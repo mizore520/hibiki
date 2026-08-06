@@ -10,8 +10,9 @@ rem  - pass "clean" to force a clean rebuild
 rem ============================================================
 
 set "REPO=%~dp0"
-set "APP=%~dp0hibiki"
-set "BOOTSTRAP=%~dp0tool\bootstrap.ps1"
+if "%REPO:~-1%"=="\" set "REPO=%REPO:~0,-1%"
+set "APP=%REPO%\hibiki"
+set "BOOTSTRAP=%REPO%\tool\bootstrap.ps1"
 set "EXE=%APP%\build\windows\x64\runner\Release\hibiki.exe"
 set "STAMP=%APP%\build\.last_built_commit"
 
