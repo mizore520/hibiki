@@ -2,6 +2,15 @@
 setlocal EnableExtensions EnableDelayedExpansion
 title Hibiki Launcher
 
+rem Some PowerShell/IDE launchers pass both `Path` and `PATH` into cmd.exe.
+rem MSBuild treats environment names case-insensitively and then fails when it
+rem tries to start cl.exe with the duplicate entries. Keep one canonical PATH.
+set "HIBIKI_CANONICAL_PATH=!PATH!"
+set "PATH="
+set "Path="
+set "PATH=!HIBIKI_CANONICAL_PATH!"
+set "HIBIKI_CANONICAL_PATH="
+
 rem ============================================================
 rem  Hibiki smart launcher
 rem  - locate the repository from this BAT file, not from a hard-coded path
@@ -109,6 +118,10 @@ if not exist "!GIT_ROOT!\bin\bash.exe" (
 )
 set "PATH=!GIT_ROOT!\bin;!GIT_ROOT!\usr\bin;!PATH!"
 echo [INFO] Git Bash: !GIT_ROOT!\bin\bash.exe
+
+rem Visual Studio 2026/MSBuild file tracking can hang during CMake try-compile.
+rem This only disables source tracking for this build; it does not affect output.
+set "TrackFileAccess=false"
 
 rem Bootstrap must run from the repository root so ci/apply-patches.sh resolves correctly.
 echo [1/2] Resolving Flutter packages and applying repository patches...
