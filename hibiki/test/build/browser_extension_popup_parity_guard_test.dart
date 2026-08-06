@@ -38,6 +38,9 @@ void main() {
       'popup.js',
       'popup.html',
       'popup.css',
+      // The structured-content renderer is vendored into all three popup
+      // entry points and must not drift between the app and extension.
+      'yomitan-glossary-renderer.js',
       // 选区/划词脚本同为三镜像共享渲染逻辑，纳入字节守卫防单侧漂移。
       'selection.js',
     ]) {

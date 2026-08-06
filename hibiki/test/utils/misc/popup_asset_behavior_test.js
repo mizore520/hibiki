@@ -4,6 +4,10 @@ const path = require('path');
 const vm = require('vm');
 
 const dictMediaPath = path.resolve(__dirname, '../../../assets/popup/dict-media.js');
+const yomitanRendererPath = path.resolve(
+  __dirname,
+  '../../../assets/popup/yomitan-glossary-renderer.js',
+);
 const popupPath = path.resolve(__dirname, '../../../assets/popup/popup.js');
 const popupCssPath = path.resolve(__dirname, '../../../assets/popup/popup.css');
 const selectionPath = path.resolve(__dirname, '../../../assets/popup/selection.js');
@@ -252,6 +256,8 @@ function createPopupContext() {
 
   const document = {
     body: new FakeElement('body'),
+    ELEMENT_NODE: 1,
+    TEXT_NODE: 3,
     // BUG-1064: the in-page action panel marks <html> while it is open (popup.css
     // gives the document a minimum height so the app-external window grows enough
     // to show it), so the stand-in document needs a real documentElement.
@@ -262,10 +268,14 @@ function createPopupContext() {
     createTextNode(text) {
       return {
         nodeType: 3,
+        nodeValue: String(text),
         textContent: String(text),
         parentElement: null,
         parentNode: null,
       };
+    },
+    createTreeWalker() {
+      return {nextNode: () => null};
     },
     createRange() {
       return {
@@ -338,6 +348,7 @@ function createPopupContext() {
       }
     },
     Node: {TEXT_NODE: 3},
+    NodeFilter: {SHOW_ELEMENT: 1, SHOW_TEXT: 4},
     // BUG-1064: the in-page hint bubble (showInlineHint) fades in on the next
     // frame; without a rAF stand-in the hint path would throw ReferenceError.
     // Runs the callback synchronously — tests assert on the resulting DOM, not
@@ -389,6 +400,9 @@ function loadPopup() {
   const context = createPopupContext();
   vm.runInNewContext(fs.readFileSync(dictMediaPath, 'utf8'), context, {
     filename: dictMediaPath,
+  });
+  vm.runInNewContext(fs.readFileSync(yomitanRendererPath, 'utf8'), context, {
+    filename: yomitanRendererPath,
   });
   vm.runInNewContext(fs.readFileSync(popupPath, 'utf8'), context, {
     filename: popupPath,
@@ -461,7 +475,7 @@ function testSanseidoEmAccentImageStaysInlineAndPointsAtDictionaryMedia() {
   assert.equal(img.className, 'gloss-image');
   assert.equal(
     img.src,
-    'image://?dictionary=%E4%B8%89%E7%9C%81%E5%A0%82%E5%9B%BD%E8%AA%9E%E8%BE%9E' +
+    'image://media?dictionary=%E4%B8%89%E7%9C%81%E5%A0%82%E5%9B%BD%E8%AA%9E%E8%BE%9E' +
       '%E5%85%B8%E3%80%80%E7%AC%AC%E5%85%AB%E7%89%88&path=sankoku8%2Fsvg-accent' +
       '%2F%E3%82%A2%E3%82%AF%E3%82%BB%E3%83%B3%E3%83%88.svg',
   );
@@ -629,7 +643,7 @@ function testTappingDefinitionImageOpensLightbox() {
 
   assert.ok(lightbox, 'image lightbox was not opened');
   assert.equal(lightbox.children[0].tagName, 'IMG');
-  assert.equal(lightbox.children[0].src, 'image://?dictionary=test-dict&path=img%2Fd93ed9600ba7717bd75cd68f5d35760c.png');
+  assert.equal(lightbox.children[0].src, 'image://media?dictionary=test-dict&path=img%2Fd93ed9600ba7717bd75cd68f5d35760c.png');
   assert.equal(lightbox.children[0].alt, 'test image');
 
   lightbox.dispatchEvent({type: 'click'});

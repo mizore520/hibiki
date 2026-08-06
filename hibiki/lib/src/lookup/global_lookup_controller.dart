@@ -16,6 +16,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' hide ModifierKey;
+import 'package:hibiki/src/dictionary/dictionary_media_types.dart';
 import 'package:hibiki/i18n/strings.g.dart';
 import 'package:hibiki/src/lookup/overlay_auto_read.dart';
 import 'package:hibiki/src/lookup/clipboard_history_payload.dart';
@@ -35,8 +36,7 @@ import 'package:hibiki/src/utils/misc/error_log_service.dart';
 import 'package:hibiki/src/shortcuts/input_binding.dart';
 import 'package:hibiki/src/shortcuts/shortcut_action.dart';
 import 'package:hibiki/src/shortcuts/shortcut_registry.dart';
-import 'package:hibiki_core/hibiki_core.dart'
-    show kStatSourceBook, mimeTypeForFilePath;
+import 'package:hibiki_core/hibiki_core.dart' show kStatSourceBook;
 import 'package:hibiki_dictionary/hibiki_dictionary.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:path/path.dart' as p;
@@ -751,7 +751,7 @@ class GlobalLookupController {
 
   /// Resolves the bytes for a dictionary media request from the overlay
   /// WebView2. Both custom schemes are routed here (matching the in-app
-  /// InAppWebView): `image://?dictionary=..&path=..` (gaiji / <img>) and
+  /// InAppWebView): `image://media?dictionary=..&path=..` (gaiji / <img>) and
   /// `dictmedia://<encoded-path>?dictionary=..` (dictionary <link> stylesheets
   /// and their relative font/bg resources). The two schemes carry the media
   /// path in different positions, so parsing is scheme-aware (see
@@ -1468,14 +1468,14 @@ class GlobalLookupMediaRequest {
 /// `dictionary_webview_media.dart` `_normalizeMediaPath` does: trims, converts
 /// back-slashes to forward, and strips any leading slashes.
 String _normalizeGlobalLookupMediaPath(String path) {
-  return path.trim().replaceAll('\\', '/').replaceFirst(RegExp(r'^/+'), '');
+  return normalizeDictionaryMediaPath(path);
 }
 
 /// Returns the image MIME type for [path]'s extension.
 ///
 /// 命名统一轮 G8：查 hibiki_core 单一 MIME 映射表 [mimeTypeForFilePath]（旧本地
 /// switch 副本之一），与 app 内 `dictionary_media_types.dart` 自动同源。
-String _globalLookupImageMime(String path) => mimeTypeForFilePath(path);
+String _globalLookupImageMime(String path) => dictionaryMediaMimeType(path);
 
 /// Parses an overlay media [url] into (dictionary, path, contentType),
 /// scheme-aware, matching the in-app `dictionary_webview_media.dart` parsing

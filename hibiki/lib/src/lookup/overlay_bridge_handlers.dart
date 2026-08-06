@@ -53,8 +53,16 @@ bool maybeHandleOverlayDeferredBridge({
   required OverlayBridgeResolver resolveBridge,
   String sentenceContext = '',
   OverlayMiningHandler? miningHandler,
+  DictionaryMediaLoader? dictionaryMediaLoader,
 }) {
   switch (handler) {
+    case 'getDictionaryMediaNaturalSizes':
+      unawaited(_handleDictionaryMediaNaturalSizesBridge(
+        message,
+        resolveBridge,
+        dictionaryMediaLoader,
+      ));
+      return true;
     // playWordAudio 桥已删：popup.js 三端统一自己用 HTML5 <audio> 播放解析好的
     // URL（bridge-shim.js 同步删除，native deferred 名单同步删除）。旧分支若被调
     // 只会失败——resolveWordAudio 返回的 data: URL 进 playAudioRef 会被分类成
@@ -105,6 +113,29 @@ bool maybeHandleOverlayDeferredBridge({
       return true;
     default:
       return false;
+  }
+}
+
+/// App-external lookup surfaces do not have the in-app JavaScript handler, so
+/// resolve the same natural-size request through their deferred bridge.
+Future<void> _handleDictionaryMediaNaturalSizesBridge(
+  Map<String, Object?> message,
+  OverlayBridgeResolver resolveBridge,
+  DictionaryMediaLoader? mediaLoader,
+) async {
+  final int? id = _bridgeIdOf(message);
+  List<Map<String, Object>> reply = const <Map<String, Object>>[];
+  try {
+    final Object? args = message['args'];
+    final String json =
+        args is List && args.isNotEmpty ? args.first?.toString() ?? '' : '';
+    reply = dictionaryMediaNaturalSizes(json, mediaLoader: mediaLoader);
+  } catch (e, st) {
+    glog('dictionary-media-size: EXCEPTION $e\n$st');
+  }
+  if (id != null) {
+    glog('dictionary-media-size: reply=${reply.length} image(s) (id=$id)');
+    unawaited(resolveBridge(id, reply));
   }
 }
 

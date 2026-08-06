@@ -27,7 +27,12 @@ const path = require('path');
 const vm = require('vm');
 
 const popupPath = path.resolve(__dirname, '../../assets/popup/popup.js');
-const source = fs.readFileSync(popupPath, 'utf8');
+const yomitanRendererPath = path.resolve(
+  __dirname,
+  '../../assets/popup/yomitan-glossary-renderer.js',
+);
+const source = fs.readFileSync(yomitanRendererPath, 'utf8') + '\n' +
+  fs.readFileSync(popupPath, 'utf8');
 
 // A throwaway DOM element good enough for the popup helpers that might touch the
 // DOM. (With empty glossaries none are actually exercised, but createElement
