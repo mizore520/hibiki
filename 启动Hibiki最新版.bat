@@ -1,84 +1,129 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal EnableExtensions EnableDelayedExpansion
 title Hibiki Launcher
 
 rem ============================================================
 rem  Hibiki smart launcher
-rem  Compare git HEAD with last-built commit:
-rem    - updated / never built -> pub get + release build, then run
-rem    - already latest         -> just run the existing exe
-rem  Force clean rebuild: pass argument "clean"
+rem  - locate the repository from this BAT file, not from a hard-coded path
+rem  - build automatically when the source commit changed or no EXE exists
+rem  - pass "clean" to force a clean rebuild
 rem ============================================================
 
-set "REPO=D:\APP\vs_claude_code\hibiki"
-set "APP=%REPO%\hibiki"
-set "FLUTTER=D:\flutter_sdk\flutter_extracted\flutter\bin\flutter.bat"
+set "REPO=%~dp0"
+set "APP=%~dp0hibiki"
+set "BOOTSTRAP=%~dp0tool\bootstrap.ps1"
 set "EXE=%APP%\build\windows\x64\runner\Release\hibiki.exe"
 set "STAMP=%APP%\build\.last_built_commit"
 
-cd /d "%APP%"
-
-rem --- read current git HEAD ---
-set "HEAD="
-for /f "delims=" %%i in ('git -C "%REPO%" rev-parse HEAD 2^>nul') do set "HEAD=%%i"
-if not defined HEAD (
-  echo [WARN] cannot read git HEAD, launching existing build
-  goto :launch
+if not exist "%APP%\pubspec.yaml" (
+  echo [ERROR] Hibiki app directory not found: %APP%
+  goto :fail
 )
 
-rem --- force clean rebuild ---
+rem --- resolve Flutter -----------------------------------------------------
+rem Priority: HIBIKI_FLUTTER > FLUTTER_BIN > common local path > PATH.
+set "FLUTTER="
+if defined HIBIKI_FLUTTER set "FLUTTER=%HIBIKI_FLUTTER%"
+if not defined FLUTTER if defined FLUTTER_BIN set "FLUTTER=%FLUTTER_BIN%"
+
+if defined FLUTTER if not exist "%FLUTTER%" (
+  echo [ERROR] Flutter path does not exist: %FLUTTER%
+  echo         Set HIBIKI_FLUTTER to the full path of flutter.bat.
+  goto :fail
+)
+
+if not defined FLUTTER if exist "C:\flutter\bin\flutter.bat" set "FLUTTER=C:\flutter\bin\flutter.bat"
+if not defined FLUTTER if exist "D:\flutter_sdk\flutter_extracted\flutter\bin\flutter.bat" set "FLUTTER=D:\flutter_sdk\flutter_extracted\flutter\bin\flutter.bat"
+if not defined FLUTTER for /f "delims=" %%F in ('where flutter.bat 2^>nul') do if not defined FLUTTER set "FLUTTER=%%F"
+
+if not defined FLUTTER (
+  echo [ERROR] Flutter was not found.
+  echo         Install Flutter, add it to PATH, or set HIBIKI_FLUTTER to flutter.bat.
+  goto :fail
+)
+echo [INFO] Flutter: %FLUTTER%
+
+rem --- read current git HEAD ----------------------------------------------
+set "HEAD="
+for /f "delims=" %%i in ('git -C "%REPO%" rev-parse --verify HEAD 2^>nul') do set "HEAD=%%i"
+if not defined HEAD (
+  echo [ERROR] Cannot read the Git HEAD for: %REPO%
+  echo         Run this BAT from a valid Git checkout.
+  goto :fail
+)
+
+cd /d "%APP%"
+
+rem --- force clean rebuild -------------------------------------------------
 if /i "%~1"=="clean" (
-  echo [CLEAN] forcing clean rebuild...
+  echo [CLEAN] Forcing clean rebuild...
   call "%FLUTTER%" clean
+  if errorlevel 1 goto :build_failed
   goto :build
 )
 
-rem --- read last-built commit ---
+rem --- compare the last built commit --------------------------------------
 set "BUILT="
 if exist "%STAMP%" set /p BUILT=<"%STAMP%"
 
 if not exist "%EXE%" (
-  echo [BUILD] no existing build, compiling for the first time...
+  echo [BUILD] No existing build, compiling for the first time...
   goto :build
 )
 if not "!BUILT!"=="!HEAD!" (
-  echo [BUILD] code updated:
+  echo [BUILD] Source changed:
   echo         old: !BUILT!
   echo         new: !HEAD!
-  echo         compiling, please wait ^(a few minutes on big changes^)...
+  echo         Compiling, please wait...
   goto :build
 )
 
-echo [SKIP] already latest ^(!HEAD:~0,12!^), launching directly
+echo [SKIP] Already built at !HEAD:~0,12!, launching directly.
 goto :launch
 
 :build
-echo [1/2] flutter pub get ...
-call "%FLUTTER%" pub get
-if errorlevel 1 (
-  echo.
-  echo [ERROR] pub get failed, not launched. Press any key to exit.
-  pause >nul
-  exit /b 1
+if not exist "%BOOTSTRAP%" (
+  echo [ERROR] Bootstrap script not found: %BOOTSTRAP%
+  goto :fail
 )
+
+rem Bootstrap must run from the repository root so ci/apply-patches.sh resolves correctly.
+echo [1/2] Resolving Flutter packages and applying repository patches...
+set "HIBIKI_FLUTTER=%FLUTTER%"
+pushd "%REPO%"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%BOOTSTRAP%"
+set "BOOTSTRAP_EXIT=!ERRORLEVEL!"
+popd
+if not "!BOOTSTRAP_EXIT!"=="0" (
+  echo [ERROR] Dependency setup failed. The app was not launched.
+  goto :fail
+)
+
 echo [2/2] flutter build windows --release ...
 call "%FLUTTER%" build windows --release
-if errorlevel 1 (
-  echo.
-  echo [ERROR] build failed, not launched. Press any key to exit.
-  pause >nul
-  exit /b 1
+if errorlevel 1 goto :build_failed
+
+if not exist "%EXE%" (
+  echo [ERROR] Build completed but executable was not found: %EXE%
+  goto :fail
 )
-rem --- record this commit ---
 >"%STAMP%" echo !HEAD!
-echo [OK] build succeeded
+echo [OK] Build succeeded.
 
 :launch
 if not exist "%EXE%" (
-  echo [ERROR] executable not found: %EXE%
-  echo         build once first. Press any key to exit.
-  pause >nul
-  exit /b 1
+  echo [ERROR] Executable not found: %EXE%
+  goto :fail
 )
 start "" "%EXE%"
 endlocal
+exit /b 0
+
+:build_failed
+echo [ERROR] Flutter build failed. The app was not launched.
+
+:fail
+echo.
+pause >nul
+endlocal
+exit /b 1
