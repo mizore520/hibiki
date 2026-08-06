@@ -88,6 +88,28 @@ if not exist "%BOOTSTRAP%" (
   goto :fail
 )
 
+rem --- make Git Bash available to bootstrap.ps1 ----------------------------
+rem Git for Windows is installed, but bash.exe is not always on PowerShell PATH.
+set "GIT_ROOT="
+if exist "%ProgramFiles%\Git\bin\bash.exe" set "GIT_ROOT=%ProgramFiles%\Git"
+if not defined GIT_ROOT if exist "%LocalAppData%\Programs\Git\bin\bash.exe" set "GIT_ROOT=%LocalAppData%\Programs\Git"
+if not defined GIT_ROOT (
+  set "GIT_EXE="
+  for /f "delims=" %%G in ('where git.exe 2^>nul') do if not defined GIT_EXE set "GIT_EXE=%%G"
+  if defined GIT_EXE for %%G in ("!GIT_EXE!") do set "GIT_ROOT=%%~dpG.."
+)
+if not defined GIT_ROOT (
+  echo [ERROR] Git Bash was not found.
+  echo         Install Git for Windows or add bash.exe to PATH.
+  goto :fail
+)
+if not exist "!GIT_ROOT!\bin\bash.exe" (
+  echo [ERROR] Git Bash executable was not found under: !GIT_ROOT!
+  goto :fail
+)
+set "PATH=!GIT_ROOT!\bin;!GIT_ROOT!\usr\bin;!PATH!"
+echo [INFO] Git Bash: !GIT_ROOT!\bin\bash.exe
+
 rem Bootstrap must run from the repository root so ci/apply-patches.sh resolves correctly.
 echo [1/2] Resolving Flutter packages and applying repository patches...
 set "HIBIKI_FLUTTER=%FLUTTER%"
