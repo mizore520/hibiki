@@ -93,7 +93,7 @@ void main() {
   group('TODO-867 P1 resolveGlobalLookupMedia (pure parse)', () {
     test('image:// — dictionary+path from query, MIME by extension', () {
       final GlobalLookupMediaRequest? r = resolveGlobalLookupMedia(
-        'image://?dictionary=My%20Dict&path=sub%2Fpic.png',
+        'image://media?dictionary=My%20Dict&path=sub%2Fpic.png',
       );
       expect(r, isNotNull);
       expect(r!.dictionary, 'My Dict');
@@ -101,14 +101,15 @@ void main() {
       expect(r.contentType, 'image/png');
     });
 
-    test('image:// — jpg/gif/webp/svg/unknown extension MIME', () {
+    test('image:// — jpg/gif/webp/avif/svg/unknown extension MIME', () {
       String? mime(String ext) =>
-          resolveGlobalLookupMedia('image://?dictionary=d&path=a.$ext')
+          resolveGlobalLookupMedia('image://media?dictionary=d&path=a.$ext')
               ?.contentType;
       expect(mime('jpg'), 'image/jpeg');
       expect(mime('jpeg'), 'image/jpeg');
       expect(mime('gif'), 'image/gif');
       expect(mime('webp'), 'image/webp');
+      expect(mime('avif'), 'image/avif');
       expect(mime('svg'), 'image/svg+xml');
       expect(mime('bin'), 'application/octet-stream');
     });
@@ -133,9 +134,10 @@ void main() {
     });
 
     test('missing fields / unknown scheme -> null (served as 404)', () {
-      expect(
-          resolveGlobalLookupMedia('image://?path=a.png'), isNull); // no dict
-      expect(resolveGlobalLookupMedia('image://?dictionary=d'), isNull); // path
+      expect(resolveGlobalLookupMedia('image://media?path=a.png'),
+          isNull); // no dict
+      expect(resolveGlobalLookupMedia('image://media?dictionary=d'),
+          isNull); // path
       expect(resolveGlobalLookupMedia('dictmedia://style.css'), isNull); // dict
       expect(resolveGlobalLookupMedia('http://x/y.png'), isNull);
     });

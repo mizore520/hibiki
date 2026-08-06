@@ -21,7 +21,9 @@ function rewriteDictionaryMediaPath(rawPath, dictName) {
             `&path=${encodeURIComponent(normalized)}` +
             `&token=${encodeURIComponent(media.token)}`;
     }
-    return `image://?dictionary=${encodeURIComponent(dictName)}&path=${encodeURIComponent(normalized)}`;
+    // WebView2 registers this custom scheme with an authority component, so
+    // keep a stable non-empty host while the media path remains in the query.
+    return `image://media?dictionary=${encodeURIComponent(dictName)}&path=${encodeURIComponent(normalized)}`;
 }
 
 function rewriteDictLinks(html, dictName) {

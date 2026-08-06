@@ -121,6 +121,10 @@ async function resolveCachedAudioUrl(expression, reading, entryIndex) {
 let currentAudio = null;
 let lastSelection = '';
 let currentDictionaryMedia = null;
+// The live popup learns image dimensions from the browser load event, but
+// mining may render before that event. Keep the dimensions per dictionary/path
+// so the export pass can use the same natural aspect ratio.
+const definitionImageNaturalSizes = new Map();
 const selectedDictionaries = {};
 
 // TODO-270 D: tri-state mine button — "overwrite the latest mined card".
@@ -680,11 +684,95 @@ function setStructuredContentElementStyle(element, style) {
 }
 
 function hasMismatchedNaturalAspectRatio(img, invAspectRatio) {
-    if (img.naturalWidth <= 0 || img.naturalHeight <= 0 || invAspectRatio <= 0) {
+    return hasMismatchedImageAspectRatio(img.naturalWidth, img.naturalHeight, invAspectRatio);
+}
+
+function hasMismatchedImageAspectRatio(width, height, invAspectRatio) {
+    if (width <= 0 || height <= 0 || invAspectRatio <= 0) {
         return false;
     }
-    const naturalInvAspectRatio = img.naturalHeight / img.naturalWidth;
+    const naturalInvAspectRatio = height / width;
     return Math.abs(Math.log(naturalInvAspectRatio / invAspectRatio)) > Math.log(1.5);
+}
+
+function definitionImageNaturalSizeKey(dictionary, path) {
+    return `${dictionary}\n${normalizeDictMediaPath(path)}`;
+}
+
+function rememberDefinitionImageNaturalSize(dictionary, path, img) {
+    if (img.naturalWidth <= 0 || img.naturalHeight <= 0) {
+        return;
+    }
+    definitionImageNaturalSizes.set(
+        definitionImageNaturalSizeKey(dictionary, path),
+        {width: img.naturalWidth, height: img.naturalHeight},
+    );
+}
+
+// Ask the native dictionary engine for dimensions before the export render.
+// This is deliberately fail-soft: a browser extension or an older host may
+// not expose the bridge, in which case the renderer keeps its declared size.
+async function hydrateDefinitionImageNaturalSizes(dictionaryMedia) {
+    if (!Array.isArray(dictionaryMedia) || dictionaryMedia.length === 0) {
+        return false;
+    }
+    try {
+        const bridge = window.flutter_inappwebview;
+        if (!bridge || typeof bridge.callHandler !== 'function') {
+            return false;
+        }
+        const sizes = await bridge.callHandler(
+            'getDictionaryMediaNaturalSizes',
+            JSON.stringify(dictionaryMedia),
+        );
+        if (!Array.isArray(sizes)) {
+            return false;
+        }
+        let hydrated = false;
+        for (const size of sizes) {
+            const dictionary = typeof size?.dictionary === 'string' ? size.dictionary : '';
+            const path = typeof size?.path === 'string' ? size.path : '';
+            const width = Number(size?.width);
+            const height = Number(size?.height);
+            if (!dictionary || !path || !Number.isFinite(width) || width <= 0 ||
+                !Number.isFinite(height) || height <= 0) {
+                continue;
+            }
+            definitionImageNaturalSizes.set(
+                definitionImageNaturalSizeKey(dictionary, path),
+                {width, height},
+            );
+            hydrated = true;
+        }
+        return hydrated;
+    } catch {
+        return false;
+    }
+}
+
+function isPositiveFiniteNumber(value) {
+    return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
+function fitNaturalImageInsideDeclaredBounds(data, naturalSize) {
+    const widthLimit = isPositiveFiniteNumber(data.preferredWidth)
+        ? data.preferredWidth
+        : (isPositiveFiniteNumber(data.width) ? data.width : null);
+    const heightLimit = isPositiveFiniteNumber(data.preferredHeight)
+        ? data.preferredHeight
+        : (isPositiveFiniteNumber(data.height) ? data.height : null);
+    let scale = 1;
+    if (widthLimit !== null && heightLimit !== null) {
+        scale = Math.min(widthLimit / naturalSize.width, heightLimit / naturalSize.height);
+    } else if (widthLimit !== null) {
+        scale = widthLimit / naturalSize.width;
+    } else if (heightLimit !== null) {
+        scale = heightLimit / naturalSize.height;
+    }
+    return {
+        width: naturalSize.width * scale,
+        height: naturalSize.height * scale,
+    };
 }
 
 function closeImageLightbox() {
@@ -929,6 +1017,36 @@ function constructGlossaryHtml(entryIndex) {
     return result;
 }
 
+// Card export uses the vendored Yomitan structured-content generator. The live
+// popup keeps its interactive renderer above, but both surfaces now share the
+// same structured-content rules, Hoshi wrapper handling, CSS sanitizing and
+// media filename registration at the export boundary.
+function constructYomitanGlossaries(entryIndex) {
+    if (!window.lookupEntries || entryIndex >= window.lookupEntries.length) {
+        return {glossary: null, singleGlossaries: {}};
+    }
+    const renderer = window.__hibikiYomitanGlossaryRenderer;
+    if (!renderer || typeof renderer.render !== 'function') {
+        throw new Error('Yomitan glossary renderer was not loaded');
+    }
+    return renderer.render(window.lookupEntries[entryIndex], {
+        dictionaryStyles: window.dictionaryStyles || {},
+        hiddenDictionaryNames: window.hiddenDictionaryNames || [],
+        compactGlossaries: window.compactGlossariesAnki === true,
+        compactGlossaryCss: COMPACT_GLOSSARIES_ANKI,
+        parseTags,
+        numericTagPattern: NUMERIC_TAG,
+        getNaturalImageSize: (dictionary, path) => definitionImageNaturalSizes.get(
+            definitionImageNaturalSizeKey(dictionary, path),
+        ),
+        getMediaFilename: (dictionary, path) => (
+            window.useAnkiConnect || window.embedMedia
+                ? getMediaFilename(dictionary, path)
+                : null
+        ),
+    });
+}
+
 function constructFrequencyHtml(frequencies) {
     if (!frequencies || frequencies.length === 0) {
         return '';
@@ -1015,8 +1133,8 @@ function constructPitchCategories(pitches, reading, rules) {
 function createDefinitionImage(data, dictionary, exporting = false) {
     const {
         path,
-        width = 100,
-        height = 100,
+        width: declaredWidth = 100,
+        height: declaredHeight = 100,
         preferredWidth,
         preferredHeight,
         title,
@@ -1032,16 +1150,20 @@ function createDefinitionImage(data, dictionary, exporting = false) {
         sizeUnits,
         data: nodeData,
     } = data;
-    
-    const hasPreferredWidth = (typeof preferredWidth === 'number');
-    const hasPreferredHeight = (typeof preferredHeight === 'number');
-    const hasDimensions = (hasPreferredWidth || hasPreferredHeight || typeof data.width === 'number' || typeof data.height === 'number');
-    const invAspectRatio = (
+
+    const hasPreferredWidth = isPositiveFiniteNumber(preferredWidth);
+    const hasPreferredHeight = isPositiveFiniteNumber(preferredHeight);
+    const hasWidth = isPositiveFiniteNumber(data.width);
+    const hasHeight = isPositiveFiniteNumber(data.height);
+    const hasDimensions = hasPreferredWidth || hasPreferredHeight || hasWidth || hasHeight;
+    const width = hasWidth ? declaredWidth : 100;
+    const height = hasHeight ? declaredHeight : 100;
+    let invAspectRatio = (
                             hasPreferredWidth && hasPreferredHeight ?
                             preferredHeight / preferredWidth :
                             height / width
                             );
-    const usedWidth = (
+    let usedWidth = (
                        hasPreferredWidth ?
                        preferredWidth :
                        (hasPreferredHeight ? preferredHeight / invAspectRatio : width)
@@ -1049,13 +1171,40 @@ function createDefinitionImage(data, dictionary, exporting = false) {
     const effectiveSizeUnits = typeof sizeUnits === 'string' ? sizeUnits : null;
     const isSvg = /\.svg$/i.test(path);
     const useEmUnits = effectiveSizeUnits === 'em';
-
-    const node = document.createElement(exporting ? 'span' : 'a');
-    node.classList.add('gloss-image-link');
-    if (!exporting) {
-        node.target = '_blank';
-        node.rel = 'noreferrer noopener';
+    const isGaiji = nodeData?.class === 'gaiji' ||
+        Object.prototype.hasOwnProperty.call(nodeData || {}, 'gaiji');
+    let exportNaturalSize = null;
+    if (exporting) {
+        const naturalSize = definitionImageNaturalSizes.get(
+            definitionImageNaturalSizeKey(dictionary, path),
+        );
+        if (naturalSize) {
+            if (!hasDimensions) {
+                usedWidth = naturalSize.width;
+                invAspectRatio = naturalSize.height / naturalSize.width;
+                exportNaturalSize = naturalSize;
+            } else if (hasMismatchedImageAspectRatio(
+                naturalSize.width, naturalSize.height, invAspectRatio)) {
+                const fittedSize = fitNaturalImageInsideDeclaredBounds(data, naturalSize);
+                usedWidth = fittedSize.width;
+                invAspectRatio = naturalSize.height / naturalSize.width;
+                exportNaturalSize = naturalSize;
+            }
+        }
     }
+    // Gaiji width/height values are source-pixel metrics. Keep an inline
+    // text-line height instead of turning 150px glyph metadata into 150em.
+    const normalizeGaijiToInlineEm = exporting && isGaiji && !useEmUnits;
+    if (normalizeGaijiToInlineEm) {
+        usedWidth = 1.2 / invAspectRatio;
+    }
+
+    // Keep an anchor in exported cards as well: after cache upload the final
+    // media filename is put in both src and href, so clicking opens the image.
+    const node = document.createElement('a');
+    node.classList.add('gloss-image-link');
+    node.target = '_blank';
+    node.rel = 'noreferrer noopener';
     
     const imageContainer = document.createElement('span');
     imageContainer.classList.add('gloss-image-container');
@@ -1093,12 +1242,15 @@ function createDefinitionImage(data, dictionary, exporting = false) {
     if (typeof border === 'string') { imageContainer.style.border = border; }
     if (typeof borderRadius === 'string') { imageContainer.style.borderRadius = borderRadius; }
     console.log('[IMG_CREATE]', path, 'dims=' + hasDimensions, 'svg=' + isSvg, usedWidth + 'x' + (usedWidth * invAspectRatio) + (useEmUnits ? 'em' : 'px'));
-    if (useEmUnits) {
+    if (useEmUnits || normalizeGaijiToInlineEm) {
         imageContainer.style.width = `${usedWidth}em`;
-    } else if (!hasDimensions && isSvg) {
+        if (normalizeGaijiToInlineEm) {
+            imageContainer.style.fontSize = 'inherit';
+            imageContainer.style.setProperty('margin-inline-end', '0', 'important');
+        }
+    } else if (!exporting && !hasDimensions && isSvg) {
         node.dataset.hasAspectRatio = 'false';
         imageContainer.style.width = 'auto';
-        const isGaiji = nodeData?.class === 'gaiji' || Object.prototype.hasOwnProperty.call(nodeData || {}, 'gaiji');
         if (isGaiji) {
             imageContainer.style.setProperty('width', 'auto', 'important');
             imageContainer.style.setProperty('margin-inline-end', '0', 'important');
@@ -1142,6 +1294,7 @@ function createDefinitionImage(data, dictionary, exporting = false) {
                 img.style.display = 'inline-block';
             }
             img.addEventListener('load', () => {
+                rememberDefinitionImageNaturalSize(dictionary, path, img);
                 const shouldUseNaturalPixels = !isSvg && img.naturalWidth > 0 && img.naturalHeight > 0 && (!useEmUnits || hasMismatchedNaturalAspectRatio(img, invAspectRatio));
                 if (shouldUseNaturalPixels) {
                     if (!hasDimensions) {
@@ -1175,16 +1328,19 @@ function createDefinitionImage(data, dictionary, exporting = false) {
         const image = document.createElement(filename ? 'img' : 'span');
         image.classList.add('gloss-image');
         if (filename) {
+            node.href = filename;
             image.alt = alt;
             image.src = filename;
-            if (useEmUnits) {
+            if (exportNaturalSize) {
+                image.width = exportNaturalSize.width;
+            } else if (useEmUnits) {
                 const emSize = 14;
                 const scaleFactor = 2 * window.devicePixelRatio;
                 image.width = usedWidth * emSize * scaleFactor;
             } else {
                 image.width = usedWidth;
             }
-            image.height = image.width * invAspectRatio;
+            image.height = exportNaturalSize ? exportNaturalSize.height : image.width * invAspectRatio;
             applyImageStyles(node, imageContainer, aspectRatioSizer, imageBackground, image, filename, appearance);
         } else {
             image.textContent = alt;
@@ -1310,12 +1466,26 @@ async function buildMinePayload(expression, reading, frequencies, pitches, rules
     const idx = entryIndex || 0;
     const furiganaPlain = constructFuriganaPlain(expression, reading);
     currentDictionaryMedia = new Map();
-    const glossary = constructGlossaryHtml(idx);
+    let renderedGlossaries = constructYomitanGlossaries(idx);
+    let glossary = renderedGlossaries.glossary;
     const freqHarmonicRank = getFrequencyHarmonicRank(frequencies);
     const frequenciesHtml = constructFrequencyHtml(frequencies);
-    const singleGlossaries = constructSingleGlossaryHtml(idx);
+    let singleGlossaries = renderedGlossaries.singleGlossaries;
     const dictionaryMedia = currentDictionaryMedia;
     currentDictionaryMedia = null;
+    // A cached/live image load is not guaranteed to have happened before the
+    // user presses Mine. Ask Dart for header dimensions and render once more so
+    // no-declared-size, em-sized, SVG or AVIF media keeps the natural ratio.
+    if (await hydrateDefinitionImageNaturalSizes([...dictionaryMedia.values()])) {
+        currentDictionaryMedia = dictionaryMedia;
+        try {
+            renderedGlossaries = constructYomitanGlossaries(idx);
+            glossary = renderedGlossaries.glossary;
+            singleGlossaries = renderedGlossaries.singleGlossaries;
+        } finally {
+            currentDictionaryMedia = null;
+        }
+    }
     const glossaryFirst = Object.values(singleGlossaries)[0] || '';
     const pitchPositions = constructPitchPositionHtml(pitches);
     const pitchCategories = constructPitchCategories(pitches, reading, rules);

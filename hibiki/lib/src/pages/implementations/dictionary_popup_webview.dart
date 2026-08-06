@@ -236,7 +236,12 @@ class DictionaryPopupWebView extends ConsumerStatefulWidget {
 
 class DictionaryPopupWebViewState
     extends ConsumerState<DictionaryPopupWebView> {
+  static Future<WebViewEnvironment>? _windowsDictionaryEnvironmentFuture;
+
   InAppWebViewController? _controller;
+  WebViewEnvironment? _webViewEnvironment;
+  bool _webViewEnvironmentRequested = false;
+  bool _webViewEnvironmentResolved = !isWindowsPlatform;
 
   /// Debug eval on THIS popup's WebView. The reader routes through its
   /// `topPopupState` (gated behind its own @visibleForTesting hook + assert) so
@@ -825,6 +830,21 @@ JSON.stringify((function(){
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (isWindowsPlatform && !_webViewEnvironmentRequested) {
+      final appModel = ref.read(appProvider);
+      try {
+        final String appDirectoryPath = appModel.appDirectory.path;
+        _webViewEnvironmentRequested = true;
+        unawaited(_resolveWindowsDictionaryEnvironment(appDirectoryPath));
+      } catch (error) {
+        if (!error.toString().contains('LateInitializationError')) rethrow;
+        // A few lightweight widget tests mount the popup before AppModel has
+        // completed its startup directory wiring. Keep the pre-existing
+        // default WebView path for that transient state; the real app reaches
+        // this widget after appDirectory is initialized.
+        _webViewEnvironmentResolved = true;
+      }
+    }
     // Re-push the theme CSS when the app theme changes while the popup is open
     // (light/dark toggle or seed-colour change rebuilds the inherited Theme).
     // Without this the WebView keeps the colours captured when results were
@@ -837,6 +857,32 @@ JSON.stringify((function(){
     if (themeVarsJs == _lastThemeVarsJs) return;
     _lastThemeVarsJs = themeVarsJs;
     _controller!.evaluateJavascript(source: themeVarsJs);
+  }
+
+  Future<void> _resolveWindowsDictionaryEnvironment(
+    String appDirectoryPath,
+  ) async {
+    try {
+      final WebViewEnvironment environment =
+          await (_windowsDictionaryEnvironmentFuture ??=
+              WebViewEnvironment.create(
+        settings: dictionaryMediaWebViewEnvironmentSettings(appDirectoryPath),
+      ));
+      if (!mounted) return;
+      setState(() {
+        _webViewEnvironment = environment;
+        _webViewEnvironmentResolved = true;
+      });
+    } catch (error, stack) {
+      _windowsDictionaryEnvironmentFuture = null;
+      ErrorLogService.instance.log(
+        'DictPopupWebview.createDictionaryMediaEnvironment',
+        error,
+        stack,
+      );
+      if (!mounted) return;
+      setState(() => _webViewEnvironmentResolved = true);
+    }
   }
 
   Future<void> _pushInstantScrollPreference() async {
@@ -1068,6 +1114,7 @@ JSON.stringify((function(){
   static String? _inlineCss;
   static String? _inlineDictMediaJs;
   static String? _inlineSelectionJs;
+  static String? _inlineYomitanRendererJs;
   static String? _inlinePopupJs;
 
   static bool get _shouldInlinePopupAssets =>
@@ -1085,11 +1132,14 @@ JSON.stringify((function(){
       final String css = _readPopupAsset('popup.css');
       final String dictMediaJs = _readPopupAsset('dict-media.js');
       final String selectionJs = _readPopupAsset('selection.js');
+      final String yomitanRendererJs =
+          _readPopupAsset('yomitan-glossary-renderer.js');
       final String popupJs = _readPopupAsset('popup.js');
       _assignInlinePopupAssets(
         css: css,
         dictMediaJs: dictMediaJs,
         selectionJs: selectionJs,
+        yomitanRendererJs: yomitanRendererJs,
         popupJs: popupJs,
       );
     } catch (e, stack) {
@@ -1123,12 +1173,15 @@ JSON.stringify((function(){
       final String css = await _readPopupAssetAsync('popup.css');
       final String dictMediaJs = await _readPopupAssetAsync('dict-media.js');
       final String selectionJs = await _readPopupAssetAsync('selection.js');
+      final String yomitanRendererJs =
+          await _readPopupAssetAsync('yomitan-glossary-renderer.js');
       final String popupJs = await _readPopupAssetAsync('popup.js');
       if (_inlineCss != null) return; // 同步兜底路径已先完成。
       _assignInlinePopupAssets(
         css: css,
         dictMediaJs: dictMediaJs,
         selectionJs: selectionJs,
+        yomitanRendererJs: yomitanRendererJs,
         popupJs: popupJs,
       );
     } catch (e, stack) {
@@ -1144,6 +1197,7 @@ JSON.stringify((function(){
     required String css,
     required String dictMediaJs,
     required String selectionJs,
+    String yomitanRendererJs = '',
     required String popupJs,
   }) {
     // BUG-717 ②：`</style` 转义从每次 _buildInlinePopupHtml 挪到装载时一次
@@ -1151,6 +1205,7 @@ JSON.stringify((function(){
     _inlineCss = css.replaceAll('</style', r'<\/style');
     _inlineDictMediaJs = dictMediaJs;
     _inlineSelectionJs = selectionJs;
+    _inlineYomitanRendererJs = yomitanRendererJs;
     _inlinePopupJs = popupJs;
     _inlineHtmlCacheKey = null;
     _inlineHtmlCache = null;
@@ -1178,6 +1233,7 @@ JSON.stringify((function(){
         '<style>$_inlineCss</style>'
         '<script>$_inlineDictMediaJs</script>'
         '<script>$_inlineSelectionJs</script>'
+        '<script>$_inlineYomitanRendererJs</script>'
         '<script>$_inlinePopupJs</script>'
         '</head>'
         '<body>'
@@ -1214,6 +1270,7 @@ JSON.stringify((function(){
     _inlineCss = null;
     _inlineDictMediaJs = null;
     _inlineSelectionJs = null;
+    _inlineYomitanRendererJs = null;
     _inlinePopupJs = null;
     _inlineHtmlCacheKey = null;
     _inlineHtmlCache = null;
@@ -1268,6 +1325,10 @@ JSON.stringify((function(){
     final String bgHex = _colorToHex(bgColor);
     final String themeAttr = isDark ? 'dark' : 'light';
 
+    if (!_webViewEnvironmentResolved) {
+      return const SizedBox.expand();
+    }
+
     InAppWebViewInitialData? popupInitialData;
     final bool shouldInlinePopupAssets = _shouldInlinePopupAssets;
     if (shouldInlinePopupAssets) {
@@ -1275,6 +1336,7 @@ JSON.stringify((function(){
       if (_inlineCss != null &&
           _inlineDictMediaJs != null &&
           _inlineSelectionJs != null &&
+          _inlineYomitanRendererJs != null &&
           _inlinePopupJs != null) {
         popupInitialData = InAppWebViewInitialData(
           data: _buildInlinePopupHtml(themeAttr: themeAttr, bgHex: bgHex),
@@ -1285,6 +1347,7 @@ JSON.stringify((function(){
     }
 
     final Widget webView = InAppWebView(
+      webViewEnvironment: _webViewEnvironment,
       initialData: popupInitialData,
       initialUrlRequest: popupInitialData != null
           ? null
@@ -1585,6 +1648,20 @@ JSON.stringify((function(){
                 if (widget.nudgeSurfaceOnRender) _nudgeSurfaceRepaint();
                 return null;
               },
+            );
+          },
+        );
+
+        controller.addJavaScriptHandler(
+          handlerName: 'getDictionaryMediaNaturalSizes',
+          callback: (args) {
+            return _guardJsBridge<List<Map<String, Object>>>(
+              'DictPopupWebview.getDictionaryMediaNaturalSizes',
+              const <Map<String, Object>>[],
+              ErrorLogService.instance,
+              () => dictionaryMediaNaturalSizes(
+                args.isNotEmpty ? args[0]?.toString() ?? '' : '',
+              ),
             );
           },
         );

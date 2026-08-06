@@ -72,7 +72,8 @@ std::string WideToUtf8(const std::wstring& value) {
 // overlay serves the SAME content-type the in-app InAppWebView does:
 //   - dictmedia:// (dictionary <link> stylesheets) -> text/css (matches the
 //     in-app dictmedia branch which hardcodes text/css).
-//   - image:// and everything else -> by file extension (png/jpg/gif/webp/svg),
+//   - image:// and everything else -> by file extension
+//     (png/jpg/gif/webp/avif/svg),
 //     defaulting to application/octet-stream.
 // The page only references dictmedia:// for the dictionary's own <link>
 // stylesheets, so text/css is the faithful type; image:// covers gaiji/<img>.
@@ -81,11 +82,27 @@ std::wstring MediaContentTypeHeader(const std::string& url) {
   if (is_dictmedia) {
     return L"Content-Type: text/css";
   }
-  // Extension is taken from the part before any '?' query.
-  std::string path = url;
-  size_t q = path.find('?');
-  if (q != std::string::npos) {
-    path = path.substr(0, q);
+  // image://media uses a stable authority so WebView2 accepts the custom URL;
+  // the media path itself remains in the `path` query parameter. Read that
+  // value for MIME detection instead of inspecting the host.
+  std::string path;
+  const size_t query = url.find('?');
+  if (query != std::string::npos) {
+    const std::string key = "path=";
+    size_t pos = query + 1;
+    while (pos < url.size()) {
+      if (url.compare(pos, key.size(), key) == 0) {
+        const size_t end = url.find('&', pos + key.size());
+        path = url.substr(pos + key.size(), end - (pos + key.size()));
+        break;
+      }
+      const size_t next = url.find('&', pos);
+      if (next == std::string::npos) break;
+      pos = next + 1;
+    }
+  }
+  if (path.empty()) {
+    path = query == std::string::npos ? url : url.substr(0, query);
   }
   size_t dot = path.find_last_of('.');
   std::string ext;
@@ -99,6 +116,7 @@ std::wstring MediaContentTypeHeader(const std::string& url) {
   if (ext == "jpg" || ext == "jpeg") return L"Content-Type: image/jpeg";
   if (ext == "gif") return L"Content-Type: image/gif";
   if (ext == "webp") return L"Content-Type: image/webp";
+  if (ext == "avif") return L"Content-Type: image/avif";
   if (ext == "svg") return L"Content-Type: image/svg+xml";
   return L"Content-Type: application/octet-stream";
 }

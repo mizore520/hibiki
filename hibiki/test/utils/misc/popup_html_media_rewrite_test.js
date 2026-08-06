@@ -41,7 +41,7 @@ function testPopupHtmlImagesUseDictionaryMediaScheme() {
 
   assert.ok(
     rewritten.includes(
-      `src="image://?dictionary=${DICT_ENC}&path=img%2Fexample.png"`,
+      `src="image://media?dictionary=${DICT_ENC}&path=img%2Fexample.png"`,
     ),
     'img src not rewritten: ' + rewritten,
   );
@@ -60,7 +60,7 @@ function testDefinitionHtmlImagesUseDictionaryMediaScheme() {
 
   assert.ok(
     rewritten.includes(
-      `src="image://?dictionary=${DICT_ENC}&path=media%2Ffigure.svg"`,
+      `src="image://media?dictionary=${DICT_ENC}&path=media%2Ffigure.svg"`,
     ),
     'img src not rewritten: ' + rewritten,
   );
@@ -72,7 +72,7 @@ function testStructuredImagesNormalizeDictionaryMediaPath() {
 
   assert.strictEqual(
     rewritten,
-    `image://?dictionary=${DICT_ENC}&path=media%2Ffigure.svg`,
+    `image://media?dictionary=${DICT_ENC}&path=media%2Ffigure.svg`,
   );
 }
 

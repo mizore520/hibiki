@@ -23,7 +23,7 @@ test('app environment (no config) keeps the image:// scheme', () => {
   const out = ctx.rewriteDictionaryMediaPath('gaiji/foo.svg', '明鏡');
   assert.strictEqual(
     out,
-    'image://?dictionary=' + encodeURIComponent('明鏡') + '&path=' + encodeURIComponent('gaiji/foo.svg'),
+    'image://media?dictionary=' + encodeURIComponent('明鏡') + '&path=' + encodeURIComponent('gaiji/foo.svg'),
   );
 });
 

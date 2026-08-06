@@ -27,7 +27,7 @@ void main() {
         expect(src.contains('/api/media/dictionary'), isTrue,
             reason: '$root dict-media.js missing http media endpoint rewrite');
         // App branch preserved: in-app still emits image:// (must not break app).
-        expect(src.contains('image://?dictionary='), isTrue,
+        expect(src.contains('image://media?dictionary='), isTrue,
             reason: '$root dict-media.js dropped the in-app image:// fallback');
       });
 
