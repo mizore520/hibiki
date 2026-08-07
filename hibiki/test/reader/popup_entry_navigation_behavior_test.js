@@ -36,6 +36,7 @@ class FakeEntry {
     this.classList = new FakeClassList();
     this.attributes = {};
     this.scrollIntoViewCalls = [];
+    this.viewportTop = null;
   }
 
   setAttribute(name, value) {
@@ -44,6 +45,11 @@ class FakeEntry {
 
   scrollIntoView(options) {
     this.scrollIntoViewCalls.push(options);
+  }
+
+  getBoundingClientRect() {
+    if (this.viewportTop === null) return null;
+    return {top: this.viewportTop, bottom: this.viewportTop + 100};
   }
 }
 
@@ -145,6 +151,11 @@ function makeContext(entryCount) {
   context.__win = win;
   context.__documentElement = documentElement;
   context.__body = body;
+  context.__setEntryTops = (tops) => {
+    entries.forEach((entry, index) => {
+      entry.viewportTop = tops[index] === undefined ? null : tops[index];
+    });
+  };
   return context;
 }
 
@@ -226,6 +237,42 @@ test('first entry + Alt+up returns to true top and Alt+down re-enters first entr
   assert.equal(fireAltWheel(context, 120), true);
   assert.equal(currentIndex(context), 0,
     'down from true top must start at the first entry, not skip it');
+});
+
+test('Alt+up again at true top does not wrap to the last entry', () => {
+  const context = loadPopup(3);
+  const move = context.__win.hoshiFocusDictionaryEntryMove;
+
+  assert.equal(fireAltWheel(context, 120), true);
+  assert.equal(fireAltWheel(context, -120), true);
+  assert.equal(currentIndex(context), -1);
+  assert.equal(move('up'), 'blocked');
+  assert.equal(currentIndex(context), -1,
+    'the true-top state must not reinterpret no current entry as the last entry');
+});
+
+test('manual scrollbar position reanchors both Alt+wheel directions', () => {
+  const downContext = loadPopup(4);
+  const downMove = downContext.__win.hoshiFocusDictionaryEntryMove;
+  for (let i = 0; i < 4; i++) assert.equal(downMove('next'), 'moved');
+  assert.equal(currentIndex(downContext), 3);
+
+  // The stale triangle is on entry 3, but the scrollbar is inside entry 1.
+  downContext.__setEntryTops([-700, -100, 180, 460]);
+  assert.equal(fireAltWheel(downContext, 120), true);
+  assert.equal(currentIndex(downContext), 2,
+    'Alt+down must use the manually visible entry, not the stale triangle');
+
+  const upContext = loadPopup(4);
+  const upMove = upContext.__win.hoshiFocusDictionaryEntryMove;
+  assert.equal(upMove('next'), 'moved');
+  assert.equal(currentIndex(upContext), 0);
+
+  // The stale triangle is on entry 0, but the scrollbar is inside entry 2.
+  upContext.__setEntryTops([-700, -420, -100, 220]);
+  assert.equal(fireAltWheel(upContext, -120), true);
+  assert.equal(currentIndex(upContext), 1,
+    'Alt+up must use the manually visible entry, not the stale triangle');
 });
 
 test('last entry keeps the normal boundary path instead of creating bottom padding', () => {
