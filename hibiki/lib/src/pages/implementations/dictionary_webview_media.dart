@@ -68,9 +68,9 @@ List<Map<String, Object>> dictionaryMediaNaturalSizes(
   }
 
   final DictionaryMediaLoader? loadMedia = mediaLoader ??
-      (HoshiDicts.isInitialized
+      (FushiDicts.isInitialized
           ? (String dictionary, String path) =>
-              HoshiDicts.instance.getMediaFile(dictionary, path)
+              FushiDicts.instance.getMediaFile(dictionary, path)
           : null);
   if (loadMedia == null) return const <Map<String, Object>>[];
 
