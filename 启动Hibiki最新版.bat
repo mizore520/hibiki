@@ -22,7 +22,7 @@ set "REPO=%~dp0"
 if "%REPO:~-1%"=="\" set "REPO=%REPO:~0,-1%"
 set "APP=%REPO%\hibiki"
 set "BOOTSTRAP=%REPO%\tool\bootstrap.ps1"
-set "EXE=%APP%\build\windows\x64\runner\Release\hibiki.exe"
+set "EXE=%APP%\build\windows\x64\runner\Release\fushi.exe"
 set "STAMP=%APP%\build\.last_built_commit"
 
 if not exist "%APP%\pubspec.yaml" (
@@ -88,8 +88,16 @@ if not "!BUILT!"=="!HEAD!" (
   goto :build
 )
 
+rem A user may edit custom code without committing it.  HEAD alone cannot see
+rem that case, so any tracked/untracked working-tree change also rebuilds.
+for /f "delims=" %%S in ('git -C "%REPO%" status --porcelain --untracked-files=all 2^>nul') do goto :dirty_build
+
 echo [SKIP] Already built at !HEAD:~0,12!, launching directly.
 goto :launch
+
+:dirty_build
+echo [BUILD] Working tree has local changes; compiling the current checkout...
+goto :build
 
 :build
 if not exist "%BOOTSTRAP%" (
@@ -124,7 +132,7 @@ rem This only disables source tracking for this build; it does not affect output
 set "TrackFileAccess=false"
 
 rem Bootstrap must run from the repository root so ci/apply-patches.sh resolves correctly.
-echo [1/2] Resolving Flutter packages and applying repository patches...
+echo [1/3] Resolving Flutter packages and applying repository patches...
 set "HIBIKI_FLUTTER=%FLUTTER%"
 pushd "%REPO%"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%BOOTSTRAP%"
@@ -138,6 +146,10 @@ if not "!BOOTSTRAP_EXIT!"=="0" (
 echo [2/2] flutter build windows --release ...
 call "%FLUTTER%" build windows --release
 if errorlevel 1 goto :build_failed
+
+echo [3/3] Installing bundled Windows runtime (ffmpeg / ffprobe / VC++ CRT) ...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%REPO%\tool\package_windows_runtime.ps1" -RepoRoot "%REPO%" -ReleaseDir "%APP%\build\windows\x64\runner\Release"
+if errorlevel 1 goto :runtime_failed
 
 if not exist "%EXE%" (
   echo [ERROR] Build completed but executable was not found: %EXE%
@@ -157,6 +169,10 @@ exit /b 0
 
 :build_failed
 echo [ERROR] Flutter build failed. The app was not launched.
+goto :fail
+
+:runtime_failed
+echo [ERROR] Windows runtime packaging failed. The app was not launched.
 
 :fail
 echo.
