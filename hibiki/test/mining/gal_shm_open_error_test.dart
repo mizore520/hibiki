@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/mining/gal_hook_failure_text.dart';
-import 'package:hibiki/src/mining/gal_hook_session_controller.dart';
-import 'package:hibiki/src/mining/galgame_audio_source.dart';
+import 'package:fushi/src/mining/gal_hook_failure_text.dart';
+import 'package:fushi/src/mining/gal_hook_session_controller.dart';
+import 'package:fushi/src/mining/galgame_audio_source.dart';
 import '../helpers/source_guard.dart';
 
 /// BUG-1216：共享内存打不开的真实原因不得在返回值处被丢弃。
@@ -90,9 +90,9 @@ void main() {
       expect(
         galHookOpenFailureDetail(<Object?, Object?>{
           'error': 'access_denied',
-          'detail': r'name=Local\HibikiVoiceHook_1234 win32=5',
+          'detail': r'name=Local\FushiVoiceHook_1234 win32=5',
         }),
-        r'voice_hook open access_denied name=Local\HibikiVoiceHook_1234 win32=5',
+        r'voice_hook open access_denied name=Local\FushiVoiceHook_1234 win32=5',
       );
       expect(
         galHookOpenFailureDetail(<Object?, Object?>{
@@ -128,7 +128,7 @@ void main() {
   });
 
   group('open 失败的一手证据必须走到用户看见的那句话 (BUG-1216)', () {
-    const String channelName = 'app.hibiki.reader/voice_hook';
+    const String channelName = 'app.fushi.reader/voice_hook';
 
     setUp(TestWidgetsFlutterBinding.ensureInitialized);
 
@@ -188,7 +188,7 @@ void main() {
       final GalHookInjectorDiagnostics diagnostics =
           await runOpenFailure(<Object?, Object?>{
         'error': 'access_denied',
-        'detail': r'name=Local\HibikiVoiceHook_4321 win32=5',
+        'detail': r'name=Local\FushiVoiceHook_4321 win32=5',
         'win32': 5,
       });
       expect(diagnostics.failure, GalHookInjectorFailure.accessDenied);
@@ -215,7 +215,7 @@ void main() {
       final GalHookInjectorDiagnostics diagnostics =
           await runOpenFailure(<Object?, Object?>{
         'error': 'mapping_not_found',
-        'detail': r'name=Local\HibikiVoiceHook_4321 win32=2',
+        'detail': r'name=Local\FushiVoiceHook_4321 win32=2',
         'win32': 2,
       });
       expect(
@@ -231,7 +231,7 @@ void main() {
       final GalHookInjectorDiagnostics diagnostics = await runOpenFailure(
         <Object?, Object?>{
           'error': 'mapping_not_found',
-          'detail': r'name=Local\HibikiVoiceHook_4321 win32=2',
+          'detail': r'name=Local\FushiVoiceHook_4321 win32=2',
           'win32': 2,
         },
         injectorStdout: 'hook DLL not found\n',

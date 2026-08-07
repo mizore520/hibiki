@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/pages/implementations/reader_hibiki_page.dart'
+import 'package:fushi/src/pages/implementations/reader_hibiki_page.dart'
     show readerUiScaleReanchorAllowed, readerRestoreReanchorAllowed;
 
 import '../helpers/source_guard.dart';
@@ -218,14 +218,14 @@ void main() {
     test('invocation builder 用 typeof 守卫使分页模式整体 no-op', () {
       expect(
         containsCodeLine(js,
-            "typeof window.hoshiReader.beginUiScaleReanchor === 'function'"),
+            "typeof window.fushiReader.beginUiScaleReanchor === 'function'"),
         isTrue,
         reason: 'beginUiScaleReanchorInvocation 必须 typeof 守卫——分页 shell 缺此函数，'
             '误调时整体 no-op 返回 -1',
       );
       expect(
         containsCodeLine(js,
-            "typeof window.hoshiReader.commitUiScaleReanchor === 'function'"),
+            "typeof window.fushiReader.commitUiScaleReanchor === 'function'"),
         isTrue,
         reason: 'commitUiScaleReanchorInvocation 必须 typeof 守卫',
       );

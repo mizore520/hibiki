@@ -13,7 +13,7 @@
 //   2. `searchDictionary` must query the kanji bucket for a single-kanji lookup
 //      and attach the results to the search result.
 //   3. The Android popup path (`PopupDbReader.kt`) must emit a real "kanji"
-//      type so the dormant "kanji" branch in `HoshiBridge.kt` routes kanji
+//      type so the dormant "kanji" branch in `FushiBridge.kt` routes kanji
 //      dictionaries to `nativeAddKanjiDict`.
 //
 // Layer rationale: the real engine reload + kanji query go through a C++ FFI
@@ -131,11 +131,11 @@ void main() {
 
     test('queryKanjiForTerm only queries the engine for a single kanji', () {
       final String body =
-          bodyOf(appModel, 'List<HoshiKanjiResult> queryKanjiForTerm(');
+          bodyOf(appModel, 'List<FushiKanjiResult> queryKanjiForTerm(');
       expect(body.contains('isSingleKanji('), isTrue,
           reason: 'must gate the engine call on isSingleKanji so multi-char '
               'terms and kana/latin singletons skip the kanji query');
-      expect(body.contains('HoshiDicts.instance.queryKanji('), isTrue,
+      expect(body.contains('FushiDicts.instance.queryKanji('), isTrue,
           reason: 'must call the FFI queryKanji for a real single kanji');
     });
   });
@@ -143,7 +143,7 @@ void main() {
   group('Android popup process routes kanji to its own bucket', () {
     test('PopupDbReader maps the kanji type to a real "kanji" bucket', () {
       final File f =
-          File('android/app/src/main/java/app/hibiki/reader/PopupDbReader.kt');
+          File('android/app/src/main/java/app/fushi/reader/PopupDbReader.kt');
       expect(f.existsSync(), isTrue);
       final String src = f.readAsStringSync();
       expect(src.contains('"term", "kanji" -> "term"'), isFalse,
@@ -153,9 +153,9 @@ void main() {
               'kanji bucket is routed to nativeAddKanjiDict');
     });
 
-    test('HoshiBridge routes a "kanji" type to nativeAddKanjiDict', () {
+    test('FushiBridge routes a "kanji" type to nativeAddKanjiDict', () {
       final File f =
-          File('android/app/src/main/java/app/hibiki/reader/HoshiBridge.kt');
+          File('android/app/src/main/java/app/fushi/reader/FushiBridge.kt');
       expect(f.existsSync(), isTrue);
       final String src = f.readAsStringSync();
       expect(

@@ -4,9 +4,9 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/pages/implementations/reader_hibiki_page.dart';
-import 'package:hibiki/src/startup/observe_blank_detector.dart';
-import 'package:hibiki/src/startup/test_environment.dart';
+import 'package:fushi/src/pages/implementations/reader_hibiki_page.dart';
+import 'package:fushi/src/startup/observe_blank_detector.dart';
+import 'package:fushi/src/startup/test_environment.dart';
 
 /// 一次离屏观察抓图的结果。
 class ObserveShot {
@@ -27,9 +27,9 @@ class ObserveShot {
 
 /// 解析截图落盘目录 `<evidenceDir>/screenshots/`。
 ///
-/// run_windows_itest.ps1 经 --dart-define 传 HIBIKI_TEST_ROOT=<evidenceDir>/isolated-root，
+/// run_windows_itest.ps1 经 --dart-define 传 FUSHI_TEST_ROOT=<evidenceDir>/isolated-root，
 /// 故 evidenceDir = isolated-root 的父目录（与 reader_computer_use_flow_test 同约定）。
-/// 无 HIBIKI_TEST_ROOT（裸 flutter test）时落 .codex-test/observe/<runId|local>/screenshots。
+/// 无 FUSHI_TEST_ROOT（裸 flutter test）时落 .codex-test/observe/<runId|local>/screenshots。
 Directory observeScreenshotDir() {
   final String? root = hibikiTestRootPath();
   Directory base;

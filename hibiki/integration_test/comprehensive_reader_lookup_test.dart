@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/main.dart' as app;
-import 'package:hibiki/src/pages/implementations/reader_hibiki_page.dart';
+import 'package:fushi/main.dart' as app;
+import 'package:fushi/src/pages/implementations/reader_hibiki_page.dart';
 
 import 'helpers/library_fixture.dart';
 import 'helpers/pagination_test_harness.dart';
@@ -60,7 +60,7 @@ void main() {
           'window.hoshiTestHarness.getPaginationState();',
         ) as String) as Map<String, dynamic>,
       );
-      await eval('window.hoshiReader.paginate("forward");');
+      await eval('window.fushiReader.paginate("forward");');
       await tester.pump(const Duration(seconds: 1));
       final PaginationState after = PaginationState.fromJson(
         jsonDecode(await eval(

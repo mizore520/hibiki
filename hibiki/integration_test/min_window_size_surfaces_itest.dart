@@ -22,13 +22,13 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/main.dart' as app;
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki/src/pages/implementations/dictionary_dialog_page.dart';
-import 'package:hibiki/src/pages/implementations/media_sources_dialog.dart';
-import 'package:hibiki/src/pages/implementations/home_page.dart';
-import 'package:hibiki/src/startup/desktop_window_placement.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi/main.dart' as app;
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/pages/implementations/dictionary_dialog_page.dart';
+import 'package:fushi/src/pages/implementations/media_sources_dialog.dart';
+import 'package:fushi/src/pages/implementations/home_page.dart';
+import 'package:fushi/src/startup/desktop_window_placement.dart';
+import 'package:fushi_core/fushi_core.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -159,7 +159,7 @@ void main() {
         // TODO-1389：TODO-1377 未覆盖的弹窗表面——「管理来源库」对话框 body
         // （HibikiReorderableColumn）在最小窗高下若不套滚动视口会 RenderFlex 底部溢出。
         // 播种 24 条来源（远超受限 body 高度）后打开对话框，扫掠断言无溢出（修后应整体
-        // 滚动而非出框）。种到隔离库（HIBIKI_TEST_ROOT），不碰真实数据。
+        // 滚动而非出框）。种到隔离库（FUSHI_TEST_ROOT），不碰真实数据。
         for (int i = 0; i < 24; i++) {
           await appModel.database.insertMediaSource(
             MediaSourcesCompanion.insert(

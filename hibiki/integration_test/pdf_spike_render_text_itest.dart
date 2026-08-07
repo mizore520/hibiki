@@ -28,8 +28,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/startup/observe_blank_detector.dart';
-import 'package:hibiki/src/startup/test_environment.dart';
+import 'package:fushi/src/startup/observe_blank_detector.dart';
+import 'package:fushi/src/startup/test_environment.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:pdfrx/pdfrx.dart';
 
@@ -39,7 +39,7 @@ const String _kPdfPath = String.fromEnvironment(
 );
 
 /// 取证目录 `<evidenceDir>/screenshots/`，与 observe_capture 同约定：
-/// run_windows_itest.ps1 传 HIBIKI_TEST_ROOT=<evidenceDir>/isolated-root。
+/// run_windows_itest.ps1 传 FUSHI_TEST_ROOT=<evidenceDir>/isolated-root。
 Directory _screenshotDir() {
   final String? root = hibikiTestRootPath();
   Directory base;

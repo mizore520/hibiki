@@ -7,11 +7,11 @@ import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki_core/hibiki_core.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_bridge.dart';
-import 'package:hibiki/src/models/theme_notifier.dart';
-import 'package:hibiki/src/utils/app_ui_scale.dart';
-import 'package:hibiki/src/utils/adaptive/adaptive_platform.dart';
+import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi/src/media/audiobook/audiobook_bridge.dart';
+import 'package:fushi/src/models/theme_notifier.dart';
+import 'package:fushi/src/utils/app_ui_scale.dart';
+import 'package:fushi/src/utils/adaptive/adaptive_platform.dart';
 
 HibikiDatabase _testDb() {
   return HibikiDatabase.forTesting(
@@ -206,7 +206,7 @@ void main() {
       expect(notifier.customThemeSecondaryColor, isNull);
       expect(notifier.customThemeTertiaryColor, isNull);
       expect(notifier.customThemeContainerColor, isNull);
-      expect(notifier.customThemeSasayakiColor, isNull);
+      expect(notifier.customThemeSentenceAudioHighlightColor, isNull);
       expect(notifier.customThemeLinkColor, isNull);
     });
   });
@@ -1033,7 +1033,7 @@ void main() {
         legacySecondaryColor: 0,
         legacyTertiaryColor: 0,
         legacyContainerColor: 0,
-        legacySasayakiColor: 0,
+        legacySentenceAudioHighlightColor: 0,
         legacyLinkColor: 0,
         idGenerator: () => 'ct-x',
       );
@@ -1057,7 +1057,7 @@ void main() {
         legacySecondaryColor: 0,
         legacyTertiaryColor: 0,
         legacyContainerColor: 0,
-        legacySasayakiColor: 0,
+        legacySentenceAudioHighlightColor: 0,
         legacyLinkColor: 0,
         idGenerator: () => 'ct-x',
       );
@@ -1080,7 +1080,7 @@ void main() {
         legacySecondaryColor: 0,
         legacyTertiaryColor: 0,
         legacyContainerColor: 0,
-        legacySasayakiColor: 0,
+        legacySentenceAudioHighlightColor: 0,
         legacyLinkColor: 0,
         idGenerator: () => 'ct-should-not-be-used',
       );

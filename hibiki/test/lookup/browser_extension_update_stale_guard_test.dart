@@ -29,10 +29,10 @@ void main() {
         final String src = File('$root/background.js').readAsStringSync();
         expect(
             src.contains(
-                "importScripts('hibiki-defaults.js', 'connection-diagnostics.js', 'self-update.js')"),
+                "importScripts('fushi-defaults.js', 'connection-diagnostics.js', 'self-update.js')"),
             isTrue,
             reason: '$root background.js must load self-update.js');
-        expect(src.contains('HIBIKI_SELF_UPDATE.decide('), isTrue,
+        expect(src.contains('FUSHI_SELF_UPDATE.decide('), isTrue,
             reason:
                 '$root background.js must decide via the pure state machine '
                 'instead of an early-return latch');

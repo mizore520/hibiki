@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/sync/hibiki_sync_server.dart';
+import 'package:fushi/src/sync/hibiki_sync_server.dart';
 import 'package:http/http.dart' as http;
 
 // TODO-963 M2: /api/ping 无鉴权轻量探测端点的行为测试。
@@ -29,14 +29,14 @@ void main() {
 
   Uri pingUri() => Uri.parse('http://127.0.0.1:${server.port}/api/ping');
 
-  test('GET /api/ping 无需鉴权即返回 hibiki 标识 + v2 配对能力', () async {
+  test('GET /api/ping 无需鉴权即返回 fushi 标识 + v2 配对能力', () async {
     await startServer(deviceName: 'Hibiki · mac');
     // 故意不带 Authorization 头：ping 是配对前公开面。
     final http.Response resp = await http.get(pingUri());
     expect(resp.statusCode, 200);
     final Map<String, dynamic> body =
         jsonDecode(resp.body) as Map<String, dynamic>;
-    expect(body['app'], 'hibiki');
+    expect(body['app'], 'fushi');
     expect((body['pairing'] as Map)['v2'], isTrue);
     expect((body['tls'] as Map)['enabled'], isFalse); // 无 securityContext。
     expect(body['deviceName'], 'Hibiki · mac');

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/media/manga/external_mokuro_runner.dart';
+import 'package:fushi/src/media/manga/external_mokuro_runner.dart';
 import 'package:path/path.dart' as p;
 
 /// 可编程 fake 子进程运行器：不真 spawn，按注入的脚本回放。
@@ -88,7 +88,7 @@ void main() {
       final ExternalMokuroRunner ext = ExternalMokuroRunner(
         configuredPath: '/opt/mokuro',
         processRunner: runner,
-        environment: const <String, String>{'HIBIKI_MOKURO': '/env/mokuro'},
+        environment: const <String, String>{'FUSHI_MOKURO': '/env/mokuro'},
       );
       expect(await ext.resolveExecutable(), '/opt/mokuro');
       // 命中配置路径时不该去跑 where/which。
@@ -99,7 +99,7 @@ void main() {
       final _FakeRunner runner = _FakeRunner();
       final ExternalMokuroRunner ext = ExternalMokuroRunner(
         processRunner: runner,
-        environment: const <String, String>{'HIBIKI_MOKURO': '/env/mokuro'},
+        environment: const <String, String>{'FUSHI_MOKURO': '/env/mokuro'},
       );
       expect(await ext.resolveExecutable(), '/env/mokuro');
       expect(runner.completionCalls, isEmpty);

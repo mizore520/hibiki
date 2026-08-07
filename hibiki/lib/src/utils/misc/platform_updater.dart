@@ -3,11 +3,11 @@ import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
 
-import 'package:hibiki/src/platform/desktop/windows_native_pre_exit.dart';
-import 'package:hibiki/src/utils/misc/channel_constants.dart';
-import 'package:hibiki/src/utils/misc/mac_update_handoff.dart';
-import 'package:hibiki/src/utils/misc/update_handoff.dart';
-import 'package:hibiki/utils.dart'; // ErrorLogService
+import 'package:fushi/src/platform/desktop/windows_native_pre_exit.dart';
+import 'package:fushi/src/utils/misc/channel_constants.dart';
+import 'package:fushi/src/utils/misc/mac_update_handoff.dart';
+import 'package:fushi/src/utils/misc/update_handoff.dart';
+import 'package:fushi/utils.dart'; // ErrorLogService
 
 export 'update_handoff.dart'
     show
@@ -152,8 +152,12 @@ const List<String> kAndroidReleaseAbis = <String>[
 /// 由其自带 assets 清单，见 `update_checker_release.dart` 的 `buildReleaseFromManifest`，TODO-705）。
 List<String> synthesizeStableAssetNames(String version) {
   final List<String> names = <String>[
-    'hibiki-$version-windows-setup.exe',
-    'hibiki-$version-macos.zip',
+    // 终态全 fushi（2026-08-07 用户拍板）。Windows 走「更新桥」（Phase 5）：
+    // 本行已切 fushi——从本提交发布的最后一个 hibiki-* 名安装包即桥版本，
+    // 老用户升到桥后即可识别后续 fushi-* 资产。Android 无更新桥（跨包名不能
+    // 就地更新，迁移链即通道），其 APK 行保持旧名直到老包停止发布。
+    'fushi-$version-windows-setup.exe',
+    'fushi-$version-macos.zip',
     for (final String abi in kAndroidReleaseAbis) 'hibiki-$version-$abi.apk',
   ];
   return List<String>.unmodifiable(names);
@@ -401,7 +405,7 @@ List<String> windowsInstallerArgs(
       '/LOG=${logPath ?? windowsInstallerLogPath(installerPath)}',
     ];
 
-const String kWindowsUpdateLauncherExecutable = 'hibiki_update_launcher.exe';
+const String kWindowsUpdateLauncherExecutable = 'fushi_update_launcher.exe';
 
 String windowsUpdateLauncherPath({String? currentExecutablePath}) {
   final String executablePath =
@@ -707,7 +711,7 @@ class WindowsInstaller {
       // 由 .iss InitializeSetup 的 WM_CLOSE(优雅落盘)→强杀 序列关掉它们并解开 mutex。
       ErrorLogService.instance.log(
         'WindowsInstaller.installBlockersDeferred',
-        'Other Hibiki/WebView2 processes are still running; continuing the '
+        'Other Fushi/WebView2 processes are still running; continuing the '
             'update and letting the installer close them (WM_CLOSE then '
             'force-terminate via hibiki.iss). Target: $target. '
             'Deferred: ${_summarizeBlockingProcesses(blockers)}. '
@@ -717,7 +721,7 @@ class WindowsInstaller {
     }
 
     throw UpdateInstallerException(
-      'Hibiki cannot install while a non-Hibiki process is using libmpv in the '
+      'Fushi cannot install while a non-Fushi process is using libmpv in the '
       'target directory (the installer cannot close it automatically). '
       'Target: $target. Holders: ${_summarizeBlockingProcesses(externalLocks)}. '
       'Close the listed process manually, then retry the installer. '
@@ -730,7 +734,10 @@ class WindowsInstaller {
   /// `msedgewebview2.exe` 是安装器托管得到的。其余 image 名视为安装器杀不掉的真外部锁。
   static bool _installerCanClose(WindowsProcessInfo process) {
     final String name = _windowsImageName(process);
-    return name == 'hibiki.exe' || name == 'msedgewebview2.exe';
+    // 过渡期两个 exe 名都认（安装器 fushi.iss 会同时结束两者）。
+    return name == 'fushi.exe' ||
+        name == 'hibiki.exe' ||
+        name == 'msedgewebview2.exe';
   }
 
   /// 取进程的 Windows image 名（小写）：优先 [WindowsProcessInfo.name]，缺失时退回
@@ -765,6 +772,7 @@ class WindowsInstaller {
     }
     for (final WindowsProcessInfo process in diagnostics.libmpvModuleHolders) {
       if (_processIsInTargetInstallDir(process, targetInstallDir) ||
+          (process.name ?? '').toLowerCase() == 'fushi.exe' ||
           (process.name ?? '').toLowerCase() == 'hibiki.exe') {
         blockers[process.pid] = process;
       }
@@ -899,7 +907,10 @@ List<WindowsDetectedInstallLocation> parseWindowsRegistryInstallLocations(
   final String? displayIcon = _registryValueAfterType(output, 'DisplayIcon');
   if (displayIcon != null && displayIcon.isNotEmpty) {
     final String path = _stripDisplayIconSuffix(displayIcon);
-    if (path.toLowerCase().endsWith(r'\hibiki.exe') ||
+    // fushi.exe 是改名后的主 exe；\hibiki.exe 保留识别旧版注册表残留安装。
+    if (path.toLowerCase().endsWith(r'\fushi.exe') ||
+        path.toLowerCase().endsWith('/fushi.exe') ||
+        path.toLowerCase().endsWith(r'\hibiki.exe') ||
         path.toLowerCase().endsWith('/hibiki.exe')) {
       result.add(
         WindowsDetectedInstallLocation(
@@ -943,7 +954,7 @@ String? windowsInstallPathMismatchWarning({
       .map((WindowsDetectedInstallLocation location) =>
           '${location.source}: ${location.path}')
       .join('; ');
-  return 'Install locations differ from the running Hibiki directory '
+  return 'Install locations differ from the running Fushi directory '
       '$targetInstallDir. This update will install only to the running '
       'directory. Other locations are left untouched; remove old shortcuts or '
       'old install folders manually if they are no longer needed. Detected: '
@@ -953,7 +964,7 @@ String? windowsInstallPathMismatchWarning({
 Future<List<WindowsProcessInfo>> queryWindowsHibikiProcesses() async {
   if (!Platform.isWindows) return const <WindowsProcessInfo>[];
   const String command =
-      "Get-CimInstance Win32_Process -Filter \"Name = 'hibiki.exe'\" | "
+      "Get-CimInstance Win32_Process -Filter \"Name = 'fushi.exe' OR Name = 'hibiki.exe'\" | "
       'Select-Object ProcessId,Name,ExecutablePath | ConvertTo-Json -Compress';
   try {
     final ProcessResult result = await Process.run(
@@ -1160,8 +1171,8 @@ Future<void> ensureWindowsInstallTargetWritable(Directory installDir) async {
   } catch (e) {
     throw UpdateInstallerException(
       'Cannot write to installation directory: ${installDir.path}. '
-      'Close Hibiki and run the installer as administrator, or reinstall '
-      'Hibiki to a user-writable folder. Details: $e',
+      'Close Fushi and run the installer as administrator, or reinstall '
+      'Fushi to a user-writable folder. Details: $e',
     );
   } finally {
     try {
@@ -1216,7 +1227,7 @@ String buildMacSwapScript({
   final StringBuffer b = StringBuffer();
   b.writeln('#!/bin/sh');
   b.writeln(
-      '# Hibiki macOS in-app update swap (Phase 3). Waits for the running');
+      '# Fushi macOS in-app update swap (Phase 3). Waits for the running');
   b.writeln(
       '# app to exit, then swaps the .app bundle and relaunches. Restores');
   b.writeln(
@@ -1238,7 +1249,7 @@ String buildMacSwapScript({
       '# Wait (bounded ~60s) for the parent process to exit. Uses a `ps`');
   b.writeln(
       '# liveness probe (never terminates anything) so the swap only starts');
-  b.writeln('# once Hibiki has quit on its own and released the bundle.');
+  b.writeln('# once Fushi has quit on its own and released the bundle.');
   b.writeln('i=0');
   b.writeln(r'while ps -p "$PARENT_PID" > /dev/null 2>&1; do');
   b.writeln(r'  i=$((i + 1))');
@@ -1329,7 +1340,7 @@ class MacInstaller {
     if (appBundle == null) {
       throw UpdateInstallerException(
         'Cannot locate the running .app bundle from "$execPath"; in-app '
-        'update requires Hibiki launched as an .app.',
+        'update requires Fushi launched as an .app.',
       );
     }
 

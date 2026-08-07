@@ -1,26 +1,26 @@
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_alignment_service.dart'
+import 'package:fushi/src/media/audiobook/audiobook_alignment_service.dart'
     show epubSectionsFromExtractDir, parseCuesForFormat;
-import 'package:hibiki/src/media/import/audiobook_health_summary.dart';
-import 'package:hibiki/src/media/import/epub_backed_srt_book.dart';
-import 'package:hibiki/src/media/import/import_dialog_frame.dart';
-import 'package:hibiki/src/media/import/real_path_directory_picker.dart';
-import 'package:hibiki/src/models/app_model.dart';
+import 'package:fushi/src/media/import/audiobook_health_summary.dart';
+import 'package:fushi/src/media/import/epub_backed_srt_book.dart';
+import 'package:fushi/src/media/import/import_dialog_frame.dart';
+import 'package:fushi/src/media/import/real_path_directory_picker.dart';
+import 'package:fushi/src/models/app_model.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/material.dart';
-import 'package:hibiki_audio/hibiki_audio.dart';
-import 'package:hibiki_core/hibiki_core.dart';
-import 'package:hibiki/src/media/drag_drop/drop_classification.dart';
-import 'package:hibiki/src/media/drag_drop/hibiki_file_drop_target.dart';
-import 'package:hibiki/src/media/drag_drop/import_dialog_drop.dart';
-import 'package:hibiki/src/media/import/import_flow_mixin.dart';
-import 'package:hibiki/src/media/audiobook/sasayaki_rematch.dart';
-import 'package:hibiki/src/sync/deletion_disclosure.dart';
-import 'package:hibiki/src/sync/deletion_prompt.dart';
-import 'package:hibiki/src/sync/deletion_propagation.dart';
-import 'package:hibiki/utils.dart';
+import 'package:fushi_audio/fushi_audio.dart';
+import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi/src/media/drag_drop/drop_classification.dart';
+import 'package:fushi/src/media/drag_drop/hibiki_file_drop_target.dart';
+import 'package:fushi/src/media/drag_drop/import_dialog_drop.dart';
+import 'package:fushi/src/media/import/import_flow_mixin.dart';
+import 'package:fushi/src/media/audiobook/subtitle_rematch.dart';
+import 'package:fushi/src/sync/deletion_disclosure.dart';
+import 'package:fushi/src/sync/deletion_prompt.dart';
+import 'package:fushi/src/sync/deletion_propagation.dart';
+import 'package:fushi/utils.dart';
 
 /// 有声书导入/移除对话框。
 ///
@@ -102,7 +102,7 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
     if (_alignmentPath == null) return false;
     if (!_hasEpub) return false;
     final String ext = _alignmentPath!.split('.').last.toLowerCase();
-    return SasayakiRematch.supportedFormats.contains(ext);
+    return SubtitleRematch.supportedFormats.contains(ext);
   }
 
   bool get _canAutoProbe => _willRunMatcher;
@@ -318,7 +318,7 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
   /// unrun 状态也允许重跑 — 历史脏记录的书借此给它跑一次。
   bool _canReMatch(Audiobook ab, AudiobookHealth health) {
     if (!_hasEpub) return false;
-    if (!SasayakiRematch.isEligible(ab)) return false;
+    if (!SubtitleRematch.isEligible(ab)) return false;
     switch (health.kind) {
       case HealthKind.partial:
       case HealthKind.failed:
@@ -348,15 +348,15 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
       case HealthKind.ok:
         icon = Icons.check_circle;
         color = cs.tertiary;
-        label = t.sasayaki_health_label(pct: '$pctStr%', detail: tail);
+        label = t.audiobook_rematch_health_label(pct: '$pctStr%', detail: tail);
       case HealthKind.partial:
         icon = Icons.warning_amber;
         color = cs.secondary;
-        label = t.sasayaki_health_label(pct: '$pctStr%', detail: tail);
+        label = t.audiobook_rematch_health_label(pct: '$pctStr%', detail: tail);
       case HealthKind.failed:
         icon = Icons.error_outline;
         color = cs.error;
-        label = t.sasayaki_health_label(pct: '$pctStr%', detail: tail);
+        label = t.audiobook_rematch_health_label(pct: '$pctStr%', detail: tail);
       case HealthKind.running:
       case HealthKind.unrun:
       case HealthKind.notApplicable:
@@ -408,14 +408,14 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
         ],
         if (!widget.audioOnly && _willRunMatcher) ...[
           SizedBox(height: tokens.spacing.rowVertical),
-          SasayakiWindowSlider(
+          SubtitleRematchWindowSlider(
             value: _searchWindow,
             onChanged: (v) => setState(() => _searchWindow = v),
             onAutoTap: _canAutoProbe ? _handleAutoProbe : null,
             autoBusy: _autoProbing,
           ),
           SizedBox(height: tokens.spacing.gap),
-          SasayakiThresholdSlider(
+          SubtitleRematchThresholdSlider(
             value: _similarityThreshold,
             onChanged: (v) => setState(() => _similarityThreshold = v),
           ),
@@ -548,7 +548,7 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
         _probedCues = await _parseCuesForProbe();
         _probedCuesSourcePath = _alignmentPath;
       }
-      final int? best = await SasayakiRematch.runAutoProbe(
+      final int? best = await SubtitleRematch.runAutoProbe(
         sections: _probedSections ?? const <EpubSection>[],
         cues: _probedCues ?? const <AudioCue>[],
       );
@@ -568,7 +568,7 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
       return epubSectionsFromExtractDir(widget.extractDir!);
     } catch (e, stack) {
       ErrorLogService.instance.log('AudiobookImport.loadSections', e, stack);
-      debugPrint('[hibiki-audiobook] probe loadSections failed: $e');
+      debugPrint('[fushi-audiobook] probe loadSections failed: $e');
       return const <EpubSection>[];
     }
   }
@@ -581,14 +581,14 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
     // probe 口径与 matcher 管线一致：仅 srt/lrc/vtt/ass；其余（含 ssa/smil/json/
     // 未知扩展名）返回空——与收敛前的显式四分支 + default 空返回逐位等价
     // （公共函数 default 落 SRT，故必须先用 supportedFormats 门控）。
-    if (!SasayakiRematch.supportedFormats.contains(ext)) {
+    if (!SubtitleRematch.supportedFormats.contains(ext)) {
       return const <AudioCue>[];
     }
     try {
       return await parseCuesForFormat(File(path), widget.bookKey, 0);
     } catch (e, stack) {
       ErrorLogService.instance.log('AudiobookImport.parseCues', e, stack);
-      debugPrint('[hibiki-audiobook] probe parseCues failed: $e');
+      debugPrint('[fushi-audiobook] probe parseCues failed: $e');
       return const <AudioCue>[];
     }
   }
@@ -605,7 +605,7 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
     }
 
     debugPrint(
-        '[hibiki-audiobook] doImport bookKey.len=${widget.bookKey.length} '
+        '[fushi-audiobook] doImport bookKey.len=${widget.bookKey.length} '
         'hash=${widget.bookKey.hashCode} key=${widget.bookKey}');
     setState(() => importing = true);
     reportProgress(0, '');
@@ -840,12 +840,12 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
   Future<void> _openReMatchSheet(Audiobook ab) async {
     if (!_hasEpub) {
       HibikiToast.show(
-        msg: t.ttu_not_bound_cannot_rematch,
+        msg: t.reader_not_bound_cannot_rematch,
         severity: ToastSeverity.error,
       );
       return;
     }
-    await SasayakiRematch.promptAndRun(
+    await SubtitleRematch.promptAndRun(
       context: context,
       ab: ab,
       repo: widget.repo,
@@ -892,7 +892,7 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
         searchWindow: _searchWindow,
         similarityThreshold: _similarityThreshold,
       );
-      SasayakiMatchCodec.applyToCues(cues: cues, result: result);
+      SubtitleRematchCodec.applyToCues(cues: cues, result: result);
       final int pct = (result.matchRate * 100).round();
       return AudiobookHealth.fromRatePct(
         ratePct: pct,

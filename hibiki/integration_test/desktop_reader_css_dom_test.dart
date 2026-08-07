@@ -6,11 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi_core/fushi_core.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/src/reader/reader_content_styles.dart';
-import 'package:hibiki/src/reader/reader_settings.dart';
+import 'package:fushi/src/reader/reader_content_styles.dart';
+import 'package:fushi/src/reader/reader_settings.dart';
 
 import 'test_helpers.dart';
 
@@ -25,7 +25,7 @@ import 'test_helpers.dart';
 /// On Windows this exercises the forked flutter_inappwebview_windows engine.
 ///
 /// Run (PowerShell, from hibiki/):
-///   $env:HIBIKI_TEST_HIDDEN = "1"
+///   $env:FUSHI_TEST_HIDDEN = "1"
 ///   flutter test integration_test/desktop_reader_css_dom_test.dart -d windows
 void main() {
   final IntegrationTestWidgetsFlutterBinding binding =

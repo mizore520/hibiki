@@ -2,8 +2,8 @@
 // 会设的同款制卡源（miningVideoUrl 抽 GIF、audioStreamUrl 抽音频）跑真 ImmersionMiningEngine，
 // 断言产出的 AnkiMiningContext 带真实 GIF 封面 + 真实音频 + 字幕句子。
 //
-// 依赖真网络（直连 YouTube）+ 本机 ffmpeg，故**默认 skip**，仅 HIBIKI_YT_LIVE_ITEST=1 时跑：
-//   $env:HIBIKI_YT_LIVE_ITEST=1
+// 依赖真网络（直连 YouTube）+ 本机 ffmpeg，故**默认 skip**，仅 FUSHI_YT_LIVE_ITEST=1 时跑：
+//   $env:FUSHI_YT_LIVE_ITEST=1
 //   flutter test test/mining/youtube_immersion_live_engine_test.dart
 // 纯 host VM（无 libmpv / 无设备 / 不碰用户 DB）——播放器侧证据见
 // integration_test/youtube_stream_playback_itest.dart。
@@ -11,16 +11,16 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:hibiki_anki/hibiki_anki.dart';
-import 'package:hibiki/src/media/video/youtube_source_resolver.dart';
-import 'package:hibiki/src/mining/immersion_mining_engine.dart';
-import 'package:hibiki/src/mining/immersion_mining_request.dart';
-import 'package:hibiki/src/utils/misc/desktop_audio_clipper.dart'
+import 'package:fushi_anki/fushi_anki.dart';
+import 'package:fushi/src/media/video/youtube_source_resolver.dart';
+import 'package:fushi/src/mining/immersion_mining_engine.dart';
+import 'package:fushi/src/mining/immersion_mining_request.dart';
+import 'package:fushi/src/utils/misc/desktop_audio_clipper.dart'
     show MiningMediaCompression;
 
 const String _kUrl = 'https://youtu.be/fKMEsvCtlZA';
 
-bool get _live => Platform.environment['HIBIKI_YT_LIVE_ITEST'] == '1';
+bool get _live => Platform.environment['FUSHI_YT_LIVE_ITEST'] == '1';
 
 /// 只捕获制卡 context 的假 Anki repo（不连真 Anki——验的是「从直播流抽出的媒体」）。
 class _CaptureRepo implements BaseAnkiRepository {
@@ -80,14 +80,14 @@ void main() {
       // ignore: avoid_print
       print('[yt-mine] aborted=${res.aborted} '
           'cover=${repo.captured?.coverPath} '
-          'audio=${repo.captured?.sasayakiAudioPath}');
+          'audio=${repo.captured?.sentenceAudioPath}');
       expect(res.aborted, isFalse, reason: 'GIF+音频都应抽到，制卡不中止');
       final AnkiMiningContext ctx = repo.captured!;
       expect(ctx.coverPath, isNotNull);
       expect(ctx.coverPath, endsWith('.gif'), reason: '封面应是 cue GIF（非降级静帧）');
       expect(File(ctx.coverPath!).lengthSync(), greaterThan(1000));
-      expect(ctx.sasayakiAudioPath, isNotNull);
-      expect(File(ctx.sasayakiAudioPath!).lengthSync(), greaterThan(1000));
+      expect(ctx.sentenceAudioPath, isNotNull);
+      expect(File(ctx.sentenceAudioPath!).lengthSync(), greaterThan(1000));
       expect(ctx.sentence, isNotEmpty);
       expect(ctx.source, AnkiMiningSource.video);
     },

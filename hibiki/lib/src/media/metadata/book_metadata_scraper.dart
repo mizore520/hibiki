@@ -12,8 +12,8 @@ library;
 
 import 'dart:convert';
 
-import 'package:hibiki/src/media/metadata/bangumi_api_client.dart';
-import 'package:hibiki/src/media/metadata/bangumi_cover_url.dart';
+import 'package:fushi/src/media/metadata/bangumi_api_client.dart';
+import 'package:fushi/src/media/metadata/bangumi_cover_url.dart';
 import 'package:http/http.dart' as http;
 
 /// 书籍刮削领域异常（网络失败 / 非 2xx / JSON 异常）。绝不吞异常，交上层给用户可见提示。
@@ -74,7 +74,7 @@ class BookMetadataScraper {
   final BangumiApiClient _api;
 
   static const String _userAgent =
-      'hibiki-reader/book-scraper (https://github.com/hajisensai)';
+      'fushi-reader/book-scraper (https://github.com/hajisensai)';
 
   /// 按 [keyword] 搜书籍条目，返回带封面的候选（最多 [limit] 条）。
   ///

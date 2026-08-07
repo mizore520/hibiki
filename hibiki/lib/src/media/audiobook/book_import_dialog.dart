@@ -6,29 +6,29 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:hibiki_audio/hibiki_audio.dart';
+import 'package:fushi_audio/fushi_audio.dart';
 import 'package:path/path.dart' as p;
-import 'package:hibiki/src/media/drag_drop/drop_classification.dart';
-import 'package:hibiki/src/media/drag_drop/hibiki_file_drop_target.dart';
-import 'package:hibiki/src/media/drag_drop/import_dialog_drop.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_alignment_service.dart';
-import 'package:hibiki/src/media/audiobook/sasayaki_rematch.dart';
-import 'package:hibiki/src/media/audiobook/text_to_epub.dart';
-import 'package:hibiki/src/media/import/audiobook_health_summary.dart';
-import 'package:hibiki/src/media/import/import_carrier.dart';
-import 'package:hibiki/src/media/import/import_dialog_frame.dart';
-import 'package:hibiki/src/media/import/import_flow_mixin.dart';
-import 'package:hibiki/src/media/import/real_path_directory_picker.dart';
-import 'package:hibiki/src/media/import/sidecar_finder.dart';
-import 'package:hibiki/src/media/media_cover_service.dart';
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki_core/hibiki_core.dart';
-import 'package:hibiki/src/epub/book_title_conflict.dart';
-import 'package:hibiki/src/epub/epub_importer.dart';
-import 'package:hibiki/src/media/manga/manga_import_dialog.dart';
-import 'package:hibiki/src/media/manga/manga_module.dart';
-import 'package:hibiki/src/pdf/pdf_importer.dart';
-import 'package:hibiki/utils.dart';
+import 'package:fushi/src/media/drag_drop/drop_classification.dart';
+import 'package:fushi/src/media/drag_drop/hibiki_file_drop_target.dart';
+import 'package:fushi/src/media/drag_drop/import_dialog_drop.dart';
+import 'package:fushi/src/media/audiobook/audiobook_alignment_service.dart';
+import 'package:fushi/src/media/audiobook/subtitle_rematch.dart';
+import 'package:fushi/src/media/audiobook/text_to_epub.dart';
+import 'package:fushi/src/media/import/audiobook_health_summary.dart';
+import 'package:fushi/src/media/import/import_carrier.dart';
+import 'package:fushi/src/media/import/import_dialog_frame.dart';
+import 'package:fushi/src/media/import/import_flow_mixin.dart';
+import 'package:fushi/src/media/import/real_path_directory_picker.dart';
+import 'package:fushi/src/media/import/sidecar_finder.dart';
+import 'package:fushi/src/media/media_cover_service.dart';
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi/src/epub/book_title_conflict.dart';
+import 'package:fushi/src/epub/epub_importer.dart';
+import 'package:fushi/src/media/manga/manga_import_dialog.dart';
+import 'package:fushi/src/media/manga/manga_module.dart';
+import 'package:fushi/src/pdf/pdf_importer.dart';
+import 'package:fushi/utils.dart';
 
 /// 统一"导入书"对话框。EPUB、字幕、音频可按需组合，一次导入。
 ///
@@ -117,7 +117,7 @@ class _BookImportDialogState extends State<BookImportDialog>
   bool get _willRunMatcher {
     if (_epubPath == null || _subtitlePath == null) return false;
     final String ext = _subtitlePath!.split('.').last.toLowerCase();
-    return SasayakiRematch.supportedFormats.contains(ext);
+    return SubtitleRematch.supportedFormats.contains(ext);
   }
 
   bool get _hasSubtitles => _subtitlePath != null;
@@ -369,12 +369,12 @@ class _BookImportDialogState extends State<BookImportDialog>
           ),
           if (!_autoWindow) ...[
             SizedBox(height: tokens.spacing.gap),
-            SasayakiWindowSlider(
+            SubtitleRematchWindowSlider(
               value: _searchWindow,
               onChanged: (v) => setState(() => _searchWindow = v),
             ),
             SizedBox(height: tokens.spacing.gap),
-            SasayakiThresholdSlider(
+            SubtitleRematchThresholdSlider(
               value: _similarityThreshold,
               onChanged: (v) => setState(() => _similarityThreshold = v),
             ),
@@ -851,16 +851,16 @@ class _BookImportDialogState extends State<BookImportDialog>
             _authorCtrl.text.trim().isEmpty ? null : _authorCtrl.text.trim();
 
         debugPrint(
-            '[hibiki-import] route: epub=$_epubPath sub=$_subtitlePath audio=${_audioPaths.length} files');
+            '[fushi-import] route: epub=$_epubPath sub=$_subtitlePath audio=${_audioPaths.length} files');
         String? tail;
         if (_epubPath != null && _hasSubtitles) {
-          debugPrint('[hibiki-import] → _importEpubWithAlignment');
+          debugPrint('[fushi-import] → _importEpubWithAlignment');
           tail = await _importEpubWithAlignment(title: title);
         } else if (_hasSubtitles) {
-          debugPrint('[hibiki-import] → _importSubtitleBook');
+          debugPrint('[fushi-import] → _importSubtitleBook');
           await _importSubtitleBook(title: title, author: authorText);
         } else {
-          debugPrint('[hibiki-import] → _importEpubOnly');
+          debugPrint('[fushi-import] → _importEpubOnly');
           await _importEpubOnly(title: title);
         }
 
@@ -887,7 +887,7 @@ class _BookImportDialogState extends State<BookImportDialog>
       uid,
       0,
     );
-    debugPrint('[hibiki-import] subtitleBook: parsed ${cues.length} cues');
+    debugPrint('[fushi-import] subtitleBook: parsed ${cues.length} cues');
 
     String bookKey = '';
     if (cues.isNotEmpty) {
@@ -909,7 +909,7 @@ class _BookImportDialogState extends State<BookImportDialog>
           policy: DuplicatePolicy.ask(_askOnDuplicate),
         );
         debugPrint(
-            '[hibiki-import] subtitleBook: EPUB import done, key=$bookKey');
+            '[fushi-import] subtitleBook: EPUB import done, key=$bookKey');
       } on DuplicateImportCancelledException {
         // 取消必须冒泡到顶层中止整次导入，不能被吞成 bookId=0 继续。
         rethrow;
@@ -920,7 +920,7 @@ class _BookImportDialogState extends State<BookImportDialog>
         // EPUB 是字幕书的正文载体，载体生成/导入失败这本书就不可读，必须让整次
         // 导入失败而不是落孤儿壳行。与上面的取消同理冒泡到顶层报错。
         ErrorLogService.instance.log('BookImportDialog.epubImport', e, stack);
-        debugPrint('[hibiki-import] EPUB generation/import failed: $e');
+        debugPrint('[fushi-import] EPUB generation/import failed: $e');
         rethrow;
       }
     }
@@ -981,7 +981,7 @@ class _BookImportDialogState extends State<BookImportDialog>
       book.coverPath = dest;
     }
 
-    debugPrint('[hibiki-import] SrtBook save: uid=$uid title="$title" '
+    debugPrint('[fushi-import] SrtBook save: uid=$uid title="$title" '
         'bookKey=$bookKey cues=${cues.length}');
 
     await widget.repo.save(book);

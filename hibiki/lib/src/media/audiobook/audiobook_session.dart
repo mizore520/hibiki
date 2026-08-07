@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:hibiki/i18n/strings.g.dart';
-import 'package:hibiki/src/media/audiobook/floating_lyric_channel.dart';
-import 'package:hibiki/src/media/audiobook/floating_lyric_context.dart';
-import 'package:hibiki/src/utils/misc/hibiki_audio_handler.dart';
-import 'package:hibiki_audio/hibiki_audio.dart';
+import 'package:fushi/i18n/strings.g.dart';
+import 'package:fushi/src/media/audiobook/floating_lyric_channel.dart';
+import 'package:fushi/src/media/audiobook/floating_lyric_context.dart';
+import 'package:fushi/src/utils/misc/hibiki_audio_handler.dart';
+import 'package:fushi_audio/fushi_audio.dart';
 
 /// 进程级常驻有声书会话（TODO-291 阶段2）。
 ///
@@ -434,7 +434,7 @@ class AudiobookSession extends ChangeNotifier {
     final AudioCue? cue = controller.displayCueForFloatingLyric;
     if (cue != null) {
       handler.updateNotificationSubtitle(
-        title: _book?.title ?? 'Hibiki',
+        title: _book?.title ?? 'Fushi',
         subtitle: cue.text,
       );
     }
@@ -562,7 +562,7 @@ class AudiobookSession extends ChangeNotifier {
       onNextCue: () => _controller?.skipToNextCue(),
       onClose: _onFloatingLyricClose,
       onLockChanged: (bool locked) {
-        debugPrint('[Hibiki] floating-lyric position lock -> $locked');
+        debugPrint('[Fushi] floating-lyric position lock -> $locked');
       },
     );
   }
@@ -601,7 +601,7 @@ class AudiobookSession extends ChangeNotifier {
       artUri = File(coverPath).uri;
     }
     handler.setMediaItemInfo(
-      title: _book?.title ?? 'Hibiki',
+      title: _book?.title ?? 'Fushi',
       artist: _book?.author,
       duration: controller.duration,
       artUri: artUri,

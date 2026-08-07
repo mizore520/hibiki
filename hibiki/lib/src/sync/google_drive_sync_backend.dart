@@ -2,15 +2,15 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
-import 'package:hibiki/src/sync/google_drive_auth.dart';
-import 'package:hibiki/src/sync/google_drive_handler.dart';
-import 'package:hibiki/src/sync/google_drive_sync_space.dart';
-import 'package:hibiki/src/sync/sync_asset_store.dart';
-import 'package:hibiki/src/sync/sync_backend.dart';
-import 'package:hibiki/src/sync/sync_remote_listing.dart';
-import 'package:hibiki/src/sync/sync_repository.dart';
-import 'package:hibiki/src/sync/sync_file_ref.dart';
-import 'package:hibiki/src/sync/ttu_models.dart';
+import 'package:fushi/src/sync/google_drive_auth.dart';
+import 'package:fushi/src/sync/google_drive_handler.dart';
+import 'package:fushi/src/sync/google_drive_sync_space.dart';
+import 'package:fushi/src/sync/sync_asset_store.dart';
+import 'package:fushi/src/sync/sync_backend.dart';
+import 'package:fushi/src/sync/sync_remote_listing.dart';
+import 'package:fushi/src/sync/sync_repository.dart';
+import 'package:fushi/src/sync/sync_file_ref.dart';
+import 'package:fushi/src/sync/ttu_models.dart';
 
 class GoogleDriveSyncBackend extends SyncBackend
     implements RemoteListingCapable {
@@ -68,9 +68,8 @@ class GoogleDriveSyncBackend extends SyncBackend
   /// 构造时固定）与 spaces/根目录名都随之切换。[GoogleDriveSyncSpace.setSyncSpace]
   /// 变更时会各自清缓存/丢弃旧客户端。
   Future<void> _applySyncSpace(SyncRepository repo) async {
-    final space = GoogleDriveSyncSpace.fromHoshiCompat(
-      await repo.isGoogleDriveHoshiCompat(),
-    );
+    // Hoshi/ッツ 共享空间功能已按用户决策移除（2026-08-07）：恒用隐藏 appData 空间。
+    const GoogleDriveSyncSpace space = GoogleDriveSyncSpace.appData;
     _auth.setSyncSpace(space);
     _drive.setSyncSpace(space);
   }

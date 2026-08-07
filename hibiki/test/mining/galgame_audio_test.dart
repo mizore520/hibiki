@@ -4,8 +4,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/mining/galgame_audio_encode.dart';
-import 'package:hibiki/src/mining/galgame_audio_source.dart';
+import 'package:fushi/src/mining/galgame_audio_encode.dart';
+import 'package:fushi/src/mining/galgame_audio_source.dart';
 
 /// 造一个最小 PE 文件字节：0x3c 处写 PE 头偏移，PE 头处 'PE\0\0' + COFF Machine。
 Uint8List _craftPe(int machine) {
@@ -316,7 +316,7 @@ void main() {
   });
 
   group('LoopbackGalAudioSource', () {
-    const channelName = 'app.hibiki.reader/audio_loopback';
+    const channelName = 'app.fushi.reader/audio_loopback';
 
     void setHandler(Future<Object?>? Function(MethodCall)? h) {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -401,7 +401,7 @@ void main() {
   });
 
   group('EngineHookGalAudioSource', () {
-    const channelName = 'app.hibiki.reader/voice_hook';
+    const channelName = 'app.fushi.reader/voice_hook';
 
     void setHandler(Future<Object?>? Function(MethodCall)? h) {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

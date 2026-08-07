@@ -1,14 +1,14 @@
 import 'package:flutter/services.dart';
 
-import 'package:hibiki/src/media/manga/mihon/mihon_bridge_runtime.dart';
-import 'package:hibiki/src/media/manga/mihon/mihon_models.dart';
-import 'package:hibiki/src/media/manga/mihon/mihon_runtime.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_bridge_runtime.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_models.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_runtime.dart';
 
 class AndroidMihonRuntime extends MihonBridgeRuntime
     implements CancellableMihonRuntime {
   AndroidMihonRuntime({
     MethodChannel? channel,
-  }) : _channel = channel ?? const MethodChannel('app.hibiki.reader/mihon');
+  }) : _channel = channel ?? const MethodChannel('app.fushi.reader/mihon');
 
   final MethodChannel _channel;
   int _imageRequestSequence = 0;

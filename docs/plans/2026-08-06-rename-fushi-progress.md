@@ -1,0 +1,72 @@
+# Fushi 全量改名 进度台账（保活续工的唯一真相源）
+
+- 计划：`docs/plans/2026-08-06-rename-fushi-migration.md`
+- 工作区：`.claude/worktrees/rename-fushi-plan-v2`；每项开工从最新 `origin/develop` 拉分支
+- 纪律：每项独立提交 → analyze 全量 + 定向测试 → 合并前 `dart run tool/flutter_test_failures.dart --no-pub` → push develop → **完成后才**勾掉本项并填真实提交哈希
+- 保活 cron：已按用户指示关闭（2026-08-07）；改用 fable 子代理并行推进
+- ⚠️ 台账只准记已验证的事实；勾选必须带真实 develop 提交哈希
+
+## 执行顺序与状态
+
+- [x] Phase 0 身份对照表（见下；本文件即产出）
+- [x] Apple 侧改名：bundle id（#784）、显示名/产物名/资产名（develop `a5022cd56`）
+- [x] P6-1 `window.hoshiReader` → `window.fushiReader`（82 文件；分支提交 45865b679，阅读器/有声书/macos 定向 2242 绿）
+- [x] P6-3 ttu 清算（develop ee0655c88）：31 个 i18n key →`reader_*`；`setTtu*`→`setReader*`；`'reader_ttu'` 收口 `kReaderSourcePersistedKey`。**白名单**：`ttu_models.dart`/`ttu_filename.dart`（ッツ第三方 wire 契约，文件头注明禁单方改）、`reader_settings.dart` 内 `ttu_*` 现役持久化键值（冻结，P2-2 新包换新键时迁移）
+- [x] P6-4a `Ht*`→`Ft*`（11 类；develop 20f50fc10，torrent 定向 147 绿）
+- [x] P6-4b（fable 子代理 2af7d512d，develop b1ff91994 批）：107 文件 Sasayaki*→SubtitleRematch*/sentenceAudio*、19 个 i18n key；**4 个持久化冻结点**：{sasayaki-audio} handlebars、handlebar_sasayaki_audio key、sasayakiColor JSON 键、sasayaki:// scheme（落 AudioCue.text_fragment_id 列）、custom_theme_sasayaki_color 偏好键——**实测面 ~500 处远超预估**，且含两个 userspace 契约需先定策略：① Anki handlebars 模板变量（`handlebar_sasayaki_audio` 对应的用户模板变量，乱改破用户现有卡模板）；② `sasayakiColor` 疑似入库的主题自定义色键（custom_theme 持久化待查）。纯内部符号（SasayakiCue/AutoNav/JS 桥）可机械换，两个契约点需映射或冻结
+- [~] P6-4c 代码字符串残留 hibiki 清扫 + 白名单收口：分支 worktree-agent-a4801e9a55f318ada 完成（提交 f0874b28b，77 文件：日志标签族 [Hibiki]/[hibiki-*]/[ReaderHibiki] 等→Fushi 形、UA hajisensai/Hibiki 与 hibiki-reader/*→fushi、realm "Fushi Sync"、'Hibiki server' 文案、/api/ping wire 'app' 两端同切 fushi（R11）；desktop_foreground_guard 词干 + updater DisplayIcon 检测补 fushi 真断裂修复），**待合并 develop**。**冻结加注**：/api/extension/status 的 'app':'hibiki'（扩展商店发布滞后，扩展端兼容前不切）。**剩余独立事项**：i18n 17 语言值面 "Hibiki" ~63 key/语言（migration_* 指旧 app 必须保留 Hibiki，需逐 key 判断）；X-Hibiki-* 互联 wire 头与 basic-auth username 'hibiki'（server 只验 password，装饰性）；%LOCALAPPDATA%\Hibiki（present_watchdog）与 DCIM/hibiki 磁盘路径、qB category 'hibiki'、sync_obfuscator 密钥种子 'hibiki'（持久化/外部契约，冻结）
+- [x] P1-1 `MigrationExporter` 核心（`lib/src/migration/migration_exporter.dart`：分批调 createBackup、断点 state.json、幂等跳过；**尚缺**：Android 中转目录取路径接线 + 从设置页触发——归 P1-3 一起做）
+- [x] P1-2 `MigrationManifest` v1（`migration_manifest.dart`：归档 sha256+size + 14 表行数 + schema 版本；8 单测绿；对计划的偏差已记回计划 §P1-2）
+- [x] P1-3 迁移 UI（develop 0ffb7cc1c + 73b4b6973 + MD3 修正，Android release APK 构建绿）：Android MigrationChannelHandler（探测/拉起/卸载/PROCESS_TEXT）+ `<queries>` + MigrationPage 三态引导 + 设置入口 + 15 i18n key。**验证态**：analyze 绿、Android release APK 构建绿（334.9MB）；真机 E2E 未做（标 implemented_unverified，待 P2 后一起真机跑）
+- [x] P1-4a 只读态启动闸门（develop c56a273aa）：`isMigrationReadonly` + init 尾段早退（互联/Yomitan/自动同步/词典自更/下载入库/texthooker 全停）+ PROCESS_TEXT 注销随导出完成触发
+- [x] P1-4b 只读态收口（develop 513e49ff2）：openMedia 单闸门（进度/统计/制卡写路径整体不可达）+ dashboard 常驻 banner（打开 Fushi / 重新导出）
+**⚠️ Android 过渡版基线 = 513e49ff2**（含完整迁移导出/只读态，包名仍 app.hibiki.reader；发布老包最后版本从此提交出包）。
+- [x] P2-1 Android 身份替换（develop 15fd787e0…64386eaf4）：applicationId/namespace/taskAffinity/Java·Kotlin 包目录/label/图标 alias/URL scheme fushi://和 Bonjour _fushi-sync/MethodChannel 前缀五端同 PR；FushiFileProvider/FushiBridge/资源改名；新包名 release APK 构建绿（335.1MB）；全量门 17619 绿
+- [x] P2-2 `MigrationImporter`（同批落地）：scan/归档校验/mergeRestore 逐批合并/行数聚合校验/失败保留（4 单测）+ MigrationImportPage + dashboard 检测 banner + 设置入口按运行包名切方向
+- [x] P2-3 卸载引导（同批落地）：dashboard 卸载 banner（ACTION_DELETE + resumed 生命周期复查，绝不乐观标成功）
+- [x] Phase 3 Windows（develop 215c9cc24 批）：fushi.exe 构建绿+版本信息 Fushi 验证；%APPDATA% 搬迁+documents 容器锚点；fushi.iss（AppId 不变/双 mutex/旧键清理）；全量门 17619 绿（清 39 红含 fork sentinel 与重启标志两处真断裂）。原文案：`fushi.exe`/安装器 AppName/`FushiSingleInstanceMutex` 三处同步/`Fushi.Video` ProgID 迁移+旧键清理/`%APPDATA%\Hibiki`→`Fushi` 搬迁
+- [x] Phase 5 更新桥（cdffe37c0）：Windows `synthesizeStableAssetNames` 行随 Phase 3 切 fushi（Android 无更新桥需求：跨包名不能就地更新，迁移链即通道）
+- [x] P6-2 `hoshidicts`→`fushidicts`（fable 子代理 4867d9f15，develop b1ff91994 批）：22 个 C ABI 符号、JNI 与 FushiBridge 对齐（修复 P2-1 遗留真断裂）、CMake/xcconfig/CI 全链；合并后 analyze 绿+定向绿。构建门：Android/Windows 待下轮构建复核
+- [x] P6-6 native 产物（fable 子代理 e090a6021，develop b1ff91994 批）：三件套 fushi_voice_*、IPC shm/event/marker 两侧同批、fushi_torrent_ffi + DLL 旧名回退、Unity 程序集 Fushi.UnityAudioExtract；1362 定向绿。保留：C++ namespace hibiki_voice_hook（内部符号，需双架构构建验证，后续项）
+- [x] P6-5 pub 包名体系（develop 31270161d，fable 子代理批 555785e28+d163b70a0）：`hibiki`→`fushi` app 包 + 6 内部包 + workspace（`fushi_workspace`）+ 全仓 import；app 目录名 hibiki/ 保持（CI/文档路径半径不成比例）
+- [~] 收尾：源码扫描守卫（旧代号零残留 + 白名单收口 + 过期豁免检测）：分支提交 ddc61451d（`hibiki/test/tools/fushi_rename_guard_test.dart`，扫 hibiki/lib + 6 个 fushi_* 包 lib，剥 Dart+内嵌 JS/CSS 注释，8 类模式；变异实测 2 例转红后还原），**待合并 develop**
+- [x] 云同步改名（2026-08-07 用户新增指令）主线部分（develop 1b326bc17 批）：删 Hoshi/ッツ 共享 Google Drive 功能（ttuShared 空间/开关/repo 方法/2 i18n key，恒用 appdata 隐藏空间——完整 drive 敏感 scope 随之消除，Phase 4 的重审风险项作废）；kSyncRootFolderName→fushi-data；Google Drive 根远端改名迁移三段
+- [x] 云同步改名五 backend 部分（develop ed101c712 批，fable 子代理）：Dropbox/OneDrive/WebDAV/FTP/SFTP/interconnect host 的 fushi-data 迁移
+- [x] Phase 4 外部注册台账（agent 无法代办，清单见下；Google 同意屏重审风险已随 Hoshi 功能删除作废）
+
+## Phase 0 身份对照表（唯一真相源）
+
+| 项 | 旧值 | 新值 |
+|---|---|---|
+| Android applicationId/namespace | `app.hibiki.reader` | `app.fushi.reader` |
+| iOS/macOS bundle id | `app.hibiki.reader`（macOS 旧 `com.example.hibiki`） | `app.fushi.reader` ✅已落 |
+| 显示名 | Hibiki | Fushi（Apple 侧 ✅已落） |
+| URL scheme | `hibiki` | `fushi`（连带 auth/lookup/anki 回调） |
+| MethodChannel 前缀 | `app.hibiki.reader/*`、`app.hibiki/*` | `app.fushi.reader/*`、`app.fushi/*`（Dart+Android+iOS+macOS+Windows C++ 同 PR） |
+| Bonjour 服务型 | `_hibiki-sync._tcp` | `_fushi-sync._tcp`（两端同 PR，破跨版本互联=计划 R11 已接受） |
+| JS 桥全局 | `window.hoshiReader` | `window.fushiReader` |
+| 词典引擎 | `hoshidicts` / `libhoshidicts_ffi` | `fushidicts` / `libfushidicts_ffi` |
+| 磁盘目录 | `hoshi_books`；`Hibiki/data`；`%APPDATA%\Hibiki` | `fushi_books`；`Fushi/data`；`%APPDATA%\Fushi`（迁移落位） |
+| DB 文件 | `hibiki.db` | `fushi.db`（新包新建；导入器读旧库） |
+| Windows 单实例 | `HibikiSingleInstanceMutex` / 窗题 `Hibiki` / `hibiki.exe` | `FushiSingleInstanceMutex` / `Fushi` / `fushi.exe`（iss+main.cpp 三处同步） |
+| Inno AppId GUID | `{{8F2C1A3E-...}}` | **不变** |
+| torrent DTO 前缀 | `Ht*` | `Ft*` |
+| torrent DLL | `hibiki_torrent_ffi` | `fushi_torrent_ffi` |
+| gal helper | `hibiki_voice_injector.exe` 等三件套 | `fushi_voice_*`（IPC 对象名两侧同 PR） |
+| 有声书代号 | `Sasayaki*` / `sasayakiAudioPath` | `SubtitleRematch*` / `sentenceAudioPath` |
+| pub 包 | `hibiki` + `hibiki_*` ×6 + `hibiki_workspace` | `fushi` + `fushi_*` + `fushi_workspace` |
+| i18n key 前缀 | `ttu_*`、`sasayaki_*` | 按域重命名（`i18n_sync --rename`） |
+| 资产名 | `hibiki-*` | macOS/iOS ✅已切；Win/Android 随更新桥 |
+| 不改 | Manhhao 署名/域名、Niratan/shishamo/jidoujisho 注释、第三方服务名、GCP 项目 ID、`kLegacyGitHubRepo`、DB 迁移阶梯历史常量 | — |
+
+## Phase 4 用户手动清单（agent 无法代办）
+
+1. Google Cloud：新建 Android OAuth client（包名 `app.fushi.reader` + 新 keystore SHA-1）、新建 iOS client（bundle id）；重下 `google-services.json`；同意屏应用名改 Fushi（敏感 scope 可能触发重审）。
+2. Dropbox 控制台：redirect URI `hibiki://auth/dropbox` → `fushi://auth/dropbox`，显示名改。
+3. Microsoft Entra：同上 `fushi://auth/onedrive`。
+4. TMDB：注册信息改名。
+5. ASC：删除绑 `app.hibiki.reader` 的废弃 `fushii` 记录。
+6. 新 Android keystore 生成并配到 CI secrets（拍板不复用旧签名）。
+7. 浏览器扩展商店条目改名（打包密钥不变）。
+
+> 全量门史：17615 绿(d23fa7f79 P1)→17619 绿(64386eaf4 P2)→17619 绿(215c9cc24 P3)→17619 绿(b1ff91994 P6-2/6/4b 合并批)。

@@ -3,24 +3,26 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:hibiki/src/sync/desktop_oauth.dart';
-import 'package:hibiki/src/sync/pkce_oauth.dart';
-import 'package:hibiki/src/sync/sync_http.dart';
-import 'package:hibiki/src/sync/sync_asset_store.dart';
-import 'package:hibiki/src/sync/sync_backend.dart';
-import 'package:hibiki/src/sync/sync_remote_listing.dart';
-import 'package:hibiki/src/sync/sync_backend_file_trio_mixin.dart';
-import 'package:hibiki/src/sync/sync_repository.dart';
-import 'package:hibiki/src/sync/sync_utils.dart';
-import 'package:hibiki/src/sync/ttu_filename.dart';
-import 'package:hibiki/src/sync/sync_file_ref.dart';
-import 'package:hibiki/src/sync/ttu_models.dart';
+import 'package:fushi/src/sync/desktop_oauth.dart';
+import 'package:fushi/src/sync/pkce_oauth.dart';
+import 'package:fushi/src/sync/sync_http.dart';
+import 'package:fushi/src/sync/sync_asset_store.dart';
+import 'package:fushi/src/sync/sync_backend.dart';
+import 'package:fushi/src/sync/sync_remote_listing.dart';
+import 'package:fushi/src/sync/sync_backend_file_trio_mixin.dart';
+import 'package:fushi/src/sync/sync_repository.dart';
+import 'package:fushi/src/sync/sync_root_migration.dart';
+import 'package:fushi/src/sync/sync_utils.dart';
+import 'package:fushi/src/sync/ttu_filename.dart';
+import 'package:fushi/src/sync/sync_file_ref.dart';
+import 'package:fushi/src/sync/ttu_models.dart';
+import 'package:fushi/src/utils/misc/error_log_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Dropbox sync backend via Dropbox API v2.
 ///
 /// Auth: OAuth 2.0 PKCE flow.
-/// Folder IDs are path strings like `/hibiki-data/BookTitle`.
+/// Folder IDs are path strings like `/fushi-data/BookTitle`.
 class DropboxSyncBackend extends SyncBackend
     with SyncFolderCache, SyncBackendFileTrioMixin, SyncAssetStoreDefaults
     implements RemoteListingCapable {
@@ -33,7 +35,7 @@ class DropboxSyncBackend extends SyncBackend
   /// backend cannot authenticate, so the UI hides it from the picker.
   static bool get isConfigured => !_clientId.startsWith('YOUR_');
 
-  static const _redirectUri = 'hibiki://auth/dropbox';
+  static const _redirectUri = 'fushi://auth/dropbox';
   static const _authorizeEndpoint = 'https://www.dropbox.com/oauth2/authorize';
   static const _tokenEndpoint = 'https://api.dropboxapi.com/oauth2/token';
   static const _apiBase = 'https://api.dropboxapi.com/2';
@@ -262,13 +264,35 @@ class DropboxSyncBackend extends SyncBackend
   Future<String> findOrCreateRootFolder() async {
     if (rootFolderIdCache != null) return rootFolderIdCache!;
 
-    // Try to get metadata for the root folder.
-    try {
-      await _apiPost('/files/get_metadata', {'path': _rootFolderPath});
-      rootFolderIdCache = _rootFolderPath;
-      return rootFolderIdCache!;
-    } on SyncBackendError catch (e) {
-      if (!e.isRetryable) rethrow;
+    // Fushi 改名迁移三段（找新根 → 旧根远端 move_v2 改名 → 新建）。结果经
+    // rootFolderIdCache 记忆化：每会话只真正探测一次，旧根探测仅在新根缺席时
+    // 发生（迁移完成后的稳态零额外 API 往返）。
+    final String? existing = await migrateLegacySyncRoot<String>(
+      find: (String name) async {
+        try {
+          await _apiPost('/files/get_metadata', {'path': '/$name'});
+          return '/$name';
+        } on SyncBackendError catch (e) {
+          if (e.isRetryable) return null; // 409 path/not_found：不存在。
+          rethrow;
+        }
+      },
+      renameLegacy: (String legacyPath) async {
+        // files/move_v2 = 远端整树改名（数据原地不动）；autorename=false 保证
+        // 绝不产生 `fushi-data (1)` 这种分叉根。
+        await _apiPost('/files/move_v2', {
+          'from_path': legacyPath,
+          'to_path': _rootFolderPath,
+          'autorename': false,
+        });
+        return _rootFolderPath;
+      },
+      onRenameError: (Object e, StackTrace st) => ErrorLogService.instance
+          .log('DropboxSyncBackend.migrateLegacyRoot', e, st),
+    );
+    if (existing != null) {
+      rootFolderIdCache = existing;
+      return existing;
     }
 
     // Create the folder.

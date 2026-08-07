@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:hibiki/src/sync/sync_backend.dart';
-import 'package:hibiki/src/sync/tls/hibiki_pinning_http.dart';
-import 'package:hibiki/src/sync/sync_utils.dart';
-import 'package:hibiki/src/sync/sync_file_ref.dart';
+import 'package:fushi/src/sync/sync_backend.dart';
+import 'package:fushi/src/sync/tls/hibiki_pinning_http.dart';
+import 'package:fushi/src/sync/sync_utils.dart';
+import 'package:fushi/src/sync/sync_file_ref.dart';
 
 /// 服务端在错误响应体里给出的拒绝原因（截断后的），读不出来就返回 null。
 ///
@@ -157,6 +157,31 @@ class WebDavOps {
       throw SyncBackendError(
           'Failed to create folder: ${mkcolResp.statusCode}');
     }
+  }
+
+  /// PROPFIND depth-0 探测 collection 是否存在（207 = 在）。与 [ensureCollection]
+  /// 的探测同一形状：401/403 等非 207 状态一律按「不存在」处理，让调用方走
+  /// 创建/迁移路径时再由写操作抛出真实错误。
+  Future<bool> collectionExists(String path) async {
+    final request = await buildRequest('PROPFIND', path);
+    request.headers.set('Depth', '0');
+    request.headers.set('Content-Type', 'application/xml; charset=utf-8');
+    request.add(utf8.encode(propfindBody));
+    final response = await request.close();
+    await response.drain<void>();
+    return response.statusCode == 207;
+  }
+
+  /// WebDAV MOVE（RFC 4918）：把 [fromPath] 整树改名/移动到 [toPath]。
+  /// `Overwrite: F`——目标已存在时服务端答 412，绝不覆盖既有数据。
+  /// 成功为 201（Created）/ 204（No Content）；其余状态抛 [SyncBackendError]。
+  Future<void> movePath(String fromPath, String toPath) async {
+    final request = await buildRequest('MOVE', fromPath);
+    request.headers.set('Destination', toPath);
+    request.headers.set('Overwrite', 'F');
+    final response = await request.close();
+    await response.drain<void>();
+    checkStatus(response.statusCode, 'MOVE $fromPath -> $toPath');
   }
 
   Future<List<DavEntry>> propfindChildren(String path) async {

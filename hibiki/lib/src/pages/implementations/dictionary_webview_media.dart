@@ -3,10 +3,10 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:hibiki/src/dictionary/dictionary_media_types.dart';
-import 'package:hibiki/src/utils/misc/error_log_service.dart';
-import 'package:hibiki_anki/hibiki_anki.dart';
-import 'package:hibiki_dictionary/hibiki_dictionary.dart';
+import 'package:fushi/src/dictionary/dictionary_media_types.dart';
+import 'package:fushi/src/utils/misc/error_log_service.dart';
+import 'package:fushi_anki/fushi_anki.dart';
+import 'package:fushi_dictionary/fushi_dictionary.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 
@@ -259,9 +259,9 @@ Future<void> writeDictionaryMediaCache(String dictionaryMediaJson) async {
   if (entries.isEmpty) return;
 
   // 未初始化的判断放在「确实有媒体要写」之后：无媒体时不该产生噪音日志。
-  if (!HoshiDicts.isInitialized) {
+  if (!FushiDicts.isInitialized) {
     _logDictionaryMediaSkip(
-      'HoshiDicts 未初始化，${entries.length} 条词典媒体未落盘（卡片将缺外字）',
+      'FushiDicts 未初始化，${entries.length} 条词典媒体未落盘（卡片将缺外字）',
     );
     return;
   }
@@ -286,7 +286,7 @@ Future<void> writeDictionaryMediaCache(String dictionaryMediaJson) async {
         File('${dir.path}/${ankiDictionaryMediaCacheFilename(dict, path)}');
     if (file.existsSync()) continue; // 幂等：已缓存。
     try {
-      final Uint8List? bytes = HoshiDicts.instance.getMediaFile(dict, path);
+      final Uint8List? bytes = FushiDicts.instance.getMediaFile(dict, path);
       if (bytes == null || bytes.isEmpty) {
         // 最常见的一条：词典里取不到这个资源（分卷 MDD 未挂载、资源名对不上、
         // 词典已删除重导）。以前这里连 debugPrint 都没有。
@@ -340,10 +340,10 @@ _DictionaryMediaResponse? _dictionaryMediaResponse(Uri url) {
     if (dictName.isEmpty || mediaPath.isEmpty) {
       return _DictionaryMediaResponse.notFound();
     }
-    if (!HoshiDicts.isInitialized) return _DictionaryMediaResponse.notFound();
+    if (!FushiDicts.isInitialized) return _DictionaryMediaResponse.notFound();
 
     try {
-      final Uint8List? data = HoshiDicts.instance.getMediaFile(
+      final Uint8List? data = FushiDicts.instance.getMediaFile(
         dictName,
         mediaPath,
       );
@@ -369,9 +369,9 @@ _DictionaryMediaResponse? _dictionaryMediaResponse(Uri url) {
     if (dictName.isEmpty || mediaPath.isEmpty) {
       return _DictionaryMediaResponse.notFound();
     }
-    if (!HoshiDicts.isInitialized) return _DictionaryMediaResponse.notFound();
+    if (!FushiDicts.isInitialized) return _DictionaryMediaResponse.notFound();
 
-    final Uint8List? data = HoshiDicts.instance.getMediaFile(
+    final Uint8List? data = FushiDicts.instance.getMediaFile(
       dictName,
       mediaPath,
     );

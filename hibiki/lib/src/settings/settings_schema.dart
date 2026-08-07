@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:hibiki/i18n/strings.g.dart';
-import 'package:hibiki/src/settings/settings_context.dart';
-import 'package:hibiki/src/settings/settings_destination.dart';
-import 'package:hibiki/src/settings/settings_schema_appearance.dart';
-import 'package:hibiki/src/settings/settings_schema_card_creation.dart';
-import 'package:hibiki/src/settings/settings_schema_downloads.dart';
-import 'package:hibiki/src/settings/settings_schema_game.dart';
-import 'package:hibiki/src/settings/settings_schema_listening.dart';
-import 'package:hibiki/src/settings/settings_schema_lookup.dart';
-import 'package:hibiki/src/settings/settings_schema_manga.dart';
-import 'package:hibiki/src/settings/settings_schema_tracking.dart';
-import 'package:hibiki/src/settings/settings_schema_profiles.dart';
-import 'package:hibiki/src/settings/settings_schema_reading.dart';
-import 'package:hibiki/src/settings/settings_schema_system.dart';
-import 'package:hibiki/src/settings/settings_schema_video.dart';
-import 'package:hibiki/src/sync/sync_settings_schema.dart';
-import 'package:hibiki/utils.dart';
+import 'package:fushi/i18n/strings.g.dart';
+import 'package:fushi/src/settings/settings_context.dart';
+import 'package:fushi/src/settings/settings_destination.dart';
+import 'package:fushi/src/settings/settings_schema_appearance.dart';
+import 'package:fushi/src/settings/settings_schema_card_creation.dart';
+import 'package:fushi/src/settings/settings_schema_downloads.dart';
+import 'package:fushi/src/settings/settings_schema_game.dart';
+import 'package:fushi/src/settings/settings_schema_listening.dart';
+import 'package:fushi/src/settings/settings_schema_lookup.dart';
+import 'package:fushi/src/settings/settings_schema_manga.dart';
+import 'package:fushi/src/settings/settings_schema_tracking.dart';
+import 'package:fushi/src/settings/settings_schema_profiles.dart';
+import 'package:fushi/src/settings/settings_schema_reading.dart';
+import 'package:fushi/src/settings/settings_schema_system.dart';
+import 'package:fushi/src/settings/settings_schema_video.dart';
+import 'package:fushi/src/sync/sync_settings_schema.dart';
+import 'package:fushi/utils.dart';
 
 /// 记忆化的 schema 快照：整棵声明树 + 两张按 [ReaderPlacement] / [VideoPlacement]
 /// 投影出来的分组表（后两者惰性算，用到才付钱）。
@@ -60,7 +60,7 @@ _SettingsSchemaCache _schemaSnapshot() {
 ///
 /// 生产路径不需要它（locale 是唯一缓存键，已由 [_schemaSnapshot] 自动比对）；存在
 /// 是为两件事：① debug 热重载——改了 `settings_schema_*.dart` 的树结构后，已缓存的
-/// 旧树不会自己更新，故 `_HoshiReaderAppState.reassemble()` 调它；② 测试里需要观察
+/// 旧树不会自己更新，故 `_FushiReaderAppState.reassemble()` 调它；② 测试里需要观察
 /// 「重新构造」而非缓存命中时的显式复位。
 void resetSettingsSchemaCache() {
   _schemaCache = null;

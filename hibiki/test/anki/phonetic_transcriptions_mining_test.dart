@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki_anki/hibiki_anki.dart';
+import 'package:fushi_anki/fushi_anki.dart';
 
 import '../helpers/source_guard.dart';
 
@@ -50,7 +50,7 @@ class _TestRepo extends BaseAnkiRepository {
         payload: payload,
         context: context,
         coverRef: null,
-        sasayakiRef: null,
+        sentenceAudioRef: null,
         processedAudio: '',
         dictionaryMediaTags: const <String, String>{},
       );

@@ -1,9 +1,9 @@
 /// Generated file. Do not edit.
 ///
 /// Locales: 17
-/// Strings: 53227 (3131 per locale)
+/// Strings: 53652 (3156 per locale)
 ///
-/// Built on 2026-08-02 at 17:37 UTC
+/// Built on 2026-08-07 at 06:16 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -731,8 +731,8 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get color_link_desc => 'Reader hyperlink color';
   String get color_primary => 'Primary';
   String get color_primary_desc => 'Audio highlight, buttons, switches';
-  String get color_sasayaki => 'Audio highlight';
-  String get color_sasayaki_desc =>
+  String get color_sentence_audio_highlight => 'Audio highlight';
+  String get color_sentence_audio_highlight_desc =>
       'Current-sentence highlight that follows audiobook playback';
   String get color_secondary => 'Secondary';
   String get color_secondary_desc => 'Dictionary entries, bookshelf badges';
@@ -2084,32 +2084,35 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
       'Reverse keyboard left/right page-turn direction';
   String get reverse_navigation_bar => 'Reverse navigation bar';
   String get reverse_reader_bottom_bar => 'Reverse reader bottom bar';
-  String get sasayaki_all_zero =>
+  String get audiobook_rematch_all_zero =>
       'All windows scored 0%, please adjust manually';
-  String sasayaki_auto_failed({required Object error}) =>
+  String audiobook_rematch_auto_failed({required Object error}) =>
       'Auto-match failed: ${error}';
-  String get sasayaki_auto_match => 'Auto match';
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String get audiobook_rematch_auto_match => 'Auto match';
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       'Auto-selected ${window} (hit ${pct}%)';
-  String sasayaki_default_value({required Object n}) => 'Default ${n}';
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_default_value({required Object n}) => 'Default ${n}';
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} matched — ${detail}';
-  String get sasayaki_matching => 'Matching...';
-  String get sasayaki_no_chapters => 'EPUB has no chapter text';
-  String get sasayaki_no_cues_to_match => 'No cues to match';
-  String get sasayaki_no_sections =>
+  String get audiobook_rematch_matching => 'Matching...';
+  String get audiobook_rematch_no_chapters => 'EPUB has no chapter text';
+  String get audiobook_rematch_no_cues_to_match => 'No cues to match';
+  String get audiobook_rematch_no_sections =>
       'No ttu chapter text found, cannot auto-match';
-  String get sasayaki_no_stored_cues => 'No stored cues, cannot re-run';
-  String sasayaki_rematch_failed({required Object error}) =>
+  String get audiobook_rematch_no_stored_cues =>
+      'No stored cues, cannot re-run';
+  String audiobook_rematch_failed({required Object error}) =>
       'Re-match failed: ${error}';
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       'Rematched: ${pct}% (window: ${window})';
-  String get sasayaki_search_window => 'Search window';
-  String get sasayaki_similarity_threshold => 'Similarity threshold';
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_search_window => 'Search window';
+  String get audiobook_rematch_similarity_threshold => 'Similarity threshold';
+  String get audiobook_rematch_threshold_hint =>
       'Minimum similarity for fuzzy matching (Dice coefficient). Lower to tolerate more text differences, but too low causes false matches.';
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       'Number of characters to search forward per cue in the text. Adjust if hit rate is low; too large may skew cursor with short noisy cues.';
   String get saved_tags => 'Tags saved.';
   String get scan_non_japanese_text => 'Scan non-Japanese text';
@@ -2527,9 +2530,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get sync_exit_warning =>
       'Sync is still in progress. Exiting now may cause data loss.';
   String get sync_exit_warning_title => 'Sync in progress';
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
   String get sync_host => 'Host';
   String get sync_lan_discovery => 'LAN devices';
   String get sync_lan_no_devices => 'No devices found';
@@ -2698,39 +2698,39 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get torrent_upload_intro_enable => 'Enable upload / seeding';
   String get torrent_upload_intro_keep_off => 'Keep off';
   String get torrent_upload_intro_title => 'Upload / seeding';
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
-  String get ttu_font_size => 'Font size';
-  String get ttu_font_vpal => 'VPAL (vertical alt)';
-  String get ttu_furigana_hide => 'Hide';
-  String get ttu_furigana_mode => 'Furigana';
-  String get ttu_furigana_mode_hint => '';
-  String get ttu_furigana_partial => 'Partial';
-  String get ttu_furigana_show => 'Show';
-  String get ttu_furigana_toggle => 'Toggle';
-  String get ttu_horizontal => 'Horizontal';
-  String get ttu_line_height => 'Line height';
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_blur_images => 'Blur images (spoiler guard)';
+  String get reader_font_size => 'Font size';
+  String get reader_font_vpal => 'VPAL (vertical alt)';
+  String get reader_furigana_hide => 'Hide';
+  String get reader_furigana_mode => 'Furigana';
+  String get reader_furigana_mode_hint => '';
+  String get reader_furigana_partial => 'Partial';
+  String get reader_furigana_show => 'Show';
+  String get reader_furigana_toggle => 'Toggle';
+  String get reader_horizontal => 'Horizontal';
+  String get reader_line_height => 'Line height';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-  String get ttu_no_books_added => 'No books in library';
-  String get ttu_not_bound_cannot_rematch =>
+  String get reader_no_books_added => 'No books in library';
+  String get reader_not_bound_cannot_rematch =>
       'Audiobook not bound to a book, cannot re-match';
-  String get ttu_orient_mixed => 'Mixed';
-  String get ttu_orient_upright => 'Upright';
-  String get ttu_page_columns_auto => 'Auto';
-  String get ttu_paginated => 'Paginated';
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
-  String get ttu_reader_styles => 'Prioritize book styles';
-  String get ttu_scroll => 'Scroll';
-  String get ttu_text_indentation => 'Paragraph indent';
-  String get ttu_text_justify => 'Text justification';
-  String get ttu_theme => 'Theme';
-  String get ttu_vert_kerning => 'Font kerning (vertical)';
-  String get ttu_vert_text_orient => 'Text orientation';
-  String get ttu_vertical => 'Vertical';
-  String get ttu_view_mode_label => 'Page / scroll';
-  String get ttu_vn => 'Visual novel';
-  String get ttu_writing_direction => 'Writing direction';
+  String get reader_orient_mixed => 'Mixed';
+  String get reader_orient_upright => 'Upright';
+  String get reader_page_columns_auto => 'Auto';
+  String get reader_paginated => 'Paginated';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
+  String get reader_reader_styles => 'Prioritize book styles';
+  String get reader_scroll => 'Scroll';
+  String get reader_text_indentation => 'Paragraph indent';
+  String get reader_text_justify => 'Text justification';
+  String get reader_theme => 'Theme';
+  String get reader_vert_kerning => 'Font kerning (vertical)';
+  String get reader_vert_text_orient => 'Text orientation';
+  String get reader_vertical => 'Vertical';
+  String get reader_view_mode_label => 'Page / scroll';
+  String get reader_vn => 'Visual novel';
+  String get reader_writing_direction => 'Writing direction';
   String get undo => 'Undo';
   String get unit_milliseconds => 'ms';
   String get unit_pixels => 'px';
@@ -4214,6 +4214,50 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
       'Configure a matching AnkiConnect API key before enabling the Android backend.';
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  String get migration_settings_entry => 'Migrate to Fushi';
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  String get migration_download_fushi => 'Get Fushi';
+  String get migration_start => 'Start migration';
+  String get migration_open_fushi => 'Open Fushi';
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  String get migration_reexport => 'Re-export';
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  String get migration_import_entry => 'Import from Hibiki';
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  String get migration_import_start => 'Start import';
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  String get migration_import_success => 'Import complete and verified.';
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 // Path: <root>
@@ -5197,9 +5241,10 @@ class _StringsAr extends _StringsEn {
   @override
   String get color_primary_desc => 'تمييز الصوت، الأزرار، المفاتيح';
   @override
-  String get color_sasayaki => 'تمييز Sasayaki';
+  String get color_sentence_audio_highlight => 'تمييز Sasayaki';
   @override
-  String get color_sasayaki_desc => 'تمييز مزامنة ترجمة الكتاب المسموع';
+  String get color_sentence_audio_highlight_desc =>
+      'تمييز مزامنة ترجمة الكتاب المسموع';
   @override
   String get color_secondary => 'ثانوي';
   @override
@@ -7635,48 +7680,51 @@ class _StringsAr extends _StringsEn {
   @override
   String get reverse_reader_bottom_bar => 'عكس الشريط السفلي للقارئ';
   @override
-  String get sasayaki_all_zero => 'جميع النوافذ سجّلت 0%، يرجى الضبط يدوياً';
+  String get audiobook_rematch_all_zero =>
+      'جميع النوافذ سجّلت 0%، يرجى الضبط يدوياً';
   @override
-  String sasayaki_auto_failed({required Object error}) =>
+  String audiobook_rematch_auto_failed({required Object error}) =>
       'فشلت المطابقة التلقائية: ${error}';
   @override
-  String get sasayaki_auto_match => 'مطابقة تلقائية';
+  String get audiobook_rematch_auto_match => 'مطابقة تلقائية';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       'تم اختيار ${window} تلقائياً (نسبة ${pct}%)';
   @override
-  String sasayaki_default_value({required Object n}) => 'افتراضي ${n}';
+  String audiobook_rematch_default_value({required Object n}) => 'افتراضي ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} مطابق — ${detail}';
   @override
-  String get sasayaki_matching => 'جارٍ المطابقة...';
+  String get audiobook_rematch_matching => 'جارٍ المطابقة...';
   @override
-  String get sasayaki_no_chapters => 'EPUB لا يحتوي على نص فصول';
+  String get audiobook_rematch_no_chapters => 'EPUB لا يحتوي على نص فصول';
   @override
-  String get sasayaki_no_cues_to_match => 'لا توجد ترجمات للمطابقة';
+  String get audiobook_rematch_no_cues_to_match => 'لا توجد ترجمات للمطابقة';
   @override
-  String get sasayaki_no_sections =>
+  String get audiobook_rematch_no_sections =>
       'لم يتم العثور على نص فصل ttu، لا يمكن المطابقة التلقائية';
   @override
-  String get sasayaki_no_stored_cues =>
+  String get audiobook_rematch_no_stored_cues =>
       'لا توجد ترجمات مخزّنة، لا يمكن إعادة التشغيل';
   @override
-  String sasayaki_rematch_failed({required Object error}) =>
+  String audiobook_rematch_failed({required Object error}) =>
       'فشلت إعادة المطابقة: ${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       'أُعيدت المطابقة: ${pct}% (نافذة: ${window})';
   @override
-  String get sasayaki_search_window => 'نافذة البحث';
+  String get audiobook_rematch_search_window => 'نافذة البحث';
   @override
-  String get sasayaki_similarity_threshold => 'عتبة التشابه';
+  String get audiobook_rematch_similarity_threshold => 'عتبة التشابه';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       'الحد الأدنى للتشابه في المطابقة الضبابية (معامل Dice). خفّض لتحمّل مزيد من الاختلافات، لكن قيمة منخفضة جداً تسبب مطابقات خاطئة.';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       'عدد الأحرف للبحث للأمام لكل ترجمة في النص. اضبط إذا كانت نسبة الإصابة منخفضة؛ قيمة كبيرة جداً قد تُنحرف المؤشر مع الترجمات القصيرة.';
   @override
   String get saved_tags => 'تم حفظ الوسوم.';
@@ -8455,11 +8503,6 @@ class _StringsAr extends _StringsEn {
   @override
   String get sync_exit_warning_title => 'المزامنة قيد التنفيذ';
   @override
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
-  @override
   String get sync_host => 'المضيف';
   @override
   String get sync_lan_discovery => 'أجهزة الشبكة المحلية';
@@ -8766,69 +8809,69 @@ class _StringsAr extends _StringsEn {
   @override
   String get torrent_upload_intro_title => 'Upload / seeding';
   @override
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
   @override
-  String get ttu_font_size => 'حجم الخط';
+  String get reader_font_size => 'حجم الخط';
   @override
-  String get ttu_font_vpal => 'VPAL (بديل عمودي)';
+  String get reader_font_vpal => 'VPAL (بديل عمودي)';
   @override
-  String get ttu_furigana_hide => 'إخفاء';
+  String get reader_furigana_hide => 'إخفاء';
   @override
-  String get ttu_furigana_mode => 'فوريغانا';
+  String get reader_furigana_mode => 'فوريغانا';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => 'جزئي';
+  String get reader_furigana_partial => 'جزئي';
   @override
-  String get ttu_furigana_show => 'عرض';
+  String get reader_furigana_show => 'عرض';
   @override
-  String get ttu_furigana_toggle => 'تبديل';
+  String get reader_furigana_toggle => 'تبديل';
   @override
-  String get ttu_horizontal => 'أفقي';
+  String get reader_horizontal => 'أفقي';
   @override
-  String get ttu_line_height => 'ارتفاع السطر';
+  String get reader_line_height => 'ارتفاع السطر';
   @override
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
   @override
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
   @override
-  String get ttu_no_books_added => 'لا توجد كتب في المكتبة';
+  String get reader_no_books_added => 'لا توجد كتب في المكتبة';
   @override
-  String get ttu_not_bound_cannot_rematch =>
+  String get reader_not_bound_cannot_rematch =>
       'الكتاب الصوتي غير مرتبط بكتاب، لا يمكن إعادة المطابقة';
   @override
-  String get ttu_orient_mixed => 'مختلط';
+  String get reader_orient_mixed => 'مختلط';
   @override
-  String get ttu_orient_upright => 'قائم';
+  String get reader_orient_upright => 'قائم';
   @override
-  String get ttu_page_columns_auto => 'تلقائي';
+  String get reader_page_columns_auto => 'تلقائي';
   @override
-  String get ttu_paginated => 'صفحات';
+  String get reader_paginated => 'صفحات';
   @override
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
   @override
-  String get ttu_reader_styles => 'أولوية أنماط الكتاب';
+  String get reader_reader_styles => 'أولوية أنماط الكتاب';
   @override
-  String get ttu_scroll => 'تمرير';
+  String get reader_scroll => 'تمرير';
   @override
-  String get ttu_text_indentation => 'مسافة بادئة الفقرة';
+  String get reader_text_indentation => 'مسافة بادئة الفقرة';
   @override
-  String get ttu_text_justify => 'ضبط النص';
+  String get reader_text_justify => 'ضبط النص';
   @override
-  String get ttu_theme => 'المظهر';
+  String get reader_theme => 'المظهر';
   @override
-  String get ttu_vert_kerning => 'تقنين الحروف (عمودي)';
+  String get reader_vert_kerning => 'تقنين الحروف (عمودي)';
   @override
-  String get ttu_vert_text_orient => 'اتجاه النص';
+  String get reader_vert_text_orient => 'اتجاه النص';
   @override
-  String get ttu_vertical => 'عمودي';
+  String get reader_vertical => 'عمودي';
   @override
-  String get ttu_view_mode_label => 'صفحات / تمرير';
+  String get reader_view_mode_label => 'صفحات / تمرير';
   @override
-  String get ttu_vn => 'Visual Novel';
+  String get reader_vn => 'Visual Novel';
   @override
-  String get ttu_writing_direction => 'اتجاه الكتابة';
+  String get reader_writing_direction => 'اتجاه الكتابة';
   @override
   String get undo => 'تراجع';
   @override
@@ -11408,6 +11451,77 @@ class _StringsAr extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  @override
+  String get migration_settings_entry => 'Migrate to Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  @override
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  @override
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  @override
+  String get migration_download_fushi => 'Get Fushi';
+  @override
+  String get migration_start => 'Start migration';
+  @override
+  String get migration_open_fushi => 'Open Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  @override
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  @override
+  String get migration_reexport => 'Re-export';
+  @override
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  @override
+  String get migration_import_entry => 'Import from Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  @override
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  @override
+  String get migration_import_start => 'Start import';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  @override
+  String get migration_import_success => 'Import complete and verified.';
+  @override
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  @override
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  @override
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 // Path: <root>
@@ -12398,9 +12512,10 @@ class _StringsDe extends _StringsEn {
   String get color_primary_desc =>
       'Audio-Hervorhebung, Schaltflächen, Schalter';
   @override
-  String get color_sasayaki => 'Sasayaki-Hervorhebung';
+  String get color_sentence_audio_highlight => 'Sasayaki-Hervorhebung';
   @override
-  String get color_sasayaki_desc => 'Untertitel-Synchronisierung des Hörbuchs';
+  String get color_sentence_audio_highlight_desc =>
+      'Untertitel-Synchronisierung des Hörbuchs';
   @override
   String get color_secondary => 'Sekundär';
   @override
@@ -14861,49 +14976,52 @@ class _StringsDe extends _StringsEn {
   @override
   String get reverse_reader_bottom_bar => 'Untere Leserleiste umkehren';
   @override
-  String get sasayaki_all_zero =>
+  String get audiobook_rematch_all_zero =>
       'Alle Fenster mit 0% bewertet, bitte manuell anpassen';
   @override
-  String sasayaki_auto_failed({required Object error}) =>
+  String audiobook_rematch_auto_failed({required Object error}) =>
       'Automatischer Abgleich fehlgeschlagen: ${error}';
   @override
-  String get sasayaki_auto_match => 'Automatischer Abgleich';
+  String get audiobook_rematch_auto_match => 'Automatischer Abgleich';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       'Automatisch ${window} ausgewählt (Treffer ${pct}%)';
   @override
-  String sasayaki_default_value({required Object n}) => 'Standard ${n}';
+  String audiobook_rematch_default_value({required Object n}) =>
+      'Standard ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} übereinstimmend — ${detail}';
   @override
-  String get sasayaki_matching => 'Abgleich läuft...';
+  String get audiobook_rematch_matching => 'Abgleich läuft...';
   @override
-  String get sasayaki_no_chapters => 'EPUB hat keinen Kapiteltext';
+  String get audiobook_rematch_no_chapters => 'EPUB hat keinen Kapiteltext';
   @override
-  String get sasayaki_no_cues_to_match => 'Keine Cues zum Abgleichen';
+  String get audiobook_rematch_no_cues_to_match => 'Keine Cues zum Abgleichen';
   @override
-  String get sasayaki_no_sections =>
+  String get audiobook_rematch_no_sections =>
       'Kein ttu-Kapiteltext gefunden, automatischer Abgleich nicht möglich';
   @override
-  String get sasayaki_no_stored_cues =>
+  String get audiobook_rematch_no_stored_cues =>
       'Keine gespeicherten Cues, erneuter Abgleich nicht möglich';
   @override
-  String sasayaki_rematch_failed({required Object error}) =>
+  String audiobook_rematch_failed({required Object error}) =>
       'Neuabgleich fehlgeschlagen: ${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       'Neu abgeglichen: ${pct}% (Fenster: ${window})';
   @override
-  String get sasayaki_search_window => 'Suchfenster';
+  String get audiobook_rematch_search_window => 'Suchfenster';
   @override
-  String get sasayaki_similarity_threshold => 'Ähnlichkeitsschwelle';
+  String get audiobook_rematch_similarity_threshold => 'Ähnlichkeitsschwelle';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       'Mindestähnlichkeit für unscharfen Abgleich (Dice-Koeffizient). Senken, um mehr Textunterschiede zu tolerieren, aber zu niedrig verursacht Fehlabgleiche.';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       'Anzahl der Zeichen, die pro Cue im Text vorwärts durchsucht werden. Anpassen, wenn die Trefferquote niedrig ist; zu groß kann den Cursor bei kurzen verrauschten Cues verzerren.';
   @override
   String get saved_tags => 'Tags gespeichert.';
@@ -15693,11 +15811,6 @@ class _StringsDe extends _StringsEn {
   @override
   String get sync_exit_warning_title => 'Sync läuft';
   @override
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
-  @override
   String get sync_host => 'Host';
   @override
   String get sync_lan_discovery => 'LAN-Geräte';
@@ -16009,69 +16122,69 @@ class _StringsDe extends _StringsEn {
   @override
   String get torrent_upload_intro_title => 'Upload / seeding';
   @override
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
   @override
-  String get ttu_font_size => 'Schriftgröße';
+  String get reader_font_size => 'Schriftgröße';
   @override
-  String get ttu_font_vpal => 'VPAL (Vertikale Alt.)';
+  String get reader_font_vpal => 'VPAL (Vertikale Alt.)';
   @override
-  String get ttu_furigana_hide => 'Ausblenden';
+  String get reader_furigana_hide => 'Ausblenden';
   @override
-  String get ttu_furigana_mode => 'Furigana';
+  String get reader_furigana_mode => 'Furigana';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => 'Teilweise';
+  String get reader_furigana_partial => 'Teilweise';
   @override
-  String get ttu_furigana_show => 'Anzeigen';
+  String get reader_furigana_show => 'Anzeigen';
   @override
-  String get ttu_furigana_toggle => 'Umschalten';
+  String get reader_furigana_toggle => 'Umschalten';
   @override
-  String get ttu_horizontal => 'Horizontal';
+  String get reader_horizontal => 'Horizontal';
   @override
-  String get ttu_line_height => 'Zeilenhöhe';
+  String get reader_line_height => 'Zeilenhöhe';
   @override
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
   @override
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
   @override
-  String get ttu_no_books_added => 'Keine Bücher in der Bibliothek';
+  String get reader_no_books_added => 'Keine Bücher in der Bibliothek';
   @override
-  String get ttu_not_bound_cannot_rematch =>
+  String get reader_not_bound_cannot_rematch =>
       'Hörbuch nicht mit einem Buch verknüpft, Neuabgleich nicht möglich';
   @override
-  String get ttu_orient_mixed => 'Gemischt';
+  String get reader_orient_mixed => 'Gemischt';
   @override
-  String get ttu_orient_upright => 'Aufrecht';
+  String get reader_orient_upright => 'Aufrecht';
   @override
-  String get ttu_page_columns_auto => 'Automatisch';
+  String get reader_page_columns_auto => 'Automatisch';
   @override
-  String get ttu_paginated => 'Seitenweise';
+  String get reader_paginated => 'Seitenweise';
   @override
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
   @override
-  String get ttu_reader_styles => 'Buchstile bevorzugen';
+  String get reader_reader_styles => 'Buchstile bevorzugen';
   @override
-  String get ttu_scroll => 'Scrollen';
+  String get reader_scroll => 'Scrollen';
   @override
-  String get ttu_text_indentation => 'Absatzeinzug';
+  String get reader_text_indentation => 'Absatzeinzug';
   @override
-  String get ttu_text_justify => 'Blocksatz';
+  String get reader_text_justify => 'Blocksatz';
   @override
-  String get ttu_theme => 'Design';
+  String get reader_theme => 'Design';
   @override
-  String get ttu_vert_kerning => 'Zeichenabstand (vertikal)';
+  String get reader_vert_kerning => 'Zeichenabstand (vertikal)';
   @override
-  String get ttu_vert_text_orient => 'Textausrichtung';
+  String get reader_vert_text_orient => 'Textausrichtung';
   @override
-  String get ttu_vertical => 'Vertikal';
+  String get reader_vertical => 'Vertikal';
   @override
-  String get ttu_view_mode_label => 'Seiten / Scrollen';
+  String get reader_view_mode_label => 'Seiten / Scrollen';
   @override
-  String get ttu_vn => 'Visual Novel';
+  String get reader_vn => 'Visual Novel';
   @override
-  String get ttu_writing_direction => 'Schreibrichtung';
+  String get reader_writing_direction => 'Schreibrichtung';
   @override
   String get undo => 'Rückgängig';
   @override
@@ -18669,6 +18782,77 @@ class _StringsDe extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  @override
+  String get migration_settings_entry => 'Migrate to Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  @override
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  @override
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  @override
+  String get migration_download_fushi => 'Get Fushi';
+  @override
+  String get migration_start => 'Start migration';
+  @override
+  String get migration_open_fushi => 'Open Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  @override
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  @override
+  String get migration_reexport => 'Re-export';
+  @override
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  @override
+  String get migration_import_entry => 'Import from Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  @override
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  @override
+  String get migration_import_start => 'Start import';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  @override
+  String get migration_import_success => 'Import complete and verified.';
+  @override
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  @override
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  @override
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 // Path: <root>
@@ -19657,9 +19841,9 @@ class _StringsEs extends _StringsEn {
   @override
   String get color_primary_desc => 'Resaltado de audio, botones, interruptores';
   @override
-  String get color_sasayaki => 'Resaltado Sasayaki';
+  String get color_sentence_audio_highlight => 'Resaltado Sasayaki';
   @override
-  String get color_sasayaki_desc =>
+  String get color_sentence_audio_highlight_desc =>
       'Resaltado de sincronización de subtítulos del audiolibro';
   @override
   String get color_secondary => 'Secundario';
@@ -22127,49 +22311,54 @@ class _StringsEs extends _StringsEn {
   @override
   String get reverse_reader_bottom_bar => 'Invertir barra inferior del lector';
   @override
-  String get sasayaki_all_zero =>
+  String get audiobook_rematch_all_zero =>
       'Todas las ventanas obtuvieron 0%, ajusta manualmente';
   @override
-  String sasayaki_auto_failed({required Object error}) =>
+  String audiobook_rematch_auto_failed({required Object error}) =>
       'Emparejamiento automático fallido: ${error}';
   @override
-  String get sasayaki_auto_match => 'Emparejamiento automático';
+  String get audiobook_rematch_auto_match => 'Emparejamiento automático';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       'Selección automática ${window} (acierto ${pct}%)';
   @override
-  String sasayaki_default_value({required Object n}) => 'Predeterminado ${n}';
+  String audiobook_rematch_default_value({required Object n}) =>
+      'Predeterminado ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} coincidencia — ${detail}';
   @override
-  String get sasayaki_matching => 'Emparejando...';
+  String get audiobook_rematch_matching => 'Emparejando...';
   @override
-  String get sasayaki_no_chapters => 'EPUB no tiene texto de capítulos';
+  String get audiobook_rematch_no_chapters =>
+      'EPUB no tiene texto de capítulos';
   @override
-  String get sasayaki_no_cues_to_match => 'No hay marcas para emparejar';
+  String get audiobook_rematch_no_cues_to_match =>
+      'No hay marcas para emparejar';
   @override
-  String get sasayaki_no_sections =>
+  String get audiobook_rematch_no_sections =>
       'No se encontró texto de capítulo en ttu, no se puede emparejar automáticamente';
   @override
-  String get sasayaki_no_stored_cues =>
+  String get audiobook_rematch_no_stored_cues =>
       'No hay marcas almacenadas, no se puede re-ejecutar';
   @override
-  String sasayaki_rematch_failed({required Object error}) =>
+  String audiobook_rematch_failed({required Object error}) =>
       'Re-emparejamiento fallido: ${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       'Reemparejado: ${pct}% (ventana: ${window})';
   @override
-  String get sasayaki_search_window => 'Ventana de búsqueda';
+  String get audiobook_rematch_search_window => 'Ventana de búsqueda';
   @override
-  String get sasayaki_similarity_threshold => 'Umbral de similitud';
+  String get audiobook_rematch_similarity_threshold => 'Umbral de similitud';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       'Similitud mínima para emparejamiento difuso (coeficiente de Dice). Reduce para tolerar más diferencias de texto, pero un valor demasiado bajo causa coincidencias falsas.';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       'Número de caracteres a buscar hacia adelante por marca en el texto. Ajusta si la tasa de aciertos es baja; demasiado grande puede desviar el cursor con marcas cortas y ruidosas.';
   @override
   String get saved_tags => 'Etiquetas guardadas.';
@@ -22964,11 +23153,6 @@ class _StringsEs extends _StringsEn {
   @override
   String get sync_exit_warning_title => 'Sincronización en curso';
   @override
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
-  @override
   String get sync_host => 'Servidor';
   @override
   String get sync_lan_discovery => 'Dispositivos en la red local';
@@ -23282,69 +23466,69 @@ class _StringsEs extends _StringsEn {
   @override
   String get torrent_upload_intro_title => 'Upload / seeding';
   @override
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
   @override
-  String get ttu_font_size => 'Tamaño de fuente';
+  String get reader_font_size => 'Tamaño de fuente';
   @override
-  String get ttu_font_vpal => 'VPAL (alt. vertical)';
+  String get reader_font_vpal => 'VPAL (alt. vertical)';
   @override
-  String get ttu_furigana_hide => 'Ocultar';
+  String get reader_furigana_hide => 'Ocultar';
   @override
-  String get ttu_furigana_mode => 'Furigana';
+  String get reader_furigana_mode => 'Furigana';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => 'Parcial';
+  String get reader_furigana_partial => 'Parcial';
   @override
-  String get ttu_furigana_show => 'Mostrar';
+  String get reader_furigana_show => 'Mostrar';
   @override
-  String get ttu_furigana_toggle => 'Alternar';
+  String get reader_furigana_toggle => 'Alternar';
   @override
-  String get ttu_horizontal => 'Horizontal';
+  String get reader_horizontal => 'Horizontal';
   @override
-  String get ttu_line_height => 'Altura de línea';
+  String get reader_line_height => 'Altura de línea';
   @override
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
   @override
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
   @override
-  String get ttu_no_books_added => 'No hay libros en la biblioteca';
+  String get reader_no_books_added => 'No hay libros en la biblioteca';
   @override
-  String get ttu_not_bound_cannot_rematch =>
+  String get reader_not_bound_cannot_rematch =>
       'El audiolibro no está vinculado a un libro, no se puede re-emparejar';
   @override
-  String get ttu_orient_mixed => 'Mixto';
+  String get reader_orient_mixed => 'Mixto';
   @override
-  String get ttu_orient_upright => 'Vertical';
+  String get reader_orient_upright => 'Vertical';
   @override
-  String get ttu_page_columns_auto => 'Automático';
+  String get reader_page_columns_auto => 'Automático';
   @override
-  String get ttu_paginated => 'Paginado';
+  String get reader_paginated => 'Paginado';
   @override
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
   @override
-  String get ttu_reader_styles => 'Priorizar estilos del libro';
+  String get reader_reader_styles => 'Priorizar estilos del libro';
   @override
-  String get ttu_scroll => 'Desplazamiento';
+  String get reader_scroll => 'Desplazamiento';
   @override
-  String get ttu_text_indentation => 'Sangría de párrafo';
+  String get reader_text_indentation => 'Sangría de párrafo';
   @override
-  String get ttu_text_justify => 'Justificación de texto';
+  String get reader_text_justify => 'Justificación de texto';
   @override
-  String get ttu_theme => 'Tema';
+  String get reader_theme => 'Tema';
   @override
-  String get ttu_vert_kerning => 'Interletraje (vertical)';
+  String get reader_vert_kerning => 'Interletraje (vertical)';
   @override
-  String get ttu_vert_text_orient => 'Orientación del texto';
+  String get reader_vert_text_orient => 'Orientación del texto';
   @override
-  String get ttu_vertical => 'Vertical';
+  String get reader_vertical => 'Vertical';
   @override
-  String get ttu_view_mode_label => 'Páginas / Desplazamiento';
+  String get reader_view_mode_label => 'Páginas / Desplazamiento';
   @override
-  String get ttu_vn => 'Visual Novel';
+  String get reader_vn => 'Visual Novel';
   @override
-  String get ttu_writing_direction => 'Dirección de escritura';
+  String get reader_writing_direction => 'Dirección de escritura';
   @override
   String get undo => 'Deshacer';
   @override
@@ -25945,6 +26129,77 @@ class _StringsEs extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  @override
+  String get migration_settings_entry => 'Migrate to Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  @override
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  @override
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  @override
+  String get migration_download_fushi => 'Get Fushi';
+  @override
+  String get migration_start => 'Start migration';
+  @override
+  String get migration_open_fushi => 'Open Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  @override
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  @override
+  String get migration_reexport => 'Re-export';
+  @override
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  @override
+  String get migration_import_entry => 'Import from Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  @override
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  @override
+  String get migration_import_start => 'Start import';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  @override
+  String get migration_import_success => 'Import complete and verified.';
+  @override
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  @override
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  @override
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 // Path: <root>
@@ -26936,9 +27191,9 @@ class _StringsFr extends _StringsEn {
   @override
   String get color_primary_desc => 'Surlignage audio, boutons, commutateurs';
   @override
-  String get color_sasayaki => 'Surlignage Sasayaki';
+  String get color_sentence_audio_highlight => 'Surlignage Sasayaki';
   @override
-  String get color_sasayaki_desc =>
+  String get color_sentence_audio_highlight_desc =>
       'Surlignage de synchronisation des sous-titres du livre audio';
   @override
   String get color_secondary => 'Secondaire';
@@ -29412,49 +29667,54 @@ class _StringsFr extends _StringsEn {
   String get reverse_reader_bottom_bar =>
       'Inverser la barre inférieure du lecteur';
   @override
-  String get sasayaki_all_zero =>
+  String get audiobook_rematch_all_zero =>
       'Toutes les fenêtres ont obtenu 0 %, veuillez ajuster manuellement';
   @override
-  String sasayaki_auto_failed({required Object error}) =>
+  String audiobook_rematch_auto_failed({required Object error}) =>
       'échec de la correspondance automatique : ${error}';
   @override
-  String get sasayaki_auto_match => 'Correspondance automatique';
+  String get audiobook_rematch_auto_match => 'Correspondance automatique';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       'Sélection automatique de ${window} (taux ${pct}%)';
   @override
-  String sasayaki_default_value({required Object n}) => 'Par défaut ${n}';
+  String audiobook_rematch_default_value({required Object n}) =>
+      'Par défaut ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} correspondance — ${detail}';
   @override
-  String get sasayaki_matching => 'Correspondance en cours...';
+  String get audiobook_rematch_matching => 'Correspondance en cours...';
   @override
-  String get sasayaki_no_chapters => 'EPUB ne contient aucun texte de chapitre';
+  String get audiobook_rematch_no_chapters =>
+      'EPUB ne contient aucun texte de chapitre';
   @override
-  String get sasayaki_no_cues_to_match => 'Aucun repère à faire correspondre';
+  String get audiobook_rematch_no_cues_to_match =>
+      'Aucun repère à faire correspondre';
   @override
-  String get sasayaki_no_sections =>
+  String get audiobook_rematch_no_sections =>
       'Aucun texte de chapitre ttu trouvé, correspondance automatique impossible';
   @override
-  String get sasayaki_no_stored_cues =>
+  String get audiobook_rematch_no_stored_cues =>
       'Aucun repère enregistré, impossible de relancer';
   @override
-  String sasayaki_rematch_failed({required Object error}) =>
+  String audiobook_rematch_failed({required Object error}) =>
       'échec de la correspondance : ${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       'Recorrespondance : ${pct}% (fenêtre : ${window})';
   @override
-  String get sasayaki_search_window => 'Fenêtre de recherche';
+  String get audiobook_rematch_search_window => 'Fenêtre de recherche';
   @override
-  String get sasayaki_similarity_threshold => 'Seuil de similarité';
+  String get audiobook_rematch_similarity_threshold => 'Seuil de similarité';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       'Similarité minimale pour la correspondance floue (coefficient de Dice). Abaissez pour tolérer plus de différences, mais une valeur trop basse provoque de fausses correspondances.';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       'Nombre de caractères à rechercher en avant par repère dans le texte. Ajustez si le taux de correspondance est faible ; une valeur trop élevée peut fausser le curseur avec des repères courts et bruités.';
   @override
   String get saved_tags => 'étiquettes enregistrées.';
@@ -30252,11 +30512,6 @@ class _StringsFr extends _StringsEn {
   @override
   String get sync_exit_warning_title => 'Sync en cours';
   @override
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
-  @override
   String get sync_host => 'Hôte';
   @override
   String get sync_lan_discovery => 'Appareils du réseau local';
@@ -30571,69 +30826,69 @@ class _StringsFr extends _StringsEn {
   @override
   String get torrent_upload_intro_title => 'Upload / seeding';
   @override
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
   @override
-  String get ttu_font_size => 'Taille de police';
+  String get reader_font_size => 'Taille de police';
   @override
-  String get ttu_font_vpal => 'VPAL (alt. vertical)';
+  String get reader_font_vpal => 'VPAL (alt. vertical)';
   @override
-  String get ttu_furigana_hide => 'Masquer';
+  String get reader_furigana_hide => 'Masquer';
   @override
-  String get ttu_furigana_mode => 'Furigana';
+  String get reader_furigana_mode => 'Furigana';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => 'Partiel';
+  String get reader_furigana_partial => 'Partiel';
   @override
-  String get ttu_furigana_show => 'Afficher';
+  String get reader_furigana_show => 'Afficher';
   @override
-  String get ttu_furigana_toggle => 'Basculer';
+  String get reader_furigana_toggle => 'Basculer';
   @override
-  String get ttu_horizontal => 'Horizontal';
+  String get reader_horizontal => 'Horizontal';
   @override
-  String get ttu_line_height => 'Hauteur de ligne';
+  String get reader_line_height => 'Hauteur de ligne';
   @override
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
   @override
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
   @override
-  String get ttu_no_books_added => 'Aucun livre dans la bibliothèque';
+  String get reader_no_books_added => 'Aucun livre dans la bibliothèque';
   @override
-  String get ttu_not_bound_cannot_rematch =>
+  String get reader_not_bound_cannot_rematch =>
       'Le livre audio n\'est pas lié à un livre, impossible de relancer la correspondance';
   @override
-  String get ttu_orient_mixed => 'Mixte';
+  String get reader_orient_mixed => 'Mixte';
   @override
-  String get ttu_orient_upright => 'Droit';
+  String get reader_orient_upright => 'Droit';
   @override
-  String get ttu_page_columns_auto => 'Automatique';
+  String get reader_page_columns_auto => 'Automatique';
   @override
-  String get ttu_paginated => 'Paginé';
+  String get reader_paginated => 'Paginé';
   @override
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
   @override
-  String get ttu_reader_styles => 'Prioriser les styles du livre';
+  String get reader_reader_styles => 'Prioriser les styles du livre';
   @override
-  String get ttu_scroll => 'Défilement';
+  String get reader_scroll => 'Défilement';
   @override
-  String get ttu_text_indentation => 'Retrait de paragraphe';
+  String get reader_text_indentation => 'Retrait de paragraphe';
   @override
-  String get ttu_text_justify => 'Justification du texte';
+  String get reader_text_justify => 'Justification du texte';
   @override
-  String get ttu_theme => 'Thème';
+  String get reader_theme => 'Thème';
   @override
-  String get ttu_vert_kerning => 'Crénage (vertical)';
+  String get reader_vert_kerning => 'Crénage (vertical)';
   @override
-  String get ttu_vert_text_orient => 'Orientation du texte';
+  String get reader_vert_text_orient => 'Orientation du texte';
   @override
-  String get ttu_vertical => 'Vertical';
+  String get reader_vertical => 'Vertical';
   @override
-  String get ttu_view_mode_label => 'Pages / Défilement';
+  String get reader_view_mode_label => 'Pages / Défilement';
   @override
-  String get ttu_vn => 'Visual Novel';
+  String get reader_vn => 'Visual Novel';
   @override
-  String get ttu_writing_direction => 'Direction d\'écriture';
+  String get reader_writing_direction => 'Direction d\'écriture';
   @override
   String get undo => 'Annuler';
   @override
@@ -33233,6 +33488,77 @@ class _StringsFr extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  @override
+  String get migration_settings_entry => 'Migrate to Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  @override
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  @override
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  @override
+  String get migration_download_fushi => 'Get Fushi';
+  @override
+  String get migration_start => 'Start migration';
+  @override
+  String get migration_open_fushi => 'Open Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  @override
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  @override
+  String get migration_reexport => 'Re-export';
+  @override
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  @override
+  String get migration_import_entry => 'Import from Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  @override
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  @override
+  String get migration_import_start => 'Start import';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  @override
+  String get migration_import_success => 'Import complete and verified.';
+  @override
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  @override
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  @override
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 // Path: <root>
@@ -34214,9 +34540,10 @@ class _StringsId extends _StringsEn {
   @override
   String get color_primary_desc => 'Sorotan audio, tombol, sakelar';
   @override
-  String get color_sasayaki => 'Sorotan Sasayaki';
+  String get color_sentence_audio_highlight => 'Sorotan Sasayaki';
   @override
-  String get color_sasayaki_desc => 'Sorotan sinkronisasi subtitle buku audio';
+  String get color_sentence_audio_highlight_desc =>
+      'Sorotan sinkronisasi subtitle buku audio';
   @override
   String get color_secondary => 'Sekunder';
   @override
@@ -36661,49 +36988,52 @@ class _StringsId extends _StringsEn {
   @override
   String get reverse_reader_bottom_bar => 'Balik bilah bawah pembaca';
   @override
-  String get sasayaki_all_zero =>
+  String get audiobook_rematch_all_zero =>
       'Semua jendela skor 0%, silakan sesuaikan secara manual';
   @override
-  String sasayaki_auto_failed({required Object error}) =>
+  String audiobook_rematch_auto_failed({required Object error}) =>
       'Pencocokan otomatis gagal: ${error}';
   @override
-  String get sasayaki_auto_match => 'Pencocokan Otomatis';
+  String get audiobook_rematch_auto_match => 'Pencocokan Otomatis';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       'Otomatis memilih ${window} (cocok ${pct}%)';
   @override
-  String sasayaki_default_value({required Object n}) => 'Default ${n}';
+  String audiobook_rematch_default_value({required Object n}) => 'Default ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} cocok — ${detail}';
   @override
-  String get sasayaki_matching => 'Mencocokkan...';
+  String get audiobook_rematch_matching => 'Mencocokkan...';
   @override
-  String get sasayaki_no_chapters => 'EPUB tidak memiliki teks bab';
+  String get audiobook_rematch_no_chapters => 'EPUB tidak memiliki teks bab';
   @override
-  String get sasayaki_no_cues_to_match => 'Tidak ada cue untuk dicocokkan';
+  String get audiobook_rematch_no_cues_to_match =>
+      'Tidak ada cue untuk dicocokkan';
   @override
-  String get sasayaki_no_sections =>
+  String get audiobook_rematch_no_sections =>
       'Teks bab ttu tidak ditemukan, tidak dapat mencocokkan otomatis';
   @override
-  String get sasayaki_no_stored_cues =>
+  String get audiobook_rematch_no_stored_cues =>
       'Tidak ada cue tersimpan, tidak dapat menjalankan ulang';
   @override
-  String sasayaki_rematch_failed({required Object error}) =>
+  String audiobook_rematch_failed({required Object error}) =>
       'Pencocokan ulang gagal: ${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       'Dicocokkan ulang: ${pct}% (jendela: ${window})';
   @override
-  String get sasayaki_search_window => 'Jendela Pencarian';
+  String get audiobook_rematch_search_window => 'Jendela Pencarian';
   @override
-  String get sasayaki_similarity_threshold => 'Ambang Kemiripan';
+  String get audiobook_rematch_similarity_threshold => 'Ambang Kemiripan';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       'Kemiripan minimum untuk pencocokan fuzzy (koefisien Dice). Turunkan untuk mentoleransi lebih banyak perbedaan teks, tapi terlalu rendah menyebabkan kecocokan palsu.';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       'Jumlah karakter untuk dicari ke depan per cue dalam teks. Sesuaikan jika tingkat kecocokan rendah; terlalu besar dapat menggeser kursor dengan cue pendek yang berisik.';
   @override
   String get saved_tags => 'Tag disimpan.';
@@ -37487,11 +37817,6 @@ class _StringsId extends _StringsEn {
   @override
   String get sync_exit_warning_title => 'Sinkronisasi Berlangsung';
   @override
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
-  @override
   String get sync_host => 'Host';
   @override
   String get sync_lan_discovery => 'Perangkat LAN';
@@ -37800,69 +38125,69 @@ class _StringsId extends _StringsEn {
   @override
   String get torrent_upload_intro_title => 'Upload / seeding';
   @override
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
   @override
-  String get ttu_font_size => 'Ukuran Font';
+  String get reader_font_size => 'Ukuran Font';
   @override
-  String get ttu_font_vpal => 'VPAL (Alt Vertikal)';
+  String get reader_font_vpal => 'VPAL (Alt Vertikal)';
   @override
-  String get ttu_furigana_hide => 'Sembunyikan';
+  String get reader_furigana_hide => 'Sembunyikan';
   @override
-  String get ttu_furigana_mode => 'Furigana';
+  String get reader_furigana_mode => 'Furigana';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => 'Sebagian';
+  String get reader_furigana_partial => 'Sebagian';
   @override
-  String get ttu_furigana_show => 'Tampilkan';
+  String get reader_furigana_show => 'Tampilkan';
   @override
-  String get ttu_furigana_toggle => 'Alihkan';
+  String get reader_furigana_toggle => 'Alihkan';
   @override
-  String get ttu_horizontal => 'Horizontal';
+  String get reader_horizontal => 'Horizontal';
   @override
-  String get ttu_line_height => 'Tinggi Baris';
+  String get reader_line_height => 'Tinggi Baris';
   @override
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
   @override
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
   @override
-  String get ttu_no_books_added => 'Belum ada buku di perpustakaan';
+  String get reader_no_books_added => 'Belum ada buku di perpustakaan';
   @override
-  String get ttu_not_bound_cannot_rematch =>
+  String get reader_not_bound_cannot_rematch =>
       'Buku audio tidak terikat ke buku, tidak dapat mencocokkan ulang';
   @override
-  String get ttu_orient_mixed => 'Campuran';
+  String get reader_orient_mixed => 'Campuran';
   @override
-  String get ttu_orient_upright => 'Tegak';
+  String get reader_orient_upright => 'Tegak';
   @override
-  String get ttu_page_columns_auto => 'Otomatis';
+  String get reader_page_columns_auto => 'Otomatis';
   @override
-  String get ttu_paginated => 'Paginasi';
+  String get reader_paginated => 'Paginasi';
   @override
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
   @override
-  String get ttu_reader_styles => 'Prioritaskan Gaya Buku';
+  String get reader_reader_styles => 'Prioritaskan Gaya Buku';
   @override
-  String get ttu_scroll => 'Gulir';
+  String get reader_scroll => 'Gulir';
   @override
-  String get ttu_text_indentation => 'Indentasi Paragraf';
+  String get reader_text_indentation => 'Indentasi Paragraf';
   @override
-  String get ttu_text_justify => 'Perataan Teks';
+  String get reader_text_justify => 'Perataan Teks';
   @override
-  String get ttu_theme => 'Tema';
+  String get reader_theme => 'Tema';
   @override
-  String get ttu_vert_kerning => 'Kerning Font (Vertikal)';
+  String get reader_vert_kerning => 'Kerning Font (Vertikal)';
   @override
-  String get ttu_vert_text_orient => 'Orientasi Teks';
+  String get reader_vert_text_orient => 'Orientasi Teks';
   @override
-  String get ttu_vertical => 'Vertikal';
+  String get reader_vertical => 'Vertikal';
   @override
-  String get ttu_view_mode_label => 'Halaman / Gulir';
+  String get reader_view_mode_label => 'Halaman / Gulir';
   @override
-  String get ttu_vn => 'Visual Novel';
+  String get reader_vn => 'Visual Novel';
   @override
-  String get ttu_writing_direction => 'Arah Penulisan';
+  String get reader_writing_direction => 'Arah Penulisan';
   @override
   String get undo => 'Urungkan';
   @override
@@ -40450,6 +40775,77 @@ class _StringsId extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  @override
+  String get migration_settings_entry => 'Migrate to Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  @override
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  @override
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  @override
+  String get migration_download_fushi => 'Get Fushi';
+  @override
+  String get migration_start => 'Start migration';
+  @override
+  String get migration_open_fushi => 'Open Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  @override
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  @override
+  String get migration_reexport => 'Re-export';
+  @override
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  @override
+  String get migration_import_entry => 'Import from Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  @override
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  @override
+  String get migration_import_start => 'Start import';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  @override
+  String get migration_import_success => 'Import complete and verified.';
+  @override
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  @override
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  @override
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 // Path: <root>
@@ -41438,9 +41834,9 @@ class _StringsIt extends _StringsEn {
   String get color_primary_desc =>
       'Evidenziazione audio, pulsanti, interruttori';
   @override
-  String get color_sasayaki => 'Evidenziazione Sasayaki';
+  String get color_sentence_audio_highlight => 'Evidenziazione Sasayaki';
   @override
-  String get color_sasayaki_desc =>
+  String get color_sentence_audio_highlight_desc =>
       'Evidenziazione sincronizzazione sottotitoli audiolibro';
   @override
   String get color_secondary => 'Secondario';
@@ -43902,50 +44298,54 @@ class _StringsIt extends _StringsEn {
   @override
   String get reverse_reader_bottom_bar => 'Inverti barra inferiore del lettore';
   @override
-  String get sasayaki_all_zero =>
+  String get audiobook_rematch_all_zero =>
       'Tutte le finestre hanno ottenuto 0%, regolare manualmente';
   @override
-  String sasayaki_auto_failed({required Object error}) =>
+  String audiobook_rematch_auto_failed({required Object error}) =>
       'Corrispondenza automatica fallita: ${error}';
   @override
-  String get sasayaki_auto_match => 'Corrispondenza automatica';
+  String get audiobook_rematch_auto_match => 'Corrispondenza automatica';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       'Selezione automatica di ${window} (tasso ${pct}%)';
   @override
-  String sasayaki_default_value({required Object n}) => 'Predefinito ${n}';
+  String audiobook_rematch_default_value({required Object n}) =>
+      'Predefinito ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} corrispondente — ${detail}';
   @override
-  String get sasayaki_matching => 'Corrispondenza in corso...';
+  String get audiobook_rematch_matching => 'Corrispondenza in corso...';
   @override
-  String get sasayaki_no_chapters => 'EPUB non contiene testo di capitolo';
+  String get audiobook_rematch_no_chapters =>
+      'EPUB non contiene testo di capitolo';
   @override
-  String get sasayaki_no_cues_to_match =>
+  String get audiobook_rematch_no_cues_to_match =>
       'Nessun riferimento da far corrispondere';
   @override
-  String get sasayaki_no_sections =>
+  String get audiobook_rematch_no_sections =>
       'Nessun testo di capitolo ttu trovato, corrispondenza automatica impossibile';
   @override
-  String get sasayaki_no_stored_cues =>
+  String get audiobook_rematch_no_stored_cues =>
       'Nessun riferimento memorizzato, impossibile riavviare';
   @override
-  String sasayaki_rematch_failed({required Object error}) =>
+  String audiobook_rematch_failed({required Object error}) =>
       'Corrispondenza fallita: ${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       'Ricalcolato: ${pct}% (finestra: ${window})';
   @override
-  String get sasayaki_search_window => 'Finestra di ricerca';
+  String get audiobook_rematch_search_window => 'Finestra di ricerca';
   @override
-  String get sasayaki_similarity_threshold => 'Soglia di similarità';
+  String get audiobook_rematch_similarity_threshold => 'Soglia di similarità';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       'Similarità minima per la corrispondenza fuzzy (coefficiente di Dice). Abbassare per tollerare più differenze, ma un valore troppo basso causa false corrispondenze.';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       'Numero di caratteri da cercare in avanti per riferimento nel testo. Regola se il tasso di corrispondenza è basso; un valore troppo alto può falsare il cursore con riferimenti brevi e rumorosi.';
   @override
   String get saved_tags => 'Etichette salvate.';
@@ -44736,11 +45136,6 @@ class _StringsIt extends _StringsEn {
   @override
   String get sync_exit_warning_title => 'Sincronizzazione in corso';
   @override
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
-  @override
   String get sync_host => 'Host';
   @override
   String get sync_lan_discovery => 'Dispositivi LAN';
@@ -45052,69 +45447,69 @@ class _StringsIt extends _StringsEn {
   @override
   String get torrent_upload_intro_title => 'Upload / seeding';
   @override
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
   @override
-  String get ttu_font_size => 'Dimensione carattere';
+  String get reader_font_size => 'Dimensione carattere';
   @override
-  String get ttu_font_vpal => 'VPAL (alt. verticale)';
+  String get reader_font_vpal => 'VPAL (alt. verticale)';
   @override
-  String get ttu_furigana_hide => 'Nascondi';
+  String get reader_furigana_hide => 'Nascondi';
   @override
-  String get ttu_furigana_mode => 'Furigana';
+  String get reader_furigana_mode => 'Furigana';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => 'Parziale';
+  String get reader_furigana_partial => 'Parziale';
   @override
-  String get ttu_furigana_show => 'Mostra';
+  String get reader_furigana_show => 'Mostra';
   @override
-  String get ttu_furigana_toggle => 'Alterna';
+  String get reader_furigana_toggle => 'Alterna';
   @override
-  String get ttu_horizontal => 'Orizzontale';
+  String get reader_horizontal => 'Orizzontale';
   @override
-  String get ttu_line_height => 'Altezza riga';
+  String get reader_line_height => 'Altezza riga';
   @override
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
   @override
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
   @override
-  String get ttu_no_books_added => 'Nessun libro nella libreria';
+  String get reader_no_books_added => 'Nessun libro nella libreria';
   @override
-  String get ttu_not_bound_cannot_rematch =>
+  String get reader_not_bound_cannot_rematch =>
       'L\'audiolibro non è collegato a un libro, impossibile riavviare la corrispondenza';
   @override
-  String get ttu_orient_mixed => 'Misto';
+  String get reader_orient_mixed => 'Misto';
   @override
-  String get ttu_orient_upright => 'Diritto';
+  String get reader_orient_upright => 'Diritto';
   @override
-  String get ttu_page_columns_auto => 'Automatico';
+  String get reader_page_columns_auto => 'Automatico';
   @override
-  String get ttu_paginated => 'Paginato';
+  String get reader_paginated => 'Paginato';
   @override
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
   @override
-  String get ttu_reader_styles => 'Priorità stili del libro';
+  String get reader_reader_styles => 'Priorità stili del libro';
   @override
-  String get ttu_scroll => 'Scorrimento';
+  String get reader_scroll => 'Scorrimento';
   @override
-  String get ttu_text_indentation => 'Rientro paragrafo';
+  String get reader_text_indentation => 'Rientro paragrafo';
   @override
-  String get ttu_text_justify => 'Giustificazione testo';
+  String get reader_text_justify => 'Giustificazione testo';
   @override
-  String get ttu_theme => 'Tema';
+  String get reader_theme => 'Tema';
   @override
-  String get ttu_vert_kerning => 'Crenatura (verticale)';
+  String get reader_vert_kerning => 'Crenatura (verticale)';
   @override
-  String get ttu_vert_text_orient => 'Orientamento testo';
+  String get reader_vert_text_orient => 'Orientamento testo';
   @override
-  String get ttu_vertical => 'Verticale';
+  String get reader_vertical => 'Verticale';
   @override
-  String get ttu_view_mode_label => 'Pagine / Scorrimento';
+  String get reader_view_mode_label => 'Pagine / Scorrimento';
   @override
-  String get ttu_vn => 'Visual Novel';
+  String get reader_vn => 'Visual Novel';
   @override
-  String get ttu_writing_direction => 'Direzione di scrittura';
+  String get reader_writing_direction => 'Direzione di scrittura';
   @override
   String get undo => 'Annulla';
   @override
@@ -47713,6 +48108,77 @@ class _StringsIt extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  @override
+  String get migration_settings_entry => 'Migrate to Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  @override
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  @override
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  @override
+  String get migration_download_fushi => 'Get Fushi';
+  @override
+  String get migration_start => 'Start migration';
+  @override
+  String get migration_open_fushi => 'Open Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  @override
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  @override
+  String get migration_reexport => 'Re-export';
+  @override
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  @override
+  String get migration_import_entry => 'Import from Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  @override
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  @override
+  String get migration_import_start => 'Start import';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  @override
+  String get migration_import_success => 'Import complete and verified.';
+  @override
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  @override
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  @override
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 // Path: <root>
@@ -48677,9 +49143,9 @@ class _StringsJa extends _StringsEn {
   @override
   String get color_primary_desc => '音声ハイライト、ボタン、スイッチ';
   @override
-  String get color_sasayaki => 'ささやきハイライト';
+  String get color_sentence_audio_highlight => 'ささやきハイライト';
   @override
-  String get color_sasayaki_desc => 'オーディオブック字幕同期ハイライト';
+  String get color_sentence_audio_highlight_desc => 'オーディオブック字幕同期ハイライト';
   @override
   String get color_secondary => 'セカンダリ';
   @override
@@ -51088,46 +51554,49 @@ class _StringsJa extends _StringsEn {
   @override
   String get reverse_reader_bottom_bar => 'リーダーの下部バーを反転';
   @override
-  String get sasayaki_all_zero => 'すべてのウィンドウのスコアが0%です。手動で調整してください';
+  String get audiobook_rematch_all_zero => 'すべてのウィンドウのスコアが0%です。手動で調整してください';
   @override
-  String sasayaki_auto_failed({required Object error}) =>
+  String audiobook_rematch_auto_failed({required Object error}) =>
       '自動マッチングに失敗しました：${error}';
   @override
-  String get sasayaki_auto_match => '自動マッチング';
+  String get audiobook_rematch_auto_match => '自動マッチング';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       '${window} を自動選択しました（ヒット率 ${pct}%）';
   @override
-  String sasayaki_default_value({required Object n}) => 'デフォルト ${n}';
+  String audiobook_rematch_default_value({required Object n}) => 'デフォルト ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} マッチ — ${detail}';
   @override
-  String get sasayaki_matching => 'マッチング中...';
+  String get audiobook_rematch_matching => 'マッチング中...';
   @override
-  String get sasayaki_no_chapters => 'EPUBにチャプターテキストがありません';
+  String get audiobook_rematch_no_chapters => 'EPUBにチャプターテキストがありません';
   @override
-  String get sasayaki_no_cues_to_match => 'マッチングするキューがありません';
+  String get audiobook_rematch_no_cues_to_match => 'マッチングするキューがありません';
   @override
-  String get sasayaki_no_sections => 'ttuのチャプターテキストが見つかりません。自動マッチングできません';
+  String get audiobook_rematch_no_sections =>
+      'ttuのチャプターテキストが見つかりません。自動マッチングできません';
   @override
-  String get sasayaki_no_stored_cues => '保存されたキューがないため、再実行できません';
+  String get audiobook_rematch_no_stored_cues => '保存されたキューがないため、再実行できません';
   @override
-  String sasayaki_rematch_failed({required Object error}) =>
+  String audiobook_rematch_failed({required Object error}) =>
       '再マッチングに失敗しました：${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       '再マッチング結果：${pct}%（ウィンドウ：${window}）';
   @override
-  String get sasayaki_search_window => '検索ウィンドウ';
+  String get audiobook_rematch_search_window => '検索ウィンドウ';
   @override
-  String get sasayaki_similarity_threshold => '類似度しきい値';
+  String get audiobook_rematch_similarity_threshold => '類似度しきい値';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       'ファジーマッチングの最小類似度（Dice係数）。テキストの差異を許容するには下げてください。ただし低すぎると誤マッチが発生します。';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       'テキスト内で各キューごとに前方検索する文字数。ヒット率が低い場合は調整してください。大きすぎると短い/ノイズの多いキューでカーソルがずれる場合があります。';
   @override
   String get saved_tags => 'タグを保存しました。';
@@ -51877,11 +52346,6 @@ class _StringsJa extends _StringsEn {
   @override
   String get sync_exit_warning_title => '同期中';
   @override
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
-  @override
   String get sync_host => 'ホスト';
   @override
   String get sync_lan_discovery => 'LAN内のデバイス';
@@ -52183,68 +52647,68 @@ class _StringsJa extends _StringsEn {
   @override
   String get torrent_upload_intro_title => 'Upload / seeding';
   @override
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
   @override
-  String get ttu_font_size => 'フォントサイズ';
+  String get reader_font_size => 'フォントサイズ';
   @override
-  String get ttu_font_vpal => 'VPAL（縦書き代替）';
+  String get reader_font_vpal => 'VPAL（縦書き代替）';
   @override
-  String get ttu_furigana_hide => '非表示';
+  String get reader_furigana_hide => '非表示';
   @override
-  String get ttu_furigana_mode => 'ふりがな';
+  String get reader_furigana_mode => 'ふりがな';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => '一部';
+  String get reader_furigana_partial => '一部';
   @override
-  String get ttu_furigana_show => '表示';
+  String get reader_furigana_show => '表示';
   @override
-  String get ttu_furigana_toggle => '切替';
+  String get reader_furigana_toggle => '切替';
   @override
-  String get ttu_horizontal => '横書き';
+  String get reader_horizontal => '横書き';
   @override
-  String get ttu_line_height => '行の高さ';
+  String get reader_line_height => '行の高さ';
   @override
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
   @override
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
   @override
-  String get ttu_no_books_added => '書庫に本がありません';
+  String get reader_no_books_added => '書庫に本がありません';
   @override
-  String get ttu_not_bound_cannot_rematch => '本に紐付けされていないため、再マッチングできません';
+  String get reader_not_bound_cannot_rematch => '本に紐付けされていないため、再マッチングできません';
   @override
-  String get ttu_orient_mixed => '混合';
+  String get reader_orient_mixed => '混合';
   @override
-  String get ttu_orient_upright => '正立';
+  String get reader_orient_upright => '正立';
   @override
-  String get ttu_page_columns_auto => '自動';
+  String get reader_page_columns_auto => '自動';
   @override
-  String get ttu_paginated => 'ページ送り';
+  String get reader_paginated => 'ページ送り';
   @override
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
   @override
-  String get ttu_reader_styles => '書籍スタイル優先';
+  String get reader_reader_styles => '書籍スタイル優先';
   @override
-  String get ttu_scroll => 'スクロール';
+  String get reader_scroll => 'スクロール';
   @override
-  String get ttu_text_indentation => '段落インデント';
+  String get reader_text_indentation => '段落インデント';
   @override
-  String get ttu_text_justify => '両端揃え';
+  String get reader_text_justify => '両端揃え';
   @override
-  String get ttu_theme => 'テーマ';
+  String get reader_theme => 'テーマ';
   @override
-  String get ttu_vert_kerning => 'カーニング（縦書き）';
+  String get reader_vert_kerning => 'カーニング（縦書き）';
   @override
-  String get ttu_vert_text_orient => '文字の向き';
+  String get reader_vert_text_orient => '文字の向き';
   @override
-  String get ttu_vertical => '縦書き';
+  String get reader_vertical => '縦書き';
   @override
-  String get ttu_view_mode_label => 'ページ / スクロール';
+  String get reader_view_mode_label => 'ページ / スクロール';
   @override
-  String get ttu_vn => 'Visual Novel';
+  String get reader_vn => 'Visual Novel';
   @override
-  String get ttu_writing_direction => '組方向';
+  String get reader_writing_direction => '組方向';
   @override
   String get undo => '元に戻す';
   @override
@@ -54793,6 +55257,77 @@ class _StringsJa extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  @override
+  String get migration_settings_entry => 'Migrate to Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  @override
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  @override
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  @override
+  String get migration_download_fushi => 'Get Fushi';
+  @override
+  String get migration_start => 'Start migration';
+  @override
+  String get migration_open_fushi => 'Open Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  @override
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  @override
+  String get migration_reexport => 'Re-export';
+  @override
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  @override
+  String get migration_import_entry => 'Import from Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  @override
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  @override
+  String get migration_import_start => 'Start import';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  @override
+  String get migration_import_success => 'Import complete and verified.';
+  @override
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  @override
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  @override
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 // Path: <root>
@@ -55760,9 +56295,9 @@ class _StringsKo extends _StringsEn {
   @override
   String get color_primary_desc => '오디오 하이라이트, 버튼, 스위치';
   @override
-  String get color_sasayaki => '사사야키 하이라이트';
+  String get color_sentence_audio_highlight => '사사야키 하이라이트';
   @override
-  String get color_sasayaki_desc => '오디오북 자막 동기화 하이라이트';
+  String get color_sentence_audio_highlight_desc => '오디오북 자막 동기화 하이라이트';
   @override
   String get color_secondary => '보조색';
   @override
@@ -58168,44 +58703,48 @@ class _StringsKo extends _StringsEn {
   @override
   String get reverse_reader_bottom_bar => '리더 하단 바 반전';
   @override
-  String get sasayaki_all_zero => '모든 윈도우 점수가 0%입니다. 수동으로 조정하세요';
+  String get audiobook_rematch_all_zero => '모든 윈도우 점수가 0%입니다. 수동으로 조정하세요';
   @override
-  String sasayaki_auto_failed({required Object error}) => '자동 매칭 실패: ${error}';
+  String audiobook_rematch_auto_failed({required Object error}) =>
+      '자동 매칭 실패: ${error}';
   @override
-  String get sasayaki_auto_match => '자동 매칭';
+  String get audiobook_rematch_auto_match => '자동 매칭';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       '${window} 자동 선택됨 (적중률 ${pct}%)';
   @override
-  String sasayaki_default_value({required Object n}) => '기본값 ${n}';
+  String audiobook_rematch_default_value({required Object n}) => '기본값 ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} 일치 — ${detail}';
   @override
-  String get sasayaki_matching => '매칭 중...';
+  String get audiobook_rematch_matching => '매칭 중...';
   @override
-  String get sasayaki_no_chapters => 'EPUB에 챕터 텍스트가 없습니다';
+  String get audiobook_rematch_no_chapters => 'EPUB에 챕터 텍스트가 없습니다';
   @override
-  String get sasayaki_no_cues_to_match => '매칭할 큐가 없습니다';
+  String get audiobook_rematch_no_cues_to_match => '매칭할 큐가 없습니다';
   @override
-  String get sasayaki_no_sections => 'ttu 챕터 텍스트를 찾을 수 없어 자동 매칭 불가';
+  String get audiobook_rematch_no_sections => 'ttu 챕터 텍스트를 찾을 수 없어 자동 매칭 불가';
   @override
-  String get sasayaki_no_stored_cues => '저장된 큐가 없어 다시 실행할 수 없습니다';
+  String get audiobook_rematch_no_stored_cues => '저장된 큐가 없어 다시 실행할 수 없습니다';
   @override
-  String sasayaki_rematch_failed({required Object error}) => '재매칭 실패: ${error}';
+  String audiobook_rematch_failed({required Object error}) =>
+      '재매칭 실패: ${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       '재매칭: ${pct}% (윈도우: ${window})';
   @override
-  String get sasayaki_search_window => '검색 윈도우';
+  String get audiobook_rematch_search_window => '검색 윈도우';
   @override
-  String get sasayaki_similarity_threshold => '유사도 임계값';
+  String get audiobook_rematch_similarity_threshold => '유사도 임계값';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       '퍼지 매칭의 최소 유사도 (Dice 계수)입니다. 낮추면 텍스트 차이를 더 허용하지만, 너무 낮으면 잘못된 매칭이 발생합니다.';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       '텍스트에서 큐당 앞으로 검색할 문자 수입니다. 적중률이 낮으면 조정하세요. 너무 크면 짧은 노이즈 큐에서 커서가 어긋날 수 있습니다.';
   @override
   String get saved_tags => '태그가 저장되었습니다.';
@@ -58957,11 +59496,6 @@ class _StringsKo extends _StringsEn {
   @override
   String get sync_exit_warning_title => '동기화 진행 중';
   @override
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
-  @override
   String get sync_host => '호스트';
   @override
   String get sync_lan_discovery => 'LAN 기기';
@@ -59263,68 +59797,69 @@ class _StringsKo extends _StringsEn {
   @override
   String get torrent_upload_intro_title => 'Upload / seeding';
   @override
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
   @override
-  String get ttu_font_size => '글꼴 크기';
+  String get reader_font_size => '글꼴 크기';
   @override
-  String get ttu_font_vpal => 'VPAL (세로 대체)';
+  String get reader_font_vpal => 'VPAL (세로 대체)';
   @override
-  String get ttu_furigana_hide => '숨기기';
+  String get reader_furigana_hide => '숨기기';
   @override
-  String get ttu_furigana_mode => '후리가나';
+  String get reader_furigana_mode => '후리가나';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => '부분';
+  String get reader_furigana_partial => '부분';
   @override
-  String get ttu_furigana_show => '표시';
+  String get reader_furigana_show => '표시';
   @override
-  String get ttu_furigana_toggle => '전환';
+  String get reader_furigana_toggle => '전환';
   @override
-  String get ttu_horizontal => '가로';
+  String get reader_horizontal => '가로';
   @override
-  String get ttu_line_height => '줄 간격';
+  String get reader_line_height => '줄 간격';
   @override
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
   @override
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
   @override
-  String get ttu_no_books_added => '서재에 책이 없습니다';
+  String get reader_no_books_added => '서재에 책이 없습니다';
   @override
-  String get ttu_not_bound_cannot_rematch => '오디오북이 책에 바인딩되지 않아 다시 매칭할 수 없습니다';
+  String get reader_not_bound_cannot_rematch =>
+      '오디오북이 책에 바인딩되지 않아 다시 매칭할 수 없습니다';
   @override
-  String get ttu_orient_mixed => '혼합';
+  String get reader_orient_mixed => '혼합';
   @override
-  String get ttu_orient_upright => '직립';
+  String get reader_orient_upright => '직립';
   @override
-  String get ttu_page_columns_auto => '자동';
+  String get reader_page_columns_auto => '자동';
   @override
-  String get ttu_paginated => '페이지 넘김';
+  String get reader_paginated => '페이지 넘김';
   @override
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
   @override
-  String get ttu_reader_styles => '책 스타일 우선';
+  String get reader_reader_styles => '책 스타일 우선';
   @override
-  String get ttu_scroll => '스크롤';
+  String get reader_scroll => '스크롤';
   @override
-  String get ttu_text_indentation => '문단 들여쓰기';
+  String get reader_text_indentation => '문단 들여쓰기';
   @override
-  String get ttu_text_justify => '양쪽 정렬';
+  String get reader_text_justify => '양쪽 정렬';
   @override
-  String get ttu_theme => '테마';
+  String get reader_theme => '테마';
   @override
-  String get ttu_vert_kerning => '커닝 (세로)';
+  String get reader_vert_kerning => '커닝 (세로)';
   @override
-  String get ttu_vert_text_orient => '글자 방향';
+  String get reader_vert_text_orient => '글자 방향';
   @override
-  String get ttu_vertical => '세로';
+  String get reader_vertical => '세로';
   @override
-  String get ttu_view_mode_label => '페이지 / 스크롤';
+  String get reader_view_mode_label => '페이지 / 스크롤';
   @override
-  String get ttu_vn => 'Visual Novel';
+  String get reader_vn => 'Visual Novel';
   @override
-  String get ttu_writing_direction => '글쓰기 방향';
+  String get reader_writing_direction => '글쓰기 방향';
   @override
   String get undo => '되돌리기';
   @override
@@ -61876,6 +62411,77 @@ class _StringsKo extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  @override
+  String get migration_settings_entry => 'Migrate to Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  @override
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  @override
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  @override
+  String get migration_download_fushi => 'Get Fushi';
+  @override
+  String get migration_start => 'Start migration';
+  @override
+  String get migration_open_fushi => 'Open Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  @override
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  @override
+  String get migration_reexport => 'Re-export';
+  @override
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  @override
+  String get migration_import_entry => 'Import from Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  @override
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  @override
+  String get migration_import_start => 'Start import';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  @override
+  String get migration_import_success => 'Import complete and verified.';
+  @override
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  @override
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  @override
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 // Path: <root>
@@ -62862,9 +63468,9 @@ class _StringsNl extends _StringsEn {
   @override
   String get color_primary_desc => 'Audiomarkering, knoppen, schakelaars';
   @override
-  String get color_sasayaki => 'Sasayaki-markering';
+  String get color_sentence_audio_highlight => 'Sasayaki-markering';
   @override
-  String get color_sasayaki_desc =>
+  String get color_sentence_audio_highlight_desc =>
       'Markering van ondertitelsynchronisatie van het luisterboek';
   @override
   String get color_secondary => 'Secundair';
@@ -65317,49 +65923,53 @@ class _StringsNl extends _StringsEn {
   @override
   String get reverse_reader_bottom_bar => 'Onderbalk van lezer omkeren';
   @override
-  String get sasayaki_all_zero =>
+  String get audiobook_rematch_all_zero =>
       'Alle vensters scoorden 0%, pas handmatig aan';
   @override
-  String sasayaki_auto_failed({required Object error}) =>
+  String audiobook_rematch_auto_failed({required Object error}) =>
       'Automatisch matchen mislukt: ${error}';
   @override
-  String get sasayaki_auto_match => 'Automatisch matchen';
+  String get audiobook_rematch_auto_match => 'Automatisch matchen';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       'Automatisch geselecteerd ${window} (treffers ${pct}%)';
   @override
-  String sasayaki_default_value({required Object n}) => 'Standaard ${n}';
+  String audiobook_rematch_default_value({required Object n}) =>
+      'Standaard ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} overeenkomst — ${detail}';
   @override
-  String get sasayaki_matching => 'Matchen...';
+  String get audiobook_rematch_matching => 'Matchen...';
   @override
-  String get sasayaki_no_chapters => 'EPUB bevat geen hoofdstuktekst';
+  String get audiobook_rematch_no_chapters => 'EPUB bevat geen hoofdstuktekst';
   @override
-  String get sasayaki_no_cues_to_match => 'Geen referenties om te matchen';
+  String get audiobook_rematch_no_cues_to_match =>
+      'Geen referenties om te matchen';
   @override
-  String get sasayaki_no_sections =>
+  String get audiobook_rematch_no_sections =>
       'Geen ttu-hoofdstuktekst gevonden, automatisch matchen niet mogelijk';
   @override
-  String get sasayaki_no_stored_cues =>
+  String get audiobook_rematch_no_stored_cues =>
       'Geen opgeslagen referenties, kan niet opnieuw uitvoeren';
   @override
-  String sasayaki_rematch_failed({required Object error}) =>
+  String audiobook_rematch_failed({required Object error}) =>
       'Opnieuw matchen mislukt: ${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       'Opnieuw gematcht: ${pct}% (venster: ${window})';
   @override
-  String get sasayaki_search_window => 'Zoekvenster';
+  String get audiobook_rematch_search_window => 'Zoekvenster';
   @override
-  String get sasayaki_similarity_threshold => 'Similariteitsdrempel';
+  String get audiobook_rematch_similarity_threshold => 'Similariteitsdrempel';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       'Minimale overeenkomst voor fuzzy matching (Dice-coëfficiënt). Verlaag om meer tekstverschillen te tolereren, maar te laag veroorzaakt foutieve matches.';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       'Aantal tekens om vooruit te zoeken per referentie in de tekst. Pas aan als het trefpercentage laag is; te hoog kan de cursor verschuiven bij korte, ruizige referenties.';
   @override
   String get saved_tags => 'Labels opgeslagen.';
@@ -66147,11 +66757,6 @@ class _StringsNl extends _StringsEn {
   @override
   String get sync_exit_warning_title => 'Synchronisatie bezig';
   @override
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
-  @override
   String get sync_host => 'Host';
   @override
   String get sync_lan_discovery => 'LAN-apparaten';
@@ -66466,69 +67071,69 @@ class _StringsNl extends _StringsEn {
   @override
   String get torrent_upload_intro_title => 'Upload / seeding';
   @override
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
   @override
-  String get ttu_font_size => 'Lettergrootte';
+  String get reader_font_size => 'Lettergrootte';
   @override
-  String get ttu_font_vpal => 'VPAL (vert. alt.)';
+  String get reader_font_vpal => 'VPAL (vert. alt.)';
   @override
-  String get ttu_furigana_hide => 'Verbergen';
+  String get reader_furigana_hide => 'Verbergen';
   @override
-  String get ttu_furigana_mode => 'Furigana';
+  String get reader_furigana_mode => 'Furigana';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => 'Gedeeltelijk';
+  String get reader_furigana_partial => 'Gedeeltelijk';
   @override
-  String get ttu_furigana_show => 'Tonen';
+  String get reader_furigana_show => 'Tonen';
   @override
-  String get ttu_furigana_toggle => 'Wisselen';
+  String get reader_furigana_toggle => 'Wisselen';
   @override
-  String get ttu_horizontal => 'Horizontaal';
+  String get reader_horizontal => 'Horizontaal';
   @override
-  String get ttu_line_height => 'Regelhoogte';
+  String get reader_line_height => 'Regelhoogte';
   @override
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
   @override
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
   @override
-  String get ttu_no_books_added => 'Geen boeken in de bibliotheek';
+  String get reader_no_books_added => 'Geen boeken in de bibliotheek';
   @override
-  String get ttu_not_bound_cannot_rematch =>
+  String get reader_not_bound_cannot_rematch =>
       'Luisterboek niet gekoppeld aan een boek, kan niet opnieuw matchen';
   @override
-  String get ttu_orient_mixed => 'Gemengd';
+  String get reader_orient_mixed => 'Gemengd';
   @override
-  String get ttu_orient_upright => 'Rechtop';
+  String get reader_orient_upright => 'Rechtop';
   @override
-  String get ttu_page_columns_auto => 'Automatisch';
+  String get reader_page_columns_auto => 'Automatisch';
   @override
-  String get ttu_paginated => 'Gepagineerd';
+  String get reader_paginated => 'Gepagineerd';
   @override
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
   @override
-  String get ttu_reader_styles => 'Boekstijlen prioriteit geven';
+  String get reader_reader_styles => 'Boekstijlen prioriteit geven';
   @override
-  String get ttu_scroll => 'Scrollen';
+  String get reader_scroll => 'Scrollen';
   @override
-  String get ttu_text_indentation => 'Alinea-inspringing';
+  String get reader_text_indentation => 'Alinea-inspringing';
   @override
-  String get ttu_text_justify => 'Tekstuitlijning';
+  String get reader_text_justify => 'Tekstuitlijning';
   @override
-  String get ttu_theme => 'Thema';
+  String get reader_theme => 'Thema';
   @override
-  String get ttu_vert_kerning => 'Tekenafstand (verticaal)';
+  String get reader_vert_kerning => 'Tekenafstand (verticaal)';
   @override
-  String get ttu_vert_text_orient => 'Tekstoriëntatie';
+  String get reader_vert_text_orient => 'Tekstoriëntatie';
   @override
-  String get ttu_vertical => 'Verticaal';
+  String get reader_vertical => 'Verticaal';
   @override
-  String get ttu_view_mode_label => 'Pagina\'s / Scrollen';
+  String get reader_view_mode_label => 'Pagina\'s / Scrollen';
   @override
-  String get ttu_vn => 'Visual Novel';
+  String get reader_vn => 'Visual Novel';
   @override
-  String get ttu_writing_direction => 'Schrijfrichting';
+  String get reader_writing_direction => 'Schrijfrichting';
   @override
   String get undo => 'Ongedaan maken';
   @override
@@ -69119,6 +69724,77 @@ class _StringsNl extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  @override
+  String get migration_settings_entry => 'Migrate to Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  @override
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  @override
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  @override
+  String get migration_download_fushi => 'Get Fushi';
+  @override
+  String get migration_start => 'Start migration';
+  @override
+  String get migration_open_fushi => 'Open Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  @override
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  @override
+  String get migration_reexport => 'Re-export';
+  @override
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  @override
+  String get migration_import_entry => 'Import from Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  @override
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  @override
+  String get migration_import_start => 'Start import';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  @override
+  String get migration_import_success => 'Import complete and verified.';
+  @override
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  @override
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  @override
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 // Path: <root>
@@ -70108,9 +70784,9 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get color_primary_desc => 'Destaque de áudio, botões, interruptores';
   @override
-  String get color_sasayaki => 'Destaque Sasayaki';
+  String get color_sentence_audio_highlight => 'Destaque Sasayaki';
   @override
-  String get color_sasayaki_desc =>
+  String get color_sentence_audio_highlight_desc =>
       'Destaque de sincronização de legendas do audiolivro';
   @override
   String get color_secondary => 'Secundária';
@@ -72572,49 +73248,52 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get reverse_reader_bottom_bar => 'Inverter barra inferior do leitor';
   @override
-  String get sasayaki_all_zero =>
+  String get audiobook_rematch_all_zero =>
       'Todas as janelas pontuaram 0%, ajuste manualmente';
   @override
-  String sasayaki_auto_failed({required Object error}) =>
+  String audiobook_rematch_auto_failed({required Object error}) =>
       'Correspondência automática falhou: ${error}';
   @override
-  String get sasayaki_auto_match => 'Correspondência Automática';
+  String get audiobook_rematch_auto_match => 'Correspondência Automática';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       'Selecionado automaticamente ${window} (acerto ${pct}%)';
   @override
-  String sasayaki_default_value({required Object n}) => 'Padrão ${n}';
+  String audiobook_rematch_default_value({required Object n}) => 'Padrão ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} correspondência — ${detail}';
   @override
-  String get sasayaki_matching => 'Correspondendo...';
+  String get audiobook_rematch_matching => 'Correspondendo...';
   @override
-  String get sasayaki_no_chapters => 'EPUB não tem texto de capítulo';
+  String get audiobook_rematch_no_chapters => 'EPUB não tem texto de capítulo';
   @override
-  String get sasayaki_no_cues_to_match => 'Nenhuma frase para corresponder';
+  String get audiobook_rematch_no_cues_to_match =>
+      'Nenhuma frase para corresponder';
   @override
-  String get sasayaki_no_sections =>
+  String get audiobook_rematch_no_sections =>
       'Nenhum texto de capítulo ttu encontrado, não é possível corresponder automaticamente';
   @override
-  String get sasayaki_no_stored_cues =>
+  String get audiobook_rematch_no_stored_cues =>
       'Nenhuma frase armazenada, não é possível reexecutar';
   @override
-  String sasayaki_rematch_failed({required Object error}) =>
+  String audiobook_rematch_failed({required Object error}) =>
       'Falha na correspondência: ${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       'Recorrespondido: ${pct}% (janela: ${window})';
   @override
-  String get sasayaki_search_window => 'Janela de Busca';
+  String get audiobook_rematch_search_window => 'Janela de Busca';
   @override
-  String get sasayaki_similarity_threshold => 'Limite de Similaridade';
+  String get audiobook_rematch_similarity_threshold => 'Limite de Similaridade';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       'Similaridade mínima para correspondência aproximada (coeficiente de Dice). Diminua para tolerar mais diferenças no texto, mas valores muito baixos causam correspondências falsas.';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       'Número de caracteres a buscar à frente por frase no texto. Ajuste se a taxa de acerto estiver baixa; valores muito altos podem deslocar o cursor com frases curtas e ruidosas.';
   @override
   String get saved_tags => 'Tags salvas.';
@@ -73401,11 +74080,6 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get sync_exit_warning_title => 'Sincronização em andamento';
   @override
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
-  @override
   String get sync_host => 'Host';
   @override
   String get sync_lan_discovery => 'Dispositivos na rede local';
@@ -73716,69 +74390,69 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get torrent_upload_intro_title => 'Upload / seeding';
   @override
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
   @override
-  String get ttu_font_size => 'Tamanho da Fonte';
+  String get reader_font_size => 'Tamanho da Fonte';
   @override
-  String get ttu_font_vpal => 'VPAL (alt. vertical)';
+  String get reader_font_vpal => 'VPAL (alt. vertical)';
   @override
-  String get ttu_furigana_hide => 'Ocultar';
+  String get reader_furigana_hide => 'Ocultar';
   @override
-  String get ttu_furigana_mode => 'Furigana';
+  String get reader_furigana_mode => 'Furigana';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => 'Parcial';
+  String get reader_furigana_partial => 'Parcial';
   @override
-  String get ttu_furigana_show => 'Mostrar';
+  String get reader_furigana_show => 'Mostrar';
   @override
-  String get ttu_furigana_toggle => 'Alternar';
+  String get reader_furigana_toggle => 'Alternar';
   @override
-  String get ttu_horizontal => 'Horizontal';
+  String get reader_horizontal => 'Horizontal';
   @override
-  String get ttu_line_height => 'Altura da Linha';
+  String get reader_line_height => 'Altura da Linha';
   @override
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
   @override
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
   @override
-  String get ttu_no_books_added => 'Nenhum livro na biblioteca';
+  String get reader_no_books_added => 'Nenhum livro na biblioteca';
   @override
-  String get ttu_not_bound_cannot_rematch =>
+  String get reader_not_bound_cannot_rematch =>
       'Audiolivro não vinculado a um livro, não é possível corresponder novamente';
   @override
-  String get ttu_orient_mixed => 'Misto';
+  String get reader_orient_mixed => 'Misto';
   @override
-  String get ttu_orient_upright => 'Vertical';
+  String get reader_orient_upright => 'Vertical';
   @override
-  String get ttu_page_columns_auto => 'Automático';
+  String get reader_page_columns_auto => 'Automático';
   @override
-  String get ttu_paginated => 'Paginado';
+  String get reader_paginated => 'Paginado';
   @override
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
   @override
-  String get ttu_reader_styles => 'Priorizar estilos do livro';
+  String get reader_reader_styles => 'Priorizar estilos do livro';
   @override
-  String get ttu_scroll => 'Rolagem';
+  String get reader_scroll => 'Rolagem';
   @override
-  String get ttu_text_indentation => 'Recuo de parágrafo';
+  String get reader_text_indentation => 'Recuo de parágrafo';
   @override
-  String get ttu_text_justify => 'Justificação do texto';
+  String get reader_text_justify => 'Justificação do texto';
   @override
-  String get ttu_theme => 'Tema';
+  String get reader_theme => 'Tema';
   @override
-  String get ttu_vert_kerning => 'Kerning (vertical)';
+  String get reader_vert_kerning => 'Kerning (vertical)';
   @override
-  String get ttu_vert_text_orient => 'Orientação do texto';
+  String get reader_vert_text_orient => 'Orientação do texto';
   @override
-  String get ttu_vertical => 'Vertical';
+  String get reader_vertical => 'Vertical';
   @override
-  String get ttu_view_mode_label => 'Páginas / Rolagem';
+  String get reader_view_mode_label => 'Páginas / Rolagem';
   @override
-  String get ttu_vn => 'Visual Novel';
+  String get reader_vn => 'Visual Novel';
   @override
-  String get ttu_writing_direction => 'Direção da Escrita';
+  String get reader_writing_direction => 'Direção da Escrita';
   @override
   String get undo => 'Desfazer';
   @override
@@ -76375,6 +77049,77 @@ class _StringsPtBr extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  @override
+  String get migration_settings_entry => 'Migrate to Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  @override
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  @override
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  @override
+  String get migration_download_fushi => 'Get Fushi';
+  @override
+  String get migration_start => 'Start migration';
+  @override
+  String get migration_open_fushi => 'Open Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  @override
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  @override
+  String get migration_reexport => 'Re-export';
+  @override
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  @override
+  String get migration_import_entry => 'Import from Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  @override
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  @override
+  String get migration_import_start => 'Start import';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  @override
+  String get migration_import_success => 'Import complete and verified.';
+  @override
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  @override
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  @override
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 // Path: <root>
@@ -77360,9 +78105,9 @@ class _StringsRu extends _StringsEn {
   @override
   String get color_primary_desc => 'Подсветка аудио, кнопки, переключатели';
   @override
-  String get color_sasayaki => 'Подсветка Sasayaki';
+  String get color_sentence_audio_highlight => 'Подсветка Sasayaki';
   @override
-  String get color_sasayaki_desc =>
+  String get color_sentence_audio_highlight_desc =>
       'Подсветка синхронизации субтитров аудиокниги';
   @override
   String get color_secondary => 'Вторичный';
@@ -79819,48 +80564,53 @@ class _StringsRu extends _StringsEn {
   @override
   String get reverse_reader_bottom_bar => 'Обратить нижнюю панель читалки';
   @override
-  String get sasayaki_all_zero => 'Все окна показали 0%, настройте вручную';
+  String get audiobook_rematch_all_zero =>
+      'Все окна показали 0%, настройте вручную';
   @override
-  String sasayaki_auto_failed({required Object error}) =>
+  String audiobook_rematch_auto_failed({required Object error}) =>
       'Автосопоставление не удалось: ${error}';
   @override
-  String get sasayaki_auto_match => 'Автосопоставление';
+  String get audiobook_rematch_auto_match => 'Автосопоставление';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       'Автоматически выбрано ${window} (совпадение ${pct}%)';
   @override
-  String sasayaki_default_value({required Object n}) => 'По умолчанию ${n}';
+  String audiobook_rematch_default_value({required Object n}) =>
+      'По умолчанию ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} совпадение — ${detail}';
   @override
-  String get sasayaki_matching => 'Сопоставление...';
+  String get audiobook_rematch_matching => 'Сопоставление...';
   @override
-  String get sasayaki_no_chapters => 'В EPUB нет текста глав';
+  String get audiobook_rematch_no_chapters => 'В EPUB нет текста глав';
   @override
-  String get sasayaki_no_cues_to_match => 'Нет меток для сопоставления';
+  String get audiobook_rematch_no_cues_to_match =>
+      'Нет меток для сопоставления';
   @override
-  String get sasayaki_no_sections =>
+  String get audiobook_rematch_no_sections =>
       'Текст глав ttu не найден, автосопоставление невозможно';
   @override
-  String get sasayaki_no_stored_cues =>
+  String get audiobook_rematch_no_stored_cues =>
       'Нет сохранённых меток, перезапуск невозможен';
   @override
-  String sasayaki_rematch_failed({required Object error}) =>
+  String audiobook_rematch_failed({required Object error}) =>
       'Пересопоставление не удалось: ${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       'Пересопоставлено: ${pct}% (окно: ${window})';
   @override
-  String get sasayaki_search_window => 'Окно поиска';
+  String get audiobook_rematch_search_window => 'Окно поиска';
   @override
-  String get sasayaki_similarity_threshold => 'Порог сходства';
+  String get audiobook_rematch_similarity_threshold => 'Порог сходства';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       'Минимальное сходство для нечёткого сопоставления (коэффициент Дайса). Уменьшите для допуска больших различий, но слишком низкое значение даёт ложные совпадения.';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       'Количество символов для поиска вперёд на каждую метку. Увеличьте, если процент совпадений низкий; слишком большое значение может сместить курсор при коротких шумных метках.';
   @override
   String get saved_tags => 'Теги сохранены.';
@@ -80648,11 +81398,6 @@ class _StringsRu extends _StringsEn {
   @override
   String get sync_exit_warning_title => 'Идёт синхронизация';
   @override
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
-  @override
   String get sync_host => 'Хост';
   @override
   String get sync_lan_discovery => 'Устройства в сети';
@@ -80963,69 +81708,69 @@ class _StringsRu extends _StringsEn {
   @override
   String get torrent_upload_intro_title => 'Upload / seeding';
   @override
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
   @override
-  String get ttu_font_size => 'Размер шрифта';
+  String get reader_font_size => 'Размер шрифта';
   @override
-  String get ttu_font_vpal => 'VPAL (верт. альт.)';
+  String get reader_font_vpal => 'VPAL (верт. альт.)';
   @override
-  String get ttu_furigana_hide => 'Скрыть';
+  String get reader_furigana_hide => 'Скрыть';
   @override
-  String get ttu_furigana_mode => 'Фуригана';
+  String get reader_furigana_mode => 'Фуригана';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => 'Частично';
+  String get reader_furigana_partial => 'Частично';
   @override
-  String get ttu_furigana_show => 'Показать';
+  String get reader_furigana_show => 'Показать';
   @override
-  String get ttu_furigana_toggle => 'Переключить';
+  String get reader_furigana_toggle => 'Переключить';
   @override
-  String get ttu_horizontal => 'Горизонтальное';
+  String get reader_horizontal => 'Горизонтальное';
   @override
-  String get ttu_line_height => 'Высота строки';
+  String get reader_line_height => 'Высота строки';
   @override
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
   @override
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
   @override
-  String get ttu_no_books_added => 'В библиотеке нет книг';
+  String get reader_no_books_added => 'В библиотеке нет книг';
   @override
-  String get ttu_not_bound_cannot_rematch =>
+  String get reader_not_bound_cannot_rematch =>
       'Аудиокнига не привязана к книге, пересопоставление невозможно';
   @override
-  String get ttu_orient_mixed => 'Смешанная';
+  String get reader_orient_mixed => 'Смешанная';
   @override
-  String get ttu_orient_upright => 'Прямая';
+  String get reader_orient_upright => 'Прямая';
   @override
-  String get ttu_page_columns_auto => 'Авто';
+  String get reader_page_columns_auto => 'Авто';
   @override
-  String get ttu_paginated => 'Постраничный';
+  String get reader_paginated => 'Постраничный';
   @override
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
   @override
-  String get ttu_reader_styles => 'Приоритет стилей книги';
+  String get reader_reader_styles => 'Приоритет стилей книги';
   @override
-  String get ttu_scroll => 'Прокрутка';
+  String get reader_scroll => 'Прокрутка';
   @override
-  String get ttu_text_indentation => 'Отступ абзаца';
+  String get reader_text_indentation => 'Отступ абзаца';
   @override
-  String get ttu_text_justify => 'Выравнивание текста';
+  String get reader_text_justify => 'Выравнивание текста';
   @override
-  String get ttu_theme => 'Тема';
+  String get reader_theme => 'Тема';
   @override
-  String get ttu_vert_kerning => 'Кернинг (вертикальный)';
+  String get reader_vert_kerning => 'Кернинг (вертикальный)';
   @override
-  String get ttu_vert_text_orient => 'Ориентация текста';
+  String get reader_vert_text_orient => 'Ориентация текста';
   @override
-  String get ttu_vertical => 'Вертикальное';
+  String get reader_vertical => 'Вертикальное';
   @override
-  String get ttu_view_mode_label => 'Страницы / Прокрутка';
+  String get reader_view_mode_label => 'Страницы / Прокрутка';
   @override
-  String get ttu_vn => 'Visual Novel';
+  String get reader_vn => 'Visual Novel';
   @override
-  String get ttu_writing_direction => 'Направление письма';
+  String get reader_writing_direction => 'Направление письма';
   @override
   String get undo => 'Отменить';
   @override
@@ -83615,6 +84360,77 @@ class _StringsRu extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  @override
+  String get migration_settings_entry => 'Migrate to Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  @override
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  @override
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  @override
+  String get migration_download_fushi => 'Get Fushi';
+  @override
+  String get migration_start => 'Start migration';
+  @override
+  String get migration_open_fushi => 'Open Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  @override
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  @override
+  String get migration_reexport => 'Re-export';
+  @override
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  @override
+  String get migration_import_entry => 'Import from Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  @override
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  @override
+  String get migration_import_start => 'Start import';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  @override
+  String get migration_import_success => 'Import complete and verified.';
+  @override
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  @override
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  @override
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 // Path: <root>
@@ -84593,9 +85409,10 @@ class _StringsTh extends _StringsEn {
   @override
   String get color_primary_desc => 'ไฮไลต์เสียง ปุ่ม สวิตช์';
   @override
-  String get color_sasayaki => 'ไฮไลท์ Sasayaki';
+  String get color_sentence_audio_highlight => 'ไฮไลท์ Sasayaki';
   @override
-  String get color_sasayaki_desc => 'ไฮไลท์การซิงค์คำบรรยายหนังสือเสียง';
+  String get color_sentence_audio_highlight_desc =>
+      'ไฮไลท์การซิงค์คำบรรยายหนังสือเสียง';
   @override
   String get color_secondary => 'สีรอง';
   @override
@@ -87029,48 +87846,52 @@ class _StringsTh extends _StringsEn {
   @override
   String get reverse_reader_bottom_bar => 'สลับด้านแถบล่างของโปรแกรมอ่าน';
   @override
-  String get sasayaki_all_zero => 'ทุกหน้าต่างได้คะแนน 0% กรุณาปรับด้วยตนเอง';
+  String get audiobook_rematch_all_zero =>
+      'ทุกหน้าต่างได้คะแนน 0% กรุณาปรับด้วยตนเอง';
   @override
-  String sasayaki_auto_failed({required Object error}) =>
+  String audiobook_rematch_auto_failed({required Object error}) =>
       'การจับคู่อัตโนมัติล้มเหลว: ${error}';
   @override
-  String get sasayaki_auto_match => 'จับคู่อัตโนมัติ';
+  String get audiobook_rematch_auto_match => 'จับคู่อัตโนมัติ';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       'เลือกอัตโนมัติ ${window} (ตรง ${pct}%)';
   @override
-  String sasayaki_default_value({required Object n}) => 'ค่าเริ่มต้น ${n}';
+  String audiobook_rematch_default_value({required Object n}) =>
+      'ค่าเริ่มต้น ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} ตรง — ${detail}';
   @override
-  String get sasayaki_matching => 'กำลังจับคู่...';
+  String get audiobook_rematch_matching => 'กำลังจับคู่...';
   @override
-  String get sasayaki_no_chapters => 'EPUB ไม่มีข้อความบท';
+  String get audiobook_rematch_no_chapters => 'EPUB ไม่มีข้อความบท';
   @override
-  String get sasayaki_no_cues_to_match => 'ไม่มี cue ที่จะจับคู่';
+  String get audiobook_rematch_no_cues_to_match => 'ไม่มี cue ที่จะจับคู่';
   @override
-  String get sasayaki_no_sections =>
+  String get audiobook_rematch_no_sections =>
       'ไม่พบข้อความบทจาก ttu ไม่สามารถจับคู่อัตโนมัติ';
   @override
-  String get sasayaki_no_stored_cues =>
+  String get audiobook_rematch_no_stored_cues =>
       'ไม่มี cue ที่เก็บไว้ ไม่สามารถเรียกใช้ใหม่';
   @override
-  String sasayaki_rematch_failed({required Object error}) =>
+  String audiobook_rematch_failed({required Object error}) =>
       'การจับคู่ใหม่ล้มเหลว: ${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       'จับคู่ใหม่: ${pct}% (หน้าต่าง: ${window})';
   @override
-  String get sasayaki_search_window => 'หน้าต่างค้นหา';
+  String get audiobook_rematch_search_window => 'หน้าต่างค้นหา';
   @override
-  String get sasayaki_similarity_threshold => 'เกณฑ์ความคล้าย';
+  String get audiobook_rematch_similarity_threshold => 'เกณฑ์ความคล้าย';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       'ค่าความคล้ายขั้นต่ำสำหรับการจับคู่แบบคลุมเครือ (สัมประสิทธิ์ Dice) ลดค่าเพื่อยอมรับความแตกต่างมากขึ้น แต่ต่ำเกินไปอาจทำให้จับคู่ผิด';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       'จำนวนอักขระที่จะค้นหาไปข้างหน้าต่อ cue ในข้อความ ปรับถ้าอัตราตรงต่ำ ค่าสูงเกินอาจทำให้เคอร์เซอร์คลาดเคลื่อนกับ cue สั้นที่มีสัญญาณรบกวน';
   @override
   String get saved_tags => 'บันทึกแท็กแล้ว';
@@ -87847,11 +88668,6 @@ class _StringsTh extends _StringsEn {
   @override
   String get sync_exit_warning_title => 'กำลังซิงค์';
   @override
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
-  @override
   String get sync_host => 'โฮสต์';
   @override
   String get sync_lan_discovery => 'อุปกรณ์ในเครือข่าย LAN';
@@ -88162,69 +88978,69 @@ class _StringsTh extends _StringsEn {
   @override
   String get torrent_upload_intro_title => 'Upload / seeding';
   @override
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
   @override
-  String get ttu_font_size => 'ขนาดฟอนต์';
+  String get reader_font_size => 'ขนาดฟอนต์';
   @override
-  String get ttu_font_vpal => 'VPAL (ตัวอักษรทดแทน)';
+  String get reader_font_vpal => 'VPAL (ตัวอักษรทดแทน)';
   @override
-  String get ttu_furigana_hide => 'ซ่อน';
+  String get reader_furigana_hide => 'ซ่อน';
   @override
-  String get ttu_furigana_mode => 'ฟุริงานะ';
+  String get reader_furigana_mode => 'ฟุริงานะ';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => 'บางส่วน';
+  String get reader_furigana_partial => 'บางส่วน';
   @override
-  String get ttu_furigana_show => 'แสดง';
+  String get reader_furigana_show => 'แสดง';
   @override
-  String get ttu_furigana_toggle => 'สลับ';
+  String get reader_furigana_toggle => 'สลับ';
   @override
-  String get ttu_horizontal => 'แนวนอน';
+  String get reader_horizontal => 'แนวนอน';
   @override
-  String get ttu_line_height => 'ระยะห่างบรรทัด';
+  String get reader_line_height => 'ระยะห่างบรรทัด';
   @override
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
   @override
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
   @override
-  String get ttu_no_books_added => 'ไม่มีหนังสือในคลัง';
+  String get reader_no_books_added => 'ไม่มีหนังสือในคลัง';
   @override
-  String get ttu_not_bound_cannot_rematch =>
+  String get reader_not_bound_cannot_rematch =>
       'หนังสือเสียงไม่ได้ผูกกับหนังสือ ไม่สามารถจับคู่ใหม่ได้';
   @override
-  String get ttu_orient_mixed => 'ผสม';
+  String get reader_orient_mixed => 'ผสม';
   @override
-  String get ttu_orient_upright => 'ตั้งตรง';
+  String get reader_orient_upright => 'ตั้งตรง';
   @override
-  String get ttu_page_columns_auto => 'อัตโนมัติ';
+  String get reader_page_columns_auto => 'อัตโนมัติ';
   @override
-  String get ttu_paginated => 'แบ่งหน้า';
+  String get reader_paginated => 'แบ่งหน้า';
   @override
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
   @override
-  String get ttu_reader_styles => 'ใช้สไตล์หนังสือ';
+  String get reader_reader_styles => 'ใช้สไตล์หนังสือ';
   @override
-  String get ttu_scroll => 'เลื่อน';
+  String get reader_scroll => 'เลื่อน';
   @override
-  String get ttu_text_indentation => 'ย่อหน้า';
+  String get reader_text_indentation => 'ย่อหน้า';
   @override
-  String get ttu_text_justify => 'จัดชิดสองด้าน';
+  String get reader_text_justify => 'จัดชิดสองด้าน';
   @override
-  String get ttu_theme => 'ธีม';
+  String get reader_theme => 'ธีม';
   @override
-  String get ttu_vert_kerning => 'ระยะตัวอักษร (แนวตั้ง)';
+  String get reader_vert_kerning => 'ระยะตัวอักษร (แนวตั้ง)';
   @override
-  String get ttu_vert_text_orient => 'ทิศทางตัวอักษร';
+  String get reader_vert_text_orient => 'ทิศทางตัวอักษร';
   @override
-  String get ttu_vertical => 'แนวตั้ง';
+  String get reader_vertical => 'แนวตั้ง';
   @override
-  String get ttu_view_mode_label => 'หน้า / เลื่อน';
+  String get reader_view_mode_label => 'หน้า / เลื่อน';
   @override
-  String get ttu_vn => 'Visual Novel';
+  String get reader_vn => 'Visual Novel';
   @override
-  String get ttu_writing_direction => 'ทิศทางการเขียน';
+  String get reader_writing_direction => 'ทิศทางการเขียน';
   @override
   String get undo => 'เลิกทำ';
   @override
@@ -90803,6 +91619,77 @@ class _StringsTh extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  @override
+  String get migration_settings_entry => 'Migrate to Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  @override
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  @override
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  @override
+  String get migration_download_fushi => 'Get Fushi';
+  @override
+  String get migration_start => 'Start migration';
+  @override
+  String get migration_open_fushi => 'Open Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  @override
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  @override
+  String get migration_reexport => 'Re-export';
+  @override
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  @override
+  String get migration_import_entry => 'Import from Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  @override
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  @override
+  String get migration_import_start => 'Start import';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  @override
+  String get migration_import_success => 'Import complete and verified.';
+  @override
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  @override
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  @override
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 // Path: <root>
@@ -91789,9 +92676,9 @@ class _StringsTr extends _StringsEn {
   @override
   String get color_primary_desc => 'Ses vurgusu, düğmeler, anahtarlar';
   @override
-  String get color_sasayaki => 'Sasayaki vurgusu';
+  String get color_sentence_audio_highlight => 'Sasayaki vurgusu';
   @override
-  String get color_sasayaki_desc =>
+  String get color_sentence_audio_highlight_desc =>
       'Sesli kitap altyazı senkronizasyon vurgusu';
   @override
   String get color_secondary => 'İkincil';
@@ -94237,49 +95124,53 @@ class _StringsTr extends _StringsEn {
   @override
   String get reverse_reader_bottom_bar => 'Okuyucu alt çubuğunu ters çevir';
   @override
-  String get sasayaki_all_zero =>
+  String get audiobook_rematch_all_zero =>
       'Tüm pencereler %0 skorladı, lütfen manuel ayarlayın';
   @override
-  String sasayaki_auto_failed({required Object error}) =>
+  String audiobook_rematch_auto_failed({required Object error}) =>
       'Otomatik eşleştirme başarısız: ${error}';
   @override
-  String get sasayaki_auto_match => 'Otomatik eşleştir';
+  String get audiobook_rematch_auto_match => 'Otomatik eşleştir';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       '${window} otomatik seçildi (isabet ${pct}%)';
   @override
-  String sasayaki_default_value({required Object n}) => 'Varsayılan ${n}';
+  String audiobook_rematch_default_value({required Object n}) =>
+      'Varsayılan ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} eşleşti — ${detail}';
   @override
-  String get sasayaki_matching => 'Eşleştiriliyor...';
+  String get audiobook_rematch_matching => 'Eşleştiriliyor...';
   @override
-  String get sasayaki_no_chapters => 'EPUB\'de bölüm metni yok';
+  String get audiobook_rematch_no_chapters => 'EPUB\'de bölüm metni yok';
   @override
-  String get sasayaki_no_cues_to_match => 'Eşleştirilecek referans yok';
+  String get audiobook_rematch_no_cues_to_match =>
+      'Eşleştirilecek referans yok';
   @override
-  String get sasayaki_no_sections =>
+  String get audiobook_rematch_no_sections =>
       'ttu bölüm metni bulunamadı, otomatik eşleştirme yapılamaz';
   @override
-  String get sasayaki_no_stored_cues =>
+  String get audiobook_rematch_no_stored_cues =>
       'Kayıtlı referans yok, yeniden çalıştırılamaz';
   @override
-  String sasayaki_rematch_failed({required Object error}) =>
+  String audiobook_rematch_failed({required Object error}) =>
       'Yeniden eşleştirme başarısız: ${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       'Yeniden eşleştirildi: ${pct}% (pencere: ${window})';
   @override
-  String get sasayaki_search_window => 'Arama penceresi';
+  String get audiobook_rematch_search_window => 'Arama penceresi';
   @override
-  String get sasayaki_similarity_threshold => 'Benzerlik eşiği';
+  String get audiobook_rematch_similarity_threshold => 'Benzerlik eşiği';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       'Bulanık eşleştirme için minimum benzerlik (Dice katsayısı). Daha fazla metin farkını tolere etmek için düşürün, ancak çok düşük yanlış eşleşmelere neden olur.';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       'Metinde referans başına ileri aranacak karakter sayısı. İsabet oranı düşükse ayarlayın; çok büyük değer kısa ve gürültülü referanslarda imleci kaydırabilir.';
   @override
   String get saved_tags => 'Etiketler kaydedildi.';
@@ -95063,11 +95954,6 @@ class _StringsTr extends _StringsEn {
   @override
   String get sync_exit_warning_title => 'Eşitleme Sürüyor';
   @override
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
-  @override
   String get sync_host => 'Sunucu';
   @override
   String get sync_lan_discovery => 'LAN cihazları';
@@ -95375,69 +96261,69 @@ class _StringsTr extends _StringsEn {
   @override
   String get torrent_upload_intro_title => 'Upload / seeding';
   @override
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
   @override
-  String get ttu_font_size => 'Yazı tipi boyutu';
+  String get reader_font_size => 'Yazı tipi boyutu';
   @override
-  String get ttu_font_vpal => 'VPAL (dikey alt.)';
+  String get reader_font_vpal => 'VPAL (dikey alt.)';
   @override
-  String get ttu_furigana_hide => 'Gizle';
+  String get reader_furigana_hide => 'Gizle';
   @override
-  String get ttu_furigana_mode => 'Furigana';
+  String get reader_furigana_mode => 'Furigana';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => 'Kısmi';
+  String get reader_furigana_partial => 'Kısmi';
   @override
-  String get ttu_furigana_show => 'Göster';
+  String get reader_furigana_show => 'Göster';
   @override
-  String get ttu_furigana_toggle => 'Değiştir';
+  String get reader_furigana_toggle => 'Değiştir';
   @override
-  String get ttu_horizontal => 'Yatay';
+  String get reader_horizontal => 'Yatay';
   @override
-  String get ttu_line_height => 'Satır yüksekliği';
+  String get reader_line_height => 'Satır yüksekliği';
   @override
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
   @override
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
   @override
-  String get ttu_no_books_added => 'Kütüphanede kitap yok';
+  String get reader_no_books_added => 'Kütüphanede kitap yok';
   @override
-  String get ttu_not_bound_cannot_rematch =>
+  String get reader_not_bound_cannot_rematch =>
       'Sesli kitap bir kitaba bağlı değil, yeniden eşleştirme yapılamaz';
   @override
-  String get ttu_orient_mixed => 'Karışık';
+  String get reader_orient_mixed => 'Karışık';
   @override
-  String get ttu_orient_upright => 'Dik';
+  String get reader_orient_upright => 'Dik';
   @override
-  String get ttu_page_columns_auto => 'Otomatik';
+  String get reader_page_columns_auto => 'Otomatik';
   @override
-  String get ttu_paginated => 'Sayfalı';
+  String get reader_paginated => 'Sayfalı';
   @override
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
   @override
-  String get ttu_reader_styles => 'Kitap stillerine öncelik ver';
+  String get reader_reader_styles => 'Kitap stillerine öncelik ver';
   @override
-  String get ttu_scroll => 'Kaydırma';
+  String get reader_scroll => 'Kaydırma';
   @override
-  String get ttu_text_indentation => 'Paragraf girintisi';
+  String get reader_text_indentation => 'Paragraf girintisi';
   @override
-  String get ttu_text_justify => 'Metin hizalama';
+  String get reader_text_justify => 'Metin hizalama';
   @override
-  String get ttu_theme => 'Tema';
+  String get reader_theme => 'Tema';
   @override
-  String get ttu_vert_kerning => 'Karakter aralığı (dikey)';
+  String get reader_vert_kerning => 'Karakter aralığı (dikey)';
   @override
-  String get ttu_vert_text_orient => 'Metin yönü';
+  String get reader_vert_text_orient => 'Metin yönü';
   @override
-  String get ttu_vertical => 'Dikey';
+  String get reader_vertical => 'Dikey';
   @override
-  String get ttu_view_mode_label => 'Sayfa / Kaydırma';
+  String get reader_view_mode_label => 'Sayfa / Kaydırma';
   @override
-  String get ttu_vn => 'Visual Novel';
+  String get reader_vn => 'Visual Novel';
   @override
-  String get ttu_writing_direction => 'Yazı yönü';
+  String get reader_writing_direction => 'Yazı yönü';
   @override
   String get undo => 'Geri al';
   @override
@@ -98023,6 +98909,77 @@ class _StringsTr extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  @override
+  String get migration_settings_entry => 'Migrate to Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  @override
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  @override
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  @override
+  String get migration_download_fushi => 'Get Fushi';
+  @override
+  String get migration_start => 'Start migration';
+  @override
+  String get migration_open_fushi => 'Open Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  @override
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  @override
+  String get migration_reexport => 'Re-export';
+  @override
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  @override
+  String get migration_import_entry => 'Import from Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  @override
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  @override
+  String get migration_import_start => 'Start import';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  @override
+  String get migration_import_success => 'Import complete and verified.';
+  @override
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  @override
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  @override
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 // Path: <root>
@@ -99005,9 +99962,10 @@ class _StringsVi extends _StringsEn {
   @override
   String get color_primary_desc => 'Đánh dấu âm thanh, nút, công tắc';
   @override
-  String get color_sasayaki => 'Tô sáng Sasayaki';
+  String get color_sentence_audio_highlight => 'Tô sáng Sasayaki';
   @override
-  String get color_sasayaki_desc => 'Tô sáng đồng bộ phụ đề sách nói';
+  String get color_sentence_audio_highlight_desc =>
+      'Tô sáng đồng bộ phụ đề sách nói';
   @override
   String get color_secondary => 'Phụ';
   @override
@@ -101450,49 +102408,52 @@ class _StringsVi extends _StringsEn {
   @override
   String get reverse_reader_bottom_bar => 'Đảo ngược thanh dưới trình đọc';
   @override
-  String get sasayaki_all_zero =>
+  String get audiobook_rematch_all_zero =>
       'Tất cả cửa sổ có tỷ lệ 0%, vui lòng điều chỉnh thủ công';
   @override
-  String sasayaki_auto_failed({required Object error}) =>
+  String audiobook_rematch_auto_failed({required Object error}) =>
       'Tự động khớp thất bại: ${error}';
   @override
-  String get sasayaki_auto_match => 'Tự động khớp';
+  String get audiobook_rematch_auto_match => 'Tự động khớp';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       'Đã tự động chọn ${window} (khớp ${pct}%)';
   @override
-  String sasayaki_default_value({required Object n}) => 'Mặc định ${n}';
+  String audiobook_rematch_default_value({required Object n}) =>
+      'Mặc định ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} khớp — ${detail}';
   @override
-  String get sasayaki_matching => 'Đang khớp…';
+  String get audiobook_rematch_matching => 'Đang khớp…';
   @override
-  String get sasayaki_no_chapters => 'EPUB không có văn bản chương';
+  String get audiobook_rematch_no_chapters => 'EPUB không có văn bản chương';
   @override
-  String get sasayaki_no_cues_to_match => 'Không có cue để khớp';
+  String get audiobook_rematch_no_cues_to_match => 'Không có cue để khớp';
   @override
-  String get sasayaki_no_sections =>
+  String get audiobook_rematch_no_sections =>
       'Không tìm thấy văn bản chương ttu, không thể tự động khớp';
   @override
-  String get sasayaki_no_stored_cues =>
+  String get audiobook_rematch_no_stored_cues =>
       'Không có cue đã lưu, không thể chạy lại';
   @override
-  String sasayaki_rematch_failed({required Object error}) =>
+  String audiobook_rematch_failed({required Object error}) =>
       'Khớp lại thất bại: ${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       'Đã khớp lại: ${pct}% (cửa sổ: ${window})';
   @override
-  String get sasayaki_search_window => 'Cửa sổ tìm kiếm';
+  String get audiobook_rematch_search_window => 'Cửa sổ tìm kiếm';
   @override
-  String get sasayaki_similarity_threshold => 'Ngưỡng tương đồng';
+  String get audiobook_rematch_similarity_threshold => 'Ngưỡng tương đồng';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       'Độ tương đồng tối thiểu cho khớp mờ (hệ số Dice). Giảm để chấp nhận nhiều khác biệt văn bản hơn, nhưng quá thấp sẽ gây khớp sai.';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       'Số ký tự tìm kiếm phía trước mỗi cue trong văn bản. Điều chỉnh nếu tỷ lệ khớp thấp; quá lớn có thể lệch con trỏ với cue ngắn nhiễu.';
   @override
   String get saved_tags => 'Đã lưu thẻ tag.';
@@ -102273,11 +103234,6 @@ class _StringsVi extends _StringsEn {
   @override
   String get sync_exit_warning_title => 'Đang đồng bộ';
   @override
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
-  @override
   String get sync_host => 'Máy chủ';
   @override
   String get sync_lan_discovery => 'Thiết bị trong mạng LAN';
@@ -102585,69 +103541,69 @@ class _StringsVi extends _StringsEn {
   @override
   String get torrent_upload_intro_title => 'Upload / seeding';
   @override
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
   @override
-  String get ttu_font_size => 'Cỡ chữ';
+  String get reader_font_size => 'Cỡ chữ';
   @override
-  String get ttu_font_vpal => 'VPAL (thay thế dọc)';
+  String get reader_font_vpal => 'VPAL (thay thế dọc)';
   @override
-  String get ttu_furigana_hide => 'Ẩn';
+  String get reader_furigana_hide => 'Ẩn';
   @override
-  String get ttu_furigana_mode => 'Furigana';
+  String get reader_furigana_mode => 'Furigana';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => 'Một phần';
+  String get reader_furigana_partial => 'Một phần';
   @override
-  String get ttu_furigana_show => 'Hiện';
+  String get reader_furigana_show => 'Hiện';
   @override
-  String get ttu_furigana_toggle => 'Chuyển đổi';
+  String get reader_furigana_toggle => 'Chuyển đổi';
   @override
-  String get ttu_horizontal => 'Ngang';
+  String get reader_horizontal => 'Ngang';
   @override
-  String get ttu_line_height => 'Chiều cao dòng';
+  String get reader_line_height => 'Chiều cao dòng';
   @override
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
   @override
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
   @override
-  String get ttu_no_books_added => 'Chưa có sách nào trong thư viện';
+  String get reader_no_books_added => 'Chưa có sách nào trong thư viện';
   @override
-  String get ttu_not_bound_cannot_rematch =>
+  String get reader_not_bound_cannot_rematch =>
       'Sách nói chưa liên kết với sách, không thể khớp lại';
   @override
-  String get ttu_orient_mixed => 'Hỗn hợp';
+  String get reader_orient_mixed => 'Hỗn hợp';
   @override
-  String get ttu_orient_upright => 'Thẳng đứng';
+  String get reader_orient_upright => 'Thẳng đứng';
   @override
-  String get ttu_page_columns_auto => 'Tự động';
+  String get reader_page_columns_auto => 'Tự động';
   @override
-  String get ttu_paginated => 'Phân trang';
+  String get reader_paginated => 'Phân trang';
   @override
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
   @override
-  String get ttu_reader_styles => 'Ưu tiên kiểu sách';
+  String get reader_reader_styles => 'Ưu tiên kiểu sách';
   @override
-  String get ttu_scroll => 'Cuộn';
+  String get reader_scroll => 'Cuộn';
   @override
-  String get ttu_text_indentation => 'Thụt đầu đoạn';
+  String get reader_text_indentation => 'Thụt đầu đoạn';
   @override
-  String get ttu_text_justify => 'Căn đều văn bản';
+  String get reader_text_justify => 'Căn đều văn bản';
   @override
-  String get ttu_theme => 'Giao diện';
+  String get reader_theme => 'Giao diện';
   @override
-  String get ttu_vert_kerning => 'Khoảng cách chữ (dọc)';
+  String get reader_vert_kerning => 'Khoảng cách chữ (dọc)';
   @override
-  String get ttu_vert_text_orient => 'Hướng văn bản';
+  String get reader_vert_text_orient => 'Hướng văn bản';
   @override
-  String get ttu_vertical => 'Dọc';
+  String get reader_vertical => 'Dọc';
   @override
-  String get ttu_view_mode_label => 'Trang / Cuộn';
+  String get reader_view_mode_label => 'Trang / Cuộn';
   @override
-  String get ttu_vn => 'Visual Novel';
+  String get reader_vn => 'Visual Novel';
   @override
-  String get ttu_writing_direction => 'Hướng viết';
+  String get reader_writing_direction => 'Hướng viết';
   @override
   String get undo => 'Hoàn tác';
   @override
@@ -105228,6 +106184,77 @@ class _StringsVi extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  @override
+  String get migration_settings_entry => 'Migrate to Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  @override
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  @override
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  @override
+  String get migration_download_fushi => 'Get Fushi';
+  @override
+  String get migration_start => 'Start migration';
+  @override
+  String get migration_open_fushi => 'Open Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  @override
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  @override
+  String get migration_reexport => 'Re-export';
+  @override
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  @override
+  String get migration_import_entry => 'Import from Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  @override
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  @override
+  String get migration_import_start => 'Start import';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  @override
+  String get migration_import_success => 'Import complete and verified.';
+  @override
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  @override
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  @override
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 // Path: <root>
@@ -106139,9 +107166,9 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get color_primary_desc => '音频高亮、按钮、开关';
   @override
-  String get color_sasayaki => '音频高亮';
+  String get color_sentence_audio_highlight => '音频高亮';
   @override
-  String get color_sasayaki_desc => '有声书播放时跟随当前句的高亮颜色';
+  String get color_sentence_audio_highlight_desc => '有声书播放时跟随当前句的高亮颜色';
   @override
   String get color_secondary => '辅色';
   @override
@@ -108425,44 +109452,47 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get reverse_reader_bottom_bar => '反转阅读器底栏';
   @override
-  String get sasayaki_all_zero => '所有窗口命中率都是 0，请人工调整';
+  String get audiobook_rematch_all_zero => '所有窗口命中率都是 0，请人工调整';
   @override
-  String sasayaki_auto_failed({required Object error}) => '自动匹配失败：${error}';
+  String audiobook_rematch_auto_failed({required Object error}) =>
+      '自动匹配失败：${error}';
   @override
-  String get sasayaki_auto_match => '自动匹配';
+  String get audiobook_rematch_auto_match => '自动匹配';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       '自动选定 ${window}（命中 ${pct}%）';
   @override
-  String sasayaki_default_value({required Object n}) => '默认 ${n}';
+  String audiobook_rematch_default_value({required Object n}) => '默认 ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} 匹配 — ${detail}';
   @override
-  String get sasayaki_matching => '匹配中…';
+  String get audiobook_rematch_matching => '匹配中…';
   @override
-  String get sasayaki_no_chapters => 'EPUB 没有章节文本';
+  String get audiobook_rematch_no_chapters => 'EPUB 没有章节文本';
   @override
-  String get sasayaki_no_cues_to_match => '没有字幕条目可供匹配';
+  String get audiobook_rematch_no_cues_to_match => '没有字幕条目可供匹配';
   @override
-  String get sasayaki_no_sections => '未读到 ttu 章节文本，无法自动匹配';
+  String get audiobook_rematch_no_sections => '未读到 ttu 章节文本，无法自动匹配';
   @override
-  String get sasayaki_no_stored_cues => '没有已存字幕条目，无法重跑';
+  String get audiobook_rematch_no_stored_cues => '没有已存字幕条目，无法重跑';
   @override
-  String sasayaki_rematch_failed({required Object error}) => '重跑失败：${error}';
+  String audiobook_rematch_failed({required Object error}) => '重跑失败：${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       '重新匹配：${pct}%（窗口：${window}）';
   @override
-  String get sasayaki_search_window => '搜索窗口';
+  String get audiobook_rematch_search_window => '搜索窗口';
   @override
-  String get sasayaki_similarity_threshold => '相似度阈值';
+  String get audiobook_rematch_similarity_threshold => '相似度阈值';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       '模糊匹配的最低相似度（Dice 系数）。降低可容忍更多文本差异，但太低会误匹配。';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       '每条字幕在正文里向前找的字符数。命中率低时可左右调整，过大容易被短噪声字幕拉偏光标。';
   @override
   String get saved_tags => '标签已保存。';
@@ -109193,11 +110223,6 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get sync_exit_warning_title => '同步进行中';
   @override
-  String get sync_google_drive_hoshi_compat => '与 Hoshi / ッツ 共享进度';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      '通过共享的 Google Drive 文件夹（ttu-reader-data）同步阅读进度。需完整 Drive 权限并重新登录。';
-  @override
   String get sync_host => '主机';
   @override
   String get sync_lan_discovery => '局域网设备';
@@ -109482,67 +110507,68 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get torrent_upload_intro_title => '上传 / 做种';
   @override
-  String get ttu_blur_images => '图片模糊（防剧透）';
+  String get reader_blur_images => '图片模糊（防剧透）';
   @override
-  String get ttu_font_size => '字体大小';
+  String get reader_font_size => '字体大小';
   @override
-  String get ttu_font_vpal => 'VPAL 纵排替代';
+  String get reader_font_vpal => 'VPAL 纵排替代';
   @override
-  String get ttu_furigana_hide => '隐藏';
+  String get reader_furigana_hide => '隐藏';
   @override
-  String get ttu_furigana_mode => '振假名';
+  String get reader_furigana_mode => '振假名';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => '部分';
+  String get reader_furigana_partial => '部分';
   @override
-  String get ttu_furigana_show => '显示';
+  String get reader_furigana_show => '显示';
   @override
-  String get ttu_furigana_toggle => '切换';
+  String get reader_furigana_toggle => '切换';
   @override
-  String get ttu_horizontal => '横排';
+  String get reader_horizontal => '横排';
   @override
-  String get ttu_line_height => '行高';
+  String get reader_line_height => '行高';
   @override
-  String get ttu_merge_image_pages => '将插图页并入正文';
+  String get reader_merge_image_pages => '将插图页并入正文';
   @override
-  String get ttu_merge_image_pages_subtitle => '把只含一张图的独立章节并入相邻正文章连续显示，不再单独占一页';
+  String get reader_merge_image_pages_subtitle =>
+      '把只含一张图的独立章节并入相邻正文章连续显示，不再单独占一页';
   @override
-  String get ttu_no_books_added => '尚未添加任何书籍';
+  String get reader_no_books_added => '尚未添加任何书籍';
   @override
-  String get ttu_not_bound_cannot_rematch => '有声书未绑定书籍，无法重跑匹配';
+  String get reader_not_bound_cannot_rematch => '有声书未绑定书籍，无法重跑匹配';
   @override
-  String get ttu_orient_mixed => '混合';
+  String get reader_orient_mixed => '混合';
   @override
-  String get ttu_orient_upright => '竖直';
+  String get reader_orient_upright => '竖直';
   @override
-  String get ttu_page_columns_auto => '自动';
+  String get reader_page_columns_auto => '自动';
   @override
-  String get ttu_paginated => '翻页';
+  String get reader_paginated => '翻页';
   @override
-  String get ttu_paragraph_spacing => '段落间距';
+  String get reader_paragraph_spacing => '段落间距';
   @override
-  String get ttu_reader_styles => '优先书籍样式';
+  String get reader_reader_styles => '优先书籍样式';
   @override
-  String get ttu_scroll => '滚动';
+  String get reader_scroll => '滚动';
   @override
-  String get ttu_text_indentation => '段落缩进';
+  String get reader_text_indentation => '段落缩进';
   @override
-  String get ttu_text_justify => '两端对齐';
+  String get reader_text_justify => '两端对齐';
   @override
-  String get ttu_theme => '主题';
+  String get reader_theme => '主题';
   @override
-  String get ttu_vert_kerning => '字偶间距（纵排）';
+  String get reader_vert_kerning => '字偶间距（纵排）';
   @override
-  String get ttu_vert_text_orient => '文字方向';
+  String get reader_vert_text_orient => '文字方向';
   @override
-  String get ttu_vertical => '竖排';
+  String get reader_vertical => '竖排';
   @override
-  String get ttu_view_mode_label => '翻页 / 滚动';
+  String get reader_view_mode_label => '翻页 / 滚动';
   @override
-  String get ttu_vn => '视觉小说';
+  String get reader_vn => '视觉小说';
   @override
-  String get ttu_writing_direction => '排版方向';
+  String get reader_writing_direction => '排版方向';
   @override
   String get undo => '撤销';
   @override
@@ -111928,6 +112954,65 @@ class _StringsZhCn extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       '无法切换 Anki 后端：${error}';
+  @override
+  String get migration_settings_entry => '迁移到 Fushi';
+  @override
+  String get migration_settings_entry_subtitle => '把全部数据搬到新的 Fushi 应用';
+  @override
+  String get migration_intro =>
+      'Fushi 是本应用的新名字。迁移会把你的全部数据分批导出到中转目录，再由 Fushi 导入并逐项校验。在你卸载旧版之前，这里的数据原样保留。';
+  @override
+  String get migration_target_missing => '尚未安装 Fushi。请先安装 Fushi，再回到这里。';
+  @override
+  String get migration_download_fushi => '下载 Fushi';
+  @override
+  String get migration_start => '开始迁移';
+  @override
+  String get migration_open_fushi => '打开 Fushi';
+  @override
+  String get migration_include_local_audio => '一并导出本地发音库（体积可能很大）';
+  @override
+  String migration_batch_running({required Object batch}) => '正在导出 ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} 已导出';
+  @override
+  String get migration_export_done => '导出完成。打开 Fushi 完成导入与校验。';
+  @override
+  String migration_export_failed({required Object error}) => '导出失败：${error}';
+  @override
+  String get migration_readonly_note =>
+      '数据已导出到 Fushi。本应用已进入只读模式：请改用 Fushi 阅读和制卡。若 Fushi 校验发现缺失，可随时在此重新导出。';
+  @override
+  String get migration_reexport => '重新导出';
+  @override
+  String get migration_batch_core_label => '设置、进度与统计';
+  @override
+  String get migration_import_entry => '从 Hibiki 导入';
+  @override
+  String get migration_import_entry_subtitle => '导入旧版 Hibiki 导出的数据';
+  @override
+  String get migration_import_detected => '检测到 Hibiki 迁移数据，现在导入？';
+  @override
+  String get migration_import_start => '开始导入';
+  @override
+  String migration_import_running({required Object batch}) => '正在导入 ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} 校验未通过，已保留待重传：${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      '导入数据不完整：${detail}。请回 Hibiki 重新导出缺失部分后再导入。';
+  @override
+  String get migration_import_success => '导入完成，校验通过。';
+  @override
+  String get migration_import_nothing => '中转目录中没有找到迁移数据。';
+  @override
+  String get migration_uninstall_prompt => '迁移完成。卸载旧版 Hibiki？';
+  @override
+  String get migration_uninstall_button => '卸载 Hibiki';
+  @override
+  String get migration_uninstall_still_installed => '旧版 Hibiki 仍安装在设备上，可随时卸载。';
 }
 
 // Path: <root>
@@ -112873,9 +113958,9 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get color_primary_desc => '音訊醒目標示、按鈕、開關';
   @override
-  String get color_sasayaki => '音訊醒目標示';
+  String get color_sentence_audio_highlight => '音訊醒目標示';
   @override
-  String get color_sasayaki_desc => '有聲書播放時跟隨當前句的醒目標示顏色';
+  String get color_sentence_audio_highlight_desc => '有聲書播放時跟隨當前句的醒目標示顏色';
   @override
   String get color_secondary => '輔色';
   @override
@@ -115264,44 +116349,47 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get reverse_reader_bottom_bar => '反轉閱讀器底欄';
   @override
-  String get sasayaki_all_zero => '所有視窗命中率都是 0，請手動調整';
+  String get audiobook_rematch_all_zero => '所有視窗命中率都是 0，請手動調整';
   @override
-  String sasayaki_auto_failed({required Object error}) => '自動比對失敗：${error}';
+  String audiobook_rematch_auto_failed({required Object error}) =>
+      '自動比對失敗：${error}';
   @override
-  String get sasayaki_auto_match => '自動比對';
+  String get audiobook_rematch_auto_match => '自動比對';
   @override
-  String sasayaki_auto_picked({required Object window, required Object pct}) =>
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
       '自動選定 ${window}（命中 ${pct}%）';
   @override
-  String sasayaki_default_value({required Object n}) => '預設 ${n}';
+  String audiobook_rematch_default_value({required Object n}) => '預設 ${n}';
   @override
-  String sasayaki_health_label({required Object pct, required Object detail}) =>
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
       '${pct} 比對 — ${detail}';
   @override
-  String get sasayaki_matching => '比對中…';
+  String get audiobook_rematch_matching => '比對中…';
   @override
-  String get sasayaki_no_chapters => 'EPUB 沒有章節文字';
+  String get audiobook_rematch_no_chapters => 'EPUB 沒有章節文字';
   @override
-  String get sasayaki_no_cues_to_match => '沒有字幕條目可供比對';
+  String get audiobook_rematch_no_cues_to_match => '沒有字幕條目可供比對';
   @override
-  String get sasayaki_no_sections => '未讀到 ttu 章節文字，無法自動比對';
+  String get audiobook_rematch_no_sections => '未讀到 ttu 章節文字，無法自動比對';
   @override
-  String get sasayaki_no_stored_cues => '沒有已存字幕條目，無法重跑';
+  String get audiobook_rematch_no_stored_cues => '沒有已存字幕條目，無法重跑';
   @override
-  String sasayaki_rematch_failed({required Object error}) => '重跑失敗：${error}';
+  String audiobook_rematch_failed({required Object error}) => '重跑失敗：${error}';
   @override
-  String sasayaki_rematch_result(
+  String audiobook_rematch_result(
           {required Object pct, required Object window}) =>
       '重新比對：${pct}%（視窗：${window}）';
   @override
-  String get sasayaki_search_window => '搜尋視窗';
+  String get audiobook_rematch_search_window => '搜尋視窗';
   @override
-  String get sasayaki_similarity_threshold => '相似度閾值';
+  String get audiobook_rematch_similarity_threshold => '相似度閾值';
   @override
-  String get sasayaki_threshold_hint =>
+  String get audiobook_rematch_threshold_hint =>
       '模糊比對的最低相似度（Dice 係數）。降低可容忍更多文字差異，但太低會誤比對。';
   @override
-  String get sasayaki_window_hint =>
+  String get audiobook_rematch_window_hint =>
       '每條字幕在正文裡向前找的字元數。命中率低時可左右調整，過大容易被短雜訊字幕拉偏游標。';
   @override
   String get saved_tags => '標籤已儲存。';
@@ -116046,11 +117134,6 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get sync_exit_warning_title => '同步進行中';
   @override
-  String get sync_google_drive_hoshi_compat => 'Share progress with Hoshi / ッツ';
-  @override
-  String get sync_google_drive_hoshi_compat_desc =>
-      'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
-  @override
   String get sync_host => '主機';
   @override
   String get sync_lan_discovery => '區域網絡裝置';
@@ -116341,68 +117424,68 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get torrent_upload_intro_title => 'Upload / seeding';
   @override
-  String get ttu_blur_images => 'Blur images (spoiler guard)';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
   @override
-  String get ttu_font_size => '字型大小';
+  String get reader_font_size => '字型大小';
   @override
-  String get ttu_font_vpal => 'VPAL 直排替代';
+  String get reader_font_vpal => 'VPAL 直排替代';
   @override
-  String get ttu_furigana_hide => '隱藏';
+  String get reader_furigana_hide => '隱藏';
   @override
-  String get ttu_furigana_mode => '振假名';
+  String get reader_furigana_mode => '振假名';
   @override
-  String get ttu_furigana_mode_hint => '';
+  String get reader_furigana_mode_hint => '';
   @override
-  String get ttu_furigana_partial => '部分';
+  String get reader_furigana_partial => '部分';
   @override
-  String get ttu_furigana_show => '顯示';
+  String get reader_furigana_show => '顯示';
   @override
-  String get ttu_furigana_toggle => '切換';
+  String get reader_furigana_toggle => '切換';
   @override
-  String get ttu_horizontal => '橫排';
+  String get reader_horizontal => '橫排';
   @override
-  String get ttu_line_height => '行高';
+  String get reader_line_height => '行高';
   @override
-  String get ttu_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
   @override
-  String get ttu_merge_image_pages_subtitle =>
+  String get reader_merge_image_pages_subtitle =>
       'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
   @override
-  String get ttu_no_books_added => '書架中尚未有任何書籍';
+  String get reader_no_books_added => '書架中尚未有任何書籍';
   @override
-  String get ttu_not_bound_cannot_rematch => '有聲書未繫結書籍，無法重跑比對';
+  String get reader_not_bound_cannot_rematch => '有聲書未繫結書籍，無法重跑比對';
   @override
-  String get ttu_orient_mixed => '混合';
+  String get reader_orient_mixed => '混合';
   @override
-  String get ttu_orient_upright => '豎直';
+  String get reader_orient_upright => '豎直';
   @override
-  String get ttu_page_columns_auto => '自動';
+  String get reader_page_columns_auto => '自動';
   @override
-  String get ttu_paginated => '翻頁';
+  String get reader_paginated => '翻頁';
   @override
-  String get ttu_paragraph_spacing => 'Paragraph spacing';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
   @override
-  String get ttu_reader_styles => '優先書籍樣式';
+  String get reader_reader_styles => '優先書籍樣式';
   @override
-  String get ttu_scroll => '捲動';
+  String get reader_scroll => '捲動';
   @override
-  String get ttu_text_indentation => '段落縮排';
+  String get reader_text_indentation => '段落縮排';
   @override
-  String get ttu_text_justify => '兩端對齊';
+  String get reader_text_justify => '兩端對齊';
   @override
-  String get ttu_theme => '主題';
+  String get reader_theme => '主題';
   @override
-  String get ttu_vert_kerning => '字偶間距（直排）';
+  String get reader_vert_kerning => '字偶間距（直排）';
   @override
-  String get ttu_vert_text_orient => '文字方向';
+  String get reader_vert_text_orient => '文字方向';
   @override
-  String get ttu_vertical => '直排';
+  String get reader_vertical => '直排';
   @override
-  String get ttu_view_mode_label => '翻頁 / 捲動';
+  String get reader_view_mode_label => '翻頁 / 捲動';
   @override
-  String get ttu_vn => 'Visual Novel';
+  String get reader_vn => 'Visual Novel';
   @override
-  String get ttu_writing_direction => '排版方向';
+  String get reader_writing_direction => '排版方向';
   @override
   String get undo => '復原';
   @override
@@ -118930,6 +120013,77 @@ class _StringsZhHk extends _StringsEn {
   @override
   String anki_connect_backend_switch_failed({required Object error}) =>
       'Could not switch Anki backend: ${error}';
+  @override
+  String get migration_settings_entry => 'Migrate to Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  @override
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  @override
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  @override
+  String get migration_download_fushi => 'Get Fushi';
+  @override
+  String get migration_start => 'Start migration';
+  @override
+  String get migration_open_fushi => 'Open Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  @override
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  @override
+  String get migration_reexport => 'Re-export';
+  @override
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  @override
+  String get migration_import_entry => 'Import from Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  @override
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  @override
+  String get migration_import_start => 'Start import';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  @override
+  String get migration_import_success => 'Import complete and verified.';
+  @override
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  @override
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  @override
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
 }
 
 /// Flat map(s) containing all translations.
@@ -119781,9 +120935,9 @@ extension on _StringsEn {
         return 'Primary';
       case 'color_primary_desc':
         return 'Audio highlight, buttons, switches';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return 'Audio highlight';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return 'Current-sentence highlight that follows audiobook playback';
       case 'color_secondary':
         return 'Secondary';
@@ -121990,42 +123144,42 @@ extension on _StringsEn {
         return 'Reverse navigation bar';
       case 'reverse_reader_bottom_bar':
         return 'Reverse reader bottom bar';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return 'All windows scored 0%, please adjust manually';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) => 'Auto-match failed: ${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return 'Auto match';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             'Auto-selected ${window} (hit ${pct}%)';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => 'Default ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} matched — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return 'Matching...';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUB has no chapter text';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return 'No cues to match';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return 'No ttu chapter text found, cannot auto-match';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return 'No stored cues, cannot re-run';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) => 'Re-match failed: ${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             'Rematched: ${pct}% (window: ${window})';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return 'Search window';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return 'Similarity threshold';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return 'Minimum similarity for fuzzy matching (Dice coefficient). Lower to tolerate more text differences, but too low causes false matches.';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return 'Number of characters to search forward per cue in the text. Adjust if hit rate is low; too large may skew cursor with short noisy cues.';
       case 'saved_tags':
         return 'Tags saved.';
@@ -122751,10 +123905,6 @@ extension on _StringsEn {
         return 'Sync is still in progress. Exiting now may cause data loss.';
       case 'sync_exit_warning_title':
         return 'Sync in progress';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return 'Host';
       case 'sync_lan_discovery':
@@ -123035,67 +124185,67 @@ extension on _StringsEn {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return 'Font size';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL (vertical alt)';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return 'Hide';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return 'Furigana';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return 'Partial';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return 'Show';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return 'Toggle';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return 'Horizontal';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return 'Line height';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return 'No books in library';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return 'Audiobook not bound to a book, cannot re-match';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return 'Mixed';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return 'Upright';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return 'Auto';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return 'Paginated';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return 'Prioritize book styles';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return 'Scroll';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return 'Paragraph indent';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return 'Text justification';
-      case 'ttu_theme':
+      case 'reader_theme':
         return 'Theme';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return 'Font kerning (vertical)';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return 'Text orientation';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return 'Vertical';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return 'Page / scroll';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return 'Writing direction';
       case 'undo':
         return 'Undo';
@@ -125353,6 +126503,62 @@ extension on _StringsEn {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }
@@ -126205,9 +127411,9 @@ extension on _StringsAr {
         return 'أساسي';
       case 'color_primary_desc':
         return 'تمييز الصوت، الأزرار، المفاتيح';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return 'تمييز Sasayaki';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return 'تمييز مزامنة ترجمة الكتاب المسموع';
       case 'color_secondary':
         return 'ثانوي';
@@ -128413,42 +129619,42 @@ extension on _StringsAr {
         return 'عكس شريط التنقّل';
       case 'reverse_reader_bottom_bar':
         return 'عكس الشريط السفلي للقارئ';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return 'جميع النوافذ سجّلت 0%، يرجى الضبط يدوياً';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) => 'فشلت المطابقة التلقائية: ${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return 'مطابقة تلقائية';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             'تم اختيار ${window} تلقائياً (نسبة ${pct}%)';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => 'افتراضي ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} مطابق — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return 'جارٍ المطابقة...';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUB لا يحتوي على نص فصول';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return 'لا توجد ترجمات للمطابقة';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return 'لم يتم العثور على نص فصل ttu، لا يمكن المطابقة التلقائية';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return 'لا توجد ترجمات مخزّنة، لا يمكن إعادة التشغيل';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) => 'فشلت إعادة المطابقة: ${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             'أُعيدت المطابقة: ${pct}% (نافذة: ${window})';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return 'نافذة البحث';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return 'عتبة التشابه';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return 'الحد الأدنى للتشابه في المطابقة الضبابية (معامل Dice). خفّض لتحمّل مزيد من الاختلافات، لكن قيمة منخفضة جداً تسبب مطابقات خاطئة.';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return 'عدد الأحرف للبحث للأمام لكل ترجمة في النص. اضبط إذا كانت نسبة الإصابة منخفضة؛ قيمة كبيرة جداً قد تُنحرف المؤشر مع الترجمات القصيرة.';
       case 'saved_tags':
         return 'تم حفظ الوسوم.';
@@ -129171,10 +130377,6 @@ extension on _StringsAr {
         return 'المزامنة لا تزال قيد التنفيذ. قد يؤدي الخروج الآن إلى فقدان البيانات.';
       case 'sync_exit_warning_title':
         return 'المزامنة قيد التنفيذ';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return 'المضيف';
       case 'sync_lan_discovery':
@@ -129456,67 +130658,67 @@ extension on _StringsAr {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return 'حجم الخط';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL (بديل عمودي)';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return 'إخفاء';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return 'فوريغانا';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return 'جزئي';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return 'عرض';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return 'تبديل';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return 'أفقي';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return 'ارتفاع السطر';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return 'لا توجد كتب في المكتبة';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return 'الكتاب الصوتي غير مرتبط بكتاب، لا يمكن إعادة المطابقة';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return 'مختلط';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return 'قائم';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return 'تلقائي';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return 'صفحات';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return 'أولوية أنماط الكتاب';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return 'تمرير';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return 'مسافة بادئة الفقرة';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return 'ضبط النص';
-      case 'ttu_theme':
+      case 'reader_theme':
         return 'المظهر';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return 'تقنين الحروف (عمودي)';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return 'اتجاه النص';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return 'عمودي';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return 'صفحات / تمرير';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual Novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return 'اتجاه الكتابة';
       case 'undo':
         return 'تراجع';
@@ -131774,6 +132976,62 @@ extension on _StringsAr {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }
@@ -132628,9 +133886,9 @@ extension on _StringsDe {
         return 'Primär';
       case 'color_primary_desc':
         return 'Audio-Hervorhebung, Schaltflächen, Schalter';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return 'Sasayaki-Hervorhebung';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return 'Untertitel-Synchronisierung des Hörbuchs';
       case 'color_secondary':
         return 'Sekundär';
@@ -134844,44 +136102,44 @@ extension on _StringsDe {
         return 'Navigationsleiste umkehren';
       case 'reverse_reader_bottom_bar':
         return 'Untere Leserleiste umkehren';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return 'Alle Fenster mit 0% bewertet, bitte manuell anpassen';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) =>
             'Automatischer Abgleich fehlgeschlagen: ${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return 'Automatischer Abgleich';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             'Automatisch ${window} ausgewählt (Treffer ${pct}%)';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => 'Standard ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} übereinstimmend — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return 'Abgleich läuft...';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUB hat keinen Kapiteltext';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return 'Keine Cues zum Abgleichen';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return 'Kein ttu-Kapiteltext gefunden, automatischer Abgleich nicht möglich';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return 'Keine gespeicherten Cues, erneuter Abgleich nicht möglich';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) =>
             'Neuabgleich fehlgeschlagen: ${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             'Neu abgeglichen: ${pct}% (Fenster: ${window})';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return 'Suchfenster';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return 'Ähnlichkeitsschwelle';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return 'Mindestähnlichkeit für unscharfen Abgleich (Dice-Koeffizient). Senken, um mehr Textunterschiede zu tolerieren, aber zu niedrig verursacht Fehlabgleiche.';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return 'Anzahl der Zeichen, die pro Cue im Text vorwärts durchsucht werden. Anpassen, wenn die Trefferquote niedrig ist; zu groß kann den Cursor bei kurzen verrauschten Cues verzerren.';
       case 'saved_tags':
         return 'Tags gespeichert.';
@@ -135609,10 +136867,6 @@ extension on _StringsDe {
         return 'Die Synchronisierung läuft noch. Wenn du jetzt beendest, können Daten verloren gehen.';
       case 'sync_exit_warning_title':
         return 'Sync läuft';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return 'Host';
       case 'sync_lan_discovery':
@@ -135896,67 +137150,67 @@ extension on _StringsDe {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return 'Schriftgröße';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL (Vertikale Alt.)';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return 'Ausblenden';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return 'Furigana';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return 'Teilweise';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return 'Anzeigen';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return 'Umschalten';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return 'Horizontal';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return 'Zeilenhöhe';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return 'Keine Bücher in der Bibliothek';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return 'Hörbuch nicht mit einem Buch verknüpft, Neuabgleich nicht möglich';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return 'Gemischt';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return 'Aufrecht';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return 'Automatisch';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return 'Seitenweise';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return 'Buchstile bevorzugen';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return 'Scrollen';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return 'Absatzeinzug';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return 'Blocksatz';
-      case 'ttu_theme':
+      case 'reader_theme':
         return 'Design';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return 'Zeichenabstand (vertikal)';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return 'Textausrichtung';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return 'Vertikal';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return 'Seiten / Scrollen';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual Novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return 'Schreibrichtung';
       case 'undo':
         return 'Rückgängig';
@@ -138217,6 +139471,62 @@ extension on _StringsDe {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }
@@ -139072,9 +140382,9 @@ extension on _StringsEs {
         return 'Primario';
       case 'color_primary_desc':
         return 'Resaltado de audio, botones, interruptores';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return 'Resaltado Sasayaki';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return 'Resaltado de sincronización de subtítulos del audiolibro';
       case 'color_secondary':
         return 'Secundario';
@@ -141288,44 +142598,44 @@ extension on _StringsEs {
         return 'Invertir barra de navegación';
       case 'reverse_reader_bottom_bar':
         return 'Invertir barra inferior del lector';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return 'Todas las ventanas obtuvieron 0%, ajusta manualmente';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) =>
             'Emparejamiento automático fallido: ${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return 'Emparejamiento automático';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             'Selección automática ${window} (acierto ${pct}%)';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => 'Predeterminado ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} coincidencia — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return 'Emparejando...';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUB no tiene texto de capítulos';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return 'No hay marcas para emparejar';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return 'No se encontró texto de capítulo en ttu, no se puede emparejar automáticamente';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return 'No hay marcas almacenadas, no se puede re-ejecutar';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) =>
             'Re-emparejamiento fallido: ${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             'Reemparejado: ${pct}% (ventana: ${window})';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return 'Ventana de búsqueda';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return 'Umbral de similitud';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return 'Similitud mínima para emparejamiento difuso (coeficiente de Dice). Reduce para tolerar más diferencias de texto, pero un valor demasiado bajo causa coincidencias falsas.';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return 'Número de caracteres a buscar hacia adelante por marca en el texto. Ajusta si la tasa de aciertos es baja; demasiado grande puede desviar el cursor con marcas cortas y ruidosas.';
       case 'saved_tags':
         return 'Etiquetas guardadas.';
@@ -142052,10 +143362,6 @@ extension on _StringsEs {
         return 'La sincronización aún está en curso. Salir ahora puede provocar pérdida de datos.';
       case 'sync_exit_warning_title':
         return 'Sincronización en curso';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return 'Servidor';
       case 'sync_lan_discovery':
@@ -142337,67 +143643,67 @@ extension on _StringsEs {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return 'Tamaño de fuente';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL (alt. vertical)';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return 'Ocultar';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return 'Furigana';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return 'Parcial';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return 'Mostrar';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return 'Alternar';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return 'Horizontal';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return 'Altura de línea';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return 'No hay libros en la biblioteca';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return 'El audiolibro no está vinculado a un libro, no se puede re-emparejar';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return 'Mixto';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return 'Vertical';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return 'Automático';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return 'Paginado';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return 'Priorizar estilos del libro';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return 'Desplazamiento';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return 'Sangría de párrafo';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return 'Justificación de texto';
-      case 'ttu_theme':
+      case 'reader_theme':
         return 'Tema';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return 'Interletraje (vertical)';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return 'Orientación del texto';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return 'Vertical';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return 'Páginas / Desplazamiento';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual Novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return 'Dirección de escritura';
       case 'undo':
         return 'Deshacer';
@@ -144659,6 +145965,62 @@ extension on _StringsEs {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }
@@ -145515,9 +146877,9 @@ extension on _StringsFr {
         return 'Primaire';
       case 'color_primary_desc':
         return 'Surlignage audio, boutons, commutateurs';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return 'Surlignage Sasayaki';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return 'Surlignage de synchronisation des sous-titres du livre audio';
       case 'color_secondary':
         return 'Secondaire';
@@ -147734,44 +149096,44 @@ extension on _StringsFr {
         return 'Inverser la barre de navigation';
       case 'reverse_reader_bottom_bar':
         return 'Inverser la barre inférieure du lecteur';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return 'Toutes les fenêtres ont obtenu 0 %, veuillez ajuster manuellement';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) =>
             'échec de la correspondance automatique : ${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return 'Correspondance automatique';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             'Sélection automatique de ${window} (taux ${pct}%)';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => 'Par défaut ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} correspondance — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return 'Correspondance en cours...';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUB ne contient aucun texte de chapitre';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return 'Aucun repère à faire correspondre';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return 'Aucun texte de chapitre ttu trouvé, correspondance automatique impossible';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return 'Aucun repère enregistré, impossible de relancer';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) =>
             'échec de la correspondance : ${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             'Recorrespondance : ${pct}% (fenêtre : ${window})';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return 'Fenêtre de recherche';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return 'Seuil de similarité';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return 'Similarité minimale pour la correspondance floue (coefficient de Dice). Abaissez pour tolérer plus de différences, mais une valeur trop basse provoque de fausses correspondances.';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return 'Nombre de caractères à rechercher en avant par repère dans le texte. Ajustez si le taux de correspondance est faible ; une valeur trop élevée peut fausser le curseur avec des repères courts et bruités.';
       case 'saved_tags':
         return 'étiquettes enregistrées.';
@@ -148497,10 +149859,6 @@ extension on _StringsFr {
         return 'La synchronisation est toujours en cours. Quitter maintenant peut entraîner une perte de données.';
       case 'sync_exit_warning_title':
         return 'Sync en cours';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return 'Hôte';
       case 'sync_lan_discovery':
@@ -148783,67 +150141,67 @@ extension on _StringsFr {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return 'Taille de police';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL (alt. vertical)';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return 'Masquer';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return 'Furigana';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return 'Partiel';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return 'Afficher';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return 'Basculer';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return 'Horizontal';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return 'Hauteur de ligne';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return 'Aucun livre dans la bibliothèque';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return 'Le livre audio n\'est pas lié à un livre, impossible de relancer la correspondance';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return 'Mixte';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return 'Droit';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return 'Automatique';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return 'Paginé';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return 'Prioriser les styles du livre';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return 'Défilement';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return 'Retrait de paragraphe';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return 'Justification du texte';
-      case 'ttu_theme':
+      case 'reader_theme':
         return 'Thème';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return 'Crénage (vertical)';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return 'Orientation du texte';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return 'Vertical';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return 'Pages / Défilement';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual Novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return 'Direction d\'écriture';
       case 'undo':
         return 'Annuler';
@@ -151107,6 +152465,62 @@ extension on _StringsFr {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }
@@ -151961,9 +153375,9 @@ extension on _StringsId {
         return 'Primer';
       case 'color_primary_desc':
         return 'Sorotan audio, tombol, sakelar';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return 'Sorotan Sasayaki';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return 'Sorotan sinkronisasi subtitle buku audio';
       case 'color_secondary':
         return 'Sekunder';
@@ -154172,43 +155586,43 @@ extension on _StringsId {
         return 'Balik bilah navigasi';
       case 'reverse_reader_bottom_bar':
         return 'Balik bilah bawah pembaca';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return 'Semua jendela skor 0%, silakan sesuaikan secara manual';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) =>
             'Pencocokan otomatis gagal: ${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return 'Pencocokan Otomatis';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             'Otomatis memilih ${window} (cocok ${pct}%)';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => 'Default ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} cocok — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return 'Mencocokkan...';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUB tidak memiliki teks bab';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return 'Tidak ada cue untuk dicocokkan';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return 'Teks bab ttu tidak ditemukan, tidak dapat mencocokkan otomatis';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return 'Tidak ada cue tersimpan, tidak dapat menjalankan ulang';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) => 'Pencocokan ulang gagal: ${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             'Dicocokkan ulang: ${pct}% (jendela: ${window})';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return 'Jendela Pencarian';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return 'Ambang Kemiripan';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return 'Kemiripan minimum untuk pencocokan fuzzy (koefisien Dice). Turunkan untuk mentoleransi lebih banyak perbedaan teks, tapi terlalu rendah menyebabkan kecocokan palsu.';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return 'Jumlah karakter untuk dicari ke depan per cue dalam teks. Sesuaikan jika tingkat kecocokan rendah; terlalu besar dapat menggeser kursor dengan cue pendek yang berisik.';
       case 'saved_tags':
         return 'Tag disimpan.';
@@ -154934,10 +156348,6 @@ extension on _StringsId {
         return 'Sinkronisasi masih berlangsung. Keluar sekarang dapat menyebabkan kehilangan data.';
       case 'sync_exit_warning_title':
         return 'Sinkronisasi Berlangsung';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return 'Host';
       case 'sync_lan_discovery':
@@ -155218,67 +156628,67 @@ extension on _StringsId {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return 'Ukuran Font';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL (Alt Vertikal)';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return 'Sembunyikan';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return 'Furigana';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return 'Sebagian';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return 'Tampilkan';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return 'Alihkan';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return 'Horizontal';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return 'Tinggi Baris';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return 'Belum ada buku di perpustakaan';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return 'Buku audio tidak terikat ke buku, tidak dapat mencocokkan ulang';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return 'Campuran';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return 'Tegak';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return 'Otomatis';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return 'Paginasi';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return 'Prioritaskan Gaya Buku';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return 'Gulir';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return 'Indentasi Paragraf';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return 'Perataan Teks';
-      case 'ttu_theme':
+      case 'reader_theme':
         return 'Tema';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return 'Kerning Font (Vertikal)';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return 'Orientasi Teks';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return 'Vertikal';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return 'Halaman / Gulir';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual Novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return 'Arah Penulisan';
       case 'undo':
         return 'Urungkan';
@@ -157537,6 +158947,62 @@ extension on _StringsId {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }
@@ -158391,9 +159857,9 @@ extension on _StringsIt {
         return 'Primario';
       case 'color_primary_desc':
         return 'Evidenziazione audio, pulsanti, interruttori';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return 'Evidenziazione Sasayaki';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return 'Evidenziazione sincronizzazione sottotitoli audiolibro';
       case 'color_secondary':
         return 'Secondario';
@@ -160606,43 +162072,43 @@ extension on _StringsIt {
         return 'Inverti barra di navigazione';
       case 'reverse_reader_bottom_bar':
         return 'Inverti barra inferiore del lettore';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return 'Tutte le finestre hanno ottenuto 0%, regolare manualmente';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) =>
             'Corrispondenza automatica fallita: ${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return 'Corrispondenza automatica';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             'Selezione automatica di ${window} (tasso ${pct}%)';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => 'Predefinito ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} corrispondente — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return 'Corrispondenza in corso...';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUB non contiene testo di capitolo';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return 'Nessun riferimento da far corrispondere';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return 'Nessun testo di capitolo ttu trovato, corrispondenza automatica impossibile';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return 'Nessun riferimento memorizzato, impossibile riavviare';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) => 'Corrispondenza fallita: ${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             'Ricalcolato: ${pct}% (finestra: ${window})';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return 'Finestra di ricerca';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return 'Soglia di similarità';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return 'Similarità minima per la corrispondenza fuzzy (coefficiente di Dice). Abbassare per tollerare più differenze, ma un valore troppo basso causa false corrispondenze.';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return 'Numero di caratteri da cercare in avanti per riferimento nel testo. Regola se il tasso di corrispondenza è basso; un valore troppo alto può falsare il cursore con riferimenti brevi e rumorosi.';
       case 'saved_tags':
         return 'Etichette salvate.';
@@ -161369,10 +162835,6 @@ extension on _StringsIt {
         return 'La sincronizzazione è ancora in corso. Uscire ora potrebbe causare la perdita di dati.';
       case 'sync_exit_warning_title':
         return 'Sincronizzazione in corso';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return 'Host';
       case 'sync_lan_discovery':
@@ -161656,67 +163118,67 @@ extension on _StringsIt {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return 'Dimensione carattere';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL (alt. verticale)';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return 'Nascondi';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return 'Furigana';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return 'Parziale';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return 'Mostra';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return 'Alterna';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return 'Orizzontale';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return 'Altezza riga';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return 'Nessun libro nella libreria';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return 'L\'audiolibro non è collegato a un libro, impossibile riavviare la corrispondenza';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return 'Misto';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return 'Diritto';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return 'Automatico';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return 'Paginato';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return 'Priorità stili del libro';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return 'Scorrimento';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return 'Rientro paragrafo';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return 'Giustificazione testo';
-      case 'ttu_theme':
+      case 'reader_theme':
         return 'Tema';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return 'Crenatura (verticale)';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return 'Orientamento testo';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return 'Verticale';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return 'Pagine / Scorrimento';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual Novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return 'Direzione di scrittura';
       case 'undo':
         return 'Annulla';
@@ -163981,6 +165443,62 @@ extension on _StringsIt {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }
@@ -164826,9 +166344,9 @@ extension on _StringsJa {
         return 'プライマリ';
       case 'color_primary_desc':
         return '音声ハイライト、ボタン、スイッチ';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return 'ささやきハイライト';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return 'オーディオブック字幕同期ハイライト';
       case 'color_secondary':
         return 'セカンダリ';
@@ -167033,42 +168551,42 @@ extension on _StringsJa {
         return 'ナビゲーションバーを反転';
       case 'reverse_reader_bottom_bar':
         return 'リーダーの下部バーを反転';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return 'すべてのウィンドウのスコアが0%です。手動で調整してください';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) => '自動マッチングに失敗しました：${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return '自動マッチング';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             '${window} を自動選択しました（ヒット率 ${pct}%）';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => 'デフォルト ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} マッチ — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return 'マッチング中...';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUBにチャプターテキストがありません';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return 'マッチングするキューがありません';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return 'ttuのチャプターテキストが見つかりません。自動マッチングできません';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return '保存されたキューがないため、再実行できません';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) => '再マッチングに失敗しました：${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             '再マッチング結果：${pct}%（ウィンドウ：${window}）';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return '検索ウィンドウ';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return '類似度しきい値';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return 'ファジーマッチングの最小類似度（Dice係数）。テキストの差異を許容するには下げてください。ただし低すぎると誤マッチが発生します。';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return 'テキスト内で各キューごとに前方検索する文字数。ヒット率が低い場合は調整してください。大きすぎると短い/ノイズの多いキューでカーソルがずれる場合があります。';
       case 'saved_tags':
         return 'タグを保存しました。';
@@ -167790,10 +169308,6 @@ extension on _StringsJa {
         return '同期がまだ進行中です。今終了するとデータが失われる可能性があります。';
       case 'sync_exit_warning_title':
         return '同期中';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return 'ホスト';
       case 'sync_lan_discovery':
@@ -168073,67 +169587,67 @@ extension on _StringsJa {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return 'フォントサイズ';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL（縦書き代替）';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return '非表示';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return 'ふりがな';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return '一部';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return '表示';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return '切替';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return '横書き';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return '行の高さ';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return '書庫に本がありません';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return '本に紐付けされていないため、再マッチングできません';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return '混合';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return '正立';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return '自動';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return 'ページ送り';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return '書籍スタイル優先';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return 'スクロール';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return '段落インデント';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return '両端揃え';
-      case 'ttu_theme':
+      case 'reader_theme':
         return 'テーマ';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return 'カーニング（縦書き）';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return '文字の向き';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return '縦書き';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return 'ページ / スクロール';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual Novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return '組方向';
       case 'undo':
         return '元に戻す';
@@ -170387,6 +171901,62 @@ extension on _StringsJa {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }
@@ -171233,9 +172803,9 @@ extension on _StringsKo {
         return '기본색';
       case 'color_primary_desc':
         return '오디오 하이라이트, 버튼, 스위치';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return '사사야키 하이라이트';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return '오디오북 자막 동기화 하이라이트';
       case 'color_secondary':
         return '보조색';
@@ -173441,42 +175011,42 @@ extension on _StringsKo {
         return '내비게이션 바 반전';
       case 'reverse_reader_bottom_bar':
         return '리더 하단 바 반전';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return '모든 윈도우 점수가 0%입니다. 수동으로 조정하세요';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) => '자동 매칭 실패: ${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return '자동 매칭';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             '${window} 자동 선택됨 (적중률 ${pct}%)';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => '기본값 ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} 일치 — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return '매칭 중...';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUB에 챕터 텍스트가 없습니다';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return '매칭할 큐가 없습니다';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return 'ttu 챕터 텍스트를 찾을 수 없어 자동 매칭 불가';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return '저장된 큐가 없어 다시 실행할 수 없습니다';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) => '재매칭 실패: ${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             '재매칭: ${pct}% (윈도우: ${window})';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return '검색 윈도우';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return '유사도 임계값';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return '퍼지 매칭의 최소 유사도 (Dice 계수)입니다. 낮추면 텍스트 차이를 더 허용하지만, 너무 낮으면 잘못된 매칭이 발생합니다.';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return '텍스트에서 큐당 앞으로 검색할 문자 수입니다. 적중률이 낮으면 조정하세요. 너무 크면 짧은 노이즈 큐에서 커서가 어긋날 수 있습니다.';
       case 'saved_tags':
         return '태그가 저장되었습니다.';
@@ -174199,10 +175769,6 @@ extension on _StringsKo {
         return '동기화가 아직 진행 중입니다. 지금 종료하면 데이터가 손실될 수 있습니다.';
       case 'sync_exit_warning_title':
         return '동기화 진행 중';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return '호스트';
       case 'sync_lan_discovery':
@@ -174482,67 +176048,67 @@ extension on _StringsKo {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return '글꼴 크기';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL (세로 대체)';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return '숨기기';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return '후리가나';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return '부분';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return '표시';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return '전환';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return '가로';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return '줄 간격';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return '서재에 책이 없습니다';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return '오디오북이 책에 바인딩되지 않아 다시 매칭할 수 없습니다';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return '혼합';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return '직립';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return '자동';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return '페이지 넘김';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return '책 스타일 우선';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return '스크롤';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return '문단 들여쓰기';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return '양쪽 정렬';
-      case 'ttu_theme':
+      case 'reader_theme':
         return '테마';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return '커닝 (세로)';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return '글자 방향';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return '세로';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return '페이지 / 스크롤';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual Novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return '글쓰기 방향';
       case 'undo':
         return '되돌리기';
@@ -176797,6 +178363,62 @@ extension on _StringsKo {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }
@@ -177650,9 +179272,9 @@ extension on _StringsNl {
         return 'Primair';
       case 'color_primary_desc':
         return 'Audiomarkering, knoppen, schakelaars';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return 'Sasayaki-markering';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return 'Markering van ondertitelsynchronisatie van het luisterboek';
       case 'color_secondary':
         return 'Secundair';
@@ -179866,43 +181488,43 @@ extension on _StringsNl {
         return 'Navigatiebalk omkeren';
       case 'reverse_reader_bottom_bar':
         return 'Onderbalk van lezer omkeren';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return 'Alle vensters scoorden 0%, pas handmatig aan';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) =>
             'Automatisch matchen mislukt: ${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return 'Automatisch matchen';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             'Automatisch geselecteerd ${window} (treffers ${pct}%)';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => 'Standaard ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} overeenkomst — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return 'Matchen...';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUB bevat geen hoofdstuktekst';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return 'Geen referenties om te matchen';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return 'Geen ttu-hoofdstuktekst gevonden, automatisch matchen niet mogelijk';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return 'Geen opgeslagen referenties, kan niet opnieuw uitvoeren';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) => 'Opnieuw matchen mislukt: ${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             'Opnieuw gematcht: ${pct}% (venster: ${window})';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return 'Zoekvenster';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return 'Similariteitsdrempel';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return 'Minimale overeenkomst voor fuzzy matching (Dice-coëfficiënt). Verlaag om meer tekstverschillen te tolereren, maar te laag veroorzaakt foutieve matches.';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return 'Aantal tekens om vooruit te zoeken per referentie in de tekst. Pas aan als het trefpercentage laag is; te hoog kan de cursor verschuiven bij korte, ruizige referenties.';
       case 'saved_tags':
         return 'Labels opgeslagen.';
@@ -180628,10 +182250,6 @@ extension on _StringsNl {
         return 'De synchronisatie is nog bezig. Nu afsluiten kan tot gegevensverlies leiden.';
       case 'sync_exit_warning_title':
         return 'Synchronisatie bezig';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return 'Host';
       case 'sync_lan_discovery':
@@ -180912,67 +182530,67 @@ extension on _StringsNl {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return 'Lettergrootte';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL (vert. alt.)';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return 'Verbergen';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return 'Furigana';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return 'Gedeeltelijk';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return 'Tonen';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return 'Wisselen';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return 'Horizontaal';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return 'Regelhoogte';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return 'Geen boeken in de bibliotheek';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return 'Luisterboek niet gekoppeld aan een boek, kan niet opnieuw matchen';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return 'Gemengd';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return 'Rechtop';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return 'Automatisch';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return 'Gepagineerd';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return 'Boekstijlen prioriteit geven';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return 'Scrollen';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return 'Alinea-inspringing';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return 'Tekstuitlijning';
-      case 'ttu_theme':
+      case 'reader_theme':
         return 'Thema';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return 'Tekenafstand (verticaal)';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return 'Tekstoriëntatie';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return 'Verticaal';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return 'Pagina\'s / Scrollen';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual Novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return 'Schrijfrichting';
       case 'undo':
         return 'Ongedaan maken';
@@ -183235,6 +184853,62 @@ extension on _StringsNl {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }
@@ -184089,9 +185763,9 @@ extension on _StringsPtBr {
         return 'Primária';
       case 'color_primary_desc':
         return 'Destaque de áudio, botões, interruptores';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return 'Destaque Sasayaki';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return 'Destaque de sincronização de legendas do audiolivro';
       case 'color_secondary':
         return 'Secundária';
@@ -186303,44 +187977,44 @@ extension on _StringsPtBr {
         return 'Inverter barra de navegação';
       case 'reverse_reader_bottom_bar':
         return 'Inverter barra inferior do leitor';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return 'Todas as janelas pontuaram 0%, ajuste manualmente';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) =>
             'Correspondência automática falhou: ${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return 'Correspondência Automática';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             'Selecionado automaticamente ${window} (acerto ${pct}%)';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => 'Padrão ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} correspondência — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return 'Correspondendo...';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUB não tem texto de capítulo';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return 'Nenhuma frase para corresponder';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return 'Nenhum texto de capítulo ttu encontrado, não é possível corresponder automaticamente';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return 'Nenhuma frase armazenada, não é possível reexecutar';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) =>
             'Falha na correspondência: ${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             'Recorrespondido: ${pct}% (janela: ${window})';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return 'Janela de Busca';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return 'Limite de Similaridade';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return 'Similaridade mínima para correspondência aproximada (coeficiente de Dice). Diminua para tolerar mais diferenças no texto, mas valores muito baixos causam correspondências falsas.';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return 'Número de caracteres a buscar à frente por frase no texto. Ajuste se a taxa de acerto estiver baixa; valores muito altos podem deslocar o cursor com frases curtas e ruidosas.';
       case 'saved_tags':
         return 'Tags salvas.';
@@ -187065,10 +188739,6 @@ extension on _StringsPtBr {
         return 'A sincronização ainda está em andamento. Sair agora pode causar perda de dados.';
       case 'sync_exit_warning_title':
         return 'Sincronização em andamento';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return 'Host';
       case 'sync_lan_discovery':
@@ -187349,67 +189019,67 @@ extension on _StringsPtBr {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return 'Tamanho da Fonte';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL (alt. vertical)';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return 'Ocultar';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return 'Furigana';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return 'Parcial';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return 'Mostrar';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return 'Alternar';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return 'Horizontal';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return 'Altura da Linha';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return 'Nenhum livro na biblioteca';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return 'Audiolivro não vinculado a um livro, não é possível corresponder novamente';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return 'Misto';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return 'Vertical';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return 'Automático';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return 'Paginado';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return 'Priorizar estilos do livro';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return 'Rolagem';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return 'Recuo de parágrafo';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return 'Justificação do texto';
-      case 'ttu_theme':
+      case 'reader_theme':
         return 'Tema';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return 'Kerning (vertical)';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return 'Orientação do texto';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return 'Vertical';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return 'Páginas / Rolagem';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual Novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return 'Direção da Escrita';
       case 'undo':
         return 'Desfazer';
@@ -189670,6 +191340,62 @@ extension on _StringsPtBr {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }
@@ -190526,9 +192252,9 @@ extension on _StringsRu {
         return 'Основной';
       case 'color_primary_desc':
         return 'Подсветка аудио, кнопки, переключатели';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return 'Подсветка Sasayaki';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return 'Подсветка синхронизации субтитров аудиокниги';
       case 'color_secondary':
         return 'Вторичный';
@@ -192741,44 +194467,44 @@ extension on _StringsRu {
         return 'Обратить панель навигации';
       case 'reverse_reader_bottom_bar':
         return 'Обратить нижнюю панель читалки';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return 'Все окна показали 0%, настройте вручную';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) =>
             'Автосопоставление не удалось: ${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return 'Автосопоставление';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             'Автоматически выбрано ${window} (совпадение ${pct}%)';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => 'По умолчанию ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} совпадение — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return 'Сопоставление...';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'В EPUB нет текста глав';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return 'Нет меток для сопоставления';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return 'Текст глав ttu не найден, автосопоставление невозможно';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return 'Нет сохранённых меток, перезапуск невозможен';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) =>
             'Пересопоставление не удалось: ${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             'Пересопоставлено: ${pct}% (окно: ${window})';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return 'Окно поиска';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return 'Порог сходства';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return 'Минимальное сходство для нечёткого сопоставления (коэффициент Дайса). Уменьшите для допуска больших различий, но слишком низкое значение даёт ложные совпадения.';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return 'Количество символов для поиска вперёд на каждую метку. Увеличьте, если процент совпадений низкий; слишком большое значение может сместить курсор при коротких шумных метках.';
       case 'saved_tags':
         return 'Теги сохранены.';
@@ -193504,10 +195230,6 @@ extension on _StringsRu {
         return 'Синхронизация ещё не завершена. Выход сейчас может привести к потере данных.';
       case 'sync_exit_warning_title':
         return 'Идёт синхронизация';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return 'Хост';
       case 'sync_lan_discovery':
@@ -193788,67 +195510,67 @@ extension on _StringsRu {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return 'Размер шрифта';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL (верт. альт.)';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return 'Скрыть';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return 'Фуригана';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return 'Частично';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return 'Показать';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return 'Переключить';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return 'Горизонтальное';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return 'Высота строки';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return 'В библиотеке нет книг';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return 'Аудиокнига не привязана к книге, пересопоставление невозможно';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return 'Смешанная';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return 'Прямая';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return 'Авто';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return 'Постраничный';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return 'Приоритет стилей книги';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return 'Прокрутка';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return 'Отступ абзаца';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return 'Выравнивание текста';
-      case 'ttu_theme':
+      case 'reader_theme':
         return 'Тема';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return 'Кернинг (вертикальный)';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return 'Ориентация текста';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return 'Вертикальное';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return 'Страницы / Прокрутка';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual Novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return 'Направление письма';
       case 'undo':
         return 'Отменить';
@@ -196110,6 +197832,62 @@ extension on _StringsRu {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }
@@ -196960,9 +198738,9 @@ extension on _StringsTh {
         return 'สีหลัก';
       case 'color_primary_desc':
         return 'ไฮไลต์เสียง ปุ่ม สวิตช์';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return 'ไฮไลท์ Sasayaki';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return 'ไฮไลท์การซิงค์คำบรรยายหนังสือเสียง';
       case 'color_secondary':
         return 'สีรอง';
@@ -199169,43 +200947,43 @@ extension on _StringsTh {
         return 'สลับด้านแถบนำทาง';
       case 'reverse_reader_bottom_bar':
         return 'สลับด้านแถบล่างของโปรแกรมอ่าน';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return 'ทุกหน้าต่างได้คะแนน 0% กรุณาปรับด้วยตนเอง';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) =>
             'การจับคู่อัตโนมัติล้มเหลว: ${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return 'จับคู่อัตโนมัติ';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             'เลือกอัตโนมัติ ${window} (ตรง ${pct}%)';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => 'ค่าเริ่มต้น ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} ตรง — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return 'กำลังจับคู่...';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUB ไม่มีข้อความบท';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return 'ไม่มี cue ที่จะจับคู่';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return 'ไม่พบข้อความบทจาก ttu ไม่สามารถจับคู่อัตโนมัติ';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return 'ไม่มี cue ที่เก็บไว้ ไม่สามารถเรียกใช้ใหม่';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) => 'การจับคู่ใหม่ล้มเหลว: ${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             'จับคู่ใหม่: ${pct}% (หน้าต่าง: ${window})';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return 'หน้าต่างค้นหา';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return 'เกณฑ์ความคล้าย';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return 'ค่าความคล้ายขั้นต่ำสำหรับการจับคู่แบบคลุมเครือ (สัมประสิทธิ์ Dice) ลดค่าเพื่อยอมรับความแตกต่างมากขึ้น แต่ต่ำเกินไปอาจทำให้จับคู่ผิด';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return 'จำนวนอักขระที่จะค้นหาไปข้างหน้าต่อ cue ในข้อความ ปรับถ้าอัตราตรงต่ำ ค่าสูงเกินอาจทำให้เคอร์เซอร์คลาดเคลื่อนกับ cue สั้นที่มีสัญญาณรบกวน';
       case 'saved_tags':
         return 'บันทึกแท็กแล้ว';
@@ -199930,10 +201708,6 @@ extension on _StringsTh {
         return 'ยังซิงค์ไม่เสร็จ การออกตอนนี้อาจทำให้ข้อมูลสูญหาย';
       case 'sync_exit_warning_title':
         return 'กำลังซิงค์';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return 'โฮสต์';
       case 'sync_lan_discovery':
@@ -200214,67 +201988,67 @@ extension on _StringsTh {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return 'ขนาดฟอนต์';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL (ตัวอักษรทดแทน)';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return 'ซ่อน';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return 'ฟุริงานะ';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return 'บางส่วน';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return 'แสดง';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return 'สลับ';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return 'แนวนอน';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return 'ระยะห่างบรรทัด';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return 'ไม่มีหนังสือในคลัง';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return 'หนังสือเสียงไม่ได้ผูกกับหนังสือ ไม่สามารถจับคู่ใหม่ได้';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return 'ผสม';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return 'ตั้งตรง';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return 'อัตโนมัติ';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return 'แบ่งหน้า';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return 'ใช้สไตล์หนังสือ';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return 'เลื่อน';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return 'ย่อหน้า';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return 'จัดชิดสองด้าน';
-      case 'ttu_theme':
+      case 'reader_theme':
         return 'ธีม';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return 'ระยะตัวอักษร (แนวตั้ง)';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return 'ทิศทางตัวอักษร';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return 'แนวตั้ง';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return 'หน้า / เลื่อน';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual Novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return 'ทิศทางการเขียน';
       case 'undo':
         return 'เลิกทำ';
@@ -202533,6 +204307,62 @@ extension on _StringsTh {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }
@@ -203388,9 +205218,9 @@ extension on _StringsTr {
         return 'Birincil';
       case 'color_primary_desc':
         return 'Ses vurgusu, düğmeler, anahtarlar';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return 'Sasayaki vurgusu';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return 'Sesli kitap altyazı senkronizasyon vurgusu';
       case 'color_secondary':
         return 'İkincil';
@@ -205597,44 +207427,44 @@ extension on _StringsTr {
         return 'Gezinme çubuğunu ters çevir';
       case 'reverse_reader_bottom_bar':
         return 'Okuyucu alt çubuğunu ters çevir';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return 'Tüm pencereler %0 skorladı, lütfen manuel ayarlayın';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) =>
             'Otomatik eşleştirme başarısız: ${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return 'Otomatik eşleştir';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             '${window} otomatik seçildi (isabet ${pct}%)';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => 'Varsayılan ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} eşleşti — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return 'Eşleştiriliyor...';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUB\'de bölüm metni yok';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return 'Eşleştirilecek referans yok';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return 'ttu bölüm metni bulunamadı, otomatik eşleştirme yapılamaz';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return 'Kayıtlı referans yok, yeniden çalıştırılamaz';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) =>
             'Yeniden eşleştirme başarısız: ${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             'Yeniden eşleştirildi: ${pct}% (pencere: ${window})';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return 'Arama penceresi';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return 'Benzerlik eşiği';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return 'Bulanık eşleştirme için minimum benzerlik (Dice katsayısı). Daha fazla metin farkını tolere etmek için düşürün, ancak çok düşük yanlış eşleşmelere neden olur.';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return 'Metinde referans başına ileri aranacak karakter sayısı. İsabet oranı düşükse ayarlayın; çok büyük değer kısa ve gürültülü referanslarda imleci kaydırabilir.';
       case 'saved_tags':
         return 'Etiketler kaydedildi.';
@@ -206359,10 +208189,6 @@ extension on _StringsTr {
         return 'Eşitleme hâlâ sürüyor. Şimdi çıkmak veri kaybına yol açabilir.';
       case 'sync_exit_warning_title':
         return 'Eşitleme Sürüyor';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return 'Sunucu';
       case 'sync_lan_discovery':
@@ -206643,67 +208469,67 @@ extension on _StringsTr {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return 'Yazı tipi boyutu';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL (dikey alt.)';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return 'Gizle';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return 'Furigana';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return 'Kısmi';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return 'Göster';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return 'Değiştir';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return 'Yatay';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return 'Satır yüksekliği';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return 'Kütüphanede kitap yok';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return 'Sesli kitap bir kitaba bağlı değil, yeniden eşleştirme yapılamaz';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return 'Karışık';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return 'Dik';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return 'Otomatik';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return 'Sayfalı';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return 'Kitap stillerine öncelik ver';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return 'Kaydırma';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return 'Paragraf girintisi';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return 'Metin hizalama';
-      case 'ttu_theme':
+      case 'reader_theme':
         return 'Tema';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return 'Karakter aralığı (dikey)';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return 'Metin yönü';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return 'Dikey';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return 'Sayfa / Kaydırma';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual Novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return 'Yazı yönü';
       case 'undo':
         return 'Geri al';
@@ -208965,6 +210791,62 @@ extension on _StringsTr {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }
@@ -209817,9 +211699,9 @@ extension on _StringsVi {
         return 'Chính';
       case 'color_primary_desc':
         return 'Đánh dấu âm thanh, nút, công tắc';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return 'Tô sáng Sasayaki';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return 'Tô sáng đồng bộ phụ đề sách nói';
       case 'color_secondary':
         return 'Phụ';
@@ -212029,42 +213911,42 @@ extension on _StringsVi {
         return 'Đảo ngược thanh điều hướng';
       case 'reverse_reader_bottom_bar':
         return 'Đảo ngược thanh dưới trình đọc';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return 'Tất cả cửa sổ có tỷ lệ 0%, vui lòng điều chỉnh thủ công';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) => 'Tự động khớp thất bại: ${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return 'Tự động khớp';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             'Đã tự động chọn ${window} (khớp ${pct}%)';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => 'Mặc định ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} khớp — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return 'Đang khớp…';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUB không có văn bản chương';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return 'Không có cue để khớp';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return 'Không tìm thấy văn bản chương ttu, không thể tự động khớp';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return 'Không có cue đã lưu, không thể chạy lại';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) => 'Khớp lại thất bại: ${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             'Đã khớp lại: ${pct}% (cửa sổ: ${window})';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return 'Cửa sổ tìm kiếm';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return 'Ngưỡng tương đồng';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return 'Độ tương đồng tối thiểu cho khớp mờ (hệ số Dice). Giảm để chấp nhận nhiều khác biệt văn bản hơn, nhưng quá thấp sẽ gây khớp sai.';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return 'Số ký tự tìm kiếm phía trước mỗi cue trong văn bản. Điều chỉnh nếu tỷ lệ khớp thấp; quá lớn có thể lệch con trỏ với cue ngắn nhiễu.';
       case 'saved_tags':
         return 'Đã lưu thẻ tag.';
@@ -212789,10 +214671,6 @@ extension on _StringsVi {
         return 'Quá trình đồng bộ vẫn đang diễn ra. Thoát ngay bây giờ có thể gây mất dữ liệu.';
       case 'sync_exit_warning_title':
         return 'Đang đồng bộ';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return 'Máy chủ';
       case 'sync_lan_discovery':
@@ -213073,67 +214951,67 @@ extension on _StringsVi {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return 'Cỡ chữ';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL (thay thế dọc)';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return 'Ẩn';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return 'Furigana';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return 'Một phần';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return 'Hiện';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return 'Chuyển đổi';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return 'Ngang';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return 'Chiều cao dòng';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return 'Chưa có sách nào trong thư viện';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return 'Sách nói chưa liên kết với sách, không thể khớp lại';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return 'Hỗn hợp';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return 'Thẳng đứng';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return 'Tự động';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return 'Phân trang';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return 'Ưu tiên kiểu sách';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return 'Cuộn';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return 'Thụt đầu đoạn';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return 'Căn đều văn bản';
-      case 'ttu_theme':
+      case 'reader_theme':
         return 'Giao diện';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return 'Khoảng cách chữ (dọc)';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return 'Hướng văn bản';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return 'Dọc';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return 'Trang / Cuộn';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual Novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return 'Hướng viết';
       case 'undo':
         return 'Hoàn tác';
@@ -215393,6 +217271,62 @@ extension on _StringsVi {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }
@@ -216232,9 +218166,9 @@ extension on _StringsZhCn {
         return '主色';
       case 'color_primary_desc':
         return '音频高亮、按钮、开关';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return '音频高亮';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return '有声书播放时跟随当前句的高亮颜色';
       case 'color_secondary':
         return '辅色';
@@ -218434,42 +220368,42 @@ extension on _StringsZhCn {
         return '反转底栏方向';
       case 'reverse_reader_bottom_bar':
         return '反转阅读器底栏';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return '所有窗口命中率都是 0，请人工调整';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) => '自动匹配失败：${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return '自动匹配';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             '自动选定 ${window}（命中 ${pct}%）';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => '默认 ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} 匹配 — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return '匹配中…';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUB 没有章节文本';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return '没有字幕条目可供匹配';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return '未读到 ttu 章节文本，无法自动匹配';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return '没有已存字幕条目，无法重跑';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) => '重跑失败：${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             '重新匹配：${pct}%（窗口：${window}）';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return '搜索窗口';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return '相似度阈值';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return '模糊匹配的最低相似度（Dice 系数）。降低可容忍更多文本差异，但太低会误匹配。';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return '每条字幕在正文里向前找的字符数。命中率低时可左右调整，过大容易被短噪声字幕拉偏光标。';
       case 'saved_tags':
         return '标签已保存。';
@@ -219188,10 +221122,6 @@ extension on _StringsZhCn {
         return '同步尚未完成，现在退出可能会丢失数据。';
       case 'sync_exit_warning_title':
         return '同步进行中';
-      case 'sync_google_drive_hoshi_compat':
-        return '与 Hoshi / ッツ 共享进度';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return '通过共享的 Google Drive 文件夹（ttu-reader-data）同步阅读进度。需完整 Drive 权限并重新登录。';
       case 'sync_host':
         return '主机';
       case 'sync_lan_discovery':
@@ -219469,67 +221399,67 @@ extension on _StringsZhCn {
         return '保持关闭';
       case 'torrent_upload_intro_title':
         return '上传 / 做种';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return '图片模糊（防剧透）';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return '字体大小';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL 纵排替代';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return '隐藏';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return '振假名';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return '部分';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return '显示';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return '切换';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return '横排';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return '行高';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return '将插图页并入正文';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return '把只含一张图的独立章节并入相邻正文章连续显示，不再单独占一页';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return '尚未添加任何书籍';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return '有声书未绑定书籍，无法重跑匹配';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return '混合';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return '竖直';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return '自动';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return '翻页';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return '段落间距';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return '优先书籍样式';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return '滚动';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return '段落缩进';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return '两端对齐';
-      case 'ttu_theme':
+      case 'reader_theme':
         return '主题';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return '字偶间距（纵排）';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return '文字方向';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return '竖排';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return '翻页 / 滚动';
-      case 'ttu_vn':
+      case 'reader_vn':
         return '视觉小说';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return '排版方向';
       case 'undo':
         return '撤销';
@@ -221766,6 +223696,62 @@ extension on _StringsZhCn {
         return '请先配置匹配的 AnkiConnect API key，再启用 Android 后端。';
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) => '无法切换 Anki 后端：${error}';
+      case 'migration_settings_entry':
+        return '迁移到 Fushi';
+      case 'migration_settings_entry_subtitle':
+        return '把全部数据搬到新的 Fushi 应用';
+      case 'migration_intro':
+        return 'Fushi 是本应用的新名字。迁移会把你的全部数据分批导出到中转目录，再由 Fushi 导入并逐项校验。在你卸载旧版之前，这里的数据原样保留。';
+      case 'migration_target_missing':
+        return '尚未安装 Fushi。请先安装 Fushi，再回到这里。';
+      case 'migration_download_fushi':
+        return '下载 Fushi';
+      case 'migration_start':
+        return '开始迁移';
+      case 'migration_open_fushi':
+        return '打开 Fushi';
+      case 'migration_include_local_audio':
+        return '一并导出本地发音库（体积可能很大）';
+      case 'migration_batch_running':
+        return ({required Object batch}) => '正在导出 ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} 已导出';
+      case 'migration_export_done':
+        return '导出完成。打开 Fushi 完成导入与校验。';
+      case 'migration_export_failed':
+        return ({required Object error}) => '导出失败：${error}';
+      case 'migration_readonly_note':
+        return '数据已导出到 Fushi。本应用已进入只读模式：请改用 Fushi 阅读和制卡。若 Fushi 校验发现缺失，可随时在此重新导出。';
+      case 'migration_reexport':
+        return '重新导出';
+      case 'migration_batch_core_label':
+        return '设置、进度与统计';
+      case 'migration_import_entry':
+        return '从 Hibiki 导入';
+      case 'migration_import_entry_subtitle':
+        return '导入旧版 Hibiki 导出的数据';
+      case 'migration_import_detected':
+        return '检测到 Hibiki 迁移数据，现在导入？';
+      case 'migration_import_start':
+        return '开始导入';
+      case 'migration_import_running':
+        return ({required Object batch}) => '正在导入 ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} 校验未通过，已保留待重传：${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            '导入数据不完整：${detail}。请回 Hibiki 重新导出缺失部分后再导入。';
+      case 'migration_import_success':
+        return '导入完成，校验通过。';
+      case 'migration_import_nothing':
+        return '中转目录中没有找到迁移数据。';
+      case 'migration_uninstall_prompt':
+        return '迁移完成。卸载旧版 Hibiki？';
+      case 'migration_uninstall_button':
+        return '卸载 Hibiki';
+      case 'migration_uninstall_still_installed':
+        return '旧版 Hibiki 仍安装在设备上，可随时卸载。';
       default:
         return null;
     }
@@ -222610,9 +224596,9 @@ extension on _StringsZhHk {
         return '主色';
       case 'color_primary_desc':
         return '音訊醒目標示、按鈕、開關';
-      case 'color_sasayaki':
+      case 'color_sentence_audio_highlight':
         return '音訊醒目標示';
-      case 'color_sasayaki_desc':
+      case 'color_sentence_audio_highlight_desc':
         return '有聲書播放時跟隨當前句的醒目標示顏色';
       case 'color_secondary':
         return '輔色';
@@ -224817,42 +226803,42 @@ extension on _StringsZhHk {
         return '反轉底欄方向';
       case 'reverse_reader_bottom_bar':
         return '反轉閱讀器底欄';
-      case 'sasayaki_all_zero':
+      case 'audiobook_rematch_all_zero':
         return '所有視窗命中率都是 0，請手動調整';
-      case 'sasayaki_auto_failed':
+      case 'audiobook_rematch_auto_failed':
         return ({required Object error}) => '自動比對失敗：${error}';
-      case 'sasayaki_auto_match':
+      case 'audiobook_rematch_auto_match':
         return '自動比對';
-      case 'sasayaki_auto_picked':
+      case 'audiobook_rematch_auto_picked':
         return ({required Object window, required Object pct}) =>
             '自動選定 ${window}（命中 ${pct}%）';
-      case 'sasayaki_default_value':
+      case 'audiobook_rematch_default_value':
         return ({required Object n}) => '預設 ${n}';
-      case 'sasayaki_health_label':
+      case 'audiobook_rematch_health_label':
         return ({required Object pct, required Object detail}) =>
             '${pct} 比對 — ${detail}';
-      case 'sasayaki_matching':
+      case 'audiobook_rematch_matching':
         return '比對中…';
-      case 'sasayaki_no_chapters':
+      case 'audiobook_rematch_no_chapters':
         return 'EPUB 沒有章節文字';
-      case 'sasayaki_no_cues_to_match':
+      case 'audiobook_rematch_no_cues_to_match':
         return '沒有字幕條目可供比對';
-      case 'sasayaki_no_sections':
+      case 'audiobook_rematch_no_sections':
         return '未讀到 ttu 章節文字，無法自動比對';
-      case 'sasayaki_no_stored_cues':
+      case 'audiobook_rematch_no_stored_cues':
         return '沒有已存字幕條目，無法重跑';
-      case 'sasayaki_rematch_failed':
+      case 'audiobook_rematch_failed':
         return ({required Object error}) => '重跑失敗：${error}';
-      case 'sasayaki_rematch_result':
+      case 'audiobook_rematch_result':
         return ({required Object pct, required Object window}) =>
             '重新比對：${pct}%（視窗：${window}）';
-      case 'sasayaki_search_window':
+      case 'audiobook_rematch_search_window':
         return '搜尋視窗';
-      case 'sasayaki_similarity_threshold':
+      case 'audiobook_rematch_similarity_threshold':
         return '相似度閾值';
-      case 'sasayaki_threshold_hint':
+      case 'audiobook_rematch_threshold_hint':
         return '模糊比對的最低相似度（Dice 係數）。降低可容忍更多文字差異，但太低會誤比對。';
-      case 'sasayaki_window_hint':
+      case 'audiobook_rematch_window_hint':
         return '每條字幕在正文裡向前找的字元數。命中率低時可左右調整，過大容易被短雜訊字幕拉偏游標。';
       case 'saved_tags':
         return '標籤已儲存。';
@@ -225573,10 +227559,6 @@ extension on _StringsZhHk {
         return '同步尚未完成，現在退出可能會遺失資料。';
       case 'sync_exit_warning_title':
         return '同步進行中';
-      case 'sync_google_drive_hoshi_compat':
-        return 'Share progress with Hoshi / ッツ';
-      case 'sync_google_drive_hoshi_compat_desc':
-        return 'Sync reading progress via a shared Google Drive folder (ttu-reader-data). Needs full Drive access and re-sign-in.';
       case 'sync_host':
         return '主機';
       case 'sync_lan_discovery':
@@ -225855,67 +227837,67 @@ extension on _StringsZhHk {
         return 'Keep off';
       case 'torrent_upload_intro_title':
         return 'Upload / seeding';
-      case 'ttu_blur_images':
+      case 'reader_blur_images':
         return 'Blur images (spoiler guard)';
-      case 'ttu_font_size':
+      case 'reader_font_size':
         return '字型大小';
-      case 'ttu_font_vpal':
+      case 'reader_font_vpal':
         return 'VPAL 直排替代';
-      case 'ttu_furigana_hide':
+      case 'reader_furigana_hide':
         return '隱藏';
-      case 'ttu_furigana_mode':
+      case 'reader_furigana_mode':
         return '振假名';
-      case 'ttu_furigana_mode_hint':
+      case 'reader_furigana_mode_hint':
         return '';
-      case 'ttu_furigana_partial':
+      case 'reader_furigana_partial':
         return '部分';
-      case 'ttu_furigana_show':
+      case 'reader_furigana_show':
         return '顯示';
-      case 'ttu_furigana_toggle':
+      case 'reader_furigana_toggle':
         return '切換';
-      case 'ttu_horizontal':
+      case 'reader_horizontal':
         return '橫排';
-      case 'ttu_line_height':
+      case 'reader_line_height':
         return '行高';
-      case 'ttu_merge_image_pages':
+      case 'reader_merge_image_pages':
         return 'Merge illustration pages into text';
-      case 'ttu_merge_image_pages_subtitle':
+      case 'reader_merge_image_pages_subtitle':
         return 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-      case 'ttu_no_books_added':
+      case 'reader_no_books_added':
         return '書架中尚未有任何書籍';
-      case 'ttu_not_bound_cannot_rematch':
+      case 'reader_not_bound_cannot_rematch':
         return '有聲書未繫結書籍，無法重跑比對';
-      case 'ttu_orient_mixed':
+      case 'reader_orient_mixed':
         return '混合';
-      case 'ttu_orient_upright':
+      case 'reader_orient_upright':
         return '豎直';
-      case 'ttu_page_columns_auto':
+      case 'reader_page_columns_auto':
         return '自動';
-      case 'ttu_paginated':
+      case 'reader_paginated':
         return '翻頁';
-      case 'ttu_paragraph_spacing':
+      case 'reader_paragraph_spacing':
         return 'Paragraph spacing';
-      case 'ttu_reader_styles':
+      case 'reader_reader_styles':
         return '優先書籍樣式';
-      case 'ttu_scroll':
+      case 'reader_scroll':
         return '捲動';
-      case 'ttu_text_indentation':
+      case 'reader_text_indentation':
         return '段落縮排';
-      case 'ttu_text_justify':
+      case 'reader_text_justify':
         return '兩端對齊';
-      case 'ttu_theme':
+      case 'reader_theme':
         return '主題';
-      case 'ttu_vert_kerning':
+      case 'reader_vert_kerning':
         return '字偶間距（直排）';
-      case 'ttu_vert_text_orient':
+      case 'reader_vert_text_orient':
         return '文字方向';
-      case 'ttu_vertical':
+      case 'reader_vertical':
         return '直排';
-      case 'ttu_view_mode_label':
+      case 'reader_view_mode_label':
         return '翻頁 / 捲動';
-      case 'ttu_vn':
+      case 'reader_vn':
         return 'Visual Novel';
-      case 'ttu_writing_direction':
+      case 'reader_writing_direction':
         return '排版方向';
       case 'undo':
         return '復原';
@@ -228167,6 +230149,62 @@ extension on _StringsZhHk {
       case 'anki_connect_backend_switch_failed':
         return ({required Object error}) =>
             'Could not switch Anki backend: ${error}';
+      case 'migration_settings_entry':
+        return 'Migrate to Fushi';
+      case 'migration_settings_entry_subtitle':
+        return 'Move all data to the new Fushi app';
+      case 'migration_intro':
+        return 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+      case 'migration_target_missing':
+        return 'Fushi is not installed yet. Install Fushi first, then return here.';
+      case 'migration_download_fushi':
+        return 'Get Fushi';
+      case 'migration_start':
+        return 'Start migration';
+      case 'migration_open_fushi':
+        return 'Open Fushi';
+      case 'migration_include_local_audio':
+        return 'Also export local pronunciation audio (can be large)';
+      case 'migration_batch_running':
+        return ({required Object batch}) => 'Exporting ${batch}…';
+      case 'migration_batch_done':
+        return ({required Object batch}) => '${batch} exported';
+      case 'migration_export_done':
+        return 'Export complete. Open Fushi to import and verify.';
+      case 'migration_export_failed':
+        return ({required Object error}) => 'Export failed: ${error}';
+      case 'migration_readonly_note':
+        return 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+      case 'migration_reexport':
+        return 'Re-export';
+      case 'migration_batch_core_label':
+        return 'Settings, progress & statistics';
+      case 'migration_import_entry':
+        return 'Import from Hibiki';
+      case 'migration_import_entry_subtitle':
+        return 'Import data exported by the old Hibiki app';
+      case 'migration_import_detected':
+        return 'Hibiki migration data detected. Import it now?';
+      case 'migration_import_start':
+        return 'Start import';
+      case 'migration_import_running':
+        return ({required Object batch}) => 'Importing ${batch}…';
+      case 'migration_import_verify_failed':
+        return ({required Object batch, required Object detail}) =>
+            '${batch} failed verification and was kept for re-export: ${detail}';
+      case 'migration_import_counts_failed':
+        return ({required Object detail}) =>
+            'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+      case 'migration_import_success':
+        return 'Import complete and verified.';
+      case 'migration_import_nothing':
+        return 'No migration data found in the transfer folder.';
+      case 'migration_uninstall_prompt':
+        return 'Migration finished. Uninstall the old Hibiki app?';
+      case 'migration_uninstall_button':
+        return 'Uninstall Hibiki';
+      case 'migration_uninstall_still_installed':
+        return 'Hibiki is still installed. You can uninstall it any time.';
       default:
         return null;
     }

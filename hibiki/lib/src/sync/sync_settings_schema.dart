@@ -5,60 +5,64 @@ import 'dart:io';
 import 'package:clipboard/clipboard.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_exit_app/flutter_exit_app.dart';
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki/src/settings/settings_context.dart';
-import 'package:hibiki/src/settings/settings_destination.dart';
-import 'package:hibiki/src/settings/settings_schema_lookup.dart'
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/pages/implementations/migration_page.dart';
+import 'package:fushi/src/pages/implementations/migration_import_page.dart';
+import 'package:fushi/src/migration/migration_target_channel.dart';
+import 'package:fushi/src/settings/settings_context.dart';
+import 'package:fushi/src/settings/settings_destination.dart';
+import 'package:fushi/src/settings/settings_schema_lookup.dart'
     show buildManageAudioSourcesItem, buildRemoteDictionaryLookupItem;
-import 'package:hibiki/src/startup/media_handle_registry.dart';
-import 'package:hibiki/src/storage/app_paths.dart';
-import 'package:hibiki/src/storage/data_root_migrator.dart';
-import 'package:hibiki/src/storage/macos_data_root_access.dart';
-import 'package:hibiki/src/sync/backup_merge_engine.dart'
+import 'package:fushi/src/startup/media_handle_registry.dart';
+import 'package:fushi/src/storage/app_paths.dart';
+import 'package:fushi/src/storage/data_root_migrator.dart';
+import 'package:fushi/src/storage/macos_data_root_access.dart';
+import 'package:fushi/src/sync/backup_merge_engine.dart'
     show BackupMergePreview;
-import 'package:hibiki/src/sync/backup_service.dart';
-import 'package:hibiki/src/sync/dropbox_sync_backend.dart';
-import 'package:hibiki/src/sync/ftp_sync_backend.dart';
-import 'package:hibiki/src/sync/interconnect_sync_backend.dart';
-import 'package:hibiki/src/sync/interconnect_device_name.dart';
-import 'package:hibiki/src/sync/interconnect_url.dart';
-import 'package:hibiki/src/sync/onedrive_sync_backend.dart';
-import 'package:hibiki/src/sync/hibiki_server_controller.dart';
-import 'package:hibiki/src/sync/hibiki_sync_server.dart';
-import 'package:hibiki/src/sync/lan_discovery_service.dart';
-import 'package:hibiki/src/sync/manual_sync_ui.dart';
-import 'package:hibiki/src/sync/pairing/hibiki_pair_v2_client.dart';
-import 'package:hibiki/src/sync/pairing/hibiki_ping_client.dart';
-import 'package:hibiki/src/sync/pairing/discovered_pairing_probe.dart';
-import 'package:hibiki/src/sync/sftp_sync_backend.dart';
-import 'package:hibiki/src/sync/tls/hibiki_tofu_probe.dart';
-import 'package:hibiki/src/sync/sync_activity.dart';
-import 'package:hibiki/src/sync/sync_backend.dart';
-import 'package:hibiki/src/sync/sync_auto_trigger.dart';
-import 'package:hibiki/src/sync/sync_compare_dialog.dart';
-import 'package:hibiki/src/sync/sync_error_messages.dart';
-import 'package:hibiki/src/sync/sync_progress.dart';
-import 'package:hibiki/src/sync/sync_message_dialog.dart';
-import 'package:hibiki/src/sync/sync_repository.dart';
-import 'package:hibiki/src/sync/webdav_ops.dart';
-import 'package:hibiki/src/sync/webdav_sync_backend.dart';
-import 'package:hibiki/utils.dart';
-import 'package:hibiki_core/hibiki_core.dart';
-import 'package:hibiki_dictionary/hibiki_dictionary.dart';
-import 'package:hibiki_platform/hibiki_platform.dart';
+import 'package:fushi/src/sync/backup_service.dart';
+import 'package:fushi/src/sync/dropbox_sync_backend.dart';
+import 'package:fushi/src/sync/ftp_sync_backend.dart';
+import 'package:fushi/src/sync/interconnect_sync_backend.dart';
+import 'package:fushi/src/sync/interconnect_device_name.dart';
+import 'package:fushi/src/sync/interconnect_url.dart';
+import 'package:fushi/src/sync/onedrive_sync_backend.dart';
+import 'package:fushi/src/sync/hibiki_server_controller.dart';
+import 'package:fushi/src/sync/hibiki_sync_server.dart';
+import 'package:fushi/src/sync/lan_discovery_service.dart';
+import 'package:fushi/src/sync/manual_sync_ui.dart';
+import 'package:fushi/src/sync/pairing/hibiki_pair_v2_client.dart';
+import 'package:fushi/src/sync/pairing/hibiki_ping_client.dart';
+import 'package:fushi/src/sync/pairing/discovered_pairing_probe.dart';
+import 'package:fushi/src/sync/sftp_sync_backend.dart';
+import 'package:fushi/src/sync/tls/hibiki_tofu_probe.dart';
+import 'package:fushi/src/sync/sync_activity.dart';
+import 'package:fushi/src/sync/sync_backend.dart';
+import 'package:fushi/src/sync/sync_auto_trigger.dart';
+import 'package:fushi/src/sync/sync_compare_dialog.dart';
+import 'package:fushi/src/sync/sync_error_messages.dart';
+import 'package:fushi/src/sync/sync_progress.dart';
+import 'package:fushi/src/sync/sync_message_dialog.dart';
+import 'package:fushi/src/sync/sync_repository.dart';
+import 'package:fushi/src/sync/webdav_ops.dart';
+import 'package:fushi/src/sync/webdav_sync_backend.dart';
+import 'package:fushi/utils.dart';
+import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi_dictionary/fushi_dictionary.dart';
+import 'package:fushi_platform/fushi_platform.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:hibiki/src/utils/misc/hibiki_share.dart';
-import 'package:hibiki/src/media/import/real_path_directory_picker.dart';
+import 'package:fushi/src/utils/misc/hibiki_share.dart';
+import 'package:fushi/src/media/import/real_path_directory_picker.dart';
 
 /// [summarizeSyncReport] 的实现搬去了 manual_sync_ui.dart（媒体页下拉同步共用），
 /// 这里再导出一次以保持既有导入点（test/sync/sync_summary_test.dart）不变。
-export 'package:hibiki/src/sync/manual_sync_ui.dart' show summarizeSyncReport;
+export 'package:fushi/src/sync/manual_sync_ui.dart' show summarizeSyncReport;
 
 part 'sync_settings_schema/account.part.dart';
 part 'sync_settings_schema/backend_config.part.dart';
@@ -94,33 +98,6 @@ SettingsDestination buildSyncBackupDestination() {
                 isOAuthSyncBackend(_syncSettings(ctx).backendType),
             builder: (SettingsContext ctx) =>
                 _SyncAccountWidget(settingsContext: ctx),
-          ),
-          // 「与 Hoshi/ッツ 共享 Google Drive」开关：仅 Google Drive 后端可见。开启后
-          // Drive 同步改用可见 My Drive / ttu-reader-data + 完整 drive scope，与
-          // Hoshi-Reader-Android / ッツ ebook-reader 落进同一云文件夹互相读写进度
-          // （[GoogleDriveSyncSpace]）。切换即换 scope（consent 时固定），必须登出重授权。
-          SettingsSwitchItem(
-            id: 'sync.google_drive_hoshi_compat',
-            title: t.sync_google_drive_hoshi_compat,
-            subtitle: t.sync_google_drive_hoshi_compat_desc,
-            icon: Icons.share_outlined,
-            visible: (SettingsContext ctx) =>
-                _syncSettings(ctx).backendType == SyncBackendType.googleDrive,
-            value: (SettingsContext ctx) =>
-                _syncSettings(ctx).googleDriveHoshiCompat,
-            onChanged: (SettingsContext ctx, bool value) async {
-              _syncSettings(ctx).googleDriveHoshiCompat = value;
-              final SyncRepository repo = SyncRepository(ctx.appModel.database);
-              await repo.setGoogleDriveHoshiCompat(value);
-              // 换存储空间 = 换 OAuth scope，旧授权覆盖不了新 scope。登出当前 Google
-              // 账号并清缓存，让下次登录/同步以新 space 的 scope 重新授权（复用与账号行
-              // 登出一致的 signOut + clearCache + clearFolderCache 序列）。
-              final SyncBackend backend =
-                  resolveSyncBackend(SyncBackendType.googleDrive);
-              await backend.signOut(repo: repo);
-              backend.clearCache();
-              await repo.clearFolderCache();
-            },
           ),
           SettingsCustomItem(
             id: 'sync.webdav_config',
@@ -339,6 +316,35 @@ SettingsDestination buildSyncBackupDestination() {
             builder: (SettingsContext ctx) =>
                 _BackupImportWidget(settingsContext: ctx),
           ),
+          // Hibiki→Fushi 跨包名迁移入口（改名迁移计划 P1-3/P2-2）；仅 Android——
+          // 桌面端数据目录可直接搬迁，不走导出/导入通道。同一份代码按**运行时
+          // 包名**切方向：老包（app.hibiki.reader，过渡版基线）显示导出入口，
+          // Fushi 显示导入入口，基线分支无需分叉。
+          if (!kIsWeb && Platform.isAndroid)
+            SettingsCustomItem(
+              id: 'sync.migration_to_fushi',
+              icon: Icons.drive_file_move_outlined,
+              builder: (SettingsContext ctx) {
+                final bool runningAsLegacy =
+                    ctx.appModel.packageInfo.packageName == kHibikiPackageName;
+                return AdaptiveSettingsRow(
+                  title: runningAsLegacy
+                      ? t.migration_settings_entry
+                      : t.migration_import_entry,
+                  subtitle: runningAsLegacy
+                      ? t.migration_settings_entry_subtitle
+                      : t.migration_import_entry_subtitle,
+                  icon: Icons.drive_file_move_outlined,
+                  onTap: () => Navigator.of(ctx.context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => runningAsLegacy
+                          ? MigrationPage(appModel: ctx.appModel)
+                          : MigrationImportPage(appModel: ctx.appModel),
+                    ),
+                  ),
+                );
+              },
+            ),
         ],
       ),
     ],
@@ -616,7 +622,6 @@ class _SyncSettingsState {
   SyncBackendType backendType = SyncBackendType.googleDrive;
 
   /// 「与 Hoshi/ッツ 共享 Google Drive」开关（仅 Google Drive 后端有效）。
-  bool googleDriveHoshiCompat = false;
 
   /// 互联总开关（独立于 [backendType] 云备份后端选择）。为 true 时互联作为一条独立
   /// 通道运行，与云备份并存（不再是互斥的 backendType==hibikiServer 单选）。
@@ -683,7 +688,6 @@ class _SyncSettingsState {
     _loading = true;
     try {
       backendType = await _repo.getBackendType();
-      googleDriveHoshiCompat = await _repo.isGoogleDriveHoshiCompat();
       interconnectEnabled = await _repo.isInterconnectEnabled();
       autoSync = await _repo.isAutoSyncEnabled();
       syncStats = await _repo.isSyncStatsEnabled();

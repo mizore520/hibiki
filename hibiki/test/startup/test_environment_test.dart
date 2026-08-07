@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/startup/test_environment.dart';
+import 'package:fushi/src/startup/test_environment.dart';
 
 void main() {
   test('hibikiTestDirectory resolves children under an explicit test root', () {
@@ -10,7 +10,7 @@ void main() {
 
     final Directory? docs = hibikiTestDirectory(
       'app-documents',
-      environment: <String, String>{'HIBIKI_TEST_ROOT': temp.path},
+      environment: <String, String>{'FUSHI_TEST_ROOT': temp.path},
       dartDefineRoot: '',
     );
 
@@ -30,7 +30,7 @@ void main() {
 
     final Directory? support = hibikiTestDirectory(
       'app-support',
-      environment: <String, String>{'HIBIKI_TEST_ROOT': envRoot.path},
+      environment: <String, String>{'FUSHI_TEST_ROOT': envRoot.path},
       dartDefineRoot: defineRoot.path,
     );
 

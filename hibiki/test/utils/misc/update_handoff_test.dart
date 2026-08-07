@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/utils/misc/platform_updater.dart';
-import 'package:hibiki/src/utils/misc/update_handoff.dart';
+import 'package:fushi/src/utils/misc/platform_updater.dart';
+import 'package:fushi/src/utils/misc/update_handoff.dart';
 
 Future<File> _markerFile() async {
   final Directory dir =
@@ -413,7 +413,7 @@ void main() {
       );
 
       expect(running.type, 'app_mutex_running');
-      expect(running.message, contains('HibikiSingleInstanceMutex'));
+      expect(running.message, contains('FushiSingleInstanceMutex'));
       expect(missing.type, 'missing_log');
     });
   });
@@ -458,7 +458,7 @@ void main() {
       expect(record?.installerLaunchSucceeded, isNull,
           reason:
               'the helper writes installer launch outcome after parent exit');
-      expect(startedExecutable, endsWith('hibiki_update_launcher.exe'));
+      expect(startedExecutable, endsWith('fushi_update_launcher.exe'));
       expect(
           startedArgs,
           containsAllInOrder(<String>[
@@ -495,7 +495,7 @@ void main() {
           ),
           startProcess: (String executable, List<String> args) async {
             throw const ProcessException(
-              'hibiki_update_launcher.exe',
+              'fushi_update_launcher.exe',
               <String>[],
               'boom',
             );
@@ -553,7 +553,7 @@ void main() {
       expect(startCalled, isFalse);
       expect(record?.installerLaunchSucceeded, isFalse);
       expect(record?.libmpvModuleHolders.single.pid, 9001);
-      expect(record?.launchError, contains('non-Hibiki process'));
+      expect(record?.launchError, contains('non-Fushi process'));
       expect(
           record?.launchError, contains('Close the listed process manually'));
     });

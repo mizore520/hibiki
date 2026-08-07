@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
-project(hibiki LANGUAGES C CXX)
+project(fushi LANGUAGES C CXX)
 
-set(BINARY_NAME "hibiki")
+set(BINARY_NAME "fushi")
 
 cmake_policy(SET CMP0063 NEW)
 
@@ -67,8 +67,8 @@ add_subdirectory("runner")
 include(flutter/generated_plugins.cmake)
 
 # === hoshidicts native dictionary engine ===
-set(HOSHIDICTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../native/hoshidicts")
-add_subdirectory("${HOSHIDICTS_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/hoshidicts")
+set(FUSHIDICTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../native/hoshidicts")
+add_subdirectory("${FUSHIDICTS_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/hoshidicts")
 
 # === Installation ===
 # Support files are copied into place next to the executable, so that it can
@@ -89,7 +89,7 @@ endif()
 set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}")
 
-install(TARGETS ${BINARY_NAME} hibiki_update_launcher
+install(TARGETS ${BINARY_NAME} fushi_update_launcher
   RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT Runtime)
 
 install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
@@ -105,7 +105,7 @@ if(PLUGIN_BUNDLED_LIBRARIES)
 endif()
 
 # Install hoshidicts DLL next to the executable
-install(TARGETS hoshidicts_ffi RUNTIME DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+install(TARGETS fushidicts_ffi RUNTIME DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 
 # === 内置 libtorrent 引擎（可选，vendored 预编译）===
@@ -117,7 +117,7 @@ install(TARGETS hoshidicts_ffi RUNTIME DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
 set(HIBIKI_TORRENT_PREBUILT_DIR
   "${CMAKE_CURRENT_SOURCE_DIR}/../../native/hibiki_torrent/prebuilt/windows-x64")
 set(HIBIKI_TORRENT_DLLS
-  "hibiki_torrent_ffi.dll"
+  "fushi_torrent_ffi.dll"
   "torrent-rasterbar.dll"
   "libssl-3-x64.dll"
   "libcrypto-3-x64.dll")

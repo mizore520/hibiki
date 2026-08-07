@@ -4,24 +4,24 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:hibiki/src/dictionary/dictionary_media_types.dart';
-import 'package:hibiki/src/media/video/video_subtitle_source.dart'
+import 'package:fushi/src/dictionary/dictionary_media_types.dart';
+import 'package:fushi/src/media/video/video_subtitle_source.dart'
     show
         EmbeddedSubtitleTrack,
         extractEmbeddedSubtitleTrackFile,
         listEmbeddedSubtitleTracks,
         subtitleExtensionForCodec,
         subtitleFormatForCodec;
-import 'package:hibiki/src/sync/aggregate_snapshot.dart';
-import 'package:hibiki/src/sync/collection_manifest.dart';
-import 'package:hibiki/src/sync/hibiki_library_host_service.dart';
-import 'package:hibiki/src/sync/interconnect_service_config.dart';
-import 'package:hibiki/src/sync/hibiki_manga_ocr_host.dart';
-import 'package:hibiki/src/sync/interconnect_device_name.dart';
-import 'package:hibiki/src/sync/hibiki_remote_api_handlers.dart';
-import 'package:hibiki/src/sync/pairing/hibiki_pairing_protocol.dart';
-import 'package:hibiki/src/sync/hibiki_remote_lookup_service.dart';
-import 'package:hibiki_core/hibiki_core.dart' show mimeTypeForFilePath;
+import 'package:fushi/src/sync/aggregate_snapshot.dart';
+import 'package:fushi/src/sync/collection_manifest.dart';
+import 'package:fushi/src/sync/hibiki_library_host_service.dart';
+import 'package:fushi/src/sync/interconnect_service_config.dart';
+import 'package:fushi/src/sync/hibiki_manga_ocr_host.dart';
+import 'package:fushi/src/sync/interconnect_device_name.dart';
+import 'package:fushi/src/sync/hibiki_remote_api_handlers.dart';
+import 'package:fushi/src/sync/pairing/hibiki_pairing_protocol.dart';
+import 'package:fushi/src/sync/hibiki_remote_lookup_service.dart';
+import 'package:fushi_core/fushi_core.dart' show mimeTypeForFilePath;
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 import 'package:shelf/shelf.dart' as shelf;
@@ -413,7 +413,7 @@ class HibikiSyncServer {
         final auth = request.headers['authorization'];
         if (auth == null || !await _validateAuth(auth)) {
           return shelf.Response(401,
-              headers: {'WWW-Authenticate': 'Basic realm="Hibiki Sync"'});
+              headers: {'WWW-Authenticate': 'Basic realm="Fushi Sync"'});
         }
         return innerHandler(request);
       };
@@ -555,6 +555,9 @@ class HibikiSyncServer {
     if (reqPath == '/api/extension/status') {
       if (method != 'POST') return shelf.Response(405);
       return _jsonResponse(<String, dynamic>{
+        // 'app': 'hibiki' 是浏览器扩展 wire 契约（connection-diagnostics.js 严格
+        // 比对 body.app === 'hibiki'；扩展经商店发布有滞后，不随 app 同版本），
+        // 冻结不改；待扩展端先兼容 'fushi' 并铺开后再切。
         'app': 'hibiki',
         'ready': true,
         'port': port,
@@ -1162,7 +1165,9 @@ class HibikiSyncServer {
   /// 供 TOFU 钉扎。只读、不含任何数据/凭据。绝不回传 token。
   shelf.Response _handlePing() {
     return _jsonResponse(<String, dynamic>{
-      'app': 'hibiki',
+      // 互联 wire 服务字段：与 client 侧 fetchHibikiPing 的 app == 'fushi'
+      // 同版本对切（R11 已接受跨版本配对探测互不识别）。
+      'app': 'fushi',
       'pairing': <String, dynamic>{'v2': true},
       'tls': <String, dynamic>{
         'enabled': _securityContext != null,

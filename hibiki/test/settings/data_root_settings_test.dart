@@ -8,8 +8,8 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/storage/data_root_migrator.dart';
-import 'package:hibiki/src/sync/sync_settings_schema.dart';
+import 'package:fushi/src/storage/data_root_migrator.dart';
+import 'package:fushi/src/sync/sync_settings_schema.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
@@ -202,7 +202,7 @@ void main() {
       expect(src.contains('DataRootMigrator().migrate('), isTrue);
       // Injects real resource closers: audio stop, dict FFI dispose, DB close.
       expect(src.contains('audiobookSession.stop()'), isTrue);
-      expect(src.contains('HoshiDicts.disposeInstance()'), isTrue);
+      expect(src.contains('FushiDicts.disposeInstance()'), isTrue);
       expect(src.contains('closeDatabase()'), isTrue);
       expect(src.contains('wal_checkpoint(TRUNCATE)'), isTrue);
       // TODO-935：迁移前也释放图片缓存句柄（封面/缩略图解码），减少数据根文件锁。

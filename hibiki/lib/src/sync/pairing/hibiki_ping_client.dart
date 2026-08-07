@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:hibiki/src/sync/tls/hibiki_pinning_http.dart';
+import 'package:fushi/src/sync/tls/hibiki_pinning_http.dart';
 import 'package:http/http.dart' as http;
 
 /// TODO-963 M2: `/api/ping` 的 client 侧响应模型。无鉴权探测，配对前用。
@@ -13,7 +13,7 @@ class HibikiPingResult {
     this.deviceName,
   });
 
-  /// host 自报为 hibiki（`app == 'hibiki'`）。非 hibiki / 非 JSON → false。
+  /// host 自报为 fushi（`app == 'fushi'`）。非 fushi / 非 JSON → false。
   final bool isHibiki;
 
   /// host 支持 v2 配对协议（`pairing.v2 == true`）。
@@ -58,7 +58,7 @@ Future<HibikiPingResult?> fetchHibikiPing(
     final dynamic decoded = jsonDecode(resp.body);
     if (decoded is! Map) return null;
     final Map<String, dynamic> json = decoded.cast<String, dynamic>();
-    final bool isHibiki = json['app'] == 'hibiki';
+    final bool isHibiki = json['app'] == 'fushi';
     if (!isHibiki) return null;
     final dynamic pairing = json['pairing'];
     final bool supportsPairV2 = pairing is Map && pairing['v2'] == true;

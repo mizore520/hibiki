@@ -1,23 +1,23 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi_core/fushi_core.dart';
 
-import 'package:hibiki/src/media/manga/manga_view_prefs.dart';
-import 'package:hibiki/src/media/torrent/anime_download_config.dart';
-import 'package:hibiki/src/media/video/dandanplay_client.dart';
-import 'package:hibiki/src/media/video/video_danmaku_model.dart';
-import 'package:hibiki/src/media/video/video_control_customization.dart';
-import 'package:hibiki/src/media/video/video_immersive_mode.dart';
-import 'package:hibiki/src/media/video/video_subtitle_obscure_mode.dart';
-import 'package:hibiki/src/mining/galgame_library.dart';
-import 'package:hibiki/src/mining/immersion_mining_request.dart'
+import 'package:fushi/src/media/manga/manga_view_prefs.dart';
+import 'package:fushi/src/media/torrent/anime_download_config.dart';
+import 'package:fushi/src/media/video/dandanplay_client.dart';
+import 'package:fushi/src/media/video/video_danmaku_model.dart';
+import 'package:fushi/src/media/video/video_control_customization.dart';
+import 'package:fushi/src/media/video/video_immersive_mode.dart';
+import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
+import 'package:fushi/src/mining/galgame_library.dart';
+import 'package:fushi/src/mining/immersion_mining_request.dart'
     show MiningAnimatedFormat, VideoMiningImageMode;
-import 'package:hibiki/src/models/audio_source_config.dart';
-import 'package:hibiki/src/utils/misc/desktop_audio_clipper.dart'
+import 'package:fushi/src/models/audio_source_config.dart';
+import 'package:fushi/src/utils/misc/desktop_audio_clipper.dart'
     show MiningMediaCompression;
-import 'package:hibiki/src/utils/misc/error_log_service.dart';
-import 'package:hibiki/src/utils/misc/update_check_cache.dart';
+import 'package:fushi/src/utils/misc/error_log_service.dart';
+import 'package:fushi/src/utils/misc/update_check_cache.dart';
 
 enum DesktopClipboardWindowMode {
   normal('normal'),
@@ -1902,7 +1902,7 @@ class PreferencesRepository extends ChangeNotifier {
 
   /// 外部 mokuro CLI 可执行路径（漫画 OCR 后备；空串=未设）。内置 ONNX 引擎在本平台不可用
   /// 或用户偏好外部工具时，OCR 导入向导据此调用系统 mokuro（见 [ExternalMokuroRunner]）。
-  /// 空串=未指定，运行时退回 `HIBIKI_MOKURO` 环境变量 / PATH 探测。
+  /// 空串=未指定，运行时退回 `FUSHI_MOKURO` 环境变量 / PATH 探测。
   String get mangaExternalMokuroPath =>
       getPref('manga_external_mokuro_path', defaultValue: '') as String;
 

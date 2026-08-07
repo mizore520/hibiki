@@ -16,7 +16,7 @@
 //          -t 90 -c:v mpeg4 -c:a aac resume_probe.mp4
 //   flutter build apk --debug --target-platform android-x64 --no-pub
 //   adb install -r -t build/app/outputs/flutter-apk/app-debug.apk
-//   adb push resume_probe.mp4 /sdcard/Android/data/app.hibiki.reader/files/resume_probe.mp4
+//   adb push resume_probe.mp4 /sdcard/Android/data/app.fushi.reader/files/resume_probe.mp4
 //   flutter test integration_test/video_resume_seek_lands_test.dart -d emulator-5556 --no-pub
 // 运行（Windows 离屏，素材由 ffmpeg 现造，无需预置）：
 //   .\hibiki\tool\run_windows_itest.ps1 integration_test\video_resume_seek_lands_test.dart
@@ -30,11 +30,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/main.dart' as app;
-import 'package:hibiki/src/media/video/video_book_repository.dart';
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki/src/pages/implementations/video_hibiki_page.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi/main.dart' as app;
+import 'package:fushi/src/media/video/video_book_repository.dart';
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/pages/implementations/video_hibiki_page.dart';
+import 'package:fushi_core/fushi_core.dart';
 
 import 'helpers/media_fixtures.dart';
 import 'test_helpers.dart';
@@ -75,10 +75,10 @@ void main() {
         // Android 模拟器（x86_64）没有 FFmpegKit native 库，[generateTestVideo] 必失败，
         // 故优先用外部预置素材（`adb push` 到 app 外部文件目录，无需存储权限即可读）：
         //   adb push resume_probe.mp4 \
-        //     /sdcard/Android/data/app.hibiki.reader/files/resume_probe.mp4
+        //     /sdcard/Android/data/app.fushi.reader/files/resume_probe.mp4
         // 桌面/有 ffmpeg 的环境仍走 [generateTestVideo] 自给自足。
         const String prepushed =
-            '/sdcard/Android/data/app.hibiki.reader/files/resume_probe.mp4';
+            '/sdcard/Android/data/app.fushi.reader/files/resume_probe.mp4';
         final File videoFile;
         if (Platform.isAndroid) {
           // Android 上**只**认预置素材：FFmpegKit 在模拟器必失败，落回

@@ -1,4 +1,4 @@
-import 'package:hibiki_dictionary/hibiki_dictionary.dart';
+import 'package:fushi_dictionary/fushi_dictionary.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -9,11 +9,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/main.dart' as app;
-import 'package:hibiki/src/epub/epub_importer.dart';
-import 'package:hibiki/media.dart';
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki/src/pages/implementations/reader_hibiki_page.dart';
+import 'package:fushi/main.dart' as app;
+import 'package:fushi/src/epub/epub_importer.dart';
+import 'package:fushi/media.dart';
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/pages/implementations/reader_hibiki_page.dart';
 
 import 'helpers/generate_test_epub.dart' show EpubGenerator;
 import 'helpers/library_fixture.dart' show showBooksTab;
@@ -93,7 +93,7 @@ void main() {
       // 小数（仅 innerHeight 为 1000 整数倍时退化），pitch 随之变成小数。
       // 原值在 finally 中恢复，不污染全局偏好。
       origMarginTop = ReaderHibikiSource.instance.ttuMarginTop;
-      await ReaderHibikiSource.instance.setTtuMarginTop(1.3);
+      await ReaderHibikiSource.instance.setReaderMarginTop(1.3);
 
       // Do not require the exact shelf card to be mounted before opening it.
       // A populated shelf is lazily built and may sort a just-imported fixture
@@ -201,14 +201,14 @@ void main() {
       debugPrint('[M1] Distinct markers seen: ${allMarkers.length} '
           '(expected $markerCount, DOM $domMarkerCount)');
       final Object? tailGeometry = await eval('''JSON.stringify((function() {
-        var ctx = hoshiReader.getScrollContext();
-        var metrics = hoshiReader.paginationMetrics || hoshiReader.buildPaginationMetrics();
+        var ctx = fushiReader.getScrollContext();
+        var metrics = fushiReader.paginationMetrics || fushiReader.buildPaginationMetrics();
         var marker = document.getElementById('m420');
         var rects = marker ? Array.from(marker.getClientRects()).map(function(r) {
           return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width,height:r.height};
         }) : [];
         return {
-          pagePosition: hoshiReader.getPagePosition(ctx),
+          pagePosition: fushiReader.getPagePosition(ctx),
           pageSize: ctx.pageSize,
           contextMaxScroll: ctx.maxScroll,
           browserMaxScroll: ctx.vertical
@@ -331,7 +331,7 @@ void main() {
       // Page back into the middle so a regression to chapter start is
       // unambiguous (the I9 step left us at the chapter end).
       for (int i = 0; i < 18; i++) {
-        await eval('window.hoshiReader.paginate("backward");');
+        await eval('window.fushiReader.paginate("backward");');
       }
       await tester.pump(const Duration(milliseconds: 300));
       final midState = PaginationState.fromJson(
@@ -383,7 +383,7 @@ void main() {
       debugPrint('[M1] === PAGINATION TESTS PASSED ===');
     } finally {
       if (origMarginTop != null) {
-        await ReaderHibikiSource.instance.setTtuMarginTop(origMarginTop);
+        await ReaderHibikiSource.instance.setReaderMarginTop(origMarginTop);
       }
       FlutterError.onError = oldHandler;
     }
@@ -410,9 +410,9 @@ Future<void> _activateBook(
 
   // openMedia requires a WidgetRef but never dereferences it on the open path
   // (it routes through the app's navigatorKey context, not ref). The root
-  // [HoshiReaderApp] is a ConsumerStatefulWidget, so its element IS a WidgetRef.
+  // [FushiReaderApp] is a ConsumerStatefulWidget, so its element IS a WidgetRef.
   final ConsumerStatefulElement appElement = tester
-      .element(find.byType(app.HoshiReaderApp)) as ConsumerStatefulElement;
+      .element(find.byType(app.FushiReaderApp)) as ConsumerStatefulElement;
   final WidgetRef ref = appElement;
 
   final MediaItem? item =

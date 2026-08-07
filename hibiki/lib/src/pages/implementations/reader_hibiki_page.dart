@@ -1,4 +1,4 @@
-import 'package:hibiki_dictionary/hibiki_dictionary.dart';
+import 'package:fushi_dictionary/fushi_dictionary.dart';
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
@@ -8,113 +8,113 @@ import 'dart:ui' show ImageFilter;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:hibiki/i18n/strings.g.dart';
-import 'package:hibiki/src/utils/misc/hibiki_toast.dart';
+import 'package:fushi/i18n/strings.g.dart';
+import 'package:fushi/src/utils/misc/hibiki_toast.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/services.dart' hide ModifierKey;
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:hibiki/pages.dart';
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki/src/utils/adaptive/adaptive_widgets.dart';
-import 'package:hibiki/src/utils/adaptive/adaptive_platform.dart';
-import 'package:hibiki_core/hibiki_core.dart';
-import 'package:hibiki/src/epub/epub_book.dart';
-import 'package:hibiki/src/epub/epub_parser.dart';
-import 'package:hibiki/src/epub/epub_spread_analyzer.dart';
-import 'package:hibiki/src/epub/epub_spread_map.dart';
-import 'package:hibiki/src/epub/epub_storage.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_bridge.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_session.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_session_launcher.dart';
-import 'package:hibiki/src/media/audiobook/lyrics_mode_html.dart';
-import 'package:hibiki/src/media/audiobook/floating_lyric_lookup_routing.dart';
-import 'package:hibiki_audio/hibiki_audio.dart';
-import 'package:hibiki/src/media/audiobook/highlight_bridge.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_play_bar.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_import_dialog.dart';
-import 'package:hibiki/src/media/audiobook/mining_audio_clip.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_clip_export.dart';
-import 'package:hibiki/src/utils/misc/card_screenshot_downsampler.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_clip_text_render.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_clip_webview_render.dart';
-import 'package:hibiki/src/utils/misc/desktop_audio_clipper.dart'
+import 'package:fushi/pages.dart';
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/utils/adaptive/adaptive_widgets.dart';
+import 'package:fushi/src/utils/adaptive/adaptive_platform.dart';
+import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi/src/epub/epub_book.dart';
+import 'package:fushi/src/epub/epub_parser.dart';
+import 'package:fushi/src/epub/epub_spread_analyzer.dart';
+import 'package:fushi/src/epub/epub_spread_map.dart';
+import 'package:fushi/src/epub/epub_storage.dart';
+import 'package:fushi/src/media/audiobook/audiobook_bridge.dart';
+import 'package:fushi/src/media/audiobook/audiobook_session.dart';
+import 'package:fushi/src/media/audiobook/audiobook_session_launcher.dart';
+import 'package:fushi/src/media/audiobook/lyrics_mode_html.dart';
+import 'package:fushi/src/media/audiobook/floating_lyric_lookup_routing.dart';
+import 'package:fushi_audio/fushi_audio.dart';
+import 'package:fushi/src/media/audiobook/highlight_bridge.dart';
+import 'package:fushi/src/media/audiobook/audiobook_play_bar.dart';
+import 'package:fushi/src/media/audiobook/audiobook_import_dialog.dart';
+import 'package:fushi/src/media/audiobook/mining_audio_clip.dart';
+import 'package:fushi/src/media/audiobook/audiobook_clip_export.dart';
+import 'package:fushi/src/utils/misc/card_screenshot_downsampler.dart';
+import 'package:fushi/src/media/audiobook/audiobook_clip_text_render.dart';
+import 'package:fushi/src/media/audiobook/audiobook_clip_webview_render.dart';
+import 'package:fushi/src/utils/misc/desktop_audio_clipper.dart'
     show extractAudioSegmentViaFfmpeg;
-import 'package:hibiki/src/media/display_title.dart';
-import 'package:hibiki/src/media/import/real_path_directory_picker.dart';
-import 'package:hibiki/src/media/audiobook/mining_sentence_draft.dart';
-import 'package:hibiki/src/media/audiobook/reader_quick_settings_sheet.dart';
-import 'package:hibiki/src/media/sources/reader_hibiki_source.dart';
-import 'package:hibiki/src/mining/immersion_mining_request.dart'
+import 'package:fushi/src/media/display_title.dart';
+import 'package:fushi/src/media/import/real_path_directory_picker.dart';
+import 'package:fushi/src/media/audiobook/mining_sentence_draft.dart';
+import 'package:fushi/src/media/audiobook/reader_quick_settings_sheet.dart';
+import 'package:fushi/src/media/sources/reader_hibiki_source.dart';
+import 'package:fushi/src/mining/immersion_mining_request.dart'
     show immersionMiningAudioExtension;
-import 'package:hibiki/src/pages/implementations/dictionary_popup_webview.dart'
+import 'package:fushi/src/pages/implementations/dictionary_popup_webview.dart'
     show DictionaryPopupWebViewState, MinePopupResult;
-import 'package:hibiki/src/pages/implementations/stat_activity.dart';
-import 'package:hibiki/src/profile/profile_repository.dart';
-import 'package:hibiki/src/profile/profile_view_model.dart';
-import 'package:hibiki/src/reader/reader_caret_scripts.dart';
-import 'package:hibiki/src/reader/reader_chapter_perf_trace.dart';
-import 'package:hibiki/src/reader/reader_engine_config.dart';
-import 'package:hibiki/src/reader/reader_script_compactor.dart';
-import 'package:hibiki/src/reader/reader_chrome_scaler.dart';
-import 'package:hibiki/src/reader/reader_lyrics_caret_scripts.dart';
-import 'package:hibiki/src/reader/reader_content_styles.dart';
-import 'package:hibiki/src/reader/image_reveal_key.dart';
-import 'package:hibiki/src/reader/reader_resource_sanitizer.dart';
-import 'package:hibiki/src/reader/reader_exit_flush.dart';
-import 'package:hibiki/src/reader/reader_pagination_scripts.dart';
-import 'package:hibiki/src/reader/reader_restore_anchor.dart';
-import 'package:hibiki/src/reader/reader_search_navigation.dart';
-import 'package:hibiki/src/reader/reader_selection_data.dart';
-import 'package:hibiki/src/reader/reader_selection_scripts.dart';
-import 'package:hibiki/src/reader/reader_chrome_floating.dart';
-import 'package:hibiki/src/reader/reader_settings.dart';
-import 'package:hibiki/src/reader/reader_top_progress.dart';
-import 'package:hibiki/src/reader/ttu_toc_flatten.dart';
-import 'package:hibiki/src/startup/exit_flush_registry.dart';
-import 'package:hibiki/src/webview/webview_death_guard.dart';
-import 'package:hibiki/src/sync/desktop_lookup_service.dart';
-import 'package:hibiki/src/media/audiobook/floating_lyric_channel.dart';
-import 'package:hibiki/src/media/audiobook/pointer_seek.dart';
-import 'package:hibiki/src/platform/selection_external_actions.dart';
-import 'package:hibiki_anki/hibiki_anki.dart';
-import 'package:hibiki/src/anki/anki_view_model.dart';
-import 'package:hibiki/src/utils/misc/coalesced_async_runner.dart';
-import 'package:hibiki/src/utils/misc/error_log_service.dart';
-import 'package:hibiki/src/utils/misc/floating_lyric_hint.dart';
-import 'package:hibiki/src/utils/misc/debug_log_service.dart';
-import 'package:hibiki/src/utils/misc/channel_constants.dart';
-import 'package:hibiki/src/utils/misc/tts_channel.dart';
-import 'package:hibiki/src/utils/misc/serial_task_queue.dart';
-import 'package:hibiki/src/utils/misc/volume_key_channel.dart';
+import 'package:fushi/src/pages/implementations/stat_activity.dart';
+import 'package:fushi/src/profile/profile_repository.dart';
+import 'package:fushi/src/profile/profile_view_model.dart';
+import 'package:fushi/src/reader/reader_caret_scripts.dart';
+import 'package:fushi/src/reader/reader_chapter_perf_trace.dart';
+import 'package:fushi/src/reader/reader_engine_config.dart';
+import 'package:fushi/src/reader/reader_script_compactor.dart';
+import 'package:fushi/src/reader/reader_chrome_scaler.dart';
+import 'package:fushi/src/reader/reader_lyrics_caret_scripts.dart';
+import 'package:fushi/src/reader/reader_content_styles.dart';
+import 'package:fushi/src/reader/image_reveal_key.dart';
+import 'package:fushi/src/reader/reader_resource_sanitizer.dart';
+import 'package:fushi/src/reader/reader_exit_flush.dart';
+import 'package:fushi/src/reader/reader_pagination_scripts.dart';
+import 'package:fushi/src/reader/reader_restore_anchor.dart';
+import 'package:fushi/src/reader/reader_search_navigation.dart';
+import 'package:fushi/src/reader/reader_selection_data.dart';
+import 'package:fushi/src/reader/reader_selection_scripts.dart';
+import 'package:fushi/src/reader/reader_chrome_floating.dart';
+import 'package:fushi/src/reader/reader_settings.dart';
+import 'package:fushi/src/reader/reader_top_progress.dart';
+import 'package:fushi/src/reader/ttu_toc_flatten.dart';
+import 'package:fushi/src/startup/exit_flush_registry.dart';
+import 'package:fushi/src/webview/webview_death_guard.dart';
+import 'package:fushi/src/sync/desktop_lookup_service.dart';
+import 'package:fushi/src/media/audiobook/floating_lyric_channel.dart';
+import 'package:fushi/src/media/audiobook/pointer_seek.dart';
+import 'package:fushi/src/platform/selection_external_actions.dart';
+import 'package:fushi_anki/fushi_anki.dart';
+import 'package:fushi/src/anki/anki_view_model.dart';
+import 'package:fushi/src/utils/misc/coalesced_async_runner.dart';
+import 'package:fushi/src/utils/misc/error_log_service.dart';
+import 'package:fushi/src/utils/misc/floating_lyric_hint.dart';
+import 'package:fushi/src/utils/misc/debug_log_service.dart';
+import 'package:fushi/src/utils/misc/channel_constants.dart';
+import 'package:fushi/src/utils/misc/tts_channel.dart';
+import 'package:fushi/src/utils/misc/serial_task_queue.dart';
+import 'package:fushi/src/utils/misc/volume_key_channel.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:hibiki/src/utils/misc/hibiki_share.dart';
+import 'package:fushi/src/utils/misc/hibiki_share.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:hibiki/src/utils/misc/platform_utils.dart';
-import 'package:hibiki/src/utils/misc/hibiki_color.dart';
-import 'package:hibiki/src/utils/components/hibiki_design_tokens.dart';
-import 'package:hibiki/src/utils/components/hibiki_icon_button.dart';
-import 'package:hibiki/src/utils/components/hibiki_material_components.dart';
-import 'package:hibiki/src/utils/misc/show_app_dialog.dart';
-import 'package:hibiki/src/shortcuts/input_binding.dart'
+import 'package:fushi/src/utils/misc/platform_utils.dart';
+import 'package:fushi/src/utils/misc/hibiki_color.dart';
+import 'package:fushi/src/utils/components/hibiki_design_tokens.dart';
+import 'package:fushi/src/utils/components/hibiki_icon_button.dart';
+import 'package:fushi/src/utils/components/hibiki_material_components.dart';
+import 'package:fushi/src/utils/misc/show_app_dialog.dart';
+import 'package:fushi/src/shortcuts/input_binding.dart'
     show GamepadButton, InputBinding, ModifierKey, activeModifierKeys;
-import 'package:hibiki/src/shortcuts/shortcut_registry.dart'
+import 'package:fushi/src/shortcuts/shortcut_registry.dart'
     show HibikiShortcutRegistry;
-import 'package:hibiki/src/shortcuts/gamepad_service.dart'
+import 'package:fushi/src/shortcuts/gamepad_service.dart'
     show GamepadButtonIntent, GamepadLongPressIntent, focusedEditableText;
-import 'package:hibiki/src/shortcuts/shortcut_action.dart';
-import 'package:hibiki/src/focus/page_focus_ownership.dart';
-import 'package:hibiki/src/focus/webview_key_bridge.dart';
-import 'package:hibiki/src/shortcuts/reader_caret_router.dart';
-import 'package:hibiki/src/shortcuts/dictionary_caret_controller.dart';
+import 'package:fushi/src/shortcuts/shortcut_action.dart';
+import 'package:fushi/src/focus/page_focus_ownership.dart';
+import 'package:fushi/src/focus/webview_key_bridge.dart';
+import 'package:fushi/src/shortcuts/reader_caret_router.dart';
+import 'package:fushi/src/shortcuts/dictionary_caret_controller.dart';
 // Re-export so existing references to `CaretSurface` via the reader page,
 // and the source-scan guards that read this file, still resolve the enum
 // after its definition moved into the shared caret controller (TODO-387).
-export 'package:hibiki/src/shortcuts/dictionary_caret_controller.dart'
+export 'package:fushi/src/shortcuts/dictionary_caret_controller.dart'
     show CaretSurface;
-import 'package:hibiki/src/shortcuts/reader_space_override.dart';
+import 'package:fushi/src/shortcuts/reader_space_override.dart';
 
 part 'reader_hibiki/lyrics.part.dart';
 part 'reader_hibiki/mining.part.dart';
@@ -130,7 +130,7 @@ part 'reader_hibiki/webview.part.dart';
 /// `flutter_inappwebview_windows` 的 `kInAppWebViewCreationFailedSentinel` 字面量
 /// 一致）。reader 凭此区分「实例创建失败」与普通页面加载错误，只对前者走可见恢复。
 const String kReaderWebViewCreationFailedSentinel =
-    'HIBIKI_INAPPWEBVIEW_CREATION_FAILED';
+    'FUSHI_INAPPWEBVIEW_CREATION_FAILED';
 
 /// What the reader-surface caret move resolves to in Dart, given the physical
 /// key direction and the `status` hoshiCaret.move returned.
@@ -268,7 +268,7 @@ DateTime contentReadyTimeoutDeadline({
 typedef ReaderThemeColors = ({
   Color bg,
   Color fg,
-  Color sasayaki,
+  Color sentenceAudioHighlight,
   Color selection,
   Color link,
   bool dark,
@@ -314,7 +314,7 @@ ReaderThemeColors resolveReaderThemeColors({
   return (
     bg: base.bg,
     fg: base.fg,
-    sasayaki: audioHighlightOverride,
+    sentenceAudioHighlight: audioHighlightOverride,
     selection: base.selection,
     link: base.link,
     dark: base.dark,
@@ -340,7 +340,8 @@ ReaderThemeColors _resolveBaseReaderThemeColors({
   return (
     bg: scheme.surface,
     fg: scheme.onSurface,
-    sasayaki: scheme.primary.withValues(alpha: dark ? 0.34 : 0.40),
+    sentenceAudioHighlight:
+        scheme.primary.withValues(alpha: dark ? 0.34 : 0.40),
     // selection 用 tertiary：与 sasayaki(primary) 错开色相，查词高亮 ≠ 跟读高亮。
     selection: scheme.tertiary.withValues(alpha: dark ? 0.35 : 0.40),
     link: scheme.primary,
@@ -543,7 +544,7 @@ html,body{width:100vw;height:100vh;overflow:hidden;background:#000}
     });
   });
   // BUG-1280：spread 是第四种独立文档（继歌词 BUG-756、VN BUG-1195 之后），HTML 本身
-  // 不含正文 hoshiReader 的 onTap/onTapEmpty，自带的手势只有「点图片 → onImageTap」。
+  // 不含正文 fushiReader 的 onTap/onTapEmpty，自带的手势只有「点图片 → onImageTap」。
   // 底栏一收起就没有唤出通道 → 看不到返回按钮 → 退不出这本书。
   //
   // 注意这条在修复前**分平台**：Windows 的 loadData 丢 baseUrl，onLoadStop 判 stale，
@@ -1318,7 +1319,7 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
   EpubSpreadMap? _spreadMap;
 
   /// BUG-1280：**上一次交给 WebView 的文档是不是 spread 独立文档**
-  /// （[buildSpreadPageHtml]，两张整页 `<img>`，无正文 `hoshiReader`）。
+  /// （[buildSpreadPageHtml]，两张整页 `<img>`，无正文 `fushiReader`）。
   ///
   /// 写点是**三个**，正好是把文档交给 WebView 的三个装载原语：`_loadSpreadPage`
   /// 置位，`_loadChapterDirectly` 与 **`_loadLyricsPage`** 复位。所以它跟踪的是
@@ -1926,7 +1927,7 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
     try {
       await _initBookInner();
     } catch (e, stack) {
-      debugPrint('[ReaderHibiki] _initBook failed: $e\n$stack');
+      debugPrint('[ReaderFushi] _initBook failed: $e\n$stack');
       ErrorLogService.instance.log('ReaderHibiki._initBook', e, stack);
       if (!mounted) return;
       HibikiToast.show(
@@ -1978,7 +1979,7 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
     final _BookLocateResult located = await bookLocateFuture;
     if (!mounted) return;
     if (!located.exists) {
-      debugPrint('[ReaderHibiki] book ${widget.bookKey} not found on disk');
+      debugPrint('[ReaderFushi] book ${widget.bookKey} not found on disk');
       HibikiToast.show(
           msg: t.book_file_not_found, severity: ToastSeverity.error);
       // 与 _initBook catch 同款 _popInProgress 合流（防与用户手动退出竞发连退两级）。
@@ -1998,13 +1999,13 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
     try {
       _book = await compute(parseBookOnly, extractDir);
       debugPrint(
-          '[ReaderHibiki] parsed EPUB: ${_book!.chapters.length} chapters');
+          '[ReaderFushi] parsed EPUB: ${_book!.chapters.length} chapters');
       if (bookRow != null) {
         charsFromDb = charCountsFromChaptersJson(
             bookRow.chaptersJson, _book!.chapters.length);
       }
     } on FormatException catch (e) {
-      debugPrint('[ReaderHibiki] EPUB parse failed ($e), trying DB metadata');
+      debugPrint('[ReaderFushi] EPUB parse failed ($e), trying DB metadata');
       _book = await _buildBookFromDb(db, widget.bookKey, extractDir);
       if (!mounted) return;
       _book ??= _buildLegacyBook(extractDir, coverHref: bookRow?.coverPath);
@@ -2018,7 +2019,7 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
     }
 
     final List<String> hrefs = _book!.chapters.map((ch) => ch.href).toList();
-    debugPrint('[ReaderHibiki] chapter hrefs: $hrefs');
+    debugPrint('[ReaderFushi] chapter hrefs: $hrefs');
 
     if (charsFromDb != null) {
       // TODO-1192: 先立刻用命中的计数（即便是旧口径 v1，先让进度/总字数有值不闪 0）；
@@ -2082,14 +2083,14 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
       _lastProgressSection = _currentChapter;
       _lastProgressValue = _initialProgress;
       _lastProgressCharOffset = _initialCharOffset;
-      debugPrint('[ReaderHibiki] restore from bookmark: '
+      debugPrint('[ReaderFushi] restore from bookmark: '
           'chapter=$_currentChapter progress=$_initialProgress '
           'charAnchor=$_initialCharOffset '
           'preserveSavedPosition=$_suppressPositionPersist');
     } else {
       final ReaderPosition? saved = await savedPositionFuture;
       if (!mounted) return;
-      debugPrint('[ReaderHibiki] restore lookup: bookKey=${widget.bookKey} '
+      debugPrint('[ReaderFushi] restore lookup: bookKey=${widget.bookKey} '
           'saved=$saved section=${saved?.sectionIndex} '
           'offset=${saved?.normCharOffset}');
       if (saved != null &&
@@ -2113,7 +2114,7 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
       try {
         WakelockPlus.enable();
       } catch (e) {
-        debugPrint('[Hibiki] wakelock enable failed: $e');
+        debugPrint('[Fushi] wakelock enable failed: $e');
       }
     }
 
@@ -2266,7 +2267,7 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
       }).toList();
     }
 
-    debugPrint('[ReaderHibiki] built from DB: ${chapters.length} chapters, '
+    debugPrint('[ReaderFushi] built from DB: ${chapters.length} chapters, '
         '${toc.length} toc entries');
 
     return EpubBook(
@@ -2424,7 +2425,7 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
     try {
       WakelockPlus.disable();
     } catch (e) {
-      debugPrint('[Hibiki] wakelock disable failed: $e');
+      debugPrint('[Fushi] wakelock disable failed: $e');
     }
     super.dispose();
   }
@@ -2598,7 +2599,7 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
     if (!widthChanged && !heightChanged) return;
     // BUG-111: 诊断——窗口/缩放 settle 或 resize 后，把真实视口与已分页基线比对。
     // 若 content-ready 后这里报 widthChanged，说明初始分页宽度偏窄、正在自动重排铺满。
-    debugPrint('[ReaderHibiki] _syncPageSize w=$w h=$h '
+    debugPrint('[ReaderFushi] _syncPageSize w=$w h=$h '
         'paginated=$_paginatedWidth x $_paginatedHeight '
         'widthChanged=$widthChanged heightChanged=$heightChanged');
     _lastSyncedWidth = w;
@@ -2835,7 +2836,7 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
                         child: DragToMoveArea(
                           child: ColoredBox(
                             key: const ValueKey<String>(
-                              'hoshi_reader_window_drag_area',
+                              'fushi_reader_window_drag_area',
                             ),
                             color: bgColor,
                           ),
@@ -2865,7 +2866,7 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
     }
     final Widget webView = _buildWebView();
     // BUG-379 / BUG-1343：歌词模式（LyricsModeHtml）与 spread 整页图都是独立 HTML，
-    // 没有 window.hoshiReader，_applyChromeInsets 对它们整体 early-return，正文那套
+    // 没有 window.fushiReader，_applyChromeInsets 对它们整体 early-return，正文那套
     // 「告诉 WebView 预留多少」的机制对它们失效，只能由 Flutter 侧收缩视口本身。
     // 留多少是 [independentDocumentInsets] 说了算（单一真相源，行为单测直接钉它）；
     // 这里只负责喂当前状态并按结果包 Padding。
@@ -2907,7 +2908,7 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
       // 真相源）——preset 透传手调专色（与旧 switch 值逐一相等，零变化）、custom 用
       // 用户色、system/light 从真实 ColorScheme 强调色派生（不再落硬编码天蓝/灰/蓝）。
       selectionColor: _colorToCssRgba(rc.selection),
-      sasayakiColor: _colorToCssRgba(rc.sasayaki),
+      sentenceAudioHighlightColor: _colorToCssRgba(rc.sentenceAudioHighlight),
       linkColor: _colorToCssRgba(rc.link),
       // 墨水屏模式：全局单开关叠加在阅读器主题之上（纯黑白+线式高亮+关过渡），
       // 黑白方向跟 app 明暗模式，与全局 E-ink ColorScheme 一致。
@@ -2956,7 +2957,7 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
   Future<void> _applyStylesLive() async {
     if (_controller == null || _settings == null) return;
     _invalidateStyleCache();
-    // _settings 即 ReaderHibikiSource.readerSettings 本体，setTtu* 已在触发本
+    // _settings 即 ReaderHibikiSource.readerSettings 本体，setReaderPref* 已在触发本
     // 回调前写穿同一对象，无需再 _syncSettingsFromHive 自拷贝（旧 TTU 死桥）。
     if (!mounted || _controller == null) return;
     // TODO-756b：把“悬停即查词”开关下发到 WebView 的 window.__hoverAutoLookup（mousemove
@@ -2969,8 +2970,8 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
     }
     final String jsonCss = _currentStyleJson();
     // 余白/主题实时不生效根因修复：CSS 换入（用户可见效果）不得被样式重锚的就绪门控
-    // [readerStyleReanchorAllowed] 挡掉。旧实现只在 `!window.hoshiReader` 时裸换 CSS，
-    // 有 hoshiReader 时把换 CSS 全托付给下面 gate 后的 beginStyleReanchor；一旦 gate 关闭
+    // [readerStyleReanchorAllowed] 挡掉。旧实现只在 `!window.fushiReader` 时裸换 CSS，
+    // 有 fushiReader 时把换 CSS 全托付给下面 gate 后的 beginStyleReanchor；一旦 gate 关闭
     // （内容未就绪 / 重排在飞 / 切章瞬态），[runUiScaleReanchorOrchestration] 在 evalBegin 前
     // 就 return，CSS 被静默丢弃 → 主题/余白改完不生效、必须退出重进重烤 _computeStyleTag
     // 才见效。这里把「换 CSS」与「重锚就绪门控」解耦：重锚会跑（gate 开）时仍交给
@@ -2992,13 +2993,13 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
     el.id = 'hoshi-reader-style';
     document.head.appendChild(el);
   }
-  // 重锚不会跑（无 hoshiReader / 内容未就绪 / 重排在飞）时就地换 CSS，并失效分页 metrics
+  // 重锚不会跑（无 fushiReader / 内容未就绪 / 重排在飞）时就地换 CSS，并失效分页 metrics
   // 让几何（余白/字号）重新分栏；重锚会跑时不在此换——交给下面 beginStyleReanchor 原子
   // 采锚 + 换 CSS + 置旗（settle-aware commit 保翻页保位）。
-  if (!window.hoshiReader || ${!reanchorWillRun}) {
+  if (!window.fushiReader || ${!reanchorWillRun}) {
     el.textContent = $jsonCss;
-    if (window.hoshiReader && window.hoshiReader.paginationMetrics !== undefined) {
-      window.hoshiReader.paginationMetrics = null;
+    if (window.fushiReader && window.fushiReader.paginationMetrics !== undefined) {
+      window.fushiReader.paginationMetrics = null;
     }
   }
 })();
@@ -3077,7 +3078,7 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
       if (!mounted || _controller == null) return;
       await _controller!.evaluateJavascript(
         source:
-            'if (!window.__hoshiCssHighlightsSupported) { window.hoshiReader && window.hoshiReader.buildNodeOffsets(); }',
+            'if (!window.__hoshiCssHighlightsSupported) { window.fushiReader && window.fushiReader.buildNodeOffsets(); }',
       );
       // HBK-AUDIT-117: theme persistence moved to _onThemeChanged — it is
       // unrelated to highlight application and must not be gated on favorites.
@@ -3278,7 +3279,7 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
   }
 
   List<AudioCue>? _cachedAllCues;
-  bool _cachedSasayaki = false;
+  bool _cachedSentenceAudio = false;
 
   // ── Spread (two-page) support ──────────────────────────────────────
 
@@ -3411,8 +3412,8 @@ class _ReaderHibikiPageState extends BaseSourcePageState<ReaderHibikiPage>
     final AudiobookPlayerController? controller = _audiobookController;
     if (controller == null) return;
     final Object? raw = await _controller?.evaluateJavascript(
-      source: 'window.hoshiReader && window.hoshiReader.cueIdAtPoint'
-          ' ? window.hoshiReader.cueIdAtPoint($x, $y) : null',
+      source: 'window.fushiReader && window.fushiReader.cueIdAtPoint'
+          ' ? window.fushiReader.cueIdAtPoint($x, $y) : null',
     );
     // await 期间用户可能退出有声书（_audiobookController 被置空并 dispose）。
     // 用快照同一性校验，避免对已 dispose 的旧 controller 调 playCueAndContinue。

@@ -2,25 +2,25 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:hibiki/src/sync/collection_manifest.dart';
-import 'package:hibiki/src/sync/deletion_propagation.dart';
-import 'package:hibiki/src/sync/hibiki_library_host_service.dart';
-import 'package:hibiki/src/sync/interconnect_service_config.dart';
-import 'package:hibiki/src/sync/remote_book_client.dart';
-import 'package:hibiki/src/sync/remote_cover_fetcher.dart';
-import 'package:hibiki/src/sync/remote_library_source.dart';
-import 'package:hibiki/src/sync/remote_video_client.dart';
-import 'package:hibiki/src/utils/misc/resumable_downloader.dart';
-import 'package:hibiki/src/sync/sync_asset_store.dart';
-import 'package:hibiki/src/sync/sync_backend.dart';
-import 'package:hibiki/src/sync/sync_backend_file_trio_mixin.dart';
-import 'package:hibiki/src/sync/sync_repository.dart';
-import 'package:hibiki/src/sync/tls/hibiki_pinning_http.dart';
-import 'package:hibiki/src/sync/sync_utils.dart';
-import 'package:hibiki/src/sync/ttu_filename.dart';
-import 'package:hibiki/src/sync/sync_file_ref.dart';
-import 'package:hibiki/src/sync/ttu_models.dart';
-import 'package:hibiki/src/sync/webdav_ops.dart';
+import 'package:fushi/src/sync/collection_manifest.dart';
+import 'package:fushi/src/sync/deletion_propagation.dart';
+import 'package:fushi/src/sync/hibiki_library_host_service.dart';
+import 'package:fushi/src/sync/interconnect_service_config.dart';
+import 'package:fushi/src/sync/remote_book_client.dart';
+import 'package:fushi/src/sync/remote_cover_fetcher.dart';
+import 'package:fushi/src/sync/remote_library_source.dart';
+import 'package:fushi/src/sync/remote_video_client.dart';
+import 'package:fushi/src/utils/misc/resumable_downloader.dart';
+import 'package:fushi/src/sync/sync_asset_store.dart';
+import 'package:fushi/src/sync/sync_backend.dart';
+import 'package:fushi/src/sync/sync_backend_file_trio_mixin.dart';
+import 'package:fushi/src/sync/sync_repository.dart';
+import 'package:fushi/src/sync/tls/hibiki_pinning_http.dart';
+import 'package:fushi/src/sync/sync_utils.dart';
+import 'package:fushi/src/sync/ttu_filename.dart';
+import 'package:fushi/src/sync/sync_file_ref.dart';
+import 'package:fushi/src/sync/ttu_models.dart';
+import 'package:fushi/src/sync/webdav_ops.dart';
 
 /// Probes whether a single Hibiki server URL is reachable with [token].
 /// Returns true if reachable, false on connectivity failure/timeout, and
@@ -48,7 +48,7 @@ Future<HibikiClientUrl> resolveReachableHibikiCandidate(
     if (reachable) return candidate;
   }
   throw SyncBackendError(
-    'No reachable Hibiki server address',
+    'No reachable Fushi server address',
     isRetryable: true,
   );
 }
@@ -72,7 +72,7 @@ Future<bool> _pinnedReachabilityProbe(
   } on SyncAuthError {
     rethrow;
   } catch (e) {
-    debugPrint('[hibiki-client] pinned probe failed for $url: $e');
+    debugPrint('[fushi-client] pinned probe failed for $url: $e');
     return false;
   } finally {
     ops?.close(force: true);
@@ -101,7 +101,7 @@ Future<bool> _defaultHibikiProbe(String url, String token) async {
     // Unreachable, timed out, or the server returned an error — skip this
     // address, but log why so a running-but-erroring server is distinguishable
     // from "down" (HBK-AUDIT-166).
-    debugPrint('[hibiki-client] probe failed for $url: $e');
+    debugPrint('[fushi-client] probe failed for $url: $e');
     return false;
   } finally {
     // force: abort any connect still in flight when we timed out, so an
@@ -282,7 +282,7 @@ class InterconnectSyncBackend extends SyncBackend
     if (_sessionResolved) return;
     final String? token = _token;
     if (token == null) {
-      throw SyncAuthError('Hibiki server credentials not configured');
+      throw SyncAuthError('Fushi server credentials not configured');
     }
     final HibikiClientUrl chosen =
         await resolveReachableHibikiCandidate(_candidates, token, _probe);
@@ -307,7 +307,7 @@ class InterconnectSyncBackend extends SyncBackend
   Future<void> authenticate({required SyncRepository repo}) async {
     await _loadConfig(repo);
     if (_candidates.isEmpty || _token == null) {
-      throw SyncAuthError('Hibiki server credentials not configured');
+      throw SyncAuthError('Fushi server credentials not configured');
     }
     // Probes + selects a reachable address (or throws), confirming the token
     // is accepted by the server.
@@ -395,7 +395,7 @@ class InterconnectSyncBackend extends SyncBackend
           await _ops!.putBytes(coverPath, coverData, format.mimeType);
         }
       } catch (e) {
-        debugPrint('[hibiki-client] cover upload failed: $e');
+        debugPrint('[fushi-client] cover upload failed: $e');
       }
     }
 

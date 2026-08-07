@@ -304,7 +304,7 @@ bool SetShortcutIconLocation(const std::wstring& lnk_path,
 // Joins a known-folder path with |relative| (a path tail relative to the
 // folder root, e.g. the desktop .lnk filename or the Start menu group
 // subfolder + .lnk). Returns empty on failure.
-std::wstring HibikiShortcutInFolder(REFKNOWNFOLDERID folder_id,
+std::wstring FushiShortcutInFolder(REFKNOWNFOLDERID folder_id,
                                     const wchar_t* relative) {
   PWSTR folder = nullptr;
   HRESULT hr = SHGetKnownFolderPath(folder_id, 0, nullptr, &folder);
@@ -323,11 +323,11 @@ std::wstring HibikiShortcutInFolder(REFKNOWNFOLDERID folder_id,
   return path;
 }
 
-// TODO-901: points the desktop + Start menu Hibiki shortcuts at |icon_path|
+// TODO-901: points the desktop + Start menu Fushi shortcuts at |icon_path|
 // (a freshly generated multi-size .ico). Installer (hibiki.iss) drops the .lnk
-// at {userdesktop}\Hibiki (Desktop\Hibiki.lnk) and {group}\Hibiki, where
-// {group} = {autoprograms}\{DefaultGroupName=Hibiki} -> Programs\Hibiki\Hibiki.lnk
-// (DisableProgramGroupPage only hides the wizard page; the Hibiki subfolder
+// at {userdesktop}\Fushi (Desktop\Fushi.lnk) and {group}\Fushi, where
+// {group} = {autoprograms}\{DefaultGroupName=Fushi} -> Programs\Fushi\Fushi.lnk
+// (DisableProgramGroupPage only hides the wizard page; the Fushi subfolder
 // still exists). Returns true if at least one shortcut was updated. Taskbar
 // pinned items are intentionally NOT touched (fragile, cached in the registry;
 // see plan).
@@ -337,13 +337,13 @@ bool ApplyShortcutIcon(const std::wstring& icon_path) {
   }
   bool any = false;
   const std::wstring desktop_lnk =
-      HibikiShortcutInFolder(FOLDERID_Desktop, L"Hibiki.lnk");
+      FushiShortcutInFolder(FOLDERID_Desktop, L"Fushi.lnk");
   if (!desktop_lnk.empty()) {
     any |= SetShortcutIconLocation(desktop_lnk, icon_path);
   }
-  // Start menu lives under the Hibiki program group subfolder, not Programs root.
+  // Start menu lives under the Fushi program group subfolder, not Programs root.
   const std::wstring programs_lnk =
-      HibikiShortcutInFolder(FOLDERID_Programs, L"Hibiki\\Hibiki.lnk");
+      FushiShortcutInFolder(FOLDERID_Programs, L"Fushi\\Fushi.lnk");
   if (!programs_lnk.empty()) {
     any |= SetShortcutIconLocation(programs_lnk, icon_path);
   }
@@ -382,7 +382,7 @@ bool FlutterWindow::OnCreate() {
   // native caption follows the in-app theme (see window_caption_channel.dart).
   caption_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
-          flutter_controller_->engine()->messenger(), "app.hibiki/window",
+          flutter_controller_->engine()->messenger(), "app.fushi/window",
           &flutter::StandardMethodCodec::GetInstance());
   caption_channel_->SetMethodCallHandler(
       [this](const flutter::MethodCall<flutter::EncodableValue>& call,
@@ -453,7 +453,7 @@ bool FlutterWindow::OnCreate() {
             result->Success(flutter::EncodableValue(ok));
           }
         } else if (call.method_name() == "setShortcutIcon") {
-          // TODO-901: rewrite the desktop + Start menu Hibiki .lnk IconLocation
+          // TODO-901: rewrite the desktop + Start menu Fushi .lnk IconLocation
           // to the freshly generated multi-size .ico Dart wrote to disk. Note
           // the arg key is 'iconPath' (distinct from setWindowIcon's 'path').
           const auto* shortcut_args =
@@ -483,7 +483,7 @@ bool FlutterWindow::OnCreate() {
   clipboard_image_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(),
-          "app.hibiki.reader/clipboard_image",
+          "app.fushi.reader/clipboard_image",
           &flutter::StandardMethodCodec::GetInstance());
   clipboard_image_channel_->SetMethodCallHandler(
       [this](const flutter::MethodCall<flutter::EncodableValue>& call,
@@ -523,7 +523,7 @@ bool FlutterWindow::OnCreate() {
   external_video_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(),
-          "app.hibiki/external_video",
+          "app.fushi/external_video",
           &flutter::StandardMethodCodec::GetInstance());
 
   // TODO-1092: 系统强调色/主题色实时变更通知 channel。runner 侧收到 Windows 的
@@ -533,13 +533,13 @@ bool FlutterWindow::OnCreate() {
   // 首实例无需主动调用任何方法，仅作为 MessageHandler 的出口。
   system_theme_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
-          flutter_controller_->engine()->messenger(), "app.hibiki/system_theme",
+          flutter_controller_->engine()->messenger(), "app.fushi/system_theme",
           &flutter::StandardMethodCodec::GetInstance());
 
   windows_ime_space_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(),
-          "app.hibiki/windows_ime_space",
+          "app.fushi/windows_ime_space",
           &flutter::StandardMethodCodec::GetInstance());
 
   RegisterImeGuardChannel();
@@ -735,7 +735,7 @@ struct ForegroundSelectionPending {
 constexpr UINT WM_WINDOWCAP_DONE = WM_APP + 4;
 
 struct WindowCapturePending {
-  hibiki::WindowCaptureResult result;
+  fushi::WindowCaptureResult result;
   std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> reply;
 };
 
@@ -747,7 +747,7 @@ void FlutterWindow::RegisterFloatingLyricChannel() {
   floating_lyric_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(),
-          "app.hibiki.reader/floating_lyric",
+          "app.fushi.reader/floating_lyric",
           &flutter::StandardMethodCodec::GetInstance());
 
   // Native taps -> Dart events (handled by FloatingLyricChannel.setEventHandlers
@@ -868,7 +868,7 @@ void FlutterWindow::RegisterImeGuardChannel() {
   windows_ime_guard_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(),
-          "app.hibiki/windows_ime_guard",
+          "app.fushi/windows_ime_guard",
           &flutter::StandardMethodCodec::GetInstance());
 
   windows_ime_guard_channel_->SetMethodCallHandler(
@@ -921,7 +921,7 @@ void FlutterWindow::RegisterClipboardTextChannel() {
   clipboard_text_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(),
-          "app.hibiki.reader/clipboard_text",
+          "app.fushi.reader/clipboard_text",
           &flutter::StandardMethodCodec::GetInstance());
 
   clipboard_text_window_->SetLookupCallback(
@@ -1009,7 +1009,7 @@ void FlutterWindow::RegisterGalHookTextChannel() {
   gal_hook_text_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(),
-          "app.hibiki.reader/gal_hook_text",
+          "app.fushi.reader/gal_hook_text",
           &flutter::StandardMethodCodec::GetInstance());
 
   gal_hook_text_window_->SetContextLookupCallback(
@@ -1161,7 +1161,7 @@ void FlutterWindow::RegisterGlobalLookupChannel() {
   global_lookup_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(),
-          "app.hibiki.reader/global_lookup",
+          "app.fushi.reader/global_lookup",
           &flutter::StandardMethodCodec::GetInstance());
 
   // image:// -> ask the main Dart engine for the bytes. Asynchronous: the reply
@@ -1399,13 +1399,13 @@ void FlutterWindow::RegisterClipboardPanelChannel() {
   // 整窗不透明度滑杆恢复工作。真·逐像素透明改走别的路线（悬浮歌词窗式 GDI per-pixel，
   // 或先把 DComp 黑底修对）再单独开启。composition 代码保留、休眠（默认 false）。
   clipboard_panel_window_->SetCompositionMode(false);
-  clipboard_panel_window_->SetWindowTitle(L"Hibiki");
+  clipboard_panel_window_->SetWindowTitle(L"Fushi");
   clipboard_panel_window_->SetUserDataLeaf(L"ClipboardPanelWebView2");
 
   clipboard_panel_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(),
-          "app.hibiki.reader/clipboard_panel",
+          "app.fushi.reader/clipboard_panel",
           &flutter::StandardMethodCodec::GetInstance());
 
   clipboard_panel_window_->SetMediaResolver(
@@ -1603,7 +1603,7 @@ void FlutterWindow::RegisterForegroundSelectionChannel() {
   foreground_selection_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(),
-          "app.hibiki.reader/foreground_selection",
+          "app.fushi.reader/foreground_selection",
           &flutter::StandardMethodCodec::GetInstance());
 
   foreground_selection_channel_->SetMethodCallHandler(
@@ -1657,7 +1657,7 @@ void FlutterWindow::RegisterWindowCaptureChannel() {
   window_capture_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(),
-          "app.hibiki.reader/window_capture",
+          "app.fushi.reader/window_capture",
           &flutter::StandardMethodCodec::GetInstance());
 
   window_capture_channel_->SetMethodCallHandler(
@@ -1666,8 +1666,8 @@ void FlutterWindow::RegisterWindowCaptureChannel() {
                  result) {
         const std::string& method = call.method_name();
         if (method == "listWindows") {
-          const std::vector<hibiki::ExternalWindow> windows =
-              hibiki::EnumerateTopLevelWindows(GetHandle());
+          const std::vector<fushi::ExternalWindow> windows =
+              fushi::EnumerateTopLevelWindows(GetHandle());
           flutter::EncodableList list;
           for (const auto& w : windows) {
             list.push_back(flutter::EncodableValue(flutter::EncodableMap{
@@ -1705,7 +1705,7 @@ void FlutterWindow::RegisterWindowCaptureChannel() {
         auto* pending = new WindowCapturePending();
         pending->reply = std::move(result);
         std::thread([target, host, pending]() {
-          pending->result = hibiki::CaptureWindowPng(target);
+          pending->result = fushi::CaptureWindowPng(target);
           if (!PostMessage(host, WM_WINDOWCAP_DONE, 0,
                            reinterpret_cast<LPARAM>(pending))) {
             pending->reply->Success(
@@ -1727,7 +1727,7 @@ void FlutterWindow::RegisterAudioLoopbackChannel() {
   audio_loopback_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(),
-          "app.hibiki.reader/audio_loopback",
+          "app.fushi.reader/audio_loopback",
           &flutter::StandardMethodCodec::GetInstance());
 
   audio_loopback_channel_->SetMethodCallHandler(
@@ -1735,7 +1735,7 @@ void FlutterWindow::RegisterAudioLoopbackChannel() {
          std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
              result) {
         const std::string& method = call.method_name();
-        auto format_map = [](const hibiki::LoopbackFormat& f) {
+        auto format_map = [](const fushi::LoopbackFormat& f) {
           return flutter::EncodableMap{
               {flutter::EncodableValue("sampleRate"),
                flutter::EncodableValue(f.sample_rate)},
@@ -1748,8 +1748,8 @@ void FlutterWindow::RegisterAudioLoopbackChannel() {
           };
         };
         if (method == "start") {
-          const hibiki::LoopbackFormat f =
-              hibiki::AudioLoopbackCapture::Instance().Start();
+          const fushi::LoopbackFormat f =
+              fushi::AudioLoopbackCapture::Instance().Start();
           if (!f.ok) {
             result->Success(flutter::EncodableValue(flutter::EncodableMap{
                 {flutter::EncodableValue("error"),
@@ -1761,7 +1761,7 @@ void FlutterWindow::RegisterAudioLoopbackChannel() {
           return;
         }
         if (method == "stop") {
-          hibiki::AudioLoopbackCapture::Instance().Stop();
+          fushi::AudioLoopbackCapture::Instance().Stop();
           result->Success();
           return;
         }
@@ -1777,8 +1777,8 @@ void FlutterWindow::RegisterAudioLoopbackChannel() {
             }
           }
           std::vector<uint8_t> pcm;
-          const hibiki::LoopbackFormat f =
-              hibiki::AudioLoopbackCapture::Instance().GrabRecent(back_ms, pcm);
+          const fushi::LoopbackFormat f =
+              fushi::AudioLoopbackCapture::Instance().GrabRecent(back_ms, pcm);
           if (!f.ok || pcm.empty()) {
             result->Success(flutter::EncodableValue(flutter::EncodableMap{
                 {flutter::EncodableValue("error"),
@@ -1804,7 +1804,7 @@ void FlutterWindow::RegisterVoiceHookChannel() {
   voice_hook_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(),
-          "app.hibiki.reader/voice_hook",
+          "app.fushi.reader/voice_hook",
           &flutter::StandardMethodCodec::GetInstance());
 
   voice_hook_channel_->SetMethodCallHandler(
@@ -1812,7 +1812,7 @@ void FlutterWindow::RegisterVoiceHookChannel() {
          std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
              result) {
         const std::string& method = call.method_name();
-        auto status_map = [](const hibiki::VoiceHookStatus& s) {
+        auto status_map = [](const fushi::VoiceHookStatus& s) {
           return flutter::EncodableMap{
               {flutter::EncodableValue("ipcProtocolVersion"),
                flutter::EncodableValue(s.ipc_protocol_version)},
@@ -1873,8 +1873,8 @@ void FlutterWindow::RegisterVoiceHookChannel() {
         };
         if (method == "open") {
           const uint32_t pid = read_pid();
-          const hibiki::VoiceHookOpenResult opened =
-              hibiki::VoiceHookReader::Instance().Open(pid);
+          const fushi::VoiceHookOpenResult opened =
+              fushi::VoiceHookReader::Instance().Open(pid);
           // open 成功但 hook 未就绪**不是错误**（调用方轮询 status）。旧判据
           // `!s.hooked && !s.ok` 把「映射已建、DLL 还没置 hooked 位」这段启动窗口
           // 误报成「共享内存不存在」，Dart 侧据此立刻降级回 loopback——引擎 hook 明明
@@ -1882,10 +1882,10 @@ void FlutterWindow::RegisterVoiceHookChannel() {
           if (!opened.ok()) {
             result->Success(flutter::EncodableValue(flutter::EncodableMap{
                 // 机器可读 token：Dart 侧据此归类成可执行处置（要管理员 / 重开游戏 /
-                // 更新 helper），不再一律说「重启 Hibiki」。
+                // 更新 helper），不再一律说「重启 Fushi」。
                 {flutter::EncodableValue("error"),
                  flutter::EncodableValue(
-                     std::string(hibiki::VoiceHookOpenErrorToken(
+                     std::string(fushi::VoiceHookOpenErrorToken(
                          opened.error)))},
                 // 一手事实（win32 码 / 映射名 / 双方版本对照），原样进用户可见诊断。
                 {flutter::EncodableValue("detail"),
@@ -1900,7 +1900,7 @@ void FlutterWindow::RegisterVoiceHookChannel() {
         }
         if (method == "status") {
           result->Success(flutter::EncodableValue(
-              status_map(hibiki::VoiceHookReader::Instance().Status())));
+              status_map(fushi::VoiceHookReader::Instance().Status())));
           return;
         }
         if (method == "grabRecent") {
@@ -1915,8 +1915,8 @@ void FlutterWindow::RegisterVoiceHookChannel() {
             }
           }
           std::vector<uint8_t> pcm;
-          const hibiki::VoiceHookStatus s =
-              hibiki::VoiceHookReader::Instance().GrabRecent(back_ms, pcm);
+          const fushi::VoiceHookStatus s =
+              fushi::VoiceHookReader::Instance().GrabRecent(back_ms, pcm);
           if (!s.ok || pcm.empty()) {
             result->Success(flutter::EncodableValue(flutter::EncodableMap{
                 {flutter::EncodableValue("error"),
@@ -1934,10 +1934,10 @@ void FlutterWindow::RegisterVoiceHookChannel() {
           // 取 (fromSeq, count] 的新台词行，喂 Dart 的 texthooker。
           const uint64_t from_seq =
               static_cast<uint64_t>(read_long("fromSeq"));
-          std::vector<hibiki::VoiceHookText> lines;
-          hibiki::VoiceHookReader::Instance().PollText(from_seq, lines);
+          std::vector<fushi::VoiceHookText> lines;
+          fushi::VoiceHookReader::Instance().PollText(from_seq, lines);
           const uint64_t count =
-              hibiki::VoiceHookReader::Instance().TextWriteCount();
+              fushi::VoiceHookReader::Instance().TextWriteCount();
           flutter::EncodableList list;
           for (const auto& ln : lines) {
             list.push_back(flutter::EncodableValue(flutter::EncodableMap{
@@ -1988,9 +1988,9 @@ void FlutterWindow::RegisterVoiceHookChannel() {
         }
         if (method == "pollThreadPreviews") {
           // v12：每条线程的最近一行（含未被选中的线程），供选择器展示。全量快照，无游标。
-          std::vector<hibiki::VoiceHookThreadPreview> previews;
+          std::vector<fushi::VoiceHookThreadPreview> previews;
           const uint64_t write_count =
-              hibiki::VoiceHookReader::Instance().PollThreadPreviews(previews);
+              fushi::VoiceHookReader::Instance().PollThreadPreviews(previews);
           flutter::EncodableList list;
           for (const auto& pv : previews) {
             list.push_back(flutter::EncodableValue(flutter::EncodableMap{
@@ -2023,7 +2023,7 @@ void FlutterWindow::RegisterVoiceHookChannel() {
           const uint64_t thread_id =
               static_cast<uint64_t>(read_long("threadId"));
           const bool ok =
-              hibiki::VoiceHookReader::Instance().SelectTextThread(thread_id);
+              fushi::VoiceHookReader::Instance().SelectTextThread(thread_id);
           result->Success(flutter::EncodableValue(flutter::EncodableMap{
               {flutter::EncodableValue("ok"), flutter::EncodableValue(ok)},
           }));
@@ -2056,8 +2056,8 @@ void FlutterWindow::RegisterVoiceHookChannel() {
             }
           }
           std::vector<uint8_t> pcm;
-          const hibiki::VoiceHookStatus s =
-              hibiki::VoiceHookReader::Instance().GrabClipNear(ts, tol, target,
+          const fushi::VoiceHookStatus s =
+              fushi::VoiceHookReader::Instance().GrabClipNear(ts, tol, target,
                                                                exclude, pcm);
           if (!s.ok || pcm.empty()) {
             result->Success(flutter::EncodableValue(flutter::EncodableMap{
@@ -2095,8 +2095,8 @@ void FlutterWindow::RegisterVoiceHookChannel() {
             }
           }
           std::vector<uint8_t> pcm;
-          const hibiki::VoiceHookStatus s =
-              hibiki::VoiceHookReader::Instance().GrabUtterance(ts, target,
+          const fushi::VoiceHookStatus s =
+              fushi::VoiceHookReader::Instance().GrabUtterance(ts, target,
                                                                 exclude, pcm);
           if (!s.ok || pcm.empty()) {
             result->Success(flutter::EncodableValue(flutter::EncodableMap{
@@ -2114,8 +2114,8 @@ void FlutterWindow::RegisterVoiceHookChannel() {
         if (method == "listAudioTracks") {
           // 枚举 ts 附近活跃语音源（供 UI 音轨列表让用户手动选/排除语音源）。
           const uint64_t ts = static_cast<uint64_t>(read_long("tsMs"));
-          std::vector<hibiki::VoiceTrackInfo> tracks;
-          hibiki::VoiceHookReader::Instance().ListAudioTracks(ts, tracks);
+          std::vector<fushi::VoiceTrackInfo> tracks;
+          fushi::VoiceHookReader::Instance().ListAudioTracks(ts, tracks);
           flutter::EncodableList list;
           for (const auto& tk : tracks) {
             list.push_back(flutter::EncodableValue(flutter::EncodableMap{
@@ -2147,7 +2147,7 @@ void FlutterWindow::RegisterVoiceHookChannel() {
           return;
         }
         if (method == "processIsWow64") {
-          // 查目标进程位数：hibiki.exe 是 64 位，故 IsWow64Process==TRUE 即目标为 32 位
+          // 查目标进程位数：fushi.exe 是 64 位，故 IsWow64Process==TRUE 即目标为 32 位
           // （多数 KiriKiri 游戏），Dart 据此选 x86 注入器；FALSE 为 64 位选 x64。
           const uint32_t pid = read_pid();
           if (pid == 0) {
@@ -2179,7 +2179,7 @@ void FlutterWindow::RegisterVoiceHookChannel() {
           return;
         }
         if (method == "close") {
-          hibiki::VoiceHookReader::Instance().Close();
+          fushi::VoiceHookReader::Instance().Close();
           result->Success();
           return;
         }
@@ -2189,11 +2189,11 @@ void FlutterWindow::RegisterVoiceHookChannel() {
 
 // Magpie 缩放状态监听（仅 Windows）。Magpie 用 RegisterWindowMessage 注册的广播消息
 // "MagpieScalingChanged" 通知全系统顶层窗口缩放状态变化；本 runner 只读不回，收到后
-// 经 app.hibiki.reader/magpie channel 把事件推给 Dart。
+// 经 app.fushi.reader/magpie channel 把事件推给 Dart。
 void FlutterWindow::RegisterMagpieChannel() {
   magpie_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
-          flutter_controller_->engine()->messenger(), "app.hibiki.reader/magpie",
+          flutter_controller_->engine()->messenger(), "app.fushi.reader/magpie",
           &flutter::StandardMethodCodec::GetInstance());
 
   // 广播消息号只注册一次：同一字符串在全系统映射到同一个消息号，Magpie 侧
@@ -2436,12 +2436,12 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
       return 0;
     }
     case WM_COPYDATA: {
-      // TODO-904 P0 回归：第二实例转交「用 Hibiki 打开视频」的路径。解出 UTF-8 路径
+      // TODO-904 P0 回归：第二实例转交「用 Fushi 打开视频」的路径。解出 UTF-8 路径
       // （dwData magic 不匹配则 DecodeExternalVideoPath 返回空串，忽略非本协议消息），
-      // 经 app.hibiki/external_video channel 推给 Dart 复用 _openExternalVideo。
+      // 经 app.fushi/external_video channel 推给 Dart 复用 _openExternalVideo。
       // WndProc 跑在 platform 线程，InvokeMethod 可直接调用。
       const auto* cds = reinterpret_cast<const COPYDATASTRUCT*>(lparam);
-      const std::string video_path = ::hibiki::DecodeExternalVideoPath(cds);
+      const std::string video_path = ::fushi::DecodeExternalVideoPath(cds);
       if (!video_path.empty() && external_video_channel_) {
         external_video_channel_->InvokeMethod(
             "openExternalVideo",

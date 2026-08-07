@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import 'package:hibiki/src/shortcuts/gamepad_service.dart'
+import 'package:fushi/src/shortcuts/gamepad_service.dart'
     show focusedEditableText;
 
 /// BUG-1450：Windows 上中文输入法激活时全表面快捷键失效的根治开关。
@@ -27,7 +27,7 @@ import 'package:hibiki/src/shortcuts/gamepad_service.dart'
 /// 只作用于 Windows。其它平台不存在这条平台缺陷，`install` 直接空转。
 abstract final class WindowsImeGuard {
   static const MethodChannel _channel =
-      MethodChannel('app.hibiki/windows_ime_guard');
+      MethodChannel('app.fushi/windows_ime_guard');
 
   static bool _installed = false;
   static bool? _lastSent;

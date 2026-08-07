@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/sync/backup_service.dart';
+import 'package:fushi/src/sync/backup_service.dart';
 
 /// Guard: the overwrite import's content-tree swap renames a freshly-extracted
 /// `.import-tmp` into place; on Windows an antivirus/indexer scanning the
@@ -14,7 +14,7 @@ import 'package:hibiki/src/sync/backup_service.dart';
 void main() {
   FileSystemException winError(int code) => FileSystemException(
         'Rename failed',
-        r'D:\APP\HIBIKI_date\documents\hoshi_books.import-tmp',
+        r'D:\APP\FUSHI_date\documents\hoshi_books.import-tmp',
         OSError('拒绝访问。', code),
       );
 

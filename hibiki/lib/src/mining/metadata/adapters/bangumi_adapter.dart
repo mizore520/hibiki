@@ -9,12 +9,12 @@ library;
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:hibiki/src/media/metadata/bangumi_api_client.dart';
-import 'package:hibiki/src/media/metadata/bangumi_cover_url.dart';
-import 'package:hibiki/src/mining/metadata/galgame_metadata_adapter.dart';
-import 'package:hibiki/src/mining/metadata/galgame_metadata_draft.dart';
-import 'package:hibiki/src/mining/metadata/galgame_metadata_rate_limit.dart';
-import 'package:hibiki/src/mining/metadata/galgame_metadata_source.dart';
+import 'package:fushi/src/media/metadata/bangumi_api_client.dart';
+import 'package:fushi/src/media/metadata/bangumi_cover_url.dart';
+import 'package:fushi/src/mining/metadata/galgame_metadata_adapter.dart';
+import 'package:fushi/src/mining/metadata/galgame_metadata_draft.dart';
+import 'package:fushi/src/mining/metadata/galgame_metadata_rate_limit.dart';
+import 'package:fushi/src/mining/metadata/galgame_metadata_source.dart';
 import 'package:http/http.dart' as http;
 
 /// Bangumi 条目类型：4 = 游戏。
@@ -55,7 +55,7 @@ class BangumiMetadataAdapter implements GalgameMetadataAdapter {
 
   /// Bangumi 要求可识别的 User-Agent，否则可能被限流 / 拒绝。
   static const String _userAgent =
-      'hibiki-reader/galgame-library (https://github.com/hajisensai)';
+      'fushi-reader/galgame-library (https://github.com/hajisensai)';
 
   @override
   GalgameMetadataSource get source => GalgameMetadataSource.bgm;

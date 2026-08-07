@@ -5,7 +5,7 @@
 // 那里删掉模板中的 $caretJs / $selectionJs / $longPressDragJs 会立刻转红，本文件不会。
 // 改这里前先分清你要锁的是语义还是注入，别在本文件里重造装配断言。
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/reader/reader_selection_scripts.dart';
+import 'package:fushi/src/reader/reader_selection_scripts.dart';
 
 /// TODO-1366：手机阅读器自绘选区（TODO-1317/BUG-624）遗留缺口守卫 —— 两件事：
 ///   ① 短选消歧：拖选意图 = 物理指位移过一个小像素阈值（`dragMoveSlopSq`），而不再是
@@ -149,10 +149,10 @@ void main() {
       expect(body, contains('this._selectionVertical()'), reason: '定位必须读书写模式');
       expect(body, contains('if (vertical)'), reason: '竖排/横排必须各自定位（不是一套硬编码坐标）');
       expect(body, contains('_glyphRect'));
-      // _selectionVertical 走 hoshiReader.isVertical()（与 caret 同源）。
+      // _selectionVertical 走 fushiReader.isVertical()（与 caret 同源）。
       final String vBody = _between(
           js, '_selectionVertical: function', 'selectionEndpoints: function');
-      expect(vBody, contains('window.hoshiReader'));
+      expect(vBody, contains('window.fushiReader'));
       expect(vBody, contains('isVertical'));
     });
 

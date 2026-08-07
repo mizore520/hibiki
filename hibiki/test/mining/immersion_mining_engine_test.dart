@@ -2,10 +2,10 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki_anki/hibiki_anki.dart';
-import 'package:hibiki/src/mining/immersion_mining_engine.dart';
-import 'package:hibiki/src/mining/immersion_mining_request.dart';
-import 'package:hibiki/src/utils/misc/desktop_audio_clipper.dart'
+import 'package:fushi_anki/fushi_anki.dart';
+import 'package:fushi/src/mining/immersion_mining_engine.dart';
+import 'package:fushi/src/mining/immersion_mining_request.dart';
+import 'package:fushi/src/utils/misc/desktop_audio_clipper.dart'
     show MiningMediaCompression, FfmpegFailureReporter;
 
 class _FakeRepo implements BaseAnkiRepository {
@@ -133,7 +133,7 @@ void main() {
     expect(res.aborted, false);
     expect(repo.minedContext!.sentence, '走り出した。');
     expect(repo.minedContext!.coverPath, endsWith('.gif'));
-    expect(repo.minedContext!.sasayakiAudioPath,
+    expect(repo.minedContext!.sentenceAudioPath,
         endsWith('immersion_audio.${immersionMiningAudioExtension()}'));
     expect(repo.minedContext!.source, AnkiMiningSource.video);
   });
@@ -186,7 +186,7 @@ void main() {
     expect(res.aborted, false);
     expect(clipperCalled, true, reason: 'host 端裁切器应被调用');
     expect(audioCalled, false, reason: 'host 端裁命中后不得再对远端 URL 跑 ffmpeg 抽取');
-    expect(repo.minedContext!.sasayakiAudioPath,
+    expect(repo.minedContext!.sentenceAudioPath,
         endsWith('immersion_audio_host.aac'));
   });
 
@@ -232,7 +232,7 @@ void main() {
     expect(res.aborted, false);
     expect(audioCalled, true,
         reason: 'host 端裁返 null 后必须回退直连 ffmpeg 抽取（Never break userspace）');
-    expect(repo.minedContext!.sasayakiAudioPath,
+    expect(repo.minedContext!.sentenceAudioPath,
         endsWith('immersion_audio.${immersionMiningAudioExtension()}'));
   });
 
@@ -250,7 +250,7 @@ void main() {
         compression: MiningMediaCompression.compressed,
         tempDir: tmp.path,
         repo: repo);
-    expect(repo.minedContext!.sasayakiAudioPath,
+    expect(repo.minedContext!.sentenceAudioPath,
         endsWith('immersion_audio.${immersionMiningAudioExtension()}'));
   });
 
@@ -351,7 +351,7 @@ void main() {
             tempDir: tmp.path,
             repo: repo);
     expect(res.aborted, false);
-    expect(repo.minedContext!.sasayakiAudioPath, isNull);
+    expect(repo.minedContext!.sentenceAudioPath, isNull);
     expect(repo.minedContext!.coverPath, endsWith('.jpg'));
   });
 

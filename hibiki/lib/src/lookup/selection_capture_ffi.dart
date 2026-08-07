@@ -15,9 +15,9 @@ import 'dart:ffi';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
-import 'package:hibiki/src/lookup/global_lookup_log.dart';
-import 'package:hibiki/src/lookup/sentence_extraction.dart';
-import 'package:hibiki/src/sync/desktop_lookup_service.dart';
+import 'package:fushi/src/lookup/global_lookup_log.dart';
+import 'package:fushi/src/lookup/sentence_extraction.dart';
+import 'package:fushi/src/sync/desktop_lookup_service.dart';
 
 typedef _KeybdEventNative = Void Function(
     Uint8 bVk, Uint8 bScan, Uint32 dwFlags, IntPtr dwExtraInfo);
@@ -45,7 +45,7 @@ abstract final class SelectionCapture {
   // MissingPluginException / any failure falls back to the clipboard capture
   // below.
   static const MethodChannel _foregroundSelectionChannel =
-      MethodChannel('app.hibiki.reader/foreground_selection');
+      MethodChannel('app.fushi.reader/foreground_selection');
 
   /// Saves the clipboard, clears it, injects a clean Ctrl+C so the foreground
   /// app copies its current selection, reads it back, then restores the

@@ -1,9 +1,9 @@
 import 'package:drift/drift.dart' show DatabaseConnection;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/media.dart';
-import 'package:hibiki/src/reader/reader_settings.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi/media.dart';
+import 'package:fushi/src/reader/reader_settings.dart';
+import 'package:fushi_core/fushi_core.dart';
 
 /// BUG-1116 守卫：ReaderSettings 读侧必须兼容 PrefCodec 类型标签值。
 ///
@@ -36,10 +36,10 @@ void main() {
     await db.close();
   });
 
-  test('(a) 回退路径双写复现：setTtuFontSize 落标签值，ReaderSettings 重启后必须读回', () async {
+  test('(a) 回退路径双写复现：setReaderFontSize 落标签值，ReaderSettings 重启后必须读回', () async {
     // readerSettings == null → 走 MediaSource.setPreference 回退，
     // 落 PrefCodec 标签值到 ReaderSettings 的同一 DB key。
-    await ReaderHibikiSource.instance.setTtuFontSize(30);
+    await ReaderHibikiSource.instance.setReaderFontSize(30);
 
     final Map<String, String> prefs = await db.getAllPrefs();
     expect(prefs['src:reader_ttu:ttu_font_size'], 'd:30.0',

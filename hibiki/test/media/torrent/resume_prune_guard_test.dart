@@ -17,11 +17,11 @@
 //      且必须与「真的一个计划都没有」（空集合 → 合法全删）区分得开。
 //
 // 行为层用例走顶层 [pruneResumeFiles] 而不是 EmbeddedTorrentHost：host 的每个
-// 方法都要真 DLL（`HIBIKI_TORRENT_LIB`），在 CI 上永远 skip，守不住任何东西。
+// 方法都要真 DLL（`FUSHI_TORRENT_LIB`），在 CI 上永远 skip，守不住任何东西。
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/media/torrent/embedded_torrent_host.dart';
+import 'package:fushi/src/media/torrent/embedded_torrent_host.dart';
 import 'package:path/path.dart' as p;
 
 String _read(String relPath) => File(relPath).readAsStringSync();

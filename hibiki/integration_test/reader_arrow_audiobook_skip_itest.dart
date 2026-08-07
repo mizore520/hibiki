@@ -3,15 +3,15 @@ import 'package:flutter/services.dart' hide ModifierKey;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/main.dart' as app;
-import 'package:hibiki/src/media/sources/reader_hibiki_source.dart'
+import 'package:fushi/main.dart' as app;
+import 'package:fushi/src/media/sources/reader_hibiki_source.dart'
     show ReaderHibikiSource;
-import 'package:hibiki/src/models/app_model.dart' show AppModel;
-import 'package:hibiki/src/shortcuts/input_binding.dart'
+import 'package:fushi/src/models/app_model.dart' show AppModel;
+import 'package:fushi/src/shortcuts/input_binding.dart'
     show InputBinding, ModifierKey, ShortcutBindingSet;
-import 'package:hibiki/src/shortcuts/shortcut_action.dart'
+import 'package:fushi/src/shortcuts/shortcut_action.dart'
     show ShortcutAction, ShortcutScope;
-import 'package:hibiki_audio/hibiki_audio.dart' show AudiobookPlayerController;
+import 'package:fushi_audio/fushi_audio.dart' show AudiobookPlayerController;
 
 import 'helpers/focus_driver.dart';
 import 'helpers/library_fixture.dart' show readyAppModel, seedAudiobook;
@@ -166,7 +166,7 @@ void main() {
                   '(got ${ctrl.chapterCueCount})');
 
           // 强制连续滚动模式（报告里的精确场景）。
-          await ReaderHibikiSource.instance.setTtuViewMode('continuous');
+          await ReaderHibikiSource.instance.setReaderViewMode('continuous');
           for (int i = 0; i < 6; i++) {
             await tester.pump(const Duration(milliseconds: 200));
           }

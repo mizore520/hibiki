@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/settings/settings_schema_system.dart';
+import 'package:fushi/src/settings/settings_schema_system.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 /// TODO-772: 设置页「应用版本」行曾把 versionName 与 Android versionCode 用
@@ -13,7 +13,7 @@ void main() {
     test('debug build: versionCode shown in parens, not semver-plus', () {
       final PackageInfo info = PackageInfo(
         appName: 'Hibiki',
-        packageName: 'app.hibiki.reader',
+        packageName: 'app.fushi.reader',
         version: '0.11.1-debug.5613',
         buildNumber: '1000561300',
       );
@@ -31,7 +31,7 @@ void main() {
     test('stable build: same parenthesized shape', () {
       final PackageInfo info = PackageInfo(
         appName: 'Hibiki',
-        packageName: 'app.hibiki.reader',
+        packageName: 'app.fushi.reader',
         version: '0.11.1',
         buildNumber: '187',
       );

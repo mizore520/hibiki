@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_clip_text_render.dart';
+import 'package:fushi/src/media/audiobook/audiobook_clip_text_render.dart';
 
 /// TODO-1071 / BUG-490：`renderAudiobookClipTextToPng` 离屏栅格化返 null 根因修复守卫。
 ///
@@ -204,7 +204,8 @@ void main() {
       expect(code.contains('i == widget.highlightIndex'), isTrue,
           reason: 'the highlighted sentence is chosen by highlightIndex');
       expect(code.contains('color: layout.highlight'), isTrue,
-          reason: 'highlighted line paints the sasayaki highlight backing');
+          reason:
+              'highlighted line paints the sentenceAudioHighlight highlight backing');
       // 批量渲染入口存在。
       expect(code.contains('renderAudiobookClipFrames'), isTrue);
     },

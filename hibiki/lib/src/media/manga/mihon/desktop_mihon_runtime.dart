@@ -9,10 +9,10 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 
-import 'package:hibiki/src/media/manga/mihon/mihon_bridge_runtime.dart';
-import 'package:hibiki/src/media/manga/mihon/mihon_child_process_containment.dart';
-import 'package:hibiki/src/media/manga/mihon/mihon_models.dart';
-import 'package:hibiki/src/media/manga/mihon/mihon_runtime.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_bridge_runtime.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_child_process_containment.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_models.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_runtime.dart';
 
 const Duration kMihonSourceImageHeaderTimeout = Duration(seconds: 90);
 const Duration kMihonSourceImageIdleTimeout = Duration(seconds: 90);
@@ -358,7 +358,7 @@ class DesktopMihonRuntime extends MihonBridgeRuntime
         '0',
         dataDirectory.path,
       ],
-      environment: <String, String>{'HIBIKI_MIHON_TOKEN': token},
+      environment: <String, String>{'FUSHI_MIHON_TOKEN': token},
       mode: ProcessStartMode.normal,
     );
     if (_disposed) {
@@ -466,7 +466,7 @@ class DesktopMihonRuntime extends MihonBridgeRuntime
 
   /// Readiness contract with the sidecar; mirrors
   /// `MExtensionServerController.READY_LINE_PREFIX`.
-  static const String _readyLinePrefix = 'HIBIKI_MIHON_READY port=';
+  static const String _readyLinePrefix = 'FUSHI_MIHON_READY port=';
 
   /// Extracts the announced port from one stdout line, or `null` if the line
   /// is ordinary log output.

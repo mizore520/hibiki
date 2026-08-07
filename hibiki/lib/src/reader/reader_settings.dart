@@ -2,12 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:hibiki_core/hibiki_core.dart';
-import 'package:hibiki/src/media/media_source.dart' show dbSourcePrefKey;
-import 'package:hibiki/src/reader/font_catalog.dart';
-import 'package:hibiki/src/reader/reader_chrome_floating.dart';
-import 'package:hibiki/src/utils/misc/error_log_service.dart';
+import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi/src/media/media_source.dart' show dbSourcePrefKey;
+import 'package:fushi/src/reader/font_catalog.dart';
+import 'package:fushi/src/reader/reader_chrome_floating.dart';
+import 'package:fushi/src/utils/misc/error_log_service.dart';
 import 'package:path/path.dart' as p;
+import 'package:fushi/src/media/sources/reader_hibiki_source.dart';
 
 /// The independent font targets a user can configure (TODO-049 / TODO-864):
 /// 软件系统字体 ([appUi]) / 小说正文字体 ([body]) / 词典字体 ([dictionary]) /
@@ -42,7 +43,7 @@ class ReaderSettings {
 
   /// 经单一真相编码器 [dbSourcePrefKey] 得到 `src:reader_ttu:`；`reader_ttu`
   /// 是冻结的历史 sourceId（旧数据兼容，勿改）。
-  static final String _prefix = dbSourcePrefKey('reader_ttu', '');
+  static final String _prefix = dbSourcePrefKey(kReaderSourcePersistedKey, '');
 
   /// TODO-362（PR#3 响应式页边距）：正文左右两侧默认各留白 2%（百分比 = vw），每行
   /// 因此变窄；上下默认 0%（垂直预留由 chrome inset + 字号决定，见
@@ -245,9 +246,9 @@ class ReaderSettings {
       _set<bool>('vn_click_advance', v);
 
   /// Merge Sasayaki cues that straddle a screen boundary (M1 feature).
-  bool get visualNovelMergeCrossScreenSasayakiCues =>
+  bool get visualNovelMergeCrossScreenSentenceAudioCues =>
       _get<bool>('vn_merge_cross_screen_cues', false);
-  Future<void> setVisualNovelMergeCrossScreenSasayakiCues(bool v) =>
+  Future<void> setVisualNovelMergeCrossScreenSentenceAudioCues(bool v) =>
       _set<bool>('vn_merge_cross_screen_cues', v);
 
   String get theme => _get<String>('ttu_theme', 'light-theme');
@@ -322,7 +323,7 @@ class ReaderSettings {
   ///
   /// BUG-1280：默认从 `auto` 改为 `off`。`auto` 会在打开书时按 OPF 元数据 /
   /// 边缘匹配**自动**把相邻整页图章节配对成双页展开，用户没主动选过就被切进一种
-  /// 手势契约完全不同的独立文档（[buildSpreadPageHtml]，无正文 hoshiReader）。
+  /// 手势契约完全不同的独立文档（[buildSpreadPageHtml]，无正文 fushiReader）。
   /// 双页展开保留为显式选项（阅读器快捷设置里的 off/on/auto 三选一），只是不再
   /// 是没设置过的用户的默认落点。已显式设过本键的用户读到的是自己的存值，不受影响。
   String get spreadMode => _get<String>('ttu_spread_mode', 'off');

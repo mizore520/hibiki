@@ -5,7 +5,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/src/media/audiobook/audiobook_bridge.dart';
+import 'package:fushi/src/media/audiobook/audiobook_bridge.dart';
 
 /// BUG-007 设备验证（真 InAppWebView）：cue 推进高亮从图片**前**一句推进到图片**后**
 /// 一句时（中间隔着 svg），`__hoshiHighlight` 的锚点间 DOM 检测必须真的触发
@@ -100,7 +100,7 @@ void main() {
           },
           onLoadStop: (InAppWebViewController controller, WebUri? url) async {
             await controller.evaluateJavascript(
-                source: 'window.hoshiReader={scrollToTarget:function(t){'
+                source: 'window.fushiReader={scrollToTarget:function(t){'
                     "window.flutter_inappwebview.callHandler('reportReveal',"
                     '(t&&(t.id||t.tagName))||null);}};');
             await AudiobookBridge.inject(controller);
@@ -125,7 +125,7 @@ void main() {
   });
 
   testWidgets(
-      'sasayaki cue: advancing across an image fires onImageDetected (BUG-007 gap1)',
+      'sentenceAudioHighlight cue: advancing across an image fires onImageDetected (BUG-007 gap1)',
       (WidgetTester tester) async {
     bool imageDetected = false;
     String? revealTarget;
@@ -154,10 +154,10 @@ void main() {
           onLoadStop: (InAppWebViewController controller, WebUri? url) async {
             await controller.evaluateJavascript(source: '''
               window.__hoshiCssHighlightsSupported = true;
-              window.hoshiReader = {
+              window.fushiReader = {
                 cueRangesMap: new Map(),
                 activeCueId: null,
-                highlightSasayakiCue: function(id, reveal){ this.activeCueId = id; },
+                highlightSentenceAudioCue: function(id, reveal){ this.activeCueId = id; },
                 scrollToTarget: function(t){
                   window.flutter_inappwebview.callHandler('reportReveal',
                     (t && (t.id || t.tagName)) || null);
@@ -166,15 +166,17 @@ void main() {
               (function(){
                 function rng(sel){ var el=document.querySelector(sel);
                   var r=document.createRange(); r.selectNodeContents(el.firstChild); return r; }
-                window.hoshiReader.cueRangesMap.set('c1', [rng('[data-hoshi-sid=s1]')]);
-                window.hoshiReader.cueRangesMap.set('c2', [rng('[data-hoshi-sid=s2]')]);
+                window.fushiReader.cueRangesMap.set('c1', [rng('[data-hoshi-sid=s1]')]);
+                window.fushiReader.cueRangesMap.set('c2', [rng('[data-hoshi-sid=s2]')]);
               })();
             ''');
             await AudiobookBridge.inject(controller);
             await controller.evaluateJavascript(
-                source: "window.__hoshiHighlightSasayakiCueById('c1', false);");
+                source:
+                    "window.__hoshiHighlightSentenceAudioCueById('c1', false);");
             await controller.evaluateJavascript(
-                source: "window.__hoshiHighlightSasayakiCueById('c2', true);");
+                source:
+                    "window.__hoshiHighlightSentenceAudioCueById('c2', true);");
             if (!driven.isCompleted) driven.complete();
           },
         ),
@@ -186,7 +188,9 @@ void main() {
     }
     await tester.pump(const Duration(seconds: 1));
     expect(imageDetected, isTrue,
-        reason: 'sasayaki cue 从 s1 跨过 svg 推进到 s2 必须触发 onImageDetected');
-    expect(revealTarget, 'pic', reason: 'sasayaki 跨图、reveal=true 时也应把视口滚到插图');
+        reason:
+            'sentenceAudioHighlight cue 从 s1 跨过 svg 推进到 s2 必须触发 onImageDetected');
+    expect(revealTarget, 'pic',
+        reason: 'sentenceAudioHighlight 跨图、reveal=true 时也应把视口滚到插图');
   });
 }

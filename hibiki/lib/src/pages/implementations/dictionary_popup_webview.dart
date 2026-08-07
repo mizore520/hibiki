@@ -8,21 +8,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hibiki_dictionary/hibiki_dictionary.dart';
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki/src/pages/implementations/dictionary_popup_input_bridge.dart';
-import 'package:hibiki/src/pages/implementations/dictionary_webview_media.dart';
-import 'package:hibiki/src/pages/implementations/popup_settings_injection.dart';
-import 'package:hibiki/src/platform/selection_external_actions.dart';
-import 'package:hibiki/src/reader/popup_swipe_close_script.dart';
-import 'package:hibiki/src/reader/reader_caret_scripts.dart';
-import 'package:hibiki/src/shortcuts/input_binding.dart'
+import 'package:fushi_dictionary/fushi_dictionary.dart';
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/pages/implementations/dictionary_popup_input_bridge.dart';
+import 'package:fushi/src/pages/implementations/dictionary_webview_media.dart';
+import 'package:fushi/src/pages/implementations/popup_settings_injection.dart';
+import 'package:fushi/src/platform/selection_external_actions.dart';
+import 'package:fushi/src/reader/popup_swipe_close_script.dart';
+import 'package:fushi/src/reader/reader_caret_scripts.dart';
+import 'package:fushi/src/shortcuts/input_binding.dart'
     show activeModifierKeys;
-import 'package:hibiki/src/shortcuts/reader_space_override.dart'
+import 'package:fushi/src/shortcuts/reader_space_override.dart'
     show readerShouldHandleDesktopCopy;
-import 'package:hibiki/src/utils/misc/lookup_audio_playback.dart';
-import 'package:hibiki/src/webview/webview_death_guard.dart';
-import 'package:hibiki/utils.dart';
+import 'package:fushi/src/utils/misc/lookup_audio_playback.dart';
+import 'package:fushi/src/webview/webview_death_guard.dart';
+import 'package:fushi/utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// TODO-426：暂时砍掉查词弹窗的「上 N 句 / 下 N 句」句子上下文选择器（用户要求暂时移除，
@@ -542,7 +542,7 @@ JSON.stringify((function(){
   // ── Char-level reading cursor (driven from the reader page) ──────────
   // The same window.hoshiCaret as the reader, injected on load and scoped to the
   // definition body. The popup has no chrome insets (the WebView IS the popup)
-  // and no hoshiReader, so the cursor runs in horizontal + continuous-scroll
+  // and no fushiReader, so the cursor runs in horizontal + continuous-scroll
   // mode automatically. The reader reaches these via the popup's webViewKey.
 
   String _caretRingColorCss() {
@@ -2356,7 +2356,7 @@ JSON.stringify((function(){
   // _rebuildStylesCache() always assigns a new Map, so identity change == content change.
   // TODO-895: public so the shared buildPopupSettingsJs uses the SAME cached encoding.
   static String dictionaryStylesJson() {
-    final Map<String, String> styles = HoshiDicts.dictionaryStyles;
+    final Map<String, String> styles = FushiDicts.dictionaryStyles;
     if (!identical(styles, _cachedStylesRef)) {
       _cachedStylesJson = jsonEncode(styles);
       _cachedStylesRef = styles;

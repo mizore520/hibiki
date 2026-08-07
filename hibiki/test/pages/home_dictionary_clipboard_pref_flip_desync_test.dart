@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/i18n/strings.g.dart';
-import 'package:hibiki/models.dart';
-import 'package:hibiki/src/models/preferences_repository.dart';
-import 'package:hibiki/src/pages/implementations/home_dictionary_page.dart';
-import 'package:hibiki/src/sync/desktop_foreground_guard.dart';
-import 'package:hibiki/src/sync/desktop_lookup_service.dart';
-import 'package:hibiki_dictionary/hibiki_dictionary.dart';
+import 'package:fushi/i18n/strings.g.dart';
+import 'package:fushi/models.dart';
+import 'package:fushi/src/models/preferences_repository.dart';
+import 'package:fushi/src/pages/implementations/home_dictionary_page.dart';
+import 'package:fushi/src/sync/desktop_foreground_guard.dart';
+import 'package:fushi/src/sync/desktop_lookup_service.dart';
+import 'package:fushi_dictionary/fushi_dictionary.dart';
 
 import '../helpers/test_platform_services.dart';
 
@@ -122,7 +122,7 @@ void main() {
       const MethodChannel('dev.leanflutter.plugins/hotkey_manager_event'),
       (MethodCall call) async => null,
     );
-    m.setMockMethodCallHandler(const MethodChannel('app.hibiki/window'),
+    m.setMockMethodCallHandler(const MethodChannel('app.fushi/window'),
         (MethodCall call) async => null);
     m.setMockMethodCallHandler(SystemChannels.platform,
         (MethodCall call) async {
@@ -140,7 +140,7 @@ void main() {
       'clipboard_watcher',
       'dev.leanflutter.plugins/hotkey_manager',
       'dev.leanflutter.plugins/hotkey_manager_event',
-      'app.hibiki/window',
+      'app.fushi/window',
     ]) {
       m.setMockMethodCallHandler(MethodChannel(name), null);
     }

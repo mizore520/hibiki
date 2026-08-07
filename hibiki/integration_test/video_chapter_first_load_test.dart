@@ -14,20 +14,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/main.dart' as app;
-import 'package:hibiki/src/media/video/ffmpeg_backend.dart';
-import 'package:hibiki/src/media/video/video_book_repository.dart';
-import 'package:hibiki/src/media/video/video_chapter_markers.dart';
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki/src/pages/implementations/video_hibiki_page.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi/main.dart' as app;
+import 'package:fushi/src/media/video/ffmpeg_backend.dart';
+import 'package:fushi/src/media/video/video_book_repository.dart';
+import 'package:fushi/src/media/video/video_chapter_markers.dart';
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/pages/implementations/video_hibiki_page.dart';
+import 'package:fushi_core/fushi_core.dart';
 
 import 'test_helpers.dart';
 
 const String _kBookUid = 'video/itest-chapter-first-load';
 
 Future<File> _generateChapteredMkv() async {
-  const String testRoot = String.fromEnvironment('HIBIKI_TEST_ROOT');
+  const String testRoot = String.fromEnvironment('FUSHI_TEST_ROOT');
   final Directory root = testRoot.isEmpty
       ? await Directory.systemTemp.createTemp('hibiki-chapter-itest-')
       : Directory('$testRoot${Platform.pathSeparator}fixtures');

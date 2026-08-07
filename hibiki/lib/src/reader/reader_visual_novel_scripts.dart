@@ -10,9 +10,9 @@
 //
 // Hibiki adaptations vs hoshi a (see [vnShellScript]):
 //   * The 4 injected dependency scripts (text-semantics / vn-content-stream /
-//     vn-range-map / media-semantics) are inlined ahead of `window.hoshiReader`.
+//     vn-range-map / media-semantics) are inlined ahead of `window.fushiReader`.
 //   * `notifyRestoreComplete` forwards to InAppWebView's `onRestoreComplete`
-//     handler instead of hoshi's native `HoshiReaderRestore.postMessage`.
+//     handler instead of hoshi's native `FushiReaderRestore.postMessage`.
 //   * media-semantics is an M0 no-op stub (images render from cloned chapter
 //     markup); Sasayaki / highlights / E-Ink overlay are M1 (their hoshi calls
 //     are guarded by `window.hoshiHighlights` / popupHost checks, safe at M0).
@@ -20,7 +20,7 @@
 //     hoshi JS concern -- the host (webview.part.dart) binds blank-tap ->
 //     `paginate("forward")`.
 //
-// `window.hoshiReader` here exposes the same method names the Dart side already
+// `window.fushiReader` here exposes the same method names the Dart side already
 // invokes via short-circuit guards (paginate / calculateProgress /
 // applySasayakiCues / highlightSasayakiCue / clearSasayakiCue). Methods the VN
 // object does not define (pageInfo / scrollToCharOffset / beginUiScaleReanchor /
@@ -29,12 +29,12 @@
 // ignore_for_file: lines_longer_than_80_chars
 library;
 
-import 'package:hibiki/src/reader/reader_content_styles.dart'
+import 'package:fushi/src/reader/reader_content_styles.dart'
     show ReaderLayoutDefaults;
 
 /// Builds the VN-mode reader shell `<script>` for the reader WebView. Mirrors
 /// [ReaderPaginationScripts.shellScript]'s shells but installs the hoshi a
-/// Visual-Novel `window.hoshiReader`.
+/// Visual-Novel `window.fushiReader`.
 class ReaderVisualNovelScripts {
   ReaderVisualNovelScripts._();
 
@@ -48,11 +48,11 @@ class ReaderVisualNovelScripts {
   /// 恢复锚三选一的运行时分派（旧实现在 Dart 侧三元式挑一条语句）。
   static const String _initialRestoreJs = '''
     if (C.initialFragment !== null && C.initialFragment !== undefined) {
-      window.hoshiReader.jumpToFragment(C.initialFragment);
+      window.fushiReader.jumpToFragment(C.initialFragment);
     } else if (C.initialCharOffset >= 0) {
-      window.hoshiReader.restoreToCharOffset(C.initialCharOffset);
+      window.fushiReader.restoreToCharOffset(C.initialCharOffset);
     } else {
-      window.hoshiReader.restoreProgress(C.initialProgress);
+      window.fushiReader.restoreProgress(C.initialProgress);
     }''';
 
   static String _shell() {
@@ -85,7 +85,7 @@ window.__hoshiShells.vn = function(C) {
     return Array.from(text || '').length;
   }
 
-  global.hoshiReaderTextSemantics = {
+  global.fushiReaderTextSemantics = {
     normalizeText: normalizeText,
     isMatchableChar: isMatchableChar,
     countChars: countChars,
@@ -95,12 +95,12 @@ window.__hoshiShells.vn = function(C) {
 (function(global) {
   'use strict';
   // TODO-909 M0 stub: hoshi a's media-semantics bridges images to an
-  // Android native @JavascriptInterface (HoshiReaderImage). Hibiki has no
+  // Android native @JavascriptInterface (FushiReaderImage). Hibiki has no
   // such bridge at M0, so images render from the chapter's own <img> markup
   // cloned into the VN screen. These no-ops keep reader-visual-novel.js's
   // setupReaderImage(s) calls safe. M1 wires Hibiki image interception.
   function noop() { return null; }
-  global.hoshiReaderMediaSemantics = {
+  global.fushiReaderMediaSemantics = {
     setupReaderImage: noop,
     setupReaderImages: noop
   };
@@ -123,10 +123,10 @@ window.__hoshiShells.vn = function(C) {
   }
 
   function textSemantics() {
-    if (!global.hoshiReaderTextSemantics) {
-      throw new Error('hoshiReaderTextSemantics is required for VN content stream');
+    if (!global.fushiReaderTextSemantics) {
+      throw new Error('fushiReaderTextSemantics is required for VN content stream');
     }
-    return global.hoshiReaderTextSemantics;
+    return global.fushiReaderTextSemantics;
   }
 
   function normalizeText(text) {
@@ -625,7 +625,7 @@ window.__hoshiShells.vn = function(C) {
     }
   };
 
-  global.hoshiReaderVnContentStream = {
+  global.fushiReaderVnContentStream = {
     create: function(root, options) {
       return new ReaderVnContentStream(root, options);
     }
@@ -752,28 +752,28 @@ window.__hoshiShells.vn = function(C) {
     }
   };
 
-  global.hoshiReaderVnRangeMap = {
+  global.fushiReaderVnRangeMap = {
     create: function(reader) {
       return new ReaderVnRangeMap(reader);
     }
   };
 })(window);
 
-window.hoshiReader = {
+window.fushiReader = {
   revealSpeed: C.vnRevealSpeed,
   screenMode: C.vnScreenMode,
   sentencesPerScreen: C.vnSentencesPerScreen,
   preserveDialogue: C.vnPreserveDialogue,
-  mergeCrossScreenSasayakiCues: C.vnMergeCrossScreenSasayakiCues,
-  initialSasayakiCues: C.sasayakiCues,
+  mergeCrossScreenSentenceAudioCues: C.vnMergeCrossScreenSentenceAudioCues,
+  initialSentenceAudioCues: C.sentenceAudioCues,
   initialProgress: C.initialProgress,
   initialFragment: C.initialFragment,
   initialHighlights: [],
   nativeSelectionActive: false,
   activeCueId: null,
-  sasayakiCues: [],
-  sasayakiCueMap: new Map(),
-  sasayakiCuesSignature: null,
+  sentenceAudioCues: [],
+  sentenceAudioCueMap: new Map(),
+  sentenceAudioCuesSignature: null,
   cueWrappers: new Map(),
   cueSourceRanges: new Map(),
   cueGeometryRanges: new Map(),
@@ -829,10 +829,10 @@ window.hoshiReader = {
     return !!(el && el.closest('[data-hoshi-visual-novel-unrevealed]'));
   },
   textSemantics: function() {
-    if (!window.hoshiReaderTextSemantics) {
-      throw new Error('hoshiReaderTextSemantics is required for reader text semantics');
+    if (!window.fushiReaderTextSemantics) {
+      throw new Error('fushiReaderTextSemantics is required for reader text semantics');
     }
-    return window.hoshiReaderTextSemantics;
+    return window.fushiReaderTextSemantics;
   },
   normalizeText: function(text) {
     return this.textSemantics().normalizeText(text);
@@ -861,7 +861,7 @@ window.hoshiReader = {
   },
   notifyRestoreComplete: function() {
     // Hibiki adaptation: hoshi a posts to a native @JavascriptInterface
-    // (HoshiReaderRestore). Hibiki is InAppWebView, so forward to the same
+    // (FushiReaderRestore). Hibiki is InAppWebView, so forward to the same
     // 'onRestoreComplete' handler the paginated/continuous shells use.
     if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
       window.flutter_inappwebview.callHandler(
@@ -919,7 +919,7 @@ window.hoshiReader = {
         this.ensureStage();
         this.applyImageMaxVars();
         this.buildSourceIndexes();
-        this.setSasayakiCueData(this.initialSasayakiCues);
+        this.setSentenceAudioCueData(this.initialSentenceAudioCues);
         this.buildScreens();
         this.renderInitialScreen();
         this.notifyRestoreComplete();
@@ -989,13 +989,13 @@ window.hoshiReader = {
     root.style.setProperty('--hoshi-image-max-height', vh + 'px');
   },
   buildSourceIndexes: function() {
-    var contentStreamFactory = window.hoshiReaderVnContentStream && window.hoshiReaderVnContentStream.create;
+    var contentStreamFactory = window.fushiReaderVnContentStream && window.fushiReaderVnContentStream.create;
     if (!contentStreamFactory) {
-      throw new Error('hoshiReaderVnContentStream is required for visual novel reader');
+      throw new Error('fushiReaderVnContentStream is required for visual novel reader');
     }
-    var rangeMapFactory = window.hoshiReaderVnRangeMap && window.hoshiReaderVnRangeMap.create;
+    var rangeMapFactory = window.fushiReaderVnRangeMap && window.fushiReaderVnRangeMap.create;
     if (!rangeMapFactory) {
-      throw new Error('hoshiReaderVnRangeMap is required for visual novel reader');
+      throw new Error('fushiReaderVnRangeMap is required for visual novel reader');
     }
     this.contentStream = contentStreamFactory(this.sourceRoot);
     this.rangeMap = rangeMapFactory(this);
@@ -1015,7 +1015,7 @@ window.hoshiReader = {
     // 至少随相邻文字出现一次。
     baseScreens = this.attachMediaScreensToAdjacentText(baseScreens);
     this.baseScreens = baseScreens;
-    this.screens = this.mergeSasayakiCrossScreenScreens(baseScreens);
+    this.screens = this.mergeSentenceAudioCrossScreenScreens(baseScreens);
     if (!this.screens.length) {
       this.screens.push(this.screenDescriptor({
         startCharCount: 0,
@@ -1221,19 +1221,19 @@ window.hoshiReader = {
   progressForScreen: function(screen) {
     return this.screenProgressAnchor(screen);
   },
-  mergeSasayakiCrossScreenScreens: function(screens) {
-    if (!this.mergeCrossScreenSasayakiCues || !Array.isArray(screens) || screens.length < 2) return screens || [];
-    if (!Array.isArray(this.sasayakiCues) || !this.sasayakiCues.length) return screens;
+  mergeSentenceAudioCrossScreenScreens: function(screens) {
+    if (!this.mergeCrossScreenSentenceAudioCues || !Array.isArray(screens) || screens.length < 2) return screens || [];
+    if (!Array.isArray(this.sentenceAudioCues) || !this.sentenceAudioCues.length) return screens;
     var cues = [];
-    for (var cueIndex = 0; cueIndex < this.sasayakiCues.length; cueIndex++) {
-      var cue = this.sasayakiCueForInput(this.sasayakiCues[cueIndex]);
+    for (var cueIndex = 0; cueIndex < this.sentenceAudioCues.length; cueIndex++) {
+      var cue = this.sentenceAudioCueForInput(this.sentenceAudioCues[cueIndex]);
       if (cue) cues.push(cue);
     }
     if (!cues.length) return screens;
     cues.sort((a, b) => {
-      var startDelta = this.sasayakiCueStart(a) - this.sasayakiCueStart(b);
+      var startDelta = this.sentenceAudioCueStart(a) - this.sentenceAudioCueStart(b);
       if (startDelta !== 0) return startDelta;
-      return this.sasayakiCueEnd(a) - this.sasayakiCueEnd(b);
+      return this.sentenceAudioCueEnd(a) - this.sentenceAudioCueEnd(b);
     });
     var intervals = [];
     var searchStart = 0;
@@ -1241,8 +1241,8 @@ window.hoshiReader = {
       var cue = cues[i];
       var first = -1;
       var last = -1;
-      var cueStart = this.sasayakiCueStart(cue);
-      var cueEnd = this.sasayakiCueEnd(cue);
+      var cueStart = this.sentenceAudioCueStart(cue);
+      var cueEnd = this.sentenceAudioCueEnd(cue);
       var zeroLengthCue = cueEnd <= cueStart;
       while (searchStart < screens.length) {
         var screenEnd = this.screenEndCharCount(screens[searchStart]);
@@ -1257,7 +1257,7 @@ window.hoshiReader = {
         var screen = screens[screenIndex];
         var screenStart = this.screenStartCharCount(screen);
         var screenEnd = this.screenEndCharCount(screen);
-        if (!this.sasayakiCueIntersectsScreen(cue, screen)) {
+        if (!this.sentenceAudioCueIntersectsScreen(cue, screen)) {
           if (zeroLengthCue ? cueStart < screenStart : cueEnd <= screenStart) break;
           continue;
         }
@@ -2351,9 +2351,9 @@ window.hoshiReader = {
     return fragment;
   },
   setupReaderImage: function(element, src, wrap, blurElement) {
-    return window.hoshiReaderMediaSemantics.setupReaderImage(element, src, {
+    return window.fushiReaderMediaSemantics.setupReaderImage(element, src, {
       blurImages: C.blurImages,
-      imageBridge: window.HoshiReaderImage,
+      imageBridge: window.FushiReaderImage,
       wrap: wrap,
       blurElement: blurElement
     });
@@ -2370,9 +2370,9 @@ window.hoshiReader = {
     // _sharedInitImages, so `--hoshi-image-max-width/height` (set by
     // applyImageMaxVars) drive their size. Gaiji glyph images are left inline.
     this.promoteBlockImages(scope);
-    return window.hoshiReaderMediaSemantics.setupReaderImages(scope, {
+    return window.fushiReaderMediaSemantics.setupReaderImages(scope, {
       blurImages: C.blurImages,
-      imageBridge: window.HoshiReaderImage,
+      imageBridge: window.FushiReaderImage,
       waitForImages: false
     });
   },
@@ -2435,7 +2435,7 @@ window.hoshiReader = {
     var safeIndex = Math.min(Math.max(0, index), this.screens.length - 1);
     this.clearRevealTimer();
     this.currentScreenIndex = safeIndex;
-    this.clearCurrentSasayakiScreenTargets();
+    this.clearCurrentSentenceAudioScreenTargets();
     if (this.screen.replaceChildren) {
       this.screen.replaceChildren();
     } else {
@@ -2453,7 +2453,7 @@ window.hoshiReader = {
     this.setupReaderImages(this.screen);
     this.buildNodeOffsets();
     if (this.revealComplete) this.applyCurrentScreenHighlights();
-    if (this.revealComplete) this.refreshSasayakiCuePresentation();
+    if (this.revealComplete) this.refreshSentenceAudioCuePresentation();
   },
   hideCurrentScreenForReveal: function() {
     this.revealSegments = [];
@@ -2556,7 +2556,7 @@ window.hoshiReader = {
     this.revealComplete = true;
     this.buildNodeOffsets();
     this.applyCurrentScreenHighlights();
-    this.refreshSasayakiCuePresentation();
+    this.refreshSentenceAudioCuePresentation();
   },
   patchHighlightsForVisualNovel: function() {
     var highlights = window.hoshiHighlights;
@@ -2682,77 +2682,77 @@ window.hoshiReader = {
     this.notifyRestoreComplete();
     return true;
   },
-  sasayakiCueSignature: function(cues) {
+  sentenceAudioCueSignature: function(cues) {
     var items = Array.isArray(cues) ? cues : [];
     return JSON.stringify(items.map((cue) => ({
       id: cue && cue.id ? String(cue.id) : '',
-      start: this.sasayakiCueStart(cue),
+      start: this.sentenceAudioCueStart(cue),
       length: Math.max(0, Number(cue && cue.length) || 0)
     })));
   },
-  sasayakiCueDataChanged: function(cues) {
-    return this.sasayakiCueSignature(cues) !== this.sasayakiCuesSignature;
+  sentenceAudioCueDataChanged: function(cues) {
+    return this.sentenceAudioCueSignature(cues) !== this.sentenceAudioCuesSignature;
   },
-  setSasayakiCueData: function(cues) {
-    this.sasayakiCues = Array.isArray(cues) ? cues : [];
-    this.sasayakiCueMap = new Map();
-    for (var i = 0; i < this.sasayakiCues.length; i++) {
-      var cue = this.sasayakiCues[i];
-      if (cue && cue.id) this.sasayakiCueMap.set(cue.id, cue);
+  setSentenceAudioCueData: function(cues) {
+    this.sentenceAudioCues = Array.isArray(cues) ? cues : [];
+    this.sentenceAudioCueMap = new Map();
+    for (var i = 0; i < this.sentenceAudioCues.length; i++) {
+      var cue = this.sentenceAudioCues[i];
+      if (cue && cue.id) this.sentenceAudioCueMap.set(cue.id, cue);
     }
-    this.sasayakiCuesSignature = this.sasayakiCueSignature(this.sasayakiCues);
+    this.sentenceAudioCuesSignature = this.sentenceAudioCueSignature(this.sentenceAudioCues);
   },
-  sasayakiCueForInput: function(cue) {
+  sentenceAudioCueForInput: function(cue) {
     if (!cue) return null;
-    if (typeof cue === 'string') return this.sasayakiCueMap.get(cue) || null;
+    if (typeof cue === 'string') return this.sentenceAudioCueMap.get(cue) || null;
     if (cue.id) {
-      this.sasayakiCueMap.set(cue.id, cue);
+      this.sentenceAudioCueMap.set(cue.id, cue);
     }
     return cue;
   },
-  sasayakiCueStart: function(cue) {
+  sentenceAudioCueStart: function(cue) {
     return Math.max(0, Number(cue && cue.start) || 0);
   },
-  sasayakiCueEnd: function(cue) {
-    var start = this.sasayakiCueStart(cue);
+  sentenceAudioCueEnd: function(cue) {
+    var start = this.sentenceAudioCueStart(cue);
     return start + Math.max(0, Number(cue && cue.length) || 0);
   },
-  sasayakiCueIntersectsScreen: function(cue, screen) {
+  sentenceAudioCueIntersectsScreen: function(cue, screen) {
     if (!cue || !screen) return false;
-    var start = this.sasayakiCueStart(cue);
-    var end = this.sasayakiCueEnd(cue);
+    var start = this.sentenceAudioCueStart(cue);
+    var end = this.sentenceAudioCueEnd(cue);
     return this.screenIntersectsCharRange(screen, start, end);
   },
-  screenIndexForSasayakiCue: function(cue) {
+  screenIndexForSentenceAudioCue: function(cue) {
     if (!cue || !this.screens || !this.screens.length) return -1;
-    var start = this.sasayakiCueStart(cue);
+    var start = this.sentenceAudioCueStart(cue);
     for (var i = 0; i < this.screens.length; i++) {
       if (this.screenContainsCharOffset(this.screens[i], start)) return i;
     }
     for (var j = 0; j < this.screens.length; j++) {
-      if (this.sasayakiCueIntersectsScreen(cue, this.screens[j])) return j;
+      if (this.sentenceAudioCueIntersectsScreen(cue, this.screens[j])) return j;
     }
     return -1;
   },
-  collectSasayakiCueRanges: function(cues) {
+  collectSentenceAudioCueRanges: function(cues) {
     var normalized = [];
     for (var i = 0; i < cues.length; i++) {
-      var cue = this.sasayakiCueForInput(cues[i]);
+      var cue = this.sentenceAudioCueForInput(cues[i]);
       if (!cue || !cue.id) continue;
-      var start = this.sasayakiCueStart(cue);
-      normalized.push({ id: cue.id, start: start, length: this.sasayakiCueEnd(cue) - start });
+      var start = this.sentenceAudioCueStart(cue);
+      normalized.push({ id: cue.id, start: start, length: this.sentenceAudioCueEnd(cue) - start });
     }
     return this.rangeMap.collectMatchableCueRanges(normalized);
   },
-  rememberSasayakiCueSources: function(cueRanges) {
+  rememberSentenceAudioCueSources: function(cueRanges) {
     for (var i = 0; i < cueRanges.length; i++) {
       this.cueSourceRanges.set(cueRanges[i].id, cueRanges[i]);
     }
   },
-  sasayakiInlineTargetsForCue: function(cueId) {
+  sentenceAudioInlineTargetsForCue: function(cueId) {
     return this.cueWrappers.get(cueId) || [];
   },
-  wrapSasayakiCueRanges: function(cueRanges) {
+  wrapSentenceAudioCueRanges: function(cueRanges) {
     var wrapped = new Map();
     var range = document.createRange();
     for (var i = cueRanges.length - 1; i >= 0; i--) {
@@ -2765,7 +2765,7 @@ window.hoshiReader = {
         range.setStart(segment.node, segment.start);
         range.setEnd(segment.node, segment.end);
         var wrapper = document.createElement('span');
-        wrapper.className = 'hoshi-sasayaki-cue';
+        wrapper.className = 'hoshi-sentence-audio-cue';
         wrapper.appendChild(range.extractContents());
         range.insertNode(wrapper);
         wrappers.push(wrapper);
@@ -2776,7 +2776,7 @@ window.hoshiReader = {
     }
     return wrapped;
   },
-  buildSasayakiGeometryRanges: function(cueRanges) {
+  buildSentenceAudioGeometryRanges: function(cueRanges) {
     var geometryRanges = new Map();
     for (var i = 0; i < cueRanges.length; i++) {
       var id = cueRanges[i].id;
@@ -2794,33 +2794,33 @@ window.hoshiReader = {
     }
     return geometryRanges;
   },
-  prepareSasayakiInlineTargets: function(cueRanges) {
+  prepareSentenceAudioInlineTargets: function(cueRanges) {
     if (!this.isEInkMode()) {
-      this.wrapSasayakiCueRanges(cueRanges);
+      this.wrapSentenceAudioCueRanges(cueRanges);
       this.buildNodeOffsets();
     }
   },
-  ensureSasayakiInlineTargetsForCue: function(cueId) {
-    if (this.isEInkMode() || this.sasayakiInlineTargetsForCue(cueId).length) return;
-    var cue = this.sasayakiCueMap.get(cueId);
+  ensureSentenceAudioInlineTargetsForCue: function(cueId) {
+    if (this.isEInkMode() || this.sentenceAudioInlineTargetsForCue(cueId).length) return;
+    var cue = this.sentenceAudioCueMap.get(cueId);
     if (!cue) return;
-    var cueRanges = this.collectSasayakiCueRanges([cue]);
-    this.rememberSasayakiCueSources(cueRanges);
-    this.prepareSasayakiInlineTargets(cueRanges);
+    var cueRanges = this.collectSentenceAudioCueRanges([cue]);
+    this.rememberSentenceAudioCueSources(cueRanges);
+    this.prepareSentenceAudioInlineTargets(cueRanges);
   },
-  ensureSasayakiCueGeometry: function(cue) {
+  ensureSentenceAudioCueGeometry: function(cue) {
     var cueId = typeof cue === 'string' ? cue : cue && cue.id;
     if (!cueId) return;
     var existing = this.cueGeometryRanges.get(cueId);
     if (existing && existing.length) return;
-    var cueObject = this.sasayakiCueForInput(cue) || this.sasayakiCueMap.get(cueId);
+    var cueObject = this.sentenceAudioCueForInput(cue) || this.sentenceAudioCueMap.get(cueId);
     if (!cueObject) return;
-    var cueRanges = this.collectSasayakiCueRanges([cueObject]);
-    this.rememberSasayakiCueSources(cueRanges);
-    var geometryRanges = this.buildSasayakiGeometryRanges(cueRanges).get(cueId) || [];
+    var cueRanges = this.collectSentenceAudioCueRanges([cueObject]);
+    this.rememberSentenceAudioCueSources(cueRanges);
+    var geometryRanges = this.buildSentenceAudioGeometryRanges(cueRanges).get(cueId) || [];
     if (geometryRanges.length) this.cueGeometryRanges.set(cueId, geometryRanges);
   },
-  sasayakiOverlayRects: function(cueId) {
+  sentenceAudioOverlayRects: function(cueId) {
     var ranges = this.cueGeometryRanges.get(cueId) || [];
     var rects = [];
     ranges.forEach(function(range) {
@@ -2834,28 +2834,28 @@ window.hoshiReader = {
     });
     return window.hoshiRubyGeometry ? window.hoshiRubyGeometry.mergeInlineRects(rects) : rects;
   },
-  renderSasayakiOverlay: function() {
+  renderSentenceAudioOverlay: function() {
     if (!this.activeCueId || !this.isEInkMode()) {
-      this.clearSasayakiOverlay();
+      this.clearSentenceAudioOverlay();
       return;
     }
-    if (window.hoshiReaderPopupHost && window.hoshiReaderPopupHost.renderSasayakiHighlight) {
-      window.hoshiReaderPopupHost.renderSasayakiHighlight({
-        rects: this.sasayakiOverlayRects(this.activeCueId),
+    if (window.fushiReaderPopupHost && window.fushiReaderPopupHost.renderSentenceAudioHighlight) {
+      window.fushiReaderPopupHost.renderSentenceAudioHighlight({
+        rects: this.sentenceAudioOverlayRects(this.activeCueId),
         eInkMode: true,
         verticalWriting: this.isVertical()
       });
     }
   },
-  clearSasayakiOverlay: function() {
-    if (window.hoshiReaderPopupHost && window.hoshiReaderPopupHost.clearSasayakiHighlight) {
-      window.hoshiReaderPopupHost.clearSasayakiHighlight();
+  clearSentenceAudioOverlay: function() {
+    if (window.fushiReaderPopupHost && window.fushiReaderPopupHost.clearSentenceAudioHighlight) {
+      window.fushiReaderPopupHost.clearSentenceAudioHighlight();
     }
   },
-  clearInlineSasayakiCue: function(cueId) {
+  clearInlineSentenceAudioCue: function(cueId) {
     var clearWrappers = function(wrappers) {
       wrappers.forEach(function(wrapper) {
-        wrapper.classList.remove('hoshi-sasayaki-active');
+        wrapper.classList.remove('hoshi-sentence-audio-active');
       });
     };
     if (cueId) {
@@ -2864,25 +2864,25 @@ window.hoshiReader = {
     }
     this.cueWrappers.forEach(clearWrappers);
   },
-  applyInlineSasayakiCue: function(cueId) {
+  applyInlineSentenceAudioCue: function(cueId) {
     var wrappers = this.cueWrappers.get(cueId) || [];
     wrappers.forEach(function(wrapper) {
-      wrapper.classList.add('hoshi-sasayaki-active');
+      wrapper.classList.add('hoshi-sentence-audio-active');
     });
     return wrappers.length > 0;
   },
-  clearSasayakiCuePresentation: function() {
-    this.clearInlineSasayakiCue();
-    this.clearSasayakiOverlay();
+  clearSentenceAudioCuePresentation: function() {
+    this.clearInlineSentenceAudioCue();
+    this.clearSentenceAudioOverlay();
   },
-  clearCurrentSasayakiScreenTargets: function() {
+  clearCurrentSentenceAudioScreenTargets: function() {
     this.cueSourceRanges.clear();
     this.cueGeometryRanges.clear();
     this.cueWrappers.clear();
-    this.clearSasayakiOverlay();
+    this.clearSentenceAudioOverlay();
   },
-  clearSasayakiTargets: function() {
-    this.clearSasayakiCuePresentation();
+  clearSentenceAudioTargets: function() {
+    this.clearSentenceAudioCuePresentation();
     var self = this;
     this.cueWrappers.forEach(function(wrappers) {
       self.unwrap(wrappers);
@@ -2892,78 +2892,78 @@ window.hoshiReader = {
     this.cueGeometryRanges.clear();
     this.buildNodeOffsets();
   },
-  applySasayakiCues: function(cues) {
+  applySentenceAudioCues: function(cues) {
     var activeCueId = this.activeCueId;
     var nextCues = Array.isArray(cues) ? cues : [];
-    var shouldRebuildScreens = this.mergeCrossScreenSasayakiCues && this.sasayakiCueDataChanged(nextCues);
+    var shouldRebuildScreens = this.mergeCrossScreenSentenceAudioCues && this.sentenceAudioCueDataChanged(nextCues);
     var progress = shouldRebuildScreens ? this.calculateProgress() : null;
-    this.clearSasayakiTargets();
-    this.setSasayakiCueData(nextCues);
-    this.activeCueId = activeCueId && this.sasayakiCueMap.has(activeCueId) ? activeCueId : null;
+    this.clearSentenceAudioTargets();
+    this.setSentenceAudioCueData(nextCues);
+    this.activeCueId = activeCueId && this.sentenceAudioCueMap.has(activeCueId) ? activeCueId : null;
     if (shouldRebuildScreens) {
       this.buildScreens();
       this.renderScreen(this.screenIndexForProgress(progress), true);
       return;
     }
     this.buildNodeOffsets();
-    if (this.activeCueId) this.refreshSasayakiCuePresentation();
+    if (this.activeCueId) this.refreshSentenceAudioCuePresentation();
   },
-  highlightSasayakiCue: function(cue, reveal) {
-    var cueObject = this.sasayakiCueForInput(cue);
+  highlightSentenceAudioCue: function(cue, reveal) {
+    var cueObject = this.sentenceAudioCueForInput(cue);
     var cueId = typeof cue === 'string' ? cue : cueObject && cueObject.id;
     if (!cueId) return null;
-    this.clearSasayakiCuePresentation();
+    this.clearSentenceAudioCuePresentation();
     this.activeCueId = cueId;
     if (!cueObject) {
-      this.refreshSasayakiCuePresentation();
+      this.refreshSentenceAudioCuePresentation();
       return null;
     }
-    var targetIndex = this.screenIndexForSasayakiCue(cueObject);
+    var targetIndex = this.screenIndexForSentenceAudioCue(cueObject);
     if (targetIndex < 0) {
-      this.refreshSasayakiCuePresentation();
+      this.refreshSentenceAudioCuePresentation();
       return null;
     }
     if (targetIndex !== this.currentScreenIndex) {
       if (!reveal) {
-        this.refreshSasayakiCuePresentation();
+        this.refreshSentenceAudioCuePresentation();
         return null;
       }
       this.renderScreen(targetIndex, true);
-      this.refreshSasayakiCuePresentation();
+      this.refreshSentenceAudioCuePresentation();
       return this.calculateProgress();
     }
     if (!this.revealComplete) this.completeCurrentReveal();
-    this.refreshSasayakiCuePresentation();
+    this.refreshSentenceAudioCuePresentation();
     return null;
   },
-  clearSasayakiCue: function() {
-    this.clearSasayakiCuePresentation();
+  clearSentenceAudioCue: function() {
+    this.clearSentenceAudioCuePresentation();
     this.activeCueId = null;
   },
-  refreshSasayakiCuePresentation: function() {
+  refreshSentenceAudioCuePresentation: function() {
     if (!this.activeCueId) {
-      this.clearSasayakiOverlay();
+      this.clearSentenceAudioOverlay();
       return;
     }
-    this.clearInlineSasayakiCue(this.activeCueId);
-    var cue = this.sasayakiCueMap.get(this.activeCueId);
+    this.clearInlineSentenceAudioCue(this.activeCueId);
+    var cue = this.sentenceAudioCueMap.get(this.activeCueId);
     var screen = this.screens && this.screens[this.currentScreenIndex];
-    if (!cue || !this.sasayakiCueIntersectsScreen(cue, screen) || !this.revealComplete) {
-      this.clearSasayakiOverlay();
+    if (!cue || !this.sentenceAudioCueIntersectsScreen(cue, screen) || !this.revealComplete) {
+      this.clearSentenceAudioOverlay();
       return;
     }
     if (this.isEInkMode()) {
-      this.ensureSasayakiCueGeometry(cue);
-      this.renderSasayakiOverlay();
+      this.ensureSentenceAudioCueGeometry(cue);
+      this.renderSentenceAudioOverlay();
     } else {
-      this.clearSasayakiOverlay();
-      this.ensureSasayakiInlineTargetsForCue(this.activeCueId);
-      this.applyInlineSasayakiCue(this.activeCueId);
+      this.clearSentenceAudioOverlay();
+      this.ensureSentenceAudioInlineTargetsForCue(this.activeCueId);
+      this.applyInlineSentenceAudioCue(this.activeCueId);
     }
   },
-  resetSasayakiCues: function() {
-    this.clearSasayakiTargets();
-    this.setSasayakiCueData([]);
+  resetSentenceAudioCues: function() {
+    this.clearSentenceAudioTargets();
+    this.setSentenceAudioCueData([]);
     this.activeCueId = null;
   },
   unwrap: function(wrappers) {
@@ -2987,18 +2987,18 @@ window.hoshiReader = {
 
 
 // ── Hibiki host-compat shims (TODO-909 M0) ───────────────────────────────────
-// The Dart side calls a few methods on window.hoshiReader that hoshi a's VN
+// The Dart side calls a few methods on window.fushiReader that hoshi a's VN
 // object does not define. Add minimal, correct equivalents so the shared Dart
 // reader paths behave under VN mode.
 (function() {
-  var vn = window.hoshiReader;
+  var vn = window.fushiReader;
   if (!vn) return;
   if (typeof vn.updatePageSize !== 'function') {
     vn.updatePageSize = function(width, height) {
       if (!this.screens || !this.screens.length) return;
       var progress = this.calculateProgress();
       this.screens = this.fitScreensToViewport(this.baseScreens
-        ? this.mergeSasayakiCrossScreenScreens(this.baseScreens)
+        ? this.mergeSentenceAudioCrossScreenScreens(this.baseScreens)
         : this.screens);
       this.assignScreenProgressAnchors();
       this.renderScreen(this.screenIndexForProgress(progress), true);
@@ -3047,14 +3047,14 @@ window.hoshiReader = {
 
 // Hibiki adaptation: initialize on load, then run the restore script. This MUST
 // run AFTER the host-compat shim IIFE above: a charOffset restore calls
-// window.hoshiReader.restoreToCharOffset, which only the shim defines. Placed
+// window.fushiReader.restoreToCharOffset, which only the shim defines. Placed
 // before the shim it threw a synchronous TypeError that aborted the outer
 // reader-setup IIFE before its tail removed #hoshi-cloak, leaving the page
 // visibility:hidden (blank) on any restore-by-charOffset VN entry. The
 // try/catch also stops a future restore error from ever stranding the cloak.
 window.addEventListener('load', function() {
   try {
-    window.hoshiReader.initialize();
+    window.fushiReader.initialize();
     $initialRestoreScript
   } catch (e) {
     try { if (window.console && console.error) console.error('[HoshiVN] boot restore failed', e); } catch (_ignored) {}
@@ -3062,7 +3062,7 @@ window.addEventListener('load', function() {
 });
 if (document.readyState === 'complete') {
   try {
-    window.hoshiReader.initialize();
+    window.fushiReader.initialize();
     $initialRestoreScript
   } catch (e) {
     try { if (window.console && console.error) console.error('[HoshiVN] boot restore failed', e); } catch (_ignored) {}

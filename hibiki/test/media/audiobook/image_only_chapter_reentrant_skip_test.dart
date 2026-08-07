@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki_audio/hibiki_audio.dart';
+import 'package:fushi_audio/fushi_audio.dart';
 import 'package:just_audio_platform_interface/just_audio_platform_interface.dart';
 
 /// TODO-1037 / BUG-487 (reentrant cross-chapter race). During cross-chapter
@@ -79,7 +79,7 @@ void main() {
     test('notifySectionRestoreCompleted early-returns while sequence active',
         () {
       final String src = File(
-        '../packages/hibiki_audio/lib/src/audiobook/audiobook_controller.dart',
+        '../packages/fushi_audio/lib/src/audiobook/audiobook_controller.dart',
       ).readAsStringSync();
       final int notifyIdx = src.indexOf('void notifySectionRestoreCompleted({');
       expect(notifyIdx, greaterThanOrEqualTo(0));
@@ -125,7 +125,7 @@ Future<AudiobookPlayerController> _loadPlayingController() async {
     audiobook: _audiobook(),
     audioFiles: <File>[audioFile],
   );
-  final List<AudioCue> cues = <AudioCue>[_sasayakiCue(0, section: 5)];
+  final List<AudioCue> cues = <AudioCue>[_sentenceAudioCue(0, section: 5)];
   controller.setAllBookCues(cues);
   controller.setChapterCues(cues);
   controller.followAudio.value = true;
@@ -133,13 +133,13 @@ Future<AudiobookPlayerController> _loadPlayingController() async {
   return controller;
 }
 
-AudioCue _sasayakiCue(int startMs, {required int section}) {
+AudioCue _sentenceAudioCue(int startMs, {required int section}) {
   return AudioCue()
     ..id = null
     ..bookKey = 'book'
     ..chapterHref = 'chapter'
     ..sentenceIndex = startMs ~/ 1000
-    ..textFragmentId = SasayakiMatchCodec.encodeHit(
+    ..textFragmentId = SubtitleRematchCodec.encodeHit(
       sectionIndex: section,
       normCharStart: 0,
       normCharEnd: 10,

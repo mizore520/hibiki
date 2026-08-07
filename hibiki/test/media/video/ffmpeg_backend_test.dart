@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/media/video/ffmpeg_backend.dart';
+import 'package:fushi/src/media/video/ffmpeg_backend.dart';
 
 /// ffmpeg 是否在本机可用（CI 可能没有）；用于守卫真跑 ffmpeg 的集成用例。
 Future<bool> _ffmpegAvailable() async {
@@ -126,7 +126,7 @@ void main() {
     });
 
     test('ffmpeg 不存在时 run 抛 ProcessException（沿用旧契约，调用方各自 catch）', () async {
-      // 用一个不存在的可执行名强制 ProcessException（不依赖 HIBIKI_FFMPEG）。
+      // 用一个不存在的可执行名强制 ProcessException（不依赖 FUSHI_FFMPEG）。
       const FfmpegBackend backend = CliFfmpegBackend();
       // 通过临时把可执行解析指向不存在的名字来验证传播；这里直接构造一个必然
       // 抛错的调用：传一个绝不存在的子命令路径作为 ffmpeg 不可用的代理较难，
