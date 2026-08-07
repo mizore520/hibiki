@@ -910,11 +910,11 @@ void FlutterWindow::RegisterImeGuardChannel() {
 
 void FlutterWindow::RegisterClipboardTextChannel() {
   // Second FloatingLyricWindow instance, text-only: the transparent clipboard
-  // text window. No transport / lock / close controls, no resize grip — only
-  // draggable, tappable text over a per-pixel transparent background. Tap lookup
-  // routes back over "lookupText" into the in-app dictionary overlay (same
-  // contract as the audiobook lyric strip). Independent instance so it can be
-  // shown alongside the lyric strip without either clobbering the other.
+  // text window. No transport / close controls — only draggable, resizable,
+  // tappable text over a per-pixel transparent background. Tap lookup routes
+  // back over "lookupText" into the in-app dictionary overlay (same contract
+  // as the audiobook lyric strip). Independent instance so it can be shown
+  // alongside the lyric strip without either clobbering the other.
   clipboard_text_window_ = std::make_unique<FloatingLyricWindow>();
   clipboard_text_window_->SetTextOnly(true);
 
@@ -942,6 +942,17 @@ void FlutterWindow::RegisterClipboardTextChannel() {
       [this](const std::string& action) {
         clipboard_text_channel_->InvokeMethod(
             action, std::make_unique<flutter::EncodableValue>());
+      });
+  clipboard_text_window_->SetSizeCallback(
+      [this](int width, int height) {
+        flutter::EncodableMap map{
+            {flutter::EncodableValue("width"), flutter::EncodableValue(width)},
+            {flutter::EncodableValue("height"),
+             flutter::EncodableValue(height)},
+        };
+        clipboard_text_channel_->InvokeMethod(
+            "windowSizeChanged",
+            std::make_unique<flutter::EncodableValue>(std::move(map)));
       });
 
   clipboard_text_channel_->SetMethodCallHandler(

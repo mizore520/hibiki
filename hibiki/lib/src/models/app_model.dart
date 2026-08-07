@@ -5269,6 +5269,14 @@ class AppModel with ChangeNotifier {
   Future<void> setClipboardTextWindowBgOpacity(double v) =>
       prefsRepo.setClipboardTextWindowBgOpacity(v);
 
+  int get clipboardTextWindowWidth => prefsRepo.clipboardTextWindowWidth;
+  int get clipboardTextWindowHeight => prefsRepo.clipboardTextWindowHeight;
+  Future<void> setClipboardTextWindowSize({
+    required int width,
+    required int height,
+  }) =>
+      prefsRepo.setClipboardTextWindowSize(width: width, height: height);
+
   /// 真透明剪切板文字窗的文字颜色 = 当前主题 onSurface（跟随明暗/配色方案）。背景
   /// 仍由 [clipboardTextWindowBgOpacity] 滑杆控制、文字恒实心（满 alpha）。明暗解析
   /// 与悬浮字幕 app 级样式同款（ThemeMode.system 按浅色，保持两处一致）。

@@ -418,32 +418,43 @@ void FloatingLyricWindow::UpdateStyle(const Style& style) {
   text_format_.Reset();
   ruby_format_.Reset();
   text_layout_.Reset();
-  ApplyStyleWidth();
+  ApplyStyleSize();
   RequestRender();
 }
 
-// TODO-708 P2: 悬浮窗宽度可调。style_.window_width > 0 时把窗口调到该逻辑 dp 宽（夹到
-// 与拖拽相同的 [kMinStripWidthDip, kMaxStripWidthDip] 边界），保留左上角原点，再夹回工作
-// 区；== 0 时保持当前宽度（历史默认 720dip 起始 + 用户拖拽结果）。文本/控件布局随 WM_SIZE
-// 自动跟随，无需重复处理。
-void FloatingLyricWindow::ApplyStyleWidth() {
-  if (hwnd_ == nullptr || style_.window_width <= 0.0) {
+// TODO-708 P2: 悬浮窗宽高可调。style_.window_width / window_height > 0 时把窗口调到该逻辑
+// dp 尺寸（夹到与拖拽相同的边界），保留左上角原点，再夹回工作区；== 0 的维度保持当前
+// 尺寸（历史默认尺寸 + 用户拖拽结果）。文本/控件布局随 WM_SIZE 自动跟随，无需重复处理。
+void FloatingLyricWindow::ApplyStyleSize() {
+  if (hwnd_ == nullptr ||
+      (style_.window_width <= 0.0 && style_.window_height <= 0.0)) {
     return;
   }
-  const float target_dip =
-      std::clamp(static_cast<float>(style_.window_width), MinStripWidthDip(),
-                 kMaxStripWidthDip);
   RECT rc;
   if (!GetWindowRect(hwnd_, &rc)) {
     return;
   }
-  const int target_px = static_cast<int>(ScaleForDpi(target_dip));
-  const int current_px = rc.right - rc.left;
-  if (target_px == current_px) {
+  const int current_width_px = rc.right - rc.left;
+  const int current_height_px = rc.bottom - rc.top;
+  const float target_width_dip =
+      style_.window_width > 0.0
+          ? std::clamp(static_cast<float>(style_.window_width),
+                      MinStripWidthDip(), kMaxStripWidthDip)
+          : strip_width_dip_;
+  const float target_height_dip =
+      style_.window_height > 0.0
+          ? std::clamp(static_cast<float>(style_.window_height),
+                      kMinStripHeightDip, kMaxStripHeightDip)
+          : strip_height_dip_;
+  const int target_width_px = static_cast<int>(ScaleForDpi(target_width_dip));
+  const int target_height_px =
+      static_cast<int>(ScaleForDpi(target_height_dip));
+  if (target_width_px == current_width_px &&
+      target_height_px == current_height_px) {
     return;
   }
   SetWindowPos(hwnd_, topmost_ ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0,
-               target_px, rc.bottom - rc.top,
+               target_width_px, target_height_px,
                SWP_NOMOVE | SWP_NOACTIVATE);
   ClampCurrentPositionToWindowMonitor();
 }
@@ -748,6 +759,16 @@ void FloatingLyricWindow::NotifyBoundsChanged() {
              rect.bottom - rect.top);
 }
 
+void FloatingLyricWindow::NotifySizeChanged() {
+  if (hwnd_ == nullptr || !on_size_) {
+    return;
+  }
+  const int width = std::max(1, static_cast<int>(std::lround(strip_width_dip_)));
+  const int height =
+      std::max(1, static_cast<int>(std::lround(strip_height_dip_)));
+  on_size_(width, height);
+}
+
 void FloatingLyricWindow::RequestRender() {
   if (hwnd_ != nullptr && visible_) {
     Render();
@@ -993,6 +1014,7 @@ LRESULT FloatingLyricWindow::HandleMessage(UINT message, WPARAM wparam,
       SyncStripSizeFromWindow();
       ClampCurrentPositionToWindowMonitor();
       NotifyBoundsChanged();
+      NotifySizeChanged();
       return 0;
     }
     case WM_GETMINMAXINFO: {
@@ -1094,11 +1116,13 @@ void FloatingLyricWindow::Render() {
   // Text format / layout. The audiobook lyric strip keeps its historical
   // behaviour: its authored font size assumes the default bar height and the
   // live font scales with strip_height_dip_, so dragging the resize grip larger
-  // enlarges the lyric text too. Hook mode does NOT (BUG-1095): its font size is
-  // an independent user preference, so dragging the overlay taller buys visible
-  // LINES instead of re-inflating the same two lines.
+  // enlarges the lyric text too. Text-only windows do NOT scale their font with
+  // height: resizing only changes the available text area, while the existing
+  // font preference remains the single source of truth.
   const float height_scale =
-      hook_text_mode_ ? 1.0f : strip_height_dip_ / kBaseStripHeightForFontDip;
+      (hook_text_mode_ || text_only_)
+          ? 1.0f
+          : strip_height_dip_ / kBaseStripHeightForFontDip;
   const float scaled_font = static_cast<float>(style_.font_size) *
                             std::max(0.5f, height_scale);
   // 注音字号与行盒加高量（物理 px）。ruby_spans_ 为空时下面所有注音分支都不执行，
@@ -1118,8 +1142,8 @@ void FloatingLyricWindow::Render() {
       text_format_->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
       text_format_->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
       text_format_->SetWordWrapping(
-          hook_text_mode_ ? DWRITE_WORD_WRAPPING_WRAP
-                          : DWRITE_WORD_WRAPPING_NO_WRAP);
+          (hook_text_mode_ || text_only_) ? DWRITE_WORD_WRAPPING_WRAP
+                                          : DWRITE_WORD_WRAPPING_NO_WRAP);
     }
     text_layout_.Reset();
   }
@@ -1189,9 +1213,11 @@ void FloatingLyricWindow::Render() {
       // symmetrically — the user cannot even start reading. Top-align the hook
       // caption the moment it no longer fits, so reading order is preserved and
       // only the tail is lost; a caption that fits stays centred (unchanged
-      // pixels). Scoped to hook mode: the audiobook lyric strip wants its
-      // current line near the middle, so its centring is left alone.
-      if (hook_text_mode_) {
+      // pixels). Text-only windows use the same top-align-on-overflow rule so
+      // narrowing the window never hides the beginning of a wrapped sentence;
+      // the audiobook lyric strip wants its current line near the middle, so
+      // its centring is left alone.
+      if (hook_text_mode_ || text_only_) {
         DWRITE_TEXT_METRICS metrics = {};
         if (SUCCEEDED(text_layout_->GetMetrics(&metrics))) {
           text_layout_->SetParagraphAlignment(
@@ -1204,7 +1230,10 @@ void FloatingLyricWindow::Render() {
           // 就是把绘制原点整体上移 scroll_offset_px_，而下面的裁剪框 text_clip
           // 一动不动 —— 视口下移，被裁掉的句尾从下面走进来。这是分层窗里唯一
           // 不需要第二个渲染目标就能做出来的滚动。
-          scroll_max_px_ = std::max(0.0f, metrics.height - text_rect_.height);
+          if (hook_text_mode_) {
+            scroll_max_px_ =
+                std::max(0.0f, metrics.height - text_rect_.height);
+          }
         }
       }
       scroll_offset_px_ = std::clamp(scroll_offset_px_, 0.0f, scroll_max_px_);
@@ -1480,9 +1509,10 @@ void FloatingLyricWindow::Render() {
       }
     }
 
-    // Hook text is a real resizable text box. The clipboard text destination
-    // remains intentionally grip-less for compatibility.
-    if (hook_text_mode_ && !locked_) {
+    // Both text-only windows expose the same low-profile bottom-right resize
+    // grip. The audiobook lyric strip keeps its existing grip in the branch
+    // below, so all three modes use the same visual affordance.
+    if (!locked_) {
       const float resize = ScaleForDpi(kResizeGripDip);
       Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> resize_brush;
       render_target_->CreateSolidColorBrush(
@@ -1720,10 +1750,7 @@ std::string FloatingLyricWindow::ControlActionAt(float x, float y) {
 }
 
 bool FloatingLyricWindow::ResizeGripContains(float x, float y) const {
-  // Text-only clipboard window has no resize grip — WM_NCHITTEST stays HTCLIENT
-  // everywhere so the whole surface keeps driving drag / lookup, never a system
-  // resize loop.
-  if ((text_only_ && !hook_text_mode_) || locked_ || hwnd_ == nullptr) {
+  if (locked_ || hwnd_ == nullptr) {
     return false;
   }
   RECT rc;

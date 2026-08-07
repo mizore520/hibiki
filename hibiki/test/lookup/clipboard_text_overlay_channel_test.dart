@@ -116,6 +116,39 @@ void main() {
 
       expect(fired, 1);
     });
+
+    test('右下角 resize 事件转发逻辑宽高', () async {
+      int? width;
+      int? height;
+      ClipboardTextOverlayChannel.setEventHandlers(
+        onWindowSizeChanged: (int nextWidth, int nextHeight) {
+          width = nextWidth;
+          height = nextHeight;
+        },
+      );
+
+      await invokeFromNative('windowSizeChanged', <String, Object?>{
+        'width': 960,
+        'height': 180,
+      });
+
+      expect(width, 960);
+      expect(height, 180);
+    });
+
+    test('无效 resize 尺寸不落到回调', () async {
+      bool fired = false;
+      ClipboardTextOverlayChannel.setEventHandlers(
+        onWindowSizeChanged: (_, __) => fired = true,
+      );
+
+      await invokeFromNative('windowSizeChanged', <String, Object?>{
+        'width': 0,
+        'height': 180,
+      });
+
+      expect(fired, isFalse);
+    });
   });
 
   group('ClipboardTextOverlayChannel outgoing calls', () {
@@ -139,6 +172,7 @@ void main() {
         'textColor': 0xFFFFFFFF,
         'bgColor': 0x00000000,
         'windowWidth': 0,
+        'windowHeight': 0,
         'clickLookupEnabled': true,
         'windowTitle': '',
       });

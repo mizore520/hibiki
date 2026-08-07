@@ -62,6 +62,7 @@ class ClipboardTextOverlayController {
     ClipboardTextOverlayChannel.setEventHandlers(
       onLookupText: _onLookup,
       onToggleTransparency: _onToggleTransparency,
+      onWindowSizeChanged: _onWindowSizeChanged,
     );
   }
 
@@ -78,6 +79,8 @@ class ClipboardTextOverlayController {
     await ClipboardTextOverlayChannel.show(
       bgColor: _bgColor(),
       textColor: _textColor(),
+      windowWidth: _appModel?.clipboardTextWindowWidth ?? 0,
+      windowHeight: _appModel?.clipboardTextWindowHeight ?? 0,
       windowTitle: t.clipboard_text_window_title,
     );
     await ClipboardTextOverlayChannel.updateText(
@@ -93,6 +96,8 @@ class ClipboardTextOverlayController {
     await ClipboardTextOverlayChannel.updateStyle(
       bgColor: _bgColor(),
       textColor: _textColor(),
+      windowWidth: _appModel?.clipboardTextWindowWidth ?? 0,
+      windowHeight: _appModel?.clipboardTextWindowHeight ?? 0,
     );
   }
 
@@ -141,5 +146,11 @@ class ClipboardTextOverlayController {
       text: text,
       index: index,
     );
+  }
+
+  Future<void> _onWindowSizeChanged(int width, int height) async {
+    final AppModel? model = _appModel;
+    if (model == null) return;
+    await model.setClipboardTextWindowSize(width: width, height: height);
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
@@ -7,12 +8,16 @@ import 'package:hibiki/src/utils/misc/channel_constants.dart';
 
 typedef ClipboardTextLookupHandler = void Function(String text, int index);
 typedef ClipboardTextTransparencyHandler = void Function();
+typedef ClipboardTextWindowSizeHandler = FutureOr<void> Function(
+  int width,
+  int height,
+);
 
 /// 真透明剪切板文字窗的 MethodChannel 绑定（Windows-only）。
 ///
 /// native 后端是 [FloatingLyricWindow] 的第二实例，`SetTextOnly(true)`：逐像素
-/// 透明背景（`UpdateLayeredWindow + ULW_ALPHA`）+ 文字实心，无播放/锁/关按钮、无
-/// 缩放抓手，只留可拖文字 + 点字。点字经 [setEventHandlers] 的 [onLookupText]
+/// 透明背景（`UpdateLayeredWindow + ULW_ALPHA`）+ 文字实心，无播放/关按钮，支持右下角
+/// 缩放并把逻辑宽高回传保存，只留可拖文字 + 点字。点字经 [setEventHandlers] 的 [onLookupText]
 /// 回到 app 内查词覆盖窗（复用 [GlobalLookupController.lookupText]）。
 ///
 /// 契约是 [FloatingLyricChannel] 的精简子集（去掉播放态/歌词行/锁/高亮/标签），
@@ -32,19 +37,23 @@ class ClipboardTextOverlayChannel extends FloatingOverlayChannel {
 
   static ClipboardTextLookupHandler? _onLookupText;
   static ClipboardTextTransparencyHandler? _onToggleTransparency;
+  static ClipboardTextWindowSizeHandler? _onWindowSizeChanged;
 
   static void setEventHandlers({
     ClipboardTextLookupHandler? onLookupText,
     ClipboardTextTransparencyHandler? onToggleTransparency,
+    ClipboardTextWindowSizeHandler? onWindowSizeChanged,
   }) {
     _onLookupText = onLookupText;
     _onToggleTransparency = onToggleTransparency;
+    _onWindowSizeChanged = onWindowSizeChanged;
     _instance.channel.setMethodCallHandler(_handleNativeCall);
   }
 
   static void clearEventHandlers() {
     _onLookupText = null;
     _onToggleTransparency = null;
+    _onWindowSizeChanged = null;
     _instance.channel.setMethodCallHandler(null);
   }
 
@@ -70,6 +79,17 @@ class ClipboardTextOverlayChannel extends FloatingOverlayChannel {
       case 'toggleTransparency':
         _onToggleTransparency?.call();
         break;
+      case 'windowSizeChanged':
+        final Object? arguments = call.arguments;
+        final Map<Object?, Object?> args = arguments is Map
+            ? arguments.cast<Object?, Object?>()
+            : const <Object?, Object?>{};
+        final int width = (args['width'] as num?)?.toInt() ?? 0;
+        final int height = (args['height'] as num?)?.toInt() ?? 0;
+        if (width > 0 && height > 0) {
+          await _onWindowSizeChanged?.call(width, height);
+        }
+        break;
       default:
         break;
     }
@@ -88,6 +108,7 @@ class ClipboardTextOverlayChannel extends FloatingOverlayChannel {
     int textColor = 0xFFFFFFFF,
     int bgColor = 0x00000000,
     int windowWidth = 0,
+    int windowHeight = 0,
     bool clickLookupEnabled = true,
     String windowTitle = '',
   }) {
@@ -96,6 +117,7 @@ class ClipboardTextOverlayChannel extends FloatingOverlayChannel {
       'textColor': textColor,
       'bgColor': bgColor,
       'windowWidth': windowWidth,
+      'windowHeight': windowHeight,
       'clickLookupEnabled': clickLookupEnabled,
       'windowTitle': windowTitle,
     });
@@ -123,6 +145,7 @@ class ClipboardTextOverlayChannel extends FloatingOverlayChannel {
     int textColor = 0xFFFFFFFF,
     int bgColor = 0x00000000,
     int windowWidth = 0,
+    int windowHeight = 0,
   }) async {
     if (!_instance.isSupported) return;
     await _instance.channel.invokeMethod<void>('updateStyle', {
@@ -130,6 +153,7 @@ class ClipboardTextOverlayChannel extends FloatingOverlayChannel {
       'textColor': textColor,
       'bgColor': bgColor,
       'windowWidth': windowWidth,
+      'windowHeight': windowHeight,
     });
   }
 

@@ -726,6 +726,46 @@ void main() {
     });
   });
 
+  group('clipboard text window size', () {
+    test('keeps the existing native default when no size was saved', () {
+      expect(repo.clipboardTextWindowWidth, 0);
+      expect(repo.clipboardTextWindowHeight, 0);
+    });
+
+    test('clamps invalid dimensions to the native resize bounds', () async {
+      await repo.setClipboardTextWindowSize(width: 1, height: 1);
+      expect(repo.clipboardTextWindowWidth, 280);
+      expect(repo.clipboardTextWindowHeight, 64);
+
+      await repo.setClipboardTextWindowSize(width: 5000, height: 5000);
+      expect(repo.clipboardTextWindowWidth, 2400);
+      expect(repo.clipboardTextWindowHeight, 480);
+
+      await repo.setClipboardTextWindowSize(width: 0, height: 0);
+      expect(repo.clipboardTextWindowWidth, 0);
+      expect(repo.clipboardTextWindowHeight, 0);
+    });
+
+    test('falls back to the native default for corrupted stored values',
+        () async {
+      await repo.setPref('clipboard_text_window_width', 'not-a-number');
+      await repo.setPref('clipboard_text_window_height', 'not-a-number');
+
+      expect(repo.clipboardTextWindowWidth, 0);
+      expect(repo.clipboardTextWindowHeight, 0);
+    });
+
+    test('round-trips the last resized dimensions through the DB', () async {
+      await repo.setClipboardTextWindowSize(width: 960, height: 180);
+
+      final PreferencesRepository repo2 = PreferencesRepository(db);
+      await repo2.loadFromDb();
+      addTearDown(repo2.dispose);
+      expect(repo2.clipboardTextWindowWidth, 960);
+      expect(repo2.clipboardTextWindowHeight, 180);
+    });
+  });
+
   // TODO-370: 悬浮字幕透明度（文字 / 按钮底色），0..100%，默认 100=保持现观感。
   group('floatingLyric opacity (TODO-370)', () {
     test('text and button-bg opacity default to 100 (unchanged look)', () {

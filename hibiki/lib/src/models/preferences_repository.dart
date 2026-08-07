@@ -564,6 +564,70 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  // 真透明剪切板文字窗的可调尺寸（逻辑 px）。0 是「未保存」哨兵，交给
+  // Windows 原生窗继续使用现有 720x96 默认尺寸；其余值沿用原生 resize 的
+  // 安全边界，避免损坏配置恢复出不可用的窗口。
+  static const int clipboardTextWindowWidthDefault = 0;
+  static const int clipboardTextWindowWidthMin = 280;
+  static const int clipboardTextWindowWidthMax = 2400;
+  static const int clipboardTextWindowHeightDefault = 0;
+  static const int clipboardTextWindowHeightMin = 64;
+  static const int clipboardTextWindowHeightMax = 480;
+
+  static int normalizeClipboardTextWindowWidth(num value) {
+    if (value is double && !value.isFinite) {
+      return clipboardTextWindowWidthDefault;
+    }
+    final int rounded = value.round();
+    if (rounded <= 0) return clipboardTextWindowWidthDefault;
+    return rounded
+        .clamp(clipboardTextWindowWidthMin, clipboardTextWindowWidthMax)
+        .toInt();
+  }
+
+  static int normalizeClipboardTextWindowHeight(num value) {
+    if (value is double && !value.isFinite) {
+      return clipboardTextWindowHeightDefault;
+    }
+    final int rounded = value.round();
+    if (rounded <= 0) return clipboardTextWindowHeightDefault;
+    return rounded
+        .clamp(clipboardTextWindowHeightMin, clipboardTextWindowHeightMax)
+        .toInt();
+  }
+
+  int get clipboardTextWindowWidth {
+    final Object? stored = getPref(
+      'clipboard_text_window_width',
+      defaultValue: clipboardTextWindowWidthDefault,
+    );
+    return stored is num
+        ? normalizeClipboardTextWindowWidth(stored)
+        : clipboardTextWindowWidthDefault;
+  }
+
+  int get clipboardTextWindowHeight {
+    final Object? stored = getPref(
+      'clipboard_text_window_height',
+      defaultValue: clipboardTextWindowHeightDefault,
+    );
+    return stored is num
+        ? normalizeClipboardTextWindowHeight(stored)
+        : clipboardTextWindowHeightDefault;
+  }
+
+  Future<void> setClipboardTextWindowSize({
+    required int width,
+    required int height,
+  }) async {
+    await setPrefs(<String, dynamic>{
+      'clipboard_text_window_width': normalizeClipboardTextWindowWidth(width),
+      'clipboard_text_window_height':
+          normalizeClipboardTextWindowHeight(height),
+    });
+    notifyListeners();
+  }
+
   /// 面板窗位置/尺寸记忆，格式 `x,y,w,h`（逻辑像素）；空 = 从未摆放（用默认位）。
   String get clipboardPanelRect =>
       getPref('clipboard_panel_rect', defaultValue: '') as String;

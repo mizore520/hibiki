@@ -82,11 +82,11 @@ class FlutterWindow : public Win32Window {
   void RegisterFloatingLyricChannel();
 
   // The transparent clipboard text window: a SECOND FloatingLyricWindow instance
-  // put in text-only mode (SetTextOnly(true)) — no transport / lock / close
-  // buttons, no resize grip, just draggable + tappable text over a per-pixel
-  // transparent background. Independent of the audiobook lyric strip so both can
-  // be shown at once. Tap lookup routes back over "lookupText" into the in-app
-  // dictionary overlay, exactly like the lyric strip.
+  // put in text-only mode (SetTextOnly(true)) — no transport / close buttons,
+  // just draggable + resizable + tappable text over a per-pixel transparent
+  // background. Independent of the audiobook lyric strip so both can be shown
+  // at once. Tap lookup routes back over "lookupText" into the in-app dictionary
+  // overlay, exactly like the lyric strip.
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
       clipboard_text_channel_;
   std::unique_ptr<FloatingLyricWindow> clipboard_text_window_;

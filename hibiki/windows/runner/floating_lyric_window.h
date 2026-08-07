@@ -61,6 +61,10 @@ class FloatingLyricWindow {
   using PassThroughCallback = std::function<void(bool enabled)>;
   using BoundsCallback =
       std::function<void(int left, int top, int width, int height)>;
+  // Reports the current text-window size in logical (96-DPI) px. The
+  // clipboard text window persists this pair as a user preference; the Hook
+  // window uses BoundsCallback because it also persists screen position.
+  using SizeCallback = std::function<void(int width, int height)>;
 
   // 一段振假名（ruby）：|ruby| 画在 text 的 [start, start + length) 上方。
   //
@@ -121,6 +125,9 @@ class FloatingLyricWindow {
   void SetBoundsCallback(BoundsCallback callback) {
     on_bounds_ = std::move(callback);
   }
+  void SetSizeCallback(SizeCallback callback) {
+    on_size_ = std::move(callback);
+  }
 
   // Creates (if needed) and shows the strip. Returns false if the OS window
   // could not be created. |owner| is the main window, used only for initial
@@ -154,10 +161,10 @@ class FloatingLyricWindow {
   // Shift-悬停本身不受此开关控制，它是查词的通用手势。
   void SetHoverAutoLookup(bool enabled);
   // Text-only mode (the transparent clipboard text window): the strip draws
-  // ONLY the draggable, tappable text — no playback / lock / close control
-  // buttons and no resize grip. Drag + single-tap word lookup still work exactly
-  // as in the audiobook lyric strip. Set once right after construction (before
-  // Show) by the clipboard_text channel; the audiobook lyric instance leaves it
+  // ONLY the draggable, tappable text — no playback / close control buttons.
+  // Drag, right-bottom resize, and single-tap word lookup work exactly as in
+  // the audiobook lyric strip. Set once right after construction (before Show)
+  // by the clipboard_text channel; the audiobook lyric instance leaves it
   // false so its rendering + hit-testing stay byte-for-byte unchanged.
   void SetTextOnly(bool text_only) { text_only_ = text_only; }
   // Rich text-only mode used by the galgame Hook window. It keeps the text-only
@@ -283,12 +290,13 @@ class FloatingLyricWindow {
   // system resize) so the font + control layout track the new dimensions.
   void SyncStripSizeFromWindow();
   void NotifyBoundsChanged();
+  void NotifySizeChanged();
 
-  // TODO-708 P2: applies style_.window_width (logical dp, >0) to the live window
-  // by resizing it (clamped to the drag min/max), keeping the top-left origin
-  // and re-clamping to the monitor. No-op when the width is 0 (platform default)
-  // or the window does not exist yet.
-  void ApplyStyleWidth();
+  // Applies style_.window_width / style_.window_height (logical dp, >0) to the
+  // live window by resizing it (clamped to the drag min/max), keeping the
+  // top-left origin and re-clamping to the monitor. A zero dimension preserves
+  // the current size (or the platform default before the first Show).
+  void ApplyStyleSize();
 
   float ScaleForDpi(float value) const;
 
@@ -341,8 +349,8 @@ class FloatingLyricWindow {
   int hover_lookup_index_ = -1;
   // 悬停轮询定时器是否已挂（只在鼠标在窗口内时挂着）。
   bool hover_poll_active_ = false;
-  // Text-only clipboard window: suppress control buttons + resize grip, use the
-  // full window height for text. Never true for the audiobook lyric strip.
+  // Text-only clipboard window: suppress playback controls and use the full
+  // window height for text. Never true for the audiobook lyric strip.
   bool text_only_ = false;
   bool hook_text_mode_ = false;
   bool pass_through_ = false;
@@ -432,6 +440,7 @@ class FloatingLyricWindow {
   LockCallback on_lock_;
   PassThroughCallback on_pass_through_;
   BoundsCallback on_bounds_;
+  SizeCallback on_size_;
 };
 
 #endif  // RUNNER_FLOATING_LYRIC_WINDOW_H_
