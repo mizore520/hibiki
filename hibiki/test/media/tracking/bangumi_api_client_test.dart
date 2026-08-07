@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/media/tracking/bangumi_api_client.dart';
+import 'package:fushi/src/media/tracking/bangumi_api_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -12,7 +12,7 @@ void main() {
     final BangumiApiClient client = BangumiApiClient(
       accessToken: 'secret-token',
       userAgent:
-          'hajisensai/Hibiki/1.2.0 (https://github.com/hajisensai/hibiki)',
+          'hajisensai/Fushi/1.2.0 (https://github.com/hajisensai/hibiki)',
       client: MockClient((http.Request request) async {
         captured = request;
         return http.Response(
@@ -28,7 +28,7 @@ void main() {
 
     expect(captured.url.path, '/v0/users/alice%20name/collections/123');
     expect(captured.headers['Authorization'], 'Bearer secret-token');
-    expect(captured.headers['User-Agent'], contains('hajisensai/Hibiki/1.2.0'));
+    expect(captured.headers['User-Agent'], contains('hajisensai/Fushi/1.2.0'));
     expect(value!.episodeProgress, 4);
   });
 

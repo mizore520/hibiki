@@ -1,11 +1,11 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/media/audiobook/floating_lyric_channel.dart';
+import 'package:fushi/src/media/audiobook/floating_lyric_channel.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const String channelName = 'app.hibiki.reader/floating_lyric';
+  const String channelName = 'app.fushi.reader/floating_lyric';
   const MethodCodec codec = StandardMethodCodec();
 
   setUp(() {

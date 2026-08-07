@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/main.dart' as app;
-import 'package:hibiki/src/media/sources/reader_hibiki_source.dart';
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki/src/reader/reader_settings.dart';
+import 'package:fushi/main.dart' as app;
+import 'package:fushi/src/media/sources/reader_hibiki_source.dart';
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/reader/reader_settings.dart';
 
 import 'helpers/effect_probes.dart';
 import 'helpers/focus_driver.dart';
@@ -16,7 +16,7 @@ import 'test_helpers.dart';
 /// Phase 2 Step 2 — desktop, background, real app, effect-verified.
 ///
 /// Proves the Phase 2 foundation end-to-end on the REAL Windows app (not a
-/// widget-test AppModel): under HIBIKI_TEST_HIDDEN the runner lives off-screen
+/// widget-test AppModel): under FUSHI_TEST_HIDDEN the runner lives off-screen
 /// and never steals foreground (see win32_window.cpp), so this runs while the
 /// machine is in use. Asserts three things the widget-level Phase 1 tests
 /// can't:
@@ -39,7 +39,7 @@ import 'test_helpers.dart';
 /// activation path (and may surface a real desktop keyboard-a11y gap).
 ///
 /// Run (PowerShell, from hibiki/):
-///   $env:HIBIKI_TEST_HIDDEN = "1"
+///   $env:FUSHI_TEST_HIDDEN = "1"
 ///   flutter test integration_test/desktop_settings_smoke_test.dart -d windows
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();

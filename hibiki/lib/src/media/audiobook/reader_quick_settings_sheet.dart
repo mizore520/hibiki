@@ -7,22 +7,22 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:hibiki/src/epub/epub_book.dart';
-import 'package:hibiki/src/focus/hibiki_focus_controller.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_bridge.dart';
-import 'package:hibiki_audio/hibiki_audio.dart';
-import 'package:hibiki/src/media/sources/reader_hibiki_source.dart';
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki/src/pages/implementations/book_css_editor_page.dart';
-import 'package:hibiki/src/settings/cupertino_settings_renderer.dart';
-import 'package:hibiki/src/settings/master_detail_settings_sheet.dart';
-import 'package:hibiki/src/settings/material_settings_renderer.dart';
-import 'package:hibiki/src/settings/settings_actions.dart';
-import 'package:hibiki/src/settings/settings_context.dart';
-import 'package:hibiki/src/settings/settings_destination.dart';
-import 'package:hibiki/src/settings/settings_renderer.dart';
-import 'package:hibiki/src/settings/settings_schema.dart';
-import 'package:hibiki/utils.dart';
+import 'package:fushi/src/epub/epub_book.dart';
+import 'package:fushi/src/focus/hibiki_focus_controller.dart';
+import 'package:fushi/src/media/audiobook/audiobook_bridge.dart';
+import 'package:fushi_audio/fushi_audio.dart';
+import 'package:fushi/src/media/sources/reader_hibiki_source.dart';
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/pages/implementations/book_css_editor_page.dart';
+import 'package:fushi/src/settings/cupertino_settings_renderer.dart';
+import 'package:fushi/src/settings/master_detail_settings_sheet.dart';
+import 'package:fushi/src/settings/material_settings_renderer.dart';
+import 'package:fushi/src/settings/settings_actions.dart';
+import 'package:fushi/src/settings/settings_context.dart';
+import 'package:fushi/src/settings/settings_destination.dart';
+import 'package:fushi/src/settings/settings_renderer.dart';
+import 'package:fushi/src/settings/settings_schema.dart';
+import 'package:fushi/utils.dart';
 
 class ReaderQuickSettingsSheet extends StatefulWidget {
   const ReaderQuickSettingsSheet({
@@ -187,48 +187,48 @@ class _ReaderQuickSettingsSheetState extends State<ReaderQuickSettingsSheet>
     final ReaderHibikiSource src = ReaderHibikiSource.instance;
     switch (key) {
       case 'fontSize':
-        await src.setTtuFontSize((value as num).toDouble());
+        await src.setReaderFontSize((value as num).toDouble());
       case 'lineHeight':
-        await src.setTtuLineHeight((value as num).toDouble());
+        await src.setReaderLineHeight((value as num).toDouble());
       case 'writingMode':
-        await src.setTtuWritingMode(value as String);
+        await src.setReaderWritingMode(value as String);
         widget.onPageMarginChanged?.call();
       case 'viewMode':
-        await src.setTtuViewMode(value as String);
+        await src.setReaderViewMode(value as String);
       case 'theme':
-        await src.setTtuTheme(value as String);
+        await src.setReaderTheme(value as String);
       case 'hideFurigana':
-        await src.setTtuFuriganaMode((value as bool) ? 'hide' : 'toggle');
+        await src.setReaderFuriganaMode((value as bool) ? 'hide' : 'toggle');
       case 'textIndentation':
-        await src.setTtuTextIndentation((value as num).toDouble());
+        await src.setReaderTextIndentation((value as num).toDouble());
       case 'marginTop':
-        await src.setTtuMarginTop((value as num).toDouble());
+        await src.setReaderMarginTop((value as num).toDouble());
         widget.onPageMarginChanged?.call();
       case 'marginBottom':
-        await src.setTtuMarginBottom((value as num).toDouble());
+        await src.setReaderMarginBottom((value as num).toDouble());
         widget.onPageMarginChanged?.call();
       case 'marginLeft':
-        await src.setTtuMarginLeft((value as num).toDouble());
+        await src.setReaderMarginLeft((value as num).toDouble());
         widget.onPageMarginChanged?.call();
       case 'marginRight':
-        await src.setTtuMarginRight((value as num).toDouble());
+        await src.setReaderMarginRight((value as num).toDouble());
         widget.onPageMarginChanged?.call();
       case 'pageColumns':
-        await src.setTtuPageColumns((value as num).toInt());
+        await src.setReaderPageColumns((value as num).toInt());
       case 'spreadMode':
-        await src.setTtuSpreadMode(value as String);
+        await src.setReaderSpreadMode(value as String);
       case 'spreadDirection':
-        await src.setTtuSpreadDirection(value as String);
+        await src.setReaderSpreadDirection(value as String);
       case 'enableVerticalFontKerning':
-        await src.setTtuEnableVerticalFontKerning(value as bool);
+        await src.setReaderEnableVerticalFontKerning(value as bool);
       case 'enableFontVPAL':
-        await src.setTtuEnableFontVPAL(value as bool);
+        await src.setReaderEnableFontVPAL(value as bool);
       case 'verticalTextOrientation':
-        await src.setTtuVerticalTextOrientation(value as String);
+        await src.setReaderVerticalTextOrientation(value as String);
       case 'enableTextJustification':
-        await src.setTtuEnableTextJustification(value as bool);
+        await src.setReaderEnableTextJustification(value as bool);
       case 'prioritizeReaderStyles':
-        await src.setTtuPrioritizeReaderStyles(value as bool);
+        await src.setReaderPrioritizeReaderStyles(value as bool);
     }
     if (widget.isHibikiReader) {
       const layoutKeys = {
@@ -561,7 +561,7 @@ class _ReaderQuickSettingsSheetState extends State<ReaderQuickSettingsSheet>
   }
 
   /// 把某个 [ReaderGroup] 投影成 schema 渲染内容。写路径走 schema item 的
-  /// `setTtu*` + notify helper，与本面板的 `_updateSetting` 落同一存储。
+  /// `setReaderPref*` + notify helper，与本面板的 `_updateSetting` 落同一存储。
   ///
   /// 实时更新由 notify helper 经 `ReaderHibikiSource` 的回调驱动，且是按 key
   /// 精确的：CSS-only key 走 `notifyReaderSettingsChanged`（=
@@ -836,7 +836,7 @@ class _ReaderQuickSettingsSheetState extends State<ReaderQuickSettingsSheet>
       });
     } catch (e, stack) {
       ErrorLogService.instance.log('AudiobookPlayBar.search', e, stack);
-      debugPrint('[hibiki-search] error: $e');
+      debugPrint('[fushi-search] error: $e');
       if (!mounted || gen != _searchGeneration) return;
       setState(() {
         _searchResults = const [];

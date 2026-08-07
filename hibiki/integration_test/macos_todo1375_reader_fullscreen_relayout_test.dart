@@ -7,14 +7,14 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/main.dart' as app;
-import 'package:hibiki/src/utils/adaptive/adaptive_navigation.dart'
+import 'package:fushi/main.dart' as app;
+import 'package:fushi/src/utils/adaptive/adaptive_navigation.dart'
     show hibikiMaterialNavKey;
 
 import 'helpers/library_fixture.dart';
 
 /// TODO-1375 symptom (2): reader re-layout when the viewport grows to
-/// fullscreen size. A parked HIBIKI_TEST_HIDDEN window cannot enter NATIVE
+/// fullscreen size. A parked FUSHI_TEST_HIDDEN window cannot enter NATIVE
 /// fullscreen, so we drive tester.view.physicalSize to a fullscreen-sized
 /// viewport -- exactly the MediaQuery size change a real fullscreen delivers to
 /// the reader, which runs didChangeMetrics -> _syncPageSize (re-paginate) and

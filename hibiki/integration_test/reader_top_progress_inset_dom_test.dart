@@ -1,4 +1,4 @@
-import 'package:hibiki_dictionary/hibiki_dictionary.dart';
+import 'package:fushi_dictionary/fushi_dictionary.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -8,11 +8,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/main.dart' as app;
-import 'package:hibiki/media.dart';
-import 'package:hibiki/src/epub/epub_importer.dart';
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki/src/pages/implementations/reader_hibiki_page.dart';
+import 'package:fushi/main.dart' as app;
+import 'package:fushi/media.dart';
+import 'package:fushi/src/epub/epub_importer.dart';
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/pages/implementations/reader_hibiki_page.dart';
 
 import 'helpers/focus_driver.dart';
 import 'helpers/generate_test_epub.dart' show EpubGenerator;
@@ -309,9 +309,9 @@ Future<void> _activateBook(WidgetTester tester, String bookKey) async {
   final AppModel appModel = container.read(appProvider);
 
   // openMedia 需要 WidgetRef 但打开路径不解引用它（经 app 的 navigatorKey context
-  // 路由，非 ref）。根 HoshiReaderApp 是 ConsumerStatefulWidget，其 element 即 WidgetRef。
+  // 路由，非 ref）。根 FushiReaderApp 是 ConsumerStatefulWidget，其 element 即 WidgetRef。
   final ConsumerStatefulElement appElement = tester
-      .element(find.byType(app.HoshiReaderApp)) as ConsumerStatefulElement;
+      .element(find.byType(app.FushiReaderApp)) as ConsumerStatefulElement;
   final WidgetRef ref = appElement;
 
   final MediaItem? item =

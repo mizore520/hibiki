@@ -7,14 +7,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/models.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_bridge.dart';
-import 'package:hibiki/src/media/audiobook/reader_quick_settings_sheet.dart';
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki/src/models/theme_notifier.dart';
-import 'package:hibiki/src/platform/platform_services.dart';
-import 'package:hibiki/utils.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi/models.dart';
+import 'package:fushi/src/media/audiobook/audiobook_bridge.dart';
+import 'package:fushi/src/media/audiobook/reader_quick_settings_sheet.dart';
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/models/theme_notifier.dart';
+import 'package:fushi/src/platform/platform_services.dart';
+import 'package:fushi/utils.dart';
+import 'package:fushi_core/fushi_core.dart';
 
 import 'helpers/focus_driver.dart';
 import 'test_helpers.dart';
@@ -46,7 +46,7 @@ import 'test_helpers.dart';
 /// DoNothingIntent，Flutter 原生遍历直接可用，无需先开实验焦点导航开关。
 ///
 /// Run (PowerShell, from hibiki/):
-///   $env:HIBIKI_TEST_HIDDEN = "1"
+///   $env:FUSHI_TEST_HIDDEN = "1"
 ///   flutter test integration_test/reader_settings_layout_reachability_test.dart -d windows
 
 class _FakeInAppWebViewController implements InAppWebViewController {
@@ -118,7 +118,7 @@ Future<void> _enterLayoutNarrow(WidgetTester tester, FocusDriver driver) async {
       reason: 'layout navigation row must be focus-reachable via Tab');
   await driver.activate();
   await tester.pump(const Duration(milliseconds: 300));
-  if (find.text(t.ttu_theme).evaluate().isEmpty) {
+  if (find.text(t.reader_theme).evaluate().isEmpty) {
     await driver.focusWidget(layoutRow, maxSteps: 40);
     await driver.activateIntent();
     await tester.pump(const Duration(milliseconds: 300));
@@ -153,7 +153,7 @@ void main() {
       await _enterLayoutNarrow(tester, driver);
 
       // GATE 2: theme selector visible + operable.
-      expect(find.text(t.ttu_theme), findsOneWidget,
+      expect(find.text(t.reader_theme), findsOneWidget,
           reason: 'GATE2: theme selector merged into layout sub-page');
       expect(find.byType(HibikiSchemeSwatch), findsWidgets,
           reason: 'GATE2: theme swatches must render');
@@ -180,7 +180,7 @@ void main() {
     final FocusDriver driver = FocusDriver(tester);
     await _enterLayoutNarrow(tester, driver);
 
-    expect(find.text(t.ttu_theme), findsOneWidget);
+    expect(find.text(t.reader_theme), findsOneWidget);
     expect(find.text(t.book_css_editor_edit_css), findsNothing,
         reason: 'TODO-801: no CSS row when extractDir is unavailable');
   });
@@ -201,7 +201,7 @@ void main() {
       await _enterLayoutNarrow(tester, driver);
 
       // GATE 4: lyrics-mode layout sub-page exposes theme + edit-book-CSS.
-      expect(find.text(t.ttu_theme), findsOneWidget,
+      expect(find.text(t.reader_theme), findsOneWidget,
           reason: 'GATE4: lyrics mode must reach the theme selector');
       expect(find.byType(HibikiSchemeSwatch), findsWidgets);
       expect(find.text(t.book_css_editor_edit_css), findsOneWidget,
@@ -238,14 +238,14 @@ void main() {
           reason: 'GATE2: wide layout item must be reachable');
       await driver.activate();
       await tester.pump(const Duration(milliseconds: 300));
-      if (find.text(t.ttu_theme).evaluate().isEmpty) {
+      if (find.text(t.reader_theme).evaluate().isEmpty) {
         await driver.focusWidget(layoutItem, maxSteps: 40);
         await driver.activateIntent();
         await tester.pump(const Duration(milliseconds: 300));
       }
 
       // GATE 2 + 3 (wide right pane).
-      expect(find.text(t.ttu_theme), findsOneWidget,
+      expect(find.text(t.reader_theme), findsOneWidget,
           reason: 'GATE2: wide layout pane must contain the theme selector');
       expect(find.text(t.book_css_editor_edit_css), findsOneWidget,
           reason: 'GATE3: wide layout pane must contain edit-book-CSS');

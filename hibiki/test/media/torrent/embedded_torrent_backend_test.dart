@@ -2,21 +2,21 @@
 // 端到端验证：分类目录语义、magnet 添加、按分类过滤、快照/文件映射、
 // isComplete 判定。下载源是 LocalSeedRig（127.0.0.1 本地做种，零外网）。
 //
-// 库路径解析：HIBIKI_TORRENT_LIB 指向 hibiki_torrent_ffi.dll；缺库整组 skip
+// 库路径解析：FUSHI_TORRENT_LIB 指向 hibiki_torrent_ffi.dll；缺库整组 skip
 // —— CI/未构建环境不因缺 DLL 而红。
 
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/media/torrent/download_save_root.dart';
-import 'package:hibiki/src/media/torrent/embedded_torrent_backend.dart';
-import 'package:hibiki/src/media/torrent/torrent_backend.dart';
-import 'package:hibiki_torrent/hibiki_torrent.dart';
-import 'package:hibiki_torrent/testing.dart';
+import 'package:fushi/src/media/torrent/download_save_root.dart';
+import 'package:fushi/src/media/torrent/embedded_torrent_backend.dart';
+import 'package:fushi/src/media/torrent/torrent_backend.dart';
+import 'package:fushi_torrent/fushi_torrent.dart';
+import 'package:fushi_torrent/testing.dart';
 import 'package:path/path.dart' as p;
 
 String? _resolveLibPath() {
-  final String? env = Platform.environment['HIBIKI_TORRENT_LIB'];
+  final String? env = Platform.environment['FUSHI_TORRENT_LIB'];
   if (env != null && env.isNotEmpty) {
     return File(env).existsSync() ? env : null;
   }

@@ -7,7 +7,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/reader/reader_pagination_scripts.dart';
+import 'package:fushi/src/reader/reader_pagination_scripts.dart';
 
 /// TODO-881：有声书自动读逐句 reveal 翻页抖动（中点锚 → 起始边锚）。
 ///
@@ -24,7 +24,7 @@ import 'package:hibiki/src/reader/reader_pagination_scripts.dart';
 /// 修复：锚取**起始边**（竖排 rect.top、横排 rect.left），与引擎其余统一。起始边
 /// 锚恒等于「这句开头所在那一页」，不越界。
 ///
-/// 这是 JS `window.hoshiReader.scrollToRange` 落页锚的纯 Dart 影子（headless
+/// 这是 JS `window.fushiReader.scrollToRange` 落页锚的纯 Dart 影子（headless
 /// WebView 不可用，按项目测试范式：纯函数单测 + 源码守卫）。
 void main() {
   const double pageSize = 1000.0;

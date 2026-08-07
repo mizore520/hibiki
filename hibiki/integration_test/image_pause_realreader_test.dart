@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/main.dart' as app;
-import 'package:hibiki/src/pages/implementations/reader_hibiki_page.dart';
+import 'package:fushi/main.dart' as app;
+import 'package:fushi/src/pages/implementations/reader_hibiki_page.dart';
 
 import 'helpers/focus_driver.dart';
 import 'helpers/library_fixture.dart';
@@ -182,8 +182,8 @@ const String _insertImageJs = r'''
         document.body.appendChild(wrap);
       }
     }
-    if (window.hoshiReader && window.hoshiReader.buildPaginationMetrics) {
-      try { window.hoshiReader.buildPaginationMetrics(); } catch (e) {}
+    if (window.fushiReader && window.fushiReader.buildPaginationMetrics) {
+      try { window.fushiReader.buildPaginationMetrics(); } catch (e) {}
     }
     return JSON.stringify({
       hasPic: !!document.getElementById('rrPic'),

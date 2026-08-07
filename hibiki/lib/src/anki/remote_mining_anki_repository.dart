@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:hibiki_anki/hibiki_anki.dart';
-import 'package:hibiki_dictionary/hibiki_dictionary.dart';
+import 'package:fushi_anki/fushi_anki.dart';
+import 'package:fushi_dictionary/fushi_dictionary.dart';
 
-import 'package:hibiki/src/sync/forwarded_mine_payload.dart';
-import 'package:hibiki/src/sync/hibiki_remote_mining_client.dart';
-import 'package:hibiki/src/sync/sync_backend.dart';
+import 'package:fushi/src/sync/forwarded_mine_payload.dart';
+import 'package:fushi/src/sync/hibiki_remote_mining_client.dart';
+import 'package:fushi/src/sync/sync_backend.dart';
 
 /// 加载一条词典媒体（外字/内嵌图）的字节。默认走 `HoshiDicts.getMediaFile`。
 typedef DictMediaByteLoader = Uint8List? Function(
@@ -63,7 +63,7 @@ class RemoteMiningAnkiRepository extends BaseAnkiRepository {
   bool _authRejectedReported = false;
 
   static Uint8List? _defaultDictMediaLoader(String dictionary, String path) =>
-      HoshiDicts.instance.getMediaFile(dictionary, path);
+      FushiDicts.instance.getMediaFile(dictionary, path);
 
   static Future<Uint8List?> _defaultFileByteLoader(String path) async {
     final File file = File(path);
@@ -135,7 +135,7 @@ class RemoteMiningAnkiRepository extends BaseAnkiRepository {
     // 封面 + 句子音频：context 里是本地文件路径，读成字节。
     final Uint8List? coverBytes = await _readPath(context.coverPath);
     final Uint8List? sentenceAudioBytes =
-        await _readPath(context.sasayakiAudioPath);
+        await _readPath(context.sentenceAudioPath);
 
     // 单词音频 + 词典外字：从 rawPayloadJson 解析。解析失败不致命——仍转发文本卡。
     Uint8List? wordAudioBytes;
@@ -174,7 +174,7 @@ class RemoteMiningAnkiRepository extends BaseAnkiRepository {
       coverBytes: coverBytes,
       coverExt: _extOf(context.coverPath),
       sentenceAudioBytes: sentenceAudioBytes,
-      sentenceAudioExt: _extOf(context.sasayakiAudioPath),
+      sentenceAudioExt: _extOf(context.sentenceAudioPath),
       wordAudioBytes: wordAudioBytes,
       wordAudioExt: wordAudioExt,
       dictionaryMedia: dictMedia,

@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_clip_text_render.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_clip_webview_render.dart';
+import 'package:fushi/src/media/audiobook/audiobook_clip_text_render.dart';
+import 'package:fushi/src/media/audiobook/audiobook_clip_webview_render.dart';
 
 import '../../helpers/source_guard.dart';
 
@@ -44,7 +44,8 @@ void main() {
     expect(html.contains('__clipFit'), isTrue);
   });
 
-  test('vertical HTML paints the current sentence with the sasayaki highlight',
+  test(
+      'vertical HTML paints the current sentence with the sentenceAudioHighlight highlight',
       () {
     final String html = buildAudiobookClipVerticalHtml(
       segments: const <AudiobookClipTextSegment>[

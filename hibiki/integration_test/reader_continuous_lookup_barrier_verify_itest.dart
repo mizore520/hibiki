@@ -7,12 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/main.dart' as app;
-import 'package:hibiki/src/epub/epub_importer.dart';
-import 'package:hibiki/src/media/media_item.dart';
-import 'package:hibiki/src/media/sources/reader_hibiki_source.dart';
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki/src/pages/implementations/reader_hibiki_page.dart';
+import 'package:fushi/main.dart' as app;
+import 'package:fushi/src/epub/epub_importer.dart';
+import 'package:fushi/src/media/media_item.dart';
+import 'package:fushi/src/media/sources/reader_hibiki_source.dart';
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/pages/implementations/reader_hibiki_page.dart';
 
 import 'helpers/generate_test_epub.dart' show EpubGenerator;
 import 'helpers/library_fixture.dart';
@@ -33,7 +33,7 @@ import 'test_helpers.dart';
 ///      证明「点弹窗外的新词，一次就换查」，不是「只关栈、要点两次」。
 ///
 /// Run (PowerShell, from hibiki/)：
-///   $env:HIBIKI_TEST_HIDDEN = "1"
+///   $env:FUSHI_TEST_HIDDEN = "1"
 ///   flutter test integration_test/reader_continuous_lookup_barrier_verify_itest.dart -d windows
 void main() {
   final IntegrationTestWidgetsFlutterBinding binding =

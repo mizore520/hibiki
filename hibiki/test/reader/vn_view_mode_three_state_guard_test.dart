@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/reader/reader_pagination_scripts.dart';
+import 'package:fushi/src/reader/reader_pagination_scripts.dart';
 import '../helpers/source_guard.dart';
 
 /// TODO-909 源码守卫（源码扫描，沿用仓库既有 `File(...).readAsStringSync()` +
@@ -240,7 +240,7 @@ void main() {
         reason: 'view-mode segmented control must offer the VN option',
       );
       expect(
-        schema.contains('t.ttu_vn'),
+        schema.contains('t.reader_vn'),
         isTrue,
         reason: 'VN option must use the ttu_vn i18n label',
       );
@@ -251,10 +251,10 @@ void main() {
       'restore bridge',
       () {
         for (final String dep in <String>[
-          'global.hoshiReaderTextSemantics',
-          'global.hoshiReaderVnContentStream',
-          'global.hoshiReaderVnRangeMap',
-          'global.hoshiReaderMediaSemantics',
+          'global.fushiReaderTextSemantics',
+          'global.fushiReaderVnContentStream',
+          'global.fushiReaderVnRangeMap',
+          'global.fushiReaderMediaSemantics',
         ]) {
           expect(
             vnScripts.contains(dep),
@@ -272,7 +272,7 @@ void main() {
         // appear in explanatory comments, so scan comment-stripped code).
         expect(
           _stripLineComments(vnScripts)
-              .contains('window.HoshiReaderRestore.postMessage('),
+              .contains('window.FushiReaderRestore.postMessage('),
           isFalse,
           reason: 'VN must not keep hoshi native restore bridge call',
         );

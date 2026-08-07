@@ -7,13 +7,13 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki_dictionary/hibiki_dictionary.dart';
+import 'package:fushi_dictionary/fushi_dictionary.dart';
 
-import 'package:hibiki/src/sync/forwarded_mine_payload.dart';
-import 'package:hibiki/src/sync/hibiki_remote_lookup_service.dart';
-import 'package:hibiki/src/sync/immersion_mine_payload.dart';
-import 'package:hibiki/src/sync/yomitan_api_server.dart';
-import 'package:hibiki/src/sync/yomitan_tokenize_adapter.dart';
+import 'package:fushi/src/sync/forwarded_mine_payload.dart';
+import 'package:fushi/src/sync/hibiki_remote_lookup_service.dart';
+import 'package:fushi/src/sync/immersion_mine_payload.dart';
+import 'package:fushi/src/sync/yomitan_api_server.dart';
+import 'package:fushi/src/sync/yomitan_tokenize_adapter.dart';
 
 class _FakeLookup implements HibikiRemoteLookupService {
   String? lastTerm;
@@ -259,7 +259,7 @@ void main() {
         'lookup response carries extensionBuild from provider and omits it '
         'when absent (BUG-726)', () async {
       // BUG-726：扩展自更新信号。app 把内置扩展内容指纹随查词响应下发（extensionBuild），
-      // 扩展 background 与自身 HIBIKI_DEFAULTS.build 比对，不一致即 runtime.reload 拉新。
+      // 扩展 background 与自身 FUSHI_DEFAULTS.build 比对，不一致即 runtime.reload 拉新。
       await startServer(apiKey: 'k123', extensionBuildProvider: () => 'abc123');
       final HttpClientResponse resp = await _post(
         server.port,

@@ -1,5 +1,5 @@
-import 'package:hibiki/src/sync/sync_backend.dart';
-import 'package:hibiki/src/sync/webdav_ops.dart';
+import 'package:fushi/src/sync/sync_backend.dart';
+import 'package:fushi/src/sync/webdav_ops.dart';
 
 /// Normalizes a manually-entered Hibiki interconnect URL.
 ///
@@ -17,7 +17,7 @@ String normalizeHibikiInterconnectManualUrl(String rawUrl) {
       explicitScheme.group(1)!.toLowerCase() == 'https') {
     withScheme = trimmed;
   } else {
-    throw SyncBackendError('Hibiki URL must use http:// or https://');
+    throw SyncBackendError('Fushi URL must use http:// or https://');
   }
   return WebDavOps.normalizeUrl(withScheme);
 }

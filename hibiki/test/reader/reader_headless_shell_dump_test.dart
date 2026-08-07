@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/reader/reader_pagination_scripts.dart';
+import 'package:fushi/src/reader/reader_pagination_scripts.dart';
 
 /// 无头复现辅助（TODO-1229 / BUG-594）：把**真实**分页 / 连续横排 shell（`ReaderPaginationScripts
 /// .shellScript` 的完整产物，含 `_sharedJs` 与初始 `restoreProgress(0)` 引导）写到系统 temp，
@@ -24,7 +24,7 @@ void main() {
     File('$tmp/hoshi_shell_continuous.html').writeAsStringSync(continuous);
     File('$tmp/hoshi_shell_fwd.html').writeAsStringSync(paginated);
     File('$tmp/hoshi_shell_bwd.html').writeAsStringSync(paginated);
-    expect(paginated.contains('window.hoshiReader'), isTrue);
-    expect(continuous.contains('window.hoshiReader'), isTrue);
+    expect(paginated.contains('window.fushiReader'), isTrue);
+    expect(continuous.contains('window.fushiReader'), isTrue);
   });
 }

@@ -110,7 +110,7 @@ void main() {
 
   test('hidden Windows runner is toolwindow/noactivate and off-screen', () {
     final String runner = read('windows/runner/win32_window.cpp');
-    expect(runner.contains('HIBIKI_TEST_HIDDEN'), isTrue);
+    expect(runner.contains('FUSHI_TEST_HIDDEN'), isTrue);
     expect(runner.contains('WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE'), isTrue);
     expect(runner.contains('kOffscreenOrigin'), isTrue);
     expect(
@@ -242,7 +242,7 @@ void main() {
         what: 'lib/src 下的 .dart', atLeast: 750, measured: 930);
     expect(offenders, isEmpty,
         reason: 'Only WindowCaptionChannel may invoke clearTaskbarFlash on the '
-            'app.hibiki/window channel.');
+            'app.fushi/window channel.');
   });
 
   // TODO-615：bringPendingLookupToFront 唤前台路径必须主动 clearTaskbarFlash——

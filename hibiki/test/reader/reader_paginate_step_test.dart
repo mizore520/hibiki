@@ -5,7 +5,7 @@
 // 那里删掉模板中的 $caretJs / $selectionJs / $longPressDragJs 会立刻转红，本文件不会。
 // 改这里前先分清你要锁的是语义还是注入，别在本文件里重造装配断言。
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/reader/reader_pagination_scripts.dart';
+import 'package:fushi/src/reader/reader_pagination_scripts.dart';
 
 /// BUG-169：阅读器分页 `paginate()` 从「可能未对齐到整页」的 currentScroll 出发，
 /// 旧实现 forward 用 `round((currentScroll + pitch) / pitch) * pitch`，等价于
@@ -17,7 +17,7 @@ import 'package:hibiki/src/reader/reader_pagination_scripts.dart';
 /// （`floor(currentScroll/pitch) + 1`），backward 取严格之前的整页边界
 /// （`ceil(currentScroll/pitch) - 1`）。整页对齐时与旧实现等价；错位时永远只走一页。
 ///
-/// 这是 JS `window.hoshiReader.paginate` 的纯 Dart 影子（headless WebView 不可用，
+/// 这是 JS `window.fushiReader.paginate` 的纯 Dart 影子（headless WebView 不可用，
 /// 按项目测试范式：纯函数单测 + 源码守卫）。
 void main() {
   const double pitch = 1000.0;

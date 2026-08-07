@@ -42,12 +42,12 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
         _contentReadyDeadline = null;
         if (!mounted || _readerContentReady) return;
         debugPrint(
-            '[ReaderHibiki] content ready timeout — forcing overlay removal');
+            '[ReaderFushi] content ready timeout — forcing overlay removal');
         _rebuild(() {
           _readerContentReady = true;
           _hasEverLoaded = true;
         });
-        // BUG-868：兜底超时是「JS 侧 hoshiReader 迟迟不回 onRestoreComplete」时的最终解锁，
+        // BUG-868：兜底超时是「JS 侧 fushiReader 迟迟不回 onRestoreComplete」时的最终解锁，
         // 光翻 _readerContentReady 不够——_restoreInFlight / _isNavigatingToChapter /
         // _restoreCompleter 仍悬空，_paginationInFlight（chrome.part.dart）恒真：遮罩摘掉、
         // 书看似打开，但翻页永久被守卫吞掉、进度不再保存。这里连同解开导航态：三份中止
@@ -90,7 +90,7 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
           expectedGeneration: _restoreExpectedGeneration,
         )) {
       debugPrint(
-        '[ReaderHibiki] stale onRestoreComplete: '
+        '[ReaderFushi] stale onRestoreComplete: '
         'reported=$reportedGeneration expected=$_restoreExpectedGeneration '
         'current=$_navigateGeneration',
       );
@@ -214,14 +214,14 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
       if (!mounted) return;
       if (_navigateGeneration != settleGeneration) {
         debugPrint(
-          '[ReaderHibiki] stale restore settle: '
+          '[ReaderFushi] stale restore settle: '
           'expected=$settleGeneration current=$_navigateGeneration',
         );
         return;
       }
       // 收藏高亮：恢复完成（分页布局稳定、恢复滚动结束）后重新应用。
       // _onChapterLoadComplete 里的早期 apply 跑在 onLoadStop 同步返回之后，
-      // 而 hoshiReader.initialize 把 buildNodeOffsets / 恢复滚动塞进图片
+      // 而 fushiReader.initialize 把 buildNodeOffsets / 恢复滚动塞进图片
       // Promise.all().then() 里异步执行——早期 apply 抢在列布局存在之前注册
       // CSS Custom Highlight range，重进章节时高亮不绘制（立即收藏时布局已稳定
       // 所以能显示）。在这里（与立即收藏相同的稳定状态）再应用一次即可对齐。
@@ -536,7 +536,7 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
       ReaderChapterPerfTrace.mark('loadUrl');
     } catch (e, stack) {
       ErrorLogService.instance.log('ReaderHibiki._navigateToChapter', e, stack);
-      debugPrint('[ReaderHibiki] _navigateToChapter loadUrl failed: $e');
+      debugPrint('[ReaderFushi] _navigateToChapter loadUrl failed: $e');
       _failNavigation();
     }
   }
@@ -572,7 +572,7 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
     final bool success = await _restoreCompleter?.future.timeout(
           const Duration(seconds: 10),
           onTimeout: () {
-            debugPrint('[ReaderHibiki] _navigateToChapterAndWait timed out');
+            debugPrint('[ReaderFushi] _navigateToChapterAndWait timed out');
             // 与装载失败 / content-ready 兜底超时共用同一份导航中止收尾。旧写法只弃置
             // completer 不 complete（行为分叉）；_failNavigation 额外 complete(false)——
             // 本 future 已超时返回，completer 再 complete 无副作用，且让其它等待方也
@@ -607,7 +607,7 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
     } catch (e, stack) {
       ErrorLogService.instance
           .log('ReaderHibiki._applyPendingPreciseLocate', e, stack);
-      debugPrint('[ReaderHibiki] _applyPendingPreciseLocate failed: $e');
+      debugPrint('[ReaderFushi] _applyPendingPreciseLocate failed: $e');
     }
   }
 
@@ -678,7 +678,7 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
       ErrorLogService.instance
           .log('ReaderHibiki._navigateToChapterWithFragment', e, stack);
       debugPrint(
-          '[ReaderHibiki] _navigateToChapterWithFragment loadUrl failed: $e');
+          '[ReaderFushi] _navigateToChapterWithFragment loadUrl failed: $e');
       _failNavigation();
     }
   }
@@ -691,13 +691,13 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
     final String literal = jsonEncode(fragment);
     try {
       await _controller!.evaluateJavascript(
-        source: 'window.hoshiReader && '
-            'window.hoshiReader.jumpToFragment($literal);',
+        source: 'window.fushiReader && '
+            'window.fushiReader.jumpToFragment($literal);',
       );
     } catch (e, stack) {
       ErrorLogService.instance
           .log('ReaderHibiki._jumpToFragmentInPlace', e, stack);
-      debugPrint('[ReaderHibiki] _jumpToFragmentInPlace failed: $e');
+      debugPrint('[ReaderFushi] _jumpToFragmentInPlace failed: $e');
     }
   }
 
@@ -714,7 +714,7 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e, stack) {
       ErrorLogService.instance.log('ReaderHibiki._openExternalUrl', e, stack);
-      debugPrint('[ReaderHibiki] _openExternalUrl failed for $url: $e');
+      debugPrint('[ReaderFushi] _openExternalUrl failed for $url: $e');
     }
   }
 
@@ -788,7 +788,7 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
       await _loadSpreadPage(entry);
     } catch (e, stack) {
       ErrorLogService.instance.log('ReaderHibiki._navigateToSpread', e, stack);
-      debugPrint('[ReaderHibiki] _navigateToSpread failed: $e');
+      debugPrint('[ReaderFushi] _navigateToSpread failed: $e');
       _failNavigation();
     }
   }
@@ -1112,7 +1112,7 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
         e,
         stack,
       );
-      debugPrint('[ReaderHibiki] syncPositionFromWebViewProgress failed: $e');
+      debugPrint('[ReaderFushi] syncPositionFromWebViewProgress failed: $e');
       return;
     }
     if (!mounted) return;
@@ -1136,7 +1136,7 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
         _audiobookController?.isPlaying != true;
     if (transientZero) {
       if (DebugLogService.instance.enabled) {
-        debugPrint('[ReaderHibiki] syncPosition skip transient reflow-zero: '
+        debugPrint('[ReaderFushi] syncPosition skip transient reflow-zero: '
             'prior=${_lastProgressValue.toStringAsFixed(4)} '
             'read=${snapshot.progress.toStringAsFixed(4)} → keep cached anchor');
       }
@@ -1185,7 +1185,7 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
     // （有真行为测），此处只做接线。
     final ({int normCharOffset, int? charOffset}) saveArgs =
         readerPositionSaveArgs(progress: progress, charOffset: charOffset);
-    debugPrint('[ReaderHibiki] save position: bookKey=${widget.bookKey} '
+    debugPrint('[ReaderFushi] save position: bookKey=${widget.bookKey} '
         'section=$section normOffset=${saveArgs.normCharOffset} '
         'charOffset=$charOffset');
     final ReaderPositionRepository repo =
@@ -1233,8 +1233,8 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
   void _syncPositionFromCurrentCue() {
     final AudioCue? cue = _audiobookController?.currentCue;
     if (cue == null) return;
-    final SasayakiFragment? frag =
-        SasayakiMatchCodec.tryDecode(cue.textFragmentId);
+    final SubtitleRematchFragment? frag =
+        SubtitleRematchCodec.tryDecode(cue.textFragmentId);
     if (frag != null) {
       _lastProgressSection = frag.sectionIndex;
       if (frag.sectionIndex >= 0 &&
@@ -1370,7 +1370,7 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
     } else {
       await _controller!.evaluateJavascript(
         source:
-            'window.hoshiReader && window.hoshiReader.restoreProgress(${target.progress});',
+            'window.fushiReader && window.fushiReader.restoreProgress(${target.progress});',
       );
     }
   }
@@ -1441,7 +1441,7 @@ extension _ReaderNavigation on _ReaderHibikiPageState {
     } catch (e, stack) {
       // fail-open：本次统计增量丢弃（计数器已清零，不会重复累加），补 debugPrint +
       // ErrorLogService.log 使 DB 写异常线上可诊断。
-      debugPrint('[ReaderHibiki] stats flush error: $e');
+      debugPrint('[ReaderFushi] stats flush error: $e');
       ErrorLogService.instance.log('ReaderHibiki._flushReadingStats', e, stack);
     }
   }

@@ -12,7 +12,7 @@ import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/mining/magpie_installer.dart';
+import 'package:fushi/src/mining/magpie_installer.dart';
 import 'package:path/path.dart' as p;
 
 import '../helpers/source_guard.dart';
@@ -320,7 +320,7 @@ void main() {
 
     test('Inno Setup 递归收目录，随包资产无需单独列条目', () {
       final String installer =
-          File('windows/installer/hibiki.iss').readAsStringSync();
+          File('windows/installer/fushi.iss').readAsStringSync();
       expect(installer, contains('recursesubdirs'));
     });
   });

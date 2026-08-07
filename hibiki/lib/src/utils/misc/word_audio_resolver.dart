@@ -3,12 +3,12 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:hibiki/i18n/strings.g.dart';
-import 'package:hibiki/src/models/audio_source_config.dart';
-import 'package:hibiki/src/sync/hibiki_remote_lookup_client.dart'
+import 'package:fushi/i18n/strings.g.dart';
+import 'package:fushi/src/models/audio_source_config.dart';
+import 'package:fushi/src/sync/hibiki_remote_lookup_client.dart'
     show RemoteLookupUnreachableError;
-import 'package:hibiki/src/utils/misc/error_log_service.dart';
-import 'package:hibiki/src/utils/misc/local_audio_db.dart'
+import 'package:fushi/src/utils/misc/error_log_service.dart';
+import 'package:fushi/src/utils/misc/local_audio_db.dart'
     show LocalAudioUnavailableError;
 
 /// 弱网下的连接超时上限：从 5s 放宽到 8s，减少慢握手被误判为失败（TODO-1057）。
@@ -47,7 +47,11 @@ class WordAudioResolver {
 
   static const String localAudioUrl =
       'http://localhost:8765/localaudio/get/?term={term}&reading={reading}';
-  static const String hibikiRemoteAudioUrl = 'hibiki://remote-audio';
+  static const String hibikiRemoteAudioUrl = 'fushi://remote-audio';
+
+  /// 旧 sentinel（Fushi 改名前写入用户音频源配置的持久化值）。经迁移导入器原样
+  /// 带过来的老配置仍是这个值——读取路径两个都认，写入只写新值。
+  static const String legacyRemoteAudioUrl = 'hibiki://remote-audio';
 
   /// hibikiRemote（互联配对）源在失败冷却表里的固定 key：配对候选是一组设备
   /// 地址、整体成败一体，不按单个候选 host 拆分冷却。
@@ -72,7 +76,8 @@ class WordAudioResolver {
         if (remote != null && remote.isNotEmpty) return remote;
         continue;
       }
-      if (template == hibikiRemoteAudioUrl) {
+      if (template == hibikiRemoteAudioUrl ||
+          template == legacyRemoteAudioUrl) {
         final String? remote = await _queryRemoteLegacy(expression, reading);
         if (remote != null && remote.isNotEmpty) return remote;
         continue;

@@ -1,15 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:hibiki/models.dart';
-import 'package:hibiki/pages.dart';
-import 'package:hibiki/src/media/sources/reader_hibiki_source.dart';
-import 'package:hibiki/src/models/theme_notifier.dart'
+import 'package:fushi/models.dart';
+import 'package:fushi/pages.dart';
+import 'package:fushi/src/media/sources/reader_hibiki_source.dart';
+import 'package:fushi/src/models/theme_notifier.dart'
     show CustomThemeEntry, kCustomThemeDefaultSeed;
-import 'package:hibiki/src/profile/profile_view_model.dart';
-import 'package:hibiki/src/settings/settings_context.dart';
-import 'package:hibiki/utils.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi/src/profile/profile_view_model.dart';
+import 'package:fushi/src/settings/settings_context.dart';
+import 'package:fushi/utils.dart';
+import 'package:fushi_core/fushi_core.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 const double _swatchSize = 48.0;
@@ -149,7 +149,7 @@ Future<void> setKeepScreenAwake(
       await WakelockPlus.disable();
     }
   } catch (e) {
-    debugPrint('[Hibiki] wakelock toggle failed: $e');
+    debugPrint('[Fushi] wakelock toggle failed: $e');
   }
   notifyReaderSettingsChanged(settingsContext);
 }
@@ -308,7 +308,7 @@ Widget buildThemeSelector(SettingsContext settingsContext) {
       HibikiDesignTokens.of(settingsContext.context);
 
   return AdaptiveSettingsRow(
-    title: t.ttu_theme,
+    title: t.reader_theme,
     // TODO-928: 提示自定义主题「点击切换 · 长按编辑」的发现性文案。
     subtitle: t.custom_theme_long_press_hint,
     icon: Icons.color_lens_outlined,

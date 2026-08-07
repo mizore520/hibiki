@@ -1,4 +1,4 @@
-import 'package:hibiki_dictionary/hibiki_dictionary.dart';
+import 'package:fushi_dictionary/fushi_dictionary.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -11,22 +11,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'package:hibiki/main.dart' show HoshiReaderApp;
-import 'package:hibiki/src/epub/epub_importer.dart';
-import 'package:hibiki/src/media/media_item.dart' show MediaItem;
-import 'package:hibiki/src/media/sources/reader_hibiki_source.dart';
-import 'package:hibiki/src/pages/implementations/home_page.dart'
+import 'package:fushi/main.dart' show FushiReaderApp;
+import 'package:fushi/src/epub/epub_importer.dart';
+import 'package:fushi/src/media/media_item.dart' show MediaItem;
+import 'package:fushi/src/media/sources/reader_hibiki_source.dart';
+import 'package:fushi/src/pages/implementations/home_page.dart'
     show HomePage, HomeTab;
-import 'package:hibiki/src/pages/implementations/home_video_page.dart'
+import 'package:fushi/src/pages/implementations/home_video_page.dart'
     show HomeVideoPage;
-import 'package:hibiki/src/media/video/video_book_repository.dart';
-import 'package:hibiki/src/media/video/video_import_dialog.dart'
+import 'package:fushi/src/media/video/video_book_repository.dart';
+import 'package:fushi/src/media/video/video_import_dialog.dart'
     show singleVideoBookUid;
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki/src/pages/implementations/tag_filter_sheet.dart'
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/pages/implementations/tag_filter_sheet.dart'
     show filteredVideoBookUidsProvider;
-import 'package:hibiki_audio/hibiki_audio.dart';
-import 'package:hibiki_core/hibiki_core.dart' show VideoBooksCompanion;
+import 'package:fushi_audio/fushi_audio.dart';
+import 'package:fushi_core/fushi_core.dart' show VideoBooksCompanion;
 
 import 'generate_test_epub.dart' show EpubGenerator;
 import 'media_fixtures.dart';
@@ -82,9 +82,9 @@ Future<void> openBookViaProductionPath(
   );
   final AppModel appModel = container.read(appProvider);
   // openMedia 需要 WidgetRef 但 open 路径不解引用它（路由走 app navigatorKey 的
-  // context）；根 [HoshiReaderApp] 是 ConsumerStatefulWidget，其 element 即 WidgetRef。
+  // context）；根 [FushiReaderApp] 是 ConsumerStatefulWidget，其 element 即 WidgetRef。
   final ConsumerStatefulElement appElement =
-      tester.element(find.byType(HoshiReaderApp)) as ConsumerStatefulElement;
+      tester.element(find.byType(FushiReaderApp)) as ConsumerStatefulElement;
   final WidgetRef ref = appElement;
   unawaited(appModel.openMedia(
     ref: ref,
@@ -214,7 +214,7 @@ Future<File> writeGeneratedDictionary(File file) async {
 Future<File?> _findExternalDictionaryFixture() async {
   final List<File> candidates = <File>[];
 
-  const String testRoot = String.fromEnvironment('HIBIKI_TEST_ROOT');
+  const String testRoot = String.fromEnvironment('FUSHI_TEST_ROOT');
   if (testRoot.isNotEmpty) {
     candidates.add(File(
         '$testRoot${Platform.pathSeparator}fixtures${Platform.pathSeparator}test_dict.zip'));
@@ -249,12 +249,12 @@ ArchiveFile _jsonFile(String name, Object json) {
   return ArchiveFile(name, bytes.length, bytes);
 }
 
-/// 落盘目录：`HIBIKI_TEST_ROOT/fixtures`（隔离测试根），未设时回退系统临时目录。
+/// 落盘目录：`FUSHI_TEST_ROOT/fixtures`（隔离测试根），未设时回退系统临时目录。
 ///
 /// 与 `video_chapter_first_load_test.dart` 同款约定，保证音视频素材落进 e2e
 /// 隔离根、可被 runner 取证 / 清理。
 Future<Directory> _fixturesDir() async {
-  const String testRoot = String.fromEnvironment('HIBIKI_TEST_ROOT');
+  const String testRoot = String.fromEnvironment('FUSHI_TEST_ROOT');
   final Directory dir = testRoot.isEmpty
       ? await Directory.systemTemp.createTemp('hibiki_fixtures_')
       : Directory('$testRoot${Platform.pathSeparator}fixtures');

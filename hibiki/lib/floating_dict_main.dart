@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hibiki/models.dart';
-import 'package:hibiki/src/pages/implementations/floating_dict_page.dart';
-import 'package:hibiki/src/platform/platform_services.dart';
-import 'package:hibiki/src/platform/platform_providers.dart';
+import 'package:fushi/models.dart';
+import 'package:fushi/src/pages/implementations/floating_dict_page.dart';
+import 'package:fushi/src/platform/platform_services.dart';
+import 'package:fushi/src/platform/platform_providers.dart';
 
-const _overlayChannel = MethodChannel('app.hibiki.reader/floating_overlay');
+const _overlayChannel = MethodChannel('app.fushi.reader/floating_overlay');
 
 @pragma('vm:entry-point')
 void floatingDictMain() {
@@ -32,7 +32,7 @@ void floatingDictMain() {
 
     unawaited(appModel.initialiseForDictionaryPopup());
   }, (exception, stack) {
-    debugPrint('[Hibiki-floatingDict] uncaught: $exception\n$stack');
+    debugPrint('[Fushi-floatingDict] uncaught: $exception\n$stack');
   });
 }
 

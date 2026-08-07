@@ -1,8 +1,8 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki_core/hibiki_core.dart';
-import 'package:hibiki/src/reader/reader_content_styles.dart';
-import 'package:hibiki/src/reader/reader_settings.dart';
+import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi/src/reader/reader_content_styles.dart';
+import 'package:fushi/src/reader/reader_settings.dart';
 
 import '../helpers/source_guard.dart';
 
@@ -105,7 +105,7 @@ void main() {
           reason: '竖排必须 ruby-position:over(振假名在右、留在基字高亮盒外)');
       expect(
           css.contains(
-              'background-color: var(--hoshi-sasayaki-background-color) !important'),
+              'background-color: var(--hoshi-sentence-audio-background-color) !important'),
           isTrue,
           reason: 'BUG-716：ruby 有声书高亮整句 background-color 填充');
       expect(css.contains('--hoshi-highlight-lane-color'), isFalse,

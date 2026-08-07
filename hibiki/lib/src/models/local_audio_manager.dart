@@ -4,10 +4,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 
-import 'package:hibiki/src/models/local_audio_source_pref.dart';
-import 'package:hibiki/src/models/preferences_repository.dart';
-import 'package:hibiki/src/utils/misc/local_audio_db.dart';
-import 'package:hibiki/src/utils/misc/tts_channel.dart';
+import 'package:fushi/src/models/local_audio_source_pref.dart';
+import 'package:fushi/src/models/preferences_repository.dart';
+import 'package:fushi/src/utils/misc/local_audio_db.dart';
+import 'package:fushi/src/utils/misc/tts_channel.dart';
 
 /// 选中的文件不是一个可用的本地音频源库（不是 Yomitan「本地音频服务器」SQLite，
 /// 或库里没有任何音频）。[LocalAudioManager.importFile] 在把文件收进库前抛出，
@@ -334,7 +334,7 @@ class LocalAudioManager {
       if (await File(resolved).exists()) {
         validConfigs.add(_configFor(entry));
       } else {
-        debugPrint('[hibiki-audio] DB missing, skipping: $resolved'
+        debugPrint('[fushi-audio] DB missing, skipping: $resolved'
             '${resolved == entry.path ? '' : ' (stored: ${entry.path})'}');
       }
     }

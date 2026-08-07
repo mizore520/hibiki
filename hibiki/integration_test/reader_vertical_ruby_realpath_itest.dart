@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/main.dart' as app;
-import 'package:hibiki/src/media/sources/reader_hibiki_source.dart'
+import 'package:fushi/main.dart' as app;
+import 'package:fushi/src/media/sources/reader_hibiki_source.dart'
     show ReaderHibikiSource;
-import 'package:hibiki/src/models/app_model.dart' show AppModel;
-import 'package:hibiki/src/pages/implementations/reader_hibiki_page.dart'
+import 'package:fushi/src/models/app_model.dart' show AppModel;
+import 'package:fushi/src/pages/implementations/reader_hibiki_page.dart'
     show ReaderHibikiPage;
 
 import 'helpers/focus_driver.dart';
@@ -192,8 +192,8 @@ void main() {
           // Keep vertical-rl (the machine default) + continuous scroll (the
           // reported scenario). writingMode/viewMode are structural layout keys:
           // fire onLayoutReloadLive to re-run pagination (the product path).
-          await ReaderHibikiSource.instance.setTtuWritingMode('vertical-rl');
-          await ReaderHibikiSource.instance.setTtuViewMode('continuous');
+          await ReaderHibikiSource.instance.setReaderWritingMode('vertical-rl');
+          await ReaderHibikiSource.instance.setReaderViewMode('continuous');
           ReaderHibikiSource.onLayoutReloadLive?.call();
           for (int i = 0; i < 16; i++) {
             await tester.pump(const Duration(milliseconds: 250));
@@ -206,7 +206,7 @@ void main() {
               reason: 'reader must expose debugEvaluateJavascript hook');
 
           final Object? verticalRaw =
-              await runJs!('window.hoshiReader.isVertical();');
+              await runJs!('window.fushiReader.isVertical();');
           expect(verticalRaw == true || verticalRaw == 'true', isTrue,
               reason: 'reader must be vertical-rl for TODO-1308');
 
@@ -238,11 +238,11 @@ void main() {
           // Trigger the real jump/relayout path: scroll to a char offset (the
           // reveal/reanchor machinery) + toggle chrome insets (forces the same
           // incremental relayout _applyChapterHighlights triggers).
-          await runJs('window.hoshiReader.restoreToCharOffset(200);');
+          await runJs('window.fushiReader.restoreToCharOffset(200);');
           await tester.pump(const Duration(milliseconds: 400));
-          await runJs('window.hoshiReader.setChromeInsets(48, 96);');
+          await runJs('window.fushiReader.setChromeInsets(48, 96);');
           await tester.pump(const Duration(milliseconds: 400));
-          await runJs('window.hoshiReader.setChromeInsets(0, 0);');
+          await runJs('window.fushiReader.setChromeInsets(0, 0);');
           await tester.pump(const Duration(milliseconds: 400));
 
           // Measure AFTER jump/relayout.

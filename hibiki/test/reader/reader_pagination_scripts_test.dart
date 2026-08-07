@@ -6,7 +6,7 @@
 // 改这里前先分清你要锁的是语义还是注入，别在本文件里重造装配断言。
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/services.dart';
-import 'package:hibiki/src/reader/reader_pagination_scripts.dart';
+import 'package:fushi/src/reader/reader_pagination_scripts.dart';
 
 void main() {
   group('ReaderPaginationScripts.didScroll', () {
@@ -58,7 +58,7 @@ void main() {
       expect(
         ReaderPaginationScripts.paginateInvocation(
             ReaderNavigationDirection.forward),
-        "window.hoshiReader && window.hoshiReader.paginate('forward')",
+        "window.fushiReader && window.fushiReader.paginate('forward')",
       );
     });
 
@@ -66,21 +66,21 @@ void main() {
       expect(
         ReaderPaginationScripts.paginateInvocation(
             ReaderNavigationDirection.backward),
-        "window.hoshiReader && window.hoshiReader.paginate('backward')",
+        "window.fushiReader && window.fushiReader.paginate('backward')",
       );
     });
 
     test('progressInvocation', () {
       expect(
         ReaderPaginationScripts.progressInvocation(),
-        'window.hoshiReader && window.hoshiReader.calculateProgress()',
+        'window.fushiReader && window.fushiReader.calculateProgress()',
       );
     });
 
     test('stableProgressInvocation returns null during reanchor', () {
       expect(
         ReaderPaginationScripts.stableProgressInvocation(),
-        'window.hoshiReader && !window.hoshiReader._reanchorPending '
+        'window.fushiReader && !window.fushiReader._reanchorPending '
         '&& window.hoshiProgressDetails ? window.hoshiProgressDetails() : null',
       );
     });
@@ -88,14 +88,14 @@ void main() {
     test('updatePageSizeInvocation', () {
       expect(
         ReaderPaginationScripts.updatePageSizeInvocation(360.0, 640.0),
-        'window.hoshiReader && window.hoshiReader.updatePageSize(360.0, 640.0)',
+        'window.fushiReader && window.fushiReader.updatePageSize(360.0, 640.0)',
       );
     });
 
-    test('clearSasayakiCueInvocation', () {
+    test('clearSentenceAudioCueInvocation', () {
       expect(
-        ReaderPaginationScripts.clearSasayakiCueInvocation(),
-        'window.hoshiReader.clearSasayakiCue()',
+        ReaderPaginationScripts.clearSentenceAudioCueInvocation(),
+        'window.fushiReader.clearSentenceAudioCue()',
       );
     });
 
@@ -109,7 +109,7 @@ void main() {
     test('clearSearchHighlightInvocation', () {
       expect(
         ReaderPaginationScripts.clearSearchHighlightInvocation(),
-        'window.hoshiReader.clearSearchHighlight()',
+        'window.fushiReader.clearSearchHighlight()',
       );
     });
   });
@@ -152,16 +152,16 @@ void main() {
   });
 
   group('ReaderPaginationScripts.shellScript contract', () {
-    test('paginated mode contains hoshiReader object', () {
+    test('paginated mode contains fushiReader object', () {
       final String script = ReaderPaginationScripts.paginatedShellSource();
       expect(script, contains('<script>'));
       expect(script, contains('</script>'));
-      expect(script, contains('window.hoshiReader'));
+      expect(script, contains('window.fushiReader'));
     });
 
-    test('continuous mode contains hoshiReader object', () {
+    test('continuous mode contains fushiReader object', () {
       final String script = ReaderPaginationScripts.continuousShellSource();
-      expect(script, contains('window.hoshiReader'));
+      expect(script, contains('window.fushiReader'));
     });
 
     test('paginated mode defines paginate method', () {
@@ -175,13 +175,13 @@ void main() {
     test('initial progress / char offset / fragment are read from config', () {
       final String script = ReaderPaginationScripts.paginatedShellSource();
       expect(script,
-          contains('window.hoshiReader.restoreProgress(C.initialProgress)'));
+          contains('window.fushiReader.restoreProgress(C.initialProgress)'));
       expect(
           script,
           contains(
-              'window.hoshiReader.restoreToCharOffset(C.initialCharOffset)'));
+              'window.fushiReader.restoreToCharOffset(C.initialCharOffset)'));
       expect(script,
-          contains('window.hoshiReader.jumpToFragment(C.initialFragment)'));
+          contains('window.fushiReader.jumpToFragment(C.initialFragment)'));
       final int fragIdx = script.indexOf('C.initialFragment !== null');
       final int charIdx = script.indexOf('C.initialCharOffset >= 0');
       expect(fragIdx, isNonNegative);
@@ -189,11 +189,13 @@ void main() {
       expect(fragIdx < charIdx, isTrue, reason: 'fragment 跳转优先级必须高于精确字符锚');
     });
 
-    test('sasayaki cues are read from config when present', () {
+    test('sentenceAudioHighlight cues are read from config when present', () {
       final String script = ReaderPaginationScripts.paginatedShellSource();
-      expect(script,
-          contains('window.hoshiReader.applySasayakiCues(C.sasayakiCues)'));
-      expect(script, contains('C.sasayakiCues !== null'));
+      expect(
+          script,
+          contains(
+              'window.fushiReader.applySentenceAudioCues(C.sentenceAudioCues)'));
+      expect(script, contains('C.sentenceAudioCues !== null'));
     });
 
     test('defines onRestoreComplete callback', () {
@@ -264,7 +266,7 @@ void main() {
           ReaderPaginationScripts.scrollToSearchMatchInvocation('a"b', 7);
       // The query must be emitted as a single, properly escaped JS string
       // literal so the raw quote cannot terminate the argument early.
-      expect(result, 'window.hoshiReader.scrollToSearchMatch("a\\"b", 7)');
+      expect(result, 'window.fushiReader.scrollToSearchMatch("a\\"b", 7)');
       expect(result, isNot(contains('"a"b"')));
     });
 
@@ -284,18 +286,19 @@ void main() {
     test('scrollToSearchMatchInvocation preserves CJK query verbatim', () {
       final String result =
           ReaderPaginationScripts.scrollToSearchMatchInvocation('猫', 100);
-      expect(result, 'window.hoshiReader.scrollToSearchMatch("猫", 100)');
+      expect(result, 'window.fushiReader.scrollToSearchMatch("猫", 100)');
     });
 
-    test('highlightSasayakiCueInvocation escapes cue id and embeds bool', () {
+    test('highlightSentenceAudioCueInvocation escapes cue id and embeds bool',
+        () {
       final String result =
-          ReaderPaginationScripts.highlightSasayakiCueInvocation(
+          ReaderPaginationScripts.highlightSentenceAudioCueInvocation(
         'cue"1',
         reveal: true,
       );
       expect(
         result,
-        'window.hoshiReader.highlightSasayakiCue("cue\\"1", true)',
+        'window.fushiReader.highlightSentenceAudioCue("cue\\"1", true)',
       );
     });
   });

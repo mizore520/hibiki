@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
-import 'package:hibiki/src/startup/test_environment.dart';
-import 'package:hibiki/src/storage/app_paths.dart';
+import 'package:fushi/src/startup/test_environment.dart';
+import 'package:fushi/src/storage/app_paths.dart';
 
 /// TODO-935 E0 守卫：钉死「应用数据根目录唯一入口 [AppPaths]」的收敛不被回退。
 ///
 /// 两类断言：
-///  1. **行为等价**（运行时）：在 `HIBIKI_TEST_ROOT` 注入下，[AppPaths] 解析出的三个根
+///  1. **行为等价**（运行时）：在 `FUSHI_TEST_ROOT` 注入下，[AppPaths] 解析出的三个根
 ///     与旧的 `hibikiTestDirectory('app-documents'|'app-support'|'temp')` 逐字节一致，
 ///     且各子目录 getter 在其下逐字节派生——证明重构没有改变任何模块拿到的绝对路径。
 ///  2. **单一入口**（源码扫描）：被收敛的核心数据存储模块不再直连
@@ -31,7 +31,7 @@ void main() {
 
     test('三个根与 hibikiTestDirectory 逐字节一致', () async {
       final Map<String, String> env = <String, String>{
-        'HIBIKI_TEST_ROOT': root.path,
+        'FUSHI_TEST_ROOT': root.path,
       };
       // 旧解析（各模块原先各自调用的等价物）。
       final Directory expectedDocs =
@@ -114,7 +114,7 @@ void main() {
       // 上游包不能 import app 层 AppPaths，故包内自有单一解析点 _documentsRoot；
       // 三处持久目录方法都经它，不再各自直连 path_provider。
       final String src = read(
-          '../packages/hibiki_audio/lib/src/audiobook/audiobook_storage.dart');
+          '../packages/fushi_audio/lib/src/audiobook/audiobook_storage.dart');
       expect(src.contains('_documentsRoot()'), isTrue,
           reason: 'audiobook_storage 必须有包内单一 documents 解析点 _documentsRoot');
       // _documentsRoot 是唯一真正调用 path_provider 的地方：三个持久目录方法都改读

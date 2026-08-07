@@ -4,16 +4,16 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
-import 'package:hibiki_dictionary/hibiki_dictionary.dart';
-import 'package:hibiki/media.dart';
-import 'package:hibiki/pages.dart';
-import 'package:hibiki/src/focus/hibiki_focus_controller.dart';
-import 'package:hibiki/src/media/drag_drop/drop_classification.dart';
-import 'package:hibiki/src/media/drag_drop/hibiki_file_drop_target.dart';
-import 'package:hibiki/src/models/dictionary_import_manager.dart';
-import 'package:hibiki/src/models/dictionary_repository.dart';
-import 'package:hibiki/src/utils/misc/channel_constants.dart';
-import 'package:hibiki/utils.dart';
+import 'package:fushi_dictionary/fushi_dictionary.dart';
+import 'package:fushi/media.dart';
+import 'package:fushi/pages.dart';
+import 'package:fushi/src/focus/hibiki_focus_controller.dart';
+import 'package:fushi/src/media/drag_drop/drop_classification.dart';
+import 'package:fushi/src/media/drag_drop/hibiki_file_drop_target.dart';
+import 'package:fushi/src/models/dictionary_import_manager.dart';
+import 'package:fushi/src/models/dictionary_repository.dart';
+import 'package:fushi/src/utils/misc/channel_constants.dart';
+import 'package:fushi/utils.dart';
 
 /// Page used for managing installed dictionaries.
 class DictionaryDialogPage extends BasePage {
@@ -44,7 +44,7 @@ class _DictionaryDialogPageState extends BasePageState {
       if (paths.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           debugPrint(
-            '[hibiki-drop] [dictionary-dialog] initialImportPaths=${paths.length}',
+            '[fushi-drop] [dictionary-dialog] initialImportPaths=${paths.length}',
           );
           if (mounted) unawaited(_importDictionaryPaths(paths));
         });
@@ -526,11 +526,11 @@ class _DictionaryDialogPageState extends BasePageState {
 
     final List<String> importPaths = classifyDroppedFilesForDictionary(paths);
     debugPrint(
-      '[hibiki-drop] [dictionary-dialog] importPaths=${importPaths.length} '
+      '[fushi-drop] [dictionary-dialog] importPaths=${importPaths.length} '
       'paths=${paths.length} global=$globalPosition',
     );
     if (importPaths.isEmpty) {
-      debugPrint('[hibiki-drop] [dictionary-dialog] intent=unsupportedSurface');
+      debugPrint('[fushi-drop] [dictionary-dialog] intent=unsupportedSurface');
       HibikiToast.show(
         msg: t.drag_drop_unsupported_on_dictionary,
         severity: ToastSeverity.error,

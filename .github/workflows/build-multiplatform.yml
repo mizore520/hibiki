@@ -253,7 +253,7 @@ jobs:
           set -euo pipefail
           "$CC" --version
           "$CXX" --version
-          cat > /tmp/hoshidicts_expected.cpp <<'CPP'
+          cat > /tmp/fushidicts_expected.cpp <<'CPP'
           #include <expected>
           #ifndef __cpp_lib_expected
           #error __cpp_lib_expected missing
@@ -264,7 +264,7 @@ jobs:
             return ok.value() == 23 && fail.error() == 1 ? 0 : 1;
           }
           CPP
-          "$CXX" -std=c++23 /tmp/hoshidicts_expected.cpp -o /tmp/hoshidicts_expected
+          "$CXX" -std=c++23 /tmp/fushidicts_expected.cpp -o /tmp/fushidicts_expected
       # Native engine e2e/guard suite (TODO-578): build the real hoshidicts
       # static lib via the unified CMake/ctest harness and run every native test
       # (UAF dict-name, kanji round-trip, media import/query, freq+pitch, plus
@@ -412,7 +412,7 @@ jobs:
           test -n "$compiler_file"
           grep -F 'set(CMAKE_CXX_COMPILER_ID "GNU")' "$compiler_file"
 
-          cat > /tmp/hoshidicts_flutter_cmake_expected.cpp <<'CPP'
+          cat > /tmp/fushidicts_flutter_cmake_expected.cpp <<'CPP'
           #include <expected>
           #ifndef __cpp_lib_expected
           #error __cpp_lib_expected missing
@@ -424,8 +424,8 @@ jobs:
           }
           CPP
           "$RUNNER_TEMP/hibiki-linux-toolchain/clang++" -std=c++23 \
-            /tmp/hoshidicts_flutter_cmake_expected.cpp \
-            -o /tmp/hoshidicts_flutter_cmake_expected
+            /tmp/fushidicts_flutter_cmake_expected.cpp \
+            -o /tmp/fushidicts_flutter_cmake_expected
       - name: Build Linux (debug)
         working-directory: hibiki
         shell: bash
@@ -583,7 +583,7 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x tool/mihon/build_desktop_runtime.sh
-          app_dir="hibiki/build/macos/Build/Products/Debug/hibiki.app"
+          app_dir="hibiki/build/macos/Build/Products/Debug/fushi.app"
           runtime_dir="$app_dir/Contents/Resources/mihon_bridge"
           tool/mihon/build_desktop_runtime.sh "$runtime_dir" "$RUNNER_TEMP/hibiki-mihon-downloads"
           while IFS= read -r candidate; do
@@ -599,25 +599,25 @@ jobs:
         working-directory: hibiki
         run: |
           set -euo pipefail
-          app_dir="build/macos/Build/Products/Debug/hibiki.app"
-          dylib="$app_dir/Contents/Frameworks/libhoshidicts_ffi.dylib"
+          app_dir="build/macos/Build/Products/Debug/fushi.app"
+          dylib="$app_dir/Contents/Frameworks/libfushidicts_ffi.dylib"
           test -f "$dylib"
-          found="$(find "$app_dir/Contents/Frameworks" -maxdepth 1 -type f -name 'libhoshidicts_ffi.dylib' -print -quit)"
+          found="$(find "$app_dir/Contents/Frameworks" -maxdepth 1 -type f -name 'libfushidicts_ffi.dylib' -print -quit)"
           test "$found" = "$dylib"
           otool -D "$dylib"
-          test "$(otool -D "$dylib" | tail -n +2)" = "@rpath/libhoshidicts_ffi.dylib"
+          test "$(otool -D "$dylib" | tail -n +2)" = "@rpath/libfushidicts_ffi.dylib"
           otool -L "$dylib"
-          otool -l "$app_dir/Contents/MacOS/hibiki" | grep -A2 LC_RPATH | grep -F '@executable_path/../Frameworks'
+          otool -l "$app_dir/Contents/MacOS/fushi" | grep -A2 LC_RPATH | grep -F '@executable_path/../Frameworks'
           DYLIB_PATH="$dylib" python3 - <<'PY'
           import ctypes
           import os
           lib = ctypes.CDLL(os.environ["DYLIB_PATH"])
-          lib.hoshidicts_create.restype = ctypes.c_void_p
-          lib.hoshidicts_destroy.argtypes = [ctypes.c_void_p]
-          handle = lib.hoshidicts_create()
+          lib.fushidicts_create.restype = ctypes.c_void_p
+          lib.fushidicts_destroy.argtypes = [ctypes.c_void_p]
+          handle = lib.fushidicts_create()
           if not handle:
-              raise SystemExit("hoshidicts_create returned null")
-          lib.hoshidicts_destroy(handle)
+              raise SystemExit("fushidicts_create returned null")
+          lib.fushidicts_destroy(handle)
           print("hoshidicts dylib smoke ok")
           PY
       - name: Run macOS comprehensive automation contract
@@ -923,7 +923,7 @@ jobs:
           & "$env:VCPKG_INSTALLATION_ROOT\vcpkg.exe" install libtorrent:x64-windows
           if ($LASTEXITCODE -ne 0) { throw "vcpkg install libtorrent failed" }
           powershell -ExecutionPolicy Bypass -File native/hibiki_torrent/build_windows_dll.ps1 -VcpkgRoot "$env:VCPKG_INSTALLATION_ROOT"
-      # `packages/hibiki_torrent` 的测试是**唯一**会真正 dlopen 这个 bridge、
+      # `packages/fushi_torrent` 的测试是**唯一**会真正 dlopen 这个 bridge、
       # 把 Dart FFI 绑定按真实 ABI 调一遍的地方；它们要 HIBIKI_TORRENT_LIB 指向
       # 已构建的 DLL，所以在 Linux 上永远整组 skip，main.yml / release.yml 的
       # 包测试清单里也没收录这个包 —— 换句话说，改 C ABI 在 CI 里原本无人可挡。
@@ -932,11 +932,11 @@ jobs:
       # 能验证「新 DLL + 新绑定」真能对上的地方（纯文本层的漂移由
       # hibiki/test/media/torrent/torrent_ffi_bindings_parity_guard_test.dart
       # 在所有平台兜底）。
-      - name: Run hibiki_torrent FFI tests against the freshly built DLL
+      - name: Run fushi_torrent FFI tests against the freshly built DLL
         shell: pwsh
-        working-directory: packages/hibiki_torrent
+        working-directory: packages/fushi_torrent
         env:
-          HIBIKI_TORRENT_LIB: ${{ github.workspace }}\native\hibiki_torrent\prebuilt\windows-x64\hibiki_torrent_ffi.dll
+          HIBIKI_TORRENT_LIB: ${{ github.workspace }}\native\hibiki_torrent\prebuilt\windows-x64\fushi_torrent_ffi.dll
         run: |
           if (-not (Test-Path -LiteralPath $env:HIBIKI_TORRENT_LIB)) {
             throw "DLL not found at $env:HIBIKI_TORRENT_LIB — the build step above should have produced it"
@@ -948,7 +948,7 @@ jobs:
           dart pub get
           if ($LASTEXITCODE -ne 0) { throw "dart pub get failed ($LASTEXITCODE)" }
           dart test
-          if ($LASTEXITCODE -ne 0) { throw "hibiki_torrent FFI tests failed" }
+          if ($LASTEXITCODE -ne 0) { throw "fushi_torrent FFI tests failed" }
       # Windows is the ONLY platform that renders EPUB via the forked
       # flutter_inappwebview_windows C++ plugin; an MSVC/native break here was
       # previously invisible to CI (the audit: Windows never built anywhere).

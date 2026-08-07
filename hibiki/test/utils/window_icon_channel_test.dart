@@ -2,12 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/utils/window_caption_channel.dart';
+import 'package:fushi/src/utils/window_caption_channel.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const MethodChannel channel = MethodChannel('app.hibiki/window');
+  const MethodChannel channel = MethodChannel('app.fushi/window');
   final List<MethodCall> calls = <MethodCall>[];
 
   setUp(calls.clear);

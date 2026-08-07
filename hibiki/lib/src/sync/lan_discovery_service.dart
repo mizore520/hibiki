@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:bonsoir/bonsoir.dart';
 
-import 'package:hibiki/src/utils/misc/error_log_service.dart';
+import 'package:fushi/src/utils/misc/error_log_service.dart';
 
 /// A peer Hibiki instance discovered on the LAN.
 class HibikiDevice {
@@ -67,7 +67,7 @@ class HibikiDevice {
 class LanDiscoveryService {
   LanDiscoveryService({required this.deviceId});
 
-  static const String serviceType = '_hibiki-sync._tcp';
+  static const String serviceType = '_fushi-sync._tcp';
   static const String attributeId = 'id';
 
   /// TODO-961: TXT 属性——host 已开 HTTPS 时广播 `tls=1`。旧客户端忽略未知

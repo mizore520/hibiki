@@ -2,14 +2,14 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import '../helpers/source_guard.dart';
 import '../pages/reader_hibiki_page_source_corpus.dart';
-import 'package:hibiki_core/hibiki_core.dart';
-import 'package:hibiki/src/reader/reader_content_styles.dart';
-import 'package:hibiki/src/reader/reader_settings.dart';
+import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi/src/reader/reader_content_styles.dart';
+import 'package:fushi/src/reader/reader_settings.dart';
 
 /// TODO-114: 删除「滑动翻页动画」守卫。
 ///
 /// reader 正文翻页（分页/连续）从来没有 CSS transition/animation/scroll-behavior：
-/// 分页模式翻页是 `hoshiReader.assignPagePosition` 直接赋值 scrollTop/scrollLeft（瞬时）。
+/// 分页模式翻页是 `fushiReader.assignPagePosition` 直接赋值 scrollTop/scrollLeft（瞬时）。
 /// 用户看到的「滑动动画」是 WebView 把触摸拖动当原生 pan，让页面跟手位移再被 snap
 /// 回弹。根因修复 = 分页模式 body `touch-action: none`，触摸不再被翻译成原生滚动，
 /// 翻页只由 onSwipe 检测后瞬时跳页。连续模式本质就是滚动阅读，保留原生滚动。

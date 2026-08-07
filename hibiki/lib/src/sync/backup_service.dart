@@ -6,13 +6,13 @@ import 'dart:isolate';
 import 'package:archive/archive_io.dart';
 import 'package:drift/drift.dart' show QueryRow, Variable;
 import 'package:flutter/foundation.dart';
-import 'package:hibiki/src/models/audio_source_config.dart';
-import 'package:hibiki/src/models/local_audio_manager.dart';
-import 'package:hibiki/src/sync/backup_merge_engine.dart';
-import 'package:hibiki/src/sync/pref_redaction_policy.dart';
-import 'package:hibiki/src/sync/sync_repository.dart';
-import 'package:hibiki/src/utils/misc/hibiki_time_format.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi/src/models/audio_source_config.dart';
+import 'package:fushi/src/models/local_audio_manager.dart';
+import 'package:fushi/src/sync/backup_merge_engine.dart';
+import 'package:fushi/src/sync/pref_redaction_policy.dart';
+import 'package:fushi/src/sync/sync_repository.dart';
+import 'package:fushi/src/utils/misc/hibiki_time_format.dart';
+import 'package:fushi_core/fushi_core.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart' as sqlite;
 
@@ -3637,7 +3637,7 @@ class BackupService {
         final Object? url = e['url'];
         if (url is String && AudioSourceConfig.isLoopbackAudioUrl(url)) {
           debugPrint(
-            '[hibiki-audio] imported remote audio source points at a loopback '
+            '[fushi-audio] imported remote audio source points at a loopback '
             'host and will not resolve on this device until re-pointed: $url',
           );
         }

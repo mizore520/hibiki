@@ -1,4 +1,6 @@
-import 'package:hibiki_dictionary/hibiki_dictionary.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io';
+import 'package:fushi_dictionary/fushi_dictionary.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart' show ValueListenable;
@@ -7,40 +9,44 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:hibiki/media.dart';
-import 'package:hibiki/utils.dart';
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki/src/media/collections/collection_continue.dart';
-import 'package:hibiki/src/media/display_title.dart';
-import 'package:hibiki/src/media/media_cover_source.dart';
-import 'package:hibiki/src/media/tracking/bangumi_api_client.dart';
-import 'package:hibiki/src/media/tracking/media_tracking_labels.dart';
-import 'package:hibiki/src/media/tracking/media_tracking_repository.dart';
-import 'package:hibiki/src/media/tracking/media_tracking_service.dart';
-import 'package:hibiki/src/mining/galgame_library.dart';
-import 'package:hibiki/src/mining/galgame_repository.dart';
-import 'package:hibiki/src/media/video/cover_ui/cover_orientation_builder.dart';
-import 'package:hibiki/src/media/video/cover_ui/portrait_cover_image.dart';
-import 'package:hibiki/src/media/video/video_home_layout.dart'
+import 'package:fushi/media.dart';
+import 'package:fushi/utils.dart';
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/media/collections/collection_continue.dart';
+import 'package:fushi/src/media/display_title.dart';
+import 'package:fushi/src/media/media_cover_source.dart';
+import 'package:fushi/src/media/tracking/bangumi_api_client.dart';
+import 'package:fushi/src/media/tracking/media_tracking_labels.dart';
+import 'package:fushi/src/media/tracking/media_tracking_repository.dart';
+import 'package:fushi/src/media/tracking/media_tracking_service.dart';
+import 'package:fushi/src/mining/galgame_library.dart';
+import 'package:fushi/src/mining/galgame_repository.dart';
+import 'package:fushi/src/media/video/cover_ui/cover_orientation_builder.dart';
+import 'package:fushi/src/media/video/cover_ui/portrait_cover_image.dart';
+import 'package:fushi/src/media/video/video_home_layout.dart'
     show VideoCardOrientation;
-import 'package:hibiki/src/media/video/m3u8_playlist.dart';
-import 'package:hibiki/src/media/video/video_book_repository.dart';
-import 'package:hibiki/src/pages/base_module_tab_page.dart';
-import 'package:hibiki/src/pages/implementations/activity_feed.dart';
-import 'package:hibiki/src/pages/implementations/home_page.dart';
-import 'package:hibiki/src/pages/implementations/home_video_page.dart'
+import 'package:fushi/src/media/video/m3u8_playlist.dart';
+import 'package:fushi/src/media/video/video_book_repository.dart';
+import 'package:fushi/src/pages/base_module_tab_page.dart';
+import 'package:fushi/src/pages/implementations/activity_feed.dart';
+import 'package:fushi/src/pages/implementations/home_page.dart';
+import 'package:fushi/src/pages/implementations/home_video_page.dart'
     show openLocalVideoBook;
-import 'package:hibiki/src/pages/implementations/stat_shared.dart';
-import 'package:hibiki/src/settings/settings_detail_page.dart';
-import 'package:hibiki/src/settings/settings_schema_tracking.dart';
-import 'package:hibiki/src/sync/interconnect_sync_backend.dart';
-import 'package:hibiki/src/sync/hibiki_library_host_service.dart';
-import 'package:hibiki/src/sync/remote_cover_image.dart';
-import 'package:hibiki/src/sync/remote_library_cache.dart';
-import 'package:hibiki/src/sync/sync_repository.dart';
-import 'package:hibiki/src/utils/components/stat_contribution_heatmap.dart';
-import 'package:hibiki/src/utils/misc/dashboard_remote_merge.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi/src/pages/implementations/stat_shared.dart';
+import 'package:fushi/src/settings/settings_detail_page.dart';
+import 'package:fushi/src/settings/settings_schema_tracking.dart';
+import 'package:fushi/src/sync/interconnect_sync_backend.dart';
+import 'package:fushi/src/sync/hibiki_library_host_service.dart';
+import 'package:fushi/src/sync/remote_cover_image.dart';
+import 'package:fushi/src/sync/remote_library_cache.dart';
+import 'package:fushi/src/sync/sync_repository.dart';
+import 'package:fushi/src/utils/components/stat_contribution_heatmap.dart';
+import 'package:fushi/src/utils/misc/dashboard_remote_merge.dart';
+import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi/src/migration/migration_target_channel.dart';
+import 'package:fushi/src/pages/implementations/migration_page.dart';
+import 'package:fushi/src/pages/implementations/migration_import_page.dart';
+import 'package:fushi/src/migration/migration_importer.dart';
 
 /// 首页仪表盘（阅读向），参考 ReinaManager 首页改造：
 ///
@@ -909,7 +915,22 @@ class _HomeDashboardPageState
         }
         return ListView(
           padding: EdgeInsets.all(tokens.spacing.card),
-          children: <Widget>[body],
+          children: <Widget>[
+            // 已迁移只读态（Fushi 迁移 P1-4，仅老包生效）：首屏常驻引导。
+            if (appModel.isMigrationReadonly) ...<Widget>[
+              _MigrationReadonlyBanner(appModel: appModel),
+              SizedBox(height: tokens.spacing.card),
+            ],
+            // Fushi 侧（P2-2/P2-3）：检测到迁移数据 → 导入引导；导入完成且旧包
+            // 仍在 → 卸载引导（ACTION_DELETE + 复查）。仅 Android。
+            if (!kIsWeb &&
+                Platform.isAndroid &&
+                appModel.packageInfo.packageName !=
+                    kHibikiPackageName) ...<Widget>[
+              _FushiMigrationBanner(appModel: appModel),
+            ],
+            body,
+          ],
         );
       },
     );
@@ -2846,6 +2867,152 @@ class _HomeDashboardPageState
             },
           ),
       ],
+    );
+  }
+}
+
+/// 已迁移只读态的首屏常驻引导（Fushi 迁移 P1-4）：数据已导出，引导用户改用
+/// Fushi；保留「重新导出」通道（Fushi 校验缺批时回头重传）。
+class _MigrationReadonlyBanner extends StatelessWidget {
+  const _MigrationReadonlyBanner({required this.appModel});
+
+  final AppModel appModel;
+
+  static const MigrationTargetChannel _channel = MigrationTargetChannel();
+
+  @override
+  Widget build(BuildContext context) {
+    return HibikiCard(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(t.migration_readonly_note),
+            const SizedBox(height: 8),
+            Row(
+              children: <Widget>[
+                FilledButton.tonal(
+                  onPressed: () => _channel.launchFushi(),
+                  child: Text(t.migration_open_fushi),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => MigrationPage(appModel: appModel),
+                    ),
+                  ),
+                  child: Text(t.migration_reexport),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Fushi 侧迁移引导 banner（P2-2/P2-3）：
+/// - 未导入且中转目录有数据 → 「检测到 Hibiki 迁移数据 → 导入」；
+/// - 已导入且旧包仍安装 → 「卸载旧版」（ACTION_DELETE 弹系统框，回来复查
+///   getPackageInfo——用户可能点了取消，绝不乐观标成功）；
+/// - 其余情况渲染为空。
+class _FushiMigrationBanner extends StatefulWidget {
+  const _FushiMigrationBanner({required this.appModel});
+
+  final AppModel appModel;
+
+  @override
+  State<_FushiMigrationBanner> createState() => _FushiMigrationBannerState();
+}
+
+class _FushiMigrationBannerState extends State<_FushiMigrationBanner>
+    with WidgetsBindingObserver {
+  static const MigrationTargetChannel _channel = MigrationTargetChannel();
+  static const MigrationImporter _importer = MigrationImporter();
+
+  bool _hasTransferData = false;
+  bool _legacyInstalled = false;
+
+  bool get _importDone =>
+      widget.appModel.prefsRepo.getPref(kMigrationImportDonePrefKey) == true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _refresh();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 从系统卸载确认框回来（resumed）时复查旧包是否真被卸了。
+    if (state == AppLifecycleState.resumed) _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final Directory dir = await migrationTransferDir();
+    final MigrationScanResult scan = await _importer.scan(dir);
+    final bool installed =
+        await _channel.isPackageInstalled(kHibikiPackageName);
+    if (!mounted) return;
+    setState(() {
+      _hasTransferData = scan.hasAnything;
+      _legacyInstalled = installed;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final HibikiDesignTokens tokens = HibikiDesignTokens.of(context);
+    Widget? inner;
+    if (!_importDone && _hasTransferData) {
+      inner = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(t.migration_import_detected),
+          const SizedBox(height: 8),
+          FilledButton.tonal(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => MigrationImportPage(appModel: widget.appModel),
+              ),
+            ),
+            child: Text(t.migration_import_entry),
+          ),
+        ],
+      );
+    } else if (_importDone && _legacyInstalled) {
+      inner = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(t.migration_uninstall_prompt),
+          const SizedBox(height: 8),
+          FilledButton.tonal(
+            onPressed: () async {
+              await _channel.requestUninstall(kHibikiPackageName);
+              // resumed 回调会复查；这里再主动刷一次兜底。
+              await _refresh();
+            },
+            child: Text(t.migration_uninstall_button),
+          ),
+        ],
+      );
+    }
+    if (inner == null) return const SizedBox.shrink();
+    return Padding(
+      padding: EdgeInsets.only(bottom: tokens.spacing.card),
+      child: HibikiCard(
+        child: Padding(padding: const EdgeInsets.all(12), child: inner),
+      ),
     );
   }
 }

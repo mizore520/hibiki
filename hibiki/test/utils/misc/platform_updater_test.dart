@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/utils/misc/platform_updater.dart';
+import 'package:fushi/src/utils/misc/platform_updater.dart';
 
 List<Map<String, dynamic>> _assets(List<String> names) => names
     .map((String n) => <String, dynamic>{
@@ -285,14 +285,14 @@ void main() {
   group('Windows installer script guards', () {
     test('does not let Inno auto-close or auto-restart applications', () {
       final String script = File(
-        'windows/installer/hibiki.iss',
+        'windows/installer/fushi.iss',
       ).readAsStringSync();
 
       expect(script, contains('CloseApplications=no'));
       expect(script, contains('RestartApplications=no'));
-      expect(script, contains('AppMutex=HibikiSingleInstanceMutex'));
+      expect(script, contains('AppMutex=FushiSingleInstanceMutex'));
       expect(script, contains('CloseApplicationsFilter=*.exe,*.dll'));
-      expect(script, contains('hibiki_update_launcher.exe'));
+      expect(script, contains('fushi_update_launcher.exe'));
     });
 
     test(
@@ -303,7 +303,7 @@ void main() {
       // source Setup.MainFunc.pas), so this is the only layer that can
       // clear the mutex before the "is currently running" abort fires.
       final String script = File(
-        'windows/installer/hibiki.iss',
+        'windows/installer/fushi.iss',
       ).readAsStringSync();
 
       expect(script, contains('[Code]'));
@@ -311,7 +311,7 @@ void main() {
       // Probes the single-instance mutex via OpenMutexW (not CreateMutex).
       expect(script, contains('OpenMutexW'));
       expect(script, contains('@kernel32.dll stdcall'));
-      expect(script, contains('HibikiSingleInstanceMutex'));
+      expect(script, contains('FushiSingleInstanceMutex'));
       // Terminates hibiki.exe and its WebView2 child tree before the check.
       expect(script, contains('taskkill'));
       expect(script, contains('hibiki.exe'));
@@ -331,7 +331,7 @@ void main() {
       final String rootCmake =
           File('windows/CMakeLists.txt').readAsStringSync();
 
-      expect(main, contains('HibikiSingleInstanceMutex'));
+      expect(main, contains('FushiSingleInstanceMutex'));
       expect(main, contains('CreateMutexW'));
       // The launcher never CREATES or holds the single-instance mutex (that is
       // the Flutter runner's job). It MAY probe it read-only via OpenMutexW to
@@ -339,19 +339,19 @@ void main() {
       // closing the "only waited on the parent PID" blind spot (TODO-549).
       expect(launcher, isNot(contains('CreateMutex')));
       expect(launcher, contains('OpenMutexW'));
-      expect(launcher, contains('HibikiSingleInstanceMutex'));
+      expect(launcher, contains('FushiSingleInstanceMutex'));
       expect(launcher, contains('WaitForMutexReleased'));
-      expect(cmake, contains('add_executable(hibiki_update_launcher WIN32'));
+      expect(cmake, contains('add_executable(fushi_update_launcher WIN32'));
       expect(cmake, contains('"update_launcher.cpp"'));
       expect(
         cmake,
-        isNot(contains('hibiki_update_launcher WIN32\n  "main.cpp"')),
+        isNot(contains('fushi_update_launcher WIN32\n  "main.cpp"')),
       );
       expect(
           cmake,
-          contains('target_link_libraries(hibiki_update_launcher '
+          contains('target_link_libraries(fushi_update_launcher '
               'PRIVATE shell32)'));
-      expect(rootCmake, contains('hibiki_update_launcher'));
+      expect(rootCmake, contains('fushi_update_launcher'));
     });
 
     test(
@@ -604,8 +604,9 @@ void main() {
   group('platform capability helpers include macOS in-app install', () {
     test('synthesizeStableAssetNames lists the macOS zip', () {
       final List<String> names = synthesizeStableAssetNames('0.4.2');
-      expect(names, contains('hibiki-0.4.2-macos.zip'));
-      expect(names, contains('hibiki-0.4.2-windows-setup.exe'));
+      // macOS/Windows 均已切 fushi（Windows 更新桥已落，Phase 5）；Android APK 保持旧名。
+      expect(names, contains('fushi-0.4.2-macos.zip'));
+      expect(names, contains('fushi-0.4.2-windows-setup.exe'));
     });
   });
 
@@ -613,18 +614,18 @@ void main() {
     test('resolves the .app bundle from a Contents/MacOS executable', () {
       expect(
         macAppBundlePathForExecutable(
-          '/Applications/hibiki.app/Contents/MacOS/hibiki',
+          '/Applications/fushi.app/Contents/MacOS/fushi',
         ),
-        '/Applications/hibiki.app',
+        '/Applications/fushi.app',
       );
     });
 
     test('handles a nested user path', () {
       expect(
         macAppBundlePathForExecutable(
-          '/Users/me/Applications/hibiki.app/Contents/MacOS/hibiki',
+          '/Users/me/Applications/fushi.app/Contents/MacOS/fushi',
         ),
-        '/Users/me/Applications/hibiki.app',
+        '/Users/me/Applications/fushi.app',
       );
     });
 
@@ -649,7 +650,7 @@ void main() {
     String script() => buildMacSwapScript(
           parentPid: 4321,
           newAppPath: '/tmp/updates/mac-update-1.2.0.extracted/hibiki.app',
-          targetAppPath: '/Applications/hibiki.app',
+          targetAppPath: '/Applications/fushi.app',
           backupPath: '/tmp/updates/mac-update-1.2.0.backup',
           extractDir: '/tmp/updates/mac-update-1.2.0.extracted',
           resultPath: '/tmp/updates/mac-update-result.json',

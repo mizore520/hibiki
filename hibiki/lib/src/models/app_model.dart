@@ -11,124 +11,126 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi_core/fushi_core.dart';
 import 'package:path/path.dart' as path;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:http/http.dart' as http;
 import 'package:remove_emoji/remove_emoji.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:hibiki/creator.dart';
-import 'package:hibiki_dictionary/hibiki_dictionary.dart';
-import 'package:hibiki/media.dart';
-import 'package:hibiki/pages.dart';
-import 'package:hibiki/utils.dart';
-import 'package:hibiki/src/storage/app_paths.dart';
-import 'package:hibiki/src/utils/misc/channel_constants.dart';
-import 'package:hibiki/src/utils/misc/lookup_input_limits.dart';
-import 'package:hibiki/src/media/drag_drop/desktop_drop_reinitializer.dart';
-import 'package:hibiki_audio/hibiki_audio.dart';
-import 'package:hibiki/src/profile/profile_repository.dart';
-import 'package:hibiki/src/pages/implementations/popup_dictionary_page.dart';
-import 'package:hibiki_anki/hibiki_anki.dart';
-import 'package:hibiki/src/media/floating_dict_channel.dart';
-import 'package:hibiki/src/models/app_font_loader.dart';
-import 'package:hibiki/src/models/app_ui_font_chain.dart';
-import 'package:hibiki/src/models/builtin_tags.dart';
-import 'package:hibiki/src/epub/book_title_conflict.dart';
-import 'package:hibiki/src/epub/epub_importer.dart';
-import 'package:hibiki/src/reader/reader_settings.dart';
-import 'package:hibiki/src/lookup/browser_extension_installer.dart';
-import 'package:hibiki/src/lookup/effective_lookup_size.dart';
-import 'package:hibiki/src/models/dictionary_repository.dart';
-import 'package:hibiki/src/models/clipboard_history_repository.dart';
-import 'package:hibiki/src/models/media_history_repository.dart';
-import 'package:hibiki/src/models/preferences_repository.dart';
-import 'package:hibiki/src/media/manga/manga_ocr_provider.dart';
-import 'package:hibiki/src/media/manga/mihon/mihon_manager.dart';
-import 'package:hibiki/src/media/manga/mihon/mihon_runtime_factory.dart';
-import 'package:hibiki/src/media/manga/online/mokuro_moe_client.dart';
-import 'package:hibiki/src/media/manga/online/mokuro_moe_download_queue.dart';
-import 'package:hibiki/src/media/torrent/anime_download_config.dart';
-import 'package:hibiki/src/media/torrent/download_network_proxy.dart';
-import 'package:hibiki/src/media/torrent/download_relocate_service.dart';
-import 'package:hibiki/src/media/torrent/download_save_root.dart';
-import 'package:hibiki/src/media/torrent/embedded_torrent_host.dart';
-import 'package:hibiki/src/media/torrent/qb_torrent_backend.dart';
-import 'package:hibiki/src/media/torrent/qbittorrent_client.dart';
-import 'package:hibiki/src/media/torrent/torrent_backend.dart';
-import 'package:hibiki/src/media/torrent/anime_download_importer.dart';
-import 'package:hibiki/src/media/torrent/anime_download_plan.dart';
-import 'package:hibiki/src/media/torrent/anime_download_service.dart';
-import 'package:hibiki/src/media/torrent/anime_download_subtitle_resolver.dart';
-import 'package:hibiki/src/media/torrent/anime_download_subscription.dart';
-import 'package:hibiki/src/media/torrent/torrent_memory.dart';
-import 'package:hibiki/src/media/video/dandanplay_client.dart';
-import 'package:hibiki/src/media/video/video_book_repository.dart';
-import 'package:hibiki/src/media/video/video_danmaku_model.dart';
-import 'package:hibiki/src/media/video/video_control_customization.dart';
-import 'package:hibiki/src/media/video/video_subtitle_obscure_mode.dart';
-import 'package:hibiki/src/media/tracking/media_tracking_repository.dart';
-import 'package:hibiki/src/media/tracking/media_tracking_service.dart';
-import 'package:hibiki/src/sync/app_model_library_host_service.dart';
-import 'package:hibiki/src/sync/backup_service.dart';
-import 'package:hibiki/src/sync/deletion_prompt.dart';
-import 'package:hibiki/src/sync/deletion_propagation.dart';
-import 'package:hibiki/src/sync/interconnect_sync_backend.dart';
-import 'package:hibiki/src/sync/hibiki_server_controller.dart';
-import 'package:hibiki/src/sync/sync_asset_package_service.dart';
-import 'package:hibiki/src/sync/sync_auto_trigger.dart';
-import 'package:hibiki/src/sync/sync_backend.dart';
-import 'package:hibiki/src/sync/sync_conflict_prompter.dart';
-import 'package:hibiki/src/sync/sync_orchestrator.dart';
-import 'package:hibiki/src/sync/sync_repository.dart';
-import 'package:hibiki/src/models/theme_notifier.dart' as theme_notifier;
-import 'package:hibiki/src/models/theme_notifier.dart'
+import 'package:fushi/creator.dart';
+import 'package:fushi_dictionary/fushi_dictionary.dart';
+import 'package:fushi/media.dart';
+import 'package:fushi/pages.dart';
+import 'package:fushi/utils.dart';
+import 'package:fushi/src/storage/app_paths.dart';
+import 'package:fushi/src/utils/misc/channel_constants.dart';
+import 'package:fushi/src/utils/misc/lookup_input_limits.dart';
+import 'package:fushi/src/media/drag_drop/desktop_drop_reinitializer.dart';
+import 'package:fushi_audio/fushi_audio.dart';
+import 'package:fushi/src/profile/profile_repository.dart';
+import 'package:fushi/src/pages/implementations/popup_dictionary_page.dart';
+import 'package:fushi_anki/fushi_anki.dart';
+import 'package:fushi/src/media/floating_dict_channel.dart';
+import 'package:fushi/src/models/app_font_loader.dart';
+import 'package:fushi/src/models/app_ui_font_chain.dart';
+import 'package:fushi/src/models/builtin_tags.dart';
+import 'package:fushi/src/epub/book_title_conflict.dart';
+import 'package:fushi/src/epub/epub_importer.dart';
+import 'package:fushi/src/reader/reader_settings.dart';
+import 'package:fushi/src/lookup/browser_extension_installer.dart';
+import 'package:fushi/src/lookup/effective_lookup_size.dart';
+import 'package:fushi/src/models/dictionary_repository.dart';
+import 'package:fushi/src/models/clipboard_history_repository.dart';
+import 'package:fushi/src/models/media_history_repository.dart';
+import 'package:fushi/src/models/preferences_repository.dart';
+import 'package:fushi/src/media/manga/manga_ocr_provider.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_manager.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_runtime_factory.dart';
+import 'package:fushi/src/media/manga/online/mokuro_moe_client.dart';
+import 'package:fushi/src/media/manga/online/mokuro_moe_download_queue.dart';
+import 'package:fushi/src/media/torrent/anime_download_config.dart';
+import 'package:fushi/src/media/torrent/download_network_proxy.dart';
+import 'package:fushi/src/media/torrent/download_relocate_service.dart';
+import 'package:fushi/src/media/torrent/download_save_root.dart';
+import 'package:fushi/src/media/torrent/embedded_torrent_host.dart';
+import 'package:fushi/src/media/torrent/qb_torrent_backend.dart';
+import 'package:fushi/src/media/torrent/qbittorrent_client.dart';
+import 'package:fushi/src/media/torrent/torrent_backend.dart';
+import 'package:fushi/src/media/torrent/anime_download_importer.dart';
+import 'package:fushi/src/media/torrent/anime_download_plan.dart';
+import 'package:fushi/src/media/torrent/anime_download_service.dart';
+import 'package:fushi/src/media/torrent/anime_download_subtitle_resolver.dart';
+import 'package:fushi/src/media/torrent/anime_download_subscription.dart';
+import 'package:fushi/src/media/torrent/torrent_memory.dart';
+import 'package:fushi/src/media/video/dandanplay_client.dart';
+import 'package:fushi/src/media/video/video_book_repository.dart';
+import 'package:fushi/src/media/video/video_danmaku_model.dart';
+import 'package:fushi/src/media/video/video_control_customization.dart';
+import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
+import 'package:fushi/src/media/tracking/media_tracking_repository.dart';
+import 'package:fushi/src/media/tracking/media_tracking_service.dart';
+import 'package:fushi/src/sync/app_model_library_host_service.dart';
+import 'package:fushi/src/sync/backup_service.dart';
+import 'package:fushi/src/sync/deletion_prompt.dart';
+import 'package:fushi/src/sync/deletion_propagation.dart';
+import 'package:fushi/src/sync/interconnect_sync_backend.dart';
+import 'package:fushi/src/sync/hibiki_server_controller.dart';
+import 'package:fushi/src/sync/sync_asset_package_service.dart';
+import 'package:fushi/src/sync/sync_auto_trigger.dart';
+import 'package:fushi/src/sync/sync_backend.dart';
+import 'package:fushi/src/sync/sync_conflict_prompter.dart';
+import 'package:fushi/src/sync/sync_orchestrator.dart';
+import 'package:fushi/src/sync/sync_repository.dart';
+import 'package:fushi/src/models/theme_notifier.dart' as theme_notifier;
+import 'package:fushi/src/models/theme_notifier.dart'
     show ThemeNotifier, CustomThemeEntry;
 // TODO-930: re-export the multi-theme value type so `hibiki/models.dart`
 // consumers (theme swatch row, CustomThemePage) can name it.
-export 'package:hibiki/src/models/theme_notifier.dart' show CustomThemeEntry;
-import 'package:hibiki/src/models/audio_controller.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_session.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_session_launcher.dart';
-import 'package:hibiki/src/media/audiobook/floating_lyric_lookup_host.dart';
-import 'package:hibiki/src/media/audiobook/floating_lyric_lookup_routing.dart';
-import 'package:hibiki/src/models/audio_source_config.dart';
-import 'package:hibiki/src/models/dictionary_import_manager.dart';
-import 'package:hibiki/src/models/file_export_manager.dart';
-import 'package:hibiki/src/models/local_audio_manager.dart';
-import 'package:hibiki/src/models/local_audio_source_pref.dart';
-import 'package:hibiki/src/models/anki_integration.dart';
-import 'package:hibiki/src/sync/hibiki_remote_lookup_client.dart';
-import 'package:hibiki/src/sync/hibiki_remote_mining_client.dart';
-import 'package:hibiki/src/sync/hibiki_remote_lookup_service.dart';
-import 'package:hibiki/src/sync/remote_audio_lookup_bytes.dart';
-import 'package:hibiki/src/utils/misc/lookup_audio_playback.dart';
-import 'package:hibiki/src/media/video/video_cover_extractor.dart'
+export 'package:fushi/src/models/theme_notifier.dart' show CustomThemeEntry;
+import 'package:fushi/src/models/audio_controller.dart';
+import 'package:fushi/src/media/audiobook/audiobook_session.dart';
+import 'package:fushi/src/media/audiobook/audiobook_session_launcher.dart';
+import 'package:fushi/src/media/audiobook/floating_lyric_lookup_host.dart';
+import 'package:fushi/src/media/audiobook/floating_lyric_lookup_routing.dart';
+import 'package:fushi/src/migration/migration_readonly.dart';
+import 'package:fushi/src/migration/migration_target_channel.dart';
+import 'package:fushi/src/models/audio_source_config.dart';
+import 'package:fushi/src/models/dictionary_import_manager.dart';
+import 'package:fushi/src/models/file_export_manager.dart';
+import 'package:fushi/src/models/local_audio_manager.dart';
+import 'package:fushi/src/models/local_audio_source_pref.dart';
+import 'package:fushi/src/models/anki_integration.dart';
+import 'package:fushi/src/sync/hibiki_remote_lookup_client.dart';
+import 'package:fushi/src/sync/hibiki_remote_mining_client.dart';
+import 'package:fushi/src/sync/hibiki_remote_lookup_service.dart';
+import 'package:fushi/src/sync/remote_audio_lookup_bytes.dart';
+import 'package:fushi/src/utils/misc/lookup_audio_playback.dart';
+import 'package:fushi/src/media/video/video_cover_extractor.dart'
     show extractVideoCover;
-import 'package:hibiki/src/sync/forwarded_mine_payload.dart';
-import 'package:hibiki/src/sync/immersion_mine_payload.dart';
-import 'package:hibiki/src/mining/galgame_library.dart';
-import 'package:hibiki/src/mining/galgame_repository.dart';
-import 'package:hibiki/src/mining/immersion_mining_engine.dart';
-import 'package:hibiki/src/mining/immersion_mining_request.dart';
-import 'package:hibiki/src/mining/immersion_capture_channel.dart';
-import 'package:hibiki/src/mining/youtube_clip_miner.dart';
-import 'package:hibiki/src/sync/hibiki_sync_server.dart';
-import 'package:hibiki/src/sync/desktop_lookup_service.dart';
-import 'package:hibiki/src/sync/texthooker_ws_client_manager.dart';
-import 'package:hibiki/src/sync/yomitan_api_server_manager.dart';
-import 'package:hibiki/src/shortcuts/gamepad_service.dart';
-import 'package:hibiki/src/shortcuts/shortcut_preferences.dart';
-import 'package:hibiki/src/shortcuts/shortcut_registry.dart';
-import 'package:hibiki/src/platform/platform_services.dart';
-import 'package:hibiki/src/platform/platform_providers.dart';
+import 'package:fushi/src/sync/forwarded_mine_payload.dart';
+import 'package:fushi/src/sync/immersion_mine_payload.dart';
+import 'package:fushi/src/mining/galgame_library.dart';
+import 'package:fushi/src/mining/galgame_repository.dart';
+import 'package:fushi/src/mining/immersion_mining_engine.dart';
+import 'package:fushi/src/mining/immersion_mining_request.dart';
+import 'package:fushi/src/mining/immersion_capture_channel.dart';
+import 'package:fushi/src/mining/youtube_clip_miner.dart';
+import 'package:fushi/src/sync/hibiki_sync_server.dart';
+import 'package:fushi/src/sync/desktop_lookup_service.dart';
+import 'package:fushi/src/sync/texthooker_ws_client_manager.dart';
+import 'package:fushi/src/sync/yomitan_api_server_manager.dart';
+import 'package:fushi/src/shortcuts/gamepad_service.dart';
+import 'package:fushi/src/shortcuts/shortcut_preferences.dart';
+import 'package:fushi/src/shortcuts/shortcut_registry.dart';
+import 'package:fushi/src/platform/platform_services.dart';
+import 'package:fushi/src/platform/platform_providers.dart';
 
-export 'package:hibiki/src/models/local_audio_manager.dart'
+export 'package:fushi/src/models/local_audio_manager.dart'
     show LocalAudioDbEntry, InvalidLocalAudioDbException;
-export 'package:hibiki/src/models/local_audio_source_pref.dart'
+export 'package:fushi/src/models/local_audio_source_pref.dart'
     show LocalAudioSourcePref;
-export 'package:hibiki/src/models/audio_source_config.dart'
+export 'package:fushi/src/models/audio_source_config.dart'
     show AudioSourceConfig, AudioSourceKind;
 
 /// A list of fields that the app will support at runtime.
@@ -782,7 +784,7 @@ class AppModel with ChangeNotifier {
 
   String _mediaTrackingAppVersion = 'unknown';
   String get _mediaTrackingUserAgent =>
-      'hajisensai/Hibiki/$_mediaTrackingAppVersion '
+      'hajisensai/Fushi/$_mediaTrackingAppVersion '
       '(https://github.com/hajisensai/hibiki)';
 
   /// Dictionary metadata, history, and search caches.
@@ -890,6 +892,17 @@ class AppModel with ChangeNotifier {
   /// Whether [initialise] has completed successfully.
   bool get isInitialised => _isInitialised;
   bool _isInitialised = false;
+
+  /// 已迁移只读态（Fushi 迁移 P1-4，见 [kMigrationReadonlyPrefKey]）。
+  /// 置位后本启动周期内：不自启互联/Yomitan 服务、不跑自动同步与后台写手。
+  ///
+  /// **包名门**：该偏好会随迁移 core 批原样合并进 Fushi 的库，只有真正运行为
+  /// 老包（`app.hibiki.reader`）时才生效——否则 Fushi 导入完成后会误锁自己。
+  /// 顺序有意：先查偏好（测试夹具里 [packageInfo] 是未初始化的 late 字段，
+  /// 偏好为 false 时短路，不触发 LateInitializationError）。
+  bool get isMigrationReadonly =>
+      prefsRepo.getPref(kMigrationReadonlyPrefKey) == true &&
+      packageInfo.packageName == kHibikiPackageName;
 
   /// BUG-815: the currently-running [_initialiseOnce] future, or null when no
   /// init is in flight. [initialise] uses it to serialise concurrent callers so
@@ -1317,7 +1330,7 @@ class AppModel with ChangeNotifier {
         try {
           final dir = path.join(dictionaryResourceDirectory.path, d.name);
           if (!Directory(dir).existsSync()) continue;
-          final int mask = HoshiDicts.probeDictContent(dir);
+          final int mask = FushiDicts.probeDictContent(dir);
           const int hasTerm = 0x1;
           const int hasKanji = 0x2;
           if (mask & hasTerm == 0) continue; // pure kanji dict, nothing to fix
@@ -1338,12 +1351,11 @@ class AppModel with ChangeNotifier {
             collapsedLanguages: d.collapsedLanguages,
           );
           dictRepo.persistDictionary(updated);
-          debugPrint(
-              '[Hibiki] reclassified kanji→term (mixed dict): ${d.name}');
+          debugPrint('[Fushi] reclassified kanji→term (mixed dict): ${d.name}');
         } catch (e, stack) {
           ErrorLogService.instance
               .log('AppModel.dictKanjiReclassify', e, stack);
-          debugPrint('[Hibiki] kanji reclassify error for ${d.name}: $e');
+          debugPrint('[Fushi] kanji reclassify error for ${d.name}: $e');
         }
         continue;
       }
@@ -1379,10 +1391,10 @@ class AppModel with ChangeNotifier {
           collapsedLanguages: d.collapsedLanguages,
         );
         dictRepo.persistDictionary(updated);
-        debugPrint('[Hibiki] migrated dict type: ${d.name} → ${detected.name}');
+        debugPrint('[Fushi] migrated dict type: ${d.name} → ${detected.name}');
       } catch (e, stack) {
         ErrorLogService.instance.log('AppModel.dictTypeMigration', e, stack);
-        debugPrint('[Hibiki] dict type migration error for ${d.name}: $e');
+        debugPrint('[Fushi] dict type migration error for ${d.name}: $e');
       } finally {
         raf.closeSync();
       }
@@ -1406,7 +1418,7 @@ class AppModel with ChangeNotifier {
       ));
     }
     final b = bucketDictPaths(entries);
-    HoshiDicts.initializeTyped(
+    FushiDicts.initializeTyped(
       termPaths: b.term,
       freqPaths: b.freq,
       pitchPaths: b.pitch,
@@ -1435,7 +1447,7 @@ class AppModel with ChangeNotifier {
         ),
     ];
     final b = bucketDictPaths(entries);
-    HoshiDicts.initializeTyped(
+    FushiDicts.initializeTyped(
       termPaths: b.term,
       freqPaths: b.freq,
       pitchPaths: b.pitch,
@@ -2098,21 +2110,21 @@ class AppModel with ChangeNotifier {
   /// [initialise] so the in-flight guard holds.
   Future<void> _initialiseOnce() async {
     try {
-      debugPrint('[Hibiki] init: PackageInfo + DeviceInfo');
+      debugPrint('[Fushi] init: PackageInfo + DeviceInfo');
 
       /// Prepare entities that may be repeatedly used at runtime.
       _packageInfo = await PackageInfo.fromPlatform();
       _mediaTrackingAppVersion = _packageInfo.version;
       await platformServices.init();
 
-      debugPrint('[Hibiki] init: directories (early, needed for DB)');
+      debugPrint('[Fushi] init: directories (early, needed for DB)');
       // TODO-1260：这一步内部解析数据根（含对自定义数据根盘的 stat）。盘掉线时最易 hang，
       // 故写启动面包屑 + 叠超时（超时→错误屏 Retry，不再无限加载）。
       ErrorLogService.instance
           .markInitStep('resolve-data-roots（AppPaths.resolve / 数据根 stat）');
       await _guardInitIo('resolve-data-roots', _prepareRuntimeDirectories());
 
-      debugPrint('[Hibiki] init: Drift database');
+      debugPrint('[Fushi] init: Drift database');
       ErrorLogService.instance
           .markInitStep('open-database（Drift 打开 hibiki.db）');
       _database = HibikiDatabase(_databaseDirectory.path);
@@ -2141,7 +2153,7 @@ class AppModel with ChangeNotifier {
       mediaHistoryRepo = MediaHistoryRepository(_database);
       clipboardHistoryRepo = ClipboardHistoryRepository(_database);
 
-      debugPrint('[Hibiki] init: repositories (parallel)');
+      debugPrint('[Fushi] init: repositories (parallel)');
       await Future.wait(<Future<void>>[
         prefsRepo.loadFromDb(),
         profileRepo.ensureDefaultProfile(),
@@ -2169,7 +2181,7 @@ class AppModel with ChangeNotifier {
       themeNotifier.addListener(notifyListeners);
       _themeListenerAdded = true;
 
-      debugPrint('[Hibiki] init: directories + system palette (parallel)');
+      debugPrint('[Fushi] init: directories + system palette (parallel)');
       _browserDirectory = Directory(path.join(appDirectory.path, 'browser'));
       _thumbnailsDirectory =
           Directory(path.join(appDirectory.path, 'thumbnails'));
@@ -2213,7 +2225,7 @@ class AppModel with ChangeNotifier {
         alternateExportDirectory: _alternateExportDirectory,
       );
 
-      debugPrint('[Hibiki] init: populate maps + audio DB (parallel)');
+      debugPrint('[Fushi] init: populate maps + audio DB (parallel)');
       populateLanguages();
       populateLocales();
       LocaleSettings.setLocaleRaw(appLocale.toLanguageTag());
@@ -2237,7 +2249,7 @@ class AppModel with ChangeNotifier {
       ]);
 
       debugPrint(
-          '[Hibiki] init: reader settings + enhancements + quick actions + media sources (parallel)');
+          '[Fushi] init: reader settings + enhancements + quick actions + media sources (parallel)');
       MediaSource.setDatabase(_database);
       final readerSettings = ReaderSettings(_database);
       await readerSettings.loadFromPrefsSnapshot(prefsSnapshot);
@@ -2254,7 +2266,7 @@ class AppModel with ChangeNotifier {
         );
         if (relocated > 0) {
           debugPrint(
-              '[Hibiki] init: relocated $relocated stale custom-font path(s) to current custom_fonts dir');
+              '[Fushi] init: relocated $relocated stale custom-font path(s) to current custom_fonts dir');
         }
       } catch (e, stack) {
         ErrorLogService.instance.log('AppModel.healFontPaths', e, stack);
@@ -2304,7 +2316,7 @@ class AppModel with ChangeNotifier {
         defaultTargetPlatform,
       );
 
-      debugPrint('[Hibiki] init: search preload (parallel)');
+      debugPrint('[Fushi] init: search preload (parallel)');
       final String warmupChar =
           JapaneseLanguage.instance.helloWorld.substring(0, 1);
       unawaited(Future.wait(<Future<void>>[
@@ -2325,11 +2337,11 @@ class AppModel with ChangeNotifier {
         ),
       ]).catchError((Object e, StackTrace stack) {
         ErrorLogService.instance.log('AppModel.searchWarmup', e, stack);
-        debugPrint('[Hibiki] search warmup failed (non-fatal): $e');
+        debugPrint('[Fushi] search warmup failed (non-fatal): $e');
         return <void>[];
       }));
 
-      debugPrint('[Hibiki] init: DONE');
+      debugPrint('[Fushi] init: DONE');
       // TODO-1260：启动正常跑完，清掉启动步进面包屑（否则下次启动会误报上次 hang）。
       ErrorLogService.instance.clearInitStep();
       _isInitialised = true;
@@ -2337,6 +2349,13 @@ class AppModel with ChangeNotifier {
       // cache (keeps refreshPrefCacheIfChanged consistent if ever reused here).
       _lastSeenPrefsVersion = prefsRepo.prefsVersion;
       _setupFloatingDictHandlers();
+      // 已迁移只读态（Fushi 迁移 P1-4）：不再自启互联服务——两版并存时端口
+      // 固定必冲突（SyncServerPortInUseException 会打到用户脸上）；老版只保
+      // 留「重新导出」通道。
+      if (isMigrationReadonly) {
+        notifyListeners();
+        return;
+      }
       // Start the LAN sync server now if hosting is enabled, so it runs app-wide
       // for the whole session instead of only while the sync settings page is on
       // screen (BUG-085). Fire-and-forget: a bind failure self-disables + is
@@ -2407,7 +2426,7 @@ class AppModel with ChangeNotifier {
       // dedicated "data location unavailable" escape screen (Retry / explicit
       // opt-in-to-default); do NOT set _initError so the generic error screen
       // doesn't shadow it. The real data is untouched on e.configuredPath.
-      debugPrint('[Hibiki] init PAUSED (data root unavailable): $e\n$stack');
+      debugPrint('[Fushi] init PAUSED (data root unavailable): $e\n$stack');
       ErrorLogService.instance
           .log('AppModel.initialise.dataRootUnavailable', e, stack);
       _dataRootUnavailable = e;
@@ -2417,7 +2436,7 @@ class AppModel with ChangeNotifier {
       // touching the file (no DROP / migration ran). Surface a dedicated,
       // non-retryable notice instead of the generic init-error screen, and
       // STOP — never continue init, never delete or rebuild the DB.
-      debugPrint('[Hibiki] init REFUSED (DB downgrade): $e\n$stack');
+      debugPrint('[Fushi] init REFUSED (DB downgrade): $e\n$stack');
       ErrorLogService.instance.log('AppModel.initialise.downgrade', e, stack);
       _downgradeError = e;
       _initError = '$e';
@@ -2427,14 +2446,14 @@ class AppModel with ChangeNotifier {
       // path and exhausted — the main hibiki.db is corrupt. Surface a dedicated,
       // actionable notice (restore backup / clear data) instead of looping the
       // generic Retry button forever against the same un-openable file.
-      debugPrint('[Hibiki] init FAILED (DB unrecoverable): $e\n$stack');
+      debugPrint('[Fushi] init FAILED (DB unrecoverable): $e\n$stack');
       ErrorLogService.instance
           .log('AppModel.initialise.unrecoverableDb', e, stack);
       _unrecoverableDbError = e;
       _initError = '$e';
       notifyListeners();
     } catch (e, stack) {
-      debugPrint('[Hibiki] init FAILED: $e\n$stack');
+      debugPrint('[Fushi] init FAILED: $e\n$stack');
       ErrorLogService.instance.log('AppModel.initialise', e, stack);
       _initError = '$e';
       notifyListeners();
@@ -2443,7 +2462,7 @@ class AppModel with ChangeNotifier {
 
   Future<void> initialiseForDictionaryPopup() async {
     if (_isInitialised) {
-      debugPrint('[Hibiki-popup] init: already initialised, '
+      debugPrint('[Fushi-popup] init: already initialised, '
           'refreshing prefs if changed');
       // TODO-855: only do the expensive full reload when the main app actually
       // mutated a preference / switched profile since the last lookup; a cheap
@@ -2453,15 +2472,15 @@ class AppModel with ChangeNotifier {
       return;
     }
     try {
-      debugPrint('[Hibiki-popup] init: PackageInfo + DeviceInfo');
+      debugPrint('[Fushi-popup] init: PackageInfo + DeviceInfo');
       _packageInfo = await PackageInfo.fromPlatform();
       _mediaTrackingAppVersion = _packageInfo.version;
       await platformServices.init();
 
-      debugPrint('[Hibiki-popup] init: directories');
+      debugPrint('[Fushi-popup] init: directories');
       await _prepareRuntimeDirectories();
 
-      debugPrint('[Hibiki-popup] init: Drift database');
+      debugPrint('[Fushi-popup] init: Drift database');
       // TODO-905 D3: the :popup process must NOT delete a poisoned -wal/-shm
       // sidecar (the main process owns recovery); it backs off on IOERR.
       _database = HibikiDatabase(_databaseDirectory.path, isMainProcess: false);
@@ -2555,7 +2574,7 @@ class AppModel with ChangeNotifier {
         defaultTargetPlatform,
       );
 
-      debugPrint('[Hibiki-popup] init: DONE');
+      debugPrint('[Fushi-popup] init: DONE');
       _isInitialised = true;
       // TODO-855: prime the prefs-version watermark from the freshly loaded
       // cache so the first warm-reuse lookup doesn't trigger a redundant reload.
@@ -2563,7 +2582,7 @@ class AppModel with ChangeNotifier {
       notifyListeners();
     } catch (e, stack) {
       ErrorLogService.instance.log('AppModel.popupInit', e, stack);
-      debugPrint('[Hibiki-popup] init FAILED: $e\n$stack');
+      debugPrint('[Fushi-popup] init FAILED: $e\n$stack');
       _initError = '$e';
       notifyListeners();
     }
@@ -2801,9 +2820,10 @@ class AppModel with ChangeNotifier {
   Future<void> setCustomThemeContainerColor(Color? c) =>
       themeNotifier.setCustomThemeContainerColor(c);
 
-  Color? get customThemeSasayakiColor => themeNotifier.customThemeSasayakiColor;
-  Future<void> setCustomThemeSasayakiColor(Color? c) =>
-      themeNotifier.setCustomThemeSasayakiColor(c);
+  Color? get customThemeSentenceAudioHighlightColor =>
+      themeNotifier.customThemeSentenceAudioHighlightColor;
+  Future<void> setCustomThemeSentenceAudioHighlightColor(Color? c) =>
+      themeNotifier.setCustomThemeSentenceAudioHighlightColor(c);
 
   /// TODO-977: 全局音频高亮颜色（与阅读器主题解耦），委托 ThemeNotifier。
   Color? get audioHighlightColor => themeNotifier.audioHighlightColor;
@@ -2824,7 +2844,7 @@ class AppModel with ChangeNotifier {
     Color? secondaryColor,
     Color? tertiaryColor,
     Color? containerColor,
-    Color? sasayakiColor,
+    Color? sentenceAudioHighlightColor,
     Color? linkColor,
   }) =>
       themeNotifier.applyCustomTheme(
@@ -2836,7 +2856,7 @@ class AppModel with ChangeNotifier {
         secondaryColor: secondaryColor,
         tertiaryColor: tertiaryColor,
         containerColor: containerColor,
-        sasayakiColor: sasayakiColor,
+        sentenceAudioHighlightColor: sentenceAudioHighlightColor,
         linkColor: linkColor,
       );
 
@@ -2899,7 +2919,7 @@ class AppModel with ChangeNotifier {
   /// the bulk of the UI reads the global Method A `t` (which does NOT rebuild
   /// on a [LocaleSettings] change by itself), the root widget tree is
   /// additionally remounted via a locale-keyed [Key] at [main]'s
-  /// [TranslationProvider] (see `_HoshiReaderAppState.build`).
+  /// [TranslationProvider] (see `_FushiReaderAppState.build`).
   ///
   /// Mobile (Android/iOS) keeps the native restart path (`restart_app` plugin
   /// rebuilds the Activity/scene — no mutex race). The data-root migration
@@ -3766,7 +3786,7 @@ class AppModel with ChangeNotifier {
             dictionary.indexUrl,
           );
           if (!remote.succeeded) {
-            debugPrint('[Hibiki] auto dict update could not check '
+            debugPrint('[Fushi] auto dict update could not check '
                 '${dictionary.name}');
             continue;
           }
@@ -3781,7 +3801,7 @@ class AppModel with ChangeNotifier {
           // 单本失败不中断其余（移植 Hoshi 的 failures-collect 语义）。
           ErrorLogService.instance
               .log('AppModel.autoUpdateDictionary', e, stack);
-          debugPrint('[Hibiki] auto dict update failed for '
+          debugPrint('[Fushi] auto dict update failed for '
               '${dictionary.name}: $e');
         }
       }
@@ -3967,10 +3987,10 @@ class AppModel with ChangeNotifier {
   /// non-kanji singletons, or when no kanji dictionary is loaded — so the term
   /// lookup path is never slowed for ordinary word lookups. The engine call is
   /// only made for a real single kanji (TODO-094 S4).
-  List<HoshiKanjiResult> queryKanjiForTerm(String searchTerm) {
-    if (!isSingleKanji(searchTerm)) return const <HoshiKanjiResult>[];
-    if (!HoshiDicts.isInitialized) return const <HoshiKanjiResult>[];
-    return HoshiDicts.instance.queryKanji(searchTerm);
+  List<FushiKanjiResult> queryKanjiForTerm(String searchTerm) {
+    if (!isSingleKanji(searchTerm)) return const <FushiKanjiResult>[];
+    if (!FushiDicts.isInitialized) return const <FushiKanjiResult>[];
+    return FushiDicts.instance.queryKanji(searchTerm);
   }
 
   Future<DictionarySearchResult> searchDictionary({
@@ -4022,7 +4042,7 @@ class AppModel with ChangeNotifier {
       return cached;
     }
 
-    if (!HoshiDicts.isInitialized) {
+    if (!FushiDicts.isInitialized) {
       return DictionarySearchResult(searchTerm: searchTerm);
     }
 
@@ -4031,9 +4051,9 @@ class AppModel with ChangeNotifier {
     // bucket independently and attach the results to whatever term result comes
     // back (or surface a kanji-only result when no term matches). Computed once
     // here so all local FFI return paths below carry the same kanji payload.
-    final List<HoshiKanjiResult> kanjiResults = queryKanjiForTerm(searchTerm);
+    final List<FushiKanjiResult> kanjiResults = queryKanjiForTerm(searchTerm);
 
-    List<HoshiLookupResult>? ffiResults =
+    List<FushiLookupResult>? ffiResults =
         dictRepo.getCachedFfiLookup(ffiCacheKey);
     DictionarySearchResult? result;
 
@@ -4070,7 +4090,7 @@ class AppModel with ChangeNotifier {
       //    同一个查询串的前缀（`scan_candidates` 只产出前缀），故「码点最长」与
       //    「UTF-16 最长」是同一个元素，它必在 `partial_sort` 后排首位、
       //    永远落在 top-N 内。
-      ffiResults = HoshiDicts.instance.lookup(
+      ffiResults = FushiDicts.instance.lookup(
         searchTerm,
         maxResults: effectiveMaxTerms,
       );
@@ -4260,6 +4280,13 @@ class AppModel with ChangeNotifier {
     MediaItem? item,
     Bookmark? initialBookmarkJump,
   }) async {
+    // 已迁移只读态（Fushi 迁移 P1-4b）：单闸门挡掉全部媒体打开路径——进度/
+    // 统计/制卡的所有写点都在媒体页内，媒体不开则写路径整体不可达（好过在
+    // 每个写点各加一个特例分支）。老版此时只保留「重新导出」通道。
+    if (isMigrationReadonly) {
+      HibikiToast.show(msg: t.migration_readonly_note);
+      return;
+    }
     if (killOnPop) {
       _shouldKillMediaOnPop = true;
     }
@@ -4289,7 +4316,7 @@ class AppModel with ChangeNotifier {
       try {
         await WakelockPlus.enable();
       } catch (e) {
-        debugPrint('[Hibiki] wakelock enable failed: $e');
+        debugPrint('[Fushi] wakelock enable failed: $e');
       }
     }
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -4343,7 +4370,7 @@ class AppModel with ChangeNotifier {
     try {
       await WakelockPlus.disable();
     } catch (e) {
-      debugPrint('[Hibiki] wakelock disable failed: $e');
+      debugPrint('[Fushi] wakelock disable failed: $e');
     }
     // Returning to the home/menu shell: hide the Android status bar again
     // (TODO-097) instead of plain edge-to-edge. iOS/desktop unchanged.
@@ -4409,7 +4436,7 @@ class AppModel with ChangeNotifier {
       return;
     }
     final Uri uri = Uri(
-      scheme: 'hibiki',
+      scheme: 'fushi',
       host: 'lookup',
       queryParameters: {'word': trimmed},
     );
@@ -4949,7 +4976,7 @@ class AppModel with ChangeNotifier {
     _prefsRepo?.removeListener(notifyListeners);
     databaseCloseNotifier.notifyListeners();
     await _database.close();
-    HoshiDicts.disposeInstance();
+    FushiDicts.disposeInstance();
   }
 
   @override
@@ -5016,7 +5043,7 @@ class AppModel with ChangeNotifier {
       await platformServices.lifecycle.moveTaskToBack();
     } catch (e, stack) {
       ErrorLogService.instance.log('AppModel.moveToBack', e, stack);
-      debugPrint('[Hibiki] moveToBack failed: $e');
+      debugPrint('[Fushi] moveToBack failed: $e');
     }
   }
 
@@ -5528,7 +5555,7 @@ class AppModel with ChangeNotifier {
       // （点击 → /api/lookup/audio 解析 → HTML5 Audio 播放）。
       audioSourcesProvider: () => enabledAudioSources,
       // BUG-726：内置扩展内容指纹随查词响应下发（`extensionBuild`），扩展 background
-      // 与自身 HIBIKI_DEFAULTS.build 比对，不一致即 chrome.runtime.reload() 从磁盘拉新。
+      // 与自身 FUSHI_DEFAULTS.build 比对，不一致即 chrome.runtime.reload() 从磁盘拉新。
       // 指纹由 refreshBrowserExtensionCopy 在启动时算好缓存；算好前返回 null（字段省略）。
       extensionBuildProvider: () => _browserExtensionBuild,
       // 弹窗尺寸精细化 Phase D：扩展弹窗被拖角调整尺寸后经 bridge 回写的 sink——clamp + 拖即
@@ -5548,9 +5575,9 @@ class AppModel with ChangeNotifier {
       },
       tokenizer: JapaneseLanguage.instance.textToWords,
       readingResolver: (String w) {
-        if (!HoshiDicts.isInitialized) return '';
-        final List<HoshiLookupResult> r =
-            HoshiDicts.instance.lookup(w, maxResults: 1);
+        if (!FushiDicts.isInitialized) return '';
+        final List<FushiLookupResult> r =
+            FushiDicts.instance.lookup(w, maxResults: 1);
         return r.isEmpty ? '' : r.first.term.reading;
       },
     );
@@ -5619,7 +5646,7 @@ class AppModel with ChangeNotifier {
   /// 幂等 + 不覆盖既有真值（安全 + 向后兼容）：
   /// - token：仅当 [yomitanApiKey] 为空时才生成一枚随机 token 并落盘；**绝不覆盖**用户手填
   ///   或此前已配对的非空 token（覆盖会踢掉扩展已保存的 token 造成 401）。播种在启动/注入前
-  ///   完成，保证 server 实际使用的 token 与随后注入扩展 `hibiki-defaults.js` 的 token 一致。
+  ///   完成，保证 server 实际使用的 token 与随后注入扩展 `fushi-defaults.js` 的 token 一致。
   /// - server：仅当当前未启用时才置位并启动；已启用则**跳过不重启**（不打断在跑的 server、
   ///   不干扰活动连接）。[startYomitanApiServer] 本身也幂等（管理器 `if (_server != null)`）。
   ///
@@ -6058,7 +6085,7 @@ class _AppModelRemoteLookupService
         cueSentence: payload.cueSentence,
         documentTitle: payload.documentTitle,
         coverPath: coverPath,
-        sasayakiAudioPath: sentenceAudioPath,
+        sentenceAudioPath: sentenceAudioPath,
         sentenceOffset: payload.sentenceOffset,
         source: _forwardedSourceFromName(payload.source),
         bookTitleTag: payload.bookTitleTag,

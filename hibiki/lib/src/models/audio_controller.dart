@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:audio_service/audio_service.dart' as ag;
 import 'package:flutter/material.dart';
-import 'package:hibiki/src/utils/misc/hibiki_audio_handler.dart';
+import 'package:fushi/src/utils/misc/hibiki_audio_handler.dart';
 
 class AudioController {
   Stream<void> get playStream => _playController.stream;
@@ -72,16 +72,16 @@ class AudioController {
           onToggleFloatingLyric: () => _toggleFloatingLyricController.add(null),
         ),
         config: const ag.AudioServiceConfig(
-          androidNotificationChannelId: 'app.hibiki.reader.channel.audio',
-          androidNotificationChannelName: 'hibiki',
-          androidNotificationIcon: 'drawable/ic_stat_hibiki',
+          androidNotificationChannelId: 'app.fushi.reader.channel.audio',
+          androidNotificationChannelName: 'fushi',
+          androidNotificationIcon: 'drawable/ic_stat_fushi',
           notificationColor: Colors.black,
           fastForwardInterval: Duration(seconds: 5),
           rewindInterval: Duration(seconds: 5),
         ),
       );
     } catch (e) {
-      debugPrint('[Hibiki] AudioService.init failed (non-fatal): $e');
+      debugPrint('[Fushi] AudioService.init failed (non-fatal): $e');
       _audioHandler = HibikiAudioHandler(
         onPlayPause: () => _playController.add(null),
         onSeek: (pos) => _seekController.add(pos),

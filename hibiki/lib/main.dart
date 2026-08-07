@@ -18,66 +18,67 @@ import 'package:stack_trace/stack_trace.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
-import 'package:hibiki_anki/hibiki_anki.dart';
-import 'package:hibiki/models.dart';
-import 'package:hibiki_dictionary/hibiki_dictionary.dart';
-import 'package:hibiki/pages.dart';
-import 'package:hibiki/popup_main.dart' as popup_entrypoint;
-import 'package:hibiki/src/sync/desktop_lookup_service.dart';
-import 'package:hibiki/src/sync/dropbox_sync_backend.dart';
-import 'package:hibiki/src/sync/onedrive_sync_backend.dart';
-import 'package:hibiki/src/sync/sync_backend.dart';
-import 'package:hibiki/src/sync/sync_error_messages.dart';
-import 'package:hibiki/src/focus/hibiki_focus_controller.dart';
-import 'package:hibiki/src/utils/misc/app_icon_preferences.dart';
-import 'package:hibiki/src/utils/misc/channel_constants.dart';
-import 'package:hibiki/src/utils/misc/present_watchdog.dart';
-import 'package:hibiki/src/utils/misc/wgc_capture_log.dart';
-import 'package:hibiki/src/utils/window_caption_channel.dart';
-import 'package:hibiki/src/utils/adaptive/hibiki_macos_theme.dart';
-import 'package:hibiki/utils.dart';
-import 'package:hibiki/src/shortcuts/global_navigation.dart';
-import 'package:hibiki/src/lookup/clipboard_panel_controller.dart';
-import 'package:hibiki/src/lookup/clipboard_text_overlay_controller.dart';
-import 'package:hibiki/src/lookup/desktop_lookup_dispatcher.dart';
-import 'package:hibiki/src/lookup/global_lookup_controller.dart';
-import 'package:hibiki/src/lookup/gal_hook_text_overlay_controller.dart';
-import 'package:hibiki/src/startup/desktop_window_placement.dart';
-import 'package:hibiki/src/settings/settings_schema.dart'
+import 'package:fushi_anki/fushi_anki.dart';
+import 'package:fushi/models.dart';
+import 'package:fushi_dictionary/fushi_dictionary.dart';
+import 'package:fushi/pages.dart';
+import 'package:fushi/popup_main.dart' as popup_entrypoint;
+import 'package:fushi/src/sync/desktop_lookup_service.dart';
+import 'package:fushi/src/sync/dropbox_sync_backend.dart';
+import 'package:fushi/src/sync/onedrive_sync_backend.dart';
+import 'package:fushi/src/sync/sync_backend.dart';
+import 'package:fushi/src/sync/sync_error_messages.dart';
+import 'package:fushi/src/focus/hibiki_focus_controller.dart';
+import 'package:fushi/src/utils/misc/app_icon_preferences.dart';
+import 'package:fushi/src/utils/misc/channel_constants.dart';
+import 'package:fushi/src/utils/misc/present_watchdog.dart';
+import 'package:fushi/src/utils/misc/wgc_capture_log.dart';
+import 'package:fushi/src/utils/window_caption_channel.dart';
+import 'package:fushi/src/utils/adaptive/hibiki_macos_theme.dart';
+import 'package:fushi/utils.dart';
+import 'package:fushi/src/shortcuts/global_navigation.dart';
+import 'package:fushi/src/lookup/clipboard_panel_controller.dart';
+import 'package:fushi/src/lookup/clipboard_text_overlay_controller.dart';
+import 'package:fushi/src/lookup/desktop_lookup_dispatcher.dart';
+import 'package:fushi/src/lookup/global_lookup_controller.dart';
+import 'package:fushi/src/lookup/gal_hook_text_overlay_controller.dart';
+import 'package:fushi/src/startup/desktop_window_placement.dart';
+import 'package:fushi/src/settings/settings_schema.dart'
     show resetSettingsSchemaCache;
-import 'package:hibiki/src/storage/data_root_migration_view.dart';
-import 'package:hibiki/src/startup/loading_watchdog_view.dart';
-import 'package:hibiki/src/sync/backup_import_overlay_view.dart';
-import 'package:hibiki/src/sync/sync_settings_schema.dart'
+import 'package:fushi/src/storage/data_root_migration_view.dart';
+import 'package:fushi/src/startup/loading_watchdog_view.dart';
+import 'package:fushi/src/sync/backup_import_overlay_view.dart';
+import 'package:fushi/src/sync/sync_settings_schema.dart'
     show backupImportRestart, dataRootMigrationRestart;
-import 'package:hibiki/src/startup/webview_prewarm.dart';
-import 'package:hibiki/src/startup/exit_flush_registry.dart';
-import 'package:hibiki/src/sync/book_exit_sync_scope.dart';
-import 'package:hibiki/src/anki/anki_view_model.dart';
-import 'package:hibiki/src/anki/ankimobile_repository.dart';
-import 'package:hibiki/src/platform/platform_services.dart';
-import 'package:hibiki/src/platform/windows_ime_guard.dart';
-import 'package:hibiki/src/platform/platform_providers.dart';
-import 'package:hibiki/src/platform/desktop/desktop_lifecycle_service.dart';
-import 'package:hibiki/src/platform/ios/ios_url_event_channel.dart';
-import 'package:hibiki/src/media/audiobook/floating_lyric_lookup_host.dart';
-import 'package:hibiki/src/media/video/external_video.dart';
-import 'package:hibiki/src/media/video/video_cover_extractor.dart'
+import 'package:fushi/src/startup/webview_prewarm.dart';
+import 'package:fushi/src/startup/exit_flush_registry.dart';
+import 'package:fushi/src/sync/book_exit_sync_scope.dart';
+import 'package:fushi/src/anki/anki_view_model.dart';
+import 'package:fushi/src/anki/ankimobile_repository.dart';
+import 'package:fushi/src/platform/platform_services.dart';
+import 'package:fushi/src/platform/windows_ime_guard.dart';
+import 'package:fushi/src/platform/platform_providers.dart';
+import 'package:fushi/src/platform/desktop/desktop_lifecycle_service.dart';
+import 'package:fushi/src/platform/ios/ios_url_event_channel.dart';
+import 'package:fushi/src/media/audiobook/floating_lyric_lookup_host.dart';
+import 'package:fushi/src/media/video/external_video.dart';
+import 'package:fushi/src/media/video/video_cover_extractor.dart'
     show extractVideoCover;
-import 'package:hibiki/src/media/video/video_book_repository.dart';
-import 'package:hibiki/src/pages/implementations/dictionary_popup_webview.dart';
-import 'package:hibiki/src/pages/implementations/video_hibiki_page.dart';
+import 'package:fushi/src/media/video/video_book_repository.dart';
+import 'package:fushi/src/pages/implementations/dictionary_popup_webview.dart';
+import 'package:fushi/src/pages/implementations/video_hibiki_page.dart';
 import 'package:drift/drift.dart' show Value;
-import 'package:hibiki_core/hibiki_core.dart'
+import 'package:fushi_core/fushi_core.dart'
     show VideoBooksCompanion, VideoBookRow;
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
+import 'package:fushi/src/storage/windows_appdata_migration.dart';
 
 Color? _savedSplashColor;
 
 /// 桌面端「从 app 外打开视频文件」时，runner 经 `set_dart_entrypoint_arguments`
 /// 把视频路径传进 `main(List<String> args)`；这里暂存，待 app 初始化完成后由
-/// [_HoshiReaderAppState] 打开播放页并加入书架。null 表示本次启动不是外部打开视频。
+/// [_FushiReaderAppState] 打开播放页并加入书架。null 表示本次启动不是外部打开视频。
 String? _pendingExternalVideoPath;
 
 /// Single source of truth for the status/navigation bar overlay style.
@@ -137,6 +138,11 @@ void main([List<String> args = const <String>[]]) {
     /// Necessary to initialise Flutter when running native code before
     /// starting the application.
     final binding = WidgetsFlutterBinding.ensureInitialized();
+    // Fushi 改名（Phase 3）：%APPDATA%\Hibiki\Hibiki → %APPDATA%\Fushi\Fushi
+    // 一次性搬迁。必须先于进程内**第一次** SharedPreferences 读取（下面的
+    // applyInitialPlacement 就会读）——插件会在新路径缓存空 prefs，数据根配置
+    // 与 documents 布局锚点全在里面，晚了就等于丢配置。
+    await migrateWindowsLegacySupportDir();
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       await windowManager.ensureInitialized();
       await DesktopWindowPlacement.applyInitialPlacement();
@@ -145,7 +151,7 @@ void main([List<String> args = const <String>[]]) {
       // exits. Without this, a queued mDNS event delivered to a torn-down
       // messenger crashes the process on exit (TODO-036, Windows). The actual
       // event-source cut + fast exit runs in
-      // [_HoshiReaderAppState.onWindowClose] (TODO-086).
+      // [_FushiReaderAppState.onWindowClose] (TODO-086).
       await windowManager.setPreventClose(true);
       // TODO-959: 数据迁移成功后的自动重启会以 detached 模式拉新进程并带上重启标志。
       // 新进程的 Windows runner 见到标志会**隐藏建窗**（不带 WS_VISIBLE，见
@@ -159,13 +165,13 @@ void main([List<String> args = const <String>[]]) {
           await windowManager.show();
           await windowManager.focus();
         } catch (e) {
-          debugPrint('[Hibiki] restart window focus skipped: $e');
+          debugPrint('[Fushi] restart window focus skipped: $e');
           // 兜底：上面的 focus() 抢前台失败不致命，但隐藏建窗的窗口若未 show 就会
           // 永久不可见。再尝试一次纯 show()，仍失败也只能记录（极端环境）。
           try {
             await windowManager.show();
           } catch (e2) {
-            debugPrint('[Hibiki] restart window show fallback failed: $e2');
+            debugPrint('[Fushi] restart window show fallback failed: $e2');
           }
         }
       }
@@ -182,11 +188,11 @@ void main([List<String> args = const <String>[]]) {
             await WindowCaptionChannel.setWindowIcon(iconPath);
           }
         } catch (e) {
-          debugPrint('[Hibiki] window icon restore failed: $e');
+          debugPrint('[Fushi] window icon restore failed: $e');
         }
       }
     }
-    JustAudioMediaKit.title = 'Hibiki';
+    JustAudioMediaKit.title = 'Fushi';
     // 关闭 pitch-shift 控制（默认 true）。开启时 media_kit 的 setRate 会在每次调速时
     // 重写 mpv 的 `af` 音频滤镜图（scaletempo:scale=…）；在 Windows 上播放过程中反复
     // 重配滤镜图会触发 libmpv 进程级崩溃（有声书拖动倍速闪退，BUG-070）。本 app 从不
@@ -247,7 +253,7 @@ void main([List<String> args = const <String>[]]) {
     try {
       WakelockPlus.disable();
     } catch (e) {
-      debugPrint('[Hibiki] wakelock disable on startup failed: $e');
+      debugPrint('[Fushi] wakelock disable on startup failed: $e');
     }
     if (Platform.isAndroid || Platform.isIOS) {
       // Home/menu shell: hide the Android status bar (keep the nav bar) so the
@@ -271,7 +277,7 @@ void main([List<String> args = const <String>[]]) {
             await HibikiChannels.splash.invokeMethod<int>('getSplashColor');
         if (raw != null && raw != 0) _savedSplashColor = Color(raw);
       } catch (e) {
-        debugPrint('[Hibiki] getSplashColor failed: $e');
+        debugPrint('[Fushi] getSplashColor failed: $e');
       }
 
       SystemChrome.setPreferredOrientations([
@@ -320,7 +326,7 @@ void main([List<String> args = const <String>[]]) {
     runApp(
       UncontrolledProviderScope(
         container: container,
-        child: const HoshiReaderApp(),
+        child: const FushiReaderApp(),
       ),
     );
 
@@ -357,9 +363,9 @@ void main([List<String> args = const <String>[]]) {
 
     /// Run the heavy initialisation after the first frame has been scheduled.
     /// [AppModel.isInitialised] will flip to true and notify listeners when
-    /// done, causing [HoshiReaderApp] to navigate from [LoadingPage] to
+    /// done, causing [FushiReaderApp] to navigate from [LoadingPage] to
     /// [HomePage].
-    await HoshiDicts.preloadTransforms();
+    await FushiDicts.preloadTransforms();
 
     final appModel = container.read(appProvider);
     await appModel.initialise();
@@ -393,7 +399,7 @@ void main([List<String> args = const <String>[]]) {
         final WebViewPrewarmSession session = WebViewPrewarmSession(
           disposeWebView: () => warmup.dispose(),
           onFinished: (String reason) =>
-              debugPrint('[Hibiki] WebView engine pre-warm ended: $reason'),
+              debugPrint('[Fushi] WebView engine pre-warm ended: $reason'),
         );
         try {
           // 桌面端等首帧，保证 Flutter view 已 attach（WebView2 前提）。
@@ -419,7 +425,7 @@ void main([List<String> args = const <String>[]]) {
           await warmup.run();
           session.armTimeout();
         } catch (e) {
-          debugPrint('[Hibiki] WebView warmup failed (non-fatal): $e');
+          debugPrint('[Fushi] WebView warmup failed (non-fatal): $e');
           await session.finish('run failed: $e');
         }
       }));
@@ -452,7 +458,7 @@ void main([List<String> args = const <String>[]]) {
           DesktopLookupDispatcher.instance.start(appModel: appModel);
           await appModel.applyDesktopClipboardLifecycle();
         } catch (e) {
-          debugPrint('[Hibiki] global lookup start failed (non-fatal): $e');
+          debugPrint('[Fushi] global lookup start failed (non-fatal): $e');
         }
       }));
     }
@@ -498,7 +504,7 @@ void main([List<String> args = const <String>[]]) {
     ErrorLogService.instance.logFatal('UncaughtZone', exception, stack);
     if (Platform.isAndroid || Platform.isIOS) {
       FlutterLogs.logError(
-        'hoshi_reader',
+        'fushi_reader',
         details.exceptionAsString(),
         stack.toString(),
       );
@@ -508,15 +514,15 @@ void main([List<String> args = const <String>[]]) {
 
 /// Encapsulates theming, spacing and other configurable options pertaining to
 /// the entire app, with some parameters dependent on the [AppModel].
-class HoshiReaderApp extends ConsumerStatefulWidget {
+class FushiReaderApp extends ConsumerStatefulWidget {
   /// Initialises an instance of the app.
-  const HoshiReaderApp({super.key});
+  const FushiReaderApp({super.key});
 
   @override
-  ConsumerState<HoshiReaderApp> createState() => _HoshiReaderAppState();
+  ConsumerState<FushiReaderApp> createState() => _FushiReaderAppState();
 }
 
-class _HoshiReaderAppState extends ConsumerState<HoshiReaderApp>
+class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
     with WidgetsBindingObserver, WindowListener {
   final navigatorKey = GlobalKey<NavigatorState>();
   bool _isMainIntent = true;
@@ -531,7 +537,7 @@ class _HoshiReaderAppState extends ConsumerState<HoshiReaderApp>
   /// 经此 MethodChannel 收到 `openExternalVideo`，复用现有 [_openExternalVideo]
   /// 打开链路。仅 Windows 注册（其它桌面平台暂无单实例守卫，走首启 argv 路径）。
   static const MethodChannel _externalVideoChannel =
-      MethodChannel('app.hibiki/external_video');
+      MethodChannel('app.fushi/external_video');
 
   /// TODO-1092: Windows 系统强调色/主题色实时变更通知 channel。runner 侧
   /// （`windows/runner/flutter_window.cpp` 的 MessageHandler）收到
@@ -539,7 +545,7 @@ class _HoshiReaderAppState extends ConsumerState<HoshiReaderApp>
   /// WM_THEMECHANGED 后经此 channel 推 `onSystemColorChanged`，Dart 侧据此调
   /// [AppModel.refreshSystemPalette] 让动态取色实时刷新（不再等生命周期 resumed）。
   static const MethodChannel _systemThemeChannel =
-      MethodChannel('app.hibiki/system_theme');
+      MethodChannel('app.fushi/system_theme');
 
   /// 去抖：一次系统色变更常连发多条 Win32 广播（DWM + ImmersiveColorSet +
   /// THEMECHANGED），合并到一次 [AppModel.refreshSystemPalette]，避免同一变更重复
@@ -720,7 +726,7 @@ class _HoshiReaderAppState extends ConsumerState<HoshiReaderApp>
       await DesktopWindowPlacement.saveCurrentBoundsNow()
           .timeout(const Duration(milliseconds: 800));
     } catch (e) {
-      debugPrint('[Hibiki] desktop window placement save on exit failed: $e');
+      debugPrint('[Fushi] desktop window placement save on exit failed: $e');
     }
     // ① 切断 Bonsoir 事件源（事件订阅同步 cancel；原生 stop fire-and-forget）。
     //    收紧超时到 1.5s：cutEventSourceForExit 不再 await 原生 stop，正常瞬间返回。
@@ -729,16 +735,15 @@ class _HoshiReaderAppState extends ConsumerState<HoshiReaderApp>
           .shutdownForExitFast()
           .timeout(const Duration(milliseconds: 1500));
     } on TimeoutException {
-      debugPrint(
-          '[Hibiki] sync source fast shutdown timed out; exiting anyway');
+      debugPrint('[Fushi] sync source fast shutdown timed out; exiting anyway');
     } catch (e) {
-      debugPrint('[Hibiki] sync source fast shutdown failed: $e');
+      debugPrint('[Fushi] sync source fast shutdown failed: $e');
     }
     // ② flush 活跃页面 pending 进度/统计（缓存值落库，不碰退出期正在拆的 WebView）。
     try {
       await ExitFlushRegistry.instance.flushAll();
     } catch (e) {
-      debugPrint('[Hibiki] exit flush failed: $e');
+      debugPrint('[Fushi] exit flush failed: $e');
     }
     // ②' TODO-132 诉求B：有界 drain 退出书 fire-and-forget 触发的、仍在飞的 app-scope
     //    关书同步（[BookExitSyncScope]）。退出书 export 与页面生命周期解耦后会继续
@@ -750,14 +755,14 @@ class _HoshiReaderAppState extends ConsumerState<HoshiReaderApp>
       await BookExitSyncScope.instance
           .drain(timeout: const Duration(seconds: 5));
     } catch (e) {
-      debugPrint('[Hibiki] book-exit sync drain failed: $e');
+      debugPrint('[Fushi] book-exit sync drain failed: $e');
     }
     // ③ close database：WAL checkpoint + 排空后台 isolate pending 写。退出最后一道
     //    数据完整性闸门——必须在 exit(0) 之前完成。
     try {
       await appModel.closeDatabase();
     } catch (e) {
-      debugPrint('[Hibiki] database close on exit failed: $e');
+      debugPrint('[Fushi] database close on exit failed: $e');
     }
     // ④ 进程级快杀（desktop lifecycle = exit(0)），跳过 destroy() 的同步插件拆除。
     await appModel.platformServices.lifecycle.exitApp();
@@ -777,7 +782,7 @@ class _HoshiReaderAppState extends ConsumerState<HoshiReaderApp>
       try {
         await ExitFlushRegistry.instance.flushAll(clearCallbacks: false);
       } catch (e) {
-        debugPrint('[Hibiki] android background flush failed: $e');
+        debugPrint('[Fushi] android background flush failed: $e');
       }
     }();
     _androidBackgroundFlushInFlight = run;
@@ -804,9 +809,9 @@ class _HoshiReaderAppState extends ConsumerState<HoshiReaderApp>
           .shutdownForExit()
           .timeout(const Duration(milliseconds: 1500));
     } on TimeoutException {
-      debugPrint('[Hibiki] sync source shutdown on exit timed out; continuing');
+      debugPrint('[Fushi] sync source shutdown on exit timed out; continuing');
     } catch (e) {
-      debugPrint('[Hibiki] sync source shutdown on exit failed: $e');
+      debugPrint('[Fushi] sync source shutdown on exit failed: $e');
     }
 
     try {
@@ -817,13 +822,13 @@ class _HoshiReaderAppState extends ConsumerState<HoshiReaderApp>
       }
       await ExitFlushRegistry.instance.flushAll();
     } catch (e) {
-      debugPrint('[Hibiki] lifecycle detach flush failed: $e');
+      debugPrint('[Fushi] lifecycle detach flush failed: $e');
     }
 
     try {
       await appModel.closeDatabase();
     } catch (e) {
-      debugPrint('[Hibiki] database close on lifecycle detach failed: $e');
+      debugPrint('[Fushi] database close on lifecycle detach failed: $e');
     }
   }
 
@@ -868,7 +873,7 @@ class _HoshiReaderAppState extends ConsumerState<HoshiReaderApp>
   }) async {
     if (data == null || !mounted) return false;
     final String normalized = data.toLowerCase();
-    if (normalized.startsWith('hibiki://auth/')) {
+    if (normalized.startsWith('fushi://auth/')) {
       await _handleOAuthRedirect(data);
       return true;
     }
@@ -946,7 +951,7 @@ class _HoshiReaderAppState extends ConsumerState<HoshiReaderApp>
   }
 
   /// TODO-904 P0 回归：首实例收到第二实例经 WM_COPYDATA 转交的外部视频路径
-  /// （`windows/runner` → `app.hibiki/external_video` channel）。这里做与首启 argv
+  /// （`windows/runner` → `app.fushi/external_video` channel）。这里做与首启 argv
   /// 路径（[main]）等价的校验：扩展名白名单（[isSupportedVideoFile]）+ 存在性
   /// （`File.existsSync`），通过后复用 [_openExternalVideo] 打开。
   ///
@@ -1041,7 +1046,7 @@ class _HoshiReaderAppState extends ConsumerState<HoshiReaderApp>
         }
       }
     } catch (e) {
-      debugPrint('[Hibiki] external video upsert failed: $e');
+      debugPrint('[Fushi] external video upsert failed: $e');
       return;
     }
 
@@ -1070,7 +1075,7 @@ class _HoshiReaderAppState extends ConsumerState<HoshiReaderApp>
       if (navigatorContext == null ||
           !UpdateChecker.canShowDialogFromContext(navigatorContext)) {
         debugPrint(
-          '[Hibiki] windows update handoff reconcile deferred: '
+          '[Fushi] windows update handoff reconcile deferred: '
           'navigator context unavailable',
         );
         return;

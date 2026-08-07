@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:hibiki_anki/hibiki_anki.dart';
+import 'package:fushi_anki/fushi_anki.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 typedef AnkiMobileUrlOpener = Future<bool> Function(Uri uri);
@@ -18,11 +18,11 @@ typedef _AnkiMobileLocalMediaRefBuilder = Future<String?> Function(
 
 const String ankiMobileInfoCallback = 'anki://x-callback-url/infoForAdding';
 const String ankiMobileAddNoteCallback = 'anki://x-callback-url/addnote';
-const String hibikiAnkiFetchCallback = 'hibiki://ankiFetch';
-const String hibikiAnkiSuccessCallback = 'hibiki://ankiSuccess';
+const String hibikiAnkiFetchCallback = 'fushi://ankiFetch';
+const String hibikiAnkiSuccessCallback = 'fushi://ankiSuccess';
 
 const MethodChannel _ankiMobileChannel =
-    MethodChannel('app.hibiki.reader/ankimobile');
+    MethodChannel('app.fushi.reader/ankimobile');
 
 String _encodeAnkiMobileQueryComponent(String value) =>
     Uri.encodeComponent(value);
@@ -120,7 +120,7 @@ class AnkiMobileRepository extends BaseAnkiRepository {
       );
     }
     return const AnkiFetchResult.error(
-      'AnkiMobile opened. Approve the request, then return to Hibiki.',
+      'AnkiMobile opened. Approve the request, then return to Fushi.',
     );
   }
 
@@ -345,8 +345,8 @@ class AnkiMobileRepository extends BaseAnkiRepository {
       context.coverPath != null
           ? localMediaRef(context.coverPath!)
           : Future<String?>.value(null),
-      context.sasayakiAudioPath != null
-          ? localMediaRef(context.sasayakiAudioPath!)
+      context.sentenceAudioPath != null
+          ? localMediaRef(context.sentenceAudioPath!)
           : Future<String?>.value(null),
       _audioFieldForAnkiMobile(payload.audio, localMediaRef),
       buildDictionaryMediaTags(
@@ -356,7 +356,7 @@ class AnkiMobileRepository extends BaseAnkiRepository {
     ];
     final mediaResults = await Future.wait(mediaFutures);
     final String? coverUrl = mediaResults[0] as String?;
-    final String? sasayakiUrl = mediaResults[1] as String?;
+    final String? sentenceAudioUrl = mediaResults[1] as String?;
     final _AnkiMobileAudioField audio =
         mediaResults[2] as _AnkiMobileAudioField;
     final Map<String, String> dictionaryMediaTags =
@@ -367,7 +367,7 @@ class AnkiMobileRepository extends BaseAnkiRepository {
       cueSentence: context.cueSentence,
       documentTitle: context.documentTitle,
       coverPath: coverUrl,
-      sasayakiAudioPath: sasayakiUrl,
+      sentenceAudioPath: sentenceAudioUrl,
       sentenceOffset: context.sentenceOffset,
       source: context.source,
       bookTitleTag: context.bookTitleTag,

@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import 'package:hibiki/src/sync/hibiki_sync_server.dart';
-import 'package:hibiki/src/sync/sync_backend.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi/src/sync/hibiki_sync_server.dart';
+import 'package:fushi/src/sync/sync_backend.dart';
+import 'package:fushi_core/fushi_core.dart';
 
 /// 触达一台 Hibiki 同步服务器的一个候选地址。同一台服务器通常可经多条路由
 /// 触达（局域网、外网），它们共享同一个 token，按列表顺序尝试、第一个可达者胜出。
@@ -117,7 +117,6 @@ class SyncRepository {
   // 「与 Hoshi/ッツ 共享」开关：开启后 Google Drive 后端改用可见 My Drive /
   // ttu-reader-data + 完整 drive scope（[GoogleDriveSyncSpace]）。属设备本地（改的是
   // 本机 Drive 存储空间/scope），不随备份导入覆盖。
-  static const _keyGoogleDriveHoshiCompat = 'google_drive_hoshi_compat';
   static const _keySyncContent = 'sync_content_enabled';
   // BUG-988：互联通道专属的「上传内容到互联对端」开关，独立于云备份的
   // sync_*_enabled（那套只管云通道）。互联解耦(PR#223)后互联通道曾复用云备份的
@@ -222,10 +221,6 @@ class SyncRepository {
 
   /// 「与 Hoshi/ッツ 共享 Google Drive」开关。默认关（老用户云端数据留在隐藏
   /// appDataFolder 原地不动）。
-  Future<bool> isGoogleDriveHoshiCompat() =>
-      _db.getPrefTyped<bool>(_keyGoogleDriveHoshiCompat, false);
-  Future<void> setGoogleDriveHoshiCompat(bool v) =>
-      _db.setPrefTyped<bool>(_keyGoogleDriveHoshiCompat, v);
 
   Future<int?> getLastSyncMs() async {
     final s = await _getStringOrNull(_keyLastSyncMs);
@@ -864,7 +859,8 @@ class SyncRepository {
   /// 这是"哪些 key 属于设备本地"的唯一真相源；备份导入只引用本清单，杜绝两处漂移。
   static const List<String> deviceLocalPrefKeys = <String>[
     _keyBackendType,
-    _keyGoogleDriveHoshiCompat,
+    // Hoshi 共享空间功能已移除；旧键 google_drive_hoshi_compat 仍属设备本地。
+    'google_drive_hoshi_compat',
     _keyDesktopCredentials,
     _keyOneDriveToken,
     _keyDropboxToken,

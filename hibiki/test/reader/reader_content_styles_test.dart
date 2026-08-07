@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki_core/hibiki_core.dart';
-import 'package:hibiki/src/reader/reader_content_styles.dart';
-import 'package:hibiki/src/reader/reader_settings.dart';
-import 'package:hibiki/src/media/sources/reader_hibiki_source.dart';
+import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi/src/reader/reader_content_styles.dart';
+import 'package:fushi/src/reader/reader_settings.dart';
+import 'package:fushi/src/media/sources/reader_hibiki_source.dart';
 
 import '../helpers/source_guard.dart';
 
@@ -347,31 +347,31 @@ void main() {
     });
 
     test(
-        'sasayaki ruby highlight fills the base box with full background-color',
+        'sentenceAudioHighlight ruby highlight fills the base box with full background-color',
         () async {
       final ReaderSettings settings = await _defaultSettings();
       await settings.setWritingMode('vertical-rl');
 
       final String css = ReaderContentStyles.css(settings: settings);
 
-      final int sasayakiStart =
-          css.indexOf('ruby.hoshi-sasayaki-ruby-active {');
-      expect(sasayakiStart, isNonNegative);
-      final String sasayakiBlock = css.substring(
-        sasayakiStart,
-        css.indexOf('}', sasayakiStart),
+      final int sentenceAudioStart =
+          css.indexOf('ruby.hoshi-sentence-audio-ruby-active {');
+      expect(sentenceAudioStart, isNonNegative);
+      final String sentenceAudioBlock = css.substring(
+        sentenceAudioStart,
+        css.indexOf('}', sentenceAudioStart),
       );
       expect(
-        sasayakiBlock,
+        sentenceAudioBlock,
         contains(
-            'background-color: var(--hoshi-sasayaki-background-color) !important'),
+            'background-color: var(--hoshi-sentence-audio-background-color) !important'),
         reason: 'BUG-716：ruby 有声书高亮整句填充；注音轨在 ruby 背景盒外，'
             '有无振假名宽度一致',
       );
     });
 
     test(
-        'sasayaki text span highlight fills with full background-color, no box model',
+        'sentenceAudioHighlight text span highlight fills with full background-color, no box model',
         () async {
       final ReaderSettings settings = await _defaultSettings();
       await settings.setWritingMode('vertical-rl');
@@ -380,12 +380,12 @@ void main() {
 
       expect(
         css,
-        contains('.hoshi-sasayaki-cue.hoshi-sasayaki-active'),
+        contains('.hoshi-sentence-audio-cue.hoshi-sentence-audio-active'),
         reason: '普通正文 cue 也必须有 active span 样式，不能只靠 CSS Highlight',
       );
 
-      final int activeStart =
-          css.indexOf('.hoshi-sasayaki-cue.hoshi-sasayaki-active {');
+      final int activeStart = css
+          .indexOf('.hoshi-sentence-audio-cue.hoshi-sentence-audio-active {');
       expect(activeStart, isNonNegative);
       final String activeBlock = css.substring(
         activeStart,
@@ -394,8 +394,8 @@ void main() {
       expect(
         activeBlock,
         contains(
-            'background-color: var(--hoshi-sasayaki-background-color) !important'),
-        reason: 'BUG-716：普通正文 sasayaki 整句 background-color 填充',
+            'background-color: var(--hoshi-sentence-audio-background-color) !important'),
+        reason: 'BUG-716：普通正文 sentenceAudioHighlight 整句 background-color 填充',
       );
       expect(
         activeBlock,
@@ -490,13 +490,13 @@ void main() {
 
       final String css = ReaderContentStyles.css(settings: settings);
 
-      final int start = css.indexOf('ruby.hoshi-sasayaki-ruby-active {');
+      final int start = css.indexOf('ruby.hoshi-sentence-audio-ruby-active {');
       expect(start, isNonNegative);
       final String block = css.substring(start, css.indexOf('}', start));
       expect(
         block,
         contains(
-            'background-color: var(--hoshi-sasayaki-background-color) !important'),
+            'background-color: var(--hoshi-sentence-audio-background-color) !important'),
         reason: 'BUG-716：横排 ruby 有声书高亮同样整句填充，rt 注音轨在上方、'
             '在 ruby 元素背景盒外',
       );
@@ -1090,8 +1090,8 @@ void main() {
       ReaderHibikiSource.readerSettings = settings;
       addTearDown(() => ReaderHibikiSource.readerSettings = null);
 
-      await ReaderHibikiSource.instance.setTtuMarginLeft(99);
-      await ReaderHibikiSource.instance.setTtuMarginRight(-10);
+      await ReaderHibikiSource.instance.setReaderMarginLeft(99);
+      await ReaderHibikiSource.instance.setReaderMarginRight(-10);
       expect(ReaderHibikiSource.instance.ttuMarginLeft, 50);
       expect(ReaderHibikiSource.instance.ttuMarginRight, 0);
     });
@@ -1111,8 +1111,8 @@ void main() {
       ReaderHibikiSource.onSettingsChangedLive = () => calls++;
       addTearDown(() => ReaderHibikiSource.onSettingsChangedLive = null);
 
-      await ReaderHibikiSource.instance.setTtuFontSize(25);
-      await ReaderHibikiSource.instance.setTtuPrioritizeReaderStyles(true);
+      await ReaderHibikiSource.instance.setReaderFontSize(25);
+      await ReaderHibikiSource.instance.setReaderPrioritizeReaderStyles(true);
       await ReaderHibikiSource.instance.addCustomFont(name: 'Test Font');
 
       expect(calls, 3);
@@ -1339,7 +1339,7 @@ void main() {
     });
   });
 
-  // TODO-1285：每页列数设置写穿守卫——UI onChanged → source.setTtuPageColumns →
+  // TODO-1285：每页列数设置写穿守卫——UI onChanged → source.setReaderPageColumns →
   // ReaderSettings.setPageColumns → preferences 表 `ttu_page_columns`。getter 反读一致。
   group('TODO-1285 每页列数写穿 DB', () {
     test('setPageColumns 写穿 preferences 且 getter 反读一致', () async {
@@ -1363,7 +1363,7 @@ void main() {
       expect(reloaded.pageColumns, 3);
     });
 
-    test('source.setTtuPageColumns 经 ReaderSettings 写穿并反读', () async {
+    test('source.setReaderPageColumns 经 ReaderSettings 写穿并反读', () async {
       final HibikiDatabase db =
           HibikiDatabase.forTesting(NativeDatabase.memory());
       addTearDown(db.close);
@@ -1372,7 +1372,7 @@ void main() {
       ReaderHibikiSource.readerSettings = settings;
       addTearDown(() => ReaderHibikiSource.readerSettings = null);
 
-      await ReaderHibikiSource.instance.setTtuPageColumns(2);
+      await ReaderHibikiSource.instance.setReaderPageColumns(2);
       expect(ReaderHibikiSource.instance.ttuPageColumns, 2);
       final Map<String, String> prefs = await db.getAllPrefs();
       expect(prefs['src:reader_ttu:ttu_page_columns'], '2');

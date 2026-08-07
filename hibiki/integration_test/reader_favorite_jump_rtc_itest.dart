@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki_audio/hibiki_audio.dart';
+import 'package:fushi_audio/fushi_audio.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/main.dart' as app;
-import 'package:hibiki/src/media/sources/reader_hibiki_source.dart'
+import 'package:fushi/main.dart' as app;
+import 'package:fushi/src/media/sources/reader_hibiki_source.dart'
     show ReaderHibikiSource;
-import 'package:hibiki/src/models/app_model.dart' show AppModel;
-import 'package:hibiki/src/pages/implementations/reader_hibiki_page.dart'
+import 'package:fushi/src/models/app_model.dart' show AppModel;
+import 'package:fushi/src/pages/implementations/reader_hibiki_page.dart'
     show ReaderHibikiPage;
 
 import 'helpers/focus_driver.dart';
@@ -57,7 +57,7 @@ Future<int> _firstVisibleCharOffset(
   Future<dynamic> Function(String source) runJs,
 ) async {
   final Object? raw = await runJs(
-      'window.hoshiReader ? window.hoshiReader.getFirstVisibleCharOffset() : -999;');
+      'window.fushiReader ? window.fushiReader.getFirstVisibleCharOffset() : -999;');
   final num? n = raw is num ? raw : num.tryParse(raw.toString());
   expect(n, isNotNull,
       reason: 'getFirstVisibleCharOffset must return a number');
@@ -120,7 +120,7 @@ Future<void> _verifyJumpInMode(
           'sentence ($targetOffset), not the chapter start (got $landedSame)');
 
   // Reset the rb/rtc chapter to the top.
-  await runJs('window.hoshiReader.restoreProgress(0);');
+  await runJs('window.fushiReader.restoreProgress(0);');
   await tester.pump(const Duration(milliseconds: 600));
   final int atTop = await _firstVisibleCharOffset(runJs);
   expect(atTop, lessThan(targetOffset ~/ 2),
@@ -219,8 +219,8 @@ void main() {
 
           // Phase A: DEFAULT paginated mode (vertical-rl). The user's app default
           // is paginated, so this is the most likely real path.
-          await ReaderHibikiSource.instance.setTtuWritingMode('vertical-rl');
-          await ReaderHibikiSource.instance.setTtuViewMode('paginated');
+          await ReaderHibikiSource.instance.setReaderWritingMode('vertical-rl');
+          await ReaderHibikiSource.instance.setReaderViewMode('paginated');
           ReaderHibikiSource.onLayoutReloadLive?.call();
           for (int i = 0; i < 16; i++) {
             await tester.pump(const Duration(milliseconds: 250));
@@ -242,7 +242,7 @@ void main() {
           await _verifyJumpInMode(tester, runJs!, jump, bookKey, 'paginated');
 
           // Phase B: continuous mode (the BUG-696-documented user scenario).
-          await ReaderHibikiSource.instance.setTtuViewMode('continuous');
+          await ReaderHibikiSource.instance.setReaderViewMode('continuous');
           ReaderHibikiSource.onLayoutReloadLive?.call();
           for (int i = 0; i < 16; i++) {
             await tester.pump(const Duration(milliseconds: 250));
@@ -275,7 +275,7 @@ Future<int> _pickDeepCharOffset(
 ) async {
   const String js = r'''
 (function () {
-  var self = window.hoshiReader;
+  var self = window.fushiReader;
   if (!self || !self.createWalker) return -1;
   var walker = self.createWalker();
   var total = 0;

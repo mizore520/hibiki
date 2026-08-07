@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/pages/implementations/reader_hibiki_page.dart';
+import 'package:fushi/src/pages/implementations/reader_hibiki_page.dart';
 
 /// BUG-438 / TODO-889：手柄重连后阅读器无限 loading。
 ///
@@ -101,7 +101,7 @@ void main() {
       'lib/src/pages/implementations/reader_hibiki/navigation.part.dart',
     ).readAsStringSync();
     final String mainActivitySrc = File(
-      'android/app/src/main/java/app/hibiki/reader/MainActivity.java',
+      'android/app/src/main/java/app/fushi/reader/MainActivity.java',
     ).readAsStringSync();
 
     String didChangeMetricsBody() {

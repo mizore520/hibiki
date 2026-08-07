@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki_audio/hibiki_audio.dart';
+import 'package:fushi_audio/fushi_audio.dart';
 import 'package:just_audio_platform_interface/just_audio_platform_interface.dart';
 import '../../helpers/source_guard.dart';
 
@@ -201,7 +201,7 @@ void main() {
     // 两个方向的假绿假红都可能。
     final String src = _stripDartComments(
       File(
-        '../packages/hibiki_audio/lib/src/audiobook/audiobook_controller.dart',
+        '../packages/fushi_audio/lib/src/audiobook/audiobook_controller.dart',
       ).readAsStringSync(),
     );
 
@@ -295,7 +295,7 @@ class _Harness {
       audiobook: _audiobook(),
       audioFiles: <File>[audioFile],
     );
-    final List<AudioCue> cues = <AudioCue>[_sasayakiCue(0, section: 5)];
+    final List<AudioCue> cues = <AudioCue>[_sentenceAudioCue(0, section: 5)];
     controller.setAllBookCues(cues);
     controller.setChapterCues(cues);
     controller.followAudio.value = true;
@@ -308,13 +308,13 @@ class _Harness {
   }
 }
 
-AudioCue _sasayakiCue(int startMs, {required int section}) {
+AudioCue _sentenceAudioCue(int startMs, {required int section}) {
   return AudioCue()
     ..id = null
     ..bookKey = 'book'
     ..chapterHref = 'chapter'
     ..sentenceIndex = startMs ~/ 1000
-    ..textFragmentId = SasayakiMatchCodec.encodeHit(
+    ..textFragmentId = SubtitleRematchCodec.encodeHit(
       sectionIndex: section,
       normCharStart: 0,
       normCharEnd: 10,

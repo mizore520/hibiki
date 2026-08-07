@@ -17,10 +17,10 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/models.dart';
-import 'package:hibiki/src/pages/implementations/media_sources_dialog.dart';
-import 'package:hibiki/utils.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi/models.dart';
+import 'package:fushi/src/pages/implementations/media_sources_dialog.dart';
+import 'package:fushi/utils.dart';
+import 'package:fushi_core/fushi_core.dart';
 
 import '../helpers/test_platform_services.dart';
 
@@ -71,7 +71,7 @@ void main() {
     await tester.pump();
   }
 
-  Widget sasayakiLikeBody() => Column(
+  Widget sentenceAudioLikeBody() => Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const <Widget>[
@@ -94,7 +94,7 @@ void main() {
   bool isOverflow(Object? e) =>
       e != null && e.toString().toLowerCase().contains('overflow');
 
-  group('sasayaki rematch dialog (0.62 cap) mechanism', () {
+  group('sentenceAudioHighlight rematch dialog (0.62 cap) mechanism', () {
     testWidgets('scrollable false overflows at a short window (root cause)',
         (WidgetTester tester) async {
       await pumpFrame(
@@ -102,7 +102,7 @@ void main() {
         screen: const Size(360, 400),
         maxHeightFactor: 0.62,
         innerScrollable: false,
-        body: sasayakiLikeBody(),
+        body: sentenceAudioLikeBody(),
       );
       expect(isOverflow(tester.takeException()), isTrue,
           reason: 'non-scrolling two-slider Column overflows under 248px cap');
@@ -115,7 +115,7 @@ void main() {
         screen: const Size(360, 400),
         maxHeightFactor: 0.62,
         innerScrollable: true,
-        body: sasayakiLikeBody(),
+        body: sentenceAudioLikeBody(),
       );
       expect(tester.takeException(), isNull, reason: 'scrollable true scrolls');
       expect(

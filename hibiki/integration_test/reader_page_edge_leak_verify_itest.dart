@@ -8,11 +8,11 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi_core/fushi_core.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/src/reader/reader_content_styles.dart';
-import 'package:hibiki/src/reader/reader_settings.dart';
+import 'package:fushi/src/reader/reader_content_styles.dart';
+import 'package:fushi/src/reader/reader_settings.dart';
 
 /// TODO-1285 真机验证：分页阅读器「翻页时看到上/下页内容」（相邻页/列泄露到页边距带）。
 ///
@@ -39,7 +39,7 @@ void main() {
 
   // 证据落盘目录：优先环境变量（runner 会给隔离 run 目录），否则用固定临时目录。
   final String evidenceDir = () {
-    final String? env = Platform.environment['HIBIKI_LEAK_EVIDENCE_DIR'];
+    final String? env = Platform.environment['FUSHI_LEAK_EVIDENCE_DIR'];
     final String base = (env != null && env.trim().isNotEmpty)
         ? env.trim()
         : '${Directory.systemTemp.path}/hibiki-leak-evidence';

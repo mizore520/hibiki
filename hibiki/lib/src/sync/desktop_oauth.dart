@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:hibiki/src/sync/sync_backend.dart';
+import 'package:fushi/src/sync/sync_backend.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Result of a desktop loopback OAuth flow: the authorization [code] plus the
@@ -106,8 +106,7 @@ Future<DesktopOAuthResult> runDesktopOAuthLoopback({
 }
 
 String _resultPage({required bool success, String? error}) {
-  final title =
-      success ? 'Hibiki — Sign-in complete' : 'Hibiki — Sign-in failed';
+  final title = success ? 'Fushi — Sign-in complete' : 'Fushi — Sign-in failed';
   final body = success
       ? 'You can close this tab and return to Hibiki.'
       : 'Authorization failed${error != null ? ': $error' : ''}. '

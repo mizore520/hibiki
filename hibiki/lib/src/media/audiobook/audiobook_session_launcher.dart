@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:hibiki/src/media/audiobook/audiobook_session.dart';
-import 'package:hibiki/src/media/sources/reader_hibiki_source.dart';
-import 'package:hibiki_audio/hibiki_audio.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi/src/media/audiobook/audiobook_session.dart';
+import 'package:fushi/src/media/sources/reader_hibiki_source.dart';
+import 'package:fushi_audio/fushi_audio.dart';
+import 'package:fushi_core/fushi_core.dart';
 
 /// 从 bookKey 解析出启动 [AudiobookSession] 所需的全部材料（音频文件 / 初值 / persist
 /// 回调 / 书元数据），供 reader 页与书架长按入口共用，消除「解析音频文件 + 装 persist」
@@ -166,7 +166,7 @@ class AudiobookSessionLauncher {
 
   Future<(String, String?, String?)> _bookMeta(String bookKey) async {
     final EpubBookRow? row = await _db.getEpubBook(bookKey);
-    if (row == null) return ('Hibiki', null, null);
+    if (row == null) return ('Fushi', null, null);
     String? coverPath;
     if (row.coverPath != null && row.coverPath!.isNotEmpty) {
       String coverRel = row.coverPath!;

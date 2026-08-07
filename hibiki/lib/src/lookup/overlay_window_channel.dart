@@ -3,7 +3,7 @@
 // as a zero-churn delegating facade for the 1700-line controller) so the
 // SECOND window instance — the persistent clipboard panel — reuses the exact
 // same method contract on its own MethodChannel
-// (app.hibiki.reader/clipboard_panel) instead of copy-pasting ~250 lines.
+// (app.fushi.reader/clipboard_panel) instead of copy-pasting ~250 lines.
 //
 // Native counterpart: windows/runner/global_lookup_window.cpp +
 // FlutterWindow::RegisterGlobalLookupChannel / RegisterClipboardPanelChannel.
@@ -12,8 +12,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
-import 'package:hibiki/src/lookup/global_lookup_log.dart';
-import 'package:hibiki/src/utils/misc/error_log_service.dart';
+import 'package:fushi/src/lookup/global_lookup_log.dart';
+import 'package:fushi/src/utils/misc/error_log_service.dart';
 
 /// Native reply for [OverlayWindowChannel.showAt]: window-created flag plus the
 /// anchor monitor's work area in PHYSICAL px (0 when unavailable). Divide the

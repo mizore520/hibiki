@@ -5,7 +5,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/src/reader/reader_pagination_scripts.dart';
+import 'package:fushi/src/reader/reader_pagination_scripts.dart';
 
 /// TODO-1339 端到端（live WebView）：图片合并把「前导单图片 run」折进后随文本章后，
 /// 注入的插图（`.hoshi-merged-image` 内）必须保持 **eager**，不能被 `_sharedInitImages`
@@ -19,7 +19,7 @@ import 'package:hibiki/src/reader/reader_pagination_scripts.dart';
 ///   3. gaiji 内联小图仍是 eager（既有行为不变）。
 ///
 /// Run (PowerShell, from hibiki/)：
-///   $env:HIBIKI_TEST_HIDDEN = "1"
+///   $env:FUSHI_TEST_HIDDEN = "1"
 ///   flutter test integration_test/merged_image_eager_load_test.dart -d windows
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();

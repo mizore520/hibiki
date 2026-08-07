@@ -30,7 +30,7 @@ part of '../reader_hibiki_page.dart';
 extension _ReaderChrome on _ReaderHibikiPageState {
   /// TODO-1229 案A：章界连续输入穿透守卫。滚轮惯性节流（450ms）远短于换章加载
   /// （数百 ms restore），跨章那一下之后排队的翻页 tick 会在新章 restore 未落定时
-  /// 立即再翻——章首插图页/首页整页被越过；更糟 hoshiReader 尚未就绪时
+  /// 立即再翻——章首插图页/首页整页被越过；更糟 fushiReader 尚未就绪时
   /// evaluateJavascript 返 null → _didScroll(null)=false → 又 _handlePageTurnLimit →
   /// **跳两章**。本 getter 只在「导航在飞（_isNavigatingToChapter）/ 恢复在飞
   /// （_restoreInFlight）/ 内容未就绪（!_readerContentReady）」这三个瞬态窗口为真；
@@ -108,8 +108,8 @@ extension _ReaderChrome on _ReaderHibikiPageState {
       _lastPaginateTime = DateTime.now();
     }
     // Lyrics mode renders LyricsModeHtml — a vertical cue list with no
-    // hoshiReader paginator. paginate() there no-ops in JS (the
-    // `window.hoshiReader && ...` guard short-circuits) and returns undefined,
+    // fushiReader paginator. paginate() there no-ops in JS (the
+    // `window.fushiReader && ...` guard short-circuits) and returns undefined,
     // which _didScroll reads as a page edge → _handlePageTurnLimit →
     // _navigateToChapter, swapping the lyrics page for an EPUB chapter (the
     // text vanishes). Swipe paths already guard this (onSwipe/onBoundarySwipe);
@@ -1153,7 +1153,7 @@ extension _ReaderChrome on _ReaderHibikiPageState {
 
   /// BUG-1195：VN（视觉小说）模式下一次「空白点击」的唯一落点。
   ///
-  /// 旧实现在 JS 侧 [_gestureEnd] 里直接 `window.hoshiReader.paginate('forward')`
+  /// 旧实现在 JS 侧 [_gestureEnd] 里直接 `window.fushiReader.paginate('forward')`
   /// 并 return，抢在查词 / `onTapEmpty` 之前把每一次空白点都吃掉——而 `onTapEmpty`
   /// 是触屏唯一能唤出控制栏的通道，于是 VN 下底栏（悬浮态默认几秒后自动收起）一旦
   /// 收起就永远唤不回来。现在 JS 只回传「这是一次 VN 空白点」，翻页还是唤栏由 Dart
@@ -1213,7 +1213,7 @@ extension _ReaderChrome on _ReaderHibikiPageState {
   ///
   /// 门控（与 [_syncPageSize] / [_applyChromeInsets] / [_refreshProgress] 一致）：控制器
   /// 释放 / 内容未就绪 / 歌词模式 / 恢复期（`_restoreInFlight`）/ 分页模式都不触发。分页
-  /// 模式即使误调，JS 侧 `beginUiScaleReanchor` 在分页 `window.hoshiReader` 缺席，
+  /// 模式即使误调，JS 侧 `beginUiScaleReanchor` 在分页 `window.fushiReader` 缺席，
   /// `typeof` 守卫使其整体 no-op。
   Future<void> _reanchorContinuousForUiScale() {
     // 实际两阶段编排（门控 → begin → intResult → postFrame → commit）抽到 top-level
@@ -1494,7 +1494,7 @@ extension _ReaderChrome on _ReaderHibikiPageState {
       Semantics(
         identifier: 'hibiki.reader.bottom.settings',
         child: IconButton(
-          key: const ValueKey<String>('hoshi_reader_settings_button'),
+          key: const ValueKey<String>('fushi_reader_settings_button'),
           icon: Icon(Icons.tune_outlined, color: _themeTextColor()),
           iconSize: 20,
           tooltip: t.reader_settings_section,
@@ -1676,11 +1676,11 @@ extension _ReaderChrome on _ReaderHibikiPageState {
                 }
                 final int section = fav.sectionIndex!;
                 final List<AudioCue> cues =
-                    _audiobookController!.sasayakiCuesForSection(section);
+                    _audiobookController!.sentenceAudioCuesForSection(section);
                 AudioCue? target;
                 for (final AudioCue cue in cues) {
-                  final SasayakiFragment? frag =
-                      SasayakiMatchCodec.tryDecode(cue.textFragmentId);
+                  final SubtitleRematchFragment? frag =
+                      SubtitleRematchCodec.tryDecode(cue.textFragmentId);
                   if (frag == null) continue;
                   if (frag.normCharStart <= fav.normCharOffset! &&
                       frag.normCharEnd > fav.normCharOffset!) {
@@ -1812,7 +1812,7 @@ extension _ReaderChrome on _ReaderHibikiPageState {
     }
     _restoreCompleter = Completer<bool>();
     _restoreInFlight = true;
-    debugPrint('[ReaderHibiki] reloadWithCurrentSettings: '
+    debugPrint('[ReaderFushi] reloadWithCurrentSettings: '
         'chapter=$_currentChapter progress=$_initialProgress '
         'generation=$gen continuous=${_settings?.isContinuousMode}');
 
@@ -1826,7 +1826,7 @@ extension _ReaderChrome on _ReaderHibikiPageState {
     } catch (e, stack) {
       ErrorLogService.instance
           .log('ReaderHibiki.reloadWithCurrentSettings', e, stack);
-      debugPrint('[ReaderHibiki] reloadWithCurrentSettings failed: $e');
+      debugPrint('[ReaderFushi] reloadWithCurrentSettings failed: $e');
       _restoreInFlight = false;
       if (_restoreCompleter != null && !_restoreCompleter!.isCompleted) {
         _restoreCompleter!.complete(false);
@@ -1945,7 +1945,7 @@ extension _ReaderChrome on _ReaderHibikiPageState {
     'ecru-theme': (
       bg: Color(0xFFF7F6EB),
       fg: Color(0xDE000000),
-      sasayaki: Color(0x66A8C68C),
+      sentenceAudioHighlight: Color(0x66A8C68C),
       selection: Color(0x59C2B280),
       link: Color(0xFF7A6232),
       dark: false,
@@ -1953,7 +1953,7 @@ extension _ReaderChrome on _ReaderHibikiPageState {
     'water-theme': (
       bg: Color(0xFFDFECF4),
       fg: Color(0xDE000000),
-      sasayaki: Color(0x6664B4DC),
+      sentenceAudioHighlight: Color(0x6664B4DC),
       selection: Color(0x59C8AA6E),
       link: Color(0xFF3A5FAD),
       dark: false,
@@ -1963,7 +1963,7 @@ extension _ReaderChrome on _ReaderHibikiPageState {
     'eyecare-theme': (
       bg: Color(0xFFC7EDCC),
       fg: Color(0xDE000000),
-      sasayaki: Color(0x66A0C878),
+      sentenceAudioHighlight: Color(0x66A0C878),
       selection: Color(0x5988B583),
       link: Color(0xFF4C7A3E),
       dark: false,
@@ -1971,7 +1971,7 @@ extension _ReaderChrome on _ReaderHibikiPageState {
     'gray-theme': (
       bg: Color(0xFF23272A),
       fg: Color(0xDEFFFFFF),
-      sasayaki: Color(0x595096C8),
+      sentenceAudioHighlight: Color(0x595096C8),
       selection: Color(0x59BE9B64),
       link: Color(0xFF6FA8DC),
       dark: true,
@@ -1979,7 +1979,7 @@ extension _ReaderChrome on _ReaderHibikiPageState {
     'dark-theme': (
       bg: Color(0xFF121212),
       fg: Color(0x99FFFFFF),
-      sasayaki: Color(0x594682B4),
+      sentenceAudioHighlight: Color(0x594682B4),
       selection: Color(0x59B4915A),
       link: Color(0xFF7AACDF),
       dark: true,
@@ -1987,7 +1987,7 @@ extension _ReaderChrome on _ReaderHibikiPageState {
     'black-theme': (
       bg: Color(0xFF000000),
       fg: Color(0xDEFFFFFF),
-      sasayaki: Color(0x663C78AA),
+      sentenceAudioHighlight: Color(0x663C78AA),
       selection: Color(0x66AA8750),
       link: Color(0xFF5B9BD5),
       dark: true,
@@ -2002,8 +2002,8 @@ extension _ReaderChrome on _ReaderHibikiPageState {
       bg: appModel.customThemeBackgroundColor ?? const Color(0xFFFFFFFF),
       fg: appModel.customThemeFontColor ??
           (dark ? const Color(0xDEFFFFFF) : const Color(0xDE000000)),
-      sasayaki:
-          appModel.customThemeSasayakiColor ?? HibikiColor.defaultSasayakiColor,
+      sentenceAudioHighlight: appModel.customThemeSentenceAudioHighlightColor ??
+          HibikiColor.defaultSentenceAudioHighlightColor,
       // 回退值与 ReaderContentStyles `_ThemeColors` 默认一致（灰选区 / 蓝链接）。
       selection: appModel.customThemeSelectionColor ?? const Color(0x66A0A0A0),
       link: appModel.customThemeLinkColor ?? const Color(0xFF426CF5),
@@ -2031,7 +2031,8 @@ extension _ReaderChrome on _ReaderHibikiPageState {
 
   Color _themeTextColor() => _readerThemeColors.fg;
 
-  Color _themeSasayakiColor() => _readerThemeColors.sasayaki;
+  Color _themeSentenceAudioHighlightColor() =>
+      _readerThemeColors.sentenceAudioHighlight;
 
   bool get _isReaderThemeDark => _readerThemeColors.dark;
 
@@ -2112,7 +2113,7 @@ extension _ReaderChrome on _ReaderHibikiPageState {
         customHighlightCss: _customHighlightCss);
     await _controller!.evaluateJavascript(
       source:
-          'if (!window.__hoshiCssHighlightsSupported) { window.hoshiReader && window.hoshiReader.buildNodeOffsets(); }',
+          'if (!window.__hoshiCssHighlightsSupported) { window.fushiReader && window.fushiReader.buildNodeOffsets(); }',
     );
   }
 
@@ -2237,7 +2238,7 @@ extension _ReaderChrome on _ReaderHibikiPageState {
     if (!mounted || _controller == null) return;
     if (useOffset) {
       await _controller!.evaluateJavascript(
-        source: 'window.hoshiReader && window.hoshiReader'
+        source: 'window.fushiReader && window.fushiReader'
             '.restoreToCharOffset($normCharOffset, $charOffsetEnd);',
       );
     } else if (textLocateJs != null) {

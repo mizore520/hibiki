@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/anki/ankimobile_repository.dart';
-import 'package:hibiki_anki/hibiki_anki.dart';
+import 'package:fushi/src/anki/ankimobile_repository.dart';
+import 'package:fushi_anki/fushi_anki.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -246,7 +246,7 @@ void main() {
       context: AnkiMiningContext(
         sentence: '',
         coverPath: cover.path,
-        sasayakiAudioPath: sentenceAudio.path,
+        sentenceAudioPath: sentenceAudio.path,
       ),
     );
 
@@ -334,7 +334,7 @@ void main() {
       }),
       context: AnkiMiningContext(
         sentence: '',
-        sasayakiAudioPath: sentenceAudio.path,
+        sentenceAudioPath: sentenceAudio.path,
       ),
     );
     expect(outcome.result, MineResult.success);

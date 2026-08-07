@@ -1,11 +1,11 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/platform/gal_hook_text_overlay_channel.dart';
+import 'package:fushi/src/platform/gal_hook_text_overlay_channel.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const String channelName = 'app.hibiki.reader/gal_hook_text';
+  const String channelName = 'app.fushi.reader/gal_hook_text';
   const MethodChannel channel = MethodChannel(channelName);
   const MethodCodec codec = StandardMethodCodec();
 

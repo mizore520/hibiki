@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// TODO-901 源码守卫：Windows 桌面换图标后同步 .lnk 快捷方式图标的链路在位。
 ///
 /// 链路：Dart `syncWindowsShortcutIcons` 编码多尺寸 .ico + 落盘 → 经
-/// `app.hibiki/window` channel 的 `setShortcutIcon`（入参 key `iconPath`）→ 原生
+/// `app.fushi/window` channel 的 `setShortcutIcon`（入参 key `iconPath`）→ 原生
 /// `ApplyShortcutIcon` 用 IShellLink + IPersistFile 改写桌面 / 开始菜单 .lnk 的
 /// IconLocation。删掉任一环即红。
 void main() {
@@ -39,19 +39,19 @@ void main() {
     expect(src.contains('FOLDERID_Desktop'), isTrue, reason: '必须同步桌面快捷方式');
     expect(src.contains('FOLDERID_Programs'), isTrue, reason: '必须同步开始菜单快捷方式');
     // TODO-901 C1 回归守卫（load-bearing）：开始菜单 .lnk 落在程序组子文件夹
-    // 内，相对路径必须是 Hibiki 子目录 + Hibiki.lnk，而不是 Programs 根下的
-    // 裸 Hibiki.lnk（{group} = {autoprograms}+程序组名，含 Hibiki 子目录）。
+    // 内，相对路径必须是 Fushi 子目录 + Fushi.lnk，而不是 Programs 根下的
+    // 裸 Fushi.lnk（{group} = {autoprograms}+程序组名，含 Fushi 子目录）。
     // 若把开始菜单那一支的相对路径改回根目录形式，GetFileAttributesW 恒 INVALID
     // → 软跳过 → 换图标时开始菜单图标永不更新。锁住整条 FOLDERID_Programs 调用
     // 连同其子目录实参，改回根目录即红（用 RegExp 匹配整段调用，避免被注释里的
     // 示例文本误满足）。
     expect(
-        RegExp(r'HibikiShortcutInFolder\(\s*FOLDERID_Programs\s*,\s*'
-                r'L"Hibiki\\\\Hibiki\.lnk"')
+        RegExp(r'FushiShortcutInFolder\(\s*FOLDERID_Programs\s*,\s*'
+                r'L"Fushi\\\\Fushi\.lnk"')
             .hasMatch(src),
         isTrue,
-        reason: r'开始菜单 .lnk 必须拼成程序组 Hibiki 子文件夹下的 Hibiki.lnk'
-            r'（FOLDERID_Programs + Hibiki\Hibiki.lnk），不能用 Programs 根下的裸 Hibiki.lnk');
+        reason: r'开始菜单 .lnk 必须拼成程序组 Fushi 子文件夹下的 Fushi.lnk'
+            r'（FOLDERID_Programs + Fushi\Fushi.lnk），不能用 Programs 根下的裸 Fushi.lnk');
     expect(src.contains('SHGetKnownFolderPath('), isTrue,
         reason: '路径必须用 SHGetKnownFolderPath 解析（兼容 OneDrive 重定向桌面）');
 
@@ -76,8 +76,8 @@ void main() {
 
   test('Dart syncWindowsShortcutIcons 经 setShortcutIcon 用 iconPath 下发', () {
     final String src = read('lib/src/utils/misc/shortcut_icon_sync.dart');
-    expect(src.contains("MethodChannel('app.hibiki/window')"), isTrue,
-        reason: '必须复用 app.hibiki/window channel');
+    expect(src.contains("MethodChannel('app.fushi/window')"), isTrue,
+        reason: '必须复用 app.fushi/window channel');
     expect(src.contains("'setShortcutIcon'"), isTrue,
         reason: '必须调 setShortcutIcon method');
     expect(src.contains("'iconPath'"), isTrue,

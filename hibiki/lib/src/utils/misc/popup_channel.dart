@@ -1,8 +1,8 @@
 import 'dart:ui' show Rect;
 
 import 'package:flutter/foundation.dart';
-import 'package:hibiki/src/utils/misc/channel_constants.dart';
-import 'package:hibiki/src/utils/misc/error_log_service.dart';
+import 'package:fushi/src/utils/misc/channel_constants.dart';
+import 'package:fushi/src/utils/misc/error_log_service.dart';
 
 class PopupChannel {
   PopupChannel._();
@@ -73,7 +73,7 @@ class PopupChannel {
     } catch (e, stack) {
       ErrorLogService.instance
           .log('PopupChannel.getInitialProcessText', e, stack);
-      debugPrint('[Hibiki-popup] getInitialProcessText failed: $e');
+      debugPrint('[Fushi-popup] getInitialProcessText failed: $e');
       return (text: null, charIndex: -1, anchor: null, subtitle: null);
     }
   }
@@ -120,7 +120,7 @@ class PopupChannel {
       await _channel.invokeMethod<void>('finishPopup');
     } catch (e, stack) {
       ErrorLogService.instance.log('PopupChannel.finishPopup', e, stack);
-      debugPrint('[Hibiki-popup] finishPopup failed: $e');
+      debugPrint('[Fushi-popup] finishPopup failed: $e');
     }
   }
 }

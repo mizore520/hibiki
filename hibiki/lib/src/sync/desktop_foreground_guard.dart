@@ -22,7 +22,7 @@ abstract final class DesktopForegroundGuard {
     final bool? override = debugHiddenWindowsRunner;
     if (override != null) return override;
     if (!Platform.isWindows) return false;
-    return Platform.environment.containsKey('HIBIKI_TEST_HIDDEN');
+    return Platform.environment.containsKey('FUSHI_TEST_HIDDEN');
   }
 
   static bool isForegroundOwnedByCurrentProcess() {
@@ -141,7 +141,11 @@ final class _WindowsForegroundProbe {
     final String stem = foregroundExe.endsWith('.exe')
         ? foregroundExe.substring(0, foregroundExe.length - 4)
         : foregroundExe;
-    return stem == 'hibiki' || stem.startsWith('hibiki-');
+    // fushi 是改名后的 exe 词干；hibiki 保留识别仍在运行的旧版/旧便携包。
+    return stem == 'fushi' ||
+        stem.startsWith('fushi-') ||
+        stem == 'hibiki' ||
+        stem.startsWith('hibiki-');
   }
 
   static String _basenameLower(String path) {

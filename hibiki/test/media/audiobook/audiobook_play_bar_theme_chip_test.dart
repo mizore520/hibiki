@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:hibiki_audio/hibiki_audio.dart';
-import 'package:hibiki/models.dart';
-import 'package:hibiki/src/models/app_model.dart';
-import 'package:hibiki/src/models/theme_notifier.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_bridge.dart';
-import 'package:hibiki/src/media/audiobook/audiobook_play_bar.dart';
-import 'package:hibiki/src/media/audiobook/reader_quick_settings_sheet.dart';
-import 'package:hibiki/utils.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi_audio/fushi_audio.dart';
+import 'package:fushi/models.dart';
+import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/models/theme_notifier.dart';
+import 'package:fushi/src/media/audiobook/audiobook_bridge.dart';
+import 'package:fushi/src/media/audiobook/audiobook_play_bar.dart';
+import 'package:fushi/src/media/audiobook/reader_quick_settings_sheet.dart';
+import 'package:fushi/utils.dart';
+import 'package:fushi_core/fushi_core.dart';
 
 import '../../helpers/test_platform_services.dart';
 
@@ -102,9 +102,9 @@ void main() {
     expect(find.text(t.section_navigation), findsOneWidget);
     // 主页不渲染内联「排版设置」卡标题 / 主题选择器 / 字号步进（都在 layout 子页）。
     expect(find.text(t.display_settings), findsNothing);
-    expect(find.text(t.ttu_theme), findsNothing);
+    expect(find.text(t.reader_theme), findsNothing);
     expect(find.byType(HibikiSchemeSwatch), findsNothing);
-    expect(find.text(t.ttu_font_size), findsNothing);
+    expect(find.text(t.reader_font_size), findsNothing);
     expect(find.byType(ListTile), findsNothing);
 
     await tester.ensureVisible(find.text(t.settings_destination_lookup));
@@ -121,13 +121,13 @@ void main() {
     await tester.pumpAndSettle();
 
     // TODO-802：主题选择器并入「布局与显示」子页顶部（外观组已删）。
-    expect(find.text(t.ttu_theme), findsOneWidget);
+    expect(find.text(t.reader_theme), findsOneWidget);
     expect(find.byType(HibikiSchemeSwatch), findsWidgets);
     // TODO-774：字号/行高（schema 投影）也在 layout 子页。
-    expect(find.text(t.ttu_font_size), findsOneWidget);
-    expect(find.text(t.ttu_line_height), findsOneWidget);
+    expect(find.text(t.reader_font_size), findsOneWidget);
+    expect(find.text(t.reader_line_height), findsOneWidget);
     // TODO-725：翻页/滚动（view_mode）现归「布局与显示」组，进 layout 子页可见。
-    expect(find.text(t.ttu_view_mode_label), findsOneWidget);
+    expect(find.text(t.reader_view_mode_label), findsOneWidget);
     // Schema-projected segmented items render as AdaptiveSettingsSegmentedRow
     // with the renderer's erased <Object> type arg, not the bespoke <String>.
     expect(
@@ -174,7 +174,7 @@ void main() {
     expect(find.text(t.section_navigation), findsOneWidget);
     expect(find.text(t.section_layout), findsOneWidget);
     expect(find.text(t.reading_progress), findsOneWidget);
-    expect(find.text(t.ttu_theme), findsNothing);
+    expect(find.text(t.reader_theme), findsNothing);
     // master-detail 无 push：无返回箭头；左 pane 不再用带 chevron 的导航行。
     expect(find.byIcon(Icons.arrow_back), findsNothing);
     expect(find.byType(AdaptiveSettingsNavigationRow), findsNothing);
@@ -183,7 +183,7 @@ void main() {
     // 分段行都出现，仍无返回箭头。
     await tester.tap(find.text(t.section_layout));
     await tester.pumpAndSettle();
-    expect(find.text(t.ttu_theme), findsOneWidget);
+    expect(find.text(t.reader_theme), findsOneWidget);
     expect(find.byType(AdaptiveSettingsSegmentedRow<Object>), findsWidgets);
     expect(find.byIcon(Icons.arrow_back), findsNothing);
   });

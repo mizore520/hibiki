@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:hibiki_audio/hibiki_audio.dart';
-import 'package:hibiki/src/focus/hibiki_focus_controller.dart'
+import 'package:fushi_audio/fushi_audio.dart';
+import 'package:fushi/src/focus/hibiki_focus_controller.dart'
     show HibikiFocusId;
-import 'package:hibiki/src/focus/hibiki_focus_target.dart';
-import 'package:hibiki/utils.dart';
+import 'package:fushi/src/focus/hibiki_focus_target.dart';
+import 'package:fushi/utils.dart';
 
 /// 有声书播放控制条（紧凑型，固定于阅读器底部）。
 ///
@@ -188,7 +188,7 @@ class AudiobookPlayBar extends StatelessWidget {
       ),
       _FocusableBarButton(
         id: const HibikiFocusId('audiobook_settings'),
-        key: const ValueKey<String>('hoshi_reader_audiobook_settings_button'),
+        key: const ValueKey<String>('fushi_reader_audiobook_settings_button'),
         semanticsIdentifier: 'hibiki.reader.audiobook.settings',
         icon: const Icon(Icons.tune_outlined),
         iconSize: 20,

@@ -4,22 +4,23 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
-import 'package:hibiki/src/ocr/manga_ocr_service.dart';
-import 'package:hibiki/src/platform/desktop/desktop_device_info_service.dart';
-import 'package:hibiki/src/sync/hibiki_library_host_service.dart';
-import 'package:hibiki/src/sync/hibiki_manga_ocr_host.dart';
-import 'package:hibiki/src/sync/hibiki_remote_lookup_service.dart';
-import 'package:hibiki/src/sync/hibiki_sync_server.dart';
-import 'package:hibiki/src/sync/interconnect_device_name.dart';
-import 'package:hibiki/src/sync/lan_discovery_service.dart';
-import 'package:hibiki/src/sync/pairing/hibiki_pairing_protocol.dart';
-import 'package:hibiki/src/sync/sync_error_messages.dart';
-import 'package:hibiki/src/sync/sync_repository.dart';
-import 'package:hibiki/src/sync/tls/hibiki_tls_identity.dart';
-import 'package:hibiki/utils.dart';
-import 'package:hibiki_core/hibiki_core.dart';
-import 'package:hibiki_dictionary/hibiki_dictionary.dart';
-import 'package:hibiki_platform/hibiki_platform.dart';
+import 'package:fushi/src/ocr/manga_ocr_service.dart';
+import 'package:fushi/src/platform/desktop/desktop_device_info_service.dart';
+import 'package:fushi/src/sync/hibiki_library_host_service.dart';
+import 'package:fushi/src/sync/hibiki_manga_ocr_host.dart';
+import 'package:fushi/src/sync/hibiki_remote_lookup_service.dart';
+import 'package:fushi/src/sync/hibiki_sync_server.dart';
+import 'package:fushi/src/sync/interconnect_device_name.dart';
+import 'package:fushi/src/sync/lan_discovery_service.dart';
+import 'package:fushi/src/sync/pairing/hibiki_pairing_protocol.dart';
+import 'package:fushi/src/sync/sync_error_messages.dart';
+import 'package:fushi/src/sync/sync_repository.dart';
+import 'package:fushi/src/sync/sync_root_migration.dart';
+import 'package:fushi/src/sync/tls/hibiki_tls_identity.dart';
+import 'package:fushi/utils.dart';
+import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi_dictionary/fushi_dictionary.dart';
+import 'package:fushi_platform/fushi_platform.dart';
 
 /// Result of a [HibikiSyncServerController.start] attempt, so the caller (the
 /// settings toggle) can surface the right message while a headless app-init
@@ -256,8 +257,8 @@ class HibikiSyncServerController extends ChangeNotifier {
       // them. Null-safe: before the engine is initialised it yields null and
       // the endpoint answers 404.
       dictionaryMediaProvider: (String dict, String mediaPath) =>
-          HoshiDicts.isInitialized
-              ? HoshiDicts.instance.getMediaFile(dict, mediaPath)
+          FushiDicts.isInitialized
+              ? FushiDicts.instance.getMediaFile(dict, mediaPath)
               : null,
     )
       ..onPairRequest = _promptPairApproval
@@ -270,6 +271,15 @@ class HibikiSyncServerController extends ChangeNotifier {
       // 集合。server 不直连 DB，经这两个回调打通存储层（清缓存在 server 内部完成）。
       ..onPeerPaired = _persistPairedPeer
       ..pairedPeerTokensProvider = _loadPairedPeerTokens;
+    // Fushi 改名迁移（host 侧）：host 的 WebDAV 根映射到 server.syncDataDir，
+    // client 的同步根是其下的 `fushi-data/` 子目录。旧安装磁盘上还留着
+    // `hibiki-data/` → 本地整目录 rename（同盘原子，不搬数据）。幂等；失败留痕
+    // 降级（client 会新建空新根，下次 host 启动重试），绝不挡 server 启动。
+    await migrateLegacySyncRootDirectory(
+      syncDataDir: server.syncDataDir,
+      onError: (Object e, StackTrace st) => ErrorLogService.instance
+          .log('HibikiServerController.migrateLegacySyncRoot', e, st),
+    );
     try {
       await server.start();
       _server = server;

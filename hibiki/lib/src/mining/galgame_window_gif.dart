@@ -1,14 +1,14 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:hibiki/src/media/video/ffmpeg_backend.dart'
+import 'package:fushi/src/media/video/ffmpeg_backend.dart'
     show FfmpegRunResult, resolveFfmpegBackend;
-import 'package:hibiki/src/utils/misc/desktop_audio_clipper.dart'
+import 'package:fushi/src/utils/misc/desktop_audio_clipper.dart'
     show animatedEncoderArgs;
-import 'package:hibiki/src/mining/immersion_mining_request.dart'
+import 'package:fushi/src/mining/immersion_mining_request.dart'
     show MiningAnimatedFormat;
-import 'package:hibiki/src/mining/window_capture_channel.dart';
-import 'package:hibiki/src/utils/misc/error_log_service.dart';
+import 'package:fushi/src/mining/window_capture_channel.dart';
+import 'package:fushi/src/utils/misc/error_log_service.dart';
 import 'package:path/path.dart' as p;
 
 /// 捕获产物：字节 + **实际编码成的格式**。
@@ -23,7 +23,7 @@ typedef GalWindowAnimatedCapture = ({
 
 /// galgame 一键制卡「画面」动图（抓角色口型/眨眼）：连续对绑定窗口抓多帧静态截图，
 /// 再用**复用的桌面 ffmpeg 后端**（`resolveFfmpegBackend()`，与 `desktop_audio_clipper.dart`
-/// 里 `extractClipGifViaFfmpeg` 走的是同一后端解析——覆盖 `HIBIKI_FFMPEG` > 程序旁捆绑
+/// 里 `extractClipGifViaFfmpeg` 走的是同一后端解析——覆盖 `FUSHI_FFMPEG` > 程序旁捆绑
 /// > PATH）按 [format] 编码（默认格式由用户偏好给出，见 [MiningAnimatedFormat]）。
 ///
 /// 纯 Dart + ffmpeg，**不碰 native**（帧捕获仍走既有 [WindowCaptureChannel.captureWindow]，

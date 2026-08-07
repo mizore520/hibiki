@@ -3,11 +3,11 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki_core/hibiki_core.dart';
+import 'package:fushi_core/fushi_core.dart';
 import 'package:path/path.dart' as p;
 
-import 'package:hibiki/src/storage/app_paths.dart';
-import 'package:hibiki/src/storage/data_root_migrator.dart';
+import 'package:fushi/src/storage/app_paths.dart';
+import 'package:fushi/src/storage/data_root_migrator.dart';
 
 /// BUG-1188：「选目录」迁移到不了新装形态 —— 目标解析归一化 + 端到端布局守卫。
 ///
@@ -30,8 +30,11 @@ void main() {
     platformDocuments = Directory(p.join(tmp.path, 'Documents'))
       ..createSync(recursive: true);
     platformSupport =
-        Directory(p.join(tmp.path, 'AppData', 'Roaming', 'app.hibiki.reader'))
+        Directory(p.join(tmp.path, 'AppData', 'Roaming', 'app.fushi.reader'))
           ..createSync(recursive: true);
+    // 本文件全部用例模拟**存量 Hibiki 安装**（BUG-1188 归一化路径），容器锚
+    // 固定 Hibiki（生产由 _ensureDocumentsContainerDecided 启动期判定）。
+    AppPaths.debugSetDocumentsContainer('Hibiki');
     defaultDocsRoot = p.joinAll(<String>[
       platformDocuments.path,
       ...AppPaths.defaultDocumentsChildSegments,
@@ -39,6 +42,7 @@ void main() {
   });
 
   tearDown(() {
+    AppPaths.debugSetDocumentsContainer(null);
     if (tmp.existsSync()) tmp.deleteSync(recursive: true);
   });
 

@@ -1,13 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/pages.dart';
-import 'package:hibiki/src/focus/webview_key_bridge.dart';
-import 'package:hibiki/src/reader/reader_caret_scripts.dart';
-import 'package:hibiki/src/reader/reader_pagination_scripts.dart';
-import 'package:hibiki/src/reader/reader_visual_novel_scripts.dart';
-import 'package:hibiki/src/reader/reader_script_compactor.dart';
-import 'package:hibiki/src/reader/reader_selection_scripts.dart';
+import 'package:fushi/pages.dart';
+import 'package:fushi/src/focus/webview_key_bridge.dart';
+import 'package:fushi/src/reader/reader_caret_scripts.dart';
+import 'package:fushi/src/reader/reader_pagination_scripts.dart';
+import 'package:fushi/src/reader/reader_visual_novel_scripts.dart';
+import 'package:fushi/src/reader/reader_script_compactor.dart';
+import 'package:fushi/src/reader/reader_selection_scripts.dart';
 
 /// TODO-perf（跨章）：setup 脚本注入前的整行注释/空行剥离必须是**语义等价**的——
 /// 它跑在每次跨章的热路径上，一旦剥错行就是整本书白屏。
@@ -78,7 +78,7 @@ var e = 5;
   group('ReaderScriptCompactor 词法地雷', () {
     test('注释里的单个反引号不会把后续模板串当成代码区', () {
       const String src = '''
-// 用 `hoshiReader 包一层（奇数个反引号）
+// 用 `fushiReader 包一层（奇数个反引号）
 var css = `body {
 
   color: red;
@@ -270,7 +270,7 @@ tail`;
     test('最终脚本里各子载荷的运行时哨兵同时在场', () {
       const Map<String, String> sentinels = <String, String>{
         'selection': 'window.hoshiSelection',
-        'pagination': 'window.hoshiReader',
+        'pagination': 'window.fushiReader',
         'caret': 'window.hoshiCaret',
         'longPressDrag': '__hoshiTextSelectDragActive',
         'keyBridge': "'onSpaceKey'",
@@ -286,7 +286,7 @@ tail`;
       final String compacted = ReaderScriptCompactor.compact(assembled);
       for (final String sentinel in <String>[
         'window.hoshiSelection',
-        'window.hoshiReader',
+        'window.fushiReader',
         'window.hoshiCaret',
         '__hoshiTextSelectDragActive',
         "'onSpaceKey'",

@@ -1,13 +1,13 @@
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki/src/reader/reader_chrome_floating.dart';
+import 'package:fushi/src/reader/reader_chrome_floating.dart';
 
 import '../helpers/source_guard.dart';
 import 'reader_hibiki_page_source_corpus.dart';
 
 /// BUG-379：歌词模式（LyricsModeHtml）进度条跑进底栏。
 ///
-/// 歌词页是独立 HTML，没有 `window.hoshiReader`，`_applyChromeInsets` 对它整体
+/// 歌词页是独立 HTML，没有 `window.fushiReader`，`_applyChromeInsets` 对它整体
 /// early-return，正文那套「告诉 WebView 底栏预留高度」的机制对歌词页失效。歌词 WebView
 /// 仍 `Positioned.fill` 铺满全屏，底栏（`_buildAudiobookBar`，bottom:0）盖在其上，歌词
 /// 文档级 CSS 滚动条（主题化的细条）沿整屏高度绘制，底部一段被绘制进底栏区域 → 看上去

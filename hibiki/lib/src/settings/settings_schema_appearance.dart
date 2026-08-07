@@ -1,11 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:hibiki/pages.dart';
-import 'package:hibiki/src/settings/settings_actions.dart';
-import 'package:hibiki/src/settings/settings_context.dart';
-import 'package:hibiki/src/settings/settings_destination.dart';
-import 'package:hibiki/utils.dart';
+import 'package:fushi/pages.dart';
+import 'package:fushi/src/settings/settings_actions.dart';
+import 'package:fushi/src/settings/settings_context.dart';
+import 'package:fushi/src/settings/settings_destination.dart';
+import 'package:fushi/utils.dart';
 
 SettingsDestination buildAppearanceDestination() {
   return SettingsDestination(
@@ -28,7 +28,7 @@ SettingsDestination buildAppearanceDestination() {
           SettingsCustomItem(
             id: 'appearance.theme',
             icon: Icons.color_lens_outlined,
-            searchTitle: t.ttu_theme,
+            searchTitle: t.reader_theme,
             builder: buildThemeSelector,
           ),
           SettingsCustomItem(

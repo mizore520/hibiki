@@ -7,22 +7,25 @@ on:
   # beta/formal publishes always run. A version bump lives under hibiki/** so it
   # still triggers; rolling debug seq = commit count, so skipping a seq on a
   # docs-only push is harmless.
-  push:
-    branches: ['main', 'develop']
-    paths:
-      - 'hibiki/**'
-      - 'packages/**'
-      # C ABI bridge 源码：只改 native/ 的 PR 以前触发不了任何构建，
-      # 编译挂了要等下一个不相关改动才暴露。
-      - 'native/**'
-      - 'ci/**'
-      - 'tool/**'
-      - 'third_party/**'
-      - 'tools/build_magpie_slim.ps1'
-      - '.github/workflows/**'
-      - 'melos.yaml'
-      - 'pubspec.yaml'
-      - 'pubspec.lock'
+  # ⚠️ Fushi 改名过渡期（2026-08-07 用户指示）：暂停 push 自动发布——新版 Fushi
+  # 尚未正式就绪，自动发布会让老 Hibiki 用户经应用内更新拉到改名后的构建
+  # （Android 并存装新包 / helper 组件名对不上），迁移链发布前恢复本块。
+  # push:
+  #   branches: ['main', 'develop']
+  #   paths:
+  #     - 'hibiki/**'
+  #     - 'packages/**'
+  #     # C ABI bridge 源码：只改 native/ 的 PR 以前触发不了任何构建，
+  #     # 编译挂了要等下一个不相关改动才暴露。
+  #     - 'native/**'
+  #     - 'ci/**'
+  #     - 'tool/**'
+  #     - 'third_party/**'
+  #     - 'tools/build_magpie_slim.ps1'
+  #     - '.github/workflows/**'
+  #     - 'melos.yaml'
+  #     - 'pubspec.yaml'
+  #     - 'pubspec.lock'
   release:
     types: [published]
   workflow_dispatch:
@@ -52,7 +55,7 @@ on:
         type: boolean
 
 concurrency:
-  group: hibiki-release-${{ github.event.release.tag_name || github.event.inputs.tag_name || github.sha }}
+  group: fushi-release-${{ github.event.release.tag_name || github.event.inputs.tag_name || github.sha }}
   cancel-in-progress: false
 
 jobs:
@@ -327,7 +330,7 @@ jobs:
       # run 30729229450 就死在其中一个：automake-1.17.tar.gz 三个 GNU 镜像同时
       # `curl error 35 (SSL connect error)`，而 vcpkg 把 SSL connect error 判成
       # 「Not a transient network error, won't retry」直接 BUILD_FAILED，桌面发布链整条
-      # 红（publish 那句 `No files matched hibiki-*-windows-setup.exe` 只是级联）。
+      # 红（publish 那句 `No files matched fushi-*-windows-setup.exe` 只是级联）。
       # 所以根因不是「vcpkg 的重试判定写错了」——那是外部缺陷、我们改不了——而是
       # 这条路径本来就不该下载任何东西：key 带上 ImageVersion 后两种镜像各占一个
       # 条目，都走 `Restored 72` 的零下载路径，取件抖动面归零、顺带每次省 ~18 min。
@@ -623,7 +626,7 @@ jobs:
           & "$iscc" "/DAppVersion=${{ steps.channel.outputs.build_version_name }}" `
             "/DSourceDir=$PWD\hibiki\build\windows\x64\runner\Release" `
             "/DOutputDir=$PWD\hibiki\build\installer" `
-            "hibiki\windows\installer\hibiki.iss"
+            "hibiki\windows\installer\fushi.iss"
       - name: Check signing availability
         id: signcheck
         shell: bash
@@ -640,7 +643,7 @@ jobs:
         run: |
           [IO.File]::WriteAllBytes("$PWD\cert.pfx", [Convert]::FromBase64String($env:WINDOWS_CERT_BASE64))
           $st = (Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" | Select-Object -Last 1).FullName
-          & "$st" sign /fd SHA256 /f "$PWD\cert.pfx" /p $env:WINDOWS_CERT_PASSWORD /tr http://timestamp.digicert.com /td SHA256 "$PWD\hibiki\build\installer\hibiki-${{ steps.channel.outputs.build_version_name }}-windows-setup.exe"
+          & "$st" sign /fd SHA256 /f "$PWD\cert.pfx" /p $env:WINDOWS_CERT_PASSWORD /tr http://timestamp.digicert.com /td SHA256 "$PWD\hibiki\build\installer\fushi-${{ steps.channel.outputs.build_version_name }}-windows-setup.exe"
       - name: Prepare Windows installer release asset
         shell: bash
         env:
@@ -648,7 +651,7 @@ jobs:
           BUILD_VERSION_NAME: ${{ steps.channel.outputs.build_version_name }}
         run: |
           set -euo pipefail
-          installer="hibiki/build/installer/hibiki-${BUILD_VERSION_NAME}-windows-setup.exe"
+          installer="hibiki/build/installer/fushi-${BUILD_VERSION_NAME}-windows-setup.exe"
           asset_name="$(basename "$installer")"
           if [ ! -f "$installer" ]; then
             echo "::error title=Windows installer missing::Expected $installer"
@@ -664,7 +667,7 @@ jobs:
             esac
           fi
           mkdir -p hibiki/build/release-artifacts
-          rm -f hibiki/build/release-artifacts/hibiki-*-windows-setup.exe
+          rm -f hibiki/build/release-artifacts/fushi-*-windows-setup.exe
           cp "$installer" "hibiki/build/release-artifacts/$asset_name"
       # TODO-866: same fragility as the Android release workflow -- the prepared
       # Windows installer is otherwise only uploaded as a GitHub Release asset
@@ -679,7 +682,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: desktop-artifacts-windows
-          path: hibiki/build/release-artifacts/hibiki-*-windows-setup.exe
+          path: hibiki/build/release-artifacts/fushi-*-windows-setup.exe
           if-no-files-found: ignore
           retention-days: 14
 
@@ -921,7 +924,7 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x tool/mihon/build_desktop_runtime.sh
-          app_dir="hibiki/build/macos/Build/Products/Release/hibiki.app"
+          app_dir="hibiki/build/macos/Build/Products/Release/fushi.app"
           runtime_dir="$app_dir/Contents/Resources/mihon_bridge"
           tool/mihon/build_desktop_runtime.sh "$runtime_dir" "$RUNNER_TEMP/hibiki-mihon-downloads"
           while IFS= read -r candidate; do
@@ -934,7 +937,7 @@ jobs:
           codesign --force --deep --sign - --timestamp=none "$app_dir"
           codesign --verify --deep --strict --verbose=2 "$app_dir"
       # BUG-1421: the macOS bundle never shipped ffmpeg at all. Only the Windows
-      # job had an install step, so hibiki.app/Contents/MacOS/ held just the main
+      # job had an install step, so fushi.app/Contents/MacOS/ held just the main
       # executable and _bundledExecutablePath() (ffmpeg_backend.dart) always
       # returned null -> resolveFfmpegExecutable() fell through to a bare
       # 'ffmpeg' on PATH. macOS ships no system ffmpeg, so every Mac without a
@@ -953,7 +956,7 @@ jobs:
         run: |
           set -euo pipefail
           source_dir="third_party/ffmpeg-min/macos"
-          app_dir="hibiki/build/macos/Build/Products/Release/hibiki.app"
+          app_dir="hibiki/build/macos/Build/Products/Release/fushi.app"
           target_dir="$app_dir/Contents/MacOS"
           if [ ! -d "$target_dir" ]; then
             echo "::error title=macOS bundle missing::Expected $target_dir"
@@ -1068,7 +1071,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          APP="build/macos/Build/Products/Release/hibiki.app"
+          APP="build/macos/Build/Products/Release/fushi.app"
           ENTITLEMENTS="macos/Runner/Release.entitlements"
           JVM_ENTITLEMENTS="$RUNNER_TEMP/mihon-jvm.entitlements"
           if [ ! -d "$APP" ]; then
@@ -1140,7 +1143,7 @@ jobs:
           APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
         run: |
           set -euo pipefail
-          APP="build/macos/Build/Products/Release/hibiki.app"
+          APP="build/macos/Build/Products/Release/fushi.app"
           KEY_PATH="$RUNNER_TEMP/AuthKey_${APPSTORE_API_KEY_ID}.p8"
           printf '%s\n' "$APPSTORE_API_PRIVATE_KEY" > "$KEY_PATH"
           NOTARIZE_ZIP="$RUNNER_TEMP/hibiki-notarize.zip"
@@ -1170,15 +1173,15 @@ jobs:
           BUILD_VERSION_NAME: ${{ steps.channel.outputs.build_version_name }}
         run: |
           set -euo pipefail
-          app_dir="build/macos/Build/Products/Release/hibiki.app"
+          app_dir="build/macos/Build/Products/Release/fushi.app"
           out_dir="build/release-artifacts"
           if [ ! -d "$app_dir" ]; then
             echo "::error title=macOS app missing::Expected $app_dir"
             exit 1
           fi
           mkdir -p "$out_dir"
-          rm -f "$out_dir"/hibiki-*-macos.zip
-          ditto -c -k --keepParent "$app_dir" "$out_dir/hibiki-${BUILD_VERSION_NAME}-macos.zip"
+          rm -f "$out_dir"/fushi-*-macos.zip
+          ditto -c -k --keepParent "$app_dir" "$out_dir/fushi-${BUILD_VERSION_NAME}-macos.zip"
       # The single non-blocking `publish` job downloads this artifact and does
       # all Release publishing, so macOS builds in parallel with Windows/iOS and
       # never blocks (or is blocked by) the other platforms.
@@ -1187,7 +1190,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: desktop-artifacts-macos
-          path: hibiki/build/release-artifacts/hibiki-*-macos.zip
+          path: hibiki/build/release-artifacts/fushi-*-macos.zip
           if-no-files-found: ignore
           retention-days: 14
 
@@ -1447,10 +1450,10 @@ jobs:
           rm -rf "$payload_dir"
           mkdir -p "$payload_dir/Payload" "$out_dir"
           ditto "$app_dir" "$payload_dir/Payload/Runner.app"
-          rm -f "$out_dir"/hibiki-*-ios.ipa
+          rm -f "$out_dir"/fushi-*-ios.ipa
           (
             cd "$payload_dir"
-            zip -qry "$GITHUB_WORKSPACE/hibiki/$out_dir/hibiki-${BUILD_VERSION_NAME}-ios.ipa" Payload
+            zip -qry "$GITHUB_WORKSPACE/hibiki/$out_dir/fushi-${BUILD_VERSION_NAME}-ios.ipa" Payload
           )
       # The single non-blocking `publish` job downloads this artifact and does
       # all Release publishing, so iOS builds in parallel with Windows/macOS and
@@ -1460,7 +1463,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: desktop-artifacts-ios
-          path: hibiki/build/release-artifacts/hibiki-*-ios.ipa
+          path: hibiki/build/release-artifacts/fushi-*-ios.ipa
           if-no-files-found: ignore
           retention-days: 14
 
@@ -1837,9 +1840,9 @@ jobs:
         with:
           tag_name: ${{ steps.channel.outputs.tag }}
           files: |
-            hibiki/build/release-artifacts/hibiki-*-windows-setup.exe
-            hibiki/build/release-artifacts/hibiki-*-macos.zip
-            hibiki/build/release-artifacts/hibiki-*-ios.ipa
+            hibiki/build/release-artifacts/fushi-*-windows-setup.exe
+            hibiki/build/release-artifacts/fushi-*-macos.zip
+            hibiki/build/release-artifacts/fushi-*-ios.ipa
       # TODO-1049 / TODO-1123 / TODO-1129: same rolling-release asset GC as
       # release.yml. softprops upserts same-named assets but never removes a
       # PRIOR commit's asset (different seq/sha in the name) from the reused
@@ -1961,9 +1964,9 @@ jobs:
           prerelease: ${{ steps.channel.outputs.prerelease }}
           make_latest: ${{ steps.channel.outputs.make_latest }}
           files: |
-            hibiki/build/release-artifacts/hibiki-*-windows-setup.exe
-            hibiki/build/release-artifacts/hibiki-*-macos.zip
-            hibiki/build/release-artifacts/hibiki-*-ios.ipa
+            hibiki/build/release-artifacts/fushi-*-windows-setup.exe
+            hibiki/build/release-artifacts/fushi-*-macos.zip
+            hibiki/build/release-artifacts/fushi-*-ios.ipa
       # TODO-705: publish a mirror update manifest so beta/debug in-China update
       # checks succeed (raw.githubusercontent.com is proxiable; api.github.com
       # /releases is mirror-403'd, BUG-292). This pushes a DATA FILE to the
@@ -1992,7 +1995,7 @@ jobs:
           VERSION: ${{ steps.channel.outputs.build_version_name }}
           RELEASE_SEQUENCE: ${{ steps.channel.outputs.release_sequence }}
           ARTIFACTS_DIR: hibiki/build/release-artifacts
-          ASSET_GLOB: hibiki-*-windows-setup.exe
+          ASSET_GLOB: fushi-*-windows-setup.exe
           PLATFORM_LABEL: desktop
         run: bash tool/publish_update_manifest.sh
       - name: Publish mirror update manifest (Apple assets)
@@ -2011,6 +2014,6 @@ jobs:
           VERSION: ${{ steps.channel.outputs.build_version_name }}
           RELEASE_SEQUENCE: ${{ steps.channel.outputs.release_sequence }}
           ARTIFACTS_DIR: hibiki/build/release-artifacts
-          ASSET_GLOB: hibiki-*-macos.zip hibiki-*-ios.ipa
+          ASSET_GLOB: fushi-*-macos.zip fushi-*-ios.ipa
           PLATFORM_LABEL: apple
         run: bash tool/publish_update_manifest.sh

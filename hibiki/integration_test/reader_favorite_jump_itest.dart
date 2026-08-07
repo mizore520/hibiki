@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hibiki_audio/hibiki_audio.dart';
+import 'package:fushi_audio/fushi_audio.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:hibiki/main.dart' as app;
-import 'package:hibiki/src/media/sources/reader_hibiki_source.dart'
+import 'package:fushi/main.dart' as app;
+import 'package:fushi/src/media/sources/reader_hibiki_source.dart'
     show ReaderHibikiSource;
-import 'package:hibiki/src/models/app_model.dart' show AppModel;
-import 'package:hibiki/src/pages/implementations/reader_hibiki_page.dart'
+import 'package:fushi/src/models/app_model.dart' show AppModel;
+import 'package:fushi/src/pages/implementations/reader_hibiki_page.dart'
     show ReaderHibikiPage;
 
 import 'helpers/focus_driver.dart';
@@ -55,7 +55,7 @@ Future<int> _firstVisibleCharOffset(
   Future<dynamic> Function(String source) runJs,
 ) async {
   final Object? raw = await runJs(
-      'window.hoshiReader ? window.hoshiReader.getFirstVisibleCharOffset() : -999;');
+      'window.fushiReader ? window.fushiReader.getFirstVisibleCharOffset() : -999;');
   final num? n = raw is num ? raw : num.tryParse(raw.toString());
   expect(n, isNotNull,
       reason: 'getFirstVisibleCharOffset must return a number');
@@ -109,8 +109,8 @@ void main() {
           await _waitFor(tester, _webViewShown, 'reader WebView');
           await _waitFor(tester, _contentReady, 'hoshi content');
 
-          await ReaderHibikiSource.instance.setTtuWritingMode('vertical-rl');
-          await ReaderHibikiSource.instance.setTtuViewMode('continuous');
+          await ReaderHibikiSource.instance.setReaderWritingMode('vertical-rl');
+          await ReaderHibikiSource.instance.setReaderViewMode('continuous');
           ReaderHibikiSource.onLayoutReloadLive?.call();
           for (int i = 0; i < 16; i++) {
             await tester.pump(const Duration(milliseconds: 250));
@@ -161,7 +161,7 @@ void main() {
           //    back to the deep offset (exercises the _navigateToChapterAndWait
           //    charOffset transport). We first scroll to the top so the landing
           //    delta is meaningful.
-          await runJs('window.hoshiReader.restoreProgress(0);');
+          await runJs('window.fushiReader.restoreProgress(0);');
           await tester.pump(const Duration(milliseconds: 600));
           final int atTop = await _firstVisibleCharOffset(runJs);
           expect(atTop, lessThan(targetOffset ~/ 2),
@@ -200,7 +200,7 @@ Future<int> _pickDeepCharOffset(
 ) async {
   const String js = r'''
 (function () {
-  var self = window.hoshiReader;
+  var self = window.fushiReader;
   if (!self || !self.createWalker) return -1;
   var walker = self.createWalker();
   var total = 0;
