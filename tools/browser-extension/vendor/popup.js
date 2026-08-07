@@ -3161,7 +3161,7 @@ window.hoshiPopupMineEntryByIndex = function(idx) {
 // (.entry)，每条自成一栏（读音 + 词典释义）。这里提供纯 JS + CSS 的「当前词条」焦点指示：
 // 给每条打 data-hoshi-entry-index，给当前条加 .entry-current（popup.css 用
 // .entry-current .entry-header::before 画 #1a73e8 蓝三角，零字体依赖，与折叠三角同法），并
-// scrollIntoView 进视口。Dart 焦点驱动（阅读器 caret 管线 → DictionaryPopupWebViewState.
+// scrollIntoView 将词条开头带到视口顶部。Dart 焦点驱动（阅读器 caret 管线 → DictionaryPopupWebViewState.
 // focusEntryMove → 这里）按 next/prev 调用。与逐字光标 hoshiCaret 正交：只移动词条级指示与
 // 视口，绝不触碰 caret ring；用户决策「咱们没有前进后退·咱们是嵌套查词」，故不做历史栈。
 (function() {
@@ -3194,8 +3194,11 @@ window.hoshiPopupMineEntryByIndex = function(idx) {
         return -1;
     }
 
-    // 把焦点落到下标 index 的词条：切 .entry-current 并滚入视口。index 越界即无操作交由
-    // 调用方（这里只在合法下标调用）。
+    // 把焦点落到下标 index 的词条：切 .entry-current 并把词条开头滚到视口顶部。
+    // 使用 block:'start' 而不是 block:'nearest'，否则长词条在视口中只露出释义中段时，
+    // 向上切换只会做最小滚动，标题和小三角仍可能留在可视区域上方。scroll-margin-top
+    // 保留顶部既有留白；靠近底部时浏览器会按正常最大 scrollTop 自动夹紧，不制造空白。
+    // index 越界即无操作交由调用方（这里只在合法下标调用）。
     function applyCurrent(entries, index) {
         for (let i = 0; i < entries.length; i++) {
             if (i === index) entries[i].classList.add(CURRENT_CLASS);
@@ -3203,7 +3206,29 @@ window.hoshiPopupMineEntryByIndex = function(idx) {
         }
         const target = entries[index];
         if (target && target.scrollIntoView) {
-            target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            target.scrollIntoView({ block: 'start', inline: 'nearest' });
+        }
+    }
+
+    // 从第一个词条继续向上时，回到包含搜索框等顶部内容的真正滚动起点。
+    // app 内滚动面是 WebView 文档；浏览器扩展则把滚动交给 shadow host。两种表面都
+    // 必须等同于把右侧滚动条拖到最上方，不能只清 .entry-current。
+    function scrollPopupToTop() {
+        const scroller = typeof __hibikiShadowHost === 'function'
+            ? __hibikiShadowHost() : null;
+        if (scroller) {
+            if (typeof scroller.scrollTo === 'function') scroller.scrollTo(0, 0);
+            else scroller.scrollTop = 0;
+            return;
+        }
+        if (typeof window.scrollTo === 'function') window.scrollTo(0, 0);
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+    }
+
+    function clearCurrent(entries) {
+        for (let i = 0; i < entries.length; i++) {
+            entries[i].classList.remove(CURRENT_CLASS);
         }
     }
 
@@ -3219,7 +3244,9 @@ window.hoshiPopupMineEntryByIndex = function(idx) {
     }
 
     // 相对移动：'next'/'down'/'forward' → 下一条；其余（'prev'/'up'/'backward'）→ 上一条。
-    // 到边界返回 'blocked'（不回绕）。首次无当前项时，next 落第 0 条、prev 落最后一条。
+    // 到末条继续向下返回 'blocked'（不回绕）。位于首条继续向上则清除词条焦点并回到
+    // 页面真正顶部，返回 'moved' 让调用方消费这次 Alt+滚轮；这样从顶部再次向下会
+    // 自然落到第一条，而不会跳过它。首次无当前项时，next 落第 0 条、prev 落最后一条。
     function moveEntry(direction) {
         const entries = indexEntries();
         if (entries.length === 0) return 'blocked';
@@ -3232,7 +3259,14 @@ window.hoshiPopupMineEntryByIndex = function(idx) {
         } else {
             next = forward ? cur + 1 : cur - 1;
         }
-        if (next < 0 || next > entries.length - 1) return 'blocked';
+        if (next < 0 || next > entries.length - 1) {
+            if (!forward && cur === 0) {
+                clearCurrent(entries);
+                scrollPopupToTop();
+                return 'moved';
+            }
+            return 'blocked';
+        }
         applyCurrent(entries, next);
         return 'moved';
     }
@@ -3240,9 +3274,7 @@ window.hoshiPopupMineEntryByIndex = function(idx) {
     // 清除当前词条焦点（保留 data-hoshi-entry-index），返回词条数。
     function resetEntry() {
         const entries = indexEntries();
-        for (let i = 0; i < entries.length; i++) {
-            entries[i].classList.remove(CURRENT_CLASS);
-        }
+        clearCurrent(entries);
         return entries.length;
     }
 
