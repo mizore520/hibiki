@@ -77,7 +77,12 @@ add_subdirectory("${HOSHIDICTS_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/hoshidicts")
 set(BUILD_BUNDLE_DIR "$<TARGET_FILE_DIR:${BINARY_NAME}>")
 # Make the "install" step default, as it's required to run.
 set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+# Flutter/CMake can leave the Windows default (for example
+# C:/Program Files/hibiki) in a fresh or previously configured cache even
+# though this project is an in-place bundle. Treat that default like an
+# uninitialized prefix, but preserve an explicitly chosen non-default prefix.
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR
+    CMAKE_INSTALL_PREFIX MATCHES "^[A-Za-z]:/Program Files[^/]*/${BINARY_NAME}/?$")
   set(CMAKE_INSTALL_PREFIX "${BUILD_BUNDLE_DIR}" CACHE PATH "..." FORCE)
 endif()
 
