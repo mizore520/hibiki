@@ -81,7 +81,11 @@ set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
 # C:/Program Files/hibiki) in a fresh or previously configured cache even
 # though this project is an in-place bundle. Treat that default like an
 # uninitialized prefix, but preserve an explicitly chosen non-default prefix.
+# A previous app target name can also survive here as a generator expression
+# (for example `$<TARGET_FILE_DIR:hibiki>`) after the target is renamed to
+# `fushi`; reset that stale cache value before CMake evaluates it.
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR
+    CMAKE_INSTALL_PREFIX MATCHES "TARGET_FILE_DIR:" OR
     CMAKE_INSTALL_PREFIX MATCHES "^[A-Za-z]:/Program Files[^/]*/${BINARY_NAME}/?$")
   set(CMAKE_INSTALL_PREFIX "${BUILD_BUNDLE_DIR}" CACHE PATH "..." FORCE)
 endif()
