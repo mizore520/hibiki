@@ -15,6 +15,73 @@ if (-not (Test-Path -LiteralPath $ReleaseDir -PathType Container)) {
 }
 $release = (Resolve-Path -LiteralPath $ReleaseDir).Path
 
+$vswhereCandidates = @()
+if ($env:ProgramFiles) {
+    $vswhereCandidates += Join-Path $env:ProgramFiles 'Microsoft Visual Studio\Installer\vswhere.exe'
+}
+if (${env:ProgramFiles(x86)}) {
+    $vswhereCandidates += Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+}
+$vswhere = $vswhereCandidates |
+    Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+    Select-Object -First 1
+
+# Flutter resolves Visual Studio's bundled CMake internally, but the helper
+# packaging script invokes cmake/ctest by command name in a child PowerShell.
+# A normal desktop shell may therefore build the Flutter app successfully and
+# still fail before helper compilation.  Add the detected VS CMake bin to PATH
+# without pinning a Visual Studio version or edition.
+if (-not (Get-Command cmake -CommandType Application -ErrorAction SilentlyContinue)) {
+    $vsInstallPath = $null
+    if ($vswhere) {
+        $vsInstallPath = (& $vswhere -latest -products '*' -property installationPath 2>$null |
+            Select-Object -First 1)
+    }
+    if ($vsInstallPath) {
+        $vsCmakeBin = Join-Path $vsInstallPath 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin'
+        if (Test-Path -LiteralPath (Join-Path $vsCmakeBin 'cmake.exe') -PathType Leaf) {
+            $env:PATH = "$vsCmakeBin;$env:PATH"
+        }
+    }
+}
+foreach ($command in @('cmake', 'ctest')) {
+    if (-not (Get-Command $command -CommandType Application -ErrorAction SilentlyContinue)) {
+        throw "Required helper build tool is unavailable: $command"
+    }
+}
+
+# The Flutter build intentionally treats the native galgame helper as optional,
+# so a plain local build can succeed while producing an app that cannot start
+# capture.  Mirror the release workflow here: build and test both helper
+# architectures, then install their verified contents beside the app.  Run the
+# scripts in child PowerShell processes so their exit codes are explicit and a
+# broken/missing helper stops the launcher before it records a successful build.
+function Invoke-CheckedPowerShellScript {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ScriptPath,
+
+        [string[]]$ScriptArguments = @()
+    )
+
+    if (-not (Test-Path -LiteralPath $ScriptPath -PathType Leaf)) {
+        throw "Required Windows packaging script is missing: $ScriptPath"
+    }
+    & powershell -NoProfile -ExecutionPolicy Bypass -File $ScriptPath @ScriptArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "$ScriptPath failed with exit code $LASTEXITCODE"
+    }
+}
+
+$helperToolsDir = Join-Path $repo 'native\galgame_hook\tools'
+$helperBuildScript = Join-Path $helperToolsDir 'build_distribution.ps1'
+$helperInstallScript = Join-Path $helperToolsDir 'install_into_bundle.ps1'
+Invoke-CheckedPowerShellScript -ScriptPath $helperBuildScript -ScriptArguments @('-RunTests')
+Invoke-CheckedPowerShellScript -ScriptPath $helperInstallScript -ScriptArguments @(
+    '-BundleDirectory',
+    $release
+)
+
 # Keep local `flutter build windows --release` output equivalent to the CI
 # desktop bundle.  The app uses the sibling ffmpeg executable for sentence
 # audio encoding; ffprobe is needed by subtitle/tag consumers.
@@ -33,17 +100,6 @@ foreach ($name in @('ffmpeg.exe', 'ffprobe.exe')) {
 # developer machine has the redist installed; machines with a system redist
 # can still run, but the warning makes a non-self-contained local bundle
 # visible instead of silently hiding it.
-$vswhereCandidates = @()
-if ($env:ProgramFiles) {
-    $vswhereCandidates += Join-Path $env:ProgramFiles 'Microsoft Visual Studio\Installer\vswhere.exe'
-}
-if (${env:ProgramFiles(x86)}) {
-    $vswhereCandidates += Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-}
-$vswhere = $vswhereCandidates |
-    Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
-    Select-Object -First 1
-
 $redistRoots = @()
 if ($vswhere) {
     $installPath = (& $vswhere -latest -products '*' `
