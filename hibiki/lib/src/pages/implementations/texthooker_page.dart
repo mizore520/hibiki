@@ -31,6 +31,7 @@ import 'package:fushi/src/pages/implementations/dictionary_popup_webview.dart'
     show MinePopupResult;
 import 'package:fushi/src/sync/texthooker_service.dart';
 import 'package:fushi/src/sync/texthooker_ws_client.dart';
+import 'package:fushi/src/sync/texthooker_ws_client_manager.dart';
 import 'package:fushi/src/utils/misc/desktop_audio_playback.dart';
 import 'package:fushi/src/utils/misc/swipe_dismiss_wrapper.dart';
 import 'package:fushi/media.dart';
@@ -1089,16 +1090,41 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
         context: context,
         builder: (BuildContext dialogContext) => GalCaptureSetupDialog(
           session: _session,
-          onSelectThread: (TexthookerTextThread thread) =>
-              _session.selectTextThread(
-            thread.nativeThreadId,
-            threadKey: thread.key,
-            remember: true,
-          ),
+          onSelectThread: _selectCaptureTextThread,
         ),
       );
       _captureSetupDialogOpen = false;
     });
+  }
+
+  /// 把 Luna 原文端点准备好后再落会话选择。用户无需理解或手填 WebSocket 地址；
+  /// 其他内置线程仍走原来的 native 选择逻辑。
+  Future<bool> _selectCaptureTextThread(TexthookerTextThread thread) async {
+    if (thread.key == GalHookSessionController.lunaExternalTextThreadKey) {
+      List<String> urls = _appModel.texthookerUrls;
+      if (!urls.any(isLunaTranslatorOriginEndpoint)) {
+        urls = <String>[...urls, kLunaTranslatorOriginWsUrl];
+        await _appModel.setTexthookerUrls(urls);
+      }
+      if (!_appModel.texthookerEnabled) {
+        await _appModel.setTexthookerEnabled(true);
+      }
+      final TexthookerWsClientManager manager =
+          TexthookerWsClientManager.instance;
+      if (!manager.isRunning) {
+        manager.start(urls);
+      } else if (!manager.endpointStatuses.any(
+        (TexthookerEndpointStatus status) =>
+            isLunaTranslatorOriginEndpoint(status.url),
+      )) {
+        await manager.restart(urls);
+      }
+    }
+    return _session.selectTextThread(
+      thread.nativeThreadId,
+      threadKey: thread.key,
+      remember: true,
+    );
   }
 
   /// TODO-1052：查词浮层 barrier 上「桌面水平拖过阈关一层」的纯状态追踪器（与
@@ -1707,9 +1733,12 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
                         // 行数用 observedLineCount（native 观测总行数）而不是已发布
                         // 行数：v12 起未被选中的线程一行都不发布，用已发布行数会让
                         // 每条候选都显示 `· 0`，用户还是没法判断该选哪条。
-                        label:
-                            '${threadDisplayLabels[thread.key] ?? thread.label}'
-                            ' · ${thread.observedLineCount}',
+                        label: thread.key ==
+                                GalHookSessionController
+                                    .lunaExternalTextThreadKey
+                            ? t.game_text_source_luna
+                            : '${threadDisplayLabels[thread.key] ?? thread.label}'
+                                ' · ${thread.observedLineCount}',
                       ),
                   ],
                   // 每条线程第二行：有音频行数 + 最近台词预览——没有预览用户
@@ -1747,12 +1776,12 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
                       _unreadLines = 0;
                     });
                     unawaited(
-                      _session.selectTextThread(
-                        selectedThread?.nativeThreadId,
-                        threadKey: selectedThread?.key,
-                        // 用户亲自选的线程记进本游戏记忆，下次开同一个游戏自动选回。
-                        remember: true,
-                      ),
+                      selectedThread == null
+                          ? _session.selectTextThread(
+                              null,
+                              remember: true,
+                            )
+                          : _selectCaptureTextThread(selectedThread),
                     );
                   },
                 ),

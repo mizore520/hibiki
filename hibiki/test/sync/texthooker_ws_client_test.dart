@@ -26,6 +26,21 @@ class _FailingChannel implements WebSocketChannel {
 void main() {
   setUp(() => TexthookerService.instance.clear());
 
+  test('defaults point at LunaTranslator origin endpoint', () {
+    expect(
+      TexthookerWsClient.defaultUrls,
+      contains(kLunaTranslatorOriginWsUrl),
+    );
+    expect(isLunaTranslatorOriginEndpoint(kLunaTranslatorOriginWsUrl), isTrue);
+    expect(
+      isLunaTranslatorOriginEndpoint(
+        'ws://127.0.0.1:2444/api/ws/text/origin',
+      ),
+      isTrue,
+    );
+    expect(isLunaTranslatorOriginEndpoint('ws://localhost:2333'), isFalse);
+  });
+
   test('receives raw text and {sentence} json from a ws server', () async {
     final server = await HttpServer.bind('127.0.0.1', 0);
     server.transform(WebSocketTransformer()).listen((WebSocket ws) {

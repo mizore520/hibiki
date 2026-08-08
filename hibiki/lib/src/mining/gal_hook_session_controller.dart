@@ -643,6 +643,11 @@ class GalHookSessionController extends ChangeNotifier {
   static const Duration _readinessRefreshInterval = Duration(milliseconds: 500);
   static const int _eventLimit = 400;
 
+  /// LunaTranslator 外部原文在 Fushi 线程选择器里的稳定身份。它不是 native helper
+  /// 线程，但复用同一套选择、过滤和每游戏记忆，避免另造一条捕获状态机。
+  static const String lunaExternalTextThreadKey =
+      'external:luna-translator-origin';
+
   final TexthookerService _textService;
   final GalEngineSourceFactory _engineSourceFactory;
   final GalLoopbackSourceFactory _loopbackSourceFactory;
@@ -670,8 +675,36 @@ class GalHookSessionController extends ChangeNotifier {
   GalHookSessionState _state = const GalHookSessionState();
   GalHookSessionState get state => _state;
   List<TexthookerLineEntry> get lines => _textService.entries;
-  List<TexthookerTextThread> get textThreads =>
-      _textService.textThreadsSince(_state.sessionStartedAt);
+  List<TexthookerTextThread> get textThreads {
+    final List<TexthookerTextThread> native =
+        _textService.textThreadsSince(_state.sessionStartedAt);
+    // 没有捕获会话时不污染普通外部文本页面；会话开始后始终提供 Luna 入口，
+    // 因而即使 Fushi 内置 Hook 一条候选都找不到，首次设置弹窗仍然可自救。
+    final DateTime? startedAt = _state.sessionStartedAt;
+    if (startedAt == null) return native;
+    final List<TexthookerLineEntry> lunaLines = _textService.entries
+        .where((TexthookerLineEntry entry) =>
+            !entry.receivedAt.isBefore(startedAt) &&
+            entry.source == TexthookerLineSource.websocket &&
+            isLunaTranslatorOriginEndpoint(entry.sourceLabel ?? ''))
+        .toList();
+    final TexthookerLineEntry? latest =
+        lunaLines.isEmpty ? null : lunaLines.last;
+    final TexthookerTextThread luna = TexthookerTextThread(
+      key: lunaExternalTextThreadKey,
+      label: 'LunaTranslator',
+      lineCount: lunaLines.length,
+      observedLineCount: lunaLines.length,
+      latestAt: latest?.receivedAt ?? startedAt,
+      latestText: latest?.text,
+      audioLineCount:
+          lunaLines.where((TexthookerLineEntry line) => line.hasAudio).length,
+    );
+    return <TexthookerTextThread>[luna, ...native];
+  }
+
+  bool get usesLunaExternalText =>
+      _selectedTextThreadKey == lunaExternalTextThreadKey;
 
   /// 这一行能否进入正式消费面（工作台 / 浮窗 / 配对 / 制卡）。
   ///
@@ -694,6 +727,10 @@ class GalHookSessionController extends ChangeNotifier {
     TexthookerLineEntry entry,
     String? selectedKey,
   ) {
+    if (selectedKey == lunaExternalTextThreadKey) {
+      return entry.source == TexthookerLineSource.websocket &&
+          isLunaTranslatorOriginEndpoint(entry.sourceLabel ?? '');
+    }
     final String? key = entry.textThreadKey;
     if (key == null || key.isEmpty) return selectedKey == null;
     return key == selectedKey;
@@ -2041,13 +2078,28 @@ class GalHookSessionController extends ChangeNotifier {
           threadId == null || threadId == 0 ? null : threadId;
       // 换线程就必须丢掉上一条线程的 hook 面，否则旧 face 会继续放行旧线程的行。
       _selectedTextThreadFaceId = 0;
+      if (usesLunaExternalText) {
+        await _ensureLoopbackForLunaExternalText();
+      }
       // 新线程在被选中之前写进自己那条道的行，现在补回来（v13 分道的直接收益）。
       await _recoverSelectedThreadHistory();
+      // 从 Luna 切回 Fushi 内置线程时恢复 native 的最佳音源。资源能力可能早已
+      // ready，不会再次产生“晚到”边沿，所以不能只等 readiness poll。
+      if (!usesLunaExternalText && engine != null) {
+        if (engine.rawVoiceReady) {
+          _promoteLateResourceAudio(engine);
+        } else {
+          final PcmFormat? readyFormat = engine.readyPcmFormat;
+          if (readyFormat != null) {
+            await _promoteLateEnginePcm(engine, readyFormat);
+          }
+        }
+      }
       if (remember) {
         // 用户已亲自表态：本会话不再自动恢复，并把这次选择记成新的真值。
         _textThreadMemoryApplied = true;
         TexthookerTextThread? chosen;
-        for (final TexthookerTextThread thread in _textService.textThreads) {
+        for (final TexthookerTextThread thread in textThreads) {
           if (thread.key == _selectedTextThreadKey) {
             chosen = thread;
             break;
@@ -2070,6 +2122,80 @@ class GalHookSessionController extends ChangeNotifier {
     );
     if (selected) notifyListeners();
     return selected;
+  }
+
+  /// Luna 的 WebSocket 只给原文，不带 Fushi native helper 的句时刻或音频事件 id。
+  /// 因此不能把“此刻最新的一段引擎 PCM”冒充成这句语音；外部原文模式明确切到
+  /// 系统回环，沿用既有延迟冻结与制卡缓存，得到可解释、可复现的兜底结果。
+  Future<void> _ensureLoopbackForLunaExternalText() async {
+    if (!_state.audioFallbackPolicy.allowsLoopback) {
+      _record(
+        GalHookEventSeverity.warning,
+        'audio',
+        'audio.luna_loopback_suppressed',
+        'Luna external text is selected, but system loopback is disabled',
+      );
+      return;
+    }
+    if (_audioSource is LoopbackGalAudioSource) {
+      _setState(
+        _state.copyWith(
+          phase: GalHookSessionPhase.degraded,
+          audioBackend: GalHookAudioBackend.systemLoopback,
+          fallbackReason: 'luna_external_text_loopback',
+          clearLastError: true,
+        ),
+      );
+      _syncTrackAutoRefresh();
+      return;
+    }
+
+    final LoopbackGalAudioSource loopback = _loopbackSourceFactory();
+    final PcmFormat? format = await loopback.start();
+    if (!usesLunaExternalText) {
+      await loopback.stop();
+      return;
+    }
+    if (format == null) {
+      await loopback.stop();
+      _setState(
+        _state.copyWith(
+          phase: GalHookSessionPhase.degraded,
+          audioBackend: GalHookAudioBackend.none,
+          fallbackReason: 'all_audio_sources_failed',
+          lastError: 'Luna text is active, but system loopback could not start',
+          clearAudioFormat: true,
+        ),
+      );
+      return;
+    }
+
+    final GalAudioSource? previous = _audioSource;
+    _audioSource = loopback;
+    // native engine 仍负责内置 Hook、诊断和稍后切回；只有其他独立音源才应关闭。
+    if (previous != null && !identical(previous, _engineSource)) {
+      await previous.stop();
+    }
+    _setState(
+      _state.copyWith(
+        phase: GalHookSessionPhase.degraded,
+        audioBackend: GalHookAudioBackend.systemLoopback,
+        audioFormat: format,
+        fallbackReason: 'luna_external_text_loopback',
+        clearLastError: true,
+      ),
+    );
+    _record(
+      GalHookEventSeverity.warning,
+      'audio',
+      'audio.luna_loopback_active',
+      'Luna external text is active with system loopback audio',
+      details: <String, Object?>{
+        'sampleRate': format.sampleRate,
+        'channels': format.channels,
+      },
+    );
+    _syncTrackAutoRefresh();
   }
 
   /// 单条台词改用指定音轨重抓语音（BUG-1102 的真正出口）。
@@ -2392,13 +2518,16 @@ class GalHookSessionController extends ChangeNotifier {
     final String? wanted = _captureMemory.textThreadFingerprint;
     if (wanted == null) return;
     TexthookerTextThread? best;
-    for (final TexthookerTextThread thread in _textService.textThreads) {
+    for (final TexthookerTextThread thread in textThreads) {
       if (textThreadFingerprint(thread) != wanted) continue;
       // 🔴 判据必须用 observedLineCount（native 观测总行数），**不能**用 lineCount
       // （已发布行数）。v12 取消自动选线程后，用户选定之前文本环恒空、lineCount 对所有
       // 线程都是 0，用它做判据会让这里永远选不出候选 → 记忆永远恢复不了 → 每次开游戏
       // 都要重新手选。这正是「第一次由用户选」与「之后自动恢复」能同时成立的关键。
-      if (thread.observedLineCount < _textThreadRestoreMinLines) continue;
+      if (thread.key != lunaExternalTextThreadKey &&
+          thread.observedLineCount < _textThreadRestoreMinLines) {
+        continue;
+      }
       if (best == null || thread.observedLineCount > best.observedLineCount) {
         best = thread;
       }
@@ -3610,7 +3739,11 @@ class GalHookSessionController extends ChangeNotifier {
     EngineHookGalAudioSource engine,
     PcmFormat format,
   ) async {
-    if (engine != _engineSource || identical(_audioSource, engine)) return;
+    if (usesLunaExternalText ||
+        engine != _engineSource ||
+        identical(_audioSource, engine)) {
+      return;
+    }
     if (_state.audioBackend != GalHookAudioBackend.systemLoopback &&
         _state.audioBackend != GalHookAudioBackend.none) {
       return;
@@ -3976,7 +4109,10 @@ class GalHookSessionController extends ChangeNotifier {
   }
 
   void _promoteLateResourceAudio(EngineHookGalAudioSource engine) {
-    if (_state.audioBackend == GalHookAudioBackend.gameResource) return;
+    if (usesLunaExternalText ||
+        _state.audioBackend == GalHookAudioBackend.gameResource) {
+      return;
+    }
     for (final MapEntry<String, int> line in _lineTimestampCache.entries) {
       final int? textEventId = _lineTextEventIdCache[line.key];
       if (textEventId == null) continue;
@@ -4045,6 +4181,13 @@ class GalHookSessionController extends ChangeNotifier {
     if (latestId != null && latestId != _lastObservedLineId) {
       final TexthookerLineEntry latest = entries.last;
       if (latest.source != TexthookerLineSource.engineHook) {
+        // 外部端点可能并行连着多个来源；只为当前正式发布的来源记活动并冻结音频，
+        // 否则 Luna/Textractor 的平行文本会各自抢一份同一时刻的系统混音。
+        if (!_publishesUnderSelection(latest, selectedTextThreadKey)) {
+          _lastObservedLineId = latestId;
+          notifyListeners();
+          return;
+        }
         _record(
           GalHookEventSeverity.success,
           'text',

@@ -404,7 +404,8 @@ class PreferencesRepository extends ChangeNotifier {
   // ── texthooker ───────────────────────────────────────────────────────
 
   static const String _texthookerDefaultUrls =
-      'ws://localhost:6677\nws://localhost:9001\nws://localhost:2333';
+      'ws://localhost:6677\nws://localhost:9001\n'
+      'ws://localhost:2333/api/ws/text/origin';
 
   bool get texthookerEnabled =>
       getPref('texthooker_enabled', defaultValue: false) as bool;
@@ -419,11 +420,19 @@ class PreferencesRepository extends ChangeNotifier {
       'texthooker_urls',
       defaultValue: _texthookerDefaultUrls,
     ) as String;
-    return raw
+    final List<String> urls = raw
         .split('\n')
         .map((String s) => s.trim())
         .where((String s) => s.isNotEmpty)
         .toList();
+    // Fushi 旧默认值指向 Luna 2333 根路径；Luna 10.x 的原文流已固定在
+    // /api/ws/text/origin。读取时兼容迁移，避免老用户必须手动清偏好。
+    final List<String> migrated = urls
+        .map((String url) => url == 'ws://localhost:2333'
+            ? 'ws://localhost:2333/api/ws/text/origin'
+            : url)
+        .toList();
+    return migrated.toSet().toList();
   }
 
   Future<void> setTexthookerUrls(List<String> urls) async {

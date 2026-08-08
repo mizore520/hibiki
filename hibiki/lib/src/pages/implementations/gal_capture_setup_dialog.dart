@@ -7,6 +7,7 @@ import 'package:fushi/src/mining/gal_hook_session_controller.dart';
 import 'package:fushi/src/mining/galgame_audio_source.dart';
 import 'package:fushi/src/pages/implementations/game_shared.dart';
 import 'package:fushi/src/sync/texthooker_service.dart';
+import 'package:fushi/src/sync/texthooker_ws_client.dart';
 import 'package:fushi/src/utils/misc/desktop_audio_playback.dart';
 import 'package:fushi/utils.dart';
 
@@ -211,22 +212,37 @@ class _GalCaptureSetupDialogState extends State<GalCaptureSetupDialog> {
                     itemCount: threads.length,
                     itemBuilder: (BuildContext context, int index) {
                       final TexthookerTextThread thread = threads[index];
+                      final bool isLuna = thread.key ==
+                          GalHookSessionController.lunaExternalTextThreadKey;
+                      final bool lunaConnected = isLuna &&
+                          widget.session.endpointStatuses.any(
+                            (TexthookerEndpointStatus status) =>
+                                isLunaTranslatorOriginEndpoint(status.url) &&
+                                status.phase ==
+                                    TexthookerEndpointPhase.connected,
+                          );
                       final bool selecting = _selectingThreadKey == thread.key;
                       return HibikiListItem(
                         leading: const Icon(Icons.forum_outlined),
                         title: Text(
-                          '${labels[thread.key] ?? thread.label} · '
-                          '${thread.observedLineCount}',
+                          isLuna
+                              ? t.game_text_source_luna
+                              : '${labels[thread.key] ?? thread.label} · '
+                                  '${thread.observedLineCount}',
                         ),
                         subtitle: Text(
-                          texthookerThreadSubtitle(
-                                audioLineCount: thread.audioLineCount,
-                                latestText: thread.displayPreviewText,
-                                audioLabel: t.game_text_thread_audio_count(
-                                  count: thread.audioLineCount,
-                                ),
-                              ) ??
-                              t.game_waiting_for_text,
+                          isLuna
+                              ? (lunaConnected
+                                  ? t.game_text_source_luna_connected
+                                  : t.game_text_source_luna_waiting)
+                              : texthookerThreadSubtitle(
+                                    audioLineCount: thread.audioLineCount,
+                                    latestText: thread.displayPreviewText,
+                                    audioLabel: t.game_text_thread_audio_count(
+                                      count: thread.audioLineCount,
+                                    ),
+                                  ) ??
+                                  t.game_waiting_for_text,
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),

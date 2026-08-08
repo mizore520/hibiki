@@ -81,6 +81,87 @@ void main() {
     endpoints.dispose();
   });
 
+  test('Luna external text is selectable and isolated with loopback audio',
+      () async {
+    final TexthookerService service = TexthookerService.test();
+    final ChangeNotifier endpoints = ChangeNotifier();
+    final _FakeEngineSource engine = _FakeEngineSource(
+      pairedBytes: Uint8List(0),
+      rawReady: true,
+    );
+    final _FakeLoopbackSource loopback = _FakeLoopbackSource();
+    final GalHookSessionController controller = GalHookSessionController(
+      textService: service,
+      isWindows: true,
+      exe32BitProbe: (_) async => true,
+      injectorResolver: ({required bool is32Bit}) => 'injector.exe',
+      engineSourceFactory: ({
+        required int targetPid,
+        required String? launchExe,
+        required String injectorPath,
+        required bool lunaPcHooks,
+        int? lunaCodepage,
+        List<String> launchArguments = const <String>[],
+        String launchWorkdir = '',
+      }) =>
+          engine,
+      loopbackSourceFactory: () => loopback,
+      windowListLoader: () async => const <ExternalWindowInfo>[],
+      windowPollAttempts: 1,
+      endpointListenable: endpoints,
+      endpointStatusLoader: () => const <TexthookerEndpointStatus>[],
+    );
+
+    expect(
+      (await controller.launchGame(r'D:\gal\luna-test.exe')).launched,
+      isTrue,
+    );
+    final TexthookerTextThread luna = controller.textThreads.firstWhere(
+      (TexthookerTextThread thread) =>
+          thread.key == GalHookSessionController.lunaExternalTextThreadKey,
+    );
+    expect(
+      await controller.selectTextThread(
+        luna.nativeThreadId,
+        threadKey: luna.key,
+      ),
+      isTrue,
+    );
+    expect(controller.usesLunaExternalText, isTrue);
+    expect(controller.state.audioBackend, GalHookAudioBackend.systemLoopback);
+    expect(loopback.startCalls, 1);
+
+    service.appendLine(
+      'Luna の原文',
+      source: TexthookerLineSource.websocket,
+      sourceLabel: kLunaTranslatorOriginWsUrl,
+    );
+    service.appendLine(
+      'parallel endpoint',
+      source: TexthookerLineSource.websocket,
+      sourceLabel: 'ws://localhost:6677',
+    );
+    expect(
+      controller.workbenchLines.map((TexthookerLineEntry line) => line.text),
+      <String>['Luna の原文'],
+    );
+
+    service.registerTextThread(
+      key: 'native:clean',
+      label: 'LucaSystem',
+      nativeThreadId: 7,
+    );
+    expect(
+      await controller.selectTextThread(7, threadKey: 'native:clean'),
+      isTrue,
+    );
+    expect(controller.usesLunaExternalText, isFalse);
+    expect(controller.state.audioBackend, GalHookAudioBackend.gameResource);
+
+    await controller.close();
+    endpoints.dispose();
+  });
+
   test('captureAudioBytes asks paired voice even without a text timestamp',
       () async {
     final TexthookerService service = TexthookerService.test();

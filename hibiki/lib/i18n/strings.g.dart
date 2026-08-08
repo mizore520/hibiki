@@ -1,9 +1,9 @@
 /// Generated file. Do not edit.
 ///
 /// Locales: 17
-/// Strings: 53737 (3161 per locale)
+/// Strings: 53788 (3164 per locale)
 ///
-/// Built on 2026-08-08 at 10:56 UTC
+/// Built on 2026-08-08 at 14:28 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -4265,6 +4265,11 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get gal_mining_screenshot_size_full_hd =>
       'Up to 1920 × 1080 (recommended)';
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 // Path: <root>
@@ -11541,6 +11546,14 @@ class _StringsAr extends _StringsEn {
       'Up to 1920 × 1080 (recommended)';
   @override
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 // Path: <root>
@@ -18884,6 +18897,14 @@ class _StringsDe extends _StringsEn {
       'Up to 1920 × 1080 (recommended)';
   @override
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 // Path: <root>
@@ -26243,6 +26264,14 @@ class _StringsEs extends _StringsEn {
       'Up to 1920 × 1080 (recommended)';
   @override
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 // Path: <root>
@@ -33614,6 +33643,14 @@ class _StringsFr extends _StringsEn {
       'Up to 1920 × 1080 (recommended)';
   @override
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 // Path: <root>
@@ -40913,6 +40950,14 @@ class _StringsId extends _StringsEn {
       'Up to 1920 × 1080 (recommended)';
   @override
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 // Path: <root>
@@ -48258,6 +48303,14 @@ class _StringsIt extends _StringsEn {
       'Up to 1920 × 1080 (recommended)';
   @override
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 // Path: <root>
@@ -55419,6 +55472,14 @@ class _StringsJa extends _StringsEn {
       'Up to 1920 × 1080 (recommended)';
   @override
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 // Path: <root>
@@ -62585,6 +62646,14 @@ class _StringsKo extends _StringsEn {
       'Up to 1920 × 1080 (recommended)';
   @override
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 // Path: <root>
@@ -69910,6 +69979,14 @@ class _StringsNl extends _StringsEn {
       'Up to 1920 × 1080 (recommended)';
   @override
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 // Path: <root>
@@ -77247,6 +77324,14 @@ class _StringsPtBr extends _StringsEn {
       'Up to 1920 × 1080 (recommended)';
   @override
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 // Path: <root>
@@ -84570,6 +84655,14 @@ class _StringsRu extends _StringsEn {
       'Up to 1920 × 1080 (recommended)';
   @override
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 // Path: <root>
@@ -91841,6 +91934,14 @@ class _StringsTh extends _StringsEn {
       'Up to 1920 × 1080 (recommended)';
   @override
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 // Path: <root>
@@ -99143,6 +99244,14 @@ class _StringsTr extends _StringsEn {
       'Up to 1920 × 1080 (recommended)';
   @override
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 // Path: <root>
@@ -106430,6 +106539,14 @@ class _StringsVi extends _StringsEn {
       'Up to 1920 × 1080 (recommended)';
   @override
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 // Path: <root>
@@ -113199,6 +113316,14 @@ class _StringsZhCn extends _StringsEn {
   String get gal_mining_screenshot_size_full_hd => '最大 1920 x 1080（推荐）';
   @override
   String get gal_mining_screenshot_size_hd => '最大 1280 x 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator（外部原文）';
+  @override
+  String get game_text_source_luna_connected =>
+      '已连接，将使用 LunaTranslator 中选定的原文。';
+  @override
+  String get game_text_source_luna_waiting =>
+      '请启动 LunaTranslator 并开启网络服务，Fushi 会自动重连。';
 }
 
 // Path: <root>
@@ -120282,6 +120407,14 @@ class _StringsZhHk extends _StringsEn {
       'Up to 1920 × 1080 (recommended)';
   @override
   String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
 }
 
 /// Flat map(s) containing all translations.
@@ -126767,6 +126900,12 @@ extension on _StringsEn {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }
@@ -133250,6 +133389,12 @@ extension on _StringsAr {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }
@@ -139755,6 +139900,12 @@ extension on _StringsDe {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }
@@ -146259,6 +146410,12 @@ extension on _StringsEs {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }
@@ -152769,6 +152926,12 @@ extension on _StringsFr {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }
@@ -159261,6 +159424,12 @@ extension on _StringsId {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }
@@ -165767,6 +165936,12 @@ extension on _StringsIt {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }
@@ -172235,6 +172410,12 @@ extension on _StringsJa {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }
@@ -178707,6 +178888,12 @@ extension on _StringsKo {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }
@@ -185207,6 +185394,12 @@ extension on _StringsNl {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }
@@ -191704,6 +191897,12 @@ extension on _StringsPtBr {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }
@@ -198206,6 +198405,12 @@ extension on _StringsRu {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }
@@ -204691,6 +204896,12 @@ extension on _StringsTh {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }
@@ -211185,6 +211396,12 @@ extension on _StringsTr {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }
@@ -217675,6 +217892,12 @@ extension on _StringsVi {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }
@@ -224110,6 +224333,12 @@ extension on _StringsZhCn {
         return '最大 1920 x 1080（推荐）';
       case 'gal_mining_screenshot_size_hd':
         return '最大 1280 x 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator（外部原文）';
+      case 'game_text_source_luna_connected':
+        return '已连接，将使用 LunaTranslator 中选定的原文。';
+      case 'game_text_source_luna_waiting':
+        return '请启动 LunaTranslator 并开启网络服务，Fushi 会自动重连。';
       default:
         return null;
     }
@@ -230573,6 +230802,12 @@ extension on _StringsZhHk {
         return 'Up to 1920 × 1080 (recommended)';
       case 'gal_mining_screenshot_size_hd':
         return 'Up to 1280 × 720';
+      case 'game_text_source_luna':
+        return 'LunaTranslator (external original text)';
+      case 'game_text_source_luna_connected':
+        return 'Connected. Fushi will use the original text selected in LunaTranslator.';
+      case 'game_text_source_luna_waiting':
+        return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
       default:
         return null;
     }

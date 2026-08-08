@@ -9,6 +9,20 @@ import 'package:fushi/src/sync/texthooker_service.dart';
 /// WS 连接工厂（注入以便测试）。
 typedef WsChannelFactory = WebSocketChannel Function(String url);
 
+/// LunaTranslator 当前版本公开的原文 WebSocket 端点。
+///
+/// 旧版 Fushi 只连 `ws://localhost:2333`，但 Luna 10.x 的原文流实际位于
+/// `/api/ws/text/origin`，根路径连接成功与否都不会提供所选文本。
+const String kLunaTranslatorOriginWsUrl =
+    'ws://localhost:2333/api/ws/text/origin';
+
+/// 是否为 LunaTranslator 的原文端点。只按路径识别，允许用户把 Luna 放在
+/// `127.0.0.1`、局域网主机或自定义端口上。
+bool isLunaTranslatorOriginEndpoint(String url) {
+  final Uri? uri = Uri.tryParse(url.trim());
+  return uri != null && uri.path == '/api/ws/text/origin';
+}
+
 /// 连接一个或多个 texthooker WS server（默认 6677/9001/2333），把收到的每条
 /// 消息经 [parseTexthookerMessage] 解析后 append 到 [TexthookerService]。
 /// 断线固定退避自动重连。
@@ -54,11 +68,11 @@ class TexthookerWsClient extends ChangeNotifier {
         _channelFactory = channelFactory,
         _retryDelay = retryDelay;
 
-  /// 事实标准默认端口（Textractor/mpv 6677、agent 9001、LunaTranslator 2333）。
+  /// 事实标准默认端点（Textractor/mpv 6677、agent 9001、LunaTranslator 原文流）。
   static const List<String> defaultUrls = <String>[
     'ws://localhost:6677',
     'ws://localhost:9001',
-    'ws://localhost:2333',
+    kLunaTranslatorOriginWsUrl,
   ];
 
   final List<String> _urls;

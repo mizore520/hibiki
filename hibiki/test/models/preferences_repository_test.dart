@@ -441,7 +441,7 @@ void main() {
       expect(repo.texthookerUrls, [
         'ws://localhost:6677',
         'ws://localhost:9001',
-        'ws://localhost:2333',
+        'ws://localhost:2333/api/ws/text/origin',
       ]);
 
       await repo.setTexthookerEnabled(true);
@@ -456,6 +456,17 @@ void main() {
       expect(repo2.texthookerEnabled, true);
       expect(repo2.texthookerUrls, ['ws://localhost:6677']);
       repo2.dispose();
+    });
+
+    test('legacy Luna root endpoint migrates on read', () async {
+      await repo.setPref(
+        'texthooker_urls',
+        'ws://localhost:6677\nws://localhost:2333',
+      );
+      expect(repo.texthookerUrls, <String>[
+        'ws://localhost:6677',
+        'ws://localhost:2333/api/ws/text/origin',
+      ]);
     });
 
     test('desktop clipboard prefs round-trip', () async {
