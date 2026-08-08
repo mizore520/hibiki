@@ -873,6 +873,12 @@ class GalHookSessionController extends ChangeNotifier {
   /// 当前尚未被下一条原文封口的 Luna 行。同一时刻只能有一条。
   String? _pendingLunaLoopbackLineId;
 
+  /// 用户在 Luna 当前句尚未封口时点了制卡：写卡链先停在这里，等下一条原文或
+  /// 30 秒安全上限真正冻结完音频后再继续。等待放在 [_audioQueue] 外；若把它排进
+  /// 同一条队列，负责封口的冻结任务会排在它后面，形成互相等待的死锁。
+  final Map<String, Completer<void>> _lunaLoopbackBoundaryWaiters =
+      <String, Completer<void>>{};
+
   final Map<String, GalAudioSlice> _lineVoiceCache = <String, GalAudioSlice>{};
 
   // 每游戏捕获选择记忆（见 [attachCaptureMemory]）。
@@ -1944,6 +1950,7 @@ class GalHookSessionController extends ChangeNotifier {
       return true;
     } finally {
       await temp?.stop();
+      _completeLunaLoopbackBoundary(lineId);
       notifyListeners();
     }
   }
@@ -2303,6 +2310,7 @@ class GalHookSessionController extends ChangeNotifier {
     if (_pendingLunaLoopbackLineId == lineId) {
       _pendingLunaLoopbackLineId = null;
     }
+    _completeLunaLoopbackBoundary(lineId);
     _textService.updateLineAudio(
       lineId,
       status: TexthookerLineAudioStatus.matched,
@@ -2612,13 +2620,26 @@ class GalHookSessionController extends ChangeNotifier {
     required String lineId,
     required String sentence,
     required String outputExtension,
-  }) {
+  }) async {
     final TexthookerLineEntry? entry = _textService.entryById(lineId);
     if (entry == null ||
         entry.text != sentence ||
         !isLineInCurrentSession(entry)) {
       _markLineAudioMissing(lineId, 'line_context_unavailable');
-      return Future<Uint8List?>.value(null);
+      return null;
+    }
+    // BUG-1462：Luna 没有游戏侧语音时间戳，当前句只能等「下一条原文」或
+    // 30 秒上限才能知道准确终点。点击制卡只冻结文本/截图请求，不能把尚在播放的
+    // 音频提前截断；否则卡会先以空音频落地，后续封口也没有机会回填。
+    await _waitForPendingLunaLoopbackBoundary(entry);
+
+    // 等待期间可能停止/重启了捕获。重新验一次上下文，禁止把旧会话的音频写进新卡。
+    final TexthookerLineEntry? current = _textService.entryById(lineId);
+    if (current == null ||
+        current.text != sentence ||
+        !isLineInCurrentSession(current)) {
+      _markLineAudioMissing(lineId, 'line_context_unavailable');
+      return null;
     }
     // 串行化 + 永不毒化（BUG-956）：单次语音采集异常（含事件记录自身抛）不得让后续采集永久挂起。
     return _audioQueue.enqueue<Uint8List?>(
@@ -2636,6 +2657,33 @@ class GalHookSessionController extends ChangeNotifier {
         details: <String, Object?>{'error': '$error', 'stack': '$stack'},
       ),
     );
+  }
+
+  Future<void> _waitForPendingLunaLoopbackBoundary(
+    TexthookerLineEntry entry,
+  ) async {
+    if (!_isLunaExternalLine(entry) ||
+        _pendingLunaLoopbackLineId != entry.id ||
+        !_loopbackFreezeTimers.containsKey(entry.id)) {
+      return;
+    }
+    final Completer<void> waiter = _lunaLoopbackBoundaryWaiters.putIfAbsent(
+      entry.id,
+      Completer<void>.new,
+    );
+    _record(
+      GalHookEventSeverity.info,
+      'card',
+      'card.luna_audio_boundary_wait',
+      'Mining waits for the current Luna line audio boundary',
+      details: <String, Object?>{'lineId': entry.id},
+    );
+    await waiter.future;
+  }
+
+  void _completeLunaLoopbackBoundary(String lineId) {
+    final Completer<void>? waiter = _lunaLoopbackBoundaryWaiters.remove(lineId);
+    if (waiter != null && !waiter.isCompleted) waiter.complete();
   }
 
   Future<Uint8List?> _captureAudioBytesNow({
@@ -3508,6 +3556,15 @@ class GalHookSessionController extends ChangeNotifier {
     // 补录窗口挂在会话音源上，会话停就必须先收束（丢弃取音）：否则临时 loopback
     // 源泄漏，超时回调还会往已结束的会话行里写状态。
     await finishLineRecapture(discard: true);
+    // BUG-1462：停止捕获也是 Luna 最后一条台词的明确边界。音源仍活着时先冻结，
+    // 再让被唤醒的制卡任务排进音频队列并执行完；否则下面清缓存/停音源会把一张
+    // 已经点下去的卡变成无音频。
+    await _flushAllLoopbackFreezes();
+    await Future<void>.delayed(Duration.zero);
+    await _audioQueue.enqueue<void>(
+      () async {},
+      buildFailure: (Object error, StackTrace stack) {},
+    );
     _textPollTimer?.cancel();
     _textPollTimer = null;
     _trackRefreshTimer?.cancel();
@@ -4281,6 +4338,7 @@ class GalHookSessionController extends ChangeNotifier {
     if (entry == null || startedAt == null) {
       _loopbackFreezeStartedAt.remove(previousLineId);
       _loopbackPreRollMsByLine.remove(previousLineId);
+      _completeLunaLoopbackBoundary(previousLineId);
       return;
     }
     final DateTime boundaryAt = _now();
@@ -4292,23 +4350,29 @@ class GalHookSessionController extends ChangeNotifier {
     unawaited(
       _audioQueue.enqueue<bool>(
         () async {
-          // 串行队列可能正在导出别的台词。真正执行 grabRecent 时若已晚于
-          // 文本边界，多取这段排队时间后再从 PCM 尾部裁掉，保证结束点仍是
-          // currentText，不会因为队列拥堵混入下一句。
-          final int trailingTrimMs = _now()
-              .difference(boundaryAt)
-              .inMilliseconds
-              .clamp(0, 30000)
-              .toInt();
-          final int captureBackMs = (desiredBackMs + trailingTrimMs)
-              .clamp(1, _loopbackRingCapacityMs)
-              .toInt();
-          await _cacheLoopbackForLine(
-            entry,
-            backMs: captureBackMs,
-            trailingTrimMs: trailingTrimMs,
-          );
-          return true;
+          try {
+            // 串行队列可能正在导出别的台词。真正执行 grabRecent 时若已晚于
+            // 文本边界，多取这段排队时间后再从 PCM 尾部裁掉，保证结束点仍是
+            // currentText，不会因为队列拥堵混入下一句。
+            final int trailingTrimMs = _now()
+                .difference(boundaryAt)
+                .inMilliseconds
+                .clamp(0, 30000)
+                .toInt();
+            final int captureBackMs = (desiredBackMs + trailingTrimMs)
+                .clamp(1, _loopbackRingCapacityMs)
+                .toInt();
+            await _cacheLoopbackForLine(
+              entry,
+              backMs: captureBackMs,
+              trailingTrimMs: trailingTrimMs,
+            );
+            return true;
+          } finally {
+            // 必须等 grabRecent 与缓存落地都结束后再放行制卡，不能只在 timer
+            // 被取消时放行；后者仍会让写卡抢在音频切片之前。
+            _completeLunaLoopbackBoundary(previousLineId);
+          }
         },
         buildFailure: (Object error, StackTrace stack) => false,
         onError: (Object error, StackTrace stack) => _record(
@@ -4366,8 +4430,14 @@ class GalHookSessionController extends ChangeNotifier {
       unawaited(
         _audioQueue.enqueue<bool>(
           () async {
-            await _cacheLoopbackForLine(entry, backMs: backMs);
-            return true;
+            try {
+              await _cacheLoopbackForLine(entry, backMs: backMs);
+              return true;
+            } finally {
+              if (_isLunaExternalLine(entry)) {
+                _completeLunaLoopbackBoundary(entry.id);
+              }
+            }
           },
           buildFailure: (Object error, StackTrace stack) => false,
           onError: (Object error, StackTrace stack) => _record(
@@ -4399,6 +4469,8 @@ class GalHookSessionController extends ChangeNotifier {
     final TexthookerLineEntry? entry = _textService.entryById(lineId);
     if (entry == null) {
       _loopbackFreezeStartedAt.remove(lineId);
+      _loopbackPreRollMsByLine.remove(lineId);
+      _completeLunaLoopbackBoundary(lineId);
       return;
     }
     final DateTime? startedAt = _loopbackFreezeStartedAt[lineId];
@@ -4410,12 +4482,18 @@ class GalHookSessionController extends ChangeNotifier {
     final int backMs = (elapsedMs + preRollMs)
         .clamp(minBackMs, _loopbackRingCapacityMs)
         .toInt();
-    await _cacheLoopbackForLine(entry, backMs: backMs);
-    if (_pendingLunaLoopbackLineId == lineId) {
-      _pendingLunaLoopbackLineId = null;
-    }
-    if (settle && !_isLunaExternalLine(entry)) {
-      _scheduleLoopbackSettle(entry, elapsedMs: elapsedMs);
+    try {
+      await _cacheLoopbackForLine(entry, backMs: backMs);
+      if (settle && !_isLunaExternalLine(entry)) {
+        _scheduleLoopbackSettle(entry, elapsedMs: elapsedMs);
+      }
+    } finally {
+      if (_pendingLunaLoopbackLineId == lineId) {
+        _pendingLunaLoopbackLineId = null;
+      }
+      if (_isLunaExternalLine(entry)) {
+        _completeLunaLoopbackBoundary(lineId);
+      }
     }
   }
 
@@ -4488,6 +4566,10 @@ class GalHookSessionController extends ChangeNotifier {
     _loopbackFreezeStartedAt.clear();
     _loopbackPreRollMsByLine.clear();
     _pendingLunaLoopbackLineId = null;
+    for (final Completer<void> waiter in _lunaLoopbackBoundaryWaiters.values) {
+      if (!waiter.isCompleted) waiter.complete();
+    }
+    _lunaLoopbackBoundaryWaiters.clear();
   }
 
   Future<void> _cacheLoopbackForLine(
