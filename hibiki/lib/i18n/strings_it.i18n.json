@@ -1315,9 +1315,7 @@
   "mining_audio_quality_hint": "Higher bitrate is clearer but makes larger cards.",
   "mining_audio_quality_max": "Maximum",
   "mining_audio_quality_standard": "Standard",
-  "mining_image_quality": "Image / GIF quality",
   "mining_image_quality_hd": "HD",
-  "mining_image_quality_hint": "Higher is sharper but makes larger cards. Maximum keeps screenshots at the source resolution; animated GIFs stay capped so cards remain usable.",
   "mining_image_quality_max": "Maximum",
   "mining_image_quality_standard": "Standard",
   "mining_image_quality_thrift": "Data saver",
@@ -3154,5 +3152,12 @@
   "migration_import_nothing": "No migration data found in the transfer folder.",
   "migration_uninstall_prompt": "Migration finished. Uninstall the old Hibiki app?",
   "migration_uninstall_button": "Uninstall Hibiki",
-  "migration_uninstall_still_installed": "Hibiki is still installed. You can uninstall it any time."
+  "migration_uninstall_still_installed": "Hibiki is still installed. You can uninstall it any time.",
+  "video_mining_image_quality": "Video / anime card image quality",
+  "video_mining_image_quality_hint": "Controls video and anime card images only. Higher settings keep more detail and may use more space.",
+  "gal_mining_screenshot_size": "Galgame screenshot size",
+  "gal_mining_screenshot_size_hint": "Applies to still screenshots and animated-capture fallbacks. Keeps the aspect ratio, never enlarges, and saves as JPEG at quality 90.",
+  "gal_mining_screenshot_size_original": "Original size (JPEG)",
+  "gal_mining_screenshot_size_full_hd": "Up to 1920 × 1080 (recommended)",
+  "gal_mining_screenshot_size_hd": "Up to 1280 × 720"
 }

@@ -48,6 +48,61 @@ void main() {
     });
   });
 
+  group('computeFittedScreenshotSize', () {
+    test('4K 16:9 fits exactly inside the 1080p box', () {
+      final size = computeFittedScreenshotSize(
+        width: 3840,
+        height: 2160,
+        maxWidth: 1920,
+        maxHeight: 1080,
+      );
+      expect(size, (width: 1920, height: 1080));
+    });
+
+    test('4:3 and ultrawide images keep their aspect ratio without cropping',
+        () {
+      expect(
+        computeFittedScreenshotSize(
+          width: 3840,
+          height: 2880,
+          maxWidth: 1920,
+          maxHeight: 1080,
+        ),
+        (width: 1440, height: 1080),
+      );
+      expect(
+        computeFittedScreenshotSize(
+          width: 3440,
+          height: 1440,
+          maxWidth: 1920,
+          maxHeight: 1080,
+        ),
+        (width: 1920, height: 804),
+      );
+    });
+
+    test('small images and original-size mode are never enlarged', () {
+      expect(
+        computeFittedScreenshotSize(
+          width: 1280,
+          height: 720,
+          maxWidth: 1920,
+          maxHeight: 1080,
+        ),
+        isNull,
+      );
+      expect(
+        computeFittedScreenshotSize(
+          width: 3840,
+          height: 2160,
+          maxWidth: 0,
+          maxHeight: 0,
+        ),
+        isNull,
+      );
+    });
+  });
+
   group('downsampleCardScreenshot', () {
     Uint8List jpegOf(int width, int height) {
       final img.Image image = img.Image(width: width, height: height);
@@ -127,6 +182,45 @@ void main() {
       final Uint8List garbage = Uint8List.fromList(<int>[0, 1, 2, 3, 4]);
       final Uint8List out = await downsampleCardScreenshotAsync(garbage);
       expect(out, orderedEquals(garbage));
+    });
+  });
+
+  group('encodeCardScreenshotAsJpg (Galgame 独立截图设置)', () {
+    Uint8List pngOf(int width, int height) {
+      final img.Image image = img.Image(width: width, height: height);
+      img.fill(image, color: img.ColorRgb8(80, 140, 220));
+      return img.encodePng(image);
+    }
+
+    test('1080p preset shrinks a PNG and emits real JPEG bytes', () {
+      final Uint8List out = encodeCardScreenshotAsJpg(
+        pngOf(2000, 1125),
+        maxWidth: 1920,
+        maxHeight: 1080,
+        quality: 90,
+      );
+      expect(out.take(3), orderedEquals(<int>[0xff, 0xd8, 0xff]));
+      final img.Image decoded = img.decodeImage(out)!;
+      expect(decoded.width, 1920);
+      expect(decoded.height, 1080);
+    });
+
+    test('original and small-image modes still convert PNG to JPEG', () {
+      final Uint8List source = pngOf(640, 360);
+      for (final ({int width, int height}) box in <({int width, int height})>[
+        (width: 0, height: 0),
+        (width: 1920, height: 1080),
+      ]) {
+        final Uint8List out = encodeCardScreenshotAsJpg(
+          source,
+          maxWidth: box.width,
+          maxHeight: box.height,
+          quality: 90,
+        );
+        expect(out.take(3), orderedEquals(<int>[0xff, 0xd8, 0xff]));
+        final img.Image decoded = img.decodeImage(out)!;
+        expect((decoded.width, decoded.height), (640, 360));
+      }
     });
   });
 }

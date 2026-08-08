@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:fushi_anki/fushi_anki.dart';
 
 import 'package:fushi/src/mining/external_window_mining.dart';
+import 'package:fushi/src/mining/gal_mining_screenshot_size.dart';
 import 'package:fushi/src/mining/gal_hook_session_controller.dart';
 import 'package:fushi/src/mining/galgame_window_gif.dart';
 import 'package:fushi/src/mining/immersion_mining_engine.dart';
@@ -14,6 +15,7 @@ import 'package:fushi/src/mining/window_capture_channel.dart';
 import 'package:fushi/src/pages/implementations/dictionary_webview_media.dart';
 import 'package:fushi/src/sync/texthooker_service.dart';
 import 'package:fushi/src/utils/misc/desktop_audio_clipper.dart';
+import 'package:fushi/src/utils/misc/card_screenshot_downsampler.dart';
 import 'package:fushi/src/utils/misc/error_log_service.dart';
 
 typedef GalHookGifCapture = Future<GalWindowAnimatedCapture?> Function({
@@ -126,6 +128,7 @@ class GalHookMiningCoordinator {
     // 缺省 gif = 旧行为逐字等价（Never break userspace）；调用方透传
     // [AppModel.galMiningImageMode]。
     VideoMiningImageMode imageMode = VideoMiningImageMode.gif,
+    GalMiningScreenshotSize screenshotSize = GalMiningScreenshotSize.fullHd,
     // 缺省 gif = 旧行为逐字等价；调用方透传 [AppModel.galMiningAnimatedFormat]（默认 avif）。
     MiningAnimatedFormat animatedFormat = MiningAnimatedFormat.gif,
   }) {
@@ -139,6 +142,7 @@ class GalHookMiningCoordinator {
         updateNoteId: updateNoteId,
         addTitleTag: addTitleTag,
         imageMode: imageMode,
+        screenshotSize: screenshotSize,
         animatedFormat: animatedFormat,
       ),
       buildFailure: (Object error, StackTrace stack) =>
@@ -159,6 +163,7 @@ class GalHookMiningCoordinator {
     required int? updateNoteId,
     required bool addTitleTag,
     required VideoMiningImageMode imageMode,
+    required GalMiningScreenshotSize screenshotSize,
     required MiningAnimatedFormat animatedFormat,
   }) async {
     final TexthookerLineEntry? entry = _lineLookup(lineId);
@@ -210,6 +215,25 @@ class GalHookMiningCoordinator {
       return still;
     }
 
+    Future<({Uint8List bytes, String name})> prepareStillCover(
+      WindowCaptureResult still,
+    ) async {
+      final Uint8List encoded = await encodeCardScreenshotAsJpgAsync(
+        still.pngBytes!,
+        maxWidth: screenshotSize.maxWidth,
+        maxHeight: screenshotSize.maxHeight,
+        quality: 90,
+      );
+      final bool isJpeg = encoded.length >= 3 &&
+          encoded[0] == 0xff &&
+          encoded[1] == 0xd8 &&
+          encoded[2] == 0xff;
+      return (
+        bytes: encoded,
+        name: isJpeg ? 'external_window.jpg' : 'external_window.png',
+      );
+    }
+
     Uint8List? coverBytes;
     String coverName = 'external_window.gif';
     bool degradedToStill = false;
@@ -223,8 +247,10 @@ class GalHookMiningCoordinator {
           failureReason: still.error ?? 'game window capture failed',
         );
       }
-      coverBytes = still.pngBytes;
-      coverName = 'external_window.png';
+      final ({Uint8List bytes, String name}) prepared =
+          await prepareStillCover(still);
+      coverBytes = prepared.bytes;
+      coverName = prepared.name;
     } else {
       final GalWindowAnimatedCapture? animated = await _captureGif(
         hwnd: window.hwnd,
@@ -243,8 +269,10 @@ class GalHookMiningCoordinator {
             failureReason: still.error ?? 'game window capture failed',
           );
         }
-        coverBytes = still.pngBytes;
-        coverName = 'external_window.png';
+        final ({Uint8List bytes, String name}) prepared =
+            await prepareStillCover(still);
+        coverBytes = prepared.bytes;
+        coverName = prepared.name;
         degradedToStill = true;
       }
     }

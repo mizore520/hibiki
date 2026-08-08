@@ -3,6 +3,35 @@ import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
 
+typedef _ScreenshotTargetResolver = ({int width, int height})? Function(
+  img.Image decoded,
+);
+
+Uint8List _transformCardScreenshot(
+  Uint8List bytes, {
+  required _ScreenshotTargetResolver targetResolver,
+  required int quality,
+  required bool encodeWhenUnchanged,
+}) {
+  if (bytes.isEmpty) return bytes;
+  try {
+    final img.Image? decoded = img.decodeImage(bytes);
+    if (decoded == null) return bytes;
+    final ({int width, int height})? target = targetResolver(decoded);
+    if (target == null && !encodeWhenUnchanged) return bytes;
+    final img.Image output = target == null
+        ? decoded
+        : img.copyResize(
+            decoded,
+            width: target.width,
+            height: target.height,
+          );
+    return img.encodeJpg(output, quality: quality);
+  } catch (_) {
+    return bytes;
+  }
+}
+
 /// TODO-646 近无损压缩：制卡截图降采样。
 ///
 /// 视频制卡封面在没有 cue GIF 时回退到当前帧截图（media_kit `image/jpeg`，按
@@ -41,6 +70,36 @@ import 'package:image/image.dart' as img;
   );
 }
 
+/// 把图片等比限制在 [maxWidth] × [maxHeight] 的边界框中（纯函数，可单测）。
+///
+/// 任一上限为 0 表示该方向不设上限；两个方向都不设上限或图片已在框内时返回 null。
+/// 只缩不放、不裁剪、不拉伸，适合把 4K / 超宽屏 Galgame 截图约束到 1080p/720p。
+({int width, int height})? computeFittedScreenshotSize({
+  required int width,
+  required int height,
+  required int maxWidth,
+  required int maxHeight,
+}) {
+  if (width <= 0 || height <= 0) return null;
+  if (maxWidth <= 0 && maxHeight <= 0) return null;
+
+  double scale = 1;
+  if (maxWidth > 0 && width > maxWidth) {
+    scale = maxWidth / width;
+  }
+  if (maxHeight > 0 && height * scale > maxHeight) {
+    scale = maxHeight / height;
+  }
+  if (scale >= 1) return null;
+
+  final int newWidth = (width * scale).round();
+  final int newHeight = (height * scale).round();
+  return (
+    width: newWidth < 1 ? 1 : newWidth,
+    height: newHeight < 1 ? 1 : newHeight,
+  );
+}
+
 /// 把制卡截图 [bytes] 降采样到长边 [maxLongEdge]px，重编码为 JPEG（质量
 /// [quality]）。长边已不超限、或解码失败时原样返回 [bytes]（绝不返回空/破坏媒体）。
 ///
@@ -51,28 +110,16 @@ Uint8List downsampleCardScreenshot(
   int maxLongEdge = 1000,
   int quality = 90,
 }) {
-  if (bytes.isEmpty) return bytes;
-  try {
-    // `img.decodeImage` 对损坏字节可能返回 null，也可能在嗅探解码器时抛
-    // （如 GIF 头探测越界 RangeError）。两种都视作「不是可处理的截图」，
-    // 保守原样返回，绝不让降采样把一张有效封面变成空/异常而破坏制卡。
-    final img.Image? decoded = img.decodeImage(bytes);
-    if (decoded == null) return bytes;
-    final ({int width, int height})? target = computeDownsampledSize(
+  return _transformCardScreenshot(
+    bytes,
+    targetResolver: (img.Image decoded) => computeDownsampledSize(
       width: decoded.width,
       height: decoded.height,
       maxLongEdge: maxLongEdge,
-    );
-    if (target == null) return bytes; // 已 <= 长边上限，不动。
-    final img.Image resized = img.copyResize(
-      decoded,
-      width: target.width,
-      height: target.height,
-    );
-    return img.encodeJpg(resized, quality: quality);
-  } catch (_) {
-    return bytes;
-  }
+    ),
+    quality: quality,
+    encodeWhenUnchanged: false,
+  );
 }
 
 /// [downsampleCardScreenshot] 的后台 isolate 变体（BUG-933）。
@@ -96,6 +143,48 @@ Future<Uint8List> downsampleCardScreenshotAsync(
     () => downsampleCardScreenshot(
       bytes,
       maxLongEdge: maxLongEdge,
+      quality: quality,
+    ),
+  );
+}
+
+/// 把 Galgame 静态截图等比限制到边界框，并统一编码为 JPEG。
+///
+/// 与 [downsampleCardScreenshot] 不同，即使源图已经小于上限或选择保留原尺寸，也会
+/// 重编码为 JPEG，以免 WGC 的原始 PNG 直接进入 Anki。解码失败时仍保守返回原字节，
+/// 调用方应据实际文件头保留原扩展名，避免名字与媒体内容不一致。
+Uint8List encodeCardScreenshotAsJpg(
+  Uint8List bytes, {
+  required int maxWidth,
+  required int maxHeight,
+  int quality = 90,
+}) {
+  return _transformCardScreenshot(
+    bytes,
+    targetResolver: (img.Image decoded) => computeFittedScreenshotSize(
+      width: decoded.width,
+      height: decoded.height,
+      maxWidth: maxWidth,
+      maxHeight: maxHeight,
+    ),
+    quality: quality,
+    encodeWhenUnchanged: true,
+  );
+}
+
+/// [encodeCardScreenshotAsJpg] 的后台 isolate 变体，避免 2K/4K 图片处理阻塞 UI。
+Future<Uint8List> encodeCardScreenshotAsJpgAsync(
+  Uint8List bytes, {
+  required int maxWidth,
+  required int maxHeight,
+  int quality = 90,
+}) {
+  if (bytes.isEmpty) return Future<Uint8List>.value(bytes);
+  return Isolate.run<Uint8List>(
+    () => encodeCardScreenshotAsJpg(
+      bytes,
+      maxWidth: maxWidth,
+      maxHeight: maxHeight,
       quality: quality,
     ),
   );

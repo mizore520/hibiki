@@ -691,6 +691,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
       // 偏好，否则同一个设置在一个入口生效、另一个入口静默用默认值（协调器的
       // `imageMode`/`animatedFormat` 默认 gif 会把漏传吞成「看着正常的旧行为」）。
       imageMode: model.galMiningImageMode,
+      screenshotSize: model.galMiningScreenshotSize,
       animatedFormat: model.galMiningAnimatedFormat,
     );
     if (result.aborted) {

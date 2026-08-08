@@ -617,6 +617,7 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
       updateNoteId: updateNoteId,
       addTitleTag: mixinAppModel.autoAddBookNameToTags,
       imageMode: mixinAppModel.galMiningImageMode,
+      screenshotSize: mixinAppModel.galMiningScreenshotSize,
       animatedFormat: mixinAppModel.galMiningAnimatedFormat,
     );
     if (result.aborted) {
