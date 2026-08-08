@@ -673,6 +673,9 @@ void main() {
     final String releaseWorkflow = File(
       '../.github/workflows/release-desktop.yml',
     ).readAsStringSync();
+    final String localRuntimePackager = File(
+      '../tool/package_windows_runtime.ps1',
+    ).readAsStringSync();
     final String installer =
         File('windows/installer/fushi.iss').readAsStringSync();
 
@@ -716,6 +719,31 @@ void main() {
 
     test('Inno Setup 递归收进 helper 子目录', () {
       expect(installer, contains('Flags: ignoreversion recursesubdirs'));
+    });
+
+    test('个人本地构建必须构建并安装两架构 helper (BUG-1461)', () {
+      const String buildCall =
+          r'Invoke-CheckedPowerShellScript -ScriptPath $helperBuildScript';
+      const String installCall =
+          r'Invoke-CheckedPowerShellScript -ScriptPath $helperInstallScript';
+      expect(localRuntimePackager, contains("'build_distribution.ps1'"));
+      expect(localRuntimePackager, contains("'install_into_bundle.ps1'"));
+      expect(localRuntimePackager, contains("@('-RunTests')"));
+      expect(
+        localRuntimePackager,
+        contains(
+          r'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin',
+        ),
+        reason: 'Flutter 能找到 VS CMake 不代表普通 PowerShell PATH 也能找到',
+      );
+      expect(localRuntimePackager, contains("@('cmake', 'ctest')"));
+      expect(localRuntimePackager, contains(buildCall));
+      expect(localRuntimePackager, contains(installCall));
+      expect(
+        localRuntimePackager.indexOf(buildCall),
+        lessThan(localRuntimePackager.indexOf(installCall)),
+        reason: 'helper 必须先构建/测试，再安装进 Windows bundle',
+      );
     });
   });
 }
