@@ -45,6 +45,10 @@ void main() {
       expect(repo.currentHomeTabIndex, 0);
     });
 
+    test('Luna audio pre-roll defaults to 800ms', () {
+      expect(repo.galLunaAudioPreRollMs, 800);
+    });
+
     test('dictionaryFontSize defaults to 16.0', () {
       expect(repo.dictionaryFontSize, 16.0);
     });
@@ -200,6 +204,18 @@ void main() {
       // 有声书退出即停是默认：新装 / 从未切过开关的用户退出阅读页就停止播放。
       expect(repo.audiobookBackgroundPlay, false);
     });
+  });
+
+  test('Luna audio pre-roll persists and clamps to the supported range',
+      () async {
+    await repo.setGalLunaAudioPreRollMs(1700);
+    expect(repo.galLunaAudioPreRollMs, 1700);
+
+    await repo.setGalLunaAudioPreRollMs(9000);
+    expect(repo.galLunaAudioPreRollMs, 3000);
+
+    await repo.setGalLunaAudioPreRollMs(-10);
+    expect(repo.galLunaAudioPreRollMs, 0);
   });
 
   // ── round-trip persistence ───────────────────────────────────────────
@@ -441,7 +457,7 @@ void main() {
       expect(repo.texthookerUrls, [
         'ws://localhost:6677',
         'ws://localhost:9001',
-        'ws://localhost:2333',
+        'ws://localhost:2333/api/ws/text/origin',
       ]);
 
       await repo.setTexthookerEnabled(true);
@@ -456,6 +472,17 @@ void main() {
       expect(repo2.texthookerEnabled, true);
       expect(repo2.texthookerUrls, ['ws://localhost:6677']);
       repo2.dispose();
+    });
+
+    test('legacy Luna root endpoint migrates on read', () async {
+      await repo.setPref(
+        'texthooker_urls',
+        'ws://localhost:6677\nws://localhost:2333',
+      );
+      expect(repo.texthookerUrls, <String>[
+        'ws://localhost:6677',
+        'ws://localhost:2333/api/ws/text/origin',
+      ]);
     });
 
     test('desktop clipboard prefs round-trip', () async {

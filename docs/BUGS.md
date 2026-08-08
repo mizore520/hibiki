@@ -29,10 +29,11 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 1367 条。点号进各自文件。
+> 共 1368 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-1462](bugs/BUG-1462-luna-mine-before-audio-boundary.md) | ✅ | ✅ | Luna 当前句制卡提前截断录音导致卡片无音频 |
 | [BUG-1461](bugs/BUG-1461-local-windows-build-misses-gal-helper.md) | ✅ | ✅ | 本地 Windows 构建成功但未打包 galgame helper |
 | [BUG-1460](bugs/BUG-1460-windows-build-bundle-prefix.md) | ✅ | ✅ | Windows 构建 bundle 安装目标误指向 Program Files |
 | [BUG-1459](bugs/BUG-1459-alt-wheel-entry-scroll.md) | ✅ | ✅ | 查词窗口 Alt+滚轮词条定位与顶部回退 |

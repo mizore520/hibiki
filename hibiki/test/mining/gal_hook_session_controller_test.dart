@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -75,6 +76,323 @@ void main() {
     expect(
       controller.events.map((event) => event.code),
       contains('text.external_line_received'),
+    );
+
+    await controller.close();
+    endpoints.dispose();
+  });
+
+  test('Luna external text is selectable and isolated with loopback audio',
+      () async {
+    final TexthookerService service = TexthookerService.test();
+    final ChangeNotifier endpoints = ChangeNotifier();
+    final _FakeEngineSource engine = _FakeEngineSource(
+      pairedBytes: Uint8List(0),
+      rawReady: true,
+    );
+    final _FakeLoopbackSource loopback = _FakeLoopbackSource();
+    final GalHookSessionController controller = GalHookSessionController(
+      textService: service,
+      isWindows: true,
+      exe32BitProbe: (_) async => true,
+      injectorResolver: ({required bool is32Bit}) => 'injector.exe',
+      engineSourceFactory: ({
+        required int targetPid,
+        required String? launchExe,
+        required String injectorPath,
+        required bool lunaPcHooks,
+        int? lunaCodepage,
+        List<String> launchArguments = const <String>[],
+        String launchWorkdir = '',
+      }) =>
+          engine,
+      loopbackSourceFactory: () => loopback,
+      windowListLoader: () async => const <ExternalWindowInfo>[],
+      windowPollAttempts: 1,
+      endpointListenable: endpoints,
+      endpointStatusLoader: () => const <TexthookerEndpointStatus>[],
+    );
+
+    expect(
+      (await controller.launchGame(r'D:\gal\luna-test.exe')).launched,
+      isTrue,
+    );
+    final TexthookerTextThread luna = controller.textThreads.firstWhere(
+      (TexthookerTextThread thread) =>
+          thread.key == GalHookSessionController.lunaExternalTextThreadKey,
+    );
+    expect(
+      await controller.selectTextThread(
+        luna.nativeThreadId,
+        threadKey: luna.key,
+      ),
+      isTrue,
+    );
+    expect(controller.usesLunaExternalText, isTrue);
+    expect(controller.state.audioBackend, GalHookAudioBackend.systemLoopback);
+    expect(loopback.startCalls, 1);
+
+    service.appendLine(
+      'Luna の原文',
+      source: TexthookerLineSource.websocket,
+      sourceLabel: kLunaTranslatorOriginWsUrl,
+    );
+    service.appendLine(
+      'parallel endpoint',
+      source: TexthookerLineSource.websocket,
+      sourceLabel: 'ws://localhost:6677',
+    );
+    expect(
+      controller.workbenchLines.map((TexthookerLineEntry line) => line.text),
+      <String>['Luna の原文'],
+    );
+
+    service.registerTextThread(
+      key: 'native:clean',
+      label: 'LucaSystem',
+      nativeThreadId: 7,
+    );
+    expect(
+      await controller.selectTextThread(7, threadKey: 'native:clean'),
+      isTrue,
+    );
+    expect(controller.usesLunaExternalText, isFalse);
+    expect(controller.state.audioBackend, GalHookAudioBackend.gameResource);
+
+    await controller.close();
+    endpoints.dispose();
+  });
+
+  test('Luna loopback uses next text as boundary and freezes pre-roll per line',
+      () async {
+    final TexthookerService service = TexthookerService.test();
+    final ChangeNotifier endpoints = ChangeNotifier();
+    final _FakeEngineSource engine = _FakeEngineSource(
+      pairedBytes: Uint8List(0),
+      rawReady: true,
+    );
+    final _FakeLoopbackSource loopback = _FakeLoopbackSource();
+    DateTime now = DateTime.utc(2026, 8, 8, 12);
+    final GalHookSessionController controller = GalHookSessionController(
+      textService: service,
+      isWindows: true,
+      now: () => now,
+      lunaLoopbackPreRollMs: 1200,
+      exe32BitProbe: (_) async => true,
+      injectorResolver: ({required bool is32Bit}) => 'injector.exe',
+      engineSourceFactory: ({
+        required int targetPid,
+        required String? launchExe,
+        required String injectorPath,
+        required bool lunaPcHooks,
+        int? lunaCodepage,
+        List<String> launchArguments = const <String>[],
+        String launchWorkdir = '',
+      }) =>
+          engine,
+      loopbackSourceFactory: () => loopback,
+      windowListLoader: () async => const <ExternalWindowInfo>[],
+      windowPollAttempts: 1,
+      endpointListenable: endpoints,
+      endpointStatusLoader: () => const <TexthookerEndpointStatus>[],
+    );
+
+    expect(
+      (await controller.launchGame(r'D:\gal\luna-boundary.exe')).launched,
+      isTrue,
+    );
+    expect(
+      await controller.selectTextThread(
+        null,
+        threadKey: GalHookSessionController.lunaExternalTextThreadKey,
+      ),
+      isTrue,
+    );
+    service.appendLine(
+      '一句目',
+      source: TexthookerLineSource.websocket,
+      sourceLabel: kLunaTranslatorOriginWsUrl,
+    );
+
+    // 这句已经用 1200ms 创建；中途拖滑块只能影响之后的台词。
+    controller.setLunaLoopbackPreRollMs(100);
+    now = now.add(const Duration(milliseconds: 1250));
+    service.appendLine(
+      '二句目',
+      source: TexthookerLineSource.websocket,
+      sourceLabel: kLunaTranslatorOriginWsUrl,
+    );
+    for (int i = 0; i < 30 && loopback.grabRecentBackMs.isEmpty; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+    expect(loopback.grabRecentBackMs, <int>[2450]);
+
+    now = now.add(const Duration(milliseconds: 1000));
+    service.appendLine(
+      '三句目',
+      source: TexthookerLineSource.websocket,
+      sourceLabel: kLunaTranslatorOriginWsUrl,
+    );
+    for (int i = 0; i < 30 && loopback.grabRecentBackMs.length < 2; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+    expect(loopback.grabRecentBackMs, <int>[2450, 1100]);
+
+    // 0ms 是真正的「不提前」，不能被通用 Loopback 的 800ms 最小窗口覆盖。
+    controller.setLunaLoopbackPreRollMs(0);
+    now = now.add(const Duration(milliseconds: 1000));
+    service.appendLine(
+      '四句目',
+      source: TexthookerLineSource.websocket,
+      sourceLabel: kLunaTranslatorOriginWsUrl,
+    );
+    for (int i = 0; i < 30 && loopback.grabRecentBackMs.length < 3; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+    now = now.add(const Duration(milliseconds: 150));
+    service.appendLine(
+      '五句目',
+      source: TexthookerLineSource.websocket,
+      sourceLabel: kLunaTranslatorOriginWsUrl,
+    );
+    for (int i = 0; i < 30 && loopback.grabRecentBackMs.length < 4; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+    expect(loopback.grabRecentBackMs, <int>[2450, 1100, 1100, 150]);
+
+    await controller.close();
+    endpoints.dispose();
+  });
+
+  test('Luna loopback keeps a configurable maximum-duration safety boundary',
+      () async {
+    final TexthookerService service = TexthookerService.test();
+    final ChangeNotifier endpoints = ChangeNotifier();
+    final _FakeLoopbackSource loopback = _FakeLoopbackSource();
+    final GalHookSessionController controller = GalHookSessionController(
+      textService: service,
+      isWindows: true,
+      lunaLoopbackMaxDuration: const Duration(milliseconds: 20),
+      lunaLoopbackPreRollMs: 800,
+      exe32BitProbe: (_) async => true,
+      injectorResolver: ({required bool is32Bit}) => 'injector.exe',
+      engineSourceFactory: ({
+        required int targetPid,
+        required String? launchExe,
+        required String injectorPath,
+        required bool lunaPcHooks,
+        int? lunaCodepage,
+        List<String> launchArguments = const <String>[],
+        String launchWorkdir = '',
+      }) =>
+          _FakeEngineSource(pairedBytes: Uint8List(0), rawReady: true),
+      loopbackSourceFactory: () => loopback,
+      windowListLoader: () async => const <ExternalWindowInfo>[],
+      windowPollAttempts: 1,
+      endpointListenable: endpoints,
+      endpointStatusLoader: () => const <TexthookerEndpointStatus>[],
+    );
+
+    expect(
+      (await controller.launchGame(r'D:\gal\luna-timeout.exe')).launched,
+      isTrue,
+    );
+    await controller.selectTextThread(
+      null,
+      threadKey: GalHookSessionController.lunaExternalTextThreadKey,
+    );
+    service.appendLine(
+      '最后一句',
+      source: TexthookerLineSource.websocket,
+      sourceLabel: kLunaTranslatorOriginWsUrl,
+    );
+    for (int i = 0; i < 30 && loopback.grabRecentBackMs.isEmpty; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+    expect(loopback.grabRecentBackMs, <int>[820]);
+
+    await controller.close();
+    endpoints.dispose();
+  });
+
+  test('BUG-1462 mining current Luna line waits until boundary audio is cached',
+      () async {
+    final TexthookerService service = TexthookerService.test();
+    final ChangeNotifier endpoints = ChangeNotifier();
+    final Completer<void> allowBoundaryCapture = Completer<void>();
+    final _BlockingLoopbackSource loopback =
+        _BlockingLoopbackSource(allowBoundaryCapture);
+    final GalHookSessionController controller = GalHookSessionController(
+      textService: service,
+      isWindows: true,
+      lunaLoopbackMaxDuration: const Duration(seconds: 30),
+      exe32BitProbe: (_) async => true,
+      injectorResolver: ({required bool is32Bit}) => 'injector.exe',
+      engineSourceFactory: ({
+        required int targetPid,
+        required String? launchExe,
+        required String injectorPath,
+        required bool lunaPcHooks,
+        int? lunaCodepage,
+        List<String> launchArguments = const <String>[],
+        String launchWorkdir = '',
+      }) =>
+          _FakeEngineSource(pairedBytes: Uint8List(0), rawReady: true),
+      loopbackSourceFactory: () => loopback,
+      windowListLoader: () async => const <ExternalWindowInfo>[],
+      windowPollAttempts: 1,
+      endpointListenable: endpoints,
+      endpointStatusLoader: () => const <TexthookerEndpointStatus>[],
+    );
+
+    expect(
+      (await controller.launchGame(r'D:\gal\luna-mine-wait.exe')).launched,
+      isTrue,
+    );
+    await controller.selectTextThread(
+      null,
+      threadKey: GalHookSessionController.lunaExternalTextThreadKey,
+    );
+    service.appendLine(
+      '制卡时还在播放的句子',
+      source: TexthookerLineSource.websocket,
+      sourceLabel: kLunaTranslatorOriginWsUrl,
+    );
+    final TexthookerLineEntry first = service.entries.single;
+
+    bool miningCompleted = false;
+    final Future<Uint8List?> mining = controller
+        .captureAudioBytes(
+          lineId: first.id,
+          sentence: first.text,
+          outputExtension: 'aac',
+        )
+        .whenComplete(() => miningCompleted = true);
+    await Future<void>.delayed(Duration.zero);
+    expect(miningCompleted, isFalse,
+        reason: '点击制卡不能把仍在播放的 Luna 当前句提前截断');
+    expect(loopback.grabRecentCalls, 0);
+
+    service.appendLine(
+      '下一句就是上一句的结束边界',
+      source: TexthookerLineSource.websocket,
+      sourceLabel: kLunaTranslatorOriginWsUrl,
+    );
+    for (int i = 0; i < 30 && loopback.grabRecentCalls == 0; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+    expect(loopback.grabRecentCalls, 1);
+    expect(miningCompleted, isFalse,
+        reason: '看到下一句还不够，必须等上一句音频真正写进缓存才可写卡');
+
+    allowBoundaryCapture.complete();
+    await mining.timeout(const Duration(seconds: 10));
+    expect(miningCompleted, isTrue);
+    expect(loopback.grabRecentCalls, 1,
+        reason: '制卡应复用边界切片，不能再次截取并改变终点');
+    expect(
+      controller.events.map((GalHookEvent event) => event.code),
+      contains('card.luna_audio_boundary_wait'),
     );
 
     await controller.close();
@@ -2060,6 +2378,7 @@ class _FakeLoopbackSource extends LoopbackGalAudioSource {
   int startCalls = 0;
   int stopCalls = 0;
   int grabRecentCalls = 0;
+  final List<int> grabRecentBackMs = <int>[];
 
   @override
   Future<PcmFormat?> start() async {
@@ -2080,6 +2399,29 @@ class _FakeLoopbackSource extends LoopbackGalAudioSource {
   @override
   Future<GalAudioSlice?> grabRecent(int backMs) async {
     grabRecentCalls++;
+    grabRecentBackMs.add(backMs);
+    return GalAudioSlice(
+      pcm: Uint8List.fromList(<int>[0, 0, 1, 1]),
+      format: const PcmFormat(
+        sampleRate: 44100,
+        channels: 2,
+        bitsPerSample: 16,
+        isFloat: false,
+      ),
+    );
+  }
+}
+
+class _BlockingLoopbackSource extends _FakeLoopbackSource {
+  _BlockingLoopbackSource(this.gate);
+
+  final Completer<void> gate;
+
+  @override
+  Future<GalAudioSlice?> grabRecent(int backMs) async {
+    grabRecentCalls++;
+    grabRecentBackMs.add(backMs);
+    await gate.future;
     return GalAudioSlice(
       pcm: Uint8List.fromList(<int>[0, 0, 1, 1]),
       format: const PcmFormat(

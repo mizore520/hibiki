@@ -3159,5 +3159,10 @@
   "gal_mining_screenshot_size_hint": "用于静态截图及动图捕获失败后的备用截图。保持比例、只缩不放，并以质量 90 保存为 JPG。",
   "gal_mining_screenshot_size_original": "原始尺寸（JPG）",
   "gal_mining_screenshot_size_full_hd": "最大 1920 x 1080（推荐）",
-  "gal_mining_screenshot_size_hd": "最大 1280 x 720"
+  "gal_mining_screenshot_size_hd": "最大 1280 x 720",
+  "game_text_source_luna": "LunaTranslator（外部原文）",
+  "game_text_source_luna_connected": "已连接，将使用 LunaTranslator 中选定的原文。",
+  "game_text_source_luna_waiting": "请启动 LunaTranslator 并开启网络服务，Fushi 会自动重连。",
+  "game_luna_audio_preroll": "Luna 语音起点提前",
+  "game_luna_audio_preroll_hint": "每条 Luna 原文到达时向前保留一小段混音，避免角色语音开头被截掉。"
 }

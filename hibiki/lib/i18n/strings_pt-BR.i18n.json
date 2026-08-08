@@ -3159,5 +3159,10 @@
   "gal_mining_screenshot_size_hint": "Applies to still screenshots and animated-capture fallbacks. Keeps the aspect ratio, never enlarges, and saves as JPEG at quality 90.",
   "gal_mining_screenshot_size_original": "Original size (JPEG)",
   "gal_mining_screenshot_size_full_hd": "Up to 1920 × 1080 (recommended)",
-  "gal_mining_screenshot_size_hd": "Up to 1280 × 720"
+  "gal_mining_screenshot_size_hd": "Up to 1280 × 720",
+  "game_text_source_luna": "LunaTranslator (external original text)",
+  "game_text_source_luna_connected": "Connected. Fushi will use the original text selected in LunaTranslator.",
+  "game_text_source_luna_waiting": "Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.",
+  "game_luna_audio_preroll": "Luna audio lead-in",
+  "game_luna_audio_preroll_hint": "Keep a little audio before each Luna text event to avoid clipping the beginning of the voice."
 }

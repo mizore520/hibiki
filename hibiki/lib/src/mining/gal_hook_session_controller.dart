@@ -584,6 +584,11 @@ class GalHookSessionController extends ChangeNotifier {
     // 也是收敛的**唯一**时长判据：缓存单调变长，「连续 N 轮没变长」只会被句中的长停顿
     // 骗成早收敛，删掉它比调参更正确（收敛提前收手只靠下一句到达 / 会话与用户裁决）。
     Duration utteranceSettleMax = const Duration(milliseconds: 6000),
+    // Luna 只给出文本到达时刻，没有原游戏语音的时间戳。因此不用通用
+    // Loopback 的固定 4s 窗口：下一条 Luna 原文到达时封口，只用本时长作为
+    // 用户长时停留在同一句时的安全上限。
+    Duration lunaLoopbackMaxDuration = const Duration(seconds: 30),
+    int lunaLoopbackPreRollMs = 800,
     List<Duration> engineRetryBackoff = kGalEngineRetryBackoff,
     Listenable? endpointListenable,
     List<TexthookerEndpointStatus> Function()? endpointStatusLoader,
@@ -612,6 +617,8 @@ class GalHookSessionController extends ChangeNotifier {
         _loopbackFreezeDelay = loopbackFreezeDelay,
         _utteranceSettleInterval = utteranceSettleInterval,
         _utteranceSettleMax = utteranceSettleMax,
+        _lunaLoopbackMaxDuration = lunaLoopbackMaxDuration,
+        _lunaLoopbackPreRollMs = lunaLoopbackPreRollMs.clamp(0, 3000).toInt(),
         _engineRetryBackoff = engineRetryBackoff,
         _endpointListenable =
             endpointListenable ?? TexthookerWsClientManager.instance,
@@ -634,7 +641,7 @@ class GalHookSessionController extends ChangeNotifier {
   static const int _loopbackRingCapacityMs = 60000;
 
   /// 逐行 loopback 冻结时额外向前多取的余量：少数引擎的语音会略早于文本落地。
-  static const int _loopbackPreRollMs = 1000;
+  static const int _defaultLoopbackPreRollMs = 1000;
 
   /// 提前收束（制卡/升格）时的最小回取长度，避免取出一段空 PCM。
   static const int _loopbackMinBackMs = 800;
@@ -642,6 +649,11 @@ class GalHookSessionController extends ChangeNotifier {
   /// 资源语音就绪查询的最小间隔（见 [_lastReadinessRefreshAt]）。
   static const Duration _readinessRefreshInterval = Duration(milliseconds: 500);
   static const int _eventLimit = 400;
+
+  /// LunaTranslator 外部原文在 Fushi 线程选择器里的稳定身份。它不是 native helper
+  /// 线程，但复用同一套选择、过滤和每游戏记忆，避免另造一条捕获状态机。
+  static const String lunaExternalTextThreadKey =
+      'external:luna-translator-origin';
 
   final TexthookerService _textService;
   final GalEngineSourceFactory _engineSourceFactory;
@@ -663,6 +675,8 @@ class GalHookSessionController extends ChangeNotifier {
   final Duration _loopbackFreezeDelay;
   final Duration _utteranceSettleInterval;
   final Duration _utteranceSettleMax;
+  final Duration _lunaLoopbackMaxDuration;
+  int _lunaLoopbackPreRollMs;
   final List<Duration> _engineRetryBackoff;
   final Listenable _endpointListenable;
   final List<TexthookerEndpointStatus> Function() _endpointStatusLoader;
@@ -670,8 +684,45 @@ class GalHookSessionController extends ChangeNotifier {
   GalHookSessionState _state = const GalHookSessionState();
   GalHookSessionState get state => _state;
   List<TexthookerLineEntry> get lines => _textService.entries;
-  List<TexthookerTextThread> get textThreads =>
-      _textService.textThreadsSince(_state.sessionStartedAt);
+  List<TexthookerTextThread> get textThreads {
+    final List<TexthookerTextThread> native =
+        _textService.textThreadsSince(_state.sessionStartedAt);
+    // 没有捕获会话时不污染普通外部文本页面；会话开始后始终提供 Luna 入口，
+    // 因而即使 Fushi 内置 Hook 一条候选都找不到，首次设置弹窗仍然可自救。
+    final DateTime? startedAt = _state.sessionStartedAt;
+    if (startedAt == null) return native;
+    final List<TexthookerLineEntry> lunaLines = _textService.entries
+        .where((TexthookerLineEntry entry) =>
+            !entry.receivedAt.isBefore(startedAt) &&
+            entry.source == TexthookerLineSource.websocket &&
+            isLunaTranslatorOriginEndpoint(entry.sourceLabel ?? ''))
+        .toList();
+    final TexthookerLineEntry? latest =
+        lunaLines.isEmpty ? null : lunaLines.last;
+    final TexthookerTextThread luna = TexthookerTextThread(
+      key: lunaExternalTextThreadKey,
+      label: 'LunaTranslator',
+      lineCount: lunaLines.length,
+      observedLineCount: lunaLines.length,
+      latestAt: latest?.receivedAt ?? startedAt,
+      latestText: latest?.text,
+      audioLineCount:
+          lunaLines.where((TexthookerLineEntry line) => line.hasAudio).length,
+    );
+    return <TexthookerTextThread>[luna, ...native];
+  }
+
+  bool get usesLunaExternalText =>
+      _selectedTextThreadKey == lunaExternalTextThreadKey;
+
+  int get lunaLoopbackPreRollMs => _lunaLoopbackPreRollMs;
+
+  void setLunaLoopbackPreRollMs(int value) {
+    final int normalized = value.clamp(0, 3000).toInt();
+    if (_lunaLoopbackPreRollMs == normalized) return;
+    _lunaLoopbackPreRollMs = normalized;
+    notifyListeners();
+  }
 
   /// 这一行能否进入正式消费面（工作台 / 浮窗 / 配对 / 制卡）。
   ///
@@ -694,6 +745,10 @@ class GalHookSessionController extends ChangeNotifier {
     TexthookerLineEntry entry,
     String? selectedKey,
   ) {
+    if (selectedKey == lunaExternalTextThreadKey) {
+      return entry.source == TexthookerLineSource.websocket &&
+          isLunaTranslatorOriginEndpoint(entry.sourceLabel ?? '');
+    }
     final String? key = entry.textThreadKey;
     if (key == null || key.isEmpty) return selectedKey == null;
     return key == selectedKey;
@@ -810,6 +865,19 @@ class GalHookSessionController extends ChangeNotifier {
 
   /// 每条待冻结行的台词到达时刻，用于提前收束（制卡 / 升格）时算真实已等待长度。
   final Map<String, DateTime> _loopbackFreezeStartedAt = <String, DateTime>{};
+
+  /// 行创建时固化的前置量。用户拖动 Luna 调节器只影响之后的台词，不会
+  /// 在一句尚未封口时悄悄改变它的起点。
+  final Map<String, int> _loopbackPreRollMsByLine = <String, int>{};
+
+  /// 当前尚未被下一条原文封口的 Luna 行。同一时刻只能有一条。
+  String? _pendingLunaLoopbackLineId;
+
+  /// 用户在 Luna 当前句尚未封口时点了制卡：写卡链先停在这里，等下一条原文或
+  /// 30 秒安全上限真正冻结完音频后再继续。等待放在 [_audioQueue] 外；若把它排进
+  /// 同一条队列，负责封口的冻结任务会排在它后面，形成互相等待的死锁。
+  final Map<String, Completer<void>> _lunaLoopbackBoundaryWaiters =
+      <String, Completer<void>>{};
 
   final Map<String, GalAudioSlice> _lineVoiceCache = <String, GalAudioSlice>{};
 
@@ -1793,6 +1861,10 @@ class GalHookSessionController extends ChangeNotifier {
     // 这行的自动延迟冻结已被用户裁决取代，别让它到点后再盖一次。
     _loopbackFreezeTimers.remove(lineId)?.cancel();
     _loopbackFreezeStartedAt.remove(lineId);
+    _loopbackPreRollMsByLine.remove(lineId);
+    if (_pendingLunaLoopbackLineId == lineId) {
+      _pendingLunaLoopbackLineId = null;
+    }
     _recaptureElapsed = Stopwatch()..start();
     _recaptureTimer = Timer(
       _recaptureWindow,
@@ -1878,6 +1950,7 @@ class GalHookSessionController extends ChangeNotifier {
       return true;
     } finally {
       await temp?.stop();
+      _completeLunaLoopbackBoundary(lineId);
       notifyListeners();
     }
   }
@@ -2041,13 +2114,28 @@ class GalHookSessionController extends ChangeNotifier {
           threadId == null || threadId == 0 ? null : threadId;
       // 换线程就必须丢掉上一条线程的 hook 面，否则旧 face 会继续放行旧线程的行。
       _selectedTextThreadFaceId = 0;
+      if (usesLunaExternalText) {
+        await _ensureLoopbackForLunaExternalText();
+      }
       // 新线程在被选中之前写进自己那条道的行，现在补回来（v13 分道的直接收益）。
       await _recoverSelectedThreadHistory();
+      // 从 Luna 切回 Fushi 内置线程时恢复 native 的最佳音源。资源能力可能早已
+      // ready，不会再次产生“晚到”边沿，所以不能只等 readiness poll。
+      if (!usesLunaExternalText && engine != null) {
+        if (engine.rawVoiceReady) {
+          _promoteLateResourceAudio(engine);
+        } else {
+          final PcmFormat? readyFormat = engine.readyPcmFormat;
+          if (readyFormat != null) {
+            await _promoteLateEnginePcm(engine, readyFormat);
+          }
+        }
+      }
       if (remember) {
         // 用户已亲自表态：本会话不再自动恢复，并把这次选择记成新的真值。
         _textThreadMemoryApplied = true;
         TexthookerTextThread? chosen;
-        for (final TexthookerTextThread thread in _textService.textThreads) {
+        for (final TexthookerTextThread thread in textThreads) {
           if (thread.key == _selectedTextThreadKey) {
             chosen = thread;
             break;
@@ -2070,6 +2158,80 @@ class GalHookSessionController extends ChangeNotifier {
     );
     if (selected) notifyListeners();
     return selected;
+  }
+
+  /// Luna 的 WebSocket 只给原文，不带 Fushi native helper 的句时刻或音频事件 id。
+  /// 因此不能把“此刻最新的一段引擎 PCM”冒充成这句语音；外部原文模式明确切到
+  /// 系统回环，沿用既有延迟冻结与制卡缓存，得到可解释、可复现的兜底结果。
+  Future<void> _ensureLoopbackForLunaExternalText() async {
+    if (!_state.audioFallbackPolicy.allowsLoopback) {
+      _record(
+        GalHookEventSeverity.warning,
+        'audio',
+        'audio.luna_loopback_suppressed',
+        'Luna external text is selected, but system loopback is disabled',
+      );
+      return;
+    }
+    if (_audioSource is LoopbackGalAudioSource) {
+      _setState(
+        _state.copyWith(
+          phase: GalHookSessionPhase.degraded,
+          audioBackend: GalHookAudioBackend.systemLoopback,
+          fallbackReason: 'luna_external_text_loopback',
+          clearLastError: true,
+        ),
+      );
+      _syncTrackAutoRefresh();
+      return;
+    }
+
+    final LoopbackGalAudioSource loopback = _loopbackSourceFactory();
+    final PcmFormat? format = await loopback.start();
+    if (!usesLunaExternalText) {
+      await loopback.stop();
+      return;
+    }
+    if (format == null) {
+      await loopback.stop();
+      _setState(
+        _state.copyWith(
+          phase: GalHookSessionPhase.degraded,
+          audioBackend: GalHookAudioBackend.none,
+          fallbackReason: 'all_audio_sources_failed',
+          lastError: 'Luna text is active, but system loopback could not start',
+          clearAudioFormat: true,
+        ),
+      );
+      return;
+    }
+
+    final GalAudioSource? previous = _audioSource;
+    _audioSource = loopback;
+    // native engine 仍负责内置 Hook、诊断和稍后切回；只有其他独立音源才应关闭。
+    if (previous != null && !identical(previous, _engineSource)) {
+      await previous.stop();
+    }
+    _setState(
+      _state.copyWith(
+        phase: GalHookSessionPhase.degraded,
+        audioBackend: GalHookAudioBackend.systemLoopback,
+        audioFormat: format,
+        fallbackReason: 'luna_external_text_loopback',
+        clearLastError: true,
+      ),
+    );
+    _record(
+      GalHookEventSeverity.warning,
+      'audio',
+      'audio.luna_loopback_active',
+      'Luna external text is active with system loopback audio',
+      details: <String, Object?>{
+        'sampleRate': format.sampleRate,
+        'channels': format.channels,
+      },
+    );
+    _syncTrackAutoRefresh();
   }
 
   /// 单条台词改用指定音轨重抓语音（BUG-1102 的真正出口）。
@@ -2144,6 +2306,11 @@ class GalHookSessionController extends ChangeNotifier {
     _pendingResourceMatches.remove(lineId);
     _loopbackFreezeTimers.remove(lineId)?.cancel();
     _loopbackFreezeStartedAt.remove(lineId);
+    _loopbackPreRollMsByLine.remove(lineId);
+    if (_pendingLunaLoopbackLineId == lineId) {
+      _pendingLunaLoopbackLineId = null;
+    }
+    _completeLunaLoopbackBoundary(lineId);
     _textService.updateLineAudio(
       lineId,
       status: TexthookerLineAudioStatus.matched,
@@ -2392,13 +2559,16 @@ class GalHookSessionController extends ChangeNotifier {
     final String? wanted = _captureMemory.textThreadFingerprint;
     if (wanted == null) return;
     TexthookerTextThread? best;
-    for (final TexthookerTextThread thread in _textService.textThreads) {
+    for (final TexthookerTextThread thread in textThreads) {
       if (textThreadFingerprint(thread) != wanted) continue;
       // 🔴 判据必须用 observedLineCount（native 观测总行数），**不能**用 lineCount
       // （已发布行数）。v12 取消自动选线程后，用户选定之前文本环恒空、lineCount 对所有
       // 线程都是 0，用它做判据会让这里永远选不出候选 → 记忆永远恢复不了 → 每次开游戏
       // 都要重新手选。这正是「第一次由用户选」与「之后自动恢复」能同时成立的关键。
-      if (thread.observedLineCount < _textThreadRestoreMinLines) continue;
+      if (thread.key != lunaExternalTextThreadKey &&
+          thread.observedLineCount < _textThreadRestoreMinLines) {
+        continue;
+      }
       if (best == null || thread.observedLineCount > best.observedLineCount) {
         best = thread;
       }
@@ -2450,13 +2620,26 @@ class GalHookSessionController extends ChangeNotifier {
     required String lineId,
     required String sentence,
     required String outputExtension,
-  }) {
+  }) async {
     final TexthookerLineEntry? entry = _textService.entryById(lineId);
     if (entry == null ||
         entry.text != sentence ||
         !isLineInCurrentSession(entry)) {
       _markLineAudioMissing(lineId, 'line_context_unavailable');
-      return Future<Uint8List?>.value(null);
+      return null;
+    }
+    // BUG-1462：Luna 没有游戏侧语音时间戳，当前句只能等「下一条原文」或
+    // 30 秒上限才能知道准确终点。点击制卡只冻结文本/截图请求，不能把尚在播放的
+    // 音频提前截断；否则卡会先以空音频落地，后续封口也没有机会回填。
+    await _waitForPendingLunaLoopbackBoundary(entry);
+
+    // 等待期间可能停止/重启了捕获。重新验一次上下文，禁止把旧会话的音频写进新卡。
+    final TexthookerLineEntry? current = _textService.entryById(lineId);
+    if (current == null ||
+        current.text != sentence ||
+        !isLineInCurrentSession(current)) {
+      _markLineAudioMissing(lineId, 'line_context_unavailable');
+      return null;
     }
     // 串行化 + 永不毒化（BUG-956）：单次语音采集异常（含事件记录自身抛）不得让后续采集永久挂起。
     return _audioQueue.enqueue<Uint8List?>(
@@ -2474,6 +2657,33 @@ class GalHookSessionController extends ChangeNotifier {
         details: <String, Object?>{'error': '$error', 'stack': '$stack'},
       ),
     );
+  }
+
+  Future<void> _waitForPendingLunaLoopbackBoundary(
+    TexthookerLineEntry entry,
+  ) async {
+    if (!_isLunaExternalLine(entry) ||
+        _pendingLunaLoopbackLineId != entry.id ||
+        !_loopbackFreezeTimers.containsKey(entry.id)) {
+      return;
+    }
+    final Completer<void> waiter = _lunaLoopbackBoundaryWaiters.putIfAbsent(
+      entry.id,
+      Completer<void>.new,
+    );
+    _record(
+      GalHookEventSeverity.info,
+      'card',
+      'card.luna_audio_boundary_wait',
+      'Mining waits for the current Luna line audio boundary',
+      details: <String, Object?>{'lineId': entry.id},
+    );
+    await waiter.future;
+  }
+
+  void _completeLunaLoopbackBoundary(String lineId) {
+    final Completer<void>? waiter = _lunaLoopbackBoundaryWaiters.remove(lineId);
+    if (waiter != null && !waiter.isCompleted) waiter.complete();
   }
 
   Future<Uint8List?> _captureAudioBytesNow({
@@ -3346,6 +3556,15 @@ class GalHookSessionController extends ChangeNotifier {
     // 补录窗口挂在会话音源上，会话停就必须先收束（丢弃取音）：否则临时 loopback
     // 源泄漏，超时回调还会往已结束的会话行里写状态。
     await finishLineRecapture(discard: true);
+    // BUG-1462：停止捕获也是 Luna 最后一条台词的明确边界。音源仍活着时先冻结，
+    // 再让被唤醒的制卡任务排进音频队列并执行完；否则下面清缓存/停音源会把一张
+    // 已经点下去的卡变成无音频。
+    await _flushAllLoopbackFreezes();
+    await Future<void>.delayed(Duration.zero);
+    await _audioQueue.enqueue<void>(
+      () async {},
+      buildFailure: (Object error, StackTrace stack) {},
+    );
     _textPollTimer?.cancel();
     _textPollTimer = null;
     _trackRefreshTimer?.cancel();
@@ -3610,7 +3829,11 @@ class GalHookSessionController extends ChangeNotifier {
     EngineHookGalAudioSource engine,
     PcmFormat format,
   ) async {
-    if (engine != _engineSource || identical(_audioSource, engine)) return;
+    if (usesLunaExternalText ||
+        engine != _engineSource ||
+        identical(_audioSource, engine)) {
+      return;
+    }
     if (_state.audioBackend != GalHookAudioBackend.systemLoopback &&
         _state.audioBackend != GalHookAudioBackend.none) {
       return;
@@ -3976,7 +4199,10 @@ class GalHookSessionController extends ChangeNotifier {
   }
 
   void _promoteLateResourceAudio(EngineHookGalAudioSource engine) {
-    if (_state.audioBackend == GalHookAudioBackend.gameResource) return;
+    if (usesLunaExternalText ||
+        _state.audioBackend == GalHookAudioBackend.gameResource) {
+      return;
+    }
     for (final MapEntry<String, int> line in _lineTimestampCache.entries) {
       final int? textEventId = _lineTextEventIdCache[line.key];
       if (textEventId == null) continue;
@@ -4045,6 +4271,13 @@ class GalHookSessionController extends ChangeNotifier {
     if (latestId != null && latestId != _lastObservedLineId) {
       final TexthookerLineEntry latest = entries.last;
       if (latest.source != TexthookerLineSource.engineHook) {
+        // 外部端点可能并行连着多个来源；只为当前正式发布的来源记活动并冻结音频，
+        // 否则 Luna/Textractor 的平行文本会各自抢一份同一时刻的系统混音。
+        if (!_publishesUnderSelection(latest, selectedTextThreadKey)) {
+          _lastObservedLineId = latestId;
+          notifyListeners();
+          return;
+        }
         _record(
           GalHookEventSeverity.success,
           'text',
@@ -4065,6 +4298,9 @@ class GalHookSessionController extends ChangeNotifier {
           _state = _state.copyWith(textSignalReceived: true);
         }
         _recordActivityLine(latest.text, fromEngineHook: false);
+        if (_isLunaExternalLine(latest)) {
+          _sealPreviousLunaLoopbackLine(latest.id);
+        }
         _scheduleLoopbackFreeze(latest);
       }
     }
@@ -4073,6 +4309,85 @@ class GalHookSessionController extends ChangeNotifier {
   }
 
   void _onEndpointStatusChanged() => notifyListeners();
+
+  bool _isLunaExternalLine(TexthookerLineEntry entry) =>
+      entry.source == TexthookerLineSource.websocket &&
+      isLunaTranslatorOriginEndpoint(entry.sourceLabel ?? '');
+
+  int _loopbackPreRollFor(TexthookerLineEntry entry) =>
+      _isLunaExternalLine(entry)
+          ? _lunaLoopbackPreRollMs
+          : _defaultLoopbackPreRollMs;
+
+  Duration _loopbackFreezeDelayFor(TexthookerLineEntry entry) =>
+      _isLunaExternalLine(entry)
+          ? _lunaLoopbackMaxDuration
+          : _loopbackFreezeDelay;
+
+  /// Luna 没有语音时间戳：新原文到达是上一句唯一稳定的自动边界。
+  /// 立即取 `[previousText-preRoll, currentText]`，不再等固定 4 秒。
+  void _sealPreviousLunaLoopbackLine(String currentLineId) {
+    final String? previousLineId = _pendingLunaLoopbackLineId;
+    if (previousLineId == null || previousLineId == currentLineId) return;
+    _pendingLunaLoopbackLineId = null;
+    final Timer? timer = _loopbackFreezeTimers.remove(previousLineId);
+    if (timer == null) return;
+    timer.cancel();
+    final TexthookerLineEntry? entry = _textService.entryById(previousLineId);
+    final DateTime? startedAt = _loopbackFreezeStartedAt[previousLineId];
+    if (entry == null || startedAt == null) {
+      _loopbackFreezeStartedAt.remove(previousLineId);
+      _loopbackPreRollMsByLine.remove(previousLineId);
+      _completeLunaLoopbackBoundary(previousLineId);
+      return;
+    }
+    final DateTime boundaryAt = _now();
+    final int elapsedMs = boundaryAt.difference(startedAt).inMilliseconds;
+    final int preRollMs =
+        _loopbackPreRollMsByLine[previousLineId] ?? _loopbackPreRollFor(entry);
+    final int desiredBackMs =
+        (elapsedMs + preRollMs).clamp(1, _loopbackRingCapacityMs).toInt();
+    unawaited(
+      _audioQueue.enqueue<bool>(
+        () async {
+          try {
+            // 串行队列可能正在导出别的台词。真正执行 grabRecent 时若已晚于
+            // 文本边界，多取这段排队时间后再从 PCM 尾部裁掉，保证结束点仍是
+            // currentText，不会因为队列拥堵混入下一句。
+            final int trailingTrimMs = _now()
+                .difference(boundaryAt)
+                .inMilliseconds
+                .clamp(0, 30000)
+                .toInt();
+            final int captureBackMs = (desiredBackMs + trailingTrimMs)
+                .clamp(1, _loopbackRingCapacityMs)
+                .toInt();
+            await _cacheLoopbackForLine(
+              entry,
+              backMs: captureBackMs,
+              trailingTrimMs: trailingTrimMs,
+            );
+            return true;
+          } finally {
+            // 必须等 grabRecent 与缓存落地都结束后再放行制卡，不能只在 timer
+            // 被取消时放行；后者仍会让写卡抢在音频切片之前。
+            _completeLunaLoopbackBoundary(previousLineId);
+          }
+        },
+        buildFailure: (Object error, StackTrace stack) => false,
+        onError: (Object error, StackTrace stack) => _record(
+          GalHookEventSeverity.error,
+          'match',
+          'audio.luna_boundary_freeze_exception',
+          'Luna next-line boundary freeze failed',
+          details: <String, Object?>{
+            'lineId': previousLineId,
+            'error': '$error',
+          },
+        ),
+      ),
+    );
+  }
 
   /// 为 [entry] 排一次「延迟冻结」（BUG-1101）。
   ///
@@ -4097,16 +4412,32 @@ class GalHookSessionController extends ChangeNotifier {
         _loopbackCacheInFlight.contains(entry.id)) {
       return;
     }
+    final Duration freezeDelay = _loopbackFreezeDelayFor(entry);
+    final int preRollMs = _loopbackPreRollFor(entry);
     _loopbackFreezeStartedAt[entry.id] = _now();
+    _loopbackPreRollMsByLine[entry.id] = preRollMs;
     _trimCache(_loopbackFreezeStartedAt);
-    final int backMs = _loopbackFreezeDelay.inMilliseconds + _loopbackPreRollMs;
-    _loopbackFreezeTimers[entry.id] = Timer(_loopbackFreezeDelay, () {
+    _trimCache(_loopbackPreRollMsByLine);
+    if (_isLunaExternalLine(entry)) {
+      _pendingLunaLoopbackLineId = entry.id;
+    }
+    final int backMs = freezeDelay.inMilliseconds + preRollMs;
+    _loopbackFreezeTimers[entry.id] = Timer(freezeDelay, () {
       _loopbackFreezeTimers.remove(entry.id);
+      if (_pendingLunaLoopbackLineId == entry.id) {
+        _pendingLunaLoopbackLineId = null;
+      }
       unawaited(
         _audioQueue.enqueue<bool>(
           () async {
-            await _cacheLoopbackForLine(entry, backMs: backMs);
-            return true;
+            try {
+              await _cacheLoopbackForLine(entry, backMs: backMs);
+              return true;
+            } finally {
+              if (_isLunaExternalLine(entry)) {
+                _completeLunaLoopbackBoundary(entry.id);
+              }
+            }
           },
           buildFailure: (Object error, StackTrace stack) => false,
           onError: (Object error, StackTrace stack) => _record(
@@ -4138,17 +4469,31 @@ class GalHookSessionController extends ChangeNotifier {
     final TexthookerLineEntry? entry = _textService.entryById(lineId);
     if (entry == null) {
       _loopbackFreezeStartedAt.remove(lineId);
+      _loopbackPreRollMsByLine.remove(lineId);
+      _completeLunaLoopbackBoundary(lineId);
       return;
     }
     final DateTime? startedAt = _loopbackFreezeStartedAt[lineId];
     final int elapsedMs =
         startedAt == null ? 0 : _now().difference(startedAt).inMilliseconds;
-    final int backMs = (elapsedMs + _loopbackPreRollMs)
-        .clamp(_loopbackMinBackMs, _loopbackRingCapacityMs)
+    final int preRollMs =
+        _loopbackPreRollMsByLine[lineId] ?? _loopbackPreRollFor(entry);
+    final int minBackMs = _isLunaExternalLine(entry) ? 1 : _loopbackMinBackMs;
+    final int backMs = (elapsedMs + preRollMs)
+        .clamp(minBackMs, _loopbackRingCapacityMs)
         .toInt();
-    await _cacheLoopbackForLine(entry, backMs: backMs);
-    if (settle) {
-      _scheduleLoopbackSettle(entry, elapsedMs: elapsedMs);
+    try {
+      await _cacheLoopbackForLine(entry, backMs: backMs);
+      if (settle && !_isLunaExternalLine(entry)) {
+        _scheduleLoopbackSettle(entry, elapsedMs: elapsedMs);
+      }
+    } finally {
+      if (_pendingLunaLoopbackLineId == lineId) {
+        _pendingLunaLoopbackLineId = null;
+      }
+      if (_isLunaExternalLine(entry)) {
+        _completeLunaLoopbackBoundary(lineId);
+      }
     }
   }
 
@@ -4162,7 +4507,8 @@ class GalHookSessionController extends ChangeNotifier {
     required int elapsedMs,
   }) {
     // 已经等满窗口才收束的，补全取不到任何新东西。
-    final int remainingMs = _loopbackFreezeDelay.inMilliseconds - elapsedMs;
+    final Duration freezeDelay = _loopbackFreezeDelayFor(entry);
+    final int remainingMs = freezeDelay.inMilliseconds - elapsedMs;
     if (remainingMs <= 0) return;
     if (!_state.audioFallbackPolicy.allowsLoopback ||
         _audioSource is! LoopbackGalAudioSource ||
@@ -4172,8 +4518,9 @@ class GalHookSessionController extends ChangeNotifier {
       return;
     }
     // 完整窗口 = 原本延迟冻结会用的 backMs，等价于取 `[t0-preRoll, t0+delay]`。
-    final int fullBackMs =
-        _loopbackFreezeDelay.inMilliseconds + _loopbackPreRollMs;
+    final int preRollMs =
+        _loopbackPreRollMsByLine[entry.id] ?? _loopbackPreRollFor(entry);
+    final int fullBackMs = freezeDelay.inMilliseconds + preRollMs;
     _loopbackFreezeTimers[entry.id] =
         Timer(Duration(milliseconds: remainingMs), () {
       _loopbackFreezeTimers.remove(entry.id);
@@ -4217,11 +4564,18 @@ class GalHookSessionController extends ChangeNotifier {
     }
     _loopbackFreezeTimers.clear();
     _loopbackFreezeStartedAt.clear();
+    _loopbackPreRollMsByLine.clear();
+    _pendingLunaLoopbackLineId = null;
+    for (final Completer<void> waiter in _lunaLoopbackBoundaryWaiters.values) {
+      if (!waiter.isCompleted) waiter.complete();
+    }
+    _lunaLoopbackBoundaryWaiters.clear();
   }
 
   Future<void> _cacheLoopbackForLine(
     TexthookerLineEntry entry, {
     required int backMs,
+    int trailingTrimMs = 0,
     // BUG-1287 — 补全模式（[_scheduleLoopbackSettle]）：这一取是**锦上添花**，只有
     // 拿到更长的切片才覆盖，取空或取短都保持已冻结的结果不动。普通冻结走 false。
     bool onlyIfLonger = false,
@@ -4237,14 +4591,32 @@ class GalHookSessionController extends ChangeNotifier {
       return;
     }
     try {
-      final GalAudioSlice? slice = await source.grabRecent(backMs);
-      if (slice == null || slice.isEmpty || _audioSource != source) {
+      final GalAudioSlice? captured = await source.grabRecent(backMs);
+      if (captured == null || captured.isEmpty || _audioSource != source) {
         // BUG-1287 — 补全取空只说明「这次没拿到更好的」，提前收束时冻下来的那段短
         // 语音仍然有效。把它标 missing 等于用一次失败的加取，毁掉一份已经能用的音频。
         if (!onlyIfLonger) {
           _markLineAudioMissing(entry.id, 'loopback_line_slice_unavailable');
         }
         return;
+      }
+      GalAudioSlice slice = captured;
+      if (trailingTrimMs > 0) {
+        final int durationMs =
+            pcmDurationMs(captured.pcm.length, captured.format.byteRate);
+        final Uint8List trimmed = slicePcmByMs(
+          captured.pcm,
+          captured.format,
+          0,
+          durationMs - trailingTrimMs,
+        );
+        if (trimmed.isEmpty) {
+          if (!onlyIfLonger) {
+            _markLineAudioMissing(entry.id, 'loopback_line_slice_unavailable');
+          }
+          return;
+        }
+        slice = GalAudioSlice(pcm: trimmed, format: captured.format);
       }
       if (onlyIfLonger) {
         final GalAudioSlice? existing = _lineVoiceCache[entry.id];
@@ -4266,11 +4638,19 @@ class GalHookSessionController extends ChangeNotifier {
         'match',
         'audio.loopback_line_locked',
         'System loopback audio was locked to the captured line',
-        details: <String, Object?>{'lineId': entry.id, 'backMs': backMs},
+        details: <String, Object?>{
+          'lineId': entry.id,
+          'backMs': backMs,
+          if (trailingTrimMs > 0) 'trailingTrimMs': trailingTrimMs,
+        },
       );
     } finally {
       _loopbackCacheInFlight.remove(entry.id);
       _loopbackFreezeStartedAt.remove(entry.id);
+      _loopbackPreRollMsByLine.remove(entry.id);
+      if (_pendingLunaLoopbackLineId == entry.id) {
+        _pendingLunaLoopbackLineId = null;
+      }
     }
   }
 

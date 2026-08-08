@@ -31,6 +31,7 @@ import 'package:fushi/src/pages/implementations/dictionary_popup_webview.dart'
     show MinePopupResult;
 import 'package:fushi/src/sync/texthooker_service.dart';
 import 'package:fushi/src/sync/texthooker_ws_client.dart';
+import 'package:fushi/src/sync/texthooker_ws_client_manager.dart';
 import 'package:fushi/src/utils/misc/desktop_audio_playback.dart';
 import 'package:fushi/src/utils/misc/swipe_dismiss_wrapper.dart';
 import 'package:fushi/media.dart';
@@ -57,6 +58,7 @@ Map<String, String> injectActiveSentence(
 /// 消除嵌入/独立两套按钮定义的特殊分支。
 enum _GalHookToolbarMenuAction {
   audioFallback,
+  lunaAudioTiming,
   health,
   showOverlay,
   externalWindow,
@@ -418,6 +420,9 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
   @override
   void initState() {
     super.initState();
+    if (_appModel.isPreferencesReady) {
+      _session.setLunaLoopbackPreRollMs(_appModel.galLunaAudioPreRollMs);
+    }
     final List<TexthookerLineEntry> initialLines =
         TexthookerService.instance.entries;
     _lastObservedLineId = initialLines.isEmpty ? null : initialLines.last.id;
@@ -1089,16 +1094,49 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
         context: context,
         builder: (BuildContext dialogContext) => GalCaptureSetupDialog(
           session: _session,
-          onSelectThread: (TexthookerTextThread thread) =>
-              _session.selectTextThread(
-            thread.nativeThreadId,
-            threadKey: thread.key,
-            remember: true,
-          ),
+          onSelectThread: _selectCaptureTextThread,
+          onLunaPreRollChanged: _setLunaAudioPreRoll,
         ),
       );
       _captureSetupDialogOpen = false;
     });
+  }
+
+  Future<void> _setLunaAudioPreRoll(int milliseconds) async {
+    _session.setLunaLoopbackPreRollMs(milliseconds);
+    if (_appModel.isPreferencesReady) {
+      await _appModel.setGalLunaAudioPreRollMs(milliseconds);
+    }
+  }
+
+  /// 把 Luna 原文端点准备好后再落会话选择。用户无需理解或手填 WebSocket 地址；
+  /// 其他内置线程仍走原来的 native 选择逻辑。
+  Future<bool> _selectCaptureTextThread(TexthookerTextThread thread) async {
+    if (thread.key == GalHookSessionController.lunaExternalTextThreadKey) {
+      List<String> urls = _appModel.texthookerUrls;
+      if (!urls.any(isLunaTranslatorOriginEndpoint)) {
+        urls = <String>[...urls, kLunaTranslatorOriginWsUrl];
+        await _appModel.setTexthookerUrls(urls);
+      }
+      if (!_appModel.texthookerEnabled) {
+        await _appModel.setTexthookerEnabled(true);
+      }
+      final TexthookerWsClientManager manager =
+          TexthookerWsClientManager.instance;
+      if (!manager.isRunning) {
+        manager.start(urls);
+      } else if (!manager.endpointStatuses.any(
+        (TexthookerEndpointStatus status) =>
+            isLunaTranslatorOriginEndpoint(status.url),
+      )) {
+        await manager.restart(urls);
+      }
+    }
+    return _session.selectTextThread(
+      thread.nativeThreadId,
+      threadKey: thread.key,
+      remember: true,
+    );
   }
 
   /// TODO-1052：查词浮层 barrier 上「桌面水平拖过阈关一层」的纯状态追踪器（与
@@ -1306,6 +1344,8 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
         switch (action) {
           case _GalHookToolbarMenuAction.audioFallback:
             unawaited(_showAudioFallbackPolicyDialog());
+          case _GalHookToolbarMenuAction.lunaAudioTiming:
+            unawaited(_showLunaAudioTimingDialog());
           case _GalHookToolbarMenuAction.health:
             unawaited(_showHealthDialog());
           case _GalHookToolbarMenuAction.showOverlay:
@@ -1321,6 +1361,14 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
           child: Text('${t.game_audio_fallback_policy} · '
               '${_audioFallbackPolicyLabel(state.audioFallbackPolicy)}'),
         ),
+        if (_session.usesLunaExternalText)
+          PopupMenuItem<_GalHookToolbarMenuAction>(
+            value: _GalHookToolbarMenuAction.lunaAudioTiming,
+            child: Text(
+              '${t.game_luna_audio_preroll} · '
+              '${_session.lunaLoopbackPreRollMs} ms',
+            ),
+          ),
         // 健康状态从右栏常驻卡改为按需打开：它是「偶尔查一眼」的静态信息，
         // 不值得长期占着逐句操作要用的横向空间（完整版仍在「兼容性诊断」页签）。
         PopupMenuItem<_GalHookToolbarMenuAction>(
@@ -1339,6 +1387,54 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
             child: Text(t.external_window_mining),
           ),
       ],
+    );
+  }
+
+  /// Luna 只给文本时间点，不给原游戏语音时间戳。游戏间延迟不同，因此把
+  /// 向前回取量留给用户就地调整；该值只影响之后到达的台词。
+  Future<void> _showLunaAudioTimingDialog() async {
+    await showAppDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(t.game_luna_audio_preroll),
+        content: SizedBox(
+          width: 460,
+          child: ListenableBuilder(
+            listenable: _session,
+            builder: (BuildContext context, Widget? child) => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(t.game_luna_audio_preroll_hint),
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    '${_session.lunaLoopbackPreRollMs} ms',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                Slider(
+                  value: _session.lunaLoopbackPreRollMs.toDouble(),
+                  min: 0,
+                  max: 3000,
+                  divisions: 30,
+                  label: '${_session.lunaLoopbackPreRollMs} ms',
+                  onChanged: (double value) =>
+                      _session.setLunaLoopbackPreRollMs(value.round()),
+                  onChangeEnd: (double value) =>
+                      unawaited(_setLunaAudioPreRoll(value.round())),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(t.dialog_close),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1707,9 +1803,12 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
                         // 行数用 observedLineCount（native 观测总行数）而不是已发布
                         // 行数：v12 起未被选中的线程一行都不发布，用已发布行数会让
                         // 每条候选都显示 `· 0`，用户还是没法判断该选哪条。
-                        label:
-                            '${threadDisplayLabels[thread.key] ?? thread.label}'
-                            ' · ${thread.observedLineCount}',
+                        label: thread.key ==
+                                GalHookSessionController
+                                    .lunaExternalTextThreadKey
+                            ? t.game_text_source_luna
+                            : '${threadDisplayLabels[thread.key] ?? thread.label}'
+                                ' · ${thread.observedLineCount}',
                       ),
                   ],
                   // 每条线程第二行：有音频行数 + 最近台词预览——没有预览用户
@@ -1747,12 +1846,12 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
                       _unreadLines = 0;
                     });
                     unawaited(
-                      _session.selectTextThread(
-                        selectedThread?.nativeThreadId,
-                        threadKey: selectedThread?.key,
-                        // 用户亲自选的线程记进本游戏记忆，下次开同一个游戏自动选回。
-                        remember: true,
-                      ),
+                      selectedThread == null
+                          ? _session.selectTextThread(
+                              null,
+                              remember: true,
+                            )
+                          : _selectCaptureTextThread(selectedThread),
                     );
                   },
                 ),
