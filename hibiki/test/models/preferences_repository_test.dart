@@ -45,6 +45,10 @@ void main() {
       expect(repo.currentHomeTabIndex, 0);
     });
 
+    test('Luna audio pre-roll defaults to 800ms', () {
+      expect(repo.galLunaAudioPreRollMs, 800);
+    });
+
     test('dictionaryFontSize defaults to 16.0', () {
       expect(repo.dictionaryFontSize, 16.0);
     });
@@ -200,6 +204,18 @@ void main() {
       // 有声书退出即停是默认：新装 / 从未切过开关的用户退出阅读页就停止播放。
       expect(repo.audiobookBackgroundPlay, false);
     });
+  });
+
+  test('Luna audio pre-roll persists and clamps to the supported range',
+      () async {
+    await repo.setGalLunaAudioPreRollMs(1700);
+    expect(repo.galLunaAudioPreRollMs, 1700);
+
+    await repo.setGalLunaAudioPreRollMs(9000);
+    expect(repo.galLunaAudioPreRollMs, 3000);
+
+    await repo.setGalLunaAudioPreRollMs(-10);
+    expect(repo.galLunaAudioPreRollMs, 0);
   });
 
   // ── round-trip persistence ───────────────────────────────────────────

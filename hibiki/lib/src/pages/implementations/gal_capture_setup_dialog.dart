@@ -14,6 +14,7 @@ import 'package:fushi/utils.dart';
 typedef GalTextThreadSelector = Future<bool> Function(
   TexthookerTextThread thread,
 );
+typedef GalLunaPreRollChanged = Future<void> Function(int milliseconds);
 
 /// 游戏启动/附着后首次出现候选线程时的捕获设置大弹窗。
 ///
@@ -23,11 +24,13 @@ class GalCaptureSetupDialog extends StatefulWidget {
   const GalCaptureSetupDialog({
     required this.session,
     required this.onSelectThread,
+    required this.onLunaPreRollChanged,
     super.key,
   });
 
   final GalHookSessionController session;
   final GalTextThreadSelector onSelectThread;
+  final GalLunaPreRollChanged onLunaPreRollChanged;
 
   @override
   State<GalCaptureSetupDialog> createState() => _GalCaptureSetupDialogState();
@@ -191,6 +194,10 @@ class _GalCaptureSetupDialogState extends State<GalCaptureSetupDialog> {
   Widget _buildThreadPane(BuildContext context) {
     final List<TexthookerTextThread> threads = widget.session.textThreads;
     final Map<String, String> labels = assignThreadDisplayLabels(threads);
+    final bool hasLuna = threads.any(
+      (TexthookerTextThread thread) =>
+          thread.key == GalHookSessionController.lunaExternalTextThreadKey,
+    );
     return HibikiCard(
       padding: EdgeInsets.zero,
       child: Column(
@@ -261,6 +268,46 @@ class _GalCaptureSetupDialogState extends State<GalCaptureSetupDialog> {
                     },
                   ),
           ),
+          if (hasLuna) ...<Widget>[
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          t.game_luna_audio_preroll,
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                      ),
+                      Text('${widget.session.lunaLoopbackPreRollMs} ms'),
+                    ],
+                  ),
+                  Text(
+                    t.game_luna_audio_preroll_hint,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                  Slider(
+                    value: widget.session.lunaLoopbackPreRollMs.toDouble(),
+                    min: 0,
+                    max: 3000,
+                    divisions: 30,
+                    label: '${widget.session.lunaLoopbackPreRollMs} ms',
+                    onChanged: (double value) =>
+                        widget.session.setLunaLoopbackPreRollMs(value.round()),
+                    onChangeEnd: (double value) => unawaited(
+                      widget.onLunaPreRollChanged(value.round()),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -1,9 +1,9 @@
 /// Generated file. Do not edit.
 ///
 /// Locales: 17
-/// Strings: 53788 (3164 per locale)
+/// Strings: 53822 (3166 per locale)
 ///
-/// Built on 2026-08-08 at 14:28 UTC
+/// Built on 2026-08-08 at 15:42 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -4270,6 +4270,9 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
       'Connected. Fushi will use the original text selected in LunaTranslator.';
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 // Path: <root>
@@ -11554,6 +11557,11 @@ class _StringsAr extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 // Path: <root>
@@ -18905,6 +18913,11 @@ class _StringsDe extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 // Path: <root>
@@ -26272,6 +26285,11 @@ class _StringsEs extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 // Path: <root>
@@ -33651,6 +33669,11 @@ class _StringsFr extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 // Path: <root>
@@ -40958,6 +40981,11 @@ class _StringsId extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 // Path: <root>
@@ -48311,6 +48339,11 @@ class _StringsIt extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 // Path: <root>
@@ -55480,6 +55513,11 @@ class _StringsJa extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 // Path: <root>
@@ -62654,6 +62692,11 @@ class _StringsKo extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 // Path: <root>
@@ -69987,6 +70030,11 @@ class _StringsNl extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 // Path: <root>
@@ -77332,6 +77380,11 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 // Path: <root>
@@ -84663,6 +84716,11 @@ class _StringsRu extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 // Path: <root>
@@ -91942,6 +92000,11 @@ class _StringsTh extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 // Path: <root>
@@ -99252,6 +99315,11 @@ class _StringsTr extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 // Path: <root>
@@ -106547,6 +106615,11 @@ class _StringsVi extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 // Path: <root>
@@ -113324,6 +113397,11 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       '请启动 LunaTranslator 并开启网络服务，Fushi 会自动重连。';
+  @override
+  String get game_luna_audio_preroll => 'Luna 语音起点提前';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      '每条 Luna 原文到达时向前保留一小段混音，避免角色语音开头被截掉。';
 }
 
 // Path: <root>
@@ -120415,6 +120493,11 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get game_text_source_luna_waiting =>
       'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
 }
 
 /// Flat map(s) containing all translations.
@@ -126906,6 +126989,10 @@ extension on _StringsEn {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }
@@ -133395,6 +133482,10 @@ extension on _StringsAr {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }
@@ -139906,6 +139997,10 @@ extension on _StringsDe {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }
@@ -146416,6 +146511,10 @@ extension on _StringsEs {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }
@@ -152932,6 +153031,10 @@ extension on _StringsFr {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }
@@ -159430,6 +159533,10 @@ extension on _StringsId {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }
@@ -165942,6 +166049,10 @@ extension on _StringsIt {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }
@@ -172416,6 +172527,10 @@ extension on _StringsJa {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }
@@ -178894,6 +179009,10 @@ extension on _StringsKo {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }
@@ -185400,6 +185519,10 @@ extension on _StringsNl {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }
@@ -191903,6 +192026,10 @@ extension on _StringsPtBr {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }
@@ -198411,6 +198538,10 @@ extension on _StringsRu {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }
@@ -204902,6 +205033,10 @@ extension on _StringsTh {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }
@@ -211402,6 +211537,10 @@ extension on _StringsTr {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }
@@ -217898,6 +218037,10 @@ extension on _StringsVi {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }
@@ -224339,6 +224482,10 @@ extension on _StringsZhCn {
         return '已连接，将使用 LunaTranslator 中选定的原文。';
       case 'game_text_source_luna_waiting':
         return '请启动 LunaTranslator 并开启网络服务，Fushi 会自动重连。';
+      case 'game_luna_audio_preroll':
+        return 'Luna 语音起点提前';
+      case 'game_luna_audio_preroll_hint':
+        return '每条 Luna 原文到达时向前保留一小段混音，避免角色语音开头被截掉。';
       default:
         return null;
     }
@@ -230808,6 +230955,10 @@ extension on _StringsZhHk {
         return 'Connected. Fushi will use the original text selected in LunaTranslator.';
       case 'game_text_source_luna_waiting':
         return 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+      case 'game_luna_audio_preroll':
+        return 'Luna audio lead-in';
+      case 'game_luna_audio_preroll_hint':
+        return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
       default:
         return null;
     }

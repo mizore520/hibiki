@@ -58,6 +58,7 @@ Map<String, String> injectActiveSentence(
 /// 消除嵌入/独立两套按钮定义的特殊分支。
 enum _GalHookToolbarMenuAction {
   audioFallback,
+  lunaAudioTiming,
   health,
   showOverlay,
   externalWindow,
@@ -419,6 +420,9 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
   @override
   void initState() {
     super.initState();
+    if (_appModel.isPreferencesReady) {
+      _session.setLunaLoopbackPreRollMs(_appModel.galLunaAudioPreRollMs);
+    }
     final List<TexthookerLineEntry> initialLines =
         TexthookerService.instance.entries;
     _lastObservedLineId = initialLines.isEmpty ? null : initialLines.last.id;
@@ -1091,10 +1095,18 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
         builder: (BuildContext dialogContext) => GalCaptureSetupDialog(
           session: _session,
           onSelectThread: _selectCaptureTextThread,
+          onLunaPreRollChanged: _setLunaAudioPreRoll,
         ),
       );
       _captureSetupDialogOpen = false;
     });
+  }
+
+  Future<void> _setLunaAudioPreRoll(int milliseconds) async {
+    _session.setLunaLoopbackPreRollMs(milliseconds);
+    if (_appModel.isPreferencesReady) {
+      await _appModel.setGalLunaAudioPreRollMs(milliseconds);
+    }
   }
 
   /// 把 Luna 原文端点准备好后再落会话选择。用户无需理解或手填 WebSocket 地址；
@@ -1332,6 +1344,8 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
         switch (action) {
           case _GalHookToolbarMenuAction.audioFallback:
             unawaited(_showAudioFallbackPolicyDialog());
+          case _GalHookToolbarMenuAction.lunaAudioTiming:
+            unawaited(_showLunaAudioTimingDialog());
           case _GalHookToolbarMenuAction.health:
             unawaited(_showHealthDialog());
           case _GalHookToolbarMenuAction.showOverlay:
@@ -1347,6 +1361,14 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
           child: Text('${t.game_audio_fallback_policy} · '
               '${_audioFallbackPolicyLabel(state.audioFallbackPolicy)}'),
         ),
+        if (_session.usesLunaExternalText)
+          PopupMenuItem<_GalHookToolbarMenuAction>(
+            value: _GalHookToolbarMenuAction.lunaAudioTiming,
+            child: Text(
+              '${t.game_luna_audio_preroll} · '
+              '${_session.lunaLoopbackPreRollMs} ms',
+            ),
+          ),
         // 健康状态从右栏常驻卡改为按需打开：它是「偶尔查一眼」的静态信息，
         // 不值得长期占着逐句操作要用的横向空间（完整版仍在「兼容性诊断」页签）。
         PopupMenuItem<_GalHookToolbarMenuAction>(
@@ -1365,6 +1387,54 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
             child: Text(t.external_window_mining),
           ),
       ],
+    );
+  }
+
+  /// Luna 只给文本时间点，不给原游戏语音时间戳。游戏间延迟不同，因此把
+  /// 向前回取量留给用户就地调整；该值只影响之后到达的台词。
+  Future<void> _showLunaAudioTimingDialog() async {
+    await showAppDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(t.game_luna_audio_preroll),
+        content: SizedBox(
+          width: 460,
+          child: ListenableBuilder(
+            listenable: _session,
+            builder: (BuildContext context, Widget? child) => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(t.game_luna_audio_preroll_hint),
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    '${_session.lunaLoopbackPreRollMs} ms',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                Slider(
+                  value: _session.lunaLoopbackPreRollMs.toDouble(),
+                  min: 0,
+                  max: 3000,
+                  divisions: 30,
+                  label: '${_session.lunaLoopbackPreRollMs} ms',
+                  onChanged: (double value) =>
+                      _session.setLunaLoopbackPreRollMs(value.round()),
+                  onChangeEnd: (double value) =>
+                      unawaited(_setLunaAudioPreRoll(value.round())),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(t.dialog_close),
+          ),
+        ],
+      ),
     );
   }
 

@@ -440,6 +440,21 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Luna 外部原文到达 Fushi 时，从系统混音环形缓冲向前回取的时长。
+  /// 调大只会多带一点前方声音，用来抵消 Luna WebSocket 传输和 UI 通知延迟。
+  int get galLunaAudioPreRollMs =>
+      (getPref('gal_luna_audio_pre_roll_ms', defaultValue: 800) as int)
+          .clamp(0, 3000)
+          .toInt();
+
+  Future<void> setGalLunaAudioPreRollMs(int value) async {
+    await setPref(
+      'gal_luna_audio_pre_roll_ms',
+      value.clamp(0, 3000).toInt(),
+    );
+    notifyListeners();
+  }
+
   // ── galgame 游戏库（首页「游戏」tab）─────────────────────────────────────
 
   /// legacy：v55 之前用户添加的 galgame 列表（单一 JSON 数组落 KV 表）。
