@@ -11,6 +11,7 @@ import 'package:fushi/src/anki/lapis_backup_retention.dart';
 import 'package:fushi/src/anki/lapis_style_editor_page.dart';
 import 'package:fushi/src/anki/anki_view_model.dart';
 import 'package:fushi/src/anki/lapis_template_service.dart';
+import 'package:fushi/src/mining/gal_mining_screenshot_size.dart';
 import 'package:fushi/src/mining/immersion_mining_request.dart'
     show MiningAnimatedFormat, VideoMiningImageMode;
 import 'package:fushi/src/platform/platform_providers.dart';
@@ -361,6 +362,7 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
             _buildVideoMiningImageModePicker(),
             _buildVideoMiningAnimatedFormatPicker(),
             _buildGalMiningImageModePicker(),
+            _buildGalMiningScreenshotSizePicker(),
             _buildGalMiningAnimatedFormatPicker(),
           ],
         ),
@@ -383,8 +385,8 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
     ];
     final int tier = appModel.miningImageQuality.clamp(0, labels.length - 1);
     return AdaptiveSettingsSliderRow(
-      title: t.mining_image_quality,
-      subtitle: t.mining_image_quality_hint,
+      title: t.video_mining_image_quality,
+      subtitle: t.video_mining_image_quality_hint,
       icon: Icons.hd_outlined,
       value: tier.toDouble(),
       min: 0,
@@ -489,6 +491,34 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
       ],
       onChanged: (VideoMiningImageMode mode) {
         appModel.setGalMiningImageMode(mode);
+        setState(() {});
+      },
+    );
+  }
+
+  Widget _buildGalMiningScreenshotSizePicker() {
+    return AdaptiveSettingsPickerRow<GalMiningScreenshotSize>(
+      title: t.gal_mining_screenshot_size,
+      subtitle: t.gal_mining_screenshot_size_hint,
+      icon: Icons.aspect_ratio_outlined,
+      controlBelow: true,
+      selected: appModel.galMiningScreenshotSize,
+      options: <AdaptiveSettingsPickerOption<GalMiningScreenshotSize>>[
+        AdaptiveSettingsPickerOption<GalMiningScreenshotSize>(
+          value: GalMiningScreenshotSize.original,
+          label: t.gal_mining_screenshot_size_original,
+        ),
+        AdaptiveSettingsPickerOption<GalMiningScreenshotSize>(
+          value: GalMiningScreenshotSize.fullHd,
+          label: t.gal_mining_screenshot_size_full_hd,
+        ),
+        AdaptiveSettingsPickerOption<GalMiningScreenshotSize>(
+          value: GalMiningScreenshotSize.hd,
+          label: t.gal_mining_screenshot_size_hd,
+        ),
+      ],
+      onChanged: (GalMiningScreenshotSize size) {
+        appModel.setGalMiningScreenshotSize(size);
         setState(() {});
       },
     );

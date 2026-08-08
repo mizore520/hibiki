@@ -1315,9 +1315,7 @@
   "mining_audio_quality_hint": "比特率越高越清晰，卡片体积也越大。",
   "mining_audio_quality_max": "最高",
   "mining_audio_quality_standard": "标准",
-  "mining_image_quality": "图片 / GIF 清晰度",
   "mining_image_quality_hd": "高清",
-  "mining_image_quality_hint": "越高越清晰，卡片体积也越大。最高档的截图保留源分辨率；动图有上限，避免卡片大到不可用。",
   "mining_image_quality_max": "最高",
   "mining_image_quality_standard": "标准",
   "mining_image_quality_thrift": "省流",
@@ -3154,5 +3152,12 @@
   "migration_import_nothing": "中转目录中没有找到迁移数据。",
   "migration_uninstall_prompt": "迁移完成。卸载旧版 Hibiki？",
   "migration_uninstall_button": "卸载 Hibiki",
-  "migration_uninstall_still_installed": "旧版 Hibiki 仍安装在设备上，可随时卸载。"
+  "migration_uninstall_still_installed": "旧版 Hibiki 仍安装在设备上，可随时卸载。",
+  "video_mining_image_quality": "视频 / 动漫制卡画质",
+  "video_mining_image_quality_hint": "仅控制视频和动漫制卡配图。画质越高越清晰，卡片体积也可能越大。",
+  "gal_mining_screenshot_size": "Galgame 截图尺寸",
+  "gal_mining_screenshot_size_hint": "用于静态截图及动图捕获失败后的备用截图。保持比例、只缩不放，并以质量 90 保存为 JPG。",
+  "gal_mining_screenshot_size_original": "原始尺寸（JPG）",
+  "gal_mining_screenshot_size_full_hd": "最大 1920 x 1080（推荐）",
+  "gal_mining_screenshot_size_hd": "最大 1280 x 720"
 }

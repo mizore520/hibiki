@@ -40,6 +40,7 @@ import 'package:fushi/src/epub/epub_importer.dart';
 import 'package:fushi/src/reader/reader_settings.dart';
 import 'package:fushi/src/lookup/browser_extension_installer.dart';
 import 'package:fushi/src/lookup/effective_lookup_size.dart';
+import 'package:fushi/src/mining/gal_mining_screenshot_size.dart';
 import 'package:fushi/src/models/dictionary_repository.dart';
 import 'package:fushi/src/models/clipboard_history_repository.dart';
 import 'package:fushi/src/models/media_history_repository.dart';
@@ -5081,6 +5082,11 @@ class AppModel with ChangeNotifier {
   VideoMiningImageMode get galMiningImageMode => prefsRepo.galMiningImageMode;
   void setGalMiningImageMode(VideoMiningImageMode mode) =>
       prefsRepo.setGalMiningImageMode(mode);
+
+  GalMiningScreenshotSize get galMiningScreenshotSize =>
+      prefsRepo.galMiningScreenshotSize;
+  void setGalMiningScreenshotSize(GalMiningScreenshotSize size) =>
+      prefsRepo.setGalMiningScreenshotSize(size);
 
   // 动图编码格式（AVIF / WebP / GIF，透传 prefsRepo）。默认 avif。与上面的「封面模式」
   // 正交：模式选用不用动图，格式选动图怎么编码。

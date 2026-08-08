@@ -11,6 +11,7 @@ import 'package:fushi/src/media/video/video_control_customization.dart';
 import 'package:fushi/src/media/video/video_immersive_mode.dart';
 import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
 import 'package:fushi/src/mining/galgame_library.dart';
+import 'package:fushi/src/mining/gal_mining_screenshot_size.dart';
 import 'package:fushi/src/mining/immersion_mining_request.dart'
     show MiningAnimatedFormat, VideoMiningImageMode;
 import 'package:fushi/src/models/audio_source_config.dart';
@@ -1461,6 +1462,17 @@ class PreferencesRepository extends ChangeNotifier {
 
   void setGalMiningImageMode(VideoMiningImageMode mode) async {
     await setPref('gal_mining_image_mode', mode.wireName);
+    notifyListeners();
+  }
+
+  // Galgame 静态截图尺寸与视频/动漫清晰度彻底分开。默认 1080p：既避免 4K WGC PNG
+  // 原样进入 Anki，又保留卡面与放大查看所需的清晰度。原始档只保留尺寸，仍转 JPEG。
+  GalMiningScreenshotSize get galMiningScreenshotSize =>
+      GalMiningScreenshotSize.fromWireName(
+          getPref('gal_mining_screenshot_size', defaultValue: null) as String?);
+
+  void setGalMiningScreenshotSize(GalMiningScreenshotSize size) async {
+    await setPref('gal_mining_screenshot_size', size.wireName);
     notifyListeners();
   }
 

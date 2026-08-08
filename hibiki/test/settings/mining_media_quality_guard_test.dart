@@ -5,6 +5,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi/src/mining/immersion_mining_request.dart'
     show MiningAnimatedFormat;
+import 'package:fushi/src/mining/gal_mining_screenshot_size.dart';
 import 'package:fushi/src/models/preferences_repository.dart';
 import 'package:fushi/src/utils/misc/desktop_audio_clipper.dart';
 import 'package:fushi_core/fushi_core.dart';
@@ -95,6 +96,21 @@ void main() {
       repo.setMiningAudioQuality(-5); // 越界
       await Future<void>.delayed(const Duration(milliseconds: 50));
       expect(repo.miningAudioQuality, 0, reason: '越界写入必须夹到 0');
+    });
+
+    test('Gal 截图尺寸默认 1080p，并以独立 key 持久化', () async {
+      expect(repo.galMiningScreenshotSize, GalMiningScreenshotSize.fullHd);
+
+      repo.setGalMiningScreenshotSize(GalMiningScreenshotSize.hd);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(repo.galMiningScreenshotSize, GalMiningScreenshotSize.hd);
+
+      final PreferencesRepository restored = PreferencesRepository(db);
+      await restored.loadFromDb();
+      expect(restored.galMiningScreenshotSize, GalMiningScreenshotSize.hd);
+      final Map<String, String> prefs = await db.getAllPrefs();
+      expect(prefs.containsKey('gal_mining_screenshot_size'), isTrue);
+      restored.dispose();
     });
   });
 
@@ -206,8 +222,8 @@ void main() {
       final String src = File(
         'lib/src/pages/implementations/anki_settings_page.dart',
       ).readAsStringSync();
-      expect(src.contains('t.mining_image_quality'), isTrue,
-          reason: '图片滑块标题用 i18n key mining_image_quality');
+      expect(src.contains('t.video_mining_image_quality'), isTrue,
+          reason: '图片滑块标题明确只控制视频/动漫制卡');
       expect(src.contains('t.mining_audio_quality'), isTrue,
           reason: '音频滑块标题用 i18n key mining_audio_quality');
       expect(src.contains('appModel.setMiningImageQuality'), isTrue);

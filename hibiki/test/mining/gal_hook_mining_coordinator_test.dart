@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi/src/mining/gal_hook_mining_coordinator.dart';
+import 'package:fushi/src/mining/gal_mining_screenshot_size.dart';
 import 'package:fushi/src/mining/gal_hook_session_controller.dart';
 import 'package:fushi/src/mining/galgame_window_gif.dart'
     show GalWindowAnimatedCapture;
@@ -13,6 +14,7 @@ import 'package:fushi/src/mining/window_capture_channel.dart';
 import 'package:fushi/src/sync/texthooker_service.dart';
 import 'package:fushi/src/utils/misc/desktop_audio_clipper.dart';
 import 'package:fushi_anki/fushi_anki.dart';
+import 'package:image/image.dart' as img;
 
 class _RecordingRepo extends BaseAnkiRepository {
   _RecordingRepo({
@@ -24,6 +26,7 @@ class _RecordingRepo extends BaseAnkiRepository {
   final Duration delay;
   final List<Map<String, Object?>> payloads = <Map<String, Object?>>[];
   final List<AnkiMiningContext> contexts = <AnkiMiningContext>[];
+  final List<Uint8List> recordedCoverBytes = <Uint8List>[];
   final List<int> updatedNoteIds = <int>[];
   int activeCalls = 0;
   int maxActiveCalls = 0;
@@ -41,6 +44,11 @@ class _RecordingRepo extends BaseAnkiRepository {
             .cast<String, Object?>(),
       );
       contexts.add(context);
+      if (context.coverPath != null) {
+        recordedCoverBytes.add(
+          await File(context.coverPath!).readAsBytes(),
+        );
+      }
       return MineOutcome.success(noteId: 100 + contexts.length);
     } finally {
       activeCalls--;
@@ -304,6 +312,35 @@ void main() {
       isFalse,
       reason: '主动选静态图不是降级，不该弹「已降级为静态图」',
     );
+  });
+
+  test('valid Gal screenshot uses independent 1080p preset and real JPEG',
+      () async {
+    final TexthookerLineEntry entry = service.appendLine('四ケーの台詞')!;
+    final _RecordingRepo repo = _RecordingRepo();
+    final img.Image source = img.Image(width: 2000, height: 1125);
+    img.fill(source, color: img.ColorRgb8(30, 90, 180));
+
+    final GalHookMiningResult result = await coordinator(
+      validator: (_) => true,
+      still: (int hwnd) async => WindowCaptureResult(
+        pngBytes: Uint8List.fromList(img.encodePng(source)),
+      ),
+    ).mineLine(
+      lineId: entry.id,
+      fields: const <String, String>{'expression': '四ケー'},
+      compression: MiningMediaCompression.compressed,
+      repo: repo,
+      imageMode: VideoMiningImageMode.currentFrame,
+      screenshotSize: GalMiningScreenshotSize.fullHd,
+    );
+
+    expect(result.success, isTrue);
+    expect(repo.contexts.single.coverPath, endsWith('.jpg'));
+    final Uint8List bytes = repo.recordedCoverBytes.single;
+    expect(bytes.take(3), orderedEquals(<int>[0xff, 0xd8, 0xff]));
+    final img.Image decoded = img.decodeImage(bytes)!;
+    expect((decoded.width, decoded.height), (1920, 1080));
   });
 
   // 捕获内部在编码器缺失时会**降级 GIF**，此时「用户所选格式」与「实际产出格式」不同。

@@ -105,8 +105,8 @@ SettingsDestination buildCardCreationDestination() {
       ),
       SettingsBodySearchEntry(
         id: 'card_creation.anki.mining_image_quality',
-        title: t.mining_image_quality,
-        subtitle: t.mining_image_quality_hint,
+        title: t.video_mining_image_quality,
+        subtitle: t.video_mining_image_quality_hint,
       ),
       SettingsBodySearchEntry(
         id: 'card_creation.anki.mining_audio_quality',
@@ -117,6 +117,11 @@ SettingsDestination buildCardCreationDestination() {
         id: 'card_creation.anki.video_mining_image_mode',
         title: t.video_mining_image_mode,
         subtitle: t.video_mining_image_mode_hint,
+      ),
+      SettingsBodySearchEntry(
+        id: 'card_creation.anki.gal_mining_screenshot_size',
+        title: t.gal_mining_screenshot_size,
+        subtitle: t.gal_mining_screenshot_size_hint,
       ),
     ],
   );
