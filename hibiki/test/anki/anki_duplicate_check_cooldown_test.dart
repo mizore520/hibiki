@@ -12,8 +12,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// 为什么这条在查词热路径上：`popup.js` 的 `createEntryHeader` 对结果里**每个
 /// 词条**都发一次 `duplicateCheck` 桥调用，而 `createAnkiRepository()` 每次都
 /// 新建一个 [AnkiConnectRepository]（所以冷却必须是**静态**的，实例字段存不住）。
-/// AnkiConnect 主机被防火墙静默丢包 / VPN 断开 / 配成不在线的远程主机时，每次
-/// 都要挂满连接超时（5s），N 个词条就是 N 条并发挂起的 HTTP 压在弹窗渲染路径上。
+/// BUG-1465 会把同一波词条汇成一批，但 AnkiConnect 主机被防火墙静默丢包 / VPN
+/// 断开 / 配成不在线的远程主机时，每个新弹窗仍会重新挂满连接超时（5s）。静态
+/// 冷却负责跨弹窗短路，批量器负责弹窗内合并，两者不能互相替代。
 ///
 /// 熔断的红线是**只对传输层失败生效**：主机应答了业务错误说明它活着，短路它会
 /// 让查重永久失灵（那是比慢更糟的正确性 bug）。
@@ -143,7 +144,8 @@ void main() {
           if (fail) throw const SocketException('Connection refused');
           return http.Response(
             jsonEncode({
-              'result': [123],
+              // canAddNotes=false means the note is already a duplicate.
+              'result': [false],
               'error': null,
             }),
             200,
