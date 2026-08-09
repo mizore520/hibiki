@@ -421,7 +421,9 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
   void initState() {
     super.initState();
     if (_appModel.isPreferencesReady) {
-      _session.setLunaLoopbackPreRollMs(_appModel.galLunaAudioPreRollMs);
+      _session.configureLunaLoopbackDefaults(
+        preRollMs: _appModel.galLunaAudioPreRollMs,
+      );
     }
     final List<TexthookerLineEntry> initialLines =
         TexthookerService.instance.entries;
@@ -761,6 +763,54 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
     return picked;
   }
 
+  Future<GalAttachCaptureMode?> _showAttachModePicker(
+    ExternalWindowInfo window,
+  ) async {
+    final GalAttachCaptureMode? remembered =
+        _session.rememberedAttachModeForWindow(window);
+    final GalAttachCaptureMode autofocusMode =
+        remembered ?? GalAttachCaptureMode.lunaSafe;
+    return showAppDialog<GalAttachCaptureMode>(
+      context: context,
+      builder: (BuildContext dialogContext) => SimpleDialog(
+        title: Text(t.game_attach_mode_title),
+        children: <Widget>[
+          for (final GalAttachCaptureMode mode in GalAttachCaptureMode.values)
+            HibikiListItem(
+              autofocus: mode == autofocusMode,
+              leading: Icon(
+                mode == GalAttachCaptureMode.lunaSafe
+                    ? Icons.shield_outlined
+                    : Icons.cable_outlined,
+              ),
+              title: Text(
+                mode == GalAttachCaptureMode.lunaSafe
+                    ? t.game_attach_mode_luna_safe
+                    : t.game_attach_mode_native,
+              ),
+              subtitle: Text(
+                mode == GalAttachCaptureMode.lunaSafe
+                    ? t.game_attach_mode_luna_safe_hint
+                    : t.game_attach_mode_native_hint,
+              ),
+              trailing: remembered == mode
+                  ? Text(
+                      t.game_attach_mode_last_used,
+                      style: Theme.of(dialogContext)
+                          .textTheme
+                          .labelSmall
+                          ?.copyWith(
+                            color: Theme.of(dialogContext).colorScheme.primary,
+                          ),
+                    )
+                  : null,
+              onTap: () => Navigator.of(dialogContext).pop(mode),
+            ),
+        ],
+      ),
+    );
+  }
+
   /// 附着到**已在运行**的游戏：与「启动并捕获」并列的一级入口。
   ///
   /// 底层能力一直都在（injector `--pid` attach + [GalHookSessionController.
@@ -777,14 +827,17 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
   Future<void> _attachToRunningGame() async {
     final ExternalWindowInfo? picked = await _showExternalWindowPicker();
     if (picked == null) return;
+    final GalAttachCaptureMode? mode = await _showAttachModePicker(picked);
+    if (mode == null) return;
     final GalHookSessionState state = _session.state;
     // 已经在捕获这个窗口：重来一遍只会丢掉正在跑的 hook 与已收台词，什么都不做。
     if (state.isActive &&
         state.externalWindowMode &&
-        state.boundWindow?.hwnd == picked.hwnd) {
+        state.boundWindow?.hwnd == picked.hwnd &&
+        _session.currentAttachMode == mode) {
       return;
     }
-    await _session.startAttachedCapture(picked);
+    await _session.startAttachedCapture(picked, mode: mode);
   }
 
   /// galgame 引擎-hook（launch 模式）：页面只发起会话；位数解析、注入器选择、窗口绑定、
@@ -1095,18 +1148,11 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
         builder: (BuildContext dialogContext) => GalCaptureSetupDialog(
           session: _session,
           onSelectThread: _selectCaptureTextThread,
-          onLunaPreRollChanged: _setLunaAudioPreRoll,
+          onLunaTimingCommitted: _session.persistLunaLoopbackTiming,
         ),
       );
       _captureSetupDialogOpen = false;
     });
-  }
-
-  Future<void> _setLunaAudioPreRoll(int milliseconds) async {
-    _session.setLunaLoopbackPreRollMs(milliseconds);
-    if (_appModel.isPreferencesReady) {
-      await _appModel.setGalLunaAudioPreRollMs(milliseconds);
-    }
   }
 
   /// 把 Luna 原文端点准备好后再落会话选择。用户无需理解或手填 WebSocket 地址；
@@ -1365,8 +1411,9 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
           PopupMenuItem<_GalHookToolbarMenuAction>(
             value: _GalHookToolbarMenuAction.lunaAudioTiming,
             child: Text(
-              '${t.game_luna_audio_preroll} · '
-              '${_session.lunaLoopbackPreRollMs} ms',
+              '${t.game_luna_audio_timing} · '
+              '${_session.lunaLoopbackPreRollMs}/'
+              '${_session.lunaLoopbackTailTrimMs} ms',
             ),
           ),
         // 健康状态从右栏常驻卡改为按需打开：它是「偶尔查一眼」的静态信息，
@@ -1390,13 +1437,13 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
     );
   }
 
-  /// Luna 只给文本时间点，不给原游戏语音时间戳。游戏间延迟不同，因此把
-  /// 向前回取量留给用户就地调整；该值只影响之后到达的台词。
+  /// 用“遇到什么现象就调哪一项”的文案代替起点/终点术语。两项都按当前附着 exe
+  /// 保存；拖动只影响之后到达的台词，松手时一次性持久化。
   Future<void> _showLunaAudioTimingDialog() async {
     await showAppDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(t.game_luna_audio_preroll),
+        title: Text(t.game_luna_audio_timing),
         content: SizedBox(
           width: 460,
           child: ListenableBuilder(
@@ -1405,14 +1452,15 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(t.game_luna_audio_preroll_hint),
-                const SizedBox(height: 12),
-                Center(
-                  child: Text(
-                    '${_session.lunaLoopbackPreRollMs} ms',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                Text(t.game_luna_audio_per_game_hint),
+                const SizedBox(height: 16),
+                Text(
+                  '${t.game_luna_audio_lead_in} · '
+                  '${_session.lunaLoopbackPreRollMs} ms',
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
+                const SizedBox(height: 4),
+                Text(t.game_luna_audio_lead_in_hint),
                 Slider(
                   value: _session.lunaLoopbackPreRollMs.toDouble(),
                   min: 0,
@@ -1422,7 +1470,26 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
                   onChanged: (double value) =>
                       _session.setLunaLoopbackPreRollMs(value.round()),
                   onChangeEnd: (double value) =>
-                      unawaited(_setLunaAudioPreRoll(value.round())),
+                      _session.persistLunaLoopbackTiming(),
+                ),
+                const Divider(height: 28),
+                Text(
+                  '${t.game_luna_audio_tail_trim} · '
+                  '${_session.lunaLoopbackTailTrimMs} ms',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(t.game_luna_audio_tail_trim_hint),
+                Slider(
+                  value: _session.lunaLoopbackTailTrimMs.toDouble(),
+                  min: 0,
+                  max: 1000,
+                  divisions: 20,
+                  label: '${_session.lunaLoopbackTailTrimMs} ms',
+                  onChanged: (double value) =>
+                      _session.setLunaLoopbackTailTrimMs(value.round()),
+                  onChangeEnd: (double value) =>
+                      _session.persistLunaLoopbackTiming(),
                 ),
               ],
             ),

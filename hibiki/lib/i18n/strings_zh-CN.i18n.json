@@ -3164,5 +3164,17 @@
   "game_text_source_luna_connected": "已连接，将使用 LunaTranslator 中选定的原文。",
   "game_text_source_luna_waiting": "请启动 LunaTranslator 并开启网络服务，Fushi 会自动重连。",
   "game_luna_audio_preroll": "Luna 语音起点提前",
-  "game_luna_audio_preroll_hint": "每条 Luna 原文到达时向前保留一小段混音，避免角色语音开头被截掉。"
+  "game_luna_audio_preroll_hint": "每条 Luna 原文到达时向前保留一小段混音，避免角色语音开头被截掉。",
+  "game_luna_audio_timing": "语音切分调整",
+  "game_luna_audio_lead_in": "补全本句开头",
+  "game_luna_audio_lead_in_hint": "如果本句开头的声音被切掉，就调大。",
+  "game_luna_audio_tail_trim": "去掉下句声音",
+  "game_luna_audio_tail_trim_hint": "如果本句结尾混入下一句声音，就调大。",
+  "game_luna_audio_per_game_hint": "会按当前附着的游戏分别保存。",
+  "game_attach_mode_title": "选择附着方式",
+  "game_attach_mode_native": "Fushi 原生附着",
+  "game_attach_mode_native_hint": "向游戏注入 Fushi，尝试获取原生文本和干净语音；请勿与 LunaTranslator 同时使用。",
+  "game_attach_mode_luna_safe": "Luna 安全附着（推荐）",
+  "game_attach_mode_luna_safe_hint": "不向游戏注入组件，使用 Luna 原文和系统混音，避免双 Hook 冲突。",
+  "game_attach_mode_last_used": "上次使用"
 }

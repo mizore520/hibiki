@@ -14,7 +14,6 @@ import 'package:fushi/utils.dart';
 typedef GalTextThreadSelector = Future<bool> Function(
   TexthookerTextThread thread,
 );
-typedef GalLunaPreRollChanged = Future<void> Function(int milliseconds);
 
 /// 游戏启动/附着后首次出现候选线程时的捕获设置大弹窗。
 ///
@@ -24,13 +23,13 @@ class GalCaptureSetupDialog extends StatefulWidget {
   const GalCaptureSetupDialog({
     required this.session,
     required this.onSelectThread,
-    required this.onLunaPreRollChanged,
+    required this.onLunaTimingCommitted,
     super.key,
   });
 
   final GalHookSessionController session;
   final GalTextThreadSelector onSelectThread;
-  final GalLunaPreRollChanged onLunaPreRollChanged;
+  final VoidCallback onLunaTimingCommitted;
 
   @override
   State<GalCaptureSetupDialog> createState() => _GalCaptureSetupDialogState();
@@ -275,11 +274,18 @@ class _GalCaptureSetupDialogState extends State<GalCaptureSetupDialog> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
+                  Text(
+                    t.game_luna_audio_per_game_hint,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
                   Row(
                     children: <Widget>[
                       Expanded(
                         child: Text(
-                          t.game_luna_audio_preroll,
+                          t.game_luna_audio_lead_in,
                           style: Theme.of(context).textTheme.labelLarge,
                         ),
                       ),
@@ -287,7 +293,7 @@ class _GalCaptureSetupDialogState extends State<GalCaptureSetupDialog> {
                     ],
                   ),
                   Text(
-                    t.game_luna_audio_preroll_hint,
+                    t.game_luna_audio_lead_in_hint,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -300,9 +306,37 @@ class _GalCaptureSetupDialogState extends State<GalCaptureSetupDialog> {
                     label: '${widget.session.lunaLoopbackPreRollMs} ms',
                     onChanged: (double value) =>
                         widget.session.setLunaLoopbackPreRollMs(value.round()),
-                    onChangeEnd: (double value) => unawaited(
-                      widget.onLunaPreRollChanged(value.round()),
-                    ),
+                    onChangeEnd: (double value) =>
+                        widget.onLunaTimingCommitted(),
+                  ),
+                  const Divider(height: 24),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          t.game_luna_audio_tail_trim,
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                      ),
+                      Text('${widget.session.lunaLoopbackTailTrimMs} ms'),
+                    ],
+                  ),
+                  Text(
+                    t.game_luna_audio_tail_trim_hint,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                  Slider(
+                    value: widget.session.lunaLoopbackTailTrimMs.toDouble(),
+                    min: 0,
+                    max: 1000,
+                    divisions: 20,
+                    label: '${widget.session.lunaLoopbackTailTrimMs} ms',
+                    onChanged: (double value) =>
+                        widget.session.setLunaLoopbackTailTrimMs(value.round()),
+                    onChangeEnd: (double value) =>
+                        widget.onLunaTimingCommitted(),
                   ),
                 ],
               ),

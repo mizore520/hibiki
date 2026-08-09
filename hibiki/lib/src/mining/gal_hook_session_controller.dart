@@ -107,6 +107,26 @@ enum GalAudioFallbackPolicy {
   }
 }
 
+/// 附着到已运行进程时采用的捕获方式。
+///
+/// [nativeHook] 保留原有能力：向目标进程注入 Fushi helper，获取原生文本与尽可能
+/// 干净的游戏语音。[lunaSafe] 则是与 LunaTranslator 同时使用时的安全边界：只绑定
+/// 进程身份、接收 Luna WebSocket 原文并开启系统 Loopback，**绝不探测位数、解析
+/// injector 或创建 native engine source**，从源头避免两套 Hook 同时进入游戏进程。
+enum GalAttachCaptureMode {
+  nativeHook,
+  lunaSafe;
+
+  String get storageKey => name;
+
+  static GalAttachCaptureMode? fromStorageKey(String? key) {
+    for (final GalAttachCaptureMode mode in GalAttachCaptureMode.values) {
+      if (mode.storageKey == key) return mode;
+    }
+    return null;
+  }
+}
+
 /// 每个游戏的捕获选择记忆（跨会话持久化的真值放偏好表）。
 ///
 /// 三项都用**弱指纹**而非会话内 id：`source_ptr` 每次启动都变、native 文本
@@ -122,6 +142,9 @@ class GalCaptureMemory {
     this.voiceTrackFingerprint,
     this.textThreadFingerprint,
     this.audioFallbackPolicy = GalAudioFallbackPolicy.full,
+    this.lunaAudioPreRollMs,
+    this.lunaAudioTailTrimMs,
+    this.attachMode,
   });
 
   factory GalCaptureMemory.fromJson(Map<Object?, Object?> json) {
@@ -135,8 +158,16 @@ class GalCaptureMemory {
       audioFallbackPolicy: GalAudioFallbackPolicy.fromStorageKey(
         json['audioFallback'] as String?,
       ),
+      lunaAudioPreRollMs: _boundedInt(json['lunaAudioPreRollMs'], 3000),
+      lunaAudioTailTrimMs: _boundedInt(json['lunaAudioTailTrimMs'], 1000),
+      attachMode: GalAttachCaptureMode.fromStorageKey(
+        json['attachMode'] as String?,
+      ),
     );
   }
+
+  static int? _boundedInt(Object? value, int maximum) =>
+      value is num ? value.toInt().clamp(0, maximum).toInt() : null;
 
   /// 用户标记为 BGM 的音轨指纹集合。
   final List<String> excludedTrackFingerprints;
@@ -151,17 +182,32 @@ class GalCaptureMemory {
   /// 「这个游戏的音频该怎么抓」的判断，只记一半会让用户每次开游戏重设一遍。
   final GalAudioFallbackPolicy audioFallbackPolicy;
 
+  /// Luna 外部原文的本句句首补录量。null = 沿用应用默认值。
+  final int? lunaAudioPreRollMs;
+
+  /// 新原文到达时，从上一句尾部去掉的时长。null = 沿用应用默认值。
+  final int? lunaAudioTailTrimMs;
+
+  /// 用户上次为这个 exe 选择的附着方式。null 表示旧数据尚未选择过。
+  final GalAttachCaptureMode? attachMode;
+
   bool get isEmpty =>
       excludedTrackFingerprints.isEmpty &&
       voiceTrackFingerprint == null &&
       textThreadFingerprint == null &&
-      audioFallbackPolicy == GalAudioFallbackPolicy.full;
+      audioFallbackPolicy == GalAudioFallbackPolicy.full &&
+      lunaAudioPreRollMs == null &&
+      lunaAudioTailTrimMs == null &&
+      attachMode == null;
 
   GalCaptureMemory copyWith({
     List<String>? excludedTrackFingerprints,
     String? voiceTrackFingerprint,
     String? textThreadFingerprint,
     GalAudioFallbackPolicy? audioFallbackPolicy,
+    int? lunaAudioPreRollMs,
+    int? lunaAudioTailTrimMs,
+    GalAttachCaptureMode? attachMode,
     bool clearVoiceTrack = false,
     bool clearTextThread = false,
   }) =>
@@ -175,6 +221,9 @@ class GalCaptureMemory {
             ? null
             : textThreadFingerprint ?? this.textThreadFingerprint,
         audioFallbackPolicy: audioFallbackPolicy ?? this.audioFallbackPolicy,
+        lunaAudioPreRollMs: lunaAudioPreRollMs ?? this.lunaAudioPreRollMs,
+        lunaAudioTailTrimMs: lunaAudioTailTrimMs ?? this.lunaAudioTailTrimMs,
+        attachMode: attachMode ?? this.attachMode,
       );
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -183,12 +232,17 @@ class GalCaptureMemory {
         if (textThreadFingerprint != null) 'textThread': textThreadFingerprint,
         if (audioFallbackPolicy != GalAudioFallbackPolicy.full)
           'audioFallback': audioFallbackPolicy.storageKey,
+        if (lunaAudioPreRollMs != null)
+          'lunaAudioPreRollMs': lunaAudioPreRollMs,
+        if (lunaAudioTailTrimMs != null)
+          'lunaAudioTailTrimMs': lunaAudioTailTrimMs,
+        if (attachMode != null) 'attachMode': attachMode!.storageKey,
       };
 }
 
 /// [GalCaptureMemory] 的持久化端口（由
-/// [GalHookSessionController.attachCaptureMemory] 注入）。gameKey 是启动 exe
-/// 全路径小写——只有 launch 路径有稳定游戏身份，attach（绑窗口）没有，不猜。
+/// [GalHookSessionController.attachCaptureMemory] 注入）。gameKey 是游戏 exe 全路径小写：
+/// launch 直接取得，attach 从用户所选 PID 反查，不要求游戏已导入 Fushi。
 typedef GalCaptureMemoryLoad = GalCaptureMemory Function(String gameKey);
 typedef GalCaptureMemorySave = void Function(
   String gameKey,
@@ -589,6 +643,7 @@ class GalHookSessionController extends ChangeNotifier {
     // 用户长时停留在同一句时的安全上限。
     Duration lunaLoopbackMaxDuration = const Duration(seconds: 30),
     int lunaLoopbackPreRollMs = 800,
+    int lunaLoopbackTailTrimMs = 0,
     List<Duration> engineRetryBackoff = kGalEngineRetryBackoff,
     Listenable? endpointListenable,
     List<TexthookerEndpointStatus> Function()? endpointStatusLoader,
@@ -618,7 +673,12 @@ class GalHookSessionController extends ChangeNotifier {
         _utteranceSettleInterval = utteranceSettleInterval,
         _utteranceSettleMax = utteranceSettleMax,
         _lunaLoopbackMaxDuration = lunaLoopbackMaxDuration,
+        _lunaLoopbackDefaultPreRollMs =
+            lunaLoopbackPreRollMs.clamp(0, 3000).toInt(),
         _lunaLoopbackPreRollMs = lunaLoopbackPreRollMs.clamp(0, 3000).toInt(),
+        _lunaLoopbackDefaultTailTrimMs =
+            lunaLoopbackTailTrimMs.clamp(0, 1000).toInt(),
+        _lunaLoopbackTailTrimMs = lunaLoopbackTailTrimMs.clamp(0, 1000).toInt(),
         _engineRetryBackoff = engineRetryBackoff,
         _endpointListenable =
             endpointListenable ?? TexthookerWsClientManager.instance,
@@ -676,7 +736,10 @@ class GalHookSessionController extends ChangeNotifier {
   final Duration _utteranceSettleInterval;
   final Duration _utteranceSettleMax;
   final Duration _lunaLoopbackMaxDuration;
+  int _lunaLoopbackDefaultPreRollMs;
   int _lunaLoopbackPreRollMs;
+  int _lunaLoopbackDefaultTailTrimMs;
+  int _lunaLoopbackTailTrimMs;
   final List<Duration> _engineRetryBackoff;
   final Listenable _endpointListenable;
   final List<TexthookerEndpointStatus> Function() _endpointStatusLoader;
@@ -715,13 +778,54 @@ class GalHookSessionController extends ChangeNotifier {
   bool get usesLunaExternalText =>
       _selectedTextThreadKey == lunaExternalTextThreadKey;
 
+  /// 当前附着会话采用的方式。启动游戏捕获不属于 attach，返回 null。
+  GalAttachCaptureMode? get currentAttachMode => _attachedCaptureMode;
+
   int get lunaLoopbackPreRollMs => _lunaLoopbackPreRollMs;
+
+  int get lunaLoopbackTailTrimMs => _lunaLoopbackTailTrimMs;
+
+  /// 应用级旧偏好只作为“未给这个游戏单独调过”的默认值。会话已经开始后调用不会
+  /// 覆盖当前游戏刚恢复出的专属设置。
+  void configureLunaLoopbackDefaults({
+    required int preRollMs,
+    int tailTrimMs = 0,
+  }) {
+    _lunaLoopbackDefaultPreRollMs = preRollMs.clamp(0, 3000).toInt();
+    _lunaLoopbackDefaultTailTrimMs = tailTrimMs.clamp(0, 1000).toInt();
+    if (_state.sessionStartedAt != null) return;
+    _lunaLoopbackPreRollMs = _lunaLoopbackDefaultPreRollMs;
+    _lunaLoopbackTailTrimMs = _lunaLoopbackDefaultTailTrimMs;
+  }
 
   void setLunaLoopbackPreRollMs(int value) {
     final int normalized = value.clamp(0, 3000).toInt();
     if (_lunaLoopbackPreRollMs == normalized) return;
     _lunaLoopbackPreRollMs = normalized;
     notifyListeners();
+  }
+
+  void setLunaLoopbackTailTrimMs(int value) {
+    final int normalized = value.clamp(0, 1000).toInt();
+    if (_lunaLoopbackTailTrimMs == normalized) return;
+    _lunaLoopbackTailTrimMs = normalized;
+    notifyListeners();
+  }
+
+  /// 滑块拖动期间只更新预览值，松手后一次性把两项按当前附着 exe 持久化，避免每个
+  /// pointer move 都写偏好表。没有可执行文件身份时保持会话内生效，但不猜归属。
+  void persistLunaLoopbackTiming() {
+    if (!_ensureCaptureMemoryLoaded()) return;
+    if (_captureMemory.lunaAudioPreRollMs == _lunaLoopbackPreRollMs &&
+        _captureMemory.lunaAudioTailTrimMs == _lunaLoopbackTailTrimMs) {
+      return;
+    }
+    _saveCaptureMemory(
+      _captureMemory.copyWith(
+        lunaAudioPreRollMs: _lunaLoopbackPreRollMs,
+        lunaAudioTailTrimMs: _lunaLoopbackTailTrimMs,
+      ),
+    );
   }
 
   /// 这一行能否进入正式消费面（工作台 / 浮窗 / 配对 / 制卡）。
@@ -870,6 +974,9 @@ class GalHookSessionController extends ChangeNotifier {
   /// 在一句尚未封口时悄悄改变它的起点。
   final Map<String, int> _loopbackPreRollMsByLine = <String, int>{};
 
+  /// 行创建时固化的“去掉下句声音”量；只在下一条 Luna 原文封口时使用。
+  final Map<String, int> _loopbackTailTrimMsByLine = <String, int>{};
+
   /// 当前尚未被下一条原文封口的 Luna 行。同一时刻只能有一条。
   String? _pendingLunaLoopbackLineId;
 
@@ -887,6 +994,12 @@ class GalHookSessionController extends ChangeNotifier {
   bool _captureMemoryLoaded = false;
   String? _captureMemoryGameKey;
   GalCaptureMemory _captureMemory = const GalCaptureMemory();
+
+  /// attach 模式从 PID 反查到的稳定 exe 路径。它只用于捕获设置记忆，不写进
+  /// [GalHookSessionState.launchExe]，避免把“附着现有进程”伪装成“由 Fushi 启动”。
+  String? _attachedCaptureExecutable;
+
+  GalAttachCaptureMode? _attachedCaptureMode;
 
   /// 音轨记忆（排除集 + 语音轨）已对本会话首个非空快照应用过。
   bool _trackMemoryApplied = false;
@@ -1070,10 +1183,32 @@ class GalHookSessionController extends ChangeNotifier {
     if (_state.externalWindowMode) await startAttachedCapture(window);
   }
 
-  Future<void> startAttachedCapture(ExternalWindowInfo window) async {
+  /// 读取这个窗口对应 exe 上次使用的附着方式，不改变当前会话。
+  ///
+  /// UI 在真正停止旧音源前调用它来给选择框标出「上次使用」。进程路径来自 PID，
+  /// 因而游戏无需先导入 Fushi 游戏库。
+  GalAttachCaptureMode? rememberedAttachModeForWindow(
+    ExternalWindowInfo window,
+  ) {
+    final GalCaptureMemoryLoad? load = _captureMemoryLoad;
+    if (load == null || window.pid <= 0) return null;
+    try {
+      final String? executable = _targetImagePathProbe(window.pid);
+      if (executable == null || executable.isEmpty) return null;
+      return load(executable.toLowerCase()).attachMode;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> startAttachedCapture(
+    ExternalWindowInfo window, {
+    GalAttachCaptureMode? mode,
+  }) async {
     final int generation = ++_operationGeneration;
     await _stopSources();
     if (!_isWindows || generation != _operationGeneration) return;
+    final String? attachedExecutable = _targetImagePathProbe(window.pid);
     _selectedTextThreadKey = null;
     _selectedNativeTextThreadId = null;
     _selectedTextThreadFaceId = 0;
@@ -1090,8 +1225,33 @@ class GalHookSessionController extends ChangeNotifier {
         textSignalReceived: false,
       ),
     );
-    // attach 模式无稳定可执行文件 id：以窗口标题作为游戏名，mediaKey 留空。
+    // activity 仍没有 galgames.id，所以 mediaKey 留空；捕获设置则可以用 PID 反查到的
+    // exe 全路径稳定记忆，不要求游戏已导入库，也不要求由 Fushi 启动。
     _beginActivitySession(title: window.title, mediaKey: null);
+    _attachedCaptureExecutable = attachedExecutable;
+    _restoreAudioFallbackPolicy();
+    _restoreLunaLoopbackTiming();
+    final GalAttachCaptureMode effectiveMode =
+        mode ?? _captureMemory.attachMode ?? GalAttachCaptureMode.nativeHook;
+    _attachedCaptureMode = effectiveMode;
+    if (mode != null && _ensureCaptureMemoryLoaded()) {
+      if (_captureMemory.attachMode != mode) {
+        _saveCaptureMemory(_captureMemory.copyWith(attachMode: mode));
+      }
+    }
+    if (effectiveMode == GalAttachCaptureMode.lunaSafe) {
+      // 安全附着只有系统 Loopback 这一条音频路；这里仅覆盖本会话策略，不改写用户为
+      // 原生附着保存的降级偏好。Luna 的句界、前置与尾部裁剪继续走同一套逻辑。
+      _selectedTextThreadKey = lunaExternalTextThreadKey;
+      _selectedNativeTextThreadId = null;
+      _selectedTextThreadFaceId = 0;
+      _textThreadMemoryApplied = true;
+      _setState(
+        _state.copyWith(audioFallbackPolicy: GalAudioFallbackPolicy.full),
+      );
+      await _activateLunaSafeAttach(generation, gamePid: window.pid);
+      return;
+    }
     _record(
       GalHookEventSeverity.info,
       'resolve',
@@ -1241,6 +1401,7 @@ class GalHookSessionController extends ChangeNotifier {
     // 音轨（native 只枚举 PCM 环），等音轨快照就等不到，用户上次选的「禁止降级」会
     // 在最需要它的资源模式游戏里静默失效。
     _restoreAudioFallbackPolicy();
+    _restoreLunaLoopbackTiming();
     final bool? is32Bit = await _exe32BitProbe(executablePath);
     final String? injector = _injectorResolver(is32Bit: is32Bit ?? false);
     if (injector == null) {
@@ -1862,6 +2023,7 @@ class GalHookSessionController extends ChangeNotifier {
     _loopbackFreezeTimers.remove(lineId)?.cancel();
     _loopbackFreezeStartedAt.remove(lineId);
     _loopbackPreRollMsByLine.remove(lineId);
+    _loopbackTailTrimMsByLine.remove(lineId);
     if (_pendingLunaLoopbackLineId == lineId) {
       _pendingLunaLoopbackLineId = null;
     }
@@ -2307,6 +2469,7 @@ class GalHookSessionController extends ChangeNotifier {
     _loopbackFreezeTimers.remove(lineId)?.cancel();
     _loopbackFreezeStartedAt.remove(lineId);
     _loopbackPreRollMsByLine.remove(lineId);
+    _loopbackTailTrimMsByLine.remove(lineId);
     if (_pendingLunaLoopbackLineId == lineId) {
       _pendingLunaLoopbackLineId = null;
     }
@@ -2425,13 +2588,13 @@ class GalHookSessionController extends ChangeNotifier {
   }
 
   String? _captureMemoryKeyForGame() {
-    final String? exe = _state.launchExe;
+    final String? exe = _state.launchExe ?? _attachedCaptureExecutable;
     if (exe == null || exe.isEmpty) return null;
     return exe.toLowerCase();
   }
 
-  /// 惰性加载当前游戏的记忆（每会话一次）。没有游戏身份（窗口附着、非启动路径）
-  /// 就没有记忆——宁可少记，不猜身份。
+  /// 惰性加载当前游戏的记忆（每会话一次）。launch 直接使用启动路径；attach 使用
+  /// `QueryFullProcessImageNameW` 从所选 PID 得到的真实 exe 路径。两者都拿不到时才不记。
   bool _ensureCaptureMemoryLoaded() {
     if (_captureMemoryLoaded) return _captureMemoryGameKey != null;
     _captureMemoryLoaded = true;
@@ -2614,6 +2777,10 @@ class GalHookSessionController extends ChangeNotifier {
     _captureMemoryLoaded = false;
     _captureMemoryGameKey = null;
     _captureMemory = const GalCaptureMemory();
+    _attachedCaptureExecutable = null;
+    _attachedCaptureMode = null;
+    _lunaLoopbackPreRollMs = _lunaLoopbackDefaultPreRollMs;
+    _lunaLoopbackTailTrimMs = _lunaLoopbackDefaultTailTrimMs;
   }
 
   Future<Uint8List?> captureAudioBytes({
@@ -3004,6 +3171,34 @@ class GalHookSessionController extends ChangeNotifier {
     _saveCaptureMemory(_captureMemory.copyWith(audioFallbackPolicy: policy));
   }
 
+  /// 恢复当前 exe 的 Luna 混音切分。旧记忆没有这两个字段时使用应用默认值，因而升级
+  /// 后的首次行为与旧版完全一致；用户松开滑块后才会写入这个游戏自己的值。
+  void _restoreLunaLoopbackTiming() {
+    if (!_ensureCaptureMemoryLoaded()) {
+      _lunaLoopbackPreRollMs = _lunaLoopbackDefaultPreRollMs;
+      _lunaLoopbackTailTrimMs = _lunaLoopbackDefaultTailTrimMs;
+      return;
+    }
+    _lunaLoopbackPreRollMs =
+        _captureMemory.lunaAudioPreRollMs ?? _lunaLoopbackDefaultPreRollMs;
+    _lunaLoopbackTailTrimMs =
+        _captureMemory.lunaAudioTailTrimMs ?? _lunaLoopbackDefaultTailTrimMs;
+    if (_captureMemory.lunaAudioPreRollMs == null &&
+        _captureMemory.lunaAudioTailTrimMs == null) {
+      return;
+    }
+    _record(
+      GalHookEventSeverity.info,
+      'audio',
+      'audio.luna_timing_restored',
+      'Restored Luna audio alignment remembered for this executable',
+      details: <String, Object?>{
+        'preRollMs': _lunaLoopbackPreRollMs,
+        'tailTrimMs': _lunaLoopbackTailTrimMs,
+      },
+    );
+  }
+
   void clearEvents() {
     if (_events.isEmpty) return;
     _events.clear();
@@ -3336,6 +3531,68 @@ class GalHookSessionController extends ChangeNotifier {
     _textPollTimer = Timer.periodic(
       _textPollInterval,
       (_) => unawaited(_pollHookedText()),
+    );
+  }
+
+  /// LunaTranslator 并用时的零注入附着。
+  ///
+  /// 本方法有意不接收 injector / engine：安全承诺靠类型与调用路径固定，不能在运行时
+  /// “先试注入，失败再降级”。文本由 Luna WebSocket 原文提供，音频直接从系统
+  /// Loopback 开始；两者仍复用既有逐句切分、制卡等待与按 exe 记忆。
+  Future<void> _activateLunaSafeAttach(
+    int generation, {
+    required int gamePid,
+  }) async {
+    final LoopbackGalAudioSource loopback = _loopbackSourceFactory();
+    final PcmFormat? format = await loopback.start();
+    if (generation != _operationGeneration) {
+      await loopback.stop();
+      return;
+    }
+    if (format == null) {
+      await loopback.stop();
+      _audioSource = null;
+      _engineSource = null;
+      _setState(
+        _state.copyWith(
+          phase: GalHookSessionPhase.degraded,
+          audioBackend: GalHookAudioBackend.none,
+          clearAudioFormat: true,
+          clearFallbackReason: true,
+          lastError: 'System loopback could not be started',
+        ),
+      );
+      _record(
+        GalHookEventSeverity.error,
+        'audio',
+        'session.luna_safe_loopback_failed',
+        'Luna safe attachment is active, but system loopback is unavailable',
+        details: <String, Object?>{'pid': gamePid, 'injection': false},
+      );
+      return;
+    }
+    _audioSource = loopback;
+    _engineSource = null;
+    _setState(
+      _state.copyWith(
+        phase: GalHookSessionPhase.waitingSignals,
+        audioBackend: GalHookAudioBackend.systemLoopback,
+        audioFormat: format,
+        clearFallbackReason: true,
+        clearLastError: true,
+      ),
+    );
+    _record(
+      GalHookEventSeverity.success,
+      'session',
+      'session.luna_safe_attached',
+      'Luna safe attachment started without injecting into the game',
+      details: <String, Object?>{
+        'pid': gamePid,
+        'injection': false,
+        'sampleRate': format.sampleRate,
+        'channels': format.channels,
+      },
     );
   }
 
@@ -4338,6 +4595,7 @@ class GalHookSessionController extends ChangeNotifier {
     if (entry == null || startedAt == null) {
       _loopbackFreezeStartedAt.remove(previousLineId);
       _loopbackPreRollMsByLine.remove(previousLineId);
+      _loopbackTailTrimMsByLine.remove(previousLineId);
       _completeLunaLoopbackBoundary(previousLineId);
       return;
     }
@@ -4347,6 +4605,12 @@ class GalHookSessionController extends ChangeNotifier {
         _loopbackPreRollMsByLine[previousLineId] ?? _loopbackPreRollFor(entry);
     final int desiredBackMs =
         (elapsedMs + preRollMs).clamp(1, _loopbackRingCapacityMs).toInt();
+    final int requestedTailTrimMs =
+        _loopbackTailTrimMsByLine[previousLineId] ?? _lunaLoopbackTailTrimMs;
+    // 极短跳句时也至少保留 1ms，不能因为用户的常规 200ms 设置把整句裁成空。
+    final int effectiveTailTrimMs = requestedTailTrimMs >= desiredBackMs
+        ? desiredBackMs - 1
+        : requestedTailTrimMs;
     unawaited(
       _audioQueue.enqueue<bool>(
         () async {
@@ -4354,12 +4618,13 @@ class GalHookSessionController extends ChangeNotifier {
             // 串行队列可能正在导出别的台词。真正执行 grabRecent 时若已晚于
             // 文本边界，多取这段排队时间后再从 PCM 尾部裁掉，保证结束点仍是
             // currentText，不会因为队列拥堵混入下一句。
-            final int trailingTrimMs = _now()
+            final int queueDelayMs = _now()
                 .difference(boundaryAt)
                 .inMilliseconds
                 .clamp(0, 30000)
                 .toInt();
-            final int captureBackMs = (desiredBackMs + trailingTrimMs)
+            final int trailingTrimMs = queueDelayMs + effectiveTailTrimMs;
+            final int captureBackMs = (desiredBackMs + queueDelayMs)
                 .clamp(1, _loopbackRingCapacityMs)
                 .toInt();
             await _cacheLoopbackForLine(
@@ -4416,8 +4681,11 @@ class GalHookSessionController extends ChangeNotifier {
     final int preRollMs = _loopbackPreRollFor(entry);
     _loopbackFreezeStartedAt[entry.id] = _now();
     _loopbackPreRollMsByLine[entry.id] = preRollMs;
+    _loopbackTailTrimMsByLine[entry.id] =
+        _isLunaExternalLine(entry) ? _lunaLoopbackTailTrimMs : 0;
     _trimCache(_loopbackFreezeStartedAt);
     _trimCache(_loopbackPreRollMsByLine);
+    _trimCache(_loopbackTailTrimMsByLine);
     if (_isLunaExternalLine(entry)) {
       _pendingLunaLoopbackLineId = entry.id;
     }
@@ -4470,6 +4738,7 @@ class GalHookSessionController extends ChangeNotifier {
     if (entry == null) {
       _loopbackFreezeStartedAt.remove(lineId);
       _loopbackPreRollMsByLine.remove(lineId);
+      _loopbackTailTrimMsByLine.remove(lineId);
       _completeLunaLoopbackBoundary(lineId);
       return;
     }
@@ -4565,6 +4834,7 @@ class GalHookSessionController extends ChangeNotifier {
     _loopbackFreezeTimers.clear();
     _loopbackFreezeStartedAt.clear();
     _loopbackPreRollMsByLine.clear();
+    _loopbackTailTrimMsByLine.clear();
     _pendingLunaLoopbackLineId = null;
     for (final Completer<void> waiter in _lunaLoopbackBoundaryWaiters.values) {
       if (!waiter.isCompleted) waiter.complete();
@@ -4648,6 +4918,7 @@ class GalHookSessionController extends ChangeNotifier {
       _loopbackCacheInFlight.remove(entry.id);
       _loopbackFreezeStartedAt.remove(entry.id);
       _loopbackPreRollMsByLine.remove(entry.id);
+      _loopbackTailTrimMsByLine.remove(entry.id);
       if (_pendingLunaLoopbackLineId == entry.id) {
         _pendingLunaLoopbackLineId = null;
       }
