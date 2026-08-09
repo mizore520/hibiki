@@ -3170,5 +3170,11 @@
   "game_luna_audio_lead_in_hint": "如果本句开头的声音被切掉，就调大。",
   "game_luna_audio_tail_trim": "去掉下句声音",
   "game_luna_audio_tail_trim_hint": "如果本句结尾混入下一句声音，就调大。",
-  "game_luna_audio_per_game_hint": "会按当前附着的游戏分别保存。"
+  "game_luna_audio_per_game_hint": "会按当前附着的游戏分别保存。",
+  "game_attach_mode_title": "选择附着方式",
+  "game_attach_mode_native": "Fushi 原生附着",
+  "game_attach_mode_native_hint": "向游戏注入 Fushi，尝试获取原生文本和干净语音；请勿与 LunaTranslator 同时使用。",
+  "game_attach_mode_luna_safe": "Luna 安全附着（推荐）",
+  "game_attach_mode_luna_safe_hint": "不向游戏注入组件，使用 Luna 原文和系统混音，避免双 Hook 冲突。",
+  "game_attach_mode_last_used": "上次使用"
 }

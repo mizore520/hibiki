@@ -763,6 +763,54 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
     return picked;
   }
 
+  Future<GalAttachCaptureMode?> _showAttachModePicker(
+    ExternalWindowInfo window,
+  ) async {
+    final GalAttachCaptureMode? remembered =
+        _session.rememberedAttachModeForWindow(window);
+    final GalAttachCaptureMode autofocusMode =
+        remembered ?? GalAttachCaptureMode.lunaSafe;
+    return showAppDialog<GalAttachCaptureMode>(
+      context: context,
+      builder: (BuildContext dialogContext) => SimpleDialog(
+        title: Text(t.game_attach_mode_title),
+        children: <Widget>[
+          for (final GalAttachCaptureMode mode in GalAttachCaptureMode.values)
+            HibikiListItem(
+              autofocus: mode == autofocusMode,
+              leading: Icon(
+                mode == GalAttachCaptureMode.lunaSafe
+                    ? Icons.shield_outlined
+                    : Icons.cable_outlined,
+              ),
+              title: Text(
+                mode == GalAttachCaptureMode.lunaSafe
+                    ? t.game_attach_mode_luna_safe
+                    : t.game_attach_mode_native,
+              ),
+              subtitle: Text(
+                mode == GalAttachCaptureMode.lunaSafe
+                    ? t.game_attach_mode_luna_safe_hint
+                    : t.game_attach_mode_native_hint,
+              ),
+              trailing: remembered == mode
+                  ? Text(
+                      t.game_attach_mode_last_used,
+                      style: Theme.of(dialogContext)
+                          .textTheme
+                          .labelSmall
+                          ?.copyWith(
+                            color: Theme.of(dialogContext).colorScheme.primary,
+                          ),
+                    )
+                  : null,
+              onTap: () => Navigator.of(dialogContext).pop(mode),
+            ),
+        ],
+      ),
+    );
+  }
+
   /// 附着到**已在运行**的游戏：与「启动并捕获」并列的一级入口。
   ///
   /// 底层能力一直都在（injector `--pid` attach + [GalHookSessionController.
@@ -779,14 +827,17 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
   Future<void> _attachToRunningGame() async {
     final ExternalWindowInfo? picked = await _showExternalWindowPicker();
     if (picked == null) return;
+    final GalAttachCaptureMode? mode = await _showAttachModePicker(picked);
+    if (mode == null) return;
     final GalHookSessionState state = _session.state;
     // 已经在捕获这个窗口：重来一遍只会丢掉正在跑的 hook 与已收台词，什么都不做。
     if (state.isActive &&
         state.externalWindowMode &&
-        state.boundWindow?.hwnd == picked.hwnd) {
+        state.boundWindow?.hwnd == picked.hwnd &&
+        _session.currentAttachMode == mode) {
       return;
     }
-    await _session.startAttachedCapture(picked);
+    await _session.startAttachedCapture(picked, mode: mode);
   }
 
   /// galgame 引擎-hook（launch 模式）：页面只发起会话；位数解析、注入器选择、窗口绑定、

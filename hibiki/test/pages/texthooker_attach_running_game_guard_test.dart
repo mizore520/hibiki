@@ -47,6 +47,8 @@ final RegExp _toolbarSig =
     RegExp(r'List<Widget> _buildToolbarActions\([\s\S]*?\)\s*\{');
 final RegExp _attachSig =
     RegExp(r'Future<void> _attachToRunningGame\(\)\s*async\s*\{');
+final RegExp _attachModeSig = RegExp(
+    r'Future<GalAttachCaptureMode\?> _showAttachModePicker\([\s\S]*?\)\s*async\s*\{');
 final RegExp _pickSig =
     RegExp(r'Future<void> _pickExternalWindow\(\)\s*async\s*\{');
 
@@ -81,6 +83,10 @@ void main() {
       final String body = _methodBody(pageSrc, _attachSig);
       expect(body.contains('startAttachedCapture('), isTrue,
           reason: '附着必须一步起会话');
+      expect(body.contains('_showAttachModePicker(picked)'), isTrue,
+          reason: '附着前必须先让用户选择原生或 Luna 安全方式');
+      expect(body.contains('mode: mode'), isTrue,
+          reason: '用户选定的方式必须传到 controller，不能在注入后才切换文本源');
     });
 
     test('方法体不得出现 bindWindow / setExternalWindowMode', () {
@@ -98,6 +104,22 @@ void main() {
       expect(body.contains('state.isActive'), isTrue, reason: '须先判当前是否已在捕获');
       expect(body.contains('boundWindow?.hwnd == picked.hwnd'), isTrue,
           reason: '选回正在捕获的同一窗口必须 no-op，否则重启会丢已收台词');
+    });
+  });
+
+  group('Luna 安全附着入口', () {
+    test('选择框同时提供原生附着与 Luna 零注入附着', () {
+      final String body = _methodBody(pageSrc, _attachModeSig);
+      expect(body.contains('GalAttachCaptureMode.values'), isTrue);
+      expect(body.contains('GalAttachCaptureMode.lunaSafe'), isTrue);
+      expect(body.contains('rememberedAttachModeForWindow(window)'), isTrue,
+          reason: '选择须按附着进程的 exe 记住，不依赖游戏已导入库');
+    });
+
+    test('同一窗口只有附着方式也相同时才 no-op', () {
+      final String body = _methodBody(pageSrc, _attachSig);
+      expect(body.contains('_session.currentAttachMode == mode'), isTrue,
+          reason: '用户切换原生/安全方式时必须真正重启会话');
     });
   });
 

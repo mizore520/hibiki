@@ -1,9 +1,9 @@
 /// Generated file. Do not edit.
 ///
 /// Locales: 17
-/// Strings: 53924 (3172 per locale)
+/// Strings: 54026 (3178 per locale)
 ///
-/// Built on 2026-08-09 at 12:33 UTC
+/// Built on 2026-08-09 at 17:01 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -4282,6 +4282,14 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
       'If the end of this sentence includes the next line, increase this value.';
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  String get game_attach_mode_title => 'Choose attachment mode';
+  String get game_attach_mode_native => 'Fushi native attachment';
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 // Path: <root>
@@ -11586,6 +11594,20 @@ class _StringsAr extends _StringsEn {
   @override
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 // Path: <root>
@@ -18957,6 +18979,20 @@ class _StringsDe extends _StringsEn {
   @override
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 // Path: <root>
@@ -26344,6 +26380,20 @@ class _StringsEs extends _StringsEn {
   @override
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 // Path: <root>
@@ -33743,6 +33793,20 @@ class _StringsFr extends _StringsEn {
   @override
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 // Path: <root>
@@ -41070,6 +41134,20 @@ class _StringsId extends _StringsEn {
   @override
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 // Path: <root>
@@ -48443,6 +48521,20 @@ class _StringsIt extends _StringsEn {
   @override
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 // Path: <root>
@@ -55632,6 +55724,20 @@ class _StringsJa extends _StringsEn {
   @override
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 // Path: <root>
@@ -62826,6 +62932,20 @@ class _StringsKo extends _StringsEn {
   @override
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 // Path: <root>
@@ -70179,6 +70299,20 @@ class _StringsNl extends _StringsEn {
   @override
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 // Path: <root>
@@ -77544,6 +77678,20 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 // Path: <root>
@@ -84895,6 +85043,20 @@ class _StringsRu extends _StringsEn {
   @override
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 // Path: <root>
@@ -92194,6 +92356,20 @@ class _StringsTh extends _StringsEn {
   @override
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 // Path: <root>
@@ -99524,6 +99700,20 @@ class _StringsTr extends _StringsEn {
   @override
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 // Path: <root>
@@ -106839,6 +107029,20 @@ class _StringsVi extends _StringsEn {
   @override
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 // Path: <root>
@@ -113633,6 +113837,20 @@ class _StringsZhCn extends _StringsEn {
   String get game_luna_audio_tail_trim_hint => '如果本句结尾混入下一句声音，就调大。';
   @override
   String get game_luna_audio_per_game_hint => '会按当前附着的游戏分别保存。';
+  @override
+  String get game_attach_mode_title => '选择附着方式';
+  @override
+  String get game_attach_mode_native => 'Fushi 原生附着';
+  @override
+  String get game_attach_mode_native_hint =>
+      '向游戏注入 Fushi，尝试获取原生文本和干净语音；请勿与 LunaTranslator 同时使用。';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna 安全附着（推荐）';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      '不向游戏注入组件，使用 Luna 原文和系统混音，避免双 Hook 冲突。';
+  @override
+  String get game_attach_mode_last_used => '上次使用';
 }
 
 // Path: <root>
@@ -120744,6 +120962,20 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get game_luna_audio_per_game_hint =>
       'Saved separately for each attached game.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
 }
 
 /// Flat map(s) containing all translations.
@@ -127251,6 +127483,18 @@ extension on _StringsEn {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }
@@ -133756,6 +134000,18 @@ extension on _StringsAr {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }
@@ -140283,6 +140539,18 @@ extension on _StringsDe {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }
@@ -146809,6 +147077,18 @@ extension on _StringsEs {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }
@@ -153341,6 +153621,18 @@ extension on _StringsFr {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }
@@ -159855,6 +160147,18 @@ extension on _StringsId {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }
@@ -166383,6 +166687,18 @@ extension on _StringsIt {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }
@@ -172873,6 +173189,18 @@ extension on _StringsJa {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }
@@ -179367,6 +179695,18 @@ extension on _StringsKo {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }
@@ -185889,6 +186229,18 @@ extension on _StringsNl {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }
@@ -192408,6 +192760,18 @@ extension on _StringsPtBr {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }
@@ -198932,6 +199296,18 @@ extension on _StringsRu {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }
@@ -205439,6 +205815,18 @@ extension on _StringsTh {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }
@@ -211955,6 +212343,18 @@ extension on _StringsTr {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }
@@ -218467,6 +218867,18 @@ extension on _StringsVi {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }
@@ -224924,6 +225336,18 @@ extension on _StringsZhCn {
         return '如果本句结尾混入下一句声音，就调大。';
       case 'game_luna_audio_per_game_hint':
         return '会按当前附着的游戏分别保存。';
+      case 'game_attach_mode_title':
+        return '选择附着方式';
+      case 'game_attach_mode_native':
+        return 'Fushi 原生附着';
+      case 'game_attach_mode_native_hint':
+        return '向游戏注入 Fushi，尝试获取原生文本和干净语音；请勿与 LunaTranslator 同时使用。';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna 安全附着（推荐）';
+      case 'game_attach_mode_luna_safe_hint':
+        return '不向游戏注入组件，使用 Luna 原文和系统混音，避免双 Hook 冲突。';
+      case 'game_attach_mode_last_used':
+        return '上次使用';
       default:
         return null;
     }
@@ -231409,6 +231833,18 @@ extension on _StringsZhHk {
         return 'If the end of this sentence includes the next line, increase this value.';
       case 'game_luna_audio_per_game_hint':
         return 'Saved separately for each attached game.';
+      case 'game_attach_mode_title':
+        return 'Choose attachment mode';
+      case 'game_attach_mode_native':
+        return 'Fushi native attachment';
+      case 'game_attach_mode_native_hint':
+        return 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+      case 'game_attach_mode_luna_safe':
+        return 'Luna safe attachment (recommended)';
+      case 'game_attach_mode_luna_safe_hint':
+        return 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+      case 'game_attach_mode_last_used':
+        return 'Last used';
       default:
         return null;
     }

@@ -107,6 +107,26 @@ enum GalAudioFallbackPolicy {
   }
 }
 
+/// 附着到已运行进程时采用的捕获方式。
+///
+/// [nativeHook] 保留原有能力：向目标进程注入 Fushi helper，获取原生文本与尽可能
+/// 干净的游戏语音。[lunaSafe] 则是与 LunaTranslator 同时使用时的安全边界：只绑定
+/// 进程身份、接收 Luna WebSocket 原文并开启系统 Loopback，**绝不探测位数、解析
+/// injector 或创建 native engine source**，从源头避免两套 Hook 同时进入游戏进程。
+enum GalAttachCaptureMode {
+  nativeHook,
+  lunaSafe;
+
+  String get storageKey => name;
+
+  static GalAttachCaptureMode? fromStorageKey(String? key) {
+    for (final GalAttachCaptureMode mode in GalAttachCaptureMode.values) {
+      if (mode.storageKey == key) return mode;
+    }
+    return null;
+  }
+}
+
 /// 每个游戏的捕获选择记忆（跨会话持久化的真值放偏好表）。
 ///
 /// 三项都用**弱指纹**而非会话内 id：`source_ptr` 每次启动都变、native 文本
@@ -124,6 +144,7 @@ class GalCaptureMemory {
     this.audioFallbackPolicy = GalAudioFallbackPolicy.full,
     this.lunaAudioPreRollMs,
     this.lunaAudioTailTrimMs,
+    this.attachMode,
   });
 
   factory GalCaptureMemory.fromJson(Map<Object?, Object?> json) {
@@ -139,6 +160,9 @@ class GalCaptureMemory {
       ),
       lunaAudioPreRollMs: _boundedInt(json['lunaAudioPreRollMs'], 3000),
       lunaAudioTailTrimMs: _boundedInt(json['lunaAudioTailTrimMs'], 1000),
+      attachMode: GalAttachCaptureMode.fromStorageKey(
+        json['attachMode'] as String?,
+      ),
     );
   }
 
@@ -164,13 +188,17 @@ class GalCaptureMemory {
   /// 新原文到达时，从上一句尾部去掉的时长。null = 沿用应用默认值。
   final int? lunaAudioTailTrimMs;
 
+  /// 用户上次为这个 exe 选择的附着方式。null 表示旧数据尚未选择过。
+  final GalAttachCaptureMode? attachMode;
+
   bool get isEmpty =>
       excludedTrackFingerprints.isEmpty &&
       voiceTrackFingerprint == null &&
       textThreadFingerprint == null &&
       audioFallbackPolicy == GalAudioFallbackPolicy.full &&
       lunaAudioPreRollMs == null &&
-      lunaAudioTailTrimMs == null;
+      lunaAudioTailTrimMs == null &&
+      attachMode == null;
 
   GalCaptureMemory copyWith({
     List<String>? excludedTrackFingerprints,
@@ -179,6 +207,7 @@ class GalCaptureMemory {
     GalAudioFallbackPolicy? audioFallbackPolicy,
     int? lunaAudioPreRollMs,
     int? lunaAudioTailTrimMs,
+    GalAttachCaptureMode? attachMode,
     bool clearVoiceTrack = false,
     bool clearTextThread = false,
   }) =>
@@ -194,6 +223,7 @@ class GalCaptureMemory {
         audioFallbackPolicy: audioFallbackPolicy ?? this.audioFallbackPolicy,
         lunaAudioPreRollMs: lunaAudioPreRollMs ?? this.lunaAudioPreRollMs,
         lunaAudioTailTrimMs: lunaAudioTailTrimMs ?? this.lunaAudioTailTrimMs,
+        attachMode: attachMode ?? this.attachMode,
       );
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -206,6 +236,7 @@ class GalCaptureMemory {
           'lunaAudioPreRollMs': lunaAudioPreRollMs,
         if (lunaAudioTailTrimMs != null)
           'lunaAudioTailTrimMs': lunaAudioTailTrimMs,
+        if (attachMode != null) 'attachMode': attachMode!.storageKey,
       };
 }
 
@@ -747,6 +778,9 @@ class GalHookSessionController extends ChangeNotifier {
   bool get usesLunaExternalText =>
       _selectedTextThreadKey == lunaExternalTextThreadKey;
 
+  /// 当前附着会话采用的方式。启动游戏捕获不属于 attach，返回 null。
+  GalAttachCaptureMode? get currentAttachMode => _attachedCaptureMode;
+
   int get lunaLoopbackPreRollMs => _lunaLoopbackPreRollMs;
 
   int get lunaLoopbackTailTrimMs => _lunaLoopbackTailTrimMs;
@@ -965,6 +999,8 @@ class GalHookSessionController extends ChangeNotifier {
   /// [GalHookSessionState.launchExe]，避免把“附着现有进程”伪装成“由 Fushi 启动”。
   String? _attachedCaptureExecutable;
 
+  GalAttachCaptureMode? _attachedCaptureMode;
+
   /// 音轨记忆（排除集 + 语音轨）已对本会话首个非空快照应用过。
   bool _trackMemoryApplied = false;
 
@@ -1147,7 +1183,28 @@ class GalHookSessionController extends ChangeNotifier {
     if (_state.externalWindowMode) await startAttachedCapture(window);
   }
 
-  Future<void> startAttachedCapture(ExternalWindowInfo window) async {
+  /// 读取这个窗口对应 exe 上次使用的附着方式，不改变当前会话。
+  ///
+  /// UI 在真正停止旧音源前调用它来给选择框标出「上次使用」。进程路径来自 PID，
+  /// 因而游戏无需先导入 Fushi 游戏库。
+  GalAttachCaptureMode? rememberedAttachModeForWindow(
+    ExternalWindowInfo window,
+  ) {
+    final GalCaptureMemoryLoad? load = _captureMemoryLoad;
+    if (load == null || window.pid <= 0) return null;
+    try {
+      final String? executable = _targetImagePathProbe(window.pid);
+      if (executable == null || executable.isEmpty) return null;
+      return load(executable.toLowerCase()).attachMode;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> startAttachedCapture(
+    ExternalWindowInfo window, {
+    GalAttachCaptureMode? mode,
+  }) async {
     final int generation = ++_operationGeneration;
     await _stopSources();
     if (!_isWindows || generation != _operationGeneration) return;
@@ -1174,6 +1231,27 @@ class GalHookSessionController extends ChangeNotifier {
     _attachedCaptureExecutable = attachedExecutable;
     _restoreAudioFallbackPolicy();
     _restoreLunaLoopbackTiming();
+    final GalAttachCaptureMode effectiveMode =
+        mode ?? _captureMemory.attachMode ?? GalAttachCaptureMode.nativeHook;
+    _attachedCaptureMode = effectiveMode;
+    if (mode != null && _ensureCaptureMemoryLoaded()) {
+      if (_captureMemory.attachMode != mode) {
+        _saveCaptureMemory(_captureMemory.copyWith(attachMode: mode));
+      }
+    }
+    if (effectiveMode == GalAttachCaptureMode.lunaSafe) {
+      // 安全附着只有系统 Loopback 这一条音频路；这里仅覆盖本会话策略，不改写用户为
+      // 原生附着保存的降级偏好。Luna 的句界、前置与尾部裁剪继续走同一套逻辑。
+      _selectedTextThreadKey = lunaExternalTextThreadKey;
+      _selectedNativeTextThreadId = null;
+      _selectedTextThreadFaceId = 0;
+      _textThreadMemoryApplied = true;
+      _setState(
+        _state.copyWith(audioFallbackPolicy: GalAudioFallbackPolicy.full),
+      );
+      await _activateLunaSafeAttach(generation, gamePid: window.pid);
+      return;
+    }
     _record(
       GalHookEventSeverity.info,
       'resolve',
@@ -2700,6 +2778,7 @@ class GalHookSessionController extends ChangeNotifier {
     _captureMemoryGameKey = null;
     _captureMemory = const GalCaptureMemory();
     _attachedCaptureExecutable = null;
+    _attachedCaptureMode = null;
     _lunaLoopbackPreRollMs = _lunaLoopbackDefaultPreRollMs;
     _lunaLoopbackTailTrimMs = _lunaLoopbackDefaultTailTrimMs;
   }
@@ -3452,6 +3531,68 @@ class GalHookSessionController extends ChangeNotifier {
     _textPollTimer = Timer.periodic(
       _textPollInterval,
       (_) => unawaited(_pollHookedText()),
+    );
+  }
+
+  /// LunaTranslator 并用时的零注入附着。
+  ///
+  /// 本方法有意不接收 injector / engine：安全承诺靠类型与调用路径固定，不能在运行时
+  /// “先试注入，失败再降级”。文本由 Luna WebSocket 原文提供，音频直接从系统
+  /// Loopback 开始；两者仍复用既有逐句切分、制卡等待与按 exe 记忆。
+  Future<void> _activateLunaSafeAttach(
+    int generation, {
+    required int gamePid,
+  }) async {
+    final LoopbackGalAudioSource loopback = _loopbackSourceFactory();
+    final PcmFormat? format = await loopback.start();
+    if (generation != _operationGeneration) {
+      await loopback.stop();
+      return;
+    }
+    if (format == null) {
+      await loopback.stop();
+      _audioSource = null;
+      _engineSource = null;
+      _setState(
+        _state.copyWith(
+          phase: GalHookSessionPhase.degraded,
+          audioBackend: GalHookAudioBackend.none,
+          clearAudioFormat: true,
+          clearFallbackReason: true,
+          lastError: 'System loopback could not be started',
+        ),
+      );
+      _record(
+        GalHookEventSeverity.error,
+        'audio',
+        'session.luna_safe_loopback_failed',
+        'Luna safe attachment is active, but system loopback is unavailable',
+        details: <String, Object?>{'pid': gamePid, 'injection': false},
+      );
+      return;
+    }
+    _audioSource = loopback;
+    _engineSource = null;
+    _setState(
+      _state.copyWith(
+        phase: GalHookSessionPhase.waitingSignals,
+        audioBackend: GalHookAudioBackend.systemLoopback,
+        audioFormat: format,
+        clearFallbackReason: true,
+        clearLastError: true,
+      ),
+    );
+    _record(
+      GalHookEventSeverity.success,
+      'session',
+      'session.luna_safe_attached',
+      'Luna safe attachment started without injecting into the game',
+      details: <String, Object?>{
+        'pid': gamePid,
+        'injection': false,
+        'sampleRate': format.sampleRate,
+        'channels': format.channels,
+      },
     );
   }
 
