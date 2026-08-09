@@ -58,4 +58,20 @@ void main() {
       reason: '导出前后都必须拒绝过期请求，异步逆序返回不能覆盖最后一次点击',
     );
   });
+
+  test('Luna 音频调整按症状拆成两项，并在松手后提交当前游戏设置', () {
+    final String code = maskComments(source);
+    expect(code, contains('t.game_luna_audio_lead_in'));
+    expect(code, contains('t.game_luna_audio_tail_trim'));
+    expect(code, contains('t.game_luna_audio_per_game_hint'));
+    expect(code, contains('setLunaLoopbackPreRollMs'));
+    expect(code, contains('setLunaLoopbackTailTrimMs'));
+    expect(
+      RegExp(r'onChangeEnd:[\s\S]*?onLunaTimingCommitted\(\)')
+          .allMatches(code)
+          .length,
+      2,
+      reason: '两个滑块都只能在松手时提交，拖动过程不能连续写偏好表',
+    );
+  });
 }

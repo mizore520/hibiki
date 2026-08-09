@@ -3164,5 +3164,11 @@
   "game_text_source_luna_connected": "Connected. Fushi will use the original text selected in LunaTranslator.",
   "game_text_source_luna_waiting": "Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.",
   "game_luna_audio_preroll": "Luna audio lead-in",
-  "game_luna_audio_preroll_hint": "Keep a little audio before each Luna text event to avoid clipping the beginning of the voice."
+  "game_luna_audio_preroll_hint": "Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.",
+  "game_luna_audio_timing": "Audio alignment",
+  "game_luna_audio_lead_in": "Complete sentence start",
+  "game_luna_audio_lead_in_hint": "If the beginning of this sentence is cut off, increase this value.",
+  "game_luna_audio_tail_trim": "Remove next-line audio",
+  "game_luna_audio_tail_trim_hint": "If the end of this sentence includes the next line, increase this value.",
+  "game_luna_audio_per_game_hint": "Saved separately for each attached game."
 }

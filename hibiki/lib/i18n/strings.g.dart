@@ -1,9 +1,9 @@
 /// Generated file. Do not edit.
 ///
 /// Locales: 17
-/// Strings: 53822 (3166 per locale)
+/// Strings: 53924 (3172 per locale)
 ///
-/// Built on 2026-08-08 at 15:42 UTC
+/// Built on 2026-08-09 at 12:33 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -4273,6 +4273,15 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get game_luna_audio_preroll => 'Luna audio lead-in';
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  String get game_luna_audio_timing => 'Audio alignment';
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 // Path: <root>
@@ -11562,6 +11571,21 @@ class _StringsAr extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 // Path: <root>
@@ -18918,6 +18942,21 @@ class _StringsDe extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 // Path: <root>
@@ -26290,6 +26329,21 @@ class _StringsEs extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 // Path: <root>
@@ -33674,6 +33728,21 @@ class _StringsFr extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 // Path: <root>
@@ -40986,6 +41055,21 @@ class _StringsId extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 // Path: <root>
@@ -48344,6 +48428,21 @@ class _StringsIt extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 // Path: <root>
@@ -55518,6 +55617,21 @@ class _StringsJa extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 // Path: <root>
@@ -62697,6 +62811,21 @@ class _StringsKo extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 // Path: <root>
@@ -70035,6 +70164,21 @@ class _StringsNl extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 // Path: <root>
@@ -77385,6 +77529,21 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 // Path: <root>
@@ -84721,6 +84880,21 @@ class _StringsRu extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 // Path: <root>
@@ -92005,6 +92179,21 @@ class _StringsTh extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 // Path: <root>
@@ -99320,6 +99509,21 @@ class _StringsTr extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 // Path: <root>
@@ -106620,6 +106824,21 @@ class _StringsVi extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 // Path: <root>
@@ -113402,6 +113621,18 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       '每条 Luna 原文到达时向前保留一小段混音，避免角色语音开头被截掉。';
+  @override
+  String get game_luna_audio_timing => '语音切分调整';
+  @override
+  String get game_luna_audio_lead_in => '补全本句开头';
+  @override
+  String get game_luna_audio_lead_in_hint => '如果本句开头的声音被切掉，就调大。';
+  @override
+  String get game_luna_audio_tail_trim => '去掉下句声音';
+  @override
+  String get game_luna_audio_tail_trim_hint => '如果本句结尾混入下一句声音，就调大。';
+  @override
+  String get game_luna_audio_per_game_hint => '会按当前附着的游戏分别保存。';
 }
 
 // Path: <root>
@@ -120498,6 +120729,21 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get game_luna_audio_preroll_hint =>
       'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
 }
 
 /// Flat map(s) containing all translations.
@@ -126993,6 +127239,18 @@ extension on _StringsEn {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
@@ -133486,6 +133744,18 @@ extension on _StringsAr {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
@@ -140001,6 +140271,18 @@ extension on _StringsDe {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
@@ -146515,6 +146797,18 @@ extension on _StringsEs {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
@@ -153035,6 +153329,18 @@ extension on _StringsFr {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
@@ -159537,6 +159843,18 @@ extension on _StringsId {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
@@ -166053,6 +166371,18 @@ extension on _StringsIt {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
@@ -172531,6 +172861,18 @@ extension on _StringsJa {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
@@ -179013,6 +179355,18 @@ extension on _StringsKo {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
@@ -185523,6 +185877,18 @@ extension on _StringsNl {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
@@ -192030,6 +192396,18 @@ extension on _StringsPtBr {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
@@ -198542,6 +198920,18 @@ extension on _StringsRu {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
@@ -205037,6 +205427,18 @@ extension on _StringsTh {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
@@ -211541,6 +211943,18 @@ extension on _StringsTr {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
@@ -218041,6 +218455,18 @@ extension on _StringsVi {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
@@ -224486,6 +224912,18 @@ extension on _StringsZhCn {
         return 'Luna 语音起点提前';
       case 'game_luna_audio_preroll_hint':
         return '每条 Luna 原文到达时向前保留一小段混音，避免角色语音开头被截掉。';
+      case 'game_luna_audio_timing':
+        return '语音切分调整';
+      case 'game_luna_audio_lead_in':
+        return '补全本句开头';
+      case 'game_luna_audio_lead_in_hint':
+        return '如果本句开头的声音被切掉，就调大。';
+      case 'game_luna_audio_tail_trim':
+        return '去掉下句声音';
+      case 'game_luna_audio_tail_trim_hint':
+        return '如果本句结尾混入下一句声音，就调大。';
+      case 'game_luna_audio_per_game_hint':
+        return '会按当前附着的游戏分别保存。';
       default:
         return null;
     }
@@ -230959,6 +231397,18 @@ extension on _StringsZhHk {
         return 'Luna audio lead-in';
       case 'game_luna_audio_preroll_hint':
         return 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+      case 'game_luna_audio_timing':
+        return 'Audio alignment';
+      case 'game_luna_audio_lead_in':
+        return 'Complete sentence start';
+      case 'game_luna_audio_lead_in_hint':
+        return 'If the beginning of this sentence is cut off, increase this value.';
+      case 'game_luna_audio_tail_trim':
+        return 'Remove next-line audio';
+      case 'game_luna_audio_tail_trim_hint':
+        return 'If the end of this sentence includes the next line, increase this value.';
+      case 'game_luna_audio_per_game_hint':
+        return 'Saved separately for each attached game.';
       default:
         return null;
     }
