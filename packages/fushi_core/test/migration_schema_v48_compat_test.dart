@@ -3,7 +3,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi_core/fushi_core.dart';
 
-HibikiDatabase _openV45Seed() => HibikiDatabase.forTesting(
+FushiDatabase _openV45Seed() => FushiDatabase.forTesting(
       NativeDatabase.memory(
         setup: (raw) {
           raw.execute('''
@@ -26,7 +26,7 @@ CREATE TABLE epub_books (
       ),
     );
 
-HibikiDatabase _openExistingV48Seed() => HibikiDatabase.forTesting(
+FushiDatabase _openExistingV48Seed() => FushiDatabase.forTesting(
       NativeDatabase.memory(
         setup: (raw) {
           raw.execute('''
@@ -44,7 +44,7 @@ CREATE TABLE preferences (
     );
 
 Future<Set<String>> _columnNames(
-  HibikiDatabase db,
+  FushiDatabase db,
   String table,
 ) async {
   final List<QueryRow> rows =
@@ -52,7 +52,7 @@ Future<Set<String>> _columnNames(
   return rows.map((QueryRow row) => row.read<String>('name')).toSet();
 }
 
-Future<Set<String>> _indexNames(HibikiDatabase db) async {
+Future<Set<String>> _indexNames(FushiDatabase db) async {
   final List<QueryRow> rows = await db
       .customSelect(
         "SELECT name FROM sqlite_master WHERE type = 'index'",
@@ -64,7 +64,7 @@ Future<Set<String>> _indexNames(HibikiDatabase db) async {
 void main() {
   test('existing schema v48 database opens without downgrade refusal',
       () async {
-    final HibikiDatabase db = _openExistingV48Seed();
+    final FushiDatabase db = _openExistingV48Seed();
     addTearDown(db.close);
 
     // 代码目标版本随 develop 演进（写此测试时为 v48，现已更高）；这里只断言
@@ -76,7 +76,7 @@ void main() {
 
   test('v45 migration adds the v46 and v47 schema before landing on v48',
       () async {
-    final HibikiDatabase db = _openV45Seed();
+    final FushiDatabase db = _openV45Seed();
     addTearDown(db.close);
 
     final QueryRow version =
@@ -84,30 +84,32 @@ void main() {
     // 迁移终点跟随当前代码的 schemaVersion（v48 时代写下，此后 develop 已继续升级）。
     expect(version.read<int>('user_version'), db.schemaVersion);
     expect(await _columnNames(db, 'epub_books'), contains('completed_at'));
+    // 断的是**迁移终点**（阶梯一路跑到当前 schemaVersion），不是 v48 当时的形状：
+    // v82 把 revealed_images 的书键从 title 派生的 `book_key` 改成本机稳定的
+    // `book_uid`（`EpubBooks.uid`，带数据搬迁），这里跟着改名走。
     expect(
       await _columnNames(db, 'revealed_images'),
-      containsAll(<String>['book_key', 'image_key', 'revealed_at']),
+      containsAll(<String>['book_uid', 'image_key', 'revealed_at']),
     );
   });
 
   test('fresh v48 database contains all v48 hot-path indexes', () async {
-    final HibikiDatabase db =
-        HibikiDatabase.forTesting(NativeDatabase.memory());
+    final FushiDatabase db = FushiDatabase.forTesting(NativeDatabase.memory());
     addTearDown(db.close);
 
     await db.getPref('force-open');
     expect(await _columnNames(db, 'epub_books'), contains('completed_at'));
     expect(
       await _columnNames(db, 'revealed_images'),
-      containsAll(<String>['book_key', 'image_key', 'revealed_at']),
+      containsAll(<String>['book_uid', 'image_key', 'revealed_at']),
     );
     expect(
       await _indexNames(db),
       containsAll(<String>[
         'idx_audio_cues_book_chapter_sentence',
-        'idx_book_tag_mappings_tag_id',
-        'idx_srt_book_tag_mappings_tag_id',
-        'idx_video_book_tag_mappings_tag_id',
+        // v79 五张标签映射表合一：per-table tag_id 索引随旧表消亡，
+        // 统一表一条索引覆盖全部 kind。
+        'idx_tag_assignments_tag_id',
         'idx_favorite_words_source_type',
       ]),
     );

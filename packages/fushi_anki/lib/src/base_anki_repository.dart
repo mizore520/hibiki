@@ -26,10 +26,10 @@ import 'lapis_preset.dart';
 @immutable
 class AudioFetchOutcome {
   const AudioFetchOutcome._({this.ref, this.failureReason})
-    : assert(
-        ref == null || failureReason == null,
-        'A successful audio fetch (ref) cannot also carry a failure reason.',
-      );
+      : assert(
+          ref == null || failureReason == null,
+          'A successful audio fetch (ref) cannot also carry a failure reason.',
+        );
 
   /// 成功：拿到裸媒体引用 [ref]。
   const AudioFetchOutcome.stored(String ref) : this._(ref: ref);
@@ -64,11 +64,43 @@ class RenderedMinedFields {
 
 abstract class BaseAnkiRepository {
   @protected
-  static const settingsKey = 'hoshi_anki_settings';
+  static const settingsKey = 'fushi_anki_settings';
+
+  /// 存量 SharedPreferences 键（W2-7 迁移输入）：[readSettingsJson] 载入期把
+  /// 值搬到 [settingsKey] 后删除旧键。旧字面量只允许活在这一处迁移代码里。
+  static const String _legacySettingsKey = 'hoshi_anki_settings';
+
+  /// 载入期一次性迁移（W2-2）：把存量用户卡模板里的音频旧别名
+  /// `{sasayaki-audio}` 就地改写为 `{sentence-audio}`（两者从来渲染同一个值，
+  /// 改写零语义变化），命中即回写持久层。幂等：改写后源串不再含旧 token。
+  /// 旧字面量只允许活在这一处迁移代码里——渲染器/枚举/诊断均已不再受理别名。
+  /// 清理条件：无（SharedPreferences 无版本阶梯，载入期改写即是它的迁移通道）。
+  static const String _legacySentenceAudioAlias = '{sasayaki-audio}';
+
+  /// 读原始设置 JSON 的**唯一通道**：两个载入期迁移（W2-7 键搬移 + W2-2 别名
+  /// 改写）都收敛在这里。子类若覆写 [loadSettings]（AnkiDroid 的 legacy deck
+  /// 迁移）也必须经由本方法取原始串，否则迁移被绕过。返回 null = 从未存过。
+  @protected
+  Future<String?> readSettingsJson(SharedPreferences prefs) async {
+    String? raw = prefs.getString(settingsKey);
+    if (raw == null) {
+      final String? legacy = prefs.getString(_legacySettingsKey);
+      if (legacy != null) {
+        await prefs.setString(settingsKey, legacy);
+        await prefs.remove(_legacySettingsKey);
+        raw = legacy;
+      }
+    }
+    if (raw != null && raw.contains(_legacySentenceAudioAlias)) {
+      raw = raw.replaceAll(_legacySentenceAudioAlias, '{sentence-audio}');
+      await prefs.setString(settingsKey, raw);
+    }
+    return raw;
+  }
 
   Future<AnkiSettings> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(settingsKey);
+    final String? raw = await readSettingsJson(prefs);
     if (raw == null) return const AnkiSettings();
     try {
       return AnkiSettings.fromJson(jsonDecode(raw) as Map<String, dynamic>);
@@ -118,9 +150,10 @@ abstract class BaseAnkiRepository {
     required int noteId,
     required String rawPayloadJson,
     required AnkiMiningContext context,
-  }) async => MineOutcome.failure(
-    'This Anki backend does not support overwriting a mined card.',
-  );
+  }) async =>
+      MineOutcome.failure(
+        'This Anki backend does not support overwriting a mined card.',
+      );
 
   /// TODO-614：按「与查重同一条件」反查一张可被覆写的**已存在** note id。
   ///
@@ -135,7 +168,8 @@ abstract class BaseAnkiRepository {
   Future<int?> findOverwriteTargetNoteId(
     String expression,
     String reading,
-  ) async => null;
+  ) async =>
+      null;
 
   /// TODO-1007/1008：按「与查重同一条件」（第一字段=expression）反查 Anki 中**所有**
   /// 已存在的同词卡，返回它们的 [MinedNoteRef]（noteId + 一行预览），**不受
@@ -151,7 +185,8 @@ abstract class BaseAnkiRepository {
   Future<List<MinedNoteRef>> findMatchingNotes(
     String expression,
     String reading,
-  ) async => const <MinedNoteRef>[];
+  ) async =>
+      const <MinedNoteRef>[];
 
   /// TODO-1007/1008：读取一张已存在 note（[noteId]）的现有字段（字段名 → 值），供
   /// note viewer 只读展示。两后端各自覆写（AnkiConnect `notesInfo` / AnkiDroid
@@ -191,7 +226,8 @@ abstract class BaseAnkiRepository {
   /// （调用方决定提示还是静默跳过）。**默认实现 = 优雅降级**：返回 `null`。
   Future<AnkiNoteTypeDefinition?> readNoteTypeDefinition(
     String modelName,
-  ) async => null;
+  ) async =>
+      null;
 
   /// 覆写 [modelName] 的 styling（CSS）。返回 `false` = 后端不支持（默认
   /// 降级）；成功返回 `true`；后端失败照抛。
@@ -204,13 +240,20 @@ abstract class BaseAnkiRepository {
   Future<bool> updateNoteTypeTemplates(
     String modelName,
     List<AnkiCardTemplate> templates,
-  ) async => false;
+  ) async =>
+      false;
 
   // ── 媒体存储优化（字节级去重，见 anki_media_dedup.dart）────────────────
 
   /// 本后端能否做媒体字节级去重。需要**本机可直读** collection.media +
   /// 全库检索 + 字段/模板改写；默认 false，仅 AnkiConnect（Anki 与 Hibiki
   /// 同机）支持。
+  ///
+  /// **后端不对称（有意）**：AnkiDroid（`AnkiRepository`）与 AnkiMobile 都不覆写
+  /// 这一对成员——它们**根本不跑媒体去重**，所以 AnkiConnect 那边的批量化
+  /// （见 `kAnkiMediaDedupBatchSize`）在这里没有对应实现，也不存在「逐条删除」
+  /// 的对称缺口需要补。AnkiDroid 的 ContentProvider 确实有 `bulkInsert`，但那是
+  /// 写卡路径的能力，与本功能无关。
   bool get supportsMediaMaintenance => false;
 
   /// 跑一轮媒体字节级去重：找出字节完全相同的文件组 → 把笔记字段与卡模板/
@@ -227,7 +270,8 @@ abstract class BaseAnkiRepository {
     Future<void> Function(Map<String, dynamic> entry)? onJournal,
     AnkiMediaDedupOnProgress? onProgress,
     bool Function()? shouldCancel,
-  }) async => null;
+  }) async =>
+      null;
 
   @protected
   AnkiDeck selectDeckAfterFetch(List<AnkiDeck> decks, AnkiSettings current) =>
@@ -279,9 +323,10 @@ abstract class BaseAnkiRepository {
 
   // ── note tags：两 backend 共用（杜绝两份漂移） ──────────────────
 
-  /// 标记每张经 Hibiki 制出的卡片的固定 tag。所有 Hibiki 制卡都会带上它，
-  /// 便于用户在 Anki 里按来源筛选/统计。
-  static const String hibikiTag = 'hibiki';
+  /// 标记每张经 Fushi 制出的卡片的固定 tag。所有 Fushi 制卡都会带上它，
+  /// 便于用户在 Anki 里按来源筛选/统计。改名前的旧卡带的是字面 tag `hibiki`
+  /// ——那是用户 Anki 库里的外部数据，只决定新卡默认值、不迁移不重写（W7）。
+  static const String fushiTag = 'fushi';
 
   /// 书籍来源（EPUB 阅读、独立查词、有声书）的分类标签。
   static const String bookTag = 'book';
@@ -309,12 +354,12 @@ abstract class BaseAnkiRepository {
   }
 
   /// 解析用户配置的 [userTags]（空白分隔，即用户自定义 DIY 标签），按开关
-  /// **追加** [hibikiTag] 与 [source] 对应的分类标签后去重（保序）。
+  /// **追加** [fushiTag] 与 [source] 对应的分类标签后去重（保序）。
   ///
-  /// - 追加而非覆盖：用户已配置的 tag 全部保留，只是按开关额外多 `hibiki` + 分类标签。
-  /// - 顺序：用户 tag → `hibiki` → 分类标签（`book`/`video`/`game`）。
-  /// - 去重：用户若已手动配置了 `hibiki`/`book`/`video`/`game`，不会出现两个。
-  /// - [includeHibiki]（TODO-117 开关）为 `false` 时不追加 `hibiki`。
+  /// - 追加而非覆盖：用户已配置的 tag 全部保留，只是按开关额外多 `fushi` + 分类标签。
+  /// - 顺序：用户 tag → `fushi` → 分类标签（`book`/`video`/`game`）。
+  /// - 去重：用户若已手动配置了 `fushi`/`book`/`video`/`game`，不会出现两个。
+  /// - [includeHibiki]（TODO-117 开关）为 `false` 时不追加 `fushi`。
   /// - [includeCategory]（TODO-117 开关）为 `false` 时不追加分类标签；为 `true` 但
   ///   [source] 为 `null`（未指定来源，如独立查词/悬浮窗）时本就没有分类标签可加。
   /// - 两个开关默认 `true`，等价 TODO-115/062 的固定行为（Never break userspace）。
@@ -339,7 +384,7 @@ abstract class BaseAnkiRepository {
       if (tag.isEmpty || !seen.add(tag)) continue;
       result.add(tag);
     }
-    if (includeHibiki && seen.add(hibikiTag)) result.add(hibikiTag);
+    if (includeHibiki && seen.add(fushiTag)) result.add(fushiTag);
     if (includeCategory) {
       final categoryTag = _categoryTagForSource(source);
       if (categoryTag != null && seen.add(categoryTag)) result.add(categoryTag);
@@ -371,10 +416,8 @@ abstract class BaseAnkiRepository {
     // 块级标签承担换行分词，直接删空会把相邻词粘连成一个词；字幕行内标签则
     // 紧贴正文、删空才不会在日文句中引入假空格。两份实现不强并（G11）。
     final String noTags = value.replaceAll(RegExp(r'<[^>]*>'), ' ');
-    final String collapsed = noTags
-        .replaceAll('&nbsp;', ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
+    final String collapsed =
+        noTags.replaceAll('&nbsp;', ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
     if (collapsed.length <= maxLen) return collapsed;
     return '${collapsed.substring(0, maxLen)}…';
   }
@@ -392,12 +435,12 @@ abstract class BaseAnkiRepository {
 
   /// 把每条词典媒体（gaiji 外字等）存进 Anki，返回「占位符 → **裸媒体引用**」映射。
   ///
-  /// - 键 = popup.js 注入到义项 HTML 里的占位符文件名（`hoshi_dict_N.ext`，即
+  /// - 键 = popup.js 注入到义项 HTML 里的占位符文件名（`fushi_dict_N.ext`，即
   ///   [DictionaryMedia.filename]）。
   /// - 值 = [storeBareRef] 返回的**裸文件名**（如 `real.svg`），**不是** `<img src>` 标签。
   ///
   /// 关键不变式：值必须是裸文件名。导出的义项 HTML 已经是
-  /// `<img class="gloss-image" src="hoshi_dict_N.ext">`，[buildMinedFields] 用
+  /// `<img class="gloss-image" src="fushi_dict_N.ext">`，[buildMinedFields] 用
   /// `replaceAll` 把 `src` 里的占位符替换成真实文件名。若值是完整 `<img src="real.svg">`
   /// 标签，会被塞进 `src="..."` 里变成 `<img src="<img src="real.svg">">` 的嵌套坏图，
   /// Anki 卡片上外字不显示（AnkiConnect 旧实现的 BUG，AnkiDroid 经

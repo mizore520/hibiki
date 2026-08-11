@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-namespace hibiki_voice_hook {
+namespace fushi_voice_hook {
 
 // `--hold` owns the shared-memory session only while the target game is alive.
 // Every launch mode must pass a synchronizable target-process handle; treating
@@ -15,4 +15,4 @@ inline bool HoldTargetIsRunning(HANDLE target_process) {
   return WaitForSingleObject(target_process, 0) == WAIT_TIMEOUT;
 }
 
-}  // namespace hibiki_voice_hook
+}  // namespace fushi_voice_hook

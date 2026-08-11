@@ -29,7 +29,7 @@
 #   NOTES             release notes / body
 #   RELEASE_SEQUENCE  monotonic git rev-list count (NOT a workflow run-number)
 #   VERSION           normalized version (build_version_name)
-#   REPO              owner/repo, e.g. hajisensai/hibiki
+#   REPO              owner/repo, e.g. hajisensai/Fushi
 #   GITHUB_TOKEN      token with contents:write on REPO
 #   ARTIFACTS_DIR     dir holding the built release assets for THIS platform
 #   ASSET_GLOB        glob (relative to ARTIFACTS_DIR) of this platform's assets
@@ -67,12 +67,36 @@ backoff_sleep() {
   sleep "$(( total / 1000 )).$(printf '%03d' $(( total % 1000 )))"
 }
 
-# Map channel -> manifest filename. Only managed channels get a manifest;
-# github-release events publish through the Release UI directly and are skipped.
+# Map (product family, channel) -> manifest filename. Only managed channels get
+# a manifest; github-release events publish through the Release UI directly and
+# are skipped.
+#
+# BUG-1481: the filename MUST carry the product family, not just the channel.
+# Two products ship out of this ONE repo during the Hibiki->Fushi rename --
+# `app.hibiki.reader` (the migration bridge, built from the bridge branch) and
+# `app.fushi.reader` (here). One repo means one `update-manifest` branch, so
+# keying the file on channel alone made both families write the SAME file.
+# merge_update_manifest.py's monotonic seq guard (TODO-1173) then handed the
+# advertised top-level release to whichever family had the higher commit count,
+# permanently: the other family's clients read a version/tag/assets that are not
+# theirs and can never self-update. Splitting the filename is what makes the two
+# release streams independent -- it also degrades the guard and the rolling-tag
+# prune back to the single-product case they were designed for.
+#
+# The historical names (`latest-<channel>.json`) belong to the HIBIKI family and
+# are FROZEN: Hibiki clients already in the wild (v1.2.0 and older) have that
+# exact URL compiled in and cannot be patched. Fushi has never shipped a
+# stable/beta release, so it is Fushi that moves to the suffixed names.
+# `fushi/test/tools/update_manifest_product_split_test.dart` pins this suffix
+# against the client-side constants in update_checker_release.dart.
+MANIFEST_PRODUCT_SUFFIX="-fushi"
 case "$CHANNEL" in
-  debug)  MANIFEST_FILE="latest-debug.json" ;;
-  beta)   MANIFEST_FILE="latest-beta.json" ;;
-  formal) MANIFEST_FILE="latest-stable.json" ;;
+  debug)  MANIFEST_FILE="latest-debug${MANIFEST_PRODUCT_SUFFIX}.json"
+          LEGACY_MANIFEST_FILE="latest-debug.json" ;;
+  beta)   MANIFEST_FILE="latest-beta${MANIFEST_PRODUCT_SUFFIX}.json"
+          LEGACY_MANIFEST_FILE="latest-beta.json" ;;
+  formal) MANIFEST_FILE="latest-stable${MANIFEST_PRODUCT_SUFFIX}.json"
+          LEGACY_MANIFEST_FILE="latest-stable.json" ;;
   *)
     echo "::notice title=Manifest skipped::channel '$CHANNEL' is not a managed update channel; not writing a manifest."
     exit 0
@@ -109,11 +133,68 @@ print(json.dumps(out))
 PY
 )"
 
+# BUG-1516: the merge step keeps a lagging platform's asset entry forever, but
+# the rolling release PRUNES old assets per platform. A platform that stops
+# publishing therefore ends up advertised at a URL whose file is gone, and the
+# client's only in-app action downloads a hard 404 (real report: an old Hibiki
+# debug client pinned to hibiki-1.3.2-debug.10182-windows-setup.exe long after
+# it was pruned). Hand the merge step the release's CURRENT asset names so it
+# can drop entries that no longer resolve.
+#
+# Fail-open: any gh failure (rate limit, transient 5xx, tag not created yet)
+# leaves this empty, which the merge step reads as "cannot tell" and skips the
+# filter. Deleting every retained asset because a query flaked would be a far
+# worse outage than the stale entry we are removing.
+# MANIFEST_LIVE_ASSETS_OVERRIDE is the offline test seam (same role as
+# MANIFEST_REMOTE_OVERRIDE below); it is never set in CI. Detection is
+# "is it DEFINED" (`+x`), not "is it non-empty": the offline suite must be able
+# to pin the empty/fail-open case too, and `:-` would send that case off to the
+# network instead.
+if [ -n "${MANIFEST_LIVE_ASSETS_OVERRIDE+x}" ]; then
+  LIVE_ASSET_NAMES_JSON="$MANIFEST_LIVE_ASSETS_OVERRIDE"
+else
+  LIVE_ASSET_NAMES_JSON="$(
+    gh release view "$DOWNLOAD_TAG" --repo "$REPO" \
+      --json assets --jq '[.assets[].name]' 2>/dev/null || true
+  )"
+fi
+if [ -z "$LIVE_ASSET_NAMES_JSON" ]; then
+  echo "Live asset list unavailable for $DOWNLOAD_TAG; skipping the stale-asset filter."
+fi
+
+# BUG-1516 ①b: the DESKTOP half of this run also has to reach the retired
+# hibiki-family manifest.
+#
+# BUG-1481 split the manifest per product family so Android never gets handed a
+# cross-package APK -- it literally cannot install one
+# (INSTALL_FAILED_UPDATE_INCOMPATIBLE). Correct for Android. Desktop needs the
+# exact opposite: `platform_updater.dart` keeps ReleaseProduct.any on
+# Windows/macOS on purpose ("桌面不做这层提升……Phase 5 有意如此") because there
+# the package rename is carried by the installer overwriting in place. A Hibiki
+# Windows client selecting `fushi-*-windows-setup.exe` and installing it IS the
+# desktop migration -- there is no desktop bridge (MigrationPage is Android-only).
+#
+# Splitting per FILE therefore cut the desktop migration path: latest-debug.json
+# stopped receiving Fushi assets, its Windows slot froze on the pre-split build,
+# and the rolling prune later deleted that file (the reported 404). Mirror the
+# desktop assets back in -- assets only, never the top level, which stays the
+# bridge's (see ADVERTISE_TOP_LEVEL in merge_update_manifest.py).
+MIRROR_ASSETS_JSON="$(
+  PLATFORM_ASSETS_JSON="$PLATFORM_ASSETS_JSON" python3 <<'PY'
+import json, os
+assets = json.loads(os.environ["PLATFORM_ASSETS_JSON"])
+# Desktop only. APKs stay out (Android cannot install across package names) and
+# .ipa stays out (Apple forbids in-app download/execute, so the entry is inert).
+suffixes = ("-windows-setup.exe", "-macos.zip")
+print(json.dumps([a for a in assets if a["name"].endswith(suffixes)]))
+PY
+)"
+
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
 # Default to the real GitHub remote. MANIFEST_REMOTE_OVERRIDE lets the
-# offline race test (hibiki/test/tools/update_manifest_publish_race_test.dart)
+# offline race test (fushi/test/tools/update_manifest_publish_race_test.dart)
 # point at a local bare repo; it is never set in CI.
 REMOTE="${MANIFEST_REMOTE_OVERRIDE:-https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git}"
 git -C "$WORK_DIR" init -q
@@ -184,8 +265,34 @@ while :; do
     PRERELEASE="$PRERELEASE" NOTES="$NOTES" \
     RELEASE_SEQUENCE="$RELEASE_SEQUENCE" \
     PLATFORM_ASSETS_JSON="$PLATFORM_ASSETS_JSON" \
+    LIVE_ASSET_NAMES_JSON="$LIVE_ASSET_NAMES_JSON" \
     python3 "$MERGE_PY"
   )
+
+  # Desktop mirror into the hibiki-family manifest (BUG-1516 ①b). Only when this
+  # run actually produced desktop assets AND that manifest already exists -- the
+  # mirror augments a live bridge channel, it never creates one.
+  #
+  # NO liveness filter here on purpose: those entries were published under a
+  # DIFFERENT rolling tag than the one we queried, so a name-based comparison
+  # would read the bridge's own APK as "pruned" and delete it -- taking out
+  # Android's migration path while fixing desktop's. The stale desktop entries
+  # do not need the filter anyway: this run's assets carry a higher sequence and
+  # supersede those slots outright.
+  if [ "$MIRROR_ASSETS_JSON" != "[]" ] && [ -f "$WORK_DIR/$LEGACY_MANIFEST_FILE" ]; then
+    (
+      cd "$WORK_DIR"
+      MANIFEST_FILE="$LEGACY_MANIFEST_FILE" \
+      CHANNEL="$CHANNEL" TAG="$TAG" VERSION="$VERSION" \
+      PRERELEASE="$PRERELEASE" NOTES="$NOTES" \
+      RELEASE_SEQUENCE="$RELEASE_SEQUENCE" \
+      PLATFORM_ASSETS_JSON="$MIRROR_ASSETS_JSON" \
+      LIVE_ASSET_NAMES_JSON="" \
+      ADVERTISE_TOP_LEVEL="false" \
+      python3 "$MERGE_PY"
+    )
+    git -C "$WORK_DIR" add "$LEGACY_MANIFEST_FILE"
+  fi
 
   git -C "$WORK_DIR" add "$MANIFEST_FILE"
   if git -C "$WORK_DIR" diff --cached --quiet; then

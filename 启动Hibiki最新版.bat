@@ -1,18 +1,18 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-title Hibiki Launcher
+title Fushi Launcher
 
 rem Some PowerShell/IDE launchers pass both `Path` and `PATH` into cmd.exe.
 rem MSBuild treats environment names case-insensitively and then fails when it
 rem tries to start cl.exe with the duplicate entries. Keep one canonical PATH.
-set "HIBIKI_CANONICAL_PATH=!PATH!"
+set "FUSHI_CANONICAL_PATH=!PATH!"
 set "PATH="
 set "Path="
-set "PATH=!HIBIKI_CANONICAL_PATH!"
-set "HIBIKI_CANONICAL_PATH="
+set "PATH=!FUSHI_CANONICAL_PATH!"
+set "FUSHI_CANONICAL_PATH="
 
 rem ============================================================
-rem  Hibiki smart launcher
+rem  Fushi smart launcher
 rem  - locate the repository from this BAT file, not from a hard-coded path
 rem  - build automatically when the source commit changed or no EXE exists
 rem  - pass "clean" to force a clean rebuild
@@ -20,26 +20,26 @@ rem ============================================================
 
 set "REPO=%~dp0"
 if "%REPO:~-1%"=="\" set "REPO=%REPO:~0,-1%"
-set "APP=%REPO%\hibiki"
+set "APP=%REPO%\fushi"
 set "BOOTSTRAP=%REPO%\tool\bootstrap.ps1"
 set "RUNTIME_UNLOCK_CHECK=%REPO%\tool\check_windows_runtime_unlocked.ps1"
 set "EXE=%APP%\build\windows\x64\runner\Release\fushi.exe"
 set "STAMP=%APP%\build\.last_built_commit"
 
 if not exist "%APP%\pubspec.yaml" (
-  echo [ERROR] Hibiki app directory not found: %APP%
+  echo [ERROR] Fushi app directory not found: %APP%
   goto :fail
 )
 
 rem --- resolve Flutter -----------------------------------------------------
-rem Priority: HIBIKI_FLUTTER > FLUTTER_BIN > common local path > PATH.
+rem Priority: FUSHI_FLUTTER > FLUTTER_BIN > common local path > PATH.
 set "FLUTTER="
-if defined HIBIKI_FLUTTER set "FLUTTER=%HIBIKI_FLUTTER%"
+if defined FUSHI_FLUTTER set "FLUTTER=%FUSHI_FLUTTER%"
 if not defined FLUTTER if defined FLUTTER_BIN set "FLUTTER=%FLUTTER_BIN%"
 
 if defined FLUTTER if not exist "%FLUTTER%" (
   echo [ERROR] Flutter path does not exist: %FLUTTER%
-  echo         Set HIBIKI_FLUTTER to the full path of flutter.bat.
+  echo         Set FUSHI_FLUTTER to the full path of flutter.bat.
   goto :fail
 )
 
@@ -49,7 +49,7 @@ if not defined FLUTTER for /f "delims=" %%F in ('where flutter.bat 2^>nul') do i
 
 if not defined FLUTTER (
   echo [ERROR] Flutter was not found.
-  echo         Install Flutter, add it to PATH, or set HIBIKI_FLUTTER to flutter.bat.
+  echo         Install Flutter, add it to PATH, or set FUSHI_FLUTTER to flutter.bat.
   goto :fail
 )
 echo [INFO] Flutter: %FLUTTER%
@@ -142,7 +142,7 @@ set "TrackFileAccess=false"
 
 rem Bootstrap must run from the repository root so ci/apply-patches.sh resolves correctly.
 echo [1/3] Resolving Flutter packages and applying repository patches...
-set "HIBIKI_FLUTTER=%FLUTTER%"
+set "FUSHI_FLUTTER=%FLUTTER%"
 pushd "%REPO%"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%BOOTSTRAP%"
 set "BOOTSTRAP_EXIT=!ERRORLEVEL!"
@@ -152,7 +152,7 @@ if not "!BOOTSTRAP_EXIT!"=="0" (
   goto :fail
 )
 
-echo [2/2] flutter build windows --release ...
+echo [2/3] flutter build windows --release ...
 call "%FLUTTER%" build windows --release
 if errorlevel 1 goto :build_failed
 

@@ -1,27 +1,41 @@
 import 'package:drift/drift.dart';
 
-// ── media_items ─────────────────────────────────────────────────────
-@DataClassName('MediaItemRow')
-class MediaItems extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get mediaIdentifier => text()();
-  TextColumn get title => text()();
-  TextColumn get mediaTypeIdentifier => text()();
-  TextColumn get mediaSourceIdentifier => text()();
-  TextColumn get uniqueKey => text().unique()();
-  TextColumn get base64Image => text().nullable()();
-  TextColumn get imageUrl => text().nullable()();
-  TextColumn get audioUrl => text().nullable()();
-  TextColumn get author => text().nullable()();
-  TextColumn get authorIdentifier => text().nullable()();
-  TextColumn get extraUrl => text().nullable()();
-  TextColumn get extra => text().nullable()();
-  TextColumn get sourceMetadata => text().nullable()();
-  IntColumn get position => integer()();
-  IntColumn get duration => integer()();
-  BoolColumn get canDelete => boolean()();
-  BoolColumn get canEdit => boolean()();
-  IntColumn get importedAt => integer().withDefault(const Constant(0))();
+// ── media_open_history（v80：取代 jidoujisho 血统的 media_items） ────
+/// 「最近打开流」：一行 = 一个媒体条目最近一次被打开的事实。旧 media_items 把
+/// 身份（uniqueKey/mediaIdentifier 双轨）、展示快照（title/author/**base64 图片
+/// 进 SQLite 行**）、播放状态（position/duration）、UI 能力位（canDelete/canEdit）
+/// 四种东西摊成 19 列；本表只留身份 + 时刻 + 排序/换算要用的两个进度数，其余
+/// 全部收进 [snapshotJson]（重开外部媒体的必要载荷——在线漫画/网页/流媒体没有
+/// 库表行可 join，title/封面/源参数只能随历史行走；库内媒体的快照只是打开当时
+/// 的展示缓存，真相仍在专表）。
+///
+/// 主键 (mediaSource, mediaId) 与旧 uniqueKey（'$source/$id'）同构，去掉自增
+/// id 与派生列。UI 能力位回归运行时按 source 推导，不再持久化。新写入不再产生
+/// base64 图片（无活写入方）；v80 前遗留的 base64 随 snapshot 平移，随行被
+/// trim 自然消亡。
+@DataClassName('MediaOpenHistoryRow')
+class MediaOpenHistory extends Table {
+  /// 媒体类型 key（冻结值域 = 旧 mediaTypeIdentifier：'reader' / 'player' / …）。
+  TextColumn get mediaType => text()();
+
+  /// 媒体源 key（旧 mediaSourceIdentifier）。
+  TextColumn get mediaSource => text()();
+
+  /// 源内身份（旧 mediaIdentifier：库内 = bookKey 派生 URI，外部 = URL）。
+  TextColumn get mediaId => text()();
+
+  /// 最后打开毫秒戳（排序与 trim 的键；旧 imported_at 平移）。
+  IntColumn get openedAt => integer().withDefault(const Constant(0))();
+
+  /// 进度两数（互联 host 的百分比换算要在 SQL 面上可用，故留列不进 JSON）。
+  IntColumn get position => integer().withDefault(const Constant(0))();
+  IntColumn get duration => integer().withDefault(const Constant(0))();
+
+  /// 其余展示/重开载荷（MediaItem.toJson 去掉列化字段后的 JSON）。
+  TextColumn get snapshotJson => text().withDefault(const Constant('{}'))();
+
+  @override
+  Set<Column> get primaryKey => {mediaSource, mediaId};
 }
 
 // ── anki_mappings ──────────────────────────────────────────────────
@@ -103,7 +117,11 @@ class SrtBooks extends Table {
 @DataClassName('ReaderPositionRow')
 class ReaderPositions extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get bookKey => text().unique()();
+
+  /// v82 起的书稳定身份:epub 书 = EpubBooks.uid(本机稳定,标题改名不丢位置);
+  /// 非 epub 域(SRT 书等)沿用其既有稳定键。刻意无 FK——本表跨书族,孤儿防线
+  /// 在应用层(host service 写入闸门 + deleteEpubBook 显式清理)。
+  TextColumn get bookUid => text().unique()();
   IntColumn get sectionIndex => integer()();
   IntColumn get normCharOffset => integer()();
   // BUG-162: section 内精确绝对字符偏移（退出再进的恢复锚）。-1 = 无精确偏移
@@ -117,8 +135,10 @@ class ReaderPositions extends Table {
 @DataClassName('BookmarkRow')
 class Bookmarks extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get bookKey =>
-      text().references(EpubBooks, #bookKey, onDelete: KeyAction.cascade)();
+
+  /// v82:= EpubBooks.uid。无 SQL FK(uid 唯一性是 partial 索引,FK 会
+  /// mismatch);删书清理走 deleteEpubBook 显式级联,守卫测试兜底。
+  TextColumn get bookUid => text()();
   IntColumn get sectionIndex => integer()();
   IntColumn get normCharOffset => integer()();
   TextColumn get label => text()();
@@ -253,6 +273,26 @@ class Preferences extends Table {
   TextColumn get key => text()();
   TextColumn get value => text()();
 
+  /// 该行最后一次写入的毫秒戳（v84 / BUG-1502）——**跨端 LWW 的比较键**。
+  ///
+  /// 绝大多数偏好是设备设置、从不跨端合并，这一列对它们只是无害的记账。它存在
+  /// 是因为**有些偏好行是内容**：书的改名（`override_title://` 覆盖行，BUG-1488）
+  /// 跟着书走、必须跨端合并，而 `preferences` 原先只有 key/value 两列，合并端
+  /// 无从判断「谁更新」，只能退化成 insert-if-absent —— 母设备**第二次**改名
+  /// 就传不到已有 override 的子设备了。
+  ///
+  /// **默认 0 = 「时刻未知」，是刻意的取舍**：v84 迁移不给存量行填迁移时刻。
+  /// 填迁移时刻会让「谁赢」由两台设备各自的升级时间决定（后升级的一侧无条件
+  /// 覆盖先升级的一侧，用户什么都没做却发生覆盖）；取 0 则存量行彼此平局，
+  /// 而 LWW 的平局规则是「保留本机」——正好等于升级前的 insert-if-absent 行为，
+  /// 零回归；任何一侧**真正改过一次名**之后（时刻 > 0）立刻胜出。同理，旧对端
+  /// 发来的无时刻数据一律按 0 收，永远不会覆盖本机改过的名字。
+  ///
+  /// 写入方：[FushiDatabase.setPref] / `setPrefs` / `compareAndSetPref` 填
+  /// `now`；跨端采纳走 [FushiDatabase.setPrefIfNewer]，**填对端的时刻而不是
+  /// now**（填 now 会让本机永远最新，母设备的下一次改名再也传不进来）。
+  IntColumn get updatedAt => integer().withDefault(const Constant(0))();
+
   @override
   Set<Column> get primaryKey => {key};
 }
@@ -345,6 +385,18 @@ class MediaTrackingOutbox extends Table {
 class EpubBooks extends Table {
   // bookKey = sanitizeTtuFilename(title): the cross-device book identity.
   TextColumn get bookKey => text()();
+
+  /// v81（P3 Stage 1，数据层重构 2026-08）：书的**本机稳定身份**。bookKey 由
+  /// 用户可见可改的标题派生（改名 = 身份变 = 十来张子表连坐改键，这正是它当
+  /// 头号根因的原因）；本列是导入时生成一次、此后永不变的机器局域 uid
+  /// （`book_<rowid/时刻>` 形，[generateEpubBookUid]），为后续把
+  /// ReaderPositions/Bookmarks/RevealedImages/BookCustomCss 等子表键切过来
+  /// （Stage 1b）与最终支持改名铺地基——v39 给视频先落 bookUid 列、v76 展示层
+  /// 才收尾的同款两步走。**wire/sync/备份仍走 bookKey**（title 派生键契约冻
+  /// 结），本列不进 wire；跨库合并经 bookKey 对齐后各自保留本机 uid。
+  /// 唯一性由独立唯一索引保证（迁移路径 ADD COLUMN 不能带 UNIQUE）；插入时
+  /// 未携带则由 [insertEpubBook] 单点自动生成，调用方零改动。
+  TextColumn get uid => text().withDefault(const Constant(''))();
   TextColumn get title => text()();
   TextColumn get author => text().nullable()();
   TextColumn get coverPath => text().nullable()();
@@ -395,39 +447,42 @@ class BookTags extends Table {
   IntColumn get createdAt => integer()();
 }
 
-// ── book_tag_mappings ─────────────────────────────────────────────
-@DataClassName('BookTagMappingRow')
-class BookTagMappings extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get bookKey =>
-      text().references(EpubBooks, #bookKey, onDelete: KeyAction.cascade)();
+// ── tag_assignments（v79：五张标签映射表合一） ─────────────────────
+/// 标签 ↔ 宿主 的统一多对多映射，取代 v79 前的五张同形表
+/// （book/srt/video/collection/galgame *_tag_mappings）。标签定义仍是共享的
+/// [BookTags] 池。
+///
+/// 设计拍板（2026-08 数据层重构，用户令合并并重新决策差异）：
+///  - **[mediaKind] + [entryKey] 逻辑外键**（仓库既定惯例，同
+///    [ShelfEntries].entryKey / [MediaCollectionItems].entryKey）：epub=bookKey /
+///    srt=SrtBooks.uid（v79 起弃本机自增 int id，换跨设备稳定的 uid）/
+///    video=bookUid / collection=MediaCollections.id 字符串化 / game=Galgames.id。
+///    宿主删除经各删除路径显式清理（不再依赖五张表各自的 DB cascade），读取期
+///    过滤兜底；[tagId] 对 [BookTags] 的真 FK 保留（删标签仍 cascade）。
+///  - **[addedAt] 统一都记**：记的是「何时打的标签」这一事实，写入成本为零。
+///    旧决策让 game/collection 不带时钟（怕被误读成在同步），代价是把「不进
+///    sync」编码进表的形状里、真要同步时只能回填 0 丢失真实时间。哪些 kind
+///    参与 sync 由合并层一处写死（当前仅 epub/video；game/collection 不进
+///    live-sync 的事实不变）。旧行迁移填 0（最古 add，语义同旧 book/video 表）。
+///  - 墓碑不变：[BookTagMembershipTombstones] 本就是 (itemKey, mediaType,
+///    tagName) 通用形，天然覆盖全部 kind。
+@DataClassName('TagAssignmentRow')
+class TagAssignments extends Table {
+  /// 宿主种类：'epub' | 'srt' | 'video' | 'collection' | 'game'。
+  TextColumn get mediaKind => text()();
+
+  /// 宿主稳定身份（值域见类 doc）。
+  TextColumn get entryKey => text()();
+
   IntColumn get tagId =>
       integer().references(BookTags, #id, onDelete: KeyAction.cascade)();
 
-  /// 该映射被加入的毫秒戳（TODO tags-sync：LWW-element-set 的 add 时钟——与
-  /// [BookTagMembershipTombstones].deletedAt 比较决定 add-wins/remove-wins，防跨设备
-  /// 复活/误删）。旧行迁移填 0（最古 add，任何带时间戳的远端移除都能压过）。
+  /// 该映射被加入的毫秒戳（epub/video 域是 LWW-element-set 的 add 时钟——与
+  /// [BookTagMembershipTombstones].deletedAt 比较决定 add-wins/remove-wins）。
   IntColumn get addedAt => integer().withDefault(const Constant(0))();
 
   @override
-  List<Set<Column>> get uniqueKeys => [
-        {bookKey, tagId},
-      ];
-}
-
-// ── srt_book_tag_mappings ─────────────────────────────────────────
-@DataClassName('SrtBookTagMappingRow')
-class SrtBookTagMappings extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  IntColumn get srtBookId =>
-      integer().references(SrtBooks, #id, onDelete: KeyAction.cascade)();
-  IntColumn get tagId =>
-      integer().references(BookTags, #id, onDelete: KeyAction.cascade)();
-
-  @override
-  List<Set<Column>> get uniqueKeys => [
-        {srtBookId, tagId},
-      ];
+  Set<Column> get primaryKey => {mediaKind, entryKey, tagId};
 }
 
 // ── profiles ────────────────────────────────────────────────────────
@@ -550,45 +605,8 @@ class VideoBooks extends Table {
   Set<Column> get primaryKey => {bookUid};
 }
 
-// ── video_book_tag_mappings ───────────────────────────────────────
-// 视频书 ↔ 标签 多对多映射。标签定义复用共享的 [BookTags]，与 EPUB
-// （[BookTagMappings]）、SRT（[SrtBookTagMappings]）共用同一标签池。
-@DataClassName('VideoBookTagMappingRow')
-class VideoBookTagMappings extends Table {
-  IntColumn get id => integer().autoIncrement()();
-
-  /// 视频书外键（v57 起与被引列 [VideoBooks].bookUid 同名；旧列名 video_book_uid）。
-  TextColumn get bookUid =>
-      text().references(VideoBooks, #bookUid, onDelete: KeyAction.cascade)();
-  IntColumn get tagId =>
-      integer().references(BookTags, #id, onDelete: KeyAction.cascade)();
-
-  /// 该映射被加入的毫秒戳（LWW-element-set 的 add 时钟，见 [BookTagMappings].addedAt）。
-  IntColumn get addedAt => integer().withDefault(const Constant(0))();
-
-  @override
-  List<Set<Column>> get uniqueKeys => [
-        {bookUid, tagId},
-      ];
-}
-
-// ── collection_tag_mappings ───────────────────────────────────────
-// 合集 ↔ 标签 多对多映射。标签定义复用共享的 [BookTags]，与 EPUB
-// （[BookTagMappings]）、SRT（[SrtBookTagMappings]）、视频（[VideoBookTagMappings]）
-// 共用同一标签池。合集删除 / 标签删除经外键 cascade 自动清理本表。
-@DataClassName('CollectionTagMappingRow')
-class CollectionTagMappings extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  IntColumn get collectionId => integer()
-      .references(MediaCollections, #id, onDelete: KeyAction.cascade)();
-  IntColumn get tagId =>
-      integer().references(BookTags, #id, onDelete: KeyAction.cascade)();
-
-  @override
-  List<Set<Column>> get uniqueKeys => [
-        {collectionId, tagId},
-      ];
-}
+// （v79：video_book_tag_mappings / collection_tag_mappings 已并入
+// [TagAssignments]，旧表只活在迁移阶梯的冻结 SQL 里。）
 
 // ── favorite_words ──────────────────────────────────────────────────
 /// 查词弹窗「收藏」的词条（书内阅读与视频共用同一套，按 [sourceType] 区分）。
@@ -648,19 +666,29 @@ class MiningStatistics extends Table {
 ///
 /// setLookupCount / setMineCount 用 MAX-union 语义（非累加），为将来备份合并 / 云聚合
 /// 幂等重导留口（本期 sync 不接）。
+///
+/// [bookKey] 自 v76 起从可空改 NOT NULL DEFAULT ''，且**进唯一键**——v39 给
+/// video_watch_statistics 修的「同名不同视频互串」在本表是同一个病：旧唯一键
+/// {title, sourceType, dateKey} 不含身份，两个同名视频的查词/制卡计数合进同一行。
+/// '' = 无书查词（title 也 ''）或 v76 前无法唯一归因的遗留行；''+title 仍在唯一键内，
+/// 遗留行按 title 互不合并。迁移按 epub_books/video_books 的 title 唯一匹配回填
+/// （v39 同判据），歧义保持 ''（读取端按 title 回退归并，见 stat_shared）。
 @DataClassName('LookupMiningCounterRow')
 class LookupMiningCounters extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get bookKey => text().nullable()();
+  TextColumn get bookKey => text().withDefault(const Constant(''))();
   TextColumn get title => text().withDefault(const Constant(''))();
   TextColumn get sourceType => text()(); // 'book' | 'video'
   TextColumn get dateKey => text()();
   IntColumn get lookupCount => integer().withDefault(const Constant(0))();
   IntColumn get mineCount => integer().withDefault(const Constant(0))();
 
+  /// 列序 {title, sourceType, dateKey, bookKey}（而非 bookKey 打头）：唯一索引
+  /// 要同时服务 add*（四列全等）与 set*/按 title 删除（三列前缀）——bookKey 打头
+  /// 会让全部 title 粒度查询退化成全表扫描（sync 应用逐 record 扫两遍）。
   @override
   List<Set<Column>> get uniqueKeys => [
-        {title, sourceType, dateKey},
+        {title, sourceType, dateKey, bookKey},
       ];
 }
 
@@ -717,7 +745,7 @@ class MinedSentences extends Table {
 ///
 /// 生成行类名 `MediaSourceRow` 是 DB 层历史命名（改名需动 database.g.dart 与全部
 /// DAO 签名，不值得）；app 消费侧统一用别名 `SourceLibraryRow`
-/// （hibiki/lib/src/media/source_library/source_library_row.dart），与 UI 媒体源
+/// （fushi/lib/src/media/source_library/source_library_row.dart），与 UI 媒体源
 /// `abstract class MediaSource`（jidoujisho 血统）区分。表名/列名/落库值不动。
 @DataClassName('MediaSourceRow')
 class MediaSources extends Table {
@@ -792,10 +820,11 @@ class ShelfEntries extends Table {
   /// `galgame_library_query.dart` 的视图偏好，合集归属见 [MediaCollectionItems]）。
   TextColumn get mediaType => text()();
 
-  /// 条目稳定身份：本地 = bookKey / srtUid / videoBookUid；远端 = downloadId /
-  /// video.id。远端书下载后 bookKey 漂移 → 由 _downloadRemoteBook 改键迁移（独立
-  /// 事务），归属延续。**逻辑外键**（不对本地三表加 FK：远端 entryKey 无本地表行，
-  /// 写 FK 会在插远端归属时违反约束）。孤儿由删除路径主动清理 + 读取期过滤兜底。
+  /// 条目稳定身份（v83 起 epub 域 = epub_books.uid,导入时刻定死、改标题不再
+  /// 漂移,旧的下载后改键迁移已删）：本地 = epubUid / srtUid / videoBookUid；
+  /// 远端 = 对端 bookKey（照抄透传,本地无行）/ video.id。**逻辑外键**（不对
+  /// 本地三表加 FK：远端 entryKey 无本地表行，写 FK 会在插远端归属时违反
+  /// 约束）。孤儿由删除路径主动清理 + 读取期过滤兜底。
   TextColumn get entryKey => text()();
 
   /// 自定义排序权重（拖拽回写）。无行的旧条目退化为 importedAt 倒序（向后兼容）。
@@ -859,7 +888,7 @@ class MediaCollections extends Table {
   IntColumn get createdAt => integer()();
 
   /// 合集内手动序（成员 sortIndex）最后一次人为改动的毫秒戳（schema v40，多端库
-  /// 联合视图 §2.3）。仅 [HibikiDatabase.reorderCollectionItems]（用户拖拽落盘）
+  /// 联合视图 §2.3）。仅 [FushiDatabase.reorderCollectionItems]（用户拖拽落盘）
   /// bump 为 now；同步应用对端顺序时**镜像对端时间戳而非 now**（否则同步会伪装成
   /// 更新的人为改序，两端时间戳互相追赶）。跨端手动序整合集 LWW 的比较键：新者
   /// 整表覆盖成员 sortIndex。默认 0 = 从未手动排序，任何真实改序都能盖过它。
@@ -933,8 +962,8 @@ class MediaCollectionItems extends Table {
 // 范式仿 [BookTombstones] 单行 LWW：重复移出 upsert 刷新 deletedAt）。
 // v57 前列名 removed_at；v57 统一为 deleted_at（与 [BookTombstones] 等墓碑表对齐；
 // sync 清单 wire JSON 的 `removedAt` 键是冻结的 wire 契约，与本列名解耦）。
-// 重新加入清同键墓碑（[HibikiDatabase.addToCollection]）；重建同名合集清合集级
-// 墓碑（[HibikiDatabase.createMediaCollection]），同插书清书墓碑一律。
+// 重新加入清同键墓碑（[FushiDatabase.addToCollection]）；重建同名合集清合集级
+// 墓碑（[FushiDatabase.createMediaCollection]），同插书清书墓碑一律。
 @DataClassName('CollectionMemberTombstoneRow')
 class CollectionMemberTombstones extends Table {
   /// 合集自然键：名字。
@@ -958,14 +987,15 @@ class CollectionMemberTombstones extends Table {
       {collectionName, collectionType, mediaType, entryKey};
 }
 
-// ── hibiki_paired_peers ─────────────────────────────
-// TODO-1017 阶段1：互联（Hibiki server 局域网配对）的 per-peer 授权凭据表。每个
-// 已配对设备一行，token 是该设备访问本机 Hibiki server 的长期凭据。范式仿
-// [MediaSources]（自增 id + text().unique() 身份列 + int 毫秒戳时间列）。本阶段
-// 仅建表 + DB 方法 + 迁移，不接线 auth（阶段2 再改 server controller），空表 =
-// 无人读 = 行为零变化（Never break userspace）。
-@DataClassName('HibikiPairedPeerRow')
-class HibikiPairedPeers extends Table {
+// ── fushi_paired_peers ─────────────────────────────
+// TODO-1017 阶段1：互联（Fushi server 局域网配对）的 per-peer 授权凭据表。每个
+// 已配对设备一行，token 是该设备访问本机 Fushi server 的长期凭据。范式仿
+// [MediaSources]（自增 id + text().unique() 身份列 + int 毫秒戳时间列）。
+// SQL 表名走 drift 默认 snake_case（fushi_paired_peers）；旧名 hibiki_paired_peers
+// 由 v69 迁移一次性 ALTER TABLE RENAME（终局清算：运行时/持久化零旧名，旧名只
+// 允许活在迁移步里）。
+@DataClassName('FushiPairedPeerRow')
+class FushiPairedPeers extends Table {
   IntColumn get id => integer().autoIncrement()();
 
   /// 对端设备的稳定身份（配对握手时对端上报的 device/installation id）。
@@ -1060,8 +1090,9 @@ class BookTagMembershipTombstones extends Table {
 // int 毫秒戳）。
 @DataClassName('BookCustomCssRow')
 class BookCustomCss extends Table {
-  /// 书稳定身份（= EpubBooks.bookKey，内容派生跨设备一致）。
-  TextColumn get bookKey => text()();
+  /// 书稳定身份（v82 起 = EpubBooks.uid，本机稳定；跨设备/备份合并经
+  /// epub_books 双侧 JOIN 换键）。删书清理走 deleteEpubBook 显式级联。
+  TextColumn get bookUid => text()();
 
   /// 书内 CSS 文件相对路径（extractDir 内，正斜杠归一，同 [CssFileEntry].relativePath）。
   TextColumn get relativePath => text()();
@@ -1076,7 +1107,7 @@ class BookCustomCss extends Table {
   IntColumn get updatedAt => integer()();
 
   @override
-  Set<Column> get primaryKey => {bookKey, relativePath};
+  Set<Column> get primaryKey => {bookUid, relativePath};
 }
 
 // ── sync_deletion_tombstones ────────────────────────────────────────
@@ -1110,25 +1141,25 @@ class SyncDeletionTombstones extends Table {
 // ── revealed_images ─────────────────────────────────────────────────
 // 图片防剧透遮罩「已揭开」状态的持久真相源。per-(bookKey, imageKey)：imageKey =
 // extractDir 相对、解码、正斜杠归一的图片路径（如 `OEBPS/images/foo.jpg`）。阅读器
-// WebView（JS __hoshiImageRevealKey）与图片库 IllustrationsViewerPage（File 相对路径）
+// WebView（JS __fushiImageRevealKey）与图片库 IllustrationsViewerPage（File 相对路径）
 // 都归一到这同一个 key，实现「书内揭开↔图片库揭开」双向同步（同一张图只存一行）。
 // 揭开即 insertOnConflictUpdate 一行（幂等）；空表 = 全部保持遮罩（旧库升级后行为与旧版
 // 完全一致，Never break userspace）。删书经 EpubBooks FK cascade 连带清本表。范式仿
 // [BookCustomCss]（text 复合键 + int 毫秒戳，为将来 sync/backup 留 LWW 口）。
 @DataClassName('RevealedImageRow')
 class RevealedImages extends Table {
-  /// 书稳定身份（= EpubBooks.bookKey，内容派生跨设备一致）。删书 cascade 清本表。
-  TextColumn get bookKey =>
-      text().references(EpubBooks, #bookKey, onDelete: KeyAction.cascade)();
+  /// 书稳定身份（v82 起 = EpubBooks.uid）。无 SQL FK（uid 唯一性是 partial
+  /// 索引），删书清理走 deleteEpubBook 显式级联，守卫测试兜底。
+  TextColumn get bookUid => text()();
 
   /// 图片稳定 key（extractDir 相对、解码、正斜杠路径，如 `OEBPS/images/foo.jpg`）。
   TextColumn get imageKey => text()();
 
-  /// 揭开毫秒戳（LWW 比较键；将来跨端同步/备份合并取较新）。
+  /// 揭开毫秒戳（LWW 比较键；备份合并取较新）。
   IntColumn get revealedAt => integer()();
 
   @override
-  Set<Column> get primaryKey => {bookKey, imageKey};
+  Set<Column> get primaryKey => {bookUid, imageKey};
 }
 
 // ── collection_scrape_meta ──────────────────────────────────────────
@@ -1393,6 +1424,792 @@ class MediaImages extends Table {
       ];
 }
 
+// ── video_metadata_works（v77：视频规范作品资料）─────────────────────
+// MoviePilot 风格来源刮削的规范宿主。一行是一部作品，归属本地合集（电视剧）或
+// 独立视频（电影）二选一；旧 CollectionScrapeMeta / VideoScrapeMeta 继续作为兼容
+// 投影，避免详情页一次性迁移。整组表均是可重建、本机路径相关缓存，不进入 live-sync。
+@DataClassName('VideoMetadataWorkRow')
+class VideoMetadataWorks extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// 电视剧作品通常绑定合集；与 [bookUid] 恰好一个非空。
+  IntColumn get collectionId => integer()
+      .nullable()
+      .references(MediaCollections, #id, onDelete: KeyAction.cascade)();
+
+  /// 独立电影通常绑定视频；与 [collectionId] 恰好一个非空。
+  TextColumn get bookUid => text()
+      .nullable()
+      .references(VideoBooks, #bookUid, onDelete: KeyAction.cascade)();
+
+  /// `movie` | `tv`。值域由视频刮削域枚举维护，DB 保持前向兼容。
+  TextColumn get mediaType => text()();
+  TextColumn get title => text()();
+  TextColumn get originalTitle => text().nullable()();
+  TextColumn get overview => text().nullable()();
+  TextColumn get tagline => text().nullable()();
+  TextColumn get premiereDate => text().nullable()();
+  TextColumn get endDate => text().nullable()();
+  IntColumn get year => integer().nullable()();
+  RealColumn get rating => real().nullable()();
+  IntColumn get ratingCount => integer().nullable()();
+  IntColumn get runtimeMinutes => integer().nullable()();
+  TextColumn get contentRating => text().nullable()();
+  TextColumn get status => text().nullable()();
+  TextColumn get originalLanguage => text().nullable()();
+  TextColumn get homepage => text().nullable()();
+
+  /// TMDB 电视剧分组规则；NULL = 使用源默认季集编排。
+  TextColumn get episodeGroupId => text().nullable()();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  List<String> get customConstraints => <String>[
+        'CHECK ((collection_id IS NULL) != (book_uid IS NULL))',
+      ];
+
+  @override
+  List<Set<Column>> get uniqueKeys => <Set<Column>>[
+        <Column>{collectionId},
+        <Column>{bookUid},
+      ];
+}
+
+// ── video_metadata_seasons ──────────────────────────────────────────
+@DataClassName('VideoMetadataSeasonRow')
+class VideoMetadataSeasons extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get workId => integer()
+      .references(VideoMetadataWorks, #id, onDelete: KeyAction.cascade)();
+  IntColumn get seasonNumber => integer()();
+  TextColumn get title => text().nullable()();
+  TextColumn get overview => text().nullable()();
+  TextColumn get premiereDate => text().nullable()();
+  TextColumn get endDate => text().nullable()();
+  IntColumn get year => integer().nullable()();
+  IntColumn get episodeCount => integer().nullable()();
+  RealColumn get rating => real().nullable()();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  List<Set<Column>> get uniqueKeys => <Set<Column>>[
+        <Column>{workId, seasonNumber},
+      ];
+}
+
+// ── video_metadata_episodes ─────────────────────────────────────────
+@DataClassName('VideoMetadataEpisodeRow')
+class VideoMetadataEpisodes extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get seasonId => integer()
+      .references(VideoMetadataSeasons, #id, onDelete: KeyAction.cascade)();
+
+  /// 可选的本地分集绑定。删视频只解绑，源侧季集骨架继续保留供重链。
+  TextColumn get bookUid => text()
+      .nullable()
+      .unique()
+      .references(VideoBooks, #bookUid, onDelete: KeyAction.setNull)();
+  IntColumn get episodeNumber => integer()();
+  IntColumn get absoluteNumber => integer().nullable()();
+  TextColumn get title => text().nullable()();
+  TextColumn get overview => text().nullable()();
+  TextColumn get airDate => text().nullable()();
+  IntColumn get year => integer().nullable()();
+  RealColumn get rating => real().nullable()();
+  IntColumn get ratingCount => integer().nullable()();
+  IntColumn get runtimeMinutes => integer().nullable()();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  List<Set<Column>> get uniqueKeys => <Set<Column>>[
+        <Column>{seasonId, episodeNumber},
+      ];
+}
+
+// ── video_metadata_people / characters ──────────────────────────────
+// TEXT 主键由抓取层生成（首个可用 provider + 外部 id；无 id 时使用规范化内容 hash），
+// 让一次事务可在插入 credit 前确定引用，并允许多个 provider identity 汇聚到同一人。
+@DataClassName('VideoMetadataPersonRow')
+class VideoMetadataPeople extends Table {
+  TextColumn get personKey => text()();
+  TextColumn get name => text()();
+  TextColumn get originalName => text().nullable()();
+  TextColumn get biography => text().nullable()();
+  TextColumn get birthday => text().nullable()();
+  TextColumn get deathday => text().nullable()();
+  IntColumn get gender => integer().nullable()();
+  TextColumn get placeOfBirth => text().nullable()();
+  TextColumn get profileUrl => text().nullable()();
+  TextColumn get profilePath => text().nullable()();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => <Column>{personKey};
+}
+
+@DataClassName('VideoMetadataCharacterRow')
+class VideoMetadataCharacters extends Table {
+  TextColumn get characterKey => text()();
+  TextColumn get name => text()();
+  TextColumn get description => text().nullable()();
+  TextColumn get imageUrl => text().nullable()();
+  TextColumn get imagePath => text().nullable()();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => <Column>{characterKey};
+}
+
+// ── video_metadata_provider_identities / raw_snapshots ───────────────
+@DataClassName('VideoMetadataProviderIdentityRow')
+class VideoMetadataProviderIdentities extends Table {
+  /// 抓取层稳定键：`<owner-kind>:<owner-key>:<provider>`。
+  TextColumn get identityKey => text()();
+  IntColumn get workId => integer()
+      .nullable()
+      .references(VideoMetadataWorks, #id, onDelete: KeyAction.cascade)();
+  IntColumn get seasonId => integer()
+      .nullable()
+      .references(VideoMetadataSeasons, #id, onDelete: KeyAction.cascade)();
+  IntColumn get episodeId => integer()
+      .nullable()
+      .references(VideoMetadataEpisodes, #id, onDelete: KeyAction.cascade)();
+  TextColumn get personKey =>
+      text().nullable().references(VideoMetadataPeople, #personKey,
+          onDelete: KeyAction.cascade)();
+  TextColumn get characterKey =>
+      text().nullable().references(VideoMetadataCharacters, #characterKey,
+          onDelete: KeyAction.cascade)();
+  TextColumn get provider => text()();
+  TextColumn get externalId => text()();
+  TextColumn get externalUrl => text().nullable()();
+  BoolColumn get isPrimary => boolean().withDefault(const Constant(false))();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => <Column>{identityKey};
+
+  @override
+  List<String> get customConstraints => <String>[
+        'CHECK ((work_id IS NOT NULL) + (season_id IS NOT NULL) + '
+            '(episode_id IS NOT NULL) + (person_key IS NOT NULL) + '
+            '(character_key IS NOT NULL) = 1)',
+      ];
+
+  @override
+  List<Set<Column>> get uniqueKeys => <Set<Column>>[
+        <Column>{workId, provider},
+        <Column>{seasonId, provider},
+        <Column>{episodeId, provider},
+        <Column>{personKey, provider},
+        <Column>{characterKey, provider},
+      ];
+}
+
+@DataClassName('VideoMetadataRawSnapshotRow')
+class VideoMetadataRawSnapshots extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get identityKey =>
+      text().references(VideoMetadataProviderIdentities, #identityKey,
+          onDelete: KeyAction.cascade)();
+
+  /// `details` / `credits` / `images` / `season` / `episode` 等响应类别。
+  TextColumn get snapshotKind => text()();
+  TextColumn get locale => text().nullable()();
+  TextColumn get etag => text().nullable()();
+  TextColumn get rawJson => text()();
+  IntColumn get fetchedAt => integer()();
+  IntColumn get expiresAt => integer().nullable()();
+
+  @override
+  List<Set<Column>> get uniqueKeys => <Set<Column>>[
+        <Column>{identityKey, snapshotKind},
+      ];
+}
+
+// ── video_metadata_terms / work_terms ───────────────────────────────
+@DataClassName('VideoMetadataTermRow')
+class VideoMetadataTerms extends Table {
+  /// 抓取层稳定键：`<kind>:<normalized-name>`。
+  TextColumn get termKey => text()();
+  TextColumn get kind => text()(); // genre / studio / country / keyword
+  TextColumn get name => text()();
+  TextColumn get normalizedName => text()();
+
+  @override
+  Set<Column> get primaryKey => <Column>{termKey};
+
+  @override
+  List<Set<Column>> get uniqueKeys => <Set<Column>>[
+        <Column>{kind, normalizedName},
+      ];
+}
+
+@DataClassName('VideoMetadataWorkTermRow')
+class VideoMetadataWorkTerms extends Table {
+  IntColumn get workId => integer()
+      .references(VideoMetadataWorks, #id, onDelete: KeyAction.cascade)();
+  TextColumn get termKey => text()
+      .references(VideoMetadataTerms, #termKey, onDelete: KeyAction.cascade)();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column> get primaryKey => <Column>{workId, termKey};
+}
+
+// ── video_metadata_credits ──────────────────────────────────────────
+@DataClassName('VideoMetadataCreditRow')
+class VideoMetadataCredits extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get workId => integer()
+      .nullable()
+      .references(VideoMetadataWorks, #id, onDelete: KeyAction.cascade)();
+  IntColumn get seasonId => integer()
+      .nullable()
+      .references(VideoMetadataSeasons, #id, onDelete: KeyAction.cascade)();
+  IntColumn get episodeId => integer()
+      .nullable()
+      .references(VideoMetadataEpisodes, #id, onDelete: KeyAction.cascade)();
+  TextColumn get personKey => text().references(VideoMetadataPeople, #personKey,
+      onDelete: KeyAction.cascade)();
+  TextColumn get characterKey =>
+      text().nullable().references(VideoMetadataCharacters, #characterKey,
+          onDelete: KeyAction.setNull)();
+
+  /// director / writer / actor / guest / voice_actor / producer 等。
+  TextColumn get creditKind => text()();
+  TextColumn get roleName => text().withDefault(const Constant(''))();
+  TextColumn get department => text().nullable()();
+  TextColumn get job => text().nullable()();
+  TextColumn get language => text().nullable()();
+  TextColumn get providerCreditId => text().nullable()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+
+  @override
+  List<String> get customConstraints => <String>[
+        'CHECK ((work_id IS NOT NULL) + (season_id IS NOT NULL) + '
+            '(episode_id IS NOT NULL) = 1)',
+      ];
+
+  @override
+  List<Set<Column>> get uniqueKeys => <Set<Column>>[
+        <Column>{workId, personKey, creditKind, roleName},
+        <Column>{seasonId, personKey, creditKind, roleName},
+        <Column>{episodeId, personKey, creditKind, roleName},
+      ];
+}
+
+// ── video_metadata_images ───────────────────────────────────────────
+// 保存远端候选与已落地图片。现有 MediaImages / coverPath 仍是 UI 兼容投影。
+@DataClassName('VideoMetadataImageRow')
+class VideoMetadataImages extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get workId => integer()
+      .nullable()
+      .references(VideoMetadataWorks, #id, onDelete: KeyAction.cascade)();
+  IntColumn get seasonId => integer()
+      .nullable()
+      .references(VideoMetadataSeasons, #id, onDelete: KeyAction.cascade)();
+  IntColumn get episodeId => integer()
+      .nullable()
+      .references(VideoMetadataEpisodes, #id, onDelete: KeyAction.cascade)();
+  TextColumn get personKey =>
+      text().nullable().references(VideoMetadataPeople, #personKey,
+          onDelete: KeyAction.cascade)();
+  TextColumn get characterKey =>
+      text().nullable().references(VideoMetadataCharacters, #characterKey,
+          onDelete: KeyAction.cascade)();
+  TextColumn get provider => text()();
+
+  /// poster / backdrop / logo / disc / banner / thumb / landscape / clearart。
+  TextColumn get kind => text()();
+  IntColumn get position => integer().withDefault(const Constant(0))();
+  TextColumn get language => text().nullable()();
+  TextColumn get remoteUrl => text()();
+  TextColumn get localPath => text().nullable()();
+  IntColumn get width => integer().nullable()();
+  IntColumn get height => integer().nullable()();
+  RealColumn get rating => real().nullable()();
+  IntColumn get voteCount => integer().nullable()();
+  TextColumn get sha256 => text().nullable()();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  List<String> get customConstraints => <String>[
+        'CHECK ((work_id IS NOT NULL) + (season_id IS NOT NULL) + '
+            '(episode_id IS NOT NULL) + (person_key IS NOT NULL) + '
+            '(character_key IS NOT NULL) = 1)',
+      ];
+
+  @override
+  List<Set<Column>> get uniqueKeys => <Set<Column>>[
+        <Column>{workId, kind, position},
+        <Column>{seasonId, kind, position},
+        <Column>{episodeId, kind, position},
+        <Column>{personKey, kind, position},
+        <Column>{characterKey, kind, position},
+      ];
+}
+
+// ── video_metadata_extras（v77：作品预告片 / 花絮）────────────────────
+// 在线附件不创建 VideoBook；本地附件复用已经入库的 VideoBook 并以 bookUid 关联。
+// extraKey 由上层生成稳定身份：`local:<bookUid>` 或 `<provider>:<video-id>`。
+@DataClassName('VideoMetadataExtraRow')
+class VideoMetadataExtras extends Table {
+  TextColumn get extraKey => text()();
+  IntColumn get workId => integer()
+      .references(VideoMetadataWorks, #id, onDelete: KeyAction.cascade)();
+  TextColumn get bookUid => text()
+      .nullable()
+      .unique()
+      .references(VideoBooks, #bookUid, onDelete: KeyAction.setNull)();
+
+  /// trailer / teaser / clip / featurette / interview / behind_the_scenes /
+  /// deleted_scene / short / scene / sample / extra。
+  TextColumn get kind => text()();
+  TextColumn get sourceKind => text()(); // local / online
+  TextColumn get title => text()();
+  TextColumn get provider => text().nullable()();
+  TextColumn get providerVideoId => text().nullable()();
+  TextColumn get site => text().nullable()();
+  TextColumn get remoteUrl => text().nullable()();
+  TextColumn get thumbnailUrl => text().nullable()();
+  TextColumn get thumbnailPath => text().nullable()();
+  IntColumn get durationMs => integer().nullable()();
+  BoolColumn get official => boolean().withDefault(const Constant(false))();
+  TextColumn get language => text().nullable()();
+  TextColumn get publishedAt => text().nullable()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => <Column>{extraKey};
+
+  @override
+  List<String> get customConstraints => <String>[
+        "CHECK (source_kind IN ('local', 'online'))",
+        "CHECK ((source_kind = 'local' AND book_uid IS NOT NULL) OR "
+            "(source_kind = 'online' AND remote_url IS NOT NULL))",
+      ];
+}
+
+// ── video_source_scrape_settings / runs ─────────────────────────────
+@DataClassName('VideoSourceScrapeSettingRow')
+class VideoSourceScrapeSettings extends Table {
+  IntColumn get sourceId =>
+      integer().references(MediaSources, #id, onDelete: KeyAction.cascade)();
+
+  BoolColumn get enabled => boolean().withDefault(const Constant(true))();
+
+  /// NULL = 继承全局默认；非空 = tmdb / douban / bangumi / anilist。
+  TextColumn get providerOverride => text().nullable()();
+  BoolColumn get autoAfterScan =>
+      boolean().withDefault(const Constant(false))();
+  BoolColumn get writeNfo => boolean().withDefault(const Constant(true))();
+  BoolColumn get writeImages => boolean().withDefault(const Constant(true))();
+  BoolColumn get fanartEnabled => boolean().withDefault(const Constant(true))();
+  TextColumn get nfoPolicy =>
+      text().withDefault(const Constant('missingOnly'))();
+  TextColumn get imagePolicy =>
+      text().withDefault(const Constant('missingOnly'))();
+  BoolColumn get allowExternalOverwrite =>
+      boolean().withDefault(const Constant(false))();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => <Column>{sourceId};
+}
+
+@DataClassName('VideoSourceScrapeRunRow')
+class VideoSourceScrapeRuns extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// NULL 表示「全部来源」批次，或来源行删除后保留的审计摘要。
+  IntColumn get sourceId => integer()
+      .nullable()
+      .references(MediaSources, #id, onDelete: KeyAction.setNull)();
+  TextColumn get scope => text()(); // source / all
+  TextColumn get status => text()(); // queued / running / completed / ...
+  TextColumn get provider => text().nullable()();
+  TextColumn get phase => text().nullable()();
+  IntColumn get totalWorks => integer().withDefault(const Constant(0))();
+  IntColumn get processedWorks => integer().withDefault(const Constant(0))();
+  IntColumn get succeededWorks => integer().withDefault(const Constant(0))();
+  IntColumn get failedWorks => integer().withDefault(const Constant(0))();
+  IntColumn get pendingConfirmations =>
+      integer().withDefault(const Constant(0))();
+  TextColumn get currentWorkTitle => text().nullable()();
+  TextColumn get summaryJson => text().nullable()();
+  TextColumn get lastError => text().nullable()();
+  IntColumn get startedAt => integer()();
+  IntColumn get updatedAt => integer()();
+  IntColumn get finishedAt => integer().nullable()();
+}
+
+// ── video_sidecar_artifacts ─────────────────────────────────────────
+@DataClassName('VideoSidecarArtifactRow')
+class VideoSidecarArtifacts extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// 来源移除只解除关联；媒体旁已有文件及本行 hash/所有权记录全部保留。
+  IntColumn get sourceId => integer()
+      .nullable()
+      .references(MediaSources, #id, onDelete: KeyAction.setNull)();
+  IntColumn get runId => integer()
+      .nullable()
+      .references(VideoSourceScrapeRuns, #id, onDelete: KeyAction.setNull)();
+  IntColumn get workId => integer()
+      .nullable()
+      .references(VideoMetadataWorks, #id, onDelete: KeyAction.setNull)();
+  IntColumn get seasonId => integer()
+      .nullable()
+      .references(VideoMetadataSeasons, #id, onDelete: KeyAction.setNull)();
+  IntColumn get episodeId => integer()
+      .nullable()
+      .references(VideoMetadataEpisodes, #id, onDelete: KeyAction.setNull)();
+  TextColumn get artifactKind => text()(); // nfo / poster / backdrop / ...
+
+  /// 规范绝对路径；同一个物理 sidecar 只保留一条所有权记录。
+  TextColumn get path => text().unique()();
+  TextColumn get sha256 => text()();
+  IntColumn get fileSize => integer().nullable()();
+  TextColumn get generatorVersion => text()();
+  TextColumn get writePolicy => text()();
+  IntColumn get createdAt => integer()();
+  IntColumn get updatedAt => integer()();
+
+  /// owner 被删后三个 FK 可全部 setNull，artifact 审计行仍有效；但任一时刻不能同时
+  /// 冒充多个层级的资产。
+  @override
+  List<String> get customConstraints => <String>[
+        'CHECK ((work_id IS NOT NULL) + (season_id IS NOT NULL) + '
+            '(episode_id IS NOT NULL) <= 1)',
+      ];
+}
+
+// ── durable video download pipeline（v78）────────────────────────────
+//
+// 下载任务是跨进程、跨重启的工作流真相源。`lifecycle` 只表达任务是否还能推进，
+// `stage` 只表达当前推进到哪一步；失败/需关注不能靠把 stage 改成 `failed` 来编码，
+// 否则恢复时无法知道该从下载、字幕还是整理阶段继续。
+abstract final class VideoDownloadJobLifecycle {
+  static const String active = 'active';
+  static const String needsAttention = 'needsAttention';
+  static const String completed = 'completed';
+  static const String failed = 'failed';
+  static const String cancelled = 'cancelled';
+}
+
+abstract final class VideoDownloadJobStage {
+  static const String enqueue = 'enqueue';
+  static const String download = 'download';
+  static const String organize = 'organize';
+  static const String subtitle = 'subtitle';
+  static const String import = 'import';
+  static const String scrape = 'scrape';
+}
+
+@DataClassName('VideoDownloadJobRow')
+class VideoDownloadJobs extends Table {
+  /// 调用方生成的稳定任务 id；不能用自增 id 充当跨崩溃幂等键。
+  TextColumn get jobId => text()();
+
+  /// 资源来源与用户选中的来源条目身份（例如 provider + torrent item id）。
+  TextColumn get resourceProvider => text()();
+  TextColumn get selectedResourceId => text()();
+
+  /// 允许持久化的下载 locator 只有 magnet。Torznab 临时 HTTP/metainfo URL 含短期
+  /// token，绝不能落库；需要时用 selectedResourceId 向 provider 重新 resolve。
+  TextColumn get magnetUri => text().nullable()();
+  TextColumn get resourceTitle => text().nullable()();
+
+  /// torrent 在后端确认 enqueue 后才一定可得，故保持 nullable。
+  TextColumn get torrentHash => text().nullable()();
+
+  /// 发现/元数据身份。两列必须同时为空或同时有值。
+  TextColumn get metadataProvider => text().nullable()();
+  TextColumn get externalId => text().nullable()();
+  TextColumn get mediaKind => text()();
+  TextColumn get discoveryCategory => text().nullable()();
+  TextColumn get title => text()();
+  IntColumn get year => integer().nullable()();
+  IntColumn get season => integer().nullable()();
+  TextColumn get coverUrl => text().nullable()();
+
+  /// 后端连接身份与去重身份。敏感凭据不进数据库；backendProfileId 是下载配置档
+  /// 的字符串身份，不是 Hibiki 用户 Profile，故没有 FK 到 Profiles。
+  TextColumn get backendKind => text()();
+  TextColumn get backendTaskId => text().nullable()();
+  TextColumn get backendProfileId => text().nullable()();
+  TextColumn get fingerprint => text()();
+  TextColumn get category => text().nullable()();
+
+  /// 目标来源库/合集被删时任务审计仍保留，只解除绑定。
+  IntColumn get targetSourceId => integer()
+      .nullable()
+      .references(MediaSources, #id, onDelete: KeyAction.setNull)();
+  IntColumn get collectionId => integer()
+      .nullable()
+      .references(MediaCollections, #id, onDelete: KeyAction.setNull)();
+  TextColumn get organizationPolicy =>
+      text().withDefault(const Constant('library'))();
+  TextColumn get subtitlePolicy =>
+      text().withDefault(const Constant('bestEffort'))();
+
+  /// 下载后端观察到的保存根与最终应落到 source library 下的相对根。
+  TextColumn get observedSavePath => text().nullable()();
+  TextColumn get targetRelativeRoot => text().nullable()();
+
+  TextColumn get lifecycle =>
+      text().withDefault(const Constant(VideoDownloadJobLifecycle.active))();
+  TextColumn get stage =>
+      text().withDefault(const Constant(VideoDownloadJobStage.enqueue))();
+  RealColumn get stageProgress => real().withDefault(const Constant(0.0))();
+  IntColumn get priority => integer().withDefault(const Constant(0))();
+
+  /// attemptCount 只在可重试错误时递增；正常轮询/lease claim 不消耗重试预算。
+  IntColumn get attemptCount => integer().withDefault(const Constant(0))();
+  IntColumn get maxAttempts => integer().withDefault(const Constant(3))();
+  IntColumn get nextAttemptAt => integer().nullable()();
+  TextColumn get claimedBy => text().nullable()();
+  IntColumn get claimExpiresAt => integer().nullable()();
+  TextColumn get lastError => text().nullable()();
+
+  IntColumn get createdAt => integer()();
+  IntColumn get updatedAt => integer()();
+  IntColumn get completedAt => integer().nullable()();
+
+  @override
+  Set<Column> get primaryKey => <Column>{jobId};
+
+  @override
+  List<String> get customConstraints => <String>[
+        "CHECK (job_id != '' AND resource_provider != '' AND "
+            "selected_resource_id != '' AND media_kind != '' AND title != '' "
+            "AND backend_kind != '' AND fingerprint != '')",
+        'CHECK ((metadata_provider IS NULL) = (external_id IS NULL))',
+        "CHECK (lifecycle IN ('active', 'needsAttention', 'completed', "
+            "'failed', 'cancelled'))",
+        "CHECK (stage IN ('enqueue', 'download', 'organize', 'subtitle', "
+            "'import', 'scrape'))",
+        'CHECK (stage_progress >= 0.0 AND stage_progress <= 1.0)',
+        'CHECK (attempt_count >= 0 AND max_attempts > 0)',
+        'CHECK (year IS NULL OR year >= 0)',
+        'CHECK (season IS NULL OR season >= 0)',
+        "CHECK (magnet_uri IS NULL OR magnet_uri LIKE 'magnet:%')",
+        'CHECK ((claimed_by IS NULL) = (claim_expires_at IS NULL))',
+        "CHECK (claimed_by IS NULL OR lifecycle = 'active')",
+      ];
+}
+
+abstract final class VideoDownloadJobFileStatus {
+  static const String pending = 'pending';
+  static const String downloading = 'downloading';
+  static const String downloaded = 'downloaded';
+  static const String organized = 'organized';
+  static const String imported = 'imported';
+  static const String skipped = 'skipped';
+  static const String failed = 'failed';
+}
+
+@DataClassName('VideoDownloadJobFileRow')
+class VideoDownloadJobFiles extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get jobId => text()
+      .references(VideoDownloadJobs, #jobId, onDelete: KeyAction.cascade)();
+  IntColumn get backendFileIndex => integer().nullable()();
+  TextColumn get originalRelativePath => text()();
+  TextColumn get currentRelativePath => text()();
+  TextColumn get targetRelativePath => text().nullable()();
+  TextColumn get finalAbsolutePath => text().nullable()();
+  TextColumn get kind => text().withDefault(const Constant('other'))();
+  IntColumn get season => integer().nullable()();
+  IntColumn get episode => integer().nullable()();
+  IntColumn get sizeBytes => integer().nullable()();
+  BoolColumn get selected => boolean().withDefault(const Constant(true))();
+  TextColumn get status =>
+      text().withDefault(const Constant(VideoDownloadJobFileStatus.pending))();
+  TextColumn get error => text().nullable()();
+  IntColumn get createdAt => integer()();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  List<Set<Column>> get uniqueKeys => <Set<Column>>[
+        <Column>{jobId, originalRelativePath},
+        <Column>{jobId, backendFileIndex},
+      ];
+
+  @override
+  List<String> get customConstraints => <String>[
+        "CHECK (original_relative_path != '' AND current_relative_path != '')",
+        "CHECK (kind IN ('video', 'subtitle', 'extra', 'other'))",
+        "CHECK (status IN ('pending', 'downloading', 'downloaded', "
+            "'organized', 'imported', 'skipped', 'failed'))",
+        'CHECK (backend_file_index IS NULL OR backend_file_index >= 0)',
+        'CHECK (season IS NULL OR season >= 0)',
+        'CHECK (episode IS NULL OR episode >= 0)',
+        'CHECK (size_bytes IS NULL OR size_bytes >= 0)',
+      ];
+}
+
+abstract final class VideoDownloadJobSubtitleStatus {
+  static const String pending = 'pending';
+  static const String resolving = 'resolving';
+  static const String staged = 'staged';
+  static const String placed = 'placed';
+  static const String unavailable = 'unavailable';
+  static const String skipped = 'skipped';
+  static const String failed = 'failed';
+}
+
+@DataClassName('VideoDownloadJobSubtitleRow')
+class VideoDownloadJobSubtitles extends Table {
+  TextColumn get subtitleId => text()();
+  TextColumn get jobId => text()
+      .references(VideoDownloadJobs, #jobId, onDelete: KeyAction.cascade)();
+  IntColumn get jobFileId => integer()
+      .nullable()
+      .references(VideoDownloadJobFiles, #id, onDelete: KeyAction.setNull)();
+  TextColumn get provider => text()();
+  TextColumn get selectedSubtitleId => text().nullable()();
+  TextColumn get language => text().nullable()();
+  IntColumn get season => integer().nullable()();
+  IntColumn get episode => integer().nullable()();
+  TextColumn get originalFileName => text().nullable()();
+  TextColumn get stagedPath => text().nullable()();
+  TextColumn get finalPath => text().nullable()();
+  TextColumn get status => text()
+      .withDefault(const Constant(VideoDownloadJobSubtitleStatus.pending))();
+  TextColumn get error => text().nullable()();
+  IntColumn get createdAt => integer()();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => <Column>{subtitleId};
+
+  @override
+  List<String> get customConstraints => <String>[
+        "CHECK (subtitle_id != '' AND provider != '')",
+        "CHECK (status IN ('pending', 'resolving', 'staged', 'placed', "
+            "'unavailable', 'skipped', 'failed'))",
+        'CHECK (season IS NULL OR season >= 0)',
+        'CHECK (episode IS NULL OR episode >= 0)',
+      ];
+}
+
+@DataClassName('VideoDownloadSubscriptionRow')
+class VideoDownloadSubscriptions extends Table {
+  TextColumn get subscriptionId => text()();
+  TextColumn get resourceProvider => text()();
+  TextColumn get metadataProvider => text().nullable()();
+  TextColumn get externalId => text().nullable()();
+  TextColumn get mediaKind => text()();
+  TextColumn get discoveryCategory => text().nullable()();
+  TextColumn get title => text()();
+  IntColumn get year => integer().nullable()();
+  IntColumn get season => integer().nullable()();
+  TextColumn get coverUrl => text().nullable()();
+
+  /// searchQuery + filterJson 是来源无关的订阅选择快照；filterJson 禁止放凭据。
+  TextColumn get searchQuery => text()();
+  TextColumn get filterJson => text().withDefault(const Constant('{}'))();
+  TextColumn get mode => text().withDefault(const Constant('ongoing'))();
+  IntColumn get startAfterEpisode => integer().nullable()();
+
+  TextColumn get backendKind => text()();
+  TextColumn get backendProfileId => text().nullable()();
+  TextColumn get fingerprint => text()();
+  TextColumn get category => text().nullable()();
+  IntColumn get targetSourceId => integer()
+      .nullable()
+      .references(MediaSources, #id, onDelete: KeyAction.setNull)();
+  IntColumn get collectionId => integer()
+      .nullable()
+      .references(MediaCollections, #id, onDelete: KeyAction.setNull)();
+  TextColumn get organizationPolicy =>
+      text().withDefault(const Constant('library'))();
+  TextColumn get subtitlePolicy =>
+      text().withDefault(const Constant('bestEffort'))();
+
+  BoolColumn get enabled => boolean().withDefault(const Constant(true))();
+  IntColumn get nextCheckAt => integer().nullable()();
+  TextColumn get claimedBy => text().nullable()();
+  IntColumn get claimExpiresAt => integer().nullable()();
+  IntColumn get retryCount => integer().withDefault(const Constant(0))();
+  IntColumn get lastCheckedAt => integer().nullable()();
+  IntColumn get lastMatchedAt => integer().nullable()();
+  IntColumn get fulfilledAt => integer().nullable()();
+  TextColumn get lastError => text().nullable()();
+  IntColumn get createdAt => integer()();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => <Column>{subscriptionId};
+
+  @override
+  List<String> get customConstraints => <String>[
+        "CHECK (subscription_id != '' AND resource_provider != '' AND "
+            "media_kind != '' AND title != '' AND search_query != '' AND "
+            "backend_kind != '' AND fingerprint != '')",
+        'CHECK ((metadata_provider IS NULL) = (external_id IS NULL))',
+        "CHECK (mode IN ('oneShot', 'ongoing'))",
+        'CHECK (year IS NULL OR year >= 0)',
+        'CHECK (season IS NULL OR season >= 0)',
+        'CHECK (start_after_episode IS NULL OR start_after_episode >= 0)',
+        'CHECK (retry_count >= 0)',
+        'CHECK ((claimed_by IS NULL) = (claim_expires_at IS NULL))',
+        "CHECK (fulfilled_at IS NULL OR (mode = 'oneShot' AND enabled = 0))",
+      ];
+}
+
+abstract final class VideoDownloadSubscriptionItemStatus {
+  static const String discovered = 'discovered';
+  static const String queued = 'queued';
+  static const String processed = 'processed';
+  static const String skipped = 'skipped';
+  static const String failed = 'failed';
+}
+
+@DataClassName('VideoDownloadSubscriptionItemRow')
+class VideoDownloadSubscriptionItems extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get subscriptionId =>
+      text().references(VideoDownloadSubscriptions, #subscriptionId,
+          onDelete: KeyAction.cascade)();
+  TextColumn get logicalItemKey => text()();
+  TextColumn get resourceProvider => text()();
+  TextColumn get selectedResourceId => text()();
+  TextColumn get torrentHash => text().nullable()();
+  TextColumn get title => text()();
+  IntColumn get season => integer().nullable()();
+  IntColumn get episode => integer().nullable()();
+  IntColumn get publishedAt => integer().nullable()();
+  TextColumn get jobId => text()
+      .nullable()
+      .references(VideoDownloadJobs, #jobId, onDelete: KeyAction.setNull)();
+  TextColumn get status => text().withDefault(
+      const Constant(VideoDownloadSubscriptionItemStatus.discovered))();
+  TextColumn get error => text().nullable()();
+  IntColumn get discoveredAt => integer()();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  List<Set<Column>> get uniqueKeys => <Set<Column>>[
+        <Column>{subscriptionId, logicalItemKey},
+        <Column>{subscriptionId, resourceProvider, selectedResourceId},
+      ];
+
+  @override
+  List<String> get customConstraints => <String>[
+        "CHECK (logical_item_key != '' AND resource_provider != '' AND "
+            "selected_resource_id != '' AND title != '')",
+        "CHECK (status IN ('discovered', 'queued', 'processed', 'skipped', "
+            "'failed'))",
+        'CHECK (season IS NULL OR season >= 0)',
+        'CHECK (episode IS NULL OR episode >= 0)',
+      ];
+}
+
 // ── galgames ────────────────────────────────────────────────────────
 /// v55（游戏库对齐 ReinaManager，见 `docs/design/galgame-library-reina-parity.md`）：
 /// galgame 游戏库的持久真相源，取代旧的偏好表单一 JSON key `galgame_library`
@@ -1437,6 +2254,16 @@ class Galgames extends Table {
   /// 由启动路径读一次。存稳定字符串而不是枚举 index：加档位不改既有值的含义，
   /// 且脏值/未来值读到时解析层直接回落关闭（不会因为 index 越界崩）。
   TextColumn get upscalingMode => text().withDefault(const Constant(''))();
+
+  /// 该游戏的「日语区域（转区）」档位：`'auto'` / `'on'` / `'off'`（BUG-1477）。
+  ///
+  /// 空串 = 用户没设过，解析层回落 `auto`（**不是** off —— 转区是用户明确要过的
+  /// 功能，老行/老用户不能因为加了这一列就被莫名关掉）。
+  ///
+  /// 与 [upscalingMode] / [launchArgs] 同类，都是「用户为该游戏设的启动期配置」。
+  /// 为什么必须每游戏一档而不是全局开关：同一个库里日文原版和汉化版并存，
+  /// 汉化版转区会直接闪退，日文原版不转区会乱码，全局值两边都不对。
+  TextColumn get japaneseLocaleMode => text().withDefault(const Constant(''))();
 
   /// 本地封面绝对路径；null = 用默认手柄图标。
   TextColumn get coverPath => text().nullable()();
@@ -1534,42 +2361,14 @@ class GalgameSessions extends Table {
   TextColumn get dateKey => text()();
 }
 
-// ── galgame_tag_mappings ────────────────────────────────────────────
-/// v59（BUG-1113「游戏没有标签」）：游戏 ↔ **用户标签** 多对多映射。标签定义复用
-/// 共享的 [BookTags]，与 EPUB（[BookTagMappings]）、SRT（[SrtBookTagMappings]）、
-/// 视频（[VideoBookTagMappings]）、合集（[CollectionTagMappings]）**同一个标签池**
-/// ——这正是本表存在的理由：上层筛选栏 / 标签管理页早已是四种媒体共用，唯独游戏
-/// 没有落表，于是接不进来（不是 UI 忘接，是 schema 缺口）。
-///
-/// 与游戏**元数据标签**（bgm/vndb 刮削来的字符串，存 [GalgameSources].dataJson +
-/// [Galgames].customDataJson，由 `galgame_library_query.dart` 按名筛选）是两个正交
-/// 维度，刻意不合并：元数据标签是外部事实、动辄上百个且随刮削变动，塞进用户标签池
-/// 会污染书/视频共享的那份手工标签。
-///
-/// **刻意不带 `addedAt`**（对比 [BookTagMappings] / [VideoBookTagMappings]）：那一列
-/// 是 LWW-element-set 的 add 时钟，只为跨端同步裁决而存在。游戏身份 [Galgames].id 是
-/// 添加时刻微秒戳，**本机局域身份**——`galgames` 整张表既不进 live-sync 清单也不进
-/// 备份合并导入，故游戏标签同样不跨端传播、不需要墓碑（[BookTagMembershipTombstones]
-/// 不覆盖游戏）。全量备份恢复走整库文件拷贝，本表随之原样还原。加一个没有消费者的
-/// 时钟列只会让人误以为它在同步。同款取舍见 [CollectionTagMappings]。
-///
-/// 删游戏 / 删标签经外键 cascade 自动清理本表。
-@DataClassName('GalgameTagMappingRow')
-class GalgameTagMappings extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get gameId =>
-      text().references(Galgames, #id, onDelete: KeyAction.cascade)();
-  IntColumn get tagId =>
-      integer().references(BookTags, #id, onDelete: KeyAction.cascade)();
-
-  @override
-  List<Set<Column>> get uniqueKeys => [
-        {gameId, tagId},
-      ];
-}
+// （v79：galgame_tag_mappings 已并入 [TagAssignments]。与游戏**元数据标签**
+// （bgm/vndb 刮削字符串，存 [GalgameSources].dataJson + [Galgames].customDataJson）
+// 仍是两条正交轴，刻意不合并：元数据标签是外部事实、动辄上百个且随刮削变动，
+// 塞进用户标签池会污染书/视频共享的那份手工标签。游戏标签依旧不进 live-sync /
+// 备份合并导入（合并层按 kind 过滤），全量备份恢复走整库文件拷贝原样还原。）
 
 // ── manga_extension_stores ──────────────────────────────────────────
-/// v65：用户自行添加的 Mihon 扩展仓库。Hibiki 不预置第三方仓库。
+/// v65：用户自行添加的 Mihon 扩展仓库。Fushi 不预置第三方仓库。
 /// （本迁移在 PR 分支上先后写作 v63 / v64，两次都与 develop 已落地的迁移撞号，
 ///  最终顺延到 v65；见 database.dart 的 `if (from < 65)` 块。）
 @DataClassName('MangaExtensionStoreRow')

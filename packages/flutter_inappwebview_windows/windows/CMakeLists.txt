@@ -188,16 +188,28 @@ endif()
 # So, creating here a custom function to apply the standard settings without the /WX flag.
 function(FLUTTER_INAPPWEBVIEW_WINDOWS_APPLY_STANDARD_SETTINGS TARGET)
   target_compile_features(${TARGET} PUBLIC cxx_std_17)
-  target_compile_options(${TARGET} PRIVATE /W4 /wd"4100")
+  target_compile_options(${TARGET} PRIVATE /W4 /wd4100)
   target_compile_options(${TARGET} PRIVATE /EHsc)
   target_compile_definitions(${TARGET} PRIVATE "_HAS_EXCEPTIONS=0")
   target_compile_definitions(${TARGET} PRIVATE "$<$<CONFIG:Debug>:_DEBUG>")
 endfunction()
 flutter_inappwebview_windows_apply_standard_settings(${PLUGIN_NAME})
 
-target_link_libraries(${PLUGIN_NAME} PRIVATE ${CMAKE_BINARY_DIR}/packages/Microsoft.Web.WebView2/build/native/Microsoft.Web.WebView2.targets)
-target_link_libraries(${PLUGIN_NAME} PRIVATE ${CMAKE_BINARY_DIR}/packages/Microsoft.Windows.ImplementationLibrary/build/native/Microsoft.Windows.ImplementationLibrary.targets)
-target_link_libraries(${PLUGIN_NAME} PRIVATE ${CMAKE_BINARY_DIR}/packages/nlohmann.json/build/native/nlohmann.json.targets)
+if(CMAKE_GENERATOR MATCHES "^Visual Studio")
+  target_link_libraries(${PLUGIN_NAME} PRIVATE ${CMAKE_BINARY_DIR}/packages/Microsoft.Web.WebView2/build/native/Microsoft.Web.WebView2.targets)
+  target_link_libraries(${PLUGIN_NAME} PRIVATE ${CMAKE_BINARY_DIR}/packages/Microsoft.Windows.ImplementationLibrary/build/native/Microsoft.Windows.ImplementationLibrary.targets)
+  target_link_libraries(${PLUGIN_NAME} PRIVATE ${CMAKE_BINARY_DIR}/packages/nlohmann.json/build/native/nlohmann.json.targets)
+else()
+  # NuGet .targets files only have meaning to MSBuild.  Keep the same native
+  # WebView2/WIL inputs available when a local Windows build uses Ninja.
+  target_include_directories(${PLUGIN_NAME} PRIVATE
+    ${CMAKE_BINARY_DIR}/packages/Microsoft.Web.WebView2/build/native/include
+    ${CMAKE_BINARY_DIR}/packages/Microsoft.Windows.ImplementationLibrary/include
+    ${CMAKE_BINARY_DIR}/packages/nlohmann.json/build/native/include)
+  target_link_libraries(${PLUGIN_NAME} PRIVATE
+    ${CMAKE_BINARY_DIR}/packages/Microsoft.Web.WebView2/build/native/x64/WebView2LoaderStatic.lib
+    version.lib)
+endif()
 
 # Symbols are hidden by default to reduce the chance of accidental conflicts
 # between plugins. This should not be removed; any symbols that should be

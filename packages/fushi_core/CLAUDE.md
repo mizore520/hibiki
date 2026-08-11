@@ -1,22 +1,22 @@
-[根目录](../../CLAUDE.md) > [packages](../) > **hibiki_core**
+[根目录](../../CLAUDE.md) > [packages](../) > **fushi_core**
 
-# hibiki_core
+# fushi_core
 
 ## 模块职责
 
-共享核心模块：定义 Drift SQLite 数据库 schema（53 张表，当前 schemaVersion=63）、表迁移逻辑、偏好键值编解码器（PrefCodec）、语言配置模型和文本选区模型。是所有其他 packages 的基础依赖。
+共享核心模块：定义 Drift SQLite 数据库 schema（77 张表，当前 schemaVersion=82；以 `database.dart` 的 `schemaVersion` getter 与 `@DriftDatabase(tables: [...])` 注册清单为准，本文数字仅作快照。v82：ReaderPositions/Bookmarks/BookCustomCss/RevealedImages 书键从 bookKey 切稳定 uid）、表迁移逻辑、偏好键值编解码器（PrefCodec）、语言配置模型和文本选区模型。是所有其他 packages 的基础依赖。
 
 ## 入口与启动
 
-- 库入口：`lib/hibiki_core.dart`
-- 数据库在 `lib/src/database/database.dart` 中通过 `HibikiDatabase(dbDirectory)` 构造，内部使用 `NativeDatabase.createInBackground()` 在后台线程打开 `hibiki.db`。
+- 库入口：`lib/fushi_core.dart`
+- 数据库在 `lib/src/database/database.dart` 中通过 `FushiDatabase(dbDirectory)` 构造，内部使用 `NativeDatabase.createInBackground()` 在后台线程打开 `fushi.db`。
 - PRAGMA 配置：`journal_mode=WAL`，`foreign_keys=ON`。
 
 ## 对外接口
 
-- `HibikiDatabase` -- 全部数据访问层，提供 media items / anki mappings / search history / audiobooks / audio cues / srt books / reader positions / bookmarks / reading statistics / preferences / dictionary metadata / epub books / book tags / profiles 等完整 CRUD API。
+- `FushiDatabase` -- 全部数据访问层，提供 media items / anki mappings / search history / audiobooks / audio cues / srt books / reader positions / bookmarks / reading statistics / preferences / dictionary metadata / epub books / book tags / profiles 等完整 CRUD API。
 - `PrefCodec` -- 偏好值的 `encode<T>` / `decode<T>` 泛型编解码。
-- `HibikiTextSelection` -- 跨模块共享的文本选区数据模型。
+- `FushiTextSelection` -- 跨模块共享的文本选区数据模型。
 
 ## 关键依赖与配置
 
@@ -26,11 +26,11 @@
 
 ## 数据模型
 
-53 张 Drift 表（按功能分组，以 `database.dart` 的 `@DriftDatabase(tables: [...])` 注册清单为准）：
+77 张 Drift 表（按功能分组，以 `database.dart` 的 `@DriftDatabase(tables: [...])` 注册清单为准）：
 
 | 分组 | 表名 |
 |------|------|
-| 媒体 | `MediaItems` |
+| 媒体 | `MediaOpenHistory`（v78 最近打开流，取代 jidoujisho 血统的 `MediaItems`） |
 | 来源库 | `MediaSources` |
 | Anki | `AnkiMappings` |
 | 搜索 | `SearchHistoryItems` |
@@ -42,14 +42,14 @@
 | 剪贴板/活动 | `ClipboardHistory`, `ActivityEvents` |
 | 词典 | `DictionaryMetadata`, `DictionaryHistory` |
 | EPUB | `EpubBooks` |
-| 标签 | `BookTags`, `BookTagMappings`, `SrtBookTagMappings`, `CollectionTagMappings` |
+| 标签 | `BookTags`, `TagAssignments`（v77 五张映射表合一，宿主逻辑外键） |
 | Profile | `Profiles`, `ProfileSettings`, `MediaTypeProfiles`, `BookProfiles` |
 | 同步基线 | `SyncBaselines` |
-| 视频 | `VideoBooks`, `VideoBookTagMappings`, `VideoWatchStatistics`, `VideoHourlyLogs` |
+| 视频 | `VideoBooks`, `VideoWatchStatistics`, `VideoHourlyLogs` |
 | 收藏/制卡 | `FavoriteWords`, `MiningStatistics`, `MinedSentences`, `LookupMiningCounters` |
 | 合集/系列 | `MediaCollections`, `MediaCollectionItems`, `Series`, `ShelfEntries` |
-| 互联 | `HibikiPairedPeers` |
-| 游戏库 | `Galgames`, `GalgameSources`, `GalgameSessions`, `GalgameTagMappings` |
+| 互联 | `FushiPairedPeers` |
+| 游戏库 | `Galgames`, `GalgameSources`, `GalgameSessions` |
 | 删除墓碑 | `BookTombstones`, `StatisticsTombstones`, `CollectionMemberTombstones`, `BookTagMembershipTombstones`, `SyncDeletionTombstones` |
 
 新增表（相对旧文档的 28 张补齐的 18 张）用途：
@@ -65,7 +65,7 @@
 - `MediaCollectionItems` -- 合集成员引用（复合键按合集去重，同一条目可属多个合集）。
 - `CollectionMemberTombstones` -- 合集成员移出/合集删除墓碑，防跨端并集同步复活。
 - `CollectionTagMappings` -- 合集 ↔ 标签 多对多映射（复用共享 `BookTags` 标签池）。
-- `HibikiPairedPeers` -- 互联（局域网配对）的 per-peer 授权凭据表，token 明文列存（红线：不进日志/明文导出）。
+- `FushiPairedPeers` -- 互联（局域网配对）的 per-peer 授权凭据表，token 明文列存（红线：不进日志/明文导出）。
 - `BookTombstones` -- 已删书墓碑，供备份「合并导入」跳过、避免复活已删的书。
 - `StatisticsTombstones` -- per-book/video 统计删除墓碑，防 MAX-union 同步/备份把删掉的统计加回。
 - `BookTagMembershipTombstones` -- 书/视频标签移除墓碑（LWW-element-set add/remove 裁决，防跨端复活/误删）。
@@ -81,7 +81,7 @@
 
 ## 测试与质量
 
-测试位于 `hibiki/test/database/` 下，覆盖：
+测试位于 `fushi/test/database/` 下，覆盖：
 - `migration_test.dart` -- 迁移路径验证
 - `preferences_test.dart` / `pref_codec_test.dart` -- 偏好读写
 - `epub_books_test.dart` / `audiobooks_test.dart` / `media_items_test.dart` 等 -- 各表 CRUD
@@ -91,12 +91,12 @@
 
 ## 相关文件清单
 
-- `lib/hibiki_core.dart` -- 库入口
+- `lib/fushi_core.dart` -- 库入口
 - `lib/src/database/database.dart` -- 数据库定义与 CRUD
 - `lib/src/database/database.g.dart` -- 生成文件（勿手动修改）
 - `lib/src/database/tables.dart` -- 全部表定义
 - `lib/src/database/pref_codec.dart` -- 偏好编解码
-- `lib/src/models/hibiki_text_selection.dart` -- 文本选区模型
+- `lib/src/models/fushi_text_selection.dart` -- 文本选区模型
 
 ## 变更记录 (Changelog)
 

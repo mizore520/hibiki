@@ -1,4 +1,4 @@
-# hibiki_voice_hook —— galgame 引擎级 voice hook（C 阶段，隔离 helper）
+# fushi_voice_hook —— galgame 引擎级 voice hook（C 阶段，隔离 helper）
 
 本目录是主 app [`hajisensai/hibiki`](https://github.com/hajisensai/hibiki) 的 native 采集组件。galgame 一键制卡（[docs/specs/galgame-mining](https://github.com/hajisensai/hibiki/blob/develop/docs/specs/galgame-mining/design.md)）C 阶段：从游戏引擎在**混音之前**截取角色语音的干净音轨，回传 Hibiki 做一键制卡。
 
@@ -42,7 +42,7 @@ python tests/engine_support_manifest_test.py
 ./tool/galhook.ps1 explain-diag --hookdiag 0x0 --hookio 0x0 --lunadiag 0x0
 ./tool/galhook.ps1 check --dry-run --native
 ./tool/galhook.ps1 probe C:\game\game.exe --output probe.zip
-./tool/galhook.ps1 new engine_id --hibiki-root C:\src\hibiki
+./tool/galhook.ps1 new engine_id --fushi-root C:\src\hibiki
 ./tool/galhook.ps1 replay tests/fixtures/workflow_replay.json
 ```
 
@@ -129,7 +129,7 @@ Hibiki 的 launch 与已运行窗口 attach 路径都会为这类目标自动打
 正式版 `SiglusEngine.exe` 使用 x86 injector。`--launch` 会识别该文件名，先让 Enigma 保护壳正常初始化，等游戏窗口出现后再自动附着（对其它引擎仍是 CREATE_SUSPENDED 早注入）；也可对用户已打开的游戏使用 `--pid`。hook 跟踪引擎之后读取的 `koe/*.ovk`，按归档头中的 16-byte 索引精确取出当前条目的完整 Ogg，并写到：
 
 ```text
-%TEMP%\hibiki_gal_voice\<tick>_<archive>.ovk_<voice-id>.ogg
+%TEMP%\fushi_gal_voice\<tick>_<archive>.ovk_<voice-id>.ogg
 ```
 
 导出前会同时检查索引边界、条目上限、Ogg 页序列号和 EOS；文件 IO 与 Ogg 校验在工作线程执行，`ReadFile` detour 只复制固定大小任务。晚附着可能没有 DirectSound PCM 格式，Hibiki 会用 `rawVoiceReady` 保持引擎源，并优先把本会话的新 Ogg 转为 Anki 音频；无文本时间戳时只选本会话最新条目，绝不拿上一局残留。受保护的 Siglus 进程若令 Toolhelp 线程快照失败，vendored MinHook 会通过 `NtGetNextThread` 安全枚举并冻结其它线程后再启用 hook。

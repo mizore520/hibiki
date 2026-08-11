@@ -71,7 +71,7 @@ const AnkiSettings _settings = AnkiSettings(
   fieldMappings: <String, String>{
     'Expression': '{expression}',
     'Audio': '{audio}',
-    'SentenceAudio': '{sasayaki-audio}',
+    'SentenceAudio': '{sentence-audio}',
   },
   allowDupes: true,
 );
@@ -128,16 +128,16 @@ void main() {
 
         final String firstWordAudio = service.addedNotes[0]['Audio']!;
         final String secondWordAudio = service.addedNotes[1]['Audio']!;
-        expect(firstWordAudio, startsWith('[sound:hibiki_audio_'));
-        expect(secondWordAudio, startsWith('[sound:hibiki_audio_'));
+        expect(firstWordAudio, startsWith('[sound:fushi_audio_'));
+        expect(secondWordAudio, startsWith('[sound:fushi_audio_'));
         expect(firstWordAudio, isNot(secondWordAudio));
 
         final String firstSentenceAudio =
             service.addedNotes[0]['SentenceAudio']!;
         final String secondSentenceAudio =
             service.addedNotes[1]['SentenceAudio']!;
-        expect(firstSentenceAudio, startsWith('[sound:hibiki_audio_'));
-        expect(secondSentenceAudio, startsWith('[sound:hibiki_audio_'));
+        expect(firstSentenceAudio, startsWith('[sound:fushi_audio_'));
+        expect(secondSentenceAudio, startsWith('[sound:fushi_audio_'));
         expect(firstSentenceAudio, isNot(secondSentenceAudio));
         expect(service.storedFilenames.toSet(), hasLength(2));
       },
@@ -145,12 +145,12 @@ void main() {
 
     test('content-derived media names use SHA-256 and preserve extension', () {
       expect(
-        hibikiAnkiMediaFilenameForBytes(
-          prefix: 'hibiki_audio_',
+        fushiAnkiMediaFilenameForBytes(
+          prefix: 'fushi_audio_',
           bytes: utf8.encode('abc'),
           sourceName: 'word.mp3',
         ),
-        'hibiki_audio_'
+        'fushi_audio_'
         'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'
         '.mp3',
       );
@@ -203,20 +203,20 @@ void main() {
 
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockMethodCallHandler(channel, (MethodCall call) async {
-              switch (call.method) {
-                case 'addFileToMedia':
-                  final args = Map<String, dynamic>.from(call.arguments as Map);
-                  final String preferredName = args['preferredName'] as String;
-                  preferredNames.add(preferredName);
-                  return preferredName;
-                case 'addNote':
-                  final args = Map<String, dynamic>.from(call.arguments as Map);
-                  addedNotes.add(List<String>.from(args['fields'] as List));
-                  return true;
-                default:
-                  fail('Unexpected AnkiDroid channel call: ${call.method}');
-              }
-            });
+          switch (call.method) {
+            case 'addFileToMedia':
+              final args = Map<String, dynamic>.from(call.arguments as Map);
+              final String preferredName = args['preferredName'] as String;
+              preferredNames.add(preferredName);
+              return preferredName;
+            case 'addNote':
+              final args = Map<String, dynamic>.from(call.arguments as Map);
+              addedNotes.add(List<String>.from(args['fields'] as List));
+              return true;
+            default:
+              fail('Unexpected AnkiDroid channel call: ${call.method}');
+          }
+        });
         addTearDown(() {
           TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
               .setMockMethodCallHandler(channel, null);
@@ -248,14 +248,14 @@ void main() {
 
         final String firstWordAudio = addedNotes[0][1];
         final String secondWordAudio = addedNotes[1][1];
-        expect(firstWordAudio, startsWith('[sound:hibiki_audio_'));
-        expect(secondWordAudio, startsWith('[sound:hibiki_audio_'));
+        expect(firstWordAudio, startsWith('[sound:fushi_audio_'));
+        expect(secondWordAudio, startsWith('[sound:fushi_audio_'));
         expect(firstWordAudio, isNot(secondWordAudio));
 
         final String firstSentenceAudio = addedNotes[0][2];
         final String secondSentenceAudio = addedNotes[1][2];
-        expect(firstSentenceAudio, startsWith('[sound:hibiki_audio_'));
-        expect(secondSentenceAudio, startsWith('[sound:hibiki_audio_'));
+        expect(firstSentenceAudio, startsWith('[sound:fushi_audio_'));
+        expect(secondSentenceAudio, startsWith('[sound:fushi_audio_'));
         expect(firstSentenceAudio, isNot(secondSentenceAudio));
         expect(preferredNames.toSet(), hasLength(2));
       },

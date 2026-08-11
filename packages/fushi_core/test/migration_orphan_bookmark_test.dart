@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi_core/fushi_core.dart';
 
 /// Safety-net for the orphan-bookmark skip in
-/// HibikiDatabase.migrateLegacyBookmarkPreferences() (database.dart ~468-549),
+/// FushiDatabase.migrateLegacyBookmarkPreferences() (database.dart ~468-549),
 /// re-establishing the coverage that the milestone-2 cleanup deleted
 /// (HBK-AUDIT-007).
 ///
@@ -24,9 +24,9 @@ import 'package:fushi_core/fushi_core.dart';
 /// invokes the public drainer directly (user_version = 16 so onUpgrade does NOT
 /// run — the method is self-guarded by table/column probes and is the unit
 /// under test). Seed follows the migration_downgrade_test raw-DB pattern.
-late HibikiDatabase _orphanDb;
+late FushiDatabase _orphanDb;
 
-HibikiDatabase _openPreV16WithLegacyBookmarkPrefs() {
+FushiDatabase _openPreV16WithLegacyBookmarkPrefs() {
   // book 1 keeps two bookmarks (one orphan ttuBookId mixed in); book 999 is a
   // pure-orphan pref (no matching epub at all). Real entries must land; orphans
   // must be skipped; every legacy key must be cleared.
@@ -57,7 +57,7 @@ HibikiDatabase _openPreV16WithLegacyBookmarkPrefs() {
     },
   ]);
 
-  _orphanDb = HibikiDatabase.forTesting(
+  _orphanDb = FushiDatabase.forTesting(
     NativeDatabase.memory(
       setup: (raw) {
         // FK enforcement ON, mirroring production _openDb. Without it the
@@ -107,7 +107,11 @@ CREATE TABLE bookmarks (
         raw.execute('''
 CREATE TABLE preferences (
   key TEXT NOT NULL PRIMARY KEY,
-  value TEXT NOT NULL
+  value TEXT NOT NULL,
+  -- v84（BUG-1502）：本 fixture 刻意 seed 成 CURRENT 版本让 onUpgrade 不跑，
+  -- 所以这张表必须与当前 schema 同形——少一列会让 drift 的类型化行映射对缺失
+  -- 列做 null 断言而炸，与被测的 pre-v16 排干逻辑毫无关系。
+  updated_at INTEGER NOT NULL DEFAULT 0
 )''');
         raw.execute(
           "INSERT INTO preferences (key, value) VALUES (?, ?), (?, ?), (?, ?)",
@@ -134,7 +138,7 @@ CREATE TABLE preferences (
 void main() {
   test('orphan legacy bookmark prefs are skipped, not aborting the upgrade',
       () async {
-    final HibikiDatabase db = _openPreV16WithLegacyBookmarkPrefs();
+    final FushiDatabase db = _openPreV16WithLegacyBookmarkPrefs();
     addTearDown(db.close);
 
     // Must NOT throw on the orphan FK target (the regression this guards).
