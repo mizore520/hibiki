@@ -241,7 +241,11 @@ class AnkiConnectService {
 
   Future<http.Response> _post(String body) {
     return _client.post(
-      Uri.parse('${useHttps ? 'https' : 'http'}://$host:$port'),
+      Uri(
+        scheme: useHttps ? 'https' : 'http',
+        host: _ankiConnectTransportHost(host),
+        port: port,
+      ),
       body: body,
       headers: {
         'Content-Type': 'application/json',
@@ -377,6 +381,57 @@ class AnkiConnectService {
       scope: scope,
     ))
         .isNotEmpty;
+  }
+
+  /// Checks several primary-field values through AnkiConnect's indexed note
+  /// duplicate path in one request.
+  ///
+  /// `findNotes` field queries run synchronously on Anki's GUI thread and one
+  /// popup can issue many of them at once. `canAddNotes` performs the same
+  /// first-field checksum lookup used by `addNote`, accepts a list, and keeps
+  /// the configured deck/collection scope through the standard note options.
+  /// Its result is `true` when a note *can* be added, so this method inverts
+  /// each item to expose the repository's `true == already exists` contract.
+  Future<List<bool>> areDuplicates({
+    required String deckName,
+    required String modelName,
+    required String fieldName,
+    required List<String> fieldValues,
+    AnkiDuplicateScope scope = AnkiDuplicateScope.deck,
+  }) async {
+    if (fieldValues.isEmpty) return const <bool>[];
+    final Map<String, Object> options = _addNoteDuplicateOptions(
+      deckName: deckName,
+      allowDuplicate: false,
+      scope: scope,
+    );
+    final result = await _request('canAddNotes', {
+      'notes': fieldValues
+          .map(
+            (String value) => <String, Object>{
+              'deckName': deckName,
+              'modelName': modelName,
+              'fields': <String, String>{fieldName: value},
+              'options': options,
+            },
+          )
+          .toList(growable: false),
+    });
+    if (result is! List || result.length != fieldValues.length) {
+      throw AnkiConnectException(
+        'Unexpected AnkiConnect response for canAddNotes '
+        '(expected ${fieldValues.length} booleans)',
+      );
+    }
+    return result.map((dynamic canAdd) {
+      if (canAdd is! bool) {
+        throw AnkiConnectException(
+          'Unexpected AnkiConnect response for canAddNotes '
+          '(expected booleans)',
+        );
+      }
+      return !canAdd;
+    }).toList(growable: false);
   }
 
   Future<List<int>> findNotesByField({
@@ -678,6 +733,23 @@ bool ankiConnectHostIsLoopback(String host) {
           ? normalized.substring(1, normalized.length - 1)
           : normalized;
   return InternetAddress.tryParse(unbracketed)?.isLoopback ?? false;
+}
+
+/// Resolve the user-friendly `localhost` setting to IPv4 for AnkiConnect.
+///
+/// Windows commonly resolves `localhost` to `::1` first while the add-on's
+/// default web server listens only on `127.0.0.1`. Leaving DNS to the socket
+/// layer therefore pays a failed IPv6 attempt before every successful request,
+/// or fails outright on some stacks. Explicit IPv4/IPv6 and remote hosts stay
+/// untouched; only the ambiguous localhost alias is made deterministic.
+String _ankiConnectTransportHost(String configuredHost) {
+  final String trimmed = configuredHost.trim();
+  final String unbracketed = trimmed.startsWith('[') && trimmed.endsWith(']')
+      ? trimmed.substring(1, trimmed.length - 1)
+      : trimmed;
+  return unbracketed.toLowerCase() == 'localhost'
+      ? InternetAddress.loopbackIPv4.address
+      : unbracketed;
 }
 
 /// 由查重范围 [scope] 解析出的 Anki 搜索卡组子句；空串 = 不限卡组（整个收藏集）。

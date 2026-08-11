@@ -29,10 +29,13 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 1369 条。点号进各自文件。
+> 共 1372 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-1466](bugs/BUG-1466-gal-overlay-loses-topmost.md) | ✅ | ✅ | Galgame文字悬浮窗切换窗口后丢失置顶 |
+| [BUG-1465](bugs/BUG-1465-anki-duplicate-check-findnotes-serial.md) | ✅ | ✅ | 词条逐个 findNotes 查重导致已制卡标记延迟 |
+| [BUG-1464](bugs/BUG-1464-anki-localhost-prefers-ipv6.md) | ✅ | ✅ | AnkiConnect 使用 localhost 时优先连接 IPv6，导致本机请求延迟或失败 |
 | [BUG-1463](bugs/BUG-1463-luna-safe-attach-double-hook-crash.md) | ✅ | ✅ | Luna 与 Fushi 双 Hook 导致游戏闪退 |
 | [BUG-1462](bugs/BUG-1462-luna-mine-before-audio-boundary.md) | ✅ | ✅ | Luna 当前句制卡提前截断录音导致卡片无音频 |
 | [BUG-1461](bugs/BUG-1461-local-windows-build-misses-gal-helper.md) | ✅ | ✅ | 本地 Windows 构建成功但未打包 galgame helper |

@@ -484,6 +484,37 @@ class _NoteFieldRewrite {
   final Map<String, String> after;
 }
 
+typedef _DuplicateCheckBatchKey = ({
+  String host,
+  int port,
+  String apiKey,
+  bool useHttps,
+  AnkiConnectService? fixedService,
+  String deckName,
+  String modelName,
+  String fieldName,
+  AnkiDuplicateScope scope,
+});
+
+class _PendingDuplicateCheckBatch {
+  _PendingDuplicateCheckBatch({
+    required this.service,
+    required this.deckName,
+    required this.modelName,
+    required this.fieldName,
+    required this.scope,
+  });
+
+  final AnkiConnectService service;
+  final String deckName;
+  final String modelName;
+  final String fieldName;
+  final AnkiDuplicateScope scope;
+  final Map<String, List<Completer<bool>>> waiters =
+      <String, List<Completer<bool>>>{};
+  Timer? timer;
+}
+
 class AnkiConnectRepository extends BaseAnkiRepository {
   AnkiConnectRepository({AnkiConnectService? service})
     : _fixedService = service;
@@ -937,6 +968,21 @@ class AnkiConnectRepository extends BaseAnkiRepository {
 
   static DateTime? _duplicateCheckUnreachableUntil;
 
+  /// Tiny coalescing window for the detached per-entry popup probes.
+  ///
+  /// JavaScript dispatches all visible entries without awaiting one another,
+  /// but every bridge call creates a fresh repository and independently loads
+  /// settings. A few milliseconds lets those futures rendezvous here so one
+  /// indexed `canAddNotes` request covers the whole popup.
+  @visibleForTesting
+  static const Duration kDuplicateCheckBatchWindow = Duration(
+    milliseconds: 8,
+  );
+
+  static final Map<_DuplicateCheckBatchKey, _PendingDuplicateCheckBatch>
+      _pendingDuplicateCheckBatches =
+      <_DuplicateCheckBatchKey, _PendingDuplicateCheckBatch>{};
+
   /// 测试用：清掉进程级查重冷却，避免用例间互相污染。
   @visibleForTesting
   static void resetDuplicateCheckCooldown() {
@@ -950,18 +996,92 @@ class AnkiConnectRepository extends BaseAnkiRepository {
     return until != null && DateTime.now().isBefore(until);
   }
 
+  static Future<bool> _enqueueDuplicateCheck({
+    required AnkiConnectService service,
+    required AnkiSettings settings,
+    required String deckName,
+    required String modelName,
+    required String fieldName,
+    required String expression,
+    required AnkiConnectService? fixedService,
+  }) {
+    final _DuplicateCheckBatchKey key = (
+      host: settings.ankiConnectHost.trim().toLowerCase(),
+      port: settings.ankiConnectPort,
+      apiKey: settings.ankiConnectApiKey,
+      useHttps: settings.ankiConnectUseHttps,
+      fixedService: fixedService,
+      deckName: deckName,
+      modelName: modelName,
+      fieldName: fieldName,
+      scope: settings.duplicateScope,
+    );
+    final Completer<bool> completer = Completer<bool>();
+    final _PendingDuplicateCheckBatch batch =
+        _pendingDuplicateCheckBatches.putIfAbsent(key, () {
+      final _PendingDuplicateCheckBatch created = _PendingDuplicateCheckBatch(
+        service: service,
+        deckName: deckName,
+        modelName: modelName,
+        fieldName: fieldName,
+        scope: settings.duplicateScope,
+      );
+      created.timer = Timer(
+        kDuplicateCheckBatchWindow,
+        () => unawaited(_flushDuplicateCheckBatch(key, created)),
+      );
+      return created;
+    });
+    batch.waiters
+        .putIfAbsent(expression, () => <Completer<bool>>[])
+        .add(completer);
+    return completer.future;
+  }
+
+  static Future<void> _flushDuplicateCheckBatch(
+    _DuplicateCheckBatchKey key,
+    _PendingDuplicateCheckBatch batch,
+  ) async {
+    if (!identical(_pendingDuplicateCheckBatches.remove(key), batch)) return;
+    batch.timer = null;
+    final List<String> expressions = batch.waiters.keys.toList(
+      growable: false,
+    );
+    try {
+      final List<bool> duplicates = await batch.service.areDuplicates(
+        deckName: batch.deckName,
+        modelName: batch.modelName,
+        fieldName: batch.fieldName,
+        fieldValues: expressions,
+        scope: batch.scope,
+      );
+      for (var index = 0; index < expressions.length; index++) {
+        for (final Completer<bool> waiter
+            in batch.waiters[expressions[index]]!) {
+          if (!waiter.isCompleted) waiter.complete(duplicates[index]);
+        }
+      }
+    } catch (error, stackTrace) {
+      for (final List<Completer<bool>> waiters in batch.waiters.values) {
+        for (final Completer<bool> waiter in waiters) {
+          if (!waiter.isCompleted) waiter.completeError(error, stackTrace);
+        }
+      }
+    }
+  }
+
   @override
   Future<bool> isDuplicate(String expression, String reading) async {
-    // 不可达冷却窗内直接判「非重复」（BUG-1302）。查重是渲染路径上**逐词条**发起的
-    // 装饰性探测：popup.js 的 createEntryHeader 对结果里每个词条都发一次 duplicateCheck
-    // 桥调用，AnkiConnect 主机被防火墙静默丢包 / VPN 断开 / 配成了远程不在线的主机时，
-    // 每次都要挂满连接超时（5s，BUG-665 已把连接阶段单独绑定），N 个词条就是 N 条
-    // 并发挂起的 HTTP。
+    if (expression.isEmpty) return false;
+    // 不可达冷却窗内直接判「非重复」（BUG-1302）。查重仍是渲染路径上**逐词条**发起的
+    // 装饰性探测，但 BUG-1465 已把同一波桥调用汇成一次 canAddNotes。冷却仍不可少：
+    // AnkiConnect 被防火墙丢包 / VPN 断开 / 配成离线远端时，若没有它，每次新弹窗
+    // 都会重新付一次完整连接超时（5s，BUG-665 已给连接阶段单独设限）。
     //
     // 注意口径（复核修正）：`createEntryHeader` 是同步函数，这次探测是脱链的
     // `.then(...)`，既不被 await 也不参与 `popupRendered` 发信——所以它**不会**
-    // 让弹窗迟出来，它拖住的是每个词条「已制卡 ✓ / 可制卡 +」徽章的刷新，外加
-    // N 条白挂的 socket。修它是为了消除这个延迟和浪费，不要拿它解释「查词慢 4-5 秒」。
+    // 让弹窗迟出来，它拖住的是每个词条「已制卡 ✓ / 可制卡 +」徽章的刷新。批量查重
+    // 与冷却分别消除「可达时 N 次慢查询」和「不可达时每个新弹窗重复超时」。
     //
     // 返回值语义与下面 catch 的 fail-soft 完全一致（false = 不标「已制卡」），
     // 只是不再为已证实不可达的主机把超时重复付 N 遍。Anki 一旦重新可达，
@@ -987,11 +1107,17 @@ class AnkiConnectRepository extends BaseAnkiRepository {
     }
     try {
       final service = _serviceForSettings(settings);
-      final bool duplicate = await service.isDuplicate(
+      final bool duplicate = await _enqueueDuplicateCheck(
+        service: service,
+        settings: settings,
         deckName: deck.name,
+        modelName: noteType.name,
         fieldName: noteType.fields.first,
-        fieldValue: expression,
-        scope: settings.duplicateScope,
+        expression: expression,
+        // Production repositories are deliberately grouped by endpoint and
+        // note configuration. Injected services stay isolated by identity so
+        // tests (and embedders) with different transports never cross-talk.
+        fixedService: _fixedService,
       );
       // 拿到应答即证明主机活着，立刻解除冷却（不必等窗口自然到期）。
       _duplicateCheckUnreachableUntil = null;

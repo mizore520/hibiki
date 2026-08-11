@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:fushi_anki/src/anki_models.dart';
 import 'package:fushi_anki/src/ankiconnect/ankiconnect_service.dart';
 
 // HBK-AUDIT-051: the AnkiConnect network IPC layer was untested — only model
@@ -58,6 +59,31 @@ void main() {
   });
 
   group('request envelope', () {
+    test('routes localhost through IPv4 without changing the saved setting',
+        () async {
+      final issued = <http.Request>[];
+      final client = MockClient((http.Request request) async {
+        issued.add(request);
+        return http.Response(
+          jsonEncode(<String, Object?>{
+            'result': const <String>[],
+            'error': null,
+          }),
+          200,
+        );
+      });
+      final service = AnkiConnectService(
+        host: 'localhost',
+        port: 8765,
+        client: client,
+      );
+
+      await service.getDeckNames();
+
+      expect(service.host, 'localhost');
+      expect(issued.single.url.host, '127.0.0.1');
+    });
+
     test('posts to the configured host/port over http', () async {
       final issued = <http.Request>[];
       await withMock((s) => s.getDeckNames(),
@@ -268,6 +294,83 @@ void main() {
         result: const <int>[],
       );
       expect(dup, isFalse);
+    });
+  });
+
+  group('batched indexed duplicate checks', () {
+    test('sends all values through one canAddNotes request', () async {
+      final issued = <http.Request>[];
+      final List<bool> duplicates = await withMock(
+        (s) => s.areDuplicates(
+          deckName: 'Lapis::Mining',
+          modelName: 'Lapis',
+          fieldName: 'Expression',
+          fieldValues: const <String>['勉強', '日本語'],
+          scope: AnkiDuplicateScope.deckRoot,
+        ),
+        sink: issued,
+        // canAddNotes: false means the note is already a duplicate.
+        result: const <bool>[false, true],
+      );
+
+      expect(duplicates, const <bool>[true, false]);
+      final Map<String, dynamic> body = bodyOf(issued.single);
+      expect(body['action'], 'canAddNotes');
+      final List<dynamic> notes =
+          (body['params'] as Map<String, dynamic>)['notes'] as List<dynamic>;
+      expect(notes, hasLength(2));
+      expect(notes.first, <String, dynamic>{
+        'deckName': 'Lapis::Mining',
+        'modelName': 'Lapis',
+        'fields': <String, dynamic>{'Expression': '勉強'},
+        'options': <String, dynamic>{
+          'allowDuplicate': false,
+          'duplicateScope': 'deck',
+          'duplicateScopeOptions': <String, dynamic>{
+            'deckName': 'Lapis',
+            'checkChildren': true,
+            'checkAllModels': true,
+          },
+        },
+      });
+      expect(
+        (notes.last as Map<String, dynamic>)['fields'],
+        <String, dynamic>{'Expression': '日本語'},
+      );
+    });
+
+    test('an empty batch does not touch the network', () async {
+      final issued = <http.Request>[];
+      final List<bool> result = await withMock(
+        (s) => s.areDuplicates(
+          deckName: 'D',
+          modelName: 'M',
+          fieldName: 'F',
+          fieldValues: const <String>[],
+        ),
+        sink: issued,
+      );
+
+      expect(result, isEmpty);
+      expect(issued, isEmpty);
+    });
+
+    test('rejects a response whose length does not match the request',
+        () async {
+      final issued = <http.Request>[];
+      await expectLater(
+        withMock(
+          (s) => s.areDuplicates(
+            deckName: 'D',
+            modelName: 'M',
+            fieldName: 'F',
+            fieldValues: const <String>['a', 'b'],
+          ),
+          sink: issued,
+          result: const <bool>[true],
+        ),
+        throwsA(isA<AnkiConnectException>()),
+      );
     });
   });
 
