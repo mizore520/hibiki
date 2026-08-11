@@ -721,7 +721,7 @@ void main() {
       expect(installer, contains('Flags: ignoreversion recursesubdirs'));
     });
 
-    test('个人本地构建必须构建并安装两架构 helper (BUG-1461)', () {
+    test('个人本地构建必须构建并安装两架构 helper (BUG-1539)', () {
       const String buildCall =
           r'Invoke-CheckedPowerShellScript -ScriptPath $helperBuildScript';
       const String installCall =
