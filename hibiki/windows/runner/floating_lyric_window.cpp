@@ -5,6 +5,7 @@
 #include <windowsx.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cstdint>
 #include <string>
@@ -42,6 +43,23 @@ constexpr float kHookTextMinStripWidthDip = 370.0f;
 // 只在窗口内轮询，代价是一次 GetAsyncKeyState + 一次 DWrite 命中测试。
 constexpr UINT_PTR kHoverLookupTimerId = 1;
 constexpr UINT kHoverLookupPollMs = 60;
+// Private window message posted by the WinEvent foreground hook. The hook
+// callback never touches window state directly because Windows may deliver an
+// out-of-context callback away from the runner's platform thread.
+constexpr UINT kReassertTopmostMessage = WM_APP + 0x38A;
+std::atomic<HWND> g_hook_topmost_target{nullptr};
+HWINEVENTHOOK g_foreground_event_hook = nullptr;
+
+void CALLBACK OnForegroundWindowChanged(HWINEVENTHOOK, DWORD event, HWND,
+                                        LONG, LONG, DWORD, DWORD) {
+  if (event != EVENT_SYSTEM_FOREGROUND) {
+    return;
+  }
+  const HWND target = g_hook_topmost_target.load(std::memory_order_acquire);
+  if (target != nullptr && IsWindow(target)) {
+    PostMessageW(target, kReassertTopmostMessage, 0, 0);
+  }
+}
 constexpr float kMinStripHeightDip = 64.0f;
 constexpr float kMaxStripWidthDip = 2400.0f;
 constexpr float kMaxStripHeightDip = 480.0f;
@@ -142,6 +160,7 @@ UINT32 GlyphLength(const wchar_t* glyph) {
 FloatingLyricWindow::FloatingLyricWindow() = default;
 
 FloatingLyricWindow::~FloatingLyricWindow() {
+  StopForegroundTopmostTracking();
   if (hwnd_ != nullptr) {
     DestroyWindow(hwnd_);
     hwnd_ = nullptr;
@@ -345,6 +364,7 @@ bool FloatingLyricWindow::Show(HWND owner) {
   SetWindowPos(hwnd_, topmost_ ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0,
                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
   visible_ = true;
+  StartForegroundTopmostTracking();
   // BUG-951: a re-show while pass-through is still on must re-create the
   // escape-hatch toolbar and re-arm the body's click-through in one place.
   ApplyPassThroughExStyle();
@@ -353,6 +373,7 @@ bool FloatingLyricWindow::Show(HWND owner) {
 }
 
 void FloatingLyricWindow::Hide() {
+  StopForegroundTopmostTracking();
   visible_ = false;
   hovered_ = false;
   tracking_mouse_leave_ = false;
@@ -504,9 +525,46 @@ void FloatingLyricWindow::SetTopmost(bool enabled) {
   }
   // 不做「值没变就早退」：Dart 每局 show 会再调一次 SetTopmost(true)，同值也把窗口
   // 重新插到 Z 序顶上——上一局被别的窗口爬到上面时，这一次复位就是把它拉回来。
+  ReassertTopmost();
+  RequestRender();
+}
+
+void FloatingLyricWindow::StartForegroundTopmostTracking() {
+  if (!hook_text_mode_ || hwnd_ == nullptr ||
+      g_foreground_event_hook != nullptr) {
+    return;
+  }
+  g_hook_topmost_target.store(hwnd_, std::memory_order_release);
+  g_foreground_event_hook = SetWinEventHook(
+      EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, nullptr,
+      OnForegroundWindowChanged, 0, 0,
+      WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+  if (g_foreground_event_hook == nullptr) {
+    g_hook_topmost_target.store(nullptr, std::memory_order_release);
+  }
+}
+
+void FloatingLyricWindow::StopForegroundTopmostTracking() {
+  if (!hook_text_mode_) {
+    return;
+  }
+  const HWND target = g_hook_topmost_target.load(std::memory_order_acquire);
+  if (target == hwnd_) {
+    g_hook_topmost_target.store(nullptr, std::memory_order_release);
+  }
+  if (g_foreground_event_hook != nullptr) {
+    UnhookWinEvent(g_foreground_event_hook);
+    g_foreground_event_hook = nullptr;
+  }
+}
+
+void FloatingLyricWindow::ReassertTopmost() {
+  if (hwnd_ == nullptr) {
+    return;
+  }
   SetWindowPos(hwnd_, topmost_ ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0,
                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-  RequestRender();
+  SyncPassThroughToolbar();
 }
 
 void FloatingLyricWindow::SetHoverAutoLookup(bool enabled) {
@@ -797,6 +855,17 @@ LRESULT CALLBACK FloatingLyricWindow::WndProc(HWND hwnd, UINT message,
 LRESULT FloatingLyricWindow::HandleMessage(UINT message, WPARAM wparam,
                                            LPARAM lparam) noexcept {
   switch (message) {
+    case kReassertTopmostMessage: {
+      // A newly foregrounded game can put its own topmost window above us even
+      // though our WS_EX_TOPMOST bit remains set. Reinsert only the visible,
+      // pinned galgame overlay at the head of that band; SWP_NOACTIVATE keeps
+      // all keyboard/controller input in the game. If the user unpinned the
+      // overlay, this event deliberately does nothing.
+      if (hook_text_mode_ && visible_ && topmost_) {
+        ReassertTopmost();
+      }
+      return 0;
+    }
     case WM_MOUSEMOVE: {
       // Mouse messages arrive immediately because the strip is not born
       // transparent. Here we drive hover affordances, drag, and the press->drag
@@ -1044,6 +1113,9 @@ LRESULT FloatingLyricWindow::HandleMessage(UINT message, WPARAM wparam,
       // area the strip was sitting in; pull it back so ≥ kMinVisibleMarginDip
       // stays grabbable. Use the window's monitor (cursor may be elsewhere).
       ClampCurrentPositionToWindowMonitor();
+      if (hook_text_mode_ && visible_ && topmost_) {
+        ReassertTopmost();
+      }
       RequestRender();
       return 0;
     }

@@ -215,6 +215,13 @@ class FloatingLyricWindow {
   bool EnsureTextResources();
   void Render();
   void RequestRender();
+  // A borderless/full-screen game may move itself to the head of Windows'
+  // topmost band whenever it becomes foreground. Track that structural event
+  // for the galgame overlay and re-assert our existing pin state without
+  // activating the overlay or stealing keyboard focus from the game.
+  void StartForegroundTopmostTracking();
+  void StopForegroundTopmostTracking();
+  void ReassertTopmost();
 
   // Geometry of the lyric text area in client (DIP-equivalent physical px),
   // computed during the last Render. Used for tap hit-testing.
