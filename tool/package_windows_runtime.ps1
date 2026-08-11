@@ -15,6 +15,13 @@ if (-not (Test-Path -LiteralPath $ReleaseDir -PathType Container)) {
 }
 $release = (Resolve-Path -LiteralPath $ReleaseDir).Path
 
+$runtimeUnlockCheck = Join-Path $repo 'tool\check_windows_runtime_unlocked.ps1'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $runtimeUnlockCheck `
+    -BundleDirectory $release
+if ($LASTEXITCODE -ne 0) {
+    throw "$runtimeUnlockCheck failed with exit code $LASTEXITCODE"
+}
+
 $vswhereCandidates = @()
 if ($env:ProgramFiles) {
     $vswhereCandidates += Join-Path $env:ProgramFiles 'Microsoft Visual Studio\Installer\vswhere.exe'

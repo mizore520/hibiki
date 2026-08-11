@@ -22,6 +22,7 @@ set "REPO=%~dp0"
 if "%REPO:~-1%"=="\" set "REPO=%REPO:~0,-1%"
 set "APP=%REPO%\hibiki"
 set "BOOTSTRAP=%REPO%\tool\bootstrap.ps1"
+set "RUNTIME_UNLOCK_CHECK=%REPO%\tool\check_windows_runtime_unlocked.ps1"
 set "EXE=%APP%\build\windows\x64\runner\Release\fushi.exe"
 set "STAMP=%APP%\build\.last_built_commit"
 
@@ -63,6 +64,14 @@ if not defined HEAD (
 )
 
 cd /d "%APP%"
+
+rem Fail before clean/dependency resolution/compilation if an old
+rem Fushi/helper/DLL is still loaded. Never kill it here: the user may still
+rem be playing a game.
+if exist "%EXE%" (
+  powershell -NoProfile -ExecutionPolicy Bypass -File "%RUNTIME_UNLOCK_CHECK%" -BundleDirectory "%APP%\build\windows\x64\runner\Release"
+  if errorlevel 1 goto :runtime_locked
+)
 
 rem --- force clean rebuild -------------------------------------------------
 if /i "%~1"=="clean" (
@@ -173,6 +182,10 @@ goto :fail
 
 :runtime_failed
 echo [ERROR] Windows runtime packaging failed. The app was not launched.
+goto :fail
+
+:runtime_locked
+echo [ERROR] Existing Fushi/Galgame runtime is still in use. Build was not started.
 
 :fail
 echo.

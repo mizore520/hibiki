@@ -29,10 +29,12 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 1372 条。点号进各自文件。
+> 共 1374 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-1468](bugs/BUG-1468-windows-runtime-lock-preflight.md) | ✅ | ✅ | Windows 完整打包未提前检查运行组件占用 |
+| [BUG-1467](bugs/BUG-1467-injector-attach-target-exit.md) | ✅ | ✅ | 附着模式游戏退出后 injector 不结束 |
 | [BUG-1466](bugs/BUG-1466-gal-overlay-loses-topmost.md) | ✅ | ✅ | Galgame文字悬浮窗切换窗口后丢失置顶 |
 | [BUG-1465](bugs/BUG-1465-anki-duplicate-check-findnotes-serial.md) | ✅ | ✅ | 词条逐个 findNotes 查重导致已制卡标记延迟 |
 | [BUG-1464](bugs/BUG-1464-anki-localhost-prefers-ipv6.md) | ✅ | ✅ | AnkiConnect 使用 localhost 时优先连接 IPv6，导致本机请求延迟或失败 |

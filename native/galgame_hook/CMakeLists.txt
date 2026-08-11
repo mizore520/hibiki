@@ -125,6 +125,15 @@ target_include_directories(fushi_voice_session_reuse_test PRIVATE "include")
 target_compile_definitions(fushi_voice_session_reuse_test PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
 add_test(NAME fushi_voice_session_reuse_test COMMAND fushi_voice_session_reuse_test)
 
+# Attach-mode lifecycle guard: a held session follows the target process and
+# must never turn a missing wait handle into an infinite orphan loop.
+add_executable(fushi_hold_process_lifecycle_test
+  "tests/hold_process_lifecycle_test.cpp"
+)
+target_include_directories(fushi_hold_process_lifecycle_test PRIVATE "injector")
+target_compile_definitions(fushi_hold_process_lifecycle_test PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
+add_test(NAME fushi_hold_process_lifecycle_test COMMAND fushi_hold_process_lifecycle_test)
+
 add_executable(fushi_unity_event_cursor_test
   "tests/unity_event_cursor_test.cpp"
 )
@@ -230,6 +239,7 @@ add_test(NAME fushi_directsound_format_registry_test
 add_executable(fushi_voice_injector
   "injector/injector_main.cpp"
   "injector/child_process_policy.h"
+  "injector/hold_process_lifecycle.h"
   "injector/locale_emulator_launch.h"
 )
 target_include_directories(fushi_voice_injector PRIVATE "include" "hook" "injector")
