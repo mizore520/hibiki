@@ -21,6 +21,7 @@
 #include "voice_hook_ipc.h"
 #include "voice_hook_session.h"
 #include "child_process_policy.h"
+#include "hold_process_lifecycle.h"
 #include "ffmpeg_runtime.h"
 #include "launch_command_line.h"
 #include "launch_failure_policy.h"
@@ -1295,7 +1296,7 @@ bool ResumeLaunchedGame(HANDLE process, HANDLE thread, const char* stage) {
 // attach 与 launch 共用的注入编排。target=目标进程句柄，pid=目标 pid（命名共享内存/事件）。
 // resume_thread!=nullptr（launch 模式）时：注入完成后 ResumeThread 让挂起的游戏跑起来，再等就绪
 // 事件——保证 hook 在游戏调 DirectSoundCreate/WinMain 之前就装好。hold_process 在 --hold 时决定
-// 挂起终点（launch 给游戏进程句柄，挂到游戏退出；attach 给 nullptr，无限 Sleep）。
+// 挂起终点；launch / Steam / attach 都必须给目标游戏进程句柄，挂到游戏退出。
 // 契约与 --pid 老路径完全一致：建共享内存(pid) + 就绪事件(pid)，注入，[Resume]，等事件，
 // 打印 OK hooked ...，[hold]。全部句柄本函数负责关闭。返回进程退出码。
 // [reason_out] 回报结构化失败原因；[resumed_out] 回报「挂起的游戏主线程是否已经被本函数
@@ -1316,6 +1317,13 @@ int RunInjection(HANDLE target, DWORD pid, const std::wstring& dll_path,
   using hibiki_voice_hook::LaunchFailureReason;
   if (reason_out != nullptr) *reason_out = LaunchFailureReason::kNone;
   if (resumed_out != nullptr) *resumed_out = false;
+  if (hold && (hold_process == nullptr ||
+               hold_process == INVALID_HANDLE_VALUE)) {
+    fprintf(stderr,
+            "--hold requires a waitable target-process handle; refusing to "
+            "run without a lifecycle owner.\n");
+    return FailWith(reason_out, LaunchFailureReason::kInjectionFailed, 1);
+  }
   bool target_wow64 = false;
   if (!BitnessMatches(target, &target_wow64)) {
     fprintf(stderr,
@@ -1613,20 +1621,13 @@ int RunInjection(HANDLE target, DWORD pid, const std::wstring& dll_path,
     // 同时消费 Unity Streaming AudioClip 资源事件；重解析/解码在 injector 子进程完成，
     // 游戏内 hook 回调始终只写固定大小共享内存事件。
     uint64_t next_unity_event = 0;
-    if (hold_process != nullptr) {
-      while (WaitForSingleObject(hold_process, 50) == WAIT_TIMEOUT) {
-        ProcessUnityVoiceEvents(header, unity_extractor,
-                                unity_data_directory, &next_unity_event);
-      }
+    while (hibiki_voice_hook::HoldTargetIsRunning(hold_process)) {
       ProcessUnityVoiceEvents(header, unity_extractor,
                               unity_data_directory, &next_unity_event);
-    } else {
-      for (;;) {
-        ProcessUnityVoiceEvents(header, unity_extractor,
-                                unity_data_directory, &next_unity_event);
-        Sleep(50);
-      }
+      Sleep(50);
     }
+    ProcessUnityVoiceEvents(header, unity_extractor,
+                            unity_data_directory, &next_unity_event);
   }
 
   ShutdownLunaHook();  // Detach 目标；Host 模块由进程退出回收（未接入时 no-op）
@@ -2554,7 +2555,7 @@ int main() {
   // attach 模式：注入已运行进程（老路径行为不变）。
   HANDLE target = OpenProcess(
       PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION | PROCESS_VM_WRITE |
-          PROCESS_VM_READ | PROCESS_QUERY_INFORMATION,
+          PROCESS_VM_READ | PROCESS_QUERY_INFORMATION | SYNCHRONIZE,
       FALSE, pid);
   if (target == nullptr) {
     fprintf(stderr, "OpenProcess(%lu) failed: %lu (需管理员/相同完整性级别?)\n",
@@ -2581,7 +2582,7 @@ int main() {
   hibiki_voice_hook::LaunchFailureReason reason =
       hibiki_voice_hook::LaunchFailureReason::kNone;
   const int rc = RunInjection(target, pid, dll_path, wait_ms, hold, nullptr,
-                              nullptr, effective_luna, &reason);
+                              target, effective_luna, &reason);
   CloseHandle(target);
   if (rc != 0) ReportFailureReason(reason, rc);
   return rc;
