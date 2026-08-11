@@ -63,10 +63,22 @@ target_link_libraries(${BINARY_NAME} PRIVATE ole32 shell32)
 target_link_libraries(${BINARY_NAME} PRIVATE d2d1 dwrite)
 # WebView2 + WIL (.targets auto-add include dirs, import lib and WebView2Loader
 # deployment) for the global lookup overlay; Shlwapi for SHCreateMemStream.
-target_link_libraries(${BINARY_NAME} PRIVATE
-  ${CMAKE_BINARY_DIR}/packages/Microsoft.Web.WebView2/build/native/Microsoft.Web.WebView2.targets)
-target_link_libraries(${BINARY_NAME} PRIVATE
-  ${CMAKE_BINARY_DIR}/packages/Microsoft.Windows.ImplementationLibrary/build/native/Microsoft.Windows.ImplementationLibrary.targets)
+if(CMAKE_GENERATOR MATCHES "^Visual Studio")
+  target_link_libraries(${BINARY_NAME} PRIVATE
+    ${CMAKE_BINARY_DIR}/packages/Microsoft.Web.WebView2/build/native/Microsoft.Web.WebView2.targets)
+  target_link_libraries(${BINARY_NAME} PRIVATE
+    ${CMAKE_BINARY_DIR}/packages/Microsoft.Windows.ImplementationLibrary/build/native/Microsoft.Windows.ImplementationLibrary.targets)
+else()
+  # NuGet .targets files are MSBuild project imports, not linker inputs.  A
+  # single-config generator such as Ninja therefore needs their native include
+  # and loader settings expressed as ordinary CMake target properties.
+  target_include_directories(${BINARY_NAME} PRIVATE
+    ${CMAKE_BINARY_DIR}/packages/Microsoft.Web.WebView2/build/native/include
+    ${CMAKE_BINARY_DIR}/packages/Microsoft.Windows.ImplementationLibrary/include)
+  target_link_libraries(${BINARY_NAME} PRIVATE
+    ${CMAKE_BINARY_DIR}/packages/Microsoft.Web.WebView2/build/native/x64/WebView2LoaderStatic.lib
+    version.lib)
+endif()
 target_link_libraries(${BINARY_NAME} PRIVATE Shlwapi.lib)
 # uiautomationcore: the UI Automation COM GUIDs (CLSID_CUIAutomation /
 # IID_IUIAutomation*) used by foreground_selection.cpp to read the foreground
