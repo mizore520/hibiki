@@ -6,18 +6,18 @@ import {fileURLToPath} from 'node:url';
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const sourceRoot = path.join(
   repositoryRoot,
-  'hibiki',
+  'fushi',
   'assets',
   'popup',
   'yomitan-26.6.15',
 );
-const entryPath = path.join(sourceRoot, 'hibiki-glossary-adapter.js');
+const entryPath = path.join(sourceRoot, 'fushi-glossary-adapter.js');
 const styleDataPath = path.join(sourceRoot, 'data', 'structured-content-style.json');
 const outputPaths = [
-  path.join(repositoryRoot, 'hibiki', 'assets', 'popup', 'yomitan-glossary-renderer.js'),
+  path.join(repositoryRoot, 'fushi', 'assets', 'popup', 'yomitan-glossary-renderer.js'),
   path.join(
     repositoryRoot,
-    'hibiki',
+    'fushi',
     'assets',
     'browser_extension',
     'vendor',
@@ -83,14 +83,14 @@ const bundle = `/*
 'use strict';
 ${modules}
 
-const __hibikiYomitanGlossaryRenderer = new HibikiYomitanGlossaryRenderer(
+const __fushiYomitanGlossaryRenderer = new FushiYomitanGlossaryRenderer(
     global.document,
     global.window || global,
     ${JSON.stringify(styleData)},
 );
-global.__hibikiYomitanGlossaryRenderer = __hibikiYomitanGlossaryRenderer;
+global.__fushiYomitanGlossaryRenderer = __fushiYomitanGlossaryRenderer;
 if (global.window && global.window !== global) {
-    global.window.__hibikiYomitanGlossaryRenderer = __hibikiYomitanGlossaryRenderer;
+    global.window.__fushiYomitanGlossaryRenderer = __fushiYomitanGlossaryRenderer;
 }
 })(globalThis);
 `;

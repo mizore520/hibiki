@@ -47,7 +47,7 @@ S/A 级同理裁剪：S 级连 worktree bootstrap 都可 `-SkipBootstrap` 到底
 ## 验证分级细则
 
 - **定向测试** = 改动直接覆盖的 test 文件 + 相邻功能的 test 文件，`flutter test test/<路径> --no-pub`。
-  - 🔴 **别靠脑子想「相邻功能」是哪些，机器能算**：改了 `hibiki/lib/**` 时用
+  - 🔴 **别靠脑子想「相邻功能」是哪些，机器能算**：改了 `fushi/lib/**` 时用
     `dart run tool/tests_for_changes.dart --include-dart --explain <改的文件…>` 反查
     「谁在源码里读这个文件」。**`--include-dart` 不加就恒为空**——工具默认把 Dart 树的
     改动整条过滤掉（`isDefaultBatchCoveredChange`，理由是「整批 35 条 + 定向测试兜底」），
@@ -75,7 +75,7 @@ S/A 级同理裁剪：S 级连 worktree bootstrap 都可 `-SkipBootstrap` 到底
 **形态 ① 有一个很具体、且不需要别人并发就能自己撞上的变体：僵尸 `flutter_tester` 锁住自己 worktree 的 `sqlite3.dll`。** 症状是
 
 ```text
-PathAccessException: Deletion failed, path = '…\hibiki\build\native_assets\windows\sqlite3.dll' (OS Error: 拒绝访问。, errno = 5)
+PathAccessException: Deletion failed, path = '…\fushi\build\native_assets\windows\sqlite3.dll' (OS Error: 拒绝访问。, errno = 5)
 …
 FLUTTER TEST VERDICT: FAILED - … Tests completed: 0
 ```
@@ -125,16 +125,16 @@ Get-CimInstance Win32_Process |
 
 **只枚举某个子树**的同样不进（`lib/src/sync` 的空 catch / PIN / TLS 三条、`lib/src/settings` 的旧 pref key、5 个媒体页根的焦点所有权……）：改动落在那个子树时，定向测试本来就会挑到它。
 
-### 清单（35 条，2026-08-02 反向枚举全量得出；TODO-2707 补入三份新语料守卫）
+### 清单（36 条，2026-08-02 反向枚举全量得出；TODO-2707 补入三份新语料守卫；BUG-1498 补入出站装配守卫）
 
 | 测试 | 扫描根 | 守什么 |
 |---|---|---|
 | `test/tools/source_guard_adoption_test.dart` | `test/` 全树 | 禁手写注释剥离，一律走 `helpers/source_guard.dart` |
 | `test/settings/md3_design_system_static_test.dart` | `lib/src` 全树（仅其中 1 个 test） | 页面 chrome 不得重开本地 MD3 决策（裸 `Card(`/`ListTile(`/`fontSize:`/`BorderRadius.circular(`…） |
-| `test/tools/dart_source_no_raw_nul_guard_test.dart` | `hibiki/{lib,test}` + 5 个 `packages/*/lib` | `.dart` 不得含裸 NUL（git 判 binary 会静默丢改动） |
+| `test/tools/dart_source_no_raw_nul_guard_test.dart` | `fushi/{lib,test}` + 5 个 `packages/*/lib` | `.dart` 不得含裸 NUL（git 判 binary 会静默丢改动） |
 | `test/tools/duplicate_policy_naming_guard_test.dart` | `lib` + `test` 全树 | 7 个淘汰命名不得复活 |
 | `test/tools/media_kind_persistence_guard_test.dart` | 6 个生产 `lib` 根 | MediaKind 持久化只经 `dbValue`/`compositeKey` |
-| `test/tools/book_format_discipline_guard_test.dart` | `lib`+`test`+`hibiki_core/lib` | `BookFormat` 只经枚举落库/比较 |
+| `test/tools/book_format_discipline_guard_test.dart` | `lib`+`test`+`fushi_core/lib` | `BookFormat` 只经枚举落库/比较 |
 | `test/tools/file_picker_discipline_guard_test.dart` | `lib` 全树 | 选择器走统一入口，裸调须登记 |
 | `test/tools/image_picker_usage_guard_test.dart` | `lib` 全树 | 桌面可达代码不得直接用 `image_picker` |
 | `test/tools/safe_file_name_guard_test.dart` | `lib` 全树 | Windows 非法文件名字符集单一真相源 |
@@ -146,7 +146,7 @@ Get-CimInstance Win32_Process |
 | `test/sync/desktop_lookup_foreground_guard_static_test.dart` | `lib/src` 全树 | 抢前台/任务栏闪烁只能走单一封装 |
 | `test/storage/documents_whitelist_guard_test.dart` | `lib` 全树 | 新增 documents 子目录必须进迁移白名单 |
 | `test/storage/path_rebase_coverage_guard_test.dart` | `lib` 全树（pref 扫描） | 新增路径形 pref / DB 列必须双向登记 |
-| `test/focus/focus_architecture_static_test.dart` | `lib/src` 全树 | 焦点滚动必须走 `HibikiFocusScroll` |
+| `test/focus/focus_architecture_static_test.dart` | `lib/src` 全树 | 焦点滚动必须走 `FushiFocusScroll` |
 | `test/lookup/auto_read_surface_coverage_guard_test.dart` | `lib` 全树 | 每个 `searchDictionary(` 调用点须声明接不接自动朗读 |
 | `test/pages/lookup_overlay_dialog_gate_guard_test.dart` | `lib` 全树 | 查词浮层每个子项都能走到对话框隐藏计数 |
 | `test/shortcuts/shortcut_channel_wiring_guard_test.dart` | `lib` 全树 | 开放的输入通道必须真有解析入口 |
@@ -160,12 +160,13 @@ Get-CimInstance Win32_Process |
 | `test/media/video/real_path_directory_picker_test.dart` | `lib` 全树 | 生产代码不得用 iOS `FileType.audio` |
 | `test/ios/info_plist_media_permission_guard_test.dart` | `lib` 全树（作谓词） | 用了相机/相册/音频就必须有 `Info.plist` 声明 |
 | `test/i18n/i18n_completeness_test.dart` | `lib/i18n` 全部 17 份 | 17 语言 key 完整、无孤儿、插值一致 |
-| `test/pages/reader_hibiki_page_source_corpus_test.dart` | `reader_hibiki/` part 目录枚举 | 合并语料覆盖每个 part（漏登记会让 90+ 条守卫真空通过） |
+| `test/pages/reader_fushi_page_source_corpus_test.dart` | `reader_fushi/` part 目录枚举 | 合并语料覆盖每个 part（漏登记会让 90+ 条守卫真空通过） |
 | `test/pages/reader_history_source_corpus_test.dart` | `reader_history/` part 目录枚举 | 同上，书架页语料 |
-| `test/pages/video_hibiki_page_source_corpus_test.dart` | `video_hibiki/` part 目录枚举 | 同上，视频页语料 |
+| `test/pages/video_fushi_page_source_corpus_test.dart` | `video_fushi/` part 目录枚举 | 同上，视频页语料 |
 | `test/sync/sync_settings_schema_source_corpus_test.dart` | `sync_settings_schema/` part 目录枚举 | 同上，同步设置 schema 语料 |
+| `test/tools/outbound_http_discipline_guard_test.dart` | `fushi/lib` + 6 个 `packages/*/lib` | 裸 `HttpClient(`/`http.Client(`/`IOClient(`/`Dio(` 必须经统一装配点，例外须登记（BUG-1498） |
 
-一条命令跑完，**当前基线 225 tests**（2026-08-02，`origin/develop@b4ed5d8f7` 实测）——比争论「这条该不该跑」便宜得多，所以**不要挑，整批跑**：
+一条命令跑完，**当前基线 250 tests**（2026-08-11，本条守卫 11 例并入后实测；上一基线 239）——比争论「这条该不该跑」便宜得多，所以**不要挑，整批跑**：
 
 **N 的演进链要留着，别只写当前值**——「N 应该是多少」本身就是判空转的信号，只写当前值就丢掉了「它为什么变」：
 
@@ -173,13 +174,16 @@ Get-CimInstance Win32_Process |
 |---|---|---|
 | 194 | 32 | 初版（34 秒） |
 | 207 | 35 | PR#756 补入三条合并语料守卫 |
-| **225** | **35** | PR#760 给禁止型判据补 18 条自校验（**当前基线**） |
+| 225 | 35 | PR#760 给禁止型判据补 18 条自校验 |
+| 227 | 35 | 期间合入的 PR 又补了 2 条（这一格是**事后补记**：`develop` 上实测 227，没人在改动那刻更新这张表——N 的演进链只有当场记才准） |
+| 239 | 35 | BUG-1489 给 `media_kind_persistence_guard` 补冻结迁移登记出口 + 10 条合成语料自校验 + 2 条登记自校验（3→15） |
+| **250** | **36** | BUG-1498 新增 `outbound_http_discipline_guard`（11 例：登记制 + 规模哨兵 + 陈旧检测 + 总数常量 + 5 组合成语料自校验，**当前基线**） |
 
 ⚠️ **N 变了不一定是坏事，但必须能说出是哪一行变的**；反过来，**N 没变也不一定是漏跑**——见下面「判 N 之前先问：新增用例落在哪一批里」。
 
 
 ```bash
-cd hibiki && dart run tool/flutter_test_failures.dart --no-pub \
+cd fushi && dart run tool/flutter_test_failures.dart --no-pub \
   --output-dir=../.codex-test/flutter-test-guards \
   test/tools/source_guard_adoption_test.dart test/settings/md3_design_system_static_test.dart \
   test/tools/dart_source_no_raw_nul_guard_test.dart test/tools/duplicate_policy_naming_guard_test.dart \
@@ -198,10 +202,11 @@ cd hibiki && dart run tool/flutter_test_failures.dart --no-pub \
   test/media/drag_drop/drag_drop_platform_guard_test.dart test/media/media_cover_write_guard_test.dart \
   test/media/sources/book_history_split_guard_test.dart test/media/video/real_path_directory_picker_test.dart \
   test/ios/info_plist_media_permission_guard_test.dart test/i18n/i18n_completeness_test.dart \
-  test/pages/reader_hibiki_page_source_corpus_test.dart \
+  test/pages/reader_fushi_page_source_corpus_test.dart \
   test/pages/reader_history_source_corpus_test.dart \
-  test/pages/video_hibiki_page_source_corpus_test.dart \
-  test/sync/sync_settings_schema_source_corpus_test.dart
+  test/pages/video_fushi_page_source_corpus_test.dart \
+  test/sync/sync_settings_schema_source_corpus_test.dart \
+  test/tools/outbound_http_discipline_guard_test.dart
 ```
 
 ### 清单会过期——怎么重新推导
@@ -209,7 +214,7 @@ cd hibiki && dart run tool/flutter_test_failures.dart --no-pub \
 **按行为反向枚举，不按名字猜**。名字里带 `guard` / `static` / `adoption` 的既不充分也不必要：`i18n_completeness_test.dart` 不带 guard 却必须进，`resume_prune_guard_test.dart` 带 guard 却是定点。
 
 ```bash
-cd hibiki
+cd fushi
 grep -rlE "listSync|\.list\(" test/ --include=*.dart | sort > /tmp/a
 grep -rlE "['\"](\.\./)*(lib|test|assets|integration_test|packages|\.github|tools|docs|third_party)(/[^'\"]*)?['\"]" \
   test/ --include=*.dart | sort > /tmp/b
@@ -259,7 +264,7 @@ TODO-2707（PR#756）已把这条补完：**35 条现在条条有扫描规模哨
 
 ## 另一半：按触发条件加跑——**不点名，按树推导**
 
-上面那 35 条扫的是 Dart 源码树。另一半守卫读的是 **native / 资产 / 配置树**：`hibiki/windows`、`hibiki/android`、`hibiki/{ios,macos,linux}`、`packages/*/windows`、`native/`、`tools/browser-extension`、`.github/workflows`、`third_party/`。整批清单抓不到它们，因为它们只在碰对应资产时才可能红。
+上面那 35 条扫的是 Dart 源码树。另一半守卫读的是 **native / 资产 / 配置树**：`fushi/windows`、`fushi/android`、`fushi/{ios,macos,linux}`、`packages/*/windows`、`native/`、`tools/browser-extension`、`.github/workflows`、`third_party/`。整批清单抓不到它们，因为它们只在碰对应资产时才可能红。
 
 ### 这里曾经挂着一份手写的 9 个测试名，它烂了——而且是必然烂的
 
@@ -271,24 +276,24 @@ TODO-2707（PR#756）已把这条补完：**35 条现在条条有扫描规模哨
 
 | 树 | 引用它的守卫数（实测） | 旧手写清单覆盖 |
 |---|---|---|
-| `hibiki/windows` | 75 | **只点了 `gal_ipc_contract_single_source` 1 个** |
-| `hibiki/android` | 38 | **0，无任何触发规则** |
+| `fushi/windows` | 75 | **只点了 `gal_ipc_contract_single_source` 1 个** |
+| `fushi/android` | 38 | **0，无任何触发规则** |
 | `tools/browser-extension` | 49 | 2 |
 | `packages/flutter_inappwebview_windows` | 20 | **0** |
 | `.github/workflows` | 20 | 3 |
-| `native/hoshidicts` / `native/galgame_hook` | 12 / 9 | 1（半覆盖） |
-| `hibiki/macos` / `hibiki/ios` / `hibiki/linux` | 9 / 7 / 2 | **0** |
+| `native/fushidicts` / `native/galgame_hook` | 12 / 9 | 1（半覆盖） |
+| `fushi/macos` / `fushi/ios` / `fushi/linux` | 9 / 7 / 2 | **0** |
 | `packages/gamepads_windows` / `third_party/desktop_drop` | 4 / 3 | **0** |
 
-改一行 `hibiki/windows/runner/flutter_window.cpp` 会牵动 **72 条**守卫，旧清单一条都没提。这是「合入的 PR 把红带进 develop」已发生 3 次的共同根因之一（TODO-2720）。
+改一行 `fushi/windows/runner/flutter_window.cpp` 会牵动 **72 条**守卫，旧清单一条都没提。这是「合入的 PR 把红带进 develop」已发生 3 次的共同根因之一（TODO-2720）。
 
 ### 现在：从仓库现状推导
 
 ```bash
-cd hibiki
+cd fushi
 dart run tool/tests_for_changes.dart --base=origin/develop            # 该加跑哪些
 dart run tool/tests_for_changes.dart --base=origin/develop --explain  # 顺带说明被哪条路径命中
-dart run tool/tests_for_changes.dart hibiki/windows/runner/x.cpp      # 也可以直接给文件
+dart run tool/tests_for_changes.dart fushi/windows/runner/x.cpp      # 也可以直接给文件
 
 # 直接串给测试入口：
 dart run tool/flutter_test_failures.dart --no-pub \
@@ -308,7 +313,7 @@ dart run tool/flutter_test_failures.dart --no-pub \
 
 **有意的偏置：过度触发，不漏触发。** 漏一条 ⇒ 红带进 develop；多跑一条 ⇒ 多几秒。所以不剥注释（注释里点名一棵树本身就是证据）、路径解析退到最近存在的祖先（构建产物 / `.../` 省略写法 / 被删的叶子都还算数）。
 
-**不需要分层**。实测 `hibiki/windows/runner/flutter_window.cpp` 推出的 **72 条**跑完 **53 秒 / 594 tests**（`origin/develop@f0a00f410`）——比争论「该不该跑」便宜得多，整批跑。
+**不需要分层**。实测 `fushi/windows/runner/flutter_window.cpp` 推出的 **72 条**跑完 **53 秒 / 594 tests**（`origin/develop@f0a00f410`）——比争论「该不该跑」便宜得多，整批跑。
 
 **唯一的例外：扫描面运行时才算得出来的守卫。** 典型是 `powershell_51_compat_guard_test.dart`——它从 `.github/workflows/*.yml` 里解析 `powershell -File <脚本>`，被守的 `.ps1` 清单是 yml 内容决定的，源码里没有那些路径的字面量。这类守卫在**自己文件里**写一行声明：
 
@@ -320,13 +325,13 @@ dart run tool/flutter_test_failures.dart --no-pub \
 
 ## 共享测试原语：它坏起来是静默的，改它的门也不在上面两批里
 
-守卫的判据窗口很少是「整个文件」，多半是「某个方法体 / 某个类体」。切窗口这件事全仓集中在 `hibiki/test/helpers/source_guard.dart` 的三个原语上——`methodBody`、`balancedBlockFrom`、`topLevelFunctionBody`。它们是上百条守卫共用的地基，**而地基塌下去的方式是静默的**：守卫不报错，只是换了一段源码继续「工作」。
+守卫的判据窗口很少是「整个文件」，多半是「某个方法体 / 某个类体」。切窗口这件事全仓集中在 `fushi/test/helpers/source_guard.dart` 的三个原语上——`methodBody`、`balancedBlockFrom`、`topLevelFunctionBody`。它们是上百条守卫共用的地基，**而地基塌下去的方式是静默的**：守卫不报错，只是换了一段源码继续「工作」。
 
 ### 已经连续三次栽在同一族缺陷上：签名形态
 
 | # | 原语 | 撞上的签名形态 | 后果 | 结局 |
 |---|---|---|---|---|
-| ① | `methodBody` | **箭头函数体** `Foo bar() => …;` | 找不到 `{`，配对扫描越界，读到**下一个声明**——守卫在一段完全无关的源码上做断言 | PR#768 已修（`291d42af0`），并加了 `HIBIKI_METHOD_BODY_AUDIT=1` 反向枚举全仓有多少守卫锚在箭头体上 |
+| ① | `methodBody` | **箭头函数体** `Foo bar() => …;` | 找不到 `{`，配对扫描越界，读到**下一个声明**——守卫在一段完全无关的源码上做断言 | PR#768 已修（`291d42af0`），并加了 `FUSHI_METHOD_BODY_AUDIT=1` 反向枚举全仓有多少守卫锚在箭头体上 |
 | ② | `balancedBlockFrom` | **具名参数签名** `void f({required A a}) {` | 从声明处找第一个 `{`，抓到的是**参数列表**的花括号，切出来的「方法体」其实是一串参数 | PR#771 绕开（`test/reader/reader_exit_bounded_probe_test.dart` 里留了注释说明为什么不能直接 `balancedBlockFrom(start)`） |
 | ③ | `topLevelFunctionBody` | **`async` / `async*` / `sync*` 体** | 右括号后第一个非空白字符不是 `{` 而是 `a`，被判成调用点、解析成 `null` ⇒ **实现正确时守卫转红** | PR#772 已修（`73eabe331`） |
 
@@ -345,7 +350,7 @@ dart run tool/flutter_test_failures.dart --no-pub \
 正确的门是按 import 反查，整批跑：
 
 ```bash
-cd hibiki
+cd fushi
 # ① 只收测试文件——裸 grep -rl 会混进 test/helpers 下没有 main() 的工具文件
 grep -rl "helpers/source_guard.dart" test/ --include=*_test.dart | sort > /tmp/blast.txt
 # ② 再逐个校验确实是可跑的 suite（*_test.dart 命名也有例外）
@@ -384,7 +389,7 @@ grep    "FLUTTER TEST VERDICT" /tmp/blast_run.log           # 逐行看，别只
 ```bash
 BR=develop                                    # 换成你要核的分支名
 git ls-remote origin "refs/heads/$BR"
-gh api "repos/hajisensai/hibiki/git/ref/heads/$BR" --jq .object.sha
+gh api "repos/hajisensai/Fushi/git/ref/heads/$BR" --jq .object.sha
 git rev-parse HEAD                            # 再拿它和「你以为推上去的那个东西」比对
 ```
 
@@ -422,7 +427,7 @@ gh run list --branch develop --limit 20 \
   --json databaseId,headSha,workflowName,createdAt,status,conclusion
 SHA=$(gh run list --branch develop --limit 1 --json headSha --jq '.[0].headSha')
 gh api -H "Accept: application/vnd.github.raw" \
-  "repos/hajisensai/hibiki/contents/.github/workflows/main.yml?ref=$SHA" | head -40
+  "repos/hajisensai/Fushi/contents/.github/workflows/main.yml?ref=$SHA" | head -40
 ```
 
 ### 判「测试跑全了没」是结构问题，不是算术问题
@@ -441,10 +446,10 @@ gh api -H "Accept: application/vnd.github.raw" \
 
 ## 三条零散硬规矩（各自有实测出处）
 
-**① 改共用文案之前，先枚举它的全部使用点。** i18n key 不属于「某个页面」，属于**所有 import 了那个 widget 的页面**。实例：`scrape_all_confirm` 在 `hibiki/lib/src/media/metadata/scrape_batch.dart` 里只出现一次，但 `ScrapeBatchDialog` 被 `home_video_page.dart` / `reader_hibiki_history_page.dart` / `games_library_page.dart` **三页共用**——只沿视频页那条路径验证「文案是否如实」，等于把同一句谎话原样搬到书架页和游戏库页。改之前先跑一遍：
+**① 改共用文案之前，先枚举它的全部使用点。** i18n key 不属于「某个页面」，属于**所有 import 了那个 widget 的页面**。实例：`scrape_all_confirm` 在 `fushi/lib/src/media/metadata/scrape_batch.dart` 里只出现一次，但 `ScrapeBatchDialog` 被 `home_video_page.dart` / `reader_fushi_history_page.dart` / `games_library_page.dart` **三页共用**——只沿视频页那条路径验证「文案是否如实」，等于把同一句谎话原样搬到书架页和游戏库页。改之前先跑一遍：
 
 ```bash
-cd hibiki
+cd fushi
 grep -rn "scrape_all_confirm" lib --include=*.dart | grep -v strings.g.dart   # 谁在用这个 key
 grep -rn "scrape_batch.dart" lib --include=*.dart                            # 谁 import 了承载它的 widget
 ```

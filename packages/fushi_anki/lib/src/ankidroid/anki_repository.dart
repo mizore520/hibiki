@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../anki_models.dart';
+import '../anki_remote_media_http.dart';
 import '../base_anki_repository.dart';
 import '../ankiconnect/ankiconnect_repository.dart';
 import '../lapis_note_type.dart';
@@ -18,7 +19,9 @@ class AnkiRepository extends BaseAnkiRepository {
   @override
   Future<AnkiSettings> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(BaseAnkiRepository.settingsKey);
+    // 原始串必须经基类 readSettingsJson 取（W2-7 键搬移 + W2-2 别名改写的唯一
+    // 通道）；直接 prefs.getString 会绕过两个载入期迁移。
+    final String? raw = await readSettingsJson(prefs);
     if (raw == null) {
       await _migrateFromLegacy(prefs);
       final migrated = prefs.getString(BaseAnkiRepository.settingsKey);
@@ -159,8 +162,7 @@ class AnkiRepository extends BaseAnkiRepository {
   }) async {
     final settings = await loadSettings();
 
-    final deck =
-        settings.availableDecks.firstWhereOrNull(
+    final deck = settings.availableDecks.firstWhereOrNull(
           (d) => d.id == settings.selectedDeckId,
         ) ??
         (settings.selectedDeckName != null
@@ -170,8 +172,7 @@ class AnkiRepository extends BaseAnkiRepository {
             : null);
     if (deck == null) return const MineOutcome.notConfigured();
 
-    final noteType =
-        settings.availableNoteTypes.firstWhereOrNull(
+    final noteType = settings.availableNoteTypes.firstWhereOrNull(
           (t) => t.id == settings.selectedNoteTypeId,
         ) ??
         (settings.selectedNoteTypeName != null
@@ -485,9 +486,8 @@ class AnkiRepository extends BaseAnkiRepository {
       for (final item in raw) {
         if (item is! Map) continue;
         final rawId = item['noteId'];
-        final int? id = rawId is int
-            ? rawId
-            : int.tryParse(rawId?.toString() ?? '');
+        final int? id =
+            rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
         if (id == null) continue;
         result.add(
           MinedNoteRef(
@@ -604,7 +604,7 @@ class AnkiRepository extends BaseAnkiRepository {
   Future<String?> _addSentenceAudio(String path) async {
     final preferredName = await _preferredMediaNameForFile(
       path,
-      'hibiki_audio_',
+      'fushi_audio_',
     );
     if (preferredName == null) return null;
     final raw = await _addMediaFile(path, preferredName, mimeTypeForPath(path));
@@ -620,7 +620,7 @@ class AnkiRepository extends BaseAnkiRepository {
     if (!file.existsSync()) return null;
     final bytes = await file.readAsBytes();
     // BUG-933：sha256 卸到后台 isolate（大媒体），避免阻塞 UI。
-    return hibikiAnkiMediaFilenameForBytesAsync(
+    return fushiAnkiMediaFilenameForBytesAsync(
       prefix: prefix,
       bytes: bytes,
       sourceName: file.path,
@@ -644,8 +644,8 @@ class AnkiRepository extends BaseAnkiRepository {
           final data = AnkiAudioRef.decodeDataUri(url);
           if (data == null) return const AudioFetchOutcome.none();
           final cacheDir = await _mediaCacheDir();
-          final preferredName = await hibikiAnkiMediaFilenameForBytesAsync(
-            prefix: 'hibiki_audio_',
+          final preferredName = await fushiAnkiMediaFilenameForBytesAsync(
+            prefix: 'fushi_audio_',
             bytes: data.bytes,
             sourceName: 'word_audio.${data.extension}',
             fallbackExtension: data.extension,
@@ -657,7 +657,7 @@ class AnkiRepository extends BaseAnkiRepository {
           final file = File(AnkiAudioRef.localPath(url));
           final preferredName = await _preferredMediaNameForFile(
             file.path,
-            'hibiki_audio_',
+            'fushi_audio_',
             fallbackExtension: 'mp3',
           );
           if (preferredName == null) return const AudioFetchOutcome.none();
@@ -670,7 +670,8 @@ class AnkiRepository extends BaseAnkiRepository {
               ? AudioFetchOutcome.stored(localRef)
               : const AudioFetchOutcome.none();
         case AnkiAudioRefKind.remoteUrl:
-          final client = HttpClient();
+          // BUG-1498：任意公网 URL（Forvo / 词典音频源），必须经应用代理出口。
+          final client = createAnkiRemoteMediaHttpClient();
           try {
             final request = await client.getUrl(Uri.parse(url));
             final response = await request.close();
@@ -693,8 +694,8 @@ class AnkiRepository extends BaseAnkiRepository {
             final cacheDir = await _mediaCacheDir();
             final ext = _audioExtension(response.headers.contentType, url);
             // BUG-933：远端音频 sha256 卸到后台 isolate。
-            final preferredName = await hibikiAnkiMediaFilenameForBytesAsync(
-              prefix: 'hibiki_audio_',
+            final preferredName = await fushiAnkiMediaFilenameForBytesAsync(
+              prefix: 'fushi_audio_',
               bytes: bytes,
               sourceName: url,
               fallbackExtension: ext,

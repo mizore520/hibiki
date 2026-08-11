@@ -2,7 +2,7 @@
 
 #include "hold_process_lifecycle.h"
 
-using hibiki_voice_hook::HoldTargetIsRunning;
+using fushi_voice_hook::HoldTargetIsRunning;
 
 int main() {
   assert(!HoldTargetIsRunning(nullptr));

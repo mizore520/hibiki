@@ -2,7 +2,7 @@
 ///
 /// **只覆盖「合集/书架 mediaType」值域**：`MediaCollectionItems.mediaType` /
 /// `ShelfEntries.mediaType` / `BookTagMembershipTombstones.mediaType` /
-/// `CollectionMemberTombstones.mediaType`。定义在 hibiki_core 是因为它是
+/// `CollectionMemberTombstones.mediaType`。定义在 fushi_core 是因为它是
 /// **schema 值域的一部分**（同 activity_event_types.dart 的理由）。
 ///
 /// ⚠️ 与本仓其它 6 个字符串值域**互不通用**，混编即数据事故（跨域换算走
@@ -23,7 +23,7 @@ library;
 ///
 /// Drift 列本身保持 `TEXT`（不引入 TypeConverter）：
 /// - `MediaCollectionItems.mediaType` 有 `''` 哨兵
-///   （`HibikiDatabase.collectionTombstoneSentinel`）；
+///   （`FushiDatabase.collectionTombstoneSentinel`）；
 /// - 同步引擎必须原样透传对端未来新增的未知种类。
 /// 因此边界上用 [tryParse] 显式解析、用 [dbValue] 显式落库。
 enum MediaKind {

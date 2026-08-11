@@ -70,7 +70,7 @@ add_library(fushi_voice_hook SHARED
 )
 target_include_directories(fushi_voice_hook PRIVATE "include")
 target_compile_definitions(fushi_voice_hook PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
-target_link_libraries(fushi_voice_hook PRIVATE minhook)
+target_link_libraries(fushi_voice_hook PRIVATE minhook winhttp)
 
 # Siglus OVK 索引/Ogg 完整性解析是纯函数，独立小测试不需启动或注入游戏。
 enable_testing()
@@ -124,6 +124,13 @@ add_executable(fushi_voice_session_reuse_test
 target_include_directories(fushi_voice_session_reuse_test PRIVATE "include")
 target_compile_definitions(fushi_voice_session_reuse_test PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
 add_test(NAME fushi_voice_session_reuse_test COMMAND fushi_voice_session_reuse_test)
+
+add_executable(fushi_voice_hook_ipc_name_test
+  "tests/voice_hook_ipc_name_test.cpp"
+)
+target_include_directories(fushi_voice_hook_ipc_name_test PRIVATE "include")
+target_compile_definitions(fushi_voice_hook_ipc_name_test PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
+add_test(NAME fushi_voice_hook_ipc_name_test COMMAND fushi_voice_hook_ipc_name_test)
 
 # Attach-mode lifecycle guard: a held session follows the target process and
 # must never turn a missing wait handle into an infinite orphan loop.
@@ -185,6 +192,14 @@ add_executable(fushi_siglus_launch_test
 target_include_directories(fushi_siglus_launch_test PRIVATE "include")
 add_test(NAME fushi_siglus_launch_test COMMAND fushi_siglus_launch_test)
 
+# KiriKiri 二进制级延迟附着 profile（根因回归：恋爱成双早注入触发 Access Violation）。
+add_executable(fushi_kirikiri_launch_profile_test
+  "tests/kirikiri_launch_profile_test.cpp"
+)
+target_include_directories(fushi_kirikiri_launch_profile_test PRIVATE "include")
+add_test(NAME fushi_kirikiri_launch_profile_test
+  COMMAND fushi_kirikiri_launch_profile_test)
+
 add_executable(fushi_luna_hook_config_test tests/luna_hook_config_test.cpp)
 target_include_directories(fushi_luna_hook_config_test PRIVATE include)
 add_test(NAME fushi_luna_hook_config_test COMMAND fushi_luna_hook_config_test)
@@ -215,6 +230,27 @@ target_compile_definitions(fushi_text_lane_ipc_test
 add_test(NAME fushi_text_lane_ipc_test
   COMMAND fushi_text_lane_ipc_test)
 
+# v14 游戏内查词区的契约级测试：各子区不重叠/不越界/8 对齐、IsLookupFrameSane 的每条
+# 拒绝理由、旧会话给 nullptr 而非野指针、以及"v14 是纯追加"这条不变量。
+add_executable(fushi_lookup_ipc_contract_test
+  tests/lookup_ipc_contract_test.cpp)
+target_include_directories(fushi_lookup_ipc_contract_test PRIVATE include)
+target_compile_definitions(fushi_lookup_ipc_contract_test
+  PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
+add_test(NAME fushi_lookup_ipc_contract_test
+  COMMAND fushi_lookup_ipc_contract_test)
+
+# 游戏内查词的会话 replay：hit→frame→apply、旧帧丢弃、未开启零写入、卡片外输入不转发、
+# 会话结束清理不串数据。fixture 走 argv（与 fushi_luna_text_replay_test 同一路子）。
+add_executable(fushi_lookup_session_replay_test
+  tests/lookup_session_replay_test.cpp)
+target_include_directories(fushi_lookup_session_replay_test PRIVATE include)
+target_compile_definitions(fushi_lookup_session_replay_test
+  PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
+add_test(NAME fushi_lookup_session_replay_test
+  COMMAND fushi_lookup_session_replay_test
+  "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/kirikiri_lookup_replay.tsv")
+
 add_executable(fushi_unity_text_mesh_reassembler_test
   tests/unity_text_mesh_reassembler_test.cpp)
 target_include_directories(fushi_unity_text_mesh_reassembler_test
@@ -234,7 +270,7 @@ target_include_directories(fushi_directsound_format_registry_test PRIVATE hook)
 add_test(NAME fushi_directsound_format_registry_test
   COMMAND fushi_directsound_format_registry_test)
 
-# 注入器（Hibiki 主进程把它当子进程拉起）。attach（--pid）+ launch（--launch；通常
+# 注入器（Fushi 主进程把它当子进程拉起）。attach（--pid）+ launch（--launch；通常
 # CREATE_SUSPENDED 早注入，Siglus/Enigma 自动延迟附着）两种模式，各 arch 一份。
 add_executable(fushi_voice_injector
   "injector/injector_main.cpp"

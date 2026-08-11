@@ -4,10 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi_core/fushi_core.dart';
 
 void main() {
-  late HibikiDatabase database;
+  late FushiDatabase database;
 
   setUp(() {
-    database = HibikiDatabase.forTesting(NativeDatabase.memory());
+    database = FushiDatabase.forTesting(NativeDatabase.memory());
   });
 
   tearDown(() => database.close());
@@ -23,7 +23,7 @@ void main() {
     // 直接把 develop 的 CI `Run package tests` 打红——因为本仓约定的本地全量
     // 门只跑 `hibiki/` 那套，`packages/` 下的字面量拿不到同一次批量替换。
     // 「当前 schema 恰好是第几版」的等值守卫属于迁移阶梯测试
-    // （`hibiki/test/database/migration_*.dart`），不属于这里。
+    // （`fushi/test/database/migration_*.dart`），不属于这里。
     expect(database.schemaVersion, greaterThanOrEqualTo(65),
         reason: 'v65 = Mihon 漫画扩展生态五张表；低于此版本本用例的表还不存在');
     await database.upsertMangaExtensionStore(

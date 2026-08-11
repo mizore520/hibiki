@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi_core/fushi_core.dart';
 
 /// Losslessness proof for the v15 -> v16 book-key migration
-/// (HibikiDatabase._migrateBookKeyV16). Seeds a raw v15 schema with the
+/// (FushiDatabase._migrateBookKeyV16). Seeds a raw v15 schema with the
 /// autoincrement int id and every relation table, then opens it through
 /// `forTesting` to trigger onUpgrade, and asserts every reading-data row is
 /// still reachable by its new bookKey = sanitizeTtuFilename(title).
@@ -12,8 +12,8 @@ import 'package:fushi_core/fushi_core.dart';
 /// Seed follows the migration_downgrade_test seed-raw-DB pattern: hand-written
 /// CREATE/INSERT of the v15 column shapes (NOT the current drift schema) so the
 /// migration is exercised against real legacy data.
-HibikiDatabase _openMigratedFromV15() {
-  return HibikiDatabase.forTesting(
+FushiDatabase _openMigratedFromV15() {
+  return FushiDatabase.forTesting(
     NativeDatabase.memory(
       setup: (raw) {
         // Mirror the production _openDb setup: FK enforcement ON. Without this
@@ -225,8 +225,8 @@ CREATE TABLE media_items (
           "INSERT INTO media_items "
           "(media_identifier, title, media_type_identifier, media_source_identifier, unique_key, position, duration, can_delete, can_edit) "
           "VALUES "
-          "('hoshi://book/1', 'Book A', 'reader', 'reader_hibiki', 'hoshi://book/1', 0, 0, 1, 1),"
-          "('hoshi://book/2', 'Book A', 'reader', 'reader_hibiki', 'hoshi://book/2', 0, 0, 1, 1)",
+          "('hoshi://book/1', 'Book A', 'reader', 'reader_fushi', 'hoshi://book/1', 0, 0, 1, 1),"
+          "('hoshi://book/2', 'Book A', 'reader', 'reader_fushi', 'hoshi://book/2', 0, 0, 1, 1)",
         );
 
         // ── preferences (two audiobook_pos key spaces + others) ───────
@@ -295,7 +295,7 @@ CREATE TABLE reading_statistics (
 
 void main() {
   test('v15->v16 re-keys all reading data to bookKey losslessly', () async {
-    final HibikiDatabase db = _openMigratedFromV15();
+    final FushiDatabase db = _openMigratedFromV15();
     addTearDown(db.close);
 
     // Opening forces the lazy DB to run onUpgrade(15 -> current). The v16
@@ -322,25 +322,30 @@ void main() {
         books.firstWhere((b) => b.bookKey == 'Book A (2)');
     expect(bookA2.extractDir, '/books/2');
 
-    // ── reader positions by bookKey ───────────────────────────────────
-    final p1 = await db.getReaderPosition('Book A');
+    // ── reader positions by book uid ──────────────────────────────────
+    // v16 把阅读数据重新键到 bookKey；v82 又把 reader_positions 的书键换成本机
+    // 稳定的 `EpubBooks.uid`（标题改名不丢位置）。所以这里查的是**书行的 uid**，
+    // 不再是 bookKey——两级 re-key 之后数据仍在，这才是本用例要守的「无损」。
+    final p1 = await db.getReaderPosition(bookA.uid);
     expect(p1, isNotNull);
     expect(p1!.normCharOffset, 5000);
-    final p2 = await db.getReaderPosition('Book A (2)');
+    final p2 = await db.getReaderPosition(bookA2.uid);
     expect(p2, isNotNull);
     expect(
         p2!.charOffset, -1); // BUG-162: v24 删 ttu_char_offset，char_offset 默认 -1
 
-    // ── bookmarks by bookKey ──────────────────────────────────────────
+    // ── bookmarks by book uid（v82 起 bookmarks 也改走 uid，同 reader_positions）─
     final bmA = await db
         .customSelect(
-          "SELECT COUNT(*) AS c FROM bookmarks WHERE book_key = 'Book A'",
+          'SELECT COUNT(*) AS c FROM bookmarks WHERE book_uid = ?',
+          variables: <Variable<Object>>[Variable<String>(bookA.uid)],
         )
         .getSingle();
     expect(bmA.read<int>('c'), 2);
     final bmA2 = await db
         .customSelect(
-          "SELECT COUNT(*) AS c FROM bookmarks WHERE book_key = 'Book A (2)'",
+          'SELECT COUNT(*) AS c FROM bookmarks WHERE book_uid = ?',
+          variables: <Variable<Object>>[Variable<String>(bookA2.uid)],
         )
         .getSingle();
     expect(bmA2.read<int>('c'), 1);
@@ -383,16 +388,13 @@ void main() {
     expect(await db.getPrefTyped<bool>('audiobook_follow_Book A', false), true);
     expect(await db.getPref('audiobook_speed_Book A'), '1.5');
 
-    // ── media_items identifier rewritten ──────────────────────────────
-    final mi = await db
-        .customSelect(
-          "SELECT media_identifier, unique_key FROM media_items "
-          "ORDER BY id",
-        )
-        .get();
-    expect(mi.map((r) => r.read<String>('media_identifier')).toSet(),
-        <String>{'hoshi://book/Book A', 'hoshi://book/Book A (2)'});
-    expect(mi.first.read<String>('unique_key'), 'hoshi://book/Book A');
+    // ── media_items identifier rewritten（v80 后终值在 media_open_history）──
+    final mi =
+        await db.customSelect('SELECT media_id FROM media_open_history').get();
+    // v16 重键出 hoshi://book/<key>，v73 再把前缀改写成 fushi://book/<key>，
+    // v80 搬进新表 —— 断言的是阶梯终值。
+    expect(mi.map((r) => r.read<String>('media_id')).toSet(),
+        <String>{'fushi://book/Book A', 'fushi://book/Book A (2)'});
 
     // ── reading_statistics title aligned to sanitized key + merged ────
     // 'Solo*Book' → 'Solo~ttu-star~Book' (untouched). The two 2026-01-02 rows
@@ -414,17 +416,18 @@ void main() {
 
     // ── FK cascade: deleting a book clears its reading data ───────────
     await db.deleteEpubBook('Book A');
-    expect(await db.getReaderPosition('Book A'), isNull);
+    expect(await db.getReaderPosition(bookA.uid), isNull);
     expect(await db.getAudiobookByBookKey('Book A'), isNull);
     expect(await db.getCuesForBook('Book A'), isEmpty);
     final bmAfter = await db
         .customSelect(
-          "SELECT COUNT(*) AS c FROM bookmarks WHERE book_key = 'Book A'",
+          'SELECT COUNT(*) AS c FROM bookmarks WHERE book_uid = ?',
+          variables: <Variable<Object>>[Variable<String>(bookA.uid)],
         )
         .getSingle();
     expect(bmAfter.read<int>('c'), 0);
     expect((await db.getTagsForBook('Book A')), isEmpty);
     // The other book is untouched.
-    expect(await db.getReaderPosition('Book A (2)'), isNotNull);
+    expect(await db.getReaderPosition(bookA2.uid), isNotNull);
   });
 }

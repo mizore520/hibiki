@@ -29,20 +29,69 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 1374 条。点号进各自文件。
+> 共 1423 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
-| [BUG-1468](bugs/BUG-1468-windows-runtime-lock-preflight.md) | ✅ | ✅ | Windows 完整打包未提前检查运行组件占用 |
-| [BUG-1467](bugs/BUG-1467-injector-attach-target-exit.md) | ✅ | ✅ | 附着模式游戏退出后 injector 不结束 |
-| [BUG-1466](bugs/BUG-1466-gal-overlay-loses-topmost.md) | ✅ | ✅ | Galgame文字悬浮窗切换窗口后丢失置顶 |
-| [BUG-1465](bugs/BUG-1465-anki-duplicate-check-findnotes-serial.md) | ✅ | ✅ | 词条逐个 findNotes 查重导致已制卡标记延迟 |
-| [BUG-1464](bugs/BUG-1464-anki-localhost-prefers-ipv6.md) | ✅ | ✅ | AnkiConnect 使用 localhost 时优先连接 IPv6，导致本机请求延迟或失败 |
-| [BUG-1463](bugs/BUG-1463-luna-safe-attach-double-hook-crash.md) | ✅ | ✅ | Luna 与 Fushi 双 Hook 导致游戏闪退 |
-| [BUG-1462](bugs/BUG-1462-luna-mine-before-audio-boundary.md) | ✅ | ✅ | Luna 当前句制卡提前截断录音导致卡片无音频 |
-| [BUG-1461](bugs/BUG-1461-local-windows-build-misses-gal-helper.md) | ✅ | ✅ | 本地 Windows 构建成功但未打包 galgame helper |
-| [BUG-1460](bugs/BUG-1460-windows-build-bundle-prefix.md) | ✅ | ✅ | Windows 构建 bundle 安装目标误指向 Program Files |
-| [BUG-1459](bugs/BUG-1459-alt-wheel-entry-scroll.md) | ✅ | ✅ | 查词窗口 Alt+滚轮词条定位与顶部回退 |
+| [BUG-1536](bugs/BUG-1536-horizontal-row-steals-vertical-wheel.md) | ✅ | ✅ | 视频首页横滚行抢走整页纵向滚动（应 Shift+滚轮才横滚） |
+| [BUG-1516](bugs/BUG-1516-update-manifest-dead-asset-404.md) | ✅ | ✅ | 更新清单保留已被 prune 的资产条目，客户端下载必 404 |
+| [BUG-1515](bugs/BUG-1515-parent-extras-split-series.md) | ✅ | ✅ | 父作品短篇被错误拆成独立系列卡 |
+| [BUG-1514](bugs/BUG-1514-subscription-episode-selection-order.md) | ✅ | ✅ | 订阅选集季号错误、重复下载且顺序按完成时间乱序 |
+| [BUG-1513](bugs/BUG-1513-subscription-first-episode-skipped.md) | ✅ | ✅ | 发现订阅跳过所选首集 |
+| [BUG-1512](bugs/BUG-1512-download-task-empty-overlay-metrics.md) | ✅ | ✅ | 下载任务空态遮挡且缺少实时指标 |
+| [BUG-1511](bugs/BUG-1511-subscription-embedded-backend-missing.md) | ✅ | ✅ | 订阅创建后因内置下载引擎缺失而全部卡在需处理 |
+| [BUG-1510](bugs/BUG-1510-migration-import-completion-pref-on-closed-db.md) | 🚧 | 🚧 | 导入完成标志写已关闭的 drift 连接：合并其实成功却谎报『校验未通过已保留待重传』，而批次文件已被删 |
+| [BUG-1509](bugs/BUG-1509-jimaku-dialog-size-search-jank.md) | ✅ | ✅ | Jimaku 字幕框偏小且搜索首帧卡顿 |
+| [BUG-1508](bugs/BUG-1508-migration-v79-legacy-video-tag-column.md) | ✅ | ✅ | v79 标签迁移不兼容旧 video_book_uid 列导致启动失败 |
+| [BUG-1507](bugs/BUG-1507-video-shader-nested-cards.md) | ✅ | ✅ | 视频画质增强嵌入设置重复嵌套卡片 |
+| [BUG-1506](bugs/BUG-1506-video-drag-seek-guard-stale-anchor.md) | ✅ | ✅ | 视频横滑 seek 守卫锚点在 BUG-1485 后失效 |
+| [BUG-1505](bugs/BUG-1505-migration-import-failure-force-restart.md) | 🚧 | 🚧 | 迁移导入失败被强制重启带走：页面与失败原因一起消失，错误日志 0 条 |
+| [BUG-1504](bugs/BUG-1504-subtitle-drop-attach-silent-failure.md) | ✅ | ✅ | 拖放字幕到视频卡失败无任何提示 |
+| [BUG-1503](bugs/BUG-1503-sync-push-book-no-display-title.md) | ✅ | ✅ | 本端把书 push 给 host 时不带显示名（裸 epub 上传无元数据） |
+| [BUG-1502](bugs/BUG-1502-sync-override-title-lww.md) | ✅ | ✅ | 书改名跨端合并无时刻列做不了 LWW（第二次改名传不到子设备） |
+| [BUG-1501](bugs/BUG-1501-video-episode-click-outside-close.md) | ✅ | ✅ | 选集横轨只能点 X 关闭，点击视频区域无效 |
+| [BUG-1500](bugs/BUG-1500-dict-concurrent-import-temp-race.md) | ✅ | ✅ | 词典手动下载与静默自动更新无互斥，共用 import_temp 互相删除 |
+| [BUG-1499](bugs/BUG-1499-dict-download-no-cancel-no-background.md) | ✅ | ✅ | 词典下载进度框无法取消也无法后台化 |
+| [BUG-1498](bugs/BUG-1498-outbound-links-bypass-app-proxy.md) | ✅ | ✅ | 多条出站链路绕过统一代理层 |
+| [BUG-1497](bugs/BUG-1497-remote-download-progress-fake-importer-no-db-row.md) | ✅ | ✅ | 远端书下载进度回填测试假 importer 不落库，v82 uid 闸门后回填永不发生 |
+| [BUG-1496](bugs/BUG-1496-collection-member-entrykey-uid-test-stale.md) | ✅ | ✅ | 合集详情焦点测试用 bookKey 加成员，v83 entryKey 切 uid 后合集行不渲染 |
+| [BUG-1495](bugs/BUG-1495-dashboard-drift-watch-teardown-timer.md) | ✅ | ✅ | 首页 dashboard widget 测试全挂：drift .watch() 隔离清单漏了新增消费方 |
+| [BUG-1494](bugs/BUG-1494-mining-guards-stale-addminingcount.md) | ✅ | ✅ | 制卡记账守卫仍钉 addMiningCount，P4 写侧收敛后把红带进 develop |
+| [BUG-1493](bugs/BUG-1493-dict-download-no-proxy-no-progress.md) | ✅ | ✅ | 词典下载不走系统代理、无超时，且下载/导入阶段无可归因进度 |
+| [BUG-1492](bugs/BUG-1492-dict-update-stale-lookup-cache.md) | ✅ | ✅ | 词典覆盖导入/在线更新后查词缓存不失效，更新完的词典查不到词 |
+| [BUG-1491](bugs/BUG-1491-anki-dedup-serial-delete.md) | ✅ | ✅ | Anki 媒体去重逐个删除过慢 |
+| [BUG-1490](bugs/BUG-1490-desktop-non-utf8-subtitle-unsupported.md) | ✅ | ✅ | 桌面端非 UTF-8 字幕全被误报为不支持 |
+| [BUG-1489](bugs/BUG-1489-media-kind-guard-frozen-migration.md) | ✅ | ✅ | MediaKind 复合键守卫误判迁移冻结字面量 |
+| [BUG-1488](bugs/BUG-1488-sync-book-rename-display-title.md) | ✅ | ✅ | 母设备重命名的书同步到子设备仍显示原书名 |
+| [BUG-1487](bugs/BUG-1487-ios-popup-furigana-webkit.md) | ✅ | ✅ | iOS 查词弹窗振假名渲染异常 |
+| [BUG-1486](bugs/BUG-1486-waveform-align-strip-list-out-of-sync.md) | ✅ | ✅ | 波形对轴面板上下字幕不一致 |
+| [BUG-1485](bugs/BUG-1485-mobile-video-drag-seek-sensitivity.md) | ✅ | ✅ | 移动端视频横滑 seek 灵敏度过高 |
+| [BUG-1484](bugs/BUG-1484-subtitle-list-follow-nearest-cue.md) | ✅ | ✅ | 字幕列表打开时未定位到最近字幕 |
+| [BUG-1483](bugs/BUG-1483-webview2-userdata-readonly-install.md) | ✅ | ✅ | Windows 装进不可写目录后 WebView2 数据目录建不出来（启动必弹错 + 更新失败） |
+| [BUG-1482](bugs/BUG-1482-video-resource-dropdown-overflow.md) | ✅ | ✅ | 资源搜索对话框下拉框横向溢出 |
+| [BUG-1481](bugs/BUG-1481-rolling-channel-shared-across-products.md) | ✅ | ✅ | fushi 与 hibiki 共用同一套发布通道，hibiki 自更新被结构性阻断 |
+| [BUG-1480](bugs/BUG-1480-gal-passthrough-click-lookup.md) | ✅ | ✅ | 穿透态点不了文字查词：整窗 WS_EX_TRANSPARENT 让字和背景一视同仁 |
+| [BUG-1479](bugs/BUG-1479-gal-lookup-card-covered-by-game.md) | ✅ | ✅ | gal 查词卡被游戏盖住：置顶只设一次、永不重申 |
+| [BUG-1478](bugs/BUG-1478-gal-workbench-char-level-lookup.md) | ✅ | ✅ | 捕获工作台只能点整词、点不了单个字；加载更多按 glossary 行递增上限 |
+| [BUG-1477](bugs/BUG-1477-gal-japanese-locale-no-switch.md) | ✅ | ✅ | 汉化版被强制转区后启动即闪退：转区没有开关，判据把「32 位」当成「日文原版」 |
+| [BUG-1476](bugs/BUG-1476-migration-settings-never-merged.md) | ✅ | ✅ | 跨包名迁移不搬任何设置：merge 引擎从不消费 settings 类别 |
+| [BUG-1475](bugs/BUG-1475-gal-utterance-settle-drops-closing-tail.md) | ✅ | ✅ | 切句时收敛裸 return，最后 250ms 已进环的 PCM 从未被读走 |
+| [BUG-1474](bugs/BUG-1474-gal-picker-dialog-cramped-and-single-line-preview.md) | ✅ | ✅ | hook 选择弹窗过小/标题截断/预览只有一句 |
+| [BUG-1473](bugs/BUG-1473-gal-mining-serial-capture-and-raw-png.md) | ✅ | ✅ | gal 制卡慢：画面与语音串行 + 静态截图全分辨率 PNG 直送 Anki |
+| [BUG-1472](bugs/BUG-1472-lookup-term-budget-counts-glossaries.md) | ✅ | ✅ | 查词只出一个读音：maximumTerms 按 glossary 行计预算吃掉其它读音 |
+| [BUG-1471](bugs/BUG-1471-gal-overlay-gesture-state-stuck.md) | ✅ | ✅ | galgame 浮窗跑久了失去点击响应：手势事务只认 WM_LBUTTONUP 一个终止条件 |
+| [BUG-1470](bugs/BUG-1470-gal-selected-thread-publish-filter.md) | ✅ | ✅ | 选中台词线程后工作台正文为空：发布期过滤器丢掉同 hook 面兄弟行 |
+| [BUG-1469](bugs/BUG-1469-futamata-kirikiri-launch-av.md) | ✅ | ✅ | 恋爱成双由 Hibiki 早注入后 Access Violation |
+| [BUG-1468](bugs/BUG-1468-video-home-card-footer-spacing.md) | ✅ | ✅ | 视频主页卡片底部信息留白过多 |
+| [BUG-1467](bugs/BUG-1467-video-home-badge-semantics.md) | ✅ | ✅ | 视频主页角标语义不一致 |
+| [BUG-1466](bugs/BUG-1466-re-zero-metadata-match.md) | ✅ | ✅ | Re Zero 罗马字标题无法通过 TMDB 严格识别 |
+| [BUG-1465](bugs/BUG-1465-video-series-poster.md) | ✅ | ✅ | 系列页未使用规范作品竖版海报 |
+| [BUG-1464](bugs/BUG-1464-video-re0-scrape-planning.md) | ✅ | ✅ | re0 特典误作作品且主剧季标题识别失败 |
+| [BUG-1463](bugs/BUG-1463-video-series-detail-layout.md) | ✅ | ✅ | 系列详情重复、底部窄栏与首页播放目标错误 |
+| [BUG-1462](bugs/BUG-1462-mushoku-metadata-backfill.md) | ✅ | ✅ | 无职转生严格匹配无法人工确认且详情与剧集标题未回填 |
+| [BUG-1461](bugs/BUG-1461-himouto-tmdb-localized-title.md) | ✅ | ✅ | Himouto 罗马字标题被 TMDB 本地化结果严格门控拒绝 |
+| [BUG-1460](bugs/BUG-1460-win-installer-legacy-delete-rollback.md) | ✅ | ✅ | Windows 升级中途失败后 app 彻底消失：[InstallDelete] 先删旧名二进制且不可回滚 |
+| [BUG-1459](bugs/BUG-1459-installer-appdir-process-lock.md) | ✅ | ✅ | 安装器无法替换被残留子进程锁定的文件 |
 | [BUG-1458](bugs/BUG-1458-sync-collections-tombstone-day-red.md) | 🚧 | 🚧 | 集合同步墓碑用例在develop稳定红-疑日期敏感 |
 | [BUG-1457](bugs/BUG-1457-ai6-clean-voice.md) | ✅ | ✅ | AI6 制卡误用混合 BGM |
 | [BUG-1456](bugs/BUG-1456-manga-source-preview-loading.md) | ✅ | ✅ | 漫画源预览并发拉图、超时与重复操作 |
