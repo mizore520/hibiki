@@ -17,7 +17,6 @@ add_custom_command(
   TARGET runner_WEBVIEW2_DOWNLOAD PRE_BUILD
   COMMAND ${NUGET} install Microsoft.Windows.ImplementationLibrary -Version ${WIL_VERSION} -ExcludeVersion -OutputDirectory ${CMAKE_BINARY_DIR}/packages
   COMMAND ${NUGET} install Microsoft.Web.WebView2 -Version ${WEBVIEW_VERSION} -ExcludeVersion -OutputDirectory ${CMAKE_BINARY_DIR}/packages
-  DEPENDS ${NUGET}
 )
 
 add_executable(${BINARY_NAME} WIN32

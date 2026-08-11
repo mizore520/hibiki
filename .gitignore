@@ -31,6 +31,7 @@ melos_*.iml
 .pub-cache/
 .pub/
 /build/
+/.build-cache/
 **/pubspec_overrides.yaml
 packages/*/pubspec.lock
 packages/*/build/

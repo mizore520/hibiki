@@ -22,9 +22,11 @@ set "REPO=%~dp0"
 if "%REPO:~-1%"=="\" set "REPO=%REPO:~0,-1%"
 set "APP=%REPO%\fushi"
 set "BOOTSTRAP=%REPO%\tool\bootstrap.ps1"
+set "PREPARE_ONNX=%REPO%\tool\prepare_windows_onnxruntime.ps1"
 set "RUNTIME_UNLOCK_CHECK=%REPO%\tool\check_windows_runtime_unlocked.ps1"
 set "EXE=%APP%\build\windows\x64\runner\Release\fushi.exe"
 set "STAMP=%APP%\build\.last_built_commit"
+set "FUSHI_ONNXRUNTIME_ROOT=%REPO%\.build-cache\onnxruntime\onnxruntime-win-x64-1.22.0"
 
 if not exist "%APP%\pubspec.yaml" (
   echo [ERROR] Fushi app directory not found: %APP%
@@ -141,7 +143,7 @@ rem This only disables source tracking for this build; it does not affect output
 set "TrackFileAccess=false"
 
 rem Bootstrap must run from the repository root so ci/apply-patches.sh resolves correctly.
-echo [1/3] Resolving Flutter packages and applying repository patches...
+echo [1/4] Resolving Flutter packages and applying repository patches...
 set "FUSHI_FLUTTER=%FLUTTER%"
 pushd "%REPO%"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%BOOTSTRAP%"
@@ -152,11 +154,19 @@ if not "!BOOTSTRAP_EXIT!"=="0" (
   goto :fail
 )
 
-echo [2/3] flutter build windows --release ...
+if not exist "%PREPARE_ONNX%" (
+  echo [ERROR] ONNX Runtime preparation script not found: %PREPARE_ONNX%
+  goto :fail
+)
+echo [2/4] Preparing persistent ONNX Runtime cache...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PREPARE_ONNX%" -RepoRoot "%REPO%" -CacheDirectory "%REPO%\.build-cache\onnxruntime"
+if errorlevel 1 goto :dependency_failed
+
+echo [3/4] flutter build windows --release ...
 call "%FLUTTER%" build windows --release
 if errorlevel 1 goto :build_failed
 
-echo [3/3] Installing bundled Windows runtime (ffmpeg / ffprobe / VC++ CRT) ...
+echo [4/4] Installing bundled Windows runtime (ffmpeg / ffprobe / VC++ CRT) ...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%REPO%\tool\package_windows_runtime.ps1" -RepoRoot "%REPO%" -ReleaseDir "%APP%\build\windows\x64\runner\Release"
 if errorlevel 1 goto :runtime_failed
 
@@ -178,6 +188,10 @@ exit /b 0
 
 :build_failed
 echo [ERROR] Flutter build failed. The app was not launched.
+goto :fail
+
+:dependency_failed
+echo [ERROR] Windows native dependency setup failed. The app was not launched.
 goto :fail
 
 :runtime_failed

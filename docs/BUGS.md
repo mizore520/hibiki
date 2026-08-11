@@ -29,10 +29,11 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 1433 条。点号进各自文件。
+> 共 1434 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-1555](bugs/BUG-1555-windows-onnx-runtime-cache.md) | ✅ | ✅ | Windows 一键构建 ONNX Runtime 下载失败且 clean 重复下载 |
 | [BUG-1546](bugs/BUG-1546-windows-runtime-lock-preflight.md) | ✅ | ✅ | Windows 完整打包未提前检查运行组件占用 |
 | [BUG-1545](bugs/BUG-1545-injector-attach-target-exit.md) | ✅ | ✅ | 附着模式游戏退出后 injector 不结束 |
 | [BUG-1544](bugs/BUG-1544-gal-overlay-loses-topmost.md) | ✅ | ✅ | Galgame文字悬浮窗切换窗口后丢失置顶 |
