@@ -36,6 +36,41 @@ void main() {
     expect(script, contains('hibiki\\build\\windows'));
   });
 
+  test('Windows launcher prepares a stable verified SQLite native asset', () {
+    final String launcher = File(
+      '${repoRoot.path}${Platform.pathSeparator}启动Hibiki最新版.bat',
+    ).readAsStringSync();
+    final String script = File(
+      '${repoRoot.path}${Platform.pathSeparator}tool'
+      '${Platform.pathSeparator}prepare_windows_sqlite3.ps1',
+    ).readAsStringSync();
+    final String pubspec = File(
+      '${repoRoot.path}${Platform.pathSeparator}fushi'
+      '${Platform.pathSeparator}pubspec.yaml',
+    ).readAsStringSync();
+    final String patcher = File(
+      '${repoRoot.path}${Platform.pathSeparator}ci'
+      '${Platform.pathSeparator}apply-patches.sh',
+    ).readAsStringSync();
+
+    expect(launcher, contains('prepare_windows_sqlite3.ps1'));
+    expect(launcher, contains('.build-cache\\sqlite3'));
+    expect(launcher.indexOf('prepare_windows_sqlite3.ps1'),
+        lessThan(launcher.indexOf('build windows --release')));
+    expect(script, contains('Test-VerifiedSqlite'));
+    expect(script, contains('Get-FileHash'));
+    expect(script, contains('sqlite3.x64.windows.dll'));
+    expect(script, contains('563a01a5fbb929844df1a9f6a84f73f7'));
+    expect(script, contains('--continue-at -'));
+    expect(script, contains('rev-parse --path-format=absolute --git-common-dir'));
+    expect(pubspec, isNot(contains('source: test-sqlite3')));
+    expect(patcher, contains('sqlite3-3.3.3/lib/src/hook/assets.dart'));
+    expect(patcher,
+        contains(r'download-\${type.name}-\${architecture.name}-\${os.name}'));
+    expect(script,
+        contains('download-sqlite3-x64-windows-\$releaseTag'));
+  });
+
   test('ONNX CMake validates prepared cache and fallback operations', () {
     final String cmake = File(
       '${repoRoot.path}${Platform.pathSeparator}third_party'

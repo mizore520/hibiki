@@ -23,6 +23,7 @@ if "%REPO:~-1%"=="\" set "REPO=%REPO:~0,-1%"
 set "APP=%REPO%\fushi"
 set "BOOTSTRAP=%REPO%\tool\bootstrap.ps1"
 set "PREPARE_ONNX=%REPO%\tool\prepare_windows_onnxruntime.ps1"
+set "PREPARE_SQLITE=%REPO%\tool\prepare_windows_sqlite3.ps1"
 set "RUNTIME_UNLOCK_CHECK=%REPO%\tool\check_windows_runtime_unlocked.ps1"
 set "EXE=%APP%\build\windows\x64\runner\Release\fushi.exe"
 set "STAMP=%APP%\build\.last_built_commit"
@@ -143,7 +144,7 @@ rem This only disables source tracking for this build; it does not affect output
 set "TrackFileAccess=false"
 
 rem Bootstrap must run from the repository root so ci/apply-patches.sh resolves correctly.
-echo [1/4] Resolving Flutter packages and applying repository patches...
+echo [1/5] Resolving Flutter packages and applying repository patches...
 set "FUSHI_FLUTTER=%FLUTTER%"
 pushd "%REPO%"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%BOOTSTRAP%"
@@ -158,15 +159,23 @@ if not exist "%PREPARE_ONNX%" (
   echo [ERROR] ONNX Runtime preparation script not found: %PREPARE_ONNX%
   goto :fail
 )
-echo [2/4] Preparing persistent ONNX Runtime cache...
+echo [2/5] Preparing persistent ONNX Runtime cache...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PREPARE_ONNX%" -RepoRoot "%REPO%" -CacheDirectory "%REPO%\.build-cache\onnxruntime"
 if errorlevel 1 goto :dependency_failed
 
-echo [3/4] flutter build windows --release ...
+if not exist "%PREPARE_SQLITE%" (
+  echo [ERROR] SQLite preparation script not found: %PREPARE_SQLITE%
+  goto :fail
+)
+echo [3/5] Preparing persistent SQLite native asset cache...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PREPARE_SQLITE%" -RepoRoot "%REPO%" -CacheDirectory "%REPO%\.build-cache\sqlite3"
+if errorlevel 1 goto :dependency_failed
+
+echo [4/5] flutter build windows --release ...
 call "%FLUTTER%" build windows --release
 if errorlevel 1 goto :build_failed
 
-echo [4/4] Installing bundled Windows runtime (ffmpeg / ffprobe / VC++ CRT) ...
+echo [5/5] Installing bundled Windows runtime (ffmpeg / ffprobe / VC++ CRT) ...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%REPO%\tool\package_windows_runtime.ps1" -RepoRoot "%REPO%" -ReleaseDir "%APP%\build\windows\x64\runner\Release"
 if errorlevel 1 goto :runtime_failed
 

@@ -64,3 +64,20 @@ if [ "$skipped" -ne 0 ]; then
 else
   echo "All patches applied."
 fi
+
+# sqlite3 3.3.3 derives its shared download directory from Object.hash. Dart
+# randomizes that hash per process, so a valid native asset can be missed and
+# downloaded again on the next build. Keep the package's normal per-platform
+# asset selection, but make only its cache key deterministic (BUG-1557).
+sqlite_assets="$PUB_CACHE_DIR/hosted/pub.dev/sqlite3-3.3.3/lib/src/hook/assets.dart"
+if [ -f "$sqlite_assets" ]; then
+  if grep -Fq "String get dirname => 'download-\${hashCode.toRadixString(16)}';" "$sqlite_assets"; then
+    sed -i "s|String get dirname => 'download-\${hashCode.toRadixString(16)}';|String get dirname => 'download-\${type.name}-\${architecture.name}-\${os.name}-\${releaseTag ?? \"local\"}';|" "$sqlite_assets"
+  fi
+  if ! grep -Fq "download-\${type.name}-\${architecture.name}-\${os.name}" "$sqlite_assets"; then
+    echo "ERROR: sqlite3-3.3.3 stable native-asset cache patch did not apply." >&2
+    exit 1
+  fi
+else
+  echo "WARNING: sqlite3-3.3.3 not in pub cache; stable native-asset cache patch skipped."
+fi
