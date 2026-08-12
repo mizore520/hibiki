@@ -18,6 +18,7 @@ import 'package:fushi/src/mining/galgame_helper_installer.dart';
 void main() {
   final File script =
       File('../native/galgame_hook/tools/install_into_bundle.ps1');
+  final File windowsCmake = File('windows/CMakeLists.txt');
   final File iss = File('windows/installer/fushi.iss');
   final List<File> workflows = <File>[
     File('../.github/workflows/release-desktop.yml'),
@@ -25,9 +26,25 @@ void main() {
   ];
 
   setUpAll(() {
-    for (final File f in <File>[script, iss, ...workflows]) {
+    for (final File f in <File>[script, windowsCmake, iss, ...workflows]) {
       expect(f.existsSync(), isTrue, reason: '守卫锚点文件不存在：${f.path}');
     }
+  });
+
+  test('本地 Flutter 构建不得重新复制运行时 helper 归档 (BUG-1556)', () {
+    final String cmake = windowsCmake.readAsStringSync();
+    expect(cmake.contains('FUSHI_GALGAME_HELPER_FILES'), isFalse,
+        reason: 'Flutter install 又把 zip 放回 galgame_helper，可能用旧归档降级新版 helper');
+    expect(cmake.contains('voice_hook_x64.zip'), isFalse,
+        reason: 'Windows CMake 不应再携带 helper zip；普通文件由共用打包脚本安装');
+
+    final String installer = script.readAsStringSync();
+    expect(installer.contains("Join-Path \$BundleDirectory 'galgame_helper'"),
+        isTrue,
+        reason: '增量构建必须清除旧版留下的 galgame_helper 目录');
+    expect(
+        installer.contains('Remove-Item -LiteralPath \$legacyBundle'), isTrue,
+        reason: '只停止新增不够，现有构建目录里的旧归档仍会触发降级');
   });
 
   group('构建期解压脚本与 Dart 清单不得漂移 (BUG-1449)', () {
