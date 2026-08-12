@@ -24,6 +24,12 @@ void main() {
     expect(script, contains('Get-FileHash'));
     expect(script, contains('Invoke-WebRequest'));
     expect(script, contains("Get-Command 'curl.exe'"));
+    expect(
+        script, contains('rev-parse --path-format=absolute --git-common-dir'));
+    expect(script, contains('.build-cache\\onnxruntime\\\$packageName'));
+    expect(script, contains("Join-Path \$cache '.downloads'"));
+    expect(script, contains('--continue-at -'));
+    expect(script, contains('.zip.partial'));
     expect(script, contains('--connect-timeout 20'));
     expect(script, contains('-TimeoutSec 120'));
     expect(script, contains('foreach (\$attempt in 1..3)'));

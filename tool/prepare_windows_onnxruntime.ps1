@@ -43,6 +43,21 @@ $required = @{
   'lib\onnxruntime.dll' = '579b636403983254346a5c1d80bd28f1519cd1e284cd204f8d4ff41f8d711559'
 }
 
+function Get-SharedCheckoutRoot {
+  try {
+    $commonDir = (& git -C $repo rev-parse --path-format=absolute --git-common-dir 2>$null |
+      Select-Object -First 1)
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($commonDir)) {
+      $resolvedCommonDir = [IO.Path]::GetFullPath($commonDir.Trim())
+      if ((Split-Path -Leaf $resolvedCommonDir) -eq '.git') {
+        return Split-Path -Parent $resolvedCommonDir
+      }
+    }
+  }
+  catch {}
+  return $null
+}
+
 function Test-VerifiedRuntime {
   param([Parameter(Mandatory = $true)][string] $Root)
 
@@ -77,6 +92,14 @@ try {
   if (-not [string]::IsNullOrWhiteSpace($SeedDirectory)) {
     $candidates += [IO.Path]::GetFullPath($SeedDirectory)
   }
+  # All worktrees share one Git common directory. Reuse the main checkout's
+  # verified persistent cache instead of downloading the same 72 MB runtime in
+  # every feature worktree.
+  $sharedCheckoutRoot = Get-SharedCheckoutRoot
+  if ($sharedCheckoutRoot -and
+      -not $sharedCheckoutRoot.Equals($repo, [StringComparison]::OrdinalIgnoreCase)) {
+    $candidates += Join-Path $sharedCheckoutRoot ".build-cache\onnxruntime\$packageName"
+  }
   $candidates += Join-Path $repo "fushi\build\windows\x64\plugins\flutter_onnxruntime\onnxruntime\$packageName"
   $candidates += Join-Path $repo "hibiki\build\windows\x64\plugins\flutter_onnxruntime\onnxruntime\$packageName"
 
@@ -88,6 +111,9 @@ try {
     Copy-Item -LiteralPath $seed -Destination $payload -Recurse -Force
   }
   else {
+    $persistentDownloadDir = Join-Path $cache '.downloads'
+    New-Item -ItemType Directory -Force -Path $persistentDownloadDir | Out-Null
+    $partialZip = Join-Path $persistentDownloadDir "$packageName.zip.partial"
     $downloaded = $false
     $lastError = $null
     foreach ($attempt in 1..3) {
@@ -99,23 +125,28 @@ try {
         $curl = Get-Command 'curl.exe' -ErrorAction SilentlyContinue
         if ($curl) {
           & $curl.Source --fail --location --silent --show-error `
-            --connect-timeout 20 --max-time 180 --output $zip $downloadUrl
+            --continue-at - --connect-timeout 20 --max-time 180 `
+            --output $partialZip $downloadUrl
           if ($LASTEXITCODE -ne 0) {
             throw "curl.exe failed with exit code $LASTEXITCODE"
           }
         }
         else {
-          Invoke-WebRequest -Uri $downloadUrl -OutFile $zip -UseBasicParsing -TimeoutSec 120
+          Invoke-WebRequest -Uri $downloadUrl -OutFile $partialZip -UseBasicParsing -TimeoutSec 120
         }
-        if ((Get-Item -LiteralPath $zip).Length -le 0) {
+        if ((Get-Item -LiteralPath $partialZip).Length -le 0) {
           throw 'downloaded archive is empty'
         }
+        Copy-Item -LiteralPath $partialZip -Destination $zip -Force
         Expand-Archive -LiteralPath $zip -DestinationPath $attemptDir -Force
         $extracted = Join-Path $attemptDir $packageName
         if (-not (Test-VerifiedRuntime -Root $extracted)) {
+          # A complete but invalid archive cannot be resumed into validity.
+          Remove-Item -LiteralPath $partialZip -Force -ErrorAction SilentlyContinue
           throw 'downloaded runtime failed the pinned SHA-256 manifest'
         }
         Move-Item -LiteralPath $extracted -Destination $payload
+        Remove-Item -LiteralPath $partialZip -Force -ErrorAction SilentlyContinue
         $downloaded = $true
         break
       }
