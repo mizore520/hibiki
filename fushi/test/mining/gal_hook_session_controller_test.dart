@@ -393,7 +393,7 @@ void main() {
     endpoints.dispose();
   });
 
-  test('BUG-1540 mining current Luna line waits until boundary audio is cached',
+  test('BUG-1590 mining current Luna line waits until boundary audio is cached',
       () async {
     final TexthookerService service = TexthookerService.test();
     final ChangeNotifier endpoints = ChangeNotifier();

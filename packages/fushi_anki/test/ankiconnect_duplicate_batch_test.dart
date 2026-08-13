@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// BUG-1543: popup entries dispatch detached duplicate probes in a burst.
+/// BUG-1593: popup entries dispatch detached duplicate probes in a burst.
 /// They must rendezvous across freshly-created repository instances and use a
 /// single indexed canAddNotes request instead of N GUI-thread findNotes calls.
 void main() {

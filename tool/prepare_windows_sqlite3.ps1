@@ -22,6 +22,29 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+function Get-Sha256Hex {
+  param([Parameter(Mandatory = $true)][string] $Path)
+
+  # Keep cache verification independent of PowerShell module auto-loading.
+  # The launcher normalizes its environment for MSBuild, where Get-FileHash can
+  # otherwise be unavailable even though the framework crypto API is present
+  # (BUG-1601).
+  $stream = [IO.File]::OpenRead($Path)
+  try {
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try {
+      $hashBytes = $sha256.ComputeHash($stream)
+      return ([BitConverter]::ToString($hashBytes).Replace('-', '')).ToLowerInvariant()
+    }
+    finally {
+      $sha256.Dispose()
+    }
+  }
+  finally {
+    $stream.Dispose()
+  }
+}
+
 $repo = (Resolve-Path -LiteralPath $RepoRoot).Path
 if ([string]::IsNullOrWhiteSpace($CacheDirectory)) {
   $CacheDirectory = Join-Path $repo '.build-cache\sqlite3'
@@ -38,6 +61,14 @@ $assetName = 'sqlite3.x64.windows.dll'
 $expectedHash = '563a01a5fbb929844df1a9f6a84f73f7a53b9b183ebda8cb8399d69567adff09'
 $target = Join-Path $cache $assetName
 $downloadUrl = "https://github.com/simolus3/sqlite3.dart/releases/download/$releaseTag/$assetName"
+$cmakeVersion = '3520000'
+$cmakeSourceName = "sqlite-autoconf-$cmakeVersion"
+$cmakeSourceTarget = Join-Path $cache $cmakeSourceName
+$cmakeSourceUrl = "https://sqlite.org/2026/$cmakeSourceName.tar.gz"
+$cmakeSourceHashes = @{
+  'sqlite3.c' = 'a503acc9fe98f628eed36eb2aa2116a26f2541270d757f9b7cdbc2f19eb72b8f'
+  'sqlite3.h' = '37537d6131c1d2e507b34a6cee5590e27cedb7d82f543f257afbc72c0cbbcc22'
+}
 
 function Get-SharedCheckoutRoot {
   try {
@@ -60,8 +91,76 @@ function Test-VerifiedSqlite {
   if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
     return $false
   }
-  $actual = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+  $actual = Get-Sha256Hex -Path $Path
   return $actual -eq $expectedHash
+}
+
+function Test-VerifiedCmakeSource {
+  param([Parameter(Mandatory = $true)][string] $Root)
+
+  if (-not (Test-Path -LiteralPath $Root -PathType Container)) {
+    return $false
+  }
+  foreach ($entry in $cmakeSourceHashes.GetEnumerator()) {
+    $path = Join-Path $Root $entry.Key
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf) -or
+        (Get-Sha256Hex -Path $path) -ne $entry.Value) {
+      return $false
+    }
+  }
+  return $true
+}
+
+function Publish-CmakeSource {
+  if (Test-VerifiedCmakeSource -Root $cmakeSourceTarget) {
+    Write-Host "[sqlite3] verified CMake source cache: $cmakeSourceTarget"
+    return
+  }
+
+  $sourceCandidates = @()
+  $sharedRoot = Get-SharedCheckoutRoot
+  if ($sharedRoot -and
+      -not $sharedRoot.Equals($repo, [StringComparison]::OrdinalIgnoreCase)) {
+    $sourceCandidates += Join-Path $sharedRoot ".build-cache\sqlite3\$cmakeSourceName"
+    $sourceCandidates += Join-Path $sharedRoot 'fushi\build\windows\x64\_deps\sqlite3-src'
+  }
+  $sourceCandidates += Join-Path $repo 'fushi\build\windows\x64\_deps\sqlite3-src'
+  $sourceSeed = $sourceCandidates |
+    Where-Object { Test-VerifiedCmakeSource -Root $_ } |
+    Select-Object -First 1
+  if ($sourceSeed) {
+    Write-Host "[sqlite3] migrating verified CMake source: $sourceSeed"
+    Copy-Item -LiteralPath $sourceSeed -Destination $cmakeSourceTarget -Recurse -Force
+    return
+  }
+
+  $sourceStage = Join-Path $cache ('.cmake-stage-' + [Guid]::NewGuid().ToString('N'))
+  $sourceArchive = Join-Path $sourceStage "$cmakeSourceName.tar.gz"
+  New-Item -ItemType Directory -Force -Path $sourceStage | Out-Null
+  try {
+    $curl = Get-Command 'curl.exe' -ErrorAction SilentlyContinue
+    if (-not $curl) {
+      throw 'curl.exe is required to prepare the SQLite CMake source cache'
+    }
+    & $curl.Source --fail --location --silent --show-error `
+      --connect-timeout 20 --max-time 180 --output $sourceArchive $cmakeSourceUrl
+    if ($LASTEXITCODE -ne 0) {
+      throw "curl.exe failed with exit code $LASTEXITCODE"
+    }
+    & tar.exe -xzf $sourceArchive -C $sourceStage
+    if ($LASTEXITCODE -ne 0) {
+      throw "tar.exe failed with exit code $LASTEXITCODE"
+    }
+    $extracted = Join-Path $sourceStage $cmakeSourceName
+    if (-not (Test-VerifiedCmakeSource -Root $extracted)) {
+      throw 'downloaded SQLite CMake source failed the pinned SHA-256 check'
+    }
+    Move-Item -LiteralPath $extracted -Destination $cmakeSourceTarget
+    Write-Host "[sqlite3] CMake source cache ready: $cmakeSourceTarget"
+  }
+  finally {
+    Remove-Item -LiteralPath $sourceStage -Recurse -Force -ErrorAction SilentlyContinue
+  }
 }
 
 function Publish-HookCache {
@@ -76,6 +175,7 @@ function Publish-HookCache {
 if (Test-VerifiedSqlite -Path $target) {
   Write-Host "[sqlite3] verified persistent cache: $target"
   Publish-HookCache
+  Publish-CmakeSource
   exit 0
 }
 
@@ -103,6 +203,7 @@ if ($seed) {
   Copy-Item -LiteralPath $seed -Destination $target -Force
   Write-Host "[sqlite3] cache ready: $target"
   Publish-HookCache
+  Publish-CmakeSource
   exit 0
 }
 
@@ -132,6 +233,7 @@ foreach ($attempt in 1..3) {
     Move-Item -LiteralPath $partial -Destination $target -Force
     Write-Host "[sqlite3] cache ready: $target"
     Publish-HookCache
+    Publish-CmakeSource
     exit 0
   }
   catch {

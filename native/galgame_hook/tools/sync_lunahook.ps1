@@ -9,6 +9,19 @@ $vendor = Join-Path $root 'third_party/lunahook'
 $manifestPath = Join-Path $vendor 'VERSION.json'
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
 
+function Get-Sha256Hex {
+  param([Parameter(Mandatory = $true)][string]$Path)
+  $stream = [IO.File]::OpenRead($Path)
+  try {
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try {
+      return ([BitConverter]::ToString($sha256.ComputeHash($stream)) -replace '-', '').ToLowerInvariant()
+    }
+    finally { $sha256.Dispose() }
+  }
+  finally { $stream.Dispose() }
+}
+
 if ($Update -and [string]::IsNullOrWhiteSpace($SourceDir)) {
   throw '-Update requires -SourceDir pointing at an unpacked official release.'
 }
@@ -26,7 +39,7 @@ foreach ($property in $manifest.files.PSObject.Properties) {
   if (-not (Test-Path -LiteralPath $target -PathType Leaf)) {
     throw "Missing vendored Luna file: $target"
   }
-  $actual = (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant()
+  $actual = Get-Sha256Hex -Path $target
   $expected = [string]$property.Value
   if ($actual -ne $expected.ToLowerInvariant()) {
     throw "$name differs from VERSION.json: expected=$expected actual=$actual"

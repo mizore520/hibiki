@@ -648,12 +648,8 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
       return const MinePopupResult();
     }
     final MineOutcome outcome = result.outcome!;
-    final String deckName = outcome.result == MineResult.success
-        ? (await repo.loadSettings()).selectedDeckName ?? ''
-        : '';
     final described = describeMineOutcome(
       outcome,
-      deckName: deckName,
       overwrite: updateNoteId != null,
     );
     if (updateNoteId == null && described.record) {
@@ -2058,10 +2054,19 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
                     itemCount: visibleLines.length,
                     itemBuilder: (BuildContext context, int i) {
                       final TexthookerLineEntry line = visibleLines[i];
+                      final TexthookerLinePresentation presentation =
+                          texthookerLinePresentation(line.text);
                       return _TexthookerLine(
+                        key: ValueKey<String>('game-line-widget-${line.id}'),
                         line: line,
+                        presentation: presentation,
                         // 分词结果按行 id 缓存，避免每次 rebuild 重复 textToWords。
-                        words: _wordCache.wordsFor(line.id, line.text),
+                        // 异常长行绝不能进日语分词/逐字 widget 路径，否则一次历史回放
+                        // 就能在这里造出成千上万个 InkWell（BUG-1597）。
+                        words: presentation ==
+                                TexthookerLinePresentation.interactive
+                            ? _wordCache.wordsFor(line.id, line.text)
+                            : const <String>[],
                         selected: line.id == _activeLineId,
                         previewingAudio: line.id == _previewingLineId,
                         // 逐行改音轨要求：会话内有 engine helper、有可选音轨快照，
@@ -2918,9 +2923,11 @@ class _StatusPill extends StatelessWidget {
 /// 一行文本：日语分词成可点 span（引擎未初始化时按字符降级，widget 测试不崩）。
 /// [words] 由页级 [_TexthookerWordCache] 按行 id 预分词后注入（本 widget 不再自行
 /// textToWords），避免每来一行整页 rebuild 时重复分词。
-class _TexthookerLine extends StatelessWidget {
+class _TexthookerLine extends StatefulWidget {
   const _TexthookerLine({
+    super.key,
     required this.line,
+    required this.presentation,
     required this.words,
     required this.selected,
     required this.previewingAudio,
@@ -2937,6 +2944,7 @@ class _TexthookerLine extends StatelessWidget {
   });
 
   final TexthookerLineEntry line;
+  final TexthookerLinePresentation presentation;
   final List<String> words;
   final bool selected;
 
@@ -2974,7 +2982,15 @@ class _TexthookerLine extends StatelessWidget {
   ) onCharTap;
 
   @override
+  State<_TexthookerLine> createState() => _TexthookerLineState();
+}
+
+class _TexthookerLineState extends State<_TexthookerLine> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final TexthookerLineEntry line = widget.line;
     final ColorScheme colors = Theme.of(context).colorScheme;
     final String source =
         line.sourceLabel ?? texthookerLineSourceLabel(line.source);
@@ -2982,9 +2998,9 @@ class _TexthookerLine extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: FushiCard(
         key: ValueKey<String>('game-line-${line.id}'),
-        selected: selected,
+        selected: widget.selected,
         focusId: FushiFocusId('game-line-${line.id}'),
-        onTap: () => onSelectLine(line),
+        onTap: () => widget.onSelectLine(line),
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3019,45 +3035,46 @@ class _TexthookerLine extends StatelessWidget {
                 // 试听中变停止钮。样式对齐收藏星。
                 if (line.hasAudio) ...<Widget>[
                   FushiIconButton(
-                    icon: previewingAudio
+                    icon: widget.previewingAudio
                         ? Icons.stop_circle_outlined
                         : Icons.play_circle_outline,
-                    tooltip: previewingAudio
+                    tooltip: widget.previewingAudio
                         ? t.game_track_preview_stop
                         : t.game_line_preview_tooltip,
                     size: 18,
-                    enabledColor: previewingAudio ? colors.primary : null,
+                    enabledColor:
+                        widget.previewingAudio ? colors.primary : null,
                     focusId: FushiFocusId('game-line-preview-${line.id}'),
-                    onTap: () => onPreviewAudio(line),
+                    onTap: () => widget.onPreviewAudio(line),
                   ),
                   const SizedBox(width: 4),
                 ],
                 // 逐行改音轨（BUG-1102）：自动选源在真机上会误选 BGM/旁白轨，
                 // 用户必须能对**这一句**直接指定用哪条轨重抓。
-                if (canPickTrack) ...<Widget>[
+                if (widget.canPickTrack) ...<Widget>[
                   FushiIconButton(
                     icon: Icons.multitrack_audio_outlined,
                     tooltip: t.game_line_track_tooltip,
                     size: 18,
                     focusId: FushiFocusId('game-line-track-${line.id}'),
-                    onTap: () => onPickTrack(line),
+                    onTap: () => widget.onPickTrack(line),
                   ),
                   const SizedBox(width: 4),
                 ],
                 // 行内补录：missing/兜底行的一键补救此前只在浮窗有入口，工作台里
                 // 用户对着红标没有任何补救手段。录音中变停止钮（收束并落定）。
-                if (canRecapture) ...<Widget>[
+                if (widget.canRecapture) ...<Widget>[
                   FushiIconButton(
-                    icon: recapturing
+                    icon: widget.recapturing
                         ? Icons.stop_circle_outlined
                         : Icons.mic_none_outlined,
-                    tooltip: recapturing
+                    tooltip: widget.recapturing
                         ? t.game_line_recapture_stop
                         : t.game_line_recapture,
                     size: 18,
-                    enabledColor: recapturing ? colors.error : null,
+                    enabledColor: widget.recapturing ? colors.error : null,
                     focusId: FushiFocusId('game-line-recapture-${line.id}'),
-                    onTap: () => onRecapture(line),
+                    onTap: () => widget.onRecapture(line),
                   ),
                   const SizedBox(width: 4),
                 ],
@@ -3066,7 +3083,7 @@ class _TexthookerLine extends StatelessWidget {
                   tooltip: t.game_line_copy_tooltip,
                   size: 18,
                   focusId: FushiFocusId('game-line-copy-${line.id}'),
-                  onTap: () => onCopy(line),
+                  onTap: () => widget.onCopy(line),
                 ),
                 const SizedBox(width: 4),
                 // 会话内存态收藏星（不落 DB）；已收藏填充金黄星，未收藏描边星。
@@ -3077,23 +3094,12 @@ class _TexthookerLine extends StatelessWidget {
                       : t.game_line_favorite_tooltip,
                   size: 18,
                   enabledColor: line.favorited ? colors.tertiary : null,
-                  onTap: () => onToggleFavorite(line),
+                  onTap: () => widget.onToggleFavorite(line),
                 ),
               ],
             ),
             const SizedBox(height: 6),
-            Wrap(
-              children: <Widget>[
-                // 分词只决定视觉断行，命中粒度在 [_WordSpan] 内部细到字（BUG-1478）。
-                for (final (int start, String word) in _indexedWords(words))
-                  _WordSpan(
-                    word: word,
-                    startIndex: start,
-                    onTapChar: (int charIndex, Rect rect) =>
-                        onCharTap(line, charIndex, rect),
-                  ),
-              ],
-            ),
+            _buildLineText(context, line, colors),
             if (line.audioBackend != null ||
                 line.audioResourceId != null ||
                 line.fallbackReason != null) ...<Widget>[
@@ -3114,6 +3120,71 @@ class _TexthookerLine extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildLineText(
+    BuildContext context,
+    TexthookerLineEntry line,
+    ColorScheme colors,
+  ) {
+    if (widget.presentation == TexthookerLinePresentation.interactive) {
+      return Wrap(
+        children: <Widget>[
+          // 分词只决定视觉断行，命中粒度在 [_WordSpan] 内部细到字（BUG-1478）。
+          for (final (int start, String word) in _indexedWords(widget.words))
+            _WordSpan(
+              word: word,
+              startIndex: start,
+              onTapChar: (int charIndex, Rect rect) =>
+                  widget.onCharTap(line, charIndex, rect),
+            ),
+        ],
+      );
+    }
+
+    final bool collapsible =
+        widget.presentation == TexthookerLinePresentation.collapsed;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        if (collapsible) ...<Widget>[
+          Row(
+            children: <Widget>[
+              Icon(
+                Icons.warning_amber_rounded,
+                size: 16,
+                color: colors.tertiary,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  t.game_line_bulk_text_hint,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+        ],
+        Text(
+          line.text,
+          key: ValueKey<String>('game-line-lightweight-text-${line.id}'),
+          maxLines: collapsible && !_expanded ? 4 : null,
+          overflow: collapsible && !_expanded ? TextOverflow.ellipsis : null,
+        ),
+        if (collapsible)
+          TextButton.icon(
+            key: ValueKey<String>('game-line-expand-${line.id}'),
+            onPressed: () => setState(() => _expanded = !_expanded),
+            icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+            label: Text(
+              _expanded ? t.collection_collapse : t.collection_expand,
+            ),
+          ),
+      ],
     );
   }
 }

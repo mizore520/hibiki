@@ -56,6 +56,18 @@ endfunction()
 
 set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 
+# BUG-1602: sqlite3_flutter_libs 0.5.42 otherwise downloads its amalgamation
+# from sqlite.org during every fresh CMake configure.  The launcher prepares a
+# verified persistent source cache and exposes it here through a narrow env
+# variable. FetchContent keeps the plugin's own targets and compile flags; only
+# the source acquisition changes.
+if(DEFINED ENV{FUSHI_SQLITE3_SOURCE_DIR} AND
+    EXISTS "$ENV{FUSHI_SQLITE3_SOURCE_DIR}/sqlite3.c")
+  file(TO_CMAKE_PATH "$ENV{FUSHI_SQLITE3_SOURCE_DIR}" FUSHI_SQLITE3_SOURCE_DIR)
+  set(FETCHCONTENT_SOURCE_DIR_SQLITE3 "${FUSHI_SQLITE3_SOURCE_DIR}"
+    CACHE PATH "Verified local SQLite source used by sqlite3_flutter_libs" FORCE)
+endif()
+
 # Flutter library and tool build rules.
 add_subdirectory(${FLUTTER_MANAGED_DIR})
 

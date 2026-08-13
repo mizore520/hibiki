@@ -397,6 +397,38 @@ class TexthookerLineEntry {
   }
 }
 
+/// 工作台对单条文本采用的呈现成本档位。
+///
+/// 正常台词保留逐字查词；较长台词改用单个文本段落；疑似快进/历史回放批量输出的
+/// 超长文本默认折叠。这里只改变 UI 的渲染成本，不截断 [TexthookerLineEntry.text]，
+/// 因而复制、导出与诊断仍能取得完整原文（BUG-1597）。
+enum TexthookerLinePresentation {
+  interactive,
+  plain,
+  collapsed,
+}
+
+const int texthookerInteractiveTextLimit = 300;
+const int texthookerCollapsedTextLimit = 800;
+const int texthookerCollapsedLineBreakLimit = 8;
+
+TexthookerLinePresentation texthookerLinePresentation(String text) {
+  if (text.length > texthookerCollapsedTextLimit) {
+    return TexthookerLinePresentation.collapsed;
+  }
+  int lineBreaks = 0;
+  for (int i = 0; i < text.length; i++) {
+    if (text.codeUnitAt(i) == 0x0a &&
+        ++lineBreaks > texthookerCollapsedLineBreakLimit) {
+      return TexthookerLinePresentation.collapsed;
+    }
+  }
+  if (text.length > texthookerInteractiveTextLimit) {
+    return TexthookerLinePresentation.plain;
+  }
+  return TexthookerLinePresentation.interactive;
+}
+
 /// 收到的 texthooker 结构化文本行 buffer。单例 + [ChangeNotifier]，
 /// 外部 texthooker 软件可经 WebSocket 接入，游戏 Hook 则追加带线程与时间戳的行。
 /// [lines] 保留旧字符串接口；捕获工作台与句音配对使用 [entries] 的稳定 id、

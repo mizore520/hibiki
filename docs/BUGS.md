@@ -29,25 +29,97 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 1437 条。点号进各自文件。
+> 共 1509 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
-| [BUG-1558](bugs/BUG-1558-gal-workbench-selection-stall.md) | ✅ | ✅ | Gal 捕获工作台句子选择被旧音轨请求阻塞 |
-| [BUG-1557](bugs/BUG-1557-windows-sqlite-native-asset-cache.md) | ✅ | ✅ | Windows SQLite 原生资产缓存目录不稳定导致重复下载失败 |
-| [BUG-1556](bugs/BUG-1556-helper-runtime-downgrade.md) | ✅ | ✅ | Windows 本地构建旧归档将新版捕获组件降级 |
-| [BUG-1555](bugs/BUG-1555-windows-onnx-runtime-cache.md) | ✅ | ✅ | Windows 一键构建 ONNX Runtime 下载失败且 clean 重复下载 |
-| [BUG-1546](bugs/BUG-1546-windows-runtime-lock-preflight.md) | ✅ | ✅ | Windows 完整打包未提前检查运行组件占用 |
-| [BUG-1545](bugs/BUG-1545-injector-attach-target-exit.md) | ✅ | ✅ | 附着模式游戏退出后 injector 不结束 |
-| [BUG-1544](bugs/BUG-1544-gal-overlay-loses-topmost.md) | ✅ | ✅ | Galgame文字悬浮窗切换窗口后丢失置顶 |
-| [BUG-1543](bugs/BUG-1543-anki-duplicate-check-findnotes-serial.md) | ✅ | ✅ | 词条逐个 findNotes 查重导致已制卡标记延迟 |
-| [BUG-1542](bugs/BUG-1542-anki-localhost-prefers-ipv6.md) | ✅ | ✅ | AnkiConnect 使用 localhost 时优先连接 IPv6，导致本机请求延迟或失败 |
-| [BUG-1541](bugs/BUG-1541-luna-safe-attach-double-hook-crash.md) | ✅ | ✅ | Luna 与 Fushi 双 Hook 导致游戏闪退 |
-| [BUG-1540](bugs/BUG-1540-luna-mine-before-audio-boundary.md) | ✅ | ✅ | Luna 当前句制卡提前截断录音导致卡片无音频 |
-| [BUG-1539](bugs/BUG-1539-local-windows-build-misses-gal-helper.md) | ✅ | ✅ | 本地 Windows 构建成功但未打包 galgame helper |
-| [BUG-1538](bugs/BUG-1538-windows-build-bundle-prefix.md) | ✅ | ✅ | Windows 构建 bundle 安装目标误指向 Program Files |
-| [BUG-1537](bugs/BUG-1537-alt-wheel-entry-scroll.md) | ✅ | ✅ | 查词窗口 Alt+滚轮词条定位与顶部回退 |
+| [BUG-1603](bugs/BUG-1603-windows-aot-stack-overflow-on-slang-flat-map.md) | ✅ | ✅ | Windows AOT 编译 Slang 巨型动态映射时栈溢出 |
+| [BUG-1602](bugs/BUG-1602-windows-sqlite-cmake-ignores-local-cache.md) | ✅ | ✅ | Windows SQLite CMake 忽略本地缓存并卡在 sqlite.org |
+| [BUG-1601](bugs/BUG-1601-windows-cache-hash-cmdlet-missing.md) | ✅ | ✅ | Windows 缓存校验依赖 Get-FileHash 导致启动构建失败 |
+| [BUG-1600](bugs/BUG-1600-windows-sqlite-native-asset-cache.md) | ✅ | ✅ | Windows SQLite 原生资产缓存目录不稳定导致重复下载失败 |
+| [BUG-1599](bugs/BUG-1599-helper-runtime-downgrade.md) | ✅ | ✅ | Windows 本地构建旧归档将新版捕获组件降级 |
+| [BUG-1598](bugs/BUG-1598-windows-onnx-runtime-cache.md) | ✅ | ✅ | Windows 一键构建 ONNX Runtime 下载失败且 clean 重复下载 |
+| [BUG-1597](bugs/BUG-1597-gal-workbench-pathological-long-line.md) | ✅ | ✅ | 工作台单条超长文本导致卡顿 |
+| [BUG-1596](bugs/BUG-1596-windows-runtime-lock-preflight.md) | ✅ | ✅ | Windows 完整打包未提前检查运行组件占用 |
+| [BUG-1595](bugs/BUG-1595-injector-attach-target-exit.md) | ✅ | ✅ | 附着模式游戏退出后 injector 不结束 |
+| [BUG-1594](bugs/BUG-1594-gal-overlay-loses-topmost.md) | ✅ | ✅ | Galgame文字悬浮窗切换窗口后丢失置顶 |
+| [BUG-1593](bugs/BUG-1593-anki-duplicate-check-findnotes-serial.md) | ✅ | ✅ | 词条逐个 findNotes 查重导致已制卡标记延迟 |
+| [BUG-1592](bugs/BUG-1592-anki-localhost-prefers-ipv6.md) | ✅ | ✅ | AnkiConnect 使用 localhost 时优先连接 IPv6，导致本机请求延迟或失败 |
+| [BUG-1591](bugs/BUG-1591-luna-safe-attach-double-hook-crash.md) | ✅ | ✅ | Luna 与 Fushi 双 Hook 导致游戏闪退 |
+| [BUG-1590](bugs/BUG-1590-luna-mine-before-audio-boundary.md) | ✅ | ✅ | Luna 当前句制卡提前截断录音导致卡片无音频 |
+| [BUG-1589](bugs/BUG-1589-local-windows-build-misses-gal-helper.md) | ✅ | ✅ | 本地 Windows 构建成功但未打包 galgame helper |
+| [BUG-1588](bugs/BUG-1588-windows-build-bundle-prefix.md) | ✅ | ✅ | Windows 构建 bundle 安装目标误指向 Program Files |
+| [BUG-1587](bugs/BUG-1587-alt-wheel-entry-scroll.md) | ✅ | ✅ | 查词窗口 Alt+滚轮词条定位与顶部回退 |
+| [BUG-1586](bugs/BUG-1586-gal-workbench-selection-stall.md) | ✅ | ✅ | Gal 捕获工作台句子选择被旧音轨请求阻塞 |
+| [BUG-1585](bugs/BUG-1585-golden-cross-platform-raster-false-red.md) | ✅ | ✅ | golden 基准图跨平台光栅必红：非 Windows 开发机全量套件恒 33 条伪红 |
+| [BUG-1584](bugs/BUG-1584-ios-archive-strip-drops-ffi-exports.md) | ✅ | ✅ | iOS archive 的 STRIP_STYLE=all 抹掉 fushidicts FFI 导出符号，上架包启动即 Initialisation failed |
+| [BUG-1583](bugs/BUG-1583-manga-ocr-test-platform-gate.md) | ✅ | ✅ | manga OCR 编排测试硬读 Platform，macOS/iOS 宿主上结构性必红 |
+| [BUG-1582](bugs/BUG-1582-log-panel-longpress-blank-line-crash.md) | ✅ | ✅ | 错误日志面板长按空行崩溃（选区端点空断言） |
+| [BUG-1581](bugs/BUG-1581-fushi-rename-residual-brand-labels.md) | ✅ | ✅ | 互联设备名与下载文件名仍播报 Hibiki 品牌词 |
+| [BUG-1580](bugs/BUG-1580-interconnect-cooldown-and-hash-shared.md) | ✅ | ✅ | 同步冷却戳与聚合快照哈希共用：一条通道压住另一条 |
+| [BUG-1579](bugs/BUG-1579-interconnect-baselines-shared-across-channels.md) | ✅ | ✅ | 合集与删除墓碑因果基线三方共用：对端移出被自己另一条通道撤销 |
+| [BUG-1578](bugs/BUG-1578-interconnect-auth-error-cross-channel-signout.md) | ✅ | ✅ | 互联 401 登出的是云会话：鉴权错误不带通道身份 |
+| [BUG-1577](bugs/BUG-1577-audio-package-missing-resource-silent.md) | ✅ | ✅ | 有声书资产包缺资源被两侧静默 fail-open 掩盖（导出跳过 + 导入编 basename 路径） |
+| [BUG-1576](bugs/BUG-1576-interconnect-folder-cache-cross-backend.md) | ✅ | ✅ | 互联/云双通道共用 folder 缓存：跨后端串味 + 凭据外发到对端主机 |
+| [BUG-1575](bugs/BUG-1575-srt-path-rebase-missing.md) | ✅ | ✅ | 合并导入不 rebase srt_books 路径：迁移后有声书有字幕没声音 |
+| [BUG-1574](bugs/BUG-1574-srt-audio-picker-const-list.md) | ✅ | ✅ | 书架「重新定位 SRT 音频」取消选择器崩溃：pickRealFilePaths 返回不可变常量空列表，调用方 sort 抛 UnsupportedError |
+| [BUG-1573](bugs/BUG-1573-server-lifecycle-manual-isolation.md) | ✅ | ✅ | 互联 host 启动前段异常逃逸 + dispose 顺序 + 手动同步通道未隔离 |
+| [BUG-1572](bugs/BUG-1572-aggregate-push-tombstone.md) | ✅ | ✅ | 聚合上行快照不过墓碑导致已删统计/收藏复活 |
+| [BUG-1571](bugs/BUG-1571-prompt-queue-cross-channel.md) | ✅ | ✅ | 双通道同步弹窗单飞槽跨通道丢候选 |
+| [BUG-1570](bugs/BUG-1570-remote-lookup-drops-fields.md) | ✅ | ✅ | 远端查词响应的 truncated/headwordCount/kanjiResults 被 client 丢弃 |
+| [BUG-1569](bugs/BUG-1569-sync-auto-trigger-lifecycle.md) | ✅ | ✅ | 互联自动同步触发层三缺口：离线探测零退避·合集观察者关库不卸载·sweep 丢弃退出书同步 |
+| [BUG-1568](bugs/BUG-1568-video-stream-token-unbounded.md) | ✅ | ✅ | 视频流 token 签发侧无上限无过期清理 |
+| [BUG-1567](bugs/BUG-1567-interconnect-request-timeouts.md) | ✅ | ✅ | 互联小型请求普遍缺超时且挂死请求占住远端清单缓存槽 |
+| [BUG-1566](bugs/BUG-1566-interconnect-channel-consumers-cloud-only.md) | ✅ | ✅ | 词典删除只传播云通道、比较对话框只解析云后端：只开互联的用户两条路都断 |
+| [BUG-1565](bugs/BUG-1565-remote-book-delete-partial-no-refresh.md) | ✅ | ✅ | 远端书删除半成功不刷新列表：书已删仍留幽灵卡，提示语与实情相反 |
+| [BUG-1564](bugs/BUG-1564-cover-backfill-m3u8-churn.md) | ✅ | ✅ | 封面回填对m3u8清单反复ffmpeg抽帧失败重试白烧CPU |
+| [BUG-1563](bugs/BUG-1563-interconnect-host-failure-swallowed.md) | ✅ | ✅ | 互联 host 换 token/开 TLS 的重启结果被丢弃、设为备份后端无 catch，失败静默把 host 打没 |
+| [BUG-1562](bugs/BUG-1562-interconnect-client-panel-stale-and-race.md) | ✅ | ✅ | 互联客户端面板：已连接状态不刷新、手动配对探测窗口无忙态可并发、弹窗返回后无 mounted 守卫 |
+| [BUG-1561](bugs/BUG-1561-interconnect-download-failure-invisible.md) | ✅ | ✅ | 互联下载失败态只写进内存永不上屏，任务表只增不减、页面 dispose 后零提示 |
+| [BUG-1560](bugs/BUG-1560-interconnect-enable-toggle-stale-cache.md) | ✅ | ✅ | 来源页互联开关绕过设置页状态：模块级缓存永不重读，设置页开关与 section 显隐显示旧值到重启 |
+| [BUG-1559](bugs/BUG-1559-interconnect-restore-auth-resets-resolved-address.md) | ✅ | ✅ | restoreAuth 把已解析地址打回候选[0] 而 _sessionResolved 仍为 true，不再重探 |
+| [BUG-1558](bugs/BUG-1558-interconnect-paired-peer-list-stale.md) | ✅ | ✅ | 配对成功后已配对设备列表不刷新（controller 落库不通知） |
+| [BUG-1557](bugs/BUG-1557-interconnect-tofu-fingerprint-check-order.md) | ✅ | ✅ | TOFU 指纹比对顺序倒置 + 编辑地址留旧指纹且无清除入口 |
+| [BUG-1556](bugs/BUG-1556-interconnect-pair-session-ttl-before-approval.md) | ✅ | ✅ | 配对会话 TTL 从审批前起算：host 审批慢就必配不上，且过期被报成「对端拒绝」 |
+| [BUG-1555](bugs/BUG-1555-interconnect-v1-pair-pin-bypass.md) | ✅ | ✅ | v1 /api/pair 绕过 PIN 强制：公网入站一次「允许」即拿到权限最大的共享 token |
+| [BUG-1554](bugs/BUG-1554-lan-discovery-browser-orphan.md) | ✅ | ✅ | LAN 发现 startDiscovery 无幂等/无 dispose 守卫，重扫与关页竞态留下孤儿 Bonsoir browser |
+| [BUG-1553](bugs/BUG-1553-interconnect-pair-failure-reason-lost.md) | ✅ | ✅ | 配对失败原因被压平：限速 429 / TLS 指纹不符 / 超时全说成「配对失败」且不留日志 |
+| [BUG-1552](bugs/BUG-1552-sync-channel-failure-cascades.md) | ✅ | ✅ | 云备份通道抛异常直接终止通道循环，互联通道整轮不跑（「并存互不干扰」不成立） |
+| [BUG-1551](bugs/BUG-1551-interconnect-server-start-race.md) | ✅ | ✅ | 互联服务开关竞态：并发 start 抢同一端口、catch 清掉别人的句柄，host 在跑却显示已停止且关不掉 |
+| [BUG-1550](bugs/BUG-1550-interconnect-peer-token-single-slot.md) | ✅ | ✅ | 互联配对第二台对端后整体瘫痪：per-peer token 只有一个全局槽 + 401 株连全部候选 |
+| [BUG-1549](bugs/BUG-1549-anki-toast-empty-deckname.md) | ✅ | ✅ | AnkiConnect 制卡成功 toast 牌组名为空——成功结果不带实际落卡牌组名，调用点事后从 selectedDeckName 猜 |
+| [BUG-1548](bugs/BUG-1548-resource-search-wrong-season-ranking.md) | ✅ | ✅ | 资源搜索结果错季混排：结果只按 seeders 排序，无标题/季号相关度 |
+| [BUG-1547](bugs/BUG-1547-tmdb-unconfigured-scrape-all-fails.md) | ✅ | ✅ | TMDB 未配置时全部刮削整批失败：resolver 不回退到零密钥的 Bangumi/AniList，且错误是英文裸串 |
+| [BUG-1546](bugs/BUG-1546-settings-width-text-truncation.md) | ✅ | ✅ | 设置页限宽与描述/集标题截断显示不全 |
+| [BUG-1545](bugs/BUG-1545-kon-collection-detail-crash.md) | ✅ | ✅ | 视频起播时 hwdec=auto 抢先下发，CUDA 硬解初始化崩溃整个进程（Windows/NVIDIA） |
+| [BUG-1544](bugs/BUG-1544-episode-number-follow-parsed.md) | ✅ | ✅ | 选集卡片序号用导入顺位号而非文件名解析出的真实集数 |
+| [BUG-1543](bugs/BUG-1543-season-split-not-splitting.md) | ✅ | ✅ | 合集分季识别吃不下「标题 2 - 集号」形态，多季全挤进第 1 季 |
+| [BUG-1542](bugs/BUG-1542-collection-continue-wrong-episode.md) | ✅ | ✅ | 合集继续播放选错集：选条目层只按位置取最靠后有痕迹成员，忽略最近播放时刻 |
+| [BUG-1541](bugs/BUG-1541-gamepad-bt-idle-dead.md) | ✅ | ✅ | 蓝牙手柄待机断连后按键永久失效，必须重启 app |
+| [BUG-1540](bugs/BUG-1540-download-task-error-detail.md) | ✅ | ✅ | 下载任务卡错误展示：英文裸串整句铺开、无点击详情、chip 未本地化 |
+| [BUG-1539](bugs/BUG-1539-resource-search-button-dead.md) | ✅ | ✅ | 下载资源页手动搜索按钮禁用但无任何原因提示 |
+| [BUG-1538](bugs/BUG-1538-download-proxy-default-direct.md) | ✅ | ✅ | 下载域默认走系统代理而非直连，发现聚合来源需钉死不随代理分叉 |
+| [BUG-1537](bugs/BUG-1537-settings-subtitle-ellipsis-single-line.md) | ✅ | ✅ | 设置行说明文字被压成单行省略号（ellipsis + maxLines:null） |
 | [BUG-1536](bugs/BUG-1536-horizontal-row-steals-vertical-wheel.md) | ✅ | ✅ | 视频首页横滚行抢走整页纵向滚动（应 Shift+滚轮才横滚） |
+| [BUG-1535](bugs/BUG-1535-download-task-details-service-unavailable.md) | ✅ | ✅ | 下载服务未启动时任务详情打不开 |
+| [BUG-1534](bugs/BUG-1534-download-task-detail-path-overflow.md) | ✅ | ✅ | 下载任务详情长路径溢出 |
+| [BUG-1533](bugs/BUG-1533-video-discovery-filter-height.md) | ✅ | ✅ | 视频发现筛选控件高度不一致 |
+| [BUG-1532](bugs/BUG-1532-download-task-details-offline-backend.md) | ✅ | ✅ | 下载任务详情被离线原后端阻断 |
+| [BUG-1531](bugs/BUG-1531-video-discovery-long-anime-movie-dedup.md) | ✅ | ✅ | 发现页同一单集长篇动画电影被重复展示 |
+| [BUG-1530](bugs/BUG-1530-mihon-cover-disk-cache.md) | ✅ | ✅ | Mihon 在线漫画封面刷新重复下载 |
+| [BUG-1529](bugs/BUG-1529-video-discovery-genre-facet-pollution.md) | ✅ | ✅ | 视频发现页类型菜单混入年份日期 |
+| [BUG-1528](bugs/BUG-1528-video-discovery-cover-disk-cache.md) | ✅ | ✅ | 视频发现与系列页封面刷新重复下载 |
+| [BUG-1527](bugs/BUG-1527-video-discovery-card-overflow-year-input.md) | ✅ | ✅ | 视频发现卡片溢出且年份下拉过长 |
+| [BUG-1526](bugs/BUG-1526-extension-side-panel-row-seek.md) | ✅ | ✅ | 浏览器侧边栏字幕行点击不能跳转 |
+| [BUG-1525](bugs/BUG-1525-extension-side-panel-lookup-latency.md) | ✅ | ✅ | 浏览器侧边栏查词存在可感知延迟 |
+| [BUG-1524](bugs/BUG-1524-download-task-delete-pause.md) | ✅ | ✅ | Task deletion is blocked when backend pause fails |
+| [BUG-1523](bugs/BUG-1523-download-task-resume.md) | ✅ | ✅ | Cancelled download tasks cannot be resumed |
+| [BUG-1522](bugs/BUG-1522-torrent-tracker-utf8.md) | ✅ | ✅ | Tracker detail JSON rejects localized backend errors |
+| [BUG-1521](bugs/BUG-1521-torrent-tracker-refresh-coupled.md) | ✅ | ✅ | 详情Tracker刷新被其他请求阻塞 |
+| [BUG-1520](bugs/BUG-1520-torrent-detail-dropped-tab-refresh.md) | ✅ | ✅ | 下载详情切换标签时Tracker刷新被丢弃 |
+| [BUG-1519](bugs/BUG-1519-video-download-missing-embedded-recovery.md) | ✅ | ✅ | 内置下载任务丢失后无法重新入队 |
+| [BUG-1518](bugs/BUG-1518-download-task-delete-service-unavailable.md) | ✅ | ✅ | 下载服务未启动时任务删除无效 |
+| [BUG-1517](bugs/BUG-1517-download-detail-missing-backend-task.md) | ✅ | ✅ | 下载详情未区分后端任务已丢失 |
 | [BUG-1516](bugs/BUG-1516-update-manifest-dead-asset-404.md) | ✅ | ✅ | 更新清单保留已被 prune 的资产条目，客户端下载必 404 |
 | [BUG-1515](bugs/BUG-1515-parent-extras-split-series.md) | ✅ | ✅ | 父作品短篇被错误拆成独立系列卡 |
 | [BUG-1514](bugs/BUG-1514-subscription-episode-selection-order.md) | ✅ | ✅ | 订阅选集季号错误、重复下载且顺序按完成时间乱序 |

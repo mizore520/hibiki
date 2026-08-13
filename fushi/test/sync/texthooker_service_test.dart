@@ -17,6 +17,34 @@ TexthookerThreadPreview preview({
     );
 
 void main() {
+  group('BUG-1597 pathological line presentation', () {
+    test('normal dialogue stays interactive', () {
+      expect(
+        texthookerLinePresentation('普通の台詞です'),
+        TexthookerLinePresentation.interactive,
+      );
+    });
+
+    test('long dialogue skips per-character rendering without being folded',
+        () {
+      expect(
+        texthookerLinePresentation('長' * 301),
+        TexthookerLinePresentation.plain,
+      );
+    });
+
+    test('bulk history output is folded by length or line count', () {
+      expect(
+        texthookerLinePresentation('履歴' * 401),
+        TexthookerLinePresentation.collapsed,
+      );
+      expect(
+        texthookerLinePresentation(List<String>.filled(10, '台詞').join('\n')),
+        TexthookerLinePresentation.collapsed,
+      );
+    });
+  });
+
   group('compareTextThreadCandidates', () {
     TexthookerTextThread thread({
       required String key,

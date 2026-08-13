@@ -170,6 +170,7 @@ if not exist "%PREPARE_SQLITE%" (
 echo [3/5] Preparing persistent SQLite native asset cache...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PREPARE_SQLITE%" -RepoRoot "%REPO%" -CacheDirectory "%REPO%\.build-cache\sqlite3"
 if errorlevel 1 goto :dependency_failed
+set "FUSHI_SQLITE3_SOURCE_DIR=%REPO%\.build-cache\sqlite3\sqlite-autoconf-3520000"
 
 echo [4/5] flutter build windows --release ...
 call "%FLUTTER%" build windows --release

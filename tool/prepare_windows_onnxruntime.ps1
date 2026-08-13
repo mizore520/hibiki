@@ -58,6 +58,29 @@ function Get-SharedCheckoutRoot {
   return $null
 }
 
+function Get-Sha256Hex {
+  param([Parameter(Mandatory = $true)][string] $Path)
+
+  # BUG-1601: Get-FileHash is module-backed and can disappear when the BAT
+  # canonicalizes PATH/PSModulePath for MSBuild.  The cache verifier runs before
+  # compilation, so use the framework crypto API that is available in both
+  # Windows PowerShell 5.1 and PowerShell 7 without module auto-loading.
+  $stream = [IO.File]::OpenRead($Path)
+  try {
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try {
+      $hashBytes = $sha256.ComputeHash($stream)
+      return ([BitConverter]::ToString($hashBytes).Replace('-', '')).ToLowerInvariant()
+    }
+    finally {
+      $sha256.Dispose()
+    }
+  }
+  finally {
+    $stream.Dispose()
+  }
+}
+
 function Test-VerifiedRuntime {
   param([Parameter(Mandatory = $true)][string] $Root)
 
@@ -69,7 +92,7 @@ function Test-VerifiedRuntime {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
       return $false
     }
-    $actual = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+    $actual = Get-Sha256Hex -Path $path
     if ($actual -ne $entry.Value) {
       return $false
     }
