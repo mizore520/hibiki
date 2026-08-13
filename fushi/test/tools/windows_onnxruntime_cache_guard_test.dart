@@ -21,7 +21,10 @@ void main() {
         lessThan(launcher.indexOf('build windows --release')));
 
     expect(script, contains('Test-VerifiedRuntime'));
-    expect(script, contains('Get-FileHash'));
+    expect(script, contains('Get-Sha256Hex'));
+    expect(script, contains('[Security.Cryptography.SHA256]::Create()'));
+    expect(script, isNot(contains('Get-FileHash -LiteralPath')),
+        reason: '启动 BAT 的环境下模块自动加载可能失效（BUG-1601）');
     expect(script, contains('Invoke-WebRequest'));
     expect(script, contains("Get-Command 'curl.exe'"));
     expect(
@@ -58,17 +61,20 @@ void main() {
     expect(launcher.indexOf('prepare_windows_sqlite3.ps1'),
         lessThan(launcher.indexOf('build windows --release')));
     expect(script, contains('Test-VerifiedSqlite'));
-    expect(script, contains('Get-FileHash'));
+    expect(script, contains('Get-Sha256Hex'));
+    expect(script, contains('[Security.Cryptography.SHA256]::Create()'));
+    expect(script, isNot(contains('Get-FileHash -LiteralPath')),
+        reason: 'SQLite 缓存校验也必须避开同一个模块依赖（BUG-1601）');
     expect(script, contains('sqlite3.x64.windows.dll'));
     expect(script, contains('563a01a5fbb929844df1a9f6a84f73f7'));
     expect(script, contains('--continue-at -'));
-    expect(script, contains('rev-parse --path-format=absolute --git-common-dir'));
+    expect(
+        script, contains('rev-parse --path-format=absolute --git-common-dir'));
     expect(pubspec, isNot(contains('source: test-sqlite3')));
     expect(patcher, contains('sqlite3-3.3.3/lib/src/hook/assets.dart'));
     expect(patcher,
         contains(r'download-\${type.name}-\${architecture.name}-\${os.name}'));
-    expect(script,
-        contains('download-sqlite3-x64-windows-\$releaseTag'));
+    expect(script, contains('download-sqlite3-x64-windows-\$releaseTag'));
   });
 
   test('ONNX CMake validates prepared cache and fallback operations', () {

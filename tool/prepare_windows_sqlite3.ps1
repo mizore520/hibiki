@@ -22,6 +22,29 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+function Get-Sha256Hex {
+  param([Parameter(Mandatory = $true)][string] $Path)
+
+  # Keep cache verification independent of PowerShell module auto-loading.
+  # The launcher normalizes its environment for MSBuild, where Get-FileHash can
+  # otherwise be unavailable even though the framework crypto API is present
+  # (BUG-1601).
+  $stream = [IO.File]::OpenRead($Path)
+  try {
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try {
+      $hashBytes = $sha256.ComputeHash($stream)
+      return ([BitConverter]::ToString($hashBytes).Replace('-', '')).ToLowerInvariant()
+    }
+    finally {
+      $sha256.Dispose()
+    }
+  }
+  finally {
+    $stream.Dispose()
+  }
+}
+
 $repo = (Resolve-Path -LiteralPath $RepoRoot).Path
 if ([string]::IsNullOrWhiteSpace($CacheDirectory)) {
   $CacheDirectory = Join-Path $repo '.build-cache\sqlite3'
@@ -60,7 +83,7 @@ function Test-VerifiedSqlite {
   if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
     return $false
   }
-  $actual = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+  $actual = Get-Sha256Hex -Path $Path
   return $actual -eq $expectedHash
 }
 

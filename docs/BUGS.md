@@ -29,10 +29,11 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 1506 条。点号进各自文件。
+> 共 1507 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-1601](bugs/BUG-1601-windows-cache-hash-cmdlet-missing.md) | ✅ | ✅ | Windows 缓存校验依赖 Get-FileHash 导致启动构建失败 |
 | [BUG-1600](bugs/BUG-1600-windows-sqlite-native-asset-cache.md) | ✅ | ✅ | Windows SQLite 原生资产缓存目录不稳定导致重复下载失败 |
 | [BUG-1599](bugs/BUG-1599-helper-runtime-downgrade.md) | ✅ | ✅ | Windows 本地构建旧归档将新版捕获组件降级 |
 | [BUG-1598](bugs/BUG-1598-windows-onnx-runtime-cache.md) | ✅ | ✅ | Windows 一键构建 ONNX Runtime 下载失败且 clean 重复下载 |
