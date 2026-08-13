@@ -33,7 +33,7 @@
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
-| [BUG-1558](bugs/BUG-1558-gal-workbench-selection-stall.md) | ✅ | ✅ | Gal 捕获工作台句子选择被旧音轨请求阻塞 |
+| [BUG-1586](bugs/BUG-1586-gal-workbench-selection-stall.md) | ✅ | ✅ | Gal 捕获工作台句子选择被旧音轨请求阻塞 |
 | [BUG-1557](bugs/BUG-1557-windows-sqlite-native-asset-cache.md) | ✅ | ✅ | Windows SQLite 原生资产缓存目录不稳定导致重复下载失败 |
 | [BUG-1556](bugs/BUG-1556-helper-runtime-downgrade.md) | ✅ | ✅ | Windows 本地构建旧归档将新版捕获组件降级 |
 | [BUG-1555](bugs/BUG-1555-windows-onnx-runtime-cache.md) | ✅ | ✅ | Windows 一键构建 ONNX Runtime 下载失败且 clean 重复下载 |
