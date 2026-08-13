@@ -3395,5 +3395,6 @@
   "game_text_threads_dormant_hide": "Hide threads without text",
   "game_text_threads_dormant_show": "Show threads without text ($count)",
   "video_mining_image_quality": "Video / anime card image quality",
-  "video_mining_image_quality_hint": "Controls video and anime card images only. Higher settings keep more detail and may use more space."
+  "video_mining_image_quality_hint": "Controls video and anime card images only. Higher settings keep more detail and may use more space.",
+  "game_line_bulk_text_hint": "Bulk text detected. Character lookup is paused."
 }

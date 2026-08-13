@@ -31,7 +31,7 @@ void main() {
     }
   });
 
-  test('本地 Flutter 构建不得重新复制运行时 helper 归档 (BUG-1556)', () {
+  test('本地 Flutter 构建不得重新复制运行时 helper 归档 (BUG-1599)', () {
     final String cmake = windowsCmake.readAsStringSync();
     expect(cmake.contains('FUSHI_GALGAME_HELPER_FILES'), isFalse,
         reason: 'Flutter install 又把 zip 放回 galgame_helper，可能用旧归档降级新版 helper');

@@ -95,7 +95,7 @@ if (-not (Test-Path -LiteralPath $DistDirectory -PathType Container)) {
   throw "Helper dist directory does not exist (run build_distribution.ps1 first): $DistDirectory"
 }
 
-# BUG-1556: older Flutter CMake rules copied the same archives into
+# BUG-1599: older Flutter CMake rules copied the same archives into
 # <Bundle>\galgame_helper. At runtime those archives could replace the freshly
 # installed plain files below with an older IPC protocol. Plain files are the
 # only shipping layout now, so incremental bundles must drop the obsolete copy.

@@ -1,9 +1,9 @@
 /// Generated file. Do not edit.
 ///
 /// Locales: 17
-/// Strings: 57749 (3397 per locale)
+/// Strings: 57766 (3398 per locale)
 ///
-/// Built on 2026-08-13 at 08:20 UTC
+/// Built on 2026-08-13 at 08:25 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -3559,6 +3559,7 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
 	String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	String get video_mining_image_quality => 'Video / anime card image quality';
 	String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 // Path: <root>
@@ -6985,6 +6986,7 @@ class _StringsAr extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 // Path: <root>
@@ -10411,6 +10413,7 @@ class _StringsDe extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 // Path: <root>
@@ -13837,6 +13840,7 @@ class _StringsEs extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 // Path: <root>
@@ -17263,6 +17267,7 @@ class _StringsFr extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 // Path: <root>
@@ -20689,6 +20694,7 @@ class _StringsId extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 // Path: <root>
@@ -24115,6 +24121,7 @@ class _StringsIt extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 // Path: <root>
@@ -27541,6 +27548,7 @@ class _StringsJa extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 // Path: <root>
@@ -30967,6 +30975,7 @@ class _StringsKo extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 // Path: <root>
@@ -34393,6 +34402,7 @@ class _StringsNl extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 // Path: <root>
@@ -37819,6 +37829,7 @@ class _StringsPtBr extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 // Path: <root>
@@ -41245,6 +41256,7 @@ class _StringsRu extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 // Path: <root>
@@ -44671,6 +44683,7 @@ class _StringsTh extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 // Path: <root>
@@ -48097,6 +48110,7 @@ class _StringsTr extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 // Path: <root>
@@ -51523,6 +51537,7 @@ class _StringsVi extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 // Path: <root>
@@ -54949,6 +54964,7 @@ class _StringsZhCn extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => '显示尚无文本的线程（${count}）';
 	@override String get video_mining_image_quality => '视频 / 动漫制卡画质';
 	@override String get video_mining_image_quality_hint => '仅控制视频和动漫制卡配图。画质越高越清晰，卡片体积也可能越大。';
+	@override String get game_line_bulk_text_hint => '检测到批量文本，已暂停逐字查词以避免卡顿。';
 }
 
 // Path: <root>
@@ -58375,6 +58391,7 @@ class _StringsZhHk extends _StringsEn {
 	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
 }
 
 /// Flat map(s) containing all translations.
@@ -61780,6 +61797,7 @@ extension on _StringsEn {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}
@@ -65185,6 +65203,7 @@ extension on _StringsAr {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}
@@ -68590,6 +68609,7 @@ extension on _StringsDe {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}
@@ -71995,6 +72015,7 @@ extension on _StringsEs {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}
@@ -75400,6 +75421,7 @@ extension on _StringsFr {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}
@@ -78805,6 +78827,7 @@ extension on _StringsId {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}
@@ -82210,6 +82233,7 @@ extension on _StringsIt {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}
@@ -85615,6 +85639,7 @@ extension on _StringsJa {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}
@@ -89020,6 +89045,7 @@ extension on _StringsKo {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}
@@ -92425,6 +92451,7 @@ extension on _StringsNl {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}
@@ -95830,6 +95857,7 @@ extension on _StringsPtBr {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}
@@ -99235,6 +99263,7 @@ extension on _StringsRu {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}
@@ -102640,6 +102669,7 @@ extension on _StringsTh {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}
@@ -106045,6 +106075,7 @@ extension on _StringsTr {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}
@@ -109450,6 +109481,7 @@ extension on _StringsVi {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}
@@ -112855,6 +112887,7 @@ extension on _StringsZhCn {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => '显示尚无文本的线程（${count}）';
 			case 'video_mining_image_quality': return '视频 / 动漫制卡画质';
 			case 'video_mining_image_quality_hint': return '仅控制视频和动漫制卡配图。画质越高越清晰，卡片体积也可能越大。';
+			case 'game_line_bulk_text_hint': return '检测到批量文本，已暂停逐字查词以避免卡顿。';
 			default: return null;
 		}
 	}
@@ -116260,6 +116293,7 @@ extension on _StringsZhHk {
 			case 'game_text_threads_dormant_show': return ({required Object count}) => 'Show threads without text (${count})';
 			case 'video_mining_image_quality': return 'Video / anime card image quality';
 			case 'video_mining_image_quality_hint': return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+			case 'game_line_bulk_text_hint': return 'Bulk text detected. Character lookup is paused.';
 			default: return null;
 		}
 	}

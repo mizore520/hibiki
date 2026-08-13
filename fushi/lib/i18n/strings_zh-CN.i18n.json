@@ -3395,5 +3395,6 @@
   "game_text_threads_dormant_hide": "收起尚无文本的线程",
   "game_text_threads_dormant_show": "显示尚无文本的线程（$count）",
   "video_mining_image_quality": "视频 / 动漫制卡画质",
-  "video_mining_image_quality_hint": "仅控制视频和动漫制卡配图。画质越高越清晰，卡片体积也可能越大。"
+  "video_mining_image_quality_hint": "仅控制视频和动漫制卡配图。画质越高越清晰，卡片体积也可能越大。",
+  "game_line_bulk_text_hint": "检测到批量文本，已暂停逐字查词以避免卡顿。"
 }

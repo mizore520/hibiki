@@ -68,7 +68,7 @@ fi
 # sqlite3 3.3.3 derives its shared download directory from Object.hash. Dart
 # randomizes that hash per process, so a valid native asset can be missed and
 # downloaded again on the next build. Keep the package's normal per-platform
-# asset selection, but make only its cache key deterministic (BUG-1557).
+# asset selection, but make only its cache key deterministic (BUG-1600).
 sqlite_assets="$PUB_CACHE_DIR/hosted/pub.dev/sqlite3-3.3.3/lib/src/hook/assets.dart"
 if [ -f "$sqlite_assets" ]; then
   if grep -Fq "String get dirname => 'download-\${hashCode.toRadixString(16)}';" "$sqlite_assets"; then

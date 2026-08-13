@@ -46,6 +46,34 @@ void main() {
     expect(find.textContaining('二'), findsWidgets);
   });
 
+  testWidgets('BUG-1597 bulk line uses a folded lightweight text widget',
+      (WidgetTester tester) async {
+    final String bulkText = '历史台词' * 250;
+    TexthookerService.instance.appendLine(bulkText);
+
+    await tester.pumpWidget(_wrapPage(const TexthookerPage()));
+    await tester.pump();
+
+    final String lineId = TexthookerService.instance.entries.single.id;
+    final Finder textFinder = find.byKey(
+      ValueKey<String>('game-line-lightweight-text-$lineId'),
+    );
+    expect(textFinder, findsOneWidget);
+    expect(tester.widget<Text>(textFinder).maxLines, 4);
+    expect(find.text('Bulk text detected. Character lookup is paused.'),
+        findsOneWidget);
+
+    await tester.tap(
+      find.byKey(ValueKey<String>('game-line-expand-$lineId')),
+    );
+    await tester.pump();
+    expect(tester.widget<Text>(textFinder).maxLines, isNull);
+    expect(
+      find.byKey(ValueKey<String>('game-line-widget-$lineId')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('clear button empties the list', (WidgetTester tester) async {
     TexthookerService.instance.appendLine('行X');
     await tester.pumpWidget(
