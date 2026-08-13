@@ -88,6 +88,27 @@ void main() {
     expect(windowsCmake, contains('FETCHCONTENT_SOURCE_DIR_SQLITE3'));
   });
 
+  test('galgame helper packaging hashes avoid module-only commands (BUG-1601)', () {
+    for (final String relativePath in <String>[
+      'native/galgame_hook/tools/build_distribution.ps1',
+      'native/galgame_hook/tools/install_into_bundle.ps1',
+      'native/galgame_hook/tools/sync_lunahook.ps1',
+    ]) {
+      final File file = File(
+        '${repoRoot.path}${Platform.pathSeparator}'
+        '${relativePath.replaceAll('/', Platform.pathSeparator)}',
+      );
+      expect(file.existsSync(), isTrue, reason: 'missing $relativePath');
+      final String script = file.readAsStringSync();
+      expect(script, contains('[Security.Cryptography.SHA256]::Create()'));
+      expect(
+        script,
+        isNot(contains('Get-FileHash -')),
+        reason: '$relativePath runs under the normalized launcher environment',
+      );
+    }
+  });
+
   test('ONNX CMake validates prepared cache and fallback operations', () {
     final String cmake = File(
       '${repoRoot.path}${Platform.pathSeparator}third_party'

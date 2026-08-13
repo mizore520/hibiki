@@ -46,6 +46,19 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+function Get-Sha256Hex {
+  param([Parameter(Mandatory = $true)][string]$Path)
+  $stream = [IO.File]::OpenRead($Path)
+  try {
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try {
+      return ([BitConverter]::ToString($sha256.ComputeHash($stream)) -replace '-', '').ToLowerInvariant()
+    }
+    finally { $sha256.Dispose() }
+  }
+  finally { $stream.Dispose() }
+}
+
 # Must stay identical to galgameHelperRequiredFiles() in
 # fushi/lib/src/mining/galgame_helper_installer.dart. Two copies of a contract
 # is exactly the shape that caused BUG-1345, so it is pinned by a guard test:
@@ -122,7 +135,7 @@ foreach ($arch in @('x86', 'x64')) {
   # unpacked into a shipping bundle: what is inside is an injector executable and
   # a DLL that gets loaded into the user's game process.
   $expected = ((Get-Content -LiteralPath $sidecar -Raw) -replace '[^0-9a-fA-F]', '').ToLowerInvariant()
-  $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLowerInvariant()
+  $actual = Get-Sha256Hex -Path $zip
   if ($expected -ne $actual) {
     throw "Helper archive sha256 mismatch for ${arch}: sidecar=$expected actual=$actual"
   }

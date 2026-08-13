@@ -36,6 +36,19 @@ function Invoke-Checked {
   }
 }
 
+function Get-Sha256Hex {
+  param([Parameter(Mandatory = $true)][string]$Path)
+  $stream = [IO.File]::OpenRead($Path)
+  try {
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try {
+      return ([BitConverter]::ToString($sha256.ComputeHash($stream)) -replace '-', '').ToLowerInvariant()
+    }
+    finally { $sha256.Dispose() }
+  }
+  finally { $stream.Dispose() }
+}
+
 function Reset-StageDirectory {
   param([Parameter(Mandatory = $true)][string]$Path)
   $full = [IO.Path]::GetFullPath($Path)
@@ -153,10 +166,10 @@ $leDir = Join-Path $tempBase 'hibiki-locale-emulator-2.5.0.1'
 $leUrl = 'https://github.com/xupefei/Locale-Emulator/releases/download/v2.5.0.1/Locale.Emulator.2.5.0.1.zip'
 $expectedLeSha = '808ff584426d52cc775ad6406da00622f454be95bd4c8fbca42eef4b7235ad5c'
 if (-not (Test-Path -LiteralPath $leZip -PathType Leaf) -or
-    (Get-FileHash -LiteralPath $leZip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedLeSha) {
+    (Get-Sha256Hex -Path $leZip) -ne $expectedLeSha) {
   Invoke-WebRequest -Uri $leUrl -OutFile $leZip
 }
-$actualLeSha = (Get-FileHash -LiteralPath $leZip -Algorithm SHA256).Hash.ToLowerInvariant()
+$actualLeSha = Get-Sha256Hex -Path $leZip
 if ($actualLeSha -ne $expectedLeSha) {
   throw "Locale Emulator SHA-256 mismatch: $actualLeSha"
 }
@@ -213,7 +226,7 @@ foreach ($arch in @('x64', 'x86')) {
 
   $zip = Join-Path $outputRoot "voice_hook_$arch.zip"
   Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zip -Force
-  $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+  $hash = Get-Sha256Hex -Path $zip
   Set-Content -LiteralPath "$zip.sha256" -Value $hash -NoNewline
   Write-Host "$arch sha256=$hash"
 }
