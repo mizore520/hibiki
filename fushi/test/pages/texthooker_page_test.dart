@@ -181,12 +181,68 @@ void main() {
     );
     await tester.pump();
 
+    expect(find.textContaining('TextRender · 0xf94600 · 0'), findsNothing,
+        reason: '零文本候选默认折叠，避免大量无用线程淹没选择器');
+    expect(
+      find.byKey(
+        const ValueKey<String>('game-dormant-text-threads-toggle'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(
+        const ValueKey<String>('game-dormant-text-threads-toggle'),
+      ),
+    );
+    await tester.pump();
     await tester.tap(
       find.byKey(const ValueKey<String>('game-text-thread-selector')),
     );
     await tester.pumpAndSettle();
 
     expect(find.textContaining('TextRender · 0xf94600 · 0'), findsWidgets);
+  });
+
+  testWidgets('active candidates stay visible while zero-output ones collapse',
+      (WidgetTester tester) async {
+    TexthookerService.instance.registerTextThread(
+      key: 'siglus:dormant',
+      label: 'SiglusEngine3 · 0x1000',
+      nativeThreadId: 1,
+    );
+    TexthookerService.instance.registerTextThread(
+      key: 'siglus:dialogue',
+      label: 'EmbedSiglus · 0x2000',
+      nativeThreadId: 2,
+    );
+    TexthookerService.instance.applyTextThreadPreviews(
+      const <TexthookerThreadPreview>[
+        TexthookerThreadPreview(
+          nativeThreadId: 1,
+          text: '',
+          observedLineCount: 0,
+          observedArtifactCount: 0,
+          isArtifact: false,
+        ),
+        TexthookerThreadPreview(
+          nativeThreadId: 2,
+          text: '会話です',
+          observedLineCount: 12,
+          observedArtifactCount: 0,
+          isArtifact: false,
+        ),
+      ],
+    );
+    await tester.pumpWidget(_wrapPage(const TexthookerPage()));
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const ValueKey<String>('game-text-thread-selector')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(MenuItemButton, 'EmbedSiglus · 0x2000 · 12'),
+        findsOneWidget);
+    expect(find.textContaining('SiglusEngine3 · 0x1000 · 0'), findsNothing);
   });
 
   testWidgets('inactive workbench keeps audio tracks out of overflow menu',

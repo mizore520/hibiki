@@ -36,6 +36,7 @@ import 'package:fushi/src/sync/texthooker_ws_client.dart';
 import 'package:fushi/src/sync/texthooker_ws_client_manager.dart';
 import 'package:fushi/src/utils/misc/desktop_audio_playback.dart';
 import 'package:fushi/src/utils/misc/swipe_dismiss_wrapper.dart';
+import 'package:fushi/src/utils/latest_request_cache.dart';
 import 'package:fushi/media.dart';
 import 'package:fushi/utils.dart';
 
@@ -116,9 +117,15 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
   DateTime? _captureSetupShownForSession;
   bool _captureSetupDialogOpen = false;
   bool _captureSetupDialogScheduled = false;
+  bool _workbenchRebuildScheduled = false;
 
   /// 实时台词列表的筛选维度（全部 / 有音频 / 已制卡 / 已收藏）。与线程下拉正交叠加。
   TexthookerLineFilter _lineFilter = TexthookerLineFilter.all;
+
+  /// Zero-output candidates are still observed by native, but stay collapsed
+  /// until the user explicitly asks to inspect them. Never deleting them is
+  /// important: the real dialogue thread may remain silent until a scene starts.
+  bool _showDormantTextThreads = false;
 
   /// 正在行内试听的行 id；null = 未在试听（样式对齐诊断页逐轨试听）。
   String? _previewingLineId;
@@ -1039,8 +1046,20 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
 
   void _onSessionChanged() {
     if (!mounted) return;
-    setState(() {});
+    _scheduleWorkbenchRebuild();
     _maybeScheduleCaptureSetupDialog();
+  }
+
+  /// Text and audio state for one line commonly arrive back-to-back through
+  /// two ChangeNotifiers. Rebuild the workbench at most once per frame instead
+  /// of rebuilding the whole list for every intermediate notification.
+  void _scheduleWorkbenchRebuild() {
+    if (_workbenchRebuildScheduled) return;
+    _workbenchRebuildScheduled = true;
+    WidgetsBinding.instance.scheduleFrameCallback((_) {
+      _workbenchRebuildScheduled = false;
+      if (mounted) setState(() {});
+    });
   }
 
   /// 外部窗口挖矿模式条：展示已绑定窗口标题 + 重选/解绑；未绑定时点击选窗口。
@@ -1108,9 +1127,8 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
     // 跟随开着但用户手动滚离底部时不硬拽回底部（否则打断上翻回看）；此时累积未读，
     // 露出「未读 N」胶囊供一键回到最新。
     final bool follow = _followLive && _isNearBottom();
-    setState(() {
-      if (!follow && receivedNewLine) _unreadLines++;
-    });
+    if (!follow && receivedNewLine) _unreadLines++;
+    _scheduleWorkbenchRebuild();
     _maybeScheduleCaptureSetupDialog();
     if (!receivedNewLine || !follow) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1779,6 +1797,23 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
     // 重名线程（同 hookName + 地址、不同调用上下文）补 `#N` 序号，供下拉区分。
     final Map<String, String> threadDisplayLabels =
         assignThreadDisplayLabels(textThreads);
+    final List<TexthookerTextThread> activeThreads = textThreads
+        .where((TexthookerTextThread thread) => thread.hasObservedLines)
+        .toList(growable: false)
+      ..sort(TexthookerService.compareTextThreadCandidates);
+    final List<TexthookerTextThread> dormantThreads = textThreads
+        .where((TexthookerTextThread thread) => !thread.hasObservedLines)
+        .toList(growable: false);
+    final List<TexthookerTextThread> visibleThreads = <TexthookerTextThread>[
+      ...activeThreads,
+      if (_showDormantTextThreads) ...dormantThreads,
+      if (!_showDormantTextThreads)
+        ...dormantThreads.where(
+          (TexthookerTextThread thread) => thread.key == selectedTextThreadKey,
+        ),
+    ];
+    final String? recommendedThreadKey =
+        activeThreads.isEmpty ? null : activeThreads.first.key;
     return FushiCard(
       padding: EdgeInsets.zero,
       child: Column(
@@ -1885,7 +1920,7 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
                     // v12：空值不再是「全部线程」——不选就一行都不发布。标签必须如实
                     // 说明，否则用户会以为不选也在抓，然后奇怪为什么没有台词。
                     (value: '', label: t.game_text_thread_unset),
-                    for (final TexthookerTextThread thread in textThreads)
+                    for (final TexthookerTextThread thread in visibleThreads)
                       (
                         value: thread.key,
                         // 同一 hook 面在不同调用上下文会报成多条同 label 线程；
@@ -1913,9 +1948,13 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
                           // 预览优先取已发布台词，回落 native 预览行——未被选中的
                           // 线程只有后者，而那正是用户挑线程时唯一能看的东西。
                           latestText: thread.displayPreviewText,
-                          audioLabel: t.game_text_thread_audio_count(
-                            count: thread.audioLineCount,
-                          ),
+                          audioLabel: <String>[
+                            if (thread.key == recommendedThreadKey)
+                              t.game_text_thread_recommended,
+                            t.game_text_thread_audio_count(
+                              count: thread.audioLineCount,
+                            ),
+                          ].join(' · '),
                         );
                       }
                     }
@@ -1946,6 +1985,32 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
                     );
                   },
                 ),
+                if (dormantThreads.isNotEmpty)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      key: const ValueKey<String>(
+                        'game-dormant-text-threads-toggle',
+                      ),
+                      onPressed: () => setState(
+                        () =>
+                            _showDormantTextThreads = !_showDormantTextThreads,
+                      ),
+                      icon: Icon(
+                        _showDormantTextThreads
+                            ? Icons.expand_less
+                            : Icons.expand_more,
+                        size: 18,
+                      ),
+                      label: Text(
+                        _showDormantTextThreads
+                            ? t.game_text_threads_dormant_hide
+                            : t.game_text_threads_dormant_show(
+                                count: dormantThreads.length,
+                              ),
+                      ),
+                    ),
+                  ),
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
@@ -2399,6 +2464,8 @@ class _LineTracksCardState extends State<_LineTracksCard> {
   /// 已取过快照的行 id：同一行不重复拉，换行才重取。
   String? _tracksLineId;
   bool _loading = false;
+  final LatestRequestCache<String, List<GalAudioTrack>> _trackLoads =
+      LatestRequestCache<String, List<GalAudioTrack>>();
   int? _previewingSourcePtr;
   Timer? _previewResetTimer;
 
@@ -2423,6 +2490,7 @@ class _LineTracksCardState extends State<_LineTracksCard> {
   Future<void> _syncTracks({bool force = false}) async {
     final TexthookerLineEntry? line = widget.line;
     if (line == null) {
+      _trackLoads.invalidateCurrent();
       if (_tracks.isNotEmpty || _tracksLineId != null) {
         setState(() {
           _tracks = const <GalAudioTrack>[];
@@ -2432,14 +2500,21 @@ class _LineTracksCardState extends State<_LineTracksCard> {
       return;
     }
     if (!force && _tracksLineId == line.id) return;
-    if (_loading) return;
-    _loading = true;
-    final List<GalAudioTrack> tracks =
-        await widget.session.tracksForLine(line.id);
-    _loading = false;
-    if (!mounted) return;
+    if (force) {
+      setState(() => _loading = true);
+    } else {
+      _loading = true;
+    }
+    final LatestRequestResult<List<GalAudioTrack>> result =
+        await _trackLoads.load(
+      line.id,
+      () => widget.session.tracksForLine(line.id),
+      force: force,
+    );
+    if (!mounted || !result.isLatest || widget.line?.id != line.id) return;
     setState(() {
-      _tracks = tracks;
+      _loading = false;
+      _tracks = result.value;
       _tracksLineId = line.id;
     });
   }
@@ -2519,6 +2594,14 @@ class _LineTracksCardState extends State<_LineTracksCard> {
                 focusId: const FushiFocusId('game-line-tracks-refresh'),
                 onTap: () => unawaited(_syncTracks(force: true)),
               ),
+              if (_loading)
+                const Padding(
+                  padding: EdgeInsets.only(left: 8),
+                  child: SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 12),

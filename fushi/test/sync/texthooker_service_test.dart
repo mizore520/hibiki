@@ -17,6 +17,35 @@ TexthookerThreadPreview preview({
     );
 
 void main() {
+  group('compareTextThreadCandidates', () {
+    TexthookerTextThread thread({
+      required String key,
+      int observed = 0,
+      int artifacts = 0,
+      int audio = 0,
+    }) =>
+        TexthookerTextThread(
+          key: key,
+          label: key,
+          lineCount: 0,
+          latestAt: DateTime(2026),
+          observedLineCount: observed,
+          observedArtifactCount: artifacts,
+          audioLineCount: audio,
+        );
+
+    test('puts proven voiced and cleaner candidates first', () {
+      final List<TexthookerTextThread> candidates = <TexthookerTextThread>[
+        thread(key: 'artifact', observed: 30, artifacts: 20),
+        thread(key: 'clean', observed: 12, audio: 10),
+        thread(key: 'quiet', observed: 4),
+      ]..sort(TexthookerService.compareTextThreadCandidates);
+
+      expect(candidates.map((TexthookerTextThread t) => t.key),
+          <String>['clean', 'quiet', 'artifact']);
+    });
+  });
+
   setUp(() => TexthookerService.instance.clear());
 
   test('appendLine adds and notifies', () {

@@ -1,9 +1,9 @@
 /// Generated file. Do not edit.
 ///
 /// Locales: 17
-/// Strings: 56797 (3341 per locale)
+/// Strings: 56848 (3344 per locale)
 ///
-/// Built on 2026-08-11 at 13:52 UTC
+/// Built on 2026-08-12 at 23:15 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -4525,6 +4525,10 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get video_mining_image_quality => 'Video / anime card image quality';
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  String get game_text_thread_recommended => 'Recommended';
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 // Path: <root>
@@ -12241,6 +12245,13 @@ class _StringsAr extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 // Path: <root>
@@ -20024,6 +20035,13 @@ class _StringsDe extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 // Path: <root>
@@ -27823,6 +27841,13 @@ class _StringsEs extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 // Path: <root>
@@ -35634,6 +35659,13 @@ class _StringsFr extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 // Path: <root>
@@ -43373,6 +43405,13 @@ class _StringsId extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 // Path: <root>
@@ -51158,6 +51197,13 @@ class _StringsIt extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 // Path: <root>
@@ -58757,6 +58803,13 @@ class _StringsJa extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 // Path: <root>
@@ -66363,6 +66416,13 @@ class _StringsKo extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 // Path: <root>
@@ -74128,6 +74188,13 @@ class _StringsNl extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 // Path: <root>
@@ -81905,6 +81972,13 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 // Path: <root>
@@ -89668,6 +89742,13 @@ class _StringsRu extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 // Path: <root>
@@ -97379,6 +97460,13 @@ class _StringsTh extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 // Path: <root>
@@ -105121,6 +105209,13 @@ class _StringsTr extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 // Path: <root>
@@ -112848,6 +112943,13 @@ class _StringsVi extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 // Path: <root>
@@ -120017,6 +120119,13 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       '仅控制视频和动漫制卡配图。画质越高越清晰，卡片体积也可能越大。';
+  @override
+  String get game_text_thread_recommended => '推荐线程';
+  @override
+  String get game_text_threads_dormant_hide => '收起尚无文本的线程';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      '显示尚无文本的线程（${count}）';
 }
 
 // Path: <root>
@@ -127539,6 +127648,13 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get video_mining_image_quality_hint =>
       'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
 }
 
 /// Flat map(s) containing all translations.
@@ -134403,6 +134519,13 @@ extension on _StringsEn {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }
@@ -141265,6 +141388,13 @@ extension on _StringsAr {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }
@@ -148149,6 +148279,13 @@ extension on _StringsDe {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }
@@ -155032,6 +155169,13 @@ extension on _StringsEs {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }
@@ -161921,6 +162065,13 @@ extension on _StringsFr {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }
@@ -168792,6 +168943,13 @@ extension on _StringsId {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }
@@ -175677,6 +175835,13 @@ extension on _StringsIt {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }
@@ -182524,6 +182689,13 @@ extension on _StringsJa {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }
@@ -189375,6 +189547,13 @@ extension on _StringsKo {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }
@@ -196254,6 +196433,13 @@ extension on _StringsNl {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }
@@ -203130,6 +203316,13 @@ extension on _StringsPtBr {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }
@@ -210011,6 +210204,13 @@ extension on _StringsRu {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }
@@ -216875,6 +217075,13 @@ extension on _StringsTh {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }
@@ -223748,6 +223955,13 @@ extension on _StringsTr {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }
@@ -230617,6 +230831,13 @@ extension on _StringsVi {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }
@@ -237429,6 +237650,12 @@ extension on _StringsZhCn {
         return '视频 / 动漫制卡画质';
       case 'video_mining_image_quality_hint':
         return '仅控制视频和动漫制卡配图。画质越高越清晰，卡片体积也可能越大。';
+      case 'game_text_thread_recommended':
+        return '推荐线程';
+      case 'game_text_threads_dormant_hide':
+        return '收起尚无文本的线程';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) => '显示尚无文本的线程（${count}）';
       default:
         return null;
     }
@@ -244271,6 +244498,13 @@ extension on _StringsZhHk {
         return 'Video / anime card image quality';
       case 'video_mining_image_quality_hint':
         return 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+      case 'game_text_thread_recommended':
+        return 'Recommended';
+      case 'game_text_threads_dormant_hide':
+        return 'Hide threads without text';
+      case 'game_text_threads_dormant_show':
+        return ({required Object count}) =>
+            'Show threads without text (${count})';
       default:
         return null;
     }

@@ -487,7 +487,7 @@ class TexthookerService extends ChangeNotifier {
       }
     }
     final List<TexthookerTextThread> result = byKey.values.toList()
-      ..sort(_compareTextThreads);
+      ..sort(compareTextThreadCandidates);
     return List<TexthookerTextThread>.unmodifiable(
       disambiguateThreadLabels(result),
     );
@@ -536,7 +536,7 @@ class TexthookerService extends ChangeNotifier {
   /// v12：判据从「已发布行数」改成 [TexthookerTextThread.hasObservedLines]。取消自动选
   /// 线程后，用户选定之前所有线程的 `lineCount` 都是 0，旧判据会退化成「只按时间排」，
   /// 又把刚发现的空线程顶回最前——正是本函数当初要修的那个症状换个方式复发。
-  static int _compareTextThreads(
+  static int compareTextThreadCandidates(
     TexthookerTextThread a,
     TexthookerTextThread b,
   ) {

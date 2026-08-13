@@ -3339,5 +3339,8 @@
   "game_text_source_luna_connected": "Connected. Fushi will use the original text selected in LunaTranslator.",
   "game_text_source_luna_waiting": "Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.",
   "video_mining_image_quality": "Video / anime card image quality",
-  "video_mining_image_quality_hint": "Controls video and anime card images only. Higher settings keep more detail and may use more space."
+  "video_mining_image_quality_hint": "Controls video and anime card images only. Higher settings keep more detail and may use more space.",
+  "game_text_thread_recommended": "Recommended",
+  "game_text_threads_dormant_hide": "Hide threads without text",
+  "game_text_threads_dormant_show": "Show threads without text ($count)"
 }
