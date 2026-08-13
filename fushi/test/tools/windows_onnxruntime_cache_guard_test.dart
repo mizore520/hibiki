@@ -55,6 +55,10 @@ void main() {
       '${repoRoot.path}${Platform.pathSeparator}ci'
       '${Platform.pathSeparator}apply-patches.sh',
     ).readAsStringSync();
+    final String windowsCmake = File(
+      '${repoRoot.path}${Platform.pathSeparator}fushi'
+      '${Platform.pathSeparator}windows${Platform.pathSeparator}CMakeLists.txt',
+    ).readAsStringSync();
 
     expect(launcher, contains('prepare_windows_sqlite3.ps1'));
     expect(launcher, contains('.build-cache\\sqlite3'));
@@ -75,6 +79,13 @@ void main() {
     expect(patcher,
         contains(r'download-\${type.name}-\${architecture.name}-\${os.name}'));
     expect(script, contains('download-sqlite3-x64-windows-\$releaseTag'));
+    expect(script, contains("\$cmakeVersion = '3520000'"));
+    expect(script, contains('sqlite-autoconf-\$cmakeVersion'));
+    expect(script, contains('Test-VerifiedCmakeSource'));
+    expect(script, contains("'sqlite3.c' = 'a503acc9"));
+    expect(launcher, contains('FUSHI_SQLITE3_SOURCE_DIR'));
+    expect(windowsCmake, contains(r'ENV{FUSHI_SQLITE3_SOURCE_DIR}'));
+    expect(windowsCmake, contains('FETCHCONTENT_SOURCE_DIR_SQLITE3'));
   });
 
   test('ONNX CMake validates prepared cache and fallback operations', () {
