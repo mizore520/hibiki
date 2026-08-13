@@ -1,7 +1,21 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi/i18n/strings.g.dart';
 
 void main() {
+  test('generated translations stay split and omit the unused flat map', () {
+    final String config = File('slang.yaml').readAsStringSync();
+    final String generated = File('lib/i18n/strings.g.dart').readAsStringSync();
+
+    expect(config, contains('output_format: multiple_files'));
+    expect(config, contains('flat_map: false'));
+    expect(generated, contains("part 'strings_en.g.dart';"));
+    expect(generated, isNot(contains("part 'strings_map.g.dart';")));
+    expect(File('lib/i18n/strings_map.g.dart').existsSync(), isFalse,
+        reason: '5.7 万项动态映射会让 Windows gen_snapshot 栈溢出（BUG-1603）');
+  });
+
   group('Chinese reader settings labels', () {
     test('uses compact labels for furigana modes', () {
       final strings = AppLocale.zhCn.translations;
