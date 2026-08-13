@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -29,24 +30,40 @@ typedef FushiProbe = Future<bool> Function(String url, String token);
 
 /// TODO-961 M1: 按顺序探测 [candidates]（跳过 disabled），返回第一个可达的
 /// [FushiClientUrl]（而非裸 URL），让调用方能取到该地址的钉扎指纹（https 走 pinned
-/// client）。探测中的 [SyncAuthError] 立即向上传播——所有候选共用一个 token，一次拒绝
-/// 即全部失败；无可达候选时抛可重试的 [SyncBackendError]。指纹是地址身份的一部分，
-/// 故必须随选中地址一起流出。
+/// client）。指纹是地址身份的一部分，故必须随选中地址一起流出。
+///
+/// BUG-1550：每个候选用**自己那份**凭据（[FushiClientUrl.token]，为空回落
+/// [fallbackToken]）。因此一个候选的 [SyncAuthError] 不再株连其余候选——它只说明
+/// 「这台的 token 过期/被吊销了」，换下一台继续探。全部候选都试完仍无可达者时：
+/// 只要出现过鉴权拒绝就抛 [SyncAuthError]（让 UI 说「凭据被拒，请重新配对」），
+/// 否则抛可重试的 [SyncBackendError]。
+///
+/// 升级前的行为（单一全局 token、第一台 401 即整体失败）在**只有一台对端**时逐字
+/// 不变：唯一候选 401 → 循环结束 → 抛 SyncAuthError，与旧的立即 rethrow 等效。
 Future<FushiClientUrl> resolveReachableFushiCandidate(
   List<FushiClientUrl> candidates,
-  String token,
+  String fallbackToken,
   FushiProbe probe,
 ) async {
+  SyncAuthError? authError;
   for (final FushiClientUrl candidate in candidates) {
     if (!candidate.enabled) continue;
+    final String? token = interconnectTokenFor(candidate, fallbackToken);
+    if (token == null) continue;
     final String? fp = candidate.fingerprintSha256;
-    // https 端点（带指纹）的可达性必须用 pinned client 探测——裸 [probe] 会因自签
-    // TLS 握手失败把它误判不可达。明文 http（无指纹）仍走可注入的 [probe] 测试缝。
-    final bool reachable = (fp != null && fp.isNotEmpty)
-        ? await _pinnedReachabilityProbe(candidate.url, token, fp)
-        : await probe(candidate.url, token);
-    if (reachable) return candidate;
+    try {
+      // https 端点（带指纹）的可达性必须用 pinned client 探测——裸 [probe] 会因自签
+      // TLS 握手失败把它误判不可达。明文 http（无指纹）仍走可注入的 [probe] 测试缝。
+      final bool reachable = (fp != null && fp.isNotEmpty)
+          ? await _pinnedReachabilityProbe(candidate.url, token, fp)
+          : await probe(candidate.url, token);
+      if (reachable) return candidate;
+    } on SyncAuthError catch (e) {
+      // 这台拒了我的凭据 —— 记下原因，继续问下一台。
+      authError = e;
+    }
   }
+  if (authError != null) throw authError;
   throw SyncBackendError(
     'No reachable Fushi server address',
     isRetryable: true,
@@ -55,7 +72,8 @@ Future<FushiClientUrl> resolveReachableFushiCandidate(
 
 /// TODO-961 M1: https 候选地址的固定 pinned 可达性探测（不经可注入的测试缝，因为
 /// 它必须真正建立 pinned TLS 连接才有意义）。语义同 [_defaultFushiProbe]：可达 →
-/// true，鉴权失败 → 抛 [SyncAuthError]（停止尝试其余地址），其余失败 → false。
+/// true，鉴权失败 → 抛 [SyncAuthError]（BUG-1550 起由调用方记下并继续问下一台，
+/// 不再株连其余地址），其余失败 → false。
 Future<bool> _pinnedReachabilityProbe(
     String url, String token, String fingerprint) async {
   WebDavOps? ops;
@@ -81,7 +99,9 @@ Future<bool> _pinnedReachabilityProbe(
 
 /// Default probe: a short-timeout WebDAV connection test. Connectivity
 /// failures and timeouts map to `false` (unreachable); a rejected token
-/// surfaces as [SyncAuthError] so the resolver stops trying other addresses.
+/// surfaces as [SyncAuthError] so the resolver can tell "this peer revoked my
+/// credential" apart from "this address is down" (BUG-1550: it moves on to the
+/// next candidate either way, and only reports auth failure if none worked).
 Future<bool> _defaultFushiProbe(String url, String token) async {
   WebDavOps? ops;
   try {
@@ -131,12 +151,39 @@ class InterconnectSyncBackend extends SyncBackend
   /// to WAN is quick when you are away from home.
   static const Duration probeTimeout = Duration(seconds: 2);
 
-  /// Bound for a resolved-host library GET (headers + body). [_ensureResolved]
-  /// only bounds the *probe*; once an address is picked, a host that accepts the
-  /// TCP connection but then stalls the response would hang the future forever
-  /// (observed as the video page's endless spinner). Cap the read so a stalled
-  /// host degrades to "failed" instead of an infinite wait.
-  static const Duration listTimeout = Duration(seconds: 15);
+  /// BUG-1567：小型请求（清单 / 进度 / 断点 / streamurl / 封面 / 服务配置 / 删除等
+  /// 非流式端点）的整体超时，分别封顶「发出请求到收到响应头」（[_sendBounded]）与
+  /// 「读取响应体」（[_readBodyBounded]）两个阶段。此前只有 videos / activity 清单有
+  /// 封顶（旧 listTimeout），其余端点在 host 接受 TCP 连接后停摆时 future 永久悬挂
+  /// ——远端库页无限转圈，且挂死的请求还占住 [RemoteLibraryCache] 的 in-flight 槽。
+  ///
+  /// 15s 沿用旧 listTimeout 的量级（探测已由 2s 的 [probeTimeout] 把关，正常请求给宽
+  /// 松余量）。整体超时同时覆盖底层 socket connect（整体 ≤ 连接阶段），无需再单调
+  /// WebDavOps 的 connectionTimeout。**不适用**于大文件传输：下载走
+  /// [ResumableDownloader] 的 firstByte/stall 超时；流式上传（epub / 视频 / 词典包
+  /// PUT）body 发送时长与文件大小成正比、host 侧收尾（词典导入等）可能分钟级，
+  /// 固定值封顶会砍断合法慢传输，维持原语义。
+  ///
+  /// 实例可变仅供测试注入短超时（生产代码不得改写）。
+  @visibleForTesting
+  Duration requestTimeout = const Duration(seconds: 15);
+
+  /// BUG-1567：把 [req] 发出并在 [requestTimeout] 内等到响应头；超时则中止请求
+  /// （释放底层连接）并抛 [TimeoutException]，让挂死 host 降级为可重试失败。
+  Future<HttpClientResponse> _sendBounded(HttpClientRequest req) {
+    return req.close().timeout(requestTimeout, onTimeout: () {
+      req.abort();
+      throw TimeoutException(
+        'interconnect request timed out after $requestTimeout',
+        requestTimeout,
+      );
+    });
+  }
+
+  /// BUG-1567：在 [requestTimeout] 内读完 [res] 的 UTF-8 响应体（响应头到了但
+  /// body 断流的对称封顶），超时抛 [TimeoutException]。
+  Future<String> _readBodyBounded(HttpClientResponse res) =>
+      res.transform(utf8.decoder).join().timeout(requestTimeout);
 
   /// 下载健壮性（弱网，TODO-819 续）超时：
   /// - [downloadStallTimeout]：数据流两个 chunk 之间的最大空闲。超过即判定连接卡死并
@@ -181,6 +228,10 @@ class InterconnectSyncBackend extends SyncBackend
   WebDavOps? _ops;
   // TODO-961 M1: 当前选中地址的钉扎指纹（https 走 pinned client；http=null）。
   String? _activeFingerprint;
+
+  /// BUG-1550：当前 [_ops] 里烧进 Basic 头的那份凭据。[WebDavOps] 只留 auth header、
+  /// 不回吐口令，故在此镜像一份，用于判断「换了一台对端 = 要重建 ops」。
+  String? _activeToken;
 
   // 文件夹缓存收敛进 [SyncFolderCache] mixin；路径式定位符覆写归一化钩子保持
   // 「缓存的 folderId 必以 `/` 结尾」不变量（BUG-845）。
@@ -236,6 +287,10 @@ class InterconnectSyncBackend extends SyncBackend
 
   /// 会话身份指纹：只包含影响「该连哪个地址、用什么凭据」的字段。`deviceName`
   /// 是纯展示名，改它不该触发全候选重探测，故不进签名。
+  ///
+  /// BUG-1550：每候选自带的 token 也进签名——重新配对某一台只改那一行的凭据，
+  /// 全局键可能一字未动，不入签名就检测不到「对端身份变了」，已解析会话会带着
+  /// 旧凭据继续用。
   static String _sessionSignature(
     List<FushiClientUrl> candidates,
     String? token,
@@ -247,7 +302,9 @@ class InterconnectSyncBackend extends SyncBackend
         ..write('\n')
         ..write(candidate.url)
         ..write('\n')
-        ..write(candidate.fingerprintSha256 ?? '');
+        ..write(candidate.fingerprintSha256 ?? '')
+        ..write('\n')
+        ..write(candidate.token ?? '');
     }
     return buffer.toString();
   }
@@ -258,16 +315,22 @@ class InterconnectSyncBackend extends SyncBackend
   void _buildProvisionalOps() {
     _ops?.close();
     _ops = null;
-    if (_token == null) return;
+    _activeToken = null;
     for (final FushiClientUrl candidate in _candidates) {
+      // BUG-1550：凭据按候选取（自带优先、回落全局），两者都空就跳过这一条。
+      final String? token = interconnectTokenFor(candidate, _token);
+      if (token == null) continue;
       try {
         _ops = WebDavOps(
           baseUrl: WebDavOps.normalizeUrl(candidate.url),
           username: 'hibiki',
-          password: _token!,
+          password: token,
           pinnedFingerprint: candidate.fingerprintSha256,
         );
         _activeFingerprint = candidate.fingerprintSha256;
+        // 与 [_ensureResolved] 的判据保持同一真相：暂定句柄用的是哪份凭据必须记下，
+        // 否则解析阶段会把「凭据没变」误判成「换了一台」而白白 clearCache()。
+        _activeToken = token;
         return;
       } on SyncBackendError {
         continue; // malformed URL — keep looking for a usable handle
@@ -280,15 +343,18 @@ class InterconnectSyncBackend extends SyncBackend
   /// folder cache, whose paths embed the previous base URL.
   Future<void> _ensureResolved() async {
     if (_sessionResolved) return;
-    final String? token = _token;
-    if (token == null) {
+    if (!_hasAnyCredential) {
       throw SyncAuthError('Fushi server credentials not configured');
     }
     final FushiClientUrl chosen =
-        await resolveReachableFushiCandidate(_candidates, token, _probe);
+        await resolveReachableFushiCandidate(_candidates, _token ?? '', _probe);
+    // BUG-1550：连接用的是**选中那台**的凭据（自带优先），不再是唯一全局 token。
+    // resolveReachableFushiCandidate 已保证选中的候选必有可用凭据。
+    final String token = interconnectTokenFor(chosen, _token)!;
     final String normalized = WebDavOps.normalizeUrl(chosen.url);
     if (_ops == null ||
         _ops!.baseUrl != normalized ||
+        _activeToken != token ||
         _activeFingerprint != chosen.fingerprintSha256) {
       _ops?.close();
       _ops = WebDavOps(
@@ -298,15 +364,22 @@ class InterconnectSyncBackend extends SyncBackend
         pinnedFingerprint: chosen.fingerprintSha256,
       );
       _activeFingerprint = chosen.fingerprintSha256;
+      _activeToken = token;
       clearCache();
     }
     _sessionResolved = true;
   }
 
+  /// BUG-1550：是否至少有一个已启用候选拿得出凭据（自带 token 或全局回落）。
+  /// 取代旧的「全局 token 非空」判据——per-peer token 时代全局键可能为空，而各
+  /// 地址行上仍有各自有效的凭据。
+  bool get _hasAnyCredential => _candidates
+      .any((FushiClientUrl u) => interconnectTokenFor(u, _token) != null);
+
   @override
   Future<void> authenticate({required SyncRepository repo}) async {
     await _loadConfig(repo);
-    if (_candidates.isEmpty || _token == null) {
+    if (_candidates.isEmpty || !_hasAnyCredential) {
       throw SyncAuthError('Fushi server credentials not configured');
     }
     // Probes + selects a reachable address (or throws), confirming the token
@@ -334,11 +407,22 @@ class InterconnectSyncBackend extends SyncBackend
   @override
   Future<bool> restoreAuth(SyncRepository repo) async {
     await _loadConfig(repo);
-    if (_candidates.isEmpty || _token == null) {
+    if (_candidates.isEmpty || !_hasAnyCredential) {
       _ops?.close();
       _ops = null;
+      _sessionResolved = false;
       return false;
     }
+    // BUG-1559：已经探明可达的会话不得被重建成「候选[0]」。
+    //
+    // [_loadConfig] 已经拿配置签名判完「会话该不该重来」（BUG-1183）：配置真变了
+    // 就会把 [_sessionResolved] 置 false。可旧实现不管那个判决，无条件跑
+    // [_buildProvisionalOps]，把 [_ops] / [_activeFingerprint] / [_activeToken] 打回第一个
+    // 格式合法的候选——而 [_sessionResolved] 仍是 true，[_ensureResolved] 直接 return。
+    // 净效果：切一次页面，会话就从「探明可达的那台」静默地滑回候选[0]（常常
+    // 是一条当前不可达的旧地址），且因为已标「已解析」而**永不重探**，往后每一次
+    // 请求都打到错地址。故会话已解析且句柄还在时，原封不动地保留它。
+    if (_sessionResolved && _ops != null) return true;
     _buildProvisionalOps();
     return _ops != null;
   }
@@ -700,7 +784,7 @@ class InterconnectSyncBackend extends SyncBackend
       'GET',
       '$_apiBase/api/interconnect/service-config',
     );
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     if (res.statusCode == 404) {
       await res.drain<void>();
       return null;
@@ -716,7 +800,7 @@ class InterconnectSyncBackend extends SyncBackend
         serverReason: await readSyncErrorBody(res),
       );
     }
-    final String body = await res.transform(utf8.decoder).join();
+    final String body = await _readBodyBounded(res);
     final Object? decoded = jsonDecode(body);
     if (decoded is! Map) {
       throw const FormatException('Invalid service config response');
@@ -735,37 +819,36 @@ class InterconnectSyncBackend extends SyncBackend
   Future<Uint8List> fetchRemoteCover(String coverUrl) async {
     await _ensureResolved();
     final HttpClientRequest req = await _ops!.buildRequest('GET', coverUrl);
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     if (res.statusCode < 200 || res.statusCode >= 300) {
       await res.drain<void>();
       throw SyncBackendError('GET cover -> ${res.statusCode}');
     }
-    return consolidateHttpClientResponseBytes(res);
+    // BUG-1567：封面字节读取同样封顶——header 到了但 body 停摆时不再永久悬挂。
+    return consolidateHttpClientResponseBytes(res).timeout(requestTimeout);
   }
 
   /// 列出对端 host 当前实时词典清单（直打 `/api/library/dictionaries`）。
   /// 互联「列清单」端点的共同骨架：解析会话 → GET → 逐条 fromJson（TODO-2120）。
   ///
-  /// 五个域此前各抄一份 12 行的同构代码。**降级与超时必须逐域按现状显式传入**，
+  /// 五个域此前各抄一份 12 行的同构代码。**降级必须逐域按现状显式传入**，
   /// 不能图省事统一给所有域打开：
   /// - [degradeOn404]：只有 videos / activity 这类**后加的**端点才降级——老 host 没有
   ///   它们，降级成空表是为了「不因老 server 缺端点让整页占位卡消失或转圈」。词典 /
   ///   书 / 本地音频 / 有声书是最老的端点，假定必然存在；给它们也加降级，会把「host
   ///   把库服务关了（404 Library service off）」从可见错误变成静默空列表——那是真实的
   ///   行为回归，不是「更健壮」。
-  /// - [timeout]：只有 videos / activity 有封顶（host 侧这两个清单可能很慢）。
+  /// - 超时（BUG-1567）：所有域统一走 [requestTimeout] 封顶。此前只有 videos /
+  ///   activity 有（旧 listTimeout），其余域在 host 停摆时永久转圈。
   Future<List<T>> _listRemote<T>(
     String path,
     T Function(Map<String, Object?> json) parse, {
-    Duration? timeout,
     bool degradeOn404 = false,
   }) async {
     await _ensureResolved();
     final HttpClientRequest req =
         await _ops!.buildRequest('GET', '$_apiBase$path');
-    final Future<HttpClientResponse> closing = req.close();
-    final HttpClientResponse res =
-        timeout == null ? await closing : await closing.timeout(timeout);
+    final HttpClientResponse res = await _sendBounded(req);
     if (degradeOn404 && res.statusCode == 404) {
       await res.drain<void>();
       return <T>[];
@@ -778,9 +861,7 @@ class InterconnectSyncBackend extends SyncBackend
         serverReason: await readSyncErrorBody(res),
       );
     }
-    final Future<String> reading = res.transform(utf8.decoder).join();
-    final String body =
-        timeout == null ? await reading : await reading.timeout(timeout);
+    final String body = await _readBodyBounded(res);
     final List<dynamic> arr = jsonDecode(body) as List<dynamic>;
     return <T>[
       for (final dynamic e in arr) parse((e as Map).cast<String, Object?>()),
@@ -836,7 +917,7 @@ class InterconnectSyncBackend extends SyncBackend
       'DELETE',
       '$_apiBase/api/library/dictionaries/${Uri.encodeComponent(name)}',
     );
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     await res.drain<void>();
     _ops!.checkStatus(res.statusCode, 'DELETE /api/library/dictionaries/$name');
   }
@@ -923,7 +1004,7 @@ class InterconnectSyncBackend extends SyncBackend
       'DELETE',
       '$_apiBase/api/library/books/${Uri.encodeComponent(title)}',
     );
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     await res.drain<void>();
     _ops!.checkStatus(res.statusCode, 'DELETE /api/library/books/$title');
   }
@@ -938,14 +1019,14 @@ class InterconnectSyncBackend extends SyncBackend
       'GET',
       '$_apiBase/api/library/books/${Uri.encodeComponent(bookKey)}/progress',
     );
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     if (res.statusCode == 404) {
       await res.drain<void>();
       return RemoteBookProgress.empty;
     }
     _ops!.checkStatus(
         res.statusCode, 'GET /api/library/books/$bookKey/progress');
-    final String body = await res.transform(utf8.decoder).join();
+    final String body = await _readBodyBounded(res);
     final Map<String, dynamic> json = jsonDecode(body) as Map<String, dynamic>;
     return RemoteBookProgress.fromJson(json.cast<String, Object?>());
   }
@@ -964,7 +1045,7 @@ class InterconnectSyncBackend extends SyncBackend
     );
     req.headers.set('Content-Type', 'application/json; charset=utf-8');
     req.add(utf8.encode(jsonEncode(progress.toJson())));
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     await res.drain<void>();
     _ops!.checkStatus(
         res.statusCode, 'PUT /api/library/books/$bookKey/progress');
@@ -982,13 +1063,13 @@ class InterconnectSyncBackend extends SyncBackend
       'GET',
       '$_apiBase/api/library/aggregate',
     );
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     if (res.statusCode == 404) {
       await res.drain<void>();
       return null; // 老 host 无聚合端点：降级跳过，不崩。
     }
     _ops!.checkStatus(res.statusCode, 'GET /api/library/aggregate');
-    final String body = await res.transform(utf8.decoder).join();
+    final String body = await _readBodyBounded(res);
     final dynamic decoded = jsonDecode(body);
     if (decoded is Map<String, dynamic>) return decoded;
     if (decoded is Map) return Map<String, dynamic>.from(decoded);
@@ -1006,7 +1087,7 @@ class InterconnectSyncBackend extends SyncBackend
     );
     req.headers.set('Content-Type', 'application/json; charset=utf-8');
     req.add(utf8.encode(jsonEncode(json)));
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     await res.drain<void>();
     _ops!.checkStatus(res.statusCode, 'PUT /api/library/aggregate');
   }
@@ -1025,13 +1106,13 @@ class InterconnectSyncBackend extends SyncBackend
       'GET',
       '$_apiBase/api/library/collections',
     );
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     if (res.statusCode == 404) {
       await res.drain<void>();
       return null; // 老 host 无合集端点：降级跳过，不崩。
     }
     _ops!.checkStatus(res.statusCode, 'GET /api/library/collections');
-    final String body = await res.transform(utf8.decoder).join();
+    final String body = await _readBodyBounded(res);
     return CollectionManifest.fromJson(jsonDecode(body));
   }
 
@@ -1048,9 +1129,9 @@ class InterconnectSyncBackend extends SyncBackend
     );
     req.headers.set('Content-Type', 'application/json; charset=utf-8');
     req.add(utf8.encode(manifest.canonicalJson()));
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     _ops!.checkStatus(res.statusCode, 'POST /api/library/collections');
-    final String body = await res.transform(utf8.decoder).join();
+    final String body = await _readBodyBounded(res);
     return CollectionManifest.fromJson(jsonDecode(body));
   }
 
@@ -1065,13 +1146,13 @@ class InterconnectSyncBackend extends SyncBackend
       'GET',
       '$_apiBase/api/tombstones',
     );
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     if (res.statusCode == 404) {
       await res.drain<void>();
       return null; // 老 host 无删除墓碑端点：降级跳过，不崩。
     }
     _ops!.checkStatus(res.statusCode, 'GET /api/tombstones');
-    final String body = await res.transform(utf8.decoder).join();
+    final String body = await _readBodyBounded(res);
     final Object? decoded = jsonDecode(body);
     final List<({String mediaType, String itemKey, int deletedAt})> out =
         <({String mediaType, String itemKey, int deletedAt})>[];
@@ -1139,7 +1220,7 @@ class InterconnectSyncBackend extends SyncBackend
       'DELETE',
       '$_apiBase/api/library/localaudio/${Uri.encodeComponent(displayName)}',
     );
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     await res.drain<void>();
     _ops!.checkStatus(
         res.statusCode, 'DELETE /api/library/localaudio/$displayName');
@@ -1199,7 +1280,7 @@ class InterconnectSyncBackend extends SyncBackend
       'DELETE',
       '$_apiBase/api/library/audiobooks/${Uri.encodeComponent(bookKey)}',
     );
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     await res.drain<void>();
     _ops!
         .checkStatus(res.statusCode, 'DELETE /api/library/audiobooks/$bookKey');
@@ -1215,14 +1296,14 @@ class InterconnectSyncBackend extends SyncBackend
       'GET',
       '$_apiBase/api/library/audiobooks/${Uri.encodeComponent(bookKey)}/position',
     );
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     if (res.statusCode == 404) {
       await res.drain<void>();
       return (positionMs: 0, updatedAtMs: 0);
     }
     _ops!.checkStatus(
         res.statusCode, 'GET /api/library/audiobooks/$bookKey/position');
-    final String body = await res.transform(utf8.decoder).join();
+    final String body = await _readBodyBounded(res);
     final Map<String, dynamic> json = jsonDecode(body) as Map<String, dynamic>;
     return (
       positionMs: (json['positionMs'] as num?)?.toInt() ?? 0,
@@ -1247,7 +1328,7 @@ class InterconnectSyncBackend extends SyncBackend
       'positionMs': positionMs,
       'positionUpdatedAtMs': updatedAtMs,
     })));
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     await res.drain<void>();
     _ops!.checkStatus(
         res.statusCode, 'PUT /api/library/audiobooks/$bookKey/position');
@@ -1260,7 +1341,7 @@ class InterconnectSyncBackend extends SyncBackend
   /// 列出对端 host 当前视频清单（直打 `/api/library/videos`）。老 host 无该端点返回
   /// 404 时优雅降级返回空表（与 [getRemoteAggregate] / [getRemoteCollectionManifest]
   /// 的 404 降级同纪律——绝不因老 server 缺端点抛异常让整页占位卡消失/转圈）。请求
-  /// 用 [listTimeout] 封顶，防止 host 接受连接后卡住响应导致视频页无限等待。
+  /// 用 [requestTimeout] 封顶，防止 host 接受连接后卡住响应导致视频页无限等待。
   /// 拉取 host 最近活动事件（新首页 Activity 面板互联数据源；display-only）。
   /// 老 host 无此端点（404）降级空列表；坏条目逐条跳过不拖垮整表。
   Future<List<RemoteActivityEvent>> listRemoteActivity(
@@ -1268,14 +1349,13 @@ class InterconnectSyncBackend extends SyncBackend
     await _ensureResolved();
     final HttpClientRequest req = await _ops!
         .buildRequest('GET', '$_apiBase/api/library/activity?limit=$limit');
-    final HttpClientResponse res = await req.close().timeout(listTimeout);
+    final HttpClientResponse res = await _sendBounded(req);
     if (res.statusCode == 404) {
       await res.drain<void>();
       return const <RemoteActivityEvent>[]; // 老 host 无活动端点：降级空表。
     }
     _ops!.checkStatus(res.statusCode, 'GET /api/library/activity');
-    final String body =
-        await res.transform(utf8.decoder).join().timeout(listTimeout);
+    final String body = await _readBodyBounded(res);
     final List<dynamic> arr = jsonDecode(body) as List<dynamic>;
     final List<RemoteActivityEvent> events = <RemoteActivityEvent>[];
     for (final dynamic e in arr) {
@@ -1299,7 +1379,6 @@ class InterconnectSyncBackend extends SyncBackend
   Future<List<RemoteVideoInfo>> listRemoteVideos() => _listRemote(
         '/api/library/videos',
         RemoteVideoInfo.fromJson,
-        timeout: listTimeout,
         degradeOn404: true,
       );
 
@@ -1349,7 +1428,7 @@ class InterconnectSyncBackend extends SyncBackend
       'DELETE',
       '$_apiBase/api/library/videos/${_encodeVideoId(id)}',
     );
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     await res.drain<void>();
     if (res.statusCode == 404 || res.statusCode == 405) return false;
     _ops!.checkStatus(res.statusCode, 'DELETE /api/library/videos/$id');
@@ -1402,9 +1481,9 @@ class InterconnectSyncBackend extends SyncBackend
       'GET',
       '$_apiBase/api/library/videos/$encodedId/streamurl$query',
     );
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     _ops!.checkStatus(res.statusCode, 'GET /api/library/videos/$id/streamurl');
-    final String body = await res.transform(utf8.decoder).join();
+    final String body = await _readBodyBounded(res);
     final Map<String, dynamic> json = jsonDecode(body) as Map<String, dynamic>;
     return RemoteVideoStreamUrls.fromJson(json);
   }
@@ -1559,13 +1638,13 @@ class InterconnectSyncBackend extends SyncBackend
       'GET',
       '$_apiBase/api/library/videos/${_encodeVideoId(id)}/position$query',
     );
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     if (res.statusCode == 404) {
       await res.drain<void>();
       return (positionMs: 0, updatedAtMs: 0);
     }
     _ops!.checkStatus(res.statusCode, 'GET /api/library/videos/$id/position');
-    final String body = await res.transform(utf8.decoder).join();
+    final String body = await _readBodyBounded(res);
     final Map<String, dynamic> json = jsonDecode(body) as Map<String, dynamic>;
     return (
       positionMs: (json['positionMs'] as num?)?.toInt() ?? 0,
@@ -1592,7 +1671,7 @@ class InterconnectSyncBackend extends SyncBackend
       'positionMs': positionMs,
       'positionUpdatedAtMs': updatedAtMs,
     })));
-    final HttpClientResponse res = await req.close();
+    final HttpClientResponse res = await _sendBounded(req);
     await res.drain<void>();
     _ops!.checkStatus(res.statusCode, 'PUT /api/library/videos/$id/position');
   }

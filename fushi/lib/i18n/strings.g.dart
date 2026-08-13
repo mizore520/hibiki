@@ -1,9 +1,9 @@
 /// Generated file. Do not edit.
 ///
 /// Locales: 17
-/// Strings: 56389 (3317 per locale)
+/// Strings: 57222 (3366 per locale)
 ///
-/// Built on 2026-08-11 at 07:47 UTC
+/// Built on 2026-08-12 at 11:23 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -1015,6 +1015,8 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get download_backend_not_configured =>
       'Download backend is not configured yet.';
   String get download_clear_finished => 'Clear finished';
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
   String get download_network_proxy_auto => 'Auto';
   String get download_network_proxy_auto_hint =>
       'Applies to AniList, Nyaa, and Jimaku only. Auto uses environment variables, then the enabled system proxy; torrent traffic is unchanged.';
@@ -1065,6 +1067,13 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get download_subscription_unavailable_hint =>
       'Choose a single-episode release with a recognizable release group to subscribe.';
   String get download_subscriptions_tab => 'Subscriptions';
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  String get download_task_delete => 'Delete task';
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  String get download_task_delete_files => 'Also delete downloaded files';
+  String get download_task_details => 'View details';
   String get download_tasks_tab => 'Tasks';
   String get download_test_connection => 'Test connection';
   String get download_test_connection_failed =>
@@ -1666,8 +1675,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get interconnect_upload_dictionary_hint =>
       'Sync this device\'s dictionaries up to the interconnect peer.';
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   String get interconnect_upload_video_files => 'Upload video files';
   String get interconnect_upload_video_files_hint =>
       'Sync this device\'s local video files up to the interconnect peer (large).';
@@ -3973,19 +3980,28 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get download_detail_backend_unsupported =>
       'Not supported by current download backend';
   String get download_detail_task_gone => 'Task not found in backend';
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
   String get download_detail_section_transfer => 'Transfer';
   String get download_detail_section_network => 'Network';
+  String get download_detail_section_task => 'Task';
   String get download_detail_seeds_label => 'Seeds';
   String get download_detail_leechers_label => 'Leechers';
   String get download_detail_connections_label => 'Connections';
+  String get download_detail_content_path_label => 'Content path';
   String get download_detail_time_active => 'Active time';
   String get download_detail_time_seeding => 'Seeding time';
+  String get download_detail_total_size_label => 'Total size';
   String get download_detail_listen_port => 'Listen port';
   String get download_detail_dht_nodes => 'DHT nodes';
+  String get download_detail_hash_label => 'Info hash';
   String get download_detail_port_mapping => 'Port mapping';
   String get download_detail_session_rates => 'Session rates';
   String get download_detail_pieces_label => 'Pieces';
   String get download_detail_priority_skip => 'Don\'t download';
+  String get download_detail_raw_state_label => 'Backend state';
+  String get download_detail_remaining_label => 'Remaining';
+  String get download_detail_save_path_label => 'Save path';
   String get download_detail_priority_normal => 'Normal';
   String get download_detail_priority_high => 'High';
   String get download_detail_tracker_working => 'Working';
@@ -4065,8 +4081,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get collection_relation_other => 'Related';
   String get collection_relation_download => 'Download';
   String get collection_relation_bind => 'Bind to existing collection';
-  String get collection_episode_scrape => 'Fetch episode details';
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
   String get collection_episode_rename => 'Rename episodes from scrape';
   String get collection_episode_rename_title => 'Rename episodes';
   String get collection_episode_rename_empty => 'Nothing to rename';
@@ -4079,11 +4093,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get collection_episode_open_bangumi => 'Open this episode on Bangumi';
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
   String collection_split_done({required Object n}) =>
@@ -4238,7 +4247,7 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get video_source_scrape_image_policy => 'Image write policy';
   String get video_source_scrape_policy_skip => 'Do not write';
   String get video_source_scrape_policy_missing_only => 'Only when missing';
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
   String get video_source_scrape_external_overwrite_hint =>
@@ -4246,7 +4255,7 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get video_source_scrape_external_overwrite_confirm_title =>
       'Overwrite protected sidecars?';
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   String get video_source_scrape_tasks_open => 'Background tasks';
   String get video_source_scrape_background_started =>
       'Scraping is running in the background';
@@ -4490,6 +4499,62 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get tag_add_failed => 'Couldn\'t add the tag. Please try again.';
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  String get download_task_error_summary_generic => 'The task hit an error';
+  String get download_task_error_view_detail => 'View details';
+  String get download_task_error_detail_title => 'Error details';
+  String get download_task_error_copied => 'Error details copied';
+  String get download_task_lifecycle_active => 'In progress';
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  String get download_task_open_location => 'Show in folder';
+  String get download_task_lifecycle_completed => 'Completed';
+  String get download_task_lifecycle_failed => 'Failed';
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  String get download_task_stage_enqueue => 'Enqueue';
+  String get download_task_stage_download => 'Download';
+  String get download_task_stage_organize => 'Organize';
+  String get download_task_stage_subtitle => 'Subtitles';
+  String get download_task_stage_import => 'Import';
+  String get download_task_stage_scrape => 'Scrape';
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  String get collection_split_move_to => 'Move to';
+  String get collection_split_new_group => 'New group';
+  String collection_split_selected({required Object n}) => '${n} selected';
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 // Path: <root>
@@ -5992,6 +6057,9 @@ class _StringsAr extends _StringsEn {
   @override
   String get download_clear_finished => 'Clear finished';
   @override
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  @override
   String get download_network_proxy_auto => 'Auto';
   @override
   String get download_network_proxy_auto_hint =>
@@ -6075,6 +6143,18 @@ class _StringsAr extends _StringsEn {
       'Choose a single-episode release with a recognizable release group to subscribe.';
   @override
   String get download_subscriptions_tab => 'Subscriptions';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  @override
+  String get download_task_delete => 'Delete task';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  @override
+  String get download_task_delete_files => 'Also delete downloaded files';
+  @override
+  String get download_task_details => 'View details';
   @override
   String get download_tasks_tab => 'Tasks';
   @override
@@ -7145,9 +7225,6 @@ class _StringsAr extends _StringsEn {
       'Sync this device\'s dictionaries up to the interconnect peer.';
   @override
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   @override
   String get interconnect_upload_video_files => 'Upload video files';
   @override
@@ -11251,9 +11328,14 @@ class _StringsAr extends _StringsEn {
   @override
   String get download_detail_task_gone => 'Task not found in backend';
   @override
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  @override
   String get download_detail_section_transfer => 'Transfer';
   @override
   String get download_detail_section_network => 'Network';
+  @override
+  String get download_detail_section_task => 'Task';
   @override
   String get download_detail_seeds_label => 'Seeds';
   @override
@@ -11261,13 +11343,19 @@ class _StringsAr extends _StringsEn {
   @override
   String get download_detail_connections_label => 'Connections';
   @override
+  String get download_detail_content_path_label => 'Content path';
+  @override
   String get download_detail_time_active => 'Active time';
   @override
   String get download_detail_time_seeding => 'Seeding time';
   @override
+  String get download_detail_total_size_label => 'Total size';
+  @override
   String get download_detail_listen_port => 'Listen port';
   @override
   String get download_detail_dht_nodes => 'DHT nodes';
+  @override
+  String get download_detail_hash_label => 'Info hash';
   @override
   String get download_detail_port_mapping => 'Port mapping';
   @override
@@ -11276,6 +11364,12 @@ class _StringsAr extends _StringsEn {
   String get download_detail_pieces_label => 'Pieces';
   @override
   String get download_detail_priority_skip => 'Don\'t download';
+  @override
+  String get download_detail_raw_state_label => 'Backend state';
+  @override
+  String get download_detail_remaining_label => 'Remaining';
+  @override
+  String get download_detail_save_path_label => 'Save path';
   @override
   String get download_detail_priority_normal => 'Normal';
   @override
@@ -11427,10 +11521,6 @@ class _StringsAr extends _StringsEn {
   @override
   String get collection_relation_bind => 'Bind to existing collection';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
   String get collection_episode_rename => 'Rename episodes from scrape';
   @override
   String get collection_episode_rename_title => 'Rename episodes';
@@ -11453,13 +11543,6 @@ class _StringsAr extends _StringsEn {
   @override
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   @override
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
@@ -11718,7 +11801,7 @@ class _StringsAr extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => 'Only when missing';
   @override
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   @override
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
@@ -11730,7 +11813,7 @@ class _StringsAr extends _StringsEn {
       'Overwrite protected sidecars?';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   @override
   String get video_source_scrape_tasks_open => 'Background tasks';
   @override
@@ -12147,6 +12230,102 @@ class _StringsAr extends _StringsEn {
   @override
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  @override
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  @override
+  String get download_task_error_summary_generic => 'The task hit an error';
+  @override
+  String get download_task_error_view_detail => 'View details';
+  @override
+  String get download_task_error_detail_title => 'Error details';
+  @override
+  String get download_task_error_copied => 'Error details copied';
+  @override
+  String get download_task_lifecycle_active => 'In progress';
+  @override
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  @override
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  @override
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  @override
+  String get download_task_open_location => 'Show in folder';
+  @override
+  String get download_task_lifecycle_completed => 'Completed';
+  @override
+  String get download_task_lifecycle_failed => 'Failed';
+  @override
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  @override
+  String get download_task_stage_enqueue => 'Enqueue';
+  @override
+  String get download_task_stage_download => 'Download';
+  @override
+  String get download_task_stage_organize => 'Organize';
+  @override
+  String get download_task_stage_subtitle => 'Subtitles';
+  @override
+  String get download_task_stage_import => 'Import';
+  @override
+  String get download_task_stage_scrape => 'Scrape';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  @override
+  String get collection_split_move_to => 'Move to';
+  @override
+  String get collection_split_new_group => 'New group';
+  @override
+  String collection_split_selected({required Object n}) => '${n} selected';
+  @override
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  @override
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  @override
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  @override
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  @override
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  @override
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 // Path: <root>
@@ -13667,6 +13846,9 @@ class _StringsDe extends _StringsEn {
   @override
   String get download_clear_finished => 'Clear finished';
   @override
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  @override
   String get download_network_proxy_auto => 'Auto';
   @override
   String get download_network_proxy_auto_hint =>
@@ -13750,6 +13932,18 @@ class _StringsDe extends _StringsEn {
       'Choose a single-episode release with a recognizable release group to subscribe.';
   @override
   String get download_subscriptions_tab => 'Subscriptions';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  @override
+  String get download_task_delete => 'Delete task';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  @override
+  String get download_task_delete_files => 'Also delete downloaded files';
+  @override
+  String get download_task_details => 'View details';
   @override
   String get download_tasks_tab => 'Tasks';
   @override
@@ -14830,9 +15024,6 @@ class _StringsDe extends _StringsEn {
       'Sync this device\'s dictionaries up to the interconnect peer.';
   @override
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   @override
   String get interconnect_upload_video_files => 'Upload video files';
   @override
@@ -18975,9 +19166,14 @@ class _StringsDe extends _StringsEn {
   @override
   String get download_detail_task_gone => 'Task not found in backend';
   @override
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  @override
   String get download_detail_section_transfer => 'Transfer';
   @override
   String get download_detail_section_network => 'Network';
+  @override
+  String get download_detail_section_task => 'Task';
   @override
   String get download_detail_seeds_label => 'Seeds';
   @override
@@ -18985,13 +19181,19 @@ class _StringsDe extends _StringsEn {
   @override
   String get download_detail_connections_label => 'Connections';
   @override
+  String get download_detail_content_path_label => 'Content path';
+  @override
   String get download_detail_time_active => 'Active time';
   @override
   String get download_detail_time_seeding => 'Seeding time';
   @override
+  String get download_detail_total_size_label => 'Total size';
+  @override
   String get download_detail_listen_port => 'Listen port';
   @override
   String get download_detail_dht_nodes => 'DHT nodes';
+  @override
+  String get download_detail_hash_label => 'Info hash';
   @override
   String get download_detail_port_mapping => 'Port mapping';
   @override
@@ -19000,6 +19202,12 @@ class _StringsDe extends _StringsEn {
   String get download_detail_pieces_label => 'Pieces';
   @override
   String get download_detail_priority_skip => 'Don\'t download';
+  @override
+  String get download_detail_raw_state_label => 'Backend state';
+  @override
+  String get download_detail_remaining_label => 'Remaining';
+  @override
+  String get download_detail_save_path_label => 'Save path';
   @override
   String get download_detail_priority_normal => 'Normal';
   @override
@@ -19151,10 +19359,6 @@ class _StringsDe extends _StringsEn {
   @override
   String get collection_relation_bind => 'Bind to existing collection';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
   String get collection_episode_rename => 'Rename episodes from scrape';
   @override
   String get collection_episode_rename_title => 'Rename episodes';
@@ -19177,13 +19381,6 @@ class _StringsDe extends _StringsEn {
   @override
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   @override
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
@@ -19442,7 +19639,7 @@ class _StringsDe extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => 'Only when missing';
   @override
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   @override
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
@@ -19454,7 +19651,7 @@ class _StringsDe extends _StringsEn {
       'Overwrite protected sidecars?';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   @override
   String get video_source_scrape_tasks_open => 'Background tasks';
   @override
@@ -19871,6 +20068,102 @@ class _StringsDe extends _StringsEn {
   @override
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  @override
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  @override
+  String get download_task_error_summary_generic => 'The task hit an error';
+  @override
+  String get download_task_error_view_detail => 'View details';
+  @override
+  String get download_task_error_detail_title => 'Error details';
+  @override
+  String get download_task_error_copied => 'Error details copied';
+  @override
+  String get download_task_lifecycle_active => 'In progress';
+  @override
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  @override
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  @override
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  @override
+  String get download_task_open_location => 'Show in folder';
+  @override
+  String get download_task_lifecycle_completed => 'Completed';
+  @override
+  String get download_task_lifecycle_failed => 'Failed';
+  @override
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  @override
+  String get download_task_stage_enqueue => 'Enqueue';
+  @override
+  String get download_task_stage_download => 'Download';
+  @override
+  String get download_task_stage_organize => 'Organize';
+  @override
+  String get download_task_stage_subtitle => 'Subtitles';
+  @override
+  String get download_task_stage_import => 'Import';
+  @override
+  String get download_task_stage_scrape => 'Scrape';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  @override
+  String get collection_split_move_to => 'Move to';
+  @override
+  String get collection_split_new_group => 'New group';
+  @override
+  String collection_split_selected({required Object n}) => '${n} selected';
+  @override
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  @override
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  @override
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  @override
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  @override
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  @override
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 // Path: <root>
@@ -21391,6 +21684,9 @@ class _StringsEs extends _StringsEn {
   @override
   String get download_clear_finished => 'Clear finished';
   @override
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  @override
   String get download_network_proxy_auto => 'Auto';
   @override
   String get download_network_proxy_auto_hint =>
@@ -21474,6 +21770,18 @@ class _StringsEs extends _StringsEn {
       'Choose a single-episode release with a recognizable release group to subscribe.';
   @override
   String get download_subscriptions_tab => 'Subscriptions';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  @override
+  String get download_task_delete => 'Delete task';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  @override
+  String get download_task_delete_files => 'Also delete downloaded files';
+  @override
+  String get download_task_details => 'View details';
   @override
   String get download_tasks_tab => 'Tasks';
   @override
@@ -22554,9 +22862,6 @@ class _StringsEs extends _StringsEn {
       'Sync this device\'s dictionaries up to the interconnect peer.';
   @override
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   @override
   String get interconnect_upload_video_files => 'Upload video files';
   @override
@@ -26715,9 +27020,14 @@ class _StringsEs extends _StringsEn {
   @override
   String get download_detail_task_gone => 'Task not found in backend';
   @override
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  @override
   String get download_detail_section_transfer => 'Transfer';
   @override
   String get download_detail_section_network => 'Network';
+  @override
+  String get download_detail_section_task => 'Task';
   @override
   String get download_detail_seeds_label => 'Seeds';
   @override
@@ -26725,13 +27035,19 @@ class _StringsEs extends _StringsEn {
   @override
   String get download_detail_connections_label => 'Connections';
   @override
+  String get download_detail_content_path_label => 'Content path';
+  @override
   String get download_detail_time_active => 'Active time';
   @override
   String get download_detail_time_seeding => 'Seeding time';
   @override
+  String get download_detail_total_size_label => 'Total size';
+  @override
   String get download_detail_listen_port => 'Listen port';
   @override
   String get download_detail_dht_nodes => 'DHT nodes';
+  @override
+  String get download_detail_hash_label => 'Info hash';
   @override
   String get download_detail_port_mapping => 'Port mapping';
   @override
@@ -26740,6 +27056,12 @@ class _StringsEs extends _StringsEn {
   String get download_detail_pieces_label => 'Pieces';
   @override
   String get download_detail_priority_skip => 'Don\'t download';
+  @override
+  String get download_detail_raw_state_label => 'Backend state';
+  @override
+  String get download_detail_remaining_label => 'Remaining';
+  @override
+  String get download_detail_save_path_label => 'Save path';
   @override
   String get download_detail_priority_normal => 'Normal';
   @override
@@ -26891,10 +27213,6 @@ class _StringsEs extends _StringsEn {
   @override
   String get collection_relation_bind => 'Bind to existing collection';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
   String get collection_episode_rename => 'Rename episodes from scrape';
   @override
   String get collection_episode_rename_title => 'Rename episodes';
@@ -26917,13 +27235,6 @@ class _StringsEs extends _StringsEn {
   @override
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   @override
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
@@ -27182,7 +27493,7 @@ class _StringsEs extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => 'Only when missing';
   @override
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   @override
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
@@ -27194,7 +27505,7 @@ class _StringsEs extends _StringsEn {
       'Overwrite protected sidecars?';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   @override
   String get video_source_scrape_tasks_open => 'Background tasks';
   @override
@@ -27611,6 +27922,102 @@ class _StringsEs extends _StringsEn {
   @override
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  @override
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  @override
+  String get download_task_error_summary_generic => 'The task hit an error';
+  @override
+  String get download_task_error_view_detail => 'View details';
+  @override
+  String get download_task_error_detail_title => 'Error details';
+  @override
+  String get download_task_error_copied => 'Error details copied';
+  @override
+  String get download_task_lifecycle_active => 'In progress';
+  @override
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  @override
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  @override
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  @override
+  String get download_task_open_location => 'Show in folder';
+  @override
+  String get download_task_lifecycle_completed => 'Completed';
+  @override
+  String get download_task_lifecycle_failed => 'Failed';
+  @override
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  @override
+  String get download_task_stage_enqueue => 'Enqueue';
+  @override
+  String get download_task_stage_download => 'Download';
+  @override
+  String get download_task_stage_organize => 'Organize';
+  @override
+  String get download_task_stage_subtitle => 'Subtitles';
+  @override
+  String get download_task_stage_import => 'Import';
+  @override
+  String get download_task_stage_scrape => 'Scrape';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  @override
+  String get collection_split_move_to => 'Move to';
+  @override
+  String get collection_split_new_group => 'New group';
+  @override
+  String collection_split_selected({required Object n}) => '${n} selected';
+  @override
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  @override
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  @override
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  @override
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  @override
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  @override
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 // Path: <root>
@@ -29141,6 +29548,9 @@ class _StringsFr extends _StringsEn {
   @override
   String get download_clear_finished => 'Clear finished';
   @override
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  @override
   String get download_network_proxy_auto => 'Auto';
   @override
   String get download_network_proxy_auto_hint =>
@@ -29224,6 +29634,18 @@ class _StringsFr extends _StringsEn {
       'Choose a single-episode release with a recognizable release group to subscribe.';
   @override
   String get download_subscriptions_tab => 'Subscriptions';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  @override
+  String get download_task_delete => 'Delete task';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  @override
+  String get download_task_delete_files => 'Also delete downloaded files';
+  @override
+  String get download_task_details => 'View details';
   @override
   String get download_tasks_tab => 'Tasks';
   @override
@@ -30303,9 +30725,6 @@ class _StringsFr extends _StringsEn {
       'Sync this device\'s dictionaries up to the interconnect peer.';
   @override
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   @override
   String get interconnect_upload_video_files => 'Upload video files';
   @override
@@ -34467,9 +34886,14 @@ class _StringsFr extends _StringsEn {
   @override
   String get download_detail_task_gone => 'Task not found in backend';
   @override
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  @override
   String get download_detail_section_transfer => 'Transfer';
   @override
   String get download_detail_section_network => 'Network';
+  @override
+  String get download_detail_section_task => 'Task';
   @override
   String get download_detail_seeds_label => 'Seeds';
   @override
@@ -34477,13 +34901,19 @@ class _StringsFr extends _StringsEn {
   @override
   String get download_detail_connections_label => 'Connections';
   @override
+  String get download_detail_content_path_label => 'Content path';
+  @override
   String get download_detail_time_active => 'Active time';
   @override
   String get download_detail_time_seeding => 'Seeding time';
   @override
+  String get download_detail_total_size_label => 'Total size';
+  @override
   String get download_detail_listen_port => 'Listen port';
   @override
   String get download_detail_dht_nodes => 'DHT nodes';
+  @override
+  String get download_detail_hash_label => 'Info hash';
   @override
   String get download_detail_port_mapping => 'Port mapping';
   @override
@@ -34492,6 +34922,12 @@ class _StringsFr extends _StringsEn {
   String get download_detail_pieces_label => 'Pieces';
   @override
   String get download_detail_priority_skip => 'Don\'t download';
+  @override
+  String get download_detail_raw_state_label => 'Backend state';
+  @override
+  String get download_detail_remaining_label => 'Remaining';
+  @override
+  String get download_detail_save_path_label => 'Save path';
   @override
   String get download_detail_priority_normal => 'Normal';
   @override
@@ -34643,10 +35079,6 @@ class _StringsFr extends _StringsEn {
   @override
   String get collection_relation_bind => 'Bind to existing collection';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
   String get collection_episode_rename => 'Rename episodes from scrape';
   @override
   String get collection_episode_rename_title => 'Rename episodes';
@@ -34669,13 +35101,6 @@ class _StringsFr extends _StringsEn {
   @override
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   @override
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
@@ -34934,7 +35359,7 @@ class _StringsFr extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => 'Only when missing';
   @override
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   @override
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
@@ -34946,7 +35371,7 @@ class _StringsFr extends _StringsEn {
       'Overwrite protected sidecars?';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   @override
   String get video_source_scrape_tasks_open => 'Background tasks';
   @override
@@ -35363,6 +35788,102 @@ class _StringsFr extends _StringsEn {
   @override
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  @override
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  @override
+  String get download_task_error_summary_generic => 'The task hit an error';
+  @override
+  String get download_task_error_view_detail => 'View details';
+  @override
+  String get download_task_error_detail_title => 'Error details';
+  @override
+  String get download_task_error_copied => 'Error details copied';
+  @override
+  String get download_task_lifecycle_active => 'In progress';
+  @override
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  @override
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  @override
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  @override
+  String get download_task_open_location => 'Show in folder';
+  @override
+  String get download_task_lifecycle_completed => 'Completed';
+  @override
+  String get download_task_lifecycle_failed => 'Failed';
+  @override
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  @override
+  String get download_task_stage_enqueue => 'Enqueue';
+  @override
+  String get download_task_stage_download => 'Download';
+  @override
+  String get download_task_stage_organize => 'Organize';
+  @override
+  String get download_task_stage_subtitle => 'Subtitles';
+  @override
+  String get download_task_stage_import => 'Import';
+  @override
+  String get download_task_stage_scrape => 'Scrape';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  @override
+  String get collection_split_move_to => 'Move to';
+  @override
+  String get collection_split_new_group => 'New group';
+  @override
+  String collection_split_selected({required Object n}) => '${n} selected';
+  @override
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  @override
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  @override
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  @override
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  @override
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  @override
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 // Path: <root>
@@ -36865,6 +37386,9 @@ class _StringsId extends _StringsEn {
   @override
   String get download_clear_finished => 'Clear finished';
   @override
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  @override
   String get download_network_proxy_auto => 'Auto';
   @override
   String get download_network_proxy_auto_hint =>
@@ -36948,6 +37472,18 @@ class _StringsId extends _StringsEn {
       'Choose a single-episode release with a recognizable release group to subscribe.';
   @override
   String get download_subscriptions_tab => 'Subscriptions';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  @override
+  String get download_task_delete => 'Delete task';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  @override
+  String get download_task_delete_files => 'Also delete downloaded files';
+  @override
+  String get download_task_details => 'View details';
   @override
   String get download_tasks_tab => 'Tasks';
   @override
@@ -38020,9 +38556,6 @@ class _StringsId extends _StringsEn {
       'Sync this device\'s dictionaries up to the interconnect peer.';
   @override
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   @override
   String get interconnect_upload_video_files => 'Upload video files';
   @override
@@ -42147,9 +42680,14 @@ class _StringsId extends _StringsEn {
   @override
   String get download_detail_task_gone => 'Task not found in backend';
   @override
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  @override
   String get download_detail_section_transfer => 'Transfer';
   @override
   String get download_detail_section_network => 'Network';
+  @override
+  String get download_detail_section_task => 'Task';
   @override
   String get download_detail_seeds_label => 'Seeds';
   @override
@@ -42157,13 +42695,19 @@ class _StringsId extends _StringsEn {
   @override
   String get download_detail_connections_label => 'Connections';
   @override
+  String get download_detail_content_path_label => 'Content path';
+  @override
   String get download_detail_time_active => 'Active time';
   @override
   String get download_detail_time_seeding => 'Seeding time';
   @override
+  String get download_detail_total_size_label => 'Total size';
+  @override
   String get download_detail_listen_port => 'Listen port';
   @override
   String get download_detail_dht_nodes => 'DHT nodes';
+  @override
+  String get download_detail_hash_label => 'Info hash';
   @override
   String get download_detail_port_mapping => 'Port mapping';
   @override
@@ -42172,6 +42716,12 @@ class _StringsId extends _StringsEn {
   String get download_detail_pieces_label => 'Pieces';
   @override
   String get download_detail_priority_skip => 'Don\'t download';
+  @override
+  String get download_detail_raw_state_label => 'Backend state';
+  @override
+  String get download_detail_remaining_label => 'Remaining';
+  @override
+  String get download_detail_save_path_label => 'Save path';
   @override
   String get download_detail_priority_normal => 'Normal';
   @override
@@ -42323,10 +42873,6 @@ class _StringsId extends _StringsEn {
   @override
   String get collection_relation_bind => 'Bind to existing collection';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
   String get collection_episode_rename => 'Rename episodes from scrape';
   @override
   String get collection_episode_rename_title => 'Rename episodes';
@@ -42349,13 +42895,6 @@ class _StringsId extends _StringsEn {
   @override
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   @override
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
@@ -42614,7 +43153,7 @@ class _StringsId extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => 'Only when missing';
   @override
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   @override
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
@@ -42626,7 +43165,7 @@ class _StringsId extends _StringsEn {
       'Overwrite protected sidecars?';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   @override
   String get video_source_scrape_tasks_open => 'Background tasks';
   @override
@@ -43043,6 +43582,102 @@ class _StringsId extends _StringsEn {
   @override
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  @override
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  @override
+  String get download_task_error_summary_generic => 'The task hit an error';
+  @override
+  String get download_task_error_view_detail => 'View details';
+  @override
+  String get download_task_error_detail_title => 'Error details';
+  @override
+  String get download_task_error_copied => 'Error details copied';
+  @override
+  String get download_task_lifecycle_active => 'In progress';
+  @override
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  @override
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  @override
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  @override
+  String get download_task_open_location => 'Show in folder';
+  @override
+  String get download_task_lifecycle_completed => 'Completed';
+  @override
+  String get download_task_lifecycle_failed => 'Failed';
+  @override
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  @override
+  String get download_task_stage_enqueue => 'Enqueue';
+  @override
+  String get download_task_stage_download => 'Download';
+  @override
+  String get download_task_stage_organize => 'Organize';
+  @override
+  String get download_task_stage_subtitle => 'Subtitles';
+  @override
+  String get download_task_stage_import => 'Import';
+  @override
+  String get download_task_stage_scrape => 'Scrape';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  @override
+  String get collection_split_move_to => 'Move to';
+  @override
+  String get collection_split_new_group => 'New group';
+  @override
+  String collection_split_selected({required Object n}) => '${n} selected';
+  @override
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  @override
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  @override
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  @override
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  @override
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  @override
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 // Path: <root>
@@ -44558,6 +45193,9 @@ class _StringsIt extends _StringsEn {
   @override
   String get download_clear_finished => 'Clear finished';
   @override
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  @override
   String get download_network_proxy_auto => 'Auto';
   @override
   String get download_network_proxy_auto_hint =>
@@ -44641,6 +45279,18 @@ class _StringsIt extends _StringsEn {
       'Choose a single-episode release with a recognizable release group to subscribe.';
   @override
   String get download_subscriptions_tab => 'Subscriptions';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  @override
+  String get download_task_delete => 'Delete task';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  @override
+  String get download_task_delete_files => 'Also delete downloaded files';
+  @override
+  String get download_task_details => 'View details';
   @override
   String get download_tasks_tab => 'Tasks';
   @override
@@ -45721,9 +46371,6 @@ class _StringsIt extends _StringsEn {
       'Sync this device\'s dictionaries up to the interconnect peer.';
   @override
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   @override
   String get interconnect_upload_video_files => 'Upload video files';
   @override
@@ -49873,9 +50520,14 @@ class _StringsIt extends _StringsEn {
   @override
   String get download_detail_task_gone => 'Task not found in backend';
   @override
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  @override
   String get download_detail_section_transfer => 'Transfer';
   @override
   String get download_detail_section_network => 'Network';
+  @override
+  String get download_detail_section_task => 'Task';
   @override
   String get download_detail_seeds_label => 'Seeds';
   @override
@@ -49883,13 +50535,19 @@ class _StringsIt extends _StringsEn {
   @override
   String get download_detail_connections_label => 'Connections';
   @override
+  String get download_detail_content_path_label => 'Content path';
+  @override
   String get download_detail_time_active => 'Active time';
   @override
   String get download_detail_time_seeding => 'Seeding time';
   @override
+  String get download_detail_total_size_label => 'Total size';
+  @override
   String get download_detail_listen_port => 'Listen port';
   @override
   String get download_detail_dht_nodes => 'DHT nodes';
+  @override
+  String get download_detail_hash_label => 'Info hash';
   @override
   String get download_detail_port_mapping => 'Port mapping';
   @override
@@ -49898,6 +50556,12 @@ class _StringsIt extends _StringsEn {
   String get download_detail_pieces_label => 'Pieces';
   @override
   String get download_detail_priority_skip => 'Don\'t download';
+  @override
+  String get download_detail_raw_state_label => 'Backend state';
+  @override
+  String get download_detail_remaining_label => 'Remaining';
+  @override
+  String get download_detail_save_path_label => 'Save path';
   @override
   String get download_detail_priority_normal => 'Normal';
   @override
@@ -50049,10 +50713,6 @@ class _StringsIt extends _StringsEn {
   @override
   String get collection_relation_bind => 'Bind to existing collection';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
   String get collection_episode_rename => 'Rename episodes from scrape';
   @override
   String get collection_episode_rename_title => 'Rename episodes';
@@ -50075,13 +50735,6 @@ class _StringsIt extends _StringsEn {
   @override
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   @override
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
@@ -50340,7 +50993,7 @@ class _StringsIt extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => 'Only when missing';
   @override
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   @override
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
@@ -50352,7 +51005,7 @@ class _StringsIt extends _StringsEn {
       'Overwrite protected sidecars?';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   @override
   String get video_source_scrape_tasks_open => 'Background tasks';
   @override
@@ -50769,6 +51422,102 @@ class _StringsIt extends _StringsEn {
   @override
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  @override
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  @override
+  String get download_task_error_summary_generic => 'The task hit an error';
+  @override
+  String get download_task_error_view_detail => 'View details';
+  @override
+  String get download_task_error_detail_title => 'Error details';
+  @override
+  String get download_task_error_copied => 'Error details copied';
+  @override
+  String get download_task_lifecycle_active => 'In progress';
+  @override
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  @override
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  @override
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  @override
+  String get download_task_open_location => 'Show in folder';
+  @override
+  String get download_task_lifecycle_completed => 'Completed';
+  @override
+  String get download_task_lifecycle_failed => 'Failed';
+  @override
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  @override
+  String get download_task_stage_enqueue => 'Enqueue';
+  @override
+  String get download_task_stage_download => 'Download';
+  @override
+  String get download_task_stage_organize => 'Organize';
+  @override
+  String get download_task_stage_subtitle => 'Subtitles';
+  @override
+  String get download_task_stage_import => 'Import';
+  @override
+  String get download_task_stage_scrape => 'Scrape';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  @override
+  String get collection_split_move_to => 'Move to';
+  @override
+  String get collection_split_new_group => 'New group';
+  @override
+  String collection_split_selected({required Object n}) => '${n} selected';
+  @override
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  @override
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  @override
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  @override
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  @override
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  @override
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 // Path: <root>
@@ -52248,6 +52997,9 @@ class _StringsJa extends _StringsEn {
   @override
   String get download_clear_finished => 'Clear finished';
   @override
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  @override
   String get download_network_proxy_auto => 'Auto';
   @override
   String get download_network_proxy_auto_hint =>
@@ -52331,6 +53083,18 @@ class _StringsJa extends _StringsEn {
       'Choose a single-episode release with a recognizable release group to subscribe.';
   @override
   String get download_subscriptions_tab => 'Subscriptions';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  @override
+  String get download_task_delete => 'Delete task';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  @override
+  String get download_task_delete_files => 'Also delete downloaded files';
+  @override
+  String get download_task_details => 'View details';
   @override
   String get download_tasks_tab => 'Tasks';
   @override
@@ -53384,9 +54148,6 @@ class _StringsJa extends _StringsEn {
       'Sync this device\'s dictionaries up to the interconnect peer.';
   @override
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   @override
   String get interconnect_upload_video_files => 'Upload video files';
   @override
@@ -57413,9 +58174,14 @@ class _StringsJa extends _StringsEn {
   @override
   String get download_detail_task_gone => 'Task not found in backend';
   @override
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  @override
   String get download_detail_section_transfer => 'Transfer';
   @override
   String get download_detail_section_network => 'Network';
+  @override
+  String get download_detail_section_task => 'Task';
   @override
   String get download_detail_seeds_label => 'Seeds';
   @override
@@ -57423,13 +58189,19 @@ class _StringsJa extends _StringsEn {
   @override
   String get download_detail_connections_label => 'Connections';
   @override
+  String get download_detail_content_path_label => 'Content path';
+  @override
   String get download_detail_time_active => 'Active time';
   @override
   String get download_detail_time_seeding => 'Seeding time';
   @override
+  String get download_detail_total_size_label => 'Total size';
+  @override
   String get download_detail_listen_port => 'Listen port';
   @override
   String get download_detail_dht_nodes => 'DHT nodes';
+  @override
+  String get download_detail_hash_label => 'Info hash';
   @override
   String get download_detail_port_mapping => 'Port mapping';
   @override
@@ -57438,6 +58210,12 @@ class _StringsJa extends _StringsEn {
   String get download_detail_pieces_label => 'Pieces';
   @override
   String get download_detail_priority_skip => 'Don\'t download';
+  @override
+  String get download_detail_raw_state_label => 'Backend state';
+  @override
+  String get download_detail_remaining_label => 'Remaining';
+  @override
+  String get download_detail_save_path_label => 'Save path';
   @override
   String get download_detail_priority_normal => 'Normal';
   @override
@@ -57589,10 +58367,6 @@ class _StringsJa extends _StringsEn {
   @override
   String get collection_relation_bind => 'Bind to existing collection';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
   String get collection_episode_rename => 'Rename episodes from scrape';
   @override
   String get collection_episode_rename_title => 'Rename episodes';
@@ -57615,13 +58389,6 @@ class _StringsJa extends _StringsEn {
   @override
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   @override
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
@@ -57880,7 +58647,7 @@ class _StringsJa extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => 'Only when missing';
   @override
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   @override
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
@@ -57892,7 +58659,7 @@ class _StringsJa extends _StringsEn {
       'Overwrite protected sidecars?';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   @override
   String get video_source_scrape_tasks_open => 'Background tasks';
   @override
@@ -58309,6 +59076,102 @@ class _StringsJa extends _StringsEn {
   @override
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  @override
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  @override
+  String get download_task_error_summary_generic => 'The task hit an error';
+  @override
+  String get download_task_error_view_detail => 'View details';
+  @override
+  String get download_task_error_detail_title => 'Error details';
+  @override
+  String get download_task_error_copied => 'Error details copied';
+  @override
+  String get download_task_lifecycle_active => 'In progress';
+  @override
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  @override
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  @override
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  @override
+  String get download_task_open_location => 'Show in folder';
+  @override
+  String get download_task_lifecycle_completed => 'Completed';
+  @override
+  String get download_task_lifecycle_failed => 'Failed';
+  @override
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  @override
+  String get download_task_stage_enqueue => 'Enqueue';
+  @override
+  String get download_task_stage_download => 'Download';
+  @override
+  String get download_task_stage_organize => 'Organize';
+  @override
+  String get download_task_stage_subtitle => 'Subtitles';
+  @override
+  String get download_task_stage_import => 'Import';
+  @override
+  String get download_task_stage_scrape => 'Scrape';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  @override
+  String get collection_split_move_to => 'Move to';
+  @override
+  String get collection_split_new_group => 'New group';
+  @override
+  String collection_split_selected({required Object n}) => '${n} selected';
+  @override
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  @override
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  @override
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  @override
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  @override
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  @override
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 // Path: <root>
@@ -59788,6 +60651,9 @@ class _StringsKo extends _StringsEn {
   @override
   String get download_clear_finished => 'Clear finished';
   @override
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  @override
   String get download_network_proxy_auto => 'Auto';
   @override
   String get download_network_proxy_auto_hint =>
@@ -59871,6 +60737,18 @@ class _StringsKo extends _StringsEn {
       'Choose a single-episode release with a recognizable release group to subscribe.';
   @override
   String get download_subscriptions_tab => 'Subscriptions';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  @override
+  String get download_task_delete => 'Delete task';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  @override
+  String get download_task_delete_files => 'Also delete downloaded files';
+  @override
+  String get download_task_details => 'View details';
   @override
   String get download_tasks_tab => 'Tasks';
   @override
@@ -60925,9 +61803,6 @@ class _StringsKo extends _StringsEn {
       'Sync this device\'s dictionaries up to the interconnect peer.';
   @override
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   @override
   String get interconnect_upload_video_files => 'Upload video files';
   @override
@@ -64960,9 +65835,14 @@ class _StringsKo extends _StringsEn {
   @override
   String get download_detail_task_gone => 'Task not found in backend';
   @override
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  @override
   String get download_detail_section_transfer => 'Transfer';
   @override
   String get download_detail_section_network => 'Network';
+  @override
+  String get download_detail_section_task => 'Task';
   @override
   String get download_detail_seeds_label => 'Seeds';
   @override
@@ -64970,13 +65850,19 @@ class _StringsKo extends _StringsEn {
   @override
   String get download_detail_connections_label => 'Connections';
   @override
+  String get download_detail_content_path_label => 'Content path';
+  @override
   String get download_detail_time_active => 'Active time';
   @override
   String get download_detail_time_seeding => 'Seeding time';
   @override
+  String get download_detail_total_size_label => 'Total size';
+  @override
   String get download_detail_listen_port => 'Listen port';
   @override
   String get download_detail_dht_nodes => 'DHT nodes';
+  @override
+  String get download_detail_hash_label => 'Info hash';
   @override
   String get download_detail_port_mapping => 'Port mapping';
   @override
@@ -64985,6 +65871,12 @@ class _StringsKo extends _StringsEn {
   String get download_detail_pieces_label => 'Pieces';
   @override
   String get download_detail_priority_skip => 'Don\'t download';
+  @override
+  String get download_detail_raw_state_label => 'Backend state';
+  @override
+  String get download_detail_remaining_label => 'Remaining';
+  @override
+  String get download_detail_save_path_label => 'Save path';
   @override
   String get download_detail_priority_normal => 'Normal';
   @override
@@ -65136,10 +66028,6 @@ class _StringsKo extends _StringsEn {
   @override
   String get collection_relation_bind => 'Bind to existing collection';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
   String get collection_episode_rename => 'Rename episodes from scrape';
   @override
   String get collection_episode_rename_title => 'Rename episodes';
@@ -65162,13 +66050,6 @@ class _StringsKo extends _StringsEn {
   @override
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   @override
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
@@ -65427,7 +66308,7 @@ class _StringsKo extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => 'Only when missing';
   @override
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   @override
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
@@ -65439,7 +66320,7 @@ class _StringsKo extends _StringsEn {
       'Overwrite protected sidecars?';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   @override
   String get video_source_scrape_tasks_open => 'Background tasks';
   @override
@@ -65856,6 +66737,102 @@ class _StringsKo extends _StringsEn {
   @override
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  @override
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  @override
+  String get download_task_error_summary_generic => 'The task hit an error';
+  @override
+  String get download_task_error_view_detail => 'View details';
+  @override
+  String get download_task_error_detail_title => 'Error details';
+  @override
+  String get download_task_error_copied => 'Error details copied';
+  @override
+  String get download_task_lifecycle_active => 'In progress';
+  @override
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  @override
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  @override
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  @override
+  String get download_task_open_location => 'Show in folder';
+  @override
+  String get download_task_lifecycle_completed => 'Completed';
+  @override
+  String get download_task_lifecycle_failed => 'Failed';
+  @override
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  @override
+  String get download_task_stage_enqueue => 'Enqueue';
+  @override
+  String get download_task_stage_download => 'Download';
+  @override
+  String get download_task_stage_organize => 'Organize';
+  @override
+  String get download_task_stage_subtitle => 'Subtitles';
+  @override
+  String get download_task_stage_import => 'Import';
+  @override
+  String get download_task_stage_scrape => 'Scrape';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  @override
+  String get collection_split_move_to => 'Move to';
+  @override
+  String get collection_split_new_group => 'New group';
+  @override
+  String collection_split_selected({required Object n}) => '${n} selected';
+  @override
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  @override
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  @override
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  @override
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  @override
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  @override
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 // Path: <root>
@@ -67369,6 +68346,9 @@ class _StringsNl extends _StringsEn {
   @override
   String get download_clear_finished => 'Clear finished';
   @override
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  @override
   String get download_network_proxy_auto => 'Auto';
   @override
   String get download_network_proxy_auto_hint =>
@@ -67452,6 +68432,18 @@ class _StringsNl extends _StringsEn {
       'Choose a single-episode release with a recognizable release group to subscribe.';
   @override
   String get download_subscriptions_tab => 'Subscriptions';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  @override
+  String get download_task_delete => 'Delete task';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  @override
+  String get download_task_delete_files => 'Also delete downloaded files';
+  @override
+  String get download_task_details => 'View details';
   @override
   String get download_tasks_tab => 'Tasks';
   @override
@@ -68527,9 +69519,6 @@ class _StringsNl extends _StringsEn {
       'Sync this device\'s dictionaries up to the interconnect peer.';
   @override
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   @override
   String get interconnect_upload_video_files => 'Upload video files';
   @override
@@ -72666,9 +73655,14 @@ class _StringsNl extends _StringsEn {
   @override
   String get download_detail_task_gone => 'Task not found in backend';
   @override
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  @override
   String get download_detail_section_transfer => 'Transfer';
   @override
   String get download_detail_section_network => 'Network';
+  @override
+  String get download_detail_section_task => 'Task';
   @override
   String get download_detail_seeds_label => 'Seeds';
   @override
@@ -72676,13 +73670,19 @@ class _StringsNl extends _StringsEn {
   @override
   String get download_detail_connections_label => 'Connections';
   @override
+  String get download_detail_content_path_label => 'Content path';
+  @override
   String get download_detail_time_active => 'Active time';
   @override
   String get download_detail_time_seeding => 'Seeding time';
   @override
+  String get download_detail_total_size_label => 'Total size';
+  @override
   String get download_detail_listen_port => 'Listen port';
   @override
   String get download_detail_dht_nodes => 'DHT nodes';
+  @override
+  String get download_detail_hash_label => 'Info hash';
   @override
   String get download_detail_port_mapping => 'Port mapping';
   @override
@@ -72691,6 +73691,12 @@ class _StringsNl extends _StringsEn {
   String get download_detail_pieces_label => 'Pieces';
   @override
   String get download_detail_priority_skip => 'Don\'t download';
+  @override
+  String get download_detail_raw_state_label => 'Backend state';
+  @override
+  String get download_detail_remaining_label => 'Remaining';
+  @override
+  String get download_detail_save_path_label => 'Save path';
   @override
   String get download_detail_priority_normal => 'Normal';
   @override
@@ -72842,10 +73848,6 @@ class _StringsNl extends _StringsEn {
   @override
   String get collection_relation_bind => 'Bind to existing collection';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
   String get collection_episode_rename => 'Rename episodes from scrape';
   @override
   String get collection_episode_rename_title => 'Rename episodes';
@@ -72868,13 +73870,6 @@ class _StringsNl extends _StringsEn {
   @override
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   @override
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
@@ -73133,7 +74128,7 @@ class _StringsNl extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => 'Only when missing';
   @override
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   @override
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
@@ -73145,7 +74140,7 @@ class _StringsNl extends _StringsEn {
       'Overwrite protected sidecars?';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   @override
   String get video_source_scrape_tasks_open => 'Background tasks';
   @override
@@ -73562,6 +74557,102 @@ class _StringsNl extends _StringsEn {
   @override
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  @override
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  @override
+  String get download_task_error_summary_generic => 'The task hit an error';
+  @override
+  String get download_task_error_view_detail => 'View details';
+  @override
+  String get download_task_error_detail_title => 'Error details';
+  @override
+  String get download_task_error_copied => 'Error details copied';
+  @override
+  String get download_task_lifecycle_active => 'In progress';
+  @override
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  @override
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  @override
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  @override
+  String get download_task_open_location => 'Show in folder';
+  @override
+  String get download_task_lifecycle_completed => 'Completed';
+  @override
+  String get download_task_lifecycle_failed => 'Failed';
+  @override
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  @override
+  String get download_task_stage_enqueue => 'Enqueue';
+  @override
+  String get download_task_stage_download => 'Download';
+  @override
+  String get download_task_stage_organize => 'Organize';
+  @override
+  String get download_task_stage_subtitle => 'Subtitles';
+  @override
+  String get download_task_stage_import => 'Import';
+  @override
+  String get download_task_stage_scrape => 'Scrape';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  @override
+  String get collection_split_move_to => 'Move to';
+  @override
+  String get collection_split_new_group => 'New group';
+  @override
+  String collection_split_selected({required Object n}) => '${n} selected';
+  @override
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  @override
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  @override
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  @override
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  @override
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  @override
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 // Path: <root>
@@ -75080,6 +76171,9 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get download_clear_finished => 'Clear finished';
   @override
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  @override
   String get download_network_proxy_auto => 'Auto';
   @override
   String get download_network_proxy_auto_hint =>
@@ -75163,6 +76257,18 @@ class _StringsPtBr extends _StringsEn {
       'Choose a single-episode release with a recognizable release group to subscribe.';
   @override
   String get download_subscriptions_tab => 'Subscriptions';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  @override
+  String get download_task_delete => 'Delete task';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  @override
+  String get download_task_delete_files => 'Also delete downloaded files';
+  @override
+  String get download_task_details => 'View details';
   @override
   String get download_tasks_tab => 'Tasks';
   @override
@@ -76241,9 +77347,6 @@ class _StringsPtBr extends _StringsEn {
       'Sync this device\'s dictionaries up to the interconnect peer.';
   @override
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   @override
   String get interconnect_upload_video_files => 'Upload video files';
   @override
@@ -80384,9 +81487,14 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get download_detail_task_gone => 'Task not found in backend';
   @override
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  @override
   String get download_detail_section_transfer => 'Transfer';
   @override
   String get download_detail_section_network => 'Network';
+  @override
+  String get download_detail_section_task => 'Task';
   @override
   String get download_detail_seeds_label => 'Seeds';
   @override
@@ -80394,13 +81502,19 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get download_detail_connections_label => 'Connections';
   @override
+  String get download_detail_content_path_label => 'Content path';
+  @override
   String get download_detail_time_active => 'Active time';
   @override
   String get download_detail_time_seeding => 'Seeding time';
   @override
+  String get download_detail_total_size_label => 'Total size';
+  @override
   String get download_detail_listen_port => 'Listen port';
   @override
   String get download_detail_dht_nodes => 'DHT nodes';
+  @override
+  String get download_detail_hash_label => 'Info hash';
   @override
   String get download_detail_port_mapping => 'Port mapping';
   @override
@@ -80409,6 +81523,12 @@ class _StringsPtBr extends _StringsEn {
   String get download_detail_pieces_label => 'Pieces';
   @override
   String get download_detail_priority_skip => 'Don\'t download';
+  @override
+  String get download_detail_raw_state_label => 'Backend state';
+  @override
+  String get download_detail_remaining_label => 'Remaining';
+  @override
+  String get download_detail_save_path_label => 'Save path';
   @override
   String get download_detail_priority_normal => 'Normal';
   @override
@@ -80560,10 +81680,6 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get collection_relation_bind => 'Bind to existing collection';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
   String get collection_episode_rename => 'Rename episodes from scrape';
   @override
   String get collection_episode_rename_title => 'Rename episodes';
@@ -80586,13 +81702,6 @@ class _StringsPtBr extends _StringsEn {
   @override
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   @override
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
@@ -80851,7 +81960,7 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => 'Only when missing';
   @override
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   @override
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
@@ -80863,7 +81972,7 @@ class _StringsPtBr extends _StringsEn {
       'Overwrite protected sidecars?';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   @override
   String get video_source_scrape_tasks_open => 'Background tasks';
   @override
@@ -81280,6 +82389,102 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  @override
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  @override
+  String get download_task_error_summary_generic => 'The task hit an error';
+  @override
+  String get download_task_error_view_detail => 'View details';
+  @override
+  String get download_task_error_detail_title => 'Error details';
+  @override
+  String get download_task_error_copied => 'Error details copied';
+  @override
+  String get download_task_lifecycle_active => 'In progress';
+  @override
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  @override
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  @override
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  @override
+  String get download_task_open_location => 'Show in folder';
+  @override
+  String get download_task_lifecycle_completed => 'Completed';
+  @override
+  String get download_task_lifecycle_failed => 'Failed';
+  @override
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  @override
+  String get download_task_stage_enqueue => 'Enqueue';
+  @override
+  String get download_task_stage_download => 'Download';
+  @override
+  String get download_task_stage_organize => 'Organize';
+  @override
+  String get download_task_stage_subtitle => 'Subtitles';
+  @override
+  String get download_task_stage_import => 'Import';
+  @override
+  String get download_task_stage_scrape => 'Scrape';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  @override
+  String get collection_split_move_to => 'Move to';
+  @override
+  String get collection_split_new_group => 'New group';
+  @override
+  String collection_split_selected({required Object n}) => '${n} selected';
+  @override
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  @override
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  @override
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  @override
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  @override
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  @override
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 // Path: <root>
@@ -82790,6 +83995,9 @@ class _StringsRu extends _StringsEn {
   @override
   String get download_clear_finished => 'Clear finished';
   @override
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  @override
   String get download_network_proxy_auto => 'Auto';
   @override
   String get download_network_proxy_auto_hint =>
@@ -82873,6 +84081,18 @@ class _StringsRu extends _StringsEn {
       'Choose a single-episode release with a recognizable release group to subscribe.';
   @override
   String get download_subscriptions_tab => 'Subscriptions';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  @override
+  String get download_task_delete => 'Delete task';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  @override
+  String get download_task_delete_files => 'Also delete downloaded files';
+  @override
+  String get download_task_details => 'View details';
   @override
   String get download_tasks_tab => 'Tasks';
   @override
@@ -83951,9 +85171,6 @@ class _StringsRu extends _StringsEn {
       'Sync this device\'s dictionaries up to the interconnect peer.';
   @override
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   @override
   String get interconnect_upload_video_files => 'Upload video files';
   @override
@@ -88088,9 +89305,14 @@ class _StringsRu extends _StringsEn {
   @override
   String get download_detail_task_gone => 'Task not found in backend';
   @override
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  @override
   String get download_detail_section_transfer => 'Transfer';
   @override
   String get download_detail_section_network => 'Network';
+  @override
+  String get download_detail_section_task => 'Task';
   @override
   String get download_detail_seeds_label => 'Seeds';
   @override
@@ -88098,13 +89320,19 @@ class _StringsRu extends _StringsEn {
   @override
   String get download_detail_connections_label => 'Connections';
   @override
+  String get download_detail_content_path_label => 'Content path';
+  @override
   String get download_detail_time_active => 'Active time';
   @override
   String get download_detail_time_seeding => 'Seeding time';
   @override
+  String get download_detail_total_size_label => 'Total size';
+  @override
   String get download_detail_listen_port => 'Listen port';
   @override
   String get download_detail_dht_nodes => 'DHT nodes';
+  @override
+  String get download_detail_hash_label => 'Info hash';
   @override
   String get download_detail_port_mapping => 'Port mapping';
   @override
@@ -88113,6 +89341,12 @@ class _StringsRu extends _StringsEn {
   String get download_detail_pieces_label => 'Pieces';
   @override
   String get download_detail_priority_skip => 'Don\'t download';
+  @override
+  String get download_detail_raw_state_label => 'Backend state';
+  @override
+  String get download_detail_remaining_label => 'Remaining';
+  @override
+  String get download_detail_save_path_label => 'Save path';
   @override
   String get download_detail_priority_normal => 'Normal';
   @override
@@ -88264,10 +89498,6 @@ class _StringsRu extends _StringsEn {
   @override
   String get collection_relation_bind => 'Bind to existing collection';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
   String get collection_episode_rename => 'Rename episodes from scrape';
   @override
   String get collection_episode_rename_title => 'Rename episodes';
@@ -88290,13 +89520,6 @@ class _StringsRu extends _StringsEn {
   @override
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   @override
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
@@ -88555,7 +89778,7 @@ class _StringsRu extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => 'Only when missing';
   @override
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   @override
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
@@ -88567,7 +89790,7 @@ class _StringsRu extends _StringsEn {
       'Overwrite protected sidecars?';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   @override
   String get video_source_scrape_tasks_open => 'Background tasks';
   @override
@@ -88984,6 +90207,102 @@ class _StringsRu extends _StringsEn {
   @override
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  @override
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  @override
+  String get download_task_error_summary_generic => 'The task hit an error';
+  @override
+  String get download_task_error_view_detail => 'View details';
+  @override
+  String get download_task_error_detail_title => 'Error details';
+  @override
+  String get download_task_error_copied => 'Error details copied';
+  @override
+  String get download_task_lifecycle_active => 'In progress';
+  @override
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  @override
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  @override
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  @override
+  String get download_task_open_location => 'Show in folder';
+  @override
+  String get download_task_lifecycle_completed => 'Completed';
+  @override
+  String get download_task_lifecycle_failed => 'Failed';
+  @override
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  @override
+  String get download_task_stage_enqueue => 'Enqueue';
+  @override
+  String get download_task_stage_download => 'Download';
+  @override
+  String get download_task_stage_organize => 'Organize';
+  @override
+  String get download_task_stage_subtitle => 'Subtitles';
+  @override
+  String get download_task_stage_import => 'Import';
+  @override
+  String get download_task_stage_scrape => 'Scrape';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  @override
+  String get collection_split_move_to => 'Move to';
+  @override
+  String get collection_split_new_group => 'New group';
+  @override
+  String collection_split_selected({required Object n}) => '${n} selected';
+  @override
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  @override
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  @override
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  @override
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  @override
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  @override
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 // Path: <root>
@@ -90481,6 +91800,9 @@ class _StringsTh extends _StringsEn {
   @override
   String get download_clear_finished => 'Clear finished';
   @override
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  @override
   String get download_network_proxy_auto => 'Auto';
   @override
   String get download_network_proxy_auto_hint =>
@@ -90564,6 +91886,18 @@ class _StringsTh extends _StringsEn {
       'Choose a single-episode release with a recognizable release group to subscribe.';
   @override
   String get download_subscriptions_tab => 'Subscriptions';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  @override
+  String get download_task_delete => 'Delete task';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  @override
+  String get download_task_delete_files => 'Also delete downloaded files';
+  @override
+  String get download_task_details => 'View details';
   @override
   String get download_tasks_tab => 'Tasks';
   @override
@@ -91632,9 +92966,6 @@ class _StringsTh extends _StringsEn {
       'Sync this device\'s dictionaries up to the interconnect peer.';
   @override
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   @override
   String get interconnect_upload_video_files => 'Upload video files';
   @override
@@ -95740,9 +97071,14 @@ class _StringsTh extends _StringsEn {
   @override
   String get download_detail_task_gone => 'Task not found in backend';
   @override
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  @override
   String get download_detail_section_transfer => 'Transfer';
   @override
   String get download_detail_section_network => 'Network';
+  @override
+  String get download_detail_section_task => 'Task';
   @override
   String get download_detail_seeds_label => 'Seeds';
   @override
@@ -95750,13 +97086,19 @@ class _StringsTh extends _StringsEn {
   @override
   String get download_detail_connections_label => 'Connections';
   @override
+  String get download_detail_content_path_label => 'Content path';
+  @override
   String get download_detail_time_active => 'Active time';
   @override
   String get download_detail_time_seeding => 'Seeding time';
   @override
+  String get download_detail_total_size_label => 'Total size';
+  @override
   String get download_detail_listen_port => 'Listen port';
   @override
   String get download_detail_dht_nodes => 'DHT nodes';
+  @override
+  String get download_detail_hash_label => 'Info hash';
   @override
   String get download_detail_port_mapping => 'Port mapping';
   @override
@@ -95765,6 +97107,12 @@ class _StringsTh extends _StringsEn {
   String get download_detail_pieces_label => 'Pieces';
   @override
   String get download_detail_priority_skip => 'Don\'t download';
+  @override
+  String get download_detail_raw_state_label => 'Backend state';
+  @override
+  String get download_detail_remaining_label => 'Remaining';
+  @override
+  String get download_detail_save_path_label => 'Save path';
   @override
   String get download_detail_priority_normal => 'Normal';
   @override
@@ -95916,10 +97264,6 @@ class _StringsTh extends _StringsEn {
   @override
   String get collection_relation_bind => 'Bind to existing collection';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
   String get collection_episode_rename => 'Rename episodes from scrape';
   @override
   String get collection_episode_rename_title => 'Rename episodes';
@@ -95942,13 +97286,6 @@ class _StringsTh extends _StringsEn {
   @override
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   @override
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
@@ -96207,7 +97544,7 @@ class _StringsTh extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => 'Only when missing';
   @override
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   @override
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
@@ -96219,7 +97556,7 @@ class _StringsTh extends _StringsEn {
       'Overwrite protected sidecars?';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   @override
   String get video_source_scrape_tasks_open => 'Background tasks';
   @override
@@ -96636,6 +97973,102 @@ class _StringsTh extends _StringsEn {
   @override
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  @override
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  @override
+  String get download_task_error_summary_generic => 'The task hit an error';
+  @override
+  String get download_task_error_view_detail => 'View details';
+  @override
+  String get download_task_error_detail_title => 'Error details';
+  @override
+  String get download_task_error_copied => 'Error details copied';
+  @override
+  String get download_task_lifecycle_active => 'In progress';
+  @override
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  @override
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  @override
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  @override
+  String get download_task_open_location => 'Show in folder';
+  @override
+  String get download_task_lifecycle_completed => 'Completed';
+  @override
+  String get download_task_lifecycle_failed => 'Failed';
+  @override
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  @override
+  String get download_task_stage_enqueue => 'Enqueue';
+  @override
+  String get download_task_stage_download => 'Download';
+  @override
+  String get download_task_stage_organize => 'Organize';
+  @override
+  String get download_task_stage_subtitle => 'Subtitles';
+  @override
+  String get download_task_stage_import => 'Import';
+  @override
+  String get download_task_stage_scrape => 'Scrape';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  @override
+  String get collection_split_move_to => 'Move to';
+  @override
+  String get collection_split_new_group => 'New group';
+  @override
+  String collection_split_selected({required Object n}) => '${n} selected';
+  @override
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  @override
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  @override
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  @override
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  @override
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  @override
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 // Path: <root>
@@ -98145,6 +99578,9 @@ class _StringsTr extends _StringsEn {
   @override
   String get download_clear_finished => 'Clear finished';
   @override
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  @override
   String get download_network_proxy_auto => 'Auto';
   @override
   String get download_network_proxy_auto_hint =>
@@ -98228,6 +99664,18 @@ class _StringsTr extends _StringsEn {
       'Choose a single-episode release with a recognizable release group to subscribe.';
   @override
   String get download_subscriptions_tab => 'Subscriptions';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  @override
+  String get download_task_delete => 'Delete task';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  @override
+  String get download_task_delete_files => 'Also delete downloaded files';
+  @override
+  String get download_task_details => 'View details';
   @override
   String get download_tasks_tab => 'Tasks';
   @override
@@ -99302,9 +100750,6 @@ class _StringsTr extends _StringsEn {
       'Sync this device\'s dictionaries up to the interconnect peer.';
   @override
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   @override
   String get interconnect_upload_video_files => 'Upload video files';
   @override
@@ -103423,9 +104868,14 @@ class _StringsTr extends _StringsEn {
   @override
   String get download_detail_task_gone => 'Task not found in backend';
   @override
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  @override
   String get download_detail_section_transfer => 'Transfer';
   @override
   String get download_detail_section_network => 'Network';
+  @override
+  String get download_detail_section_task => 'Task';
   @override
   String get download_detail_seeds_label => 'Seeds';
   @override
@@ -103433,13 +104883,19 @@ class _StringsTr extends _StringsEn {
   @override
   String get download_detail_connections_label => 'Connections';
   @override
+  String get download_detail_content_path_label => 'Content path';
+  @override
   String get download_detail_time_active => 'Active time';
   @override
   String get download_detail_time_seeding => 'Seeding time';
   @override
+  String get download_detail_total_size_label => 'Total size';
+  @override
   String get download_detail_listen_port => 'Listen port';
   @override
   String get download_detail_dht_nodes => 'DHT nodes';
+  @override
+  String get download_detail_hash_label => 'Info hash';
   @override
   String get download_detail_port_mapping => 'Port mapping';
   @override
@@ -103448,6 +104904,12 @@ class _StringsTr extends _StringsEn {
   String get download_detail_pieces_label => 'Pieces';
   @override
   String get download_detail_priority_skip => 'Don\'t download';
+  @override
+  String get download_detail_raw_state_label => 'Backend state';
+  @override
+  String get download_detail_remaining_label => 'Remaining';
+  @override
+  String get download_detail_save_path_label => 'Save path';
   @override
   String get download_detail_priority_normal => 'Normal';
   @override
@@ -103599,10 +105061,6 @@ class _StringsTr extends _StringsEn {
   @override
   String get collection_relation_bind => 'Bind to existing collection';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
   String get collection_episode_rename => 'Rename episodes from scrape';
   @override
   String get collection_episode_rename_title => 'Rename episodes';
@@ -103625,13 +105083,6 @@ class _StringsTr extends _StringsEn {
   @override
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   @override
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
@@ -103890,7 +105341,7 @@ class _StringsTr extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => 'Only when missing';
   @override
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   @override
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
@@ -103902,7 +105353,7 @@ class _StringsTr extends _StringsEn {
       'Overwrite protected sidecars?';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   @override
   String get video_source_scrape_tasks_open => 'Background tasks';
   @override
@@ -104319,6 +105770,102 @@ class _StringsTr extends _StringsEn {
   @override
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  @override
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  @override
+  String get download_task_error_summary_generic => 'The task hit an error';
+  @override
+  String get download_task_error_view_detail => 'View details';
+  @override
+  String get download_task_error_detail_title => 'Error details';
+  @override
+  String get download_task_error_copied => 'Error details copied';
+  @override
+  String get download_task_lifecycle_active => 'In progress';
+  @override
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  @override
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  @override
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  @override
+  String get download_task_open_location => 'Show in folder';
+  @override
+  String get download_task_lifecycle_completed => 'Completed';
+  @override
+  String get download_task_lifecycle_failed => 'Failed';
+  @override
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  @override
+  String get download_task_stage_enqueue => 'Enqueue';
+  @override
+  String get download_task_stage_download => 'Download';
+  @override
+  String get download_task_stage_organize => 'Organize';
+  @override
+  String get download_task_stage_subtitle => 'Subtitles';
+  @override
+  String get download_task_stage_import => 'Import';
+  @override
+  String get download_task_stage_scrape => 'Scrape';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  @override
+  String get collection_split_move_to => 'Move to';
+  @override
+  String get collection_split_new_group => 'New group';
+  @override
+  String collection_split_selected({required Object n}) => '${n} selected';
+  @override
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  @override
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  @override
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  @override
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  @override
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  @override
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 // Path: <root>
@@ -105825,6 +107372,9 @@ class _StringsVi extends _StringsEn {
   @override
   String get download_clear_finished => 'Clear finished';
   @override
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  @override
   String get download_network_proxy_auto => 'Auto';
   @override
   String get download_network_proxy_auto_hint =>
@@ -105908,6 +107458,18 @@ class _StringsVi extends _StringsEn {
       'Choose a single-episode release with a recognizable release group to subscribe.';
   @override
   String get download_subscriptions_tab => 'Subscriptions';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  @override
+  String get download_task_delete => 'Delete task';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  @override
+  String get download_task_delete_files => 'Also delete downloaded files';
+  @override
+  String get download_task_details => 'View details';
   @override
   String get download_tasks_tab => 'Tasks';
   @override
@@ -106978,9 +108540,6 @@ class _StringsVi extends _StringsEn {
       'Sync this device\'s dictionaries up to the interconnect peer.';
   @override
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   @override
   String get interconnect_upload_video_files => 'Upload video files';
   @override
@@ -111091,9 +112650,14 @@ class _StringsVi extends _StringsEn {
   @override
   String get download_detail_task_gone => 'Task not found in backend';
   @override
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  @override
   String get download_detail_section_transfer => 'Transfer';
   @override
   String get download_detail_section_network => 'Network';
+  @override
+  String get download_detail_section_task => 'Task';
   @override
   String get download_detail_seeds_label => 'Seeds';
   @override
@@ -111101,13 +112665,19 @@ class _StringsVi extends _StringsEn {
   @override
   String get download_detail_connections_label => 'Connections';
   @override
+  String get download_detail_content_path_label => 'Content path';
+  @override
   String get download_detail_time_active => 'Active time';
   @override
   String get download_detail_time_seeding => 'Seeding time';
   @override
+  String get download_detail_total_size_label => 'Total size';
+  @override
   String get download_detail_listen_port => 'Listen port';
   @override
   String get download_detail_dht_nodes => 'DHT nodes';
+  @override
+  String get download_detail_hash_label => 'Info hash';
   @override
   String get download_detail_port_mapping => 'Port mapping';
   @override
@@ -111116,6 +112686,12 @@ class _StringsVi extends _StringsEn {
   String get download_detail_pieces_label => 'Pieces';
   @override
   String get download_detail_priority_skip => 'Don\'t download';
+  @override
+  String get download_detail_raw_state_label => 'Backend state';
+  @override
+  String get download_detail_remaining_label => 'Remaining';
+  @override
+  String get download_detail_save_path_label => 'Save path';
   @override
   String get download_detail_priority_normal => 'Normal';
   @override
@@ -111267,10 +112843,6 @@ class _StringsVi extends _StringsEn {
   @override
   String get collection_relation_bind => 'Bind to existing collection';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
   String get collection_episode_rename => 'Rename episodes from scrape';
   @override
   String get collection_episode_rename_title => 'Rename episodes';
@@ -111293,13 +112865,6 @@ class _StringsVi extends _StringsEn {
   @override
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   @override
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
@@ -111558,7 +113123,7 @@ class _StringsVi extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => 'Only when missing';
   @override
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   @override
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
@@ -111570,7 +113135,7 @@ class _StringsVi extends _StringsEn {
       'Overwrite protected sidecars?';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   @override
   String get video_source_scrape_tasks_open => 'Background tasks';
   @override
@@ -111987,6 +113552,102 @@ class _StringsVi extends _StringsEn {
   @override
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  @override
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  @override
+  String get download_task_error_summary_generic => 'The task hit an error';
+  @override
+  String get download_task_error_view_detail => 'View details';
+  @override
+  String get download_task_error_detail_title => 'Error details';
+  @override
+  String get download_task_error_copied => 'Error details copied';
+  @override
+  String get download_task_lifecycle_active => 'In progress';
+  @override
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  @override
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  @override
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  @override
+  String get download_task_open_location => 'Show in folder';
+  @override
+  String get download_task_lifecycle_completed => 'Completed';
+  @override
+  String get download_task_lifecycle_failed => 'Failed';
+  @override
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  @override
+  String get download_task_stage_enqueue => 'Enqueue';
+  @override
+  String get download_task_stage_download => 'Download';
+  @override
+  String get download_task_stage_organize => 'Organize';
+  @override
+  String get download_task_stage_subtitle => 'Subtitles';
+  @override
+  String get download_task_stage_import => 'Import';
+  @override
+  String get download_task_stage_scrape => 'Scrape';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  @override
+  String get collection_split_move_to => 'Move to';
+  @override
+  String get collection_split_new_group => 'New group';
+  @override
+  String collection_split_selected({required Object n}) => '${n} selected';
+  @override
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  @override
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  @override
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  @override
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  @override
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  @override
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 // Path: <root>
@@ -113395,6 +115056,9 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get download_clear_finished => '清除已完成';
   @override
+  String get download_detail_backend_offline =>
+      '原下载后端当前离线。这里仍显示已保存的任务信息，但实时参数暂不可用。';
+  @override
   String get download_network_proxy_auto => '自动';
   @override
   String get download_network_proxy_auto_hint =>
@@ -113471,6 +115135,18 @@ class _StringsZhCn extends _StringsEn {
       '请选择能识别字幕组的单集发布后再订阅；合集仍可单次下载。';
   @override
   String get download_subscriptions_tab => '订阅';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      '任务操作失败：${error}';
+  @override
+  String get download_task_delete => '删除任务';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      '删除“${title}”的下载任务吗？';
+  @override
+  String get download_task_delete_files => '同时删除已下载文件';
+  @override
+  String get download_task_details => '查看详情';
   @override
   String get download_tasks_tab => '任务';
   @override
@@ -114462,9 +116138,6 @@ class _StringsZhCn extends _StringsEn {
   String get interconnect_upload_dictionary_hint => '把本设备的词典上传同步到互联对端。';
   @override
   String get interconnect_upload_section => '上传到互联对端';
-  @override
-  String get interconnect_upload_section_footer =>
-      '选择本设备要把哪些内容上传到已连接的互联对端。与云备份、以及「启用互联」连接开关互不影响；默认全部关闭。';
   @override
   String get interconnect_upload_video_files => '上传视频文件';
   @override
@@ -118285,9 +119958,14 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get download_detail_task_gone => '后端中找不到该任务';
   @override
+  String get download_detail_task_missing =>
+      '原下载后端在线，但该 torrent 已不在引擎中。实时节点和 Tracker 无法恢复，这里显示已保存的任务信息。';
+  @override
   String get download_detail_section_transfer => '传输';
   @override
   String get download_detail_section_network => '网络';
+  @override
+  String get download_detail_section_task => '任务';
   @override
   String get download_detail_seeds_label => '做种';
   @override
@@ -118295,13 +119973,19 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get download_detail_connections_label => '连接数';
   @override
+  String get download_detail_content_path_label => '内容路径';
+  @override
   String get download_detail_time_active => '活跃时长';
   @override
   String get download_detail_time_seeding => '做种时长';
   @override
+  String get download_detail_total_size_label => '总大小';
+  @override
   String get download_detail_listen_port => '监听端口';
   @override
   String get download_detail_dht_nodes => 'DHT 节点';
+  @override
+  String get download_detail_hash_label => '信息哈希';
   @override
   String get download_detail_port_mapping => '端口映射';
   @override
@@ -118310,6 +119994,12 @@ class _StringsZhCn extends _StringsEn {
   String get download_detail_pieces_label => '分片';
   @override
   String get download_detail_priority_skip => '不下载';
+  @override
+  String get download_detail_raw_state_label => '后端状态';
+  @override
+  String get download_detail_remaining_label => '剩余大小';
+  @override
+  String get download_detail_save_path_label => '保存路径';
   @override
   String get download_detail_priority_normal => '普通';
   @override
@@ -118455,10 +120145,6 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get collection_relation_bind => '绑定到已有合集';
   @override
-  String get collection_episode_scrape => '刮削分集资料';
-  @override
-  String get collection_episode_scrape_unbound => '请先刮削合集资料';
-  @override
   String get collection_episode_rename => '按刮削重命名各集';
   @override
   String get collection_episode_rename_title => '批量重命名各集';
@@ -118480,13 +120166,6 @@ class _StringsZhCn extends _StringsEn {
   String get collection_episode_open_bangumi => '在 Bangumi 打开本集';
   @override
   String collection_relation_bound({required Object name}) => '已绑定到 ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      '已更新 ${updated} 集 · 跳过 ${skipped} 集';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      '分集刮削失败：${error}';
   @override
   String collection_episode_rename_apply({required Object n}) => '重命名 ${n} 集';
   @override
@@ -118709,7 +120388,7 @@ class _StringsZhCn extends _StringsEn {
   String get video_source_scrape_confirmation_title => '确认资料匹配';
   @override
   String get video_source_scrape_confirmation_hint =>
-      '找到多个严格匹配结果。请选择正确作品，Hibiki 会保存其来源绑定。';
+      '找到多个严格匹配结果。请选择正确作品，Fushi 会保存其来源绑定。';
   @override
   String get video_source_scrape_confirmation_skip => '跳过此作品';
   @override
@@ -118721,7 +120400,7 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => '仅缺失时写入';
   @override
-  String get video_source_scrape_policy_overwrite => '更新 Hibiki 生成物';
+  String get video_source_scrape_policy_overwrite => '更新 Fushi 生成物';
   @override
   String get video_source_scrape_external_overwrite => '允许覆盖受保护的 sidecar';
   @override
@@ -118732,7 +120411,7 @@ class _StringsZhCn extends _StringsEn {
       '覆盖受保护的 sidecar？';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      '本批次可能替换第三方 NFO/图片，或你修改过的 Hibiki 生成物；视频文件本身不会改动。是否继续？';
+      '本批次可能替换第三方 NFO/图片，或你修改过的 Fushi 生成物；视频文件本身不会改动。是否继续？';
   @override
   String get video_source_scrape_tasks_open => '后台任务';
   @override
@@ -119101,6 +120780,90 @@ class _StringsZhCn extends _StringsEn {
   String get tag_add_failed => '标签添加失败，请重试。';
   @override
   String get tag_reorder_failed => '标签排序保存失败，请重试。';
+  @override
+  String get download_task_error_summary_source_missing => '受管视频来源不存在或不可访问';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      '种子未能按哈希、标题、分类确认';
+  @override
+  String get download_task_error_summary_subtitle => '字幕不可用或未能安装';
+  @override
+  String get download_task_error_summary_backend_unavailable => '下载后端不可用或不再匹配';
+  @override
+  String get download_task_error_summary_legacy => '旧版导入数据需要处理';
+  @override
+  String get download_task_error_summary_torrent_info => '种子信息缺失或无法校验';
+  @override
+  String get download_task_error_summary_generic => '任务出错';
+  @override
+  String get download_task_error_view_detail => '查看详情';
+  @override
+  String get download_task_error_detail_title => '错误详情';
+  @override
+  String get download_task_error_copied => '错误详情已复制';
+  @override
+  String get download_task_lifecycle_active => '进行中';
+  @override
+  String get download_task_lifecycle_needs_attention => '需要处理';
+  @override
+  String get download_task_location_missing => '找不到该任务对应的文件位置。';
+  @override
+  String get download_task_location_open_failed => '无法打开文件位置。';
+  @override
+  String get download_task_open_location => '打开文件位置';
+  @override
+  String get download_task_lifecycle_completed => '已完成';
+  @override
+  String get download_task_lifecycle_failed => '已失败';
+  @override
+  String get download_task_lifecycle_cancelled => '已取消';
+  @override
+  String get download_task_stage_enqueue => '入队';
+  @override
+  String get download_task_stage_download => '下载';
+  @override
+  String get download_task_stage_organize => '整理';
+  @override
+  String get download_task_stage_subtitle => '字幕';
+  @override
+  String get download_task_stage_import => '入库';
+  @override
+  String get download_task_stage_scrape => '刮削';
+  @override
+  String get video_discovery_manual_identity_hint => '填写标题、外部 ID 和年份后才能搜索';
+  @override
+  String get collection_split_move_to => '移动到';
+  @override
+  String get collection_split_new_group => '新建分组';
+  @override
+  String collection_split_selected({required Object n}) => '已选 ${n} 集';
+  @override
+  String get sync_pair_rate_limited => '尝试次数过多，请等几分钟后重试。';
+  @override
+  String get sync_pair_tls_failed => '证书校验失败：对端证书与已记录的指纹不符。';
+  @override
+  String get sync_pair_timeout => '对端没有及时响应。';
+  @override
+  String get sync_pair_expired => '配对会话已超时，请重新发起配对。';
+  @override
+  String get sync_pair_upgrade_required =>
+      '对方版本过旧，无法在当前网络下安全配对（需要 PIN）。请更新对方后重新配对。';
+  @override
+  String get sync_pair_fingerprint_changed_title => '证书已变更';
+  @override
+  String get sync_pair_fingerprint_stored_label => '此前已钉扎';
+  @override
+  String get sync_pair_fingerprint_new_label => '本次握手所见';
+  @override
+  String get sync_pair_fingerprint_retrust => '清除已存指纹并重新信任';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      '这条地址此前钉扎的是另一张证书。只有在你确知对方重装/重置过设备时才继续，否则连接可能正被中间人拦截。';
+  @override
+  String get interconnect_upload_section_footer =>
+      '选择本设备要把哪些内容上传给已连接的互联对端。与云备份的同名开关互不影响，且默认全部关闭。本组开关只在「启用互联」打开时生效：关掉互联，这里的上传全部停止。';
+  @override
+  String get remote_delete_audiobook_partial => '书已在对端删除，但它的有声书没能删掉';
 }
 
 // Path: <root>
@@ -120556,6 +122319,9 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get download_clear_finished => 'Clear finished';
   @override
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  @override
   String get download_network_proxy_auto => 'Auto';
   @override
   String get download_network_proxy_auto_hint =>
@@ -120639,6 +122405,18 @@ class _StringsZhHk extends _StringsEn {
       'Choose a single-episode release with a recognizable release group to subscribe.';
   @override
   String get download_subscriptions_tab => 'Subscriptions';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  @override
+  String get download_task_delete => 'Delete task';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  @override
+  String get download_task_delete_files => 'Also delete downloaded files';
+  @override
+  String get download_task_details => 'View details';
   @override
   String get download_tasks_tab => 'Tasks';
   @override
@@ -121685,9 +123463,6 @@ class _StringsZhHk extends _StringsEn {
       'Sync this device\'s dictionaries up to the interconnect peer.';
   @override
   String get interconnect_upload_section => 'Upload to interconnect peer';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
   @override
   String get interconnect_upload_video_files => 'Upload video files';
   @override
@@ -125669,9 +127444,14 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get download_detail_task_gone => 'Task not found in backend';
   @override
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  @override
   String get download_detail_section_transfer => 'Transfer';
   @override
   String get download_detail_section_network => 'Network';
+  @override
+  String get download_detail_section_task => 'Task';
   @override
   String get download_detail_seeds_label => 'Seeds';
   @override
@@ -125679,13 +127459,19 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get download_detail_connections_label => 'Connections';
   @override
+  String get download_detail_content_path_label => 'Content path';
+  @override
   String get download_detail_time_active => 'Active time';
   @override
   String get download_detail_time_seeding => 'Seeding time';
   @override
+  String get download_detail_total_size_label => 'Total size';
+  @override
   String get download_detail_listen_port => 'Listen port';
   @override
   String get download_detail_dht_nodes => 'DHT nodes';
+  @override
+  String get download_detail_hash_label => 'Info hash';
   @override
   String get download_detail_port_mapping => 'Port mapping';
   @override
@@ -125694,6 +127480,12 @@ class _StringsZhHk extends _StringsEn {
   String get download_detail_pieces_label => 'Pieces';
   @override
   String get download_detail_priority_skip => 'Don\'t download';
+  @override
+  String get download_detail_raw_state_label => 'Backend state';
+  @override
+  String get download_detail_remaining_label => 'Remaining';
+  @override
+  String get download_detail_save_path_label => 'Save path';
   @override
   String get download_detail_priority_normal => 'Normal';
   @override
@@ -125845,10 +127637,6 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get collection_relation_bind => 'Bind to existing collection';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
   String get collection_episode_rename => 'Rename episodes from scrape';
   @override
   String get collection_episode_rename_title => 'Rename episodes';
@@ -125871,13 +127659,6 @@ class _StringsZhHk extends _StringsEn {
   @override
   String collection_relation_bound({required Object name}) =>
       'Bound to ${name}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
   @override
   String collection_episode_rename_apply({required Object n}) =>
       'Rename ${n} episodes';
@@ -126135,7 +127916,7 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get video_source_scrape_policy_missing_only => 'Only when missing';
   @override
-  String get video_source_scrape_policy_overwrite => 'Update Hibiki files';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
   @override
   String get video_source_scrape_external_overwrite =>
       'Allow protected sidecar overwrite';
@@ -126147,7 +127928,7 @@ class _StringsZhHk extends _StringsEn {
       'Overwrite protected sidecars?';
   @override
   String get video_source_scrape_external_overwrite_confirm_body =>
-      'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
   @override
   String get video_source_scrape_tasks_open => 'Background tasks';
   @override
@@ -126564,6 +128345,102 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get tag_reorder_failed =>
       'Couldn\'t save the new tag order. Please try again.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  @override
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  @override
+  String get download_task_error_summary_generic => 'The task hit an error';
+  @override
+  String get download_task_error_view_detail => 'View details';
+  @override
+  String get download_task_error_detail_title => 'Error details';
+  @override
+  String get download_task_error_copied => 'Error details copied';
+  @override
+  String get download_task_lifecycle_active => 'In progress';
+  @override
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  @override
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  @override
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  @override
+  String get download_task_open_location => 'Show in folder';
+  @override
+  String get download_task_lifecycle_completed => 'Completed';
+  @override
+  String get download_task_lifecycle_failed => 'Failed';
+  @override
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  @override
+  String get download_task_stage_enqueue => 'Enqueue';
+  @override
+  String get download_task_stage_download => 'Download';
+  @override
+  String get download_task_stage_organize => 'Organize';
+  @override
+  String get download_task_stage_subtitle => 'Subtitles';
+  @override
+  String get download_task_stage_import => 'Import';
+  @override
+  String get download_task_stage_scrape => 'Scrape';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  @override
+  String get collection_split_move_to => 'Move to';
+  @override
+  String get collection_split_new_group => 'New group';
+  @override
+  String collection_split_selected({required Object n}) => '${n} selected';
+  @override
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  @override
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  @override
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  @override
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  @override
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  @override
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
 }
 
 /// Flat map(s) containing all translations.
@@ -127899,6 +129776,8 @@ extension on _StringsEn {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -127970,6 +129849,17 @@ extension on _StringsEn {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -128922,8 +130812,6 @@ extension on _StringsEn {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -132599,24 +134487,34 @@ extension on _StringsEn {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -132625,6 +134523,12 @@ extension on _StringsEn {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -132768,10 +134672,6 @@ extension on _StringsEn {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -132794,11 +134694,6 @@ extension on _StringsEn {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -133018,7 +134913,7 @@ extension on _StringsEn {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -133026,7 +134921,7 @@ extension on _StringsEn {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -133380,6 +135275,86 @@ extension on _StringsEn {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
@@ -134716,6 +136691,8 @@ extension on _StringsAr {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -134787,6 +136764,17 @@ extension on _StringsAr {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -135738,8 +137726,6 @@ extension on _StringsAr {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -139411,24 +141397,34 @@ extension on _StringsAr {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -139437,6 +141433,12 @@ extension on _StringsAr {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -139580,10 +141582,6 @@ extension on _StringsAr {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -139606,11 +141604,6 @@ extension on _StringsAr {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -139830,7 +141823,7 @@ extension on _StringsAr {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -139838,7 +141831,7 @@ extension on _StringsAr {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -140194,6 +142187,86 @@ extension on _StringsAr {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
@@ -141534,6 +143607,8 @@ extension on _StringsDe {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -141605,6 +143680,17 @@ extension on _StringsDe {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -142560,8 +144646,6 @@ extension on _StringsDe {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -146247,24 +148331,34 @@ extension on _StringsDe {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -146273,6 +148367,12 @@ extension on _StringsDe {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -146416,10 +148516,6 @@ extension on _StringsDe {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -146442,11 +148538,6 @@ extension on _StringsDe {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -146666,7 +148757,7 @@ extension on _StringsDe {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -146674,7 +148765,7 @@ extension on _StringsDe {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -147030,6 +149121,86 @@ extension on _StringsDe {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
@@ -148371,6 +150542,8 @@ extension on _StringsEs {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -148442,6 +150615,17 @@ extension on _StringsEs {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -149396,8 +151580,6 @@ extension on _StringsEs {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -153082,24 +155264,34 @@ extension on _StringsEs {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -153108,6 +155300,12 @@ extension on _StringsEs {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -153251,10 +155449,6 @@ extension on _StringsEs {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -153277,11 +155471,6 @@ extension on _StringsEs {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -153501,7 +155690,7 @@ extension on _StringsEs {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -153509,7 +155698,7 @@ extension on _StringsEs {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -153865,6 +156054,86 @@ extension on _StringsEs {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
@@ -155209,6 +157478,8 @@ extension on _StringsFr {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -155280,6 +157551,17 @@ extension on _StringsFr {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -156235,8 +158517,6 @@ extension on _StringsFr {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -159923,24 +162203,34 @@ extension on _StringsFr {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -159949,6 +162239,12 @@ extension on _StringsFr {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -160092,10 +162388,6 @@ extension on _StringsFr {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -160118,11 +162410,6 @@ extension on _StringsFr {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -160342,7 +162629,7 @@ extension on _StringsFr {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -160350,7 +162637,7 @@ extension on _StringsFr {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -160706,6 +162993,86 @@ extension on _StringsFr {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
@@ -162045,6 +164412,8 @@ extension on _StringsId {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -162116,6 +164485,17 @@ extension on _StringsId {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -163069,8 +165449,6 @@ extension on _StringsId {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -166746,24 +169124,34 @@ extension on _StringsId {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -166772,6 +169160,12 @@ extension on _StringsId {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -166915,10 +169309,6 @@ extension on _StringsId {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -166941,11 +169331,6 @@ extension on _StringsId {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -167165,7 +169550,7 @@ extension on _StringsId {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -167173,7 +169558,7 @@ extension on _StringsId {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -167529,6 +169914,86 @@ extension on _StringsId {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
@@ -168869,6 +171334,8 @@ extension on _StringsIt {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -168940,6 +171407,17 @@ extension on _StringsIt {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -169894,8 +172372,6 @@ extension on _StringsIt {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -173583,24 +176059,34 @@ extension on _StringsIt {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -173609,6 +176095,12 @@ extension on _StringsIt {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -173752,10 +176244,6 @@ extension on _StringsIt {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -173778,11 +176266,6 @@ extension on _StringsIt {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -174002,7 +176485,7 @@ extension on _StringsIt {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -174010,7 +176493,7 @@ extension on _StringsIt {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -174366,6 +176849,86 @@ extension on _StringsIt {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
@@ -175695,6 +178258,8 @@ extension on _StringsJa {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -175766,6 +178331,17 @@ extension on _StringsJa {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -176716,8 +179292,6 @@ extension on _StringsJa {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -180382,24 +182956,34 @@ extension on _StringsJa {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -180408,6 +182992,12 @@ extension on _StringsJa {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -180551,10 +183141,6 @@ extension on _StringsJa {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -180577,11 +183163,6 @@ extension on _StringsJa {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -180801,7 +183382,7 @@ extension on _StringsJa {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -180809,7 +183390,7 @@ extension on _StringsJa {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -181165,6 +183746,86 @@ extension on _StringsJa {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
@@ -182495,6 +185156,8 @@ extension on _StringsKo {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -182566,6 +185229,17 @@ extension on _StringsKo {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -183517,8 +186191,6 @@ extension on _StringsKo {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -187185,24 +189857,34 @@ extension on _StringsKo {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -187211,6 +189893,12 @@ extension on _StringsKo {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -187354,10 +190042,6 @@ extension on _StringsKo {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -187380,11 +190064,6 @@ extension on _StringsKo {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -187604,7 +190283,7 @@ extension on _StringsKo {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -187612,7 +190291,7 @@ extension on _StringsKo {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -187968,6 +190647,86 @@ extension on _StringsKo {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
@@ -189308,6 +192067,8 @@ extension on _StringsNl {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -189379,6 +192140,17 @@ extension on _StringsNl {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -190333,8 +193105,6 @@ extension on _StringsNl {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -194016,24 +196786,34 @@ extension on _StringsNl {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -194042,6 +196822,12 @@ extension on _StringsNl {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -194185,10 +196971,6 @@ extension on _StringsNl {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -194211,11 +196993,6 @@ extension on _StringsNl {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -194435,7 +197212,7 @@ extension on _StringsNl {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -194443,7 +197220,7 @@ extension on _StringsNl {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -194799,6 +197576,86 @@ extension on _StringsNl {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
@@ -196138,6 +198995,8 @@ extension on _StringsPtBr {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -196209,6 +199068,17 @@ extension on _StringsPtBr {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -197163,8 +200033,6 @@ extension on _StringsPtBr {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -200844,24 +203712,34 @@ extension on _StringsPtBr {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -200870,6 +203748,12 @@ extension on _StringsPtBr {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -201013,10 +203897,6 @@ extension on _StringsPtBr {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -201039,11 +203919,6 @@ extension on _StringsPtBr {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -201263,7 +204138,7 @@ extension on _StringsPtBr {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -201271,7 +204146,7 @@ extension on _StringsPtBr {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -201627,6 +204502,86 @@ extension on _StringsPtBr {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
@@ -202969,6 +205924,8 @@ extension on _StringsRu {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -203040,6 +205997,17 @@ extension on _StringsRu {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -203994,8 +206962,6 @@ extension on _StringsRu {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -207677,24 +210643,34 @@ extension on _StringsRu {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -207703,6 +210679,12 @@ extension on _StringsRu {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -207846,10 +210828,6 @@ extension on _StringsRu {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -207872,11 +210850,6 @@ extension on _StringsRu {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -208096,7 +211069,7 @@ extension on _StringsRu {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -208104,7 +211077,7 @@ extension on _StringsRu {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -208460,6 +211433,86 @@ extension on _StringsRu {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
@@ -209794,6 +212847,8 @@ extension on _StringsTh {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -209865,6 +212920,17 @@ extension on _StringsTh {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -210817,8 +213883,6 @@ extension on _StringsTh {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -214493,24 +217557,34 @@ extension on _StringsTh {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -214519,6 +217593,12 @@ extension on _StringsTh {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -214662,10 +217742,6 @@ extension on _StringsTh {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -214688,11 +217764,6 @@ extension on _StringsTh {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -214912,7 +217983,7 @@ extension on _StringsTh {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -214920,7 +217991,7 @@ extension on _StringsTh {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -215276,6 +218347,86 @@ extension on _StringsTh {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
@@ -216615,6 +219766,8 @@ extension on _StringsTr {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -216686,6 +219839,17 @@ extension on _StringsTr {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -217638,8 +220802,6 @@ extension on _StringsTr {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -221318,24 +224480,34 @@ extension on _StringsTr {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -221344,6 +224516,12 @@ extension on _StringsTr {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -221487,10 +224665,6 @@ extension on _StringsTr {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -221513,11 +224687,6 @@ extension on _StringsTr {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -221737,7 +224906,7 @@ extension on _StringsTr {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -221745,7 +224914,7 @@ extension on _StringsTr {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -222101,6 +225270,86 @@ extension on _StringsTr {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
@@ -223438,6 +226687,8 @@ extension on _StringsVi {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -223509,6 +226760,17 @@ extension on _StringsVi {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -224461,8 +227723,6 @@ extension on _StringsVi {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -228139,24 +231399,34 @@ extension on _StringsVi {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -228165,6 +231435,12 @@ extension on _StringsVi {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -228308,10 +231584,6 @@ extension on _StringsVi {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -228334,11 +231606,6 @@ extension on _StringsVi {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -228558,7 +231825,7 @@ extension on _StringsVi {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -228566,7 +231833,7 @@ extension on _StringsVi {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -228922,6 +232189,86 @@ extension on _StringsVi {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
@@ -230245,6 +233592,8 @@ extension on _StringsZhCn {
         return '请先配置下载后端。';
       case 'download_clear_finished':
         return '清除已完成';
+      case 'download_detail_backend_offline':
+        return '原下载后端当前离线。这里仍显示已保存的任务信息，但实时参数暂不可用。';
       case 'download_network_proxy_auto':
         return '自动';
       case 'download_network_proxy_auto_hint':
@@ -230314,6 +233663,16 @@ extension on _StringsZhCn {
         return '请选择能识别字幕组的单集发布后再订阅；合集仍可单次下载。';
       case 'download_subscriptions_tab':
         return '订阅';
+      case 'download_task_action_failed':
+        return ({required Object error}) => '任务操作失败：${error}';
+      case 'download_task_delete':
+        return '删除任务';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) => '删除“${title}”的下载任务吗？';
+      case 'download_task_delete_files':
+        return '同时删除已下载文件';
+      case 'download_task_details':
+        return '查看详情';
       case 'download_tasks_tab':
         return '任务';
       case 'download_test_connection':
@@ -231262,8 +234621,6 @@ extension on _StringsZhCn {
         return '把本设备的词典上传同步到互联对端。';
       case 'interconnect_upload_section':
         return '上传到互联对端';
-      case 'interconnect_upload_section_footer':
-        return '选择本设备要把哪些内容上传到已连接的互联对端。与云备份、以及「启用互联」连接开关互不影响；默认全部关闭。';
       case 'interconnect_upload_video_files':
         return '上传视频文件';
       case 'interconnect_upload_video_files_hint':
@@ -234909,24 +238266,34 @@ extension on _StringsZhCn {
         return '当前下载后端不支持';
       case 'download_detail_task_gone':
         return '后端中找不到该任务';
+      case 'download_detail_task_missing':
+        return '原下载后端在线，但该 torrent 已不在引擎中。实时节点和 Tracker 无法恢复，这里显示已保存的任务信息。';
       case 'download_detail_section_transfer':
         return '传输';
       case 'download_detail_section_network':
         return '网络';
+      case 'download_detail_section_task':
+        return '任务';
       case 'download_detail_seeds_label':
         return '做种';
       case 'download_detail_leechers_label':
         return '下载者';
       case 'download_detail_connections_label':
         return '连接数';
+      case 'download_detail_content_path_label':
+        return '内容路径';
       case 'download_detail_time_active':
         return '活跃时长';
       case 'download_detail_time_seeding':
         return '做种时长';
+      case 'download_detail_total_size_label':
+        return '总大小';
       case 'download_detail_listen_port':
         return '监听端口';
       case 'download_detail_dht_nodes':
         return 'DHT 节点';
+      case 'download_detail_hash_label':
+        return '信息哈希';
       case 'download_detail_port_mapping':
         return '端口映射';
       case 'download_detail_session_rates':
@@ -234935,6 +238302,12 @@ extension on _StringsZhCn {
         return '分片';
       case 'download_detail_priority_skip':
         return '不下载';
+      case 'download_detail_raw_state_label':
+        return '后端状态';
+      case 'download_detail_remaining_label':
+        return '剩余大小';
+      case 'download_detail_save_path_label':
+        return '保存路径';
       case 'download_detail_priority_normal':
         return '普通';
       case 'download_detail_priority_high':
@@ -235078,10 +238451,6 @@ extension on _StringsZhCn {
         return '去下载';
       case 'collection_relation_bind':
         return '绑定到已有合集';
-      case 'collection_episode_scrape':
-        return '刮削分集资料';
-      case 'collection_episode_scrape_unbound':
-        return '请先刮削合集资料';
       case 'collection_episode_rename':
         return '按刮削重命名各集';
       case 'collection_episode_rename_title':
@@ -235104,11 +238473,6 @@ extension on _StringsZhCn {
         return '在 Bangumi 打开本集';
       case 'collection_relation_bound':
         return ({required Object name}) => '已绑定到 ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            '已更新 ${updated} 集 · 跳过 ${skipped} 集';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => '分集刮削失败：${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => '重命名 ${n} 集';
       case 'collection_split_done':
@@ -235315,7 +238679,7 @@ extension on _StringsZhCn {
       case 'video_source_scrape_confirmation_title':
         return '确认资料匹配';
       case 'video_source_scrape_confirmation_hint':
-        return '找到多个严格匹配结果。请选择正确作品，Hibiki 会保存其来源绑定。';
+        return '找到多个严格匹配结果。请选择正确作品，Fushi 会保存其来源绑定。';
       case 'video_source_scrape_confirmation_skip':
         return '跳过此作品';
       case 'video_source_scrape_nfo_policy':
@@ -235327,7 +238691,7 @@ extension on _StringsZhCn {
       case 'video_source_scrape_policy_missing_only':
         return '仅缺失时写入';
       case 'video_source_scrape_policy_overwrite':
-        return '更新 Hibiki 生成物';
+        return '更新 Fushi 生成物';
       case 'video_source_scrape_external_overwrite':
         return '允许覆盖受保护的 sidecar';
       case 'video_source_scrape_external_overwrite_hint':
@@ -235335,7 +238699,7 @@ extension on _StringsZhCn {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return '覆盖受保护的 sidecar？';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return '本批次可能替换第三方 NFO/图片，或你修改过的 Hibiki 生成物；视频文件本身不会改动。是否继续？';
+        return '本批次可能替换第三方 NFO/图片，或你修改过的 Fushi 生成物；视频文件本身不会改动。是否继续？';
       case 'video_source_scrape_tasks_open':
         return '后台任务';
       case 'video_source_scrape_background_started':
@@ -235686,6 +239050,86 @@ extension on _StringsZhCn {
         return '标签添加失败，请重试。';
       case 'tag_reorder_failed':
         return '标签排序保存失败，请重试。';
+      case 'download_task_error_summary_source_missing':
+        return '受管视频来源不存在或不可访问';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return '种子未能按哈希、标题、分类确认';
+      case 'download_task_error_summary_subtitle':
+        return '字幕不可用或未能安装';
+      case 'download_task_error_summary_backend_unavailable':
+        return '下载后端不可用或不再匹配';
+      case 'download_task_error_summary_legacy':
+        return '旧版导入数据需要处理';
+      case 'download_task_error_summary_torrent_info':
+        return '种子信息缺失或无法校验';
+      case 'download_task_error_summary_generic':
+        return '任务出错';
+      case 'download_task_error_view_detail':
+        return '查看详情';
+      case 'download_task_error_detail_title':
+        return '错误详情';
+      case 'download_task_error_copied':
+        return '错误详情已复制';
+      case 'download_task_lifecycle_active':
+        return '进行中';
+      case 'download_task_lifecycle_needs_attention':
+        return '需要处理';
+      case 'download_task_location_missing':
+        return '找不到该任务对应的文件位置。';
+      case 'download_task_location_open_failed':
+        return '无法打开文件位置。';
+      case 'download_task_open_location':
+        return '打开文件位置';
+      case 'download_task_lifecycle_completed':
+        return '已完成';
+      case 'download_task_lifecycle_failed':
+        return '已失败';
+      case 'download_task_lifecycle_cancelled':
+        return '已取消';
+      case 'download_task_stage_enqueue':
+        return '入队';
+      case 'download_task_stage_download':
+        return '下载';
+      case 'download_task_stage_organize':
+        return '整理';
+      case 'download_task_stage_subtitle':
+        return '字幕';
+      case 'download_task_stage_import':
+        return '入库';
+      case 'download_task_stage_scrape':
+        return '刮削';
+      case 'video_discovery_manual_identity_hint':
+        return '填写标题、外部 ID 和年份后才能搜索';
+      case 'collection_split_move_to':
+        return '移动到';
+      case 'collection_split_new_group':
+        return '新建分组';
+      case 'collection_split_selected':
+        return ({required Object n}) => '已选 ${n} 集';
+      case 'sync_pair_rate_limited':
+        return '尝试次数过多，请等几分钟后重试。';
+      case 'sync_pair_tls_failed':
+        return '证书校验失败：对端证书与已记录的指纹不符。';
+      case 'sync_pair_timeout':
+        return '对端没有及时响应。';
+      case 'sync_pair_expired':
+        return '配对会话已超时，请重新发起配对。';
+      case 'sync_pair_upgrade_required':
+        return '对方版本过旧，无法在当前网络下安全配对（需要 PIN）。请更新对方后重新配对。';
+      case 'sync_pair_fingerprint_changed_title':
+        return '证书已变更';
+      case 'sync_pair_fingerprint_stored_label':
+        return '此前已钉扎';
+      case 'sync_pair_fingerprint_new_label':
+        return '本次握手所见';
+      case 'sync_pair_fingerprint_retrust':
+        return '清除已存指纹并重新信任';
+      case 'sync_pair_fingerprint_changed_body':
+        return '这条地址此前钉扎的是另一张证书。只有在你确知对方重装/重置过设备时才继续，否则连接可能正被中间人拦截。';
+      case 'interconnect_upload_section_footer':
+        return '选择本设备要把哪些内容上传给已连接的互联对端。与云备份的同名开关互不影响，且默认全部关闭。本组开关只在「启用互联」打开时生效：关掉互联，这里的上传全部停止。';
+      case 'remote_delete_audiobook_partial':
+        return '书已在对端删除，但它的有声书没能删掉';
       default:
         return null;
     }
@@ -237014,6 +240458,8 @@ extension on _StringsZhHk {
         return 'Download backend is not configured yet.';
       case 'download_clear_finished':
         return 'Clear finished';
+      case 'download_detail_backend_offline':
+        return 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
       case 'download_network_proxy_auto':
         return 'Auto';
       case 'download_network_proxy_auto_hint':
@@ -237085,6 +240531,17 @@ extension on _StringsZhHk {
         return 'Choose a single-episode release with a recognizable release group to subscribe.';
       case 'download_subscriptions_tab':
         return 'Subscriptions';
+      case 'download_task_action_failed':
+        return ({required Object error}) => 'The task action failed: ${error}';
+      case 'download_task_delete':
+        return 'Delete task';
+      case 'download_task_delete_confirm':
+        return ({required Object title}) =>
+            'Delete the download task for ${title}?';
+      case 'download_task_delete_files':
+        return 'Also delete downloaded files';
+      case 'download_task_details':
+        return 'View details';
       case 'download_tasks_tab':
         return 'Tasks';
       case 'download_test_connection':
@@ -238035,8 +241492,6 @@ extension on _StringsZhHk {
         return 'Sync this device\'s dictionaries up to the interconnect peer.';
       case 'interconnect_upload_section':
         return 'Upload to interconnect peer';
-      case 'interconnect_upload_section_footer':
-        return 'Choose what this device uploads to the connected peer. Independent from cloud backup and from the Enable interconnect toggle — off by default.';
       case 'interconnect_upload_video_files':
         return 'Upload video files';
       case 'interconnect_upload_video_files_hint':
@@ -241697,24 +245152,34 @@ extension on _StringsZhHk {
         return 'Not supported by current download backend';
       case 'download_detail_task_gone':
         return 'Task not found in backend';
+      case 'download_detail_task_missing':
+        return 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
       case 'download_detail_section_transfer':
         return 'Transfer';
       case 'download_detail_section_network':
         return 'Network';
+      case 'download_detail_section_task':
+        return 'Task';
       case 'download_detail_seeds_label':
         return 'Seeds';
       case 'download_detail_leechers_label':
         return 'Leechers';
       case 'download_detail_connections_label':
         return 'Connections';
+      case 'download_detail_content_path_label':
+        return 'Content path';
       case 'download_detail_time_active':
         return 'Active time';
       case 'download_detail_time_seeding':
         return 'Seeding time';
+      case 'download_detail_total_size_label':
+        return 'Total size';
       case 'download_detail_listen_port':
         return 'Listen port';
       case 'download_detail_dht_nodes':
         return 'DHT nodes';
+      case 'download_detail_hash_label':
+        return 'Info hash';
       case 'download_detail_port_mapping':
         return 'Port mapping';
       case 'download_detail_session_rates':
@@ -241723,6 +245188,12 @@ extension on _StringsZhHk {
         return 'Pieces';
       case 'download_detail_priority_skip':
         return 'Don\'t download';
+      case 'download_detail_raw_state_label':
+        return 'Backend state';
+      case 'download_detail_remaining_label':
+        return 'Remaining';
+      case 'download_detail_save_path_label':
+        return 'Save path';
       case 'download_detail_priority_normal':
         return 'Normal';
       case 'download_detail_priority_high':
@@ -241866,10 +245337,6 @@ extension on _StringsZhHk {
         return 'Download';
       case 'collection_relation_bind':
         return 'Bind to existing collection';
-      case 'collection_episode_scrape':
-        return 'Fetch episode details';
-      case 'collection_episode_scrape_unbound':
-        return 'Scrape the collection first';
       case 'collection_episode_rename':
         return 'Rename episodes from scrape';
       case 'collection_episode_rename_title':
@@ -241892,11 +245359,6 @@ extension on _StringsZhHk {
         return 'Open this episode on Bangumi';
       case 'collection_relation_bound':
         return ({required Object name}) => 'Bound to ${name}';
-      case 'collection_episode_scrape_result':
-        return ({required Object updated, required Object skipped}) =>
-            'Updated ${updated} episodes, skipped ${skipped}';
-      case 'collection_episode_scrape_failed':
-        return ({required Object error}) => 'Episode scrape failed: ${error}';
       case 'collection_episode_rename_apply':
         return ({required Object n}) => 'Rename ${n} episodes';
       case 'collection_split_done':
@@ -242116,7 +245578,7 @@ extension on _StringsZhHk {
       case 'video_source_scrape_policy_missing_only':
         return 'Only when missing';
       case 'video_source_scrape_policy_overwrite':
-        return 'Update Hibiki files';
+        return 'Update Fushi files';
       case 'video_source_scrape_external_overwrite':
         return 'Allow protected sidecar overwrite';
       case 'video_source_scrape_external_overwrite_hint':
@@ -242124,7 +245586,7 @@ extension on _StringsZhHk {
       case 'video_source_scrape_external_overwrite_confirm_title':
         return 'Overwrite protected sidecars?';
       case 'video_source_scrape_external_overwrite_confirm_body':
-        return 'This batch may replace third-party NFO/images or Hibiki files you edited. Media files are not changed. Continue?';
+        return 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
       case 'video_source_scrape_tasks_open':
         return 'Background tasks';
       case 'video_source_scrape_background_started':
@@ -242480,6 +245942,86 @@ extension on _StringsZhHk {
         return 'Couldn\'t add the tag. Please try again.';
       case 'tag_reorder_failed':
         return 'Couldn\'t save the new tag order. Please try again.';
+      case 'download_task_error_summary_source_missing':
+        return 'Managed video source is missing or inaccessible';
+      case 'download_task_error_summary_backend_unconfirmed':
+        return 'Torrent could not be confirmed by hash, title, and category';
+      case 'download_task_error_summary_subtitle':
+        return 'Subtitles are unavailable or could not be installed';
+      case 'download_task_error_summary_backend_unavailable':
+        return 'Download backend is unavailable or no longer matches';
+      case 'download_task_error_summary_legacy':
+        return 'Legacy import needs manual attention';
+      case 'download_task_error_summary_torrent_info':
+        return 'Torrent identity is missing or unverifiable';
+      case 'download_task_error_summary_generic':
+        return 'The task hit an error';
+      case 'download_task_error_view_detail':
+        return 'View details';
+      case 'download_task_error_detail_title':
+        return 'Error details';
+      case 'download_task_error_copied':
+        return 'Error details copied';
+      case 'download_task_lifecycle_active':
+        return 'In progress';
+      case 'download_task_lifecycle_needs_attention':
+        return 'Needs attention';
+      case 'download_task_location_missing':
+        return 'The task file location is unavailable.';
+      case 'download_task_location_open_failed':
+        return 'Could not open the file location.';
+      case 'download_task_open_location':
+        return 'Show in folder';
+      case 'download_task_lifecycle_completed':
+        return 'Completed';
+      case 'download_task_lifecycle_failed':
+        return 'Failed';
+      case 'download_task_lifecycle_cancelled':
+        return 'Cancelled';
+      case 'download_task_stage_enqueue':
+        return 'Enqueue';
+      case 'download_task_stage_download':
+        return 'Download';
+      case 'download_task_stage_organize':
+        return 'Organize';
+      case 'download_task_stage_subtitle':
+        return 'Subtitles';
+      case 'download_task_stage_import':
+        return 'Import';
+      case 'download_task_stage_scrape':
+        return 'Scrape';
+      case 'video_discovery_manual_identity_hint':
+        return 'Enter the title, external ID and year above to enable search';
+      case 'collection_split_move_to':
+        return 'Move to';
+      case 'collection_split_new_group':
+        return 'New group';
+      case 'collection_split_selected':
+        return ({required Object n}) => '${n} selected';
+      case 'sync_pair_rate_limited':
+        return 'Too many attempts. Wait a few minutes and try again.';
+      case 'sync_pair_tls_failed':
+        return 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+      case 'sync_pair_timeout':
+        return 'The peer did not respond in time.';
+      case 'sync_pair_expired':
+        return 'Pairing timed out. Start pairing again from this device.';
+      case 'sync_pair_upgrade_required':
+        return 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+      case 'sync_pair_fingerprint_changed_title':
+        return 'Certificate changed';
+      case 'sync_pair_fingerprint_stored_label':
+        return 'Pinned earlier';
+      case 'sync_pair_fingerprint_new_label':
+        return 'Seen now';
+      case 'sync_pair_fingerprint_retrust':
+        return 'Clear and trust again';
+      case 'sync_pair_fingerprint_changed_body':
+        return 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+      case 'interconnect_upload_section_footer':
+        return 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+      case 'remote_delete_audiobook_partial':
+        return 'Book deleted, but its audiobook could not be removed on the paired device';
       default:
         return null;
     }
