@@ -594,7 +594,7 @@ class AppModel with ChangeNotifier {
       navigatorKey: navigatorKey,
       db: database,
       views: views,
-      highWaterMs: report.deletionTombstonesHighWaterMs,
+      highWaterMsByScope: report.deletionTombstonesHighWaterMsByScope,
       applyDeletions: _applyConfirmedDeletions,
       source: ConflictSource.auto,
       inBook: isMediaOpen,
@@ -2160,8 +2160,16 @@ class AppModel with ChangeNotifier {
       //    selection to the independent interconnect toggle (interconnect and a
       //    cloud backup backend can now coexist).
       await BackupService.recoverPendingImport(_databaseDirectory.path);
+      //    cloud backup backend can now coexist);
+      // 4) BUG-1576: drop the pre-decoupling GLOBAL folder cache. Two channels
+      //    took turns writing that single pair of keys, so its value can no
+      //    longer be attributed to any one remote — and an interconnect/WebDAV
+      //    folderId is an ABSOLUTE URL, which the other channel would then hit
+      //    (Basic credentials attached). It is a pure cache: every backend
+      //    re-resolves its root/book folders by name on the next sweep.
       await SyncRepository(_database).migrateSmbToWebDav();
       await SyncRepository(_database).migrateInterconnectBackendToToggle();
+      await SyncRepository(_database).migrateFolderCacheToPerChannel();
 
       /// Prepare all repositories (objects created first, then loaded in
       /// parallel to avoid serial await chains).
@@ -3762,6 +3770,7 @@ class AppModel with ChangeNotifier {
       ],
       backendResolver: _resolveVideoDownloadBackend,
       scrapeCoordinator: scrape,
+      onBackendTaskAdded: _checkpointEmbeddedVideoDownload,
     )..start();
     _videoDownloadPipelineService = pipeline;
     _videoDownloadSubscriptionService = VideoDownloadSubscriptionService(
@@ -3870,6 +3879,28 @@ class AppModel with ChangeNotifier {
     };
     _animeDownloadPlanIds = ids;
     return ids;
+  }
+
+  /// The pipeline persists `stage=download` only after this checkpoint. This
+  /// closes the one-minute periodic-save gap where an unclean app exit could
+  /// leave Drift tracking a torrent that the embedded engine cannot restore.
+  Future<void> _checkpointEmbeddedVideoDownload(
+    VideoDownloadJobRow job,
+  ) async {
+    if (job.backendKind != QbConnectionConfig.backendEmbedded) return;
+    final EmbeddedTorrentHost? host = _embeddedTorrentHost;
+    if (host == null) return;
+    try {
+      final AnimeDownloadPlanStore? store = _animeDownloadPlanStore;
+      final Set<String> keepIds = store == null
+          ? legacyEmbeddedTorrentResumeIds(
+              await database.getVideoDownloadJobs(),
+            )
+          : await _refreshAnimeDownloadPlanIds(store);
+      host.saveResumeSnapshot(keepIds, force: true);
+    } catch (e) {
+      debugPrint('[torrent] post-enqueue resume checkpoint failed: $e');
+    }
   }
 
   /// TODO-1961-a：启动时按需恢复上次的内置引擎会话。
@@ -4300,27 +4331,45 @@ class AppModel with ChangeNotifier {
     }
   }
 
-  /// Best-effort removal of a deleted dictionary's package from the remote sync
-  /// staging namespace (BUG-086). Only runs when dictionary sync is enabled and
-  /// the backend is configured/authenticated; offline / unconfigured / errors
-  /// are swallowed (logged) so a local delete never depends on the network.
-  /// Serialized through the sync mutex so it can't race an in-flight sync on the
-  /// singleton backend (the BUG-083 hazard).
+  /// Best-effort removal of a deleted dictionary's package from **每条启用的同步
+  /// 通道** 的远端暂存命名空间（BUG-086 的删除传播 + BUG-1566 的通道覆盖）。
+  ///
+  /// BUG-1566 根因：这里原来只按「云备份 backendType」解析出的那一条通道去删，
+  /// 门控也只读云备份的 `isSyncDictionaryEnabled`。用户「云备份=Google
+  /// Drive + 互联启用」时，删词典只把云暂存删了，互联对端上那份原封不动；而词典是并集
+  /// 同步（[SyncOrchestrator] 的词典维度），下一轮又被拉回来 → 幽灵词典永远删不掉。
+  /// 通道枚举必须复用同步真正跑的那份 [enabledSyncChannelBackends]（云 + 已启用互联），
+  /// 门控按通道走 [resolveChannelSyncFlags]（互联通道读互联专属上传开关，BUG-988 语义）。
+  ///
+  /// 每条通道各自认证成功才动手；未配置/离线/出错的通道只记账并继续下一条——一条云通道
+  /// 掉线不得挡住互联通道的删除传播（BUG-1552 同型的通道隔离）。整体仍在
+  /// [runExclusiveWithSync] 里串行，避免与在飞同步抢单例后端（BUG-083）。本地删除从不
+  /// 依赖网络：所有错误都被吞掉（记 log）。
   Future<void> _propagateDictionaryDeleteToRemote(String name) async {
     try {
       final SyncRepository repo = SyncRepository(database);
-      if (!await repo.isSyncDictionaryEnabled()) return;
-      final SyncBackend backend =
-          resolveSyncBackend(await repo.getBackendType());
+      final List<SyncChannel> channels = await enabledSyncChannelBackends(repo);
       await runExclusiveWithSync(() async {
-        if (!await backend.restoreAuth(repo)) return;
-        if (!await backend.isAuthenticated) return;
-        // 互联（live）后端直接走 host DELETE 端点；云后端走暂存删除路径。
-        if (backend is InterconnectSyncBackend) {
-          await backend.deleteRemoteDictionary(name);
-          return;
+        for (final SyncChannel channel in channels) {
+          try {
+            final ChannelSyncFlags flags = await resolveChannelSyncFlags(
+              repo,
+              isInterconnect: channel.isInterconnect,
+            );
+            if (!flags.syncDictionary) continue;
+            final SyncBackend backend = channel.backend;
+            if (!await backend.restoreAuth(repo)) continue;
+            if (!await backend.isAuthenticated) continue;
+            // 互联（live）后端直接走 host DELETE 端点；云后端走暂存删除路径。
+            if (backend is InterconnectSyncBackend) {
+              await backend.deleteRemoteDictionary(name);
+              continue;
+            }
+            await deleteRemoteDictionaryAsset(backend, name);
+          } catch (e, stack) {
+            ErrorLogService.instance.log('deleteDictionary.remote', e, stack);
+          }
         }
-        await deleteRemoteDictionaryAsset(backend, name);
       });
     } catch (e, stack) {
       ErrorLogService.instance.log('deleteDictionary.remote', e, stack);
@@ -5356,6 +5405,11 @@ class AppModel with ChangeNotifier {
 
   Future<void> closeDatabase() async {
     _isInitialised = false;
+    // BUG-1569②：合集观察者持有本库的表订阅 + 未决防抖 Timer，关库前必须撤——
+    // 否则防抖到点后 _runCollectionsSync 会对已关闭的 db 发起查询（drift「connection
+    // was closed」异常）。initialise 装载（installCollectionsSyncWatcher），此前只有
+    // 测试 teardown 调过 uninstall，生产三条关库路径全都不撤订阅。
+    uninstallCollectionsSyncWatcher();
     databaseCloseNotifier.notifyListeners();
     await quiesceBackgroundDatabaseWriters();
     await _database.close();
@@ -5368,6 +5422,9 @@ class AppModel with ChangeNotifier {
   }
 
   Future<void> closeForPopup() async {
+    // BUG-1569②：与 [closeDatabase] 同理——撤合集观察者，防止防抖 Timer 对已
+    // 关闭的 db 跑轻量同步。
+    uninstallCollectionsSyncWatcher();
     _prefsRepo?.removeListener(notifyListeners);
     databaseCloseNotifier.notifyListeners();
     await _database.close();
@@ -5383,9 +5440,17 @@ class AppModel with ChangeNotifier {
       // syncServerController 是 late final 带初始化器（读即构造）：仅在已 init（即已被
       // startIfEnabled 构造）时读它，避免「从未 init 却只为销毁而构造」。它既是常驻
       // 服务又是 ChangeNotifier，故 stop() 后还需 dispose()。
+      // BUG-1573：dispose() 现在**自己**拆掉广播 / server / LAN 发现浏览器，并在
+      // `_disposed` 后把 notifyListeners 变成 no-op —— 原来这两行的顺序（同步的
+      // dispose 之后 stop 才恢复执行）必然让 stop 尾部的 notify 撞
+      // 「dispose 后不得 notify」断言。stop 现在对并发调用幂等，这一行保留只是让
+      // 关停在 dispose 之前就开始。
       unawaited(syncServerController.stop());
       syncServerController.dispose();
     }
+    // BUG-1569②：合集观察者是模块级全局（幂等，未装载时 no-op），dispose 路径
+    // 也对称撤掉，防止未决防抖 Timer 在 AppModel 销毁后仍去摸 db。
+    uninstallCollectionsSyncWatcher();
     // 其余三个 stop 都 null 安全 / 单例安全，未启动也可调，无需 _isInitialised 守卫。
     unawaited(TexthookerWsClientManager.instance.stop());
     unawaited(stopYomitanApiServer());
@@ -6262,16 +6327,13 @@ class AppModel with ChangeNotifier {
             rawPayloadJson: jsonEncode(fields),
             context: const AnkiMiningContext(sentence: ''),
           );
-          // 牌组名仅 success 需要（避免给失败分支白白 loadSettings）。
-          final String deckName = outcome.result == MineResult.success
-              ? (await repo.loadSettings()).selectedDeckName ?? ''
-              : '';
+          // 牌组名由后端随成功结果带回（outcome.deckName，BUG-1549）。
           final ({
             String message,
             bool success,
             bool record,
             MineToastStatus status
-          }) described = describeMineOutcome(outcome, deckName: deckName);
+          }) described = describeMineOutcome(outcome);
           FushiToast.show(
             msg: described.message,
             severity: mineToastSeverity(described.status),
@@ -6405,9 +6467,12 @@ RemoteMineResult remoteMineResultFromOutcome(MineOutcome outcome) {
     case MineResult.success:
       final String? warn = outcome.audioWarning;
       // 部分成功：卡建好了但单词远程音频落空 → 回传警告让扩展区分「真成功 / 没音频」。
-      return warn != null && warn.isNotEmpty
-          ? RemoteMineResult(result: outcome.result.name, message: warn)
-          : RemoteMineResult(result: outcome.result.name);
+      // BUG-1549：实际落卡的牌组名一并回传，供互联客户端的成功 toast 显示。
+      return RemoteMineResult(
+        result: outcome.result.name,
+        message: warn != null && warn.isNotEmpty ? warn : null,
+        deckName: outcome.deckName,
+      );
     case MineResult.duplicate:
     case MineResult.notConfigured:
       return RemoteMineResult(result: outcome.result.name);
@@ -6435,6 +6500,7 @@ RemoteMineResult remoteMineError(
 class _AppModelRemoteLookupService
     implements
         FushiRemoteLookupService,
+        FushiRemoteTimedPopupLookupService,
         FushiRemoteMiningService,
         FushiRemoteHistoryService {
   const _AppModelRemoteLookupService(this._appModel);
@@ -6759,14 +6825,185 @@ class _AppModelRemoteLookupService
     required bool wildcards,
     required int maximumTerms,
   }) async {
-    final DictionarySearchResult result = await _appModel.searchDictionary(
+    final DictionarySearchResult source = await _appModel.searchDictionary(
       searchTerm: term,
       searchWithWildcards: wildcards,
       overrideMaximumTerms: maximumTerms,
-      useCache: false,
+      // 浏览器 Shift 与 Side Panel 都会在同一词上反复落点。禁用结果缓存会在 FFI
+      // 原始结果已命中时仍重复构造 DictionaryEntry 和 popupJson（冷后每次仍需数十
+      // 毫秒）；词典/排序/隐藏项设置的所有写路径都会统一清该缓存，因此这里安全复用。
+      useCache: true,
       allowRemoteLookup: false,
     );
-    return result.entries.isEmpty ? null : result;
+    if (source.entries.isEmpty) return null;
+    // scrollPosition 是 DictionarySearchResult 唯一的可变字段。远端传输复用缓存内容，
+    // 但不能把本地历史/页面滚动位置的对象别名暴露给远端 record/full-result 调用方。
+    final DictionarySearchResult result = DictionarySearchResult(
+      searchTerm: source.searchTerm,
+      entries: source.entries,
+      bestLength: source.bestLength,
+      scrollPosition: 0,
+      kanjiResults: source.kanjiResults,
+      truncated: source.truncated,
+      headwordCount: source.headwordCount,
+    );
+    result.popupJson = source.popupJson;
+    return result;
+  }
+
+  @override
+  Future<RemoteDictionaryPopupLookup?> searchDictionaryPopup({
+    required String term,
+    required bool wildcards,
+    required int maximumTerms,
+  }) =>
+      _searchDictionaryPopup(
+        term: term,
+        wildcards: wildcards,
+        maximumTerms: maximumTerms,
+      );
+
+  @override
+  Future<RemoteDictionaryPopupLookup?> searchDictionaryPopupWithTiming({
+    required String term,
+    required bool wildcards,
+    required int maximumTerms,
+    required RemoteDictionaryPopupTiming timing,
+  }) =>
+      _searchDictionaryPopup(
+        term: term,
+        wildcards: wildcards,
+        maximumTerms: maximumTerms,
+        timing: timing,
+      );
+
+  Future<RemoteDictionaryPopupLookup?> _searchDictionaryPopup({
+    required String term,
+    required bool wildcards,
+    required int maximumTerms,
+    RemoteDictionaryPopupTiming? timing,
+  }) async {
+    timing?.reset();
+    final Stopwatch? serviceWatch =
+        timing == null ? null : (Stopwatch()..start());
+    Stopwatch? startPhase() => timing == null ? null : (Stopwatch()..start());
+    int finishPhase(Stopwatch? watch) {
+      watch?.stop();
+      return watch?.elapsedMicroseconds ?? 0;
+    }
+
+    try {
+      // 与 AppModel.searchDictionary 完全相同的规范化与缓存键；wildcards 当前在本地 FFI
+      // 路径没有不同语义，未来若实现本地通配符，须将它纳入两种缓存键。
+      final Stopwatch? normalizeWatch = startPhase();
+      final String searchTerm = normalizeSearchTerm(
+        term,
+        emojiRegex: AppModel._emojiRegex,
+        punctuationRegex: AppModel._punctuationRegex,
+        loneSurrogateRegex: AppModel._loneSurrogateRegex,
+      );
+      if (timing != null) {
+        timing.normalizeMicros = finishPhase(normalizeWatch);
+      }
+      if (searchTerm.trim().isEmpty) return null;
+
+      final String searchCacheKey = buildSearchCacheKey(
+        term: searchTerm,
+        maxTerms: maximumTerms,
+        maxResults: maximumTerms,
+      );
+      final Stopwatch? popupCacheWatch = startPhase();
+      final DictionaryPopupCacheEntry? cachedPopup =
+          _appModel.dictRepo.getCachedPopupSearch(searchCacheKey);
+      if (timing != null) {
+        timing.popupCacheMicros = finishPhase(popupCacheWatch);
+      }
+      if (cachedPopup != null) {
+        if (timing != null) timing.cache = 'popup';
+        return RemoteDictionaryPopupLookup(
+          popupJson: cachedPopup.popupJson,
+          bestLength: cachedPopup.bestLength,
+        );
+      }
+
+      // App 内刚查过同一个词时直接复用完整结果；这里不复制 entries，也不触碰唯一可变的
+      // scrollPosition。把紧凑快照写入专用 LRU，后续扩展请求不再依赖完整结果常驻。
+      final Stopwatch? fullCacheWatch = startPhase();
+      final DictionarySearchResult? cachedFull =
+          _appModel.dictRepo.getCachedSearch(searchCacheKey);
+      if (timing != null) {
+        timing.fullCacheMicros = finishPhase(fullCacheWatch);
+      }
+      if (cachedFull != null &&
+          cachedFull.entries.isNotEmpty &&
+          cachedFull.popupJson != null) {
+        if (timing != null) timing.cache = 'full';
+        final DictionaryPopupCacheEntry entry = (
+          popupJson: cachedFull.popupJson!,
+          bestLength: cachedFull.bestLength,
+        );
+        _appModel.dictRepo.cachePopupSearch(searchCacheKey, entry);
+        return RemoteDictionaryPopupLookup(
+          popupJson: entry.popupJson,
+          bestLength: entry.bestLength,
+        );
+      }
+
+      if (!FushiDicts.isInitialized) return null;
+      final String ffiCacheKey = buildFfiLookupCacheKey(
+        term: searchTerm,
+        maxResults: maximumTerms,
+      );
+      final Stopwatch? ffiCacheWatch = startPhase();
+      List<FushiLookupResult>? ffiResults =
+          _appModel.dictRepo.getCachedFfiLookup(ffiCacheKey);
+      if (timing != null) {
+        timing.ffiCacheMicros = finishPhase(ffiCacheWatch);
+      }
+      if (ffiResults != null && timing != null) timing.cache = 'ffi';
+      if (ffiResults == null) {
+        final Stopwatch? ffiLookupWatch = startPhase();
+        ffiResults = FushiDicts.instance.lookup(
+          searchTerm,
+          maxResults: maximumTerms,
+        );
+        if (timing != null) {
+          timing.ffiLookupMicros = finishPhase(ffiLookupWatch);
+        }
+        if (ffiResults.isNotEmpty) {
+          _appModel.dictRepo.cacheFfiLookup(ffiCacheKey, ffiResults);
+        }
+      }
+      if (ffiResults.isEmpty) return null;
+
+      int bestLength = 0;
+      for (final FushiLookupResult result in ffiResults) {
+        if (result.matched.length > bestLength) {
+          bestLength = result.matched.length;
+        }
+      }
+      final Stopwatch? popupJsonWatch = startPhase();
+      final String popupJson = buildPopupJsonFromLookup(
+        results: ffiResults,
+        maximumTerms: maximumTerms,
+      );
+      if (timing != null) {
+        timing.popupJsonMicros = finishPhase(popupJsonWatch);
+      }
+      final DictionaryPopupCacheEntry entry = (
+        popupJson: popupJson,
+        bestLength: bestLength,
+      );
+      _appModel.dictRepo.cachePopupSearch(searchCacheKey, entry);
+      return RemoteDictionaryPopupLookup(
+        popupJson: entry.popupJson,
+        bestLength: entry.bestLength,
+      );
+    } finally {
+      if (timing != null) {
+        timing.serviceTotalMicros = finishPhase(serviceWatch);
+      }
+    }
   }
 
   @override
