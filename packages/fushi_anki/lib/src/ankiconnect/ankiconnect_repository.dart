@@ -1091,7 +1091,7 @@ class AnkiConnectRepository extends BaseAnkiRepository {
   Future<bool> isDuplicate(String expression, String reading) async {
     if (expression.isEmpty) return false;
     // 不可达冷却窗内直接判「非重复」（BUG-1302）。查重仍是渲染路径上**逐词条**发起的
-    // 装饰性探测，但 BUG-1543 已把同一波桥调用汇成一次 canAddNotes。冷却仍不可少：
+    // 装饰性探测，但 BUG-1593 已把同一波桥调用汇成一次 canAddNotes。冷却仍不可少：
     // AnkiConnect 被防火墙丢包 / VPN 断开 / 配成离线远端时，若没有它，每次新弹窗
     // 都会重新付一次完整连接超时（5s，BUG-665 已给连接阶段单独设限）。
     //

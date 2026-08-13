@@ -33,20 +33,20 @@
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-1596](bugs/BUG-1596-windows-runtime-lock-preflight.md) | ✅ | ✅ | Windows 完整打包未提前检查运行组件占用 |
+| [BUG-1595](bugs/BUG-1595-injector-attach-target-exit.md) | ✅ | ✅ | 附着模式游戏退出后 injector 不结束 |
+| [BUG-1594](bugs/BUG-1594-gal-overlay-loses-topmost.md) | ✅ | ✅ | Galgame文字悬浮窗切换窗口后丢失置顶 |
+| [BUG-1593](bugs/BUG-1593-anki-duplicate-check-findnotes-serial.md) | ✅ | ✅ | 词条逐个 findNotes 查重导致已制卡标记延迟 |
+| [BUG-1592](bugs/BUG-1592-anki-localhost-prefers-ipv6.md) | ✅ | ✅ | AnkiConnect 使用 localhost 时优先连接 IPv6，导致本机请求延迟或失败 |
+| [BUG-1591](bugs/BUG-1591-luna-safe-attach-double-hook-crash.md) | ✅ | ✅ | Luna 与 Fushi 双 Hook 导致游戏闪退 |
+| [BUG-1590](bugs/BUG-1590-luna-mine-before-audio-boundary.md) | ✅ | ✅ | Luna 当前句制卡提前截断录音导致卡片无音频 |
+| [BUG-1589](bugs/BUG-1589-local-windows-build-misses-gal-helper.md) | ✅ | ✅ | 本地 Windows 构建成功但未打包 galgame helper |
+| [BUG-1588](bugs/BUG-1588-windows-build-bundle-prefix.md) | ✅ | ✅ | Windows 构建 bundle 安装目标误指向 Program Files |
+| [BUG-1587](bugs/BUG-1587-alt-wheel-entry-scroll.md) | ✅ | ✅ | 查词窗口 Alt+滚轮词条定位与顶部回退 |
 | [BUG-1586](bugs/BUG-1586-gal-workbench-selection-stall.md) | ✅ | ✅ | Gal 捕获工作台句子选择被旧音轨请求阻塞 |
 | [BUG-1557](bugs/BUG-1557-windows-sqlite-native-asset-cache.md) | ✅ | ✅ | Windows SQLite 原生资产缓存目录不稳定导致重复下载失败 |
 | [BUG-1556](bugs/BUG-1556-helper-runtime-downgrade.md) | ✅ | ✅ | Windows 本地构建旧归档将新版捕获组件降级 |
 | [BUG-1555](bugs/BUG-1555-windows-onnx-runtime-cache.md) | ✅ | ✅ | Windows 一键构建 ONNX Runtime 下载失败且 clean 重复下载 |
-| [BUG-1546](bugs/BUG-1546-windows-runtime-lock-preflight.md) | ✅ | ✅ | Windows 完整打包未提前检查运行组件占用 |
-| [BUG-1545](bugs/BUG-1545-injector-attach-target-exit.md) | ✅ | ✅ | 附着模式游戏退出后 injector 不结束 |
-| [BUG-1544](bugs/BUG-1544-gal-overlay-loses-topmost.md) | ✅ | ✅ | Galgame文字悬浮窗切换窗口后丢失置顶 |
-| [BUG-1543](bugs/BUG-1543-anki-duplicate-check-findnotes-serial.md) | ✅ | ✅ | 词条逐个 findNotes 查重导致已制卡标记延迟 |
-| [BUG-1542](bugs/BUG-1542-anki-localhost-prefers-ipv6.md) | ✅ | ✅ | AnkiConnect 使用 localhost 时优先连接 IPv6，导致本机请求延迟或失败 |
-| [BUG-1541](bugs/BUG-1541-luna-safe-attach-double-hook-crash.md) | ✅ | ✅ | Luna 与 Fushi 双 Hook 导致游戏闪退 |
-| [BUG-1540](bugs/BUG-1540-luna-mine-before-audio-boundary.md) | ✅ | ✅ | Luna 当前句制卡提前截断录音导致卡片无音频 |
-| [BUG-1539](bugs/BUG-1539-local-windows-build-misses-gal-helper.md) | ✅ | ✅ | 本地 Windows 构建成功但未打包 galgame helper |
-| [BUG-1538](bugs/BUG-1538-windows-build-bundle-prefix.md) | ✅ | ✅ | Windows 构建 bundle 安装目标误指向 Program Files |
-| [BUG-1537](bugs/BUG-1537-alt-wheel-entry-scroll.md) | ✅ | ✅ | 查词窗口 Alt+滚轮词条定位与顶部回退 |
 | [BUG-1536](bugs/BUG-1536-horizontal-row-steals-vertical-wheel.md) | ✅ | ✅ | 视频首页横滚行抢走整页纵向滚动（应 Shift+滚轮才横滚） |
 | [BUG-1516](bugs/BUG-1516-update-manifest-dead-asset-404.md) | ✅ | ✅ | 更新清单保留已被 prune 的资产条目，客户端下载必 404 |
 | [BUG-1515](bugs/BUG-1515-parent-extras-split-series.md) | ✅ | ✅ | 父作品短篇被错误拆成独立系列卡 |

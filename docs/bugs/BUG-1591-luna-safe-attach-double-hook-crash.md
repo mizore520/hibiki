@@ -1,4 +1,4 @@
-## BUG-1541 · Luna 与 Fushi 双 Hook 导致游戏闪退
+## BUG-1591 · Luna 与 Fushi 双 Hook 导致游戏闪退
 - **报告**：2026-08-10（用户：LunaTranslator 单独使用几乎不闪退，同时附着 Fushi 后游戏偶发闪退，严重影响游戏体验）
 - **真实性**：✅ 真 bug。Windows WER 在 2026-08-08 至 2026-08-10 的四次 `SiglusEngine.exe` 崩溃报告中同时记录了 LunaTranslator 的 `LunaHook32.dll` 与 Fushi 的 `fushi_voice_hook.dll`；其中三次访问冲突直接落在 `LunaHook32.dll`。代码侧 `native/galgame_hook/hook/adapters/text_render_adapter.inc:222`、`native/galgame_hook/hook/adapter_registry.inc:63` 还会为 Siglus 安装与 Luna 同源目标的精确文本 Hook。此前 `fushi/lib/src/mining/gal_hook_session_controller.dart:1204` 的附着路径无条件执行位数探测与 native engine 注入，用户之后选择 Luna 原文只切换文本/音频来源，并不会卸掉已进入游戏的 Fushi Hook。
 - **[x] ① 已修复** — 新增按 exe 记忆的「Fushi 原生附着 / Luna 安全附着」选择。安全方式在 `startAttachedCapture` 的注入分流之前生效，只接收 Luna 原文并开启系统 Loopback；不执行目标位数探测、不解析 injector、不创建 native engine source，且保留既有 Luna 句界、前置量、尾部裁剪与当前句制卡等待逻辑。原生方式保持旧附着流程。

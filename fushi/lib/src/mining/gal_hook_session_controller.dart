@@ -2928,7 +2928,7 @@ class GalHookSessionController extends ChangeNotifier {
       _markLineAudioMissing(lineId, 'line_context_unavailable');
       return null;
     }
-    // BUG-1540：Luna 没有游戏侧语音时间戳，当前句只能等「下一条原文」或
+    // BUG-1590：Luna 没有游戏侧语音时间戳，当前句只能等「下一条原文」或
     // 30 秒上限才能知道准确终点。点击制卡只冻结文本/截图请求，不能把尚在播放的
     // 音频提前截断；否则卡会先以空音频落地，后续封口也没有机会回填。
     await _waitForPendingLunaLoopbackBoundary(entry);
@@ -4046,7 +4046,7 @@ class GalHookSessionController extends ChangeNotifier {
     // 补录窗口挂在会话音源上，会话停就必须先收束（丢弃取音）：否则临时 loopback
     // 源泄漏，超时回调还会往已结束的会话行里写状态。
     await finishLineRecapture(discard: true);
-    // BUG-1540：停止捕获也是 Luna 最后一条台词的明确边界。音源仍活着时先冻结，
+    // BUG-1590：停止捕获也是 Luna 最后一条台词的明确边界。音源仍活着时先冻结，
     // 再让被唤醒的制卡任务排进音频队列并执行完；否则下面清缓存/停音源会把一张
     // 已经点下去的卡变成无音频。
     await _flushAllLoopbackFreezes();
