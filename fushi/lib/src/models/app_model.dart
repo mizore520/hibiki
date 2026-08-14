@@ -74,6 +74,7 @@ import 'package:fushi/src/media/torrent/anime_download_subtitle_resolver.dart';
 import 'package:fushi/src/media/torrent/anime_download_subscription.dart';
 import 'package:fushi/src/media/torrent/torrent_memory.dart';
 import 'package:fushi/src/media/video/dandanplay_client.dart';
+import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
 import 'package:fushi/src/media/video/download/video_download_backend_identity.dart';
 import 'package:fushi/src/media/video/download/video_download_path_mapping.dart';
 import 'package:fushi/src/media/video/download/video_download_pipeline_service.dart';
@@ -3175,6 +3176,14 @@ class AppModel with ChangeNotifier {
 
   Future<void> setVideoRespectAssStyle(bool value) =>
       prefsRepo.setVideoRespectAssStyle(value);
+
+  VideoSubtitleLanguageFilter get videoSubtitleLanguageFilter =>
+      prefsRepo.videoSubtitleLanguageFilter;
+
+  Future<void> setVideoSubtitleLanguageFilter(
+    VideoSubtitleLanguageFilter filter,
+  ) =>
+      prefsRepo.setVideoSubtitleLanguageFilter(filter);
 
   /// 视频 mpv 配置（JSON；见 VideoMpvConfig）。
   String get videoMpvConfig => prefsRepo.videoMpvConfig;

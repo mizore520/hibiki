@@ -29,10 +29,11 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 1509 条。点号进各自文件。
+> 共 1510 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-1604](bugs/BUG-1604-candidate-windows-runtime-gate.md) | ✅ | ✅ | Windows 候选包可绕过完整运行组件组装与验证 |
 | [BUG-1603](bugs/BUG-1603-windows-aot-stack-overflow-on-slang-flat-map.md) | ✅ | ✅ | Windows AOT 编译 Slang 巨型动态映射时栈溢出 |
 | [BUG-1602](bugs/BUG-1602-windows-sqlite-cmake-ignores-local-cache.md) | ✅ | ✅ | Windows SQLite CMake 忽略本地缓存并卡在 sqlite.org |
 | [BUG-1601](bugs/BUG-1601-windows-cache-hash-cmdlet-missing.md) | ✅ | ✅ | Windows 缓存校验依赖 Get-FileHash 导致启动构建失败 |

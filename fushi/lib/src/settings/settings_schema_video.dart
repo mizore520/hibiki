@@ -8,6 +8,7 @@ import 'package:fushi/src/media/video/video_immersive_mode.dart';
 import 'package:fushi/src/media/video/video_mpv_config.dart';
 import 'package:fushi/src/media/video/video_settings_actions.dart';
 import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
+import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
 import 'package:fushi/src/media/video/metadata/video_source_scrape_config.dart';
 import 'package:fushi/src/media/video/scraper/tmdb_default_key.dart';
 import 'package:fushi/src/media/video/video_subtitle_style.dart';
@@ -810,6 +811,32 @@ SettingsDestination buildVideoDestination() {
                 settingsContext,
                 (VideoAsbplayerConfig c) =>
                     c.copyWith(pauseAtSubtitleEnd: value),
+              );
+            },
+          ),
+          SettingsSegmentedItem<VideoSubtitleLanguageFilter>(
+            id: 'video.subtitle.language_filter',
+            title: t.video_setting_subtitle_language_filter,
+            subtitle: t.video_setting_subtitle_language_filter_hint,
+            icon: Icons.translate_outlined,
+            video: VideoPlacement(group: VideoGroup.subtitle, order: 35),
+            options: <SettingsSegmentOption<VideoSubtitleLanguageFilter>>[
+              for (final VideoSubtitleLanguageFilter filter
+                  in VideoSubtitleLanguageFilter.values)
+                SettingsSegmentOption<VideoSubtitleLanguageFilter>(
+                  value: filter,
+                  label: _videoSubtitleLanguageFilterLabel(filter),
+                ),
+            ],
+            selected: (SettingsContext settingsContext) =>
+                settingsContext.appModel.videoSubtitleLanguageFilter,
+            onChanged: (
+              SettingsContext settingsContext,
+              VideoSubtitleLanguageFilter filter,
+            ) async {
+              await setVideoSubtitleLanguageFilterDual(
+                settingsContext,
+                filter,
               );
             },
           ),
@@ -1623,6 +1650,19 @@ String _videoSubtitleObscureModeLabel(VideoSubtitleObscureMode mode) {
       return t.video_setting_subtitle_obscure_blur;
     case VideoSubtitleObscureMode.hide:
       return t.video_setting_subtitle_obscure_hide;
+  }
+}
+
+String _videoSubtitleLanguageFilterLabel(
+  VideoSubtitleLanguageFilter filter,
+) {
+  switch (filter) {
+    case VideoSubtitleLanguageFilter.all:
+      return t.video_setting_subtitle_language_filter_all;
+    case VideoSubtitleLanguageFilter.japanese:
+      return t.video_setting_subtitle_language_filter_japanese;
+    case VideoSubtitleLanguageFilter.chinese:
+      return t.video_setting_subtitle_language_filter_chinese;
   }
 }
 

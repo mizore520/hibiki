@@ -3418,4 +3418,9 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
 	String get video_mining_image_quality => 'Video / anime card image quality';
 	String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
 	String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
+	String get video_setting_subtitle_language_filter => 'Subtitle language';
+	String get video_setting_subtitle_language_filter_hint => 'Filter Chinese and Japanese content inside the selected subtitle track.';
+	String get video_setting_subtitle_language_filter_all => 'All';
+	String get video_setting_subtitle_language_filter_japanese => 'Japanese';
+	String get video_setting_subtitle_language_filter_chinese => 'Chinese';
 }

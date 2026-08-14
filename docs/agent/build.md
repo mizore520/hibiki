@@ -14,6 +14,16 @@
 
 `tool/bootstrap.sh`（Windows：`.\tool\bootstrap.ps1`）一条命令完成：`flutter pub get` → `ci/apply-patches.sh`。`melos bootstrap` 经 post hook 做同样两步。然后：
 
+### Windows 候选包唯一入口（BUG-1604）
+
+`flutter build windows --release` 的输出只是基础构建目录，**不得直接作为候选版交付**：它不会自动包含正式 Windows 包后置组装的 ffmpeg/ffprobe、VC++ CRT、双架构 Galgame helper、Mihon runtime 与 Magpie 离线包。候选版必须从仓库根运行：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tool/build_windows_candidate.ps1
+```
+
+已有基础 Release 构建、只需重新完整组包时可加 `-UseExistingBuild`。脚本不会覆盖正在运行的开发版，而是重建独立的 `fushi/build/windows-candidate/Release`；成功的唯一判据是该目录生成 `fushi-candidate-manifest.json`，且脚本末尾输出 `[candidate] VERIFIED`。缺任一运行文件、摘要不符、ffmpeg/ffprobe 无法启动、Mihon smoke test 失败都会非零退出；失败目录不会留 ready manifest。日常开发启动器使用的 `package_windows_runtime.ps1` 只保证核心本地运行组件，不代表完整候选包。
+
 > **代理**：`pub get` 只认继承来的 `HTTPS_PROXY`/`HTTP_PROXY`，而 agent 每次工具调用都是新 shell —— 上一条命令里设的代理不会留到下一条，这是「`setup_worktree.ps1` 首跑 socket error、带代理重跑就过」的根因。`bootstrap.ps1` 按 `调用方环境变量 > FUSHI_BOOTSTRAP_PROXY > <主 checkout>/tool/bootstrap.local.env`（gitignore，本机私有，一次配好所有 worktree 通用）取代理，三者都没有也照常直连跑（CI 不受影响），只是会先探一次 pub.dev 并在不通时把配法打在前面——**探测只示警不拦路**（实测单次探测会误报：探测 10s 超时失败的同一时刻，`pub get` 自带重试仍 45s 跑通），真判死刑交给 `pub get` 自己，失败时把同一份配法作为报错抛出。代理地址绝不写进入库脚本。
 
 ```bash

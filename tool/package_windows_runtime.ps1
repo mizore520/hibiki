@@ -89,9 +89,9 @@ Invoke-CheckedPowerShellScript -ScriptPath $helperInstallScript -ScriptArguments
     $release
 )
 
-# Keep local `flutter build windows --release` output equivalent to the CI
-# desktop bundle.  The app uses the sibling ffmpeg executable for sentence
-# audio encoding; ffprobe is needed by subtitle/tag consumers.
+# Install the core local runtime subset. A distributable candidate also needs
+# Mihon and Magpie plus an independent manifest gate; use
+# tool/build_windows_candidate.ps1 for candidate delivery.
 $ffmpegSourceDir = Join-Path $repo 'third_party\ffmpeg-min\windows'
 foreach ($name in @('ffmpeg.exe', 'ffprobe.exe')) {
     $source = Join-Path $ffmpegSourceDir $name
@@ -166,4 +166,5 @@ foreach ($name in @('ffmpeg.exe', 'ffprobe.exe')) {
         throw "Bundled $name failed -version with exit code $LASTEXITCODE"
     }
 }
-Write-Host '[runtime] Windows runtime bundle is ready.'
+Write-Host '[runtime] Core Windows runtime is ready.'
+Write-Host '[runtime] For a distributable candidate, run tool/build_windows_candidate.ps1.'

@@ -115,6 +115,7 @@ import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
 import 'package:fushi/src/media/video/video_subtitle_overlay.dart';
 import 'package:fushi/src/media/video/video_subtitle_selection.dart';
 import 'package:fushi/src/media/video/video_subtitle_source.dart';
+import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
 import 'package:fushi/src/media/video/video_volume_overlays.dart';
 import 'package:fushi/src/models/app_model.dart';
 import 'package:fushi/src/models/preferences_repository.dart';
@@ -1448,7 +1449,7 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
   /// 这里，连续查多句累积；制卡（[onMineEntry] / [onUpdateEntry]）时把草稿全部句 +
   /// 当前句用 [MiningSentenceDraft.composeText] 合成 sentence 字段、用
   /// [MiningSentenceDraft.composeAudioRange] 合并成「首句起→末句止」的单一区间（GIF +
-  /// 音频共用，与字幕列表多选 [_selectedMiningCueStarts] 同观感，但属不同入口）。制卡
+  /// 音频共用，与字幕列表多选 [_selectedMiningCueKeys] 同观感，但属不同入口）。制卡
   /// 成功或关闭整条查词浮层栈后清空。视频所有 cue 同属一个视频文件，故区间合并恒成功
   /// （[MiningSentenceDraft] 把 [AudioPlaybackRange.audioFileIndex] 当文件键，视频统一
   /// 用 0）。reader/有声书车道（[ReaderFushiPage] 的 `_miningDraft`）共用同一草稿模型。
@@ -1556,7 +1557,8 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
   /// 行内收藏 toggle 后增量更新。新条目按 `bookUid + cue.startMs` 匹配；旧条目没有
   /// startMs 时保留 text-only 兼容键。
   final Set<String> _favoritedVideoSentences = <String>{};
-  final Set<int> _selectedMiningCueStarts = <int>{};
+  final Set<VideoSubtitleCueKey> _selectedMiningCueKeys =
+      <VideoSubtitleCueKey>{};
 
   // ── DictionaryPageMixin 必需的抽象成员 ──────────────────────────────
   @override
@@ -2865,6 +2867,7 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     final bool isInitialVideoOpen = _controller == null;
     final VideoPlayerController controller =
         _controller ?? VideoPlayerController();
+    controller.setSubtitleLanguageFilter(appModel.videoSubtitleLanguageFilter);
     // BUG-772：首开新建的在途 controller 登记进字段，让页面 dispose 能主动取消它。
     // 换集复用同一 _controller 时不设，避免误 dispose 正在用的实例。
     if (isInitialVideoOpen) _pendingController = controller;
@@ -5903,6 +5906,18 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     _rebuild(() {});
   }
 
+  Future<void> _setVideoSubtitleLanguageFilter(
+    VideoSubtitleLanguageFilter filter,
+  ) async {
+    _controller?.setSubtitleLanguageFilter(filter);
+    _lastLookupCue = null;
+    _lastLookupSentence = '';
+    _miningDraft.clear();
+    _clearSelectedMiningCues();
+    await appModel.setVideoSubtitleLanguageFilter(filter);
+    if (mounted) setState(() {});
+  }
+
   Future<void> _persistSubtitleStyle(VideoSubtitleStyle style) async {
     _subtitleStyle = style;
     await appModel.setVideoSubtitleStyle(VideoSubtitleStyle.encode(style));
@@ -6195,6 +6210,7 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       onSetSpeed: _setSpeed,
       onSetSubtitleObscureMode: _setSubtitleObscureMode,
       onSetSecondarySubtitleObscureMode: _setSecondarySubtitleObscureMode,
+      onSetSubtitleLanguageFilter: _setVideoSubtitleLanguageFilter,
       onAsbConfigChanged: _setAsbConfig,
       onSubtitleStylePreview: (VideoSubtitleStyle s) {
         if (mounted) setState(() => _subtitleStyle = s);

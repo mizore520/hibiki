@@ -624,6 +624,15 @@ class SubtitleMarkup {
   /// cue 级默认样式（来自 ASS `[V4+ Styles]`，TODO-1105）。null=无 Style 段/非 ASS。
   final SubtitleCueStyle? cueStyle;
 
+  /// ASS/SSA Dialogue 引用的 Style 原名。非 ASS 字幕为 null。
+  ///
+  /// 它是事件语义，不等同于 [cueStyle] 的视觉属性；视频层可优先利用作者写入的
+  /// `jp` / `zh` 等可靠语言标记，避免从中日共用的汉字猜测语言。
+  final String? assStyleName;
+
+  /// ASS/SSA Dialogue 的 Name/Actor 字段；非 ASS 或空字段为 null。
+  final String? assActorName;
+
   /// ASS `[Script Info]` 的 `PlayResY`（脚本坐标系高度，TODO-1246）。ASS 的字号
   /// （`Fontsize` / `\fs`）与阴影深度（`Shadow` / `\shad`）是**相对本高度的绝对像素**：
   /// 渲染层据 `字幕显示区高度 / playResY` 把绝对值缩放到实际播放尺寸，否则大制作字幕
@@ -683,6 +692,8 @@ class SubtitleMarkup {
     this.anchor,
     this.posFraction,
     this.cueStyle,
+    this.assStyleName,
+    this.assActorName,
     this.playResY,
     this.playResX,
     this.lineBreakGraphemes = const <int>[],
@@ -837,6 +848,8 @@ SubtitleMarkup parseSubtitleMarkup(String raw,
     {double? playResX,
     double? playResY,
     SubtitleCueStyle? cueStyle,
+    String? assStyleName,
+    String? assActorName,
     int layer = 0}) {
   final List<({String text, _Style style})> segments =
       <({String text, _Style style})>[];
@@ -994,6 +1007,8 @@ SubtitleMarkup parseSubtitleMarkup(String raw,
     anchor: anchor ?? cueStyle?.anchor,
     posFraction: pos,
     cueStyle: cueStyle,
+    assStyleName: assStyleName,
+    assActorName: assActorName,
     // PlayResY 原样透传，供渲染层把 ASS 绝对字号 / 阴影深度缩放到播放尺寸（TODO-1246）。
     playResY: playResY,
     // PlayResX 透传，供渲染层缩放 MarginL/MarginR 水平边距（与 PlayResY 同构）。

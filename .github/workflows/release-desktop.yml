@@ -547,6 +547,13 @@ jobs:
           }
           Get-ChildItem -LiteralPath $targetDir -Filter '*140*.dll' |
             Select-Object FullName, Length
+      - name: Verify complete Windows candidate bundle
+        shell: pwsh
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File tool/verify_windows_candidate.ps1 `
+            -RepoRoot "$PWD" `
+            -ReleaseDir "$PWD\fushi\build\windows\x64\runner\Release"
+          if ($LASTEXITCODE -ne 0) { throw "Windows candidate verification failed ($LASTEXITCODE)" }
       # The bundled ffmpeg -version check below is the hard gate: it proves the
       # exact binary we ship in the installer payload executes. The fuller
       # smoke-test.sh comparison additionally needs a *fixture* full ffmpeg to

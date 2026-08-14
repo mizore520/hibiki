@@ -3419,4 +3419,9 @@ class _StringsTh extends _StringsEn {
 	@override String get video_mining_image_quality => 'Video / anime card image quality';
 	@override String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
 	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
+	@override String get video_setting_subtitle_language_filter => 'Subtitle language';
+	@override String get video_setting_subtitle_language_filter_hint => 'Filter Chinese and Japanese content inside the selected subtitle track.';
+	@override String get video_setting_subtitle_language_filter_all => 'All';
+	@override String get video_setting_subtitle_language_filter_japanese => 'Japanese';
+	@override String get video_setting_subtitle_language_filter_chinese => 'Chinese';
 }

@@ -90,31 +90,32 @@ extension _VideoLookupMining on _VideoFushiPageState {
   /// coverPath（→`{book-cover}`）+ 当前字幕 cue 的音频片段（裁**当前选中音轨**）
   /// sasayakiAudioPath（→`{sentence-audio}`）+ 例句 sentence。复用现有 Anki 字段。
   bool _isCueSelectedForCard(AudioCue cue) =>
-      _selectedMiningCueStarts.contains(cue.startMs);
+      _selectedMiningCueKeys.contains(videoSubtitleCueKey(cue));
 
   void _toggleCueSelectedForCard(AudioCue cue) {
     _rebuild(() {
-      if (!_selectedMiningCueStarts.add(cue.startMs)) {
-        _selectedMiningCueStarts.remove(cue.startMs);
+      final VideoSubtitleCueKey key = videoSubtitleCueKey(cue);
+      if (!_selectedMiningCueKeys.add(key)) {
+        _selectedMiningCueKeys.remove(key);
       }
     });
   }
 
   void _clearSelectedMiningCues() {
-    if (_selectedMiningCueStarts.isEmpty) return;
-    _rebuild(_selectedMiningCueStarts.clear);
+    if (_selectedMiningCueKeys.isEmpty) return;
+    _rebuild(_selectedMiningCueKeys.clear);
   }
 
   AudioCue? _selectedMiningCueForCard(VideoPlayerController controller) {
     return buildSelectedSubtitleCueContext(
       cues: controller.cues,
-      selectedStartMs: _selectedMiningCueStarts,
+      selectedCueKeys: _selectedMiningCueKeys,
     );
   }
 
   /// 视频制卡/覆盖共用的「解析这一张卡的区间 + 文本」。把三个并存入口收口成一处，避免
   /// [onMineEntry] / [onUpdateEntry] 两份漂移：
-  /// - **字幕列表多选**（TODO-102，[_selectedMiningCueStarts] 非空）优先：用
+  /// - **字幕列表多选**（TODO-102，[_selectedMiningCueKeys] 非空）优先：用
   ///   [buildSelectedSubtitleCueContext] 合成的单段区间 + join 文本，**不掺查词草稿**。
   /// - 否则**查词窗口多句合一草稿**（TODO-270 E）：当前 cue 取「lookup 缓存 → currentCue
   ///   → 按位置解析」多段兜底（含 gap，BUG-188）；文本用 [MiningSentenceDraft.composeText]

@@ -3396,5 +3396,10 @@
   "game_text_threads_dormant_show": "Show threads without text ($count)",
   "video_mining_image_quality": "Video / anime card image quality",
   "video_mining_image_quality_hint": "Controls video and anime card images only. Higher settings keep more detail and may use more space.",
-  "game_line_bulk_text_hint": "Bulk text detected. Character lookup is paused."
+  "game_line_bulk_text_hint": "Bulk text detected. Character lookup is paused.",
+  "video_setting_subtitle_language_filter": "Subtitle language",
+  "video_setting_subtitle_language_filter_hint": "Filter Chinese and Japanese content inside the selected subtitle track.",
+  "video_setting_subtitle_language_filter_all": "All",
+  "video_setting_subtitle_language_filter_japanese": "Japanese",
+  "video_setting_subtitle_language_filter_chinese": "Chinese"
 }
