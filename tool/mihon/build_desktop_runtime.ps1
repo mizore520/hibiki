@@ -2,7 +2,8 @@
 param(
     [Parameter(Mandatory = $true)]
     [string] $OutputDirectory,
-    [string] $DownloadCache = ""
+    [string] $DownloadCache = "",
+    [string] $JdkRoot = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -53,6 +54,47 @@ function Invoke-Checked {
     }
 }
 
+function Invoke-VerifiedDownload {
+    param(
+        [Parameter(Mandatory = $true)][string] $Uri,
+        [Parameter(Mandatory = $true)][string] $Destination,
+        [Parameter(Mandatory = $true)][string] $ExpectedSha256
+    )
+
+    $partial = "$Destination.partial"
+    Remove-Item -LiteralPath $partial -Force -ErrorAction SilentlyContinue
+    $curl = (Get-Command curl.exe -CommandType Application -ErrorAction Stop).Source
+    $arguments = @(
+        '--fail',
+        '--location',
+        '--retry', '2',
+        '--retry-delay', '5',
+        '--connect-timeout', '20',
+        '--max-time', '300',
+        '--output', $partial,
+        $Uri
+    )
+    $proxy = if ($env:HTTPS_PROXY) { $env:HTTPS_PROXY } elseif ($env:HTTP_PROXY) { $env:HTTP_PROXY } else { $null }
+    if ($proxy) { $arguments = @('--proxy', $proxy) + $arguments }
+    try {
+        & $curl @arguments
+        if ($LASTEXITCODE -ne 0) {
+            throw "curl download failed with exit code $LASTEXITCODE`: $Uri"
+        }
+        if (-not (Test-Path -LiteralPath $partial -PathType Leaf)) {
+            throw "Download did not create a file: $Uri"
+        }
+        $actual = (Get-FileHash -LiteralPath $partial -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($actual -ne $ExpectedSha256) {
+            throw "Downloaded archive checksum mismatch: expected $ExpectedSha256, got $actual"
+        }
+        Move-Item -LiteralPath $partial -Destination $Destination -Force
+    }
+    finally {
+        Remove-Item -LiteralPath $partial -Force -ErrorAction SilentlyContinue
+    }
+}
+
 function Copy-Tree {
     param([string] $From, [string] $To)
     # -Force：vendored 树里有 .gitattributes / .gitignore / .github 这类点开头
@@ -90,20 +132,56 @@ try {
     )
     Copy-Tree (Join-Path $overlayRoot "overlay") $sourceRoot
 
-    $archivePath = Join-Path $resolvedCache $temurinArchive
-    if (-not (Test-Path -LiteralPath $archivePath)) {
-        Invoke-WebRequest -Uri $temurinUrl -OutFile $archivePath
-    }
-    $actualSha256 = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
-    if ($actualSha256 -ne $temurinSha256) {
-        throw "Temurin archive checksum mismatch: expected $temurinSha256, got $actualSha256"
-    }
+    $jdkDescriptor = $null
+    if (-not [string]::IsNullOrWhiteSpace($JdkRoot)) {
+        $resolvedJdkRoot = (Resolve-Path -LiteralPath $JdkRoot).Path
+        foreach ($tool in @('java.exe', 'jdeps.exe', 'jlink.exe')) {
+            if (-not (Test-Path -LiteralPath (Join-Path $resolvedJdkRoot "bin\$tool") -PathType Leaf)) {
+                throw "Local JDK is incomplete: missing bin\$tool under $resolvedJdkRoot"
+            }
+        }
+        $javaVersion = (& (Join-Path $resolvedJdkRoot 'bin\java.exe') -version 2>&1 | Select-Object -First 1).ToString()
+        if ($LASTEXITCODE -ne 0 -or $javaVersion -notmatch 'version\s+"21[.]') {
+            throw "Local JDK must be Java 21: $javaVersion"
+        }
+        $jdkRootPath = $resolvedJdkRoot
+        $jdkDescriptor = [ordered]@{
+            provider = 'local-java-21'
+            version = $javaVersion
+            releaseSha256 = if (Test-Path -LiteralPath (Join-Path $resolvedJdkRoot 'release')) {
+                (Get-FileHash -LiteralPath (Join-Path $resolvedJdkRoot 'release') -Algorithm SHA256).Hash.ToLowerInvariant()
+            } else { $null }
+        }
+    } else {
+        $archivePath = Join-Path $resolvedCache $temurinArchive
+        $archiveValid = $false
+        if (Test-Path -LiteralPath $archivePath -PathType Leaf) {
+            $archiveValid = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant() -eq $temurinSha256
+            if (-not $archiveValid) {
+                Remove-Item -LiteralPath $archivePath -Force
+            }
+        }
+        if (-not $archiveValid) {
+            Invoke-VerifiedDownload -Uri $temurinUrl -Destination $archivePath -ExpectedSha256 $temurinSha256
+        }
+        $actualSha256 = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($actualSha256 -ne $temurinSha256) {
+            throw "Temurin archive checksum mismatch: expected $temurinSha256, got $actualSha256"
+        }
 
-    $jdkExtractRoot = Join-Path $workingRoot "jdk"
-    Expand-Archive -LiteralPath $archivePath -DestinationPath $jdkExtractRoot
-    $jdkRoot = Get-ChildItem -LiteralPath $jdkExtractRoot -Directory | Select-Object -First 1
-    if ($null -eq $jdkRoot) {
-        throw "Temurin archive did not contain a JDK directory."
+        $jdkExtractRoot = Join-Path $workingRoot "jdk"
+        Expand-Archive -LiteralPath $archivePath -DestinationPath $jdkExtractRoot
+        $jdkRootItem = Get-ChildItem -LiteralPath $jdkExtractRoot -Directory | Select-Object -First 1
+        if ($null -eq $jdkRootItem) {
+            throw "Temurin archive did not contain a JDK directory."
+        }
+        $jdkRootPath = $jdkRootItem.FullName
+        $jdkDescriptor = [ordered]@{
+            provider = 'adoptium-temurin'
+            version = $temurinVersion
+            archive = $temurinArchive
+            archiveSha256 = $temurinSha256
+        }
     }
 
     # The pinned server targets Java 21. Running Gradle/tests with the host JDK
@@ -113,14 +191,46 @@ try {
     $previousJavaHome = $env:JAVA_HOME
     $previousProductRevision = $env:ProductRevision
     try {
-        $env:JAVA_HOME = $jdkRoot.FullName
+        $env:JAVA_HOME = $jdkRootPath
         $env:ProductRevision = $serverRevision
-        Invoke-Checked -Executable (Join-Path $sourceRoot "gradlew.bat") -Arguments @(
+        # Keep the byte-for-byte vendored upstream tree untouched. A Gradle
+        # init script inserts a Central mirror before the project's canonical
+        # repositories for networks that return 403 from Maven Central.
+        $mirrorInitScript = Join-Path $workingRoot 'fushi-central-mirror.init.gradle'
+        $mirrorScript = @'
+allprojects {
+    repositories {
+        maven { url = uri("https://maven.aliyun.com/repository/central") }
+    }
+}
+'@
+        [IO.File]::WriteAllText($mirrorInitScript, $mirrorScript, [Text.UTF8Encoding]::new($false))
+        $gradleArguments = @(
             "-p", $sourceRoot,
+            "--init-script", $mirrorInitScript,
             ":server:test",
             ":server:shadowJar",
-            "--no-daemon"
+            "--no-daemon",
+            "-Dorg.gradle.internal.http.connectionTimeout=20000",
+            "-Dorg.gradle.internal.http.socketTimeout=60000"
         )
+        # Gradle/Java do not consistently honor HTTPS_PROXY on Windows. Forward
+        # the configured proxy explicitly so dependency resolution cannot hang
+        # on a direct connection while curl succeeds through the proxy.
+        $gradleProxy = if ($env:HTTPS_PROXY) { $env:HTTPS_PROXY } elseif ($env:HTTP_PROXY) { $env:HTTP_PROXY } else { $null }
+        if ($gradleProxy) {
+            $proxyUri = [Uri]$gradleProxy
+            if (-not $proxyUri.Host -or $proxyUri.Port -le 0) {
+                throw "Invalid Gradle proxy URI: $gradleProxy"
+            }
+            $gradleArguments += @(
+                "-Dhttps.proxyHost=$($proxyUri.Host)",
+                "-Dhttps.proxyPort=$($proxyUri.Port)",
+                "-Dhttp.proxyHost=$($proxyUri.Host)",
+                "-Dhttp.proxyPort=$($proxyUri.Port)"
+            )
+        }
+        Invoke-Checked -Executable (Join-Path $sourceRoot "gradlew.bat") -Arguments $gradleArguments
     } finally {
         if ($null -eq $previousJavaHome) {
             Remove-Item Env:JAVA_HOME -ErrorAction SilentlyContinue
@@ -142,8 +252,8 @@ try {
         throw "The M-Extension-Server shadow JAR was not produced."
     }
 
-    $jdeps = Join-Path $jdkRoot.FullName "bin\jdeps.exe"
-    $jlink = Join-Path $jdkRoot.FullName "bin\jlink.exe"
+    $jdeps = Join-Path $jdkRootPath "bin\jdeps.exe"
+    $jlink = Join-Path $jdkRootPath "bin\jlink.exe"
     $detectedModules = (& $jdeps --ignore-missing-deps --multi-release 21 --print-module-deps $serverJar.FullName).Trim()
     if ($LASTEXITCODE -ne 0) {
         throw "jdeps failed while inspecting the M-Extension-Server JAR."
@@ -188,11 +298,7 @@ try {
             commit = $serverCommit
             sha256 = (Get-FileHash -LiteralPath (Join-Path $stagingRoot "m-extension-server.jar") -Algorithm SHA256).Hash.ToLowerInvariant()
         }
-        temurin = [ordered]@{
-            version = $temurinVersion
-            archive = $temurinArchive
-            archiveSha256 = $temurinSha256
-        }
+        jdk = $jdkDescriptor
     }
     $checksums | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $stagingRoot "checksums.json") -Encoding utf8NoBOM
 

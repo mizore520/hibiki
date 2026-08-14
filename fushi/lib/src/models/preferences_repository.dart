@@ -11,6 +11,7 @@ import 'package:fushi/src/media/video/video_danmaku_model.dart';
 import 'package:fushi/src/media/video/video_control_customization.dart';
 import 'package:fushi/src/media/video/video_immersive_mode.dart';
 import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
+import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
 import 'package:fushi/src/mining/galgame_library.dart';
 import 'package:fushi/src/mining/gal_mining_screenshot_size.dart';
 import 'package:fushi/src/mining/immersion_mining_request.dart'
@@ -1365,6 +1366,23 @@ class PreferencesRepository extends ChangeNotifier {
 
   Future<void> setVideoRespectAssStyle(bool value) async {
     await setPref('video_respect_ass_style', value);
+    notifyListeners();
+  }
+
+  /// 单个已选字幕轨内部的运行时语言过滤。默认 [VideoSubtitleLanguageFilter.all]，
+  /// 保持旧用户完整字幕行为；只持久化选择，不改字幕文件或 cue 数据库。
+  VideoSubtitleLanguageFilter get videoSubtitleLanguageFilter =>
+      VideoSubtitleLanguageFilterStorage.fromStorage(
+        getPref(
+          'video_subtitle_language_filter',
+          defaultValue: VideoSubtitleLanguageFilter.all.storageValue,
+        ) as String,
+      );
+
+  Future<void> setVideoSubtitleLanguageFilter(
+    VideoSubtitleLanguageFilter filter,
+  ) async {
+    await setPref('video_subtitle_language_filter', filter.storageValue);
     notifyListeners();
   }
 

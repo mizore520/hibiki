@@ -8,6 +8,7 @@ import 'package:fushi/src/models/preferences_repository.dart';
 import 'package:fushi/src/media/video/video_immersive_mode.dart';
 import 'package:fushi/src/media/video/video_shader_tier.dart';
 import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
+import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
 import 'package:fushi/src/media/video/video_subtitle_style.dart';
 import 'package:fushi/src/settings/video_settings_host.dart';
 import 'package:fushi_audio/fushi_audio.dart';
@@ -44,6 +45,7 @@ class VideoQuickSettingsHost extends VideoSettingsHost {
     required this.onSetSpeed,
     required this.onSetSubtitleObscureMode,
     required this.onSetSecondarySubtitleObscureMode,
+    required this.onSetSubtitleLanguageFilter,
     required this.subtitleStyle,
     required this.onSubtitleStylePreview,
     required this.onSubtitleStyleCommit,
@@ -107,6 +109,8 @@ class VideoQuickSettingsHost extends VideoSettingsHost {
       onSetSubtitleObscureMode;
   final Future<void> Function(VideoSubtitleObscureMode mode)
       onSetSecondarySubtitleObscureMode;
+  final Future<void> Function(VideoSubtitleLanguageFilter filter)
+      onSetSubtitleLanguageFilter;
 
   /// 页面当前生效的字幕样式（含拖动中的预览态），schema 滑条以它为权威值回显。
   final VideoSubtitleStyle Function() subtitleStyle;

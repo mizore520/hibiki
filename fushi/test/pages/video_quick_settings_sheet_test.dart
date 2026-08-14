@@ -14,6 +14,7 @@ import 'package:fushi/src/media/video/video_mpv_config.dart';
 import 'package:fushi/src/media/video/video_shader_tier.dart';
 import 'package:fushi/src/media/video/video_side_panel.dart';
 import 'package:fushi/src/media/video/video_subtitle_style.dart';
+import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
 import 'package:fushi/src/models/preferences_repository.dart';
 import 'package:fushi/src/pages/implementations/video_shader_dialog.dart';
 import 'package:fushi/src/settings/settings_destination.dart';
@@ -51,6 +52,7 @@ Future<VideoSheetHarness> _pumpSheet(
   VideoSubtitleStyle? initialSubtitleStyle,
   void Function(VideoSubtitleStyle)? onSubtitleStylePreview,
   void Function(VideoSubtitleStyle)? onSubtitleStyleCommit,
+  void Function(VideoSubtitleLanguageFilter)? onSubtitleLanguageFilter,
   Future<int?> Function()? onAutoAlign,
   List<AudioCue> subtitleWaveformCues = const <AudioCue>[],
   Future<List<double>> Function()? loadSubtitleWaveform,
@@ -86,6 +88,7 @@ Future<VideoSheetHarness> _pumpSheet(
       onSetSpeed: onSetSpeed,
       onSubtitleStylePreview: onSubtitleStylePreview,
       onSubtitleStyleCommit: onSubtitleStyleCommit,
+      onSetSubtitleLanguageFilter: onSubtitleLanguageFilter,
       onAsbConfigChanged: onAsbConfigChanged,
       onMpvConfigChanged: onMpvConfigChanged,
       onSelectShaderTier: onSelectShaderTier,
@@ -656,6 +659,34 @@ void main() {
       0,
       reason: '快捷项必须同步页面权威样式，避免背景不透明度滑条显示滞后',
     );
+  });
+
+  testWidgets('subtitle language selector renders and drives the live host',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final List<VideoSubtitleLanguageFilter> changes =
+        <VideoSubtitleLanguageFilter>[];
+    await _pumpSheet(
+      tester,
+      initialCategory: 'subtitle',
+      onSubtitleLanguageFilter: changes.add,
+    );
+
+    final Finder rowFinder = find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is AdaptiveSettingsSegmentedRow &&
+          widget.title == t.video_setting_subtitle_language_filter,
+    );
+    expect(rowFinder, findsOneWidget);
+    final AdaptiveSettingsSegmentedRow<Object> row =
+        tester.widget(rowFinder) as AdaptiveSettingsSegmentedRow<Object>;
+    expect(row.selected, VideoSubtitleLanguageFilter.all);
+    row.onChanged(VideoSubtitleLanguageFilter.japanese);
+    await tester.pump();
+    expect(changes, <VideoSubtitleLanguageFilter>[
+      VideoSubtitleLanguageFilter.japanese,
+    ]);
   });
 
   testWidgets(

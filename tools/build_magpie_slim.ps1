@@ -69,14 +69,30 @@ function Get-Sha256([string]$Path) {
   (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 
-# Invoke-WebRequest 不读 HTTPS_PROXY/HTTP_PROXY 环境变量（.NET 走的是系统代理设置）。
-# CI 上直连 GitHub 没问题，本机验证多半要过代理，所以显式透传一次；变量没设时
-# $webArgs 里就没有 Proxy 键，行为与原来完全一致。
-$webArgs = @{ UseBasicParsing = $true }
 $proxy = if ($env:HTTPS_PROXY) { $env:HTTPS_PROXY } elseif ($env:HTTP_PROXY) { $env:HTTP_PROXY } else { $null }
 if ($proxy) {
-  $webArgs['Proxy'] = $proxy
   Write-Host "使用代理 $proxy"
+}
+
+function Invoke-BoundedDownload([string]$Uri, [string]$Destination) {
+  $partial = "$Destination.partial"
+  Remove-Item -LiteralPath $partial -Force -ErrorAction SilentlyContinue
+  $curlArgs = @(
+    '--fail', '--location', '--retry', '2', '--retry-delay', '5',
+    '--connect-timeout', '20', '--max-time', '300',
+    '--output', $partial, $Uri
+  )
+  if ($proxy) { $curlArgs = @('--proxy', $proxy) + $curlArgs }
+  try {
+    & curl.exe @curlArgs
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $partial -PathType Leaf)) {
+      throw "Magpie 下载失败（exit $LASTEXITCODE）：$Uri"
+    }
+    Move-Item -LiteralPath $partial -Destination $Destination -Force
+  }
+  finally {
+    Remove-Item -LiteralPath $partial -Force -ErrorAction SilentlyContinue
+  }
 }
 
 foreach ($a in $Arch) {
@@ -88,17 +104,15 @@ foreach ($a in $Arch) {
     $url = "https://github.com/$repo/releases/download/$tag/Magpie-hibiki-$a.zip"
 
     Write-Host "  下载 $url"
-    Invoke-WebRequest -Uri $url -OutFile $fullZip @webArgs
+    Invoke-BoundedDownload -Uri $url -Destination $fullZip
 
     # 🔴 先校验上游完整包，再裁。裁剪会重新打包 —— 若源包已被掉包，精简包会带着
     # 我们自己签的、看起来完全可信的侧车流进主包，等于亲手洗白一个被污染的产物。
     Write-Host "  校验上游侧车"
     $sidecarUrl = "$url.sha256"
-    $sidecarBody = (Invoke-WebRequest -Uri $sidecarUrl @webArgs).Content
-    # UseBasicParsing 对非 text/* 响应会给出 byte[]，先归一成字符串再匹配。
-    if ($sidecarBody -is [byte[]]) {
-      $sidecarBody = [System.Text.Encoding]::ASCII.GetString($sidecarBody)
-    }
+    $upstreamSidecar = Join-Path $work "Magpie-hibiki-$a.zip.sha256"
+    Invoke-BoundedDownload -Uri $sidecarUrl -Destination $upstreamSidecar
+    $sidecarBody = Get-Content -LiteralPath $upstreamSidecar -Raw
     if ($sidecarBody -notmatch '[0-9a-fA-F]{64}') {
       throw "上游侧车里没有合法 SHA-256 ($a)：$sidecarBody"
     }

@@ -17,6 +17,7 @@ import 'package:fushi/src/media/video/video_quick_settings_host.dart';
 import 'package:fushi/src/media/video/video_quick_settings_sheet.dart';
 import 'package:fushi/src/media/video/video_shader_tier.dart';
 import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
+import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
 import 'package:fushi/src/media/video/video_subtitle_style.dart';
 import 'package:fushi/src/models/preferences_repository.dart';
 
@@ -34,8 +35,7 @@ class VideoSheetHarness {
   final Directory _tmpDir;
 
   static Future<VideoSheetHarness> create() async {
-    final FushiDatabase db =
-        FushiDatabase.forTesting(NativeDatabase.memory());
+    final FushiDatabase db = FushiDatabase.forTesting(NativeDatabase.memory());
     final PreferencesRepository prefsRepo = PreferencesRepository(db);
     await prefsRepo.loadFromDb();
     final Directory tmpDir =
@@ -90,6 +90,8 @@ VideoQuickSettingsHost buildTestVideoHost({
   void Function(VideoSubtitleObscureMode mode)? onSetSubtitleObscureMode,
   void Function(VideoSubtitleObscureMode mode)?
       onSetSecondarySubtitleObscureMode,
+  void Function(VideoSubtitleLanguageFilter filter)?
+      onSetSubtitleLanguageFilter,
   void Function(VideoSubtitleStyle style)? onSubtitleStylePreview,
   void Function(VideoSubtitleStyle style)? onSubtitleStyleCommit,
   void Function(bool value)? onRespectAssStyleChanged,
@@ -144,6 +146,9 @@ VideoQuickSettingsHost buildTestVideoHost({
     },
     onSetSecondarySubtitleObscureMode: (VideoSubtitleObscureMode mode) async {
       onSetSecondarySubtitleObscureMode?.call(mode);
+    },
+    onSetSubtitleLanguageFilter: (VideoSubtitleLanguageFilter filter) async {
+      onSetSubtitleLanguageFilter?.call(filter);
     },
     subtitleStyle: () => s.subtitleStyle,
     onSubtitleStylePreview: (VideoSubtitleStyle style) {

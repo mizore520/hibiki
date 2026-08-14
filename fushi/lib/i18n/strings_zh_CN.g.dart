@@ -3419,4 +3419,9 @@ class _StringsZhCn extends _StringsEn {
 	@override String get video_mining_image_quality => '视频 / 动漫制卡画质';
 	@override String get video_mining_image_quality_hint => '仅控制视频和动漫制卡配图。画质越高越清晰，卡片体积也可能越大。';
 	@override String get game_line_bulk_text_hint => '检测到批量文本，已暂停逐字查词以避免卡顿。';
+	@override String get video_setting_subtitle_language_filter => '字幕语言';
+	@override String get video_setting_subtitle_language_filter_hint => '过滤当前所选字幕轨内部的中文或日文内容。';
+	@override String get video_setting_subtitle_language_filter_all => '全部';
+	@override String get video_setting_subtitle_language_filter_japanese => '日文';
+	@override String get video_setting_subtitle_language_filter_chinese => '中文';
 }

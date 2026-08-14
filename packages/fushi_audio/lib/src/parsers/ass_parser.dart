@@ -95,6 +95,7 @@ class AssParser {
     int endCol = -1;
     int textCol = -1;
     int styleCol = -1;
+    int nameCol = -1;
     // Dialogue 行级 Margin 覆盖列（MarginL/MarginR/MarginV，>0 覆盖样式默认，ASS 规范）。
     int marginLCol = -1;
     int marginRCol = -1;
@@ -190,6 +191,8 @@ class AssParser {
         endCol = cols.indexOf('end');
         textCol = cols.indexOf('text');
         styleCol = cols.indexOf('style');
+        nameCol = cols.indexOf('name');
+        if (nameCol < 0) nameCol = cols.indexOf('actor');
         marginLCol = cols.indexOf('marginl');
         marginRCol = cols.indexOf('marginr');
         marginVCol = cols.indexOf('marginv');
@@ -220,8 +223,16 @@ class AssParser {
 
         // 本条引用的 Style（V4+ Format 里的 'style' 列）→ cue 级默认样式（TODO-1105）。
         SubtitleCueStyle? cueStyle;
+        String? styleName;
         if (styleCol >= 0 && styleCol < parts.length) {
-          cueStyle = styles[parts[styleCol].trim().toLowerCase()];
+          styleName = parts[styleCol].trim();
+          if (styleName.isEmpty) styleName = null;
+          cueStyle = styles[styleName?.toLowerCase()];
+        }
+        String? actorName;
+        if (nameCol >= 0 && nameCol < parts.length) {
+          actorName = parts[nameCol].trim();
+          if (actorName.isEmpty) actorName = null;
         }
 
         // Dialogue 行级 Margin 覆盖（ASS 规范：>0 覆盖样式默认，0 沿用）。样式实例被
@@ -255,6 +266,8 @@ class AssParser {
           playResX: playResX ?? 384,
           playResY: playResY ?? 288,
           cueStyle: cueStyle,
+          assStyleName: styleName,
+          assActorName: actorName,
           layer: layer,
         );
         final String text = markup.plainText;

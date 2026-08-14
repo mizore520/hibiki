@@ -9,6 +9,7 @@ import 'package:fushi/src/media/video/video_mpv_config.dart';
 import 'package:fushi/src/media/video/video_playback_source.dart';
 import 'package:fushi/src/media/video/video_shader_manager.dart';
 import 'package:fushi/src/media/video/video_subtitle_source.dart';
+import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
 import 'package:fushi_audio/fushi_audio.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -206,6 +207,7 @@ class VideoPlayerController extends ChangeNotifier
   /// [_releaseMediaHandles] 真放掉底层文件句柄，避免同盘 rename 撞「文件被占用」。
   MediaHandleReleaseCallback? _mediaHandleRegistration;
 
+  List<AudioCue> _rawCues = <AudioCue>[];
   List<AudioCue> _cues = <AudioCue>[];
   AudioCue? _currentCue;
   int _currentCueIndex = -1;
@@ -221,7 +223,10 @@ class VideoPlayerController extends ChangeNotifier
   /// TODO-1312：副字幕 cue 流。与主字幕 [_cues] 独立、同一 effective 位置各自求活动集，
   /// 一起交给 Flutter overlay 多层渲染（不再走 libmpv `secondary-sid` 自渲染）——副字幕
   /// 因此也可逐字符查词。空列表 = 无副字幕。按 startMs 升序（[setSecondaryCues] 保证）。
+  List<AudioCue> _rawSecondaryCues = <AudioCue>[];
   List<AudioCue> _secondaryCues = <AudioCue>[];
+  VideoSubtitleLanguageFilter _subtitleLanguageFilter =
+      VideoSubtitleLanguageFilter.all;
 
   /// 副字幕当前活动集（下标进 [_secondaryCues]，升序）。[setSecondaryCues] /
   /// [clearSecondaryCues] 换列表时复位。
@@ -486,6 +491,12 @@ class VideoPlayerController extends ChangeNotifier
 
   List<AudioCue> get cues => _cues;
 
+  /// 未经过语言过滤的主字幕 cue。只供重新过滤与测试；UI/查词/制卡必须读 [cues]。
+  List<AudioCue> get rawCues => List<AudioCue>.unmodifiable(_rawCues);
+
+  VideoSubtitleLanguageFilter get subtitleLanguageFilter =>
+      _subtitleLanguageFilter;
+
   /// TODO-1312：当前主字幕活动集（重叠 cue 全渲染用）。overlay 据此把同一时刻区间覆盖
   /// 播放位置的所有 cue 竖排堆叠渲染；单条时与 [currentCue] 等价（退化成旧的一个字幕盒）。
   List<AudioCue> get activeCues => <AudioCue>[
@@ -495,6 +506,9 @@ class VideoPlayerController extends ChangeNotifier
 
   /// TODO-1312：副字幕全量 cue（诊断 / 测试用）；空 = 无副字幕。
   List<AudioCue> get secondaryCues => _secondaryCues;
+
+  List<AudioCue> get rawSecondaryCues =>
+      List<AudioCue>.unmodifiable(_rawSecondaryCues);
 
   /// TODO-1312：副字幕当前活动集（overlay 副层渲染用，可查词）。
   List<AudioCue> get secondaryActiveCues => <AudioCue>[
@@ -874,8 +888,9 @@ class VideoPlayerController extends ChangeNotifier
   /// 设置 cue 列表：拷贝并按 startMs 升序排序（[JsonAlignmentParser.findCueIndex]
   /// 要求升序），重置当前 cue 状态。
   void setCues(List<AudioCue> cues) {
-    _cues = List<AudioCue>.of(cues)
+    _rawCues = List<AudioCue>.of(cues)
       ..sort((AudioCue a, AudioCue b) => a.startMs.compareTo(b.startMs));
+    _cues = filterVideoSubtitleCues(_rawCues, _subtitleLanguageFilter);
     // 非空文本 cue → 切到可点 overlay 文本字幕，离开图形轨渲染（BUG-301）。空 cue
     // 不在此推断模式：可能是图形轨（[selectEmbeddedGraphicTrack] 先清空 cue 再选轨置
     // true）或无字幕段，故只在确有文本 cue 时复位图形标志。
@@ -898,18 +913,47 @@ class VideoPlayerController extends ChangeNotifier
   /// 副字幕与主字幕独立、同一 effective 位置各自求活动集，一起交给 Flutter overlay 多层
   /// 渲染（不再走 libmpv `secondary-sid`）——副字幕因此也可逐字符查词。空列表 = 无副字幕。
   void setSecondaryCues(List<AudioCue> cues) {
-    _secondaryCues = List<AudioCue>.of(cues)
+    _rawSecondaryCues = List<AudioCue>.of(cues)
       ..sort((AudioCue a, AudioCue b) => a.startMs.compareTo(b.startMs));
+    _secondaryCues =
+        filterVideoSubtitleCues(_rawSecondaryCues, _subtitleLanguageFilter);
     _activeSecondaryCueIndices = const <int>[];
     notifyListeners();
   }
 
   /// TODO-1312：关闭副字幕（清空副字幕 cue 流 + 活动集）。幂等：本就无副字幕时不通知。
   void clearSecondaryCues() {
-    if (_secondaryCues.isEmpty && _activeSecondaryCueIndices.isEmpty) return;
+    if (_rawSecondaryCues.isEmpty &&
+        _secondaryCues.isEmpty &&
+        _activeSecondaryCueIndices.isEmpty) {
+      return;
+    }
+    _rawSecondaryCues = <AudioCue>[];
     _secondaryCues = <AudioCue>[];
     _activeSecondaryCueIndices = const <int>[];
     notifyListeners();
+  }
+
+  /// 即时切换字幕轨内部语言过滤。原始 cue 不变；现有 overlay、列表、查词与制卡继续
+  /// 读取 [cues]/[secondaryCues]，因此天然共享同一过滤结果。
+  void setSubtitleLanguageFilter(VideoSubtitleLanguageFilter filter) {
+    if (_subtitleLanguageFilter == filter) return;
+    _subtitleLanguageFilter = filter;
+    _cues = filterVideoSubtitleCues(_rawCues, filter);
+    _secondaryCues = filterVideoSubtitleCues(_rawSecondaryCues, filter);
+    _currentCue = null;
+    _currentCueIndex = -1;
+    _activeCueIndices = const <int>[];
+    _activeSecondaryCueIndices = const <int>[];
+    _clearSeekTargetSnap();
+    _oneShotHoldCueIndex = null;
+    _lastSubtitleEndPauseCueIndex = null;
+    final int? currentPosition = positionMs;
+    if (currentPosition != null) {
+      _syncCueForPosition(currentPosition, persistPosition: false);
+    } else {
+      notifyListeners();
+    }
   }
 
   /// 设置音画延迟（毫秒），clamp 到 ±600000（±10 分钟）。
@@ -1048,6 +1092,7 @@ class VideoPlayerController extends ChangeNotifier
     // TODO-1312：换片复位副字幕 cue 流（旧下标对新片失效；新集副字幕由页面
     // _restoreSecondarySubtitle 重挂）。在 setCues 之前复位，让 setCues 的单次
     // notify 已反映清空后的副字幕状态。
+    _rawSecondaryCues = <AudioCue>[];
     _secondaryCues = <AudioCue>[];
     _activeSecondaryCueIndices = const <int>[];
     setCues(cues);

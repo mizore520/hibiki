@@ -13,6 +13,7 @@ import 'package:fushi/src/media/video/video_quick_settings_host.dart';
 import 'package:fushi/src/media/video/video_shader_manager.dart';
 import 'package:fushi/src/media/video/video_shader_tier.dart';
 import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
+import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
 import 'package:fushi/src/media/video/video_subtitle_style.dart';
 import 'package:fushi/src/media/video/video_subtitle_sync_row.dart';
 import 'package:fushi/src/models/preferences_repository.dart';
@@ -226,6 +227,18 @@ Future<void> setVideoSecondarySubtitleObscureModeDual(
   } else {
     await context.appModel.setVideoSecondarySubtitleObscureMode(mode);
     context.appModel.notifyPreferencesChanged();
+  }
+}
+
+Future<void> setVideoSubtitleLanguageFilterDual(
+  SettingsContext context,
+  VideoSubtitleLanguageFilter filter,
+) async {
+  final VideoQuickSettingsHost? host = videoQuickSettingsHostOf(context);
+  if (host != null) {
+    await host.onSetSubtitleLanguageFilter(filter);
+  } else {
+    await context.appModel.setVideoSubtitleLanguageFilter(filter);
   }
 }
 
