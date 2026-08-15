@@ -8,6 +8,9 @@ void main() {
   final String source = File(
     'lib/src/pages/implementations/gal_capture_setup_dialog.dart',
   ).readAsStringSync();
+  final String texthookerSource = File(
+    'lib/src/pages/implementations/texthooker_page.dart',
+  ).readAsStringSync();
 
   test('捕获设置弹窗的所有关闭路径收口到一次性 dismiss', () {
     final String code = maskComments(source);
@@ -73,5 +76,67 @@ void main() {
       2,
       reason: '两个滑块都只能在松手时提交，拖动过程不能连续写偏好表',
     );
+    expect(code, contains('setLunaLoopbackPreRollMs(value.round())'));
+    expect(code, contains('setLunaLoopbackTailTrimMs(value.round())'));
+    expect(texthookerSource,
+        contains('_session.setLunaLoopbackPreRollMs(value.round())'));
+    expect(texthookerSource,
+        contains('_session.setLunaLoopbackTailTrimMs(value.round())'));
+  });
+
+  test('两个 Luna 页面上的两个 Slider 都锁定为 50 ms 步进', () {
+    void expectSliderStep(
+      String code, {
+      required String valueExpression,
+      required int max,
+      required int divisions,
+      required String page,
+    }) {
+      final RegExp slider = RegExp(
+        r'Slider\(\s*value:\s*' +
+            RegExp.escape(valueExpression) +
+            r'\.toDouble\(\),\s*min:\s*0,\s*max:\s*' +
+            max.toString() +
+            r',\s*divisions:\s*(\d+),',
+      );
+      final List<RegExpMatch> matches = slider.allMatches(code).toList();
+      expect(matches, hasLength(1), reason: '$page 缺少唯一的 Luna Slider');
+      final int actualDivisions = int.parse(matches.single.group(1)!);
+      expect(actualDivisions, divisions, reason: '$page 的 divisions 已改变');
+      expect(
+        actualDivisions * 50,
+        max,
+        reason: '$page 的 Slider 不再以 50 ms 为一个吸附步长',
+      );
+    }
+
+    for (final (String page, String code, String prefix)
+        in <(String, String, String)>[
+      (
+        'Gal 捕获设置弹窗',
+        source,
+        'widget.session',
+      ),
+      (
+        'Hook 工具栏设置',
+        texthookerSource,
+        '_session',
+      ),
+    ]) {
+      expectSliderStep(
+        code,
+        valueExpression: '$prefix.lunaLoopbackPreRollMs',
+        max: 1000,
+        divisions: 20,
+        page: '$page·补全本句开头',
+      );
+      expectSliderStep(
+        code,
+        valueExpression: '$prefix.lunaLoopbackTailTrimMs',
+        max: 1000,
+        divisions: 20,
+        page: '$page·去掉下句声音',
+      );
+    }
   });
 }

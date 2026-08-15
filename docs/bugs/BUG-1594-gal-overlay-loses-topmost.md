@@ -1,6 +1,6 @@
-## BUG-1594 · Galgame文字悬浮窗切换窗口后丢失置顶
-- **报告**：2026-08-11（用户：Galgame 文字悬浮窗起初正常置顶，切换一次窗口后不再位于游戏上方）
-- **真实性**：✅ 真 bug。`fushi/windows/runner/floating_lyric_window.cpp:277` 只在首次 `Show`、手动切换图钉和窗口自身移动/缩放时调用 `SetWindowPos(HWND_TOPMOST)`。窗口保留 `WS_EX_TOPMOST` 只代表它仍在 topmost band，不能保证它排在后来重新进入前台并把自身插到同一 band 头部的无边框/全屏游戏上方；现有实现完全没有监听 `EVENT_SYSTEM_FOREGROUND`，所以切回游戏后不会重新确认 Z 序。
-- **[x] ① 已修复** — Galgame 浮窗显示期间注册 `EVENT_SYSTEM_FOREGROUND` WinEvent；回调只向浮窗平台线程投递私有消息，由消息处理器在“浮窗可见且用户仍开启图钉”时以 `SWP_NOACTIVATE` 重新插入 topmost band 顶部。隐藏/析构立即注销监听；手动关闭图钉后前台切换不会擅自拉回置顶。`WM_DISPLAYCHANGE` 同样重新确认置顶，覆盖分辨率/显示器切换。修复提交：`ba6c431ef`。
-- **[x] ② 已加自动化测试** — `fushi/test/tools/gal_overlay_topmost_foreground_guard_test.dart` 守住事件驱动（非轮询）、平台线程投递、可见/图钉门控、`SWP_NOACTIVATE` 和显示/隐藏生命周期。测试提交：`ba6c431ef`。
-- **备注**：Windows 的真实 topmost band / 全屏合成顺序无法由 Flutter 单测模拟，仍需候选 EXE 在用户原游戏中执行“浮窗出现 → Alt+Tab 切走 → 切回游戏”验收。
+## BUG-1594 · Galgame文字悬浮窗切换窗口或 Magpie 输出后丢失置顶
+- **报告**：2026-08-11，2026-08-15 复核（用户：Galgame 文字悬浮窗起初正常置顶，切换一次窗口或启用 Magpie 后偶尔落到输出画面后面）
+- **真实性**：✅ 真 bug。第一层缺口是浮窗只在首次 `Show`、手动切换图钉、窗口自身移动/缩放和显示器变化时调用 `SetWindowPos(HWND_TOPMOST)`；保留 `WS_EX_TOPMOST` 不保证它排在后来进入 topmost band 的窗口上方。已有 `EVENT_SYSTEM_FOREGROUND` 修复覆盖前台 HWND 变化，但 Magpie 还会在前台 HWND 不变时重建、移动或提升缩放输出窗口。Fushi 主窗口实际上已收到 `MagpieScalingChanged`（`lParam` 是输出 HWND，state 1/2/3 代表启动/位置尺寸变化/拖动，state 0 且有 HWND 代表源窗口转后台），旧代码却只更新 Dart 状态，未给独立的 Hook 浮窗恢复机会。
+- **[x] ① 已修复** — Galgame 浮窗显示期间保留 `EVENT_SYSTEM_FOREGROUND` WinEvent；回调只向浮窗平台线程投递私有消息，由消息处理器在“浮窗可见且用户仍开启图钉”时以 `SWP_NOACTIVATE` 重新插入 topmost band 顶部。隐藏/析构立即注销监听；手动关闭图钉后前台切换不会擅自拉回置顶。`WM_DISPLAYCHANGE` 同样重新确认置顶。当前任务再把有输出 HWND 的已知 `MagpieScalingChanged` 生命周期状态桥接到 Hook 浮窗，并在浮窗消息队列中合并请求，覆盖前台 HWND 不变时的 Magpie 输出重建/重排；修复提交：前置 `ba6c431ef`，本任务工作树改动尚未提交。
+- **[x] ② 已加自动化测试** — `fushi/test/tools/gal_overlay_topmost_foreground_guard_test.dart` 守住前台事件、Magpie 生命周期桥接、合并请求、可见/图钉门控、`SWP_NOACTIVATE`、非轮询和显示/隐藏生命周期；`fushi/test/pages/gal_capture_setup_dialog_lifecycle_guard_test.dart` 守住四个 Luna Slider 的 50ms 步进和松手提交。当前定向测试已通过；本任务工作树改动尚未提交。
+- **备注**：Windows 的真实 topmost band / 全屏合成顺序无法由 Flutter 单测模拟。当前自动环境只有本地 Magpie 进程（`E:\gal\gal-tools\Magpie-v0.10.6-x64\Magpie.exe`），没有可见游戏、Magpie 输出或 Fushi HWND，故仍需候选 EXE 在用户原游戏中执行“浮窗出现 → 启用/重启 Magpie → Alt+Tab → 切回游戏/输出 → 重建输出”的验收。

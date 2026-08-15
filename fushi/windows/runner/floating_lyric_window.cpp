@@ -43,9 +43,11 @@ constexpr float kHookTextMinStripWidthDip = 370.0f;
 // 只在窗口内轮询，代价是一次 GetAsyncKeyState + 一次 DWrite 命中测试。
 constexpr UINT_PTR kHoverLookupTimerId = 1;
 constexpr UINT kHoverLookupPollMs = 60;
-// Private window message posted by the WinEvent foreground hook. The hook
-// callback never touches window state directly because Windows may deliver an
-// out-of-context callback away from the runner's platform thread.
+// Private window message posted by either the WinEvent foreground hook or the
+// Magpie lifecycle bridge. Neither producer touches window state directly:
+// Windows may deliver an out-of-context callback away from the runner's
+// platform thread, and Magpie can broadcast several output geometry events in
+// one UI gesture.
 constexpr UINT kReassertTopmostMessage = WM_APP + 0x38A;
 std::atomic<HWND> g_hook_topmost_target{nullptr};
 HWINEVENTHOOK g_foreground_event_hook = nullptr;
@@ -161,6 +163,7 @@ FloatingLyricWindow::FloatingLyricWindow() = default;
 
 FloatingLyricWindow::~FloatingLyricWindow() {
   StopForegroundTopmostTracking();
+  external_topmost_reassert_pending_ = false;
   if (hwnd_ != nullptr) {
     DestroyWindow(hwnd_);
     hwnd_ = nullptr;
@@ -364,6 +367,7 @@ bool FloatingLyricWindow::Show(HWND owner) {
   SetWindowPos(hwnd_, topmost_ ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0,
                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
   visible_ = true;
+  external_topmost_reassert_pending_ = false;
   StartForegroundTopmostTracking();
   // BUG-951: a re-show while pass-through is still on must re-create the
   // escape-hatch toolbar and re-arm the body's click-through in one place.
@@ -383,6 +387,7 @@ void FloatingLyricWindow::CancelPointerGesture() {
 
 void FloatingLyricWindow::Hide() {
   StopForegroundTopmostTracking();
+  external_topmost_reassert_pending_ = false;
   visible_ = false;
   hovered_ = false;
   tracking_mouse_leave_ = false;
@@ -568,6 +573,20 @@ void FloatingLyricWindow::StopForegroundTopmostTracking() {
   if (g_foreground_event_hook != nullptr) {
     UnhookWinEvent(g_foreground_event_hook);
     g_foreground_event_hook = nullptr;
+  }
+}
+
+void FloatingLyricWindow::NotifyExternalWindowLifecycle(HWND external_window) {
+  // lParam is the scaled output HWND for the Magpie states that use this
+  // bridge. Do not manufacture a recovery event for the terminal state, which
+  // deliberately carries a null handle.
+  if (external_window == nullptr || hwnd_ == nullptr || !hook_text_mode_ ||
+      !visible_ || !topmost_ || external_topmost_reassert_pending_) {
+    return;
+  }
+  external_topmost_reassert_pending_ = true;
+  if (!PostMessageW(hwnd_, kReassertTopmostMessage, 0, 0)) {
+    external_topmost_reassert_pending_ = false;
   }
 }
 
@@ -874,6 +893,7 @@ LRESULT FloatingLyricWindow::HandleMessage(UINT message, WPARAM wparam,
                                            LPARAM lparam) noexcept {
   switch (message) {
     case kReassertTopmostMessage: {
+      external_topmost_reassert_pending_ = false;
       // A newly foregrounded game can put its own topmost window above us even
       // though our WS_EX_TOPMOST bit remains set. Reinsert only the visible,
       // pinned galgame overlay at the head of that band; SWP_NOACTIVATE keeps

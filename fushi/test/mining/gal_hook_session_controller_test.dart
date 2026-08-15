@@ -23,6 +23,18 @@ void main() {
   // 空列表而不是在无 binding 下直接抛错。
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('legacy Luna timing memory is bounded to the 1000ms pre-roll maximum',
+      () {
+    final GalCaptureMemory memory = GalCaptureMemory.fromJson(
+      const <Object?, Object?>{
+        'lunaAudioPreRollMs': 3000,
+        'lunaAudioTailTrimMs': 1000,
+      },
+    );
+    expect(memory.lunaAudioPreRollMs, 1000);
+    expect(memory.lunaAudioTailTrimMs, 1000);
+  });
+
   test('window binding is app-level state and stop keeps binding by default',
       () async {
     final TexthookerService service = TexthookerService.test();
@@ -222,7 +234,8 @@ void main() {
       sourceLabel: kLunaTranslatorOriginWsUrl,
     );
 
-    // 这句已经用 1200ms 创建；中途拖滑块只能影响之后的台词。
+    // 传入的旧上限值会被限制到 1000ms；中途拖滑块只能影响之后的台词。
+    expect(controller.lunaLoopbackPreRollMs, 1000);
     controller.setLunaLoopbackPreRollMs(100);
     now = now.add(const Duration(milliseconds: 1250));
     service.appendLine(
@@ -233,7 +246,7 @@ void main() {
     for (int i = 0; i < 30 && loopback.grabRecentBackMs.isEmpty; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 5));
     }
-    expect(loopback.grabRecentBackMs, <int>[2450]);
+    expect(loopback.grabRecentBackMs, <int>[2250]);
 
     now = now.add(const Duration(milliseconds: 1000));
     service.appendLine(
@@ -244,7 +257,7 @@ void main() {
     for (int i = 0; i < 30 && loopback.grabRecentBackMs.length < 2; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 5));
     }
-    expect(loopback.grabRecentBackMs, <int>[2450, 1100]);
+    expect(loopback.grabRecentBackMs, <int>[2250, 1100]);
 
     // 0ms 是真正的「不提前」，不能被通用 Loopback 的 800ms 最小窗口覆盖。
     controller.setLunaLoopbackPreRollMs(0);
@@ -266,7 +279,7 @@ void main() {
     for (int i = 0; i < 30 && loopback.grabRecentBackMs.length < 4; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 5));
     }
-    expect(loopback.grabRecentBackMs, <int>[2450, 1100, 1100, 150]);
+    expect(loopback.grabRecentBackMs, <int>[2250, 1100, 1100, 150]);
 
     await controller.close();
     endpoints.dispose();

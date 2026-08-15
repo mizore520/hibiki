@@ -1502,8 +1502,8 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
                 Slider(
                   value: _session.lunaLoopbackPreRollMs.toDouble(),
                   min: 0,
-                  max: 3000,
-                  divisions: 30,
+                  max: 1000,
+                  divisions: 20,
                   label: '${_session.lunaLoopbackPreRollMs} ms',
                   onChanged: (double value) =>
                       _session.setLunaLoopbackPreRollMs(value.round()),

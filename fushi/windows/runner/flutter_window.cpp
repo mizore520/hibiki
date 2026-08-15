@@ -2306,6 +2306,21 @@ void FlutterWindow::RegisterMagpieChannel() {
 }
 
 void FlutterWindow::NotifyMagpieScalingChanged(WPARAM wparam, LPARAM lparam) {
+  // The foreground WinEvent hook covers ordinary Alt+Tab/focus changes, but
+  // Magpie can recreate, move, or raise its scaled output while the foreground
+  // HWND stays unchanged. Reuse Magpie's existing stable broadcast contract
+  // (and its output HWND in lParam) to give the independent Hook overlay a
+  // coalesced, non-activating reassert opportunity. The overlay method checks
+  // visibility, Hook mode, and the user's pin state itself.
+  const bool has_output_window = lparam != 0;
+  const bool output_lifecycle_event =
+      has_output_window &&
+      (wparam == 0 || wparam == 1 || wparam == 2 || wparam == 3);
+  if (output_lifecycle_event && gal_hook_text_window_ != nullptr) {
+    gal_hook_text_window_->NotifyExternalWindowLifecycle(
+        reinterpret_cast<HWND>(static_cast<intptr_t>(lparam)));
+  }
+
   // WndProc 跑在 platform 线程，InvokeMethod 可直接调用。channel 在 OnCreate 建好
   // 前（极早期消息）可能为空；**退出期**则是引擎先被拆掉、窗口还在收广播消息，此时
   // channel 指针虽非空但底下的 messenger 已随 flutter_controller_ 一起销毁 ——
