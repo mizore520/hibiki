@@ -200,6 +200,11 @@ class FloatingLyricWindow {
   // 不然上一局关掉置顶之后，下一局浮窗会藏在全屏游戏后面，用户只会以为它没出来。
   void SetTopmost(bool enabled);
   bool IsTopmost() const { return topmost_; }
+  // Magpie broadcasts an output-window lifecycle change to the Fushi main
+  // window. Reassert through the overlay's own message loop so a recreated or
+  // repositioned scaled window cannot leave the pinned Hook strip behind it.
+  // The request is coalesced and never activates this window.
+  void NotifyExternalWindowLifecycle(HWND external_window);
   // Restores a physical-pixel window rectangle before the next Show. Invalid
   // rectangles are ignored and Show uses its DPI-aware default.
   void SetInitialBounds(int left, int top, int width, int height);
@@ -222,6 +227,7 @@ class FloatingLyricWindow {
   void StartForegroundTopmostTracking();
   void StopForegroundTopmostTracking();
   void ReassertTopmost();
+  bool external_topmost_reassert_pending_ = false;
 
   // Geometry of the lyric text area in client (DIP-equivalent physical px),
   // computed during the last Render. Used for tap hit-testing.

@@ -170,7 +170,7 @@ class GalCaptureMemory {
       audioFallbackPolicy: GalAudioFallbackPolicy.fromStorageKey(
         json['audioFallback'] as String?,
       ),
-      lunaAudioPreRollMs: _boundedInt(json['lunaAudioPreRollMs'], 3000),
+      lunaAudioPreRollMs: _boundedInt(json['lunaAudioPreRollMs'], 1000),
       lunaAudioTailTrimMs: _boundedInt(json['lunaAudioTailTrimMs'], 1000),
       attachMode: GalAttachCaptureMode.fromStorageKey(
         json['attachMode'] as String?,
@@ -692,8 +692,8 @@ class GalHookSessionController extends ChangeNotifier {
         _utteranceSettleMax = utteranceSettleMax,
         _lunaLoopbackMaxDuration = lunaLoopbackMaxDuration,
         _lunaLoopbackDefaultPreRollMs =
-            lunaLoopbackPreRollMs.clamp(0, 3000).toInt(),
-        _lunaLoopbackPreRollMs = lunaLoopbackPreRollMs.clamp(0, 3000).toInt(),
+            lunaLoopbackPreRollMs.clamp(0, 1000).toInt(),
+        _lunaLoopbackPreRollMs = lunaLoopbackPreRollMs.clamp(0, 1000).toInt(),
         _lunaLoopbackDefaultTailTrimMs =
             lunaLoopbackTailTrimMs.clamp(0, 1000).toInt(),
         _lunaLoopbackTailTrimMs = lunaLoopbackTailTrimMs.clamp(0, 1000).toInt(),
@@ -809,7 +809,7 @@ class GalHookSessionController extends ChangeNotifier {
     required int preRollMs,
     int tailTrimMs = 0,
   }) {
-    _lunaLoopbackDefaultPreRollMs = preRollMs.clamp(0, 3000).toInt();
+    _lunaLoopbackDefaultPreRollMs = preRollMs.clamp(0, 1000).toInt();
     _lunaLoopbackDefaultTailTrimMs = tailTrimMs.clamp(0, 1000).toInt();
     if (_state.sessionStartedAt != null) return;
     _lunaLoopbackPreRollMs = _lunaLoopbackDefaultPreRollMs;
@@ -817,7 +817,7 @@ class GalHookSessionController extends ChangeNotifier {
   }
 
   void setLunaLoopbackPreRollMs(int value) {
-    final int normalized = value.clamp(0, 3000).toInt();
+    final int normalized = value.clamp(0, 1000).toInt();
     if (_lunaLoopbackPreRollMs == normalized) return;
     _lunaLoopbackPreRollMs = normalized;
     notifyListeners();
@@ -3305,7 +3305,8 @@ class GalHookSessionController extends ChangeNotifier {
   }
 
   /// 恢复当前 exe 的 Luna 混音切分。旧记忆没有这两个字段时使用应用默认值，因而升级
-  /// 后的首次行为与旧版完全一致；用户松开滑块后才会写入这个游戏自己的值。
+  /// 后的首次行为与旧版完全一致；超过新上限的旧值会被限制在 1000ms，避免恢复出
+  /// 滑块范围之外的值。用户松开滑块后才会写入这个游戏自己的值。
   void _restoreLunaLoopbackTiming() {
     if (!_ensureCaptureMemoryLoaded()) {
       _lunaLoopbackPreRollMs = _lunaLoopbackDefaultPreRollMs;
@@ -3313,7 +3314,9 @@ class GalHookSessionController extends ChangeNotifier {
       return;
     }
     _lunaLoopbackPreRollMs =
-        _captureMemory.lunaAudioPreRollMs ?? _lunaLoopbackDefaultPreRollMs;
+        (_captureMemory.lunaAudioPreRollMs ?? _lunaLoopbackDefaultPreRollMs)
+            .clamp(0, 1000)
+            .toInt();
     _lunaLoopbackTailTrimMs =
         _captureMemory.lunaAudioTailTrimMs ?? _lunaLoopbackDefaultTailTrimMs;
     if (_captureMemory.lunaAudioPreRollMs == null &&

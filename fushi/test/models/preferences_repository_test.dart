@@ -208,11 +208,11 @@ void main() {
 
   test('Luna audio pre-roll persists and clamps to the supported range',
       () async {
-    await repo.setGalLunaAudioPreRollMs(1700);
-    expect(repo.galLunaAudioPreRollMs, 1700);
+    await repo.setGalLunaAudioPreRollMs(700);
+    expect(repo.galLunaAudioPreRollMs, 700);
 
     await repo.setGalLunaAudioPreRollMs(9000);
-    expect(repo.galLunaAudioPreRollMs, 3000);
+    expect(repo.galLunaAudioPreRollMs, 1000);
 
     await repo.setGalLunaAudioPreRollMs(-10);
     expect(repo.galLunaAudioPreRollMs, 0);

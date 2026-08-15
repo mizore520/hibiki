@@ -447,13 +447,13 @@ class PreferencesRepository extends ChangeNotifier {
   /// 调大只会多带一点前方声音，用来抵消 Luna WebSocket 传输和 UI 通知延迟。
   int get galLunaAudioPreRollMs =>
       (getPref('gal_luna_audio_pre_roll_ms', defaultValue: 800) as int)
-          .clamp(0, 3000)
+          .clamp(0, 1000)
           .toInt();
 
   Future<void> setGalLunaAudioPreRollMs(int value) async {
     await setPref(
       'gal_luna_audio_pre_roll_ms',
-      value.clamp(0, 3000).toInt(),
+      value.clamp(0, 1000).toInt(),
     );
     notifyListeners();
   }

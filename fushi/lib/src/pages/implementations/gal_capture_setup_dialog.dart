@@ -312,8 +312,8 @@ class _GalCaptureSetupDialogState extends State<GalCaptureSetupDialog> {
                   Slider(
                     value: widget.session.lunaLoopbackPreRollMs.toDouble(),
                     min: 0,
-                    max: 3000,
-                    divisions: 30,
+                    max: 1000,
+                    divisions: 20,
                     label: '${widget.session.lunaLoopbackPreRollMs} ms',
                     onChanged: (double value) =>
                         widget.session.setLunaLoopbackPreRollMs(value.round()),
