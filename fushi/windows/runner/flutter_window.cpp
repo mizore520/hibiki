@@ -2573,6 +2573,15 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  // TODO-1680：退出期的主 HWND 不能继续暴露已经被 native pre-exit 拆掉的
+  // Flutter/WebView2/DComp 客户区。WM_CLOSE 仍必须继续交给 Flutter/window_manager：
+  // Dart 侧的 setPreventClose(true) 负责 flush、关库和最终 exit(0)，这里仅做视觉隔离。
+  // ShowWindow(SW_HIDE) 不销毁 HWND、不改变 prevent-close，也不激活其它窗口；其返回值
+  // 只表示之前是否可见，失败也不能阻断下面的消息分发和既有关闭清理链。
+  if (message == WM_CLOSE) {
+    ShowWindow(hwnd, SW_HIDE);
+  }
+
   // BUG-1239: inspect VK_PROCESSKEY before Flutter handles the message. The
   // engine deliberately reports IME-owned keys as physical=0/logical=0, so
   // checking after HandleTopLevelWindowProc can no longer identify Space.
