@@ -40,6 +40,7 @@ import 'package:fushi/src/media/video/stream_video_launch.dart';
 import 'package:fushi/src/media/video/subtitle_embedded_fonts.dart';
 import 'package:fushi/src/media/video/video_episode_start_policy.dart';
 import 'package:fushi/src/media/video/video_import_dialog.dart';
+import 'package:fushi/src/media/video/video_top_bar_slots.dart';
 import 'package:fushi/src/media/video/m3u8_playlist.dart';
 import 'package:fushi/src/media/video/url_stream_video.dart';
 import 'package:fushi/src/media/video/youtube_source_resolver.dart'
@@ -1417,7 +1418,7 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
         hitSubtitle: true,
       )) {
         _handleSubtitleHoverLookup(
-            hit.sentence, hit.graphemeIndex, hit.charRect);
+            hit.sentence, hit.graphemeIndex, hit.charRect, hit.cue);
       }
       return;
     }
@@ -1698,6 +1699,13 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
   /// 音画延迟（毫秒）：字幕 cue 同步偏移，跨重启保留；换集复用同一值。
   int _delayMs = 0;
 
+  /// 副字幕独立调轴（毫秒，TODO-2837 主副字幕分开调轴）：null = 未单独设置 =
+  /// 跟随 [_delayMs]（v86 前「主副共用一个 offset」行为）；非 null = 副轨独立偏移
+  /// （主副字幕轴不同源时各调各的）。两层持久化镜像 [_delayMs]（per-book
+  /// `VideoBooks.secondaryDelayMs` + 合集级 `MediaCollections.secondarySubtitleDelayMs`），
+  /// 换集复用同一值。远端播放恒 null（host 不下发副轨偏移，副字幕也不参与远端流）。
+  int? _secondaryDelayMs;
+
   /// 播放倍速：用户在设置面板调，跨重启保留；换集复用同一值（速度记忆）。
   double _playbackSpeed = 1.0;
   double? _longPressPreviousSpeed;
@@ -1723,6 +1731,12 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
 
   /// 当前字幕外观（全局偏好快照；设置面板改动后刷新）。
   VideoSubtitleStyle _subtitleStyle = VideoSubtitleStyle.defaults;
+
+  /// 「拖拽调整字幕位置」模式开关（TODO-2838）：设置面板入口进入、画面顶部横幅
+  /// 「完成」退出。开启时字幕 overlay 让出查词指针面、改挂竖直拖拽（见
+  /// [VideoSubtitleOverlay.dragAdjustEnabled]），松手经 [_handleSubtitleDragAdjustEnd]
+  /// 写回 [_subtitleStyle] 并持久化。
+  bool _subtitleDragAdjustActive = false;
   VideoAsbplayerConfig _asbConfig = VideoAsbplayerConfig.defaults;
 
   /// Live 9-slot control button layout (TODO-274/312 phase 2). This is loaded
@@ -2053,6 +2067,8 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     _currentSecondarySubtitleSource = row.secondarySubtitleSource;
     _currentAudioTrackId = row.audioTrackId;
     _delayMs = row.delayMs;
+    // TODO-2837：副字幕独立调轴（null = 跟随主字幕）。
+    _secondaryDelayMs = row.secondaryDelayMs;
     _playbackSpeed = _readPersistedSpeed();
     _playbackVolume = _readPersistedVolume();
     _subtitleStyle = VideoSubtitleStyle.decode(appModel.videoSubtitleStyle);
@@ -2075,6 +2091,9 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       _currentAudioTrackId =
           effectiveSeriesAudioTrackId(col?.audioTrackId, row.audioTrackId);
       _delayMs = effectiveSeriesDelayMs(col?.subtitleDelayMs, row.delayMs);
+      // TODO-2837：副轨调轴同款系列级优先（两层都 null = 跟随主字幕）。
+      _secondaryDelayMs = effectiveSeriesSecondaryDelayMs(
+          col?.secondarySubtitleDelayMs, row.secondaryDelayMs);
       final List<MediaCollectionItemRow> members =
           await widget.repo.getCollectionItems(collectionId);
       // v68 Jellyfin 对齐：剧集面板要 ①集级刮削集名 ②合集横图回退链 ③看完/在看
@@ -2131,10 +2150,19 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     final RemoteVideoInfo info = _effectiveRemoteInfo!;
     _currentSubtitleSource = null;
     _currentSecondarySubtitleSource = null;
-    _currentAudioTrackId = null;
+    // 远端音轨恢复（BUG-1636 → 播放偏好同步泛化批）：本地带戳选择与 host 下发值
+    // 逐字段 LWW；都无 = null 跟随 libmpv 默认轨。_applyLoad 里 _restoreAudioTrack
+    // 会按它选轨。
+    _currentAudioTrackId =
+        _resolveRemoteInitialAudioTrackId(info, widget.bookUid);
     // BUG-996：远端播放跟随 host 下发的字幕时序偏移（此前恒 0，字幕调轴不同步）。
     // 通道已就绪——_applyLoad 里 controller.setDelayMs(_delayMs) 会应用它。
-    _delayMs = info.delayMs;
+    // 互联远端调轴不持久化 bug：host 值与本地 prefs 经 LWW 取严格较新者——本机调过
+    // 的轴退出重进不再被 host 的 0 覆盖。
+    _delayMs = _resolveRemoteInitialDelayMs(info, widget.bookUid);
+    // TODO-2837 远端副字幕支持：先置中性值，真实来源/调轴在 [_loadRemoteEpisode]
+    // 按 (uid, ep) 从本地 prefs 恢复（副字幕轨是本机自选的，host 不参与同步）。
+    _secondaryDelayMs = null;
     _playbackSpeed = _readPersistedSpeed();
     _playbackVolume = _readPersistedVolume();
     _subtitleStyle = VideoSubtitleStyle.decode(appModel.videoSubtitleStyle);
@@ -2155,10 +2183,17 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
             title: m.title,
             coverUrl: m.coverUrl,
             coverCacheKey: m.id,
+            // 剧集面板看完/在看角标（互联完整支持批次）：host 下发 completedAt +
+            // 断点即口径，与本地集（completedAt / lastPositionMs）对齐。
+            completed: m.completedAt != null,
+            started: m.positionMs > 0,
           ),
       ];
       _activeRemoteMember = _remoteMembers[startIndex];
-      _delayMs = _remoteMembers[startIndex].delayMs;
+      _delayMs = _resolveRemoteInitialDelayMs(
+          _remoteMembers[startIndex], _remoteMembers[startIndex].id);
+      _currentAudioTrackId = _resolveRemoteInitialAudioTrackId(
+          _remoteMembers[startIndex], _remoteMembers[startIndex].id);
       await _loadRemoteEpisode(
         startIndex,
         startIntent: EpisodeStartIntent.initialOpen,
@@ -2206,11 +2241,21 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       info = _remoteMembers[index.clamp(0, _remoteMembers.length - 1)];
       streamEpisodeIndex = 0;
       _activeRemoteMember = info;
-      _delayMs = info.delayMs;
+      _delayMs = _resolveRemoteInitialDelayMs(info, info.id);
+      _currentAudioTrackId = _resolveRemoteInitialAudioTrackId(info, info.id);
     } else {
       info = _effectiveRemoteInfo!;
       streamEpisodeIndex = index;
     }
+    // TODO-2837 远端副字幕（播放偏好同步泛化批）：来源与独立调轴按 uid 做本地带戳
+    // 值 vs host 下发值的逐字段 LWW。_applyLoad 内 setSecondaryDelayMs 应用调轴、
+    // _restoreSecondarySubtitle 远端分支重放来源。
+    final RemoteVideoInfo secInfo =
+        _isRemoteCollection ? info : _effectiveRemoteInfo!;
+    final (String secUid, _) = _remotePositionKeyForIndex(index);
+    _currentSecondarySubtitleSource =
+        _resolveRemoteInitialSecondarySource(secInfo, secUid);
+    _secondaryDelayMs = _resolveRemoteInitialSecondaryDelayMs(secInfo, secUid);
     final RemoteVideoClient client = _effectiveRemoteClient!;
     final int seq = ++_episodeLoadSeq;
     // TODO-1307：新一集起播重置「用户已关字幕」标记（字幕后置自动应用的门控，见
@@ -2244,6 +2289,10 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       final String? persistedSub =
           appModel.remoteSubtitleSource(subUid, episodeIndex: subEp);
       bool subtitleResolved = false;
+      // 内嵌轨重放成功时的持久化编码（`embedded:<n>`）——_applyLoad 会把
+      // _currentSubtitleSource 设成外挂文件路径（下载的临时抽取产物），须在其后
+      // 改回本编码，否则字幕菜单的内嵌轨行高亮不上、再选一次还会重复下载。
+      String? restoredPrimarySource;
       if (persistedSub != null) {
         if (SubtitleSource.isOff(persistedSub)) {
           // 上次显式关闭 → 保持关闭，不加载 host 默认字幕（尊重用户选择）。
@@ -2259,8 +2308,42 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
             _remoteSubtitlePath = persistedSub;
             subtitleResolved = true;
           }
+        } else if (persistedSub.startsWith(SubtitleSource.embeddedPrefix)) {
+          // 远端内嵌轨选择重放（互联完整支持批次）：此前 `embedded:<n>` 不重放、
+          // 重进落回 host 默认字幕（选内嵌轨的用户每次进影片都要重选一遍）。向
+          // host 重新抽取该轨（与 [_applyRemoteEmbeddedSubtitle] 同端点）；抽取
+          // 失败（轨已变 / 旧 host）静默落回 host 默认分支，不阻断起播。
+          final int? streamIndex = int.tryParse(
+              persistedSub.substring(SubtitleSource.embeddedPrefix.length));
+          if (streamIndex != null) {
+            _setLoadingPhase(_VideoLoadPhase.downloadingSubtitle);
+            try {
+              final Directory temp = await getTemporaryDirectory();
+              final File subtitle = File(p.join(
+                temp.path,
+                _remoteSubtitleTempFileName(
+                    '${info.id}_emb$streamIndex', 'embedded_$streamIndex.srt'),
+              ));
+              await client.getRemoteVideoSubtitle(
+                info.id,
+                subtitle,
+                embeddedStreamIndex: streamIndex,
+                episodeIndex: streamEpisodeIndex,
+              );
+              cues = await _loadExternalSubtitleCues(subtitle.path, info.id);
+              if (cues.isNotEmpty) {
+                externalSub = subtitle.path;
+                _remoteSubtitlePath = subtitle.path;
+                restoredPrimarySource = persistedSub;
+                subtitleResolved = true;
+              }
+            } catch (e) {
+              debugPrint(
+                  '[VideoFushiPage] embedded subtitle replay failed: $e');
+            }
+          }
         }
-        // host url / embedded 索引 / 文件已删 → 不在此解析，落回下方 host 默认分支。
+        // host url / 文件已删 → 不在此解析，落回下方 host 默认分支。
       }
       // TODO-1000：YouTube 等预解析好 cue（timedtext→AudioCue）时直接用，跳过
       // subtitleUrl 下载+解析（YouTube XML 字幕现有解析器不识别）。
@@ -2319,6 +2402,10 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
         // load 返回后才挂（那时 play 已开始，新加音轨不会自动 seek 到当前位置 → 无声）。
         externalAudioTrackUrl: urls.audioStreamUrl,
       );
+      if (restoredPrimarySource != null && mounted) {
+        // 内嵌轨重放：把选择态改回 `embedded:<n>` 编码（见 restoredPrimarySource doc）。
+        setState(() => _currentSubtitleSource = restoredPrimarySource);
+      }
       // TODO-1301（BUG-600）：制卡音频源与批量制卡守卫（youtube_clip_miner.dart:67）完全
       // 一致——muxed 挖矿流自带音轨时置 null，让引擎回落 miningSource(muxed 360p) 抽音频
       // （实测 2s 出 AAC）；仅无 muxed 的纯分离流才指向 audio-only 流。此前无条件指向
@@ -2442,6 +2529,112 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     final int v =
         raw is num ? raw.toInt() : int.tryParse(raw?.toString() ?? '') ?? 0;
     return v < 0 ? 0 : v;
+  }
+
+  /// 读本地持久化的远端视频 [uid] 字幕调轴（prefs，无记录返回 0）。与断点同款
+  /// per-uid prefs 范式（互联远端调轴不持久化 bug：远端无 VideoBooks 行，
+  /// `updateDelayMs` 是静默 0 行 UPDATE，调轴必须落 prefs 才能跨重启保留）。
+  int _readPersistedRemoteDelayMs(String uid) {
+    final Object? raw = appModel.prefsRepo
+        .getPref(videoRemoteDelayPrefKey(uid), defaultValue: 0);
+    return raw is num ? raw.toInt() : int.tryParse(raw?.toString() ?? '') ?? 0;
+  }
+
+  /// 读 [_readPersistedRemoteDelayMs] 对应的本地「最后更新时间」（无则 0）。LWW 用。
+  int _readPersistedRemoteDelayAtMs(String uid) {
+    final Object? raw = appModel.prefsRepo
+        .getPref(videoRemoteDelayAtPrefKey(uid), defaultValue: 0);
+    final int v =
+        raw is num ? raw.toInt() : int.tryParse(raw?.toString() ?? '') ?? 0;
+    return v < 0 ? 0 : v;
+  }
+
+  /// 远端视频起播字幕调轴：host 下发值（[info].delayMs@delayUpdatedAtMs）与本地
+  /// prefs 经 [resolveDelayLww]「严格较新者胜」。平局（两侧都无戳 = 本机从未调过、
+  /// host 也无带戳记录）跟随 host（保留 BUG-996 行为）；本机调过而 host 无新主张
+  /// 时本机值胜——这正是「退出重进归 0」的修复点。
+  int _resolveRemoteInitialDelayMs(RemoteVideoInfo info, String uid) {
+    final ({int delayMs, int updatedAtMs}) winner = resolveDelayLww(
+      aDelayMs: info.delayMs,
+      aUpdatedAtMs: info.delayUpdatedAtMs,
+      bDelayMs: _readPersistedRemoteDelayMs(uid),
+      bUpdatedAtMs: _readPersistedRemoteDelayAtMs(uid),
+    );
+    return winner.delayMs
+        .clamp(-kVideoSubtitleDelayLimitMs, kVideoSubtitleDelayLimitMs);
+  }
+
+  // ── 远端播放偏好统一键对读写（播放偏好同步泛化批）───────────────────────────
+  // 每偏好 = (值键, at 键) 一对；字符串值空串 = null（「显式清除」有 at 无值，与
+  // 「从未设过」at==0 区分）。与 host 侧 getVideoPlayback 同一键、同一语义。
+
+  /// 读远端播放偏好的字符串值键（缺失/空串 → null）。
+  String? _readRemoteStringPref(String key) {
+    final Object? raw = appModel.prefsRepo.getPref(key, defaultValue: '');
+    final String s = raw?.toString() ?? '';
+    return s.isEmpty ? null : s;
+  }
+
+  /// 读远端播放偏好的 at 键（缺失 → 0）。
+  int _readRemoteAtPref(String key) {
+    final Object? raw = appModel.prefsRepo.getPref(key, defaultValue: 0);
+    final int v =
+        raw is num ? raw.toInt() : int.tryParse(raw?.toString() ?? '') ?? 0;
+    return v < 0 ? 0 : v;
+  }
+
+  /// 写远端播放偏好键对（值 null → 空串哨兵 = 显式清除；at = now）。返回盖下的 at。
+  Future<int> _stampRemoteStringPref(
+      String valueKey, String atKey, String? value) async {
+    final int nowMs = DateTime.now().millisecondsSinceEpoch;
+    await appModel.prefsRepo.setPref(valueKey, value ?? '');
+    await appModel.prefsRepo.setPref(atKey, nowMs);
+    return nowMs;
+  }
+
+  /// best-effort 上报播放偏好带戳字段到 host（能力探测 + 吞错；调整哪个字段就
+  /// 只带哪个字段，host 逐字段 LWW 合并）。旧 host 无端点 / 离线只记日志。
+  void _pushRemotePlayback(String uid, VideoPlaybackSyncState state) {
+    // 经 Object? 中转促成类型提升：RemoteVideoPlaybackSync 是能力接口，不是
+    // RemoteVideoClient 的子类型，直接 is 判断不会提升接收者。
+    final Object? client = _effectiveRemoteClient;
+    if (client is! RemoteVideoPlaybackSync) return;
+    unawaited(() async {
+      try {
+        await client.putRemoteVideoPlayback(uid, state);
+      } catch (e) {
+        debugPrint('[VideoFushiPage] remote playback upload failed: $e');
+      }
+    }());
+  }
+
+  /// 远端起播音轨：本地带戳选择严格新于 host → 本地；否则跟随 host 下发
+  /// （系列级 ?? row 基底或对端带戳值）。平局（双 0）= 都没选过 → host 基底。
+  String? _resolveRemoteInitialAudioTrackId(RemoteVideoInfo info, String uid) =>
+      _readRemoteAtPref(videoRemoteAudioTrackAtPrefKey(uid)) >
+              info.audioTrackUpdatedAtMs
+          ? _readRemoteStringPref(videoRemoteAudioTrackPrefKey(uid))
+          : info.audioTrackId;
+
+  /// 远端起播副字幕来源（TODO-2837 副字幕入同步通道）。值可能是对端设备的本地
+  /// 文件路径——恢复侧文件不存在自然跳过，无特例分支。
+  String? _resolveRemoteInitialSecondarySource(
+          RemoteVideoInfo info, String uid) =>
+      _readRemoteAtPref(videoRemoteSecondarySubtitleAtPrefKey(uid)) >
+              info.secondarySubtitleUpdatedAtMs
+          ? _readRemoteStringPref(videoRemoteSecondarySubtitlePrefKey(uid))
+          : info.secondarySubtitleSource;
+
+  /// 远端起播副字幕独立调轴（null = 跟随主字幕；「显式清除」也带戳同步）。
+  int? _resolveRemoteInitialSecondaryDelayMs(RemoteVideoInfo info, String uid) {
+    final int? winner = _readRemoteAtPref(
+                videoRemoteSecondaryDelayAtPrefKey(uid)) >
+            info.secondaryDelayUpdatedAtMs
+        ? int.tryParse(
+            _readRemoteStringPref(videoRemoteSecondaryDelayPrefKey(uid)) ?? '')
+        : info.secondaryDelayMs;
+    return winner?.clamp(
+        -kVideoSubtitleDelayLimitMs, kVideoSubtitleDelayLimitMs);
   }
 
   /// 远端视频开播位置（TODO-653/885）：在 host 真相（[info] 随清单带回的整书 positionMs，
@@ -2936,6 +3129,8 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     }
     // 应用持久化的音画延迟（换集复用同一值；load 不重置 delay）。
     controller.setDelayMs(_delayMs);
+    // TODO-2837：副字幕独立调轴同步应用（null = 跟随主字幕，controller 侧回退）。
+    controller.setSecondaryDelayMs(_secondaryDelayMs);
     controller.setPauseAtSubtitleEnd(_asbConfig.pauseAtSubtitleEnd);
     // TODO-559: 远端断点保存——远端无 DB 行，按 bookUid 落 prefs（原为 null 不存）。
     controller.onPositionWrite =
@@ -3813,7 +4008,8 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
           topVisibleIndex: _topVisiblePopupIndex,
           hitSubtitle: true,
         )) {
-      _handleSubtitleHoverLookup(hit.sentence, hit.graphemeIndex, hit.charRect);
+      _handleSubtitleHoverLookup(
+          hit.sentence, hit.graphemeIndex, hit.charRect, hit.cue);
       return;
     }
     // BUG-879/881：画面字幕没命中，再反查**字幕列表侧栏**——barrier 全屏盖在推挤式侧栏上，
@@ -3846,6 +4042,7 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     String sentence,
     int graphemeIndex,
     Rect charRect,
+    AudioCue? cue,
   ) {
     if (sentence == _barrierHoverLastSentence &&
         graphemeIndex == _barrierHoverLastGrapheme) {
@@ -3853,7 +4050,7 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     }
     _barrierHoverLastSentence = sentence;
     _barrierHoverLastGrapheme = graphemeIndex;
-    _handleSubtitleLookupTap(sentence, graphemeIndex, charRect);
+    _handleSubtitleLookupTap(sentence, graphemeIndex, charRect, cue);
   }
 
   /// BUG-094: seed one persistent, hidden warm popup slot on open so its
@@ -3898,7 +4095,8 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       topVisibleIndex: _topVisiblePopupIndex,
       hitSubtitle: hit != null,
     )) {
-      _handleSubtitleLookupTap(hit!.sentence, hit.graphemeIndex, hit.charRect);
+      _handleSubtitleLookupTap(
+          hit!.sentence, hit.graphemeIndex, hit.charRect, hit.cue);
       return;
     }
     // BUG-874：底部字幕没命中，再反查**字幕列表侧栏**——barrier 全屏盖在推挤式侧栏之上、
@@ -3928,13 +4126,18 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     _popNestedPopupAt(0);
   }
 
+  /// BUG-1592：[cue] 是被点字符**所属的那条 cue**，直接当查词/制卡锚点透传
+  /// （`overrideCue`）。此前不传，锚点靠 [resolveVideoLookupAnchorCue] 去主字幕流按播放
+  /// 位置猜——主字幕关掉只开副字幕时主流为空，锚点恒 null，制卡区间塌成 `0..0`（句子音频
+  /// 空 + 封面抽第 0 秒的片头黑帧）；主副同开时点副字幕还会错锚到主字幕那句。
   void _handleSubtitleLookupTap(
     String sentence,
     int graphemeIndex,
     Rect charRect,
+    AudioCue? cue,
   ) {
     if (!_immersiveAllowsLookup) return;
-    unawaited(_lookupAt(sentence, graphemeIndex, charRect));
+    unawaited(_lookupAt(sentence, graphemeIndex, charRect, overrideCue: cue));
   }
 
   void _popNestedPopupAt(int index) {
@@ -4415,7 +4618,9 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       }),
       // 字幕对轴/匹配（用户请求）：Shift+A 一键弹波形对轴放大视图；z/x 整体平移字幕延迟
       // ±_kSubtitleDelayNudgeMs（走 _setDelayMs 写穿 delayMs 落盘 + OSD）。都过沉浸门控，
-      // 与顶部快速设置面板同源、零第二套状态。
+      // 与顶部快速设置面板同源、零第二套状态。TODO-2837：z/x 保持只调**主字幕轨**；
+      // 副字幕独立调轴本轮只走快速设置面板（_setSecondaryDelayMs），不占新键位——
+      // 加副轨微调快捷键前须查 docs/agent/shortcuts-inventory.md 撞键并走注册表新动作。
       openSubtitleAlign: () => _runWhenImmersiveAllowsShortcuts(
         () => unawaited(_openSubtitleWaveformAlign()),
       ),
@@ -4799,20 +5004,22 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     if (!_controlLayout.itemsIn(VideoControlSlot.topCenter).contains(
           VideoControlItem.title,
         )) {
-      return const Spacer();
+      // 标题项没配置：交回零宽占位，整条顶栏宽都归两侧按钮组。绝不能返回 Spacer
+      // （= Expanded/FlexFit.tight）——那会让「空的中段」硬占一份顶栏宽，用户把标题
+      // 关掉后中间明明是空白、右上角按钮却照旧被挤进滚动区裁掉（本轮修复的现象）。
+      return const SizedBox.shrink();
     }
-    return Flexible(
-      // TODO-642：标题用 Flexible(loose) 而非 Expanded(=FlexFit.tight)。tight 会强迫
-      // 标题填满它分到的那 1/3 顶栏宽，把左右按钮组（同为 Flexible loose）挤进窄滚动
-      // 区，导致右上角按钮被裁/要横滑才看得到。loose 让标题只占自身需要的宽、把剩余
-      // 空间优先让给按钮组；标题已有 maxLines:1 + ellipsis，窄窗时优雅截断不溢出。
-      fit: FlexFit.loose,
-      // 标题走 ValueListenableBuilder（BUG-120）：全屏路由不随页面 setState 重建，
-      // 监听 _titleNotifier 才能在全屏换集后刷新标题。Align 固定标题起点：
-      // topRight 清空时不靠右侧空白占位撑布局，已有按钮未清空时仍保持原有 Row 顺序。
-      child: _topBarTitleText(
-        alignment: AlignmentDirectional.centerStart,
-      ),
+    // TODO-642 → 本轮：标题不再参与 Row 的 flex 分配（旧实现是 Flexible(loose)，与
+    // 左右按钮组各占 flex:1 → Flex 把整宽**平分**成三份，loose 用不完的空间又不回流，
+    // 所以右侧按钮组无论如何最多只拿 1/3 顶栏宽、多出来的按钮被裁进横滚区）。改由
+    // [_TopBarSlots] 按「按钮按需优先、标题吃剩余」的固定优先级分宽：按钮永远完整可见，
+    // 标题只在剩余宽里显示、靠 maxLines:1 + ellipsis 优雅截断。
+    //
+    // 标题走 ValueListenableBuilder（BUG-120）：全屏路由不随页面 setState 重建，
+    // 监听 _titleNotifier 才能在全屏换集后刷新标题。Align 固定标题起点：
+    // topRight 清空时不靠右侧空白占位撑布局，已有按钮未清空时仍保持原有顺序。
+    return _topBarTitleText(
+      alignment: AlignmentDirectional.centerStart,
     );
   }
 
@@ -5113,17 +5320,23 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       );
     }
 
-    return Flexible(
-      fit: FlexFit.loose,
-      child: Align(
-        alignment: slot == VideoControlSlot.topRight
-            ? Alignment.centerRight
-            : Alignment.centerLeft,
-        child: HorizontalDragScrollable(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            reverse: slot == VideoControlSlot.topRight,
-            child: Row(
+    // 按钮组按**内容固有宽**收缩（`widthFactor: 1` + `shrinkWrap: true`），不再撑满
+    // 分到的那份宽：这样 [_TopBarSlots] 才能先把两侧按钮要的宽度足额给出去、把真正
+    // 剩下的宽度交给标题。用 ListView 而不是 SingleChildScrollView，正是因为后者的
+    // viewport 在主轴上恒撑满约束（拿不到内容宽），窄窗仍靠横滚兜底按钮可达性。
+    return Align(
+      alignment: slot == VideoControlSlot.topRight
+          ? Alignment.centerRight
+          : Alignment.centerLeft,
+      widthFactor: 1,
+      child: HorizontalDragScrollable(
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          shrinkWrap: true,
+          padding: EdgeInsets.zero,
+          reverse: slot == VideoControlSlot.topRight,
+          children: <Widget>[
+            Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: slot == VideoControlSlot.topRight
                   ? MainAxisAlignment.end
@@ -5136,7 +5349,7 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
                     buttonFor(item),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -5758,7 +5971,8 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
   /// 持久化到 VideoBook.delayMs（换集复用、跨重启保留）+ 刷新面板显示 + 左上角 OSD
   /// 即时反馈（BUG-373：与调速 [Icons.speed] 同范式，让快速设置面板外也看得到调整生效）。
   Future<void> _setDelayMs(int delayMs) async {
-    final int clamped = delayMs.clamp(-600000, 600000);
+    final int clamped =
+        delayMs.clamp(-kVideoSubtitleDelayLimitMs, kVideoSubtitleDelayLimitMs);
     if (clamped == _delayMs) return;
     _delayMs = clamped;
     _controller?.setDelayMs(clamped);
@@ -5770,15 +5984,102 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       icon: Icons.sync_outlined,
     );
     // 同系列调轴记忆（schema v52）：合集内调轴写系列级，全系列共享（换集/从书架重进
-    // 任一集都读到同一值）；单文件视频（无合集，含远端 collectionId==null）仍走
-    // per-book，行为与旧版一致。所有调轴入口（z/x 微调、asbplayer 对齐、面板滑条/
-    // 输入/自动对轴）都汇聚到此，写入分流一处覆盖全部。
+    // 任一集都读到同一值）；单文件视频（无合集）仍走 per-book，行为与旧版一致。所有
+    // 调轴入口（z/x 微调、asbplayer 对齐、面板滑条/输入/自动对轴）都汇聚到此，写入
+    // 分流一处覆盖全部。
+    //
+    // 互联远端调轴不持久化 bug 根因修复：远端播放（[_isRemote]）在 client 无
+    // VideoBooks 行，旧路径 `updateDelayMs(远端uid)` 是**静默 0 行 UPDATE**（调轴落
+    // 在空气里），重进又被 host 清单值覆盖归 0。改按稳定远端 uid 落 prefs（断点
+    // TODO-559/653 同款范式，跨重启保留）+ best-effort 上报 host（host 侧「严格较新
+    // 时间戳者胜」+ 写穿行值，使 host 本机与其它设备跟随；失败/旧 host 无端点只记
+    // 日志——本地 prefs 已写，不阻塞播放）。合集连播键 = 当前成员 id（与断点键
+    // [_remotePositionKeyForIndex] 同构，成员天然隔离）。
+    if (_isRemote) {
+      final int nowMs = DateTime.now().millisecondsSinceEpoch;
+      final (String uid, _) = _remotePositionKeyForIndex(_currentEpisode);
+      await appModel.prefsRepo.setPref(videoRemoteDelayPrefKey(uid), clamped);
+      await appModel.prefsRepo.setPref(videoRemoteDelayAtPrefKey(uid), nowMs);
+      _pushRemotePlayback(
+          uid, VideoPlaybackSyncState(delayMs: clamped, delayAt: nowMs));
+    } else {
+      final int? collectionId = widget.playlistCollectionId;
+      if (collectionId != null) {
+        // 系列级写入内聚盖戳：repo 会把值 + now 镜像进**全体视频成员**的
+        // `video_remote_delay_` prefs 对（互联 LWW 用，见 repo doc），此处无需重复。
+        await widget.repo
+            .updateCollectionSubtitleDelayMs(collectionId, clamped);
+      } else {
+        await widget.repo.updateDelayMs(widget.bookUid, clamped);
+        // 本机调轴镜像盖戳（断点 TODO-816 同范式）：调轴 + now 写进与互联同一键
+        // 空间，使 host 侧 getVideoDelay / 清单以带戳值参与 LWW——否则对端上报过
+        // 一次后，本机后续调轴（row 无戳恒 0）永远输给旧戳、再也传不出去。
+        await appModel.prefsRepo
+            .setPref(videoRemoteDelayPrefKey(widget.bookUid), clamped);
+        await appModel.prefsRepo.setPref(
+            videoRemoteDelayAtPrefKey(widget.bookUid),
+            DateTime.now().millisecondsSinceEpoch);
+      }
+    }
+    if (mounted) setState(() {});
+  }
+
+  /// 设置**副字幕**独立调轴（毫秒，TODO-2837）：null = 清除独立值、回到跟随主字幕
+  /// [_delayMs]。即时调 controller（副字幕活动集立即按新轴重算）+ 两层持久化镜像
+  /// [_setDelayMs]（合集内写系列级、否则写 per-book）+ 左上角 OSD 即时反馈。
+  ///
+  /// 「重置为跟随」在合集内**两层都清**（系列级 + 本集 per-book）：决议是
+  /// `系列级 ?? per-book`，只清系列级会让本集在单集时代留下的旧独立值复活——
+  /// 「跟随」的语义是两层皆 null，一次写干净，不留特例。
+  Future<void> _setSecondaryDelayMs(int? delayMs) async {
+    final int? clamped = delayMs?.clamp(-600000, 600000);
+    if (clamped == _secondaryDelayMs) return;
+    _secondaryDelayMs = clamped;
+    _controller?.setSecondaryDelayMs(clamped);
+    if (clamped == null) {
+      _showOsd(
+        t.video_subtitle_secondary_delay_follow_osd,
+        icon: Icons.sync_outlined,
+      );
+    } else {
+      final String signed = clamped >= 0 ? '+$clamped' : '$clamped';
+      _showOsd(
+        t.video_subtitle_secondary_delay_osd(ms: signed),
+        icon: Icons.sync_outlined,
+      );
+    }
+    // TODO-2837 副字幕调轴入同步通道（播放偏好同步泛化批）：远端按 uid 落带戳
+    // 键对 + 上报 host；null（回跟随）也是一次带戳写，清除同样跨设备收敛。
+    if (_isRemote) {
+      final (String uid, _) = _remotePositionKeyForIndex(_currentEpisode);
+      final int nowMs = await _stampRemoteStringPref(
+          videoRemoteSecondaryDelayPrefKey(uid),
+          videoRemoteSecondaryDelayAtPrefKey(uid),
+          clamped?.toString());
+      _pushRemotePlayback(
+          uid,
+          VideoPlaybackSyncState(
+              secondaryDelayMs: clamped, secondaryDelayAt: nowMs));
+      if (mounted) setState(() {});
+      return;
+    }
     final int? collectionId = widget.playlistCollectionId;
     if (collectionId != null) {
-      await widget.repo.updateCollectionSubtitleDelayMs(collectionId, clamped);
+      await widget.repo
+          .updateCollectionSecondarySubtitleDelayMs(collectionId, clamped);
+      if (clamped == null) {
+        // 重置为跟随：连本集 per-book 旧值一起清（见 doc，消除回退复活特例）。
+        await widget.repo.updateSecondaryDelayMs(widget.bookUid, null);
+      }
     } else {
-      await widget.repo.updateDelayMs(widget.bookUid, clamped);
+      await widget.repo.updateSecondaryDelayMs(widget.bookUid, clamped);
     }
+    // 本机镜像盖戳（互联 LWW 载体；断点 TODO-816 同范式）：使 host 侧
+    // getVideoPlayback / 清单以带戳值参与逐字段 LWW。
+    await _stampRemoteStringPref(
+        videoRemoteSecondaryDelayPrefKey(widget.bookUid),
+        videoRemoteSecondaryDelayAtPrefKey(widget.bookUid),
+        clamped?.toString());
     if (mounted) setState(() {});
   }
 
@@ -6157,6 +6458,13 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       danmakuStyle: () => _danmakuStyle,
       controlLayout: () => _controlLayout,
       onSetDelay: _setDelayMs,
+      // TODO-2837：副字幕独立调轴（null = 跟随主字幕）。行只在副字幕轨激活
+      // （secondaryCues 非空）时显示——hasSecondarySubtitle 是活值 getter，
+      // 面板内切换副字幕轨后经 controller 通知即时显隐。
+      secondaryDelayMs: () => _secondaryDelayMs,
+      onSetSecondaryDelay: _setSecondaryDelayMs,
+      hasSecondarySubtitle: () =>
+          _controller?.secondaryCues.isNotEmpty ?? false,
       // TODO-701 阶段1：仅当当前有字幕 cue + 视频本地路径时给自动对轴按钮（否则
       // 无可对齐对象/无音频源），否则置 null 让面板不显示该按钮。
       onAutoAlign: (_controller?.cues.isNotEmpty ?? false) &&
@@ -6216,6 +6524,8 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
         if (mounted) setState(() => _subtitleStyle = s);
       },
       onSubtitleStyleCommit: _persistSubtitleStyle,
+      // TODO-2838：进入「拖拽调整字幕位置」模式（关设置侧栏 + 开拖拽，见 layout.part）。
+      onEnterSubtitleDragAdjust: _enterSubtitleDragAdjust,
       // TODO-1105：尊重 .ass 自带样式切换回调（持久化 + 重建让 overlay 即时生效）。
       onRespectAssStyleChanged: _setVideoRespectAssStyle,
       // 着色器/mpv 配置面板内嵌（不弹独立对话框）：着色器勾选 → 持久化启用集 +

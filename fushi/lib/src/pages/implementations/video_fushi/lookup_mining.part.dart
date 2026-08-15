@@ -48,9 +48,13 @@ extension _VideoLookupMining on _VideoFushiPageState {
     );
   }
 
-  /// 以当前查词 cue（[_lastLookupCue]）为锚，在 [VideoPlayerController.cues]（按 startMs
-  /// 升序）里取它之前 [prevCount] 条、之后 [nextCount] 条作上下文，整体设进草稿（覆盖
-  /// 上次选择，不累积）。无 cue / 无控制器时清空上下文返回 0。
+  /// 以当前查词 cue（[_lastLookupCue]）为锚，在**锚点所属的那条字幕流**
+  /// （[VideoPlayerController.cueStreamOwning]，按 startMs 升序）里取它之前 [prevCount] 条、
+  /// 之后 [nextCount] 条作上下文，整体设进草稿（覆盖上次选择，不累积）。无 cue / 无控制器
+  /// 时清空上下文返回 0。
+  ///
+  /// BUG-1592：以前硬取主字幕流 [VideoPlayerController.cues]。副字幕上查词时锚点不在主流里，
+  /// `indexOf` 恒 -1 → 上下 N 句**静默失效**（用户只看到上下文没生效，没有任何报错）。
   Future<int> _setSentenceContextToDraft(int prevCount, int nextCount) async {
     final VideoPlayerController? controller = _controller;
     final AudioCue? anchor = _lastLookupCue;
@@ -58,7 +62,7 @@ extension _VideoLookupMining on _VideoFushiPageState {
       _miningDraft.setContext();
       return _miningDraft.length;
     }
-    final List<AudioCue> cues = controller.cues;
+    final List<AudioCue> cues = controller.cueStreamOwning(anchor);
     final int idx = cues.indexOf(anchor);
     if (idx < 0) {
       _miningDraft.setContext();
@@ -134,10 +138,14 @@ extension _VideoLookupMining on _VideoFushiPageState {
     if (selectedCue != null) {
       // 字幕列表多选（独立入口）：单段区间就是合成 cue 的时间窗，文本即其 join。
       // TODO-680 / BUG-392：cue 时间是字幕文件坐标，裁音频/封面前逆变换回播放器轴
-      // （+ delayMs），否则字幕调轴后裁的位置整体偏移 delayMs。
+      // （+ delayMs），否则字幕调轴后裁的位置整体偏移 delayMs。TODO-2837：主副
+      // 字幕分开调轴后，逆变换必须用**该 cue 所属流**的生效轴（delayMsForCue；
+      // 列表多选的合成 cue 不属任一流 → 回落有效流 miningDelayMs）。
       return (
-        clipStartMs: miningClipTimeMs(selectedCue.startMs, controller.delayMs),
-        clipEndMs: miningClipTimeMs(selectedCue.endMs, controller.delayMs),
+        clipStartMs: miningClipTimeMs(
+            selectedCue.startMs, controller.delayMsForCue(selectedCue)),
+        clipEndMs: miningClipTimeMs(
+            selectedCue.endMs, controller.delayMsForCue(selectedCue)),
         sentence: selectedCue.text,
         cueSentence: selectedCue.text,
         usedSelectedCue: true,
@@ -145,12 +153,17 @@ extension _VideoLookupMining on _VideoFushiPageState {
     }
 
     // 查词窗口多句合一（TODO-270 E）。当前 cue 多段兜底（含 gap，BUG-188）。
+    // BUG-1592：按位置兜底走**有效流**（主字幕流为空即副字幕流）。命中项已带 cue 的入口
+    // （点击 / hover / 手柄光标 / 列表）走 [_lastLookupCue]，这条只服务「没有命中项」的
+    // 入口（如无查词直接制卡）——它以前硬认主流，主字幕关闭时恒 null → 区间 `0..0`。
     final AudioCue? cue = _lastLookupCue ??
         controller.currentCue ??
         resolveMiningCueForPosition(
-          cues: controller.cues,
+          cues: controller.miningCues,
           positionMs: controller.positionMs ?? 0,
-          delayMs: controller.delayMs,
+          // TODO-2837：按位置解析必须与有效流的 cue 命中同一根轴（主流空落副流
+          // 时用副轨生效轴，否则副轨独立调轴后锚错句）。
+          delayMs: controller.miningDelayMs,
         );
     // 草稿全部句 + 当前查词句合成 sentence（草稿空 → 单句 _lastLookupSentence trim）。
     final String mergedSentence = _miningDraft.composeText(_lastLookupSentence);
@@ -166,12 +179,15 @@ extension _VideoLookupMining on _VideoFushiPageState {
     );
     // TODO-680 / BUG-392：mergedRange / cue 的 startMs/endMs 都是字幕文件坐标，裁
     // 音频/封面前逆变换回播放器轴（+ delayMs），与字幕显示用的 effectiveSubtitlePositionMs
-    // 方向相反，保证裁的就是用户实际听到/看到的那段。
+    // 方向相反，保证裁的就是用户实际听到/看到的那段。TODO-2837：主副分开调轴后
+    // 按锚定 cue 所属流取轴（查副字幕词制卡时用副轨生效轴；无 cue 回落有效流轴）。
+    final int clipDelayMs =
+        cue == null ? controller.miningDelayMs : controller.delayMsForCue(cue);
     return (
       clipStartMs: miningClipTimeMs(
-          mergedRange?.startMs ?? cue?.startMs ?? 0, controller.delayMs),
-      clipEndMs: miningClipTimeMs(
-          mergedRange?.endMs ?? cue?.endMs ?? 0, controller.delayMs),
+          mergedRange?.startMs ?? cue?.startMs ?? 0, clipDelayMs),
+      clipEndMs:
+          miningClipTimeMs(mergedRange?.endMs ?? cue?.endMs ?? 0, clipDelayMs),
       // 多句时 cueSentence 用合并文本与 sentence 一致；草稿空时退回单 cue 文本作 fallback。
       cueSentence: _miningDraft.isEmpty ? cue?.text : mergedSentence,
       sentence: mergedSentence,

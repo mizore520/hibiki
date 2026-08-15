@@ -79,7 +79,12 @@ class GalHookTextOverlayController extends ChangeNotifier {
 
   static const String _rectPreferenceKey = 'gal_hook_text_window_rect';
   static const String _opacityPreferenceKey = 'gal_hook_text_window_bg_opacity';
-  static const double _defaultOpacity = 0.88;
+
+  /// 桌面歌词式重写：native 侧 hook 模式文字已自带描边 + 投影，可读性不再依赖
+  /// 底板，默认背景与音乐播放器桌面歌词一致——全透明。存过偏好的用户保持原值
+  /// （never break userspace）；`◐` 一键切底板时恢复到 [_defaultRestoreOpacity]。
+  static const double _defaultOpacity = 0.0;
+  static const double _defaultRestoreOpacity = 0.6;
 
   /// BUG-1095：台词字号的持久化 key。与 [_rectPreferenceKey]（窗口几何）严格分开——
   /// 这两件事以前被 native 的「字号 = 基准 × 窗高比例」耦成一件，正是「放不下拖高
@@ -124,7 +129,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
   /// 浮窗被关掉时仍要能判出换行并让游戏内卡片消场。
   String? _ingameLatestLineId;
   double _opacity = _defaultOpacity;
-  double _lastNonZeroOpacity = _defaultOpacity;
+  double _lastNonZeroOpacity = _defaultRestoreOpacity;
   double _fontSize = kGalHookTextFontSize;
   GalHookTextWindowRect? _savedRect;
 
@@ -456,8 +461,9 @@ class GalHookTextOverlayController extends ChangeNotifier {
       _lastNonZeroOpacity = _opacity;
       _opacity = 0;
     } else {
-      _opacity =
-          _lastNonZeroOpacity > 0 ? _lastNonZeroOpacity : _defaultOpacity;
+      _opacity = _lastNonZeroOpacity > 0
+          ? _lastNonZeroOpacity
+          : _defaultRestoreOpacity;
     }
     final AppModel? model = _appModel;
     if (model != null) {
@@ -703,31 +709,56 @@ class GalHookTextOverlayController extends ChangeNotifier {
   /// 完全相同的 [_mineFromLookup]（截图 / 语音 / 标签 / 压缩档全部同源）。
   ///
   /// hook 报上来的只有文本，没有行 id。同一句台词一局里可能出现多次（回想、重读），
-  /// 取**最后一条**——屏幕上正在显示的必然是最新那条。回溯不到就返回 null：卡照样
-  /// 能建，只是不带 gal 媒体，绝不因为对不上行就把制卡按钮变成死键。
-  OverlayMiningHandler? _ingameMiningHandlerFor(String line) {
+  /// 只允许绑定当前线程的**最新一条**。TextRender 与文本线程的载荷可能不同：后者可带
+  /// `.ks` 文件名等元数据，甚至把同一句完整重复；因此先做最新行逐字匹配，再做受限
+  /// containment。绝不回溯历史 exact：同一句可能重复出现，旧 id 会把当前截图/音频
+  /// 错绑到上一次 occurrence。
+  String? _resolveIngameMiningLineId(String line) {
     final List<TexthookerLineEntry> lines = _session.selectedSessionLines;
-    String? lineId;
-    for (final TexthookerLineEntry entry in lines) {
-      if (entry.text == line) lineId = entry.id;
+    if (lines.isEmpty) return null;
+    final TexthookerLineEntry latest = lines.last;
+    if (latest.text == line) return latest.id;
+    final String normalizedLine = line.replaceAll(RegExp(r'\s+'), '');
+    final String normalizedLatest = latest.text.replaceAll(RegExp(r'\s+'), '');
+    // 短串 containment 太容易误绑助词/人名；8 个 UTF-16 code unit 是保守门槛，
+    // 当前真机的净句远高于此值。只有“当前最新行包含完整净句”才复用其 lineId。
+    if (normalizedLine.length >= 8 &&
+        normalizedLatest.contains(normalizedLine)) {
+      return latest.id;
     }
-    if (lineId == null) return null;
-    final String resolved = lineId;
+    return null;
+  }
+
+  OverlayMiningHandler _ingameMiningHandlerFor(String line) {
     return ({
       required Map<String, String> fields,
       int? updateNoteId,
-    }) =>
-        _mineFromLookup(
-          lineId: resolved,
-          fields: fields,
-          updateNoteId: updateNoteId,
-        );
+    }) async {
+      // resolver 在 popup 构造时被保存，而文本线程可能稍后才发布当前行。到真正点「制卡」
+      // 时重新解析，既覆盖这段时序差，也会重新套用当前 session/thread 的筛选。
+      final String? resolved = _resolveIngameMiningLineId(line);
+      if (resolved == null) {
+        return const <String, Object?>{
+          'ankiConnect': false,
+          'noteId': null,
+        };
+      }
+      return _mineFromLookup(
+        lineId: resolved,
+        fields: fields,
+        updateNoteId: updateNoteId,
+        sentenceOverride: line,
+        suppressIngameLookupForCapture: true,
+      );
+    };
   }
 
   Future<Map<String, Object?>> _mineFromLookup({
     required String lineId,
     required Map<String, String> fields,
     required int? updateNoteId,
+    String? sentenceOverride,
+    bool suppressIngameLookupForCapture = false,
   }) async {
     final AppModel? model = _appModel;
     if (model == null) {
@@ -745,6 +776,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
     final GalHookMiningResult result = await _miningCoordinator.mineLine(
       lineId: lineId,
       fields: fields,
+      sentenceOverride: sentenceOverride,
       compression: MiningMediaCompression.resolve(
         imageTier: model.miningImageQuality,
         audioTier: model.miningAudioQuality,
@@ -759,6 +791,9 @@ class GalHookTextOverlayController extends ChangeNotifier {
       imageMode: model.galMiningImageMode,
       screenshotSize: model.galMiningScreenshotSize,
       animatedFormat: model.galMiningAnimatedFormat,
+      captureLeaseFactory: suppressIngameLookupForCapture
+          ? _ingameLookup.acquireMiningCaptureLease
+          : null,
     );
     if (result.aborted) {
       FushiToast.showMine(

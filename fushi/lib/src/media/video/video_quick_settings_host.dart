@@ -29,6 +29,9 @@ class VideoQuickSettingsHost extends VideoSettingsHost {
     required this.isTouchControls,
     required this.delayMs,
     required this.onSetDelay,
+    this.secondaryDelayMs,
+    this.onSetSecondaryDelay,
+    this.hasSecondarySubtitle,
     this.onAutoAlign,
     this.subtitleWaveformCues = const <AudioCue>[],
     this.videoDurationMs = 0,
@@ -49,6 +52,7 @@ class VideoQuickSettingsHost extends VideoSettingsHost {
     required this.subtitleStyle,
     required this.onSubtitleStylePreview,
     required this.onSubtitleStyleCommit,
+    this.onEnterSubtitleDragAdjust,
     this.onRespectAssStyleChanged,
     required this.onAsbConfigChanged,
     required this.onMpvConfigChanged,
@@ -87,6 +91,19 @@ class VideoQuickSettingsHost extends VideoSettingsHost {
   // ── 字幕调轴（A/V 延迟，per-media DB 持久化，仅播放中有意义）──────────────
   final int Function() delayMs;
   final Future<void> Function(int delayMs) onSetDelay;
+
+  /// TODO-2837：副字幕独立调轴当前值（null = 跟随主字幕）。三件套（本值 /
+  /// [onSetSecondaryDelay] / [hasSecondarySubtitle]）齐备且副字幕轨激活时，
+  /// 调轴行才显示副轨独立一段；不齐（全局设置页等无播放器上下文）自然隐藏。
+  final int? Function()? secondaryDelayMs;
+
+  /// TODO-2837：设置副字幕独立调轴（null = 重置为跟随主字幕）。
+  final Future<void> Function(int? delayMs)? onSetSecondaryDelay;
+
+  /// TODO-2837：副字幕轨当前是否激活（cue 流非空）。活值 getter——面板内切换
+  /// 副字幕轨后经 [subtitlePositionListenable]（controller）的通知即时显隐。
+  final bool Function()? hasSecondarySubtitle;
+
   final Future<int?> Function()? onAutoAlign;
   final List<AudioCue> subtitleWaveformCues;
   final int videoDurationMs;
@@ -116,6 +133,11 @@ class VideoQuickSettingsHost extends VideoSettingsHost {
   final VideoSubtitleStyle Function() subtitleStyle;
   final void Function(VideoSubtitleStyle style) onSubtitleStylePreview;
   final Future<void> Function(VideoSubtitleStyle style) onSubtitleStyleCommit;
+
+  /// 进入「拖拽调整字幕位置」模式（TODO-2838）：页面关设置侧栏 + 打开拖拽模式，
+  /// 字幕 overlay 显示可拖指示、竖直拖动写回位置偏好。null = 面板不显示该入口
+  /// （全局设置页 / 无播放器场景）。
+  final VoidCallback? onEnterSubtitleDragAdjust;
   final Future<void> Function(bool value)? onRespectAssStyleChanged;
 
   // ── 手势/播放行为 JSON pref（页面持久化 + 即时生效）──────────────────────

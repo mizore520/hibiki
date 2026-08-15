@@ -141,6 +141,7 @@ import 'package:fushi/src/mining/immersion_mining_request.dart';
 import 'package:fushi/src/mining/immersion_capture_channel.dart';
 import 'package:fushi/src/mining/youtube_clip_miner.dart';
 import 'package:fushi/src/sync/fushi_sync_server.dart';
+import 'package:fushi/src/sync/manga_sync_package.dart';
 import 'package:fushi/src/sync/desktop_lookup_service.dart';
 import 'package:fushi/src/sync/texthooker_ws_client_manager.dart';
 import 'package:fushi/src/sync/yomitan_api_server_manager.dart';
@@ -507,11 +508,26 @@ class AppModel with ChangeNotifier {
       // 服务端 catch 成 HTTP 500，互联/live 书籍推送（client→host）整体失效。
       // 生产实现即文档约定的 EpubImporter.importFromPath（tmp 文件名 = <title>.epub，
       // fileName 用作 epubPath 与标题回退）。
-      importBookFromFile: (File epubFile) => EpubImporter.importFromPath(
-        db: database,
-        filePath: epubFile.path,
-        fileName: path.basename(epubFile.path),
-      ),
+      //
+      // 互联完整支持批次：先做漫画包内容嗅探（zip 根含 manga.json = 漫画书目录整
+      // 树包），命中走 MangaImporter 的既有两遍式校验落库（防穿越/缺图/同名策略/
+      // 回滚全部复用）；否则按 EPUB。端点与 tmp 命名不变，内容即真相。
+      importBookFromFile: (File bookFile) async {
+        if (await isMangaPackage(bookFile)) {
+          // tmp 文件名 = <URL raw title>.epub（_serveAssetPackage 按端点 id 命名），
+          // 去扩展名即身份标题。
+          return importMangaPackageFile(
+            db: database,
+            file: bookFile,
+            title: path.basenameWithoutExtension(bookFile.path),
+          );
+        }
+        return EpubImporter.importFromPath(
+          db: database,
+          filePath: bookFile.path,
+          fileName: path.basename(bookFile.path),
+        );
+      },
       localAudioEntries: localAudioDbs,
       localAudioStagingDir: temporaryDirectory,
       onLocalAudioImported: importSyncedLocalAudioDb,
@@ -2214,6 +2230,9 @@ class AppModel with ChangeNotifier {
       // （localhost:8765，也可能是局域网另一台机）绝不经过它。
       installAnkiRemoteMediaHttpClientFactory();
       _applyMemoryPolicy();
+      // BUG-1647：lazy getter 可能已提前建过实例；替换前先取消其重试定时器，
+      // 否则旧定时器会拿着旧 repository 继续同步。
+      _mediaTrackingService?.dispose();
       _mediaTrackingService = MediaTrackingService(
         repository: MediaTrackingRepository(_database),
         preferences: prefsRepo,
@@ -2551,6 +2570,8 @@ class AppModel with ChangeNotifier {
       _prefsRepo = PreferencesRepository(_database);
       await prefsRepo.loadFromDb();
       prefsRepo.addListener(notifyListeners);
+      // BUG-1647：同主进程路径，替换前取消旧实例可能挂起的重试定时器。
+      _mediaTrackingService?.dispose();
       _mediaTrackingService = MediaTrackingService(
         repository: MediaTrackingRepository(_database),
         preferences: prefsRepo,
@@ -3417,6 +3438,9 @@ class AppModel with ChangeNotifier {
       legacySavePaths: roots.legacy,
       resumeDir: resumeDir,
       restoreIds: _animeDownloadPlanIds,
+      // 恢复阶段先保持 DHT 静默；host 读完 torrent 状态后再按实际下载/
+      // 允许做种工作恢复用户配置，避免仅有历史 resume 时启动即广播。
+      enableDht: false,
     );
     if (host == null) return null;
     _embeddedTorrentHost = host;
@@ -3510,7 +3534,7 @@ class AppModel with ChangeNotifier {
         AnimeDownloadPlanStore(baseDir: baseDir);
     _animeDownloadPlanStore = store;
 
-    // 内置引擎宿主：仅桌面（Android/iOS 阶段4/5 再定）。默认下载根就在计划目录旁的
+    // 内置引擎宿主：桌面 + Android（iOS 无内置引擎）。默认下载根就在计划目录旁的
     // `content/` 子目录（分类再往下分）；TODO-1961 起用户可在设置里改成任意目录。
     //
     // BUG-1053：这里**只记路径，不建 session**。真正的 libtorrent session 会绑
@@ -3662,7 +3686,7 @@ class AppModel with ChangeNotifier {
     QbConnectionConfig config,
   ) async {
     final String resolved =
-        config.resolveBackend(isDesktop: _supportsEmbeddedTorrent());
+        config.resolveBackend(embeddedSupported: _supportsEmbeddedTorrent());
     final String installationId =
         await prefsRepo.ensureVideoDownloadEmbeddedInstallationId();
     return buildVideoDownloadBackendIdentity(
@@ -3697,7 +3721,7 @@ class AppModel with ChangeNotifier {
 
   TorrentBackend? _createExactTorrentBackend(QbConnectionConfig config) {
     final String resolved =
-        config.resolveBackend(isDesktop: _supportsEmbeddedTorrent());
+        config.resolveBackend(embeddedSupported: _supportsEmbeddedTorrent());
     if (resolved == QbConnectionConfig.backendEmbedded) {
       final EmbeddedTorrentHost? host = _ensureEmbeddedTorrentHost();
       return host?.backendView();
@@ -3941,7 +3965,12 @@ class AppModel with ChangeNotifier {
     // host 已经被别处（下载服务 tick）先建出来时，那次 open 可能因为计划 id
     // 还没加载而跳过了恢复（[EmbeddedTorrentHost.hasRestored] = false）。
     // 真相源到位了就在这里补做一次，别让「本次启动不续传」变成常态。
-    if (host != null && !host.hasRestored) host.restoreFromResume(planIds);
+    if (host != null && !host.hasRestored) {
+      host.restoreFromResume(planIds);
+      // 这个防御性延迟恢复发生在 host 已应用用户配置之后；恢复出的活跃下载
+      // 需要立即重开 discovery，不能等下一次维护 tick。
+      host.reconcileNetworkDiscoveryState();
+    }
   }
 
   /// TODO-1961-a：周期性把 resume data 落盘（host 内部按
@@ -4003,7 +4032,7 @@ class AppModel with ChangeNotifier {
   /// 外接 qBittorrent（默认 / 内置不可用时的回退）。
   TorrentBackend _torrentBackendFor(QbConnectionConfig config) {
     final String backend =
-        config.resolveBackend(isDesktop: _supportsEmbeddedTorrent());
+        config.resolveBackend(embeddedSupported: _supportsEmbeddedTorrent());
     // BUG-1053：到这里才是「真的要用下载后端」，session 在此懒建（幂等）。
     final EmbeddedTorrentHost? host =
         backend == QbConnectionConfig.backendEmbedded
@@ -4019,9 +4048,13 @@ class AppModel with ChangeNotifier {
     ));
   }
 
-  /// 内置 libtorrent 支持的平台：桌面（Windows 先行；mac/Linux 阶段4）。
+  /// 内置 libtorrent 支持的平台：桌面 + Android（`libfushi_torrent_ffi.so`
+  /// 经 jniLibs 随包）。iOS 不支持：从不构建也从不打包内置引擎产物。
   bool _supportsEmbeddedTorrent() =>
-      Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+      Platform.isWindows ||
+      Platform.isMacOS ||
+      Platform.isLinux ||
+      Platform.isAndroid;
 
   /// 每系列记住的 Jimaku 字幕语言偏好（TODO-674）。
   Map<String, String> get jimakuPreferredLanguages =>
@@ -4041,6 +4074,10 @@ class AppModel with ChangeNotifier {
     String? source,
   ) =>
       prefsRepo.setRemoteSubtitleSource(bookUid, episodeIndex, source);
+
+  // 注：远端视频播放偏好（调轴/音轨/副字幕源/副字幕调轴）不再走本层门面——统一
+  // 落 `video_remote_*_` prefs 键对（播放偏好同步泛化批，键定义在
+  // fushi_library_host_service.dart，页面直用 prefsRepo.getPref/setPref）。
 
   bool get reverseNavigationBar => prefsRepo.reverseNavigationBar;
   void toggleReverseNavigationBar() => prefsRepo.toggleReverseNavigationBar();
@@ -4115,6 +4152,9 @@ class AppModel with ChangeNotifier {
     // 下载/index URL 回填来源）。默认 null/false，本地导入向后兼容、行为不变。
     bool forceReplaceExisting = false,
     Map<String, String>? sourceOverride,
+    // BUG-1595：更新入口传入被点击的词典作显式替换目标——新包标题变化（如标题
+    // 携带版本号）时仍替换该目标而非按 title 误判成新增。普通导入不传，行为不变。
+    Dictionary? replaceTarget,
   }) async {
     try {
       await _dictImportManager.importFromFile(
@@ -4127,6 +4167,7 @@ class AppModel with ChangeNotifier {
         onMemoryError: onMemoryError,
         forceReplaceExisting: forceReplaceExisting,
         sourceOverride: sourceOverride,
+        replaceTarget: replaceTarget,
       );
     } finally {
       // BUG-1492：词典集合变了，已经渲染在屏上的查词结果还停在旧集合上。缓存失效由
@@ -4254,6 +4295,9 @@ class AppModel with ChangeNotifier {
         progressNotifier: job.message,
         onImportSuccess: () {},
         forceReplaceExisting: true,
+        // BUG-1595：自动更新替换的就是这本——远端包哪怕改了标题（title 携带版本
+        // 号等）也不允许按 title 误判成新增、旧本残留。
+        replaceTarget: dictionary,
         sourceOverride: <String, String>{
           'isUpdatable': 'true',
           'downloadUrl': dictionary.downloadUrl,
@@ -6643,6 +6687,38 @@ class _AppModelRemoteLookupService
       default:
         return null;
     }
+  }
+
+  // ── 互联 Lapis 客制化：客户端（手机等）经互联读写本机 Anki 的 note type。
+  // 与 mineForwarded 同语义地用**本机**平台仓库（主机自己的 AnkiConnect），
+  // 后端不支持时按 BaseAnkiRepository 的降级契约回 null/false（不抛）。
+
+  @override
+  Future<AnkiNoteTypeDefinition?> readNoteTypeDefinition(
+      String modelName) async {
+    final BaseAnkiRepository repo =
+        _appModel.platformServices.createAnkiRepository();
+    if (!repo.supportsNoteTypeEditing) return null;
+    return repo.readNoteTypeDefinition(modelName);
+  }
+
+  @override
+  Future<bool> updateNoteTypeStyling(String modelName, String css) async {
+    final BaseAnkiRepository repo =
+        _appModel.platformServices.createAnkiRepository();
+    if (!repo.supportsNoteTypeEditing) return false;
+    return repo.updateNoteTypeStyling(modelName, css);
+  }
+
+  @override
+  Future<bool> updateNoteTypeTemplates(
+    String modelName,
+    List<AnkiCardTemplate> templates,
+  ) async {
+    final BaseAnkiRepository repo =
+        _appModel.platformServices.createAnkiRepository();
+    if (!repo.supportsNoteTypeEditing) return false;
+    return repo.updateNoteTypeTemplates(modelName, templates);
   }
 
   @override

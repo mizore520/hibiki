@@ -135,8 +135,12 @@ class AdapterStructureTest(unittest.TestCase):
         self.assertIn("unity_.ProcessPendingEvents();", registry)
         install = source.split("bool TryHookUnityIl2CppAudio()", 1)[1]
         self.assertLess(
-            install.index('class_get_method(source_class, "get_clip", 0)'),
-            install.index('class_get_method(clip_class, "GetData", 2)'),
+            install.index(
+                'FindIl2CppMethodByParamCount(source_class, "get_clip", 0)'
+            ),
+            install.index(
+                'FindIl2CppMethodByParamCount(clip_class, "GetData", 2)'
+            ),
         )
         self.assertLess(
             install.index("pcm_helpers_ready ="),

@@ -17,7 +17,10 @@ void main() {
       const Color(0xE6000000),
     );
     expect(s.fontWeight, isNull);
-    expect(s.resolveFontWeight(1.0), 700);
+    // 默认字重 400 常规，与 mpv 默认（--sub-bold=no）对齐；ASS cueStyle 路径的字重
+    // 恒随 ASS（BUG-819），本默认只管 SRT/无样式表路径。
+    expect(VideoSubtitleStyle.defaultFontWeight, 400);
+    expect(s.resolveFontWeight(1.0), 400);
     // 阴影半径改回 Niratan 默认 3（柔和投影模糊半径，不再是 5px 硬描边）。
     expect(s.shadowThickness, isNull);
     expect(VideoSubtitleStyle.defaultShadowThickness, 3);
@@ -32,10 +35,28 @@ void main() {
   test('unconfigured weight and shadow follow app UI scale', () {
     const VideoSubtitleStyle s = VideoSubtitleStyle.defaults;
 
-    expect(s.resolveFontWeight(2.0), 900);
+    expect(s.resolveFontWeight(2.0), 800); // 400 * 2.0
     expect(s.resolveShadowThickness(2.0), 6); // 3 * 2.0
-    expect(s.resolveFontWeight(0.5), 400);
+    expect(s.resolveFontWeight(0.5), 200); // 400 * 0.5
     expect(s.resolveShadowThickness(0.5), 1.5); // 3 * 0.5
+  });
+
+  test('extreme UI scale still lands inside CSS weight / shadow bounds', () {
+    // UI scale 先被 FushiAppUiScale.normalize 钳到 [0.3, 3.0]，再参与缩放。
+    // 这份覆盖原先只由 video_quick_settings_sheet_test 在旧默认 700 下偶然盖住
+    // （700 * 2 = 1400 → 上限 900）；默认改 400 后那里不再饱和，故在此显式钉死。
+    const VideoSubtitleStyle s = VideoSubtitleStyle.defaults;
+
+    // 字重上限 900 仍够得着：scale 3.0 → 400 * 3 = 1200 → 钳到 900。
+    expect(s.resolveFontWeight(3.0), 900);
+    expect(s.resolveFontWeight(99.0), 900, reason: 'scale 先被归一化到 3.0');
+    // 下限侧：scale 归一化到 0.3 → 400 * 0.3 = 120 → 按 100 步进舍入到 100。
+    expect(s.resolveFontWeight(0.01), 100);
+    // 阴影：归一化后最大 3 * 3.0 = 9，够不到滑杆上限 12——这是值域设计的结论，
+    // 不是断言写松了；若哪天 maxScale 或默认半径变大，这条会先红。
+    expect(s.resolveShadowThickness(3.0), 9);
+    expect(s.resolveShadowThickness(99.0), 9, reason: 'scale 先被归一化到 3.0');
+    expect(s.resolveShadowThickness(0.01), closeTo(0.9, 1e-9));
   });
 
   test('null color still means follow the active theme (legacy data)', () {
@@ -161,7 +182,9 @@ void main() {
 
     expect(s.fontWeight, isNull);
     expect(s.shadowThickness, isNull);
-    expect(s.resolveFontWeight(1.0), 700);
+    // v1 的 700 是历史迁移锚点（_v1LegacyFontWeight）；折叠成 null 后 resolve 出的是
+    // **当前**默认 400（mpv 对齐）——「跟随默认」的老用户随新默认走，而非钉死旧值。
+    expect(s.resolveFontWeight(1.0), 400);
     expect(s.resolveShadowThickness(1.0), 3); // Niratan 默认半径。
   });
 
@@ -445,24 +468,33 @@ void main() {
       expect(buildSubtitleSoftShadow(c, -3), isEmpty);
     });
 
-    test('正粗细生成单枚柔和投影：色 / 模糊半径 / 向下 1px 偏移', () {
+    test('正粗细生成单枚柔和投影：色 / 模糊半径 / 零偏移', () {
       final List<Shadow> shadows = buildSubtitleSoftShadow(c, 3);
       // 单枚（不是 8 向伪描边）→ 不会重现 BUG-222/323 的残留黑字。
       expect(shadows.length, 1);
       final Shadow s = shadows.single;
       expect(s.color, c);
       expect(s.blurRadius, 3); // blurRadius == thickness（模糊半径）
-      // 向下偏移 1px（对应 Niratan `.shadow(..., y: 1)`）。
-      expect(s.offset, const Offset(0, 1));
+      expect(s.offset, Offset.zero,
+          reason: 'BUG-1603：任何非零偏移都会让投影变方向性。真机（DPR=2）实测 '
+              'offset(0,1) 把上方光晕压到 1、下方放大到 218（零偏移是 54/61 '
+              '对称），观感从「字后柔和黑影」退化成「阴影掉到字下面」。');
     });
 
-    test('blurRadius 随 thickness 线性变化（仍单枚、偏移恒 (0,1)）', () {
+    test('blurRadius 随 thickness 线性变化（仍单枚、偏移恒为零）', () {
       final Shadow s6 = buildSubtitleSoftShadow(c, 6).single;
       expect(s6.blurRadius, 6);
-      expect(s6.offset, const Offset(0, 1));
+      expect(s6.offset, Offset.zero);
       final Shadow s12 = buildSubtitleSoftShadow(c, 12).single;
       expect(s12.blurRadius, 12);
-      expect(s12.offset, const Offset(0, 1));
+      expect(s12.offset, Offset.zero);
+    });
+
+    test('BUG-1603 守卫：任意 thickness 下偏移都必须为零', () {
+      for (final double t in <double>[0.5, 1, 2, 3, 4.5, 6, 10, 12]) {
+        expect(buildSubtitleSoftShadow(c, t).single.offset, Offset.zero,
+            reason: 'thickness=$t 时出现非零偏移即回归');
+      }
     });
   });
 

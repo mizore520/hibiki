@@ -199,6 +199,52 @@ double subtitleScreenScaleFactor(
   return raw.clamp(minFactor, maxFactor).toDouble();
 }
 
+/// 字幕层的**用户垂直锚定**（TODO-2838）：决定该层 padding 基线量的是「离底距离」
+/// （[bottom]，历史默认）还是「离顶距离」（[top]）。
+///
+/// 此前顶部锚定只来自两处非用户源：ASS `\an`/`\pos` 标记（respectAssStyle 开时）与
+/// 纯 SRT 副字幕的自动置顶。用户想把**主字幕**放到画面顶部（动画字幕常在上 1/6 处）
+/// 没有任何入口。本枚举把「锚定边」提升成用户可选的一等状态：顶锚时
+/// [VideoSubtitleStyle.bottomPadding]（持久化名冻结）语义 = 离顶距离，镜像副字幕
+/// forceTop 的既有消费方式（`_paddingFor` 顶分支），不新造第二个距离字段。
+enum SubtitleLayerVAnchor { bottom, top }
+
+/// 字幕垂直位置（距锚定边的距离）的统一上限（逻辑像素，TODO-2838）：持久化 clamp、
+/// 设置滑条 max、拖拽落点 clamp 三处同一真相源。历史上滑条上限 240 < 存储上限 400，
+/// 用户想把字幕放到画面上 1/6 够不着；统一拉到 400（存储上限本就允许）。
+const double kVideoSubtitleMaxPadding = 400;
+
+/// 统一「层锚定解析」纯函数（TODO-2838）：返回该层要**强制**的垂直锚定边；null =
+/// 不强制（遵 cue 自带 ASS 位置，或主层历史底部基线路径）。
+///
+/// 优先级（高 → 低）：
+/// 1. cue 自带非底位置（`\pos` / `\move` / 非底 `\an`，[ownNonBottom]）——它只在
+///    「尊重 .ass 自带样式」开启时才存在（纯字幕模式 markup 恒空），代表作者明示的
+///    定位意图；用户已显式选择尊重 ASS，则各遵其位。**默认纯字幕模式下 markup 恒空，
+///    用户锚定事实上最高优先**。若让用户锚定越过 ASS 位置，多组异位 cue（\pos 招牌 +
+///    对白）会被折到同一顶部盒互相叠印——锚定是「层默认位置」，不是「压平一切」。
+/// 2. 用户显式锚定 [userAnchor]：主层只有选了顶部才算显式（底部即历史默认）；副层
+///    任何非 null 值（拖拽落点写入）都算显式。
+/// 3. 副字幕自动锚定：无显式选择时取主层锚定的**对侧**（[mainUserAnchor] 底 → 副顶，
+///    历史行为；主顶 → 副底）。双层各占一边，消除「主字幕顶锚后与自动置顶的副字幕
+///    同点叠印」的新特例——对侧规则让碰撞在结构上不可能。
+/// 4. 主层默认：null（不强制，底部基线路径，历史像素级不变）。
+SubtitleLayerVAnchor? resolveLayerForcedAnchor({
+  required bool isSecondary,
+  required SubtitleLayerVAnchor? userAnchor,
+  required SubtitleLayerVAnchor mainUserAnchor,
+  required bool ownNonBottom,
+}) {
+  if (ownNonBottom) return null;
+  if (userAnchor != null) return userAnchor;
+  if (isSecondary) {
+    return mainUserAnchor == SubtitleLayerVAnchor.top
+        ? SubtitleLayerVAnchor.bottom
+        : SubtitleLayerVAnchor.top;
+  }
+  return null;
+}
+
 /// 字幕背景盒的**默认底色**（TODO-1059 方案A）：固定半透明黑，而非跟随
 /// `ColorScheme.surface`。
 ///
@@ -237,9 +283,20 @@ class VideoSubtitleStyle {
     required this.backgroundOpacity,
     required this.bottomPadding,
     this.secondaryBottomPadding,
+    this.mainAnchor = SubtitleLayerVAnchor.bottom,
+    this.secondaryAnchor,
   });
 
-  static const int defaultFontWeight = 700;
+  /// 默认字重 400（常规），与 mpv 默认（`--sub-bold=no` → Regular）对齐：同一字体
+  /// SRT/无样式表字幕在 fushi 与 mpv 里不再一边粗体一边常规（用户报「字重差异大」）。
+  /// ASS 有 cueStyle 时字重恒以 ASS 为准（Bold 标志/命名面字重，BUG-819），本默认值
+  /// 只管非 ASS / 样式失配路径。历史默认曾是 700，v1 迁移锚点见 [_v1LegacyFontWeight]。
+  static const int defaultFontWeight = 400;
+
+  /// v1 持久化时代硬编码的默认字重（700）。仅供 [decode] 把 v1 存的该值迁移成 null
+  /// （跟随缩放/新默认）用；与当前 [defaultFontWeight] 解耦，与
+  /// [_v1LegacyShadowThickness] 同一模式——改默认不破坏旧数据迁移语义。
+  static const int _v1LegacyFontWeight = 700;
 
   /// 默认阴影/投影**半径**（模糊强度），抄 Niratan（mac 原生日语沉浸 app）字幕默认的
   /// `shadowRadius = 3`（其设置滑杆范围 0..10）。BUG-323 时代这里是 5px「硬描边粗细」；
@@ -253,7 +310,7 @@ class VideoSubtitleStyle {
   /// 同为 3，语义不同（此值是历史迁移锚点），后续改默认也不破坏旧数据迁移。
   static const double _v1LegacyShadowThickness = 3;
 
-  /// High-contrast caption defaults (TODO-051): 36px bold WHITE text with a soft
+  /// High-contrast caption defaults (TODO-051): 36px WHITE text with a soft
   /// translucent-BLACK drop shadow, no box. Fixed white/black instead of theme
   /// colors so subtitles stay legible on any video and don't wash out on
   /// low-contrast themes. [fontWeight]/[shadowThickness] stay null to follow the
@@ -308,6 +365,17 @@ class VideoSubtitleStyle {
   /// 位置（Never break userspace：老用户外观像素级不变）。
   final double? secondaryBottomPadding;
 
+  /// 主字幕层的用户垂直锚定（TODO-2838）。默认 [SubtitleLayerVAnchor.bottom] =
+  /// 历史行为（底距基线）；[SubtitleLayerVAnchor.top] 时 [bottomPadding] 语义变为
+  /// **离顶距离**（镜像副字幕 forceTop 的既有消费路径）。旧 JSON 无本字段 → 底锚，
+  /// 零迁移零破坏。
+  final SubtitleLayerVAnchor mainAnchor;
+
+  /// 副字幕层的用户垂直锚定（TODO-2838）。null = 自动（历史行为：取主层锚定的对侧，
+  /// 主底 → 副顶）；非 null = 用户显式选择（播放器内拖拽落点写入），从此不再自动跟随。
+  /// 锚定解析优先级见 [resolveLayerForcedAnchor]。
+  final SubtitleLayerVAnchor? secondaryAnchor;
+
   VideoSubtitleStyle copyWith({
     double? fontSize,
     Color? textColor,
@@ -320,6 +388,11 @@ class VideoSubtitleStyle {
     // null = 不改（保持当前值，含「仍跟随主字幕」的 null 态）。设置面板拖动副字幕位置
     // 时才传具体值；无「改回跟随」的入口，故不需要 backgroundColor 那样的 reset 标志。
     double? secondaryBottomPadding,
+    // null = 不改。锚定选择器 / 拖拽落点才传具体值。
+    SubtitleLayerVAnchor? mainAnchor,
+    // null = 不改（保持当前值，含「仍自动对侧」的 null 态）。仅拖拽副字幕落点写入；
+    // 无「改回自动」的入口，与 secondaryBottomPadding 同款单向语义。
+    SubtitleLayerVAnchor? secondaryAnchor,
     // [backgroundColor] 与 null 语义冲突：`null` 既是「不改」又是「显式清空跟随默认黑」。
     // 用显式 [resetBackgroundColor] 标志区分——true 时把 [backgroundColor] 强制清成 null
     // （回到 [kDefaultSubtitleBackgroundColor] 固定默认），供设置面板「默认（黑）」选项用。
@@ -338,6 +411,8 @@ class VideoSubtitleStyle {
       bottomPadding: bottomPadding ?? this.bottomPadding,
       secondaryBottomPadding:
           secondaryBottomPadding ?? this.secondaryBottomPadding,
+      mainAnchor: mainAnchor ?? this.mainAnchor,
+      secondaryAnchor: secondaryAnchor ?? this.secondaryAnchor,
     );
   }
 
@@ -374,6 +449,10 @@ class VideoSubtitleStyle {
         'bottomPadding': s.bottomPadding,
         // null（从未单独调过副字幕位置）也照写：decode 侧 null → 继续跟随主字幕。
         'secondaryBottomPadding': s.secondaryBottomPadding,
+        // 锚定（TODO-2838）：主层枚举名字符串（'bottom'/'top'）；副层 null（自动
+        // 对侧）也照写，decode 侧 null → 继续自动。
+        'mainAnchor': s.mainAnchor.name,
+        'secondaryAnchor': s.secondaryAnchor?.name,
       });
 
   static VideoSubtitleStyle decode(String? json) {
@@ -396,7 +475,10 @@ class VideoSubtitleStyle {
       int? readFontWeight(Object? v) {
         if (v is! num) return null;
         final int normalized = normalizeWeight(v);
-        return version < 2 && normalized == defaultFontWeight
+        // v1 数据存的是当时硬编码默认字重（700）=「跟随默认」，迁移成 null。对照 v1
+        // 时代字面量而非当前 [defaultFontWeight]（已改 400，mpv 对齐）：否则老用户的
+        // 未调整值会被钉死成显式 700、永远吃不到新默认（同 shadowThickness 的教训）。
+        return version < 2 && normalized == _v1LegacyFontWeight
             ? null
             : normalized;
       }
@@ -431,43 +513,64 @@ class VideoSubtitleStyle {
           d['backgroundOpacity'],
           defaults.backgroundOpacity,
         ).clamp(0.0, 1.0),
-        bottomPadding:
-            num2d(d['bottomPadding'], defaults.bottomPadding).clamp(0, 400),
+        bottomPadding: num2d(d['bottomPadding'], defaults.bottomPadding)
+            .clamp(0, kVideoSubtitleMaxPadding),
         // 缺字段（旧数据）/ 非数字 → null = 副字幕继续跟随主字幕位置（旧外观不变）。
         secondaryBottomPadding: d['secondaryBottomPadding'] is num
             ? (d['secondaryBottomPadding'] as num)
                 .toDouble()
-                .clamp(0, 400)
+                .clamp(0, kVideoSubtitleMaxPadding)
                 .toDouble()
             : null,
+        // 锚定（TODO-2838）：缺字段（旧数据）/ 未知值 → 主层底锚、副层自动（对侧），
+        // 旧外观像素级不变。
+        mainAnchor:
+            _decodeAnchor(d['mainAnchor']) ?? SubtitleLayerVAnchor.bottom,
+        secondaryAnchor: _decodeAnchor(d['secondaryAnchor']),
       );
     } catch (_) {
       return defaults;
     }
   }
 
+  /// JSON 里的锚定字符串 → 枚举；未知/非字符串返回 null（调用方决定回退语义）。
+  static SubtitleLayerVAnchor? _decodeAnchor(Object? v) => switch (v) {
+        'top' => SubtitleLayerVAnchor.top,
+        'bottom' => SubtitleLayerVAnchor.bottom,
+        _ => null,
+      };
+
   static double _normalizeUiScale(double uiScale) {
     return FushiAppUiScale.normalize(uiScale);
   }
 }
 
-/// 字幕正文的**柔和投影**（抄 Niratan / mac）：把 [thickness]（阴影半径）渲染成**单层**
-/// 高斯 drop shadow，挂在正文 fill [Text] 的 `style.shadows` 上（见
+/// 字幕正文的**柔和投影**：把 [thickness]（阴影半径）渲染成**单层**高斯 drop shadow，
+/// 挂在正文 fill [Text] 的 `style.shadows` 上（见
 /// [VideoSubtitleOverlay._buildSubtitleChar]）。[thickness] <= 0 返回空列表（无投影）。
 ///
-/// 对应 Niratan `SubtitleOverlayView` 的 `.shadow(color: .black.opacity(0.9),
-/// radius: shadowRadius, y: 1)`：单个阴影、模糊半径 = [thickness]、向下偏移 1px、
-/// 颜色由 [color] 决定（默认 `0xE6000000` = 黑 @ 0.9）。观感是「字后面一团柔和黑影」。
+/// **偏移恒为零（BUG-1603）**：投影环绕字形四周，观感是「字后面一团柔和黑影」。
+///
+/// 原本抄 Niratan `SubtitleOverlayView` 的 `.shadow(..., y: 1)` 带 1px 下偏。真机
+/// （iPhone SE，DPR=2）像素实测证明那 1 逻辑像素在**紧模糊**下被放大成明显的方向性：
+///
+/// | 配置 | 上方暗度 | 下方暗度 |
+/// |---|---|---|
+/// | `offset(0,1)` blur3 | 1 | 218 |
+/// | `offset.zero` blur3 | 54 | 61 |
+///
+/// 即偏移把上方光晕**几乎清零**、下方**放大 3.5 倍**——不再是「字后柔和黑影」，而是
+/// 「阴影整个掉到字下面」。用户报的「阴影错位/方向不对」就是这个。渲染本身没问题
+/// （零偏移那组上下 54/61 对称），所以根因在参数不在渲染层。
 ///
 /// 为什么用**单层**而非 BUG-222/BUG-323 的 8 层 `Shadow`：那套残留黑字的根因是**8 份**
 /// 模糊 glyph 拷贝（`blurRadius=thickness` > 偏移 `thickness/2`）大面积重叠外溢成能看清
-/// 字形的第二个黑字。单层 drop shadow（偏移仅 (0,1)、只一份拷贝）不产生这种重叠，是所有
-/// 主流播放器（含 Niratan 本身）字幕投影的常规做法——按用户决策换回这套柔和观感（放弃
-/// BUG-323 的硬描边）。[color] 是用户/主题阴影色，thickness=模糊强度，0=无投影。
+/// 字形的第二个黑字。单层、零偏移的 drop shadow 只有一份拷贝、不产生位移重叠，结构上
+/// 不可能重现那个症状。[color] 是用户/主题阴影色，thickness=模糊强度，0=无投影。
 List<Shadow> buildSubtitleSoftShadow(Color color, double thickness) {
   if (thickness <= 0) return const <Shadow>[];
   return <Shadow>[
-    Shadow(color: color, blurRadius: thickness, offset: const Offset(0, 1)),
+    Shadow(color: color, blurRadius: thickness, offset: Offset.zero),
   ];
 }
 

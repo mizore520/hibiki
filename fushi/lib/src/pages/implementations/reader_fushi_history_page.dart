@@ -13,6 +13,8 @@ import 'package:fushi/pages.dart';
 import 'package:fushi_audio/fushi_audio.dart';
 import 'package:fushi/src/epub/epub_importer.dart';
 import 'package:fushi/src/media/audiobook/audiobook_import_dialog.dart';
+import 'package:fushi/src/media/audiobook/srt_book_reimport_dialog.dart';
+import 'package:fushi/src/media/import/srt_book_reimport.dart';
 import 'package:fushi/src/media/audiobook/book_import_dialog.dart';
 import 'package:fushi/src/media/drag_drop/card_drop_registry.dart';
 import 'package:fushi/src/media/drag_drop/drop_classification.dart';
@@ -30,6 +32,7 @@ import 'package:fushi/src/media/video/video_book_repository.dart';
 import 'package:fushi/src/media/video/video_feature_flags.dart';
 import 'package:fushi/src/media/video/video_import_dialog.dart';
 import 'package:fushi/src/pages/implementations/book_drag_target.dart';
+import 'package:fushi/src/pages/implementations/media_library_shell.dart';
 import 'package:fushi/src/pages/implementations/collection_name_dialog.dart';
 import 'package:fushi/src/pages/implementations/tag_filter_bar.dart';
 import 'package:fushi_core/fushi_core.dart';
@@ -82,6 +85,7 @@ import 'package:fushi/src/sync/remote_book_client.dart';
 import 'package:fushi/src/sync/remote_library_cache.dart';
 import 'package:fushi/src/sync/sync_backend.dart';
 import 'package:fushi/src/sync/sync_asset_package_service.dart';
+import 'package:fushi/src/sync/manga_sync_package.dart';
 import 'package:fushi/src/sync/sync_progress_banner.dart';
 import 'package:fushi/src/sync/sync_repository.dart';
 import 'package:fushi/src/sync/ttu_filename.dart';
@@ -399,17 +403,15 @@ class _ReaderFushiHistoryPageState<T extends HistoryReaderPage>
     // 远端占位卡 + 书库概览总数要等用户手动下拉刷新才补齐。监听全局 tab 信号，切回
     // 书架 tab 时自动重拉一次远端（缓存 _lastRemoteState 顶住 waiting、不闪屏）。
     //
-    // BUG-1181：漫画书架是本 State 类的另一个实例（`mangaOnly: true`），它也会走到
-    // 这里，而回调判的是 `== HomeTab.books` —— 于是切到书架时两个实例各拉一遍远端书，
-    // 漫画那份在 build 里被 `!_mangaOnly` 丢掉。漫画实例根本不消费远端书，直接不订阅。
-    if (!_mangaOnly) {
-      homeShellTabNotifier.addListener(_onShellTabActivated);
-      // BUG-1182：「显示远端条目」开关落在 prefsRepo（独立 ChangeNotifier），不经
-      // AppModel 通知，本页不会因它重建 → 门控翻转后既不重取也不重渲染。显式订阅。
-      // 用 appModelNoUpdate：initState 里读 appModel 会走 ref.watch，触发
-      // 「initState 完成前依赖 InheritedWidget」断言。
-      appModelNoUpdate.prefsRepo.addListener(_onPrefsChangedForRemoteGate);
-    }
+    // 互联完整支持批次：漫画实例现在也消费远端（远端漫画占位卡 + 漫画包下载），
+    // 两个实例都订阅。BUG-1181 担心的重复网络由共享 TTL 清单缓存（BUG-1180）吸收，
+    // 两个实例命中同一份清单。
+    homeShellTabNotifier.addListener(_onShellTabActivated);
+    // BUG-1182：「显示远端条目」开关落在 prefsRepo（独立 ChangeNotifier），不经
+    // AppModel 通知，本页不会因它重建 → 门控翻转后既不重取也不重渲染。显式订阅。
+    // 用 appModelNoUpdate：initState 里读 appModel 会走 ref.watch，触发
+    // 「initState 完成前依赖 InheritedWidget」断言。
+    appModelNoUpdate.prefsRepo.addListener(_onPrefsChangedForRemoteGate);
   }
 
   /// prefsRepo 变更回调：只关心「显示远端条目」门控是否翻转（BUG-1182）。其余偏好
@@ -437,6 +439,12 @@ class _ReaderFushiHistoryPageState<T extends HistoryReaderPage>
   /// 落到这里重载 _shelfMapsFuture，让新同步进来的合集成员立即成组。
   void _reloadShelfMapsOnTabRefresh() {
     if (!mounted) return;
+    // 同步拉回对端更远的阅读进度（localBookProgressPulled>0 同样走 refreshTab）
+    // 时，书列表 / 最近阅读时刻 provider 的缓存也必须失效——否则书架进度条与
+    // 「最近阅读」排序停在旧值，要下拉刷新或重启才对（BUG-686 只修了触发信号，
+    // 消费端一直没接上这两个缓存）。
+    ref.invalidate(fushiBooksProvider(JapaneseLanguage.instance));
+    ref.invalidate(bookLastReadAtProvider);
     setState(() {
       _shelfMapsFuture = _loadShelfMaps();
     });
@@ -657,26 +665,27 @@ class _ReaderFushiHistoryPageState<T extends HistoryReaderPage>
 
   Widget _buildPageHeader() {
     final List<Widget> actions = <Widget>[
-      // 宽窗（非 compact）时动作展开成「图标+文字」药丸（与视频 tab 页头一致，
-      // 用户 mockup：导入书籍 / 来源 / 合集 / 阅读统计带文字外显）；窄窗回落纯图标。
-      // 漫画库和书架是同一页面的两种壳，但导入的是两种载体，故按钮指向两个不同
-      // 的对话框——不再是「同一个框换个 label」。
-      if (_mangaOnly)
-        MangaFushiSource.instance.buildMangaImportButton(
-          context: context,
-          ref: ref,
-          appModel: appModel,
-          focusId: kShelfImportFocusId,
-          label: t.manga_import_action,
-        )
-      else
-        mediaSource.buildBookImportButton(
-          context: context,
-          ref: ref,
-          appModel: appModel,
-          focusId: kShelfImportFocusId,
-          label: t.srt_import,
-        ),
+      // 单件导入入口已统一收敛到库页「导入」视图的快速导入区（书 / 漫画 / 视频 /
+      // 游戏四域同位，2026-08-13 定案）；页头只在书架被**独立使用**（无导航壳、
+      // 够不到「导入」视图）时保留导入按钮兜底。漫画和书籍载体不同，兜底按钮
+      // 仍指向两个不同的对话框。
+      if (_pageWidget.navigation == null)
+        if (_mangaOnly)
+          MangaFushiSource.instance.buildMangaImportButton(
+            context: context,
+            ref: ref,
+            appModel: appModel,
+            focusId: kShelfImportFocusId,
+            label: t.manga_import_action,
+          )
+        else
+          mediaSource.buildBookImportButton(
+            context: context,
+            ref: ref,
+            appModel: appModel,
+            focusId: kShelfImportFocusId,
+            label: t.srt_import,
+          ),
       _headerAction(
         tooltip: t.scrape_all,
         icon: Icons.manage_search_outlined,
@@ -1304,8 +1313,9 @@ class _ReaderFushiHistoryPageState<T extends HistoryReaderPage>
       _lastRemoteState = snapState;
     }
     final _RemoteBookState? remoteState = snapState ?? _lastRemoteState;
-    final bool showRemote = !_mangaOnly &&
-        remoteState != null &&
+    // 互联完整支持批次：漫画书架同样显示远端占位卡（_loadRemoteBooks 已按
+    // _mangaOnly 分架过滤：漫画架只来 format='manga'+hasMangaContent 的条目）。
+    final bool showRemote = remoteState != null &&
         !remoteState.failed &&
         !hasActiveFilter &&
         appModel.prefsRepo.showRemoteEntries;
@@ -1955,6 +1965,10 @@ class _ReaderFushiHistoryPageState<T extends HistoryReaderPage>
   @override
   Widget buildPlaceholder() {
     final FushiDesignTokens tokens = FushiDesignTokens.of(context);
+    // 在库页导航壳里：空态引导去「导入」视图（快速导入 + 常驻来源都在那），教会
+    // 用户唯一入库位置；独立使用（无壳）时回退为直接开导入对话框。
+    final MediaLibraryShellScope? shell =
+        MediaLibraryShellScope.maybeOf(context);
 
     return Center(
       child: Column(
@@ -1965,27 +1979,34 @@ class _ReaderFushiHistoryPageState<T extends HistoryReaderPage>
             message: t.reader_no_books_added,
           ),
           SizedBox(height: tokens.spacing.gap + tokens.spacing.gap / 2),
-          FilledButton.icon(
-            icon: const Icon(Icons.library_add_outlined, size: 18),
-            label: Text(_mangaOnly ? t.manga_import_action : t.srt_import),
-            onPressed: () async {
-              // 空态按钮与页头按钮指向同一个对话框：漫画库开漫画框，书架开书籍框。
-              final bool? imported = await showAppDialog<bool>(
-                context: context,
-                builder: (_) => _mangaOnly
-                    ? MangaImportDialog(db: appModel.database)
-                    : BookImportDialog(
-                        repo: SrtBookRepository(appModel.database),
-                        audiobookRepo: AudiobookRepository(appModel.database),
-                        db: appModel.database,
-                      ),
-              );
-              if (imported == true) {
-                ref.invalidate(fushiBooksProvider(JapaneseLanguage.instance));
-                ref.invalidate(srtBooksProvider);
-              }
-            },
-          ),
+          if (shell != null)
+            FilledButton.icon(
+              icon: const Icon(Icons.library_add_outlined, size: 18),
+              label: Text(t.library_empty_go_import),
+              onPressed: () => shell.select(MediaLibraryViewKind.sources),
+            )
+          else
+            FilledButton.icon(
+              icon: const Icon(Icons.library_add_outlined, size: 18),
+              label: Text(_mangaOnly ? t.manga_import_action : t.srt_import),
+              onPressed: () async {
+                // 空态兜底与页头兜底指向同一个对话框：漫画库开漫画框，书架开书籍框。
+                final bool? imported = await showAppDialog<bool>(
+                  context: context,
+                  builder: (_) => _mangaOnly
+                      ? MangaImportDialog(db: appModel.database)
+                      : BookImportDialog(
+                          repo: SrtBookRepository(appModel.database),
+                          audiobookRepo: AudiobookRepository(appModel.database),
+                          db: appModel.database,
+                        ),
+                );
+                if (imported == true) {
+                  ref.invalidate(fushiBooksProvider(JapaneseLanguage.instance));
+                  ref.invalidate(srtBooksProvider);
+                }
+              },
+            ),
         ],
       ),
     );

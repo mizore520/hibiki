@@ -29,12 +29,49 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 1510 条。点号进各自文件。
+> 共 1558 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-1661](bugs/BUG-1661-corretto-x64-sha256-typo.md) | ✅ | ✅ | macOS 构建挂在「下载 pinned JDK 失败」，真因是 sha256 抄成 65 位 |
+| [BUG-1660](bugs/BUG-1660-aidoku-image-reader-compat.md) | ✅ | ✅ | Aidoku 图源图片与章节兼容及阅读器返回入口缺失 |
+| [BUG-1659](bugs/BUG-1659-inline-level-box-scan-boundary.md) | ✅ | ✅ | 查词浮窗 glossary 里带振假名的词只能查到第一个汉字 |
+| [BUG-1658](bugs/BUG-1658-module-settings-header-inset.md) | ✅ | ✅ | 模块设置子页顶栏与其他子页边距不一致 |
+| [BUG-1657](bugs/BUG-1657-angle-surface-fallback-loses-shaders.md) | ✅ | ✅ | 画质增强/超分静默失效：ANGLE device-backed display 之后任一步失败即掉软件渲染，而 SW 路径下 glsl-shaders 完全不生效 |
+| [BUG-1656](bugs/BUG-1656-apple-manga-reader-images.md) | ✅ | ✅ | Apple 漫画阅读器图片黑屏 |
+| [BUG-1655](bugs/BUG-1655-ruby-double-scale.md) | ✅ | ✅ | 查词浮窗振假名显示过小（疑双重 0.5em 缩放） |
+| [BUG-1650](bugs/BUG-1650-sync-pulled-progress-stale-until-restart.md) | ✅ | ✅ | 同步拉回更远进度后首页继续与书架不刷新须重启 |
+| [BUG-1649](bugs/BUG-1649-manga-folder-epub-import.md) | ✅ | ✅ | 漫画页选文件夹导入：目录内是 epub 卷时报 Manga image folder has no pages |
+| [BUG-1648](bugs/BUG-1648-embedded-torrent-idle-discovery.md) | ✅ | ✅ | 已完成任务恢复后 DHT 常驻导致网关周期性高延迟 |
+| [BUG-1647](bugs/BUG-1647-bangumi-sync-stuck-in-backoff.md) | ✅ | ✅ | Bangumi 同步失败后卡在退避窗口且无自动重试，只能手动同步 |
+| [BUG-1646](bugs/BUG-1646-manosaba-scene-switch-subtitle-lane.md) | ✅ | 🚧 | 魔法少女的魔女审判切换场景后字幕线程断开 |
+| [BUG-1645](bugs/BUG-1645-nested-latin-lookup.md) | ✅ | ✅ | 嵌套查词查不了英语单词（跨节点粘连成拉丁串） |
+| [BUG-1644](bugs/BUG-1644-d3d11va-zero-copy-interop.md) | ✅ | ✅ | Windows 视频硬解走 d3d11va-copy：ANGLE 用自己的隐藏 D3D11 device，mpv d3d11-egl interop 加载不了 |
+| [BUG-1643](bugs/BUG-1643-settings-width-cap.md) | ✅ | ✅ | 设置页宽屏被 960px 强制限宽 |
+| [BUG-1642](bugs/BUG-1642-favorite-unfavorite-never-propagates.md) | ✅ | ✅ | 取消收藏词句不跨端传播对端永远删不掉 |
+| [BUG-1641](bugs/BUG-1641-anki-open-not-foreground.md) | ✅ | ✅ | 制卡后「在 Anki 中打开」只闪任务栏，Anki 不到前台 |
+| [BUG-1640](bugs/BUG-1640-interconnect-manga-bad-package-and-noise.md) | ✅ | ✅ | 互联把EPUB转化漫画打成坏包且漫画行每轮刷推送错误 |
+| [BUG-1639](bugs/BUG-1639-hwdec-nvdec-cuda-crash.md) | ✅ | ✅ | Windows+NVIDIA 起播闪退：hwdec=auto-safe 在 GL 渲染路径下必然回退 nvdec(CUDA)，nvcuda64 空指针整进程崩（BUG-1545 未根治） |
+| [BUG-1638](bugs/BUG-1638-dashboard-remote-continue-dead-end-card.md) | ✅ | ✅ | 首页远端继续卡对不可下载条目是死路 |
+| [BUG-1637](bugs/BUG-1637-standalone-srt-audiobook-position-never-syncs.md) | ✅ | ✅ | 纯SRT有声书听书进度跨设备完全不同步 |
+| [BUG-1636](bugs/BUG-1636-remote-audio-track-not-persisted.md) | ✅ | ✅ | 互联远端视频音轨选择不持久化 |
+| [BUG-1635](bugs/BUG-1635-gal-ingame-nested-popup-height-clipped.md) | ✅ | ✅ | 游戏内嵌套查词卡被父弹窗锚点空间裁短 |
+| [BUG-1634](bugs/BUG-1634-gal-ingame-card-capture-includes-popup.md) | ✅ | 🚧 | 游戏内查词制卡截图包含查词框 |
+| [BUG-1633](bugs/BUG-1633-gal-ingame-popup-input-rendering.md) | ✅ | 🚧 | 游戏内查词位图卡渲染错位且滚轮、按钮与制卡失效 |
+| [BUG-1632](bugs/BUG-1632-gal-ingame-native-popup-ownership.md) | ✅ | ✅ | 游戏内查词离屏卡被钳回桌面导致重复弹窗 |
+| [BUG-1631](bugs/BUG-1631-gal-ingame-kag-anchor-primary-coordinates.md) | ✅ | ✅ | 游戏内查词把 KAG 消息锚点误判为脱离 primary 导致字形恒不命中 |
+| [BUG-1620](bugs/BUG-1620-interconnect-remote-delay-not-persisted.md) | ✅ | ✅ | 互联远端视频字幕偏移不持久化（退出重进归 0） |
+| [BUG-1613](bugs/BUG-1613-apple-coreml-ep-detector-empty.md) | ✅ | ✅ | Apple CoreML EP 上 int8 检测模型静默返回空结果且更慢 |
+| [BUG-1610](bugs/BUG-1610-bangumi-search-rating-null.md) | ✅ | ✅ | Bangumi 搜索候选评分恒空：映射器读扁平 score，真实响应只有嵌套 rating.score |
+| [BUG-1609](bugs/BUG-1609-global-lookup-card-right-corners-square.md) | ✅ | ✅ | app 外全局查词卡片右上/右下圆角变方角 |
+| [BUG-1608](bugs/BUG-1608-mobile-ankiconnect-ios-missing-and-silent-fallback.md) | ✅ | ✅ | iOS 没接 AnkiConnect（Lapis 区永远隐藏）；移动端清空 API key 后开关静默失效 |
+| [BUG-1607](bugs/BUG-1607-danmaku-exit-relayout.md) | ✅ | ✅ | 弹幕退场时其余弹幕整屏重排 |
+| [BUG-1606](bugs/BUG-1606-gal-ingame-lookup-card-dismissed-by-other-text-layer.md) | ✅ | ✅ | gal 游戏内查词卡片被无关文本层重绘打掉（说话人切换时闪没） |
+| [BUG-1605](bugs/BUG-1605-gal-multi-voice-resources-single-pick.md) | ✅ | ✅ | gal 制卡：同句多个语音资源只取一个（多角色同时说话丢声） |
+| [BUG-1604](bugs/BUG-1604-sync-channel-isolation-remaining-loops.md) | ✅ | ✅ | 合集同步与退出书同步的通道循环仍无逐通道隔离：云通道抛异常，互联通道整轮不跑 |
 | [BUG-1604](bugs/BUG-1604-candidate-windows-runtime-gate.md) | ✅ | ✅ | Windows 候选包可绕过完整运行组件组装与验证 |
 | [BUG-1603](bugs/BUG-1603-windows-aot-stack-overflow-on-slang-flat-map.md) | ✅ | ✅ | Windows AOT 编译 Slang 巨型动态映射时栈溢出 |
+| [BUG-1603](bugs/BUG-1603-srt-subtitle-shadow-directional-offset.md) | ✅ | ✅ | SRT 字幕柔和投影方向性偏下，真机上观感为阴影错位 |
 | [BUG-1602](bugs/BUG-1602-windows-sqlite-cmake-ignores-local-cache.md) | ✅ | ✅ | Windows SQLite CMake 忽略本地缓存并卡在 sqlite.org |
 | [BUG-1601](bugs/BUG-1601-windows-cache-hash-cmdlet-missing.md) | ✅ | ✅ | Windows 缓存校验依赖 Get-FileHash 导致启动构建失败 |
 | [BUG-1600](bugs/BUG-1600-windows-sqlite-native-asset-cache.md) | ✅ | ✅ | Windows SQLite 原生资产缓存目录不稳定导致重复下载失败 |
@@ -42,15 +79,26 @@
 | [BUG-1598](bugs/BUG-1598-windows-onnx-runtime-cache.md) | ✅ | ✅ | Windows 一键构建 ONNX Runtime 下载失败且 clean 重复下载 |
 | [BUG-1597](bugs/BUG-1597-gal-workbench-pathological-long-line.md) | ✅ | ✅ | 工作台单条超长文本导致卡顿 |
 | [BUG-1596](bugs/BUG-1596-windows-runtime-lock-preflight.md) | ✅ | ✅ | Windows 完整打包未提前检查运行组件占用 |
+| [BUG-1596](bugs/BUG-1596-release-sequence-workdir.md) | ✅ | ✅ | release.yml 序号脚本在 working-directory: fushi 下解析成不存在路径，恢复自动发布首跑 exit 127 |
 | [BUG-1595](bugs/BUG-1595-injector-attach-target-exit.md) | ✅ | ✅ | 附着模式游戏退出后 injector 不结束 |
+| [BUG-1595](bugs/BUG-1595-dict-update-not-replacing.md) | ✅ | ✅ | 词典更新入口遇新包标题变化仍判新增两版并存 |
+| [BUG-1594](bugs/BUG-1594-ring-probe-readonly-map-crash.md) | ✅ | ✅ | ring_probe 只读映射下枚举文本槽必崩（Interlocked 写只读页） |
 | [BUG-1594](bugs/BUG-1594-gal-overlay-loses-topmost.md) | ✅ | ✅ | Galgame文字悬浮窗切换窗口或 Magpie 输出后丢失置顶 |
+| [BUG-1593](bugs/BUG-1593-gal-utterance-head-clipped.md) | ✅ | ✅ | galgame 制卡语音每句都少一截开头（提交时刻 vs 播放时刻） |
 | [BUG-1593](bugs/BUG-1593-anki-duplicate-check-findnotes-serial.md) | ✅ | ✅ | 词条逐个 findNotes 查重导致已制卡标记延迟 |
 | [BUG-1592](bugs/BUG-1592-anki-localhost-prefers-ipv6.md) | ✅ | ✅ | AnkiConnect 使用 localhost 时优先连接 IPv6，导致本机请求延迟或失败 |
+| [BUG-1592](bugs/BUG-1592-secondary-subtitle-mining-black-cover.md) | ✅ | ✅ | 只开副字幕时制卡：无区间→封面抽片头黑帧 |
 | [BUG-1591](bugs/BUG-1591-luna-safe-attach-double-hook-crash.md) | ✅ | ✅ | Luna 与 Fushi 双 Hook 导致游戏闪退 |
+| [BUG-1591](bugs/BUG-1591-download-priority-has-no-write-entry.md) | ✅ | ✅ | priority 列参与排序却无写入口，排队退化成先来后到 |
+| [BUG-1590](bugs/BUG-1590-subscription-candidate-list-not-aggregated.md) | ✅ | ✅ | 订阅候选列表按发布逐条列，与订阅生效单位不一致 |
 | [BUG-1590](bugs/BUG-1590-luna-mine-before-audio-boundary.md) | ✅ | ✅ | Luna 当前句制卡提前截断录音导致卡片无音频 |
+| [BUG-1589](bugs/BUG-1589-windows-release-build-red-and-invisible.md) | ✅ | ✅ | Windows 发布构建固定红，且真错误被 MSBuild 折叠得看不见 |
 | [BUG-1589](bugs/BUG-1589-local-windows-build-misses-gal-helper.md) | ✅ | ✅ | 本地 Windows 构建成功但未打包 galgame helper |
 | [BUG-1588](bugs/BUG-1588-windows-build-bundle-prefix.md) | ✅ | ✅ | Windows 构建 bundle 安装目标误指向 Program Files |
+| [BUG-1588](bugs/BUG-1588-tmdb-key-missing-in-release-builds.md) | ✅ | ✅ | 发布 workflow 漏注入 TMDB key，发出去的包 TMDB 恒未配置 |
+| [BUG-1587](bugs/BUG-1587-download-queued-reported-as-torrent-missing.md) | ✅ | ✅ | 排队等槽位的下载任务被误报成「torrent 已不在引擎中」 |
 | [BUG-1587](bugs/BUG-1587-alt-wheel-entry-scroll.md) | ✅ | ✅ | 查词窗口 Alt+滚轮词条定位与顶部回退 |
+| [BUG-1586](bugs/BUG-1586-release-seq-floor-after-history-rewrite.md) | ✅ | ✅ | 历史重写让发布序号倒退，全部已装用户永久收不到更新 |
 | [BUG-1586](bugs/BUG-1586-gal-workbench-selection-stall.md) | ✅ | ✅ | Gal 捕获工作台句子选择被旧音轨请求阻塞 |
 | [BUG-1585](bugs/BUG-1585-golden-cross-platform-raster-false-red.md) | ✅ | ✅ | golden 基准图跨平台光栅必红：非 Windows 开发机全量套件恒 33 条伪红 |
 | [BUG-1584](bugs/BUG-1584-ios-archive-strip-drops-ffi-exports.md) | ✅ | ✅ | iOS archive 的 STRIP_STYLE=all 抹掉 fushidicts FFI 导出符号，上架包启动即 Initialisation failed |
@@ -535,7 +583,7 @@
 | [BUG-1044](bugs/BUG-1044-popup-auto-expand-rows-vs-columns.md) | ✅ | ✅ | 折叠词典「自动展开词典数」与「词典列数」冲突：绝对本数不随列数对齐致顶部参差 |
 | [BUG-1043](bugs/BUG-1043-ios-smoke-update-dialog-steals-focus.md) | ✅ | ✅ | iOS冒烟测试焦点断言被启动期更新弹窗与恒真判定掩盖 |
 | [BUG-1042](bugs/BUG-1042-ios-generated-xcconfig-tracked.md) | ✅ | ✅ | iOS Flutter 生成文件误入库导致 Mac 上 pod install 失败 |
-| [BUG-1041](bugs/BUG-1041-global-lookup-card-corner-asymmetry.md) | 🚧 | 🚧 | 查词浮窗卡片左侧圆角右侧直角 |
+| [BUG-1041](bugs/BUG-1041-global-lookup-card-corner-asymmetry.md) | ✅ | ✅ | 查词浮窗卡片左侧圆角右侧直角 |
 | [BUG-1040](bugs/BUG-1040-mined-card-dialog-centered-and-above-popup.md) | ✅ | ✅ | 「卡片已在 Anki 中」是底部 sheet 且层级低于查词弹窗（被盖住看不见） |
 | [BUG-1039](bugs/BUG-1039-native-tier-gif-explodes-mining.md) | ✅ | ✅ | 制卡「原片档」把 GIF 按源分辨率+源帧率导出 → 制卡/覆盖巨慢、Anki 无响应 |
 | [BUG-1038](bugs/BUG-1038-galgame-auto-locale.md) | ✅ | ✅ | Hibiki 启动日文非 Unicode 游戏时界面乱码 |

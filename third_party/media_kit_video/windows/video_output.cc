@@ -73,6 +73,16 @@ VideoOutput::VideoOutput(int64_t handle,
           is_hardware_acceleration_enabled = true;
           std::cout << "media_kit: VideoOutput: Using H/W rendering."
                     << std::endl;
+          // HIBIKI FORK: makes it observable whether libmpv can decode straight
+          // into the same Direct3D 11 device ANGLE renders with (`d3d11va`) or
+          // has to round-trip every frame through system memory
+          // (`d3d11va-copy`). See |ANGLESurfaceManager::EnsureSharedEGLDisplay|.
+          std::cout << "media_kit: VideoOutput: libmpv d3d11-egl zero-copy "
+                       "interop: "
+                    << (ANGLESurfaceManager::uses_shared_d3d11_device()
+                            ? "available"
+                            : "unavailable")
+                    << std::endl;
         }
       } catch (...) {
         // Do nothing.
@@ -82,6 +92,13 @@ VideoOutput::VideoOutput(int64_t handle,
     }
     if (!is_hardware_acceleration_enabled) {
       std::cout << "media_kit: VideoOutput: Using S/W rendering." << std::endl;
+      // HIBIKI FORK (BUG-1657): make the real cost of this downgrade visible.
+      // MPV_RENDER_API_TYPE_SW is not vo=gpu, so libmpv's `glsl-shaders`
+      // (Anime4K / upscalers) and the `scale`/`cscale` filters silently stop
+      // applying -- users see "画质增强 stopped working" with no other symptom.
+      std::cout << "media_kit: VideoOutput: S/W rendering has no vo=gpu "
+                   "pipeline: libmpv glsl-shaders & scale filters are INERT."
+                << std::endl;
       // Allocate a "large enough" buffer ahead of time.
       pixel_buffer_ =
           std::make_unique<uint8_t[]>(SW_RENDERING_PIXEL_BUFFER_SIZE);
