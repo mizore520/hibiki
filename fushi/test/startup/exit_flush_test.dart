@@ -119,6 +119,20 @@ void main() {
           reason: 'destroy()串行逐插件拆引擎是几秒~十几秒卡顿根因；退出改 exit(0)');
     });
 
+    test('window-close execution is single-shot before the durability gate',
+        () {
+      final int closeAt = main.indexOf('void onWindowClose()');
+      final int exitBodyAt =
+          main.indexOf('_flushAndExitForWindowClose() async');
+      expect(closeAt, greaterThanOrEqualTo(0));
+      expect(exitBodyAt, greaterThan(closeAt));
+      expect(
+        main.indexOf('if (_shutdownStarted) return;', exitBodyAt),
+        greaterThan(exitBodyAt),
+        reason: '重复 WM_CLOSE 不能重复 flush 或重复关闭数据库',
+      );
+    });
+
     test('desktop close path flushes data, closes DB, then exit(0)', () {
       final int hookAt = main.indexOf('_flushAndExitForWindowClose() async');
       expect(hookAt, greaterThanOrEqualTo(0),

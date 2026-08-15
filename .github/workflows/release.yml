@@ -8,21 +8,20 @@ on:
   # changed. A version bump lives in fushi/pubspec.yaml (under fushi/**) so it
   # still triggers; the rolling debug seq = commit count, so skipping a seq on a
   # docs-only push is harmless.
-  # ⚠️ Fushi 改名过渡期（2026-08-07 用户指示）：暂停 push 自动发布——新版 Fushi
-  # 尚未正式就绪，自动发布会让老 Hibiki 用户经应用内更新拉到改名后的构建
-  # （Android 并存装新包 / helper 组件名对不上），迁移链发布前恢复本块。
-  # push:
-  #   branches: ['main', 'develop']
-  #   paths:
-  #     - 'fushi/**'
-  #     - 'packages/**'
-  #     - 'ci/**'
-  #     - 'tool/**'
-  #     - 'third_party/**'
-  #     - '.github/workflows/**'
-  #     - 'melos.yaml'
-  #     - 'pubspec.yaml'
-  #     - 'pubspec.lock'
+  # Fushi 改名过渡期曾暂停 push 自动发布（2026-08-07 用户指示），
+  # 2026-08-13 用户指示恢复。
+  push:
+    branches: ['main', 'develop']
+    paths:
+      - 'fushi/**'
+      - 'packages/**'
+      - 'ci/**'
+      - 'tool/**'
+      - 'third_party/**'
+      - '.github/workflows/**'
+      - 'melos.yaml'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
   release:
     types: [published]
   workflow_dispatch:
@@ -78,9 +77,11 @@ jobs:
         flutter-version: '3.44.0'
         cache: true
 
+    # 与 release-desktop.yml 的同名 step 一样在仓库根运行：BUG-1586 的
+    # `bash tool/release_sequence.sh` 是根相对路径，working-directory: fushi
+    # 会把它解析成不存在的 fushi/tool/（exit 127，自动发布恢复当天首跑即红）。
     - name: Resolve Android release channel
       id: channel
-      working-directory: fushi
       shell: bash
       env:
         INPUT_CHANNEL: ${{ github.event.inputs.channel }}
@@ -90,7 +91,7 @@ jobs:
         RELEASE_IS_PRERELEASE: ${{ github.event.release.prerelease }}
       run: |
         set -euo pipefail
-        PUBSPEC_VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: *//')
+        PUBSPEC_VERSION=$(grep '^version:' fushi/pubspec.yaml | sed 's/version: *//')
         VERSION="${PUBSPEC_VERSION%%+*}"
         PUBSPEC_BUILD="${PUBSPEC_VERSION#*+}"
         if [ "$PUBSPEC_BUILD" = "$PUBSPEC_VERSION" ]; then
@@ -100,7 +101,7 @@ jobs:
           echo "::error title=Invalid pubspec build number::Expected numeric +build in $PUBSPEC_VERSION"
           exit 1
         fi
-        RELEASE_SEQUENCE=$(git rev-list --count HEAD)
+        RELEASE_SEQUENCE=$(bash tool/release_sequence.sh)
         if ! [[ "$RELEASE_SEQUENCE" =~ ^[0-9]+$ ]] || [ "$RELEASE_SEQUENCE" -le 0 ]; then
           echo "::error title=Invalid release sequence::Expected positive git rev-list count, got $RELEASE_SEQUENCE"
           exit 1
@@ -141,7 +142,7 @@ jobs:
           push)
             CHANNEL=debug
             TAG="${TAG:-v${VERSION}-debug.${RELEASE_SEQUENCE}+${SHORT_SHA}}"
-            NAME="${NAME:-Hibiki debug ${VERSION} (${SHORT_SHA})}"
+            NAME="${NAME:-Fushi debug ${VERSION} (${SHORT_SHA})}"
             BODY="Automated release-signed debug-channel build from ${GITHUB_REF_NAME} @ ${SHORT_SHA}. Push releases are always prerelease and never Latest."
             BUILD_DEBUG_APK=false
             BUILD_DEBUG_CHANNEL_APK=true
@@ -152,7 +153,7 @@ jobs:
             case "$CHANNEL" in
               debug)
                 TAG="${TAG:-v${VERSION}-debug.${RELEASE_SEQUENCE}+${SHORT_SHA}}"
-                NAME="${NAME:-Hibiki debug ${VERSION} (${SHORT_SHA})}"
+                NAME="${NAME:-Fushi debug ${VERSION} (${SHORT_SHA})}"
                 BODY="Manual release-signed debug-channel build from ${GITHUB_REF_NAME} @ ${SHORT_SHA}. Debug releases are prerelease and never Latest."
                 BUILD_DEBUG_APK=false
                 BUILD_DEBUG_CHANNEL_APK=true
@@ -160,7 +161,7 @@ jobs:
                 ;;
               beta)
                 TAG="${TAG:-v${VERSION}-beta.${RELEASE_SEQUENCE}}"
-                NAME="${NAME:-Hibiki ${VERSION} beta ${RELEASE_SEQUENCE}}"
+                NAME="${NAME:-Fushi ${VERSION} beta ${RELEASE_SEQUENCE}}"
                 BODY="Manual beta/test build from ${GITHUB_REF_NAME} @ ${SHORT_SHA}. Beta/test releases are prerelease and never Latest."
                 FILES="fushi/build/release-artifacts/fushi-*.apk"
                 BUILD_DEBUG_APK=false
@@ -169,7 +170,7 @@ jobs:
                 ;;
               formal)
                 TAG="${TAG:-v${VERSION}}"
-                NAME="${NAME:-Hibiki ${VERSION}}"
+                NAME="${NAME:-Fushi ${VERSION}}"
                 BODY="Manual formal release from ${GITHUB_REF_NAME} @ ${SHORT_SHA}."
                 PRERELEASE=false
                 MAKE_LATEST=true
@@ -312,73 +313,18 @@ jobs:
         sed -i '/systemProp\.https\.proxyPort/d' gradle.properties
         sed -i '/systemProp\.http\.nonProxyHosts/d' gradle.properties
 
-    # google_oauth_secret.dart is gitignored (the real client secret lives only
-    # on dev hosts); CI lacks it, so google_drive_auth.dart's import fails
-    # `flutter analyze`. When the GOOGLE_OAUTH_CLIENT_SECRET repo secret is set,
-    # bake the REAL value in so release/CI builds can actually sign in to Google
-    # Drive (otherwise desktop sign-in hits invalid_client 401, TODO-045). When
-    # it is not set, fall back to the committed example (placeholder value, no
-    # GOCSPX- prefix, so the no_hardcoded_google_secret guard stays green).
-    - name: Provide gitignored Google OAuth secret stub
-      shell: bash
-      env:
-        GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
-      run: |
-        dst=fushi/lib/src/sync/google_oauth_secret.dart
-        if [ -n "$GOOGLE_OAUTH_CLIENT_SECRET" ]; then
-          oauth_secret_literal="$(python3 -c 'import json,os; print(json.dumps(os.environ["GOOGLE_OAUTH_CLIENT_SECRET"]))')"
-          printf 'const String kGoogleOAuthClientSecret =\n    %s;\n' \
-            "$oauth_secret_literal" \
-            > "$dst"
-        elif [ ! -f "$dst" ]; then
-          cp fushi/lib/src/sync/google_oauth_secret.example.dart "$dst"
-        fi
-    # log_upload_secret.dart ships a committed empty placeholder (endpoint = '')
-    # so a fresh clone compiles and the log-upload button stays hidden (it is
-    # gated by a non-empty endpoint, not by platform - see log_upload_config
-    # showUploadLogAction). When the LOG_UPLOAD_ENDPOINT / LOG_UPLOAD_TOKEN repo
-    # secrets are set, bake the real values in so CI/release builds (incl.
-    # Windows) actually show and can use the "upload log to cloud" button
-    # (TODO-385). When unset, leave the committed empty placeholder so the
-    # button stays hidden and no endpoint is exposed.
-    - name: Provide gitignored log upload secret stub
-      shell: bash
-      env:
-        LOG_UPLOAD_ENDPOINT: ${{ secrets.LOG_UPLOAD_ENDPOINT }}
-        LOG_UPLOAD_TOKEN: ${{ secrets.LOG_UPLOAD_TOKEN }}
-      run: |
-        dst=fushi/lib/src/utils/misc/log_upload_secret.dart
-        if [ -n "$LOG_UPLOAD_ENDPOINT" ]; then
-          log_endpoint_literal="$(python3 -c 'import json,os; print(json.dumps(os.environ["LOG_UPLOAD_ENDPOINT"]))')"
-          log_token_literal="$(python3 -c 'import json,os; print(json.dumps(os.environ.get("LOG_UPLOAD_TOKEN","")))')"
-          printf 'const String kLogUploadEndpoint = %s;\nconst String kLogUploadToken = %s;\n' \
-            "$log_endpoint_literal" \
-            "$log_token_literal" \
-            > "$dst"
-        elif [ ! -f "$dst" ]; then
-          cp fushi/lib/src/utils/misc/log_upload_secret.example.dart "$dst"
-        fi
-    # dandanplay_secret.dart ships a committed empty placeholder (AppId/AppSecret
-    # = '') so a fresh clone compiles and online danmaku degrades to unsigned.
-    # When the DANDANPLAY_APP_ID / DANDANPLAY_APP_SECRET repo secrets are set, bake
-    # the real values in so release builds sign dandanplay open-API requests and
-    # online danmaku works out of the box (no manual API entry).
-    - name: Provide gitignored dandanplay secret stub
-      shell: bash
-      env:
-        DANDANPLAY_APP_ID: ${{ secrets.DANDANPLAY_APP_ID }}
-        DANDANPLAY_APP_SECRET: ${{ secrets.DANDANPLAY_APP_SECRET }}
-      run: |
-        dst=fushi/lib/src/media/video/dandanplay_secret.dart
-        if [ -n "$DANDANPLAY_APP_ID" ]; then
-          printf "const String kDandanplayAppId = '%s';\nconst String kDandanplayAppSecret = '%s';\n" \
-            "$DANDANPLAY_APP_ID" \
-            "$DANDANPLAY_APP_SECRET" \
-            > "$dst"
-        elif [ ! -f "$dst" ]; then
-          cp fushi/lib/src/media/video/dandanplay_secret.example.dart "$dst"
-        fi
-
+    # 烘进包里的密钥统一由 composite action 注入 —— 这批注入曾被逐字抄进 11 个
+    # job，抄到最后 TMDB 有 3 个变体、两条发布 workflow 一处都没有，导致发出去
+    # 的包里 TMDB 恒「未配置」而 CI 全绿（BUG-1588）。真相源只留一份。
+    - name: Provide baked-in secret stubs
+      uses: ./.github/actions/provide-baked-secrets
+      with:
+        google-oauth-client-secret: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+        log-upload-endpoint: ${{ secrets.LOG_UPLOAD_ENDPOINT }}
+        log-upload-token: ${{ secrets.LOG_UPLOAD_TOKEN }}
+        dandanplay-app-id: ${{ secrets.DANDANPLAY_APP_ID }}
+        dandanplay-app-secret: ${{ secrets.DANDANPLAY_APP_SECRET }}
+        tmdb-api-key: ${{ secrets.TMDB_API_KEY }}
     # TODO-2721: 只缓存 Gradle 的下载物（modules-2 / wrapper dists），不缓存
     # <ver>/transforms 这类可从 modules-2 重算的派生产物。三个 workflow
     # （main / release / build-multiplatform）的 path + key 必须逐字相同，且此步
@@ -410,6 +356,56 @@ jobs:
       run: |
         chmod +x ci/apply-patches.sh
         bash ci/apply-patches.sh
+
+    # 内置 libtorrent 引擎的 Android .so：vcpkg 交叉编 libtorrent + bridge，产物落
+    # native/fushi_torrent/prebuilt/android/arm64-v8a/，由 fushi/android/app/
+    # build.gradle 的 jniLibs copy-if-present 随包。
+    #
+    # 范围决策：**只编 arm64-v8a**（2026 年真机几乎全是 arm64）。armeabi-v7a /
+    # x86_64 的 split APK 与 fat debug APK 在这些 ABI 上没有 .so，运行期
+    # EmbeddedTorrentHost.open 返回 null → 自动回退外接 qb（与 Windows 缺 DLL
+    # 同一条路径），不是静默破坏。要补其它 ABI 时给脚本追加 ABI 参数即可。
+    #
+    # 缓存姿势照抄 build-multiplatform.yml 的 Windows vcpkg 步骤（TODO-2668）：
+    # key 带 runner ImageVersion（镜像决定 vcpkg 修订与工具链 = 决定 ABI hash，
+    # 常量 key 会让另一镜像永远冷编且命中即不回存）；distfile 目录第二层兜
+    # 「新镜像上线那一次必然冷编」的高危外网取件。
+    - name: Resolve vcpkg cache identity
+      id: vcpkg_cache_id
+      if: ${{ steps.channel.outputs.build_debug_apk == 'true' || steps.channel.outputs.build_debug_channel_apk == 'true' || steps.channel.outputs.build_split_release_apk == 'true' }}
+      shell: bash
+      run: |
+        image="${ImageVersion:-unknown-image}"
+        image="$(echo "$image" | tr -c '0-9A-Za-z._-' '-')"
+        echo "vcpkg cache identity (runner ImageVersion): $image"
+        echo "image=$image" >> "$GITHUB_OUTPUT"
+    - name: Cache vcpkg source distfiles (libtorrent android)
+      if: ${{ steps.channel.outputs.build_debug_apk == 'true' || steps.channel.outputs.build_debug_channel_apk == 'true' || steps.channel.outputs.build_split_release_apk == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ runner.temp }}/vcpkg-downloads
+          !${{ runner.temp }}/vcpkg-downloads/tools
+        key: ${{ runner.os }}-vcpkg-downloads-libtorrent-android-v1-${{ steps.vcpkg_cache_id.outputs.image }}
+        restore-keys: |
+          ${{ runner.os }}-vcpkg-downloads-libtorrent-android-v1-
+    - name: Cache vcpkg binary archives (libtorrent android)
+      if: ${{ steps.channel.outputs.build_debug_apk == 'true' || steps.channel.outputs.build_debug_channel_apk == 'true' || steps.channel.outputs.build_split_release_apk == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/vcpkg/archives
+        key: ${{ runner.os }}-vcpkg-libtorrent-arm64-android-v1-${{ steps.vcpkg_cache_id.outputs.image }}
+    - name: Build embedded libtorrent Android .so (vcpkg)
+      if: ${{ steps.channel.outputs.build_debug_apk == 'true' || steps.channel.outputs.build_debug_channel_apk == 'true' || steps.channel.outputs.build_split_release_apk == 'true' }}
+      timeout-minutes: 90
+      shell: bash
+      env:
+        VCPKG_DOWNLOADS: ${{ runner.temp }}/vcpkg-downloads
+      run: |
+        set -euo pipefail
+        chmod +x native/fushi_torrent/build_android_so.sh
+        bash native/fushi_torrent/build_android_so.sh \
+          "$VCPKG_INSTALLATION_ROOT" "$ANDROID_NDK_LATEST_HOME" arm64-v8a
 
     # TODO-fast-release: analyze/unit/package tests no longer gate this build job.
     # They ran here as sequential steps BEFORE `flutter build apk`, so a slow or
@@ -560,6 +556,47 @@ jobs:
         path: fushi/build/release-artifacts/*.apk
         if-no-files-found: ignore
         retention-days: 14
+
+    # 正式版发布的数据安全硬门：该 tag 上必须已经挂好迁移桥包。
+    #
+    # 已出货的 Hibiki v1.2.0 挑包不认产品族，只看「.apk 结尾 + 名字含设备
+    # SUPPORTED_ABIS 任一项」，且 GitHub API 按文件名升序返回资产。桥包用 `bridge-`
+    # 前缀（字母序 < `fushi-`）就能把 ABI 命中全部接走；桥包缺席时它会退化成
+    # `fallback ??= asset` 直接装本体 —— 跨包名装成并存的第二个空 app，用户卸掉
+    # Hibiki 即永久丢数据。所以顺序是「先发桥包、再发本体」，这一步把顺序钉成硬约束：
+    # 桥包不在就**在上传本体资产之前**失败，绝不留下一个只有 fushi-* 的正式 release。
+    #
+    # 位置很重要：本体 APK 有**两条**上传路径——手动发 GitHub Release 走下面紧邻的
+    # `Upload APKs to GitHub Release event`（`release` 事件，托管发布那步是跳过的），
+    # workflow_dispatch 走后面的 `Publish Android channel release`。这道门必须排在
+    # **两条之前**；只挡住后者等于放过手动发布这条路，而正式版按发布通道硬规则恰恰
+    # 常走手动 Release。守卫断言了它与两条上传路径的先后。
+    # 不变式与反向用例见
+    # fushi/test/utils/misc/formal_asset_naming_legacy_contract_test.dart。
+    - name: Require migration bridge assets on the formal tag
+      if: steps.channel.outputs.manifest_channel == 'formal'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        REPO: ${{ github.repository }}
+        PUBLISH_TAG: ${{ steps.channel.outputs.publish_tag }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        if ! ASSETS="$(gh release view "$PUBLISH_TAG" --repo "$REPO" --json assets --jq '.assets[].name')"; then
+          echo "::error title=Missing formal release::$PUBLISH_TAG does not exist yet. Publish the migration bridge release first."
+          exit 1
+        fi
+        MISSING=()
+        for abi in arm64-v8a armeabi-v7a x86_64; do
+          if ! grep -qE "^bridge-.*-${abi}\.apk$" <<< "$ASSETS"; then
+            MISSING+=("bridge-<version>-${abi}.apk")
+          fi
+        done
+        if [ "${#MISSING[@]}" -ne 0 ]; then
+          echo "::error title=Migration bridge missing::$PUBLISH_TAG is missing ${MISSING[*]}. Old Hibiki v1.2.0 clients would install the Fushi APK as a second, empty app and lose all their data when they uninstall Hibiki. Publish the bridge assets first."
+          exit 1
+        fi
+        echo "Migration bridge assets present on $PUBLISH_TAG."
 
     - name: Upload APKs to GitHub Release event
       if: github.event_name == 'release'
@@ -803,60 +840,18 @@ jobs:
         flutter-version: '3.44.0'
         cache: true
 
-    - name: Provide gitignored Google OAuth secret stub
-      shell: bash
-      env:
-        GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
-      run: |
-        dst=fushi/lib/src/sync/google_oauth_secret.dart
-        if [ -n "$GOOGLE_OAUTH_CLIENT_SECRET" ]; then
-          oauth_secret_literal="$(python3 -c 'import json,os; print(json.dumps(os.environ["GOOGLE_OAUTH_CLIENT_SECRET"]))')"
-          printf 'const String kGoogleOAuthClientSecret =\n    %s;\n' \
-            "$oauth_secret_literal" \
-            > "$dst"
-        elif [ ! -f "$dst" ]; then
-          cp fushi/lib/src/sync/google_oauth_secret.example.dart "$dst"
-        fi
-    # Symmetric with the build job (BUG-290): every job that injects the
-    # google_oauth stub must also inject the log_upload stub so the symmetry
-    # guard (log_upload_workflow_injection_guard_test) stays green and a future
-    # platform job can never silently drop the injection. Harmless here (tests
-    # do not upload logs) - when the secret is unset it leaves the committed
-    # empty placeholder so nothing is exposed.
-    - name: Provide gitignored log upload secret stub
-      shell: bash
-      env:
-        LOG_UPLOAD_ENDPOINT: ${{ secrets.LOG_UPLOAD_ENDPOINT }}
-        LOG_UPLOAD_TOKEN: ${{ secrets.LOG_UPLOAD_TOKEN }}
-      run: |
-        dst=fushi/lib/src/utils/misc/log_upload_secret.dart
-        if [ -n "$LOG_UPLOAD_ENDPOINT" ]; then
-          log_endpoint_literal="$(python3 -c 'import json,os; print(json.dumps(os.environ["LOG_UPLOAD_ENDPOINT"]))')"
-          log_token_literal="$(python3 -c 'import json,os; print(json.dumps(os.environ.get("LOG_UPLOAD_TOKEN","")))')"
-          printf 'const String kLogUploadEndpoint = %s;\nconst String kLogUploadToken = %s;\n' \
-            "$log_endpoint_literal" \
-            "$log_token_literal" \
-            > "$dst"
-        elif [ ! -f "$dst" ]; then
-          cp fushi/lib/src/utils/misc/log_upload_secret.example.dart "$dst"
-        fi
-
-    - name: Provide gitignored dandanplay secret stub
-      shell: bash
-      env:
-        DANDANPLAY_APP_ID: ${{ secrets.DANDANPLAY_APP_ID }}
-        DANDANPLAY_APP_SECRET: ${{ secrets.DANDANPLAY_APP_SECRET }}
-      run: |
-        dst=fushi/lib/src/media/video/dandanplay_secret.dart
-        if [ -n "$DANDANPLAY_APP_ID" ]; then
-          printf "const String kDandanplayAppId = '%s';\nconst String kDandanplayAppSecret = '%s';\n" \
-            "$DANDANPLAY_APP_ID" \
-            "$DANDANPLAY_APP_SECRET" \
-            > "$dst"
-        elif [ ! -f "$dst" ]; then
-          cp fushi/lib/src/media/video/dandanplay_secret.example.dart "$dst"
-        fi
-
+    # 烘进包里的密钥统一由 composite action 注入 —— 这批注入曾被逐字抄进 11 个
+    # job，抄到最后 TMDB 有 3 个变体、两条发布 workflow 一处都没有，导致发出去
+    # 的包里 TMDB 恒「未配置」而 CI 全绿（BUG-1588）。真相源只留一份。
+    - name: Provide baked-in secret stubs
+      uses: ./.github/actions/provide-baked-secrets
+      with:
+        google-oauth-client-secret: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+        log-upload-endpoint: ${{ secrets.LOG_UPLOAD_ENDPOINT }}
+        log-upload-token: ${{ secrets.LOG_UPLOAD_TOKEN }}
+        dandanplay-app-id: ${{ secrets.DANDANPLAY_APP_ID }}
+        dandanplay-app-secret: ${{ secrets.DANDANPLAY_APP_SECRET }}
+        tmdb-api-key: ${{ secrets.TMDB_API_KEY }}
     - name: Flutter pub get
       working-directory: fushi
       run: flutter pub get

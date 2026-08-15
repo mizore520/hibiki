@@ -445,3 +445,121 @@ drag gesture at all, so mouse / keyboard seeking is untouched.
 
 Source-guard test: `fushi/test/pages/video_horizontal_seek_test.dart`
 (group `BUG-1485: 横滑 seek 换算模型接线守卫`).
+
+## BUG-1644: ANGLE must render on our Direct3D 11 device (`d3d11va` zero-copy)
+
+`windows/angle_surface_manager.{h,cc}` and one log line in `windows/video_output.cc`.
+
+Upstream `ANGLESurfaceManager` creates **two unrelated** Direct3D 11 devices:
+
+- one per `ANGLESurfaceManager` instance, via `D3D11CreateDevice(..., flags = 0)`,
+  used only to allocate the two shared BGRA textures Flutter samples;
+- one *hidden* device that ANGLE creates for itself, because the `EGLDisplay`
+  comes from `eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
+  EGL_DEFAULT_DISPLAY, ...)`.
+
+libmpv's `d3d11-egl` hardware-decoding interop
+(`mpv/video/out/opengl/hwdec_d3d11egl.c`) has exactly one way to find the device
+it must decode into: it reads it back out of the *current* display with
+`eglQueryDisplayAttribEXT(EGL_DEVICE_EXT)` →
+`eglQueryDeviceAttribEXT(EGL_D3D11_DEVICE_ANGLE)`. So it can only ever see
+ANGLE's hidden device — a device nobody created with
+`D3D11_CREATE_DEVICE_VIDEO_SUPPORT` and nobody marked thread safe (ANGLE hard
+codes `debug ? D3D11_CREATE_DEVICE_DEBUG : 0`, see ANGLE `Renderer11.cpp`
+`callD3D11CreateDevice`). It then hands that device to FFmpeg
+(`d3d11_wrap_device_ref` → `d3d11va_device_init`), which `QueryInterface`s for
+`ID3D11VideoDevice` **and** `ID3D11VideoContext`. That QI is gated by the flag
+at the D3D11 *runtime* level, not by the driver: a device created without
+`D3D11_CREATE_DEVICE_VIDEO_SUPPORT` returns `E_NOINTERFACE 0x80004002`
+(measured on WARP). How much that costs depends on the adapter — measured on a
+GeForce RTX 5090 the QI on ANGLE's flag-less device still succeeded — so this
+half of the patch is about being correct everywhere rather than about one
+machine. When the QI does fail, `init()` returns `-1` and `--hwdec=d3d11va`
+degrades to `d3d11va-copy`: every decoded frame is read back to system memory
+and re-uploaded to the GPU. Independently observed in `docs/bugs/BUG-1639`
+(a separate branch, not merged into `develop` yet)
+("`d3d11va` 失败 → `Using hardware decoding (d3d11va-copy)`").
+
+**This patch alone is not sufficient.** `hwdec_d3d11egl::init()` checks
+`EGL_EXT_device_query` *before* it ever looks at the device, and libmpv older
+than mpv `1d15686142` (2026-07-31) looks for it in the EGL **display**
+extension string while ANGLE publishes it in the **client** string — so `init()`
+returns `-1` with no log line at all, whichever device the display carries
+(measured: `display: no` / `client: YES` on both the upstream
+`EGL_DEFAULT_DISPLAY` and this patch's `EGL_PLATFORM_DEVICE_EXT` display).
+`third_party/media_kit_libs_windows_video/windows/CMakeLists.txt` therefore
+pins libmpv at or after that fix and documents the floor; the guard test below
+enforces it.
+
+The patch does what mpv's own `--gpu-context=angle` does
+(`mpv/video/out/opengl/context_angle.c`, `d3d11_device_create`):
+
+- **one** process-wide `ID3D11Device` (`shared_d3d_11_device_`) replaces the
+  per-instance ones, created with
+  `D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_VIDEO_SUPPORT` and
+  marked `ID3D10Multithread::SetMultithreadProtected(TRUE)` (libmpv decodes on
+  its own threads while Flutter's raster thread reads the shared texture);
+- the `EGLDisplay` is created **on that device** with
+  `eglCreateDeviceANGLE(EGL_D3D11_DEVICE_ANGLE, device)` +
+  `eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, ...)`, so
+  `EGL_D3D11_DEVICE_ANGLE` resolves to our device and the interop adopts it;
+- `CleanUp(true)` no longer `Release`s the device per instance (that would free
+  it under the surviving `VideoOutput`s) — the last instance calls
+  `ReleaseSharedResources()`, which terminates the display, releases the
+  `EGLDeviceEXT` and only then the device.
+
+Every new step is guarded: if the device rejects the flags they are dropped one
+by one, and if `eglCreateDeviceANGLE` / the device-backed display is
+unavailable the original
+`EGL_PLATFORM_ANGLE_ANGLE`/`EGL_DEFAULT_DISPLAY` four-candidate fallback chain
+(D3D11 → D3D11 9_3 → D3D9 → wrap) runs verbatim, so machines that cannot take
+the new path behave exactly like pub.dev.
+
+`ANGLESurfaceManager::uses_shared_d3d11_device()` makes the outcome observable;
+`VideoOutput` logs `libmpv d3d11-egl zero-copy interop: available/unavailable`
+next to its existing `Using H/W rendering.` line.
+
+Source-guard test: `fushi/test/third_party/media_kit_video_angle_interop_guard_test.dart`.
+
+## BUG-1657: a failed interop surface must not cost the whole GPU pipeline
+
+`windows/angle_surface_manager.{h,cc}` and one log line in `windows/video_output.cc`.
+
+BUG-1644 added a new display type (`EGL_PLATFORM_DEVICE_EXT` on our own D3D11
+device). `EnsureSharedEGLDisplay()` falls back to the upstream
+`EGL_DEFAULT_DISPLAY` chain only when creating *that display* fails, but the
+config, the context and the `eglCreatePbufferFromClientBuffer` all happen
+afterwards, and any of those failing threw straight out of `Create()`, which
+drops the whole `VideoOutput` into `MPV_RENDER_API_TYPE_SW`.
+
+That downgrade is far more expensive than it looks: the software path is not
+`vo=gpu`, so libmpv's `glsl-shaders` (Anime4K & other upscalers) and the
+`scale`/`cscale` filters stop applying **silently**. Measured with one user's
+real shader set, same libmpv, same clip, changing only the render API: the
+generated shaders contain 2016 `conv2d` references on the GL path and **zero**
+on the S/W path. The user-visible symptom is just "super-resolution stopped
+working", with nothing in any log.
+
+Note on evidence: mpv never emits a user shader's `//!DESC` text into the
+generated shader or the log, so "the log does not mention Anime4K" proves
+nothing. The reliable marker is the intermediate texture names a shader
+declares with `//!SAVE` (`conv2d*` here), which do appear in the generated
+GLSL/HLSL.
+
+The patch:
+
+- `Create()` calls `RetryOnUpstreamEGLDisplay()` when `CreateAndBindEGLSurface()`
+  fails. It terminates the device-backed display, releases the `EGLDeviceEXT`,
+  latches `shared_interop_display_disabled_` so neither this nor a later
+  instance rebuilds it, and rebuilds context + surface on the upstream display.
+  Only then, if that also fails, does it throw. Guarded by `instance_count_ == 0`
+  so a shared display another `VideoOutput` is already rendering on is never
+  torn down.
+- `VideoOutput` logs, next to `Using S/W rendering.`, that
+  `libmpv glsl-shaders & scale filters are INERT`, so the next such report is
+  diagnosable from the log alone.
+
+Net effect: a problem that only affects zero-copy now costs only zero-copy,
+instead of costing hardware rendering and every shader with it.
+
+Source-guard test: `fushi/test/third_party/media_kit_video_angle_interop_guard_test.dart`.
