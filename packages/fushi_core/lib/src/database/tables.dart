@@ -111,6 +111,10 @@ class SrtBooks extends Table {
   IntColumn get importedAt => integer()();
   // Standalone SRT books (no backing epub) use the empty-string sentinel.
   TextColumn get bookKey => text().withDefault(const Constant(''))();
+
+  /// v88：字幕书/有声书的内容语言（BCP-47）。SRT 文件本身不声明语言，所以这一列
+  /// 只能由用户指定；null = 未知，正文不写 font-family（不猜）。
+  TextColumn get language => text().nullable()();
 }
 
 // ── reader_positions ────────────────────────────────────────────────
@@ -310,6 +314,17 @@ class DictionaryMetadata extends Table {
   TextColumn get collapsedLanguagesJson =>
       text().withDefault(const Constant('[]'))();
 
+  /// v87：用户**手动指定**的词典内容语言（BCP-47，如 `ja` / `zh-Hant`）。
+  ///
+  /// null = 未指定，按自动来源推断（yomitan `index.json` 的 `sourceLanguage`，
+  /// 落在 [metadataJson] 里）。非 null 为用户覆盖，压过一切自动判断。
+  ///
+  /// 为什么不塞进 [metadataJson]：重导/在线更新词典时 metadata 会被包内 index.json
+  /// **整体重建**（见 `dictionary_import_manager` 的两处 persistDictionary），
+  /// 用户的手动指定会随之蒸发。它属于「用户设置」，必须与 hidden/collapsedLanguages
+  /// 走同一条继承通道（`preservedSettings`）。
+  TextColumn get languageOverride => text().nullable()();
+
   @override
   Set<Column> get primaryKey => {name};
 }
@@ -407,6 +422,16 @@ class EpubBooks extends Table {
   TextColumn get tocJson => text().nullable()();
   TextColumn get sourceMetadata => text().nullable()();
   IntColumn get importedAt => integer()();
+
+  /// v87：书的内容语言（BCP-47，如 `ja` / `zh-Hant`），决定正文用哪条字体链。
+  ///
+  /// 导入时从 EPUB OPF 的 `dc:language` 回填（`EpubParser` 早就解析出来了，此前
+  /// 无人消费）；用户可在书籍设置里手动改，手动值压过自动值。null = 既没解析到
+  /// 也没指定 → 阅读器不写 `font-family`，保持浏览器默认（不猜，见
+  /// `content_font_chain.dart`）。
+  ///
+  /// 与 [mangaReadingMode] 同款「null=自动 / 非 null=用户覆盖」语义。
+  TextColumn get language => text().nullable()();
 
   /// 书身份格式判别（PDF 阅读器 Phase 1）：`'epub'`（默认，含 EPUB / TextToEpub /
   /// 有声书配对壳）、`'pdf'`（pdfrx 渲染的真 PDF）或 `'manga'`（漫画 OCR，第三种书）。
@@ -554,6 +579,14 @@ class VideoBooks extends Table {
   TextColumn get bookUid => text()();
   TextColumn get title => text()();
   TextColumn get videoPath => text()();
+
+  /// v88：视频的内容语言（BCP-47），决定字幕用哪条字体链。
+  ///
+  /// null = 未指定 → 字幕层退回「当前字幕轨的 language」，再没有则用历史兜底链。
+  /// 非 null 为用户手动指定，压过字幕轨声明——外挂 SRT 基本都不带语言标记，
+  /// 而内嵌轨的 language 又常被打包者写错，所以必须留一个用户说了算的入口。
+  TextColumn get language => text().nullable()();
+
   TextColumn get subtitleSource => text().nullable()();
 
   /// 副字幕源（TODO-857 视频双字幕 Path A）：与 [subtitleSource] 同款四态编码
@@ -2263,6 +2296,12 @@ class Galgames extends Table {
 
   /// 游戏可执行文件绝对路径（hook 注入目标）。
   TextColumn get exePath => text()();
+
+  /// v88：游戏文本的内容语言（BCP-47），决定 hook 文本浮窗与查词卡用哪条字体链。
+  ///
+  /// hook 出来的文本没有任何语言声明可读，所以这一列只能由用户指定；null = 未知。
+  /// 不要因为「galgame 多半是日文」就默认 ja——那是全局假设，本仓不做这种假设。
+  TextColumn get language => text().nullable()();
 
   /// 工作目录（默认 exe 所在目录）。也是游玩计时判定「候选进程组」的范围依据。
   TextColumn get workdir => text()();

@@ -123,6 +123,11 @@ SettingsDestination buildCardCreationDestination() {
         title: t.gal_mining_screenshot_size,
         subtitle: t.gal_mining_screenshot_size_hint,
       ),
+      SettingsBodySearchEntry(
+        id: 'card_creation.anki.video_mining_still_format',
+        title: t.video_mining_still_format,
+        subtitle: t.video_mining_still_format_hint,
+      ),
     ],
   );
 }

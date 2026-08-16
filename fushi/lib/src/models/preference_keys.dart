@@ -41,6 +41,9 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'current_home_tab_index',
   'custom_dict_css',
   'deduplicate_pitch_accents',
+  // String（BCP-47，如 'ja' / 'zh-Hant'；空串 = 未设置）：全局默认内容语言。
+  // 内容字体链优先级的第三档，兜在「资源手动指定 > 内容自带元数据」之后。
+  'default_content_language',
   'design_system',
   'desktop_clipboard_always_on_top',
   'desktop_clipboard_auto_lookup',
@@ -70,6 +73,7 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'gal_hook_text_font_size',
   'gal_mining_animated_format',
   'gal_mining_image_mode',
+  'gal_mining_still_format',
   'galgame_library',
   'galgame_library_view',
   'games_collapsed_collection_ids',
@@ -89,6 +93,7 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'low_memory_mode',
   'manga_external_mokuro_path',
   'manga_ocr_engine_preference',
+  'manga_ocr_lens_language',
   'manga_online_catalog_base_url',
   'manga_online_catalog_enabled',
   'manga_page_animation',
@@ -156,6 +161,7 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'video_lock_window_aspect_ratio',
   'video_mining_animated_format',
   'video_mining_image_mode',
+  'video_mining_still_format',
   'video_mpv_config',
   'video_mpv_shader_dir',
   'video_remote_subtitle',

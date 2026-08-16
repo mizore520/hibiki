@@ -15,7 +15,7 @@ import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
 import 'package:fushi/src/mining/galgame_library.dart';
 import 'package:fushi/src/mining/gal_mining_screenshot_size.dart';
 import 'package:fushi/src/mining/immersion_mining_request.dart'
-    show MiningAnimatedFormat, VideoMiningImageMode;
+    show MiningAnimatedFormat, MiningStillFormat, VideoMiningImageMode;
 import 'package:fushi/src/models/audio_source_config.dart';
 import 'package:fushi/src/utils/misc/desktop_audio_clipper.dart'
     show MiningMediaCompression;
@@ -296,6 +296,26 @@ class PreferencesRepository extends ChangeNotifier {
 
   Future<void> setLastDictionaryUpdateAt(DateTime when) async {
     await setPref('last_dictionary_update_at', when.toIso8601String());
+    notifyListeners();
+  }
+
+  // ── 内容语言（内容字体链）────────────────────────────────────────────
+
+  /// **全局默认内容语言**（BCP-47，如 `ja` / `zh-Hant`）。空串 = 未设置。
+  ///
+  /// 它是内容字体链优先级里的第三档，兜在资源级之后：
+  /// `资源手动指定 > 内容自带元数据 > 本项 > 硬编码兜底链`（见
+  /// `content_font_chain.dart` 的 [resolveContentLanguage]）。
+  ///
+  /// 存在的理由：前两档覆盖不全——外挂 SRT 不带语言标记、自制 EPUB 常缺
+  /// `dc:language`、hook 出来的 galgame 文本更没有任何声明。逐个资源手动指定能解
+  /// 决，但用户装的内容通常以某一种语言为主，给一个默认值比让他点几十次省事。
+  /// 默认空串而不是 `ja`：本仓不做「内容恒为日语」这种全局假设。
+  String get defaultContentLanguage =>
+      getPref('default_content_language', defaultValue: '') as String;
+
+  Future<void> setDefaultContentLanguage(String language) async {
+    await setPref('default_content_language', language);
     notifyListeners();
   }
 
@@ -1647,6 +1667,32 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  // 静图（截图）**编码格式**，与上面两轴正交：模式选「用不用动图 / 静态帧取哪一帧」，
+  // 本项选「那帧用什么编码」。默认由 [MiningStillFormat.fromWireName] 对 null 给出（= jpg，
+  // 现状零破坏），不写在这里：解析未知历史值与「从没设过」走同一条路径。
+  //
+  // galgame 侧不取本项：那条链的静图来自窗口抓图（本就是 PNG），不经本格式轴。
+  MiningStillFormat get videoMiningStillFormat =>
+      MiningStillFormat.fromWireName(
+          getPref('video_mining_still_format', defaultValue: null) as String?);
+
+  void setVideoMiningStillFormat(MiningStillFormat format) async {
+    await setPref('video_mining_still_format', format.wireName);
+    notifyListeners();
+  }
+
+  // galgame 侧单存一份（同 image mode / animated format 的分法）：那边的静图来自
+  // 窗口抓图（本身是 PNG），与视频帧的取舍不同，共用一个开关会逼用户为一边将就另一边。
+  // 默认同样是 jpg：BUG-1473 已把 gal 截图接进降采样（原本 1.5~4 MB 的无压缩 PNG），
+  // “小图原样返回 PNG”只是不值得重编码的捐径，不是意图。
+  MiningStillFormat get galMiningStillFormat => MiningStillFormat.fromWireName(
+      getPref('gal_mining_still_format', defaultValue: null) as String?);
+
+  void setGalMiningStillFormat(MiningStillFormat format) async {
+    await setPref('gal_mining_still_format', format.wireName);
+    notifyListeners();
+  }
+
   MiningAnimatedFormat get galMiningAnimatedFormat =>
       MiningAnimatedFormat.fromWireName(
           getPref('gal_mining_animated_format', defaultValue: null) as String?);
@@ -2114,6 +2160,17 @@ class PreferencesRepository extends ChangeNotifier {
 
   Future<void> setMangaOcrEnginePreference(String value) async {
     await setPref('manga_ocr_engine_preference', value);
+    notifyListeners();
+  }
+
+  /// Google Lens 整卷 OCR 的识别语言（本地书/无源语言时的兜底）。在线阅读的
+  /// Lens OCR 优先用源自身声明的语言，本偏好只在源语言未知时回退。存主子标签
+  /// （`ja`/`en`/`zh`…），进请求前统一过 normalizeLensLanguage。
+  String get mangaOcrLensLanguage =>
+      getPref('manga_ocr_lens_language', defaultValue: 'ja') as String;
+
+  Future<void> setMangaOcrLensLanguage(String value) async {
+    await setPref('manga_ocr_lens_language', value);
     notifyListeners();
   }
 

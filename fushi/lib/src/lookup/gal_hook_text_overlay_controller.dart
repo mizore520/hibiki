@@ -791,6 +791,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
       imageMode: model.galMiningImageMode,
       screenshotSize: model.galMiningScreenshotSize,
       animatedFormat: model.galMiningAnimatedFormat,
+      stillFormat: model.galMiningStillFormat,
       captureLeaseFactory: suppressIngameLookupForCapture
           ? _ingameLookup.acquireMiningCaptureLease
           : null,

@@ -251,6 +251,25 @@ extension _ReaderHistoryBooks on _ReaderFushiHistoryPageState {
       // 统一三库页卡菜单：SRT 卡与 EPUB/视频/游戏卡对称含「标签」项（用户
       // 2026-07-28 拍板推翻 TODO-455；内部自行收起本对话框）。身份 =
       // SrtBooks.uid（与合集/批量选择键解码一致）。
+      // 内容语言：决定正文用哪条字体链。SRT 文件本身不声明语言，只能手动指定。
+      // 配对 SRT 书（bookKey 非空）的正文由 EpubBooks 行承载，语言在书卡菜单里改；
+      // 这一项写的是 SrtBooks.language，standalone 书开场时读它（_applySrtBookLanguage）。
+      DialogListAction(
+        label: t.book_language_action,
+        icon: Icons.translate,
+        onPressed: () async {
+          Navigator.pop(dialogContext);
+          await showContentLanguagePicker(
+            context: context,
+            title: t.book_language_action,
+            description: t.book_language_description,
+            current: book.language,
+            autoDetected: '',
+            onSelected: (String? tag) =>
+                appModel.database.updateSrtBookLanguage(book.uid, tag),
+          );
+        },
+      ),
       DialogListAction(
         label: t.tag_label,
         icon: Icons.sell_outlined,
@@ -1252,6 +1271,31 @@ extension _ReaderHistoryBooks on _ReaderFushiHistoryPageState {
     if (mounted) {
       _rebuild(() {});
     }
+  }
+
+  /// 书的内容语言选择框。选择器 UI 与词典共用（[showContentLanguagePicker]），
+  /// 这里只负责读当前值与写库。
+  ///
+  /// 写完刷新页面即可——阅读器下次开书时读 EpubBooks.language 建链；书已经开着
+  /// 时改语言不即时重渲（正文 CSS 在开书时生成），关掉重开生效。
+  Future<void> _openBookLanguagePicker(String bookKey) async {
+    Navigator.pop(context);
+    final FushiDatabase db = appModel.database;
+    final EpubBookRow? row = await db.getEpubBook(bookKey);
+    if (!mounted) return;
+    final String? current = row?.language;
+    await showContentLanguagePicker(
+      context: context,
+      title: t.book_language_action,
+      description: t.book_language_description,
+      current: current,
+      // 书没有「自动值」可显示：dc:language 在导入时就直接写进了同一列，读回来
+      // 分不清是自动回填的还是用户手动指定的。留空 = 只显示「自动」这一项本身。
+      autoDetected: '',
+      // 写完不刷新书架：语言不出现在卡片上，重建一遍纯属浪费。生效点在阅读器
+      // 开书时读这一列建字体链。
+      onSelected: (String? tag) => db.updateEpubBookLanguage(bookKey, tag),
+    );
   }
 
   Future<void> _openCssEditor(String bookKey) async {

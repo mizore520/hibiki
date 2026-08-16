@@ -35,6 +35,7 @@ import 'package:fushi_audio/fushi_audio.dart';
 import 'package:fushi/src/profile/profile_repository.dart';
 import 'package:fushi/src/pages/implementations/popup_dictionary_page.dart';
 import 'package:fushi_anki/fushi_anki.dart';
+import 'package:fushi/src/anki/anki_media_dedup_runner.dart';
 import 'package:fushi/src/media/floating_dict_channel.dart';
 import 'package:fushi/src/models/app_font_loader.dart';
 import 'package:fushi/src/models/app_ui_font_chain.dart';
@@ -741,6 +742,15 @@ class AppModel with ChangeNotifier {
 
     if (report.serviceConfigsImported > 0) {
       await refreshPrefCache();
+      // 导入的服务配置不是「静态设置」，它们是 provider runtime 的构造入参：
+      // Jimaku / OpenSubtitles / Torznab / TMDB 的 client 在
+      // [_startVideoDownloadPipeline] 里按当时的 key 一次性建好，key 为空的
+      // provider 干脆不进 registry。不重建 runtime，互联搬过来的字幕/索引器
+      // 凭据要等到下次冷启动才生效（用户视角＝「同步了但还是搜不到字幕」）。
+      await reloadVideoDownloadPipelineRuntime();
+      // 追番令牌可能换人：设置页与首页的状态行监听 statusRevision，不 bump 就
+      // 一直显示导入前的账号/未连接。
+      _mediaTrackingService?.notifyStatusChanged();
     }
 
     if (report.dictionariesImported > 0) {
@@ -829,6 +839,26 @@ class AppModel with ChangeNotifier {
 
   /// Dictionary metadata, history, and search caches.
   late DictionaryRepository dictRepo;
+
+  /// **当前查词来源**的内容语言（BCP-47），决定查词卡里**词头**（`.expression`
+  /// 与振假名）用哪条字体链。null = 未知 → 词头跟随弹窗的兜底链。
+  ///
+  /// 为什么词头不跟词典走：词头是**被查的那个词**，语言由用户正在读的东西决定，
+  /// 不由哪本词典解释它决定——同一个词头在日文书里查和在中文书里查是两种字形。
+  /// 释义区才跟词典语言（见 `dictionary_language_css.dart` 的分层）。
+  ///
+  /// 由各媒体页在进入/切换内容时写入（阅读器开书、视频页解析字幕语言、galgame
+  /// 启动）；app 外查词（剪贴板/扩展）保持 null → 落到全局默认。
+  String? currentLookupLanguage;
+
+  /// [dictRepo] 是否已经赋值。
+  ///
+  /// 它是 late 字段，而 `_databaseOpened = true` 发生在它被赋值**之前**，所以
+  /// 「DB 已就绪」并不蕴含「词典仓库已就绪」——初始化早期与测试 seam 都能撞进这段
+  /// 窗口，此时读 [dictionaries] 会抛 LateInitializationError。需要在初始化完成前
+  /// 读词典（例如查词弹窗注入按词典语言分流的字体 CSS）的调用方必须先问这个。
+  bool _dictionaryRepoReady = false;
+  bool get isDictionaryRepoReady => _dictionaryRepoReady;
   late ClipboardHistoryRepository clipboardHistoryRepo;
   final ClipboardHistoryNotifier clipboardHistoryNotifier =
       ClipboardHistoryNotifier();
@@ -2197,6 +2227,7 @@ class AppModel with ChangeNotifier {
       dictRepo = DictionaryRepository(_database,
           onCacheRebuild: _rebuildDictPathsCache,
           isLowMemory: () => prefsRepo.lowMemoryMode);
+      _dictionaryRepoReady = true;
       mediaHistoryRepo = MediaHistoryRepository(_database);
       clipboardHistoryRepo = ClipboardHistoryRepository(_database);
 
@@ -2229,6 +2260,9 @@ class AppModel with ChangeNotifier {
       // 同样反向 import 不了 applyAppProxy。只接**远程媒体**这一条，AnkiConnect 自身
       // （localhost:8765，也可能是局域网另一台机）绝不经过它。
       installAnkiRemoteMediaHttpClientFactory();
+      // 「代装 AnkiConnect」从 ankiweb.net 下插件包，同样是公网出站、同样住在
+      // fushi_anki 包里。与上面一条彼此独立：一个抓发音，一个下插件。
+      installAnkiAddonDownloadHttpClientFactory();
       _applyMemoryPolicy();
       // BUG-1647：lazy getter 可能已提前建过实例；替换前先取消其重试定时器，
       // 否则旧定时器会拿着旧 repository 继续同步。
@@ -2581,6 +2615,7 @@ class AppModel with ChangeNotifier {
       dictRepo = DictionaryRepository(_database,
           onCacheRebuild: _rebuildDictPathsCache,
           isLowMemory: () => prefsRepo.lowMemoryMode);
+      _dictionaryRepoReady = true;
       await dictRepo.loadFromDb();
 
       mediaHistoryRepo = MediaHistoryRepository(_database);
@@ -4309,6 +4344,10 @@ class AppModel with ChangeNotifier {
     }
   }
 
+  /// 用户手动指定词典内容语言（BCP-47），null = 恢复自动（读 index.json 声明）。
+  void setDictionaryLanguageOverride(Dictionary dictionary, String? language) =>
+      dictRepo.setDictionaryLanguageOverride(dictionary, language);
+
   void toggleDictionaryCollapsed(Dictionary dictionary) =>
       dictRepo.toggleDictionaryCollapsed(
           dictionary, JapaneseLanguage.instance.languageCode);
@@ -5614,6 +5653,17 @@ class AppModel with ChangeNotifier {
   void setGalMiningAnimatedFormat(MiningAnimatedFormat format) =>
       prefsRepo.setGalMiningAnimatedFormat(format);
 
+  // 静图（截图）编码格式（JPG / PNG，透传 prefsRepo）。默认 jpg=现状。与上面两轴正交：
+  // 模式选用不用动图与取哪帧，本项只管那帧怎么编码。
+  MiningStillFormat get videoMiningStillFormat =>
+      prefsRepo.videoMiningStillFormat;
+  void setVideoMiningStillFormat(MiningStillFormat format) =>
+      prefsRepo.setVideoMiningStillFormat(format);
+
+  MiningStillFormat get galMiningStillFormat => prefsRepo.galMiningStillFormat;
+  void setGalMiningStillFormat(MiningStillFormat format) =>
+      prefsRepo.setGalMiningStillFormat(format);
+
   bool get deduplicatePitchAccents => prefsRepo.deduplicatePitchAccents;
   void toggleDeduplicatePitchAccents() =>
       prefsRepo.toggleDeduplicatePitchAccents();
@@ -6433,6 +6483,10 @@ class AppModel with ChangeNotifier {
   Future<void> setMangaOcrEnginePreference(String value) =>
       prefsRepo.setMangaOcrEnginePreference(value);
 
+  String get mangaOcrLensLanguage => prefsRepo.mangaOcrLensLanguage;
+  Future<void> setMangaOcrLensLanguage(String value) =>
+      prefsRepo.setMangaOcrLensLanguage(value);
+
   String get mangaSpreadPreference => prefsRepo.mangaSpreadPreference;
   Future<void> setMangaSpreadPreference(String value) =>
       prefsRepo.setMangaSpreadPreference(value);
@@ -6721,6 +6775,27 @@ class _AppModelRemoteLookupService
     return repo.updateNoteTypeTemplates(modelName, templates);
   }
 
+  // ── 互联媒体存储优化：客户端（手机）经互联对本机 collection.media 去重。
+  // 与上面同语义地用**本机**平台仓库；后端不支持时按 BaseAnkiRepository 的
+  // 降级契约回 false/null（不抛）。
+
+  @override
+  Future<bool> probeMediaMaintenance() async {
+    final BaseAnkiRepository repo =
+        _appModel.platformServices.createAnkiRepository();
+    return repo.probeMediaMaintenance();
+  }
+
+  @override
+  Future<AnkiMediaDedupReport?> runMediaDedup({bool dryRun = true}) async {
+    final BaseAnkiRepository repo =
+        _appModel.platformServices.createAnkiRepository();
+    if (!repo.supportsMediaMaintenance) return null;
+    // 走本机 runner 而不是裸 repo：改写与删除真实发生在**这台机器**上，
+    // 审计 journal 与「上次去重时刻」就该落在这里。客户端只发起、只看结果。
+    return AnkiMediaDedupRunner(repo).runNow(dryRun: dryRun);
+  }
+
   @override
   Future<bool> isDuplicate({
     required String expression,
@@ -6810,6 +6885,9 @@ class _AppModelRemoteLookupService
           // → 静态模式根本不进 extractAnimatedClipWithFallback，不存在 BUG-1039 那种
           // 「格式与编码参数不成对」的风险：静态帧压根不吃 gifFps/gifWidth。
           imageMode: _appModel.videoMiningImageMode,
+          // 静图编码格式（默认 JPG）：服务端路径的两种静态档都落到引擎
+          // tryStartFrame，抽帧按它选编码器与扩展名，失败退回 JPG。
+          stillFormat: _appModel.videoMiningStillFormat,
         ),
         compression: compression,
         tempDir: Directory.systemTemp.path,
@@ -6863,6 +6941,9 @@ class _AppModelRemoteLookupService
         // 与上面 resolve 的 format 同值：转码按它选编码器 + 输出扩展名 + 降级链，
         // 实际产出格式经 ImmersionCaptureResult.animatedFormat 回传给封面文件名。
         format: animatedFormat,
+        // 静帧档的编码格式（默认 JPG）：同样选编码器 + 输出扩展名 + 降级链，
+        // 实际产出格式经 ImmersionCaptureResult.stillFormat 回传给封面文件名。
+        stillFormat: _appModel.videoMiningStillFormat,
         stillTarget: stillTarget,
       );
     } else if (payload.netflixVideoId != null &&

@@ -12,13 +12,18 @@ Uint8List _transformCardScreenshot(
   required _ScreenshotTargetResolver targetResolver,
   required int quality,
   required bool encodeWhenUnchanged,
+  CardScreenshotEncoding encoding = CardScreenshotEncoding.jpeg,
 }) {
   if (bytes.isEmpty) return bytes;
   try {
     final img.Image? decoded = img.decodeImage(bytes);
     if (decoded == null) return bytes;
     final ({int width, int height})? target = targetResolver(decoded);
-    if (target == null && !encodeWhenUnchanged) return bytes;
+    if (target == null &&
+        !encodeWhenUnchanged &&
+        cardScreenshotEncodingOf(bytes) == encoding) {
+      return bytes;
+    }
     final img.Image output = target == null
         ? decoded
         : img.copyResize(
@@ -26,7 +31,10 @@ Uint8List _transformCardScreenshot(
             width: target.width,
             height: target.height,
           );
-    return img.encodeJpg(output, quality: quality);
+    return switch (encoding) {
+      CardScreenshotEncoding.jpeg => img.encodeJpg(output, quality: quality),
+      CardScreenshotEncoding.png => img.encodePng(output),
+    };
   } catch (_) {
     return bytes;
   }
@@ -47,6 +55,19 @@ Uint8List _transformCardScreenshot(
 ///   降采样把一张有效截图变成空字节而破坏制卡。
 /// - 纯 Dart（`package:image`，无 dart:ui），可在隔离/单测中直接调用，与
 ///   `epub_edge_matcher.dart` 同范式。
+
+/// 降采样后重编码用的目标格式。
+///
+/// 这里**不直接用** `MiningStillFormat`（`lib/src/mining/` 的制卡值对象）：本模块是
+/// utils 层，同时服务阅读器选区插图等与制卡无关的调用点，反向依赖 mining 会把制卡
+/// 的偏好语义拖进一个纯图像工具里。调用点做一次映射即可。
+enum CardScreenshotEncoding {
+  /// 有损，吃 `quality` 参数（默认，= 改动前的唯一行为）。
+  jpeg,
+
+  /// 无损，忽略 `quality`。
+  png,
+}
 
 /// 计算等比缩放后的目标尺寸（纯函数，可单测）。
 ///
@@ -100,15 +121,21 @@ Uint8List _transformCardScreenshot(
   );
 }
 
-/// 把制卡截图 [bytes] 降采样到长边 [maxLongEdge]px，重编码为 JPEG（质量
-/// [quality]）。长边已不超限、或解码失败时原样返回 [bytes]（绝不返回空/破坏媒体）。
+/// 把制卡截图 [bytes] 降采样到长边 [maxLongEdge]px，重编码为 [encoding]（JPEG 时吃
+/// [quality]）。解码失败时原样返回 [bytes]（绝不返回空/破坏媒体）。
 ///
 /// TODO-757 压缩开关：默认压缩档（长边 1000px / 质量 90，= TODO-646 现状）。关闭压缩
 /// 时调用点传高保真档（长边 2000px / 质量 95）。默认值保持现状，纯函数不读全局偏好。
+///
+/// 「不需要缩放就原样返回」这条捷径**只在入参已经是目标格式时**成立：用户选 PNG 而截图
+/// 源是 media_kit 的 `image/jpeg` 时，原样返回会让调用方把 JPEG 字节写进 `.png`（Anki 按
+/// 扩展名判 MIME → 封面不显示）。故这里按 [encoding] 与实际字节格式比对，格式不符就
+/// 重编码——即使尺寸没变。返回字节的真实格式由 [cardScreenshotEncodingOf] 复核。
 Uint8List downsampleCardScreenshot(
   Uint8List bytes, {
   int maxLongEdge = 1000,
   int quality = 90,
+  CardScreenshotEncoding encoding = CardScreenshotEncoding.jpeg,
 }) {
   return _transformCardScreenshot(
     bytes,
@@ -119,6 +146,71 @@ Uint8List downsampleCardScreenshot(
     ),
     quality: quality,
     encodeWhenUnchanged: false,
+    encoding: encoding,
+  );
+}
+
+/// [bytes] 实际是哪种编码（按魔数嗅探，不解码整图）。既不是 JPEG 也不是 PNG（含空字节、
+/// GIF、损坏数据）时返回 null。
+///
+/// 用途是**落盘前复核真实格式**：降采样在解码失败时会原样返回入参，此时产出格式与用户
+/// 所选无关，扩展名必须跟着真实字节走。
+CardScreenshotEncoding? cardScreenshotEncodingOf(Uint8List bytes) {
+  // `findFormatForData` 会挨个问解码器 `isValidFile`，其中 GIF 那个对**过短/损坏**的字节
+  // 直接抛 RangeError（`InputBuffer.readString` 越界）——不是返回 false。嗅探失败等价于
+  // 「不是我们认得的静图」，与 [downsampleCardScreenshot] 的保守回退同一条纪律。
+  try {
+    return switch (img.findFormatForData(bytes)) {
+      img.ImageFormat.jpg => CardScreenshotEncoding.jpeg,
+      img.ImageFormat.png => CardScreenshotEncoding.png,
+      _ => null,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+/// 只换编码、**不改尺寸**：把 [bytes] 重编码成 [encoding]。
+///
+/// 与 [downsampleCardScreenshot] 分开是因为用途不同：那个服务「我们自己抓的原始帧」
+/// （该压就压），这个服务「外部已经处理好的封面字节」（gal 窗口抓图已降过采样、浏览器
+/// 扩展给的截图），此时再压一遍尺寸是越权。
+///
+/// 三种情况原样返回，一个字节都不动：
+/// - 空字节；
+/// - 嗅探不出是 JPEG/PNG —— **动图（GIF/WebP/AVIF）走的就是这条**，绝不能把一段动图
+///   解成第一帧再编成静图；
+/// - 已经就是目标格式。
+Uint8List transcodeCardScreenshot(
+  Uint8List bytes, {
+  required CardScreenshotEncoding encoding,
+  int quality = 90,
+}) {
+  if (bytes.isEmpty) return bytes;
+  final CardScreenshotEncoding? actual = cardScreenshotEncodingOf(bytes);
+  if (actual == null || actual == encoding) return bytes;
+  try {
+    final img.Image? decoded = img.decodeImage(bytes);
+    if (decoded == null) return bytes;
+    return switch (encoding) {
+      CardScreenshotEncoding.jpeg => img.encodeJpg(decoded, quality: quality),
+      CardScreenshotEncoding.png => img.encodePng(decoded),
+    };
+  } catch (_) {
+    return bytes;
+  }
+}
+
+/// [transcodeCardScreenshot] 的后台 isolate 变体（理由同
+/// [downsampleCardScreenshotAsync]：解码/编码是纯 Dart CPU 重活，不能压 UI 线程）。
+Future<Uint8List> transcodeCardScreenshotAsync(
+  Uint8List bytes, {
+  required CardScreenshotEncoding encoding,
+  int quality = 90,
+}) {
+  if (bytes.isEmpty) return Future<Uint8List>.value(bytes);
+  return Isolate.run<Uint8List>(
+    () => transcodeCardScreenshot(bytes, encoding: encoding, quality: quality),
   );
 }
 
@@ -137,6 +229,7 @@ Future<Uint8List> downsampleCardScreenshotAsync(
   Uint8List bytes, {
   int maxLongEdge = 1000,
   int quality = 90,
+  CardScreenshotEncoding encoding = CardScreenshotEncoding.jpeg,
 }) {
   if (bytes.isEmpty) return Future<Uint8List>.value(bytes);
   return Isolate.run<Uint8List>(
@@ -144,20 +237,22 @@ Future<Uint8List> downsampleCardScreenshotAsync(
       bytes,
       maxLongEdge: maxLongEdge,
       quality: quality,
+      encoding: encoding,
     ),
   );
 }
 
-/// 把 Galgame 静态截图等比限制到边界框，并统一编码为 JPEG。
+/// 把 Galgame 静态截图等比限制到边界框，并编码为 [encoding]。
 ///
 /// 与 [downsampleCardScreenshot] 不同，即使源图已经小于上限或选择保留原尺寸，也会
-/// 重编码为 JPEG，以免 WGC 的原始 PNG 直接进入 Anki。解码失败时仍保守返回原字节，
+/// 重编码，以免 WGC 的原始 PNG 直接进入 Anki。解码失败时仍保守返回原字节，
 /// 调用方应据实际文件头保留原扩展名，避免名字与媒体内容不一致。
 Uint8List encodeCardScreenshotAsJpg(
   Uint8List bytes, {
   required int maxWidth,
   required int maxHeight,
   int quality = 90,
+  CardScreenshotEncoding encoding = CardScreenshotEncoding.jpeg,
 }) {
   return _transformCardScreenshot(
     bytes,
@@ -169,6 +264,7 @@ Uint8List encodeCardScreenshotAsJpg(
     ),
     quality: quality,
     encodeWhenUnchanged: true,
+    encoding: encoding,
   );
 }
 
@@ -178,6 +274,7 @@ Future<Uint8List> encodeCardScreenshotAsJpgAsync(
   required int maxWidth,
   required int maxHeight,
   int quality = 90,
+  CardScreenshotEncoding encoding = CardScreenshotEncoding.jpeg,
 }) {
   if (bytes.isEmpty) return Future<Uint8List>.value(bytes);
   return Isolate.run<Uint8List>(
@@ -186,6 +283,7 @@ Future<Uint8List> encodeCardScreenshotAsJpgAsync(
       maxWidth: maxWidth,
       maxHeight: maxHeight,
       quality: quality,
+      encoding: encoding,
     ),
   );
 }

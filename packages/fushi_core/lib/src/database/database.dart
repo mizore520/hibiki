@@ -514,7 +514,7 @@ class FushiDatabase extends _$FushiDatabase
   final bool _isMainProcess;
 
   @override
-  int get schemaVersion => 86;
+  int get schemaVersion => 88;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -2493,6 +2493,56 @@ class FushiDatabase extends _$FushiDatabase
                     'media_collections', 'secondary_subtitle_delay_ms')) {
               await m.addColumn(
                   mediaCollections, mediaCollections.secondarySubtitleDelayMs);
+            }
+          }
+          if (from < 87) {
+            // v87（内容语言字体链）：dictionary_metadata 加 language_override、
+            // epub_books 加 language，给「这份内容是什么语言」一个可持久化的真值，
+            // 供 content_font_chain 选字体链。
+            //
+            // 无损：两列 nullable 无 default → 旧库既有行全 NULL = 语言未知 =
+            // 不写 font-family = 逐字节保留 v87 前的渲染（Never break userspace）。
+            // 书的 language 由导入时的 dc:language 回填，存量书在下次打开时不会
+            // 自动回填（不扫全库），用户可手动指定；词典的自动值走 metadataJson
+            // 的 sourceLanguage，重导即有。守卫幂等（fresh DB 由 onCreate 建好，
+            // 重复升级 _columnExists 短路 no-op）。
+            if (await _tableExists('dictionary_metadata') &&
+                !await _columnExists(
+                    'dictionary_metadata', 'language_override')) {
+              await m.addColumn(
+                  dictionaryMetadata, dictionaryMetadata.languageOverride);
+            }
+            if (await _tableExists('epub_books') &&
+                !await _columnExists('epub_books', 'language')) {
+              await m.addColumn(epubBooks, epubBooks.language);
+            }
+          }
+          if (from < 88) {
+            // v88（内容语言字体链·其余三类资源）：视频（字幕字体链）、字幕书/
+            // 有声书、galgame 各加同款 language 覆盖列。
+            //
+            // **必须是 v88 而不是并进上面的 v87**：v87 已经随内容语言字体链那批
+            // 改动落在 develop 上跑了一整天，预发布/debug 通道与本机开发库都已经
+            // 把 user_version 写成 87。塞进 `from < 87` 的列对这些库永远不会执行。
+            // 实测（变异测试）下的表现是两种都很坏：读路径不抛，`language` 一律
+            // 读成 NULL——功能像「设了没反应」一样静默死掉；而写路径
+            // （updateVideoBookLanguage 等生成 `SET language = ?`）直接撞
+            // no such column。已发布的版本号是只读的，加列只能往上开新台阶。
+            //
+            // 无损：三列 nullable 无 default → 旧库既有行全 NULL = 语言未知 =
+            // 各消费方保持原有渲染，零破坏。守卫幂等（fresh DB 由 onCreate 建好，
+            // 重复升级 _columnExists 短路 no-op）。
+            if (await _tableExists('video_books') &&
+                !await _columnExists('video_books', 'language')) {
+              await m.addColumn(videoBooks, videoBooks.language);
+            }
+            if (await _tableExists('srt_books') &&
+                !await _columnExists('srt_books', 'language')) {
+              await m.addColumn(srtBooks, srtBooks.language);
+            }
+            if (await _tableExists('galgames') &&
+                !await _columnExists('galgames', 'language')) {
+              await m.addColumn(galgames, galgames.language);
             }
           }
         },
