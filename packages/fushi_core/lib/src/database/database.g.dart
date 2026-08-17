@@ -2497,6 +2497,12 @@ class $SrtBooksTable extends SrtBooks
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant(''));
+  static const VerificationMeta _languageMeta =
+      const VerificationMeta('language');
+  @override
+  late final GeneratedColumn<String> language = GeneratedColumn<String>(
+      'language', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -2508,7 +2514,8 @@ class $SrtBooksTable extends SrtBooks
         srtPath,
         coverPath,
         importedAt,
-        bookKey
+        bookKey,
+        language
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2571,6 +2578,10 @@ class $SrtBooksTable extends SrtBooks
       context.handle(_bookKeyMeta,
           bookKey.isAcceptableOrUnknown(data['book_key']!, _bookKeyMeta));
     }
+    if (data.containsKey('language')) {
+      context.handle(_languageMeta,
+          language.isAcceptableOrUnknown(data['language']!, _languageMeta));
+    }
     return context;
   }
 
@@ -2600,6 +2611,8 @@ class $SrtBooksTable extends SrtBooks
           .read(DriftSqlType.int, data['${effectivePrefix}imported_at'])!,
       bookKey: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}book_key'])!,
+      language: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}language']),
     );
   }
 
@@ -2620,6 +2633,10 @@ class SrtBookRow extends DataClass implements Insertable<SrtBookRow> {
   final String? coverPath;
   final int importedAt;
   final String bookKey;
+
+  /// v87：字幕书/有声书的内容语言（BCP-47）。SRT 文件本身不声明语言，所以这一列
+  /// 只能由用户指定；null = 未知，正文不写 font-family（不猜）。
+  final String? language;
   const SrtBookRow(
       {required this.id,
       required this.uid,
@@ -2630,7 +2647,8 @@ class SrtBookRow extends DataClass implements Insertable<SrtBookRow> {
       required this.srtPath,
       this.coverPath,
       required this.importedAt,
-      required this.bookKey});
+      required this.bookKey,
+      this.language});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2652,6 +2670,9 @@ class SrtBookRow extends DataClass implements Insertable<SrtBookRow> {
     }
     map['imported_at'] = Variable<int>(importedAt);
     map['book_key'] = Variable<String>(bookKey);
+    if (!nullToAbsent || language != null) {
+      map['language'] = Variable<String>(language);
+    }
     return map;
   }
 
@@ -2674,6 +2695,9 @@ class SrtBookRow extends DataClass implements Insertable<SrtBookRow> {
           : Value(coverPath),
       importedAt: Value(importedAt),
       bookKey: Value(bookKey),
+      language: language == null && nullToAbsent
+          ? const Value.absent()
+          : Value(language),
     );
   }
 
@@ -2691,6 +2715,7 @@ class SrtBookRow extends DataClass implements Insertable<SrtBookRow> {
       coverPath: serializer.fromJson<String?>(json['coverPath']),
       importedAt: serializer.fromJson<int>(json['importedAt']),
       bookKey: serializer.fromJson<String>(json['bookKey']),
+      language: serializer.fromJson<String?>(json['language']),
     );
   }
   @override
@@ -2707,6 +2732,7 @@ class SrtBookRow extends DataClass implements Insertable<SrtBookRow> {
       'coverPath': serializer.toJson<String?>(coverPath),
       'importedAt': serializer.toJson<int>(importedAt),
       'bookKey': serializer.toJson<String>(bookKey),
+      'language': serializer.toJson<String?>(language),
     };
   }
 
@@ -2720,7 +2746,8 @@ class SrtBookRow extends DataClass implements Insertable<SrtBookRow> {
           String? srtPath,
           Value<String?> coverPath = const Value.absent(),
           int? importedAt,
-          String? bookKey}) =>
+          String? bookKey,
+          Value<String?> language = const Value.absent()}) =>
       SrtBookRow(
         id: id ?? this.id,
         uid: uid ?? this.uid,
@@ -2733,6 +2760,7 @@ class SrtBookRow extends DataClass implements Insertable<SrtBookRow> {
         coverPath: coverPath.present ? coverPath.value : this.coverPath,
         importedAt: importedAt ?? this.importedAt,
         bookKey: bookKey ?? this.bookKey,
+        language: language.present ? language.value : this.language,
       );
   SrtBookRow copyWithCompanion(SrtBooksCompanion data) {
     return SrtBookRow(
@@ -2749,6 +2777,7 @@ class SrtBookRow extends DataClass implements Insertable<SrtBookRow> {
       importedAt:
           data.importedAt.present ? data.importedAt.value : this.importedAt,
       bookKey: data.bookKey.present ? data.bookKey.value : this.bookKey,
+      language: data.language.present ? data.language.value : this.language,
     );
   }
 
@@ -2764,14 +2793,15 @@ class SrtBookRow extends DataClass implements Insertable<SrtBookRow> {
           ..write('srtPath: $srtPath, ')
           ..write('coverPath: $coverPath, ')
           ..write('importedAt: $importedAt, ')
-          ..write('bookKey: $bookKey')
+          ..write('bookKey: $bookKey, ')
+          ..write('language: $language')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(id, uid, title, author, audioRoot,
-      audioPathsJson, srtPath, coverPath, importedAt, bookKey);
+      audioPathsJson, srtPath, coverPath, importedAt, bookKey, language);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2785,7 +2815,8 @@ class SrtBookRow extends DataClass implements Insertable<SrtBookRow> {
           other.srtPath == this.srtPath &&
           other.coverPath == this.coverPath &&
           other.importedAt == this.importedAt &&
-          other.bookKey == this.bookKey);
+          other.bookKey == this.bookKey &&
+          other.language == this.language);
 }
 
 class SrtBooksCompanion extends UpdateCompanion<SrtBookRow> {
@@ -2799,6 +2830,7 @@ class SrtBooksCompanion extends UpdateCompanion<SrtBookRow> {
   final Value<String?> coverPath;
   final Value<int> importedAt;
   final Value<String> bookKey;
+  final Value<String?> language;
   const SrtBooksCompanion({
     this.id = const Value.absent(),
     this.uid = const Value.absent(),
@@ -2810,6 +2842,7 @@ class SrtBooksCompanion extends UpdateCompanion<SrtBookRow> {
     this.coverPath = const Value.absent(),
     this.importedAt = const Value.absent(),
     this.bookKey = const Value.absent(),
+    this.language = const Value.absent(),
   });
   SrtBooksCompanion.insert({
     this.id = const Value.absent(),
@@ -2822,6 +2855,7 @@ class SrtBooksCompanion extends UpdateCompanion<SrtBookRow> {
     this.coverPath = const Value.absent(),
     required int importedAt,
     this.bookKey = const Value.absent(),
+    this.language = const Value.absent(),
   })  : uid = Value(uid),
         title = Value(title),
         srtPath = Value(srtPath),
@@ -2837,6 +2871,7 @@ class SrtBooksCompanion extends UpdateCompanion<SrtBookRow> {
     Expression<String>? coverPath,
     Expression<int>? importedAt,
     Expression<String>? bookKey,
+    Expression<String>? language,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2849,6 +2884,7 @@ class SrtBooksCompanion extends UpdateCompanion<SrtBookRow> {
       if (coverPath != null) 'cover_path': coverPath,
       if (importedAt != null) 'imported_at': importedAt,
       if (bookKey != null) 'book_key': bookKey,
+      if (language != null) 'language': language,
     });
   }
 
@@ -2862,7 +2898,8 @@ class SrtBooksCompanion extends UpdateCompanion<SrtBookRow> {
       Value<String>? srtPath,
       Value<String?>? coverPath,
       Value<int>? importedAt,
-      Value<String>? bookKey}) {
+      Value<String>? bookKey,
+      Value<String?>? language}) {
     return SrtBooksCompanion(
       id: id ?? this.id,
       uid: uid ?? this.uid,
@@ -2874,6 +2911,7 @@ class SrtBooksCompanion extends UpdateCompanion<SrtBookRow> {
       coverPath: coverPath ?? this.coverPath,
       importedAt: importedAt ?? this.importedAt,
       bookKey: bookKey ?? this.bookKey,
+      language: language ?? this.language,
     );
   }
 
@@ -2910,6 +2948,9 @@ class SrtBooksCompanion extends UpdateCompanion<SrtBookRow> {
     if (bookKey.present) {
       map['book_key'] = Variable<String>(bookKey.value);
     }
+    if (language.present) {
+      map['language'] = Variable<String>(language.value);
+    }
     return map;
   }
 
@@ -2925,7 +2966,8 @@ class SrtBooksCompanion extends UpdateCompanion<SrtBookRow> {
           ..write('srtPath: $srtPath, ')
           ..write('coverPath: $coverPath, ')
           ..write('importedAt: $importedAt, ')
-          ..write('bookKey: $bookKey')
+          ..write('bookKey: $bookKey, ')
+          ..write('language: $language')
           ..write(')'))
         .toString();
   }
@@ -4789,6 +4831,12 @@ class $DictionaryMetadataTable extends DictionaryMetadata
           type: DriftSqlType.string,
           requiredDuringInsert: false,
           defaultValue: const Constant('[]'));
+  static const VerificationMeta _languageOverrideMeta =
+      const VerificationMeta('languageOverride');
+  @override
+  late final GeneratedColumn<String> languageOverride = GeneratedColumn<String>(
+      'language_override', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         name,
@@ -4797,7 +4845,8 @@ class $DictionaryMetadataTable extends DictionaryMetadata
         type,
         metadataJson,
         hiddenLanguagesJson,
-        collapsedLanguagesJson
+        collapsedLanguagesJson,
+        languageOverride
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4849,6 +4898,12 @@ class $DictionaryMetadataTable extends DictionaryMetadata
           collapsedLanguagesJson.isAcceptableOrUnknown(
               data['collapsed_languages_json']!, _collapsedLanguagesJsonMeta));
     }
+    if (data.containsKey('language_override')) {
+      context.handle(
+          _languageOverrideMeta,
+          languageOverride.isAcceptableOrUnknown(
+              data['language_override']!, _languageOverrideMeta));
+    }
     return context;
   }
 
@@ -4874,6 +4929,8 @@ class $DictionaryMetadataTable extends DictionaryMetadata
       collapsedLanguagesJson: attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}collapsed_languages_json'])!,
+      languageOverride: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}language_override']),
     );
   }
 
@@ -4892,6 +4949,17 @@ class DictionaryMetaRow extends DataClass
   final String metadataJson;
   final String hiddenLanguagesJson;
   final String collapsedLanguagesJson;
+
+  /// v87：用户**手动指定**的词典内容语言（BCP-47，如 `ja` / `zh-Hant`）。
+  ///
+  /// null = 未指定，按自动来源推断（yomitan `index.json` 的 `sourceLanguage`，
+  /// 落在 [metadataJson] 里）。非 null 为用户覆盖，压过一切自动判断。
+  ///
+  /// 为什么不塞进 [metadataJson]：重导/在线更新词典时 metadata 会被包内 index.json
+  /// **整体重建**（见 `dictionary_import_manager` 的两处 persistDictionary），
+  /// 用户的手动指定会随之蒸发。它属于「用户设置」，必须与 hidden/collapsedLanguages
+  /// 走同一条继承通道（`preservedSettings`）。
+  final String? languageOverride;
   const DictionaryMetaRow(
       {required this.name,
       required this.formatKey,
@@ -4899,7 +4967,8 @@ class DictionaryMetaRow extends DataClass
       required this.type,
       required this.metadataJson,
       required this.hiddenLanguagesJson,
-      required this.collapsedLanguagesJson});
+      required this.collapsedLanguagesJson,
+      this.languageOverride});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -4910,6 +4979,9 @@ class DictionaryMetaRow extends DataClass
     map['metadata_json'] = Variable<String>(metadataJson);
     map['hidden_languages_json'] = Variable<String>(hiddenLanguagesJson);
     map['collapsed_languages_json'] = Variable<String>(collapsedLanguagesJson);
+    if (!nullToAbsent || languageOverride != null) {
+      map['language_override'] = Variable<String>(languageOverride);
+    }
     return map;
   }
 
@@ -4922,6 +4994,9 @@ class DictionaryMetaRow extends DataClass
       metadataJson: Value(metadataJson),
       hiddenLanguagesJson: Value(hiddenLanguagesJson),
       collapsedLanguagesJson: Value(collapsedLanguagesJson),
+      languageOverride: languageOverride == null && nullToAbsent
+          ? const Value.absent()
+          : Value(languageOverride),
     );
   }
 
@@ -4938,6 +5013,7 @@ class DictionaryMetaRow extends DataClass
           serializer.fromJson<String>(json['hiddenLanguagesJson']),
       collapsedLanguagesJson:
           serializer.fromJson<String>(json['collapsedLanguagesJson']),
+      languageOverride: serializer.fromJson<String?>(json['languageOverride']),
     );
   }
   @override
@@ -4952,6 +5028,7 @@ class DictionaryMetaRow extends DataClass
       'hiddenLanguagesJson': serializer.toJson<String>(hiddenLanguagesJson),
       'collapsedLanguagesJson':
           serializer.toJson<String>(collapsedLanguagesJson),
+      'languageOverride': serializer.toJson<String?>(languageOverride),
     };
   }
 
@@ -4962,7 +5039,8 @@ class DictionaryMetaRow extends DataClass
           String? type,
           String? metadataJson,
           String? hiddenLanguagesJson,
-          String? collapsedLanguagesJson}) =>
+          String? collapsedLanguagesJson,
+          Value<String?> languageOverride = const Value.absent()}) =>
       DictionaryMetaRow(
         name: name ?? this.name,
         formatKey: formatKey ?? this.formatKey,
@@ -4972,6 +5050,9 @@ class DictionaryMetaRow extends DataClass
         hiddenLanguagesJson: hiddenLanguagesJson ?? this.hiddenLanguagesJson,
         collapsedLanguagesJson:
             collapsedLanguagesJson ?? this.collapsedLanguagesJson,
+        languageOverride: languageOverride.present
+            ? languageOverride.value
+            : this.languageOverride,
       );
   DictionaryMetaRow copyWithCompanion(DictionaryMetadataCompanion data) {
     return DictionaryMetaRow(
@@ -4988,6 +5069,9 @@ class DictionaryMetaRow extends DataClass
       collapsedLanguagesJson: data.collapsedLanguagesJson.present
           ? data.collapsedLanguagesJson.value
           : this.collapsedLanguagesJson,
+      languageOverride: data.languageOverride.present
+          ? data.languageOverride.value
+          : this.languageOverride,
     );
   }
 
@@ -5000,14 +5084,15 @@ class DictionaryMetaRow extends DataClass
           ..write('type: $type, ')
           ..write('metadataJson: $metadataJson, ')
           ..write('hiddenLanguagesJson: $hiddenLanguagesJson, ')
-          ..write('collapsedLanguagesJson: $collapsedLanguagesJson')
+          ..write('collapsedLanguagesJson: $collapsedLanguagesJson, ')
+          ..write('languageOverride: $languageOverride')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(name, formatKey, order, type, metadataJson,
-      hiddenLanguagesJson, collapsedLanguagesJson);
+      hiddenLanguagesJson, collapsedLanguagesJson, languageOverride);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5018,7 +5103,8 @@ class DictionaryMetaRow extends DataClass
           other.type == this.type &&
           other.metadataJson == this.metadataJson &&
           other.hiddenLanguagesJson == this.hiddenLanguagesJson &&
-          other.collapsedLanguagesJson == this.collapsedLanguagesJson);
+          other.collapsedLanguagesJson == this.collapsedLanguagesJson &&
+          other.languageOverride == this.languageOverride);
 }
 
 class DictionaryMetadataCompanion extends UpdateCompanion<DictionaryMetaRow> {
@@ -5029,6 +5115,7 @@ class DictionaryMetadataCompanion extends UpdateCompanion<DictionaryMetaRow> {
   final Value<String> metadataJson;
   final Value<String> hiddenLanguagesJson;
   final Value<String> collapsedLanguagesJson;
+  final Value<String?> languageOverride;
   final Value<int> rowid;
   const DictionaryMetadataCompanion({
     this.name = const Value.absent(),
@@ -5038,6 +5125,7 @@ class DictionaryMetadataCompanion extends UpdateCompanion<DictionaryMetaRow> {
     this.metadataJson = const Value.absent(),
     this.hiddenLanguagesJson = const Value.absent(),
     this.collapsedLanguagesJson = const Value.absent(),
+    this.languageOverride = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DictionaryMetadataCompanion.insert({
@@ -5048,6 +5136,7 @@ class DictionaryMetadataCompanion extends UpdateCompanion<DictionaryMetaRow> {
     this.metadataJson = const Value.absent(),
     this.hiddenLanguagesJson = const Value.absent(),
     this.collapsedLanguagesJson = const Value.absent(),
+    this.languageOverride = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : name = Value(name),
         formatKey = Value(formatKey),
@@ -5060,6 +5149,7 @@ class DictionaryMetadataCompanion extends UpdateCompanion<DictionaryMetaRow> {
     Expression<String>? metadataJson,
     Expression<String>? hiddenLanguagesJson,
     Expression<String>? collapsedLanguagesJson,
+    Expression<String>? languageOverride,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -5072,6 +5162,7 @@ class DictionaryMetadataCompanion extends UpdateCompanion<DictionaryMetaRow> {
         'hidden_languages_json': hiddenLanguagesJson,
       if (collapsedLanguagesJson != null)
         'collapsed_languages_json': collapsedLanguagesJson,
+      if (languageOverride != null) 'language_override': languageOverride,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -5084,6 +5175,7 @@ class DictionaryMetadataCompanion extends UpdateCompanion<DictionaryMetaRow> {
       Value<String>? metadataJson,
       Value<String>? hiddenLanguagesJson,
       Value<String>? collapsedLanguagesJson,
+      Value<String?>? languageOverride,
       Value<int>? rowid}) {
     return DictionaryMetadataCompanion(
       name: name ?? this.name,
@@ -5094,6 +5186,7 @@ class DictionaryMetadataCompanion extends UpdateCompanion<DictionaryMetaRow> {
       hiddenLanguagesJson: hiddenLanguagesJson ?? this.hiddenLanguagesJson,
       collapsedLanguagesJson:
           collapsedLanguagesJson ?? this.collapsedLanguagesJson,
+      languageOverride: languageOverride ?? this.languageOverride,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -5124,6 +5217,9 @@ class DictionaryMetadataCompanion extends UpdateCompanion<DictionaryMetaRow> {
       map['collapsed_languages_json'] =
           Variable<String>(collapsedLanguagesJson.value);
     }
+    if (languageOverride.present) {
+      map['language_override'] = Variable<String>(languageOverride.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5140,6 +5236,7 @@ class DictionaryMetadataCompanion extends UpdateCompanion<DictionaryMetaRow> {
           ..write('metadataJson: $metadataJson, ')
           ..write('hiddenLanguagesJson: $hiddenLanguagesJson, ')
           ..write('collapsedLanguagesJson: $collapsedLanguagesJson, ')
+          ..write('languageOverride: $languageOverride, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -6068,6 +6165,12 @@ class $EpubBooksTable extends EpubBooks
   late final GeneratedColumn<int> importedAt = GeneratedColumn<int>(
       'imported_at', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _languageMeta =
+      const VerificationMeta('language');
+  @override
+  late final GeneratedColumn<String> language = GeneratedColumn<String>(
+      'language', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _formatMeta = const VerificationMeta('format');
   @override
   late final GeneratedColumn<String> format = GeneratedColumn<String>(
@@ -6110,6 +6213,7 @@ class $EpubBooksTable extends EpubBooks
         tocJson,
         sourceMetadata,
         importedAt,
+        language,
         format,
         mangaReadingMode,
         completedAt,
@@ -6197,6 +6301,10 @@ class $EpubBooksTable extends EpubBooks
     } else if (isInserting) {
       context.missing(_importedAtMeta);
     }
+    if (data.containsKey('language')) {
+      context.handle(_languageMeta,
+          language.isAcceptableOrUnknown(data['language']!, _languageMeta));
+    }
     if (data.containsKey('format')) {
       context.handle(_formatMeta,
           format.isAcceptableOrUnknown(data['format']!, _formatMeta));
@@ -6250,6 +6358,8 @@ class $EpubBooksTable extends EpubBooks
           .read(DriftSqlType.string, data['${effectivePrefix}source_metadata']),
       importedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}imported_at'])!,
+      language: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}language']),
       format: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}format'])!,
       mangaReadingMode: attachedDatabase.typeMapping.read(
@@ -6292,6 +6402,16 @@ class EpubBookRow extends DataClass implements Insertable<EpubBookRow> {
   final String? sourceMetadata;
   final int importedAt;
 
+  /// v87：书的内容语言（BCP-47，如 `ja` / `zh-Hant`），决定正文用哪条字体链。
+  ///
+  /// 导入时从 EPUB OPF 的 `dc:language` 回填（`EpubParser` 早就解析出来了，此前
+  /// 无人消费）；用户可在书籍设置里手动改，手动值压过自动值。null = 既没解析到
+  /// 也没指定 → 阅读器不写 `font-family`，保持浏览器默认（不猜，见
+  /// `content_font_chain.dart`）。
+  ///
+  /// 与 [mangaReadingMode] 同款「null=自动 / 非 null=用户覆盖」语义。
+  final String? language;
+
   /// 书身份格式判别（PDF 阅读器 Phase 1）：`'epub'`（默认，含 EPUB / TextToEpub /
   /// 有声书配对壳）、`'pdf'`（pdfrx 渲染的真 PDF）或 `'manga'`（漫画 OCR，第三种书）。
   /// 默认 `'epub'` 让既有全部行零破坏（Never break userspace，v51 迁移 addColumn 自动
@@ -6326,6 +6446,7 @@ class EpubBookRow extends DataClass implements Insertable<EpubBookRow> {
       this.tocJson,
       this.sourceMetadata,
       required this.importedAt,
+      this.language,
       required this.format,
       this.mangaReadingMode,
       this.completedAt,
@@ -6353,6 +6474,9 @@ class EpubBookRow extends DataClass implements Insertable<EpubBookRow> {
       map['source_metadata'] = Variable<String>(sourceMetadata);
     }
     map['imported_at'] = Variable<int>(importedAt);
+    if (!nullToAbsent || language != null) {
+      map['language'] = Variable<String>(language);
+    }
     map['format'] = Variable<String>(format);
     if (!nullToAbsent || mangaReadingMode != null) {
       map['manga_reading_mode'] = Variable<String>(mangaReadingMode);
@@ -6387,6 +6511,9 @@ class EpubBookRow extends DataClass implements Insertable<EpubBookRow> {
           ? const Value.absent()
           : Value(sourceMetadata),
       importedAt: Value(importedAt),
+      language: language == null && nullToAbsent
+          ? const Value.absent()
+          : Value(language),
       format: Value(format),
       mangaReadingMode: mangaReadingMode == null && nullToAbsent
           ? const Value.absent()
@@ -6416,6 +6543,7 @@ class EpubBookRow extends DataClass implements Insertable<EpubBookRow> {
       tocJson: serializer.fromJson<String?>(json['tocJson']),
       sourceMetadata: serializer.fromJson<String?>(json['sourceMetadata']),
       importedAt: serializer.fromJson<int>(json['importedAt']),
+      language: serializer.fromJson<String?>(json['language']),
       format: serializer.fromJson<String>(json['format']),
       mangaReadingMode: serializer.fromJson<String?>(json['mangaReadingMode']),
       completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
@@ -6438,6 +6566,7 @@ class EpubBookRow extends DataClass implements Insertable<EpubBookRow> {
       'tocJson': serializer.toJson<String?>(tocJson),
       'sourceMetadata': serializer.toJson<String?>(sourceMetadata),
       'importedAt': serializer.toJson<int>(importedAt),
+      'language': serializer.toJson<String?>(language),
       'format': serializer.toJson<String>(format),
       'mangaReadingMode': serializer.toJson<String?>(mangaReadingMode),
       'completedAt': serializer.toJson<DateTime?>(completedAt),
@@ -6458,6 +6587,7 @@ class EpubBookRow extends DataClass implements Insertable<EpubBookRow> {
           Value<String?> tocJson = const Value.absent(),
           Value<String?> sourceMetadata = const Value.absent(),
           int? importedAt,
+          Value<String?> language = const Value.absent(),
           String? format,
           Value<String?> mangaReadingMode = const Value.absent(),
           Value<DateTime?> completedAt = const Value.absent(),
@@ -6476,6 +6606,7 @@ class EpubBookRow extends DataClass implements Insertable<EpubBookRow> {
         sourceMetadata:
             sourceMetadata.present ? sourceMetadata.value : this.sourceMetadata,
         importedAt: importedAt ?? this.importedAt,
+        language: language.present ? language.value : this.language,
         format: format ?? this.format,
         mangaReadingMode: mangaReadingMode.present
             ? mangaReadingMode.value
@@ -6505,6 +6636,7 @@ class EpubBookRow extends DataClass implements Insertable<EpubBookRow> {
           : this.sourceMetadata,
       importedAt:
           data.importedAt.present ? data.importedAt.value : this.importedAt,
+      language: data.language.present ? data.language.value : this.language,
       format: data.format.present ? data.format.value : this.format,
       mangaReadingMode: data.mangaReadingMode.present
           ? data.mangaReadingMode.value
@@ -6530,6 +6662,7 @@ class EpubBookRow extends DataClass implements Insertable<EpubBookRow> {
           ..write('tocJson: $tocJson, ')
           ..write('sourceMetadata: $sourceMetadata, ')
           ..write('importedAt: $importedAt, ')
+          ..write('language: $language, ')
           ..write('format: $format, ')
           ..write('mangaReadingMode: $mangaReadingMode, ')
           ..write('completedAt: $completedAt, ')
@@ -6552,6 +6685,7 @@ class EpubBookRow extends DataClass implements Insertable<EpubBookRow> {
       tocJson,
       sourceMetadata,
       importedAt,
+      language,
       format,
       mangaReadingMode,
       completedAt,
@@ -6572,6 +6706,7 @@ class EpubBookRow extends DataClass implements Insertable<EpubBookRow> {
           other.tocJson == this.tocJson &&
           other.sourceMetadata == this.sourceMetadata &&
           other.importedAt == this.importedAt &&
+          other.language == this.language &&
           other.format == this.format &&
           other.mangaReadingMode == this.mangaReadingMode &&
           other.completedAt == this.completedAt &&
@@ -6591,6 +6726,7 @@ class EpubBooksCompanion extends UpdateCompanion<EpubBookRow> {
   final Value<String?> tocJson;
   final Value<String?> sourceMetadata;
   final Value<int> importedAt;
+  final Value<String?> language;
   final Value<String> format;
   final Value<String?> mangaReadingMode;
   final Value<DateTime?> completedAt;
@@ -6609,6 +6745,7 @@ class EpubBooksCompanion extends UpdateCompanion<EpubBookRow> {
     this.tocJson = const Value.absent(),
     this.sourceMetadata = const Value.absent(),
     this.importedAt = const Value.absent(),
+    this.language = const Value.absent(),
     this.format = const Value.absent(),
     this.mangaReadingMode = const Value.absent(),
     this.completedAt = const Value.absent(),
@@ -6628,6 +6765,7 @@ class EpubBooksCompanion extends UpdateCompanion<EpubBookRow> {
     this.tocJson = const Value.absent(),
     this.sourceMetadata = const Value.absent(),
     required int importedAt,
+    this.language = const Value.absent(),
     this.format = const Value.absent(),
     this.mangaReadingMode = const Value.absent(),
     this.completedAt = const Value.absent(),
@@ -6653,6 +6791,7 @@ class EpubBooksCompanion extends UpdateCompanion<EpubBookRow> {
     Expression<String>? tocJson,
     Expression<String>? sourceMetadata,
     Expression<int>? importedAt,
+    Expression<String>? language,
     Expression<String>? format,
     Expression<String>? mangaReadingMode,
     Expression<DateTime>? completedAt,
@@ -6672,6 +6811,7 @@ class EpubBooksCompanion extends UpdateCompanion<EpubBookRow> {
       if (tocJson != null) 'toc_json': tocJson,
       if (sourceMetadata != null) 'source_metadata': sourceMetadata,
       if (importedAt != null) 'imported_at': importedAt,
+      if (language != null) 'language': language,
       if (format != null) 'format': format,
       if (mangaReadingMode != null) 'manga_reading_mode': mangaReadingMode,
       if (completedAt != null) 'completed_at': completedAt,
@@ -6693,6 +6833,7 @@ class EpubBooksCompanion extends UpdateCompanion<EpubBookRow> {
       Value<String?>? tocJson,
       Value<String?>? sourceMetadata,
       Value<int>? importedAt,
+      Value<String?>? language,
       Value<String>? format,
       Value<String?>? mangaReadingMode,
       Value<DateTime?>? completedAt,
@@ -6711,6 +6852,7 @@ class EpubBooksCompanion extends UpdateCompanion<EpubBookRow> {
       tocJson: tocJson ?? this.tocJson,
       sourceMetadata: sourceMetadata ?? this.sourceMetadata,
       importedAt: importedAt ?? this.importedAt,
+      language: language ?? this.language,
       format: format ?? this.format,
       mangaReadingMode: mangaReadingMode ?? this.mangaReadingMode,
       completedAt: completedAt ?? this.completedAt,
@@ -6758,6 +6900,9 @@ class EpubBooksCompanion extends UpdateCompanion<EpubBookRow> {
     if (importedAt.present) {
       map['imported_at'] = Variable<int>(importedAt.value);
     }
+    if (language.present) {
+      map['language'] = Variable<String>(language.value);
+    }
     if (format.present) {
       map['format'] = Variable<String>(format.value);
     }
@@ -6791,6 +6936,7 @@ class EpubBooksCompanion extends UpdateCompanion<EpubBookRow> {
           ..write('tocJson: $tocJson, ')
           ..write('sourceMetadata: $sourceMetadata, ')
           ..write('importedAt: $importedAt, ')
+          ..write('language: $language, ')
           ..write('format: $format, ')
           ..write('mangaReadingMode: $mangaReadingMode, ')
           ..write('completedAt: $completedAt, ')
@@ -8596,6 +8742,12 @@ class $VideoBooksTable extends VideoBooks
   late final GeneratedColumn<String> videoPath = GeneratedColumn<String>(
       'video_path', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _languageMeta =
+      const VerificationMeta('language');
+  @override
+  late final GeneratedColumn<String> language = GeneratedColumn<String>(
+      'language', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _subtitleSourceMeta =
       const VerificationMeta('subtitleSource');
   @override
@@ -8706,6 +8858,7 @@ class $VideoBooksTable extends VideoBooks
         bookUid,
         title,
         videoPath,
+        language,
         subtitleSource,
         secondarySubtitleSource,
         subtitleFormat,
@@ -8750,6 +8903,10 @@ class $VideoBooksTable extends VideoBooks
           videoPath.isAcceptableOrUnknown(data['video_path']!, _videoPathMeta));
     } else if (isInserting) {
       context.missing(_videoPathMeta);
+    }
+    if (data.containsKey('language')) {
+      context.handle(_languageMeta,
+          language.isAcceptableOrUnknown(data['language']!, _languageMeta));
     }
     if (data.containsKey('subtitle_source')) {
       context.handle(
@@ -8857,6 +9014,8 @@ class $VideoBooksTable extends VideoBooks
           .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
       videoPath: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}video_path'])!,
+      language: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}language']),
       subtitleSource: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}subtitle_source']),
       secondarySubtitleSource: attachedDatabase.typeMapping.read(
@@ -8903,6 +9062,13 @@ class VideoBookRow extends DataClass implements Insertable<VideoBookRow> {
   final String bookUid;
   final String title;
   final String videoPath;
+
+  /// v87：视频的内容语言（BCP-47），决定字幕用哪条字体链。
+  ///
+  /// null = 未指定 → 字幕层退回「当前字幕轨的 language」，再没有则用历史兜底链。
+  /// 非 null 为用户手动指定，压过字幕轨声明——外挂 SRT 基本都不带语言标记，
+  /// 而内嵌轨的 language 又常被打包者写错，所以必须留一个用户说了算的入口。
+  final String? language;
   final String? subtitleSource;
 
   /// 副字幕源（TODO-857 视频双字幕 Path A）：与 [subtitleSource] 同款四态编码
@@ -8974,6 +9140,7 @@ class VideoBookRow extends DataClass implements Insertable<VideoBookRow> {
       {required this.bookUid,
       required this.title,
       required this.videoPath,
+      this.language,
       this.subtitleSource,
       this.secondarySubtitleSource,
       this.subtitleFormat,
@@ -8996,6 +9163,9 @@ class VideoBookRow extends DataClass implements Insertable<VideoBookRow> {
     map['book_uid'] = Variable<String>(bookUid);
     map['title'] = Variable<String>(title);
     map['video_path'] = Variable<String>(videoPath);
+    if (!nullToAbsent || language != null) {
+      map['language'] = Variable<String>(language);
+    }
     if (!nullToAbsent || subtitleSource != null) {
       map['subtitle_source'] = Variable<String>(subtitleSource);
     }
@@ -9047,6 +9217,9 @@ class VideoBookRow extends DataClass implements Insertable<VideoBookRow> {
       bookUid: Value(bookUid),
       title: Value(title),
       videoPath: Value(videoPath),
+      language: language == null && nullToAbsent
+          ? const Value.absent()
+          : Value(language),
       subtitleSource: subtitleSource == null && nullToAbsent
           ? const Value.absent()
           : Value(subtitleSource),
@@ -9099,6 +9272,7 @@ class VideoBookRow extends DataClass implements Insertable<VideoBookRow> {
       bookUid: serializer.fromJson<String>(json['bookUid']),
       title: serializer.fromJson<String>(json['title']),
       videoPath: serializer.fromJson<String>(json['videoPath']),
+      language: serializer.fromJson<String?>(json['language']),
       subtitleSource: serializer.fromJson<String?>(json['subtitleSource']),
       secondarySubtitleSource:
           serializer.fromJson<String?>(json['secondarySubtitleSource']),
@@ -9126,6 +9300,7 @@ class VideoBookRow extends DataClass implements Insertable<VideoBookRow> {
       'bookUid': serializer.toJson<String>(bookUid),
       'title': serializer.toJson<String>(title),
       'videoPath': serializer.toJson<String>(videoPath),
+      'language': serializer.toJson<String?>(language),
       'subtitleSource': serializer.toJson<String?>(subtitleSource),
       'secondarySubtitleSource':
           serializer.toJson<String?>(secondarySubtitleSource),
@@ -9150,6 +9325,7 @@ class VideoBookRow extends DataClass implements Insertable<VideoBookRow> {
           {String? bookUid,
           String? title,
           String? videoPath,
+          Value<String?> language = const Value.absent(),
           Value<String?> subtitleSource = const Value.absent(),
           Value<String?> secondarySubtitleSource = const Value.absent(),
           Value<String?> subtitleFormat = const Value.absent(),
@@ -9170,6 +9346,7 @@ class VideoBookRow extends DataClass implements Insertable<VideoBookRow> {
         bookUid: bookUid ?? this.bookUid,
         title: title ?? this.title,
         videoPath: videoPath ?? this.videoPath,
+        language: language.present ? language.value : this.language,
         subtitleSource:
             subtitleSource.present ? subtitleSource.value : this.subtitleSource,
         secondarySubtitleSource: secondarySubtitleSource.present
@@ -9204,6 +9381,7 @@ class VideoBookRow extends DataClass implements Insertable<VideoBookRow> {
       bookUid: data.bookUid.present ? data.bookUid.value : this.bookUid,
       title: data.title.present ? data.title.value : this.title,
       videoPath: data.videoPath.present ? data.videoPath.value : this.videoPath,
+      language: data.language.present ? data.language.value : this.language,
       subtitleSource: data.subtitleSource.present
           ? data.subtitleSource.value
           : this.subtitleSource,
@@ -9253,6 +9431,7 @@ class VideoBookRow extends DataClass implements Insertable<VideoBookRow> {
           ..write('bookUid: $bookUid, ')
           ..write('title: $title, ')
           ..write('videoPath: $videoPath, ')
+          ..write('language: $language, ')
           ..write('subtitleSource: $subtitleSource, ')
           ..write('secondarySubtitleSource: $secondarySubtitleSource, ')
           ..write('subtitleFormat: $subtitleFormat, ')
@@ -9278,6 +9457,7 @@ class VideoBookRow extends DataClass implements Insertable<VideoBookRow> {
       bookUid,
       title,
       videoPath,
+      language,
       subtitleSource,
       secondarySubtitleSource,
       subtitleFormat,
@@ -9301,6 +9481,7 @@ class VideoBookRow extends DataClass implements Insertable<VideoBookRow> {
           other.bookUid == this.bookUid &&
           other.title == this.title &&
           other.videoPath == this.videoPath &&
+          other.language == this.language &&
           other.subtitleSource == this.subtitleSource &&
           other.secondarySubtitleSource == this.secondarySubtitleSource &&
           other.subtitleFormat == this.subtitleFormat &&
@@ -9323,6 +9504,7 @@ class VideoBooksCompanion extends UpdateCompanion<VideoBookRow> {
   final Value<String> bookUid;
   final Value<String> title;
   final Value<String> videoPath;
+  final Value<String?> language;
   final Value<String?> subtitleSource;
   final Value<String?> secondarySubtitleSource;
   final Value<String?> subtitleFormat;
@@ -9344,6 +9526,7 @@ class VideoBooksCompanion extends UpdateCompanion<VideoBookRow> {
     this.bookUid = const Value.absent(),
     this.title = const Value.absent(),
     this.videoPath = const Value.absent(),
+    this.language = const Value.absent(),
     this.subtitleSource = const Value.absent(),
     this.secondarySubtitleSource = const Value.absent(),
     this.subtitleFormat = const Value.absent(),
@@ -9366,6 +9549,7 @@ class VideoBooksCompanion extends UpdateCompanion<VideoBookRow> {
     required String bookUid,
     required String title,
     required String videoPath,
+    this.language = const Value.absent(),
     this.subtitleSource = const Value.absent(),
     this.secondarySubtitleSource = const Value.absent(),
     this.subtitleFormat = const Value.absent(),
@@ -9390,6 +9574,7 @@ class VideoBooksCompanion extends UpdateCompanion<VideoBookRow> {
     Expression<String>? bookUid,
     Expression<String>? title,
     Expression<String>? videoPath,
+    Expression<String>? language,
     Expression<String>? subtitleSource,
     Expression<String>? secondarySubtitleSource,
     Expression<String>? subtitleFormat,
@@ -9412,6 +9597,7 @@ class VideoBooksCompanion extends UpdateCompanion<VideoBookRow> {
       if (bookUid != null) 'book_uid': bookUid,
       if (title != null) 'title': title,
       if (videoPath != null) 'video_path': videoPath,
+      if (language != null) 'language': language,
       if (subtitleSource != null) 'subtitle_source': subtitleSource,
       if (secondarySubtitleSource != null)
         'secondary_subtitle_source': secondarySubtitleSource,
@@ -9438,6 +9624,7 @@ class VideoBooksCompanion extends UpdateCompanion<VideoBookRow> {
       {Value<String>? bookUid,
       Value<String>? title,
       Value<String>? videoPath,
+      Value<String?>? language,
       Value<String?>? subtitleSource,
       Value<String?>? secondarySubtitleSource,
       Value<String?>? subtitleFormat,
@@ -9459,6 +9646,7 @@ class VideoBooksCompanion extends UpdateCompanion<VideoBookRow> {
       bookUid: bookUid ?? this.bookUid,
       title: title ?? this.title,
       videoPath: videoPath ?? this.videoPath,
+      language: language ?? this.language,
       subtitleSource: subtitleSource ?? this.subtitleSource,
       secondarySubtitleSource:
           secondarySubtitleSource ?? this.secondarySubtitleSource,
@@ -9492,6 +9680,9 @@ class VideoBooksCompanion extends UpdateCompanion<VideoBookRow> {
     }
     if (videoPath.present) {
       map['video_path'] = Variable<String>(videoPath.value);
+    }
+    if (language.present) {
+      map['language'] = Variable<String>(language.value);
     }
     if (subtitleSource.present) {
       map['subtitle_source'] = Variable<String>(subtitleSource.value);
@@ -9555,6 +9746,7 @@ class VideoBooksCompanion extends UpdateCompanion<VideoBookRow> {
           ..write('bookUid: $bookUid, ')
           ..write('title: $title, ')
           ..write('videoPath: $videoPath, ')
+          ..write('language: $language, ')
           ..write('subtitleSource: $subtitleSource, ')
           ..write('secondarySubtitleSource: $secondarySubtitleSource, ')
           ..write('subtitleFormat: $subtitleFormat, ')
@@ -19273,6 +19465,12 @@ class $GalgamesTable extends Galgames
   late final GeneratedColumn<String> exePath = GeneratedColumn<String>(
       'exe_path', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _languageMeta =
+      const VerificationMeta('language');
+  @override
+  late final GeneratedColumn<String> language = GeneratedColumn<String>(
+      'language', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _workdirMeta =
       const VerificationMeta('workdir');
   @override
@@ -19354,6 +19552,7 @@ class $GalgamesTable extends Galgames
         id,
         name,
         exePath,
+        language,
         workdir,
         launchArgs,
         upscalingMode,
@@ -19392,6 +19591,10 @@ class $GalgamesTable extends Galgames
           exePath.isAcceptableOrUnknown(data['exe_path']!, _exePathMeta));
     } else if (isInserting) {
       context.missing(_exePathMeta);
+    }
+    if (data.containsKey('language')) {
+      context.handle(_languageMeta,
+          language.isAcceptableOrUnknown(data['language']!, _languageMeta));
     }
     if (data.containsKey('workdir')) {
       context.handle(_workdirMeta,
@@ -19470,6 +19673,8 @@ class $GalgamesTable extends Galgames
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       exePath: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}exe_path'])!,
+      language: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}language']),
       workdir: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}workdir'])!,
       launchArgs: attachedDatabase.typeMapping
@@ -19511,6 +19716,12 @@ class GalgameRow extends DataClass implements Insertable<GalgameRow> {
 
   /// 游戏可执行文件绝对路径（hook 注入目标）。
   final String exePath;
+
+  /// v87：游戏文本的内容语言（BCP-47），决定 hook 文本浮窗与查词卡用哪条字体链。
+  ///
+  /// hook 出来的文本没有任何语言声明可读，所以这一列只能由用户指定；null = 未知。
+  /// 不要因为「galgame 多半是日文」就默认 ja——那是全局假设，本仓不做这种假设。
+  final String? language;
 
   /// 工作目录（默认 exe 所在目录）。也是游玩计时判定「候选进程组」的范围依据。
   final String workdir;
@@ -19570,6 +19781,7 @@ class GalgameRow extends DataClass implements Insertable<GalgameRow> {
       {required this.id,
       required this.name,
       required this.exePath,
+      this.language,
       required this.workdir,
       required this.launchArgs,
       required this.upscalingMode,
@@ -19587,6 +19799,9 @@ class GalgameRow extends DataClass implements Insertable<GalgameRow> {
     map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
     map['exe_path'] = Variable<String>(exePath);
+    if (!nullToAbsent || language != null) {
+      map['language'] = Variable<String>(language);
+    }
     map['workdir'] = Variable<String>(workdir);
     map['launch_args'] = Variable<String>(launchArgs);
     map['upscaling_mode'] = Variable<String>(upscalingMode);
@@ -19614,6 +19829,9 @@ class GalgameRow extends DataClass implements Insertable<GalgameRow> {
       id: Value(id),
       name: Value(name),
       exePath: Value(exePath),
+      language: language == null && nullToAbsent
+          ? const Value.absent()
+          : Value(language),
       workdir: Value(workdir),
       launchArgs: Value(launchArgs),
       upscalingMode: Value(upscalingMode),
@@ -19643,6 +19861,7 @@ class GalgameRow extends DataClass implements Insertable<GalgameRow> {
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       exePath: serializer.fromJson<String>(json['exePath']),
+      language: serializer.fromJson<String?>(json['language']),
       workdir: serializer.fromJson<String>(json['workdir']),
       launchArgs: serializer.fromJson<String>(json['launchArgs']),
       upscalingMode: serializer.fromJson<String>(json['upscalingMode']),
@@ -19664,6 +19883,7 @@ class GalgameRow extends DataClass implements Insertable<GalgameRow> {
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'exePath': serializer.toJson<String>(exePath),
+      'language': serializer.toJson<String?>(language),
       'workdir': serializer.toJson<String>(workdir),
       'launchArgs': serializer.toJson<String>(launchArgs),
       'upscalingMode': serializer.toJson<String>(upscalingMode),
@@ -19682,6 +19902,7 @@ class GalgameRow extends DataClass implements Insertable<GalgameRow> {
           {String? id,
           String? name,
           String? exePath,
+          Value<String?> language = const Value.absent(),
           String? workdir,
           String? launchArgs,
           String? upscalingMode,
@@ -19697,6 +19918,7 @@ class GalgameRow extends DataClass implements Insertable<GalgameRow> {
         id: id ?? this.id,
         name: name ?? this.name,
         exePath: exePath ?? this.exePath,
+        language: language.present ? language.value : this.language,
         workdir: workdir ?? this.workdir,
         launchArgs: launchArgs ?? this.launchArgs,
         upscalingMode: upscalingMode ?? this.upscalingMode,
@@ -19716,6 +19938,7 @@ class GalgameRow extends DataClass implements Insertable<GalgameRow> {
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       exePath: data.exePath.present ? data.exePath.value : this.exePath,
+      language: data.language.present ? data.language.value : this.language,
       workdir: data.workdir.present ? data.workdir.value : this.workdir,
       launchArgs:
           data.launchArgs.present ? data.launchArgs.value : this.launchArgs,
@@ -19747,6 +19970,7 @@ class GalgameRow extends DataClass implements Insertable<GalgameRow> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('exePath: $exePath, ')
+          ..write('language: $language, ')
           ..write('workdir: $workdir, ')
           ..write('launchArgs: $launchArgs, ')
           ..write('upscalingMode: $upscalingMode, ')
@@ -19767,6 +19991,7 @@ class GalgameRow extends DataClass implements Insertable<GalgameRow> {
       id,
       name,
       exePath,
+      language,
       workdir,
       launchArgs,
       upscalingMode,
@@ -19785,6 +20010,7 @@ class GalgameRow extends DataClass implements Insertable<GalgameRow> {
           other.id == this.id &&
           other.name == this.name &&
           other.exePath == this.exePath &&
+          other.language == this.language &&
           other.workdir == this.workdir &&
           other.launchArgs == this.launchArgs &&
           other.upscalingMode == this.upscalingMode &&
@@ -19802,6 +20028,7 @@ class GalgamesCompanion extends UpdateCompanion<GalgameRow> {
   final Value<String> id;
   final Value<String> name;
   final Value<String> exePath;
+  final Value<String?> language;
   final Value<String> workdir;
   final Value<String> launchArgs;
   final Value<String> upscalingMode;
@@ -19818,6 +20045,7 @@ class GalgamesCompanion extends UpdateCompanion<GalgameRow> {
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.exePath = const Value.absent(),
+    this.language = const Value.absent(),
     this.workdir = const Value.absent(),
     this.launchArgs = const Value.absent(),
     this.upscalingMode = const Value.absent(),
@@ -19835,6 +20063,7 @@ class GalgamesCompanion extends UpdateCompanion<GalgameRow> {
     required String id,
     required String name,
     required String exePath,
+    this.language = const Value.absent(),
     required String workdir,
     this.launchArgs = const Value.absent(),
     this.upscalingMode = const Value.absent(),
@@ -19856,6 +20085,7 @@ class GalgamesCompanion extends UpdateCompanion<GalgameRow> {
     Expression<String>? id,
     Expression<String>? name,
     Expression<String>? exePath,
+    Expression<String>? language,
     Expression<String>? workdir,
     Expression<String>? launchArgs,
     Expression<String>? upscalingMode,
@@ -19873,6 +20103,7 @@ class GalgamesCompanion extends UpdateCompanion<GalgameRow> {
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (exePath != null) 'exe_path': exePath,
+      if (language != null) 'language': language,
       if (workdir != null) 'workdir': workdir,
       if (launchArgs != null) 'launch_args': launchArgs,
       if (upscalingMode != null) 'upscaling_mode': upscalingMode,
@@ -19893,6 +20124,7 @@ class GalgamesCompanion extends UpdateCompanion<GalgameRow> {
       {Value<String>? id,
       Value<String>? name,
       Value<String>? exePath,
+      Value<String?>? language,
       Value<String>? workdir,
       Value<String>? launchArgs,
       Value<String>? upscalingMode,
@@ -19909,6 +20141,7 @@ class GalgamesCompanion extends UpdateCompanion<GalgameRow> {
       id: id ?? this.id,
       name: name ?? this.name,
       exePath: exePath ?? this.exePath,
+      language: language ?? this.language,
       workdir: workdir ?? this.workdir,
       launchArgs: launchArgs ?? this.launchArgs,
       upscalingMode: upscalingMode ?? this.upscalingMode,
@@ -19935,6 +20168,9 @@ class GalgamesCompanion extends UpdateCompanion<GalgameRow> {
     }
     if (exePath.present) {
       map['exe_path'] = Variable<String>(exePath.value);
+    }
+    if (language.present) {
+      map['language'] = Variable<String>(language.value);
     }
     if (workdir.present) {
       map['workdir'] = Variable<String>(workdir.value);
@@ -19981,6 +20217,7 @@ class GalgamesCompanion extends UpdateCompanion<GalgameRow> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('exePath: $exePath, ')
+          ..write('language: $language, ')
           ..write('workdir: $workdir, ')
           ..write('launchArgs: $launchArgs, ')
           ..write('upscalingMode: $upscalingMode, ')
@@ -40653,6 +40890,7 @@ typedef $$SrtBooksTableCreateCompanionBuilder = SrtBooksCompanion Function({
   Value<String?> coverPath,
   required int importedAt,
   Value<String> bookKey,
+  Value<String?> language,
 });
 typedef $$SrtBooksTableUpdateCompanionBuilder = SrtBooksCompanion Function({
   Value<int> id,
@@ -40665,6 +40903,7 @@ typedef $$SrtBooksTableUpdateCompanionBuilder = SrtBooksCompanion Function({
   Value<String?> coverPath,
   Value<int> importedAt,
   Value<String> bookKey,
+  Value<String?> language,
 });
 
 class $$SrtBooksTableFilterComposer
@@ -40706,6 +40945,9 @@ class $$SrtBooksTableFilterComposer
 
   ColumnFilters<String> get bookKey => $composableBuilder(
       column: $table.bookKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get language => $composableBuilder(
+      column: $table.language, builder: (column) => ColumnFilters(column));
 }
 
 class $$SrtBooksTableOrderingComposer
@@ -40747,6 +40989,9 @@ class $$SrtBooksTableOrderingComposer
 
   ColumnOrderings<String> get bookKey => $composableBuilder(
       column: $table.bookKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get language => $composableBuilder(
+      column: $table.language, builder: (column) => ColumnOrderings(column));
 }
 
 class $$SrtBooksTableAnnotationComposer
@@ -40787,6 +41032,9 @@ class $$SrtBooksTableAnnotationComposer
 
   GeneratedColumn<String> get bookKey =>
       $composableBuilder(column: $table.bookKey, builder: (column) => column);
+
+  GeneratedColumn<String> get language =>
+      $composableBuilder(column: $table.language, builder: (column) => column);
 }
 
 class $$SrtBooksTableTableManager extends RootTableManager<
@@ -40822,6 +41070,7 @@ class $$SrtBooksTableTableManager extends RootTableManager<
             Value<String?> coverPath = const Value.absent(),
             Value<int> importedAt = const Value.absent(),
             Value<String> bookKey = const Value.absent(),
+            Value<String?> language = const Value.absent(),
           }) =>
               SrtBooksCompanion(
             id: id,
@@ -40834,6 +41083,7 @@ class $$SrtBooksTableTableManager extends RootTableManager<
             coverPath: coverPath,
             importedAt: importedAt,
             bookKey: bookKey,
+            language: language,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -40846,6 +41096,7 @@ class $$SrtBooksTableTableManager extends RootTableManager<
             Value<String?> coverPath = const Value.absent(),
             required int importedAt,
             Value<String> bookKey = const Value.absent(),
+            Value<String?> language = const Value.absent(),
           }) =>
               SrtBooksCompanion.insert(
             id: id,
@@ -40858,6 +41109,7 @@ class $$SrtBooksTableTableManager extends RootTableManager<
             coverPath: coverPath,
             importedAt: importedAt,
             bookKey: bookKey,
+            language: language,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -41825,6 +42077,7 @@ typedef $$DictionaryMetadataTableCreateCompanionBuilder
   Value<String> metadataJson,
   Value<String> hiddenLanguagesJson,
   Value<String> collapsedLanguagesJson,
+  Value<String?> languageOverride,
   Value<int> rowid,
 });
 typedef $$DictionaryMetadataTableUpdateCompanionBuilder
@@ -41836,6 +42089,7 @@ typedef $$DictionaryMetadataTableUpdateCompanionBuilder
   Value<String> metadataJson,
   Value<String> hiddenLanguagesJson,
   Value<String> collapsedLanguagesJson,
+  Value<String?> languageOverride,
   Value<int> rowid,
 });
 
@@ -41869,6 +42123,10 @@ class $$DictionaryMetadataTableFilterComposer
 
   ColumnFilters<String> get collapsedLanguagesJson => $composableBuilder(
       column: $table.collapsedLanguagesJson,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get languageOverride => $composableBuilder(
+      column: $table.languageOverride,
       builder: (column) => ColumnFilters(column));
 }
 
@@ -41904,6 +42162,10 @@ class $$DictionaryMetadataTableOrderingComposer
   ColumnOrderings<String> get collapsedLanguagesJson => $composableBuilder(
       column: $table.collapsedLanguagesJson,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get languageOverride => $composableBuilder(
+      column: $table.languageOverride,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$DictionaryMetadataTableAnnotationComposer
@@ -41935,6 +42197,9 @@ class $$DictionaryMetadataTableAnnotationComposer
 
   GeneratedColumn<String> get collapsedLanguagesJson => $composableBuilder(
       column: $table.collapsedLanguagesJson, builder: (column) => column);
+
+  GeneratedColumn<String> get languageOverride => $composableBuilder(
+      column: $table.languageOverride, builder: (column) => column);
 }
 
 class $$DictionaryMetadataTableTableManager extends RootTableManager<
@@ -41973,6 +42238,7 @@ class $$DictionaryMetadataTableTableManager extends RootTableManager<
             Value<String> metadataJson = const Value.absent(),
             Value<String> hiddenLanguagesJson = const Value.absent(),
             Value<String> collapsedLanguagesJson = const Value.absent(),
+            Value<String?> languageOverride = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               DictionaryMetadataCompanion(
@@ -41983,6 +42249,7 @@ class $$DictionaryMetadataTableTableManager extends RootTableManager<
             metadataJson: metadataJson,
             hiddenLanguagesJson: hiddenLanguagesJson,
             collapsedLanguagesJson: collapsedLanguagesJson,
+            languageOverride: languageOverride,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -41993,6 +42260,7 @@ class $$DictionaryMetadataTableTableManager extends RootTableManager<
             Value<String> metadataJson = const Value.absent(),
             Value<String> hiddenLanguagesJson = const Value.absent(),
             Value<String> collapsedLanguagesJson = const Value.absent(),
+            Value<String?> languageOverride = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               DictionaryMetadataCompanion.insert(
@@ -42003,6 +42271,7 @@ class $$DictionaryMetadataTableTableManager extends RootTableManager<
             metadataJson: metadataJson,
             hiddenLanguagesJson: hiddenLanguagesJson,
             collapsedLanguagesJson: collapsedLanguagesJson,
+            languageOverride: languageOverride,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -43023,6 +43292,7 @@ typedef $$EpubBooksTableCreateCompanionBuilder = EpubBooksCompanion Function({
   Value<String?> tocJson,
   Value<String?> sourceMetadata,
   required int importedAt,
+  Value<String?> language,
   Value<String> format,
   Value<String?> mangaReadingMode,
   Value<DateTime?> completedAt,
@@ -43042,6 +43312,7 @@ typedef $$EpubBooksTableUpdateCompanionBuilder = EpubBooksCompanion Function({
   Value<String?> tocJson,
   Value<String?> sourceMetadata,
   Value<int> importedAt,
+  Value<String?> language,
   Value<String> format,
   Value<String?> mangaReadingMode,
   Value<DateTime?> completedAt,
@@ -43113,6 +43384,9 @@ class $$EpubBooksTableFilterComposer
 
   ColumnFilters<int> get importedAt => $composableBuilder(
       column: $table.importedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get language => $composableBuilder(
+      column: $table.language, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get format => $composableBuilder(
       column: $table.format, builder: (column) => ColumnFilters(column));
@@ -43193,6 +43467,9 @@ class $$EpubBooksTableOrderingComposer
   ColumnOrderings<int> get importedAt => $composableBuilder(
       column: $table.importedAt, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get language => $composableBuilder(
+      column: $table.language, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get format => $composableBuilder(
       column: $table.format, builder: (column) => ColumnOrderings(column));
 
@@ -43269,6 +43546,9 @@ class $$EpubBooksTableAnnotationComposer
   GeneratedColumn<int> get importedAt => $composableBuilder(
       column: $table.importedAt, builder: (column) => column);
 
+  GeneratedColumn<String> get language =>
+      $composableBuilder(column: $table.language, builder: (column) => column);
+
   GeneratedColumn<String> get format =>
       $composableBuilder(column: $table.format, builder: (column) => column);
 
@@ -43334,6 +43614,7 @@ class $$EpubBooksTableTableManager extends RootTableManager<
             Value<String?> tocJson = const Value.absent(),
             Value<String?> sourceMetadata = const Value.absent(),
             Value<int> importedAt = const Value.absent(),
+            Value<String?> language = const Value.absent(),
             Value<String> format = const Value.absent(),
             Value<String?> mangaReadingMode = const Value.absent(),
             Value<DateTime?> completedAt = const Value.absent(),
@@ -43353,6 +43634,7 @@ class $$EpubBooksTableTableManager extends RootTableManager<
             tocJson: tocJson,
             sourceMetadata: sourceMetadata,
             importedAt: importedAt,
+            language: language,
             format: format,
             mangaReadingMode: mangaReadingMode,
             completedAt: completedAt,
@@ -43372,6 +43654,7 @@ class $$EpubBooksTableTableManager extends RootTableManager<
             Value<String?> tocJson = const Value.absent(),
             Value<String?> sourceMetadata = const Value.absent(),
             required int importedAt,
+            Value<String?> language = const Value.absent(),
             Value<String> format = const Value.absent(),
             Value<String?> mangaReadingMode = const Value.absent(),
             Value<DateTime?> completedAt = const Value.absent(),
@@ -43391,6 +43674,7 @@ class $$EpubBooksTableTableManager extends RootTableManager<
             tocJson: tocJson,
             sourceMetadata: sourceMetadata,
             importedAt: importedAt,
+            language: language,
             format: format,
             mangaReadingMode: mangaReadingMode,
             completedAt: completedAt,
@@ -45225,6 +45509,7 @@ typedef $$VideoBooksTableCreateCompanionBuilder = VideoBooksCompanion Function({
   required String bookUid,
   required String title,
   required String videoPath,
+  Value<String?> language,
   Value<String?> subtitleSource,
   Value<String?> secondarySubtitleSource,
   Value<String?> subtitleFormat,
@@ -45247,6 +45532,7 @@ typedef $$VideoBooksTableUpdateCompanionBuilder = VideoBooksCompanion Function({
   Value<String> bookUid,
   Value<String> title,
   Value<String> videoPath,
+  Value<String?> language,
   Value<String?> subtitleSource,
   Value<String?> secondarySubtitleSource,
   Value<String?> subtitleFormat,
@@ -45390,6 +45676,9 @@ class $$VideoBooksTableFilterComposer
 
   ColumnFilters<String> get videoPath => $composableBuilder(
       column: $table.videoPath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get language => $composableBuilder(
+      column: $table.language, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get subtitleSource => $composableBuilder(
       column: $table.subtitleSource,
@@ -45590,6 +45879,9 @@ class $$VideoBooksTableOrderingComposer
   ColumnOrderings<String> get videoPath => $composableBuilder(
       column: $table.videoPath, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get language => $composableBuilder(
+      column: $table.language, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get subtitleSource => $composableBuilder(
       column: $table.subtitleSource,
       builder: (column) => ColumnOrderings(column));
@@ -45684,6 +45976,9 @@ class $$VideoBooksTableAnnotationComposer
 
   GeneratedColumn<String> get videoPath =>
       $composableBuilder(column: $table.videoPath, builder: (column) => column);
+
+  GeneratedColumn<String> get language =>
+      $composableBuilder(column: $table.language, builder: (column) => column);
 
   GeneratedColumn<String> get subtitleSource => $composableBuilder(
       column: $table.subtitleSource, builder: (column) => column);
@@ -45893,6 +46188,7 @@ class $$VideoBooksTableTableManager extends RootTableManager<
             Value<String> bookUid = const Value.absent(),
             Value<String> title = const Value.absent(),
             Value<String> videoPath = const Value.absent(),
+            Value<String?> language = const Value.absent(),
             Value<String?> subtitleSource = const Value.absent(),
             Value<String?> secondarySubtitleSource = const Value.absent(),
             Value<String?> subtitleFormat = const Value.absent(),
@@ -45915,6 +46211,7 @@ class $$VideoBooksTableTableManager extends RootTableManager<
             bookUid: bookUid,
             title: title,
             videoPath: videoPath,
+            language: language,
             subtitleSource: subtitleSource,
             secondarySubtitleSource: secondarySubtitleSource,
             subtitleFormat: subtitleFormat,
@@ -45937,6 +46234,7 @@ class $$VideoBooksTableTableManager extends RootTableManager<
             required String bookUid,
             required String title,
             required String videoPath,
+            Value<String?> language = const Value.absent(),
             Value<String?> subtitleSource = const Value.absent(),
             Value<String?> secondarySubtitleSource = const Value.absent(),
             Value<String?> subtitleFormat = const Value.absent(),
@@ -45959,6 +46257,7 @@ class $$VideoBooksTableTableManager extends RootTableManager<
             bookUid: bookUid,
             title: title,
             videoPath: videoPath,
+            language: language,
             subtitleSource: subtitleSource,
             secondarySubtitleSource: secondarySubtitleSource,
             subtitleFormat: subtitleFormat,
@@ -52162,6 +52461,7 @@ typedef $$GalgamesTableCreateCompanionBuilder = GalgamesCompanion Function({
   required String id,
   required String name,
   required String exePath,
+  Value<String?> language,
   required String workdir,
   Value<String> launchArgs,
   Value<String> upscalingMode,
@@ -52179,6 +52479,7 @@ typedef $$GalgamesTableUpdateCompanionBuilder = GalgamesCompanion Function({
   Value<String> id,
   Value<String> name,
   Value<String> exePath,
+  Value<String?> language,
   Value<String> workdir,
   Value<String> launchArgs,
   Value<String> upscalingMode,
@@ -52245,6 +52546,9 @@ class $$GalgamesTableFilterComposer
 
   ColumnFilters<String> get exePath => $composableBuilder(
       column: $table.exePath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get language => $composableBuilder(
+      column: $table.language, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get workdir => $composableBuilder(
       column: $table.workdir, builder: (column) => ColumnFilters(column));
@@ -52342,6 +52646,9 @@ class $$GalgamesTableOrderingComposer
   ColumnOrderings<String> get exePath => $composableBuilder(
       column: $table.exePath, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get language => $composableBuilder(
+      column: $table.language, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get workdir => $composableBuilder(
       column: $table.workdir, builder: (column) => ColumnOrderings(column));
 
@@ -52397,6 +52704,9 @@ class $$GalgamesTableAnnotationComposer
 
   GeneratedColumn<String> get exePath =>
       $composableBuilder(column: $table.exePath, builder: (column) => column);
+
+  GeneratedColumn<String> get language =>
+      $composableBuilder(column: $table.language, builder: (column) => column);
 
   GeneratedColumn<String> get workdir =>
       $composableBuilder(column: $table.workdir, builder: (column) => column);
@@ -52501,6 +52811,7 @@ class $$GalgamesTableTableManager extends RootTableManager<
             Value<String> id = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<String> exePath = const Value.absent(),
+            Value<String?> language = const Value.absent(),
             Value<String> workdir = const Value.absent(),
             Value<String> launchArgs = const Value.absent(),
             Value<String> upscalingMode = const Value.absent(),
@@ -52518,6 +52829,7 @@ class $$GalgamesTableTableManager extends RootTableManager<
             id: id,
             name: name,
             exePath: exePath,
+            language: language,
             workdir: workdir,
             launchArgs: launchArgs,
             upscalingMode: upscalingMode,
@@ -52535,6 +52847,7 @@ class $$GalgamesTableTableManager extends RootTableManager<
             required String id,
             required String name,
             required String exePath,
+            Value<String?> language = const Value.absent(),
             required String workdir,
             Value<String> launchArgs = const Value.absent(),
             Value<String> upscalingMode = const Value.absent(),
@@ -52552,6 +52865,7 @@ class $$GalgamesTableTableManager extends RootTableManager<
             id: id,
             name: name,
             exePath: exePath,
+            language: language,
             workdir: workdir,
             launchArgs: launchArgs,
             upscalingMode: upscalingMode,

@@ -29,11 +29,38 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 1559 条。点号进各自文件。
+> 共 1586 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-1690](bugs/BUG-1690-startup-audio-warmup-interrupts-music.md) | ✅ | ✅ | 启动静音预热在音频设备上开流,打断其他应用正在播放的音乐 |
+| [BUG-1689](bugs/BUG-1689-lookup-grip-activates-main-window.md) | ✅ | ✅ | 点剪贴板查词面板把 Hibiki 主界面抬到用户窗口之上 |
+| [BUG-1688](bugs/BUG-1688-vn-chrome-inset-viewport.md) | ✅ | ✅ | VN 模式忽略 chrome inset 与页面尺寸，正文被顶栏/底栏与刘海压住（iOS 最严重） |
+| [BUG-1687](bugs/BUG-1687-qb-category-legacy-hibiki.md) | 🚧 | 🚧 | 存量 qBittorrent 分类仍是改名前的 hibiki |
+| [BUG-1686](bugs/BUG-1686-video-home-rows-not-interconnected.md) | ✅ | ✅ | 视频首页「下一集」「最近添加」两行不含互联远端条目 |
+| [BUG-1685](bugs/BUG-1685-video-subtitle-fetch-two-implementations.md) | ✅ | ✅ | 播放页找字幕只搜 Jimaku，与下载管线的统一 registry 是两套实现 |
+| [BUG-1684](bugs/BUG-1684-outbound-user-agent-still-hibiki.md) | ✅ | ✅ | 对外 User-Agent 仍报旧名 Hibiki |
+| [BUG-1683](bugs/BUG-1683-interconnect-service-config-misses-bangumi-token.md) | ✅ | ✅ | 互联不同步 Bangumi 追番令牌与刮削/字幕/索引器凭据 |
+| [BUG-1682](bugs/BUG-1682-remote-mining-media-dedup-delegates-local.md) | ✅ | ✅ | 制卡到已配对设备时媒体去重委派本地仓库，手机上整区隐藏 |
+| [BUG-1681](bugs/BUG-1681-ankiconnect-remote-media-dedup-phantom-section.md) | ✅ | ✅ | 手机连局域网 AnkiConnect 时显示一个必然不可用的媒体存储优化区 |
+| [BUG-1680](bugs/BUG-1680-ankidroid-note-type-editing.md) | ✅ | ✅ | AnkiDroid 能改已存在 note type，Lapis 样式区却在手机上整区隐藏 |
+| [BUG-1679](bugs/BUG-1679-audiobook-audio-replace-stale-position.md) | ✅ | ✅ | 换音频后沿用旧时间轴的播放进度导致不响/乱跳页 |
+| [BUG-1678](bugs/BUG-1678-audiobook-reimport-wipes-existing-audio.md) | ✅ | ✅ | 有声书换字幕时把现有音频删光并中止导入 |
+| [BUG-1677](bugs/BUG-1677-expansiontile-outline-label-clipped.md) | ✅ | ✅ | 折叠区首个下拉框的浮动标签被展开动画的 ClipRect 削掉上半截 |
+| [BUG-1676](bugs/BUG-1676-anki-gloss-image-overflows-card.md) | ✅ | ✅ | 制卡词典插图撑出卡片跑到屏幕右外 |
+| [BUG-1675](bugs/BUG-1675-gal-helper-stale-after-locked-update.md) | ✅ | ✅ | galgame 捕获组件 protocol_mismatch：更新时游戏开着导致 helper 被静默跳过 |
+| [BUG-1674](bugs/BUG-1674-mining-still-format.md) | ✅ | ✅ | 视频卡片图片：描述不准，且静态截图格式不可选 |
+| [BUG-1671](bugs/BUG-1671-ext-side-panel-subtitle-incomplete.md) | ✅ | ✅ | 浏览器扩展侧边栏获取字幕不全 |
+| [BUG-1670](bugs/BUG-1670-ext-pause-on-lookup-no-resume.md) | ✅ | ✅ | 浏览器扩展查词不暂停视频且关闭弹窗不恢复播放 |
+| [BUG-1669](bugs/BUG-1669-ext-side-panel-lookup-stuck-loading.md) | ✅ | ✅ | 浏览器扩展侧边栏高频查词后「正在查词」永久卡死 |
+| [BUG-1668](bugs/BUG-1668-macos-ffmpeg-arm64-only.md) | ✅ | ✅ | macOS 随包 ffmpeg 是 arm64-only 瘦二进制，Intel Mac 上制卡/封面/内封字幕全线失效 |
+| [BUG-1667](bugs/BUG-1667-local-audio-android-db-import-double-copy.md) | ✅ | ✅ | 安卓上用 android.db 配本地音频跑不通：导入被复制两次（cache + 库目录），峰值需 2 倍体积 |
+| [BUG-1666](bugs/BUG-1666-anki-card-crossref-links-localhost.md) | ✅ | ✅ | 制卡后卡片释义交叉引用链接跳向127本地地址 |
+| [BUG-1665](bugs/BUG-1665-english-mining-term-not-lemma.md) | ✅ | ✅ | 英语查词制卡词头不还原原形（MDX 重定向别名词条盖过原形） |
+| [BUG-1664](bugs/BUG-1664-mine-abort-root-cause.md) | ✅ | ✅ | 制卡中止只报症状不报根因（macOS 缺 ffmpeg 时批量制卡整批失败且不可诊断） |
+| [BUG-1663](bugs/BUG-1663-ios-update-lands-on-github-not-testflight.md) | ✅ | ✅ | iOS「检查更新」把 TestFlight 用户送到 GitHub 未签名 ipa |
 | [BUG-1662](bugs/BUG-1662-windows-close-black-screen.md) | ✅ | ✅ | Windows关闭时主窗口黑屏延迟 |
+| [BUG-1662](bugs/BUG-1662-collection-rescrape-entry.md) | ✅ | ✅ | 合集缺重新刮削入口：详情页无刮削项、单集无条目信息、菜单文案不含刮削 |
 | [BUG-1661](bugs/BUG-1661-corretto-x64-sha256-typo.md) | ✅ | ✅ | macOS 构建挂在「下载 pinned JDK 失败」，真因是 sha256 抄成 65 位 |
 | [BUG-1660](bugs/BUG-1660-aidoku-image-reader-compat.md) | ✅ | ✅ | Aidoku 图源图片与章节兼容及阅读器返回入口缺失 |
 | [BUG-1659](bugs/BUG-1659-inline-level-box-scan-boundary.md) | ✅ | ✅ | 查词浮窗 glossary 里带振假名的词只能查到第一个汉字 |
@@ -85,8 +112,8 @@
 | [BUG-1595](bugs/BUG-1595-dict-update-not-replacing.md) | ✅ | ✅ | 词典更新入口遇新包标题变化仍判新增两版并存 |
 | [BUG-1594](bugs/BUG-1594-ring-probe-readonly-map-crash.md) | ✅ | ✅ | ring_probe 只读映射下枚举文本槽必崩（Interlocked 写只读页） |
 | [BUG-1594](bugs/BUG-1594-gal-overlay-loses-topmost.md) | ✅ | ✅ | Galgame文字悬浮窗切换窗口或 Magpie 输出后丢失置顶 |
-| [BUG-1593](bugs/BUG-1593-anki-duplicate-check-findnotes-serial.md) | ✅ | ✅ | 词条逐个 findNotes 查重导致已制卡标记延迟 |
 | [BUG-1593](bugs/BUG-1593-gal-utterance-head-clipped.md) | ✅ | ✅ | galgame 制卡语音每句都少一截开头（提交时刻 vs 播放时刻） |
+| [BUG-1593](bugs/BUG-1593-anki-duplicate-check-findnotes-serial.md) | ✅ | ✅ | 词条逐个 findNotes 查重导致已制卡标记延迟 |
 | [BUG-1592](bugs/BUG-1592-secondary-subtitle-mining-black-cover.md) | ✅ | ✅ | 只开副字幕时制卡：无区间→封面抽片头黑帧 |
 | [BUG-1592](bugs/BUG-1592-anki-localhost-prefers-ipv6.md) | ✅ | ✅ | AnkiConnect 使用 localhost 时优先连接 IPv6，导致本机请求延迟或失败 |
 | [BUG-1591](bugs/BUG-1591-luna-safe-attach-double-hook-crash.md) | ✅ | ✅ | Luna 与 Fushi 双 Hook 导致游戏闪退 |

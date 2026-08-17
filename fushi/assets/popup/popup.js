@@ -462,6 +462,23 @@ function isStringPartiallyChinese(text) {
 }
 
 // https://github.com/yomidevs/yomitan/blob/c0abb9e98a15aeb6b6f8f6e2d91fe5e54240b54a/ext/js/language/text-utilities.js#L28
+// 词典名 -> 该词典的内容语言（BCP-47）。映射由 Dart 注入
+// （popup_settings_injection 写 window.__fushiDictionaryLanguages，值取自 yomitan
+// index.json 的 sourceLanguage/targetLanguage，或用户在词典设置里手动指定）。
+// 浏览器扩展没有 Dart 注入 -> 返回 null -> 退回纯字符检测（旧行为）。
+//
+// 为什么必须传：getLanguageFromText 的 isStringPartiallyJapanese 把**汉字**也算
+// 日文（KANA_PATTERN || CJK_PATTERN），所以纯汉字的中文释义会被判成 'ja'。上游
+// 本来留了闸门（language 是 zh/yue 时跳过检测），但所有调用处一直传 null，闸门
+// 从未生效。传上词典自己声明的语言，中文词典的释义才不会被贴上 lang="ja" 再被
+// :lang(ja) 的日文字体链接管。
+function dictionaryLanguageOf(dictName) {
+    const map = window.__fushiDictionaryLanguages;
+    if (!map || !dictName) return null;
+    const language = map[dictName];
+    return typeof language === 'string' && language ? language : null;
+}
+
 function getLanguageFromText(text, language) {
     const partiallyJapanese = isStringPartiallyJapanese(text);
     const partiallyChinese = isStringPartiallyChinese(text);
@@ -634,15 +651,23 @@ function applyTableStyles(html) {
     .replace(/<td(?=[>\s])/g, `<td style="${cellStyle}"`);
 }
 
-function applyImageStyles(node, imageContainer, aspectRatioSizer, imageBackground, image, filename, appearance) {
+function applyImageStyles(node, imageContainer, aspectRatioSizer, imageBackground, image, filename, appearance, naturalSized = false) {
     // .gloss-image-link
     node.style.cssText += 'display:inline-block;position:relative;line-height:1;max-width:100%;';
     // .gloss-image-container
     imageContainer.style.cssText += `display:inline-block;white-space:nowrap;max-width:100%;max-height:100vh;position:relative;vertical-align:top;line-height:0;overflow:hidden;font-size:1em;`;
-    // .gloss-image-link[data-has-aspect-ratio=true] .gloss-image-sizer
-    aspectRatioSizer.style.cssText += 'display:inline-block;width:0;vertical-align:top;font-size:0;';
-    // .gloss-image-link[data-has-aspect-ratio=true] .gloss-image
-    image.style.cssText += 'display:inline-block;vertical-align:top;object-fit:contain;border:none;outline:none;position:absolute;left:0;top:0;width:100%;height:100%;';
+    if (naturalSized) {
+        // BUG-1676：词典没声明尺寸时，<img> 自己就是布局盒（容器 width:auto）。此时
+        // 绝对定位的 img 会把容器塌成 0×0（sizer 也已关掉），整张图消失，所以这两条
+        // 必须成对切换，不能只改容器宽度。
+        aspectRatioSizer.style.cssText += 'display:none;';
+        image.style.cssText += 'display:inline-block;vertical-align:top;object-fit:contain;border:none;outline:none;position:static;width:auto;height:auto;max-width:100%;';
+    } else {
+        // .gloss-image-link[data-has-aspect-ratio=true] .gloss-image-sizer
+        aspectRatioSizer.style.cssText += 'display:inline-block;width:0;vertical-align:top;font-size:0;';
+        // .gloss-image-link[data-has-aspect-ratio=true] .gloss-image
+        image.style.cssText += 'display:inline-block;vertical-align:top;object-fit:contain;border:none;outline:none;position:absolute;left:0;top:0;width:100%;height:100%;';
+    }
     // .gloss-image-background, set image url directly
     if (appearance === 'monochrome') {
         imageBackground.style.cssText += `--image:url("${filename}");position:absolute;left:0;top:0;width:100%;height:100%;-webkit-mask-repeat:no-repeat;-webkit-mask-position:center center;-webkit-mask-mode:alpha;-webkit-mask-size:contain;-webkit-mask-image:var(--image);mask-repeat:no-repeat;mask-position:center center;mask-mode:alpha;mask-size:contain;mask-image:var(--image);background-color:currentColor;`;
@@ -861,6 +886,36 @@ const COMPACT_GLOSSARIES_ANKI = `.yomitan-glossary ul[data-sc-content="glossary"
 .yomitan-glossary ul[data-sc-content="glossary"] > li, .yomitan-glossary .glossary-list > li { display: inline; }
 .yomitan-glossary ul[data-sc-content="glossary"], .yomitan-glossary .glossary-list { display: inline; list-style: none; padding-left: 0px; }`;
 
+// BUG-1666: exported glossary HTML used to keep the dictionary's raw
+// cross-reference anchors (`entry://词` / relative hrefs). Anki desktop and
+// AnkiDroid render cards in a WebView whose base URL is their local media
+// server (http://127.0.0.1:<random port>), so tapping such a link on a card
+// navigated to a dead localhost page. Inside the popup these clicks are
+// intercepted and re-looked-up by the anchor's visible headword
+// (handleGlossaryAnchorClick, BUG-767); a card has no interceptor, so bake the
+// same semantic into the exported bytes: internal cross references become
+// fushi://lookup?word=<visible text> deep links (Android :popup dict window /
+// Windows single-instance handoff open them as a lookup), real external
+// http(s) links are kept, `#` fragments stay (they never leave the card), and
+// dictionary media anchors (sound:// etc., whose bytes are not exported) lose
+// their href instead of pointing nowhere.
+function rewriteExportedGlossaryAnchors(root) {
+    root.querySelectorAll('a[href]').forEach((anchor) => {
+        const href = (anchor.getAttribute('href') || '').trim();
+        if (/^https?:\/\//i.test(href) || href.startsWith('#')) {
+            return;
+        }
+        const word = /^(?:sound|image|dictmedia):/i.test(href)
+            ? ''
+            : (anchor.textContent || '').trim();
+        if (!word) {
+            anchor.removeAttribute('href');
+            return;
+        }
+        anchor.setAttribute('href', `fushi://lookup?word=${encodeURIComponent(word)}`);
+    });
+}
+
 // the following two should roughly match the glossary format of yomitan and keep compatibility with notetypes like lapis
 // 23.01.2026: this still has some differences
 // 24.01.2026: should be a bit closer now
@@ -925,16 +980,16 @@ function constructSingleGlossaryHtml(entryIndex) {
         const tempDiv = document.createElement('div');
         if (typeof g.content === 'string') {
             try {
-                renderStructuredContent(tempDiv, JSON.parse(g.content), null, dictName, true);
+                renderStructuredContent(tempDiv, JSON.parse(g.content), dictionaryLanguageOf(dictName), dictName, true);
             } catch {
                 if (/<[a-z][\s\S]*>/i.test(g.content)) {
                     tempDiv.innerHTML = sanitizeHtml(g.content);
                 } else {
-                    renderStructuredContent(tempDiv, g.content, null, dictName, true);
+                    renderStructuredContent(tempDiv, g.content, dictionaryLanguageOf(dictName), dictName, true);
                 }
             }
         } else {
-            renderStructuredContent(tempDiv, g.content, null, dictName, true);
+            renderStructuredContent(tempDiv, g.content, dictionaryLanguageOf(dictName), dictName, true);
         }
 
         const parsedTags = parseTags(g.definitionTags).filter(tag => !NUMERIC_TAG.test(tag));
@@ -942,6 +997,7 @@ function constructSingleGlossaryHtml(entryIndex) {
         const currentTags = JSON.stringify(posTags);
         const filteredTags = parsedTags.filter(tag => !isPartOfSpeech(tag) || !(prevTags !== null && prevTags === currentTags));
         const tags = filteredTags.length > 0 ? filteredTags.join(', ') : '';
+        rewriteExportedGlossaryAnchors(tempDiv);
         const content = applyTableStyles(tempDiv.innerHTML);
         let listIdentifier = '';
         if (dictChanged) {
@@ -977,16 +1033,16 @@ function constructGlossaryHtml(entryIndex) {
         const tempDiv = document.createElement('div');
         if (typeof g.content === 'string') {
             try {
-                renderStructuredContent(tempDiv, JSON.parse(g.content), null, dictName, true);
+                renderStructuredContent(tempDiv, JSON.parse(g.content), dictionaryLanguageOf(dictName), dictName, true);
             } catch {
                 if (/<[a-z][\s\S]*>/i.test(g.content)) {
                     tempDiv.innerHTML = sanitizeHtml(g.content);
                 } else {
-                    renderStructuredContent(tempDiv, g.content, null, dictName, true);
+                    renderStructuredContent(tempDiv, g.content, dictionaryLanguageOf(dictName), dictName, true);
                 }
             }
         } else {
-            renderStructuredContent(tempDiv, g.content, null, dictName, true);
+            renderStructuredContent(tempDiv, g.content, dictionaryLanguageOf(dictName), dictName, true);
         }
 
         let label = '';
@@ -1006,6 +1062,7 @@ function constructGlossaryHtml(entryIndex) {
             label = tags ? `(${tags})` : ''
         }
         
+        rewriteExportedGlossaryAnchors(tempDiv);
         glossaryItems += `<li data-dictionary="${dictName}"><i>${label}</i> <span>${applyTableStyles(tempDiv.innerHTML)}</span></li>`;
         prevTags = currentTags;
         
@@ -1211,6 +1268,11 @@ function createDefinitionImage(data, dictionary, exporting = false) {
             }
         }
     }
+    // BUG-1676：词典没声明尺寸的位图。已在弹窗端缓存到自然尺寸的图片仍沿用
+    // personal fork 的精确尺寸路径；只有没有声明尺寸、也没有缓存自然尺寸的导出图才
+    // 交给 <img> 自己布局，避免 100×100 兜底值把卡片撑出屏幕。
+    const naturalSizedExport =
+        exporting && !useEmUnits && !hasDimensions && !isSvg && exportNaturalSize == null;
     // Gaiji width/height values are source-pixel metrics. Keep an inline
     // text-line height instead of turning 150px glyph metadata into 150em.
     const normalizeGaijiToInlineEm = exporting && isGaiji && !useEmUnits;
@@ -1279,6 +1341,15 @@ function createDefinitionImage(data, dictionary, exporting = false) {
         imageContainer.style.fontSize = 'inherit';
         imageContainer.style.lineHeight = '0';
         imageContainer.style.overflow = 'visible';
+        aspectRatioSizer.style.display = 'none';
+    } else if (naturalSizedExport) {
+        // 凭空写 `100em`（= 100 × 卡片正文字号 ≈ 2000px）会把 400×300 的插图放成
+        // 2000×2000 并按 1:1 摆位；再加上 structured-content 的 `table-layout:auto`
+        // 表格不理会百分比 max-width，整张卡就被撑到屏幕右外（BUG-1676）。
+        // 交给浏览器：容器 width:auto、关掉 aspect-ratio sizer，<img> 按真实自然尺寸和
+        // 真实宽高比布局，`max-width:100%` 负责不超出卡片。
+        node.dataset.hasAspectRatio = 'false';
+        imageContainer.style.width = 'auto';
         aspectRatioSizer.style.display = 'none';
     } else {
         // 导出（制卡）与弹窗的尺寸语义不同：Yomitan 的 structured-content-generator 永远写
@@ -1352,15 +1423,20 @@ function createDefinitionImage(data, dictionary, exporting = false) {
             image.src = filename;
             if (exportNaturalSize) {
                 image.width = exportNaturalSize.width;
+                image.height = exportNaturalSize.height;
+            } else if (naturalSizedExport) {
+                // 不写 width/height 属性：兜底的 100×100 会被浏览器当成真实像素尺寸用来
+                // 定预留宽高比，正好是 BUG-1676 里那圈上下留白的来源。
             } else if (useEmUnits) {
                 const emSize = 14;
                 const scaleFactor = 2 * window.devicePixelRatio;
                 image.width = usedWidth * emSize * scaleFactor;
+                image.height = image.width * invAspectRatio;
             } else {
                 image.width = usedWidth;
+                image.height = image.width * invAspectRatio;
             }
-            image.height = exportNaturalSize ? exportNaturalSize.height : image.width * invAspectRatio;
-            applyImageStyles(node, imageContainer, aspectRatioSizer, imageBackground, image, filename, appearance);
+            applyImageStyles(node, imageContainer, aspectRatioSizer, imageBackground, image, filename, appearance, naturalSizedExport);
         } else {
             image.textContent = alt;
         }
@@ -1954,7 +2030,11 @@ function renderStructuredContent(parent, node, language = null, dictName = null,
                 parent.appendChild(document.createElement('br'));
             }
             if (line) {
-                if (!language && !parent.hasAttribute('lang')) {
+                // 原判据是 `!language && ...`：传了 language 就干脆不标 lang，
+                // 因为上游假设更外层已经标过。本 app 没有那个外层，于是「传了词典
+                // 语言」反而比「不传」丢的信息更多。改成只要父节点还没标就标，
+                // getLanguageFromText 在 language 已知时直接回传它（不瞎猜）。
+                if (!parent.hasAttribute('lang')) {
                     const detected = getLanguageFromText(line, language);
                     if (detected) {
                         parent.setAttribute('lang', detected);
@@ -2094,6 +2174,15 @@ function renderStructuredContent(parent, node, language = null, dictName = null,
     if (tagName === 'table') {
         const container = document.createElement('div');
         container.classList.add('gloss-sc-table-container');
+        if (exporting) {
+            // BUG-1676：弹窗有 popup.css 的
+            // `.gloss-sc-table-container{display:block;overflow-x:auto}`（上游 Yomitan 同款）
+            // 兜住超宽表格，Anki 卡片上没有那份 CSS。`table-layout:auto` 的 td 首选宽度
+            // 不理会百分比 max-width（循环依赖，浏览器直接忽略），所以卡片上任何一张超宽
+            // structured-content 表格都会连带把整张卡撑出屏幕，而不只是自己变宽。
+            // 把护栏放在容器上：表格保留自己的列宽算法，溢出改为容器内横向滚动。
+            container.style.cssText += 'display:block;max-width:100%;overflow-x:auto;';
+        }
         container.appendChild(element);
         parent.appendChild(container);
         return;
@@ -2710,6 +2799,15 @@ function createEntryHeader(entry, idx) {
     const header = el('div', { className: 'entry-header' });
     
     const expressionSpan = el('span', { className: 'expression' });
+    // 词头语言：由 Dart 按「当前查词来源」注入（正在读的书/视频/游戏的内容语言，
+    // 否则全局默认）。标上 lang 之后，popup.css 里既有的 :lang() 规则自动接管词头
+    // 与振假名的字体——不需要再为词头单开一条 CSS。
+    //
+    // 词头与释义分属两条独立的语言轴：词头是**被查的那个词**（语言由用户在读什么
+    // 决定），释义跟**这本词典**（语言由词典自己声明）。日中词典里两者本来就不同。
+    if (window.__fushiLookupLanguage) {
+        expressionSpan.setAttribute('lang', window.__fushiLookupLanguage);
+    }
     let needsScroll = false;
     if (reading && reading !== expression) {
         needsScroll = buildFuriganaEl(expressionSpan, expression, reading);

@@ -165,9 +165,9 @@ class SrtBookRepository {
   ///
   /// 行为与阅读器内 `_openSrtBookAudioPicker` 逐字节等价：
   /// - persist 目录 key 统一为 [uid]（`AudiobookStorage.ensurePersistDir(uid)`）；
-  /// - 写入前 `cleanAudioFiles` 清掉旧音频文件（整组替换语义）；
-  /// - 逐个 `persistFileWithProgress` 复制进持久目录；
-  /// - 落库时 `audioPaths = 复制后的路径`、`audioRoot = null`。
+  /// - 走 `AudiobookStorage.syncAudioFiles` 把持久目录同步成恰好这一组（整组替换
+  ///   语义；已在目录里的源文件零拷贝保留，不会被自己的清理删掉，BUG-1678）；
+  /// - 落库时 `audioPaths = 落地后的路径`、`audioRoot = null`。
   ///
   /// [uid] 必须命中既有 SRT 书，否则抛 [StateError]（调用方应已加载过该书）。
   /// [pickedPaths] 为空时直接返回（无副作用），调用方负责空选过滤/提示。
@@ -186,22 +186,30 @@ class SrtBookRepository {
     }
 
     final Directory persistDir = await AudiobookStorage.ensurePersistDir(uid);
-    await AudiobookStorage.cleanAudioFiles(persistDir);
-
-    final List<String> persisted = <String>[];
-    for (final String src in pickedPaths) {
-      persisted.add(
-        await AudiobookStorage.persistFileWithProgress(
-          File(src),
-          persistDir,
-          onProgress: onProgress,
-        ),
-      );
-    }
+    final List<String> previousAudio =
+        List<String>.from(book.audioPaths ?? const <String>[]);
+    final String? previousRoot = book.audioRoot;
+    // 持久目录音频的唯一写入原语（同步成恰好这一组，幂等、不会先删掉自己的源）。
+    final List<String> persisted = await AudiobookStorage.syncAudioFiles(
+      persistDir,
+      pickedPaths,
+      onProgress: onProgress,
+    );
 
     book.audioPaths = persisted;
     book.audioRoot = null;
     await save(book);
+
+    // BUG-1679：换了音频就作废与旧时间轴绑定的播放进度。SRT 书的进度 pref key 是
+    // `audiobook_pos_<uid>`（与 AudiobookSessionLauncher._readPrefs 的 SRT 分支
+    // 同源）。不归零则恢复 seek 落在新音频的随机处甚至 EOF——「音频不响」/
+    // 「乱跳页」。音频集合没变（重复导入同一组）时不动进度。
+    final bool audioChanged = previousRoot != null ||
+        !AudiobookStorage.sameAudioPathList(previousAudio, persisted);
+    if (audioChanged) {
+      await AudiobookRepository(_db)
+          .updatePositionMs(bookKey: uid, positionMs: 0);
+    }
 
     // TODO-1032 PR2：愈合旧数据。PR1 把 SRT 书音频归一到 SrtBooks.audioPaths，但
     // 旧版书架「导入音频」曾对同一本 EPUB 配对 SRT 书落过一条 **Audiobooks** 脏行
@@ -281,6 +289,55 @@ class SrtBookRepository {
         SyncTombstoneKind.srtbook.dbValue, book.uid);
   }
 
+  /// 局部更新一条 SRT 书：**只写显式传入的字段**，其余列原样不动，行不存在时
+  /// 返回 false（调用方据此走整行创建）。
+  ///
+  /// BUG-1678：[save] 是整行覆盖（companion 除 id 外每列都是 `Value(...)`）。
+  /// 「只改其中几列」的调用方凭空造一个 [SrtBook] 再 save，本次没设的列会被静默
+  /// 清空。手抄一遍「把旧值搬过来」只是纪律——新增列照样漏抄；这里让「没传 =
+  /// 不改」由类型表达，漏抄这件事从结构上不成立。
+  ///
+  /// 参数一律「null = 不改」。真要把某列清空是另一种意图，需要专门的入口，
+  /// 不能与「没提供」混成一个值。
+  Future<bool> patchByUid(
+    String uid, {
+    String? title,
+    String? srtPath,
+    String? bookKey,
+    int? importedAt,
+    String? author,
+    String? coverPath,
+    List<String>? audioPaths,
+    String? audioRoot,
+  }) async {
+    final int affected = await _db.patchSrtBook(
+      uid,
+      SrtBooksCompanion(
+        title: title == null ? const Value.absent() : Value(title),
+        srtPath: srtPath == null ? const Value.absent() : Value(srtPath),
+        bookKey: bookKey == null ? const Value.absent() : Value(bookKey),
+        importedAt:
+            importedAt == null ? const Value.absent() : Value(importedAt),
+        author: author == null ? const Value.absent() : Value(author),
+        coverPath: coverPath == null ? const Value.absent() : Value(coverPath),
+        audioPathsJson: audioPaths == null
+            ? const Value.absent()
+            : Value(jsonEncode(audioPaths)),
+        // 换新音频一律文件列表模式：legacy 目录模式的 audioRoot 必须同时清掉，
+        // 否则读取端在 audioPaths 断链时会回退去扫早已作废的旧目录。
+        audioRoot: audioPaths != null
+            ? const Value<String?>(null)
+            : (audioRoot == null
+                ? const Value.absent()
+                : Value<String?>(audioRoot)),
+      ),
+    );
+    if (affected == 0) return false;
+    await _db.clearSyncDeletionTombstone(
+        SyncTombstoneKind.srtbook.dbValue, uid);
+    return true;
+  }
+
   /// Deletes the SRT book + its on-disk persist dir. Returns the number of
   /// srt_books rows actually removed (0 when [uid] matched nothing) so callers
   /// can count only real deletions (BUG-439).
@@ -347,6 +404,7 @@ class SrtBookRepository {
     book.coverPath = r.coverPath;
     book.importedAt = r.importedAt;
     book.bookKey = r.bookKey;
+    book.language = r.language;
     return book;
   }
 }
