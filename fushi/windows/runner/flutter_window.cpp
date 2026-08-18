@@ -1,6 +1,7 @@
 #include "flutter_window.h"
 
 #include <dwmapi.h>
+#include <dwrite.h>
 #include <flutter_windows.h>
 #include <shlobj.h>
 #include <shobjidl.h>
@@ -9,6 +10,8 @@
 #include <wrl/client.h>
 
 #include <cstdio>
+#include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <functional>
 #include <limits>
@@ -45,6 +48,19 @@ std::wstring Utf8ToWideString(const std::string& value) {
   std::wstring result(size, L'\0');
   MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, value.data(),
                       static_cast<int>(value.size()), result.data(), size);
+  return result;
+}
+
+std::string WideToUtf8String(const std::wstring& value) {
+  if (value.empty()) return std::string();
+  const int size = WideCharToMultiByte(
+      CP_UTF8, WC_ERR_INVALID_CHARS, value.data(),
+      static_cast<int>(value.size()), nullptr, 0, nullptr, nullptr);
+  if (size <= 0) return std::string();
+  std::string result(size, '\0');
+  WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, value.data(),
+                      static_cast<int>(value.size()), result.data(), size,
+                      nullptr, nullptr);
   return result;
 }
 
@@ -751,6 +767,13 @@ std::vector<FloatingLyricWindow::RubySpan> RubySpansFromValue(
 FloatingLyricWindow::Style StyleFromArgs(const flutter::EncodableMap* args) {
   FloatingLyricWindow::Style style;
   style.font_size = DoubleFromValue(args, "fontSize", style.font_size);
+  style.font_family = WideFromValue(args, "fontFamily", style.font_family);
+  // Do not let an unexpectedly large preference become a native allocation or
+  // an expensive DirectWrite lookup. The Dart repository applies the same cap;
+  // this second boundary keeps the channel safe for older or hostile callers.
+  if (style.font_family.size() > 256) {
+    style.font_family.resize(256);
+  }
   style.text_color = ArgbFromValue(args, "textColor", style.text_color);
   style.bg_color = ArgbFromValue(args, "bgColor", style.bg_color);
   style.button_text_color =
@@ -766,6 +789,76 @@ FloatingLyricWindow::Style StyleFromArgs(const flutter::EncodableMap* args) {
   style.window_height =
       DoubleFromValue(args, "windowHeight", style.window_height);
   return style;
+}
+
+flutter::EncodableList InstalledFontFamilies() {
+  using Microsoft::WRL::ComPtr;
+  ComPtr<IDWriteFactory> factory;
+  if (FAILED(DWriteCreateFactory(
+          DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
+          reinterpret_cast<IUnknown**>(factory.GetAddressOf()))) ||
+      factory == nullptr) {
+    return {};
+  }
+
+  ComPtr<IDWriteFontCollection> collection;
+  if (FAILED(factory->GetSystemFontCollection(collection.GetAddressOf(), TRUE)) ||
+      collection == nullptr) {
+    return {};
+  }
+
+  std::vector<std::string> names;
+  const UINT32 family_count = collection->GetFontFamilyCount();
+  names.reserve(family_count);
+  for (UINT32 i = 0; i < family_count; ++i) {
+    ComPtr<IDWriteFontFamily> family;
+    if (FAILED(collection->GetFontFamily(i, family.GetAddressOf())) ||
+        family == nullptr) {
+      continue;
+    }
+    ComPtr<IDWriteLocalizedStrings> localized;
+    if (FAILED(family->GetFamilyNames(localized.GetAddressOf())) ||
+        localized == nullptr) {
+      continue;
+    }
+    UINT32 locale_index = 0;
+    BOOL locale_exists = FALSE;
+    localized->FindLocaleName(L"en-us", &locale_index, &locale_exists);
+    if (!locale_exists) locale_index = 0;
+    UINT32 length = 0;
+    if (FAILED(localized->GetStringLength(locale_index, &length)) ||
+        length == 0) {
+      continue;
+    }
+    std::wstring family_name(length + 1, L'\0');
+    if (FAILED(localized->GetString(locale_index, family_name.data(),
+                                    length + 1))) {
+      continue;
+    }
+    family_name.resize(length);
+    const std::string utf8 = WideToUtf8String(family_name);
+    if (!utf8.empty()) names.push_back(utf8);
+  }
+
+  std::sort(names.begin(), names.end(), [](const std::string& lhs,
+                                           const std::string& rhs) {
+    std::string left = lhs;
+    std::string right = rhs;
+    std::transform(left.begin(), left.end(), left.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::transform(right.begin(), right.end(), right.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    if (left != right) return left < right;
+    return lhs < rhs;
+  });
+  names.erase(std::unique(names.begin(), names.end()), names.end());
+
+  flutter::EncodableList result;
+  result.reserve(names.size());
+  for (const std::string& name : names) {
+    result.emplace_back(name);
+  }
+  return result;
 }
 
 // TODO-1030 M0 — private window message posting a completed foreground-selection
@@ -1166,6 +1259,9 @@ void FlutterWindow::RegisterGalHookTextChannel() {
         const std::string& method = call.method_name();
         if (method == "canDrawOverlays") {
           result->Success(flutter::EncodableValue(true));
+        } else if (method == "getInstalledFontFamilies") {
+          result->Success(
+              flutter::EncodableValue(InstalledFontFamilies()));
         } else if (method == "show") {
           gal_hook_text_window_->UpdateStyle(StyleFromArgs(args));
           gal_hook_text_window_->SetClickLookupEnabled(

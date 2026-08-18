@@ -166,6 +166,25 @@ install(CODE "
   endif()
 " COMPONENT Runtime)
 
+# === galgame hook helper 随包归档（可选，本地/CI 事先构建）===
+# helper（injector exe + hook DLL）**绝不链接进 fushi.exe**，它以隔离子进程/DLL
+# 运行，随主包分发的是两架构 zip + sha256 侧车，app 校验后解压到 voice_hook/<arch>/。
+# 运行期定位是「exe 同级的 galgame_helper/」（galgame_helper_installer.dart 的
+# _bundledDirectory）。开发构建也由 install 规则从 build_distribution.ps1 的产出目录
+# 直接拷贝，避免本地构建的 Fushi 永远缺 helper。
+set(FUSHI_GALGAME_HELPER_DIST_DIR
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../native/galgame_hook/dist")
+set(FUSHI_GALGAME_HELPER_FILES
+  "voice_hook_x64.zip"
+  "voice_hook_x64.zip.sha256"
+  "voice_hook_x86.zip"
+  "voice_hook_x86.zip.sha256")
+foreach(_helper_file ${FUSHI_GALGAME_HELPER_FILES})
+  install(FILES "${FUSHI_GALGAME_HELPER_DIST_DIR}/${_helper_file}"
+    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}/galgame_helper"
+    COMPONENT Runtime OPTIONAL)
+endforeach()
+
 # === Magpie 随包精简归档（可选，本地/CI 事先构建）===
 # 与上面的 helper 规则同源同理由（BUG-1246）：Magpie 删掉下载链路之后，`magpie_bundle/`
 # 只由 CI 在 `flutter build windows` 之后的一个独立 YAML 步骤拷贝，于是 `flutter run` /

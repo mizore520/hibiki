@@ -238,6 +238,10 @@ typedef GalHookTextBoundsHandler = FutureOr<void> Function(
 /// 所以没拖过窗的用户观感逐像素不变。
 const double kGalHookTextFontSize = 30.0;
 
+/// 空串表示 Windows native 的默认字体（Yu Gothic UI）。字体族名由 native
+/// 根据本机 DirectWrite 字体集合最终校验，失效时安全回退到该默认字体。
+const String kGalHookTextFontFamilyDefault = '';
+
 /// Windows Hook 台词浮窗的专用 MethodChannel 契约。
 class GalHookTextOverlayChannel extends FloatingOverlayChannel {
   GalHookTextOverlayChannel._() : super(FushiChannels.galHookText);
@@ -392,6 +396,7 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
   static Future<bool> show({
     GalHookTextWindowRect? rect,
     double fontSize = kGalHookTextFontSize,
+    String fontFamily = kGalHookTextFontFamilyDefault,
     int textColor = 0xFFFFFFFF,
     int bgColor = 0xE0000000,
     bool following = true,
@@ -401,6 +406,7 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
   }) {
     return _instance.showImpl(<String, Object?>{
       'fontSize': fontSize,
+      'fontFamily': fontFamily,
       'textColor': textColor,
       'bgColor': bgColor,
       'buttonTextColor': 0xFFFFFFFF,
@@ -446,16 +452,34 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
     required int bgColor,
     int textColor = 0xFFFFFFFF,
     double fontSize = kGalHookTextFontSize,
+    String fontFamily = kGalHookTextFontFamilyDefault,
   }) async {
     if (!_instance.isSupported) return;
     await _instance.channel.invokeMethod<void>('updateStyle', <String, Object?>{
       'fontSize': fontSize,
+      'fontFamily': fontFamily,
       'bgColor': bgColor,
       'textColor': textColor,
       'buttonTextColor': 0xFFFFFFFF,
       'buttonBgColor': 0x552D2340,
       'activeColor': 0xFFCE93D8,
     });
+  }
+
+  /// 返回 Windows 当前已安装的 DirectWrite 字体族名。字体列表来自系统字体集合，
+  /// 不在 Dart 侧维护硬编码名单；非 Windows 或 native 失败时返回空列表。
+  static Future<List<String>> getInstalledFontFamilies() async {
+    if (!_instance.isSupported) return <String>[];
+    final Object? result = await _instance.channel.invokeMethod<Object?>(
+      'getInstalledFontFamilies',
+    );
+    if (result is! List) return <String>[];
+    return <String>{
+      for (final Object? value in result)
+        if (value is String && value.trim().isNotEmpty) value.trim(),
+    }.toList()
+      ..sort(
+          (String a, String b) => a.toLowerCase().compareTo(b.toLowerCase()));
   }
 
   static Future<void> setFollowing(bool following) async {

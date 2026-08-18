@@ -891,6 +891,44 @@ class PreferencesRepository extends ChangeNotifier {
     await setPref('first_time_setup', false);
   }
 
+  /// 「功能模块」显隐：漫画/视频/游戏三个媒体库 tab 是否出现在底栏/侧栏。默认
+  /// 全开（与旧版行为一致）；新手引导的功能选择与 设置 → 系统 → 功能模块 写同
+  /// 一真值。games 在读取端还叠加 Windows 平台门控，这里只存用户意愿。
+  bool get moduleMangaEnabled =>
+      getPref('module_manga_enabled', defaultValue: true) as bool;
+
+  Future<void> setModuleMangaEnabled(bool value) async {
+    await setPref('module_manga_enabled', value);
+    notifyListeners();
+  }
+
+  bool get moduleVideoEnabled =>
+      getPref('module_video_enabled', defaultValue: true) as bool;
+
+  Future<void> setModuleVideoEnabled(bool value) async {
+    await setPref('module_video_enabled', value);
+    notifyListeners();
+  }
+
+  bool get moduleGamesEnabled =>
+      getPref('module_games_enabled', defaultValue: true) as bool;
+
+  Future<void> setModuleGamesEnabled(bool value) async {
+    await setPref('module_games_enabled', value);
+    notifyListeners();
+  }
+
+  /// 新手引导完成标志。缺省值刻意取 **true**：既有安装升级上来不重弹引导；
+  /// 全新安装在 HomePage 的 `first_time_setup` 首帧分支里显式写 false，向导
+  /// 关闭后写回 true——中途杀进程下次启动值仍是 false，会重新弹出。备份合并的
+  /// insert-if-absent 天然不会覆盖本键（描述本库自身状态，同 `first_time_setup`）。
+  bool get onboardingCompleted =>
+      getPref('onboarding_completed', defaultValue: true) as bool;
+
+  Future<void> setOnboardingCompleted({required bool value}) async {
+    await setPref('onboarding_completed', value);
+  }
+
   final int defaultMaximumDictionaryTermsInResult = 10;
 
   int get maximumTerms => getPref('maximum_terms',
@@ -1337,6 +1375,16 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// YouTube 显式画质目标高度（如 720/1080/2160）；0 = 自动（默认策略：编码优先、
+  /// ≤1080p，见 pickPlaybackVideoStream）。消费方把 0 换算成 null 传解析器。
+  int get youtubeQualityTargetHeight =>
+      getPref('video_youtube_quality_height', defaultValue: 0) as int;
+
+  Future<void> setYoutubeQualityTargetHeight(int height) async {
+    await setPref('video_youtube_quality_height', height < 0 ? 0 : height);
+    notifyListeners();
+  }
+
   /// 视频画面缩放/比例模式（窗口模式 + 全屏的 [Video] fit；默认 [VideoFitMode.contain]
   /// = 保持比例完整适应媒体框；已有 cover/fill 持久化值仍按原值恢复）。
   VideoFitMode get videoFitMode => VideoFitMode.fromStorage(
@@ -1485,6 +1533,24 @@ class PreferencesRepository extends ChangeNotifier {
 
   Future<void> setJimakuDefaultLanguage(String langCode) async {
     await setPref('jimaku_default_language', langCode);
+    notifyListeners();
+  }
+
+  /// 刮削完成后，自动为**仍缺字幕**的视频补一条在线字幕。默认开。
+  ///
+  /// 为什么默认开：下载流水线的字幕阶段本来就默认 `bestEffort`（自动配字幕一直
+  /// 是开着的），只是从来没有名字、没有开关、失败只落在任务行一句英文里，用户
+  /// 无从知道这个能力存在。给它一个名字放进设置页（可被设置搜索命中），是这个
+  /// 能力第一次变得可发现。
+  ///
+  /// 只在配好了在线字幕来源（Jimaku key / OpenSubtitles）时才有任何动作；
+  /// 且**绝不覆盖**任何已有字幕。
+  bool get videoSubtitleBackfillAfterScrape =>
+      getPref('video_subtitle_backfill_after_scrape', defaultValue: true)
+          as bool;
+
+  Future<void> setVideoSubtitleBackfillAfterScrape(bool enabled) async {
+    await setPref('video_subtitle_backfill_after_scrape', enabled);
     notifyListeners();
   }
 
@@ -1934,6 +2000,56 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Galgame Hook 台词浮窗的字体族。空串表示默认的 Yu Gothic UI；字体是否仍
+  /// 安装、以及 DirectWrite 能否创建格式由 Windows native 再做最终校验并安全回退。
+  static const String galHookTextFontFamilyDefault = '';
+  static const int galHookTextFontFamilyMaxLength = 256;
+
+  String get galHookTextFontFamily {
+    final Object? stored = getPref(
+      'gal_hook_text_font_family',
+      defaultValue: galHookTextFontFamilyDefault,
+    );
+    if (stored is! String) return galHookTextFontFamilyDefault;
+    final String value = stored.trim();
+    return value.length <= galHookTextFontFamilyMaxLength
+        ? value
+        : value.substring(0, galHookTextFontFamilyMaxLength);
+  }
+
+  Future<void> setGalHookTextFontFamily(String value) async {
+    final String normalized = value.trim();
+    await setPref(
+      'gal_hook_text_font_family',
+      normalized.length <= galHookTextFontFamilyMaxLength
+          ? normalized
+          : normalized.substring(0, galHookTextFontFamilyMaxLength),
+    );
+    notifyListeners();
+  }
+
+  /// Galgame Hook 台词浮窗背景不透明度（0.0 = 完全透明，1.0 = 完全不透明）。
+  /// 旧版本已经使用同一个 key；这里只把读取/写入集中到偏好仓库，保持兼容。
+  static const double galHookTextWindowBgOpacityDefault = 0.0;
+
+  double get galHookTextWindowBgOpacity {
+    final Object? stored = getPref(
+      'gal_hook_text_window_bg_opacity',
+      defaultValue: galHookTextWindowBgOpacityDefault,
+    );
+    final double value =
+        stored is num ? stored.toDouble() : galHookTextWindowBgOpacityDefault;
+    return value.clamp(0.0, 1.0);
+  }
+
+  Future<void> setGalHookTextWindowBgOpacity(double value) async {
+    await setPref(
+      'gal_hook_text_window_bg_opacity',
+      value.clamp(0.0, 1.0).toDouble(),
+    );
+    notifyListeners();
+  }
+
   /// 「游戏内查词」（KiriKiri in-game lookup）默认**开**。
   ///
   /// 代价只在真发生命中时才付：注入侧的传感器要等 `lookup_enabled=1` **且**引擎
@@ -2302,6 +2418,16 @@ class PreferencesRepository extends ChangeNotifier {
   /// TODO-1961：内置下载引擎的下载根（新任务落点）。空串 = 未设置 → 用默认根
   /// `<documents>/anime_downloads/content`（与本 key 出现之前逐字节一致）。
   /// 设备本地路径，不进 Profile 快照（见 `ProfileKeys._excludedPrefKeys`）。
+  /// 发现页「全部源」聚合默认排除的源 id（逗号分隔）。默认排除 sukebei
+  /// （18+ 源只在用户于源下拉里**显式单选**时使用，不进默认聚合）。
+  String get discoveryDisabledSources =>
+      getPref('discovery_disabled_sources', defaultValue: 'sukebei') as String;
+
+  Future<void> setDiscoveryDisabledSources(String value) async {
+    await setPref('discovery_disabled_sources', value);
+    notifyListeners();
+  }
+
   String get downloadSaveRoot =>
       getPref('download_save_root', defaultValue: '') as String;
 

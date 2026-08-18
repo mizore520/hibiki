@@ -2,3512 +2,4706 @@ part of 'strings.g.dart';
 
 // Path: <root>
 class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
+  /// You can call this constructor and build your own translation instance of this locale.
+  /// Constructing via the enum [AppLocale.build] is preferred.
+  _StringsEn.build(
+      {Map<String, Node>? overrides,
+      PluralResolver? cardinalResolver,
+      PluralResolver? ordinalResolver})
+      : assert(overrides == null,
+            'Set "translation_overrides: true" in order to enable this feature.'),
+        $meta = TranslationMetadata(
+          locale: AppLocale.en,
+          overrides: overrides ?? {},
+          cardinalResolver: cardinalResolver,
+          ordinalResolver: ordinalResolver,
+        );
 
-	/// You can call this constructor and build your own translation instance of this locale.
-	/// Constructing via the enum [AppLocale.build] is preferred.
-	_StringsEn.build({Map<String, Node>? overrides, PluralResolver? cardinalResolver, PluralResolver? ordinalResolver})
-		: assert(overrides == null, 'Set "translation_overrides: true" in order to enable this feature.'),
-		  $meta = TranslationMetadata(
-		    locale: AppLocale.en,
-		    overrides: overrides ?? {},
-		    cardinalResolver: cardinalResolver,
-		    ordinalResolver: ordinalResolver,
-		  );
+  /// Metadata for the translations of <en>.
+  @override
+  final TranslationMetadata<AppLocale, _StringsEn> $meta;
 
-	/// Metadata for the translations of <en>.
-	@override final TranslationMetadata<AppLocale, _StringsEn> $meta;
+  late final _StringsEn _root = this; // ignore: unused_field
 
-	late final _StringsEn _root = this; // ignore: unused_field
-
-	// Translations
-	String get action_exit => 'Exit';
-	String get action_favorite => 'Favorite';
-	String activity_days_ago({required Object n}) => '${n} d ago';
-	String activity_hours_ago({required Object n}) => '${n} h ago';
-	String get activity_just_now => 'Just now';
-	String activity_minutes_ago({required Object n}) => '${n} min ago';
-	String get add_to_collection => 'Add to collection';
-	String get anime_download_back => 'Back';
-	String get anime_download_batch => 'Batch';
-	String get anime_download_category_all => 'All';
-	String get anime_download_category_english => 'English-translated';
-	String get anime_download_category_non_english => 'Non-English';
-	String get anime_download_category_raw => 'Raw';
-	String get anime_download_delete => 'Delete';
-	String anime_download_episode_count({required Object count}) => 'EP ${count}';
-	String get anime_download_generic_download => 'Download';
-	String get anime_download_generic_hint => 'Magnet link';
-	String get anime_download_generic_title => 'Paste a link (books, videos, anything)';
-	String get anime_download_include_subs => 'Include subtitles';
-	String get anime_download_kind_auto => 'Auto';
-	String get anime_download_kind_book => 'Book';
-	String get anime_download_kind_video => 'Video';
-	String get anime_download_magnet_invalid => 'Invalid magnet link';
-	String get anime_download_no_results => 'No results';
-	String get anime_download_no_subs => 'No subs';
-	String get anime_download_no_tasks => 'No download tasks yet';
-	String get anime_download_nyaa_query => 'Nyaa search terms';
-	String get anime_download_play_now => 'Play while downloading';
-	String get anime_download_play_now_fail => 'Not ready yet (metadata pending or connection failed) — try again later';
-	String get anime_download_play_now_ok => 'Imported — open it from the video library to play while downloading';
-	String get anime_download_push => 'Push download';
-	String get anime_download_push_failed => 'Failed to push to qBittorrent';
-	String get anime_download_pushed => 'Pushed — it will be imported automatically once finished';
-	String get anime_download_refresh => 'Refresh';
-	String get anime_download_relocate => 'Rename / move';
-	String anime_download_relocate_engine_failed({required Object reason}) => 'Failed, nothing changed: ${reason}';
-	String get anime_download_relocate_hint => 'Fushi renames/moves through the download engine, so seeding is not interrupted. Renaming in Explorer can never be recovered.';
-	String anime_download_relocate_library_failed({required Object reason}) => 'Files moved, but the library still points at the old path: ${reason}';
-	String get anime_download_relocate_move_title => 'Move to folder';
-	String get anime_download_relocate_no_files => 'This task has no files to rename yet (metadata not ready)';
-	String anime_download_relocate_ok({required Object rows}) => 'Renamed / moved; ${rows} library entries updated';
-	String get anime_download_relocate_pick_folder => 'Choose destination folder';
-	String get anime_download_relocate_rename_title => 'Rename file';
-	String get anime_download_retry => 'Retry';
-	String get anime_download_search => 'Search';
-	String get anime_download_search_error_proxy_hint => 'If the site cannot be reached directly, configure a network proxy in download settings.';
-	String get anime_download_search_failed => 'Search failed or timed out. Tap retry.';
-	String get anime_download_search_hint => 'Anime title';
-	String get anime_download_search_start_hint => 'Search an anime title above — torrents and subtitles are matched automatically.';
-	String get anime_download_sort_date => 'Published';
-	String get anime_download_sort_seeders => 'Seeders';
-	String get anime_download_sort_size => 'Size';
-	String get anime_download_store_unavailable => 'Download plan storage is unavailable';
-	String get anime_download_subs_badge => 'Subs';
-	String get anime_download_subs_failed => 'Subtitle search failed. Tap retry.';
-	String get anime_download_subs_need_key => 'Enter a Jimaku API key above to search subtitles.';
-	String get anime_download_tasks => 'Download tasks';
-	String get anime_download_title => 'Anime download';
-	String get anime_download_trusted => 'Trusted';
-	String get anime_download_trusted_only => 'Trusted only';
-	String get anki_allow_duplicates => 'Allow duplicates';
-	String get anki_allow_duplicates_hint => 'Skip duplicate check when adding cards';
-	String get anki_card_action_failed => 'Card action failed. Please try again.';
-	String get anki_compact_glossaries => 'Compact glossaries';
-	String get anki_compact_glossaries_hint => 'Use compact format for glossary entries';
-	String get anki_connect_api_key => 'API Key';
-	String get anki_connect_host => 'Host';
-	String get anki_connect_port => 'Port';
-	String get anki_create_lapis => 'Create Lapis deck';
-	String get anki_create_lapis_exists => 'Lapis note type and deck already exist — selected them.';
-	String anki_create_lapis_failed({required Object error}) => 'Could not create Lapis deck: ${error}';
-	String get anki_create_lapis_hint => 'Adds the Lapis note type and a Lapis deck to Anki, then selects them.';
-	String get anki_create_lapis_success => 'Lapis note type and deck created.';
-	String get anki_deck => 'Deck';
-	String get anki_duplicate_scope => 'Duplicate check scope';
-	String get anki_duplicate_scope_collection => 'Whole collection';
-	String get anki_duplicate_scope_deck => 'Selected deck (and its subdecks)';
-	String get anki_duplicate_scope_deck_root => 'Root deck (all subdecks)';
-	String get anki_duplicate_scope_hint => 'Which decks are searched when checking whether a card already exists. AnkiConnect only; AnkiDroid always searches the whole collection.';
-	String get anki_error_collection_unavailable => 'AnkiDroid\'s collection is currently unavailable. Open AnkiDroid at least once, make sure it isn\'t syncing and the API is enabled, then retry.';
-	String get anki_error_connection_refused => 'Could not connect to Anki: connection refused. Make sure Anki Desktop is running and the AnkiConnect add-on is installed.';
-	String get anki_error_connection_timeout => 'Could not connect to Anki: the connection timed out. Check the host, port, and firewall settings.';
-	String get anki_error_connection_unknown => 'Could not export to Anki: an unexpected connection error occurred. See the error log for details.';
-	String get anki_error_http => 'Could not export to Anki: an HTTP error occurred while contacting AnkiConnect.';
-	String get anki_error_permission_denied => 'AnkiDroid hasn\'t granted card access permission. Approve the system permission dialog that just appeared, then tap the button again to export.';
-	String get anki_fetch => 'Refresh decks & note types';
-	String get anki_fetching => 'Fetching...';
-	String get anki_field_mappings => 'Field mappings';
-	String get anki_field_not_mapped => 'Not mapped';
-	String get anki_mine_to_server => 'Mine to paired device';
-	String get anki_mine_to_server_hint => 'Send mined cards to the paired host\'s Anki (its decks and settings) instead of this device. Requires an interconnect pairing.';
-	String get anki_mined_action_add_duplicate => 'Add as a new card';
-	String get anki_mined_action_overwrite => 'Overwrite this card';
-	String get anki_mined_action_view => 'View / open in Anki';
-	String get anki_mined_card_subtitle => 'Choose what to do with the matching card.';
-	String get anki_mined_card_title => 'Card already in Anki';
-	String anki_mined_multiple_matches({required Object count}) => '${count} matching cards';
-	String get anki_not_configured => 'Tap Refresh to load your Anki decks and note types.';
-	String get anki_note_open_failed => 'Could not open the card in Anki.';
-	String get anki_note_type => 'Note type';
-	String get anki_note_viewer_empty => 'This card has no readable fields.';
-	String get anki_note_viewer_open_in_anki => 'Open in Anki';
-	String get anki_note_viewer_title => 'Existing card';
-	String get anki_open_no_card => 'No card found for this word in Anki.';
-	String get anki_overwrite_scope => 'Overwrite range';
-	String get anki_overwrite_scope_all => 'All matching cards';
-	String get anki_overwrite_scope_hint => 'Which already-made cards the green ✓ can overwrite';
-	String get anki_overwrite_scope_latest => 'Latest card only';
-	String get anki_refresh_hint => 'After creating or renaming a deck or note type in Anki, tap here to refresh.';
-	String anki_select_handlebar({required Object field}) => 'Select value for ${field}';
-	String get anki_settings_label => 'Anki settings';
-	String get anki_tag_default_section => 'Default tags';
-	String get anki_tag_include_category => 'Add source category tag';
-	String get anki_tag_include_category_hint => 'Books get "book", videos get "video", games get "game"';
-	String get anki_tag_include_fushi => 'Add "fushi" tag';
-	String get anki_tag_include_fushi_hint => 'Mark every card mined by Fushi';
-	String get anki_tags => 'Tags';
-	String get anki_tags_hint => 'Space-separated tags added to every card';
-	String get app_icon_label => 'App icon';
-	String get app_icon_presets => 'Presets';
-	String get app_ui_scale => 'UI size';
-	String get app_ui_scale_hint => 'Scales the whole interface — text, icons and controls together — from 30% to 300%. Increase it if the UI looks small on large screens.';
-	String get app_version => 'App version';
-	String get apply_theme => 'Apply theme';
-	String get audio_clip_failed => 'Couldn\'t extract the audio clip — the audio source may be missing or unreadable';
-	String get audio_import => 'Import audio';
-	String get audio_panel_add_audio => 'Add audio';
-	String get audio_panel_auto => 'Auto';
-	String get audio_panel_pick_new_subtitle => 'Pick new subtitle file';
-	String get audio_source_added => 'Audio source added';
-	String audio_source_dns_error({required Object host}) => 'Audio source connection failed: cannot resolve "${host}" — check your network, or remove this source in settings';
-	String get audio_source_edit_target_gone => 'That audio source no longer exists — edit discarded';
-	String get audio_source_edit_url => 'Edit audio source link';
-	String audio_source_error({required Object detail}) => 'Audio source error: ${detail}';
-	String get audio_source_fushi_interconnect => 'Fushi Interconnect';
-	String get audio_source_loopback_warning => 'Points at this device — re-point after switching machines';
-	String audio_source_request_error({required Object detail}) => 'Audio source request failed: ${detail}';
-	String audio_source_timeout({required Object host}) => 'Audio source timeout: "${host}" — server not responding, try again later or change source';
-	String get audio_source_updated => 'Audio source updated';
-	String get audio_source_url_invalid => 'Link must be http(s) and contain a term or reading placeholder';
-	String get audio_unavailable => 'No audio could be found.';
-	String get audio_volume => 'Volume';
-	String get audiobook_attached => 'Audiobook attached';
-	String get audiobook_audio_missing => 'Audio file missing';
-	String get audiobook_background_play => 'Keep playing after exit';
-	String get audiobook_background_play_hint => 'When off, audiobook playback stops when you leave the reader. Turn on to keep playing in the background.';
-	String get audiobook_export_clip => 'Export clip video';
-	String get audiobook_export_clip_failed => 'Clip export failed';
-	String get audiobook_export_clip_in_progress => 'Exporting clip…';
-	String get audiobook_export_clip_no_selection => 'Select text first to export a clip';
-	String get audiobook_export_clip_no_text => 'This selection has no text to render';
-	String get audiobook_export_clip_saved => 'Clip saved';
-	String get audiobook_export_clip_unsupported_range => 'This selection can\'t be exported (crosses chapter or audio file)';
-	String get audiobook_import => 'Import audiobook';
-	String get audiobook_import_error => 'Import failed';
-	String audiobook_import_error_copy_failed({required Object name}) => 'Failed to copy file: ${name}';
-	String audiobook_import_error_disk_full({required Object size}) => 'Not enough disk space. Required: ${size}';
-	String get audiobook_import_success => 'Audiobook imported';
-	String get audiobook_load_error => 'Failed to load audiobook.';
-	String get audiobook_pick_alignment => 'Pick alignment file';
-	String get audiobook_reference_original => 'Reference original files';
-	String get audiobook_reference_original_desc => 'Keep audio where it is and play from its original path; the book breaks if the file is moved or deleted.';
-	String get audiobook_relocate => 'Relocate file';
-	String get audiobook_relocate_done => 'Audio relocated';
-	String get auto_add_book_name_to_tags => 'Auto-add book title to tags';
-	String auto_chapter({required Object n}) => 'Chapter ${n}';
-	String get auto_read_on_lookup => 'Auto read word on lookup';
-	String get auto_search => 'Auto search';
-	String get auto_search_debounce_delay => 'Auto search debounce delay';
-	String get auto_select_search_window => 'Auto-select search window';
-	String get auto_select_search_window_hint => 'Probe multiple window sizes on import, pick the one with the best hit rate';
-	String get av_sync => 'A/V Sync';
-	String get av_sync_reset => 'Reset';
-	String get back => 'Back';
-	String get background_color => 'Background color';
-	String get background_color_desc => 'Reader page background';
-	String get backup_category_audiobooks => 'Audiobook audio';
-	String get backup_category_audiobooks_desc => 'Audiobook audio and alignment';
-	String get backup_category_books => 'Books';
-	String get backup_category_books_desc => 'Book files (EPUB and extracted content)';
-	String get backup_category_dictionary => 'Dictionaries';
-	String get backup_category_dictionary_desc => 'Imported dictionaries and their files';
-	String get backup_category_fonts => 'Custom fonts';
-	String get backup_category_fonts_desc => 'Imported custom font files';
-	String get backup_category_local_audio => 'Local audio databases';
-	String get backup_category_local_audio_desc => 'Local pronunciation audio databases';
-	String get backup_category_profiles => 'Profiles';
-	String get backup_category_profiles_desc => 'Configuration profiles';
-	String get backup_category_progress => 'Reading progress';
-	String get backup_category_progress_desc => 'Reading positions and bookmarks';
-	String get backup_category_settings => 'Settings';
-	String get backup_category_settings_desc => 'App and reader settings';
-	String get backup_category_statistics => 'Statistics';
-	String get backup_category_statistics_desc => 'Reading, video and mining statistics';
-	String get backup_category_videos => 'Videos';
-	String get backup_category_videos_desc => 'Local video files';
-	String get backup_export => 'Export backup';
-	String get backup_export_books_all => 'All books';
-	String backup_export_books_selected({required Object count}) => '${count} books selected';
-	String get backup_export_categories_hint => 'Tick what to pack into the backup. Unchecking Books removes those books entirely — their content and records go with them.';
-	String get backup_export_categories_title => 'Choose what to export';
-	String get backup_export_choose_books => 'Choose books';
-	String get backup_export_choose_videos => 'Choose videos';
-	String backup_export_failed({required Object message}) => 'Backup export failed: ${message}';
-	String get backup_export_hint => 'Choose what to include. Reading data (progress, stats, settings) is always included; uncheck Books to exclude books entirely, or uncheck large items (local audio, videos) to shrink the backup.';
-	String get backup_export_no_books => 'No books to choose from';
-	String get backup_export_no_videos => 'No videos to choose from';
-	String get backup_export_select_all => 'Select all';
-	String get backup_export_select_none => 'Select none';
-	String get backup_export_success => 'Backup exported successfully';
-	String get backup_export_videos_all => 'All videos';
-	String backup_export_videos_selected({required Object count}) => '${count} videos selected';
-	String get backup_exporting => 'Creating backup…';
-	String get backup_import => 'Import backup';
-	String backup_import_confirm({required Object date, required Object bookCount, required Object statsCount}) => 'This will replace all current data with the backup from ${date}.\n\n${bookCount} books, ${statsCount} statistics records.\n\nThe app will restart after restore.';
-	String get backup_import_confirm_title => 'Restore Backup?';
-	String get backup_import_contents_hint => 'Untick an item to skip it.';
-	String get backup_import_contents_title => 'This backup contains';
-	String backup_import_failed({required Object message}) => 'Backup import failed: ${message}';
-	String get backup_import_hint => 'Restore from a backup file. The app will restart.';
-	String get backup_import_invalid => 'Invalid backup file';
-	String backup_import_merge_preview({required Object bookCount, required Object progressCount}) => 'Merge will add ${bookCount} books and update ${progressCount} reading positions.';
-	String get backup_import_mode_label => 'Import mode';
-	String get backup_import_mode_merge => 'Merge into current library';
-	String get backup_import_mode_overwrite => 'Overwrite entire library';
-	String get backup_import_overlay_title => 'Importing backup';
-	String get backup_import_overlay_warning => 'Restoring your data. Please don\'t close the app.';
-	String get backup_import_preserve_sync_note => 'Your sync settings on this device (account and credentials) will be kept.';
-	String get backup_import_restart_button => 'Restart now';
-	String get backup_import_settings_off_hint => 'Keep this device\'s fonts/appearance/profiles; restore only books & reading data.';
-	String get backup_import_settings_on_hint => 'Full restore: fonts, appearance and profiles come from the backup.';
-	String get backup_import_settings_toggle => 'Import settings & profiles';
-	String get backup_import_success => 'Backup restored. Restarting…';
-	String get backup_import_validating_hint => 'Checking and previewing the backup file. This may take a moment.';
-	String get backup_import_validating_title => 'Reading backup…';
-	String backup_schema_newer({required Object version}) => 'This backup requires a newer version of the app (schema ${version}). Please update first.';
-	String batch_add_to_collection_success({required Object n}) => 'Added ${n} item(s) to the collection.';
-	String batch_delete_confirm({required Object n}) => 'Delete ${n} book(s)? This cannot be undone.';
-	String batch_delete_confirm_video({required Object n}) => 'Delete ${n} video(s)? This cannot be undone.';
-	String batch_delete_mixed_confirm({required Object n, required Object m}) => 'Delete ${n} media and dissolve ${m} collection(s)? This cannot be undone.';
-	String batch_delete_mixed_success({required Object n, required Object m}) => 'Deleted ${n} media, dissolved ${m} collection(s).';
-	String batch_delete_success({required Object n}) => 'Deleted ${n} book(s).';
-	String batch_delete_success_video({required Object n}) => 'Deleted ${n} video(s).';
-	String batch_dissolve_confirm({required Object m}) => 'Dissolve ${m} collection(s)? Grouping is removed; the media is kept.';
-	String batch_dissolve_success({required Object m}) => 'Dissolved ${m} collection(s).';
-	String get batch_invert_selection => 'Invert';
-	String get batch_select => 'Select';
-	String get batch_select_all => 'All';
-	String batch_selected_count({required Object n}) => '${n} selected';
-	String get batch_tag_add => 'Add';
-	String batch_tag_added({required Object name, required Object n}) => 'Tag "${name}" added to ${n} book(s).';
-	String batch_tag_added_video({required Object name, required Object n}) => 'Added tag "${name}" to ${n} video(s).';
-	String get batch_tag_apply => 'Apply';
-	String get batch_tag_keep => 'Keep';
-	String get batch_tag_remove => 'Remove';
-	String batch_tag_removed({required Object name, required Object n}) => 'Tag "${name}" removed from ${n} book(s).';
-	String batch_tag_removed_video({required Object name, required Object n}) => 'Removed tag "${name}" from ${n} video(s).';
-	String get batch_tag_title => 'Manage tags';
-	String get book_continue_reading => 'Continue reading';
-	String get book_css_editor_cancel => 'Cancel';
-	String get book_css_editor_confirm_reset => 'Reset CSS for this file to default?';
-	String get book_css_editor_confirm_reset_all => 'Reset CSS for ALL files to default?';
-	String get book_css_editor_discard => 'Discard';
-	String get book_css_editor_edit_css => 'Edit book CSS';
-	String get book_css_editor_no_css_files => 'No CSS files found in this book.';
-	String get book_css_editor_no_extract_dir => 'Book directory not found. Re-import the book to edit CSS.';
-	String get book_css_editor_reset_all => 'Reset all';
-	String get book_css_editor_reset_current => 'Reset current';
-	String get book_css_editor_reset_done => 'CSS has been reset.';
-	String get book_css_editor_save => 'Save';
-	String get book_css_editor_saved => 'CSS saved.';
-	String get book_css_editor_title => 'Book CSS editor';
-	String get book_css_editor_unsaved_changes => 'Unsaved changes';
-	String get book_css_editor_unsaved_changes_message => 'You have unsaved changes. Discard them?';
-	String get book_directory_not_found => 'Book directory not found.';
-	String get book_edit_author => 'Author';
-	String get book_file_not_found => 'Book file not found';
-	String get book_import_duplicate_cancel => 'No, cancel';
-	String get book_import_duplicate_cancelled => 'Import cancelled';
-	String get book_import_duplicate_keep => 'Yes, add suffix';
-	String book_import_duplicate_message({required Object name}) => 'A book named "${name}" already exists. Import it anyway? "Yes" imports with a numbered suffix; "No" cancels.';
-	String get book_import_duplicate_title => 'Duplicate book';
-	String get book_mark_completed_action => 'Mark as completed';
-	String get book_mark_uncompleted_action => 'Mark as not completed';
-	String get book_marked_completed => 'Marked as completed';
-	String get book_marked_uncompleted => 'Marked as not completed';
-	String get book_mode => 'Book mode';
-	String book_read_progress({required Object percent}) => 'Read ${percent}%';
-	String get book_scrape_cover => 'Scrape cover online';
-	String get book_scrape_empty => 'No matching covers';
-	String get book_scrape_failed => 'Failed to fetch cover';
-	String get book_scrape_hint => 'Book title / author';
-	String get book_scrape_search => 'Search';
-	String get book_scrape_search_failed => 'Search failed. Tap Search to retry.';
-	String get book_scrape_title => 'Match cover online';
-	String get book_scrape_use => 'Use';
-	String get book_search => 'Search in book';
-	String get book_search_hint => 'Enter search text…';
-	String get book_search_no_results => 'No results found';
-	String book_search_results({required Object n}) => '${n} result(s)';
-	String get books => 'Books';
-	String get browser_extension_enable_server_first => 'Tip: enable "Yomitan API server" and set an API key above first, so the extension is auto-configured with a working connection.';
-	String get browser_extension_mobile_unsupported => 'Mobile browsers cannot load this extension. Use in-app lookup in the reader or video player instead.';
-	String get browser_extension_page_intro => 'On desktop, look up words, parse subtitles and mine cards right inside Chrome or Edge. Prepare the extension below, then load it in your browser.';
-	String get browser_extension_prepare_button => 'Prepare extension files';
-	String get browser_extension_prepare_hint => 'Starts the lookup server and unpacks the extension locally; the folder path is copied to the clipboard.';
-	String get browser_extension_reinstall_button => 'Re-prepare / refresh files';
-	String get browser_extension_server_off => 'Lookup server off';
-	String get browser_extension_server_on => 'Lookup server on';
-	String get browser_extension_status_connected => 'Extension connected';
-	String get browser_extension_status_never => 'Extension not detected yet';
-	String get browser_extension_step_dev_mode => 'Turn on "Developer mode" (toggle in the top-right corner).';
-	String get browser_extension_step_done_auto => 'Done. The extension is already set up to connect to Fushi for lookups — nothing to fill in by hand.';
-	String get browser_extension_step_load_unpacked => 'Click "Load unpacked".';
-	String get browser_extension_step_open_page => 'Open the browser extensions page:';
-	String get browser_extension_step_pick_folder => 'Select the extension folder below (its path is already copied to your clipboard).';
-	String get browser_extension_step_verify => 'Verify the extension is loaded and connected';
-	String get browser_extension_verify_button => 'Check connection';
-	String get browser_extension_verify_checking => 'Checking…';
-	String get browser_extension_verify_connected => 'Extension detected and connected.';
-	String get browser_extension_verify_not_detected => 'No extension detected yet. Make sure it is loaded and enabled in your browser, then check again.';
-	String get browser_extension_version_app => 'App bundled';
-	String get browser_extension_version_browser => 'Loaded in browser';
-	String get browser_extension_version_label => 'Extension version';
-	String get browser_extension_version_mismatch => 'The extension loaded in your browser is outdated. Prepare the extension again if needed, then reload it from your browser\'s extensions page (chrome://extensions).';
-	String browser_extension_yomitan_port_conflict({required Object port}) => 'Port ${port} is in use by another process (usually the yomitan-api component — a Python process launched by your browser). End that process, or disable Yomitan API in Yomitan\'s advanced settings, then enable the Yomitan API server in Fushi again.';
-	String get cancel => 'Cancel';
-	String card_cover_degraded_to_static({required Object reason}) => 'Card cover fell back to a still frame (animated clip unavailable): ${reason}';
-	String get card_duplicate => 'Duplicate card — not exported.';
-	String get card_export_failed => 'Failed to export card.';
-	String card_export_failed_detail({required Object reason}) => 'Failed to export card: ${reason}';
-	String get card_export_not_configured => 'Anki not configured. Open Anki settings and tap Fetch.';
-	String card_exported({required Object deck}) => 'Card exported to 『${deck}』.';
-	String card_exported_audio_failed({required Object reason}) => 'Card exported, but the audio failed to download (${reason}).';
-	String get card_mined_no_sentence_captured => 'Card created, but no sentence was captured (re-select the word, or this text has no recognizable sentence).';
-	String get card_mined_unmapped_sentence_audio_field => 'Card created with sentence audio, but your Anki note type has no field mapped to it. Map a field to {sentence-audio}.';
-	String get card_mined_unmapped_sentence_field => 'Card created, but your Anki note type has no field mapped to the sentence. Use Settings -> \'Create Lapis deck\' or map a field to {sentence}.';
-	String get card_mined_without_sentence_audio => 'Card created without sentence audio (none found for this selection).';
-	String get card_mining_pending => 'Adding card…';
-	String card_overwritten({required Object deck}) => 'Card overwritten in 『${deck}』.';
-	String get change_source => 'Change source';
-	String get changelog_empty => 'No changelog found. Check your network or proxy settings.';
-	String get changelog_open_releases => 'Open releases page';
-	String get changelog_prerelease => 'Prerelease';
-	String chapter_progress({required Object idx, required Object total, required Object suffix, required Object pct}) => 'Chapter ${idx} / ${total}${suffix} · ${pct}%';
-	String get clear => 'Clear';
-	String get clear_dictionary_description => 'This will clear all dictionary results from history. Are you sure?';
-	String get clear_dictionary_title => 'Clear dictionary result history';
-	String get clipboard_history_clear => 'Clear';
-	String get clipboard_history_empty => 'No copy history yet';
-	String get clipboard_history_title => 'Clipboard history';
-	String get clipboard_panel_block_capture => 'Block screen capture';
-	String get clipboard_panel_block_capture_hint => 'Excludes the lookup and clipboard popup windows from screenshots, screen recording, and live streaming (Windows). Turn this off to let screenshots, recording, and streaming capture the lookup popup.';
-	String get clipboard_panel_opacity => 'Panel opacity';
-	String get clipboard_panel_opacity_hint => 'Whole-panel opacity — see through to the game or page beneath';
-	String get clipboard_panel_window_title => 'Fushi clipboard lookup';
-	String get clipboard_text_window_bg_opacity => 'Text window background';
-	String get clipboard_text_window_bg_opacity_hint => 'Background opacity of the transparent clipboard text window — 0% shows only the text over the game beneath';
-	String get clipboard_text_window_title => 'Clipboard text';
-	String get collapse_dictionaries => 'Collapse dictionaries';
-	String get collection_bookmark => 'Bookmark';
-	String get collection_clear_confirm => 'Permanently delete the selected collections? This can\'t be undone.';
-	String get collection_clear_scope => 'Clear scope';
-	String get collection_collapse => 'Collapse';
-	String collection_continue_progress({required Object n}) => 'Continue · EP ${n}';
-	String get collection_empty => 'Collection is empty';
-	String get collection_expand => 'Expand';
-	String get collection_export_all_books => 'All books';
-	String get collection_export_all_mined => 'All mined sentences';
-	String get collection_export_all_words => 'All favorite words';
-	String get collection_export_dedupe => 'Deduplicate by sentence';
-	String get collection_export_failed => 'Export failed';
-	String get collection_export_favorites_scope => 'Favorite sentences';
-	String get collection_export_format => 'Format';
-	String get collection_export_mined_title => 'Mined sentences';
-	String get collection_export_no_items => 'Nothing to export';
-	String get collection_export_pick_book => 'Choose a book';
-	String get collection_export_save => 'Save export';
-	String get collection_export_saved => 'Export saved';
-	String get collection_export_scope => 'Export scope';
-	String get collection_export_sentences_title => 'Favorite sentences';
-	String get collection_export_words_title => 'Favorite words';
-	String get collection_loading_hint => 'Loading collections and matching audio files…';
-	String get collection_member_removed => 'Removed from collection';
-	String get collection_merge_title => 'Merge collections';
-	String get collection_merged => 'Collections merged.';
-	String get collection_mined => 'Mined';
-	String get collection_open => 'Open';
-	String get collection_play => 'Play';
-	String get collection_remove_member => 'Remove from collection';
-	String get collection_remove_member_confirm => 'Remove this item from the collection? The item itself is kept.';
-	String get collection_sentence => 'Sentence';
-	String get collection_sort_by_imported => 'Sort by import date';
-	String get collection_sort_by_title => 'Sort by name';
-	String get collection_view_all => 'View all';
-	String collection_watched_progress({required Object done, required Object total}) => 'Watched ${done}/${total}';
-	String get collection_word => 'Word';
-	String get collections => 'Collections';
-	String get color_container => 'Container';
-	String get color_container_desc => 'Switch tracks, play bar background';
-	String get color_link => 'Link color';
-	String get color_link_desc => 'Reader hyperlink color';
-	String get color_primary => 'Primary';
-	String get color_primary_desc => 'Audio highlight, buttons, switches';
-	String get color_sentence_audio_highlight => 'Audio highlight';
-	String get color_sentence_audio_highlight_desc => 'Current-sentence highlight that follows audiobook playback';
-	String get color_secondary => 'Secondary';
-	String get color_secondary_desc => 'Dictionary entries, bookshelf badges';
-	String get color_tertiary => 'Tertiary';
-	String get color_tertiary_desc => 'Collections, reading statistics';
-	String get columns_per_page => 'Columns per page';
-	String get combine_into_series => 'Combine into series';
-	String get copied => 'Copied';
-	String get copied_to_clipboard => 'Copied to clipboard.';
-	String get copy => 'Copy';
-	String get copy_error => 'Copy error';
-	String get crash_dump_empty => 'No crash dumps';
-	String crash_dump_label({required Object n}) => 'Crash Dumps (${n})';
-	String get crash_dump_open_folder => 'Open dump folder';
-	String get crash_dump_privacy_notice => 'Crash dumps (.dmp) contain a snapshot of process memory and may include text you were reading, words you looked up, or other in-app data. Share them only with developers you trust.';
-	String get crash_dump_share => 'Share dump';
-	String get crash_dump_share_subject => 'Fushi Crash Dump';
-	String get create_series => 'Create series';
-	String get creator_action_add_to_stash => 'Add to stash';
-	String get creator_action_copy_to_clipboard => 'Copy to clipboard';
-	String get creator_action_play_audio => 'Play audio';
-	String get creator_action_share => 'Share';
-	String get creator_enhancement_audio_recorder => 'Audio recorder';
-	String get creator_enhancement_camera => 'Camera';
-	String get creator_enhancement_clear_field => 'Clear field';
-	String get creator_enhancement_crop_image => 'Crop image';
-	String get creator_enhancement_local_audio => 'Local audio';
-	String get creator_enhancement_open_stash => 'Open stash';
-	String get creator_enhancement_pick_audio => 'Pick audio';
-	String get creator_enhancement_pick_image => 'Pick image';
-	String get creator_enhancement_pop_from_stash => 'Pop from stash';
-	String get creator_enhancement_save_tags => 'Save tags';
-	String get creator_enhancement_search_dictionary => 'Search dictionary';
-	String get creator_enhancement_sentence_picker => 'Sentence picker';
-	String get creator_enhancement_text_segmentation => 'Text segmentation';
-	String get creator_export_card => 'Create card';
-	String get creator_field_audio => 'Term audio';
-	String get creator_field_audio_sentence => 'Sentence audio';
-	String get creator_field_cloze_after => 'Cloze after';
-	String get creator_field_cloze_before => 'Cloze before';
-	String get creator_field_cloze_inside => 'Cloze inside';
-	String get creator_field_collapsed_meaning => 'Collapsed meaning';
-	String get creator_field_context => 'Context';
-	String get creator_field_cue_sentence => 'Cue sentence';
-	String get creator_field_expanded_meaning => 'Expanded meaning';
-	String get creator_field_frequency => 'Frequency';
-	String get creator_field_furigana => 'Furigana';
-	String get creator_field_hidden_meaning => 'Hidden meaning';
-	String get creator_field_image => 'Image';
-	String get creator_field_meaning => 'Meaning';
-	String get creator_field_notes => 'Notes';
-	String get creator_field_pitch_accent => 'Pitch accent';
-	String get creator_field_reading => 'Reading';
-	String get creator_field_sentence => 'Sentence';
-	String get creator_field_tags => 'Tags';
-	String get creator_field_term => 'Term';
-	String get custom_dict_css => 'Custom CSS';
-	String get custom_dict_css_global => 'Global (all dictionaries)';
-	String get custom_fonts => 'Custom fonts';
-	String get custom_fonts_add_system => 'Add system font';
-	String get custom_fonts_archive_error => 'Failed to extract archive';
-	String get custom_fonts_catalog_title => 'Font library';
-	String get custom_fonts_download_failed => 'Download failed';
-	String get custom_fonts_downloading => 'Downloading...';
-	String get custom_fonts_drag_hint => 'Drag to reorder font priority';
-	String get custom_fonts_empty => 'No custom fonts added';
-	String get custom_fonts_font_roles => 'Font roles';
-	String get custom_fonts_import_file => 'Import font file';
-	String get custom_fonts_import_url => 'Import from URL';
-	String custom_fonts_imported_count({required Object count}) => '${count} font(s) imported';
-	String get custom_fonts_manage => 'Manage fonts';
-	String get custom_fonts_no_fonts_in_archive => 'No font files found in archive';
-	String get custom_fonts_recommended => 'Recommended fonts';
-	String get custom_fonts_removed => 'Font removed';
-	String get custom_fonts_search_hint => 'Search fonts';
-	String get custom_theme => 'Custom theme';
-	String custom_theme_default_name({required Object n}) => 'Custom ${n}';
-	String get custom_theme_long_press_hint => 'Tap to switch · long-press to edit';
-	String get custom_theme_name => 'Name';
-	String get dark_mode => 'Dark mode';
-	String get dark_mode_dark => 'Dark';
-	String get dark_mode_light => 'Light';
-	String get dark_mode_system => 'System';
-	String data_root_unavailable_message({required Object path}) => 'Your configured data location ${path} is temporarily unreachable (the drive may be asleep, busy, or disconnected). Your data is safe and untouched there — nothing is lost. Tap Retry once the drive is ready to load your data, or start with the default location for now (your existing data will NOT be modified).';
-	String get data_root_unavailable_title => 'Data location not responding';
-	String get data_root_use_default_button => 'Start with default location';
-	String get data_storage_change_button => 'Change location';
-	String get data_storage_change_confirm_body => 'Fushi will move all your data to the new folder and then restart. Do not close the app during the move.';
-	String get data_storage_change_confirm_title => 'Change data storage location?';
-	String get data_storage_location_default => 'Default location';
-	String get data_storage_location_hint => 'Where Fushi keeps your library, audiobooks and database. Desktop only.';
-	String get data_storage_location_title => 'Data storage location';
-	String data_storage_migrate_failed({required Object message}) => 'Could not move data: ${message}';
-	String get data_storage_migrate_failed_restart => 'Restart';
-	String get data_storage_migrate_failed_suggestions => 'Please try again with a different, empty folder. Do not choose the app\'s install folder, and make sure no files in that location are in use.';
-	String get data_storage_migrate_failed_title => 'Data migration failed';
-	String data_storage_migrate_overlay_progress({required Object copied, required Object total}) => 'Copying files: ${copied} / ${total}';
-	String get data_storage_migrate_overlay_title => 'Moving your data';
-	String get data_storage_migrate_overlay_warning => 'Please keep the app open. Do not close or shut down your computer until it finishes.';
-	String get data_storage_migrate_success => 'Data moved. Restarting…';
-	String get data_storage_migrating => 'Moving data…';
-	String get data_storage_reject_install_dir => 'That folder is the app\'s install location and can\'t store your data. Please choose a different, empty folder.';
-	String get data_storage_restart_failed => 'Data moved, but automatic restart failed. Please reopen Fushi manually.';
-	String db_downgrade_message({required Object dbVersion, required Object appVersion}) => 'This database was created by a newer version of Fushi (schema v${dbVersion}). Your current app is too old (v${appVersion}). Opening was blocked to protect your data. Please update the app and try again.';
-	String get db_downgrade_title => 'Update Fushi';
-	String get db_unrecoverable_message => 'The database could not be opened even after automatic repair. It is likely corrupt. You can restore a backup in Settings, or clear app data to start fresh.';
-	String get db_unrecoverable_title => 'Database damaged';
-	String get debug_log_share_subject => 'Fushi Debug Log';
-	String debug_log_title({required Object count}) => 'Debug Log (${count})';
-	String get debug_log_toggle => 'Enable debug log';
-	String get decrease => 'Decrease';
-	String get deduplicate_pitch_accents => 'Deduplicate pitch accents';
-	String get delete_collection => 'Delete collection';
-	String get delete_collection_also_books => 'Also delete the books in it';
-	String get delete_collection_also_videos => 'Also delete the videos (keeps your original video files)';
-	String get delete_custom_theme => 'Delete theme';
-	String get delete_custom_theme_confirm => 'Delete this custom theme? This cannot be undone.';
-	String get delete_in_progress => 'Delete in progress';
-	String get delete_prompt_delete_selected => 'Delete selected';
-	String get delete_prompt_message => 'These items were deleted on another device. Delete them here too?';
-	String get delete_prompt_select_all => 'Select all';
-	String get delete_prompt_title => 'Deleted on another device';
-	String get delete_scope_keep_local_desc => 'Other devices keep their copy';
-	String get delete_scope_sync_everywhere => 'Delete from all devices';
-	String get delete_scope_sync_everywhere_desc => 'Other devices confirm the deletion on next sync';
-	String get design_system_auto => 'Auto';
-	String get design_system_hint => 'Controls the visual style of the app';
-	String get design_system_label => 'Design system';
-	String get desktop_clipboard_auto_lookup => 'Auto-look-up on copy';
-	String get desktop_clipboard_auto_lookup_hint => 'When off, the panel shows only the copied text; tap a word to look it up.';
-	String get desktop_clipboard_destination => 'Lookup popup position';
-	String get desktop_clipboard_destination_main => 'Main window';
-	String get desktop_clipboard_destination_panel => 'Floating panel';
-	String get desktop_clipboard_destination_text_window => 'Transparent text window';
-	String get desktop_clipboard_destination_transient => 'Popup at cursor';
-	String get desktop_clipboard_enabled => 'Desktop clipboard lookup';
-	String get desktop_clipboard_enabled_hint => 'Watch clipboard + global shortcut to pop a lookup window (desktop · experimental)';
-	String get desktop_clipboard_window_mode => 'Window pinning';
-	String get desktop_clipboard_window_mode_always => 'Always';
-	String get desktop_clipboard_window_mode_hint => 'Controls whether Fushi stays above other windows';
-	String get desktop_clipboard_window_mode_lookup => 'Lookup only';
-	String get desktop_clipboard_window_mode_normal => 'Not on top';
-	String get dialog_add => 'ADD';
-	String get dialog_append => 'APPEND';
-	String get dialog_cancel => 'CANCEL';
-	String get dialog_clear => 'CLEAR';
-	String get dialog_clear_all_dictionaries => 'Delete all dictionaries';
-	String get dialog_close => 'CLOSE';
-	String get dialog_connect => 'CONNECT';
-	String get dialog_content_dictionary_clear => 'Wiping the dictionary database will also clear all search results in history.';
-	String get dialog_content_dictionary_delete => 'Deleting a single dictionary may take longer than clearing the entire dictionary database. This will also clear all search results in history.';
-	String get dialog_create => 'CREATE';
-	String get dialog_crop => 'CROP';
-	String get dialog_delete => 'DELETE';
-	String get dialog_done => 'DONE';
-	String get dialog_edit => 'EDIT';
-	String get dialog_edit_info => 'Edit info';
-	String get dialog_exit => 'EXIT';
-	String get dialog_export => 'EXPORT';
-	String get dialog_import => 'IMPORT';
-	String get dialog_import_dictionary => 'Import dictionary';
-	String get dialog_import_folder => 'Import folder dictionary';
-	String get dialog_importing => 'IMPORTING…';
-	String get dialog_launch_ankidroid => 'LAUNCH ANKIDROID';
-	String get dialog_ok => 'OK';
-	String get dialog_play => 'PLAY';
-	String get dialog_read => 'READ';
-	String get dialog_record => 'RECORD';
-	String get dialog_replace => 'Replace';
-	String get dialog_save => 'SAVE';
-	String get dialog_search => 'SEARCH';
-	String get dialog_select => 'SELECT';
-	String get dialog_share => 'SHARE';
-	String get dialog_stash => 'STASH';
-	String get dialog_stop => 'STOP';
-	String get dialog_title_dictionary_clear => 'Clear all dictionaries?';
-	String dialog_title_dictionary_delete({required Object name}) => 'Delete 『${name}』?';
-	String get dict_auto_update => 'Update automatically';
-	String get dict_auto_update_hint => 'Check for dictionary updates on launch';
-	String dict_auto_update_last({required Object time}) => 'Last successful check: ${time}';
-	String get dict_auto_update_never => 'Never';
-	String get dict_category_frequency => 'Frequency';
-	String get dict_category_grammar => 'Grammar';
-	String get dict_category_ja_en => 'Japanese–English';
-	String get dict_category_ja_ja => 'Japanese–Japanese';
-	String get dict_category_ja_other => 'Other Japanese';
-	String get dict_category_kanji => 'Kanji';
-	String get dict_category_names => 'Names';
-	String get dict_category_supplementary => 'Supplementary';
-	String get dict_download_browse => 'Download dictionaries';
-	String dict_download_button({required Object count}) => 'Download (${count})';
-	String get dict_download_complete => 'Download complete.';
-	String dict_download_failed({required Object error}) => 'Download failed: ${error}';
-	String get dict_download_installed => 'Installed';
-	String get dict_download_language => 'Your language';
-	String dict_download_partial({required Object success, required Object total, required Object error}) => '${success} / ${total} OK. Failed: ${error}';
-	String get dict_download_select_title => 'Select dictionaries';
-	String dict_downloading({required Object name}) => 'Downloading ${name}…';
-	String dict_import_failed_summary({required Object n}) => 'Failed to import ${n} dictionary(s)';
-	String get dict_import_started => 'Importing dictionaries in the background...';
-	String dict_import_success_summary({required Object n}) => 'Imported ${n} dictionary(s)';
-	String get dict_update_check => 'Check for updates';
-	String get dict_update_checking => 'Checking for updates…';
-	String dict_update_done({required Object name}) => '${name} updated.';
-	String dict_update_failed({required Object error}) => 'Update failed: ${error}';
-	String get dict_update_interval_daily => 'Daily';
-	String get dict_update_interval_monthly => 'Monthly';
-	String get dict_update_interval_weekly => 'Weekly';
-	String get dict_update_latest => 'Already up to date.';
-	String dict_update_name_mismatch_body({required Object incoming, required Object existing}) => 'The selected file is "${incoming}", but you are updating "${existing}". Replace anyway?';
-	String get dict_update_name_mismatch_title => 'Names do not match';
-	String get dict_update_none => 'All dictionaries are up to date.';
-	String dict_update_summary({required Object updated, required Object current, required Object failed}) => '${updated} updated, ${current} up to date, ${failed} failed.';
-	String get dict_update_tooltip => 'Update dictionary';
-	String dict_update_updating({required Object name}) => 'Updating ${name}…';
-	String get dictionaries => 'Dictionaries';
-	String get dictionaries_delete_failed => 'Failed to delete dictionaries';
-	String get dictionaries_deleting_data => 'Deleting dictionary data...';
-	String get dictionaries_menu_empty => 'Import a dictionary for use';
-	String get dictionary_delete_failed => 'Failed to delete dictionary';
-	String get dictionary_font_size => 'Dictionary font size';
-	String get dictionary_font_size_zoom_hint => 'Ctrl + scroll wheel zooms the popup content';
-	String get dictionary_section_frequency => 'Frequency dictionaries';
-	String get dictionary_section_kanji => 'Kanji dictionaries';
-	String get dictionary_section_pitch => 'Pitch dictionaries';
-	String get dictionary_section_term => 'Term dictionaries';
-	String get dictionary_settings => 'Dictionary settings';
-	String get dictionary_type_frequency => 'Frequency';
-	String get dictionary_type_pitch => 'Pitch';
-	String get dictionary_type_term => 'Term';
-	String get dictionary_unrecognized_format => 'Unrecognized dictionary format';
-	String get dismiss_swipe_sensitivity => 'Swipe dismiss sensitivity';
-	String get display_settings => 'Typography settings';
-	String get download_backend_not_configured => 'Download backend is not configured yet.';
-	String get download_clear_finished => 'Clear finished';
-	String get download_detail_backend_offline => 'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
-	String get download_network_proxy_auto => 'Auto';
-	String get download_network_proxy_auto_hint => 'Applies to AniList, Nyaa, and Jimaku only. Auto uses environment variables, then the enabled system proxy; torrent traffic is unchanged.';
-	String get download_network_proxy_custom => 'Custom';
-	String get download_network_proxy_custom_label => 'Custom proxy';
-	String get download_network_proxy_direct => 'Direct';
-	String get download_network_proxy_section => 'Discovery network';
-	String get download_open_settings => 'Open settings';
-	String get download_save_root_change => 'Change folder';
-	String get download_save_root_create_failed => 'Cannot create that folder. Check the drive and permissions.';
-	String get download_save_root_fallback_warning => 'The configured download folder is unavailable, so the default folder is being used.';
-	String get download_save_root_hint => 'New downloads are saved here. Existing tasks keep their original folder.';
-	String get download_save_root_not_absolute => 'Please pick an absolute folder path.';
-	String get download_save_root_not_writable => 'That folder is not writable.';
-	String get download_save_root_reset => 'Restore default';
-	String get download_save_root_title => 'Download folder';
-	String get download_settings => 'Download settings';
-	String get download_status_cancelled => 'Cancelled';
-	String get download_status_queued => 'Queued';
-	String download_subscription_after_episode({required Object episode}) => 'After episode ${episode}';
-	String get download_subscription_check_all => 'Check all';
-	String get download_subscription_check_now => 'Check now';
-	String download_subscription_choice_hint({required Object group, required Object resolution}) => 'Follow ${group} · ${resolution}. New single-episode releases will be queued.';
-	String get download_subscription_created => 'Download queued and subscription created';
-	String get download_subscription_delete => 'Delete subscription';
-	String download_subscription_delete_confirm({required Object title}) => 'Delete the subscription for ${title}? Downloaded tasks are kept.';
-	String get download_subscription_download_and_create => 'Download and subscribe';
-	String get download_subscription_empty_body => 'In Discover, choose a single-episode release and use Download and subscribe.';
-	String get download_subscription_empty_title => 'No subscriptions yet';
-	String download_subscription_last_checked({required Object time}) => 'Last checked: ${time}';
-	String download_subscription_latest_episode({required Object episode}) => 'Latest queued: episode ${episode}';
-	String get download_subscription_never_checked => 'Never checked';
-	String get download_subscription_running_hint => 'Fushi checks enabled subscriptions every 15 minutes while the app is running.';
-	String get download_subscription_unavailable_hint => 'Choose a single-episode release with a recognizable release group to subscribe.';
-	String get download_subscriptions_tab => 'Subscriptions';
-	String download_task_action_failed({required Object error}) => 'The task action failed: ${error}';
-	String get download_task_delete => 'Delete task';
-	String download_task_delete_confirm({required Object title}) => 'Delete the download task for ${title}?';
-	String get download_task_delete_files => 'Also delete downloaded files';
-	String get download_task_details => 'View details';
-	String get download_tasks_tab => 'Tasks';
-	String get download_test_connection => 'Test connection';
-	String get download_test_connection_failed => 'Connection failed. Check the address and credentials.';
-	String download_test_connection_ok({required Object version}) => 'Connected (version: ${version})';
-	String get drag_drop_need_card_target => 'Drop subtitles or audio onto a book or video';
-	String get drag_drop_unsupported_on_books => 'Drop book files here. Switch to Video or Dictionaries for those files.';
-	String get drag_drop_unsupported_on_dictionary => 'Drop .zip, .dsl, or .mdx dictionary files here. CSS files only work together with a dictionary package.';
-	String get drag_drop_unsupported_on_video => 'Drop videos, playlists, or subtitles here. Switch to Books or Dictionaries for those files.';
-	String get edit_custom_theme => 'Edit custom theme';
-	String get eink_mode => 'E-ink mode';
-	String get eink_mode_hint => 'Pure black-and-white theme with no animations and line-style highlights, for e-ink displays';
-	String get enable_swipe_to_close => 'Swipe to close popup';
-	String get epub_delete_error => 'Failed to delete book';
-	String get epub_delete_title => 'Delete book';
-	String get epub_parse_fallback => 'Book metadata repaired from database';
-	String get error_ankidroid_api => 'AnkiDroid error';
-	String get error_ankidroid_api_content => 'There was an issue communicating with AnkiDroid.\n\nEnsure that the AnkiDroid background service is active and all relevant app permissions are granted in order to continue.';
-	String get error_copied => 'Error copied to clipboard';
-	String get error_load_failed => 'Something went wrong while loading';
-	String get error_log_diagnostics_section => 'Diagnostics / forensics (not app errors)';
-	String get error_log_empty => 'No error logs';
-	String error_log_label({required Object n}) => 'Error Log (${n})';
-	String get error_log_previous_run => 'Historical logs (before last run)';
-	String get error_log_share_subject => 'Fushi Error Log';
-	String get extension_popup_independent_size => 'Separate size for browser extension';
-	String get extension_popup_independent_size_hint => 'Give the browser-extension lookup popup its own max size instead of following the in-app popup';
-	String get extension_popup_max_height => 'Extension popup max height';
-	String get extension_popup_max_width => 'Extension popup max width';
-	String get external_window_capture_failed => 'Window capture failed';
-	String get external_window_current_game => 'Current game';
-	String get external_window_mining => 'External window mining';
-	String get external_window_no_windows => 'No capturable windows found';
-	String get external_window_none => 'No window bound (tap to select)';
-	String get external_window_refresh => 'Refresh window list';
-	String get external_window_select => 'Select target window';
-	String get external_window_unbind => 'Unbind window';
-	String get external_window_unsupported => 'External window mining is Windows-only';
-	String get failed_online_service => 'Failed to communicate with online service';
-	String get favorite_added => 'Sentence saved to favorites';
-	String get favorite_removed => 'Sentence removed from favorites';
-	String favorites({required Object n}) => 'Favorites (${n})';
-	String field_fallback_used({required Object field, required Object secondField}) => 'The ${field} field used ${secondField} as its fallback search term.';
-	String file_count({required Object count}) => '${count} files';
-	String get floating_dict_close => 'Close';
-	String get floating_dict_title => 'Dictionary';
-	String get floating_lyric_bg_opacity => 'Floating subtitle background opacity';
-	String get floating_lyric_button_bg_opacity => 'Floating subtitle button background opacity';
-	String get floating_lyric_click_lookup => 'Tap floating subtitle to look up';
-	String get floating_lyric_click_lookup_hint => 'Keep this on with position lock if you still want word lookup.';
-	String get floating_lyric_close => 'Close';
-	String get floating_lyric_context_lines => 'Floating subtitle context lines';
-	String get floating_lyric_context_lines_hint => '0 shows only the current line (single-line, unchanged); set 1-3 to show that many lines before and after it';
-	String get floating_lyric_corner_radius => 'Floating subtitle corner radius';
-	String get floating_lyric_corner_radius_hint => '0 keeps each platform\'s default corners; raise it to round the bar and buttons more';
-	String get floating_lyric_font_size => 'Floating subtitle font size';
-	String get floating_lyric_hint => 'Float the currently playing subtitle line on top of other apps.';
-	String get floating_lyric_lock => 'Lock';
-	String get floating_lyric_next => 'Next';
-	String get floating_lyric_no_audio => 'This book has no audio to listen to';
-	String get floating_lyric_permission_hint => 'Overlay permission is required to display floating lyrics.';
-	String get floating_lyric_permission_hint_coloros => 'If the system keeps refusing the overlay permission: reinstall this app\'s APK once with a file manager, or turn off permission monitoring in Developer options, then try again.';
-	String get floating_lyric_play_pause => 'Play';
-	String get floating_lyric_previous => 'Previous';
-	String get floating_lyric_text_opacity => 'Floating subtitle text opacity';
-	String get floating_lyric_toggle_action => 'Floating subtitle';
-	String get floating_lyric_unavailable_hint => 'Could not show the floating subtitle window.';
-	String get floating_lyric_unlock => 'Unlock';
-	String get floating_lyric_width => 'Floating subtitle width';
-	String get floating_lyric_width_hint => '0 uses the platform default width; set a value to make the bar a fixed width';
-	String get focus_navigation_enabled => 'Keyboard & gamepad focus navigation';
-	String get focus_navigation_enabled_hint => 'Move focus with arrow keys or a gamepad and show a focus ring.';
-	String get folder_picker_permission_required => 'Storage permission is required to browse folders';
-	String get follow_audio_off_tooltip => 'Follow audio: OFF';
-	String get follow_audio_on_tooltip => 'Follow audio: ON';
-	String get font_color => 'Font color';
-	String get font_color_desc => 'Reader text color';
-	String get font_desc_hina_mincho => 'Soft decorative Mincho · Pairs well with Noto Sans JP fallback';
-	String get font_desc_klee_one => 'Handwritten textbook style · Clear and legible · Pairs well with Noto Sans JP fallback';
-	String get font_desc_mplus_rounded_1c => 'Rounded cute style · Ideal for light novels · Pairs well with Noto Sans JP fallback';
-	String get font_desc_noto_sans_jp => 'Google/Adobe Gothic · Japanese glyphs priority · Variable weight';
-	String get font_desc_noto_sans_sc => 'Google/Adobe Gothic · Simplified Chinese glyphs priority · Use as fallback with Japanese fonts';
-	String get font_desc_noto_sans_tc => 'Google/Adobe Gothic · Traditional Chinese glyphs priority';
-	String get font_desc_noto_serif_jp => 'Google/Adobe Serif · Japanese glyphs priority · Ideal for vertical reading';
-	String get font_desc_noto_serif_sc => 'Google/Adobe Serif · Simplified Chinese glyphs priority · Use as fallback with Japanese fonts';
-	String get font_desc_noto_serif_tc => 'Google/Adobe Serif · Traditional Chinese glyphs priority · Ideal for vertical reading';
-	String get font_desc_shippori_mincho => 'Elegant Mincho typeface · Great for literature · Pairs well with Noto Sans JP fallback';
-	String get font_desc_zen_kaku_gothic_new => 'Modern Kaku Gothic · General reading · Pairs well with Noto Sans JP fallback';
-	String get font_desc_zen_maru_gothic => 'Soft rounded Gothic · Pairs well with Noto Sans JP fallback';
-	String get font_desc_zen_old_mincho => 'Vintage Mincho typeface · Classical literature style · Pairs well with Noto Sans JP fallback';
-	String get font_source_file => 'File';
-	String get font_source_system => 'System';
-	String get font_target_app_ui => 'System UI font';
-	String get font_target_body => 'Novel text font';
-	String get font_target_dictionary => 'Dictionary font';
-	String get font_target_video_subtitle => 'Video subtitle font';
-	String get gal_hook_text_font_size => 'Galgame caption font size';
-	String get gal_hook_text_font_size_hint => 'Drag the overlay\'s corner to resize the window; the caption size is set here.';
-	String get game_add => 'Add game';
-	String get game_already_added => 'This game is already in the library';
-	String get game_audio_backend_engine => 'Engine PCM';
-	String get game_audio_backend_loopback => 'System loopback (mixed)';
-	String get game_audio_backend_none => 'No audio source';
-	String get game_audio_backend_resource => 'Game resource audio';
-	String get game_audio_duration => 'Audio duration';
-	String get game_audio_fallback_disabled_missing => 'No matching game resource audio; fallback is disabled';
-	String get game_audio_resource_id => 'Audio resource ID';
-	String get game_audio_tracks => 'Active audio tracks';
-	String get game_auto_cover => 'Fetch cover automatically';
-	String get game_back_to_capture => 'Back to capture workspace';
-	String get game_back_to_library => 'Back to game library';
-	String get game_capture_active => 'Capture is active';
-	String get game_capture_degraded_loopback => 'The game is running, but engine injection failed; falling back to system audio, which can mix in BGM and effects.';
-	String get game_capture_description => 'Launch or attach a game, then monitor text, voice, screenshots and Anki output.';
-	String get game_capture_empty_body => 'Launch or bind a game; text and sentence-audio status will appear here.';
-	String get game_capture_empty_title => 'No lines received yet';
-	String get game_capture_launch_failed => 'Game launch or capture failed';
-	String get game_capture_launching => 'Launching game and starting capture...';
-	String get game_capture_running => 'Capture session is running';
-	String get game_capture_window_missing => 'The game process started but its window never appeared, so the game may not have launched. Try starting it again.';
-	String get game_capture_workbench => 'Capture workspace';
-	String get game_captured_lines => 'Captured lines';
-	String get game_card_mapping_missing => 'Anki field mappings are missing game-card tokens';
-	String get game_card_sentence_audio_missing => 'The card was created without sentence audio; no other line\'s audio was substituted.';
-	String get game_clear_events => 'Clear events';
-	String get game_cover_not_found => 'No usable cover found in the game folder or executable';
-	String get game_cover_searching => 'Looking for a cover...';
-	String get game_cover_updated => 'Cover updated';
-	String get game_dashboard => 'Home';
-	String get game_detail_missing => 'This game is no longer in the library';
-	String get game_detail_tab_edit => 'Edit';
-	String get game_detail_tab_stats => 'Stats';
-	String get game_detail_tab_summary => 'Overview';
-	String get game_diagnostics => 'Compatibility diagnostics';
-	String get game_diagnostics_subtitle => 'Session stages, endpoints, audio tracks and structured events';
-	String game_drop_imported({required Object count}) => 'Added ${count} game(s)';
-	String get game_drop_no_exe => 'No new game .exe among the dropped files';
-	String get game_edit_developer => 'Developer';
-	String get game_edit_display_name => 'Display name';
-	String get game_edit_exe_path => 'Executable path';
-	String get game_edit_invalid_date => 'Release date must be YYYY-MM-DD';
-	String get game_edit_launch_args => 'Launch arguments';
-	String get game_edit_launch_args_hint => 'Passed to the game on launch, e.g. -windowed';
-	String get game_edit_nsfw => 'Adult title';
-	String get game_edit_release_date => 'Release date (YYYY-MM-DD)';
-	String get game_edit_save => 'Save';
-	String get game_edit_saved => 'Saved';
-	String get game_edit_summary => 'Description';
-	String get game_edit_tags => 'Tags (comma separated)';
-	String get game_edit_user_rating => 'My rating (0-10)';
-	String get game_edit_user_review => 'My review';
-	String get game_edit_workdir => 'Working directory';
-	String get game_empty => 'No games added yet';
-	String get game_endpoint_phase_connected => 'Connected';
-	String get game_endpoint_phase_connecting => 'Connecting';
-	String get game_endpoint_phase_retrying => 'Retrying';
-	String get game_endpoint_phase_stopped => 'Stopped';
-	String get game_endpoints_engine_active => 'Text is provided by the engine hook; these endpoints are optional';
-	String get game_endpoints_hint => 'Ports for external text tools (Textractor / LunaTranslator etc.); ignore if you don\'t use them';
-	String get game_event_all => 'All events';
-	String get game_event_warnings => 'Warnings and errors';
-	String get game_exe_missing => 'Game executable not found';
-	String get game_filter => 'Filter';
-	String get game_filter_all => 'All';
-	String get game_filter_favorited => 'Favorited';
-	String get game_filter_hide_nsfw => 'Hide adult titles';
-	String get game_filter_local_only => 'Has local file';
-	String get game_filter_metadata_only => 'Metadata only';
-	String get game_filter_mined => 'Mined';
-	String get game_filter_reset => 'Clear filters';
-	String get game_filter_source => 'Availability';
-	String get game_filter_status => 'Play status';
-	String get game_filter_tags => 'Tags';
-	String get game_filter_with_audio => 'With audio';
-	String get game_focus_continue => 'Continue';
-	String get game_follow_live => 'Follow live';
-	String get game_health => 'Health status';
-	String get game_health_anki => 'Anki output';
-	String get game_health_audio => 'Audio source';
-	String get game_health_helper => 'Hook helper';
-	String get game_health_process => 'Game process';
-	String get game_health_text => 'Text source';
-	String get game_health_upscaling => 'Window upscaling';
-	String get game_health_window => 'Game window';
-	String get game_helper_download => 'Download';
-	String game_helper_download_failed({required Object error}) => 'Engine component download failed: ${error}';
-	String get game_helper_downloading => 'Downloading engine component…';
-	String get game_helper_install_incomplete => 'Engine component install incomplete, please retry';
-	String game_helper_needed_body({required Object size}) => 'Launching a galgame needs the engine-hook injector component (about ${size}). It contains process-injection code and ships separately from the app to avoid antivirus false positives. Download it now?';
-	String get game_helper_needed_title => 'Galgame engine component required';
-	String get game_helper_size_unknown => 'unknown size';
-	String get game_helper_verification_failed => 'Engine component blocked: its checksum could not be verified (the .sha256 file from GitHub is unreachable, missing, or does not match). Fushi refuses to install unverified injector code.';
-	String get game_home_subtitle => 'Game library and capture monitoring';
-	String get game_hook_fallback_all_audio_sources_failed => 'Neither the engine voice hook nor the system loopback could be started; no audio can be captured.';
-	String get game_hook_fallback_engine_attach_failed => 'Attaching the engine voice hook to the running game failed; system mix is used instead.';
-	String get game_hook_fallback_engine_pcm_unavailable => 'The engine voice hook is installed, but the game has not played any voice yet. System mix is used for now and will switch back automatically once the first voice arrives.';
-	String get game_hook_fallback_launch_injection_failed => 'The game is running, but early engine injection failed; system mix is used instead.';
-	String get game_hook_fallback_window_not_found => 'Audio capture is running, but the game window has not appeared yet, so screenshots are unavailable. It will bind automatically once the window shows up.';
-	String get game_hook_line_unavailable => 'This captured line is no longer available.';
-	String get game_hook_reason_access_denied => 'The game runs with higher privileges; start Fushi as administrator and try again.';
-	String get game_hook_reason_bitness_mismatch => 'Helper architecture does not match the game (32-bit vs 64-bit); reinstall the helper.';
-	String get game_hook_reason_create_process_failed => 'The game could not be started from Fushi; check the executable path.';
-	String get game_hook_reason_elevation_required => 'This game requires administrator rights; start Fushi as administrator and launch it again.';
-	String get game_hook_reason_game_exe_missing => 'The game executable no longer exists at the saved path.';
-	String get game_hook_reason_guarded_hook_failed => 'A profile-guarded hook could not be installed in time; retrying automatically.';
-	String get game_hook_reason_handshake_timeout => 'The game was hooked but produced no text or audio in time; this engine may not be supported yet.';
-	String get game_hook_reason_helper_missing => 'Voice-hook helper is not installed for this game architecture; install it and try again.';
-	String get game_hook_reason_hook_dll_missing => 'The helper package is incomplete (hook library missing); reinstall it.';
-	String get game_hook_reason_injection_failed => 'Injection into the game was blocked; add Fushi and the game to antivirus exclusions.';
-	String get game_hook_reason_ready_timeout => 'The hook library did not finish loading in time; antivirus scanning can cause this.';
-	String get game_hook_reason_resume_failed => 'The launched game could not be resumed and was stopped; launch it again.';
-	String get game_hook_reason_shared_memory_unavailable => 'The capture channel could not be opened; restart Fushi.';
-	String get game_hook_reason_spawn_failed => 'The helper could not be started; check that antivirus has not removed or blocked it.';
-	String get game_hook_reason_stale_session => 'A previous capture session is still loaded in the game; restart the game once.';
-	String get game_hook_reason_steam_timeout => 'Steam accepted the launch request but the game process never appeared.';
-	String get game_hook_reason_target_missing => 'No game process or executable was selected for capture.';
-	String get game_hook_recapture_empty => 'No audio captured in the recapture window';
-	String get game_hook_recapture_saved => 'Recaptured voice saved to this line';
-	String get game_hook_recapture_started => 'Recording — replay this line in the game';
-	String get game_hook_recapture_unavailable => 'Voice recapture needs system loopback audio';
-	String get game_kpi_total_games => 'Games';
-	String get game_kpi_week => 'This week';
-	String get game_latest_line => 'Latest line';
-	String get game_launch => 'Launch';
-	String get game_launch_and_capture => 'Launch and capture';
-	String get game_launch_unsupported => 'Launching games is only supported on Windows';
-	String get game_library => 'Game library';
-	String get game_line_audio_encoded => 'Audio extracted';
-	String get game_line_audio_fallback => 'Fallback';
-	String get game_line_audio_matched => 'Audio ready';
-	String get game_line_audio_missing => 'No audio';
-	String get game_line_audio_pending => 'Matching';
-	String get game_line_audio_unavailable => 'Text only';
-	String get game_line_favorite_tooltip => 'Favorite this line';
-	String get game_line_mined => 'Mined';
-	String get game_line_preview_failed => 'No playable audio for this line';
-	String get game_line_preview_tooltip => 'Play this line\'s audio';
-	String get game_line_track_applied => 'Voice track applied to this line';
-	String get game_line_track_dialog_title => 'Voice track for this line';
-	String get game_line_track_failed => 'That track has no audio around this line';
-	String get game_line_track_tooltip => 'Pick the voice track for this line';
-	String get game_line_unfavorite_tooltip => 'Remove favorite';
-	String get game_live_lines => 'Live lines';
-	String get game_manage_tracks => 'Manage audio tracks';
-	String get game_meta_added => 'Added';
-	String get game_meta_ranking => 'Ranking';
-	String get game_meta_source => 'Data source';
-	String get game_never_played => 'Never played';
-	String get game_no_active_line => 'Select a line to inspect its sentence-audio state.';
-	String get game_no_events => 'No session events yet';
-	String get game_no_match => 'No games match the current filters';
-	String get game_no_tracks => 'No audio-track data yet';
-	String get game_open_capture_workspace => 'Open capture workspace';
-	String get game_phase_attaching => 'Attaching';
-	String get game_phase_degraded => 'Degraded';
-	String get game_phase_error => 'Error';
-	String get game_phase_idle => 'Idle';
-	String get game_phase_injecting => 'Injecting';
-	String get game_phase_launching => 'Launching';
-	String get game_phase_resolving => 'Resolving';
-	String get game_phase_running => 'Running';
-	String get game_phase_stopping => 'Stopping';
-	String get game_phase_waiting_signals => 'Waiting for signals';
-	String get game_pipeline => 'Session pipeline';
-	String get game_play_status => 'Play status';
-	String get game_random_reroll => 'Shuffle';
-	String get game_random_title => 'Pick for me';
-	String get game_recently_played => 'Recently played';
-	String get game_refresh_tracks => 'Refresh tracks';
-	String get game_remove => 'Remove';
-	String get game_rename => 'Rename';
-	String get game_rename_label => 'Game name';
-	String get game_scrape => 'Fetch metadata';
-	String get game_scrape_applied => 'Metadata updated';
-	String get game_scrape_failed => 'Metadata fetch failed';
-	String get game_scrape_no_result => 'No matching entry found';
-	String get game_scrape_query => 'Title or source ID';
-	String get game_search => 'Search games';
-	String get game_session_events => 'Session events';
-	String get game_session_idle => 'Capture has not started';
-	String get game_session_listening => 'Listening';
-	String get game_set_cover => 'Set cover';
-	String get game_show_hook_text_window => 'Show Hook text window';
-	String get game_site_score => 'Site rating';
-	String get game_sort => 'Sort';
-	String get game_sort_added => 'Date added';
-	String get game_sort_last_played => 'Last played';
-	String get game_sort_name => 'Name';
-	String get game_sort_release => 'Release date';
-	String get game_sort_site_score => 'Site rating';
-	String get game_sort_user_rating => 'My rating';
-	String get game_stat_daily => 'Daily play time';
-	String get game_stat_delete_session => 'Delete this session';
-	String get game_stat_last_played => 'Last played';
-	String get game_stat_no_sessions => 'No play sessions recorded yet';
-	String get game_stat_session_list => 'Session history';
-	String get game_stat_sessions => 'Sessions';
-	String get game_stat_today => 'Today\'s play time';
-	String get game_stat_total_time => 'Total play time';
-	String get game_status_dropped => 'Dropped';
-	String get game_status_not_configured => 'Not verified';
-	String get game_status_on_hold => 'On hold';
-	String get game_status_played => 'Played';
-	String get game_status_playing => 'Playing';
-	String get game_status_ready => 'Ready';
-	String get game_status_unset => 'Not set';
-	String get game_status_waiting => 'Waiting';
-	String get game_status_want_to_play => 'Want to play';
-	String get game_stop_listening => 'Stop listeners';
-	String get game_summary_aliases => 'Aliases';
-	String get game_summary_all_titles => 'All titles';
-	String get game_summary_average_hours => 'Average play time';
-	String get game_summary_none => 'No description yet. Fetch metadata to fill it in.';
-	String get game_summary_release_date => 'Release date';
-	String get game_tags_clear => 'Clear selection';
-	String get game_tags_title => 'Game tags';
-	String get game_text_endpoints => 'Text endpoints';
-	String get game_text_gaps => 'Sequence gaps';
-	String get game_text_gaps_hint => 'Sequence gaps = dropped-line count in the hook text ring; 0 is normal';
-	String get game_text_source_engine => 'Engine hook';
-	String get game_text_source_unknown => 'Unknown source';
-	String get game_text_source_websocket => 'WebSocket';
-	String get game_text_thread => 'Text thread';
-	String game_text_thread_audio_count({required Object count}) => '${count} with audio';
-	String get game_text_thread_hint => 'Choose the clean dialogue thread, like Luna Translator';
-	String get game_track_auto => 'Automatic selection';
-	String get game_track_clips => 'Clips';
-	String get game_track_energy => 'Energy';
-	String get game_track_exclude_bgm => 'Mark as BGM';
-	String get game_track_exclusion_hint => 'Mark a BGM/ambience track as excluded so auto-selection never treats it as voice — lines without speech no longer pick up BGM.';
-	String get game_track_exclusion_title => 'Exclude audio tracks';
-	String get game_track_preview => 'Preview this track';
-	String get game_track_preview_failed => 'No recent audio could be captured from this track';
-	String get game_track_preview_stop => 'Stop preview';
-	String get game_track_restore => 'Restore track';
-	String get game_track_select_as_voice => 'Use as voice track';
-	String get game_track_select_requires_engine => 'Track selection requires an active engine hook session';
-	String get game_track_voice => 'Voice';
-	String get game_tracks_loopback_hint => 'System loopback captures the whole system\'s mixed output as a single stream; per-track enumeration is not available.';
-	String get game_tracks_pcm_only_hint => 'Per-track selection only affects capture while engine PCM is the active audio backend. The list below is read-only under the current backend.';
-	String get game_tracks_resource_mode_hint => 'In game-resource audio mode, each voice line is extracted directly from game files, so no PCM track list exists here. Automatic or manual track selection only applies to engine PCM capture.';
-	String get game_unread_lines => 'Unread';
-	String get game_upscaling => 'Game window upscaling';
-	String get game_upscaling_auto => 'Auto';
-	String get game_upscaling_hint_external => 'A copy of Magpie was already running, so Fushi left it alone. Press Win+Shift+A to upscale the game window.';
-	String get game_upscaling_hint_first_run => 'Magpie still had to set itself up this time. Press Win+Shift+A to upscale now — next time you start the game it will happen automatically.';
-	String get game_upscaling_hint_manual => 'Press Win+Shift+A to upscale the game window.';
-	String get game_upscaling_installed_only => 'Installed only';
-	String get game_upscaling_off => 'Off';
-	String get game_upscaling_status_active => 'Window upscaling is on';
-	String get game_upscaling_status_failed => 'Window upscaling could not start';
-	String get game_upscaling_status_manual => 'Window upscaling is ready, but did not start on its own';
-	String get game_upscaling_status_unavailable => 'Window upscaling is not available';
-	String get game_user_rating => 'My rating';
-	String get game_view_detail => 'View details';
-	String get game_waiting_for_text => 'Waiting for text';
-	String game_waveform_range_label({required Object start, required Object end, required Object duration, required Object total}) => '${start} - ${end} (selected ${duration} / total ${total})';
-	String get game_waveform_select_title => 'Select audio range';
-	String get game_window_bound => 'Bound';
-	String get game_window_missing => 'Not bound';
-	String get games => 'Games';
-	String get global_context_capture => 'Capture selection context';
-	String get global_context_capture_hint => 'Read surrounding text from the foreground app to show the current sentence (Windows only)';
-	String go_to_chapter({required Object n}) => 'Chapter ${n}';
-	String get handlebar_audio => 'Audio';
-	String get handlebar_book_cover => 'Book cover';
-	String get handlebar_card_image => 'Card image (cover / GIF)';
-	String get handlebar_cue_sentence => 'Cue sentence';
-	String handlebar_deprecated_label({required Object label}) => '${label} (deprecated)';
-	String get handlebar_document_title => 'Document title';
-	String get handlebar_expression => 'Expression';
-	String get handlebar_frequencies => 'Frequencies (HTML)';
-	String get handlebar_frequency_harmonic_rank => 'Frequency (rank)';
-	String get handlebar_furigana_plain => 'Furigana';
-	String get handlebar_glossary => 'Glossary';
-	String get handlebar_glossary_first => 'Glossary (first)';
-	String get handlebar_pitch_accent_categories => 'Pitch categories';
-	String get handlebar_pitch_accent_positions => 'Pitch positions';
-	String get handlebar_popup_selection_text => 'Popup selection text';
-	String get handlebar_reading => 'Reading';
-	String get handlebar_selected_glossary => 'Selected glossary';
-	String get handlebar_sentence => 'Sentence';
-	String get handlebar_sentence_audio => 'Sentence audio';
-	String get handlebar_video_clip => 'Video clip (GIF)';
-	String get harmonic_frequency => 'Aggregate word frequencies';
-	String health_match_summary({required Object pct}) => 'Match ${pct}%';
-	String get highlight_on_tap => 'Highlight text on tap';
-	String get home_activity => 'Activity';
-	String get home_activity_empty => 'No activity yet';
-	String get home_continue => 'Continue';
-	String get home_filter_added => 'Added';
-	String get home_filter_all => 'All';
-	String get home_filter_game => 'Game';
-	String get home_filter_read => 'Read';
-	String get home_filter_watch => 'Watch';
-	String get home_recently_added => 'Recently added';
-	String get home_remote_source => 'Remote';
-	String home_session_count({required Object n}) => '${n} sessions';
-	String get home_today => 'Today';
-	String get home_yesterday => 'Yesterday';
-	String get hover_auto_lookup => 'Look up on hover';
-	String get hover_auto_lookup_hint => 'Look up automatically when the mouse hovers over a character; no need to click or hold Shift. Triggers at most one popup layer. Desktop only.';
-	String get icon_custom => 'Custom';
-	String get icon_custom_confirm_body => 'This will create a home screen shortcut with your chosen image. Continue?';
-	String get icon_custom_confirm_title => 'Custom icon';
-	String get icon_custom_hint => 'Tap an icon to switch, or pick a custom image below.';
-	String get icon_default => 'Default';
-	String get icon_full => 'Full';
-	String get icon_shortcut_created => 'Home screen shortcut created.';
-	String get icon_shortcut_unsupported => 'Shortcuts are not supported on this device.';
-	String get icon_switch_success => 'App icon changed successfully.';
-	String get icon_transparent => 'Transparent';
-	String image_page_counter({required Object current, required Object total}) => '${current} / ${total}';
-	String get image_pause => 'Pause on image';
-	String get image_pause_hint => 'Auto-pause when an image appears during playback.';
-	String get image_pause_off => 'Off';
-	String get image_search_label_after => 'found for';
-	String get image_search_label_before => 'Selecting image ';
-	String get image_search_label_middle => 'out of ';
-	String get image_search_label_none_before => 'Selecting ';
-	String get image_search_label_none_middle => 'no image ';
-	String get import_complete => 'Dictionary import complete.';
-	String import_duplicate({required Object name}) => 'A dictionary with the name『${name}』is already imported.';
-	String get import_extract => 'Extracting files...';
-	String get import_failed => 'Dictionary import failed.';
-	String get import_in_progress => 'Import in progress';
-	String import_name({required Object name}) => 'Importing 『${name}』...';
-	String import_sidecar_audio({required Object count}) => 'Auto-attached ${count} audio file(s)';
-	String import_sidecar_subtitle({required Object name}) => 'Auto-attached subtitle: ${name}';
-	String get import_start => 'Preparing for import...';
-	String get import_step_building_epub => 'Building EPUB…';
-	String get import_step_converting_epub => 'Converting to EPUB…';
-	String import_step_copying_file({required Object name}) => 'Copying ${name}…';
-	String get import_step_done => 'Done';
-	String get import_step_importing_epub => 'Importing EPUB…';
-	String get import_step_matching => 'Audio alignment…';
-	String get import_step_parsing => 'Parsing subtitles…';
-	String get import_step_persisting => 'Saving files…';
-	String get import_step_reading => 'Reading file…';
-	String get import_step_reading_idb => 'Reading book info…';
-	String get import_step_saving => 'Saving records…';
-	String get import_theme => 'Import theme';
-	String get import_theme_hint => 'Paste theme code';
-	String get import_theme_invalid => 'Invalid theme code';
-	String get import_theme_success => 'Theme imported';
-	String import_unsupported_file_format({required Object ext}) => 'Unsupported file format: ${ext}';
-	String get increase => 'Increase';
-	String get info_empty_home_tab => 'History is empty';
-	String init_error_message({required Object error}) => 'Initialization failed: ${error}';
-	String get initialization_failed => 'Initialisation failed';
-	String get interconnect_backup_backend => 'Use interconnect as the backup backend';
-	String get interconnect_backup_backend_active => 'Backups already go to the paired device. Pick another backend in Sync & backup to switch away.';
-	String get interconnect_backup_backend_apply => 'Set as backup backend';
-	String interconnect_backup_backend_current({required Object backend}) => 'Current backup backend: ${backend}';
-	String get interconnect_backup_backend_hint => 'Back up and sync to the paired device instead of a cloud drive. Everything the paired-device upload switches above allow is what gets written there.';
-	String get interconnect_backup_backend_needs_pairing => 'Connect to a device above first.';
-	String get interconnect_enable => 'Enable interconnect';
-	String get interconnect_enable_hint => 'Connect to your other devices over the LAN. Works alongside a cloud backup backend — they don\'t conflict.';
-	String get interconnect_moved_note => 'Connection & server settings are in the Fushi Interconnect category';
-	String get interconnect_section_client => 'Connect to other devices';
-	String get interconnect_section_delegate => 'Delegate to the paired device';
-	String get interconnect_section_related => 'Remote content & lookup';
-	String get interconnect_summary => 'Direct device-to-device sync & host this device as a server';
-	String get interconnect_upload_audiobook_files => 'Upload audiobook files';
-	String get interconnect_upload_audiobook_files_hint => 'Sync this device\'s audiobook audio and subtitle packages up to the interconnect peer (large).';
-	String get interconnect_upload_content => 'Upload book files';
-	String get interconnect_upload_content_hint => 'Sync this device\'s books and reading content up to the interconnect peer.';
-	String get interconnect_upload_dictionary => 'Upload dictionaries';
-	String get interconnect_upload_dictionary_hint => 'Sync this device\'s dictionaries up to the interconnect peer.';
-	String get interconnect_upload_section => 'Upload to interconnect peer';
-	String get interconnect_upload_video_files => 'Upload video files';
-	String get interconnect_upload_video_files_hint => 'Sync this device\'s local video files up to the interconnect peer (large).';
-	String get invert_audiobook_skip_direction => 'Invert bottom-bar skip buttons';
-	String get invert_swipe_direction => 'Invert swipe page turn direction';
-	String get invert_volume_buttons => 'Invert volume buttons';
-	String get jump_to_char => 'Jump to character';
-	String jump_to_char_current({required Object current, required Object total}) => 'Current: ${current} / ${total}';
-	String get jump_to_char_hint => 'Enter character position…';
-	String get keep_screen_awake => 'Keep screen awake';
-	String get library_search => 'Search library';
-	String get loading_illustrations => 'Loading illustrations…';
-	String get loading_slow_message => 'If your data storage location is on a network or removable drive that is currently disconnected, startup can stall. Tap Retry to launch using the default storage location for this session; your data stays where it is.';
-	String get loading_slow_message_mobile => 'Startup is taking longer than usual — Fushi may be loading a large library or dictionaries. Please wait a moment, or tap Retry to reload. Your data is safe and won\'t be lost.';
-	String get loading_slow_title => 'Startup is taking longer than usual';
-	String get local_audio => 'Local audio';
-	String get local_audio_add_db => 'Add local audio database';
-	String get local_audio_edit_sources => 'Edit sources';
-	String local_audio_import_failed_detail({required Object reason}) => 'Failed to import audio database: ${reason}';
-	String get local_audio_imported => 'Audio database added';
-	String get local_audio_invalid_db => 'This file isn\'t a usable audio database (not a Local Audio Server database, or it has no audio).';
-	String get local_audio_no_sources => 'No sources found in this database';
-	String get local_audio_reference_original => 'Reference original file (don\'t copy)';
-	String get local_audio_reference_original_desc => 'Keep the database where it is and read from its original path; the source breaks if the file is moved or deleted.';
-	String get local_audio_source_order_title => 'Source priority';
-	String get log_copy_all => 'Copy all';
-	String get log_export_failed => 'Export failed';
-	String get log_export_file => 'Export to file';
-	String get log_export_saved => 'Log saved';
-	String get log_upload_action => 'Upload to server';
-	String get log_upload_consent_agree => 'Agree & upload';
-	String get log_upload_consent_body => 'The log text (which may include error messages, file paths, and book titles) plus your app version, platform, and device model will be uploaded to the developer\'s server to help diagnose issues. This only happens when you tap upload — nothing is sent automatically.';
-	String get log_upload_consent_title => 'Upload log to server?';
-	String get log_upload_failed => 'Upload failed';
-	String get log_upload_in_progress => 'Uploading log…';
-	String get log_upload_success => 'Log uploaded';
-	String get log_upload_too_large => 'Log too large to upload';
-	String get login => 'Login';
-	String get lookup_audio_volume => 'Lookup audio volume';
-	String get low_memory_mode => 'Low memory mode';
-	String get low_memory_mode_hint => 'Reduce cache and memory usage for low-end devices. Some changes take effect after restart.';
-	String get low_memory_mode_suggestion => 'Try enabling Low Memory Mode in Settings → Miscellaneous.';
-	String get lyrics_artist => 'Artist';
-	String get lyrics_blur => 'Blur lyrics';
-	String get lyrics_blur_hint => 'Blur the current line for listening immersion; hover or tap to reveal';
-	String get lyrics_font_size => 'Lyrics font size';
-	String get lyrics_font_size_hint => 'Lyrics font size is independent of book mode';
-	String get lyrics_mode => 'Lyrics mode';
-	String get lyrics_mode_hint_body => 'Lyrics mode has its own font size setting. You can adjust it in ⚙ Settings → Typography.';
-	String get lyrics_mode_hint_title => 'Lyrics mode';
-	String get lyrics_text_color => 'Lyrics text color';
-	String get lyrics_text_color_hint => 'Use a custom color for lyrics text instead of following the theme';
-	String get lyrics_title => 'Title';
-	String get lyrics_vertical_writing => 'Vertical lyrics';
-	String get lyrics_vertical_writing_hint => 'Read lyrics top-to-bottom, right-to-left (independent of book mode)';
-	String get manage_audio_sources => 'Manage audio sources';
-	String get manager => 'Dictionaries & sources';
-	String get manga_mode_toggle => 'Reading mode';
-	String get manga_ocr_delete => 'Delete models';
-	String get manga_ocr_delete_confirm_message => 'This frees disk space. You can download them again later.';
-	String get manga_ocr_delete_confirm_title => 'Delete OCR models?';
-	String get manga_ocr_delete_done => 'Models deleted';
-	String get manga_ocr_download => 'Download models';
-	String get manga_ocr_download_done => 'Models downloaded';
-	String get manga_ocr_download_failed => 'Model download failed';
-	String manga_ocr_downloading_file({required Object file}) => 'Downloading ${file}…';
-	String get manga_ocr_engine_builtin => 'Built-in';
-	String get manga_ocr_engine_external => 'External mokuro';
-	String get manga_ocr_engine_none => 'No OCR engine available. Download built-in models or set the mokuro CLI path in settings.';
-	String get manga_ocr_external_cli_hint => 'Leave empty to auto-detect (FUSHI_MOKURO / PATH)';
-	String get manga_ocr_external_cli_label => 'External mokuro CLI path';
-	String get manga_ocr_external_detect => 'Detect';
-	String manga_ocr_external_detected({required Object version}) => 'Detected: ${version}';
-	String get manga_ocr_external_not_found => 'mokuro not found';
-	String get manga_ocr_mobile_note => 'On mobile, the recognition model powers box scan in the manga reader.';
-	String get manga_ocr_model_status_missing => 'OCR models not downloaded';
-	String get manga_ocr_model_status_ready => 'OCR models ready';
-	String get manga_ocr_section => 'Manga OCR';
-	String get manga_ocr_section_summary => 'Built-in OCR models and external mokuro CLI';
-	String get manga_ocr_unsupported => 'Built-in manga OCR isn\'t available on this platform yet.';
-	String get manga_ocr_wizard_done => 'Manga imported';
-	String get manga_ocr_wizard_failed => 'OCR failed';
-	String get manga_ocr_wizard_has_mokuro => 'This folder already has a .mokuro file — use normal import instead.';
-	String get manga_ocr_wizard_importing => 'Importing…';
-	String get manga_ocr_wizard_no_images => 'No images found in this folder.';
-	String manga_ocr_wizard_page_progress({required Object done, required Object total}) => 'Page ${done} / ${total}';
-	String get manga_ocr_wizard_pick_folder => 'Choose image folder';
-	String get manga_ocr_wizard_run => 'Run OCR';
-	String get manga_ocr_wizard_running => 'Running OCR…';
-	String get manga_ocr_wizard_title => 'OCR import manga';
-	String get manga_ocr_wizard_title_label => 'Title (optional)';
-	String get manga_online_base_url_label => 'Online catalog URL';
-	String get manga_online_catalog_title => 'Online catalog';
-	String get manga_online_download_selected => 'Download selected';
-	String get manga_online_downloaded => 'Imported';
-	String get manga_online_failed => 'Download failed';
-	String get manga_online_load_failed => 'Failed to load catalog';
-	String get manga_online_queue_added => 'Added to download queue';
-	String manga_online_queue_progress({required Object done, required Object total}) => 'Volume ${done} / ${total}';
-	String get manga_online_queue_section => 'Manga catalog downloads';
-	String get manga_online_search_hint => 'Search series';
-	String get manga_online_stage_cbz => 'Downloading volume…';
-	String get manga_online_stage_extract => 'Extracting…';
-	String get manga_online_stage_mokuro => 'Downloading OCR data…';
-	String get manga_reading_mode_spread => 'Spread';
-	String get manga_reading_mode_webtoon => 'Webtoon';
-	String get manga_remote_ocr_cancelled => 'Remote OCR was cancelled on the host.';
-	String get manga_remote_ocr_engine => 'Paired host';
-	String get manga_remote_ocr_failed => 'Remote OCR failed';
-	String get manga_remote_ocr_no_host => 'No paired host with manga OCR is reachable.';
-	String get manga_remote_ocr_not_ready => 'The paired host\'s OCR models are not downloaded. Download them on the host first.';
-	String get manga_remote_ocr_running => 'Paired host is running OCR…';
-	String get manga_remote_ocr_unsupported => 'The paired host does not support manga OCR.';
-	String manga_remote_ocr_uploading({required Object done, required Object total}) => 'Uploading pages ${done} / ${total}…';
-	String get margin_bottom => 'Bottom margin';
-	String get margin_left => 'Left margin';
-	String get margin_right => 'Right margin';
-	String get margin_top => 'Top margin';
-	String get maximum_terms => 'Maximum dictionary headwords in result';
-	String get media_source_add => 'Add source';
-	String get media_source_add_local_folder => 'Local folder';
-	String get media_source_add_network => 'Network';
-	String media_source_count_book({required Object n}) => '${n} books';
-	String media_source_count_video({required Object n}) => '${n} videos';
-	String media_source_last_scan({required Object time}) => 'Last scan ${time}';
-	String get media_source_manage_title => 'Manage sources';
-	String get media_source_network_label_optional => 'Display name (optional)';
-	String get media_source_network_missing_fields => 'Enter host, username, remote path, and a password or key';
-	String get media_source_network_remote_path => 'Remote path';
-	String get media_source_network_subtitle => 'SFTP / FTP / WebDAV remote library';
-	String get media_source_no_sources => 'No sources yet';
-	String get media_source_open_folder => 'Open folder';
-	String get media_source_remove => 'Remove source';
-	String get media_source_remove_keeps_media => 'Removing a source does not delete imported media.';
-	String get media_source_rescan => 'Rescan';
-	String get media_source_scan_error => 'Scan failed';
-	String get media_tracking_access_token => 'Access token';
-	String get media_tracking_access_token_hint => 'Create a personal access token with write permission';
-	String get media_tracking_account => 'Bangumi account';
-	String get media_tracking_add_mapping => 'Add mapping';
-	String get media_tracking_anime => 'Anime';
-	String get media_tracking_chapter => 'Chapter';
-	String get media_tracking_connect => 'Connect and verify';
-	String get media_tracking_connected_as => 'Connected account';
-	String get media_tracking_delete_mapping => 'Remove mapping';
-	String get media_tracking_episode => 'Episode';
-	String get media_tracking_kind => 'Category';
-	String get media_tracking_local_item => 'Local item';
-	String get media_tracking_manga => 'Manga';
-	String get media_tracking_mappings => 'Item mappings';
-	String get media_tracking_no_mappings => 'No manual mappings yet. Fushi matches automatically on the first completed episode or reading progress; add ambiguous items here.';
-	String get media_tracking_novel => 'Novel';
-	String get media_tracking_pending => 'Pending updates';
-	String get media_tracking_progress_mode => 'Progress unit';
-	String get media_tracking_progress_offset => 'Starting number';
-	String get media_tracking_saved => 'Mapping saved';
-	String get media_tracking_search => 'Search Bangumi';
-	String get media_tracking_search_results => 'Bangumi results';
-	String get media_tracking_summary => 'Automatically record anime, novel, and manga progress to Bangumi';
-	String get media_tracking_sync_failed => 'Sync failed. The update remains queued.';
-	String get media_tracking_sync_now => 'Sync now';
-	String get media_tracking_sync_success => 'Sync completed';
-	String get media_tracking_token_required => 'Enter and verify an access token first';
-	String get media_tracking_volume => 'Volume';
-	String get microphone_permission_denied => 'Microphone permission is required to record.';
-	String get mining_audio_quality => 'Audio quality';
-	String get mining_audio_quality_high => 'High';
-	String get mining_audio_quality_hint => 'Higher bitrate is clearer but makes larger cards.';
-	String get mining_audio_quality_max => 'Maximum';
-	String get mining_audio_quality_standard => 'Standard';
-	String get mining_image_quality => 'Image / GIF quality';
-	String get mining_image_quality_hd => 'HD';
-	String get mining_image_quality_hint => 'Higher is sharper but makes larger cards. Maximum keeps screenshots at the source resolution; animated GIFs stay capped so cards remain usable.';
-	String get mining_image_quality_max => 'Maximum';
-	String get mining_image_quality_standard => 'Standard';
-	String get mining_image_quality_thrift => 'Data saver';
-	String get move_down => 'Move down';
-	String get move_up => 'Move up';
-	String get name => 'Name';
-	String get nav_browser_extension => 'Extension';
-	String get nav_downloads => 'Downloads';
-	String get nav_game => 'Game';
-	String get nav_home => 'Home';
-	String get nav_lookup => 'Lookup';
-	String get nav_video => 'Video';
-	String get next_sentence => 'Next sentence';
-	String get no_audio_file => 'No audio file to save.';
-	String get no_collections => 'No bookmarks or saved sentences';
-	String get no_debug_logs => 'No debug logs.';
-	String get no_illustrations_found => 'No illustrations found';
-	String get no_results_found => 'No results found.';
-	String get no_search_results => 'No search results found.';
-	String get no_sentence_selected => 'No sentence selected';
-	String get no_sentences_found => 'No sentences found';
-	String get no_text => 'No text.';
-	String get no_text_to_search => 'No text to search.';
-	String get now_listening_label => 'Now listening';
-	String get on_screen_keyboard => 'On-screen keyboard';
-	String get options_collapse => 'Collapse in lookup';
-	String get options_delete => 'Delete';
-	String get options_edit => 'Edit';
-	String get options_expand => 'Expand in lookup';
-	String get options_github => 'View repository on GitHub';
-	String get options_hide => 'Hide in lookup';
-	String get options_language => 'Language settings';
-	String get options_show => 'Show in lookup';
-	String get overlay_lookup_independent_size => 'Separate size for pop-out lookup';
-	String get overlay_lookup_independent_size_hint => 'Give the app-external pop-out lookup window its own max size instead of following the in-app popup';
-	String get overlay_lookup_max_height => 'Pop-out lookup max height';
-	String get overlay_lookup_max_width => 'Pop-out lookup max width';
-	String page_progress({required Object current, required Object total}) => 'Page ${current} / ${total}';
-	String get paste => 'Paste';
-	String get pause => 'Pause';
-	String get pause_on_lookup => 'Pause on lookup';
-	String get pdf_bookmark_added => 'Bookmark added';
-	String get pdf_bookmarks => 'Bookmarks';
-	String get pdf_bookmarks_empty => 'No bookmarks yet.';
-	String get pdf_no_text_layer => 'This PDF has no text layer (scanned image), so lookup is unavailable.';
-	String get pdf_outline => 'Contents';
-	String get pdf_outline_empty => 'This PDF has no contents.';
-	String get pick_image => 'Pick image';
-	String get play => 'Play';
-	String get play_from_cue => 'Play from sentence';
-	String get playback_auto_pause => 'Subtitle pause playback mode';
-	String get playback_speed => 'Speed';
-	String get popup_append_sentence_tooltip => 'Add this sentence to the card';
-	String get popup_auto_expand_dictionaries => 'Auto-expand rows';
-	String get popup_auto_expand_dictionaries_hint => 'Keep the first N rows of dictionary blocks expanded even when \'Collapse dictionaries\' is on. The expanded count follows the column setting: rows x columns (0 = collapse all)';
-	String get popup_bottom_docked => 'Bottom-docked popup';
-	String get popup_bottom_docked_hint => 'Pin the lookup popup as a full-width panel at the bottom of the screen instead of following the looked-up word.';
-	String get popup_clear_sentence_draft_tooltip => 'Clear added sentences';
-	String get popup_ctx_adjust_button => 'Adjust context';
-	String get popup_ctx_box_current => 'Current sentence';
-	String get popup_ctx_box_empty => '(none)';
-	String get popup_ctx_box_next => 'Next context';
-	String get popup_ctx_box_prev => 'Previous context';
-	String get popup_ctx_cancel => 'Cancel';
-	String get popup_ctx_confirm => 'Confirm mining';
-	String get popup_ctx_modal_count => 'Selected %d sentences';
-	String get popup_ctx_modal_eyebrow => 'Adjust before mining';
-	String get popup_ctx_modal_title => 'Select sentence context';
-	String get popup_ctx_next_minus => 'Remove next';
-	String get popup_ctx_next_plus => 'Add next';
-	String get popup_ctx_prev_minus => 'Remove previous';
-	String get popup_ctx_prev_plus => 'Add previous';
-	String get popup_dictionary_max_columns => 'Max dictionary columns (auto-fill)';
-	String get popup_dictionary_max_columns_hint => 'Auto-fills up to this many dictionary columns per row; narrower screens use fewer';
-	String get popup_font_size_decrease => 'Smaller dictionary text';
-	String get popup_font_size_increase => 'Larger dictionary text';
-	String get popup_instant_scroll => 'Instant popup scroll';
-	String get popup_instant_scroll_hint => 'Jump the lookup popup by fixed distances without animated scrolling for e-ink screens.';
-	String get popup_max_height => 'Popup max height';
-	String get popup_max_width => 'Popup max width';
-	String get popup_no_audio_available => 'No audio available';
-	String get popup_sentence_context_next_label => 'After';
-	String get popup_sentence_context_prev_label => 'Before';
-	String get popup_wheel_speed => 'Popup scroll speed';
-	String get popup_wheel_speed_hint => 'Mouse-wheel scroll speed for the dictionary popup (also applies to the browser extension).';
-	String get prev_sentence => 'Previous sentence';
-	String get preview => 'Preview';
-	String get preview_badge => 'Badge';
-	String get preview_switch => 'Switch';
-	String get processing_in_progress => 'Preparing images';
-	String get profile_book_profile => 'Assign profile';
-	String profile_confirm_delete({required Object name}) => 'Delete profile "${name}"?';
-	String get profile_copy => 'Copy';
-	String get profile_copy_suffix => '(Copy)';
-	String get profile_create => 'Create profile';
-	String get profile_delete => 'Delete';
-	String get profile_export => 'Export';
-	String get profile_export_failed => 'Export failed';
-	String profile_follow_default_current({required Object name}) => 'Following default (${name})';
-	String get profile_import => 'Import';
-	String get profile_import_failed => 'Import failed';
-	String get profile_import_invalid => 'Invalid profile file';
-	String get profile_import_success => 'Profile imported';
-	String get profile_label => 'Profile';
-	String get profile_management => 'Profile management';
-	String get profile_media_audiobook => 'Audiobook';
-	String get profile_media_epub => 'Book';
-	String get profile_media_lyrics => 'Lyrics mode';
-	String get profile_media_none => 'None';
-	String get profile_media_srtbook => 'Subtitle book';
-	String get profile_media_type_bindings => 'Media type bindings';
-	String get profile_media_video => 'Video';
-	String get profile_name_hint => 'Profile name';
-	String get profile_rename => 'Rename';
-	String get reader_auto_hide_chrome_duration => 'Auto-hide floating controls after';
-	String get reader_content_timeout => 'Content loading timed out. Reopen if display is abnormal';
-	String get reader_copy_image => 'Copy image';
-	String get reader_gallery => 'Gallery';
-	String get reader_gallery_current => 'Reading here';
-	String get reader_gallery_empty => 'No illustrations in this book';
-	String get reader_gallery_jump => 'Jump to this illustration';
-	String get reader_gallery_tooltip => 'Browse illustrations';
-	String reader_image_copy_failed({required Object error}) => 'Failed to copy image: ${error}';
-	String get reader_image_file_unavailable => 'Image file is unavailable.';
-	String reader_image_share_failed({required Object error}) => 'Failed to share image: ${error}';
-	String get reader_open_failed => 'Failed to open book';
-	String get reader_settings_section => 'Reader settings';
-	String get reader_theme_black => 'Black';
-	String get reader_theme_dark => 'Dark';
-	String get reader_theme_ecru => 'Ecru';
-	String get reader_theme_eyecare => 'Eye care';
-	String get reader_theme_gray => 'Gray';
-	String get reader_theme_light => 'White';
-	String get reader_theme_water => 'Water blue';
-	String get reader_top_progress_floating => 'Floating reading progress';
-	String get reader_unsupported_platform => 'The reader is not yet available on this platform.';
-	String get reading_activity => 'Study activity';
-	String get reading_progress => 'Reading progress';
-	String get reading_section_mode => 'Mode & orientation';
-	String get reading_statistics => 'Reading statistics';
-	String get record => 'Record';
-	String get refresh => 'Refresh';
-	String get rematch_adjust_window => 'Adjust search window and re-match';
-	String get rematch_run => 'Re-run match';
-	String get remote_audio_source => 'Remote audio';
-	String get remote_book_audiobook_download_failed => 'Could not download audiobook for this book';
-	String get remote_book_download => 'Download to this device';
-	String get remote_book_download_failed => 'Could not download remote book';
-	String get remote_book_downloaded => 'Downloaded remote book';
-	String get remote_book_downloading => 'Downloading…';
-	String get remote_book_info => 'Info';
-	String get remote_book_info_has_audiobook => 'Includes audiobook';
-	String get remote_book_unavailable => 'Paired device unavailable';
-	String get remote_dict_lookup => 'Remote dictionary lookup';
-	String get remote_dict_lookup_hint => 'When local dictionaries miss, query the configured Fushi server';
-	String get remote_video_download => 'Download to this device';
-	String get remote_video_download_failed => 'Could not download remote video';
-	String get remote_video_downloaded => 'Downloaded remote video';
-	String get remote_video_downloading => 'Downloading…';
-	String get remote_video_info => 'Info';
-	String get remote_video_info_has_subtitle => 'Includes subtitles';
-	String get remote_video_info_no_subtitle => 'No subtitles';
-	String remote_video_info_size({required Object size}) => 'Size: ${size}';
-	String get remote_video_list_failed => 'Couldn\'t load remote videos. Make sure the other device is online and on the same network, then try again.';
-	String get remote_video_unavailable => 'Paired device unavailable';
-	String get rename_collection => 'Rename collection';
-	String get render_restart_required => 'Takes effect after restarting the app';
-	String get repeat_cue => 'Repeat sentence';
-	String get reset => 'Reset';
-	String get retry => 'Retry';
-	String get reverse_arrow_page_turn => 'Reverse keyboard left/right page-turn direction';
-	String get reverse_navigation_bar => 'Reverse navigation bar';
-	String get reverse_reader_bottom_bar => 'Reverse reader bottom bar';
-	String get audiobook_rematch_all_zero => 'All windows scored 0%, please adjust manually';
-	String audiobook_rematch_auto_failed({required Object error}) => 'Auto-match failed: ${error}';
-	String get audiobook_rematch_auto_match => 'Auto match';
-	String audiobook_rematch_auto_picked({required Object window, required Object pct}) => 'Auto-selected ${window} (hit ${pct}%)';
-	String audiobook_rematch_default_value({required Object n}) => 'Default ${n}';
-	String audiobook_rematch_health_label({required Object pct, required Object detail}) => '${pct} matched — ${detail}';
-	String get audiobook_rematch_matching => 'Matching...';
-	String get audiobook_rematch_no_chapters => 'EPUB has no chapter text';
-	String get audiobook_rematch_no_cues_to_match => 'No cues to match';
-	String get audiobook_rematch_no_sections => 'No chapter text found, cannot auto-match';
-	String get audiobook_rematch_no_stored_cues => 'No stored cues, cannot re-run';
-	String audiobook_rematch_failed({required Object error}) => 'Re-match failed: ${error}';
-	String audiobook_rematch_result({required Object pct, required Object window}) => 'Rematched: ${pct}% (window: ${window})';
-	String get audiobook_rematch_search_window => 'Search window';
-	String get audiobook_rematch_similarity_threshold => 'Similarity threshold';
-	String get audiobook_rematch_threshold_hint => 'Minimum similarity for fuzzy matching (Dice coefficient). Lower to tolerate more text differences, but too low causes false matches.';
-	String get audiobook_rematch_window_hint => 'Number of characters to search forward per cue in the text. Adjust if hit rate is low; too large may skew cursor with short noisy cues.';
-	String get saved_tags => 'Tags saved.';
-	String get scan_non_japanese_text => 'Scan non-Japanese text';
-	String get scan_non_japanese_text_hint => 'When off, selection stops at non-Japanese characters';
-	String get search => 'Search';
-	String get search_ellipsis => 'Search...';
-	String get searching_in_progress => 'Searching for ';
-	String get section_advanced_colors => 'Advanced';
-	String get section_advanced_typography => 'Advanced';
-	String get section_audiobook => 'Audiobook';
-	String get section_audiobook_lyrics => 'Audiobook & lyrics';
-	String get section_epub => 'EPUB Library';
-	String get section_floating_lyric => 'Floating lyric';
-	String get section_interface => 'Interface';
-	String get section_layout => 'Layout & display';
-	String get section_navigation => 'Navigation';
-	String get section_page_turn_direction => 'Page-turn direction';
-	String get section_reader_colors => 'Reader colors';
-	String get section_system_theme => 'System theme color';
-	String get section_typography => 'Typography';
-	String get section_update => 'Update settings';
-	String get section_video_danmaku => 'Danmaku';
-	String get section_video_library => 'Library';
-	String get section_video_playback => 'Playback';
-	String get section_video_subtitles => 'Subtitles';
-	String get seed_color => 'Seed color';
-	String get seed_color_desc => 'Generates all default colors below';
-	String get selection_color => 'Selection highlight';
-	String get selection_color_desc => 'Reader text selection highlight';
-	String get send => 'Send';
-	String get series => 'Series';
-	String get series_created => 'Series created';
-	String get series_default_name => 'New series';
-	String series_item_count({required Object n}) => '${n} items';
-	String get series_name_hint => 'Series name';
-	String get server_address => 'Server address';
-	String get settings => 'Settings';
-	String get settings_check_update_now => 'Check for updates';
-	String get settings_destination_appearance => 'Appearance';
-	String get settings_destination_card_creation => 'Card creation';
-	String get settings_destination_diagnostics => 'Diagnostics';
-	String get settings_destination_interconnect => 'Fushi Interconnect';
-	String get settings_destination_listening => 'Listening';
-	String get settings_destination_lookup => 'Lookup';
-	String get settings_destination_profiles => 'Configuration schemes';
-	String get settings_destination_reading => 'Reading';
-	String get settings_destination_reading_controls => 'Reading controls';
-	String get settings_destination_sync_backup => 'Sync & backup (experimental)';
-	String get settings_destination_system => 'System';
-	String get settings_destination_system_summary => 'General, updates & diagnostics';
-	String get settings_destination_tracking => 'Media tracking';
-	String get settings_destination_video => 'Video';
-	String get settings_experimental_suffix => ' (experimental)';
-	String get settings_search_hint => 'Search settings';
-	String get settings_search_no_results => 'No matching settings';
-	String get settings_secret_hide => 'Hide value';
-	String get settings_secret_show => 'Show value';
-	String get settings_section_app_shell => 'App';
-	String get settings_section_data_storage => 'Data storage location';
-	String get settings_section_gal_hook_overlay => 'Galgame caption overlay';
-	String get settings_section_general => 'General';
-	String get settings_section_lookup_audio => 'Pronunciation & feedback';
-	String get settings_section_lookup_clipboard => 'Clipboard & global lookup';
-	String get settings_section_lookup_content => 'Entry content';
-	String get settings_section_lookup_integrations => 'External integrations';
-	String get settings_section_lookup_popup_window => 'Popup window';
-	String get settings_section_lookup_trigger => 'Lookup trigger';
-	String get settings_section_page_turn_input => 'Page turning & interaction';
-	String get settings_section_reader_chrome => 'Reader interface';
-	String get settings_section_update_channel => 'Update channel';
-	String get settings_view_changelog => 'View changelog';
-	String get share => 'Share';
-	String get share_theme => 'Share theme';
-	String get shortcut_action_audiobook_next_sentence => 'Next sentence';
-	String get shortcut_action_audiobook_play_pause => 'Play / pause';
-	String get shortcut_action_audiobook_prev_sentence => 'Previous sentence';
-	String get shortcut_action_audiobook_seek_clicked => 'Seek audio to clicked sentence';
-	String get shortcut_action_dpad_down => 'D-pad down';
-	String get shortcut_action_dpad_left => 'D-pad left';
-	String get shortcut_action_dpad_right => 'D-pad right';
-	String get shortcut_action_dpad_up => 'D-pad up';
-	String get shortcut_action_global_back => 'Back / exit one level';
-	String get shortcut_action_global_external_lookup => 'App-external lookup shortcut';
-	String get shortcut_action_global_scroll_page_down => 'Scroll down one screen';
-	String get shortcut_action_global_scroll_page_up => 'Scroll up one screen';
-	String get shortcut_action_global_toggle_fullscreen => 'Toggle fullscreen';
-	String get shortcut_action_home_focus_search => 'Focus search';
-	String get shortcut_action_home_tab_books => 'Books tab';
-	String get shortcut_action_home_tab_dict => 'Dictionary tab';
-	String get shortcut_action_home_tab_next => 'Next tab';
-	String get shortcut_action_home_tab_prev => 'Previous tab';
-	String get shortcut_action_home_tab_settings => 'Settings tab';
-	String get shortcut_action_popup_next_entry => 'Next word entry';
-	String get shortcut_action_popup_prev_entry => 'Previous word entry';
-	String get shortcut_action_reader_create_card_from_popup => 'Create card from popup';
-	String get shortcut_action_reader_dismiss_dict => 'Dismiss dictionary';
-	String get shortcut_action_reader_enter_caret => 'Enter lookup cursor';
-	String get shortcut_action_reader_lookup_at_cursor => 'Lookup / activate cursor';
-	String get shortcut_action_reader_open_menu => 'Open settings menu';
-	String get shortcut_action_reader_open_navigation => 'Open navigation';
-	String get shortcut_action_reader_page_backward => 'Previous page';
-	String get shortcut_action_reader_page_forward => 'Next page';
-	String get shortcut_action_reader_shift_lookup => 'Look up word at caret';
-	String get shortcut_action_reader_toggle_chrome => 'Toggle controls';
-	String get shortcut_action_reader_toggle_furigana => 'Toggle furigana';
-	String get shortcut_action_video_align_subtitle_to_next => 'Align next subtitle to now';
-	String get shortcut_action_video_align_subtitle_to_prev => 'Align previous subtitle to now';
-	String get shortcut_action_video_cycle_secondary_subtitle_obscure => 'Cycle secondary subtitle obscure';
-	String get shortcut_action_video_cycle_subtitle_obscure => 'Cycle subtitle obscure mode';
-	String get shortcut_action_video_next_chapter => 'Next chapter';
-	String get shortcut_action_video_next_frame => 'Next frame';
-	String get shortcut_action_video_next_subtitle => 'Next subtitle';
-	String get shortcut_action_video_open_subtitle_align => 'Open subtitle waveform align';
-	String get shortcut_action_video_pause => 'Pause';
-	String get shortcut_action_video_play => 'Play';
-	String get shortcut_action_video_previous_chapter => 'Previous chapter';
-	String get shortcut_action_video_previous_frame => 'Previous frame';
-	String get shortcut_action_video_previous_subtitle => 'Previous subtitle';
-	String get shortcut_action_video_replay_current_subtitle => 'Replay current subtitle';
-	String get shortcut_action_video_replay_previous_subtitle => 'Replay previous subtitle';
-	String get shortcut_action_video_reset_speed => 'Reset speed';
-	String get shortcut_action_video_screenshot => 'Screenshot';
-	String get shortcut_action_video_seek_backward => 'Seek backward';
-	String get shortcut_action_video_seek_forward => 'Seek forward';
-	String get shortcut_action_video_speed_down => 'Slow down';
-	String get shortcut_action_video_speed_up => 'Speed up';
-	String get shortcut_action_video_subtitle_delay_decrease => 'Subtitle delay −';
-	String get shortcut_action_video_subtitle_delay_increase => 'Subtitle delay +';
-	String get shortcut_action_video_toggle_favorite_sentence => 'Favorite current sentence';
-	String get shortcut_action_video_toggle_fullscreen => 'Toggle fullscreen';
-	String get shortcut_action_video_toggle_immersive_lock => 'Toggle immersive lock';
-	String get shortcut_action_video_toggle_mute => 'Toggle mute';
-	String get shortcut_action_video_toggle_play_pause => 'Play / pause';
-	String get shortcut_action_video_toggle_secondary_subtitle_hide => 'Toggle hide secondary subtitle';
-	String get shortcut_action_video_toggle_shader_compare => 'Toggle shader compare';
-	String get shortcut_action_video_toggle_subtitle_blur => 'Toggle subtitle blur';
-	String get shortcut_action_video_toggle_subtitle_hide => 'Toggle hide subtitles';
-	String get shortcut_action_video_toggle_subtitle_list => 'Toggle subtitle list';
-	String get shortcut_action_video_volume_down => 'Volume down';
-	String get shortcut_action_video_volume_up => 'Volume up';
-	String get shortcut_assign_pick_action => 'Assign to action…';
-	String get shortcut_clear => 'Clear';
-	String shortcut_conflict({required Object s}) => 'Already used by: ${s}';
-	String shortcut_conflict_replace_confirm({required Object s}) => 'This shortcut is already used by ${s}. Move it to this action?';
-	String get shortcut_gamepad => 'Gamepad';
-	String get shortcut_gamepad_brand_label => 'Gamepad button style';
-	String get shortcut_gamepad_brand_playstation => 'PlayStation';
-	String get shortcut_gamepad_brand_switch => 'Nintendo Switch';
-	String get shortcut_gamepad_brand_xbox => 'Xbox';
-	String get shortcut_gamepad_pick_list => 'Choose from list';
-	String get shortcut_gamepad_unavailable_hint => 'GameInput component not detected — gamepad support is unavailable. Install the Windows Gaming Services to enable controller support.';
-	String get shortcut_keyboard => 'Keyboard';
-	String get shortcut_mouse_back => 'Back button';
-	String get shortcut_mouse_button => 'Mouse button';
-	String get shortcut_mouse_forward => 'Forward button';
-	String get shortcut_mouse_left => 'Left click';
-	String get shortcut_mouse_middle => 'Middle click';
-	String get shortcut_mouse_right => 'Right click';
-	String get shortcut_press_gamepad => 'Press a gamepad button...';
-	String get shortcut_press_key => 'Press a key combination...';
-	String get shortcut_press_mouse_button => 'Press a mouse button...';
-	String get shortcut_press_wheel => 'Hold a modifier key and scroll here';
-	String get shortcut_reset_confirm => 'Reset all shortcuts in this section to defaults?';
-	String get shortcut_reset_defaults => 'Reset to defaults';
-	String get shortcut_scope_audiobook => 'Audiobook';
-	String get shortcut_scope_dictionary_popup => 'Dictionary popup';
-	String get shortcut_scope_dictionary_popup_note => 'Works while the pointer is over a dictionary popup';
-	String get shortcut_scope_gamepad => 'Gamepad';
-	String get shortcut_scope_global => 'Global';
-	String get shortcut_scope_global_external => 'Global (app-external)';
-	String get shortcut_scope_global_external_mobile_note => 'Triggered by the system (text selection menu, share, floating ball); the OS does not allow apps to remap this shortcut.';
-	String get shortcut_scope_home => 'Home';
-	String get shortcut_scope_reader => 'Reader';
-	String get shortcut_scope_video => 'Video';
-	String get shortcut_settings_title => 'Keyboard shortcuts';
-	String get shortcut_stop_capture => 'Stop';
-	String get shortcut_tap_to_assign => 'Not set · tap to assign';
-	String get shortcut_view_list => 'List view';
-	String get shortcut_view_visual => 'Controller layout';
-	String get shortcut_wheel => 'Mouse wheel';
-	String get shortcut_wheel_down => 'Wheel down';
-	String get shortcut_wheel_needs_modifier => 'A bare wheel scrolls the popup — hold Alt / Ctrl / Shift while scrolling';
-	String get shortcut_wheel_up => 'Wheel up';
-	String get show_bottom_bar_cue => 'Show current sentence';
-	String get show_expression_tags => 'Show expression tags';
-	String get show_floating_lyric => 'Floating lyric overlay';
-	String get show_media_notification => 'Show media notification';
-	String get show_options => 'Show options';
-	String get show_top_progress_bar => 'Reading progress indicator';
-	String get skip_action => 'Skip action';
-	String skip_action_seconds({required Object n}) => '${n} seconds';
-	String get skip_action_sentence => '1 sentence';
-	String get sort_by => 'Sort';
-	String get sort_imported => 'Import date';
-	String get sort_recent_read => 'Recently read';
-	String get sort_recent_watched => 'Recently watched';
-	String get sort_title => 'Name';
-	String get source_description_epub => 'EPUB reading & dictionary lookup';
-	String get source_name_bookshelf => 'Bookshelf';
-	String get spread_auto => 'Auto';
-	String get spread_direction => 'Spread direction';
-	String get spread_direction_ltr => 'Left to right';
-	String get spread_direction_rtl => 'Right to left';
-	String get spread_mode => 'Spread mode';
-	String get spread_off => 'Off';
-	String get spread_on => 'On';
-	String get srt_audio_unresolved => 'Audio file not found — please re-attach';
-	String get srt_books_section => 'Subtitle audiobooks';
-	String srt_delete_confirm({required Object title}) => 'Delete 『${title}』? This cannot be undone.';
-	String get srt_delete_title => 'Delete subtitle book';
-	String get srt_epub_not_ready => 'Book not ready — please re-import';
-	String get srt_import => 'Import book';
-	String get srt_import_audio_needs_subtitle => 'Audio must be paired with subtitles. To attach audio to an existing EPUB, long-press the book on the shelf.';
-	String get srt_import_author_hint => 'Author (optional)';
-	String get srt_import_error => 'Import failed';
-	String srt_import_files_selected({required Object n}) => '${n} files selected';
-	String get srt_import_hint_epub_or_srt => 'Pick an EPUB or subtitle file to import.';
-	String get srt_import_missing_input => 'Please pick at least an EPUB or subtitle file';
-	String get srt_import_missing_title => 'Please enter a book title';
-	String get srt_import_pick_audio_dir => 'Pick audio directory';
-	String get srt_import_pick_audio_files => 'Pick audio files';
-	String get srt_import_pick_cover => 'Pick cover image';
-	String get srt_import_pick_epub => 'Pick EPUB';
-	String get srt_import_pick_subtitle_files => 'Pick subtitle files';
-	String get srt_import_success => 'Book imported';
-	String get srt_import_title_hint => 'Book title';
-	String get startup_default_dictionary_tab => 'Open lookup on startup';
-	String get startup_default_dictionary_tab_hint => 'Start the home screen on the lookup tab instead of the current default.';
-	String get stash => 'Stash';
-	String get stash_added_multiple => 'Multiple items have been added to the Stash.';
-	String stash_added_single({required Object term}) => '『${term}』has been added to the Stash.';
-	String get stash_clear_description => 'All contents will be cleared. Are you sure?';
-	String stash_clear_single({required Object term}) => '『${term}』has been removed from the Stash.';
-	String get stash_clear_title => 'Clear stash';
-	String get stash_nothing_to_pop => 'No items to be popped from the Stash.';
-	String get stash_placeholder => 'No items in the Stash';
-	String get stat_all_time => 'All time';
-	String get stat_bookshelf_compare => 'Bookshelf';
-	String get stat_clear_all => 'Clear statistics';
-	String get stat_clear_all_confirm => 'Clear';
-	String get stat_clear_all_reading_message => 'Clear all reading time, character counts, and lookup/mining counts? Your saved words, sentences, and mined cards are kept. This cannot be undone.';
-	String get stat_clear_all_title => 'Clear all statistics';
-	String get stat_clear_all_video_message => 'Clear all watch time, subtitle character counts, and lookup/mining counts? Your saved words, sentences, and mined cards are kept. This cannot be undone.';
-	String get stat_daily_average => 'Daily avg';
-	String get stat_delete_message => 'Delete this item\'s time, character count, and lookup/mining statistics? Your saved words and sentences are not affected.';
-	String get stat_delete_title => 'Delete statistics';
-	String get stat_fastest_day => 'Fastest day';
-	String get stat_favorited => 'Favorited';
-	String get stat_favorited_sentence => 'Favorited sentences';
-	String stat_format_chars({required Object n}) => '${n} characters';
-	String stat_format_chars_wan({required Object n}) => '${n}万 characters';
-	String stat_format_days({required Object n}) => '${n} days';
-	String stat_format_hours_minutes({required Object h, required Object m}) => '${h} hr ${m} min';
-	String stat_format_minutes({required Object n}) => '${n} min';
-	String get stat_goal => 'Daily goal';
-	String get stat_goal_daily => 'Daily goal';
-	String get stat_goal_presets => 'Presets';
-	String stat_goal_progress({required Object read, required Object goal}) => '${read} / ${goal} chars';
-	String get stat_goal_reached => 'Goal reached';
-	String stat_goal_recent_average({required Object n}) => 'Last 7 days: ${n} chars/day on average';
-	String get stat_goal_set => 'Set goal';
-	String get stat_goal_unit_chars => 'chars';
-	String get stat_goal_weekly => 'Weekly goal';
-	String get stat_last_30_days => 'Last 30 days';
-	String get stat_lookup => 'Lookups';
-	String get stat_metric_chars => 'Characters';
-	String get stat_metric_speed => 'Speed';
-	String get stat_metric_time => 'Time';
-	String get stat_mined => 'Cards mined';
-	String get stat_no_data => 'No reading data yet';
-	String get stat_range_and_trend => 'Range & trend';
-	String get stat_recent_active => 'Active Days (7d)';
-	String get stat_refresh => 'Refresh';
-	String get stat_slowest_day => 'Slowest day';
-	String get stat_sort_by_chars => 'By characters';
-	String get stat_sort_by_speed => 'By speed';
-	String get stat_sort_by_time => 'By time';
-	String get stat_speed_anomaly => 'Anomaly';
-	String get stat_speed_avg => 'Moving average';
-	String stat_speed_cph({required Object n}) => '${n} chars/hr';
-	String get stat_speed_summary => 'Speed summary';
-	String get stat_streak => 'Streak';
-	String get stat_this_month => 'This month';
-	String get stat_this_week => 'This week';
-	String get stat_today => 'Today';
-	String get stat_today_hourly => 'Today by hour';
-	String get stat_trend_daily => 'Daily';
-	String get stat_trend_monthly => 'Monthly';
-	String get stat_trend_weekly => 'Weekly';
-	String get stat_typical_day => 'Typical day';
-	String get stat_vs_prev => 'vs prev 14d';
-	String get stat_weighted_avg_speed => 'Weighted avg';
-	String get stop => 'Stop';
-	String get storage_permissions => 'Please grant the following permissions for exporting to AnkiDroid.';
-	String get stream => 'Stream';
-	String get swipe_page_turn_sensitivity => 'Swipe page-turn sensitivity';
-	String get sync_account => 'Account';
-	String get sync_audiobook => 'Sync audiobook position';
-	String get sync_audiobook_files => 'Sync audiobook files';
-	String get sync_audiobook_files_warning => 'Audio and subtitles can be large.';
-	String sync_auth_error({required Object message}) => 'Authentication failed: ${message}';
-	String get sync_auto_sync => 'Auto sync';
-	String get sync_backend => 'Storage backend';
-	String get sync_backend_dropbox => 'Dropbox';
-	String get sync_backend_ftp => 'FTP';
-	String get sync_backend_google_drive => 'Google Drive';
-	String get sync_backend_fushi_server => 'Fushi Interconnect';
-	String get sync_backend_onedrive => 'OneDrive';
-	String get sync_backend_sftp => 'SFTP';
-	String get sync_backend_webdav => 'WebDAV';
-	String get sync_checking_account => 'Checking account…';
-	String get sync_client_connected => 'Connected';
-	String get sync_client_token => 'Peer access token';
-	String get sync_client_token_manual => 'Enter token manually';
-	String get sync_compare => 'Compare data';
-	String get sync_compare_all_books => 'All books';
-	String get sync_compare_all_local => 'All → local';
-	String get sync_compare_all_remote => 'All → remote';
-	String get sync_compare_all_skip => 'All → skip';
-	String sync_compare_applied({required Object count}) => 'Applied ${count} changes';
-	String sync_compare_apply({required Object count}) => 'Sync now (${count})';
-	String get sync_compare_close => 'Close';
-	String get sync_compare_conflicts => 'Conflicts';
-	String get sync_compare_days => 'days';
-	String get sync_compare_delete_audiobook => 'Delete audiobook on remote';
-	String get sync_compare_delete_book => 'Delete book on remote';
-	String sync_compare_delete_confirm({required Object name}) => 'Delete "${name}" from the remote? Local data is kept. This cannot be undone.';
-	String get sync_compare_delete_dict => 'Delete dictionary on remote';
-	String get sync_compare_deleted => 'Deleted from remote';
-	String get sync_compare_dictionaries => 'Dictionaries';
-	String get sync_compare_download => 'Download';
-	String get sync_compare_empty => 'No books found';
-	String get sync_compare_local => 'Local';
-	String get sync_compare_no_content => 'Cloud data only — no book to download';
-	String get sync_compare_no_data => 'No data';
-	String get sync_compare_remote => 'Remote';
-	String get sync_compare_select_all => 'Select all';
-	String get sync_compare_skip => 'Skip';
-	String get sync_compare_title => 'Local vs remote';
-	String get sync_compare_unavailable => 'Set up a sync backend first';
-	String get sync_compare_use_local => 'Local';
-	String get sync_compare_use_remote => 'Remote';
-	String get sync_connection_failed => 'Connection failed';
-	String get sync_connection_success => 'Connection successful';
-	String get sync_content => 'Upload book files';
-	String get sync_content_warning => 'Large files will use storage space and data';
-	String get sync_dictionary => 'Sync dictionaries';
-	String get sync_dictionary_warning => 'Dictionary packages can be large and include imported dictionary resources.';
-	String get sync_err_auth_expired => 'Sign-in expired — please sign in again.';
-	String get sync_err_invalid_client => 'Client credentials are invalid for this build — please update the app.';
-	String get sync_err_network => 'Cannot reach the server — check your network or proxy settings.';
-	String get sync_err_not_configured => 'Google sync credentials are not configured in this build.';
-	String get sync_err_quota => 'Cloud storage is full (quota reached).';
-	String get sync_err_scope_upgrade => 'Sync permissions changed — please sign in to Google again to continue syncing.';
-	String get sync_err_timeout => 'Connection timed out — the server did not respond in time. Check your network or proxy settings.';
-	String sync_error({required Object message}) => 'Sync error: ${message}';
-	String get sync_exit_warning => 'Sync is still in progress. Exiting now may cause data loss.';
-	String get sync_exit_warning_title => 'Sync in progress';
-	String get sync_host => 'Host';
-	String get sync_lan_discovery => 'LAN devices';
-	String get sync_lan_no_devices => 'No devices found';
-	String get sync_lan_scan_failed => 'Scan failed — check network permissions or firewall.';
-	String get sync_local_audio => 'Sync local audio';
-	String get sync_local_audio_warning => 'Syncs local audio source databases (may be large)';
-	String get sync_not_signed_in => 'Not signed in';
-	String get sync_now => 'Sync now';
-	String sync_now_audio_in({required Object count}) => '↓${count} audiobooks';
-	String sync_now_audio_out({required Object count}) => '↑${count} audiobooks';
-	String sync_now_books_in({required Object count}) => '↓${count} books';
-	String get sync_now_busy => 'A sync is already running';
-	String sync_now_dicts_in({required Object count}) => '↓${count} dictionaries';
-	String sync_now_dicts_out({required Object count}) => '↑${count} dictionaries';
-	String sync_now_done({required Object detail}) => 'Synced · ${detail}';
-	String sync_now_failed_suffix({required Object count}) => ' · ${count} failed';
-	String get sync_now_hint => 'Run a full two-way sync with the cloud now';
-	String sync_now_local_audio_in({required Object count}) => '↓${count} audio sources';
-	String sync_now_local_audio_out({required Object count}) => '↑${count} audio sources';
-	String get sync_now_no_changes => 'no changes';
-	String get sync_pair_allow => 'Allow';
-	String sync_pair_confirm_identity_body({required Object device}) => 'You are pairing with ${device}. Confirm this is the device you expect before continuing.';
-	String get sync_pair_confirm_identity_title => 'Confirm device';
-	String get sync_pair_continue => 'Continue';
-	String get sync_pair_denied => 'The other device declined pairing';
-	String get sync_pair_deny => 'Deny';
-	String get sync_pair_enter_pin_body => 'Enter the 6-digit PIN shown on the other device.';
-	String get sync_pair_enter_pin_title => 'Enter PIN';
-	String get sync_pair_failed => 'Pairing failed';
-	String get sync_pair_fingerprint_changed => 'Certificate changed — pairing aborted for safety (possible interception).';
-	String get sync_pair_fingerprint_label => 'Certificate fingerprint';
-	String get sync_pair_not_fushi => 'No Fushi device found at this address. The address was saved.';
-	String get sync_pair_pairing => 'Pairing…';
-	String get sync_pair_pin_label => 'Enter this PIN on the other device';
-	String get sync_pair_pin_waiting => 'Waiting for the other device to enter this PIN…';
-	String get sync_pair_pin_wrong => 'Wrong PIN — try again';
-	String get sync_pair_repair => 'Pair again';
-	String get sync_pair_request_body => 'A device is requesting to pair. Allow it to sync with this device?';
-	String get sync_pair_request_title => 'Pairing request';
-	String get sync_pair_success => 'Paired — token filled in';
-	String get sync_pair_unavailable => 'The other device isn\'t ready or is on an older version. Update it and enable sync, then try again.';
-	String get sync_pair_unknown_device => 'Unknown device';
-	String get sync_paired_peer_remove => 'Remove';
-	String get sync_paired_peer_removed => 'Removed paired device';
-	String get sync_paired_peer_unknown => 'Unknown device';
-	String get sync_paired_peers_empty => 'No paired devices yet';
-	String get sync_paired_peers_title => 'Paired devices';
-	String get sync_password => 'Password';
-	String get sync_port => 'Port';
-	String get sync_private_key => 'Private key';
-	String get sync_progress_audiobooks => 'Syncing audiobooks';
-	String get sync_progress_books => 'Importing books';
-	String get sync_progress_dictionaries => 'Syncing dictionaries';
-	String get sync_progress_local_audio => 'Syncing local audio';
-	String get sync_progress_reading => 'Syncing reading data';
-	String get sync_progress_videos => 'Syncing videos';
-	String get sync_role_locked_by_client => 'Already connected to another device. Remove the connection before hosting as a server.';
-	String get sync_role_locked_by_server => 'This device is hosting as a server. Turn off the server before connecting to other devices.';
-	String get sync_section_actions => 'Sync actions';
-	String get sync_section_backup => 'Local backup';
-	String get sync_section_content => 'What to sync';
-	String get sync_section_host_server => 'This device as a sync server';
-	String get sync_section_host_server_footer => 'Let other devices sync from this device. Independent of the sync backend above.';
-	String get sync_section_method => 'Sync method';
-	String get sync_server_copy_token => 'Copy token';
-	String get sync_server_enable => 'Enable sync server';
-	String get sync_server_mode_active => 'This device is a sync server';
-	String get sync_server_mode_clients_drive => 'Connected clients start the sync — no manual sync needed here.';
-	String get sync_server_port => 'Server port';
-	String sync_server_port_in_use({required Object port}) => 'Port ${port} is already in use — pick a different port.';
-	String get sync_server_regenerate_token => 'Regenerate token';
-	String get sync_server_running => 'Server running';
-	String get sync_server_stopped => 'Server stopped';
-	String get sync_server_tls_enable => 'Interconnect encryption (HTTPS/TLS)';
-	String get sync_server_tls_repair_hint => 'Changing this requires paired devices to pair again';
-	String get sync_server_token => 'Access token';
-	String get sync_show_remote_entries => 'Show remote entries';
-	String get sync_show_remote_entries_warning => 'Show books and videos that exist on paired devices or the cloud as placeholder cards you can download or stream.';
-	String get sync_sign_in => 'Sign in';
-	String get sync_sign_out => 'Sign out';
-	String get sync_signed_in => 'Signed in';
-	String get sync_statistics => 'Sync statistics';
-	String get sync_summary => 'Cloud, LAN P2P & local backup';
-	String get sync_test_connection => 'Test connection';
-	String get sync_use_tls => 'Use TLS';
-	String get sync_username => 'Username';
-	String get sync_video_files => 'Upload video files';
-	String get sync_video_files_warning => 'Video files can be very large.';
-	String get sync_webdav_missing_fields => 'Missing fields';
-	String sync_webdav_test_failed({required Object message}) => 'Connection failed: ${message}';
-	String get sync_webdav_url => 'Server URL';
-	String tag_added_to_book({required Object name}) => 'Tag "${name}" added to book.';
-	String tag_added_to_collection({required Object name}) => 'Tag ${name} added to collection.';
-	String tag_added_to_video({required Object name}) => 'Tag ${name} added to video.';
-	String tag_already_on_book({required Object name}) => 'Tag "${name}" is already on this book.';
-	String tag_already_on_collection({required Object name}) => 'Tag ${name} is already on this collection.';
-	String tag_book_count({required Object count}) => '${count} book(s)';
-	String get tag_clear_filter => 'Clear filter';
-	String get tag_color => 'Color';
-	String tag_delete_confirm({required Object name}) => 'Delete tag "${name}"?';
-	String get tag_filter_title => 'Filter by tag';
-	String get tag_label => 'Tags';
-	String get tag_manage => 'Manage tags';
-	String get tag_manage_title => 'Manage tags';
-	String get tag_name_duplicate => 'A tag with this name already exists.';
-	String get tag_name_empty => 'Tag name cannot be empty.';
-	String get tag_name_hint => 'Tag name';
-	String get tag_new => 'New tag';
-	String get tag_no_books_for_filter => 'No books match the selected tags.';
-	String get tag_no_tags_hint => 'No tags yet. Create one to get started.';
-	String get tag_seed_stars => 'Add star rating tags';
-	String get tag_seed_stars_added => 'Star rating tags added';
-	String get tag_seed_stars_exists => 'Star rating tags already exist';
-	String get tap_empty_hide_chrome => 'Floating control bar';
-	String get text_segmentation => 'Text segmentation';
-	String get texthooker => 'Texthooker';
-	String get texthooker_enabled => 'Texthooker (receive text)';
-	String get texthooker_enabled_hint => 'Connect to Textractor/mpv/agent and look up incoming text';
-	String get texthooker_experimental_banner => 'Texthooker is experimental — live text, lookup and card creation may be unstable.';
-	String get theme_black => 'Pure black';
-	String get theme_code_copied => 'Theme code copied to clipboard';
-	String get theme_dark => 'Deep dark';
-	String get theme_ecru => 'Ecru';
-	String get theme_eyecare => 'Eye care';
-	String get theme_gray => 'Gray dark';
-	String get theme_light => 'White';
-	String get theme_seed_preview_hint => 'Swatches below preview the colors actually generated from your seed. To force a specific color as the primary accent, turn on the Primary toggle and pick it explicitly.';
-	String get theme_water => 'Water blue';
-	String toc_section({required Object n}) => 'Table of Contents (${n})';
-	String get top_progress_pos_center => 'Center';
-	String get top_progress_pos_left => 'Top-left';
-	String get top_progress_pos_right => 'Top-right';
-	String get top_progress_position => 'Progress position';
-	String get torrent_upload_intro_body => 'Uploading (seeding) is off by default. Turn it on to share downloaded content back to the swarm — this uses your upload bandwidth. You can change this anytime in Settings.';
-	String get torrent_upload_intro_confirm => 'Save';
-	String get torrent_upload_intro_enable => 'Enable upload / seeding';
-	String get torrent_upload_intro_keep_off => 'Keep off';
-	String get torrent_upload_intro_title => 'Upload / seeding';
-	String get reader_blur_images => 'Blur images (spoiler guard)';
-	String get reader_font_size => 'Font size';
-	String get reader_font_vpal => 'VPAL (vertical alt)';
-	String get reader_furigana_hide => 'Hide';
-	String get reader_furigana_mode => 'Furigana';
-	String get reader_furigana_mode_hint => '';
-	String get reader_furigana_partial => 'Partial';
-	String get reader_furigana_show => 'Show';
-	String get reader_furigana_toggle => 'Toggle';
-	String get reader_horizontal => 'Horizontal';
-	String get reader_line_height => 'Line height';
-	String get reader_merge_image_pages => 'Merge illustration pages into text';
-	String get reader_merge_image_pages_subtitle => 'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
-	String get reader_no_books_added => 'No books in library';
-	String get reader_not_bound_cannot_rematch => 'Audiobook not bound to a book, cannot re-match';
-	String get reader_orient_mixed => 'Mixed';
-	String get reader_orient_upright => 'Upright';
-	String get reader_page_columns_auto => 'Auto';
-	String get reader_paginated => 'Paginated';
-	String get reader_paragraph_spacing => 'Paragraph spacing';
-	String get reader_reader_styles => 'Prioritize book styles';
-	String get reader_scroll => 'Scroll';
-	String get reader_text_indentation => 'Paragraph indent';
-	String get reader_text_justify => 'Text justification';
-	String get reader_theme => 'Theme';
-	String get reader_vert_kerning => 'Font kerning (vertical)';
-	String get reader_vert_text_orient => 'Text orientation';
-	String get reader_vertical => 'Vertical';
-	String get reader_view_mode_label => 'Page / scroll';
-	String get reader_vn => 'Visual novel';
-	String get reader_writing_direction => 'Writing direction';
-	String get undo => 'Undo';
-	String get unit_milliseconds => 'ms';
-	String get unit_pixels => 'px';
-	String untitled_book({required Object id}) => 'Book ${id}';
-	String get untitled_chapter => '(Untitled)';
-	String get update_already_latest => 'You\'re on the latest version';
-	String get update_auto_install => 'Auto-install updates';
-	String get update_available => 'Update available';
-	String update_cached_newer({required Object version}) => 'Update ${version} available (verifying…)';
-	String update_cached_up_to_date({required Object version}) => 'On latest known version ${version} (checking…)';
-	String get update_cancel => 'Cancel';
-	String get update_cancelled => 'Download cancelled';
-	String get update_cancelling => 'Cancelling…';
-	String get update_channel_beta => 'Beta';
-	String get update_channel_debug => 'Debug';
-	String get update_channel_stable => 'Stable';
-	String get update_check_failed => 'Update check failed';
-	String get update_checking_now => 'Checking for updates…';
-	String get update_connecting => 'Connecting…';
-	String get update_custom_proxy_auto_hint => 'Used for update checks, cloud sync and downloads. Leave blank to use environment variables, then the enabled system proxy.';
-	String get update_custom_proxy_hint => 'host:port, e.g. 127.0.0.1:7890 (IPv4/host only)';
-	String get update_custom_proxy_invalid => 'Invalid proxy. Use host:port';
-	String get update_custom_proxy_label => 'Custom network proxy';
-	String get update_debug_channel => 'Debug update channel';
-	String get update_debug_channel_warning => 'Debug channel builds may be unstable. Use at your own risk.';
-	String get update_download => 'Download';
-	String get update_download_failed => 'Download failed';
-	String get update_download_not_resumed => 'not resumed';
-	String get update_download_restarted_from_zero => 'restarted from zero';
-	String update_download_resume_status({required Object status}) => 'Resume: ${status}';
-	String get update_download_resumed => 'resumed';
-	String update_download_size({required Object received, required Object total}) => 'Downloaded: ${received} / ${total}';
-	String update_download_source({required Object source}) => 'Source: ${source}';
-	String update_download_speed({required Object speed}) => 'Speed: ${speed}';
-	String get update_downloading => 'Downloading update…';
-	String get update_hide => 'Hide';
-	String update_install_current_executable({required Object path}) => 'Running executable: ${path}';
-	String update_install_deletefile_failure({required Object path, required Object code}) => 'Installer failed to replace ${path} (code ${code})';
-	String update_install_detected_location({required Object source, required Object path}) => 'Detected install location (${source}): ${path}';
-	String update_install_failure_summary({required Object summary}) => 'Reason: ${summary}';
-	String get update_install_incomplete_message => 'The installer started, but Fushi is still on the previous version. Check the installer log below.';
-	String get update_install_incomplete_title => 'Update did not finish';
-	String update_install_installer_pid({required Object pid}) => 'Installer PID: ${pid}';
-	String update_install_launch_failed_message({required Object version}) => 'Fushi could not start the installer for version ${version}. Check the log path below.';
-	String get update_install_launch_failed_title => 'Update installer did not start';
-	String update_install_launcher_pid({required Object pid}) => 'Update launcher PID: ${pid}';
-	String update_install_libmpv_holder({required Object pid, required Object path}) => 'libmpv holder: PID ${pid} - ${path}';
-	String get update_install_log_not_observed => 'Installer log was not created during the post-launch check.';
-	String get update_install_log_observed => 'Installer log was created during the post-launch check.';
-	String update_install_log_path({required Object path}) => 'Installer log: ${path}';
-	String get update_install_manual_close_retry => 'Close Fushi from the listed PID/path, then retry the update or run the installer again.';
-	String get update_install_parent_exit_not_observed => 'The update launcher did not observe Fushi exiting before the installer launch.';
-	String get update_install_parent_exit_observed => 'Fushi exited before the installer was launched.';
-	String update_install_path_mismatch({required Object warning}) => 'Install directory mismatch: ${warning}';
-	String get update_install_permission_cancel => 'Cancel';
-	String get update_install_permission_message => 'Please allow Fushi to install apps in system settings, then retry.';
-	String get update_install_permission_retry => 'Retry install';
-	String get update_install_permission_title => 'Allow installing updates';
-	String get update_install_restart_windows_hint => 'If the listed processes are closed but libmpv-2.dll is still locked, restart Windows and install again.';
-	String update_install_running_process({required Object pid, required Object path}) => 'Running Fushi process: PID ${pid} - ${path}';
-	String update_install_success_message({required Object version}) => 'Fushi was updated to version ${version}.';
-	String get update_install_success_title => 'Update installed';
-	String update_install_target_dir({required Object path}) => 'Install target: ${path}';
-	String get update_installing => 'Installing…';
-	String get update_mac_install_incomplete_message => 'The update could not be applied, so Fushi is still on the previous version. You can retry the update, or download the latest release manually.';
-	String update_message({required Object version}) => 'Version ${version} is available.';
-	String update_network_failure({required Object host, required Object reason}) => 'Could not reach ${host}: ${reason}';
-	String get update_never_remind => 'Don\'t remind me about updates';
-	String get update_skip => 'Skip';
-	String get url => 'URL';
-	String get video_audio_track => 'Audio track';
-	String get video_audio_track_empty => 'No switchable audio tracks';
-	String video_audio_track_switched({required Object label}) => 'Audio track: ${label}';
-	String get video_auto_play_next_cancel => 'Cancel';
-	String video_auto_play_next_countdown({required Object seconds}) => 'Next episode in ${seconds}s';
-	String get video_black_flash_notice_action => 'View suggestions';
-	String get video_black_flash_notice_dont_show_again => 'Don\'t show again';
-	String get video_bottom_next_cue => 'Next subtitle (forward a bit if none)';
-	String get video_bottom_play_pause => 'Play / pause';
-	String get video_bottom_prev_cue => 'Previous subtitle (back a bit if none)';
-	String get video_bottom_seek_back => 'Back 10s';
-	String get video_bottom_seek_back_label => '−10s';
-	String get video_bottom_seek_forward => 'Forward 10s';
-	String get video_bottom_seek_forward_label => '+10s';
-	String video_chapter_n({required Object n}) => 'Chapter ${n}';
-	String get video_chapters => 'Chapters';
-	String get video_chapters_empty => 'No chapters';
-	String get video_clip_export => 'Clip export';
-	String get video_clip_export_cancelled => 'Clip export cancelled';
-	String video_clip_export_failed({required Object reason}) => 'Clip export failed: ${reason}';
-	String get video_clip_export_ffmpeg_failed => 'ffmpeg failed';
-	String get video_clip_export_ffmpeg_unavailable => 'ffmpeg is unavailable';
-	String get video_clip_export_input_missing => 'Source video is unavailable';
-	String get video_clip_export_invalid_range => 'No valid clip range';
-	String get video_clip_export_output_missing => 'No output file was created';
-	String get video_clip_export_remote_download_required => 'Download the remote video to this device before exporting a clip';
-	String get video_clip_export_source_changed => 'Video source changed; clip export cancelled';
-	String get video_clip_export_start => 'Start clip export';
-	String get video_clip_export_stop => 'Stop and export clip';
-	String video_clip_exported({required Object path}) => 'Clip exported: ${path}';
-	String video_clip_exported_with_subtitles({required Object path}) => 'Clip exported with subtitles: ${path}';
-	String get video_clip_exporting => 'Exporting clip…';
-	String get video_continue_watching => 'Continue watching';
-	String get video_control_audio_track => 'Audio track';
-	String get video_control_customize_hint => 'Choose where each button sits on the player, or move it out.';
-	String get video_control_episode_list => 'Episode list';
-	String get video_control_favorite_sentence => 'Favorite current sentence';
-	String get video_control_fullscreen => 'Fullscreen';
-	String get video_control_next_cue => 'Next subtitle';
-	String get video_control_palette_hint => 'Drag a button into a slot to add it; a button can sit in several slots.';
-	String get video_control_palette_title => 'All buttons';
-	String get video_control_play_pause => 'Play/Pause';
-	String get video_control_previous_cue => 'Previous subtitle';
-	String get video_control_reject_required => 'Required controls must stay on the player.';
-	String get video_control_reject_unavailable => 'This control cannot be placed there.';
-	String get video_control_reject_volume_bottom => 'Volume can only sit on the bottom bar.';
-	String get video_control_remove_from_slot => 'Move out';
-	String get video_control_reset_layout => 'Reset player button layout';
-	String get video_control_screenshot => 'Screenshot';
-	String get video_control_seek_backward => 'Back 10s';
-	String get video_control_seek_forward => 'Forward 10s';
-	String get video_control_settings => 'Player settings';
-	String get video_control_slot_bottom_center => 'Bottom bar (center)';
-	String get video_control_slot_bottom_left => 'Bottom bar (left)';
-	String get video_control_slot_bottom_right => 'Bottom bar (right)';
-	String get video_control_slot_drop_hint => 'Drag a button here';
-	String get video_control_slot_hidden => 'Removed from player';
-	String get video_control_slot_screen_left => 'Screen left';
-	String get video_control_slot_screen_right => 'Screen right';
-	String get video_control_slot_top_center => 'Top bar (center)';
-	String get video_control_slot_top_left => 'Top bar (left)';
-	String get video_control_slot_top_right => 'Top bar (right)';
-	String get video_control_speed => 'Speed';
-	String get video_control_subtitle_list => 'Subtitle list';
-	String get video_control_subtitle_track => 'Subtitle track';
-	String get video_control_title => 'Video title';
-	String get video_control_volume => 'Volume';
-	String get video_danmaku_manual_bind_empty => 'No danmaku for this episode yet.';
-	String get video_danmaku_manual_bind_failed => 'Couldn\'t load danmaku for this episode. Try again later.';
-	String get video_danmaku_manual_bind_server_error => 'The danmaku server rejected the request. Try again later.';
-	String get video_danmaku_manual_match_title => 'Match danmaku';
-	String get video_danmaku_manual_network_error => 'Network error. Check your connection and try again.';
-	String get video_danmaku_manual_no_result => 'No matching anime found.';
-	String get video_danmaku_manual_search_action => 'Search';
-	String get video_danmaku_manual_search_hint => 'Anime title';
-	String get video_danmaku_manual_search_prompt => 'Search Dandanplay by anime title, then pick an episode.';
-	String get video_danmaku_manual_server_error => 'Search failed. Try again later.';
-	String video_delete_confirm({required Object title}) => 'Delete 『${title}』? This cannot be undone.';
-	String get video_delete_title => 'Delete video';
-	String get video_double_tap_next_cue => 'Next line';
-	String get video_double_tap_prev_cue => 'Previous line';
-	String get video_drop_audio_unsupported => 'Drop subtitle files onto the current video. Audio files cannot be attached here.';
-	String get video_drop_subtitle_only => 'Drop subtitle files onto the current video.';
-	String get video_episode_list => 'Episodes';
-	String get video_episode_list_empty => 'No episodes';
-	String video_favorite_count({required Object count}) => '${count} favorites';
-	String get video_file_error_content => 'Unable to load the video file. Please ensure this file exists and is located in a directory accessible by the application.';
-	String get video_file_not_found => 'Video file not found';
-	String get video_immersive_locked => 'Immersive mode on';
-	String get video_immersive_mode_full => 'Full controls';
-	String get video_immersive_mode_lookup_only => 'Lookup only';
-	String get video_immersive_mode_seek_lookup => 'Shortcut + lookup';
-	String get video_immersive_mode_unlock_only => 'Unlock only';
-	String get video_immersive_unlock => 'Unlock';
-	String get video_immersive_unlocked => 'Immersive mode off';
-	String get video_import_action => 'Import video';
-	String get video_import_confirm => 'Import';
-	String video_import_folder_done({required Object count}) => 'Imported ${count} series';
-	String get video_import_folder_empty => 'No video files found in this folder';
-	String get video_import_pick_folder => 'Import folder (auto-group episodes)';
-	String get video_import_pick_playlist => 'Pick m3u8 playlist';
-	String get video_import_pick_subtitle => 'Pick subtitle';
-	String get video_import_pick_video => 'Pick video file';
-	String get video_import_stream_advanced => 'Advanced (anti-leech headers)';
-	String get video_import_stream_referer => 'Referer (optional)';
-	String get video_import_stream_subtitle_url_field => 'External subtitle URL (optional)';
-	String get video_import_stream_url_field => 'Video stream URL';
-	String get video_import_stream_url_hint => 'Play HLS/m3u8/mp4 stream URL (with optional external subtitle URL and anti-leech Referer/User-Agent)';
-	String get video_import_stream_user_agent => 'User-Agent (optional)';
-	String get video_import_subtitle_optional => 'Optional external subtitle (you can switch between embedded/external subtitles anytime during playback)';
-	String get video_import_title => 'Import video';
-	String get video_jimaku_anime_match => 'Anime match';
-	String get video_jimaku_api_key => 'Jimaku API key';
-	String get video_jimaku_api_key_hint => 'Get a free API key at jimaku.cc/account';
-	String get video_jimaku_api_key_set => 'API key set';
-	String video_jimaku_batch_done({required Object done, required Object total}) => 'Subtitles fetched: ${done}/${total}';
-	String get video_jimaku_batch_download => 'Download all';
-	String get video_jimaku_batch_title => 'Fetch subtitles for collection';
-	String get video_jimaku_download_failed => 'Download failed';
-	String get video_jimaku_downloaded => 'Subtitle downloaded and applied';
-	String get video_jimaku_episode => 'Episode (optional)';
-	String get video_jimaku_episode_hint => 'Leave empty to list all';
-	String get video_jimaku_fetch => 'Fetch subtitles (Jimaku)';
-	String get video_jimaku_filter => 'Filter results (e.g. WEBRip, BD)';
-	String get video_jimaku_find_sources => 'Find subtitles';
-	String get video_jimaku_language => 'Language';
-	String get video_jimaku_language_all => 'All';
-	String get video_jimaku_no_key => 'Enter your Jimaku API key first';
-	String get video_jimaku_no_results => 'No subtitles found';
-	String get video_jimaku_query => 'Series name';
-	String get video_jimaku_search => 'Search';
-	String get video_jimaku_series => 'Series';
-	String get video_jimaku_show_all_episodes => 'Show all episodes';
-	String get video_jimaku_source => 'Subtitle source';
-	String get video_jimaku_source_hint => 'Choose one Jimaku entry. Season packs are matched by episode automatically.';
-	String video_last_watched({required Object date}) => 'Last watched ${date}';
-	String get video_library_empty => 'No videos imported yet';
-	String get video_load_failed_back => 'Back';
-	String get video_load_failed_generic => 'Couldn\'t load this video.';
-	String get video_load_failed_network => 'Network error - check your connection and try again.';
-	String get video_load_failed_not_found => 'This item was not found in your library.';
-	String get video_load_failed_retry => 'Retry';
-	String get video_load_failed_timeout => 'Connection timed out - the network is slow or the source is rate-limiting. Please try again.';
-	String get video_load_failed_title => 'Video failed to load';
-	String get video_load_failed_unavailable => 'Couldn\'t get the video stream - it may be unavailable, region or age restricted, or the source changed.';
-	String get video_loading_buffering => 'Buffering…';
-	String get video_loading_connecting => 'Connecting to stream…';
-	String get video_loading_preparing => 'Preparing…';
-	String get video_loading_subtitle => 'Downloading subtitles…';
-	String get video_menu_fullscreen => 'Toggle fullscreen';
-	String get video_menu_lock => 'Immersive / lock mode';
-	String get video_menu_play_pause => 'Play / pause';
-	String get video_menu_subtitle_track => 'Subtitle track';
-	String get video_mining_image_mode => 'Video card image';
-	String get video_mining_image_mode_current_frame => 'Screenshot at mining';
-	String get video_mining_image_mode_gif => 'Animated GIF (subtitle clip)';
-	String get video_mining_image_mode_hint => 'Whether the video card cover is an animation of the subtitle clip or a single still frame — and which frame';
-	String get video_mining_image_mode_subtitle_start => 'Screenshot at subtitle start';
-	String get video_next_episode => 'Next episode';
-	String video_playlist_episodes({required Object count}) => '${count} eps';
-	String get video_prev_episode => 'Previous episode';
-	String get video_quality => 'Quality';
-	String get video_quality_auto => 'Auto';
-	String get video_quality_empty => 'No switchable quality for this video';
-	String get video_quality_enhancement_hint => 'Turn this on to sharpen the picture with mpv\'s built-in high-quality scaling. Works for anime as well as live-action shows and movies. To go further with shaders like Anime4K, open Image enhancement while a video is playing and pick a level there.';
-	String get video_quality_load_failed => 'Couldn\'t load qualities for this video.';
-	String get video_quality_loading => 'Loading available qualities…';
-	String video_quality_switched({required Object label}) => 'Quality: ${label}';
-	String get video_rename => 'Rename';
-	String get video_rename_hint => 'Title';
-	String get video_render_skia_fix_confirm_action => 'Restart';
-	String get video_render_skia_fix_confirm_body => 'This disables the Impeller renderer and restarts the app to apply.';
-	String get video_render_skia_fix_confirm_title => 'Switch to Skia and restart?';
-	String get video_render_skia_fix_hint => 'Use if audio plays but the video stays black. Disables Impeller; restarts to apply.';
-	String get video_render_skia_fix_title => 'Screen black? Switch renderer (Skia)';
-	String video_resource_missing_message({required Object title}) => 'The file for 『${title}』 could not be found. Its location may have changed, or the drive may not be connected. You can re-import it, or remove this entry.';
-	String get video_resource_missing_reimport => 'Re-import';
-	String get video_resource_missing_title => 'Video unavailable';
-	String get video_resource_relink_success => 'Video relinked';
-	String get video_scrape_air_date => 'Aired';
-	String get video_scrape_applied => 'Cover applied';
-	String get video_scrape_apply_failed => 'Failed to apply cover';
-	String video_scrape_apply_to_collection({required Object n}) => 'Also apply to all ${n} episodes in this collection';
-	String get video_scrape_batch_close => 'Close';
-	String get video_scrape_confidence_high => 'High match';
-	String get video_scrape_confidence_low => 'Low match';
-	String get video_scrape_confidence_medium => 'Medium match';
-	String get video_scrape_episodes => 'Episodes';
-	String get video_scrape_info => 'Series info';
-	String get video_scrape_info_empty => 'No series info yet. It is fetched automatically in the background; you can also match it manually.';
-	String get video_scrape_no_results => 'No matches found';
-	String get video_scrape_online_match => 'Match cover online';
-	String video_scrape_rating_votes({required Object count}) => '${count} ratings';
-	String get video_scrape_rescrape => 'Re-scrape';
-	String get video_scrape_search => 'Search';
-	String get video_scrape_search_hint => 'Search by title';
-	String get video_scrape_source_offline => 'Offline';
-	String get video_scrape_summary => 'Synopsis';
-	String get video_scrape_tags => 'Tags';
-	String get video_scrape_use => 'Use';
-	String get video_scrape_view_subject => 'View on Bangumi';
-	String get video_screenshot => 'Screenshot';
-	String video_screenshot_failed_reason({required Object reason}) => 'Screenshot failed: ${reason}';
-	String video_screenshot_ready({required Object file}) => 'Screenshot ready: ${file}';
-	String video_screenshot_saved_to({required Object path}) => 'Screenshot saved: ${path}';
-	String get video_secondary_subtitle_hint => 'Rendered by player (not lookupable)';
-	String get video_secondary_subtitle_sources => 'Secondary subtitle';
-	String get video_setting_auto_play_next => 'Auto-play next episode';
-	String get video_setting_auto_scrape => 'Auto-fetch series info';
-	String get video_setting_auto_scrape_hint => 'Silently fetch cover, synopsis, rating and tags from Bangumi for videos in your library';
-	String get video_setting_av_delay => 'Subtitle sync';
-	String get video_setting_av_delay_hint => 'Positive = subtitle later (cues pushed back); negative = subtitle earlier. Use the slider, +/- buttons, or type a value.';
-	String get video_setting_danmaku_area => 'Display area';
-	String get video_setting_danmaku_area_hint => 'Fraction of the screen height danmaku may occupy, from the top.';
-	String get video_setting_danmaku_block_rules => 'Block words / regex';
-	String get video_setting_danmaku_block_rules_hint => 'One rule per line. Wrap a line in slashes like /pattern/ for a regular expression; otherwise it matches as case-insensitive text.';
-	String get video_setting_danmaku_block_rules_placeholder => 'e.g. spoiler or /pattern/';
-	String get video_setting_danmaku_enabled => 'Show danmaku';
-	String get video_setting_danmaku_enabled_hint => 'Render local or matched danmaku over the video without blocking controls.';
-	String get video_setting_danmaku_font_scale => 'Font size';
-	String get video_setting_danmaku_font_scale_hint => 'Scale the danmaku text size.';
-	String get video_setting_danmaku_manual_match => 'Manual match';
-	String get video_setting_danmaku_manual_match_hint => 'Search Dandanplay by title and pick the episode when auto match fails or is wrong.';
-	String get video_setting_danmaku_max_active => 'Active danmaku limit';
-	String get video_setting_danmaku_max_active_hint => 'Caps comments rendered per frame to keep large files responsive.';
-	String get video_setting_danmaku_online => 'Online Dandanplay match';
-	String get video_setting_danmaku_online_hint => 'When no usable local sidecar exists, match the opened video with Dandanplay and fetch related comments.';
-	String get video_setting_danmaku_opacity => 'Opacity';
-	String get video_setting_danmaku_opacity_hint => 'Overall danmaku transparency.';
-	String get video_setting_danmaku_server_url => 'Danmaku server URL';
-	String get video_setting_danmaku_speed => 'Speed';
-	String get video_setting_danmaku_speed_hint => 'Higher is faster; scrolling danmaku cross the screen sooner.';
-	String get video_setting_double_tap => 'Double-tap seek';
-	String get video_setting_double_tap_hint => 'Double-tap the left or right of the video to seek';
-	String get video_setting_double_tap_off => 'Off';
-	String get video_setting_double_tap_subtitle => 'Subtitle';
-	String get video_setting_immersive_mode => 'Immersive mode';
-	String get video_setting_immersive_mode_hint => 'Controls what remains available after pressing the side lock button';
-	String get video_setting_lock_window_aspect => 'Lock window to video aspect';
-	String get video_setting_long_press_speed => 'Long-press speed';
-	String get video_setting_long_press_speed_hint => 'Temporarily use this speed while holding the video.';
-	String get video_setting_mpv_aspect => 'Aspect ratio';
-	String get video_setting_mpv_aspect_auto => 'Original';
-	String get video_setting_mpv_brightness => 'Brightness';
-	String get video_setting_mpv_channels => 'Channels';
-	String get video_setting_mpv_channels_auto => 'Auto';
-	String get video_setting_mpv_channels_mono => 'Mono';
-	String get video_setting_mpv_channels_stereo => 'Stereo (downmix)';
-	String get video_setting_mpv_contrast => 'Contrast';
-	String get video_setting_mpv_correct_downscale => 'Linear downscaling';
-	String get video_setting_mpv_deband => 'Debanding';
-	String get video_setting_mpv_deinterlace => 'Deinterlace';
-	String get video_setting_mpv_dither => 'Dithering';
-	String get video_setting_mpv_gamma => 'Gamma';
-	String get video_setting_mpv_group_advanced => 'Advanced';
-	String get video_setting_mpv_group_audio => 'Audio';
-	String get video_setting_mpv_group_color => 'Color';
-	String get video_setting_mpv_group_decode => 'Decoding';
-	String get video_setting_mpv_group_geometry => 'Geometry';
-	String get video_setting_mpv_group_playback => 'Playback';
-	String get video_setting_mpv_group_quality => 'Image quality';
-	String get video_setting_mpv_hue => 'Hue';
-	String get video_setting_mpv_hwdec => 'Hardware decoding';
-	String get video_setting_mpv_hwdec_auto => 'Auto (safe)';
-	String get video_setting_mpv_hwdec_copy => 'Auto (copy)';
-	String get video_setting_mpv_hwdec_off => 'Off';
-	String get video_setting_mpv_interpolation => 'Motion interpolation';
-	String get video_setting_mpv_loop => 'Loop file';
-	String get video_setting_mpv_normalize => 'Normalize downmix loudness';
-	String get video_setting_mpv_panscan => 'Pan & scan (crop borders)';
-	String get video_setting_mpv_pitch => 'Preserve pitch when speeding';
-	String get video_setting_mpv_raw => 'Extra mpv options (one per line, key=value)';
-	String get video_setting_mpv_raw_hint => 'Desktop only; options that cannot apply at runtime (e.g. vo, profile) are ignored. SVP/RIFE need external tools and are not supported.';
-	String get video_setting_mpv_reset => 'Reset all';
-	String get video_setting_mpv_rotate => 'Rotation';
-	String get video_setting_mpv_saturation => 'Saturation';
-	String get video_setting_mpv_sigmoid => 'Sigmoid upscaling';
-	String get video_setting_mpv_sigmoid_hint => 'Sigmoid-curve upscaling reduces ringing but costs GPU. Off by default for performance; turn on if you want sharper upscaling.';
-	String get video_setting_mpv_zoom => 'Zoom';
-	String get video_setting_picture_fit => 'Picture scaling';
-	String get video_setting_picture_fit_contain => 'Fit keep ratio add black bars';
-	String get video_setting_picture_fit_cover => 'Fill keep ratio crop edges';
-	String get video_setting_picture_fit_fill => 'Stretch to fill';
-	String get video_setting_picture_fit_hint => 'How the picture fills the player area';
-	String get video_setting_qb_category => 'qBittorrent category';
-	String get video_setting_qb_category_hint => 'Downloads pushed by Fushi get this category; completion tracking only watches it.';
-	String get video_setting_qb_password => 'WebUI password';
-	String get video_setting_qb_url => 'qBittorrent WebUI URL';
-	String get video_setting_qb_url_hint => 'e.g. http://127.0.0.1:8080. Leave empty to disable anime downloading.';
-	String get video_setting_qb_username => 'WebUI username';
-	String get video_setting_secondary_subtitle_obscure => 'Obscure secondary subtitle';
-	String get video_setting_secondary_subtitle_obscure_hint => 'Blur or hide the secondary (translation) subtitle';
-	String get video_setting_seek_seconds => 'Seek seconds';
-	String get video_setting_speed => 'Playback speed';
-	String get video_setting_speed_step => 'Speed step';
-	String get video_setting_subtitle_appearance => 'Subtitle appearance';
-	String get video_setting_subtitle_bg_color => 'Background color';
-	String get video_setting_subtitle_bg_opacity => 'Background opacity';
-	String get video_setting_subtitle_font_size => 'Font size';
-	String get video_setting_subtitle_font_weight => 'Font weight';
-	String get video_setting_subtitle_no_background => 'No background';
-	String get video_setting_subtitle_no_background_hint => 'Make the subtitle background transparent.';
-	String get video_setting_subtitle_obscure => 'Obscure subtitles';
-	String get video_setting_subtitle_obscure_blur => 'Blur';
-	String get video_setting_subtitle_obscure_hide => 'Hide';
-	String get video_setting_subtitle_obscure_hint => 'Choose how subtitles are obscured for listening practice: off, blurred (hover or tap to reveal), or hidden.';
-	String get video_setting_subtitle_obscure_none => 'Off';
-	String get video_setting_subtitle_position => 'Vertical position';
-	String get video_setting_subtitle_reset => 'Reset to default';
-	String get video_setting_subtitle_respect_ass => 'Respect subtitle\'s own style';
-	String get video_setting_subtitle_respect_ass_hint => 'Use the font, color, and outline built into .ass subtitles when available; turn off to force your appearance settings.';
-	String get video_setting_subtitle_shadow => 'Shadow';
-	String get video_setting_subtitle_sync_input => 'Offset (ms)';
-	String get video_setting_subtitle_text_color => 'Text color';
-	String get video_setting_theme => 'Theme';
-	String get video_setting_torrent_active_downloads => 'Max active downloads';
-	String get video_setting_torrent_active_seeds => 'Max active seeds';
-	String get video_setting_torrent_anonymous => 'Anonymous mode';
-	String get video_setting_torrent_antileech => 'Enable anti-leech';
-	String get video_setting_torrent_backend_qb => 'External qBittorrent';
-	String get video_setting_torrent_ban_progress_cheat => 'Ban progress cheat';
-	String get video_setting_torrent_ban_relative_cheat => 'Ban relative progress cheat';
-	String get video_setting_torrent_ban_time => 'Ban duration (min)';
-	String get video_setting_torrent_ban_time_hint => '0 = permanent';
-	String get video_setting_torrent_connections_hint => '0 = engine default';
-	String get video_setting_torrent_dht => 'DHT';
-	String get video_setting_torrent_download_limit => 'Download limit (KB/s)';
-	String get video_setting_torrent_encryption_disabled => 'Disabled';
-	String get video_setting_torrent_encryption_forced => 'Force';
-	String get video_setting_torrent_encryption_prefer => 'Prefer';
-	String get video_setting_torrent_limit_hint => '0 = unlimited';
-	String get video_setting_torrent_listen_port => 'Listen port';
-	String get video_setting_torrent_listen_port_hint => '0 = default (6881)';
-	String get video_setting_torrent_lsd => 'Local peer discovery (LSD)';
-	String get video_setting_torrent_max_connections => 'Max connections';
-	String get video_setting_torrent_max_ip_ports => 'Max ports per IP';
-	String get video_setting_torrent_memory_hint => 'Cap engine memory. 0 = auto (based on device RAM).';
-	String get video_setting_torrent_memory_limit => 'Memory limit (MB)';
-	String get video_setting_torrent_natpmp => 'NAT-PMP port mapping';
-	String get video_setting_torrent_section_antileech => 'Anti-leech';
-	String get video_setting_torrent_section_session => 'Session';
-	String get video_setting_torrent_seed_ratio_hint => 'Stop uploading when uploaded/downloaded reaches this. 0 = unlimited.';
-	String get video_setting_torrent_seed_ratio_limit => 'Seed ratio limit';
-	String get video_setting_torrent_seed_time_hint => 'Stop uploading after seeding this long. 0 = unlimited.';
-	String get video_setting_torrent_seed_time_limit => 'Seed time limit (minutes)';
-	String get video_setting_torrent_upload_enabled => 'Enable upload / seeding';
-	String get video_setting_torrent_upload_enabled_hint => 'Off by default. Seed back to the swarm after downloading.';
-	String get video_setting_torrent_upload_limit => 'Upload limit (KB/s)';
-	String get video_setting_torrent_upload_slots => 'Max upload slots';
-	String get video_setting_torrent_upnp => 'UPnP port mapping';
-	String get video_setting_torrent_zero_default => '0 = default';
-	String get video_setting_torrent_zero_off => '0 = off';
-	String get video_settings_cat_audio => 'Audio';
-	String get video_settings_cat_controls => 'Controls';
-	String get video_settings_cat_danmaku => 'Danmaku';
-	String get video_settings_cat_mpv => 'mpv';
-	String get video_settings_cat_playback => 'Playback';
-	String get video_settings_cat_shaders => 'Image enhancement';
-	String get video_settings_cat_subtitle => 'Subtitles';
-	String get video_settings_title => 'Video settings';
-	String get video_shader_anime4k_hint => 'Pick a preset to download. After downloading, tick it in the list to enable. Desktop only.';
-	String get video_shader_anime4k_title => 'Anime4K recommended shaders';
-	String get video_shader_download_anime4k => 'Download Anime4K presets';
-	String video_shader_download_done({required Object count}) => 'Downloaded ${count} shader(s)';
-	String get video_shader_download_failed => 'Shader download failed';
-	String video_shader_download_partial({required Object ok, required Object failed}) => 'Downloaded ${ok} shader(s), ${failed} failed';
-	String get video_shader_download_url => 'Download from link';
-	String get video_shader_downloaded_label => 'Downloaded';
-	String get video_shader_downloading => 'Downloading shaders…';
-	String get video_shader_first_use_body => 'For sharper anime playback, open Image enhancement and click Download Anime4K presets. It downloads recommended shaders, then you can tick the installed ones to enable them.';
-	String get video_shader_first_use_download => 'Download and enable';
-	String get video_shader_first_use_title => 'Try Anime4K image enhancement';
-	String get video_shader_import => 'Import shader (.glsl)';
-	String video_shader_import_done({required Object count}) => 'Imported ${count} shader(s)';
-	String get video_shader_import_from_mpv => 'Import from local mpv';
-	String get video_shader_import_from_mpv_hint => 'Search local mpv automatically, or choose an mpv folder when none is found.';
-	String get video_shader_mobile_perf_hint => 'On phones, shaders apply only on the standard GPU render path and effectiveness varies by device GPU; higher tiers may drop frames or heat up. Try Low/Medium first and check the result on your device.';
-	String video_shader_mpv_dir_current({required Object path}) => 'mpv folder: ${path}';
-	String get video_shader_mpv_dir_empty => 'No shaders found in that folder';
-	String get video_shader_mpv_not_found => 'No local mpv shaders found';
-	String get video_shader_mpv_pick_title => 'Import shaders from mpv';
-	String get video_shader_pick_mpv_dir => 'Choose mpv folder';
-	String get video_shader_preset_mode_a_fast => 'For most 1080p anime. Lighter GPU load.';
-	String get video_shader_preset_mode_a_hq => 'Highest quality for 1080p anime. Needs a strong GPU.';
-	String get video_shader_preset_mode_b_fast => 'For older 720p anime with resampling artifacts.';
-	String get video_shader_preset_mode_b_hq => 'High quality for older 720p anime with resampling artifacts. Needs a strong GPU.';
-	String get video_shader_preset_mode_c_fast => 'For old SD (480p) anime with compression smearing.';
-	String get video_shader_preset_mode_c_hq => 'High quality for old SD (480p) anime with compression smearing. Needs a strong GPU.';
-	String get video_shader_quality_tier => 'Quality enhancement';
-	String get video_shader_section_advanced => 'Advanced (manual shaders)';
-	String get video_shader_section_installed => 'Installed shaders';
-	String get video_shader_showing_original => 'Shaders off (original)';
-	String get video_shader_showing_shaded => 'Shaders on';
-	String get video_shader_tier_custom_hint => 'Custom shader selection. Pick a tier above to switch to a preset.';
-	String get video_shader_tier_high => 'High';
-	String get video_shader_tier_high_hint => 'Anime4K HQ. Sharper; best for animation, also usable on live-action (smaller gain). Needs an upper-mid GPU (NVIDIA RTX 4060 / RTX 3070, AMD RX 6700 XT / RX 7700 XT).';
-	String get video_shader_tier_low => 'Low';
-	String get video_shader_tier_low_hint => 'mpv built-in sharpening (ewa_lanczossharp). Works on any video (animation and live-action). No download, lowest GPU load. Pick this on integrated or older cards (NVIDIA GTX 1050, AMD RX 560, Intel iGPU).';
-	String get video_shader_tier_medium => 'Medium';
-	String get video_shader_tier_medium_hint => 'Anime4K Fast. Best for animation, but also works on live-action movies/TV (smaller gain). Runs on mid-range GPUs (NVIDIA GTX 1660 / RTX 3050, AMD RX 6600).';
-	String get video_shader_tier_off => 'None';
-	String get video_shader_tier_off_hint => 'No enhancement. Plays the original video as-is.';
-	String get video_shader_tier_ultra => 'Ultra';
-	String get video_shader_tier_ultra_hint => 'Anime4K Mode A, VL + an extra deblur/denoise restore pass — the strongest reconstruction the video renderer can actually run: the High-tier VL chain plus one more restore pass for compressed sources. Also usable on live-action (smaller gain). Best on a strong GPU (NVIDIA RTX 5090, AMD RX 7900 XTX); pick a lower tier if yours is weaker.';
-	String get video_shader_url_hint => 'Paste a shader .glsl link (e.g. GitHub)';
-	String get video_shaders_empty => 'No shaders imported yet';
-	String get video_stat_by_video => 'By video';
-	String get video_stat_completed => 'Completed';
-	String get video_stat_no_data => 'No video statistics yet';
-	String get video_statistics => 'Video statistics';
-	String get video_subtitle_attach_playlist_hint => 'Open the playlist to attach a subtitle per episode';
-	String video_subtitle_attached_to_video({required Object title, required Object count}) => 'Subtitle attached to ${title} (${count} cues)';
-	String get video_subtitle_auto_align => 'Auto-align subtitle';
-	String video_subtitle_auto_align_done({required Object ms}) => 'Auto-aligned subtitle by ${ms} ms';
-	String get video_subtitle_auto_align_low_confidence => 'Couldn\'t confidently auto-align (no clear voice match)';
-	String get video_subtitle_auto_align_running => 'Auto-aligning subtitle…';
-	String get video_subtitle_color_note => 'Subtitle colors are set inside the video player.';
-	String video_subtitle_delay_osd({required Object ms}) => 'Subtitle sync: ${ms} ms';
-	String get video_subtitle_filter_all => 'All';
-	String get video_subtitle_filter_favorites => 'Favorites';
-	String get video_subtitle_filter_favorites_empty => 'No favorited lines yet';
-	String get video_subtitle_filter_selected => 'Selected';
-	String get video_subtitle_filter_selected_empty => 'No lines selected yet';
-	String get video_subtitle_graphic_hint => 'Graphic subtitle · shown on video · no word lookup';
-	String video_subtitle_graphic_shown({required Object label}) => 'Graphic subtitle shown on video (no word lookup): ${label}';
-	String get video_subtitle_import_failed => 'Failed to import subtitle';
-	String get video_subtitle_import_file => 'Import subtitle file…';
-	String get video_subtitle_import_unsupported => 'Unsupported subtitle format';
-	String get video_subtitle_list => 'Subtitle list';
-	String get video_subtitle_list_auto_scroll => 'Auto-scroll';
-	String get video_subtitle_list_clear_selection => 'Clear card selection';
-	String get video_subtitle_list_empty => 'No subtitles loaded';
-	String get video_subtitle_list_font_larger => 'Larger text';
-	String get video_subtitle_list_font_smaller => 'Smaller text';
-	String get video_subtitle_list_jump => 'Jump to this line';
-	String get video_subtitle_list_loading => 'Loading subtitles...';
-	String get video_subtitle_list_remove_from_card => 'Remove from card selection';
-	String get video_subtitle_list_select_for_card => 'Select for card (merged into the sentence when mining)';
-	String video_subtitle_load_failed({required Object label}) => 'Couldn\'t load this subtitle (graphic or unsupported track): ${label}';
-	String get video_subtitle_off => 'Turn off subtitles';
-	String get video_subtitle_remote_host => 'Paired device subtitle';
-	String video_subtitle_switched({required Object label}) => 'Subtitle: ${label}';
-	String get video_subtitle_waveform_cue_list => 'Subtitle list';
-	String get video_subtitle_waveform_jump_playhead => 'Jump to playhead';
-	String get video_subtitle_waveform_legend_cue => 'Subtitle cue';
-	String get video_subtitle_waveform_legend_energy => 'Loudness';
-	String get video_subtitle_waveform_legend_playhead => 'Playhead';
-	String get video_subtitle_waveform_open => 'Waveform alignment';
-	String get video_subtitle_waveform_open_hint => 'Tap to zoom in and align';
-	String get video_subtitle_waveform_scroll_hint => 'Drag to scan the timeline; use the controls below to align';
-	String get video_subtitle_waveform_unavailable => 'Waveform unavailable on this device';
-	String get video_subtitle_waveform_zoom_in => 'Zoom in';
-	String get video_subtitle_waveform_zoom_out => 'Zoom out';
-	String get video_subtitle_youtube_empty => 'This caption track has no text';
-	String video_subtitle_youtube_translated({required Object lang}) => '${lang} (translated)';
-	String video_watched_up_to({required Object time}) => 'Watched to ${time}';
-	String get video_windows_black_flash_notice_body => 'On Windows, video may flash black under heavy GPU load. To reduce the load, try turning off Quality enhancement, Sigmoid upscaling and Debanding above, or switch Hardware decoding to Copy.';
-	String get video_windows_black_flash_notice_title => 'Black flickering on Windows?';
-	String get view_illustrations => 'Illustrations';
-	String get volume_button_page_turning => 'Volume button page turning';
-	String get volume_key_sentence_nav => 'Volume key sentence navigation';
-	String get wheel_page_turn_interval => 'Mouse wheel page-turn interval';
-	String get word_favorite_added => 'Word saved to favorites';
-	String get word_favorite_removed => 'Word removed from favorites';
-	String get yomitan_api_key => 'Yomitan API key (optional)';
-	String get yomitan_api_server => 'Yomitan API server';
-	String get yomitan_api_server_hint => 'Let yomitan-api clients query Fushi\'s dictionaries (port 19633)';
-	String get yomitan_api_server_started => 'Yomitan API server started';
-	String get yomitan_port_kill_action => 'End process and retry';
-	String get yomitan_port_kill_confirm => 'End process';
-	String yomitan_port_kill_confirm_message({required Object process}) => 'The port is currently used by: ${process}';
-	String yomitan_port_kill_confirm_title({required Object port}) => 'End the process using port ${port}?';
-	String yomitan_port_kill_failed({required Object process}) => 'Could not end ${process}. Please end it manually, then retry.';
-	String yomitan_port_kill_protected({required Object process}) => '${process} is a critical system process — Fushi will not end it. Change the port instead.';
-	String get yomitan_port_kill_self_instance => 'This process is another running instance of this app.';
-	String get game_track_bgm => 'BGM / excluded';
-	String get game_line_audio_no_voice => 'No voice';
-	String get game_line_audio_overlong => 'Overlong clip';
-	String get game_line_audio_overlong_hint => 'Far longer than a single line; may include BGM or other mixed audio';
-	String get game_line_audio_loopback_hint => 'System-mix fallback; may include BGM';
-	String get game_line_recapture => 'Recapture voice';
-	String get game_line_recapture_stop => 'Finish recapture';
-	String get game_line_tracks => 'Tracks for this line';
-	String get game_line_tracks_hint => 'Preview each track at this line\'s moment, then exclude the BGM ones';
-	String get game_line_track_use => 'Use for this line';
-	String get game_user_tags_title => 'My tags';
-	String get anki_lapis_section => 'Lapis card style';
-	String get anki_lapis_font_scale => 'Card font scale';
-	String get anki_lapis_font_scale_hint => 'Scales every Lapis font size; takes effect via "Apply style to Anki".';
-	String get anki_lapis_custom_css => 'Custom CSS';
-	String get anki_lapis_custom_css_hint => 'Appended to the Lapis stylesheet in a protected user section.';
-	String get anki_lapis_apply => 'Apply style to Anki';
-	String get anki_lapis_apply_done => 'Lapis style applied. A backup was saved first.';
-	String anki_lapis_apply_failed({required Object error}) => 'Could not apply style: ${error}';
-	String get anki_lapis_up_to_date => 'Lapis style is already up to date.';
-	String get anki_lapis_foreign_edit_title => 'Template changed in Anki';
-	String get anki_lapis_foreign_edit_body => 'The Lapis template in Anki differs from what Fushi last applied - it may have been edited by hand. Applying will overwrite it; a backup is saved first. Continue?';
-	String get anki_lapis_backup => 'Back up Lapis template';
-	String anki_lapis_backup_done({required Object path}) => 'Template backed up: ${path}';
-	String anki_lapis_backup_failed({required Object error}) => 'Backup failed: ${error}';
-	String get anki_lapis_not_found => 'Lapis note type not found in Anki.';
-	String get anki_lapis_restore => 'Restore from backup';
-	String get anki_lapis_restore_empty => 'No backups yet.';
-	String get anki_lapis_restore_confirm => 'Overwrite the Lapis template in Anki with this backup? The current state is backed up first.';
-	String get anki_lapis_restore_done => 'Template restored.';
-	String anki_lapis_restore_failed({required Object error}) => 'Restore failed: ${error}';
-	String get anki_dedup_section => 'Anki media storage optimization';
-	String get anki_dedup_scan => 'Scan for duplicates (no changes)';
-	String get anki_dedup_run => 'Deduplicate now';
-	String get anki_dedup_report_title => 'Media deduplication report';
-	String anki_dedup_report_body({required Object groups, required Object removed, required Object size, required Object notes, required Object models, required Object skipped}) => '${groups} duplicate groups; ${removed} extra copies (${size}); ${notes} notes and ${models} note types rewritten; ${skipped} skipped.';
-	String get anki_dedup_report_dry_note => 'Scan only - nothing was changed.';
-	String get anki_dedup_report_clean => 'No byte-identical duplicates found.';
-	String anki_dedup_failed({required Object error}) => 'Deduplication failed: ${error}';
-	String get anki_dedup_unavailable => 'Requires Anki running on this machine (AnkiConnect).';
-	String get anki_dedup_run_hint => 'Scans first and lists exactly what would be deleted; nothing is removed until you confirm.';
-	String get anki_dedup_plan_title => 'Files to delete';
-	String anki_dedup_plan_intro({required Object count, required Object size}) => '${count} extra copies, ${size} reclaimable. One copy of each file is kept and every reference is repointed to it first; nothing is ever re-encoded.';
-	String anki_dedup_plan_entry({required Object file, required Object size, required Object canonical}) => 'Delete ${file} (${size}) - keeping ${canonical}';
-	String get anki_dedup_plan_delete => 'Delete these files';
-	String get anki_dedup_plan_journal => 'A journal of every rewrite and deletion is written to the backup folder first.';
-	String get manga_ocr_default_engine => 'Default OCR engine';
-	String get manga_ocr_engine_auto => 'Automatic (never uploads to Lens)';
-	String get manga_ocr_engine_local_onnx => 'Local ONNX';
-	String get manga_ocr_engine_google_lens => 'Google Lens';
-	String get manga_google_lens_disclosure_title => 'Send manga pages to Google Lens?';
-	String get manga_google_lens_disclosure_body => 'Recognizing this manga sends a reduced JPEG copy of each page without OCR text to Google. Results are cached on this device. The endpoint is unofficial and may stop working. Nothing is uploaded unless you agree.';
-	String get manga_google_lens_disclosure_accept => 'Agree and start OCR';
-	String get manga_google_lens_disclosure_decline => 'Cancel';
-	String get manga_reading_direction => 'Reading direction';
-	String get manga_direction_rtl => 'Right to left';
-	String get manga_direction_ltr => 'Left to right';
-	String get manga_zoom => 'Zoom';
-	String get manga_jump_to_page => 'Jump to page';
-	String get manga_previous_page => 'Previous page';
-	String get manga_next_page => 'Next page';
-	String manga_page_number_hint({required Object total}) => 'Page number (1-${total})';
-	String get manga_import_direct => 'Import without OCR';
-	String get manga_library => 'Manga';
-	String get manga_import_action => 'Import Manga';
-	String get game_scrape_search => 'Search';
-	String get game_scrape_use => 'Use';
-	String get game_scrape_search_failed => 'Search failed. Check your network and try again.';
-	String get game_remove_confirm => 'Remove this game from the library? Game files on disk will not be deleted.';
-	String manga_ocr_acceleration_status({required Object engine}) => 'OCR acceleration: ${engine}';
-	String manga_ocr_acceleration_degraded({required Object engine, required Object reason}) => 'GPU acceleration unavailable, running OCR on ${engine}: ${reason}';
-	String get media_tracking_status => 'Collection status';
-	String get media_tracking_signup => 'Create a Bangumi account';
-	String get media_tracking_game => 'Game';
-	String get download_rate_limit_lan_exempt => 'Does not apply within your local network; LAN transfers always run at full speed.';
-	String get video_scrape_search_failed => 'Search failed. Tap Search to retry.';
-	String get scrape_reason_network => 'Could not get a valid response from the cover source. Check your network and retry.';
-	String get scrape_reason_server => 'The cover source returned an error. Try again later or pick another candidate.';
-	String get common_more_actions => 'More actions';
-	String get collection_already_has_item => 'This item is already in the collection.';
-	String get drag_drop_manga_archive_unsupported => 'Can\'t import .cbr/.rar comic archives — repack as .cbz or a folder of images.';
-	String get collection_add_failed => 'Couldn\'t add the item to the collection. Please try again.';
-	String get anki_dedup_auto => 'Automatic processing';
-	String get anki_dedup_auto_hint => 'Off by default. When on, Fushi scans at startup (at most once a week) and shows you the list first — nothing is deleted until you confirm.';
-	String get anki_dedup_auto_delete => 'Delete automatically without asking';
-	String get anki_dedup_auto_delete_hint => 'Skips the confirmation dialog. Only byte-identical extra copies are ever removed and nothing is re-encoded, but deletion cannot be undone.';
-	String anki_dedup_auto_found({required Object count, required Object size}) => 'Found ${count} duplicate Anki media files (${size} reclaimable)';
-	String get anki_dedup_auto_review => 'Review';
-	String anki_dedup_auto_done({required Object count, required Object size}) => 'Removed ${count} duplicate Anki media files, ${size} reclaimed';
-	String anki_lapis_backup_done_pruned({required Object path, required Object count}) => 'Backed up to ${path} (${count} old backups pruned by the 90-day / keep-10 policy)';
-	String get game_audio_fallback_policy => 'Audio fallback';
-	String get game_audio_fallback_full => 'Allow mixed audio';
-	String get game_audio_fallback_clean => 'Clean sources only';
-	String get game_audio_fallback_resource => 'Original resources only';
-	String get game_track_silent_at_cue => 'No sound at this line';
-	String get game_audio_fallback_full_hint => 'Falls back to the system mix when no clean voice is captured; the clip may contain BGM and effects.';
-	String get game_audio_fallback_clean_hint => 'Uses game resource audio and engine PCM only. Lines with no voice are mined without audio instead of picking up BGM.';
-	String get game_audio_fallback_resource_hint => 'Requires the original voice file shipped with the game; mining is refused when it is missing.';
-	String get game_line_audio_suppressed => 'Mix skipped';
-	String get game_line_audio_suppressed_hint => 'No clean audio source produced audio for this line, and the system mix was skipped by your audio fallback policy. This does not mean the line has no voice.';
-	String get video_setting_torrent_limit_lan => 'Apply limits to LAN peers';
-	String get video_setting_torrent_limit_lan_hint => 'Off by default: transfers with peers on your local network ignore the limits above.';
-	String get download_rate_limit_lan_included => 'Also applies within your local network.';
-	String get video_collection_no_local_member => 'No local video in this collection';
-	String video_scrape_online_match_collection({required Object name}) => 'Match cover for ${name}';
-	String get gal_mining_image_mode => 'Galgame card image';
-	String get gal_mining_image_mode_screenshot => 'Screenshot';
-	String get gal_mining_image_mode_hint => 'Galgame scenes barely move within one line, so a still screenshot is usually smaller and just as useful.';
-	String get shortcut_scope_manga => 'Manga';
-	String get shortcut_action_manga_page_forward => 'Next page';
-	String get shortcut_action_manga_page_backward => 'Previous page';
-	String get shortcut_action_manga_dismiss_dict => 'Close dictionary';
-	String get video_setting_jimaku_default_language => 'Default subtitle language';
-	String get video_setting_jimaku_default_language_hint => 'Preferred language when the series has no remembered choice';
-	String get video_jimaku_api_key_settings_hint => 'Also editable in Settings → Video → Subtitles';
-	String get anime_download_subs_episodes_unverified => 'Episode numbers are not verified against this pack - subtitles may come from another season.';
-	String get anime_download_subs_deferred => 'Subtitles are matched after download, from the pack\'s actual files';
-	String get anime_download_subs_pending => 'Subtitles: pending until download completes';
-	String get anime_download_subs_unmatched => 'Subtitles: no match for this pack';
-	String get stat_source_breakdown => 'By source';
-	String stat_format_pages({required Object n}) => '${n} pages';
-	String anime_download_subs_season_mismatch({required Object season}) => 'No subtitle entry matches season ${season} of this pack - not auto-selected. Pick one manually if you want it anyway.';
-	String get media_tracking_card_title => 'Bangumi sync';
-	String get media_tracking_not_connected => 'Not connected. Progress stays local and nothing reaches Bangumi.';
-	String get media_tracking_last_sync => 'Last sync';
-	String get media_tracking_never_synced => 'Never synced';
-	String media_tracking_linked_count({required Object n}) => '${n} linked';
-	String media_tracking_pending_count({required Object n}) => '${n} waiting to send';
-	String get media_tracking_all_synced => 'Everything sent';
-	String get media_tracking_unauthorized => 'Bangumi rejected the access token. Reconnect it in settings.';
-	String get media_tracking_open_subject => 'Open on Bangumi';
-	String get media_tracking_manage_links => 'Manage links';
-	String get media_tracking_last_error => 'Last error';
-	String get shortcut_action_popup_mine_entry => 'Create card (mine)';
-	String get game_upscaling_auto_hint => 'Use Magpie if it is already running; otherwise use the version bundled with Fushi. No download is needed.';
-	String get game_upscaling_installed_only_hint => 'Only use Magpie if it is already installed or running. Do not unpack Fushi\'s bundled version.';
-	String get game_upscaling_off_hint => 'Never upscale the game window.';
-	String get game_helper_bundle_missing => 'The galgame hook helper is not bundled with this build. Update Fushi to get it.';
-	String game_upscaling_pick_title({required Object name}) => 'Window upscaling for ${name}';
-	String get game_upscaling_pick_body => 'Upscales this game window with Magpie while a capture session is running. Set per game - it only helps for games whose native resolution is lower than your screen. Uses your GPU.';
-	String get game_upscaling_hint_not_installed => 'Magpie is not ready. Set window upscaling to Auto to use the copy bundled with Fushi; if it still does not start, update or reinstall Fushi.';
-	String media_source_count_manga({required Object n}) => '${n} volumes';
-	String get library_view_shelf => 'Shelf';
-	String get library_view_browse => 'Browse';
-	String get library_view_media => 'Library';
-	String get scrape_failure_detail_show => 'Show details';
-	String get scrape_failure_detail_hide => 'Hide details';
-	String get media_tracking_retry_mapping => 'Retry matching';
-	String get media_tracking_retry_matched => 'Matched and queued current progress';
-	String get media_tracking_retry_no_match => 'No match found. Try manual linking.';
-	String get game_statistics => 'Game statistics';
-	String get game_stat_by_game => 'By game';
-	String get stat_clear_all_game_message => 'Clear all game play time and session counts? Your game library and activity timeline are kept. This cannot be undone.';
-	String batch_selection_stale_skipped({required Object m, required Object n}) => 'Skipped ${m} of ${n} selected items that no longer exist';
-	String get game_text_thread_unset => 'No thread selected — pick one to start capturing';
-	String get media_tracking_watched_show => 'View all watched anime';
-	String get media_tracking_watched_title => 'Watched on Bangumi';
-	String get media_tracking_watched_empty => 'No anime is marked as watched on this Bangumi account.';
-	String media_tracking_watched_load_failed({required Object error}) => 'Could not load watched anime: ${error}';
-	String media_tracking_watched_progress({required Object n}) => 'Watched ${n} episodes';
-	String get media_tracking_manual_required => 'Needs manual link';
-	String media_tracking_manual_required_count({required Object n}) => '${n} items need manual links';
-	String get media_tracking_manual_required_hint => 'These local items already have progress but are not linked to Bangumi.';
-	String get media_tracking_no_local_history => 'No local watch, reading, or game progress needs linking.';
-	String media_tracking_more_manual_required({required Object n}) => '${n} more items need manual links';
-	String get manga_import_hint => 'Pick a manga folder, a .cbz/.zip page archive, or a .mokuro file.';
-	String get manga_import_pick_file => 'Pick manga file';
-	String get manga_import_pick_folder => 'Pick manga folder';
-	String get manga_import_missing_input => 'Pick a manga file or folder first.';
-	String get manga_import_detected_title => 'This looks like manga';
-	String get manga_import_detected_confirm => 'Import as manga';
-	String manga_import_detected_message({required Object name}) => '"${name}" is a manga file, so it will go through the manga importer instead of the book importer.';
-	String get video_jimaku_source_loading => 'Checking subtitle availability...';
-	String get video_jimaku_source_failed => 'Could not check subtitle availability. Try searching again.';
-	String get video_jimaku_language_unknown => 'Language not labeled';
-	String video_jimaku_source_summary({required Object files, required Object episodes, required Object languages}) => '${files} subtitle files · ${episodes} episodes · ${languages}';
-	String video_jimaku_episode_unlabeled({required Object episode, required Object count}) => 'No subtitle labeled episode ${episode}; ${count} unlabeled files may still match';
-	String video_jimaku_episode_unavailable({required Object episode}) => 'No subtitle found for episode ${episode}';
-	String video_jimaku_episode_available({required Object count, required Object languages}) => '${count} subtitles available · ${languages}';
-	String get video_scrape_manual_match_hint => 'Manual matching replaces this episode cover and saves its source mapping and title metadata. All available sources are searched together and results are ranked by match confidence.';
-	String get video_scrape_collection_match_hint => 'This only replaces the collection cover. Episode covers and title metadata are not changed. All available sources are searched together and results are ranked by match confidence.';
-	String get video_scrape_apply_to_collection_hint => 'This writes the same cover to every episode. Leave it off unless that is intentional.';
-	String get manga_online_source_disabled => 'This internet source is disabled. Enable it in Sources to browse the catalog.';
-	String get selection_web_search => 'Search the web';
-	String get selection_web_search_unavailable => 'No app can search the web.';
-	String get selection_share_failed => 'Could not open the share sheet.';
-	String video_subtitle_youtube_auto_generated({required Object lang}) => '${lang} (auto-generated)';
-	String get anki_dedup_progress_title => 'Deduplicating media';
-	String anki_dedup_progress_scanning({required Object count}) => 'Scanning media folder… (${count} files found)';
-	String anki_dedup_progress_hashing({required Object done, required Object total}) => 'Comparing same-size files… (${done} / ${total})';
-	String anki_dedup_progress_resolving({required Object done, required Object total}) => 'Processing duplicates… (${done} / ${total})';
-	String anki_dedup_progress_freed({required Object size}) => 'Freed ${size} so far';
-	String get anki_dedup_cancelling => 'Cancelling…';
-	String get anki_dedup_cancelled => 'Deduplication cancelled; completed changes are kept.';
-	String get anki_dedup_report_cancelled_note => 'Cancelled early — the numbers below only cover what was completed.';
-	String get anki_dedup_plan_busy_note => 'Anki may be unresponsive while this runs; avoid using Anki until it finishes.';
-	String get video_setting_subtitle_position_secondary => 'Secondary subtitle position';
-	String get dict_download_learning_language => 'Learning language';
-	String get dict_category_bilingual => 'Bilingual';
-	String get dict_category_monolingual => 'Monolingual';
-	String get shortcut_action_video_hold_speed => 'Hold for temporary speed';
-	String get handlebar_phonetic_transcriptions => 'Phonetic transcriptions';
-	String get sync_progress_preparing => 'Preparing sync';
-	String get sync_progress_collections => 'Syncing collections';
-	String get sync_progress_book => 'Syncing book';
-	String sync_progress_book_titled({required Object title}) => 'Syncing ${title}';
-	String sync_last_completed({required Object count}) => 'Last sync: done (${count} channels)';
-	String get sync_last_no_channels => 'Last sync: nothing synced - no connected sync channel';
-	String get sync_last_nothing => 'Last sync: nothing to sync';
-	String get sync_last_auto_disabled => 'Last sync: skipped - auto sync is off';
-	String get sync_last_cooled_down => 'Last sync: skipped - synced recently';
-	String get sync_last_failed => 'Last sync: failed';
-	String anime_download_no_results_detail({required Object query, required Object filters}) => 'The service responded successfully but returned 0 items. Query: ${query}; filters: ${filters}. Try another title or loosen the filters.';
-	String get anime_download_streaming_ready => 'In library · download continues';
-	String get anime_download_unfiltered => 'No Trusted filter';
-	String get interconnect_enable_footer => 'How to use: on the device that holds your library, turn on the sync server switch below; on your other device, add the address of that server to pair with it. A device can act as only one role at a time — server or client.';
-	String get interconnect_peer_list_title => 'Added peers';
-	String get interconnect_peer_list_empty => 'No peers added yet. Pick a discovered device from the LAN device list below to pair automatically, or add a peer address manually.';
-	String get anki_lapis_visual_editor => 'Visual editor';
-	String get anki_lapis_visual_editor_hint => 'Preview the Lapis card, then change each area\'s style, position and field mapping without writing CSS.';
-	String get anki_lapis_visual_front => 'Front';
-	String get anki_lapis_visual_back => 'Back';
-	String get anki_lapis_visual_preview => 'Lapis card preview';
-	String get anki_lapis_visual_select_field => 'Choose what to edit';
-	String get anki_lapis_visual_reset_field => 'Reset field';
-	String anki_lapis_visual_font_size({required Object percent}) => 'Font size: ${percent}%';
-	String get anki_lapis_visual_bold => 'Bold';
-	String get anki_lapis_visual_alignment => 'Alignment';
-	String get anki_lapis_visual_color => 'Text color';
-	String get anki_lapis_visual_default => 'Default';
-	String get anki_lapis_visual_advanced_css => 'Advanced CSS';
-	String get anki_lapis_visual_field_expression => 'Word';
-	String get anki_lapis_visual_field_reading => 'Reading';
-	String get anki_lapis_visual_field_sentence => 'Sentence';
-	String get anki_lapis_visual_field_primary_definition => 'Primary definition';
-	String get anki_lapis_visual_field_glossaries => 'Other definitions';
-	String get anki_lapis_visual_target_card_content => 'Card content';
-	String get anki_lapis_visual_target_definition => 'Definition';
-	String get anki_lapis_visual_target_inside_definition => 'Inside definition';
-	String get anki_lapis_visual_field_definition_info => 'Definition indicator';
-	String get anki_lapis_visual_field_definition_box => 'Definition box';
-	String get anki_lapis_visual_field_definition_content => 'Whole definition';
-	String get anki_lapis_visual_field_selected_definition => 'Selected definition';
-	String get anki_lapis_visual_field_dictionary_entry => 'Dictionary entry';
-	String get anki_lapis_visual_field_dictionary_name => 'Dictionary name';
-	String get anki_lapis_visual_field_definition_example => 'Definition example';
-	String get anki_lapis_visual_line_height => 'Line height';
-	String get anki_lapis_visual_background_color => 'Background highlight';
-	String get anki_lapis_visual_box_layout => 'Box appearance';
-	String get anki_lapis_visual_border_width => 'Border';
-	String get anki_lapis_visual_border_color => 'Border color';
-	String get anki_lapis_visual_corner_radius => 'Corner radius';
-	String get anki_lapis_visual_padding => 'Inner spacing';
-	String get anki_lapis_visual_margin => 'Outer spacing';
-	String get anki_lapis_visual_field_definition_info_note => 'Only visible on cards that keep more than one definition block; single-definition cards hide it.';
-	String get anki_lapis_visual_field_dictionary_name_note => 'On Fushi cards this label also carries the part-of-speech tags, so the two cannot be styled separately.';
-	String get game_upscaling_error_bundle_missing => 'Fushi installation is incomplete: the bundled Magpie component is missing. Reinstall or update Fushi.';
-	String get game_upscaling_error_bundle_invalid => 'The bundled Magpie component is corrupted or did not pass verification. Reinstall or update Fushi.';
-	String download_test_connection_failed_reason({required Object message}) => 'Connection failed: ${message}';
-	String get delete_disclosure_will_delete_label => 'Will be deleted';
-	String get delete_disclosure_will_keep_label => 'Will be kept';
-	String get delete_disclosure_book_records => 'Reading progress, bookmarks, tags and subtitle data';
-	String get delete_disclosure_book_extracted => 'The book files Fushi extracted into its own storage';
-	String get delete_disclosure_book_audiobook => 'The audio and aligned subtitles of the attached audiobook, if any';
-	String get delete_disclosure_source_kept => 'The original files you imported (book, subtitles, audio)';
-	String get delete_disclosure_stats_kept => 'Reading statistics';
-	String get delete_disclosure_audiobook_files => 'The audio and aligned subtitles Fushi copied into its own storage';
-	String get delete_disclosure_audiobook_book_kept => 'The book itself and its reading progress';
-	String get delete_disclosure_audiobook_source_kept => 'The original audio files you imported';
-	String get audiobook_delete => 'Delete audiobook';
-	String get audiobook_delete_confirm => 'Delete the attached audiobook? Its audio files are removed from this device.';
-	String get delete_collection_confirm => 'Only the grouping is removed. The items in it are kept.';
-	String get shortcut_action_video_enter_caret => 'Enter subtitle lookup cursor';
-	String get audiobook_export_clip_too_long => 'Selection audio is too long to export (limit: 5 minutes)';
-	String get sync_err_forbidden => 'The server refused this request. Your sign-in is fine - check the server\'s settings.';
-	String sync_err_forbidden_detail({required Object reason}) => 'The server refused this request: ${reason} (your sign-in is fine)';
-	String get collection_group_extras => 'Extras & PV';
-	String collection_group_season({required Object n}) => 'Season ${n}';
-	String get collection_sort_by_season => 'Sort by season';
-	String get mining_animated_format_avif => 'AVIF (smallest)';
-	String get mining_animated_format_webp => 'WebP (wider support)';
-	String get mining_animated_format_gif => 'GIF (most compatible)';
-	String get video_mining_animated_format => 'Video card animation format';
-	String get video_mining_animated_format_hint => 'AVIF is far smaller than GIF at the same quality, and its top quality tier allows a higher resolution and frame rate than GIF or WebP. Falls back to GIF automatically when the bundled encoder cannot produce it.';
-	String get gal_mining_animated_format => 'Game card animation format';
-	String get gal_mining_animated_format_hint => 'Same formats as video cards, stored separately: a galgame frame barely moves within one line, so the trade-off differs.';
-	String get scrape_all => 'Scrape all';
-	String scrape_all_title({required Object kind}) => 'Scrape all ${kind}';
-	String scrape_all_running({required Object current, required Object total}) => 'Scraping ${current} / ${total}';
-	String scrape_all_item({required Object title}) => 'Processing: ${title}';
-	String scrape_all_done({required Object applied, required Object review, required Object skipped, required Object failed}) => 'Done: ${applied} applied, ${review} need review, ${skipped} skipped, ${failed} failed';
-	String get scrape_all_empty => 'There are no items to scrape in this library.';
-	String get scrape_all_start => 'Start';
-	String collection_hero_total_episodes({required Object count}) => '${count} episodes';
-	String get video_scrape_collection_rename_title => 'Rename this collection?';
-	String get video_scrape_collection_rename_body => 'The matched entry has a different name. Renaming is optional: the cover and details are saved either way, and a rename also replaces the old name on your other synced devices.';
-	String video_scrape_collection_rename_from({required Object name}) => 'Current name: ${name}';
-	String video_scrape_collection_rename_to({required Object name}) => 'New name: ${name}';
-	String get video_scrape_collection_rename_keep => 'Keep current name';
-	String get video_scrape_collection_rename_confirm => 'Rename';
-	String get download_task_toggle_failed => 'Pause/resume failed';
-	String download_subscription_start_episode({required Object episode}) => 'Start from episode ${episode}';
-	String get download_task_eta => 'ETA';
-	String get download_task_ratio => 'Ratio';
-	String get download_task_status_downloading => 'Downloading';
-	String get download_task_status_seeding => 'Seeding';
-	String get download_task_status_completed => 'Completed';
-	String get download_task_status_paused => 'Paused';
-	String get download_task_status_queued => 'Queued';
-	String get download_task_status_stalled => 'Stalled';
-	String get download_task_status_checking => 'Checking';
-	String get download_task_status_metadata => 'Fetching metadata';
-	String get download_task_status_moving => 'Moving';
-	String get download_task_status_error => 'Error';
-	String get download_task_pause => 'Pause';
-	String get download_task_resume => 'Resume';
-	String get download_airing_calendar_title => 'Airing calendar';
-	String get download_airing_calendar_show_all => 'Show all this season';
-	String get download_airing_calendar_empty_guidance => 'Nothing to show yet: bind a collection to AniList or add a download subscription, and their airing times will appear here.';
-	String get download_airing_calendar_error => 'Failed to load the airing schedule';
-	String get download_airing_calendar_in_library => 'In library';
-	String get download_airing_calendar_subscribed => 'Subscribed';
-	String download_airing_calendar_episode_label({required Object episode}) => 'Ep ${episode}';
-	String get download_airing_calendar_week_prev => 'Previous week';
-	String get download_airing_calendar_week_next => 'Next week';
-	String get download_airing_calendar_week_empty => 'Nothing airing this week';
-	String get video_jimaku_format => 'Format';
-	String get video_jimaku_format_all => 'All';
-	String get video_setting_tmdb_key => 'Custom TMDB API key';
-	String get video_setting_tmdb_key_hint => 'Optional. Leave empty to use the built-in key. Fill in your own only if scraping stops working or you want to use your own quota.';
-	String get about_tmdb_attribution => 'This application uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.';
-	String get anki_lapis_visual_layout => 'Layout';
-	String get anki_lapis_visual_layout_hint => 'Uses Lapis\' own layout switches, so desktop and mobile Anki both follow it.';
-	String get anki_lapis_visual_layout_sentence => 'Sentence position';
-	String get anki_lapis_visual_layout_sentence_above => 'Above definitions';
-	String get anki_lapis_visual_layout_sentence_below => 'Below definitions';
-	String get anki_lapis_visual_layout_picture => 'Image position';
-	String get anki_lapis_visual_layout_picture_right => 'Right of the word';
-	String get anki_lapis_visual_layout_picture_left => 'Left of the word';
-	String get anki_lapis_visual_layout_picture_alt => 'Inside the sentence';
-	String get anki_lapis_visual_layout_audio => 'Audio buttons';
-	String get anki_lapis_visual_layout_audio_header => 'Next to the reading';
-	String get anki_lapis_visual_layout_audio_fixed => 'Pinned to the bottom';
-	String get anki_lapis_visual_layout_audio_alt => 'Inside the sentence';
-	String get anki_lapis_visual_mapping_hint => 'Anki fields that fill the selected area. Changes are saved together with the style.';
-	String get anki_lapis_visual_mapping_none => 'This area is drawn by the template itself and has no field of its own.';
-	String get anki_lapis_visual_color_custom => 'Custom';
-	String get anki_lapis_visual_color_picker_title => 'Pick a color';
-	String get video_scrape_tmdb_key_hint => 'Enter TMDB API key';
-	String get video_scrape_tmdb_key_required => 'TMDB requires an API key';
-	String get video_scrape_tmdb_key_save => 'Save';
-	String get video_scrape_tmdb_key_empty => 'Save a TMDB API key, then press Search. Results from other sources are not shown here.';
-	String get download_detail_tab_overview => 'Overview';
-	String get download_detail_tab_files => 'Files';
-	String get download_detail_tab_peers => 'Peers';
-	String get download_detail_tab_trackers => 'Trackers';
-	String get download_detail_backend_unsupported => 'Not supported by current download backend';
-	String get download_detail_task_gone => 'Task not found in backend';
-	String get download_detail_task_missing => 'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
-	String get download_detail_section_transfer => 'Transfer';
-	String get download_detail_section_network => 'Network';
-	String get download_detail_section_task => 'Task';
-	String get download_detail_seeds_label => 'Seeds';
-	String get download_detail_leechers_label => 'Leechers';
-	String get download_detail_connections_label => 'Connections';
-	String get download_detail_content_path_label => 'Content path';
-	String get download_detail_time_active => 'Active time';
-	String get download_detail_time_seeding => 'Seeding time';
-	String get download_detail_total_size_label => 'Total size';
-	String get download_detail_listen_port => 'Listen port';
-	String get download_detail_dht_nodes => 'DHT nodes';
-	String get download_detail_hash_label => 'Info hash';
-	String get download_detail_port_mapping => 'Port mapping';
-	String get download_detail_session_rates => 'Session rates';
-	String get download_detail_pieces_label => 'Pieces';
-	String get download_detail_priority_skip => 'Don\'t download';
-	String get download_detail_raw_state_label => 'Backend state';
-	String get download_detail_remaining_label => 'Remaining';
-	String get download_detail_save_path_label => 'Save path';
-	String get download_detail_priority_normal => 'Normal';
-	String get download_detail_priority_high => 'High';
-	String get download_detail_tracker_working => 'Working';
-	String get download_detail_tracker_updating => 'Updating';
-	String get download_detail_tracker_not_contacted => 'Not contacted yet';
-	String get download_detail_tracker_not_working => 'Not working';
-	String get download_detail_tracker_disabled => 'Disabled';
-	String get download_detail_no_peers => 'No connected peers';
-	String get download_detail_no_trackers => 'No trackers';
-	String get video_filter_year => 'Year';
-	String get video_filter_year_unknown => 'Unknown year';
-	String get video_filter_watch_status => 'Watch status';
-	String get video_filter_watch_status_unwatched => 'Unwatched';
-	String get video_filter_watch_status_watching => 'Watching';
-	String get video_filter_watch_status_completed => 'Completed';
-	String get video_hero_detail_view => 'Details';
-	String video_hero_episodes_watched({required Object n}) => '${n} eps watched';
-	String get video_recently_added_badge => 'NEW';
-	String get video_air_season_winter => 'Winter';
-	String get video_air_season_spring => 'Spring';
-	String get video_air_season_summer => 'Summer';
-	String get video_air_season_autumn => 'Fall';
-	String get delete_scope_no_channel => 'No sync configured - this deletion only affects this device';
-	String get mihon_sources_title => 'Manga sources';
-	String get mihon_extensions_title => 'Manga extensions';
-	String get mihon_store_add => 'Add extension store';
-	String get mihon_store_url => 'Extension store URL';
-	String get mihon_store_empty => 'No extension stores yet. Add a compatible Mihon store or import a local APK.';
-	String get mihon_extension_import => 'Import local APK';
-	String get mihon_extension_warning => 'Third-party extensions execute code with Fushi permissions. Only install extensions and signers you trust.';
-	String get mihon_extension_install => 'Install';
-	String get mihon_extension_update => 'Update';
-	String get mihon_extension_uninstall => 'Uninstall';
-	String get mihon_extension_installed => 'Installed';
-	String get mihon_extension_disabled => 'Disabled';
-	String get mihon_source_empty => 'No enabled manga sources. Install and enable an extension first.';
-	String get mihon_source_popular => 'Popular';
-	String get mihon_source_latest => 'Latest';
-	String get mihon_source_search => 'Search manga';
-	String get mihon_source_preferences => 'Source preferences';
-	String get mihon_source_clear_data => 'Clear source data';
-	String get mihon_source_clear_data_hint => 'Clears this source preferences and cookies. Installed extensions are kept.';
-	String get mihon_signer_trust_title => 'Trust extension signer?';
-	String get mihon_signer_fingerprint => 'Signer SHA-256';
-	String get mihon_runtime_unavailable => 'Mihon extensions are unavailable on this platform.';
-	String get mihon_extension_incompatible => 'Incompatible extension';
-	String get mihon_store_refresh => 'Refresh stores';
-	String get mihon_source_browse_mokuro => 'Built-in Mokuro catalog';
-	String get mihon_source_no_results => 'No manga found.';
-	String get mihon_chapters_title => 'Chapters';
-	String get mihon_extension_language_filter => 'Language';
-	String get mihon_extension_language_all => 'All languages';
-	String get mihon_filter_ignore => 'Ignore';
-	String get mihon_filter_include => 'Include';
-	String get mihon_filter_exclude => 'Exclude';
-	String get mihon_filter_ascending => 'Ascending';
-	String get mihon_filter_descending => 'Descending';
-	String get mihon_add_to_bookshelf => 'Add to manga shelf';
-	String get mihon_in_bookshelf => 'In manga shelf';
-	String get media_source_local_roots => 'Local scan roots';
-	String scrape_all_confirm({required Object n}) => 'Match all ${n} library items by title. Only high-confidence matches are applied automatically — videos are scored on the title together with year, type and other signals, while books and games require a unique exact title. Covers you chose yourself are never overwritten (local images you set, entries you picked in the match dialog, and poster files placed in the folder), and ambiguous results stay pending for manual review.';
-	String get collection_related_title => 'Related works';
-	String get collection_relation_prequel => 'Prequel';
-	String get collection_relation_sequel => 'Sequel';
-	String get collection_relation_side_story => 'Side story';
-	String get collection_relation_movie => 'Movie';
-	String get collection_relation_spin_off => 'Spin-off';
-	String get collection_relation_other => 'Related';
-	String get collection_relation_download => 'Download';
-	String get collection_relation_bind => 'Bind to existing collection';
-	String get collection_episode_rename => 'Rename episodes from scrape';
-	String get collection_episode_rename_title => 'Rename episodes';
-	String get collection_episode_rename_empty => 'Nothing to rename';
-	String get collection_episode_download => 'Download this episode';
-	String get collection_episode_fill_missing => 'Fill missing episodes';
-	String get collection_episode_no_missing => 'No missing episodes';
-	String get collection_split_by_season => 'Split by season';
-	String get collection_split_keep_original => 'Keep the original collection';
-	String get collection_split_confirm => 'Split';
-	String get collection_episode_open_bangumi => 'Open this episode on Bangumi';
-	String collection_relation_bound({required Object name}) => 'Bound to ${name}';
-	String collection_episode_rename_apply({required Object n}) => 'Rename ${n} episodes';
-	String collection_split_done({required Object n}) => 'Split into ${n} collections';
-	String collection_episode_watched_at({required Object position}) => 'Watched to ${position}';
-	String collection_episode_bangumi_open_failed({required Object error}) => 'Could not resolve the episode on Bangumi: ${error}';
-	String collection_episode_rename_partial({required Object n, required Object m}) => 'Renamed ${n} episodes, ${m} failed';
-	String get collection_episode_bangumi_not_found => 'Episode not found on Bangumi; opened the subject page instead';
-	String get sync_err_browser_timeout => 'The browser never returned the authorization. Retry, and make sure your proxy lets 127.0.0.1 through.';
-	String get manga_rescan_run => 'Box OCR';
-	String get manga_rescan_hint => 'Drag a box around the text you want to recognize.';
-	String get manga_rescan_model_missing => 'Download the manga OCR models in Settings first.';
-	String get manga_rescan_running => 'Recognizing the selected box...';
-	String get manga_rescan_failed => 'Box OCR failed';
-	String get manga_rescan_empty => 'No text was recognized in this box.';
-	String get manga_rescan_local_source => 'Local OCR';
-	String get manga_rescan_lookup => 'Look up';
-	String get manga_rescan_writeback => 'Save to page';
-	String get manga_rescan_writeback_done => 'Saved to manga.json';
-	String get manga_rescan_writeback_failed => 'Failed to save to manga.json';
-	String get stat_hourly_band_epub => 'Text books';
-	String get stat_hourly_band_pdf => 'PDF';
-	String get stat_hourly_band_manga => 'Manga';
-	String get stat_hourly_band_unattributed => 'Unsplit history';
-	String get stat_hourly_unattributed_note => 'Hours recorded before per-format tracking existed have no type stored, so they cannot be split. They are shown as a combined total and are not assigned to any type.';
-	String get book_convert_to_manga_action => 'Convert to manga';
-	String get book_convert_to_book_action => 'Convert back to book';
-	String get book_convert_running => 'Converting…';
-	String get book_convert_done => 'Conversion finished';
-	String get book_convert_failed => 'Conversion failed';
-	String get book_convert_blocked_already => 'This book is already in that format.';
-	String get book_convert_blocked_text_only => 'This is a text book with no page images. Only scanned image books can become manga.';
-	String get book_convert_blocked_no_original => 'This manga was imported from images, so there is no original book to convert back to.';
-	String get book_convert_blocked_source_missing => 'The source files are gone from disk.';
-	String manga_online_retry_waiting({required Object attempt, required Object total}) => 'Retrying automatically (${attempt}/${total})';
-	String get manga_ocr_wizard_already_ocred => 'This volume already has OCR data on every page. Running OCR again would overwrite it.';
-	String get shortcut_scope_universal => 'Back / Exit';
-	String get game_attach_and_capture => 'Attach and capture';
-	String get remote_delete_failed => 'Could not delete it on the paired device';
-	String get remote_delete_unsupported => 'The paired device is too old to support remote deletion. Update Fushi there first.';
-	String get anki_lapis_visual_blocks => 'Custom areas';
-	String get anki_lapis_visual_blocks_hint => 'Show existing fields somewhere else on the card. Display only: no Anki field is added or deleted.';
-	String get anki_lapis_visual_block_add => 'Add area';
-	String get anki_lapis_visual_block_delete => 'Delete area';
-	String anki_lapis_visual_block_name({required Object index}) => 'Area ${index}';
-	String get anki_lapis_visual_block_anchor => 'Position on the card';
-	String get anki_lapis_visual_block_anchor_top => 'Top of the card';
-	String get anki_lapis_visual_block_anchor_above_sentence => 'Below the word';
-	String get anki_lapis_visual_block_anchor_above_definition => 'Below the sentence';
-	String get anki_lapis_visual_block_anchor_below_definition => 'Below the definitions';
-	String get anki_lapis_visual_block_anchor_bottom => 'Bottom of the card';
-	String get anki_lapis_visual_block_fields => 'Fields shown here';
-	String get anki_lapis_visual_block_no_fields => 'No fields selected yet';
-	String get anki_lapis_visual_block_needs_note_type => 'Pick a note type first to choose fields.';
-	String get anki_lapis_restore_factory => 'Restore factory Lapis';
-	String get anki_lapis_restore_factory_hint => 'Overwrite the Lapis note type in Anki with the version bundled in Fushi and clear every customisation here.';
-	String get anki_lapis_restore_factory_confirm => 'This overwrites the Lapis styling and card templates in Anki with Fushi\'s bundled version, and resets font size, custom CSS and custom areas. A backup of the current state is saved first. Card data is not touched.';
-	String get anki_lapis_restore_factory_done => 'Lapis restored to factory defaults';
-	String anki_lapis_restore_factory_failed({required Object error}) => 'Restore failed: ${error}';
-	String get anki_lapis_visual_select_field_hint => 'Click any part of the preview, or pick one below. What you pick is what the controls underneath edit.';
-	String get anki_lapis_visual_editing_now => 'Editing';
-	String get mihon_extension_preview => 'Preview';
-	String get mihon_extension_preview_warning => 'Previewing runs this extension\'s code before it is installed. Nothing is added to your library until you choose to install.';
-	String get mihon_extension_preview_discard => 'Discard';
-	String get mihon_extension_preview_source_select => 'Pick a source to preview';
-	String get mihon_extension_sources_included => 'Included sources';
-	String get mihon_extension_preview_read_only => 'Preview is read-only. Install the extension to open and read.';
-	String get selection_copy_empty => 'No text selected.';
-	String get video_library_empty_source_hint => 'Add a video folder from Sources to build your library';
-	String get video_source_scrape_action => 'Scrape this source';
-	String get video_source_scrape_settings => 'Source scrape settings';
-	String get video_source_scrape_provider => 'Primary metadata source';
-	String get video_source_scrape_provider_inherit => 'Use global default';
-	String get video_source_scrape_auto_after_scan => 'Scrape after scanning';
-	String get video_source_scrape_auto_after_scan_hint => 'Run metadata scraping automatically after this source is scanned';
-	String get video_source_scrape_write_nfo => 'Write NFO files';
-	String get video_source_scrape_write_images => 'Write image files';
-	String get video_source_scrape_use_fanart => 'Use Fanart images';
-	String video_source_scrape_progress({required Object phase, required Object current, required Object total}) => '${phase} · ${current}/${total}';
-	String video_source_scrape_last_summary({required Object status, required Object succeeded, required Object pending, required Object failed}) => 'Last scrape (${status}): ${succeeded} succeeded, ${pending} pending, ${failed} failed';
-	String get video_source_scrape_phase_planning => 'Planning';
-	String get video_source_scrape_phase_recognizing => 'Matching';
-	String get video_source_scrape_phase_fetching => 'Fetching metadata';
-	String get video_source_scrape_phase_applying => 'Saving metadata';
-	String get video_source_scrape_phase_writing_sidecars => 'Writing sidecars';
-	String get video_source_scrape_status_interrupted => 'Interrupted';
-	String get video_source_scrape_global_provider => 'Default metadata source';
-	String get video_source_scrape_global_provider_hint => 'Used by video sources that inherit the global setting';
-	String get video_source_scrape_fanart_key => 'Fanart API key';
-	String get video_source_scrape_fanart_key_hint => 'Optional key used to fill missing artwork from Fanart';
-	String get video_source_scrape_bangumi_token => 'Bangumi access token';
-	String get video_source_scrape_bangumi_token_hint => 'Optional access token for the official Bangumi API v0';
-	String get video_source_scrape_douban_endpoint => 'Authorized Douban API endpoint';
-	String get video_source_scrape_douban_endpoint_hint => 'Douban is unavailable unless both an authorized endpoint and token are configured';
-	String get video_source_scrape_douban_token => 'Authorized Douban API token';
-	String get video_source_scrape_douban_token_hint => 'Douban is unavailable unless both an authorized endpoint and token are configured';
-	String get video_source_scrape_locale => 'Metadata language';
-	String get video_source_scrape_locale_hint => 'Preferred language for titles, summaries and images';
-	String get video_source_scrape_confirmation_title => 'Confirm metadata match';
-	String get video_source_scrape_confirmation_hint => 'Multiple exact matches were found. Choose the correct work to save its provider binding.';
-	String get video_source_scrape_confirmation_skip => 'Skip this work';
-	String get video_source_scrape_nfo_policy => 'NFO write policy';
-	String get video_source_scrape_image_policy => 'Image write policy';
-	String get video_source_scrape_policy_skip => 'Do not write';
-	String get video_source_scrape_policy_missing_only => 'Only when missing';
-	String get video_source_scrape_policy_overwrite => 'Update Fushi files';
-	String get video_source_scrape_external_overwrite => 'Allow protected sidecar overwrite';
-	String get video_source_scrape_external_overwrite_hint => 'Third-party or user-modified files remain protected until you confirm each manual scrape batch again.';
-	String get video_source_scrape_external_overwrite_confirm_title => 'Overwrite protected sidecars?';
-	String get video_source_scrape_external_overwrite_confirm_body => 'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
-	String get video_source_scrape_tasks_open => 'Background tasks';
-	String get video_source_scrape_background_started => 'Scraping is running in the background';
-	String get video_source_scrape_tasks_current => 'Current task';
-	String get video_source_scrape_tasks_history => 'Recent tasks';
-	String get video_source_scrape_tasks_empty => 'No scrape tasks yet';
-	String get video_source_scrape_waiting_confirmation => 'Waiting for your confirmation';
-	String get video_source_scrape_phase_scanning => 'Scanning source';
-	String get video_library_all_videos => 'All videos';
-	String get video_work_voice_roles => 'Voice cast and characters';
-	String get video_work_cast_crew => 'Cast and crew';
-	String get video_work_trailers => 'Trailers';
-	String get video_work_extras => 'Extras';
-	String get video_work_details => 'Details';
-	String get video_work_external_ids => 'External IDs';
-	String get video_work_metadata_pending => 'Detailed metadata has not been scraped yet. Retry this source from Sources, then reopen the work.';
-	String get video_work_genres => 'Genres';
-	String get video_work_keywords => 'Keywords';
-	String get video_work_studios => 'Studios';
-	String get video_work_countries => 'Countries';
-	String get video_work_content_rating => 'Content rating';
-	String get video_all_videos_list_view => 'List view';
-	String get video_all_videos_grid_view => 'Grid view';
-	String video_home_continue_episode_number({required Object n}) => 'Playing episode ${n}';
-	String video_home_next_episode_number({required Object n}) => 'Next · Episode ${n}';
-	String video_home_recent_episode_number({required Object n}) => 'Recently added · Episode ${n}';
-	String video_home_remaining_minutes({required Object minutes}) => '${minutes} min remaining';
-	String get video_subtitle_replay => 'Replay this line';
-	String get manga_ocr_done => 'OCR complete';
-	String get settings_destination_manga_summary => 'Reader, OCR and online catalog';
-	String get manga_page_animation => 'Page turn animation';
-	String get manga_page_animation_none => 'None';
-	String get manga_page_animation_slide => 'Slide';
-	String get manga_page_animation_fade => 'Fade';
-	String get manga_default_zoom => 'Default zoom';
-	String get manga_zoom_sensitivity => 'Zoom sensitivity';
-	String get manga_volume_key_paging => 'Volume keys turn pages';
-	String get manga_volume_key_paging_subtitle => 'Use volume up and down to turn pages in the manga reader';
-	String get manga_tap_zone_paging => 'Tap edges to turn pages';
-	String get manga_tap_zone_paging_subtitle => 'Tap the left or right edge of the page to turn';
-	String get manga_section_viewing => 'Viewing and page turning';
-	String get game_capture_setup_title => 'Complete capture setup';
-	String get game_capture_setup_hint => 'Choose the dialogue thread first. Fushi can only pair audio with lines from the selected thread.';
-	String get game_audio_requires_thread => 'The audio capture source may be ready, but sentence audio does not exist until a thread is selected and a line is received.';
-	String get game_session_waiting_thread => 'Waiting for a dialogue thread';
-	String get anki_connect_use_on_mobile => 'Use AnkiConnect instead';
-	String get anki_connect_use_on_mobile_hint => 'Use only on a trusted network. AnkiConnect uses cleartext HTTP; configure a matching API key, then refresh decks and note types after switching.';
-	String get anki_connect_api_key_hint => 'Required for remote AnkiConnect; must match the key configured in the add-on';
-	String get anki_connect_mobile_api_key_required => 'Configure a matching AnkiConnect API key before switching to the AnkiConnect backend.';
-	String anki_connect_backend_switch_failed({required Object error}) => 'Could not switch Anki backend: ${error}';
-	String get migration_settings_entry => 'Migrate to Fushi';
-	String get migration_settings_entry_subtitle => 'Move all data to the new Fushi app';
-	String get migration_intro => 'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
-	String get migration_target_missing => 'Fushi is not installed yet. Install Fushi first, then return here.';
-	String get migration_download_fushi => 'Get Fushi';
-	String get migration_start => 'Start migration';
-	String get migration_open_fushi => 'Open Fushi';
-	String get migration_include_local_audio => 'Also export local pronunciation audio (can be large)';
-	String migration_batch_running({required Object batch}) => 'Exporting ${batch}…';
-	String migration_batch_done({required Object batch}) => '${batch} exported';
-	String get migration_export_done => 'Export complete. Open Fushi to import and verify.';
-	String migration_export_failed({required Object error}) => 'Export failed: ${error}';
-	String get migration_readonly_note => 'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
-	String get migration_reexport => 'Re-export';
-	String get migration_batch_core_label => 'Settings, progress & statistics';
-	String get migration_import_entry => 'Import from Hibiki';
-	String get migration_import_entry_subtitle => 'Import data exported by the old Hibiki app';
-	String get migration_import_detected => 'Hibiki migration data detected. Import it now?';
-	String get migration_import_start => 'Start import';
-	String migration_import_running({required Object batch}) => 'Importing ${batch}…';
-	String migration_import_verify_failed({required Object batch, required Object detail}) => '${batch} failed verification and was kept for re-export: ${detail}';
-	String migration_import_counts_failed({required Object detail}) => 'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
-	String get migration_import_success => 'Import complete and verified.';
-	String get migration_import_nothing => 'No migration data found in the transfer folder.';
-	String get migration_uninstall_prompt => 'Migration finished. Uninstall the old Hibiki app?';
-	String get migration_uninstall_button => 'Uninstall Hibiki';
-	String get migration_uninstall_still_installed => 'Hibiki is still installed. You can uninstall it any time.';
-	String get migration_import_permission_title => 'Storage permission required';
-	String get migration_import_permission_body => 'The transfer folder was created by the old app. Without "All files access", Fushi cannot read it — the data is intact, it just cannot be opened.';
-	String get migration_import_permission_grant => 'Grant permission';
-	String migration_import_verifying({required Object batch, required Object done, required Object total}) => 'Verifying ${batch} (${done}/${total})';
-	String get migration_import_verifying_hint => 'Checksumming the archives. Large libraries can take several minutes.';
-	String get game_line_copy_tooltip => 'Copy sentence';
-	String get game_japanese_locale_auto => 'Auto';
-	String get game_japanese_locale_on => 'Always on';
-	String get game_japanese_locale_off => 'Off';
-	String get game_japanese_locale => 'Japanese locale';
-	String get game_japanese_locale_hint => 'Chinese/English patched builds must turn this off, or the game crashes on launch';
-	String get video_scrape_diagnostic_export => 'Export scrape diagnostics';
-	String get video_scrape_diagnostic_confirm_title => 'Export scrape diagnostics?';
-	String get video_scrape_diagnostic_saved => 'Diagnostic package saved';
-	String video_scrape_diagnostic_failed({required Object reason}) => 'Could not export diagnostic package: ${reason}';
-	String get video_scrape_diagnostic_share_subject => 'Fushi video scrape diagnostics';
-	String get video_scrape_diagnostic_confirm_body => 'The package includes relative file and folder names, scrape summaries, and original NFO contents. It does not add videos, subtitles, images, absolute paths, app configuration, or app credentials. Original NFO files are preserved unchanged and may contain personal information or secrets; review the package before sharing publicly.';
-	String get video_discovery_tab => 'Discover';
-	String get video_discovery_search_hint => 'Search movies, series, anime';
-	String get video_discovery_hot => 'Popular now';
-	String get video_discovery_seasonal_anime => 'Seasonal anime';
-	String get video_discovery_all_works => 'All titles';
-	String get video_discovery_search_results => 'Search results';
-	String get video_discovery_provider_warning => 'Some providers are unavailable. Showing available results.';
-	String get video_discovery_load_failed => 'Could not load discovery results.';
-	String get video_discovery_empty => 'No matching titles.';
-	String get video_discovery_resource_search => 'Search resources';
-	String get video_discovery_subtitle_search => 'Search subtitles';
-	String get video_discovery_subscribe => 'Subscribe';
-	String get video_discovery_subscription_manage => 'Manage subscription';
-	String get video_discovery_pipeline_idle => 'Not downloaded → Download → Organize → Subtitles → Scrape → Library';
-	String get video_discovery_details_load_failed => 'Could not load title details.';
-	String get video_discovery_sort_popularity => 'Popularity';
-	String get video_discovery_sort_rating => 'Rating';
-	String get video_discovery_sort_release => 'Release date';
-	String get video_discovery_in_library => 'In library';
-	String get video_discovery_play => 'Play';
-	String get download_resources_tab => 'Resources';
-	String get video_external_settings_section => 'External resource and subtitle providers';
-	String get video_torznab_settings_title => 'Torznab indexers';
-	String get video_torznab_settings_hint => 'Configure one or more Jackett, Prowlarr, or compatible Torznab endpoints. Secrets stay on this device.';
-	String get video_torznab_add => 'Add indexer';
-	String get video_torznab_name => 'Name';
-	String get video_torznab_endpoint => 'Endpoint';
-	String get video_torznab_endpoint_hint => 'HTTPS is required except for loopback addresses.';
-	String get video_torznab_api_key => 'API key';
-	String get video_torznab_priority => 'Priority';
-	String get video_torznab_categories => 'Categories';
-	String get video_torznab_categories_hint => 'Comma-separated numeric category IDs';
-	String get video_external_enabled => 'Enabled';
-	String get video_external_insecure_http => 'Allow insecure HTTP';
-	String get video_external_insecure_http_hint => 'Use only for a trusted local network endpoint.';
-	String get video_external_endpoint_invalid => 'Enter a valid endpoint without credentials, query parameters, or fragments.';
-	String get video_opensubtitles_settings_title => 'OpenSubtitles';
-	String get video_opensubtitles_settings_hint => 'API credentials and preferred subtitle languages stay on this device.';
-	String get video_opensubtitles_user_agent => 'User-Agent';
-	String get video_opensubtitles_languages => 'Preferred languages';
-	String get video_opensubtitles_languages_hint => 'Comma-separated language codes, for example zh-CN,en,ja';
-	String get video_download_path_mappings_title => 'qBittorrent path mappings';
-	String get video_download_path_mappings_hint => 'Map each qBittorrent remote root to a locally accessible folder.';
-	String get video_download_path_mapping_add => 'Add path mapping';
-	String get video_download_backend_profile_id => 'Backend profile ID';
-	String get video_download_remote_root => 'Remote root';
-	String get video_download_local_root => 'Local root';
-	String get video_download_target_source_title => 'Default managed video source';
-	String get video_download_target_source_hint => 'New downloads are organized into this local video source.';
-	String get video_download_target_source_none => 'Choose a local video source';
-	String get video_external_remove => 'Remove';
-	String get video_external_username_optional => 'Username (optional)';
-	String get video_external_password_optional => 'Password (optional)';
-	String get video_external_api_key => 'API key';
-	String get video_external_save_error => 'The configuration could not be saved. Check the highlighted fields.';
-	String get video_external_categories_invalid => 'Categories must be comma-separated numeric IDs.';
-	String get video_download_path_mapping_invalid => 'Enter a profile ID, remote root, and absolute local root.';
-	String get video_opensubtitles_endpoint => 'API endpoint';
-	String get video_download_target_source_empty => 'No locally accessible video source is available. Add one on the Sources tab first.';
-	String get video_setting_drag_seek_sensitivity => 'Drag-to-seek sensitivity';
-	String get video_setting_drag_seek_sensitivity_hint => 'How far one full-width swipe seeks on a touch screen: Low about 45s, Medium about 90s, High about 180s. Independent of the video\'s total length. Touch drag only; mouse and keyboard seeking are unaffected.';
-	String get video_setting_drag_seek_sensitivity_low => 'Low';
-	String get video_setting_drag_seek_sensitivity_medium => 'Medium';
-	String get video_setting_drag_seek_sensitivity_high => 'High';
-	String video_subtitle_read_failed({required Object label}) => 'Couldn\'t read this subtitle file (damaged or empty): ${label}';
-	String dict_downloading_size({required Object name, required Object done, required Object total}) => 'Downloading ${name} (${done} / ${total})';
-	String get video_subtitle_attach_book_missing => 'This video isn\'t in your library, so the subtitle wasn\'t attached';
-	String get dict_download_hide => 'Run in background';
-	String get dict_download_progress_show => 'View progress';
-	String get dict_download_cancelled => 'Download cancelled.';
-	String get dict_download_import_uncancellable => 'Importing cannot be interrupted';
-	String get dict_download_busy => 'A dictionary download is already running.';
-	String get gal_hook_ingame_lookup => 'In-game dictionary lookup';
-	String get gal_hook_ingame_lookup_hint => 'Show the dictionary card inside the game window itself (KiriKiri engine, Windows only)';
-	String get drag_drop_failed => 'Couldn\'t handle the dropped files. Please try again.';
-	String get tag_add_failed => 'Couldn\'t add the tag. Please try again.';
-	String get tag_reorder_failed => 'Couldn\'t save the new tag order. Please try again.';
-	String get download_task_error_summary_source_missing => 'Managed video source is missing or inaccessible';
-	String get download_task_error_summary_backend_unconfirmed => 'Torrent could not be confirmed by hash, title, and category';
-	String get download_task_error_summary_subtitle => 'Subtitles are unavailable or could not be installed';
-	String get download_task_error_summary_backend_unavailable => 'Download backend is unavailable or no longer matches';
-	String get download_task_error_summary_legacy => 'Legacy import needs manual attention';
-	String get download_task_error_summary_torrent_info => 'Torrent identity is missing or unverifiable';
-	String get download_task_error_summary_generic => 'The task hit an error';
-	String get download_task_error_view_detail => 'View details';
-	String get download_task_error_detail_title => 'Error details';
-	String get download_task_error_copied => 'Error details copied';
-	String get download_task_lifecycle_active => 'In progress';
-	String get download_task_lifecycle_needs_attention => 'Needs attention';
-	String get download_task_location_missing => 'The task file location is unavailable.';
-	String get download_task_location_open_failed => 'Could not open the file location.';
-	String get download_task_open_location => 'Show in folder';
-	String get download_task_lifecycle_completed => 'Completed';
-	String get download_task_lifecycle_failed => 'Failed';
-	String get download_task_lifecycle_cancelled => 'Cancelled';
-	String get download_task_stage_enqueue => 'Enqueue';
-	String get download_task_stage_download => 'Download';
-	String get download_task_stage_organize => 'Organize';
-	String get download_task_stage_subtitle => 'Subtitles';
-	String get download_task_stage_import => 'Import';
-	String get download_task_stage_scrape => 'Scrape';
-	String get video_discovery_manual_identity_hint => 'Enter the title, external ID and year above to enable search';
-	String get collection_split_move_to => 'Move to';
-	String get collection_split_new_group => 'New group';
-	String collection_split_selected({required Object n}) => '${n} selected';
-	String get sync_pair_rate_limited => 'Too many attempts. Wait a few minutes and try again.';
-	String get sync_pair_tls_failed => 'Certificate check failed. The peer\'s certificate does not match the pinned one.';
-	String get sync_pair_timeout => 'The peer did not respond in time.';
-	String get sync_pair_expired => 'Pairing timed out. Start pairing again from this device.';
-	String get sync_pair_upgrade_required => 'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
-	String get sync_pair_fingerprint_changed_title => 'Certificate changed';
-	String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
-	String get sync_pair_fingerprint_new_label => 'Seen now';
-	String get sync_pair_fingerprint_retrust => 'Clear and trust again';
-	String get sync_pair_fingerprint_changed_body => 'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
-	String get interconnect_upload_section_footer => 'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
-	String get remote_delete_audiobook_partial => 'Book deleted, but its audiobook could not be removed on the paired device';
-	String get collection_episode_scrape => 'Fetch episode details';
-	String collection_episode_scrape_failed({required Object error}) => 'Episode scrape failed: ${error}';
-	String collection_episode_scrape_result({required Object updated, required Object skipped}) => 'Updated ${updated} episodes, skipped ${skipped}';
-	String get collection_episode_scrape_unbound => 'Scrape the collection first';
-	String get gal_mining_screenshot_size => 'Galgame screenshot size';
-	String get gal_mining_screenshot_size_full_hd => 'Up to 1920 × 1080 (recommended)';
-	String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
-	String get gal_mining_screenshot_size_hint => 'Applies to still screenshots and animated-capture fallbacks. Keeps the aspect ratio, never enlarges, and saves as JPEG at quality 90.';
-	String get gal_mining_screenshot_size_original => 'Original size (JPEG)';
-	String get game_attach_mode_last_used => 'Last used';
-	String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
-	String get game_attach_mode_luna_safe_hint => 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
-	String get game_attach_mode_native => 'Fushi native attachment';
-	String get game_attach_mode_native_hint => 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
-	String get game_attach_mode_title => 'Choose attachment mode';
-	String get game_luna_audio_lead_in => 'Complete sentence start';
-	String get game_luna_audio_lead_in_hint => 'If the beginning of this sentence is cut off, increase this value.';
-	String get game_luna_audio_per_game_hint => 'Saved separately for each attached game.';
-	String get game_luna_audio_preroll => 'Luna audio lead-in';
-	String get game_luna_audio_preroll_hint => 'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
-	String get game_luna_audio_tail_trim => 'Remove next-line audio';
-	String get game_luna_audio_tail_trim_hint => 'If the end of this sentence includes the next line, increase this value.';
-	String get game_luna_audio_timing => 'Audio alignment';
-	String get game_text_source_luna => 'LunaTranslator (external original text)';
-	String get game_text_source_luna_connected => 'Connected. Fushi will use the original text selected in LunaTranslator.';
-	String get game_text_source_luna_waiting => 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
-	String get game_text_thread_recommended => 'Recommended';
-	String get game_text_threads_dormant_hide => 'Hide threads without text';
-	String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
-	String get video_mining_image_quality => 'Video / anime card image quality';
-	String get video_mining_image_quality_hint => 'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
-	String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
-	String get video_setting_subtitle_language_filter => 'Subtitle language';
-	String get video_setting_subtitle_language_filter_hint => 'Filter Chinese and Japanese content inside the selected subtitle track.';
-	String get video_setting_subtitle_language_filter_all => 'All';
-	String get video_setting_subtitle_language_filter_japanese => 'Japanese';
-	String get video_setting_subtitle_language_filter_chinese => 'Chinese';
-	String get download_detail_task_queued => 'Queued: waiting for other downloads to free a slot. This task has not been handed to the downloader yet, so there is no live peer or tracker data.';
-	String video_subscription_group_release_count({required Object count}) => '${count} releases';
-	String get download_task_priority => 'Queue priority';
-	String get download_task_priority_high => 'High';
-	String get download_task_priority_normal => 'Normal';
-	String get download_task_priority_low => 'Low';
-	String get library_view_import => 'Import';
-	String get quick_import_title => 'Quick import';
-	String get media_source_section_title => 'Library sources';
-	String get book_import_folder => 'Import folder';
-	String get book_import_folder_as_source => 'Add as library source';
-	String get book_import_folder_as_source_hint => 'Keep scanning this folder for new books';
-	String get book_import_folder_once => 'Import once only';
-	String get library_empty_go_import => 'Go to import';
-	String get game_import_drop_hint => 'You can also drag .exe files into the game library';
-	String get library_view_sources => 'Sources';
-	String get video_setting_secondary_av_delay => 'Secondary subtitle sync';
-	String get video_setting_secondary_av_delay_hint => 'Adjust the secondary subtitle offset independently. It follows the primary offset until set here.';
-	String get video_setting_secondary_delay_follow => 'Follow primary';
-	String video_subtitle_secondary_delay_osd({required Object ms}) => 'Secondary subtitle sync: ${ms} ms';
-	String get video_subtitle_secondary_delay_follow_osd => 'Secondary subtitle sync: follow primary';
-	String get video_setting_subtitle_anchor => 'Main subtitle anchor';
-	String get video_subtitle_anchor_bottom => 'Bottom';
-	String get video_subtitle_anchor_top => 'Top';
-	String get video_setting_subtitle_drag_adjust => 'Drag to adjust position';
-	String get video_subtitle_drag_adjust_hint => 'Drag a subtitle up or down to reposition it';
-	String get anki_connect_mobile_disabled_key_cleared => 'AnkiConnect needs an API key on mobile, so clearing it turned the switch back off. Anki now goes through the built-in backend again.';
-	String manga_import_batch_hint({required Object n}) => 'This folder holds ${n} volume files; each is imported as its own book, named after its file.';
-	String manga_import_batch_done({required Object imported, required Object skipped, required Object failed}) => 'Imported ${imported}, skipped ${skipped}, failed ${failed}.';
-	String get srt_book_reimport => 'Re-import';
-	String get srt_book_reimport_subtitle_hint => 'Replacing the subtitle rebuilds the book text from the new cues.';
-	String get srt_book_reimport_no_cues => 'No subtitle lines found in that file';
-	String get srt_book_reimport_body_rebuilt => 'Book text rebuilt — reopen the book to read it';
-	String get video_setting_torrent_backend_embedded => 'Built-in engine';
-	String get download_backend_unsupported_note => 'The built-in engine is not available on this platform. Downloads use external qBittorrent.';
-	String get aidoku_runtime_unavailable => 'Aidoku extensions are currently available on macOS only.';
-	String get aidoku_extensions_title => 'Aidoku extensions';
-	String get aidoku_extension_empty => 'No Aidoku extensions installed.';
-	String get aidoku_extension_remove => 'Remove Aidoku extension';
-	String get aidoku_extension_warning => 'Aidoku extensions execute third-party WebAssembly code with network access. Only continue with sources you trust.';
-	String get aidoku_webview_unsupported => 'This source requires Aidoku WebView APIs that are not supported yet.';
-	String get aidoku_extension_imported => 'Aidoku extension imported';
-	String get aidoku_extension_import => 'Import Aidoku extension (.aix)';
-	String get aidoku_extension_confirm_title => 'Install Aidoku extension?';
-	String get aidoku_extension_version => 'Version';
-	String get aidoku_repository_url => 'Repository URL';
-	String get aidoku_repository_sources => 'Repository sources';
-	String get aidoku_repository_identity_mismatch => 'The downloaded package does not match the repository index.';
-	String get aidoku_repository_installed => 'Installed';
-	String get aidoku_repository_search => 'Search repository sources';
-	String get aidoku_repository_install => 'Install';
-	String get aidoku_repository_update => 'Update';
-	String get aidoku_repository_add => 'Add Aidoku repository';
-	String get aidoku_repository_added => 'Aidoku repository added';
-	String get aidoku_repository_browse => 'Browse repository';
-	String get aidoku_repository_hint => 'Paste an Aidoku repository homepage or index.min.json URL. The community repository is filled in by default.';
-	String get aidoku_repository_remove => 'Remove repository';
-	String get aidoku_repository_empty => 'No Aidoku repositories added.';
-	String get dict_language_tooltip => 'Content language';
-	String get dict_language_title => 'Dictionary content language';
-	String get dict_language_description => 'Decides which font renders this dictionary\'s text. Automatic uses the language the dictionary declares.';
-	String get dict_language_auto => 'Automatic';
-	String get book_language_action => 'Content language';
-	String get book_language_description => 'Decides which font renders this book\'s text. Automatic uses the language declared in the EPUB.';
-	String get local_audio_reference_unavailable => 'Can\'t reference the original file without all-files access; a copy was imported instead.';
-	String get video_collection_scrape => 'Scrape info & cover';
-	String get update_testflight_open => 'Open TestFlight';
-	String get update_app_store_open => 'Open App Store';
-	String get update_release_page_open => 'Release page';
-	String update_install_gal_hook_holder({required Object pid, required Object path}) => 'Galgame capture component in use: PID ${pid} - ${path} (this is the game you are playing, or its capture host). Close the game, then update again.';
-	String get game_hook_reason_protocol_mismatch => 'The capture component does not match this Fushi build. It ships inside Fushi, so there is nothing to install separately. First, fully close the game and launch it again: the game process may still hold the component injected by an earlier session. If it still mismatches, the component files on disk are older than Fushi, because the last Fushi update could not replace them while a game was running. Close every game, then run the Fushi installer again.';
-	String get video_mining_still_format => 'Video card screenshot format';
-	String get video_mining_still_format_hint => 'Encoding used when the card image is a still screenshot. JPG is much smaller; PNG is lossless but several times larger. Animated covers are unaffected — they follow the animation format setting.';
-	String get mining_still_format_jpg => 'JPG (smaller)';
-	String get mining_still_format_png => 'PNG (lossless)';
-	String get gal_mining_still_format => 'Game card screenshot format';
-	String get gal_mining_still_format_hint => 'Same formats as video cards, stored separately. Game window grabs come in as PNG: keeping PNG is lossless but several times larger, while JPG matches how these screenshots were compressed before.';
-	String get manga_source_cloudflare_blocked => 'This source is protected by Cloudflare and can\'t be reached by the built-in reader yet.';
-	String get manga_global_search_title => 'Search all sources';
-	String get manga_global_search_hint => 'Search every enabled source';
-	String get manga_global_search_prompt => 'Type a title to search every enabled manga source at once.';
-	String get manga_global_search_no_sources => 'No enabled manga sources. Install and enable an extension first.';
-	String get anki_connect_addon_install => 'Install AnkiConnect';
-	String get anki_connect_addon_install_hint => 'Downloads AnkiConnect from AnkiWeb and hands it to the running Anki. Anki will ask you to confirm, then advise a restart.';
-	String get anki_connect_addon_handed => 'Handed AnkiConnect to Anki. Confirm the prompt in Anki, then restart Anki as it advises.';
-	String get anki_connect_addon_anki_not_running => 'No running Anki found. Start Anki desktop first, then try again.';
-	String anki_connect_addon_download_failed({required Object error}) => 'Could not download AnkiConnect from AnkiWeb: ${error}';
-	String get anki_connect_addon_invalid => 'AnkiWeb returned something that is not a usable add-on package.';
-	String anki_connect_addon_launch_failed({required Object error}) => 'Could not hand the add-on to Anki: ${error}';
-	String get settings_content_language_title => 'Default content language';
-	String get settings_content_language_unset => 'Not set';
-	String get settings_content_language_description => 'Fallback language for content that does not declare one. Per-book, per-video, per-game and per-dictionary settings override this.';
-	String get manga_ocr_lens_language_label => 'Recognition language';
+  // Translations
+  String get action_exit => 'Exit';
+  String get action_favorite => 'Favorite';
+  String activity_days_ago({required Object n}) => '${n} d ago';
+  String activity_hours_ago({required Object n}) => '${n} h ago';
+  String get activity_just_now => 'Just now';
+  String activity_minutes_ago({required Object n}) => '${n} min ago';
+  String get add_to_collection => 'Add to collection';
+  String get anime_download_back => 'Back';
+  String get anime_download_batch => 'Batch';
+  String get anime_download_category_all => 'All';
+  String get anime_download_category_english => 'English-translated';
+  String get anime_download_category_non_english => 'Non-English';
+  String get anime_download_category_raw => 'Raw';
+  String get anime_download_delete => 'Delete';
+  String anime_download_episode_count({required Object count}) => 'EP ${count}';
+  String get anime_download_generic_download => 'Download';
+  String get anime_download_generic_hint => 'Magnet link';
+  String get anime_download_generic_title =>
+      'Paste a link (books, videos, anything)';
+  String get anime_download_include_subs => 'Include subtitles';
+  String get anime_download_kind_auto => 'Auto';
+  String get anime_download_kind_book => 'Book';
+  String get anime_download_kind_video => 'Video';
+  String get anime_download_magnet_invalid => 'Invalid magnet link';
+  String get anime_download_no_results => 'No results';
+  String get anime_download_no_subs => 'No subs';
+  String get anime_download_no_tasks => 'No download tasks yet';
+  String get anime_download_nyaa_query => 'Nyaa search terms';
+  String get anime_download_play_now => 'Play while downloading';
+  String get anime_download_play_now_fail =>
+      'Not ready yet (metadata pending or connection failed) — try again later';
+  String get anime_download_play_now_ok =>
+      'Imported — open it from the video library to play while downloading';
+  String get anime_download_push => 'Push download';
+  String get anime_download_push_failed => 'Failed to push to qBittorrent';
+  String get anime_download_pushed =>
+      'Pushed — it will be imported automatically once finished';
+  String get anime_download_refresh => 'Refresh';
+  String get anime_download_relocate => 'Rename / move';
+  String anime_download_relocate_engine_failed({required Object reason}) =>
+      'Failed, nothing changed: ${reason}';
+  String get anime_download_relocate_hint =>
+      'Fushi renames/moves through the download engine, so seeding is not interrupted. Renaming in Explorer can never be recovered.';
+  String anime_download_relocate_library_failed({required Object reason}) =>
+      'Files moved, but the library still points at the old path: ${reason}';
+  String get anime_download_relocate_move_title => 'Move to folder';
+  String get anime_download_relocate_no_files =>
+      'This task has no files to rename yet (metadata not ready)';
+  String anime_download_relocate_ok({required Object rows}) =>
+      'Renamed / moved; ${rows} library entries updated';
+  String get anime_download_relocate_pick_folder => 'Choose destination folder';
+  String get anime_download_relocate_rename_title => 'Rename file';
+  String get anime_download_retry => 'Retry';
+  String get anime_download_search => 'Search';
+  String get anime_download_search_error_proxy_hint =>
+      'If the site cannot be reached directly, configure a network proxy in download settings.';
+  String get anime_download_search_failed =>
+      'Search failed or timed out. Tap retry.';
+  String get anime_download_search_hint => 'Anime title';
+  String get anime_download_search_start_hint =>
+      'Search an anime title above — torrents and subtitles are matched automatically.';
+  String get anime_download_sort_date => 'Published';
+  String get anime_download_sort_seeders => 'Seeders';
+  String get anime_download_sort_size => 'Size';
+  String get anime_download_store_unavailable =>
+      'Download plan storage is unavailable';
+  String get anime_download_subs_badge => 'Subs';
+  String get anime_download_subs_failed => 'Subtitle search failed. Tap retry.';
+  String get anime_download_subs_need_key =>
+      'Enter a Jimaku API key above to search subtitles.';
+  String get anime_download_tasks => 'Download tasks';
+  String get anime_download_title => 'Anime download';
+  String get anime_download_trusted => 'Trusted';
+  String get anime_download_trusted_only => 'Trusted only';
+  String get anki_allow_duplicates => 'Allow duplicates';
+  String get anki_allow_duplicates_hint =>
+      'Skip duplicate check when adding cards';
+  String get anki_card_action_failed => 'Card action failed. Please try again.';
+  String get anki_compact_glossaries => 'Compact glossaries';
+  String get anki_compact_glossaries_hint =>
+      'Use compact format for glossary entries';
+  String get anki_connect_api_key => 'API Key';
+  String get anki_connect_host => 'Host';
+  String get anki_connect_port => 'Port';
+  String get anki_create_lapis => 'Create Lapis deck';
+  String get anki_create_lapis_exists =>
+      'Lapis note type and deck already exist — selected them.';
+  String anki_create_lapis_failed({required Object error}) =>
+      'Could not create Lapis deck: ${error}';
+  String get anki_create_lapis_hint =>
+      'Adds the Lapis note type and a Lapis deck to Anki, then selects them.';
+  String get anki_create_lapis_success => 'Lapis note type and deck created.';
+  String get anki_deck => 'Deck';
+  String get anki_duplicate_scope => 'Duplicate check scope';
+  String get anki_duplicate_scope_collection => 'Whole collection';
+  String get anki_duplicate_scope_deck => 'Selected deck (and its subdecks)';
+  String get anki_duplicate_scope_deck_root => 'Root deck (all subdecks)';
+  String get anki_duplicate_scope_hint =>
+      'Which decks are searched when checking whether a card already exists. AnkiConnect only; AnkiDroid always searches the whole collection.';
+  String get anki_error_collection_unavailable =>
+      'AnkiDroid\'s collection is currently unavailable. Open AnkiDroid at least once, make sure it isn\'t syncing and the API is enabled, then retry.';
+  String get anki_error_connection_refused =>
+      'Could not connect to Anki: connection refused. Make sure Anki Desktop is running and the AnkiConnect add-on is installed.';
+  String get anki_error_connection_timeout =>
+      'Could not connect to Anki: the connection timed out. Check the host, port, and firewall settings.';
+  String get anki_error_connection_unknown =>
+      'Could not export to Anki: an unexpected connection error occurred. See the error log for details.';
+  String get anki_error_http =>
+      'Could not export to Anki: an HTTP error occurred while contacting AnkiConnect.';
+  String get anki_error_permission_denied =>
+      'AnkiDroid hasn\'t granted card access permission. Approve the system permission dialog that just appeared, then tap the button again to export.';
+  String get anki_fetch => 'Refresh decks & note types';
+  String get anki_fetching => 'Fetching...';
+  String get anki_field_mappings => 'Field mappings';
+  String get anki_field_not_mapped => 'Not mapped';
+  String get anki_mine_to_server => 'Mine to paired device';
+  String get anki_mine_to_server_hint =>
+      'Send mined cards to the paired host\'s Anki (its decks and settings) instead of this device. Requires an interconnect pairing.';
+  String get anki_mined_action_add_duplicate => 'Add as a new card';
+  String get anki_mined_action_overwrite => 'Overwrite this card';
+  String get anki_mined_action_view => 'View / open in Anki';
+  String get anki_mined_card_subtitle =>
+      'Choose what to do with the matching card.';
+  String get anki_mined_card_title => 'Card already in Anki';
+  String anki_mined_multiple_matches({required Object count}) =>
+      '${count} matching cards';
+  String get anki_not_configured =>
+      'Tap Refresh to load your Anki decks and note types.';
+  String get anki_note_open_failed => 'Could not open the card in Anki.';
+  String get anki_note_type => 'Note type';
+  String get anki_note_viewer_empty => 'This card has no readable fields.';
+  String get anki_note_viewer_open_in_anki => 'Open in Anki';
+  String get anki_note_viewer_title => 'Existing card';
+  String get anki_open_no_card => 'No card found for this word in Anki.';
+  String get anki_overwrite_scope => 'Overwrite range';
+  String get anki_overwrite_scope_all => 'All matching cards';
+  String get anki_overwrite_scope_hint =>
+      'Which already-made cards the green ✓ can overwrite';
+  String get anki_overwrite_scope_latest => 'Latest card only';
+  String get anki_refresh_hint =>
+      'After creating or renaming a deck or note type in Anki, tap here to refresh.';
+  String anki_select_handlebar({required Object field}) =>
+      'Select value for ${field}';
+  String get anki_settings_label => 'Anki settings';
+  String get anki_tag_default_section => 'Default tags';
+  String get anki_tag_include_category => 'Add source category tag';
+  String get anki_tag_include_category_hint =>
+      'Books get "book", videos get "video", games get "game"';
+  String get anki_tag_include_fushi => 'Add "fushi" tag';
+  String get anki_tag_include_fushi_hint => 'Mark every card mined by Fushi';
+  String get anki_tags => 'Tags';
+  String get anki_tags_hint => 'Space-separated tags added to every card';
+  String get app_icon_label => 'App icon';
+  String get app_icon_presets => 'Presets';
+  String get app_ui_scale => 'UI size';
+  String get app_ui_scale_hint =>
+      'Scales the whole interface — text, icons and controls together — from 30% to 300%. Increase it if the UI looks small on large screens.';
+  String get app_version => 'App version';
+  String get apply_theme => 'Apply theme';
+  String get audio_clip_failed =>
+      'Couldn\'t extract the audio clip — the audio source may be missing or unreadable';
+  String get audio_import => 'Import audio';
+  String get audio_panel_add_audio => 'Add audio';
+  String get audio_panel_auto => 'Auto';
+  String get audio_panel_pick_new_subtitle => 'Pick new subtitle file';
+  String get audio_source_added => 'Audio source added';
+  String audio_source_dns_error({required Object host}) =>
+      'Audio source connection failed: cannot resolve "${host}" — check your network, or remove this source in settings';
+  String get audio_source_edit_target_gone =>
+      'That audio source no longer exists — edit discarded';
+  String get audio_source_edit_url => 'Edit audio source link';
+  String audio_source_error({required Object detail}) =>
+      'Audio source error: ${detail}';
+  String get audio_source_fushi_interconnect => 'Fushi Interconnect';
+  String get audio_source_loopback_warning =>
+      'Points at this device — re-point after switching machines';
+  String audio_source_request_error({required Object detail}) =>
+      'Audio source request failed: ${detail}';
+  String audio_source_timeout({required Object host}) =>
+      'Audio source timeout: "${host}" — server not responding, try again later or change source';
+  String get audio_source_updated => 'Audio source updated';
+  String get audio_source_url_invalid =>
+      'Link must be http(s) and contain a term or reading placeholder';
+  String get audio_unavailable => 'No audio could be found.';
+  String get audio_volume => 'Volume';
+  String get audiobook_attached => 'Audiobook attached';
+  String get audiobook_audio_missing => 'Audio file missing';
+  String get audiobook_background_play => 'Keep playing after exit';
+  String get audiobook_background_play_hint =>
+      'When off, audiobook playback stops when you leave the reader. Turn on to keep playing in the background.';
+  String get audiobook_export_clip => 'Export clip video';
+  String get audiobook_export_clip_failed => 'Clip export failed';
+  String get audiobook_export_clip_in_progress => 'Exporting clip…';
+  String get audiobook_export_clip_no_selection =>
+      'Select text first to export a clip';
+  String get audiobook_export_clip_no_text =>
+      'This selection has no text to render';
+  String get audiobook_export_clip_saved => 'Clip saved';
+  String get audiobook_export_clip_unsupported_range =>
+      'This selection can\'t be exported (crosses chapter or audio file)';
+  String get audiobook_import => 'Import audiobook';
+  String get audiobook_import_error => 'Import failed';
+  String audiobook_import_error_copy_failed({required Object name}) =>
+      'Failed to copy file: ${name}';
+  String audiobook_import_error_disk_full({required Object size}) =>
+      'Not enough disk space. Required: ${size}';
+  String get audiobook_import_success => 'Audiobook imported';
+  String get audiobook_load_error => 'Failed to load audiobook.';
+  String get audiobook_pick_alignment => 'Pick alignment file';
+  String get audiobook_reference_original => 'Reference original files';
+  String get audiobook_reference_original_desc =>
+      'Keep audio where it is and play from its original path; the book breaks if the file is moved or deleted.';
+  String get audiobook_relocate => 'Relocate file';
+  String get audiobook_relocate_done => 'Audio relocated';
+  String get auto_add_book_name_to_tags => 'Auto-add book title to tags';
+  String auto_chapter({required Object n}) => 'Chapter ${n}';
+  String get auto_read_on_lookup => 'Auto read word on lookup';
+  String get auto_search => 'Auto search';
+  String get auto_search_debounce_delay => 'Auto search debounce delay';
+  String get auto_select_search_window => 'Auto-select search window';
+  String get auto_select_search_window_hint =>
+      'Probe multiple window sizes on import, pick the one with the best hit rate';
+  String get av_sync => 'A/V Sync';
+  String get av_sync_reset => 'Reset';
+  String get back => 'Back';
+  String get background_color => 'Background color';
+  String get background_color_desc => 'Reader page background';
+  String get backup_category_audiobooks => 'Audiobook audio';
+  String get backup_category_audiobooks_desc => 'Audiobook audio and alignment';
+  String get backup_category_books => 'Books';
+  String get backup_category_books_desc =>
+      'Book files (EPUB and extracted content)';
+  String get backup_category_dictionary => 'Dictionaries';
+  String get backup_category_dictionary_desc =>
+      'Imported dictionaries and their files';
+  String get backup_category_fonts => 'Custom fonts';
+  String get backup_category_fonts_desc => 'Imported custom font files';
+  String get backup_category_local_audio => 'Local audio databases';
+  String get backup_category_local_audio_desc =>
+      'Local pronunciation audio databases';
+  String get backup_category_profiles => 'Profiles';
+  String get backup_category_profiles_desc => 'Configuration profiles';
+  String get backup_category_progress => 'Reading progress';
+  String get backup_category_progress_desc => 'Reading positions and bookmarks';
+  String get backup_category_settings => 'Settings';
+  String get backup_category_settings_desc => 'App and reader settings';
+  String get backup_category_statistics => 'Statistics';
+  String get backup_category_statistics_desc =>
+      'Reading, video and mining statistics';
+  String get backup_category_videos => 'Videos';
+  String get backup_category_videos_desc => 'Local video files';
+  String get backup_export => 'Export backup';
+  String get backup_export_books_all => 'All books';
+  String backup_export_books_selected({required Object count}) =>
+      '${count} books selected';
+  String get backup_export_categories_hint =>
+      'Tick what to pack into the backup. Unchecking Books removes those books entirely — their content and records go with them.';
+  String get backup_export_categories_title => 'Choose what to export';
+  String get backup_export_choose_books => 'Choose books';
+  String get backup_export_choose_videos => 'Choose videos';
+  String backup_export_failed({required Object message}) =>
+      'Backup export failed: ${message}';
+  String get backup_export_hint =>
+      'Choose what to include. Reading data (progress, stats, settings) is always included; uncheck Books to exclude books entirely, or uncheck large items (local audio, videos) to shrink the backup.';
+  String get backup_export_no_books => 'No books to choose from';
+  String get backup_export_no_videos => 'No videos to choose from';
+  String get backup_export_select_all => 'Select all';
+  String get backup_export_select_none => 'Select none';
+  String get backup_export_success => 'Backup exported successfully';
+  String get backup_export_videos_all => 'All videos';
+  String backup_export_videos_selected({required Object count}) =>
+      '${count} videos selected';
+  String get backup_exporting => 'Creating backup…';
+  String get backup_import => 'Import backup';
+  String backup_import_confirm(
+          {required Object date,
+          required Object bookCount,
+          required Object statsCount}) =>
+      'This will replace all current data with the backup from ${date}.\n\n${bookCount} books, ${statsCount} statistics records.\n\nThe app will restart after restore.';
+  String get backup_import_confirm_title => 'Restore Backup?';
+  String get backup_import_contents_hint => 'Untick an item to skip it.';
+  String get backup_import_contents_title => 'This backup contains';
+  String backup_import_failed({required Object message}) =>
+      'Backup import failed: ${message}';
+  String get backup_import_hint =>
+      'Restore from a backup file. The app will restart.';
+  String get backup_import_invalid => 'Invalid backup file';
+  String backup_import_merge_preview(
+          {required Object bookCount, required Object progressCount}) =>
+      'Merge will add ${bookCount} books and update ${progressCount} reading positions.';
+  String get backup_import_mode_label => 'Import mode';
+  String get backup_import_mode_merge => 'Merge into current library';
+  String get backup_import_mode_overwrite => 'Overwrite entire library';
+  String get backup_import_overlay_title => 'Importing backup';
+  String get backup_import_overlay_warning =>
+      'Restoring your data. Please don\'t close the app.';
+  String get backup_import_preserve_sync_note =>
+      'Your sync settings on this device (account and credentials) will be kept.';
+  String get backup_import_restart_button => 'Restart now';
+  String get backup_import_settings_off_hint =>
+      'Keep this device\'s fonts/appearance/profiles; restore only books & reading data.';
+  String get backup_import_settings_on_hint =>
+      'Full restore: fonts, appearance and profiles come from the backup.';
+  String get backup_import_settings_toggle => 'Import settings & profiles';
+  String get backup_import_success => 'Backup restored. Restarting…';
+  String get backup_import_validating_hint =>
+      'Checking and previewing the backup file. This may take a moment.';
+  String get backup_import_validating_title => 'Reading backup…';
+  String backup_schema_newer({required Object version}) =>
+      'This backup requires a newer version of the app (schema ${version}). Please update first.';
+  String batch_add_to_collection_success({required Object n}) =>
+      'Added ${n} item(s) to the collection.';
+  String batch_delete_confirm({required Object n}) =>
+      'Delete ${n} book(s)? This cannot be undone.';
+  String batch_delete_confirm_video({required Object n}) =>
+      'Delete ${n} video(s)? This cannot be undone.';
+  String batch_delete_mixed_confirm({required Object n, required Object m}) =>
+      'Delete ${n} media and dissolve ${m} collection(s)? This cannot be undone.';
+  String batch_delete_mixed_success({required Object n, required Object m}) =>
+      'Deleted ${n} media, dissolved ${m} collection(s).';
+  String batch_delete_success({required Object n}) => 'Deleted ${n} book(s).';
+  String batch_delete_success_video({required Object n}) =>
+      'Deleted ${n} video(s).';
+  String batch_dissolve_confirm({required Object m}) =>
+      'Dissolve ${m} collection(s)? Grouping is removed; the media is kept.';
+  String batch_dissolve_success({required Object m}) =>
+      'Dissolved ${m} collection(s).';
+  String get batch_invert_selection => 'Invert';
+  String get batch_select => 'Select';
+  String get batch_select_all => 'All';
+  String batch_selected_count({required Object n}) => '${n} selected';
+  String get batch_tag_add => 'Add';
+  String batch_tag_added({required Object name, required Object n}) =>
+      'Tag "${name}" added to ${n} book(s).';
+  String batch_tag_added_video({required Object name, required Object n}) =>
+      'Added tag "${name}" to ${n} video(s).';
+  String get batch_tag_apply => 'Apply';
+  String get batch_tag_keep => 'Keep';
+  String get batch_tag_remove => 'Remove';
+  String batch_tag_removed({required Object name, required Object n}) =>
+      'Tag "${name}" removed from ${n} book(s).';
+  String batch_tag_removed_video({required Object name, required Object n}) =>
+      'Removed tag "${name}" from ${n} video(s).';
+  String get batch_tag_title => 'Manage tags';
+  String get book_continue_reading => 'Continue reading';
+  String get book_css_editor_cancel => 'Cancel';
+  String get book_css_editor_confirm_reset =>
+      'Reset CSS for this file to default?';
+  String get book_css_editor_confirm_reset_all =>
+      'Reset CSS for ALL files to default?';
+  String get book_css_editor_discard => 'Discard';
+  String get book_css_editor_edit_css => 'Edit book CSS';
+  String get book_css_editor_no_css_files => 'No CSS files found in this book.';
+  String get book_css_editor_no_extract_dir =>
+      'Book directory not found. Re-import the book to edit CSS.';
+  String get book_css_editor_reset_all => 'Reset all';
+  String get book_css_editor_reset_current => 'Reset current';
+  String get book_css_editor_reset_done => 'CSS has been reset.';
+  String get book_css_editor_save => 'Save';
+  String get book_css_editor_saved => 'CSS saved.';
+  String get book_css_editor_title => 'Book CSS editor';
+  String get book_css_editor_unsaved_changes => 'Unsaved changes';
+  String get book_css_editor_unsaved_changes_message =>
+      'You have unsaved changes. Discard them?';
+  String get book_directory_not_found => 'Book directory not found.';
+  String get book_edit_author => 'Author';
+  String get book_file_not_found => 'Book file not found';
+  String get book_import_duplicate_cancel => 'No, cancel';
+  String get book_import_duplicate_cancelled => 'Import cancelled';
+  String get book_import_duplicate_keep => 'Yes, add suffix';
+  String book_import_duplicate_message({required Object name}) =>
+      'A book named "${name}" already exists. Import it anyway? "Yes" imports with a numbered suffix; "No" cancels.';
+  String get book_import_duplicate_title => 'Duplicate book';
+  String get book_mark_completed_action => 'Mark as completed';
+  String get book_mark_uncompleted_action => 'Mark as not completed';
+  String get book_marked_completed => 'Marked as completed';
+  String get book_marked_uncompleted => 'Marked as not completed';
+  String get book_mode => 'Book mode';
+  String book_read_progress({required Object percent}) => 'Read ${percent}%';
+  String get book_scrape_cover => 'Scrape cover online';
+  String get book_scrape_empty => 'No matching covers';
+  String get book_scrape_failed => 'Failed to fetch cover';
+  String get book_scrape_hint => 'Book title / author';
+  String get book_scrape_search => 'Search';
+  String get book_scrape_search_failed => 'Search failed. Tap Search to retry.';
+  String get book_scrape_title => 'Match cover online';
+  String get book_scrape_use => 'Use';
+  String get book_search => 'Search in book';
+  String get book_search_hint => 'Enter search text…';
+  String get book_search_no_results => 'No results found';
+  String book_search_results({required Object n}) => '${n} result(s)';
+  String get books => 'Books';
+  String get browser_extension_enable_server_first =>
+      'Tip: enable "Yomitan API server" and set an API key above first, so the extension is auto-configured with a working connection.';
+  String get browser_extension_mobile_unsupported =>
+      'Mobile browsers cannot load this extension. Use in-app lookup in the reader or video player instead.';
+  String get browser_extension_page_intro =>
+      'On desktop, look up words, parse subtitles and mine cards right inside Chrome or Edge. Prepare the extension below, then load it in your browser.';
+  String get browser_extension_prepare_button => 'Prepare extension files';
+  String get browser_extension_prepare_hint =>
+      'Starts the lookup server and unpacks the extension locally; the folder path is copied to the clipboard.';
+  String get browser_extension_reinstall_button => 'Re-prepare / refresh files';
+  String get browser_extension_server_off => 'Lookup server off';
+  String get browser_extension_server_on => 'Lookup server on';
+  String get browser_extension_status_connected => 'Extension connected';
+  String get browser_extension_status_never => 'Extension not detected yet';
+  String get browser_extension_step_dev_mode =>
+      'Turn on "Developer mode" (toggle in the top-right corner).';
+  String get browser_extension_step_done_auto =>
+      'Done. The extension is already set up to connect to Fushi for lookups — nothing to fill in by hand.';
+  String get browser_extension_step_load_unpacked => 'Click "Load unpacked".';
+  String get browser_extension_step_open_page =>
+      'Open the browser extensions page:';
+  String get browser_extension_step_pick_folder =>
+      'Select the extension folder below (its path is already copied to your clipboard).';
+  String get browser_extension_step_verify =>
+      'Verify the extension is loaded and connected';
+  String get browser_extension_verify_button => 'Check connection';
+  String get browser_extension_verify_checking => 'Checking…';
+  String get browser_extension_verify_connected =>
+      'Extension detected and connected.';
+  String get browser_extension_verify_not_detected =>
+      'No extension detected yet. Make sure it is loaded and enabled in your browser, then check again.';
+  String get browser_extension_version_app => 'App bundled';
+  String get browser_extension_version_browser => 'Loaded in browser';
+  String get browser_extension_version_label => 'Extension version';
+  String get browser_extension_version_mismatch =>
+      'The extension loaded in your browser is outdated. Prepare the extension again if needed, then reload it from your browser\'s extensions page (chrome://extensions).';
+  String browser_extension_yomitan_port_conflict({required Object port}) =>
+      'Port ${port} is in use by another process (usually the yomitan-api component — a Python process launched by your browser). End that process, or disable Yomitan API in Yomitan\'s advanced settings, then enable the Yomitan API server in Fushi again.';
+  String get cancel => 'Cancel';
+  String card_cover_degraded_to_static({required Object reason}) =>
+      'Card cover fell back to a still frame (animated clip unavailable): ${reason}';
+  String get card_duplicate => 'Duplicate card — not exported.';
+  String get card_export_failed => 'Failed to export card.';
+  String card_export_failed_detail({required Object reason}) =>
+      'Failed to export card: ${reason}';
+  String get card_export_not_configured =>
+      'Anki not configured. Open Anki settings and tap Fetch.';
+  String card_exported({required Object deck}) => 'Card exported to 『${deck}』.';
+  String card_exported_audio_failed({required Object reason}) =>
+      'Card exported, but the audio failed to download (${reason}).';
+  String get card_mined_no_sentence_captured =>
+      'Card created, but no sentence was captured (re-select the word, or this text has no recognizable sentence).';
+  String get card_mined_unmapped_sentence_audio_field =>
+      'Card created with sentence audio, but your Anki note type has no field mapped to it. Map a field to {sentence-audio}.';
+  String get card_mined_unmapped_sentence_field =>
+      'Card created, but your Anki note type has no field mapped to the sentence. Use Settings -> \'Create Lapis deck\' or map a field to {sentence}.';
+  String get card_mined_without_sentence_audio =>
+      'Card created without sentence audio (none found for this selection).';
+  String get card_mining_pending => 'Adding card…';
+  String card_overwritten({required Object deck}) =>
+      'Card overwritten in 『${deck}』.';
+  String get change_source => 'Change source';
+  String get changelog_empty =>
+      'No changelog found. Check your network or proxy settings.';
+  String get changelog_open_releases => 'Open releases page';
+  String get changelog_prerelease => 'Prerelease';
+  String chapter_progress(
+          {required Object idx,
+          required Object total,
+          required Object suffix,
+          required Object pct}) =>
+      'Chapter ${idx} / ${total}${suffix} · ${pct}%';
+  String get clear => 'Clear';
+  String get clear_dictionary_description =>
+      'This will clear all dictionary results from history. Are you sure?';
+  String get clear_dictionary_title => 'Clear dictionary result history';
+  String get clipboard_history_clear => 'Clear';
+  String get clipboard_history_empty => 'No copy history yet';
+  String get clipboard_history_title => 'Clipboard history';
+  String get clipboard_panel_block_capture => 'Block screen capture';
+  String get clipboard_panel_block_capture_hint =>
+      'Excludes the lookup and clipboard popup windows from screenshots, screen recording, and live streaming (Windows). Turn this off to let screenshots, recording, and streaming capture the lookup popup.';
+  String get clipboard_panel_opacity => 'Panel opacity';
+  String get clipboard_panel_opacity_hint =>
+      'Whole-panel opacity — see through to the game or page beneath';
+  String get clipboard_panel_window_title => 'Fushi clipboard lookup';
+  String get clipboard_text_window_bg_opacity => 'Text window background';
+  String get clipboard_text_window_bg_opacity_hint =>
+      'Background opacity of the transparent clipboard text window — 0% shows only the text over the game beneath';
+  String get clipboard_text_window_title => 'Clipboard text';
+  String get collapse_dictionaries => 'Collapse dictionaries';
+  String get collection_bookmark => 'Bookmark';
+  String get collection_clear_confirm =>
+      'Permanently delete the selected collections? This can\'t be undone.';
+  String get collection_clear_scope => 'Clear scope';
+  String get collection_collapse => 'Collapse';
+  String collection_continue_progress({required Object n}) =>
+      'Continue · EP ${n}';
+  String get collection_empty => 'Collection is empty';
+  String get collection_expand => 'Expand';
+  String get collection_export_all_books => 'All books';
+  String get collection_export_all_mined => 'All mined sentences';
+  String get collection_export_all_words => 'All favorite words';
+  String get collection_export_dedupe => 'Deduplicate by sentence';
+  String get collection_export_failed => 'Export failed';
+  String get collection_export_favorites_scope => 'Favorite sentences';
+  String get collection_export_format => 'Format';
+  String get collection_export_mined_title => 'Mined sentences';
+  String get collection_export_no_items => 'Nothing to export';
+  String get collection_export_pick_book => 'Choose a book';
+  String get collection_export_save => 'Save export';
+  String get collection_export_saved => 'Export saved';
+  String get collection_export_scope => 'Export scope';
+  String get collection_export_sentences_title => 'Favorite sentences';
+  String get collection_export_words_title => 'Favorite words';
+  String get collection_loading_hint =>
+      'Loading collections and matching audio files…';
+  String get collection_member_removed => 'Removed from collection';
+  String get collection_merge_title => 'Merge collections';
+  String get collection_merged => 'Collections merged.';
+  String get collection_mined => 'Mined';
+  String get collection_open => 'Open';
+  String get collection_play => 'Play';
+  String get collection_remove_member => 'Remove from collection';
+  String get collection_remove_member_confirm =>
+      'Remove this item from the collection? The item itself is kept.';
+  String get collection_sentence => 'Sentence';
+  String get collection_sort_by_imported => 'Sort by import date';
+  String get collection_sort_by_title => 'Sort by name';
+  String get collection_view_all => 'View all';
+  String collection_watched_progress(
+          {required Object done, required Object total}) =>
+      'Watched ${done}/${total}';
+  String get collection_word => 'Word';
+  String get collections => 'Collections';
+  String get color_container => 'Container';
+  String get color_container_desc => 'Switch tracks, play bar background';
+  String get color_link => 'Link color';
+  String get color_link_desc => 'Reader hyperlink color';
+  String get color_primary => 'Primary';
+  String get color_primary_desc => 'Audio highlight, buttons, switches';
+  String get color_sentence_audio_highlight => 'Audio highlight';
+  String get color_sentence_audio_highlight_desc =>
+      'Current-sentence highlight that follows audiobook playback';
+  String get color_secondary => 'Secondary';
+  String get color_secondary_desc => 'Dictionary entries, bookshelf badges';
+  String get color_tertiary => 'Tertiary';
+  String get color_tertiary_desc => 'Collections, reading statistics';
+  String get columns_per_page => 'Columns per page';
+  String get combine_into_series => 'Combine into series';
+  String get copied => 'Copied';
+  String get copied_to_clipboard => 'Copied to clipboard.';
+  String get copy => 'Copy';
+  String get copy_error => 'Copy error';
+  String get crash_dump_empty => 'No crash dumps';
+  String crash_dump_label({required Object n}) => 'Crash Dumps (${n})';
+  String get crash_dump_open_folder => 'Open dump folder';
+  String get crash_dump_privacy_notice =>
+      'Crash dumps (.dmp) contain a snapshot of process memory and may include text you were reading, words you looked up, or other in-app data. Share them only with developers you trust.';
+  String get crash_dump_share => 'Share dump';
+  String get crash_dump_share_subject => 'Fushi Crash Dump';
+  String get create_series => 'Create series';
+  String get creator_action_add_to_stash => 'Add to stash';
+  String get creator_action_copy_to_clipboard => 'Copy to clipboard';
+  String get creator_action_play_audio => 'Play audio';
+  String get creator_action_share => 'Share';
+  String get creator_enhancement_audio_recorder => 'Audio recorder';
+  String get creator_enhancement_camera => 'Camera';
+  String get creator_enhancement_clear_field => 'Clear field';
+  String get creator_enhancement_crop_image => 'Crop image';
+  String get creator_enhancement_local_audio => 'Local audio';
+  String get creator_enhancement_open_stash => 'Open stash';
+  String get creator_enhancement_pick_audio => 'Pick audio';
+  String get creator_enhancement_pick_image => 'Pick image';
+  String get creator_enhancement_pop_from_stash => 'Pop from stash';
+  String get creator_enhancement_save_tags => 'Save tags';
+  String get creator_enhancement_search_dictionary => 'Search dictionary';
+  String get creator_enhancement_sentence_picker => 'Sentence picker';
+  String get creator_enhancement_text_segmentation => 'Text segmentation';
+  String get creator_export_card => 'Create card';
+  String get creator_field_audio => 'Term audio';
+  String get creator_field_audio_sentence => 'Sentence audio';
+  String get creator_field_cloze_after => 'Cloze after';
+  String get creator_field_cloze_before => 'Cloze before';
+  String get creator_field_cloze_inside => 'Cloze inside';
+  String get creator_field_collapsed_meaning => 'Collapsed meaning';
+  String get creator_field_context => 'Context';
+  String get creator_field_cue_sentence => 'Cue sentence';
+  String get creator_field_expanded_meaning => 'Expanded meaning';
+  String get creator_field_frequency => 'Frequency';
+  String get creator_field_furigana => 'Furigana';
+  String get creator_field_hidden_meaning => 'Hidden meaning';
+  String get creator_field_image => 'Image';
+  String get creator_field_meaning => 'Meaning';
+  String get creator_field_notes => 'Notes';
+  String get creator_field_pitch_accent => 'Pitch accent';
+  String get creator_field_reading => 'Reading';
+  String get creator_field_sentence => 'Sentence';
+  String get creator_field_tags => 'Tags';
+  String get creator_field_term => 'Term';
+  String get custom_dict_css => 'Custom CSS';
+  String get custom_dict_css_global => 'Global (all dictionaries)';
+  String get custom_fonts => 'Custom fonts';
+  String get custom_fonts_add_system => 'Add system font';
+  String get custom_fonts_archive_error => 'Failed to extract archive';
+  String get custom_fonts_catalog_title => 'Font library';
+  String get custom_fonts_download_failed => 'Download failed';
+  String get custom_fonts_downloading => 'Downloading...';
+  String get custom_fonts_drag_hint => 'Drag to reorder font priority';
+  String get custom_fonts_empty => 'No custom fonts added';
+  String get custom_fonts_font_roles => 'Font roles';
+  String get custom_fonts_import_file => 'Import font file';
+  String get custom_fonts_import_url => 'Import from URL';
+  String custom_fonts_imported_count({required Object count}) =>
+      '${count} font(s) imported';
+  String get custom_fonts_manage => 'Manage fonts';
+  String get custom_fonts_no_fonts_in_archive =>
+      'No font files found in archive';
+  String get custom_fonts_recommended => 'Recommended fonts';
+  String get custom_fonts_removed => 'Font removed';
+  String get custom_fonts_search_hint => 'Search fonts';
+  String get custom_theme => 'Custom theme';
+  String custom_theme_default_name({required Object n}) => 'Custom ${n}';
+  String get custom_theme_long_press_hint =>
+      'Tap to switch · long-press to edit';
+  String get custom_theme_name => 'Name';
+  String get dark_mode => 'Dark mode';
+  String get dark_mode_dark => 'Dark';
+  String get dark_mode_light => 'Light';
+  String get dark_mode_system => 'System';
+  String data_root_unavailable_message({required Object path}) =>
+      'Your configured data location ${path} is temporarily unreachable (the drive may be asleep, busy, or disconnected). Your data is safe and untouched there — nothing is lost. Tap Retry once the drive is ready to load your data, or start with the default location for now (your existing data will NOT be modified).';
+  String get data_root_unavailable_title => 'Data location not responding';
+  String get data_root_use_default_button => 'Start with default location';
+  String get data_storage_change_button => 'Change location';
+  String get data_storage_change_confirm_body =>
+      'Fushi will move all your data to the new folder and then restart. Do not close the app during the move.';
+  String get data_storage_change_confirm_title =>
+      'Change data storage location?';
+  String get data_storage_location_default => 'Default location';
+  String get data_storage_location_hint =>
+      'Where Fushi keeps your library, audiobooks and database. Desktop only.';
+  String get data_storage_location_title => 'Data storage location';
+  String data_storage_migrate_failed({required Object message}) =>
+      'Could not move data: ${message}';
+  String get data_storage_migrate_failed_restart => 'Restart';
+  String get data_storage_migrate_failed_suggestions =>
+      'Please try again with a different, empty folder. Do not choose the app\'s install folder, and make sure no files in that location are in use.';
+  String get data_storage_migrate_failed_title => 'Data migration failed';
+  String data_storage_migrate_overlay_progress(
+          {required Object copied, required Object total}) =>
+      'Copying files: ${copied} / ${total}';
+  String get data_storage_migrate_overlay_title => 'Moving your data';
+  String get data_storage_migrate_overlay_warning =>
+      'Please keep the app open. Do not close or shut down your computer until it finishes.';
+  String get data_storage_migrate_success => 'Data moved. Restarting…';
+  String get data_storage_migrating => 'Moving data…';
+  String get data_storage_reject_install_dir =>
+      'That folder is the app\'s install location and can\'t store your data. Please choose a different, empty folder.';
+  String get data_storage_restart_failed =>
+      'Data moved, but automatic restart failed. Please reopen Fushi manually.';
+  String db_downgrade_message(
+          {required Object dbVersion, required Object appVersion}) =>
+      'This database was created by a newer version of Fushi (schema v${dbVersion}). Your current app is too old (v${appVersion}). Opening was blocked to protect your data. Please update the app and try again.';
+  String get db_downgrade_title => 'Update Fushi';
+  String get db_unrecoverable_message =>
+      'The database could not be opened even after automatic repair. It is likely corrupt. You can restore a backup in Settings, or clear app data to start fresh.';
+  String get db_unrecoverable_title => 'Database damaged';
+  String get debug_log_share_subject => 'Fushi Debug Log';
+  String debug_log_title({required Object count}) => 'Debug Log (${count})';
+  String get debug_log_toggle => 'Enable debug log';
+  String get decrease => 'Decrease';
+  String get deduplicate_pitch_accents => 'Deduplicate pitch accents';
+  String get delete_collection => 'Delete collection';
+  String get delete_collection_also_books => 'Also delete the books in it';
+  String get delete_collection_also_videos =>
+      'Also delete the videos (keeps your original video files)';
+  String get delete_custom_theme => 'Delete theme';
+  String get delete_custom_theme_confirm =>
+      'Delete this custom theme? This cannot be undone.';
+  String get delete_in_progress => 'Delete in progress';
+  String get delete_prompt_delete_selected => 'Delete selected';
+  String get delete_prompt_message =>
+      'These items were deleted on another device. Delete them here too?';
+  String get delete_prompt_select_all => 'Select all';
+  String get delete_prompt_title => 'Deleted on another device';
+  String get delete_scope_keep_local_desc => 'Other devices keep their copy';
+  String get delete_scope_sync_everywhere => 'Delete from all devices';
+  String get delete_scope_sync_everywhere_desc =>
+      'Other devices confirm the deletion on next sync';
+  String get design_system_auto => 'Auto';
+  String get design_system_hint => 'Controls the visual style of the app';
+  String get design_system_label => 'Design system';
+  String get desktop_clipboard_auto_lookup => 'Auto-look-up on copy';
+  String get desktop_clipboard_auto_lookup_hint =>
+      'When off, the panel shows only the copied text; tap a word to look it up.';
+  String get desktop_clipboard_destination => 'Lookup popup position';
+  String get desktop_clipboard_destination_main => 'Main window';
+  String get desktop_clipboard_destination_panel => 'Floating panel';
+  String get desktop_clipboard_destination_text_window =>
+      'Transparent text window';
+  String get desktop_clipboard_destination_transient => 'Popup at cursor';
+  String get desktop_clipboard_enabled => 'Desktop clipboard lookup';
+  String get desktop_clipboard_enabled_hint =>
+      'Watch clipboard + global shortcut to pop a lookup window (desktop · experimental)';
+  String get desktop_clipboard_window_mode => 'Window pinning';
+  String get desktop_clipboard_window_mode_always => 'Always';
+  String get desktop_clipboard_window_mode_hint =>
+      'Controls whether Fushi stays above other windows';
+  String get desktop_clipboard_window_mode_lookup => 'Lookup only';
+  String get desktop_clipboard_window_mode_normal => 'Not on top';
+  String get dialog_add => 'ADD';
+  String get dialog_append => 'APPEND';
+  String get dialog_cancel => 'CANCEL';
+  String get dialog_clear => 'CLEAR';
+  String get dialog_clear_all_dictionaries => 'Delete all dictionaries';
+  String get dialog_close => 'CLOSE';
+  String get dialog_connect => 'CONNECT';
+  String get dialog_content_dictionary_clear =>
+      'Wiping the dictionary database will also clear all search results in history.';
+  String get dialog_content_dictionary_delete =>
+      'Deleting a single dictionary may take longer than clearing the entire dictionary database. This will also clear all search results in history.';
+  String get dialog_create => 'CREATE';
+  String get dialog_crop => 'CROP';
+  String get dialog_delete => 'DELETE';
+  String get dialog_done => 'DONE';
+  String get dialog_edit => 'EDIT';
+  String get dialog_edit_info => 'Edit info';
+  String get dialog_exit => 'EXIT';
+  String get dialog_export => 'EXPORT';
+  String get dialog_import => 'IMPORT';
+  String get dialog_import_dictionary => 'Import dictionary';
+  String get dialog_import_folder => 'Import folder dictionary';
+  String get dialog_importing => 'IMPORTING…';
+  String get dialog_launch_ankidroid => 'LAUNCH ANKIDROID';
+  String get dialog_ok => 'OK';
+  String get dialog_play => 'PLAY';
+  String get dialog_read => 'READ';
+  String get dialog_record => 'RECORD';
+  String get dialog_replace => 'Replace';
+  String get dialog_save => 'SAVE';
+  String get dialog_search => 'SEARCH';
+  String get dialog_select => 'SELECT';
+  String get dialog_share => 'SHARE';
+  String get dialog_stash => 'STASH';
+  String get dialog_stop => 'STOP';
+  String get dialog_title_dictionary_clear => 'Clear all dictionaries?';
+  String dialog_title_dictionary_delete({required Object name}) =>
+      'Delete 『${name}』?';
+  String get dict_auto_update => 'Update automatically';
+  String get dict_auto_update_hint => 'Check for dictionary updates on launch';
+  String dict_auto_update_last({required Object time}) =>
+      'Last successful check: ${time}';
+  String get dict_auto_update_never => 'Never';
+  String get dict_category_frequency => 'Frequency';
+  String get dict_category_grammar => 'Grammar';
+  String get dict_category_ja_en => 'Japanese–English';
+  String get dict_category_ja_ja => 'Japanese–Japanese';
+  String get dict_category_ja_other => 'Other Japanese';
+  String get dict_category_kanji => 'Kanji';
+  String get dict_category_names => 'Names';
+  String get dict_category_supplementary => 'Supplementary';
+  String get dict_download_browse => 'Download dictionaries';
+  String dict_download_button({required Object count}) => 'Download (${count})';
+  String get dict_download_complete => 'Download complete.';
+  String dict_download_failed({required Object error}) =>
+      'Download failed: ${error}';
+  String get dict_download_installed => 'Installed';
+  String get dict_download_language => 'Your language';
+  String dict_download_partial(
+          {required Object success,
+          required Object total,
+          required Object error}) =>
+      '${success} / ${total} OK. Failed: ${error}';
+  String get dict_download_select_title => 'Select dictionaries';
+  String dict_downloading({required Object name}) => 'Downloading ${name}…';
+  String dict_import_failed_summary({required Object n}) =>
+      'Failed to import ${n} dictionary(s)';
+  String get dict_import_started =>
+      'Importing dictionaries in the background...';
+  String dict_import_success_summary({required Object n}) =>
+      'Imported ${n} dictionary(s)';
+  String get dict_update_check => 'Check for updates';
+  String get dict_update_checking => 'Checking for updates…';
+  String dict_update_done({required Object name}) => '${name} updated.';
+  String dict_update_failed({required Object error}) =>
+      'Update failed: ${error}';
+  String get dict_update_interval_daily => 'Daily';
+  String get dict_update_interval_monthly => 'Monthly';
+  String get dict_update_interval_weekly => 'Weekly';
+  String get dict_update_latest => 'Already up to date.';
+  String dict_update_name_mismatch_body(
+          {required Object incoming, required Object existing}) =>
+      'The selected file is "${incoming}", but you are updating "${existing}". Replace anyway?';
+  String get dict_update_name_mismatch_title => 'Names do not match';
+  String get dict_update_none => 'All dictionaries are up to date.';
+  String dict_update_summary(
+          {required Object updated,
+          required Object current,
+          required Object failed}) =>
+      '${updated} updated, ${current} up to date, ${failed} failed.';
+  String get dict_update_tooltip => 'Update dictionary';
+  String dict_update_updating({required Object name}) => 'Updating ${name}…';
+  String get dictionaries => 'Dictionaries';
+  String get dictionaries_delete_failed => 'Failed to delete dictionaries';
+  String get dictionaries_deleting_data => 'Deleting dictionary data...';
+  String get dictionaries_menu_empty => 'Import a dictionary for use';
+  String get dictionary_delete_failed => 'Failed to delete dictionary';
+  String get dictionary_font_size => 'Dictionary font size';
+  String get dictionary_font_size_zoom_hint =>
+      'Ctrl + scroll wheel zooms the popup content';
+  String get dictionary_section_frequency => 'Frequency dictionaries';
+  String get dictionary_section_kanji => 'Kanji dictionaries';
+  String get dictionary_section_pitch => 'Pitch dictionaries';
+  String get dictionary_section_term => 'Term dictionaries';
+  String get dictionary_settings => 'Dictionary settings';
+  String get dictionary_type_frequency => 'Frequency';
+  String get dictionary_type_pitch => 'Pitch';
+  String get dictionary_type_term => 'Term';
+  String get dictionary_unrecognized_format => 'Unrecognized dictionary format';
+  String get dismiss_swipe_sensitivity => 'Swipe dismiss sensitivity';
+  String get display_settings => 'Typography settings';
+  String get download_backend_not_configured =>
+      'Download backend is not configured yet.';
+  String get download_clear_finished => 'Clear finished';
+  String get download_detail_backend_offline =>
+      'The original download backend is offline. Persisted task information is shown; live parameters are unavailable.';
+  String get download_network_proxy_auto => 'Auto';
+  String get download_network_proxy_auto_hint =>
+      'Applies to AniList, Nyaa, and Jimaku only. Auto uses environment variables, then the enabled system proxy; torrent traffic is unchanged.';
+  String get download_network_proxy_custom => 'Custom';
+  String get download_network_proxy_custom_label => 'Custom proxy';
+  String get download_network_proxy_direct => 'Direct';
+  String get download_network_proxy_section => 'Discovery network';
+  String get download_open_settings => 'Open settings';
+  String get download_save_root_change => 'Change folder';
+  String get download_save_root_create_failed =>
+      'Cannot create that folder. Check the drive and permissions.';
+  String get download_save_root_fallback_warning =>
+      'The configured download folder is unavailable, so the default folder is being used.';
+  String get download_save_root_hint =>
+      'New downloads are saved here. Existing tasks keep their original folder.';
+  String get download_save_root_not_absolute =>
+      'Please pick an absolute folder path.';
+  String get download_save_root_not_writable => 'That folder is not writable.';
+  String get download_save_root_reset => 'Restore default';
+  String get download_save_root_title => 'Download folder';
+  String get download_settings => 'Download settings';
+  String get download_status_cancelled => 'Cancelled';
+  String get download_status_queued => 'Queued';
+  String download_subscription_after_episode({required Object episode}) =>
+      'After episode ${episode}';
+  String get download_subscription_check_all => 'Check all';
+  String get download_subscription_check_now => 'Check now';
+  String download_subscription_choice_hint(
+          {required Object group, required Object resolution}) =>
+      'Follow ${group} · ${resolution}. New single-episode releases will be queued.';
+  String get download_subscription_created =>
+      'Download queued and subscription created';
+  String get download_subscription_delete => 'Delete subscription';
+  String download_subscription_delete_confirm({required Object title}) =>
+      'Delete the subscription for ${title}? Downloaded tasks are kept.';
+  String get download_subscription_download_and_create =>
+      'Download and subscribe';
+  String get download_subscription_empty_body =>
+      'In Discover, choose a single-episode release and use Download and subscribe.';
+  String get download_subscription_empty_title => 'No subscriptions yet';
+  String download_subscription_last_checked({required Object time}) =>
+      'Last checked: ${time}';
+  String download_subscription_latest_episode({required Object episode}) =>
+      'Latest queued: episode ${episode}';
+  String get download_subscription_never_checked => 'Never checked';
+  String get download_subscription_running_hint =>
+      'Fushi checks enabled subscriptions every 15 minutes while the app is running.';
+  String get download_subscription_unavailable_hint =>
+      'Choose a single-episode release with a recognizable release group to subscribe.';
+  String get download_subscriptions_tab => 'Subscriptions';
+  String download_task_action_failed({required Object error}) =>
+      'The task action failed: ${error}';
+  String get download_task_delete => 'Delete task';
+  String download_task_delete_confirm({required Object title}) =>
+      'Delete the download task for ${title}?';
+  String get download_task_delete_files => 'Also delete downloaded files';
+  String get download_task_details => 'View details';
+  String get download_tasks_tab => 'Tasks';
+  String get download_test_connection => 'Test connection';
+  String get download_test_connection_failed =>
+      'Connection failed. Check the address and credentials.';
+  String download_test_connection_ok({required Object version}) =>
+      'Connected (version: ${version})';
+  String get drag_drop_need_card_target =>
+      'Drop subtitles or audio onto a book or video';
+  String get drag_drop_unsupported_on_books =>
+      'Drop book files here. Switch to Video or Dictionaries for those files.';
+  String get drag_drop_unsupported_on_dictionary =>
+      'Drop .zip, .dsl, or .mdx dictionary files here. CSS files only work together with a dictionary package.';
+  String get drag_drop_unsupported_on_video =>
+      'Drop videos, playlists, or subtitles here. Switch to Books or Dictionaries for those files.';
+  String get edit_custom_theme => 'Edit custom theme';
+  String get eink_mode => 'E-ink mode';
+  String get eink_mode_hint =>
+      'Pure black-and-white theme with no animations and line-style highlights, for e-ink displays';
+  String get enable_swipe_to_close => 'Swipe to close popup';
+  String get epub_delete_error => 'Failed to delete book';
+  String get epub_delete_title => 'Delete book';
+  String get epub_parse_fallback => 'Book metadata repaired from database';
+  String get error_ankidroid_api => 'AnkiDroid error';
+  String get error_ankidroid_api_content =>
+      'There was an issue communicating with AnkiDroid.\n\nEnsure that the AnkiDroid background service is active and all relevant app permissions are granted in order to continue.';
+  String get error_copied => 'Error copied to clipboard';
+  String get error_load_failed => 'Something went wrong while loading';
+  String get error_log_diagnostics_section =>
+      'Diagnostics / forensics (not app errors)';
+  String get error_log_empty => 'No error logs';
+  String error_log_label({required Object n}) => 'Error Log (${n})';
+  String get error_log_previous_run => 'Historical logs (before last run)';
+  String get error_log_share_subject => 'Fushi Error Log';
+  String get extension_popup_independent_size =>
+      'Separate size for browser extension';
+  String get extension_popup_independent_size_hint =>
+      'Give the browser-extension lookup popup its own max size instead of following the in-app popup';
+  String get extension_popup_max_height => 'Extension popup max height';
+  String get extension_popup_max_width => 'Extension popup max width';
+  String get external_window_capture_failed => 'Window capture failed';
+  String get external_window_current_game => 'Current game';
+  String get external_window_mining => 'External window mining';
+  String get external_window_no_windows => 'No capturable windows found';
+  String get external_window_none => 'No window bound (tap to select)';
+  String get external_window_refresh => 'Refresh window list';
+  String get external_window_select => 'Select target window';
+  String get external_window_unbind => 'Unbind window';
+  String get external_window_unsupported =>
+      'External window mining is Windows-only';
+  String get failed_online_service =>
+      'Failed to communicate with online service';
+  String get favorite_added => 'Sentence saved to favorites';
+  String get favorite_removed => 'Sentence removed from favorites';
+  String favorites({required Object n}) => 'Favorites (${n})';
+  String field_fallback_used(
+          {required Object field, required Object secondField}) =>
+      'The ${field} field used ${secondField} as its fallback search term.';
+  String file_count({required Object count}) => '${count} files';
+  String get floating_dict_close => 'Close';
+  String get floating_dict_title => 'Dictionary';
+  String get floating_lyric_bg_opacity =>
+      'Floating subtitle background opacity';
+  String get floating_lyric_button_bg_opacity =>
+      'Floating subtitle button background opacity';
+  String get floating_lyric_click_lookup => 'Tap floating subtitle to look up';
+  String get floating_lyric_click_lookup_hint =>
+      'Keep this on with position lock if you still want word lookup.';
+  String get floating_lyric_close => 'Close';
+  String get floating_lyric_context_lines => 'Floating subtitle context lines';
+  String get floating_lyric_context_lines_hint =>
+      '0 shows only the current line (single-line, unchanged); set 1-3 to show that many lines before and after it';
+  String get floating_lyric_corner_radius => 'Floating subtitle corner radius';
+  String get floating_lyric_corner_radius_hint =>
+      '0 keeps each platform\'s default corners; raise it to round the bar and buttons more';
+  String get floating_lyric_font_size => 'Floating subtitle font size';
+  String get floating_lyric_hint =>
+      'Float the currently playing subtitle line on top of other apps.';
+  String get floating_lyric_lock => 'Lock';
+  String get floating_lyric_next => 'Next';
+  String get floating_lyric_no_audio => 'This book has no audio to listen to';
+  String get floating_lyric_permission_hint =>
+      'Overlay permission is required to display floating lyrics.';
+  String get floating_lyric_permission_hint_coloros =>
+      'If the system keeps refusing the overlay permission: reinstall this app\'s APK once with a file manager, or turn off permission monitoring in Developer options, then try again.';
+  String get floating_lyric_play_pause => 'Play';
+  String get floating_lyric_previous => 'Previous';
+  String get floating_lyric_text_opacity => 'Floating subtitle text opacity';
+  String get floating_lyric_toggle_action => 'Floating subtitle';
+  String get floating_lyric_unavailable_hint =>
+      'Could not show the floating subtitle window.';
+  String get floating_lyric_unlock => 'Unlock';
+  String get floating_lyric_width => 'Floating subtitle width';
+  String get floating_lyric_width_hint =>
+      '0 uses the platform default width; set a value to make the bar a fixed width';
+  String get focus_navigation_enabled => 'Keyboard & gamepad focus navigation';
+  String get focus_navigation_enabled_hint =>
+      'Move focus with arrow keys or a gamepad and show a focus ring.';
+  String get folder_picker_permission_required =>
+      'Storage permission is required to browse folders';
+  String get follow_audio_off_tooltip => 'Follow audio: OFF';
+  String get follow_audio_on_tooltip => 'Follow audio: ON';
+  String get font_color => 'Font color';
+  String get font_color_desc => 'Reader text color';
+  String get font_desc_hina_mincho =>
+      'Soft decorative Mincho · Pairs well with Noto Sans JP fallback';
+  String get font_desc_klee_one =>
+      'Handwritten textbook style · Clear and legible · Pairs well with Noto Sans JP fallback';
+  String get font_desc_mplus_rounded_1c =>
+      'Rounded cute style · Ideal for light novels · Pairs well with Noto Sans JP fallback';
+  String get font_desc_noto_sans_jp =>
+      'Google/Adobe Gothic · Japanese glyphs priority · Variable weight';
+  String get font_desc_noto_sans_sc =>
+      'Google/Adobe Gothic · Simplified Chinese glyphs priority · Use as fallback with Japanese fonts';
+  String get font_desc_noto_sans_tc =>
+      'Google/Adobe Gothic · Traditional Chinese glyphs priority';
+  String get font_desc_noto_serif_jp =>
+      'Google/Adobe Serif · Japanese glyphs priority · Ideal for vertical reading';
+  String get font_desc_noto_serif_sc =>
+      'Google/Adobe Serif · Simplified Chinese glyphs priority · Use as fallback with Japanese fonts';
+  String get font_desc_noto_serif_tc =>
+      'Google/Adobe Serif · Traditional Chinese glyphs priority · Ideal for vertical reading';
+  String get font_desc_shippori_mincho =>
+      'Elegant Mincho typeface · Great for literature · Pairs well with Noto Sans JP fallback';
+  String get font_desc_zen_kaku_gothic_new =>
+      'Modern Kaku Gothic · General reading · Pairs well with Noto Sans JP fallback';
+  String get font_desc_zen_maru_gothic =>
+      'Soft rounded Gothic · Pairs well with Noto Sans JP fallback';
+  String get font_desc_zen_old_mincho =>
+      'Vintage Mincho typeface · Classical literature style · Pairs well with Noto Sans JP fallback';
+  String get font_source_file => 'File';
+  String get font_source_system => 'System';
+  String get font_target_app_ui => 'System UI font';
+  String get font_target_body => 'Novel text font';
+  String get font_target_dictionary => 'Dictionary font';
+  String get font_target_video_subtitle => 'Video subtitle font';
+  String get gal_hook_text_font_size => 'Galgame caption font size';
+  String get gal_hook_text_font_size_hint =>
+      'Drag the overlay\'s corner to resize the window; the caption size is set here.';
+  String get game_add => 'Add game';
+  String get game_already_added => 'This game is already in the library';
+  String get game_audio_backend_engine => 'Engine PCM';
+  String get game_audio_backend_loopback => 'System loopback (mixed)';
+  String get game_audio_backend_none => 'No audio source';
+  String get game_audio_backend_resource => 'Game resource audio';
+  String get game_audio_duration => 'Audio duration';
+  String get game_audio_fallback_disabled_missing =>
+      'No matching game resource audio; fallback is disabled';
+  String get game_audio_resource_id => 'Audio resource ID';
+  String get game_audio_tracks => 'Active audio tracks';
+  String get game_auto_cover => 'Fetch cover automatically';
+  String get game_back_to_capture => 'Back to capture workspace';
+  String get game_back_to_library => 'Back to game library';
+  String get game_capture_active => 'Capture is active';
+  String get game_capture_degraded_loopback =>
+      'The game is running, but engine injection failed; falling back to system audio, which can mix in BGM and effects.';
+  String get game_capture_description =>
+      'Launch or attach a game, then monitor text, voice, screenshots and Anki output.';
+  String get game_capture_empty_body =>
+      'Launch or bind a game; text and sentence-audio status will appear here.';
+  String get game_capture_empty_title => 'No lines received yet';
+  String get game_capture_launch_failed => 'Game launch or capture failed';
+  String get game_capture_launching => 'Launching game and starting capture...';
+  String get game_capture_running => 'Capture session is running';
+  String get game_capture_window_missing =>
+      'The game process started but its window never appeared, so the game may not have launched. Try starting it again.';
+  String get game_capture_workbench => 'Capture workspace';
+  String get game_captured_lines => 'Captured lines';
+  String get game_card_mapping_missing =>
+      'Anki field mappings are missing game-card tokens';
+  String get game_card_sentence_audio_missing =>
+      'The card was created without sentence audio; no other line\'s audio was substituted.';
+  String get game_clear_events => 'Clear events';
+  String get game_cover_not_found =>
+      'No usable cover found in the game folder or executable';
+  String get game_cover_searching => 'Looking for a cover...';
+  String get game_cover_updated => 'Cover updated';
+  String get game_dashboard => 'Home';
+  String get game_detail_missing => 'This game is no longer in the library';
+  String get game_detail_tab_edit => 'Edit';
+  String get game_detail_tab_stats => 'Stats';
+  String get game_detail_tab_summary => 'Overview';
+  String get game_diagnostics => 'Compatibility diagnostics';
+  String get game_diagnostics_subtitle =>
+      'Session stages, endpoints, audio tracks and structured events';
+  String game_drop_imported({required Object count}) =>
+      'Added ${count} game(s)';
+  String get game_drop_no_exe => 'No new game .exe among the dropped files';
+  String get game_edit_developer => 'Developer';
+  String get game_edit_display_name => 'Display name';
+  String get game_edit_exe_path => 'Executable path';
+  String get game_edit_invalid_date => 'Release date must be YYYY-MM-DD';
+  String get game_edit_launch_args => 'Launch arguments';
+  String get game_edit_launch_args_hint =>
+      'Passed to the game on launch, e.g. -windowed';
+  String get game_edit_nsfw => 'Adult title';
+  String get game_edit_release_date => 'Release date (YYYY-MM-DD)';
+  String get game_edit_save => 'Save';
+  String get game_edit_saved => 'Saved';
+  String get game_edit_summary => 'Description';
+  String get game_edit_tags => 'Tags (comma separated)';
+  String get game_edit_user_rating => 'My rating (0-10)';
+  String get game_edit_user_review => 'My review';
+  String get game_edit_workdir => 'Working directory';
+  String get game_empty => 'No games added yet';
+  String get game_endpoint_phase_connected => 'Connected';
+  String get game_endpoint_phase_connecting => 'Connecting';
+  String get game_endpoint_phase_retrying => 'Retrying';
+  String get game_endpoint_phase_stopped => 'Stopped';
+  String get game_endpoints_engine_active =>
+      'Text is provided by the engine hook; these endpoints are optional';
+  String get game_endpoints_hint =>
+      'Ports for external text tools (Textractor / LunaTranslator etc.); ignore if you don\'t use them';
+  String get game_event_all => 'All events';
+  String get game_event_warnings => 'Warnings and errors';
+  String get game_exe_missing => 'Game executable not found';
+  String get game_filter => 'Filter';
+  String get game_filter_all => 'All';
+  String get game_filter_favorited => 'Favorited';
+  String get game_filter_hide_nsfw => 'Hide adult titles';
+  String get game_filter_local_only => 'Has local file';
+  String get game_filter_metadata_only => 'Metadata only';
+  String get game_filter_mined => 'Mined';
+  String get game_filter_reset => 'Clear filters';
+  String get game_filter_source => 'Availability';
+  String get game_filter_status => 'Play status';
+  String get game_filter_tags => 'Tags';
+  String get game_filter_with_audio => 'With audio';
+  String get game_focus_continue => 'Continue';
+  String get game_follow_live => 'Follow live';
+  String get game_health => 'Health status';
+  String get game_health_anki => 'Anki output';
+  String get game_health_audio => 'Audio source';
+  String get game_health_helper => 'Hook helper';
+  String get game_health_process => 'Game process';
+  String get game_health_text => 'Text source';
+  String get game_health_upscaling => 'Window upscaling';
+  String get game_health_window => 'Game window';
+  String get game_helper_download => 'Download';
+  String game_helper_download_failed({required Object error}) =>
+      'Engine component download failed: ${error}';
+  String get game_helper_downloading => 'Downloading engine component…';
+  String get game_helper_install_incomplete =>
+      'Engine component install incomplete, please retry';
+  String game_helper_needed_body({required Object size}) =>
+      'Launching a galgame needs the engine-hook injector component (about ${size}). It contains process-injection code and ships separately from the app to avoid antivirus false positives. Download it now?';
+  String get game_helper_needed_title => 'Galgame engine component required';
+  String get game_helper_size_unknown => 'unknown size';
+  String get game_helper_verification_failed =>
+      'Engine component blocked: its checksum could not be verified (the .sha256 file from GitHub is unreachable, missing, or does not match). Fushi refuses to install unverified injector code.';
+  String get game_home_subtitle => 'Game library and capture monitoring';
+  String get game_hook_fallback_all_audio_sources_failed =>
+      'Neither the engine voice hook nor the system loopback could be started; no audio can be captured.';
+  String get game_hook_fallback_engine_attach_failed =>
+      'Attaching the engine voice hook to the running game failed; system mix is used instead.';
+  String get game_hook_fallback_engine_pcm_unavailable =>
+      'The engine voice hook is installed, but the game has not played any voice yet. System mix is used for now and will switch back automatically once the first voice arrives.';
+  String get game_hook_fallback_launch_injection_failed =>
+      'The game is running, but early engine injection failed; system mix is used instead.';
+  String get game_hook_fallback_window_not_found =>
+      'Audio capture is running, but the game window has not appeared yet, so screenshots are unavailable. It will bind automatically once the window shows up.';
+  String get game_hook_line_unavailable =>
+      'This captured line is no longer available.';
+  String get game_hook_reason_access_denied =>
+      'The game runs with higher privileges; start Fushi as administrator and try again.';
+  String get game_hook_reason_bitness_mismatch =>
+      'Helper architecture does not match the game (32-bit vs 64-bit); reinstall the helper.';
+  String get game_hook_reason_create_process_failed =>
+      'The game could not be started from Fushi; check the executable path.';
+  String get game_hook_reason_elevation_required =>
+      'This game requires administrator rights; start Fushi as administrator and launch it again.';
+  String get game_hook_reason_game_exe_missing =>
+      'The game executable no longer exists at the saved path.';
+  String get game_hook_reason_guarded_hook_failed =>
+      'A profile-guarded hook could not be installed in time; retrying automatically.';
+  String get game_hook_reason_handshake_timeout =>
+      'The game was hooked but produced no text or audio in time; this engine may not be supported yet.';
+  String get game_hook_reason_helper_missing =>
+      'Voice-hook helper is not installed for this game architecture; install it and try again.';
+  String get game_hook_reason_hook_dll_missing =>
+      'The helper package is incomplete (hook library missing); reinstall it.';
+  String get game_hook_reason_injection_failed =>
+      'Injection into the game was blocked; add Fushi and the game to antivirus exclusions.';
+  String get game_hook_reason_ready_timeout =>
+      'The hook library did not finish loading in time; antivirus scanning can cause this.';
+  String get game_hook_reason_resume_failed =>
+      'The launched game could not be resumed and was stopped; launch it again.';
+  String get game_hook_reason_shared_memory_unavailable =>
+      'The capture channel could not be opened; restart Fushi.';
+  String get game_hook_reason_spawn_failed =>
+      'The helper could not be started; check that antivirus has not removed or blocked it.';
+  String get game_hook_reason_stale_session =>
+      'A previous capture session is still loaded in the game; restart the game once.';
+  String get game_hook_reason_steam_timeout =>
+      'Steam accepted the launch request but the game process never appeared.';
+  String get game_hook_reason_target_missing =>
+      'No game process or executable was selected for capture.';
+  String get game_hook_recapture_empty =>
+      'No audio captured in the recapture window';
+  String get game_hook_recapture_saved => 'Recaptured voice saved to this line';
+  String get game_hook_recapture_started =>
+      'Recording — replay this line in the game';
+  String get game_hook_recapture_unavailable =>
+      'Voice recapture needs system loopback audio';
+  String get game_kpi_total_games => 'Games';
+  String get game_kpi_week => 'This week';
+  String get game_latest_line => 'Latest line';
+  String get game_launch => 'Launch';
+  String get game_launch_and_capture => 'Launch and capture';
+  String get game_launch_unsupported =>
+      'Launching games is only supported on Windows';
+  String get game_library => 'Game library';
+  String get game_line_audio_encoded => 'Audio extracted';
+  String get game_line_audio_fallback => 'Fallback';
+  String get game_line_audio_matched => 'Audio ready';
+  String get game_line_audio_missing => 'No audio';
+  String get game_line_audio_pending => 'Matching';
+  String get game_line_audio_unavailable => 'Text only';
+  String get game_line_favorite_tooltip => 'Favorite this line';
+  String get game_line_mined => 'Mined';
+  String get game_line_preview_failed => 'No playable audio for this line';
+  String get game_line_preview_tooltip => 'Play this line\'s audio';
+  String get game_line_track_applied => 'Voice track applied to this line';
+  String get game_line_track_dialog_title => 'Voice track for this line';
+  String get game_line_track_failed =>
+      'That track has no audio around this line';
+  String get game_line_track_tooltip => 'Pick the voice track for this line';
+  String get game_line_unfavorite_tooltip => 'Remove favorite';
+  String get game_live_lines => 'Live lines';
+  String get game_manage_tracks => 'Manage audio tracks';
+  String get game_meta_added => 'Added';
+  String get game_meta_ranking => 'Ranking';
+  String get game_meta_source => 'Data source';
+  String get game_never_played => 'Never played';
+  String get game_no_active_line =>
+      'Select a line to inspect its sentence-audio state.';
+  String get game_no_events => 'No session events yet';
+  String get game_no_match => 'No games match the current filters';
+  String get game_no_tracks => 'No audio-track data yet';
+  String get game_open_capture_workspace => 'Open capture workspace';
+  String get game_phase_attaching => 'Attaching';
+  String get game_phase_degraded => 'Degraded';
+  String get game_phase_error => 'Error';
+  String get game_phase_idle => 'Idle';
+  String get game_phase_injecting => 'Injecting';
+  String get game_phase_launching => 'Launching';
+  String get game_phase_resolving => 'Resolving';
+  String get game_phase_running => 'Running';
+  String get game_phase_stopping => 'Stopping';
+  String get game_phase_waiting_signals => 'Waiting for signals';
+  String get game_pipeline => 'Session pipeline';
+  String get game_play_status => 'Play status';
+  String get game_random_reroll => 'Shuffle';
+  String get game_random_title => 'Pick for me';
+  String get game_recently_played => 'Recently played';
+  String get game_refresh_tracks => 'Refresh tracks';
+  String get game_remove => 'Remove';
+  String get game_rename => 'Rename';
+  String get game_rename_label => 'Game name';
+  String get game_scrape => 'Fetch metadata';
+  String get game_scrape_applied => 'Metadata updated';
+  String get game_scrape_failed => 'Metadata fetch failed';
+  String get game_scrape_no_result => 'No matching entry found';
+  String get game_scrape_query => 'Title or source ID';
+  String get game_search => 'Search games';
+  String get game_session_events => 'Session events';
+  String get game_session_idle => 'Capture has not started';
+  String get game_session_listening => 'Listening';
+  String get game_set_cover => 'Set cover';
+  String get game_show_hook_text_window => 'Show Hook text window';
+  String get game_site_score => 'Site rating';
+  String get game_sort => 'Sort';
+  String get game_sort_added => 'Date added';
+  String get game_sort_last_played => 'Last played';
+  String get game_sort_name => 'Name';
+  String get game_sort_release => 'Release date';
+  String get game_sort_site_score => 'Site rating';
+  String get game_sort_user_rating => 'My rating';
+  String get game_stat_daily => 'Daily play time';
+  String get game_stat_delete_session => 'Delete this session';
+  String get game_stat_last_played => 'Last played';
+  String get game_stat_no_sessions => 'No play sessions recorded yet';
+  String get game_stat_session_list => 'Session history';
+  String get game_stat_sessions => 'Sessions';
+  String get game_stat_today => 'Today\'s play time';
+  String get game_stat_total_time => 'Total play time';
+  String get game_status_dropped => 'Dropped';
+  String get game_status_not_configured => 'Not verified';
+  String get game_status_on_hold => 'On hold';
+  String get game_status_played => 'Played';
+  String get game_status_playing => 'Playing';
+  String get game_status_ready => 'Ready';
+  String get game_status_unset => 'Not set';
+  String get game_status_waiting => 'Waiting';
+  String get game_status_want_to_play => 'Want to play';
+  String get game_stop_listening => 'Stop listeners';
+  String get game_summary_aliases => 'Aliases';
+  String get game_summary_all_titles => 'All titles';
+  String get game_summary_average_hours => 'Average play time';
+  String get game_summary_none =>
+      'No description yet. Fetch metadata to fill it in.';
+  String get game_summary_release_date => 'Release date';
+  String get game_tags_clear => 'Clear selection';
+  String get game_tags_title => 'Game tags';
+  String get game_text_endpoints => 'Text endpoints';
+  String get game_text_gaps => 'Sequence gaps';
+  String get game_text_gaps_hint =>
+      'Sequence gaps = dropped-line count in the hook text ring; 0 is normal';
+  String get game_text_source_engine => 'Engine hook';
+  String get game_text_source_unknown => 'Unknown source';
+  String get game_text_source_websocket => 'WebSocket';
+  String get game_text_thread => 'Text thread';
+  String game_text_thread_audio_count({required Object count}) =>
+      '${count} with audio';
+  String get game_text_thread_hint =>
+      'Choose the clean dialogue thread, like Luna Translator';
+  String get game_track_auto => 'Automatic selection';
+  String get game_track_clips => 'Clips';
+  String get game_track_energy => 'Energy';
+  String get game_track_exclude_bgm => 'Mark as BGM';
+  String get game_track_exclusion_hint =>
+      'Mark a BGM/ambience track as excluded so auto-selection never treats it as voice — lines without speech no longer pick up BGM.';
+  String get game_track_exclusion_title => 'Exclude audio tracks';
+  String get game_track_preview => 'Preview this track';
+  String get game_track_preview_failed =>
+      'No recent audio could be captured from this track';
+  String get game_track_preview_stop => 'Stop preview';
+  String get game_track_restore => 'Restore track';
+  String get game_track_select_as_voice => 'Use as voice track';
+  String get game_track_select_requires_engine =>
+      'Track selection requires an active engine hook session';
+  String get game_track_voice => 'Voice';
+  String get game_tracks_loopback_hint =>
+      'System loopback captures the whole system\'s mixed output as a single stream; per-track enumeration is not available.';
+  String get game_tracks_pcm_only_hint =>
+      'Per-track selection only affects capture while engine PCM is the active audio backend. The list below is read-only under the current backend.';
+  String get game_tracks_resource_mode_hint =>
+      'In game-resource audio mode, each voice line is extracted directly from game files, so no PCM track list exists here. Automatic or manual track selection only applies to engine PCM capture.';
+  String get game_unread_lines => 'Unread';
+  String get game_upscaling => 'Game window upscaling';
+  String get game_upscaling_auto => 'Auto';
+  String get game_upscaling_hint_external =>
+      'A copy of Magpie was already running, so Fushi left it alone. Press Win+Shift+A to upscale the game window.';
+  String get game_upscaling_hint_first_run =>
+      'Magpie still had to set itself up this time. Press Win+Shift+A to upscale now — next time you start the game it will happen automatically.';
+  String get game_upscaling_hint_manual =>
+      'Press Win+Shift+A to upscale the game window.';
+  String get game_upscaling_installed_only => 'Installed only';
+  String get game_upscaling_off => 'Off';
+  String get game_upscaling_status_active => 'Window upscaling is on';
+  String get game_upscaling_status_failed => 'Window upscaling could not start';
+  String get game_upscaling_status_manual =>
+      'Window upscaling is ready, but did not start on its own';
+  String get game_upscaling_status_unavailable =>
+      'Window upscaling is not available';
+  String get game_user_rating => 'My rating';
+  String get game_view_detail => 'View details';
+  String get game_waiting_for_text => 'Waiting for text';
+  String game_waveform_range_label(
+          {required Object start,
+          required Object end,
+          required Object duration,
+          required Object total}) =>
+      '${start} - ${end} (selected ${duration} / total ${total})';
+  String get game_waveform_select_title => 'Select audio range';
+  String get game_window_bound => 'Bound';
+  String get game_window_missing => 'Not bound';
+  String get games => 'Games';
+  String get global_context_capture => 'Capture selection context';
+  String get global_context_capture_hint =>
+      'Read surrounding text from the foreground app to show the current sentence (Windows only)';
+  String go_to_chapter({required Object n}) => 'Chapter ${n}';
+  String get handlebar_audio => 'Audio';
+  String get handlebar_book_cover => 'Book cover';
+  String get handlebar_card_image => 'Card image (cover / GIF)';
+  String get handlebar_cue_sentence => 'Cue sentence';
+  String handlebar_deprecated_label({required Object label}) =>
+      '${label} (deprecated)';
+  String get handlebar_document_title => 'Document title';
+  String get handlebar_expression => 'Expression';
+  String get handlebar_frequencies => 'Frequencies (HTML)';
+  String get handlebar_frequency_harmonic_rank => 'Frequency (rank)';
+  String get handlebar_furigana_plain => 'Furigana';
+  String get handlebar_glossary => 'Glossary';
+  String get handlebar_glossary_first => 'Glossary (first)';
+  String get handlebar_pitch_accent_categories => 'Pitch categories';
+  String get handlebar_pitch_accent_positions => 'Pitch positions';
+  String get handlebar_popup_selection_text => 'Popup selection text';
+  String get handlebar_reading => 'Reading';
+  String get handlebar_selected_glossary => 'Selected glossary';
+  String get handlebar_sentence => 'Sentence';
+  String get handlebar_sentence_audio => 'Sentence audio';
+  String get handlebar_video_clip => 'Video clip (GIF)';
+  String get harmonic_frequency => 'Aggregate word frequencies';
+  String health_match_summary({required Object pct}) => 'Match ${pct}%';
+  String get highlight_on_tap => 'Highlight text on tap';
+  String get home_activity => 'Activity';
+  String get home_activity_empty => 'No activity yet';
+  String get home_continue => 'Continue';
+  String get home_filter_added => 'Added';
+  String get home_filter_all => 'All';
+  String get home_filter_game => 'Game';
+  String get home_filter_read => 'Read';
+  String get home_filter_watch => 'Watch';
+  String get home_recently_added => 'Recently added';
+  String get home_remote_source => 'Remote';
+  String home_session_count({required Object n}) => '${n} sessions';
+  String get home_today => 'Today';
+  String get home_yesterday => 'Yesterday';
+  String get hover_auto_lookup => 'Look up on hover';
+  String get hover_auto_lookup_hint =>
+      'Look up automatically when the mouse hovers over a character; no need to click or hold Shift. Triggers at most one popup layer. Desktop only.';
+  String get icon_custom => 'Custom';
+  String get icon_custom_confirm_body =>
+      'This will create a home screen shortcut with your chosen image. Continue?';
+  String get icon_custom_confirm_title => 'Custom icon';
+  String get icon_custom_hint =>
+      'Tap an icon to switch, or pick a custom image below.';
+  String get icon_default => 'Default';
+  String get icon_full => 'Full';
+  String get icon_shortcut_created => 'Home screen shortcut created.';
+  String get icon_shortcut_unsupported =>
+      'Shortcuts are not supported on this device.';
+  String get icon_switch_success => 'App icon changed successfully.';
+  String get icon_transparent => 'Transparent';
+  String image_page_counter({required Object current, required Object total}) =>
+      '${current} / ${total}';
+  String get image_pause => 'Pause on image';
+  String get image_pause_hint =>
+      'Auto-pause when an image appears during playback.';
+  String get image_pause_off => 'Off';
+  String get image_search_label_after => 'found for';
+  String get image_search_label_before => 'Selecting image ';
+  String get image_search_label_middle => 'out of ';
+  String get image_search_label_none_before => 'Selecting ';
+  String get image_search_label_none_middle => 'no image ';
+  String get import_complete => 'Dictionary import complete.';
+  String import_duplicate({required Object name}) =>
+      'A dictionary with the name『${name}』is already imported.';
+  String get import_extract => 'Extracting files...';
+  String get import_failed => 'Dictionary import failed.';
+  String get import_in_progress => 'Import in progress';
+  String import_name({required Object name}) => 'Importing 『${name}』...';
+  String import_sidecar_audio({required Object count}) =>
+      'Auto-attached ${count} audio file(s)';
+  String import_sidecar_subtitle({required Object name}) =>
+      'Auto-attached subtitle: ${name}';
+  String get import_start => 'Preparing for import...';
+  String get import_step_building_epub => 'Building EPUB…';
+  String get import_step_converting_epub => 'Converting to EPUB…';
+  String import_step_copying_file({required Object name}) => 'Copying ${name}…';
+  String get import_step_done => 'Done';
+  String get import_step_importing_epub => 'Importing EPUB…';
+  String get import_step_matching => 'Audio alignment…';
+  String get import_step_parsing => 'Parsing subtitles…';
+  String get import_step_persisting => 'Saving files…';
+  String get import_step_reading => 'Reading file…';
+  String get import_step_reading_idb => 'Reading book info…';
+  String get import_step_saving => 'Saving records…';
+  String get import_theme => 'Import theme';
+  String get import_theme_hint => 'Paste theme code';
+  String get import_theme_invalid => 'Invalid theme code';
+  String get import_theme_success => 'Theme imported';
+  String import_unsupported_file_format({required Object ext}) =>
+      'Unsupported file format: ${ext}';
+  String get increase => 'Increase';
+  String get info_empty_home_tab => 'History is empty';
+  String init_error_message({required Object error}) =>
+      'Initialization failed: ${error}';
+  String get initialization_failed => 'Initialisation failed';
+  String get interconnect_backup_backend =>
+      'Use interconnect as the backup backend';
+  String get interconnect_backup_backend_active =>
+      'Backups already go to the paired device. Pick another backend in Sync & backup to switch away.';
+  String get interconnect_backup_backend_apply => 'Set as backup backend';
+  String interconnect_backup_backend_current({required Object backend}) =>
+      'Current backup backend: ${backend}';
+  String get interconnect_backup_backend_hint =>
+      'Back up and sync to the paired device instead of a cloud drive. Everything the paired-device upload switches above allow is what gets written there.';
+  String get interconnect_backup_backend_needs_pairing =>
+      'Connect to a device above first.';
+  String get interconnect_enable => 'Enable interconnect';
+  String get interconnect_enable_hint =>
+      'Connect to your other devices over the LAN. Works alongside a cloud backup backend — they don\'t conflict.';
+  String get interconnect_moved_note =>
+      'Connection & server settings are in the Fushi Interconnect category';
+  String get interconnect_section_client => 'Connect to other devices';
+  String get interconnect_section_delegate => 'Delegate to the paired device';
+  String get interconnect_section_related => 'Remote content & lookup';
+  String get interconnect_summary =>
+      'Direct device-to-device sync & host this device as a server';
+  String get interconnect_upload_audiobook_files => 'Upload audiobook files';
+  String get interconnect_upload_audiobook_files_hint =>
+      'Sync this device\'s audiobook audio and subtitle packages up to the interconnect peer (large).';
+  String get interconnect_upload_content => 'Upload book files';
+  String get interconnect_upload_content_hint =>
+      'Sync this device\'s books and reading content up to the interconnect peer.';
+  String get interconnect_upload_dictionary => 'Upload dictionaries';
+  String get interconnect_upload_dictionary_hint =>
+      'Sync this device\'s dictionaries up to the interconnect peer.';
+  String get interconnect_upload_section => 'Upload to interconnect peer';
+  String get interconnect_upload_video_files => 'Upload video files';
+  String get interconnect_upload_video_files_hint =>
+      'Sync this device\'s local video files up to the interconnect peer (large).';
+  String get invert_audiobook_skip_direction =>
+      'Invert bottom-bar skip buttons';
+  String get invert_swipe_direction => 'Invert swipe page turn direction';
+  String get invert_volume_buttons => 'Invert volume buttons';
+  String get jump_to_char => 'Jump to character';
+  String jump_to_char_current(
+          {required Object current, required Object total}) =>
+      'Current: ${current} / ${total}';
+  String get jump_to_char_hint => 'Enter character position…';
+  String get keep_screen_awake => 'Keep screen awake';
+  String get library_search => 'Search library';
+  String get loading_illustrations => 'Loading illustrations…';
+  String get loading_slow_message =>
+      'If your data storage location is on a network or removable drive that is currently disconnected, startup can stall. Tap Retry to launch using the default storage location for this session; your data stays where it is.';
+  String get loading_slow_message_mobile =>
+      'Startup is taking longer than usual — Fushi may be loading a large library or dictionaries. Please wait a moment, or tap Retry to reload. Your data is safe and won\'t be lost.';
+  String get loading_slow_title => 'Startup is taking longer than usual';
+  String get local_audio => 'Local audio';
+  String get local_audio_add_db => 'Add local audio database';
+  String get local_audio_edit_sources => 'Edit sources';
+  String local_audio_import_failed_detail({required Object reason}) =>
+      'Failed to import audio database: ${reason}';
+  String get local_audio_imported => 'Audio database added';
+  String get local_audio_invalid_db =>
+      'This file isn\'t a usable audio database (not a Local Audio Server database, or it has no audio).';
+  String get local_audio_no_sources => 'No sources found in this database';
+  String get local_audio_reference_original =>
+      'Reference original file (don\'t copy)';
+  String get local_audio_reference_original_desc =>
+      'Keep the database where it is and read from its original path; the source breaks if the file is moved or deleted.';
+  String get local_audio_source_order_title => 'Source priority';
+  String get log_copy_all => 'Copy all';
+  String get log_export_failed => 'Export failed';
+  String get log_export_file => 'Export to file';
+  String get log_export_saved => 'Log saved';
+  String get log_upload_action => 'Upload to server';
+  String get log_upload_consent_agree => 'Agree & upload';
+  String get log_upload_consent_body =>
+      'The log text (which may include error messages, file paths, and book titles) plus your app version, platform, and device model will be uploaded to the developer\'s server to help diagnose issues. This only happens when you tap upload — nothing is sent automatically.';
+  String get log_upload_consent_title => 'Upload log to server?';
+  String get log_upload_failed => 'Upload failed';
+  String get log_upload_in_progress => 'Uploading log…';
+  String get log_upload_success => 'Log uploaded';
+  String get log_upload_too_large => 'Log too large to upload';
+  String get login => 'Login';
+  String get lookup_audio_volume => 'Lookup audio volume';
+  String get low_memory_mode => 'Low memory mode';
+  String get low_memory_mode_hint =>
+      'Reduce cache and memory usage for low-end devices. Some changes take effect after restart.';
+  String get low_memory_mode_suggestion =>
+      'Try enabling Low Memory Mode in Settings → Miscellaneous.';
+  String get lyrics_artist => 'Artist';
+  String get lyrics_blur => 'Blur lyrics';
+  String get lyrics_blur_hint =>
+      'Blur the current line for listening immersion; hover or tap to reveal';
+  String get lyrics_font_size => 'Lyrics font size';
+  String get lyrics_font_size_hint =>
+      'Lyrics font size is independent of book mode';
+  String get lyrics_mode => 'Lyrics mode';
+  String get lyrics_mode_hint_body =>
+      'Lyrics mode has its own font size setting. You can adjust it in ⚙ Settings → Typography.';
+  String get lyrics_mode_hint_title => 'Lyrics mode';
+  String get lyrics_text_color => 'Lyrics text color';
+  String get lyrics_text_color_hint =>
+      'Use a custom color for lyrics text instead of following the theme';
+  String get lyrics_title => 'Title';
+  String get lyrics_vertical_writing => 'Vertical lyrics';
+  String get lyrics_vertical_writing_hint =>
+      'Read lyrics top-to-bottom, right-to-left (independent of book mode)';
+  String get manage_audio_sources => 'Manage audio sources';
+  String get manager => 'Dictionaries & sources';
+  String get manga_mode_toggle => 'Reading mode';
+  String get manga_ocr_delete => 'Delete models';
+  String get manga_ocr_delete_confirm_message =>
+      'This frees disk space. You can download them again later.';
+  String get manga_ocr_delete_confirm_title => 'Delete OCR models?';
+  String get manga_ocr_delete_done => 'Models deleted';
+  String get manga_ocr_download => 'Download models';
+  String get manga_ocr_download_done => 'Models downloaded';
+  String get manga_ocr_download_failed => 'Model download failed';
+  String manga_ocr_downloading_file({required Object file}) =>
+      'Downloading ${file}…';
+  String get manga_ocr_engine_builtin => 'Built-in';
+  String get manga_ocr_engine_external => 'External mokuro';
+  String get manga_ocr_engine_none =>
+      'No OCR engine available. Download built-in models or set the mokuro CLI path in settings.';
+  String get manga_ocr_external_cli_hint =>
+      'Leave empty to auto-detect (FUSHI_MOKURO / PATH)';
+  String get manga_ocr_external_cli_label => 'External mokuro CLI path';
+  String get manga_ocr_external_detect => 'Detect';
+  String manga_ocr_external_detected({required Object version}) =>
+      'Detected: ${version}';
+  String get manga_ocr_external_not_found => 'mokuro not found';
+  String get manga_ocr_mobile_note =>
+      'On mobile, the recognition model powers box scan in the manga reader.';
+  String get manga_ocr_model_status_missing => 'OCR models not downloaded';
+  String get manga_ocr_model_status_ready => 'OCR models ready';
+  String get manga_ocr_section => 'Manga OCR';
+  String get manga_ocr_section_summary =>
+      'Built-in OCR models and external mokuro CLI';
+  String get manga_ocr_unsupported =>
+      'Built-in manga OCR isn\'t available on this platform yet.';
+  String get manga_ocr_wizard_done => 'Manga imported';
+  String get manga_ocr_wizard_failed => 'OCR failed';
+  String get manga_ocr_wizard_has_mokuro =>
+      'This folder already has a .mokuro file — use normal import instead.';
+  String get manga_ocr_wizard_importing => 'Importing…';
+  String get manga_ocr_wizard_no_images => 'No images found in this folder.';
+  String manga_ocr_wizard_page_progress(
+          {required Object done, required Object total}) =>
+      'Page ${done} / ${total}';
+  String get manga_ocr_wizard_pick_folder => 'Choose image folder';
+  String get manga_ocr_wizard_run => 'Run OCR';
+  String get manga_ocr_wizard_running => 'Running OCR…';
+  String get manga_ocr_wizard_title => 'OCR import manga';
+  String get manga_ocr_wizard_title_label => 'Title (optional)';
+  String get manga_online_base_url_label => 'Online catalog URL';
+  String get manga_online_catalog_title => 'Online catalog';
+  String get manga_online_download_selected => 'Download selected';
+  String get manga_online_downloaded => 'Imported';
+  String get manga_online_failed => 'Download failed';
+  String get manga_online_load_failed => 'Failed to load catalog';
+  String get manga_online_queue_added => 'Added to download queue';
+  String manga_online_queue_progress(
+          {required Object done, required Object total}) =>
+      'Volume ${done} / ${total}';
+  String get manga_online_queue_section => 'Manga catalog downloads';
+  String get manga_online_search_hint => 'Search series';
+  String get manga_online_stage_cbz => 'Downloading volume…';
+  String get manga_online_stage_extract => 'Extracting…';
+  String get manga_online_stage_mokuro => 'Downloading OCR data…';
+  String get manga_reading_mode_spread => 'Spread';
+  String get manga_reading_mode_webtoon => 'Webtoon';
+  String get manga_remote_ocr_cancelled =>
+      'Remote OCR was cancelled on the host.';
+  String get manga_remote_ocr_engine => 'Paired host';
+  String get manga_remote_ocr_failed => 'Remote OCR failed';
+  String get manga_remote_ocr_no_host =>
+      'No paired host with manga OCR is reachable.';
+  String get manga_remote_ocr_not_ready =>
+      'The paired host\'s OCR models are not downloaded. Download them on the host first.';
+  String get manga_remote_ocr_running => 'Paired host is running OCR…';
+  String get manga_remote_ocr_unsupported =>
+      'The paired host does not support manga OCR.';
+  String manga_remote_ocr_uploading(
+          {required Object done, required Object total}) =>
+      'Uploading pages ${done} / ${total}…';
+  String get margin_bottom => 'Bottom margin';
+  String get margin_left => 'Left margin';
+  String get margin_right => 'Right margin';
+  String get margin_top => 'Top margin';
+  String get maximum_terms => 'Maximum dictionary headwords in result';
+  String get media_source_add => 'Add source';
+  String get media_source_add_local_folder => 'Local folder';
+  String get media_source_add_network => 'Network';
+  String media_source_count_book({required Object n}) => '${n} books';
+  String media_source_count_video({required Object n}) => '${n} videos';
+  String media_source_last_scan({required Object time}) => 'Last scan ${time}';
+  String get media_source_manage_title => 'Manage sources';
+  String get media_source_network_label_optional => 'Display name (optional)';
+  String get media_source_network_missing_fields =>
+      'Enter host, username, remote path, and a password or key';
+  String get media_source_network_remote_path => 'Remote path';
+  String get media_source_network_subtitle =>
+      'SFTP / FTP / WebDAV remote library';
+  String get media_source_no_sources => 'No sources yet';
+  String get media_source_open_folder => 'Open folder';
+  String get media_source_remove => 'Remove source';
+  String get media_source_remove_keeps_media =>
+      'Removing a source does not delete imported media.';
+  String get media_source_rescan => 'Rescan';
+  String get media_source_scan_error => 'Scan failed';
+  String get media_tracking_access_token => 'Access token';
+  String get media_tracking_access_token_hint =>
+      'Create a personal access token with write permission';
+  String get media_tracking_account => 'Bangumi account';
+  String get media_tracking_add_mapping => 'Add mapping';
+  String get media_tracking_anime => 'Anime';
+  String get media_tracking_chapter => 'Chapter';
+  String get media_tracking_connect => 'Connect and verify';
+  String get media_tracking_connected_as => 'Connected account';
+  String get media_tracking_delete_mapping => 'Remove mapping';
+  String get media_tracking_episode => 'Episode';
+  String get media_tracking_kind => 'Category';
+  String get media_tracking_local_item => 'Local item';
+  String get media_tracking_manga => 'Manga';
+  String get media_tracking_mappings => 'Item mappings';
+  String get media_tracking_no_mappings =>
+      'No manual mappings yet. Fushi matches automatically on the first completed episode or reading progress; add ambiguous items here.';
+  String get media_tracking_novel => 'Novel';
+  String get media_tracking_pending => 'Pending updates';
+  String get media_tracking_progress_mode => 'Progress unit';
+  String get media_tracking_progress_offset => 'Starting number';
+  String get media_tracking_saved => 'Mapping saved';
+  String get media_tracking_search => 'Search Bangumi';
+  String get media_tracking_search_results => 'Bangumi results';
+  String get media_tracking_summary =>
+      'Automatically record anime, novel, and manga progress to Bangumi';
+  String get media_tracking_sync_failed =>
+      'Sync failed. The update remains queued.';
+  String get media_tracking_sync_now => 'Sync now';
+  String get media_tracking_sync_success => 'Sync completed';
+  String get media_tracking_token_required =>
+      'Enter and verify an access token first';
+  String get media_tracking_volume => 'Volume';
+  String get microphone_permission_denied =>
+      'Microphone permission is required to record.';
+  String get mining_audio_quality => 'Audio quality';
+  String get mining_audio_quality_high => 'High';
+  String get mining_audio_quality_hint =>
+      'Higher bitrate is clearer but makes larger cards.';
+  String get mining_audio_quality_max => 'Maximum';
+  String get mining_audio_quality_standard => 'Standard';
+  String get mining_image_quality => 'Image / GIF quality';
+  String get mining_image_quality_hd => 'HD';
+  String get mining_image_quality_hint =>
+      'Higher is sharper but makes larger cards. Maximum keeps screenshots at the source resolution; animated GIFs stay capped so cards remain usable.';
+  String get mining_image_quality_max => 'Maximum';
+  String get mining_image_quality_standard => 'Standard';
+  String get mining_image_quality_thrift => 'Data saver';
+  String get move_down => 'Move down';
+  String get move_up => 'Move up';
+  String get name => 'Name';
+  String get nav_browser_extension => 'Extension';
+  String get nav_downloads => 'Downloads';
+  String get nav_game => 'Game';
+  String get nav_home => 'Home';
+  String get nav_lookup => 'Lookup';
+  String get nav_video => 'Video';
+  String get next_sentence => 'Next sentence';
+  String get no_audio_file => 'No audio file to save.';
+  String get no_collections => 'No bookmarks or saved sentences';
+  String get no_debug_logs => 'No debug logs.';
+  String get no_illustrations_found => 'No illustrations found';
+  String get no_results_found => 'No results found.';
+  String get no_search_results => 'No search results found.';
+  String get no_sentence_selected => 'No sentence selected';
+  String get no_sentences_found => 'No sentences found';
+  String get no_text => 'No text.';
+  String get no_text_to_search => 'No text to search.';
+  String get now_listening_label => 'Now listening';
+  String get on_screen_keyboard => 'On-screen keyboard';
+  String get options_collapse => 'Collapse in lookup';
+  String get options_delete => 'Delete';
+  String get options_edit => 'Edit';
+  String get options_expand => 'Expand in lookup';
+  String get options_github => 'View repository on GitHub';
+  String get options_hide => 'Hide in lookup';
+  String get options_language => 'Language settings';
+  String get options_show => 'Show in lookup';
+  String get overlay_lookup_independent_size =>
+      'Separate size for pop-out lookup';
+  String get overlay_lookup_independent_size_hint =>
+      'Give the app-external pop-out lookup window its own max size instead of following the in-app popup';
+  String get overlay_lookup_max_height => 'Pop-out lookup max height';
+  String get overlay_lookup_max_width => 'Pop-out lookup max width';
+  String page_progress({required Object current, required Object total}) =>
+      'Page ${current} / ${total}';
+  String get paste => 'Paste';
+  String get pause => 'Pause';
+  String get pause_on_lookup => 'Pause on lookup';
+  String get pdf_bookmark_added => 'Bookmark added';
+  String get pdf_bookmarks => 'Bookmarks';
+  String get pdf_bookmarks_empty => 'No bookmarks yet.';
+  String get pdf_no_text_layer =>
+      'This PDF has no text layer (scanned image), so lookup is unavailable.';
+  String get pdf_outline => 'Contents';
+  String get pdf_outline_empty => 'This PDF has no contents.';
+  String get pick_image => 'Pick image';
+  String get play => 'Play';
+  String get play_from_cue => 'Play from sentence';
+  String get playback_auto_pause => 'Subtitle pause playback mode';
+  String get playback_speed => 'Speed';
+  String get popup_append_sentence_tooltip => 'Add this sentence to the card';
+  String get popup_auto_expand_dictionaries => 'Auto-expand rows';
+  String get popup_auto_expand_dictionaries_hint =>
+      'Keep the first N rows of dictionary blocks expanded even when \'Collapse dictionaries\' is on. The expanded count follows the column setting: rows x columns (0 = collapse all)';
+  String get popup_bottom_docked => 'Bottom-docked popup';
+  String get popup_bottom_docked_hint =>
+      'Pin the lookup popup as a full-width panel at the bottom of the screen instead of following the looked-up word.';
+  String get popup_clear_sentence_draft_tooltip => 'Clear added sentences';
+  String get popup_ctx_adjust_button => 'Adjust context';
+  String get popup_ctx_box_current => 'Current sentence';
+  String get popup_ctx_box_empty => '(none)';
+  String get popup_ctx_box_next => 'Next context';
+  String get popup_ctx_box_prev => 'Previous context';
+  String get popup_ctx_cancel => 'Cancel';
+  String get popup_ctx_confirm => 'Confirm mining';
+  String get popup_ctx_modal_count => 'Selected %d sentences';
+  String get popup_ctx_modal_eyebrow => 'Adjust before mining';
+  String get popup_ctx_modal_title => 'Select sentence context';
+  String get popup_ctx_next_minus => 'Remove next';
+  String get popup_ctx_next_plus => 'Add next';
+  String get popup_ctx_prev_minus => 'Remove previous';
+  String get popup_ctx_prev_plus => 'Add previous';
+  String get popup_dictionary_max_columns =>
+      'Max dictionary columns (auto-fill)';
+  String get popup_dictionary_max_columns_hint =>
+      'Auto-fills up to this many dictionary columns per row; narrower screens use fewer';
+  String get popup_font_size_decrease => 'Smaller dictionary text';
+  String get popup_font_size_increase => 'Larger dictionary text';
+  String get popup_instant_scroll => 'Instant popup scroll';
+  String get popup_instant_scroll_hint =>
+      'Jump the lookup popup by fixed distances without animated scrolling for e-ink screens.';
+  String get popup_max_height => 'Popup max height';
+  String get popup_max_width => 'Popup max width';
+  String get popup_no_audio_available => 'No audio available';
+  String get popup_sentence_context_next_label => 'After';
+  String get popup_sentence_context_prev_label => 'Before';
+  String get popup_wheel_speed => 'Popup scroll speed';
+  String get popup_wheel_speed_hint =>
+      'Mouse-wheel scroll speed for the dictionary popup (also applies to the browser extension).';
+  String get prev_sentence => 'Previous sentence';
+  String get preview => 'Preview';
+  String get preview_badge => 'Badge';
+  String get preview_switch => 'Switch';
+  String get processing_in_progress => 'Preparing images';
+  String get profile_book_profile => 'Assign profile';
+  String profile_confirm_delete({required Object name}) =>
+      'Delete profile "${name}"?';
+  String get profile_copy => 'Copy';
+  String get profile_copy_suffix => '(Copy)';
+  String get profile_create => 'Create profile';
+  String get profile_delete => 'Delete';
+  String get profile_export => 'Export';
+  String get profile_export_failed => 'Export failed';
+  String profile_follow_default_current({required Object name}) =>
+      'Following default (${name})';
+  String get profile_import => 'Import';
+  String get profile_import_failed => 'Import failed';
+  String get profile_import_invalid => 'Invalid profile file';
+  String get profile_import_success => 'Profile imported';
+  String get profile_label => 'Profile';
+  String get profile_management => 'Profile management';
+  String get profile_media_audiobook => 'Audiobook';
+  String get profile_media_epub => 'Book';
+  String get profile_media_lyrics => 'Lyrics mode';
+  String get profile_media_none => 'None';
+  String get profile_media_srtbook => 'Subtitle book';
+  String get profile_media_type_bindings => 'Media type bindings';
+  String get profile_media_video => 'Video';
+  String get profile_name_hint => 'Profile name';
+  String get profile_rename => 'Rename';
+  String get reader_auto_hide_chrome_duration =>
+      'Auto-hide floating controls after';
+  String get reader_content_timeout =>
+      'Content loading timed out. Reopen if display is abnormal';
+  String get reader_copy_image => 'Copy image';
+  String get reader_gallery => 'Gallery';
+  String get reader_gallery_current => 'Reading here';
+  String get reader_gallery_empty => 'No illustrations in this book';
+  String get reader_gallery_jump => 'Jump to this illustration';
+  String get reader_gallery_tooltip => 'Browse illustrations';
+  String reader_image_copy_failed({required Object error}) =>
+      'Failed to copy image: ${error}';
+  String get reader_image_file_unavailable => 'Image file is unavailable.';
+  String reader_image_share_failed({required Object error}) =>
+      'Failed to share image: ${error}';
+  String get reader_open_failed => 'Failed to open book';
+  String get reader_settings_section => 'Reader settings';
+  String get reader_theme_black => 'Black';
+  String get reader_theme_dark => 'Dark';
+  String get reader_theme_ecru => 'Ecru';
+  String get reader_theme_eyecare => 'Eye care';
+  String get reader_theme_gray => 'Gray';
+  String get reader_theme_light => 'White';
+  String get reader_theme_water => 'Water blue';
+  String get reader_top_progress_floating => 'Floating reading progress';
+  String get reader_unsupported_platform =>
+      'The reader is not yet available on this platform.';
+  String get reading_activity => 'Study activity';
+  String get reading_progress => 'Reading progress';
+  String get reading_section_mode => 'Mode & orientation';
+  String get reading_statistics => 'Reading statistics';
+  String get record => 'Record';
+  String get refresh => 'Refresh';
+  String get rematch_adjust_window => 'Adjust search window and re-match';
+  String get rematch_run => 'Re-run match';
+  String get remote_audio_source => 'Remote audio';
+  String get remote_book_audiobook_download_failed =>
+      'Could not download audiobook for this book';
+  String get remote_book_download => 'Download to this device';
+  String get remote_book_download_failed => 'Could not download remote book';
+  String get remote_book_downloaded => 'Downloaded remote book';
+  String get remote_book_downloading => 'Downloading…';
+  String get remote_book_info => 'Info';
+  String get remote_book_info_has_audiobook => 'Includes audiobook';
+  String get remote_book_unavailable => 'Paired device unavailable';
+  String get remote_dict_lookup => 'Remote dictionary lookup';
+  String get remote_dict_lookup_hint =>
+      'When local dictionaries miss, query the configured Fushi server';
+  String get remote_video_download => 'Download to this device';
+  String get remote_video_download_failed => 'Could not download remote video';
+  String get remote_video_downloaded => 'Downloaded remote video';
+  String get remote_video_downloading => 'Downloading…';
+  String get remote_video_info => 'Info';
+  String get remote_video_info_has_subtitle => 'Includes subtitles';
+  String get remote_video_info_no_subtitle => 'No subtitles';
+  String remote_video_info_size({required Object size}) => 'Size: ${size}';
+  String get remote_video_list_failed =>
+      'Couldn\'t load remote videos. Make sure the other device is online and on the same network, then try again.';
+  String get remote_video_unavailable => 'Paired device unavailable';
+  String get rename_collection => 'Rename collection';
+  String get render_restart_required => 'Takes effect after restarting the app';
+  String get repeat_cue => 'Repeat sentence';
+  String get reset => 'Reset';
+  String get retry => 'Retry';
+  String get reverse_arrow_page_turn =>
+      'Reverse keyboard left/right page-turn direction';
+  String get reverse_navigation_bar => 'Reverse navigation bar';
+  String get reverse_reader_bottom_bar => 'Reverse reader bottom bar';
+  String get audiobook_rematch_all_zero =>
+      'All windows scored 0%, please adjust manually';
+  String audiobook_rematch_auto_failed({required Object error}) =>
+      'Auto-match failed: ${error}';
+  String get audiobook_rematch_auto_match => 'Auto match';
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
+      'Auto-selected ${window} (hit ${pct}%)';
+  String audiobook_rematch_default_value({required Object n}) => 'Default ${n}';
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
+      '${pct} matched — ${detail}';
+  String get audiobook_rematch_matching => 'Matching...';
+  String get audiobook_rematch_no_chapters => 'EPUB has no chapter text';
+  String get audiobook_rematch_no_cues_to_match => 'No cues to match';
+  String get audiobook_rematch_no_sections =>
+      'No chapter text found, cannot auto-match';
+  String get audiobook_rematch_no_stored_cues =>
+      'No stored cues, cannot re-run';
+  String audiobook_rematch_failed({required Object error}) =>
+      'Re-match failed: ${error}';
+  String audiobook_rematch_result(
+          {required Object pct, required Object window}) =>
+      'Rematched: ${pct}% (window: ${window})';
+  String get audiobook_rematch_search_window => 'Search window';
+  String get audiobook_rematch_similarity_threshold => 'Similarity threshold';
+  String get audiobook_rematch_threshold_hint =>
+      'Minimum similarity for fuzzy matching (Dice coefficient). Lower to tolerate more text differences, but too low causes false matches.';
+  String get audiobook_rematch_window_hint =>
+      'Number of characters to search forward per cue in the text. Adjust if hit rate is low; too large may skew cursor with short noisy cues.';
+  String get saved_tags => 'Tags saved.';
+  String get scan_non_japanese_text => 'Scan non-Japanese text';
+  String get scan_non_japanese_text_hint =>
+      'When off, selection stops at non-Japanese characters';
+  String get search => 'Search';
+  String get search_ellipsis => 'Search...';
+  String get searching_in_progress => 'Searching for ';
+  String get section_advanced_colors => 'Advanced';
+  String get section_advanced_typography => 'Advanced';
+  String get section_audiobook => 'Audiobook';
+  String get section_audiobook_lyrics => 'Audiobook & lyrics';
+  String get section_epub => 'EPUB Library';
+  String get section_floating_lyric => 'Floating lyric';
+  String get section_interface => 'Interface';
+  String get section_layout => 'Layout & display';
+  String get section_navigation => 'Navigation';
+  String get section_page_turn_direction => 'Page-turn direction';
+  String get section_reader_colors => 'Reader colors';
+  String get section_system_theme => 'System theme color';
+  String get section_typography => 'Typography';
+  String get section_update => 'Update settings';
+  String get section_video_danmaku => 'Danmaku';
+  String get section_video_library => 'Library';
+  String get section_video_playback => 'Playback';
+  String get section_video_subtitles => 'Subtitles';
+  String get seed_color => 'Seed color';
+  String get seed_color_desc => 'Generates all default colors below';
+  String get selection_color => 'Selection highlight';
+  String get selection_color_desc => 'Reader text selection highlight';
+  String get send => 'Send';
+  String get series => 'Series';
+  String get series_created => 'Series created';
+  String get series_default_name => 'New series';
+  String series_item_count({required Object n}) => '${n} items';
+  String get series_name_hint => 'Series name';
+  String get server_address => 'Server address';
+  String get settings => 'Settings';
+  String get settings_check_update_now => 'Check for updates';
+  String get settings_destination_appearance => 'Appearance';
+  String get settings_destination_card_creation => 'Card creation';
+  String get settings_destination_diagnostics => 'Diagnostics';
+  String get settings_destination_interconnect => 'Fushi Interconnect';
+  String get settings_destination_listening => 'Listening';
+  String get settings_destination_lookup => 'Lookup';
+  String get settings_destination_profiles => 'Configuration schemes';
+  String get settings_destination_reading => 'Reading';
+  String get settings_destination_reading_controls => 'Reading controls';
+  String get settings_destination_sync_backup => 'Sync & backup (experimental)';
+  String get settings_destination_system => 'System';
+  String get settings_destination_system_summary =>
+      'General, updates & diagnostics';
+  String get settings_destination_tracking => 'Media tracking';
+  String get settings_destination_video => 'Video';
+  String get settings_experimental_suffix => ' (experimental)';
+  String get settings_search_hint => 'Search settings';
+  String get settings_search_no_results => 'No matching settings';
+  String get settings_secret_hide => 'Hide value';
+  String get settings_secret_show => 'Show value';
+  String get settings_section_app_shell => 'App';
+  String get settings_section_data_storage => 'Data storage location';
+  String get settings_section_gal_hook_overlay => 'Galgame caption overlay';
+  String get settings_section_general => 'General';
+  String get settings_section_lookup_audio => 'Pronunciation & feedback';
+  String get settings_section_lookup_clipboard => 'Clipboard & global lookup';
+  String get settings_section_lookup_content => 'Entry content';
+  String get settings_section_lookup_integrations => 'External integrations';
+  String get settings_section_lookup_popup_window => 'Popup window';
+  String get settings_section_lookup_trigger => 'Lookup trigger';
+  String get settings_section_page_turn_input => 'Page turning & interaction';
+  String get settings_section_reader_chrome => 'Reader interface';
+  String get settings_section_update_channel => 'Update channel';
+  String get settings_view_changelog => 'View changelog';
+  String get share => 'Share';
+  String get share_theme => 'Share theme';
+  String get shortcut_action_audiobook_next_sentence => 'Next sentence';
+  String get shortcut_action_audiobook_play_pause => 'Play / pause';
+  String get shortcut_action_audiobook_prev_sentence => 'Previous sentence';
+  String get shortcut_action_audiobook_seek_clicked =>
+      'Seek audio to clicked sentence';
+  String get shortcut_action_dpad_down => 'D-pad down';
+  String get shortcut_action_dpad_left => 'D-pad left';
+  String get shortcut_action_dpad_right => 'D-pad right';
+  String get shortcut_action_dpad_up => 'D-pad up';
+  String get shortcut_action_global_back => 'Back / exit one level';
+  String get shortcut_action_global_external_lookup =>
+      'App-external lookup shortcut';
+  String get shortcut_action_global_scroll_page_down =>
+      'Scroll down one screen';
+  String get shortcut_action_global_scroll_page_up => 'Scroll up one screen';
+  String get shortcut_action_global_toggle_fullscreen => 'Toggle fullscreen';
+  String get shortcut_action_home_focus_search => 'Focus search';
+  String get shortcut_action_home_tab_books => 'Books tab';
+  String get shortcut_action_home_tab_dict => 'Dictionary tab';
+  String get shortcut_action_home_tab_next => 'Next tab';
+  String get shortcut_action_home_tab_prev => 'Previous tab';
+  String get shortcut_action_home_tab_settings => 'Settings tab';
+  String get shortcut_action_popup_next_entry => 'Next word entry';
+  String get shortcut_action_popup_prev_entry => 'Previous word entry';
+  String get shortcut_action_reader_create_card_from_popup =>
+      'Create card from popup';
+  String get shortcut_action_reader_dismiss_dict => 'Dismiss dictionary';
+  String get shortcut_action_reader_enter_caret => 'Enter lookup cursor';
+  String get shortcut_action_reader_lookup_at_cursor =>
+      'Lookup / activate cursor';
+  String get shortcut_action_reader_open_menu => 'Open settings menu';
+  String get shortcut_action_reader_open_navigation => 'Open navigation';
+  String get shortcut_action_reader_page_backward => 'Previous page';
+  String get shortcut_action_reader_page_forward => 'Next page';
+  String get shortcut_action_reader_shift_lookup => 'Look up word at caret';
+  String get shortcut_action_reader_toggle_chrome => 'Toggle controls';
+  String get shortcut_action_reader_toggle_furigana => 'Toggle furigana';
+  String get shortcut_action_video_align_subtitle_to_next =>
+      'Align next subtitle to now';
+  String get shortcut_action_video_align_subtitle_to_prev =>
+      'Align previous subtitle to now';
+  String get shortcut_action_video_cycle_secondary_subtitle_obscure =>
+      'Cycle secondary subtitle obscure';
+  String get shortcut_action_video_cycle_subtitle_obscure =>
+      'Cycle subtitle obscure mode';
+  String get shortcut_action_video_next_chapter => 'Next chapter';
+  String get shortcut_action_video_next_frame => 'Next frame';
+  String get shortcut_action_video_next_subtitle => 'Next subtitle';
+  String get shortcut_action_video_open_subtitle_align =>
+      'Open subtitle waveform align';
+  String get shortcut_action_video_pause => 'Pause';
+  String get shortcut_action_video_play => 'Play';
+  String get shortcut_action_video_previous_chapter => 'Previous chapter';
+  String get shortcut_action_video_previous_frame => 'Previous frame';
+  String get shortcut_action_video_previous_subtitle => 'Previous subtitle';
+  String get shortcut_action_video_replay_current_subtitle =>
+      'Replay current subtitle';
+  String get shortcut_action_video_replay_previous_subtitle =>
+      'Replay previous subtitle';
+  String get shortcut_action_video_reset_speed => 'Reset speed';
+  String get shortcut_action_video_screenshot => 'Screenshot';
+  String get shortcut_action_video_seek_backward => 'Seek backward';
+  String get shortcut_action_video_seek_forward => 'Seek forward';
+  String get shortcut_action_video_speed_down => 'Slow down';
+  String get shortcut_action_video_speed_up => 'Speed up';
+  String get shortcut_action_video_subtitle_delay_decrease =>
+      'Subtitle delay −';
+  String get shortcut_action_video_subtitle_delay_increase =>
+      'Subtitle delay +';
+  String get shortcut_action_video_toggle_favorite_sentence =>
+      'Favorite current sentence';
+  String get shortcut_action_video_toggle_fullscreen => 'Toggle fullscreen';
+  String get shortcut_action_video_toggle_immersive_lock =>
+      'Toggle immersive lock';
+  String get shortcut_action_video_toggle_mute => 'Toggle mute';
+  String get shortcut_action_video_toggle_play_pause => 'Play / pause';
+  String get shortcut_action_video_toggle_secondary_subtitle_hide =>
+      'Toggle hide secondary subtitle';
+  String get shortcut_action_video_toggle_shader_compare =>
+      'Toggle shader compare';
+  String get shortcut_action_video_toggle_subtitle_blur =>
+      'Toggle subtitle blur';
+  String get shortcut_action_video_toggle_subtitle_hide =>
+      'Toggle hide subtitles';
+  String get shortcut_action_video_toggle_subtitle_list =>
+      'Toggle subtitle list';
+  String get shortcut_action_video_volume_down => 'Volume down';
+  String get shortcut_action_video_volume_up => 'Volume up';
+  String get shortcut_assign_pick_action => 'Assign to action…';
+  String get shortcut_clear => 'Clear';
+  String shortcut_conflict({required Object s}) => 'Already used by: ${s}';
+  String shortcut_conflict_replace_confirm({required Object s}) =>
+      'This shortcut is already used by ${s}. Move it to this action?';
+  String get shortcut_gamepad => 'Gamepad';
+  String get shortcut_gamepad_brand_label => 'Gamepad button style';
+  String get shortcut_gamepad_brand_playstation => 'PlayStation';
+  String get shortcut_gamepad_brand_switch => 'Nintendo Switch';
+  String get shortcut_gamepad_brand_xbox => 'Xbox';
+  String get shortcut_gamepad_pick_list => 'Choose from list';
+  String get shortcut_gamepad_unavailable_hint =>
+      'GameInput component not detected — gamepad support is unavailable. Install the Windows Gaming Services to enable controller support.';
+  String get shortcut_keyboard => 'Keyboard';
+  String get shortcut_mouse_back => 'Back button';
+  String get shortcut_mouse_button => 'Mouse button';
+  String get shortcut_mouse_forward => 'Forward button';
+  String get shortcut_mouse_left => 'Left click';
+  String get shortcut_mouse_middle => 'Middle click';
+  String get shortcut_mouse_right => 'Right click';
+  String get shortcut_press_gamepad => 'Press a gamepad button...';
+  String get shortcut_press_key => 'Press a key combination...';
+  String get shortcut_press_mouse_button => 'Press a mouse button...';
+  String get shortcut_press_wheel => 'Hold a modifier key and scroll here';
+  String get shortcut_reset_confirm =>
+      'Reset all shortcuts in this section to defaults?';
+  String get shortcut_reset_defaults => 'Reset to defaults';
+  String get shortcut_scope_audiobook => 'Audiobook';
+  String get shortcut_scope_dictionary_popup => 'Dictionary popup';
+  String get shortcut_scope_dictionary_popup_note =>
+      'Works while the pointer is over a dictionary popup';
+  String get shortcut_scope_gamepad => 'Gamepad';
+  String get shortcut_scope_global => 'Global';
+  String get shortcut_scope_global_external => 'Global (app-external)';
+  String get shortcut_scope_global_external_mobile_note =>
+      'Triggered by the system (text selection menu, share, floating ball); the OS does not allow apps to remap this shortcut.';
+  String get shortcut_scope_home => 'Home';
+  String get shortcut_scope_reader => 'Reader';
+  String get shortcut_scope_video => 'Video';
+  String get shortcut_settings_title => 'Keyboard shortcuts';
+  String get shortcut_stop_capture => 'Stop';
+  String get shortcut_tap_to_assign => 'Not set · tap to assign';
+  String get shortcut_view_list => 'List view';
+  String get shortcut_view_visual => 'Controller layout';
+  String get shortcut_wheel => 'Mouse wheel';
+  String get shortcut_wheel_down => 'Wheel down';
+  String get shortcut_wheel_needs_modifier =>
+      'A bare wheel scrolls the popup — hold Alt / Ctrl / Shift while scrolling';
+  String get shortcut_wheel_up => 'Wheel up';
+  String get show_bottom_bar_cue => 'Show current sentence';
+  String get show_expression_tags => 'Show expression tags';
+  String get show_floating_lyric => 'Floating lyric overlay';
+  String get show_media_notification => 'Show media notification';
+  String get show_options => 'Show options';
+  String get show_top_progress_bar => 'Reading progress indicator';
+  String get skip_action => 'Skip action';
+  String skip_action_seconds({required Object n}) => '${n} seconds';
+  String get skip_action_sentence => '1 sentence';
+  String get sort_by => 'Sort';
+  String get sort_imported => 'Import date';
+  String get sort_recent_read => 'Recently read';
+  String get sort_recent_watched => 'Recently watched';
+  String get sort_title => 'Name';
+  String get source_description_epub => 'EPUB reading & dictionary lookup';
+  String get source_name_bookshelf => 'Bookshelf';
+  String get spread_auto => 'Auto';
+  String get spread_direction => 'Spread direction';
+  String get spread_direction_ltr => 'Left to right';
+  String get spread_direction_rtl => 'Right to left';
+  String get spread_mode => 'Spread mode';
+  String get spread_off => 'Off';
+  String get spread_on => 'On';
+  String get srt_audio_unresolved => 'Audio file not found — please re-attach';
+  String get srt_books_section => 'Subtitle audiobooks';
+  String srt_delete_confirm({required Object title}) =>
+      'Delete 『${title}』? This cannot be undone.';
+  String get srt_delete_title => 'Delete subtitle book';
+  String get srt_epub_not_ready => 'Book not ready — please re-import';
+  String get srt_import => 'Import book';
+  String get srt_import_audio_needs_subtitle =>
+      'Audio must be paired with subtitles. To attach audio to an existing EPUB, long-press the book on the shelf.';
+  String get srt_import_author_hint => 'Author (optional)';
+  String get srt_import_error => 'Import failed';
+  String srt_import_files_selected({required Object n}) =>
+      '${n} files selected';
+  String get srt_import_hint_epub_or_srt =>
+      'Pick an EPUB or subtitle file to import.';
+  String get srt_import_missing_input =>
+      'Please pick at least an EPUB or subtitle file';
+  String get srt_import_missing_title => 'Please enter a book title';
+  String get srt_import_pick_audio_dir => 'Pick audio directory';
+  String get srt_import_pick_audio_files => 'Pick audio files';
+  String get srt_import_pick_cover => 'Pick cover image';
+  String get srt_import_pick_epub => 'Pick EPUB';
+  String get srt_import_pick_subtitle_files => 'Pick subtitle files';
+  String get srt_import_success => 'Book imported';
+  String get srt_import_title_hint => 'Book title';
+  String get startup_default_dictionary_tab => 'Open lookup on startup';
+  String get startup_default_dictionary_tab_hint =>
+      'Start the home screen on the lookup tab instead of the current default.';
+  String get stash => 'Stash';
+  String get stash_added_multiple =>
+      'Multiple items have been added to the Stash.';
+  String stash_added_single({required Object term}) =>
+      '『${term}』has been added to the Stash.';
+  String get stash_clear_description =>
+      'All contents will be cleared. Are you sure?';
+  String stash_clear_single({required Object term}) =>
+      '『${term}』has been removed from the Stash.';
+  String get stash_clear_title => 'Clear stash';
+  String get stash_nothing_to_pop => 'No items to be popped from the Stash.';
+  String get stash_placeholder => 'No items in the Stash';
+  String get stat_all_time => 'All time';
+  String get stat_bookshelf_compare => 'Bookshelf';
+  String get stat_clear_all => 'Clear statistics';
+  String get stat_clear_all_confirm => 'Clear';
+  String get stat_clear_all_reading_message =>
+      'Clear all reading time, character counts, and lookup/mining counts? Your saved words, sentences, and mined cards are kept. This cannot be undone.';
+  String get stat_clear_all_title => 'Clear all statistics';
+  String get stat_clear_all_video_message =>
+      'Clear all watch time, subtitle character counts, and lookup/mining counts? Your saved words, sentences, and mined cards are kept. This cannot be undone.';
+  String get stat_daily_average => 'Daily avg';
+  String get stat_delete_message =>
+      'Delete this item\'s time, character count, and lookup/mining statistics? Your saved words and sentences are not affected.';
+  String get stat_delete_title => 'Delete statistics';
+  String get stat_fastest_day => 'Fastest day';
+  String get stat_favorited => 'Favorited';
+  String get stat_favorited_sentence => 'Favorited sentences';
+  String stat_format_chars({required Object n}) => '${n} characters';
+  String stat_format_chars_wan({required Object n}) => '${n}万 characters';
+  String stat_format_days({required Object n}) => '${n} days';
+  String stat_format_hours_minutes({required Object h, required Object m}) =>
+      '${h} hr ${m} min';
+  String stat_format_minutes({required Object n}) => '${n} min';
+  String get stat_goal => 'Daily goal';
+  String get stat_goal_daily => 'Daily goal';
+  String get stat_goal_presets => 'Presets';
+  String stat_goal_progress({required Object read, required Object goal}) =>
+      '${read} / ${goal} chars';
+  String get stat_goal_reached => 'Goal reached';
+  String stat_goal_recent_average({required Object n}) =>
+      'Last 7 days: ${n} chars/day on average';
+  String get stat_goal_set => 'Set goal';
+  String get stat_goal_unit_chars => 'chars';
+  String get stat_goal_weekly => 'Weekly goal';
+  String get stat_last_30_days => 'Last 30 days';
+  String get stat_lookup => 'Lookups';
+  String get stat_metric_chars => 'Characters';
+  String get stat_metric_speed => 'Speed';
+  String get stat_metric_time => 'Time';
+  String get stat_mined => 'Cards mined';
+  String get stat_no_data => 'No reading data yet';
+  String get stat_range_and_trend => 'Range & trend';
+  String get stat_recent_active => 'Active Days (7d)';
+  String get stat_refresh => 'Refresh';
+  String get stat_slowest_day => 'Slowest day';
+  String get stat_sort_by_chars => 'By characters';
+  String get stat_sort_by_speed => 'By speed';
+  String get stat_sort_by_time => 'By time';
+  String get stat_speed_anomaly => 'Anomaly';
+  String get stat_speed_avg => 'Moving average';
+  String stat_speed_cph({required Object n}) => '${n} chars/hr';
+  String get stat_speed_summary => 'Speed summary';
+  String get stat_streak => 'Streak';
+  String get stat_this_month => 'This month';
+  String get stat_this_week => 'This week';
+  String get stat_today => 'Today';
+  String get stat_today_hourly => 'Today by hour';
+  String get stat_trend_daily => 'Daily';
+  String get stat_trend_monthly => 'Monthly';
+  String get stat_trend_weekly => 'Weekly';
+  String get stat_typical_day => 'Typical day';
+  String get stat_vs_prev => 'vs prev 14d';
+  String get stat_weighted_avg_speed => 'Weighted avg';
+  String get stop => 'Stop';
+  String get storage_permissions =>
+      'Please grant the following permissions for exporting to AnkiDroid.';
+  String get stream => 'Stream';
+  String get swipe_page_turn_sensitivity => 'Swipe page-turn sensitivity';
+  String get sync_account => 'Account';
+  String get sync_audiobook => 'Sync audiobook position';
+  String get sync_audiobook_files => 'Sync audiobook files';
+  String get sync_audiobook_files_warning =>
+      'Audio and subtitles can be large.';
+  String sync_auth_error({required Object message}) =>
+      'Authentication failed: ${message}';
+  String get sync_auto_sync => 'Auto sync';
+  String get sync_backend => 'Storage backend';
+  String get sync_backend_dropbox => 'Dropbox';
+  String get sync_backend_ftp => 'FTP';
+  String get sync_backend_google_drive => 'Google Drive';
+  String get sync_backend_fushi_server => 'Fushi Interconnect';
+  String get sync_backend_onedrive => 'OneDrive';
+  String get sync_backend_sftp => 'SFTP';
+  String get sync_backend_webdav => 'WebDAV';
+  String get sync_checking_account => 'Checking account…';
+  String get sync_client_connected => 'Connected';
+  String get sync_client_token => 'Peer access token';
+  String get sync_client_token_manual => 'Enter token manually';
+  String get sync_compare => 'Compare data';
+  String get sync_compare_all_books => 'All books';
+  String get sync_compare_all_local => 'All → local';
+  String get sync_compare_all_remote => 'All → remote';
+  String get sync_compare_all_skip => 'All → skip';
+  String sync_compare_applied({required Object count}) =>
+      'Applied ${count} changes';
+  String sync_compare_apply({required Object count}) => 'Sync now (${count})';
+  String get sync_compare_close => 'Close';
+  String get sync_compare_conflicts => 'Conflicts';
+  String get sync_compare_days => 'days';
+  String get sync_compare_delete_audiobook => 'Delete audiobook on remote';
+  String get sync_compare_delete_book => 'Delete book on remote';
+  String sync_compare_delete_confirm({required Object name}) =>
+      'Delete "${name}" from the remote? Local data is kept. This cannot be undone.';
+  String get sync_compare_delete_dict => 'Delete dictionary on remote';
+  String get sync_compare_deleted => 'Deleted from remote';
+  String get sync_compare_dictionaries => 'Dictionaries';
+  String get sync_compare_download => 'Download';
+  String get sync_compare_empty => 'No books found';
+  String get sync_compare_local => 'Local';
+  String get sync_compare_no_content => 'Cloud data only — no book to download';
+  String get sync_compare_no_data => 'No data';
+  String get sync_compare_remote => 'Remote';
+  String get sync_compare_select_all => 'Select all';
+  String get sync_compare_skip => 'Skip';
+  String get sync_compare_title => 'Local vs remote';
+  String get sync_compare_unavailable => 'Set up a sync backend first';
+  String get sync_compare_use_local => 'Local';
+  String get sync_compare_use_remote => 'Remote';
+  String get sync_connection_failed => 'Connection failed';
+  String get sync_connection_success => 'Connection successful';
+  String get sync_content => 'Upload book files';
+  String get sync_content_warning =>
+      'Large files will use storage space and data';
+  String get sync_dictionary => 'Sync dictionaries';
+  String get sync_dictionary_warning =>
+      'Dictionary packages can be large and include imported dictionary resources.';
+  String get sync_err_auth_expired => 'Sign-in expired — please sign in again.';
+  String get sync_err_invalid_client =>
+      'Client credentials are invalid for this build — please update the app.';
+  String get sync_err_network =>
+      'Cannot reach the server — check your network or proxy settings.';
+  String get sync_err_not_configured =>
+      'Google sync credentials are not configured in this build.';
+  String get sync_err_quota => 'Cloud storage is full (quota reached).';
+  String get sync_err_scope_upgrade =>
+      'Sync permissions changed — please sign in to Google again to continue syncing.';
+  String get sync_err_timeout =>
+      'Connection timed out — the server did not respond in time. Check your network or proxy settings.';
+  String sync_error({required Object message}) => 'Sync error: ${message}';
+  String get sync_exit_warning =>
+      'Sync is still in progress. Exiting now may cause data loss.';
+  String get sync_exit_warning_title => 'Sync in progress';
+  String get sync_host => 'Host';
+  String get sync_lan_discovery => 'LAN devices';
+  String get sync_lan_no_devices => 'No devices found';
+  String get sync_lan_scan_failed =>
+      'Scan failed — check network permissions or firewall.';
+  String get sync_local_audio => 'Sync local audio';
+  String get sync_local_audio_warning =>
+      'Syncs local audio source databases (may be large)';
+  String get sync_not_signed_in => 'Not signed in';
+  String get sync_now => 'Sync now';
+  String sync_now_audio_in({required Object count}) => '↓${count} audiobooks';
+  String sync_now_audio_out({required Object count}) => '↑${count} audiobooks';
+  String sync_now_books_in({required Object count}) => '↓${count} books';
+  String get sync_now_busy => 'A sync is already running';
+  String sync_now_dicts_in({required Object count}) => '↓${count} dictionaries';
+  String sync_now_dicts_out({required Object count}) =>
+      '↑${count} dictionaries';
+  String sync_now_done({required Object detail}) => 'Synced · ${detail}';
+  String sync_now_failed_suffix({required Object count}) =>
+      ' · ${count} failed';
+  String get sync_now_hint => 'Run a full two-way sync with the cloud now';
+  String sync_now_local_audio_in({required Object count}) =>
+      '↓${count} audio sources';
+  String sync_now_local_audio_out({required Object count}) =>
+      '↑${count} audio sources';
+  String get sync_now_no_changes => 'no changes';
+  String get sync_pair_allow => 'Allow';
+  String sync_pair_confirm_identity_body({required Object device}) =>
+      'You are pairing with ${device}. Confirm this is the device you expect before continuing.';
+  String get sync_pair_confirm_identity_title => 'Confirm device';
+  String get sync_pair_continue => 'Continue';
+  String get sync_pair_denied => 'The other device declined pairing';
+  String get sync_pair_deny => 'Deny';
+  String get sync_pair_enter_pin_body =>
+      'Enter the 6-digit PIN shown on the other device.';
+  String get sync_pair_enter_pin_title => 'Enter PIN';
+  String get sync_pair_failed => 'Pairing failed';
+  String get sync_pair_fingerprint_changed =>
+      'Certificate changed — pairing aborted for safety (possible interception).';
+  String get sync_pair_fingerprint_label => 'Certificate fingerprint';
+  String get sync_pair_not_fushi =>
+      'No Fushi device found at this address. The address was saved.';
+  String get sync_pair_pairing => 'Pairing…';
+  String get sync_pair_pin_label => 'Enter this PIN on the other device';
+  String get sync_pair_pin_waiting =>
+      'Waiting for the other device to enter this PIN…';
+  String get sync_pair_pin_wrong => 'Wrong PIN — try again';
+  String get sync_pair_repair => 'Pair again';
+  String get sync_pair_request_body =>
+      'A device is requesting to pair. Allow it to sync with this device?';
+  String get sync_pair_request_title => 'Pairing request';
+  String get sync_pair_success => 'Paired — token filled in';
+  String get sync_pair_unavailable =>
+      'The other device isn\'t ready or is on an older version. Update it and enable sync, then try again.';
+  String get sync_pair_unknown_device => 'Unknown device';
+  String get sync_paired_peer_remove => 'Remove';
+  String get sync_paired_peer_removed => 'Removed paired device';
+  String get sync_paired_peer_unknown => 'Unknown device';
+  String get sync_paired_peers_empty => 'No paired devices yet';
+  String get sync_paired_peers_title => 'Paired devices';
+  String get sync_password => 'Password';
+  String get sync_port => 'Port';
+  String get sync_private_key => 'Private key';
+  String get sync_progress_audiobooks => 'Syncing audiobooks';
+  String get sync_progress_books => 'Importing books';
+  String get sync_progress_dictionaries => 'Syncing dictionaries';
+  String get sync_progress_local_audio => 'Syncing local audio';
+  String get sync_progress_reading => 'Syncing reading data';
+  String get sync_progress_videos => 'Syncing videos';
+  String get sync_role_locked_by_client =>
+      'Already connected to another device. Remove the connection before hosting as a server.';
+  String get sync_role_locked_by_server =>
+      'This device is hosting as a server. Turn off the server before connecting to other devices.';
+  String get sync_section_actions => 'Sync actions';
+  String get sync_section_backup => 'Local backup';
+  String get sync_section_content => 'What to sync';
+  String get sync_section_host_server => 'This device as a sync server';
+  String get sync_section_host_server_footer =>
+      'Let other devices sync from this device. Independent of the sync backend above.';
+  String get sync_section_method => 'Sync method';
+  String get sync_server_copy_token => 'Copy token';
+  String get sync_server_enable => 'Enable sync server';
+  String get sync_server_mode_active => 'This device is a sync server';
+  String get sync_server_mode_clients_drive =>
+      'Connected clients start the sync — no manual sync needed here.';
+  String get sync_server_port => 'Server port';
+  String sync_server_port_in_use({required Object port}) =>
+      'Port ${port} is already in use — pick a different port.';
+  String get sync_server_regenerate_token => 'Regenerate token';
+  String get sync_server_running => 'Server running';
+  String get sync_server_stopped => 'Server stopped';
+  String get sync_server_tls_enable => 'Interconnect encryption (HTTPS/TLS)';
+  String get sync_server_tls_repair_hint =>
+      'Changing this requires paired devices to pair again';
+  String get sync_server_token => 'Access token';
+  String get sync_show_remote_entries => 'Show remote entries';
+  String get sync_show_remote_entries_warning =>
+      'Show books and videos that exist on paired devices or the cloud as placeholder cards you can download or stream.';
+  String get sync_sign_in => 'Sign in';
+  String get sync_sign_out => 'Sign out';
+  String get sync_signed_in => 'Signed in';
+  String get sync_statistics => 'Sync statistics';
+  String get sync_summary => 'Cloud, LAN P2P & local backup';
+  String get sync_test_connection => 'Test connection';
+  String get sync_use_tls => 'Use TLS';
+  String get sync_username => 'Username';
+  String get sync_video_files => 'Upload video files';
+  String get sync_video_files_warning => 'Video files can be very large.';
+  String get sync_webdav_missing_fields => 'Missing fields';
+  String sync_webdav_test_failed({required Object message}) =>
+      'Connection failed: ${message}';
+  String get sync_webdav_url => 'Server URL';
+  String tag_added_to_book({required Object name}) =>
+      'Tag "${name}" added to book.';
+  String tag_added_to_collection({required Object name}) =>
+      'Tag ${name} added to collection.';
+  String tag_added_to_video({required Object name}) =>
+      'Tag ${name} added to video.';
+  String tag_already_on_book({required Object name}) =>
+      'Tag "${name}" is already on this book.';
+  String tag_already_on_collection({required Object name}) =>
+      'Tag ${name} is already on this collection.';
+  String tag_book_count({required Object count}) => '${count} book(s)';
+  String get tag_clear_filter => 'Clear filter';
+  String get tag_color => 'Color';
+  String tag_delete_confirm({required Object name}) => 'Delete tag "${name}"?';
+  String get tag_filter_title => 'Filter by tag';
+  String get tag_label => 'Tags';
+  String get tag_manage => 'Manage tags';
+  String get tag_manage_title => 'Manage tags';
+  String get tag_name_duplicate => 'A tag with this name already exists.';
+  String get tag_name_empty => 'Tag name cannot be empty.';
+  String get tag_name_hint => 'Tag name';
+  String get tag_new => 'New tag';
+  String get tag_no_books_for_filter => 'No books match the selected tags.';
+  String get tag_no_tags_hint => 'No tags yet. Create one to get started.';
+  String get tag_seed_stars => 'Add star rating tags';
+  String get tag_seed_stars_added => 'Star rating tags added';
+  String get tag_seed_stars_exists => 'Star rating tags already exist';
+  String get tap_empty_hide_chrome => 'Floating control bar';
+  String get text_segmentation => 'Text segmentation';
+  String get texthooker => 'Texthooker';
+  String get texthooker_enabled => 'Texthooker (receive text)';
+  String get texthooker_enabled_hint =>
+      'Connect to Textractor/mpv/agent and look up incoming text';
+  String get texthooker_experimental_banner =>
+      'Texthooker is experimental — live text, lookup and card creation may be unstable.';
+  String get theme_black => 'Pure black';
+  String get theme_code_copied => 'Theme code copied to clipboard';
+  String get theme_dark => 'Deep dark';
+  String get theme_ecru => 'Ecru';
+  String get theme_eyecare => 'Eye care';
+  String get theme_gray => 'Gray dark';
+  String get theme_light => 'White';
+  String get theme_seed_preview_hint =>
+      'Swatches below preview the colors actually generated from your seed. To force a specific color as the primary accent, turn on the Primary toggle and pick it explicitly.';
+  String get theme_water => 'Water blue';
+  String toc_section({required Object n}) => 'Table of Contents (${n})';
+  String get top_progress_pos_center => 'Center';
+  String get top_progress_pos_left => 'Top-left';
+  String get top_progress_pos_right => 'Top-right';
+  String get top_progress_position => 'Progress position';
+  String get torrent_upload_intro_body =>
+      'Uploading (seeding) is off by default. Turn it on to share downloaded content back to the swarm — this uses your upload bandwidth. You can change this anytime in Settings.';
+  String get torrent_upload_intro_confirm => 'Save';
+  String get torrent_upload_intro_enable => 'Enable upload / seeding';
+  String get torrent_upload_intro_keep_off => 'Keep off';
+  String get torrent_upload_intro_title => 'Upload / seeding';
+  String get reader_blur_images => 'Blur images (spoiler guard)';
+  String get reader_font_size => 'Font size';
+  String get reader_font_vpal => 'VPAL (vertical alt)';
+  String get reader_furigana_hide => 'Hide';
+  String get reader_furigana_mode => 'Furigana';
+  String get reader_furigana_mode_hint => '';
+  String get reader_furigana_partial => 'Partial';
+  String get reader_furigana_show => 'Show';
+  String get reader_furigana_toggle => 'Toggle';
+  String get reader_horizontal => 'Horizontal';
+  String get reader_line_height => 'Line height';
+  String get reader_merge_image_pages => 'Merge illustration pages into text';
+  String get reader_merge_image_pages_subtitle =>
+      'Standalone single-image chapters render inline in the adjacent text chapter instead of on their own page';
+  String get reader_no_books_added => 'No books in library';
+  String get reader_not_bound_cannot_rematch =>
+      'Audiobook not bound to a book, cannot re-match';
+  String get reader_orient_mixed => 'Mixed';
+  String get reader_orient_upright => 'Upright';
+  String get reader_page_columns_auto => 'Auto';
+  String get reader_paginated => 'Paginated';
+  String get reader_paragraph_spacing => 'Paragraph spacing';
+  String get reader_reader_styles => 'Prioritize book styles';
+  String get reader_scroll => 'Scroll';
+  String get reader_text_indentation => 'Paragraph indent';
+  String get reader_text_justify => 'Text justification';
+  String get reader_theme => 'Theme';
+  String get reader_vert_kerning => 'Font kerning (vertical)';
+  String get reader_vert_text_orient => 'Text orientation';
+  String get reader_vertical => 'Vertical';
+  String get reader_view_mode_label => 'Page / scroll';
+  String get reader_vn => 'Visual novel';
+  String get reader_writing_direction => 'Writing direction';
+  String get undo => 'Undo';
+  String get unit_milliseconds => 'ms';
+  String get unit_pixels => 'px';
+  String untitled_book({required Object id}) => 'Book ${id}';
+  String get untitled_chapter => '(Untitled)';
+  String get update_already_latest => 'You\'re on the latest version';
+  String get update_auto_install => 'Auto-install updates';
+  String get update_available => 'Update available';
+  String update_cached_newer({required Object version}) =>
+      'Update ${version} available (verifying…)';
+  String update_cached_up_to_date({required Object version}) =>
+      'On latest known version ${version} (checking…)';
+  String get update_cancel => 'Cancel';
+  String get update_cancelled => 'Download cancelled';
+  String get update_cancelling => 'Cancelling…';
+  String get update_channel_beta => 'Beta';
+  String get update_channel_debug => 'Debug';
+  String get update_channel_stable => 'Stable';
+  String get update_check_failed => 'Update check failed';
+  String get update_checking_now => 'Checking for updates…';
+  String get update_connecting => 'Connecting…';
+  String get update_custom_proxy_auto_hint =>
+      'Used for update checks, cloud sync and downloads. Leave blank to use environment variables, then the enabled system proxy.';
+  String get update_custom_proxy_hint =>
+      'host:port, e.g. 127.0.0.1:7890 (IPv4/host only)';
+  String get update_custom_proxy_invalid => 'Invalid proxy. Use host:port';
+  String get update_custom_proxy_label => 'Custom network proxy';
+  String get update_debug_channel => 'Debug update channel';
+  String get update_debug_channel_warning =>
+      'Debug channel builds may be unstable. Use at your own risk.';
+  String get update_download => 'Download';
+  String get update_download_failed => 'Download failed';
+  String get update_download_not_resumed => 'not resumed';
+  String get update_download_restarted_from_zero => 'restarted from zero';
+  String update_download_resume_status({required Object status}) =>
+      'Resume: ${status}';
+  String get update_download_resumed => 'resumed';
+  String update_download_size(
+          {required Object received, required Object total}) =>
+      'Downloaded: ${received} / ${total}';
+  String update_download_source({required Object source}) =>
+      'Source: ${source}';
+  String update_download_speed({required Object speed}) => 'Speed: ${speed}';
+  String get update_downloading => 'Downloading update…';
+  String get update_hide => 'Hide';
+  String update_install_current_executable({required Object path}) =>
+      'Running executable: ${path}';
+  String update_install_deletefile_failure(
+          {required Object path, required Object code}) =>
+      'Installer failed to replace ${path} (code ${code})';
+  String update_install_detected_location(
+          {required Object source, required Object path}) =>
+      'Detected install location (${source}): ${path}';
+  String update_install_failure_summary({required Object summary}) =>
+      'Reason: ${summary}';
+  String get update_install_incomplete_message =>
+      'The installer started, but Fushi is still on the previous version. Check the installer log below.';
+  String get update_install_incomplete_title => 'Update did not finish';
+  String update_install_installer_pid({required Object pid}) =>
+      'Installer PID: ${pid}';
+  String update_install_launch_failed_message({required Object version}) =>
+      'Fushi could not start the installer for version ${version}. Check the log path below.';
+  String get update_install_launch_failed_title =>
+      'Update installer did not start';
+  String update_install_launcher_pid({required Object pid}) =>
+      'Update launcher PID: ${pid}';
+  String update_install_libmpv_holder(
+          {required Object pid, required Object path}) =>
+      'libmpv holder: PID ${pid} - ${path}';
+  String get update_install_log_not_observed =>
+      'Installer log was not created during the post-launch check.';
+  String get update_install_log_observed =>
+      'Installer log was created during the post-launch check.';
+  String update_install_log_path({required Object path}) =>
+      'Installer log: ${path}';
+  String get update_install_manual_close_retry =>
+      'Close Fushi from the listed PID/path, then retry the update or run the installer again.';
+  String get update_install_parent_exit_not_observed =>
+      'The update launcher did not observe Fushi exiting before the installer launch.';
+  String get update_install_parent_exit_observed =>
+      'Fushi exited before the installer was launched.';
+  String update_install_path_mismatch({required Object warning}) =>
+      'Install directory mismatch: ${warning}';
+  String get update_install_permission_cancel => 'Cancel';
+  String get update_install_permission_message =>
+      'Please allow Fushi to install apps in system settings, then retry.';
+  String get update_install_permission_retry => 'Retry install';
+  String get update_install_permission_title => 'Allow installing updates';
+  String get update_install_restart_windows_hint =>
+      'If the listed processes are closed but libmpv-2.dll is still locked, restart Windows and install again.';
+  String update_install_running_process(
+          {required Object pid, required Object path}) =>
+      'Running Fushi process: PID ${pid} - ${path}';
+  String update_install_success_message({required Object version}) =>
+      'Fushi was updated to version ${version}.';
+  String get update_install_success_title => 'Update installed';
+  String update_install_target_dir({required Object path}) =>
+      'Install target: ${path}';
+  String get update_installing => 'Installing…';
+  String get update_mac_install_incomplete_message =>
+      'The update could not be applied, so Fushi is still on the previous version. You can retry the update, or download the latest release manually.';
+  String update_message({required Object version}) =>
+      'Version ${version} is available.';
+  String update_network_failure(
+          {required Object host, required Object reason}) =>
+      'Could not reach ${host}: ${reason}';
+  String get update_never_remind => 'Don\'t remind me about updates';
+  String get update_skip => 'Skip';
+  String get url => 'URL';
+  String get video_audio_track => 'Audio track';
+  String get video_audio_track_empty => 'No switchable audio tracks';
+  String video_audio_track_switched({required Object label}) =>
+      'Audio track: ${label}';
+  String get video_auto_play_next_cancel => 'Cancel';
+  String video_auto_play_next_countdown({required Object seconds}) =>
+      'Next episode in ${seconds}s';
+  String get video_black_flash_notice_action => 'View suggestions';
+  String get video_black_flash_notice_dont_show_again => 'Don\'t show again';
+  String get video_bottom_next_cue => 'Next subtitle (forward a bit if none)';
+  String get video_bottom_play_pause => 'Play / pause';
+  String get video_bottom_prev_cue => 'Previous subtitle (back a bit if none)';
+  String get video_bottom_seek_back => 'Back 10s';
+  String get video_bottom_seek_back_label => '−10s';
+  String get video_bottom_seek_forward => 'Forward 10s';
+  String get video_bottom_seek_forward_label => '+10s';
+  String video_chapter_n({required Object n}) => 'Chapter ${n}';
+  String get video_chapters => 'Chapters';
+  String get video_chapters_empty => 'No chapters';
+  String get video_clip_export => 'Clip export';
+  String get video_clip_export_cancelled => 'Clip export cancelled';
+  String video_clip_export_failed({required Object reason}) =>
+      'Clip export failed: ${reason}';
+  String get video_clip_export_ffmpeg_failed => 'ffmpeg failed';
+  String get video_clip_export_ffmpeg_unavailable => 'ffmpeg is unavailable';
+  String get video_clip_export_input_missing => 'Source video is unavailable';
+  String get video_clip_export_invalid_range => 'No valid clip range';
+  String get video_clip_export_output_missing => 'No output file was created';
+  String get video_clip_export_remote_download_required =>
+      'Download the remote video to this device before exporting a clip';
+  String get video_clip_export_source_changed =>
+      'Video source changed; clip export cancelled';
+  String get video_clip_export_start => 'Start clip export';
+  String get video_clip_export_stop => 'Stop and export clip';
+  String video_clip_exported({required Object path}) =>
+      'Clip exported: ${path}';
+  String video_clip_exported_with_subtitles({required Object path}) =>
+      'Clip exported with subtitles: ${path}';
+  String get video_clip_exporting => 'Exporting clip…';
+  String get video_continue_watching => 'Continue watching';
+  String get video_control_audio_track => 'Audio track';
+  String get video_control_customize_hint =>
+      'Choose where each button sits on the player, or move it out.';
+  String get video_control_episode_list => 'Episode list';
+  String get video_control_favorite_sentence => 'Favorite current sentence';
+  String get video_control_fullscreen => 'Fullscreen';
+  String get video_control_next_cue => 'Next subtitle';
+  String get video_control_palette_hint =>
+      'Drag a button into a slot to add it; a button can sit in several slots.';
+  String get video_control_palette_title => 'All buttons';
+  String get video_control_play_pause => 'Play/Pause';
+  String get video_control_previous_cue => 'Previous subtitle';
+  String get video_control_reject_required =>
+      'Required controls must stay on the player.';
+  String get video_control_reject_unavailable =>
+      'This control cannot be placed there.';
+  String get video_control_reject_volume_bottom =>
+      'Volume can only sit on the bottom bar.';
+  String get video_control_remove_from_slot => 'Move out';
+  String get video_control_reset_layout => 'Reset player button layout';
+  String get video_control_screenshot => 'Screenshot';
+  String get video_control_seek_backward => 'Back 10s';
+  String get video_control_seek_forward => 'Forward 10s';
+  String get video_control_settings => 'Player settings';
+  String get video_control_slot_bottom_center => 'Bottom bar (center)';
+  String get video_control_slot_bottom_left => 'Bottom bar (left)';
+  String get video_control_slot_bottom_right => 'Bottom bar (right)';
+  String get video_control_slot_drop_hint => 'Drag a button here';
+  String get video_control_slot_hidden => 'Removed from player';
+  String get video_control_slot_screen_left => 'Screen left';
+  String get video_control_slot_screen_right => 'Screen right';
+  String get video_control_slot_top_center => 'Top bar (center)';
+  String get video_control_slot_top_left => 'Top bar (left)';
+  String get video_control_slot_top_right => 'Top bar (right)';
+  String get video_control_speed => 'Speed';
+  String get video_control_subtitle_list => 'Subtitle list';
+  String get video_control_subtitle_track => 'Subtitle track';
+  String get video_control_title => 'Video title';
+  String get video_control_volume => 'Volume';
+  String get video_danmaku_manual_bind_empty =>
+      'No danmaku for this episode yet.';
+  String get video_danmaku_manual_bind_failed =>
+      'Couldn\'t load danmaku for this episode. Try again later.';
+  String get video_danmaku_manual_bind_server_error =>
+      'The danmaku server rejected the request. Try again later.';
+  String get video_danmaku_manual_match_title => 'Match danmaku';
+  String get video_danmaku_manual_network_error =>
+      'Network error. Check your connection and try again.';
+  String get video_danmaku_manual_no_result => 'No matching anime found.';
+  String get video_danmaku_manual_search_action => 'Search';
+  String get video_danmaku_manual_search_hint => 'Anime title';
+  String get video_danmaku_manual_search_prompt =>
+      'Search Dandanplay by anime title, then pick an episode.';
+  String get video_danmaku_manual_server_error =>
+      'Search failed. Try again later.';
+  String video_delete_confirm({required Object title}) =>
+      'Delete 『${title}』? This cannot be undone.';
+  String get video_delete_title => 'Delete video';
+  String get video_double_tap_next_cue => 'Next line';
+  String get video_double_tap_prev_cue => 'Previous line';
+  String get video_drop_audio_unsupported =>
+      'Drop subtitle files onto the current video. Audio files cannot be attached here.';
+  String get video_drop_subtitle_only =>
+      'Drop subtitle files onto the current video.';
+  String get video_episode_list => 'Episodes';
+  String get video_episode_list_empty => 'No episodes';
+  String video_favorite_count({required Object count}) => '${count} favorites';
+  String get video_file_error_content =>
+      'Unable to load the video file. Please ensure this file exists and is located in a directory accessible by the application.';
+  String get video_file_not_found => 'Video file not found';
+  String get video_immersive_locked => 'Immersive mode on';
+  String get video_immersive_mode_full => 'Full controls';
+  String get video_immersive_mode_lookup_only => 'Lookup only';
+  String get video_immersive_mode_seek_lookup => 'Shortcut + lookup';
+  String get video_immersive_mode_unlock_only => 'Unlock only';
+  String get video_immersive_unlock => 'Unlock';
+  String get video_immersive_unlocked => 'Immersive mode off';
+  String get video_import_action => 'Import video';
+  String get video_import_confirm => 'Import';
+  String video_import_folder_done({required Object count}) =>
+      'Imported ${count} series';
+  String get video_import_folder_empty => 'No video files found in this folder';
+  String get video_import_pick_folder => 'Import folder (auto-group episodes)';
+  String get video_import_pick_playlist => 'Pick m3u8 playlist';
+  String get video_import_pick_subtitle => 'Pick subtitle';
+  String get video_import_pick_video => 'Pick video file';
+  String get video_import_stream_advanced => 'Advanced (anti-leech headers)';
+  String get video_import_stream_referer => 'Referer (optional)';
+  String get video_import_stream_subtitle_url_field =>
+      'External subtitle URL (optional)';
+  String get video_import_stream_url_field => 'Video stream URL';
+  String get video_import_stream_url_hint =>
+      'Play HLS/m3u8/mp4 stream URL (with optional external subtitle URL and anti-leech Referer/User-Agent)';
+  String get video_import_stream_user_agent => 'User-Agent (optional)';
+  String get video_import_subtitle_optional =>
+      'Optional external subtitle (you can switch between embedded/external subtitles anytime during playback)';
+  String get video_import_title => 'Import video';
+  String get video_jimaku_anime_match => 'Anime match';
+  String get video_jimaku_api_key => 'Jimaku API key';
+  String get video_jimaku_api_key_hint =>
+      'Get a free API key at jimaku.cc/account';
+  String get video_jimaku_api_key_set => 'API key set';
+  String video_jimaku_batch_done(
+          {required Object done, required Object total}) =>
+      'Subtitles fetched: ${done}/${total}';
+  String get video_jimaku_batch_download => 'Download all';
+  String get video_jimaku_batch_title => 'Fetch subtitles for collection';
+  String get video_jimaku_download_failed => 'Download failed';
+  String get video_jimaku_downloaded => 'Subtitle downloaded and applied';
+  String get video_jimaku_episode => 'Episode (optional)';
+  String get video_jimaku_episode_hint => 'Leave empty to list all';
+  String get video_jimaku_fetch => 'Fetch subtitles (Jimaku)';
+  String get video_jimaku_filter => 'Filter results (e.g. WEBRip, BD)';
+  String get video_jimaku_find_sources => 'Find subtitles';
+  String get video_jimaku_language => 'Language';
+  String get video_jimaku_language_all => 'All';
+  String get video_jimaku_no_key => 'Enter your Jimaku API key first';
+  String get video_jimaku_no_results => 'No subtitles found';
+  String get video_jimaku_query => 'Series name';
+  String get video_jimaku_search => 'Search';
+  String get video_jimaku_series => 'Series';
+  String get video_jimaku_show_all_episodes => 'Show all episodes';
+  String get video_jimaku_source => 'Subtitle source';
+  String get video_jimaku_source_hint =>
+      'Choose one Jimaku entry. Season packs are matched by episode automatically.';
+  String video_last_watched({required Object date}) => 'Last watched ${date}';
+  String get video_library_empty => 'No videos imported yet';
+  String get video_load_failed_back => 'Back';
+  String get video_load_failed_generic => 'Couldn\'t load this video.';
+  String get video_load_failed_network =>
+      'Network error - check your connection and try again.';
+  String get video_load_failed_not_found =>
+      'This item was not found in your library.';
+  String get video_load_failed_retry => 'Retry';
+  String get video_load_failed_timeout =>
+      'Connection timed out - the network is slow or the source is rate-limiting. Please try again.';
+  String get video_load_failed_title => 'Video failed to load';
+  String get video_load_failed_unavailable =>
+      'Couldn\'t get the video stream - it may be unavailable, region or age restricted, or the source changed.';
+  String get video_loading_buffering => 'Buffering…';
+  String get video_loading_connecting => 'Connecting to stream…';
+  String get video_loading_preparing => 'Preparing…';
+  String get video_loading_subtitle => 'Downloading subtitles…';
+  String get video_menu_fullscreen => 'Toggle fullscreen';
+  String get video_menu_lock => 'Immersive / lock mode';
+  String get video_menu_play_pause => 'Play / pause';
+  String get video_menu_subtitle_track => 'Subtitle track';
+  String get video_mining_image_mode => 'Video card image';
+  String get video_mining_image_mode_current_frame => 'Screenshot at mining';
+  String get video_mining_image_mode_gif => 'Animated GIF (subtitle clip)';
+  String get video_mining_image_mode_hint =>
+      'Whether the video card cover is an animation of the subtitle clip or a single still frame — and which frame';
+  String get video_mining_image_mode_subtitle_start =>
+      'Screenshot at subtitle start';
+  String get video_next_episode => 'Next episode';
+  String video_playlist_episodes({required Object count}) => '${count} eps';
+  String get video_prev_episode => 'Previous episode';
+  String get video_quality => 'Quality';
+  String get video_quality_auto => 'Auto';
+  String get video_quality_empty => 'No switchable quality for this video';
+  String get video_quality_enhancement_hint =>
+      'Turn this on to sharpen the picture with mpv\'s built-in high-quality scaling. Works for anime as well as live-action shows and movies. To go further with shaders like Anime4K, open Image enhancement while a video is playing and pick a level there.';
+  String get video_quality_load_failed =>
+      'Couldn\'t load qualities for this video.';
+  String get video_quality_loading => 'Loading available qualities…';
+  String video_quality_switched({required Object label}) => 'Quality: ${label}';
+  String get video_rename => 'Rename';
+  String get video_rename_hint => 'Title';
+  String get video_render_skia_fix_confirm_action => 'Restart';
+  String get video_render_skia_fix_confirm_body =>
+      'This disables the Impeller renderer and restarts the app to apply.';
+  String get video_render_skia_fix_confirm_title =>
+      'Switch to Skia and restart?';
+  String get video_render_skia_fix_hint =>
+      'Use if audio plays but the video stays black. Disables Impeller; restarts to apply.';
+  String get video_render_skia_fix_title =>
+      'Screen black? Switch renderer (Skia)';
+  String video_resource_missing_message({required Object title}) =>
+      'The file for 『${title}』 could not be found. Its location may have changed, or the drive may not be connected. You can re-import it, or remove this entry.';
+  String get video_resource_missing_reimport => 'Re-import';
+  String get video_resource_missing_title => 'Video unavailable';
+  String get video_resource_relink_success => 'Video relinked';
+  String get video_scrape_air_date => 'Aired';
+  String get video_scrape_applied => 'Cover applied';
+  String get video_scrape_apply_failed => 'Failed to apply cover';
+  String video_scrape_apply_to_collection({required Object n}) =>
+      'Also apply to all ${n} episodes in this collection';
+  String get video_scrape_batch_close => 'Close';
+  String get video_scrape_confidence_high => 'High match';
+  String get video_scrape_confidence_low => 'Low match';
+  String get video_scrape_confidence_medium => 'Medium match';
+  String get video_scrape_episodes => 'Episodes';
+  String get video_scrape_info => 'Series info';
+  String get video_scrape_info_empty =>
+      'No series info yet. It is fetched automatically in the background; you can also match it manually.';
+  String get video_scrape_no_results => 'No matches found';
+  String get video_scrape_online_match => 'Match cover online';
+  String video_scrape_rating_votes({required Object count}) =>
+      '${count} ratings';
+  String get video_scrape_rescrape => 'Re-scrape';
+  String get video_scrape_search => 'Search';
+  String get video_scrape_search_hint => 'Search by title';
+  String get video_scrape_source_offline => 'Offline';
+  String get video_scrape_summary => 'Synopsis';
+  String get video_scrape_tags => 'Tags';
+  String get video_scrape_use => 'Use';
+  String get video_scrape_view_subject => 'View on Bangumi';
+  String get video_screenshot => 'Screenshot';
+  String video_screenshot_failed_reason({required Object reason}) =>
+      'Screenshot failed: ${reason}';
+  String video_screenshot_ready({required Object file}) =>
+      'Screenshot ready: ${file}';
+  String video_screenshot_saved_to({required Object path}) =>
+      'Screenshot saved: ${path}';
+  String get video_secondary_subtitle_hint =>
+      'Rendered by player (not lookupable)';
+  String get video_secondary_subtitle_sources => 'Secondary subtitle';
+  String get video_setting_auto_play_next => 'Auto-play next episode';
+  String get video_setting_auto_scrape => 'Auto-fetch series info';
+  String get video_setting_auto_scrape_hint =>
+      'Silently fetch cover, synopsis, rating and tags from Bangumi for videos in your library';
+  String get video_setting_av_delay => 'Subtitle sync';
+  String get video_setting_av_delay_hint =>
+      'Positive = subtitle later (cues pushed back); negative = subtitle earlier. Use the slider, +/- buttons, or type a value.';
+  String get video_setting_danmaku_area => 'Display area';
+  String get video_setting_danmaku_area_hint =>
+      'Fraction of the screen height danmaku may occupy, from the top.';
+  String get video_setting_danmaku_block_rules => 'Block words / regex';
+  String get video_setting_danmaku_block_rules_hint =>
+      'One rule per line. Wrap a line in slashes like /pattern/ for a regular expression; otherwise it matches as case-insensitive text.';
+  String get video_setting_danmaku_block_rules_placeholder =>
+      'e.g. spoiler or /pattern/';
+  String get video_setting_danmaku_enabled => 'Show danmaku';
+  String get video_setting_danmaku_enabled_hint =>
+      'Render local or matched danmaku over the video without blocking controls.';
+  String get video_setting_danmaku_font_scale => 'Font size';
+  String get video_setting_danmaku_font_scale_hint =>
+      'Scale the danmaku text size.';
+  String get video_setting_danmaku_manual_match => 'Manual match';
+  String get video_setting_danmaku_manual_match_hint =>
+      'Search Dandanplay by title and pick the episode when auto match fails or is wrong.';
+  String get video_setting_danmaku_max_active => 'Active danmaku limit';
+  String get video_setting_danmaku_max_active_hint =>
+      'Caps comments rendered per frame to keep large files responsive.';
+  String get video_setting_danmaku_online => 'Online Dandanplay match';
+  String get video_setting_danmaku_online_hint =>
+      'When no usable local sidecar exists, match the opened video with Dandanplay and fetch related comments.';
+  String get video_setting_danmaku_opacity => 'Opacity';
+  String get video_setting_danmaku_opacity_hint =>
+      'Overall danmaku transparency.';
+  String get video_setting_danmaku_server_url => 'Danmaku server URL';
+  String get video_setting_danmaku_speed => 'Speed';
+  String get video_setting_danmaku_speed_hint =>
+      'Higher is faster; scrolling danmaku cross the screen sooner.';
+  String get video_setting_double_tap => 'Double-tap seek';
+  String get video_setting_double_tap_hint =>
+      'Double-tap the left or right of the video to seek';
+  String get video_setting_double_tap_off => 'Off';
+  String get video_setting_double_tap_subtitle => 'Subtitle';
+  String get video_setting_immersive_mode => 'Immersive mode';
+  String get video_setting_immersive_mode_hint =>
+      'Controls what remains available after pressing the side lock button';
+  String get video_setting_lock_window_aspect => 'Lock window to video aspect';
+  String get video_setting_long_press_speed => 'Long-press speed';
+  String get video_setting_long_press_speed_hint =>
+      'Temporarily use this speed while holding the video.';
+  String get video_setting_mpv_aspect => 'Aspect ratio';
+  String get video_setting_mpv_aspect_auto => 'Original';
+  String get video_setting_mpv_brightness => 'Brightness';
+  String get video_setting_mpv_channels => 'Channels';
+  String get video_setting_mpv_channels_auto => 'Auto';
+  String get video_setting_mpv_channels_mono => 'Mono';
+  String get video_setting_mpv_channels_stereo => 'Stereo (downmix)';
+  String get video_setting_mpv_contrast => 'Contrast';
+  String get video_setting_mpv_correct_downscale => 'Linear downscaling';
+  String get video_setting_mpv_deband => 'Debanding';
+  String get video_setting_mpv_deinterlace => 'Deinterlace';
+  String get video_setting_mpv_dither => 'Dithering';
+  String get video_setting_mpv_gamma => 'Gamma';
+  String get video_setting_mpv_group_advanced => 'Advanced';
+  String get video_setting_mpv_group_audio => 'Audio';
+  String get video_setting_mpv_group_color => 'Color';
+  String get video_setting_mpv_group_decode => 'Decoding';
+  String get video_setting_mpv_group_geometry => 'Geometry';
+  String get video_setting_mpv_group_playback => 'Playback';
+  String get video_setting_mpv_group_quality => 'Image quality';
+  String get video_setting_mpv_hue => 'Hue';
+  String get video_setting_mpv_hwdec => 'Hardware decoding';
+  String get video_setting_mpv_hwdec_auto => 'Auto (safe)';
+  String get video_setting_mpv_hwdec_copy => 'Auto (copy)';
+  String get video_setting_mpv_hwdec_off => 'Off';
+  String get video_setting_mpv_interpolation => 'Motion interpolation';
+  String get video_setting_mpv_loop => 'Loop file';
+  String get video_setting_mpv_normalize => 'Normalize downmix loudness';
+  String get video_setting_mpv_panscan => 'Pan & scan (crop borders)';
+  String get video_setting_mpv_pitch => 'Preserve pitch when speeding';
+  String get video_setting_mpv_raw =>
+      'Extra mpv options (one per line, key=value)';
+  String get video_setting_mpv_raw_hint =>
+      'Desktop only; options that cannot apply at runtime (e.g. vo, profile) are ignored. SVP/RIFE need external tools and are not supported.';
+  String get video_setting_mpv_reset => 'Reset all';
+  String get video_setting_mpv_rotate => 'Rotation';
+  String get video_setting_mpv_saturation => 'Saturation';
+  String get video_setting_mpv_sigmoid => 'Sigmoid upscaling';
+  String get video_setting_mpv_sigmoid_hint =>
+      'Sigmoid-curve upscaling reduces ringing but costs GPU. Off by default for performance; turn on if you want sharper upscaling.';
+  String get video_setting_mpv_zoom => 'Zoom';
+  String get video_setting_picture_fit => 'Picture scaling';
+  String get video_setting_picture_fit_contain =>
+      'Fit keep ratio add black bars';
+  String get video_setting_picture_fit_cover => 'Fill keep ratio crop edges';
+  String get video_setting_picture_fit_fill => 'Stretch to fill';
+  String get video_setting_picture_fit_hint =>
+      'How the picture fills the player area';
+  String get video_setting_qb_category => 'qBittorrent category';
+  String get video_setting_qb_category_hint =>
+      'Downloads pushed by Fushi get this category; completion tracking only watches it.';
+  String get video_setting_qb_password => 'WebUI password';
+  String get video_setting_qb_url => 'qBittorrent WebUI URL';
+  String get video_setting_qb_url_hint =>
+      'e.g. http://127.0.0.1:8080. Leave empty to disable anime downloading.';
+  String get video_setting_qb_username => 'WebUI username';
+  String get video_setting_secondary_subtitle_obscure =>
+      'Obscure secondary subtitle';
+  String get video_setting_secondary_subtitle_obscure_hint =>
+      'Blur or hide the secondary (translation) subtitle';
+  String get video_setting_seek_seconds => 'Seek seconds';
+  String get video_setting_speed => 'Playback speed';
+  String get video_setting_speed_step => 'Speed step';
+  String get video_setting_subtitle_appearance => 'Subtitle appearance';
+  String get video_setting_subtitle_bg_color => 'Background color';
+  String get video_setting_subtitle_bg_opacity => 'Background opacity';
+  String get video_setting_subtitle_font_size => 'Font size';
+  String get video_setting_subtitle_font_weight => 'Font weight';
+  String get video_setting_subtitle_no_background => 'No background';
+  String get video_setting_subtitle_no_background_hint =>
+      'Make the subtitle background transparent.';
+  String get video_setting_subtitle_obscure => 'Obscure subtitles';
+  String get video_setting_subtitle_obscure_blur => 'Blur';
+  String get video_setting_subtitle_obscure_hide => 'Hide';
+  String get video_setting_subtitle_obscure_hint =>
+      'Choose how subtitles are obscured for listening practice: off, blurred (hover or tap to reveal), or hidden.';
+  String get video_setting_subtitle_obscure_none => 'Off';
+  String get video_setting_subtitle_position => 'Vertical position';
+  String get video_setting_subtitle_reset => 'Reset to default';
+  String get video_setting_subtitle_respect_ass =>
+      'Respect subtitle\'s own style';
+  String get video_setting_subtitle_respect_ass_hint =>
+      'Use the font, color, and outline built into .ass subtitles when available; turn off to force your appearance settings.';
+  String get video_setting_subtitle_shadow => 'Shadow';
+  String get video_setting_subtitle_sync_input => 'Offset (ms)';
+  String get video_setting_subtitle_text_color => 'Text color';
+  String get video_setting_theme => 'Theme';
+  String get video_setting_torrent_active_downloads => 'Max active downloads';
+  String get video_setting_torrent_active_seeds => 'Max active seeds';
+  String get video_setting_torrent_anonymous => 'Anonymous mode';
+  String get video_setting_torrent_antileech => 'Enable anti-leech';
+  String get video_setting_torrent_backend_qb => 'External qBittorrent';
+  String get video_setting_torrent_ban_progress_cheat => 'Ban progress cheat';
+  String get video_setting_torrent_ban_relative_cheat =>
+      'Ban relative progress cheat';
+  String get video_setting_torrent_ban_time => 'Ban duration (min)';
+  String get video_setting_torrent_ban_time_hint => '0 = permanent';
+  String get video_setting_torrent_connections_hint => '0 = engine default';
+  String get video_setting_torrent_dht => 'DHT';
+  String get video_setting_torrent_download_limit => 'Download limit (KB/s)';
+  String get video_setting_torrent_encryption_disabled => 'Disabled';
+  String get video_setting_torrent_encryption_forced => 'Force';
+  String get video_setting_torrent_encryption_prefer => 'Prefer';
+  String get video_setting_torrent_limit_hint => '0 = unlimited';
+  String get video_setting_torrent_listen_port => 'Listen port';
+  String get video_setting_torrent_listen_port_hint => '0 = default (6881)';
+  String get video_setting_torrent_lsd => 'Local peer discovery (LSD)';
+  String get video_setting_torrent_max_connections => 'Max connections';
+  String get video_setting_torrent_max_ip_ports => 'Max ports per IP';
+  String get video_setting_torrent_memory_hint =>
+      'Cap engine memory. 0 = auto (based on device RAM).';
+  String get video_setting_torrent_memory_limit => 'Memory limit (MB)';
+  String get video_setting_torrent_natpmp => 'NAT-PMP port mapping';
+  String get video_setting_torrent_section_antileech => 'Anti-leech';
+  String get video_setting_torrent_section_session => 'Session';
+  String get video_setting_torrent_seed_ratio_hint =>
+      'Stop uploading when uploaded/downloaded reaches this. 0 = unlimited.';
+  String get video_setting_torrent_seed_ratio_limit => 'Seed ratio limit';
+  String get video_setting_torrent_seed_time_hint =>
+      'Stop uploading after seeding this long. 0 = unlimited.';
+  String get video_setting_torrent_seed_time_limit =>
+      'Seed time limit (minutes)';
+  String get video_setting_torrent_upload_enabled => 'Enable upload / seeding';
+  String get video_setting_torrent_upload_enabled_hint =>
+      'Off by default. Seed back to the swarm after downloading.';
+  String get video_setting_torrent_upload_limit => 'Upload limit (KB/s)';
+  String get video_setting_torrent_upload_slots => 'Max upload slots';
+  String get video_setting_torrent_upnp => 'UPnP port mapping';
+  String get video_setting_torrent_zero_default => '0 = default';
+  String get video_setting_torrent_zero_off => '0 = off';
+  String get video_settings_cat_audio => 'Audio';
+  String get video_settings_cat_controls => 'Controls';
+  String get video_settings_cat_danmaku => 'Danmaku';
+  String get video_settings_cat_mpv => 'mpv';
+  String get video_settings_cat_playback => 'Playback';
+  String get video_settings_cat_shaders => 'Image enhancement';
+  String get video_settings_cat_subtitle => 'Subtitles';
+  String get video_settings_title => 'Video settings';
+  String get video_shader_anime4k_hint =>
+      'Pick a preset to download. After downloading, tick it in the list to enable. Desktop only.';
+  String get video_shader_anime4k_title => 'Anime4K recommended shaders';
+  String get video_shader_download_anime4k => 'Download Anime4K presets';
+  String video_shader_download_done({required Object count}) =>
+      'Downloaded ${count} shader(s)';
+  String get video_shader_download_failed => 'Shader download failed';
+  String video_shader_download_partial(
+          {required Object ok, required Object failed}) =>
+      'Downloaded ${ok} shader(s), ${failed} failed';
+  String get video_shader_download_url => 'Download from link';
+  String get video_shader_downloaded_label => 'Downloaded';
+  String get video_shader_downloading => 'Downloading shaders…';
+  String get video_shader_first_use_body =>
+      'For sharper anime playback, open Image enhancement and click Download Anime4K presets. It downloads recommended shaders, then you can tick the installed ones to enable them.';
+  String get video_shader_first_use_download => 'Download and enable';
+  String get video_shader_first_use_title => 'Try Anime4K image enhancement';
+  String get video_shader_import => 'Import shader (.glsl)';
+  String video_shader_import_done({required Object count}) =>
+      'Imported ${count} shader(s)';
+  String get video_shader_import_from_mpv => 'Import from local mpv';
+  String get video_shader_import_from_mpv_hint =>
+      'Search local mpv automatically, or choose an mpv folder when none is found.';
+  String get video_shader_mobile_perf_hint =>
+      'On phones, shaders apply only on the standard GPU render path and effectiveness varies by device GPU; higher tiers may drop frames or heat up. Try Low/Medium first and check the result on your device.';
+  String video_shader_mpv_dir_current({required Object path}) =>
+      'mpv folder: ${path}';
+  String get video_shader_mpv_dir_empty => 'No shaders found in that folder';
+  String get video_shader_mpv_not_found => 'No local mpv shaders found';
+  String get video_shader_mpv_pick_title => 'Import shaders from mpv';
+  String get video_shader_pick_mpv_dir => 'Choose mpv folder';
+  String get video_shader_preset_mode_a_fast =>
+      'For most 1080p anime. Lighter GPU load.';
+  String get video_shader_preset_mode_a_hq =>
+      'Highest quality for 1080p anime. Needs a strong GPU.';
+  String get video_shader_preset_mode_b_fast =>
+      'For older 720p anime with resampling artifacts.';
+  String get video_shader_preset_mode_b_hq =>
+      'High quality for older 720p anime with resampling artifacts. Needs a strong GPU.';
+  String get video_shader_preset_mode_c_fast =>
+      'For old SD (480p) anime with compression smearing.';
+  String get video_shader_preset_mode_c_hq =>
+      'High quality for old SD (480p) anime with compression smearing. Needs a strong GPU.';
+  String get video_shader_quality_tier => 'Quality enhancement';
+  String get video_shader_section_advanced => 'Advanced (manual shaders)';
+  String get video_shader_section_installed => 'Installed shaders';
+  String get video_shader_showing_original => 'Shaders off (original)';
+  String get video_shader_showing_shaded => 'Shaders on';
+  String get video_shader_tier_custom_hint =>
+      'Custom shader selection. Pick a tier above to switch to a preset.';
+  String get video_shader_tier_high => 'High';
+  String get video_shader_tier_high_hint =>
+      'Anime4K HQ. Sharper; best for animation, also usable on live-action (smaller gain). Needs an upper-mid GPU (NVIDIA RTX 4060 / RTX 3070, AMD RX 6700 XT / RX 7700 XT).';
+  String get video_shader_tier_low => 'Low';
+  String get video_shader_tier_low_hint =>
+      'mpv built-in sharpening (ewa_lanczossharp). Works on any video (animation and live-action). No download, lowest GPU load. Pick this on integrated or older cards (NVIDIA GTX 1050, AMD RX 560, Intel iGPU).';
+  String get video_shader_tier_medium => 'Medium';
+  String get video_shader_tier_medium_hint =>
+      'Anime4K Fast. Best for animation, but also works on live-action movies/TV (smaller gain). Runs on mid-range GPUs (NVIDIA GTX 1660 / RTX 3050, AMD RX 6600).';
+  String get video_shader_tier_off => 'None';
+  String get video_shader_tier_off_hint =>
+      'No enhancement. Plays the original video as-is.';
+  String get video_shader_tier_ultra => 'Ultra';
+  String get video_shader_tier_ultra_hint =>
+      'Anime4K Mode A, VL + an extra deblur/denoise restore pass — the strongest reconstruction the video renderer can actually run: the High-tier VL chain plus one more restore pass for compressed sources. Also usable on live-action (smaller gain). Best on a strong GPU (NVIDIA RTX 5090, AMD RX 7900 XTX); pick a lower tier if yours is weaker.';
+  String get video_shader_url_hint => 'Paste a shader .glsl link (e.g. GitHub)';
+  String get video_shaders_empty => 'No shaders imported yet';
+  String get video_stat_by_video => 'By video';
+  String get video_stat_completed => 'Completed';
+  String get video_stat_no_data => 'No video statistics yet';
+  String get video_statistics => 'Video statistics';
+  String get video_subtitle_attach_playlist_hint =>
+      'Open the playlist to attach a subtitle per episode';
+  String video_subtitle_attached_to_video(
+          {required Object title, required Object count}) =>
+      'Subtitle attached to ${title} (${count} cues)';
+  String get video_subtitle_auto_align => 'Auto-align subtitle';
+  String video_subtitle_auto_align_done({required Object ms}) =>
+      'Auto-aligned subtitle by ${ms} ms';
+  String get video_subtitle_auto_align_low_confidence =>
+      'Couldn\'t confidently auto-align (no clear voice match)';
+  String get video_subtitle_auto_align_running => 'Auto-aligning subtitle…';
+  String get video_subtitle_color_note =>
+      'Subtitle colors are set inside the video player.';
+  String video_subtitle_delay_osd({required Object ms}) =>
+      'Subtitle sync: ${ms} ms';
+  String get video_subtitle_filter_all => 'All';
+  String get video_subtitle_filter_favorites => 'Favorites';
+  String get video_subtitle_filter_favorites_empty => 'No favorited lines yet';
+  String get video_subtitle_filter_selected => 'Selected';
+  String get video_subtitle_filter_selected_empty => 'No lines selected yet';
+  String get video_subtitle_graphic_hint =>
+      'Graphic subtitle · shown on video · no word lookup';
+  String video_subtitle_graphic_shown({required Object label}) =>
+      'Graphic subtitle shown on video (no word lookup): ${label}';
+  String get video_subtitle_import_failed => 'Failed to import subtitle';
+  String get video_subtitle_import_file => 'Import subtitle file…';
+  String get video_subtitle_import_unsupported => 'Unsupported subtitle format';
+  String get video_subtitle_list => 'Subtitle list';
+  String get video_subtitle_list_auto_scroll => 'Auto-scroll';
+  String get video_subtitle_list_clear_selection => 'Clear card selection';
+  String get video_subtitle_list_empty => 'No subtitles loaded';
+  String get video_subtitle_list_font_larger => 'Larger text';
+  String get video_subtitle_list_font_smaller => 'Smaller text';
+  String get video_subtitle_list_jump => 'Jump to this line';
+  String get video_subtitle_list_loading => 'Loading subtitles...';
+  String get video_subtitle_list_remove_from_card =>
+      'Remove from card selection';
+  String get video_subtitle_list_select_for_card =>
+      'Select for card (merged into the sentence when mining)';
+  String video_subtitle_load_failed({required Object label}) =>
+      'Couldn\'t load this subtitle (graphic or unsupported track): ${label}';
+  String get video_subtitle_off => 'Turn off subtitles';
+  String get video_subtitle_remote_host => 'Paired device subtitle';
+  String video_subtitle_switched({required Object label}) =>
+      'Subtitle: ${label}';
+  String get video_subtitle_waveform_cue_list => 'Subtitle list';
+  String get video_subtitle_waveform_jump_playhead => 'Jump to playhead';
+  String get video_subtitle_waveform_legend_cue => 'Subtitle cue';
+  String get video_subtitle_waveform_legend_energy => 'Loudness';
+  String get video_subtitle_waveform_legend_playhead => 'Playhead';
+  String get video_subtitle_waveform_open => 'Waveform alignment';
+  String get video_subtitle_waveform_open_hint => 'Tap to zoom in and align';
+  String get video_subtitle_waveform_scroll_hint =>
+      'Drag to scan the timeline; use the controls below to align';
+  String get video_subtitle_waveform_unavailable =>
+      'Waveform unavailable on this device';
+  String get video_subtitle_waveform_zoom_in => 'Zoom in';
+  String get video_subtitle_waveform_zoom_out => 'Zoom out';
+  String get video_subtitle_youtube_empty => 'This caption track has no text';
+  String video_subtitle_youtube_translated({required Object lang}) =>
+      '${lang} (translated)';
+  String video_watched_up_to({required Object time}) => 'Watched to ${time}';
+  String get video_windows_black_flash_notice_body =>
+      'On Windows, video may flash black under heavy GPU load. To reduce the load, try turning off Quality enhancement, Sigmoid upscaling and Debanding above, or switch Hardware decoding to Copy.';
+  String get video_windows_black_flash_notice_title =>
+      'Black flickering on Windows?';
+  String get view_illustrations => 'Illustrations';
+  String get volume_button_page_turning => 'Volume button page turning';
+  String get volume_key_sentence_nav => 'Volume key sentence navigation';
+  String get wheel_page_turn_interval => 'Mouse wheel page-turn interval';
+  String get word_favorite_added => 'Word saved to favorites';
+  String get word_favorite_removed => 'Word removed from favorites';
+  String get yomitan_api_key => 'Yomitan API key (optional)';
+  String get yomitan_api_server => 'Yomitan API server';
+  String get yomitan_api_server_hint =>
+      'Let yomitan-api clients query Fushi\'s dictionaries (port 19633)';
+  String get yomitan_api_server_started => 'Yomitan API server started';
+  String get yomitan_port_kill_action => 'End process and retry';
+  String get yomitan_port_kill_confirm => 'End process';
+  String yomitan_port_kill_confirm_message({required Object process}) =>
+      'The port is currently used by: ${process}';
+  String yomitan_port_kill_confirm_title({required Object port}) =>
+      'End the process using port ${port}?';
+  String yomitan_port_kill_failed({required Object process}) =>
+      'Could not end ${process}. Please end it manually, then retry.';
+  String yomitan_port_kill_protected({required Object process}) =>
+      '${process} is a critical system process — Fushi will not end it. Change the port instead.';
+  String get yomitan_port_kill_self_instance =>
+      'This process is another running instance of this app.';
+  String get game_track_bgm => 'BGM / excluded';
+  String get game_line_audio_no_voice => 'No voice';
+  String get game_line_audio_overlong => 'Overlong clip';
+  String get game_line_audio_overlong_hint =>
+      'Far longer than a single line; may include BGM or other mixed audio';
+  String get game_line_audio_loopback_hint =>
+      'System-mix fallback; may include BGM';
+  String get game_line_recapture => 'Recapture voice';
+  String get game_line_recapture_stop => 'Finish recapture';
+  String get game_line_tracks => 'Tracks for this line';
+  String get game_line_tracks_hint =>
+      'Preview each track at this line\'s moment, then exclude the BGM ones';
+  String get game_line_track_use => 'Use for this line';
+  String get game_user_tags_title => 'My tags';
+  String get anki_lapis_section => 'Lapis card style';
+  String get anki_lapis_font_scale => 'Card font scale';
+  String get anki_lapis_font_scale_hint =>
+      'Scales every Lapis font size; takes effect via "Apply style to Anki".';
+  String get anki_lapis_custom_css => 'Custom CSS';
+  String get anki_lapis_custom_css_hint =>
+      'Appended to the Lapis stylesheet in a protected user section.';
+  String get anki_lapis_apply => 'Apply style to Anki';
+  String get anki_lapis_apply_done =>
+      'Lapis style applied. A backup was saved first.';
+  String anki_lapis_apply_failed({required Object error}) =>
+      'Could not apply style: ${error}';
+  String get anki_lapis_up_to_date => 'Lapis style is already up to date.';
+  String get anki_lapis_foreign_edit_title => 'Template changed in Anki';
+  String get anki_lapis_foreign_edit_body =>
+      'The Lapis template in Anki differs from what Fushi last applied - it may have been edited by hand. Applying will overwrite it; a backup is saved first. Continue?';
+  String get anki_lapis_backup => 'Back up Lapis template';
+  String anki_lapis_backup_done({required Object path}) =>
+      'Template backed up: ${path}';
+  String anki_lapis_backup_failed({required Object error}) =>
+      'Backup failed: ${error}';
+  String get anki_lapis_not_found => 'Lapis note type not found in Anki.';
+  String get anki_lapis_restore => 'Restore from backup';
+  String get anki_lapis_restore_empty => 'No backups yet.';
+  String get anki_lapis_restore_confirm =>
+      'Overwrite the Lapis template in Anki with this backup? The current state is backed up first.';
+  String get anki_lapis_restore_done => 'Template restored.';
+  String anki_lapis_restore_failed({required Object error}) =>
+      'Restore failed: ${error}';
+  String get anki_dedup_section => 'Anki media storage optimization';
+  String get anki_dedup_scan => 'Scan for duplicates (no changes)';
+  String get anki_dedup_run => 'Deduplicate now';
+  String get anki_dedup_report_title => 'Media deduplication report';
+  String anki_dedup_report_body(
+          {required Object groups,
+          required Object removed,
+          required Object size,
+          required Object notes,
+          required Object models,
+          required Object skipped}) =>
+      '${groups} duplicate groups; ${removed} extra copies (${size}); ${notes} notes and ${models} note types rewritten; ${skipped} skipped.';
+  String get anki_dedup_report_dry_note => 'Scan only - nothing was changed.';
+  String get anki_dedup_report_clean => 'No byte-identical duplicates found.';
+  String anki_dedup_failed({required Object error}) =>
+      'Deduplication failed: ${error}';
+  String get anki_dedup_unavailable =>
+      'Requires Anki running on this machine (AnkiConnect).';
+  String get anki_dedup_run_hint =>
+      'Scans first and lists exactly what would be deleted; nothing is removed until you confirm.';
+  String get anki_dedup_plan_title => 'Files to delete';
+  String anki_dedup_plan_intro({required Object count, required Object size}) =>
+      '${count} extra copies, ${size} reclaimable. One copy of each file is kept and every reference is repointed to it first; nothing is ever re-encoded.';
+  String anki_dedup_plan_entry(
+          {required Object file,
+          required Object size,
+          required Object canonical}) =>
+      'Delete ${file} (${size}) - keeping ${canonical}';
+  String get anki_dedup_plan_delete => 'Delete these files';
+  String get anki_dedup_plan_journal =>
+      'A journal of every rewrite and deletion is written to the backup folder first.';
+  String get manga_ocr_default_engine => 'Default OCR engine';
+  String get manga_ocr_engine_auto => 'Automatic (never uploads to Lens)';
+  String get manga_ocr_engine_local_onnx => 'Local ONNX';
+  String get manga_ocr_engine_google_lens => 'Google Lens';
+  String get manga_google_lens_disclosure_title =>
+      'Send manga pages to Google Lens?';
+  String get manga_google_lens_disclosure_body =>
+      'Recognizing this manga sends a reduced JPEG copy of each page without OCR text to Google. Results are cached on this device. The endpoint is unofficial and may stop working. Nothing is uploaded unless you agree.';
+  String get manga_google_lens_disclosure_accept => 'Agree and start OCR';
+  String get manga_google_lens_disclosure_decline => 'Cancel';
+  String get manga_reading_direction => 'Reading direction';
+  String get manga_direction_rtl => 'Right to left';
+  String get manga_direction_ltr => 'Left to right';
+  String get manga_zoom => 'Zoom';
+  String get manga_jump_to_page => 'Jump to page';
+  String get manga_previous_page => 'Previous page';
+  String get manga_next_page => 'Next page';
+  String manga_page_number_hint({required Object total}) =>
+      'Page number (1-${total})';
+  String get manga_import_direct => 'Import without OCR';
+  String get manga_library => 'Manga';
+  String get manga_import_action => 'Import Manga';
+  String get game_scrape_search => 'Search';
+  String get game_scrape_use => 'Use';
+  String get game_scrape_search_failed =>
+      'Search failed. Check your network and try again.';
+  String get game_remove_confirm =>
+      'Remove this game from the library? Game files on disk will not be deleted.';
+  String manga_ocr_acceleration_status({required Object engine}) =>
+      'OCR acceleration: ${engine}';
+  String manga_ocr_acceleration_degraded(
+          {required Object engine, required Object reason}) =>
+      'GPU acceleration unavailable, running OCR on ${engine}: ${reason}';
+  String get media_tracking_status => 'Collection status';
+  String get media_tracking_signup => 'Create a Bangumi account';
+  String get media_tracking_game => 'Game';
+  String get download_rate_limit_lan_exempt =>
+      'Does not apply within your local network; LAN transfers always run at full speed.';
+  String get video_scrape_search_failed =>
+      'Search failed. Tap Search to retry.';
+  String get scrape_reason_network =>
+      'Could not get a valid response from the cover source. Check your network and retry.';
+  String get scrape_reason_server =>
+      'The cover source returned an error. Try again later or pick another candidate.';
+  String get common_more_actions => 'More actions';
+  String get collection_already_has_item =>
+      'This item is already in the collection.';
+  String get drag_drop_manga_archive_unsupported =>
+      'Can\'t import .cbr/.rar comic archives — repack as .cbz or a folder of images.';
+  String get collection_add_failed =>
+      'Couldn\'t add the item to the collection. Please try again.';
+  String get anki_dedup_auto => 'Automatic processing';
+  String get anki_dedup_auto_hint =>
+      'Off by default. When on, Fushi scans at startup (at most once a week) and shows you the list first — nothing is deleted until you confirm.';
+  String get anki_dedup_auto_delete => 'Delete automatically without asking';
+  String get anki_dedup_auto_delete_hint =>
+      'Skips the confirmation dialog. Only byte-identical extra copies are ever removed and nothing is re-encoded, but deletion cannot be undone.';
+  String anki_dedup_auto_found({required Object count, required Object size}) =>
+      'Found ${count} duplicate Anki media files (${size} reclaimable)';
+  String get anki_dedup_auto_review => 'Review';
+  String anki_dedup_auto_done({required Object count, required Object size}) =>
+      'Removed ${count} duplicate Anki media files, ${size} reclaimed';
+  String anki_lapis_backup_done_pruned(
+          {required Object path, required Object count}) =>
+      'Backed up to ${path} (${count} old backups pruned by the 90-day / keep-10 policy)';
+  String get game_audio_fallback_policy => 'Audio fallback';
+  String get game_audio_fallback_full => 'Allow mixed audio';
+  String get game_audio_fallback_clean => 'Clean sources only';
+  String get game_audio_fallback_resource => 'Original resources only';
+  String get game_track_silent_at_cue => 'No sound at this line';
+  String get game_audio_fallback_full_hint =>
+      'Falls back to the system mix when no clean voice is captured; the clip may contain BGM and effects.';
+  String get game_audio_fallback_clean_hint =>
+      'Uses game resource audio and engine PCM only. Lines with no voice are mined without audio instead of picking up BGM.';
+  String get game_audio_fallback_resource_hint =>
+      'Requires the original voice file shipped with the game; mining is refused when it is missing.';
+  String get game_line_audio_suppressed => 'Mix skipped';
+  String get game_line_audio_suppressed_hint =>
+      'No clean audio source produced audio for this line, and the system mix was skipped by your audio fallback policy. This does not mean the line has no voice.';
+  String get video_setting_torrent_limit_lan => 'Apply limits to LAN peers';
+  String get video_setting_torrent_limit_lan_hint =>
+      'Off by default: transfers with peers on your local network ignore the limits above.';
+  String get download_rate_limit_lan_included =>
+      'Also applies within your local network.';
+  String get video_collection_no_local_member =>
+      'No local video in this collection';
+  String video_scrape_online_match_collection({required Object name}) =>
+      'Match cover for ${name}';
+  String get gal_mining_image_mode => 'Galgame card image';
+  String get gal_mining_image_mode_screenshot => 'Screenshot';
+  String get gal_mining_image_mode_hint =>
+      'Galgame scenes barely move within one line, so a still screenshot is usually smaller and just as useful.';
+  String get shortcut_scope_manga => 'Manga';
+  String get shortcut_action_manga_page_forward => 'Next page';
+  String get shortcut_action_manga_page_backward => 'Previous page';
+  String get shortcut_action_manga_dismiss_dict => 'Close dictionary';
+  String get video_setting_jimaku_default_language =>
+      'Default subtitle language';
+  String get video_jimaku_api_key_settings_hint =>
+      'Also editable in Settings → Video → Subtitles';
+  String get anime_download_subs_episodes_unverified =>
+      'Episode numbers are not verified against this pack - subtitles may come from another season.';
+  String get anime_download_subs_deferred =>
+      'Subtitles are matched after download, from the pack\'s actual files';
+  String get anime_download_subs_pending =>
+      'Subtitles: pending until download completes';
+  String get anime_download_subs_unmatched =>
+      'Subtitles: no match for this pack';
+  String get stat_source_breakdown => 'By source';
+  String stat_format_pages({required Object n}) => '${n} pages';
+  String anime_download_subs_season_mismatch({required Object season}) =>
+      'No subtitle entry matches season ${season} of this pack - not auto-selected. Pick one manually if you want it anyway.';
+  String get media_tracking_card_title => 'Bangumi sync';
+  String get media_tracking_not_connected =>
+      'Not connected. Progress stays local and nothing reaches Bangumi.';
+  String get media_tracking_last_sync => 'Last sync';
+  String get media_tracking_never_synced => 'Never synced';
+  String media_tracking_linked_count({required Object n}) => '${n} linked';
+  String media_tracking_pending_count({required Object n}) =>
+      '${n} waiting to send';
+  String get media_tracking_all_synced => 'Everything sent';
+  String get media_tracking_unauthorized =>
+      'Bangumi rejected the access token. Reconnect it in settings.';
+  String get media_tracking_open_subject => 'Open on Bangumi';
+  String get media_tracking_manage_links => 'Manage links';
+  String get media_tracking_last_error => 'Last error';
+  String get shortcut_action_popup_mine_entry => 'Create card (mine)';
+  String get game_upscaling_auto_hint =>
+      'Use Magpie if it is already running; otherwise use the version bundled with Fushi. No download is needed.';
+  String get game_upscaling_installed_only_hint =>
+      'Only use Magpie if it is already installed or running. Do not unpack Fushi\'s bundled version.';
+  String get game_upscaling_off_hint => 'Never upscale the game window.';
+  String get game_helper_bundle_missing =>
+      'The galgame hook helper is not bundled with this build. Update Fushi to get it.';
+  String game_upscaling_pick_title({required Object name}) =>
+      'Window upscaling for ${name}';
+  String get game_upscaling_pick_body =>
+      'Upscales this game window with Magpie while a capture session is running. Set per game - it only helps for games whose native resolution is lower than your screen. Uses your GPU.';
+  String get game_upscaling_hint_not_installed =>
+      'Magpie is not ready. Set window upscaling to Auto to use the copy bundled with Fushi; if it still does not start, update or reinstall Fushi.';
+  String media_source_count_manga({required Object n}) => '${n} volumes';
+  String get library_view_shelf => 'Shelf';
+  String get library_view_browse => 'Discover';
+  String get library_view_media => 'Library';
+  String get scrape_failure_detail_show => 'Show details';
+  String get scrape_failure_detail_hide => 'Hide details';
+  String get media_tracking_retry_mapping => 'Retry matching';
+  String get media_tracking_retry_matched =>
+      'Matched and queued current progress';
+  String get media_tracking_retry_no_match =>
+      'No match found. Try manual linking.';
+  String get game_statistics => 'Game statistics';
+  String get game_stat_by_game => 'By game';
+  String get stat_clear_all_game_message =>
+      'Clear all game play time and session counts? Your game library and activity timeline are kept. This cannot be undone.';
+  String batch_selection_stale_skipped(
+          {required Object m, required Object n}) =>
+      'Skipped ${m} of ${n} selected items that no longer exist';
+  String get game_text_thread_unset =>
+      'No thread selected — pick one to start capturing';
+  String get media_tracking_watched_show => 'View all watched anime';
+  String get media_tracking_watched_title => 'Watched on Bangumi';
+  String get media_tracking_watched_empty =>
+      'No anime is marked as watched on this Bangumi account.';
+  String media_tracking_watched_load_failed({required Object error}) =>
+      'Could not load watched anime: ${error}';
+  String media_tracking_watched_progress({required Object n}) =>
+      'Watched ${n} episodes';
+  String get media_tracking_manual_required => 'Needs manual link';
+  String media_tracking_manual_required_count({required Object n}) =>
+      '${n} items need manual links';
+  String get media_tracking_manual_required_hint =>
+      'These local items already have progress but are not linked to Bangumi.';
+  String get media_tracking_no_local_history =>
+      'No local watch, reading, or game progress needs linking.';
+  String media_tracking_more_manual_required({required Object n}) =>
+      '${n} more items need manual links';
+  String get manga_import_hint =>
+      'Pick a manga folder, a .cbz/.zip page archive, or a .mokuro file.';
+  String get manga_import_pick_file => 'Pick manga file';
+  String get manga_import_pick_folder => 'Pick manga folder';
+  String get manga_import_missing_input => 'Pick a manga file or folder first.';
+  String get manga_import_detected_title => 'This looks like manga';
+  String get manga_import_detected_confirm => 'Import as manga';
+  String manga_import_detected_message({required Object name}) =>
+      '"${name}" is a manga file, so it will go through the manga importer instead of the book importer.';
+  String get video_jimaku_source_loading => 'Checking subtitle availability...';
+  String get video_jimaku_source_failed =>
+      'Could not check subtitle availability. Try searching again.';
+  String get video_jimaku_language_unknown => 'Language not labeled';
+  String video_jimaku_source_summary(
+          {required Object files,
+          required Object episodes,
+          required Object languages}) =>
+      '${files} subtitle files · ${episodes} episodes · ${languages}';
+  String video_jimaku_episode_unlabeled(
+          {required Object episode, required Object count}) =>
+      'No subtitle labeled episode ${episode}; ${count} unlabeled files may still match';
+  String video_jimaku_episode_unavailable({required Object episode}) =>
+      'No subtitle found for episode ${episode}';
+  String video_jimaku_episode_available(
+          {required Object count, required Object languages}) =>
+      '${count} subtitles available · ${languages}';
+  String get video_scrape_manual_match_hint =>
+      'Manual matching replaces this episode cover and saves its source mapping and title metadata. All available sources are searched together and results are ranked by match confidence.';
+  String get video_scrape_collection_match_hint =>
+      'This only replaces the collection cover. Episode covers and title metadata are not changed. All available sources are searched together and results are ranked by match confidence.';
+  String get video_scrape_apply_to_collection_hint =>
+      'This writes the same cover to every episode. Leave it off unless that is intentional.';
+  String get manga_online_source_disabled =>
+      'This internet source is disabled. Enable it in Sources to browse the catalog.';
+  String get selection_web_search => 'Search the web';
+  String get selection_web_search_unavailable => 'No app can search the web.';
+  String get selection_share_failed => 'Could not open the share sheet.';
+  String video_subtitle_youtube_auto_generated({required Object lang}) =>
+      '${lang} (auto-generated)';
+  String get anki_dedup_progress_title => 'Deduplicating media';
+  String anki_dedup_progress_scanning({required Object count}) =>
+      'Scanning media folder… (${count} files found)';
+  String anki_dedup_progress_hashing(
+          {required Object done, required Object total}) =>
+      'Comparing same-size files… (${done} / ${total})';
+  String anki_dedup_progress_resolving(
+          {required Object done, required Object total}) =>
+      'Processing duplicates… (${done} / ${total})';
+  String anki_dedup_progress_freed({required Object size}) =>
+      'Freed ${size} so far';
+  String get anki_dedup_cancelling => 'Cancelling…';
+  String get anki_dedup_cancelled =>
+      'Deduplication cancelled; completed changes are kept.';
+  String get anki_dedup_report_cancelled_note =>
+      'Cancelled early — the numbers below only cover what was completed.';
+  String get anki_dedup_plan_busy_note =>
+      'Anki may be unresponsive while this runs; avoid using Anki until it finishes.';
+  String get video_setting_subtitle_position_secondary =>
+      'Secondary subtitle position';
+  String get dict_download_learning_language => 'Learning language';
+  String get dict_category_bilingual => 'Bilingual';
+  String get dict_category_monolingual => 'Monolingual';
+  String get shortcut_action_video_hold_speed => 'Hold for temporary speed';
+  String get handlebar_phonetic_transcriptions => 'Phonetic transcriptions';
+  String get sync_progress_preparing => 'Preparing sync';
+  String get sync_progress_collections => 'Syncing collections';
+  String get sync_progress_book => 'Syncing book';
+  String sync_progress_book_titled({required Object title}) =>
+      'Syncing ${title}';
+  String sync_last_completed({required Object count}) =>
+      'Last sync: done (${count} channels)';
+  String get sync_last_no_channels =>
+      'Last sync: nothing synced - no connected sync channel';
+  String get sync_last_nothing => 'Last sync: nothing to sync';
+  String get sync_last_auto_disabled => 'Last sync: skipped - auto sync is off';
+  String get sync_last_cooled_down => 'Last sync: skipped - synced recently';
+  String get sync_last_failed => 'Last sync: failed';
+  String anime_download_no_results_detail(
+          {required Object query, required Object filters}) =>
+      'The service responded successfully but returned 0 items. Query: ${query}; filters: ${filters}. Try another title or loosen the filters.';
+  String get anime_download_streaming_ready =>
+      'In library · download continues';
+  String get anime_download_unfiltered => 'No Trusted filter';
+  String get interconnect_enable_footer =>
+      'How to use: on the device that holds your library, turn on the sync server switch below; on your other device, add the address of that server to pair with it. A device can act as only one role at a time — server or client.';
+  String get interconnect_peer_list_title => 'Added peers';
+  String get interconnect_peer_list_empty =>
+      'No peers added yet. Pick a discovered device from the LAN device list below to pair automatically, or add a peer address manually.';
+  String get anki_lapis_visual_editor => 'Visual editor';
+  String get anki_lapis_visual_editor_hint =>
+      'Preview the Lapis card, then change each area\'s style, position and field mapping without writing CSS.';
+  String get anki_lapis_visual_front => 'Front';
+  String get anki_lapis_visual_back => 'Back';
+  String get anki_lapis_visual_preview => 'Lapis card preview';
+  String get anki_lapis_visual_select_field => 'Choose what to edit';
+  String get anki_lapis_visual_reset_field => 'Reset field';
+  String anki_lapis_visual_font_size({required Object percent}) =>
+      'Font size: ${percent}%';
+  String get anki_lapis_visual_bold => 'Bold';
+  String get anki_lapis_visual_alignment => 'Alignment';
+  String get anki_lapis_visual_color => 'Text color';
+  String get anki_lapis_visual_default => 'Default';
+  String get anki_lapis_visual_advanced_css => 'Advanced CSS';
+  String get anki_lapis_visual_field_expression => 'Word';
+  String get anki_lapis_visual_field_reading => 'Reading';
+  String get anki_lapis_visual_field_sentence => 'Sentence';
+  String get anki_lapis_visual_field_primary_definition => 'Primary definition';
+  String get anki_lapis_visual_field_glossaries => 'Other definitions';
+  String get anki_lapis_visual_target_card_content => 'Card content';
+  String get anki_lapis_visual_target_definition => 'Definition';
+  String get anki_lapis_visual_target_inside_definition => 'Inside definition';
+  String get anki_lapis_visual_field_definition_info => 'Definition indicator';
+  String get anki_lapis_visual_field_definition_box => 'Definition box';
+  String get anki_lapis_visual_field_definition_content => 'Whole definition';
+  String get anki_lapis_visual_field_selected_definition =>
+      'Selected definition';
+  String get anki_lapis_visual_field_dictionary_entry => 'Dictionary entry';
+  String get anki_lapis_visual_field_dictionary_name => 'Dictionary name';
+  String get anki_lapis_visual_field_definition_example => 'Definition example';
+  String get anki_lapis_visual_line_height => 'Line height';
+  String get anki_lapis_visual_background_color => 'Background highlight';
+  String get anki_lapis_visual_box_layout => 'Box appearance';
+  String get anki_lapis_visual_border_width => 'Border';
+  String get anki_lapis_visual_border_color => 'Border color';
+  String get anki_lapis_visual_corner_radius => 'Corner radius';
+  String get anki_lapis_visual_padding => 'Inner spacing';
+  String get anki_lapis_visual_margin => 'Outer spacing';
+  String get anki_lapis_visual_field_definition_info_note =>
+      'Only visible on cards that keep more than one definition block; single-definition cards hide it.';
+  String get anki_lapis_visual_field_dictionary_name_note =>
+      'On Fushi cards this label also carries the part-of-speech tags, so the two cannot be styled separately.';
+  String get game_upscaling_error_bundle_missing =>
+      'Fushi installation is incomplete: the bundled Magpie component is missing. Reinstall or update Fushi.';
+  String get game_upscaling_error_bundle_invalid =>
+      'The bundled Magpie component is corrupted or did not pass verification. Reinstall or update Fushi.';
+  String download_test_connection_failed_reason({required Object message}) =>
+      'Connection failed: ${message}';
+  String get delete_disclosure_will_delete_label => 'Will be deleted';
+  String get delete_disclosure_will_keep_label => 'Will be kept';
+  String get delete_disclosure_book_records =>
+      'Reading progress, bookmarks, tags and subtitle data';
+  String get delete_disclosure_book_extracted =>
+      'The book files Fushi extracted into its own storage';
+  String get delete_disclosure_book_audiobook =>
+      'The audio and aligned subtitles of the attached audiobook, if any';
+  String get delete_disclosure_source_kept =>
+      'The original files you imported (book, subtitles, audio)';
+  String get delete_disclosure_stats_kept => 'Reading statistics';
+  String get delete_disclosure_audiobook_files =>
+      'The audio and aligned subtitles Fushi copied into its own storage';
+  String get delete_disclosure_audiobook_book_kept =>
+      'The book itself and its reading progress';
+  String get delete_disclosure_audiobook_source_kept =>
+      'The original audio files you imported';
+  String get audiobook_delete => 'Delete audiobook';
+  String get audiobook_delete_confirm =>
+      'Delete the attached audiobook? Its audio files are removed from this device.';
+  String get delete_collection_confirm =>
+      'Only the grouping is removed. The items in it are kept.';
+  String get shortcut_action_video_enter_caret =>
+      'Enter subtitle lookup cursor';
+  String get audiobook_export_clip_too_long =>
+      'Selection audio is too long to export (limit: 5 minutes)';
+  String get sync_err_forbidden =>
+      'The server refused this request. Your sign-in is fine - check the server\'s settings.';
+  String sync_err_forbidden_detail({required Object reason}) =>
+      'The server refused this request: ${reason} (your sign-in is fine)';
+  String get collection_group_extras => 'Extras & PV';
+  String collection_group_season({required Object n}) => 'Season ${n}';
+  String get collection_sort_by_season => 'Sort by season';
+  String get mining_animated_format_avif => 'AVIF (smallest)';
+  String get mining_animated_format_webp => 'WebP (wider support)';
+  String get mining_animated_format_gif => 'GIF (most compatible)';
+  String get video_mining_animated_format => 'Video card animation format';
+  String get video_mining_animated_format_hint =>
+      'AVIF is far smaller than GIF at the same quality, and its top quality tier allows a higher resolution and frame rate than GIF or WebP. Falls back to GIF automatically when the bundled encoder cannot produce it.';
+  String get gal_mining_animated_format => 'Game card animation format';
+  String get gal_mining_animated_format_hint =>
+      'Same formats as video cards, stored separately: a galgame frame barely moves within one line, so the trade-off differs.';
+  String get scrape_all => 'Scrape all';
+  String scrape_all_title({required Object kind}) => 'Scrape all ${kind}';
+  String scrape_all_running({required Object current, required Object total}) =>
+      'Scraping ${current} / ${total}';
+  String scrape_all_item({required Object title}) => 'Processing: ${title}';
+  String scrape_all_done(
+          {required Object applied,
+          required Object review,
+          required Object skipped,
+          required Object failed}) =>
+      'Done: ${applied} applied, ${review} need review, ${skipped} skipped, ${failed} failed';
+  String get scrape_all_empty =>
+      'There are no items to scrape in this library.';
+  String get scrape_all_start => 'Start';
+  String collection_hero_total_episodes({required Object count}) =>
+      '${count} episodes';
+  String get video_scrape_collection_rename_title => 'Rename this collection?';
+  String get video_scrape_collection_rename_body =>
+      'The matched entry has a different name. Renaming is optional: the cover and details are saved either way, and a rename also replaces the old name on your other synced devices.';
+  String video_scrape_collection_rename_from({required Object name}) =>
+      'Current name: ${name}';
+  String video_scrape_collection_rename_to({required Object name}) =>
+      'New name: ${name}';
+  String get video_scrape_collection_rename_keep => 'Keep current name';
+  String get video_scrape_collection_rename_confirm => 'Rename';
+  String get download_task_toggle_failed => 'Pause/resume failed';
+  String download_subscription_start_episode({required Object episode}) =>
+      'Start from episode ${episode}';
+  String get download_task_eta => 'ETA';
+  String get download_task_ratio => 'Ratio';
+  String get download_task_status_downloading => 'Downloading';
+  String get download_task_status_seeding => 'Seeding';
+  String get download_task_status_completed => 'Completed';
+  String get download_task_status_paused => 'Paused';
+  String get download_task_status_queued => 'Queued';
+  String get download_task_status_stalled => 'Stalled';
+  String get download_task_status_checking => 'Checking';
+  String get download_task_status_metadata => 'Fetching metadata';
+  String get download_task_status_moving => 'Moving';
+  String get download_task_status_error => 'Error';
+  String get download_task_pause => 'Pause';
+  String get download_task_resume => 'Resume';
+  String get download_airing_calendar_title => 'Airing calendar';
+  String get download_airing_calendar_show_all => 'Show all this season';
+  String get download_airing_calendar_empty_guidance =>
+      'Nothing to show yet: bind a collection to AniList or add a download subscription, and their airing times will appear here.';
+  String get download_airing_calendar_error =>
+      'Failed to load the airing schedule';
+  String get download_airing_calendar_in_library => 'In library';
+  String get download_airing_calendar_subscribed => 'Subscribed';
+  String download_airing_calendar_episode_label({required Object episode}) =>
+      'Ep ${episode}';
+  String get download_airing_calendar_week_prev => 'Previous week';
+  String get download_airing_calendar_week_next => 'Next week';
+  String get download_airing_calendar_week_empty => 'Nothing airing this week';
+  String get video_jimaku_format => 'Format';
+  String get video_jimaku_format_all => 'All';
+  String get video_setting_tmdb_key => 'Custom TMDB API key';
+  String get video_setting_tmdb_key_hint =>
+      'Optional. Leave empty to use the built-in key. Fill in your own only if scraping stops working or you want to use your own quota.';
+  String get about_tmdb_attribution =>
+      'This application uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.';
+  String get anki_lapis_visual_layout => 'Layout';
+  String get anki_lapis_visual_layout_hint =>
+      'Uses Lapis\' own layout switches, so desktop and mobile Anki both follow it.';
+  String get anki_lapis_visual_layout_sentence => 'Sentence position';
+  String get anki_lapis_visual_layout_sentence_above => 'Above definitions';
+  String get anki_lapis_visual_layout_sentence_below => 'Below definitions';
+  String get anki_lapis_visual_layout_picture => 'Image position';
+  String get anki_lapis_visual_layout_picture_right => 'Right of the word';
+  String get anki_lapis_visual_layout_picture_left => 'Left of the word';
+  String get anki_lapis_visual_layout_picture_alt => 'Inside the sentence';
+  String get anki_lapis_visual_layout_audio => 'Audio buttons';
+  String get anki_lapis_visual_layout_audio_header => 'Next to the reading';
+  String get anki_lapis_visual_layout_audio_fixed => 'Pinned to the bottom';
+  String get anki_lapis_visual_layout_audio_alt => 'Inside the sentence';
+  String get anki_lapis_visual_mapping_hint =>
+      'Anki fields that fill the selected area. Changes are saved together with the style.';
+  String get anki_lapis_visual_mapping_none =>
+      'This area is drawn by the template itself and has no field of its own.';
+  String get anki_lapis_visual_color_custom => 'Custom';
+  String get anki_lapis_visual_color_picker_title => 'Pick a color';
+  String get video_scrape_tmdb_key_hint => 'Enter TMDB API key';
+  String get video_scrape_tmdb_key_required => 'TMDB requires an API key';
+  String get video_scrape_tmdb_key_save => 'Save';
+  String get video_scrape_tmdb_key_empty =>
+      'Save a TMDB API key, then press Search. Results from other sources are not shown here.';
+  String get download_detail_tab_overview => 'Overview';
+  String get download_detail_tab_files => 'Files';
+  String get download_detail_tab_peers => 'Peers';
+  String get download_detail_tab_trackers => 'Trackers';
+  String get download_detail_backend_unsupported =>
+      'Not supported by current download backend';
+  String get download_detail_task_gone => 'Task not found in backend';
+  String get download_detail_task_missing =>
+      'The original download backend is online, but this torrent is no longer present. Live peers and trackers cannot be recovered; persisted task information is shown.';
+  String get download_detail_section_transfer => 'Transfer';
+  String get download_detail_section_network => 'Network';
+  String get download_detail_section_task => 'Task';
+  String get download_detail_seeds_label => 'Seeds';
+  String get download_detail_leechers_label => 'Leechers';
+  String get download_detail_connections_label => 'Connections';
+  String get download_detail_content_path_label => 'Content path';
+  String get download_detail_time_active => 'Active time';
+  String get download_detail_time_seeding => 'Seeding time';
+  String get download_detail_total_size_label => 'Total size';
+  String get download_detail_listen_port => 'Listen port';
+  String get download_detail_dht_nodes => 'DHT nodes';
+  String get download_detail_hash_label => 'Info hash';
+  String get download_detail_port_mapping => 'Port mapping';
+  String get download_detail_session_rates => 'Session rates';
+  String get download_detail_pieces_label => 'Pieces';
+  String get download_detail_priority_skip => 'Don\'t download';
+  String get download_detail_raw_state_label => 'Backend state';
+  String get download_detail_remaining_label => 'Remaining';
+  String get download_detail_save_path_label => 'Save path';
+  String get download_detail_priority_normal => 'Normal';
+  String get download_detail_priority_high => 'High';
+  String get download_detail_tracker_working => 'Working';
+  String get download_detail_tracker_updating => 'Updating';
+  String get download_detail_tracker_not_contacted => 'Not contacted yet';
+  String get download_detail_tracker_not_working => 'Not working';
+  String get download_detail_tracker_disabled => 'Disabled';
+  String get download_detail_no_peers => 'No connected peers';
+  String get download_detail_no_trackers => 'No trackers';
+  String get video_filter_year => 'Year';
+  String get video_filter_year_unknown => 'Unknown year';
+  String get video_filter_watch_status => 'Watch status';
+  String get video_filter_watch_status_unwatched => 'Unwatched';
+  String get video_filter_watch_status_watching => 'Watching';
+  String get video_filter_watch_status_completed => 'Completed';
+  String get video_hero_detail_view => 'Details';
+  String video_hero_episodes_watched({required Object n}) => '${n} eps watched';
+  String get video_recently_added_badge => 'NEW';
+  String get video_air_season_winter => 'Winter';
+  String get video_air_season_spring => 'Spring';
+  String get video_air_season_summer => 'Summer';
+  String get video_air_season_autumn => 'Fall';
+  String get delete_scope_no_channel =>
+      'No sync configured - this deletion only affects this device';
+  String get mihon_sources_title => 'Manga sources';
+  String get mihon_extensions_title => 'Manga extensions';
+  String get mihon_store_add => 'Add extension store';
+  String get mihon_store_url => 'Extension store URL';
+  String get mihon_store_empty =>
+      'No extension stores yet. Add a compatible Mihon store or import a local APK.';
+  String get mihon_extension_import => 'Import local APK';
+  String get mihon_extension_warning =>
+      'Third-party extensions execute code with Fushi permissions. Only install extensions and signers you trust.';
+  String get mihon_extension_install => 'Install';
+  String get mihon_extension_update => 'Update';
+  String get mihon_extension_uninstall => 'Uninstall';
+  String get mihon_extension_installed => 'Installed';
+  String get mihon_extension_disabled => 'Disabled';
+  String get mihon_source_empty =>
+      'No enabled manga sources. Install and enable an extension first.';
+  String get mihon_source_popular => 'Popular';
+  String get mihon_source_latest => 'Latest';
+  String get mihon_source_search => 'Search manga';
+  String get mihon_source_preferences => 'Source preferences';
+  String get mihon_source_clear_data => 'Clear source data';
+  String get mihon_source_clear_data_hint =>
+      'Clears this source preferences and cookies. Installed extensions are kept.';
+  String get mihon_signer_trust_title => 'Trust extension signer?';
+  String get mihon_signer_fingerprint => 'Signer SHA-256';
+  String get mihon_runtime_unavailable =>
+      'Mihon extensions are unavailable on this platform.';
+  String get mihon_extension_incompatible => 'Incompatible extension';
+  String get mihon_store_refresh => 'Refresh stores';
+  String get mihon_source_browse_mokuro => 'Built-in Mokuro catalog';
+  String get mihon_source_no_results => 'No manga found.';
+  String get mihon_chapters_title => 'Chapters';
+  String get mihon_extension_language_filter => 'Language';
+  String get mihon_extension_language_all => 'All languages';
+  String get mihon_filter_ignore => 'Ignore';
+  String get mihon_filter_include => 'Include';
+  String get mihon_filter_exclude => 'Exclude';
+  String get mihon_filter_ascending => 'Ascending';
+  String get mihon_filter_descending => 'Descending';
+  String get mihon_add_to_bookshelf => 'Add to manga shelf';
+  String get mihon_in_bookshelf => 'In manga shelf';
+  String get media_source_local_roots => 'Local scan roots';
+  String scrape_all_confirm({required Object n}) =>
+      'Match all ${n} library items by title. Only high-confidence matches are applied automatically — videos are scored on the title together with year, type and other signals, while books and games require a unique exact title. Covers you chose yourself are never overwritten (local images you set, entries you picked in the match dialog, and poster files placed in the folder), and ambiguous results stay pending for manual review.';
+  String get collection_related_title => 'Related works';
+  String get collection_relation_prequel => 'Prequel';
+  String get collection_relation_sequel => 'Sequel';
+  String get collection_relation_side_story => 'Side story';
+  String get collection_relation_movie => 'Movie';
+  String get collection_relation_spin_off => 'Spin-off';
+  String get collection_relation_other => 'Related';
+  String get collection_relation_download => 'Download';
+  String get collection_relation_bind => 'Bind to existing collection';
+  String get collection_episode_rename => 'Rename episodes from scrape';
+  String get collection_episode_rename_title => 'Rename episodes';
+  String get collection_episode_rename_empty => 'Nothing to rename';
+  String get collection_episode_download => 'Download this episode';
+  String get collection_episode_fill_missing => 'Fill missing episodes';
+  String get collection_episode_no_missing => 'No missing episodes';
+  String get collection_split_by_season => 'Split by season';
+  String get collection_split_keep_original => 'Keep the original collection';
+  String get collection_split_confirm => 'Split';
+  String get collection_episode_open_bangumi => 'Open this episode on Bangumi';
+  String collection_relation_bound({required Object name}) =>
+      'Bound to ${name}';
+  String collection_episode_rename_apply({required Object n}) =>
+      'Rename ${n} episodes';
+  String collection_split_done({required Object n}) =>
+      'Split into ${n} collections';
+  String collection_episode_watched_at({required Object position}) =>
+      'Watched to ${position}';
+  String collection_episode_bangumi_open_failed({required Object error}) =>
+      'Could not resolve the episode on Bangumi: ${error}';
+  String collection_episode_rename_partial(
+          {required Object n, required Object m}) =>
+      'Renamed ${n} episodes, ${m} failed';
+  String get collection_episode_bangumi_not_found =>
+      'Episode not found on Bangumi; opened the subject page instead';
+  String get sync_err_browser_timeout =>
+      'The browser never returned the authorization. Retry, and make sure your proxy lets 127.0.0.1 through.';
+  String get manga_rescan_run => 'Box OCR';
+  String get manga_rescan_hint =>
+      'Drag a box around the text you want to recognize.';
+  String get manga_rescan_model_missing =>
+      'Download the manga OCR models in Settings first.';
+  String get manga_rescan_running => 'Recognizing the selected box...';
+  String get manga_rescan_failed => 'Box OCR failed';
+  String get manga_rescan_empty => 'No text was recognized in this box.';
+  String get manga_rescan_local_source => 'Local OCR';
+  String get manga_rescan_lookup => 'Look up';
+  String get manga_rescan_writeback => 'Save to page';
+  String get manga_rescan_writeback_done => 'Saved to manga.json';
+  String get manga_rescan_writeback_failed => 'Failed to save to manga.json';
+  String get stat_hourly_band_epub => 'Text books';
+  String get stat_hourly_band_pdf => 'PDF';
+  String get stat_hourly_band_manga => 'Manga';
+  String get stat_hourly_band_unattributed => 'Unsplit history';
+  String get stat_hourly_unattributed_note =>
+      'Hours recorded before per-format tracking existed have no type stored, so they cannot be split. They are shown as a combined total and are not assigned to any type.';
+  String get book_convert_to_manga_action => 'Convert to manga';
+  String get book_convert_to_book_action => 'Convert back to book';
+  String get book_convert_running => 'Converting…';
+  String get book_convert_done => 'Conversion finished';
+  String get book_convert_failed => 'Conversion failed';
+  String get book_convert_blocked_already =>
+      'This book is already in that format.';
+  String get book_convert_blocked_text_only =>
+      'This is a text book with no page images. Only scanned image books can become manga.';
+  String get book_convert_blocked_no_original =>
+      'This manga was imported from images, so there is no original book to convert back to.';
+  String get book_convert_blocked_source_missing =>
+      'The source files are gone from disk.';
+  String manga_online_retry_waiting(
+          {required Object attempt, required Object total}) =>
+      'Retrying automatically (${attempt}/${total})';
+  String get manga_ocr_wizard_already_ocred =>
+      'This volume already has OCR data on every page. Running OCR again would overwrite it.';
+  String get shortcut_scope_universal => 'Back / Exit';
+  String get game_attach_and_capture => 'Attach and capture';
+  String get remote_delete_failed => 'Could not delete it on the paired device';
+  String get remote_delete_unsupported =>
+      'The paired device is too old to support remote deletion. Update Fushi there first.';
+  String get anki_lapis_visual_blocks => 'Custom areas';
+  String get anki_lapis_visual_blocks_hint =>
+      'Show existing fields somewhere else on the card. Display only: no Anki field is added or deleted.';
+  String get anki_lapis_visual_block_add => 'Add area';
+  String get anki_lapis_visual_block_delete => 'Delete area';
+  String anki_lapis_visual_block_name({required Object index}) =>
+      'Area ${index}';
+  String get anki_lapis_visual_block_anchor => 'Position on the card';
+  String get anki_lapis_visual_block_anchor_top => 'Top of the card';
+  String get anki_lapis_visual_block_anchor_above_sentence => 'Below the word';
+  String get anki_lapis_visual_block_anchor_above_definition =>
+      'Below the sentence';
+  String get anki_lapis_visual_block_anchor_below_definition =>
+      'Below the definitions';
+  String get anki_lapis_visual_block_anchor_bottom => 'Bottom of the card';
+  String get anki_lapis_visual_block_fields => 'Fields shown here';
+  String get anki_lapis_visual_block_no_fields => 'No fields selected yet';
+  String get anki_lapis_visual_block_needs_note_type =>
+      'Pick a note type first to choose fields.';
+  String get anki_lapis_restore_factory => 'Restore factory Lapis';
+  String get anki_lapis_restore_factory_hint =>
+      'Overwrite the Lapis note type in Anki with the version bundled in Fushi and clear every customisation here.';
+  String get anki_lapis_restore_factory_confirm =>
+      'This overwrites the Lapis styling and card templates in Anki with Fushi\'s bundled version, and resets font size, custom CSS and custom areas. A backup of the current state is saved first. Card data is not touched.';
+  String get anki_lapis_restore_factory_done =>
+      'Lapis restored to factory defaults';
+  String anki_lapis_restore_factory_failed({required Object error}) =>
+      'Restore failed: ${error}';
+  String get anki_lapis_visual_select_field_hint =>
+      'Click any part of the preview, or pick one below. What you pick is what the controls underneath edit.';
+  String get anki_lapis_visual_editing_now => 'Editing';
+  String get mihon_extension_preview => 'Preview';
+  String get mihon_extension_preview_warning =>
+      'Previewing runs this extension\'s code before it is installed. Nothing is added to your library until you choose to install.';
+  String get mihon_extension_preview_discard => 'Discard';
+  String get mihon_extension_preview_source_select =>
+      'Pick a source to preview';
+  String get mihon_extension_sources_included => 'Included sources';
+  String get mihon_extension_preview_read_only =>
+      'Preview is read-only. Install the extension to open and read.';
+  String get selection_copy_empty => 'No text selected.';
+  String get video_library_empty_source_hint =>
+      'Add a video folder from Sources to build your library';
+  String get video_source_scrape_action => 'Scrape this source';
+  String get video_source_scrape_settings => 'Source scrape settings';
+  String get video_source_scrape_provider => 'Primary metadata source';
+  String get video_source_scrape_provider_inherit => 'Use global default';
+  String get video_source_scrape_auto_after_scan => 'Scrape after scanning';
+  String get video_source_scrape_auto_after_scan_hint =>
+      'Run metadata scraping automatically after this source is scanned';
+  String get video_source_scrape_write_nfo => 'Write NFO files';
+  String get video_source_scrape_write_images => 'Write image files';
+  String get video_source_scrape_use_fanart => 'Use Fanart images';
+  String video_source_scrape_progress(
+          {required Object phase,
+          required Object current,
+          required Object total}) =>
+      '${phase} · ${current}/${total}';
+  String video_source_scrape_last_summary(
+          {required Object status,
+          required Object succeeded,
+          required Object pending,
+          required Object failed}) =>
+      'Last scrape (${status}): ${succeeded} succeeded, ${pending} pending, ${failed} failed';
+  String get video_source_scrape_phase_planning => 'Planning';
+  String get video_source_scrape_phase_recognizing => 'Matching';
+  String get video_source_scrape_phase_fetching => 'Fetching metadata';
+  String get video_source_scrape_phase_applying => 'Saving metadata';
+  String get video_source_scrape_phase_writing_sidecars => 'Writing sidecars';
+  String get video_source_scrape_status_interrupted => 'Interrupted';
+  String get video_source_scrape_global_provider => 'Default metadata source';
+  String get video_source_scrape_global_provider_hint =>
+      'Used by video sources that inherit the global setting';
+  String get video_source_scrape_fanart_key => 'Fanart API key';
+  String get video_source_scrape_fanart_key_hint =>
+      'Optional key used to fill missing artwork from Fanart';
+  String get video_source_scrape_bangumi_token => 'Bangumi access token';
+  String get video_source_scrape_bangumi_token_hint =>
+      'Optional access token for the official Bangumi API v0';
+  String get video_source_scrape_douban_endpoint =>
+      'Authorized Douban API endpoint';
+  String get video_source_scrape_douban_endpoint_hint =>
+      'Douban is unavailable unless both an authorized endpoint and token are configured';
+  String get video_source_scrape_douban_token => 'Authorized Douban API token';
+  String get video_source_scrape_douban_token_hint =>
+      'Douban is unavailable unless both an authorized endpoint and token are configured';
+  String get video_source_scrape_locale => 'Metadata language';
+  String get video_source_scrape_locale_hint =>
+      'Preferred language for titles, summaries and images';
+  String get video_source_scrape_confirmation_title => 'Confirm metadata match';
+  String get video_source_scrape_confirmation_hint =>
+      'Multiple exact matches were found. Choose the correct work to save its provider binding.';
+  String get video_source_scrape_confirmation_skip => 'Skip this work';
+  String get video_source_scrape_nfo_policy => 'NFO write policy';
+  String get video_source_scrape_image_policy => 'Image write policy';
+  String get video_source_scrape_policy_skip => 'Do not write';
+  String get video_source_scrape_policy_missing_only => 'Only when missing';
+  String get video_source_scrape_policy_overwrite => 'Update Fushi files';
+  String get video_source_scrape_external_overwrite =>
+      'Allow protected sidecar overwrite';
+  String get video_source_scrape_external_overwrite_hint =>
+      'Third-party or user-modified files remain protected until you confirm each manual scrape batch again.';
+  String get video_source_scrape_external_overwrite_confirm_title =>
+      'Overwrite protected sidecars?';
+  String get video_source_scrape_external_overwrite_confirm_body =>
+      'This batch may replace third-party NFO/images or Fushi files you edited. Media files are not changed. Continue?';
+  String get video_source_scrape_tasks_open => 'Background tasks';
+  String get video_source_scrape_background_started =>
+      'Scraping is running in the background';
+  String get video_source_scrape_tasks_current => 'Current task';
+  String get video_source_scrape_tasks_history => 'Recent tasks';
+  String get video_source_scrape_tasks_empty => 'No scrape tasks yet';
+  String get video_source_scrape_waiting_confirmation =>
+      'Waiting for your confirmation';
+  String get video_source_scrape_phase_scanning => 'Scanning source';
+  String get video_library_all_videos => 'All videos';
+  String get video_work_voice_roles => 'Voice cast and characters';
+  String get video_work_cast_crew => 'Cast and crew';
+  String get video_work_trailers => 'Trailers';
+  String get video_work_extras => 'Extras';
+  String get video_work_details => 'Details';
+  String get video_work_external_ids => 'External IDs';
+  String get video_work_metadata_pending =>
+      'Detailed metadata has not been scraped yet. Retry this source from Sources, then reopen the work.';
+  String get video_work_genres => 'Genres';
+  String get video_work_keywords => 'Keywords';
+  String get video_work_studios => 'Studios';
+  String get video_work_countries => 'Countries';
+  String get video_work_content_rating => 'Content rating';
+  String get video_all_videos_list_view => 'List view';
+  String get video_all_videos_grid_view => 'Grid view';
+  String video_home_continue_episode_number({required Object n}) =>
+      'Playing episode ${n}';
+  String video_home_next_episode_number({required Object n}) =>
+      'Next · Episode ${n}';
+  String video_home_recent_episode_number({required Object n}) =>
+      'Recently added · Episode ${n}';
+  String video_home_remaining_minutes({required Object minutes}) =>
+      '${minutes} min remaining';
+  String get video_subtitle_replay => 'Replay this line';
+  String get manga_ocr_done => 'OCR complete';
+  String get settings_destination_manga_summary =>
+      'Reader, OCR and online catalog';
+  String get manga_page_animation => 'Page turn animation';
+  String get manga_page_animation_none => 'None';
+  String get manga_page_animation_slide => 'Slide';
+  String get manga_page_animation_fade => 'Fade';
+  String get manga_default_zoom => 'Default zoom';
+  String get manga_zoom_sensitivity => 'Zoom sensitivity';
+  String get manga_volume_key_paging => 'Volume keys turn pages';
+  String get manga_volume_key_paging_subtitle =>
+      'Use volume up and down to turn pages in the manga reader';
+  String get manga_tap_zone_paging => 'Tap edges to turn pages';
+  String get manga_tap_zone_paging_subtitle =>
+      'Tap the left or right edge of the page to turn';
+  String get manga_section_viewing => 'Viewing and page turning';
+  String get game_capture_setup_title => 'Complete capture setup';
+  String get game_capture_setup_hint =>
+      'Choose the dialogue thread first. Fushi can only pair audio with lines from the selected thread.';
+  String get game_audio_requires_thread =>
+      'The audio capture source may be ready, but sentence audio does not exist until a thread is selected and a line is received.';
+  String get game_session_waiting_thread => 'Waiting for a dialogue thread';
+  String get anki_connect_use_on_mobile => 'Use AnkiConnect instead';
+  String get anki_connect_use_on_mobile_hint =>
+      'Use only on a trusted network. AnkiConnect uses cleartext HTTP; configure a matching API key, then refresh decks and note types after switching.';
+  String get anki_connect_api_key_hint =>
+      'Required for remote AnkiConnect; must match the key configured in the add-on';
+  String get anki_connect_mobile_api_key_required =>
+      'Configure a matching AnkiConnect API key before switching to the AnkiConnect backend.';
+  String anki_connect_backend_switch_failed({required Object error}) =>
+      'Could not switch Anki backend: ${error}';
+  String get migration_settings_entry => 'Migrate to Fushi';
+  String get migration_settings_entry_subtitle =>
+      'Move all data to the new Fushi app';
+  String get migration_intro =>
+      'Fushi is the new name of this app. Migration exports all your data in batches to a transfer folder, then Fushi imports and verifies it. Your data here stays untouched until you uninstall this app.';
+  String get migration_target_missing =>
+      'Fushi is not installed yet. Install Fushi first, then return here.';
+  String get migration_download_fushi => 'Get Fushi';
+  String get migration_start => 'Start migration';
+  String get migration_open_fushi => 'Open Fushi';
+  String get migration_include_local_audio =>
+      'Also export local pronunciation audio (can be large)';
+  String migration_batch_running({required Object batch}) =>
+      'Exporting ${batch}…';
+  String migration_batch_done({required Object batch}) => '${batch} exported';
+  String get migration_export_done =>
+      'Export complete. Open Fushi to import and verify.';
+  String migration_export_failed({required Object error}) =>
+      'Export failed: ${error}';
+  String get migration_readonly_note =>
+      'Your data has been exported to Fushi. This app is now read-only: use Fushi for reading and mining. You can re-export at any time if Fushi reports missing data.';
+  String get migration_reexport => 'Re-export';
+  String get migration_batch_core_label => 'Settings, progress & statistics';
+  String get migration_import_entry => 'Import from Hibiki';
+  String get migration_import_entry_subtitle =>
+      'Import data exported by the old Hibiki app';
+  String get migration_import_detected =>
+      'Hibiki migration data detected. Import it now?';
+  String get migration_import_start => 'Start import';
+  String migration_import_running({required Object batch}) =>
+      'Importing ${batch}…';
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} failed verification and was kept for re-export: ${detail}';
+  String migration_import_counts_failed({required Object detail}) =>
+      'Imported data is incomplete: ${detail}. Re-export the missing parts from Hibiki, then import again.';
+  String get migration_import_success => 'Import complete and verified.';
+  String get migration_import_nothing =>
+      'No migration data found in the transfer folder.';
+  String get migration_uninstall_prompt =>
+      'Migration finished. Uninstall the old Hibiki app?';
+  String get migration_uninstall_button => 'Uninstall Hibiki';
+  String get migration_uninstall_still_installed =>
+      'Hibiki is still installed. You can uninstall it any time.';
+  String get migration_import_permission_title => 'Storage permission required';
+  String get migration_import_permission_body =>
+      'The transfer folder was created by the old app. Without "All files access", Fushi cannot read it — the data is intact, it just cannot be opened.';
+  String get migration_import_permission_grant => 'Grant permission';
+  String migration_import_verifying(
+          {required Object batch,
+          required Object done,
+          required Object total}) =>
+      'Verifying ${batch} (${done}/${total})';
+  String get migration_import_verifying_hint =>
+      'Checksumming the archives. Large libraries can take several minutes.';
+  String get game_line_copy_tooltip => 'Copy sentence';
+  String get game_japanese_locale_auto => 'Auto';
+  String get game_japanese_locale_on => 'Always on';
+  String get game_japanese_locale_off => 'Off';
+  String get game_japanese_locale => 'Japanese locale';
+  String get game_japanese_locale_hint =>
+      'Chinese/English patched builds must turn this off, or the game crashes on launch';
+  String get video_scrape_diagnostic_export => 'Export scrape diagnostics';
+  String get video_scrape_diagnostic_confirm_title =>
+      'Export scrape diagnostics?';
+  String get video_scrape_diagnostic_saved => 'Diagnostic package saved';
+  String video_scrape_diagnostic_failed({required Object reason}) =>
+      'Could not export diagnostic package: ${reason}';
+  String get video_scrape_diagnostic_share_subject =>
+      'Fushi video scrape diagnostics';
+  String get video_scrape_diagnostic_confirm_body =>
+      'The package includes relative file and folder names, scrape summaries, and original NFO contents. It does not add videos, subtitles, images, absolute paths, app configuration, or app credentials. Original NFO files are preserved unchanged and may contain personal information or secrets; review the package before sharing publicly.';
+  String get video_discovery_search_hint => 'Search movies, series, anime';
+  String get video_discovery_hot => 'Popular now';
+  String get video_discovery_seasonal_anime => 'Seasonal anime';
+  String get video_discovery_all_works => 'All titles';
+  String get video_discovery_search_results => 'Search results';
+  String get video_discovery_provider_warning =>
+      'Some providers are unavailable. Showing available results.';
+  String get video_discovery_load_failed => 'Could not load discovery results.';
+  String get video_discovery_empty => 'No matching titles.';
+  String get video_discovery_resource_search => 'Search resources';
+  String get video_discovery_subtitle_search => 'Search subtitles';
+  String get video_discovery_subscribe => 'Subscribe';
+  String get video_discovery_subscription_manage => 'Manage subscription';
+  String get video_discovery_pipeline_idle =>
+      'Not downloaded → Download → Organize → Subtitles → Scrape → Library';
+  String get video_discovery_details_load_failed =>
+      'Could not load title details.';
+  String get video_discovery_sort_popularity => 'Popularity';
+  String get video_discovery_sort_rating => 'Rating';
+  String get video_discovery_sort_release => 'Release date';
+  String get video_discovery_in_library => 'In library';
+  String get video_discovery_play => 'Play';
+  String get download_resources_tab => 'Resources';
+  String get video_external_settings_section =>
+      'External resource and subtitle providers';
+  String get video_torznab_settings_title => 'Torznab indexers';
+  String get video_torznab_add => 'Add indexer';
+  String get video_torznab_name => 'Name';
+  String get video_torznab_endpoint => 'Endpoint';
+  String get video_torznab_endpoint_hint =>
+      'HTTPS is required except for loopback addresses.';
+  String get video_torznab_api_key => 'API key';
+  String get video_torznab_priority => 'Priority';
+  String get video_torznab_categories => 'Categories';
+  String get video_torznab_categories_hint =>
+      'Comma-separated numeric category IDs';
+  String get video_external_enabled => 'Enabled';
+  String get video_external_insecure_http => 'Allow insecure HTTP';
+  String get video_external_insecure_http_hint =>
+      'Use only for a trusted local network endpoint.';
+  String get video_external_endpoint_invalid =>
+      'Enter a valid endpoint without credentials, query parameters, or fragments.';
+  String get video_opensubtitles_settings_title => 'OpenSubtitles';
+  String get video_opensubtitles_user_agent => 'User-Agent';
+  String get video_opensubtitles_languages => 'Preferred languages';
+  String get video_opensubtitles_languages_hint =>
+      'Comma-separated language codes, for example zh-CN,en,ja';
+  String get video_download_path_mappings_title => 'qBittorrent path mappings';
+  String get video_download_path_mappings_hint =>
+      'Map each qBittorrent remote root to a locally accessible folder.';
+  String get video_download_path_mapping_add => 'Add path mapping';
+  String get video_download_backend_profile_id => 'Backend profile ID';
+  String get video_download_remote_root => 'Remote root';
+  String get video_download_local_root => 'Local root';
+  String get video_download_target_source_title =>
+      'Default managed video source';
+  String get video_download_target_source_hint =>
+      'New downloads are organized into this local video source.';
+  String get video_download_target_source_none => 'Choose a local video source';
+  String get video_external_remove => 'Remove';
+  String get video_external_username_optional => 'Username (optional)';
+  String get video_external_password_optional => 'Password (optional)';
+  String get video_external_api_key => 'API key';
+  String get video_external_save_error =>
+      'The configuration could not be saved. Check the highlighted fields.';
+  String get video_external_categories_invalid =>
+      'Categories must be comma-separated numeric IDs.';
+  String get video_download_path_mapping_invalid =>
+      'Enter a profile ID, remote root, and absolute local root.';
+  String get video_opensubtitles_endpoint => 'API endpoint';
+  String get video_download_target_source_empty =>
+      'No locally accessible video source is available. Add one on the Sources tab first.';
+  String get video_setting_drag_seek_sensitivity => 'Drag-to-seek sensitivity';
+  String get video_setting_drag_seek_sensitivity_hint =>
+      'How far one full-width swipe seeks on a touch screen: Low about 45s, Medium about 90s, High about 180s. Independent of the video\'s total length. Touch drag only; mouse and keyboard seeking are unaffected.';
+  String get video_setting_drag_seek_sensitivity_low => 'Low';
+  String get video_setting_drag_seek_sensitivity_medium => 'Medium';
+  String get video_setting_drag_seek_sensitivity_high => 'High';
+  String video_subtitle_read_failed({required Object label}) =>
+      'Couldn\'t read this subtitle file (damaged or empty): ${label}';
+  String dict_downloading_size(
+          {required Object name,
+          required Object done,
+          required Object total}) =>
+      'Downloading ${name} (${done} / ${total})';
+  String get video_subtitle_attach_book_missing =>
+      'This video isn\'t in your library, so the subtitle wasn\'t attached';
+  String get dict_download_hide => 'Run in background';
+  String get dict_download_progress_show => 'View progress';
+  String get dict_download_cancelled => 'Download cancelled.';
+  String get dict_download_import_uncancellable =>
+      'Importing cannot be interrupted';
+  String get dict_download_busy => 'A dictionary download is already running.';
+  String get gal_hook_ingame_lookup => 'In-game dictionary lookup';
+  String get gal_hook_ingame_lookup_hint =>
+      'Show the dictionary card inside the game window itself (KiriKiri engine, Windows only)';
+  String get drag_drop_failed =>
+      'Couldn\'t handle the dropped files. Please try again.';
+  String get tag_add_failed => 'Couldn\'t add the tag. Please try again.';
+  String get tag_reorder_failed =>
+      'Couldn\'t save the new tag order. Please try again.';
+  String get download_task_error_summary_source_missing =>
+      'Managed video source is missing or inaccessible';
+  String get download_task_error_summary_backend_unconfirmed =>
+      'Torrent could not be confirmed by hash, title, and category';
+  String get download_task_error_summary_subtitle =>
+      'Subtitles are unavailable or could not be installed';
+  String get download_task_error_summary_backend_unavailable =>
+      'Download backend is unavailable or no longer matches';
+  String get download_task_error_summary_legacy =>
+      'Legacy import needs manual attention';
+  String get download_task_error_summary_torrent_info =>
+      'Torrent identity is missing or unverifiable';
+  String get download_task_error_summary_generic => 'The task hit an error';
+  String get download_task_error_view_detail => 'View details';
+  String get download_task_error_detail_title => 'Error details';
+  String get download_task_error_copied => 'Error details copied';
+  String get download_task_lifecycle_active => 'In progress';
+  String get download_task_lifecycle_needs_attention => 'Needs attention';
+  String get download_task_location_missing =>
+      'The task file location is unavailable.';
+  String get download_task_location_open_failed =>
+      'Could not open the file location.';
+  String get download_task_open_location => 'Show in folder';
+  String get download_task_lifecycle_completed => 'Completed';
+  String get download_task_lifecycle_failed => 'Failed';
+  String get download_task_lifecycle_cancelled => 'Cancelled';
+  String get download_task_stage_enqueue => 'Enqueue';
+  String get download_task_stage_download => 'Download';
+  String get download_task_stage_organize => 'Organize';
+  String get download_task_stage_subtitle => 'Subtitles';
+  String get download_task_stage_import => 'Import';
+  String get download_task_stage_scrape => 'Scrape';
+  String get video_discovery_manual_identity_hint =>
+      'Enter the title, external ID and year above to enable search';
+  String get collection_split_move_to => 'Move to';
+  String get collection_split_new_group => 'New group';
+  String collection_split_selected({required Object n}) => '${n} selected';
+  String get sync_pair_rate_limited =>
+      'Too many attempts. Wait a few minutes and try again.';
+  String get sync_pair_tls_failed =>
+      'Certificate check failed. The peer\'s certificate does not match the pinned one.';
+  String get sync_pair_timeout => 'The peer did not respond in time.';
+  String get sync_pair_expired =>
+      'Pairing timed out. Start pairing again from this device.';
+  String get sync_pair_upgrade_required =>
+      'The other device runs an older version that cannot pair securely from this network. Update it, then pair again.';
+  String get sync_pair_fingerprint_changed_title => 'Certificate changed';
+  String get sync_pair_fingerprint_stored_label => 'Pinned earlier';
+  String get sync_pair_fingerprint_new_label => 'Seen now';
+  String get sync_pair_fingerprint_retrust => 'Clear and trust again';
+  String get sync_pair_fingerprint_changed_body =>
+      'This address was pinned to a different certificate before. Continue only if you know the peer reinstalled or reset it — otherwise someone may be intercepting the connection.';
+  String get interconnect_upload_section_footer =>
+      'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
+  String get remote_delete_audiobook_partial =>
+      'Book deleted, but its audiobook could not be removed on the paired device';
+  String get collection_episode_scrape => 'Fetch episode details';
+  String collection_episode_scrape_failed({required Object error}) =>
+      'Episode scrape failed: ${error}';
+  String collection_episode_scrape_result(
+          {required Object updated, required Object skipped}) =>
+      'Updated ${updated} episodes, skipped ${skipped}';
+  String get collection_episode_scrape_unbound => 'Scrape the collection first';
+  String get gal_mining_screenshot_size => 'Galgame screenshot size';
+  String get gal_mining_screenshot_size_full_hd =>
+      'Up to 1920 × 1080 (recommended)';
+  String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  String get gal_mining_screenshot_size_hint =>
+      'Applies to still screenshots and animated-capture fallbacks. Keeps the aspect ratio, never enlarges, and saves as JPEG at quality 90.';
+  String get gal_mining_screenshot_size_original => 'Original size (JPEG)';
+  String get game_attach_mode_last_used => 'Last used';
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  String get game_attach_mode_native => 'Fushi native attachment';
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  String get game_attach_mode_title => 'Choose attachment mode';
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
+  String get game_luna_audio_preroll => 'Luna audio lead-in';
+  String get game_luna_audio_preroll_hint =>
+      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  String get game_luna_audio_timing => 'Audio alignment';
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  String get game_text_thread_recommended => 'Recommended';
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
+  String get video_mining_image_quality => 'Video / anime card image quality';
+  String get video_mining_image_quality_hint =>
+      'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  String get game_line_bulk_text_hint =>
+      'Bulk text detected. Character lookup is paused.';
+  String get video_setting_subtitle_language_filter => 'Subtitle language';
+  String get video_setting_subtitle_language_filter_hint =>
+      'Filter Chinese and Japanese content inside the selected subtitle track.';
+  String get video_setting_subtitle_language_filter_all => 'All';
+  String get video_setting_subtitle_language_filter_japanese => 'Japanese';
+  String get video_setting_subtitle_language_filter_chinese => 'Chinese';
+  String get download_detail_task_queued =>
+      'Queued: waiting for other downloads to free a slot. This task has not been handed to the downloader yet, so there is no live peer or tracker data.';
+  String video_subscription_group_release_count({required Object count}) =>
+      '${count} releases';
+  String get download_task_priority => 'Queue priority';
+  String get download_task_priority_high => 'High';
+  String get download_task_priority_normal => 'Normal';
+  String get download_task_priority_low => 'Low';
+  String get library_view_import => 'Import';
+  String get quick_import_title => 'Quick import';
+  String get media_source_section_title => 'Library sources';
+  String get book_import_folder => 'Import folder';
+  String get book_import_folder_as_source => 'Add as library source';
+  String get book_import_folder_as_source_hint =>
+      'Keep scanning this folder for new books';
+  String get book_import_folder_once => 'Import once only';
+  String get library_empty_go_import => 'Go to import';
+  String get game_import_drop_hint =>
+      'You can also drag .exe files into the game library';
+  String get library_view_sources => 'Sources';
+  String get video_setting_secondary_av_delay => 'Secondary subtitle sync';
+  String get video_setting_secondary_av_delay_hint =>
+      'Adjust the secondary subtitle offset independently. It follows the primary offset until set here.';
+  String get video_setting_secondary_delay_follow => 'Follow primary';
+  String video_subtitle_secondary_delay_osd({required Object ms}) =>
+      'Secondary subtitle sync: ${ms} ms';
+  String get video_subtitle_secondary_delay_follow_osd =>
+      'Secondary subtitle sync: follow primary';
+  String get video_setting_subtitle_anchor => 'Main subtitle anchor';
+  String get video_subtitle_anchor_bottom => 'Bottom';
+  String get video_subtitle_anchor_top => 'Top';
+  String get video_setting_subtitle_drag_adjust => 'Drag to adjust position';
+  String get video_subtitle_drag_adjust_hint =>
+      'Drag a subtitle up or down to reposition it';
+  String get anki_connect_mobile_disabled_key_cleared =>
+      'AnkiConnect needs an API key on mobile, so clearing it turned the switch back off. Anki now goes through the built-in backend again.';
+  String manga_import_batch_hint({required Object n}) =>
+      'This folder holds ${n} volume files; each is imported as its own book, named after its file.';
+  String manga_import_batch_done(
+          {required Object imported,
+          required Object skipped,
+          required Object failed}) =>
+      'Imported ${imported}, skipped ${skipped}, failed ${failed}.';
+  String get srt_book_reimport => 'Re-import';
+  String get srt_book_reimport_subtitle_hint =>
+      'Replacing the subtitle rebuilds the book text from the new cues.';
+  String get srt_book_reimport_no_cues =>
+      'No subtitle lines found in that file';
+  String get srt_book_reimport_body_rebuilt =>
+      'Book text rebuilt — reopen the book to read it';
+  String get video_setting_torrent_backend_embedded => 'Built-in engine';
+  String get download_backend_unsupported_note =>
+      'The built-in engine is not available on this platform. Downloads use external qBittorrent.';
+  String get aidoku_runtime_unavailable =>
+      'Aidoku extensions are currently available on macOS only.';
+  String get aidoku_extensions_title => 'Aidoku extensions';
+  String get aidoku_extension_empty => 'No Aidoku extensions installed.';
+  String get aidoku_extension_remove => 'Remove Aidoku extension';
+  String get aidoku_extension_warning =>
+      'Aidoku extensions execute third-party WebAssembly code with network access. Only continue with sources you trust.';
+  String get aidoku_webview_unsupported =>
+      'This source requires Aidoku WebView APIs that are not supported yet.';
+  String get aidoku_extension_imported => 'Aidoku extension imported';
+  String get aidoku_extension_import => 'Import Aidoku extension (.aix)';
+  String get aidoku_extension_confirm_title => 'Install Aidoku extension?';
+  String get aidoku_extension_version => 'Version';
+  String get aidoku_repository_url => 'Repository URL';
+  String get aidoku_repository_sources => 'Repository sources';
+  String get aidoku_repository_identity_mismatch =>
+      'The downloaded package does not match the repository index.';
+  String get aidoku_repository_installed => 'Installed';
+  String get aidoku_repository_search => 'Search repository sources';
+  String get aidoku_repository_install => 'Install';
+  String get aidoku_repository_update => 'Update';
+  String get aidoku_repository_add => 'Add Aidoku repository';
+  String get aidoku_repository_added => 'Aidoku repository added';
+  String get aidoku_repository_browse => 'Browse repository';
+  String get aidoku_repository_hint =>
+      'Paste an Aidoku repository homepage or index.min.json URL. The community repository is filled in by default.';
+  String get aidoku_repository_remove => 'Remove repository';
+  String get aidoku_repository_empty => 'No Aidoku repositories added.';
+  String get dict_language_tooltip => 'Content language';
+  String get dict_language_title => 'Dictionary content language';
+  String get dict_language_description =>
+      'Decides which font renders this dictionary\'s text. Automatic uses the language the dictionary declares.';
+  String get dict_language_auto => 'Automatic';
+  String get book_language_action => 'Content language';
+  String get book_language_description =>
+      'Decides which font renders this book\'s text. Automatic uses the language declared in the EPUB.';
+  String get local_audio_reference_unavailable =>
+      'Can\'t reference the original file without all-files access; a copy was imported instead.';
+  String get video_collection_scrape => 'Scrape info & cover';
+  String get update_testflight_open => 'Open TestFlight';
+  String get update_app_store_open => 'Open App Store';
+  String get update_release_page_open => 'Release page';
+  String update_install_gal_hook_holder(
+          {required Object pid, required Object path}) =>
+      'Galgame capture component in use: PID ${pid} - ${path} (this is the game you are playing, or its capture host). Close the game, then update again.';
+  String get game_hook_reason_protocol_mismatch =>
+      'The capture component does not match this Fushi build. It ships inside Fushi, so there is nothing to install separately. First, fully close the game and launch it again: the game process may still hold the component injected by an earlier session. If it still mismatches, the component files on disk are older than Fushi, because the last Fushi update could not replace them while a game was running. Close every game, then run the Fushi installer again.';
+  String get video_mining_still_format => 'Video card screenshot format';
+  String get video_mining_still_format_hint =>
+      'Encoding used when the card image is a still screenshot. JPG is much smaller; PNG is lossless but several times larger. Animated covers are unaffected — they follow the animation format setting.';
+  String get mining_still_format_jpg => 'JPG (smaller)';
+  String get mining_still_format_png => 'PNG (lossless)';
+  String get gal_mining_still_format => 'Game card screenshot format';
+  String get gal_mining_still_format_hint =>
+      'Same formats as video cards, stored separately. Game window grabs come in as PNG: keeping PNG is lossless but several times larger, while JPG matches how these screenshots were compressed before.';
+  String get manga_source_cloudflare_blocked =>
+      'This source is protected by Cloudflare and can\'t be reached by the built-in reader yet.';
+  String get manga_global_search_title => 'Search all sources';
+  String get manga_global_search_hint => 'Search every enabled source';
+  String get manga_global_search_prompt =>
+      'Type a title to search every enabled manga source at once.';
+  String get manga_global_search_no_sources =>
+      'No enabled manga sources. Install and enable an extension first.';
+  String get anki_connect_addon_install => 'Install AnkiConnect';
+  String get anki_connect_addon_install_hint =>
+      'Downloads AnkiConnect from AnkiWeb and hands it to the running Anki. Anki will ask you to confirm, then advise a restart.';
+  String get anki_connect_addon_handed =>
+      'Handed AnkiConnect to Anki. Confirm the prompt in Anki, then restart Anki as it advises.';
+  String get anki_connect_addon_anki_not_running =>
+      'No running Anki found. Start Anki desktop first, then try again.';
+  String anki_connect_addon_download_failed({required Object error}) =>
+      'Could not download AnkiConnect from AnkiWeb: ${error}';
+  String get anki_connect_addon_invalid =>
+      'AnkiWeb returned something that is not a usable add-on package.';
+  String anki_connect_addon_launch_failed({required Object error}) =>
+      'Could not hand the add-on to Anki: ${error}';
+  String get settings_content_language_title => 'Default content language';
+  String get settings_content_language_unset => 'Not set';
+  String get settings_content_language_description =>
+      'Fallback language for content that does not declare one. Per-book, per-video, per-game and per-dictionary settings override this.';
+  String get manga_ocr_lens_language_label => 'Recognition language';
+  String get dict_user_title => 'User dictionary';
+  String get dict_user_entry_add => 'Add entry';
+  String get dict_user_entry_edit => 'Edit entry';
+  String get dict_user_entry_delete_confirm => 'Delete this entry?';
+  String get dict_user_field_expression => 'Headword';
+  String get dict_user_field_reading => 'Reading';
+  String get dict_user_field_meaning => 'Definition';
+  String get dict_user_empty =>
+      'No entries yet. Add one to build your own dictionary.';
+  String get dict_user_expression_required => 'Headword cannot be empty';
+  String get dict_user_rebuild_failed =>
+      'Failed to rebuild the user dictionary';
+  String get sync_err_peer_unreachable =>
+      'Can\'t reach the paired device - it may be offline or not running Fushi.';
+  String get remote_book_list_failed =>
+      'Couldn\'t fetch the remote library from the paired device.';
+  String get video_torznab_settings_hint =>
+      'Configure one or more Jackett, Prowlarr, or compatible Torznab endpoints. Secrets are never exported in backups; they may sync to paired devices over Interconnect (can be turned off in Interconnect settings).';
+  String get video_opensubtitles_settings_hint =>
+      'API credentials are never exported in backups; they may sync to paired devices over Interconnect (can be turned off in Interconnect settings).';
+  String get sync_interconnect_service_config_toggle =>
+      'Sync service configuration from host';
+  String get sync_interconnect_service_config_toggle_desc =>
+      'Receive external service settings and API keys (Jimaku, TMDB, Torznab, OpenSubtitles, tracking) from the paired host over the encrypted Interconnect channel. Requires TLS.';
+  String get video_setting_subtitle_backfill =>
+      'Auto-fetch subtitles after scraping';
+  String get video_setting_subtitle_backfill_hint =>
+      'When a scrape finishes, videos that still have no subtitle get one from your configured online sources. Never replaces an existing subtitle.';
+  String get video_setting_subtitle_sources_section =>
+      'Online subtitle sources';
+  String get video_subtitle_no_source_configured =>
+      'No subtitle found · set up an online subtitle source';
+  String get anime_download_subs_retrying =>
+      'Subtitles: not up yet — will retry automatically';
+  String get video_jimaku_language_follow_video => 'Follow video language';
+  String get video_setting_jimaku_default_language_hint =>
+      'Defaults to the video\'s own language (audio track / scraped metadata). Pick one to always prefer that language instead.';
+  String get onboarding_title => 'Getting started';
+  String get onboarding_welcome_headline => 'Welcome!';
+  String get onboarding_feature_anki => 'Anki flashcards';
+  String get onboarding_feature_anki_hint =>
+      'Connect AnkiConnect or AnkiDroid to create flashcards';
+  String get onboarding_feature_backup => 'Backup & sync';
+  String get onboarding_feature_backup_hint =>
+      'Back up your data to Google Drive, WebDAV and other backends';
+  String get onboarding_feature_interconnect => 'Device interconnect';
+  String get onboarding_feature_interconnect_hint =>
+      'Pair devices on your LAN to share libraries and progress';
+  String get onboarding_step_dictionary_action => 'Open dictionary manager';
+  String get onboarding_step_anki_title => 'Set up Anki';
+  String get onboarding_step_anki_body =>
+      'Open card creation settings to connect AnkiConnect (desktop) or AnkiDroid (Android) and test the connection.';
+  String get onboarding_step_anki_action => 'Open card creation settings';
+  String get onboarding_step_backup_title => 'Set up backup';
+  String get onboarding_step_backup_body =>
+      'Choose a backup backend and sign in, or export a local backup file.';
+  String get onboarding_step_backup_action => 'Open backup settings';
+  String get onboarding_step_interconnect_title => 'Set up interconnect';
+  String get onboarding_step_interconnect_body =>
+      'Enable interconnect and pair with other devices on your LAN to share libraries, progress and lookups.';
+  String get onboarding_step_interconnect_action =>
+      'Open interconnect settings';
+  String get onboarding_finish_title => 'All set';
+  String get onboarding_finish_body =>
+      'You can revisit this guide anytime from Settings → System.';
+  String get onboarding_action_next => 'Next';
+  String get onboarding_action_finish => 'Finish';
+  String get onboarding_action_skip => 'Skip for now';
+  String get onboarding_reopen => 'Getting started guide';
+  String get onboarding_welcome_body =>
+      'Set your interface language and theme first — the next steps will walk you through the rest.';
+  String get onboarding_features_title => 'Choose what you use';
+  String get onboarding_features_modules_label =>
+      'Library tabs (unchecked ones are hidden from the navigation bar; change anytime in Settings)';
+  String get onboarding_features_setup_label => 'What to set up next';
+  String get onboarding_feature_manga => 'Manga library';
+  String get onboarding_feature_manga_hint => 'Read manga with OCR lookup';
+  String get onboarding_feature_video => 'Video library';
+  String get onboarding_feature_video_hint =>
+      'Watch videos with subtitle lookup and mining';
+  String get onboarding_feature_games => 'Galgame library';
+  String get onboarding_feature_games_hint =>
+      'Launch galgames with text-hook lookup (Windows only)';
+  String get onboarding_feature_pack =>
+      'Recommended pack (dictionaries + audio)';
+  String get onboarding_feature_pack_hint =>
+      'One download sets up Japanese dictionaries plus JA/EN pronunciation audio';
+  String get onboarding_step_pack_title => 'Install the recommended pack';
+  String get onboarding_step_pack_body =>
+      'The recommended pack bundles Japanese word, pitch-accent and frequency dictionaries plus Japanese/English pronunciation audio databases. Download and import it here; importing replaces local data, so run it on a fresh install. Learning another language? Use the dictionary manager to import your own dictionaries instead.';
+  String get onboarding_step_pack_download_action => 'Download and import';
+  String get onboarding_step_pack_import_existing_action =>
+      'Import downloaded pack';
+  String get onboarding_step_pack_pick_action => 'Choose a local pack file';
+  String get onboarding_step_pack_browser_action =>
+      'Open in browser (Google Drive)';
+  String get onboarding_pack_downloading =>
+      'Downloading… cancel anytime, resumes next time';
+  String onboarding_pack_download_failed({required Object message}) =>
+      'Download failed: ${message}';
+  String get onboarding_step_extension_title => 'Browser extension';
+  String get onboarding_step_extension_body =>
+      'Install the companion browser extension to look up words on any web page.';
+  String get onboarding_step_extension_action => 'Open extension guide';
+  String get onboarding_step_fonts_title => 'Reading fonts';
+  String get onboarding_step_fonts_body =>
+      'Import custom fonts and choose which of UI, book text and dictionary use them.';
+  String get settings_section_modules => 'Feature modules';
+  String get module_manga_label => 'Manga';
+  String get module_video_label => 'Video';
+  String get module_games_label => 'Galgame';
+  String get module_toggle_hint =>
+      'Show this library tab in the navigation bar; turn off to hide it';
+  String get video_setting_youtube_quality => 'YouTube quality';
+  String get video_setting_youtube_quality_hint =>
+      'Start streams at the highest tier up to this target; Auto prefers smooth playback (hardware-friendly codec, up to 1080p)';
+  String get library_view_discover => 'Discover';
+  String get manga_discovery_section_trending => 'Trending';
+  String get manga_discovery_section_popular => 'Popular';
+  String get manga_discovery_section_top_rated => 'Top rated';
+  String get manga_discovery_section_latest_finished => 'Recently completed';
+  String get manga_discovery_load_failed => 'Couldn\'t load the discover feed.';
+  String get manga_discovery_match_section => 'Read from a source';
+  String get manga_discovery_match_running =>
+      'Matching in your enabled sources...';
+  String get manga_discovery_match_none => 'No match found in enabled sources.';
+  String get manga_discovery_status_releasing => 'Ongoing';
+  String get manga_discovery_status_finished => 'Completed';
+  String get manga_discovery_status_hiatus => 'On hiatus';
+  String get manga_discovery_status_cancelled => 'Cancelled';
+  String get manga_discovery_status_not_yet_released => 'Not yet released';
+  String manga_discovery_source_popular({required Object source}) =>
+      'Popular on ${source}';
+  String get mihon_extension_error => 'Extension error';
+  String get discovery_all_sources => 'All sources';
+  String get discovery_search_hint => 'Search online resources';
+  String get discovery_enter_query_hint => 'Enter a keyword to search';
+  String get discovery_empty => 'No results';
+  String get discovery_partial_failure => 'Some sources are unavailable';
+  String get discovery_load_more => 'Load more';
+  String get discovery_download_queued => 'Added to downloads';
+  String get discovery_torrent_pushed => 'Torrent task added';
+  String get discovery_torrent_failed => 'Failed to add torrent task';
+  String get discovery_kind_novel => 'Novels';
+  String get discovery_kind_audiobook => 'Audiobooks';
+  String get gal_hook_text_font_family => 'Galgame caption font';
+  String get gal_hook_text_font_family_hint =>
+      'Choose an installed Windows font. Default uses Yu Gothic UI.';
+  String get gal_hook_text_bg_opacity => 'Caption window background opacity';
+  String get gal_hook_text_bg_opacity_hint =>
+      '0% is fully transparent; 100% is fully opaque. The ◐ button toggles between 0% and your last non-zero value.';
 }

@@ -90,6 +90,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
   /// 这两件事以前被 native 的「字号 = 基准 × 窗高比例」耦成一件，正是「放不下拖高
   /// 还是放不下」的根因。范围/默认值的唯一真值在 `PreferencesRepository`。
   static const String _fontSizePreferenceKey = 'gal_hook_text_font_size';
+  static const String _fontFamilyPreferenceKey = 'gal_hook_text_font_family';
 
   final GalHookSessionController _session;
   final GalHookMiningCoordinator _miningCoordinator;
@@ -131,6 +132,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
   double _opacity = _defaultOpacity;
   double _lastNonZeroOpacity = _defaultRestoreOpacity;
   double _fontSize = kGalHookTextFontSize;
+  String _fontFamily = kGalHookTextFontFamilyDefault;
   GalHookTextWindowRect? _savedRect;
 
   static bool get isSupported =>
@@ -147,6 +149,8 @@ class GalHookTextOverlayController extends ChangeNotifier {
 
   /// BUG-1095：当前台词字号（逻辑 px），与窗口高度无关。
   double get fontSize => _fontSize;
+  String get fontFamily => _fontFamily;
+  double get backgroundOpacity => _opacity;
 
   /// 试听兜底复位上限：资源原件（OGG/WAV）时长未知时按它把按钮高亮收回，
   /// 与实时台词列表的行内试听同一上限。
@@ -270,6 +274,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
     _opacity = stored.clamp(0.0, 1.0);
     if (_opacity > 0) _lastNonZeroOpacity = _opacity;
     _fontSize = _readFontSizePreference();
+    _fontFamily = _readFontFamilyPreference();
     final Object? storedRect = read(_rectPreferenceKey, '');
     final String encoded = storedRect is String ? storedRect : '';
     if (encoded.isEmpty) return;
@@ -299,6 +304,23 @@ class GalHookTextOverlayController extends ChangeNotifier {
       PreferencesRepository.galHookTextFontSizeMin,
       PreferencesRepository.galHookTextFontSizeMax,
     );
+  }
+
+  String _readFontFamilyPreference() {
+    const String fallback = PreferencesRepository.galHookTextFontFamilyDefault;
+    final AppModel? model = _appModel;
+    final Object? stored = _preferenceReader != null
+        ? _preferenceReader(_fontFamilyPreferenceKey, defaultValue: fallback)
+        : model?.prefsRepo
+            .getPref(_fontFamilyPreferenceKey, defaultValue: fallback);
+    if (stored is! String) return fallback;
+    final String value = stored.trim();
+    return value.length <= PreferencesRepository.galHookTextFontFamilyMaxLength
+        ? value
+        : value.substring(
+            0,
+            PreferencesRepository.galHookTextFontFamilyMaxLength,
+          );
   }
 
   void _scheduleSync() {
@@ -392,6 +414,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
       _visible = await GalHookTextOverlayChannel.show(
         rect: _savedRect,
         fontSize: _fontSize,
+        fontFamily: _fontFamily,
         bgColor: _backgroundColor,
         following: _following,
         passThrough: _passThrough,
@@ -473,12 +496,15 @@ class GalHookTextOverlayController extends ChangeNotifier {
         await model.prefsRepo.setPref(_opacityPreferenceKey, _opacity);
       }
     }
-    await GalHookTextOverlayChannel.updateStyle(
-      bgColor: _backgroundColor,
-      fontSize: _fontSize,
-    );
+    await _pushStyle();
     notifyListeners();
   }
+
+  Future<void> _pushStyle() => GalHookTextOverlayChannel.updateStyle(
+        bgColor: _backgroundColor,
+        fontSize: _fontSize,
+        fontFamily: _fontFamily,
+      );
 
   /// BUG-1095：把字号偏好重新读进来并立刻推给 native 浮窗。
   ///
@@ -493,10 +519,36 @@ class GalHookTextOverlayController extends ChangeNotifier {
     final double next = _readFontSizePreference();
     if (next == _fontSize) return;
     _fontSize = next;
-    await GalHookTextOverlayChannel.updateStyle(
-      bgColor: _backgroundColor,
-      fontSize: next,
-    );
+    await _pushStyle();
+    notifyListeners();
+  }
+
+  /// 设置页改完字体族后，把最新值立即推给已经打开的 native 浮窗。
+  Future<void> applyFontFamilyFromPreferences() async {
+    if (!_started) return;
+    final String next = _readFontFamilyPreference();
+    if (next == _fontFamily) return;
+    _fontFamily = next;
+    await _pushStyle();
+    notifyListeners();
+  }
+
+  /// 设置页改完背景不透明度后立即预览。只改变背景 alpha，文字、注音和工具栏
+  /// 的 alpha 仍由 native 各自的颜色/绘制路径决定。
+  Future<void> applyOpacityFromPreferences() async {
+    if (!_started) return;
+    final AppModel? model = _appModel;
+    final Object? stored = _preferenceReader != null
+        ? _preferenceReader(_opacityPreferenceKey,
+            defaultValue: _defaultOpacity)
+        : model?.prefsRepo
+            .getPref(_opacityPreferenceKey, defaultValue: _defaultOpacity);
+    final double next =
+        (stored is num ? stored.toDouble() : _defaultOpacity).clamp(0.0, 1.0);
+    if (next > 0) _lastNonZeroOpacity = next;
+    if (next == _opacity) return;
+    _opacity = next;
+    await _pushStyle();
     notifyListeners();
   }
 

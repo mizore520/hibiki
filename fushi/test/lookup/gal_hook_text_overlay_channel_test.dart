@@ -158,6 +158,7 @@ void main() {
         captured?.arguments as Map<Object?, Object?>;
     expect(args['windowWidth'], 900.0);
     expect(args['windowHeight'], 140.0);
+    expect(args['fontFamily'], kGalHookTextFontFamilyDefault);
     expect(args['bgColor'], 0xE0000000);
     expect(args['clickLookupEnabled'], isTrue);
     expect(args['left'], 12);
@@ -166,6 +167,33 @@ void main() {
     expect(args['height'], 180);
     expect(args['passThrough'], isTrue);
     expect(args['locked'], isTrue);
+  });
+
+  test('字体族经 channel 传递，系统字体列表不由 Dart 硬编码', () async {
+    final List<MethodCall> calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall call) async {
+      calls.add(call);
+      if (call.method == 'getInstalledFontFamilies') {
+        return <String>['Yu Gothic UI', 'Noto Sans JP', 'Noto Sans JP'];
+      }
+      return null;
+    });
+
+    await GalHookTextOverlayChannel.updateStyle(
+      bgColor: 0,
+      fontFamily: 'Noto Sans JP',
+    );
+    final List<String> families =
+        await GalHookTextOverlayChannel.getInstalledFontFamilies();
+
+    expect(
+      (calls
+          .firstWhere((MethodCall call) => call.method == 'updateStyle')
+          .arguments as Map<Object?, Object?>)['fontFamily'],
+      'Noto Sans JP',
+    );
+    expect(families, <String>['Noto Sans JP', 'Yu Gothic UI']);
   });
 
   test('state setters keep following, pass-through, and lock independent',

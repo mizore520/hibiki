@@ -18,6 +18,7 @@
 namespace {
 
 constexpr wchar_t kWindowClassName[] = L"FushiFloatingLyricWindow";
+constexpr wchar_t kDefaultTextFontFamily[] = L"Yu Gothic UI";
 
 // Logical (96-DPI) strip metrics; scaled per-monitor in Render(). The width /
 // height defaults seed the initial window; the live size lives in
@@ -238,6 +239,25 @@ bool FloatingLyricWindow::EnsureTextResources() {
     }
   }
   return true;
+}
+
+std::wstring FloatingLyricWindow::EffectiveTextFontFamily() const {
+  if (style_.font_family.empty() || dwrite_factory_ == nullptr) {
+    return kDefaultTextFontFamily;
+  }
+
+  Microsoft::WRL::ComPtr<IDWriteFontCollection> collection;
+  BOOL exists = FALSE;
+  UINT32 family_index = 0;
+  if (FAILED(dwrite_factory_->GetSystemFontCollection(
+          collection.GetAddressOf(), TRUE)) ||
+      collection == nullptr ||
+      FAILED(collection->FindFamilyName(style_.font_family.c_str(),
+                                         &family_index, &exists)) ||
+      !exists) {
+    return kDefaultTextFontFamily;
+  }
+  return style_.font_family;
 }
 
 float FloatingLyricWindow::ScaleForDpi(float value) const {
@@ -1257,9 +1277,8 @@ void FloatingLyricWindow::Render() {
   // height: resizing only changes the available text area, while the existing
   // font preference remains the single source of truth.
   const float height_scale =
-      (hook_text_mode_ || text_only_)
-          ? 1.0f
-          : strip_height_dip_ / kBaseStripHeightForFontDip;
+      hook_text_mode_ ? 1.0f
+                      : (text_only_ ? 1.0f : strip_height_dip_ / kBaseStripHeightForFontDip);
   const float scaled_font = static_cast<float>(style_.font_size) *
                             std::max(0.5f, height_scale);
   // 注音字号与行盒加高量（物理 px）。ruby_spans_ 为空时下面所有注音分支都不执行，
@@ -1274,12 +1293,19 @@ void FloatingLyricWindow::Render() {
   const DWRITE_FONT_WEIGHT text_weight = hook_text_mode_
                                              ? DWRITE_FONT_WEIGHT_SEMI_BOLD
                                              : DWRITE_FONT_WEIGHT_NORMAL;
+  const std::wstring text_font_family = EffectiveTextFontFamily();
   if (text_format_ == nullptr) {
-    dwrite_factory_->CreateTextFormat(
-        L"Yu Gothic UI", nullptr, text_weight,
-        DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        static_cast<float>(ScaleForDpi(scaled_font)),
+    HRESULT hr = dwrite_factory_->CreateTextFormat(
+        text_font_family.c_str(), nullptr, text_weight, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, static_cast<float>(ScaleForDpi(scaled_font)),
         L"", text_format_.GetAddressOf());
+    if (FAILED(hr) && text_font_family != kDefaultTextFontFamily) {
+      dwrite_factory_->CreateTextFormat(
+          kDefaultTextFontFamily, nullptr, text_weight,
+          DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+          static_cast<float>(ScaleForDpi(scaled_font)), L"",
+          text_format_.GetAddressOf());
+    }
     if (text_format_ != nullptr) {
       text_format_->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
       text_format_->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
@@ -1294,10 +1320,16 @@ void FloatingLyricWindow::Render() {
   // 基准宽时向两侧对称溢出（DrawText 不带 CLIP 选项不会自己裁，外层已经用
   // PushAxisAlignedClip 把一切文字绘制框在 text_rect_ 里，绝不会画到控件带上）。
   if (has_ruby && ruby_format_ == nullptr) {
-    dwrite_factory_->CreateTextFormat(
-        L"Yu Gothic UI", nullptr, text_weight,
+    HRESULT hr = dwrite_factory_->CreateTextFormat(
+        text_font_family.c_str(), nullptr, text_weight,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, ruby_font_px,
         L"", ruby_format_.GetAddressOf());
+    if (FAILED(hr) && text_font_family != kDefaultTextFontFamily) {
+      dwrite_factory_->CreateTextFormat(
+          kDefaultTextFontFamily, nullptr, text_weight,
+          DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, ruby_font_px,
+          L"", ruby_format_.GetAddressOf());
+    }
     if (ruby_format_ != nullptr) {
       ruby_format_->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
       ruby_format_->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
@@ -1373,8 +1405,7 @@ void FloatingLyricWindow::Render() {
           // 一动不动 —— 视口下移，被裁掉的句尾从下面走进来。这是分层窗里唯一
           // 不需要第二个渲染目标就能做出来的滚动。
           if (hook_text_mode_) {
-            scroll_max_px_ =
-                std::max(0.0f, metrics.height - text_rect_.height);
+            scroll_max_px_ = std::max(0.0f, metrics.height - text_rect_.height);
           }
         }
       }
