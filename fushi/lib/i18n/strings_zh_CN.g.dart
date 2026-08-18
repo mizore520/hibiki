@@ -2,3513 +2,7717 @@ part of 'strings.g.dart';
 
 // Path: <root>
 class _StringsZhCn extends _StringsEn {
+  /// You can call this constructor and build your own translation instance of this locale.
+  /// Constructing via the enum [AppLocale.build] is preferred.
+  _StringsZhCn.build(
+      {Map<String, Node>? overrides,
+      PluralResolver? cardinalResolver,
+      PluralResolver? ordinalResolver})
+      : assert(overrides == null,
+            'Set "translation_overrides: true" in order to enable this feature.'),
+        $meta = TranslationMetadata(
+          locale: AppLocale.zhCn,
+          overrides: overrides ?? {},
+          cardinalResolver: cardinalResolver,
+          ordinalResolver: ordinalResolver,
+        ),
+        super.build(
+            cardinalResolver: cardinalResolver,
+            ordinalResolver: ordinalResolver);
 
-	/// You can call this constructor and build your own translation instance of this locale.
-	/// Constructing via the enum [AppLocale.build] is preferred.
-	_StringsZhCn.build({Map<String, Node>? overrides, PluralResolver? cardinalResolver, PluralResolver? ordinalResolver})
-		: assert(overrides == null, 'Set "translation_overrides: true" in order to enable this feature.'),
-		  $meta = TranslationMetadata(
-		    locale: AppLocale.zhCn,
-		    overrides: overrides ?? {},
-		    cardinalResolver: cardinalResolver,
-		    ordinalResolver: ordinalResolver,
-		  ),
-		  super.build(cardinalResolver: cardinalResolver, ordinalResolver: ordinalResolver);
+  /// Metadata for the translations of <zh-CN>.
+  @override
+  final TranslationMetadata<AppLocale, _StringsEn> $meta;
 
-	/// Metadata for the translations of <zh-CN>.
-	@override final TranslationMetadata<AppLocale, _StringsEn> $meta;
+  @override
+  late final _StringsZhCn _root = this; // ignore: unused_field
 
-	@override late final _StringsZhCn _root = this; // ignore: unused_field
-
-	// Translations
-	@override String get action_exit => '退出';
-	@override String get action_favorite => '收藏';
-	@override String activity_days_ago({required Object n}) => '${n} 天前';
-	@override String activity_hours_ago({required Object n}) => '${n} 小时前';
-	@override String get activity_just_now => '刚刚';
-	@override String activity_minutes_ago({required Object n}) => '${n} 分钟前';
-	@override String get add_to_collection => '加入合集';
-	@override String get anime_download_back => '返回';
-	@override String get anime_download_batch => '合集';
-	@override String get anime_download_category_all => '全部';
-	@override String get anime_download_category_english => '英译';
-	@override String get anime_download_category_non_english => '非英译';
-	@override String get anime_download_category_raw => '生肉';
-	@override String get anime_download_delete => '删除';
-	@override String anime_download_episode_count({required Object count}) => '${count} 集';
-	@override String get anime_download_generic_download => '下载';
-	@override String get anime_download_generic_hint => '磁力链接';
-	@override String get anime_download_generic_title => '粘贴链接下载（书、视频等）';
-	@override String get anime_download_include_subs => '附带字幕';
-	@override String get anime_download_kind_auto => '自动';
-	@override String get anime_download_kind_book => '书';
-	@override String get anime_download_kind_video => '视频';
-	@override String get anime_download_magnet_invalid => '磁力链接无效';
-	@override String get anime_download_no_results => '无结果';
-	@override String get anime_download_no_subs => '无字幕';
-	@override String get anime_download_no_tasks => '暂无下载任务';
-	@override String get anime_download_nyaa_query => 'Nyaa 查询词';
-	@override String get anime_download_play_now => '边下边播';
-	@override String get anime_download_play_now_fail => '暂不可提前入库（元数据未就绪或连接失败），稍后再试';
-	@override String get anime_download_play_now_ok => '已入库，可从视频库打开边下边播';
-	@override String get anime_download_push => '推送下载';
-	@override String get anime_download_push_failed => '推送到 qBittorrent 失败';
-	@override String get anime_download_pushed => '已推送，下载完成后自动入库';
-	@override String get anime_download_refresh => '刷新';
-	@override String get anime_download_relocate => '重命名 / 移动';
-	@override String anime_download_relocate_engine_failed({required Object reason}) => '失败，磁盘与库都未改动：${reason}';
-	@override String get anime_download_relocate_hint => 'Fushi 通过下载引擎改名/移动，因此不会掐断做种。在资源管理器里改名则永远无法挽回。';
-	@override String anime_download_relocate_library_failed({required Object reason}) => '文件已移动，但库仍指向旧路径：${reason}';
-	@override String get anime_download_relocate_move_title => '移动到文件夹';
-	@override String get anime_download_relocate_no_files => '该任务还没有可改名的文件（元数据未就绪）';
-	@override String anime_download_relocate_ok({required Object rows}) => '已改名 / 移动，同步更新 ${rows} 个库条目';
-	@override String get anime_download_relocate_pick_folder => '选择目标文件夹';
-	@override String get anime_download_relocate_rename_title => '重命名文件';
-	@override String get anime_download_retry => '重试';
-	@override String get anime_download_search => '搜索';
-	@override String get anime_download_search_error_proxy_hint => '站点无法直连时，可在下载设置中配置网络代理。';
-	@override String get anime_download_search_failed => '搜索失败或超时，请点重试';
-	@override String get anime_download_search_hint => '番剧名';
-	@override String get anime_download_search_start_hint => '在上方搜索番剧名，自动匹配种子与字幕。';
-	@override String get anime_download_sort_date => '发布时间';
-	@override String get anime_download_sort_seeders => '做种数';
-	@override String get anime_download_sort_size => '体积';
-	@override String get anime_download_store_unavailable => '下载计划存储不可用';
-	@override String get anime_download_subs_badge => '字幕';
-	@override String get anime_download_subs_failed => '字幕搜索失败，请点重试';
-	@override String get anime_download_subs_need_key => '在上方填写 Jimaku API key 后可搜字幕';
-	@override String get anime_download_tasks => '下载任务';
-	@override String get anime_download_title => '番剧下载';
-	@override String get anime_download_trusted => 'Trusted';
-	@override String get anime_download_trusted_only => '仅 Trusted';
-	@override String get anki_allow_duplicates => '允许重复';
-	@override String get anki_allow_duplicates_hint => '添加卡片时跳过重复检查';
-	@override String get anki_card_action_failed => '卡片操作失败，请重试。';
-	@override String get anki_compact_glossaries => '紧凑释义';
-	@override String get anki_compact_glossaries_hint => '使用紧凑格式显示释义';
-	@override String get anki_connect_api_key => 'API 密钥';
-	@override String get anki_connect_host => '主机';
-	@override String get anki_connect_port => '端口';
-	@override String get anki_create_lapis => '创建 Lapis 卡组';
-	@override String get anki_create_lapis_exists => 'Lapis 笔记类型和卡组已存在，已选中。';
-	@override String anki_create_lapis_failed({required Object error}) => '无法创建 Lapis 卡组：${error}';
-	@override String get anki_create_lapis_hint => '向 Anki 添加 Lapis 笔记类型和 Lapis 卡组并自动选中。';
-	@override String get anki_create_lapis_success => '已创建 Lapis 笔记类型和卡组。';
-	@override String get anki_deck => '牌组';
-	@override String get anki_duplicate_scope => '查重范围';
-	@override String get anki_duplicate_scope_collection => '整个收藏集';
-	@override String get anki_duplicate_scope_deck => '所选卡组（含子卡组）';
-	@override String get anki_duplicate_scope_deck_root => '根卡组（含全部子卡组）';
-	@override String get anki_duplicate_scope_hint => '查询「这个词是否已经有卡」时搜索哪些卡组。仅 AnkiConnect（桌面 Anki）生效；AnkiDroid 始终整库查重。';
-	@override String get anki_error_collection_unavailable => 'AnkiDroid 数据库当前不可用：请先打开 AnkiDroid 至少一次，确认它没有在同步且已开启 API，然后重试。';
-	@override String get anki_error_connection_refused => '无法连接 Anki：连接被拒绝。请确认 Anki 桌面版正在运行，且已安装 AnkiConnect 插件。';
-	@override String get anki_error_connection_timeout => '无法连接 Anki：连接超时。请检查主机、端口和防火墙设置。';
-	@override String get anki_error_connection_unknown => '无法导出到 Anki：发生未知的连接错误。详情见错误日志。';
-	@override String get anki_error_http => '无法导出到 Anki：连接 AnkiConnect 时发生 HTTP 错误。';
-	@override String get anki_error_permission_denied => 'AnkiDroid 尚未授予卡片访问权限。请在刚弹出的系统授权对话框中允许，然后再次点击按钮制卡。';
-	@override String get anki_fetch => '刷新牌组与笔记类型';
-	@override String get anki_fetching => '获取中...';
-	@override String get anki_field_mappings => '字段映射';
-	@override String get anki_field_not_mapped => '未映射';
-	@override String get anki_mine_to_server => '制卡到已配对设备';
-	@override String get anki_mine_to_server_hint => '把制卡发送到已配对主机的 Anki（用该设备的牌组与设置），而非本机。需先在互联/同步里完成配对。';
-	@override String get anki_mined_action_add_duplicate => '新增为重复卡';
-	@override String get anki_mined_action_overwrite => '覆写这张卡';
-	@override String get anki_mined_action_view => '查看 / 在 Anki 中打开';
-	@override String get anki_mined_card_subtitle => '选择对这张已存在的卡片做什么。';
-	@override String get anki_mined_card_title => '卡片已在 Anki 中';
-	@override String anki_mined_multiple_matches({required Object count}) => '${count} 张匹配的卡片';
-	@override String get anki_not_configured => '点击「刷新」加载你的 Anki 牌组与笔记类型。';
-	@override String get anki_note_open_failed => '无法在 Anki 中打开这张卡片。';
-	@override String get anki_note_type => '笔记类型';
-	@override String get anki_note_viewer_empty => '这张卡片没有可读取的字段。';
-	@override String get anki_note_viewer_open_in_anki => '在 Anki 中打开';
-	@override String get anki_note_viewer_title => '已存在的卡片';
-	@override String get anki_open_no_card => '在 Anki 中没有找到这个词的卡片。';
-	@override String get anki_overwrite_scope => '覆写范围';
-	@override String get anki_overwrite_scope_all => '全部匹配的卡片';
-	@override String get anki_overwrite_scope_hint => '绿色 ✓ 能覆写哪些已制卡片';
-	@override String get anki_overwrite_scope_latest => '仅最近一张';
-	@override String get anki_refresh_hint => '在 Anki 里新建或重命名牌组、笔记类型后，点此刷新。';
-	@override String anki_select_handlebar({required Object field}) => '选择 ${field} 的值';
-	@override String get anki_settings_label => 'Anki 设置';
-	@override String get anki_tag_default_section => '默认标签';
-	@override String get anki_tag_include_category => '添加来源分类标签';
-	@override String get anki_tag_include_category_hint => '书籍标「book」、视频标「video」、游戏标「game」';
-	@override String get anki_tag_include_fushi => '添加「fushi」标签';
-	@override String get anki_tag_include_fushi_hint => '为每张 Fushi 制出的卡片打上标记';
-	@override String get anki_tags => '标签';
-	@override String get anki_tags_hint => '空格分隔，每张卡片都会添加';
-	@override String get app_icon_label => '应用图标';
-	@override String get app_icon_presets => '预设';
-	@override String get app_ui_scale => '界面大小';
-	@override String get app_ui_scale_hint => '整体缩放应用界面（文字、图标、控件一起放大缩小），范围 30% 到 300%。大屏设备上界面偏小可调高。';
-	@override String get app_version => '应用版本';
-	@override String get apply_theme => '应用主题';
-	@override String get audio_clip_failed => '无法截取音频片段 — 音频源可能缺失或无法读取';
-	@override String get audio_import => '导入音频';
-	@override String get audio_panel_add_audio => '添加音频';
-	@override String get audio_panel_auto => '自动';
-	@override String get audio_panel_pick_new_subtitle => '选择新字幕文件';
-	@override String get audio_source_added => '已添加音频来源';
-	@override String audio_source_dns_error({required Object host}) => '音频源连接失败：无法解析 "${host}" — 请检查网络，或在设置中移除此音频源';
-	@override String get audio_source_edit_target_gone => '该音频来源已不存在，编辑已丢弃';
-	@override String get audio_source_edit_url => '编辑音频来源链接';
-	@override String audio_source_error({required Object detail}) => '音频源错误：${detail}';
-	@override String get audio_source_fushi_interconnect => 'Fushi 互联';
-	@override String get audio_source_loopback_warning => '指向本机地址，换机后需重新指向';
-	@override String audio_source_request_error({required Object detail}) => '音频源请求失败：${detail}';
-	@override String audio_source_timeout({required Object host}) => '音频源超时："${host}" — 服务器无响应，请稍后重试或更换音频源';
-	@override String get audio_source_updated => '已更新音频来源';
-	@override String get audio_source_url_invalid => '链接需为 http(s) 且含 term / reading 占位符';
-	@override String get audio_unavailable => '未找到音频。';
-	@override String get audio_volume => '音量';
-	@override String get audiobook_attached => '已附加有声书';
-	@override String get audiobook_audio_missing => '音频文件丢失';
-	@override String get audiobook_background_play => '退出后继续播放';
-	@override String get audiobook_background_play_hint => '关闭时，退出阅读页即停止有声书播放；开启后退出仍在后台继续播放。';
-	@override String get audiobook_export_clip => '导出片段视频';
-	@override String get audiobook_export_clip_failed => '片段导出失败';
-	@override String get audiobook_export_clip_in_progress => '正在导出片段…';
-	@override String get audiobook_export_clip_no_selection => '请先选中文本再导出片段';
-	@override String get audiobook_export_clip_no_text => '该选区没有可渲染的文本';
-	@override String get audiobook_export_clip_saved => '片段已保存';
-	@override String get audiobook_export_clip_unsupported_range => '该选区暂不支持导出（跨章或跨音频文件）';
-	@override String get audiobook_import => '导入有声书';
-	@override String get audiobook_import_error => '导入失败';
-	@override String audiobook_import_error_copy_failed({required Object name}) => '文件复制失败：${name}';
-	@override String audiobook_import_error_disk_full({required Object size}) => '磁盘空间不足。所需空间：${size}';
-	@override String get audiobook_import_success => '有声书导入成功';
-	@override String get audiobook_load_error => '加载有声书失败。';
-	@override String get audiobook_pick_alignment => '选择对齐文件';
-	@override String get audiobook_reference_original => '引用原文件（不复制）';
-	@override String get audiobook_reference_original_desc => '音频保留在原位置、按原路径播放；原文件被移动或删除后这本书会失效。';
-	@override String get audiobook_relocate => '重新定位文件';
-	@override String get audiobook_relocate_done => '音频已重新定位';
-	@override String get auto_add_book_name_to_tags => '自动添加书名到标签';
-	@override String auto_chapter({required Object n}) => '第 ${n} 章';
-	@override String get auto_read_on_lookup => '查词时自动朗读';
-	@override String get auto_search => '自动搜索';
-	@override String get auto_search_debounce_delay => '自动搜索防抖延迟';
-	@override String get auto_select_search_window => '自动选择搜索窗口';
-	@override String get auto_select_search_window_hint => '导入时探测多档 window，取命中率最高的那档';
-	@override String get av_sync => '音画同步';
-	@override String get av_sync_reset => '归零';
-	@override String get back => '返回';
-	@override String get background_color => '背景颜色';
-	@override String get background_color_desc => '阅读器页面背景';
-	@override String get backup_category_audiobooks => '有声书音频';
-	@override String get backup_category_audiobooks_desc => '有声书音频与对齐数据';
-	@override String get backup_category_books => '书籍内容';
-	@override String get backup_category_books_desc => '书籍文件（EPUB 及解压内容）';
-	@override String get backup_category_dictionary => '词典';
-	@override String get backup_category_dictionary_desc => '已导入的词典及其文件';
-	@override String get backup_category_fonts => '自定义字体';
-	@override String get backup_category_fonts_desc => '已导入的自定义字体文件';
-	@override String get backup_category_local_audio => '本地音频数据库';
-	@override String get backup_category_local_audio_desc => '本地发音音频库';
-	@override String get backup_category_profiles => '配置方案';
-	@override String get backup_category_profiles_desc => '配置方案';
-	@override String get backup_category_progress => '阅读进度';
-	@override String get backup_category_progress_desc => '阅读进度与书签';
-	@override String get backup_category_settings => '设置';
-	@override String get backup_category_settings_desc => '应用与阅读器设置';
-	@override String get backup_category_statistics => '统计数据';
-	@override String get backup_category_statistics_desc => '阅读、视频与制卡统计';
-	@override String get backup_category_videos => '视频';
-	@override String get backup_category_videos_desc => '本地视频文件';
-	@override String get backup_export => '导出备份';
-	@override String get backup_export_books_all => '全部书籍';
-	@override String backup_export_books_selected({required Object count}) => '已选 ${count} 本书';
-	@override String get backup_export_categories_hint => '勾选要打包进备份的内容。取消勾选「书籍」会连同这些书的正文和记录一并移除。';
-	@override String get backup_export_categories_title => '选择要导出的内容';
-	@override String get backup_export_choose_books => '选择书籍';
-	@override String get backup_export_choose_videos => '选择视频';
-	@override String backup_export_failed({required Object message}) => '备份导出失败：${message}';
-	@override String get backup_export_hint => '选择要包含的内容。阅读数据（进度、统计、设置）始终包含；取消「书籍」可完整排除书籍，取消大文件（本地音频、视频）可缩小备份。';
-	@override String get backup_export_no_books => '没有可选的书籍';
-	@override String get backup_export_no_videos => '没有可选的视频';
-	@override String get backup_export_select_all => '全选';
-	@override String get backup_export_select_none => '全不选';
-	@override String get backup_export_success => '备份导出成功';
-	@override String get backup_export_videos_all => '全部视频';
-	@override String backup_export_videos_selected({required Object count}) => '已选 ${count} 个视频';
-	@override String get backup_exporting => '正在创建备份…';
-	@override String get backup_import => '导入备份';
-	@override String backup_import_confirm({required Object date, required Object bookCount, required Object statsCount}) => '这将用 ${date} 的备份替换所有当前数据。\n\n${bookCount} 本书，${statsCount} 条统计记录。\n\n恢复后应用将重启。';
-	@override String get backup_import_confirm_title => '恢复备份？';
-	@override String get backup_import_contents_hint => '取消勾选某项即可跳过它。';
-	@override String get backup_import_contents_title => '此备份包含';
-	@override String backup_import_failed({required Object message}) => '备份导入失败：${message}';
-	@override String get backup_import_hint => '从备份文件恢复。应用将会重启。';
-	@override String get backup_import_invalid => '无效的备份文件';
-	@override String backup_import_merge_preview({required Object bookCount, required Object progressCount}) => '合并将新增 ${bookCount} 本书、更新 ${progressCount} 条阅读进度。';
-	@override String get backup_import_mode_label => '导入方式';
-	@override String get backup_import_mode_merge => '合并到现有库';
-	@override String get backup_import_mode_overwrite => '覆盖整库';
-	@override String get backup_import_overlay_title => '正在导入备份';
-	@override String get backup_import_overlay_warning => '正在恢复数据，请勿关闭应用。';
-	@override String get backup_import_preserve_sync_note => '本设备的同步配置（账户与凭据）将保留。';
-	@override String get backup_import_restart_button => '立即重启';
-	@override String get backup_import_settings_off_hint => '保留本机字体/外观/Profile，只恢复书籍与阅读数据。';
-	@override String get backup_import_settings_on_hint => '完整恢复：字体、外观、Profile 都来自备份。';
-	@override String get backup_import_settings_toggle => '导入设置与 Profile';
-	@override String get backup_import_success => '备份已恢复。正在重启…';
-	@override String get backup_import_validating_hint => '正在校验并预览备份内容，请稍候。';
-	@override String get backup_import_validating_title => '正在读取备份…';
-	@override String backup_schema_newer({required Object version}) => '此备份需要更新版本的应用（schema ${version}）。请先更新。';
-	@override String batch_add_to_collection_success({required Object n}) => '已把 ${n} 项加入合集。';
-	@override String batch_delete_confirm({required Object n}) => '确定删除 ${n} 本书？此操作不可撤销。';
-	@override String batch_delete_confirm_video({required Object n}) => '确定删除 ${n} 个视频？此操作不可撤销。';
-	@override String batch_delete_mixed_confirm({required Object n, required Object m}) => '删除 ${n} 个媒体、解散 ${m} 个合集？此操作无法撤销。';
-	@override String batch_delete_mixed_success({required Object n, required Object m}) => '已删除 ${n} 个媒体、解散 ${m} 个合集。';
-	@override String batch_delete_success({required Object n}) => '已删除 ${n} 本书。';
-	@override String batch_delete_success_video({required Object n}) => '已删除 ${n} 个视频。';
-	@override String batch_dissolve_confirm({required Object m}) => '解散 ${m} 个合集？只解除分组，不删除媒体本体。';
-	@override String batch_dissolve_success({required Object m}) => '已解散 ${m} 个合集。';
-	@override String get batch_invert_selection => '反选';
-	@override String get batch_select => '选择';
-	@override String get batch_select_all => '全选';
-	@override String batch_selected_count({required Object n}) => '已选 ${n} 项';
-	@override String get batch_tag_add => '添加';
-	@override String batch_tag_added({required Object n, required Object name}) => '已为 ${n} 本书添加标签「${name}」。';
-	@override String batch_tag_added_video({required Object n, required Object name}) => '已为 ${n} 个视频添加标签「${name}」。';
-	@override String get batch_tag_apply => '应用';
-	@override String get batch_tag_keep => '保持';
-	@override String get batch_tag_remove => '移除';
-	@override String batch_tag_removed({required Object n, required Object name}) => '已从 ${n} 本书移除标签「${name}」。';
-	@override String batch_tag_removed_video({required Object n, required Object name}) => '已从 ${n} 个视频移除标签「${name}」。';
-	@override String get batch_tag_title => '批量管理标签';
-	@override String get book_continue_reading => '继续阅读';
-	@override String get book_css_editor_cancel => '取消';
-	@override String get book_css_editor_confirm_reset => '将此文件的 CSS 重置为默认值？';
-	@override String get book_css_editor_confirm_reset_all => '将所有文件的 CSS 重置为默认值？';
-	@override String get book_css_editor_discard => '丢弃';
-	@override String get book_css_editor_edit_css => '编辑书籍 CSS';
-	@override String get book_css_editor_no_css_files => '此书中未找到 CSS 文件。';
-	@override String get book_css_editor_no_extract_dir => '未找到书籍目录。请重新导入书籍以编辑 CSS。';
-	@override String get book_css_editor_reset_all => '全部重置';
-	@override String get book_css_editor_reset_current => '重置当前';
-	@override String get book_css_editor_reset_done => 'CSS 已重置。';
-	@override String get book_css_editor_save => '保存';
-	@override String get book_css_editor_saved => 'CSS 已保存。';
-	@override String get book_css_editor_title => '书籍 CSS 编辑器';
-	@override String get book_css_editor_unsaved_changes => '未保存的更改';
-	@override String get book_css_editor_unsaved_changes_message => '有未保存的更改。是否丢弃？';
-	@override String get book_directory_not_found => '未找到书籍目录。';
-	@override String get book_edit_author => '作者';
-	@override String get book_file_not_found => '找不到书籍文件';
-	@override String get book_import_duplicate_cancel => '否，取消';
-	@override String get book_import_duplicate_cancelled => '已取消导入';
-	@override String get book_import_duplicate_keep => '是，加后缀';
-	@override String book_import_duplicate_message({required Object name}) => '书架中已存在《${name}》。仍要导入吗？「是」会加序号后缀导入，「否」取消添加这本书。';
-	@override String get book_import_duplicate_title => '同名书籍';
-	@override String get book_mark_completed_action => '标记为已读完';
-	@override String get book_mark_uncompleted_action => '取消已读完';
-	@override String get book_marked_completed => '已标记为读完';
-	@override String get book_marked_uncompleted => '已取消完成标记';
-	@override String get book_mode => '书籍模式';
-	@override String book_read_progress({required Object percent}) => '已读 ${percent}%';
-	@override String get book_scrape_cover => '在线刮削封面';
-	@override String get book_scrape_empty => '无匹配封面';
-	@override String get book_scrape_failed => '封面获取失败';
-	@override String get book_scrape_hint => '书名 / 作者';
-	@override String get book_scrape_search => '搜索';
-	@override String get book_scrape_search_failed => '搜索失败，请点击「搜索」重试';
-	@override String get book_scrape_title => '在线匹配封面';
-	@override String get book_scrape_use => '使用';
-	@override String get book_search => '书内搜索';
-	@override String get book_search_hint => '输入搜索内容…';
-	@override String get book_search_no_results => '未找到结果';
-	@override String book_search_results({required Object n}) => '${n} 条结果';
-	@override String get books => '书架';
-	@override String get browser_extension_enable_server_first => '提示：请先在上方开启「Yomitan API 服务器」并设置 API 密钥，扩展才能被自动配置为可用连接。';
-	@override String get browser_extension_mobile_unsupported => '手机浏览器无法加载此扩展，请直接在 app 内阅读器/视频中查词。';
-	@override String get browser_extension_page_intro => '在电脑的 Chrome / Edge 里直接划词查词、解析字幕、一键制卡。先在下面准备扩展文件，再按步骤加载到浏览器。';
-	@override String get browser_extension_prepare_button => '准备扩展文件';
-	@override String get browser_extension_prepare_hint => '会自动开启查词服务并把扩展解压到本机，扩展文件夹路径已复制到剪贴板。';
-	@override String get browser_extension_reinstall_button => '重新准备 / 刷新文件';
-	@override String get browser_extension_server_off => '查词服务未开启';
-	@override String get browser_extension_server_on => '查词服务已开启';
-	@override String get browser_extension_status_connected => '插件已连接';
-	@override String get browser_extension_status_never => '尚未检测到插件';
-	@override String get browser_extension_step_dev_mode => '打开右上角的「开发者模式」开关。';
-	@override String get browser_extension_step_done_auto => '完成。扩展已自动配置好，装好后会直接连上本应用查词，你不用手动填写任何设置。';
-	@override String get browser_extension_step_load_unpacked => '点击「加载已解压的扩展程序」。';
-	@override String get browser_extension_step_open_page => '打开浏览器扩展管理页：';
-	@override String get browser_extension_step_pick_folder => '选择下方的扩展文件夹（其路径已复制到剪贴板）。';
-	@override String get browser_extension_step_verify => '验证插件已加载并连上本机';
-	@override String get browser_extension_verify_button => '检测连接';
-	@override String get browser_extension_verify_checking => '检测中…';
-	@override String get browser_extension_verify_connected => '已检测到插件已连接，一切正常。';
-	@override String get browser_extension_verify_not_detected => '还没检测到插件。请确认已在浏览器里加载并启用扩展后再检测。';
-	@override String get browser_extension_version_app => 'App 内置';
-	@override String get browser_extension_version_browser => '浏览器中加载';
-	@override String get browser_extension_version_label => '扩展版本';
-	@override String get browser_extension_version_mismatch => '浏览器中加载的扩展不是最新版本：如有需要先重新准备扩展，再到浏览器扩展管理页（chrome://extensions）点「重新加载」。';
-	@override String browser_extension_yomitan_port_conflict({required Object port}) => '端口 ${port} 正被其他进程占用（通常是浏览器拉起的 yomitan-api 组件，即一个 Python 进程）。可直接结束该进程，或在 Yomitan 高级设置中关闭 Yomitan API，然后重新开启 Fushi 的 Yomitan API 服务器。';
-	@override String get cancel => '取消';
-	@override String card_cover_degraded_to_static({required Object reason}) => '卡片封面已降级为静态帧（动图不可用）：${reason}';
-	@override String get card_duplicate => '重复卡片，未导出。';
-	@override String get card_export_failed => '导出卡片失败。';
-	@override String card_export_failed_detail({required Object reason}) => '导出卡片失败：${reason}';
-	@override String get card_export_not_configured => 'Anki 尚未配置。请打开 Anki 设置并点击获取。';
-	@override String card_exported({required Object deck}) => '卡片已导出到『${deck}』。';
-	@override String card_exported_audio_failed({required Object reason}) => '卡片已导出，但音频下载失败（${reason}）。';
-	@override String get card_mined_no_sentence_captured => '卡片已创建，但未捕获到句子（请重新选词，或该处内容无法识别句子）。';
-	@override String get card_mined_unmapped_sentence_audio_field => '卡片已创建并含句子音频，但当前 Anki 卡片模板没有字段映射到它。请把某字段映射到 {sentence-audio}。';
-	@override String get card_mined_unmapped_sentence_field => '卡片已创建，但当前 Anki 卡片模板没有任何字段映射到句子。请用设置页『一键创建 Lapis 卡组』，或把某字段映射到 {sentence}。';
-	@override String get card_mined_without_sentence_audio => '已制卡，但本次选区找不到句子音频。';
-	@override String get card_mining_pending => '制卡中…';
-	@override String card_overwritten({required Object deck}) => '卡片已覆盖到『${deck}』。';
-	@override String get change_source => '切换来源';
-	@override String get changelog_empty => '未获取到更新日志，请检查网络或代理设置。';
-	@override String get changelog_open_releases => '打开发布页';
-	@override String get changelog_prerelease => '预发布';
-	@override String chapter_progress({required Object idx, required Object total, required Object suffix, required Object pct}) => '第 ${idx} / ${total} 章${suffix} · ${pct}%';
-	@override String get clear => '清除';
-	@override String get clear_dictionary_description => '此操作将清除所有历史词典搜索结果。确定吗？';
-	@override String get clear_dictionary_title => '清除词典搜索历史';
-	@override String get clipboard_history_clear => '清空';
-	@override String get clipboard_history_empty => '暂无复制记录';
-	@override String get clipboard_history_title => '复制历史';
-	@override String get clipboard_panel_block_capture => '防截屏 / 防录屏';
-	@override String get clipboard_panel_block_capture_hint => '把查词和剪贴板悬浮窗从截图、录屏、直播串流中排除（Windows）。关闭后，截图、录屏和串流即可拍到查词悬浮窗。';
-	@override String get clipboard_panel_opacity => '面板不透明度';
-	@override String get clipboard_panel_opacity_hint => '整个面板的不透明度——可透视底下的游戏/网页';
-	@override String get clipboard_panel_window_title => 'Fushi 剪贴板查词';
-	@override String get clipboard_text_window_bg_opacity => '文字窗背景不透明度';
-	@override String get clipboard_text_window_bg_opacity_hint => '透明剪切板文字窗的背景不透明度——0% 时背景全透只露文字，透视底下的游戏';
-	@override String get clipboard_text_window_title => '剪贴板文字';
-	@override String get collapse_dictionaries => '折叠词典显示';
-	@override String get collection_bookmark => '书签';
-	@override String get collection_clear_confirm => '确定清空所选收藏？此操作不可撤销。';
-	@override String get collection_clear_scope => '清空范围';
-	@override String get collection_collapse => '折叠';
-	@override String collection_continue_progress({required Object n}) => '继续看 第${n}集';
-	@override String get collection_empty => '合集为空';
-	@override String get collection_expand => '展开';
-	@override String get collection_export_all_books => '全部书籍';
-	@override String get collection_export_all_mined => '全部制卡句';
-	@override String get collection_export_all_words => '全部收藏词';
-	@override String get collection_export_dedupe => '按句去重';
-	@override String get collection_export_failed => '导出失败';
-	@override String get collection_export_favorites_scope => '收藏句';
-	@override String get collection_export_format => '格式';
-	@override String get collection_export_mined_title => '制卡语句';
-	@override String get collection_export_no_items => '没有可导出的内容';
-	@override String get collection_export_pick_book => '选择书籍';
-	@override String get collection_export_save => '保存导出';
-	@override String get collection_export_saved => '已保存导出';
-	@override String get collection_export_scope => '导出范围';
-	@override String get collection_export_sentences_title => '收藏句子';
-	@override String get collection_export_words_title => '收藏词';
-	@override String get collection_loading_hint => '正在加载收藏并匹配音频文件…';
-	@override String get collection_member_removed => '已移出合集';
-	@override String get collection_merge_title => '合并合集';
-	@override String get collection_merged => '已合并合集。';
-	@override String get collection_mined => '制卡句';
-	@override String get collection_open => '打开';
-	@override String get collection_play => '播放';
-	@override String get collection_remove_member => '移出合集';
-	@override String get collection_remove_member_confirm => '将该条目移出合集？条目本身保留。';
-	@override String get collection_sentence => '句子';
-	@override String get collection_sort_by_imported => '按导入时间排序';
-	@override String get collection_sort_by_title => '按名称排序';
-	@override String get collection_view_all => '查看全部';
-	@override String collection_watched_progress({required Object done, required Object total}) => '已看完 ${done}/${total}';
-	@override String get collection_word => '单词';
-	@override String get collections => '收藏夹';
-	@override String get color_container => '容器色';
-	@override String get color_container_desc => '开关轨道、播放栏';
-	@override String get color_link => '链接颜色';
-	@override String get color_link_desc => '阅读器超链接颜色';
-	@override String get color_primary => '主色';
-	@override String get color_primary_desc => '音频高亮、按钮、开关';
-	@override String get color_sentence_audio_highlight => '音频高亮';
-	@override String get color_sentence_audio_highlight_desc => '有声书播放时跟随当前句的高亮颜色';
-	@override String get color_secondary => '辅色';
-	@override String get color_secondary_desc => '词典条目、书架标签';
-	@override String get color_tertiary => '第三色';
-	@override String get color_tertiary_desc => '收藏夹、阅读统计';
-	@override String get columns_per_page => '每页列数';
-	@override String get combine_into_series => '组合成系列';
-	@override String get copied => '已复制';
-	@override String get copied_to_clipboard => '已复制到剪贴板。';
-	@override String get copy => '复制';
-	@override String get copy_error => '复制错误';
-	@override String get crash_dump_empty => '暂无崩溃转储';
-	@override String crash_dump_label({required Object n}) => '崩溃转储 (${n})';
-	@override String get crash_dump_open_folder => '打开转储文件夹';
-	@override String get crash_dump_privacy_notice => '崩溃转储文件（.dmp）含进程内存快照，可能包含你正在阅读的文本、查过的词或其它应用内数据。仅分享给你信任的开发者。';
-	@override String get crash_dump_share => '分享转储';
-	@override String get crash_dump_share_subject => 'Fushi 崩溃转储';
-	@override String get create_series => '新建系列';
-	@override String get creator_action_add_to_stash => '添加到暂存';
-	@override String get creator_action_copy_to_clipboard => '复制到剪贴板';
-	@override String get creator_action_play_audio => '播放音频';
-	@override String get creator_action_share => '分享';
-	@override String get creator_enhancement_audio_recorder => '录音';
-	@override String get creator_enhancement_camera => '相机';
-	@override String get creator_enhancement_clear_field => '清空字段';
-	@override String get creator_enhancement_crop_image => '裁剪图片';
-	@override String get creator_enhancement_local_audio => '本地音频';
-	@override String get creator_enhancement_open_stash => '打开暂存';
-	@override String get creator_enhancement_pick_audio => '选择音频';
-	@override String get creator_enhancement_pick_image => '选择图片';
-	@override String get creator_enhancement_pop_from_stash => '从暂存取出';
-	@override String get creator_enhancement_save_tags => '保存标签';
-	@override String get creator_enhancement_search_dictionary => '查词典';
-	@override String get creator_enhancement_sentence_picker => '选句';
-	@override String get creator_enhancement_text_segmentation => '分词';
-	@override String get creator_export_card => '创建卡片';
-	@override String get creator_field_audio => '词条音频';
-	@override String get creator_field_audio_sentence => '例句音频';
-	@override String get creator_field_cloze_after => '填空后文';
-	@override String get creator_field_cloze_before => '填空前文';
-	@override String get creator_field_cloze_inside => '填空内容';
-	@override String get creator_field_collapsed_meaning => '折叠释义';
-	@override String get creator_field_context => '上下文';
-	@override String get creator_field_cue_sentence => '字幕例句';
-	@override String get creator_field_expanded_meaning => '展开释义';
-	@override String get creator_field_frequency => '词频';
-	@override String get creator_field_furigana => '振假名';
-	@override String get creator_field_hidden_meaning => '隐藏释义';
-	@override String get creator_field_image => '图片';
-	@override String get creator_field_meaning => '释义';
-	@override String get creator_field_notes => '笔记';
-	@override String get creator_field_pitch_accent => '声调';
-	@override String get creator_field_reading => '读音';
-	@override String get creator_field_sentence => '例句';
-	@override String get creator_field_tags => '标签';
-	@override String get creator_field_term => '词条';
-	@override String get custom_dict_css => '自定义 CSS';
-	@override String get custom_dict_css_global => '全局（所有词典）';
-	@override String get custom_fonts => '自定义字体';
-	@override String get custom_fonts_add_system => '添加系统字体';
-	@override String get custom_fonts_archive_error => '解压失败';
-	@override String get custom_fonts_catalog_title => '字体库';
-	@override String get custom_fonts_download_failed => '下载失败';
-	@override String get custom_fonts_downloading => '正在下载…';
-	@override String get custom_fonts_drag_hint => '拖拽排列字体优先级';
-	@override String get custom_fonts_empty => '未添加自定义字体';
-	@override String get custom_fonts_font_roles => '字体用途';
-	@override String get custom_fonts_import_file => '导入字体文件';
-	@override String get custom_fonts_import_url => '从 URL 导入';
-	@override String custom_fonts_imported_count({required Object count}) => '已导入 ${count} 个字体';
-	@override String get custom_fonts_manage => '管理字体';
-	@override String get custom_fonts_no_fonts_in_archive => '压缩包中未找到字体文件';
-	@override String get custom_fonts_recommended => '推荐字体';
-	@override String get custom_fonts_removed => '已移除字体';
-	@override String get custom_fonts_search_hint => '搜索字体';
-	@override String get custom_theme => '自定义主题';
-	@override String custom_theme_default_name({required Object n}) => '自定义 ${n}';
-	@override String get custom_theme_long_press_hint => '点击切换 · 长按编辑';
-	@override String get custom_theme_name => '名称';
-	@override String get dark_mode => '深色模式';
-	@override String get dark_mode_dark => '深色';
-	@override String get dark_mode_light => '浅色';
-	@override String get dark_mode_system => '跟随系统';
-	@override String data_root_unavailable_message({required Object path}) => '你设置的数据位置 ${path} 暂时读不到（盘可能在休眠、被占用或未连接）。你的数据是安全的、原封不动留在那里——没有丢失。请点「重试」,等盘就绪即可用回你的数据；或选择用默认位置临时启动（不会改动你原来的数据）。';
-	@override String get data_root_unavailable_title => '数据位置未响应';
-	@override String get data_root_use_default_button => '仍用默认位置启动';
-	@override String get data_storage_change_button => '更改位置';
-	@override String get data_storage_change_confirm_body => 'Fushi 会把所有数据迁移到新文件夹，然后自动重启。迁移过程中请勿关闭应用。';
-	@override String get data_storage_change_confirm_title => '更改数据存储位置？';
-	@override String get data_storage_location_default => '默认位置';
-	@override String get data_storage_location_hint => 'Fushi 存放媒体库、有声书和数据库的位置（仅桌面）。';
-	@override String get data_storage_location_title => '数据存储位置';
-	@override String data_storage_migrate_failed({required Object message}) => '数据迁移失败：${message}';
-	@override String get data_storage_migrate_failed_restart => '重启';
-	@override String get data_storage_migrate_failed_suggestions => '请改选一个空目录后重试。不要选择应用安装目录，并确保目标位置没有文件正在被占用。';
-	@override String get data_storage_migrate_failed_title => '数据迁移失败';
-	@override String data_storage_migrate_overlay_progress({required Object copied, required Object total}) => '正在复制文件：${copied} / ${total}';
-	@override String get data_storage_migrate_overlay_title => '正在迁移数据';
-	@override String get data_storage_migrate_overlay_warning => '正在迁移数据，请勿关闭应用或电脑，迁移完成后会自动重启。';
-	@override String get data_storage_migrate_success => '数据已迁移，正在重启…';
-	@override String get data_storage_migrating => '正在迁移数据…';
-	@override String get data_storage_reject_install_dir => '所选目录是应用的安装位置，不能用来存放数据。请另选一个空目录。';
-	@override String get data_storage_restart_failed => '数据已迁移，但自动重启失败，请手动重新打开 Fushi。';
-	@override String db_downgrade_message({required Object dbVersion, required Object appVersion}) => '此数据库由更新版本的 Fushi 创建（schema v${dbVersion}）。当前应用版本过旧（v${appVersion}）。已阻止打开以保护你的数据。请更新应用后重试。';
-	@override String get db_downgrade_title => '请更新 Fushi';
-	@override String get db_unrecoverable_message => '自动修复后仍无法打开数据库，文件可能已损坏。可在设置中恢复备份，或清除应用数据重新开始。';
-	@override String get db_unrecoverable_title => '数据库已损坏';
-	@override String get debug_log_share_subject => 'Fushi 调试日志';
-	@override String debug_log_title({required Object count}) => '调试日志 (${count})';
-	@override String get debug_log_toggle => '启用调试日志';
-	@override String get decrease => '减少';
-	@override String get deduplicate_pitch_accents => '音调去重';
-	@override String get delete_collection => '删除合集';
-	@override String get delete_collection_also_books => '同时删除其中的书';
-	@override String get delete_collection_also_videos => '同时删除其中的视频（保留你的原始视频文件）';
-	@override String get delete_custom_theme => '删除主题';
-	@override String get delete_custom_theme_confirm => '删除这个自定义主题？此操作不可撤销。';
-	@override String get delete_in_progress => '删除中';
-	@override String get delete_prompt_delete_selected => '删除选中';
-	@override String get delete_prompt_message => '以下内容已在其他设备删除，也从本机删除吗？';
-	@override String get delete_prompt_select_all => '全选';
-	@override String get delete_prompt_title => '其他设备已删除';
-	@override String get delete_scope_keep_local_desc => '其他设备保留';
-	@override String get delete_scope_sync_everywhere => '从所有设备删除';
-	@override String get delete_scope_sync_everywhere_desc => '其他设备下次同步时会确认删除';
-	@override String get design_system_auto => '自动';
-	@override String get design_system_hint => '切换应用的视觉风格';
-	@override String get design_system_label => '设计系统';
-	@override String get desktop_clipboard_auto_lookup => '复制后自动查词';
-	@override String get desktop_clipboard_auto_lookup_hint => '关闭后面板只显示复制到的文字，点词才查词。';
-	@override String get desktop_clipboard_destination => '查词弹窗位置';
-	@override String get desktop_clipboard_destination_main => '主窗口';
-	@override String get desktop_clipboard_destination_panel => '悬浮面板';
-	@override String get desktop_clipboard_destination_text_window => '透明文字窗';
-	@override String get desktop_clipboard_destination_transient => '光标处弹卡';
-	@override String get desktop_clipboard_enabled => '桌面剪贴板查词';
-	@override String get desktop_clipboard_enabled_hint => '监听剪贴板 + 全局快捷键弹出查词窗（桌面·实验性）';
-	@override String get desktop_clipboard_window_mode => '窗口置顶策略';
-	@override String get desktop_clipboard_window_mode_always => '始终置顶';
-	@override String get desktop_clipboard_window_mode_hint => '控制 Fushi 是否保持在其他窗口上方';
-	@override String get desktop_clipboard_window_mode_lookup => '仅查词期间';
-	@override String get desktop_clipboard_window_mode_normal => '不置顶';
-	@override String get dialog_add => '添加';
-	@override String get dialog_append => '追加';
-	@override String get dialog_cancel => '取消';
-	@override String get dialog_clear => '清除';
-	@override String get dialog_clear_all_dictionaries => '删除所有词典';
-	@override String get dialog_close => '关闭';
-	@override String get dialog_connect => '连接';
-	@override String get dialog_content_dictionary_clear => '清空词典数据库会同时清除所有历史搜索结果。';
-	@override String get dialog_content_dictionary_delete => '单独删除词典可能比清空整个数据库耗时更长，且会清除所有历史搜索结果。';
-	@override String get dialog_create => '新建';
-	@override String get dialog_crop => '裁剪';
-	@override String get dialog_delete => '删除';
-	@override String get dialog_done => '完成';
-	@override String get dialog_edit => '编辑';
-	@override String get dialog_edit_info => '编辑信息';
-	@override String get dialog_exit => '退出';
-	@override String get dialog_export => '导出';
-	@override String get dialog_import => '导入';
-	@override String get dialog_import_dictionary => '导入词典';
-	@override String get dialog_import_folder => '导入文件夹词典';
-	@override String get dialog_importing => '正在导入…';
-	@override String get dialog_launch_ankidroid => '启动 ANKIDROID';
-	@override String get dialog_ok => '确定';
-	@override String get dialog_play => '播放';
-	@override String get dialog_read => '阅读';
-	@override String get dialog_record => '录制';
-	@override String get dialog_replace => '替换';
-	@override String get dialog_save => '保存';
-	@override String get dialog_search => '搜索';
-	@override String get dialog_select => '选择';
-	@override String get dialog_share => '分享';
-	@override String get dialog_stash => '暂存';
-	@override String get dialog_stop => '停止';
-	@override String get dialog_title_dictionary_clear => '清除所有词典？';
-	@override String dialog_title_dictionary_delete({required Object name}) => '删除『${name}』？';
-	@override String get dict_auto_update => '自动更新';
-	@override String get dict_auto_update_hint => '启动时检查词典更新';
-	@override String dict_auto_update_last({required Object time}) => '上次成功检查：${time}';
-	@override String get dict_auto_update_never => '从未';
-	@override String get dict_category_frequency => '词频';
-	@override String get dict_category_grammar => '语法';
-	@override String get dict_category_ja_en => '日英';
-	@override String get dict_category_ja_ja => '日日';
-	@override String get dict_category_ja_other => '其他日语';
-	@override String get dict_category_kanji => '汉字';
-	@override String get dict_category_names => '人名';
-	@override String get dict_category_supplementary => '补充';
-	@override String get dict_download_browse => '下载推荐词典';
-	@override String dict_download_button({required Object count}) => '下载 (${count})';
-	@override String get dict_download_complete => '下载完成。';
-	@override String dict_download_failed({required Object error}) => '下载失败：${error}';
-	@override String get dict_download_installed => '已安装';
-	@override String get dict_download_language => '你的语言';
-	@override String dict_download_partial({required Object success, required Object total, required Object error}) => '成功 ${success} / ${total}。失败：${error}';
-	@override String get dict_download_select_title => '选择词典';
-	@override String dict_downloading({required Object name}) => '正在下载 ${name}…';
-	@override String dict_import_failed_summary({required Object n}) => '导入 ${n} 个词典失败';
-	@override String get dict_import_started => '正在后台导入词典…';
-	@override String dict_import_success_summary({required Object n}) => '已导入 ${n} 本词典';
-	@override String get dict_update_check => '检查更新';
-	@override String get dict_update_checking => '正在检查更新…';
-	@override String dict_update_done({required Object name}) => '${name} 已更新。';
-	@override String dict_update_failed({required Object error}) => '更新失败：${error}';
-	@override String get dict_update_interval_daily => '每天';
-	@override String get dict_update_interval_monthly => '每月';
-	@override String get dict_update_interval_weekly => '每周';
-	@override String get dict_update_latest => '已是最新。';
-	@override String dict_update_name_mismatch_body({required Object incoming, required Object existing}) => '所选文件是「${incoming}」，但你正在更新「${existing}」。仍要替换吗？';
-	@override String get dict_update_name_mismatch_title => '词典名称不一致';
-	@override String get dict_update_none => '所有词典均为最新。';
-	@override String dict_update_summary({required Object updated, required Object current, required Object failed}) => '${updated} 个已更新，${current} 个最新，${failed} 个失败。';
-	@override String get dict_update_tooltip => '更新词典';
-	@override String dict_update_updating({required Object name}) => '正在更新 ${name}…';
-	@override String get dictionaries => '词典管理';
-	@override String get dictionaries_delete_failed => '删除全部词典失败';
-	@override String get dictionaries_deleting_data => '正在删除词典数据…';
-	@override String get dictionaries_menu_empty => '请先导入词典以便使用';
-	@override String get dictionary_delete_failed => '删除词典失败';
-	@override String get dictionary_font_size => '词典字号';
-	@override String get dictionary_font_size_zoom_hint => 'Ctrl+滚轮可直接缩放查词弹窗内容';
-	@override String get dictionary_section_frequency => '词频词典';
-	@override String get dictionary_section_kanji => '汉字词典';
-	@override String get dictionary_section_pitch => '音调词典';
-	@override String get dictionary_section_term => '释义词典';
-	@override String get dictionary_settings => '词典设置';
-	@override String get dictionary_type_frequency => '词频';
-	@override String get dictionary_type_pitch => '音调';
-	@override String get dictionary_type_term => '释义';
-	@override String get dictionary_unrecognized_format => '无法识别的词典格式';
-	@override String get dismiss_swipe_sensitivity => '滑动关闭灵敏度';
-	@override String get display_settings => '排版设置';
-	@override String get download_backend_not_configured => '请先配置下载后端。';
-	@override String get download_clear_finished => '清除已完成';
-	@override String get download_detail_backend_offline => '原下载后端当前离线。这里仍显示已保存的任务信息，但实时参数暂不可用。';
-	@override String get download_network_proxy_auto => '自动';
-	@override String get download_network_proxy_auto_hint => '仅影响 AniList、Nyaa 和 Jimaku。自动模式先读环境变量，再读已启用的系统代理；种子流量不受影响。';
-	@override String get download_network_proxy_custom => '自定义';
-	@override String get download_network_proxy_custom_label => '自定义代理';
-	@override String get download_network_proxy_direct => '直连';
-	@override String get download_network_proxy_section => '发现网络';
-	@override String get download_open_settings => '去设置';
-	@override String get download_save_root_change => '更改目录';
-	@override String get download_save_root_create_failed => '无法创建该目录，请检查磁盘与权限。';
-	@override String get download_save_root_fallback_warning => '配置的下载目录当前不可用，已回退到默认目录。';
-	@override String get download_save_root_hint => '新的下载任务保存到这里；已有任务仍留在原目录，不会被移动。';
-	@override String get download_save_root_not_absolute => '请选择一个绝对路径的目录。';
-	@override String get download_save_root_not_writable => '该目录不可写入。';
-	@override String get download_save_root_reset => '恢复默认';
-	@override String get download_save_root_title => '下载目录';
-	@override String get download_settings => '下载设置';
-	@override String get download_status_cancelled => '已取消';
-	@override String get download_status_queued => '排队中';
-	@override String download_subscription_after_episode({required Object episode}) => '第 ${episode} 集之后';
-	@override String get download_subscription_check_all => '全部检查';
-	@override String get download_subscription_check_now => '立即检查';
-	@override String download_subscription_choice_hint({required Object group, required Object resolution}) => '将追踪 ${group} · ${resolution}，有新的单集发布时自动加入下载。';
-	@override String get download_subscription_created => '已加入下载并创建订阅';
-	@override String get download_subscription_delete => '删除订阅';
-	@override String download_subscription_delete_confirm({required Object title}) => '删除“${title}”的订阅吗？已创建的下载任务会保留。';
-	@override String get download_subscription_download_and_create => '下载并订阅';
-	@override String get download_subscription_empty_body => '在“发现”中选择一个单集发布，然后使用“下载并订阅”。';
-	@override String get download_subscription_empty_title => '还没有订阅';
-	@override String download_subscription_last_checked({required Object time}) => '上次检查：${time}';
-	@override String download_subscription_latest_episode({required Object episode}) => '最近加入：第 ${episode} 集';
-	@override String get download_subscription_never_checked => '尚未检查';
-	@override String get download_subscription_running_hint => 'Fushi 运行期间每 15 分钟检查一次已启用的订阅。';
-	@override String get download_subscription_unavailable_hint => '请选择能识别字幕组的单集发布后再订阅；合集仍可单次下载。';
-	@override String get download_subscriptions_tab => '订阅';
-	@override String download_task_action_failed({required Object error}) => '任务操作失败：${error}';
-	@override String get download_task_delete => '删除任务';
-	@override String download_task_delete_confirm({required Object title}) => '删除“${title}”的下载任务吗？';
-	@override String get download_task_delete_files => '同时删除已下载文件';
-	@override String get download_task_details => '查看详情';
-	@override String get download_tasks_tab => '任务';
-	@override String get download_test_connection => '测试连接';
-	@override String get download_test_connection_failed => '连接失败，请检查地址与账号密码。';
-	@override String download_test_connection_ok({required Object version}) => '连接成功（版本：${version}）';
-	@override String get drag_drop_need_card_target => '请把字幕或音频拖到某本书或某个视频上';
-	@override String get drag_drop_unsupported_on_books => '请把书籍文件拖到这里。视频或词典文件请切到对应页面。';
-	@override String get drag_drop_unsupported_on_dictionary => '请把 .zip、.dsl 或 .mdx 词典文件拖到这里。CSS 只能和词典包一起导入。';
-	@override String get drag_drop_unsupported_on_video => '请把视频、播放列表或字幕拖到这里。书籍或词典文件请切到对应页面。';
-	@override String get edit_custom_theme => '编辑自定义主题';
-	@override String get eink_mode => '墨水屏模式';
-	@override String get eink_mode_hint => '纯黑白主题、无动画、线式高亮，适合墨水屏设备';
-	@override String get enable_swipe_to_close => '滑动关闭弹窗';
-	@override String get epub_delete_error => '删除书籍失败';
-	@override String get epub_delete_title => '删除书籍';
-	@override String get epub_parse_fallback => '已从数据库修复书籍元数据';
-	@override String get error_ankidroid_api => 'AnkiDroid 错误';
-	@override String get error_ankidroid_api_content => '与 AnkiDroid 通信时出错。\n\n请确认 AnkiDroid 的后台服务已启用，并已授予所需权限。';
-	@override String get error_copied => '错误已复制到剪贴板';
-	@override String get error_load_failed => '加载出错';
-	@override String get error_log_diagnostics_section => '诊断/取证信息（非应用错误）';
-	@override String get error_log_empty => '暂无错误日志';
-	@override String error_log_label({required Object n}) => '错误日志 (${n})';
-	@override String get error_log_previous_run => '历史日志（上次运行前）';
-	@override String get error_log_share_subject => 'Fushi 错误日志';
-	@override String get extension_popup_independent_size => '浏览器扩展独立尺寸';
-	@override String get extension_popup_independent_size_hint => '让浏览器扩展查词弹窗使用独立最大尺寸，而非跟随 app 内查词弹窗';
-	@override String get extension_popup_max_height => '扩展弹窗最大高度';
-	@override String get extension_popup_max_width => '扩展弹窗最大宽度';
-	@override String get external_window_capture_failed => '窗口截图失败';
-	@override String get external_window_current_game => '当前游戏';
-	@override String get external_window_mining => '外部窗口挖矿';
-	@override String get external_window_no_windows => '未找到可捕获的窗口';
-	@override String get external_window_none => '未绑定窗口（点此选择）';
-	@override String get external_window_refresh => '刷新窗口列表';
-	@override String get external_window_select => '选择目标窗口';
-	@override String get external_window_unbind => '解除窗口绑定';
-	@override String get external_window_unsupported => '外部窗口挖矿仅支持 Windows';
-	@override String get failed_online_service => '与在线服务通信失败';
-	@override String get favorite_added => '句子已收藏';
-	@override String get favorite_removed => '句子已取消收藏。';
-	@override String favorites({required Object n}) => '收藏 (${n})';
-	@override String field_fallback_used({required Object field, required Object secondField}) => '${field} 字段使用 ${secondField} 作为备选搜索词。';
-	@override String file_count({required Object count}) => '${count} 个文件';
-	@override String get floating_dict_close => '关闭';
-	@override String get floating_dict_title => '词典';
-	@override String get floating_lyric_bg_opacity => '悬浮字幕背景不透明度';
-	@override String get floating_lyric_button_bg_opacity => '悬浮字幕按钮底色透明度';
-	@override String get floating_lyric_click_lookup => '点击悬浮字幕查词';
-	@override String get floating_lyric_click_lookup_hint => '锁定悬浮字幕位置时仍可保留点击查词。';
-	@override String get floating_lyric_close => '关闭';
-	@override String get floating_lyric_context_lines => '悬浮字幕上下文行数';
-	@override String get floating_lyric_context_lines_hint => '0 只显示当前行(单行,与今天一致);设 1-3 在当前行上下各显示这么多行上下文';
-	@override String get floating_lyric_corner_radius => '悬浮字幕圆角';
-	@override String get floating_lyric_corner_radius_hint => '0 = 各平台默认圆角；调大让字幕条与按钮更圆';
-	@override String get floating_lyric_font_size => '悬浮字幕字号';
-	@override String get floating_lyric_hint => '将当前播放的字幕句悬浮显示在其他应用之上。';
-	@override String get floating_lyric_lock => '锁定';
-	@override String get floating_lyric_next => '下句';
-	@override String get floating_lyric_no_audio => '这本书没有可听的音频';
-	@override String get floating_lyric_permission_hint => '显示悬浮歌词需要悬浮窗权限。';
-	@override String get floating_lyric_permission_hint_coloros => '系统拒绝授予悬浮窗权限时：请用文件管理器找到安装包覆盖安装一次，或在开发者选项中关闭权限监控后重试。';
-	@override String get floating_lyric_play_pause => '播放';
-	@override String get floating_lyric_previous => '上句';
-	@override String get floating_lyric_text_opacity => '悬浮字幕文字透明度';
-	@override String get floating_lyric_toggle_action => '悬浮字幕';
-	@override String get floating_lyric_unavailable_hint => '无法显示悬浮字幕窗口。';
-	@override String get floating_lyric_unlock => '解锁';
-	@override String get floating_lyric_width => '悬浮字幕宽度';
-	@override String get floating_lyric_width_hint => '0 = 平台默认宽度；设定数值让字幕条固定宽';
-	@override String get focus_navigation_enabled => '键盘/手柄焦点导航';
-	@override String get focus_navigation_enabled_hint => '用方向键或手柄移动焦点并显示焦点环。';
-	@override String get folder_picker_permission_required => '浏览文件夹需要存储权限';
-	@override String get follow_audio_off_tooltip => '音频跟随：关闭';
-	@override String get follow_audio_on_tooltip => '音频跟随：开启';
-	@override String get font_color => '字体颜色';
-	@override String get font_color_desc => '阅读器文字颜色';
-	@override String get font_desc_hina_mincho => '柔和装饰性明朝体 · 建议搭配 Noto Sans JP 回退';
-	@override String get font_desc_klee_one => '手写教科书体 · 清晰易读 · 建议搭配 Noto Sans JP 回退';
-	@override String get font_desc_mplus_rounded_1c => '圆角可爱风格 · 适合轻小说 · 建议搭配 Noto Sans JP 回退';
-	@override String get font_desc_noto_sans_jp => 'Google/Adobe 黑体 · 日语字形优先 · 可变字重';
-	@override String get font_desc_noto_sans_sc => 'Google/Adobe 黑体 · 简中字形优先 · 搭配日文字体做回退';
-	@override String get font_desc_noto_sans_tc => 'Google/Adobe 黑体 · 繁中字形优先';
-	@override String get font_desc_noto_serif_jp => 'Google/Adobe 宋体 · 日语字形优先 · 适合竖排阅读';
-	@override String get font_desc_noto_serif_sc => 'Google/Adobe 宋体 · 简中字形优先 · 搭配日文字体做回退';
-	@override String get font_desc_noto_serif_tc => 'Google/Adobe 宋体 · 繁中字形优先 · 适合竖排阅读';
-	@override String get font_desc_shippori_mincho => '优雅明朝体 · 文学作品推荐 · 建议搭配 Noto Sans JP 回退';
-	@override String get font_desc_zen_kaku_gothic_new => '现代角黑体 · 通用阅读 · 建议搭配 Noto Sans JP 回退';
-	@override String get font_desc_zen_maru_gothic => '柔和圆润黑体 · 建议搭配 Noto Sans JP 回退';
-	@override String get font_desc_zen_old_mincho => '复古明朝体 · 古典文学风格 · 建议搭配 Noto Sans JP 回退';
-	@override String get font_source_file => '文件';
-	@override String get font_source_system => '系统';
-	@override String get font_target_app_ui => '软件系统字体';
-	@override String get font_target_body => '小说正文字体';
-	@override String get font_target_dictionary => '词典字体';
-	@override String get font_target_video_subtitle => '视频字幕字体';
-	@override String get gal_hook_text_font_size => 'Galgame 台词浮窗字号';
-	@override String get gal_hook_text_font_size_hint => '拖动浮窗右下角只改窗口大小（换来更多可见行），字号在这里单独设置。';
-	@override String get game_add => '添加游戏';
-	@override String get game_already_added => '该游戏已在库中';
-	@override String get game_audio_backend_engine => '引擎 PCM';
-	@override String get game_audio_backend_loopback => '系统 Loopback（混音）';
-	@override String get game_audio_backend_none => '无音频源';
-	@override String get game_audio_backend_resource => '游戏资源音频';
-	@override String get game_audio_duration => '音频时长';
-	@override String get game_audio_fallback_disabled_missing => '未找到与该句匹配的游戏资源音频；已关闭降级，未制卡';
-	@override String get game_audio_resource_id => '音频资源 ID';
-	@override String get game_audio_tracks => '活跃音轨';
-	@override String get game_auto_cover => '自动获取封面';
-	@override String get game_back_to_capture => '返回捕获工作台';
-	@override String get game_back_to_library => '返回游戏库';
-	@override String get game_capture_active => '正在捕获';
-	@override String get game_capture_degraded_loopback => '游戏已在运行，但引擎注入失败，改用整机混音兜底，可能混入 BGM 和音效。';
-	@override String get game_capture_description => '启动或绑定游戏，并监控文本、语音、画面与 Anki 出卡。';
-	@override String get game_capture_empty_body => '启动或绑定游戏后，文本与句音状态会显示在这里。';
-	@override String get game_capture_empty_title => '尚未收到台词';
-	@override String get game_capture_launch_failed => '游戏启动或捕获失败';
-	@override String get game_capture_launching => '正在启动游戏并开始捕获…';
-	@override String get game_capture_running => '捕获会话已运行';
-	@override String get game_capture_window_missing => '游戏进程已启动，但窗口一直没有出现，游戏可能没能真正启动。可以再启动一次试试。';
-	@override String get game_capture_workbench => '捕获工作台';
-	@override String get game_captured_lines => '已捕获台词';
-	@override String get game_card_mapping_missing => 'Anki 字段映射缺少游戏卡片字段';
-	@override String get game_card_sentence_audio_missing => '卡片已创建，但没有句子音频；未借用其他台词的音频。';
-	@override String get game_clear_events => '清空事件';
-	@override String get game_cover_not_found => '游戏目录和程序图标里都没找到可用封面';
-	@override String get game_cover_searching => '正在查找封面...';
-	@override String get game_cover_updated => '封面已更新';
-	@override String get game_dashboard => '首页';
-	@override String get game_detail_missing => '该游戏已不在库中';
-	@override String get game_detail_tab_edit => '编辑';
-	@override String get game_detail_tab_stats => '统计';
-	@override String get game_detail_tab_summary => '简介';
-	@override String get game_diagnostics => '兼容性诊断';
-	@override String get game_diagnostics_subtitle => '会话阶段、端点、音轨与结构化事件';
-	@override String game_drop_imported({required Object count}) => '已添加 ${count} 个游戏';
-	@override String get game_drop_no_exe => '拖入的文件里没有新的游戏 .exe';
-	@override String get game_edit_developer => '开发商';
-	@override String get game_edit_display_name => '显示名';
-	@override String get game_edit_exe_path => '可执行文件路径';
-	@override String get game_edit_invalid_date => '发行日必须是 YYYY-MM-DD 格式';
-	@override String get game_edit_launch_args => '启动参数';
-	@override String get game_edit_launch_args_hint => '启动时传给游戏，例如 -windowed';
-	@override String get game_edit_nsfw => '成人向';
-	@override String get game_edit_release_date => '发行日（YYYY-MM-DD）';
-	@override String get game_edit_save => '保存';
-	@override String get game_edit_saved => '已保存';
-	@override String get game_edit_summary => '简介';
-	@override String get game_edit_tags => '标签（逗号分隔）';
-	@override String get game_edit_user_rating => '我的评分（0-10）';
-	@override String get game_edit_user_review => '我的评价';
-	@override String get game_edit_workdir => '工作目录';
-	@override String get game_empty => '还没有添加游戏';
-	@override String get game_endpoint_phase_connected => '已连接';
-	@override String get game_endpoint_phase_connecting => '连接中';
-	@override String get game_endpoint_phase_retrying => '重试中';
-	@override String get game_endpoint_phase_stopped => '已停止';
-	@override String get game_endpoints_engine_active => '当前文本来自引擎 Hook，这些端点无需连接';
-	@override String get game_endpoints_hint => '供 Textractor / LunaTranslator 等外部文本工具接入的端口；未使用这些工具可忽略';
-	@override String get game_event_all => '全部事件';
-	@override String get game_event_warnings => '警告及错误';
-	@override String get game_exe_missing => '找不到游戏可执行文件';
-	@override String get game_filter => '筛选';
-	@override String get game_filter_all => '全部';
-	@override String get game_filter_favorited => '已收藏';
-	@override String get game_filter_hide_nsfw => '隐藏成人向';
-	@override String get game_filter_local_only => '有本地 exe';
-	@override String get game_filter_metadata_only => '仅元数据';
-	@override String get game_filter_mined => '已制卡';
-	@override String get game_filter_reset => '清除筛选';
-	@override String get game_filter_source => '条目来源';
-	@override String get game_filter_status => '游玩状态';
-	@override String get game_filter_tags => '标签';
-	@override String get game_filter_with_audio => '有音频';
-	@override String get game_focus_continue => '继续游戏';
-	@override String get game_follow_live => '跟随实时';
-	@override String get game_health => '健康状态';
-	@override String get game_health_anki => 'Anki 出卡';
-	@override String get game_health_audio => '音频来源';
-	@override String get game_health_helper => 'Hook Helper';
-	@override String get game_health_process => '游戏进程';
-	@override String get game_health_text => '文本来源';
-	@override String get game_health_upscaling => '窗口超分';
-	@override String get game_health_window => '游戏窗口';
-	@override String get game_helper_download => '下载';
-	@override String game_helper_download_failed({required Object error}) => '引擎组件下载失败：${error}';
-	@override String get game_helper_downloading => '正在下载引擎组件…';
-	@override String get game_helper_install_incomplete => '引擎组件安装不完整，请重试';
-	@override String game_helper_needed_body({required Object size}) => '启动 galgame 需要引擎-hook 注入器组件（约 ${size}）。它含进程注入代码，与主程序分离分发以避免杀软误报。现在下载吗？';
-	@override String get game_helper_needed_title => '需要下载 galgame 引擎组件';
-	@override String get game_helper_size_unknown => '大小未知';
-	@override String get game_helper_verification_failed => '引擎组件已被拒绝安装：无法校验其完整性（GitHub 上的 .sha256 校验文件不可达、缺失或与下载内容不符）。为避免装入被篡改的注入器代码，本次安装已终止。';
-	@override String get game_home_subtitle => '游戏库与捕获监控';
-	@override String get game_hook_fallback_all_audio_sources_failed => '引擎语音钩子和系统回环都启动失败，当前无法采集任何音频。';
-	@override String get game_hook_fallback_engine_attach_failed => '附着引擎语音钩子到正在运行的游戏失败，改用系统混音。';
-	@override String get game_hook_fallback_engine_pcm_unavailable => '引擎语音钩子已装好，但游戏还没播放过语音。暂时用系统混音，出现第一句语音后会自动切回引擎语音。';
-	@override String get game_hook_fallback_launch_injection_failed => '游戏已经启动，但早期注入引擎钩子失败，改用系统混音。';
-	@override String get game_hook_fallback_window_not_found => '音频采集正常，但游戏窗口还没出现，暂时无法截图。窗口出现后会自动绑定。';
-	@override String get game_hook_line_unavailable => '这条捕获台词已不可用，未使用其他台词替代。';
-	@override String get game_hook_reason_access_denied => '游戏以更高权限运行，请以管理员身份启动 Fushi 后重试。';
-	@override String get game_hook_reason_bitness_mismatch => '钩子组件位数与游戏不匹配（32 位 / 64 位），请重新安装组件。';
-	@override String get game_hook_reason_create_process_failed => 'Fushi 无法启动该游戏，请检查可执行文件路径。';
-	@override String get game_hook_reason_elevation_required => '该游戏需要管理员权限，请以管理员身份启动 Fushi 后再启动游戏。';
-	@override String get game_hook_reason_game_exe_missing => '保存的游戏可执行文件路径已不存在。';
-	@override String get game_hook_reason_guarded_hook_failed => '受保护的钩子未能在超时内安装，正在自动重试。';
-	@override String get game_hook_reason_handshake_timeout => '已注入游戏，但超时内没有文本或音频，该引擎可能尚未支持。';
-	@override String get game_hook_reason_helper_missing => '未安装与该游戏位数匹配的语音钩子组件，请先安装后重试。';
-	@override String get game_hook_reason_hook_dll_missing => '钩子组件不完整（缺少 hook 库），请重新安装。';
-	@override String get game_hook_reason_injection_failed => '注入游戏被拦截，请把 Fushi 与该游戏加入杀毒软件白名单。';
-	@override String get game_hook_reason_ready_timeout => '钩子库未能在超时内加载完成，杀毒软件扫描可能是原因。';
-	@override String get game_hook_reason_resume_failed => '已启动的游戏无法恢复运行并被结束，请重新启动。';
-	@override String get game_hook_reason_shared_memory_unavailable => '捕获通道无法打开，请重启 Fushi。';
-	@override String get game_hook_reason_spawn_failed => '语音钩子组件无法启动，请检查是否被杀毒软件删除或拦截。';
-	@override String get game_hook_reason_stale_session => '游戏里还残留上一次的捕获会话，请重启一次游戏。';
-	@override String get game_hook_reason_steam_timeout => 'Steam 已接受启动请求，但始终没有出现游戏进程。';
-	@override String get game_hook_reason_target_missing => '没有可捕获的游戏进程或可执行文件。';
-	@override String get game_hook_recapture_empty => '补录窗口内没有录到声音';
-	@override String get game_hook_recapture_saved => '补录语音已绑定到这句';
-	@override String get game_hook_recapture_started => '录音中——请在游戏里重播这句语音';
-	@override String get game_hook_recapture_unavailable => '补录需要系统声音采集可用';
-	@override String get game_kpi_total_games => '游戏总数';
-	@override String get game_kpi_week => '本周';
-	@override String get game_latest_line => '最新台词';
-	@override String get game_launch => '启动游戏';
-	@override String get game_launch_and_capture => '启动并捕获';
-	@override String get game_launch_unsupported => '启动游戏仅支持 Windows 桌面';
-	@override String get game_library => '游戏库';
-	@override String get game_line_audio_encoded => '音频已提取';
-	@override String get game_line_audio_fallback => '已降级';
-	@override String get game_line_audio_matched => '音频就绪';
-	@override String get game_line_audio_missing => '无音频';
-	@override String get game_line_audio_pending => '匹配中';
-	@override String get game_line_audio_unavailable => '仅文本';
-	@override String get game_line_favorite_tooltip => '收藏台词';
-	@override String get game_line_mined => '已制卡';
-	@override String get game_line_preview_failed => '这句还没有可播放的音频';
-	@override String get game_line_preview_tooltip => '播放这句音频';
-	@override String get game_line_track_applied => '已把该轨的语音绑定到这句';
-	@override String get game_line_track_dialog_title => '这句台词的语音轨';
-	@override String get game_line_track_failed => '这条轨在该句附近没有取到语音';
-	@override String get game_line_track_tooltip => '为这句选择语音轨';
-	@override String get game_line_unfavorite_tooltip => '取消收藏';
-	@override String get game_live_lines => '实时台词';
-	@override String get game_manage_tracks => '管理音轨';
-	@override String get game_meta_added => '添加时间';
-	@override String get game_meta_ranking => '游戏排行';
-	@override String get game_meta_source => '数据来源';
-	@override String get game_never_played => '未游玩';
-	@override String get game_no_active_line => '选择一条台词查看句音状态。';
-	@override String get game_no_events => '尚无会话事件';
-	@override String get game_no_match => '没有符合当前筛选的游戏';
-	@override String get game_no_tracks => '尚无音轨数据';
-	@override String get game_open_capture_workspace => '打开捕获工作台';
-	@override String get game_phase_attaching => '附着中';
-	@override String get game_phase_degraded => '降级运行';
-	@override String get game_phase_error => '出错';
-	@override String get game_phase_idle => '空闲';
-	@override String get game_phase_injecting => '注入中';
-	@override String get game_phase_launching => '启动中';
-	@override String get game_phase_resolving => '解析中';
-	@override String get game_phase_running => '运行中';
-	@override String get game_phase_stopping => '停止中';
-	@override String get game_phase_waiting_signals => '等待信号';
-	@override String get game_pipeline => '会话管线';
-	@override String get game_play_status => '游玩状态';
-	@override String get game_random_reroll => '换一个';
-	@override String get game_random_title => '随机推荐';
-	@override String get game_recently_played => '最近玩过';
-	@override String get game_refresh_tracks => '刷新音轨';
-	@override String get game_remove => '移除';
-	@override String get game_rename => '重命名';
-	@override String get game_rename_label => '游戏名称';
-	@override String get game_scrape => '刮削元数据';
-	@override String get game_scrape_applied => '元数据已更新';
-	@override String get game_scrape_failed => '元数据获取失败';
-	@override String get game_scrape_no_result => '没有找到匹配条目';
-	@override String get game_scrape_query => '标题或源 ID';
-	@override String get game_search => '搜索游戏';
-	@override String get game_session_events => '会话事件';
-	@override String get game_session_idle => '尚未开始捕获';
-	@override String get game_session_listening => '正在监听';
-	@override String get game_set_cover => '设置封面';
-	@override String get game_show_hook_text_window => '显示 Hook 文本浮窗';
-	@override String get game_site_score => '站点评分';
-	@override String get game_sort => '排序';
-	@override String get game_sort_added => '添加时间';
-	@override String get game_sort_last_played => '最后游玩';
-	@override String get game_sort_name => '名称';
-	@override String get game_sort_release => '发行日';
-	@override String get game_sort_site_score => '站点评分';
-	@override String get game_sort_user_rating => '我的评分';
-	@override String get game_stat_daily => '每日时长';
-	@override String get game_stat_delete_session => '删除这次记录';
-	@override String get game_stat_last_played => '最后游玩';
-	@override String get game_stat_no_sessions => '还没有游玩记录';
-	@override String get game_stat_session_list => '会话流水';
-	@override String get game_stat_sessions => '游玩次数';
-	@override String get game_stat_today => '今日时长';
-	@override String get game_stat_total_time => '累计时长';
-	@override String get game_status_dropped => '弃坑';
-	@override String get game_status_not_configured => '待验证';
-	@override String get game_status_on_hold => '搁置';
-	@override String get game_status_played => '玩过';
-	@override String get game_status_playing => '在玩';
-	@override String get game_status_ready => '可用';
-	@override String get game_status_unset => '未设置';
-	@override String get game_status_waiting => '等待';
-	@override String get game_status_want_to_play => '想玩';
-	@override String get game_stop_listening => '停止监听';
-	@override String get game_summary_aliases => '别名';
-	@override String get game_summary_all_titles => '全部标题';
-	@override String get game_summary_average_hours => '预计通关时长';
-	@override String get game_summary_none => '还没有简介，刮削元数据后自动填充。';
-	@override String get game_summary_release_date => '发行日';
-	@override String get game_tags_clear => '清空所选';
-	@override String get game_tags_title => '游戏标签';
-	@override String get game_text_endpoints => '文本端点';
-	@override String get game_text_gaps => '序号缺口';
-	@override String get game_text_gaps_hint => '序号缺口 = Hook 文本环丢行计数，0 为正常';
-	@override String get game_text_source_engine => '引擎 Hook';
-	@override String get game_text_source_unknown => '未知来源';
-	@override String get game_text_source_websocket => 'WebSocket';
-	@override String get game_text_thread => '文本线程';
-	@override String game_text_thread_audio_count({required Object count}) => '${count} 行有音频';
-	@override String get game_text_thread_hint => '像 Luna Translator 一样选择干净的台词线程';
-	@override String get game_track_auto => '自动选择';
-	@override String get game_track_clips => '音频段';
-	@override String get game_track_energy => '能量';
-	@override String get game_track_exclude_bgm => '标记为 BGM';
-	@override String get game_track_exclusion_hint => '把 BGM/环境音轨标记为排除，自动选源便不会把它当成语音——没有语音的台词也不会再读到 BGM。';
-	@override String get game_track_exclusion_title => '排除音轨';
-	@override String get game_track_preview => '试听该音轨';
-	@override String get game_track_preview_failed => '未能从该音轨抓到最近的音频片段';
-	@override String get game_track_preview_stop => '停止试听';
-	@override String get game_track_restore => '恢复音轨';
-	@override String get game_track_select_as_voice => '设为语音轨';
-	@override String get game_track_select_requires_engine => '选择语音轨需要引擎 Hook 会话处于活动状态';
-	@override String get game_track_voice => '语音';
-	@override String get game_tracks_loopback_hint => '系统回环捕获的是整机混音单流，无法枚举独立音轨。';
-	@override String get game_tracks_pcm_only_hint => '只有当前音频后端是「引擎 PCM」时，选轨/排除才会真正影响取音。当前后端下方列表只读。';
-	@override String get game_tracks_resource_mode_hint => '游戏资源音频模式按句直接提取原始语音文件，不经过 PCM 音轨环，因此这里不会出现音轨列表；自动/手动选轨仅对引擎 PCM 模式有意义。';
-	@override String get game_unread_lines => '未读';
-	@override String get game_upscaling => '游戏窗口超分';
-	@override String get game_upscaling_auto => '自动';
-	@override String get game_upscaling_hint_external => '你的电脑上已经开着一个 Magpie，Fushi 没有去动它。按 Win+Shift+A 就能放大游戏窗口。';
-	@override String get game_upscaling_hint_first_run => '这次 Magpie 还在做首次初始化。现在按 Win+Shift+A 就能放大；下次启动游戏会自动放大。';
-	@override String get game_upscaling_hint_manual => '按 Win+Shift+A 放大游戏窗口。';
-	@override String get game_upscaling_installed_only => '仅用已装';
-	@override String get game_upscaling_off => '关闭';
-	@override String get game_upscaling_status_active => '窗口超分已开启';
-	@override String get game_upscaling_status_failed => '窗口超分没能启动';
-	@override String get game_upscaling_status_manual => '窗口超分已就绪，但没有自动开始';
-	@override String get game_upscaling_status_unavailable => '窗口超分暂时用不了';
-	@override String get game_user_rating => '我的评分';
-	@override String get game_view_detail => '查看详情';
-	@override String get game_waiting_for_text => '等待文本';
-	@override String game_waveform_range_label({required Object start, required Object end, required Object duration, required Object total}) => '${start} - ${end}（时长 ${duration} / 共 ${total}）';
-	@override String get game_waveform_select_title => '选择音频范围';
-	@override String get game_window_bound => '已绑定';
-	@override String get game_window_missing => '未绑定';
-	@override String get games => '游戏';
-	@override String get global_context_capture => '抓取选中文本上下文';
-	@override String get global_context_capture_hint => '从前台应用读取选区周围文本，在查词弹窗显示当前句（仅 Windows）';
-	@override String go_to_chapter({required Object n}) => '第 ${n} 章';
-	@override String get handlebar_audio => '音频';
-	@override String get handlebar_book_cover => '书籍封面';
-	@override String get handlebar_card_image => '卡片图片（封面 / 视频 GIF）';
-	@override String get handlebar_cue_sentence => '字幕例句';
-	@override String handlebar_deprecated_label({required Object label}) => '${label}（已弃用）';
-	@override String get handlebar_document_title => '文档标题';
-	@override String get handlebar_expression => '词条';
-	@override String get handlebar_frequencies => '词频（HTML）';
-	@override String get handlebar_frequency_harmonic_rank => '词频（排名）';
-	@override String get handlebar_furigana_plain => '振假名';
-	@override String get handlebar_glossary => '释义';
-	@override String get handlebar_glossary_first => '释义（首条）';
-	@override String get handlebar_pitch_accent_categories => '音高类型';
-	@override String get handlebar_pitch_accent_positions => '音高位置';
-	@override String get handlebar_popup_selection_text => '弹窗选中文本';
-	@override String get handlebar_reading => '读音';
-	@override String get handlebar_selected_glossary => '选中的释义';
-	@override String get handlebar_sentence => '例句';
-	@override String get handlebar_sentence_audio => '句子音频';
-	@override String get handlebar_video_clip => '视频片段 (GIF)';
-	@override String get harmonic_frequency => '词频聚合';
-	@override String health_match_summary({required Object pct}) => '匹配 ${pct}%';
-	@override String get highlight_on_tap => '点击时高亮文本';
-	@override String get home_activity => '活动';
-	@override String get home_activity_empty => '暂无活动记录';
-	@override String get home_continue => '继续';
-	@override String get home_filter_added => '导入';
-	@override String get home_filter_all => '全部';
-	@override String get home_filter_game => '游戏';
-	@override String get home_filter_read => '阅读';
-	@override String get home_filter_watch => '观看';
-	@override String get home_recently_added => '最近添加';
-	@override String get home_remote_source => '远端';
-	@override String home_session_count({required Object n}) => '${n} 次';
-	@override String get home_today => '今天';
-	@override String get home_yesterday => '昨天';
-	@override String get hover_auto_lookup => '悬停即查词';
-	@override String get hover_auto_lookup_hint => '鼠标悬停在文字上即自动查词，无需点击或按住 Shift；最多触发一层弹窗。仅桌面端。';
-	@override String get icon_custom => '自定义';
-	@override String get icon_custom_confirm_body => '将使用所选图片创建主屏幕快捷方式。是否继续？';
-	@override String get icon_custom_confirm_title => '自定义图标';
-	@override String get icon_custom_hint => '点击图标切换，或在下方选择自定义图片。';
-	@override String get icon_default => '默认';
-	@override String get icon_full => '完整';
-	@override String get icon_shortcut_created => '已创建主屏幕快捷方式。';
-	@override String get icon_shortcut_unsupported => '此设备不支持快捷方式。';
-	@override String get icon_switch_success => '应用图标已更改。';
-	@override String get icon_transparent => '透明';
-	@override String image_page_counter({required Object current, required Object total}) => '${current} / ${total}';
-	@override String get image_pause => '图片暂停';
-	@override String get image_pause_hint => '播放时遇到图片自动暂停。';
-	@override String get image_pause_off => '关闭';
-	@override String get image_search_label_after => '张，关键词：';
-	@override String get image_search_label_before => '正在选择图片 ';
-	@override String get image_search_label_middle => '共 ';
-	@override String get image_search_label_none_before => '正在选择 ';
-	@override String get image_search_label_none_middle => '无图片 ';
-	@override String get import_complete => '词典导入完成。';
-	@override String import_duplicate({required Object name}) => '名为『${name}』的词典已导入。';
-	@override String get import_extract => '正在解压文件…';
-	@override String get import_failed => '词典导入失败。';
-	@override String get import_in_progress => '导入中';
-	@override String import_name({required Object name}) => '正在导入『${name}』…';
-	@override String import_sidecar_audio({required Object count}) => '已自动挂载 ${count} 个音频';
-	@override String import_sidecar_subtitle({required Object name}) => '已自动挂载字幕：${name}';
-	@override String get import_start => '准备导入…';
-	@override String get import_step_building_epub => '生成 EPUB…';
-	@override String get import_step_converting_epub => '转换为 EPUB…';
-	@override String import_step_copying_file({required Object name}) => '正在复制 ${name}…';
-	@override String get import_step_done => '完成';
-	@override String get import_step_importing_epub => '导入 EPUB…';
-	@override String get import_step_matching => '音频对齐…';
-	@override String get import_step_parsing => '解析字幕…';
-	@override String get import_step_persisting => '保存文件…';
-	@override String get import_step_reading => '读取文件…';
-	@override String get import_step_reading_idb => '读取书籍信息…';
-	@override String get import_step_saving => '保存记录…';
-	@override String get import_theme => '导入主题';
-	@override String get import_theme_hint => '粘贴主题代码';
-	@override String get import_theme_invalid => '无效的主题代码';
-	@override String get import_theme_success => '主题已导入';
-	@override String import_unsupported_file_format({required Object ext}) => '不支持的文件格式: ${ext}';
-	@override String get increase => '增加';
-	@override String get info_empty_home_tab => '历史记录为空';
-	@override String init_error_message({required Object error}) => '初始化失败：${error}';
-	@override String get initialization_failed => '初始化失败';
-	@override String get interconnect_backup_backend => '用互联做备份后端';
-	@override String get interconnect_backup_backend_active => '备份已写到已配对设备。要换回云盘，去「同步与备份」里改后端。';
-	@override String get interconnect_backup_backend_apply => '设为备份后端';
-	@override String interconnect_backup_backend_current({required Object backend}) => '当前备份后端：${backend}';
-	@override String get interconnect_backup_backend_hint => '备份与同步写到已配对设备，而不是云盘。写过去的内容由上面「上传到互联对端」的几个开关决定。';
-	@override String get interconnect_backup_backend_needs_pairing => '请先在上面连接一台设备。';
-	@override String get interconnect_enable => '启用互联';
-	@override String get interconnect_enable_hint => '通过局域网连接你的其他设备。与云备份后端并存，互不冲突。';
-	@override String get interconnect_moved_note => '互联连接与本机服务器设置在「Fushi 互联」分类';
-	@override String get interconnect_section_client => '连接到其他设备';
-	@override String get interconnect_section_delegate => '交给已配对设备';
-	@override String get interconnect_section_related => '远端内容与查词';
-	@override String get interconnect_summary => '设备间直连同步与本机作为服务器';
-	@override String get interconnect_upload_audiobook_files => '上传有声书文件';
-	@override String get interconnect_upload_audiobook_files_hint => '把本设备的有声书音频+字幕包上传同步到互联对端（体积较大）。';
-	@override String get interconnect_upload_content => '上传书籍文件';
-	@override String get interconnect_upload_content_hint => '把本设备的书籍/阅读内容上传同步到互联对端。';
-	@override String get interconnect_upload_dictionary => '上传词典';
-	@override String get interconnect_upload_dictionary_hint => '把本设备的词典上传同步到互联对端。';
-	@override String get interconnect_upload_section => '上传到互联对端';
-	@override String get interconnect_upload_video_files => '上传视频文件';
-	@override String get interconnect_upload_video_files_hint => '把本设备的本地视频文件上传同步到互联对端（体积较大）。';
-	@override String get invert_audiobook_skip_direction => '反转底栏前进后退按钮';
-	@override String get invert_swipe_direction => '反转滑动翻页方向';
-	@override String get invert_volume_buttons => '反转音量键方向';
-	@override String get jump_to_char => '按字数跳转';
-	@override String jump_to_char_current({required Object current, required Object total}) => '当前: ${current} / ${total}';
-	@override String get jump_to_char_hint => '输入字符位置…';
-	@override String get keep_screen_awake => '阅读时防止息屏';
-	@override String get library_search => '搜索库';
-	@override String get loading_illustrations => '正在加载插画…';
-	@override String get loading_slow_message => '如果你把数据存储位置设在了当前未连接的网络盘 / 移动盘上，启动可能卡住。点「重试」即可用默认存储位置启动本次会话；你的数据仍保留在原位置不动。';
-	@override String get loading_slow_message_mobile => '启动比平常慢，可能在加载较大的媒体库或词典。请稍候，或点「重试」重新加载——你的数据是安全的，不会丢失。';
-	@override String get loading_slow_title => '启动耗时超出预期';
-	@override String get local_audio => '本地音频';
-	@override String get local_audio_add_db => '添加本地音频数据库';
-	@override String get local_audio_edit_sources => '编辑来源';
-	@override String local_audio_import_failed_detail({required Object reason}) => '导入音频数据库失败：${reason}';
-	@override String get local_audio_imported => '已添加音频数据库';
-	@override String get local_audio_invalid_db => '该文件不是可用的音频数据库（不是本地音频源数据库，或其中没有任何音频）。';
-	@override String get local_audio_no_sources => '此数据库未发现可用来源';
-	@override String get local_audio_reference_original => '引用原文件（不复制）';
-	@override String get local_audio_reference_original_desc => '数据库保留在原位置、按原路径读取；原文件被移动或删除后该来源会失效。';
-	@override String get local_audio_source_order_title => '来源顺序';
-	@override String get log_copy_all => '复制全部';
-	@override String get log_export_failed => '导出失败';
-	@override String get log_export_file => '导出到文件';
-	@override String get log_export_saved => '日志已保存';
-	@override String get log_upload_action => '上传到服务器';
-	@override String get log_upload_consent_agree => '同意并上传';
-	@override String get log_upload_consent_body => '日志正文（可能包含错误信息、文件路径、书名等）以及 App 版本、平台、设备型号会上传到开发者的服务器，用于诊断问题。仅在你点上传时发生，不会自动发送。';
-	@override String get log_upload_consent_title => '上传日志到服务器？';
-	@override String get log_upload_failed => '上传失败';
-	@override String get log_upload_in_progress => '正在上传日志…';
-	@override String get log_upload_success => '日志已上传';
-	@override String get log_upload_too_large => '日志过大，无法上传';
-	@override String get login => '登录';
-	@override String get lookup_audio_volume => '查词音量';
-	@override String get low_memory_mode => '小内存模式';
-	@override String get low_memory_mode_hint => '减少缓存和内存使用，适合低端设备。部分更改需重启后生效。';
-	@override String get low_memory_mode_suggestion => '可尝试在 设置 → 其他设置 中开启小内存模式。';
-	@override String get lyrics_artist => '艺术家';
-	@override String get lyrics_blur => '模糊歌词';
-	@override String get lyrics_blur_hint => '听力沉浸：模糊当前句，悬停或点击显形';
-	@override String get lyrics_font_size => '歌词字号';
-	@override String get lyrics_font_size_hint => '歌词字号与书籍模式独立';
-	@override String get lyrics_mode => '歌词模式';
-	@override String get lyrics_mode_hint_body => '歌词模式有独立的字号设置，可在 ⚙ 设置 → 排版 中调整。';
-	@override String get lyrics_mode_hint_title => '歌词模式';
-	@override String get lyrics_text_color => '歌词字幕颜色';
-	@override String get lyrics_text_color_hint => '歌词字幕用自定义颜色（不跟随主题）';
-	@override String get lyrics_title => '标题';
-	@override String get lyrics_vertical_writing => '竖排歌词';
-	@override String get lyrics_vertical_writing_hint => '歌词竖排显示，从右到左（独立于书本模式）';
-	@override String get manage_audio_sources => '管理音频来源';
-	@override String get manager => '词典与来源';
-	@override String get manga_mode_toggle => '阅读模式';
-	@override String get manga_ocr_delete => '删除模型';
-	@override String get manga_ocr_delete_confirm_message => '这将释放磁盘空间，之后可再次下载。';
-	@override String get manga_ocr_delete_confirm_title => '删除 OCR 模型？';
-	@override String get manga_ocr_delete_done => '模型已删除';
-	@override String get manga_ocr_download => '下载模型';
-	@override String get manga_ocr_download_done => '模型下载完成';
-	@override String get manga_ocr_download_failed => '模型下载失败';
-	@override String manga_ocr_downloading_file({required Object file}) => '正在下载 ${file}…';
-	@override String get manga_ocr_engine_builtin => '内置';
-	@override String get manga_ocr_engine_external => '外部 mokuro';
-	@override String get manga_ocr_engine_none => '没有可用的 OCR 引擎。请在设置中下载内置模型或配置 mokuro 命令行路径。';
-	@override String get manga_ocr_external_cli_hint => '留空则自动探测（FUSHI_MOKURO / PATH）';
-	@override String get manga_ocr_external_cli_label => '外部 mokuro 命令行路径';
-	@override String get manga_ocr_external_detect => '检测';
-	@override String manga_ocr_external_detected({required Object version}) => '已检测到：${version}';
-	@override String get manga_ocr_external_not_found => '未找到 mokuro';
-	@override String get manga_ocr_mobile_note => '移动端下载的模型用于漫画阅读页的框选识别。';
-	@override String get manga_ocr_model_status_missing => 'OCR 模型未下载';
-	@override String get manga_ocr_model_status_ready => 'OCR 模型已就绪';
-	@override String get manga_ocr_section => '漫画 OCR';
-	@override String get manga_ocr_section_summary => '内置 OCR 模型与外部 mokuro 命令行';
-	@override String get manga_ocr_unsupported => '内置漫画 OCR 暂不支持当前平台。';
-	@override String get manga_ocr_wizard_done => '漫画已导入';
-	@override String get manga_ocr_wizard_failed => 'OCR 失败';
-	@override String get manga_ocr_wizard_has_mokuro => '此文件夹已有 .mokuro 文件，请直接用普通导入。';
-	@override String get manga_ocr_wizard_importing => '正在导入…';
-	@override String get manga_ocr_wizard_no_images => '此文件夹中没有找到图片。';
-	@override String manga_ocr_wizard_page_progress({required Object done, required Object total}) => '第 ${done} / ${total} 页';
-	@override String get manga_ocr_wizard_pick_folder => '选择图片文件夹';
-	@override String get manga_ocr_wizard_run => '开始 OCR';
-	@override String get manga_ocr_wizard_running => '正在识别…';
-	@override String get manga_ocr_wizard_title => 'OCR 导入漫画';
-	@override String get manga_ocr_wizard_title_label => '标题（可选）';
-	@override String get manga_online_base_url_label => '在线目录地址';
-	@override String get manga_online_catalog_title => '在线目录';
-	@override String get manga_online_download_selected => '下载所选';
-	@override String get manga_online_downloaded => '已入库';
-	@override String get manga_online_failed => '下载失败';
-	@override String get manga_online_load_failed => '目录加载失败';
-	@override String get manga_online_queue_added => '已加入下载队列';
-	@override String manga_online_queue_progress({required Object done, required Object total}) => '第 ${done} / ${total} 卷';
-	@override String get manga_online_queue_section => '漫画目录下载';
-	@override String get manga_online_search_hint => '搜索系列';
-	@override String get manga_online_stage_cbz => '下载卷包…';
-	@override String get manga_online_stage_extract => '解包中…';
-	@override String get manga_online_stage_mokuro => '下载 OCR 数据…';
-	@override String get manga_reading_mode_spread => '翻页';
-	@override String get manga_reading_mode_webtoon => '条漫';
-	@override String get manga_remote_ocr_cancelled => '主机侧已取消远程 OCR。';
-	@override String get manga_remote_ocr_engine => '已配对主机';
-	@override String get manga_remote_ocr_failed => '远程 OCR 失败';
-	@override String get manga_remote_ocr_no_host => '没有可用的支持漫画 OCR 的已配对主机。';
-	@override String get manga_remote_ocr_not_ready => '已配对主机的 OCR 模型未下载，请先在主机上下载模型。';
-	@override String get manga_remote_ocr_running => '已配对主机正在识别…';
-	@override String get manga_remote_ocr_unsupported => '已配对主机不支持漫画 OCR。';
-	@override String manga_remote_ocr_uploading({required Object done, required Object total}) => '正在上传页面 ${done} / ${total}…';
-	@override String get margin_bottom => '下边距';
-	@override String get margin_left => '左边距';
-	@override String get margin_right => '右边距';
-	@override String get margin_top => '上边距';
-	@override String get maximum_terms => '结果中的词头数量上限';
-	@override String get media_source_add => '添加来源';
-	@override String get media_source_add_local_folder => '本地文件夹';
-	@override String get media_source_add_network => '网络';
-	@override String media_source_count_book({required Object n}) => '${n} 本书';
-	@override String media_source_count_video({required Object n}) => '${n} 个视频';
-	@override String media_source_last_scan({required Object time}) => '上次扫描 ${time}';
-	@override String get media_source_manage_title => '管理来源';
-	@override String get media_source_network_label_optional => '显示名（可选）';
-	@override String get media_source_network_missing_fields => '请填写主机、用户名、远端路径，以及密码或私钥';
-	@override String get media_source_network_remote_path => '远端路径';
-	@override String get media_source_network_subtitle => 'SFTP / FTP / WebDAV 远端书架';
-	@override String get media_source_no_sources => '暂无来源';
-	@override String get media_source_open_folder => '打开文件夹';
-	@override String get media_source_remove => '移除来源';
-	@override String get media_source_remove_keeps_media => '移除来源不会删除已导入的媒体。';
-	@override String get media_source_rescan => '重新扫描';
-	@override String get media_source_scan_error => '扫描失败';
-	@override String get media_tracking_access_token => '访问令牌';
-	@override String get media_tracking_access_token_hint => '创建具有写入权限的个人访问令牌';
-	@override String get media_tracking_account => 'Bangumi 账号';
-	@override String get media_tracking_add_mapping => '添加映射';
-	@override String get media_tracking_anime => '番剧';
-	@override String get media_tracking_chapter => '话';
-	@override String get media_tracking_connect => '连接并验证';
-	@override String get media_tracking_connected_as => '已连接账号';
-	@override String get media_tracking_delete_mapping => '移除映射';
-	@override String get media_tracking_episode => '集';
-	@override String get media_tracking_kind => '分类';
-	@override String get media_tracking_local_item => '本地条目';
-	@override String get media_tracking_manga => '漫画';
-	@override String get media_tracking_mappings => '条目映射';
-	@override String get media_tracking_no_mappings => '暂无手动映射。首次看完一集或产生阅读进度时会自动匹配；歧义条目可在此手动添加。';
-	@override String get media_tracking_novel => '小说';
-	@override String get media_tracking_pending => '待同步记录';
-	@override String get media_tracking_progress_mode => '进度单位';
-	@override String get media_tracking_progress_offset => '起始编号';
-	@override String get media_tracking_saved => '映射已保存';
-	@override String get media_tracking_search => '搜索 Bangumi';
-	@override String get media_tracking_search_results => 'Bangumi 搜索结果';
-	@override String get media_tracking_summary => '自动将番剧、小说和漫画进度记录到 Bangumi';
-	@override String get media_tracking_sync_failed => '同步失败，记录已保留在队列中。';
-	@override String get media_tracking_sync_now => '立即同步';
-	@override String get media_tracking_sync_success => '同步完成';
-	@override String get media_tracking_token_required => '请先输入并验证访问令牌';
-	@override String get media_tracking_volume => '卷';
-	@override String get microphone_permission_denied => '录音需要麦克风权限。';
-	@override String get mining_audio_quality => '音频质量';
-	@override String get mining_audio_quality_high => '高音质';
-	@override String get mining_audio_quality_hint => '比特率越高越清晰，卡片体积也越大。';
-	@override String get mining_audio_quality_max => '最高';
-	@override String get mining_audio_quality_standard => '标准';
-	@override String get mining_image_quality => '图片 / GIF 清晰度';
-	@override String get mining_image_quality_hd => '高清';
-	@override String get mining_image_quality_hint => '越高越清晰，卡片体积也越大。最高档的截图保留源分辨率；动图有上限，避免卡片大到不可用。';
-	@override String get mining_image_quality_max => '最高';
-	@override String get mining_image_quality_standard => '标准';
-	@override String get mining_image_quality_thrift => '省流';
-	@override String get move_down => '下移';
-	@override String get move_up => '上移';
-	@override String get name => '名称';
-	@override String get nav_browser_extension => '浏览器扩展';
-	@override String get nav_downloads => '下载';
-	@override String get nav_game => '游戏';
-	@override String get nav_home => '首页';
-	@override String get nav_lookup => '查词';
-	@override String get nav_video => '视频';
-	@override String get next_sentence => '下一句';
-	@override String get no_audio_file => '没有可保存的音频。';
-	@override String get no_collections => '没有书签或保存的句子';
-	@override String get no_debug_logs => '无调试日志。';
-	@override String get no_illustrations_found => '未找到插画';
-	@override String get no_results_found => '未找到结果。';
-	@override String get no_search_results => '未找到搜索结果。';
-	@override String get no_sentence_selected => '未选择句子';
-	@override String get no_sentences_found => '未找到句子';
-	@override String get no_text => '无文本。';
-	@override String get no_text_to_search => '没有可搜索的文本。';
-	@override String get now_listening_label => '正在听书';
-	@override String get on_screen_keyboard => '屏幕键盘';
-	@override String get options_collapse => '查词时折叠';
-	@override String get options_delete => '删除';
-	@override String get options_edit => '编辑';
-	@override String get options_expand => '查词时展开';
-	@override String get options_github => '在 GitHub 查看仓库';
-	@override String get options_hide => '查词时隐藏';
-	@override String get options_language => '语言设置';
-	@override String get options_show => '查词时显示';
-	@override String get overlay_lookup_independent_size => '弹出查词窗独立尺寸';
-	@override String get overlay_lookup_independent_size_hint => '让 app 外弹出查词窗使用独立最大尺寸，而非跟随 app 内查词弹窗';
-	@override String get overlay_lookup_max_height => '弹出查词窗最大高度';
-	@override String get overlay_lookup_max_width => '弹出查词窗最大宽度';
-	@override String page_progress({required Object current, required Object total}) => '第 ${current} / ${total} 页';
-	@override String get paste => '粘贴';
-	@override String get pause => '暂停';
-	@override String get pause_on_lookup => '查词时暂停';
-	@override String get pdf_bookmark_added => '已添加书签';
-	@override String get pdf_bookmarks => '书签';
-	@override String get pdf_bookmarks_empty => '还没有书签。';
-	@override String get pdf_no_text_layer => '此 PDF 没有文本层（扫描图），无法查词。';
-	@override String get pdf_outline => '目录';
-	@override String get pdf_outline_empty => '此 PDF 没有目录。';
-	@override String get pick_image => '选择图片';
-	@override String get play => '播放';
-	@override String get play_from_cue => '从本句播放';
-	@override String get playback_auto_pause => '字幕暂停播放模式';
-	@override String get playback_speed => '倍速';
-	@override String get popup_append_sentence_tooltip => '加入制卡句子';
-	@override String get popup_auto_expand_dictionaries => '自动展开行数';
-	@override String get popup_auto_expand_dictionaries_hint => '即使开启「折叠词典」，也保持前 N 行词典方框展开。展开数跟随列数设置：行数 x 词典列数（0 = 全部折叠）';
-	@override String get popup_bottom_docked => '底部停靠查词弹窗';
-	@override String get popup_bottom_docked_hint => '将查词弹窗固定为屏幕底部一条整宽面板，而不是跟随被查词的位置。';
-	@override String get popup_clear_sentence_draft_tooltip => '清空已加句子';
-	@override String get popup_ctx_adjust_button => '调整上下文';
-	@override String get popup_ctx_box_current => '当前句';
-	@override String get popup_ctx_box_empty => '（无）';
-	@override String get popup_ctx_box_next => '后文';
-	@override String get popup_ctx_box_prev => '前文';
-	@override String get popup_ctx_cancel => '取消';
-	@override String get popup_ctx_confirm => '确认制卡';
-	@override String get popup_ctx_modal_count => '已选择 %d 句';
-	@override String get popup_ctx_modal_eyebrow => '制卡前调整';
-	@override String get popup_ctx_modal_title => '选择句子上下文';
-	@override String get popup_ctx_next_minus => '后退一句';
-	@override String get popup_ctx_next_plus => '后加一句';
-	@override String get popup_ctx_prev_minus => '前退一句';
-	@override String get popup_ctx_prev_plus => '前加一句';
-	@override String get popup_dictionary_max_columns => '词典最多列数（自动填充）';
-	@override String get popup_dictionary_max_columns_hint => '每行自动填充词典，最多不超过此列数；窄屏会自动减少';
-	@override String get popup_font_size_decrease => '缩小查词字号';
-	@override String get popup_font_size_increase => '放大查词字号';
-	@override String get popup_instant_scroll => '查词弹窗瞬时滚动';
-	@override String get popup_instant_scroll_hint => '为墨水屏使用：查词弹窗按固定距离瞬时跳动，不播放滚动动画。';
-	@override String get popup_max_height => '查词窗口最大高度';
-	@override String get popup_max_width => '查词窗口最大宽度';
-	@override String get popup_no_audio_available => '暂无发音';
-	@override String get popup_sentence_context_next_label => '下';
-	@override String get popup_sentence_context_prev_label => '上';
-	@override String get popup_wheel_speed => '弹窗滚轮速度';
-	@override String get popup_wheel_speed_hint => '查词弹窗的鼠标滚轮滚动速度（浏览器扩展弹窗同样生效）。';
-	@override String get prev_sentence => '上一句';
-	@override String get preview => '预览';
-	@override String get preview_badge => '徽章';
-	@override String get preview_switch => '开关';
-	@override String get processing_in_progress => '正在准备图片';
-	@override String get profile_book_profile => '指定配置';
-	@override String profile_confirm_delete({required Object name}) => '删除配置「${name}」？';
-	@override String get profile_copy => '复制';
-	@override String get profile_copy_suffix => '（副本）';
-	@override String get profile_create => '创建配置';
-	@override String get profile_delete => '删除';
-	@override String get profile_export => '导出';
-	@override String get profile_export_failed => '导出失败';
-	@override String profile_follow_default_current({required Object name}) => '跟随默认（${name}）';
-	@override String get profile_import => '导入';
-	@override String get profile_import_failed => '导入失败';
-	@override String get profile_import_invalid => '配置方案文件无效';
-	@override String get profile_import_success => '配置方案已导入';
-	@override String get profile_label => '配置';
-	@override String get profile_management => '配置管理';
-	@override String get profile_media_audiobook => '有声书';
-	@override String get profile_media_epub => '普通书';
-	@override String get profile_media_lyrics => '歌词模式';
-	@override String get profile_media_none => '无';
-	@override String get profile_media_srtbook => '字幕书';
-	@override String get profile_media_type_bindings => '媒体类型绑定';
-	@override String get profile_media_video => '视频';
-	@override String get profile_name_hint => '配置名称';
-	@override String get profile_rename => '重命名';
-	@override String get reader_auto_hide_chrome_duration => '悬浮控件自动隐藏延时';
-	@override String get reader_content_timeout => '内容加载超时，如显示异常请重新打开';
-	@override String get reader_copy_image => '复制图片';
-	@override String get reader_gallery => '插图';
-	@override String get reader_gallery_current => '正在阅读';
-	@override String get reader_gallery_empty => '本书没有插图';
-	@override String get reader_gallery_jump => '跳转到此插图';
-	@override String get reader_gallery_tooltip => '浏览插图';
-	@override String reader_image_copy_failed({required Object error}) => '复制图片失败：${error}';
-	@override String get reader_image_file_unavailable => '图片文件不可用。';
-	@override String reader_image_share_failed({required Object error}) => '分享图片失败：${error}';
-	@override String get reader_open_failed => '打开书籍失败';
-	@override String get reader_settings_section => '阅读设置';
-	@override String get reader_theme_black => '纯黑';
-	@override String get reader_theme_dark => '深暗';
-	@override String get reader_theme_ecru => '米黄';
-	@override String get reader_theme_eyecare => '护眼';
-	@override String get reader_theme_gray => '灰暗';
-	@override String get reader_theme_light => '白色';
-	@override String get reader_theme_water => '水蓝';
-	@override String get reader_top_progress_floating => '悬浮阅读进度';
-	@override String get reader_unsupported_platform => '本平台暂不支持阅读器。';
-	@override String get reading_activity => '学习活动';
-	@override String get reading_progress => '阅读进度';
-	@override String get reading_section_mode => '模式与排版方向';
-	@override String get reading_statistics => '阅读统计';
-	@override String get record => '录制';
-	@override String get refresh => '刷新';
-	@override String get rematch_adjust_window => '调整搜索窗口重新匹配';
-	@override String get rematch_run => '重跑匹配';
-	@override String get remote_audio_source => '远端音频';
-	@override String get remote_book_audiobook_download_failed => '无法下载这本书的有声书';
-	@override String get remote_book_download => '下载到本机';
-	@override String get remote_book_download_failed => '无法下载对端书籍';
-	@override String get remote_book_downloaded => '已下载对端书籍';
-	@override String get remote_book_downloading => '正在下载…';
-	@override String get remote_book_info => '信息';
-	@override String get remote_book_info_has_audiobook => '包含有声书';
-	@override String get remote_book_unavailable => '配对设备不可用';
-	@override String get remote_dict_lookup => '远端词典查询';
-	@override String get remote_dict_lookup_hint => '本地词典查不到时，查询已配置的 Fushi 服务器';
-	@override String get remote_video_download => '下载到本机';
-	@override String get remote_video_download_failed => '无法下载对端视频';
-	@override String get remote_video_downloaded => '已下载对端视频';
-	@override String get remote_video_downloading => '正在下载…';
-	@override String get remote_video_info => '信息';
-	@override String get remote_video_info_has_subtitle => '包含字幕';
-	@override String get remote_video_info_no_subtitle => '不含字幕';
-	@override String remote_video_info_size({required Object size}) => '大小：${size}';
-	@override String get remote_video_list_failed => '无法加载远端视频，请确认对端设备在线并与本机处于同一网络后重试';
-	@override String get remote_video_unavailable => '配对设备不可用';
-	@override String get rename_collection => '重命名合集';
-	@override String get render_restart_required => '重启 App 后生效';
-	@override String get repeat_cue => '重复本句';
-	@override String get reset => '重置';
-	@override String get retry => '重试';
-	@override String get reverse_arrow_page_turn => '反转键盘左右键翻页方向';
-	@override String get reverse_navigation_bar => '反转底栏方向';
-	@override String get reverse_reader_bottom_bar => '反转阅读器底栏';
-	@override String get audiobook_rematch_all_zero => '所有窗口命中率都是 0，请人工调整';
-	@override String audiobook_rematch_auto_failed({required Object error}) => '自动匹配失败：${error}';
-	@override String get audiobook_rematch_auto_match => '自动匹配';
-	@override String audiobook_rematch_auto_picked({required Object window, required Object pct}) => '自动选定 ${window}（命中 ${pct}%）';
-	@override String audiobook_rematch_default_value({required Object n}) => '默认 ${n}';
-	@override String audiobook_rematch_health_label({required Object pct, required Object detail}) => '${pct} 匹配 — ${detail}';
-	@override String get audiobook_rematch_matching => '匹配中…';
-	@override String get audiobook_rematch_no_chapters => 'EPUB 没有章节文本';
-	@override String get audiobook_rematch_no_cues_to_match => '没有字幕条目可供匹配';
-	@override String get audiobook_rematch_no_sections => '未读到章节文本，无法自动匹配';
-	@override String get audiobook_rematch_no_stored_cues => '没有已存字幕条目，无法重跑';
-	@override String audiobook_rematch_failed({required Object error}) => '重跑失败：${error}';
-	@override String audiobook_rematch_result({required Object pct, required Object window}) => '重新匹配：${pct}%（窗口：${window}）';
-	@override String get audiobook_rematch_search_window => '搜索窗口';
-	@override String get audiobook_rematch_similarity_threshold => '相似度阈值';
-	@override String get audiobook_rematch_threshold_hint => '模糊匹配的最低相似度（Dice 系数）。降低可容忍更多文本差异，但太低会误匹配。';
-	@override String get audiobook_rematch_window_hint => '每条字幕在正文里向前找的字符数。命中率低时可左右调整，过大容易被短噪声字幕拉偏光标。';
-	@override String get saved_tags => '标签已保存。';
-	@override String get scan_non_japanese_text => '扫描非日文文本';
-	@override String get scan_non_japanese_text_hint => '关闭后选区遇非日文字符即停止';
-	@override String get search => '搜索';
-	@override String get search_ellipsis => '搜索…';
-	@override String get searching_in_progress => '正在搜索 ';
-	@override String get section_advanced_colors => '高级选项';
-	@override String get section_advanced_typography => '高级选项';
-	@override String get section_audiobook => '有声书';
-	@override String get section_audiobook_lyrics => '有声书与歌词';
-	@override String get section_epub => 'EPUB 书架';
-	@override String get section_floating_lyric => '悬浮歌词';
-	@override String get section_interface => '界面';
-	@override String get section_layout => '布局显示';
-	@override String get section_navigation => '导航';
-	@override String get section_page_turn_direction => '翻页方向';
-	@override String get section_reader_colors => '阅读器颜色';
-	@override String get section_system_theme => '系统主题色';
-	@override String get section_typography => '排版';
-	@override String get section_update => '更新设置';
-	@override String get section_video_danmaku => '弹幕';
-	@override String get section_video_library => '媒体库';
-	@override String get section_video_playback => '播放';
-	@override String get section_video_subtitles => '字幕';
-	@override String get seed_color => '种子色';
-	@override String get seed_color_desc => '自动生成下方所有默认颜色';
-	@override String get selection_color => '选中高亮色';
-	@override String get selection_color_desc => '阅读器选中高亮';
-	@override String get send => '发送';
-	@override String get series => '系列';
-	@override String get series_created => '已创建系列';
-	@override String get series_default_name => '新系列';
-	@override String series_item_count({required Object n}) => '${n} 项';
-	@override String get series_name_hint => '系列名称';
-	@override String get server_address => '服务器地址';
-	@override String get settings => '设置';
-	@override String get settings_check_update_now => '检查更新';
-	@override String get settings_destination_appearance => '外观';
-	@override String get settings_destination_card_creation => '制卡';
-	@override String get settings_destination_diagnostics => '诊断';
-	@override String get settings_destination_interconnect => 'Fushi 互联';
-	@override String get settings_destination_listening => '听书';
-	@override String get settings_destination_lookup => '查词';
-	@override String get settings_destination_profiles => '配置方案';
-	@override String get settings_destination_reading => '阅读';
-	@override String get settings_destination_reading_controls => '阅读操作';
-	@override String get settings_destination_sync_backup => '同步与备份（实验性）';
-	@override String get settings_destination_system => '系统';
-	@override String get settings_destination_system_summary => '通用、更新与诊断';
-	@override String get settings_destination_tracking => '媒体记录';
-	@override String get settings_destination_video => '视频';
-	@override String get settings_experimental_suffix => '（实验性）';
-	@override String get settings_search_hint => '搜索设置';
-	@override String get settings_search_no_results => '没有匹配的设置项';
-	@override String get settings_secret_hide => '隐藏内容';
-	@override String get settings_secret_show => '显示内容';
-	@override String get settings_section_app_shell => '应用';
-	@override String get settings_section_data_storage => '数据存储位置';
-	@override String get settings_section_gal_hook_overlay => 'Galgame 台词浮窗';
-	@override String get settings_section_general => '通用';
-	@override String get settings_section_lookup_audio => '朗读与反馈';
-	@override String get settings_section_lookup_clipboard => '剪贴板与全局查词';
-	@override String get settings_section_lookup_content => '词条内容';
-	@override String get settings_section_lookup_integrations => '外部集成';
-	@override String get settings_section_lookup_popup_window => '弹窗窗口';
-	@override String get settings_section_lookup_trigger => '查词触发';
-	@override String get settings_section_page_turn_input => '翻页与交互';
-	@override String get settings_section_reader_chrome => '阅读界面';
-	@override String get settings_section_update_channel => '更新通道';
-	@override String get settings_view_changelog => '查看更新日志';
-	@override String get share => '分享';
-	@override String get share_theme => '分享主题';
-	@override String get shortcut_action_audiobook_next_sentence => '下一句';
-	@override String get shortcut_action_audiobook_play_pause => '播放/暂停';
-	@override String get shortcut_action_audiobook_prev_sentence => '上一句';
-	@override String get shortcut_action_audiobook_seek_clicked => '跳转音频到点击的句子';
-	@override String get shortcut_action_dpad_down => '方向键 下';
-	@override String get shortcut_action_dpad_left => '方向键 左';
-	@override String get shortcut_action_dpad_right => '方向键 右';
-	@override String get shortcut_action_dpad_up => '方向键 上';
-	@override String get shortcut_action_global_back => '返回上一级';
-	@override String get shortcut_action_global_external_lookup => '应用外查词快捷键';
-	@override String get shortcut_action_global_scroll_page_down => '向下翻一屏';
-	@override String get shortcut_action_global_scroll_page_up => '向上翻一屏';
-	@override String get shortcut_action_global_toggle_fullscreen => '全屏切换';
-	@override String get shortcut_action_home_focus_search => '聚焦搜索';
-	@override String get shortcut_action_home_tab_books => '书架标签';
-	@override String get shortcut_action_home_tab_dict => '词典标签';
-	@override String get shortcut_action_home_tab_next => '下一个标签页';
-	@override String get shortcut_action_home_tab_prev => '上一个标签页';
-	@override String get shortcut_action_home_tab_settings => '设置标签';
-	@override String get shortcut_action_popup_next_entry => '下一个词条';
-	@override String get shortcut_action_popup_prev_entry => '上一个词条';
-	@override String get shortcut_action_reader_create_card_from_popup => '从弹窗制卡';
-	@override String get shortcut_action_reader_dismiss_dict => '关闭词典';
-	@override String get shortcut_action_reader_enter_caret => '进入选字查词光标';
-	@override String get shortcut_action_reader_lookup_at_cursor => '查词/激活光标';
-	@override String get shortcut_action_reader_open_menu => '打开设置菜单';
-	@override String get shortcut_action_reader_open_navigation => '打开导航';
-	@override String get shortcut_action_reader_page_backward => '上一页';
-	@override String get shortcut_action_reader_page_forward => '下一页';
-	@override String get shortcut_action_reader_shift_lookup => '光标处查词';
-	@override String get shortcut_action_reader_toggle_chrome => '显示/隐藏控制栏';
-	@override String get shortcut_action_reader_toggle_furigana => '切换振假名';
-	@override String get shortcut_action_video_align_subtitle_to_next => '下一句字幕对齐到当前时间';
-	@override String get shortcut_action_video_align_subtitle_to_prev => '上一句字幕对齐到当前时间';
-	@override String get shortcut_action_video_cycle_secondary_subtitle_obscure => '循环副字幕遮蔽';
-	@override String get shortcut_action_video_cycle_subtitle_obscure => '循环字幕遮蔽模式';
-	@override String get shortcut_action_video_next_chapter => '下一章';
-	@override String get shortcut_action_video_next_frame => '下一帧';
-	@override String get shortcut_action_video_next_subtitle => '下一句字幕';
-	@override String get shortcut_action_video_open_subtitle_align => '打开字幕波形对轴';
-	@override String get shortcut_action_video_pause => '暂停';
-	@override String get shortcut_action_video_play => '播放';
-	@override String get shortcut_action_video_previous_chapter => '上一章';
-	@override String get shortcut_action_video_previous_frame => '上一帧';
-	@override String get shortcut_action_video_previous_subtitle => '上一句字幕';
-	@override String get shortcut_action_video_replay_current_subtitle => '重播当前句';
-	@override String get shortcut_action_video_replay_previous_subtitle => '重播上一句';
-	@override String get shortcut_action_video_reset_speed => '速度复位';
-	@override String get shortcut_action_video_screenshot => '截图';
-	@override String get shortcut_action_video_seek_backward => '快退';
-	@override String get shortcut_action_video_seek_forward => '快进';
-	@override String get shortcut_action_video_speed_down => '减速';
-	@override String get shortcut_action_video_speed_up => '加速';
-	@override String get shortcut_action_video_subtitle_delay_decrease => '字幕延迟减小';
-	@override String get shortcut_action_video_subtitle_delay_increase => '字幕延迟增大';
-	@override String get shortcut_action_video_toggle_favorite_sentence => '收藏当前句';
-	@override String get shortcut_action_video_toggle_fullscreen => '切换全屏';
-	@override String get shortcut_action_video_toggle_immersive_lock => '切换沉浸锁定';
-	@override String get shortcut_action_video_toggle_mute => '静音切换';
-	@override String get shortcut_action_video_toggle_play_pause => '播放/暂停';
-	@override String get shortcut_action_video_toggle_secondary_subtitle_hide => '隐藏副字幕';
-	@override String get shortcut_action_video_toggle_shader_compare => '切换着色器对比';
-	@override String get shortcut_action_video_toggle_subtitle_blur => '切换字幕模糊';
-	@override String get shortcut_action_video_toggle_subtitle_hide => '切换隐藏字幕';
-	@override String get shortcut_action_video_toggle_subtitle_list => '切换字幕列表';
-	@override String get shortcut_action_video_volume_down => '音量-';
-	@override String get shortcut_action_video_volume_up => '音量+';
-	@override String get shortcut_assign_pick_action => '分配到动作…';
-	@override String get shortcut_clear => '清除';
-	@override String shortcut_conflict({required Object s}) => '已被占用：${s}';
-	@override String shortcut_conflict_replace_confirm({required Object s}) => '该快捷键已被“${s}”占用。要移到当前动作吗？';
-	@override String get shortcut_gamepad => '手柄';
-	@override String get shortcut_gamepad_brand_label => '手柄按钮样式';
-	@override String get shortcut_gamepad_brand_playstation => 'PlayStation';
-	@override String get shortcut_gamepad_brand_switch => 'Nintendo Switch';
-	@override String get shortcut_gamepad_brand_xbox => 'Xbox';
-	@override String get shortcut_gamepad_pick_list => '从列表选择';
-	@override String get shortcut_gamepad_unavailable_hint => '未检测到 GameInput 组件，手柄功能不可用。可安装 Windows「游戏服务(Gaming Services)」以启用手柄支持。';
-	@override String get shortcut_keyboard => '键盘';
-	@override String get shortcut_mouse_back => '鼠标侧键(后退)';
-	@override String get shortcut_mouse_button => '鼠标按键';
-	@override String get shortcut_mouse_forward => '鼠标侧键(前进)';
-	@override String get shortcut_mouse_left => '鼠标左键';
-	@override String get shortcut_mouse_middle => '鼠标中键';
-	@override String get shortcut_mouse_right => '鼠标右键';
-	@override String get shortcut_press_gamepad => '按下手柄按钮…';
-	@override String get shortcut_press_key => '请按下快捷键组合...';
-	@override String get shortcut_press_mouse_button => '按下鼠标键……';
-	@override String get shortcut_press_wheel => '按住修饰键在此滚动滚轮';
-	@override String get shortcut_reset_confirm => '确定要将此部分的所有快捷键恢复为默认值吗？';
-	@override String get shortcut_reset_defaults => '恢复默认';
-	@override String get shortcut_scope_audiobook => '有声书';
-	@override String get shortcut_scope_dictionary_popup => '查词弹窗';
-	@override String get shortcut_scope_dictionary_popup_note => '鼠标位于查词弹窗上时生效';
-	@override String get shortcut_scope_gamepad => '手柄';
-	@override String get shortcut_scope_global => '全局';
-	@override String get shortcut_scope_global_external => '全局（应用外）';
-	@override String get shortcut_scope_global_external_mobile_note => '由系统触发（选中文本菜单、分享、悬浮球），系统不允许应用自定义此快捷键。';
-	@override String get shortcut_scope_home => '首页';
-	@override String get shortcut_scope_reader => '阅读器';
-	@override String get shortcut_scope_video => '视频';
-	@override String get shortcut_settings_title => '快捷键设置';
-	@override String get shortcut_stop_capture => '停止捕获';
-	@override String get shortcut_tap_to_assign => '未设置 · 点击设置';
-	@override String get shortcut_view_list => '列表视图';
-	@override String get shortcut_view_visual => '手柄可视化图';
-	@override String get shortcut_wheel => '鼠标滚轮';
-	@override String get shortcut_wheel_down => '滚轮向下';
-	@override String get shortcut_wheel_needs_modifier => '裸滚轮用于滚动弹窗内容，请按住 Alt / Ctrl / Shift 再滚';
-	@override String get shortcut_wheel_up => '滚轮向上';
-	@override String get show_bottom_bar_cue => '显示当前句子';
-	@override String get show_expression_tags => '显示表达标签';
-	@override String get show_floating_lyric => '悬浮字幕';
-	@override String get show_media_notification => '显示媒体通知';
-	@override String get show_options => '显示选项';
-	@override String get show_top_progress_bar => '顶部阅读进度';
-	@override String get skip_action => '跳过操作';
-	@override String skip_action_seconds({required Object n}) => '${n} 秒';
-	@override String get skip_action_sentence => '1 句';
-	@override String get sort_by => '排序方式';
-	@override String get sort_imported => '导入时间';
-	@override String get sort_recent_read => '最近阅读';
-	@override String get sort_recent_watched => '最近观看';
-	@override String get sort_title => '名称';
-	@override String get source_description_epub => 'EPUB 阅读与词典查询';
-	@override String get source_name_bookshelf => '书架';
-	@override String get spread_auto => '自动';
-	@override String get spread_direction => '跨页方向';
-	@override String get spread_direction_ltr => '从左到右';
-	@override String get spread_direction_rtl => '从右到左';
-	@override String get spread_mode => '跨页模式';
-	@override String get spread_off => '关闭';
-	@override String get spread_on => '开启';
-	@override String get srt_audio_unresolved => '未找到音频文件 — 请重新附加';
-	@override String get srt_books_section => '字幕有声书';
-	@override String srt_delete_confirm({required Object title}) => '删除 『${title}』？此操作无法撤销。';
-	@override String get srt_delete_title => '删除字幕书籍';
-	@override String get srt_epub_not_ready => '书籍尚未就绪 — 请重新导入';
-	@override String get srt_import => '导入书';
-	@override String get srt_import_audio_needs_subtitle => '音频需要配合字幕使用（给现有 EPUB 挂音频请在书架长按该书）';
-	@override String get srt_import_author_hint => '作者（可选）';
-	@override String get srt_import_error => '导入失败';
-	@override String srt_import_files_selected({required Object n}) => '已选择 ${n} 个文件';
-	@override String get srt_import_hint_epub_or_srt => '选择 EPUB 或字幕文件进行导入。';
-	@override String get srt_import_missing_input => '请至少选择 EPUB 或字幕文件';
-	@override String get srt_import_missing_title => '请输入书名';
-	@override String get srt_import_pick_audio_dir => '选择音频目录';
-	@override String get srt_import_pick_audio_files => '选择音频文件';
-	@override String get srt_import_pick_cover => '选择封面图片';
-	@override String get srt_import_pick_epub => '选择 EPUB';
-	@override String get srt_import_pick_subtitle_files => '选择字幕文件';
-	@override String get srt_import_success => '导入成功';
-	@override String get srt_import_title_hint => '书名';
-	@override String get startup_default_dictionary_tab => '启动时打开查词';
-	@override String get startup_default_dictionary_tab_hint => '应用开屏后直接显示查词页；关闭时保留当前默认首页。';
-	@override String get stash => '暂存';
-	@override String get stash_added_multiple => '多项已添加到暂存区。';
-	@override String stash_added_single({required Object term}) => '『${term}』已添加到暂存区。';
-	@override String get stash_clear_description => '所有内容将被清除。确定吗？';
-	@override String stash_clear_single({required Object term}) => '『${term}』已从暂存区移除。';
-	@override String get stash_clear_title => '清空暂存区';
-	@override String get stash_nothing_to_pop => '暂存区没有可弹出的项目。';
-	@override String get stash_placeholder => '暂存区为空';
-	@override String get stat_all_time => '全部';
-	@override String get stat_bookshelf_compare => '书架对比';
-	@override String get stat_clear_all => '清空统计';
-	@override String get stat_clear_all_confirm => '清空';
-	@override String get stat_clear_all_reading_message => '确定清空全部阅读统计吗？将删除所有阅读时长、字数以及查词 / 制卡计数。你收藏的词、句子和已制卡片不受影响。此操作不可撤销。';
-	@override String get stat_clear_all_title => '清空全部统计';
-	@override String get stat_clear_all_video_message => '确定清空全部视频统计吗？将删除所有观看时长、字幕字数以及查词 / 制卡计数。你收藏的词、句子和已制卡片不受影响。此操作不可撤销。';
-	@override String get stat_daily_average => '日均';
-	@override String get stat_delete_message => '删除该项的时长、字数与查词/制卡统计？你收藏的单词和句子不受影响。';
-	@override String get stat_delete_title => '删除统计数据';
-	@override String get stat_fastest_day => '最快日';
-	@override String get stat_favorited => '收藏';
-	@override String get stat_favorited_sentence => '收藏语句';
-	@override String stat_format_chars({required Object n}) => '${n} 字';
-	@override String stat_format_chars_wan({required Object n}) => '${n} 万字';
-	@override String stat_format_days({required Object n}) => '${n} 天';
-	@override String stat_format_hours_minutes({required Object h, required Object m}) => '${h} 小时 ${m} 分钟';
-	@override String stat_format_minutes({required Object n}) => '${n} 分钟';
-	@override String get stat_goal => '每日目标';
-	@override String get stat_goal_daily => '每日目标';
-	@override String get stat_goal_presets => '快捷预设';
-	@override String stat_goal_progress({required Object read, required Object goal}) => '${read} / ${goal} 字';
-	@override String get stat_goal_reached => '已达成';
-	@override String stat_goal_recent_average({required Object n}) => '近 7 日日均 ${n} 字';
-	@override String get stat_goal_set => '设定目标';
-	@override String get stat_goal_unit_chars => '字';
-	@override String get stat_goal_weekly => '每周目标';
-	@override String get stat_last_30_days => '近 30 天';
-	@override String get stat_lookup => '查词';
-	@override String get stat_metric_chars => '字数';
-	@override String get stat_metric_speed => '速度';
-	@override String get stat_metric_time => '时长';
-	@override String get stat_mined => '制卡';
-	@override String get stat_no_data => '暂无阅读数据';
-	@override String get stat_range_and_trend => '范围与趋势';
-	@override String get stat_recent_active => '近 7 日活跃';
-	@override String get stat_refresh => '刷新';
-	@override String get stat_slowest_day => '最慢日';
-	@override String get stat_sort_by_chars => '按字数';
-	@override String get stat_sort_by_speed => '按速度';
-	@override String get stat_sort_by_time => '按时长';
-	@override String get stat_speed_anomaly => '异常日';
-	@override String get stat_speed_avg => '移动平均';
-	@override String stat_speed_cph({required Object n}) => '${n} 字/时';
-	@override String get stat_speed_summary => '速度摘要';
-	@override String get stat_streak => '连续天数';
-	@override String get stat_this_month => '本月';
-	@override String get stat_this_week => '本周';
-	@override String get stat_today => '今日';
-	@override String get stat_today_hourly => '今日按小时';
-	@override String get stat_trend_daily => '日';
-	@override String get stat_trend_monthly => '月';
-	@override String get stat_trend_weekly => '周';
-	@override String get stat_typical_day => '典型日';
-	@override String get stat_vs_prev => '较前 14 天';
-	@override String get stat_weighted_avg_speed => '加权均速';
-	@override String get stop => '停止';
-	@override String get storage_permissions => '请授予以下权限以便导出到 AnkiDroid。';
-	@override String get stream => '流媒体';
-	@override String get swipe_page_turn_sensitivity => '滑动翻页灵敏度';
-	@override String get sync_account => '账户';
-	@override String get sync_audiobook => '同步有声书位置';
-	@override String get sync_audiobook_files => '同步有声书文件';
-	@override String get sync_audiobook_files_warning => '音频和字幕可能很大。';
-	@override String sync_auth_error({required Object message}) => '认证失败：${message}';
-	@override String get sync_auto_sync => '自动同步';
-	@override String get sync_backend => '存储后端';
-	@override String get sync_backend_dropbox => 'Dropbox';
-	@override String get sync_backend_ftp => 'FTP';
-	@override String get sync_backend_google_drive => 'Google Drive';
-	@override String get sync_backend_fushi_server => 'Fushi 互联';
-	@override String get sync_backend_onedrive => 'OneDrive';
-	@override String get sync_backend_sftp => 'SFTP';
-	@override String get sync_backend_webdav => 'WebDAV';
-	@override String get sync_checking_account => '正在检查账户…';
-	@override String get sync_client_connected => '已连接';
-	@override String get sync_client_token => '对端访问令牌';
-	@override String get sync_client_token_manual => '手动填写令牌';
-	@override String get sync_compare => '对比数据';
-	@override String get sync_compare_all_books => '全部书籍';
-	@override String get sync_compare_all_local => '全部 → 本地';
-	@override String get sync_compare_all_remote => '全部 → 远端';
-	@override String get sync_compare_all_skip => '全部 → 跳过';
-	@override String sync_compare_applied({required Object count}) => '已应用 ${count} 项更改';
-	@override String sync_compare_apply({required Object count}) => '立即同步（${count}）';
-	@override String get sync_compare_close => '关闭';
-	@override String get sync_compare_conflicts => '冲突';
-	@override String get sync_compare_days => '天';
-	@override String get sync_compare_delete_audiobook => '删除远端有声书';
-	@override String get sync_compare_delete_book => '删除远端书籍';
-	@override String sync_compare_delete_confirm({required Object name}) => '确定从远端删除「${name}」吗？本地数据保留，此操作不可撤销。';
-	@override String get sync_compare_delete_dict => '删除远端词典';
-	@override String get sync_compare_deleted => '已从远端删除';
-	@override String get sync_compare_dictionaries => '词典';
-	@override String get sync_compare_download => '下载';
-	@override String get sync_compare_empty => '未找到书籍';
-	@override String get sync_compare_local => '本地';
-	@override String get sync_compare_no_content => '仅云端数据，无可下载书籍';
-	@override String get sync_compare_no_data => '无数据';
-	@override String get sync_compare_remote => '远端';
-	@override String get sync_compare_select_all => '全选';
-	@override String get sync_compare_skip => '跳过';
-	@override String get sync_compare_title => '本地 vs 远端';
-	@override String get sync_compare_unavailable => '请先设置同步后端';
-	@override String get sync_compare_use_local => '本地';
-	@override String get sync_compare_use_remote => '远端';
-	@override String get sync_connection_failed => '连接失败';
-	@override String get sync_connection_success => '连接成功';
-	@override String get sync_content => '上传书籍文件';
-	@override String get sync_content_warning => '大文件会消耗存储空间和流量';
-	@override String get sync_dictionary => '同步词典';
-	@override String get sync_dictionary_warning => '词典包可能很大，并包含已导入的词典资源。';
-	@override String get sync_err_auth_expired => '登录已过期，请重新登录。';
-	@override String get sync_err_invalid_client => '客户端凭据无效，请更新 App。';
-	@override String get sync_err_network => '无法连接服务器——请检查网络或代理设置。';
-	@override String get sync_err_not_configured => '此构建未配置谷歌同步凭据。';
-	@override String get sync_err_quota => '云端存储空间已满（配额已用尽）。';
-	@override String get sync_err_scope_upgrade => '同步权限已更新，请重新登录 Google 账号以继续同步。';
-	@override String get sync_err_timeout => '连接超时——服务器未在限定时间内响应。请检查网络或代理设置。';
-	@override String sync_error({required Object message}) => '同步错误：${message}';
-	@override String get sync_exit_warning => '同步尚未完成，现在退出可能会丢失数据。';
-	@override String get sync_exit_warning_title => '同步进行中';
-	@override String get sync_host => '主机';
-	@override String get sync_lan_discovery => '局域网设备';
-	@override String get sync_lan_no_devices => '未发现设备';
-	@override String get sync_lan_scan_failed => '扫描失败——请检查网络权限或防火墙。';
-	@override String get sync_local_audio => '同步本地音频';
-	@override String get sync_local_audio_warning => '同步本地音频来源数据库（可能较大）';
-	@override String get sync_not_signed_in => '未登录';
-	@override String get sync_now => '立即同步';
-	@override String sync_now_audio_in({required Object count}) => '↓${count} 有声书';
-	@override String sync_now_audio_out({required Object count}) => '↑${count} 有声书';
-	@override String sync_now_books_in({required Object count}) => '↓${count} 本书';
-	@override String get sync_now_busy => '同步进行中，请稍候';
-	@override String sync_now_dicts_in({required Object count}) => '↓${count} 词典';
-	@override String sync_now_dicts_out({required Object count}) => '↑${count} 词典';
-	@override String sync_now_done({required Object detail}) => '同步完成 · ${detail}';
-	@override String sync_now_failed_suffix({required Object count}) => ' · ${count} 项失败';
-	@override String get sync_now_hint => '立即与云端做一次完整双向同步';
-	@override String sync_now_local_audio_in({required Object count}) => '↓${count} 本地音频';
-	@override String sync_now_local_audio_out({required Object count}) => '↑${count} 本地音频';
-	@override String get sync_now_no_changes => '无新增';
-	@override String get sync_pair_allow => '允许';
-	@override String sync_pair_confirm_identity_body({required Object device}) => '你正在与 ${device} 配对。继续前请确认这是你预期的设备。';
-	@override String get sync_pair_confirm_identity_title => '确认设备';
-	@override String get sync_pair_continue => '继续';
-	@override String get sync_pair_denied => '对方拒绝了配对请求';
-	@override String get sync_pair_deny => '拒绝';
-	@override String get sync_pair_enter_pin_body => '输入另一台设备屏幕上显示的 6 位 PIN。';
-	@override String get sync_pair_enter_pin_title => '输入 PIN';
-	@override String get sync_pair_failed => '配对失败';
-	@override String get sync_pair_fingerprint_changed => '证书已变更，为安全起见已中止配对（可能存在中间人攻击）。';
-	@override String get sync_pair_fingerprint_label => '证书指纹';
-	@override String get sync_pair_not_fushi => '此地址未找到 Fushi 设备，已保存该地址。';
-	@override String get sync_pair_pairing => '正在配对…';
-	@override String get sync_pair_pin_label => '在另一台设备上输入此 PIN';
-	@override String get sync_pair_pin_waiting => '等待对方设备输入此 PIN…';
-	@override String get sync_pair_pin_wrong => 'PIN 错误，请重试';
-	@override String get sync_pair_repair => '重新配对';
-	@override String get sync_pair_request_body => '有设备请求配对，允许它与本机同步吗？';
-	@override String get sync_pair_request_title => '配对请求';
-	@override String get sync_pair_success => '配对成功，已自动填入 token';
-	@override String get sync_pair_unavailable => '对方设备未就绪或版本过旧，请确认对方已更新并开启同步后重试。';
-	@override String get sync_pair_unknown_device => '未知设备';
-	@override String get sync_paired_peer_remove => '移除';
-	@override String get sync_paired_peer_removed => '已移除配对设备';
-	@override String get sync_paired_peer_unknown => '未知设备';
-	@override String get sync_paired_peers_empty => '尚无已配对设备';
-	@override String get sync_paired_peers_title => '已配对设备';
-	@override String get sync_password => '密码';
-	@override String get sync_port => '端口';
-	@override String get sync_private_key => '私钥';
-	@override String get sync_progress_audiobooks => '同步有声书';
-	@override String get sync_progress_books => '导入书籍';
-	@override String get sync_progress_dictionaries => '同步词典';
-	@override String get sync_progress_local_audio => '同步本地音频';
-	@override String get sync_progress_reading => '同步阅读数据';
-	@override String get sync_progress_videos => '同步视频';
-	@override String get sync_role_locked_by_client => '已连接其他设备，请先移除连接后才能作为服务端。';
-	@override String get sync_role_locked_by_server => '本机正作为服务端，请先关闭服务端再连接其他设备。';
-	@override String get sync_section_actions => '同步操作';
-	@override String get sync_section_backup => '本地备份';
-	@override String get sync_section_content => '同步内容';
-	@override String get sync_section_host_server => '本机作为同步服务器';
-	@override String get sync_section_host_server_footer => '让其他设备从本机同步，与上面选择的同步后端互不影响。';
-	@override String get sync_section_method => '同步方式';
-	@override String get sync_server_copy_token => '复制令牌';
-	@override String get sync_server_enable => '启用同步服务';
-	@override String get sync_server_mode_active => '本机作为同步服务端';
-	@override String get sync_server_mode_clients_drive => '由已连接的客户端发起同步，本机无需手动同步';
-	@override String get sync_server_port => '服务端口';
-	@override String sync_server_port_in_use({required Object port}) => '端口 ${port} 已被占用，请换一个端口。';
-	@override String get sync_server_regenerate_token => '重新生成令牌';
-	@override String get sync_server_running => '服务运行中';
-	@override String get sync_server_stopped => '服务已停止';
-	@override String get sync_server_tls_enable => '互联加密（HTTPS/TLS）';
-	@override String get sync_server_tls_repair_hint => '切换后已配对设备需重新配对';
-	@override String get sync_server_token => '访问令牌';
-	@override String get sync_show_remote_entries => '显示远端条目';
-	@override String get sync_show_remote_entries_warning => '把配对设备或云端有、本机没有的书籍和视频显示为可下载/流播的占位卡。';
-	@override String get sync_sign_in => '登录';
-	@override String get sync_sign_out => '退出登录';
-	@override String get sync_signed_in => '已登录';
-	@override String get sync_statistics => '同步统计';
-	@override String get sync_summary => '云端、局域网与本地备份';
-	@override String get sync_test_connection => '测试连接';
-	@override String get sync_use_tls => '使用 TLS';
-	@override String get sync_username => '用户名';
-	@override String get sync_video_files => '上传视频文件';
-	@override String get sync_video_files_warning => '视频文件可能非常大。';
-	@override String get sync_webdav_missing_fields => '缺少字段';
-	@override String sync_webdav_test_failed({required Object message}) => '连接失败: ${message}';
-	@override String get sync_webdav_url => '服务器地址';
-	@override String tag_added_to_book({required Object name}) => '标签「${name}」已添加到书籍。';
-	@override String tag_added_to_collection({required Object name}) => '标签「${name}」已添加到合集。';
-	@override String tag_added_to_video({required Object name}) => '标签「${name}」已添加到视频。';
-	@override String tag_already_on_book({required Object name}) => '标签「${name}」已存在于此书。';
-	@override String tag_already_on_collection({required Object name}) => '标签「${name}」已在此合集上。';
-	@override String tag_book_count({required Object count}) => '${count} 本';
-	@override String get tag_clear_filter => '清除筛选';
-	@override String get tag_color => '颜色';
-	@override String tag_delete_confirm({required Object name}) => '删除标签「${name}」？';
-	@override String get tag_filter_title => '按标签筛选';
-	@override String get tag_label => '标签';
-	@override String get tag_manage => '管理标签';
-	@override String get tag_manage_title => '标签管理';
-	@override String get tag_name_duplicate => '同名标签已存在。';
-	@override String get tag_name_empty => '标签名称不能为空。';
-	@override String get tag_name_hint => '标签名称';
-	@override String get tag_new => '新建标签';
-	@override String get tag_no_books_for_filter => '没有书籍匹配所选标签。';
-	@override String get tag_no_tags_hint => '还没有标签。创建一个开始吧。';
-	@override String get tag_seed_stars => '添加星级标签';
-	@override String get tag_seed_stars_added => '已添加星级标签';
-	@override String get tag_seed_stars_exists => '星级标签已存在';
-	@override String get tap_empty_hide_chrome => '悬浮控制栏';
-	@override String get text_segmentation => '文本分词';
-	@override String get texthooker => '文本钩子';
-	@override String get texthooker_enabled => '文本钩子（接收文本）';
-	@override String get texthooker_enabled_hint => '连接 Textractor/mpv/agent 并查询收到的文本';
-	@override String get texthooker_experimental_banner => '文本钩子为实验性功能：实时文本、查词与制卡可能尚不稳定。';
-	@override String get theme_black => '纯黑';
-	@override String get theme_code_copied => '主题代码已复制到剪贴板';
-	@override String get theme_dark => '深暗';
-	@override String get theme_ecru => '米黄';
-	@override String get theme_eyecare => '护眼';
-	@override String get theme_gray => '灰暗';
-	@override String get theme_light => '白色';
-	@override String get theme_seed_preview_hint => '下方色板预览由种子色实际生成的颜色。想让某个颜色固定作为主色强调色，请打开「主色」开关并显式指定。';
-	@override String get theme_water => '水蓝';
-	@override String toc_section({required Object n}) => '章节列表（${n}）';
-	@override String get top_progress_pos_center => '居中';
-	@override String get top_progress_pos_left => '左上';
-	@override String get top_progress_pos_right => '右上';
-	@override String get top_progress_position => '进度位置';
-	@override String get torrent_upload_intro_body => '上传（做种）默认关闭。开启后会把下载内容回传给网络，会占用你的上传带宽。可随时在「设置」里修改。';
-	@override String get torrent_upload_intro_confirm => '保存';
-	@override String get torrent_upload_intro_enable => '启用上传 / 做种';
-	@override String get torrent_upload_intro_keep_off => '保持关闭';
-	@override String get torrent_upload_intro_title => '上传 / 做种';
-	@override String get reader_blur_images => '图片模糊（防剧透）';
-	@override String get reader_font_size => '字体大小';
-	@override String get reader_font_vpal => 'VPAL 纵排替代';
-	@override String get reader_furigana_hide => '隐藏';
-	@override String get reader_furigana_mode => '振假名';
-	@override String get reader_furigana_mode_hint => '';
-	@override String get reader_furigana_partial => '部分';
-	@override String get reader_furigana_show => '显示';
-	@override String get reader_furigana_toggle => '切换';
-	@override String get reader_horizontal => '横排';
-	@override String get reader_line_height => '行高';
-	@override String get reader_merge_image_pages => '将插图页并入正文';
-	@override String get reader_merge_image_pages_subtitle => '把只含一张图的独立章节并入相邻正文章连续显示，不再单独占一页';
-	@override String get reader_no_books_added => '尚未添加任何书籍';
-	@override String get reader_not_bound_cannot_rematch => '有声书未绑定书籍，无法重跑匹配';
-	@override String get reader_orient_mixed => '混合';
-	@override String get reader_orient_upright => '竖直';
-	@override String get reader_page_columns_auto => '自动';
-	@override String get reader_paginated => '翻页';
-	@override String get reader_paragraph_spacing => '段落间距';
-	@override String get reader_reader_styles => '优先书籍样式';
-	@override String get reader_scroll => '滚动';
-	@override String get reader_text_indentation => '段落缩进';
-	@override String get reader_text_justify => '两端对齐';
-	@override String get reader_theme => '主题';
-	@override String get reader_vert_kerning => '字偶间距（纵排）';
-	@override String get reader_vert_text_orient => '文字方向';
-	@override String get reader_vertical => '竖排';
-	@override String get reader_view_mode_label => '翻页 / 滚动';
-	@override String get reader_vn => '视觉小说';
-	@override String get reader_writing_direction => '排版方向';
-	@override String get undo => '撤销';
-	@override String get unit_milliseconds => '毫秒';
-	@override String get unit_pixels => '像素';
-	@override String untitled_book({required Object id}) => '书籍 ${id}';
-	@override String get untitled_chapter => '（无标题）';
-	@override String get update_already_latest => '已是最新版本';
-	@override String get update_auto_install => '自动安装更新';
-	@override String get update_available => '发现新版本';
-	@override String update_cached_newer({required Object version}) => '发现新版 ${version}（校验中…）';
-	@override String update_cached_up_to_date({required Object version}) => '已是最新已知版本 ${version}（校验中…）';
-	@override String get update_cancel => '取消';
-	@override String get update_cancelled => '已取消下载';
-	@override String get update_cancelling => '正在取消…';
-	@override String get update_channel_beta => '测试版';
-	@override String get update_channel_debug => '调试版';
-	@override String get update_channel_stable => '稳定版';
-	@override String get update_check_failed => '检查更新失败';
-	@override String get update_checking_now => '正在检查更新…';
-	@override String get update_connecting => '正在连接更新源…';
-	@override String get update_custom_proxy_auto_hint => '用于更新检查、云同步和下载。留空时自动读取环境变量，再读取已启用的系统代理。';
-	@override String get update_custom_proxy_hint => 'host:port，例如 127.0.0.1:7890（仅 IPv4/域名）';
-	@override String get update_custom_proxy_invalid => '代理格式无效，请用 host:port';
-	@override String get update_custom_proxy_label => '自定义网络代理';
-	@override String get update_debug_channel => '调试更新通道';
-	@override String get update_debug_channel_warning => '调试通道的构建可能不稳定。使用风险自负。';
-	@override String get update_download => '下载';
-	@override String get update_download_failed => '下载失败';
-	@override String get update_download_not_resumed => '未续传';
-	@override String get update_download_restarted_from_zero => '已从零重下';
-	@override String update_download_resume_status({required Object status}) => '续传：${status}';
-	@override String get update_download_resumed => '已续传';
-	@override String update_download_size({required Object received, required Object total}) => '已下载：${received} / ${total}';
-	@override String update_download_source({required Object source}) => '来源：${source}';
-	@override String update_download_speed({required Object speed}) => '速度：${speed}';
-	@override String get update_downloading => '正在下载更新…';
-	@override String get update_hide => '隐藏';
-	@override String update_install_current_executable({required Object path}) => '当前运行程序：${path}';
-	@override String update_install_deletefile_failure({required Object path, required Object code}) => '安装器无法替换 ${path}（代码 ${code}）';
-	@override String update_install_detected_location({required Object source, required Object path}) => '检测到的安装位置（${source}）：${path}';
-	@override String update_install_failure_summary({required Object summary}) => '原因：${summary}';
-	@override String get update_install_incomplete_message => '安装器已启动，但 Fushi 仍是旧版本。请查看下方安装日志。';
-	@override String get update_install_incomplete_title => '更新未完成';
-	@override String update_install_installer_pid({required Object pid}) => '安装器 PID：${pid}';
-	@override String update_install_launch_failed_message({required Object version}) => 'Fushi 未能启动 ${version} 版本安装器。请查看下方日志路径。';
-	@override String get update_install_launch_failed_title => '更新安装器未启动';
-	@override String update_install_launcher_pid({required Object pid}) => '更新启动器 PID：${pid}';
-	@override String update_install_libmpv_holder({required Object pid, required Object path}) => 'libmpv 持有进程：PID ${pid} - ${path}';
-	@override String get update_install_log_not_observed => '启动后检查时未创建安装日志。';
-	@override String get update_install_log_observed => '启动后检查时已创建安装日志。';
-	@override String update_install_log_path({required Object path}) => '安装日志：${path}';
-	@override String get update_install_manual_close_retry => '请按上方 PID/路径手动关闭 Fushi，然后重试更新或重新运行安装器。';
-	@override String get update_install_parent_exit_not_observed => '更新启动器未确认 Fushi 已在安装器启动前退出。';
-	@override String get update_install_parent_exit_observed => '启动安装器前已确认 Fushi 退出。';
-	@override String update_install_path_mismatch({required Object warning}) => '安装目录不一致：${warning}';
-	@override String get update_install_permission_cancel => '取消';
-	@override String get update_install_permission_message => '请在系统设置中允许 Fushi 安装应用，然后重试安装。';
-	@override String get update_install_permission_retry => '重试安装';
-	@override String get update_install_permission_title => '允许安装更新';
-	@override String get update_install_restart_windows_hint => '如果上方进程已关闭但 libmpv-2.dll 仍被占用，请重启 Windows 后再安装。';
-	@override String update_install_running_process({required Object pid, required Object path}) => '仍在运行的 Fushi 进程：PID ${pid} - ${path}';
-	@override String update_install_success_message({required Object version}) => 'Fushi 已更新到 ${version} 版本。';
-	@override String get update_install_success_title => '更新已安装';
-	@override String update_install_target_dir({required Object path}) => '安装目标：${path}';
-	@override String get update_installing => '正在安装…';
-	@override String get update_mac_install_incomplete_message => '更新未能应用，Fushi 仍是旧版本。你可以重试更新，或手动下载最新版本。';
-	@override String update_message({required Object version}) => '${version} 版本可用。';
-	@override String update_network_failure({required Object host, required Object reason}) => '无法连接 ${host}：${reason}';
-	@override String get update_never_remind => '不再提醒自动更新';
-	@override String get update_skip => '跳过';
-	@override String get url => '网址';
-	@override String get video_audio_track => '音轨';
-	@override String get video_audio_track_empty => '没有可切换的音频轨';
-	@override String video_audio_track_switched({required Object label}) => '音轨: ${label}';
-	@override String get video_auto_play_next_cancel => '取消';
-	@override String video_auto_play_next_countdown({required Object seconds}) => '${seconds} 秒后播放下一集';
-	@override String get video_black_flash_notice_action => '查看建议';
-	@override String get video_black_flash_notice_dont_show_again => '不再提示';
-	@override String get video_bottom_next_cue => '下一句字幕（无字幕则前进一段）';
-	@override String get video_bottom_play_pause => '播放 / 暂停';
-	@override String get video_bottom_prev_cue => '上一句字幕（无字幕则后退一段）';
-	@override String get video_bottom_seek_back => '后退 10 秒';
-	@override String get video_bottom_seek_back_label => '−10s';
-	@override String get video_bottom_seek_forward => '前进 10 秒';
-	@override String get video_bottom_seek_forward_label => '+10s';
-	@override String video_chapter_n({required Object n}) => '章节 ${n}';
-	@override String get video_chapters => '章节';
-	@override String get video_chapters_empty => '无章节';
-	@override String get video_clip_export => '片段导出';
-	@override String get video_clip_export_cancelled => '已取消片段导出';
-	@override String video_clip_export_failed({required Object reason}) => '片段导出失败：${reason}';
-	@override String get video_clip_export_ffmpeg_failed => 'ffmpeg 执行失败';
-	@override String get video_clip_export_ffmpeg_unavailable => 'ffmpeg 不可用';
-	@override String get video_clip_export_input_missing => '源视频不可用';
-	@override String get video_clip_export_invalid_range => '没有有效片段';
-	@override String get video_clip_export_output_missing => '没有生成导出文件';
-	@override String get video_clip_export_remote_download_required => '请先把远端视频下载到本机后再导出片段';
-	@override String get video_clip_export_source_changed => '视频源已切换，已取消片段导出';
-	@override String get video_clip_export_start => '开始片段导出';
-	@override String get video_clip_export_stop => '停止并导出片段';
-	@override String video_clip_exported({required Object path}) => '片段已导出：${path}';
-	@override String video_clip_exported_with_subtitles({required Object path}) => '片段已导出（含字幕）：${path}';
-	@override String get video_clip_exporting => '正在导出片段…';
-	@override String get video_continue_watching => '继续观看';
-	@override String get video_control_audio_track => '音轨';
-	@override String get video_control_customize_hint => '为每个按钮选择在播放器上的位置，或将其移出。';
-	@override String get video_control_episode_list => '剧集列表';
-	@override String get video_control_favorite_sentence => '收藏当前句';
-	@override String get video_control_fullscreen => '全屏';
-	@override String get video_control_next_cue => '下一句字幕';
-	@override String get video_control_palette_hint => '把按钮拖入某个位置即可添加；一个按钮可放在多个位置。';
-	@override String get video_control_palette_title => '全部按钮';
-	@override String get video_control_play_pause => '播放/暂停';
-	@override String get video_control_previous_cue => '上一句字幕';
-	@override String get video_control_reject_required => '必选控制必须保留在播放器上。';
-	@override String get video_control_reject_unavailable => '此控制不能放在这里。';
-	@override String get video_control_reject_volume_bottom => '音量只能放在底栏。';
-	@override String get video_control_remove_from_slot => '移出';
-	@override String get video_control_reset_layout => '恢复默认播放器按钮布局';
-	@override String get video_control_screenshot => '截图';
-	@override String get video_control_seek_backward => '后退10秒';
-	@override String get video_control_seek_forward => '前进10秒';
-	@override String get video_control_settings => '播放器设置';
-	@override String get video_control_slot_bottom_center => '底栏（中间）';
-	@override String get video_control_slot_bottom_left => '底栏（左）';
-	@override String get video_control_slot_bottom_right => '底栏（右）';
-	@override String get video_control_slot_drop_hint => '拖动按钮到这里';
-	@override String get video_control_slot_hidden => '移出播放器';
-	@override String get video_control_slot_screen_left => '屏幕左侧';
-	@override String get video_control_slot_screen_right => '屏幕右侧';
-	@override String get video_control_slot_top_center => '顶栏（中间）';
-	@override String get video_control_slot_top_left => '顶栏（左）';
-	@override String get video_control_slot_top_right => '顶栏（右）';
-	@override String get video_control_speed => '倍速';
-	@override String get video_control_subtitle_list => '字幕列表';
-	@override String get video_control_subtitle_track => '字幕轨';
-	@override String get video_control_title => '视频名称';
-	@override String get video_control_volume => '音量';
-	@override String get video_danmaku_manual_bind_empty => '这一集还没有弹幕';
-	@override String get video_danmaku_manual_bind_failed => '弹幕加载失败，请稍后重试';
-	@override String get video_danmaku_manual_bind_server_error => '弹幕服务器拒绝了请求，请稍后重试';
-	@override String get video_danmaku_manual_match_title => '匹配弹幕';
-	@override String get video_danmaku_manual_network_error => '网络错误，请检查连接后重试。';
-	@override String get video_danmaku_manual_no_result => '未找到匹配的番剧。';
-	@override String get video_danmaku_manual_search_action => '搜索';
-	@override String get video_danmaku_manual_search_hint => '番剧名';
-	@override String get video_danmaku_manual_search_prompt => '按番剧名搜索弹弹play，再选择分集。';
-	@override String get video_danmaku_manual_server_error => '搜索失败，请稍后重试。';
-	@override String video_delete_confirm({required Object title}) => '删除『${title}』？此操作无法撤销。';
-	@override String get video_delete_title => '删除视频';
-	@override String get video_double_tap_next_cue => '下一句';
-	@override String get video_double_tap_prev_cue => '上一句';
-	@override String get video_drop_audio_unsupported => '请把字幕文件拖到当前视频上。音频文件不能在这里关联。';
-	@override String get video_drop_subtitle_only => '请把字幕文件拖到当前视频上。';
-	@override String get video_episode_list => '选集';
-	@override String get video_episode_list_empty => '无剧集';
-	@override String video_favorite_count({required Object count}) => '收藏 ${count} 句';
-	@override String get video_file_error_content => '无法加载视频文件。请确认该文件存在并位于应用可访问的目录中。';
-	@override String get video_file_not_found => '找不到视频文件';
-	@override String get video_immersive_locked => '已进入沉浸模式';
-	@override String get video_immersive_mode_full => '全部功能';
-	@override String get video_immersive_mode_lookup_only => '仅查词';
-	@override String get video_immersive_mode_seek_lookup => '快捷键 + 查词';
-	@override String get video_immersive_mode_unlock_only => '仅解锁';
-	@override String get video_immersive_unlock => '解锁';
-	@override String get video_immersive_unlocked => '已退出沉浸模式';
-	@override String get video_import_action => '导入视频';
-	@override String get video_import_confirm => '导入';
-	@override String video_import_folder_done({required Object count}) => '已导入 ${count} 个系列';
-	@override String get video_import_folder_empty => '此文件夹里没有视频文件';
-	@override String get video_import_pick_folder => '导入文件夹（自动分组剧集）';
-	@override String get video_import_pick_playlist => '选择 m3u8 播放列表';
-	@override String get video_import_pick_subtitle => '选择字幕';
-	@override String get video_import_pick_video => '选择视频文件';
-	@override String get video_import_stream_advanced => '高级（防盗链请求头）';
-	@override String get video_import_stream_referer => 'Referer（可选）';
-	@override String get video_import_stream_subtitle_url_field => '外挂字幕 URL（可选）';
-	@override String get video_import_stream_url_field => '视频流 URL';
-	@override String get video_import_stream_url_hint => '播放 HLS/m3u8/mp4 直链（可选外挂字幕 URL 与防盗链 Referer/User-Agent）';
-	@override String get video_import_stream_user_agent => 'User-Agent（可选）';
-	@override String get video_import_subtitle_optional => '可选外挂字幕（播放时可随时在内嵌/外挂字幕间切换）';
-	@override String get video_import_title => '导入视频';
-	@override String get video_jimaku_anime_match => '番剧匹配';
-	@override String get video_jimaku_api_key => 'Jimaku API key';
-	@override String get video_jimaku_api_key_hint => '在 jimaku.cc/account 免费获取 API key';
-	@override String get video_jimaku_api_key_set => 'API key 已配置';
-	@override String video_jimaku_batch_done({required Object done, required Object total}) => '字幕已获取：${done}/${total}';
-	@override String get video_jimaku_batch_download => '下载全部';
-	@override String get video_jimaku_batch_title => '为合集获取字幕';
-	@override String get video_jimaku_download_failed => '下载失败';
-	@override String get video_jimaku_downloaded => '字幕已下载并应用';
-	@override String get video_jimaku_episode => '集数（可选）';
-	@override String get video_jimaku_episode_hint => '留空列出全部';
-	@override String get video_jimaku_fetch => '获取字幕（Jimaku）';
-	@override String get video_jimaku_filter => '筛选结果（如 WEBRip、BD）';
-	@override String get video_jimaku_find_sources => '查找字幕';
-	@override String get video_jimaku_language => '语言';
-	@override String get video_jimaku_language_all => '全部';
-	@override String get video_jimaku_no_key => '请先填写 Jimaku API key';
-	@override String get video_jimaku_no_results => '没有找到字幕';
-	@override String get video_jimaku_query => '番剧名';
-	@override String get video_jimaku_search => '搜索';
-	@override String get video_jimaku_series => '系列';
-	@override String get video_jimaku_show_all_episodes => '显示全部集';
-	@override String get video_jimaku_source => '字幕来源';
-	@override String get video_jimaku_source_hint => '选择一个 Jimaku 条目；合集字幕会按集号自动匹配。';
-	@override String video_last_watched({required Object date}) => '上次观看 ${date}';
-	@override String get video_library_empty => '还没有导入视频';
-	@override String get video_load_failed_back => '返回';
-	@override String get video_load_failed_generic => '无法加载该视频。';
-	@override String get video_load_failed_network => '网络错误，请检查网络连接后重试。';
-	@override String get video_load_failed_not_found => '在媒体库中找不到该条目。';
-	@override String get video_load_failed_retry => '重试';
-	@override String get video_load_failed_timeout => '连接超时，网络较慢或视频源暂时限流，请稍后重试。';
-	@override String get video_load_failed_title => '视频加载失败';
-	@override String get video_load_failed_unavailable => '无法获取视频流，视频可能不可用、受地区或年龄限制，或来源已变更。';
-	@override String get video_loading_buffering => '正在缓冲…';
-	@override String get video_loading_connecting => '正在连接视频流…';
-	@override String get video_loading_preparing => '正在准备…';
-	@override String get video_loading_subtitle => '正在下载字幕…';
-	@override String get video_menu_fullscreen => '切换全屏';
-	@override String get video_menu_lock => '沉浸 / 锁定模式';
-	@override String get video_menu_play_pause => '播放 / 暂停';
-	@override String get video_menu_subtitle_track => '字幕轨';
-	@override String get video_mining_image_mode => '视频卡片图片';
-	@override String get video_mining_image_mode_current_frame => '制卡时截图';
-	@override String get video_mining_image_mode_gif => '动图 GIF（字幕片段）';
-	@override String get video_mining_image_mode_hint => '视频卡片封面用字幕区间动图，还是某一帧静态截图（取哪一帧也在这里选）';
-	@override String get video_mining_image_mode_subtitle_start => '字幕开头截图';
-	@override String get video_next_episode => '下一集';
-	@override String video_playlist_episodes({required Object count}) => '${count} 集';
-	@override String get video_prev_episode => '上一集';
-	@override String get video_quality => '画质';
-	@override String get video_quality_auto => '自动';
-	@override String get video_quality_empty => '本视频没有可切换的画质';
-	@override String get video_quality_enhancement_hint => '开启后用 mpv 内置高画质缩放让画面更清晰，动画、真人影视/电视剧都适用。想用 Anime4K 等着色器进一步增强，请在播放视频时的「画质增强」里选择档位。';
-	@override String get video_quality_load_failed => '无法获取该视频的画质档。';
-	@override String get video_quality_loading => '正在获取可选画质…';
-	@override String video_quality_switched({required Object label}) => '画质：${label}';
-	@override String get video_rename => '重命名';
-	@override String get video_rename_hint => '标题';
-	@override String get video_render_skia_fix_confirm_action => '重启';
-	@override String get video_render_skia_fix_confirm_body => '将关闭 Impeller 渲染器并重启应用使其生效。';
-	@override String get video_render_skia_fix_confirm_title => '切换到 Skia 并重启？';
-	@override String get video_render_skia_fix_hint => '有声音但画面全黑时用。关闭 Impeller，重启后生效。';
-	@override String get video_render_skia_fix_title => '画面全黑？切换渲染器（Skia）';
-	@override String video_resource_missing_message({required Object title}) => '找不到『${title}』的视频文件。资源位置可能已变化，或所在磁盘未连接。你可以重新导入，或删除此条目。';
-	@override String get video_resource_missing_reimport => '重新导入';
-	@override String get video_resource_missing_title => '视频无法访问';
-	@override String get video_resource_relink_success => '已重新链接视频文件';
-	@override String get video_scrape_air_date => '放送开始';
-	@override String get video_scrape_applied => '封面已应用';
-	@override String get video_scrape_apply_failed => '封面应用失败';
-	@override String video_scrape_apply_to_collection({required Object n}) => '同时应用到本合集全部 ${n} 集';
-	@override String get video_scrape_batch_close => '关闭';
-	@override String get video_scrape_confidence_high => '高匹配';
-	@override String get video_scrape_confidence_low => '低匹配';
-	@override String get video_scrape_confidence_medium => '中匹配';
-	@override String get video_scrape_episodes => '话数';
-	@override String get video_scrape_info => '条目信息';
-	@override String get video_scrape_info_empty => '还没有条目资料。后台会自动刮削，也可以手动匹配。';
-	@override String get video_scrape_no_results => '没有找到匹配结果';
-	@override String get video_scrape_online_match => '在线匹配封面';
-	@override String video_scrape_rating_votes({required Object count}) => '${count} 人评分';
-	@override String get video_scrape_rescrape => '重新刮削';
-	@override String get video_scrape_search => '搜索';
-	@override String get video_scrape_search_hint => '按片名搜索';
-	@override String get video_scrape_source_offline => '离线库';
-	@override String get video_scrape_summary => '简介';
-	@override String get video_scrape_tags => '标签';
-	@override String get video_scrape_use => '使用';
-	@override String get video_scrape_view_subject => '在 Bangumi 查看';
-	@override String get video_screenshot => '截图';
-	@override String video_screenshot_failed_reason({required Object reason}) => '截图失败：${reason}';
-	@override String video_screenshot_ready({required Object file}) => '截图已准备好：${file}';
-	@override String video_screenshot_saved_to({required Object path}) => '截图已保存：${path}';
-	@override String get video_secondary_subtitle_hint => '由播放器渲染（不可查词）';
-	@override String get video_secondary_subtitle_sources => '副字幕';
-	@override String get video_setting_auto_play_next => '自动连播下一集';
-	@override String get video_setting_auto_scrape => '自动刮削条目资料';
-	@override String get video_setting_auto_scrape_hint => '库里的视频后台自动从 Bangumi 获取封面、简介、评分与标签';
-	@override String get video_setting_av_delay => '字幕调轴';
-	@override String get video_setting_av_delay_hint => '正数 = 字幕延后（字幕整体往后拨）；负数 = 字幕提前。可拖滑条、按 ± 或直接输入数值。';
-	@override String get video_setting_danmaku_area => '显示区域';
-	@override String get video_setting_danmaku_area_hint => '弹幕可占用的画面高度比例（从顶部起）。';
-	@override String get video_setting_danmaku_block_rules => '屏蔽词 / 正则';
-	@override String get video_setting_danmaku_block_rules_hint => '每行一条规则。用斜杠包裹（如 /pattern/）视为正则，否则按忽略大小写的文本子串匹配。';
-	@override String get video_setting_danmaku_block_rules_placeholder => '例如 剧透 或 /pattern/';
-	@override String get video_setting_danmaku_enabled => '显示弹幕';
-	@override String get video_setting_danmaku_enabled_hint => '在视频上渲染本地或在线匹配的弹幕，不阻挡播放器操作。';
-	@override String get video_setting_danmaku_font_scale => '字号';
-	@override String get video_setting_danmaku_font_scale_hint => '缩放弹幕文字大小。';
-	@override String get video_setting_danmaku_manual_match => '手动匹配';
-	@override String get video_setting_danmaku_manual_match_hint => '自动匹配失败或匹配错集时，按标题搜索弹弹play 并手动选集。';
-	@override String get video_setting_danmaku_max_active => '同时显示上限';
-	@override String get video_setting_danmaku_max_active_hint => '限制每帧渲染的弹幕数量，避免大文件拖慢播放。';
-	@override String get video_setting_danmaku_online => '在线匹配 Dandanplay';
-	@override String get video_setting_danmaku_online_hint => '没有可用本地 sidecar 时，用 Dandanplay 匹配当前视频并拉取关联弹幕。';
-	@override String get video_setting_danmaku_opacity => '不透明度';
-	@override String get video_setting_danmaku_opacity_hint => '弹幕整体透明度。';
-	@override String get video_setting_danmaku_server_url => '弹幕服务器地址';
-	@override String get video_setting_danmaku_speed => '速度';
-	@override String get video_setting_danmaku_speed_hint => '越大越快，滚动弹幕更快划过屏幕。';
-	@override String get video_setting_double_tap => '双击快进';
-	@override String get video_setting_double_tap_hint => '双击视频左右两侧快退快进';
-	@override String get video_setting_double_tap_off => '关';
-	@override String get video_setting_double_tap_subtitle => '字幕';
-	@override String get video_setting_immersive_mode => '沉浸模式';
-	@override String get video_setting_immersive_mode_hint => '控制按下侧边锁后仍允许哪些操作';
-	@override String get video_setting_lock_window_aspect => '锁定窗口为视频比例';
-	@override String get video_setting_long_press_speed => '长按倍速';
-	@override String get video_setting_long_press_speed_hint => '按住画面时临时使用这个倍速。';
-	@override String get video_setting_mpv_aspect => '画面比例';
-	@override String get video_setting_mpv_aspect_auto => '原始';
-	@override String get video_setting_mpv_brightness => '亮度';
-	@override String get video_setting_mpv_channels => '声道';
-	@override String get video_setting_mpv_channels_auto => '自动';
-	@override String get video_setting_mpv_channels_mono => '单声道';
-	@override String get video_setting_mpv_channels_stereo => '立体声（下混）';
-	@override String get video_setting_mpv_contrast => '对比度';
-	@override String get video_setting_mpv_correct_downscale => '线性降采样';
-	@override String get video_setting_mpv_deband => '去色带';
-	@override String get video_setting_mpv_deinterlace => '去隔行';
-	@override String get video_setting_mpv_dither => '抖动';
-	@override String get video_setting_mpv_gamma => 'Gamma';
-	@override String get video_setting_mpv_group_advanced => '高级';
-	@override String get video_setting_mpv_group_audio => '音频';
-	@override String get video_setting_mpv_group_color => '色彩';
-	@override String get video_setting_mpv_group_decode => '解码';
-	@override String get video_setting_mpv_group_geometry => '画面';
-	@override String get video_setting_mpv_group_playback => '播放';
-	@override String get video_setting_mpv_group_quality => '画质';
-	@override String get video_setting_mpv_hue => '色相';
-	@override String get video_setting_mpv_hwdec => '硬件解码';
-	@override String get video_setting_mpv_hwdec_auto => '自动（安全）';
-	@override String get video_setting_mpv_hwdec_copy => '自动（复制）';
-	@override String get video_setting_mpv_hwdec_off => '关闭';
-	@override String get video_setting_mpv_interpolation => '运动插帧';
-	@override String get video_setting_mpv_loop => '单文件循环';
-	@override String get video_setting_mpv_normalize => '下混响度归一化';
-	@override String get video_setting_mpv_panscan => '平移裁切（去黑边）';
-	@override String get video_setting_mpv_pitch => '变速保持音高';
-	@override String get video_setting_mpv_raw => '额外 mpv 选项（每行 key=value）';
-	@override String get video_setting_mpv_raw_hint => '仅桌面生效；运行时无法应用的项（如 vo、profile）会被忽略。SVP/RIFE 需外部工具，不支持。';
-	@override String get video_setting_mpv_reset => '全部恢复默认';
-	@override String get video_setting_mpv_rotate => '旋转';
-	@override String get video_setting_mpv_saturation => '饱和度';
-	@override String get video_setting_mpv_sigmoid => 'S形上采样';
-	@override String get video_setting_mpv_sigmoid_hint => 'S 形曲线上采样可减少振铃，但会增加显卡负担。为性能默认关闭；想要更锐利的放大画质可开启。';
-	@override String get video_setting_mpv_zoom => '缩放';
-	@override String get video_setting_picture_fit => '画面缩放';
-	@override String get video_setting_picture_fit_contain => '适应';
-	@override String get video_setting_picture_fit_cover => '填充';
-	@override String get video_setting_picture_fit_fill => '拉伸填满';
-	@override String get video_setting_picture_fit_hint => '画面如何填充播放区域';
-	@override String get video_setting_qb_category => 'qBittorrent 分类';
-	@override String get video_setting_qb_category_hint => 'Fushi 推送的下载会打上此分类，完成监听只关注该分类。';
-	@override String get video_setting_qb_password => 'WebUI 密码';
-	@override String get video_setting_qb_url => 'qBittorrent WebUI 地址';
-	@override String get video_setting_qb_url_hint => '例如 http://127.0.0.1:8080，留空表示不启用番剧下载。';
-	@override String get video_setting_qb_username => 'WebUI 用户名';
-	@override String get video_setting_secondary_subtitle_obscure => '副字幕遮蔽';
-	@override String get video_setting_secondary_subtitle_obscure_hint => '模糊或隐藏副字幕（翻译参考轨）';
-	@override String get video_setting_seek_seconds => '快进/快退步长（秒）';
-	@override String get video_setting_speed => '播放速度';
-	@override String get video_setting_speed_step => '倍速步进';
-	@override String get video_setting_subtitle_appearance => '字幕外观';
-	@override String get video_setting_subtitle_bg_color => '背景颜色';
-	@override String get video_setting_subtitle_bg_opacity => '背景不透明度';
-	@override String get video_setting_subtitle_font_size => '字号';
-	@override String get video_setting_subtitle_font_weight => '字重';
-	@override String get video_setting_subtitle_no_background => '无背景';
-	@override String get video_setting_subtitle_no_background_hint => '让字幕背景透明，不显示底色。';
-	@override String get video_setting_subtitle_obscure => '字幕遮蔽';
-	@override String get video_setting_subtitle_obscure_blur => '模糊';
-	@override String get video_setting_subtitle_obscure_hide => '隐藏';
-	@override String get video_setting_subtitle_obscure_hint => '选择听力练习时如何遮蔽字幕：关闭、模糊（悬停或点击显形）或隐藏。';
-	@override String get video_setting_subtitle_obscure_none => '关闭';
-	@override String get video_setting_subtitle_position => '垂直位置';
-	@override String get video_setting_subtitle_reset => '恢复默认';
-	@override String get video_setting_subtitle_respect_ass => '尊重字幕自带样式';
-	@override String get video_setting_subtitle_respect_ass_hint => '有 .ass 字幕自带的字体、颜色、描边时优先采用；关闭则一律使用你的外观设置。';
-	@override String get video_setting_subtitle_shadow => '阴影';
-	@override String get video_setting_subtitle_sync_input => '偏移 (ms)';
-	@override String get video_setting_subtitle_text_color => '文字颜色';
-	@override String get video_setting_theme => '主题';
-	@override String get video_setting_torrent_active_downloads => '最大活跃下载数';
-	@override String get video_setting_torrent_active_seeds => '最大活跃做种数';
-	@override String get video_setting_torrent_anonymous => '匿名模式';
-	@override String get video_setting_torrent_antileech => '启用反吸血';
-	@override String get video_setting_torrent_backend_qb => '外接 qBittorrent';
-	@override String get video_setting_torrent_ban_progress_cheat => '封禁进度作弊';
-	@override String get video_setting_torrent_ban_relative_cheat => '封禁相对进度作弊';
-	@override String get video_setting_torrent_ban_time => '封禁时长（分钟）';
-	@override String get video_setting_torrent_ban_time_hint => '0 = 永久';
-	@override String get video_setting_torrent_connections_hint => '0 = 引擎默认';
-	@override String get video_setting_torrent_dht => 'DHT';
-	@override String get video_setting_torrent_download_limit => '下载限速 (KB/s)';
-	@override String get video_setting_torrent_encryption_disabled => '禁用';
-	@override String get video_setting_torrent_encryption_forced => '强制';
-	@override String get video_setting_torrent_encryption_prefer => '首选';
-	@override String get video_setting_torrent_limit_hint => '0 = 不限';
-	@override String get video_setting_torrent_listen_port => '监听端口';
-	@override String get video_setting_torrent_listen_port_hint => '0 = 默认（6881）';
-	@override String get video_setting_torrent_lsd => '本地节点发现 (LSD)';
-	@override String get video_setting_torrent_max_connections => '最大连接数';
-	@override String get video_setting_torrent_max_ip_ports => '同 IP 最大端口数';
-	@override String get video_setting_torrent_memory_hint => '限制引擎内存占用。0 = 自动（按设备内存推导）。';
-	@override String get video_setting_torrent_memory_limit => '内存占用上限（MB）';
-	@override String get video_setting_torrent_natpmp => 'NAT-PMP 端口映射';
-	@override String get video_setting_torrent_section_antileech => '反吸血';
-	@override String get video_setting_torrent_section_session => '会话设置';
-	@override String get video_setting_torrent_seed_ratio_hint => '上传/下载比值达到此值后停止上传。0 = 不限。';
-	@override String get video_setting_torrent_seed_ratio_limit => '做种分享率上限';
-	@override String get video_setting_torrent_seed_time_hint => '做种超过此时长后停止上传。0 = 不限。';
-	@override String get video_setting_torrent_seed_time_limit => '做种时长上限（分钟）';
-	@override String get video_setting_torrent_upload_enabled => '启用上传 / 做种';
-	@override String get video_setting_torrent_upload_enabled_hint => '默认关闭。下载完成后向网络回传做种。';
-	@override String get video_setting_torrent_upload_limit => '上传限速 (KB/s)';
-	@override String get video_setting_torrent_upload_slots => '最大上传槽位';
-	@override String get video_setting_torrent_upnp => 'UPnP 端口映射';
-	@override String get video_setting_torrent_zero_default => '0 = 默认';
-	@override String get video_setting_torrent_zero_off => '0 = 关闭';
-	@override String get video_settings_cat_audio => '音频';
-	@override String get video_settings_cat_controls => '控制按钮';
-	@override String get video_settings_cat_danmaku => '弹幕';
-	@override String get video_settings_cat_mpv => 'mpv';
-	@override String get video_settings_cat_playback => '播放';
-	@override String get video_settings_cat_shaders => '画质增强';
-	@override String get video_settings_cat_subtitle => '字幕';
-	@override String get video_settings_title => '视频设置';
-	@override String get video_shader_anime4k_hint => '选择一个预设下载。下载完成后在列表里勾选启用。仅桌面端生效。';
-	@override String get video_shader_anime4k_title => 'Anime4K 推荐着色器';
-	@override String get video_shader_download_anime4k => '下载 Anime4K 推荐着色器';
-	@override String video_shader_download_done({required Object count}) => '已下载 ${count} 个着色器';
-	@override String get video_shader_download_failed => '着色器下载失败';
-	@override String video_shader_download_partial({required Object ok, required Object failed}) => '已下载 ${ok} 个，${failed} 个失败';
-	@override String get video_shader_download_url => '粘贴链接下载';
-	@override String get video_shader_downloaded_label => '已下载';
-	@override String get video_shader_downloading => '正在下载着色器…';
-	@override String get video_shader_first_use_body => '想让动画画面更清晰，可以进入“画质增强”并点击“下载 Anime4K 推荐着色器”。下载后在已安装列表里勾选即可启用。';
-	@override String get video_shader_first_use_download => '一键下载并启用';
-	@override String get video_shader_first_use_title => '试试 Anime4K 画质增强';
-	@override String get video_shader_import => '导入着色器（.glsl）';
-	@override String video_shader_import_done({required Object count}) => '已导入 ${count} 个着色器';
-	@override String get video_shader_import_from_mpv => '从本机 mpv 导入';
-	@override String get video_shader_import_from_mpv_hint => '自动搜索本机 mpv；未找到时可手动选择 mpv 目录。';
-	@override String get video_shader_mobile_perf_hint => '手机上着色器仅在标准 GPU 渲染路径下生效，实际效果因机型 GPU 而异；高档位可能掉帧或发热。建议先用低/中档，并在本机确认效果。';
-	@override String video_shader_mpv_dir_current({required Object path}) => 'mpv 目录：${path}';
-	@override String get video_shader_mpv_dir_empty => '该目录没找到着色器';
-	@override String get video_shader_mpv_not_found => '未发现本机 mpv 着色器';
-	@override String get video_shader_mpv_pick_title => '从 mpv 导入着色器';
-	@override String get video_shader_pick_mpv_dir => '选择 mpv 目录';
-	@override String get video_shader_preset_mode_a_fast => '适合多数 1080p 动画。GPU 负载较低。';
-	@override String get video_shader_preset_mode_a_hq => '1080p 动画最高画质。需要较强 GPU。';
-	@override String get video_shader_preset_mode_b_fast => '适合有重采样伪影的 720p 旧番。';
-	@override String get video_shader_preset_mode_b_hq => '720p 旧番高画质（重采样伪影），需较强 GPU。';
-	@override String get video_shader_preset_mode_c_fast => '适合有压缩涂抹的 480p SD 老番。';
-	@override String get video_shader_preset_mode_c_hq => '480p SD 老番高画质（压缩涂抹，带去噪），需较强 GPU。';
-	@override String get video_shader_quality_tier => '画质增强';
-	@override String get video_shader_section_advanced => '进阶（手动着色器）';
-	@override String get video_shader_section_installed => '已安装着色器';
-	@override String get video_shader_showing_original => '已关着色器（原画）';
-	@override String get video_shader_showing_shaded => '已开着色器';
-	@override String get video_shader_tier_custom_hint => '自定义着色器组合。点上方档位可切回预设。';
-	@override String get video_shader_tier_high => '高';
-	@override String get video_shader_tier_high_hint => 'Anime4K HQ。更锐利，对动画效果最佳，真人内容也可用（提升较小）。需要中高端 GPU（N卡 RTX 4060 / RTX 3070，A卡 RX 6700 XT / RX 7700 XT）。';
-	@override String get video_shader_tier_low => '低';
-	@override String get video_shader_tier_low_hint => 'mpv 内置锐化（ewa_lanczossharp）。对任何视频都有效（动画与真人皆可），无需下载、GPU 负载最低。集显或老显卡（N卡 GTX 1050、A卡 RX 560、Intel 核显）选这档。';
-	@override String get video_shader_tier_medium => '中';
-	@override String get video_shader_tier_medium_hint => 'Anime4K Fast。对动画效果最佳，真人电影/电视剧也能用（提升较小）。中端 GPU 可跑（N卡 GTX 1660 / RTX 3050，A卡 RX 6600）。';
-	@override String get video_shader_tier_off => '无';
-	@override String get video_shader_tier_off_hint => '不增强，按原画播放。';
-	@override String get video_shader_tier_ultra => '极高';
-	@override String get video_shader_tier_ultra_hint => 'Anime4K Mode A（VL + 额外去模糊/降噪修复）。视频渲染器实际能跑的最强重建——在「高」档 VL 链之上再叠一个修复 pass，对压制源更狠；真人内容也可用（提升较小）。推荐较强 GPU（N卡 RTX 5090，A卡 RX 7900 XTX），显卡较弱请往低档选。';
-	@override String get video_shader_url_hint => '粘贴着色器 .glsl 链接（如 GitHub）';
-	@override String get video_shaders_empty => '还没有导入着色器';
-	@override String get video_stat_by_video => '按视频';
-	@override String get video_stat_completed => '已完成';
-	@override String get video_stat_no_data => '暂无视频统计数据';
-	@override String get video_statistics => '视频统计';
-	@override String get video_subtitle_attach_playlist_hint => '请进入播放页按集挂载字幕';
-	@override String video_subtitle_attached_to_video({required Object title, required Object count}) => '已为《${title}》挂上字幕（${count} 句）';
-	@override String get video_subtitle_auto_align => '自动对轴';
-	@override String video_subtitle_auto_align_done({required Object ms}) => '已自动对轴 ${ms} ms';
-	@override String get video_subtitle_auto_align_low_confidence => '无法可靠自动对轴（未找到明显的语音匹配）';
-	@override String get video_subtitle_auto_align_running => '正在自动对轴…';
-	@override String get video_subtitle_color_note => '视频字幕颜色在视频播放器内设置。';
-	@override String video_subtitle_delay_osd({required Object ms}) => '字幕同步：${ms} ms';
-	@override String get video_subtitle_filter_all => '全部';
-	@override String get video_subtitle_filter_favorites => '收藏';
-	@override String get video_subtitle_filter_favorites_empty => '暂无收藏的句子';
-	@override String get video_subtitle_filter_selected => '已选';
-	@override String get video_subtitle_filter_selected_empty => '还未选择句子';
-	@override String get video_subtitle_graphic_hint => '图形字幕 · 画面显示 · 不可查词';
-	@override String video_subtitle_graphic_shown({required Object label}) => '已显示图形字幕（画面显示，不可查词）：${label}';
-	@override String get video_subtitle_import_failed => '导入字幕失败';
-	@override String get video_subtitle_import_file => '导入字幕文件…';
-	@override String get video_subtitle_import_unsupported => '不支持的字幕格式';
-	@override String get video_subtitle_list => '字幕列表';
-	@override String get video_subtitle_list_auto_scroll => '自动滚动';
-	@override String get video_subtitle_list_clear_selection => '清空选择';
-	@override String get video_subtitle_list_empty => '未加载字幕';
-	@override String get video_subtitle_list_font_larger => '放大字号';
-	@override String get video_subtitle_list_font_smaller => '缩小字号';
-	@override String get video_subtitle_list_jump => '跳到此句';
-	@override String get video_subtitle_list_loading => '正在加载字幕…';
-	@override String get video_subtitle_list_remove_from_card => '从词卡选择中移除';
-	@override String get video_subtitle_list_select_for_card => '选入词卡（制卡时合并为例句）';
-	@override String video_subtitle_load_failed({required Object label}) => '无法加载该字幕（可能是图形或不支持的字幕轨）：${label}';
-	@override String get video_subtitle_off => '关闭字幕';
-	@override String get video_subtitle_remote_host => '配对设备字幕';
-	@override String video_subtitle_switched({required Object label}) => '已切换字幕：${label}';
-	@override String get video_subtitle_waveform_cue_list => '字幕列表';
-	@override String get video_subtitle_waveform_jump_playhead => '跳到播放头';
-	@override String get video_subtitle_waveform_legend_cue => '字幕边界';
-	@override String get video_subtitle_waveform_legend_energy => '响度';
-	@override String get video_subtitle_waveform_legend_playhead => '播放头';
-	@override String get video_subtitle_waveform_open => '波形对轴';
-	@override String get video_subtitle_waveform_open_hint => '点击放大查看并对轴';
-	@override String get video_subtitle_waveform_scroll_hint => '横向拖动查看时间轴，用下方控件对齐字幕';
-	@override String get video_subtitle_waveform_unavailable => '本设备无法生成波形';
-	@override String get video_subtitle_waveform_zoom_in => '放大';
-	@override String get video_subtitle_waveform_zoom_out => '缩小';
-	@override String get video_subtitle_youtube_empty => '该字幕轨没有文字';
-	@override String video_subtitle_youtube_translated({required Object lang}) => '${lang}（翻译）';
-	@override String video_watched_up_to({required Object time}) => '已看至 ${time}';
-	@override String get video_windows_black_flash_notice_body => '在 Windows 上，当显卡占用过高时视频画面可能出现黑屏闪烁。可尝试关闭上方的画质增强、S 形上采样和去色带，或把硬件解码切到「复制」以降低显卡负载。';
-	@override String get video_windows_black_flash_notice_title => 'Windows 上黑屏闪烁？';
-	@override String get view_illustrations => '查看插画';
-	@override String get volume_button_page_turning => '音量键翻页';
-	@override String get volume_key_sentence_nav => '音量键句子导航';
-	@override String get wheel_page_turn_interval => '滚轮翻页间隔';
-	@override String get word_favorite_added => '已收藏该词';
-	@override String get word_favorite_removed => '已取消收藏该词';
-	@override String get yomitan_api_key => 'Yomitan API 密钥（可选）';
-	@override String get yomitan_api_server => 'Yomitan API 服务器';
-	@override String get yomitan_api_server_hint => '让 yomitan-api 客户端查询 Fushi 词典（端口 19633）';
-	@override String get yomitan_api_server_started => 'Yomitan API 服务器已开启';
-	@override String get yomitan_port_kill_action => '结束进程并重试';
-	@override String get yomitan_port_kill_confirm => '结束进程';
-	@override String yomitan_port_kill_confirm_message({required Object process}) => '该端口目前被以下进程占用：${process}';
-	@override String yomitan_port_kill_confirm_title({required Object port}) => '结束占用端口 ${port} 的进程？';
-	@override String yomitan_port_kill_failed({required Object process}) => '无法结束 ${process}，请手动结束该进程后重试。';
-	@override String yomitan_port_kill_protected({required Object process}) => '${process} 是关键系统进程，Fushi 不会结束它；请改用其他端口。';
-	@override String get yomitan_port_kill_self_instance => '该进程是本应用的另一个正在运行的实例。';
-	@override String get game_track_bgm => 'BGM / 已排除';
-	@override String get game_line_audio_no_voice => '无配音';
-	@override String get game_line_audio_overlong => '超长片段';
-	@override String get game_line_audio_overlong_hint => '远超单句时长，可能混入 BGM 或其它混音';
-	@override String get game_line_audio_loopback_hint => '整机混音兜底，可能混入 BGM';
-	@override String get game_line_recapture => '补录语音';
-	@override String get game_line_recapture_stop => '完成补录';
-	@override String get game_line_tracks => '本句音轨';
-	@override String get game_line_tracks_hint => '按本句时刻试听各轨，确认是 BGM 就排除';
-	@override String get game_line_track_use => '用于本句';
-	@override String get game_user_tags_title => '我的标签';
-	@override String get anki_lapis_section => 'Lapis 卡片样式';
-	@override String get anki_lapis_font_scale => '卡片字号缩放';
-	@override String get anki_lapis_font_scale_hint => '整体缩放 Lapis 卡片全部字号；点「应用样式到 Anki」后生效。';
-	@override String get anki_lapis_custom_css => '自定义 CSS';
-	@override String get anki_lapis_custom_css_hint => '追加到 Lapis 样式表中受保护的用户区段。';
-	@override String get anki_lapis_apply => '应用样式到 Anki';
-	@override String get anki_lapis_apply_done => 'Lapis 样式已应用（已先自动备份）。';
-	@override String anki_lapis_apply_failed({required Object error}) => '应用样式失败：${error}';
-	@override String get anki_lapis_up_to_date => 'Lapis 样式已是最新。';
-	@override String get anki_lapis_foreign_edit_title => 'Anki 端模板有改动';
-	@override String get anki_lapis_foreign_edit_body => 'Anki 里的 Lapis 模板与 Fushi 上次应用的状态不一致，可能被手动改过。继续应用会覆盖它（会先自动备份）。是否继续？';
-	@override String get anki_lapis_backup => '备份 Lapis 模板';
-	@override String anki_lapis_backup_done({required Object path}) => '模板已备份：${path}';
-	@override String anki_lapis_backup_failed({required Object error}) => '备份失败：${error}';
-	@override String get anki_lapis_not_found => 'Anki 里没有找到 Lapis 笔记模板。';
-	@override String get anki_lapis_restore => '从备份恢复';
-	@override String get anki_lapis_restore_empty => '还没有备份。';
-	@override String get anki_lapis_restore_confirm => '用该备份覆盖 Anki 里的 Lapis 模板？当前状态会先自动备份。';
-	@override String get anki_lapis_restore_done => '模板已恢复。';
-	@override String anki_lapis_restore_failed({required Object error}) => '恢复失败：${error}';
-	@override String get anki_dedup_section => 'Anki 媒体存储优化';
-	@override String get anki_dedup_scan => '扫描重复项（不做改动）';
-	@override String get anki_dedup_run => '立即去重';
-	@override String get anki_dedup_report_title => '媒体去重报告';
-	@override String anki_dedup_report_body({required Object groups, required Object removed, required Object size, required Object notes, required Object models, required Object skipped}) => '${groups} 组重复；多余副本 ${removed} 个（${size}）；改写笔记 ${notes} 张、模板 ${models} 个；跳过 ${skipped} 个。';
-	@override String get anki_dedup_report_dry_note => '仅扫描——未做任何改动。';
-	@override String get anki_dedup_report_clean => '没有发现字节完全相同的重复文件。';
-	@override String anki_dedup_failed({required Object error}) => '去重失败：${error}';
-	@override String get anki_dedup_unavailable => '需要本机运行 Anki（AnkiConnect）。';
-	@override String get anki_dedup_run_hint => '先扫描并列出将要删除的文件，你确认之后才会真正删除。';
-	@override String get anki_dedup_plan_title => '将要删除的文件';
-	@override String anki_dedup_plan_intro({required Object count, required Object size}) => '共 ${count} 个多余副本，可回收 ${size}。每个文件都保留一份，所有引用先改指到保留的那一份；不重新编码任何文件。';
-	@override String anki_dedup_plan_entry({required Object file, required Object size, required Object canonical}) => '删除 ${file}（${size}）——保留 ${canonical}';
-	@override String get anki_dedup_plan_delete => '删除这些文件';
-	@override String get anki_dedup_plan_journal => '每一次改写和删除都会先记进备份文件夹里的日志。';
-	@override String get manga_ocr_default_engine => '默认 OCR 引擎';
-	@override String get manga_ocr_engine_auto => '自动（不会上传到 Lens）';
-	@override String get manga_ocr_engine_local_onnx => '本地 ONNX';
-	@override String get manga_ocr_engine_google_lens => 'Google Lens';
-	@override String get manga_google_lens_disclosure_title => '将漫画页面发送到 Google Lens？';
-	@override String get manga_google_lens_disclosure_body => '识别本漫画会把尚无 OCR 文本的页面缩小为 JPEG 后发送给 Google，结果缓存在本设备。该接口并非官方公开 API，可能随时失效。只有同意后才会上传。';
-	@override String get manga_google_lens_disclosure_accept => '同意并开始识别';
-	@override String get manga_google_lens_disclosure_decline => '取消';
-	@override String get manga_reading_direction => '阅读方向';
-	@override String get manga_direction_rtl => '从右到左';
-	@override String get manga_direction_ltr => '从左到右';
-	@override String get manga_zoom => '缩放';
-	@override String get manga_jump_to_page => '跳转页面';
-	@override String get manga_previous_page => '上一页';
-	@override String get manga_next_page => '下一页';
-	@override String manga_page_number_hint({required Object total}) => '页码（1-${total}）';
-	@override String get manga_import_direct => '直接导入';
-	@override String get manga_library => '漫画';
-	@override String get manga_import_action => '导入漫画';
-	@override String get game_scrape_search => '搜索';
-	@override String get game_scrape_use => '使用';
-	@override String get game_scrape_search_failed => '搜索失败，请检查网络后重试';
-	@override String get game_remove_confirm => '从库中移除此游戏？不会删除磁盘上的游戏文件。';
-	@override String manga_ocr_acceleration_status({required Object engine}) => 'OCR 加速：${engine}';
-	@override String manga_ocr_acceleration_degraded({required Object engine, required Object reason}) => 'GPU 加速不可用，OCR 改用 ${engine} 运行：${reason}';
-	@override String get media_tracking_status => '收藏状态';
-	@override String get media_tracking_signup => '注册 Bangumi 账号';
-	@override String get media_tracking_game => '游戏';
-	@override String get download_rate_limit_lan_exempt => '不作用于局域网；局域网内的传输始终全速进行。';
-	@override String get video_scrape_search_failed => '搜索失败，点「搜索」可重试。';
-	@override String get scrape_reason_network => '没能从封面源取到有效响应，请检查网络后重试。';
-	@override String get scrape_reason_server => '封面源返回了错误，请稍后重试或换一个候选。';
-	@override String get common_more_actions => '更多操作';
-	@override String get collection_already_has_item => '该条目已在这个合集里。';
-	@override String get drag_drop_manga_archive_unsupported => '无法导入 .cbr/.rar 漫画压缩包，请转成 .cbz 或图片文件夹。';
-	@override String get collection_add_failed => '没能把该条目加进合集，请重试。';
-	@override String get anki_dedup_auto => '自动处理';
-	@override String get anki_dedup_auto_hint => '默认关闭。打开后 Fushi 会在启动时扫描（最多每周一次）并先把清单给你看，你不确认就不会删任何文件。';
-	@override String get anki_dedup_auto_delete => '自动直接删除（不再询问）';
-	@override String get anki_dedup_auto_delete_hint => '跳过确认弹窗。仍然只删字节完全相同的多余副本、绝不重编码，但删除不可撤销。';
-	@override String anki_dedup_auto_found({required Object count, required Object size}) => '发现 ${count} 个重复的 Anki 媒体文件（可释放 ${size}）';
-	@override String get anki_dedup_auto_review => '查看';
-	@override String anki_dedup_auto_done({required Object count, required Object size}) => '已删除 ${count} 个重复的 Anki 媒体文件，释放 ${size}';
-	@override String anki_lapis_backup_done_pruned({required Object path, required Object count}) => '已备份到 ${path}（按「保留 90 天、至少留 10 份」清理了 ${count} 份旧备份）';
-	@override String get game_audio_fallback_policy => '音频降级';
-	@override String get game_audio_fallback_full => '允许混音兜底';
-	@override String get game_audio_fallback_clean => '只用干净语音';
-	@override String get game_audio_fallback_resource => '只用游戏原始资源';
-	@override String get game_track_silent_at_cue => '这句时刻没有声音';
-	@override String get game_audio_fallback_full_hint => '抓不到干净语音时用系统混音兜底，可能混入 BGM 和音效。';
-	@override String get game_audio_fallback_clean_hint => '只用游戏资源音频和引擎 PCM。没有配音的句子照常制卡，只是不带音频，不会收进 BGM。';
-	@override String get game_audio_fallback_resource_hint => '必须拿到游戏自带的原始语音文件，缺失时拒绝制卡。';
-	@override String get game_line_audio_suppressed => '已跳过混音';
-	@override String get game_line_audio_suppressed_hint => '本句没有干净音源可用，整机混音已按你选的降级策略跳过。这不代表这句没有配音。';
-	@override String get video_setting_torrent_limit_lan => '限速也作用于局域网';
-	@override String get video_setting_torrent_limit_lan_hint => '默认关闭：与局域网内 peer 的传输不受上面的限速约束。';
-	@override String get download_rate_limit_lan_included => '同时作用于局域网内的传输。';
-	@override String get video_collection_no_local_member => '本合集没有本地视频';
-	@override String video_scrape_online_match_collection({required Object name}) => '为「${name}」匹配封面';
-	@override String get gal_mining_image_mode => 'Galgame 制卡配图';
-	@override String get gal_mining_image_mode_screenshot => '静态截图';
-	@override String get gal_mining_image_mode_hint => 'Galgame 一句台词内画面基本不动，静态截图通常更小、信息量一样。';
-	@override String get shortcut_scope_manga => '漫画';
-	@override String get shortcut_action_manga_page_forward => '下一页';
-	@override String get shortcut_action_manga_page_backward => '上一页';
-	@override String get shortcut_action_manga_dismiss_dict => '关闭词典';
-	@override String get video_setting_jimaku_default_language => '默认字幕语言';
-	@override String get video_setting_jimaku_default_language_hint => '该系列没有记住的语言时优先使用';
-	@override String get video_jimaku_api_key_settings_hint => '也可在 设置 → 视频 → 字幕 中修改';
-	@override String get anime_download_subs_episodes_unverified => '集号未与该整季包核对，字幕可能来自别的季。';
-	@override String get anime_download_subs_deferred => '字幕将在下载完成后按包内实际文件配对';
-	@override String get anime_download_subs_pending => '字幕：待下载完成后配对';
-	@override String get anime_download_subs_unmatched => '字幕：未匹配到（可手动补）';
-	@override String get stat_source_breakdown => '各来源';
-	@override String stat_format_pages({required Object n}) => '${n} 页';
-	@override String anime_download_subs_season_mismatch({required Object season}) => '没有字幕条目对得上该种子的第 ${season} 季，已不自动选中。要用的话请手动选一条。';
-	@override String get media_tracking_card_title => 'Bangumi 同步';
-	@override String get media_tracking_not_connected => '未连接。进度只记在本地，不会同步到 Bangumi。';
-	@override String get media_tracking_last_sync => '上次同步';
-	@override String get media_tracking_never_synced => '从未同步';
-	@override String media_tracking_linked_count({required Object n}) => '已关联 ${n} 项';
-	@override String media_tracking_pending_count({required Object n}) => '${n} 项待发送';
-	@override String get media_tracking_all_synced => '全部已发送';
-	@override String get media_tracking_unauthorized => 'Bangumi 拒绝了访问令牌，请在设置里重新连接。';
-	@override String get media_tracking_open_subject => '在 Bangumi 打开';
-	@override String get media_tracking_manage_links => '管理关联';
-	@override String get media_tracking_last_error => '上次错误';
-	@override String get shortcut_action_popup_mine_entry => '制卡（加号）';
-	@override String get game_upscaling_auto_hint => '优先使用机器上正在运行的 Magpie；否则启用 Fushi 内置版本，不需要下载。';
-	@override String get game_upscaling_installed_only_hint => '只用机器上已经安装或正在运行的 Magpie，不启用 Fushi 内置版本。';
-	@override String get game_upscaling_off_hint => '不放大游戏窗口。';
-	@override String get game_helper_bundle_missing => '这个版本没有随包附带 galgame 钩子 helper，请更新 Fushi 获取。';
-	@override String game_upscaling_pick_title({required Object name}) => '${name} 的窗口超分';
-	@override String get game_upscaling_pick_body => '捕获会话期间用 Magpie 放大这个游戏的窗口。每个游戏各自设置——只有原生分辨率低于屏幕的游戏才用得上。会占用显卡。';
-	@override String get game_upscaling_hint_not_installed => 'Magpie 尚未就绪。将该游戏的「窗口超分」设为「自动」即可使用随包的内置版本；仍无法启动时请更新或重装 Fushi。';
-	@override String media_source_count_manga({required Object n}) => '${n} 卷';
-	@override String get library_view_shelf => '书架';
-	@override String get library_view_browse => '浏览';
-	@override String get library_view_media => '媒体库';
-	@override String get scrape_failure_detail_show => '显示详情';
-	@override String get scrape_failure_detail_hide => '隐藏详情';
-	@override String get media_tracking_retry_mapping => '重试匹配';
-	@override String get media_tracking_retry_matched => '已重新关联并补发当前进度';
-	@override String get media_tracking_retry_no_match => '仍未匹配到条目，请尝试手动关联';
-	@override String get game_statistics => '游戏统计';
-	@override String get game_stat_by_game => '按游戏';
-	@override String get stat_clear_all_game_message => '确定清空全部游戏统计吗？将删除所有游戏时长和游玩次数。你的游戏库与首页活动流不受影响。此操作不可撤销。';
-	@override String batch_selection_stale_skipped({required Object n, required Object m}) => '选中的 ${n} 项中有 ${m} 项已不存在，已跳过';
-	@override String get game_text_thread_unset => '尚未选择线程 · 选一条后开始捕获';
-	@override String get media_tracking_watched_show => '查看全部看过';
-	@override String get media_tracking_watched_title => 'Bangumi 看过';
-	@override String get media_tracking_watched_empty => '这个 Bangumi 账号还没有标记为“看过”的番剧。';
-	@override String media_tracking_watched_load_failed({required Object error}) => '读取看过记录失败：${error}';
-	@override String media_tracking_watched_progress({required Object n}) => '已看 ${n} 集';
-	@override String get media_tracking_manual_required => '需要手动关联';
-	@override String media_tracking_manual_required_count({required Object n}) => '${n} 项需要手动关联';
-	@override String get media_tracking_manual_required_hint => '这些本地条目已有观看、阅读或游玩记录，但还没有关联到 Bangumi。';
-	@override String get media_tracking_no_local_history => '暂无需要关联的本地观看、阅读或游玩记录。';
-	@override String media_tracking_more_manual_required({required Object n}) => '另有 ${n} 项需要手动关联';
-	@override String get manga_import_hint => '选择漫画文件夹、.cbz/.zip 页图压缩包，或 .mokuro 文件。';
-	@override String get manga_import_pick_file => '选择漫画文件';
-	@override String get manga_import_pick_folder => '选择漫画文件夹';
-	@override String get manga_import_missing_input => '请先选择漫画文件或文件夹。';
-	@override String get manga_import_detected_title => '这看起来是漫画';
-	@override String get manga_import_detected_confirm => '按漫画导入';
-	@override String manga_import_detected_message({required Object name}) => '「${name}」是漫画文件，将走漫画导入流程，而不是书籍导入流程。';
-	@override String get video_jimaku_source_loading => '正在检查字幕可用性…';
-	@override String get video_jimaku_source_failed => '字幕可用性检查失败，请重新查找。';
-	@override String get video_jimaku_language_unknown => '语言未标注';
-	@override String video_jimaku_source_summary({required Object files, required Object episodes, required Object languages}) => '${files} 个字幕文件 · 覆盖 ${episodes} 集 · ${languages}';
-	@override String video_jimaku_episode_unlabeled({required Object episode, required Object count}) => '未发现标为第 ${episode} 集的字幕；另有 ${count} 个未标集号文件可尝试';
-	@override String video_jimaku_episode_unavailable({required Object episode}) => '没有找到第 ${episode} 集字幕';
-	@override String video_jimaku_episode_available({required Object count, required Object languages}) => '有 ${count} 个字幕 · ${languages}';
-	@override String get video_scrape_manual_match_hint => '手动匹配会替换本集封面，并保存来源映射和条目资料。会同时搜索全部可用来源，结果按匹配度排序。';
-	@override String get video_scrape_collection_match_hint => '这里只替换合集封面，不会修改各集封面或条目资料。会同时搜索全部可用来源，结果按匹配度排序。';
-	@override String get video_scrape_apply_to_collection_hint => '这会把同一张封面写到每一集；只有确实需要统一单集封面时才开启。';
-	@override String get manga_online_source_disabled => '此互联网来源已关闭，请在「来源」中开启后浏览目录。';
-	@override String get selection_web_search => '网页搜索';
-	@override String get selection_web_search_unavailable => '没有可用的网页搜索应用。';
-	@override String get selection_share_failed => '无法打开分享面板。';
-	@override String video_subtitle_youtube_auto_generated({required Object lang}) => '${lang}（自动生成）';
-	@override String get anki_dedup_progress_title => '正在去重媒体';
-	@override String anki_dedup_progress_scanning({required Object count}) => '正在扫描媒体目录…（已发现 ${count} 个文件）';
-	@override String anki_dedup_progress_hashing({required Object done, required Object total}) => '正在比对同大小文件…（${done} / ${total}）';
-	@override String anki_dedup_progress_resolving({required Object done, required Object total}) => '正在处理重复副本…（${done} / ${total}）';
-	@override String anki_dedup_progress_freed({required Object size}) => '已释放 ${size}';
-	@override String get anki_dedup_cancelling => '正在取消…';
-	@override String get anki_dedup_cancelled => '已取消去重；已完成的改动保留。';
-	@override String get anki_dedup_report_cancelled_note => '已提前取消——以下数字只统计已完成的部分。';
-	@override String get anki_dedup_plan_busy_note => '执行期间 Anki 可能暂时无响应；结束前请不要在 Anki 里操作。';
-	@override String get video_setting_subtitle_position_secondary => '副字幕垂直位置';
-	@override String get dict_download_learning_language => '学习语言';
-	@override String get dict_category_bilingual => '双语';
-	@override String get dict_category_monolingual => '单语';
-	@override String get shortcut_action_video_hold_speed => '按住临时倍速';
-	@override String get handlebar_phonetic_transcriptions => '音标';
-	@override String get sync_progress_preparing => '正在准备同步';
-	@override String get sync_progress_collections => '同步合集';
-	@override String get sync_progress_book => '同步书籍';
-	@override String sync_progress_book_titled({required Object title}) => '同步 ${title}';
-	@override String sync_last_completed({required Object count}) => '上次同步：已完成（${count} 条通道）';
-	@override String get sync_last_no_channels => '上次同步：未同步——没有已连接的同步通道';
-	@override String get sync_last_nothing => '上次同步：没有可同步的内容';
-	@override String get sync_last_auto_disabled => '上次同步：已跳过——自动同步已关闭';
-	@override String get sync_last_cooled_down => '上次同步：已跳过——刚同步过';
-	@override String get sync_last_failed => '上次同步：失败';
-	@override String anime_download_no_results_detail({required Object query, required Object filters}) => '服务已正常响应，但按当前条件返回 0 条。查询：${query}；筛选：${filters}。请尝试别名或放宽筛选。';
-	@override String get anime_download_streaming_ready => '已入库 · 下载继续';
-	@override String get anime_download_unfiltered => '未启用 Trusted 筛选';
-	@override String get interconnect_enable_footer => '用法：在存放内容的那台设备上开启下方的同步服务器开关；在另一台设备上添加该服务器的地址完成配对。同一台设备同一时间只能担任服务器或客户端其中一种角色。';
-	@override String get interconnect_peer_list_title => '已添加的对端';
-	@override String get interconnect_peer_list_empty => '尚未添加任何对端。可在下方的局域网设备列表中点击发现的设备自动配对，或手动添加对端地址。';
-	@override String get anki_lapis_visual_editor => '可视化编辑';
-	@override String get anki_lapis_visual_editor_hint => '预览 Lapis 卡片，选中区域后直接改样式、位置和字段映射，无需手写 CSS。';
-	@override String get anki_lapis_visual_front => '正面';
-	@override String get anki_lapis_visual_back => '背面';
-	@override String get anki_lapis_visual_preview => 'Lapis 卡片预览';
-	@override String get anki_lapis_visual_select_field => '选择要编辑的部分';
-	@override String get anki_lapis_visual_reset_field => '重置字段';
-	@override String anki_lapis_visual_font_size({required Object percent}) => '字号：${percent}%';
-	@override String get anki_lapis_visual_bold => '粗体';
-	@override String get anki_lapis_visual_alignment => '对齐';
-	@override String get anki_lapis_visual_color => '文字颜色';
-	@override String get anki_lapis_visual_default => '默认';
-	@override String get anki_lapis_visual_advanced_css => '高级 CSS';
-	@override String get anki_lapis_visual_field_expression => '单词';
-	@override String get anki_lapis_visual_field_reading => '读音';
-	@override String get anki_lapis_visual_field_sentence => '例句';
-	@override String get anki_lapis_visual_field_primary_definition => '首要释义';
-	@override String get anki_lapis_visual_field_glossaries => '其他释义';
-	@override String get anki_lapis_visual_target_card_content => '卡片内容';
-	@override String get anki_lapis_visual_target_definition => '释义';
-	@override String get anki_lapis_visual_target_inside_definition => '释义内部';
-	@override String get anki_lapis_visual_field_definition_info => '释义序号';
-	@override String get anki_lapis_visual_field_definition_box => '释义框';
-	@override String get anki_lapis_visual_field_definition_content => '整段释义';
-	@override String get anki_lapis_visual_field_selected_definition => '选中释义';
-	@override String get anki_lapis_visual_field_dictionary_entry => '词典条目';
-	@override String get anki_lapis_visual_field_dictionary_name => '词典名称';
-	@override String get anki_lapis_visual_field_definition_example => '释义例句';
-	@override String get anki_lapis_visual_line_height => '行高';
-	@override String get anki_lapis_visual_background_color => '背景高亮';
-	@override String get anki_lapis_visual_box_layout => '区域外观';
-	@override String get anki_lapis_visual_border_width => '边框';
-	@override String get anki_lapis_visual_border_color => '边框颜色';
-	@override String get anki_lapis_visual_corner_radius => '圆角';
-	@override String get anki_lapis_visual_padding => '内边距';
-	@override String get anki_lapis_visual_margin => '外边距';
-	@override String get anki_lapis_visual_field_definition_info_note => '仅在保留多段释义的卡片上可见；只有一段释义的卡片不会显示。';
-	@override String get anki_lapis_visual_field_dictionary_name_note => 'Fushi 生成的卡片把词性标签和词典名放在同一个标签里，两者无法分开设置样式。';
-	@override String get game_upscaling_error_bundle_missing => 'Fushi 安装包不完整：缺少内置 Magpie 组件。请重新安装或更新 Fushi。';
-	@override String get game_upscaling_error_bundle_invalid => '内置 Magpie 组件已损坏或校验失败。请重新安装或更新 Fushi。';
-	@override String download_test_connection_failed_reason({required Object message}) => '连接失败：${message}';
-	@override String get delete_disclosure_will_delete_label => '会被删除';
-	@override String get delete_disclosure_will_keep_label => '会被保留';
-	@override String get delete_disclosure_book_records => '阅读进度、书签、标签和字幕数据';
-	@override String get delete_disclosure_book_extracted => 'Fushi 解压到自己存储目录里的书籍文件';
-	@override String get delete_disclosure_book_audiobook => '配套有声书的音频和对齐字幕（如果有）';
-	@override String get delete_disclosure_source_kept => '你导入时选择的原始文件（书籍、字幕、音频）';
-	@override String get delete_disclosure_stats_kept => '阅读统计';
-	@override String get delete_disclosure_audiobook_files => 'Fushi 复制到自己存储目录里的音频和对齐字幕';
-	@override String get delete_disclosure_audiobook_book_kept => '书籍本身和它的阅读进度';
-	@override String get delete_disclosure_audiobook_source_kept => '你导入时选择的原始音频文件';
-	@override String get audiobook_delete => '删除有声书';
-	@override String get audiobook_delete_confirm => '删除已附加的有声书？它的音频文件会从本机删除。';
-	@override String get delete_collection_confirm => '只解除分组，其中的条目会保留。';
-	@override String get shortcut_action_video_enter_caret => '进入字幕选词光标';
-	@override String get audiobook_export_clip_too_long => '选区音频过长，暂不支持导出（上限 5 分钟）';
-	@override String get sync_err_forbidden => '服务端拒绝了这次请求。登录没问题，请检查服务端设置。';
-	@override String sync_err_forbidden_detail({required Object reason}) => '服务端拒绝了这次请求：${reason}（登录没问题）';
-	@override String get collection_group_extras => 'PV·特典';
-	@override String collection_group_season({required Object n}) => '第 ${n} 季';
-	@override String get collection_sort_by_season => '按季排序';
-	@override String get mining_animated_format_avif => 'AVIF（体积最小）';
-	@override String get mining_animated_format_webp => 'WebP（兼容性更广）';
-	@override String get mining_animated_format_gif => 'GIF（兼容性最好）';
-	@override String get video_mining_animated_format => '视频制卡动图格式';
-	@override String get video_mining_animated_format_hint => '同画质下 AVIF 体积远小于 GIF，最高清晰度档也允许比 GIF/WebP 更高的分辨率与帧率。捆绑的编码器产不出时会自动回退 GIF。';
-	@override String get gal_mining_animated_format => '游戏制卡动图格式';
-	@override String get gal_mining_animated_format_hint => '与视频制卡同样的格式，但分开保存：galgame 一句台词内画面基本静止，取舍不同。';
-	@override String get scrape_all => '全部刮削';
-	@override String scrape_all_title({required Object kind}) => '刮削全部${kind}';
-	@override String scrape_all_running({required Object current, required Object total}) => '正在刮削 ${current} / ${total}';
-	@override String scrape_all_item({required Object title}) => '正在处理：${title}';
-	@override String scrape_all_done({required Object applied, required Object review, required Object skipped, required Object failed}) => '完成：已应用 ${applied} 个，待手动确认 ${review} 个，已跳过 ${skipped} 个，失败 ${failed} 个';
-	@override String get scrape_all_empty => '当前库没有可刮削的条目。';
-	@override String get scrape_all_start => '开始';
-	@override String collection_hero_total_episodes({required Object count}) => '全 ${count} 话';
-	@override String get video_scrape_collection_rename_title => '要重命名这个合集吗？';
-	@override String get video_scrape_collection_rename_body => '匹配到的条目名称与当前不同。改名是可选的：无论选哪个，封面和资料都会保存；确认改名还会把其他已同步设备上的旧名一并替换。';
-	@override String video_scrape_collection_rename_from({required Object name}) => '当前名称：${name}';
-	@override String video_scrape_collection_rename_to({required Object name}) => '新名称：${name}';
-	@override String get video_scrape_collection_rename_keep => '保留当前名称';
-	@override String get video_scrape_collection_rename_confirm => '重命名';
-	@override String get download_task_toggle_failed => '暂停/恢复操作失败';
-	@override String download_subscription_start_episode({required Object episode}) => '从第 ${episode} 集开始';
-	@override String get download_task_eta => '剩余';
-	@override String get download_task_ratio => '分享率';
-	@override String get download_task_status_downloading => '下载中';
-	@override String get download_task_status_seeding => '做种中';
-	@override String get download_task_status_completed => '已完成';
-	@override String get download_task_status_paused => '已暂停';
-	@override String get download_task_status_queued => '排队中';
-	@override String get download_task_status_stalled => '等待资源';
-	@override String get download_task_status_checking => '校验中';
-	@override String get download_task_status_metadata => '获取元数据';
-	@override String get download_task_status_moving => '移动中';
-	@override String get download_task_status_error => '出错';
-	@override String get download_task_pause => '暂停';
-	@override String get download_task_resume => '恢复';
-	@override String get download_airing_calendar_title => '放送日历';
-	@override String get download_airing_calendar_show_all => '显示本季全部';
-	@override String get download_airing_calendar_empty_guidance => '暂无可显示的放送信息：给合集绑定 AniList 或添加下载订阅后，这里会显示对应的放送时间。';
-	@override String get download_airing_calendar_error => '放送时间表加载失败';
-	@override String get download_airing_calendar_in_library => '已入库';
-	@override String get download_airing_calendar_subscribed => '订阅中';
-	@override String download_airing_calendar_episode_label({required Object episode}) => '第 ${episode} 集';
-	@override String get download_airing_calendar_week_prev => '上一周';
-	@override String get download_airing_calendar_week_next => '下一周';
-	@override String get download_airing_calendar_week_empty => '本周没有相关放送';
-	@override String get video_jimaku_format => '类型';
-	@override String get video_jimaku_format_all => '全部';
-	@override String get video_setting_tmdb_key => '自定义 TMDB API Key';
-	@override String get video_setting_tmdb_key_hint => '可留空，默认用内置 Key。仅当刮削失效或你想用自己的配额时才需要填写。';
-	@override String get about_tmdb_attribution => 'This application uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.';
-	@override String get anki_lapis_visual_layout => '布局';
-	@override String get anki_lapis_visual_layout_hint => '复用 Lapis 自带的布局开关，桌面与手机 Anki 同时生效。';
-	@override String get anki_lapis_visual_layout_sentence => '例句位置';
-	@override String get anki_lapis_visual_layout_sentence_above => '释义框上方';
-	@override String get anki_lapis_visual_layout_sentence_below => '释义框下方';
-	@override String get anki_lapis_visual_layout_picture => '图片位置';
-	@override String get anki_lapis_visual_layout_picture_right => '单词右侧';
-	@override String get anki_lapis_visual_layout_picture_left => '单词左侧';
-	@override String get anki_lapis_visual_layout_picture_alt => '例句内';
-	@override String get anki_lapis_visual_layout_audio => '音频按钮';
-	@override String get anki_lapis_visual_layout_audio_header => '读音旁';
-	@override String get anki_lapis_visual_layout_audio_fixed => '固定在底部';
-	@override String get anki_lapis_visual_layout_audio_alt => '例句内';
-	@override String get anki_lapis_visual_mapping_hint => '填充选中区域的 Anki 字段；改动随样式一起保存。';
-	@override String get anki_lapis_visual_mapping_none => '该区域由模板自己绘制，没有对应字段。';
-	@override String get anki_lapis_visual_color_custom => '自定义';
-	@override String get anki_lapis_visual_color_picker_title => '选择颜色';
-	@override String get video_scrape_tmdb_key_hint => '输入 TMDB API Key';
-	@override String get video_scrape_tmdb_key_required => 'TMDB 需要 API Key';
-	@override String get video_scrape_tmdb_key_save => '保存';
-	@override String get video_scrape_tmdb_key_empty => '先保存 TMDB API Key，再点“搜索”。这里不会混入其他来源的结果。';
-	@override String get download_detail_tab_overview => '总览';
-	@override String get download_detail_tab_files => '文件';
-	@override String get download_detail_tab_peers => '节点';
-	@override String get download_detail_tab_trackers => 'Tracker';
-	@override String get download_detail_backend_unsupported => '当前下载后端不支持';
-	@override String get download_detail_task_gone => '后端中找不到该任务';
-	@override String get download_detail_task_missing => '原下载后端在线，但该 torrent 已不在引擎中。实时节点和 Tracker 无法恢复，这里显示已保存的任务信息。';
-	@override String get download_detail_section_transfer => '传输';
-	@override String get download_detail_section_network => '网络';
-	@override String get download_detail_section_task => '任务';
-	@override String get download_detail_seeds_label => '做种';
-	@override String get download_detail_leechers_label => '下载者';
-	@override String get download_detail_connections_label => '连接数';
-	@override String get download_detail_content_path_label => '内容路径';
-	@override String get download_detail_time_active => '活跃时长';
-	@override String get download_detail_time_seeding => '做种时长';
-	@override String get download_detail_total_size_label => '总大小';
-	@override String get download_detail_listen_port => '监听端口';
-	@override String get download_detail_dht_nodes => 'DHT 节点';
-	@override String get download_detail_hash_label => '信息哈希';
-	@override String get download_detail_port_mapping => '端口映射';
-	@override String get download_detail_session_rates => '会话速率';
-	@override String get download_detail_pieces_label => '分片';
-	@override String get download_detail_priority_skip => '不下载';
-	@override String get download_detail_raw_state_label => '后端状态';
-	@override String get download_detail_remaining_label => '剩余大小';
-	@override String get download_detail_save_path_label => '保存路径';
-	@override String get download_detail_priority_normal => '普通';
-	@override String get download_detail_priority_high => '高';
-	@override String get download_detail_tracker_working => '工作中';
-	@override String get download_detail_tracker_updating => '更新中';
-	@override String get download_detail_tracker_not_contacted => '尚未联系';
-	@override String get download_detail_tracker_not_working => '不工作';
-	@override String get download_detail_tracker_disabled => '已禁用';
-	@override String get download_detail_no_peers => '暂无已连接节点';
-	@override String get download_detail_no_trackers => '无 Tracker';
-	@override String get video_filter_year => '年份';
-	@override String get video_filter_year_unknown => '未知年份';
-	@override String get video_filter_watch_status => '看完状态';
-	@override String get video_filter_watch_status_unwatched => '未看';
-	@override String get video_filter_watch_status_watching => '在看';
-	@override String get video_filter_watch_status_completed => '已看完';
-	@override String get video_hero_detail_view => '详情';
-	@override String video_hero_episodes_watched({required Object n}) => '已看 ${n} 集';
-	@override String get video_recently_added_badge => '新';
-	@override String get video_air_season_winter => '冬';
-	@override String get video_air_season_spring => '春';
-	@override String get video_air_season_summer => '夏';
-	@override String get video_air_season_autumn => '秋';
-	@override String get delete_scope_no_channel => '未配置同步，本次删除只影响这台设备';
-	@override String get mihon_sources_title => '漫画源';
-	@override String get mihon_extensions_title => '漫画扩展';
-	@override String get mihon_store_add => '添加扩展仓库';
-	@override String get mihon_store_url => '扩展仓库地址';
-	@override String get mihon_store_empty => '还没有扩展仓库。可添加兼容的 Mihon 仓库，或导入本地 APK。';
-	@override String get mihon_extension_import => '导入本地 APK';
-	@override String get mihon_extension_warning => '第三方扩展会以 Fushi 的权限执行代码。请只安装你信任的扩展和签名者。';
-	@override String get mihon_extension_install => '安装';
-	@override String get mihon_extension_update => '更新';
-	@override String get mihon_extension_uninstall => '卸载';
-	@override String get mihon_extension_installed => '已安装';
-	@override String get mihon_extension_disabled => '已停用';
-	@override String get mihon_source_empty => '没有已启用的漫画源。请先安装并启用漫画扩展。';
-	@override String get mihon_source_popular => '热门';
-	@override String get mihon_source_latest => '最新';
-	@override String get mihon_source_search => '搜索漫画';
-	@override String get mihon_source_preferences => '来源偏好';
-	@override String get mihon_source_clear_data => '清除来源数据';
-	@override String get mihon_source_clear_data_hint => '清除该来源的偏好与 Cookie，不会卸载扩展。';
-	@override String get mihon_signer_trust_title => '信任扩展签名者？';
-	@override String get mihon_signer_fingerprint => '签名者 SHA-256';
-	@override String get mihon_runtime_unavailable => '此平台暂不支持 Mihon 扩展。';
-	@override String get mihon_extension_incompatible => '扩展不兼容';
-	@override String get mihon_store_refresh => '刷新仓库';
-	@override String get mihon_source_browse_mokuro => '内置 Mokuro 目录';
-	@override String get mihon_source_no_results => '没有找到漫画。';
-	@override String get mihon_chapters_title => '章节';
-	@override String get mihon_extension_language_filter => '语言';
-	@override String get mihon_extension_language_all => '全部语言';
-	@override String get mihon_filter_ignore => '忽略';
-	@override String get mihon_filter_include => '包含';
-	@override String get mihon_filter_exclude => '排除';
-	@override String get mihon_filter_ascending => '升序';
-	@override String get mihon_filter_descending => '降序';
-	@override String get mihon_add_to_bookshelf => '加入漫画书架';
-	@override String get mihon_in_bookshelf => '已加入漫画书架';
-	@override String get media_source_local_roots => '本地扫描根';
-	@override String scrape_all_confirm({required Object n}) => '将按标题匹配库中的 ${n} 个条目。只自动应用高置信度的匹配——视频按标题与年份、类型等信息综合打分，书籍和游戏则要求标题唯一且完全一致。你自己定的封面一律不覆盖（手动设置的本地图、在匹配弹窗里亲手选定的条目、目录里自带的 poster 图），歧义结果留待手动确认。';
-	@override String get collection_related_title => '相关作品';
-	@override String get collection_relation_prequel => '前传';
-	@override String get collection_relation_sequel => '续作';
-	@override String get collection_relation_side_story => '番外';
-	@override String get collection_relation_movie => '剧场版';
-	@override String get collection_relation_spin_off => '衍生';
-	@override String get collection_relation_other => '相关';
-	@override String get collection_relation_download => '去下载';
-	@override String get collection_relation_bind => '绑定到已有合集';
-	@override String get collection_episode_rename => '按刮削重命名各集';
-	@override String get collection_episode_rename_title => '批量重命名各集';
-	@override String get collection_episode_rename_empty => '没有可改的集名';
-	@override String get collection_episode_download => '下载本集';
-	@override String get collection_episode_fill_missing => '补齐缺集';
-	@override String get collection_episode_no_missing => '没有缺集';
-	@override String get collection_split_by_season => '按季拆分合集';
-	@override String get collection_split_keep_original => '保留原合集';
-	@override String get collection_split_confirm => '拆分';
-	@override String get collection_episode_open_bangumi => '在 Bangumi 打开本集';
-	@override String collection_relation_bound({required Object name}) => '已绑定到 ${name}';
-	@override String collection_episode_rename_apply({required Object n}) => '重命名 ${n} 集';
-	@override String collection_split_done({required Object n}) => '已拆分为 ${n} 个合集';
-	@override String collection_episode_watched_at({required Object position}) => '看到 ${position}';
-	@override String collection_episode_bangumi_open_failed({required Object error}) => '解析 Bangumi 章节失败：${error}';
-	@override String collection_episode_rename_partial({required Object n, required Object m}) => '已重命名 ${n} 集 · ${m} 集失败';
-	@override String get collection_episode_bangumi_not_found => '未找到对应集，已打开条目页';
-	@override String get sync_err_browser_timeout => '浏览器授权没有返回到应用。请重试，并确认代理放行了本机回环地址 127.0.0.1。';
-	@override String get manga_rescan_run => '框选识别';
-	@override String get manga_rescan_hint => '拖动框选想要识别的文字。';
-	@override String get manga_rescan_model_missing => '请先在设置里下载漫画 OCR 模型。';
-	@override String get manga_rescan_running => '正在识别所选区域…';
-	@override String get manga_rescan_failed => '框选识别失败';
-	@override String get manga_rescan_empty => '该区域未识别出文字。';
-	@override String get manga_rescan_local_source => '本地识别';
-	@override String get manga_rescan_lookup => '查词';
-	@override String get manga_rescan_writeback => '回写本页';
-	@override String get manga_rescan_writeback_done => '已回写 manga.json';
-	@override String get manga_rescan_writeback_failed => '回写 manga.json 失败';
-	@override String get stat_hourly_band_epub => '文字书';
-	@override String get stat_hourly_band_pdf => 'PDF';
-	@override String get stat_hourly_band_manga => '漫画';
-	@override String get stat_hourly_band_unattributed => '未区分历史';
-	@override String get stat_hourly_unattributed_note => '早期记录的时段数据没有存类型，无法拆分；这里按合计如实显示，不归入任何一类。';
-	@override String get book_convert_to_manga_action => '转换为漫画';
-	@override String get book_convert_to_book_action => '转换回书';
-	@override String get book_convert_running => '转换中…';
-	@override String get book_convert_done => '转换完成';
-	@override String get book_convert_failed => '转换失败';
-	@override String get book_convert_blocked_already => '这本书已经是该格式了。';
-	@override String get book_convert_blocked_text_only => '这是一本没有页图的文字书。只有扫描版图片书才能转成漫画。';
-	@override String get book_convert_blocked_no_original => '这本漫画是从图片导入的，没有可还原的原书。';
-	@override String get book_convert_blocked_source_missing => '源文件已从磁盘上消失。';
-	@override String manga_online_retry_waiting({required Object attempt, required Object total}) => '即将自动重试 (${attempt}/${total})';
-	@override String get manga_ocr_wizard_already_ocred => '本卷每一页都已有 OCR 数据，无需再跑（重跑会覆盖现有数据）。';
-	@override String get shortcut_scope_universal => '返回·退出';
-	@override String get game_attach_and_capture => '附着并捕获';
-	@override String get remote_delete_failed => '无法在对端设备上删除';
-	@override String get remote_delete_unsupported => '对端设备版本过旧，不支持远端删除，请先升级对端 Fushi';
-	@override String get anki_lapis_visual_blocks => '自定义区域';
-	@override String get anki_lapis_visual_blocks_hint => '把已有字段摆到卡片的其它位置。只改显示，不新增也不删除 Anki 字段。';
-	@override String get anki_lapis_visual_block_add => '添加区域';
-	@override String get anki_lapis_visual_block_delete => '删除区域';
-	@override String anki_lapis_visual_block_name({required Object index}) => '区域 ${index}';
-	@override String get anki_lapis_visual_block_anchor => '在卡片上的位置';
-	@override String get anki_lapis_visual_block_anchor_top => '卡片顶部';
-	@override String get anki_lapis_visual_block_anchor_above_sentence => '单词区下方';
-	@override String get anki_lapis_visual_block_anchor_above_definition => '例句下方';
-	@override String get anki_lapis_visual_block_anchor_below_definition => '释义框下方';
-	@override String get anki_lapis_visual_block_anchor_bottom => '卡片底部';
-	@override String get anki_lapis_visual_block_fields => '这里显示的字段';
-	@override String get anki_lapis_visual_block_no_fields => '还没选字段';
-	@override String get anki_lapis_visual_block_needs_note_type => '先选好卡片类型才能挑字段。';
-	@override String get anki_lapis_restore_factory => '恢复出厂 Lapis';
-	@override String get anki_lapis_restore_factory_hint => '用 Fushi 内置版本覆盖 Anki 里的 Lapis 卡型（样式与正反面模板），并清空这里的全部客制化。';
-	@override String get anki_lapis_restore_factory_confirm => '这会用 Fushi 内置版本覆盖 Anki 里 Lapis 的样式与正反面模板，并把字号、自定义 CSS、自定义区域全部重置。执行前会先自动备份当前状态。卡片数据不受影响。';
-	@override String get anki_lapis_restore_factory_done => 'Lapis 已恢复出厂状态';
-	@override String anki_lapis_restore_factory_failed({required Object error}) => '恢复失败：${error}';
-	@override String get anki_lapis_visual_select_field_hint => '点预览里的任意部分，或从下面挑一个。选中的就是下方那些控件正在编辑的对象。';
-	@override String get anki_lapis_visual_editing_now => '正在编辑';
-	@override String get mihon_extension_preview => '预览';
-	@override String get mihon_extension_preview_warning => '预览会在安装前运行该扩展的代码。在你选择安装之前，不会有任何东西写进你的库。';
-	@override String get mihon_extension_preview_discard => '放弃';
-	@override String get mihon_extension_preview_source_select => '选择要预览的源';
-	@override String get mihon_extension_sources_included => '包含的源';
-	@override String get mihon_extension_preview_read_only => '预览是只读的。安装扩展后才能打开阅读。';
-	@override String get selection_copy_empty => '未选中文本。';
-	@override String get video_library_empty_source_hint => '请从“来源”添加视频文件夹以建立媒体库';
-	@override String get video_source_scrape_action => '刮削此来源';
-	@override String get video_source_scrape_settings => '来源刮削设置';
-	@override String get video_source_scrape_provider => '主刮削来源';
-	@override String get video_source_scrape_provider_inherit => '继承全局默认';
-	@override String get video_source_scrape_auto_after_scan => '扫描后自动刮削';
-	@override String get video_source_scrape_auto_after_scan_hint => '扫描此来源完成后自动刮削作品资料';
-	@override String get video_source_scrape_write_nfo => '写入 NFO 文件';
-	@override String get video_source_scrape_write_images => '写入图片文件';
-	@override String get video_source_scrape_use_fanart => '使用 Fanart 图片';
-	@override String video_source_scrape_progress({required Object phase, required Object current, required Object total}) => '${phase} · ${current}/${total}';
-	@override String video_source_scrape_last_summary({required Object status, required Object succeeded, required Object pending, required Object failed}) => '上次刮削（${status}）：成功 ${succeeded}，待确认 ${pending}，失败 ${failed}';
-	@override String get video_source_scrape_phase_planning => '准备中';
-	@override String get video_source_scrape_phase_recognizing => '识别匹配中';
-	@override String get video_source_scrape_phase_fetching => '获取资料中';
-	@override String get video_source_scrape_phase_applying => '保存资料中';
-	@override String get video_source_scrape_phase_writing_sidecars => '写入 NFO 与图片';
-	@override String get video_source_scrape_status_interrupted => '已中断';
-	@override String get video_source_scrape_global_provider => '视频默认刮削来源';
-	@override String get video_source_scrape_global_provider_hint => '供选择“继承全局默认”的视频来源使用';
-	@override String get video_source_scrape_fanart_key => 'Fanart API Key';
-	@override String get video_source_scrape_fanart_key_hint => '可选，用于从 Fanart 补充缺少的图片';
-	@override String get video_source_scrape_bangumi_token => 'Bangumi 访问令牌';
-	@override String get video_source_scrape_bangumi_token_hint => '可选，用于访问 Bangumi 官方 v0 API';
-	@override String get video_source_scrape_douban_endpoint => '已授权的豆瓣 API 端点';
-	@override String get video_source_scrape_douban_endpoint_hint => '仅当已授权端点和令牌都已配置时豆瓣来源才可用';
-	@override String get video_source_scrape_douban_token => '已授权的豆瓣 API 令牌';
-	@override String get video_source_scrape_douban_token_hint => '仅当已授权端点和令牌都已配置时豆瓣来源才可用';
-	@override String get video_source_scrape_locale => '资料语言';
-	@override String get video_source_scrape_locale_hint => '标题、简介与图片的首选语言';
-	@override String get video_source_scrape_confirmation_title => '确认资料匹配';
-	@override String get video_source_scrape_confirmation_hint => '找到多个严格匹配结果。请选择正确作品，Fushi 会保存其来源绑定。';
-	@override String get video_source_scrape_confirmation_skip => '跳过此作品';
-	@override String get video_source_scrape_nfo_policy => 'NFO 写入策略';
-	@override String get video_source_scrape_image_policy => '图片写入策略';
-	@override String get video_source_scrape_policy_skip => '不写入';
-	@override String get video_source_scrape_policy_missing_only => '仅缺失时写入';
-	@override String get video_source_scrape_policy_overwrite => '更新 Fushi 生成物';
-	@override String get video_source_scrape_external_overwrite => '允许覆盖受保护的 sidecar';
-	@override String get video_source_scrape_external_overwrite_hint => '第三方或用户修改过的文件仍受保护；每次手动刮削批次都必须再次确认。';
-	@override String get video_source_scrape_external_overwrite_confirm_title => '覆盖受保护的 sidecar？';
-	@override String get video_source_scrape_external_overwrite_confirm_body => '本批次可能替换第三方 NFO/图片，或你修改过的 Fushi 生成物；视频文件本身不会改动。是否继续？';
-	@override String get video_source_scrape_tasks_open => '后台任务';
-	@override String get video_source_scrape_background_started => '刮削已在后台开始';
-	@override String get video_source_scrape_tasks_current => '当前任务';
-	@override String get video_source_scrape_tasks_history => '最近任务';
-	@override String get video_source_scrape_tasks_empty => '暂无刮削任务';
-	@override String get video_source_scrape_waiting_confirmation => '等待你的确认';
-	@override String get video_source_scrape_phase_scanning => '扫描来源';
-	@override String get video_library_all_videos => '全部视频';
-	@override String get video_work_voice_roles => '声优与角色';
-	@override String get video_work_cast_crew => '演职员';
-	@override String get video_work_trailers => '预告片';
-	@override String get video_work_extras => '花絮';
-	@override String get video_work_details => '作品资料';
-	@override String get video_work_external_ids => '外部 ID';
-	@override String get video_work_metadata_pending => '暂无详细资料。请在';
-	@override String get video_work_genres => '类型';
-	@override String get video_work_keywords => '标签';
-	@override String get video_work_studios => '工作室';
-	@override String get video_work_countries => '国家';
-	@override String get video_work_content_rating => '分级';
-	@override String get video_all_videos_list_view => '列表视图';
-	@override String get video_all_videos_grid_view => '网格视图';
-	@override String video_home_continue_episode_number({required Object n}) => '看到第 ${n} 集';
-	@override String video_home_next_episode_number({required Object n}) => '下一集 · 第 ${n} 集';
-	@override String video_home_recent_episode_number({required Object n}) => '最近添加 · 第 ${n} 集';
-	@override String video_home_remaining_minutes({required Object minutes}) => '剩余 ${minutes} 分钟';
-	@override String get video_subtitle_replay => '重播本句';
-	@override String get manga_ocr_done => 'OCR 已完成';
-	@override String get settings_destination_manga_summary => '阅读器、OCR 与在线目录';
-	@override String get manga_page_animation => '翻页动画';
-	@override String get manga_page_animation_none => '无';
-	@override String get manga_page_animation_slide => '滑动';
-	@override String get manga_page_animation_fade => '淡入淡出';
-	@override String get manga_default_zoom => '默认缩放';
-	@override String get manga_zoom_sensitivity => '缩放灵敏度';
-	@override String get manga_volume_key_paging => '音量键翻页';
-	@override String get manga_volume_key_paging_subtitle => '在漫画阅读器中用音量加减键翻页';
-	@override String get manga_tap_zone_paging => '点击边缘翻页';
-	@override String get manga_tap_zone_paging_subtitle => '点击页面左右边缘翻页';
-	@override String get manga_section_viewing => '浏览与翻页';
-	@override String get game_capture_setup_title => '完成捕获设置';
-	@override String get game_capture_setup_hint => '请先选择台词线程。Fushi 只能把音频与所选线程收到的台词配对。';
-	@override String get game_audio_requires_thread => '音频采集源可能已经就绪，但选择线程并收到台词之前，不存在本句音频。';
-	@override String get game_session_waiting_thread => '等待选择台词线程';
-	@override String get anki_connect_use_on_mobile => '改用 AnkiConnect';
-	@override String get anki_connect_use_on_mobile_hint => '仅在可信网络中使用。AnkiConnect 使用明文 HTTP；请配置匹配的 API key，切换后再刷新牌组与笔记类型。';
-	@override String get anki_connect_api_key_hint => '远程 AnkiConnect 必填；必须与插件中配置的 key 一致';
-	@override String get anki_connect_mobile_api_key_required => '请先配置匹配的 AnkiConnect API key，再切换到 AnkiConnect 后端。';
-	@override String anki_connect_backend_switch_failed({required Object error}) => '无法切换 Anki 后端：${error}';
-	@override String get migration_settings_entry => '迁移到 Fushi';
-	@override String get migration_settings_entry_subtitle => '把全部数据搬到新的 Fushi 应用';
-	@override String get migration_intro => 'Fushi 是本应用的新名字。迁移会把你的全部数据分批导出到中转目录，再由 Fushi 导入并逐项校验。在你卸载旧版之前，这里的数据原样保留。';
-	@override String get migration_target_missing => '尚未安装 Fushi。请先安装 Fushi，再回到这里。';
-	@override String get migration_download_fushi => '下载 Fushi';
-	@override String get migration_start => '开始迁移';
-	@override String get migration_open_fushi => '打开 Fushi';
-	@override String get migration_include_local_audio => '一并导出本地发音库（体积可能很大）';
-	@override String migration_batch_running({required Object batch}) => '正在导出 ${batch}…';
-	@override String migration_batch_done({required Object batch}) => '${batch} 已导出';
-	@override String get migration_export_done => '导出完成。打开 Fushi 完成导入与校验。';
-	@override String migration_export_failed({required Object error}) => '导出失败：${error}';
-	@override String get migration_readonly_note => '数据已导出到 Fushi。本应用已进入只读模式：请改用 Fushi 阅读和制卡。若 Fushi 校验发现缺失，可随时在此重新导出。';
-	@override String get migration_reexport => '重新导出';
-	@override String get migration_batch_core_label => '设置、进度与统计';
-	@override String get migration_import_entry => '从 Hibiki 导入';
-	@override String get migration_import_entry_subtitle => '导入旧版 Hibiki 导出的数据';
-	@override String get migration_import_detected => '检测到 Hibiki 迁移数据，现在导入？';
-	@override String get migration_import_start => '开始导入';
-	@override String migration_import_running({required Object batch}) => '正在导入 ${batch}…';
-	@override String migration_import_verify_failed({required Object batch, required Object detail}) => '${batch} 校验未通过，已保留待重传：${detail}';
-	@override String migration_import_counts_failed({required Object detail}) => '导入数据不完整：${detail}。请回 Hibiki 重新导出缺失部分后再导入。';
-	@override String get migration_import_success => '导入完成，校验通过。';
-	@override String get migration_import_nothing => '中转目录中没有找到迁移数据。';
-	@override String get migration_uninstall_prompt => '迁移完成。卸载旧版 Hibiki？';
-	@override String get migration_uninstall_button => '卸载 Hibiki';
-	@override String get migration_uninstall_still_installed => '旧版 Hibiki 仍安装在设备上，可随时卸载。';
-	@override String get migration_import_permission_title => '需要文件访问权限';
-	@override String get migration_import_permission_body => '中转目录是旧版应用创建的。没有「所有文件访问权限」，Fushi 读不了它——数据是完好的，只是打不开。';
-	@override String get migration_import_permission_grant => '去授权';
-	@override String migration_import_verifying({required Object batch, required Object done, required Object total}) => '正在校验 ${batch}（${done}/${total}）';
-	@override String get migration_import_verifying_hint => '正在核对归档校验和。库很大时需要几分钟。';
-	@override String get game_line_copy_tooltip => '复制句子';
-	@override String get game_japanese_locale_auto => '自动';
-	@override String get game_japanese_locale_on => '始终开启';
-	@override String get game_japanese_locale_off => '关闭';
-	@override String get game_japanese_locale => '日语区域（转区）';
-	@override String get game_japanese_locale_hint => '汉化版/英化版请选「关闭」，否则启动即闪退';
-	@override String get video_scrape_diagnostic_export => '导出刮削诊断包';
-	@override String get video_scrape_diagnostic_confirm_title => '导出刮削诊断包？';
-	@override String get video_scrape_diagnostic_saved => '诊断包已保存';
-	@override String video_scrape_diagnostic_failed({required Object reason}) => '无法导出诊断包：${reason}';
-	@override String get video_scrape_diagnostic_share_subject => 'Fushi 视频刮削诊断';
-	@override String get video_scrape_diagnostic_confirm_body => '诊断包包含相对文件/目录名、刮削摘要和原始 NFO 内容；不会加入视频、字幕、图片、绝对路径、应用配置或应用凭据。原始 NFO 会原样保留，仍可能含有个人信息或密钥，请在公开分享前检查。';
-	@override String get video_discovery_tab => '发现';
-	@override String get video_discovery_search_hint => '搜索电影、剧集、动漫';
-	@override String get video_discovery_hot => '热门推荐';
-	@override String get video_discovery_seasonal_anime => '本季动漫';
-	@override String get video_discovery_all_works => '全部作品';
-	@override String get video_discovery_search_results => '搜索结果';
-	@override String get video_discovery_provider_warning => '部分来源暂不可用，已显示其余结果';
-	@override String get video_discovery_load_failed => '发现内容加载失败';
-	@override String get video_discovery_empty => '没有匹配的作品';
-	@override String get video_discovery_resource_search => '搜索资源';
-	@override String get video_discovery_subtitle_search => '搜索字幕';
-	@override String get video_discovery_subscribe => '订阅';
-	@override String get video_discovery_subscription_manage => '管理订阅';
-	@override String get video_discovery_pipeline_idle => '未下载 → 下载 → 整理 → 字幕 → 刮削 → 入库';
-	@override String get video_discovery_details_load_failed => '作品详情加载失败';
-	@override String get video_discovery_sort_popularity => '热度';
-	@override String get video_discovery_sort_rating => '评分';
-	@override String get video_discovery_sort_release => '上映时间';
-	@override String get video_discovery_in_library => '已入库';
-	@override String get video_discovery_play => '播放';
-	@override String get download_resources_tab => '资源';
-	@override String get video_external_settings_section => '外部资源与字幕来源';
-	@override String get video_torznab_settings_title => 'Torznab 索引器';
-	@override String get video_torznab_settings_hint => '配置一个或多个 Jackett、Prowlarr 或兼容的 Torznab 端点。密钥仅保存在本机。';
-	@override String get video_torznab_add => '添加索引器';
-	@override String get video_torznab_name => '名称';
-	@override String get video_torznab_endpoint => '端点';
-	@override String get video_torznab_endpoint_hint => '除回环地址外必须使用 HTTPS。';
-	@override String get video_torznab_api_key => 'API 密钥';
-	@override String get video_torznab_priority => '优先级';
-	@override String get video_torznab_categories => '分类';
-	@override String get video_torznab_categories_hint => '用逗号分隔的数字分类 ID';
-	@override String get video_external_enabled => '已启用';
-	@override String get video_external_insecure_http => '允许不安全的 HTTP';
-	@override String get video_external_insecure_http_hint => '仅用于可信的局域网端点。';
-	@override String get video_external_endpoint_invalid => '请输入不含凭据、查询参数或片段的有效端点。';
-	@override String get video_opensubtitles_settings_title => 'OpenSubtitles';
-	@override String get video_opensubtitles_settings_hint => 'API 凭据和首选字幕语言仅保存在本机。';
-	@override String get video_opensubtitles_user_agent => 'User-Agent';
-	@override String get video_opensubtitles_languages => '首选语言';
-	@override String get video_opensubtitles_languages_hint => '用逗号分隔语言代码，例如 zh-CN,en,ja';
-	@override String get video_download_path_mappings_title => 'qBittorrent 路径映射';
-	@override String get video_download_path_mappings_hint => '将每个 qBittorrent 远程根目录映射到本机可访问的文件夹。';
-	@override String get video_download_path_mapping_add => '添加路径映射';
-	@override String get video_download_backend_profile_id => '后端配置 ID';
-	@override String get video_download_remote_root => '远程根目录';
-	@override String get video_download_local_root => '本机根目录';
-	@override String get video_download_target_source_title => '默认受管视频来源';
-	@override String get video_download_target_source_hint => '新下载会整理到此本地视频来源中。';
-	@override String get video_download_target_source_none => '选择本地视频来源';
-	@override String get video_external_remove => '移除';
-	@override String get video_external_username_optional => '用户名（可选）';
-	@override String get video_external_password_optional => '密码（可选）';
-	@override String get video_external_api_key => 'API 密钥';
-	@override String get video_external_save_error => '无法保存配置，请检查标出的字段。';
-	@override String get video_external_categories_invalid => '分类必须是用逗号分隔的数字 ID。';
-	@override String get video_download_path_mapping_invalid => '请输入配置 ID、远程根目录和本机绝对根目录。';
-	@override String get video_opensubtitles_endpoint => 'API 端点';
-	@override String get video_download_target_source_empty => '没有可访问的本地视频来源。请先在来源页添加。';
-	@override String get video_setting_drag_seek_sensitivity => '拖动调进度灵敏度';
-	@override String get video_setting_drag_seek_sensitivity_hint => '触屏横向滑动调进度时，划过整屏宽度对应的时长：低约 45 秒、中约 90 秒、高约 180 秒。与视频总长无关。只影响触屏拖动，鼠标和键盘调进度不受影响。';
-	@override String get video_setting_drag_seek_sensitivity_low => '低';
-	@override String get video_setting_drag_seek_sensitivity_medium => '中';
-	@override String get video_setting_drag_seek_sensitivity_high => '高';
-	@override String video_subtitle_read_failed({required Object label}) => '无法读取该字幕文件（内容损坏或为空）：${label}';
-	@override String dict_downloading_size({required Object name, required Object done, required Object total}) => '正在下载 ${name}（${done} / ${total}）';
-	@override String get video_subtitle_attach_book_missing => '该视频不在视频库中，字幕没有挂上';
-	@override String get dict_download_hide => '后台继续';
-	@override String get dict_download_progress_show => '查看进度';
-	@override String get dict_download_cancelled => '已取消下载。';
-	@override String get dict_download_import_uncancellable => '导入阶段无法中断';
-	@override String get dict_download_busy => '已有词典下载正在进行。';
-	@override String get gal_hook_ingame_lookup => '游戏内查词';
-	@override String get gal_hook_ingame_lookup_hint => '在游戏画面内直接显示词典卡片（KiriKiri 引擎，仅 Windows）';
-	@override String get drag_drop_failed => '拖入的文件处理失败，请重试。';
-	@override String get tag_add_failed => '标签添加失败，请重试。';
-	@override String get tag_reorder_failed => '标签排序保存失败，请重试。';
-	@override String get download_task_error_summary_source_missing => '受管视频来源不存在或不可访问';
-	@override String get download_task_error_summary_backend_unconfirmed => '种子未能按哈希、标题、分类确认';
-	@override String get download_task_error_summary_subtitle => '字幕不可用或未能安装';
-	@override String get download_task_error_summary_backend_unavailable => '下载后端不可用或不再匹配';
-	@override String get download_task_error_summary_legacy => '旧版导入数据需要处理';
-	@override String get download_task_error_summary_torrent_info => '种子信息缺失或无法校验';
-	@override String get download_task_error_summary_generic => '任务出错';
-	@override String get download_task_error_view_detail => '查看详情';
-	@override String get download_task_error_detail_title => '错误详情';
-	@override String get download_task_error_copied => '错误详情已复制';
-	@override String get download_task_lifecycle_active => '进行中';
-	@override String get download_task_lifecycle_needs_attention => '需要处理';
-	@override String get download_task_location_missing => '找不到该任务对应的文件位置。';
-	@override String get download_task_location_open_failed => '无法打开文件位置。';
-	@override String get download_task_open_location => '打开文件位置';
-	@override String get download_task_lifecycle_completed => '已完成';
-	@override String get download_task_lifecycle_failed => '已失败';
-	@override String get download_task_lifecycle_cancelled => '已取消';
-	@override String get download_task_stage_enqueue => '入队';
-	@override String get download_task_stage_download => '下载';
-	@override String get download_task_stage_organize => '整理';
-	@override String get download_task_stage_subtitle => '字幕';
-	@override String get download_task_stage_import => '入库';
-	@override String get download_task_stage_scrape => '刮削';
-	@override String get video_discovery_manual_identity_hint => '填写标题、外部 ID 和年份后才能搜索';
-	@override String get collection_split_move_to => '移动到';
-	@override String get collection_split_new_group => '新建分组';
-	@override String collection_split_selected({required Object n}) => '已选 ${n} 集';
-	@override String get sync_pair_rate_limited => '尝试次数过多，请等几分钟后重试。';
-	@override String get sync_pair_tls_failed => '证书校验失败：对端证书与已记录的指纹不符。';
-	@override String get sync_pair_timeout => '对端没有及时响应。';
-	@override String get sync_pair_expired => '配对会话已超时，请重新发起配对。';
-	@override String get sync_pair_upgrade_required => '对方版本过旧，无法在当前网络下安全配对（需要 PIN）。请更新对方后重新配对。';
-	@override String get sync_pair_fingerprint_changed_title => '证书已变更';
-	@override String get sync_pair_fingerprint_stored_label => '此前已钉扎';
-	@override String get sync_pair_fingerprint_new_label => '本次握手所见';
-	@override String get sync_pair_fingerprint_retrust => '清除已存指纹并重新信任';
-	@override String get sync_pair_fingerprint_changed_body => '这条地址此前钉扎的是另一张证书。只有在你确知对方重装/重置过设备时才继续，否则连接可能正被中间人拦截。';
-	@override String get interconnect_upload_section_footer => '选择本设备要把哪些内容上传给已连接的互联对端。与云备份的同名开关互不影响，且默认全部关闭。本组开关只在「启用互联」打开时生效：关掉互联，这里的上传全部停止。';
-	@override String get remote_delete_audiobook_partial => '书已在对端删除，但它的有声书没能删掉';
-	@override String get collection_episode_scrape => '刮削分集资料';
-	@override String collection_episode_scrape_failed({required Object error}) => '分集刮削失败：${error}';
-	@override String collection_episode_scrape_result({required Object updated, required Object skipped}) => '已更新 ${updated} 集 · 跳过 ${skipped} 集';
-	@override String get collection_episode_scrape_unbound => '请先刮削合集资料';
-	@override String get gal_mining_screenshot_size => 'Galgame 截图尺寸';
-	@override String get gal_mining_screenshot_size_full_hd => '最大 1920 x 1080（推荐）';
-	@override String get gal_mining_screenshot_size_hd => '最大 1280 x 720';
-	@override String get gal_mining_screenshot_size_hint => '用于静态截图及动图捕获失败后的备用截图。保持比例、只缩不放，并以质量 90 保存为 JPG。';
-	@override String get gal_mining_screenshot_size_original => '原始尺寸（JPG）';
-	@override String get game_attach_mode_last_used => '上次使用';
-	@override String get game_attach_mode_luna_safe => 'Luna 安全附着（推荐）';
-	@override String get game_attach_mode_luna_safe_hint => '不向游戏注入组件，使用 Luna 原文和系统混音，避免双 Hook 冲突。';
-	@override String get game_attach_mode_native => 'Fushi 原生附着';
-	@override String get game_attach_mode_native_hint => '向游戏注入 Fushi，尝试获取原生文本和干净语音；请勿与 LunaTranslator 同时使用。';
-	@override String get game_attach_mode_title => '选择附着方式';
-	@override String get game_luna_audio_lead_in => '补全本句开头';
-	@override String get game_luna_audio_lead_in_hint => '如果本句开头的声音被切掉，就调大。';
-	@override String get game_luna_audio_per_game_hint => '会按当前附着的游戏分别保存。';
-	@override String get game_luna_audio_preroll => 'Luna 语音起点提前';
-	@override String get game_luna_audio_preroll_hint => '每条 Luna 原文到达时向前保留一小段混音，避免角色语音开头被截掉。';
-	@override String get game_luna_audio_tail_trim => '去掉下句声音';
-	@override String get game_luna_audio_tail_trim_hint => '如果本句结尾混入下一句声音，就调大。';
-	@override String get game_luna_audio_timing => '语音切分调整';
-	@override String get game_text_source_luna => 'LunaTranslator（外部原文）';
-	@override String get game_text_source_luna_connected => '已连接，将使用 LunaTranslator 中选定的原文。';
-	@override String get game_text_source_luna_waiting => '请启动 LunaTranslator 并开启网络服务，Fushi 会自动重连。';
-	@override String get game_text_thread_recommended => '推荐线程';
-	@override String get game_text_threads_dormant_hide => '收起尚无文本的线程';
-	@override String game_text_threads_dormant_show({required Object count}) => '显示尚无文本的线程（${count}）';
-	@override String get video_mining_image_quality => '视频 / 动漫制卡画质';
-	@override String get video_mining_image_quality_hint => '仅控制视频和动漫制卡配图。画质越高越清晰，卡片体积也可能越大。';
-	@override String get game_line_bulk_text_hint => '检测到批量文本，已暂停逐字查词以避免卡顿。';
-	@override String get video_setting_subtitle_language_filter => '字幕语言';
-	@override String get video_setting_subtitle_language_filter_hint => '过滤当前所选字幕轨内部的中文或日文内容。';
-	@override String get video_setting_subtitle_language_filter_all => '全部';
-	@override String get video_setting_subtitle_language_filter_japanese => '日文';
-	@override String get video_setting_subtitle_language_filter_chinese => '中文';
-	@override String get download_detail_task_queued => '排队中：正在等其他下载让出槽位。任务还没交给下载器，所以暂时没有实时节点和 Tracker 数据。';
-	@override String video_subscription_group_release_count({required Object count}) => '共 ${count} 个发布';
-	@override String get download_task_priority => '排队优先级';
-	@override String get download_task_priority_high => '高';
-	@override String get download_task_priority_normal => '普通';
-	@override String get download_task_priority_low => '低';
-	@override String get library_view_import => '导入';
-	@override String get quick_import_title => '快速导入';
-	@override String get media_source_section_title => '常驻来源';
-	@override String get book_import_folder => '导入文件夹';
-	@override String get book_import_folder_as_source => '设为常驻来源';
-	@override String get book_import_folder_as_source_hint => '以后自动扫描此文件夹里的新书';
-	@override String get book_import_folder_once => '仅导入这一次';
-	@override String get library_empty_go_import => '去导入';
-	@override String get game_import_drop_hint => '也可以把 .exe 文件直接拖进游戏库添加';
-	@override String get library_view_sources => '来源';
-	@override String get video_setting_secondary_av_delay => '副字幕调轴';
-	@override String get video_setting_secondary_av_delay_hint => '副字幕独立偏移；未单独设置时跟随主字幕调轴。';
-	@override String get video_setting_secondary_delay_follow => '跟随主字幕';
-	@override String video_subtitle_secondary_delay_osd({required Object ms}) => '副字幕同步：${ms} ms';
-	@override String get video_subtitle_secondary_delay_follow_osd => '副字幕同步：跟随主字幕';
-	@override String get video_setting_subtitle_anchor => '主字幕锚定';
-	@override String get video_subtitle_anchor_bottom => '底部';
-	@override String get video_subtitle_anchor_top => '顶部';
-	@override String get video_setting_subtitle_drag_adjust => '拖拽调整位置';
-	@override String get video_subtitle_drag_adjust_hint => '上下拖动字幕调整位置';
-	@override String get anki_connect_mobile_disabled_key_cleared => '移动端使用 AnkiConnect 必须填 API key，清空后已自动关闭该开关，Anki 改回走内置后端。';
-	@override String manga_import_batch_hint({required Object n}) => '该文件夹里有 ${n} 个整卷文件，将逐卷各导入为一本，书名取各自的文件名。';
-	@override String manga_import_batch_done({required Object imported, required Object skipped, required Object failed}) => '导入完成：成功 ${imported} 卷，跳过 ${skipped} 卷，失败 ${failed} 卷。';
-	@override String get srt_book_reimport => '重新导入';
-	@override String get srt_book_reimport_subtitle_hint => '替换字幕会用新字幕重建这本书的正文。';
-	@override String get srt_book_reimport_no_cues => '该字幕文件解析不出任何字幕行';
-	@override String get srt_book_reimport_body_rebuilt => '正文已重建，请重新打开本书';
-	@override String get video_setting_torrent_backend_embedded => '内置引擎';
-	@override String get download_backend_unsupported_note => '本平台无内置引擎，下载使用外接 qBittorrent。';
-	@override String get aidoku_runtime_unavailable => 'Aidoku 扩展目前仅支持 macOS。';
-	@override String get aidoku_extensions_title => 'Aidoku 扩展';
-	@override String get aidoku_extension_empty => '尚未安装 Aidoku 扩展。';
-	@override String get aidoku_extension_remove => '移除 Aidoku 扩展';
-	@override String get aidoku_extension_warning => 'Aidoku 扩展会执行具有网络访问权限的第三方 WebAssembly 代码。请只导入你信任的来源。';
-	@override String get aidoku_webview_unsupported => '此扩展依赖尚未支持的 Aidoku WebView API。';
-	@override String get aidoku_extension_imported => 'Aidoku 扩展已导入';
-	@override String get aidoku_extension_import => '导入 Aidoku 扩展（.aix）';
-	@override String get aidoku_extension_confirm_title => '安装 Aidoku 扩展？';
-	@override String get aidoku_extension_version => '版本';
-	@override String get aidoku_repository_url => '仓库地址';
-	@override String get aidoku_repository_sources => '仓库扩展';
-	@override String get aidoku_repository_identity_mismatch => '下载的扩展包与仓库索引不一致。';
-	@override String get aidoku_repository_installed => '已安装';
-	@override String get aidoku_repository_search => '搜索仓库扩展';
-	@override String get aidoku_repository_install => '安装';
-	@override String get aidoku_repository_update => '更新';
-	@override String get aidoku_repository_add => '添加 Aidoku 仓库';
-	@override String get aidoku_repository_added => 'Aidoku 仓库已添加';
-	@override String get aidoku_repository_browse => '浏览仓库';
-	@override String get aidoku_repository_hint => '粘贴 Aidoku 仓库主页或 index.min.json 地址。默认已填入社区仓库。';
-	@override String get aidoku_repository_remove => '移除仓库';
-	@override String get aidoku_repository_empty => '尚未添加 Aidoku 仓库。';
-	@override String get dict_language_tooltip => '内容语言';
-	@override String get dict_language_title => '词典内容语言';
-	@override String get dict_language_description => '决定这本词典的文字用哪种字体渲染。自动 = 用词典自己声明的语言。';
-	@override String get dict_language_auto => '自动';
-	@override String get book_language_action => '内容语言';
-	@override String get book_language_description => '决定这本书的正文用哪种字体渲染。自动 = 用 EPUB 里声明的语言。';
-	@override String get local_audio_reference_unavailable => '没有「所有文件访问权限」无法引用原文件，已改为导入副本。';
-	@override String get video_collection_scrape => '刮削资料与封面';
-	@override String get update_testflight_open => '打开 TestFlight';
-	@override String get update_app_store_open => '打开 App Store';
-	@override String get update_release_page_open => '发布页';
-	@override String update_install_gal_hook_holder({required Object pid, required Object path}) => 'Galgame 捕获组件被占用：PID ${pid} - ${path}（这是你正在玩的游戏或它的捕获宿主进程）。请先关闭游戏再更新。';
-	@override String get game_hook_reason_protocol_mismatch => '捕获组件与本体版本不一致。组件已内置在 Fushi 里，不需要单独安装：先彻底关掉游戏再重开一次（游戏进程里可能还挂着上一次注入的旧组件）。若重开后仍提示不一致，说明磁盘上的组件比 Fushi 旧——上次更新 Fushi 时游戏正开着，安装器换不掉被占用的组件文件。请关闭所有游戏，然后重新运行一次 Fushi 安装程序。';
-	@override String get video_mining_still_format => '视频卡片截图格式';
-	@override String get video_mining_still_format_hint => '选「制卡时截图」或「字幕开头截图」时那张图用什么编码。JPG 体积小得多；PNG 无损但大好几倍。动图封面不受影响，它跟随「动图格式」那一项。';
-	@override String get mining_still_format_jpg => 'JPG（体积更小）';
-	@override String get mining_still_format_png => 'PNG（无损）';
-	@override String get gal_mining_still_format => '游戏卡片截图格式';
-	@override String get gal_mining_still_format_hint => '与视频卡片同样的格式，但分开保存。游戏窗口抓图本身是 PNG：选 PNG 无损但大好几倍，选 JPG 与这些截图过去的压缩方式一致。';
-	@override String get manga_source_cloudflare_blocked => '该来源受 Cloudflare 保护，内置阅读器暂时无法访问。';
-	@override String get manga_global_search_title => '搜索全部来源';
-	@override String get manga_global_search_hint => '搜索所有已启用来源';
-	@override String get manga_global_search_prompt => '输入书名，一次搜索所有已启用的漫画来源。';
-	@override String get manga_global_search_no_sources => '没有已启用的漫画来源，请先安装并启用扩展。';
-	@override String get anki_connect_addon_install => '安装 AnkiConnect';
-	@override String get anki_connect_addon_install_hint => '从 AnkiWeb 下载 AnkiConnect 并交给正在运行的 Anki。Anki 会弹窗请你确认，之后按它的提示重启。';
-	@override String get anki_connect_addon_handed => '已把 AnkiConnect 交给 Anki。请在 Anki 弹出的确认框中同意，然后按 Anki 的提示重启。';
-	@override String get anki_connect_addon_anki_not_running => '没有检测到正在运行的 Anki。请先启动 Anki 桌面版再试。';
-	@override String anki_connect_addon_download_failed({required Object error}) => '无法从 AnkiWeb 下载 AnkiConnect：${error}';
-	@override String get anki_connect_addon_invalid => 'AnkiWeb 返回的内容不是可用的插件包。';
-	@override String anki_connect_addon_launch_failed({required Object error}) => '无法把插件交给 Anki：${error}';
-	@override String get settings_content_language_title => '默认内容语言';
-	@override String get settings_content_language_unset => '未设置';
-	@override String get settings_content_language_description => '内容没有声明语言时用的默认值。书/视频/游戏/词典各自的设置会覆盖它。';
-	@override String get manga_ocr_lens_language_label => '识别语言';
+  // Translations
+  @override
+  String get action_exit => '退出';
+  @override
+  String get action_favorite => '收藏';
+  @override
+  String activity_days_ago({required Object n}) => '${n} 天前';
+  @override
+  String activity_hours_ago({required Object n}) => '${n} 小时前';
+  @override
+  String get activity_just_now => '刚刚';
+  @override
+  String activity_minutes_ago({required Object n}) => '${n} 分钟前';
+  @override
+  String get add_to_collection => '加入合集';
+  @override
+  String get anime_download_back => '返回';
+  @override
+  String get anime_download_batch => '合集';
+  @override
+  String get anime_download_category_all => '全部';
+  @override
+  String get anime_download_category_english => '英译';
+  @override
+  String get anime_download_category_non_english => '非英译';
+  @override
+  String get anime_download_category_raw => '生肉';
+  @override
+  String get anime_download_delete => '删除';
+  @override
+  String anime_download_episode_count({required Object count}) => '${count} 集';
+  @override
+  String get anime_download_generic_download => '下载';
+  @override
+  String get anime_download_generic_hint => '磁力链接';
+  @override
+  String get anime_download_generic_title => '粘贴链接下载（书、视频等）';
+  @override
+  String get anime_download_include_subs => '附带字幕';
+  @override
+  String get anime_download_kind_auto => '自动';
+  @override
+  String get anime_download_kind_book => '书';
+  @override
+  String get anime_download_kind_video => '视频';
+  @override
+  String get anime_download_magnet_invalid => '磁力链接无效';
+  @override
+  String get anime_download_no_results => '无结果';
+  @override
+  String get anime_download_no_subs => '无字幕';
+  @override
+  String get anime_download_no_tasks => '暂无下载任务';
+  @override
+  String get anime_download_nyaa_query => 'Nyaa 查询词';
+  @override
+  String get anime_download_play_now => '边下边播';
+  @override
+  String get anime_download_play_now_fail => '暂不可提前入库（元数据未就绪或连接失败），稍后再试';
+  @override
+  String get anime_download_play_now_ok => '已入库，可从视频库打开边下边播';
+  @override
+  String get anime_download_push => '推送下载';
+  @override
+  String get anime_download_push_failed => '推送到 qBittorrent 失败';
+  @override
+  String get anime_download_pushed => '已推送，下载完成后自动入库';
+  @override
+  String get anime_download_refresh => '刷新';
+  @override
+  String get anime_download_relocate => '重命名 / 移动';
+  @override
+  String anime_download_relocate_engine_failed({required Object reason}) =>
+      '失败，磁盘与库都未改动：${reason}';
+  @override
+  String get anime_download_relocate_hint =>
+      'Fushi 通过下载引擎改名/移动，因此不会掐断做种。在资源管理器里改名则永远无法挽回。';
+  @override
+  String anime_download_relocate_library_failed({required Object reason}) =>
+      '文件已移动，但库仍指向旧路径：${reason}';
+  @override
+  String get anime_download_relocate_move_title => '移动到文件夹';
+  @override
+  String get anime_download_relocate_no_files => '该任务还没有可改名的文件（元数据未就绪）';
+  @override
+  String anime_download_relocate_ok({required Object rows}) =>
+      '已改名 / 移动，同步更新 ${rows} 个库条目';
+  @override
+  String get anime_download_relocate_pick_folder => '选择目标文件夹';
+  @override
+  String get anime_download_relocate_rename_title => '重命名文件';
+  @override
+  String get anime_download_retry => '重试';
+  @override
+  String get anime_download_search => '搜索';
+  @override
+  String get anime_download_search_error_proxy_hint => '站点无法直连时，可在下载设置中配置网络代理。';
+  @override
+  String get anime_download_search_failed => '搜索失败或超时，请点重试';
+  @override
+  String get anime_download_search_hint => '番剧名';
+  @override
+  String get anime_download_search_start_hint => '在上方搜索番剧名，自动匹配种子与字幕。';
+  @override
+  String get anime_download_sort_date => '发布时间';
+  @override
+  String get anime_download_sort_seeders => '做种数';
+  @override
+  String get anime_download_sort_size => '体积';
+  @override
+  String get anime_download_store_unavailable => '下载计划存储不可用';
+  @override
+  String get anime_download_subs_badge => '字幕';
+  @override
+  String get anime_download_subs_failed => '字幕搜索失败，请点重试';
+  @override
+  String get anime_download_subs_need_key => '在上方填写 Jimaku API key 后可搜字幕';
+  @override
+  String get anime_download_tasks => '下载任务';
+  @override
+  String get anime_download_title => '番剧下载';
+  @override
+  String get anime_download_trusted => 'Trusted';
+  @override
+  String get anime_download_trusted_only => '仅 Trusted';
+  @override
+  String get anki_allow_duplicates => '允许重复';
+  @override
+  String get anki_allow_duplicates_hint => '添加卡片时跳过重复检查';
+  @override
+  String get anki_card_action_failed => '卡片操作失败，请重试。';
+  @override
+  String get anki_compact_glossaries => '紧凑释义';
+  @override
+  String get anki_compact_glossaries_hint => '使用紧凑格式显示释义';
+  @override
+  String get anki_connect_api_key => 'API 密钥';
+  @override
+  String get anki_connect_host => '主机';
+  @override
+  String get anki_connect_port => '端口';
+  @override
+  String get anki_create_lapis => '创建 Lapis 卡组';
+  @override
+  String get anki_create_lapis_exists => 'Lapis 笔记类型和卡组已存在，已选中。';
+  @override
+  String anki_create_lapis_failed({required Object error}) =>
+      '无法创建 Lapis 卡组：${error}';
+  @override
+  String get anki_create_lapis_hint => '向 Anki 添加 Lapis 笔记类型和 Lapis 卡组并自动选中。';
+  @override
+  String get anki_create_lapis_success => '已创建 Lapis 笔记类型和卡组。';
+  @override
+  String get anki_deck => '牌组';
+  @override
+  String get anki_duplicate_scope => '查重范围';
+  @override
+  String get anki_duplicate_scope_collection => '整个收藏集';
+  @override
+  String get anki_duplicate_scope_deck => '所选卡组（含子卡组）';
+  @override
+  String get anki_duplicate_scope_deck_root => '根卡组（含全部子卡组）';
+  @override
+  String get anki_duplicate_scope_hint =>
+      '查询「这个词是否已经有卡」时搜索哪些卡组。仅 AnkiConnect（桌面 Anki）生效；AnkiDroid 始终整库查重。';
+  @override
+  String get anki_error_collection_unavailable =>
+      'AnkiDroid 数据库当前不可用：请先打开 AnkiDroid 至少一次，确认它没有在同步且已开启 API，然后重试。';
+  @override
+  String get anki_error_connection_refused =>
+      '无法连接 Anki：连接被拒绝。请确认 Anki 桌面版正在运行，且已安装 AnkiConnect 插件。';
+  @override
+  String get anki_error_connection_timeout => '无法连接 Anki：连接超时。请检查主机、端口和防火墙设置。';
+  @override
+  String get anki_error_connection_unknown => '无法导出到 Anki：发生未知的连接错误。详情见错误日志。';
+  @override
+  String get anki_error_http => '无法导出到 Anki：连接 AnkiConnect 时发生 HTTP 错误。';
+  @override
+  String get anki_error_permission_denied =>
+      'AnkiDroid 尚未授予卡片访问权限。请在刚弹出的系统授权对话框中允许，然后再次点击按钮制卡。';
+  @override
+  String get anki_fetch => '刷新牌组与笔记类型';
+  @override
+  String get anki_fetching => '获取中...';
+  @override
+  String get anki_field_mappings => '字段映射';
+  @override
+  String get anki_field_not_mapped => '未映射';
+  @override
+  String get anki_mine_to_server => '制卡到已配对设备';
+  @override
+  String get anki_mine_to_server_hint =>
+      '把制卡发送到已配对主机的 Anki（用该设备的牌组与设置），而非本机。需先在互联/同步里完成配对。';
+  @override
+  String get anki_mined_action_add_duplicate => '新增为重复卡';
+  @override
+  String get anki_mined_action_overwrite => '覆写这张卡';
+  @override
+  String get anki_mined_action_view => '查看 / 在 Anki 中打开';
+  @override
+  String get anki_mined_card_subtitle => '选择对这张已存在的卡片做什么。';
+  @override
+  String get anki_mined_card_title => '卡片已在 Anki 中';
+  @override
+  String anki_mined_multiple_matches({required Object count}) =>
+      '${count} 张匹配的卡片';
+  @override
+  String get anki_not_configured => '点击「刷新」加载你的 Anki 牌组与笔记类型。';
+  @override
+  String get anki_note_open_failed => '无法在 Anki 中打开这张卡片。';
+  @override
+  String get anki_note_type => '笔记类型';
+  @override
+  String get anki_note_viewer_empty => '这张卡片没有可读取的字段。';
+  @override
+  String get anki_note_viewer_open_in_anki => '在 Anki 中打开';
+  @override
+  String get anki_note_viewer_title => '已存在的卡片';
+  @override
+  String get anki_open_no_card => '在 Anki 中没有找到这个词的卡片。';
+  @override
+  String get anki_overwrite_scope => '覆写范围';
+  @override
+  String get anki_overwrite_scope_all => '全部匹配的卡片';
+  @override
+  String get anki_overwrite_scope_hint => '绿色 ✓ 能覆写哪些已制卡片';
+  @override
+  String get anki_overwrite_scope_latest => '仅最近一张';
+  @override
+  String get anki_refresh_hint => '在 Anki 里新建或重命名牌组、笔记类型后，点此刷新。';
+  @override
+  String anki_select_handlebar({required Object field}) => '选择 ${field} 的值';
+  @override
+  String get anki_settings_label => 'Anki 设置';
+  @override
+  String get anki_tag_default_section => '默认标签';
+  @override
+  String get anki_tag_include_category => '添加来源分类标签';
+  @override
+  String get anki_tag_include_category_hint => '书籍标「book」、视频标「video」、游戏标「game」';
+  @override
+  String get anki_tag_include_fushi => '添加「fushi」标签';
+  @override
+  String get anki_tag_include_fushi_hint => '为每张 Fushi 制出的卡片打上标记';
+  @override
+  String get anki_tags => '标签';
+  @override
+  String get anki_tags_hint => '空格分隔，每张卡片都会添加';
+  @override
+  String get app_icon_label => '应用图标';
+  @override
+  String get app_icon_presets => '预设';
+  @override
+  String get app_ui_scale => '界面大小';
+  @override
+  String get app_ui_scale_hint =>
+      '整体缩放应用界面（文字、图标、控件一起放大缩小），范围 30% 到 300%。大屏设备上界面偏小可调高。';
+  @override
+  String get app_version => '应用版本';
+  @override
+  String get apply_theme => '应用主题';
+  @override
+  String get audio_clip_failed => '无法截取音频片段 — 音频源可能缺失或无法读取';
+  @override
+  String get audio_import => '导入音频';
+  @override
+  String get audio_panel_add_audio => '添加音频';
+  @override
+  String get audio_panel_auto => '自动';
+  @override
+  String get audio_panel_pick_new_subtitle => '选择新字幕文件';
+  @override
+  String get audio_source_added => '已添加音频来源';
+  @override
+  String audio_source_dns_error({required Object host}) =>
+      '音频源连接失败：无法解析 "${host}" — 请检查网络，或在设置中移除此音频源';
+  @override
+  String get audio_source_edit_target_gone => '该音频来源已不存在，编辑已丢弃';
+  @override
+  String get audio_source_edit_url => '编辑音频来源链接';
+  @override
+  String audio_source_error({required Object detail}) => '音频源错误：${detail}';
+  @override
+  String get audio_source_fushi_interconnect => 'Fushi 互联';
+  @override
+  String get audio_source_loopback_warning => '指向本机地址，换机后需重新指向';
+  @override
+  String audio_source_request_error({required Object detail}) =>
+      '音频源请求失败：${detail}';
+  @override
+  String audio_source_timeout({required Object host}) =>
+      '音频源超时："${host}" — 服务器无响应，请稍后重试或更换音频源';
+  @override
+  String get audio_source_updated => '已更新音频来源';
+  @override
+  String get audio_source_url_invalid => '链接需为 http(s) 且含 term / reading 占位符';
+  @override
+  String get audio_unavailable => '未找到音频。';
+  @override
+  String get audio_volume => '音量';
+  @override
+  String get audiobook_attached => '已附加有声书';
+  @override
+  String get audiobook_audio_missing => '音频文件丢失';
+  @override
+  String get audiobook_background_play => '退出后继续播放';
+  @override
+  String get audiobook_background_play_hint =>
+      '关闭时，退出阅读页即停止有声书播放；开启后退出仍在后台继续播放。';
+  @override
+  String get audiobook_export_clip => '导出片段视频';
+  @override
+  String get audiobook_export_clip_failed => '片段导出失败';
+  @override
+  String get audiobook_export_clip_in_progress => '正在导出片段…';
+  @override
+  String get audiobook_export_clip_no_selection => '请先选中文本再导出片段';
+  @override
+  String get audiobook_export_clip_no_text => '该选区没有可渲染的文本';
+  @override
+  String get audiobook_export_clip_saved => '片段已保存';
+  @override
+  String get audiobook_export_clip_unsupported_range => '该选区暂不支持导出（跨章或跨音频文件）';
+  @override
+  String get audiobook_import => '导入有声书';
+  @override
+  String get audiobook_import_error => '导入失败';
+  @override
+  String audiobook_import_error_copy_failed({required Object name}) =>
+      '文件复制失败：${name}';
+  @override
+  String audiobook_import_error_disk_full({required Object size}) =>
+      '磁盘空间不足。所需空间：${size}';
+  @override
+  String get audiobook_import_success => '有声书导入成功';
+  @override
+  String get audiobook_load_error => '加载有声书失败。';
+  @override
+  String get audiobook_pick_alignment => '选择对齐文件';
+  @override
+  String get audiobook_reference_original => '引用原文件（不复制）';
+  @override
+  String get audiobook_reference_original_desc =>
+      '音频保留在原位置、按原路径播放；原文件被移动或删除后这本书会失效。';
+  @override
+  String get audiobook_relocate => '重新定位文件';
+  @override
+  String get audiobook_relocate_done => '音频已重新定位';
+  @override
+  String get auto_add_book_name_to_tags => '自动添加书名到标签';
+  @override
+  String auto_chapter({required Object n}) => '第 ${n} 章';
+  @override
+  String get auto_read_on_lookup => '查词时自动朗读';
+  @override
+  String get auto_search => '自动搜索';
+  @override
+  String get auto_search_debounce_delay => '自动搜索防抖延迟';
+  @override
+  String get auto_select_search_window => '自动选择搜索窗口';
+  @override
+  String get auto_select_search_window_hint => '导入时探测多档 window，取命中率最高的那档';
+  @override
+  String get av_sync => '音画同步';
+  @override
+  String get av_sync_reset => '归零';
+  @override
+  String get back => '返回';
+  @override
+  String get background_color => '背景颜色';
+  @override
+  String get background_color_desc => '阅读器页面背景';
+  @override
+  String get backup_category_audiobooks => '有声书音频';
+  @override
+  String get backup_category_audiobooks_desc => '有声书音频与对齐数据';
+  @override
+  String get backup_category_books => '书籍内容';
+  @override
+  String get backup_category_books_desc => '书籍文件（EPUB 及解压内容）';
+  @override
+  String get backup_category_dictionary => '词典';
+  @override
+  String get backup_category_dictionary_desc => '已导入的词典及其文件';
+  @override
+  String get backup_category_fonts => '自定义字体';
+  @override
+  String get backup_category_fonts_desc => '已导入的自定义字体文件';
+  @override
+  String get backup_category_local_audio => '本地音频数据库';
+  @override
+  String get backup_category_local_audio_desc => '本地发音音频库';
+  @override
+  String get backup_category_profiles => '配置方案';
+  @override
+  String get backup_category_profiles_desc => '配置方案';
+  @override
+  String get backup_category_progress => '阅读进度';
+  @override
+  String get backup_category_progress_desc => '阅读进度与书签';
+  @override
+  String get backup_category_settings => '设置';
+  @override
+  String get backup_category_settings_desc => '应用与阅读器设置';
+  @override
+  String get backup_category_statistics => '统计数据';
+  @override
+  String get backup_category_statistics_desc => '阅读、视频与制卡统计';
+  @override
+  String get backup_category_videos => '视频';
+  @override
+  String get backup_category_videos_desc => '本地视频文件';
+  @override
+  String get backup_export => '导出备份';
+  @override
+  String get backup_export_books_all => '全部书籍';
+  @override
+  String backup_export_books_selected({required Object count}) =>
+      '已选 ${count} 本书';
+  @override
+  String get backup_export_categories_hint =>
+      '勾选要打包进备份的内容。取消勾选「书籍」会连同这些书的正文和记录一并移除。';
+  @override
+  String get backup_export_categories_title => '选择要导出的内容';
+  @override
+  String get backup_export_choose_books => '选择书籍';
+  @override
+  String get backup_export_choose_videos => '选择视频';
+  @override
+  String backup_export_failed({required Object message}) => '备份导出失败：${message}';
+  @override
+  String get backup_export_hint =>
+      '选择要包含的内容。阅读数据（进度、统计、设置）始终包含；取消「书籍」可完整排除书籍，取消大文件（本地音频、视频）可缩小备份。';
+  @override
+  String get backup_export_no_books => '没有可选的书籍';
+  @override
+  String get backup_export_no_videos => '没有可选的视频';
+  @override
+  String get backup_export_select_all => '全选';
+  @override
+  String get backup_export_select_none => '全不选';
+  @override
+  String get backup_export_success => '备份导出成功';
+  @override
+  String get backup_export_videos_all => '全部视频';
+  @override
+  String backup_export_videos_selected({required Object count}) =>
+      '已选 ${count} 个视频';
+  @override
+  String get backup_exporting => '正在创建备份…';
+  @override
+  String get backup_import => '导入备份';
+  @override
+  String backup_import_confirm(
+          {required Object date,
+          required Object bookCount,
+          required Object statsCount}) =>
+      '这将用 ${date} 的备份替换所有当前数据。\n\n${bookCount} 本书，${statsCount} 条统计记录。\n\n恢复后应用将重启。';
+  @override
+  String get backup_import_confirm_title => '恢复备份？';
+  @override
+  String get backup_import_contents_hint => '取消勾选某项即可跳过它。';
+  @override
+  String get backup_import_contents_title => '此备份包含';
+  @override
+  String backup_import_failed({required Object message}) => '备份导入失败：${message}';
+  @override
+  String get backup_import_hint => '从备份文件恢复。应用将会重启。';
+  @override
+  String get backup_import_invalid => '无效的备份文件';
+  @override
+  String backup_import_merge_preview(
+          {required Object bookCount, required Object progressCount}) =>
+      '合并将新增 ${bookCount} 本书、更新 ${progressCount} 条阅读进度。';
+  @override
+  String get backup_import_mode_label => '导入方式';
+  @override
+  String get backup_import_mode_merge => '合并到现有库';
+  @override
+  String get backup_import_mode_overwrite => '覆盖整库';
+  @override
+  String get backup_import_overlay_title => '正在导入备份';
+  @override
+  String get backup_import_overlay_warning => '正在恢复数据，请勿关闭应用。';
+  @override
+  String get backup_import_preserve_sync_note => '本设备的同步配置（账户与凭据）将保留。';
+  @override
+  String get backup_import_restart_button => '立即重启';
+  @override
+  String get backup_import_settings_off_hint => '保留本机字体/外观/Profile，只恢复书籍与阅读数据。';
+  @override
+  String get backup_import_settings_on_hint => '完整恢复：字体、外观、Profile 都来自备份。';
+  @override
+  String get backup_import_settings_toggle => '导入设置与 Profile';
+  @override
+  String get backup_import_success => '备份已恢复。正在重启…';
+  @override
+  String get backup_import_validating_hint => '正在校验并预览备份内容，请稍候。';
+  @override
+  String get backup_import_validating_title => '正在读取备份…';
+  @override
+  String backup_schema_newer({required Object version}) =>
+      '此备份需要更新版本的应用（schema ${version}）。请先更新。';
+  @override
+  String batch_add_to_collection_success({required Object n}) =>
+      '已把 ${n} 项加入合集。';
+  @override
+  String batch_delete_confirm({required Object n}) => '确定删除 ${n} 本书？此操作不可撤销。';
+  @override
+  String batch_delete_confirm_video({required Object n}) =>
+      '确定删除 ${n} 个视频？此操作不可撤销。';
+  @override
+  String batch_delete_mixed_confirm({required Object n, required Object m}) =>
+      '删除 ${n} 个媒体、解散 ${m} 个合集？此操作无法撤销。';
+  @override
+  String batch_delete_mixed_success({required Object n, required Object m}) =>
+      '已删除 ${n} 个媒体、解散 ${m} 个合集。';
+  @override
+  String batch_delete_success({required Object n}) => '已删除 ${n} 本书。';
+  @override
+  String batch_delete_success_video({required Object n}) => '已删除 ${n} 个视频。';
+  @override
+  String batch_dissolve_confirm({required Object m}) =>
+      '解散 ${m} 个合集？只解除分组，不删除媒体本体。';
+  @override
+  String batch_dissolve_success({required Object m}) => '已解散 ${m} 个合集。';
+  @override
+  String get batch_invert_selection => '反选';
+  @override
+  String get batch_select => '选择';
+  @override
+  String get batch_select_all => '全选';
+  @override
+  String batch_selected_count({required Object n}) => '已选 ${n} 项';
+  @override
+  String get batch_tag_add => '添加';
+  @override
+  String batch_tag_added({required Object n, required Object name}) =>
+      '已为 ${n} 本书添加标签「${name}」。';
+  @override
+  String batch_tag_added_video({required Object n, required Object name}) =>
+      '已为 ${n} 个视频添加标签「${name}」。';
+  @override
+  String get batch_tag_apply => '应用';
+  @override
+  String get batch_tag_keep => '保持';
+  @override
+  String get batch_tag_remove => '移除';
+  @override
+  String batch_tag_removed({required Object n, required Object name}) =>
+      '已从 ${n} 本书移除标签「${name}」。';
+  @override
+  String batch_tag_removed_video({required Object n, required Object name}) =>
+      '已从 ${n} 个视频移除标签「${name}」。';
+  @override
+  String get batch_tag_title => '批量管理标签';
+  @override
+  String get book_continue_reading => '继续阅读';
+  @override
+  String get book_css_editor_cancel => '取消';
+  @override
+  String get book_css_editor_confirm_reset => '将此文件的 CSS 重置为默认值？';
+  @override
+  String get book_css_editor_confirm_reset_all => '将所有文件的 CSS 重置为默认值？';
+  @override
+  String get book_css_editor_discard => '丢弃';
+  @override
+  String get book_css_editor_edit_css => '编辑书籍 CSS';
+  @override
+  String get book_css_editor_no_css_files => '此书中未找到 CSS 文件。';
+  @override
+  String get book_css_editor_no_extract_dir => '未找到书籍目录。请重新导入书籍以编辑 CSS。';
+  @override
+  String get book_css_editor_reset_all => '全部重置';
+  @override
+  String get book_css_editor_reset_current => '重置当前';
+  @override
+  String get book_css_editor_reset_done => 'CSS 已重置。';
+  @override
+  String get book_css_editor_save => '保存';
+  @override
+  String get book_css_editor_saved => 'CSS 已保存。';
+  @override
+  String get book_css_editor_title => '书籍 CSS 编辑器';
+  @override
+  String get book_css_editor_unsaved_changes => '未保存的更改';
+  @override
+  String get book_css_editor_unsaved_changes_message => '有未保存的更改。是否丢弃？';
+  @override
+  String get book_directory_not_found => '未找到书籍目录。';
+  @override
+  String get book_edit_author => '作者';
+  @override
+  String get book_file_not_found => '找不到书籍文件';
+  @override
+  String get book_import_duplicate_cancel => '否，取消';
+  @override
+  String get book_import_duplicate_cancelled => '已取消导入';
+  @override
+  String get book_import_duplicate_keep => '是，加后缀';
+  @override
+  String book_import_duplicate_message({required Object name}) =>
+      '书架中已存在《${name}》。仍要导入吗？「是」会加序号后缀导入，「否」取消添加这本书。';
+  @override
+  String get book_import_duplicate_title => '同名书籍';
+  @override
+  String get book_mark_completed_action => '标记为已读完';
+  @override
+  String get book_mark_uncompleted_action => '取消已读完';
+  @override
+  String get book_marked_completed => '已标记为读完';
+  @override
+  String get book_marked_uncompleted => '已取消完成标记';
+  @override
+  String get book_mode => '书籍模式';
+  @override
+  String book_read_progress({required Object percent}) => '已读 ${percent}%';
+  @override
+  String get book_scrape_cover => '在线刮削封面';
+  @override
+  String get book_scrape_empty => '无匹配封面';
+  @override
+  String get book_scrape_failed => '封面获取失败';
+  @override
+  String get book_scrape_hint => '书名 / 作者';
+  @override
+  String get book_scrape_search => '搜索';
+  @override
+  String get book_scrape_search_failed => '搜索失败，请点击「搜索」重试';
+  @override
+  String get book_scrape_title => '在线匹配封面';
+  @override
+  String get book_scrape_use => '使用';
+  @override
+  String get book_search => '书内搜索';
+  @override
+  String get book_search_hint => '输入搜索内容…';
+  @override
+  String get book_search_no_results => '未找到结果';
+  @override
+  String book_search_results({required Object n}) => '${n} 条结果';
+  @override
+  String get books => '书架';
+  @override
+  String get browser_extension_enable_server_first =>
+      '提示：请先在上方开启「Yomitan API 服务器」并设置 API 密钥，扩展才能被自动配置为可用连接。';
+  @override
+  String get browser_extension_mobile_unsupported =>
+      '手机浏览器无法加载此扩展，请直接在 app 内阅读器/视频中查词。';
+  @override
+  String get browser_extension_page_intro =>
+      '在电脑的 Chrome / Edge 里直接划词查词、解析字幕、一键制卡。先在下面准备扩展文件，再按步骤加载到浏览器。';
+  @override
+  String get browser_extension_prepare_button => '准备扩展文件';
+  @override
+  String get browser_extension_prepare_hint =>
+      '会自动开启查词服务并把扩展解压到本机，扩展文件夹路径已复制到剪贴板。';
+  @override
+  String get browser_extension_reinstall_button => '重新准备 / 刷新文件';
+  @override
+  String get browser_extension_server_off => '查词服务未开启';
+  @override
+  String get browser_extension_server_on => '查词服务已开启';
+  @override
+  String get browser_extension_status_connected => '插件已连接';
+  @override
+  String get browser_extension_status_never => '尚未检测到插件';
+  @override
+  String get browser_extension_step_dev_mode => '打开右上角的「开发者模式」开关。';
+  @override
+  String get browser_extension_step_done_auto =>
+      '完成。扩展已自动配置好，装好后会直接连上本应用查词，你不用手动填写任何设置。';
+  @override
+  String get browser_extension_step_load_unpacked => '点击「加载已解压的扩展程序」。';
+  @override
+  String get browser_extension_step_open_page => '打开浏览器扩展管理页：';
+  @override
+  String get browser_extension_step_pick_folder => '选择下方的扩展文件夹（其路径已复制到剪贴板）。';
+  @override
+  String get browser_extension_step_verify => '验证插件已加载并连上本机';
+  @override
+  String get browser_extension_verify_button => '检测连接';
+  @override
+  String get browser_extension_verify_checking => '检测中…';
+  @override
+  String get browser_extension_verify_connected => '已检测到插件已连接，一切正常。';
+  @override
+  String get browser_extension_verify_not_detected =>
+      '还没检测到插件。请确认已在浏览器里加载并启用扩展后再检测。';
+  @override
+  String get browser_extension_version_app => 'App 内置';
+  @override
+  String get browser_extension_version_browser => '浏览器中加载';
+  @override
+  String get browser_extension_version_label => '扩展版本';
+  @override
+  String get browser_extension_version_mismatch =>
+      '浏览器中加载的扩展不是最新版本：如有需要先重新准备扩展，再到浏览器扩展管理页（chrome://extensions）点「重新加载」。';
+  @override
+  String browser_extension_yomitan_port_conflict({required Object port}) =>
+      '端口 ${port} 正被其他进程占用（通常是浏览器拉起的 yomitan-api 组件，即一个 Python 进程）。可直接结束该进程，或在 Yomitan 高级设置中关闭 Yomitan API，然后重新开启 Fushi 的 Yomitan API 服务器。';
+  @override
+  String get cancel => '取消';
+  @override
+  String card_cover_degraded_to_static({required Object reason}) =>
+      '卡片封面已降级为静态帧（动图不可用）：${reason}';
+  @override
+  String get card_duplicate => '重复卡片，未导出。';
+  @override
+  String get card_export_failed => '导出卡片失败。';
+  @override
+  String card_export_failed_detail({required Object reason}) =>
+      '导出卡片失败：${reason}';
+  @override
+  String get card_export_not_configured => 'Anki 尚未配置。请打开 Anki 设置并点击获取。';
+  @override
+  String card_exported({required Object deck}) => '卡片已导出到『${deck}』。';
+  @override
+  String card_exported_audio_failed({required Object reason}) =>
+      '卡片已导出，但音频下载失败（${reason}）。';
+  @override
+  String get card_mined_no_sentence_captured =>
+      '卡片已创建，但未捕获到句子（请重新选词，或该处内容无法识别句子）。';
+  @override
+  String get card_mined_unmapped_sentence_audio_field =>
+      '卡片已创建并含句子音频，但当前 Anki 卡片模板没有字段映射到它。请把某字段映射到 {sentence-audio}。';
+  @override
+  String get card_mined_unmapped_sentence_field =>
+      '卡片已创建，但当前 Anki 卡片模板没有任何字段映射到句子。请用设置页『一键创建 Lapis 卡组』，或把某字段映射到 {sentence}。';
+  @override
+  String get card_mined_without_sentence_audio => '已制卡，但本次选区找不到句子音频。';
+  @override
+  String get card_mining_pending => '制卡中…';
+  @override
+  String card_overwritten({required Object deck}) => '卡片已覆盖到『${deck}』。';
+  @override
+  String get change_source => '切换来源';
+  @override
+  String get changelog_empty => '未获取到更新日志，请检查网络或代理设置。';
+  @override
+  String get changelog_open_releases => '打开发布页';
+  @override
+  String get changelog_prerelease => '预发布';
+  @override
+  String chapter_progress(
+          {required Object idx,
+          required Object total,
+          required Object suffix,
+          required Object pct}) =>
+      '第 ${idx} / ${total} 章${suffix} · ${pct}%';
+  @override
+  String get clear => '清除';
+  @override
+  String get clear_dictionary_description => '此操作将清除所有历史词典搜索结果。确定吗？';
+  @override
+  String get clear_dictionary_title => '清除词典搜索历史';
+  @override
+  String get clipboard_history_clear => '清空';
+  @override
+  String get clipboard_history_empty => '暂无复制记录';
+  @override
+  String get clipboard_history_title => '复制历史';
+  @override
+  String get clipboard_panel_block_capture => '防截屏 / 防录屏';
+  @override
+  String get clipboard_panel_block_capture_hint =>
+      '把查词和剪贴板悬浮窗从截图、录屏、直播串流中排除（Windows）。关闭后，截图、录屏和串流即可拍到查词悬浮窗。';
+  @override
+  String get clipboard_panel_opacity => '面板不透明度';
+  @override
+  String get clipboard_panel_opacity_hint => '整个面板的不透明度——可透视底下的游戏/网页';
+  @override
+  String get clipboard_panel_window_title => 'Fushi 剪贴板查词';
+  @override
+  String get clipboard_text_window_bg_opacity => '文字窗背景不透明度';
+  @override
+  String get clipboard_text_window_bg_opacity_hint =>
+      '透明剪切板文字窗的背景不透明度——0% 时背景全透只露文字，透视底下的游戏';
+  @override
+  String get clipboard_text_window_title => '剪贴板文字';
+  @override
+  String get collapse_dictionaries => '折叠词典显示';
+  @override
+  String get collection_bookmark => '书签';
+  @override
+  String get collection_clear_confirm => '确定清空所选收藏？此操作不可撤销。';
+  @override
+  String get collection_clear_scope => '清空范围';
+  @override
+  String get collection_collapse => '折叠';
+  @override
+  String collection_continue_progress({required Object n}) => '继续看 第${n}集';
+  @override
+  String get collection_empty => '合集为空';
+  @override
+  String get collection_expand => '展开';
+  @override
+  String get collection_export_all_books => '全部书籍';
+  @override
+  String get collection_export_all_mined => '全部制卡句';
+  @override
+  String get collection_export_all_words => '全部收藏词';
+  @override
+  String get collection_export_dedupe => '按句去重';
+  @override
+  String get collection_export_failed => '导出失败';
+  @override
+  String get collection_export_favorites_scope => '收藏句';
+  @override
+  String get collection_export_format => '格式';
+  @override
+  String get collection_export_mined_title => '制卡语句';
+  @override
+  String get collection_export_no_items => '没有可导出的内容';
+  @override
+  String get collection_export_pick_book => '选择书籍';
+  @override
+  String get collection_export_save => '保存导出';
+  @override
+  String get collection_export_saved => '已保存导出';
+  @override
+  String get collection_export_scope => '导出范围';
+  @override
+  String get collection_export_sentences_title => '收藏句子';
+  @override
+  String get collection_export_words_title => '收藏词';
+  @override
+  String get collection_loading_hint => '正在加载收藏并匹配音频文件…';
+  @override
+  String get collection_member_removed => '已移出合集';
+  @override
+  String get collection_merge_title => '合并合集';
+  @override
+  String get collection_merged => '已合并合集。';
+  @override
+  String get collection_mined => '制卡句';
+  @override
+  String get collection_open => '打开';
+  @override
+  String get collection_play => '播放';
+  @override
+  String get collection_remove_member => '移出合集';
+  @override
+  String get collection_remove_member_confirm => '将该条目移出合集？条目本身保留。';
+  @override
+  String get collection_sentence => '句子';
+  @override
+  String get collection_sort_by_imported => '按导入时间排序';
+  @override
+  String get collection_sort_by_title => '按名称排序';
+  @override
+  String get collection_view_all => '查看全部';
+  @override
+  String collection_watched_progress(
+          {required Object done, required Object total}) =>
+      '已看完 ${done}/${total}';
+  @override
+  String get collection_word => '单词';
+  @override
+  String get collections => '收藏夹';
+  @override
+  String get color_container => '容器色';
+  @override
+  String get color_container_desc => '开关轨道、播放栏';
+  @override
+  String get color_link => '链接颜色';
+  @override
+  String get color_link_desc => '阅读器超链接颜色';
+  @override
+  String get color_primary => '主色';
+  @override
+  String get color_primary_desc => '音频高亮、按钮、开关';
+  @override
+  String get color_sentence_audio_highlight => '音频高亮';
+  @override
+  String get color_sentence_audio_highlight_desc => '有声书播放时跟随当前句的高亮颜色';
+  @override
+  String get color_secondary => '辅色';
+  @override
+  String get color_secondary_desc => '词典条目、书架标签';
+  @override
+  String get color_tertiary => '第三色';
+  @override
+  String get color_tertiary_desc => '收藏夹、阅读统计';
+  @override
+  String get columns_per_page => '每页列数';
+  @override
+  String get combine_into_series => '组合成系列';
+  @override
+  String get copied => '已复制';
+  @override
+  String get copied_to_clipboard => '已复制到剪贴板。';
+  @override
+  String get copy => '复制';
+  @override
+  String get copy_error => '复制错误';
+  @override
+  String get crash_dump_empty => '暂无崩溃转储';
+  @override
+  String crash_dump_label({required Object n}) => '崩溃转储 (${n})';
+  @override
+  String get crash_dump_open_folder => '打开转储文件夹';
+  @override
+  String get crash_dump_privacy_notice =>
+      '崩溃转储文件（.dmp）含进程内存快照，可能包含你正在阅读的文本、查过的词或其它应用内数据。仅分享给你信任的开发者。';
+  @override
+  String get crash_dump_share => '分享转储';
+  @override
+  String get crash_dump_share_subject => 'Fushi 崩溃转储';
+  @override
+  String get create_series => '新建系列';
+  @override
+  String get creator_action_add_to_stash => '添加到暂存';
+  @override
+  String get creator_action_copy_to_clipboard => '复制到剪贴板';
+  @override
+  String get creator_action_play_audio => '播放音频';
+  @override
+  String get creator_action_share => '分享';
+  @override
+  String get creator_enhancement_audio_recorder => '录音';
+  @override
+  String get creator_enhancement_camera => '相机';
+  @override
+  String get creator_enhancement_clear_field => '清空字段';
+  @override
+  String get creator_enhancement_crop_image => '裁剪图片';
+  @override
+  String get creator_enhancement_local_audio => '本地音频';
+  @override
+  String get creator_enhancement_open_stash => '打开暂存';
+  @override
+  String get creator_enhancement_pick_audio => '选择音频';
+  @override
+  String get creator_enhancement_pick_image => '选择图片';
+  @override
+  String get creator_enhancement_pop_from_stash => '从暂存取出';
+  @override
+  String get creator_enhancement_save_tags => '保存标签';
+  @override
+  String get creator_enhancement_search_dictionary => '查词典';
+  @override
+  String get creator_enhancement_sentence_picker => '选句';
+  @override
+  String get creator_enhancement_text_segmentation => '分词';
+  @override
+  String get creator_export_card => '创建卡片';
+  @override
+  String get creator_field_audio => '词条音频';
+  @override
+  String get creator_field_audio_sentence => '例句音频';
+  @override
+  String get creator_field_cloze_after => '填空后文';
+  @override
+  String get creator_field_cloze_before => '填空前文';
+  @override
+  String get creator_field_cloze_inside => '填空内容';
+  @override
+  String get creator_field_collapsed_meaning => '折叠释义';
+  @override
+  String get creator_field_context => '上下文';
+  @override
+  String get creator_field_cue_sentence => '字幕例句';
+  @override
+  String get creator_field_expanded_meaning => '展开释义';
+  @override
+  String get creator_field_frequency => '词频';
+  @override
+  String get creator_field_furigana => '振假名';
+  @override
+  String get creator_field_hidden_meaning => '隐藏释义';
+  @override
+  String get creator_field_image => '图片';
+  @override
+  String get creator_field_meaning => '释义';
+  @override
+  String get creator_field_notes => '笔记';
+  @override
+  String get creator_field_pitch_accent => '声调';
+  @override
+  String get creator_field_reading => '读音';
+  @override
+  String get creator_field_sentence => '例句';
+  @override
+  String get creator_field_tags => '标签';
+  @override
+  String get creator_field_term => '词条';
+  @override
+  String get custom_dict_css => '自定义 CSS';
+  @override
+  String get custom_dict_css_global => '全局（所有词典）';
+  @override
+  String get custom_fonts => '自定义字体';
+  @override
+  String get custom_fonts_add_system => '添加系统字体';
+  @override
+  String get custom_fonts_archive_error => '解压失败';
+  @override
+  String get custom_fonts_catalog_title => '字体库';
+  @override
+  String get custom_fonts_download_failed => '下载失败';
+  @override
+  String get custom_fonts_downloading => '正在下载…';
+  @override
+  String get custom_fonts_drag_hint => '拖拽排列字体优先级';
+  @override
+  String get custom_fonts_empty => '未添加自定义字体';
+  @override
+  String get custom_fonts_font_roles => '字体用途';
+  @override
+  String get custom_fonts_import_file => '导入字体文件';
+  @override
+  String get custom_fonts_import_url => '从 URL 导入';
+  @override
+  String custom_fonts_imported_count({required Object count}) =>
+      '已导入 ${count} 个字体';
+  @override
+  String get custom_fonts_manage => '管理字体';
+  @override
+  String get custom_fonts_no_fonts_in_archive => '压缩包中未找到字体文件';
+  @override
+  String get custom_fonts_recommended => '推荐字体';
+  @override
+  String get custom_fonts_removed => '已移除字体';
+  @override
+  String get custom_fonts_search_hint => '搜索字体';
+  @override
+  String get custom_theme => '自定义主题';
+  @override
+  String custom_theme_default_name({required Object n}) => '自定义 ${n}';
+  @override
+  String get custom_theme_long_press_hint => '点击切换 · 长按编辑';
+  @override
+  String get custom_theme_name => '名称';
+  @override
+  String get dark_mode => '深色模式';
+  @override
+  String get dark_mode_dark => '深色';
+  @override
+  String get dark_mode_light => '浅色';
+  @override
+  String get dark_mode_system => '跟随系统';
+  @override
+  String data_root_unavailable_message({required Object path}) =>
+      '你设置的数据位置 ${path} 暂时读不到（盘可能在休眠、被占用或未连接）。你的数据是安全的、原封不动留在那里——没有丢失。请点「重试」,等盘就绪即可用回你的数据；或选择用默认位置临时启动（不会改动你原来的数据）。';
+  @override
+  String get data_root_unavailable_title => '数据位置未响应';
+  @override
+  String get data_root_use_default_button => '仍用默认位置启动';
+  @override
+  String get data_storage_change_button => '更改位置';
+  @override
+  String get data_storage_change_confirm_body =>
+      'Fushi 会把所有数据迁移到新文件夹，然后自动重启。迁移过程中请勿关闭应用。';
+  @override
+  String get data_storage_change_confirm_title => '更改数据存储位置？';
+  @override
+  String get data_storage_location_default => '默认位置';
+  @override
+  String get data_storage_location_hint => 'Fushi 存放媒体库、有声书和数据库的位置（仅桌面）。';
+  @override
+  String get data_storage_location_title => '数据存储位置';
+  @override
+  String data_storage_migrate_failed({required Object message}) =>
+      '数据迁移失败：${message}';
+  @override
+  String get data_storage_migrate_failed_restart => '重启';
+  @override
+  String get data_storage_migrate_failed_suggestions =>
+      '请改选一个空目录后重试。不要选择应用安装目录，并确保目标位置没有文件正在被占用。';
+  @override
+  String get data_storage_migrate_failed_title => '数据迁移失败';
+  @override
+  String data_storage_migrate_overlay_progress(
+          {required Object copied, required Object total}) =>
+      '正在复制文件：${copied} / ${total}';
+  @override
+  String get data_storage_migrate_overlay_title => '正在迁移数据';
+  @override
+  String get data_storage_migrate_overlay_warning =>
+      '正在迁移数据，请勿关闭应用或电脑，迁移完成后会自动重启。';
+  @override
+  String get data_storage_migrate_success => '数据已迁移，正在重启…';
+  @override
+  String get data_storage_migrating => '正在迁移数据…';
+  @override
+  String get data_storage_reject_install_dir =>
+      '所选目录是应用的安装位置，不能用来存放数据。请另选一个空目录。';
+  @override
+  String get data_storage_restart_failed => '数据已迁移，但自动重启失败，请手动重新打开 Fushi。';
+  @override
+  String db_downgrade_message(
+          {required Object dbVersion, required Object appVersion}) =>
+      '此数据库由更新版本的 Fushi 创建（schema v${dbVersion}）。当前应用版本过旧（v${appVersion}）。已阻止打开以保护你的数据。请更新应用后重试。';
+  @override
+  String get db_downgrade_title => '请更新 Fushi';
+  @override
+  String get db_unrecoverable_message =>
+      '自动修复后仍无法打开数据库，文件可能已损坏。可在设置中恢复备份，或清除应用数据重新开始。';
+  @override
+  String get db_unrecoverable_title => '数据库已损坏';
+  @override
+  String get debug_log_share_subject => 'Fushi 调试日志';
+  @override
+  String debug_log_title({required Object count}) => '调试日志 (${count})';
+  @override
+  String get debug_log_toggle => '启用调试日志';
+  @override
+  String get decrease => '减少';
+  @override
+  String get deduplicate_pitch_accents => '音调去重';
+  @override
+  String get delete_collection => '删除合集';
+  @override
+  String get delete_collection_also_books => '同时删除其中的书';
+  @override
+  String get delete_collection_also_videos => '同时删除其中的视频（保留你的原始视频文件）';
+  @override
+  String get delete_custom_theme => '删除主题';
+  @override
+  String get delete_custom_theme_confirm => '删除这个自定义主题？此操作不可撤销。';
+  @override
+  String get delete_in_progress => '删除中';
+  @override
+  String get delete_prompt_delete_selected => '删除选中';
+  @override
+  String get delete_prompt_message => '以下内容已在其他设备删除，也从本机删除吗？';
+  @override
+  String get delete_prompt_select_all => '全选';
+  @override
+  String get delete_prompt_title => '其他设备已删除';
+  @override
+  String get delete_scope_keep_local_desc => '其他设备保留';
+  @override
+  String get delete_scope_sync_everywhere => '从所有设备删除';
+  @override
+  String get delete_scope_sync_everywhere_desc => '其他设备下次同步时会确认删除';
+  @override
+  String get design_system_auto => '自动';
+  @override
+  String get design_system_hint => '切换应用的视觉风格';
+  @override
+  String get design_system_label => '设计系统';
+  @override
+  String get desktop_clipboard_auto_lookup => '复制后自动查词';
+  @override
+  String get desktop_clipboard_auto_lookup_hint => '关闭后面板只显示复制到的文字，点词才查词。';
+  @override
+  String get desktop_clipboard_destination => '查词弹窗位置';
+  @override
+  String get desktop_clipboard_destination_main => '主窗口';
+  @override
+  String get desktop_clipboard_destination_panel => '悬浮面板';
+  @override
+  String get desktop_clipboard_destination_text_window => '透明文字窗';
+  @override
+  String get desktop_clipboard_destination_transient => '光标处弹卡';
+  @override
+  String get desktop_clipboard_enabled => '桌面剪贴板查词';
+  @override
+  String get desktop_clipboard_enabled_hint => '监听剪贴板 + 全局快捷键弹出查词窗（桌面·实验性）';
+  @override
+  String get desktop_clipboard_window_mode => '窗口置顶策略';
+  @override
+  String get desktop_clipboard_window_mode_always => '始终置顶';
+  @override
+  String get desktop_clipboard_window_mode_hint => '控制 Fushi 是否保持在其他窗口上方';
+  @override
+  String get desktop_clipboard_window_mode_lookup => '仅查词期间';
+  @override
+  String get desktop_clipboard_window_mode_normal => '不置顶';
+  @override
+  String get dialog_add => '添加';
+  @override
+  String get dialog_append => '追加';
+  @override
+  String get dialog_cancel => '取消';
+  @override
+  String get dialog_clear => '清除';
+  @override
+  String get dialog_clear_all_dictionaries => '删除所有词典';
+  @override
+  String get dialog_close => '关闭';
+  @override
+  String get dialog_connect => '连接';
+  @override
+  String get dialog_content_dictionary_clear => '清空词典数据库会同时清除所有历史搜索结果。';
+  @override
+  String get dialog_content_dictionary_delete =>
+      '单独删除词典可能比清空整个数据库耗时更长，且会清除所有历史搜索结果。';
+  @override
+  String get dialog_create => '新建';
+  @override
+  String get dialog_crop => '裁剪';
+  @override
+  String get dialog_delete => '删除';
+  @override
+  String get dialog_done => '完成';
+  @override
+  String get dialog_edit => '编辑';
+  @override
+  String get dialog_edit_info => '编辑信息';
+  @override
+  String get dialog_exit => '退出';
+  @override
+  String get dialog_export => '导出';
+  @override
+  String get dialog_import => '导入';
+  @override
+  String get dialog_import_dictionary => '导入词典';
+  @override
+  String get dialog_import_folder => '导入文件夹词典';
+  @override
+  String get dialog_importing => '正在导入…';
+  @override
+  String get dialog_launch_ankidroid => '启动 ANKIDROID';
+  @override
+  String get dialog_ok => '确定';
+  @override
+  String get dialog_play => '播放';
+  @override
+  String get dialog_read => '阅读';
+  @override
+  String get dialog_record => '录制';
+  @override
+  String get dialog_replace => '替换';
+  @override
+  String get dialog_save => '保存';
+  @override
+  String get dialog_search => '搜索';
+  @override
+  String get dialog_select => '选择';
+  @override
+  String get dialog_share => '分享';
+  @override
+  String get dialog_stash => '暂存';
+  @override
+  String get dialog_stop => '停止';
+  @override
+  String get dialog_title_dictionary_clear => '清除所有词典？';
+  @override
+  String dialog_title_dictionary_delete({required Object name}) =>
+      '删除『${name}』？';
+  @override
+  String get dict_auto_update => '自动更新';
+  @override
+  String get dict_auto_update_hint => '启动时检查词典更新';
+  @override
+  String dict_auto_update_last({required Object time}) => '上次成功检查：${time}';
+  @override
+  String get dict_auto_update_never => '从未';
+  @override
+  String get dict_category_frequency => '词频';
+  @override
+  String get dict_category_grammar => '语法';
+  @override
+  String get dict_category_ja_en => '日英';
+  @override
+  String get dict_category_ja_ja => '日日';
+  @override
+  String get dict_category_ja_other => '其他日语';
+  @override
+  String get dict_category_kanji => '汉字';
+  @override
+  String get dict_category_names => '人名';
+  @override
+  String get dict_category_supplementary => '补充';
+  @override
+  String get dict_download_browse => '下载推荐词典';
+  @override
+  String dict_download_button({required Object count}) => '下载 (${count})';
+  @override
+  String get dict_download_complete => '下载完成。';
+  @override
+  String dict_download_failed({required Object error}) => '下载失败：${error}';
+  @override
+  String get dict_download_installed => '已安装';
+  @override
+  String get dict_download_language => '你的语言';
+  @override
+  String dict_download_partial(
+          {required Object success,
+          required Object total,
+          required Object error}) =>
+      '成功 ${success} / ${total}。失败：${error}';
+  @override
+  String get dict_download_select_title => '选择词典';
+  @override
+  String dict_downloading({required Object name}) => '正在下载 ${name}…';
+  @override
+  String dict_import_failed_summary({required Object n}) => '导入 ${n} 个词典失败';
+  @override
+  String get dict_import_started => '正在后台导入词典…';
+  @override
+  String dict_import_success_summary({required Object n}) => '已导入 ${n} 本词典';
+  @override
+  String get dict_update_check => '检查更新';
+  @override
+  String get dict_update_checking => '正在检查更新…';
+  @override
+  String dict_update_done({required Object name}) => '${name} 已更新。';
+  @override
+  String dict_update_failed({required Object error}) => '更新失败：${error}';
+  @override
+  String get dict_update_interval_daily => '每天';
+  @override
+  String get dict_update_interval_monthly => '每月';
+  @override
+  String get dict_update_interval_weekly => '每周';
+  @override
+  String get dict_update_latest => '已是最新。';
+  @override
+  String dict_update_name_mismatch_body(
+          {required Object incoming, required Object existing}) =>
+      '所选文件是「${incoming}」，但你正在更新「${existing}」。仍要替换吗？';
+  @override
+  String get dict_update_name_mismatch_title => '词典名称不一致';
+  @override
+  String get dict_update_none => '所有词典均为最新。';
+  @override
+  String dict_update_summary(
+          {required Object updated,
+          required Object current,
+          required Object failed}) =>
+      '${updated} 个已更新，${current} 个最新，${failed} 个失败。';
+  @override
+  String get dict_update_tooltip => '更新词典';
+  @override
+  String dict_update_updating({required Object name}) => '正在更新 ${name}…';
+  @override
+  String get dictionaries => '词典管理';
+  @override
+  String get dictionaries_delete_failed => '删除全部词典失败';
+  @override
+  String get dictionaries_deleting_data => '正在删除词典数据…';
+  @override
+  String get dictionaries_menu_empty => '请先导入词典以便使用';
+  @override
+  String get dictionary_delete_failed => '删除词典失败';
+  @override
+  String get dictionary_font_size => '词典字号';
+  @override
+  String get dictionary_font_size_zoom_hint => 'Ctrl+滚轮可直接缩放查词弹窗内容';
+  @override
+  String get dictionary_section_frequency => '词频词典';
+  @override
+  String get dictionary_section_kanji => '汉字词典';
+  @override
+  String get dictionary_section_pitch => '音调词典';
+  @override
+  String get dictionary_section_term => '释义词典';
+  @override
+  String get dictionary_settings => '词典设置';
+  @override
+  String get dictionary_type_frequency => '词频';
+  @override
+  String get dictionary_type_pitch => '音调';
+  @override
+  String get dictionary_type_term => '释义';
+  @override
+  String get dictionary_unrecognized_format => '无法识别的词典格式';
+  @override
+  String get dismiss_swipe_sensitivity => '滑动关闭灵敏度';
+  @override
+  String get display_settings => '排版设置';
+  @override
+  String get download_backend_not_configured => '请先配置下载后端。';
+  @override
+  String get download_clear_finished => '清除已完成';
+  @override
+  String get download_detail_backend_offline =>
+      '原下载后端当前离线。这里仍显示已保存的任务信息，但实时参数暂不可用。';
+  @override
+  String get download_network_proxy_auto => '自动';
+  @override
+  String get download_network_proxy_auto_hint =>
+      '仅影响 AniList、Nyaa 和 Jimaku。自动模式先读环境变量，再读已启用的系统代理；种子流量不受影响。';
+  @override
+  String get download_network_proxy_custom => '自定义';
+  @override
+  String get download_network_proxy_custom_label => '自定义代理';
+  @override
+  String get download_network_proxy_direct => '直连';
+  @override
+  String get download_network_proxy_section => '发现网络';
+  @override
+  String get download_open_settings => '去设置';
+  @override
+  String get download_save_root_change => '更改目录';
+  @override
+  String get download_save_root_create_failed => '无法创建该目录，请检查磁盘与权限。';
+  @override
+  String get download_save_root_fallback_warning => '配置的下载目录当前不可用，已回退到默认目录。';
+  @override
+  String get download_save_root_hint => '新的下载任务保存到这里；已有任务仍留在原目录，不会被移动。';
+  @override
+  String get download_save_root_not_absolute => '请选择一个绝对路径的目录。';
+  @override
+  String get download_save_root_not_writable => '该目录不可写入。';
+  @override
+  String get download_save_root_reset => '恢复默认';
+  @override
+  String get download_save_root_title => '下载目录';
+  @override
+  String get download_settings => '下载设置';
+  @override
+  String get download_status_cancelled => '已取消';
+  @override
+  String get download_status_queued => '排队中';
+  @override
+  String download_subscription_after_episode({required Object episode}) =>
+      '第 ${episode} 集之后';
+  @override
+  String get download_subscription_check_all => '全部检查';
+  @override
+  String get download_subscription_check_now => '立即检查';
+  @override
+  String download_subscription_choice_hint(
+          {required Object group, required Object resolution}) =>
+      '将追踪 ${group} · ${resolution}，有新的单集发布时自动加入下载。';
+  @override
+  String get download_subscription_created => '已加入下载并创建订阅';
+  @override
+  String get download_subscription_delete => '删除订阅';
+  @override
+  String download_subscription_delete_confirm({required Object title}) =>
+      '删除“${title}”的订阅吗？已创建的下载任务会保留。';
+  @override
+  String get download_subscription_download_and_create => '下载并订阅';
+  @override
+  String get download_subscription_empty_body => '在“发现”中选择一个单集发布，然后使用“下载并订阅”。';
+  @override
+  String get download_subscription_empty_title => '还没有订阅';
+  @override
+  String download_subscription_last_checked({required Object time}) =>
+      '上次检查：${time}';
+  @override
+  String download_subscription_latest_episode({required Object episode}) =>
+      '最近加入：第 ${episode} 集';
+  @override
+  String get download_subscription_never_checked => '尚未检查';
+  @override
+  String get download_subscription_running_hint =>
+      'Fushi 运行期间每 15 分钟检查一次已启用的订阅。';
+  @override
+  String get download_subscription_unavailable_hint =>
+      '请选择能识别字幕组的单集发布后再订阅；合集仍可单次下载。';
+  @override
+  String get download_subscriptions_tab => '订阅';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      '任务操作失败：${error}';
+  @override
+  String get download_task_delete => '删除任务';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      '删除“${title}”的下载任务吗？';
+  @override
+  String get download_task_delete_files => '同时删除已下载文件';
+  @override
+  String get download_task_details => '查看详情';
+  @override
+  String get download_tasks_tab => '任务';
+  @override
+  String get download_test_connection => '测试连接';
+  @override
+  String get download_test_connection_failed => '连接失败，请检查地址与账号密码。';
+  @override
+  String download_test_connection_ok({required Object version}) =>
+      '连接成功（版本：${version}）';
+  @override
+  String get drag_drop_need_card_target => '请把字幕或音频拖到某本书或某个视频上';
+  @override
+  String get drag_drop_unsupported_on_books => '请把书籍文件拖到这里。视频或词典文件请切到对应页面。';
+  @override
+  String get drag_drop_unsupported_on_dictionary =>
+      '请把 .zip、.dsl 或 .mdx 词典文件拖到这里。CSS 只能和词典包一起导入。';
+  @override
+  String get drag_drop_unsupported_on_video =>
+      '请把视频、播放列表或字幕拖到这里。书籍或词典文件请切到对应页面。';
+  @override
+  String get edit_custom_theme => '编辑自定义主题';
+  @override
+  String get eink_mode => '墨水屏模式';
+  @override
+  String get eink_mode_hint => '纯黑白主题、无动画、线式高亮，适合墨水屏设备';
+  @override
+  String get enable_swipe_to_close => '滑动关闭弹窗';
+  @override
+  String get epub_delete_error => '删除书籍失败';
+  @override
+  String get epub_delete_title => '删除书籍';
+  @override
+  String get epub_parse_fallback => '已从数据库修复书籍元数据';
+  @override
+  String get error_ankidroid_api => 'AnkiDroid 错误';
+  @override
+  String get error_ankidroid_api_content =>
+      '与 AnkiDroid 通信时出错。\n\n请确认 AnkiDroid 的后台服务已启用，并已授予所需权限。';
+  @override
+  String get error_copied => '错误已复制到剪贴板';
+  @override
+  String get error_load_failed => '加载出错';
+  @override
+  String get error_log_diagnostics_section => '诊断/取证信息（非应用错误）';
+  @override
+  String get error_log_empty => '暂无错误日志';
+  @override
+  String error_log_label({required Object n}) => '错误日志 (${n})';
+  @override
+  String get error_log_previous_run => '历史日志（上次运行前）';
+  @override
+  String get error_log_share_subject => 'Fushi 错误日志';
+  @override
+  String get extension_popup_independent_size => '浏览器扩展独立尺寸';
+  @override
+  String get extension_popup_independent_size_hint =>
+      '让浏览器扩展查词弹窗使用独立最大尺寸，而非跟随 app 内查词弹窗';
+  @override
+  String get extension_popup_max_height => '扩展弹窗最大高度';
+  @override
+  String get extension_popup_max_width => '扩展弹窗最大宽度';
+  @override
+  String get external_window_capture_failed => '窗口截图失败';
+  @override
+  String get external_window_current_game => '当前游戏';
+  @override
+  String get external_window_mining => '外部窗口挖矿';
+  @override
+  String get external_window_no_windows => '未找到可捕获的窗口';
+  @override
+  String get external_window_none => '未绑定窗口（点此选择）';
+  @override
+  String get external_window_refresh => '刷新窗口列表';
+  @override
+  String get external_window_select => '选择目标窗口';
+  @override
+  String get external_window_unbind => '解除窗口绑定';
+  @override
+  String get external_window_unsupported => '外部窗口挖矿仅支持 Windows';
+  @override
+  String get failed_online_service => '与在线服务通信失败';
+  @override
+  String get favorite_added => '句子已收藏';
+  @override
+  String get favorite_removed => '句子已取消收藏。';
+  @override
+  String favorites({required Object n}) => '收藏 (${n})';
+  @override
+  String field_fallback_used(
+          {required Object field, required Object secondField}) =>
+      '${field} 字段使用 ${secondField} 作为备选搜索词。';
+  @override
+  String file_count({required Object count}) => '${count} 个文件';
+  @override
+  String get floating_dict_close => '关闭';
+  @override
+  String get floating_dict_title => '词典';
+  @override
+  String get floating_lyric_bg_opacity => '悬浮字幕背景不透明度';
+  @override
+  String get floating_lyric_button_bg_opacity => '悬浮字幕按钮底色透明度';
+  @override
+  String get floating_lyric_click_lookup => '点击悬浮字幕查词';
+  @override
+  String get floating_lyric_click_lookup_hint => '锁定悬浮字幕位置时仍可保留点击查词。';
+  @override
+  String get floating_lyric_close => '关闭';
+  @override
+  String get floating_lyric_context_lines => '悬浮字幕上下文行数';
+  @override
+  String get floating_lyric_context_lines_hint =>
+      '0 只显示当前行(单行,与今天一致);设 1-3 在当前行上下各显示这么多行上下文';
+  @override
+  String get floating_lyric_corner_radius => '悬浮字幕圆角';
+  @override
+  String get floating_lyric_corner_radius_hint => '0 = 各平台默认圆角；调大让字幕条与按钮更圆';
+  @override
+  String get floating_lyric_font_size => '悬浮字幕字号';
+  @override
+  String get floating_lyric_hint => '将当前播放的字幕句悬浮显示在其他应用之上。';
+  @override
+  String get floating_lyric_lock => '锁定';
+  @override
+  String get floating_lyric_next => '下句';
+  @override
+  String get floating_lyric_no_audio => '这本书没有可听的音频';
+  @override
+  String get floating_lyric_permission_hint => '显示悬浮歌词需要悬浮窗权限。';
+  @override
+  String get floating_lyric_permission_hint_coloros =>
+      '系统拒绝授予悬浮窗权限时：请用文件管理器找到安装包覆盖安装一次，或在开发者选项中关闭权限监控后重试。';
+  @override
+  String get floating_lyric_play_pause => '播放';
+  @override
+  String get floating_lyric_previous => '上句';
+  @override
+  String get floating_lyric_text_opacity => '悬浮字幕文字透明度';
+  @override
+  String get floating_lyric_toggle_action => '悬浮字幕';
+  @override
+  String get floating_lyric_unavailable_hint => '无法显示悬浮字幕窗口。';
+  @override
+  String get floating_lyric_unlock => '解锁';
+  @override
+  String get floating_lyric_width => '悬浮字幕宽度';
+  @override
+  String get floating_lyric_width_hint => '0 = 平台默认宽度；设定数值让字幕条固定宽';
+  @override
+  String get focus_navigation_enabled => '键盘/手柄焦点导航';
+  @override
+  String get focus_navigation_enabled_hint => '用方向键或手柄移动焦点并显示焦点环。';
+  @override
+  String get folder_picker_permission_required => '浏览文件夹需要存储权限';
+  @override
+  String get follow_audio_off_tooltip => '音频跟随：关闭';
+  @override
+  String get follow_audio_on_tooltip => '音频跟随：开启';
+  @override
+  String get font_color => '字体颜色';
+  @override
+  String get font_color_desc => '阅读器文字颜色';
+  @override
+  String get font_desc_hina_mincho => '柔和装饰性明朝体 · 建议搭配 Noto Sans JP 回退';
+  @override
+  String get font_desc_klee_one => '手写教科书体 · 清晰易读 · 建议搭配 Noto Sans JP 回退';
+  @override
+  String get font_desc_mplus_rounded_1c =>
+      '圆角可爱风格 · 适合轻小说 · 建议搭配 Noto Sans JP 回退';
+  @override
+  String get font_desc_noto_sans_jp => 'Google/Adobe 黑体 · 日语字形优先 · 可变字重';
+  @override
+  String get font_desc_noto_sans_sc => 'Google/Adobe 黑体 · 简中字形优先 · 搭配日文字体做回退';
+  @override
+  String get font_desc_noto_sans_tc => 'Google/Adobe 黑体 · 繁中字形优先';
+  @override
+  String get font_desc_noto_serif_jp => 'Google/Adobe 宋体 · 日语字形优先 · 适合竖排阅读';
+  @override
+  String get font_desc_noto_serif_sc => 'Google/Adobe 宋体 · 简中字形优先 · 搭配日文字体做回退';
+  @override
+  String get font_desc_noto_serif_tc => 'Google/Adobe 宋体 · 繁中字形优先 · 适合竖排阅读';
+  @override
+  String get font_desc_shippori_mincho =>
+      '优雅明朝体 · 文学作品推荐 · 建议搭配 Noto Sans JP 回退';
+  @override
+  String get font_desc_zen_kaku_gothic_new =>
+      '现代角黑体 · 通用阅读 · 建议搭配 Noto Sans JP 回退';
+  @override
+  String get font_desc_zen_maru_gothic => '柔和圆润黑体 · 建议搭配 Noto Sans JP 回退';
+  @override
+  String get font_desc_zen_old_mincho =>
+      '复古明朝体 · 古典文学风格 · 建议搭配 Noto Sans JP 回退';
+  @override
+  String get font_source_file => '文件';
+  @override
+  String get font_source_system => '系统';
+  @override
+  String get font_target_app_ui => '软件系统字体';
+  @override
+  String get font_target_body => '小说正文字体';
+  @override
+  String get font_target_dictionary => '词典字体';
+  @override
+  String get font_target_video_subtitle => '视频字幕字体';
+  @override
+  String get gal_hook_text_font_size => 'Galgame 台词浮窗字号';
+  @override
+  String get gal_hook_text_font_size_hint =>
+      '拖动浮窗右下角只改窗口大小（换来更多可见行），字号在这里单独设置。';
+  @override
+  String get game_add => '添加游戏';
+  @override
+  String get game_already_added => '该游戏已在库中';
+  @override
+  String get game_audio_backend_engine => '引擎 PCM';
+  @override
+  String get game_audio_backend_loopback => '系统 Loopback（混音）';
+  @override
+  String get game_audio_backend_none => '无音频源';
+  @override
+  String get game_audio_backend_resource => '游戏资源音频';
+  @override
+  String get game_audio_duration => '音频时长';
+  @override
+  String get game_audio_fallback_disabled_missing =>
+      '未找到与该句匹配的游戏资源音频；已关闭降级，未制卡';
+  @override
+  String get game_audio_resource_id => '音频资源 ID';
+  @override
+  String get game_audio_tracks => '活跃音轨';
+  @override
+  String get game_auto_cover => '自动获取封面';
+  @override
+  String get game_back_to_capture => '返回捕获工作台';
+  @override
+  String get game_back_to_library => '返回游戏库';
+  @override
+  String get game_capture_active => '正在捕获';
+  @override
+  String get game_capture_degraded_loopback =>
+      '游戏已在运行，但引擎注入失败，改用整机混音兜底，可能混入 BGM 和音效。';
+  @override
+  String get game_capture_description => '启动或绑定游戏，并监控文本、语音、画面与 Anki 出卡。';
+  @override
+  String get game_capture_empty_body => '启动或绑定游戏后，文本与句音状态会显示在这里。';
+  @override
+  String get game_capture_empty_title => '尚未收到台词';
+  @override
+  String get game_capture_launch_failed => '游戏启动或捕获失败';
+  @override
+  String get game_capture_launching => '正在启动游戏并开始捕获…';
+  @override
+  String get game_capture_running => '捕获会话已运行';
+  @override
+  String get game_capture_window_missing =>
+      '游戏进程已启动，但窗口一直没有出现，游戏可能没能真正启动。可以再启动一次试试。';
+  @override
+  String get game_capture_workbench => '捕获工作台';
+  @override
+  String get game_captured_lines => '已捕获台词';
+  @override
+  String get game_card_mapping_missing => 'Anki 字段映射缺少游戏卡片字段';
+  @override
+  String get game_card_sentence_audio_missing => '卡片已创建，但没有句子音频；未借用其他台词的音频。';
+  @override
+  String get game_clear_events => '清空事件';
+  @override
+  String get game_cover_not_found => '游戏目录和程序图标里都没找到可用封面';
+  @override
+  String get game_cover_searching => '正在查找封面...';
+  @override
+  String get game_cover_updated => '封面已更新';
+  @override
+  String get game_dashboard => '首页';
+  @override
+  String get game_detail_missing => '该游戏已不在库中';
+  @override
+  String get game_detail_tab_edit => '编辑';
+  @override
+  String get game_detail_tab_stats => '统计';
+  @override
+  String get game_detail_tab_summary => '简介';
+  @override
+  String get game_diagnostics => '兼容性诊断';
+  @override
+  String get game_diagnostics_subtitle => '会话阶段、端点、音轨与结构化事件';
+  @override
+  String game_drop_imported({required Object count}) => '已添加 ${count} 个游戏';
+  @override
+  String get game_drop_no_exe => '拖入的文件里没有新的游戏 .exe';
+  @override
+  String get game_edit_developer => '开发商';
+  @override
+  String get game_edit_display_name => '显示名';
+  @override
+  String get game_edit_exe_path => '可执行文件路径';
+  @override
+  String get game_edit_invalid_date => '发行日必须是 YYYY-MM-DD 格式';
+  @override
+  String get game_edit_launch_args => '启动参数';
+  @override
+  String get game_edit_launch_args_hint => '启动时传给游戏，例如 -windowed';
+  @override
+  String get game_edit_nsfw => '成人向';
+  @override
+  String get game_edit_release_date => '发行日（YYYY-MM-DD）';
+  @override
+  String get game_edit_save => '保存';
+  @override
+  String get game_edit_saved => '已保存';
+  @override
+  String get game_edit_summary => '简介';
+  @override
+  String get game_edit_tags => '标签（逗号分隔）';
+  @override
+  String get game_edit_user_rating => '我的评分（0-10）';
+  @override
+  String get game_edit_user_review => '我的评价';
+  @override
+  String get game_edit_workdir => '工作目录';
+  @override
+  String get game_empty => '还没有添加游戏';
+  @override
+  String get game_endpoint_phase_connected => '已连接';
+  @override
+  String get game_endpoint_phase_connecting => '连接中';
+  @override
+  String get game_endpoint_phase_retrying => '重试中';
+  @override
+  String get game_endpoint_phase_stopped => '已停止';
+  @override
+  String get game_endpoints_engine_active => '当前文本来自引擎 Hook，这些端点无需连接';
+  @override
+  String get game_endpoints_hint =>
+      '供 Textractor / LunaTranslator 等外部文本工具接入的端口；未使用这些工具可忽略';
+  @override
+  String get game_event_all => '全部事件';
+  @override
+  String get game_event_warnings => '警告及错误';
+  @override
+  String get game_exe_missing => '找不到游戏可执行文件';
+  @override
+  String get game_filter => '筛选';
+  @override
+  String get game_filter_all => '全部';
+  @override
+  String get game_filter_favorited => '已收藏';
+  @override
+  String get game_filter_hide_nsfw => '隐藏成人向';
+  @override
+  String get game_filter_local_only => '有本地 exe';
+  @override
+  String get game_filter_metadata_only => '仅元数据';
+  @override
+  String get game_filter_mined => '已制卡';
+  @override
+  String get game_filter_reset => '清除筛选';
+  @override
+  String get game_filter_source => '条目来源';
+  @override
+  String get game_filter_status => '游玩状态';
+  @override
+  String get game_filter_tags => '标签';
+  @override
+  String get game_filter_with_audio => '有音频';
+  @override
+  String get game_focus_continue => '继续游戏';
+  @override
+  String get game_follow_live => '跟随实时';
+  @override
+  String get game_health => '健康状态';
+  @override
+  String get game_health_anki => 'Anki 出卡';
+  @override
+  String get game_health_audio => '音频来源';
+  @override
+  String get game_health_helper => 'Hook Helper';
+  @override
+  String get game_health_process => '游戏进程';
+  @override
+  String get game_health_text => '文本来源';
+  @override
+  String get game_health_upscaling => '窗口超分';
+  @override
+  String get game_health_window => '游戏窗口';
+  @override
+  String get game_helper_download => '下载';
+  @override
+  String game_helper_download_failed({required Object error}) =>
+      '引擎组件下载失败：${error}';
+  @override
+  String get game_helper_downloading => '正在下载引擎组件…';
+  @override
+  String get game_helper_install_incomplete => '引擎组件安装不完整，请重试';
+  @override
+  String game_helper_needed_body({required Object size}) =>
+      '启动 galgame 需要引擎-hook 注入器组件（约 ${size}）。它含进程注入代码，与主程序分离分发以避免杀软误报。现在下载吗？';
+  @override
+  String get game_helper_needed_title => '需要下载 galgame 引擎组件';
+  @override
+  String get game_helper_size_unknown => '大小未知';
+  @override
+  String get game_helper_verification_failed =>
+      '引擎组件已被拒绝安装：无法校验其完整性（GitHub 上的 .sha256 校验文件不可达、缺失或与下载内容不符）。为避免装入被篡改的注入器代码，本次安装已终止。';
+  @override
+  String get game_home_subtitle => '游戏库与捕获监控';
+  @override
+  String get game_hook_fallback_all_audio_sources_failed =>
+      '引擎语音钩子和系统回环都启动失败，当前无法采集任何音频。';
+  @override
+  String get game_hook_fallback_engine_attach_failed =>
+      '附着引擎语音钩子到正在运行的游戏失败，改用系统混音。';
+  @override
+  String get game_hook_fallback_engine_pcm_unavailable =>
+      '引擎语音钩子已装好，但游戏还没播放过语音。暂时用系统混音，出现第一句语音后会自动切回引擎语音。';
+  @override
+  String get game_hook_fallback_launch_injection_failed =>
+      '游戏已经启动，但早期注入引擎钩子失败，改用系统混音。';
+  @override
+  String get game_hook_fallback_window_not_found =>
+      '音频采集正常，但游戏窗口还没出现，暂时无法截图。窗口出现后会自动绑定。';
+  @override
+  String get game_hook_line_unavailable => '这条捕获台词已不可用，未使用其他台词替代。';
+  @override
+  String get game_hook_reason_access_denied => '游戏以更高权限运行，请以管理员身份启动 Fushi 后重试。';
+  @override
+  String get game_hook_reason_bitness_mismatch =>
+      '钩子组件位数与游戏不匹配（32 位 / 64 位），请重新安装组件。';
+  @override
+  String get game_hook_reason_create_process_failed =>
+      'Fushi 无法启动该游戏，请检查可执行文件路径。';
+  @override
+  String get game_hook_reason_elevation_required =>
+      '该游戏需要管理员权限，请以管理员身份启动 Fushi 后再启动游戏。';
+  @override
+  String get game_hook_reason_game_exe_missing => '保存的游戏可执行文件路径已不存在。';
+  @override
+  String get game_hook_reason_guarded_hook_failed => '受保护的钩子未能在超时内安装，正在自动重试。';
+  @override
+  String get game_hook_reason_handshake_timeout =>
+      '已注入游戏，但超时内没有文本或音频，该引擎可能尚未支持。';
+  @override
+  String get game_hook_reason_helper_missing => '未安装与该游戏位数匹配的语音钩子组件，请先安装后重试。';
+  @override
+  String get game_hook_reason_hook_dll_missing => '钩子组件不完整（缺少 hook 库），请重新安装。';
+  @override
+  String get game_hook_reason_injection_failed =>
+      '注入游戏被拦截，请把 Fushi 与该游戏加入杀毒软件白名单。';
+  @override
+  String get game_hook_reason_ready_timeout => '钩子库未能在超时内加载完成，杀毒软件扫描可能是原因。';
+  @override
+  String get game_hook_reason_resume_failed => '已启动的游戏无法恢复运行并被结束，请重新启动。';
+  @override
+  String get game_hook_reason_shared_memory_unavailable =>
+      '捕获通道无法打开，请重启 Fushi。';
+  @override
+  String get game_hook_reason_spawn_failed => '语音钩子组件无法启动，请检查是否被杀毒软件删除或拦截。';
+  @override
+  String get game_hook_reason_stale_session => '游戏里还残留上一次的捕获会话，请重启一次游戏。';
+  @override
+  String get game_hook_reason_steam_timeout => 'Steam 已接受启动请求，但始终没有出现游戏进程。';
+  @override
+  String get game_hook_reason_target_missing => '没有可捕获的游戏进程或可执行文件。';
+  @override
+  String get game_hook_recapture_empty => '补录窗口内没有录到声音';
+  @override
+  String get game_hook_recapture_saved => '补录语音已绑定到这句';
+  @override
+  String get game_hook_recapture_started => '录音中——请在游戏里重播这句语音';
+  @override
+  String get game_hook_recapture_unavailable => '补录需要系统声音采集可用';
+  @override
+  String get game_kpi_total_games => '游戏总数';
+  @override
+  String get game_kpi_week => '本周';
+  @override
+  String get game_latest_line => '最新台词';
+  @override
+  String get game_launch => '启动游戏';
+  @override
+  String get game_launch_and_capture => '启动并捕获';
+  @override
+  String get game_launch_unsupported => '启动游戏仅支持 Windows 桌面';
+  @override
+  String get game_library => '游戏库';
+  @override
+  String get game_line_audio_encoded => '音频已提取';
+  @override
+  String get game_line_audio_fallback => '已降级';
+  @override
+  String get game_line_audio_matched => '音频就绪';
+  @override
+  String get game_line_audio_missing => '无音频';
+  @override
+  String get game_line_audio_pending => '匹配中';
+  @override
+  String get game_line_audio_unavailable => '仅文本';
+  @override
+  String get game_line_favorite_tooltip => '收藏台词';
+  @override
+  String get game_line_mined => '已制卡';
+  @override
+  String get game_line_preview_failed => '这句还没有可播放的音频';
+  @override
+  String get game_line_preview_tooltip => '播放这句音频';
+  @override
+  String get game_line_track_applied => '已把该轨的语音绑定到这句';
+  @override
+  String get game_line_track_dialog_title => '这句台词的语音轨';
+  @override
+  String get game_line_track_failed => '这条轨在该句附近没有取到语音';
+  @override
+  String get game_line_track_tooltip => '为这句选择语音轨';
+  @override
+  String get game_line_unfavorite_tooltip => '取消收藏';
+  @override
+  String get game_live_lines => '实时台词';
+  @override
+  String get game_manage_tracks => '管理音轨';
+  @override
+  String get game_meta_added => '添加时间';
+  @override
+  String get game_meta_ranking => '游戏排行';
+  @override
+  String get game_meta_source => '数据来源';
+  @override
+  String get game_never_played => '未游玩';
+  @override
+  String get game_no_active_line => '选择一条台词查看句音状态。';
+  @override
+  String get game_no_events => '尚无会话事件';
+  @override
+  String get game_no_match => '没有符合当前筛选的游戏';
+  @override
+  String get game_no_tracks => '尚无音轨数据';
+  @override
+  String get game_open_capture_workspace => '打开捕获工作台';
+  @override
+  String get game_phase_attaching => '附着中';
+  @override
+  String get game_phase_degraded => '降级运行';
+  @override
+  String get game_phase_error => '出错';
+  @override
+  String get game_phase_idle => '空闲';
+  @override
+  String get game_phase_injecting => '注入中';
+  @override
+  String get game_phase_launching => '启动中';
+  @override
+  String get game_phase_resolving => '解析中';
+  @override
+  String get game_phase_running => '运行中';
+  @override
+  String get game_phase_stopping => '停止中';
+  @override
+  String get game_phase_waiting_signals => '等待信号';
+  @override
+  String get game_pipeline => '会话管线';
+  @override
+  String get game_play_status => '游玩状态';
+  @override
+  String get game_random_reroll => '换一个';
+  @override
+  String get game_random_title => '随机推荐';
+  @override
+  String get game_recently_played => '最近玩过';
+  @override
+  String get game_refresh_tracks => '刷新音轨';
+  @override
+  String get game_remove => '移除';
+  @override
+  String get game_rename => '重命名';
+  @override
+  String get game_rename_label => '游戏名称';
+  @override
+  String get game_scrape => '刮削元数据';
+  @override
+  String get game_scrape_applied => '元数据已更新';
+  @override
+  String get game_scrape_failed => '元数据获取失败';
+  @override
+  String get game_scrape_no_result => '没有找到匹配条目';
+  @override
+  String get game_scrape_query => '标题或源 ID';
+  @override
+  String get game_search => '搜索游戏';
+  @override
+  String get game_session_events => '会话事件';
+  @override
+  String get game_session_idle => '尚未开始捕获';
+  @override
+  String get game_session_listening => '正在监听';
+  @override
+  String get game_set_cover => '设置封面';
+  @override
+  String get game_show_hook_text_window => '显示 Hook 文本浮窗';
+  @override
+  String get game_site_score => '站点评分';
+  @override
+  String get game_sort => '排序';
+  @override
+  String get game_sort_added => '添加时间';
+  @override
+  String get game_sort_last_played => '最后游玩';
+  @override
+  String get game_sort_name => '名称';
+  @override
+  String get game_sort_release => '发行日';
+  @override
+  String get game_sort_site_score => '站点评分';
+  @override
+  String get game_sort_user_rating => '我的评分';
+  @override
+  String get game_stat_daily => '每日时长';
+  @override
+  String get game_stat_delete_session => '删除这次记录';
+  @override
+  String get game_stat_last_played => '最后游玩';
+  @override
+  String get game_stat_no_sessions => '还没有游玩记录';
+  @override
+  String get game_stat_session_list => '会话流水';
+  @override
+  String get game_stat_sessions => '游玩次数';
+  @override
+  String get game_stat_today => '今日时长';
+  @override
+  String get game_stat_total_time => '累计时长';
+  @override
+  String get game_status_dropped => '弃坑';
+  @override
+  String get game_status_not_configured => '待验证';
+  @override
+  String get game_status_on_hold => '搁置';
+  @override
+  String get game_status_played => '玩过';
+  @override
+  String get game_status_playing => '在玩';
+  @override
+  String get game_status_ready => '可用';
+  @override
+  String get game_status_unset => '未设置';
+  @override
+  String get game_status_waiting => '等待';
+  @override
+  String get game_status_want_to_play => '想玩';
+  @override
+  String get game_stop_listening => '停止监听';
+  @override
+  String get game_summary_aliases => '别名';
+  @override
+  String get game_summary_all_titles => '全部标题';
+  @override
+  String get game_summary_average_hours => '预计通关时长';
+  @override
+  String get game_summary_none => '还没有简介，刮削元数据后自动填充。';
+  @override
+  String get game_summary_release_date => '发行日';
+  @override
+  String get game_tags_clear => '清空所选';
+  @override
+  String get game_tags_title => '游戏标签';
+  @override
+  String get game_text_endpoints => '文本端点';
+  @override
+  String get game_text_gaps => '序号缺口';
+  @override
+  String get game_text_gaps_hint => '序号缺口 = Hook 文本环丢行计数，0 为正常';
+  @override
+  String get game_text_source_engine => '引擎 Hook';
+  @override
+  String get game_text_source_unknown => '未知来源';
+  @override
+  String get game_text_source_websocket => 'WebSocket';
+  @override
+  String get game_text_thread => '文本线程';
+  @override
+  String game_text_thread_audio_count({required Object count}) =>
+      '${count} 行有音频';
+  @override
+  String get game_text_thread_hint => '像 Luna Translator 一样选择干净的台词线程';
+  @override
+  String get game_track_auto => '自动选择';
+  @override
+  String get game_track_clips => '音频段';
+  @override
+  String get game_track_energy => '能量';
+  @override
+  String get game_track_exclude_bgm => '标记为 BGM';
+  @override
+  String get game_track_exclusion_hint =>
+      '把 BGM/环境音轨标记为排除，自动选源便不会把它当成语音——没有语音的台词也不会再读到 BGM。';
+  @override
+  String get game_track_exclusion_title => '排除音轨';
+  @override
+  String get game_track_preview => '试听该音轨';
+  @override
+  String get game_track_preview_failed => '未能从该音轨抓到最近的音频片段';
+  @override
+  String get game_track_preview_stop => '停止试听';
+  @override
+  String get game_track_restore => '恢复音轨';
+  @override
+  String get game_track_select_as_voice => '设为语音轨';
+  @override
+  String get game_track_select_requires_engine => '选择语音轨需要引擎 Hook 会话处于活动状态';
+  @override
+  String get game_track_voice => '语音';
+  @override
+  String get game_tracks_loopback_hint => '系统回环捕获的是整机混音单流，无法枚举独立音轨。';
+  @override
+  String get game_tracks_pcm_only_hint =>
+      '只有当前音频后端是「引擎 PCM」时，选轨/排除才会真正影响取音。当前后端下方列表只读。';
+  @override
+  String get game_tracks_resource_mode_hint =>
+      '游戏资源音频模式按句直接提取原始语音文件，不经过 PCM 音轨环，因此这里不会出现音轨列表；自动/手动选轨仅对引擎 PCM 模式有意义。';
+  @override
+  String get game_unread_lines => '未读';
+  @override
+  String get game_upscaling => '游戏窗口超分';
+  @override
+  String get game_upscaling_auto => '自动';
+  @override
+  String get game_upscaling_hint_external =>
+      '你的电脑上已经开着一个 Magpie，Fushi 没有去动它。按 Win+Shift+A 就能放大游戏窗口。';
+  @override
+  String get game_upscaling_hint_first_run =>
+      '这次 Magpie 还在做首次初始化。现在按 Win+Shift+A 就能放大；下次启动游戏会自动放大。';
+  @override
+  String get game_upscaling_hint_manual => '按 Win+Shift+A 放大游戏窗口。';
+  @override
+  String get game_upscaling_installed_only => '仅用已装';
+  @override
+  String get game_upscaling_off => '关闭';
+  @override
+  String get game_upscaling_status_active => '窗口超分已开启';
+  @override
+  String get game_upscaling_status_failed => '窗口超分没能启动';
+  @override
+  String get game_upscaling_status_manual => '窗口超分已就绪，但没有自动开始';
+  @override
+  String get game_upscaling_status_unavailable => '窗口超分暂时用不了';
+  @override
+  String get game_user_rating => '我的评分';
+  @override
+  String get game_view_detail => '查看详情';
+  @override
+  String get game_waiting_for_text => '等待文本';
+  @override
+  String game_waveform_range_label(
+          {required Object start,
+          required Object end,
+          required Object duration,
+          required Object total}) =>
+      '${start} - ${end}（时长 ${duration} / 共 ${total}）';
+  @override
+  String get game_waveform_select_title => '选择音频范围';
+  @override
+  String get game_window_bound => '已绑定';
+  @override
+  String get game_window_missing => '未绑定';
+  @override
+  String get games => '游戏';
+  @override
+  String get global_context_capture => '抓取选中文本上下文';
+  @override
+  String get global_context_capture_hint =>
+      '从前台应用读取选区周围文本，在查词弹窗显示当前句（仅 Windows）';
+  @override
+  String go_to_chapter({required Object n}) => '第 ${n} 章';
+  @override
+  String get handlebar_audio => '音频';
+  @override
+  String get handlebar_book_cover => '书籍封面';
+  @override
+  String get handlebar_card_image => '卡片图片（封面 / 视频 GIF）';
+  @override
+  String get handlebar_cue_sentence => '字幕例句';
+  @override
+  String handlebar_deprecated_label({required Object label}) => '${label}（已弃用）';
+  @override
+  String get handlebar_document_title => '文档标题';
+  @override
+  String get handlebar_expression => '词条';
+  @override
+  String get handlebar_frequencies => '词频（HTML）';
+  @override
+  String get handlebar_frequency_harmonic_rank => '词频（排名）';
+  @override
+  String get handlebar_furigana_plain => '振假名';
+  @override
+  String get handlebar_glossary => '释义';
+  @override
+  String get handlebar_glossary_first => '释义（首条）';
+  @override
+  String get handlebar_pitch_accent_categories => '音高类型';
+  @override
+  String get handlebar_pitch_accent_positions => '音高位置';
+  @override
+  String get handlebar_popup_selection_text => '弹窗选中文本';
+  @override
+  String get handlebar_reading => '读音';
+  @override
+  String get handlebar_selected_glossary => '选中的释义';
+  @override
+  String get handlebar_sentence => '例句';
+  @override
+  String get handlebar_sentence_audio => '句子音频';
+  @override
+  String get handlebar_video_clip => '视频片段 (GIF)';
+  @override
+  String get harmonic_frequency => '词频聚合';
+  @override
+  String health_match_summary({required Object pct}) => '匹配 ${pct}%';
+  @override
+  String get highlight_on_tap => '点击时高亮文本';
+  @override
+  String get home_activity => '活动';
+  @override
+  String get home_activity_empty => '暂无活动记录';
+  @override
+  String get home_continue => '继续';
+  @override
+  String get home_filter_added => '导入';
+  @override
+  String get home_filter_all => '全部';
+  @override
+  String get home_filter_game => '游戏';
+  @override
+  String get home_filter_read => '阅读';
+  @override
+  String get home_filter_watch => '观看';
+  @override
+  String get home_recently_added => '最近添加';
+  @override
+  String get home_remote_source => '远端';
+  @override
+  String home_session_count({required Object n}) => '${n} 次';
+  @override
+  String get home_today => '今天';
+  @override
+  String get home_yesterday => '昨天';
+  @override
+  String get hover_auto_lookup => '悬停即查词';
+  @override
+  String get hover_auto_lookup_hint =>
+      '鼠标悬停在文字上即自动查词，无需点击或按住 Shift；最多触发一层弹窗。仅桌面端。';
+  @override
+  String get icon_custom => '自定义';
+  @override
+  String get icon_custom_confirm_body => '将使用所选图片创建主屏幕快捷方式。是否继续？';
+  @override
+  String get icon_custom_confirm_title => '自定义图标';
+  @override
+  String get icon_custom_hint => '点击图标切换，或在下方选择自定义图片。';
+  @override
+  String get icon_default => '默认';
+  @override
+  String get icon_full => '完整';
+  @override
+  String get icon_shortcut_created => '已创建主屏幕快捷方式。';
+  @override
+  String get icon_shortcut_unsupported => '此设备不支持快捷方式。';
+  @override
+  String get icon_switch_success => '应用图标已更改。';
+  @override
+  String get icon_transparent => '透明';
+  @override
+  String image_page_counter({required Object current, required Object total}) =>
+      '${current} / ${total}';
+  @override
+  String get image_pause => '图片暂停';
+  @override
+  String get image_pause_hint => '播放时遇到图片自动暂停。';
+  @override
+  String get image_pause_off => '关闭';
+  @override
+  String get image_search_label_after => '张，关键词：';
+  @override
+  String get image_search_label_before => '正在选择图片 ';
+  @override
+  String get image_search_label_middle => '共 ';
+  @override
+  String get image_search_label_none_before => '正在选择 ';
+  @override
+  String get image_search_label_none_middle => '无图片 ';
+  @override
+  String get import_complete => '词典导入完成。';
+  @override
+  String import_duplicate({required Object name}) => '名为『${name}』的词典已导入。';
+  @override
+  String get import_extract => '正在解压文件…';
+  @override
+  String get import_failed => '词典导入失败。';
+  @override
+  String get import_in_progress => '导入中';
+  @override
+  String import_name({required Object name}) => '正在导入『${name}』…';
+  @override
+  String import_sidecar_audio({required Object count}) => '已自动挂载 ${count} 个音频';
+  @override
+  String import_sidecar_subtitle({required Object name}) => '已自动挂载字幕：${name}';
+  @override
+  String get import_start => '准备导入…';
+  @override
+  String get import_step_building_epub => '生成 EPUB…';
+  @override
+  String get import_step_converting_epub => '转换为 EPUB…';
+  @override
+  String import_step_copying_file({required Object name}) => '正在复制 ${name}…';
+  @override
+  String get import_step_done => '完成';
+  @override
+  String get import_step_importing_epub => '导入 EPUB…';
+  @override
+  String get import_step_matching => '音频对齐…';
+  @override
+  String get import_step_parsing => '解析字幕…';
+  @override
+  String get import_step_persisting => '保存文件…';
+  @override
+  String get import_step_reading => '读取文件…';
+  @override
+  String get import_step_reading_idb => '读取书籍信息…';
+  @override
+  String get import_step_saving => '保存记录…';
+  @override
+  String get import_theme => '导入主题';
+  @override
+  String get import_theme_hint => '粘贴主题代码';
+  @override
+  String get import_theme_invalid => '无效的主题代码';
+  @override
+  String get import_theme_success => '主题已导入';
+  @override
+  String import_unsupported_file_format({required Object ext}) =>
+      '不支持的文件格式: ${ext}';
+  @override
+  String get increase => '增加';
+  @override
+  String get info_empty_home_tab => '历史记录为空';
+  @override
+  String init_error_message({required Object error}) => '初始化失败：${error}';
+  @override
+  String get initialization_failed => '初始化失败';
+  @override
+  String get interconnect_backup_backend => '用互联做备份后端';
+  @override
+  String get interconnect_backup_backend_active =>
+      '备份已写到已配对设备。要换回云盘，去「同步与备份」里改后端。';
+  @override
+  String get interconnect_backup_backend_apply => '设为备份后端';
+  @override
+  String interconnect_backup_backend_current({required Object backend}) =>
+      '当前备份后端：${backend}';
+  @override
+  String get interconnect_backup_backend_hint =>
+      '备份与同步写到已配对设备，而不是云盘。写过去的内容由上面「上传到互联对端」的几个开关决定。';
+  @override
+  String get interconnect_backup_backend_needs_pairing => '请先在上面连接一台设备。';
+  @override
+  String get interconnect_enable => '启用互联';
+  @override
+  String get interconnect_enable_hint => '通过局域网连接你的其他设备。与云备份后端并存，互不冲突。';
+  @override
+  String get interconnect_moved_note => '互联连接与本机服务器设置在「Fushi 互联」分类';
+  @override
+  String get interconnect_section_client => '连接到其他设备';
+  @override
+  String get interconnect_section_delegate => '交给已配对设备';
+  @override
+  String get interconnect_section_related => '远端内容与查词';
+  @override
+  String get interconnect_summary => '设备间直连同步与本机作为服务器';
+  @override
+  String get interconnect_upload_audiobook_files => '上传有声书文件';
+  @override
+  String get interconnect_upload_audiobook_files_hint =>
+      '把本设备的有声书音频+字幕包上传同步到互联对端（体积较大）。';
+  @override
+  String get interconnect_upload_content => '上传书籍文件';
+  @override
+  String get interconnect_upload_content_hint => '把本设备的书籍/阅读内容上传同步到互联对端。';
+  @override
+  String get interconnect_upload_dictionary => '上传词典';
+  @override
+  String get interconnect_upload_dictionary_hint => '把本设备的词典上传同步到互联对端。';
+  @override
+  String get interconnect_upload_section => '上传到互联对端';
+  @override
+  String get interconnect_upload_video_files => '上传视频文件';
+  @override
+  String get interconnect_upload_video_files_hint =>
+      '把本设备的本地视频文件上传同步到互联对端（体积较大）。';
+  @override
+  String get invert_audiobook_skip_direction => '反转底栏前进后退按钮';
+  @override
+  String get invert_swipe_direction => '反转滑动翻页方向';
+  @override
+  String get invert_volume_buttons => '反转音量键方向';
+  @override
+  String get jump_to_char => '按字数跳转';
+  @override
+  String jump_to_char_current(
+          {required Object current, required Object total}) =>
+      '当前: ${current} / ${total}';
+  @override
+  String get jump_to_char_hint => '输入字符位置…';
+  @override
+  String get keep_screen_awake => '阅读时防止息屏';
+  @override
+  String get library_search => '搜索库';
+  @override
+  String get loading_illustrations => '正在加载插画…';
+  @override
+  String get loading_slow_message =>
+      '如果你把数据存储位置设在了当前未连接的网络盘 / 移动盘上，启动可能卡住。点「重试」即可用默认存储位置启动本次会话；你的数据仍保留在原位置不动。';
+  @override
+  String get loading_slow_message_mobile =>
+      '启动比平常慢，可能在加载较大的媒体库或词典。请稍候，或点「重试」重新加载——你的数据是安全的，不会丢失。';
+  @override
+  String get loading_slow_title => '启动耗时超出预期';
+  @override
+  String get local_audio => '本地音频';
+  @override
+  String get local_audio_add_db => '添加本地音频数据库';
+  @override
+  String get local_audio_edit_sources => '编辑来源';
+  @override
+  String local_audio_import_failed_detail({required Object reason}) =>
+      '导入音频数据库失败：${reason}';
+  @override
+  String get local_audio_imported => '已添加音频数据库';
+  @override
+  String get local_audio_invalid_db => '该文件不是可用的音频数据库（不是本地音频源数据库，或其中没有任何音频）。';
+  @override
+  String get local_audio_no_sources => '此数据库未发现可用来源';
+  @override
+  String get local_audio_reference_original => '引用原文件（不复制）';
+  @override
+  String get local_audio_reference_original_desc =>
+      '数据库保留在原位置、按原路径读取；原文件被移动或删除后该来源会失效。';
+  @override
+  String get local_audio_source_order_title => '来源顺序';
+  @override
+  String get log_copy_all => '复制全部';
+  @override
+  String get log_export_failed => '导出失败';
+  @override
+  String get log_export_file => '导出到文件';
+  @override
+  String get log_export_saved => '日志已保存';
+  @override
+  String get log_upload_action => '上传到服务器';
+  @override
+  String get log_upload_consent_agree => '同意并上传';
+  @override
+  String get log_upload_consent_body =>
+      '日志正文（可能包含错误信息、文件路径、书名等）以及 App 版本、平台、设备型号会上传到开发者的服务器，用于诊断问题。仅在你点上传时发生，不会自动发送。';
+  @override
+  String get log_upload_consent_title => '上传日志到服务器？';
+  @override
+  String get log_upload_failed => '上传失败';
+  @override
+  String get log_upload_in_progress => '正在上传日志…';
+  @override
+  String get log_upload_success => '日志已上传';
+  @override
+  String get log_upload_too_large => '日志过大，无法上传';
+  @override
+  String get login => '登录';
+  @override
+  String get lookup_audio_volume => '查词音量';
+  @override
+  String get low_memory_mode => '小内存模式';
+  @override
+  String get low_memory_mode_hint => '减少缓存和内存使用，适合低端设备。部分更改需重启后生效。';
+  @override
+  String get low_memory_mode_suggestion => '可尝试在 设置 → 其他设置 中开启小内存模式。';
+  @override
+  String get lyrics_artist => '艺术家';
+  @override
+  String get lyrics_blur => '模糊歌词';
+  @override
+  String get lyrics_blur_hint => '听力沉浸：模糊当前句，悬停或点击显形';
+  @override
+  String get lyrics_font_size => '歌词字号';
+  @override
+  String get lyrics_font_size_hint => '歌词字号与书籍模式独立';
+  @override
+  String get lyrics_mode => '歌词模式';
+  @override
+  String get lyrics_mode_hint_body => '歌词模式有独立的字号设置，可在 ⚙ 设置 → 排版 中调整。';
+  @override
+  String get lyrics_mode_hint_title => '歌词模式';
+  @override
+  String get lyrics_text_color => '歌词字幕颜色';
+  @override
+  String get lyrics_text_color_hint => '歌词字幕用自定义颜色（不跟随主题）';
+  @override
+  String get lyrics_title => '标题';
+  @override
+  String get lyrics_vertical_writing => '竖排歌词';
+  @override
+  String get lyrics_vertical_writing_hint => '歌词竖排显示，从右到左（独立于书本模式）';
+  @override
+  String get manage_audio_sources => '管理音频来源';
+  @override
+  String get manager => '词典与来源';
+  @override
+  String get manga_mode_toggle => '阅读模式';
+  @override
+  String get manga_ocr_delete => '删除模型';
+  @override
+  String get manga_ocr_delete_confirm_message => '这将释放磁盘空间，之后可再次下载。';
+  @override
+  String get manga_ocr_delete_confirm_title => '删除 OCR 模型？';
+  @override
+  String get manga_ocr_delete_done => '模型已删除';
+  @override
+  String get manga_ocr_download => '下载模型';
+  @override
+  String get manga_ocr_download_done => '模型下载完成';
+  @override
+  String get manga_ocr_download_failed => '模型下载失败';
+  @override
+  String manga_ocr_downloading_file({required Object file}) => '正在下载 ${file}…';
+  @override
+  String get manga_ocr_engine_builtin => '内置';
+  @override
+  String get manga_ocr_engine_external => '外部 mokuro';
+  @override
+  String get manga_ocr_engine_none =>
+      '没有可用的 OCR 引擎。请在设置中下载内置模型或配置 mokuro 命令行路径。';
+  @override
+  String get manga_ocr_external_cli_hint => '留空则自动探测（FUSHI_MOKURO / PATH）';
+  @override
+  String get manga_ocr_external_cli_label => '外部 mokuro 命令行路径';
+  @override
+  String get manga_ocr_external_detect => '检测';
+  @override
+  String manga_ocr_external_detected({required Object version}) =>
+      '已检测到：${version}';
+  @override
+  String get manga_ocr_external_not_found => '未找到 mokuro';
+  @override
+  String get manga_ocr_mobile_note => '移动端下载的模型用于漫画阅读页的框选识别。';
+  @override
+  String get manga_ocr_model_status_missing => 'OCR 模型未下载';
+  @override
+  String get manga_ocr_model_status_ready => 'OCR 模型已就绪';
+  @override
+  String get manga_ocr_section => '漫画 OCR';
+  @override
+  String get manga_ocr_section_summary => '内置 OCR 模型与外部 mokuro 命令行';
+  @override
+  String get manga_ocr_unsupported => '内置漫画 OCR 暂不支持当前平台。';
+  @override
+  String get manga_ocr_wizard_done => '漫画已导入';
+  @override
+  String get manga_ocr_wizard_failed => 'OCR 失败';
+  @override
+  String get manga_ocr_wizard_has_mokuro => '此文件夹已有 .mokuro 文件，请直接用普通导入。';
+  @override
+  String get manga_ocr_wizard_importing => '正在导入…';
+  @override
+  String get manga_ocr_wizard_no_images => '此文件夹中没有找到图片。';
+  @override
+  String manga_ocr_wizard_page_progress(
+          {required Object done, required Object total}) =>
+      '第 ${done} / ${total} 页';
+  @override
+  String get manga_ocr_wizard_pick_folder => '选择图片文件夹';
+  @override
+  String get manga_ocr_wizard_run => '开始 OCR';
+  @override
+  String get manga_ocr_wizard_running => '正在识别…';
+  @override
+  String get manga_ocr_wizard_title => 'OCR 导入漫画';
+  @override
+  String get manga_ocr_wizard_title_label => '标题（可选）';
+  @override
+  String get manga_online_base_url_label => '在线目录地址';
+  @override
+  String get manga_online_catalog_title => '在线目录';
+  @override
+  String get manga_online_download_selected => '下载所选';
+  @override
+  String get manga_online_downloaded => '已入库';
+  @override
+  String get manga_online_failed => '下载失败';
+  @override
+  String get manga_online_load_failed => '目录加载失败';
+  @override
+  String get manga_online_queue_added => '已加入下载队列';
+  @override
+  String manga_online_queue_progress(
+          {required Object done, required Object total}) =>
+      '第 ${done} / ${total} 卷';
+  @override
+  String get manga_online_queue_section => '漫画目录下载';
+  @override
+  String get manga_online_search_hint => '搜索系列';
+  @override
+  String get manga_online_stage_cbz => '下载卷包…';
+  @override
+  String get manga_online_stage_extract => '解包中…';
+  @override
+  String get manga_online_stage_mokuro => '下载 OCR 数据…';
+  @override
+  String get manga_reading_mode_spread => '翻页';
+  @override
+  String get manga_reading_mode_webtoon => '条漫';
+  @override
+  String get manga_remote_ocr_cancelled => '主机侧已取消远程 OCR。';
+  @override
+  String get manga_remote_ocr_engine => '已配对主机';
+  @override
+  String get manga_remote_ocr_failed => '远程 OCR 失败';
+  @override
+  String get manga_remote_ocr_no_host => '没有可用的支持漫画 OCR 的已配对主机。';
+  @override
+  String get manga_remote_ocr_not_ready => '已配对主机的 OCR 模型未下载，请先在主机上下载模型。';
+  @override
+  String get manga_remote_ocr_running => '已配对主机正在识别…';
+  @override
+  String get manga_remote_ocr_unsupported => '已配对主机不支持漫画 OCR。';
+  @override
+  String manga_remote_ocr_uploading(
+          {required Object done, required Object total}) =>
+      '正在上传页面 ${done} / ${total}…';
+  @override
+  String get margin_bottom => '下边距';
+  @override
+  String get margin_left => '左边距';
+  @override
+  String get margin_right => '右边距';
+  @override
+  String get margin_top => '上边距';
+  @override
+  String get maximum_terms => '结果中的词头数量上限';
+  @override
+  String get media_source_add => '添加来源';
+  @override
+  String get media_source_add_local_folder => '本地文件夹';
+  @override
+  String get media_source_add_network => '网络';
+  @override
+  String media_source_count_book({required Object n}) => '${n} 本书';
+  @override
+  String media_source_count_video({required Object n}) => '${n} 个视频';
+  @override
+  String media_source_last_scan({required Object time}) => '上次扫描 ${time}';
+  @override
+  String get media_source_manage_title => '管理来源';
+  @override
+  String get media_source_network_label_optional => '显示名（可选）';
+  @override
+  String get media_source_network_missing_fields => '请填写主机、用户名、远端路径，以及密码或私钥';
+  @override
+  String get media_source_network_remote_path => '远端路径';
+  @override
+  String get media_source_network_subtitle => 'SFTP / FTP / WebDAV 远端书架';
+  @override
+  String get media_source_no_sources => '暂无来源';
+  @override
+  String get media_source_open_folder => '打开文件夹';
+  @override
+  String get media_source_remove => '移除来源';
+  @override
+  String get media_source_remove_keeps_media => '移除来源不会删除已导入的媒体。';
+  @override
+  String get media_source_rescan => '重新扫描';
+  @override
+  String get media_source_scan_error => '扫描失败';
+  @override
+  String get media_tracking_access_token => '访问令牌';
+  @override
+  String get media_tracking_access_token_hint => '创建具有写入权限的个人访问令牌';
+  @override
+  String get media_tracking_account => 'Bangumi 账号';
+  @override
+  String get media_tracking_add_mapping => '添加映射';
+  @override
+  String get media_tracking_anime => '番剧';
+  @override
+  String get media_tracking_chapter => '话';
+  @override
+  String get media_tracking_connect => '连接并验证';
+  @override
+  String get media_tracking_connected_as => '已连接账号';
+  @override
+  String get media_tracking_delete_mapping => '移除映射';
+  @override
+  String get media_tracking_episode => '集';
+  @override
+  String get media_tracking_kind => '分类';
+  @override
+  String get media_tracking_local_item => '本地条目';
+  @override
+  String get media_tracking_manga => '漫画';
+  @override
+  String get media_tracking_mappings => '条目映射';
+  @override
+  String get media_tracking_no_mappings =>
+      '暂无手动映射。首次看完一集或产生阅读进度时会自动匹配；歧义条目可在此手动添加。';
+  @override
+  String get media_tracking_novel => '小说';
+  @override
+  String get media_tracking_pending => '待同步记录';
+  @override
+  String get media_tracking_progress_mode => '进度单位';
+  @override
+  String get media_tracking_progress_offset => '起始编号';
+  @override
+  String get media_tracking_saved => '映射已保存';
+  @override
+  String get media_tracking_search => '搜索 Bangumi';
+  @override
+  String get media_tracking_search_results => 'Bangumi 搜索结果';
+  @override
+  String get media_tracking_summary => '自动将番剧、小说和漫画进度记录到 Bangumi';
+  @override
+  String get media_tracking_sync_failed => '同步失败，记录已保留在队列中。';
+  @override
+  String get media_tracking_sync_now => '立即同步';
+  @override
+  String get media_tracking_sync_success => '同步完成';
+  @override
+  String get media_tracking_token_required => '请先输入并验证访问令牌';
+  @override
+  String get media_tracking_volume => '卷';
+  @override
+  String get microphone_permission_denied => '录音需要麦克风权限。';
+  @override
+  String get mining_audio_quality => '音频质量';
+  @override
+  String get mining_audio_quality_high => '高音质';
+  @override
+  String get mining_audio_quality_hint => '比特率越高越清晰，卡片体积也越大。';
+  @override
+  String get mining_audio_quality_max => '最高';
+  @override
+  String get mining_audio_quality_standard => '标准';
+  @override
+  String get mining_image_quality => '图片 / GIF 清晰度';
+  @override
+  String get mining_image_quality_hd => '高清';
+  @override
+  String get mining_image_quality_hint =>
+      '越高越清晰，卡片体积也越大。最高档的截图保留源分辨率；动图有上限，避免卡片大到不可用。';
+  @override
+  String get mining_image_quality_max => '最高';
+  @override
+  String get mining_image_quality_standard => '标准';
+  @override
+  String get mining_image_quality_thrift => '省流';
+  @override
+  String get move_down => '下移';
+  @override
+  String get move_up => '上移';
+  @override
+  String get name => '名称';
+  @override
+  String get nav_browser_extension => '浏览器扩展';
+  @override
+  String get nav_downloads => '下载';
+  @override
+  String get nav_game => '游戏';
+  @override
+  String get nav_home => '首页';
+  @override
+  String get nav_lookup => '查词';
+  @override
+  String get nav_video => '视频';
+  @override
+  String get next_sentence => '下一句';
+  @override
+  String get no_audio_file => '没有可保存的音频。';
+  @override
+  String get no_collections => '没有书签或保存的句子';
+  @override
+  String get no_debug_logs => '无调试日志。';
+  @override
+  String get no_illustrations_found => '未找到插画';
+  @override
+  String get no_results_found => '未找到结果。';
+  @override
+  String get no_search_results => '未找到搜索结果。';
+  @override
+  String get no_sentence_selected => '未选择句子';
+  @override
+  String get no_sentences_found => '未找到句子';
+  @override
+  String get no_text => '无文本。';
+  @override
+  String get no_text_to_search => '没有可搜索的文本。';
+  @override
+  String get now_listening_label => '正在听书';
+  @override
+  String get on_screen_keyboard => '屏幕键盘';
+  @override
+  String get options_collapse => '查词时折叠';
+  @override
+  String get options_delete => '删除';
+  @override
+  String get options_edit => '编辑';
+  @override
+  String get options_expand => '查词时展开';
+  @override
+  String get options_github => '在 GitHub 查看仓库';
+  @override
+  String get options_hide => '查词时隐藏';
+  @override
+  String get options_language => '语言设置';
+  @override
+  String get options_show => '查词时显示';
+  @override
+  String get overlay_lookup_independent_size => '弹出查词窗独立尺寸';
+  @override
+  String get overlay_lookup_independent_size_hint =>
+      '让 app 外弹出查词窗使用独立最大尺寸，而非跟随 app 内查词弹窗';
+  @override
+  String get overlay_lookup_max_height => '弹出查词窗最大高度';
+  @override
+  String get overlay_lookup_max_width => '弹出查词窗最大宽度';
+  @override
+  String page_progress({required Object current, required Object total}) =>
+      '第 ${current} / ${total} 页';
+  @override
+  String get paste => '粘贴';
+  @override
+  String get pause => '暂停';
+  @override
+  String get pause_on_lookup => '查词时暂停';
+  @override
+  String get pdf_bookmark_added => '已添加书签';
+  @override
+  String get pdf_bookmarks => '书签';
+  @override
+  String get pdf_bookmarks_empty => '还没有书签。';
+  @override
+  String get pdf_no_text_layer => '此 PDF 没有文本层（扫描图），无法查词。';
+  @override
+  String get pdf_outline => '目录';
+  @override
+  String get pdf_outline_empty => '此 PDF 没有目录。';
+  @override
+  String get pick_image => '选择图片';
+  @override
+  String get play => '播放';
+  @override
+  String get play_from_cue => '从本句播放';
+  @override
+  String get playback_auto_pause => '字幕暂停播放模式';
+  @override
+  String get playback_speed => '倍速';
+  @override
+  String get popup_append_sentence_tooltip => '加入制卡句子';
+  @override
+  String get popup_auto_expand_dictionaries => '自动展开行数';
+  @override
+  String get popup_auto_expand_dictionaries_hint =>
+      '即使开启「折叠词典」，也保持前 N 行词典方框展开。展开数跟随列数设置：行数 x 词典列数（0 = 全部折叠）';
+  @override
+  String get popup_bottom_docked => '底部停靠查词弹窗';
+  @override
+  String get popup_bottom_docked_hint => '将查词弹窗固定为屏幕底部一条整宽面板，而不是跟随被查词的位置。';
+  @override
+  String get popup_clear_sentence_draft_tooltip => '清空已加句子';
+  @override
+  String get popup_ctx_adjust_button => '调整上下文';
+  @override
+  String get popup_ctx_box_current => '当前句';
+  @override
+  String get popup_ctx_box_empty => '（无）';
+  @override
+  String get popup_ctx_box_next => '后文';
+  @override
+  String get popup_ctx_box_prev => '前文';
+  @override
+  String get popup_ctx_cancel => '取消';
+  @override
+  String get popup_ctx_confirm => '确认制卡';
+  @override
+  String get popup_ctx_modal_count => '已选择 %d 句';
+  @override
+  String get popup_ctx_modal_eyebrow => '制卡前调整';
+  @override
+  String get popup_ctx_modal_title => '选择句子上下文';
+  @override
+  String get popup_ctx_next_minus => '后退一句';
+  @override
+  String get popup_ctx_next_plus => '后加一句';
+  @override
+  String get popup_ctx_prev_minus => '前退一句';
+  @override
+  String get popup_ctx_prev_plus => '前加一句';
+  @override
+  String get popup_dictionary_max_columns => '词典最多列数（自动填充）';
+  @override
+  String get popup_dictionary_max_columns_hint => '每行自动填充词典，最多不超过此列数；窄屏会自动减少';
+  @override
+  String get popup_font_size_decrease => '缩小查词字号';
+  @override
+  String get popup_font_size_increase => '放大查词字号';
+  @override
+  String get popup_instant_scroll => '查词弹窗瞬时滚动';
+  @override
+  String get popup_instant_scroll_hint => '为墨水屏使用：查词弹窗按固定距离瞬时跳动，不播放滚动动画。';
+  @override
+  String get popup_max_height => '查词窗口最大高度';
+  @override
+  String get popup_max_width => '查词窗口最大宽度';
+  @override
+  String get popup_no_audio_available => '暂无发音';
+  @override
+  String get popup_sentence_context_next_label => '下';
+  @override
+  String get popup_sentence_context_prev_label => '上';
+  @override
+  String get popup_wheel_speed => '弹窗滚轮速度';
+  @override
+  String get popup_wheel_speed_hint => '查词弹窗的鼠标滚轮滚动速度（浏览器扩展弹窗同样生效）。';
+  @override
+  String get prev_sentence => '上一句';
+  @override
+  String get preview => '预览';
+  @override
+  String get preview_badge => '徽章';
+  @override
+  String get preview_switch => '开关';
+  @override
+  String get processing_in_progress => '正在准备图片';
+  @override
+  String get profile_book_profile => '指定配置';
+  @override
+  String profile_confirm_delete({required Object name}) => '删除配置「${name}」？';
+  @override
+  String get profile_copy => '复制';
+  @override
+  String get profile_copy_suffix => '（副本）';
+  @override
+  String get profile_create => '创建配置';
+  @override
+  String get profile_delete => '删除';
+  @override
+  String get profile_export => '导出';
+  @override
+  String get profile_export_failed => '导出失败';
+  @override
+  String profile_follow_default_current({required Object name}) =>
+      '跟随默认（${name}）';
+  @override
+  String get profile_import => '导入';
+  @override
+  String get profile_import_failed => '导入失败';
+  @override
+  String get profile_import_invalid => '配置方案文件无效';
+  @override
+  String get profile_import_success => '配置方案已导入';
+  @override
+  String get profile_label => '配置';
+  @override
+  String get profile_management => '配置管理';
+  @override
+  String get profile_media_audiobook => '有声书';
+  @override
+  String get profile_media_epub => '普通书';
+  @override
+  String get profile_media_lyrics => '歌词模式';
+  @override
+  String get profile_media_none => '无';
+  @override
+  String get profile_media_srtbook => '字幕书';
+  @override
+  String get profile_media_type_bindings => '媒体类型绑定';
+  @override
+  String get profile_media_video => '视频';
+  @override
+  String get profile_name_hint => '配置名称';
+  @override
+  String get profile_rename => '重命名';
+  @override
+  String get reader_auto_hide_chrome_duration => '悬浮控件自动隐藏延时';
+  @override
+  String get reader_content_timeout => '内容加载超时，如显示异常请重新打开';
+  @override
+  String get reader_copy_image => '复制图片';
+  @override
+  String get reader_gallery => '插图';
+  @override
+  String get reader_gallery_current => '正在阅读';
+  @override
+  String get reader_gallery_empty => '本书没有插图';
+  @override
+  String get reader_gallery_jump => '跳转到此插图';
+  @override
+  String get reader_gallery_tooltip => '浏览插图';
+  @override
+  String reader_image_copy_failed({required Object error}) => '复制图片失败：${error}';
+  @override
+  String get reader_image_file_unavailable => '图片文件不可用。';
+  @override
+  String reader_image_share_failed({required Object error}) =>
+      '分享图片失败：${error}';
+  @override
+  String get reader_open_failed => '打开书籍失败';
+  @override
+  String get reader_settings_section => '阅读设置';
+  @override
+  String get reader_theme_black => '纯黑';
+  @override
+  String get reader_theme_dark => '深暗';
+  @override
+  String get reader_theme_ecru => '米黄';
+  @override
+  String get reader_theme_eyecare => '护眼';
+  @override
+  String get reader_theme_gray => '灰暗';
+  @override
+  String get reader_theme_light => '白色';
+  @override
+  String get reader_theme_water => '水蓝';
+  @override
+  String get reader_top_progress_floating => '悬浮阅读进度';
+  @override
+  String get reader_unsupported_platform => '本平台暂不支持阅读器。';
+  @override
+  String get reading_activity => '学习活动';
+  @override
+  String get reading_progress => '阅读进度';
+  @override
+  String get reading_section_mode => '模式与排版方向';
+  @override
+  String get reading_statistics => '阅读统计';
+  @override
+  String get record => '录制';
+  @override
+  String get refresh => '刷新';
+  @override
+  String get rematch_adjust_window => '调整搜索窗口重新匹配';
+  @override
+  String get rematch_run => '重跑匹配';
+  @override
+  String get remote_audio_source => '远端音频';
+  @override
+  String get remote_book_audiobook_download_failed => '无法下载这本书的有声书';
+  @override
+  String get remote_book_download => '下载到本机';
+  @override
+  String get remote_book_download_failed => '无法下载对端书籍';
+  @override
+  String get remote_book_downloaded => '已下载对端书籍';
+  @override
+  String get remote_book_downloading => '正在下载…';
+  @override
+  String get remote_book_info => '信息';
+  @override
+  String get remote_book_info_has_audiobook => '包含有声书';
+  @override
+  String get remote_book_unavailable => '配对设备不可用';
+  @override
+  String get remote_dict_lookup => '远端词典查询';
+  @override
+  String get remote_dict_lookup_hint => '本地词典查不到时，查询已配置的 Fushi 服务器';
+  @override
+  String get remote_video_download => '下载到本机';
+  @override
+  String get remote_video_download_failed => '无法下载对端视频';
+  @override
+  String get remote_video_downloaded => '已下载对端视频';
+  @override
+  String get remote_video_downloading => '正在下载…';
+  @override
+  String get remote_video_info => '信息';
+  @override
+  String get remote_video_info_has_subtitle => '包含字幕';
+  @override
+  String get remote_video_info_no_subtitle => '不含字幕';
+  @override
+  String remote_video_info_size({required Object size}) => '大小：${size}';
+  @override
+  String get remote_video_list_failed => '无法加载远端视频，请确认对端设备在线并与本机处于同一网络后重试';
+  @override
+  String get remote_video_unavailable => '配对设备不可用';
+  @override
+  String get rename_collection => '重命名合集';
+  @override
+  String get render_restart_required => '重启 App 后生效';
+  @override
+  String get repeat_cue => '重复本句';
+  @override
+  String get reset => '重置';
+  @override
+  String get retry => '重试';
+  @override
+  String get reverse_arrow_page_turn => '反转键盘左右键翻页方向';
+  @override
+  String get reverse_navigation_bar => '反转底栏方向';
+  @override
+  String get reverse_reader_bottom_bar => '反转阅读器底栏';
+  @override
+  String get audiobook_rematch_all_zero => '所有窗口命中率都是 0，请人工调整';
+  @override
+  String audiobook_rematch_auto_failed({required Object error}) =>
+      '自动匹配失败：${error}';
+  @override
+  String get audiobook_rematch_auto_match => '自动匹配';
+  @override
+  String audiobook_rematch_auto_picked(
+          {required Object window, required Object pct}) =>
+      '自动选定 ${window}（命中 ${pct}%）';
+  @override
+  String audiobook_rematch_default_value({required Object n}) => '默认 ${n}';
+  @override
+  String audiobook_rematch_health_label(
+          {required Object pct, required Object detail}) =>
+      '${pct} 匹配 — ${detail}';
+  @override
+  String get audiobook_rematch_matching => '匹配中…';
+  @override
+  String get audiobook_rematch_no_chapters => 'EPUB 没有章节文本';
+  @override
+  String get audiobook_rematch_no_cues_to_match => '没有字幕条目可供匹配';
+  @override
+  String get audiobook_rematch_no_sections => '未读到章节文本，无法自动匹配';
+  @override
+  String get audiobook_rematch_no_stored_cues => '没有已存字幕条目，无法重跑';
+  @override
+  String audiobook_rematch_failed({required Object error}) => '重跑失败：${error}';
+  @override
+  String audiobook_rematch_result(
+          {required Object pct, required Object window}) =>
+      '重新匹配：${pct}%（窗口：${window}）';
+  @override
+  String get audiobook_rematch_search_window => '搜索窗口';
+  @override
+  String get audiobook_rematch_similarity_threshold => '相似度阈值';
+  @override
+  String get audiobook_rematch_threshold_hint =>
+      '模糊匹配的最低相似度（Dice 系数）。降低可容忍更多文本差异，但太低会误匹配。';
+  @override
+  String get audiobook_rematch_window_hint =>
+      '每条字幕在正文里向前找的字符数。命中率低时可左右调整，过大容易被短噪声字幕拉偏光标。';
+  @override
+  String get saved_tags => '标签已保存。';
+  @override
+  String get scan_non_japanese_text => '扫描非日文文本';
+  @override
+  String get scan_non_japanese_text_hint => '关闭后选区遇非日文字符即停止';
+  @override
+  String get search => '搜索';
+  @override
+  String get search_ellipsis => '搜索…';
+  @override
+  String get searching_in_progress => '正在搜索 ';
+  @override
+  String get section_advanced_colors => '高级选项';
+  @override
+  String get section_advanced_typography => '高级选项';
+  @override
+  String get section_audiobook => '有声书';
+  @override
+  String get section_audiobook_lyrics => '有声书与歌词';
+  @override
+  String get section_epub => 'EPUB 书架';
+  @override
+  String get section_floating_lyric => '悬浮歌词';
+  @override
+  String get section_interface => '界面';
+  @override
+  String get section_layout => '布局显示';
+  @override
+  String get section_navigation => '导航';
+  @override
+  String get section_page_turn_direction => '翻页方向';
+  @override
+  String get section_reader_colors => '阅读器颜色';
+  @override
+  String get section_system_theme => '系统主题色';
+  @override
+  String get section_typography => '排版';
+  @override
+  String get section_update => '更新设置';
+  @override
+  String get section_video_danmaku => '弹幕';
+  @override
+  String get section_video_library => '媒体库';
+  @override
+  String get section_video_playback => '播放';
+  @override
+  String get section_video_subtitles => '字幕';
+  @override
+  String get seed_color => '种子色';
+  @override
+  String get seed_color_desc => '自动生成下方所有默认颜色';
+  @override
+  String get selection_color => '选中高亮色';
+  @override
+  String get selection_color_desc => '阅读器选中高亮';
+  @override
+  String get send => '发送';
+  @override
+  String get series => '系列';
+  @override
+  String get series_created => '已创建系列';
+  @override
+  String get series_default_name => '新系列';
+  @override
+  String series_item_count({required Object n}) => '${n} 项';
+  @override
+  String get series_name_hint => '系列名称';
+  @override
+  String get server_address => '服务器地址';
+  @override
+  String get settings => '设置';
+  @override
+  String get settings_check_update_now => '检查更新';
+  @override
+  String get settings_destination_appearance => '外观';
+  @override
+  String get settings_destination_card_creation => '制卡';
+  @override
+  String get settings_destination_diagnostics => '诊断';
+  @override
+  String get settings_destination_interconnect => 'Fushi 互联';
+  @override
+  String get settings_destination_listening => '听书';
+  @override
+  String get settings_destination_lookup => '查词';
+  @override
+  String get settings_destination_profiles => '配置方案';
+  @override
+  String get settings_destination_reading => '阅读';
+  @override
+  String get settings_destination_reading_controls => '阅读操作';
+  @override
+  String get settings_destination_sync_backup => '同步与备份（实验性）';
+  @override
+  String get settings_destination_system => '系统';
+  @override
+  String get settings_destination_system_summary => '通用、更新与诊断';
+  @override
+  String get settings_destination_tracking => '媒体记录';
+  @override
+  String get settings_destination_video => '视频';
+  @override
+  String get settings_experimental_suffix => '（实验性）';
+  @override
+  String get settings_search_hint => '搜索设置';
+  @override
+  String get settings_search_no_results => '没有匹配的设置项';
+  @override
+  String get settings_secret_hide => '隐藏内容';
+  @override
+  String get settings_secret_show => '显示内容';
+  @override
+  String get settings_section_app_shell => '应用';
+  @override
+  String get settings_section_data_storage => '数据存储位置';
+  @override
+  String get settings_section_gal_hook_overlay => 'Galgame 台词浮窗';
+  @override
+  String get settings_section_general => '通用';
+  @override
+  String get settings_section_lookup_audio => '朗读与反馈';
+  @override
+  String get settings_section_lookup_clipboard => '剪贴板与全局查词';
+  @override
+  String get settings_section_lookup_content => '词条内容';
+  @override
+  String get settings_section_lookup_integrations => '外部集成';
+  @override
+  String get settings_section_lookup_popup_window => '弹窗窗口';
+  @override
+  String get settings_section_lookup_trigger => '查词触发';
+  @override
+  String get settings_section_page_turn_input => '翻页与交互';
+  @override
+  String get settings_section_reader_chrome => '阅读界面';
+  @override
+  String get settings_section_update_channel => '更新通道';
+  @override
+  String get settings_view_changelog => '查看更新日志';
+  @override
+  String get share => '分享';
+  @override
+  String get share_theme => '分享主题';
+  @override
+  String get shortcut_action_audiobook_next_sentence => '下一句';
+  @override
+  String get shortcut_action_audiobook_play_pause => '播放/暂停';
+  @override
+  String get shortcut_action_audiobook_prev_sentence => '上一句';
+  @override
+  String get shortcut_action_audiobook_seek_clicked => '跳转音频到点击的句子';
+  @override
+  String get shortcut_action_dpad_down => '方向键 下';
+  @override
+  String get shortcut_action_dpad_left => '方向键 左';
+  @override
+  String get shortcut_action_dpad_right => '方向键 右';
+  @override
+  String get shortcut_action_dpad_up => '方向键 上';
+  @override
+  String get shortcut_action_global_back => '返回上一级';
+  @override
+  String get shortcut_action_global_external_lookup => '应用外查词快捷键';
+  @override
+  String get shortcut_action_global_scroll_page_down => '向下翻一屏';
+  @override
+  String get shortcut_action_global_scroll_page_up => '向上翻一屏';
+  @override
+  String get shortcut_action_global_toggle_fullscreen => '全屏切换';
+  @override
+  String get shortcut_action_home_focus_search => '聚焦搜索';
+  @override
+  String get shortcut_action_home_tab_books => '书架标签';
+  @override
+  String get shortcut_action_home_tab_dict => '词典标签';
+  @override
+  String get shortcut_action_home_tab_next => '下一个标签页';
+  @override
+  String get shortcut_action_home_tab_prev => '上一个标签页';
+  @override
+  String get shortcut_action_home_tab_settings => '设置标签';
+  @override
+  String get shortcut_action_popup_next_entry => '下一个词条';
+  @override
+  String get shortcut_action_popup_prev_entry => '上一个词条';
+  @override
+  String get shortcut_action_reader_create_card_from_popup => '从弹窗制卡';
+  @override
+  String get shortcut_action_reader_dismiss_dict => '关闭词典';
+  @override
+  String get shortcut_action_reader_enter_caret => '进入选字查词光标';
+  @override
+  String get shortcut_action_reader_lookup_at_cursor => '查词/激活光标';
+  @override
+  String get shortcut_action_reader_open_menu => '打开设置菜单';
+  @override
+  String get shortcut_action_reader_open_navigation => '打开导航';
+  @override
+  String get shortcut_action_reader_page_backward => '上一页';
+  @override
+  String get shortcut_action_reader_page_forward => '下一页';
+  @override
+  String get shortcut_action_reader_shift_lookup => '光标处查词';
+  @override
+  String get shortcut_action_reader_toggle_chrome => '显示/隐藏控制栏';
+  @override
+  String get shortcut_action_reader_toggle_furigana => '切换振假名';
+  @override
+  String get shortcut_action_video_align_subtitle_to_next => '下一句字幕对齐到当前时间';
+  @override
+  String get shortcut_action_video_align_subtitle_to_prev => '上一句字幕对齐到当前时间';
+  @override
+  String get shortcut_action_video_cycle_secondary_subtitle_obscure =>
+      '循环副字幕遮蔽';
+  @override
+  String get shortcut_action_video_cycle_subtitle_obscure => '循环字幕遮蔽模式';
+  @override
+  String get shortcut_action_video_next_chapter => '下一章';
+  @override
+  String get shortcut_action_video_next_frame => '下一帧';
+  @override
+  String get shortcut_action_video_next_subtitle => '下一句字幕';
+  @override
+  String get shortcut_action_video_open_subtitle_align => '打开字幕波形对轴';
+  @override
+  String get shortcut_action_video_pause => '暂停';
+  @override
+  String get shortcut_action_video_play => '播放';
+  @override
+  String get shortcut_action_video_previous_chapter => '上一章';
+  @override
+  String get shortcut_action_video_previous_frame => '上一帧';
+  @override
+  String get shortcut_action_video_previous_subtitle => '上一句字幕';
+  @override
+  String get shortcut_action_video_replay_current_subtitle => '重播当前句';
+  @override
+  String get shortcut_action_video_replay_previous_subtitle => '重播上一句';
+  @override
+  String get shortcut_action_video_reset_speed => '速度复位';
+  @override
+  String get shortcut_action_video_screenshot => '截图';
+  @override
+  String get shortcut_action_video_seek_backward => '快退';
+  @override
+  String get shortcut_action_video_seek_forward => '快进';
+  @override
+  String get shortcut_action_video_speed_down => '减速';
+  @override
+  String get shortcut_action_video_speed_up => '加速';
+  @override
+  String get shortcut_action_video_subtitle_delay_decrease => '字幕延迟减小';
+  @override
+  String get shortcut_action_video_subtitle_delay_increase => '字幕延迟增大';
+  @override
+  String get shortcut_action_video_toggle_favorite_sentence => '收藏当前句';
+  @override
+  String get shortcut_action_video_toggle_fullscreen => '切换全屏';
+  @override
+  String get shortcut_action_video_toggle_immersive_lock => '切换沉浸锁定';
+  @override
+  String get shortcut_action_video_toggle_mute => '静音切换';
+  @override
+  String get shortcut_action_video_toggle_play_pause => '播放/暂停';
+  @override
+  String get shortcut_action_video_toggle_secondary_subtitle_hide => '隐藏副字幕';
+  @override
+  String get shortcut_action_video_toggle_shader_compare => '切换着色器对比';
+  @override
+  String get shortcut_action_video_toggle_subtitle_blur => '切换字幕模糊';
+  @override
+  String get shortcut_action_video_toggle_subtitle_hide => '切换隐藏字幕';
+  @override
+  String get shortcut_action_video_toggle_subtitle_list => '切换字幕列表';
+  @override
+  String get shortcut_action_video_volume_down => '音量-';
+  @override
+  String get shortcut_action_video_volume_up => '音量+';
+  @override
+  String get shortcut_assign_pick_action => '分配到动作…';
+  @override
+  String get shortcut_clear => '清除';
+  @override
+  String shortcut_conflict({required Object s}) => '已被占用：${s}';
+  @override
+  String shortcut_conflict_replace_confirm({required Object s}) =>
+      '该快捷键已被“${s}”占用。要移到当前动作吗？';
+  @override
+  String get shortcut_gamepad => '手柄';
+  @override
+  String get shortcut_gamepad_brand_label => '手柄按钮样式';
+  @override
+  String get shortcut_gamepad_brand_playstation => 'PlayStation';
+  @override
+  String get shortcut_gamepad_brand_switch => 'Nintendo Switch';
+  @override
+  String get shortcut_gamepad_brand_xbox => 'Xbox';
+  @override
+  String get shortcut_gamepad_pick_list => '从列表选择';
+  @override
+  String get shortcut_gamepad_unavailable_hint =>
+      '未检测到 GameInput 组件，手柄功能不可用。可安装 Windows「游戏服务(Gaming Services)」以启用手柄支持。';
+  @override
+  String get shortcut_keyboard => '键盘';
+  @override
+  String get shortcut_mouse_back => '鼠标侧键(后退)';
+  @override
+  String get shortcut_mouse_button => '鼠标按键';
+  @override
+  String get shortcut_mouse_forward => '鼠标侧键(前进)';
+  @override
+  String get shortcut_mouse_left => '鼠标左键';
+  @override
+  String get shortcut_mouse_middle => '鼠标中键';
+  @override
+  String get shortcut_mouse_right => '鼠标右键';
+  @override
+  String get shortcut_press_gamepad => '按下手柄按钮…';
+  @override
+  String get shortcut_press_key => '请按下快捷键组合...';
+  @override
+  String get shortcut_press_mouse_button => '按下鼠标键……';
+  @override
+  String get shortcut_press_wheel => '按住修饰键在此滚动滚轮';
+  @override
+  String get shortcut_reset_confirm => '确定要将此部分的所有快捷键恢复为默认值吗？';
+  @override
+  String get shortcut_reset_defaults => '恢复默认';
+  @override
+  String get shortcut_scope_audiobook => '有声书';
+  @override
+  String get shortcut_scope_dictionary_popup => '查词弹窗';
+  @override
+  String get shortcut_scope_dictionary_popup_note => '鼠标位于查词弹窗上时生效';
+  @override
+  String get shortcut_scope_gamepad => '手柄';
+  @override
+  String get shortcut_scope_global => '全局';
+  @override
+  String get shortcut_scope_global_external => '全局（应用外）';
+  @override
+  String get shortcut_scope_global_external_mobile_note =>
+      '由系统触发（选中文本菜单、分享、悬浮球），系统不允许应用自定义此快捷键。';
+  @override
+  String get shortcut_scope_home => '首页';
+  @override
+  String get shortcut_scope_reader => '阅读器';
+  @override
+  String get shortcut_scope_video => '视频';
+  @override
+  String get shortcut_settings_title => '快捷键设置';
+  @override
+  String get shortcut_stop_capture => '停止捕获';
+  @override
+  String get shortcut_tap_to_assign => '未设置 · 点击设置';
+  @override
+  String get shortcut_view_list => '列表视图';
+  @override
+  String get shortcut_view_visual => '手柄可视化图';
+  @override
+  String get shortcut_wheel => '鼠标滚轮';
+  @override
+  String get shortcut_wheel_down => '滚轮向下';
+  @override
+  String get shortcut_wheel_needs_modifier =>
+      '裸滚轮用于滚动弹窗内容，请按住 Alt / Ctrl / Shift 再滚';
+  @override
+  String get shortcut_wheel_up => '滚轮向上';
+  @override
+  String get show_bottom_bar_cue => '显示当前句子';
+  @override
+  String get show_expression_tags => '显示表达标签';
+  @override
+  String get show_floating_lyric => '悬浮字幕';
+  @override
+  String get show_media_notification => '显示媒体通知';
+  @override
+  String get show_options => '显示选项';
+  @override
+  String get show_top_progress_bar => '顶部阅读进度';
+  @override
+  String get skip_action => '跳过操作';
+  @override
+  String skip_action_seconds({required Object n}) => '${n} 秒';
+  @override
+  String get skip_action_sentence => '1 句';
+  @override
+  String get sort_by => '排序方式';
+  @override
+  String get sort_imported => '导入时间';
+  @override
+  String get sort_recent_read => '最近阅读';
+  @override
+  String get sort_recent_watched => '最近观看';
+  @override
+  String get sort_title => '名称';
+  @override
+  String get source_description_epub => 'EPUB 阅读与词典查询';
+  @override
+  String get source_name_bookshelf => '书架';
+  @override
+  String get spread_auto => '自动';
+  @override
+  String get spread_direction => '跨页方向';
+  @override
+  String get spread_direction_ltr => '从左到右';
+  @override
+  String get spread_direction_rtl => '从右到左';
+  @override
+  String get spread_mode => '跨页模式';
+  @override
+  String get spread_off => '关闭';
+  @override
+  String get spread_on => '开启';
+  @override
+  String get srt_audio_unresolved => '未找到音频文件 — 请重新附加';
+  @override
+  String get srt_books_section => '字幕有声书';
+  @override
+  String srt_delete_confirm({required Object title}) =>
+      '删除 『${title}』？此操作无法撤销。';
+  @override
+  String get srt_delete_title => '删除字幕书籍';
+  @override
+  String get srt_epub_not_ready => '书籍尚未就绪 — 请重新导入';
+  @override
+  String get srt_import => '导入书';
+  @override
+  String get srt_import_audio_needs_subtitle =>
+      '音频需要配合字幕使用（给现有 EPUB 挂音频请在书架长按该书）';
+  @override
+  String get srt_import_author_hint => '作者（可选）';
+  @override
+  String get srt_import_error => '导入失败';
+  @override
+  String srt_import_files_selected({required Object n}) => '已选择 ${n} 个文件';
+  @override
+  String get srt_import_hint_epub_or_srt => '选择 EPUB 或字幕文件进行导入。';
+  @override
+  String get srt_import_missing_input => '请至少选择 EPUB 或字幕文件';
+  @override
+  String get srt_import_missing_title => '请输入书名';
+  @override
+  String get srt_import_pick_audio_dir => '选择音频目录';
+  @override
+  String get srt_import_pick_audio_files => '选择音频文件';
+  @override
+  String get srt_import_pick_cover => '选择封面图片';
+  @override
+  String get srt_import_pick_epub => '选择 EPUB';
+  @override
+  String get srt_import_pick_subtitle_files => '选择字幕文件';
+  @override
+  String get srt_import_success => '导入成功';
+  @override
+  String get srt_import_title_hint => '书名';
+  @override
+  String get startup_default_dictionary_tab => '启动时打开查词';
+  @override
+  String get startup_default_dictionary_tab_hint => '应用开屏后直接显示查词页；关闭时保留当前默认首页。';
+  @override
+  String get stash => '暂存';
+  @override
+  String get stash_added_multiple => '多项已添加到暂存区。';
+  @override
+  String stash_added_single({required Object term}) => '『${term}』已添加到暂存区。';
+  @override
+  String get stash_clear_description => '所有内容将被清除。确定吗？';
+  @override
+  String stash_clear_single({required Object term}) => '『${term}』已从暂存区移除。';
+  @override
+  String get stash_clear_title => '清空暂存区';
+  @override
+  String get stash_nothing_to_pop => '暂存区没有可弹出的项目。';
+  @override
+  String get stash_placeholder => '暂存区为空';
+  @override
+  String get stat_all_time => '全部';
+  @override
+  String get stat_bookshelf_compare => '书架对比';
+  @override
+  String get stat_clear_all => '清空统计';
+  @override
+  String get stat_clear_all_confirm => '清空';
+  @override
+  String get stat_clear_all_reading_message =>
+      '确定清空全部阅读统计吗？将删除所有阅读时长、字数以及查词 / 制卡计数。你收藏的词、句子和已制卡片不受影响。此操作不可撤销。';
+  @override
+  String get stat_clear_all_title => '清空全部统计';
+  @override
+  String get stat_clear_all_video_message =>
+      '确定清空全部视频统计吗？将删除所有观看时长、字幕字数以及查词 / 制卡计数。你收藏的词、句子和已制卡片不受影响。此操作不可撤销。';
+  @override
+  String get stat_daily_average => '日均';
+  @override
+  String get stat_delete_message => '删除该项的时长、字数与查词/制卡统计？你收藏的单词和句子不受影响。';
+  @override
+  String get stat_delete_title => '删除统计数据';
+  @override
+  String get stat_fastest_day => '最快日';
+  @override
+  String get stat_favorited => '收藏';
+  @override
+  String get stat_favorited_sentence => '收藏语句';
+  @override
+  String stat_format_chars({required Object n}) => '${n} 字';
+  @override
+  String stat_format_chars_wan({required Object n}) => '${n} 万字';
+  @override
+  String stat_format_days({required Object n}) => '${n} 天';
+  @override
+  String stat_format_hours_minutes({required Object h, required Object m}) =>
+      '${h} 小时 ${m} 分钟';
+  @override
+  String stat_format_minutes({required Object n}) => '${n} 分钟';
+  @override
+  String get stat_goal => '每日目标';
+  @override
+  String get stat_goal_daily => '每日目标';
+  @override
+  String get stat_goal_presets => '快捷预设';
+  @override
+  String stat_goal_progress({required Object read, required Object goal}) =>
+      '${read} / ${goal} 字';
+  @override
+  String get stat_goal_reached => '已达成';
+  @override
+  String stat_goal_recent_average({required Object n}) => '近 7 日日均 ${n} 字';
+  @override
+  String get stat_goal_set => '设定目标';
+  @override
+  String get stat_goal_unit_chars => '字';
+  @override
+  String get stat_goal_weekly => '每周目标';
+  @override
+  String get stat_last_30_days => '近 30 天';
+  @override
+  String get stat_lookup => '查词';
+  @override
+  String get stat_metric_chars => '字数';
+  @override
+  String get stat_metric_speed => '速度';
+  @override
+  String get stat_metric_time => '时长';
+  @override
+  String get stat_mined => '制卡';
+  @override
+  String get stat_no_data => '暂无阅读数据';
+  @override
+  String get stat_range_and_trend => '范围与趋势';
+  @override
+  String get stat_recent_active => '近 7 日活跃';
+  @override
+  String get stat_refresh => '刷新';
+  @override
+  String get stat_slowest_day => '最慢日';
+  @override
+  String get stat_sort_by_chars => '按字数';
+  @override
+  String get stat_sort_by_speed => '按速度';
+  @override
+  String get stat_sort_by_time => '按时长';
+  @override
+  String get stat_speed_anomaly => '异常日';
+  @override
+  String get stat_speed_avg => '移动平均';
+  @override
+  String stat_speed_cph({required Object n}) => '${n} 字/时';
+  @override
+  String get stat_speed_summary => '速度摘要';
+  @override
+  String get stat_streak => '连续天数';
+  @override
+  String get stat_this_month => '本月';
+  @override
+  String get stat_this_week => '本周';
+  @override
+  String get stat_today => '今日';
+  @override
+  String get stat_today_hourly => '今日按小时';
+  @override
+  String get stat_trend_daily => '日';
+  @override
+  String get stat_trend_monthly => '月';
+  @override
+  String get stat_trend_weekly => '周';
+  @override
+  String get stat_typical_day => '典型日';
+  @override
+  String get stat_vs_prev => '较前 14 天';
+  @override
+  String get stat_weighted_avg_speed => '加权均速';
+  @override
+  String get stop => '停止';
+  @override
+  String get storage_permissions => '请授予以下权限以便导出到 AnkiDroid。';
+  @override
+  String get stream => '流媒体';
+  @override
+  String get swipe_page_turn_sensitivity => '滑动翻页灵敏度';
+  @override
+  String get sync_account => '账户';
+  @override
+  String get sync_audiobook => '同步有声书位置';
+  @override
+  String get sync_audiobook_files => '同步有声书文件';
+  @override
+  String get sync_audiobook_files_warning => '音频和字幕可能很大。';
+  @override
+  String sync_auth_error({required Object message}) => '认证失败：${message}';
+  @override
+  String get sync_auto_sync => '自动同步';
+  @override
+  String get sync_backend => '存储后端';
+  @override
+  String get sync_backend_dropbox => 'Dropbox';
+  @override
+  String get sync_backend_ftp => 'FTP';
+  @override
+  String get sync_backend_google_drive => 'Google Drive';
+  @override
+  String get sync_backend_fushi_server => 'Fushi 互联';
+  @override
+  String get sync_backend_onedrive => 'OneDrive';
+  @override
+  String get sync_backend_sftp => 'SFTP';
+  @override
+  String get sync_backend_webdav => 'WebDAV';
+  @override
+  String get sync_checking_account => '正在检查账户…';
+  @override
+  String get sync_client_connected => '已连接';
+  @override
+  String get sync_client_token => '对端访问令牌';
+  @override
+  String get sync_client_token_manual => '手动填写令牌';
+  @override
+  String get sync_compare => '对比数据';
+  @override
+  String get sync_compare_all_books => '全部书籍';
+  @override
+  String get sync_compare_all_local => '全部 → 本地';
+  @override
+  String get sync_compare_all_remote => '全部 → 远端';
+  @override
+  String get sync_compare_all_skip => '全部 → 跳过';
+  @override
+  String sync_compare_applied({required Object count}) => '已应用 ${count} 项更改';
+  @override
+  String sync_compare_apply({required Object count}) => '立即同步（${count}）';
+  @override
+  String get sync_compare_close => '关闭';
+  @override
+  String get sync_compare_conflicts => '冲突';
+  @override
+  String get sync_compare_days => '天';
+  @override
+  String get sync_compare_delete_audiobook => '删除远端有声书';
+  @override
+  String get sync_compare_delete_book => '删除远端书籍';
+  @override
+  String sync_compare_delete_confirm({required Object name}) =>
+      '确定从远端删除「${name}」吗？本地数据保留，此操作不可撤销。';
+  @override
+  String get sync_compare_delete_dict => '删除远端词典';
+  @override
+  String get sync_compare_deleted => '已从远端删除';
+  @override
+  String get sync_compare_dictionaries => '词典';
+  @override
+  String get sync_compare_download => '下载';
+  @override
+  String get sync_compare_empty => '未找到书籍';
+  @override
+  String get sync_compare_local => '本地';
+  @override
+  String get sync_compare_no_content => '仅云端数据，无可下载书籍';
+  @override
+  String get sync_compare_no_data => '无数据';
+  @override
+  String get sync_compare_remote => '远端';
+  @override
+  String get sync_compare_select_all => '全选';
+  @override
+  String get sync_compare_skip => '跳过';
+  @override
+  String get sync_compare_title => '本地 vs 远端';
+  @override
+  String get sync_compare_unavailable => '请先设置同步后端';
+  @override
+  String get sync_compare_use_local => '本地';
+  @override
+  String get sync_compare_use_remote => '远端';
+  @override
+  String get sync_connection_failed => '连接失败';
+  @override
+  String get sync_connection_success => '连接成功';
+  @override
+  String get sync_content => '上传书籍文件';
+  @override
+  String get sync_content_warning => '大文件会消耗存储空间和流量';
+  @override
+  String get sync_dictionary => '同步词典';
+  @override
+  String get sync_dictionary_warning => '词典包可能很大，并包含已导入的词典资源。';
+  @override
+  String get sync_err_auth_expired => '登录已过期，请重新登录。';
+  @override
+  String get sync_err_invalid_client => '客户端凭据无效，请更新 App。';
+  @override
+  String get sync_err_network => '无法连接服务器——请检查网络或代理设置。';
+  @override
+  String get sync_err_not_configured => '此构建未配置谷歌同步凭据。';
+  @override
+  String get sync_err_quota => '云端存储空间已满（配额已用尽）。';
+  @override
+  String get sync_err_scope_upgrade => '同步权限已更新，请重新登录 Google 账号以继续同步。';
+  @override
+  String get sync_err_timeout => '连接超时——服务器未在限定时间内响应。请检查网络或代理设置。';
+  @override
+  String sync_error({required Object message}) => '同步错误：${message}';
+  @override
+  String get sync_exit_warning => '同步尚未完成，现在退出可能会丢失数据。';
+  @override
+  String get sync_exit_warning_title => '同步进行中';
+  @override
+  String get sync_host => '主机';
+  @override
+  String get sync_lan_discovery => '局域网设备';
+  @override
+  String get sync_lan_no_devices => '未发现设备';
+  @override
+  String get sync_lan_scan_failed => '扫描失败——请检查网络权限或防火墙。';
+  @override
+  String get sync_local_audio => '同步本地音频';
+  @override
+  String get sync_local_audio_warning => '同步本地音频来源数据库（可能较大）';
+  @override
+  String get sync_not_signed_in => '未登录';
+  @override
+  String get sync_now => '立即同步';
+  @override
+  String sync_now_audio_in({required Object count}) => '↓${count} 有声书';
+  @override
+  String sync_now_audio_out({required Object count}) => '↑${count} 有声书';
+  @override
+  String sync_now_books_in({required Object count}) => '↓${count} 本书';
+  @override
+  String get sync_now_busy => '同步进行中，请稍候';
+  @override
+  String sync_now_dicts_in({required Object count}) => '↓${count} 词典';
+  @override
+  String sync_now_dicts_out({required Object count}) => '↑${count} 词典';
+  @override
+  String sync_now_done({required Object detail}) => '同步完成 · ${detail}';
+  @override
+  String sync_now_failed_suffix({required Object count}) => ' · ${count} 项失败';
+  @override
+  String get sync_now_hint => '立即与云端做一次完整双向同步';
+  @override
+  String sync_now_local_audio_in({required Object count}) => '↓${count} 本地音频';
+  @override
+  String sync_now_local_audio_out({required Object count}) => '↑${count} 本地音频';
+  @override
+  String get sync_now_no_changes => '无新增';
+  @override
+  String get sync_pair_allow => '允许';
+  @override
+  String sync_pair_confirm_identity_body({required Object device}) =>
+      '你正在与 ${device} 配对。继续前请确认这是你预期的设备。';
+  @override
+  String get sync_pair_confirm_identity_title => '确认设备';
+  @override
+  String get sync_pair_continue => '继续';
+  @override
+  String get sync_pair_denied => '对方拒绝了配对请求';
+  @override
+  String get sync_pair_deny => '拒绝';
+  @override
+  String get sync_pair_enter_pin_body => '输入另一台设备屏幕上显示的 6 位 PIN。';
+  @override
+  String get sync_pair_enter_pin_title => '输入 PIN';
+  @override
+  String get sync_pair_failed => '配对失败';
+  @override
+  String get sync_pair_fingerprint_changed => '证书已变更，为安全起见已中止配对（可能存在中间人攻击）。';
+  @override
+  String get sync_pair_fingerprint_label => '证书指纹';
+  @override
+  String get sync_pair_not_fushi => '此地址未找到 Fushi 设备，已保存该地址。';
+  @override
+  String get sync_pair_pairing => '正在配对…';
+  @override
+  String get sync_pair_pin_label => '在另一台设备上输入此 PIN';
+  @override
+  String get sync_pair_pin_waiting => '等待对方设备输入此 PIN…';
+  @override
+  String get sync_pair_pin_wrong => 'PIN 错误，请重试';
+  @override
+  String get sync_pair_repair => '重新配对';
+  @override
+  String get sync_pair_request_body => '有设备请求配对，允许它与本机同步吗？';
+  @override
+  String get sync_pair_request_title => '配对请求';
+  @override
+  String get sync_pair_success => '配对成功，已自动填入 token';
+  @override
+  String get sync_pair_unavailable => '对方设备未就绪或版本过旧，请确认对方已更新并开启同步后重试。';
+  @override
+  String get sync_pair_unknown_device => '未知设备';
+  @override
+  String get sync_paired_peer_remove => '移除';
+  @override
+  String get sync_paired_peer_removed => '已移除配对设备';
+  @override
+  String get sync_paired_peer_unknown => '未知设备';
+  @override
+  String get sync_paired_peers_empty => '尚无已配对设备';
+  @override
+  String get sync_paired_peers_title => '已配对设备';
+  @override
+  String get sync_password => '密码';
+  @override
+  String get sync_port => '端口';
+  @override
+  String get sync_private_key => '私钥';
+  @override
+  String get sync_progress_audiobooks => '同步有声书';
+  @override
+  String get sync_progress_books => '导入书籍';
+  @override
+  String get sync_progress_dictionaries => '同步词典';
+  @override
+  String get sync_progress_local_audio => '同步本地音频';
+  @override
+  String get sync_progress_reading => '同步阅读数据';
+  @override
+  String get sync_progress_videos => '同步视频';
+  @override
+  String get sync_role_locked_by_client => '已连接其他设备，请先移除连接后才能作为服务端。';
+  @override
+  String get sync_role_locked_by_server => '本机正作为服务端，请先关闭服务端再连接其他设备。';
+  @override
+  String get sync_section_actions => '同步操作';
+  @override
+  String get sync_section_backup => '本地备份';
+  @override
+  String get sync_section_content => '同步内容';
+  @override
+  String get sync_section_host_server => '本机作为同步服务器';
+  @override
+  String get sync_section_host_server_footer => '让其他设备从本机同步，与上面选择的同步后端互不影响。';
+  @override
+  String get sync_section_method => '同步方式';
+  @override
+  String get sync_server_copy_token => '复制令牌';
+  @override
+  String get sync_server_enable => '启用同步服务';
+  @override
+  String get sync_server_mode_active => '本机作为同步服务端';
+  @override
+  String get sync_server_mode_clients_drive => '由已连接的客户端发起同步，本机无需手动同步';
+  @override
+  String get sync_server_port => '服务端口';
+  @override
+  String sync_server_port_in_use({required Object port}) =>
+      '端口 ${port} 已被占用，请换一个端口。';
+  @override
+  String get sync_server_regenerate_token => '重新生成令牌';
+  @override
+  String get sync_server_running => '服务运行中';
+  @override
+  String get sync_server_stopped => '服务已停止';
+  @override
+  String get sync_server_tls_enable => '互联加密（HTTPS/TLS）';
+  @override
+  String get sync_server_tls_repair_hint => '切换后已配对设备需重新配对';
+  @override
+  String get sync_server_token => '访问令牌';
+  @override
+  String get sync_show_remote_entries => '显示远端条目';
+  @override
+  String get sync_show_remote_entries_warning =>
+      '把配对设备或云端有、本机没有的书籍和视频显示为可下载/流播的占位卡。';
+  @override
+  String get sync_sign_in => '登录';
+  @override
+  String get sync_sign_out => '退出登录';
+  @override
+  String get sync_signed_in => '已登录';
+  @override
+  String get sync_statistics => '同步统计';
+  @override
+  String get sync_summary => '云端、局域网与本地备份';
+  @override
+  String get sync_test_connection => '测试连接';
+  @override
+  String get sync_use_tls => '使用 TLS';
+  @override
+  String get sync_username => '用户名';
+  @override
+  String get sync_video_files => '上传视频文件';
+  @override
+  String get sync_video_files_warning => '视频文件可能非常大。';
+  @override
+  String get sync_webdav_missing_fields => '缺少字段';
+  @override
+  String sync_webdav_test_failed({required Object message}) =>
+      '连接失败: ${message}';
+  @override
+  String get sync_webdav_url => '服务器地址';
+  @override
+  String tag_added_to_book({required Object name}) => '标签「${name}」已添加到书籍。';
+  @override
+  String tag_added_to_collection({required Object name}) =>
+      '标签「${name}」已添加到合集。';
+  @override
+  String tag_added_to_video({required Object name}) => '标签「${name}」已添加到视频。';
+  @override
+  String tag_already_on_book({required Object name}) => '标签「${name}」已存在于此书。';
+  @override
+  String tag_already_on_collection({required Object name}) =>
+      '标签「${name}」已在此合集上。';
+  @override
+  String tag_book_count({required Object count}) => '${count} 本';
+  @override
+  String get tag_clear_filter => '清除筛选';
+  @override
+  String get tag_color => '颜色';
+  @override
+  String tag_delete_confirm({required Object name}) => '删除标签「${name}」？';
+  @override
+  String get tag_filter_title => '按标签筛选';
+  @override
+  String get tag_label => '标签';
+  @override
+  String get tag_manage => '管理标签';
+  @override
+  String get tag_manage_title => '标签管理';
+  @override
+  String get tag_name_duplicate => '同名标签已存在。';
+  @override
+  String get tag_name_empty => '标签名称不能为空。';
+  @override
+  String get tag_name_hint => '标签名称';
+  @override
+  String get tag_new => '新建标签';
+  @override
+  String get tag_no_books_for_filter => '没有书籍匹配所选标签。';
+  @override
+  String get tag_no_tags_hint => '还没有标签。创建一个开始吧。';
+  @override
+  String get tag_seed_stars => '添加星级标签';
+  @override
+  String get tag_seed_stars_added => '已添加星级标签';
+  @override
+  String get tag_seed_stars_exists => '星级标签已存在';
+  @override
+  String get tap_empty_hide_chrome => '悬浮控制栏';
+  @override
+  String get text_segmentation => '文本分词';
+  @override
+  String get texthooker => '文本钩子';
+  @override
+  String get texthooker_enabled => '文本钩子（接收文本）';
+  @override
+  String get texthooker_enabled_hint => '连接 Textractor/mpv/agent 并查询收到的文本';
+  @override
+  String get texthooker_experimental_banner => '文本钩子为实验性功能：实时文本、查词与制卡可能尚不稳定。';
+  @override
+  String get theme_black => '纯黑';
+  @override
+  String get theme_code_copied => '主题代码已复制到剪贴板';
+  @override
+  String get theme_dark => '深暗';
+  @override
+  String get theme_ecru => '米黄';
+  @override
+  String get theme_eyecare => '护眼';
+  @override
+  String get theme_gray => '灰暗';
+  @override
+  String get theme_light => '白色';
+  @override
+  String get theme_seed_preview_hint =>
+      '下方色板预览由种子色实际生成的颜色。想让某个颜色固定作为主色强调色，请打开「主色」开关并显式指定。';
+  @override
+  String get theme_water => '水蓝';
+  @override
+  String toc_section({required Object n}) => '章节列表（${n}）';
+  @override
+  String get top_progress_pos_center => '居中';
+  @override
+  String get top_progress_pos_left => '左上';
+  @override
+  String get top_progress_pos_right => '右上';
+  @override
+  String get top_progress_position => '进度位置';
+  @override
+  String get torrent_upload_intro_body =>
+      '上传（做种）默认关闭。开启后会把下载内容回传给网络，会占用你的上传带宽。可随时在「设置」里修改。';
+  @override
+  String get torrent_upload_intro_confirm => '保存';
+  @override
+  String get torrent_upload_intro_enable => '启用上传 / 做种';
+  @override
+  String get torrent_upload_intro_keep_off => '保持关闭';
+  @override
+  String get torrent_upload_intro_title => '上传 / 做种';
+  @override
+  String get reader_blur_images => '图片模糊（防剧透）';
+  @override
+  String get reader_font_size => '字体大小';
+  @override
+  String get reader_font_vpal => 'VPAL 纵排替代';
+  @override
+  String get reader_furigana_hide => '隐藏';
+  @override
+  String get reader_furigana_mode => '振假名';
+  @override
+  String get reader_furigana_mode_hint => '';
+  @override
+  String get reader_furigana_partial => '部分';
+  @override
+  String get reader_furigana_show => '显示';
+  @override
+  String get reader_furigana_toggle => '切换';
+  @override
+  String get reader_horizontal => '横排';
+  @override
+  String get reader_line_height => '行高';
+  @override
+  String get reader_merge_image_pages => '将插图页并入正文';
+  @override
+  String get reader_merge_image_pages_subtitle =>
+      '把只含一张图的独立章节并入相邻正文章连续显示，不再单独占一页';
+  @override
+  String get reader_no_books_added => '尚未添加任何书籍';
+  @override
+  String get reader_not_bound_cannot_rematch => '有声书未绑定书籍，无法重跑匹配';
+  @override
+  String get reader_orient_mixed => '混合';
+  @override
+  String get reader_orient_upright => '竖直';
+  @override
+  String get reader_page_columns_auto => '自动';
+  @override
+  String get reader_paginated => '翻页';
+  @override
+  String get reader_paragraph_spacing => '段落间距';
+  @override
+  String get reader_reader_styles => '优先书籍样式';
+  @override
+  String get reader_scroll => '滚动';
+  @override
+  String get reader_text_indentation => '段落缩进';
+  @override
+  String get reader_text_justify => '两端对齐';
+  @override
+  String get reader_theme => '主题';
+  @override
+  String get reader_vert_kerning => '字偶间距（纵排）';
+  @override
+  String get reader_vert_text_orient => '文字方向';
+  @override
+  String get reader_vertical => '竖排';
+  @override
+  String get reader_view_mode_label => '翻页 / 滚动';
+  @override
+  String get reader_vn => '视觉小说';
+  @override
+  String get reader_writing_direction => '排版方向';
+  @override
+  String get undo => '撤销';
+  @override
+  String get unit_milliseconds => '毫秒';
+  @override
+  String get unit_pixels => '像素';
+  @override
+  String untitled_book({required Object id}) => '书籍 ${id}';
+  @override
+  String get untitled_chapter => '（无标题）';
+  @override
+  String get update_already_latest => '已是最新版本';
+  @override
+  String get update_auto_install => '自动安装更新';
+  @override
+  String get update_available => '发现新版本';
+  @override
+  String update_cached_newer({required Object version}) =>
+      '发现新版 ${version}（校验中…）';
+  @override
+  String update_cached_up_to_date({required Object version}) =>
+      '已是最新已知版本 ${version}（校验中…）';
+  @override
+  String get update_cancel => '取消';
+  @override
+  String get update_cancelled => '已取消下载';
+  @override
+  String get update_cancelling => '正在取消…';
+  @override
+  String get update_channel_beta => '测试版';
+  @override
+  String get update_channel_debug => '调试版';
+  @override
+  String get update_channel_stable => '稳定版';
+  @override
+  String get update_check_failed => '检查更新失败';
+  @override
+  String get update_checking_now => '正在检查更新…';
+  @override
+  String get update_connecting => '正在连接更新源…';
+  @override
+  String get update_custom_proxy_auto_hint =>
+      '用于更新检查、云同步和下载。留空时自动读取环境变量，再读取已启用的系统代理。';
+  @override
+  String get update_custom_proxy_hint =>
+      'host:port，例如 127.0.0.1:7890（仅 IPv4/域名）';
+  @override
+  String get update_custom_proxy_invalid => '代理格式无效，请用 host:port';
+  @override
+  String get update_custom_proxy_label => '自定义网络代理';
+  @override
+  String get update_debug_channel => '调试更新通道';
+  @override
+  String get update_debug_channel_warning => '调试通道的构建可能不稳定。使用风险自负。';
+  @override
+  String get update_download => '下载';
+  @override
+  String get update_download_failed => '下载失败';
+  @override
+  String get update_download_not_resumed => '未续传';
+  @override
+  String get update_download_restarted_from_zero => '已从零重下';
+  @override
+  String update_download_resume_status({required Object status}) =>
+      '续传：${status}';
+  @override
+  String get update_download_resumed => '已续传';
+  @override
+  String update_download_size(
+          {required Object received, required Object total}) =>
+      '已下载：${received} / ${total}';
+  @override
+  String update_download_source({required Object source}) => '来源：${source}';
+  @override
+  String update_download_speed({required Object speed}) => '速度：${speed}';
+  @override
+  String get update_downloading => '正在下载更新…';
+  @override
+  String get update_hide => '隐藏';
+  @override
+  String update_install_current_executable({required Object path}) =>
+      '当前运行程序：${path}';
+  @override
+  String update_install_deletefile_failure(
+          {required Object path, required Object code}) =>
+      '安装器无法替换 ${path}（代码 ${code}）';
+  @override
+  String update_install_detected_location(
+          {required Object source, required Object path}) =>
+      '检测到的安装位置（${source}）：${path}';
+  @override
+  String update_install_failure_summary({required Object summary}) =>
+      '原因：${summary}';
+  @override
+  String get update_install_incomplete_message =>
+      '安装器已启动，但 Fushi 仍是旧版本。请查看下方安装日志。';
+  @override
+  String get update_install_incomplete_title => '更新未完成';
+  @override
+  String update_install_installer_pid({required Object pid}) =>
+      '安装器 PID：${pid}';
+  @override
+  String update_install_launch_failed_message({required Object version}) =>
+      'Fushi 未能启动 ${version} 版本安装器。请查看下方日志路径。';
+  @override
+  String get update_install_launch_failed_title => '更新安装器未启动';
+  @override
+  String update_install_launcher_pid({required Object pid}) =>
+      '更新启动器 PID：${pid}';
+  @override
+  String update_install_libmpv_holder(
+          {required Object pid, required Object path}) =>
+      'libmpv 持有进程：PID ${pid} - ${path}';
+  @override
+  String get update_install_log_not_observed => '启动后检查时未创建安装日志。';
+  @override
+  String get update_install_log_observed => '启动后检查时已创建安装日志。';
+  @override
+  String update_install_log_path({required Object path}) => '安装日志：${path}';
+  @override
+  String get update_install_manual_close_retry =>
+      '请按上方 PID/路径手动关闭 Fushi，然后重试更新或重新运行安装器。';
+  @override
+  String get update_install_parent_exit_not_observed =>
+      '更新启动器未确认 Fushi 已在安装器启动前退出。';
+  @override
+  String get update_install_parent_exit_observed => '启动安装器前已确认 Fushi 退出。';
+  @override
+  String update_install_path_mismatch({required Object warning}) =>
+      '安装目录不一致：${warning}';
+  @override
+  String get update_install_permission_cancel => '取消';
+  @override
+  String get update_install_permission_message =>
+      '请在系统设置中允许 Fushi 安装应用，然后重试安装。';
+  @override
+  String get update_install_permission_retry => '重试安装';
+  @override
+  String get update_install_permission_title => '允许安装更新';
+  @override
+  String get update_install_restart_windows_hint =>
+      '如果上方进程已关闭但 libmpv-2.dll 仍被占用，请重启 Windows 后再安装。';
+  @override
+  String update_install_running_process(
+          {required Object pid, required Object path}) =>
+      '仍在运行的 Fushi 进程：PID ${pid} - ${path}';
+  @override
+  String update_install_success_message({required Object version}) =>
+      'Fushi 已更新到 ${version} 版本。';
+  @override
+  String get update_install_success_title => '更新已安装';
+  @override
+  String update_install_target_dir({required Object path}) => '安装目标：${path}';
+  @override
+  String get update_installing => '正在安装…';
+  @override
+  String get update_mac_install_incomplete_message =>
+      '更新未能应用，Fushi 仍是旧版本。你可以重试更新，或手动下载最新版本。';
+  @override
+  String update_message({required Object version}) => '${version} 版本可用。';
+  @override
+  String update_network_failure(
+          {required Object host, required Object reason}) =>
+      '无法连接 ${host}：${reason}';
+  @override
+  String get update_never_remind => '不再提醒自动更新';
+  @override
+  String get update_skip => '跳过';
+  @override
+  String get url => '网址';
+  @override
+  String get video_audio_track => '音轨';
+  @override
+  String get video_audio_track_empty => '没有可切换的音频轨';
+  @override
+  String video_audio_track_switched({required Object label}) => '音轨: ${label}';
+  @override
+  String get video_auto_play_next_cancel => '取消';
+  @override
+  String video_auto_play_next_countdown({required Object seconds}) =>
+      '${seconds} 秒后播放下一集';
+  @override
+  String get video_black_flash_notice_action => '查看建议';
+  @override
+  String get video_black_flash_notice_dont_show_again => '不再提示';
+  @override
+  String get video_bottom_next_cue => '下一句字幕（无字幕则前进一段）';
+  @override
+  String get video_bottom_play_pause => '播放 / 暂停';
+  @override
+  String get video_bottom_prev_cue => '上一句字幕（无字幕则后退一段）';
+  @override
+  String get video_bottom_seek_back => '后退 10 秒';
+  @override
+  String get video_bottom_seek_back_label => '−10s';
+  @override
+  String get video_bottom_seek_forward => '前进 10 秒';
+  @override
+  String get video_bottom_seek_forward_label => '+10s';
+  @override
+  String video_chapter_n({required Object n}) => '章节 ${n}';
+  @override
+  String get video_chapters => '章节';
+  @override
+  String get video_chapters_empty => '无章节';
+  @override
+  String get video_clip_export => '片段导出';
+  @override
+  String get video_clip_export_cancelled => '已取消片段导出';
+  @override
+  String video_clip_export_failed({required Object reason}) =>
+      '片段导出失败：${reason}';
+  @override
+  String get video_clip_export_ffmpeg_failed => 'ffmpeg 执行失败';
+  @override
+  String get video_clip_export_ffmpeg_unavailable => 'ffmpeg 不可用';
+  @override
+  String get video_clip_export_input_missing => '源视频不可用';
+  @override
+  String get video_clip_export_invalid_range => '没有有效片段';
+  @override
+  String get video_clip_export_output_missing => '没有生成导出文件';
+  @override
+  String get video_clip_export_remote_download_required => '请先把远端视频下载到本机后再导出片段';
+  @override
+  String get video_clip_export_source_changed => '视频源已切换，已取消片段导出';
+  @override
+  String get video_clip_export_start => '开始片段导出';
+  @override
+  String get video_clip_export_stop => '停止并导出片段';
+  @override
+  String video_clip_exported({required Object path}) => '片段已导出：${path}';
+  @override
+  String video_clip_exported_with_subtitles({required Object path}) =>
+      '片段已导出（含字幕）：${path}';
+  @override
+  String get video_clip_exporting => '正在导出片段…';
+  @override
+  String get video_continue_watching => '继续观看';
+  @override
+  String get video_control_audio_track => '音轨';
+  @override
+  String get video_control_customize_hint => '为每个按钮选择在播放器上的位置，或将其移出。';
+  @override
+  String get video_control_episode_list => '剧集列表';
+  @override
+  String get video_control_favorite_sentence => '收藏当前句';
+  @override
+  String get video_control_fullscreen => '全屏';
+  @override
+  String get video_control_next_cue => '下一句字幕';
+  @override
+  String get video_control_palette_hint => '把按钮拖入某个位置即可添加；一个按钮可放在多个位置。';
+  @override
+  String get video_control_palette_title => '全部按钮';
+  @override
+  String get video_control_play_pause => '播放/暂停';
+  @override
+  String get video_control_previous_cue => '上一句字幕';
+  @override
+  String get video_control_reject_required => '必选控制必须保留在播放器上。';
+  @override
+  String get video_control_reject_unavailable => '此控制不能放在这里。';
+  @override
+  String get video_control_reject_volume_bottom => '音量只能放在底栏。';
+  @override
+  String get video_control_remove_from_slot => '移出';
+  @override
+  String get video_control_reset_layout => '恢复默认播放器按钮布局';
+  @override
+  String get video_control_screenshot => '截图';
+  @override
+  String get video_control_seek_backward => '后退10秒';
+  @override
+  String get video_control_seek_forward => '前进10秒';
+  @override
+  String get video_control_settings => '播放器设置';
+  @override
+  String get video_control_slot_bottom_center => '底栏（中间）';
+  @override
+  String get video_control_slot_bottom_left => '底栏（左）';
+  @override
+  String get video_control_slot_bottom_right => '底栏（右）';
+  @override
+  String get video_control_slot_drop_hint => '拖动按钮到这里';
+  @override
+  String get video_control_slot_hidden => '移出播放器';
+  @override
+  String get video_control_slot_screen_left => '屏幕左侧';
+  @override
+  String get video_control_slot_screen_right => '屏幕右侧';
+  @override
+  String get video_control_slot_top_center => '顶栏（中间）';
+  @override
+  String get video_control_slot_top_left => '顶栏（左）';
+  @override
+  String get video_control_slot_top_right => '顶栏（右）';
+  @override
+  String get video_control_speed => '倍速';
+  @override
+  String get video_control_subtitle_list => '字幕列表';
+  @override
+  String get video_control_subtitle_track => '字幕轨';
+  @override
+  String get video_control_title => '视频名称';
+  @override
+  String get video_control_volume => '音量';
+  @override
+  String get video_danmaku_manual_bind_empty => '这一集还没有弹幕';
+  @override
+  String get video_danmaku_manual_bind_failed => '弹幕加载失败，请稍后重试';
+  @override
+  String get video_danmaku_manual_bind_server_error => '弹幕服务器拒绝了请求，请稍后重试';
+  @override
+  String get video_danmaku_manual_match_title => '匹配弹幕';
+  @override
+  String get video_danmaku_manual_network_error => '网络错误，请检查连接后重试。';
+  @override
+  String get video_danmaku_manual_no_result => '未找到匹配的番剧。';
+  @override
+  String get video_danmaku_manual_search_action => '搜索';
+  @override
+  String get video_danmaku_manual_search_hint => '番剧名';
+  @override
+  String get video_danmaku_manual_search_prompt => '按番剧名搜索弹弹play，再选择分集。';
+  @override
+  String get video_danmaku_manual_server_error => '搜索失败，请稍后重试。';
+  @override
+  String video_delete_confirm({required Object title}) =>
+      '删除『${title}』？此操作无法撤销。';
+  @override
+  String get video_delete_title => '删除视频';
+  @override
+  String get video_double_tap_next_cue => '下一句';
+  @override
+  String get video_double_tap_prev_cue => '上一句';
+  @override
+  String get video_drop_audio_unsupported => '请把字幕文件拖到当前视频上。音频文件不能在这里关联。';
+  @override
+  String get video_drop_subtitle_only => '请把字幕文件拖到当前视频上。';
+  @override
+  String get video_episode_list => '选集';
+  @override
+  String get video_episode_list_empty => '无剧集';
+  @override
+  String video_favorite_count({required Object count}) => '收藏 ${count} 句';
+  @override
+  String get video_file_error_content => '无法加载视频文件。请确认该文件存在并位于应用可访问的目录中。';
+  @override
+  String get video_file_not_found => '找不到视频文件';
+  @override
+  String get video_immersive_locked => '已进入沉浸模式';
+  @override
+  String get video_immersive_mode_full => '全部功能';
+  @override
+  String get video_immersive_mode_lookup_only => '仅查词';
+  @override
+  String get video_immersive_mode_seek_lookup => '快捷键 + 查词';
+  @override
+  String get video_immersive_mode_unlock_only => '仅解锁';
+  @override
+  String get video_immersive_unlock => '解锁';
+  @override
+  String get video_immersive_unlocked => '已退出沉浸模式';
+  @override
+  String get video_import_action => '导入视频';
+  @override
+  String get video_import_confirm => '导入';
+  @override
+  String video_import_folder_done({required Object count}) =>
+      '已导入 ${count} 个系列';
+  @override
+  String get video_import_folder_empty => '此文件夹里没有视频文件';
+  @override
+  String get video_import_pick_folder => '导入文件夹（自动分组剧集）';
+  @override
+  String get video_import_pick_playlist => '选择 m3u8 播放列表';
+  @override
+  String get video_import_pick_subtitle => '选择字幕';
+  @override
+  String get video_import_pick_video => '选择视频文件';
+  @override
+  String get video_import_stream_advanced => '高级（防盗链请求头）';
+  @override
+  String get video_import_stream_referer => 'Referer（可选）';
+  @override
+  String get video_import_stream_subtitle_url_field => '外挂字幕 URL（可选）';
+  @override
+  String get video_import_stream_url_field => '视频流 URL';
+  @override
+  String get video_import_stream_url_hint =>
+      '播放 HLS/m3u8/mp4 直链（可选外挂字幕 URL 与防盗链 Referer/User-Agent）';
+  @override
+  String get video_import_stream_user_agent => 'User-Agent（可选）';
+  @override
+  String get video_import_subtitle_optional => '可选外挂字幕（播放时可随时在内嵌/外挂字幕间切换）';
+  @override
+  String get video_import_title => '导入视频';
+  @override
+  String get video_jimaku_anime_match => '番剧匹配';
+  @override
+  String get video_jimaku_api_key => 'Jimaku API key';
+  @override
+  String get video_jimaku_api_key_hint => '在 jimaku.cc/account 免费获取 API key';
+  @override
+  String get video_jimaku_api_key_set => 'API key 已配置';
+  @override
+  String video_jimaku_batch_done(
+          {required Object done, required Object total}) =>
+      '字幕已获取：${done}/${total}';
+  @override
+  String get video_jimaku_batch_download => '下载全部';
+  @override
+  String get video_jimaku_batch_title => '为合集获取字幕';
+  @override
+  String get video_jimaku_download_failed => '下载失败';
+  @override
+  String get video_jimaku_downloaded => '字幕已下载并应用';
+  @override
+  String get video_jimaku_episode => '集数（可选）';
+  @override
+  String get video_jimaku_episode_hint => '留空列出全部';
+  @override
+  String get video_jimaku_fetch => '获取字幕（Jimaku）';
+  @override
+  String get video_jimaku_filter => '筛选结果（如 WEBRip、BD）';
+  @override
+  String get video_jimaku_find_sources => '查找字幕';
+  @override
+  String get video_jimaku_language => '语言';
+  @override
+  String get video_jimaku_language_all => '全部';
+  @override
+  String get video_jimaku_no_key => '请先填写 Jimaku API key';
+  @override
+  String get video_jimaku_no_results => '没有找到字幕';
+  @override
+  String get video_jimaku_query => '番剧名';
+  @override
+  String get video_jimaku_search => '搜索';
+  @override
+  String get video_jimaku_series => '系列';
+  @override
+  String get video_jimaku_show_all_episodes => '显示全部集';
+  @override
+  String get video_jimaku_source => '字幕来源';
+  @override
+  String get video_jimaku_source_hint => '选择一个 Jimaku 条目；合集字幕会按集号自动匹配。';
+  @override
+  String video_last_watched({required Object date}) => '上次观看 ${date}';
+  @override
+  String get video_library_empty => '还没有导入视频';
+  @override
+  String get video_load_failed_back => '返回';
+  @override
+  String get video_load_failed_generic => '无法加载该视频。';
+  @override
+  String get video_load_failed_network => '网络错误，请检查网络连接后重试。';
+  @override
+  String get video_load_failed_not_found => '在媒体库中找不到该条目。';
+  @override
+  String get video_load_failed_retry => '重试';
+  @override
+  String get video_load_failed_timeout => '连接超时，网络较慢或视频源暂时限流，请稍后重试。';
+  @override
+  String get video_load_failed_title => '视频加载失败';
+  @override
+  String get video_load_failed_unavailable =>
+      '无法获取视频流，视频可能不可用、受地区或年龄限制，或来源已变更。';
+  @override
+  String get video_loading_buffering => '正在缓冲…';
+  @override
+  String get video_loading_connecting => '正在连接视频流…';
+  @override
+  String get video_loading_preparing => '正在准备…';
+  @override
+  String get video_loading_subtitle => '正在下载字幕…';
+  @override
+  String get video_menu_fullscreen => '切换全屏';
+  @override
+  String get video_menu_lock => '沉浸 / 锁定模式';
+  @override
+  String get video_menu_play_pause => '播放 / 暂停';
+  @override
+  String get video_menu_subtitle_track => '字幕轨';
+  @override
+  String get video_mining_image_mode => '视频卡片图片';
+  @override
+  String get video_mining_image_mode_current_frame => '制卡时截图';
+  @override
+  String get video_mining_image_mode_gif => '动图 GIF（字幕片段）';
+  @override
+  String get video_mining_image_mode_hint =>
+      '视频卡片封面用字幕区间动图，还是某一帧静态截图（取哪一帧也在这里选）';
+  @override
+  String get video_mining_image_mode_subtitle_start => '字幕开头截图';
+  @override
+  String get video_next_episode => '下一集';
+  @override
+  String video_playlist_episodes({required Object count}) => '${count} 集';
+  @override
+  String get video_prev_episode => '上一集';
+  @override
+  String get video_quality => '画质';
+  @override
+  String get video_quality_auto => '自动';
+  @override
+  String get video_quality_empty => '本视频没有可切换的画质';
+  @override
+  String get video_quality_enhancement_hint =>
+      '开启后用 mpv 内置高画质缩放让画面更清晰，动画、真人影视/电视剧都适用。想用 Anime4K 等着色器进一步增强，请在播放视频时的「画质增强」里选择档位。';
+  @override
+  String get video_quality_load_failed => '无法获取该视频的画质档。';
+  @override
+  String get video_quality_loading => '正在获取可选画质…';
+  @override
+  String video_quality_switched({required Object label}) => '画质：${label}';
+  @override
+  String get video_rename => '重命名';
+  @override
+  String get video_rename_hint => '标题';
+  @override
+  String get video_render_skia_fix_confirm_action => '重启';
+  @override
+  String get video_render_skia_fix_confirm_body => '将关闭 Impeller 渲染器并重启应用使其生效。';
+  @override
+  String get video_render_skia_fix_confirm_title => '切换到 Skia 并重启？';
+  @override
+  String get video_render_skia_fix_hint => '有声音但画面全黑时用。关闭 Impeller，重启后生效。';
+  @override
+  String get video_render_skia_fix_title => '画面全黑？切换渲染器（Skia）';
+  @override
+  String video_resource_missing_message({required Object title}) =>
+      '找不到『${title}』的视频文件。资源位置可能已变化，或所在磁盘未连接。你可以重新导入，或删除此条目。';
+  @override
+  String get video_resource_missing_reimport => '重新导入';
+  @override
+  String get video_resource_missing_title => '视频无法访问';
+  @override
+  String get video_resource_relink_success => '已重新链接视频文件';
+  @override
+  String get video_scrape_air_date => '放送开始';
+  @override
+  String get video_scrape_applied => '封面已应用';
+  @override
+  String get video_scrape_apply_failed => '封面应用失败';
+  @override
+  String video_scrape_apply_to_collection({required Object n}) =>
+      '同时应用到本合集全部 ${n} 集';
+  @override
+  String get video_scrape_batch_close => '关闭';
+  @override
+  String get video_scrape_confidence_high => '高匹配';
+  @override
+  String get video_scrape_confidence_low => '低匹配';
+  @override
+  String get video_scrape_confidence_medium => '中匹配';
+  @override
+  String get video_scrape_episodes => '话数';
+  @override
+  String get video_scrape_info => '条目信息';
+  @override
+  String get video_scrape_info_empty => '还没有条目资料。后台会自动刮削，也可以手动匹配。';
+  @override
+  String get video_scrape_no_results => '没有找到匹配结果';
+  @override
+  String get video_scrape_online_match => '在线匹配封面';
+  @override
+  String video_scrape_rating_votes({required Object count}) => '${count} 人评分';
+  @override
+  String get video_scrape_rescrape => '重新刮削';
+  @override
+  String get video_scrape_search => '搜索';
+  @override
+  String get video_scrape_search_hint => '按片名搜索';
+  @override
+  String get video_scrape_source_offline => '离线库';
+  @override
+  String get video_scrape_summary => '简介';
+  @override
+  String get video_scrape_tags => '标签';
+  @override
+  String get video_scrape_use => '使用';
+  @override
+  String get video_scrape_view_subject => '在 Bangumi 查看';
+  @override
+  String get video_screenshot => '截图';
+  @override
+  String video_screenshot_failed_reason({required Object reason}) =>
+      '截图失败：${reason}';
+  @override
+  String video_screenshot_ready({required Object file}) => '截图已准备好：${file}';
+  @override
+  String video_screenshot_saved_to({required Object path}) => '截图已保存：${path}';
+  @override
+  String get video_secondary_subtitle_hint => '由播放器渲染（不可查词）';
+  @override
+  String get video_secondary_subtitle_sources => '副字幕';
+  @override
+  String get video_setting_auto_play_next => '自动连播下一集';
+  @override
+  String get video_setting_auto_scrape => '自动刮削条目资料';
+  @override
+  String get video_setting_auto_scrape_hint =>
+      '库里的视频后台自动从 Bangumi 获取封面、简介、评分与标签';
+  @override
+  String get video_setting_av_delay => '字幕调轴';
+  @override
+  String get video_setting_av_delay_hint =>
+      '正数 = 字幕延后（字幕整体往后拨）；负数 = 字幕提前。可拖滑条、按 ± 或直接输入数值。';
+  @override
+  String get video_setting_danmaku_area => '显示区域';
+  @override
+  String get video_setting_danmaku_area_hint => '弹幕可占用的画面高度比例（从顶部起）。';
+  @override
+  String get video_setting_danmaku_block_rules => '屏蔽词 / 正则';
+  @override
+  String get video_setting_danmaku_block_rules_hint =>
+      '每行一条规则。用斜杠包裹（如 /pattern/）视为正则，否则按忽略大小写的文本子串匹配。';
+  @override
+  String get video_setting_danmaku_block_rules_placeholder =>
+      '例如 剧透 或 /pattern/';
+  @override
+  String get video_setting_danmaku_enabled => '显示弹幕';
+  @override
+  String get video_setting_danmaku_enabled_hint => '在视频上渲染本地或在线匹配的弹幕，不阻挡播放器操作。';
+  @override
+  String get video_setting_danmaku_font_scale => '字号';
+  @override
+  String get video_setting_danmaku_font_scale_hint => '缩放弹幕文字大小。';
+  @override
+  String get video_setting_danmaku_manual_match => '手动匹配';
+  @override
+  String get video_setting_danmaku_manual_match_hint =>
+      '自动匹配失败或匹配错集时，按标题搜索弹弹play 并手动选集。';
+  @override
+  String get video_setting_danmaku_max_active => '同时显示上限';
+  @override
+  String get video_setting_danmaku_max_active_hint => '限制每帧渲染的弹幕数量，避免大文件拖慢播放。';
+  @override
+  String get video_setting_danmaku_online => '在线匹配 Dandanplay';
+  @override
+  String get video_setting_danmaku_online_hint =>
+      '没有可用本地 sidecar 时，用 Dandanplay 匹配当前视频并拉取关联弹幕。';
+  @override
+  String get video_setting_danmaku_opacity => '不透明度';
+  @override
+  String get video_setting_danmaku_opacity_hint => '弹幕整体透明度。';
+  @override
+  String get video_setting_danmaku_server_url => '弹幕服务器地址';
+  @override
+  String get video_setting_danmaku_speed => '速度';
+  @override
+  String get video_setting_danmaku_speed_hint => '越大越快，滚动弹幕更快划过屏幕。';
+  @override
+  String get video_setting_double_tap => '双击快进';
+  @override
+  String get video_setting_double_tap_hint => '双击视频左右两侧快退快进';
+  @override
+  String get video_setting_double_tap_off => '关';
+  @override
+  String get video_setting_double_tap_subtitle => '字幕';
+  @override
+  String get video_setting_immersive_mode => '沉浸模式';
+  @override
+  String get video_setting_immersive_mode_hint => '控制按下侧边锁后仍允许哪些操作';
+  @override
+  String get video_setting_lock_window_aspect => '锁定窗口为视频比例';
+  @override
+  String get video_setting_long_press_speed => '长按倍速';
+  @override
+  String get video_setting_long_press_speed_hint => '按住画面时临时使用这个倍速。';
+  @override
+  String get video_setting_mpv_aspect => '画面比例';
+  @override
+  String get video_setting_mpv_aspect_auto => '原始';
+  @override
+  String get video_setting_mpv_brightness => '亮度';
+  @override
+  String get video_setting_mpv_channels => '声道';
+  @override
+  String get video_setting_mpv_channels_auto => '自动';
+  @override
+  String get video_setting_mpv_channels_mono => '单声道';
+  @override
+  String get video_setting_mpv_channels_stereo => '立体声（下混）';
+  @override
+  String get video_setting_mpv_contrast => '对比度';
+  @override
+  String get video_setting_mpv_correct_downscale => '线性降采样';
+  @override
+  String get video_setting_mpv_deband => '去色带';
+  @override
+  String get video_setting_mpv_deinterlace => '去隔行';
+  @override
+  String get video_setting_mpv_dither => '抖动';
+  @override
+  String get video_setting_mpv_gamma => 'Gamma';
+  @override
+  String get video_setting_mpv_group_advanced => '高级';
+  @override
+  String get video_setting_mpv_group_audio => '音频';
+  @override
+  String get video_setting_mpv_group_color => '色彩';
+  @override
+  String get video_setting_mpv_group_decode => '解码';
+  @override
+  String get video_setting_mpv_group_geometry => '画面';
+  @override
+  String get video_setting_mpv_group_playback => '播放';
+  @override
+  String get video_setting_mpv_group_quality => '画质';
+  @override
+  String get video_setting_mpv_hue => '色相';
+  @override
+  String get video_setting_mpv_hwdec => '硬件解码';
+  @override
+  String get video_setting_mpv_hwdec_auto => '自动（安全）';
+  @override
+  String get video_setting_mpv_hwdec_copy => '自动（复制）';
+  @override
+  String get video_setting_mpv_hwdec_off => '关闭';
+  @override
+  String get video_setting_mpv_interpolation => '运动插帧';
+  @override
+  String get video_setting_mpv_loop => '单文件循环';
+  @override
+  String get video_setting_mpv_normalize => '下混响度归一化';
+  @override
+  String get video_setting_mpv_panscan => '平移裁切（去黑边）';
+  @override
+  String get video_setting_mpv_pitch => '变速保持音高';
+  @override
+  String get video_setting_mpv_raw => '额外 mpv 选项（每行 key=value）';
+  @override
+  String get video_setting_mpv_raw_hint =>
+      '仅桌面生效；运行时无法应用的项（如 vo、profile）会被忽略。SVP/RIFE 需外部工具，不支持。';
+  @override
+  String get video_setting_mpv_reset => '全部恢复默认';
+  @override
+  String get video_setting_mpv_rotate => '旋转';
+  @override
+  String get video_setting_mpv_saturation => '饱和度';
+  @override
+  String get video_setting_mpv_sigmoid => 'S形上采样';
+  @override
+  String get video_setting_mpv_sigmoid_hint =>
+      'S 形曲线上采样可减少振铃，但会增加显卡负担。为性能默认关闭；想要更锐利的放大画质可开启。';
+  @override
+  String get video_setting_mpv_zoom => '缩放';
+  @override
+  String get video_setting_picture_fit => '画面缩放';
+  @override
+  String get video_setting_picture_fit_contain => '适应';
+  @override
+  String get video_setting_picture_fit_cover => '填充';
+  @override
+  String get video_setting_picture_fit_fill => '拉伸填满';
+  @override
+  String get video_setting_picture_fit_hint => '画面如何填充播放区域';
+  @override
+  String get video_setting_qb_category => 'qBittorrent 分类';
+  @override
+  String get video_setting_qb_category_hint => 'Fushi 推送的下载会打上此分类，完成监听只关注该分类。';
+  @override
+  String get video_setting_qb_password => 'WebUI 密码';
+  @override
+  String get video_setting_qb_url => 'qBittorrent WebUI 地址';
+  @override
+  String get video_setting_qb_url_hint =>
+      '例如 http://127.0.0.1:8080，留空表示不启用番剧下载。';
+  @override
+  String get video_setting_qb_username => 'WebUI 用户名';
+  @override
+  String get video_setting_secondary_subtitle_obscure => '副字幕遮蔽';
+  @override
+  String get video_setting_secondary_subtitle_obscure_hint => '模糊或隐藏副字幕（翻译参考轨）';
+  @override
+  String get video_setting_seek_seconds => '快进/快退步长（秒）';
+  @override
+  String get video_setting_speed => '播放速度';
+  @override
+  String get video_setting_speed_step => '倍速步进';
+  @override
+  String get video_setting_subtitle_appearance => '字幕外观';
+  @override
+  String get video_setting_subtitle_bg_color => '背景颜色';
+  @override
+  String get video_setting_subtitle_bg_opacity => '背景不透明度';
+  @override
+  String get video_setting_subtitle_font_size => '字号';
+  @override
+  String get video_setting_subtitle_font_weight => '字重';
+  @override
+  String get video_setting_subtitle_no_background => '无背景';
+  @override
+  String get video_setting_subtitle_no_background_hint => '让字幕背景透明，不显示底色。';
+  @override
+  String get video_setting_subtitle_obscure => '字幕遮蔽';
+  @override
+  String get video_setting_subtitle_obscure_blur => '模糊';
+  @override
+  String get video_setting_subtitle_obscure_hide => '隐藏';
+  @override
+  String get video_setting_subtitle_obscure_hint =>
+      '选择听力练习时如何遮蔽字幕：关闭、模糊（悬停或点击显形）或隐藏。';
+  @override
+  String get video_setting_subtitle_obscure_none => '关闭';
+  @override
+  String get video_setting_subtitle_position => '垂直位置';
+  @override
+  String get video_setting_subtitle_reset => '恢复默认';
+  @override
+  String get video_setting_subtitle_respect_ass => '尊重字幕自带样式';
+  @override
+  String get video_setting_subtitle_respect_ass_hint =>
+      '有 .ass 字幕自带的字体、颜色、描边时优先采用；关闭则一律使用你的外观设置。';
+  @override
+  String get video_setting_subtitle_shadow => '阴影';
+  @override
+  String get video_setting_subtitle_sync_input => '偏移 (ms)';
+  @override
+  String get video_setting_subtitle_text_color => '文字颜色';
+  @override
+  String get video_setting_theme => '主题';
+  @override
+  String get video_setting_torrent_active_downloads => '最大活跃下载数';
+  @override
+  String get video_setting_torrent_active_seeds => '最大活跃做种数';
+  @override
+  String get video_setting_torrent_anonymous => '匿名模式';
+  @override
+  String get video_setting_torrent_antileech => '启用反吸血';
+  @override
+  String get video_setting_torrent_backend_qb => '外接 qBittorrent';
+  @override
+  String get video_setting_torrent_ban_progress_cheat => '封禁进度作弊';
+  @override
+  String get video_setting_torrent_ban_relative_cheat => '封禁相对进度作弊';
+  @override
+  String get video_setting_torrent_ban_time => '封禁时长（分钟）';
+  @override
+  String get video_setting_torrent_ban_time_hint => '0 = 永久';
+  @override
+  String get video_setting_torrent_connections_hint => '0 = 引擎默认';
+  @override
+  String get video_setting_torrent_dht => 'DHT';
+  @override
+  String get video_setting_torrent_download_limit => '下载限速 (KB/s)';
+  @override
+  String get video_setting_torrent_encryption_disabled => '禁用';
+  @override
+  String get video_setting_torrent_encryption_forced => '强制';
+  @override
+  String get video_setting_torrent_encryption_prefer => '首选';
+  @override
+  String get video_setting_torrent_limit_hint => '0 = 不限';
+  @override
+  String get video_setting_torrent_listen_port => '监听端口';
+  @override
+  String get video_setting_torrent_listen_port_hint => '0 = 默认（6881）';
+  @override
+  String get video_setting_torrent_lsd => '本地节点发现 (LSD)';
+  @override
+  String get video_setting_torrent_max_connections => '最大连接数';
+  @override
+  String get video_setting_torrent_max_ip_ports => '同 IP 最大端口数';
+  @override
+  String get video_setting_torrent_memory_hint => '限制引擎内存占用。0 = 自动（按设备内存推导）。';
+  @override
+  String get video_setting_torrent_memory_limit => '内存占用上限（MB）';
+  @override
+  String get video_setting_torrent_natpmp => 'NAT-PMP 端口映射';
+  @override
+  String get video_setting_torrent_section_antileech => '反吸血';
+  @override
+  String get video_setting_torrent_section_session => '会话设置';
+  @override
+  String get video_setting_torrent_seed_ratio_hint =>
+      '上传/下载比值达到此值后停止上传。0 = 不限。';
+  @override
+  String get video_setting_torrent_seed_ratio_limit => '做种分享率上限';
+  @override
+  String get video_setting_torrent_seed_time_hint => '做种超过此时长后停止上传。0 = 不限。';
+  @override
+  String get video_setting_torrent_seed_time_limit => '做种时长上限（分钟）';
+  @override
+  String get video_setting_torrent_upload_enabled => '启用上传 / 做种';
+  @override
+  String get video_setting_torrent_upload_enabled_hint => '默认关闭。下载完成后向网络回传做种。';
+  @override
+  String get video_setting_torrent_upload_limit => '上传限速 (KB/s)';
+  @override
+  String get video_setting_torrent_upload_slots => '最大上传槽位';
+  @override
+  String get video_setting_torrent_upnp => 'UPnP 端口映射';
+  @override
+  String get video_setting_torrent_zero_default => '0 = 默认';
+  @override
+  String get video_setting_torrent_zero_off => '0 = 关闭';
+  @override
+  String get video_settings_cat_audio => '音频';
+  @override
+  String get video_settings_cat_controls => '控制按钮';
+  @override
+  String get video_settings_cat_danmaku => '弹幕';
+  @override
+  String get video_settings_cat_mpv => 'mpv';
+  @override
+  String get video_settings_cat_playback => '播放';
+  @override
+  String get video_settings_cat_shaders => '画质增强';
+  @override
+  String get video_settings_cat_subtitle => '字幕';
+  @override
+  String get video_settings_title => '视频设置';
+  @override
+  String get video_shader_anime4k_hint => '选择一个预设下载。下载完成后在列表里勾选启用。仅桌面端生效。';
+  @override
+  String get video_shader_anime4k_title => 'Anime4K 推荐着色器';
+  @override
+  String get video_shader_download_anime4k => '下载 Anime4K 推荐着色器';
+  @override
+  String video_shader_download_done({required Object count}) =>
+      '已下载 ${count} 个着色器';
+  @override
+  String get video_shader_download_failed => '着色器下载失败';
+  @override
+  String video_shader_download_partial(
+          {required Object ok, required Object failed}) =>
+      '已下载 ${ok} 个，${failed} 个失败';
+  @override
+  String get video_shader_download_url => '粘贴链接下载';
+  @override
+  String get video_shader_downloaded_label => '已下载';
+  @override
+  String get video_shader_downloading => '正在下载着色器…';
+  @override
+  String get video_shader_first_use_body =>
+      '想让动画画面更清晰，可以进入“画质增强”并点击“下载 Anime4K 推荐着色器”。下载后在已安装列表里勾选即可启用。';
+  @override
+  String get video_shader_first_use_download => '一键下载并启用';
+  @override
+  String get video_shader_first_use_title => '试试 Anime4K 画质增强';
+  @override
+  String get video_shader_import => '导入着色器（.glsl）';
+  @override
+  String video_shader_import_done({required Object count}) =>
+      '已导入 ${count} 个着色器';
+  @override
+  String get video_shader_import_from_mpv => '从本机 mpv 导入';
+  @override
+  String get video_shader_import_from_mpv_hint =>
+      '自动搜索本机 mpv；未找到时可手动选择 mpv 目录。';
+  @override
+  String get video_shader_mobile_perf_hint =>
+      '手机上着色器仅在标准 GPU 渲染路径下生效，实际效果因机型 GPU 而异；高档位可能掉帧或发热。建议先用低/中档，并在本机确认效果。';
+  @override
+  String video_shader_mpv_dir_current({required Object path}) =>
+      'mpv 目录：${path}';
+  @override
+  String get video_shader_mpv_dir_empty => '该目录没找到着色器';
+  @override
+  String get video_shader_mpv_not_found => '未发现本机 mpv 着色器';
+  @override
+  String get video_shader_mpv_pick_title => '从 mpv 导入着色器';
+  @override
+  String get video_shader_pick_mpv_dir => '选择 mpv 目录';
+  @override
+  String get video_shader_preset_mode_a_fast => '适合多数 1080p 动画。GPU 负载较低。';
+  @override
+  String get video_shader_preset_mode_a_hq => '1080p 动画最高画质。需要较强 GPU。';
+  @override
+  String get video_shader_preset_mode_b_fast => '适合有重采样伪影的 720p 旧番。';
+  @override
+  String get video_shader_preset_mode_b_hq => '720p 旧番高画质（重采样伪影），需较强 GPU。';
+  @override
+  String get video_shader_preset_mode_c_fast => '适合有压缩涂抹的 480p SD 老番。';
+  @override
+  String get video_shader_preset_mode_c_hq =>
+      '480p SD 老番高画质（压缩涂抹，带去噪），需较强 GPU。';
+  @override
+  String get video_shader_quality_tier => '画质增强';
+  @override
+  String get video_shader_section_advanced => '进阶（手动着色器）';
+  @override
+  String get video_shader_section_installed => '已安装着色器';
+  @override
+  String get video_shader_showing_original => '已关着色器（原画）';
+  @override
+  String get video_shader_showing_shaded => '已开着色器';
+  @override
+  String get video_shader_tier_custom_hint => '自定义着色器组合。点上方档位可切回预设。';
+  @override
+  String get video_shader_tier_high => '高';
+  @override
+  String get video_shader_tier_high_hint =>
+      'Anime4K HQ。更锐利，对动画效果最佳，真人内容也可用（提升较小）。需要中高端 GPU（N卡 RTX 4060 / RTX 3070，A卡 RX 6700 XT / RX 7700 XT）。';
+  @override
+  String get video_shader_tier_low => '低';
+  @override
+  String get video_shader_tier_low_hint =>
+      'mpv 内置锐化（ewa_lanczossharp）。对任何视频都有效（动画与真人皆可），无需下载、GPU 负载最低。集显或老显卡（N卡 GTX 1050、A卡 RX 560、Intel 核显）选这档。';
+  @override
+  String get video_shader_tier_medium => '中';
+  @override
+  String get video_shader_tier_medium_hint =>
+      'Anime4K Fast。对动画效果最佳，真人电影/电视剧也能用（提升较小）。中端 GPU 可跑（N卡 GTX 1660 / RTX 3050，A卡 RX 6600）。';
+  @override
+  String get video_shader_tier_off => '无';
+  @override
+  String get video_shader_tier_off_hint => '不增强，按原画播放。';
+  @override
+  String get video_shader_tier_ultra => '极高';
+  @override
+  String get video_shader_tier_ultra_hint =>
+      'Anime4K Mode A（VL + 额外去模糊/降噪修复）。视频渲染器实际能跑的最强重建——在「高」档 VL 链之上再叠一个修复 pass，对压制源更狠；真人内容也可用（提升较小）。推荐较强 GPU（N卡 RTX 5090，A卡 RX 7900 XTX），显卡较弱请往低档选。';
+  @override
+  String get video_shader_url_hint => '粘贴着色器 .glsl 链接（如 GitHub）';
+  @override
+  String get video_shaders_empty => '还没有导入着色器';
+  @override
+  String get video_stat_by_video => '按视频';
+  @override
+  String get video_stat_completed => '已完成';
+  @override
+  String get video_stat_no_data => '暂无视频统计数据';
+  @override
+  String get video_statistics => '视频统计';
+  @override
+  String get video_subtitle_attach_playlist_hint => '请进入播放页按集挂载字幕';
+  @override
+  String video_subtitle_attached_to_video(
+          {required Object title, required Object count}) =>
+      '已为《${title}》挂上字幕（${count} 句）';
+  @override
+  String get video_subtitle_auto_align => '自动对轴';
+  @override
+  String video_subtitle_auto_align_done({required Object ms}) =>
+      '已自动对轴 ${ms} ms';
+  @override
+  String get video_subtitle_auto_align_low_confidence => '无法可靠自动对轴（未找到明显的语音匹配）';
+  @override
+  String get video_subtitle_auto_align_running => '正在自动对轴…';
+  @override
+  String get video_subtitle_color_note => '视频字幕颜色在视频播放器内设置。';
+  @override
+  String video_subtitle_delay_osd({required Object ms}) => '字幕同步：${ms} ms';
+  @override
+  String get video_subtitle_filter_all => '全部';
+  @override
+  String get video_subtitle_filter_favorites => '收藏';
+  @override
+  String get video_subtitle_filter_favorites_empty => '暂无收藏的句子';
+  @override
+  String get video_subtitle_filter_selected => '已选';
+  @override
+  String get video_subtitle_filter_selected_empty => '还未选择句子';
+  @override
+  String get video_subtitle_graphic_hint => '图形字幕 · 画面显示 · 不可查词';
+  @override
+  String video_subtitle_graphic_shown({required Object label}) =>
+      '已显示图形字幕（画面显示，不可查词）：${label}';
+  @override
+  String get video_subtitle_import_failed => '导入字幕失败';
+  @override
+  String get video_subtitle_import_file => '导入字幕文件…';
+  @override
+  String get video_subtitle_import_unsupported => '不支持的字幕格式';
+  @override
+  String get video_subtitle_list => '字幕列表';
+  @override
+  String get video_subtitle_list_auto_scroll => '自动滚动';
+  @override
+  String get video_subtitle_list_clear_selection => '清空选择';
+  @override
+  String get video_subtitle_list_empty => '未加载字幕';
+  @override
+  String get video_subtitle_list_font_larger => '放大字号';
+  @override
+  String get video_subtitle_list_font_smaller => '缩小字号';
+  @override
+  String get video_subtitle_list_jump => '跳到此句';
+  @override
+  String get video_subtitle_list_loading => '正在加载字幕…';
+  @override
+  String get video_subtitle_list_remove_from_card => '从词卡选择中移除';
+  @override
+  String get video_subtitle_list_select_for_card => '选入词卡（制卡时合并为例句）';
+  @override
+  String video_subtitle_load_failed({required Object label}) =>
+      '无法加载该字幕（可能是图形或不支持的字幕轨）：${label}';
+  @override
+  String get video_subtitle_off => '关闭字幕';
+  @override
+  String get video_subtitle_remote_host => '配对设备字幕';
+  @override
+  String video_subtitle_switched({required Object label}) => '已切换字幕：${label}';
+  @override
+  String get video_subtitle_waveform_cue_list => '字幕列表';
+  @override
+  String get video_subtitle_waveform_jump_playhead => '跳到播放头';
+  @override
+  String get video_subtitle_waveform_legend_cue => '字幕边界';
+  @override
+  String get video_subtitle_waveform_legend_energy => '响度';
+  @override
+  String get video_subtitle_waveform_legend_playhead => '播放头';
+  @override
+  String get video_subtitle_waveform_open => '波形对轴';
+  @override
+  String get video_subtitle_waveform_open_hint => '点击放大查看并对轴';
+  @override
+  String get video_subtitle_waveform_scroll_hint => '横向拖动查看时间轴，用下方控件对齐字幕';
+  @override
+  String get video_subtitle_waveform_unavailable => '本设备无法生成波形';
+  @override
+  String get video_subtitle_waveform_zoom_in => '放大';
+  @override
+  String get video_subtitle_waveform_zoom_out => '缩小';
+  @override
+  String get video_subtitle_youtube_empty => '该字幕轨没有文字';
+  @override
+  String video_subtitle_youtube_translated({required Object lang}) =>
+      '${lang}（翻译）';
+  @override
+  String video_watched_up_to({required Object time}) => '已看至 ${time}';
+  @override
+  String get video_windows_black_flash_notice_body =>
+      '在 Windows 上，当显卡占用过高时视频画面可能出现黑屏闪烁。可尝试关闭上方的画质增强、S 形上采样和去色带，或把硬件解码切到「复制」以降低显卡负载。';
+  @override
+  String get video_windows_black_flash_notice_title => 'Windows 上黑屏闪烁？';
+  @override
+  String get view_illustrations => '查看插画';
+  @override
+  String get volume_button_page_turning => '音量键翻页';
+  @override
+  String get volume_key_sentence_nav => '音量键句子导航';
+  @override
+  String get wheel_page_turn_interval => '滚轮翻页间隔';
+  @override
+  String get word_favorite_added => '已收藏该词';
+  @override
+  String get word_favorite_removed => '已取消收藏该词';
+  @override
+  String get yomitan_api_key => 'Yomitan API 密钥（可选）';
+  @override
+  String get yomitan_api_server => 'Yomitan API 服务器';
+  @override
+  String get yomitan_api_server_hint =>
+      '让 yomitan-api 客户端查询 Fushi 词典（端口 19633）';
+  @override
+  String get yomitan_api_server_started => 'Yomitan API 服务器已开启';
+  @override
+  String get yomitan_port_kill_action => '结束进程并重试';
+  @override
+  String get yomitan_port_kill_confirm => '结束进程';
+  @override
+  String yomitan_port_kill_confirm_message({required Object process}) =>
+      '该端口目前被以下进程占用：${process}';
+  @override
+  String yomitan_port_kill_confirm_title({required Object port}) =>
+      '结束占用端口 ${port} 的进程？';
+  @override
+  String yomitan_port_kill_failed({required Object process}) =>
+      '无法结束 ${process}，请手动结束该进程后重试。';
+  @override
+  String yomitan_port_kill_protected({required Object process}) =>
+      '${process} 是关键系统进程，Fushi 不会结束它；请改用其他端口。';
+  @override
+  String get yomitan_port_kill_self_instance => '该进程是本应用的另一个正在运行的实例。';
+  @override
+  String get game_track_bgm => 'BGM / 已排除';
+  @override
+  String get game_line_audio_no_voice => '无配音';
+  @override
+  String get game_line_audio_overlong => '超长片段';
+  @override
+  String get game_line_audio_overlong_hint => '远超单句时长，可能混入 BGM 或其它混音';
+  @override
+  String get game_line_audio_loopback_hint => '整机混音兜底，可能混入 BGM';
+  @override
+  String get game_line_recapture => '补录语音';
+  @override
+  String get game_line_recapture_stop => '完成补录';
+  @override
+  String get game_line_tracks => '本句音轨';
+  @override
+  String get game_line_tracks_hint => '按本句时刻试听各轨，确认是 BGM 就排除';
+  @override
+  String get game_line_track_use => '用于本句';
+  @override
+  String get game_user_tags_title => '我的标签';
+  @override
+  String get anki_lapis_section => 'Lapis 卡片样式';
+  @override
+  String get anki_lapis_font_scale => '卡片字号缩放';
+  @override
+  String get anki_lapis_font_scale_hint =>
+      '整体缩放 Lapis 卡片全部字号；点「应用样式到 Anki」后生效。';
+  @override
+  String get anki_lapis_custom_css => '自定义 CSS';
+  @override
+  String get anki_lapis_custom_css_hint => '追加到 Lapis 样式表中受保护的用户区段。';
+  @override
+  String get anki_lapis_apply => '应用样式到 Anki';
+  @override
+  String get anki_lapis_apply_done => 'Lapis 样式已应用（已先自动备份）。';
+  @override
+  String anki_lapis_apply_failed({required Object error}) => '应用样式失败：${error}';
+  @override
+  String get anki_lapis_up_to_date => 'Lapis 样式已是最新。';
+  @override
+  String get anki_lapis_foreign_edit_title => 'Anki 端模板有改动';
+  @override
+  String get anki_lapis_foreign_edit_body =>
+      'Anki 里的 Lapis 模板与 Fushi 上次应用的状态不一致，可能被手动改过。继续应用会覆盖它（会先自动备份）。是否继续？';
+  @override
+  String get anki_lapis_backup => '备份 Lapis 模板';
+  @override
+  String anki_lapis_backup_done({required Object path}) => '模板已备份：${path}';
+  @override
+  String anki_lapis_backup_failed({required Object error}) => '备份失败：${error}';
+  @override
+  String get anki_lapis_not_found => 'Anki 里没有找到 Lapis 笔记模板。';
+  @override
+  String get anki_lapis_restore => '从备份恢复';
+  @override
+  String get anki_lapis_restore_empty => '还没有备份。';
+  @override
+  String get anki_lapis_restore_confirm =>
+      '用该备份覆盖 Anki 里的 Lapis 模板？当前状态会先自动备份。';
+  @override
+  String get anki_lapis_restore_done => '模板已恢复。';
+  @override
+  String anki_lapis_restore_failed({required Object error}) => '恢复失败：${error}';
+  @override
+  String get anki_dedup_section => 'Anki 媒体存储优化';
+  @override
+  String get anki_dedup_scan => '扫描重复项（不做改动）';
+  @override
+  String get anki_dedup_run => '立即去重';
+  @override
+  String get anki_dedup_report_title => '媒体去重报告';
+  @override
+  String anki_dedup_report_body(
+          {required Object groups,
+          required Object removed,
+          required Object size,
+          required Object notes,
+          required Object models,
+          required Object skipped}) =>
+      '${groups} 组重复；多余副本 ${removed} 个（${size}）；改写笔记 ${notes} 张、模板 ${models} 个；跳过 ${skipped} 个。';
+  @override
+  String get anki_dedup_report_dry_note => '仅扫描——未做任何改动。';
+  @override
+  String get anki_dedup_report_clean => '没有发现字节完全相同的重复文件。';
+  @override
+  String anki_dedup_failed({required Object error}) => '去重失败：${error}';
+  @override
+  String get anki_dedup_unavailable => '需要本机运行 Anki（AnkiConnect）。';
+  @override
+  String get anki_dedup_run_hint => '先扫描并列出将要删除的文件，你确认之后才会真正删除。';
+  @override
+  String get anki_dedup_plan_title => '将要删除的文件';
+  @override
+  String anki_dedup_plan_intro({required Object count, required Object size}) =>
+      '共 ${count} 个多余副本，可回收 ${size}。每个文件都保留一份，所有引用先改指到保留的那一份；不重新编码任何文件。';
+  @override
+  String anki_dedup_plan_entry(
+          {required Object file,
+          required Object size,
+          required Object canonical}) =>
+      '删除 ${file}（${size}）——保留 ${canonical}';
+  @override
+  String get anki_dedup_plan_delete => '删除这些文件';
+  @override
+  String get anki_dedup_plan_journal => '每一次改写和删除都会先记进备份文件夹里的日志。';
+  @override
+  String get manga_ocr_default_engine => '默认 OCR 引擎';
+  @override
+  String get manga_ocr_engine_auto => '自动（不会上传到 Lens）';
+  @override
+  String get manga_ocr_engine_local_onnx => '本地 ONNX';
+  @override
+  String get manga_ocr_engine_google_lens => 'Google Lens';
+  @override
+  String get manga_google_lens_disclosure_title => '将漫画页面发送到 Google Lens？';
+  @override
+  String get manga_google_lens_disclosure_body =>
+      '识别本漫画会把尚无 OCR 文本的页面缩小为 JPEG 后发送给 Google，结果缓存在本设备。该接口并非官方公开 API，可能随时失效。只有同意后才会上传。';
+  @override
+  String get manga_google_lens_disclosure_accept => '同意并开始识别';
+  @override
+  String get manga_google_lens_disclosure_decline => '取消';
+  @override
+  String get manga_reading_direction => '阅读方向';
+  @override
+  String get manga_direction_rtl => '从右到左';
+  @override
+  String get manga_direction_ltr => '从左到右';
+  @override
+  String get manga_zoom => '缩放';
+  @override
+  String get manga_jump_to_page => '跳转页面';
+  @override
+  String get manga_previous_page => '上一页';
+  @override
+  String get manga_next_page => '下一页';
+  @override
+  String manga_page_number_hint({required Object total}) => '页码（1-${total}）';
+  @override
+  String get manga_import_direct => '直接导入';
+  @override
+  String get manga_library => '漫画';
+  @override
+  String get manga_import_action => '导入漫画';
+  @override
+  String get game_scrape_search => '搜索';
+  @override
+  String get game_scrape_use => '使用';
+  @override
+  String get game_scrape_search_failed => '搜索失败，请检查网络后重试';
+  @override
+  String get game_remove_confirm => '从库中移除此游戏？不会删除磁盘上的游戏文件。';
+  @override
+  String manga_ocr_acceleration_status({required Object engine}) =>
+      'OCR 加速：${engine}';
+  @override
+  String manga_ocr_acceleration_degraded(
+          {required Object engine, required Object reason}) =>
+      'GPU 加速不可用，OCR 改用 ${engine} 运行：${reason}';
+  @override
+  String get media_tracking_status => '收藏状态';
+  @override
+  String get media_tracking_signup => '注册 Bangumi 账号';
+  @override
+  String get media_tracking_game => '游戏';
+  @override
+  String get download_rate_limit_lan_exempt => '不作用于局域网；局域网内的传输始终全速进行。';
+  @override
+  String get video_scrape_search_failed => '搜索失败，点「搜索」可重试。';
+  @override
+  String get scrape_reason_network => '没能从封面源取到有效响应，请检查网络后重试。';
+  @override
+  String get scrape_reason_server => '封面源返回了错误，请稍后重试或换一个候选。';
+  @override
+  String get common_more_actions => '更多操作';
+  @override
+  String get collection_already_has_item => '该条目已在这个合集里。';
+  @override
+  String get drag_drop_manga_archive_unsupported =>
+      '无法导入 .cbr/.rar 漫画压缩包，请转成 .cbz 或图片文件夹。';
+  @override
+  String get collection_add_failed => '没能把该条目加进合集，请重试。';
+  @override
+  String get anki_dedup_auto => '自动处理';
+  @override
+  String get anki_dedup_auto_hint =>
+      '默认关闭。打开后 Fushi 会在启动时扫描（最多每周一次）并先把清单给你看，你不确认就不会删任何文件。';
+  @override
+  String get anki_dedup_auto_delete => '自动直接删除（不再询问）';
+  @override
+  String get anki_dedup_auto_delete_hint =>
+      '跳过确认弹窗。仍然只删字节完全相同的多余副本、绝不重编码，但删除不可撤销。';
+  @override
+  String anki_dedup_auto_found({required Object count, required Object size}) =>
+      '发现 ${count} 个重复的 Anki 媒体文件（可释放 ${size}）';
+  @override
+  String get anki_dedup_auto_review => '查看';
+  @override
+  String anki_dedup_auto_done({required Object count, required Object size}) =>
+      '已删除 ${count} 个重复的 Anki 媒体文件，释放 ${size}';
+  @override
+  String anki_lapis_backup_done_pruned(
+          {required Object path, required Object count}) =>
+      '已备份到 ${path}（按「保留 90 天、至少留 10 份」清理了 ${count} 份旧备份）';
+  @override
+  String get game_audio_fallback_policy => '音频降级';
+  @override
+  String get game_audio_fallback_full => '允许混音兜底';
+  @override
+  String get game_audio_fallback_clean => '只用干净语音';
+  @override
+  String get game_audio_fallback_resource => '只用游戏原始资源';
+  @override
+  String get game_track_silent_at_cue => '这句时刻没有声音';
+  @override
+  String get game_audio_fallback_full_hint => '抓不到干净语音时用系统混音兜底，可能混入 BGM 和音效。';
+  @override
+  String get game_audio_fallback_clean_hint =>
+      '只用游戏资源音频和引擎 PCM。没有配音的句子照常制卡，只是不带音频，不会收进 BGM。';
+  @override
+  String get game_audio_fallback_resource_hint => '必须拿到游戏自带的原始语音文件，缺失时拒绝制卡。';
+  @override
+  String get game_line_audio_suppressed => '已跳过混音';
+  @override
+  String get game_line_audio_suppressed_hint =>
+      '本句没有干净音源可用，整机混音已按你选的降级策略跳过。这不代表这句没有配音。';
+  @override
+  String get video_setting_torrent_limit_lan => '限速也作用于局域网';
+  @override
+  String get video_setting_torrent_limit_lan_hint =>
+      '默认关闭：与局域网内 peer 的传输不受上面的限速约束。';
+  @override
+  String get download_rate_limit_lan_included => '同时作用于局域网内的传输。';
+  @override
+  String get video_collection_no_local_member => '本合集没有本地视频';
+  @override
+  String video_scrape_online_match_collection({required Object name}) =>
+      '为「${name}」匹配封面';
+  @override
+  String get gal_mining_image_mode => 'Galgame 制卡配图';
+  @override
+  String get gal_mining_image_mode_screenshot => '静态截图';
+  @override
+  String get gal_mining_image_mode_hint =>
+      'Galgame 一句台词内画面基本不动，静态截图通常更小、信息量一样。';
+  @override
+  String get shortcut_scope_manga => '漫画';
+  @override
+  String get shortcut_action_manga_page_forward => '下一页';
+  @override
+  String get shortcut_action_manga_page_backward => '上一页';
+  @override
+  String get shortcut_action_manga_dismiss_dict => '关闭词典';
+  @override
+  String get video_setting_jimaku_default_language => '默认字幕语言';
+  @override
+  String get video_jimaku_api_key_settings_hint => '也可在 设置 → 视频 → 字幕 中修改';
+  @override
+  String get anime_download_subs_episodes_unverified => '集号未与该整季包核对，字幕可能来自别的季。';
+  @override
+  String get anime_download_subs_deferred => '字幕将在下载完成后按包内实际文件配对';
+  @override
+  String get anime_download_subs_pending => '字幕：待下载完成后配对';
+  @override
+  String get anime_download_subs_unmatched => '字幕：未匹配到（可手动补）';
+  @override
+  String get stat_source_breakdown => '各来源';
+  @override
+  String stat_format_pages({required Object n}) => '${n} 页';
+  @override
+  String anime_download_subs_season_mismatch({required Object season}) =>
+      '没有字幕条目对得上该种子的第 ${season} 季，已不自动选中。要用的话请手动选一条。';
+  @override
+  String get media_tracking_card_title => 'Bangumi 同步';
+  @override
+  String get media_tracking_not_connected => '未连接。进度只记在本地，不会同步到 Bangumi。';
+  @override
+  String get media_tracking_last_sync => '上次同步';
+  @override
+  String get media_tracking_never_synced => '从未同步';
+  @override
+  String media_tracking_linked_count({required Object n}) => '已关联 ${n} 项';
+  @override
+  String media_tracking_pending_count({required Object n}) => '${n} 项待发送';
+  @override
+  String get media_tracking_all_synced => '全部已发送';
+  @override
+  String get media_tracking_unauthorized => 'Bangumi 拒绝了访问令牌，请在设置里重新连接。';
+  @override
+  String get media_tracking_open_subject => '在 Bangumi 打开';
+  @override
+  String get media_tracking_manage_links => '管理关联';
+  @override
+  String get media_tracking_last_error => '上次错误';
+  @override
+  String get shortcut_action_popup_mine_entry => '制卡（加号）';
+  @override
+  String get game_upscaling_auto_hint =>
+      '优先使用机器上正在运行的 Magpie；否则启用 Fushi 内置版本，不需要下载。';
+  @override
+  String get game_upscaling_installed_only_hint =>
+      '只用机器上已经安装或正在运行的 Magpie，不启用 Fushi 内置版本。';
+  @override
+  String get game_upscaling_off_hint => '不放大游戏窗口。';
+  @override
+  String get game_helper_bundle_missing =>
+      '这个版本没有随包附带 galgame 钩子 helper，请更新 Fushi 获取。';
+  @override
+  String game_upscaling_pick_title({required Object name}) => '${name} 的窗口超分';
+  @override
+  String get game_upscaling_pick_body =>
+      '捕获会话期间用 Magpie 放大这个游戏的窗口。每个游戏各自设置——只有原生分辨率低于屏幕的游戏才用得上。会占用显卡。';
+  @override
+  String get game_upscaling_hint_not_installed =>
+      'Magpie 尚未就绪。将该游戏的「窗口超分」设为「自动」即可使用随包的内置版本；仍无法启动时请更新或重装 Fushi。';
+  @override
+  String media_source_count_manga({required Object n}) => '${n} 卷';
+  @override
+  String get library_view_shelf => '书架';
+  @override
+  String get library_view_browse => '发现';
+  @override
+  String get library_view_media => '媒体库';
+  @override
+  String get scrape_failure_detail_show => '显示详情';
+  @override
+  String get scrape_failure_detail_hide => '隐藏详情';
+  @override
+  String get media_tracking_retry_mapping => '重试匹配';
+  @override
+  String get media_tracking_retry_matched => '已重新关联并补发当前进度';
+  @override
+  String get media_tracking_retry_no_match => '仍未匹配到条目，请尝试手动关联';
+  @override
+  String get game_statistics => '游戏统计';
+  @override
+  String get game_stat_by_game => '按游戏';
+  @override
+  String get stat_clear_all_game_message =>
+      '确定清空全部游戏统计吗？将删除所有游戏时长和游玩次数。你的游戏库与首页活动流不受影响。此操作不可撤销。';
+  @override
+  String batch_selection_stale_skipped(
+          {required Object n, required Object m}) =>
+      '选中的 ${n} 项中有 ${m} 项已不存在，已跳过';
+  @override
+  String get game_text_thread_unset => '尚未选择线程 · 选一条后开始捕获';
+  @override
+  String get media_tracking_watched_show => '查看全部看过';
+  @override
+  String get media_tracking_watched_title => 'Bangumi 看过';
+  @override
+  String get media_tracking_watched_empty => '这个 Bangumi 账号还没有标记为“看过”的番剧。';
+  @override
+  String media_tracking_watched_load_failed({required Object error}) =>
+      '读取看过记录失败：${error}';
+  @override
+  String media_tracking_watched_progress({required Object n}) => '已看 ${n} 集';
+  @override
+  String get media_tracking_manual_required => '需要手动关联';
+  @override
+  String media_tracking_manual_required_count({required Object n}) =>
+      '${n} 项需要手动关联';
+  @override
+  String get media_tracking_manual_required_hint =>
+      '这些本地条目已有观看、阅读或游玩记录，但还没有关联到 Bangumi。';
+  @override
+  String get media_tracking_no_local_history => '暂无需要关联的本地观看、阅读或游玩记录。';
+  @override
+  String media_tracking_more_manual_required({required Object n}) =>
+      '另有 ${n} 项需要手动关联';
+  @override
+  String get manga_import_hint => '选择漫画文件夹、.cbz/.zip 页图压缩包，或 .mokuro 文件。';
+  @override
+  String get manga_import_pick_file => '选择漫画文件';
+  @override
+  String get manga_import_pick_folder => '选择漫画文件夹';
+  @override
+  String get manga_import_missing_input => '请先选择漫画文件或文件夹。';
+  @override
+  String get manga_import_detected_title => '这看起来是漫画';
+  @override
+  String get manga_import_detected_confirm => '按漫画导入';
+  @override
+  String manga_import_detected_message({required Object name}) =>
+      '「${name}」是漫画文件，将走漫画导入流程，而不是书籍导入流程。';
+  @override
+  String get video_jimaku_source_loading => '正在检查字幕可用性…';
+  @override
+  String get video_jimaku_source_failed => '字幕可用性检查失败，请重新查找。';
+  @override
+  String get video_jimaku_language_unknown => '语言未标注';
+  @override
+  String video_jimaku_source_summary(
+          {required Object files,
+          required Object episodes,
+          required Object languages}) =>
+      '${files} 个字幕文件 · 覆盖 ${episodes} 集 · ${languages}';
+  @override
+  String video_jimaku_episode_unlabeled(
+          {required Object episode, required Object count}) =>
+      '未发现标为第 ${episode} 集的字幕；另有 ${count} 个未标集号文件可尝试';
+  @override
+  String video_jimaku_episode_unavailable({required Object episode}) =>
+      '没有找到第 ${episode} 集字幕';
+  @override
+  String video_jimaku_episode_available(
+          {required Object count, required Object languages}) =>
+      '有 ${count} 个字幕 · ${languages}';
+  @override
+  String get video_scrape_manual_match_hint =>
+      '手动匹配会替换本集封面，并保存来源映射和条目资料。会同时搜索全部可用来源，结果按匹配度排序。';
+  @override
+  String get video_scrape_collection_match_hint =>
+      '这里只替换合集封面，不会修改各集封面或条目资料。会同时搜索全部可用来源，结果按匹配度排序。';
+  @override
+  String get video_scrape_apply_to_collection_hint =>
+      '这会把同一张封面写到每一集；只有确实需要统一单集封面时才开启。';
+  @override
+  String get manga_online_source_disabled => '此互联网来源已关闭，请在「来源」中开启后浏览目录。';
+  @override
+  String get selection_web_search => '网页搜索';
+  @override
+  String get selection_web_search_unavailable => '没有可用的网页搜索应用。';
+  @override
+  String get selection_share_failed => '无法打开分享面板。';
+  @override
+  String video_subtitle_youtube_auto_generated({required Object lang}) =>
+      '${lang}（自动生成）';
+  @override
+  String get anki_dedup_progress_title => '正在去重媒体';
+  @override
+  String anki_dedup_progress_scanning({required Object count}) =>
+      '正在扫描媒体目录…（已发现 ${count} 个文件）';
+  @override
+  String anki_dedup_progress_hashing(
+          {required Object done, required Object total}) =>
+      '正在比对同大小文件…（${done} / ${total}）';
+  @override
+  String anki_dedup_progress_resolving(
+          {required Object done, required Object total}) =>
+      '正在处理重复副本…（${done} / ${total}）';
+  @override
+  String anki_dedup_progress_freed({required Object size}) => '已释放 ${size}';
+  @override
+  String get anki_dedup_cancelling => '正在取消…';
+  @override
+  String get anki_dedup_cancelled => '已取消去重；已完成的改动保留。';
+  @override
+  String get anki_dedup_report_cancelled_note => '已提前取消——以下数字只统计已完成的部分。';
+  @override
+  String get anki_dedup_plan_busy_note => '执行期间 Anki 可能暂时无响应；结束前请不要在 Anki 里操作。';
+  @override
+  String get video_setting_subtitle_position_secondary => '副字幕垂直位置';
+  @override
+  String get dict_download_learning_language => '学习语言';
+  @override
+  String get dict_category_bilingual => '双语';
+  @override
+  String get dict_category_monolingual => '单语';
+  @override
+  String get shortcut_action_video_hold_speed => '按住临时倍速';
+  @override
+  String get handlebar_phonetic_transcriptions => '音标';
+  @override
+  String get sync_progress_preparing => '正在准备同步';
+  @override
+  String get sync_progress_collections => '同步合集';
+  @override
+  String get sync_progress_book => '同步书籍';
+  @override
+  String sync_progress_book_titled({required Object title}) => '同步 ${title}';
+  @override
+  String sync_last_completed({required Object count}) =>
+      '上次同步：已完成（${count} 条通道）';
+  @override
+  String get sync_last_no_channels => '上次同步：未同步——没有已连接的同步通道';
+  @override
+  String get sync_last_nothing => '上次同步：没有可同步的内容';
+  @override
+  String get sync_last_auto_disabled => '上次同步：已跳过——自动同步已关闭';
+  @override
+  String get sync_last_cooled_down => '上次同步：已跳过——刚同步过';
+  @override
+  String get sync_last_failed => '上次同步：失败';
+  @override
+  String anime_download_no_results_detail(
+          {required Object query, required Object filters}) =>
+      '服务已正常响应，但按当前条件返回 0 条。查询：${query}；筛选：${filters}。请尝试别名或放宽筛选。';
+  @override
+  String get anime_download_streaming_ready => '已入库 · 下载继续';
+  @override
+  String get anime_download_unfiltered => '未启用 Trusted 筛选';
+  @override
+  String get interconnect_enable_footer =>
+      '用法：在存放内容的那台设备上开启下方的同步服务器开关；在另一台设备上添加该服务器的地址完成配对。同一台设备同一时间只能担任服务器或客户端其中一种角色。';
+  @override
+  String get interconnect_peer_list_title => '已添加的对端';
+  @override
+  String get interconnect_peer_list_empty =>
+      '尚未添加任何对端。可在下方的局域网设备列表中点击发现的设备自动配对，或手动添加对端地址。';
+  @override
+  String get anki_lapis_visual_editor => '可视化编辑';
+  @override
+  String get anki_lapis_visual_editor_hint =>
+      '预览 Lapis 卡片，选中区域后直接改样式、位置和字段映射，无需手写 CSS。';
+  @override
+  String get anki_lapis_visual_front => '正面';
+  @override
+  String get anki_lapis_visual_back => '背面';
+  @override
+  String get anki_lapis_visual_preview => 'Lapis 卡片预览';
+  @override
+  String get anki_lapis_visual_select_field => '选择要编辑的部分';
+  @override
+  String get anki_lapis_visual_reset_field => '重置字段';
+  @override
+  String anki_lapis_visual_font_size({required Object percent}) =>
+      '字号：${percent}%';
+  @override
+  String get anki_lapis_visual_bold => '粗体';
+  @override
+  String get anki_lapis_visual_alignment => '对齐';
+  @override
+  String get anki_lapis_visual_color => '文字颜色';
+  @override
+  String get anki_lapis_visual_default => '默认';
+  @override
+  String get anki_lapis_visual_advanced_css => '高级 CSS';
+  @override
+  String get anki_lapis_visual_field_expression => '单词';
+  @override
+  String get anki_lapis_visual_field_reading => '读音';
+  @override
+  String get anki_lapis_visual_field_sentence => '例句';
+  @override
+  String get anki_lapis_visual_field_primary_definition => '首要释义';
+  @override
+  String get anki_lapis_visual_field_glossaries => '其他释义';
+  @override
+  String get anki_lapis_visual_target_card_content => '卡片内容';
+  @override
+  String get anki_lapis_visual_target_definition => '释义';
+  @override
+  String get anki_lapis_visual_target_inside_definition => '释义内部';
+  @override
+  String get anki_lapis_visual_field_definition_info => '释义序号';
+  @override
+  String get anki_lapis_visual_field_definition_box => '释义框';
+  @override
+  String get anki_lapis_visual_field_definition_content => '整段释义';
+  @override
+  String get anki_lapis_visual_field_selected_definition => '选中释义';
+  @override
+  String get anki_lapis_visual_field_dictionary_entry => '词典条目';
+  @override
+  String get anki_lapis_visual_field_dictionary_name => '词典名称';
+  @override
+  String get anki_lapis_visual_field_definition_example => '释义例句';
+  @override
+  String get anki_lapis_visual_line_height => '行高';
+  @override
+  String get anki_lapis_visual_background_color => '背景高亮';
+  @override
+  String get anki_lapis_visual_box_layout => '区域外观';
+  @override
+  String get anki_lapis_visual_border_width => '边框';
+  @override
+  String get anki_lapis_visual_border_color => '边框颜色';
+  @override
+  String get anki_lapis_visual_corner_radius => '圆角';
+  @override
+  String get anki_lapis_visual_padding => '内边距';
+  @override
+  String get anki_lapis_visual_margin => '外边距';
+  @override
+  String get anki_lapis_visual_field_definition_info_note =>
+      '仅在保留多段释义的卡片上可见；只有一段释义的卡片不会显示。';
+  @override
+  String get anki_lapis_visual_field_dictionary_name_note =>
+      'Fushi 生成的卡片把词性标签和词典名放在同一个标签里，两者无法分开设置样式。';
+  @override
+  String get game_upscaling_error_bundle_missing =>
+      'Fushi 安装包不完整：缺少内置 Magpie 组件。请重新安装或更新 Fushi。';
+  @override
+  String get game_upscaling_error_bundle_invalid =>
+      '内置 Magpie 组件已损坏或校验失败。请重新安装或更新 Fushi。';
+  @override
+  String download_test_connection_failed_reason({required Object message}) =>
+      '连接失败：${message}';
+  @override
+  String get delete_disclosure_will_delete_label => '会被删除';
+  @override
+  String get delete_disclosure_will_keep_label => '会被保留';
+  @override
+  String get delete_disclosure_book_records => '阅读进度、书签、标签和字幕数据';
+  @override
+  String get delete_disclosure_book_extracted => 'Fushi 解压到自己存储目录里的书籍文件';
+  @override
+  String get delete_disclosure_book_audiobook => '配套有声书的音频和对齐字幕（如果有）';
+  @override
+  String get delete_disclosure_source_kept => '你导入时选择的原始文件（书籍、字幕、音频）';
+  @override
+  String get delete_disclosure_stats_kept => '阅读统计';
+  @override
+  String get delete_disclosure_audiobook_files => 'Fushi 复制到自己存储目录里的音频和对齐字幕';
+  @override
+  String get delete_disclosure_audiobook_book_kept => '书籍本身和它的阅读进度';
+  @override
+  String get delete_disclosure_audiobook_source_kept => '你导入时选择的原始音频文件';
+  @override
+  String get audiobook_delete => '删除有声书';
+  @override
+  String get audiobook_delete_confirm => '删除已附加的有声书？它的音频文件会从本机删除。';
+  @override
+  String get delete_collection_confirm => '只解除分组，其中的条目会保留。';
+  @override
+  String get shortcut_action_video_enter_caret => '进入字幕选词光标';
+  @override
+  String get audiobook_export_clip_too_long => '选区音频过长，暂不支持导出（上限 5 分钟）';
+  @override
+  String get sync_err_forbidden => '服务端拒绝了这次请求。登录没问题，请检查服务端设置。';
+  @override
+  String sync_err_forbidden_detail({required Object reason}) =>
+      '服务端拒绝了这次请求：${reason}（登录没问题）';
+  @override
+  String get collection_group_extras => 'PV·特典';
+  @override
+  String collection_group_season({required Object n}) => '第 ${n} 季';
+  @override
+  String get collection_sort_by_season => '按季排序';
+  @override
+  String get mining_animated_format_avif => 'AVIF（体积最小）';
+  @override
+  String get mining_animated_format_webp => 'WebP（兼容性更广）';
+  @override
+  String get mining_animated_format_gif => 'GIF（兼容性最好）';
+  @override
+  String get video_mining_animated_format => '视频制卡动图格式';
+  @override
+  String get video_mining_animated_format_hint =>
+      '同画质下 AVIF 体积远小于 GIF，最高清晰度档也允许比 GIF/WebP 更高的分辨率与帧率。捆绑的编码器产不出时会自动回退 GIF。';
+  @override
+  String get gal_mining_animated_format => '游戏制卡动图格式';
+  @override
+  String get gal_mining_animated_format_hint =>
+      '与视频制卡同样的格式，但分开保存：galgame 一句台词内画面基本静止，取舍不同。';
+  @override
+  String get scrape_all => '全部刮削';
+  @override
+  String scrape_all_title({required Object kind}) => '刮削全部${kind}';
+  @override
+  String scrape_all_running({required Object current, required Object total}) =>
+      '正在刮削 ${current} / ${total}';
+  @override
+  String scrape_all_item({required Object title}) => '正在处理：${title}';
+  @override
+  String scrape_all_done(
+          {required Object applied,
+          required Object review,
+          required Object skipped,
+          required Object failed}) =>
+      '完成：已应用 ${applied} 个，待手动确认 ${review} 个，已跳过 ${skipped} 个，失败 ${failed} 个';
+  @override
+  String get scrape_all_empty => '当前库没有可刮削的条目。';
+  @override
+  String get scrape_all_start => '开始';
+  @override
+  String collection_hero_total_episodes({required Object count}) =>
+      '全 ${count} 话';
+  @override
+  String get video_scrape_collection_rename_title => '要重命名这个合集吗？';
+  @override
+  String get video_scrape_collection_rename_body =>
+      '匹配到的条目名称与当前不同。改名是可选的：无论选哪个，封面和资料都会保存；确认改名还会把其他已同步设备上的旧名一并替换。';
+  @override
+  String video_scrape_collection_rename_from({required Object name}) =>
+      '当前名称：${name}';
+  @override
+  String video_scrape_collection_rename_to({required Object name}) =>
+      '新名称：${name}';
+  @override
+  String get video_scrape_collection_rename_keep => '保留当前名称';
+  @override
+  String get video_scrape_collection_rename_confirm => '重命名';
+  @override
+  String get download_task_toggle_failed => '暂停/恢复操作失败';
+  @override
+  String download_subscription_start_episode({required Object episode}) =>
+      '从第 ${episode} 集开始';
+  @override
+  String get download_task_eta => '剩余';
+  @override
+  String get download_task_ratio => '分享率';
+  @override
+  String get download_task_status_downloading => '下载中';
+  @override
+  String get download_task_status_seeding => '做种中';
+  @override
+  String get download_task_status_completed => '已完成';
+  @override
+  String get download_task_status_paused => '已暂停';
+  @override
+  String get download_task_status_queued => '排队中';
+  @override
+  String get download_task_status_stalled => '等待资源';
+  @override
+  String get download_task_status_checking => '校验中';
+  @override
+  String get download_task_status_metadata => '获取元数据';
+  @override
+  String get download_task_status_moving => '移动中';
+  @override
+  String get download_task_status_error => '出错';
+  @override
+  String get download_task_pause => '暂停';
+  @override
+  String get download_task_resume => '恢复';
+  @override
+  String get download_airing_calendar_title => '放送日历';
+  @override
+  String get download_airing_calendar_show_all => '显示本季全部';
+  @override
+  String get download_airing_calendar_empty_guidance =>
+      '暂无可显示的放送信息：给合集绑定 AniList 或添加下载订阅后，这里会显示对应的放送时间。';
+  @override
+  String get download_airing_calendar_error => '放送时间表加载失败';
+  @override
+  String get download_airing_calendar_in_library => '已入库';
+  @override
+  String get download_airing_calendar_subscribed => '订阅中';
+  @override
+  String download_airing_calendar_episode_label({required Object episode}) =>
+      '第 ${episode} 集';
+  @override
+  String get download_airing_calendar_week_prev => '上一周';
+  @override
+  String get download_airing_calendar_week_next => '下一周';
+  @override
+  String get download_airing_calendar_week_empty => '本周没有相关放送';
+  @override
+  String get video_jimaku_format => '类型';
+  @override
+  String get video_jimaku_format_all => '全部';
+  @override
+  String get video_setting_tmdb_key => '自定义 TMDB API Key';
+  @override
+  String get video_setting_tmdb_key_hint =>
+      '可留空，默认用内置 Key。仅当刮削失效或你想用自己的配额时才需要填写。';
+  @override
+  String get about_tmdb_attribution =>
+      'This application uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.';
+  @override
+  String get anki_lapis_visual_layout => '布局';
+  @override
+  String get anki_lapis_visual_layout_hint =>
+      '复用 Lapis 自带的布局开关，桌面与手机 Anki 同时生效。';
+  @override
+  String get anki_lapis_visual_layout_sentence => '例句位置';
+  @override
+  String get anki_lapis_visual_layout_sentence_above => '释义框上方';
+  @override
+  String get anki_lapis_visual_layout_sentence_below => '释义框下方';
+  @override
+  String get anki_lapis_visual_layout_picture => '图片位置';
+  @override
+  String get anki_lapis_visual_layout_picture_right => '单词右侧';
+  @override
+  String get anki_lapis_visual_layout_picture_left => '单词左侧';
+  @override
+  String get anki_lapis_visual_layout_picture_alt => '例句内';
+  @override
+  String get anki_lapis_visual_layout_audio => '音频按钮';
+  @override
+  String get anki_lapis_visual_layout_audio_header => '读音旁';
+  @override
+  String get anki_lapis_visual_layout_audio_fixed => '固定在底部';
+  @override
+  String get anki_lapis_visual_layout_audio_alt => '例句内';
+  @override
+  String get anki_lapis_visual_mapping_hint => '填充选中区域的 Anki 字段；改动随样式一起保存。';
+  @override
+  String get anki_lapis_visual_mapping_none => '该区域由模板自己绘制，没有对应字段。';
+  @override
+  String get anki_lapis_visual_color_custom => '自定义';
+  @override
+  String get anki_lapis_visual_color_picker_title => '选择颜色';
+  @override
+  String get video_scrape_tmdb_key_hint => '输入 TMDB API Key';
+  @override
+  String get video_scrape_tmdb_key_required => 'TMDB 需要 API Key';
+  @override
+  String get video_scrape_tmdb_key_save => '保存';
+  @override
+  String get video_scrape_tmdb_key_empty =>
+      '先保存 TMDB API Key，再点“搜索”。这里不会混入其他来源的结果。';
+  @override
+  String get download_detail_tab_overview => '总览';
+  @override
+  String get download_detail_tab_files => '文件';
+  @override
+  String get download_detail_tab_peers => '节点';
+  @override
+  String get download_detail_tab_trackers => 'Tracker';
+  @override
+  String get download_detail_backend_unsupported => '当前下载后端不支持';
+  @override
+  String get download_detail_task_gone => '后端中找不到该任务';
+  @override
+  String get download_detail_task_missing =>
+      '原下载后端在线，但该 torrent 已不在引擎中。实时节点和 Tracker 无法恢复，这里显示已保存的任务信息。';
+  @override
+  String get download_detail_section_transfer => '传输';
+  @override
+  String get download_detail_section_network => '网络';
+  @override
+  String get download_detail_section_task => '任务';
+  @override
+  String get download_detail_seeds_label => '做种';
+  @override
+  String get download_detail_leechers_label => '下载者';
+  @override
+  String get download_detail_connections_label => '连接数';
+  @override
+  String get download_detail_content_path_label => '内容路径';
+  @override
+  String get download_detail_time_active => '活跃时长';
+  @override
+  String get download_detail_time_seeding => '做种时长';
+  @override
+  String get download_detail_total_size_label => '总大小';
+  @override
+  String get download_detail_listen_port => '监听端口';
+  @override
+  String get download_detail_dht_nodes => 'DHT 节点';
+  @override
+  String get download_detail_hash_label => '信息哈希';
+  @override
+  String get download_detail_port_mapping => '端口映射';
+  @override
+  String get download_detail_session_rates => '会话速率';
+  @override
+  String get download_detail_pieces_label => '分片';
+  @override
+  String get download_detail_priority_skip => '不下载';
+  @override
+  String get download_detail_raw_state_label => '后端状态';
+  @override
+  String get download_detail_remaining_label => '剩余大小';
+  @override
+  String get download_detail_save_path_label => '保存路径';
+  @override
+  String get download_detail_priority_normal => '普通';
+  @override
+  String get download_detail_priority_high => '高';
+  @override
+  String get download_detail_tracker_working => '工作中';
+  @override
+  String get download_detail_tracker_updating => '更新中';
+  @override
+  String get download_detail_tracker_not_contacted => '尚未联系';
+  @override
+  String get download_detail_tracker_not_working => '不工作';
+  @override
+  String get download_detail_tracker_disabled => '已禁用';
+  @override
+  String get download_detail_no_peers => '暂无已连接节点';
+  @override
+  String get download_detail_no_trackers => '无 Tracker';
+  @override
+  String get video_filter_year => '年份';
+  @override
+  String get video_filter_year_unknown => '未知年份';
+  @override
+  String get video_filter_watch_status => '看完状态';
+  @override
+  String get video_filter_watch_status_unwatched => '未看';
+  @override
+  String get video_filter_watch_status_watching => '在看';
+  @override
+  String get video_filter_watch_status_completed => '已看完';
+  @override
+  String get video_hero_detail_view => '详情';
+  @override
+  String video_hero_episodes_watched({required Object n}) => '已看 ${n} 集';
+  @override
+  String get video_recently_added_badge => '新';
+  @override
+  String get video_air_season_winter => '冬';
+  @override
+  String get video_air_season_spring => '春';
+  @override
+  String get video_air_season_summer => '夏';
+  @override
+  String get video_air_season_autumn => '秋';
+  @override
+  String get delete_scope_no_channel => '未配置同步，本次删除只影响这台设备';
+  @override
+  String get mihon_sources_title => '漫画源';
+  @override
+  String get mihon_extensions_title => '漫画扩展';
+  @override
+  String get mihon_store_add => '添加扩展仓库';
+  @override
+  String get mihon_store_url => '扩展仓库地址';
+  @override
+  String get mihon_store_empty => '还没有扩展仓库。可添加兼容的 Mihon 仓库，或导入本地 APK。';
+  @override
+  String get mihon_extension_import => '导入本地 APK';
+  @override
+  String get mihon_extension_warning => '第三方扩展会以 Fushi 的权限执行代码。请只安装你信任的扩展和签名者。';
+  @override
+  String get mihon_extension_install => '安装';
+  @override
+  String get mihon_extension_update => '更新';
+  @override
+  String get mihon_extension_uninstall => '卸载';
+  @override
+  String get mihon_extension_installed => '已安装';
+  @override
+  String get mihon_extension_disabled => '已停用';
+  @override
+  String get mihon_source_empty => '没有已启用的漫画源。请先安装并启用漫画扩展。';
+  @override
+  String get mihon_source_popular => '热门';
+  @override
+  String get mihon_source_latest => '最新';
+  @override
+  String get mihon_source_search => '搜索漫画';
+  @override
+  String get mihon_source_preferences => '来源偏好';
+  @override
+  String get mihon_source_clear_data => '清除来源数据';
+  @override
+  String get mihon_source_clear_data_hint => '清除该来源的偏好与 Cookie，不会卸载扩展。';
+  @override
+  String get mihon_signer_trust_title => '信任扩展签名者？';
+  @override
+  String get mihon_signer_fingerprint => '签名者 SHA-256';
+  @override
+  String get mihon_runtime_unavailable => '此平台暂不支持 Mihon 扩展。';
+  @override
+  String get mihon_extension_incompatible => '扩展不兼容';
+  @override
+  String get mihon_store_refresh => '刷新仓库';
+  @override
+  String get mihon_source_browse_mokuro => '内置 Mokuro 目录';
+  @override
+  String get mihon_source_no_results => '没有找到漫画。';
+  @override
+  String get mihon_chapters_title => '章节';
+  @override
+  String get mihon_extension_language_filter => '语言';
+  @override
+  String get mihon_extension_language_all => '全部语言';
+  @override
+  String get mihon_filter_ignore => '忽略';
+  @override
+  String get mihon_filter_include => '包含';
+  @override
+  String get mihon_filter_exclude => '排除';
+  @override
+  String get mihon_filter_ascending => '升序';
+  @override
+  String get mihon_filter_descending => '降序';
+  @override
+  String get mihon_add_to_bookshelf => '加入漫画书架';
+  @override
+  String get mihon_in_bookshelf => '已加入漫画书架';
+  @override
+  String get media_source_local_roots => '本地扫描根';
+  @override
+  String scrape_all_confirm({required Object n}) =>
+      '将按标题匹配库中的 ${n} 个条目。只自动应用高置信度的匹配——视频按标题与年份、类型等信息综合打分，书籍和游戏则要求标题唯一且完全一致。你自己定的封面一律不覆盖（手动设置的本地图、在匹配弹窗里亲手选定的条目、目录里自带的 poster 图），歧义结果留待手动确认。';
+  @override
+  String get collection_related_title => '相关作品';
+  @override
+  String get collection_relation_prequel => '前传';
+  @override
+  String get collection_relation_sequel => '续作';
+  @override
+  String get collection_relation_side_story => '番外';
+  @override
+  String get collection_relation_movie => '剧场版';
+  @override
+  String get collection_relation_spin_off => '衍生';
+  @override
+  String get collection_relation_other => '相关';
+  @override
+  String get collection_relation_download => '去下载';
+  @override
+  String get collection_relation_bind => '绑定到已有合集';
+  @override
+  String get collection_episode_rename => '按刮削重命名各集';
+  @override
+  String get collection_episode_rename_title => '批量重命名各集';
+  @override
+  String get collection_episode_rename_empty => '没有可改的集名';
+  @override
+  String get collection_episode_download => '下载本集';
+  @override
+  String get collection_episode_fill_missing => '补齐缺集';
+  @override
+  String get collection_episode_no_missing => '没有缺集';
+  @override
+  String get collection_split_by_season => '按季拆分合集';
+  @override
+  String get collection_split_keep_original => '保留原合集';
+  @override
+  String get collection_split_confirm => '拆分';
+  @override
+  String get collection_episode_open_bangumi => '在 Bangumi 打开本集';
+  @override
+  String collection_relation_bound({required Object name}) => '已绑定到 ${name}';
+  @override
+  String collection_episode_rename_apply({required Object n}) => '重命名 ${n} 集';
+  @override
+  String collection_split_done({required Object n}) => '已拆分为 ${n} 个合集';
+  @override
+  String collection_episode_watched_at({required Object position}) =>
+      '看到 ${position}';
+  @override
+  String collection_episode_bangumi_open_failed({required Object error}) =>
+      '解析 Bangumi 章节失败：${error}';
+  @override
+  String collection_episode_rename_partial(
+          {required Object n, required Object m}) =>
+      '已重命名 ${n} 集 · ${m} 集失败';
+  @override
+  String get collection_episode_bangumi_not_found => '未找到对应集，已打开条目页';
+  @override
+  String get sync_err_browser_timeout =>
+      '浏览器授权没有返回到应用。请重试，并确认代理放行了本机回环地址 127.0.0.1。';
+  @override
+  String get manga_rescan_run => '框选识别';
+  @override
+  String get manga_rescan_hint => '拖动框选想要识别的文字。';
+  @override
+  String get manga_rescan_model_missing => '请先在设置里下载漫画 OCR 模型。';
+  @override
+  String get manga_rescan_running => '正在识别所选区域…';
+  @override
+  String get manga_rescan_failed => '框选识别失败';
+  @override
+  String get manga_rescan_empty => '该区域未识别出文字。';
+  @override
+  String get manga_rescan_local_source => '本地识别';
+  @override
+  String get manga_rescan_lookup => '查词';
+  @override
+  String get manga_rescan_writeback => '回写本页';
+  @override
+  String get manga_rescan_writeback_done => '已回写 manga.json';
+  @override
+  String get manga_rescan_writeback_failed => '回写 manga.json 失败';
+  @override
+  String get stat_hourly_band_epub => '文字书';
+  @override
+  String get stat_hourly_band_pdf => 'PDF';
+  @override
+  String get stat_hourly_band_manga => '漫画';
+  @override
+  String get stat_hourly_band_unattributed => '未区分历史';
+  @override
+  String get stat_hourly_unattributed_note =>
+      '早期记录的时段数据没有存类型，无法拆分；这里按合计如实显示，不归入任何一类。';
+  @override
+  String get book_convert_to_manga_action => '转换为漫画';
+  @override
+  String get book_convert_to_book_action => '转换回书';
+  @override
+  String get book_convert_running => '转换中…';
+  @override
+  String get book_convert_done => '转换完成';
+  @override
+  String get book_convert_failed => '转换失败';
+  @override
+  String get book_convert_blocked_already => '这本书已经是该格式了。';
+  @override
+  String get book_convert_blocked_text_only => '这是一本没有页图的文字书。只有扫描版图片书才能转成漫画。';
+  @override
+  String get book_convert_blocked_no_original => '这本漫画是从图片导入的，没有可还原的原书。';
+  @override
+  String get book_convert_blocked_source_missing => '源文件已从磁盘上消失。';
+  @override
+  String manga_online_retry_waiting(
+          {required Object attempt, required Object total}) =>
+      '即将自动重试 (${attempt}/${total})';
+  @override
+  String get manga_ocr_wizard_already_ocred =>
+      '本卷每一页都已有 OCR 数据，无需再跑（重跑会覆盖现有数据）。';
+  @override
+  String get shortcut_scope_universal => '返回·退出';
+  @override
+  String get game_attach_and_capture => '附着并捕获';
+  @override
+  String get remote_delete_failed => '无法在对端设备上删除';
+  @override
+  String get remote_delete_unsupported => '对端设备版本过旧，不支持远端删除，请先升级对端 Fushi';
+  @override
+  String get anki_lapis_visual_blocks => '自定义区域';
+  @override
+  String get anki_lapis_visual_blocks_hint =>
+      '把已有字段摆到卡片的其它位置。只改显示，不新增也不删除 Anki 字段。';
+  @override
+  String get anki_lapis_visual_block_add => '添加区域';
+  @override
+  String get anki_lapis_visual_block_delete => '删除区域';
+  @override
+  String anki_lapis_visual_block_name({required Object index}) => '区域 ${index}';
+  @override
+  String get anki_lapis_visual_block_anchor => '在卡片上的位置';
+  @override
+  String get anki_lapis_visual_block_anchor_top => '卡片顶部';
+  @override
+  String get anki_lapis_visual_block_anchor_above_sentence => '单词区下方';
+  @override
+  String get anki_lapis_visual_block_anchor_above_definition => '例句下方';
+  @override
+  String get anki_lapis_visual_block_anchor_below_definition => '释义框下方';
+  @override
+  String get anki_lapis_visual_block_anchor_bottom => '卡片底部';
+  @override
+  String get anki_lapis_visual_block_fields => '这里显示的字段';
+  @override
+  String get anki_lapis_visual_block_no_fields => '还没选字段';
+  @override
+  String get anki_lapis_visual_block_needs_note_type => '先选好卡片类型才能挑字段。';
+  @override
+  String get anki_lapis_restore_factory => '恢复出厂 Lapis';
+  @override
+  String get anki_lapis_restore_factory_hint =>
+      '用 Fushi 内置版本覆盖 Anki 里的 Lapis 卡型（样式与正反面模板），并清空这里的全部客制化。';
+  @override
+  String get anki_lapis_restore_factory_confirm =>
+      '这会用 Fushi 内置版本覆盖 Anki 里 Lapis 的样式与正反面模板，并把字号、自定义 CSS、自定义区域全部重置。执行前会先自动备份当前状态。卡片数据不受影响。';
+  @override
+  String get anki_lapis_restore_factory_done => 'Lapis 已恢复出厂状态';
+  @override
+  String anki_lapis_restore_factory_failed({required Object error}) =>
+      '恢复失败：${error}';
+  @override
+  String get anki_lapis_visual_select_field_hint =>
+      '点预览里的任意部分，或从下面挑一个。选中的就是下方那些控件正在编辑的对象。';
+  @override
+  String get anki_lapis_visual_editing_now => '正在编辑';
+  @override
+  String get mihon_extension_preview => '预览';
+  @override
+  String get mihon_extension_preview_warning =>
+      '预览会在安装前运行该扩展的代码。在你选择安装之前，不会有任何东西写进你的库。';
+  @override
+  String get mihon_extension_preview_discard => '放弃';
+  @override
+  String get mihon_extension_preview_source_select => '选择要预览的源';
+  @override
+  String get mihon_extension_sources_included => '包含的源';
+  @override
+  String get mihon_extension_preview_read_only => '预览是只读的。安装扩展后才能打开阅读。';
+  @override
+  String get selection_copy_empty => '未选中文本。';
+  @override
+  String get video_library_empty_source_hint => '请从“来源”添加视频文件夹以建立媒体库';
+  @override
+  String get video_source_scrape_action => '刮削此来源';
+  @override
+  String get video_source_scrape_settings => '来源刮削设置';
+  @override
+  String get video_source_scrape_provider => '主刮削来源';
+  @override
+  String get video_source_scrape_provider_inherit => '继承全局默认';
+  @override
+  String get video_source_scrape_auto_after_scan => '扫描后自动刮削';
+  @override
+  String get video_source_scrape_auto_after_scan_hint => '扫描此来源完成后自动刮削作品资料';
+  @override
+  String get video_source_scrape_write_nfo => '写入 NFO 文件';
+  @override
+  String get video_source_scrape_write_images => '写入图片文件';
+  @override
+  String get video_source_scrape_use_fanart => '使用 Fanart 图片';
+  @override
+  String video_source_scrape_progress(
+          {required Object phase,
+          required Object current,
+          required Object total}) =>
+      '${phase} · ${current}/${total}';
+  @override
+  String video_source_scrape_last_summary(
+          {required Object status,
+          required Object succeeded,
+          required Object pending,
+          required Object failed}) =>
+      '上次刮削（${status}）：成功 ${succeeded}，待确认 ${pending}，失败 ${failed}';
+  @override
+  String get video_source_scrape_phase_planning => '准备中';
+  @override
+  String get video_source_scrape_phase_recognizing => '识别匹配中';
+  @override
+  String get video_source_scrape_phase_fetching => '获取资料中';
+  @override
+  String get video_source_scrape_phase_applying => '保存资料中';
+  @override
+  String get video_source_scrape_phase_writing_sidecars => '写入 NFO 与图片';
+  @override
+  String get video_source_scrape_status_interrupted => '已中断';
+  @override
+  String get video_source_scrape_global_provider => '视频默认刮削来源';
+  @override
+  String get video_source_scrape_global_provider_hint => '供选择“继承全局默认”的视频来源使用';
+  @override
+  String get video_source_scrape_fanart_key => 'Fanart API Key';
+  @override
+  String get video_source_scrape_fanart_key_hint => '可选，用于从 Fanart 补充缺少的图片';
+  @override
+  String get video_source_scrape_bangumi_token => 'Bangumi 访问令牌';
+  @override
+  String get video_source_scrape_bangumi_token_hint =>
+      '可选，用于访问 Bangumi 官方 v0 API';
+  @override
+  String get video_source_scrape_douban_endpoint => '已授权的豆瓣 API 端点';
+  @override
+  String get video_source_scrape_douban_endpoint_hint =>
+      '仅当已授权端点和令牌都已配置时豆瓣来源才可用';
+  @override
+  String get video_source_scrape_douban_token => '已授权的豆瓣 API 令牌';
+  @override
+  String get video_source_scrape_douban_token_hint => '仅当已授权端点和令牌都已配置时豆瓣来源才可用';
+  @override
+  String get video_source_scrape_locale => '资料语言';
+  @override
+  String get video_source_scrape_locale_hint => '标题、简介与图片的首选语言';
+  @override
+  String get video_source_scrape_confirmation_title => '确认资料匹配';
+  @override
+  String get video_source_scrape_confirmation_hint =>
+      '找到多个严格匹配结果。请选择正确作品，Fushi 会保存其来源绑定。';
+  @override
+  String get video_source_scrape_confirmation_skip => '跳过此作品';
+  @override
+  String get video_source_scrape_nfo_policy => 'NFO 写入策略';
+  @override
+  String get video_source_scrape_image_policy => '图片写入策略';
+  @override
+  String get video_source_scrape_policy_skip => '不写入';
+  @override
+  String get video_source_scrape_policy_missing_only => '仅缺失时写入';
+  @override
+  String get video_source_scrape_policy_overwrite => '更新 Fushi 生成物';
+  @override
+  String get video_source_scrape_external_overwrite => '允许覆盖受保护的 sidecar';
+  @override
+  String get video_source_scrape_external_overwrite_hint =>
+      '第三方或用户修改过的文件仍受保护；每次手动刮削批次都必须再次确认。';
+  @override
+  String get video_source_scrape_external_overwrite_confirm_title =>
+      '覆盖受保护的 sidecar？';
+  @override
+  String get video_source_scrape_external_overwrite_confirm_body =>
+      '本批次可能替换第三方 NFO/图片，或你修改过的 Fushi 生成物；视频文件本身不会改动。是否继续？';
+  @override
+  String get video_source_scrape_tasks_open => '后台任务';
+  @override
+  String get video_source_scrape_background_started => '刮削已在后台开始';
+  @override
+  String get video_source_scrape_tasks_current => '当前任务';
+  @override
+  String get video_source_scrape_tasks_history => '最近任务';
+  @override
+  String get video_source_scrape_tasks_empty => '暂无刮削任务';
+  @override
+  String get video_source_scrape_waiting_confirmation => '等待你的确认';
+  @override
+  String get video_source_scrape_phase_scanning => '扫描来源';
+  @override
+  String get video_library_all_videos => '全部视频';
+  @override
+  String get video_work_voice_roles => '声优与角色';
+  @override
+  String get video_work_cast_crew => '演职员';
+  @override
+  String get video_work_trailers => '预告片';
+  @override
+  String get video_work_extras => '花絮';
+  @override
+  String get video_work_details => '作品资料';
+  @override
+  String get video_work_external_ids => '外部 ID';
+  @override
+  String get video_work_metadata_pending => '暂无详细资料。请在';
+  @override
+  String get video_work_genres => '类型';
+  @override
+  String get video_work_keywords => '标签';
+  @override
+  String get video_work_studios => '工作室';
+  @override
+  String get video_work_countries => '国家';
+  @override
+  String get video_work_content_rating => '分级';
+  @override
+  String get video_all_videos_list_view => '列表视图';
+  @override
+  String get video_all_videos_grid_view => '网格视图';
+  @override
+  String video_home_continue_episode_number({required Object n}) =>
+      '看到第 ${n} 集';
+  @override
+  String video_home_next_episode_number({required Object n}) =>
+      '下一集 · 第 ${n} 集';
+  @override
+  String video_home_recent_episode_number({required Object n}) =>
+      '最近添加 · 第 ${n} 集';
+  @override
+  String video_home_remaining_minutes({required Object minutes}) =>
+      '剩余 ${minutes} 分钟';
+  @override
+  String get video_subtitle_replay => '重播本句';
+  @override
+  String get manga_ocr_done => 'OCR 已完成';
+  @override
+  String get settings_destination_manga_summary => '阅读器、OCR 与在线目录';
+  @override
+  String get manga_page_animation => '翻页动画';
+  @override
+  String get manga_page_animation_none => '无';
+  @override
+  String get manga_page_animation_slide => '滑动';
+  @override
+  String get manga_page_animation_fade => '淡入淡出';
+  @override
+  String get manga_default_zoom => '默认缩放';
+  @override
+  String get manga_zoom_sensitivity => '缩放灵敏度';
+  @override
+  String get manga_volume_key_paging => '音量键翻页';
+  @override
+  String get manga_volume_key_paging_subtitle => '在漫画阅读器中用音量加减键翻页';
+  @override
+  String get manga_tap_zone_paging => '点击边缘翻页';
+  @override
+  String get manga_tap_zone_paging_subtitle => '点击页面左右边缘翻页';
+  @override
+  String get manga_section_viewing => '浏览与翻页';
+  @override
+  String get game_capture_setup_title => '完成捕获设置';
+  @override
+  String get game_capture_setup_hint => '请先选择台词线程。Fushi 只能把音频与所选线程收到的台词配对。';
+  @override
+  String get game_audio_requires_thread => '音频采集源可能已经就绪，但选择线程并收到台词之前，不存在本句音频。';
+  @override
+  String get game_session_waiting_thread => '等待选择台词线程';
+  @override
+  String get anki_connect_use_on_mobile => '改用 AnkiConnect';
+  @override
+  String get anki_connect_use_on_mobile_hint =>
+      '仅在可信网络中使用。AnkiConnect 使用明文 HTTP；请配置匹配的 API key，切换后再刷新牌组与笔记类型。';
+  @override
+  String get anki_connect_api_key_hint => '远程 AnkiConnect 必填；必须与插件中配置的 key 一致';
+  @override
+  String get anki_connect_mobile_api_key_required =>
+      '请先配置匹配的 AnkiConnect API key，再切换到 AnkiConnect 后端。';
+  @override
+  String anki_connect_backend_switch_failed({required Object error}) =>
+      '无法切换 Anki 后端：${error}';
+  @override
+  String get migration_settings_entry => '迁移到 Fushi';
+  @override
+  String get migration_settings_entry_subtitle => '把全部数据搬到新的 Fushi 应用';
+  @override
+  String get migration_intro =>
+      'Fushi 是本应用的新名字。迁移会把你的全部数据分批导出到中转目录，再由 Fushi 导入并逐项校验。在你卸载旧版之前，这里的数据原样保留。';
+  @override
+  String get migration_target_missing => '尚未安装 Fushi。请先安装 Fushi，再回到这里。';
+  @override
+  String get migration_download_fushi => '下载 Fushi';
+  @override
+  String get migration_start => '开始迁移';
+  @override
+  String get migration_open_fushi => '打开 Fushi';
+  @override
+  String get migration_include_local_audio => '一并导出本地发音库（体积可能很大）';
+  @override
+  String migration_batch_running({required Object batch}) => '正在导出 ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => '${batch} 已导出';
+  @override
+  String get migration_export_done => '导出完成。打开 Fushi 完成导入与校验。';
+  @override
+  String migration_export_failed({required Object error}) => '导出失败：${error}';
+  @override
+  String get migration_readonly_note =>
+      '数据已导出到 Fushi。本应用已进入只读模式：请改用 Fushi 阅读和制卡。若 Fushi 校验发现缺失，可随时在此重新导出。';
+  @override
+  String get migration_reexport => '重新导出';
+  @override
+  String get migration_batch_core_label => '设置、进度与统计';
+  @override
+  String get migration_import_entry => '从 Hibiki 导入';
+  @override
+  String get migration_import_entry_subtitle => '导入旧版 Hibiki 导出的数据';
+  @override
+  String get migration_import_detected => '检测到 Hibiki 迁移数据，现在导入？';
+  @override
+  String get migration_import_start => '开始导入';
+  @override
+  String migration_import_running({required Object batch}) => '正在导入 ${batch}…';
+  @override
+  String migration_import_verify_failed(
+          {required Object batch, required Object detail}) =>
+      '${batch} 校验未通过，已保留待重传：${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      '导入数据不完整：${detail}。请回 Hibiki 重新导出缺失部分后再导入。';
+  @override
+  String get migration_import_success => '导入完成，校验通过。';
+  @override
+  String get migration_import_nothing => '中转目录中没有找到迁移数据。';
+  @override
+  String get migration_uninstall_prompt => '迁移完成。卸载旧版 Hibiki？';
+  @override
+  String get migration_uninstall_button => '卸载 Hibiki';
+  @override
+  String get migration_uninstall_still_installed => '旧版 Hibiki 仍安装在设备上，可随时卸载。';
+  @override
+  String get migration_import_permission_title => '需要文件访问权限';
+  @override
+  String get migration_import_permission_body =>
+      '中转目录是旧版应用创建的。没有「所有文件访问权限」，Fushi 读不了它——数据是完好的，只是打不开。';
+  @override
+  String get migration_import_permission_grant => '去授权';
+  @override
+  String migration_import_verifying(
+          {required Object batch,
+          required Object done,
+          required Object total}) =>
+      '正在校验 ${batch}（${done}/${total}）';
+  @override
+  String get migration_import_verifying_hint => '正在核对归档校验和。库很大时需要几分钟。';
+  @override
+  String get game_line_copy_tooltip => '复制句子';
+  @override
+  String get game_japanese_locale_auto => '自动';
+  @override
+  String get game_japanese_locale_on => '始终开启';
+  @override
+  String get game_japanese_locale_off => '关闭';
+  @override
+  String get game_japanese_locale => '日语区域（转区）';
+  @override
+  String get game_japanese_locale_hint => '汉化版/英化版请选「关闭」，否则启动即闪退';
+  @override
+  String get video_scrape_diagnostic_export => '导出刮削诊断包';
+  @override
+  String get video_scrape_diagnostic_confirm_title => '导出刮削诊断包？';
+  @override
+  String get video_scrape_diagnostic_saved => '诊断包已保存';
+  @override
+  String video_scrape_diagnostic_failed({required Object reason}) =>
+      '无法导出诊断包：${reason}';
+  @override
+  String get video_scrape_diagnostic_share_subject => 'Fushi 视频刮削诊断';
+  @override
+  String get video_scrape_diagnostic_confirm_body =>
+      '诊断包包含相对文件/目录名、刮削摘要和原始 NFO 内容；不会加入视频、字幕、图片、绝对路径、应用配置或应用凭据。原始 NFO 会原样保留，仍可能含有个人信息或密钥，请在公开分享前检查。';
+  @override
+  String get video_discovery_search_hint => '搜索电影、剧集、动漫';
+  @override
+  String get video_discovery_hot => '热门推荐';
+  @override
+  String get video_discovery_seasonal_anime => '本季动漫';
+  @override
+  String get video_discovery_all_works => '全部作品';
+  @override
+  String get video_discovery_search_results => '搜索结果';
+  @override
+  String get video_discovery_provider_warning => '部分来源暂不可用，已显示其余结果';
+  @override
+  String get video_discovery_load_failed => '发现内容加载失败';
+  @override
+  String get video_discovery_empty => '没有匹配的作品';
+  @override
+  String get video_discovery_resource_search => '搜索资源';
+  @override
+  String get video_discovery_subtitle_search => '搜索字幕';
+  @override
+  String get video_discovery_subscribe => '订阅';
+  @override
+  String get video_discovery_subscription_manage => '管理订阅';
+  @override
+  String get video_discovery_pipeline_idle => '未下载 → 下载 → 整理 → 字幕 → 刮削 → 入库';
+  @override
+  String get video_discovery_details_load_failed => '作品详情加载失败';
+  @override
+  String get video_discovery_sort_popularity => '热度';
+  @override
+  String get video_discovery_sort_rating => '评分';
+  @override
+  String get video_discovery_sort_release => '上映时间';
+  @override
+  String get video_discovery_in_library => '已入库';
+  @override
+  String get video_discovery_play => '播放';
+  @override
+  String get download_resources_tab => '资源';
+  @override
+  String get video_external_settings_section => '外部资源与字幕来源';
+  @override
+  String get video_torznab_settings_title => 'Torznab 索引器';
+  @override
+  String get video_torznab_add => '添加索引器';
+  @override
+  String get video_torznab_name => '名称';
+  @override
+  String get video_torznab_endpoint => '端点';
+  @override
+  String get video_torznab_endpoint_hint => '除回环地址外必须使用 HTTPS。';
+  @override
+  String get video_torznab_api_key => 'API 密钥';
+  @override
+  String get video_torznab_priority => '优先级';
+  @override
+  String get video_torznab_categories => '分类';
+  @override
+  String get video_torznab_categories_hint => '用逗号分隔的数字分类 ID';
+  @override
+  String get video_external_enabled => '已启用';
+  @override
+  String get video_external_insecure_http => '允许不安全的 HTTP';
+  @override
+  String get video_external_insecure_http_hint => '仅用于可信的局域网端点。';
+  @override
+  String get video_external_endpoint_invalid => '请输入不含凭据、查询参数或片段的有效端点。';
+  @override
+  String get video_opensubtitles_settings_title => 'OpenSubtitles';
+  @override
+  String get video_opensubtitles_user_agent => 'User-Agent';
+  @override
+  String get video_opensubtitles_languages => '首选语言';
+  @override
+  String get video_opensubtitles_languages_hint => '用逗号分隔语言代码，例如 zh-CN,en,ja';
+  @override
+  String get video_download_path_mappings_title => 'qBittorrent 路径映射';
+  @override
+  String get video_download_path_mappings_hint =>
+      '将每个 qBittorrent 远程根目录映射到本机可访问的文件夹。';
+  @override
+  String get video_download_path_mapping_add => '添加路径映射';
+  @override
+  String get video_download_backend_profile_id => '后端配置 ID';
+  @override
+  String get video_download_remote_root => '远程根目录';
+  @override
+  String get video_download_local_root => '本机根目录';
+  @override
+  String get video_download_target_source_title => '默认受管视频来源';
+  @override
+  String get video_download_target_source_hint => '新下载会整理到此本地视频来源中。';
+  @override
+  String get video_download_target_source_none => '选择本地视频来源';
+  @override
+  String get video_external_remove => '移除';
+  @override
+  String get video_external_username_optional => '用户名（可选）';
+  @override
+  String get video_external_password_optional => '密码（可选）';
+  @override
+  String get video_external_api_key => 'API 密钥';
+  @override
+  String get video_external_save_error => '无法保存配置，请检查标出的字段。';
+  @override
+  String get video_external_categories_invalid => '分类必须是用逗号分隔的数字 ID。';
+  @override
+  String get video_download_path_mapping_invalid => '请输入配置 ID、远程根目录和本机绝对根目录。';
+  @override
+  String get video_opensubtitles_endpoint => 'API 端点';
+  @override
+  String get video_download_target_source_empty => '没有可访问的本地视频来源。请先在来源页添加。';
+  @override
+  String get video_setting_drag_seek_sensitivity => '拖动调进度灵敏度';
+  @override
+  String get video_setting_drag_seek_sensitivity_hint =>
+      '触屏横向滑动调进度时，划过整屏宽度对应的时长：低约 45 秒、中约 90 秒、高约 180 秒。与视频总长无关。只影响触屏拖动，鼠标和键盘调进度不受影响。';
+  @override
+  String get video_setting_drag_seek_sensitivity_low => '低';
+  @override
+  String get video_setting_drag_seek_sensitivity_medium => '中';
+  @override
+  String get video_setting_drag_seek_sensitivity_high => '高';
+  @override
+  String video_subtitle_read_failed({required Object label}) =>
+      '无法读取该字幕文件（内容损坏或为空）：${label}';
+  @override
+  String dict_downloading_size(
+          {required Object name,
+          required Object done,
+          required Object total}) =>
+      '正在下载 ${name}（${done} / ${total}）';
+  @override
+  String get video_subtitle_attach_book_missing => '该视频不在视频库中，字幕没有挂上';
+  @override
+  String get dict_download_hide => '后台继续';
+  @override
+  String get dict_download_progress_show => '查看进度';
+  @override
+  String get dict_download_cancelled => '已取消下载。';
+  @override
+  String get dict_download_import_uncancellable => '导入阶段无法中断';
+  @override
+  String get dict_download_busy => '已有词典下载正在进行。';
+  @override
+  String get gal_hook_ingame_lookup => '游戏内查词';
+  @override
+  String get gal_hook_ingame_lookup_hint =>
+      '在游戏画面内直接显示词典卡片（KiriKiri 引擎，仅 Windows）';
+  @override
+  String get drag_drop_failed => '拖入的文件处理失败，请重试。';
+  @override
+  String get tag_add_failed => '标签添加失败，请重试。';
+  @override
+  String get tag_reorder_failed => '标签排序保存失败，请重试。';
+  @override
+  String get download_task_error_summary_source_missing => '受管视频来源不存在或不可访问';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      '种子未能按哈希、标题、分类确认';
+  @override
+  String get download_task_error_summary_subtitle => '字幕不可用或未能安装';
+  @override
+  String get download_task_error_summary_backend_unavailable => '下载后端不可用或不再匹配';
+  @override
+  String get download_task_error_summary_legacy => '旧版导入数据需要处理';
+  @override
+  String get download_task_error_summary_torrent_info => '种子信息缺失或无法校验';
+  @override
+  String get download_task_error_summary_generic => '任务出错';
+  @override
+  String get download_task_error_view_detail => '查看详情';
+  @override
+  String get download_task_error_detail_title => '错误详情';
+  @override
+  String get download_task_error_copied => '错误详情已复制';
+  @override
+  String get download_task_lifecycle_active => '进行中';
+  @override
+  String get download_task_lifecycle_needs_attention => '需要处理';
+  @override
+  String get download_task_location_missing => '找不到该任务对应的文件位置。';
+  @override
+  String get download_task_location_open_failed => '无法打开文件位置。';
+  @override
+  String get download_task_open_location => '打开文件位置';
+  @override
+  String get download_task_lifecycle_completed => '已完成';
+  @override
+  String get download_task_lifecycle_failed => '已失败';
+  @override
+  String get download_task_lifecycle_cancelled => '已取消';
+  @override
+  String get download_task_stage_enqueue => '入队';
+  @override
+  String get download_task_stage_download => '下载';
+  @override
+  String get download_task_stage_organize => '整理';
+  @override
+  String get download_task_stage_subtitle => '字幕';
+  @override
+  String get download_task_stage_import => '入库';
+  @override
+  String get download_task_stage_scrape => '刮削';
+  @override
+  String get video_discovery_manual_identity_hint => '填写标题、外部 ID 和年份后才能搜索';
+  @override
+  String get collection_split_move_to => '移动到';
+  @override
+  String get collection_split_new_group => '新建分组';
+  @override
+  String collection_split_selected({required Object n}) => '已选 ${n} 集';
+  @override
+  String get sync_pair_rate_limited => '尝试次数过多，请等几分钟后重试。';
+  @override
+  String get sync_pair_tls_failed => '证书校验失败：对端证书与已记录的指纹不符。';
+  @override
+  String get sync_pair_timeout => '对端没有及时响应。';
+  @override
+  String get sync_pair_expired => '配对会话已超时，请重新发起配对。';
+  @override
+  String get sync_pair_upgrade_required =>
+      '对方版本过旧，无法在当前网络下安全配对（需要 PIN）。请更新对方后重新配对。';
+  @override
+  String get sync_pair_fingerprint_changed_title => '证书已变更';
+  @override
+  String get sync_pair_fingerprint_stored_label => '此前已钉扎';
+  @override
+  String get sync_pair_fingerprint_new_label => '本次握手所见';
+  @override
+  String get sync_pair_fingerprint_retrust => '清除已存指纹并重新信任';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      '这条地址此前钉扎的是另一张证书。只有在你确知对方重装/重置过设备时才继续，否则连接可能正被中间人拦截。';
+  @override
+  String get interconnect_upload_section_footer =>
+      '选择本设备要把哪些内容上传给已连接的互联对端。与云备份的同名开关互不影响，且默认全部关闭。本组开关只在「启用互联」打开时生效：关掉互联，这里的上传全部停止。';
+  @override
+  String get remote_delete_audiobook_partial => '书已在对端删除，但它的有声书没能删掉';
+  @override
+  String get collection_episode_scrape => '刮削分集资料';
+  @override
+  String collection_episode_scrape_failed({required Object error}) =>
+      '分集刮削失败：${error}';
+  @override
+  String collection_episode_scrape_result(
+          {required Object updated, required Object skipped}) =>
+      '已更新 ${updated} 集 · 跳过 ${skipped} 集';
+  @override
+  String get collection_episode_scrape_unbound => '请先刮削合集资料';
+  @override
+  String get gal_mining_screenshot_size => 'Galgame 截图尺寸';
+  @override
+  String get gal_mining_screenshot_size_full_hd => '最大 1920 x 1080（推荐）';
+  @override
+  String get gal_mining_screenshot_size_hd => '最大 1280 x 720';
+  @override
+  String get gal_mining_screenshot_size_hint =>
+      '用于静态截图及动图捕获失败后的备用截图。保持比例、只缩不放，并以质量 90 保存为 JPG。';
+  @override
+  String get gal_mining_screenshot_size_original => '原始尺寸（JPG）';
+  @override
+  String get game_attach_mode_last_used => '上次使用';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna 安全附着（推荐）';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      '不向游戏注入组件，使用 Luna 原文和系统混音，避免双 Hook 冲突。';
+  @override
+  String get game_attach_mode_native => 'Fushi 原生附着';
+  @override
+  String get game_attach_mode_native_hint =>
+      '向游戏注入 Fushi，尝试获取原生文本和干净语音；请勿与 LunaTranslator 同时使用。';
+  @override
+  String get game_attach_mode_title => '选择附着方式';
+  @override
+  String get game_luna_audio_lead_in => '补全本句开头';
+  @override
+  String get game_luna_audio_lead_in_hint => '如果本句开头的声音被切掉，就调大。';
+  @override
+  String get game_luna_audio_per_game_hint => '会按当前附着的游戏分别保存。';
+  @override
+  String get game_luna_audio_preroll => 'Luna 语音起点提前';
+  @override
+  String get game_luna_audio_preroll_hint =>
+      '每条 Luna 原文到达时向前保留一小段混音，避免角色语音开头被截掉。';
+  @override
+  String get game_luna_audio_tail_trim => '去掉下句声音';
+  @override
+  String get game_luna_audio_tail_trim_hint => '如果本句结尾混入下一句声音，就调大。';
+  @override
+  String get game_luna_audio_timing => '语音切分调整';
+  @override
+  String get game_text_source_luna => 'LunaTranslator（外部原文）';
+  @override
+  String get game_text_source_luna_connected =>
+      '已连接，将使用 LunaTranslator 中选定的原文。';
+  @override
+  String get game_text_source_luna_waiting =>
+      '请启动 LunaTranslator 并开启网络服务，Fushi 会自动重连。';
+  @override
+  String get game_text_thread_recommended => '推荐线程';
+  @override
+  String get game_text_threads_dormant_hide => '收起尚无文本的线程';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      '显示尚无文本的线程（${count}）';
+  @override
+  String get video_mining_image_quality => '视频 / 动漫制卡画质';
+  @override
+  String get video_mining_image_quality_hint =>
+      '仅控制视频和动漫制卡配图。画质越高越清晰，卡片体积也可能越大。';
+  @override
+  String get game_line_bulk_text_hint => '检测到批量文本，已暂停逐字查词以避免卡顿。';
+  @override
+  String get video_setting_subtitle_language_filter => '字幕语言';
+  @override
+  String get video_setting_subtitle_language_filter_hint =>
+      '过滤当前所选字幕轨内部的中文或日文内容。';
+  @override
+  String get video_setting_subtitle_language_filter_all => '全部';
+  @override
+  String get video_setting_subtitle_language_filter_japanese => '日文';
+  @override
+  String get video_setting_subtitle_language_filter_chinese => '中文';
+  @override
+  String get download_detail_task_queued =>
+      '排队中：正在等其他下载让出槽位。任务还没交给下载器，所以暂时没有实时节点和 Tracker 数据。';
+  @override
+  String video_subscription_group_release_count({required Object count}) =>
+      '共 ${count} 个发布';
+  @override
+  String get download_task_priority => '排队优先级';
+  @override
+  String get download_task_priority_high => '高';
+  @override
+  String get download_task_priority_normal => '普通';
+  @override
+  String get download_task_priority_low => '低';
+  @override
+  String get library_view_import => '导入';
+  @override
+  String get quick_import_title => '快速导入';
+  @override
+  String get media_source_section_title => '常驻来源';
+  @override
+  String get book_import_folder => '导入文件夹';
+  @override
+  String get book_import_folder_as_source => '设为常驻来源';
+  @override
+  String get book_import_folder_as_source_hint => '以后自动扫描此文件夹里的新书';
+  @override
+  String get book_import_folder_once => '仅导入这一次';
+  @override
+  String get library_empty_go_import => '去导入';
+  @override
+  String get game_import_drop_hint => '也可以把 .exe 文件直接拖进游戏库添加';
+  @override
+  String get library_view_sources => '来源';
+  @override
+  String get video_setting_secondary_av_delay => '副字幕调轴';
+  @override
+  String get video_setting_secondary_av_delay_hint => '副字幕独立偏移；未单独设置时跟随主字幕调轴。';
+  @override
+  String get video_setting_secondary_delay_follow => '跟随主字幕';
+  @override
+  String video_subtitle_secondary_delay_osd({required Object ms}) =>
+      '副字幕同步：${ms} ms';
+  @override
+  String get video_subtitle_secondary_delay_follow_osd => '副字幕同步：跟随主字幕';
+  @override
+  String get video_setting_subtitle_anchor => '主字幕锚定';
+  @override
+  String get video_subtitle_anchor_bottom => '底部';
+  @override
+  String get video_subtitle_anchor_top => '顶部';
+  @override
+  String get video_setting_subtitle_drag_adjust => '拖拽调整位置';
+  @override
+  String get video_subtitle_drag_adjust_hint => '上下拖动字幕调整位置';
+  @override
+  String get anki_connect_mobile_disabled_key_cleared =>
+      '移动端使用 AnkiConnect 必须填 API key，清空后已自动关闭该开关，Anki 改回走内置后端。';
+  @override
+  String manga_import_batch_hint({required Object n}) =>
+      '该文件夹里有 ${n} 个整卷文件，将逐卷各导入为一本，书名取各自的文件名。';
+  @override
+  String manga_import_batch_done(
+          {required Object imported,
+          required Object skipped,
+          required Object failed}) =>
+      '导入完成：成功 ${imported} 卷，跳过 ${skipped} 卷，失败 ${failed} 卷。';
+  @override
+  String get srt_book_reimport => '重新导入';
+  @override
+  String get srt_book_reimport_subtitle_hint => '替换字幕会用新字幕重建这本书的正文。';
+  @override
+  String get srt_book_reimport_no_cues => '该字幕文件解析不出任何字幕行';
+  @override
+  String get srt_book_reimport_body_rebuilt => '正文已重建，请重新打开本书';
+  @override
+  String get video_setting_torrent_backend_embedded => '内置引擎';
+  @override
+  String get download_backend_unsupported_note =>
+      '本平台无内置引擎，下载使用外接 qBittorrent。';
+  @override
+  String get aidoku_runtime_unavailable => 'Aidoku 扩展目前仅支持 macOS。';
+  @override
+  String get aidoku_extensions_title => 'Aidoku 扩展';
+  @override
+  String get aidoku_extension_empty => '尚未安装 Aidoku 扩展。';
+  @override
+  String get aidoku_extension_remove => '移除 Aidoku 扩展';
+  @override
+  String get aidoku_extension_warning =>
+      'Aidoku 扩展会执行具有网络访问权限的第三方 WebAssembly 代码。请只导入你信任的来源。';
+  @override
+  String get aidoku_webview_unsupported => '此扩展依赖尚未支持的 Aidoku WebView API。';
+  @override
+  String get aidoku_extension_imported => 'Aidoku 扩展已导入';
+  @override
+  String get aidoku_extension_import => '导入 Aidoku 扩展（.aix）';
+  @override
+  String get aidoku_extension_confirm_title => '安装 Aidoku 扩展？';
+  @override
+  String get aidoku_extension_version => '版本';
+  @override
+  String get aidoku_repository_url => '仓库地址';
+  @override
+  String get aidoku_repository_sources => '仓库扩展';
+  @override
+  String get aidoku_repository_identity_mismatch => '下载的扩展包与仓库索引不一致。';
+  @override
+  String get aidoku_repository_installed => '已安装';
+  @override
+  String get aidoku_repository_search => '搜索仓库扩展';
+  @override
+  String get aidoku_repository_install => '安装';
+  @override
+  String get aidoku_repository_update => '更新';
+  @override
+  String get aidoku_repository_add => '添加 Aidoku 仓库';
+  @override
+  String get aidoku_repository_added => 'Aidoku 仓库已添加';
+  @override
+  String get aidoku_repository_browse => '浏览仓库';
+  @override
+  String get aidoku_repository_hint =>
+      '粘贴 Aidoku 仓库主页或 index.min.json 地址。默认已填入社区仓库。';
+  @override
+  String get aidoku_repository_remove => '移除仓库';
+  @override
+  String get aidoku_repository_empty => '尚未添加 Aidoku 仓库。';
+  @override
+  String get dict_language_tooltip => '内容语言';
+  @override
+  String get dict_language_title => '词典内容语言';
+  @override
+  String get dict_language_description => '决定这本词典的文字用哪种字体渲染。自动 = 用词典自己声明的语言。';
+  @override
+  String get dict_language_auto => '自动';
+  @override
+  String get book_language_action => '内容语言';
+  @override
+  String get book_language_description => '决定这本书的正文用哪种字体渲染。自动 = 用 EPUB 里声明的语言。';
+  @override
+  String get local_audio_reference_unavailable =>
+      '没有「所有文件访问权限」无法引用原文件，已改为导入副本。';
+  @override
+  String get video_collection_scrape => '刮削资料与封面';
+  @override
+  String get update_testflight_open => '打开 TestFlight';
+  @override
+  String get update_app_store_open => '打开 App Store';
+  @override
+  String get update_release_page_open => '发布页';
+  @override
+  String update_install_gal_hook_holder(
+          {required Object pid, required Object path}) =>
+      'Galgame 捕获组件被占用：PID ${pid} - ${path}（这是你正在玩的游戏或它的捕获宿主进程）。请先关闭游戏再更新。';
+  @override
+  String get game_hook_reason_protocol_mismatch =>
+      '捕获组件与本体版本不一致。组件已内置在 Fushi 里，不需要单独安装：先彻底关掉游戏再重开一次（游戏进程里可能还挂着上一次注入的旧组件）。若重开后仍提示不一致，说明磁盘上的组件比 Fushi 旧——上次更新 Fushi 时游戏正开着，安装器换不掉被占用的组件文件。请关闭所有游戏，然后重新运行一次 Fushi 安装程序。';
+  @override
+  String get video_mining_still_format => '视频卡片截图格式';
+  @override
+  String get video_mining_still_format_hint =>
+      '选「制卡时截图」或「字幕开头截图」时那张图用什么编码。JPG 体积小得多；PNG 无损但大好几倍。动图封面不受影响，它跟随「动图格式」那一项。';
+  @override
+  String get mining_still_format_jpg => 'JPG（体积更小）';
+  @override
+  String get mining_still_format_png => 'PNG（无损）';
+  @override
+  String get gal_mining_still_format => '游戏卡片截图格式';
+  @override
+  String get gal_mining_still_format_hint =>
+      '与视频卡片同样的格式，但分开保存。游戏窗口抓图本身是 PNG：选 PNG 无损但大好几倍，选 JPG 与这些截图过去的压缩方式一致。';
+  @override
+  String get manga_source_cloudflare_blocked =>
+      '该来源受 Cloudflare 保护，内置阅读器暂时无法访问。';
+  @override
+  String get manga_global_search_title => '搜索全部来源';
+  @override
+  String get manga_global_search_hint => '搜索所有已启用来源';
+  @override
+  String get manga_global_search_prompt => '输入书名，一次搜索所有已启用的漫画来源。';
+  @override
+  String get manga_global_search_no_sources => '没有已启用的漫画来源，请先安装并启用扩展。';
+  @override
+  String get anki_connect_addon_install => '安装 AnkiConnect';
+  @override
+  String get anki_connect_addon_install_hint =>
+      '从 AnkiWeb 下载 AnkiConnect 并交给正在运行的 Anki。Anki 会弹窗请你确认，之后按它的提示重启。';
+  @override
+  String get anki_connect_addon_handed =>
+      '已把 AnkiConnect 交给 Anki。请在 Anki 弹出的确认框中同意，然后按 Anki 的提示重启。';
+  @override
+  String get anki_connect_addon_anki_not_running =>
+      '没有检测到正在运行的 Anki。请先启动 Anki 桌面版再试。';
+  @override
+  String anki_connect_addon_download_failed({required Object error}) =>
+      '无法从 AnkiWeb 下载 AnkiConnect：${error}';
+  @override
+  String get anki_connect_addon_invalid => 'AnkiWeb 返回的内容不是可用的插件包。';
+  @override
+  String anki_connect_addon_launch_failed({required Object error}) =>
+      '无法把插件交给 Anki：${error}';
+  @override
+  String get settings_content_language_title => '默认内容语言';
+  @override
+  String get settings_content_language_unset => '未设置';
+  @override
+  String get settings_content_language_description =>
+      '内容没有声明语言时用的默认值。书/视频/游戏/词典各自的设置会覆盖它。';
+  @override
+  String get manga_ocr_lens_language_label => '识别语言';
+  @override
+  String get dict_user_title => '用户词典';
+  @override
+  String get dict_user_entry_add => '添加词条';
+  @override
+  String get dict_user_entry_edit => '编辑词条';
+  @override
+  String get dict_user_entry_delete_confirm => '删除这条词条？';
+  @override
+  String get dict_user_field_expression => '词头';
+  @override
+  String get dict_user_field_reading => '读音';
+  @override
+  String get dict_user_field_meaning => '释义';
+  @override
+  String get dict_user_empty => '还没有词条，添加一条开始建立自己的词典。';
+  @override
+  String get dict_user_expression_required => '词头不能为空';
+  @override
+  String get dict_user_rebuild_failed => '用户词典重建失败';
+  @override
+  String get sync_err_peer_unreachable => '无法连接配对设备——对方可能不在线，或对端未运行 Fushi。';
+  @override
+  String get remote_book_list_failed => '无法获取配对设备的远端书库。';
+  @override
+  String get video_torznab_settings_hint =>
+      '配置一个或多个 Jackett、Prowlarr 或兼容的 Torznab 端点。密钥绝不随备份导出；可随互联同步到已配对设备（可在互联设置中关闭）。';
+  @override
+  String get video_opensubtitles_settings_hint =>
+      'API 凭据绝不随备份导出；可随互联同步到已配对设备（可在互联设置中关闭）。';
+  @override
+  String get sync_interconnect_service_config_toggle => '同步主机服务配置';
+  @override
+  String get sync_interconnect_service_config_toggle_desc =>
+      '经加密互联通道接收已配对主机的外部服务设定与 API key（Jimaku、TMDB、Torznab、OpenSubtitles、追番）。需启用 TLS。';
+  @override
+  String get video_setting_subtitle_backfill => '刮削后自动补字幕';
+  @override
+  String get video_setting_subtitle_backfill_hint =>
+      '刮削完成后，仍然没有字幕的视频会自动从已配置的在线字幕来源取一条。绝不覆盖已有字幕。';
+  @override
+  String get video_setting_subtitle_sources_section => '在线字幕来源';
+  @override
+  String get video_subtitle_no_source_configured => '没找到字幕 · 去配置在线字幕来源';
+  @override
+  String get anime_download_subs_retrying => '字幕：还没上传，稍后自动重试';
+  @override
+  String get video_jimaku_language_follow_video => '跟随视频语言';
+  @override
+  String get video_setting_jimaku_default_language_hint =>
+      '默认跟随视频自身的语言（音轨 / 刮削元数据）。选定某个语言则始终优先它。';
+  @override
+  String get onboarding_title => '新手引导';
+  @override
+  String get onboarding_welcome_headline => '欢迎使用！';
+  @override
+  String get onboarding_feature_anki => 'Anki 制卡';
+  @override
+  String get onboarding_feature_anki_hint =>
+      '连接 AnkiConnect / AnkiDroid，查词一键制卡';
+  @override
+  String get onboarding_feature_backup => '备份与同步';
+  @override
+  String get onboarding_feature_backup_hint => '把数据备份到 Google Drive、WebDAV 等后端';
+  @override
+  String get onboarding_feature_interconnect => '设备互联';
+  @override
+  String get onboarding_feature_interconnect_hint => '局域网配对多台设备，共享书库与进度';
+  @override
+  String get onboarding_step_dictionary_action => '打开词典管理';
+  @override
+  String get onboarding_step_anki_title => '配置 Anki';
+  @override
+  String get onboarding_step_anki_body =>
+      '打开制卡设置，连接 AnkiConnect（桌面）或 AnkiDroid（安卓），并测试连接。';
+  @override
+  String get onboarding_step_anki_action => '打开制卡设置';
+  @override
+  String get onboarding_step_backup_title => '配置备份';
+  @override
+  String get onboarding_step_backup_body => '选择备份后端并登录，也可以导出本地备份文件。';
+  @override
+  String get onboarding_step_backup_action => '打开备份设置';
+  @override
+  String get onboarding_step_interconnect_title => '配置互联';
+  @override
+  String get onboarding_step_interconnect_body =>
+      '开启互联，与局域网内其他设备配对，共享书库、进度与查词。';
+  @override
+  String get onboarding_step_interconnect_action => '打开互联设置';
+  @override
+  String get onboarding_finish_title => '一切就绪';
+  @override
+  String get onboarding_finish_body => '之后随时可以在「设置 → 系统」里重新打开本引导。';
+  @override
+  String get onboarding_action_next => '下一步';
+  @override
+  String get onboarding_action_finish => '完成';
+  @override
+  String get onboarding_action_skip => '暂时跳过';
+  @override
+  String get onboarding_reopen => '新手引导';
+  @override
+  String get onboarding_welcome_body => '先选好界面语言与明暗主题，接下来会带你逐项完成配置。';
+  @override
+  String get onboarding_features_title => '选择要用的功能';
+  @override
+  String get onboarding_features_modules_label => '库页显示（未勾选的将从底栏隐藏，可随时在设置里改回）';
+  @override
+  String get onboarding_features_setup_label => '接下来要配置';
+  @override
+  String get onboarding_feature_manga => '漫画库';
+  @override
+  String get onboarding_feature_manga_hint => '看漫画，支持 OCR 查词';
+  @override
+  String get onboarding_feature_video => '视频库';
+  @override
+  String get onboarding_feature_video_hint => '看视频，字幕查词与制卡';
+  @override
+  String get onboarding_feature_games => 'Galgame 库';
+  @override
+  String get onboarding_feature_games_hint =>
+      '启动 galgame，文本 Hook 查词（仅 Windows）';
+  @override
+  String get onboarding_feature_pack => '推荐包（词典 + 发音音频）';
+  @override
+  String get onboarding_feature_pack_hint => '一次下载配好日语推荐词典与日/英发音音频库';
+  @override
+  String get onboarding_step_pack_title => '安装推荐包';
+  @override
+  String get onboarding_step_pack_body =>
+      '推荐包内含日语单词/音调/词频词典与日/英发音音频数据库。可在此直接下载并导入；导入会覆盖本地数据，建议在全新安装时进行。学其他语言可用「打开词典管理」自行导入词典。';
+  @override
+  String get onboarding_step_pack_download_action => '下载并导入';
+  @override
+  String get onboarding_step_pack_import_existing_action => '导入已下载的包';
+  @override
+  String get onboarding_step_pack_pick_action => '选择本地包文件';
+  @override
+  String get onboarding_step_pack_browser_action => '浏览器下载（Google Drive）';
+  @override
+  String get onboarding_pack_downloading => '下载中……可随时取消，下次续传';
+  @override
+  String onboarding_pack_download_failed({required Object message}) =>
+      '下载失败：${message}';
+  @override
+  String get onboarding_step_extension_title => '浏览器扩展';
+  @override
+  String get onboarding_step_extension_body => '安装配套浏览器扩展，在任意网页上查词。';
+  @override
+  String get onboarding_step_extension_action => '打开扩展安装引导';
+  @override
+  String get onboarding_step_fonts_title => '配置字体';
+  @override
+  String get onboarding_step_fonts_body => '导入自定义字体，并选择界面/正文/词典分别使用哪套字体。';
+  @override
+  String get settings_section_modules => '功能模块';
+  @override
+  String get module_manga_label => '漫画';
+  @override
+  String get module_video_label => '视频';
+  @override
+  String get module_games_label => 'Galgame';
+  @override
+  String get module_toggle_hint => '在底栏/侧栏显示该库页；关闭即隐藏';
+  @override
+  String get video_setting_youtube_quality => 'YouTube 画质';
+  @override
+  String get video_setting_youtube_quality_hint =>
+      '起播自动选不超过目标的最高档；「自动」优先流畅（硬解友好编码，最高 1080p）';
+  @override
+  String get library_view_discover => '发现';
+  @override
+  String get manga_discovery_section_trending => '趋势';
+  @override
+  String get manga_discovery_section_popular => '热门';
+  @override
+  String get manga_discovery_section_top_rated => '高分';
+  @override
+  String get manga_discovery_section_latest_finished => '最新完结';
+  @override
+  String get manga_discovery_load_failed => '发现内容加载失败。';
+  @override
+  String get manga_discovery_match_section => '来源匹配';
+  @override
+  String get manga_discovery_match_running => '正在已启用来源中匹配…';
+  @override
+  String get manga_discovery_match_none => '已启用来源中未找到匹配。';
+  @override
+  String get manga_discovery_status_releasing => '连载中';
+  @override
+  String get manga_discovery_status_finished => '已完结';
+  @override
+  String get manga_discovery_status_hiatus => '休刊中';
+  @override
+  String get manga_discovery_status_cancelled => '已腰斩';
+  @override
+  String get manga_discovery_status_not_yet_released => '未发售';
+  @override
+  String manga_discovery_source_popular({required Object source}) =>
+      '${source} · 热门';
+  @override
+  String get mihon_extension_error => '扩展错误';
+  @override
+  String get discovery_all_sources => '全部源';
+  @override
+  String get discovery_search_hint => '搜索在线资源';
+  @override
+  String get discovery_enter_query_hint => '输入关键词搜索';
+  @override
+  String get discovery_empty => '无结果';
+  @override
+  String get discovery_partial_failure => '部分源不可用';
+  @override
+  String get discovery_load_more => '加载更多';
+  @override
+  String get discovery_download_queued => '已加入下载';
+  @override
+  String get discovery_torrent_pushed => '种子任务已添加';
+  @override
+  String get discovery_torrent_failed => '种子任务添加失败';
+  @override
+  String get discovery_kind_novel => '小说';
+  @override
+  String get discovery_kind_audiobook => '有声书';
+  @override
+  String get gal_hook_text_font_family => 'Galgame 台词字体';
+  @override
+  String get gal_hook_text_font_family_hint =>
+      '从 Windows 已安装字体中选择；默认使用 Yu Gothic UI。';
+  @override
+  String get gal_hook_text_bg_opacity => '台词浮窗背景不透明度';
+  @override
+  String get gal_hook_text_bg_opacity_hint =>
+      '0% 为背景完全透明；100% 为背景完全不透明。◐ 按钮在 0% 与上次非零值之间切换。';
 }

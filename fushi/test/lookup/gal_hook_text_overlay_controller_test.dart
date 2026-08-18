@@ -321,6 +321,7 @@ void main() {
     );
     final Map<Object?, Object?> args = show.arguments as Map<Object?, Object?>;
     expect(args['fontSize'], 48.0, reason: '字号必须来自偏好，而不是硬常量');
+    expect(args['fontFamily'], kGalHookTextFontFamilyDefault);
     expect(controller.fontSize, 48.0);
     expect(args['height'], 180, reason: '改字号不得连带改窗口几何（两者已解耦）');
   });
@@ -366,5 +367,59 @@ void main() {
       nativeCalls.where((MethodCall c) => c.method == 'updateStyle').length,
       stylePushes,
     );
+  });
+
+  test('字体族与背景不透明度改动会立即刷新，且不让文字 alpha 跟着变淡', () async {
+    preferences['gal_hook_text_font_family'] = 'Noto Sans JP';
+    preferences['gal_hook_text_window_bg_opacity'] = 0.5;
+    await controller.start(appModel: AppModel(testPlatformServices()));
+    await startSession();
+    textService.appendLine(
+      '字体与背景',
+      source: TexthookerLineSource.websocket,
+    );
+    await _waitUntil(() => controller.isVisible);
+
+    final MethodCall show = nativeCalls.lastWhere(
+      (MethodCall call) => call.method == 'show',
+    );
+    final Map<Object?, Object?> showArgs =
+        show.arguments as Map<Object?, Object?>;
+    expect(showArgs['fontFamily'], 'Noto Sans JP');
+    expect(showArgs['bgColor'], 0x80000000);
+
+    preferences['gal_hook_text_font_family'] = 'Yu Mincho';
+    preferences['gal_hook_text_window_bg_opacity'] = 0.0;
+    await controller.applyFontFamilyFromPreferences();
+    await controller.applyOpacityFromPreferences();
+
+    final MethodCall style = nativeCalls.lastWhere(
+      (MethodCall call) => call.method == 'updateStyle',
+    );
+    final Map<Object?, Object?> styleArgs =
+        style.arguments as Map<Object?, Object?>;
+    expect(styleArgs['fontFamily'], 'Yu Mincho');
+    expect(styleArgs['bgColor'], 0x00000000);
+    expect(styleArgs['textColor'], 0xFFFFFFFF,
+        reason: '背景 alpha 不能通过整窗 alpha 让台词文字一起变淡');
+  });
+
+  test('◐ 在 0 与最后一次非零背景值之间切换并持久化', () async {
+    preferences['gal_hook_text_window_bg_opacity'] = 0.37;
+    await controller.start(appModel: AppModel(testPlatformServices()));
+    await startSession();
+    textService.appendLine(
+      '透明度切换',
+      source: TexthookerLineSource.websocket,
+    );
+    await _waitUntil(() => controller.isVisible);
+
+    await controller.toggleTransparency();
+    expect(preferences['gal_hook_text_window_bg_opacity'], 0.0);
+    expect(controller.backgroundOpacity, 0.0);
+    await controller.toggleTransparency();
+    expect(
+        preferences['gal_hook_text_window_bg_opacity'], closeTo(0.37, 0.0001));
+    expect(controller.backgroundOpacity, closeTo(0.37, 0.0001));
   });
 }

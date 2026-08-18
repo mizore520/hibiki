@@ -131,6 +131,7 @@ import 'package:fushi/src/pages/implementations/dictionary_popup_webview.dart'
     show MinePopupResult, DictionaryPopupWebViewState;
 import 'package:fushi/src/pages/implementations/stat_activity.dart';
 import 'package:fushi/src/sync/interconnect_sync_backend.dart';
+import 'package:fushi/src/sync/sync_backend.dart' show SyncPeerUnreachableError;
 import 'package:fushi/src/sync/fushi_library_host_service.dart';
 import 'package:fushi/src/sync/remote_cover_fetcher.dart';
 import 'package:fushi/src/sync/remote_video_client.dart';
@@ -2044,7 +2045,8 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       _setLoadingPhase(_VideoLoadPhase.connecting);
       try {
         final ({UrlStreamVideoClient client, RemoteVideoInfo info}) launch =
-            await buildStreamVideoLaunch(row);
+            await buildStreamVideoLaunch(row,
+                youtubeTargetHeight: appModel.youtubeQualityTargetHeightOrNull);
         if (!mounted) return;
         _resolvedStreamInfo = launch.info;
         _resolvedStreamClient = launch.client;
@@ -2682,6 +2684,14 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
         videoRemotePositionEpisodePrefKey(keyUid, episodeIndex), clamped);
     await appModel.prefsRepo.setPref(
         videoRemotePositionEpisodeAtPrefKey(keyUid, episodeIndex), nowMs);
+    // 书架流媒体书（YouTube/直链，TODO-1157）**有** VideoBooks 行（[_bookRow] 非空），
+    // 只写 prefs 会让书架的「继续观看 / 在看筛选 / 合集续播选集」对它全部失明——那些
+    // 读的是 `lastPositionMs` / `lastPlayedAt`。与本地 [_persistPosition] 对齐补写 DB 行
+    // （resume 仍走上面的 prefs LWW，两者读写路径互不干扰）。互联远端无行，保持原样。
+    if (_bookRow != null) {
+      await widget.repo
+          .updatePosition(widget.bookUid, clamped, playedAt: nowMs);
+    }
     final RemoteVideoClient? client = _effectiveRemoteClient;
     if (client == null) return;
     try {
@@ -3231,7 +3241,10 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     _prewarmNextEpisodeSubtitleCache();
 
     // 首次 load 建观看统计采集器；换片复用同一 controller 实例，已 attach 不重建。
-    if (!_isRemote && _watchTracker == null) {
+    // 判据 [_bookRow] 非空 = 书架书（本地视频 + TODO-1157 流媒体书都有 VideoBooks 行）：
+    // 流媒体书（YouTube 等）在本机播放同样计观看时长/字幕字数/看完标记（用户在 app 内
+    // 看油管也是沉浸时间）。互联远端（无行，媒体归 host）保持不采集。
+    if (_bookRow != null && _watchTracker == null) {
       final FushiDatabase db = appModel.database;
       _watchTracker = VideoWatchTracker(
         title: title,
@@ -6862,16 +6875,14 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
   /// 通用文案。纯字符串判据（异常类型 + 消息关键词），best-effort、绝不抛。
   String _describeLoadFailure(Object? error) {
     if (error is TimeoutException) return t.video_load_failed_timeout;
+    // BUG-1693：互联对端一台都探不到（对端未运行 Fushi / 离线）有类型可依，
+    // 优先分派——它既不是「视频不可用」也不是「本机网络故障」。
+    if (error is SyncPeerUnreachableError) return t.sync_err_peer_unreachable;
     final String s = error?.toString().toLowerCase() ?? '';
-    if (s.contains('403') ||
-        s.contains('forbidden') ||
-        s.contains('manifest failed') ||
-        s.contains('unavailable') ||
-        s.contains('unplayable') ||
-        s.contains('age') ||
-        s.contains('private')) {
-      return t.video_load_failed_unavailable;
-    }
+    // 网络判据先行（BUG-1693 顺带修）：旧序里 'age'/'unavailable' 排在前面且
+    // 'age' 是裸子串——'message'/'package'/'storage' 这类传输错误文本都含 'age'，
+    // 真网络故障会被误标成「视频不可用/受限」。'age' 加词界（age-restricted /
+    // age_verification / " age "），并把可归因的网络关键词放到它之前。
     if (s.contains('socket') ||
         s.contains('network') ||
         s.contains('connection') ||
@@ -6879,6 +6890,15 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
         s.contains('failed host lookup') ||
         s.contains('timed out')) {
       return t.video_load_failed_network;
+    }
+    if (s.contains('403') ||
+        s.contains('forbidden') ||
+        s.contains('manifest failed') ||
+        s.contains('unavailable') ||
+        s.contains('unplayable') ||
+        RegExp(r'\bage[ _-]').hasMatch(s) ||
+        s.contains('private')) {
+      return t.video_load_failed_unavailable;
     }
     return t.video_load_failed_generic;
   }

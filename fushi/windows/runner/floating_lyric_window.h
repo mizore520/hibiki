@@ -79,6 +79,10 @@ class FloatingLyricWindow {
 
   struct Style {
     double font_size = 20.0;
+    // Empty means the historical Yu Gothic UI default. Hook text can override
+    // this with a user-selected installed family; the renderer validates it
+    // against DirectWrite and falls back safely when it is unavailable.
+    std::wstring font_family;
     uint32_t text_color = 0xFFFFFFFF;
     uint32_t bg_color = 0xCC000000;
     uint32_t button_text_color = 0xFFFFFFFF;
@@ -218,6 +222,7 @@ class FloatingLyricWindow {
   bool EnsureDeviceResources();
   void DiscardDeviceResources();
   bool EnsureTextResources();
+  std::wstring EffectiveTextFontFamily() const;
   void Render();
   void RequestRender();
   // A borderless/full-screen game may move itself to the head of Windows'

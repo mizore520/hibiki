@@ -119,6 +119,34 @@ SettingsDestination buildVideoDestination() {
               await setVideoFitModeDual(settingsContext, mode);
             },
           ),
+          // YouTube 显式画质目标（0=自动=默认策略：编码优先、≤1080p）。非 0 起播即选
+          // ≤目标 的最高档（画质菜单同语义），4K 档在 YouTube 侧只有 vp9/av01——无硬解
+          // 设备可能软解掉帧，故默认仍是「自动」。长标签多档 → dropdown 渲染。
+          SettingsSegmentedItem<int>(
+            id: 'video.playback.youtube_quality',
+            title: t.video_setting_youtube_quality,
+            subtitle: t.video_setting_youtube_quality_hint,
+            icon: Icons.high_quality_outlined,
+            dropdown: true,
+            video: VideoPlacement(group: VideoGroup.playback, order: 15),
+            options: <SettingsSegmentOption<int>>[
+              SettingsSegmentOption<int>(
+                value: 0,
+                label: t.video_quality_auto,
+              ),
+              for (final int height in <int>[480, 720, 1080, 1440, 2160])
+                SettingsSegmentOption<int>(
+                  value: height,
+                  label: '${height}p',
+                ),
+            ],
+            selected: (SettingsContext settingsContext) =>
+                settingsContext.appModel.youtubeQualityTargetHeight,
+            onChanged: (SettingsContext settingsContext, int height) async {
+              await settingsContext.appModel
+                  .setYoutubeQualityTargetHeight(height);
+            },
+          ),
           SettingsSegmentedItem<int>(
             id: 'video.playback.double_tap',
             title: t.video_setting_double_tap,
@@ -1158,6 +1186,26 @@ SettingsDestination buildVideoDestination() {
                   ?.call();
             },
           ),
+          // ── 自动获取字幕 ─────────────────────────────────────────────────
+          // 这个开关的主要价值是**让用户知道这件事存在**（BUG-1698）。
+          //
+          // 自动配字幕其实一直开着（下载流水线的字幕阶段默认 bestEffort），但它
+          // 从来没有名字、没有位置、失败只落在任务行一句英文 note 里——用户没有
+          // 任何途径发现这个能力，更不知道要去配 Jimaku key 才能用上。给它一个
+          // 有名字的条目放在字幕来源配置**正上方**，设置搜索（settings_search）
+          // 就能命中「字幕」搜到它，配置项也在同屏可见。
+          SettingsSwitchItem(
+            id: 'video.subtitle.backfill_after_scrape',
+            title: t.video_setting_subtitle_backfill,
+            subtitle: t.video_setting_subtitle_backfill_hint,
+            icon: Icons.subtitles_outlined,
+            value: (SettingsContext settingsContext) =>
+                settingsContext.appModel.videoSubtitleBackfillAfterScrape,
+            onChanged: (SettingsContext settingsContext, bool value) async {
+              await settingsContext.appModel
+                  .setVideoSubtitleBackfillAfterScrape(value);
+            },
+          ),
           // ── Jimaku（在线字幕源）───────────────────────────────────────────
           // 此前 API key 只能在三个对话框（视频字幕 / 番剧下载 / 批量匹配）里就地填，
           // 设置页压根没有入口；下载对话框那个还只在 key 为空时才显示，key 填错了
@@ -1175,7 +1223,13 @@ SettingsDestination buildVideoDestination() {
             },
           ),
           // 默认字幕语言：没有该系列记忆（jimakuPreferredLanguages）时的兜底优先语言。
-          // `''` = 不限（按 jimakuLanguageRank 默认权重排）。
+          //
+          // `''` 的语义已从「不限」改成「**跟随视频语言**」：自动下字幕时按视频
+          // 自己的语言（用户手动指定的内容语言 > 刮削 originalLanguage > 音轨 tag）
+          // 优先选，日语番取日语轨、韩剧取韩语轨。旧的「不限」实际效果是拿搜索结果
+          // 里排最前的那条，语言随缘——对一个沉浸学习 app 这不是合理默认。
+          // 注意这是**排序**不是过滤：只有英文字幕的日语番仍然配得上，只是排后面。
+          // 选定某个语言则是用户显式表态，进硬过滤。
           SettingsSegmentedItem<String>(
             id: 'video.subtitle.jimaku_default_language',
             title: t.video_setting_jimaku_default_language,
@@ -1184,7 +1238,11 @@ SettingsDestination buildVideoDestination() {
             options: <SettingsSegmentOption<String>>[
               SettingsSegmentOption<String>(
                 value: '',
-                label: t.video_jimaku_language_all,
+                // 不复用 video_jimaku_language_all（「全部」）：那个标签在字幕
+                // 对话框/条目选择器里是「别过滤我正在浏览的列表」，语义仍然正确；
+                // 这里同一个 `''` 值的意思已经变成「跟随视频语言」。同值不同义，
+                // 就该是两个标签。
+                label: t.video_jimaku_language_follow_video,
               ),
               for (final String code in kJimakuLanguageCodes)
                 SettingsSegmentOption<String>(
