@@ -159,7 +159,7 @@ class _GalHookTextFontFamilyDialogState
                   itemCount: families.length + 1,
                   itemBuilder: (BuildContext context, int index) {
                     if (index == 0 && normalizedQuery.isEmpty) {
-                      return ListTile(
+                      return FushiListItem(
                         selected: widget.selected.isEmpty,
                         leading: const Icon(Icons.settings_backup_restore),
                         title: Text(t.icon_default),
@@ -173,7 +173,7 @@ class _GalHookTextFontFamilyDialogState
                       return const SizedBox.shrink();
                     }
                     final String family = families[familyIndex];
-                    return ListTile(
+                    return FushiListItem(
                       selected: widget.selected == family,
                       title: Text(
                         family,

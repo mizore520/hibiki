@@ -3202,8 +3202,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get video_subtitle_filter_all => 'All';
   String get video_subtitle_filter_favorites => 'Favorites';
   String get video_subtitle_filter_favorites_empty => 'No favorited lines yet';
-  String get video_subtitle_filter_selected => 'Selected';
-  String get video_subtitle_filter_selected_empty => 'No lines selected yet';
   String get video_subtitle_graphic_hint =>
       'Graphic subtitle · shown on video · no word lookup';
   String video_subtitle_graphic_shown({required Object label}) =>
@@ -3213,16 +3211,11 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get video_subtitle_import_unsupported => 'Unsupported subtitle format';
   String get video_subtitle_list => 'Subtitle list';
   String get video_subtitle_list_auto_scroll => 'Auto-scroll';
-  String get video_subtitle_list_clear_selection => 'Clear card selection';
   String get video_subtitle_list_empty => 'No subtitles loaded';
   String get video_subtitle_list_font_larger => 'Larger text';
   String get video_subtitle_list_font_smaller => 'Smaller text';
   String get video_subtitle_list_jump => 'Jump to this line';
   String get video_subtitle_list_loading => 'Loading subtitles...';
-  String get video_subtitle_list_remove_from_card =>
-      'Remove from card selection';
-  String get video_subtitle_list_select_for_card =>
-      'Select for card (merged into the sentence when mining)';
   String video_subtitle_load_failed({required Object label}) =>
       'Couldn\'t load this subtitle (graphic or unsupported track): ${label}';
   String get video_subtitle_off => 'Turn off subtitles';
@@ -3884,7 +3877,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get mihon_filter_descending => 'Descending';
   String get mihon_add_to_bookshelf => 'Add to manga shelf';
   String get mihon_in_bookshelf => 'In manga shelf';
-  String get media_source_local_roots => 'Local scan roots';
   String scrape_all_confirm({required Object n}) =>
       'Match all ${n} library items by title. Only high-confidence matches are applied automatically — videos are scored on the title together with year, type and other signals, while books and games require a unique exact title. Covers you chose yourself are never overwritten (local images you set, entries you picked in the match dialog, and poster files placed in the folder), and ambiguous results stay pending for manual review.';
   String get collection_related_title => 'Related works';
@@ -4252,7 +4244,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
       'Enter a valid endpoint without credentials, query parameters, or fragments.';
   String get video_opensubtitles_settings_title => 'OpenSubtitles';
   String get video_opensubtitles_user_agent => 'User-Agent';
-  String get video_opensubtitles_languages => 'Preferred languages';
   String get video_opensubtitles_languages_hint =>
       'Comma-separated language codes, for example zh-CN,en,ja';
   String get video_download_path_mappings_title => 'qBittorrent path mappings';
@@ -4365,60 +4356,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
       'Choose what this device uploads to the connected peer. Independent from the cloud backup switches and off by default. These switches only apply while Enable interconnect is on: turning interconnect off stops every upload here.';
   String get remote_delete_audiobook_partial =>
       'Book deleted, but its audiobook could not be removed on the paired device';
-  String get collection_episode_scrape => 'Fetch episode details';
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  String get gal_mining_screenshot_size => 'Galgame screenshot size';
-  String get gal_mining_screenshot_size_full_hd =>
-      'Up to 1920 × 1080 (recommended)';
-  String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
-  String get gal_mining_screenshot_size_hint =>
-      'Applies to still screenshots and animated-capture fallbacks. Keeps the aspect ratio, never enlarges, and saves as JPEG at quality 90.';
-  String get gal_mining_screenshot_size_original => 'Original size (JPEG)';
-  String get game_attach_mode_last_used => 'Last used';
-  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
-  String get game_attach_mode_luna_safe_hint =>
-      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
-  String get game_attach_mode_native => 'Fushi native attachment';
-  String get game_attach_mode_native_hint =>
-      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
-  String get game_attach_mode_title => 'Choose attachment mode';
-  String get game_luna_audio_lead_in => 'Complete sentence start';
-  String get game_luna_audio_lead_in_hint =>
-      'If the beginning of this sentence is cut off, increase this value.';
-  String get game_luna_audio_per_game_hint =>
-      'Saved separately for each attached game.';
-  String get game_luna_audio_preroll => 'Luna audio lead-in';
-  String get game_luna_audio_preroll_hint =>
-      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
-  String get game_luna_audio_tail_trim => 'Remove next-line audio';
-  String get game_luna_audio_tail_trim_hint =>
-      'If the end of this sentence includes the next line, increase this value.';
-  String get game_luna_audio_timing => 'Audio alignment';
-  String get game_text_source_luna => 'LunaTranslator (external original text)';
-  String get game_text_source_luna_connected =>
-      'Connected. Fushi will use the original text selected in LunaTranslator.';
-  String get game_text_source_luna_waiting =>
-      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
-  String get game_text_thread_recommended => 'Recommended';
-  String get game_text_threads_dormant_hide => 'Hide threads without text';
-  String game_text_threads_dormant_show({required Object count}) =>
-      'Show threads without text (${count})';
-  String get video_mining_image_quality => 'Video / anime card image quality';
-  String get video_mining_image_quality_hint =>
-      'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
-  String get game_line_bulk_text_hint =>
-      'Bulk text detected. Character lookup is paused.';
-  String get video_setting_subtitle_language_filter => 'Subtitle language';
-  String get video_setting_subtitle_language_filter_hint =>
-      'Filter Chinese and Japanese content inside the selected subtitle track.';
-  String get video_setting_subtitle_language_filter_all => 'All';
-  String get video_setting_subtitle_language_filter_japanese => 'Japanese';
-  String get video_setting_subtitle_language_filter_chinese => 'Chinese';
   String get download_detail_task_queued =>
       'Queued: waiting for other downloads to free a slot. This task has not been handed to the downloader yet, so there is no live peer or tracker data.';
   String video_subscription_group_release_count({required Object count}) =>
@@ -4430,11 +4367,11 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get library_view_import => 'Import';
   String get quick_import_title => 'Quick import';
   String get media_source_section_title => 'Library sources';
-  String get book_import_folder => 'Import folder';
-  String get book_import_folder_as_source => 'Add as library source';
+  String get media_import_folder => 'Import folder';
+  String get media_import_folder_as_source => 'Add as library source';
   String get book_import_folder_as_source_hint =>
       'Keep scanning this folder for new books';
-  String get book_import_folder_once => 'Import once only';
+  String get media_import_folder_once => 'Import once only';
   String get library_empty_go_import => 'Go to import';
   String get game_import_drop_hint =>
       'You can also drag .exe files into the game library';
@@ -4698,10 +4635,165 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get discovery_torrent_failed => 'Failed to add torrent task';
   String get discovery_kind_novel => 'Novels';
   String get discovery_kind_audiobook => 'Audiobooks';
+  String get discovery_source_pick_hint =>
+      'Pick a source to browse, or type a keyword to search every source';
+  String get discovery_source_query_required =>
+      'This source only supports keyword search';
+  String get manga_discovery_sources_browse => 'Browse a source';
+  String get discovery_kind_manga => 'Manga';
+  String get game_capture_workbench_tab => 'Capture workspace';
+  String get video_builtin_sources_title => 'Built-in sources';
+  String get video_resource_no_provider_title =>
+      'No resource indexer configured';
+  String get video_subtitle_no_provider_title =>
+      'No subtitle provider configured';
+  String get video_subtitle_no_provider_hint =>
+      'Enter a Jimaku API key or enable OpenSubtitles under Settings, Downloads, External resource and subtitle providers.';
+  String get anime_download_require_subs => 'Subtitles required';
+  String get video_jimaku_scope_hint =>
+      'Japanese subtitles for anime and Japanese live-action titles. A free API key is required.';
+  String get video_builtin_apibay_hint =>
+      'Movies and TV shows. Public index, no account needed.';
+  String get video_builtin_knaben_hint =>
+      'Movies and TV shows. Aggregates several public indexers.';
+  String get video_jimaku_enabled_hint =>
+      'Off means Jimaku is skipped even when an API key is saved.';
+  String get discovery_sources_settings_title => 'Discovery sources';
+  String get discovery_sources_settings_hint =>
+      'Which built-in sources take part in the Discover page\'s All sources search. Picking a single source in the source dropdown always works, even when it is off here.';
+  String get video_builtin_sources_hint =>
+      'Ship with the app: no account, no API key. Turn one off to keep it out of resource searches.';
+  String get video_builtin_nyaa_hint =>
+      'Anime only. Movies and TV shows are covered by the two public indexers below.';
+  String get video_resource_no_provider_hint =>
+      'This search had no provider to query. Re-enable a built-in source, or add a Torznab indexer, under Settings, Downloads, External resource and subtitle providers.';
+  String discovery_source_kinds_label({required Object kinds}) =>
+      'Covers: ${kinds}';
+  String get video_source_scrape_rescrape_source => 'Rescrape this source';
+  String get video_source_scrape_run_detail_title => 'Scrape result';
+  String get video_source_scrape_run_no_issues =>
+      'No warnings or errors were recorded.';
+  String get video_source_scrape_manual_search_title =>
+      'Specify the work manually';
+  String get video_source_scrape_manual_search_hint =>
+      'Search the metadata provider by title, then pick the correct work.';
+  String get video_source_scrape_manual_search_action => 'Search';
+  String get video_source_scrape_manual_search_empty => 'No results';
+  String get profile_media_manga => 'Manga';
+  String get profile_media_game => 'Game';
+  String get profile_media_browser => 'Browser';
+  String get mihon_store_remove => 'Remove extension store';
+  String get video_import_folder_as_source_hint =>
+      'Keep scanning this folder for new videos';
+  String get manga_import_folder_as_source_hint =>
+      'Keep scanning this folder for new manga';
+  String get download_no_managed_video_source =>
+      'No managed video source yet. Downloads need a local video folder to land in.';
+  String get download_add_video_source => 'Add video source';
+  String get video_subtitle_prev_cue_align => 'Align previous line to now';
+  String get video_subtitle_next_cue_align => 'Align next line to now';
+  String video_control_custom_action({required Object index}) =>
+      'Shortcut ${index}';
+  String get video_control_custom_action_none => 'Not assigned';
+  String get settings_destination_storage => 'Storage';
+  String get settings_destination_storage_summary =>
+      'Disk usage and reclaimable modules';
+  String get storage_overview_section => 'Disk usage';
+  String get storage_overview_total => 'Total';
+  String get storage_overview_refresh => 'Rescan';
+  String get storage_overview_scanning => 'Scanning…';
+  String get storage_category_books => 'Books & audiobooks';
+  String get storage_category_dictionaries => 'Dictionaries';
+  String get storage_category_video_downloads => 'Video downloads';
+  String get storage_category_covers => 'Covers & thumbnails';
+  String get storage_category_subtitles => 'Subtitles';
+  String get storage_category_shaders => 'Video shaders';
+  String get storage_category_custom_fonts => 'Custom fonts';
+  String get storage_category_web => 'Web archive & browser data';
+  String get storage_category_exports => 'Exports';
+  String get storage_category_database => 'Database & internal data';
+  String get storage_category_ocr_models => 'Manga OCR models';
+  String storage_entry_more_rest({required Object n, required Object size}) =>
+      '${n} more items, ${size} in total';
+  String storage_entry_delete_confirm_title({required Object name}) =>
+      'Delete ${name}?';
+  String get storage_entry_delete_book_confirm_body =>
+      'This removes the book, its reading progress and paired audio copies from this device.';
+  String get storage_entry_delete_dictionary_confirm_body =>
+      'This removes the dictionary and its imported data.';
+  String get storage_entry_delete_done => 'Deleted';
+  String storage_entry_delete_failed({required Object reason}) =>
+      'Delete failed: ${reason}';
+  String get storage_modules_section => 'Optional modules';
+  String get storage_modules_anime4k_title => 'Anime4K shaders';
+  String get storage_modules_anime4k_hint =>
+      'Can be downloaded again anytime in video settings';
+  String storage_modules_anime4k_delete_done({required Object n}) =>
+      'Deleted ${n} shader files';
+  String get storage_modules_not_installed => 'Not installed';
+  String get storage_bundled_section => 'Bundled components';
+  String get storage_bundled_hint =>
+      'Shipped with the installer; deleted files come back on the next update, listed for reference only.';
+  String get storage_dictionary_delete_incomplete =>
+      'Dictionary still present after deletion, see error log';
+  String get module_books_label => 'Novels';
+  String get module_extension_label => 'Browser extension';
+  String get onboarding_feature_books => 'Novel library';
+  String get onboarding_feature_books_hint =>
+      'Read EPUB novels with dictionary lookup and audiobook sync';
+  String get onboarding_feature_extension_hint =>
+      'Look up words on any web page (desktop only)';
+  String get video_setting_tap_toggles_playback => 'Tap video to play/pause';
+  String get video_setting_tap_toggles_playback_hint =>
+      'Turn off so tapping the video only reveals the controls';
   String get gal_hook_text_font_family => 'Galgame caption font';
   String get gal_hook_text_font_family_hint =>
       'Choose an installed Windows font. Default uses Yu Gothic UI.';
   String get gal_hook_text_bg_opacity => 'Caption window background opacity';
   String get gal_hook_text_bg_opacity_hint =>
       '0% is fully transparent; 100% is fully opaque. The ◐ button toggles between 0% and your last non-zero value.';
+  String get gal_mining_screenshot_size => 'Galgame screenshot size';
+  String get gal_mining_screenshot_size_full_hd =>
+      'Up to 1920 × 1080 (recommended)';
+  String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  String get gal_mining_screenshot_size_hint =>
+      'Applies to still screenshots and animated-capture fallbacks. Keeps the aspect ratio, never enlarges, and saves as JPEG at quality 90.';
+  String get gal_mining_screenshot_size_original => 'Original size (JPEG)';
+  String get game_attach_mode_last_used => 'Last used';
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  String get game_attach_mode_native => 'Fushi native attachment';
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  String get game_attach_mode_title => 'Choose attachment mode';
+  String get game_line_bulk_text_hint =>
+      'Bulk text detected. Character lookup is paused.';
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  String get game_luna_audio_timing => 'Audio alignment';
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  String get game_text_thread_recommended => 'Recommended';
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
+  String get video_mining_image_quality => 'Video / anime card image quality';
+  String get video_mining_image_quality_hint =>
+      'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  String get video_setting_subtitle_language_filter => 'Subtitle language';
+  String get video_setting_subtitle_language_filter_all => 'All';
+  String get video_setting_subtitle_language_filter_chinese => 'Chinese';
+  String get video_setting_subtitle_language_filter_hint =>
+      'Filter Chinese and Japanese content inside the selected subtitle track.';
+  String get video_setting_subtitle_language_filter_japanese => 'Japanese';
 }

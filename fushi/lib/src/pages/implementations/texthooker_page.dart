@@ -39,6 +39,8 @@ import 'package:fushi/src/utils/misc/swipe_dismiss_wrapper.dart';
 import 'package:fushi/src/utils/latest_request_cache.dart';
 import 'package:fushi/media.dart';
 import 'package:fushi/utils.dart';
+import 'package:fushi/src/profile/profile_view_model.dart';
+import 'package:fushi_core/fushi_core.dart' show ProfileMediaKind;
 
 /// fallback 制卡（非外部窗口/非 Windows，走普通 in-app popup 制卡）也要带上当前活跃
 /// hook 台词作 sentence，否则挖出的卡 `{sentence}` 恒空（BUG-954）。仅在 [fields] 未自带
@@ -843,6 +845,12 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
         _session.currentAttachMode == mode) {
       return;
     }
+    // TODO-2936：应用「游戏」媒体类型的 Profile 绑定（非致命、与附着并行）。
+    unawaited(
+      ref
+          .read(profileViewModelProvider.notifier)
+          .autoApplyBinding(mediaType: ProfileMediaKind.game),
+    );
     await _session.startAttachedCapture(picked, mode: mode);
   }
 
@@ -888,6 +896,12 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
       final GalgameEntry? known = findGalgameByExePath(
         _appModel.galgameRepo.games,
         executable,
+      );
+      // TODO-2936：应用「游戏」媒体类型的 Profile 绑定（非致命、与启动并行）。
+      unawaited(
+        ref
+            .read(profileViewModelProvider.notifier)
+            .autoApplyBinding(mediaType: ProfileMediaKind.game),
       );
       final GalHookLaunchResult result = await _session.launchGame(
         executable,

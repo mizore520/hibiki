@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi/src/media/video/video_player_controller.dart';
 import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
-import 'package:fushi/src/media/video/video_subtitle_selection.dart';
 import 'package:fushi_audio/fushi_audio.dart';
 
 AudioCue _cue(String text, int startMs, int endMs, {String? style}) {
@@ -113,17 +112,6 @@ void main() {
     expect(controller.cues, hasLength(2));
     expect(raw, hasLength(2));
     controller.dispose();
-  });
-
-  test('selection identity distinguishes bilingual cues with the same start',
-      () {
-    final AudioCue jp = _cue('きれい', 1000, 2000, style: 'jp');
-    final AudioCue zh = _cue('真漂亮', 1000, 2000, style: 'ch');
-    final AudioCue? selected = buildSelectedSubtitleCueContext(
-      cues: <AudioCue>[jp, zh],
-      selectedCueKeys: <VideoSubtitleCueKey>{videoSubtitleCueKey(jp)},
-    );
-    expect(selected, same(jp));
   });
 
   test('ASS parser preserves Style and Name metadata for filtering', () {

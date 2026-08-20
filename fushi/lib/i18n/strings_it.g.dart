@@ -5810,10 +5810,6 @@ class _StringsIt extends _StringsEn {
   @override
   String get video_subtitle_filter_favorites_empty => 'No favorited lines yet';
   @override
-  String get video_subtitle_filter_selected => 'Selezionati';
-  @override
-  String get video_subtitle_filter_selected_empty => 'No lines selected yet';
-  @override
   String get video_subtitle_graphic_hint =>
       'Sottotitolo grafico · mostrato sul video · senza ricerca parole';
   @override
@@ -5832,8 +5828,6 @@ class _StringsIt extends _StringsEn {
   @override
   String get video_subtitle_list_auto_scroll => 'Scorrimento automatico';
   @override
-  String get video_subtitle_list_clear_selection => 'Svuota la selezione';
-  @override
   String get video_subtitle_list_empty => 'Nessun sottotitolo caricato';
   @override
   String get video_subtitle_list_font_larger => 'Testo più grande';
@@ -5843,11 +5837,6 @@ class _StringsIt extends _StringsEn {
   String get video_subtitle_list_jump => 'Vai a questa riga';
   @override
   String get video_subtitle_list_loading => 'Caricamento sottotitoli...';
-  @override
-  String get video_subtitle_list_remove_from_card =>
-      'Rimuovi dalla selezione per la carta';
-  @override
-  String get video_subtitle_list_select_for_card => 'Select for card';
   @override
   String video_subtitle_load_failed({required Object label}) =>
       'Impossibile caricare questo sottotitolo (traccia grafica o non supportata): ${label}';
@@ -6983,8 +6972,6 @@ class _StringsIt extends _StringsEn {
   @override
   String get mihon_in_bookshelf => 'In manga shelf';
   @override
-  String get media_source_local_roots => 'Local scan roots';
-  @override
   String scrape_all_confirm({required Object n}) =>
       'Match all ${n} library items by title. Only high-confidence matches are applied automatically — videos are scored on the title together with year, type and other signals, while books and games require a unique exact title. Covers you chose yourself are never overwritten (local images you set, entries you picked in the match dialog, and poster files placed in the folder), and ambiguous results stay pending for manual review.';
   @override
@@ -7610,8 +7597,6 @@ class _StringsIt extends _StringsEn {
   @override
   String get video_opensubtitles_user_agent => 'User-Agent';
   @override
-  String get video_opensubtitles_languages => 'Preferred languages';
-  @override
   String get video_opensubtitles_languages_hint =>
       'Comma-separated language codes, for example zh-CN,en,ja';
   @override
@@ -7804,97 +7789,6 @@ class _StringsIt extends _StringsEn {
   String get remote_delete_audiobook_partial =>
       'Book deleted, but its audiobook could not be removed on the paired device';
   @override
-  String get collection_episode_scrape => 'Fetch episode details';
-  @override
-  String collection_episode_scrape_failed({required Object error}) =>
-      'Episode scrape failed: ${error}';
-  @override
-  String collection_episode_scrape_result(
-          {required Object updated, required Object skipped}) =>
-      'Updated ${updated} episodes, skipped ${skipped}';
-  @override
-  String get collection_episode_scrape_unbound => 'Scrape the collection first';
-  @override
-  String get gal_mining_screenshot_size => 'Galgame screenshot size';
-  @override
-  String get gal_mining_screenshot_size_full_hd =>
-      'Up to 1920 × 1080 (recommended)';
-  @override
-  String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
-  @override
-  String get gal_mining_screenshot_size_hint =>
-      'Applies to still screenshots and animated-capture fallbacks. Keeps the aspect ratio, never enlarges, and saves as JPEG at quality 90.';
-  @override
-  String get gal_mining_screenshot_size_original => 'Original size (JPEG)';
-  @override
-  String get game_attach_mode_last_used => 'Last used';
-  @override
-  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
-  @override
-  String get game_attach_mode_luna_safe_hint =>
-      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
-  @override
-  String get game_attach_mode_native => 'Fushi native attachment';
-  @override
-  String get game_attach_mode_native_hint =>
-      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
-  @override
-  String get game_attach_mode_title => 'Choose attachment mode';
-  @override
-  String get game_luna_audio_lead_in => 'Complete sentence start';
-  @override
-  String get game_luna_audio_lead_in_hint =>
-      'If the beginning of this sentence is cut off, increase this value.';
-  @override
-  String get game_luna_audio_per_game_hint =>
-      'Saved separately for each attached game.';
-  @override
-  String get game_luna_audio_preroll => 'Luna audio lead-in';
-  @override
-  String get game_luna_audio_preroll_hint =>
-      'Keep a little audio before each Luna text event to avoid clipping the beginning of the voice.';
-  @override
-  String get game_luna_audio_tail_trim => 'Remove next-line audio';
-  @override
-  String get game_luna_audio_tail_trim_hint =>
-      'If the end of this sentence includes the next line, increase this value.';
-  @override
-  String get game_luna_audio_timing => 'Audio alignment';
-  @override
-  String get game_text_source_luna => 'LunaTranslator (external original text)';
-  @override
-  String get game_text_source_luna_connected =>
-      'Connected. Fushi will use the original text selected in LunaTranslator.';
-  @override
-  String get game_text_source_luna_waiting =>
-      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
-  @override
-  String get game_text_thread_recommended => 'Recommended';
-  @override
-  String get game_text_threads_dormant_hide => 'Hide threads without text';
-  @override
-  String game_text_threads_dormant_show({required Object count}) =>
-      'Show threads without text (${count})';
-  @override
-  String get video_mining_image_quality => 'Video / anime card image quality';
-  @override
-  String get video_mining_image_quality_hint =>
-      'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
-  @override
-  String get game_line_bulk_text_hint =>
-      'Bulk text detected. Character lookup is paused.';
-  @override
-  String get video_setting_subtitle_language_filter => 'Subtitle language';
-  @override
-  String get video_setting_subtitle_language_filter_hint =>
-      'Filter Chinese and Japanese content inside the selected subtitle track.';
-  @override
-  String get video_setting_subtitle_language_filter_all => 'All';
-  @override
-  String get video_setting_subtitle_language_filter_japanese => 'Japanese';
-  @override
-  String get video_setting_subtitle_language_filter_chinese => 'Chinese';
-  @override
   String get download_detail_task_queued =>
       'Queued: waiting for other downloads to free a slot. This task has not been handed to the downloader yet, so there is no live peer or tracker data.';
   @override
@@ -7915,14 +7809,14 @@ class _StringsIt extends _StringsEn {
   @override
   String get media_source_section_title => 'Library sources';
   @override
-  String get book_import_folder => 'Import folder';
+  String get media_import_folder => 'Import folder';
   @override
-  String get book_import_folder_as_source => 'Add as library source';
+  String get media_import_folder_as_source => 'Add as library source';
   @override
   String get book_import_folder_as_source_hint =>
       'Keep scanning this folder for new books';
   @override
-  String get book_import_folder_once => 'Import once only';
+  String get media_import_folder_once => 'Import once only';
   @override
   String get library_empty_go_import => 'Go to import';
   @override
@@ -8373,6 +8267,194 @@ class _StringsIt extends _StringsEn {
   @override
   String get discovery_kind_audiobook => 'Audiobooks';
   @override
+  String get discovery_source_pick_hint =>
+      'Pick a source to browse, or type a keyword to search every source';
+  @override
+  String get discovery_source_query_required =>
+      'This source only supports keyword search';
+  @override
+  String get manga_discovery_sources_browse => 'Browse a source';
+  @override
+  String get discovery_kind_manga => 'Manga';
+  @override
+  String get game_capture_workbench_tab => 'Capture workspace';
+  @override
+  String get video_builtin_sources_title => 'Built-in sources';
+  @override
+  String get video_resource_no_provider_title =>
+      'No resource indexer configured';
+  @override
+  String get video_subtitle_no_provider_title =>
+      'No subtitle provider configured';
+  @override
+  String get video_subtitle_no_provider_hint =>
+      'Enter a Jimaku API key or enable OpenSubtitles under Settings, Downloads, External resource and subtitle providers.';
+  @override
+  String get anime_download_require_subs => 'Subtitles required';
+  @override
+  String get video_jimaku_scope_hint =>
+      'Japanese subtitles for anime and Japanese live-action titles. A free API key is required.';
+  @override
+  String get video_builtin_apibay_hint =>
+      'Movies and TV shows. Public index, no account needed.';
+  @override
+  String get video_builtin_knaben_hint =>
+      'Movies and TV shows. Aggregates several public indexers.';
+  @override
+  String get video_jimaku_enabled_hint =>
+      'Off means Jimaku is skipped even when an API key is saved.';
+  @override
+  String get discovery_sources_settings_title => 'Discovery sources';
+  @override
+  String get discovery_sources_settings_hint =>
+      'Which built-in sources take part in the Discover page\'s All sources search. Picking a single source in the source dropdown always works, even when it is off here.';
+  @override
+  String get video_builtin_sources_hint =>
+      'Ship with the app: no account, no API key. Turn one off to keep it out of resource searches.';
+  @override
+  String get video_builtin_nyaa_hint =>
+      'Anime only. Movies and TV shows are covered by the two public indexers below.';
+  @override
+  String get video_resource_no_provider_hint =>
+      'This search had no provider to query. Re-enable a built-in source, or add a Torznab indexer, under Settings, Downloads, External resource and subtitle providers.';
+  @override
+  String discovery_source_kinds_label({required Object kinds}) =>
+      'Covers: ${kinds}';
+  @override
+  String get video_source_scrape_rescrape_source => 'Rescrape this source';
+  @override
+  String get video_source_scrape_run_detail_title => 'Scrape result';
+  @override
+  String get video_source_scrape_run_no_issues =>
+      'No warnings or errors were recorded.';
+  @override
+  String get video_source_scrape_manual_search_title =>
+      'Specify the work manually';
+  @override
+  String get video_source_scrape_manual_search_hint =>
+      'Search the metadata provider by title, then pick the correct work.';
+  @override
+  String get video_source_scrape_manual_search_action => 'Search';
+  @override
+  String get video_source_scrape_manual_search_empty => 'No results';
+  @override
+  String get profile_media_manga => 'Manga';
+  @override
+  String get profile_media_game => 'Game';
+  @override
+  String get profile_media_browser => 'Browser';
+  @override
+  String get mihon_store_remove => 'Remove extension store';
+  @override
+  String get video_import_folder_as_source_hint =>
+      'Keep scanning this folder for new videos';
+  @override
+  String get manga_import_folder_as_source_hint =>
+      'Keep scanning this folder for new manga';
+  @override
+  String get download_no_managed_video_source =>
+      'No managed video source yet. Downloads need a local video folder to land in.';
+  @override
+  String get download_add_video_source => 'Add video source';
+  @override
+  String get video_subtitle_prev_cue_align => 'Align previous line to now';
+  @override
+  String get video_subtitle_next_cue_align => 'Align next line to now';
+  @override
+  String video_control_custom_action({required Object index}) =>
+      'Shortcut ${index}';
+  @override
+  String get video_control_custom_action_none => 'Not assigned';
+  @override
+  String get settings_destination_storage => 'Storage';
+  @override
+  String get settings_destination_storage_summary =>
+      'Disk usage and reclaimable modules';
+  @override
+  String get storage_overview_section => 'Disk usage';
+  @override
+  String get storage_overview_total => 'Total';
+  @override
+  String get storage_overview_refresh => 'Rescan';
+  @override
+  String get storage_overview_scanning => 'Scanning…';
+  @override
+  String get storage_category_books => 'Books & audiobooks';
+  @override
+  String get storage_category_dictionaries => 'Dictionaries';
+  @override
+  String get storage_category_video_downloads => 'Video downloads';
+  @override
+  String get storage_category_covers => 'Covers & thumbnails';
+  @override
+  String get storage_category_subtitles => 'Subtitles';
+  @override
+  String get storage_category_shaders => 'Video shaders';
+  @override
+  String get storage_category_custom_fonts => 'Custom fonts';
+  @override
+  String get storage_category_web => 'Web archive & browser data';
+  @override
+  String get storage_category_exports => 'Exports';
+  @override
+  String get storage_category_database => 'Database & internal data';
+  @override
+  String get storage_category_ocr_models => 'Manga OCR models';
+  @override
+  String storage_entry_more_rest({required Object n, required Object size}) =>
+      '${n} more items, ${size} in total';
+  @override
+  String storage_entry_delete_confirm_title({required Object name}) =>
+      'Delete ${name}?';
+  @override
+  String get storage_entry_delete_book_confirm_body =>
+      'This removes the book, its reading progress and paired audio copies from this device.';
+  @override
+  String get storage_entry_delete_dictionary_confirm_body =>
+      'This removes the dictionary and its imported data.';
+  @override
+  String get storage_entry_delete_done => 'Deleted';
+  @override
+  String storage_entry_delete_failed({required Object reason}) =>
+      'Delete failed: ${reason}';
+  @override
+  String get storage_modules_section => 'Optional modules';
+  @override
+  String get storage_modules_anime4k_title => 'Anime4K shaders';
+  @override
+  String get storage_modules_anime4k_hint =>
+      'Can be downloaded again anytime in video settings';
+  @override
+  String storage_modules_anime4k_delete_done({required Object n}) =>
+      'Deleted ${n} shader files';
+  @override
+  String get storage_modules_not_installed => 'Not installed';
+  @override
+  String get storage_bundled_section => 'Bundled components';
+  @override
+  String get storage_bundled_hint =>
+      'Shipped with the installer; deleted files come back on the next update, listed for reference only.';
+  @override
+  String get storage_dictionary_delete_incomplete =>
+      'Dictionary still present after deletion, see error log';
+  @override
+  String get module_books_label => 'Novels';
+  @override
+  String get module_extension_label => 'Browser extension';
+  @override
+  String get onboarding_feature_books => 'Novel library';
+  @override
+  String get onboarding_feature_books_hint =>
+      'Read EPUB novels with dictionary lookup and audiobook sync';
+  @override
+  String get onboarding_feature_extension_hint =>
+      'Look up words on any web page (desktop only)';
+  @override
+  String get video_setting_tap_toggles_playback => 'Tap video to play/pause';
+  @override
+  String get video_setting_tap_toggles_playback_hint =>
+      'Turn off so tapping the video only reveals the controls';
+  @override
   String get gal_hook_text_font_family => 'Galgame caption font';
   @override
   String get gal_hook_text_font_family_hint =>
@@ -8382,4 +8464,79 @@ class _StringsIt extends _StringsEn {
   @override
   String get gal_hook_text_bg_opacity_hint =>
       '0% is fully transparent; 100% is fully opaque. The ◐ button toggles between 0% and your last non-zero value.';
+  @override
+  String get gal_mining_screenshot_size => 'Galgame screenshot size';
+  @override
+  String get gal_mining_screenshot_size_full_hd =>
+      'Up to 1920 × 1080 (recommended)';
+  @override
+  String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get gal_mining_screenshot_size_hint =>
+      'Applies to still screenshots and animated-capture fallbacks. Keeps the aspect ratio, never enlarges, and saves as JPEG at quality 90.';
+  @override
+  String get gal_mining_screenshot_size_original => 'Original size (JPEG)';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_line_bulk_text_hint =>
+      'Bulk text detected. Character lookup is paused.';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
+  @override
+  String get video_mining_image_quality => 'Video / anime card image quality';
+  @override
+  String get video_mining_image_quality_hint =>
+      'Controls video and anime card images only. Higher settings keep more detail and may use more space.';
+  @override
+  String get video_setting_subtitle_language_filter => 'Subtitle language';
+  @override
+  String get video_setting_subtitle_language_filter_all => 'All';
+  @override
+  String get video_setting_subtitle_language_filter_chinese => 'Chinese';
+  @override
+  String get video_setting_subtitle_language_filter_hint =>
+      'Filter Chinese and Japanese content inside the selected subtitle track.';
+  @override
+  String get video_setting_subtitle_language_filter_japanese => 'Japanese';
 }
