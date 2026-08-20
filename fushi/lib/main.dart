@@ -69,9 +69,10 @@ import 'package:fushi/src/media/video/video_cover_extractor.dart'
 import 'package:fushi/src/media/video/video_book_repository.dart';
 import 'package:fushi/src/pages/implementations/dictionary_popup_webview.dart';
 import 'package:fushi/src/pages/implementations/video_fushi_page.dart';
+import 'package:fushi/src/profile/profile_view_model.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:fushi_core/fushi_core.dart'
-    show VideoBooksCompanion, VideoBookRow;
+    show VideoBooksCompanion, VideoBookRow, ProfileMediaKind;
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 import 'package:fushi/src/storage/legacy_support_dir_migration.dart';
@@ -387,6 +388,11 @@ void main([List<String> args = const <String>[]]) {
     await FushiDicts.preloadTransforms();
 
     final appModel = container.read(appProvider);
+    // TODO-2936：浏览器扩展查词命中 yomitan-api server 时应用「浏览器」媒体类型
+    // 的 Profile 绑定。必须在 initialise() 之前注入（server 在 initialise 内启动）。
+    appModel.browserLookupProfileApplier = () => container
+        .read(profileViewModelProvider.notifier)
+        .autoApplyBinding(mediaType: ProfileMediaKind.browser);
     await appModel.initialise();
 
     // ── 预热 WebView 引擎 ──────────────────────────────────────────────
@@ -1705,10 +1711,12 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
                                   ? null
                                   : buildFushiMacosSidebar(
                                       activeTabs: homeActiveTabs(
-                                        // 漫画/视频按「功能模块」偏好显隐（与
-                                        // HomePage._activeTabs 同一真值）。games
-                                        // （galgame 库）仅 Windows；macOS 根侧栏此处
-                                        // 恒 false（gamesEnabled 缺省），不显示。
+                                        // 小说/漫画/视频/扩展按「功能模块」偏好
+                                        // 显隐（与 HomePage._activeTabs 同一真值）。
+                                        // games（galgame 库）仅 Windows；macOS 根
+                                        // 侧栏此处恒 false（gamesEnabled 缺省）。
+                                        booksEnabled:
+                                            appModel.moduleBooksEnabled,
                                         videoEnabled:
                                             appModel.moduleVideoEnabled,
                                         mangaEnabled:
@@ -1716,7 +1724,9 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
                                         // 浏览器扩展 tab「电脑才有」：此处为 macOS 根
                                         // 侧栏，macOS 即桌面 → 与底栏/rail 同一门控。
                                         browserExtensionEnabled:
-                                            DesktopLookupService.isDesktop,
+                                            DesktopLookupService.isDesktop &&
+                                                appModel
+                                                    .moduleBrowserExtensionEnabled,
                                       ),
                                     ),
                               child: child!,

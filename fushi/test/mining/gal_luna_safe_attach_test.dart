@@ -26,7 +26,7 @@ void main() {
         architectureProbes++;
         return false;
       },
-      injectorResolver: ({required bool is32Bit}) {
+      injectorResolver: ({required bool is32Bit}) async {
         injectorResolutions++;
         return 'injector.exe';
       },

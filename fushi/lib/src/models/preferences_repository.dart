@@ -9,6 +9,7 @@ import 'package:fushi/src/media/video/download/video_download_backend_identity.d
 import 'package:fushi/src/media/video/subtitle/open_subtitles_client.dart';
 import 'package:fushi/src/media/video/video_danmaku_model.dart';
 import 'package:fushi/src/media/video/video_control_customization.dart';
+import 'package:fushi/src/media/video/video_custom_action_bindings.dart';
 import 'package:fushi/src/media/video/video_immersive_mode.dart';
 import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
 import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
@@ -891,9 +892,26 @@ class PreferencesRepository extends ChangeNotifier {
     await setPref('first_time_setup', false);
   }
 
-  /// 「功能模块」显隐：漫画/视频/游戏三个媒体库 tab 是否出现在底栏/侧栏。默认
-  /// 全开（与旧版行为一致）；新手引导的功能选择与 设置 → 系统 → 功能模块 写同
-  /// 一真值。games 在读取端还叠加 Windows 平台门控，这里只存用户意愿。
+  /// 「功能模块」显隐：小说/漫画/视频/游戏/浏览器扩展五个库页 tab 是否出现在
+  /// 底栏/侧栏。默认全开（与旧版行为一致）；新手引导的功能选择与 设置 → 系统 →
+  /// 功能模块 写同一真值。games（Windows）与浏览器扩展（桌面）在读取端还叠加
+  /// 平台门控，这里只存用户意愿。首页/下载/词典/设置恒在，不提供开关。
+  bool get moduleBooksEnabled =>
+      getPref('module_books_enabled', defaultValue: true) as bool;
+
+  Future<void> setModuleBooksEnabled(bool value) async {
+    await setPref('module_books_enabled', value);
+    notifyListeners();
+  }
+
+  bool get moduleBrowserExtensionEnabled =>
+      getPref('module_browser_extension_enabled', defaultValue: true) as bool;
+
+  Future<void> setModuleBrowserExtensionEnabled(bool value) async {
+    await setPref('module_browser_extension_enabled', value);
+    notifyListeners();
+  }
+
   bool get moduleMangaEnabled =>
       getPref('module_manga_enabled', defaultValue: true) as bool;
 
@@ -1418,6 +1436,25 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 视频「快捷键 1..4」自定义动作按钮的绑定（用户请求）：槽位序号 → 视频动作。
+  ///
+  /// 与 [videoControlLayout] **分开存**：布局管「按钮在哪个槽位、显不显示」，本表管
+  /// 「按钮按下去干什么」。两者正交——用户可以只改位置不改动作，反之亦然；混进同一个
+  /// JSON 只会让那个已经在扛 v1→v2→v3 迁移的 payload 再多一层版本。
+  /// 空串 = 一个都没绑（[VideoCustomActionBindings.empty]）。此时按钮仍显示在控制条上，
+  /// 点它就地弹动作选择器——空槽位是配置入口，不是死按钮。
+  VideoCustomActionBindings get videoCustomActionBindings =>
+      VideoCustomActionBindings.decode(
+        getPref('video_custom_action_bindings', defaultValue: '') as String,
+      );
+
+  Future<void> setVideoCustomActionBindings(
+    VideoCustomActionBindings bindings,
+  ) async {
+    await setPref('video_custom_action_bindings', bindings.encode());
+    notifyListeners();
+  }
+
   /// 视频字幕外观（JSON；解析见 VideoSubtitleStyle.encode/decode）。空串=默认外观。
   String get videoSubtitleStyle =>
       getPref('video_subtitle_style', defaultValue: '') as String;
@@ -1491,6 +1528,21 @@ class PreferencesRepository extends ChangeNotifier {
 
   Future<void> setJimakuApiKey(String key) async {
     await setPref('jimaku_api_key', key);
+    notifyListeners();
+  }
+
+  /// Jimaku 是否参与字幕搜索。与 [jimakuApiKey] 组成 `enabled && key` 双门控，
+  /// 形状对齐 OpenSubtitles（那家的 `enabled` 长在它的 config JSON 里）。
+  ///
+  /// **默认 true 是兼容性要求**：这个键出现之前，「填了 key」就等于「启用」。
+  /// 默认 false 会让所有已填 key 的存量用户在升级后 Jimaku 突然失效，且他们
+  /// 无从知道是新加了一个开关。默认 true + key 仍为空则不注册，语义与本键出现
+  /// 之前逐字一致，不需要任何迁移写入。
+  bool get jimakuEnabled =>
+      getPref('jimaku_enabled', defaultValue: true) as bool;
+
+  Future<void> setJimakuEnabled(bool value) async {
+    await setPref('jimaku_enabled', value);
     notifyListeners();
   }
 
@@ -2425,6 +2477,19 @@ class PreferencesRepository extends ChangeNotifier {
 
   Future<void> setDiscoveryDisabledSources(String value) async {
     await setPref('discovery_disabled_sources', value);
+    notifyListeners();
+  }
+
+  /// 用户停用的**内置**视频资源索引器 id（逗号分隔，默认空 = 全部启用）。
+  ///
+  /// 与 [discoveryDisabledSources] 同形：都是「一组零配置内置源，按 id 记停用」。
+  /// 用户自配的 Torznab 索引器不进这里——它们各自带 `enabled` 字段，那是配置的
+  /// 一部分，不是内置源开关。
+  String get videoResourceDisabledSources =>
+      getPref('video_resource_disabled_sources', defaultValue: '') as String;
+
+  Future<void> setVideoResourceDisabledSources(String value) async {
+    await setPref('video_resource_disabled_sources', value);
     notifyListeners();
   }
 

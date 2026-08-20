@@ -29,10 +29,37 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 1597 条。点号进各自文件。
+> 共 1625 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-1731](bugs/BUG-1731-host-video-progress-reverse-sync.md) | ✅ | ✅ | 互联子端看片进度不反向推进 host 的继续观看/下一集 |
+| [BUG-1730](bugs/BUG-1730-ass-word-wrap-midword-break.md) | ✅ | ✅ | ass 字幕英文单词中间断行（Wrap 逐字符换行无词边界） |
+| [BUG-1729](bugs/BUG-1729-waveform-cue-strip-overlap.md) | ✅ | ✅ | 波形对轴弹窗字幕条带重叠cue叠画 |
+| [BUG-1728](bugs/BUG-1728-ext-netflix-fulltrack-fetch.md) | ✅ | ✅ | Netflix 字幕列表只剩「实时采集」——整轨拦截静默失败 |
+| [BUG-1727](bugs/BUG-1727-ext-popup-masonry-overlap.md) | ✅ | ✅ | 扩展弹窗渲染中间态多卡片重叠 |
+| [BUG-1726](bugs/BUG-1726-ext-popup-viewport-clip.md) | ✅ | ✅ | 扩展查词弹窗超出视口底部被截断 |
+| [BUG-1725](bugs/BUG-1725-i18n-sync-swallows-extra-args.md) | ✅ | ✅ | i18n_sync 多个 --remove 只生效第一个，多余参数被静默吞掉 |
+| [BUG-1723](bugs/BUG-1723-android-predictive-back-gesture-freezes-taps.md) | ✅ | ✅ | 安卓侧滑返回后全屏点击失效 |
+| [BUG-1722](bugs/BUG-1722-manga-default-store-needs-network.md) | ✅ | ✅ | 默认 keiyoushi 扩展仓库绑死在首次启动能连上 github，手机上永远看不到 |
+| [BUG-1721](bugs/BUG-1721-scrape-history-no-rescrape-entry.md) | ✅ | ✅ | 后台任务历史条目无法重新刮削或手动指定作品 |
+| [BUG-1720](bugs/BUG-1720-scrape-pending-confirmation-no-entry.md) | ✅ | ✅ | 视频刮削「待确认 N」没有任何确认入口 |
+| [BUG-1719](bugs/BUG-1719-capture-workbench-topbar-sink.md) | ✅ | ✅ | 游戏捕获工作台顶栏分段条下沉跳动 |
+| [BUG-1718](bugs/BUG-1718-browser-extension-missing-dictionary-css.md) | ✅ | ✅ | 浏览器扩展查词拿不到词典自带 CSS 与词典内嵌图片，mdx 词典在插件里样式全失效 |
+| [BUG-1717](bugs/BUG-1717-manga-default-keiyoushi-store.md) | — | — | 漫画缺少默认 keiyoushi 扩展仓库（核查：develop 已内置） |
+| [BUG-1716](bugs/BUG-1716-mihon-store-remove-no-confirm.md) | ✅ | ✅ | 删除漫画扩展仓库没有确认提示，一点即删 |
+| [BUG-1715](bugs/BUG-1715-desktop-extension-icons-bypass-proxy.md) | ✅ | ✅ | 桌面漫画扩展列表不显示图标：图标请求绕过应用代理出口 |
+| [BUG-1714](bugs/BUG-1714-subtitle-policy-required-wrong-string.md) | ✅ | ✅ | 「附带字幕 · 必选」选项复用播放器控件文案，选项读不通 |
+| [BUG-1713](bugs/BUG-1713-resource-search-empty-state-hides-missing-indexer.md) | ✅ | ✅ | 未配置索引器时资源/字幕搜索显示「没有匹配的作品」，把配置缺失伪装成搜不到 |
+| [BUG-1712](bugs/BUG-1712-external-subtitle-sources-missing-jimaku.md) | ✅ | ✅ | 「外部资源与字幕来源」只列用户自配项，Jimaku 与内置 Nyaa 全不可见 |
+| [BUG-1711](bugs/BUG-1711-discovery-all-sources-shows-single-source.md) | ✅ | ✅ | 发现页「全部源」透出单个源的目录列表 |
+| [BUG-1710](bugs/BUG-1710-manga-duplicate-discover-tabs.md) | ✅ | ✅ | 漫画库两个 tab 都叫「发现」 |
+| [BUG-1709](bugs/BUG-1709-mihon-install-uses-stale-index-snapshot.md) | ✅ | ✅ | 默认 keiyoushi 仓库安装扩展报 STORE_HTTP_404：安装用的是过期索引快照 |
+| [BUG-1708](bugs/BUG-1708-update-blocked-by-self-held-files.md) | ✅ | ✅ | 自更新被自己造成的文件占用挡住且失败后 app 不回来 |
+| [BUG-1707](bugs/BUG-1707-mihon-store-legacy-index-v2.md) | ✅ | ✅ | Mihon 扩展仓库填 index.min.json 后安装必 404（legacy 分支吞掉 repo.json 的 index_v2） |
+| [BUG-1706](bugs/BUG-1706-downloads-resource-gate-message.md) | ✅ | ✅ | 下载页资源标签把「无受管视频来源」误报成「请先配置下载后端」 |
+| [BUG-1705](bugs/BUG-1705-qb-login-204.md) | ✅ | ✅ | qBittorrent 5.2+ 登录成功返回 204 被判成登录失败 |
+| [BUG-1704](bugs/BUG-1704-interconnect-collection-detail-remote-members.md) | ✅ | ✅ | 互联客户端打开合集详情显示「合集为空」：详情页只认本地视频行，丢弃 host 侧成员 |
 | [BUG-1703](bugs/BUG-1703-manga-extension-error-truncated-toast.md) | ✅ | ✅ | 扩展安装/加载失败的根因被 Android 原生 toast 截成 2 行，用户永远看不到 |
 | [BUG-1702](bugs/BUG-1702-mihon-r8-kotlin-keep.md) | ✅ | ✅ | release APK 的 R8 混淆掉宿主 Kotlin 运行时，所有 Mihon 漫画扩展 LOAD_FAILED |
 | [BUG-1701](bugs/BUG-1701-manga-webtoon-pinch-vs-scroll.md) | ✅ | ✅ | 手机端漫画条漫模式捏合缩放与上下滚动互相干扰 |
@@ -44,6 +71,7 @@
 | [BUG-1695](bugs/BUG-1695-jimaku-batch-wrong-episode-fallback.md) | ✅ | ✅ | 合集批量字幕：集号一条都对不上时静默取第一个文件，整季挂同一个错字幕 |
 | [BUG-1694](bugs/BUG-1694-jimaku-anime-filter.md) | ✅ | ✅ | Jimaku 搜索永不传 anime 参数，真人剧/日剧字幕永远 0 结果 |
 | [BUG-1693](bugs/BUG-1693-interconnect-peer-offline-misreported-as-network-error.md) | ✅ | ✅ | 互联对端关闭时误报为网络错误 |
+| [BUG-1692](bugs/BUG-1692-macos-lookup-popup-webview-ignores-pointer.md) | ✅ | ✅ | macOS 查词浮层 WebView 完全收不到指针事件（点击/拖拽全失效，Flutter 外壳正常） |
 | [BUG-1690](bugs/BUG-1690-startup-audio-warmup-interrupts-music.md) | ✅ | ✅ | 启动静音预热在音频设备上开流,打断其他应用正在播放的音乐 |
 | [BUG-1689](bugs/BUG-1689-lookup-grip-activates-main-window.md) | ✅ | ✅ | 点剪贴板查词面板把 Hibiki 主界面抬到用户窗口之上 |
 | [BUG-1688](bugs/BUG-1688-vn-chrome-inset-viewport.md) | ✅ | ✅ | VN 模式忽略 chrome inset 与页面尺寸，正文被顶栏/底栏与刘海压住（iOS 最严重） |
@@ -70,8 +98,8 @@
 | [BUG-1665](bugs/BUG-1665-english-mining-term-not-lemma.md) | ✅ | ✅ | 英语查词制卡词头不还原原形（MDX 重定向别名词条盖过原形） |
 | [BUG-1664](bugs/BUG-1664-mine-abort-root-cause.md) | ✅ | ✅ | 制卡中止只报症状不报根因（macOS 缺 ffmpeg 时批量制卡整批失败且不可诊断） |
 | [BUG-1663](bugs/BUG-1663-ios-update-lands-on-github-not-testflight.md) | ✅ | ✅ | iOS「检查更新」把 TestFlight 用户送到 GitHub 未签名 ipa |
-| [BUG-1662](bugs/BUG-1662-collection-rescrape-entry.md) | ✅ | ✅ | 合集缺重新刮削入口：详情页无刮削项、单集无条目信息、菜单文案不含刮削 |
 | [BUG-1662](bugs/BUG-1662-windows-close-black-screen.md) | ✅ | ✅ | Windows关闭时主窗口黑屏延迟 |
+| [BUG-1662](bugs/BUG-1662-collection-rescrape-entry.md) | ✅ | ✅ | 合集缺重新刮削入口：详情页无刮削项、单集无条目信息、菜单文案不含刮削 |
 | [BUG-1661](bugs/BUG-1661-corretto-x64-sha256-typo.md) | ✅ | ✅ | macOS 构建挂在「下载 pinned JDK 失败」，真因是 sha256 抄成 65 位 |
 | [BUG-1660](bugs/BUG-1660-aidoku-image-reader-compat.md) | ✅ | ✅ | Aidoku 图源图片与章节兼容及阅读器返回入口缺失 |
 | [BUG-1659](bugs/BUG-1659-inline-level-box-scan-boundary.md) | ✅ | ✅ | 查词浮窗 glossary 里带振假名的词只能查到第一个汉字 |
@@ -117,28 +145,28 @@
 | [BUG-1599](bugs/BUG-1599-helper-runtime-downgrade.md) | ✅ | ✅ | Windows 本地构建旧归档将新版捕获组件降级 |
 | [BUG-1598](bugs/BUG-1598-windows-onnx-runtime-cache.md) | ✅ | ✅ | Windows 一键构建 ONNX Runtime 下载失败且 clean 重复下载 |
 | [BUG-1597](bugs/BUG-1597-gal-workbench-pathological-long-line.md) | ✅ | ✅ | 工作台单条超长文本导致卡顿 |
-| [BUG-1596](bugs/BUG-1596-windows-runtime-lock-preflight.md) | ✅ | ✅ | Windows 完整打包未提前检查运行组件占用 |
 | [BUG-1596](bugs/BUG-1596-release-sequence-workdir.md) | ✅ | ✅ | release.yml 序号脚本在 working-directory: fushi 下解析成不存在路径，恢复自动发布首跑 exit 127 |
-| [BUG-1595](bugs/BUG-1595-injector-attach-target-exit.md) | ✅ | ✅ | 附着模式游戏退出后 injector 不结束 |
+| [BUG-1596](bugs/BUG-1596-windows-runtime-lock-preflight.md) | ✅ | ✅ | Windows 完整打包未提前检查运行组件占用 |
 | [BUG-1595](bugs/BUG-1595-dict-update-not-replacing.md) | ✅ | ✅ | 词典更新入口遇新包标题变化仍判新增两版并存 |
+| [BUG-1595](bugs/BUG-1595-injector-attach-target-exit.md) | ✅ | ✅ | 附着模式游戏退出后 injector 不结束 |
 | [BUG-1594](bugs/BUG-1594-ring-probe-readonly-map-crash.md) | ✅ | ✅ | ring_probe 只读映射下枚举文本槽必崩（Interlocked 写只读页） |
 | [BUG-1594](bugs/BUG-1594-gal-overlay-loses-topmost.md) | ✅ | ✅ | Galgame文字悬浮窗切换窗口或 Magpie 输出后丢失置顶 |
 | [BUG-1593](bugs/BUG-1593-anki-duplicate-check-findnotes-serial.md) | ✅ | ✅ | 词条逐个 findNotes 查重导致已制卡标记延迟 |
 | [BUG-1593](bugs/BUG-1593-gal-utterance-head-clipped.md) | ✅ | ✅ | galgame 制卡语音每句都少一截开头（提交时刻 vs 播放时刻） |
 | [BUG-1592](bugs/BUG-1592-anki-localhost-prefers-ipv6.md) | ✅ | ✅ | AnkiConnect 使用 localhost 时优先连接 IPv6，导致本机请求延迟或失败 |
 | [BUG-1592](bugs/BUG-1592-secondary-subtitle-mining-black-cover.md) | ✅ | ✅ | 只开副字幕时制卡：无区间→封面抽片头黑帧 |
-| [BUG-1591](bugs/BUG-1591-luna-safe-attach-double-hook-crash.md) | ✅ | ✅ | Luna 与 Fushi 双 Hook 导致游戏闪退 |
 | [BUG-1591](bugs/BUG-1591-download-priority-has-no-write-entry.md) | ✅ | ✅ | priority 列参与排序却无写入口，排队退化成先来后到 |
-| [BUG-1590](bugs/BUG-1590-subscription-candidate-list-not-aggregated.md) | ✅ | ✅ | 订阅候选列表按发布逐条列，与订阅生效单位不一致 |
+| [BUG-1591](bugs/BUG-1591-luna-safe-attach-double-hook-crash.md) | ✅ | ✅ | Luna 与 Fushi 双 Hook 导致游戏闪退 |
 | [BUG-1590](bugs/BUG-1590-luna-mine-before-audio-boundary.md) | ✅ | ✅ | Luna 当前句制卡提前截断录音导致卡片无音频 |
-| [BUG-1589](bugs/BUG-1589-windows-release-build-red-and-invisible.md) | ✅ | ✅ | Windows 发布构建固定红，且真错误被 MSBuild 折叠得看不见 |
+| [BUG-1590](bugs/BUG-1590-subscription-candidate-list-not-aggregated.md) | ✅ | ✅ | 订阅候选列表按发布逐条列，与订阅生效单位不一致 |
 | [BUG-1589](bugs/BUG-1589-local-windows-build-misses-gal-helper.md) | ✅ | ✅ | 本地 Windows 构建成功但未打包 galgame helper |
-| [BUG-1588](bugs/BUG-1588-windows-build-bundle-prefix.md) | ✅ | ✅ | Windows 构建 bundle 安装目标误指向 Program Files |
+| [BUG-1589](bugs/BUG-1589-windows-release-build-red-and-invisible.md) | ✅ | ✅ | Windows 发布构建固定红，且真错误被 MSBuild 折叠得看不见 |
 | [BUG-1588](bugs/BUG-1588-tmdb-key-missing-in-release-builds.md) | ✅ | ✅ | 发布 workflow 漏注入 TMDB key，发出去的包 TMDB 恒未配置 |
-| [BUG-1587](bugs/BUG-1587-download-queued-reported-as-torrent-missing.md) | ✅ | ✅ | 排队等槽位的下载任务被误报成「torrent 已不在引擎中」 |
+| [BUG-1588](bugs/BUG-1588-windows-build-bundle-prefix.md) | ✅ | ✅ | Windows 构建 bundle 安装目标误指向 Program Files |
 | [BUG-1587](bugs/BUG-1587-alt-wheel-entry-scroll.md) | ✅ | ✅ | 查词窗口 Alt+滚轮词条定位与顶部回退 |
-| [BUG-1586](bugs/BUG-1586-release-seq-floor-after-history-rewrite.md) | ✅ | ✅ | 历史重写让发布序号倒退，全部已装用户永久收不到更新 |
+| [BUG-1587](bugs/BUG-1587-download-queued-reported-as-torrent-missing.md) | ✅ | ✅ | 排队等槽位的下载任务被误报成「torrent 已不在引擎中」 |
 | [BUG-1586](bugs/BUG-1586-gal-workbench-selection-stall.md) | ✅ | ✅ | Gal 捕获工作台句子选择被旧音轨请求阻塞 |
+| [BUG-1586](bugs/BUG-1586-release-seq-floor-after-history-rewrite.md) | ✅ | ✅ | 历史重写让发布序号倒退，全部已装用户永久收不到更新 |
 | [BUG-1585](bugs/BUG-1585-golden-cross-platform-raster-false-red.md) | ✅ | ✅ | golden 基准图跨平台光栅必红：非 Windows 开发机全量套件恒 33 条伪红 |
 | [BUG-1584](bugs/BUG-1584-ios-archive-strip-drops-ffi-exports.md) | ✅ | ✅ | iOS archive 的 STRIP_STYLE=all 抹掉 fushidicts FFI 导出符号，上架包启动即 Initialisation failed |
 | [BUG-1583](bugs/BUG-1583-manga-ocr-test-platform-gate.md) | ✅ | ✅ | manga OCR 编排测试硬读 Platform，macOS/iOS 宿主上结构性必红 |
