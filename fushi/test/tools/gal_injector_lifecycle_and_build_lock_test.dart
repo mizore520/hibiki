@@ -24,7 +24,8 @@ void main() {
       source,
       contains(
         'RunInjection(target, pid, dll_path, wait_ms, hold, nullptr,\n'
-        '                              target, effective_luna, &reason)',
+        '                              target, effective_luna,\n'
+        '                              native_loopback_requested, &reason)',
       ),
       reason: 'Attach mode must use the game process as its hold lifetime.',
     );

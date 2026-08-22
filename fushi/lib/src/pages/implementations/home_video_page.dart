@@ -87,6 +87,8 @@ import 'package:fushi/src/sync/remote_library_cache.dart';
 import 'package:fushi/src/sync/remote_video_client.dart';
 import 'package:fushi/src/sync/sync_backend.dart';
 import 'package:fushi/src/sync/sync_progress_banner.dart';
+import 'package:fushi/src/sync/jellyfin_video_client.dart'
+    show JellyfinServerConfig, JellyfinVideoClient;
 import 'package:fushi/src/sync/sync_repository.dart';
 import 'package:fushi/utils.dart';
 import 'package:fushi/src/utils/components/batch_tag_dialog_frame.dart';
@@ -94,6 +96,7 @@ import 'package:fushi/src/utils/cover_image.dart';
 import 'package:fushi/src/pages/implementations/collection_name_dialog.dart';
 import 'package:fushi/src/media/video/video_filename_parser.dart';
 import 'package:fushi/src/utils/misc/shelf_ordering.dart';
+import 'package:fushi/src/media/source_library/add_local_folder_source.dart';
 import 'package:path/path.dart' as p;
 
 /// 顶层 helper：打开本地视频播放页的**共享路由入口**（本页 hero/卡片与首页
@@ -786,6 +789,17 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     return CloudRemoteVideoClient(backend: backend, backendType: type);
   }
 
+  /// Jellyfin/Emby 媒体服务器分支：设置里登录过服务器（配置在 SyncRepository
+  /// `sync_jellyfin_server`）即可出 client——它具备完整 [RemoteVideoClient] 能力
+  /// （直连流播/字幕/服务器端断点），与互联 live 库同级；每次取数新建实例，
+  /// 缓存身份按服务器细分（`jellyfin:<serverUrl>`，BUG-1202 口径）。
+  Future<JellyfinVideoClient?> _resolveJellyfinVideoClient() async {
+    final AppModel appModel = ref.read(appProvider);
+    final SyncRepository syncRepo = SyncRepository(appModel.database);
+    final JellyfinServerConfig? config = await syncRepo.getJellyfinServer();
+    return config?.buildClient();
+  }
+
   /// 是否应该去问远端要视频清单。
   ///
   /// BUG-1182：`showRemoteEntries` 开关此前只在渲染期的 [_visibleRemoteVideos] 生效，
@@ -817,9 +831,11 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
       _remoteVideoSource = null;
       return null;
     }
-    // TODO-2119：互联优先、否则回退云盘；两者都是 [RemoteVideoSource]，所以下面
-    // 「列清单 → 去重 → 出占位卡」这条主干只写一遍，不再按后端类型分叉。
+    // TODO-2119：互联优先、次选 Jellyfin 媒体服务器、否则回退云盘；三者都是
+    // [RemoteVideoSource]，所以下面「列清单 → 去重 → 出占位卡」这条主干只写
+    // 一遍，不再按后端类型分叉。
     final RemoteVideoSource? source = await _resolveRemoteVideoClient() ??
+        await _resolveJellyfinVideoClient() ??
         await _resolveCloudRemoteVideoClient();
     _remoteVideoSource = source;
     if (source == null) return null;
@@ -1140,7 +1156,13 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     final ModalRoute<dynamic>? route = ModalRoute.of(context);
     if (route != null && !route.isCurrent) return;
 
-    final DroppedFiles files = classifyDroppedFiles(paths);
+    // 必须注入 isDirectory 谓词：不传的话目录落进 unknown，视频页对「拖入文件夹」
+    // 完全静默（用户报的「拖文件夹没反应」）。分类只记录事实，目录算什么由
+    // decideDropIntent 按落点表面决定。
+    final DroppedFiles files = classifyDroppedFiles(
+      paths,
+      isDirectory: (String path) => Directory(path).existsSync(),
+    );
     debugPrint(
       '[fushi-drop] [home-video] classified '
       'videos=${files.videos.length} playlists=${files.playlists.length} '
@@ -1156,11 +1178,13 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     );
     switch (intent) {
       case DropIntent.importNewVideo:
-        _openVideoImportPrefilled(
-          videoPath: files.videos.first,
-          subtitlePath:
-              files.subtitles.isNotEmpty ? files.subtitles.first : null,
-        );
+        // 拖入的**每个**视频都要导入。旧实现只取 `files.videos.first`，多选拖入时
+        // 其余文件被静默丢弃（用户报「手动拖多个影片进去只会导入第一个」）。
+        // VideoImportDialog 结构上是单条目的（每条视频各有标题/字幕/元数据要确认），
+        // 所以这里排成队列逐个预填，而不是硬塞一个批量模式进对话框。
+        unawaited(_openVideoImportQueue(files.videos, files.subtitles));
+      case DropIntent.addFolderAsSource:
+        unawaited(_addDroppedFoldersAsSources(files.directories));
       case DropIntent.importNewPlaylist:
         _openPlaylistImportPrefilled(playlistPath: files.playlists.first);
       case DropIntent.importVideoUrl:
@@ -1200,6 +1224,61 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
   /// 按文件名派生 bookUid，用户确认后保存，关闭后刷新列表。「把字幕挂到已有视频卡」
   /// 不走这里——它会对已存在视频重算 bookUid 触发同名去重建重复条目（TODO-079），
   /// 改走 [_attachSubtitleToVideoCard] 直接对命中卡 bookUid 落库。
+  /// 拖入文件夹 → 登记成视频扫描根并扫描（每个拖入的目录各一条）。
+  ///
+  /// 媒体类型取自**当前页面**（视频页恒 `video`），不从目录内容猜——这正是用户要的
+  /// 「以打开的页面为准」。走共享的 [addLocalFolderAsSource]，与来源页「添加本地
+  /// 文件夹」按钮产出完全相同的来源行。
+  Future<void> _addDroppedFoldersAsSources(List<String> directories) async {
+    int added = 0;
+    for (final String dir in directories) {
+      final AddLocalFolderResult result = await addLocalFolderAsSource(
+        db: appModel.database,
+        mediaKind: SourceLibraryKind.video.dbValue,
+        path: dir,
+      );
+      switch (result.outcome) {
+        case AddLocalFolderOutcome.added:
+          added++;
+        case AddLocalFolderOutcome.duplicate:
+          break;
+      }
+      if (!mounted) return;
+    }
+    if (!mounted) return;
+    if (added > 0) _refresh();
+    FushiToast.show(
+      msg: added > 0
+          ? t.drag_drop_folder_source_added
+          : t.drag_drop_folder_source_exists,
+      severity: added > 0 ? ToastSeverity.success : ToastSeverity.warning,
+    );
+  }
+
+  /// 逐个导入拖入的多个视频。
+  ///
+  /// 字幕配对：只有一个视频时沿用历史行为（把第一条字幕给它）；多个视频时按**文件
+  /// 名主干**配对（`EP01.mkv` ↔ `EP01.srt`），配不上就不给——多集拖入时把同一条字幕
+  /// 挂到每一集比不挂更糟。
+  ///
+  /// 用户在某一条上点取消只跳过该条，队列继续：拖 5 个进来、其中 1 个不想要，不应该
+  /// 连带取消另外 4 个。
+  Future<void> _openVideoImportQueue(
+    List<String> videos,
+    List<String> subtitles,
+  ) async {
+    for (final String video in videos) {
+      if (!mounted) return;
+      final String? subtitle = videos.length == 1
+          ? (subtitles.isNotEmpty ? subtitles.first : null)
+          : subtitleForVideoByStem(video, subtitles);
+      await _openVideoImportPrefilled(
+        videoPath: video,
+        subtitlePath: subtitle,
+      );
+    }
+  }
+
   Future<void> _openVideoImportPrefilled({
     required String videoPath,
     String? subtitlePath,
@@ -4454,39 +4533,39 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     );
   }
 
-  /// 合集卡进度行：有观看痕迹且未整套看完 → 「继续看 第n集」（[continueMemberIndex]
-  /// 纯函数，与旧横排行初始横滚定位同源）；否则 → 「已看完 x/N」（x = completedAt
-  /// 非空的本地成员数；远端占位无本地完成态，只计入 N）。
+  /// 合集卡进度行：有观看痕迹且未整套看完 → 「继续看 第n集」；否则 →
+  /// 「已看完 x/N」。
+  ///
+  /// BUG-1740：选集与时钟必须与详情页 hero **同一实现**——同走
+  /// [continueMemberIndex]，锚点时刻同走 [_slotWatchedAtMs]（= BUG-1731 的
+  /// max(本机统计, 行级 lastPlayedAt) 口径）。此前这里自绕一套
+  /// `latestPlayedSeriesIndex` + 只读本机统计时钟：互联对端回灌的进度只写行级
+  /// `lastPlayedAt`，外侧锚点便钉在本机最后播的那集，出现「卡片外『继续看
+  /// 第8集』、进详情页变『第9集』」的两套答案。
   String _collectionProgressLabel(CollectionGroup<_VideoSlot> group) {
     final int total = group.items.length;
     int completed = 0;
-    final List<VideoSeriesPlaybackState> playback =
-        <VideoSeriesPlaybackState>[];
+    final List<CollectionMemberProgress> progresses =
+        <CollectionMemberProgress>[];
     for (final CollectionOrderingItem<_VideoSlot> item in group.items) {
-      final VideoBookRow? local = item.payload.local;
-      final RemoteVideoInfo? remote = item.payload.remote;
-      final bool isCompleted = local?.completedAt != null;
+      final _VideoSlot slot = item.payload;
+      // 完成态与详情页 [CollectionEpisodeSlot.completed] 同口径：远端成员认
+      // host 下发的 completedAt，不再只数本地行。
+      final bool isCompleted = slot.local != null
+          ? slot.local!.completedAt != null
+          : slot.remote!.completedAt != null;
       if (isCompleted) completed++;
-      playback.add(VideoSeriesPlaybackState(
-        lastWatchedAtMs: local == null
-            ? remote?.positionUpdatedAtMs ?? 0
-            : (_watchAtByUid[local.bookUid] ??
-                        _legacyWatchAtByTitle[local.title])
-                    ?.millisecondsSinceEpoch ??
-                0,
-        positionMs: local?.lastPositionMs ?? remote?.positionMs ?? 0,
+      progresses.add(CollectionMemberProgress(
+        positionMs: slot.local?.lastPositionMs ?? slot.remote?.positionMs ?? 0,
         completed: isCompleted,
+        lastPlayedAt: _slotWatchedAtMs(slot),
       ));
     }
-    final int? latestIndex = latestPlayedSeriesIndex(playback);
-    final int? continueIndex = latestIndex != null &&
-            !playback[latestIndex].completed &&
-            playback[latestIndex].positionMs > 0
-        ? latestIndex
-        : nextEpisodeAfterLatestPlayed(playback);
-    if (continueIndex != null && completed < total) {
+    final bool anyTrace = progresses.any((CollectionMemberProgress p) =>
+        p.completed || (p.positionMs ?? 0) > 0 || (p.lastPlayedAt ?? 0) > 0);
+    if (anyTrace && completed < total) {
       return t.collection_continue_progress(
-        n: continueIndex + 1,
+        n: continueMemberIndex(progresses) + 1,
       );
     }
     return t.collection_watched_progress(done: completed, total: total);
@@ -5651,14 +5730,20 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
         ],
       ),
     );
+    // 悬停抬升：与游戏库同一个壳（含墨水屏 / 减弱动态效果两处降级）。多选态
+    // 关掉——那时卡片是勾选目标，跟着指针放大只会干扰框选。
+    final Widget liftedCard = FushiHoverLift(
+      enabled: !_selectionMode,
+      builder: (BuildContext _, bool __) => fushiCard,
+    );
     // 选择态下禁用标签拖放命中（避免选卡时误触拖标签）。
     final Widget card = _selectionMode
-        ? fushiCard
+        ? liftedCard
         : BookDragTarget(
             bookId: book.bookUid,
             onTagDropped: (BookTagRow tag) =>
                 _addTagToVideoBook(book.bookUid, tag),
-            child: fushiCard,
+            child: liftedCard,
           );
     return CardDropZone<VideoBookRow>(
       meta: book,

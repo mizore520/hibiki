@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
 #include <cstring>
 #include <functional>
 #include <limits>
@@ -768,14 +769,26 @@ FloatingLyricWindow::Style StyleFromArgs(const flutter::EncodableMap* args) {
   FloatingLyricWindow::Style style;
   style.font_size = DoubleFromValue(args, "fontSize", style.font_size);
   style.font_family = WideFromValue(args, "fontFamily", style.font_family);
-  // Do not let an unexpectedly large preference become a native allocation or
-  // an expensive DirectWrite lookup. The Dart repository applies the same cap;
-  // this second boundary keeps the channel safe for older or hostile callers.
+  style.font_path = WideFromValue(args, "fontPath", style.font_path);
+  // Keep the native boundary bounded even for older or hostile callers; the
+  // Dart preference repository applies the same cap.
   if (style.font_family.size() > 256) {
     style.font_family.resize(256);
   }
+  style.letter_spacing =
+      DoubleFromValue(args, "letterSpacing", style.letter_spacing);
+  style.line_height = DoubleFromValue(args, "lineHeight", style.line_height);
+  style.bold = BoolFromValue(args, "bold", style.bold);
+  style.text_alignment =
+      IntFromValue(args, "textAlignment", style.text_alignment);
   style.text_color = ArgbFromValue(args, "textColor", style.text_color);
   style.bg_color = ArgbFromValue(args, "bgColor", style.bg_color);
+  style.outline_color =
+      ArgbFromValue(args, "outlineColor", style.outline_color);
+  style.outline_width =
+      DoubleFromValue(args, "outlineWidth", style.outline_width);
+  style.text_padding =
+      DoubleFromValue(args, "textPadding", style.text_padding);
   style.button_text_color =
       ArgbFromValue(args, "buttonTextColor", style.button_text_color);
   style.button_bg_color =
@@ -855,9 +868,7 @@ flutter::EncodableList InstalledFontFamilies() {
 
   flutter::EncodableList result;
   result.reserve(names.size());
-  for (const std::string& name : names) {
-    result.emplace_back(name);
-  }
+  for (const std::string& name : names) result.emplace_back(name);
   return result;
 }
 
@@ -1056,11 +1067,11 @@ void FlutterWindow::RegisterImeGuardChannel() {
 
 void FlutterWindow::RegisterClipboardTextChannel() {
   // Second FloatingLyricWindow instance, text-only: the transparent clipboard
-  // text window. No transport / close controls — only draggable, resizable,
-  // tappable text over a per-pixel transparent background. Tap lookup routes
-  // back over "lookupText" into the in-app dictionary overlay (same contract
-  // as the audiobook lyric strip). Independent instance so it can be shown
-  // alongside the lyric strip without either clobbering the other.
+  // text window. No transport / lock / close controls, no resize grip — only
+  // draggable, tappable text over a per-pixel transparent background. Tap lookup
+  // routes back over "lookupText" into the in-app dictionary overlay (same
+  // contract as the audiobook lyric strip). Independent instance so it can be
+  // shown alongside the lyric strip without either clobbering the other.
   clipboard_text_window_ = std::make_unique<FloatingLyricWindow>();
   clipboard_text_window_->SetTextOnly(true);
 
@@ -1088,17 +1099,6 @@ void FlutterWindow::RegisterClipboardTextChannel() {
       [this](const std::string& action) {
         clipboard_text_channel_->InvokeMethod(
             action, std::make_unique<flutter::EncodableValue>());
-      });
-  clipboard_text_window_->SetSizeCallback(
-      [this](int width, int height) {
-        flutter::EncodableMap map{
-            {flutter::EncodableValue("width"), flutter::EncodableValue(width)},
-            {flutter::EncodableValue("height"),
-             flutter::EncodableValue(height)},
-        };
-        clipboard_text_channel_->InvokeMethod(
-            "windowSizeChanged",
-            std::make_unique<flutter::EncodableValue>(std::move(map)));
       });
 
   clipboard_text_channel_->SetMethodCallHandler(
@@ -1260,8 +1260,7 @@ void FlutterWindow::RegisterGalHookTextChannel() {
         if (method == "canDrawOverlays") {
           result->Success(flutter::EncodableValue(true));
         } else if (method == "getInstalledFontFamilies") {
-          result->Success(
-              flutter::EncodableValue(InstalledFontFamilies()));
+          result->Success(flutter::EncodableValue(InstalledFontFamilies()));
         } else if (method == "show") {
           gal_hook_text_window_->UpdateStyle(StyleFromArgs(args));
           gal_hook_text_window_->SetClickLookupEnabled(
@@ -1614,6 +1613,12 @@ void FlutterWindow::RegisterGlobalLookupChannel() {
           result->Success(flutter::EncodableValue(reply));
         } else if (method == "render") {
           win->RenderJson(StringFromValue(args, "json", ""));
+          result->Success();
+        } else if (method == "gamepadAction") {
+          // 手柄重设计 P5：Dart 侧 GamepadService 独占路由 → host gamepadAction
+          // （词条导航/制卡/发音/滚动，动作名白名单在 window 实现里钉死）。
+          win->DispatchGamepadAction(StringFromValue(args, "action", ""),
+                                     DoubleFromValue(args, "dy", 0.0));
           result->Success();
         } else if (method == "resize") {
           if (win == gal_lookup_card_window_.get()) {
@@ -2158,6 +2163,18 @@ void FlutterWindow::RegisterVoiceHookChannel() {
                flutter::EncodableValue(s.text_lane_recycles)},
               {flutter::EncodableValue("textLaneOverflows"),
                flutter::EncodableValue(s.text_lane_overflows)},
+              {flutter::EncodableValue("nativeLoopbackRequested"),
+               flutter::EncodableValue(
+                   static_cast<int64_t>(s.native_loopback_requested))},
+              {flutter::EncodableValue("nativeLoopbackRequestSeq"),
+               flutter::EncodableValue(
+                   static_cast<int64_t>(s.native_loopback_request_seq))},
+              {flutter::EncodableValue("nativeLoopbackState"),
+               flutter::EncodableValue(
+                   static_cast<int64_t>(s.native_loopback_state))},
+              {flutter::EncodableValue("nativeLoopbackAppliedSeq"),
+               flutter::EncodableValue(
+                   static_cast<int64_t>(s.native_loopback_applied_seq))},
               {flutter::EncodableValue("ready"),
                flutter::EncodableValue(s.ok || s.raw_voice_ready)},
           };
@@ -2217,6 +2234,39 @@ void FlutterWindow::RegisterVoiceHookChannel() {
         if (method == "status") {
           result->Success(flutter::EncodableValue(
               status_map(fushi::VoiceHookReader::Instance().Status())));
+          return;
+        }
+        if (method == "requestNativeLoopbackPolicy") {
+          const auto* args =
+              std::get_if<flutter::EncodableMap>(call.arguments());
+          const std::string* policy = nullptr;
+          if (args != nullptr) {
+            const auto it =
+                args->find(flutter::EncodableValue("policy"));
+            if (it != args->end()) {
+              policy = std::get_if<std::string>(&it->second);
+            }
+          }
+          if (policy == nullptr ||
+              (*policy != "allow" && *policy != "deny")) {
+            result->Success(flutter::EncodableValue(flutter::EncodableMap{
+                {flutter::EncodableValue("error"),
+                 flutter::EncodableValue(std::string("invalid_policy"))}}));
+            return;
+          }
+          const uint32_t request_seq =
+              fushi::VoiceHookReader::Instance().RequestNativeLoopbackPolicy(
+                  *policy == "allow");
+          if (request_seq == 0) {
+            result->Success(flutter::EncodableValue(flutter::EncodableMap{
+                {flutter::EncodableValue("error"),
+                 flutter::EncodableValue(std::string("not_open"))}}));
+            return;
+          }
+          // Return a full snapshot so Dart can often satisfy an already-
+          // applied idempotent request without an extra status round-trip.
+          result->Success(flutter::EncodableValue(status_map(
+              fushi::VoiceHookReader::Instance().Status())));
           return;
         }
         if (method == "grabRecent") {
@@ -2533,12 +2583,10 @@ void FlutterWindow::RegisterMagpieChannel() {
 }
 
 void FlutterWindow::NotifyMagpieScalingChanged(WPARAM wparam, LPARAM lparam) {
-  // The foreground WinEvent hook covers ordinary Alt+Tab/focus changes, but
-  // Magpie can recreate, move, or raise its scaled output while the foreground
-  // HWND stays unchanged. Reuse Magpie's existing stable broadcast contract
-  // (and its output HWND in lParam) to give the independent Hook overlay a
-  // coalesced, non-activating reassert opportunity. The overlay method checks
-  // visibility, Hook mode, and the user's pin state itself.
+  // The foreground WinEvent hook covers ordinary focus changes, but Magpie can
+  // recreate, move, or raise its scaled output while the foreground HWND stays
+  // unchanged. Let the independent Hook overlay coalesce a non-activating
+  // topmost reassertion through its own window thread.
   const bool has_output_window = lparam != 0;
   const bool output_lifecycle_event =
       has_output_window &&
@@ -2669,15 +2717,6 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
-  // TODO-1680：退出期的主 HWND 不能继续暴露已经被 native pre-exit 拆掉的
-  // Flutter/WebView2/DComp 客户区。WM_CLOSE 仍必须继续交给 Flutter/window_manager：
-  // Dart 侧的 setPreventClose(true) 负责 flush、关库和最终 exit(0)，这里仅做视觉隔离。
-  // ShowWindow(SW_HIDE) 不销毁 HWND、不改变 prevent-close，也不激活其它窗口；其返回值
-  // 只表示之前是否可见，失败也不能阻断下面的消息分发和既有关闭清理链。
-  if (message == WM_CLOSE) {
-    ShowWindow(hwnd, SW_HIDE);
-  }
-
   // BUG-1239: inspect VK_PROCESSKEY before Flutter handles the message. The
   // engine deliberately reports IME-owned keys as physical=0/logical=0, so
   // checking after HandleTopLevelWindowProc can no longer identify Space.

@@ -36,6 +36,273 @@ class AdapterStructureTest(unittest.TestCase):
             self.assertIn(marker, path.read_text(encoding="utf-8"))
             self.assertIn(f'#include "adapters/{filename}"', source)
 
+    def test_native_loopback_is_policy_gated_and_generation_owned(self) -> None:
+        registry = (ROOT / "hook" / "adapter_registry.inc").read_text(
+            encoding="utf-8"
+        )
+        worker = (
+            ROOT / "hook" / "adapters" / "loopback_adapter.inc"
+        ).read_text(encoding="utf-8")
+        ipc = (ROOT / "include" / "voice_hook_ipc.h").read_text(
+            encoding="utf-8"
+        )
+
+        loopback_class = registry.split("class LoopbackAdapter", 1)[1]
+        loopback_class = loopback_class.split("class AdapterRegistry", 1)[0]
+        install = loopback_class.split("bool install() override", 1)[1]
+        install = install.split("AdapterCapability capabilities", 1)[0]
+        self.assertIn("PollPolicy();", install)
+        self.assertNotIn("CreateThread", install)
+        self.assertEqual(loopback_class.count("CreateThread("), 1)
+        self.assertIn("NativeLoopbackRequestMatches", loopback_class)
+        self.assertIn("control_.request_seq", loopback_class)
+        self.assertIn("NativeLoopbackWorkerFailureApplies", loopback_class)
+        self.assertIn(
+            "WaitForSingleObject(thread_, 0) == WAIT_OBJECT_0",
+            loopback_class,
+        )
+        self.assertIn("WaitForSingleObject(thread_, INFINITE)", loopback_class)
+
+        # The worker independently gates every COM startup stage and binds to
+        # the request generation, so rapid allow->deny->allow cannot reuse it.
+        self.assertIn("NativeLoopbackWorkerMayCapture", worker)
+        self.assertIn("!LbShouldStop(control)", worker)
+        initialize = worker.index("client->Initialize(")
+        self.assertLess(
+            worker.rindex("kLoopbackDiagInitializeAttempted", 0, initialize),
+            initialize,
+        )
+        self.assertIn("client->Stop();", worker)
+        self.assertLess(worker.index("client->Stop();"), worker.index("client->Release();"))
+
+        for field in (
+            "native_loopback_requested",
+            "native_loopback_request_seq",
+            "native_loopback_state",
+            "native_loopback_applied_seq",
+        ):
+            self.assertIn(field, ipc)
+
+        injector = (ROOT / "injector" / "injector_main.cpp").read_text(
+            encoding="utf-8"
+        )
+        run_injection = injector.split("int RunInjection(", 1)[1]
+        run_injection = run_injection.split("bool IsSiglusExecutable", 1)[0]
+        after_policy_publish = run_injection.split(
+            "const uint32_t native_loopback_request_seq", 1
+        )[1]
+        # Every error exit after allow authority can exist must revoke it before
+        # releasing the mapping. The first path is publication failure itself
+        # and calls the non-lambda helper directly.
+        cursor = 0
+        while True:
+            failure = after_policy_publish.find("return FailWith", cursor)
+            if failure < 0:
+                break
+            prefix = after_policy_publish[max(0, failure - 900) : failure]
+            self.assertTrue(
+                "revoke_loopback_before_failure();" in prefix
+                or "RevokeNativeLoopbackForFailure(" in prefix,
+                prefix,
+            )
+            cursor = failure + 1
+        self.assertIn(
+            "if (!loopback_stopped_on_failure)", injector
+        )
+        self.assertIn(
+            "LaunchedProcessDisposition::kTerminate", injector
+        )
+
+    def test_hold_requires_a_waitable_process_owner(self) -> None:
+        injector = (ROOT / "injector" / "injector_main.cpp").read_text(
+            encoding="utf-8"
+        )
+        run_injection = injector.split("int RunInjection(", 1)[1]
+        run_injection = run_injection.split("bool IsSiglusExecutable", 1)[0]
+        self.assertIn("if (hold && (hold_process == nullptr ||", run_injection)
+        self.assertIn("hold_process == INVALID_HANDLE_VALUE", run_injection)
+        self.assertIn("--hold requires a waitable target-process handle", run_injection)
+
+    def test_xaudio_preload_capture_keeps_lifecycle_and_capacity_guards(
+        self,
+    ) -> None:
+        adapter = (
+            ROOT / "hook" / "adapters" / "windows_audio_adapter.inc"
+        ).read_text(encoding="utf-8")
+        main = (ROOT / "hook" / "dll_main.cpp").read_text(encoding="utf-8")
+
+        # The SGRE regression was a four-slot ADPCM queue plus a wall-clock
+        # expiry. Bursty preloads must use the byte-bounded arena, and pending
+        # ownership is invalidated by the XAudio2 lifecycle instead of time.
+        self.assertNotIn("kXAudioAdpcmJobCount = 4", adapter)
+        self.assertNotIn("kPendingXAudioClipMaxAgeMs", adapter)
+        for marker in (
+            "kXAudioCaptureJobCount = 1024",
+            "kXAudioCaptureArenaBytes = 32u * 1024u * 1024u",
+            "kXAudioCapturePageBytes = 16u * 1024u",
+            "ReserveXAudioCapturePages",
+            "ReleaseXAudioCapturePages",
+        ):
+            self.assertIn(marker, adapter)
+
+        submit = adapter.split("Detour_SubmitSourceBuffer", 1)[1]
+        submit = submit.split("Detour_CreateSourceVoice", 1)[0]
+        self.assertLess(
+            submit.index("PrepareXAudioCaptureJob("),
+            submit.index("OriginalHookForVtableSlot<SubmitSourceBuffer_t>"),
+        )
+        self.assertLess(
+            submit.index("OriginalHookForVtableSlot<SubmitSourceBuffer_t>"),
+            submit.index("PublishXAudioCaptureJob("),
+        )
+        self.assertNotIn("g_orig_SubmitSourceBuffer", main)
+        self.assertNotIn("g_orig_FlushSourceBuffers", main)
+        self.assertIn("g_submit_source_buffer_originals", main)
+        self.assertIn("g_flush_source_buffers_originals", main)
+        self.assertIn("originals.Lookup(VtableSlot(com_obj, idx))", main)
+        # 先发布 trampoline 再启用 hook：反过来的话 detour 已经在跑、original 还没
+        # 登记，正是这次要根治的崩溃形态。范围必须收在 codec 专用的那个安装函数体内
+        # ——dll_main.cpp 里还有一条普通 HookFn 路径（它用 g_hooked_fns 去重、根本
+        # 不碰 registry），全文件 index() 会先撞上那条路径的 MH_EnableHook(target)，
+        # 让这条断言在实现完全正确时也失败。
+        registry_installer = main.split(
+            "bool HookFnWithOriginalRegistry(", 1
+        )[1].split("\n}\n", 1)[0]
+        self.assertIn("originals->Publish(target, trampoline)", registry_installer)
+        self.assertLess(
+            registry_installer.index("originals->Publish(target, trampoline)"),
+            registry_installer.index("MH_EnableHook(target)"),
+        )
+        # 发布成功但启用失败时必须把已登记的 trampoline 撤掉，否则 registry 会留下
+        # 一条指向已移除 hook 的 original。
+        self.assertIn("originals->Erase(target, trampoline)", registry_installer)
+        failed = submit.split("if (FAILED(hr))", 1)[1]
+        failed = failed.split("return hr;", 1)[0]
+        self.assertIn("ReleaseXAudioCaptureJob(staged)", failed)
+
+        for index, detour in (
+            ("kIdxFlushSourceBuffers", "Detour_FlushSourceBuffers"),
+            ("kIdxDestroyVoice", "Detour_DestroyVoice"),
+        ):
+            self.assertIn(index, main)
+            self.assertIn(detour, adapter)
+            self.assertIn(f"VtableSlot(*ppSourceVoice, {index})", adapter)
+        self.assertIn("kIdxCommitChanges", main)
+        self.assertIn("Detour_CommitChanges", adapter)
+        self.assertIn("VtableSlot(x, kIdxCommitChanges)", adapter)
+
+        for diagnostic in (
+            "kXAudioDiagDescriptorExhausted",
+            "kXAudioDiagArenaExhausted",
+            "kXAudioDiagStaleInvalidated",
+            "kXAudioDiagCommitObserved",
+        ):
+            self.assertIn(diagnostic, adapter)
+
+    def test_xaudio_trace_is_fixed_exported_and_remotely_read(self) -> None:
+        trace = (ROOT / "include" / "xaudio_trace.h").read_text(
+            encoding="utf-8"
+        )
+        adapter = (
+            ROOT / "hook" / "adapters" / "windows_audio_adapter.inc"
+        ).read_text(encoding="utf-8")
+        main = (ROOT / "hook" / "dll_main.cpp").read_text(encoding="utf-8")
+        probe = (ROOT / "tools" / "ring_probe.cpp").read_text(encoding="utf-8")
+
+        self.assertIn("FushiXAudioTraceV1", main)
+        self.assertIn("__declspec(dllexport)", main)
+        for marker in (
+            "sizeof(XAudioTraceFormat) == 244",
+            "sizeof(XAudioTraceEvent) == 376",
+            "sizeof(XAudioTraceSlot) == 384",
+            "offsetof(XAudioTraceBuffer, slots) == 40",
+            "kXAudioTraceCapacity = 2048",
+            "InterlockedCompareExchange(&slot->writing, 1, 0)",
+            "InterlockedIncrement64(&trace->dropped_busy)",
+        ):
+            self.assertIn(marker, trace)
+        wma_capture = trace.split("inline void CaptureXAudioTraceWma", 1)[1]
+        wma_capture = wma_capture.split(
+            "inline void CaptureXAudioTraceFormat", 1
+        )[0]
+        self.assertIn(
+            "source->pDecodedPacketCumulativeBytes == nullptr",
+            wma_capture,
+        )
+        self.assertIn("source->PacketCount == 0", wma_capture)
+        self.assertIn("source->pDecodedPacketCumulativeBytes[0]", wma_capture)
+        self.assertIn(
+            "source->pDecodedPacketCumulativeBytes[source->PacketCount - 1u]",
+            wma_capture,
+        )
+        for forbidden in (
+            "CreateFile",
+            "ReadFile",
+            "WriteFile",
+            "Sleep(",
+            "WaitForSingleObject",
+            "std::mutex",
+            "EnterCriticalSection",
+            "malloc(",
+            "new ",
+            "printf(",
+            "fprintf(",
+            "OutputDebugString",
+            "HookLog",
+        ):
+            self.assertNotIn(forbidden, wma_capture)
+        publisher = trace.split("inline uint64_t PublishXAudioTraceEvent", 1)[1]
+        publisher = publisher.split("}  // namespace", 1)[0]
+        self.assertLess(publisher.index("std::memcpy"), publisher.rindex(
+            "InterlockedExchange64"
+        ))
+        for forbidden in (
+            "CreateFile",
+            "ReadFile",
+            "WriteFile",
+            "Sleep(",
+            "WaitForSingleObject",
+            "std::mutex",
+            "EnterCriticalSection",
+            "malloc(",
+            "new ",
+            "printf(",
+            "fprintf(",
+            "fopen(",
+            "OutputDebugString",
+            "HookLog",
+        ):
+            self.assertNotIn(forbidden, publisher)
+
+        for kind in (
+            "kCreate",
+            "kSubmit",
+            "kStart",
+            "kStop",
+            "kFlush",
+            "kDestroy",
+            "kCommit",
+            "kWorkerWait",
+            "kWorkerPublish",
+            "kWorkerInvalidate",
+        ):
+            self.assertIn(f"XAudioTraceEventKind::{kind}", adapter)
+
+        for marker in (
+            "--dump-xaudio-trace",
+            "TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32",
+            "IMAGE_OPTIONAL_HEADER32",
+            "IMAGE_OPTIONAL_HEADER64",
+            "ResolveRemotePeExportRva",
+            "ReadProcessMemory",
+            "sequence_before == expected",
+            "sequence_after == expected",
+        ):
+            self.assertIn(marker, probe)
+        main_body = probe.split("int main(int argc, char** argv)", 1)[1]
+        self.assertLess(main_body.index("--dump-xaudio-trace"),
+                        main_body.index("OpenFileMappingW"))
+
     def test_registry_exposes_module_notification_seam(self) -> None:
         source = (ROOT / "hook" / "adapter_registry.inc").read_text(
             encoding="utf-8"
@@ -134,13 +401,13 @@ class AdapterStructureTest(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn("unity_.ProcessPendingEvents();", registry)
         install = source.split("bool TryHookUnityIl2CppAudio()", 1)[1]
+        # 守的是「先解析 resource 方法（get_clip），再解析 PCM 方法（GetData）」这个顺序，
+        # 不是解析用的辅助函数叫什么名字。锚点只取 (类, "方法名", 参数个数) 这段实参：
+        # 解析器曾从 class_get_method 换成 FindIl2CppMethodByParamCount，顺序不变量原封
+        # 不动，守卫却因为把旧辅助函数名写死进字面量而红了，且红在与本不变量无关的地方。
         self.assertLess(
-            install.index(
-                'FindIl2CppMethodByParamCount(source_class, "get_clip", 0)'
-            ),
-            install.index(
-                'FindIl2CppMethodByParamCount(clip_class, "GetData", 2)'
-            ),
+            install.index('(source_class, "get_clip", 0)'),
+            install.index('(clip_class, "GetData", 2)'),
         )
         self.assertLess(
             install.index("pcm_helpers_ready ="),
@@ -331,6 +598,43 @@ class AdapterStructureTest(unittest.TestCase):
             run_launch.count('SetEnvironmentVariableW(L"SteamAppId"'),
             "Only the explicit force-direct launch may set SteamAppId.",
         )
+
+    def test_sgre_resource_logic_is_profile_scoped(self) -> None:
+        shared_paths = (
+            ROOT / "hook" / "dll_main.cpp",
+            ROOT / "hook" / "adapters" / "windows_audio_adapter.inc",
+            ROOT / "hook" / "xwma_resource.h",
+        )
+        for path in shared_paths:
+            source = path.read_text(encoding="utf-8").lower()
+            self.assertNotIn("sgre", source, path.name)
+            self.assertNotIn("voice_body.bin", source, path.name)
+
+        adapter = (
+            ROOT / "hook" / "adapters" / "sgre_adapter.inc"
+        ).read_text(encoding="utf-8")
+        profile = (
+            ROOT / "hook" / "adapters" / "sgre_profile.h"
+        ).read_text(encoding="utf-8")
+        generic = (
+            ROOT / "hook" / "adapters" / "windows_audio_adapter.inc"
+        ).read_text(encoding="utf-8")
+        self.assertIn("MatchesSgreProfile", adapter)
+        self.assertIn("RegisterXAudioCompressedResourceHandler", adapter)
+        self.assertIn("FindSgreVoiceArchiveResourceParts", adapter)
+        self.assertIn("kSgreExecutableSha256", profile)
+        self.assertIn("HasXAudioCompressedResourceHandler", generic)
+        self.assertFalse((ROOT / "hook" / "xaudio_pcm_capture_xapo.h").exists())
+        self.assertNotIn("700", generic)
+
+    def test_hook_worker_rejects_unknown_ipc_before_adapter_poll(self) -> None:
+        source = (ROOT / "hook" / "dll_main.cpp").read_text(encoding="utf-8")
+        rejection = source.index(
+            "g_header == nullptr || g_header->magic != kSharedMagic"
+        )
+        polling = source.index("while (!g_stop)")
+        self.assertLess(rejection, polling)
+        self.assertIn("return 1;", source[rejection:polling])
 
 
 if __name__ == "__main__":

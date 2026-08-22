@@ -86,47 +86,70 @@ void main() {
     );
   });
 
-  test('字体族默认表示 Yu Gothic UI，写入后可跨仓库实例恢复', () async {
-    expect(
-      repo.galHookTextFontFamily,
-      PreferencesRepository.galHookTextFontFamilyDefault,
-    );
-
-    await repo.setGalHookTextFontFamily('  Noto Sans JP  ');
-    expect(repo.galHookTextFontFamily, 'Noto Sans JP');
-
-    final PreferencesRepository reloaded = PreferencesRepository(db);
-    await reloaded.loadFromDb();
-    expect(reloaded.galHookTextFontFamily, 'Noto Sans JP');
+  test('浮窗外观偏好有兼容旧观感的默认值', () {
+    expect(repo.galHookTextLetterSpacing, 0);
+    expect(repo.galHookTextLineHeight, 1);
+    expect(repo.galHookTextBold, isTrue);
+    expect(repo.galHookTextAlignment, 'center');
+    expect(repo.galHookTextColor, 0xFFFFFFFF);
+    expect(repo.galHookTextBackgroundColor, 0xFF000000);
+    expect(repo.galHookTextBackgroundOpacity, 0);
+    expect(repo.galHookTextOutlineColor, 0xE0000000);
+    expect(repo.galHookTextOutlineWidth, 1.6);
+    expect(repo.galHookTextPadding, 20);
+    expect(repo.galHookTextCornerRadius, 14);
   });
 
-  test('字体族历史脏值安全收敛，超长值不会直接送入 native', () async {
-    await repo.setPref('gal_hook_text_font_family', 42);
-    expect(
-      repo.galHookTextFontFamily,
-      PreferencesRepository.galHookTextFontFamilyDefault,
-    );
+  test('浮窗外观偏好写入后可读回', () async {
+    await repo.setGalHookTextLetterSpacing(2.5);
+    await repo.setGalHookTextLineHeight(1.4);
+    await repo.setGalHookTextBold(false);
+    await repo.setGalHookTextAlignment('left');
+    await repo.setGalHookTextColor(0xFF123456);
+    await repo.setGalHookTextBackgroundColor(0xFF654321);
+    await repo.setGalHookTextBackgroundOpacity(0.65);
+    await repo.setGalHookTextOutlineColor(0xAA010203);
+    await repo.setGalHookTextOutlineWidth(2.75);
+    await repo.setGalHookTextPadding(34);
+    await repo.setGalHookTextCornerRadius(22);
 
-    final String tooLong = 'x' * 400;
-    await repo.setPref('gal_hook_text_font_family', tooLong);
-    expect(
-      repo.galHookTextFontFamily.length,
-      PreferencesRepository.galHookTextFontFamilyMaxLength,
-    );
+    expect(repo.galHookTextLetterSpacing, 2.5);
+    expect(repo.galHookTextLineHeight, 1.4);
+    expect(repo.galHookTextBold, isFalse);
+    expect(repo.galHookTextAlignment, 'left');
+    expect(repo.galHookTextColor, 0xFF123456);
+    expect(repo.galHookTextBackgroundColor, 0xFF654321);
+    expect(repo.galHookTextBackgroundOpacity, 0.65);
+    expect(repo.galHookTextOutlineColor, 0xAA010203);
+    expect(repo.galHookTextOutlineWidth, 2.75);
+    expect(repo.galHookTextPadding, 34);
+    expect(repo.galHookTextCornerRadius, 22);
   });
 
-  test('背景不透明度复用既有 key，支持 0、中间值、100% 并持久化', () async {
-    expect(repo.galHookTextWindowBgOpacity, 0.0);
+  test('浮窗外观偏好的数值边界在读写两端都会收敛', () async {
+    await repo.setGalHookTextLetterSpacing(999);
+    await repo.setGalHookTextLineHeight(-10);
+    await repo.setGalHookTextBackgroundOpacity(5);
+    await repo.setGalHookTextOutlineWidth(-2);
+    await repo.setGalHookTextPadding(999);
+    await repo.setGalHookTextCornerRadius(999);
 
-    await repo.setGalHookTextWindowBgOpacity(0.42);
-    expect(repo.galHookTextWindowBgOpacity, closeTo(0.42, 0.0001));
+    expect(repo.galHookTextLetterSpacing,
+        PreferencesRepository.galHookTextLetterSpacingMax);
+    expect(repo.galHookTextLineHeight,
+        PreferencesRepository.galHookTextLineHeightMin);
+    expect(repo.galHookTextBackgroundOpacity, 1);
+    expect(repo.galHookTextOutlineWidth,
+        PreferencesRepository.galHookTextOutlineWidthMin);
+    expect(
+        repo.galHookTextPadding, PreferencesRepository.galHookTextPaddingMax);
+    expect(repo.galHookTextCornerRadius,
+        PreferencesRepository.galHookTextCornerRadiusMax);
 
-    await repo.setGalHookTextWindowBgOpacity(1.0);
-    expect(repo.galHookTextWindowBgOpacity, 1.0);
-
-    await repo.setGalHookTextWindowBgOpacity(-1.0);
-    expect(repo.galHookTextWindowBgOpacity, 0.0);
-    await repo.setGalHookTextWindowBgOpacity(2.0);
-    expect(repo.galHookTextWindowBgOpacity, 1.0);
+    await repo.setPref('gal_hook_text_outline_width', 999.0);
+    await repo.setPref('gal_hook_text_alignment', 'right');
+    expect(repo.galHookTextOutlineWidth,
+        PreferencesRepository.galHookTextOutlineWidthMax);
+    expect(repo.galHookTextAlignment, 'center');
   });
 }

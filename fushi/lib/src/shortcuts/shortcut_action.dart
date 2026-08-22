@@ -167,21 +167,28 @@ enum ShortcutScope {
       // 提供的，故只开键盘。
       case globalExternal:
         return const <ShortcutChannel>{ShortcutChannel.keyboard};
-      // 漫画页只有键盘解析入口：`_resolveMangaKeyAction` 走 `resolveKeyboard`，
-      // 滚轮翻页是硬编码的 `wheelInputAction`（不查注册表），手柄则完全没接
-      // （既无 `resolveGamepad`，也无 `GamepadButtonIntent` 的 Action）。开着手柄/
-      // 鼠标通道 = 设置页给出能配却按了没反应的入口，比没有这个选项更糟。
-      // 接上对应解析入口（照 reader `_handleGamepadButton`）并真机验证后再开。
+      // 漫画页：键盘走 `_resolveMangaKeyAction`（resolveKeyboard），手柄走
+      // `_handleGamepadButton`（resolveGamepad manga → universal，桌面轮询的
+      // GamepadButtonIntent 与 Android gameButton* 键事件汇合到同一入口，与
+      // reader 同构）。滚轮翻页是硬编码的 `wheelInputAction`（不查注册表），
+      // 鼠标依旧没有解析入口，不开。
       case manga:
-        return const <ShortcutChannel>{ShortcutChannel.keyboard};
-      // 查词弹窗：滚轮（上/下一个词条）+ 键盘（制卡）。两者都不经 resolveKeyboard —— 绑定
-      // 由 popup_settings_injection 序列化后注入给 popup.js，命中判定在 JS 侧（弹窗内容是
-      // WebView，输入事件先到它的 JS）。键盘通道的取用点同样是
-      // `bindingsFor(popupMineEntry).keyboardBindings`。
+        return const <ShortcutChannel>{
+          ShortcutChannel.keyboard,
+          ShortcutChannel.gamepad,
+        };
+      // 查词弹窗：滚轮（上/下一个词条）+ 键盘（制卡）+ 手柄。滚轮/键盘不经
+      // resolveKeyboard —— 绑定由 popup_settings_injection 序列化后注入给 popup.js，
+      // 命中判定在 JS 侧（弹窗内容是 WebView，输入事件先到它的 JS）；键盘通道的
+      // 取用点同样是 `bindingsFor(popupMineEntry).keyboardBindings`。
+      // 手柄（P2）走 Dart 侧：GamepadService 在页面 Actions 未消费后按
+      // `resolveGamepad(scope: dictionaryPopup)` 解析，经
+      // DictionaryPopupGamepadRegistry 的钩子调进弹窗 JS（词条导航/制卡/发音）。
       case dictionaryPopup:
         return const <ShortcutChannel>{
           ShortcutChannel.wheel,
           ShortcutChannel.keyboard,
+          ShortcutChannel.gamepad,
         };
     }
   }
@@ -391,6 +398,13 @@ enum ShortcutAction {
   // 「关弹窗并翻页」，那条语义在 [MangaReaderInputAction] 侧，与本动作无关。
   // 退出漫画走 universal 的 [globalBack] 阶梯（弹窗可见先关弹窗，否则退出）。
   mangaDismissDict(ShortcutScope.manga, 'manga_dismiss_dict'),
+  // 放大后在页面上平移视野（默认 Ctrl+方向键）。裸方向键已被翻页占死，所以默认
+  // 走修饰键组合；用户可在快捷键设置里改成任意键。语义是「视野往哪个方向走」，
+  // 与滚动条直觉一致，不随阅读方向镜像（镜像只对**翻页**有意义）。
+  mangaPanUp(ShortcutScope.manga, 'manga_pan_up'),
+  mangaPanDown(ShortcutScope.manga, 'manga_pan_down'),
+  mangaPanLeft(ShortcutScope.manga, 'manga_pan_left'),
+  mangaPanRight(ShortcutScope.manga, 'manga_pan_right'),
 
   // Gamepad（TODO-700 T6）：dpad 四向作为可绑触发键。默认各绑对应 dpad 键，执行体
   // = 通用方向焦点移动（与摇杆同效果，但摇杆固定走 onStickMove 通道、不经注册表，
@@ -443,7 +457,12 @@ enum ShortcutAction {
   // 不可能触发**。galgame 场景焦点通常在游戏上，不先点面板就按不到。要覆盖瞬态窗只有两条
   // 路（去掉 NOACTIVATE = 抢游戏焦点、违背它的设计初衷；或上全局 RegisterHotKey），都是
   // 产品取舍，未做——别把这里的实现说成「app 内 / app 外 / 浏览器都能用」。
-  popupMineEntry(ShortcutScope.dictionaryPopup, 'popup_mine_entry');
+  popupMineEntry(ShortcutScope.dictionaryPopup, 'popup_mine_entry'),
+
+  // 手柄重设计 P2：播放第一个可见词条的发音（点既有 `.audio-button`，与制卡同一
+  // 「点按钮不另起桥」纪律，JS 入口 `fushiPopupPlayFirstAudio`）。默认只有手柄 Y
+  // ——键盘上鼠标点按钮已经够近，而手柄用户没有任何非光标模式的发音入口。
+  popupPlayAudio(ShortcutScope.dictionaryPopup, 'popup_play_audio');
 
   const ShortcutAction(this.scope, this.key);
 

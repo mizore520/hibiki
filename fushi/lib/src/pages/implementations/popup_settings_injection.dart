@@ -475,7 +475,7 @@ String _webKeyName(LogicalKeyboardKey key) {
 /// {"mine":[{"key":"enter","mods":["ctrl"]}],"next":[],"prev":[]}
 /// ```
 ///
-/// 覆盖本 scope **全部三个动作**（制卡 + 上/下一个词条），而不只是制卡——因为
+/// 覆盖本 scope **全部动作**（制卡 + 上/下一个词条 + 播放发音），而不只是制卡——因为
 /// [ShortcutScope.channels] 是按 scope 而非按 action 开通道的：只要这个 scope 开了键盘，
 /// 设置页就会给它名下每个动作都渲染出「添加键盘快捷键」入口。若只有制卡真能用，词条导航
 /// 那两个入口就成了「能配、按了没反应」的死绑定（`shortcut_channel_wiring_guard_test`
@@ -509,6 +509,10 @@ String popupKeyBindingsJson(
     'mine': encode(ShortcutAction.popupMineEntry),
     'next': encode(ShortcutAction.popupNextEntry),
     'prev': encode(ShortcutAction.popupPrevEntry),
+    // P2 新增「播放发音」：键盘默认为空（默认只有手柄 Y），但 scope 开着键盘通道，
+    // 用户绑上后 app 外裸 WebView2 表面照样要生效——注入表必须与 scope 动作全集
+    // 同步（popup_mine_key_binding_test 钉着）。
+    'audio': encode(ShortcutAction.popupPlayAudio),
   });
 }
 
@@ -605,10 +609,8 @@ PopupStaticSettingsJs buildPopupStaticSettingsJs({
     theme.platform,
   );
   // 弹窗键盘绑定只对 **app 外**的裸 WebView2 表面（全局查词窗 / 剪贴板面板）下发真值。
-  // in-app 宿主（app 内弹窗 / Android 悬浮词典 / 独立查词页）显式收 `null` 关掉 JS 侧
-  // 判定——那里键盘由 Flutter 派发（阅读器 readerCreateCardFromPopup、视频页读
-  // popupMineEntry 绑定）。两边同时开的话，一旦 WebView 把同一次按键既交给 JS 又冒泡回
-  // Flutter，就会制出两张卡；按宿主切开是结构上杜绝，而不是靠去重兜底。
+  // in-app 宿主显式收 `null` 关掉 JS 侧判定，键盘由 Flutter 的单一消费者派发。
+  // 两边同时启用会让同一次按键跨 WebView/Flutter 边界重复制卡。
   final String popupKeyBindings = options.globalLookup
       ? popupKeyBindingsJson(appModel.shortcutRegistry, theme.platform)
       : 'null';
@@ -624,10 +626,9 @@ PopupStaticSettingsJs buildPopupStaticSettingsJs({
       .where((d) => d.isCollapsed(JapaneseLanguage.instance))
       .map((d) => d.name)
       .toList());
-  final String hiddenNames = jsonEncode(appModel.dictionaries
-      .where((d) => d.isHidden(JapaneseLanguage.instance))
-      .map((d) => d.name)
-      .toList());
+  // 与 popupJson 生成期共用同一个真相源，别再抄第二份表达式。
+  final String hiddenNames =
+      jsonEncode(appModel.hiddenDictionaryNames.toList());
   final String globalDictCSS = appModel.globalDictCSS;
   final String customDictCSSJson = jsonEncode(appModel.customDictCSS);
 

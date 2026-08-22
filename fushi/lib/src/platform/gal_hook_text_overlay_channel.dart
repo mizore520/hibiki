@@ -23,11 +23,11 @@ class GalHookTextWindowRect {
   bool get isValid => width > 0 && height > 0;
 
   Map<String, Object?> toMap() => <String, Object?>{
-        'left': left,
-        'top': top,
-        'width': width,
-        'height': height,
-      };
+    'left': left,
+    'top': top,
+    'width': width,
+    'height': height,
+  };
 
   static GalHookTextWindowRect? fromMap(Map<Object?, Object?> map) {
     int? value(String key) => (map[key] as num?)?.toInt();
@@ -41,12 +41,13 @@ class GalHookTextWindowRect {
   }
 }
 
-typedef GalHookTextLookupHandler = FutureOr<void> Function(
-  String lineId,
-  String text,
-  int index,
-  Rect? wordRect,
-);
+typedef GalHookTextLookupHandler =
+    FutureOr<void> Function(
+      String lineId,
+      String text,
+      int index,
+      Rect? wordRect,
+    );
 typedef GalHookTextEventHandler = FutureOr<void> Function();
 typedef GalHookTextLockHandler = FutureOr<void> Function(bool locked);
 
@@ -98,11 +99,11 @@ class GalLookupHit {
 
   /// 命中字形矩形（primaryLayer px）。
   Rect get glyphRect => Rect.fromLTWH(
-        glyphX.toDouble(),
-        glyphY.toDouble(),
-        glyphW.toDouble(),
-        glyphH.toDouble(),
-      );
+    glyphX.toDouble(),
+    glyphY.toDouble(),
+    glyphW.toDouble(),
+    glyphH.toDouble(),
+  );
 
   /// [charIndex] 是否真的指得到 [line] 里的一个字。**硬门**：指不到就丢弃，不去猜
   /// ——猜出来的下标会让高亮与查词落在完全无关的字上。
@@ -191,8 +192,9 @@ class GalLookupCallResult {
   });
 
   /// 平台不支持（非 Windows）时的常量结果：不是失败，是「这条链在这个平台不存在」。
-  static const GalLookupCallResult unsupported =
-      GalLookupCallResult(error: 'unsupported_platform');
+  static const GalLookupCallResult unsupported = GalLookupCallResult(
+    error: 'unsupported_platform',
+  );
 
   /// runner 给的错误 token；null = 成功。
   final String? error;
@@ -222,12 +224,10 @@ class GalLookupCallResult {
 /// native 侧穿透态被否决 / 变更时的回传（BUG-951）。native 建不出逃生工具条窗
 /// 时会拒绝进入穿透并把自己摁回 false；Dart 必须跟着退回，否则它的标志卡在
 /// true，用户下一次按 `↗` 会变成一次看不出反应的空点击。
-typedef GalHookTextPassThroughHandler = FutureOr<void> Function(
-  bool passThrough,
-);
-typedef GalHookTextBoundsHandler = FutureOr<void> Function(
-  GalHookTextWindowRect rect,
-);
+typedef GalHookTextPassThroughHandler =
+    FutureOr<void> Function(bool passThrough);
+typedef GalHookTextBoundsHandler =
+    FutureOr<void> Function(GalHookTextWindowRect rect);
 
 /// Hook 台词浮窗的默认字号（逻辑 px）。
 ///
@@ -238,8 +238,8 @@ typedef GalHookTextBoundsHandler = FutureOr<void> Function(
 /// 所以没拖过窗的用户观感逐像素不变。
 const double kGalHookTextFontSize = 30.0;
 
-/// 空串表示 Windows native 的默认字体（Yu Gothic UI）。字体族名由 native
-/// 根据本机 DirectWrite 字体集合最终校验，失效时安全回退到该默认字体。
+/// 空串表示 Windows native 的默认字体（Yu Gothic UI）。这是个人版旧设置
+/// 入口使用的兼容常量；作者新版 managed 字体目录仍通过同一 fontFamily 字段下发。
 const String kGalHookTextFontFamilyDefault = '';
 
 /// Windows Hook 台词浮窗的专用 MethodChannel 契约。
@@ -321,8 +321,9 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
 
   static Future<void> _handleNativeCall(MethodCall call) async {
     final Object? arguments = call.arguments;
-    final Map<Object?, Object?> args =
-        arguments is Map ? arguments.cast<Object?, Object?>() : const {};
+    final Map<Object?, Object?> args = arguments is Map
+        ? arguments.cast<Object?, Object?>()
+        : const {};
     switch (call.method) {
       case 'lookupText':
         final String lineId = args['lineId']?.toString() ?? '';
@@ -396,9 +397,18 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
   static Future<bool> show({
     GalHookTextWindowRect? rect,
     double fontSize = kGalHookTextFontSize,
-    String fontFamily = kGalHookTextFontFamilyDefault,
+    String fontFamily = '',
+    String? fontPath,
+    double letterSpacing = 0,
+    double lineHeight = 1,
+    bool bold = true,
+    String textAlignment = 'center',
     int textColor = 0xFFFFFFFF,
     int bgColor = 0xE0000000,
+    int outlineColor = 0xE0000000,
+    double outlineWidth = 1.6,
+    double textPadding = 20,
+    double cornerRadius = 14,
     bool following = true,
     bool passThrough = false,
     bool locked = false,
@@ -407,13 +417,22 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
     return _instance.showImpl(<String, Object?>{
       'fontSize': fontSize,
       'fontFamily': fontFamily,
+      if (fontPath != null) 'fontPath': fontPath,
+      'letterSpacing': letterSpacing,
+      'lineHeight': lineHeight,
+      'bold': bold,
+      'textAlignment': textAlignment == 'left' ? 1 : 0,
       'textColor': textColor,
       'bgColor': bgColor,
+      'outlineColor': outlineColor,
+      'outlineWidth': outlineWidth,
+      'textPadding': textPadding,
       'buttonTextColor': 0xFFFFFFFF,
       'buttonBgColor': 0x552D2340,
       'activeColor': 0xFFCE93D8,
       'windowWidth': 900.0,
       'windowHeight': 140.0,
+      'cornerRadius': cornerRadius,
       'clickLookupEnabled': true,
       // 置顶（📌 按钮）按会话复位为「开」，与 locked / passThrough / following 同
       // 规矩：上一局用户关掉置顶，不该让这一局的浮窗藏在全屏游戏后面。
@@ -426,6 +445,25 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
       'locked': locked,
       ...?rect?.toMap(),
     });
+  }
+
+  /// 兼容个人版旧字体选择器：字体列表由 Windows DirectWrite 枚举本机已安装
+  /// 字体，不在 Dart 侧硬编码小名单。作者新版设置页使用 CustomFontsPage，
+  /// 但保留这个 channel 入口可让旧调用安全工作。
+  static Future<List<String>> getInstalledFontFamilies() async {
+    if (!_instance.isSupported) return <String>[];
+    final Object? result = await _instance.channel.invokeMethod<Object?>(
+      'getInstalledFontFamilies',
+    );
+    if (result is! List) return <String>[];
+    final List<String> fonts = <String>{
+      for (final Object? value in result)
+        if (value is String && value.trim().isNotEmpty) value.trim(),
+    }.toList();
+    fonts.sort(
+      (String a, String b) => a.toLowerCase().compareTo(b.toLowerCase()),
+    );
+    return fonts;
   }
 
   static Future<void> hide() => _instance.hideImpl();
@@ -452,34 +490,36 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
     required int bgColor,
     int textColor = 0xFFFFFFFF,
     double fontSize = kGalHookTextFontSize,
-    String fontFamily = kGalHookTextFontFamilyDefault,
+    String fontFamily = '',
+    String? fontPath,
+    double letterSpacing = 0,
+    double lineHeight = 1,
+    bool bold = true,
+    String textAlignment = 'center',
+    int outlineColor = 0xE0000000,
+    double outlineWidth = 1.6,
+    double textPadding = 20,
+    double cornerRadius = 14,
   }) async {
     if (!_instance.isSupported) return;
     await _instance.channel.invokeMethod<void>('updateStyle', <String, Object?>{
       'fontSize': fontSize,
       'fontFamily': fontFamily,
+      if (fontPath != null) 'fontPath': fontPath,
+      'letterSpacing': letterSpacing,
+      'lineHeight': lineHeight,
+      'bold': bold,
+      'textAlignment': textAlignment == 'left' ? 1 : 0,
       'bgColor': bgColor,
       'textColor': textColor,
+      'outlineColor': outlineColor,
+      'outlineWidth': outlineWidth,
+      'textPadding': textPadding,
+      'cornerRadius': cornerRadius,
       'buttonTextColor': 0xFFFFFFFF,
       'buttonBgColor': 0x552D2340,
       'activeColor': 0xFFCE93D8,
     });
-  }
-
-  /// 返回 Windows 当前已安装的 DirectWrite 字体族名。字体列表来自系统字体集合，
-  /// 不在 Dart 侧维护硬编码名单；非 Windows 或 native 失败时返回空列表。
-  static Future<List<String>> getInstalledFontFamilies() async {
-    if (!_instance.isSupported) return <String>[];
-    final Object? result = await _instance.channel.invokeMethod<Object?>(
-      'getInstalledFontFamilies',
-    );
-    if (result is! List) return <String>[];
-    return <String>{
-      for (final Object? value in result)
-        if (value is String && value.trim().isNotEmpty) value.trim(),
-    }.toList()
-      ..sort(
-          (String a, String b) => a.toLowerCase().compareTo(b.toLowerCase()));
   }
 
   static Future<void> setFollowing(bool following) async {
@@ -506,10 +546,7 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
     if (!_instance.isSupported) return;
     await _instance.channel.invokeMethod<void>(
       'setVoiceState',
-      <String, Object?>{
-        'replaying': replaying,
-        'recapturing': recapturing,
-      },
+      <String, Object?>{'replaying': replaying, 'recapturing': recapturing},
     );
   }
 
@@ -525,10 +562,9 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
 
   static Future<void> setLocked(bool locked) async {
     if (!_instance.isSupported) return;
-    await _instance.channel.invokeMethod<void>(
-      'setLocked',
-      <String, Object?>{'locked': locked},
-    );
+    await _instance.channel.invokeMethod<void>('setLocked', <String, Object?>{
+      'locked': locked,
+    });
   }
 
   // ── 游戏内查词（Dart → runner）────────────────────────────────────────────
@@ -561,16 +597,14 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
     required int highlightLen,
   }) async {
     if (!_instance.isSupported) return GalLookupCallResult.unsupported;
-    final Object? reply = await _instance.channel.invokeMethod<Object?>(
-      'galLookupPresent',
-      <String, Object?>{
-        'seq': seq,
-        'anchorX': anchorX,
-        'anchorY': anchorY,
-        'highlightStart': highlightStart,
-        'highlightLen': highlightLen,
-      },
-    );
+    final Object? reply = await _instance.channel
+        .invokeMethod<Object?>('galLookupPresent', <String, Object?>{
+          'seq': seq,
+          'anchorX': anchorX,
+          'anchorY': anchorY,
+          'highlightStart': highlightStart,
+          'highlightLen': highlightLen,
+        });
     return GalLookupCallResult.fromReply(reply);
   }
 
@@ -588,16 +622,14 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
     required int highlightLen,
   }) async {
     if (!_instance.isSupported) return GalLookupCallResult.unsupported;
-    final Object? reply = await _instance.channel.invokeMethod<Object?>(
-      'galLookupPresentHighlight',
-      <String, Object?>{
-        'seq': seq,
-        'anchorX': anchorX,
-        'anchorY': anchorY,
-        'highlightStart': highlightStart,
-        'highlightLen': highlightLen,
-      },
-    );
+    final Object? reply = await _instance.channel
+        .invokeMethod<Object?>('galLookupPresentHighlight', <String, Object?>{
+          'seq': seq,
+          'anchorX': anchorX,
+          'anchorY': anchorY,
+          'highlightStart': highlightStart,
+          'highlightLen': highlightLen,
+        });
     return GalLookupCallResult.fromReply(reply);
   }
 
@@ -638,17 +670,15 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
   ) async {
     if (!_instance.isSupported) return GalLookupCallResult.unsupported;
     return GalLookupCallResult.fromReply(
-      await _instance.channel.invokeMethod<Object?>(
-        'galLookupInput',
-        <String, Object?>{
-          'seq': input.seq,
-          'x': input.x,
-          'y': input.y,
-          'kind': input.kind,
-          'wheel': input.wheel,
-          'keys': input.keys,
-        },
-      ),
+      await _instance.channel
+          .invokeMethod<Object?>('galLookupInput', <String, Object?>{
+            'seq': input.seq,
+            'x': input.x,
+            'y': input.y,
+            'kind': input.kind,
+            'wheel': input.wheel,
+            'keys': input.keys,
+          }),
     );
   }
 }

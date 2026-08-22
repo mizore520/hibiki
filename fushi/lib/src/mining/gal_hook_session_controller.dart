@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:fushi_core/fushi_core.dart';
@@ -30,24 +31,26 @@ import 'package:fushi/src/utils/misc/fushi_time_format.dart';
 /// `GalgamePlayTracker`（前台窗口 + 候选进程组计时），hook 文本这条路径再写一份
 /// 时长就是同一次游玩被计两遍。hook 文本字符数仍然有价值（喂首页「今日字符数」），
 /// 所以这条写入保留，只是不再携带时长。
-typedef GalHookActivityWriter = Future<void> Function({
-  required String title,
-  String? mediaKey,
-  required String dateKey,
-  required int timestampMs,
-  required int charsDelta,
-});
+typedef GalHookActivityWriter =
+    Future<void> Function({
+      required String title,
+      String? mediaKey,
+      required String dateKey,
+      required int timestampMs,
+      required int charsDelta,
+    });
 
 /// 建游玩计时器的工厂（契约 §3.1 的时长侧）。生产默认建真 [GalgamePlayTracker]
 /// （Windows 前台窗口 + 候选进程组计时）；单测注入带假 probe / 假时钟的实例。
 ///
 /// 控制器只提供三件事实——游戏 id、游戏目录、结算落库回调——计时策略与平台细节
 /// 全部留在 tracker 本体，工厂签名刻意不透传 mode / 间隔等调参项。
-typedef GalgamePlayTrackerFactory = GalgamePlayTracker Function({
-  required String gameId,
-  required String gameDirectory,
-  required GalgamePlaySessionSink onSessionEnded,
-});
+typedef GalgamePlayTrackerFactory =
+    GalgamePlayTracker Function({
+      required String gameId,
+      required String gameDirectory,
+      required GalgamePlaySessionSink onSessionEnded,
+    });
 
 enum GalHookSessionPhase {
   idle,
@@ -92,8 +95,8 @@ const int kGalOverlongSliceSuspectMs = 20000;
 ///   灰标 + 无音频成卡（旁白/心理描写句本来就该是这个结果）。
 /// - [resourceOnly]：只认游戏原始资源文件；缺音频时拒绝制卡（旧 `allow=false`）。
 ///
-/// 用户**显式裁决**（浮窗「重播并录音」、逐行选轨）不受本策略约束——那不是降级，
-/// 是用户指定音源，见 [GalHookSessionController._captureAudioBytesNow] 的裁决分支。
+/// 逐行选轨使用的仍是干净引擎 PCM，可以作为用户裁决保留；「重播并录音」
+/// 物理上启动的是 process loopback，因此只有 [full] 允许。
 enum GalAudioFallbackPolicy {
   full,
   cleanOnly,
@@ -224,44 +227,39 @@ class GalCaptureMemory {
     GalAttachCaptureMode? attachMode,
     bool clearVoiceTrack = false,
     bool clearTextThread = false,
-  }) =>
-      GalCaptureMemory(
-        excludedTrackFingerprints:
-            excludedTrackFingerprints ?? this.excludedTrackFingerprints,
-        voiceTrackFingerprint: clearVoiceTrack
-            ? null
-            : voiceTrackFingerprint ?? this.voiceTrackFingerprint,
-        textThreadFingerprint: clearTextThread
-            ? null
-            : textThreadFingerprint ?? this.textThreadFingerprint,
-        audioFallbackPolicy: audioFallbackPolicy ?? this.audioFallbackPolicy,
-        lunaAudioPreRollMs: lunaAudioPreRollMs ?? this.lunaAudioPreRollMs,
-        lunaAudioTailTrimMs: lunaAudioTailTrimMs ?? this.lunaAudioTailTrimMs,
-        attachMode: attachMode ?? this.attachMode,
-      );
+  }) => GalCaptureMemory(
+    excludedTrackFingerprints:
+        excludedTrackFingerprints ?? this.excludedTrackFingerprints,
+    voiceTrackFingerprint: clearVoiceTrack
+        ? null
+        : voiceTrackFingerprint ?? this.voiceTrackFingerprint,
+    textThreadFingerprint: clearTextThread
+        ? null
+        : textThreadFingerprint ?? this.textThreadFingerprint,
+    audioFallbackPolicy: audioFallbackPolicy ?? this.audioFallbackPolicy,
+    lunaAudioPreRollMs: lunaAudioPreRollMs ?? this.lunaAudioPreRollMs,
+    lunaAudioTailTrimMs: lunaAudioTailTrimMs ?? this.lunaAudioTailTrimMs,
+    attachMode: attachMode ?? this.attachMode,
+  );
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'excludedTracks': excludedTrackFingerprints,
-        if (voiceTrackFingerprint != null) 'voiceTrack': voiceTrackFingerprint,
-        if (textThreadFingerprint != null) 'textThread': textThreadFingerprint,
-        if (audioFallbackPolicy != GalAudioFallbackPolicy.full)
-          'audioFallback': audioFallbackPolicy.storageKey,
-        if (lunaAudioPreRollMs != null)
-          'lunaAudioPreRollMs': lunaAudioPreRollMs,
-        if (lunaAudioTailTrimMs != null)
-          'lunaAudioTailTrimMs': lunaAudioTailTrimMs,
-        if (attachMode != null) 'attachMode': attachMode!.storageKey,
-      };
+    'excludedTracks': excludedTrackFingerprints,
+    if (voiceTrackFingerprint != null) 'voiceTrack': voiceTrackFingerprint,
+    if (textThreadFingerprint != null) 'textThread': textThreadFingerprint,
+    if (audioFallbackPolicy != GalAudioFallbackPolicy.full)
+      'audioFallback': audioFallbackPolicy.storageKey,
+    if (lunaAudioPreRollMs != null) 'lunaAudioPreRollMs': lunaAudioPreRollMs,
+    if (lunaAudioTailTrimMs != null) 'lunaAudioTailTrimMs': lunaAudioTailTrimMs,
+    if (attachMode != null) 'attachMode': attachMode!.storageKey,
+  };
 }
 
 /// [GalCaptureMemory] 的持久化端口（由
 /// [GalHookSessionController.attachCaptureMemory] 注入）。gameKey 是游戏 exe 全路径小写：
 /// launch 直接取得，attach 从用户所选 PID 反查，不要求游戏已导入 Fushi。
 typedef GalCaptureMemoryLoad = GalCaptureMemory Function(String gameKey);
-typedef GalCaptureMemorySave = void Function(
-  String gameKey,
-  GalCaptureMemory memory,
-);
+typedef GalCaptureMemorySave =
+    void Function(String gameKey, GalCaptureMemory memory);
 
 /// 会话级选轨 / 排除是否真的影响取音（纯函数，可单测）。
 ///
@@ -419,8 +417,7 @@ class GalTrackPreview {
 String galTrackPreviewFileName({
   required int sourcePtr,
   required int timestampMs,
-}) =>
-    'gal_track_preview_${sourcePtr.toRadixString(16)}_$timestampMs.wav';
+}) => 'gal_track_preview_${sourcePtr.toRadixString(16)}_$timestampMs.wav';
 
 enum GalHookEventSeverity { info, success, warning, error }
 
@@ -549,16 +546,18 @@ class GalHookSessionState {
           : sessionStartedAt ?? this.sessionStartedAt,
       audioBackend: audioBackend ?? this.audioBackend,
       audioFormat: clearAudioFormat ? null : audioFormat ?? this.audioFormat,
-      fallbackReason:
-          clearFallbackReason ? null : fallbackReason ?? this.fallbackReason,
+      fallbackReason: clearFallbackReason
+          ? null
+          : fallbackReason ?? this.fallbackReason,
       // 降级原因与降级本身同生共死：clearFallbackReason 时必须一起复位，否则会话恢复后
       // 还挂着上一次的失败原因。
       injectorFailure: clearFallbackReason
           ? GalHookInjectorFailure.none
           : injectorFailure ?? this.injectorFailure,
       // 证据跟着原因走：原因复位了还留着上一次的 win32 码只会误导排障。
-      injectorDetail:
-          clearFallbackReason ? '' : injectorDetail ?? this.injectorDetail,
+      injectorDetail: clearFallbackReason
+          ? ''
+          : injectorDetail ?? this.injectorDetail,
       lastError: clearLastError ? null : lastError ?? this.lastError,
       textSignalReceived: textSignalReceived ?? this.textSignalReceived,
       textGapCount: textGapCount ?? this.textGapCount,
@@ -586,20 +585,21 @@ const List<Duration> kGalEngineRetryBackoff = <Duration>[
   Duration(seconds: 20),
 ];
 
-typedef GalEngineSourceFactory = EngineHookGalAudioSource Function({
-  required int targetPid,
-  required String? launchExe,
-  required String injectorPath,
-  required bool lunaPcHooks,
-  int? lunaCodepage,
-  // launch 专用且可选：attach 路径（引擎重试、窗口绑定）不传，行为不变。
-  List<String> launchArguments,
-  String launchWorkdir,
-  // BUG-1477：该游戏的日语区域（转区）档位。以前整条 UI→source 的通路上**根本没有
-  // 这个形参**，所以不是「忘了传」而是没有这个自由度——汉化版被强制转区后闪退，
-  // 用户无法自救。attach 路径不传，转区在 source 侧必然短路（launchMode 为首个合取项）。
-  GalJapaneseLocaleMode japaneseLocaleMode,
-});
+typedef GalEngineSourceFactory =
+    EngineHookGalAudioSource Function({
+      required int targetPid,
+      required String? launchExe,
+      required String injectorPath,
+      required bool lunaPcHooks,
+      int? lunaCodepage,
+      // launch 专用且可选：attach 路径（引擎重试、窗口绑定）不传，行为不变。
+      List<String> launchArguments,
+      String launchWorkdir,
+      // BUG-1477：该游戏的日语区域（转区）档位。以前整条 UI→source 的通路上**根本没有
+      // 这个形参**，所以不是「忘了传」而是没有这个自由度——汉化版被强制转区后闪退，
+      // 用户无法自救。attach 路径不传，转区在 source 侧必然短路（launchMode 为首个合取项）。
+      GalJapaneseLocaleMode japaneseLocaleMode,
+    });
 typedef GalLoopbackSourceFactory = LoopbackGalAudioSource Function();
 typedef GalTargetWow64Probe = Future<bool?> Function(int pid);
 typedef GalExe32BitProbe = Future<bool?> Function(String path);
@@ -670,46 +670,49 @@ class GalHookSessionController extends ChangeNotifier {
     List<TexthookerEndpointStatus> Function()? endpointStatusLoader,
     GalHookActivityWriter? activityWriter,
     GalgamePlayTrackerFactory? playTrackerFactory,
-  })  : _textService = textService ?? TexthookerService.instance,
-        _activityWriter = activityWriter,
-        _playTrackerFactory = playTrackerFactory ?? _defaultPlayTrackerFactory,
-        _engineSourceFactory = engineSourceFactory ?? _defaultEngineFactory,
-        _loopbackSourceFactory =
-            loopbackSourceFactory ?? LoopbackGalAudioSource.new,
-        _targetWow64Probe =
-            targetWow64Probe ?? EngineHookGalAudioSource.targetIsWow64,
-        _targetImagePathProbe = targetImagePathProbe ?? _defaultTargetImagePath,
-        _exe32BitProbe = exe32BitProbe ?? EngineHookGalAudioSource.exeIs32Bit,
-        _windowListLoader =
-            windowListLoader ?? WindowCaptureChannel.listWindows,
-        _injectorResolver = injectorResolver ?? defaultInjectorResolver,
-        _now = now ?? DateTime.now,
-        _isWindows = isWindows ?? Platform.isWindows,
-        _textPollInterval = textPollInterval,
-        _windowPollInterval = windowPollInterval,
-        _resourceAudioWait = resourceAudioWait,
-        _resourceAudioPollInterval = resourceAudioPollInterval,
-        _windowPollAttempts = windowPollAttempts,
-        _windowRebindInterval = windowRebindInterval,
-        _trackRefreshInterval = trackRefreshInterval,
-        _loopbackFreezeDelay = loopbackFreezeDelay,
-        _utteranceSettleInterval = utteranceSettleInterval,
-        _utteranceSettleMax = utteranceSettleMax,
-        _lunaLoopbackMaxDuration = lunaLoopbackMaxDuration,
-        _lunaLoopbackDefaultPreRollMs =
-            lunaLoopbackPreRollMs.clamp(0, 1000).toInt(),
-        _lunaLoopbackPreRollMs = lunaLoopbackPreRollMs.clamp(0, 1000).toInt(),
-        _lunaLoopbackDefaultTailTrimMs =
-            lunaLoopbackTailTrimMs.clamp(0, 1000).toInt(),
-        _lunaLoopbackTailTrimMs = lunaLoopbackTailTrimMs.clamp(0, 1000).toInt(),
-        _engineRetryBackoff = engineRetryBackoff,
-        _endpointListenable =
-            endpointListenable ?? TexthookerWsClientManager.instance,
-        _endpointStatusLoader = endpointStatusLoader ??
-            (() => TexthookerWsClientManager.instance.endpointStatuses) {
+  }) : _textService = textService ?? TexthookerService.instance,
+       _activityWriter = activityWriter,
+       _playTrackerFactory = playTrackerFactory ?? _defaultPlayTrackerFactory,
+       _engineSourceFactory = engineSourceFactory ?? _defaultEngineFactory,
+       _loopbackSourceFactory =
+           loopbackSourceFactory ?? LoopbackGalAudioSource.new,
+       _targetWow64Probe =
+           targetWow64Probe ?? EngineHookGalAudioSource.targetIsWow64,
+       _targetImagePathProbe = targetImagePathProbe ?? _defaultTargetImagePath,
+       _exe32BitProbe = exe32BitProbe ?? EngineHookGalAudioSource.exeIs32Bit,
+       _windowListLoader = windowListLoader ?? WindowCaptureChannel.listWindows,
+       _injectorResolver = injectorResolver ?? defaultInjectorResolver,
+       _now = now ?? DateTime.now,
+       _isWindows = isWindows ?? Platform.isWindows,
+       _textPollInterval = textPollInterval,
+       _windowPollInterval = windowPollInterval,
+       _resourceAudioWait = resourceAudioWait,
+       _resourceAudioPollInterval = resourceAudioPollInterval,
+       _windowPollAttempts = windowPollAttempts,
+       _windowRebindInterval = windowRebindInterval,
+       _trackRefreshInterval = trackRefreshInterval,
+       _loopbackFreezeDelay = loopbackFreezeDelay,
+       _utteranceSettleInterval = utteranceSettleInterval,
+       _utteranceSettleMax = utteranceSettleMax,
+       _lunaLoopbackMaxDuration = lunaLoopbackMaxDuration,
+       _lunaLoopbackDefaultPreRollMs = lunaLoopbackPreRollMs
+           .clamp(0, 1000)
+           .toInt(),
+       _lunaLoopbackPreRollMs = lunaLoopbackPreRollMs.clamp(0, 1000).toInt(),
+       _lunaLoopbackDefaultTailTrimMs = lunaLoopbackTailTrimMs
+           .clamp(0, 1000)
+           .toInt(),
+       _lunaLoopbackTailTrimMs = lunaLoopbackTailTrimMs.clamp(0, 1000).toInt(),
+       _engineRetryBackoff = engineRetryBackoff,
+       _endpointListenable =
+           endpointListenable ?? TexthookerWsClientManager.instance,
+       _endpointStatusLoader =
+           endpointStatusLoader ??
+           (() => TexthookerWsClientManager.instance.endpointStatuses) {
     final List<TexthookerLineEntry> initialEntries = _textService.entries;
-    _lastObservedLineId =
-        initialEntries.isEmpty ? null : initialEntries.last.id;
+    _lastObservedLineId = initialEntries.isEmpty
+        ? null
+        : initialEntries.last.id;
     _state = _state.copyWith(textSignalReceived: initialEntries.isNotEmpty);
     _textService.addListener(_onTextBufferChanged);
     _endpointListenable.addListener(_onEndpointStatusChanged);
@@ -771,20 +774,24 @@ class GalHookSessionController extends ChangeNotifier {
   GalHookSessionState get state => _state;
   List<TexthookerLineEntry> get lines => _textService.entries;
   List<TexthookerTextThread> get textThreads {
-    final List<TexthookerTextThread> native =
-        _textService.textThreadsSince(_state.sessionStartedAt);
+    final List<TexthookerTextThread> native = _textService.textThreadsSince(
+      _state.sessionStartedAt,
+    );
     // 没有捕获会话时不污染普通外部文本页面；会话开始后始终提供 Luna 入口，
     // 因而即使 Fushi 内置 Hook 一条候选都找不到，首次设置弹窗仍然可自救。
     final DateTime? startedAt = _state.sessionStartedAt;
     if (startedAt == null) return native;
     final List<TexthookerLineEntry> lunaLines = _textService.entries
-        .where((TexthookerLineEntry entry) =>
-            !entry.receivedAt.isBefore(startedAt) &&
-            entry.source == TexthookerLineSource.websocket &&
-            isLunaTranslatorOriginEndpoint(entry.sourceLabel ?? ''))
+        .where(
+          (TexthookerLineEntry entry) =>
+              !entry.receivedAt.isBefore(startedAt) &&
+              entry.source == TexthookerLineSource.websocket &&
+              isLunaTranslatorOriginEndpoint(entry.sourceLabel ?? ''),
+        )
         .toList();
-    final TexthookerLineEntry? latest =
-        lunaLines.isEmpty ? null : lunaLines.last;
+    final TexthookerLineEntry? latest = lunaLines.isEmpty
+        ? null
+        : lunaLines.last;
     final TexthookerTextThread luna = TexthookerTextThread(
       key: lunaExternalTextThreadKey,
       label: 'LunaTranslator',
@@ -792,8 +799,9 @@ class GalHookSessionController extends ChangeNotifier {
       observedLineCount: lunaLines.length,
       latestAt: latest?.receivedAt ?? startedAt,
       latestText: latest?.text,
-      audioLineCount:
-          lunaLines.where((TexthookerLineEntry line) => line.hasAudio).length,
+      audioLineCount: lunaLines
+          .where((TexthookerLineEntry line) => line.hasAudio)
+          .length,
     );
     return <TexthookerTextThread>[luna, ...native];
   }
@@ -886,14 +894,25 @@ class GalHookSessionController extends ChangeNotifier {
     return key == selectedKey || claimedKeys.contains(key);
   }
 
-  /// 捕获工作台当前应展示的正式行。过滤判据见 [_publishesUnderSelection]；
-  /// 捕获中额外只看本次会话，避免上一个进程的台词混进当前工作台。
-  List<TexthookerLineEntry> get workbenchLines {
+  /// 「本局当前可用的台词行」——**工作台展示与游戏内制卡共用这一份**。
+  ///
+  /// 这两处过去各写各的，且在 `sessionStartedAt == null` 时方向相反：展示那份不过滤、
+  /// 照常显示，制卡那份直接返回空。于是用户在工作台**看得见台词**，游戏内点「制卡」却
+  /// 因为拿到空列表而静默失败（BUG-1734；Ren'Py 上实测：同一句台词，工作台点词能写出
+  /// Anki 卡，游戏内卡片点「+」零反应）。
+  ///
+  /// 两个语义上必须同答案的判据分叉，本身就是 bug 的形状；所以合成一个，
+  /// 而不是给制卡那条打补丁。`startedAt` 为空时按「还没开始计会话，不做时间过滤」处理，
+  /// 与工作台原有的可见行为一致——真正的修复是**消除分歧**，不是改变用户看到的东西。
+  List<TexthookerLineEntry> get _sessionScopedLines {
     final String? selectedKey = selectedTextThreadKey;
     final DateTime? startedAt = _state.sessionStartedAt;
     Iterable<TexthookerLineEntry> scoped = _textService.entries.where(
       (TexthookerLineEntry entry) => _publishesUnderSelection(
-          entry, selectedKey, _selectedThreadClaimedKeys),
+        entry,
+        selectedKey,
+        _selectedThreadClaimedKeys,
+      ),
     );
     if (startedAt != null) {
       scoped = scoped.where(
@@ -902,6 +921,9 @@ class GalHookSessionController extends ChangeNotifier {
     }
     return List<TexthookerLineEntry>.unmodifiable(scoped);
   }
+
+  /// 捕获工作台当前应展示的正式行。
+  List<TexthookerLineEntry> get workbenchLines => _sessionScopedLines;
 
   String? get selectedTextThreadKey {
     final String? selected = _selectedTextThreadKey;
@@ -924,22 +946,9 @@ class GalHookSessionController extends ChangeNotifier {
 
   /// 当前捕获会话、当前线程的有效行。历史缓冲仍保留在 [lines]，但浮窗和场景
   /// 制卡只允许消费这里的行，防止跨会话或跨线程借用上下文。
-  List<TexthookerLineEntry> get selectedSessionLines {
-    final DateTime? startedAt = _state.sessionStartedAt;
-    if (startedAt == null) return const <TexthookerLineEntry>[];
-    final String? selectedKey = selectedTextThreadKey;
-    return List<TexthookerLineEntry>.unmodifiable(
-      _textService.entries.where(
-        (TexthookerLineEntry entry) =>
-            _publishesUnderSelection(
-              entry,
-              selectedKey,
-              _selectedThreadClaimedKeys,
-            ) &&
-            !entry.receivedAt.isBefore(startedAt),
-      ),
-    );
-  }
+  /// 游戏内制卡回溯台词行时用的集合。与 [workbenchLines] **必须是同一份**——
+  /// 见 [_sessionScopedLines] 的说明（BUG-1734）。
+  List<TexthookerLineEntry> get selectedSessionLines => _sessionScopedLines;
 
   TexthookerLineEntry? entryById(String lineId) =>
       _textService.entryById(lineId);
@@ -961,6 +970,9 @@ class GalHookSessionController extends ChangeNotifier {
 
   GalAudioSource? _audioSource;
   EngineHookGalAudioSource? _engineSource;
+  // Engine constructed and possibly injecting, but not yet promoted to the
+  // active text/audio source. Policy changes must include this window.
+  EngineHookGalAudioSource? _startingEngineSource;
   Timer? _textPollTimer;
   Timer? _trackRefreshTimer;
   // BUG-1049：launch 后游戏窗口尚未出现时的重绑监视（见 [_startWindowRebindWatch]）。
@@ -1006,6 +1018,9 @@ class GalHookSessionController extends ChangeNotifier {
   /// 绕过采集期的调用方（既有测试与 WebSocket/剪贴板等无 helper 来源）保持原行为。
   final Set<String> _selectedThreadClaimedKeys = <String>{};
   final SerialJobQueue _audioQueue = SerialJobQueue();
+  final SerialJobQueue _audioFallbackPolicyQueue = SerialJobQueue();
+  Future<void> _audioFallbackPolicyApply = Future<void>.value();
+  int _audioFallbackPolicyRevision = 0;
   final Set<String> _loopbackCacheInFlight = <String>{};
 
   /// 逐行 loopback「延迟冻结」定时器（BUG-1101）：lineId → 到点后把环形缓冲冻结成该行
@@ -1060,8 +1075,7 @@ class GalHookSessionController extends ChangeNotifier {
   final Map<String, int> _lineTimestampCache = <String, int>{};
   final Map<String, int> _lineTextEventIdCache = <String, int>{};
   final Map<String, ({int timestampMs, int textEventId})>
-      _pendingResourceMatches =
-      <String, ({int timestampMs, int textEventId})>{};
+  _pendingResourceMatches = <String, ({int timestampMs, int textEventId})>{};
 
   // ── 游戏活动记账（首页「游戏」活动的字符侧写入方；时长侧见 _playTracker）──
   /// 纯累计器：把 hook 文本行累计成活跃时长 + 字符数（挂机间隔封顶，见其实现）。
@@ -1129,12 +1143,11 @@ class GalHookSessionController extends ChangeNotifier {
     required String gameId,
     required String gameDirectory,
     required GalgamePlaySessionSink onSessionEnded,
-  }) =>
-      GalgamePlayTracker(
-        gameId: gameId,
-        gameDirectory: gameDirectory,
-        onSessionEnded: onSessionEnded,
-      );
+  }) => GalgamePlayTracker(
+    gameId: gameId,
+    gameDirectory: gameDirectory,
+    onSessionEnded: onSessionEnded,
+  );
 
   static EngineHookGalAudioSource _defaultEngineFactory({
     required int targetPid,
@@ -1156,6 +1169,33 @@ class GalHookSessionController extends ChangeNotifier {
       lunaCodepage: lunaCodepage,
       japaneseLocaleMode: japaneseLocaleMode,
     );
+  }
+
+  GalNativeLoopbackPolicy get _desiredNativeLoopbackPolicy =>
+      _state.audioFallbackPolicy.allowsLoopback
+      ? GalNativeLoopbackPolicy.allow
+      : GalNativeLoopbackPolicy.deny;
+
+  EngineHookGalAudioSource _trackStartingEngine(
+    EngineHookGalAudioSource engine,
+  ) {
+    // Synchronous and before start(): this value is embedded in the injector
+    // command line, so clean/resource-only sessions never briefly start the
+    // injected WASAPI capture worker under a permissive default.
+    engine.rememberNativeLoopbackPolicy(_desiredNativeLoopbackPolicy);
+    _startingEngineSource = engine;
+    return engine;
+  }
+
+  void _clearStartingEngine(EngineHookGalAudioSource engine) {
+    if (identical(_startingEngineSource, engine)) {
+      _startingEngineSource = null;
+    }
+  }
+
+  Future<void> _stopEngine(EngineHookGalAudioSource engine) async {
+    _clearStartingEngine(engine);
+    await engine.stop();
   }
 
   /// 复用 [GalgameWindowsProcessProbe]（`QueryFullProcessImageNameW`）而不是再写
@@ -1342,17 +1382,19 @@ class GalHookSessionController extends ChangeNotifier {
     final String? injector = await _injectorResolver(is32Bit: is32Bit ?? false);
     if (injector != null && window.pid > 0) {
       _setState(_state.copyWith(phase: GalHookSessionPhase.injecting));
-      final EngineHookGalAudioSource engine = _engineSourceFactory(
-        targetPid: window.pid,
-        launchExe: null,
-        injectorPath: injector,
-        // BUG-1267 — 从 PID 反查 exe 后走与 launch 相同的判据，别再写死 false。
-        lunaPcHooks: _lunaPcHooksForPid(window.pid),
+      final EngineHookGalAudioSource engine = _trackStartingEngine(
+        _engineSourceFactory(
+          targetPid: window.pid,
+          launchExe: null,
+          injectorPath: injector,
+          // BUG-1267 — 从 PID 反查 exe 后走与 launch 相同的判据，别再写死 false。
+          lunaPcHooks: _lunaPcHooksForPid(window.pid),
+        ),
       );
       await _attachPersistedHookProfiles(engine);
       final PcmFormat? format = await engine.start();
       if (generation != _operationGeneration) {
-        await engine.stop();
+        await _stopEngine(engine);
         return;
       }
       if (format != null) {
@@ -1377,7 +1419,7 @@ class GalHookSessionController extends ChangeNotifier {
       }
       // 诊断必须在 stop() 之前取：stop 只负责杀进程，失败原因由本次 start 定格。
       final GalHookInjectorDiagnostics diagnostics = engine.lastFailure;
-      await engine.stop();
+      await _stopEngine(engine);
       _record(
         GalHookEventSeverity.warning,
         'audio',
@@ -1513,20 +1555,22 @@ class GalHookSessionController extends ChangeNotifier {
         'hasWorkdir': workdir.isNotEmpty,
       },
     );
-    final EngineHookGalAudioSource engine = _engineSourceFactory(
-      targetPid: 0,
-      launchExe: executablePath,
-      launchArguments: launchArguments,
-      launchWorkdir: workdir,
-      injectorPath: injector,
-      lunaPcHooks: lunaPcHooks,
-      japaneseLocaleMode: japaneseLocaleMode,
+    final EngineHookGalAudioSource engine = _trackStartingEngine(
+      _engineSourceFactory(
+        targetPid: 0,
+        launchExe: executablePath,
+        launchArguments: launchArguments,
+        launchWorkdir: workdir,
+        injectorPath: injector,
+        lunaPcHooks: lunaPcHooks,
+        japaneseLocaleMode: japaneseLocaleMode,
+      ),
     );
     await _attachPersistedHookProfiles(engine);
     _setState(_state.copyWith(phase: GalHookSessionPhase.injecting));
     final PcmFormat? format = await engine.start();
     if (generation != _operationGeneration) {
-      await engine.stop();
+      await _stopEngine(engine);
       return const GalHookLaunchResult.failed(
         GalHookLaunchFailureReason.superseded,
       );
@@ -1538,7 +1582,7 @@ class GalHookSessionController extends ChangeNotifier {
       // 用户面前明明有个游戏窗口，Hibiki 却停在终态错误，只能手动去「捕获目标」重绑。
       // 改为保留会话、降级到 Loopback，并按退避表重试附着。
       final int? runningPid = engine.launchedPid;
-      await engine.stop();
+      await _stopEngine(engine);
       if (runningPid != null) {
         _record(
           GalHookEventSeverity.warning,
@@ -1618,9 +1662,11 @@ class GalHookSessionController extends ChangeNotifier {
     }
     ExternalWindowInfo? window;
     if (gamePid != null) {
-      for (int attempt = 0;
-          attempt < _windowPollAttempts && window == null;
-          attempt++) {
+      for (
+        int attempt = 0;
+        attempt < _windowPollAttempts && window == null;
+        attempt++
+      ) {
         final List<ExternalWindowInfo> windows = await _windowListLoader();
         for (final ExternalWindowInfo candidate in windows) {
           if (candidate.pid == gamePid) {
@@ -1717,15 +1763,15 @@ class GalHookSessionController extends ChangeNotifier {
       _windowRebindTimer = null;
       final bool degradedForWindow =
           _state.phase == GalHookSessionPhase.degraded &&
-              _state.fallbackReason == 'window_not_found';
+          _state.fallbackReason == 'window_not_found';
       _setState(
         _state.copyWith(
           boundWindow: candidate,
           gamePid: gamePid,
           phase: degradedForWindow
               ? (_state.textSignalReceived
-                  ? GalHookSessionPhase.running
-                  : GalHookSessionPhase.waitingSignals)
+                    ? GalHookSessionPhase.running
+                    : GalHookSessionPhase.waitingSignals)
               : _state.phase,
           clearFallbackReason: degradedForWindow,
         ),
@@ -1824,8 +1870,10 @@ class GalHookSessionController extends ChangeNotifier {
     final List<GalAudioTrack> tracks = await engine.listAudioTracks(timestamp);
     // await 期间会话可能已停止/重启：旧 engine 的快照不落地（同 BUG-950 范式）。
     if (engine != _engineSource) return;
-    final bool membershipChanged =
-        !sameTrackMembership(_state.audioTracks, tracks);
+    final bool membershipChanged = !sameTrackMembership(
+      _state.audioTracks,
+      tracks,
+    );
     _setState(_state.copyWith(audioTracks: tracks));
     if (tracks.isNotEmpty && !_trackMemoryApplied) {
       _trackMemoryApplied = true;
@@ -1943,10 +1991,14 @@ class GalHookSessionController extends ChangeNotifier {
         '${dir.path}${Platform.pathSeparator}'
         '${galTrackPreviewFileName(sourcePtr: sourcePtr, timestampMs: timestamp)}',
       );
-      await out.writeAsBytes(buildWavBytes(slice.pcm, slice.format),
-          flush: true);
-      final int durationMs =
-          pcmDurationMs(slice.pcm.length, slice.format.byteRate);
+      await out.writeAsBytes(
+        buildWavBytes(slice.pcm, slice.format),
+        flush: true,
+      );
+      final int durationMs = pcmDurationMs(
+        slice.pcm.length,
+        slice.format.byteRate,
+      );
       _record(
         GalHookEventSeverity.info,
         'audio',
@@ -1985,12 +2037,14 @@ class GalHookSessionController extends ChangeNotifier {
   Future<GalTrackPreview?> exportLineAudioPreview(String lineId) async {
     final EngineHookGalAudioSource? engine = _engineSource;
     // 用户裁决过的行只播它自己的冻结切片，绝不回头播资源原件。
-    final String? resourceId =
-        _isUserAdjudicated(lineId) ? null : _resourceIdForLine(lineId);
+    final String? resourceId = _isUserAdjudicated(lineId)
+        ? null
+        : _resourceIdForLine(lineId);
     if (engine != null && resourceId != null) {
       // BUG-1109：hook 可能还在写这个原件，直接播会听到被截断的半句。
-      final String? path =
-          await engine.settledPairedVoiceFilePathForResourceId(resourceId);
+      final String? path = await engine.settledPairedVoiceFilePathForResourceId(
+        resourceId,
+      );
       if (path != null) {
         return GalTrackPreview(filePath: path, durationMs: 0);
       }
@@ -2006,8 +2060,10 @@ class GalHookSessionController extends ChangeNotifier {
         final File out = File(
           '${dir.path}${Platform.pathSeparator}gal_line_preview_$lineId.wav',
         );
-        await out.writeAsBytes(buildWavBytes(slice.pcm, slice.format),
-            flush: true);
+        await out.writeAsBytes(
+          buildWavBytes(slice.pcm, slice.format),
+          flush: true,
+        );
         return GalTrackPreview(
           filePath: out.path,
           durationMs: pcmDurationMs(slice.pcm.length, slice.format.byteRate),
@@ -2099,12 +2155,28 @@ class GalHookSessionController extends ChangeNotifier {
       );
       return false;
     }
+    if (!_state.audioFallbackPolicy.allowsLoopback) {
+      _record(
+        GalHookEventSeverity.info,
+        'audio',
+        'audio.recapture_suppressed_by_policy',
+        'Manual system-loopback recapture is disabled by the audio fallback '
+            'policy',
+        details: <String, Object?>{
+          'lineId': lineId,
+          'policy': _state.audioFallbackPolicy.storageKey,
+        },
+      );
+      return false;
+    }
     LoopbackGalAudioSource? temp;
     if (_audioSource is! LoopbackGalAudioSource) {
-      temp = _loopbackSourceFactory();
-      final PcmFormat? format = await temp.start();
-      if (format == null) {
-        await temp.stop();
+      final (LoopbackGalAudioSource, PcmFormat)? started =
+          await _startLoopbackIfAllowed(
+            sessionGeneration: _operationGeneration,
+            policyRevision: _audioFallbackPolicyRevision,
+          );
+      if (started == null) {
         _record(
           GalHookEventSeverity.error,
           'audio',
@@ -2114,6 +2186,7 @@ class GalHookSessionController extends ChangeNotifier {
         );
         return false;
       }
+      temp = started.$1;
     }
     _recaptureTempSource = temp;
     _recapturingLineId = lineId;
@@ -2169,8 +2242,9 @@ class GalHookSessionController extends ChangeNotifier {
         return false;
       }
       // 回取长度只由本次窗口的**真实已用时间**决定，上限是环的真实容量。
-      final int backMs =
-          elapsedMs.clamp(_recaptureMinBackMs, _loopbackRingCapacityMs).toInt();
+      final int backMs = elapsedMs
+          .clamp(_recaptureMinBackMs, _loopbackRingCapacityMs)
+          .toInt();
       final GalAudioSlice? slice = await _audioQueue.enqueue<GalAudioSlice?>(
         () => source.grabRecent(backMs),
         buildFailure: (Object error, StackTrace stack) => null,
@@ -2332,16 +2406,19 @@ class GalHookSessionController extends ChangeNotifier {
         _selectedTextThreadFaceId = line.faceId;
       }
     }
-    final List<GalHookedLine> history = poll.lines
-        .where((GalHookedLine line) =>
-            line.eventKind == GalTextEventKind.line &&
-            line.seq <= _lastTextSeq &&
-            !appended.contains(line.seq) &&
-            line.text.trim().isNotEmpty &&
-            !isGalgameSystemUiLine(line.text) &&
-            _acceptsLineFromSelectedThread(line))
-        .toList()
-      ..sort((GalHookedLine a, GalHookedLine b) => a.seq.compareTo(b.seq));
+    final List<GalHookedLine> history =
+        poll.lines
+            .where(
+              (GalHookedLine line) =>
+                  line.eventKind == GalTextEventKind.line &&
+                  line.seq <= _lastTextSeq &&
+                  !appended.contains(line.seq) &&
+                  line.text.trim().isNotEmpty &&
+                  !isGalgameSystemUiLine(line.text) &&
+                  _acceptsLineFromSelectedThread(line),
+            )
+            .toList()
+          ..sort((GalHookedLine a, GalHookedLine b) => a.seq.compareTo(b.seq));
     if (history.isEmpty) return;
     for (final GalHookedLine line in history) {
       final TexthookerLineEntry? entry = _textService.appendLine(
@@ -2367,10 +2444,7 @@ class GalHookSessionController extends ChangeNotifier {
       'text',
       'text.thread_history_recovered',
       'Recovered buffered lines from the newly selected text thread',
-      details: <String, Object?>{
-        'threadId': selected,
-        'lines': history.length,
-      },
+      details: <String, Object?>{'threadId': selected, 'lines': history.length},
     );
   }
 
@@ -2389,10 +2463,12 @@ class GalHookSessionController extends ChangeNotifier {
     final bool selected =
         engine == null || await engine.selectTextThread(threadId);
     if (selected) {
-      _selectedTextThreadKey =
-          threadKey == null || threadKey.isEmpty ? null : threadKey;
-      _selectedNativeTextThreadId =
-          threadId == null || threadId == 0 ? null : threadId;
+      _selectedTextThreadKey = threadKey == null || threadKey.isEmpty
+          ? null
+          : threadKey;
+      _selectedNativeTextThreadId = threadId == null || threadId == 0
+          ? null
+          : threadId;
       // 换线程就必须丢掉上一条线程的 hook 面，否则旧 face 会继续放行旧线程的行。
       _selectedTextThreadFaceId = 0;
       // 认领集合用选定 key 自身播种：绕过采集期直接塞行的来源（无 helper 的
@@ -2762,8 +2838,8 @@ class GalHookSessionController extends ChangeNotifier {
     List<GalAudioTrack> tracks,
   ) {
     if (!_ensureCaptureMemoryLoaded() || _captureMemory.isEmpty) return;
-    final Set<String> excludedFps =
-        _captureMemory.excludedTrackFingerprints.toSet();
+    final Set<String> excludedFps = _captureMemory.excludedTrackFingerprints
+        .toSet();
     final String? voiceFp = _captureMemory.voiceTrackFingerprint;
     int excluded = 0;
     int? restoredVoicePtr;
@@ -2813,8 +2889,8 @@ class GalHookSessionController extends ChangeNotifier {
     if (!_ensureCaptureMemoryLoaded()) return;
     final String? fingerprint = _fingerprintForSourcePtr(sourcePtr);
     if (fingerprint == null) return; // 快照里已不存在的轨谈不上指纹。
-    final Set<String> fingerprints =
-        _captureMemory.excludedTrackFingerprints.toSet();
+    final Set<String> fingerprints = _captureMemory.excludedTrackFingerprints
+        .toSet();
     final bool changed = excluded
         ? fingerprints.add(fingerprint)
         : fingerprints.remove(fingerprint);
@@ -2898,8 +2974,9 @@ class GalHookSessionController extends ChangeNotifier {
   /// 用户显式选定/取消文本线程后同步持久化（null = 未选择，清掉记忆）。
   void _persistTextThread(TexthookerTextThread? thread) {
     if (!_ensureCaptureMemoryLoaded()) return;
-    final String? fingerprint =
-        thread == null ? null : textThreadFingerprint(thread);
+    final String? fingerprint = thread == null
+        ? null
+        : textThreadFingerprint(thread);
     if (fingerprint == null) {
       if (_captureMemory.textThreadFingerprint == null) return;
       _saveCaptureMemory(_captureMemory.copyWith(clearTextThread: true));
@@ -3009,8 +3086,9 @@ class GalHookSessionController extends ChangeNotifier {
     // 自动结果不对；这里再去等资源配对会把用户选定的那段直接顶掉。两种裁决共用一条
     // 分支，只有 backend 标签不同——它必须如实说明字节到底来自哪条链路。
     final int? overriddenTrack = _lineVoiceSourcePtr[lineId];
-    final GalAudioSlice? adjudicated =
-        _isUserAdjudicated(lineId) ? _lineVoiceCache[lineId] : null;
+    final GalAudioSlice? adjudicated = _isUserAdjudicated(lineId)
+        ? _lineVoiceCache[lineId]
+        : null;
     if (adjudicated != null && !adjudicated.isEmpty) {
       return _encodeLineSlice(
         lineId: lineId,
@@ -3084,7 +3162,15 @@ class GalHookSessionController extends ChangeNotifier {
     // 但**报什么**必须按证据来：抑制掉唯一可用音源不等于「这句没配音」，
     // 见 [_classifySuppressedLoopbackMiss]。
     final bool loopbackSourced = source is LoopbackGalAudioSource;
-    if (loopbackSourced && !_state.audioFallbackPolicy.allowsLoopback) {
+    // Clean-policy transitions deliberately stop the loopback source. When no
+    // clean engine PCM is ready, `_audioSource` is therefore null even though
+    // the suppressed fallback is still the only source the session could have
+    // used. Keep that case on the same evidence-based suppression path instead
+    // of mislabelling it as a generic cache miss.
+    final bool loopbackSuppressed =
+        !_state.audioFallbackPolicy.allowsLoopback &&
+        (loopbackSourced || (source == null && engine != null));
+    if (loopbackSuppressed) {
       final String reason = await _classifySuppressedLoopbackMiss(
         lineId: lineId,
         engine: engine,
@@ -3115,7 +3201,8 @@ class GalHookSessionController extends ChangeNotifier {
         engine != null &&
         identical(source, engine) &&
         timestamp > 0) {
-      slice = await engine.grabUtterance(timestamp) ??
+      slice =
+          await engine.grabUtterance(timestamp) ??
           await engine.grabClipNear(timestamp);
     }
     if (slice == null || slice.isEmpty) {
@@ -3123,8 +3210,8 @@ class GalHookSessionController extends ChangeNotifier {
       // 是否有候选轨在响」区分无配音与疑似漏抓，别一律顶红标。
       final String reason =
           engine != null && identical(source, engine) && timestamp > 0
-              ? await _classifyEnginePcmMiss(engine, timestamp)
-              : 'line_audio_not_cached';
+          ? await _classifyEnginePcmMiss(engine, timestamp, lineId: lineId)
+          : 'line_audio_not_cached';
       _markLineAudioMissing(lineId, reason);
       return null;
     }
@@ -3133,8 +3220,9 @@ class GalHookSessionController extends ChangeNotifier {
       slice: slice,
       backend: identical(source, engine) ? 'engine_pcm' : 'system_loopback',
       outputExtension: outputExtension,
-      fallbackReason:
-          timestamp > 0 ? 'paired_voice_not_found' : 'no_engine_timestamp',
+      fallbackReason: timestamp > 0
+          ? 'paired_voice_not_found'
+          : 'no_engine_timestamp',
     );
   }
 
@@ -3148,7 +3236,8 @@ class GalHookSessionController extends ChangeNotifier {
     required int durationMs,
     required String? fallbackReason,
   }) {
-    final bool userAdjudicated = fallbackReason == 'manual_recapture' ||
+    final bool userAdjudicated =
+        fallbackReason == 'manual_recapture' ||
         fallbackReason == 'manual_track_override';
     if (!userAdjudicated && durationMs > kGalOverlongSliceSuspectMs) {
       return kGalOverlongSliceSuspectReason;
@@ -3273,9 +3362,40 @@ class GalHookSessionController extends ChangeNotifier {
     return null;
   }
 
-  /// 用户切换降级策略：立即生效 + 按游戏记住。已排定的 loopback 冻结定时器必须
-  /// 一并取消——策略改成「不许混音」的那一刻，还在等窗口到点的冻结就是待落地的
-  /// 混音，留着等于让用户的选择晚一句才生效。
+  Future<void> _applyNativeLoopbackPolicyToLiveEngines({
+    required GalNativeLoopbackPolicy policy,
+    required int sessionGeneration,
+    required int policyRevision,
+  }) async {
+    final Set<EngineHookGalAudioSource> engines =
+        HashSet<EngineHookGalAudioSource>.identity();
+    final EngineHookGalAudioSource? starting = _startingEngineSource;
+    final EngineHookGalAudioSource? active = _engineSource;
+    final GalAudioSource? audio = _audioSource;
+    if (starting != null) engines.add(starting);
+    if (active != null) engines.add(active);
+    if (audio is EngineHookGalAudioSource) engines.add(audio);
+    for (final EngineHookGalAudioSource engine in engines) {
+      final bool applied = await engine.requestNativeLoopbackPolicy(policy);
+      if (sessionGeneration != _operationGeneration ||
+          policyRevision != _audioFallbackPolicyRevision) {
+        return;
+      }
+      if (!applied) {
+        throw StateError(
+          'native loopback policy ${policy.cliValue} was not acknowledged',
+        );
+      }
+    }
+  }
+
+  /// 用户切换降级策略：立即生效 + 按游戏记住。
+  ///
+  /// “不把 loopback 用于入卡”不够：[GalAudioFallbackPolicy.cleanOnly] /
+  /// [GalAudioFallbackPolicy.resourceOnly] 表示进程回环根本不应在录。因此切换
+  /// 除了取消待冻结的切片，还会停掉活跃/临时 loopback；切回 [full]
+  /// 时只在当前活跃会话确实需要降级源时重启。公开 API 保持同步更新状态，
+  /// 实际 stop/start 在专用串行队列里收敛。
   void setAudioFallbackPolicy(GalAudioFallbackPolicy policy) {
     if (_state.audioFallbackPolicy == policy) return;
     _setState(_state.copyWith(audioFallbackPolicy: policy));
@@ -3288,7 +3408,56 @@ class GalHookSessionController extends ChangeNotifier {
       'Audio fallback policy changed to ${policy.storageKey}',
       details: <String, Object?>{'policy': policy.storageKey},
     );
+    final int revision = ++_audioFallbackPolicyRevision;
+    final int sessionGeneration = _operationGeneration;
+    _audioFallbackPolicyApply = _audioFallbackPolicyQueue
+        .enqueue<bool>(
+          () async {
+            if (revision != _audioFallbackPolicyRevision ||
+                sessionGeneration != _operationGeneration) {
+              return true;
+            }
+            if (policy.allowsLoopback) {
+              await _applyNativeLoopbackPolicyToLiveEngines(
+                policy: GalNativeLoopbackPolicy.allow,
+                sessionGeneration: sessionGeneration,
+                policyRevision: revision,
+              );
+              await _enableLoopbackForFullPolicy(
+                sessionGeneration: sessionGeneration,
+                policyRevision: revision,
+              );
+            } else {
+              // Stop host-side process loopback immediately; a starting engine may
+              // still need to reach Open before its injected worker can ack deny.
+              await _disableLoopbackForCleanPolicy(
+                policy: policy,
+                sessionGeneration: sessionGeneration,
+                policyRevision: revision,
+              );
+              await _applyNativeLoopbackPolicyToLiveEngines(
+                policy: GalNativeLoopbackPolicy.deny,
+                sessionGeneration: sessionGeneration,
+                policyRevision: revision,
+              );
+            }
+            return true;
+          },
+          buildFailure: (Object error, StackTrace stack) => false,
+          onError: (Object error, StackTrace stack) => _record(
+            GalHookEventSeverity.error,
+            'audio',
+            'audio.fallback_policy_apply_failed',
+            'Failed to apply the audio fallback policy to the live source',
+            details: <String, Object?>{'error': '$error'},
+          ),
+        )
+        .then<void>((bool _) {});
+    unawaited(_audioFallbackPolicyApply);
   }
+
+  @visibleForTesting
+  Future<void> debugWaitForAudioFallbackPolicy() => _audioFallbackPolicyApply;
 
   /// 会话启动时把上次为这个游戏选的策略套回来（没有记忆 = 保持 [GalAudioFallbackPolicy.full]）。
   void _restoreAudioFallbackPolicy() {
@@ -3296,7 +3465,9 @@ class GalHookSessionController extends ChangeNotifier {
     final GalAudioFallbackPolicy remembered =
         _captureMemory.audioFallbackPolicy;
     if (remembered == _state.audioFallbackPolicy) return;
+    ++_audioFallbackPolicyRevision;
     _setState(_state.copyWith(audioFallbackPolicy: remembered));
+    if (!remembered.allowsLoopback) _cancelLoopbackFreezes();
     _record(
       GalHookEventSeverity.info,
       'audio',
@@ -3386,8 +3557,9 @@ class GalHookSessionController extends ChangeNotifier {
     _magpieUpscaling = service;
     // **注入即登记退出清理**：桌面点 X 走 `exit(0)`，没有任何 dispose / close 会帮我们
     // 收。登记点必须就在这里而不是调用方，否则「以后谁再注入一次」就又会漏掉。
-    _magpieExitFlush ??=
-        ExitFlushRegistry.instance.register(shutdownMagpieUpscaling);
+    _magpieExitFlush ??= ExitFlushRegistry.instance.register(
+      shutdownMagpieUpscaling,
+    );
   }
 
   /// 窗口超分编排器（UI 订阅它显示超分状态）。未注入 / 非 Windows 时为 null，
@@ -3424,8 +3596,9 @@ class GalHookSessionController extends ChangeNotifier {
     tracker.start(mainPid: mainPid ?? 0);
     // 桌面点 X 走 `exit(0)` 快杀，[close] 不会被调用；与超分同款，登记退出 flush
     // 把结算写穿再放进程死（登记点就在启动处，换人再启动也不会漏）。
-    _playTrackerExitFlush ??=
-        ExitFlushRegistry.instance.register(_stopPlayTracker);
+    _playTrackerExitFlush ??= ExitFlushRegistry.instance.register(
+      _stopPlayTracker,
+    );
   }
 
   /// 停止游玩计时并等待结算落库完成。幂等；无在跑计时器时是空操作。
@@ -3570,17 +3743,16 @@ class GalHookSessionController extends ChangeNotifier {
       required String dateKey,
       required int timestampMs,
       required int charsDelta,
-    }) =>
-        database.addActivityEvent(
-          eventType: kActivityGame,
-          mediaType: kActivityMediaGame,
-          title: title,
-          mediaKey: mediaKey,
-          dateKey: dateKey,
-          timestampMs: timestampMs,
-          // durationMs 刻意不传（留 null）：时长由 GalgamePlayTracker 独立写行。
-          charsDelta: charsDelta,
-        );
+    }) => database.addActivityEvent(
+      eventType: kActivityGame,
+      mediaType: kActivityMediaGame,
+      title: title,
+      mediaKey: mediaKey,
+      dateKey: dateKey,
+      timestampMs: timestampMs,
+      // durationMs 刻意不传（留 null）：时长由 GalgamePlayTracker 独立写行。
+      charsDelta: charsDelta,
+    );
   }
 
   Future<void> _safeWriteActivity({
@@ -3641,6 +3813,188 @@ class GalHookSessionController extends ChangeNotifier {
     _syncTrackAutoRefresh();
   }
 
+  /// 启动 process loopback 的唯一入口。策略在 `start` 前后各检一次：
+  /// MethodChannel/native 启动是异步的，用户可能在 await 期间切到 cleanOnly，
+  /// 旧启动完成后必须当场 stop，不得在新策略下“复活”。会话代次同理。
+  Future<(LoopbackGalAudioSource, PcmFormat)?> _startLoopbackIfAllowed({
+    required int sessionGeneration,
+    required int policyRevision,
+  }) async {
+    if (sessionGeneration != _operationGeneration ||
+        policyRevision != _audioFallbackPolicyRevision ||
+        !_state.audioFallbackPolicy.allowsLoopback) {
+      return null;
+    }
+    final LoopbackGalAudioSource loopback = _loopbackSourceFactory();
+    final PcmFormat? format = await loopback.start();
+    if (format == null ||
+        sessionGeneration != _operationGeneration ||
+        policyRevision != _audioFallbackPolicyRevision ||
+        !_state.audioFallbackPolicy.allowsLoopback) {
+      await loopback.stop();
+      return null;
+    }
+    return (loopback, format);
+  }
+
+  Future<void> _disableLoopbackForCleanPolicy({
+    required GalAudioFallbackPolicy policy,
+    required int sessionGeneration,
+    required int policyRevision,
+  }) async {
+    // 补录可能持有一只不在 _audioSource 里的临时 loopback，必须一起停。
+    await finishLineRecapture(discard: true);
+    if (sessionGeneration != _operationGeneration ||
+        policyRevision != _audioFallbackPolicyRevision ||
+        _state.audioFallbackPolicy != policy) {
+      return;
+    }
+    final GalAudioSource? previous = _audioSource;
+    if (previous is! LoopbackGalAudioSource) return;
+    _audioSource = null;
+    await previous.stop();
+    if (sessionGeneration != _operationGeneration ||
+        policyRevision != _audioFallbackPolicyRevision ||
+        _state.audioFallbackPolicy != policy) {
+      return;
+    }
+
+    final EngineHookGalAudioSource? engine = _engineSource;
+    final bool resourcePrimary =
+        engine != null &&
+        (_state.audioBackend == GalHookAudioBackend.gameResource ||
+            engine.rawVoiceReady);
+    final PcmFormat? cleanPcm = engine != null && policy.allowsEnginePcm
+        ? engine.readyPcmFormat
+        : null;
+    if (resourcePrimary) {
+      _audioSource = engine;
+      _setState(
+        _state.copyWith(
+          phase: _state.textSignalReceived
+              ? GalHookSessionPhase.running
+              : GalHookSessionPhase.waitingSignals,
+          audioBackend: GalHookAudioBackend.gameResource,
+          clearAudioFormat: true,
+        ),
+      );
+    } else if (engine != null && cleanPcm != null) {
+      _audioSource = engine;
+      _setState(
+        _state.copyWith(
+          phase: _state.textSignalReceived
+              ? GalHookSessionPhase.running
+              : GalHookSessionPhase.waitingSignals,
+          audioBackend: GalHookAudioBackend.enginePcm,
+          audioFormat: cleanPcm,
+        ),
+      );
+    } else {
+      _setState(
+        _state.copyWith(
+          phase: GalHookSessionPhase.degraded,
+          audioBackend: GalHookAudioBackend.none,
+          clearAudioFormat: true,
+        ),
+      );
+    }
+    _record(
+      GalHookEventSeverity.info,
+      'audio',
+      'audio.loopback_stopped_by_policy',
+      'System loopback capture stopped because the fallback policy disallows '
+          'mixed audio',
+      details: <String, Object?>{'policy': policy.storageKey},
+    );
+    _syncTrackAutoRefresh();
+  }
+
+  Future<void> _enableLoopbackForFullPolicy({
+    required int sessionGeneration,
+    required int policyRevision,
+  }) async {
+    if (sessionGeneration != _operationGeneration ||
+        policyRevision != _audioFallbackPolicyRevision ||
+        !_state.audioFallbackPolicy.allowsLoopback ||
+        _audioSource is LoopbackGalAudioSource) {
+      return;
+    }
+    // 会话还在解析/注入时由后续 _activate* 决定来源；空闲/结束态更不得
+    // 因为改了一个设置就单独拉起 WASAPI。
+    if (_state.phase == GalHookSessionPhase.idle ||
+        _state.phase == GalHookSessionPhase.resolving ||
+        _state.phase == GalHookSessionPhase.launching ||
+        _state.phase == GalHookSessionPhase.attaching ||
+        _state.phase == GalHookSessionPhase.injecting ||
+        _state.phase == GalHookSessionPhase.stopping ||
+        _state.phase == GalHookSessionPhase.error) {
+      return;
+    }
+    final EngineHookGalAudioSource? engine = _engineSource;
+    final bool resourcePrimary =
+        engine != null &&
+        (_state.audioBackend == GalHookAudioBackend.gameResource ||
+            engine.rawVoiceReady);
+    final bool enginePcmPrimary =
+        engine != null &&
+        identical(_audioSource, engine) &&
+        _state.audioBackend == GalHookAudioBackend.enginePcm;
+    final bool textOnlyNeedsFallback =
+        engine != null &&
+        !resourcePrimary &&
+        !enginePcmPrimary &&
+        engine.readyPcmFormat == null;
+    final bool engineMissingNeedsFallback =
+        engine == null &&
+        _state.phase == GalHookSessionPhase.degraded &&
+        _state.audioBackend == GalHookAudioBackend.none;
+    if (!resourcePrimary &&
+        !textOnlyNeedsFallback &&
+        !engineMissingNeedsFallback) {
+      return;
+    }
+    final GalAudioSource? previous = _audioSource;
+    final (LoopbackGalAudioSource, PcmFormat)? started =
+        await _startLoopbackIfAllowed(
+          sessionGeneration: sessionGeneration,
+          policyRevision: policyRevision,
+        );
+    if (started == null) return;
+    if (!identical(_audioSource, previous)) {
+      await started.$1.stop();
+      return;
+    }
+    _audioSource = started.$1;
+    if (resourcePrimary) {
+      _setState(
+        _state.copyWith(
+          audioBackend: GalHookAudioBackend.gameResource,
+          clearAudioFormat: true,
+        ),
+      );
+    } else {
+      _setState(
+        _state.copyWith(
+          phase: GalHookSessionPhase.degraded,
+          audioBackend: GalHookAudioBackend.systemLoopback,
+          audioFormat: started.$2,
+        ),
+      );
+    }
+    _record(
+      GalHookEventSeverity.warning,
+      'audio',
+      'audio.loopback_started_by_policy',
+      'System loopback capture started because the full fallback policy is '
+          'active',
+      details: <String, Object?>{
+        'sampleRate': started.$2.sampleRate,
+        'channels': started.$2.channels,
+      },
+    );
+    _syncTrackAutoRefresh();
+  }
+
   /// 原始游戏资源音频是首选，系统回环只作为某句没有资源文件时的兜底。资源 hook 本身
   /// 不提供 PCM 环，因此两条来源必须同时保活：[_engineSource] 负责文本/资源配对，
   /// [_audioSource] 优先持回环（启动失败则保留 engine 空 PCM 源，资源制卡仍可继续）。
@@ -3649,15 +4003,18 @@ class GalHookSessionController extends ChangeNotifier {
     EngineHookGalAudioSource engine, {
     int? gamePid,
   }) async {
-    final LoopbackGalAudioSource loopback = _loopbackSourceFactory();
-    final PcmFormat? fallbackFormat = await loopback.start();
+    final int policyRevision = _audioFallbackPolicyRevision;
+    final (LoopbackGalAudioSource, PcmFormat)? started =
+        await _startLoopbackIfAllowed(
+          sessionGeneration: generation,
+          policyRevision: policyRevision,
+        );
     if (generation != _operationGeneration) {
-      await loopback.stop();
-      await engine.stop();
+      await started?.$1.stop();
+      await _stopEngine(engine);
       return;
     }
-    if (fallbackFormat == null) await loopback.stop();
-    _audioSource = fallbackFormat == null ? engine : loopback;
+    _audioSource = started?.$1 ?? engine;
     _startEngineTextPolling(engine);
     _setState(
       _state.copyWith(
@@ -3676,7 +4033,7 @@ class GalHookSessionController extends ChangeNotifier {
       'Game resource audio is primary; system loopback is fallback only',
       details: <String, Object?>{
         'pid': gamePid,
-        'loopbackAvailable': fallbackFormat != null,
+        'loopbackAvailable': started != null,
       },
     );
     _syncTrackAutoRefresh();
@@ -3697,17 +4054,20 @@ class GalHookSessionController extends ChangeNotifier {
     EngineHookGalAudioSource engine, {
     int? gamePid,
   }) async {
-    final LoopbackGalAudioSource loopback = _loopbackSourceFactory();
-    final PcmFormat? format = await loopback.start();
+    final int policyRevision = _audioFallbackPolicyRevision;
+    final (LoopbackGalAudioSource, PcmFormat)? started =
+        await _startLoopbackIfAllowed(
+          sessionGeneration: generation,
+          policyRevision: policyRevision,
+        );
     if (generation != _operationGeneration) {
-      await loopback.stop();
-      await engine.stop();
+      await started?.$1.stop();
+      await _stopEngine(engine);
       return false;
     }
-    if (format == null) {
-      await loopback.stop();
-    }
-    _audioSource = format == null ? null : loopback;
+    final PcmFormat? format = started?.$2;
+    final bool loopbackDisabled = !_state.audioFallbackPolicy.allowsLoopback;
+    _audioSource = started?.$1;
     _startEngineTextPolling(engine);
     _setState(
       _state.copyWith(
@@ -3718,16 +4078,18 @@ class GalHookSessionController extends ChangeNotifier {
         audioFormat: format,
         clearAudioFormat: format == null,
         gamePid: gamePid,
-        fallbackReason: format == null
-            ? 'all_audio_sources_failed'
-            : 'engine_pcm_unavailable',
+        fallbackReason: format != null
+            ? 'engine_pcm_unavailable'
+            : loopbackDisabled
+            ? 'engine_pcm_unavailable_fallback_disabled'
+            : 'all_audio_sources_failed',
         // 文本 hook 已就绪 = 注入这条链是通的：不能把上一次注入失败的原因留在状态里，
         // 否则 UI 会一直显示「需要管理员权限」之类早已不成立的处置。
         injectorFailure: GalHookInjectorFailure.none,
-        lastError: format == null
+        lastError: format == null && !loopbackDisabled
             ? 'Text hook is ready, but no audio capture source could be started'
             : null,
-        clearLastError: format != null,
+        clearLastError: format != null || loopbackDisabled,
       ),
     );
     _record(
@@ -3738,19 +4100,26 @@ class GalHookSessionController extends ChangeNotifier {
       details: <String, Object?>{'pid': gamePid, 'audioMode': 'text_only'},
     );
     _record(
-      format == null
+      format == null && !loopbackDisabled
           ? GalHookEventSeverity.error
+          : loopbackDisabled
+          ? GalHookEventSeverity.info
           : GalHookEventSeverity.warning,
       'audio',
-      format == null
-          ? 'audio.all_sources_failed'
-          : 'audio.hybrid_loopback_active',
-      format == null
-          ? 'Text capture is active, but no audio source is available'
-          : 'Text hook is active with system loopback audio',
+      format != null
+          ? 'audio.hybrid_loopback_active'
+          : loopbackDisabled
+          ? 'audio.loopback_suppressed_by_policy'
+          : 'audio.all_sources_failed',
+      format != null
+          ? 'Text hook is active with system loopback audio'
+          : loopbackDisabled
+          ? 'Text hook is active; system loopback is disabled by policy'
+          : 'Text capture is active, but no audio source is available',
       details: <String, Object?>{
         if (format != null) 'sampleRate': format.sampleRate,
         if (format != null) 'channels': format.channels,
+        if (loopbackDisabled) 'policy': _state.audioFallbackPolicy.storageKey,
       },
     );
     _syncTrackAutoRefresh();
@@ -3758,6 +4127,7 @@ class GalHookSessionController extends ChangeNotifier {
   }
 
   void _startEngineTextPolling(EngineHookGalAudioSource engine) {
+    _clearStartingEngine(engine);
     _engineSource = engine;
     _lastTextSeq = 0;
     _pollInFlight = false;
@@ -3847,32 +4217,56 @@ class GalHookSessionController extends ChangeNotifier {
     GalHookInjectorFailure failure = GalHookInjectorFailure.none,
     String detail = '',
   }) async {
-    final LoopbackGalAudioSource loopback = _loopbackSourceFactory();
-    final PcmFormat? format = await loopback.start();
+    final int policyRevision = _audioFallbackPolicyRevision;
+    final (LoopbackGalAudioSource, PcmFormat)? started =
+        await _startLoopbackIfAllowed(
+          sessionGeneration: generation,
+          policyRevision: policyRevision,
+        );
     if (generation != _operationGeneration) {
-      await loopback.stop();
+      await started?.$1.stop();
       return;
     }
+    final PcmFormat? format = started?.$2;
+    final bool loopbackDisabled = !_state.audioFallbackPolicy.allowsLoopback;
     if (format == null) {
-      await loopback.stop();
+      _audioSource = null;
+      _engineSource = null;
       _setState(
         _state.copyWith(
           phase: GalHookSessionPhase.degraded,
           audioBackend: GalHookAudioBackend.none,
-          fallbackReason: 'all_audio_sources_failed',
-          lastError: 'No audio capture source could be started',
+          fallbackReason: loopbackDisabled
+              ? fallbackReason
+              : 'all_audio_sources_failed',
+          injectorFailure: failure,
+          injectorDetail: detail,
+          lastError: loopbackDisabled
+              ? null
+              : 'No audio capture source could be started',
+          clearLastError: loopbackDisabled,
           clearAudioFormat: true,
         ),
       );
       _record(
-        GalHookEventSeverity.error,
+        loopbackDisabled
+            ? GalHookEventSeverity.info
+            : GalHookEventSeverity.error,
         'audio',
-        'audio.all_sources_failed',
-        'Engine hook and system loopback are both unavailable',
+        loopbackDisabled
+            ? 'audio.loopback_suppressed_by_policy'
+            : 'audio.all_sources_failed',
+        loopbackDisabled
+            ? 'Engine hook is unavailable; system loopback is disabled by '
+                  'policy'
+            : 'Engine hook and system loopback are both unavailable',
+        details: <String, Object?>{
+          if (loopbackDisabled) 'policy': _state.audioFallbackPolicy.storageKey,
+        },
       );
       return;
     }
-    _audioSource = loopback;
+    _audioSource = started!.$1;
     _engineSource = null;
     _setState(
       _state.copyWith(
@@ -3967,20 +4361,23 @@ class GalHookSessionController extends ChangeNotifier {
     try {
       final bool? is32Bit = await _targetWow64Probe(pid);
       if (generation != _operationGeneration) return;
-      final String? injector =
-          await _injectorResolver(is32Bit: is32Bit ?? false);
+      final String? injector = await _injectorResolver(
+        is32Bit: is32Bit ?? false,
+      );
       if (injector == null) return; // helper 缺失：重试不可能变好
-      final EngineHookGalAudioSource engine = _engineSourceFactory(
-        targetPid: pid,
-        launchExe: null,
-        injectorPath: injector,
-        // BUG-1267 — 引擎重试同样走 PID→exe 判据，否则重试会把首次的 PC hooks 丢掉。
-        lunaPcHooks: _lunaPcHooksForPid(pid),
+      final EngineHookGalAudioSource engine = _trackStartingEngine(
+        _engineSourceFactory(
+          targetPid: pid,
+          launchExe: null,
+          injectorPath: injector,
+          // BUG-1267 — 引擎重试同样走 PID→exe 判据，否则重试会把首次的 PC hooks 丢掉。
+          lunaPcHooks: _lunaPcHooksForPid(pid),
+        ),
       );
       await _attachPersistedHookProfiles(engine);
       final PcmFormat? format = await engine.start();
       if (generation != _operationGeneration) {
-        await engine.stop();
+        await _stopEngine(engine);
         return;
       }
       if (format != null || engine.textHookReady) {
@@ -3994,7 +4391,7 @@ class GalHookSessionController extends ChangeNotifier {
         return;
       }
       final GalHookInjectorDiagnostics diagnostics = engine.lastFailure;
-      await engine.stop();
+      await _stopEngine(engine);
       _record(
         GalHookEventSeverity.warning,
         'inject',
@@ -4005,11 +4402,7 @@ class GalHookSessionController extends ChangeNotifier {
           ...diagnostics.toDetails(),
         },
       );
-      _scheduleEngineRecovery(
-        generation,
-        pid: pid,
-        diagnostics: diagnostics,
-      );
+      _scheduleEngineRecovery(generation, pid: pid, diagnostics: diagnostics);
     } finally {
       _engineRetryInFlight = false;
     }
@@ -4028,7 +4421,7 @@ class GalHookSessionController extends ChangeNotifier {
     _audioSource = null;
     await previous?.stop();
     if (generation != _operationGeneration) {
-      await engine.stop();
+      await _stopEngine(engine);
       return;
     }
     _engineRetryAttempt = 0;
@@ -4080,6 +4473,8 @@ class GalHookSessionController extends ChangeNotifier {
     _windowRebindInFlight = false;
     _pollInFlight = false;
     _lastReadinessRefreshAt = null;
+    final EngineHookGalAudioSource? startingEngine = _startingEngineSource;
+    _startingEngineSource = null;
     final EngineHookGalAudioSource? engine = _engineSource;
     _engineSource = null;
     _lastTextSeq = 0;
@@ -4093,10 +4488,13 @@ class GalHookSessionController extends ChangeNotifier {
     _pendingResourceMatches.clear();
     final GalAudioSource? source = _audioSource;
     _audioSource = null;
-    if (engine != null && !identical(engine, source)) {
-      await engine.stop();
+    final Set<GalAudioSource> sources = HashSet<GalAudioSource>.identity();
+    if (startingEngine != null) sources.add(startingEngine);
+    if (engine != null) sources.add(engine);
+    if (source != null) sources.add(source);
+    for (final GalAudioSource captureSource in sources) {
+      await captureSource.stop();
     }
-    await source?.stop();
   }
 
   /// 拉一次 native 线程预览快照并合进线程目录。
@@ -4105,8 +4503,8 @@ class GalHookSessionController extends ChangeNotifier {
   /// 补偿逻辑。native 不支持（旧 helper）返回 null，此时选择器退回旧行为（只有已发布
   /// 线程有内容）——不崩，只是选不动，与升级 helper 前的现状一致。
   Future<void> _pollThreadPreviews(EngineHookGalAudioSource engine) async {
-    final List<GalTextThreadPreview>? previews =
-        await engine.pollThreadPreviews();
+    final List<GalTextThreadPreview>? previews = await engine
+        .pollThreadPreviews();
     if (previews == null || engine != _engineSource) return;
     _textService.applyTextThreadPreviews(<TexthookerThreadPreview>[
       for (final GalTextThreadPreview preview in previews)
@@ -4161,6 +4559,25 @@ class GalHookSessionController extends ChangeNotifier {
             'Text sequence gap detected',
             details: <String, Object?>{'from': cursor, 'to': line.seq},
           );
+        }
+        // 重连到一个仍在运行、仍已注入的游戏时，旧的 threadDiscovered 事件不会重放。
+        // 如果这里直接执行下面的“未选中就丢”过滤，自定义 hook（SGRE 的 UserHook1
+        // 即为实测现场）虽然持续把正文写进文本环，却永远不会重新进入线程目录，跨会话
+        // 记忆也就永远达不到恢复门槛。先用正文元数据补目录/观测计数；正文是否发布仍由
+        // _acceptsLineFromSelectedThread 独占裁决，不会把噪声线程灌进工作台。
+        if (line.eventKind == GalTextEventKind.line) {
+          final String? threadKey = line.textThreadKey;
+          final String? threadLabel = line.textThreadLabel;
+          if (threadKey != null && threadLabel != null) {
+            _textService.observeTextThreadLine(
+              key: threadKey,
+              label: threadLabel,
+              text: line.text,
+              hookCode: line.hookCode.isEmpty ? null : line.hookCode,
+              nativeThreadId: line.threadId == 0 ? null : line.threadId,
+            );
+            _maybeRestoreTextThread();
+          }
         }
         // v13 消费期线程过滤。native 现在把**每条线程**的行都写进各自的道（这正是"多抓
         // 文本"要的：换线程后旧行仍在、选错线程不再等于那段语音永久孤儿），所以喂进
@@ -4399,10 +4816,7 @@ class GalHookSessionController extends ChangeNotifier {
           'match',
           'audio.line_attach_exception',
           'Line audio attach job failed',
-          details: <String, Object?>{
-            'lineId': entry.id,
-            'error': '$error',
-          },
+          details: <String, Object?>{'lineId': entry.id, 'error': '$error'},
         ),
       );
       // BUG-1109：首取只拿到这句语音的开头，剩下的段还没进环。收敛必须在队列**之外**
@@ -4420,10 +4834,7 @@ class GalHookSessionController extends ChangeNotifier {
           'match',
           'audio.utterance_settle_exception',
           'Utterance settle loop failed',
-          details: <String, Object?>{
-            'lineId': entry.id,
-            'error': '$error',
-          },
+          details: <String, Object?>{'lineId': entry.id, 'error': '$error'},
         );
       }
     }());
@@ -4510,7 +4921,7 @@ class GalHookSessionController extends ChangeNotifier {
     }
   }
 
-  /// 收敛因「下一句到达」而收手时的**封口 grab**（BUG-1475）。
+  /// 收敛因「下一句到达」而收手时的**封口 grab**（BUG-1475 / BUG-1710）。
   ///
   /// 从最后一次成功 grab 到下一句到达之间，最多有一个 [_utteranceSettleInterval]
   /// （250ms）的 PCM 已经进了共享内存环、却从未被读出来。这段数据的时间戳**严格早于**
@@ -4523,6 +4934,10 @@ class GalHookSessionController extends ChangeNotifier {
   ///   资源升格这几种终止意味着这行的所有权已经不在收敛手上，此时再写缓存就是越权。
   /// * 前向窗口用下一句的 ts 收口（`endTsMs`），BUG-1109 的不变量原样保住。
   /// * 仍然只在**更长**时才写回：缓存单调变长的性质不变。
+  /// * 某些 XAudio2 引擎（SGRE）先发布下一句文本，随后才 DestroyVoice；XAPO 的整句
+  ///   PCM 要等 DestroyVoice 才安全发布。因此首个封口 grab 可能合法地为空。此时最多
+  ///   再等四个 [_utteranceSettleInterval]（默认总窗 1s）；每次都带同一个下一句 ts
+  ///   上界，既能接住晚发布的上一句，也绝不会把下一句语音拼进去。
   Future<void> _closingUtteranceGrab({
     required EngineHookGalAudioSource engine,
     required TexthookerLineEntry entry,
@@ -4530,7 +4945,8 @@ class GalHookSessionController extends ChangeNotifier {
     required int bestBytes,
   }) async {
     // 除「下一句到达」之外的任何一条不成立 ⇒ 所有权已易主，不补。
-    final bool onlyNextLineArrived = engine == _engineSource &&
+    bool stillOwnsClosingGrab() =>
+        engine == _engineSource &&
         identical(_audioSource, engine) &&
         isLineInCurrentSession(entry) &&
         _recapturingLineId == null &&
@@ -4538,31 +4954,35 @@ class GalHookSessionController extends ChangeNotifier {
         _resourceIdForLine(entry.id) == null &&
         !_pendingResourceMatches.containsKey(entry.id) &&
         _lastTextSeq > line.seq;
-    if (!onlyNextLineArrived) return;
+    if (!stillOwnsClosingGrab()) return;
     final int? nextTs = _nextLineTimestampAfter(line.seq);
     if (nextTs == null || nextTs <= line.timestampMs) return;
-    final GalAudioSlice? closing = await _audioQueue.enqueue<GalAudioSlice?>(
-      () => engine.grabUtterance(line.timestampMs, endTsMs: nextTs),
-      buildFailure: (Object error, StackTrace stack) => null,
-    );
-    if (closing == null || closing.isEmpty) return;
-    if (closing.pcm.length <= bestBytes) return;
-    // 等待期间仍可能夹进一次易主，写回前再核一次。
-    if (_recapturingLineId != null ||
-        _isUserAdjudicated(entry.id) ||
-        _resourceIdForLine(entry.id) != null ||
-        _pendingResourceMatches.containsKey(entry.id) ||
-        !identical(_audioSource, engine)) {
+    for (int attempt = 0; attempt < 5; attempt++) {
+      if (attempt != 0) {
+        await Future<void>.delayed(_utteranceSettleInterval);
+        if (!stillOwnsClosingGrab()) return;
+      }
+      final GalAudioSlice? closing = await _audioQueue.enqueue<GalAudioSlice?>(
+        () => engine.grabUtterance(line.timestampMs, endTsMs: nextTs),
+        buildFailure: (Object error, StackTrace stack) => null,
+      );
+      if (closing == null ||
+          closing.isEmpty ||
+          closing.pcm.length <= bestBytes) {
+        continue;
+      }
+      // 等待/队列期间仍可能夹进一次易主，写回前再核一次。
+      if (!stillOwnsClosingGrab()) return;
+      _lineVoiceCache[entry.id] = closing;
+      _trimCache(_lineVoiceCache);
+      _textService.updateLineAudio(
+        entry.id,
+        status: TexthookerLineAudioStatus.matched,
+        backend: 'engine_pcm',
+        durationMs: (closing.pcm.length * 1000) ~/ closing.format.byteRate,
+      );
       return;
     }
-    _lineVoiceCache[entry.id] = closing;
-    _trimCache(_lineVoiceCache);
-    _textService.updateLineAudio(
-      entry.id,
-      status: TexthookerLineAudioStatus.matched,
-      backend: 'engine_pcm',
-      durationMs: (closing.pcm.length * 1000) ~/ closing.format.byteRate,
-    );
   }
 
   /// 已消费行里 seq **紧接** [seq] 之后那一行的时间戳；没有则 null。
@@ -4630,7 +5050,8 @@ class GalHookSessionController extends ChangeNotifier {
     // 文本 helper 在 Loopback 降级会话中仍然保活，但它暴露的残留/未通过门控 PCM 不能
     // 覆盖真正的逐行 Loopback 缓存（下方 _cacheLoopbackForLine 分支）。
     if (!resourceReady && identical(_audioSource, engine)) {
-      clip = await engine.grabUtterance(line.timestampMs) ??
+      clip =
+          await engine.grabUtterance(line.timestampMs) ??
           await engine.grabClipNear(line.timestampMs);
       if (engine != _engineSource) return;
     }
@@ -4674,7 +5095,11 @@ class GalHookSessionController extends ChangeNotifier {
               engine: engine,
               timestampMs: line.timestampMs,
             )
-          : await _classifyEnginePcmMiss(engine, line.timestampMs);
+          : await _classifyEnginePcmMiss(
+              engine,
+              line.timestampMs,
+              lineId: entry.id,
+            );
       if (engine != _engineSource || !isLineInCurrentSession(entry)) return;
       _textService.updateLineAudio(
         entry.id,
@@ -4683,20 +5108,20 @@ class GalHookSessionController extends ChangeNotifier {
       );
       final (GalHookEventSeverity, String, String) event = switch (reason) {
         kGalLineNoVoiceReason => (
-            GalHookEventSeverity.info,
-            'audio.line_no_voice',
-            'No PCM was active at this line; treating it as unvoiced',
-          ),
+          GalHookEventSeverity.info,
+          'audio.line_no_voice',
+          'No PCM was active at this line; treating it as unvoiced',
+        ),
         kGalCleanSourceSuppressedReason => (
-            GalHookEventSeverity.info,
-            'audio.loopback_suppressed',
-            'System loopback audio was suppressed by the clean-source policy',
-          ),
+          GalHookEventSeverity.info,
+          'audio.loopback_suppressed',
+          'System loopback audio was suppressed by the clean-source policy',
+        ),
         _ => (
-            GalHookEventSeverity.warning,
-            'audio.utterance_not_found',
-            'No engine utterance matched the captured line',
-          ),
+          GalHookEventSeverity.warning,
+          'audio.utterance_not_found',
+          'No engine utterance matched the captured line',
+        ),
       };
       _record(
         event.$1,
@@ -4717,12 +5142,19 @@ class GalHookSessionController extends ChangeNotifier {
   /// 这样旁白/选项句不再顶着「missing」红标吓人，真正的抓取失败也不会被无配音淹没。
   Future<String> _classifyEnginePcmMiss(
     EngineHookGalAudioSource engine,
-    int timestampMs,
-  ) async {
+    int timestampMs, {
+    String? lineId,
+  }) async {
+    // 资源原件仍在配对窗内，本身就是「这句本该有语音」的直接证据；
+    // 切掉 loopback 后不能因 PCM 轨暂时为空就把它降格成「无配音」。
+    if (lineId != null && _pendingResourceMatches.containsKey(lineId)) {
+      return 'utterance_not_found';
+    }
     if (timestampMs <= 0) return 'utterance_not_found';
     try {
-      final List<GalAudioTrack> tracks =
-          await engine.listAudioTracks(timestampMs);
+      final List<GalAudioTrack> tracks = await engine.listAudioTracks(
+        timestampMs,
+      );
       return _hasSoundingCandidateTrack(engine, tracks)
           ? 'utterance_not_found'
           : kGalLineNoVoiceReason;
@@ -4777,8 +5209,9 @@ class GalHookSessionController extends ChangeNotifier {
     }
     if (engine != null && timestampMs > 0) {
       try {
-        final List<GalAudioTrack> tracks =
-            await engine.listAudioTracks(timestampMs);
+        final List<GalAudioTrack> tracks = await engine.listAudioTracks(
+          timestampMs,
+        );
         if (tracks.isNotEmpty) {
           return _hasSoundingCandidateTrack(engine, tracks)
               ? 'utterance_not_found'
@@ -4913,13 +5346,13 @@ class GalHookSessionController extends ChangeNotifier {
 
   int _loopbackPreRollFor(TexthookerLineEntry entry) =>
       _isLunaExternalLine(entry)
-          ? _lunaLoopbackPreRollMs
-          : _defaultLoopbackPreRollMs;
+      ? _lunaLoopbackPreRollMs
+      : _defaultLoopbackPreRollMs;
 
   Duration _loopbackFreezeDelayFor(TexthookerLineEntry entry) =>
       _isLunaExternalLine(entry)
-          ? _lunaLoopbackMaxDuration
-          : _loopbackFreezeDelay;
+      ? _lunaLoopbackMaxDuration
+      : _loopbackFreezeDelay;
 
   /// Luna 没有语音时间戳：新原文到达是上一句唯一稳定的自动边界。
   /// 立即取 `[previousText-preRoll, currentText]`，不再等固定 4 秒。
@@ -4943,8 +5376,9 @@ class GalHookSessionController extends ChangeNotifier {
     final int elapsedMs = boundaryAt.difference(startedAt).inMilliseconds;
     final int preRollMs =
         _loopbackPreRollMsByLine[previousLineId] ?? _loopbackPreRollFor(entry);
-    final int desiredBackMs =
-        (elapsedMs + preRollMs).clamp(1, _loopbackRingCapacityMs).toInt();
+    final int desiredBackMs = (elapsedMs + preRollMs)
+        .clamp(1, _loopbackRingCapacityMs)
+        .toInt();
     final int requestedTailTrimMs =
         _loopbackTailTrimMsByLine[previousLineId] ?? _lunaLoopbackTailTrimMs;
     // 极短跳句时也至少保留 1ms，不能因为用户的常规 200ms 设置把整句裁成空。
@@ -5021,8 +5455,9 @@ class GalHookSessionController extends ChangeNotifier {
     final int preRollMs = _loopbackPreRollFor(entry);
     _loopbackFreezeStartedAt[entry.id] = _now();
     _loopbackPreRollMsByLine[entry.id] = preRollMs;
-    _loopbackTailTrimMsByLine[entry.id] =
-        _isLunaExternalLine(entry) ? _lunaLoopbackTailTrimMs : 0;
+    _loopbackTailTrimMsByLine[entry.id] = _isLunaExternalLine(entry)
+        ? _lunaLoopbackTailTrimMs
+        : 0;
     _trimCache(_loopbackFreezeStartedAt);
     _trimCache(_loopbackPreRollMsByLine);
     _trimCache(_loopbackTailTrimMsByLine);
@@ -5083,8 +5518,9 @@ class GalHookSessionController extends ChangeNotifier {
       return;
     }
     final DateTime? startedAt = _loopbackFreezeStartedAt[lineId];
-    final int elapsedMs =
-        startedAt == null ? 0 : _now().difference(startedAt).inMilliseconds;
+    final int elapsedMs = startedAt == null
+        ? 0
+        : _now().difference(startedAt).inMilliseconds;
     final int preRollMs =
         _loopbackPreRollMsByLine[lineId] ?? _loopbackPreRollFor(entry);
     final int minBackMs = _isLunaExternalLine(entry) ? 1 : _loopbackMinBackMs;
@@ -5130,30 +5566,32 @@ class GalHookSessionController extends ChangeNotifier {
     final int preRollMs =
         _loopbackPreRollMsByLine[entry.id] ?? _loopbackPreRollFor(entry);
     final int fullBackMs = freezeDelay.inMilliseconds + preRollMs;
-    _loopbackFreezeTimers[entry.id] =
-        Timer(Duration(milliseconds: remainingMs), () {
-      _loopbackFreezeTimers.remove(entry.id);
-      unawaited(
-        _audioQueue.enqueue<bool>(
-          () async {
-            await _cacheLoopbackForLine(
-              entry,
-              backMs: fullBackMs,
-              onlyIfLonger: true,
-            );
-            return true;
-          },
-          buildFailure: (Object error, StackTrace stack) => false,
-          onError: (Object error, StackTrace stack) => _record(
-            GalHookEventSeverity.error,
-            'match',
-            'audio.loopback_settle_exception',
-            'Delayed loopback settle failed',
-            details: <String, Object?>{'lineId': entry.id, 'error': '$error'},
+    _loopbackFreezeTimers[entry.id] = Timer(
+      Duration(milliseconds: remainingMs),
+      () {
+        _loopbackFreezeTimers.remove(entry.id);
+        unawaited(
+          _audioQueue.enqueue<bool>(
+            () async {
+              await _cacheLoopbackForLine(
+                entry,
+                backMs: fullBackMs,
+                onlyIfLonger: true,
+              );
+              return true;
+            },
+            buildFailure: (Object error, StackTrace stack) => false,
+            onError: (Object error, StackTrace stack) => _record(
+              GalHookEventSeverity.error,
+              'match',
+              'audio.loopback_settle_exception',
+              'Delayed loopback settle failed',
+              details: <String, Object?>{'lineId': entry.id, 'error': '$error'},
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
   /// 收束所有待冻结行（音源即将被换走时调用；此刻还持有旧 Loopback）。
@@ -5212,8 +5650,10 @@ class GalHookSessionController extends ChangeNotifier {
       }
       GalAudioSlice slice = captured;
       if (trailingTrimMs > 0) {
-        final int durationMs =
-            pcmDurationMs(captured.pcm.length, captured.format.byteRate);
+        final int durationMs = pcmDurationMs(
+          captured.pcm.length,
+          captured.format.byteRate,
+        );
         final Uint8List trimmed = slicePcmByMs(
           captured.pcm,
           captured.format,

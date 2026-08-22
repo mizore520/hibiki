@@ -17,23 +17,22 @@ import 'package:fushi/src/mining/magpie_upscaling.dart';
 import 'package:fushi/src/mining/magpie_upscaling_service.dart';
 import 'package:fushi/src/media/sources/reader_fushi_source.dart';
 import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/models/app_font_loader.dart';
 import 'package:fushi/src/models/preferences_repository.dart';
 import 'package:fushi/src/pages/implementations/home_game_page.dart';
 import 'package:fushi/src/pages/implementations/home_page.dart';
 import 'package:fushi/src/platform/gal_hook_text_overlay_channel.dart';
+import 'package:fushi/src/reader/reader_settings.dart';
 import 'package:fushi/src/sync/desktop_lookup_service.dart';
 import 'package:fushi/src/sync/texthooker_service.dart';
 import 'package:fushi/src/utils/misc/ruby_markup.dart';
 import 'package:fushi/utils.dart';
+import 'package:path/path.dart' as p;
 
-typedef GalHookPreferenceReader = Object? Function(
-  String key, {
-  required Object? defaultValue,
-});
-typedef GalHookPreferenceWriter = Future<void> Function(
-  String key,
-  Object? value,
-);
+typedef GalHookPreferenceReader =
+    Object? Function(String key, {required Object? defaultValue});
+typedef GalHookPreferenceWriter =
+    Future<void> Function(String key, Object? value);
 
 /// 「悬停即查词」开关的读取口（设置项 `hover_auto_lookup`）。真值在
 /// [ReaderFushiSource]（media source 偏好store，与本控制器用的 prefsRepo 不是同一
@@ -49,13 +48,13 @@ class GalHookTextOverlayController extends ChangeNotifier {
     GalHookPreferenceWriter? preferenceWriter,
     GalHookHoverAutoLookupReader? hoverAutoLookupReader,
     GalIngameLookupController? ingameLookup,
-  })  : _session = session ?? GalHookSessionController.instance,
-        _miningCoordinator =
-            miningCoordinator ?? GalHookMiningCoordinator.instance,
-        _preferenceReader = preferenceReader,
-        _preferenceWriter = preferenceWriter,
-        _hoverAutoLookupReader = hoverAutoLookupReader,
-        _ingameLookup = ingameLookup ?? GalIngameLookupController.instance;
+  }) : _session = session ?? GalHookSessionController.instance,
+       _miningCoordinator =
+           miningCoordinator ?? GalHookMiningCoordinator.instance,
+       _preferenceReader = preferenceReader,
+       _preferenceWriter = preferenceWriter,
+       _hoverAutoLookupReader = hoverAutoLookupReader,
+       _ingameLookup = ingameLookup ?? GalIngameLookupController.instance;
 
   static final GalHookTextOverlayController instance =
       GalHookTextOverlayController._();
@@ -69,13 +68,13 @@ class GalHookTextOverlayController extends ChangeNotifier {
     GalHookHoverAutoLookupReader? hoverAutoLookupReader,
     GalIngameLookupController? ingameLookup,
   }) : this._(
-          session: session,
-          miningCoordinator: miningCoordinator,
-          preferenceReader: preferenceReader,
-          preferenceWriter: preferenceWriter,
-          hoverAutoLookupReader: hoverAutoLookupReader,
-          ingameLookup: ingameLookup,
-        );
+         session: session,
+         miningCoordinator: miningCoordinator,
+         preferenceReader: preferenceReader,
+         preferenceWriter: preferenceWriter,
+         hoverAutoLookupReader: hoverAutoLookupReader,
+         ingameLookup: ingameLookup,
+       );
 
   static const String _rectPreferenceKey = 'gal_hook_text_window_rect';
   static const String _opacityPreferenceKey = 'gal_hook_text_window_bg_opacity';
@@ -91,6 +90,21 @@ class GalHookTextOverlayController extends ChangeNotifier {
   /// 还是放不下」的根因。范围/默认值的唯一真值在 `PreferencesRepository`。
   static const String _fontSizePreferenceKey = 'gal_hook_text_font_size';
   static const String _fontFamilyPreferenceKey = 'gal_hook_text_font_family';
+  static const String _letterSpacingPreferenceKey =
+      'gal_hook_text_letter_spacing';
+  static const String _lineHeightPreferenceKey = 'gal_hook_text_line_height';
+  static const String _boldPreferenceKey = 'gal_hook_text_bold';
+  static const String _alignmentPreferenceKey = 'gal_hook_text_alignment';
+  static const String _textColorPreferenceKey = 'gal_hook_text_color';
+  static const String _backgroundColorPreferenceKey =
+      'gal_hook_text_background_color';
+  static const String _outlineColorPreferenceKey =
+      'gal_hook_text_outline_color';
+  static const String _outlineWidthPreferenceKey =
+      'gal_hook_text_outline_width';
+  static const String _paddingPreferenceKey = 'gal_hook_text_padding';
+  static const String _cornerRadiusPreferenceKey =
+      'gal_hook_text_corner_radius';
 
   final GalHookSessionController _session;
   final GalHookMiningCoordinator _miningCoordinator;
@@ -132,7 +146,18 @@ class GalHookTextOverlayController extends ChangeNotifier {
   double _opacity = _defaultOpacity;
   double _lastNonZeroOpacity = _defaultRestoreOpacity;
   double _fontSize = kGalHookTextFontSize;
-  String _fontFamily = kGalHookTextFontFamilyDefault;
+  double _letterSpacing = PreferencesRepository.galHookTextLetterSpacingDefault;
+  double _lineHeight = PreferencesRepository.galHookTextLineHeightDefault;
+  bool _bold = true;
+  String _textAlignment = 'center';
+  int _textColor = PreferencesRepository.galHookTextColorDefault;
+  int _backgroundBaseColor =
+      PreferencesRepository.galHookTextBackgroundColorDefault;
+  int _outlineColor = PreferencesRepository.galHookTextOutlineColorDefault;
+  double _outlineWidth = PreferencesRepository.galHookTextOutlineWidthDefault;
+  double _textPadding = PreferencesRepository.galHookTextPaddingDefault;
+  double _cornerRadius = PreferencesRepository.galHookTextCornerRadiusDefault;
+  ({String family, String? path})? _fontSelection;
   GalHookTextWindowRect? _savedRect;
 
   static bool get isSupported =>
@@ -149,7 +174,13 @@ class GalHookTextOverlayController extends ChangeNotifier {
 
   /// BUG-1095：当前台词字号（逻辑 px），与窗口高度无关。
   double get fontSize => _fontSize;
-  String get fontFamily => _fontFamily;
+
+  /// First usable font selected for the managed `gameLookup` target. Imported
+  /// files keep their path because the native DirectWrite renderer cannot see
+  /// Flutter's process-private font registrations.
+  ({String family, String? path})? get fontSelection => _fontSelection;
+  String get fontFamily =>
+      _fontSelection?.family ?? kGalHookTextFontFamilyDefault;
   double get backgroundOpacity => _opacity;
 
   /// 试听兜底复位上限：资源原件（OGG/WAV）时长未知时按它把按钮高亮收回，
@@ -179,8 +210,10 @@ class GalHookTextOverlayController extends ChangeNotifier {
     // 且用户一改就同步覆盖记忆，见 session 侧注释。
     _session.attachCaptureMemory(
       load: (String gameKey) {
-        final Object? stored = appModel.prefsRepo
-            .getPref('gal_capture_memory::$gameKey', defaultValue: '');
+        final Object? stored = appModel.prefsRepo.getPref(
+          'gal_capture_memory::$gameKey',
+          defaultValue: '',
+        );
         if (stored is! String || stored.isEmpty) {
           return const GalCaptureMemory();
         }
@@ -265,17 +298,18 @@ class GalHookTextOverlayController extends ChangeNotifier {
   }
 
   void _loadPreferences(AppModel appModel) {
-    Object? read(String key, Object? fallback) => _preferenceReader != null
-        ? _preferenceReader(key, defaultValue: fallback)
-        : appModel.prefsRepo.getPref(key, defaultValue: fallback);
-    final Object? storedOpacity = read(_opacityPreferenceKey, _defaultOpacity);
-    final double stored =
-        storedOpacity is num ? storedOpacity.toDouble() : _defaultOpacity;
+    final Object? storedOpacity = _readPreference(
+      _opacityPreferenceKey,
+      _defaultOpacity,
+    );
+    final double stored = storedOpacity is num
+        ? storedOpacity.toDouble()
+        : _defaultOpacity;
     _opacity = stored.clamp(0.0, 1.0);
     if (_opacity > 0) _lastNonZeroOpacity = _opacity;
-    _fontSize = _readFontSizePreference();
-    _fontFamily = _readFontFamilyPreference();
-    final Object? storedRect = read(_rectPreferenceKey, '');
+    _readAppearancePreferences();
+    _fontSelection = _readFontSelection();
+    final Object? storedRect = _readPreference(_rectPreferenceKey, '');
     final String encoded = storedRect is String ? storedRect : '';
     if (encoded.isEmpty) return;
     try {
@@ -290,6 +324,80 @@ class GalHookTextOverlayController extends ChangeNotifier {
     }
   }
 
+  Object? _readPreference(String key, Object? fallback) {
+    final GalHookPreferenceReader? reader = _preferenceReader;
+    if (reader != null) return reader(key, defaultValue: fallback);
+    return _appModel?.prefsRepo.getPref(key, defaultValue: fallback) ??
+        fallback;
+  }
+
+  double _readDouble(
+    String key, {
+    required double fallback,
+    required double min,
+    required double max,
+  }) {
+    final Object? stored = _readPreference(key, fallback);
+    final double value = stored is num ? stored.toDouble() : fallback;
+    return value.clamp(min, max);
+  }
+
+  int _readColor(String key, int fallback) {
+    final Object? stored = _readPreference(key, fallback);
+    return ((stored is num ? stored.toInt() : fallback) & 0xFFFFFFFF).toInt();
+  }
+
+  void _readAppearancePreferences() {
+    _fontSize = _readFontSizePreference();
+    _letterSpacing = _readDouble(
+      _letterSpacingPreferenceKey,
+      fallback: PreferencesRepository.galHookTextLetterSpacingDefault,
+      min: PreferencesRepository.galHookTextLetterSpacingMin,
+      max: PreferencesRepository.galHookTextLetterSpacingMax,
+    );
+    _lineHeight = _readDouble(
+      _lineHeightPreferenceKey,
+      fallback: PreferencesRepository.galHookTextLineHeightDefault,
+      min: PreferencesRepository.galHookTextLineHeightMin,
+      max: PreferencesRepository.galHookTextLineHeightMax,
+    );
+    _bold = _readPreference(_boldPreferenceKey, true) == true;
+    _textAlignment =
+        _readPreference(_alignmentPreferenceKey, 'center') == 'left'
+        ? 'left'
+        : 'center';
+    _textColor = _readColor(
+      _textColorPreferenceKey,
+      PreferencesRepository.galHookTextColorDefault,
+    );
+    _backgroundBaseColor = _readColor(
+      _backgroundColorPreferenceKey,
+      PreferencesRepository.galHookTextBackgroundColorDefault,
+    );
+    _outlineColor = _readColor(
+      _outlineColorPreferenceKey,
+      PreferencesRepository.galHookTextOutlineColorDefault,
+    );
+    _outlineWidth = _readDouble(
+      _outlineWidthPreferenceKey,
+      fallback: PreferencesRepository.galHookTextOutlineWidthDefault,
+      min: PreferencesRepository.galHookTextOutlineWidthMin,
+      max: PreferencesRepository.galHookTextOutlineWidthMax,
+    );
+    _textPadding = _readDouble(
+      _paddingPreferenceKey,
+      fallback: PreferencesRepository.galHookTextPaddingDefault,
+      min: PreferencesRepository.galHookTextPaddingMin,
+      max: PreferencesRepository.galHookTextPaddingMax,
+    );
+    _cornerRadius = _readDouble(
+      _cornerRadiusPreferenceKey,
+      fallback: PreferencesRepository.galHookTextCornerRadiusDefault,
+      min: PreferencesRepository.galHookTextCornerRadiusMin,
+      max: PreferencesRepository.galHookTextCornerRadiusMax,
+    );
+  }
+
   /// BUG-1095：读台词字号偏好（逻辑 px）。范围钳位与默认值的唯一真值在
   /// [PreferencesRepository]；这里只负责取值并按同一区间收敛脏数据。
   double _readFontSizePreference() {
@@ -297,8 +405,10 @@ class GalHookTextOverlayController extends ChangeNotifier {
     final AppModel? model = _appModel;
     final Object? stored = _preferenceReader != null
         ? _preferenceReader(_fontSizePreferenceKey, defaultValue: fallback)
-        : model?.prefsRepo
-            .getPref(_fontSizePreferenceKey, defaultValue: fallback);
+        : model?.prefsRepo.getPref(
+            _fontSizePreferenceKey,
+            defaultValue: fallback,
+          );
     final double value = stored is num ? stored.toDouble() : fallback;
     return value.clamp(
       PreferencesRepository.galHookTextFontSizeMin,
@@ -306,21 +416,37 @@ class GalHookTextOverlayController extends ChangeNotifier {
     );
   }
 
-  String _readFontFamilyPreference() {
-    const String fallback = PreferencesRepository.galHookTextFontFamilyDefault;
+  ({String family, String? path})? _readFontSelection() {
     final AppModel? model = _appModel;
-    final Object? stored = _preferenceReader != null
-        ? _preferenceReader(_fontFamilyPreferenceKey, defaultValue: fallback)
-        : model?.prefsRepo
-            .getPref(_fontFamilyPreferenceKey, defaultValue: fallback);
-    if (stored is! String) return fallback;
+    final ReaderSettings? settings = ReaderFushiSource.readerSettings;
+    if (model != null && settings != null) {
+      final ({String family, String? path})? managed =
+          AppFontLoader.resolveForNativeOverlay(
+            settings.gameLookupFonts,
+            allowedDirectories: <String>[
+              p.join(model.appDirectory.path, 'custom_fonts'),
+            ],
+          );
+      if (managed != null) return managed;
+    }
+    // Compatibility with the personal pre-managed setting. The author
+    // catalog is preferred when it has a usable entry; this fallback keeps
+    // existing users and older channel callers on the same payload contract.
+    final Object? stored = _readPreference(
+      _fontFamilyPreferenceKey,
+      PreferencesRepository.galHookTextFontFamilyDefault,
+    );
+    if (stored is! String) return null;
     final String value = stored.trim();
-    return value.length <= PreferencesRepository.galHookTextFontFamilyMaxLength
+    if (value.isEmpty) return null;
+    final String family =
+        value.length <= PreferencesRepository.galHookTextFontFamilyMaxLength
         ? value
         : value.substring(
             0,
             PreferencesRepository.galHookTextFontFamilyMaxLength,
           );
+    return (family: family, path: null);
   }
 
   void _scheduleSync() {
@@ -363,7 +489,8 @@ class GalHookTextOverlayController extends ChangeNotifier {
       notifyListeners();
     }
 
-    final bool active = state.externalWindowMode &&
+    final bool active =
+        state.externalWindowMode &&
         nextSessionKey != null &&
         state.phase != GalHookSessionPhase.idle &&
         state.phase != GalHookSessionPhase.stopping &&
@@ -372,7 +499,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
     // （`_suppressedForSession`）不代表他不要游戏内查词，两者是各自独立的表面。
     // 放在下面所有早退之前，会话一结束就一定关得掉。
     // Luna 外部原文（尤其 lunaSafe）没有注入侧字形几何。保持零注入承诺，只关掉
-    // 游戏内卡片；主窗口/文字浮窗仍要照常显示和点词。
+    // 游戏内卡片；主窗口/文字浮窗仍照常显示和点词。
     await _ingameLookup.setSessionActive(
       active && !_session.usesLunaExternalText,
     );
@@ -414,8 +541,18 @@ class GalHookTextOverlayController extends ChangeNotifier {
       _visible = await GalHookTextOverlayChannel.show(
         rect: _savedRect,
         fontSize: _fontSize,
-        fontFamily: _fontFamily,
+        fontFamily: _fontSelection?.family ?? '',
+        fontPath: _fontSelection?.path,
+        letterSpacing: _letterSpacing,
+        lineHeight: _lineHeight,
+        bold: _bold,
+        textAlignment: _textAlignment,
+        textColor: _textColor,
         bgColor: _backgroundColor,
+        outlineColor: _outlineColor,
+        outlineWidth: _outlineWidth,
+        textPadding: _textPadding,
+        cornerRadius: _cornerRadius,
         following: _following,
         passThrough: _passThrough,
         locked: _locked,
@@ -447,8 +584,24 @@ class GalHookTextOverlayController extends ChangeNotifier {
 
   int get _backgroundColor {
     final int alpha = (_opacity.clamp(0.0, 1.0) * 255).round();
-    return alpha << 24;
+    return (alpha << 24) | (_backgroundBaseColor & 0x00FFFFFF);
   }
+
+  Future<void> _pushStyle() => GalHookTextOverlayChannel.updateStyle(
+    bgColor: _backgroundColor,
+    fontSize: _fontSize,
+    fontFamily: _fontSelection?.family ?? '',
+    fontPath: _fontSelection?.path,
+    letterSpacing: _letterSpacing,
+    lineHeight: _lineHeight,
+    bold: _bold,
+    textAlignment: _textAlignment,
+    textColor: _textColor,
+    outlineColor: _outlineColor,
+    outlineWidth: _outlineWidth,
+    textPadding: _textPadding,
+    cornerRadius: _cornerRadius,
+  );
 
   Future<void> showManually() async {
     if (!_started) return;
@@ -500,12 +653,6 @@ class GalHookTextOverlayController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _pushStyle() => GalHookTextOverlayChannel.updateStyle(
-        bgColor: _backgroundColor,
-        fontSize: _fontSize,
-        fontFamily: _fontFamily,
-      );
-
   /// BUG-1095：把字号偏好重新读进来并立刻推给 native 浮窗。
   ///
   /// 设置页写偏好（`AppModel.setGalHookTextFontSize`）后调用本方法，与悬浮字幕的
@@ -523,31 +670,43 @@ class GalHookTextOverlayController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 设置页改完字体族后，把最新值立即推给已经打开的 native 浮窗。
-  Future<void> applyFontFamilyFromPreferences() async {
+  /// Re-resolves the managed game-lookup font and repaints an already-open
+  /// native overlay immediately. [CustomFontsPage] calls this after persisting
+  /// the shared catalog; a controller that has not started yet simply picks up
+  /// the latest target from [_loadPreferences] on startup.
+  Future<void> applyFontFromSettings() async {
     if (!_started) return;
-    final String next = _readFontFamilyPreference();
-    if (next == _fontFamily) return;
-    _fontFamily = next;
+    final ({String family, String? path})? next = _readFontSelection();
+    if (next == _fontSelection) return;
+    _fontSelection = next;
     await _pushStyle();
     notifyListeners();
   }
 
-  /// 设置页改完背景不透明度后立即预览。只改变背景 alpha，文字、注音和工具栏
-  /// 的 alpha 仍由 native 各自的颜色/绘制路径决定。
-  Future<void> applyOpacityFromPreferences() async {
+  /// Compatibility alias for the personal font-family setting. New settings
+  /// pages use [applyFontFromSettings], but older callers can still update an
+  /// already-open overlay immediately.
+  Future<void> applyFontFamilyFromPreferences() => applyFontFromSettings();
+
+  /// Compatibility alias for the personal opacity setting. The author style
+  /// path already reloads the shared `gal_hook_text_window_bg_opacity` key.
+  Future<void> applyOpacityFromPreferences() =>
+      applyAppearanceFromPreferences();
+
+  /// Reloads every visual preference and repaints an already-open overlay.
+  /// The settings page uses this single entry point so related controls cannot
+  /// accidentally update only part of the native style payload.
+  Future<void> applyAppearanceFromPreferences() async {
     if (!_started) return;
-    final AppModel? model = _appModel;
-    final Object? stored = _preferenceReader != null
-        ? _preferenceReader(_opacityPreferenceKey,
-            defaultValue: _defaultOpacity)
-        : model?.prefsRepo
-            .getPref(_opacityPreferenceKey, defaultValue: _defaultOpacity);
-    final double next =
-        (stored is num ? stored.toDouble() : _defaultOpacity).clamp(0.0, 1.0);
-    if (next > 0) _lastNonZeroOpacity = next;
-    if (next == _opacity) return;
-    _opacity = next;
+    final double storedOpacity = _readDouble(
+      _opacityPreferenceKey,
+      fallback: _defaultOpacity,
+      min: 0.0,
+      max: 1.0,
+    );
+    _opacity = storedOpacity;
+    if (_opacity > 0) _lastNonZeroOpacity = _opacity;
+    _readAppearancePreferences();
     await _pushStyle();
     notifyListeners();
   }
@@ -616,8 +775,9 @@ class GalHookTextOverlayController extends ChangeNotifier {
       );
       return;
     }
-    final GalTrackPreview? preview =
-        await _session.exportLineAudioPreview(lineId);
+    final GalTrackPreview? preview = await _session.exportLineAudioPreview(
+      lineId,
+    );
     if (preview == null) {
       FushiToast.show(
         msg: t.game_line_preview_failed,
@@ -636,8 +796,9 @@ class GalHookTextOverlayController extends ChangeNotifier {
     _replayResetTimer?.cancel();
     _replayResetTimer = Timer(
       Duration(
-        milliseconds:
-            preview.durationMs > 0 ? preview.durationMs + 300 : _replayMaxMs,
+        milliseconds: preview.durationMs > 0
+            ? preview.durationMs + 300
+            : _replayMaxMs,
       ),
       () {
         _replaying = false;
@@ -745,15 +906,13 @@ class GalHookTextOverlayController extends ChangeNotifier {
       // 浮窗里点词跟阅读器/剪贴板面板一样是「点哪个词看哪个词」。老 native 不带
       // 矩形时为 null，自动回落到光标定位。
       anchorScreenRect: wordRect,
-      miningHandler: ({
-        required Map<String, String> fields,
-        int? updateNoteId,
-      }) =>
-          _mineFromLookup(
-        lineId: entry.id,
-        fields: fields,
-        updateNoteId: updateNoteId,
-      ),
+      miningHandler:
+          ({required Map<String, String> fields, int? updateNoteId}) =>
+              _mineFromLookup(
+                lineId: entry.id,
+                fields: fields,
+                updateNoteId: updateNoteId,
+              ),
     );
   }
 
@@ -782,18 +941,27 @@ class GalHookTextOverlayController extends ChangeNotifier {
   }
 
   OverlayMiningHandler _ingameMiningHandlerFor(String line) {
-    return ({
-      required Map<String, String> fields,
-      int? updateNoteId,
-    }) async {
+    return ({required Map<String, String> fields, int? updateNoteId}) async {
       // resolver 在 popup 构造时被保存，而文本线程可能稍后才发布当前行。到真正点「制卡」
       // 时重新解析，既覆盖这段时序差，也会重新套用当前 session/thread 的筛选。
       final String? resolved = _resolveIngameMiningLineId(line);
       if (resolved == null) {
-        return const <String, Object?>{
-          'ankiConnect': false,
-          'noteId': null,
-        };
+        // BUG-1734：这里过去是**纯静默返回**——不 toast、不记录、不打日志。popup 侧收到
+        // ankiConnect:false 同样什么都不做（assets/popup/popup.js 的 mine 分支只在
+        // ankiConnect 为真时才有动作），于是用户点「制卡」后屏幕上零反馈，无法区分
+        // 「制卡失败了」和「我没点到按钮」。真机上这一条把整轮 E2E 卡了很久。
+        //
+        // 两种失败原因必须分开报，因为用户要做的动作完全不同：
+        //   本局一条台词都没有 → 多半选了一条只产出伪影的文本线程（见 BUG-1733），
+        //                        要去工作台换线程；
+        //   有台词但对不上当前这句 → 与浮窗点词路径同一种失败，沿用同一条文案。
+        FushiToast.show(
+          msg: _session.selectedSessionLines.isEmpty
+              ? t.game_hook_mining_no_session_lines
+              : t.game_hook_line_unavailable,
+          severity: ToastSeverity.error,
+        );
+        return const <String, Object?>{'ankiConnect': false, 'noteId': null};
       }
       return _mineFromLookup(
         lineId: resolved,
@@ -814,17 +982,14 @@ class GalHookTextOverlayController extends ChangeNotifier {
   }) async {
     final AppModel? model = _appModel;
     if (model == null) {
-      return const <String, Object?>{
-        'ankiConnect': false,
-        'noteId': null,
-      };
+      return const <String, Object?>{'ankiConnect': false, 'noteId': null};
     }
     FushiToast.showMine(
       msg: t.card_mining_pending,
       status: MineToastStatus.pending,
     );
-    final BaseAnkiRepository repo =
-        model.platformServices.createAnkiRepository();
+    final BaseAnkiRepository repo = model.platformServices
+        .createAnkiRepository();
     final GalHookMiningResult result = await _miningCoordinator.mineLine(
       lineId: lineId,
       fields: fields,
@@ -850,8 +1015,13 @@ class GalHookTextOverlayController extends ChangeNotifier {
     );
     if (result.aborted) {
       FushiToast.showMine(
-        msg:
-            '${t.external_window_capture_failed}：${result.failureReason ?? ''}',
+        // 截图已经成功后，resource-only 音频门禁也可能中止制卡。不要把所有
+        // abort 都误报成“窗口截图失败”；与 texthooker 页入口保持同一分流。
+        msg: result.audioFallbackDisabled
+            ? t.game_audio_fallback_disabled_missing
+            : result.failureReason != null
+            ? '${t.external_window_capture_failed}：${result.failureReason}'
+            : t.external_window_capture_failed,
         status: MineToastStatus.failed,
       );
       return result.toPopupReply();
@@ -871,7 +1041,8 @@ class GalHookTextOverlayController extends ChangeNotifier {
     }
     if (result.unmappedTokens.isNotEmpty) {
       FushiToast.show(
-        msg: '${t.game_card_mapping_missing}: '
+        msg:
+            '${t.game_card_mapping_missing}: '
             '${result.unmappedTokens.join(', ')}',
         severity: ToastSeverity.warning,
       );

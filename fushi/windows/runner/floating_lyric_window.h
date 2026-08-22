@@ -61,10 +61,6 @@ class FloatingLyricWindow {
   using PassThroughCallback = std::function<void(bool enabled)>;
   using BoundsCallback =
       std::function<void(int left, int top, int width, int height)>;
-  // Reports the current text-window size in logical (96-DPI) px. The
-  // clipboard text window persists this pair as a user preference; the Hook
-  // window uses BoundsCallback because it also persists screen position.
-  using SizeCallback = std::function<void(int width, int height)>;
 
   // 一段振假名（ruby）：|ruby| 画在 text 的 [start, start + length) 上方。
   //
@@ -79,12 +75,17 @@ class FloatingLyricWindow {
 
   struct Style {
     double font_size = 20.0;
-    // Empty means the historical Yu Gothic UI default. Hook text can override
-    // this with a user-selected installed family; the renderer validates it
-    // against DirectWrite and falls back safely when it is unavailable.
     std::wstring font_family;
+    std::wstring font_path;
+    double letter_spacing = 0.0;
+    double line_height = 1.0;
+    bool bold = true;
+    int text_alignment = 0;  // 0 = center, 1 = leading.
     uint32_t text_color = 0xFFFFFFFF;
     uint32_t bg_color = 0xCC000000;
+    uint32_t outline_color = 0xE0000000;
+    double outline_width = 1.6;
+    double text_padding = 20.0;
     uint32_t button_text_color = 0xFFFFFFFF;
     uint32_t button_bg_color = 0x33000000;
     uint32_t highlight_color = 0x80FFD54F;
@@ -129,9 +130,6 @@ class FloatingLyricWindow {
   void SetBoundsCallback(BoundsCallback callback) {
     on_bounds_ = std::move(callback);
   }
-  void SetSizeCallback(SizeCallback callback) {
-    on_size_ = std::move(callback);
-  }
 
   // Creates (if needed) and shows the strip. Returns false if the OS window
   // could not be created. |owner| is the main window, used only for initial
@@ -165,10 +163,10 @@ class FloatingLyricWindow {
   // Shift-悬停本身不受此开关控制，它是查词的通用手势。
   void SetHoverAutoLookup(bool enabled);
   // Text-only mode (the transparent clipboard text window): the strip draws
-  // ONLY the draggable, tappable text — no playback / close control buttons.
-  // Drag, right-bottom resize, and single-tap word lookup work exactly as in
-  // the audiobook lyric strip. Set once right after construction (before Show)
-  // by the clipboard_text channel; the audiobook lyric instance leaves it
+  // ONLY the draggable, tappable text — no playback / lock / close control
+  // buttons and no resize grip. Drag + single-tap word lookup still work exactly
+  // as in the audiobook lyric strip. Set once right after construction (before
+  // Show) by the clipboard_text channel; the audiobook lyric instance leaves it
   // false so its rendering + hit-testing stay byte-for-byte unchanged.
   void SetTextOnly(bool text_only) { text_only_ = text_only; }
   // Rich text-only mode used by the galgame Hook window. It keeps the text-only
@@ -204,10 +202,9 @@ class FloatingLyricWindow {
   // 不然上一局关掉置顶之后，下一局浮窗会藏在全屏游戏后面，用户只会以为它没出来。
   void SetTopmost(bool enabled);
   bool IsTopmost() const { return topmost_; }
-  // Magpie broadcasts an output-window lifecycle change to the Fushi main
-  // window. Reassert through the overlay's own message loop so a recreated or
-  // repositioned scaled window cannot leave the pinned Hook strip behind it.
-  // The request is coalesced and never activates this window.
+  // Magpie can recreate or raise its scaled output while the foreground HWND
+  // remains unchanged. Queue a non-activating topmost reassertion for the
+  // window's own platform thread; this is a no-op when the user unpinned it.
   void NotifyExternalWindowLifecycle(HWND external_window);
   // Restores a physical-pixel window rectangle before the next Show. Invalid
   // rectangles are ignored and Show uses its DPI-aware default.
@@ -222,17 +219,16 @@ class FloatingLyricWindow {
   bool EnsureDeviceResources();
   void DiscardDeviceResources();
   bool EnsureTextResources();
+  void RebuildFontCollection();
+  // Returns the family actually used by both the lyric body and ruby text.
+  // Invalid/uninstalled requests are deliberately reduced to Yu Gothic UI so
+  // a stale preference can never leave the overlay blank.
   std::wstring EffectiveTextFontFamily() const;
-  void Render();
-  void RequestRender();
-  // A borderless/full-screen game may move itself to the head of Windows'
-  // topmost band whenever it becomes foreground. Track that structural event
-  // for the galgame overlay and re-assert our existing pin state without
-  // activating the overlay or stealing keyboard focus from the game.
   void StartForegroundTopmostTracking();
   void StopForegroundTopmostTracking();
   void ReassertTopmost();
-  bool external_topmost_reassert_pending_ = false;
+  void Render();
+  void RequestRender();
 
   // Geometry of the lyric text area in client (DIP-equivalent physical px),
   // computed during the last Render. Used for tap hit-testing.
@@ -322,13 +318,12 @@ class FloatingLyricWindow {
   // system resize) so the font + control layout track the new dimensions.
   void SyncStripSizeFromWindow();
   void NotifyBoundsChanged();
-  void NotifySizeChanged();
 
-  // Applies style_.window_width / style_.window_height (logical dp, >0) to the
-  // live window by resizing it (clamped to the drag min/max), keeping the
-  // top-left origin and re-clamping to the monitor. A zero dimension preserves
-  // the current size (or the platform default before the first Show).
-  void ApplyStyleSize();
+  // TODO-708 P2: applies style_.window_width (logical dp, >0) to the live window
+  // by resizing it (clamped to the drag min/max), keeping the top-left origin
+  // and re-clamping to the monitor. No-op when the width is 0 (platform default)
+  // or the window does not exist yet.
+  void ApplyStyleWidth();
 
   float ScaleForDpi(float value) const;
 
@@ -381,8 +376,8 @@ class FloatingLyricWindow {
   int hover_lookup_index_ = -1;
   // 悬停轮询定时器是否已挂（只在鼠标在窗口内时挂着）。
   bool hover_poll_active_ = false;
-  // Text-only clipboard window: suppress playback controls and use the full
-  // window height for text. Never true for the audiobook lyric strip.
+  // Text-only clipboard window: suppress control buttons + resize grip, use the
+  // full window height for text. Never true for the audiobook lyric strip.
   bool text_only_ = false;
   bool hook_text_mode_ = false;
   bool pass_through_ = false;
@@ -404,6 +399,7 @@ class FloatingLyricWindow {
   // re-assert topmost after the user pinned it off. The audiobook lyric strip
   // never toggles it, so its behaviour is unchanged.
   bool topmost_ = true;
+  bool external_topmost_reassert_pending_ = false;
   UINT dpi_ = 96;
 
   // Logical (96-DPI) strip size. Mutable so the bottom-right resize grip can
@@ -449,12 +445,16 @@ class FloatingLyricWindow {
   bool press_was_text_ = false; // press landed on the lyric text (lookup case)
   bool dragging_ = false;       // promoted to a move-the-strip drag
   POINT drag_anchor_ = {0, 0};  // cursor offset inside the window at press
-  POINT press_origin_ = {0, 0}; // screen point where the press began
-  POINT press_client_ = {0, 0}; // client point where the press began (lookup)
+  POINT press_origin_ = {0, 0};  // screen point where the press began
+  POINT press_client_ = {0, 0};  // client point where the press began (lookup)
 
   // Direct2D / DirectWrite.
   Microsoft::WRL::ComPtr<ID2D1Factory> d2d_factory_;
   Microsoft::WRL::ComPtr<IDWriteFactory> dwrite_factory_;
+  Microsoft::WRL::ComPtr<IDWriteFontCollection> icon_font_collection_;
+  Microsoft::WRL::ComPtr<IDWriteFontCollection> custom_font_collection_;
+  std::wstring resolved_font_family_ = L"Yu Gothic UI";
+  bool font_collection_dirty_ = true;
   Microsoft::WRL::ComPtr<ID2D1DCRenderTarget> render_target_;
   Microsoft::WRL::ComPtr<IDWriteTextFormat> text_format_;
   // 振假名用的小号 format（居中、不换行）。与 text_format_ 同生命周期：字号 /
@@ -472,7 +472,6 @@ class FloatingLyricWindow {
   LockCallback on_lock_;
   PassThroughCallback on_pass_through_;
   BoundsCallback on_bounds_;
-  SizeCallback on_size_;
 };
 
 #endif  // RUNNER_FLOATING_LYRIC_WINDOW_H_

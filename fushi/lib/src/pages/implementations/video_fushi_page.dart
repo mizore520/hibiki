@@ -25,6 +25,8 @@ import 'package:fushi/src/anki/anki_view_model.dart';
 import 'package:fushi/src/storage/app_paths.dart';
 import 'package:fushi/src/media/audiobook/mining_sentence_draft.dart';
 import 'package:fushi/src/media/sources/reader_fushi_source.dart';
+import 'package:fushi/src/media/tracking/media_tracking_service.dart'
+    show kMediaTrackingEnabled;
 import 'package:fushi/src/pages/implementations/video_loading_overlay.dart';
 import 'package:fushi/src/utils/misc/swipe_dismiss_wrapper.dart';
 // 只取语义枚举与调色板：视频页的通知一律走左上角 _showOsd，不得用 FushiToast
@@ -36,6 +38,7 @@ import 'package:fushi/src/media/import/real_path_directory_picker.dart';
 import 'package:fushi/src/media/media_cover_source.dart';
 import 'package:fushi/src/media/video/dandanplay_client.dart';
 import 'package:fushi/src/media/video/danmaku_manual_match_panel.dart';
+import 'package:fushi/src/media/source_library/source_stream_headers.dart';
 import 'package:fushi/src/media/video/stream_video_launch.dart';
 import 'package:fushi/src/media/video/subtitle_embedded_fonts.dart';
 import 'package:fushi/src/media/video/video_episode_start_policy.dart';
@@ -76,18 +79,24 @@ import 'package:fushi/src/media/video/video_danmaku_overlay.dart';
 import 'package:fushi/src/media/video/video_danmaku_source.dart';
 import 'package:fushi/src/media/video/video_filename_parser.dart';
 import 'package:fushi/src/media/video/video_immersive_mode.dart';
+import 'package:fushi/src/media/video/video_lua_script_manager.dart';
 import 'package:fushi/src/media/video/video_mpv_config.dart';
 import 'package:fushi/src/media/video/video_player_controller.dart';
 import 'package:fushi/src/media/video/video_screenshot_filename.dart';
 import 'package:fushi/src/startup/exit_flush_registry.dart';
 import 'package:fushi/src/focus/page_focus_ownership.dart';
+import 'package:fushi/src/focus/panel_focus_scope.dart';
 import 'package:fushi/src/media/video/video_player_shortcuts.dart';
 // TODO-1342：视频播放器手柄映射。GamepadButtonIntent（桌面轮询派发）+ GamepadButton
 // （原生按键归一）+ ShortcutAction/ShortcutScope（video 作用域绑定解析）。
 import 'package:fushi/src/shortcuts/dictionary_caret_controller.dart'
     show CaretSurface, DictionaryCaretController, DictionaryCaretHost;
 import 'package:fushi/src/shortcuts/gamepad_service.dart'
-    show GamepadButtonIntent, GamepadLongPressIntent, focusedEditableText;
+    show
+        GamepadButtonIntent,
+        GamepadLongPressIntent,
+        focusedEditableText,
+        tryDictionaryPopupGamepadButton;
 import 'package:fushi/src/shortcuts/input_binding.dart'
     show GamepadButton, InputBinding;
 import 'package:fushi/src/shortcuts/reader_caret_router.dart'
@@ -321,33 +330,37 @@ bool _isLatinWordGrapheme(String grapheme) {
 final RegExp _kLatinWordCharRegExp =
     RegExp(r'^[\p{Script=Latin}0-9]', unicode: true);
 
-/// 点字幕第 [graphemeIndex] 个字位起的查词词面（TODO-916 症状③）。
+/// 点字幕第 [graphemeIndex] 个字位起的查询串。
 ///
-/// 默认（CJK / 日文）行为：从被点字位一直取到**句尾**，逐字查词（与历史一致，
-/// 不能套「延伸到词尾」——中日文按字 / 词查）。
+/// 查询串只由**起点**决定，终点恒为句尾——引擎按查询串做最长匹配并回报
+/// `bestLength`（弹窗 / 字幕据此高亮整词跨度），多喂的后文超出 `scanLength`
+/// （`FushiDicts.defaultScanLength` = 16 码点）自然丢弃。
 ///
-/// 仅当**被点字位本身是拉丁单词字符**时，回退到该拉丁单词的**词首**并延伸到
-/// **词尾**，返回整个单词。这样点 "hello" 的任意字母（含 'e' / 'o'）都返回
-/// "hello"，而不是旧 `skip(index)` 的 "ello" 查不到（拉丁词非逐字、点中间字母
-/// 取不到整词 → 查不到）。空格 / 标点 / 连字号 / CJK 都是词边界。
+/// 起点按脚本分：
+/// - CJK / 标点 / 空白：就是被点字位本身（逐字查词，点「永」命中「永遠」、
+///   点「遠」能单独查「遠」）。
+/// - 拉丁单词字符：回退到该单词的**词首**，这样点 "hello" 的任意字母（含
+///   'e' / 'o'）都从 "hello" 起查，而不是旧 `skip(index)` 的 "ello" 查不到
+///   （TODO-916 症状③）。空格 / 标点 / 连字号 / CJK 都是词首边界。
+///
+/// BUG-1773：拉丁分支此前**同时**把终点钉死在词尾，于是查询串被截成单个单词，
+/// `listen to` / `look forward to` 这类空格分词短语的词条永远匹配不到——点空格
+/// 反而能查出短语（走了 CJK 的「到句尾」分支）就是这个特例的照妖镜。终点从来
+/// 不该由脚本决定：C++ `scan_candidates` 明确禁止在空格分词语言的单词中间切
+/// （native/fushidicts/fushidicts_src/scan/word_scan.cpp），候选恒是
+/// `listen to music` / `listen to` / `listen`，单词自己仍在候选里，不会被短语挤掉。
 @visibleForTesting
 String subtitleLookupTerm(String sentence, int graphemeIndex) {
   final List<String> graphemes = sentence.characters.toList();
   if (graphemeIndex < 0 || graphemeIndex >= graphemes.length) return '';
-  // 非拉丁（CJK / 标点 / 空白）：维持历史「取到句尾逐字查」语义。
-  if (!_isLatinWordGrapheme(graphemes[graphemeIndex])) {
-    return graphemes.skip(graphemeIndex).join();
-  }
   int start = graphemeIndex;
-  while (start > 0 && _isLatinWordGrapheme(graphemes[start - 1])) {
-    start--;
+  // 拉丁单词字符：只把起点回退到词首。其余脚本起点即命中字位。
+  if (_isLatinWordGrapheme(graphemes[graphemeIndex])) {
+    while (start > 0 && _isLatinWordGrapheme(graphemes[start - 1])) {
+      start--;
+    }
   }
-  int end = graphemeIndex; // inclusive index of last word grapheme
-  while (
-      end + 1 < graphemes.length && _isLatinWordGrapheme(graphemes[end + 1])) {
-    end++;
-  }
-  return graphemes.sublist(start, end + 1).join();
+  return graphemes.skip(start).join();
 }
 
 @visibleForTesting
@@ -2042,9 +2055,21 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       // 解析 getManifest 有网络往返、慢网仍可数秒）之前，避免解析期页面裸转圈「点了没动静」。
       _setLoadingPhase(_VideoLoadPhase.connecting);
       try {
+        // 来源库网络视频（WebDAV）：认证头按 sourceId 现解析（凭据不落行级
+        // spec——改来源密码一处生效）；非来源书解析为空 map，零分支。
+        // targetUrl 传本行真实流地址：来源根下的 m3u8 清单可以指向第三方主机，
+        // 那些行同样带本来源的 sourceId，不按目标地址收口就会把 NAS 账号密码
+        // 发给第三方（见 source_library/stream_auth_scope.dart）。
+        final Map<String, String> sourceHeaders =
+            await resolveSourceStreamHeaders(
+          db: appModel.database,
+          sourceId: row.sourceId,
+          targetUrl: row.videoPath,
+        );
         final ({UrlStreamVideoClient client, RemoteVideoInfo info}) launch =
             await buildStreamVideoLaunch(row,
-                youtubeTargetHeight: appModel.youtubeQualityTargetHeightOrNull);
+                youtubeTargetHeight: appModel.youtubeQualityTargetHeightOrNull,
+                sourceHttpHeaders: sourceHeaders);
         if (!mounted) return;
         _resolvedStreamInfo = launch.info;
         _resolvedStreamClient = launch.client;
@@ -3085,6 +3110,11 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
             decodeEnabledShaders(appModel.videoShadersEnabled),
           )
         : const <String>[];
+    // 开关开启时装载 mpv_scripts 目录全部 Lua 脚本（每 Player 实例幂等，
+    // 见 video_lua_script_manager.dart）。
+    final List<String> luaScriptPaths = appModel.videoMpvLuaScriptsEnabled
+        ? await listLuaScriptPaths()
+        : const <String>[];
     controller.setOnCompleted(_handlePlaybackCompleted);
     // TODO-1119 / BUG-545：Windows 高显卡占用黑屏闪烁运行时提示。仅 Windows 挂回调
     // （其它平台 null＝控制器完全不采样，零开销）；判定持续迟帧后弹一次可关闭提示条。
@@ -3109,6 +3139,7 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
         subtitleExplicitlyOff: SubtitleSource.isOff(externalSubtitlePath),
         renderGraphicStreamIndex: renderGraphicStreamIndex,
         shaderPaths: shaderPaths,
+        luaScriptPaths: luaScriptPaths,
         mpvConfig: mpvConfig,
         httpHeaderFields: _streamHttpHeaderFields,
         autoPlay: true,
@@ -3269,14 +3300,16 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
         ),
         markCompleted: (String uid) =>
             db.markVideoCompleted(uid, DateTime.now()),
-        onEpisodeCompleted: () =>
-            appModel.mediaTrackingService.recordVideoCompleted(
-          bookUid: widget.bookUid,
-          collectionId: widget.playlistCollectionId,
-          episodeIndex: _currentEpisode,
-          seriesCompleted:
-              _episodes.isNotEmpty && _currentEpisode == _episodes.length - 1,
-        ),
+        onEpisodeCompleted: () async {
+          if (!kMediaTrackingEnabled) return;
+          await appModel.mediaTrackingService.recordVideoCompleted(
+            bookUid: widget.bookUid,
+            collectionId: widget.playlistCollectionId,
+            episodeIndex: _currentEpisode,
+            seriesCompleted:
+                _episodes.isNotEmpty && _currentEpisode == _episodes.length - 1,
+          );
+        },
         // v49：一次观看 session 结束落一条活动事件，喂首页 Activity 时间轴。
         recordActivity: (String t, String uid, String dateKey, int timestampMs,
                 int durationMs, int chars) =>
@@ -3738,6 +3771,14 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     if (cause != FocusReclaimCause.popupDismissed && _hasVisiblePopup) {
       return false;
     }
+    // 手柄重设计 P3：可导航浮层面板（剧集轨 / 字幕列表 / 侧栏）打开期间焦点归
+    // PanelFocusScope 所有，页面不抢。少了这一条就是纯回归：字幕列表是 push-aside，
+    // 视频区全程可点，用户点一下画面（reclaim(gesture)）或从字幕行查完词关浮层
+    // （reclaim(popupDismissed)）焦点就被拽回页面节点，而 PanelFocusScope 只在
+    // visible 边沿认领一次、不复领 ⇒ 面板仍开着，_handleVideoGamepadButton 继续让
+    // dpad/A 给焦点兜底，于是 dpad 既进不了面板、也不再调音量/seek —— 比 P3 之前
+    // 更差（之前至少还能调音量）。面板关闭时通知先翻假，归还路径不受影响。
+    if (_videoNavigablePanelOpen) return false;
     // 生命周期回前台是全局回调，本页上方可能压着设置对话框 / 菜单 / 导入遮罩
     // （键盘所有者路由：窗口模式=本页路由，全屏期间=全屏路由）。此时抢焦点会
     // 夺走对话框的键盘（Never break userspace）——那些覆盖层各自的 guardOverlay
@@ -3777,6 +3818,14 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       _subtitleListVisible.value ||
       _episodeListVisible.value ||
       _videoControlEditMode.value;
+
+  /// 手柄重设计 P3：可用 D-pad 逐行浏览的三类面板任一打开（字幕列表 / 剧集轨 /
+  /// 侧栏）。与 [_hasVideoOverlay] 刻意不同集：控件 popover 与控制条编辑模式不是
+  /// 「行浏览」表面，D-pad 在那里仍按 video scope 解析。
+  bool get _videoNavigablePanelOpen =>
+      _subtitleListVisible.value ||
+      _episodeListVisible.value ||
+      _videoSidePanel.value != null;
 
   // BUG-371：字幕跳转列表是 **push-aside** 侧栏（[_videoWithSubtitlePanel] 的
   // `Row[Expanded(video), 面板列]`，TODO-314），把画面挤窄到左侧、**不遮挡**叠在画面上
@@ -4712,6 +4761,13 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     // （阅读器 caret.part 同款 contextual 路由）；未激活返回 false 走正常解析
     // （进入光标本身是注册表动作 videoEnterCaret，经下方 callback 执行）。
     if (_handleCaretGamepadButton(button)) return true;
+    // 手柄重设计 P3：浮层面板打开时，D-pad/A 让位给通用焦点导航（面板内选行）——
+    // 返回 false 交给 GamepadService 的 dpad=移焦 / A=激活兜底，而不是解析成
+    // 音量 / seek / 播放暂停。焦点由 PanelFocusScope 在面板打开时领进面板；其余
+    // 按钮照常解析（LB/RB seek 仍可用），B 经下方 universal 兜底走逐级退出关面板。
+    if (_videoNavigablePanelOpen && isVideoPanelFocusNavButton(button)) {
+      return false;
+    }
     final ShortcutAction? action = appModel.shortcutRegistry.resolveGamepad(
           button,
           scope: ShortcutScope.video,
@@ -4727,6 +4783,15 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     // 而非穿透控制后台视频。放在解析出 action 之后——未绑定的键仍交回 GamepadService 兜底
     // （焦点移动等），不误吞导航。
     if (_hasVisiblePopup) {
+      // 手柄重设计 P2：先给浮层自己的 dictionaryPopup 绑定一次消费机会，再落到上面
+      // 那条「已绑键 = 关浮层」。少了这一步，dpad 上下 / X / Y 在 video scope 全都
+      // 有绑定（音量 / 上下条字幕），于是 P2 的词条导航 / 制卡 / 发音四个默认绑定在
+      // 视频页**结构性不可达**——GamepadService 的弹窗兜底排在页面 Actions 之后，
+      // 这里已经 return true 了，永远轮不到。设置里能配、按了没反应正是要禁的形态。
+      // B 不在 dictionaryPopup 绑定里，逐级退出关浮层的行为不变。
+      if (tryDictionaryPopupGamepadButton(appModel.shortcutRegistry, button)) {
+        return true;
+      }
       _dismissTopVisiblePopup();
       return true;
     }
@@ -5223,14 +5288,29 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
   }
 
   bool _shouldRenderControlItem(VideoControlItem item) {
-    // 自定义「快捷键」按钮：**未绑定也显示**（用户拍板）。空槽位不是死按钮——点它
-    // 就地弹动作选择器（见 `_activateVideoControlItem`），这是手机上最短的配置路径：
-    // 看得见 → 点得到 → 当场配好，不用先翻进设置面板找编辑器。
+    // 自定义「快捷键」按钮：**已绑的照常显示，未绑的只露一个加号**（用户拍板改口，
+    // 此前是 4 个空槽全摆——一排一模一样的图标既占地方又看不出差别）。
     //
-    // 想让某个槽位彻底消失，走控件编辑器把它拖进隐藏托盘（和其它按钮同一套操作），
-    // 而不是靠「没绑动作」这个隐式条件——后者会让「我明明配置过它，怎么不见了」
-    // 和「怎么才能把它调出来」同时变成谜。
-    if (item.isCustomAction) return true;
+    // 空槽仍不是死按钮：露出来的那个加号点一下就地弹动作选择器（见
+    // `_activateVideoControlItem`），这是手机上最短的配置路径——看得见 → 点得到 →
+    // 当场配好，不用先翻进设置面板找编辑器；配完下一个空槽自动接上加号的位置。
+    //
+    // 想让快捷键按钮**彻底**消失（连加号都不要），走控件编辑器把槽位拖进隐藏托盘
+    // （和其它按钮同一套操作）。编辑器不经本门控（它读 `layout.itemsIn`），所以 4 个
+    // 槽位在那里永远都在、随时可配，不会因为播放器上只画一个而变得不可达。
+    //
+    // 已知边界：单独把「加号所在的那个槽位」拖进隐藏托盘（比如只藏快捷键1、留着
+    // 2/3/4 都不绑），播放器上就一个加号也不剩——加号取的是绑定表里序号最小的空位，
+    // 不去问它在哪个 slot。这是有意的：判据一旦掺进布局，就得回答「藏了 1 该由 2 顶上
+    // 吗、2 也藏了呢」这类没有正确答案的问题。隐藏是用户自己的操作，托盘里随时拖回来。
+    //
+    // 本分支的形状被 video_custom_action_bindings_test 的源码守卫钉死（退回无条件
+    // 显示全部槽位会变红），改这里请连它一起改。
+    final int? customSlot = item.customActionSlotIndex;
+    if (customSlot != null) {
+      return _customActionBindings.actionAt(customSlot) != null ||
+          customSlot == _customActionBindings.firstUnboundSlotIndex;
+    }
     switch (item) {
       case VideoControlItem.previousEpisode:
       case VideoControlItem.nextEpisode:
@@ -5469,7 +5549,7 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       case VideoControlItem.customAction3:
       case VideoControlItem.customAction4:
         // 不可达：函数开头已委托 [videoControlItemIcon] 按绑定解析。
-        return Icons.bolt_outlined;
+        return Icons.add;
     }
   }
 
@@ -5559,8 +5639,8 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     //   · 已绑定 → 查**键盘 / 手柄用的同一张动作表**并执行。这里刻意不写第二套
     //     switch——[videoActionCallbacks] 已是「动作 → 本页具体操作」的唯一接线，屏幕
     //     按钮再抄一份就等于承诺两份实现永远一致（沉浸门控、防重入都在回调里）。
-    //   · 未绑定 → 就地弹动作选择器配置它。空槽位照样渲染（见
-    //     `_shouldRenderControlItem`），靠这条分流才不至于变成按了没反应的死按钮。
+    //   · 未绑定 → 就地弹动作选择器配置它。播放器上只有第一个空槽会渲染成加号（见
+    //     `_shouldRenderControlItem`），靠这条分流它才不至于变成按了没反应的死按钮。
     final int? slotIndex = item.customActionSlotIndex;
     if (slotIndex != null) {
       final ShortcutAction? action = _customActionBindings.actionAt(slotIndex);
@@ -6681,6 +6761,13 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
               )
             : const <String>[];
         await _controller?.applyShaders(paths);
+      },
+      // mpv Lua 脚本开关：落 pref；开启时把脚本目录即时装载进活播放器（幂等，
+      // 已装载路径跳过）。关闭不可卸载（mpv 无 unload-script），下次进入生效。
+      onLuaScriptsEnabledChanged: (bool enabled) async {
+        await appModel.setVideoMpvLuaScriptsEnabled(enabled);
+        if (!enabled) return;
+        await _controller?.applyLuaScripts(await listLuaScriptPaths());
       },
       onLockWindowAspectRatioChanged: _setLockWindowAspectRatio,
       onVideoFitModeChanged: _setVideoFitMode,

@@ -1,9 +1,12 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fushi/src/media/video/dandanplay_client.dart';
 import 'package:fushi/src/media/video/video_asbplayer_config.dart';
 import 'package:fushi/src/media/video/video_danmaku_model.dart';
 import 'package:fushi/src/media/video/video_horizontal_seek_gesture.dart';
 import 'package:fushi/src/media/video/video_immersive_mode.dart';
+import 'package:fushi/src/media/video/video_lua_script_manager.dart';
 import 'package:fushi/src/media/video/video_mpv_config.dart';
 import 'package:fushi/src/media/video/video_settings_actions.dart';
 import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
@@ -14,6 +17,7 @@ import 'package:fushi/src/media/video/video_subtitle_style.dart';
 import 'package:fushi/src/models/preferences_repository.dart';
 import 'package:fushi/src/settings/settings_context.dart';
 import 'package:fushi/src/settings/settings_destination.dart';
+import 'package:fushi/src/sync/jellyfin_settings_widget.dart';
 import 'package:fushi/utils.dart';
 import 'package:fushi/src/pages/implementations/video_external_provider_settings_section.dart';
 
@@ -1247,6 +1251,23 @@ SettingsDestination buildVideoDestination() {
           ),
         ],
       ),
+      // ── 媒体服务器（Jellyfin / Emby）───────────────────────────────────
+      // 登录后服务器条目混排进视频库网格（home_video_page 远端源解析链），
+      // 点击直连串流播放；配置读写全在 JellyfinConfigWidget（SyncRepository
+      // `sync_jellyfin_server`，设备本地键，不随备份跨设备）。
+      SettingsSection(
+        title: t.jellyfin_settings_title,
+        collapsedByDefault: true,
+        items: <SettingsItem>[
+          SettingsCustomItem(
+            id: 'video.media_server.jellyfin',
+            // 搜索得命中品牌名（Jellyfin/Emby），t 标题只有「媒体服务器」语义。
+            searchTitle: 'Jellyfin · Emby · ${t.jellyfin_settings_title}',
+            builder: (SettingsContext settingsContext) =>
+                JellyfinConfigWidget(settingsContext: settingsContext),
+          ),
+        ],
+      ),
       SettingsSection(
         title: t.section_video_danmaku,
         collapsedByDefault: true,
@@ -1495,6 +1516,84 @@ SettingsDestination buildVideoDestination() {
             ),
             builder: buildVideoMpvRawConfField,
           ),
+          // mpv Lua 脚本：`<documents>/mpv_scripts` 整目录装载（对齐 mpv `scripts/`
+          // 目录语义，删文件即禁用）。host 在场开启即时装载（幂等）；mpv 无
+          // unload-script，关闭一律下次进入视频页生效（见 video_lua_script_manager.dart）。
+          SettingsSwitchItem(
+            id: 'video.player.mpv_lua_scripts',
+            title: t.video_setting_mpv_lua_scripts,
+            subtitle: t.video_setting_mpv_lua_scripts_hint,
+            icon: Icons.data_object_outlined,
+            video: VideoPlacement(
+              group: VideoGroup.mpv,
+              order: 212,
+              section: t.video_setting_mpv_group_advanced,
+            ),
+            value: (SettingsContext settingsContext) =>
+                settingsContext.appModel.videoMpvLuaScriptsEnabled,
+            onChanged: (SettingsContext settingsContext, bool value) async {
+              final Future<void> Function(bool)? live =
+                  videoQuickSettingsHostOf(settingsContext)
+                      ?.onLuaScriptsEnabledChanged;
+              if (live != null) {
+                await live(value);
+              } else {
+                await settingsContext.appModel
+                    .setVideoMpvLuaScriptsEnabled(value);
+              }
+            },
+          ),
+          SettingsActionItem(
+            id: 'video.player.mpv_lua_scripts_import',
+            title: t.video_setting_mpv_lua_scripts_import,
+            icon: Icons.note_add_outlined,
+            video: VideoPlacement(
+              group: VideoGroup.mpv,
+              order: 214,
+              section: t.video_setting_mpv_group_advanced,
+            ),
+            onTap: (SettingsContext settingsContext) async {
+              final FilePickerResult? result =
+                  await FilePicker.platform.pickFiles(
+                type: FileType.custom,
+                allowedExtensions: const <String>['lua'],
+                allowMultiple: true,
+              );
+              if (result == null) return;
+              bool imported = false;
+              for (final PlatformFile f in result.files) {
+                final String? path = f.path;
+                if (path == null) continue;
+                await importLuaScriptFile(path);
+                imported = true;
+              }
+              if (!imported) return;
+              _showVideoSettingsSnackBar(
+                settingsContext,
+                t.video_setting_mpv_lua_scripts_imported,
+              );
+            },
+          ),
+          // 复制目录路径（全平台一致，不做平台分支的文件管理器跳转）：用户拿路径
+          // 自行增删/编辑脚本文件。
+          SettingsActionItem(
+            id: 'video.player.mpv_lua_scripts_dir',
+            title: t.video_setting_mpv_lua_scripts_dir_copy,
+            icon: Icons.folder_copy_outlined,
+            video: VideoPlacement(
+              group: VideoGroup.mpv,
+              order: 216,
+              section: t.video_setting_mpv_group_advanced,
+            ),
+            onTap: (SettingsContext settingsContext) async {
+              final String dirPath = (await mpvLuaScriptDirectory()).path;
+              await Clipboard.setData(ClipboardData(text: dirPath));
+              _showVideoSettingsSnackBar(
+                settingsContext,
+                '${t.video_setting_mpv_lua_scripts_dir_copied}\n$dirPath',
+              );
+            },
+          ),
           // 重置：全部回 mpv 默认（含清空原始 conf 框，经 pref 回填输入框）。
           SettingsActionItem(
             id: 'video.player.mpv_reset',
@@ -1613,6 +1712,14 @@ Future<void> _commitVideoDanmakuConfig(
   final DandanplayConfig current = settingsContext.appModel.videoDanmakuConfig;
   await settingsContext.appModel.setVideoDanmakuConfig(mutate(current));
   settingsContext.refresh();
+}
+
+/// 轻量提示条（与 settings_schema_lookup.dart 的 `_showSettingsSnackBar` 同款）。
+void _showVideoSettingsSnackBar(
+    SettingsContext settingsContext, String message) {
+  final BuildContext ctx = settingsContext.context;
+  if (!ctx.mounted) return;
+  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(message)));
 }
 
 /// mpv 布尔开关的声明模板：读写同一 [AppModel.videoMpvConfig]，无 host 落 pref
