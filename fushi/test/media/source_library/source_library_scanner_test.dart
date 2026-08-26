@@ -23,6 +23,7 @@ import 'package:fushi/src/epub/epub_storage.dart';
 import 'package:fushi/src/media/source_library/source_file_system.dart';
 import 'package:fushi/src/media/source_library/source_library_row.dart';
 import 'package:fushi/src/media/source_library/source_library_scanner.dart';
+import 'package:fushi/src/media/video/metadata/video_scrape_operation_gate.dart';
 import 'package:fushi/src/media/video/video_book_repository.dart';
 import 'package:fushi_core/fushi_core.dart';
 import 'package:path/path.dart' as p;
@@ -112,6 +113,36 @@ void main() {
       TestWidgetsFlutterBinding.ensureInitialized();
 
   group('planScanFromFileList (pure)', () {
+    test('.pdf 也是一本书：此前整批被静默跳过', () {
+      // kScanBookExtensions 只有 'epub' 时，目录里的每份 PDF 既不进 plan.books
+      // 也不报错，看起来像扫描漏读了文件（用户实报）。
+      final ScanPlan plan = planScanFromFileList(<SourceFileEntry>[
+        _file('/lib/scan.pdf'),
+        _file('/lib/book.epub'),
+      ]);
+
+      expect(plan.books.map((ScanBookItem b) => b.bookPath),
+          containsAll(<String>['/lib/scan.pdf', '/lib/book.epub']));
+      final ScanBookItem pdf =
+          plan.books.firstWhere((ScanBookItem b) => b.isPdf);
+      expect(pdf.bookPath, '/lib/scan.pdf');
+      expect(plan.books.firstWhere((ScanBookItem b) => !b.isPdf).bookPath,
+          '/lib/book.epub');
+    });
+
+    test('PDF 旁边有同名字幕+音频也不挂有声书（PDF 行没有可对齐的正文）', () {
+      final ScanPlan plan = planScanFromFileList(<SourceFileEntry>[
+        _file('/lib/scan.pdf'),
+        _file('/lib/scan.srt'),
+        _file('/lib/scan.mp3'),
+      ]);
+
+      final ScanBookItem pdf = plan.books.single;
+      expect(pdf.isPdf, isTrue);
+      expect(pdf.isAudiobook, isFalse,
+          reason: '对齐拿 EPUB 章节正文与字幕逐句配，PDF 的 chaptersJson 是 []');
+    });
+
     test('classifies epub / video; subtitle attaches as video sidecar', () {
       final List<SourceFileEntry> files = <SourceFileEntry>[
         _file('/lib/book.epub'),
@@ -124,7 +155,7 @@ void main() {
       final ScanPlan plan = planScanFromFileList(files);
 
       expect(plan.books, hasLength(1));
-      expect(plan.books.single.epubPath, '/lib/book.epub');
+      expect(plan.books.single.bookPath, '/lib/book.epub');
       // No sidecar audio -> plain EPUB (not an audiobook).
       expect(plan.books.single.isAudiobook, isFalse);
       expect(plan.videos, hasLength(1));
@@ -178,7 +209,7 @@ void main() {
         <String>['/lib/vol1.mokuro'],
       );
       // 既有分类零变化：EPUB/视频照旧，页图不出现在任何清单。
-      expect(plan.books.single.epubPath, '/lib/book.epub');
+      expect(plan.books.single.bookPath, '/lib/book.epub');
       expect(plan.videos.single.videoPath, '/lib/movie.mp4');
       expect(plan.playlists, isEmpty);
     });
@@ -216,7 +247,7 @@ void main() {
       final ScanPlan plan = planScanFromFileList(files);
       expect(plan.books, hasLength(1));
       final ScanBookItem b = plan.books.single;
-      expect(b.epubPath, '/lib/book.epub');
+      expect(b.bookPath, '/lib/book.epub');
       expect(b.subtitlePath, '/lib/book.srt');
       expect(b.audioPaths, <String>['/lib/book.mp3']);
       expect(b.isAudiobook, isTrue);
@@ -363,6 +394,33 @@ void main() {
       expect(summary.createdVideoUids, <String>[videos.single.bookUid]);
       expect(summary.reusedVideoUids, isEmpty);
       expect(summary.createdCollectionIds, isEmpty);
+    });
+
+    test('maintenance lease blocks the real video scanner before any IO',
+        () async {
+      final FushiDatabase db = _memDb();
+      addTearDown(db.close);
+      final VideoBookRepository repo = VideoBookRepository(db);
+      File(p.join(tmp.path, 'blocked.mp4')).writeAsStringSync('fake-mp4');
+      final int sid = await db.insertMediaSource(MediaSourcesCompanion.insert(
+        label: 'Blocked videos',
+        mediaKind: 'video',
+        rootPath: tmp.path,
+        createdAt: 1000,
+      ));
+      final SourceLibraryRow source = (await db.getMediaSourceById(sid))!;
+      final VideoScrapeOperationLease lease =
+          VideoScrapeOperationGate.tryEnterMaintenance()!;
+      addTearDown(lease.release);
+
+      final SourceScanSummary summary =
+          await SourceLibraryScanner(db).scan(source);
+
+      expect(summary.succeeded, isFalse);
+      expect(summary.error, contains('正在清理'));
+      expect(summary.discoveredPaths, isEmpty);
+      expect(await repo.listAll(), isEmpty);
+      expect(await db.getAllVideoMetadataWorks(), isEmpty);
     });
 
     test('nested episodic videos form one additive, stable playlist', () async {

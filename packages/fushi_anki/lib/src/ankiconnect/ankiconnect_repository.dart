@@ -164,7 +164,7 @@ Future<String> fushiAnkiBase64EncodeAsync(List<int> bytes) {
 
 String _safeMediaPrefix(String prefix) {
   final String safe = prefix.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
-  return safe.isEmpty ? 'hibiki_media_' : safe;
+  return safe.isEmpty ? 'fushi_media_' : safe;
 }
 
 String _mediaExtensionFromSource(
@@ -842,7 +842,7 @@ class AnkiConnectRepository extends BaseAnkiRepository {
               service,
               mediaTransaction,
               context.coverPath!,
-              'hibiki_cover_',
+              'fushi_cover_',
             )
           : Future<String?>.value(null),
       context.sentenceAudioPath != null
@@ -1093,7 +1093,7 @@ class AnkiConnectRepository extends BaseAnkiRepository {
   Future<bool> isDuplicate(String expression, String reading) async {
     if (expression.isEmpty) return false;
     // 不可达冷却窗内直接判「非重复」（BUG-1302）。查重仍是渲染路径上**逐词条**发起的
-    // 装饰性探测，但 BUG-1593 已把同一波桥调用汇成一次 canAddNotes。冷却仍不可少：
+    // 装饰性探测，但 BUG-1875 已把同一波桥调用汇成一次 canAddNotes。冷却仍不可少：
     // AnkiConnect 被防火墙丢包 / VPN 断开 / 配成离线远端时，若没有它，每次新弹窗
     // 都会重新付一次完整连接超时（5s，BUG-665 已给连接阶段单独设限）。
     //
@@ -1263,6 +1263,31 @@ class AnkiConnectRepository extends BaseAnkiRepository {
     }
   }
 
+  // BUG-1799：复核哪些 note 已被用户在 Anki 里删掉。一次 `notesInfo` 批量往返
+  // （常数 1 次，不随 id 数增长），把「应答里没出现」的 id 当作已删除。
+  //
+  // `notesInfoMany` 对不存在的 note 收到的是**空对象项**（没有 noteId 字段），
+  // 在那边已被跳过，所以「id 不在返回 map 里」精确等于「Anki 说这张 note 没了」。
+  //
+  // 传输层/业务层任何失败都返回**空集**（见基类口径）：问不到 ≠ 已删除。这里刻意
+  // **不**复用 isDuplicate 的 30s 不可达冷却窗（BUG-1302）——那个冷却是给渲染路径上
+  // 每词条一发的高频探测省超时的，而本方法是用户切回来才跑一次的低频复核，
+  // 借它的短路只会让「Anki 刚重新可达」的那一次复核白跑。
+  @override
+  Future<Set<int>> findDeletedNotes(Set<int> noteIds) async {
+    if (noteIds.isEmpty) return const <int>{};
+    try {
+      final service = await _getService();
+      final Map<int, Map<String, String>> infos =
+          await service.notesInfoMany(noteIds.toList()..sort());
+      return noteIds.where((int id) => !infos.containsKey(id)).toSet();
+    } catch (e, stack) {
+      debugPrint('AnkiConnectRepository.findDeletedNotes: $e');
+      debugPrint('$stack');
+      return const <int>{};
+    }
+  }
+
   // TODO-1007/1008：在 Anki 桌面端打开浏览器并选中该 note（guiBrowse(nid:<id>)）。
   //
   // 光发 guiBrowse 不够：Anki 若已经在后台开着「浏览」窗口，它内部只是 raise 一个
@@ -1272,12 +1297,17 @@ class AnkiConnectRepository extends BaseAnkiRepository {
   //
   // 只对本机 Anki 生效：host 非 loopback 时说的是另一台机器上的 AnkiConnect，
   // 去激活本机窗口毫无意义。
+  //
+  // BUG-1837：认 Anki 进程要用 **service.port**（谁在监听我们正在对话的这个
+  // AnkiConnect），而不是「exe 叫 anki.exe」——新版 Anki 的 anki.exe 只是启动器，
+  // 真正持有窗口的是 venv 里的 pythonw.exe，按名字找必然落空、整套让渡空转。
   @override
   Future<bool> openNoteInAnki(int noteId) async {
     try {
       final service = await _getService();
       final int? ankiPid = ankiConnectHostIsLoopback(service.host)
-          ? AnkiDesktopForeground.grantForegroundToAnki()
+          ? AnkiDesktopForeground.grantForegroundToAnki(
+              ankiConnectPort: service.port)
           : null;
       await service.guiBrowse(noteId);
       await AnkiDesktopForeground.raiseAnkiWindow(ankiPid);

@@ -18,8 +18,9 @@ import 'package:fushi/src/models/preferences_repository.dart';
 import 'package:fushi/src/sync/desktop_lookup_service.dart';
 import 'package:fushi/src/sync/manual_sync_ui.dart';
 import 'package:fushi/src/sync/sync_progress_banner.dart';
-import 'package:fushi/src/utils/misc/swipe_dismiss_wrapper.dart';
+import 'package:fushi/src/utils/misc/lookup_dismiss_barrier.dart';
 import 'package:fushi/src/utils/components/clipboard_lookup_text_panel.dart';
+import 'package:fushi/src/utils/overlay_entry_lifecycle.dart';
 import 'package:fushi/utils.dart';
 
 /// 测试可见的查词状态探针：让 widget 行为测试直接断言「查词后 _isSearching 已复位」
@@ -54,9 +55,18 @@ abstract class HomeDictionarySearchDebug {
 
 /// The body content for the Dictionary tab in the main menu.
 class HomeDictionaryPage extends BaseTabPage {
-  const HomeDictionaryPage({super.key, this.focusSignal});
+  const HomeDictionaryPage({
+    super.key,
+    this.focusSignal,
+    this.showBackButton = false,
+  });
 
   final ValueNotifier<int>? focusSignal;
+
+  /// 本页作为**独立路由**承载时（查词 tab 被「功能模块」隐藏，热键/桌面取词仍要有
+  /// 落地面，见 HomePage 的 `_revealDictionary`）在页头左侧显示返回箭头。作为 tab
+  /// 内容时恒 false —— 切 tab 不产生路由栈，画一个返回箭头没有可返回的目标。
+  final bool showBackButton;
 
   @override
   BaseTabPageState<HomeDictionaryPage> createState() =>
@@ -299,8 +309,7 @@ class _HomeDictionaryPageState extends BaseTabPageState<HomeDictionaryPage>
     // Overlay 重建 [_buildPopupOverlay]，杜绝销毁期用失效 State 重建浮层（照搬 video）。
     final OverlayEntry? entry = _popupOverlayEntry;
     if (entry != null) {
-      if (entry.mounted) entry.remove();
-      entry.dispose();
+      removeAndDisposeOwnedOverlayEntry(entry);
       _popupOverlayEntry = null;
     }
     // TODO-058：弹窗 controller 现持有挂起层兜底 Timer，dispose 取消防泄漏。
@@ -440,6 +449,14 @@ class _HomeDictionaryPageState extends BaseTabPageState<HomeDictionaryPage>
   Widget _buildPageHeader() {
     return FushiPageHeader(
       title: t.nav_lookup,
+      leading: widget.showBackButton
+          ? FushiIconButton(
+              key: const ValueKey<String>('home-dictionary-route-back'),
+              tooltip: t.back,
+              icon: Icons.arrow_back,
+              onTap: () => Navigator.of(context).maybePop(),
+            )
+          : null,
       actions: <Widget>[
         FushiIconButton(
           tooltip: t.clear_dictionary_title,
@@ -925,8 +942,7 @@ class _HomeDictionaryPageState extends BaseTabPageState<HomeDictionaryPage>
     if (_popup.entries.isEmpty) {
       final OverlayEntry? entry = _popupOverlayEntry;
       if (entry != null) {
-        if (entry.mounted) entry.remove();
-        entry.dispose();
+        removeAndDisposeOwnedOverlayEntry(entry);
         _popupOverlayEntry = null;
       }
       return;
@@ -975,24 +991,17 @@ class _HomeDictionaryPageState extends BaseTabPageState<HomeDictionaryPage>
                   hiddenByDialog: lookupPopupHiddenByDialog,
                 ))
                   Positioned.fill(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.translucent,
-                      onTap: () => _popNestedPopupAt(0),
-                      // TODO-1052：桌面对齐手机——barrier 上水平拖过阈关一层（逐层关）。
-                      // 仅当滑动关闭开关开启时挂横拖（否则只 onTap）。竞技场分流单击/横拖。
-                      onHorizontalDragStart:
-                          ReaderFushiSource.instance.enableSwipeToClose
-                              ? _onBarrierHorizontalDragStart
-                              : null,
-                      onHorizontalDragUpdate:
-                          ReaderFushiSource.instance.enableSwipeToClose
-                              ? _onBarrierHorizontalDragUpdate
-                              : null,
-                      onHorizontalDragEnd:
-                          ReaderFushiSource.instance.enableSwipeToClose
-                              ? _onBarrierHorizontalDragEnd
-                              : null,
-                      child: const ColoredBox(color: Colors.transparent),
+                    // BUG-1757：barrier 收口成唯一原语 [LookupDismissBarrier]，
+                    // 横拖走它内部不入竞技场的 Listener 旁路 + 可单测的判轴。
+                    child: LookupDismissBarrier(
+                      // 本表面不按落点分流，点真空白一律关栈根层。
+                      onTapDismiss: (_) => _popNestedPopupAt(0),
+                      // TODO-1052：水平拖过阈关一层（逐层关）。
+                      onSwipeDismiss: _dismissTopNestedPopup,
+                      swipeEnabled:
+                          ReaderFushiSource.instance.enableSwipeToClose,
+                      sensitivity:
+                          ReaderFushiSource.instance.dismissSwipeSensitivity,
                     ),
                   ),
                 // 搜索期加载占位卡（搜索→就绪才显示，与书内同观感）。
@@ -1028,26 +1037,11 @@ class _HomeDictionaryPageState extends BaseTabPageState<HomeDictionaryPage>
   /// TODO-931：是否有任何**可见**弹窗层（常驻隐藏热槽不算）。
   bool get _hasVisiblePopup => _popup.hasVisiblePopup;
 
-  /// TODO-1052：查词浮层 barrier 上「桌面水平拖过阈关一层」的纯状态追踪器（与
-  /// reader/audiobook、video、texthooker 共用 [BarrierSwipeDismissTracker]，阈值/
-  /// 位移单一真相源、不漂移）。仅当 [ReaderFushiSource.enableSwipeToClose] 开启时挂
-  /// 到 barrier（否则只 onTap，与旧行为一致）。过阈关一层（逐层关，非清整栈）。
-  final BarrierSwipeDismissTracker _barrierSwipe = BarrierSwipeDismissTracker();
-
-  void _onBarrierHorizontalDragStart(DragStartDetails details) {
-    _barrierSwipe.begin();
-  }
-
-  void _onBarrierHorizontalDragUpdate(DragUpdateDetails details) {
-    _barrierSwipe.update(details.delta.dx);
-  }
-
-  void _onBarrierHorizontalDragEnd(DragEndDetails details) {
-    if (_barrierSwipe.end(
-      sensitivity: ReaderFushiSource.instance.dismissSwipeSensitivity,
-    )) {
-      _popNestedPopupAt(_popup.lastVisibleIndex);
-    }
+  /// TODO-1052：查词浮层 barrier 上「水平拖过阈关一层」。判轴/累积/阈值全部收在
+  /// [LookupDismissBarrier] 内（BUG-1757：横拖不进手势竞技场）。过阈关一层（逐层
+  /// 关，非清整栈；清整栈仍是点真空白的 tap）。
+  void _dismissTopNestedPopup() {
+    _popNestedPopupAt(_popup.lastVisibleIndex);
   }
 
   void _popNestedPopupAt(int index) {

@@ -17,17 +17,23 @@ void main() {
   late String page;
 
   setUpAll(() {
-    page = File('lib/src/pages/implementations/texthooker_page.dart')
-        .readAsStringSync();
+    page = File(
+      'lib/src/pages/implementations/texthooker_page.dart',
+    ).readAsStringSync();
   });
 
   test('命中区按字素簇逐个建，不是整词一个', () {
     final String masked = maskComments(page);
-    expect(masked.contains('for (final String grapheme in word.characters)'),
-        isTrue,
-        reason: '必须按字素簇切——用 UTF-16 code unit 会劈开代理对/浊点/组合字');
-    expect(masked.contains('class _CharSpan'), isTrue,
-        reason: '单字命中区必须是独立 widget，整词一个 InkWell 就退回原状了');
+    expect(
+      masked.contains('for (final String grapheme in word.characters)'),
+      isTrue,
+      reason: '必须按字素簇切——用 UTF-16 code unit 会劈开代理对/浊点/组合字',
+    );
+    expect(
+      masked.contains('class _CharSpan'),
+      isTrue,
+      reason: '单字命中区必须是独立 widget，整词一个 InkWell 就退回原状了',
+    );
   });
 
   // 查询串的构造已从本页提到 sentence_extraction 的共享 lookupQueryFromIndex()
@@ -37,22 +43,27 @@ void main() {
   test('查询串从命中的那个字起算，交给引擎最长匹配', () {
     final String body = methodBody(
       page,
-      'void _onCharTap(\n    TexthookerLineEntry line,\n    int charIndex,\n    Rect rect,\n  )',
+      'void _onCharTap(TexthookerLineEntry line, int charIndex, Rect rect)',
     );
-    expect(body.contains('lookupQueryFromIndex(line.text, charIndex)'), isTrue,
-        reason: '查询串必须从命中字起算；传分词器切的那个词就等于没修');
+    expect(
+      body.contains('lookupQueryFromIndex(line.text, charIndex)'),
+      isTrue,
+      reason: '查询串必须从命中字起算；传分词器切的那个词就等于没修',
+    );
 
-    final String shared =
-        maskComments(File('lib/src/lookup/sentence_extraction.dart')
-            .readAsStringSync());
+    final String shared = maskComments(
+      File('lib/src/lookup/sentence_extraction.dart').readAsStringSync(),
+    );
     final String helper = methodBody(
       shared,
       'String lookupQueryFromIndex(\n  String text,\n  int charIndex, {\n  int maxChars = kLookupQueryMaxChars,\n})',
     );
-    expect(helper.contains('text.substring(charIndex, end)'), isTrue,
-        reason: '共享 helper 必须真的从命中字下标起切');
-    expect(helper.contains('maxChars'), isTrue,
-        reason: '必须截断，别把整行喂给引擎');
+    expect(
+      helper.contains('text.substring(charIndex, end)'),
+      isTrue,
+      reason: '共享 helper 必须真的从命中字下标起切',
+    );
+    expect(helper.contains('maxChars'), isTrue, reason: '必须截断，别把整行喂给引擎');
   });
 
   test('词首偏移按前缀长度累加，不在原文里搜索', () {

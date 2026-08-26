@@ -7,6 +7,8 @@ import 'package:fushi/src/ocr/manga_ocr_pipeline.dart';
 import 'package:fushi/src/ocr/manga_ocr_service.dart';
 import 'package:fushi/src/ocr/manga_ocr_service_impl.dart';
 import 'package:fushi/src/ocr/ocr_inference.dart';
+import 'package:fushi/src/ocr/ocr_inference_ort.dart'
+    show isLocalOnnxRuntimeAvailable;
 import 'package:path/path.dart' as p;
 
 /// 与真实清单同名同形（detector + encoder/decoder/vocab），尺寸缩成几字节，
@@ -88,9 +90,10 @@ void main() {
   });
 
   /// [platformSupported] 显式钉死平台闸门，让 `ocrFolder` 的编排断言在任何宿主
-  /// 上都跑同一条分支。真实 `isSupportedPlatform` 是 Windows / Linux / macOS /
-  /// iOS 为真、Android 为假，照默认值跑的话这组编排测试在 Android 宿主上会整组
-  /// 走「平台不支持」分支而全红——红的是宿主，不是被测逻辑。
+  /// 上都跑同一条分支，而不是跟着宿主平台漂。
+  ///
+  /// 真实 `isSupportedPlatform` 现在就是 ORT native 可用性（出包五端全真，
+  /// 含 Android，BUG-1780），所以「平台不支持」那条分支只能靠这个参数注入才走得到。
   MangaOcrServiceImpl service(
     _FakeRunner runner, {
     bool platformSupported = true,
@@ -128,6 +131,37 @@ void main() {
       expect(status.detectorReady, isTrue);
       expect(status.recognizerReady, isFalse);
       expect(status.diskBytes, 4);
+    });
+
+    test('obtainedBytes 把 .part 残留算进「已下多少」', () async {
+      // 一个已就绪档 + 一个下到一半的 .part：用户看到的进度必须是两者之和，
+      // 否则每次重进设置页那半截下载就像白下了（下载器一直有 Range 续传）。
+      File(p.join(modelsDir.path, 'detector-v4-s_int8.onnx'))
+          .writeAsBytesSync(<int>[1, 2, 3, 4]);
+      File(p.join(modelsDir.path, 'encoder_model.onnx.part'))
+          .writeAsBytesSync(<int>[1, 2, 3]);
+
+      final MangaOcrModelStatus status =
+          await service(_FakeRunner()).modelStatus();
+
+      expect(status.obtainedBytes, 4 + 3);
+      expect(status.hasResumableDownload, isTrue);
+    });
+
+    test('全新安装：obtainedBytes 为 0，不显示「继续下载」', () async {
+      final MangaOcrModelStatus status =
+          await service(_FakeRunner()).modelStatus();
+      expect(status.obtainedBytes, 0);
+      expect(status.hasResumableDownload, isFalse);
+    });
+
+    test('全部就绪后不再是「可续传」状态', () async {
+      writeAllModels();
+      final MangaOcrModelStatus status =
+          await service(_FakeRunner()).modelStatus();
+      expect(status.obtainedBytes, status.totalBytes);
+      expect(status.hasResumableDownload, isFalse,
+          reason: '已经下完了还提示「继续下载」只会让人以为没下完');
     });
 
     test('零字节文件不算就绪', () async {
@@ -216,17 +250,47 @@ void main() {
       expect(runner.requests, isEmpty);
     });
 
-    test('平台闸门 = 桌面三端 + iOS（Android 仍不开整卷本地 OCR）', () {
-      // 2026-08-14：macOS/iOS 随 flutter_onnxruntime fork 重接 Apple native 后
-      // 打开。这条按宿主断言，所以 macOS 开发机与 macOS CI 上它真的在验证
-      // 「macOS 为真」这条新行为，而不是空转。
-      final bool expected = Platform.isWindows ||
-          Platform.isLinux ||
-          Platform.isMacOS ||
-          Platform.isIOS;
-      expect(MangaOcrServiceImpl.defaultPlatformSupport(), expected,
-          reason: '${Platform.operatingSystem} 上的整卷本地 OCR 闸门与预期不符；'
-              '改闸门必须同时改这里，别让它静默漂移');
+    test('平台闸门 = ORT native 可用性本身（含 Android，出包五端全开）', () {
+      expect(
+        MangaOcrServiceImpl.defaultPlatformSupport(),
+        isLocalOnnxRuntimeAvailable,
+        reason: '整卷本地 OCR 的闸门必须**就是** ORT native 可用性；'
+            '要调整平台支持面就去改 isLocalOnnxRuntimeAvailable（BUG-1780）',
+      );
+      expect(
+        MangaOcrServiceImpl.defaultPlatformSupport(),
+        isTrue,
+        reason: '${Platform.operatingSystem} 是出包五端之一，ORT native 应可用',
+      );
+    });
+
+    test('闸门实现里不许再长出第二份平台白名单（源码守卫，任何宿主都有效）', () {
+      // 这条不能靠「按宿主算 expected」来守。旧写法是
+      //   expected = isWindows || isLinux || isMacOS || isIOS
+      // 它在 Windows / macOS / Linux 宿主上改前改后都是 true，**只有 Android 宿主
+      // 才会红**——而单测从不在 Android 上跑。于是「Android 被漏在白名单外」这件事
+      // 有守卫却测不出来，一路活到用户报障（BUG-1780）。
+      //
+      // 换成扫实现体：只要有人再把 `Platform.isXxx` 写回闸门里，任何宿主都当场红。
+      final String source =
+          File('lib/src/ocr/manga_ocr_service_impl.dart').readAsStringSync();
+      final RegExpMatch? match = RegExp(
+        r'static bool defaultPlatformSupport\(\)\s*=>([\s\S]*?);',
+      ).firstMatch(source);
+      expect(
+        match,
+        isNotNull,
+        reason: '找不到 defaultPlatformSupport 的定义；改了签名要同步改本守卫',
+      );
+      final String body = match!.group(1)!;
+      expect(
+        body.contains('Platform.'),
+        isFalse,
+        reason: '闸门体里又出现了 Platform.xxx —— 第二份平台白名单回来了。\n'
+            'ORT 可用性的唯一真相源是 ocr_inference_ort.dart 的 '
+            'isLocalOnnxRuntimeAvailable，要改支持面就去改它。\n'
+            '当前实现体：$body',
+      );
     });
 
     test('默认构造走真实平台闸门（不被注入桩悄悄替换）', () {

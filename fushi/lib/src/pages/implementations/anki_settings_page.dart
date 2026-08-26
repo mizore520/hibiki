@@ -137,12 +137,15 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
                 onChanged: _ankiBackendBusy || uiState.isFetching
                     ? null
                     : (bool value) =>
-                        _updateMobileAnkiBackend(vm, settings, value),
+                          _updateMobileAnkiBackend(vm, settings, value),
               ),
             _AnkiConnectionField(
               label: t.anki_connect_host,
               value: settings.ankiConnectHost,
               hint: 'localhost',
+              // 移动端连局域网 Anki 桌面版要手输 192.168.x.x，中文输入法会把
+              // 点转成句号（BUG-1807）；旁边的 port 框一直有声明，这里漏了。
+              keyboardType: TextInputType.url,
               onChanged: vm.updateAnkiConnectHost,
             ),
             _AnkiConnectionField(
@@ -174,8 +177,10 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
                     ? SizedBox(
                         width: 20,
                         height: 20,
-                        child:
-                            adaptiveIndicator(context: context, strokeWidth: 2),
+                        child: adaptiveIndicator(
+                          context: context,
+                          strokeWidth: 2,
+                        ),
                       )
                     : null,
                 onTap: _addonInstallBusy ? null : _installAnkiConnectAddon,
@@ -220,8 +225,10 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
                     ? SizedBox(
                         width: 20,
                         height: 20,
-                        child:
-                            adaptiveIndicator(context: context, strokeWidth: 2),
+                        child: adaptiveIndicator(
+                          context: context,
+                          strokeWidth: 2,
+                        ),
                       )
                     : null,
                 onTap: _lapisBusy ? null : () => _applyLapisStyling(vm),
@@ -292,8 +299,10 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
                     ? SizedBox(
                         width: 20,
                         height: 20,
-                        child:
-                            adaptiveIndicator(context: context, strokeWidth: 2),
+                        child: adaptiveIndicator(
+                          context: context,
+                          strokeWidth: 2,
+                        ),
                       )
                     : null,
                 onTap: _dedupBusy ? null : () => _scanMediaDedup(vm),
@@ -317,8 +326,9 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
             ),
             child: Text(
               uiState.errorMessage!,
-              style:
-                  textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
+              style: textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
             ),
           ),
         if (!uiState.isConfigured && uiState.errorMessage == null)
@@ -452,8 +462,8 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
     ];
     final int tier = appModel.miningImageQuality.clamp(0, labels.length - 1);
     return AdaptiveSettingsSliderRow(
-      title: t.video_mining_image_quality,
-      subtitle: t.video_mining_image_quality_hint,
+      title: t.mining_image_quality,
+      subtitle: t.mining_image_quality_hint,
       icon: Icons.hd_outlined,
       value: tier.toDouble(),
       min: 0,
@@ -630,18 +640,18 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
   }
 
   Widget _buildVideoMiningAnimatedFormatPicker() => _buildAnimatedFormatPicker(
-        title: t.video_mining_animated_format,
-        subtitle: t.video_mining_animated_format_hint,
-        selected: appModel.videoMiningAnimatedFormat,
-        onChanged: appModel.setVideoMiningAnimatedFormat,
-      );
+    title: t.video_mining_animated_format,
+    subtitle: t.video_mining_animated_format_hint,
+    selected: appModel.videoMiningAnimatedFormat,
+    onChanged: appModel.setVideoMiningAnimatedFormat,
+  );
 
   Widget _buildGalMiningAnimatedFormatPicker() => _buildAnimatedFormatPicker(
-        title: t.gal_mining_animated_format,
-        subtitle: t.gal_mining_animated_format_hint,
-        selected: appModel.galMiningAnimatedFormat,
-        onChanged: appModel.setGalMiningAnimatedFormat,
-      );
+    title: t.gal_mining_animated_format,
+    subtitle: t.gal_mining_animated_format_hint,
+    selected: appModel.galMiningAnimatedFormat,
+    onChanged: appModel.setGalMiningAnimatedFormat,
+  );
 
   /// 静图（截图）**编码格式**，与上面两轴正交：封面模式选「用不用动图 / 静帧取
   /// 哪一帧」，动图格式选「动图怎么编码」，本项只管「那一帧怎么编码」。
@@ -682,18 +692,18 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
   }
 
   Widget _buildVideoMiningStillFormatPicker() => _buildStillFormatPicker(
-        title: t.video_mining_still_format,
-        subtitle: t.video_mining_still_format_hint,
-        selected: appModel.videoMiningStillFormat,
-        onChanged: appModel.setVideoMiningStillFormat,
-      );
+    title: t.video_mining_still_format,
+    subtitle: t.video_mining_still_format_hint,
+    selected: appModel.videoMiningStillFormat,
+    onChanged: appModel.setVideoMiningStillFormat,
+  );
 
   Widget _buildGalMiningStillFormatPicker() => _buildStillFormatPicker(
-        title: t.gal_mining_still_format,
-        subtitle: t.gal_mining_still_format_hint,
-        selected: appModel.galMiningStillFormat,
-        onChanged: appModel.setGalMiningStillFormat,
-      );
+    title: t.gal_mining_still_format,
+    subtitle: t.gal_mining_still_format_hint,
+    selected: appModel.galMiningStillFormat,
+    onChanged: appModel.setGalMiningStillFormat,
+  );
 
   Widget _buildFetchTile(AnkiUiState uiState, AnkiViewModel vm) {
     // Lapis 创建在途时 vm 的 isFetching 也为 true（vm 内部复用同一 flag）；
@@ -741,7 +751,8 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
     final AnkiSettings before = ref.read(ankiViewModelProvider).settings;
     await vm.updateAnkiConnectApiKey(apiKey);
     if (!mounted) return;
-    final bool losesPrerequisite = _isMobileAnkiPlatform &&
+    final bool losesPrerequisite =
+        _isMobileAnkiPlatform &&
         before.useAnkiConnectOnMobile &&
         apiKey.trim().isEmpty;
     if (!losesPrerequisite) return;
@@ -779,8 +790,9 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
     required String apiKey,
   }) async {
     if (_ankiBackendBusy) return;
-    final PlatformServices platformServices =
-        ref.read(platformServicesProvider);
+    final PlatformServices platformServices = ref.read(
+      platformServicesProvider,
+    );
     final ProviderContainer container = ProviderScope.containerOf(
       context,
       listen: false,
@@ -801,8 +813,9 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text(t.anki_connect_backend_switch_failed(error: '$error')),
+            content: Text(
+              t.anki_connect_backend_switch_failed(error: '$error'),
+            ),
           ),
         );
       }
@@ -882,26 +895,26 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
       debugPrint('Lapis 预览基线读取失败，退回内置副本: $e');
     }
     if (!mounted) return;
-    final LapisVisualEditorResult? result =
-        await Navigator.of(context).push<LapisVisualEditorResult>(
-      adaptivePageRoute<LapisVisualEditorResult>(
-        context: context,
-        builder: (BuildContext context) => LapisStyleEditorPage(
-          initialCustomCss: settings.lapisCustomCss,
-          fontScalePercent: settings.lapisFontScalePercent,
-          noteTypeFields: noteTypeFields,
-          initialFieldMappings: settings.fieldMappings,
-          initialBlocks: settings.lapisCustomBlocks,
-          baseCss: baseCss,
-          // 映射编辑仍按**本地**卡型门控：远端字段候选只服务区域摆放，映射
-          // 本身是本地制卡配置，本地没选卡型就没有可写的映射目标。
-          pickHandlebar: localNoteTypeFields.isEmpty
-              ? null
-              : (String field, String currentValue) =>
-                  _pickHandlebar(field, currentValue),
-        ),
-      ),
-    );
+    final LapisVisualEditorResult? result = await Navigator.of(context)
+        .push<LapisVisualEditorResult>(
+          adaptivePageRoute<LapisVisualEditorResult>(
+            context: context,
+            builder: (BuildContext context) => LapisStyleEditorPage(
+              initialCustomCss: settings.lapisCustomCss,
+              fontScalePercent: settings.lapisFontScalePercent,
+              noteTypeFields: noteTypeFields,
+              initialFieldMappings: settings.fieldMappings,
+              initialBlocks: settings.lapisCustomBlocks,
+              baseCss: baseCss,
+              // 映射编辑仍按**本地**卡型门控：远端字段候选只服务区域摆放，映射
+              // 本身是本地制卡配置，本地没选卡型就没有可写的映射目标。
+              pickHandlebar: localNoteTypeFields.isEmpty
+                  ? null
+                  : (String field, String currentValue) =>
+                        _pickHandlebar(field, currentValue),
+            ),
+          ),
+        );
     if (result == null) return;
     await vm.setLapisCustomCss(result.customCss);
     await vm.setLapisCustomBlocks(result.blocks);
@@ -910,8 +923,10 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
     }
   }
 
-  Future<void> _applyLapisStyling(AnkiViewModel vm,
-      {bool force = false}) async {
+  Future<void> _applyLapisStyling(
+    AnkiViewModel vm, {
+    bool force = false,
+  }) async {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     setState(() => _lapisBusy = true);
     final LapisApplyResult result;
@@ -919,7 +934,8 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
       result = await vm.lapisTemplateService.applyCustomization(force: force);
     } catch (e) {
       messenger.showSnackBar(
-          SnackBar(content: Text(t.anki_lapis_apply_failed(error: '$e'))));
+        SnackBar(content: Text(t.anki_lapis_apply_failed(error: '$e'))),
+      );
       return;
     } finally {
       if (mounted) setState(() => _lapisBusy = false);
@@ -928,12 +944,14 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
     switch (result) {
       case LapisApplyResult.applied:
         await vm.refreshSettingsFromStore();
-        messenger
-            .showSnackBar(SnackBar(content: Text(t.anki_lapis_apply_done)));
+        messenger.showSnackBar(
+          SnackBar(content: Text(t.anki_lapis_apply_done)),
+        );
       case LapisApplyResult.upToDate:
         await vm.refreshSettingsFromStore();
-        messenger
-            .showSnackBar(SnackBar(content: Text(t.anki_lapis_up_to_date)));
+        messenger.showSnackBar(
+          SnackBar(content: Text(t.anki_lapis_up_to_date)),
+        );
       case LapisApplyResult.needsConfirm:
         final bool? ok = await showDialog<bool>(
           context: context,
@@ -984,8 +1002,8 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
     if (ok != true || !mounted) return;
     setState(() => _lapisBusy = true);
     try {
-      final LapisRestoreFactoryResult result =
-          await vm.lapisTemplateService.restoreFactoryDefaults();
+      final LapisRestoreFactoryResult result = await vm.lapisTemplateService
+          .restoreFactoryDefaults();
       // 恢复会清空 Hibiki 侧客制化（字号/CSS/自定义区域），UI 必须跟着刷新，
       // 否则设置页还显示恢复前的字号、编辑器打开还是旧区域。
       await vm.refreshSettingsFromStore();
@@ -997,9 +1015,11 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
       };
       messenger.showSnackBar(SnackBar(content: Text(message)));
     } catch (e) {
-      messenger.showSnackBar(SnackBar(
-        content: Text(t.anki_lapis_restore_factory_failed(error: '$e')),
-      ));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(t.anki_lapis_restore_factory_failed(error: '$e')),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _lapisBusy = false);
     }
@@ -1043,14 +1063,15 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     setState(() => _lapisBusy = true);
     try {
-      final LapisBackupOutcome? outcome =
-          await vm.lapisTemplateService.backupNow();
-      messenger.showSnackBar(SnackBar(
-        content: Text(_lapisBackupMessage(outcome)),
-      ));
+      final LapisBackupOutcome? outcome = await vm.lapisTemplateService
+          .backupNow();
+      messenger.showSnackBar(
+        SnackBar(content: Text(_lapisBackupMessage(outcome))),
+      );
     } catch (e) {
       messenger.showSnackBar(
-          SnackBar(content: Text(t.anki_lapis_backup_failed(error: '$e'))));
+        SnackBar(content: Text(t.anki_lapis_backup_failed(error: '$e'))),
+      );
     } finally {
       if (mounted) setState(() => _lapisBusy = false);
     }
@@ -1073,8 +1094,9 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
     final List<File> backups = await vm.lapisTemplateService.listBackups();
     if (!mounted) return;
     if (backups.isEmpty) {
-      messenger
-          .showSnackBar(SnackBar(content: Text(t.anki_lapis_restore_empty)));
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.anki_lapis_restore_empty)),
+      );
       return;
     }
     final File? chosen = await showDialog<File>(
@@ -1126,11 +1148,15 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
     } catch (e) {
       failure ??= e; // 恢复本身的错更接近根因，优先呈现它。
     }
-    messenger.showSnackBar(SnackBar(
-      content: Text(failure == null
-          ? t.anki_lapis_restore_done
-          : t.anki_lapis_restore_failed(error: '$failure')),
-    ));
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          failure == null
+              ? t.anki_lapis_restore_done
+              : t.anki_lapis_restore_failed(error: '$failure'),
+        ),
+      ),
+    );
   }
 
   /// 「扫描重复（不改动）」：只跑干跑并把清单摊给用户看，不提供删除按钮。
@@ -1146,8 +1172,11 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
   Future<void> _runMediaDedup(AnkiViewModel vm) async {
     final AnkiMediaDedupReport? plan = await _runDedupPass(vm, dryRun: true);
     if (plan == null || !mounted) return;
-    final bool confirmed =
-        await showAnkiMediaDedupPlanDialog(context, plan, offerDelete: true);
+    final bool confirmed = await showAnkiMediaDedupPlanDialog(
+      context,
+      plan,
+      offerDelete: true,
+    );
     if (!confirmed || !mounted) return;
     final AnkiMediaDedupReport? result = await _runDedupPass(vm, dryRun: false);
     if (result == null || !mounted) return;
@@ -1172,7 +1201,8 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
       );
     } catch (e) {
       messenger.showSnackBar(
-          SnackBar(content: Text(t.anki_dedup_failed(error: '$e'))));
+        SnackBar(content: Text(t.anki_dedup_failed(error: '$e'))),
+      );
       return null;
     } finally {
       if (mounted) setState(() => _dedupBusy = false);
@@ -1216,18 +1246,19 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
   Widget _buildDeckDropdown(AnkiSettings settings, AnkiViewModel vm) {
     final decks = settings.availableDecks;
     final selectedId = settings.selectedDeckId;
-    final int? validSelectedId =
-        decks.any((d) => d.id == selectedId) ? selectedId : null;
+    final int? validSelectedId = decks.any((d) => d.id == selectedId)
+        ? selectedId
+        : null;
 
     return AdaptiveSettingsPickerRow<int?>(
       title: t.anki_deck,
       controlBelow: true,
       selected: validSelectedId,
       options: decks
-          .map((d) => AdaptiveSettingsPickerOption<int?>(
-                value: d.id,
-                label: d.name,
-              ))
+          .map(
+            (d) =>
+                AdaptiveSettingsPickerOption<int?>(value: d.id, label: d.name),
+          )
           .toList(),
       onChanged: (id) {
         if (id == null) return;
@@ -1240,18 +1271,19 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
   Widget _buildNoteTypeDropdown(AnkiSettings settings, AnkiViewModel vm) {
     final noteTypes = settings.availableNoteTypes;
     final selectedId = settings.selectedNoteTypeId;
-    final int? validSelectedId =
-        noteTypes.any((n) => n.id == selectedId) ? selectedId : null;
+    final int? validSelectedId = noteTypes.any((n) => n.id == selectedId)
+        ? selectedId
+        : null;
 
     return AdaptiveSettingsPickerRow<int?>(
       title: t.anki_note_type,
       controlBelow: true,
       selected: validSelectedId,
       options: noteTypes
-          .map((n) => AdaptiveSettingsPickerOption<int?>(
-                value: n.id,
-                label: n.name,
-              ))
+          .map(
+            (n) =>
+                AdaptiveSettingsPickerOption<int?>(value: n.id, label: n.name),
+          )
           .toList(),
       onChanged: (id) {
         if (id == null) return;
@@ -1288,8 +1320,9 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
   /// 只负责「让用户选一个占位符」，不落盘。设置页选完立即写回；可视化编辑器
   /// 里的选择要跟样式一起走保存/取消，所以落盘时机必须由调用方决定。
   Future<String?> _pickHandlebar(String field, String currentValue) async {
-    final dictionaryNames =
-        appModel.termDictionaries.map((d) => d.name).toList();
+    final dictionaryNames = appModel.termDictionaries
+        .map((d) => d.name)
+        .toList();
     // 隐藏没被用到的旧别名；当前字段正用着的旧别名仍会出现（并标「已弃用」）。
     final options = AnkiHandlebarOptions.optionsForField(
       dictionaryNames: dictionaryNames,
@@ -1403,8 +1436,9 @@ class _AnkiConnectionField extends StatefulWidget {
 }
 
 class _AnkiConnectionFieldState extends State<_AnkiConnectionField> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.value);
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.value,
+  );
   final FocusNode _focusNode = FocusNode();
 
   @override

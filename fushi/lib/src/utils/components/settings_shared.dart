@@ -870,7 +870,53 @@ const double _kSegmentNarrowGlyphWidthFactor = 0.62;
 
 /// Estimated advance width of [label] (logical pixels) at [scaledFont],
 /// classifying each rune as wide (CJK/fullwidth, >= U+1100) or narrow.
-double _segmentLabelContentWidth(String label, double scaledFont) {
+double _segmentLabelContentWidth(String label, double scaledFont) =>
+    estimateLabelAdvanceWidth(
+      label: label,
+      fontSize: scaledFont,
+      textScaleFactor: 1.0,
+    );
+
+/// 估算一排 MD3 tab（库页顶栏 [LibrarySectionTabs]）按各自文案取宽时的自然总宽
+/// （逻辑像素）。[horizontalPaddingPerTab] 是单侧 label 内边距。
+///
+/// 逐段求和，不是「段数 × 最宽段」——后者是等宽分段条 [estimateSegmentedStripWidth]
+/// 的算法，tab 各自取宽，用错会高估近一倍。
+///
+/// 字号 / 文字缩放在这里就地取自 tokens 与 [MediaQuery]，调用点不再重复那三行样板，
+/// 也不必自己碰 `fontSize`——顶栏字号是共享组件层的决策，页面侧不该重开。
+double estimateSectionTabBarWidth(
+  BuildContext context,
+  List<String> labels, {
+  required double horizontalPaddingPerTab,
+}) {
+  final FushiDesignTokens tokens = FushiDesignTokens.of(context);
+  final double fontSize = tokens.type.controlLabel.fontSize ?? 14.0;
+  final double textScaleFactor = MediaQuery.textScalerOf(context).scale(1);
+  double total = 0.0;
+  for (final String label in labels) {
+    total += estimateLabelAdvanceWidth(
+          label: label,
+          fontSize: fontSize,
+          textScaleFactor: textScaleFactor,
+        ) +
+        horizontalPaddingPerTab * 2;
+  }
+  return total;
+}
+
+/// 一段标签文案的估算横向进距（逻辑像素），CJK / 全角按 1em、其余按 0.62em。
+///
+/// Build 期可算（只依赖文案 / 字号 / 文字缩放，不依赖布局），供两类顶栏控件共用：
+/// [segmentedStripCellWidth]（分段条的等宽单元格）与库页顶栏 [LibrarySectionTabs]
+/// 的 tab 自然宽。两者的换行 / 滚动兜底判据必须出自同一张字宽表，否则同一批文案
+/// 在两个控件上会得出不同的「摆得下吗」结论。
+double estimateLabelAdvanceWidth({
+  required String label,
+  required double fontSize,
+  required double textScaleFactor,
+}) {
+  final double scaledFont = fontSize * textScaleFactor;
   double width = 0.0;
   for (final int rune in label.runes) {
     width += scaledFont *
@@ -1147,12 +1193,15 @@ class FushiSegmentedStrip<T extends Object> extends StatelessWidget {
   final AlignmentGeometry alignment;
 
   /// Uniform per-segment width floor (logical pixels), applied only while the
-  /// widened strip still fits its host. Library-page top bars pass
-  /// [kLibrarySectionTabMinSegmentWidth] so all four modules' section tabs read
-  /// as the same control regardless of per-page label lengths (TODO-2937);
-  /// when the floor does not fit, the strip falls back to its natural width,
-  /// then to horizontal scrolling -- the floor never forces a scroll that the
-  /// natural width would avoid.
+  /// widened strip still fits its host. Callers that host several strips in one
+  /// view pass a shared floor so they read as the same control regardless of
+  /// per-strip label lengths; when the floor does not fit, the strip falls back
+  /// to its natural width, then to horizontal scrolling -- the floor never
+  /// forces a scroll that the natural width would avoid.
+  ///
+  /// 库页顶栏曾是本参数最大的消费者（TODO-2937 的统一段宽），2026-08-24 起顶栏改走
+  /// MD3 tabs（[LibrarySectionTabs]），四页观感一致由「同一个控件」保证，不再需要
+  /// 估算出来的等宽下限。
   final double? minSegmentWidth;
 
   @override
@@ -1658,6 +1707,93 @@ class _AdaptiveSettingsTextFieldState extends State<AdaptiveSettingsTextField> {
       onSubmitted: widget.onSubmitted,
       suffixIcon: widget.suffixIcon,
       focusId: widget.focusId ?? _fallbackFocusId,
+    );
+  }
+}
+
+/// 设置页里**表单式**小节（下载后端配置、在线服务配置这类一列裸排输入框的段落）
+/// 的唯一输入框原语。
+///
+/// 与 [AdaptiveSettingsTextField] 的分工：那个是「一行一设置」的行式设置项（走
+/// [AdaptiveSettingsRow]，自带标题/副标题/图标）；本组件是表单段落里裸排的字段，
+/// 标签长在输入框自己的 `labelText` 上，并自带字段间距。
+///
+/// **宽度契约：恒为可用宽度（`double.infinity`）**，左右基线由所在小节承接
+/// （`rowHorizontal`，与普通设置行同一条），字段自身绝不再加一层 `maxWidth`。
+///
+/// BUG-1858：此前设置页并存三种输入框宽度——下载设置的字段自己缩到 480、那两段
+/// 正文又收进 560、其余分类的设置行（[AdaptiveSettingsTextField]）撑满 pane。
+/// 用户 2026-08-25 实报「这里和别的输入框宽度不一样」并拍板统一成撑满，两层限宽
+/// 随之删除。要再引入宽度上限，只能加在这里（全 app 一处），不能各段自设。
+class SettingsFormField extends StatelessWidget {
+  const SettingsFormField({
+    required this.label,
+    required this.onChanged,
+    super.key,
+    this.initialValue,
+    this.controller,
+    this.focusNode,
+    this.hintText,
+    this.helperText,
+    this.errorText,
+    this.obscureText = false,
+    this.keyboardType,
+    this.bottomSpacing = 8,
+  }) : assert(initialValue == null || controller == null,
+            'initialValue 与 controller 二选一');
+
+  /// 浮动标签（`InputDecoration.labelText`）。
+  final String label;
+
+  /// 与 [controller] 二选一：一次性初值。
+  final String? initialValue;
+  final TextEditingController? controller;
+  final FocusNode? focusNode;
+
+  /// 输入后即消失的占位提示。
+  final String? hintText;
+
+  /// 常驻说明（`helperText`）：讲清输入框自身讲不完的生效边界，最多 3 行。
+  final String? helperText;
+
+  /// 非 null 时以错误态渲染并在下方显示该文案。
+  final String? errorText;
+
+  /// 遮蔽输入（密码 / API key）。同时关掉输入建议与自动纠错。
+  final bool obscureText;
+  final TextInputType? keyboardType;
+
+  /// 字段之间的垂直间距（落在字段下方）。
+  final double bottomSpacing;
+
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomSpacing),
+      child: SizedBox(
+        width: double.infinity,
+        child: TextFormField(
+          initialValue: initialValue,
+          controller: controller,
+          focusNode: focusNode,
+          obscureText: obscureText,
+          enableSuggestions: !obscureText,
+          autocorrect: !obscureText,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            labelText: label,
+            hintText: hintText,
+            helperText: helperText,
+            helperMaxLines: 3,
+            errorText: errorText,
+            isDense: true,
+            border: const OutlineInputBorder(),
+          ),
+          onChanged: onChanged,
+        ),
+      ),
     );
   }
 }

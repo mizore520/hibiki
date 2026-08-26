@@ -2,8 +2,13 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fushi/models.dart';
+import 'package:fushi/src/dictionary/dict_style_rules.dart';
 import 'package:fushi/src/focus/fushi_focus_scroll.dart';
+import 'package:fushi/src/pages/implementations/dict_style_preview.dart';
+import 'package:fushi/src/pages/implementations/dict_style_visual_editor.dart';
 import 'package:fushi/src/profile/profile_view_model.dart';
+import 'package:fushi/src/reader/dictionary_style_css.dart';
+import 'package:fushi/src/utils/net/url_input_normalizer.dart';
 import 'package:fushi/utils.dart';
 
 @visibleForTesting
@@ -33,7 +38,9 @@ class AudioSourcesDialog extends StatefulWidget {
   /// `{term}` / `{reading}` 占位符（否则播放时无法代入查词参数）。
   @visibleForTesting
   static bool isValidRemoteUrl(String text) {
-    final String value = text.trim();
+    // 折全角后再判：否则合法模板会被拒，而错误提示只说「地址无效」，
+    // 用户完全看不出问题出在标点上（BUG-1807）。
+    final String value = normalizeUrlInput(text);
     final Uri? uri = Uri.tryParse(value);
     if (uri == null || !uri.hasAuthority) return false;
     if (uri.scheme != 'http' && uri.scheme != 'https') return false;
@@ -342,6 +349,7 @@ class _AudioSourcesDialogState extends State<AudioSourcesDialog> {
           // 编辑态给出可见标签，让「这一栏现在改的是已有那行、不是新增」有据可依。
           labelText: editing ? t.audio_source_edit_url : null,
           hintText: 'https://...{term}...{reading}',
+          keyboardType: TextInputType.url,
           onChanged: (String value) => setState(
             () => _urlValid = AudioSourcesDialog.isValidRemoteUrl(value),
           ),
@@ -428,7 +436,9 @@ class _AudioSourcesDialogState extends State<AudioSourcesDialog> {
 
   /// 输入框提交：编辑态改写目标行的 URL，否则按新增插到最前。
   void _commitRemoteUrl() {
-    final String text = _controller.text.trim();
+    // 存归一化后的值，而不是原始文本：否则校验（已折全角）会通过，落库的却仍是
+    // 全角地址，变成「加的时候没报错、播放时永远失败」。
+    final String text = normalizeUrlInput(_controller.text);
     if (!AudioSourcesDialog.isValidRemoteUrl(text)) {
       _showSnack(t.audio_source_url_invalid);
       return;
@@ -527,17 +537,44 @@ class _DictCssDraftSession {
   final Object profileDraftScope;
   final Map<String?, String> cssByDictionary = <String?, String>{};
   String? selectedDictionaryName;
+
+  /// 可视化规则表草稿。与手写 CSS 同一个「保存 / 取消」闸门——两者分开落盘会让
+  /// 「取消」只撤回一半，同一个对话框出现两套生效语义。
+  ///
+  /// null = 本次会话还没碰过可视化页，保存时也就不该覆写已存规则。
+  List<DictStyleRule>? styleRules;
+
+  /// 可视化页当前选中的部位，跨 tab 切换保持。
+  DictStylePart selectedPart = DictStylePart.glossaryContent;
+
+  /// 当前停在哪个 tab（0 = 可视化，1 = 手写 CSS）。
+  int tabIndex = 0;
 }
 
 _DictCssDraftSession? _dictCssDraftSession;
+
+/// 测试注入口：替换掉可视化页里的真 WebView 预览。
+///
+/// 与 `LapisStyleEditorPage.previewBuilder` 同一模式——widget 测试跑不了平台
+/// WebView，而本对话框的草稿/保存语义又必须能测。
+typedef DictStylePreviewBuilder = Widget Function(
+  BuildContext context,
+  String css,
+  DictStylePart highlightPart,
+  ValueChanged<DictStylePart> onPickPart,
+);
 
 class DictCssEditorDialog extends StatefulWidget {
   const DictCssEditorDialog({
     super.key,
     this.initialDictionaryName,
+    this.previewBuilder,
   });
 
   final String? initialDictionaryName;
+
+  /// 非 null 时用它替代 [DictStylePreview]（仅测试传）。
+  final DictStylePreviewBuilder? previewBuilder;
 
   @override
   State<DictCssEditorDialog> createState() => _DictCssEditorDialogState();
@@ -630,6 +667,12 @@ class _DictCssEditorDialogState extends State<DictCssEditorDialog> {
               );
             }
           }
+          // null = 本次没碰过可视化页。不能拿 `?? []` 兜底——那会把用户已存的
+          // 规则在「只改了手写 CSS 就保存」时整份清空。
+          final List<DictStyleRule>? rules = _draft.styleRules;
+          if (rules != null) {
+            await _appModel.saveDictStyleRules(rules);
+          }
         },
       );
       if (!saved) {
@@ -675,6 +718,10 @@ class _DictCssEditorDialogState extends State<DictCssEditorDialog> {
     return dictIndex < 0 ? 0 : dictIndex + 1;
   }
 
+  /// 规则表草稿。首次读时从 AppModel 惰性取一份副本。
+  List<DictStyleRule> get _currentDraftRules =>
+      _draft.styleRules ??= _appModel.dictStyleRules;
+
   String get _currentDraftCss {
     return _draft.cssByDictionary.putIfAbsent(
       _selectedDictionaryName,
@@ -699,8 +746,9 @@ class _DictCssEditorDialogState extends State<DictCssEditorDialog> {
       ),
       scrollable: false,
       child: FushiModalSheetFrame(
-        title: t.custom_dict_css,
-        leadingIcon: Icons.code_outlined,
+        // 不再只是「自定义 CSS」——里面现在有可视化和手写两页。
+        title: t.dict_style_title,
+        leadingIcon: Icons.palette_outlined,
         bodyPadding: EdgeInsets.fromLTRB(
           tokens.spacing.card,
           0,
@@ -719,12 +767,31 @@ class _DictCssEditorDialogState extends State<DictCssEditorDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              SegmentedButton<int>(
+                showSelectedIcon: false,
+                segments: <ButtonSegment<int>>[
+                  ButtonSegment<int>(
+                    value: 0,
+                    icon: const Icon(Icons.palette_outlined, size: 18),
+                    label: Text(t.dict_style_tab_visual),
+                  ),
+                  ButtonSegment<int>(
+                    value: 1,
+                    icon: const Icon(Icons.code_outlined, size: 18),
+                    label: Text(t.dict_style_tab_code),
+                  ),
+                ],
+                selected: <int>{_draft.tabIndex},
+                onSelectionChanged: (Set<int> picked) =>
+                    setState(() => _draft.tabIndex = picked.first),
+              ),
+              SizedBox(height: tokens.spacing.gap),
               _buildScopeDropdown(context),
               SizedBox(height: tokens.spacing.gap),
               Expanded(
-                child: FushiEditorPanel(
-                  controller: _cssController,
-                ),
+                child: _draft.tabIndex == 0
+                    ? _buildVisualTab(tokens)
+                    : FushiEditorPanel(controller: _cssController),
               ),
             ],
           ),
@@ -749,6 +816,90 @@ class _DictCssEditorDialogState extends State<DictCssEditorDialog> {
         ),
       ),
     );
+  }
+
+  /// 可视化页：上半预览、下半控件。
+  ///
+  /// 预览喂的是「本次草稿编译出的 CSS」，不含用户已存的手写 CSS——混进去就分不清
+  /// 屏幕上这个效果是这次改的还是老规则带来的。
+  Widget _buildVisualTab(FushiDesignTokens tokens) {
+    final List<DictStyleRule> rules = _currentDraftRules;
+    final String? scope = _selectedDictionaryName;
+    final String previewCss = mergeGeneratedAndAuthoredCss(
+      buildGlobalDictStyleCss(rules),
+      // 单典规则在预览里也要能看见效果。预览的 DOM 里 [data-dictionary] 是真实
+      // 存在的（样例词条带两本词典），所以这里必须自己加一次作用域前缀——真实
+      // 下发链上那一次是 constructDictCss 加的，预览没走那条链。
+      <String>[
+        for (final String name in dictionariesWithStyleRules(rules))
+          _scopeCssToDictionary(buildPerDictionaryStyleCss(rules, name), name),
+      ].join('\n'),
+    );
+    return Column(
+      children: <Widget>[
+        Expanded(
+          flex: 2,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: tokens.surfaces.page,
+              borderRadius: tokens.radii.cardRadius,
+              border: Border.all(color: tokens.surfaces.outline),
+            ),
+            child: ClipRRect(
+              borderRadius: tokens.radii.cardRadius,
+              child: widget.previewBuilder?.call(
+                    context,
+                    previewCss,
+                    _draft.selectedPart,
+                    (DictStylePart part) =>
+                        setState(() => _draft.selectedPart = part),
+                  ) ??
+                  DictStylePreview(
+                    css: previewCss,
+                    highlightPart: _draft.selectedPart,
+                    onPickPart: (DictStylePart part) =>
+                        setState(() => _draft.selectedPart = part),
+                  ),
+            ),
+          ),
+        ),
+        SizedBox(height: tokens.spacing.gap / 2),
+        Text(t.dict_style_pick_hint, style: tokens.type.listSubtitle),
+        SizedBox(height: tokens.spacing.gap / 2),
+        Expanded(
+          flex: 3,
+          child: DictStyleVisualEditor(
+            rules: rules,
+            scopeDictionary: scope,
+            selectedPart: _draft.selectedPart,
+            onSelectPart: (DictStylePart part) =>
+                setState(() => _draft.selectedPart = part),
+            onRulesChanged: (List<DictStyleRule> next) =>
+                setState(() => _draft.styleRules = next),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 给一段无前缀的单典 CSS 加上 `[data-dictionary="名"]` 作用域。
+  ///
+  /// 只用于预览。生产路径上这一步由 `assets/popup/dict-media.js` 的
+  /// `constructDictCss()` 做，那是个完整的 CSS 分词器（认 @media / 嵌套 / `&`）。
+  /// 这里的输入是我们自己编译出来的、形状固定的「选择器 { 声明 }」平铺列表，
+  /// 所以按行加前缀就够，不需要把那个分词器搬到 Dart 来。
+  String _scopeCssToDictionary(String css, String dictionaryName) {
+    if (css.trim().isEmpty) return '';
+    final String escaped = dictionaryName
+        .replaceAll('\\', r'\\')
+        .replaceAll('"', r'\"')
+        .replaceAll('\n', r'\A ')
+        .replaceAll('\r', '');
+    return css
+        .split('\n')
+        .where((String line) => line.trim().isNotEmpty)
+        .map((String line) => '[data-dictionary="$escaped"] $line')
+        .join('\n');
   }
 
   Widget _buildScopeDropdown(BuildContext context) {

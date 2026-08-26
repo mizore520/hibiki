@@ -145,27 +145,13 @@ SettingsDestination buildLookupDestination() {
           ),
           SettingsActionItem(
             id: 'lookup.custom_css',
-            title: t.custom_dict_css,
-            icon: Icons.code_outlined,
+            title: t.dict_style_title,
+            icon: Icons.palette_outlined,
             onTap: (SettingsContext settingsContext) {
               return showSettingsDialog(
                 settingsContext,
                 (_) => const DictCssEditorDialog(),
               );
-            },
-          ),
-          // 用户词典可视化编辑器：词条真相源在偏好，保存后经现有导入链整部
-          // 重建挂载（详见 user_dictionary_store.dart 库注释）。
-          SettingsNavigationItem(
-            id: 'lookup.user_dictionary',
-            title: t.dict_user_title,
-            icon: Icons.edit_note_outlined,
-            onTap: (SettingsContext settingsContext) async {
-              await pushSettingsPage(
-                settingsContext,
-                (_) => const UserDictionaryEditorPage(),
-              );
-              settingsContext.refresh();
             },
           ),
           // 「管理音频来源」抽成共享 builder：查词分类与 Hibiki 互联分类都引用同一份

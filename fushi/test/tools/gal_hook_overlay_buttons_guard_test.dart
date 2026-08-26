@@ -22,8 +22,9 @@ void main() {
     final String source = window.readAsStringSync();
     final String header = toolbarHeader.readAsStringSync();
 
-    final Match? declared =
-        RegExp(r'kSlotCount\s*=\s*(\d+)\s*;').firstMatch(header);
+    final Match? declared = RegExp(
+      r'kSlotCount\s*=\s*(\d+)\s*;',
+    ).firstMatch(header);
     expect(declared, isNotNull, reason: '找不到 hook_toolbar::kSlotCount 声明');
     final int slots = int.parse(declared!.group(1)!);
 
@@ -37,8 +38,10 @@ void main() {
     // 槽表必须正好有 N 个 action。
     final int tableStart = header.indexOf('kSlotActions');
     expect(tableStart, greaterThan(0));
-    final String table =
-        header.substring(tableStart, header.indexOf('};', tableStart));
+    final String table = header.substring(
+      tableStart,
+      header.indexOf('};', tableStart),
+    );
     expect(
       RegExp('"([a-zA-Z]+)"').allMatches(table).length,
       slots,
@@ -49,17 +52,22 @@ void main() {
     final String toolbarSource = toolbar.readAsStringSync();
     final int glyphStart = toolbarSource.indexOf('const wchar_t* SlotGlyph');
     expect(glyphStart, greaterThan(0), reason: '找不到 SlotGlyph 定义');
-    // 切到 SlotGlyph 自己的收尾大括号（行首 `}`），而不是「下一个函数的名字」：
-    // 后者把守卫绑在了两个函数的书写顺序上，一旦重排就 indexOf → -1 直接打红，
-    // 而那跟被守的不变量（字形表覆盖 0..N-1）毫无关系。
+    // 切片终点取**本函数**在第 0 列的收尾大括号，不要拿相邻函数当分隔符：
+    // 原实现以 'bool SlotActive' 为终点，SlotActive 被挪到 SlotGlyph 之前时
+    // indexOf 返回 -1，守卫直接崩在切片上而不是报出真正的问题。
     final int glyphEnd = toolbarSource.indexOf('\n}', glyphStart);
-    expect(glyphEnd, greaterThan(glyphStart), reason: 'SlotGlyph 函数体没有闭合');
+    expect(
+      glyphEnd,
+      greaterThan(glyphStart),
+      reason: 'SlotGlyph 必须有第 0 列的收尾大括号',
+    );
     final String glyphBody = toolbarSource.substring(glyphStart, glyphEnd);
-    final List<int> glyphCases = RegExp(r'case (\d+):')
-        .allMatches(glyphBody)
-        .map((Match m) => int.parse(m.group(1)!))
-        .toList()
-      ..sort();
+    final List<int> glyphCases =
+        RegExp(r'case (\d+):')
+            .allMatches(glyphBody)
+            .map((Match m) => int.parse(m.group(1)!))
+            .toList()
+          ..sort();
     expect(
       glyphCases,
       List<int>.generate(slots, (int i) => i),
@@ -120,7 +128,9 @@ void main() {
     expect(scaleAt, greaterThan(0), reason: '非 hook 的歌词条仍按高度缩放，该表达式应当还在');
     final String scaleExpr = source.substring(scaleAt, scaleAt + 400);
     expect(
-      scaleExpr.contains('hook_text_mode_ ? 1.0f'),
+      RegExp(
+        r'\(hook_text_mode_\s*\|\|\s*text_only_\)\s*\?\s*1\.0f',
+      ).hasMatch(scaleExpr),
       isTrue,
       reason: 'hook 分支的高度缩放必须恒为 1.0f（字号与窗高解耦）',
     );
@@ -141,7 +151,8 @@ void main() {
     );
     expect(
       source.contains(
-          'on_context_lookup_(context_id_, utf8, index, screen_rect)'),
+        'on_context_lookup_(context_id_, utf8, index, screen_rect)',
+      ),
       isTrue,
       reason: '查词事件必须带上屏幕逻辑 px 的词矩形',
     );

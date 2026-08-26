@@ -225,11 +225,20 @@ constexpr uint32_t kXAudioDiagUnsupportedFormat = 0x00008000u;
 constexpr uint32_t kXAudioDiagRegistryExhausted = 0x00010000u;
 constexpr uint32_t kXAudioDiagCommitFailed = 0x00020000u;
 constexpr uint32_t kXAudioDiagCommitQueueExhausted = 0x00040000u;
-// At least one byte-exact compressed game voice resource was published by the
-// XAudio2 path.  Unlike kXAudioDiagPcmPublished, this is a resource-audio
-// readiness proof and lets the host prefer the original file even when no PCM
-// clip was active at the matching text timestamp (SGRE xWMA).
+// 至少发布过一条**取自引擎归档**的压缩语音资源（当前只有 SGRE 的 voice_body.bin）。
+// 与 kXAudioDiagPcmPublished 不同，这是 resource-audio 就绪证据：即使配对时刻没有
+// 活跃 PCM clip，host 也可以优先用它。
+//
+// 「byte-exact」到什么层次，必须说准（SOP 第 7 节的 hash_verified 是按这个判的）：
+//   * fmt / dpds / 压缩负载三块**逐字节**取自归档，与源 entry 一致；
+//   * 但发布出去的 `.xwma` **文件**不逐字节等于归档里的任何一段——归档存的是无头
+//     chunk，RIFF 外壳是本进程合成的。所以能宣称的是「负载哈希一致」，不是「文件
+//     哈希一致」；要上 hash_verified 必须比对负载而不是整文件。
 constexpr uint32_t kXAudioDiagGameResourcePublished = 0x00080000u;
+// 由运行时 fmt/dpds 重建并发布的**通用** xWMA 资源（没有引擎归档可比对的引擎）。
+// 与上面那位分开的理由：那位能宣称负载逐字节等于源 entry，这一位不能——fmt 是本
+// 进程按 XAudio2 报的源格式合成的。混成一位，台账上就分不出这两级证据。
+constexpr uint32_t kXAudioDiagRuntimeXwmaPublished = 0x00100000u;
 
 // reserved_luna 的资源音频诊断位。KiriKiriZ 的 TVPCreateStream hook 直接导出当前播放的
 // 已解密 Ogg；Siglus 从 OVK 索引导出逐句 Ogg。它们只代表“资源捕获链已安装”，不要求 PCM
@@ -374,9 +383,9 @@ struct LoopbackMarker {
 //   frame : host → hook，双缓冲（避免 host 写下一帧时撕裂 hook 正在拷的这一帧）
 //
 // **像素格式：BGRA8，直通（非预乘）alpha，自顶向下。** 两端都按直通最省事——host 侧
-// WebView2 取帧经 PNG 解码出来的本来就是直通；注入侧 KiriKiri 的 ltAlpha 也正是直通
-// （预乘对应的是 ltAddAlpha）。任何一侧擅自改成预乘，症状是卡片半透明边缘发暗，不会
-// 报错，只会看起来"有点脏"——所以在这里写死，别靠两边默契。
+// WebView2 取帧经 WIC 解码并由 shell mask 重建透明边界；注入侧 KiriKiri 的 ltAlpha
+// 是直通（预乘对应的是 ltAddAlpha）。任何一侧擅自改成预乘，症状是卡片半透明边缘发暗，
+// 不会报错，只会看起来"有点脏"——所以在这里写死，别靠两边默契。
 constexpr uint32_t kLookupLineBytes = 1024;      // 单行台词 UTF-8 上限（整行，不截断）
 constexpr uint32_t kLookupInputSlotCount = 64;   // 输入转发环槽数
 constexpr uint32_t kLookupFrameCount = 2;        // 位图双缓冲
@@ -384,7 +393,7 @@ constexpr uint32_t kLookupFrameCount = 2;        // 位图双缓冲
 // host 负责钳制卡片尺寸，注入侧只做校验和拒绝，绝不按收到的 width/height 盲拷。
 // 单张卡片位图的字节预算（双缓冲，共享内存占 2 倍）。
 //
-// 超预算时 runner 只能**裁**（DecodePngStreamToStraightBgra 直接改小 width/height
+// 超预算时 runner 只能**裁**（DecodeCaptureStreamToStraightBgra 直接改小 width/height
 // 按左上角取块），不是缩——也就是说预算定小了，用户看到的是被切掉半张的卡片。
 // 原来的 3 MiB 只够 786432 像素，1920x1440 视口下取 0.6 就已经逼近；抬到 8 MiB
 // 后可容 2097152 像素（约 1600x1200 / 1920x1092），正常卡片不可能撞到。
@@ -451,6 +460,10 @@ constexpr uint32_t kLookupDiagFallbackPngMissing = 0x00080000u; // 降级路的 
 // 卡片层退回了普通 Layer（自定义子类建不出来）。卡片能显示，但卡片内的鼠标事件
 // 转发失效——降级发生了就要看得见，不许悄悄发生。
 constexpr uint32_t kLookupDiagCardPlainFallback = 0x00100000u;
+// Helper 已完成显式 Luna H-code 的插入。与 kDiagLunaConnected 分开：Connect 回调先置后者、
+// 随后才逐条 InsertHook；同一入口还要叠加原生查词 detour 时，必须等到这一步完成才能稳定链式
+// 安装，不能拿“管道已连上”冒充“目标地址已改写”。
+constexpr uint32_t kLookupDiagLunaKnownHookReady = 0x00200000u;
 // hook → host：用户真正提交查词时命中了哪个字符。hover 由游戏线程即时画高亮，不写这个
 // 单槽，避免后到 hover 覆盖尚未被 host 消费的 submit。写侧先把 `seq` 清 0，再写 payload，
 // 最后用 Interlocked 发布新 `seq`，与 VoiceClip / LoopbackMarker 同一套纪律。

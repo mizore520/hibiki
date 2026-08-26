@@ -28,6 +28,7 @@ import 'package:fushi/src/models/dictionary_download_controller.dart';
 import 'package:fushi/src/storage/app_paths.dart';
 import 'package:fushi/src/storage/books_directory.dart';
 import 'package:fushi/src/storage/export_directory.dart';
+import 'package:fushi/src/storage/installer_data_root_bootstrap.dart';
 import 'package:fushi/src/utils/misc/channel_constants.dart';
 import 'package:fushi/src/utils/misc/lookup_input_limits.dart';
 import 'package:fushi/src/media/drag_drop/desktop_drop_reinitializer.dart';
@@ -40,9 +41,10 @@ import 'package:fushi/src/media/floating_dict_channel.dart';
 import 'package:fushi/src/models/app_font_loader.dart';
 import 'package:fushi/src/models/app_ui_font_chain.dart';
 import 'package:fushi/src/models/builtin_tags.dart';
-import 'package:fushi/src/dictionary/user_dictionary_store.dart';
 import 'package:fushi/src/epub/book_title_conflict.dart';
 import 'package:fushi/src/epub/epub_importer.dart';
+import 'package:fushi/src/dictionary/dict_style_rules.dart';
+import 'package:fushi/src/reader/dictionary_style_css.dart';
 import 'package:fushi/src/reader/reader_settings.dart';
 import 'package:fushi/src/lookup/browser_extension_installer.dart';
 import 'package:fushi/src/lookup/effective_lookup_size.dart';
@@ -557,17 +559,6 @@ class AppModel with ChangeNotifier {
       extractVideoCover:
           ({required String videoPath, required String bookUid}) =>
               extractVideoCover(videoPath: videoPath, bookUid: bookUid),
-      // host 收到 DELETE /api/library/videos/<id> 时的磁盘回收（VideoDeletionHost）：
-      // 复用本机长按删除的同一函数，按「仍在 app 资产目录内 + 无其它条目引用」回收
-      // 封面 / 字幕缓存。**不碰用户自己导入的原始视频文件**——远端删除与本地删除
-      // 在「删掉哪些字节」上必须完全同语义，否则同一动作在两端后果不同。
-      cleanupVideoOnDisk: (VideoBookRow row) =>
-          VideoBookRepository(database).reclaimDeletedVideoBookAssets(
-            deletedBookUid: row.bookUid,
-            deletedCoverPath: row.coverPath,
-            deletedSubtitlePath: row.subtitleSource,
-            deletedVideoPath: row.videoPath,
-          ),
       removeLocalAudioEntry: (String displayName) async {
         // 按 displayName 在 LocalAudioManager 中找到对应 index 并删除。
         // LocalAudioManager.remove(int) 删除 DB 文件 + 从 prefs 移出 + 推 native。
@@ -693,6 +684,7 @@ class AppModel with ChangeNotifier {
   Future<void> _applyConfirmedDeletions(
     List<DeletionPropagationCandidate> confirmed,
   ) async {
+    bool deletedVideoBook = false;
     for (final DeletionPropagationCandidate c in confirmed) {
       try {
         // 命名统一 Phase 3.4：墓碑 mediaType 经 [SyncTombstoneKind.tryParse]
@@ -707,9 +699,13 @@ class AppModel with ChangeNotifier {
               scope: DeleteScope.keepLocalOnly,
             );
           case SyncTombstoneKind.video:
-            await VideoBookRepository(
-              database,
-            ).deleteVideoBook(c.itemKey, scope: DeleteScope.keepLocalOnly);
+            final bool deleted = await VideoBookRepository(database)
+                .deleteVideoBookAndReclaimAssets(
+                  c.itemKey,
+                  scope: DeleteScope.keepLocalOnly,
+                  compactDatabase: false,
+                );
+            deletedVideoBook = deletedVideoBook || deleted;
           case SyncTombstoneKind.audiobook:
             await AudiobookRepository(
               database,
@@ -750,6 +746,9 @@ class AppModel with ChangeNotifier {
       } catch (e) {
         debugPrint('[sync] apply deletion ${c.mediaType}/${c.itemKey}: $e');
       }
+    }
+    if (deletedVideoBook) {
+      await VideoBookRepository(database).compactAfterVideoDeleteBestEffort();
     }
     // 删完刷新受影响的本地库缓存/书架（书 + 视频 + 有声书都可能变）。
     ReaderMediaType.instance.refreshTab();
@@ -1665,6 +1664,30 @@ class AppModel with ChangeNotifier {
   String? _subtitleFontFamily;
   String? get subtitleFontFamily => _subtitleFontFamily;
 
+  /// [FontTarget.gameLookup] 在 **Flutter 侧**解析出的字体链（texthooker 页面等
+  /// 游戏文本面用），由 [refreshAppFont] 注册进引擎。
+  ///
+  /// 与 native hook 浮窗同一个用户设置、两端各取所能：native 分层窗只吃第一条裸
+  /// sfnt（`AppFontLoader.resolveForNativeOverlay`），Flutter 侧能解码 WOFF/WOFF2
+  /// 且能整链缺字回退，所以这里走 `resolveAndLoadAll` 取全链。
+  List<String> _gameLookupFontFamilies = const <String>[];
+
+  /// 游戏文本字体链；空 = 用户没设，调用方退回主题默认（appUi 链）。
+  List<String> get gameLookupFontFamilies => _gameLookupFontFamilies;
+
+  /// 把游戏文本字体链套到 [base] 上（texthooker 台词等）。
+  ///
+  /// 链为空（用户没为「游戏」设字体）时**原样返回**，让文本继续跟主题走——
+  /// 不猜、不塞兜底 CJK 族：链首放一个 CJK face 会把西文排版一并接管，
+  /// 与内容语言链同一条戒律（见 `content_font_chain.dart`）。
+  TextStyle? applyGameTextFont(TextStyle? base) {
+    if (base == null || _gameLookupFontFamilies.isEmpty) return base;
+    return base.copyWith(
+      fontFamily: _gameLookupFontFamilies.first,
+      fontFamilyFallback: _gameLookupFontFamilies.skip(1).toList(),
+    );
+  }
+
   /// Loads **all** enabled entries of the `appUiFonts` target as the app-wide UI
   /// font chain (registering each file with the Flutter engine via
   /// [AppFontLoader]) and rebuilds the theme. Falls back to the display
@@ -1687,12 +1710,21 @@ class AppModel with ChangeNotifier {
     final String? subtitleFamily = await AppFontLoader.resolveAndLoad(
       settings.videoSubtitleFonts,
     );
+    // 游戏文本目标同样在这里解析：texthooker 页面（Flutter 层）此前只跟主题字体，
+    // 用户在字体库里为「游戏」设的字体只作用于 native hook 浮窗，同一批台词在
+    // app 内页面里不跟随——两个表面各说各话。整链解析，理由见
+    // [_gameLookupFontFamilies]。
+    final List<String> gameFamilies = await AppFontLoader.resolveAndLoadAll(
+      settings.gameLookupFonts,
+    );
     if (listEquals(families, _appFontFamilies) &&
-        subtitleFamily == _subtitleFontFamily) {
+        subtitleFamily == _subtitleFontFamily &&
+        listEquals(gameFamilies, _gameLookupFontFamilies)) {
       return;
     }
     _appFontFamilies = families;
     _subtitleFontFamily = subtitleFamily;
+    _gameLookupFontFamilies = gameFamilies;
     notifyListeners();
   }
 
@@ -2128,6 +2160,8 @@ class AppModel with ChangeNotifier {
       'dejavu-fonts',
       // Windows galgame overlay toolbar: reduced official Google font subset.
       'material-symbols-rounded',
+      // 内置 AnkiConnect 插件包（assets/anki/，GPLv3，新手引导一键安装用）。
+      'anki-connect',
     ];
 
     for (String packageName in packageNames) {
@@ -2165,6 +2199,9 @@ class AppModel with ChangeNotifier {
   /// the application. [AppModel] is initialised in the main function before
   /// [runApp] is executed.
   Future<void> _prepareRuntimeDirectories() async {
+    // Windows 安装向导里选的「数据存储位置」经一次性引导文件送达，必须在 resolve
+    // 读 data_root pref 之前消费（全新安装才生效，见该函数契约）。
+    await consumeInstallerDataRootBootstrap();
     // TODO-935 E0：三个数据根经唯一入口 [AppPaths] 解析（内部已honor测试分支
     // [fushiTestDirectory]，故行为与旧的 test/production 双分支逐字节等价）。
     _appPaths = await AppPaths.resolve();
@@ -2448,6 +2485,11 @@ class AppModel with ChangeNotifier {
       // TODO-864: 视频字幕字体同样在首帧前从 videoSubtitle 目标解析。
       _subtitleFontFamily = await AppFontLoader.resolveAndLoad(
         readerSettings.videoSubtitleFonts,
+      );
+      // 游戏文本字体链也在首帧前解析：否则 texthooker 页面首次打开会先用主题字体
+      // 画一帧再跳变（refreshAppFont 要等到用户改设置才跑）。
+      _gameLookupFontFamilies = await AppFontLoader.resolveAndLoadAll(
+        readerSettings.gameLookupFonts,
       );
       ReaderFushiSource.readerSettings = readerSettings;
 
@@ -2917,8 +2959,10 @@ class AppModel with ChangeNotifier {
 
   RemotePopupDictionaryCss browserExtensionPopupDictionaryCss() {
     final Map<String, String> styles = FushiDicts.dictionaryStyles;
-    final String globalCss = globalDictCSS;
-    final Map<String, String> customCss = customDictCSS;
+    // 与 in-app 注入同源：扩展也必须吃到可视化规则的编译产物，否则同一份
+    // popup.js 在两个宿主里呈现不一致。
+    final String globalCss = effectiveGlobalDictCSS;
+    final Map<String, String> customCss = effectiveCustomDictCSS;
     final RemotePopupDictionaryCss? cached = _browserExtensionPopupCss;
     if (cached != null &&
         identical(cached.dictionaryStyles, styles) &&
@@ -2952,7 +2996,12 @@ class AppModel with ChangeNotifier {
     final ColorScheme s = themeNotifier.buildColorScheme(
       themeNotifier.isDarkMode ? Brightness.dark : Brightness.light,
     );
-    final Color bgColor = _overrideDictionaryColor ?? s.surface;
+    // Niratan 对齐（2026-08-23）：默认卡面纯白/纯黑（popupCardSurface），
+    // 不再用 tinted scheme.surface；override 优先级不变。
+    final Color bgColor = popupCardSurface(
+      scheme: s,
+      override: _overrideDictionaryColor,
+    );
     // BUG-736：核心色/圆角/列数变量的取值统一来自 buildPopupThemeCssVars——与 in-app
     // 弹窗注入器（popup_settings_injection / dictionary_popup_webview）同一真源，
     // 根除「扩展漏抄一处、退化成灰高亮/白字/直角」的手抄漂移。
@@ -4073,7 +4122,7 @@ class AppModel with ChangeNotifier {
         resolvedTmdbApiKey: resolveTmdbApiKey(configuredTmdbKey),
       ),
       // 刮削完成 → 给仍缺字幕的视频补字幕。刮削是全仓唯一解析出规范身份
-      // （AniList/TMDB id + 原名）的地方，而字幕准确率几乎完全取决于身份准不准
+      // （AniDB 主身份 + TMDB/AniList crossref + 原名）的地方，而字幕准确率几乎完全取决于身份准不准
       // ——不接这一刀，播放页只能拿文件名里的中文译名去 AniList 现猜。
       onWorkScraped: _backfillSubtitlesForScrapedWork,
     );
@@ -4546,6 +4595,10 @@ class AppModel with ChangeNotifier {
     );
   }
 
+  /// 本平台是否具备内置 libtorrent 引擎。UI（后端选择器 / 配置引导）与运行时
+  /// 后端解析共用同一判据，别再各处手抄一份 `Platform.isXxx` 串。
+  bool get supportsEmbeddedTorrent => _supportsEmbeddedTorrent();
+
   /// 内置 libtorrent 支持的平台：桌面 + Android（`libfushi_torrent_ffi.so`
   /// 经 jniLibs 随包）。iOS 不支持：从不构建也从不打包内置引擎产物。
   bool _supportsEmbeddedTorrent() =>
@@ -4670,65 +4723,6 @@ class AppModel with ChangeNotifier {
       // 与 delete / reorder 路径对称（BUG-355）。放 finally：覆盖导入失败时旧词典可能
       // 已被删掉，那种半状态同样必须让 UI 重查，不能停在更旧的结果上。
       dictionarySearchAgainNotifier.notifyListeners();
-    }
-  }
-
-  // ── user dictionary (visual editor) ─────────────────────────────────
-
-  /// 用户词典词条列表（真相源：偏好 [userDictionaryEntriesPrefKey]）。
-  List<UserDictionaryEntry> get userDictionaryEntries =>
-      decodeUserDictionaryEntries(
-        prefsRepo.getPref(userDictionaryEntriesPrefKey, defaultValue: '')
-            as String,
-      );
-
-  /// 保存用户词条列表并重建挂载「User Dictionary」。
-  ///
-  /// 先落偏好（真相源永远先写，重建失败也不丢数据），再把整份列表编译成
-  /// Yomitan zip 走现有导入链整部重建（`forceReplaceExisting` = 同名替换并
-  /// 保留 order/hidden/collapsed）。清空到零条 = 删除该词典（走既有删除路径，
-  /// 引擎重载/缓存失效/同步删除传播全复用）。
-  Future<void> saveUserDictionaryEntries(
-    List<UserDictionaryEntry> entries,
-  ) async {
-    await prefsRepo.setPref(
-      userDictionaryEntriesPrefKey,
-      encodeUserDictionaryEntries(entries),
-    );
-
-    final List<Dictionary> existing = dictionaries
-        .where((Dictionary d) => d.name == userDictionaryTitle)
-        .toList();
-    if (entries.isEmpty) {
-      if (existing.isNotEmpty) {
-        await deleteDictionary(existing.first);
-      }
-      return;
-    }
-
-    // 与下载/自动更新共用 `<资源目录>/import_temp`（BUG-1500 的并发形状）。
-    // 忙时不硬闯：抛给编辑器提示稍后重存——偏好已落盘，下次保存自愈。
-    if (dictionaryDownloadController.isBusy) {
-      throw StateError('dictionary download in progress');
-    }
-
-    final List<int> zipBytes = buildUserDictionaryZipBytes(
-      entries: entries,
-      revision: 'user-${DateTime.now().millisecondsSinceEpoch}',
-    );
-    final File tempZip = File(
-      path.join(dictionaryResourceDirectory.path, 'user_dict_rebuild.zip'),
-    );
-    await tempZip.writeAsBytes(zipBytes, flush: true);
-    try {
-      await importDictionary(
-        file: tempZip,
-        progressNotifier: ValueNotifier<String>(''),
-        onImportSuccess: () {},
-        forceReplaceExisting: true,
-      );
-    } finally {
-      if (tempZip.existsSync()) tempZip.deleteSync();
     }
   }
 
@@ -6051,6 +6045,12 @@ class AppModel with ChangeNotifier {
   bool get moduleGamesEnabled => prefsRepo.moduleGamesEnabled;
   Future<void> setModuleGamesEnabled(bool value) =>
       prefsRepo.setModuleGamesEnabled(value);
+  bool get moduleDownloadsEnabled => prefsRepo.moduleDownloadsEnabled;
+  Future<void> setModuleDownloadsEnabled(bool value) =>
+      prefsRepo.setModuleDownloadsEnabled(value);
+  bool get moduleDictionariesEnabled => prefsRepo.moduleDictionariesEnabled;
+  Future<void> setModuleDictionariesEnabled(bool value) =>
+      prefsRepo.setModuleDictionariesEnabled(value);
 
   /// 是否已展示过「上传/做种」首用提示（下载对话框首次推送时弹一次性提醒）。
   bool get torrentUploadIntroShown => prefsRepo.torrentUploadIntroShown;
@@ -6510,6 +6510,64 @@ class AppModel with ChangeNotifier {
   String get globalDictCSS => prefsRepo.globalDictCSS;
   Future<void> setGlobalDictCSS(String css) => prefsRepo.setGlobalDictCSS(css);
 
+  // ── 可视化样式规则 ───────────────────────────────────────────────────
+  //
+  // 上面两个 getter 是**用户手写的原文**，编辑器要拿它回填文本框，绝不能混进
+  // 编译产物。下面的 effective* 才是注入弹窗的最终值（产物在前、手写在后）。
+
+  /// 可视化样式规则表（真相源：偏好 [dictStyleRulesPrefKey]）。
+  ///
+  /// 偏好没就绪时返回空表而不是崩：弹窗注入链（`buildPopupStaticSettingsJs`）会
+  /// 在偏好未初始化的裸 AppModel 上被 widget 测试调到，而「还没有偏好」的正确
+  /// 语义就是「一条规则都没设」。
+  List<DictStyleRule> get dictStyleRules => isPreferencesReady
+      ? decodeDictStyleRules(prefsRepo.dictStyleRulesRaw)
+      : const <DictStyleRule>[];
+
+  /// 保存规则表，并同步刷新 CSS 编译产物缓存。
+  ///
+  /// 缓存只为跑不了 Dart 编译器的消费方存在（Android 独立弹窗 Activity 直连
+  /// prefs 表）。这里是它唯一的写入点——冗余数据必须单点收口，否则迟早不同步。
+  Future<void> saveDictStyleRules(List<DictStyleRule> rules) async {
+    await prefsRepo.setDictStyleRulesRaw(encodeDictStyleRules(rules));
+    await prefsRepo.setDictStyleRulesCss(encodeCompiledDictStyleCss(rules));
+    notifyListeners();
+  }
+
+  /// 注入弹窗的全局 CSS：可视化产物 + 用户手写。
+  ///
+  /// 手写那半走 [globalDictCSS] 而不是 `prefsRepo.globalDictCSS`：前者是可被子类
+  /// 覆写的公开面，测试里的假 AppModel 正是靠覆写它来喂值的；直接穿透到
+  /// prefsRepo 会把覆写全部绕过去（且在偏好未就绪时空指针）。
+  String get effectiveGlobalDictCSS => mergeGeneratedAndAuthoredCss(
+    buildGlobalDictStyleCss(dictStyleRules),
+    globalDictCSS,
+  );
+
+  /// 注入弹窗的单典 CSS：可视化产物 + 用户手写，逐本合并。
+  ///
+  /// 键集是两边的并集——只设了可视化规则、没写过手写 CSS 的词典也必须出现在
+  /// 结果里，否则规则静默失效。
+  Map<String, String> get effectiveCustomDictCSS {
+    final List<DictStyleRule> rules = dictStyleRules;
+    // 同 [effectiveGlobalDictCSS]：走可覆写的公开 getter，别穿透 prefsRepo。
+    final Map<String, String> authored = customDictCSS;
+    final Set<String> names = <String>{
+      ...authored.keys,
+      ...dictionariesWithStyleRules(rules),
+    };
+    final Map<String, String> out = <String, String>{};
+    for (final String name in names) {
+      final String merged = mergeGeneratedAndAuthoredCss(
+        buildPerDictionaryStyleCss(rules, name),
+        authored[name] ?? '',
+      );
+      if (merged.trim().isEmpty) continue;
+      out[name] = merged;
+    }
+    return out;
+  }
+
   // ── audio sources (delegated) ────────────────────────────────────────
 
   static const List<String> defaultAudioSources =
@@ -6757,6 +6815,9 @@ class AppModel with ChangeNotifier {
         _browserExtensionReportedAt = DateTime.now();
         browserExtensionReportedBuild.value = build;
       },
+      // 「Jimaku 查字幕」扩展桥：Side Panel 搜索/下载字幕经 /api/subtitle/jimaku/* 复用
+      // 用户在 app 设置里填的 Jimaku API key；未填时端点回 no-api-key（扩展提示去填）。
+      jimakuApiKeyProvider: () => jimakuApiKey,
       tokenizer: JapaneseLanguage.instance.textToWords,
       readingResolver: (String w) {
         if (!FushiDicts.isInitialized) return '';
@@ -7182,6 +7243,14 @@ class AppModel with ChangeNotifier {
   Future<void> setMangaOcrLensLanguage(String value) =>
       prefsRepo.setMangaOcrLensLanguage(value);
 
+  bool get mangaTapToOcr => prefsRepo.mangaTapToOcr;
+  Future<void> setMangaTapToOcr(bool value) =>
+      prefsRepo.setMangaTapToOcr(value);
+
+  bool get mangaTapToOcrNoticeShown => prefsRepo.mangaTapToOcrNoticeShown;
+  Future<void> setMangaTapToOcrNoticeShown(bool value) =>
+      prefsRepo.setMangaTapToOcrNoticeShown(value);
+
   String get mangaSpreadPreference => prefsRepo.mangaSpreadPreference;
   Future<void> setMangaSpreadPreference(String value) =>
       prefsRepo.setMangaSpreadPreference(value);
@@ -7332,7 +7401,7 @@ class _AppModelRemoteLookupService
     final BaseAnkiRepository repo = _appModel.platformServices
         .createAnkiRepository();
     final Directory tmp = Directory.systemTemp.createTempSync(
-      'hibiki_fwd_mine_',
+      'fushi_fwd_mine_',
     );
     try {
       // ① 封面 → 临时文件 → context.coverPath

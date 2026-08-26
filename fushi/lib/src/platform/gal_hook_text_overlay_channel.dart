@@ -189,6 +189,7 @@ class GalLookupCallResult {
     this.width = 0,
     this.height = 0,
     this.clamped = false,
+    this.directSurface = false,
   });
 
   /// 平台不支持（非 Windows）时的常量结果：不是失败，是「这条链在这个平台不存在」。
@@ -206,6 +207,10 @@ class GalLookupCallResult {
   /// 卡片被裁过（源画面超维度上界，或字节超预算按行裁）——处置是「把卡片做小点」。
   final bool clamped;
 
+  /// true = runner 已把 WebView2 composition surface 直接贴到游戏客户区；此后
+  /// DOM/滚动由浏览器合成器原生刷新，不再需要 CapturePreview dirty 帧。
+  final bool directSurface;
+
   bool get ok => error == null;
 
   static GalLookupCallResult fromReply(Object? reply) {
@@ -217,6 +222,7 @@ class GalLookupCallResult {
       width: (map['width'] as num?)?.toInt() ?? 0,
       height: (map['height'] as num?)?.toInt() ?? 0,
       clamped: map['clamped'] == true,
+      directSurface: map['directSurface'] == true,
     );
   }
 }
@@ -413,10 +419,15 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
     bool passThrough = false,
     bool locked = false,
     bool hoverAutoLookup = false,
+    List<String>? slotTooltips,
   }) {
     return _instance.showImpl(<String, Object?>{
       'fontSize': fontSize,
       'fontFamily': fontFamily,
+      // 工具条 9 槽悬停提示，下标与 native hook_toolbar::kSlotActions 严格对齐。
+      // 不传 = native 侧无提示（老 payload 行为），工具条本身照常可点。
+      if (slotTooltips != null && slotTooltips.isNotEmpty)
+        'slotTooltips': slotTooltips,
       if (fontPath != null) 'fontPath': fontPath,
       'letterSpacing': letterSpacing,
       'lineHeight': lineHeight,
@@ -595,6 +606,10 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
     required int anchorY,
     required int highlightStart,
     required int highlightLen,
+    required int cardWidth,
+    required int cardHeight,
+    required int viewWidth,
+    required int viewHeight,
   }) async {
     if (!_instance.isSupported) return GalLookupCallResult.unsupported;
     final Object? reply = await _instance.channel
@@ -604,6 +619,10 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
           'anchorY': anchorY,
           'highlightStart': highlightStart,
           'highlightLen': highlightLen,
+          'cardWidth': cardWidth,
+          'cardHeight': cardHeight,
+          'viewWidth': viewWidth,
+          'viewHeight': viewHeight,
         });
     return GalLookupCallResult.fromReply(reply);
   }

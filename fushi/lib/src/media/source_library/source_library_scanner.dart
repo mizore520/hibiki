@@ -48,8 +48,15 @@ import 'package:fushi/src/media/manga/manga_importer.dart';
 import 'package:fushi/src/media/manga/manga_storage.dart'
     show MangaImportException;
 import 'package:fushi/src/media/manga/mokuro_payload.dart'
-    show MokuroImage, MokuroPayload, parseMokuro;
+    show
+        MokuroImage,
+        MokuroPayload,
+        joinMokuroPageRoot,
+        mokuroPageRootCandidates,
+        parseMokuro,
+        resolveMokuroPageRoot;
 import 'package:fushi/src/media/source_library/source_file_system.dart';
+import 'package:fushi/src/pdf/pdf_importer.dart';
 import 'package:fushi/src/media/source_library/source_library_credential_store.dart';
 import 'package:fushi/src/media/source_library/source_library_row.dart';
 import 'package:fushi/src/media/video/external_video.dart'
@@ -58,14 +65,22 @@ import 'package:fushi/src/sync/ttu_filename.dart';
 import 'package:fushi/src/media/video/m3u8_playlist.dart';
 import 'package:fushi/src/media/video/url_stream_video.dart'
     show StreamVideoSpec;
+import 'package:fushi/src/media/video/metadata/video_scrape_operation_gate.dart';
+import 'package:fushi/src/media/video/scraper/cover_meta_store.dart';
 import 'package:fushi/src/media/video/video_book_repository.dart';
 import 'package:fushi/src/media/video/video_filename_parser.dart';
 import 'package:fushi/src/media/video/video_folder_group_coordinator.dart';
+import 'package:fushi/src/media/video/video_storage.dart';
 import 'package:fushi/src/media/video/video_import_dialog.dart';
 import 'package:fushi/src/media/video/metadata/video_source_metadata_indexer.dart';
 
-/// EPUB extensions (lowercase, no leading dot).
-const Set<String> kScanEpubExtensions = <String>{'epub'};
+/// 书文件扩展名（小写、不带点）。
+///
+/// `pdf` 在列：PDF 是 `EpubBooks.format` 的三种书身份之一，单本导入对话框一直认
+/// 它（`ImportCarrier.pdf` → `PdfImporter`）。此前这份扫描白名单只有 `epub`，于是
+/// 「导入文件夹」把目录里每一份 PDF 静默跳过——不报错、不计数，看起来像扫描漏掉了
+/// 文件（用户实报）。导入分流见 [SourceLibraryScanner._importBooks]。
+const Set<String> kScanBookExtensions = <String>{'epub', 'pdf'};
 
 /// Subtitle whitelist shared with the video import dialog (no lrc).
 const Set<String> kScanVideoSubtitleExts = <String>{'srt', 'vtt', 'ass', 'ssa'};
@@ -82,13 +97,18 @@ const Set<String> kScanMangaExtensions = <String>{'mokuro'};
 @immutable
 class ScanBookItem {
   const ScanBookItem({
-    required this.epubPath,
+    required this.bookPath,
     this.subtitlePath,
     this.audioPaths = const <String>[],
   });
 
-  /// EPUB 文件完整路径（来源命名空间）。
-  final String epubPath;
+  /// 书文件完整路径（来源命名空间）。扩展名决定用哪个导入器——`.pdf` 走
+  /// [PdfImporter]，其余走 [EpubImporter]。字段名不再叫 `epubPath`：它装的
+  /// 是「一本书的文件」，装进 PDF 后那个名字就是句谎话。
+  final String bookPath;
+
+  /// 这份书文件是不是 PDF（决定导入器与能否挂有声书）。
+  bool get isPdf => p.extension(bookPath).toLowerCase() == '.pdf';
 
   /// 同名字幕完整路径；无同名字幕为 null。
   final String? subtitlePath;
@@ -97,18 +117,22 @@ class ScanBookItem {
   final List<String> audioPaths;
 
   /// 是否应导成有声书：同名字幕与音频齐备（音频必配字幕）。
-  bool get isAudiobook => subtitlePath != null && audioPaths.isNotEmpty;
+  ///
+  /// PDF 恒 false：对齐拿 EPUB 的章节正文与字幕逐句配，PDF 行的 `chaptersJson`
+  /// 是 `'[]'`、根本没有可配的正文，喂进去只会产出一本空对齐的假有声书。
+  bool get isAudiobook =>
+      !isPdf && subtitlePath != null && audioPaths.isNotEmpty;
 
   @override
   bool operator ==(Object other) =>
       other is ScanBookItem &&
-      other.epubPath == epubPath &&
+      other.bookPath == bookPath &&
       other.subtitlePath == subtitlePath &&
       _listEquals(other.audioPaths, audioPaths);
 
   @override
   int get hashCode =>
-      Object.hash(epubPath, subtitlePath, Object.hashAll(audioPaths));
+      Object.hash(bookPath, subtitlePath, Object.hashAll(audioPaths));
 }
 
 bool _listEquals(List<String> a, List<String> b) {
@@ -240,7 +264,7 @@ String _extOf(String name) =>
 /// Pure function: classifies a listed [files] set into a scan plan. No IO.
 ///
 /// - Skips directory entries (recursive listing yields only files anyway).
-/// - EPUB (ext in [kScanEpubExtensions]) -> [ScanPlan.epubPaths].
+/// - EPUB (ext in [kScanBookExtensions]) -> [ScanPlan.epubPaths].
 /// - Video (ext in [kVideoExtensions]) -> [ScanPlan.videos], associating the
 ///   same-stem subtitle found by [selectSidecarNames] within the same directory.
 /// - Subtitles are not inserted on their own; they only attach to a video.
@@ -285,7 +309,7 @@ ScanPlan planScanFromFileList(List<SourceFileEntry> files) {
       mangas.add(ScanMangaItem(mokuroPath: e.path));
       continue;
     }
-    if (kScanEpubExtensions.contains(ext)) {
+    if (kScanBookExtensions.contains(ext)) {
       // TODO-946：EPUB 同目录扫同名字幕 + 音频（wantAudio:true，字幕扩展含 lrc）。
       // 命中音频 -> 导成有声书（字幕作对齐源）；否则纯 EPUB。同目录作用域，与
       // 视频 sidecar 关联一致。
@@ -299,7 +323,7 @@ ScanPlan planScanFromFileList(List<SourceFileEntry> files) {
       final Map<String, String> dirPaths =
           pathByDir[dir] ?? const <String, String>{};
       books.add(ScanBookItem(
-        epubPath: e.path,
+        bookPath: e.path,
         subtitlePath: sel.subtitle == null ? null : dirPaths[sel.subtitle!],
         audioPaths: sel.audio.map((String n) => dirPaths[n] ?? n).toList(),
       ));
@@ -395,6 +419,27 @@ class SourceLibraryScanner {
   Future<SourceScanSummary> scan(
     SourceLibraryRow source, {
     SourceFileSystem? fs,
+  }) {
+    if (source.mediaKind != SourceLibraryKind.video.dbValue) {
+      return _scanUnlocked(source, fs: fs);
+    }
+    final VideoScrapeOperationLease? lease =
+        VideoScrapeOperationGate.tryEnterOperation();
+    if (lease == null) {
+      return Future<SourceScanSummary>.value(SourceScanSummary(
+        sourceId: source.id,
+        mediaKind: source.mediaKind,
+        discoveredPaths: const <String>[],
+        importedMediaCount: 0,
+        error: '视频刮削资料正在清理',
+      ));
+    }
+    return _scanUnlocked(source, fs: fs).whenComplete(lease.release);
+  }
+
+  Future<SourceScanSummary> _scanUnlocked(
+    SourceLibraryRow source, {
+    SourceFileSystem? fs,
   }) async {
     final SourceFileSystem files = fs ?? await _resolveFileSystem(source);
     int mediaCount = 0;
@@ -432,7 +477,7 @@ class SourceLibraryScanner {
       );
       final ScanPlan plan = planScanFromFileList(entries);
       discoveredPaths = <String>[
-        for (final ScanBookItem item in plan.books) item.epubPath,
+        for (final ScanBookItem item in plan.books) item.bookPath,
         for (final ScanVideoItem item in plan.videos) item.videoPath,
         for (final ScanPlaylistItem item in plan.playlists) item.playlistPath,
         for (final ScanMangaItem item in plan.mangas) item.mokuroPath,
@@ -520,23 +565,36 @@ class SourceLibraryScanner {
     Directory? epubTmp;
     for (final ScanBookItem item in plan.books) {
       try {
-        // 网络来源：先把远端 EPUB 下载到临时盘（导入器只吃本地路径）；本地原样。
-        String localEpub = item.epubPath;
+        // 网络来源：先把远端书文件下载到临时盘（导入器只吃本地路径）；本地原样。
+        String localBook = item.bookPath;
         if (!fs.isLocal) {
           epubTmp ??= Directory.systemTemp.createTempSync('m1c_scan_books_');
-          localEpub = await fs.copyToLocal(item.epubPath, epubTmp.path);
+          localBook = await fs.copyToLocal(item.bookPath, epubTmp.path);
         }
         // DuplicatePolicy.skip() reuses the sanitizeTtuFilename identity key so a
         // re-scan / same-batch duplicate throws DuplicateImportCancelledException
         // (caught below) instead of a silent "X (2)" (BUG-443). The returned
         // bookKey is the audiobook anchor when a sidecar audio attaches.
-        final String bookKey = await EpubImporter.importFromPath(
-          db: _db,
-          filePath: localEpub,
-          fileName: p.basename(item.epubPath),
-          sourceId: sourceId,
-          policy: const DuplicatePolicy.skip(),
-        );
+        //
+        // PDF 分流到 [PdfImporter]：同一套 bookKey 身份、同一条 skip 语义、同一张
+        // `EpubBooks` 表，差别只在产物（拷 document.pdf + 栅格化首页当封面）。标题
+        // 取文件名去扩展名——PDF 元数据里的标题不可靠，与单本导入对话框同口径。
+        final String bookKey = item.isPdf
+            ? await PdfImporter.importFromPath(
+                db: _db,
+                filePath: localBook,
+                fileName: p.basename(item.bookPath),
+                title: p.basenameWithoutExtension(item.bookPath),
+                sourceId: sourceId,
+                policy: const DuplicatePolicy.skip(),
+              )
+            : await EpubImporter.importFromPath(
+                db: _db,
+                filePath: localBook,
+                fileName: p.basename(item.bookPath),
+                sourceId: sourceId,
+                policy: const DuplicatePolicy.skip(),
+              );
         count++;
         // TODO-946：同目录有同名字幕 + 音频 -> 复用对话框抽出的非 UI 落库 service
         // 把这本 EPUB 升级成有声书（字幕做对齐源 + 音频）。仅本地传输支持（service
@@ -547,7 +605,7 @@ class SourceLibraryScanner {
             repo: SrtBookRepository(_db),
             audiobookRepo: AudiobookRepository(_db),
             bookKey: bookKey,
-            title: p.basenameWithoutExtension(item.epubPath),
+            title: p.basenameWithoutExtension(item.bookPath),
             subtitlePath: item.subtitlePath!,
             audioPaths: item.audioPaths,
           );
@@ -559,7 +617,7 @@ class SourceLibraryScanner {
         // 时才对齐，保证重复重扫幂等、不重跑 matcher、不覆盖用户手动重匹配。
         await _attachSidecarAudiobookToExisting(item, e.title, fs);
         debugPrint('SourceLibraryScanner skip duplicate book '
-            '${e.title} (${item.epubPath})');
+            '${e.title} (${item.bookPath})');
       }
     }
     if (epubTmp != null) {
@@ -595,7 +653,7 @@ class SourceLibraryScanner {
       repo: SrtBookRepository(_db),
       audiobookRepo: audiobookRepo,
       bookKey: bookKey,
-      title: p.basenameWithoutExtension(item.epubPath),
+      title: p.basenameWithoutExtension(item.bookPath),
       subtitlePath: item.subtitlePath!,
       audioPaths: item.audioPaths,
     );
@@ -711,12 +769,34 @@ class SourceLibraryScanner {
         remoteByRel[segs.join('/')] = e.path;
       }
 
+      // 页图根与本地导入同一口径（[resolveMokuroPageRoot]）：远端同样有「img_path
+      // 自带卷名前缀」和「卷子目录布局裸文件名」两种惯例，这里若仍硬编码同级，
+      // 卷子目录布局的远端卷在查表阶段就报缺图（BUG-1830 的远端同源分身）。
+      final String remoteVolumeName = p.basenameWithoutExtension(mokuroName);
+      final List<String>? pageRoot = resolveMokuroPageRoot(
+        payload: payload,
+        volumeName: remoteVolumeName,
+        pageExists: remoteByRel.containsKey,
+      );
+      if (pageRoot == null) {
+        final String searched =
+            mokuroPageRootCandidates(volumeName: remoteVolumeName)
+                .map((List<String> candidate) => candidate.isEmpty
+                    ? parentDir
+                    : '$prefix${candidate.join('/')}')
+                .join(', ');
+        throw MangaImportException(
+          'Missing manga page image: ${payload.images.first.url} '
+          '(searched: $searched)',
+        );
+      }
+
       final Directory tmp =
           Directory.systemTemp.createTempSync('m1c_scan_manga_');
       try {
-        // 逐页镜像（保留相对子目录布局——导入器按 payload.url 相对 `.mokuro`
-        // 同级解析）。`..` 段直接拒绝：临时镜像在书目录 sanitize 之前落盘，
-        // 不能靠后面那道防穿越。
+        // 逐页镜像，**连页图根一起原样保留**（`<根>/<url>`）：本地导入器对着镜像
+        // 目录再解析一次根，两边同一口径，于是镜像布局与远端逐段同构。`..` 段直接
+        // 拒绝：临时镜像在书目录 sanitize 之前落盘，不能靠后面那道防穿越。
         for (final MokuroImage page in payload.images) {
           final List<String> segs = page.url
               .split(RegExp(r'[\\/]+'))
@@ -725,12 +805,17 @@ class SourceLibraryScanner {
           if (segs.isEmpty || segs.contains('..')) {
             throw MangaImportException('Invalid manga page path: ${page.url}');
           }
-          final String? remotePath = remoteByRel[segs.join('/')];
+          final String rel = joinMokuroPageRoot(pageRoot, segs.join('/'));
+          final String? remotePath = remoteByRel[rel];
           if (remotePath == null) {
-            throw MangaImportException('Missing manga page image: ${page.url}');
+            throw MangaImportException('Missing manga page image: $rel');
           }
-          final Directory destDir = Directory(p.joinAll(
-              <String>[tmp.path, ...segs.sublist(0, segs.length - 1)]));
+          final List<String> destSegs = <String>[
+            ...pageRoot,
+            ...segs.sublist(0, segs.length - 1),
+          ];
+          final Directory destDir =
+              Directory(p.joinAll(<String>[tmp.path, ...destSegs]));
           destDir.createSync(recursive: true);
           await fs.copyToLocal(remotePath, destDir.path);
         }
@@ -844,31 +929,14 @@ class SourceLibraryScanner {
           subtitleFormat = fmt;
         }
 
-        // Cover only for local files (extractVideoCover needs a local path);
-        // network cover extraction is deferred to M2/M3. Cover is an OPTIONAL
-        // enhancement: ffmpeg-missing returns null, and any unexpected failure
-        // (e.g. path_provider unavailable) must never abort the whole scan, so
-        // it is caught here and degrades to a null cover (shelf placeholder).
-        String? coverPath;
-        if (fs.isLocal) {
-          try {
-            coverPath = await extractVideoCover(
-              videoPath: item.videoPath,
-              bookUid: bookUid,
-            );
-          } catch (e) {
-            debugPrint('SourceLibraryScanner cover extract failed for '
-                '$bookUid: $e');
-          }
-        }
-
         // 标题用解码后的文件名：WebDAV 条目路径是百分号编码的 href，直接取
         // basename 会把 %20 之类渗进书架标题。
         final String title = streamInPlace
             ? p.basenameWithoutExtension(sourceEntryBasename(item.videoPath))
             : p.basenameWithoutExtension(item.videoPath);
-        await _videoRepo.saveVideoBook(
-          VideoBooksCompanion(
+        Future<void> persistVideo(String? coverPath) =>
+            _videoRepo.saveVideoBook(
+              VideoBooksCompanion(
             bookUid: Value(bookUid),
             title: Value(title),
             videoPath: Value(item.videoPath),
@@ -881,8 +949,53 @@ class SourceLibraryScanner {
                 : const Value<int?>(null),
             importedAt: Value(DateTime.now().millisecondsSinceEpoch),
           ),
-          sourceId: sourceId,
-        );
+              sourceId: sourceId,
+            );
+
+        // Cover only for local files (extractVideoCover needs a local path).
+        // 准入、文件替换、book pointer 与 provenance 同处封面串行边界；远端流
+        // 不抽帧，直接以空封面入库。
+        if (fs.isLocal) {
+          await VideoCoverMutationGate.runExclusive(() async {
+            String? coverPath;
+            CoverMetaStore? autoFrameMetaStore;
+            try {
+              final CoverMetaStore store =
+                  CoverMetaStore(await VideoStorage.coversDir());
+              if (await store.allowsAutoFrameWrite(bookUid)) {
+                autoFrameMetaStore = store;
+                coverPath = await extractVideoCover(
+                  videoPath: item.videoPath,
+                  bookUid: bookUid,
+                );
+              }
+            } catch (e) {
+              debugPrint('SourceLibraryScanner cover extract failed for '
+                  '$bookUid: $e');
+            }
+            await persistVideo(coverPath);
+            if (coverPath != null && autoFrameMetaStore != null) {
+              try {
+                final bool committed = await autoFrameMetaStore
+                    .markAutoFrameAfterWrite(bookUid);
+                if (!committed) {
+                  debugPrint(
+                    'SourceLibraryScanner cover provenance changed during '
+                    'write for $bookUid',
+                  );
+                }
+              } catch (e) {
+                // 来源仍是旧 legacy/空状态；生成帧不会被误标成用户保护资产。
+                debugPrint(
+                  'SourceLibraryScanner cover provenance commit failed '
+                  'for $bookUid: $e',
+                );
+              }
+            }
+          });
+        } else {
+          await persistVideo(null);
+        }
         if (cues.isNotEmpty) {
           await _videoRepo.saveCues(bookUid: bookUid, cues: cues);
         }
@@ -1019,13 +1132,29 @@ class SourceLibraryScanner {
         // never aborts the scan.
         if (fs.isLocal) {
           try {
-            final String? coverPath = await extractPlaylistCover(
-              episodePaths: entries.map((PlaylistEntry e) => e.path).toList(),
-              bookUid: result.episodeUids.first,
-            );
-            if (coverPath != null) {
-              await _videoRepo.updateCover(result.episodeUids.first, coverPath);
-            }
+            await VideoCoverMutationGate.runExclusive(() async {
+              final String firstUid = result.episodeUids.first;
+              final CoverMetaStore store =
+                  CoverMetaStore(await VideoStorage.coversDir());
+              if (await store.allowsAutoFrameWrite(firstUid)) {
+                final String? coverPath = await extractPlaylistCover(
+                  episodePaths:
+                      entries.map((PlaylistEntry e) => e.path).toList(),
+                  bookUid: firstUid,
+                );
+                if (coverPath != null) {
+                  await _videoRepo.updateCover(firstUid, coverPath);
+                  final bool committed =
+                      await store.markAutoFrameAfterWrite(firstUid);
+                  if (!committed) {
+                    debugPrint(
+                      'SourceLibraryScanner playlist cover provenance '
+                      'changed during write for $firstUid',
+                    );
+                  }
+                }
+              }
+            });
           } catch (e) {
             debugPrint('SourceLibraryScanner playlist cover extract failed for '
                 '${result.collectionId}: $e');

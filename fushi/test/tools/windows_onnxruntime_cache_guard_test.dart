@@ -17,18 +17,25 @@ void main() {
     expect(launcher, contains('FUSHI_ONNXRUNTIME_ROOT'));
     expect(launcher, contains('.build-cache\\onnxruntime'));
     expect(launcher, contains('prepare_windows_onnxruntime.ps1'));
-    expect(launcher.indexOf('prepare_windows_onnxruntime.ps1'),
-        lessThan(launcher.indexOf('build windows --release')));
+    expect(
+      launcher.indexOf('prepare_windows_onnxruntime.ps1'),
+      lessThan(launcher.indexOf('build windows --release')),
+    );
 
     expect(script, contains('Test-VerifiedRuntime'));
     expect(script, contains('Get-Sha256Hex'));
     expect(script, contains('[Security.Cryptography.SHA256]::Create()'));
-    expect(script, isNot(contains('Get-FileHash -LiteralPath')),
-        reason: '启动 BAT 的环境下模块自动加载可能失效（BUG-1601）');
+    expect(
+      script,
+      isNot(contains('Get-FileHash -LiteralPath')),
+      reason: '启动 BAT 的环境下模块自动加载可能失效（BUG-1601）',
+    );
     expect(script, contains('Invoke-WebRequest'));
     expect(script, contains("Get-Command 'curl.exe'"));
     expect(
-        script, contains('rev-parse --path-format=absolute --git-common-dir'));
+      script,
+      contains('rev-parse --path-format=absolute --git-common-dir'),
+    );
     expect(script, contains('.build-cache\\onnxruntime\\\$packageName'));
     expect(script, contains("Join-Path \$cache '.downloads'"));
     expect(script, contains('--continue-at -'));
@@ -36,7 +43,12 @@ void main() {
     expect(script, contains('--connect-timeout 20'));
     expect(script, contains('-TimeoutSec 120'));
     expect(script, contains('foreach (\$attempt in 1..3)'));
-    expect(script, contains('hibiki\\build\\windows'));
+    expect(script, contains('fushi\\build\\windows'));
+    expect(
+      script,
+      isNot(contains('hibiki\\build\\windows')),
+      reason: '旧 app 子目录不得作为缓存候选继续残留',
+    );
   });
 
   test('Windows launcher prepares a stable verified SQLite native asset', () {
@@ -62,22 +74,31 @@ void main() {
 
     expect(launcher, contains('prepare_windows_sqlite3.ps1'));
     expect(launcher, contains('.build-cache\\sqlite3'));
-    expect(launcher.indexOf('prepare_windows_sqlite3.ps1'),
-        lessThan(launcher.indexOf('build windows --release')));
+    expect(
+      launcher.indexOf('prepare_windows_sqlite3.ps1'),
+      lessThan(launcher.indexOf('build windows --release')),
+    );
     expect(script, contains('Test-VerifiedSqlite'));
     expect(script, contains('Get-Sha256Hex'));
     expect(script, contains('[Security.Cryptography.SHA256]::Create()'));
-    expect(script, isNot(contains('Get-FileHash -LiteralPath')),
-        reason: 'SQLite 缓存校验也必须避开同一个模块依赖（BUG-1601）');
+    expect(
+      script,
+      isNot(contains('Get-FileHash -LiteralPath')),
+      reason: 'SQLite 缓存校验也必须避开同一个模块依赖（BUG-1601）',
+    );
     expect(script, contains('sqlite3.x64.windows.dll'));
     expect(script, contains('563a01a5fbb929844df1a9f6a84f73f7'));
     expect(script, contains('--continue-at -'));
     expect(
-        script, contains('rev-parse --path-format=absolute --git-common-dir'));
+      script,
+      contains('rev-parse --path-format=absolute --git-common-dir'),
+    );
     expect(pubspec, isNot(contains('source: test-sqlite3')));
     expect(patcher, contains('sqlite3-3.3.3/lib/src/hook/assets.dart'));
-    expect(patcher,
-        contains(r'download-\${type.name}-\${architecture.name}-\${os.name}'));
+    expect(
+      patcher,
+      contains(r'download-\${type.name}-\${architecture.name}-\${os.name}'),
+    );
     expect(script, contains('download-sqlite3-x64-windows-\$releaseTag'));
     expect(script, contains("\$cmakeVersion = '3520000'"));
     expect(script, contains('sqlite-autoconf-\$cmakeVersion'));
@@ -88,26 +109,30 @@ void main() {
     expect(windowsCmake, contains('FETCHCONTENT_SOURCE_DIR_SQLITE3'));
   });
 
-  test('galgame helper packaging hashes avoid module-only commands (BUG-1601)', () {
-    for (final String relativePath in <String>[
-      'native/galgame_hook/tools/build_distribution.ps1',
-      'native/galgame_hook/tools/install_into_bundle.ps1',
-      'native/galgame_hook/tools/sync_lunahook.ps1',
-    ]) {
-      final File file = File(
-        '${repoRoot.path}${Platform.pathSeparator}'
-        '${relativePath.replaceAll('/', Platform.pathSeparator)}',
-      );
-      expect(file.existsSync(), isTrue, reason: 'missing $relativePath');
-      final String script = file.readAsStringSync();
-      expect(script, contains('[Security.Cryptography.SHA256]::Create()'));
-      expect(
-        script,
-        isNot(contains('Get-FileHash -')),
-        reason: '$relativePath runs under the normalized launcher environment',
-      );
-    }
-  });
+  test(
+    'galgame helper packaging hashes avoid module-only commands (BUG-1601)',
+    () {
+      for (final String relativePath in <String>[
+        'native/galgame_hook/tools/build_distribution.ps1',
+        'native/galgame_hook/tools/install_into_bundle.ps1',
+        'native/galgame_hook/tools/sync_lunahook.ps1',
+      ]) {
+        final File file = File(
+          '${repoRoot.path}${Platform.pathSeparator}'
+          '${relativePath.replaceAll('/', Platform.pathSeparator)}',
+        );
+        expect(file.existsSync(), isTrue, reason: 'missing $relativePath');
+        final String script = file.readAsStringSync();
+        expect(script, contains('[Security.Cryptography.SHA256]::Create()'));
+        expect(
+          script,
+          isNot(contains('Get-FileHash -')),
+          reason:
+              '$relativePath runs under the normalized launcher environment',
+        );
+      }
+    },
+  );
 
   test('ONNX CMake validates prepared cache and fallback operations', () {
     final String cmake = File(

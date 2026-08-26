@@ -15,16 +15,21 @@ import 'package:path/path.dart' as p;
 
 void main() {
   final String runner = p.join('windows', 'runner');
-  final String window =
-      File(p.join(runner, 'floating_lyric_window.cpp')).readAsStringSync();
-  final String windowHeader =
-      File(p.join(runner, 'floating_lyric_window.h')).readAsStringSync();
-  final String toolbarHeader =
-      File(p.join(runner, 'hook_toolbar_window.h')).readAsStringSync();
-  final String toolbar =
-      File(p.join(runner, 'hook_toolbar_window.cpp')).readAsStringSync();
-  final String host =
-      File(p.join(runner, 'flutter_window.cpp')).readAsStringSync();
+  final String window = File(
+    p.join(runner, 'floating_lyric_window.cpp'),
+  ).readAsStringSync();
+  final String windowHeader = File(
+    p.join(runner, 'floating_lyric_window.h'),
+  ).readAsStringSync();
+  final String toolbarHeader = File(
+    p.join(runner, 'hook_toolbar_window.h'),
+  ).readAsStringSync();
+  final String toolbar = File(
+    p.join(runner, 'hook_toolbar_window.cpp'),
+  ).readAsStringSync();
+  final String host = File(
+    p.join(runner, 'flutter_window.cpp'),
+  ).readAsStringSync();
 
   group('Shift-悬停查词', () {
     test('点击查词与悬停查词共用同一个派发出口', () {
@@ -37,7 +42,8 @@ void main() {
       );
       expect(
         window.contains(
-            'on_context_lookup_(context_id_, utf8, index, screen_rect)'),
+          'on_context_lookup_(context_id_, utf8, index, screen_rect)',
+        ),
         isTrue,
         reason: '查词事件必须带上屏幕逻辑 px 的词矩形（锚定到词而非鼠标）',
       );
@@ -120,11 +126,14 @@ void main() {
         isTrue,
       );
       // UpdateText 里必须复位：换句之后同号下标是另一个字了。
-      final int updateTextAt =
-          window.indexOf('void FloatingLyricWindow::UpdateText(');
+      final int updateTextAt = window.indexOf(
+        'void FloatingLyricWindow::UpdateText(',
+      );
       expect(updateTextAt, greaterThan(0));
       final String updateTextBody = window.substring(
-          updateTextAt, window.indexOf('void FloatingLyricWindow::Highlight('));
+        updateTextAt,
+        window.indexOf('void FloatingLyricWindow::Highlight('),
+      );
       expect(
         updateTextBody.contains('ResetHoverLookupAnchor();'),
         isTrue,
@@ -137,8 +146,9 @@ void main() {
     // Shift** —— 穿透的用途是把鼠标让给游戏，纯移动就弹卡片会不停打断游玩。
     test('穿透态悬停查词必须按住 Shift：判据写在函数里，不靠「收不到鼠标消息」', () {
       // 轮询读的是全局光标位置，绕过任何窗口级边界，所以判据必须显式写在这里。
-      final int hoverAt =
-          window.indexOf('void FloatingLyricWindow::MaybeHoverLookup(');
+      final int hoverAt = window.indexOf(
+        'void FloatingLyricWindow::MaybeHoverLookup(',
+      );
       expect(hoverAt, greaterThan(0));
       final String hoverBody = window.substring(hoverAt, hoverAt + 2200);
       expect(
@@ -153,9 +163,11 @@ void main() {
       );
       expect(
         hoverBody.contains(
-            '!hook_text_mode_ || !click_lookup_enabled_ || pressed_ || dragging_'),
+          '!hook_text_mode_ || !click_lookup_enabled_ || pressed_ || dragging_',
+        ),
         isTrue,
-        reason: '悬停查词只属于 gal hook 浮窗，且拖窗 / 按下期间不查；'
+        reason:
+            '悬停查词只属于 gal hook 浮窗，且拖窗 / 按下期间不查；'
             '歌词条与剪贴板文本窗必须保持「点字才查」',
       );
     });
@@ -180,35 +192,28 @@ void main() {
         isTrue,
         reason: '设置页改完要能 live 推给开着的浮窗',
       );
-      final String channel = File(p.join(
-        'lib',
-        'src',
-        'platform',
-        'gal_hook_text_overlay_channel.dart',
-      )).readAsStringSync();
+      final String channel = File(
+        p.join('lib', 'src', 'platform', 'gal_hook_text_overlay_channel.dart'),
+      ).readAsStringSync();
       expect(channel.contains("'hoverAutoLookup': hoverAutoLookup"), isTrue);
       expect(
-        channel
-            .contains('static Future<void> setHoverAutoLookup(bool enabled)'),
+        channel.contains(
+          'static Future<void> setHoverAutoLookup(bool enabled)',
+        ),
         isTrue,
       );
-      final String controller = File(p.join(
-        'lib',
-        'src',
-        'lookup',
-        'gal_hook_text_overlay_controller.dart',
-      )).readAsStringSync();
+      final String controller = File(
+        p.join('lib', 'src', 'lookup', 'gal_hook_text_overlay_controller.dart'),
+      ).readAsStringSync();
       expect(
         controller.contains(
-            'Future<void> applyHoverAutoLookupFromPreferences() async'),
+          'Future<void> applyHoverAutoLookupFromPreferences() async',
+        ),
         isTrue,
       );
-      final String settings = File(p.join(
-        'lib',
-        'src',
-        'settings',
-        'settings_schema_lookup.dart',
-      )).readAsStringSync();
+      final String settings = File(
+        p.join('lib', 'src', 'settings', 'settings_schema_lookup.dart'),
+      ).readAsStringSync();
       expect(
         settings.contains('applyHoverAutoLookupFromPreferences()'),
         isTrue,
@@ -222,11 +227,12 @@ void main() {
       final int tableStart = toolbarHeader.indexOf('kSlotActions');
       expect(tableStart, greaterThan(0));
       final String table = toolbarHeader.substring(
-          tableStart, toolbarHeader.indexOf('};', tableStart));
-      final List<String> actions = RegExp('"([a-zA-Z]+)"')
-          .allMatches(table)
-          .map((RegExpMatch m) => m.group(1)!)
-          .toList();
+        tableStart,
+        toolbarHeader.indexOf('};', tableStart),
+      );
+      final List<String> actions = RegExp(
+        '"([a-zA-Z]+)"',
+      ).allMatches(table).map((RegExpMatch m) => m.group(1)!).toList();
       expect(actions.contains('topmost'), isTrue, reason: '缺置顶按钮');
       expect(actions.last, 'close', reason: '最右按钮必须仍是关闭（肌肉记忆）');
       expect(
@@ -236,18 +242,28 @@ void main() {
       );
     });
 
-    test('按钮状态：📌 字形 + 真实 topmost 高亮 + 状态参与重绘比对', () {
+    test('按钮状态：push_pin 字形 + 真实 topmost 高亮 + 状态参与重绘比对', () {
       expect(
         toolbarHeader.contains('bool topmost = true;'),
         isTrue,
         reason: 'States 必须带上 topmost，独立工具条窗才画得出高亮',
       );
-      // 工具栏字形已从 emoji 换成打包的 Material Symbols Rounded 子集，
-      // 置顶槽是 push_pin(U+F10D)——BMP 单 code unit，不再有代理对。
+      // 图钉保留 Segoe UI Symbol 可回退的 U+1F4CC，工具栏不得跟随台词
+      // 字体。把矢量兜底一起钉住，避免系统字形不可用时出现空按钮。
       expect(
-        toolbar.contains(r'return L"\uF10D";'),
+        toolbar.contains(r'return L"\U0001F4CC";'),
         isTrue,
-        reason: '置顶槽必须有 push_pin 字形',
+        reason: '置顶槽必须保留独立于台词字体的图钉字形',
+      );
+      expect(
+        toolbar.contains('L"Segoe UI Symbol"'),
+        isTrue,
+        reason: '工具栏图标字体必须继续独立使用 Segoe UI Symbol',
+      );
+      expect(
+        toolbar.contains('void DrawSlotIcon('),
+        isTrue,
+        reason: '图标字体缺失时必须还有矢量兜底，否则整排按钮画不出来',
       );
       expect(
         toolbar.contains('return states.topmost;'),
@@ -276,33 +292,38 @@ void main() {
       );
       expect(
         window.contains(
-            'SetWindowPos(hwnd_, topmost_ ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0,'),
+          'SetWindowPos(hwnd_, topmost_ ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0,',
+        ),
         isTrue,
         reason: '正文窗的 pin 必须真的改自己的 Z 序',
       );
     });
 
-    test('最小宽度跟着槽数与按钮尺寸走（下限不得窄于工具栏行）', () {
-      final Match? declared =
-          RegExp(r'kSlotCount\s*=\s*(\d+)\s*;').firstMatch(toolbarHeader);
+    test('最小宽度跟着槽数走（下限必须不小于真实工具栏行宽）', () {
+      final Match? declared = RegExp(
+        r'kSlotCount\s*=\s*(\d+)\s*;',
+      ).firstMatch(toolbarHeader);
       expect(declared, isNotNull);
       final int slots = int.parse(declared!.group(1)!);
-      final Match? minWidth =
-          RegExp(r'kHookTextMinStripWidthDip = ([\d.]+)f;').firstMatch(window);
+      final Match? minWidth = RegExp(
+        r'kHookTextMinStripWidthDip = ([\d.]+)f;',
+      ).firstMatch(window);
       expect(minWidth, isNotNull);
       final double floor = double.parse(minWidth!.group(1)!);
-      // 按钮尺寸/间隙也是源码常量，必须从源码读——写死数字的话，改了尺寸这条
-      // 守卫要么假红（尺寸变小）要么假绿（尺寸变大却不报），两种都比不守还糟。
-      final Match? btn =
-          RegExp(r'kHookTextButtonSizeDip = ([\d.]+)f;').firstMatch(window);
-      final Match? gap =
-          RegExp(r'kHookTextButtonGapDip = ([\d.]+)f;').firstMatch(window);
+      // 行宽 = N * 按钮 + (N-1) * 间隙。两个尺寸必须**从源码读**：守卫自抄一份
+      // 数字，就会在源码把 30/10 调成 32/4 时继续用旧值算，算出的下限既不是
+      // 真实行宽、也没人发现它已经不看真实值了。
+      final Match? btn = RegExp(
+        r'kHookTextButtonSizeDip = ([\d.]+)f;',
+      ).firstMatch(window);
+      final Match? gap = RegExp(
+        r'kHookTextButtonGapDip = ([\d.]+)f;',
+      ).firstMatch(window);
       expect(btn, isNotNull, reason: '找不到 kHookTextButtonSizeDip');
       expect(gap, isNotNull, reason: '找不到 kHookTextButtonGapDip');
-      final double buttonDip = double.parse(btn!.group(1)!);
-      final double gapDip = double.parse(gap!.group(1)!);
-      // 行宽 = N * 按钮 + (N-1) * 间隙。
-      final double rowWidth = slots * buttonDip + (slots - 1) * gapDip;
+      final double rowWidth =
+          slots * double.parse(btn!.group(1)!) +
+          (slots - 1) * double.parse(gap!.group(1)!);
       expect(
         floor,
         greaterThanOrEqualTo(rowWidth),
@@ -321,12 +342,9 @@ void main() {
         isTrue,
         reason: 'show 必须按载荷复位置顶',
       );
-      final String channel = File(p.join(
-        'lib',
-        'src',
-        'platform',
-        'gal_hook_text_overlay_channel.dart',
-      )).readAsStringSync();
+      final String channel = File(
+        p.join('lib', 'src', 'platform', 'gal_hook_text_overlay_channel.dart'),
+      ).readAsStringSync();
       expect(
         channel.contains("'topmost': true"),
         isTrue,

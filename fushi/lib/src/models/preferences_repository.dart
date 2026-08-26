@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi/src/dictionary/dict_style_rules.dart';
+import 'package:fushi/src/media/manga/ocr/manga_ocr_engine.dart';
 import 'package:fushi/src/media/torrent/anime_download_config.dart';
 import 'package:fushi/src/media/torrent/torznab_client.dart';
 import 'package:fushi/src/media/video/dandanplay_client.dart';
@@ -900,10 +902,11 @@ class PreferencesRepository extends ChangeNotifier {
     await setPref('first_time_setup', false);
   }
 
-  /// 「功能模块」显隐：小说/漫画/视频/游戏/浏览器扩展五个库页 tab 是否出现在
-  /// 底栏/侧栏。默认全开（与旧版行为一致）；新手引导的功能选择与 设置 → 系统 →
-  /// 功能模块 写同一真值。games（Windows）与浏览器扩展（桌面）在读取端还叠加
-  /// 平台门控，这里只存用户意愿。首页/下载/词典/设置恒在，不提供开关。
+  /// 「功能模块」显隐：小说/漫画/视频/游戏/浏览器扩展五个库页 tab 加 下载/查词
+  /// 两个工具 tab 是否出现在底栏/侧栏。默认全开（与旧版行为一致）；新手引导的功能
+  /// 选择与 设置 → 系统 → 功能模块 写同一真值（引导只勾库页，不勾下载/查词）。
+  /// games（Windows）与浏览器扩展（桌面）在读取端还叠加平台门控，这里只存用户意愿。
+  /// 首页/设置恒在，是全部隐藏后的安全回退面，不提供开关。
   bool get moduleBooksEnabled =>
       getPref('module_books_enabled', defaultValue: true) as bool;
 
@@ -941,6 +944,22 @@ class PreferencesRepository extends ChangeNotifier {
 
   Future<void> setModuleGamesEnabled(bool value) async {
     await setPref('module_games_enabled', value);
+    notifyListeners();
+  }
+
+  bool get moduleDownloadsEnabled =>
+      getPref('module_downloads_enabled', defaultValue: true) as bool;
+
+  Future<void> setModuleDownloadsEnabled(bool value) async {
+    await setPref('module_downloads_enabled', value);
+    notifyListeners();
+  }
+
+  bool get moduleDictionariesEnabled =>
+      getPref('module_dictionaries_enabled', defaultValue: true) as bool;
+
+  Future<void> setModuleDictionariesEnabled(bool value) async {
+    await setPref('module_dictionaries_enabled', value);
     notifyListeners();
   }
 
@@ -1159,17 +1178,9 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 视频条目自动刮削开关：默认开启。开则进视频页 / 新视频入库后后台静默拉条目
-  /// 资料（封面 + 简介/评分/放送/标签），关则完全不发这些请求（已刮到的资料保留，
-  /// 手动「重新刮削」仍可用）。给不希望库信息自动出网的用户一个明确的总闸——
-  /// 自动化取代手动按钮后，没有开关就等于没得关。
-  ///
-  /// ⚠️ 出网面**不止 Bangumi**：`CoverScraperService._resolveBestDecision` 按代价
-  /// 逐层兜底 离线库 → Bangumi → TMDB（随包内置 key，无需用户配置）→ AniList →
-  /// Jikan/MAL，命中 high 即停。命中早的条目只碰 Bangumi，前几层都没把握的条目会把
-  /// 解析出的标题依次发给全部四家。改这条链路时同步改本注释——「只发 Bangumi」的
-  /// 旧描述会让用户以为总闸管的是一家。
-  /// getPref 仅在该 key 从未写过时返回默认 true。
+  /// 旧本地封面补齐开关。现只控制 sidecar / 本地封面 sweep，不会发起元数据
+  /// 网络请求；保留该偏好用于兼容已有设备设置。在线刮削统一由
+  /// `VideoSourceScrapeCoordinator` 管理。
   bool get videoAutoScrape =>
       getPref('video_auto_scrape', defaultValue: true) as bool;
 
@@ -1935,6 +1946,30 @@ class PreferencesRepository extends ChangeNotifier {
     await setPref('global_dict_css', css);
   }
 
+  // ── 可视化样式规则（结构化真相源 + CSS 编译产物缓存）────────────────
+  //
+  // 与上面的手写 CSS **分开存**：可视化面板改规则表，手写框改 CSS 文本，注入时
+  // 拼接。共用一份文本就得反向解析手写 CSS 才能回填面板，往返编辑必坏。
+
+  String get dictStyleRulesRaw =>
+      getPref(dictStyleRulesPrefKey, defaultValue: '') as String;
+
+  Future<void> setDictStyleRulesRaw(String raw) async {
+    await setPref(dictStyleRulesPrefKey, raw);
+  }
+
+  /// 规则表的 CSS 编译产物缓存。
+  ///
+  /// 供跑不了 Dart 编译器的消费方直接读（Android 独立弹窗 Activity 直连 prefs
+  /// 表）。Dart 侧一律走 `AppModel.effective*DictCSS` 现算，不读这个缓存——
+  /// 冗余数据只允许有一个写入点（`AppModel.saveDictStyleRules`）和一类读者。
+  String get dictStyleRulesCss =>
+      getPref(dictStyleRulesCssPrefKey, defaultValue: '') as String;
+
+  Future<void> setDictStyleRulesCss(String css) async {
+    await setPref(dictStyleRulesCssPrefKey, css);
+  }
+
   // ── audio sources ────────────────────────────────────────────────────
 
   static const List<String> defaultAudioSources = [
@@ -2561,9 +2596,10 @@ class PreferencesRepository extends ChangeNotifier {
   /// 削弱隐私边界——真正的上传闸门是 [ensureGoogleLensDisclosure] 的逐设备一次性
   /// 同意弹窗，用户拒绝即不发任何字节；想彻底离线的用户把本偏好改回 `auto`，
   /// `auto` 的解析链依旧永不跨到 Lens。
-  String get mangaOcrEnginePreference =>
-      getPref('manga_ocr_engine_preference', defaultValue: 'google_lens')
-          as String;
+  String get mangaOcrEnginePreference => getPref(
+        'manga_ocr_engine_preference',
+        defaultValue: kDefaultMangaOcrEnginePreference.key,
+      ) as String;
 
   Future<void> setMangaOcrEnginePreference(String value) async {
     await setPref('manga_ocr_engine_preference', value);
@@ -2578,6 +2614,31 @@ class PreferencesRepository extends ChangeNotifier {
 
   Future<void> setMangaOcrLensLanguage(String value) async {
     await setPref('manga_ocr_lens_language', value);
+    notifyListeners();
+  }
+
+  /// 漫画阅读器「点一下没识别的对话框就地开跑 OCR」。
+  ///
+  /// 默认开：这条路径存在的全部意义就是让用户不必先去点识别模式。关掉它等于
+  /// 回到旧行为（空白点只回收焦点），给不希望被动触发联网/耗电的人留后路。
+  bool get mangaTapToOcr =>
+      getPref('manga_tap_to_ocr', defaultValue: true) as bool;
+
+  Future<void> setMangaTapToOcr(bool value) async {
+    await setPref('manga_tap_to_ocr', value);
+    notifyListeners();
+  }
+
+  /// 「点击即识别」的首次说明是否已经给过。
+  ///
+  /// 单独一个键而不是复用 Lens 的上传告知：那条只在 Lens 引擎下出现，而本次要
+  /// 说的是「你这一点会触发一次识别、用的是你在设置里选的哪个引擎」——两件事，
+  /// 只是恰好在 Lens 下会前后脚出现。
+  bool get mangaTapToOcrNoticeShown =>
+      getPref('manga_tap_to_ocr_notice_shown', defaultValue: false) as bool;
+
+  Future<void> setMangaTapToOcrNoticeShown(bool value) async {
+    await setPref('manga_tap_to_ocr_notice_shown', value);
     notifyListeners();
   }
 

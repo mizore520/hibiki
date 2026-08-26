@@ -61,6 +61,7 @@ class FloatingLyricWindow {
   using PassThroughCallback = std::function<void(bool enabled)>;
   using BoundsCallback =
       std::function<void(int left, int top, int width, int height)>;
+  using SizeCallback = std::function<void(int width, int height)>;
 
   // 一段振假名（ruby）：|ruby| 画在 text 的 [start, start + length) 上方。
   //
@@ -90,9 +91,14 @@ class FloatingLyricWindow {
     uint32_t button_bg_color = 0x33000000;
     uint32_t highlight_color = 0x80FFD54F;
     uint32_t active_color = 0xFFFFD54F;
-    // TODO-708 P2: 圆角半径 / 窗宽（逻辑 dp）。0 = 平台原生默认（14dp 圆角 / 720dip 起始
-    // 宽 + 可拖拽），>0 时按该 dp 覆盖，保证默认零观感变化。
-    double corner_radius = 0.0;
+    // TODO-708 P2: 窗宽/窗高仍用 0 = 平台原生默认（720dip 起始宽 + 可拖拽）：0 宽窗
+    // 不是合法用户取值，拿它当哨兵没有歧义。
+    //
+    // 圆角**不能**这么做：0 是合法取值（直角），偏好里 min 就是 0。原实现让绘制点
+    // 读到 0 就回退 14dp，于是用户把圆角拖到 0 什么都不会发生，而且看不出为什么。
+    // 这里直接把历史默认写成默认值，绘制点不再有哨兵分支——0 就是 0。
+    // 数值与 floating_lyric_window.cpp 的 kCornerRadiusDip 由 static_assert 钉死同源。
+    double corner_radius = 14.0;
     double window_width = 0.0;
     double window_height = 0.0;
   };
@@ -129,6 +135,9 @@ class FloatingLyricWindow {
   }
   void SetBoundsCallback(BoundsCallback callback) {
     on_bounds_ = std::move(callback);
+  }
+  void SetSizeCallback(SizeCallback callback) {
+    on_size_ = std::move(callback);
   }
 
   // Creates (if needed) and shows the strip. Returns false if the OS window
@@ -176,6 +185,8 @@ class FloatingLyricWindow {
   void SetHookTextMode(bool enabled) {
     hook_text_mode_ = enabled;
     if (enabled) text_only_ = true;
+    // 模式一变仍重解析字体集合，避免沿用上一表面的自定义字体状态。
+    font_collection_dirty_ = true;
   }
   // Window title = the taskbar / Alt+Tab label. The text-only clipboard window
   // shows in the taskbar (WS_EX_APPWINDOW) so the fully transparent overlay is
@@ -249,6 +260,21 @@ class FloatingLyricWindow {
   // Returns the control action at the client point, or empty when none.
   std::string ControlActionAt(float x, float y);
 
+  // hook 模式工具条几何的唯一真相（物理 px）。绘制（Render）、命中
+  // （ControlActionAt）、穿透工具条窗定位（ComputePassThroughToolbarLayout）
+  // 与悬停提示四处共用，谁也不可能自己算偏。
+  //  * RowWidth：一行 kHookTextControlSlotCount 颗按钮的总宽；
+  //  * RowLeft ：该行在宽 |width| 的容器里居中后的左起点；
+  //  * SlotAt  ：client 点落在第几槽（-1 = 不在任何按钮上）。SlotAt 只判几何，
+  //    「按钮此刻是否可见/可点」（hovered_）留给调用方，与改造前逐字节同门。
+  float HookToolbarRowWidth() const;
+  float HookToolbarRowLeft(float width) const;
+  int HookToolbarSlotAt(float x, float y) const;
+
+  // 个人版全部表面的兜底字族保持 Yu Gothic UI。用户显式设了
+  // style_.font_family 时兜底不参与（见 RebuildFontCollection）。
+  const wchar_t* DefaultFontFamily() const;
+
   // 把 client 点上的那个字送去查词（回调带屏幕逻辑 px 的词矩形）。点击查词与
   // Shift-悬停查词共用这一个出口，两条路径的取词、坐标换算、载荷永远同形。
   // 返回是否真的派发了一次查词。
@@ -318,12 +344,11 @@ class FloatingLyricWindow {
   // system resize) so the font + control layout track the new dimensions.
   void SyncStripSizeFromWindow();
   void NotifyBoundsChanged();
+  void NotifySizeChanged();
 
-  // TODO-708 P2: applies style_.window_width (logical dp, >0) to the live window
-  // by resizing it (clamped to the drag min/max), keeping the top-left origin
-  // and re-clamping to the monitor. No-op when the width is 0 (platform default)
-  // or the window does not exist yet.
-  void ApplyStyleWidth();
+  // Applies non-zero logical width/height style values to the live window.
+  // A zero axis preserves its current/default size for old payloads.
+  void ApplyStyleSize();
 
   float ScaleForDpi(float value) const;
 
@@ -336,6 +361,29 @@ class FloatingLyricWindow {
   // 非 hook 模式、穿透模式、没有溢出时恒为 no-op，歌词条与剪贴板文本
   // 窗逐像素不变。
   bool ScrollBy(float delta_px);
+  // 把滚动偏移写成 |offset_px|（夹到 [0, scroll_max_px_]）；变了就重绘并返回
+  // true。ScrollBy（滚轮）与拖 thumb（BUG-1860）共用的唯一写入口。
+  bool SetScrollOffset(float offset_px);
+
+  // BUG-1860 — 滚动条几何（客户区物理 px），绘制 / 命中 / 拖 thumb 的唯一真相。
+  // visible=false 时其余字段无意义。
+  struct ScrollBarGeometry {
+    bool visible = false;
+    float bar_x = 0.0f;  // 画出来的细条左沿
+    float bar_w = 0.0f;
+    float track_top = 0.0f;
+    float track_bottom = 0.0f;
+    float thumb_y = 0.0f;
+    float thumb_h = 0.0f;
+    float hit_left = 0.0f;  // 命中带（比细条宽，见 kScrollBarHitWidthDip）
+    float hit_right = 0.0f;
+  };
+  ScrollBarGeometry ComputeScrollBar() const;
+  // 客户区点是否落在滚动条命中带里（hook 模式且真有溢出时才可能为 true）。
+  bool ScrollBarContains(float x, float y) const;
+  // 从客户区 y 开始拖 thumb：按在 thumb 外先把 thumb 中心搬到指针下。返回 false
+  // = 没有可拖行程（thumb 撑满轨道），调用方按普通按压处理。
+  bool BeginScrollThumbDrag(float y);
 
   // Minimum visible margin (in 96-DPI logical px) that must always stay inside
   // the target monitor's work area, so the strip can never be dragged or
@@ -433,6 +481,12 @@ class FloatingLyricWindow {
   // 把偏移留在旧行程外。
   float scroll_offset_px_ = 0.0f;
   float scroll_max_px_ = 0.0f;
+  // BUG-1860 — 拖滚动条 thumb 的手势状态。与 pressed_ / dragging_ 互斥，同样由
+  // CancelPointerGesture 统一终结。
+  bool scroll_thumb_dragging_ = false;
+  float scroll_drag_origin_y_ = 0.0f;      // 按下时的客户区 y
+  float scroll_drag_start_offset_ = 0.0f;  // 按下时的 scroll_offset_px_
+  float scroll_drag_px_per_px_ = 0.0f;     // 指针走 1px ↔ 内容滚多少 px
 
   // Press / drag / resize state for moving and sizing the strip.
   //
@@ -466,12 +520,17 @@ class FloatingLyricWindow {
   // Only ever created / shown for hook_text_mode_ instances in pass-through.
   HookToolbarWindow pass_through_toolbar_;
 
+  // 正文内工具条的槽位悬停提示（文案共享 hook_toolbar::SlotTooltip 表，与
+  // 穿透工具条窗同一张，两处提示不可能各说各话）。
+  hook_toolbar::SlotTooltipHost slot_tooltip_;
+
   LookupCallback on_lookup_;
   ContextLookupCallback on_context_lookup_;
   ControlCallback on_control_;
   LockCallback on_lock_;
   PassThroughCallback on_pass_through_;
   BoundsCallback on_bounds_;
+  SizeCallback on_size_;
 };
 
 #endif  // RUNNER_FLOATING_LYRIC_WINDOW_H_

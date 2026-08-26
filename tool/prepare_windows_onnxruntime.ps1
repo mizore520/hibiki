@@ -124,7 +124,6 @@ try {
     $candidates += Join-Path $sharedCheckoutRoot ".build-cache\onnxruntime\$packageName"
   }
   $candidates += Join-Path $repo "fushi\build\windows\x64\plugins\flutter_onnxruntime\onnxruntime\$packageName"
-  $candidates += Join-Path $repo "hibiki\build\windows\x64\plugins\flutter_onnxruntime\onnxruntime\$packageName"
 
   $seed = $candidates |
     Where-Object { Test-VerifiedRuntime -Root $_ } |

@@ -14,7 +14,7 @@
 
 `tool/bootstrap.sh`（Windows：`.\tool\bootstrap.ps1`）一条命令完成：`flutter pub get` → `ci/apply-patches.sh`。`melos bootstrap` 经 post hook 做同样两步。然后：
 
-### Windows 候选包唯一入口（BUG-1604）
+### Windows 候选包唯一入口（BUG-1880）
 
 `flutter build windows --release` 的输出只是基础构建目录，**不得直接作为候选版交付**：它不会自动包含正式 Windows 包后置组装的 ffmpeg/ffprobe、VC++ CRT、双架构 Galgame helper、Mihon runtime 与 Magpie 离线包。候选版必须从仓库根运行：
 
@@ -48,7 +48,7 @@ Android / Windows / macOS / iOS debug/beta workflow 必须使用跨 workflow 统
 默认 push 只发 debug 通道；beta/test 和 formal 都必须手动触发。任何 push 触发的 GitHub Release 都必须是 prerelease 且 `make_latest: false`，不得创建或更新 Latest/正式 release。
 
 - debug（push 自动）：`main` / `develop` push 会走 `.github/workflows/main.yml` 上传 Actions artifact，并走 `.github/workflows/release.yml` 发布 Android debug GitHub prerelease；同时走 `.github/workflows/release-desktop.yml` 发布 Windows debug installer、macOS app zip、iOS no-codesign IPA。Artifact 名称为 `fushi-debug-apk-${{ github.sha }}`，Actions artifact APK 文件名为 `fushi-<version>-<short-sha>-debug.apk`，保留 14 天；Android debug GitHub Release 使用 release-signed debug-channel APK，文件名为 `fushi-<version>-debug.<seq>-<short-sha>-debug.apk`；Windows debug GitHub Release 使用 Inno Setup installer，文件名为 `fushi-<version>-debug.<seq>-windows-setup.exe`；macOS 为 `fushi-<version>-debug.<seq>-macos.zip`；iOS 为 `fushi-<version>-debug.<seq>-ios.ipa`。Windows/macOS/iOS 都用同一个 `0.x.y-debug.<seq>` 作为 Flutter `--build-name`，保证安装后的 `PackageInfo.version` 能停止同一 debug release 的重复提示/自动安装。GitHub Release 的 git tag 固定为滚动的 `debug-rolling`（TODO-1049，见上「滚动 debug release」）；客户端版本比较用的版本化 tag 仍为 `v<version>-debug.<seq>+<short-sha>`（写进 manifest `tag` 字段）。同一 commit 的 Android/Windows/macOS/iOS 自动 debug 必须落到同一个 GitHub Release（即同一个 `debug-rolling` 滚动 release），且必须是 prerelease / non-Latest；各客户端必须按本平台资产后缀过滤，不能互相吃错平台资产，也不能等 beta/test 或 formal installer。
-- beta/test（手动）：通过 `.github/workflows/release.yml` 或 `.github/workflows/release-desktop.yml` 的 `workflow_dispatch` 选择 `beta`，或手动发布一个勾选 prerelease 且非 Latest 的 GitHub Release。Android 默认 tag 为 `v<version>-beta.<seq>`，产物包含 `fushi-<version>-<short-sha>-debug.apk` 与 split ABI release APK `fushi-<version>-<abi>.apk`；Windows 产物为 `fushi-<version>-windows-setup.exe`；macOS 产物为 `fushi-<version>-macos.zip`；iOS 产物为 `fushi-<version>-ios.ipa`。如需 Android、Windows、macOS、iOS 合并到同一 beta/test Release，两个手动 workflow 使用同一个 `tag_name`；未指定时，同一 commit 上两条 workflow 的默认 `<seq>` 相同，也会合并到同一 Release。
+- beta/test（手动）：通过 `.github/workflows/release.yml` 或 `.github/workflows/release-desktop.yml` 的 `workflow_dispatch` 选择 `beta`，或手动发布一个勾选 prerelease 且非 Latest 的 GitHub Release。Android 默认 tag 为 `v<version>-beta.<seq>`，产物包含 `fushi-<version>-beta.<seq>-<short-sha>-debug.apk` 与 split ABI release APK `fushi-<version>-beta.<seq>-<abi>.apk`；Windows 产物为 `fushi-<version>-beta.<seq>-windows-setup.exe`；macOS 产物为 `fushi-<version>-beta.<seq>-macos.zip`；iOS 产物为 `fushi-<version>-beta.<seq>-ios.ipa`。**版本名对所有版本 tag 从 tag 派生**（BUG-1836）：beta 包此前用 pubspec 的裸 `<version>`，导致「运行中代码版本」这条更新落地判据在 beta 通道退化成常量。唯一例外是 iOS 的 `--build-name`——Apple 只接受至多三段非负整数的 `CFBundleShortVersionString`，故传剥掉预发布段的 `apple_build_version_name`；`--dart-define=FUSHI_BUILD_VERSION` 仍注入完整版本名。如需 Android、Windows、macOS、iOS 合并到同一 beta/test Release，两个手动 workflow 使用同一个 `tag_name`；未指定时，同一 commit 上两条 workflow 的默认 `<seq>` 相同，也会合并到同一 Release。
 - formal（手动）：通过手动 GitHub Release 或 `workflow_dispatch` 选择 `formal`。默认 tag 为 `v<version>`；Android 产物包含 debug APK 与 split ABI release APK，Windows 产物为 installer，macOS 为 app zip，iOS 为 no-codesign IPA。formal 是唯一允许成为 Latest 的通道。
 - 禁止事项：不要把 push、debug tag、debug APK 或 beta/test workflow 接到 formal/Latest；不要让 push 上传正式 release APK 或发布 formal/Latest；不要把 beta/test 发布成 non-prerelease 或 Latest。
 
@@ -98,6 +98,25 @@ gh release view v<version> --repo hajisensai/Fushi --json assets \
 - Windows 老用户**不需要**桥包：他们按 `-windows-setup.exe` 后缀直接拿
   `fushi-<version>-windows-setup.exe`，Inno `AppId` 未变 → 原地升级，数据由
   `legacy_support_dir_migration.dart` 自动搬迁。所以别给桥分支发桌面产物。
+- Windows 安装器的「数据存储位置」页（`fushi/windows/installer/fushi.iss`）**只在全新
+  安装出现**。`IsFreshInstall` 是**三个**条件的 and：无卸载键、`%APPDATA%\Fushi\Fushi`
+  不存在、`%APPDATA%\Hibiki\Hibiki` 也不存在（第三条兜改名前的老用户「卸载留数据后
+  重装」——首启 `migrateLegacySupportDir` 会把旧名搬成新名并认出旧库，那台机器不该被
+  再问一次）。用户的选择写进 `{app}\data_root.bootstrap`，app 首启在 `AppPaths.resolve()`
+  之前由 `lib/src/storage/installer_data_root_bootstrap.dart` 一次性消费**后删除**。
+  「消费」不等于「采纳」：app 侧还会独立否决安装器的选择——已有 `data_root` 偏好、平台
+  support 根下已有主库、路径不是绝对路径、与安装目录相同或互相包含、目标下已有非空
+  `documents`/`support` 子树，任何一条命中都只删文件不写偏好；**选中默认位置**
+  （`<Documents>\Fushi`）同样**不写** pref，按全新安装的固定落点走。升级 / 保留数据重装 /
+  静默自更新都不弹这页、不写这个文件；安装器是一次性写者，数据根的唯一真相源仍是 app 的
+  `data_root` 偏好（要搬走走设置里的迁移）。
+  改 iss 后本机可用 `ISCC.exe /DAppVersion=0.0.0 /DSourceDir=<任意含一个文件的目录>
+  /DOutputDir=<临时目录> fushi.iss` 验编译，但**别运行**产物——同 AppId 会覆盖本机真实
+  安装的卸载键。**CI 不编译这个 iss**：`build-multiplatform.yml` 的 `windows` 检查根本
+  不碰它，真正跑 ISCC 的 `release-desktop.yml` 没有 `pull_request` 触发。所以 Pascal 侧
+  的唯一门是源码守卫 `test/build/windows_installer_data_root_page_guard_test.dart`——
+  它钉的是**效果**（整式比对、每条校验后必须 `Result := False;`、`if ... then Exit;`
+  成对、跨语句顺序），改动 iss 后新增断言必须做变异实测再提交。
 
 ### 快速发版（跳测试）
 

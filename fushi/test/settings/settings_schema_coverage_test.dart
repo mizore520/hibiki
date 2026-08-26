@@ -35,14 +35,18 @@ import '../helpers/test_platform_services.dart';
 /// 让覆盖测试不对「别处已覆盖」的项裸喊 UNVERIFIED/FAIL，且强制每个 changed
 /// 但未 effect-verified 的设置都必须有去处（no silent caps）。
 const Map<String, String> kCoveredElsewhere = <String, String>{
-  // 「功能模块」三开关（新手引导 PR）。写 prefsRepo（changed=true），生效点是
-  // HomePage/macOS 侧栏的可见 tab 列表——harness 里没有挂 HomePage 外壳，探不到
-  // 底栏。行为由 homeActiveTabs 纯函数用例咬住：mangaEnabled/videoEnabled/
-  // gamesEnabled=false 各自隐藏对应 tab、书架/词典/设置/下载恒在。
+  'video/Subtitle language':
+      'test/media/video/video_subtitle_language_filter_test.dart + test/pages/video_quick_settings_sheet_test.dart',
+  // 「功能模块」七开关（五库页 + 下载/查词两个工具 tab）。写 prefsRepo
+  // （changed=true），生效点是 HomePage/macOS 侧栏的可见 tab 列表——harness 里没有
+  // 挂 HomePage 外壳，探不到底栏。行为由 homeActiveTabs 纯函数用例咬住：各开关
+  // =false 各自隐藏对应 tab、首页/设置恒在。
   'system/Novels': 'test/pages/home_page_tabs_test.dart',
   'system/Manga': 'test/pages/home_page_tabs_test.dart',
   'system/Video': 'test/pages/home_page_tabs_test.dart',
   'system/Galgame': 'test/pages/home_page_tabs_test.dart',
+  'system/Downloads': 'test/pages/home_page_tabs_test.dart',
+  'system/Lookup': 'test/pages/home_page_tabs_test.dart',
   'system/Browser extension': 'test/pages/home_page_tabs_test.dart',
   // 漫画观看偏好五项。写 prefsRepo（changed=true），生效点全部在**漫画阅读器的
   // WebView 文档**里——这些值被注入成 CSS 过渡声明 / JS 常量（ZOOM_SENS、
@@ -62,7 +66,8 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // CI（Linux）连控件都不该渲染。由三层专项测试咬住：三态 → 后端裁决的纯函数、
   // profile 增量改写的每一条降级分支、以及「开/关对称」的生命周期编排（含退出清理、
   // 启动期孤儿对账、第二局仍能拉起），外加 native 广播监听的源码守卫。
-  'lookup/Game window upscaling': 'test/mining/magpie_upscaling_test.dart + '
+  'lookup/Game window upscaling':
+      'test/mining/magpie_upscaling_test.dart + '
       'test/mining/magpie_native_guard_test.dart + '
       'test/mining/magpie_installer_test.dart',
   // 游戏内查词开关（KiriKiri/KAGEX）。写 prefsRepo（changed=true），生效点整条在
@@ -72,11 +77,21 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 连控件都不该渲染。由四层专项测试咬住：Dart 侧命中→定位→投帧的契约测试、native
   // 侧 v14 契约测试（区寻址 + 帧闸门 + ShouldApplyLookupFrame 真值表）、会话 replay
   // （7 个变异体实测全红），以及禁止把查词链路搬回游戏进程的源码扫描守卫。
+  // galgame 台词浮窗的九项外观设置（PR#938）。写 prefsRepo（changed=true），生效点
+  // 全部在 runner 自有的 Win32 分层窗里：Direct2D/DirectWrite 直绘，widget harness
+  // 既没有那个 HWND 也没有渲染目标，没有任何可探的渲染输入；而且整条 Windows-only，
+  // CI（Linux）连控件都不该渲染。由三层源码守卫咬住：
+  //   ① appearance 守卫：每个字段都真的过 MethodChannel 落进 native style，并被
+  //      对应的绘制点消费（不是「接进来了但没人读」）；
+  //   ② lyric-style 守卫：描边/字重的门控与**默认值等于改造前硬编码值**；
+  //   ③ ruby-render 守卫：行距门控与默认行高恒等 1.0。
+  // ②③ 那两条默认值断言是这批登记的前提：可配置化如果顺手改了默认观感，
+  // 「没探针」就会变成「没人发现所有老用户的浮窗都变样了」。
   'game/In-game dictionary lookup':
       'test/lookup/gal_ingame_lookup_contract_test.dart + '
-          'native/galgame_hook/tests/lookup_ipc_contract_test.cpp + '
-          'native/galgame_hook/tests/lookup_session_replay_test.cpp + '
-          'native/galgame_hook/tests/kirikiri_lookup_source_guard_test.py',
+      'native/galgame_hook/tests/lookup_ipc_contract_test.cpp + '
+      'native/galgame_hook/tests/lookup_session_replay_test.cpp + '
+      'native/galgame_hook/tests/kirikiri_lookup_source_guard_test.py',
   // BUG-1095：galgame Hook 台词浮窗字号。写 prefsRepo（changed=true），生效点在
   // runner 自有的 Win32 分层浮窗（Direct2D/DirectWrite 直绘，不是 Flutter widget
   // 树），本进程内没有任何可探的渲染输入，故无适用探针；由三层专项测试咬住：
@@ -87,8 +102,8 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 门控，比原先更严），故登记键的 destId 随之从 lookup 变 game。
   'game/Galgame caption font size':
       'test/models/preferences_repository_gal_hook_font_test.dart + '
-          'test/lookup/gal_hook_text_overlay_controller_test.dart + '
-          'test/build/gal_overlay_font_decoupled_guard_test.dart',
+      'test/lookup/gal_hook_text_overlay_controller_test.dart + '
+      'test/build/gal_overlay_font_decoupled_guard_test.dart',
   // #938 的浮窗外观八项（字距/行高/字重/对齐/底板不透明度/描边宽度/内边距/圆角）。
   // 与上面的字号同一个消费点：runner 自有的 Win32 分层浮窗（Direct2D/DirectWrite
   // 直绘），本进程内没有任何可探的渲染输入——和 listening/ 那批有声书浮窗项同型
@@ -100,29 +115,34 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // text_layout_ 上（否则点字命中会和显示错位）。渲染语义另由样式守卫咬：字重只
   // 在 hook 模式生效、描边半径每一处都经 clamp、默认底板全透明且 ◐ 恢复值非零、
   // ruby 让出的行距只在有注音时加。落到实际像素仍需 Windows 真机点验。
-  'game/Letter spacing': 'test/build/gal_overlay_appearance_guard_test.dart + '
+  'game/Letter spacing':
+      'test/build/gal_overlay_appearance_guard_test.dart + '
       'DEVICE: native hook overlay character spacing',
-  'game/Line height': 'test/build/gal_overlay_appearance_guard_test.dart + '
+  'game/Line height':
+      'test/build/gal_overlay_appearance_guard_test.dart + '
       'test/build/overlay_ruby_render_guard_test.dart + '
       'DEVICE: native hook overlay line spacing',
-  'game/Bold text': 'test/build/gal_overlay_appearance_guard_test.dart + '
+  'game/Bold text':
+      'test/build/gal_overlay_appearance_guard_test.dart + '
       'test/build/gal_overlay_lyric_style_guard_test.dart + '
       'DEVICE: native hook overlay font weight',
-  'game/Text alignment': 'test/build/gal_overlay_appearance_guard_test.dart + '
+  'game/Text alignment':
+      'test/build/gal_overlay_appearance_guard_test.dart + '
       'DEVICE: native hook overlay text alignment',
   'game/Window background opacity':
       'test/build/gal_overlay_appearance_guard_test.dart + '
-          'test/build/gal_overlay_lyric_style_guard_test.dart + '
-          'DEVICE: native hook overlay backplate alpha',
-  'game/Outline width': 'test/build/gal_overlay_appearance_guard_test.dart + '
+      'test/build/gal_overlay_lyric_style_guard_test.dart + '
+      'DEVICE: native hook overlay backplate alpha',
+  'game/Outline width':
+      'test/build/gal_overlay_appearance_guard_test.dart + '
       'test/build/gal_overlay_lyric_style_guard_test.dart + '
       'DEVICE: native hook overlay outline radius',
   'game/Horizontal text padding':
       'test/build/gal_overlay_appearance_guard_test.dart + '
-          'DEVICE: native hook overlay text padding',
+      'DEVICE: native hook overlay text padding',
   'game/Window corner radius':
       'test/build/gal_overlay_appearance_guard_test.dart + '
-          'DEVICE: native hook overlay corner radius',
+      'DEVICE: native hook overlay corner radius',
   // 视频条目自动刮削总闸。写 prefsRepo（changed=true），生效点在
   // VideoScrapeAutoService.sweep 的进场门（关=零网络请求、零资料落库），不是
   // reader CSS / 主题树，无适用探针；由专项服务测试咬住（关=不发请求、关→开
@@ -230,7 +250,7 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 测的是已删死契约 TagsField.onCreatorOpenAction，已随该契约删除。
   'cardCreation/Auto-add book title to tags':
       'test/settings/settings_flatten_anki_profile_test.dart + live consume in '
-          'reader_fushi/mining.part.dart & video_fushi/lookup_mining.part.dart (bookTitleTag)',
+      'reader_fushi/mining.part.dart & video_fushi/lookup_mining.part.dart (bookTitleTag)',
   // TODO-1650: 制卡图片/GIF 清晰度 + 音频质量两滑块（替代旧「压缩」开关）。写
   // AppModel.miningImageQuality / miningAudioQuality（prefsRepo），焦点遍历能切到
   // 并写穿 DB（changed=true），但消费点在 ffmpeg/截图编码参数（非 reader CSS / 主题
@@ -254,10 +274,10 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 显式打开自动直接删除才真删 / 7 天节流边界 / 源码守卫。
   'cardCreation/Automatic processing':
       'test/anki/anki_media_dedup_auto_test.dart + '
-          'test/settings/settings_flatten_anki_profile_test.dart',
+      'test/settings/settings_flatten_anki_profile_test.dart',
   'cardCreation/Delete automatically without asking':
       'test/anki/anki_media_dedup_auto_test.dart + '
-          'test/settings/settings_flatten_anki_profile_test.dart',
+      'test/settings/settings_flatten_anki_profile_test.dart',
   // PR#343: 互联「制卡到服务端」开关。写 prefsRepo mine_to_server（changed=true），
   // 生效点在 ankiRepositoryProvider——开关开时把本地仓库包一层 RemoteMiningAnkiRepository，
   // mineEntry/isDuplicate 经互联链路转发到已配对主机（用主机 Anki 落卡），配置类方法仍委派
@@ -267,8 +287,8 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 目标设备、失效条件全由互联决定），故登记键的 destId 随之从 cardCreation 变 interconnect。
   'interconnect/Mine to paired device':
       'test/anki/remote_mining_anki_repository_test.dart + '
-          'test/sync/forwarded_mine_payload_test.dart + '
-          'test/sync/fushi_remote_mining_service_test.dart',
+      'test/sync/forwarded_mine_payload_test.dart + '
+      'test/sync/fushi_remote_mining_service_test.dart',
   'system/Low memory mode': 'test/models/app_model_low_memory_mode_test.dart',
   'system/Keyboard & gamepad focus navigation':
       'test/shortcuts/global_space_no_activate_test.dart + main.dart 门控安装 FushiFocusRoot/Ring',
@@ -324,7 +344,7 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 接线不得写死、移动端门控排在 playOrPause 之前、schema 行经双路写穿）咬住。
   'video/Tap video to play/pause':
       'test/media/video/video_asbplayer_config_test.dart + '
-          'test/pages/video_double_tap_seek_guard_test.dart',
+      'test/pages/video_double_tap_seek_guard_test.dart',
   'video/Obscure subtitles':
       'test/media/video/video_subtitle_obscure_mode_test.dart + test/media/video/video_subtitle_overlay_test.dart + test/shortcuts/video_shortcut_registry_test.dart',
   'video/Obscure secondary subtitle':
@@ -400,7 +420,7 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // （群④）——否则删掉滑杆或断掉 layout.part.dart 传参时几何测试照样全绿。
   'video/Secondary subtitle position':
       'test/media/video/video_subtitle_secondary_position_test.dart '
-          '(①②③ overlay 真几何/跟随/持久化 + ④ 设置滑杆→视频页→overlay 接线守卫)',
+      '(①②③ overlay 真几何/跟随/持久化 + ④ 设置滑杆→视频页→overlay 接线守卫)',
   'video/Show danmaku':
       'test/media/video/video_danmaku_settings_test.dart + test/pages/video_danmaku_wiring_guard_test.dart',
   'video/Online Dandanplay match':
@@ -447,6 +467,12 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   'downloads/Ban relative progress cheat':
       'test/media/torrent/anime_download_config_backend_test.dart',
   // 设备/集成 backlog（消费点真机/WebView/Android-only，widget 测不到）
+  // 「点一下没识别的对话框就地开跑 OCR」。生效点整条都在 WebView 里：JS 空白点
+  // 带落页 payload 回传 → Dart 起任务 → 该页文字层热替换 → 回放点击查词。widget
+  // 树上看不到任何变化，故由 JS 契约守卫 + 引擎选择单测覆盖。
+  'manga/Tap to recognise':
+      'test/media/manga/manga_tap_ocr_overlay_contract_test.dart + '
+      'test/media/manga/ocr/manga_ocr_auto_start_test.dart',
   'reading/Spread direction': 'DEVICE: spread page order in WebView',
   'reading/Highlight text on tap': 'DEVICE: WebView onTap lookup',
   // TODO-1029：开关显示名改为「悬浮控制栏」(en: 'Floating control bar')，覆盖 map
@@ -602,275 +628,322 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
 void main() {
   test('reverse arrow setting keeps schema title wired to i18n', () {
     // TODO-586：reverse_arrow 项随 reading destination 搬到 reading 领域文件。
-    final String source = File('lib/src/settings/settings_schema_reading.dart')
-        .readAsStringSync();
+    final String source = File(
+      'lib/src/settings/settings_schema_reading.dart',
+    ).readAsStringSync();
 
-    expect(
-      source,
-      contains("id: 'reading_controls.reverse_arrow_page_turn'"),
-    );
+    expect(source, contains("id: 'reading_controls.reverse_arrow_page_turn'"));
     expect(source, contains('title: t.reverse_arrow_page_turn'));
   });
 
   testWidgets(
-      'all settings destinations: focus-driven, change persists and takes effect',
-      (WidgetTester tester) async {
-    // 折叠 section 默认收起会把行移出 widget 树、Tab 焦点驱动够不到它们，静默削弱
-    // 本覆盖守卫。强制全展开，让每个 section 的每一行都能被驱动到（见
-    // debugSettingsForceExpandAllSections）。
-    debugSettingsForceExpandAllSections = true;
-    addTearDown(() => debugSettingsForceExpandAllSections = false);
-    // cardCreation 详情页现在内联渲染 AnkiSettingsBody（扁平化后不再藏在子路由
-    // 后），它经 ankiViewModelProvider → BaseAnkiRepository 调
-    // SharedPreferences.getInstance()；host 无插件实现会抛 MissingPluginException。
-    // mock 空初值让其确定性成功，不依赖异步异常逃逸 takeException 窗口。
-    SharedPreferences.setMockInitialValues(<String, Object>{});
+    'all settings destinations: focus-driven, change persists and takes effect',
+    (WidgetTester tester) async {
+      // 折叠 section 默认收起会把行移出 widget 树、Tab 焦点驱动够不到它们，静默削弱
+      // 本覆盖守卫。强制全展开，让每个 section 的每一行都能被驱动到（见
+      // debugSettingsForceExpandAllSections）。
+      debugSettingsForceExpandAllSections = true;
+      addTearDown(() => debugSettingsForceExpandAllSections = false);
+      // cardCreation 详情页现在内联渲染 AnkiSettingsBody（扁平化后不再藏在子路由
+      // 后），它经 ankiViewModelProvider → BaseAnkiRepository 调
+      // SharedPreferences.getInstance()；host 无插件实现会抛 MissingPluginException。
+      // mock 空初值让其确定性成功，不依赖异步异常逃逸 takeException 窗口。
+      SharedPreferences.setMockInitialValues(<String, Object>{});
 
-    final FushiDatabase db = FushiDatabase.forTesting(NativeDatabase.memory());
-    addTearDown(db.close);
+      final FushiDatabase db = FushiDatabase.forTesting(
+        NativeDatabase.memory(),
+      );
+      addTearDown(db.close);
 
-    final ReaderSettings? prevReaderSettings = ReaderFushiSource.readerSettings;
-    final ReaderSettings readerSettings = ReaderSettings(db);
-    await readerSettings.refreshFromDb();
-    ReaderFushiSource.readerSettings = readerSettings;
-    addTearDown(() => ReaderFushiSource.readerSettings = prevReaderSettings);
+      final ReaderSettings? prevReaderSettings =
+          ReaderFushiSource.readerSettings;
+      final ReaderSettings readerSettings = ReaderSettings(db);
+      await readerSettings.refreshFromDb();
+      ReaderFushiSource.readerSettings = readerSettings;
+      addTearDown(() => ReaderFushiSource.readerSettings = prevReaderSettings);
 
-    final ThemeNotifier themeNotifier =
-        ThemeNotifier(db, () => const TextTheme())
-          ..loadFromPrefsSnapshot(<String, String>{
-            'design_system': PrefCodec.encode('material'),
-            'app_theme_key': PrefCodec.encode('system-theme'),
-            'brightness_mode': PrefCodec.encode('system'),
-            'custom_theme_seed': PrefCodec.encode(0xFF1F4959),
-          });
-    addTearDown(themeNotifier.dispose);
-    // 用现成公开 seam 把 schema 渲染需要的子系统全部 wire 到同一内存 DB（不改
-    // app_model.dart，避开并发 agent 冲突）：wireDatabaseForTesting 设 database；
-    // wireLocalAudioForTesting 设 prefsRepo(+localAudioManager) —— prefsRepo 是
-    // appearance/lookup/cardCreation/listening/system 绝大多数 blocker 的根源。
-    final Directory tmpDir =
-        Directory.systemTemp.createTempSync('hibiki_settings_cov_');
-    addTearDown(() {
-      try {
-        tmpDir.deleteSync(recursive: true);
-      } catch (_) {}
-    });
-    final PreferencesRepository prefsRepo = PreferencesRepository(db);
-    await prefsRepo.loadFromDb();
-    final PlatformServices platformServices = testPlatformServices();
-    final AppModel appModel = _CoverageAppModel(platformServices)
-      ..themeNotifier = themeNotifier
-      ..wireDatabaseForTesting(db)
-      ..wireLocalAudioForTesting(
-          prefsRepo: prefsRepo, databaseDirectory: tmpDir)
-      // 语言选择器读 locales late-Map；populateLanguages/Locales 是公开纯 Dart
-      // 静态注册（startup 也调它们），填好 system 分组的语言项才能渲染。
-      ..populateLanguages()
-      ..populateLocales();
+      final ThemeNotifier themeNotifier =
+          ThemeNotifier(db, () => const TextTheme())
+            ..loadFromPrefsSnapshot(<String, String>{
+              'design_system': PrefCodec.encode('material'),
+              'app_theme_key': PrefCodec.encode('system-theme'),
+              'brightness_mode': PrefCodec.encode('system'),
+              'custom_theme_seed': PrefCodec.encode(0xFF1F4959),
+            });
+      addTearDown(themeNotifier.dispose);
+      // 用现成公开 seam 把 schema 渲染需要的子系统全部 wire 到同一内存 DB（不改
+      // app_model.dart，避开并发 agent 冲突）：wireDatabaseForTesting 设 database；
+      // wireLocalAudioForTesting 设 prefsRepo(+localAudioManager) —— prefsRepo 是
+      // appearance/lookup/cardCreation/listening/system 绝大多数 blocker 的根源。
+      final Directory tmpDir = Directory.systemTemp.createTempSync(
+        'hibiki_settings_cov_',
+      );
+      addTearDown(() {
+        try {
+          tmpDir.deleteSync(recursive: true);
+        } catch (_) {}
+      });
+      final PreferencesRepository prefsRepo = PreferencesRepository(db);
+      await prefsRepo.loadFromDb();
+      final PlatformServices platformServices = testPlatformServices();
+      final AppModel appModel = _CoverageAppModel(platformServices)
+        ..themeNotifier = themeNotifier
+        ..wireDatabaseForTesting(db)
+        ..wireLocalAudioForTesting(
+          prefsRepo: prefsRepo,
+          databaseDirectory: tmpDir,
+        )
+        // 语言选择器读 locales late-Map；populateLanguages/Locales 是公开纯 Dart
+        // 静态注册（startup 也调它们），填好 system 分组的语言项才能渲染。
+        ..populateLanguages()
+        ..populateLocales();
 
-    // 探针：reading→T1 reader CSS；appearance→T2 themeNotifier.theme 渲染输入。
-    final ReaderCssEffectProbe readerProbe =
-        ReaderCssEffectProbe(() => readerSettings);
-    final RenderInputProbe themeProbe = RenderInputProbe(
-      () => '${themeNotifier.theme.colorScheme}|'
-          '${themeNotifier.darkTheme.colorScheme}|'
-          '${themeNotifier.brightnessMode}|${themeNotifier.appThemeKey}',
-      tier: EffectTier.t2WidgetTree,
-    );
-    EffectProbe? probeFor(SettingsDestinationId id) => switch (id) {
-          SettingsDestinationId.reading => readerProbe,
-          SettingsDestinationId.appearance => themeProbe,
-          _ => null,
-        };
+      // 探针：reading→T1 reader CSS；appearance→T2 themeNotifier.theme 渲染输入。
+      final ReaderCssEffectProbe readerProbe = ReaderCssEffectProbe(
+        () => readerSettings,
+      );
+      final RenderInputProbe themeProbe = RenderInputProbe(
+        () =>
+            '${themeNotifier.theme.colorScheme}|'
+            '${themeNotifier.darkTheme.colorScheme}|'
+            '${themeNotifier.brightnessMode}|${themeNotifier.appThemeKey}',
+        tier: EffectTier.t2WidgetTree,
+      );
+      EffectProbe? probeFor(SettingsDestinationId id) => switch (id) {
+        SettingsDestinationId.reading => readerProbe,
+        SettingsDestinationId.appearance => themeProbe,
+        _ => null,
+      };
 
-    final ValueNotifier<SettingsDestination?> destNotifier =
-        ValueNotifier<SettingsDestination?>(null);
-    addTearDown(destNotifier.dispose);
-    List<SettingsDestination> destinations = const <SettingsDestination>[];
+      final ValueNotifier<SettingsDestination?> destNotifier =
+          ValueNotifier<SettingsDestination?>(null);
+      addTearDown(destNotifier.dispose);
+      List<SettingsDestination> destinations = const <SettingsDestination>[];
 
-    await tester.pumpWidget(ProviderScope(
-      overrides: <Override>[
-        appProvider.overrideWith((Ref ref) => appModel),
-        platformServicesProvider.overrideWithValue(platformServices),
-      ],
-      child: MaterialApp(
-        theme: ThemeData(
-          useMaterial3: true,
-          platform: TargetPlatform.android,
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF386A58)),
-          extensions: <ThemeExtension<dynamic>>[
-            FushiDesignSystemTheme(themeNotifier.designSystemTheme),
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: <Override>[
+            appProvider.overrideWith((Ref ref) => appModel),
+            platformServicesProvider.overrideWithValue(platformServices),
           ],
-        ),
-        home: Consumer(
-          builder: (BuildContext ctx, WidgetRef ref, Widget? _) {
-            final SettingsContext sctx = SettingsContext(
-              context: ctx,
-              appModel: ref.read(appProvider),
-              ref: ref,
-              readerSource: ReaderFushiSource.instance,
-              refresh: () {},
-            );
-            final List<SettingsDestination> all = buildSettingsSchema(sctx);
-            destinations = all;
-            return ValueListenableBuilder<SettingsDestination?>(
-              valueListenable: destNotifier,
-              builder: (_, SettingsDestination? dest, __) {
-                return MaterialSettingsRenderer().buildDetailPage(
-                  settingsContext: sctx,
-                  destination: dest ?? all.first,
+          child: MaterialApp(
+            theme: ThemeData(
+              useMaterial3: true,
+              platform: TargetPlatform.android,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF386A58),
+              ),
+              extensions: <ThemeExtension<dynamic>>[
+                FushiDesignSystemTheme(themeNotifier.designSystemTheme),
+              ],
+            ),
+            home: Consumer(
+              builder: (BuildContext ctx, WidgetRef ref, Widget? _) {
+                final SettingsContext sctx = SettingsContext(
+                  context: ctx,
+                  appModel: ref.read(appProvider),
+                  ref: ref,
+                  readerSource: ReaderFushiSource.instance,
+                  refresh: () {},
+                );
+                final List<SettingsDestination> all = buildSettingsSchema(sctx);
+                destinations = all;
+                return ValueListenableBuilder<SettingsDestination?>(
+                  valueListenable: destNotifier,
+                  builder: (_, SettingsDestination? dest, __) {
+                    return MaterialSettingsRenderer().buildDetailPage(
+                      settingsContext: sctx,
+                      destination: dest ?? all.first,
+                    );
+                  },
                 );
               },
-            );
-          },
+            ),
+          ),
         ),
-      ),
-    ));
-    await tester.pump(const Duration(milliseconds: 200));
+      );
+      await tester.pump(const Duration(milliseconds: 200));
 
-    final Map<String, String> initial =
-        Map<String, String>.from(await db.getAllPrefs());
+      final Map<String, String> initial = Map<String, String>.from(
+        await db.getAllPrefs(),
+      );
 
-    final FocusDriver driver = FocusDriver(tester);
-    final List<ItemVerdict> verdicts = <ItemVerdict>[];
-    final List<String> destFindings = <String>[];
+      final FocusDriver driver = FocusDriver(tester);
+      final List<ItemVerdict> verdicts = <ItemVerdict>[];
+      final List<String> destFindings = <String>[];
 
-    for (final SettingsDestination dest in destinations) {
-      destNotifier.value = dest;
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 120));
-      // 渲染该分组时可能抛多个异常（最小 harness 缺真实 AppModel 子系统状态）；
-      // 全部 drain，记下第一条当发现，跳过该分组（不让残留异常判挂整测）。
-      Object? renderEx;
-      Object? e;
-      while ((e = tester.takeException()) != null) {
-        renderEx ??= e;
-      }
-      if (renderEx != null) {
-        destFindings.add('${dest.id.name}: render threw $renderEx');
-        debugPrint(
-            '[schema-coverage] DEST ${dest.id.name} render FAILED: $renderEx');
-        continue;
-      }
-      final EffectProbe? probe = probeFor(dest.id);
-      final Set<FocusNode> seen = <FocusNode>{};
-      final Set<String> driven = <String>{};
-      int stale = 0;
-      for (int step = 0; step < 400; step++) {
-        final FocusNode? node = FocusManager.instance.primaryFocus;
-        if (node != null && !seen.contains(node)) {
-          seen.add(node);
-          final _FocusedRow? row = _focusedSettingsRow();
-          if (row != null && driven.add(row.title)) {
-            verdicts.add(await _verifyFocusedNode(
-              tester: tester,
-              driver: driver,
-              db: db,
-              readerSettings: readerSettings,
-              probe: probe,
-              destId: dest.id.name,
-              row: row,
-            ));
+      for (final SettingsDestination dest in destinations) {
+        destNotifier.value = dest;
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 120));
+        // 渲染该分组时可能抛多个异常（最小 harness 缺真实 AppModel 子系统状态）；
+        // 全部 drain，记下第一条当发现，跳过该分组（不让残留异常判挂整测）。
+        Object? renderEx;
+        Object? e;
+        while ((e = tester.takeException()) != null) {
+          renderEx ??= e;
+        }
+        if (renderEx != null) {
+          destFindings.add('${dest.id.name}: render threw $renderEx');
+          debugPrint(
+            '[schema-coverage] DEST ${dest.id.name} render FAILED: $renderEx',
+          );
+          continue;
+        }
+        final EffectProbe? probe = probeFor(dest.id);
+        final Set<FocusNode> seen = <FocusNode>{};
+        final Set<String> driven = <String>{};
+        int stale = 0;
+        for (int step = 0; step < 400; step++) {
+          final FocusNode? node = FocusManager.instance.primaryFocus;
+          if (node != null && !seen.contains(node)) {
+            seen.add(node);
+            final _FocusedRow? row = _focusedSettingsRow();
+            if (row != null && driven.add(row.title)) {
+              verdicts.add(
+                await _verifyFocusedNode(
+                  tester: tester,
+                  driver: driver,
+                  db: db,
+                  readerSettings: readerSettings,
+                  probe: probe,
+                  destId: dest.id.name,
+                  row: row,
+                ),
+              );
+            }
+          }
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pump(const Duration(milliseconds: 16));
+          final FocusNode? now = FocusManager.instance.primaryFocus;
+          if (now == null || seen.contains(now)) {
+            if (++stale > 8) break;
+          } else {
+            stale = 0;
           }
         }
-        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-        await tester.pump(const Duration(milliseconds: 16));
-        final FocusNode? now = FocusManager.instance.primaryFocus;
-        if (now == null || seen.contains(now)) {
-          if (++stale > 8) break;
-        } else {
-          stale = 0;
+      }
+
+      // 全局还原：改过的 key 写回初值，测试新增的 key 删除，再校验快照一致。
+      final Map<String, String> afterAll = Map<String, String>.from(
+        await db.getAllPrefs(),
+      );
+      for (final MapEntry<String, String> e in initial.entries) {
+        if (e.key == PreferencesRepository.prefsVersionKey) continue;
+        if (afterAll[e.key] != e.value) {
+          await db.setPref(e.key, e.value);
         }
       }
-    }
-
-    // 全局还原：改过的 key 写回初值，测试新增的 key 删除，再校验快照一致。
-    final Map<String, String> afterAll =
-        Map<String, String>.from(await db.getAllPrefs());
-    for (final MapEntry<String, String> e in initial.entries) {
-      if (e.key == PreferencesRepository.prefsVersionKey) continue;
-      if (afterAll[e.key] != e.value) {
-        await db.setPref(e.key, e.value);
+      for (final String k in afterAll.keys) {
+        if (k == PreferencesRepository.prefsVersionKey) continue;
+        if (!initial.containsKey(k)) {
+          await db.deletePref(k);
+        }
       }
-    }
-    for (final String k in afterAll.keys) {
-      if (k == PreferencesRepository.prefsVersionKey) continue;
-      if (!initial.containsKey(k)) {
-        await db.deletePref(k);
+      await readerSettings.refreshFromDb();
+      final Map<String, String> restored = Map<String, String>.from(
+        await db.getAllPrefs(),
+      );
+      final List<String> restoreDiff = _mapDiff(initial, restored);
+      final bool globallyRestored = restoreDiff.isEmpty;
+
+      // 「Yomitan API server」开关被焦点遍历真切到 ON 时会 shelf_io.serve 绑定一个
+      // 真实 HttpServer，它带一个 2 分钟 idleTimeout 周期 Timer。全局还原只写回 DB
+      // pref，不会停服 → 该 Timer 残留，触发测试结束的「A Timer is still pending」
+      // 断言（原 develop 基线红）。必须在**测试 body 内**（FakeAsync 区、pending-
+      // timer 校验之前）停服；放 addTearDown 太晚（teardown 在 timer 校验之后跑）。
+      // stopYomitanApiServer() 是 async，但调用它会**同步**求值到 HttpServer.close()
+      // ——close() 在第一个 await 挂起前就同步取消了 idleTimeout Timer。故只需触发调
+      // 用、不能 await 它（await 真 socket-close 的 I/O Future 在 FakeAsync 区会死锁；
+      // 用 tester.runAsync 又会冲掉无关的 image-cache 真异步引出 path_provider
+      // MissingPluginException）。socket 真关闭随后在真实事件循环兑现，与本断言无关。
+      // 仅 Yomitan 留 Timer（texthooker/clipboard 切 ON 不留 fake Timer），故只停它。
+      unawaited(appModel.stopYomitanApiServer());
+
+      for (final ItemVerdict v in verdicts) {
+        debugPrint('[schema-coverage] ${_describe(v)}');
       }
-    }
-    await readerSettings.refreshFromDb();
-    final Map<String, String> restored =
-        Map<String, String>.from(await db.getAllPrefs());
-    final List<String> restoreDiff = _mapDiff(initial, restored);
-    final bool globallyRestored = restoreDiff.isEmpty;
-
-    // 「Yomitan API server」开关被焦点遍历真切到 ON 时会 shelf_io.serve 绑定一个
-    // 真实 HttpServer，它带一个 2 分钟 idleTimeout 周期 Timer。全局还原只写回 DB
-    // pref，不会停服 → 该 Timer 残留，触发测试结束的「A Timer is still pending」
-    // 断言（原 develop 基线红）。必须在**测试 body 内**（FakeAsync 区、pending-
-    // timer 校验之前）停服；放 addTearDown 太晚（teardown 在 timer 校验之后跑）。
-    // stopYomitanApiServer() 是 async，但调用它会**同步**求值到 HttpServer.close()
-    // ——close() 在第一个 await 挂起前就同步取消了 idleTimeout Timer。故只需触发调
-    // 用、不能 await 它（await 真 socket-close 的 I/O Future 在 FakeAsync 区会死锁；
-    // 用 tester.runAsync 又会冲掉无关的 image-cache 真异步引出 path_provider
-    // MissingPluginException）。socket 真关闭随后在真实事件循环兑现，与本断言无关。
-    // 仅 Yomitan 留 Timer（texthooker/clipboard 切 ON 不留 fake Timer），故只停它。
-    unawaited(appModel.stopYomitanApiServer());
-
-    for (final ItemVerdict v in verdicts) {
-      debugPrint('[schema-coverage] ${_describe(v)}');
-    }
-    final int changed = verdicts.where((ItemVerdict v) => v.changed).length;
-    final int effect =
-        verdicts.where((ItemVerdict v) => v.effectVerified).length;
-    final int unverified = verdicts
-        .where((ItemVerdict v) => v.changed && !v.effectVerified)
-        .length;
-    debugPrint('[schema-coverage] ALL destinations: rows=${verdicts.length} '
+      final int changed = verdicts.where((ItemVerdict v) => v.changed).length;
+      final int effect = verdicts
+          .where((ItemVerdict v) => v.effectVerified)
+          .length;
+      final int unverified = verdicts
+          .where((ItemVerdict v) => v.changed && !v.effectVerified)
+          .length;
+      debugPrint(
+        '[schema-coverage] ALL destinations: rows=${verdicts.length} '
         'changed=$changed effectVerified=$effect '
         'unverified(待 T4)=$unverified globallyRestored=$globallyRestored '
-        'destFindings=${destFindings.length}');
-    for (final String f in destFindings) {
-      debugPrint('[schema-coverage] DEST-FINDING: $f');
-    }
+        'destFindings=${destFindings.length}',
+      );
+      for (final String f in destFindings) {
+        debugPrint('[schema-coverage] DEST-FINDING: $f');
+      }
 
-    // 账目：每个 changed 但未 effect-verified 的设置，要么有专项探针、要么登记
-    // 设备 backlog（kCoveredElsewhere），不允许静默缺口。
-    final List<ItemVerdict> stillUnaccounted = verdicts
-        .where((ItemVerdict v) =>
-            !v.effectVerified && !kCoveredElsewhere.containsKey(v.id))
-        .toList();
-    for (final ItemVerdict v in stillUnaccounted) {
-      debugPrint('[schema-coverage] STILL-UNACCOUNTED: ${v.id} '
-          '(${v.controlType}) — 既无探针也未登记 backlog');
-    }
-    debugPrint('[schema-coverage] coverage accounting: '
+      // 账目：每个 changed 但未 effect-verified 的设置，要么有专项探针、要么登记
+      // 设备 backlog（kCoveredElsewhere），不允许静默缺口。
+      final List<ItemVerdict> stillUnaccounted = verdicts
+          .where(
+            (ItemVerdict v) =>
+                !v.effectVerified && !kCoveredElsewhere.containsKey(v.id),
+          )
+          .toList();
+      for (final ItemVerdict v in stillUnaccounted) {
+        debugPrint(
+          '[schema-coverage] STILL-UNACCOUNTED: ${v.id} '
+          '(${v.controlType}) — 既无探针也未登记 backlog',
+        );
+      }
+      debugPrint(
+        '[schema-coverage] coverage accounting: '
         'effectVerified=$effect '
         'coveredElsewhere=${verdicts.where((ItemVerdict v) => !v.effectVerified && kCoveredElsewhere.containsKey(v.id)).length} '
-        'stillUnaccounted=${stillUnaccounted.length}');
+        'stillUnaccounted=${stillUnaccounted.length}',
+      );
 
-    expect(stillUnaccounted, isEmpty,
-        reason: '每个 changed 但未 effect-verified 的设置都必须登记到 '
+      expect(
+        stillUnaccounted,
+        isEmpty,
+        reason:
+            '每个 changed 但未 effect-verified 的设置都必须登记到 '
             'kCoveredElsewhere（专项测试或设备 backlog），不允许静默缺口。'
-            '未登记: ${stillUnaccounted.map((ItemVerdict v) => v.id).join(", ")}');
+            '未登记: ${stillUnaccounted.map((ItemVerdict v) => v.id).join(", ")}',
+      );
 
-    expect(destFindings, isEmpty,
-        reason: '全部 8 个 destination 都应能渲染（根本性修复：测试侧 wire 全部'
-            '子系统）。渲染失败: ${destFindings.join("; ")}');
-    expect(verdicts.length, greaterThan(40),
-        reason: '应遍历到跨全部 8 个分组的大量可操作控件（焦点可达）');
-    final List<ItemVerdict> notPersisted =
-        verdicts.where((ItemVerdict v) => v.changed && !v.persisted).toList();
-    expect(notPersisted, isEmpty,
-        reason: '改了却没写穿 DB 的控件: '
-            '${notPersisted.map((ItemVerdict v) => v.id).join(", ")}');
-    expect(verdicts.where((ItemVerdict v) => v.effectVerified).length,
+      expect(
+        destFindings,
+        isEmpty,
+        reason:
+            '全部 8 个 destination 都应能渲染（根本性修复：测试侧 wire 全部'
+            '子系统）。渲染失败: ${destFindings.join("; ")}',
+      );
+      expect(
+        verdicts.length,
+        greaterThan(40),
+        reason: '应遍历到跨全部 8 个分组的大量可操作控件（焦点可达）',
+      );
+      final List<ItemVerdict> notPersisted = verdicts
+          .where((ItemVerdict v) => v.changed && !v.persisted)
+          .toList();
+      expect(
+        notPersisted,
+        isEmpty,
+        reason:
+            '改了却没写穿 DB 的控件: '
+            '${notPersisted.map((ItemVerdict v) => v.id).join(", ")}',
+      );
+      expect(
+        verdicts.where((ItemVerdict v) => v.effectVerified).length,
         greaterThanOrEqualTo(8),
-        reason: 'reading(T1)+appearance(T2) 应有多项被探针确认真生效');
-    expect(globallyRestored, isTrue,
-        reason: '全部设置必须能还原到初始快照。diff: ${restoreDiff.join("; ")}');
-  });
+        reason: 'reading(T1)+appearance(T2) 应有多项被探针确认真生效',
+      );
+      expect(
+        globallyRestored,
+        isTrue,
+        reason: '全部设置必须能还原到初始快照。diff: ${restoreDiff.join("; ")}',
+      );
+    },
+  );
 }
 
 String _describe(ItemVerdict v) {
@@ -903,7 +976,9 @@ _FocusedRow? _focusedSettingsRow() {
     }
     if (w is AdaptiveSettingsSegmentedRow) {
       found = _FocusedRow(
-          title: (w as dynamic).title as String, kind: _RowKind.segmented);
+        title: (w as dynamic).title as String,
+        kind: _RowKind.segmented,
+      );
       return false;
     }
     return true;
@@ -922,8 +997,9 @@ Future<ItemVerdict> _verifyFocusedNode({
 }) async {
   await readerSettings.refreshFromDb();
   final EffectSnapshot? effBefore = probe?.capture();
-  final Map<String, String> before =
-      Map<String, String>.from(await db.getAllPrefs());
+  final Map<String, String> before = Map<String, String>.from(
+    await db.getAllPrefs(),
+  );
 
   if (row.kind == _RowKind.switchRow) {
     await driver.activate();
@@ -938,8 +1014,9 @@ Future<ItemVerdict> _verifyFocusedNode({
   }
   final Object? thrown = tester.takeException();
 
-  final Map<String, String> after =
-      Map<String, String>.from(await db.getAllPrefs());
+  final Map<String, String> after = Map<String, String>.from(
+    await db.getAllPrefs(),
+  );
   await readerSettings.refreshFromDb();
   final bool persisted = !_mapsEqual(before, after);
   final bool changed = persisted;
@@ -1007,7 +1084,7 @@ class _FocusedRow {
 
 class _CoverageAppModel extends AppModel {
   _CoverageAppModel(PlatformServices platformServices)
-      : super(platformServices);
+    : super(platformServices);
 
   final PackageInfo _packageInfo = PackageInfo(
     appName: 'Hibiki',

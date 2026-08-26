@@ -12,7 +12,7 @@
 | `elf_ai6` | elf AI6 | `implemented_unverified` | luna_textouta_hook (implemented_unverified) | ai6_voice_arc_resource (implemented_unverified)；directsound_pcm (implemented_unverified)；process_loopback (implemented_unverified) | 0 |
 | `reallive` | RealLive / old VisualArt's | `implemented_unverified` | luna_hook (implemented_unverified) | visual_arts_ovk_resource (implemented_unverified)；xaudio2_or_directsound_pcm (implemented_unverified)；process_loopback (implemented_unverified) | 0 |
 | `kirikiri_z` | KiriKiri2 / KiriKiriZ | `partial` | luna_auto_or_pc_hooks (implemented_unverified)；ingame_lookup_geometry (implemented_unverified) | kirikiri_resource_stream (implemented_unverified)；kirikiri_decoder_pcm (implemented_unverified)；directsound_pcm (verified)；process_loopback (verified) | 2 |
-| `xaudio2_directsound` | XAudio2 / DirectSound generic capture | `verified` | — | xaudio2_source_voice_pcm (verified)；directsound_buffer_pcm (verified) | 1 |
+| `xaudio2_directsound` | XAudio2 / DirectSound generic capture | `verified` | — | xaudio2_source_voice_pcm (verified)；directsound_buffer_pcm (verified)；xwma_compressed_resource (implemented_unverified) | 1 |
 | `renpy_ffmpeg` | Ren'Py / FFmpeg | `implemented_unverified` | luna_auto_or_pc_hooks (implemented_unverified) | ffmpeg_resource_event (implemented_unverified)；ffmpeg54_decoder_pcm (implemented_unverified)；process_loopback (verified) | 1 |
 | `tyrano_nwjs` | TyranoScript / NW.js | `partial` | luna_auto_or_pc_hooks (implemented_unverified) | tyrano_asar_voice_resource (verified)；ffmpeg_resource_event (implemented_unverified)；process_loopback (verified) | 1 |
 | `bgi_ethornell` | BGI / Ethornell | `implemented_unverified` | luna_auto_or_pc_hooks (implemented_unverified) | bgi_arc20_voice_resource (implemented_unverified)；directsound_pcm (implemented_unverified)；process_loopback (implemented_unverified) | 0 |
@@ -21,6 +21,7 @@
 | `malie_libp` | Malie System / LIBP CFI | `partial` | luna_auto_or_pc_hooks (implemented_unverified) | malie_libp_cfi_voice_resource (verified)；directsound_pcm (verified)；process_loopback (verified) | 1 |
 | `qlie_filepack` | QLIE / FilePack | `partial` | luna_auto_or_pc_hooks (implemented_unverified) | qlie_wuvorbis_per_source_pcm (verified)；qlie_wuvorbis_float_per_source_pcm (implemented_unverified)；directsound_pcm (verified)；process_loopback (verified) | 1 |
 | `unity_il2cpp` | Unity IL2CPP | `verified` | luna_pc_hooks (verified)；unity_tmp_events (verified)；unity_legacy_text_events (implemented_unverified) | unity_audioclip_resource (verified)；xaudio2_source_voice_pcm (verified)；process_loopback (verified) | 1 |
+| `sgre` | M2 wind3d11 runtime (STEINS;GATE RE:BOOT) | `implemented_unverified` | — | engine_archive_resource (implemented_unverified) | 0 |
 
 ## 识别与能力明细
 
@@ -212,6 +213,7 @@ Tests：`tests/resource_audio_ready_test.cpp`、`tests/lookup_ipc_contract_test.
 
 1. `xaudio2_source_voice_pcm` — `verified`；格式：source-voice PCM；clean voice：engine_dependent
 2. `directsound_buffer_pcm` — `verified`；格式：secondary/output buffer PCM；clean voice：engine_dependent
+3. `xwma_compressed_resource` — `implemented_unverified`；格式：RIFF/XWMA rebuilt from the submission's own fmt + dpds；clean voice：engine_dependent
 
 真实样本证据：
 
@@ -222,6 +224,7 @@ Tests：`tests/resource_audio_ready_test.cpp`、`tests/lookup_ipc_contract_test.
 - A backend hit does not prove clean voice: software-mixed buffers can be equivalent to loopback.
 - Attach cannot retroactively hook already-created engine/source objects.
 - The P0 baseline does not contain a named, hashed XAudio2 sample, so compatibility must be re-verified per engine.
+- xWMA source voices publish a compressed resource rebuilt from the runtime format and the XAUDIO2_BUFFER_WMA dpds table. The compressed payload is verbatim, but the RIFF envelope is synthesised here, so the emitted file is not byte-identical to any archive entry. No real game has been run against this path yet.
 
 Fixtures：尚无（P5 补齐）
 
@@ -571,6 +574,44 @@ Tests：`tests/qlie_pack_test.cpp`、`tests/adapter_structure_test.py`
 Fixtures：尚无（P5 补齐）
 
 Tests：`tests/unity_event_cursor_test.cpp`、`tests/il2cpp_thread_scope_test.cpp`、`tests/resource_audio_ready_test.cpp`、`tests/adapter_structure_test.py`
+
+### M2 wind3d11 runtime (STEINS;GATE RE:BOOT) (`sgre`)
+
+- 状态：`implemented_unverified`
+- 别名：SGRE、STEINS;GATE RE:BOOT、wind3d11
+- 家族：`m2_wind3d11`（M2 wind3d11 audio-archive runtime）
+- 当前 adapter：`hook/adapters/sgre_adapter.inc`
+- 进程策略：launch=`create_suspended_preferred`，attach=`supported_for_objects_created_after_attach`，follow-child=`false`
+
+识别签名（所有非空项均带真实样本或运行时观察证据）：
+
+- `pe_architectures`：x64；证据：runtime_observation — Luna text profile config/luna_hook_profiles.tsv:5 records an x64 Steam build; the audio path has no independent hashed sample yet.
+- `directory_files_all`：wind3d11data/voice_body.bin；证据：runtime_observation — MatchesSgreProfile requires the archive to exist next to the hashed executable; character voices live in voice_body.bin.
+- `hashes`：75A83A0E2A7E22055417AE0474B47BE98418C4E42C695C548B558705C404B9D8；证据：runtime_observation — Same executable SHA-256 the Luna text profile keys on, so text and audio identity cannot drift apart silently.
+
+文本能力：
+
+- 不适用；文本由具体引擎 profile / Luna 线程处理。
+- codepage：not_applicable
+- 线程提示：Text comes from the Luna profile keyed by the same executable SHA-256, not from this adapter.
+
+音频优先级：
+
+1. `engine_archive_resource` — `implemented_unverified`；格式：xWMA chunks taken verbatim from wind3d11data/voice_body.bin；clean voice：yes
+
+真实样本证据：
+
+
+已知限制：
+
+- No real-game session has been run against this adapter: process_found through card_e2e are all not_run.
+- Archive membership is the role proof, and it only holds while the runtime keeps character voice in a separate voice_body.bin.
+- The emitted .xwma file is not byte-identical to an archive entry: the RIFF envelope is synthesised here. Only the fmt/dpds/payload chunks are verbatim.
+- Identity is the executable SHA-256, so a game patch disables both text and audio capture at once. That is deliberate -- it prevents a silent text/audio mismatch -- but it does mean a patched build stops working until the hash is re-measured.
+
+Fixtures：尚无（P5 补齐）
+
+Tests：`tests/sgre_adapter_test.cpp`
 
 ## 状态定义
 

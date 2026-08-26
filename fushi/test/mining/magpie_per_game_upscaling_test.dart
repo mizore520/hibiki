@@ -96,7 +96,8 @@ void main() {
           modeReader: modeReader,
           bridge: _NotRunningBridge(),
           isWindowsOverride: true,
-          configPathOverride: '${Directory.systemTemp.path}'
+          configPathOverride:
+              '${Directory.systemTemp.path}'
               '${Platform.pathSeparator}hibiki_magpie_absent_config.json',
           processLauncher: (String exe, List<String> args) async {
             throw StateError('档位没生效才会走到这');
@@ -104,17 +105,21 @@ void main() {
         );
 
     test('读到 auto → failed/bundleMissing（证明这套替身分得清 auto 和 off）', () async {
-      final MagpieUpscalingService service =
-          build(() => MagpieUpscalingMode.auto);
+      final MagpieUpscalingService service = build(
+        () => MagpieUpscalingMode.auto,
+      );
       await service.onGameWindowReady(hwnd: 1234);
       expect(service.report.status, MagpieUpscalingStatus.failed);
-      expect(service.report.failureReason,
-          MagpieUpscalingFailureReason.bundleMissing);
+      expect(
+        service.report.failureReason,
+        MagpieUpscalingFailureReason.bundleMissing,
+      );
     });
 
     test('读到 off → disabled，一次都不碰安装器/进程', () async {
-      final MagpieUpscalingService service =
-          build(() => MagpieUpscalingMode.off);
+      final MagpieUpscalingService service = build(
+        () => MagpieUpscalingMode.off,
+      );
       await service.onGameWindowReady(hwnd: 1234);
       expect(service.report.status, MagpieUpscalingStatus.disabled);
     });
@@ -136,8 +141,9 @@ void main() {
     test('读档抛异常（DB 未就绪 / 库里没这行）→ 关闭，绝不兜底成 auto', () async {
       // 这是本轮最硬的一条：兜底成 auto 等于替用户默默打开一个吃 GPU 的东西。
       // 兜底若改成 auto，状态会变成 unavailable（走了下载分支），本条立刻转红。
-      final MagpieUpscalingService service =
-          build(() => throw StateError('database not ready'));
+      final MagpieUpscalingService service = build(
+        () => throw StateError('database not ready'),
+      );
       await service.onGameWindowReady(hwnd: 1234);
       expect(service.report.status, MagpieUpscalingStatus.disabled);
     });
@@ -175,8 +181,9 @@ void main() {
       expect(find.byType(MagpieUpscalingModeDialog), findsOneWidget);
       if (tapLabel == null) {
         // 点遮罩取消。
-        Navigator.of(tester.element(find.byType(MagpieUpscalingModeDialog)))
-            .pop();
+        Navigator.of(
+          tester.element(find.byType(MagpieUpscalingModeDialog)),
+        ).pop();
       } else {
         await tester.tap(find.text(tapLabel));
       }
@@ -204,8 +211,10 @@ void main() {
     });
 
     testWidgets('取消 → null（调用方据此一个字节都不写）', (WidgetTester tester) async {
-      final MagpieUpscalingMode? picked =
-          await pump(tester, current: MagpieUpscalingMode.auto);
+      final MagpieUpscalingMode? picked = await pump(
+        tester,
+        current: MagpieUpscalingMode.auto,
+      );
       expect(picked, isNull);
     });
 
@@ -221,14 +230,16 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text(t.game_upscaling_pick_title(name: 'テストゲーム')),
-          findsOneWidget);
-      final RadioListTile<MagpieUpscalingMode> selected =
-          tester.widget<RadioListTile<MagpieUpscalingMode>>(
-        find.byKey(const ValueKey<String>(
-          'magpie-upscaling-mode-installed_only',
-        )),
+      expect(
+        find.text(t.game_upscaling_pick_title(name: 'テストゲーム')),
+        findsOneWidget,
       );
+      final RadioListTile<MagpieUpscalingMode> selected = tester
+          .widget<RadioListTile<MagpieUpscalingMode>>(
+            find.byKey(
+              const ValueKey<String>('magpie-upscaling-mode-installed_only'),
+            ),
+          );
       expect(selected.groupValue, MagpieUpscalingMode.installedOnly);
       expect(selected.value, MagpieUpscalingMode.installedOnly);
     });
@@ -264,10 +275,14 @@ void main() {
         reason: '旧全局偏好也不得留下写入点',
       );
 
-      final String appModel =
-          await File('lib/src/models/app_model.dart').readAsString();
-      expect(appModel.contains(obsoleteKey), isFalse,
-          reason: 'AppModel 不得重新暴露旧全局超分状态');
+      final String appModel = await File(
+        'lib/src/models/app_model.dart',
+      ).readAsString();
+      expect(
+        appModel.contains(obsoleteKey),
+        isFalse,
+        reason: 'AppModel 不得重新暴露旧全局超分状态',
+      );
 
       final Iterable<File> settingsFiles = Directory('lib/src/settings')
           .listSync(recursive: true)
@@ -282,20 +297,27 @@ void main() {
       }
     });
 
-    test('helper 随包归档必须由 CMake install 拷进 bundle（开发构建也要有）', () async {
-      // BUG-1196：helper 的网络下载与后台自更新已删除，随包 zip 是**唯一**来源。
-      // 在此之前 galgame_helper/ 只由 CI 的独立 YAML 步骤拷贝，于是 `flutter run`
-      // 出来的 exe 旁边永远没有它，galgame hook 在开发模式下完全用不了。
+    test('helper 由共用脚本解压成普通文件，CMake 不再随包放旧归档', () async {
+      // BUG-1449：运行时 zip 会形成可能落后于本体的第二份副本。作者当前方案由
+      // install_into_bundle.ps1 在候选组装阶段把两架构普通文件写入 voice_hook/。
       final String cmake = await File('windows/CMakeLists.txt').readAsString();
       expect(
         cmake.contains(r'native/galgame_hook/dist'),
-        isTrue,
-        reason: 'CMake 必须从 build_distribution.ps1 的产出目录取 helper zip',
+        isFalse,
+        reason: 'CMake 不得重新从 dist 搬运 helper zip',
       );
       expect(
         cmake.contains(r'/galgame_helper'),
+        isFalse,
+        reason: '旧 galgame_helper 归档目录不得复活',
+      );
+      final String installer = await File(
+        '../native/galgame_hook/tools/install_into_bundle.ps1',
+      ).readAsString();
+      expect(
+        installer.contains(r'Join-Path $BundleDirectory "voice_hook\$arch"'),
         isTrue,
-        reason: '目标目录必须与运行期 _bundledDirectory() 的约定一致',
+        reason: '候选组装必须把 helper 普通文件安装进 voice_hook',
       );
     });
   });

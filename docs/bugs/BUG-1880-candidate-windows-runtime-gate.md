@@ -1,0 +1,13 @@
+## BUG-1880 · Windows 候选包可绕过完整运行组件组装与验证
+- **报告**：2026-08-14（用户：字幕候选版过滤正常但制卡报 `ffmpeg launch failed: errorCode=2`）
+- **真实性**：✅ 真 bug。`flutter build windows --release` 只产基础 bundle；正式流程在 `.github/workflows/release-desktop.yml` 后续步骤才复制 ffmpeg/ffprobe、CRT、Mihon、Magpie 与 Galgame helper。交付本地基础 Release 目录可完全绕过这些门。既有 `tool/package_windows_runtime.ps1` 只装核心本地运行组件，也没有完整候选清单/ready 标记；结果是 EXE 能启动、字幕功能能测，到真实制卡首次启动 ffmpeg 才失败。
+- **[x] ① 已修复** — 新增 `tool/build_windows_candidate.ps1` 作为 Windows 候选唯一入口，统一执行基础构建、核心 runtime、Mihon、Magpie 和最终验证；基础 Release 只作为输入，候选在独立 `fushi/build/windows-candidate/Release` 重建，既不覆盖运行中的开发版，也不会把上次半组装目录沿用下来。新增 `tool/verify_windows_candidate.ps1` 对主程序、媒体工具、torrent、CRT、Mihon、Magpie、双架构 helper fail-closed，并只在全部通过后写 `fushi-candidate-manifest.json`。正式 Windows release workflow 同样调用该验证器；旧成功标记会在任何新一轮组包开始时先删除，避免失败后遗留假绿。
+- **[x] ② 已加自动化测试** — `fushi/test/tools/windows_candidate_bundle_gate_test.dart` 钉住完整组装步骤、全 runtime 家族、CI/文档接线，并在临时空目录真实运行验证器，证明失败时不会写 ready manifest。
+- **备注**：修复已通过候选版实机验收；提交与合并状态以 Git 历史为准。候选重组不会强制结束正在运行的旧版，重组前仍由用户正常退出。
+- **真实组包补证**：首次执行完整入口时，后置 Galgame helper 的 CMake 卡在 Visual Studio 2026 `CompilerIdC.vcxproj`；此前 `TrackFileAccess=false` 只包住 Flutter build，没有传给候选后置原生编译。入口现对整条候选管线设置该变量，避免“主体可编、helper 配置挂死”的另一种半成品路径。
+- **真实组包补证 2**：helper 双架构 62 项 CTest 全通过后，Mihon 构建若由 Windows PowerShell 5.1 启动，会因其 .NET Framework 没有 `[IO.Path]::GetRelativePath` 而失败；正式 workflow 使用 `pwsh`。候选入口现显式解析并使用 PowerShell 7 执行 Mihon 与 Magpie，测试禁止退回 5.1。
+- **真实组包补证 3**：Mihon 的 Temurin 下载原来直接 `Invoke-WebRequest -OutFile <最终缓存>`，无超时/重试/代理，连接卡住时会长期留下 0 字节“缓存”；本机实跑中即使给 IWR 加超时仍停在 0 字节。现改用 Windows 自带 `curl.exe`，带连接/总超时、重试、可选代理，写 `.partial`，SHA-256 通过后才原子换入；陈旧或 0 字节缓存会先删除，失败清理 partial。
+- **真实组包补证 4**：本机已有完整 Oracle JDK 21（含 `java/jdeps/jlink`），旧脚本仍强制从 GitHub 重下约 200 MB Temurin，代理连接停在 0 字节。Mihon builder 现支持显式 `-JdkRoot`，强制验证三个工具与 Java major=21，并把 provider/version/`release` 摘要写进 checksums；候选入口自动采用标准本机 JDK 21 路径。CI 未传该参数时仍走固定 Temurin URL+SHA，不改变正式发布可复现性。
+- **真实组包补证 5**：调用方等待超时不会自动杀掉 Windows 子进程，实跑曾留下两条候选构建链争用 Gradle 缓存。候选入口现用独占文件锁保证单实例；第二次调用会立即失败，不再同时删除/复制候选目录。Gradle 还会忽略 Windows 的 `HTTPS_PROXY` 环境变量而直连挂起，现显式传代理与 20s/60s 连接/读取超时，并通过外部 init script优先使用 Central 镜像（不修改 vendored 上游树）。
+- **真实组包补证 6**：Magpie 的 `Invoke-WebRequest` 在本机代理下 TLS 认证失败。下载现统一为有界 curl、`.partial` 临时文件与上游 SHA-256 侧车校验，校验通过后才裁剪并生成随包侧车。
+- **真实组包补证 7**：仅跑 `ffmpeg -version` 仍不能证明制卡编码链可用。验证器现生成短 PCM WAV，实际执行与桌面制卡相同的 `AAC/mono/64k/.aac(ADTS)` 转码，再由 ffprobe 读取产物；任何编码器、复用器或输出文件缺失都会拒绝候选。另用用户的《丽兹与青鸟》MKV 做真实补证，成功导出 2.51 秒、21164 字节 AAC。

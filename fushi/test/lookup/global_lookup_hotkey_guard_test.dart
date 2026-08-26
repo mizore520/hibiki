@@ -149,16 +149,22 @@ void main() {
   group('整句横幅只给剪切板自动唤出的瞬态窗', () {
     late String controllerSrc;
     late String dispatcherSrc;
+    late String galOverlaySrc;
     setUpAll(() {
       controllerSrc = read('lib/src/lookup/global_lookup_controller.dart');
       dispatcherSrc = read('lib/src/lookup/desktop_lookup_dispatcher.dart');
+      galOverlaySrc =
+          read('lib/src/lookup/gal_hook_text_overlay_controller.dart');
     });
 
     test('手动快捷键窗不贴横幅：hotkey 的 _lookupExternal 传 showSentenceBanner:false', () {
       final int at = controllerSrc.indexOf('hotkey: empty selection');
       expect(at, greaterThan(-1), reason: 'hotkey 分支必须存在');
       final String tail = controllerSrc.substring(at);
-      final int callAt = tail.indexOf('_lookupExternal(text,');
+      // 锚点不能写成 `_lookupExternal(text,` 这种**单行**字面量：实参一旦换行
+      // （dart format 在参数变多时必然这么做）它就找不到了，而语义一点没变。
+      // 只认调用名，参数怎么排都行。
+      final int callAt = tail.indexOf('_lookupExternal(');
       expect(callAt, greaterThan(-1), reason: 'hotkey 必须走 _lookupExternal');
       final String call = tail.substring(callAt, tail.indexOf(';', callAt));
       expect(call.contains('showSentenceBanner: false'), isTrue,
@@ -177,6 +183,24 @@ void main() {
       expect(
           controllerSrc.contains('sentenceContext: _currentSentence'), isTrue,
           reason: 'BUG-730：热键窗整句仍进制卡 {sentence}，与横幅解耦不受影响');
+    });
+
+    test('游戏台词浮窗点词不贴横幅，但保留完整句子供制卡', () {
+      final int handlerAt =
+          galOverlaySrc.indexOf('Future<void> _onLookupText(');
+      expect(handlerAt, greaterThan(-1), reason: '游戏台词浮窗查词入口必须存在');
+      final int callAt = galOverlaySrc.indexOf(
+        'GlobalLookupController.instance.lookupText(',
+        handlerAt,
+      );
+      expect(callAt, greaterThan(handlerAt));
+      final int callEnd = galOverlaySrc.indexOf(');', callAt);
+      expect(callEnd, greaterThan(callAt));
+      final String call = galOverlaySrc.substring(callAt, callEnd + 2);
+      expect(call.contains('showSentenceBanner: false'), isTrue,
+          reason: '游戏台词已经在浮窗显示，查词卡不得重复显示整句横幅');
+      expect(call.contains('sentence: entry.text'), isTrue,
+          reason: '隐藏横幅不能清空制卡需要的完整句子上下文');
     });
 
     test('剪切板自动唤出（dispatcher transient）保留横幅：不关 banner', () {

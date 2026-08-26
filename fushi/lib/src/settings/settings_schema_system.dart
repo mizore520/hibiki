@@ -7,6 +7,7 @@ import 'package:fushi/src/settings/settings_context.dart';
 import 'package:fushi/src/settings/settings_destination.dart';
 import 'package:fushi/src/sync/desktop_lookup_service.dart';
 import 'package:fushi/src/sync/sync_http.dart';
+import 'package:fushi/src/utils/misc/build_version.dart';
 import 'package:fushi/src/utils/misc/crash_dump_locator.dart';
 import 'package:fushi/src/utils/misc/platform_updater.dart';
 import 'package:fushi/utils.dart';
@@ -144,9 +145,10 @@ SettingsDestination buildSystemDestination() {
           ),
         ],
       ),
-      // 「功能模块」：小说/漫画/视频/游戏/浏览器扩展五个库页 tab 的显隐开关
-      // （与新手引导的功能选择写同一真值）。首页/下载/词典/设置恒在，不提供开关；
-      // games 仅 Windows、扩展仅桌面显示（读取端还叠加平台门控）。
+      // 「功能模块」：小说/漫画/视频/游戏/浏览器扩展五个库页 tab 加 下载/查词 两个
+      // 工具 tab 的显隐开关（库页那几项与新手引导的功能选择写同一真值）。首页/设置
+      // 恒在，不提供开关；games 仅 Windows、扩展仅桌面显示（读取端还叠加平台门控）。
+      // 顺序与底栏一致：库页 → 下载 → 查词 → 扩展。
       SettingsSection(
         title: t.settings_section_modules,
         items: <SettingsItem>[
@@ -196,6 +198,31 @@ SettingsDestination buildSystemDestination() {
                 settingsContext.appModel.moduleGamesEnabled,
             onChanged: (SettingsContext settingsContext, bool value) async {
               await settingsContext.appModel.setModuleGamesEnabled(value);
+              settingsContext.refresh();
+            },
+          ),
+          SettingsSwitchItem(
+            id: 'system.module_downloads',
+            title: t.nav_downloads,
+            subtitle: t.module_tool_toggle_hint,
+            icon: Icons.download_outlined,
+            value: (SettingsContext settingsContext) =>
+                settingsContext.appModel.moduleDownloadsEnabled,
+            onChanged: (SettingsContext settingsContext, bool value) async {
+              await settingsContext.appModel.setModuleDownloadsEnabled(value);
+              settingsContext.refresh();
+            },
+          ),
+          SettingsSwitchItem(
+            id: 'system.module_lookup',
+            title: t.nav_lookup,
+            subtitle: t.module_tool_toggle_hint,
+            icon: Icons.search_outlined,
+            value: (SettingsContext settingsContext) =>
+                settingsContext.appModel.moduleDictionariesEnabled,
+            onChanged: (SettingsContext settingsContext, bool value) async {
+              await settingsContext.appModel
+                  .setModuleDictionariesEnabled(value);
               settingsContext.refresh();
             },
           ),
@@ -406,7 +433,10 @@ Future<void> _checkUpdateNow(SettingsContext settingsContext) async {
   // 「已是最新已知 vX」/「发现新版 vY」（校验中…）的乐观提示，不等网络；网络刷新随后
   // 在后台校验，结果以既有 onUpToDate / 对话框收口。无缓存（首检/畸形/换通道）才退回
   // 原「正在检查…」提示。
-  final String currentVersion = settingsContext.appModel.packageInfo.version;
+  // BUG-1836：同 home_page，半更新态下 exe 版本资源谎报新版本，
+  // 据它比较会永判「已是最新」，用户困在旧代码里没有出路。
+  final String currentVersion =
+      resolveCurrentAppVersion(settingsContext.appModel.packageInfo.version);
   final String currentBuildNumber =
       settingsContext.appModel.packageInfo.buildNumber;
   final UpdateChannel channel = _channelFromSettings(settingsContext);
@@ -550,7 +580,10 @@ Widget _buildRuntimeAppVersionRow(SettingsContext settingsContext) {
   final packageInfo = settingsContext.appModel.packageInfo;
   return AdaptiveSettingsRow(
     title: t.app_version,
-    subtitle: formatAppVersionDisplay(packageInfo),
+    subtitle: formatAppVersionDisplay(
+      packageInfo,
+      runningCodeVersion: fushiRunningCodeVersion,
+    ),
     icon: Icons.info_outline,
     showIcon: true,
   );
@@ -560,6 +593,61 @@ Widget _buildRuntimeAppVersionRow(SettingsContext settingsContext) {
 /// buildNumber 是 Android versionCode（如 `1000561300`），两者语义不同：
 /// 绝不能用 semver 的 `+` build-metadata 把 versionCode 拼进 versionName，
 /// 否则会渲染出畸形的 `0.11.1-debug.5613+1000561300`。用括号并列展示。
+///
+/// [runningCodeVersion] 是编译进 `app.so` 的构建版本（见 `build_version.dart`），
+/// [PackageInfo.version] 则来自 exe / Info.plist / manifest 的版本资源。两者是
+/// **两个文件**：Inno 的回滚保留被覆盖的文件、只删本次新建的文件，所以「新 exe +
+/// 旧 app.so」这种半更新态完全可能落地（BUG-1786 现场），而版本资源照样报新版本。
+///
+/// 不一致时并排显示 exe 那个值——关于页是用户唯一能自查这件事的地方。
 @visibleForTesting
-String formatAppVersionDisplay(PackageInfo packageInfo) =>
-    '${packageInfo.version} (${packageInfo.buildNumber})';
+String formatAppVersionDisplay(
+  PackageInfo packageInfo, {
+  String? runningCodeVersion,
+}) {
+  final String executableVersion = packageInfo.version;
+  final String shown = runningCodeVersion ?? executableVersion;
+  final String display = '$shown (${packageInfo.buildNumber})';
+  if (runningCodeVersion == null) return display;
+  if (_isSameBuildVersion(runningCodeVersion, executableVersion)) {
+    return display;
+  }
+  return '$display ≠ exe $executableVersion';
+}
+
+/// [codeVersion]（`app.so` 里的构建版本）与 [executableVersion]（exe / Info.plist /
+/// manifest 的版本资源）是否来自同一次构建。
+///
+/// **不对称**：原生版本资源是代码版本的一种**有损渲染**——在版本字段只收数字段的
+/// 平台上（Apple：`CFBundleShortVersionString` 至多三段非负整数），`release-desktop.yml`
+/// 给 `--build-name` 传的是剥掉预发布段的 `apple_build_version_name`，而
+/// `--dart-define=FUSHI_BUILD_VERSION` 注入的仍是完整版本名（守卫
+/// `test/build/build_version_define_guard_test.dart` 同时钉死这两条）。所以两侧
+/// **故意解耦**：iOS 上同一次构建就是 `2.2.1-beta.30` 的代码配 `2.2.1` 的 Info.plist。
+///
+/// 判据因此是「逐字相等 **或** 版本资源等于代码版本剥掉预发布段后的值」：
+///
+/// - Windows 半更新态 exe `2.2.1-debug.12216` / 代码 `2.2.1-debug.12215`：剥段得
+///   `2.2.1` ≠ exe ⇒ 照常告警（BUG-1786 现场，基版本相同、只差序号一位，只比基
+///   版本的实现会对唯一需要它的输入闭眼）。
+/// - Apple 预发布包 exe `2.2.1` / 代码 `2.2.1-beta.30`：剥段后相等 ⇒ 静默。
+///
+/// **已知残留假阴性**：Windows「正式版 exe `2.2.1` + 同 base 预发布 app.so」的跨通道
+/// 半更新态会被这条判据静默。这是有意的取舍——它与 Apple 的正常态在字符串层面完全
+/// 同形，分开只能靠平台特例分支；换来的是 Apple 端不再常驻一个恒为真的「你的安装
+/// 坏了」告警。真出这种跨通道半更新态时，更新检查侧（[resolveCurrentAppVersion] 吃
+/// 代码版本）仍会照常提示新版本，用户不会被困住。
+bool _isSameBuildVersion(String codeVersion, String executableVersion) {
+  final String code = _normalizedVersion(codeVersion);
+  final String executable = _normalizedVersion(executableVersion);
+  if (code == executable) return true;
+  return executable == _withoutPrerelease(code);
+}
+
+String _normalizedVersion(String version) =>
+    version.trim().replaceFirst(RegExp('^[vV]'), '').split('+').first;
+
+/// 剥掉 semver 预发布段（`2.2.1-beta.30` → `2.2.1`）——原生版本字段只收数字段的
+/// 平台上，版本资源里落地的就是这个值。
+String _withoutPrerelease(String normalizedVersion) =>
+    normalizedVersion.split('-').first;

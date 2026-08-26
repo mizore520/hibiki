@@ -557,6 +557,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
         passThrough: _passThrough,
         locked: _locked,
         hoverAutoLookup: hoverAutoLookup,
+        slotTooltips: _slotTooltips,
       );
       _pushedHoverAutoLookup = hoverAutoLookup;
       // native 在 show 里把语音控件复位（见 flutter_window.cpp），本地镜像跟着复位，
@@ -581,6 +582,21 @@ class GalHookTextOverlayController extends ChangeNotifier {
     // 高亮才不会停在已结束的状态上。
     await _syncVoiceState();
   }
+
+  /// 工具条槽位悬停提示文案，**下标与 native `hook_toolbar::kSlotActions`
+  /// 严格同序**（重播 / 重录 / 跟随 / 穿透 / 底板 / 锁定 / 工作台 / 置顶 /
+  /// 关闭）。native 不持有 i18n，文案只能由这里按当前 locale 下发。
+  List<String> get _slotTooltips => <String>[
+        t.game_hook_btn_replay,
+        t.game_hook_btn_recapture,
+        t.game_hook_btn_follow,
+        t.game_hook_btn_passthrough,
+        t.game_hook_btn_transparency,
+        t.game_hook_btn_lock,
+        t.game_hook_btn_workbench,
+        t.game_hook_btn_topmost,
+        t.game_hook_btn_close,
+      ];
 
   int get _backgroundColor {
     final int alpha = (_opacity.clamp(0.0, 1.0) * 255).round();
@@ -902,6 +918,12 @@ class GalHookTextOverlayController extends ChangeNotifier {
     await GlobalLookupController.instance.lookupText(
       term,
       sentence: entry.text,
+      // 台词浮窗本身已经显示完整句子；查词卡只保留词典正文。完整 sentence 仍会
+      // 进入 mining 上下文，不因关闭可见横幅而丢失。
+      showSentenceBanner: false,
+      // 游戏台词浮窗的点词卡不暴露进程级复制历史；这条路径使用 desktop HWND，
+      // 不能依靠 galCard route 判断，必须由调用表面显式声明。
+      allowClipboardHistory: false,
       // 卡片锚在被点中的那个词上（native 给的屏幕逻辑 px 矩形），而不是鼠标位置：
       // 浮窗里点词跟阅读器/剪贴板面板一样是「点哪个词看哪个词」。老 native 不带
       // 矩形时为 null，自动回落到光标定位。

@@ -224,8 +224,36 @@ extension _VideoSubtitle on _VideoFushiPageState {
                     )
                 : null,
           ),
+      // BUG-1861：远端模式下本机落盘的字幕档（Jimaku 下载 / 手动导入）也要有自己的行。
+      // 远端字幕轨行原本只覆盖 YouTube 轨 / host sidecar / host 内封轨三类，本机档案
+      // 经 [_applyRemoteSubtitle] 应用后只改 `_currentSubtitleSource`，列表里没有任何
+      // 行能承载它——「字幕明明应用上了、列表里却没有它」。与 host sidecar 行按路径去重
+      // （重进时的持久化重放会把同一档案挂到 `_remoteSubtitlePath` 上，见 [_loadRemoteEpisode]）。
+      if (_isRemote)
+        for (final SubtitleSource source in _importedSubtitleSources)
+          if (hostSub == null ||
+              !sameExternalSubtitlePathForMenu(source, hostSub))
+            ListTile(
+              leading: const Icon(Icons.subtitles),
+              title: Text(source.label),
+              selected: subtitleSourceMatchesPersistedForMenu(
+                source,
+                _currentSubtitleSource,
+              ),
+              selectedColor: cs.primary,
+              enabled: !_subtitleLoadingShown,
+              onTap: _subtitleLoadingShown
+                  ? null
+                  : () => unawaited(
+                        _applyRemoteSubtitle(
+                          controller,
+                          source.externalPath!,
+                          label: source.label,
+                        ),
+                      ),
+            ),
       if (!_isRemote)
-        for (final SubtitleSource source in _subtitleMenuSources)
+        for (final SubtitleSource source in _menuSubtitleSources)
           ListTile(
             leading: Icon(
               source.isGraphicEmbedded
@@ -353,6 +381,32 @@ extension _VideoSubtitle on _VideoFushiPageState {
                     )
                 : null,
           ),
+        // BUG-1861：与远端**主**字幕轨行完全同形——本机落盘的字幕档
+        // （[_pickAndImportRemoteSecondarySubtitle] 拷进 video_subtitles/）也要有自己的
+        // 行。否则「导入成功、副字幕生效、列表里找不到它、也切不回来」，正是主字幕那半
+        // 已修掉的同一个洞。与 host sidecar 行按路径去重。
+        for (final SubtitleSource source in _importedSubtitleSources)
+          if (hostSub == null ||
+              !sameExternalSubtitlePathForMenu(source, hostSub))
+            ListTile(
+              leading: const Icon(Icons.subtitles),
+              title: Text(source.label),
+              selected: subtitleSourceMatchesPersistedForMenu(
+                source,
+                _currentSecondarySubtitleSource,
+              ),
+              selectedColor: cs.primary,
+              enabled: !_subtitleLoadingShown,
+              onTap: _subtitleLoadingShown
+                  ? null
+                  : () => unawaited(
+                        _applyRemoteSecondarySubtitle(
+                          controller,
+                          source.externalPath!,
+                          label: source.label,
+                        ),
+                      ),
+            ),
       ];
     }
     return <Widget>[
@@ -370,10 +424,10 @@ extension _VideoSubtitle on _VideoFushiPageState {
             : () => unawaited(_selectSecondarySubtitleOff(controller)),
       ),
       const Divider(height: 1),
-      // BUG-900：遍历完整 [_subtitleMenuSources]（与主字幕轨行同一份可用列表），外挂
-      // 字幕文件也能选为副字幕。图标与主字幕轨行一致：图形轨 image / 内嵌 movie /
-      // 外挂 subtitles。
-      for (final SubtitleSource source in _subtitleMenuSources)
+      // BUG-900：遍历完整可用列表（与主字幕轨行同一份，BUG-1861 起含本会话导入 /
+      // 下载的档案），外挂字幕文件也能选为副字幕。图标与主字幕轨行一致：图形轨
+      // image / 内嵌 movie / 外挂 subtitles。
+      for (final SubtitleSource source in _menuSubtitleSources)
         ListTile(
           leading: Icon(
             source.isGraphicEmbedded
@@ -494,15 +548,40 @@ extension _VideoSubtitle on _VideoFushiPageState {
   ///     带来的唯一新信息，就是我们手里这个已知路径的外挂文件。
   ///
   /// 新档是本 app 刚写下的外挂文件，路径与标签都在手里，没有任何需要向 ffmpeg 求证的
-  /// 东西：直接插到列表首位（与 [includeCurrentPersistedSubtitleForMenu] 的「当前导入排
-  /// 最前」约定一致），内嵌轨枚举缓存保持有效、不重探。尚未为当前视频枚举过（缓存 key
-  /// 不匹配）时什么都不做——首次枚举本就会经 [includeCurrentPersistedSubtitleForMenu]
-  /// 把它带上。远端视频没有本地枚举列表（走 host / YouTube 轨），直接跳过。
+  /// 东西：直接记进 [_importedSubtitleSources]，渲染时经
+  /// [mergeImportedSubtitleSourcesForMenu] 排到列表首位（与
+  /// [includeCurrentPersistedSubtitleForMenu] 的「当前导入排最前」约定一致），内嵌轨枚举
+  /// 缓存保持有效、不重探。
+  ///
+  /// BUG-1861：**登记不再有任何前置条件**。BUG-1329 的实现把新档直接写进
+  /// `_subtitleMenuSources`，因而必须先确认「枚举缓存对当前视频有效」
+  /// （`_subtitleMenuSourcesPath == videoPath`），否则就丢弃；并且远端模式整个跳过。
+  /// 这三种情况下用户都会看到「字幕应用上了、列表里却没有它」：
+  ///  1. **枚举尚在途**：用户一进「字幕」分类就点获取字幕，而大容器的 `ffmpeg -i` 探测要
+  ///     数秒到数十秒。缓存 key 此刻还没写，新档被丢；等枚举回来又用**它启动时抓的**
+  ///     `_currentSubtitleSource` 快照整体覆盖列表，新档也进不了
+  ///     [includeCurrentPersistedSubtitleForMenu]。
+  ///  2. **枚举失败**：ffmpeg 缺失 / 超时 / 路径不可枚举（网络流）时 `enumerated == null`，
+  ///     缓存 key 永远不写，此后每次登记都静默 return。
+  ///  3. **换集后未再进字幕分类**：缓存 key 还是上一集的路径。
+  /// 而「这个档案就在盘上、刚刚被应用」是**不依赖枚举的既成事实**，不该被枚举缓存的
+  /// 有效性 gate 掉。现在两份列表各自独立、渲染时合并（见
+  /// [mergeImportedSubtitleSourcesForMenu]）。
+  ///
+  /// 只收**外挂字幕档案路径**（[isExternalSubtitleFilePathForMenu]：非 `embedded:<n>`
+  /// 源指针、非 `off:` 哨兵、非空）；远端内封轨抽取出来的临时档由 `embedded:<n>` 源指针
+  /// 自己的行承载，不进这里。**刻意不按扩展名过滤**——Jimaku / OpenSubtitles 给的
+  /// `fileName` 不受白名单约束，拿扩展名当门会让 `.sup` / `.smi` / `.ttml` 下完之后在
+  /// 列表里彻底消失，与本函数两个调用点「坏档也该列出来、不按应用成功门控」的约定矛盾
+  /// （BUG-1861）。
+  ///
+  /// 首行判 [mounted]：四个调用点全在 FilePicker / 网络下载 / `File.copy` 等 await 之后，
+  /// 而 `_rebuild` 就是裸 `setState`。BUG-1861 去掉 `_isRemote` 早退之后，远端两条导入
+  /// 路径首次成为可达的 setState 路径，用户在拷贝期间退出视频页就会 setState-after-dispose。
   void _registerImportedSubtitleSource(String path) {
-    if (_isRemote) return;
-    final String? videoPath = _currentVideoPath;
-    if (videoPath == null || _subtitleMenuSourcesPath != videoPath) return;
-    final bool alreadyListed = _subtitleMenuSources.any(
+    if (!mounted) return;
+    if (!isExternalSubtitleFilePathForMenu(path)) return;
+    final bool alreadyListed = _importedSubtitleSources.any(
       (SubtitleSource source) => sameExternalSubtitlePathForMenu(source, path),
     );
     if (alreadyListed) return;
@@ -511,9 +590,20 @@ extension _VideoSubtitle on _VideoFushiPageState {
       label: p.basename(path),
     );
     _rebuild(() {
-      _subtitleMenuSources = <SubtitleSource>[added, ..._subtitleMenuSources];
+      _importedSubtitleSources = <SubtitleSource>[
+        added,
+        ..._importedSubtitleSources,
+      ];
     });
   }
+
+  /// 字幕轨 / 副字幕轨行共用的**最终可选列表**：枚举结果（内封轨 + 视频同目录 sidecar）
+  /// 与本会话导入 / 下载的档案合并（BUG-1861）。本地视频专用；远端各类轨各自成行。
+  List<SubtitleSource> get _menuSubtitleSources =>
+      mergeImportedSubtitleSourcesForMenu(
+        _subtitleMenuSources,
+        _importedSubtitleSources,
+      );
 
   /// **纯映射**：把 [SubtitleCueLoadFailure] 翻成给用户看的一句话。
   ///
@@ -688,6 +778,50 @@ extension _VideoSubtitle on _VideoFushiPageState {
     return null;
   }
 
+  /// 组装在线字幕检索的**身份种子**：优先用刮削早就存下的外部 ID 与日文原名，而不是
+  /// 界面上的显示名（BUG-1842）。
+  ///
+  /// 根因背景：库里的显示名可能是中文译名（如「Re：从零开始的异世界生活 第四季 丧失篇」），
+  /// 而 Jimaku 的条目名只有罗马音/英文/日文，AniList 也匹配不上这种「中文译名 + 季度 +
+  /// 篇名」的长串——于是搜索必然空手而归，**尽管这个视频刮削过、库里明明存着它的 AniList
+  /// ID 和日文原名**。有身份就别再去猜名字。
+  ///
+  /// 归属规则（`video_metadata_works` 的 CHECK 约束）：合集里的一集，元数据挂在**合集**上
+  /// 而不是该集的 bookUid 上，故有 [VideoFushiPage.playlistCollectionId] 时必须走合集口，
+  /// 否则恒查不到。读不到元数据一律降级为纯文本检索（= 旧行为），绝不因此挡住搜索。
+  Future<SubtitleSearchSeed> _buildJimakuSeed(String fallbackTitle) async {
+    try {
+      final FushiDatabase db = appModel.database;
+      final int? collectionId = widget.playlistCollectionId;
+      final VideoMetadataWorkRow? work = collectionId != null
+          ? await db.getVideoMetadataWorkByCollection(collectionId)
+          : await db.getVideoMetadataWorkByBook(widget.bookUid);
+      final Map<String, String> externalIds = <String, String>{};
+      if (work != null) {
+        final List<VideoMetadataProviderIdentityRow> identities =
+            await db.getVideoMetadataProviderIdentities(workId: work.id);
+        for (final VideoMetadataProviderIdentityRow row in identities) {
+          externalIds[row.provider.trim().toLowerCase()] = row.externalId;
+        }
+      }
+      return buildSubtitleSearchSeed(
+        originalTitle: work?.originalTitle,
+        metadataTitle: work?.title,
+        displayTitle: fallbackTitle,
+        collectionTitle: _playlistTitle,
+        externalIds: externalIds,
+        isMovie: work?.mediaType == 'movie',
+      );
+    } on Object catch (error) {
+      ErrorLogService.instance
+          .logDiagnostic('VideoFushiPage._buildJimakuSeed', error);
+      return buildSubtitleSearchSeed(
+        displayTitle: fallbackTitle,
+        collectionTitle: _playlistTitle,
+      );
+    }
+  }
+
   /// 打开「自动获取字幕（Jimaku）」对话框：用番名（[_jimakuQuery]）搜 → 下载到
   /// `<appDocs>/video_subtitles/` → 应用。
   ///
@@ -710,10 +844,17 @@ extension _VideoSubtitle on _VideoFushiPageState {
     final String? preferredLanguage =
         appModel.jimakuPreferredLanguages[seriesKey] ??
             appModel.jimakuDefaultLanguageOrNull;
+    // 身份种子（外部 ID + 日文原名）；seriesKey 仍按原 query 算，免得预填词一换就把
+    // 用户此前的语言记忆全对不上。
+    final SubtitleSearchSeed seed = await _buildJimakuSeed(query);
+    if (!context.mounted) return;
     final String? downloaded = await showDialog<String>(
       context: context,
       builder: (_) => JimakuSubtitleDialog(
-        initialQuery: query,
+        seed: seed,
+        // 本地视频才有指纹可算（远端流恒 null），OpenSubtitles 据此按文件哈希精确匹配。
+        videoPath: _isRemote ? null : _currentVideoPath,
+        initialQuery: seed.primaryQuery.isEmpty ? query : seed.primaryQuery,
         initialApiKey: appModel.jimakuApiKey,
         onApiKeyChanged: (String key) => appModel.setJimakuApiKey(key),
         // 延迟解析：填 key 会重建 provider runtime，早绑的实例正是「刚填完 key
@@ -732,6 +873,10 @@ extension _VideoSubtitle on _VideoFushiPageState {
     if (_isRemote) {
       // 远端：内存应用，不写本地 DB（_applyRemoteSubtitle 自带 cue 为空时的失败提示
       // + 成功 OSD），不叠加额外提示。
+      // BUG-1861：先登记再应用——远端字幕轨列表原本没有承载本机档案的行，下完只改了
+      // `_currentSubtitleSource`，用户看到字幕生效却在列表里找不到它（也就切不回来）。
+      // 与本地分支一样**不**按应用成功门控：文件已经在盘上了，坏档也该列出来。
+      _registerImportedSubtitleSource(downloaded);
       await _applyRemoteSubtitle(controller, downloaded);
       return;
     }
@@ -799,6 +944,8 @@ extension _VideoSubtitle on _VideoFushiPageState {
     } catch (_) {
       // 保留原始 pick 路径应用；本次可播，只是可能不持久。
     }
+    // BUG-1861：与远端 Jimaku 下载同理，导入的档案要在字幕轨列表里有自己的行。
+    _registerImportedSubtitleSource(applyPath);
     await _applyRemoteSubtitle(controller, applyPath);
   }
 
@@ -1041,6 +1188,8 @@ extension _VideoSubtitle on _VideoFushiPageState {
     } catch (_) {
       // 保留原始 pick 路径应用；本次可用，只是可能不持久。
     }
+    // BUG-1861：与远端主字幕导入同理，档案要在**副**字幕轨列表里有自己的行。
+    _registerImportedSubtitleSource(applyPath);
     await _applyRemoteSecondarySubtitle(controller, applyPath);
   }
 
@@ -1459,6 +1608,9 @@ extension _VideoSubtitle on _VideoFushiPageState {
                                 onCopyCue: _copyCueText,
                                 onFavoriteCue: _toggleFavoriteCueForVideo,
                                 isCueFavorited: _isCueFavorited,
+                                // 列表行跟用户设的字幕字体（FontTarget.videoSubtitle），
+                                // 与画面上的字幕同一套，不再各用各的。
+                                fontFamily: appModel.subtitleFontFamily,
                                 // TODO-613：自动滚动开关初值从 Drift preferences 读，切换时落盘。
                                 initialAutoScroll:
                                     appModel.videoSubtitleListAutoScroll,

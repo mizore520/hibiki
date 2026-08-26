@@ -4,6 +4,7 @@
    resolve inside the shadow (fall back to document before the shadow exists). */
 function __fushiRootNode(){ return window.__fushiRoot || document; }
 function __fushiContainer(){ var r = window.__fushiRoot; return r ? r.querySelector('#entries-container') : document.getElementById('entries-container'); }
+function __fushiViewportWidth(){ var w = Number(window.__fushiPopupViewportWidth); return (isFinite(w) && w > 0) ? w : (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 0); }
 function __fushiOverlayParent(){ return window.__fushiRoot || document.body; }
 // 注意：scrollHeight 是**未乘 CSS zoom 的 layout px**。要和宿主几何（host CSS px）同单位，
 // 用下面的 __fushiReportedContentHeight()（BUG-1651 ②）。
@@ -168,6 +169,127 @@ let lastMinedEntryKey = null;
 // Dart side and the lookup-time duplicateCheck use.
 function mineEntryKey(expression, reading) {
     return `${expression || ''}\u0000${reading || ''}`;
+}
+
+// BUG-1833 follow-up: favorite/Anki state is decoration for each result header,
+// not a prerequisite for revealing the dictionary card. A large lookup can
+// contain dozens of entry headers; firing both bridges while synchronously
+// building every header floods Dart/Anki for seconds after the popup is gone and
+// steals time from the next (including nested) lookup. Observe each button and
+// start its checks only when it reaches the viewport prefetch margin. Repeated
+// expression/reading pairs entering together share the same in-flight promise;
+// settled answers are not cached because Anki/favorite state can change live.
+//
+// A full render resets the epoch, disconnecting work which never became visible
+// and preventing already-started checks from painting a newer DOM. Environments
+// without IntersectionObserver keep the old eager, fail-soft behaviour.
+let entryStateCheckEpoch = 0;
+let entryStateCheckObserver = null;
+let entryStateCheckJobs = new WeakMap();
+let entryStateCheckRuns = new WeakMap();
+const entryStateCheckPromises = new Map();
+
+function resetEntryStateChecks() {
+    entryStateCheckEpoch += 1;
+    entryStateCheckObserver?.disconnect();
+    entryStateCheckObserver = null;
+    entryStateCheckJobs = new WeakMap();
+    entryStateCheckRuns = new WeakMap();
+    entryStateCheckPromises.clear();
+}
+
+function invalidateEntryStateCheck(anchor) {
+    entryStateCheckObserver?.unobserve(anchor);
+    entryStateCheckJobs.delete(anchor);
+    entryStateCheckRuns.delete(anchor);
+    anchor.__fushiEntryStateVersion =
+        (anchor.__fushiEntryStateVersion || 0) + 1;
+}
+
+// A user can click a just-rendered header before IntersectionObserver delivers
+// its first callback. Let correctness-sensitive actions (the mine button reads
+// data-mined to choose create vs. existing-card handling) join or start that
+// same lazy probe instead of treating the temporary "+" placeholder as truth.
+async function runEntryStateCheckNow(anchor) {
+    const job = entryStateCheckJobs.get(anchor);
+    if (job) {
+        entryStateCheckObserver?.unobserve(anchor);
+        entryStateCheckJobs.delete(anchor);
+        await job();
+        return;
+    }
+    const run = entryStateCheckRuns.get(anchor);
+    if (run) await run;
+}
+
+function scheduleEntryStateCheck(anchor, key, fetchState, applyState) {
+    const epoch = entryStateCheckEpoch;
+    anchor.__fushiEntryStateVersion = anchor.__fushiEntryStateVersion || 0;
+    const version = anchor.__fushiEntryStateVersion;
+    const applyIfCurrent = (value) => {
+        if (epoch !== entryStateCheckEpoch) return;
+        if (anchor.__fushiEntryStateVersion !== version) return;
+        if (anchor.isConnected === false) return;
+        return applyState(value);
+    };
+
+    const start = () => {
+        if (epoch !== entryStateCheckEpoch) return;
+        const existingRun = entryStateCheckRuns.get(anchor);
+        if (existingRun) return existingRun;
+        let pending = entryStateCheckPromises.get(key);
+        if (!pending) {
+            try {
+                pending = Promise.resolve(fetchState());
+            } catch (error) {
+                pending = Promise.reject(error);
+            }
+            entryStateCheckPromises.set(key, pending);
+            pending.then(
+                () => {
+                    if (entryStateCheckPromises.get(key) === pending) {
+                        entryStateCheckPromises.delete(key);
+                    }
+                },
+                () => {
+                    if (entryStateCheckPromises.get(key) === pending) {
+                        entryStateCheckPromises.delete(key);
+                    }
+                },
+            );
+        }
+        // Resolve the joinable run after the backend answer and synchronous
+        // state paint. An optional secondary probe (for example overwrite note
+        // id) may continue without delaying a click that only needs ✓/+ truth.
+        const run = pending.then((value) => {
+            const applied = applyIfCurrent(value);
+            Promise.resolve(applied).catch(() => {});
+        }).catch(() => {});
+        entryStateCheckRuns.set(anchor, run);
+        return run;
+    };
+
+    entryStateCheckJobs.set(anchor, start);
+
+    // Old WebViews and the lightweight JS behaviour harness do not expose an
+    // observer. Preserve their eager semantics rather than dropping status.
+    if (typeof IntersectionObserver !== 'function') {
+        start();
+        return;
+    }
+
+    if (!entryStateCheckObserver) {
+        entryStateCheckObserver = new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+                if (!entry.isIntersecting) continue;
+                const job = entryStateCheckJobs.get(entry.target);
+                entryStateCheckObserver?.unobserve(entry.target);
+                entryStateCheckJobs.delete(entry.target);
+                job?.();
+            }
+        }, { root: null, rootMargin: '240px 0px', threshold: 0 });
+    }
+    entryStateCheckObserver.observe(anchor);
 }
 
 // Normalize the mineEntry/updateEntry handler reply into {ankiConnect, noteId}.
@@ -555,7 +677,7 @@ function showGrammarTooltip(element) {
     const margin = 8;
 
     let left = anchor.left;
-    const maxLeft = window.innerWidth - box.width - margin;
+    const maxLeft = __fushiViewportWidth() - box.width - margin;
     if (left > maxLeft) left = maxLeft;
     if (left < margin) left = margin;
 
@@ -1461,9 +1583,9 @@ function createDefinitionImage(data, dictionary, exporting = false) {
                 const shouldUseNaturalPixels = !isSvg && img.naturalWidth > 0 && img.naturalHeight > 0 && (!useEmUnits || hasMismatchedNaturalAspectRatio(img, invAspectRatio));
                 if (shouldUseNaturalPixels) {
                     if (!hasDimensions) {
-                        imageContainer.style.width = `${Math.min(img.naturalWidth, window.innerWidth - 20)}px`;
+                        imageContainer.style.width = `${Math.min(img.naturalWidth, __fushiViewportWidth() - 20)}px`;
                     } else if (hasMismatchedNaturalAspectRatio(img, invAspectRatio)) {
-                        imageContainer.style.width = `${Math.min(img.naturalWidth, window.innerWidth - 20)}px`;
+                        imageContainer.style.width = `${Math.min(img.naturalWidth, __fushiViewportWidth() - 20)}px`;
                     } else if (useEmUnits) {
                         imageContainer.style.width = `${usedWidth}px`;
                     }
@@ -1474,7 +1596,7 @@ function createDefinitionImage(data, dictionary, exporting = false) {
                         imageContainer.style.maxWidth = '100%';
                     }
                 } else if (!hasDimensions && !isSvg) {
-                    imageContainer.style.width = `${Math.min(img.naturalWidth, window.innerWidth - 20)}px`;
+                    imageContainer.style.width = `${Math.min(img.naturalWidth, __fushiViewportWidth() - 20)}px`;
                     aspectRatioSizer.style.paddingTop = `${(img.naturalHeight / img.naturalWidth) * 100}%`;
                 }
             }, {once: true});
@@ -1951,7 +2073,7 @@ function showInlineHint(button, message) {
     const btnRect = button.getBoundingClientRect();
     const hintRect = hint.getBoundingClientRect();
     let left = btnRect.left + btnRect.width / 2 - hintRect.width / 2;
-    left = Math.max(4, Math.min(left, window.innerWidth - hintRect.width - 4));
+    left = Math.max(4, Math.min(left, __fushiViewportWidth() - hintRect.width - 4));
     let top = btnRect.top - hintRect.height - 6;
     if (top < 4) top = btnRect.bottom + 6;
     hint.style.left = left + 'px';
@@ -2727,7 +2849,7 @@ function __fushiShowButtonTip(button) {
     const btnRect = button.getBoundingClientRect();
     const tipRect = __fushiBtnTipEl.getBoundingClientRect();
     let left = btnRect.left + btnRect.width / 2 - tipRect.width / 2;
-    left = Math.max(4, Math.min(left, window.innerWidth - tipRect.width - 4));
+    left = Math.max(4, Math.min(left, __fushiViewportWidth() - tipRect.width - 4));
     let top = btnRect.bottom + 6;
     if (top + tipRect.height > window.innerHeight - 4) {
         top = btnRect.top - tipRect.height - 6;
@@ -2794,7 +2916,7 @@ function showNoAudioHint(button) {
     const btnRect = button.getBoundingClientRect();
     const hintRect = hint.getBoundingClientRect();
     let left = btnRect.left + btnRect.width / 2 - hintRect.width / 2;
-    left = Math.max(4, Math.min(left, window.innerWidth - hintRect.width - 4));
+    left = Math.max(4, Math.min(left, __fushiViewportWidth() - hintRect.width - 4));
     let top = btnRect.top - hintRect.height - 6;
     if (top < 4) top = btnRect.bottom + 6;
     hint.style.left = left + 'px';
@@ -2833,6 +2955,7 @@ function createFavoriteButton(expression, reading) {
     const button = el('button', {
         className: 'inline-action-button favorite-button',
         onclick: async () => {
+            invalidateEntryStateCheck(button);
             button.disabled = true;
             try {
                 const nowFav = await window.flutter_inappwebview.callHandler(
@@ -2848,48 +2971,79 @@ function createFavoriteButton(expression, reading) {
         }
     });
     setButtonIcon(button, 'favorite');
-    // 初始状态：查询是否已收藏，设收藏图标。
-    window.flutter_inappwebview.callHandler('favoriteCheck', { expression, reading })
-        .then(isFav => {
+    // 初始状态：接近可见时查询是否已收藏，避免不可见词条挤占首屏渲染。
+    scheduleEntryStateCheck(
+        button,
+        `favorite\u0000${mineEntryKey(expression, reading)}`,
+        () => window.flutter_inappwebview.callHandler(
+            'favoriteCheck', { expression, reading }),
+        (isFav) => {
             setButtonIcon(button, isFav ? 'favorited' : 'favorite');
             button.classList.toggle('favorited', !!isFav);
-        })
-        .catch(() => {});
+        },
+    );
     return button;
 }
 
-function createKanjiBreakdown(expression) {
-    const seen = new Set();
-    const kanjiChars = [];
-    for (const ch of expression) {
-        if (KANJI_PATTERN.test(ch) && !seen.has(ch)) {
-            seen.add(ch);
-            kanjiChars.push(ch);
+// design-2026-08 讨论区反馈: the old kanji-breakdown chip row repeated every kanji of the
+// headword on its own line just to make it clickable. The chips are gone;
+// instead each kanji INSIDE the headword is its own tap target (dotted
+// underline affordance, popup.css .kanji-inline). This is a post-pass over an
+// already-built subtree (called from the tail of postProcessRuby, so every
+// render path that fixes ruby also gets inline kanji): it only splits TEXT
+// nodes under .expression, skipping the reading machinery (rt / rp / .ruby-rt /
+// .ruby-reserve) — the per-base .ruby-unit anchor + em reserve geometry
+// (BUG-722/733/850/1487) is untouched, and each kanji stays a live text node
+// (one span deeper) so ruby lookup selection (BUG-110/123/125/129) keeps
+// working. Idempotent like postProcessRuby itself (BUG-1098): text already
+// inside a .kanji-inline is rejected by the walker filter.
+function wrapExpressionInlineKanji(container) {
+    const roots = container.classList?.contains('expression')
+        ? [container]
+        : container.querySelectorAll('.expression');
+    roots.forEach(root => {
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+            acceptNode(node) {
+                const p = node.parentElement;
+                if (!node.textContent || !p) return NodeFilter.FILTER_REJECT;
+                if (p.closest('rt, rp, .ruby-rt, .ruby-reserve, .kanji-inline')) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        });
+        const textNodes = [];
+        while (walker.nextNode()) textNodes.push(walker.currentNode);
+        for (const node of textNodes) {
+            const text = node.textContent;
+            let hasKanji = false;
+            for (const ch of text) {
+                if (KANJI_PATTERN.test(ch)) { hasKanji = true; break; }
+            }
+            if (!hasKanji) continue;
+            const frag = document.createDocumentFragment();
+            let run = '';
+            const flushRun = () => {
+                if (run) {
+                    frag.appendChild(document.createTextNode(run));
+                    run = '';
+                }
+            };
+            for (const ch of text) {
+                if (KANJI_PATTERN.test(ch)) {
+                    flushRun();
+                    const span = document.createElement('span');
+                    span.className = 'kanji-inline';
+                    span.textContent = ch;
+                    frag.appendChild(span);
+                } else {
+                    run += ch;
+                }
+            }
+            flushRun();
+            node.replaceWith(frag);
         }
-    }
-    if (kanjiChars.length === 0) return null;
-
-    const row = el('div', { className: 'kanji-breakdown' });
-    for (const ch of kanjiChars) {
-        const tag = el('span', {
-            className: 'kanji-tag',
-            textContent: ch,
-        });
-        tag.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const rect = tag.getBoundingClientRect();
-            markGlobalLookupExtHit(tag);
-            window.flutter_inappwebview.callHandler('onLinkClick', ch, {
-                x: rect.left,
-                y: rect.top,
-                width: rect.width,
-                height: rect.height
-            });
-        });
-        row.appendChild(tag);
-    }
-    return row;
+    });
 }
 
 function createEntryHeader(entry, idx) {
@@ -2916,9 +3070,19 @@ function createEntryHeader(entry, idx) {
     expressionSpan.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const rect = expressionSpan.getBoundingClientRect();
-        markGlobalLookupExtHit(expressionSpan);
-        window.flutter_inappwebview.callHandler('onLinkClick', expression, {
+        // design-2026-08 讨论区反馈: a click landing on an inline kanji (.kanji-inline, wrapped
+        // by wrapExpressionInlineKanji) looks up THAT character — same
+        // onLinkClick channel + anchor-rect semantics the removed
+        // kanji-breakdown chips used. Anywhere else on the headword keeps the
+        // old whole-expression re-lookup.
+        const kanjiEl = e.target instanceof Element
+            ? e.target.closest('.kanji-inline')
+            : null;
+        const anchorEl = kanjiEl || expressionSpan;
+        const term = kanjiEl ? kanjiEl.textContent : expression;
+        const rect = anchorEl.getBoundingClientRect();
+        markGlobalLookupExtHit(anchorEl);
+        window.flutter_inappwebview.callHandler('onLinkClick', term, {
             x: rect.left,
             y: rect.top,
             width: rect.width,
@@ -3012,6 +3176,11 @@ function createEntryHeader(entry, idx) {
             mineButton.dataset.mining = '1';
             mineButton.disabled = true;
             try {
+                // IntersectionObserver may not have delivered its first callback
+                // yet. Join/start the scheduled duplicateCheck before consulting
+                // data-mined, then invalidate late decoration work for this click.
+                await runEntryStateCheckNow(mineButton);
+                invalidateEntryStateCheck(mineButton);
                 if (mineButton.dataset.latest === '1' && isLatestEditable(expression, reading)) {
                     // TODO-270 D green ✓⤺: this is the latest mined card and it
                     // carries a real note id → OVERWRITE that note in place with
@@ -3175,22 +3344,37 @@ function createEntryHeader(entry, idx) {
     // earlier card to the editable ✓↩ latest state so a single click overwrites
     // it in place — no need to have mined it in this popup session. A null reply
     // keeps the ordinary two-state behaviour (Never break userspace).
-    window.flutter_inappwebview.callHandler('duplicateCheck', { expression, reading }).then(async isDuplicate => {
-        if (isDuplicate && !isLatestEditable(expression, reading)) {
-            try {
-                const noteId = await window.flutter_inappwebview.callHandler(
-                    'overwriteTargetNoteId', { expression, reading });
-                if (typeof noteId === 'number' && Number.isFinite(noteId)) {
-                    rememberLatestMined(expression, reading, noteId);
+    scheduleEntryStateCheck(
+        mineButton,
+        `duplicate\u0000${mineEntryKey(expression, reading)}`,
+        () => window.flutter_inappwebview.callHandler(
+            'duplicateCheck', { expression, reading }),
+        async (isDuplicate) => {
+            const stateEpoch = entryStateCheckEpoch;
+            const stateVersion = mineButton.__fushiEntryStateVersion || 0;
+            // Paint ✓/+ as soon as duplicateCheck answers. The optional
+            // overwrite-target probe is a second Anki round trip and must not
+            // hold the basic lookup-time state hostage.
+            setMineState(isDuplicate);
+            if (isDuplicate && !isLatestEditable(expression, reading)) {
+                try {
+                    const noteId = await window.flutter_inappwebview.callHandler(
+                        'overwriteTargetNoteId', { expression, reading });
+                    if (stateEpoch !== entryStateCheckEpoch ||
+                        stateVersion !== (mineButton.__fushiEntryStateVersion || 0) ||
+                        mineButton.isConnected === false) return;
+                    if (typeof noteId === 'number' && Number.isFinite(noteId)) {
+                        rememberLatestMined(expression, reading, noteId);
+                        setMineState(true);
+                    }
+                } catch (e) {
+                    // A failed overwrite-target probe must never break the ✓/+ paint;
+                    // fall back to the ordinary mined state below.
+                    console.error('overwriteTargetNoteId probe failed', e);
                 }
-            } catch (e) {
-                // A failed overwrite-target probe must never break the ✓/+ paint;
-                // fall back to the ordinary mined state below.
-                console.error('overwriteTargetNoteId probe failed', e);
             }
-        }
-        setMineState(isDuplicate);
-    });
+        },
+    );
 
     // TODO-393「查词窗口句子上下文制卡」：仅支持草稿的表面（书籍/有声书/视频；宿主接受
     // setSentenceContext）渲染「上 N 句 / 下 N 句」上下文选择器。选「上 N」「下 N」把当前
@@ -3771,11 +3955,6 @@ function buildEntryElement(entry, idx, maximumDictionaryBlocks = Infinity) {
     const entryDiv = el('div', { className: 'entry' });
     entryDiv.appendChild(createEntryHeader(entry, idx));
 
-    const kanjiRow = createKanjiBreakdown(entry.expression);
-    if (kanjiRow) {
-        entryDiv.appendChild(kanjiRow);
-    }
-
     const exprTags = createExpressionTagsSection(entry);
     if (exprTags) {
         entryDiv.appendChild(exprTags);
@@ -3945,14 +4124,11 @@ function postProcessRuby(container) {
                 rtBox.className = 'ruby-rt';
                 unit.appendChild(rtBox);
                 rtBox.appendChild(sib);
-                // BUG-850: reserve horizontal room equal to the reading. The
-                // reading box (.ruby-rt) is position:absolute (no inline width),
-                // so a reading wider than
-                // its kanji would overhang and collide with the next base's
-                // reading. This zero-height, in-flow twin of the reading text
-                // grows the per-base unit's shrink-to-fit width to the reading
-                // width (popup.css .ruby-reserve), while the base stays on its
-                // own baseline. aria-hidden + user-select:none keep it out of
+                // BUG-1778: keep the historical reading twin for DOM parity,
+                // but popup.css now positions it out of flow. It must not widen
+                // a one-kanji base to a long reading such as 体/からだ, because
+                // that produces the visibly separated正文 shown in the report.
+                // aria-hidden + user-select:none still keep it out of
                 // accessibility and ruby lookup selection (BUG-110/123/125/129).
                 const reserve = document.createElement('span');
                 reserve.className = 'ruby-reserve';
@@ -3962,6 +4138,11 @@ function postProcessRuby(container) {
             }
         }
     });
+    // design-2026-08 讨论区反馈: inline-kanji tap targets ride the same post-pass so every
+    // render path that ruby-fixes a subtree (first entry, deferred tail
+    // entries, incremental updates) also gets them; both passes are idempotent
+    // so the double walk over entry 0 (BUG-1098) stays harmless.
+    wrapExpressionInlineKanji(container);
 }
 
 function applyCustomCSS() {
@@ -4010,7 +4191,7 @@ function createKanjiCard(kanji) {
     const head = el('div', { className: 'kanji-card-head' });
     const charEl = el('div', { className: 'kanji-card-char', textContent: kanji.character });
     // Tapping the big character re-looks it up (consistent with the term
-    // headword + kanji-breakdown tags), so a kanji card is also a jump-off
+    // headword + inline kanji, design-2026-08 讨论区反馈), so a kanji card is also a jump-off
     // point for a fresh lookup.
     charEl.addEventListener('click', (e) => {
         e.preventDefault();
@@ -4348,13 +4529,33 @@ function observeMasonryTargets() {
 
 function scheduleMasonry() {
     if (!masonrySupported() || masonryRaf) return;
+    const generation = window._renderGeneration;
     masonryRaf = requestAnimationFrame(() => {
         masonryRaf = null;
+        if (generation !== window._renderGeneration) return;
         layoutMasonry();
         // 铺完复报高度（容器高度已由 masonry 改写），让宿主给弹窗重新定尺。
         _reportPopupHeight();
     });
 }
+
+// BUG-1833 — the global lookup host parks and rebinds a physical iframe realm.
+// Retire every callback/observer that belongs to the old logical card before
+// the realm can receive a new frame id. The generation checks cover font/tail/
+// masonry callbacks; explicit cancellation also lets the new render schedule
+// its own masonry immediately instead of being blocked by an old non-null rAF.
+window.__fushiPrepareRealmForReuse = () => {
+    window._renderGeneration += 1;
+    window._renderInProgress = false;
+    resetEntryStateChecks();
+    if (masonryRaf != null) {
+        try { cancelAnimationFrame(masonryRaf); } catch (_) { /* no-op */ }
+        masonryRaf = null;
+    }
+    try { masonryObserver?.disconnect(); } catch (_) { /* no-op */ }
+    masonryObserver = null;
+    return window._renderGeneration;
+};
 
 // 宿主改列数 / 外部触发时可调；渲染钩子已在 _firePopupRendered / updatePopupIncremental 里调。
 window.fushiRelayoutDictionaries = () => {
@@ -4478,7 +4679,7 @@ function effectiveDictColumns() {
         configured = 1;
     }
     if (!(configured > 0)) configured = 1;
-    const width = window.innerWidth || 0;
+    const width = __fushiViewportWidth();
     const fit = width > 0
         ? Math.max(1, Math.floor(width / DICT_COLUMN_MIN_WIDTH))
         : configured;
@@ -4513,6 +4714,14 @@ function prependSentenceBanner(container) {
 
 window.renderPopup = function() {
     const t0 = performance.now();
+    // Invalidate every deferred dictionary-block task from the preceding DOM
+    // before taking ANY early return. Previously no-results/kanji-only paths
+    // returned before advancing this generation, so an old multi-entry timer
+    // could append stale cards into the freshly-rendered empty state.
+    const gen = ++window._renderGeneration;
+    // Cancel not-yet-visible status probes from the previous DOM before any new
+    // entry headers are built. In-flight probes are epoch-gated on completion.
+    resetEntryStateChecks();
     // 真机第 5 轮 — settingsJs 可能刚更新了 --dict-columns；渲染前按当前视口
     // 重算有效列数（resize 监听兜住渲染后的窗口拖拽）。
     updateEffectiveDictColumns();
@@ -4544,8 +4753,6 @@ window.renderPopup = function() {
         _emitPopupRenderPerf('complete', t0, 0, { noResults: true });
         return;
     }
-
-    const gen = ++window._renderGeneration;
 
     // TODO-833: entries that the hidden-dictionary filter leaves with no visible
     // glossary are skipped (buildEntryElement returns null), so the rendered DOM
@@ -5266,3 +5473,34 @@ document.addEventListener('mousemove', function(e) {
         window.fushiSelection.selectText(e.clientX, e.clientY, 20);
     }
 }, {passive: true});
+
+// Niratan 对齐（2026-08-23）— 滚动条静止隐形、滚动时浮现。popup.css 的
+// ::-webkit-scrollbar-thumb 静止透明，靠 :hover 或 .popup-scroll-active 显形；
+// hover 只覆盖桌面鼠标，这里补触屏/键盘滚动：任意滚动事件给根节点 + body +
+// 事件目标挂 .popup-scroll-active，900ms 无滚动后整体清除（与 Niratan
+// setPopupScrollIndicatorActive 同法同参）。capture:true 才收得到内部滚动容器
+// （.overlay / .expression-scroll 等）的 scroll（scroll 不冒泡）。
+var __fushiPopupScrollIndicatorTimer = 0;
+document.addEventListener('scroll', function (event) {
+    var root = document.documentElement;
+    var body = document.body;
+    var activeClass = 'popup-scroll-active';
+    root.classList.add(activeClass);
+    if (body) body.classList.add(activeClass);
+    var scrollTarget = event.target && event.target.nodeType === Node.ELEMENT_NODE
+        ? event.target
+        : null;
+    if (scrollTarget && scrollTarget.classList) {
+        scrollTarget.classList.add(activeClass);
+    }
+    if (__fushiPopupScrollIndicatorTimer) {
+        clearTimeout(__fushiPopupScrollIndicatorTimer);
+    }
+    __fushiPopupScrollIndicatorTimer = setTimeout(function () {
+        root.classList.remove(activeClass);
+        if (body) body.classList.remove(activeClass);
+        document.querySelectorAll('.' + activeClass).forEach(function (element) {
+            element.classList.remove(activeClass);
+        });
+    }, 900);
+}, { passive: true, capture: true });

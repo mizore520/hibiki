@@ -279,6 +279,93 @@ class DictionaryPopupWebViewState
       _controller?.evaluateJavascript(source: source);
   bool _ready = false;
   bool _refreshWhenReady = false;
+  double? _layoutWidth;
+  double? _layoutHeight;
+
+  void _capturePopupLayout(BoxConstraints constraints) {
+    final double? width = constraints.hasBoundedWidth &&
+            constraints.maxWidth.isFinite &&
+            constraints.maxWidth > 0
+        ? constraints.maxWidth
+        : null;
+    final double? height = constraints.hasBoundedHeight &&
+            constraints.maxHeight.isFinite &&
+            constraints.maxHeight > 0
+        ? constraints.maxHeight
+        : null;
+    if (_layoutWidth == width && _layoutHeight == height) return;
+    _layoutWidth = width;
+    _layoutHeight = height;
+    if (!_ready) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_applyPopupViewportSize());
+    });
+  }
+
+  /// BUG-1812：iOS WKWebView 的 popup 文档可出现 `window.innerWidth == 0`，
+  /// 即使 Flutter platform view 已有真实非零布局。把 Flutter 约束发布给弹窗 JS，
+  /// 并按当前 document zoom 折回 layout px 后约束 `#entries-container`；不能直接写
+  /// html/body width，否则 zoom != 1 时实占宽度会再次越过真实视口。
+  Future<void> _applyPopupViewportSize() async {
+    final InAppWebViewController? controller = _controller;
+    final double? width = _layoutWidth;
+    final double? height = _layoutHeight;
+    if (controller == null || width == null || width <= 0) return;
+    final String heightValue = height == null ? '0' : '$height';
+    try {
+      await controller.evaluateJavascript(source: '''(function(){
+  var w = $width, h = $heightValue;
+  document.documentElement.style.setProperty('--fushi-popup-viewport-width', w + 'px');
+  if (h > 0) {
+    document.documentElement.style.setProperty('--fushi-popup-viewport-height', h + 'px');
+  }
+  window.__fushiPopupViewportWidth = w;
+  window.__fushiPopupViewportHeight = h;
+  window.__fushiApplyPopupViewport = function(){
+    var width = Number(window.__fushiPopupViewportWidth) || 0;
+    var z = parseFloat(document.documentElement.style.zoom);
+    if (!(z > 0) || !isFinite(z)) z = 1;
+    var container = document.getElementById('entries-container');
+    if (container && width > 0) {
+      var bodyStyle = getComputedStyle(document.body);
+      var leftInset = parseFloat(bodyStyle.paddingLeft) || 0;
+      var rightInset = parseFloat(bodyStyle.paddingRight) || 0;
+      var layoutWidth = Math.max(0, width / z - leftInset - rightInset);
+      container.style.width = layoutWidth + 'px';
+      container.style.maxWidth = layoutWidth + 'px';
+    }
+  };
+  window.__fushiApplyPopupViewport();
+})();''');
+    } catch (e, stack) {
+      // macOS WKWebView may tear down its platform controller after this
+      // asynchronous call has started (for example when a lookup is cleared).
+      // That is a normal lifecycle completion, not an app error. A live
+      // controller failure is logged, but must not skip the first result push.
+      if (!mounted || !identical(_controller, controller)) return;
+      ErrorLogService.instance
+          .log('DictPopupWebview.applyPopupViewportSize', e, stack);
+    }
+  }
+
+  Future<void> _completePopupLoad(
+      InAppWebViewController controller) async {
+    try {
+      await controller.evaluateJavascript(source: ReaderCaretScripts.source());
+      if (!mounted) return;
+      await _applyPopupViewportSize();
+    } catch (e, stack) {
+      if (mounted) {
+        ErrorLogService.instance.log('DictPopupWebview.loadBootstrap', e, stack);
+      }
+    }
+    if (!mounted) return;
+    unawaited(_pushInstantScrollPreference());
+    if (_refreshWhenReady || _lastSearchTerm == null) {
+      _pushResults();
+    }
+    _setHasChildPopupJs(widget.hasChildPopup);
+  }
 
   /// renderer 死亡处置（救命动作 = 下面 [InAppWebView.onRenderProcessGone] 传了
   /// 非 null 回调，否则 Android 会连坐杀掉整个 app）。
@@ -423,6 +510,7 @@ class DictionaryPopupWebViewState
     if (z < 0.3) z = 0.3;
     if (z > 8) z = 8;
     document.documentElement.style.zoom = z.toFixed(4);
+    window.__fushiApplyPopupViewport?.();
     try { window.flutter_inappwebview.callHandler('popupZoomFont', fs); } catch (err) {}
   };
   window.addEventListener('wheel', function(e){
@@ -951,7 +1039,9 @@ JSON.stringify((function(){
     // popup CSS 在属性缺席时回退 1（经典单列不受影响）。
     final Map<String, String> vars = buildPopupThemeCssVars(
       scheme: scheme,
-      backgroundColor: appModel.overrideDictionaryColor ?? scheme.surface,
+      // Niratan 对齐（2026-08-23）：默认卡面纯白/纯黑，override 优先级不变。
+      backgroundColor: popupCardSurface(
+          scheme: scheme, override: appModel.overrideDictionaryColor),
       surfaceContainerHigh: scheme.surfaceContainerHigh,
       dictionaryColumns: appModel.popupDictionaryColumns,
     );
@@ -1322,7 +1412,23 @@ JSON.stringify((function(){
     _inlineAssetsPreload = null;
   }
 
-  /// 测试专用：构造当前内联资产下的 popup HTML（走生产 memo 路径）。
+  /// 本平台的 WebView 能否可靠地把 popup.html 当 file:// 主框架加载。
+  ///
+  /// 公开给别的 popup 宿主（如设置里的样式预览）复用同一判断——各处自己抄一份
+  /// 平台清单，迟早在某个平台上分叉成两种加载行为。
+  static bool get shouldInlinePopupAssets => _shouldInlinePopupAssets;
+
+  /// 构造内联资产版的 popup HTML，供 [shouldInlinePopupAssets] 为真的平台使用。
+  ///
+  /// 与 in-app 弹窗同一份 memo 路径，故预览与真实弹窗吃的是同一份 popup.js /
+  /// popup.css，不会出现「预览好看、真弹窗不一样」。
+  static String buildInlinePopupHtml({
+    required String themeAttr,
+    required String bgHex,
+  }) =>
+      _buildInlinePopupHtml(themeAttr: themeAttr, bgHex: bgHex);
+
+  /// 测试专用别名，保留既有调用点。
   @visibleForTesting
   static String debugBuildInlinePopupHtml({
     required String themeAttr,
@@ -1364,8 +1470,11 @@ JSON.stringify((function(){
     );
     final t = Translations.of(context);
     final appModel = ref.read(appProvider);
-    final Color bgColor = appModel.overrideDictionaryColor ??
-        Theme.of(context).colorScheme.surface;
+    // Niratan 对齐（2026-08-23）：初始 HTML 底色与主题注入器同源纯白/纯黑，
+    // 避免「先 tinted 后纯色」的一帧闪变。
+    final Color bgColor = popupCardSurface(
+        scheme: Theme.of(context).colorScheme,
+        override: appModel.overrideDictionaryColor);
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final String bgHex = _colorToHex(bgColor);
     final String themeAttr = isDark ? 'dark' : 'light';
@@ -2215,18 +2324,7 @@ JSON.stringify((function(){
                 : widget.inputSpec,
           ),
         );
-        controller
-            .evaluateJavascript(source: ReaderCaretScripts.source())
-            .then((_) {
-          if (!mounted) return;
-          unawaited(_pushInstantScrollPreference());
-          if (_refreshWhenReady || _lastSearchTerm == null) {
-            _pushResults();
-          }
-          // TODO-869：冷加载就绪后显式下发一次当前 hasChildPopup（默认 false 也下发，
-          // 保证叶子层 __hasChildPopup 明确为 false）。
-          _setHasChildPopupJs(widget.hasChildPopup);
-        });
+        unawaited(_completePopupLoad(controller));
       },
       onReceivedError: (controller, request, error) {
         // TODO-058 fail-safe：主框架加载失败（弹窗 WebView 进程异常 / 资源拦截
@@ -2268,8 +2366,9 @@ JSON.stringify((function(){
     // appUiScale 空间。非 Windows 平台不包 GestureDetector，保持原生菜单行为不变。
     // [HitTestBehavior.translucent] 让右键之外的所有指针事件照常落到 WebView（不抢左键
     // 框选 / 滚动 / 点击）。
+    final Widget guardedWebView;
     if (isWindowsPlatform) {
-      return KeyedSubtree(
+      guardedWebView = KeyedSubtree(
         key: _deathGuard.rebuildKey,
         child: Focus(
           // BUG-1451 键盘那一半（BUG-402 当年只修了阅读器正文，弹窗漏修）：Windows 的
@@ -2290,8 +2389,16 @@ JSON.stringify((function(){
           ),
         ),
       );
+    } else {
+      guardedWebView =
+          KeyedSubtree(key: _deathGuard.rebuildKey, child: webView);
     }
-    return KeyedSubtree(key: _deathGuard.rebuildKey, child: webView);
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        _capturePopupLayout(constraints);
+        return guardedWebView;
+      },
+    );
   }
 
   /// Windows 弹窗内的「Ctrl+C 复制选中文字」兼容层（BUG-1451，BUG-402 同根）。

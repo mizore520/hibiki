@@ -129,6 +129,11 @@ Root: HKCU; Subkey: "Software\Classes\.webm\OpenWithProgids"; ValueType: none; V
 Root: HKCU; Subkey: "Software\Classes\.mov\OpenWithProgids"; ValueType: none; ValueName: "Hibiki.Video"; Flags: deletevalue
 Root: HKCU; Subkey: "Software\Classes\.ts\OpenWithProgids"; ValueType: none; ValueName: "Hibiki.Video"; Flags: deletevalue
 
+[UninstallDelete]
+; 数据存储位置引导文件（见 [Code] WriteDataRootBootstrap）。app 首启即消费并删除；
+; 装完从没启动过就卸载时由这里收尾，别在安装目录留一个孤儿文件。
+Type: files; Name: "{app}\data_root.bootstrap"
+
 [Run]
 Filename: "{app}\fushi.exe"; Description: "启动 Fushi"; Flags: nowait postinstall
 
@@ -234,10 +239,25 @@ begin
   StringChangeEx(EscapedDir, '''', '''''', True);
   Cmd := '-NoProfile -NonInteractive -Command "$d = ''' + EscapedDir + '''; ' +
     'if (-not $d.EndsWith(''\'')) { $d += ''\'' }; ' +
-    'Get-Process | Where-Object { $_.Path -and $_.Path.StartsWith($d, [System.StringComparison]::OrdinalIgnoreCase) } | ' +
+    'Get-Process | Where-Object { $_.Path -and $_.Path.StartsWith($d, [System.StringComparison]::OrdinalIgnoreCase) ' +
+    '-and $_.ProcessName -ne ''fushi_update_launcher'' } | ' +
     'Stop-Process -Force -ErrorAction SilentlyContinue"';
-  Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), Cmd, '',
-       SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  // BUG-1786：必须走 {sysnative} 而不是 {sys}。本安装器是 **32 位**进程
+  // （日志里的「64-bit install mode: No」），{sys} 会被 WOW64 重定向到 SysWOW64 的
+  // **32 位** PowerShell，而 32 位 PowerShell 读不到 64 位进程的 .Path（底层 MainModule
+  // 跨位宽访问失败，属性取到空串）。于是过滤条件 `$_.Path -and ...` 对**每一个** 64 位
+  // 进程都恒假——fushi.exe / injector / ffmpeg 一个都杀不掉，这个过程长期是发哑弹。
+  // 实测（同一份命令、同一个 x64 目标进程）：
+  // 64 位 PowerShell → alive=False，文件随即可写；
+  // 32 位 PowerShell → alive=True，文件仍被占用，且 Path 取到空串。
+  // {sysnative} 在 64 位 Windows 上绕过 WOW64 重定向指向真正的 System32；32 位 Windows
+  // 上它等同 {sys}，故无平台回归。
+  //
+  // launcher 被显式排除（上面的 ProcessName 判断）：它是拉起本安装器的进程，且要活到
+  // 安装结束才能在失败时把 app 拉回来（BUG-1708）。杀了它等于用那条 bug 的复发换这次
+  // 复制成功。它自己占住的文件由 MakeWayForRunningLauncher 改名让路解决。
+  Exec(ExpandConstant('{sysnative}\WindowsPowerShell\v1.0\powershell.exe'), Cmd,
+       '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 { BUG-1675: 能不能真的换掉这个文件——用「独占写方式打开」实测，而不是猜。
@@ -312,6 +332,70 @@ begin
     Result := FirstLockedFileInDir(Base + 'x64');
 end;
 
+// BUG-1786：给正在运行的 update launcher 让路。
+//
+// 应用内更新时 {app}\fushi_update_launcher.exe **必然**处于运行中——它就是拉起本安装器
+// 的那个进程，而且必须一直活到安装结束：BUG-1708 把「安装失败后谁把 app 拉回来」这一环
+// 交给了它（app 为让出文件锁已经 exit 了，Inno 走不到 [Run] 就没人负责）。于是复制阶段
+// 撞上「文件正被使用」→ DeleteFile code 5 → /SUPPRESSMSGBOXES 对 Abort/Retry/Ignore
+// 默认取 **Abort** → 整包回滚。排在它后面的 data\app.so（全部 Dart 代码）和 flutter_assets
+// 一个都装不上，而字母序在它之前的 fushi.exe 已经落地并被保留——半更新态：新 exe + 旧
+// Dart 代码，版本号（读自 exe 资源）却显示为新版，用户完全无从察觉（现场：用户连报
+// 「修好的 bug 怎么没生效」）。
+//
+// 这里**故意不杀 launcher**：杀了它就没人在安装失败时把 app 拉回来，等于用 BUG-1708 的
+// 复发换这次复制成功。Windows 允许给正在运行的 exe **改名**（同卷，只是不能删除/覆盖），
+// 改名后目标路径空出来让 Inno 正常写入新文件，而那个进程的映像仍然有效、照样兜底。
+//
+// 新版 app 起已改为从安装目录**外**的副本运行 launcher（platform_updater.dart 的
+// stageWindowsUpdateLauncher），届时这里探测不到占用、直接返回；本过程是给**存量旧版**
+// 用户的救援——他们跑的仍是安装目录里的 launcher，只有靠这一步才能把这一版装完整。
+procedure MakeWayForRunningLauncher(const AppDir: String);
+var
+  Launcher: String;
+  Stale: String;
+  Attempt: Integer;
+begin
+  Launcher := AddBackslash(AppDir) + 'fushi_update_launcher.exe';
+  Stale := AddBackslash(AppDir) + 'fushi_update_launcher.old.exe';
+  { BUG-1831：launcher 不在位、只剩残留 —— 上一轮让路之后那次安装**仍然回滚了**。
+    改名之后 Launcher 这个路径是空的，Inno 往里写的是一个**新建**文件，而回滚会删除
+    本次新建的文件（只有被覆盖的文件才原样保留）⇒ 原件已改名、新件被删，安装目录里
+    再没有 launcher。此时必须把残留**改回去**：它是同一份映像，旧版 app 又只认
+    fushi_update_launcher.exe 这一个路径。先删掉它等于把「还能自愈」变成「这台机器
+    永远发不出更新」（安装器一次都起不来，连 Inno 日志都不会产生）。
+    改回去之后本次安装照常覆盖它，一次装完即回到正常态。 }
+  if not FileExists(Launcher) then
+  begin
+    if FileExists(Stale) then
+      RenameFile(Stale, Launcher);
+    Exit;
+  end;
+  { 没被占用就什么都不做——不给正常路径平添一次改名和一个残留文件。
+    顺手清掉上一轮的残留：原件在位说明它早已完成使命，不让它无限堆积。 }
+  if not FileLockedForWrite(Launcher) then
+  begin
+    if FileExists(Stale) then
+      DeleteFile(Stale);
+    Exit;
+  end;
+  { 让路目标必须先空出来，否则 RenameFile 直接失败、等于没让路。残留可能正是
+    **拉起本安装器的那个进程**（BUG-1831 的自愈路径上 app 就是从 .old 起的 launcher），
+    删不掉就换个序号名——绝不因为一个删不掉的残留放弃整次安装。 }
+  Attempt := 0;
+  while FileExists(Stale) do
+  begin
+    if DeleteFile(Stale) then
+      Break;
+    Attempt := Attempt + 1;
+    if Attempt > 8 then
+      Exit;
+    Stale := AddBackslash(AppDir) + 'fushi_update_launcher.old' +
+      IntToStr(Attempt) + '.exe';
+  end;
+  RenameFile(Launcher, Stale);
+end;
+
 { Runs after the user confirms install, before file copy — the last hook where
   we can still release file locks. Empty result string = proceed. }
 function PrepareToInstall(var NeedsRestart: Boolean): String;
@@ -322,6 +406,8 @@ begin
   Result := '';
   KillProcessesUnderDir(ExpandConstant('{app}'));
   Sleep(500);
+  { KillProcessesUnderDir 杀不到 launcher，也**不该**杀它（见上）。改名让路。 }
+  MakeWayForRunningLauncher(ExpandConstant('{app}'));
 
   { BUG-1675：KillProcessesUnderDir 按**主模块路径**杀进程，杀得掉安装目录里的
     fushi_voice_injector.exe，却杀不掉真正的占用大头——**用户正在玩的游戏**：它的
@@ -363,6 +449,104 @@ begin
   Result := not FileExists(ExpandConstant('{userdesktop}\Fushi.lnk'));
 end;
 
+// ── 数据存储位置（全新安装向导页）──────────────────────────────────────────
+// 安装目录 ({app}) 与数据目录是两回事：书库/漫画/视频封面字幕/词典/数据库全落数据根，
+// 体积可能远大于程序本身。旧行为是 app 首启无条件用默认根（<Documents>\Fushi\data +
+// %APPDATA%\Fushi\Fushi），用户只能装完再去「设置 → 数据存储位置」整树迁移 + 重启。
+// 这里在全新安装时多问一页；用户的选择经 {app}\data_root.bootstrap 一次性交给 app
+// （lib/src/storage/installer_data_root_bootstrap.dart 首启消费后删除、之后唯一真相源
+// 仍是 app 自己的 data_root 偏好）。安装器只是一次性写者，不是第二个配置来源。
+//
+// 只对全新安装显示：升级/重装时 app 已经有自己的数据根（默认或自定义），从安装器再
+// 塞一个进去只会让既有书库「消失」；要搬走走设置里的迁移（连 DB 内绝对路径一起 rebase）。
+const
+  DataRootBootstrapFileName = 'data_root.bootstrap';
+
+var
+  DataRootPage: TInputDirWizardPage;
+  { ShouldSkipPage 里判定并记住「本次真的向用户展示了数据目录页」。ssPostInstall 时卸载键
+    已经写好，届时再调 IsFreshInstall 恒为 False，所以必须在页面阶段落下这个标记。 }
+  DataRootPageOffered: Boolean;
+
+{ Inno 卸载键：HKCU（PrivilegesRequired=lowest）\...\Uninstall\<AppId>_is1。AppId 直接
+  经 ISPP 从 Setup 段取，再让 ExpandConstant 做双左括号 → 单左括号的转义——Setup 段里
+  写的是双括号包着的 GUID，真值是「单左括号 + GUID + 双右括号」（尾部两个右括号是 Inno
+  的既定行为，不是笔误）。手抄 GUID 会漏掉这一层，键永远匹配不上。
+  注意：本注释任何一行都不能以「[」开头——Inno 段解析先于 Code 段，会当成段标签。 }
+function FushiUninstallKey(): String;
+begin
+  Result := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\'
+    + ExpandConstant('{#SetupSetting("AppId")}') + '_is1';
+end;
+
+{ 全新安装 = 卸载键不存在（没装过 / 已卸载）且 app 的平台固定落点不存在——
+  %APPDATA%\Fushi\Fushi（path_provider 取 exe 版本资源 CompanyName\ProductName），
+  兼看改名前的 %APPDATA%\Hibiki\Hibiki（app 首启 migrateLegacySupportDir 会把它搬成新名，
+  随后认出旧库、丢弃安装器的选择）。这两条兜住「卸载但保留了数据」的重装：那种机器上
+  app 首启会认出旧库，安装器不该再问。 }
+function IsFreshInstall(): Boolean;
+begin
+  Result := (not RegKeyExists(HKCU, FushiUninstallKey()))
+    and (not DirExists(ExpandConstant('{userappdata}\Fushi\Fushi')))
+    and (not DirExists(ExpandConstant('{userappdata}\Hibiki\Hibiki')));
+end;
+
+{ A 等于 B、或是 B 的祖先目录（大小写不敏感、按整段路径前缀比较：尾部补反斜杠后
+  'C:\Fushi\' 不会误配 'C:\FushiData\'）。 }
+function IsSameOrAncestorDir(const A, B: String): Boolean;
+begin
+  Result := Pos(Lowercase(AddBackslash(A)), Lowercase(AddBackslash(B))) = 1;
+end;
+
+procedure InitializeWizard();
+begin
+  DataRootPageOffered := False;
+  DataRootPage := CreateInputDirPage(wpSelectDir,
+    '选择数据存储位置',
+    '导入的书籍、漫画、视频封面与字幕、词典和数据库存放在哪里？',
+    '这些数据可能远大于程序本身，建议选一个空间充足的位置。' + #13#10 +
+    '之后可以在「设置 → 数据存储位置」里迁移。' + #13#10#13#10 +
+    '点击「下一步」继续。',
+    False, 'Fushi');
+  DataRootPage.Add('');
+  DataRootPage.Values[0] := ExpandConstant('{userdocs}\Fushi');
+end;
+
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := False;
+  if (DataRootPage <> nil) and (PageID = DataRootPage.ID) then
+  begin
+    { 静默安装（/SILENT、/VERYSILENT：无人值守部署、app 内自更新）没人回答这页，
+      Inno 仍会逐页 ClickThrough——NextButtonClick 返回 False 会整个安装中止。
+      静默 = 不问、不写引导文件，app 按默认根走，与改动前逐字节一致。 }
+    DataRootPageOffered := (not WizardSilent()) and IsFreshInstall();
+    Result := not DataRootPageOffered;
+  end;
+end;
+
+{ ssPostInstall：把用户选的数据目录交给 app。默认值也照写——「选的是不是默认位置」由
+  app 按它自己的默认根定义归一化，安装器不复制这条规则。 }
+procedure WriteDataRootBootstrap();
+var
+  Lines: TArrayOfString;
+  Target: String;
+begin
+  if not DataRootPageOffered then
+    Exit;
+  { DataRootPageOffered 只可能在 ShouldSkipPage 里被置真，那时 DataRootPage 必非 nil；
+    显式再判一次，别让这条隐式不变式成为一次改动就能踩穿的解引用。 }
+  if DataRootPage = nil then
+    Exit;
+  Target := RemoveBackslashUnlessRoot(Trim(DataRootPage.Values[0]));
+  if Target = '' then
+    Exit;
+  SetArrayLength(Lines, 1);
+  Lines[0] := Target;
+  if not SaveStringsToUTF8File(ExpandConstant('{app}\' + DataRootBootstrapFileName), Lines, False) then
+    Log('WriteDataRootBootstrap: 写入失败，app 将使用默认数据位置');
+end;
+
 // Fushi 改名的旧名残留清理，全部放在 ssPostInstall（新文件已全部落地之后），
 // 不放 [InstallDelete]：后者在复制前执行，且 Inno 不会在安装失败/取消时回滚删除，
 // 于是任何一次中途失败的升级都会把「还剩个能跑的旧版」变成「一个可执行文件都没有」。
@@ -375,6 +559,8 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep <> ssPostInstall then
     Exit;
+
+  WriteDataRootBootstrap();
 
   // 旧名可执行文件：Inno 只覆盖同名文件，改了名的旧 exe 不清就会与 fushi.exe
   // 并存，旧快捷方式还能把上一版拉起来。
@@ -470,6 +656,8 @@ begin
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  DataRoot: String;
 begin
   Result := True;
   if CurPageID = wpSelectDir then
@@ -481,6 +669,72 @@ begin
         + ExpandConstant('{localappdata}\Fushi') + '）。' + #13#10#13#10
         + '不建议装进需要管理员权限的目录：即使以管理员身份重装到该目录，'
         + '应用日常以普通权限运行，之后每次自动更新都需要再次提权。',
+        mbError, MB_OK);
+      Result := False;
+    end;
+  end
+  else if (DataRootPage <> nil) and (CurPageID = DataRootPage.ID) then
+  begin
+    DataRoot := RemoveBackslashUnlessRoot(Trim(DataRootPage.Values[0]));
+    { 绝对路径预检，必须排在其余三条业务校验之前。TInputDirWizardPage 的编辑框允许清空、
+      也照收相对路径，Inno 对自定义页的取值不做任何自动校验，而下面三条业务校验对这两种
+      输入**全部放行**（Inno 6.7.3 实测，不是推断）：
+        AddBackslash('') = ''           → 子目录探测变成相对路径 'documents'，DirExists 假
+        IsSameOrAncestorDir 两向         → 都假
+        DirExists('') = False，但 ForceDirectories('') = True，SaveStringToFile 也成功
+                                        → InstallDirWritable('') 返回 True
+      后果：空串一路走到 WriteDataRootBootstrap，被那里的空串兜底 Exit 掉——不写坏数据，
+      但用户的选择被**静默丢弃**；相对路径更糟，安装器会在 setup 自己的工作目录（用户的
+      下载目录）里真建出一个目录、写探针、再把相对路径原样写进引导文件，直到 app 侧
+      installer_data_root_bootstrap.dart 的绝对路径判定才被丢掉，而那条拒绝路径是无声的。
+      路径合法性不能整层下放给 app：这里就得判死并告诉用户。
+      判据：盘符路径 X:\...（含盘符根 X:\，长度 3）或 UNC \\server\share。正斜杠写法
+      C:/Fushi 也判非法——Inno 的目录选择框只产出反斜杠，手打正斜杠给明确报错，
+      好过一路放行到 app 再无声丢弃。 }
+    if (Length(DataRoot) < 3)
+      or ((Copy(DataRoot, 2, 2) <> ':\') and (Copy(DataRoot, 1, 2) <> '\\')) then
+    begin
+      MsgBox('数据存储位置必须是完整的绝对路径（例如 D:\FushiData）。' + #13#10#13#10
+        + '当前填写的是：' + #13#10 + DataRoot,
+        mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+    { 数据目录与安装目录不得相同或互相包含：自动更新 / 安装回滚会整体处理安装目录，
+      数据压在下面会被一起清；反过来安装目录落在数据根里则迁移会拒绝（含运行中 exe）。
+      app 侧 installer_data_root_bootstrap.dart 首启再做一次同样的双向判定。 }
+    if IsSameOrAncestorDir(DataRoot, WizardDirValue)
+      or IsSameOrAncestorDir(WizardDirValue, DataRoot) then
+    begin
+      MsgBox('数据存储位置不能与安装目录相同或互相包含：' + #13#10
+        + '安装目录：' + WizardDirValue + #13#10
+        + '数据目录：' + DataRoot + #13#10#13#10
+        + '请另选一个独立的目录（推荐默认 '
+        + ExpandConstant('{userdocs}\Fushi') + '）。',
+        mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+    { app 会在所选目录下派生 documents\ 与 support\ 两棵私有子树并整树接管（子目录名的
+      真相源是 Dart 侧 AppPaths.dataRootDocumentsChild / dataRootSupportChild，源码守卫
+      把两侧绑在一起，改了 Dart 常量这里会当场变红而不是静默放行）；用户自己的
+      目录里已经有同名子目录（典型：把 D:\Downloads 选成数据根）就不能选——否则之后的
+      数据根迁移会把用户文件当 Fushi 数据整树搬走 / 删掉。app 首启同样拒绝（targetNotEmpty），
+      这里提前拦，别让用户装完才发现选择被丢弃。 }
+    if DirExists(AddBackslash(DataRoot) + 'documents')
+      or DirExists(AddBackslash(DataRoot) + 'support') then
+    begin
+      MsgBox('所选目录下已经存在 documents 或 support 子目录：' + #13#10 + DataRoot + #13#10#13#10
+        + 'Fushi 会在数据目录下创建并接管这两个子目录，请选一个空目录或新建一个目录。',
+        mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+    if not InstallDirWritable(DataRoot) then
+    begin
+      MsgBox('当前权限无法写入所选数据目录：' + #13#10 + DataRoot + #13#10#13#10
+        + '请改选用户可写的目录（推荐默认 '
+        + ExpandConstant('{userdocs}\Fushi') + '）。',
         mbError, MB_OK);
       Result := False;
     end;

@@ -11,44 +11,58 @@
 //   ③ 最终填充遍仍是滚动守卫锚定的那次原点绘制（text_rect_.left, text_origin_y）。
 //   ④ Dart 侧默认背景全透明（可读性由描边承担），且 ◐ 一键底板的恢复值非零
 //      ——否则 toggle 会在 0 ↔ 0 之间死循环。
+//   ⑤ 个人版的“默认”选项始终是 Yu Gothic UI；Hook、歌词条和剪贴板文字窗
+//      都安全回退到同一字族，用户显式选择的字体仍然优先。
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  final String window =
-      File('windows/runner/floating_lyric_window.cpp').readAsStringSync();
-  final String controller =
-      File('lib/src/lookup/gal_hook_text_overlay_controller.dart')
-          .readAsStringSync();
+  final String window = File(
+    'windows/runner/floating_lyric_window.cpp',
+  ).readAsStringSync();
+  final String controller = File(
+    'lib/src/lookup/gal_hook_text_overlay_controller.dart',
+  ).readAsStringSync();
+  final String prefs = File(
+    'lib/src/models/preferences_repository.dart',
+  ).readAsStringSync();
+  final String windowHeader = File(
+    'windows/runner/floating_lyric_window.h',
+  ).readAsStringSync();
 
   test('① 描边/投影是同一 text_layout_ 的偏移多遍绘制', () {
-    // 描边半径本身是用户可调项（gal_hook_text_outline_width），不再是编译期常量；
-    // 守的是「半径有界」而不是「叫什么名字」——无界半径会让 8 遍描边把整窗涂满。
-    // 主文本遍与注音遍各用一次，必须**每一处**都经 clamp：只要求「存在一处 clamp」
-    // 的话，另一处失去限幅是抓不到的。
-    final int outlineUses =
-        RegExp(r'style_\.outline_width').allMatches(window).length;
-    final int clampedUses =
-        RegExp(r'std::clamp\(style_\.outline_width,').allMatches(window).length;
-    expect(outlineUses, greaterThan(0),
-        reason: '描边半径必须取自 style_.outline_width');
+    // 描边半径从固定常量 kLyricOutlineRadiusDip 改成了用户可配的 style_.outline_width，
+    // 所以这里不再钉常量名，而是钉「半径来自 style_ 且被夹在合法区间」——常量名没了不等于
+    // 渲染没接上，但取值不夹区间就是能把描边拉到吃掉整块文字。
     expect(
-      clampedUses,
-      outlineUses,
-      reason: '每一处 style_.outline_width 都必须经 clamp 限幅，'
-          '否则用户能把描边半径调到把整窗涂满',
+      window.contains('std::clamp(style_.outline_width, 0.0, 8.0)'),
+      isTrue,
+      reason: '描边半径必须取自 style_.outline_width 并夹在 [0,8]',
     );
     expect(
       window.contains('kLyricShadowOffsetDip'),
       isTrue,
       reason: '投影偏移常量必须存在',
     );
+    // 可配置化不得顺手改观感：默认值必须逐位等于改造前的硬编码值，否则所有没动过
+    // 这个设置的用户会在一次升级后发现描边变了，而 diff 里看不出任何「观感改动」。
+    expect(
+      prefs.contains('galHookTextOutlineWidthDefault = 1.6'),
+      isTrue,
+      reason: '描边默认值必须等于原 kLyricOutlineRadiusDip = 1.6f',
+    );
+    expect(
+      windowHeader.contains('bool bold = true;'),
+      isTrue,
+      reason: '半粗默认必须为真：改造前 hook 模式无条件半粗',
+    );
     // 描边环必须把 text_layout_ 自己再画一遍（同一几何），而不是另建排版。
     expect(
-      RegExp(r'for \(const D2D1_POINT_2F& off : ring\)[\s\S]{0,300}?'
-              r'text_layout_\.Get\(\), lyric_outline\.Get\(\)')
-          .hasMatch(window),
+      RegExp(
+        r'for \(const D2D1_POINT_2F& off : ring\)[\s\S]{0,300}?'
+        r'text_layout_\.Get\(\), lyric_outline\.Get\(\)',
+      ).hasMatch(window),
       isTrue,
       reason: '描边遍必须复用 text_layout_（与点字/滚动/高亮同一份几何）',
     );
@@ -57,35 +71,43 @@ void main() {
   test('② 描边只在 hook 模式生效，其余浮窗逐像素不变', () {
     // 主文本门与注音门分别锁：两处同形门若只锁其一，另一处被拆掉时守卫不响。
     expect(
-      RegExp(r'if \(hook_text_mode_ && lyric_outline != nullptr &&\s*'
-              r'lyric_shadow != nullptr\)')
-          .hasMatch(window),
+      RegExp(
+        r'if \(hook_text_mode_ && lyric_outline != nullptr &&\s*'
+        r'lyric_shadow != nullptr\)',
+      ).hasMatch(window),
       isTrue,
-      reason: '主文本描边/投影遍必须被 hook_text_mode_ 门住；'
+      reason:
+          '主文本描边/投影遍必须被 hook_text_mode_ 门住；'
           '歌词条 / 剪贴板窗不许被改观感',
     );
     expect(
-      RegExp(r'if \(hook_text_mode_ && lyric_outline != nullptr\) \{')
-          .hasMatch(window),
+      RegExp(
+        r'if \(hook_text_mode_ && lyric_outline != nullptr\) \{',
+      ).hasMatch(window),
       isTrue,
       reason: '注音描边遍必须被 hook_text_mode_ 门住',
     );
     // 允许在 hook_text_mode_ 之后再 && 上更严的条件（现在是用户的 style_.bold），
     // 但 hook_text_mode_ 必须仍在这个三元的条件里——否则歌词条会被改字重。
     expect(
-      RegExp(r'hook_text_mode_[^?\n]*\s*\?\s*DWRITE_FONT_WEIGHT_SEMI_BOLD'
-              r'\s*:\s*DWRITE_FONT_WEIGHT_NORMAL')
-          .hasMatch(window),
+      RegExp(
+        r'hook_text_mode_ && style_\.bold\s*\?\s*'
+        r'DWRITE_FONT_WEIGHT_SEMI_BOLD'
+        r'\s*:\s*DWRITE_FONT_WEIGHT_NORMAL',
+      ).hasMatch(window),
       isTrue,
-      reason: '半粗字重同样只允许在 hook 模式启用',
+      reason:
+          '半粗字重同样只允许在 hook 模式启用（现在还叠一个用户开关，'
+          '但 hook_text_mode_ 这一层门不能被去掉——去掉就会改到歌词条/剪贴板窗）',
     );
   });
 
   test('③ 最终填充遍仍是原点那次绘制（滚动守卫的锚点）', () {
     expect(
-      RegExp(r'D2D1::Point2F\(text_rect_\.left, text_origin_y\), '
-              r'text_layout_\.Get\(\),\s*brush\.Get\(\)')
-          .hasMatch(window),
+      RegExp(
+        r'D2D1::Point2F\(text_rect_\.left, text_origin_y\), '
+        r'text_layout_\.Get\(\),\s*brush\.Get\(\)',
+      ).hasMatch(window),
       isTrue,
       reason: '填充遍必须保持在 (text_rect_.left, text_origin_y) 原点、用正文画刷',
     );
@@ -104,6 +126,53 @@ void main() {
       double.parse(m!.group(1)!),
       greaterThan(0),
       reason: '恢复值为 0 会让 ◐ 在 0 ↔ 0 之间空转',
+    );
+  });
+
+  test('⑤ 默认与无效字体都安全回退到 Yu Gothic UI', () {
+    expect(
+      window.contains('return kDefaultTextFontFamily;'),
+      isTrue,
+      reason: 'DefaultFontFamily 必须保持个人版承诺的 Yu Gothic UI',
+    );
+    // RebuildFontCollection 的兜底必须走 DefaultFontFamily()，且用户显式设过
+    // style_.font_family 时仍然优先用用户的——兜底只在没设时兜。
+    expect(
+      RegExp(
+        r'resolved_font_family_ = style_\.font_family\.empty\(\)\s*'
+        r'\?\s*std::wstring\(DefaultFontFamily\(\)\)\s*'
+        r':\s*style_\.font_family;',
+      ).hasMatch(window),
+      isTrue,
+      reason: '兜底必须走 DefaultFontFamily()，且不得覆盖用户显式选的字族',
+    );
+    expect(
+      RegExp(r'L"Yu Gothic"').allMatches(window).length,
+      0,
+      reason: '个人版默认不得静默切换成 Yu Gothic',
+    );
+    // 最后一道兜底不带自定义 collection，并与默认常量比较。
+    expect(
+      window.contains('std::wstring(family) != kDefaultTextFontFamily)) {'),
+      isTrue,
+      reason: '无效字族或自定义 collection 失败后必须进入系统字体重试',
+    );
+    expect(
+      RegExp(
+        r'kDefaultTextFontFamily, nullptr, text_weight,\s*'
+        r'DWRITE_FONT_STYLE_NORMAL',
+      ).hasMatch(window),
+      isTrue,
+      reason: 'CreateTextFormat 的最终兜底必须是无 collection 的 Yu Gothic UI',
+    );
+    // 模式一变，上一次解析出来的字族就属于另一个模式，必须重解析。
+    expect(
+      RegExp(
+        r'void SetHookTextMode\(bool enabled\) \{[\s\S]{0,400}?'
+        r'font_collection_dirty_ = true;',
+      ).hasMatch(windowHeader),
+      isTrue,
+      reason: 'SetHookTextMode 必须让字体集合失效，否则兜底字族停在旧模式上',
     );
   });
 }

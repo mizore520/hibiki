@@ -29,10 +29,99 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 1651 条。点号进各自文件。
+> 共 1745 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-1867](bugs/BUG-1867-cover-backfill-hollow-m2ts.md) | ✅ | ✅ | 封面回填把 best-effort 失败刷进用户错误日志，且对未落盘文件仍走 ffmpeg |
+| [BUG-1866](bugs/BUG-1866-resolve-public-indexer-needs-network.md) | ✅ | ✅ | 公共索引器重解析非要联网重搜，搜不中就把活资源误报 notFound |
+| [BUG-1865](bugs/BUG-1865-organizer-numbered-extras.md) | ✅ | ✅ | 剧集整理把带编号的特典当正片，与真正片撞号整批失败 |
+| [BUG-1864](bugs/BUG-1864-video-fullscreen-space-pause-panel.md) | ✅ | ✅ | 视频全屏路由漏掉页级裸空格覆盖：焦点在字幕列表面板时按空格不暂停 |
+| [BUG-1863](bugs/BUG-1863-video-resume-gray-static-areas.md) | ✅ | ✅ | 从后台切回视频静止区域变成灰色 |
+| [BUG-1862](bugs/BUG-1862-video-esc-skips-overlay-dismiss.md) | ✅ | ✅ | 视频页 Esc/返回键在侧栏等前台浮层打开时直接退出页面，未逐级关闭 |
+| [BUG-1861](bugs/BUG-1861-video-subtitle-imported-not-listed.md) | ✅ | ✅ | 获取的字幕能应用上却不出现在字幕轨列表里 |
+| [BUG-1860](bugs/BUG-1860-gal-overlay-scrollbar-not-draggable.md) | ✅ | ✅ | gal 查词浮窗滚动条只是指示条：按住拖 thumb 变成拖窗 |
+| [BUG-1859](bugs/BUG-1859-gal-overlay-passthrough-wheel-gate.md) | ✅ | ✅ | gal 查词浮窗穿透态滚轮不滚：ScrollBy 的 pass_through_ 门是 WS_EX_TRANSPARENT 时代遗物 |
+| [BUG-1858](bugs/BUG-1858-settings-form-field-width.md) | ✅ | ✅ | 设置页输入框宽度三套并存：下载设置 480 / 在线服务 560 / 其余撑满 |
+| [BUG-1857](bugs/BUG-1857-gal-overlay-resize-card-does-not-follow-drag.md) | ✅ | ✅ | 查词浮窗拖右下角调大小时卡片不跟手，松手才跳到位 |
+| [BUG-1856](bugs/BUG-1856-jimaku-dialog-search-button-unreachable-phone-landscape-keyboard.md) | ✅ | ✅ | Jimaku 获取字幕对话框在手机横屏弹键盘时只看得见「取消」，搜索按钮藏在可滚区不可达 |
+| [BUG-1855](bugs/BUG-1855-home-continue-row-drops-collection-after-episode-complete.md) | ✅ | ✅ | 视频首页「继续观看」一集看完退出后合集消失，只有中途退出才在 |
+| [BUG-1854](bugs/BUG-1854-gal-mining-capture-includes-title-bar.md) | ✅ | ✅ | 制卡截图把游戏窗口标题栏截进去了，应裁到客户区 |
+| [BUG-1853](bugs/BUG-1853-gal-passthrough-glyph-holes-fall-through.md) | ✅ | ✅ | 穿透态点到文字笔画镂空处直接透给游戏，碰撞箱应为行矩形 |
+| [BUG-1852](bugs/BUG-1852-manga-region-rescan-lookup-action-removed.md) | 🚧 | 🚧 | 框选区域重识别移除了旧「框选查词」直通词典的入口 |
+| [BUG-1851](bugs/BUG-1851-manga-region-rescan-auto-engine-mix.md) | 🚧 | 🚧 | auto 引擎偏好下区域重识别可能与整卷用不同引擎，页内混引擎且 ocr 元数据仍写旧引擎 |
+| [BUG-1850](bugs/BUG-1850-settings-destination-itest-vacuous-selected-row.md) | ✅ | ✅ | 集成测试用恒真的选中行谓词当设置分类打开判据 |
+| [BUG-1849](bugs/BUG-1849-jimaku-live-action-no-tmdb-key.md) | ✅ | ✅ | Jimaku 真人剧检索没有权威关联键：TMDB id 被解析器丢弃，只能靠标题模糊命中 |
+| [BUG-1848](bugs/BUG-1848-playlist-subtitle-restore-no-fallback.md) | ✅ | ✅ | 合集里下载的字幕退出再进就没了：恢复链只走一支、零兜底 |
+| [BUG-1847](bugs/BUG-1847-manual-subtitle-search-missing-file-hash.md) | ✅ | ✅ | 播放页手动检索字幕不带 OSDb 文件哈希，精确匹配分支永远走不到 |
+| [BUG-1846](bugs/BUG-1846-opensubtitles-zh-language-code.md) | ✅ | ✅ | OpenSubtitles 搜索传裸 zh 语言码，中文字幕永远搜不到 |
+| [BUG-1845](bugs/BUG-1845-subtitle-download-filename-path-traversal.md) | ✅ | ✅ | 在线字幕落盘直接拼远端文件名，可路径穿越写出目标目录 |
+| [BUG-1844](bugs/BUG-1844-jimaku-download-error-hidden-behind-dialog.md) | ✅ | ✅ | 下载失败提示被对话框盖住且没有原因 |
+| [BUG-1843](bugs/BUG-1843-jimaku-series-list-cleared-before-refetch.md) | ✅ | ✅ | 填集数再搜后系列列表消失且搜不出结果 |
+| [BUG-1842](bugs/BUG-1842-jimaku-search-uses-display-name.md) | ✅ | ✅ | Jimaku 搜索拿显示名去猜，刮削存下的 AniList ID 从没被用过 |
+| [BUG-1841](bugs/BUG-1841-custom-theme-edit-persists-blank-draft.md) | ✅ | ✅ | 自定义主题「+新建」和「编辑」图标进编辑页前就落库空主题 |
+| [BUG-1840](bugs/BUG-1840-settings-custom-item-left-baseline.md) | ✅ | ✅ | 视频设置页 Jimaku/OpenSubtitles 块贴边，比标准设置行更靠左 |
+| [BUG-1838](bugs/BUG-1838-ankiconnect-installer-launcher-not-found.md) | 🚧 | 🚧 | AnkiConnect 一键代装误报 Anki 没运行：新版 launcher 下找不到入口 exe |
+| [BUG-1837](bugs/BUG-1837-anki-open-foreground-pid-launcher.md) | ✅ | ✅ | 制卡后在 Anki 中打开仍不到前台：新版 Anki launcher 下进程识别失效 |
+| [BUG-1836](bugs/BUG-1836-manual-install-rescue-reports-failure.md) | ✅ | ✅ | 手动跑安装包救援成功后仍必报更新失败（Inno 日志判据拿不到证据） |
+| [BUG-1835](bugs/BUG-1835-gal-ingame-nested-card-placement.md) | 🚧 | ✅ | 游戏内嵌套查词子卡未按选词正上正下布局 |
+| [BUG-1834](bugs/BUG-1834-gal-lookup-nested-source-frame.md) | ✅ | ✅ | 游戏内嵌套查词丢失来源层导致子卡挂错谱系 |
+| [BUG-1833](bugs/BUG-1833-gal-ingame-webview-png-scroll-jank.md) | 🚧 | ✅ | 游戏内 WebView 查词卡 PNG 全帧重采导致弹出与滚动卡顿 |
+| [BUG-1832](bugs/BUG-1832-youtube-client-fallback-missing-android.md) | ✅ | ✅ | YouTube 部分视频打不开：兜底 client 链缺 android |
+| [BUG-1831](bugs/BUG-1831-win-update-launcher-vanished.md) | ✅ | ✅ | 改名让路后新 launcher 被回滚删除，安装目录再无 launcher，自更新永久卡死 |
+| [BUG-1830](bugs/BUG-1830-mokuro-volume-subdir.md) | ✅ | ✅ | mokuro 卷子目录布局导入必失败（img_path 裸文件名） |
+| [BUG-1829](bugs/BUG-1829-reader-wheel-chapter-cooldown-starvation.md) | ✅ | ✅ | 快速拨滚轮永远跨不了章：跨章冷却窗被每次被拦输入自我续期 |
+| [BUG-1828](bugs/BUG-1828-reader-image-wrapper-swallows-empty-tap.md) | ✅ | ✅ | 阅读器大图两侧留白被判成点中图片，底栏永远唤不出来 |
+| [BUG-1827](bugs/BUG-1827-popup-phonetic-overflows-card.md) | ✅ | ✅ | 查词弹窗释义里的不可断短语溢出词典卡 |
+| [BUG-1826](bugs/BUG-1826-mihon-loading-gate-blocks-store-edit.md) | 🚧 | 🚧 | 漫画扩展页 loading 一位两义：初始化联网刷新期间连添加/编辑仓库都点不动 |
+| [BUG-1825](bugs/BUG-1825-lyrics-itest-concrete-activation.md) | ✅ | ✅ | 歌词模式实测未激活具体reader-action焦点节点 |
+| [BUG-1824](bugs/BUG-1824-dictionary-overlay-dispose-without-remove.md) | ✅ | ✅ | 查词页根Overlay卸载时先dispose仍登记的OverlayEntry |
+| [BUG-1823](bugs/BUG-1823-comprehensive-imports-dictionary-tab-index-drift.md) | ✅ | ✅ | 综合导入实测按固定索引误把书架当查词 |
+| [BUG-1822](bugs/BUG-1822-comprehensive-imports-ios-font-fixture.md) | ✅ | ✅ | 综合导入实测在iOS找不到字体fixture |
+| [BUG-1821](bugs/BUG-1821-itest-fresh-install-onboarding-hides-home.md) | ✅ | 🚧 | 实机集成测试把首次引导前的短暂首页误判为可用 |
+| [BUG-1820](bugs/BUG-1820-ios-media-sources-scrape-actions-hidden.md) | 🚧 | 🚧 | iOS视频来源页隐藏全部刮削与任务入口 |
+| [BUG-1819](bugs/BUG-1819-observe-capture-ios-unwritable-relative-dir.md) | ✅ | ✅ | 实机截图helper在iOS写相对codex-test目录失败 |
+| [BUG-1818](bugs/BUG-1818-video-library-section-focus-lost.md) | 🚧 | 🚧 | 视频库切分区后分段导航焦点丢失 |
+| [BUG-1817](bugs/BUG-1817-video-source-itest-section-type-drift.md) | ✅ | ✅ | 视频来源实测仍按旧两段库页导航驱动 |
+| [BUG-1816](bugs/BUG-1816-focus-driver-scope-fallback-nonmac.md) | ✅ | ✅ | FocusDriver Scope 兜底掩盖非 macOS Tab 回归 |
+| [BUG-1815](bugs/BUG-1815-lyrics-load-guard-stale-finalizer-test.md) | ✅ | ✅ | 歌词文档守卫静态测试未跟随 finalizer 重构 |
+| [BUG-1814](bugs/BUG-1814-main-window-focus-gate-nonwindows-test.md) | ✅ | ✅ | Windows 焦点闸门单测在非 Windows 误红 |
+| [BUG-1813](bugs/BUG-1813-macos-popup-viewport-teardown.md) | ✅ | ✅ | macOS 词典弹窗视口注入销毁竞态 |
+| [BUG-1812](bugs/BUG-1812-ios-reader-zero-vh-vw-margins.md) | ✅ | ✅ | iOS阅读器WebView视口单位为零导致四边页边距失效 |
+| [BUG-1811](bugs/BUG-1811-ios-interconnect-remote-audio-unpinned-player.md) | ✅ | ✅ | iOS互联远端音频绕过证书钉扎导致无法播放 |
+| [BUG-1810](bugs/BUG-1810-comprehensive-imports-never-opens-books.md) | ✅ | ✅ | 综合导入实测未打开书架导致已导入图书不可见 |
+| [BUG-1809](bugs/BUG-1809-ios-lyrics-load-data-no-load-stop.md) | ✅ | ✅ | iOS歌词loadData返回后不触发onLoadStop导致永不ready |
+| [BUG-1808](bugs/BUG-1808-video-home-row-card-tags.md) | ✅ | ✅ | 视频首页横滚行卡不显示标签（拆 section 后首页只剩横滚卡，标签层只画在墙格卡上） |
+| [BUG-1807](bugs/BUG-1807-url-keyboard-missing-across-app.md) | ✅ | ✅ | 全仓 10 处 URL/host 输入框漏声明 keyboardType，与 BUG-1804 同族 |
+| [BUG-1806](bugs/BUG-1806-mihon-store-url-not-editable.md) | ✅ | ✅ | 扩展仓库地址不可编辑，只能删了重加 |
+| [BUG-1805](bugs/BUG-1805-mihon-store-zero-extensions-silent.md) | ✅ | ✅ | 仓库拉到 0 条扩展时静默空列表，无任何提示 |
+| [BUG-1804](bugs/BUG-1804-mihon-store-url-fullwidth-rejected.md) | ✅ | ✅ | 添加扩展仓库输入框无 URL 键盘类型，中文输入法全角标点被拒 INVALID_URL |
+| [BUG-1803](bugs/BUG-1803-sgre-layout-argument-forwarding.md) | ✅ | ✅ | SGRE 查词 detour 丢失布局参数导致游戏控制码不转义 |
+| [BUG-1802](bugs/BUG-1802-sgre-lookup-glyph-position.md) | ✅ | ✅ | SGRE 内嵌查词读取错误字形坐标导致命中错位 |
+| [BUG-1801](bugs/BUG-1801-sgre-lookup-stale-line.md) | ✅ | ✅ | SGRE 内嵌查词保留旧台词导致查询不实时 |
+| [BUG-1800](bugs/BUG-1800-sgre-shift-tap-missed.md) | ✅ | ✅ | SGRE 内嵌查词短按 Shift 在轮询间隙被漏掉 |
+| [BUG-1799](bugs/BUG-1799-texthooker-mined-badge-never-revalidated.md) | ✅ | ✅ | galgame 台词列表「已制卡」徽章是单向内存 latch，Anki 删卡后永不复核 |
+| [BUG-1798](bugs/BUG-1798-video-lookup-controls-autohide-race.md) | ✅ | ✅ | 查词浮层与控制条自动显隐竞态 |
+| [BUG-1797](bugs/BUG-1797-reader-padding-hit-leak.md) | ✅ | ✅ | 阅读器页边距能点到相邻页的词查词（不可见却可命中） |
+| [BUG-1794](bugs/BUG-1794-video-scrape-cleanup-entry-hidden.md) | ✅ | ✅ | 视频导入页看不到清理全部刮削记录入口 |
+| [BUG-1793](bugs/BUG-1793-gal-ingame-lookup-hides-clipboard-history.md) | ✅ | ✅ | 游戏浮窗查词不应显示复制历史入口 |
+| [BUG-1792](bugs/BUG-1792-recommended-dictionary-font-size-cap.md) | ✅ | ✅ | 推荐字体超过8MiB导致词典字体静默不生效 |
+| [BUG-1791](bugs/BUG-1791-recommended-font-library-reentry.md) | ✅ | ✅ | 推荐字体重进字体库显示未持久化 |
+| [BUG-1790](bugs/BUG-1790-gal-resource-poll-freeze.md) | ✅ | ✅ | 资源语音待匹配全量轮询导致 Fushi 与浮窗冻结 |
+| [BUG-1789](bugs/BUG-1789-pdf-import-whitelists.md) | ✅ | ✅ | PDF 导入白名单三处漏抄：漫画框选不中、拖放不认、文件夹扫描跳过 |
+| [BUG-1788](bugs/BUG-1788-popup-kanji-chip-row-never-deleted.md) | ✅ | ✅ | 查词弹窗词头下方的单字 chip 行仍在渲染：删除提交从未合并进 develop |
+| [BUG-1787](bugs/BUG-1787-font-library-scope-target-dead-param.md) | ✅ | ✅ | 字体库作用域参数不生效：从游戏入口导入的字体挂到小说正文 |
+| [BUG-1786](bugs/BUG-1786-win-update-launcher-self-lock.md) | ✅ | ✅ | 自更新永远装不上 app.so：launcher 占着自己的文件让 Inno 整包回滚 |
+| [BUG-1785](bugs/BUG-1785-download-organize-tv-preview-blocks-batch.md) | ✅ | ✅ | TV 整理被无集号特典文件整批卡死 |
+| [BUG-1784](bugs/BUG-1784-download-nyaa-retry-loses-magnet.md) | ✅ | ✅ | 下载重试丢失已选 magnet 致 nyaa notFound |
+| [BUG-1783](bugs/BUG-1783-chapter-markers-safearea-basis-mismatch.md) | ✅ | ✅ | 移动端章节标记与进度条基准分叉：标记层多套一层 SafeArea，刘海横屏下整排斜切错位 |
+| [BUG-1782](bugs/BUG-1782-jimaku-anilist-silent-degrade-cross-season.md) | ✅ | ✅ | Jimaku 搜索时好时坏：AniList 失败被静默吞成空结果，退化成跨季文本搜索 |
+| [BUG-1780](bugs/BUG-1780-android-local-manga-ocr-gate.md) | ✅ | ✅ | 安卓本地漫画 OCR 不可用：整卷平台白名单漏掉 Android，模型下载入口被同一闸门连坐关闭 |
+| [BUG-1779](bugs/BUG-1779-anki-media-filename-hibiki-prefix.md) | ✅ | ✅ | 制卡媒体文件名仍带 hibiki 旧名前缀 |
+| [BUG-1778](bugs/BUG-1778-ruby-overhang-compacts-glossary-base-spacing.md) | ✅ | ✅ | 振假名横向预留拉开正文汉字间距 |
+| [BUG-1777](bugs/BUG-1777-emphatic-full-collapse-phantom-match.md) | ✅ | ✅ | 查词促音丢失：强调折叠full模式常开产生吞字幻影匹配压过原形 |
+| [BUG-1776](bugs/BUG-1776-subtitle-list-adjacent-chain-dup.md) | ✅ | ✅ | 字幕列表不折叠同文本时间相接的卡拉OK交替事件 |
+| [BUG-1775](bugs/BUG-1775-ass-clip-cue-frame-anchor.md) | ✅ | ✅ | 带clip的ASS事件按容器基线定位与帧空间裁剪几何脱节 |
 | [BUG-1774](bugs/BUG-1774-xaudio-codec-trampoline-collision.md) | ✅ | ✅ | XAudio2 WMA Hook 覆盖 ADPCM trampoline 导致游戏静音 |
 | [BUG-1773](bugs/BUG-1773-phrase-lookup-truncated-at-word-end.md) | ✅ | ✅ | 点英文单词查词把查询串截到词尾导致短语词条永不匹配 |
 | [BUG-1772](bugs/BUG-1772-libtorrent-2-1-drift-breaks-native-build.md) | ✅ | ✅ | vcpkg 未钉版，libtorrent 2.0→2.1 漂移打断 Windows DLL 与 Android .so 构建 |
@@ -50,6 +139,7 @@
 | [BUG-1760](bugs/BUG-1760-manga-wheel-zoomed-misturn.md) | ✅ | ✅ | 漫画放大态滚轮误翻页应页内平移贴边才翻 |
 | [BUG-1759](bugs/BUG-1759-manga-zoom-out-aliasing.md) | ✅ | ✅ | 漫画缩放低于100%锯齿严重需放大到150%才恢复清晰 |
 | [BUG-1758](bugs/BUG-1758-manga-resize-stale-projection.md) | ✅ | ✅ | 漫画阅读器调整窗口大小后显示错误跨页直到翻页 |
+| [BUG-1757](bugs/BUG-1757-popup-close-latch-native-callback-race.md) | ✅ | ✅ | 安卓独立查词窗连续查词后卡死关不掉——原生关闭回调被销毁中的旧 Activity 清掉，Dart 闭锁随即锁死 |
 | [BUG-1756](bugs/BUG-1756-dict-delete-mmap-lock.md) | ✅ | ✅ | 词典删除/覆盖更新失败：引擎 mmap 未卸载就删目录 |
 | [BUG-1755](bugs/BUG-1755-ass-wrap-width-anchored-to-window.md) | ✅ | ✅ | 字幕换行宽度锚在窗口而非视频画面，最大化后排版突变（BUG-1730 续） |
 | [BUG-1754](bugs/BUG-1754-drop-video-folder-ignored.md) | ✅ | ✅ | 视频页拖入文件夹完全静默 |
@@ -115,6 +205,7 @@
 | [BUG-1694](bugs/BUG-1694-jimaku-anime-filter.md) | ✅ | ✅ | Jimaku 搜索永不传 anime 参数，真人剧/日剧字幕永远 0 结果 |
 | [BUG-1693](bugs/BUG-1693-interconnect-peer-offline-misreported-as-network-error.md) | ✅ | ✅ | 互联对端关闭时误报为网络错误 |
 | [BUG-1692](bugs/BUG-1692-macos-lookup-popup-webview-ignores-pointer.md) | ✅ | ✅ | macOS 查词浮层 WebView 完全收不到指针事件（点击/拖拽全失效，Flutter 外壳正常） |
+| [BUG-1691](bugs/BUG-1691-gal-japanese-locale-invisible.md) | ✅ | ✅ | 转区静默生效解坏多语言版游戏文字，用户无从发现 |
 | [BUG-1690](bugs/BUG-1690-startup-audio-warmup-interrupts-music.md) | ✅ | ✅ | 启动静音预热在音频设备上开流,打断其他应用正在播放的音乐 |
 | [BUG-1689](bugs/BUG-1689-lookup-grip-activates-main-window.md) | ✅ | ✅ | 点剪贴板查词面板把 Hibiki 主界面抬到用户窗口之上 |
 | [BUG-1688](bugs/BUG-1688-vn-chrome-inset-viewport.md) | ✅ | ✅ | VN 模式忽略 chrome inset 与页面尺寸，正文被顶栏/底栏与刘海压住（iOS 最严重） |
@@ -132,6 +223,8 @@
 | [BUG-1676](bugs/BUG-1676-anki-gloss-image-overflows-card.md) | ✅ | ✅ | 制卡词典插图撑出卡片跑到屏幕右外 |
 | [BUG-1675](bugs/BUG-1675-gal-helper-stale-after-locked-update.md) | ✅ | ✅ | galgame 捕获组件 protocol_mismatch：更新时游戏开着导致 helper 被静默跳过 |
 | [BUG-1674](bugs/BUG-1674-mining-still-format.md) | ✅ | ✅ | 视频卡片图片：描述不准，且静态截图格式不可选 |
+| [BUG-1673](bugs/BUG-1673-ext-side-panel-click-lookup-lost.md) | ✅ | ✅ | 侧边栏行内点击查词在迁移原生 Side Panel 时丢失 |
+| [BUG-1672](bugs/BUG-1672-ext-paste-blocked-by-selection-clear.md) | ✅ | ✅ | 开着浏览器扩展时网页粘贴间歇性失效 |
 | [BUG-1671](bugs/BUG-1671-ext-side-panel-subtitle-incomplete.md) | ✅ | ✅ | 浏览器扩展侧边栏获取字幕不全 |
 | [BUG-1670](bugs/BUG-1670-ext-pause-on-lookup-no-resume.md) | ✅ | ✅ | 浏览器扩展查词不暂停视频且关闭弹窗不恢复播放 |
 | [BUG-1669](bugs/BUG-1669-ext-side-panel-lookup-stuck-loading.md) | ✅ | ✅ | 浏览器扩展侧边栏高频查词后「正在查词」永久卡死 |
@@ -173,6 +266,7 @@
 | [BUG-1632](bugs/BUG-1632-gal-ingame-native-popup-ownership.md) | ✅ | ✅ | 游戏内查词离屏卡被钳回桌面导致重复弹窗 |
 | [BUG-1631](bugs/BUG-1631-gal-ingame-kag-anchor-primary-coordinates.md) | ✅ | ✅ | 游戏内查词把 KAG 消息锚点误判为脱离 primary 导致字形恒不命中 |
 | [BUG-1620](bugs/BUG-1620-interconnect-remote-delay-not-persisted.md) | ✅ | ✅ | 互联远端视频字幕偏移不持久化（退出重进归 0） |
+| [BUG-1619](bugs/BUG-1619-panel-drag-steals-foreground.md) | ✅ | ✅ | 拖剪贴板查词面板顶栏把主窗抢到前台 |
 | [BUG-1613](bugs/BUG-1613-apple-coreml-ep-detector-empty.md) | ✅ | ✅ | Apple CoreML EP 上 int8 检测模型静默返回空结果且更慢 |
 | [BUG-1610](bugs/BUG-1610-bangumi-search-rating-null.md) | ✅ | ✅ | Bangumi 搜索候选评分恒空：映射器读扁平 score，真实响应只有嵌套 rating.score |
 | [BUG-1609](bugs/BUG-1609-global-lookup-card-right-corners-square.md) | ✅ | ✅ | app 外全局查词卡片右上/右下圆角变方角 |

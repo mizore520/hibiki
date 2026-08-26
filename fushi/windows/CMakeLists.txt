@@ -90,11 +90,11 @@ set(BUILD_BUNDLE_DIR "$<TARGET_FILE_DIR:${BINARY_NAME}>")
 # Make the "install" step default, as it's required to run.
 set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
 # Flutter/CMake can leave the Windows default (for example
-# C:/Program Files/hibiki) in a fresh or previously configured cache even
+# C:/Program Files/old-app-name) in a fresh or previously configured cache even
 # though this project is an in-place bundle. Treat that default like an
 # uninitialized prefix, but preserve an explicitly chosen non-default prefix.
 # A previous app target name can also survive here as a generator expression
-# (for example `$<TARGET_FILE_DIR:hibiki>`) after the target is renamed to
+# (for example `$<TARGET_FILE_DIR:old_app_target>`) after the target is renamed to
 # `fushi`; reset that stale cache value before CMake evaluates it.
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR
     CMAKE_INSTALL_PREFIX MATCHES "TARGET_FILE_DIR:" OR
@@ -165,25 +165,6 @@ install(CODE "
     endforeach()
   endif()
 " COMPONENT Runtime)
-
-# === galgame hook helper 随包归档（可选，本地/CI 事先构建）===
-# helper（injector exe + hook DLL）**绝不链接进 fushi.exe**，它以隔离子进程/DLL
-# 运行，随主包分发的是两架构 zip + sha256 侧车，app 校验后解压到 voice_hook/<arch>/。
-# 运行期定位是「exe 同级的 galgame_helper/」（galgame_helper_installer.dart 的
-# _bundledDirectory）。开发构建也由 install 规则从 build_distribution.ps1 的产出目录
-# 直接拷贝，避免本地构建的 Fushi 永远缺 helper。
-set(FUSHI_GALGAME_HELPER_DIST_DIR
-  "${CMAKE_CURRENT_SOURCE_DIR}/../../native/galgame_hook/dist")
-set(FUSHI_GALGAME_HELPER_FILES
-  "voice_hook_x64.zip"
-  "voice_hook_x64.zip.sha256"
-  "voice_hook_x86.zip"
-  "voice_hook_x86.zip.sha256")
-foreach(_helper_file ${FUSHI_GALGAME_HELPER_FILES})
-  install(FILES "${FUSHI_GALGAME_HELPER_DIST_DIR}/${_helper_file}"
-    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}/galgame_helper"
-    COMPONENT Runtime OPTIONAL)
-endforeach()
 
 # === Magpie 随包精简归档（可选，本地/CI 事先构建）===
 # 与上面的 helper 规则同源同理由（BUG-1246）：Magpie 删掉下载链路之后，`magpie_bundle/`

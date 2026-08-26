@@ -14,8 +14,6 @@ import 'package:fushi/src/media/video/jimaku_client.dart';
 import 'package:fushi/src/media/video/subtitle/open_subtitles_client.dart';
 import 'package:fushi/src/models/app_model.dart';
 import 'package:fushi/src/pages/implementations/source_toggle_section.dart';
-import 'package:fushi/src/pages/implementations/torrent_settings_section.dart'
-    show kTorrentSettingsContentMaxWidth;
 import 'package:fushi/utils.dart';
 import 'package:fushi/src/utils/net/app_user_agent.dart';
 import 'package:fushi_core/fushi_core.dart';
@@ -189,6 +187,28 @@ class AppVideoExternalSettingsStore implements VideoExternalSettingsStore {
       appModel.setJimakuDefaultLanguage(language);
 }
 
+/// [VideoExternalProviderSettingsSection] 渲染哪一段。
+///
+/// 这份组件的 store 快照里混着三种东西，此前用一个 `onlySubtitleSources` 布尔
+/// 把它们切成「字幕来源」与「其余全部」两半——而「其余」又同时装着在线索引器
+/// （第三方 API）和下载落盘的路径映射（纯本机管道）。两者归属不同设置分区
+/// （在线服务 / 下载），布尔切不开，所以按内容命名成三段，各挂各的家。
+enum VideoExternalProviderScope {
+  /// 在线字幕来源：Jimaku + OpenSubtitles + 默认字幕语言。
+  ///
+  /// 两家 registry 是并列的（`video_subtitle_registry.dart`：动漫搜 Jimaku +
+  /// OpenSubtitles，其余只搜 OpenSubtitles），所以两家必须并列出现在同一节里；
+  /// 只列一家会让用户以为另一家不存在（用户 2026-08-18 反馈，BUG-1712）。
+  subtitleSources,
+
+  /// 资源索引器：随包内置来源开关 + Torznab 索引器。
+  resourceSources,
+
+  /// 下载落盘管道：下载后端路径映射 + 下载目标视频来源。不是在线服务，留在
+  /// 「下载」分区。
+  downloadRouting,
+}
+
 /// 发现/下载闭环所依赖的设备本地外部配置。
 ///
 /// 密钥字段始终遮罩；端点只有通过 provider 自身的 HTTPS/loopback 安全校验后才写入
@@ -197,24 +217,16 @@ class AppVideoExternalSettingsStore implements VideoExternalSettingsStore {
 class VideoExternalProviderSettingsSection extends ConsumerStatefulWidget {
   const VideoExternalProviderSettingsSection({
     super.key,
+    required this.scope,
     this.store,
-    this.onlySubtitleSources = false,
   });
 
   /// 测试注入口；生产路径从 [AppModel] 构造设备本地 store。
   final VideoExternalSettingsStore? store;
 
-  /// 只渲染「在线字幕来源」那一节（Jimaku + OpenSubtitles + 默认字幕语言）。
-  ///
-  /// 字幕来源此前分居两处：Jimaku API key 在设置 → 视频 → 字幕，OpenSubtitles 在
-  /// 设置 → 下载 → 外部来源。同一个能力两个家，用户配完一个以为配完了。这里不复制
-  /// 一份编辑 UI（那就是第二份真相源），而是让本组件按节可裁，两处渲染同一份实现、
-  /// 写同一个 `video_subtitle_opensubtitles_config`。
-  ///
-  /// 两家 registry 是并列的（`video_subtitle_registry.dart`：动漫搜 Jimaku +
-  /// OpenSubtitles，其余只搜 OpenSubtitles），所以两家必须并列出现在同一节里；
-  /// 只列一家会让用户以为另一家不存在（用户 2026-08-18 反馈，BUG-1712）。
-  final bool onlySubtitleSources;
+  /// 渲染哪一段（见 [VideoExternalProviderScope]）。三段写同一个 store，各自只
+  /// 保存自己那段的字段（`_save*` 按字段落盘，不整份快照回写）。
+  final VideoExternalProviderScope scope;
 
   @override
   ConsumerState<VideoExternalProviderSettingsSection> createState() =>
@@ -431,33 +443,21 @@ class _VideoExternalProviderSettingsSectionState
     bool secret = false,
     TextInputType? keyboardType,
   }) {
-    // 宽度由整段的外层容器（[_constrainSectionWidth]）统一承接，这里不再自己
-    // 缩到 480——那份局部限宽正是几何撕裂的来源：同一个 Column 里输入框缩到
+    // 宽度由整段的外层容器（[_alignSectionBaseline]）统一承接，字段自己不再加
+    // 一层 maxWidth——那份局部限宽正是几何撕裂的来源：同一个 Column 里输入框缩到
     // 480、Switch 吃满 stretch 紧约束占满整宽、用户名/密码 Row 又各占一半，
-    // 三种行三套左右边界。
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: SizedBox(
-        width: double.infinity,
-        child: TextFormField(
-          key: key,
-          initialValue: initialValue,
-          obscureText: secret,
-          enableSuggestions: !secret,
-          autocorrect: !secret,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            labelText: label,
-            hintText: hint,
-            helperText: helper,
-            helperMaxLines: 3,
-            errorText: errorText,
-            isDense: true,
-            border: const OutlineInputBorder(),
-          ),
-          onChanged: onChanged,
-        ),
-      ),
+    // 三种行三套左右边界。这条契约现在写在 [SettingsFormField] 上，下载设置那段
+    // 用的是同一个原语。
+    return SettingsFormField(
+      key: key,
+      label: label,
+      initialValue: initialValue,
+      obscureText: secret,
+      keyboardType: keyboardType,
+      hintText: hint,
+      helperText: helper,
+      errorText: errorText,
+      onChanged: onChanged,
     );
   }
 
@@ -891,28 +891,41 @@ class _VideoExternalProviderSettingsSectionState
     );
   }
 
-  /// 把整段收进与下载设置同一个内容宽度（[kTorrentSettingsContentMaxWidth]）并
-  /// **左对齐**。
+  /// 把整段落到与普通设置行同一条 16px 左右基线上，正文吃满剩下的宽度。
   ///
   /// 这一段此前三种行各有一套左右边界：输入框自己缩到 480；`SwitchListTile`
   /// 直接吃 `CrossAxisAlignment.stretch` 的紧约束、贴到 pane 最右；用户名/密码
   /// 的 `Row` 又是全宽再各占一半。宽窗下看起来就是「输入框只占左半边、开关孤零
   /// 零在最右、中间一大片空白」。
   ///
-  /// 收进同一个容器后三者边界一致，同时保住 BUG-1084 的结论（4K 全屏下输入框
-  /// 不会被拉到三千像素）。用左对齐而不是 BUG-1278 的居中：这一段嵌在设置详情
-  /// 的行流里，居中会与上下普通设置行的左基线再撕一次。
-  Widget _constrainSectionWidth(Widget content) {
-    return Align(
-      alignment: Alignment.topLeft,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: kTorrentSettingsContentMaxWidth,
-        ),
-        child: SizedBox(width: double.infinity, child: content),
+  /// 左右基线由本组件自己承接（`rowHorizontal`，与 `DiscoverySourceSettingsSection`
+  /// / 普通设置行同一条）：设置 schema 的 `SettingsCustomItem` 是裸渲染、不给
+  /// 内边距，此前本段被宿主 [TorrentSettingsSection] 包着才有边距，一旦单独挂进
+  /// 设置分区就整块贴到卡片左沿，标题/输入框比上一行的图标还靠左（用户截图）。
+  ///
+  /// BUG-1858：基线之外此前还收了一层 560 右边界（BUG-1084/BUG-1278 的结论）。
+  /// 但那层只加在本组件和下载设置上，同一个「在线服务」页里下面的元数据刮削行
+  /// （`SettingsTextItem`）照旧撑满 pane——于是一页之内两种输入框宽度。用户
+  /// 2026-08-25 实报并拍板统一成撑满，右边界这层随之删除：全 app 设置输入框只
+  /// 剩「吃满内容区」这一条规则（见 [SettingsFormField] 的宽度契约）。
+  Widget _alignSectionBaseline(BuildContext context, Widget content) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: FushiDesignTokens.of(context).spacing.rowHorizontal,
       ),
+      child: SizedBox(width: double.infinity, child: content),
     );
   }
+
+  Widget _saveFailedBanner(ThemeData theme) => Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Text(
+          t.video_external_save_error,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.error,
+          ),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -924,142 +937,134 @@ class _VideoExternalProviderSettingsSectionState
     }
     if (_store == null) return const SizedBox.shrink();
     final ThemeData theme = Theme.of(context);
-    if (widget.onlySubtitleSources) {
-      return _constrainSectionWidth(Column(
-        key: const ValueKey<String>('video-external-subtitle-sources'),
+    final List<Widget> blocks = switch (widget.scope) {
+      VideoExternalProviderScope.subtitleSources =>
+        _subtitleSourceBlocks(theme),
+      VideoExternalProviderScope.resourceSources =>
+        _resourceSourceBlocks(theme),
+      VideoExternalProviderScope.downloadRouting =>
+        _downloadRoutingBlocks(theme),
+    };
+    return _alignSectionBaseline(
+      context,
+      Column(
+        key: ValueKey<VideoExternalProviderScope>(widget.scope),
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          if (_saveFailed)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                t.video_external_save_error,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
-                ),
-              ),
-            ),
-          ..._subtitleSourceBlocks(theme),
+          if (_saveFailed) _saveFailedBanner(theme),
+          ...blocks,
+          const SizedBox(height: 8),
         ],
-      ));
+      ),
+    );
+  }
+
+  /// 资源索引器：内置来源开关 + Torznab 索引器。
+  List<Widget> _resourceSourceBlocks(ThemeData theme) {
+    return <Widget>[
+      _builtinSourcesBlock(theme),
+      const Divider(height: 32),
+      _sectionHeading(
+        theme,
+        t.video_torznab_settings_title,
+        t.video_torznab_settings_hint,
+        icon: Icons.travel_explore_outlined,
+      ),
+      for (int index = 0; index < _torznab.length; index++)
+        _torznabCard(theme, index),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: OutlinedButton.icon(
+          key: const ValueKey<String>('video-torznab-add'),
+          onPressed: () => setState(
+            () => _torznab.add(_TorznabDraft.empty(_newDraftId('torznab'))),
+          ),
+          icon: const Icon(Icons.add),
+          label: Text(t.video_torznab_add),
+        ),
+      ),
+    ];
+  }
+
+  /// 下载落盘管道：路径映射 + 下载目标视频来源。
+  List<Widget> _downloadRoutingBlocks(ThemeData theme) {
+    return <Widget>[
+      _sectionHeading(
+        theme,
+        t.video_download_path_mappings_title,
+        t.video_download_path_mappings_hint,
+        icon: Icons.route_outlined,
+      ),
+      for (int index = 0; index < _mappings.length; index++)
+        _mappingCard(index),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: OutlinedButton.icon(
+          key: const ValueKey<String>('video-path-mapping-add'),
+          onPressed: () => setState(
+            () => _mappings.add(_PathMappingDraft.empty(
+              _newDraftId('mapping'),
+              suggestedBackendProfileId: _suggestedBackendProfileId,
+            )),
+          ),
+          icon: const Icon(Icons.add),
+          label: Text(t.video_download_path_mapping_add),
+        ),
+      ),
+      const Divider(height: 32),
+      _sectionHeading(
+        theme,
+        t.video_download_target_source_title,
+        t.video_download_target_source_hint,
+        icon: Icons.video_library_outlined,
+      ),
+      _targetSourceField(theme),
+    ];
+  }
+
+  Widget _targetSourceField(ThemeData theme) {
+    if (_sources.isEmpty) {
+      return Text(
+        t.video_download_target_source_empty,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      );
     }
-    return _constrainSectionWidth(Column(
-      key: const ValueKey<String>('video-external-provider-settings'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        const Divider(height: 32),
-        Text(
-          t.video_external_settings_section,
-          style: theme.textTheme.titleMedium,
+    return DropdownButtonFormField<int>(
+      key: ValueKey<String>(
+        'video-target-source-${_targetSourceId ?? 'none'}',
+      ),
+      initialValue: _targetSourceId ?? 0,
+      decoration: InputDecoration(
+        labelText: t.video_download_target_source_none,
+        isDense: true,
+        border: const OutlineInputBorder(),
+      ),
+      isExpanded: true,
+      items: <DropdownMenuItem<int>>[
+        DropdownMenuItem<int>(
+          value: 0,
+          child: Text(t.video_download_target_source_none),
         ),
-        if (_saveFailed)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
+        for (final ManagedVideoSourceOption source in _sources)
+          DropdownMenuItem<int>(
+            value: source.id,
             child: Text(
-              t.video_external_save_error,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.error,
-              ),
+              '${source.label} — ${source.rootPath}',
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-        _builtinSourcesBlock(theme),
-        const Divider(height: 32),
-        _sectionHeading(
-          theme,
-          t.video_torznab_settings_title,
-          t.video_torznab_settings_hint,
-          icon: Icons.travel_explore_outlined,
-        ),
-        for (int index = 0; index < _torznab.length; index++)
-          _torznabCard(theme, index),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: OutlinedButton.icon(
-            key: const ValueKey<String>('video-torznab-add'),
-            onPressed: () => setState(
-              () => _torznab.add(_TorznabDraft.empty(_newDraftId('torznab'))),
-            ),
-            icon: const Icon(Icons.add),
-            label: Text(t.video_torznab_add),
-          ),
-        ),
-        const Divider(height: 32),
-        ..._subtitleSourceBlocks(theme),
-        const Divider(height: 32),
-        _sectionHeading(
-          theme,
-          t.video_download_path_mappings_title,
-          t.video_download_path_mappings_hint,
-          icon: Icons.route_outlined,
-        ),
-        for (int index = 0; index < _mappings.length; index++)
-          _mappingCard(index),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: OutlinedButton.icon(
-            key: const ValueKey<String>('video-path-mapping-add'),
-            onPressed: () => setState(
-              () => _mappings.add(_PathMappingDraft.empty(
-                _newDraftId('mapping'),
-                suggestedBackendProfileId: _suggestedBackendProfileId,
-              )),
-            ),
-            icon: const Icon(Icons.add),
-            label: Text(t.video_download_path_mapping_add),
-          ),
-        ),
-        const Divider(height: 32),
-        _sectionHeading(
-          theme,
-          t.video_download_target_source_title,
-          t.video_download_target_source_hint,
-          icon: Icons.video_library_outlined,
-        ),
-        if (_sources.isEmpty)
-          Text(
-            t.video_download_target_source_empty,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          )
-        else
-          DropdownButtonFormField<int>(
-            key: ValueKey<String>(
-              'video-target-source-${_targetSourceId ?? 'none'}',
-            ),
-            initialValue: _targetSourceId ?? 0,
-            decoration: InputDecoration(
-              labelText: t.video_download_target_source_none,
-              isDense: true,
-              border: const OutlineInputBorder(),
-            ),
-            isExpanded: true,
-            items: <DropdownMenuItem<int>>[
-              DropdownMenuItem<int>(
-                value: 0,
-                child: Text(t.video_download_target_source_none),
-              ),
-              for (final ManagedVideoSourceOption source in _sources)
-                DropdownMenuItem<int>(
-                  value: source.id,
-                  child: Text(
-                    '${source.label} — ${source.rootPath}',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-            ],
-            onChanged: (int? sourceId) {
-              final int? selected = sourceId == 0 ? null : sourceId;
-              setState(() => _targetSourceId = selected);
-              _save(
-                (VideoExternalSettingsStore store) =>
-                    store.saveTargetSourceId(selected),
-              );
-            },
-          ),
-        const SizedBox(height: 8),
       ],
-    ));
+      onChanged: (int? sourceId) {
+        final int? selected = sourceId == 0 ? null : sourceId;
+        setState(() => _targetSourceId = selected);
+        _save(
+          (VideoExternalSettingsStore store) =>
+              store.saveTargetSourceId(selected),
+        );
+      },
+    );
   }
 }
 

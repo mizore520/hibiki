@@ -105,8 +105,8 @@ SettingsDestination buildCardCreationDestination() {
       ),
       SettingsBodySearchEntry(
         id: 'card_creation.anki.mining_image_quality',
-        title: t.video_mining_image_quality,
-        subtitle: t.video_mining_image_quality_hint,
+        title: t.mining_image_quality,
+        subtitle: t.mining_image_quality_hint,
       ),
       SettingsBodySearchEntry(
         id: 'card_creation.anki.mining_audio_quality',
