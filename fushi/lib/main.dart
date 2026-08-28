@@ -35,12 +35,10 @@ import 'package:fushi/src/utils/misc/channel_constants.dart';
 import 'package:fushi/src/utils/misc/present_watchdog.dart';
 import 'package:fushi/src/utils/misc/wgc_capture_log.dart';
 import 'package:fushi/src/utils/window_caption_channel.dart';
+import 'package:fushi/src/utils/components/fushi_windows_title_bar.dart';
 import 'package:fushi/src/utils/adaptive/fushi_macos_theme.dart';
 import 'package:fushi/utils.dart';
 import 'package:fushi/src/shortcuts/global_navigation.dart';
-import 'package:fushi/src/lookup/clipboard_panel_controller.dart';
-import 'package:fushi/src/lookup/clipboard_text_overlay_controller.dart';
-import 'package:fushi/src/lookup/desktop_lookup_dispatcher.dart';
 import 'package:fushi/src/lookup/global_lookup_log.dart';
 import 'package:fushi/src/lookup/lookup_deep_link.dart';
 import 'package:fushi/src/lookup/global_lookup_controller.dart';
@@ -64,6 +62,7 @@ import 'package:fushi/src/platform/platform_providers.dart';
 import 'package:fushi/src/platform/desktop/desktop_lifecycle_service.dart';
 import 'package:fushi/src/platform/ios/ios_url_event_channel.dart';
 import 'package:fushi/src/media/audiobook/floating_lyric_lookup_host.dart';
+import 'package:fushi/src/media/manga/aidoku/aidoku_cloudflare_challenge_page.dart';
 import 'package:fushi/src/media/video/external_video.dart';
 import 'package:fushi/src/media/video/metadata/video_scrape_operation_gate.dart';
 import 'package:fushi/src/media/video/scraper/cover_meta_store.dart';
@@ -76,7 +75,11 @@ import 'package:fushi/src/pages/implementations/video_fushi_page.dart';
 import 'package:fushi/src/profile/profile_view_model.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:fushi_core/fushi_core.dart'
-    show VideoBooksCompanion, VideoBookRow, ProfileMediaKind;
+    show
+        VideoBooksCompanion,
+        VideoBookRow,
+        ProfileMediaKind,
+        FushiDatabaseFailureKind;
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 import 'package:fushi/src/storage/legacy_support_dir_migration.dart';
@@ -187,6 +190,17 @@ void main([List<String> args = const <String>[]]) {
     await recoverLegacyMacosPrefsFromSharedPreferences();
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       await windowManager.ensureInitialized();
+      if (Platform.isWindows) {
+        // window_manager's Windows plugin implements setTitleBarStyle as a
+        // string assignment + SetWindowPos and always reports success, so there
+        // is no failure mode to fall back from here. The app frame is therefore
+        // unconditional on Windows once the plugin is initialised.
+        await windowManager.setTitleBarStyle(
+          TitleBarStyle.hidden,
+          windowButtonVisibility: false,
+        );
+        FushiWindowsTitleBar.markEnabled();
+      }
       // BUG-1619：主窗前台真值的唯一来源，必须在 window_manager 初始化之后、
       // 任何页面挂载之前起来——焦点闸门与焦点控制器都读它。
       MainWindowForegroundWatcher.instance.start();
@@ -485,29 +499,14 @@ void main([List<String> args = const <String>[]]) {
         try {
           await WidgetsBinding.instance.endOfFrame;
           await GlobalLookupController.instance.start(appModel: appModel);
-          // spec 2026-07-10 §4/§7 — 剪贴板监听 app 级启动（生命周期归 AppModel；
-          // 覆盖窗控制器先启动，路由端 isAvailable 判定才准确）。dispatcher 先挂
-          // 监听再启服务，防首个剪贴板事件竞态。面板控制器只接线+预热，窗口
-          // 到首个 panel 分区请求才显示。
-          if (ClipboardPanelController.isSupported) {
-            await ClipboardPanelController.instance.start(appModel: appModel);
-          }
-          // 真透明剪切板文字窗控制器：只接线 native 点字回调，窗口到首个
-          // textWindow 分区请求才显示。
-          if (ClipboardTextOverlayController.isSupported) {
-            await ClipboardTextOverlayController.instance
-                .start(appModel: appModel);
-          }
           if (GalHookTextOverlayController.isSupported) {
             await GalHookTextOverlayController.instance
                 .start(appModel: appModel);
           }
-          DesktopLookupDispatcher.instance.start(appModel: appModel);
-          await appModel.applyDesktopClipboardLifecycle();
         } catch (e, st) {
           // 🔴 这里以前只有 debugPrint —— release 构建下它**无处可去**。于是这一整段
-          // 桌面查词启动链（剪贴板面板 / 剪贴板文字窗 / galgame 台词浮窗 / 桌面查词
-          // 分发）里任何一步抛异常，都会静默地把后面全部跳过：用户看到的是"某个功能
+          // 桌面查词启动链（全局查词覆盖窗 / galgame 台词浮窗）里任何一步抛异常，
+          // 都会静默地把后面全部跳过：用户看到的是"某个功能
           // 就是不工作"，日志里一个字都没有。真机上正因为这个，galgame 台词浮窗控制器
           // 没启动这件事查了很久才定位到。落盘记录，别再让启动失败无声无息。
           glog('startup: global lookup chain FAILED (non-fatal): $e');
@@ -679,6 +678,8 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
       _systemThemeChannel.setMethodCallHandler(_handleSystemThemeChannel);
     }
     FushiToast.navigatorKey = ref.read(appProvider).navigatorKey;
+    // BUG-1876：Aidoku 源被 Cloudflare 拦下时在 WebView 里解题再重试。
+    installAidokuCloudflareResolver(ref.read(appProvider).navigatorKey);
 
     if (Platform.isAndroid) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -1328,6 +1329,11 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
     // "disk I/O error" with a dead Retry loop.
     final unrecoverable = appModel.unrecoverableDbError;
     if (unrecoverable != null) {
+      // BUG-1899：「打不开」不是「坏了」。父目录不存在 / 无权限 / 只读介质 / 盘断链
+      // 都会让 sqlite 报 SQLITE_CANTOPEN(14)，此前它们共用「数据库损坏，请恢复备份或
+      // 清空数据」这句话——在磁盘完好的情况下把用户往清空数据上引。
+      final bool cannotOpen =
+          unrecoverable.kind == FushiDatabaseFailureKind.cannotOpen;
       final brightness =
           WidgetsBinding.instance.platformDispatcher.platformBrightness;
       final cs = ColorScheme.fromSeed(
@@ -1346,11 +1352,17 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.broken_image_outlined,
-                        size: 48, color: cs.error),
+                    Icon(
+                        cannotOpen
+                            ? Icons.folder_off_outlined
+                            : Icons.broken_image_outlined,
+                        size: 48,
+                        color: cs.error),
                     const SizedBox(height: 16),
                     Text(
-                      t.db_unrecoverable_title,
+                      cannotOpen
+                          ? t.db_cannot_open_title
+                          : t.db_unrecoverable_title,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -1360,7 +1372,9 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      t.db_unrecoverable_message,
+                      cannotOpen
+                          ? t.db_cannot_open_message
+                          : t.db_unrecoverable_message,
                       style: TextStyle(
                         fontSize: 13,
                         color: cs.onSurfaceVariant,
@@ -1692,9 +1706,24 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
           builder: (context, child) {
             _scheduleWindowsUpdateHandoffReconcile();
             final cs = Theme.of(context).colorScheme;
-            // Keep the native Windows title bar in sync with the live app theme
-            // (surface background + onSurface text). No-op on other platforms.
-            // The channel de-dupes identical values so this is cheap per rebuild.
+            // BUG-1916: this is no longer about the *caption* — the Windows
+            // native caption is hidden for good (see main()), and the themed
+            // native title bar this call used to feed was correctly deleted
+            // with it (`3c4a5960f8`). The same channel now also drives the
+            // runner's own window-surface backdrop brush
+            // (`FlutterWindow::ApplyCaptionColors` → `Win32Window::
+            // SetBackdropColor`), and that surface is very much alive: DWM
+            // animates it — not the Flutter view's composition layer — during
+            // maximize / restore / DPI transitions, so whatever colour it holds
+            // shows for a frame. Without this push the brush stays at the
+            // TODO-959 cold-start splash teal forever and every maximize flashes
+            // it (measured 100% of the window at +43ms). Hence: pushed
+            // unconditionally, not behind a title-bar capability check — the
+            // DwmSetWindowAttribute half is a harmless no-op under a hidden
+            // caption, and the channel de-dupes identical values, so this is
+            // cheap per rebuild. Guarded by
+            // `test/build/win_resize_backdrop_guard_test.dart` (the native chain
+            // is only as good as what Dart feeds it).
             WindowCaptionChannel.setCaptionColors(
               caption: cs.surface,
               text: cs.onSurface,
@@ -1809,7 +1838,50 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
                           ),
                         );
                       }
-                      return FushiAppUiScale(scale: uiScale, child: navigation);
+                      navigation = FushiAppUiScale(
+                        scale: uiScale,
+                        child: navigation,
+                      );
+                      if (Platform.isWindows &&
+                          FushiWindowsTitleBar.isEnabled) {
+                        navigation = ValueListenableBuilder<bool>(
+                          // The home rail is only on screen while the home
+                          // shell is the top route; opening a media item
+                          // covers it — the same signal the macOS shell uses
+                          // to drop its sidebar — so the title has to
+                          // un-indent with it. `navigation` is passed through
+                          // as the unchanging `child`, so flipping this never
+                          // rebuilds the navigator subtree.
+                          valueListenable: appModel.mediaOpenNotifier,
+                          builder: (BuildContext context, bool mediaOpen,
+                              Widget? child) {
+                            final bool railVisible = !mediaOpen &&
+                                windowSizeClassForWidth(viewport.width) !=
+                                    WindowSizeClass.compact;
+                            return FushiWindowsTitleBar(
+                              // The native-sized frame sits outside app UI
+                              // zoom; align its title with the visually scaled
+                              // home rail. Breakpoint and rail width both come
+                              // from the widgets that own them (HomePage's
+                              // size class / adaptiveNavRail), so they cannot
+                              // drift apart behind a copied literal.
+                              leadingInset: railVisible
+                                  ? kAdaptiveNavRailWidth * uiScale
+                                  : 0,
+                              title: ValueListenableBuilder<HomeTab>(
+                                valueListenable: homeShellTabNotifier,
+                                builder: (BuildContext context, HomeTab tab,
+                                    Widget? _) {
+                                  return Text(homeNavItemFor(tab).label);
+                                },
+                              ),
+                              child: child!,
+                            );
+                          },
+                          child: navigation,
+                        );
+                      }
+                      return navigation;
                     },
                   ),
                 ),

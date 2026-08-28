@@ -31,12 +31,6 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'auto_update_dictionaries',
   'builtInTagsSeeded',
   'clipboard_panel_block_capture',
-  'clipboard_panel_opacity',
-  'clipboard_panel_pinned',
-  'clipboard_panel_rect',
-  'clipboard_text_window_bg_opacity',
-  'clipboard_text_window_height',
-  'clipboard_text_window_width',
   'collapse_dictionaries',
   'collapsed_collection_ids',
   'compress_mining_media',
@@ -47,11 +41,6 @@ const Set<String> kKnownPreferenceKeys = <String>{
   // 内容字体链优先级的第三档，兜在「资源手动指定 > 内容自带元数据」之后。
   'default_content_language',
   'design_system',
-  'desktop_clipboard_always_on_top',
-  'desktop_clipboard_auto_lookup',
-  'desktop_clipboard_destination',
-  'desktop_clipboard_enabled',
-  'desktop_clipboard_window_mode',
   'dictionary_entry_font_size',
   'dictionary_update_interval',
   // 发现页「全部源」聚合默认排除的源 id（逗号分隔；默认 sukebei——18+ 源
@@ -87,6 +76,7 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'gal_hook_text_outline_color',
   'gal_hook_text_outline_width',
   'gal_hook_text_padding',
+  'gal_hook_text_vertical_alignment',
   'gal_hook_text_window_bg_opacity',
   'gal_luna_audio_pre_roll_ms',
   'gal_mining_animated_format',
@@ -98,6 +88,9 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'games_collapsed_collection_ids',
   'global_dict_css',
   'harmonic_frequency',
+  // bool（默认 true，BUG-1891）：进视频页时是否自动向 Jellyfin/Emby 服务器枚举
+  // 条目。几十万条目的公共 Emby 服上自动枚举会被当成爬虫，关掉后改由下拉刷新手动触发。
+  'jellyfin_auto_list_videos',
   'jimaku_api_key',
   'jimaku_default_language',
   // bool（默认 true）：Jimaku 是否参与字幕搜索。与 jimaku_api_key 组成

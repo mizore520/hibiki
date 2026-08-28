@@ -123,7 +123,7 @@ constexpr int kHookTextControlSlotCount = hook_toolbar::kSlotCount;
 // there is a background strip to grab when dragging the overlay.
 constexpr float kToolbarWindowMarginDip = 5.0f;
 
-// Text-only clipboard window (Luna-style hover toolbar). A thin top strip is
+// Text-only hook window (Luna-style hover toolbar). A thin top strip is
 // ALWAYS a mouse catch (drawn at ~2% alpha across the full width) so the fully
 // transparent window can always be grabbed to move + can reveal its toolbar,
 // while the body below stays truly transparent (click-through to the game). At
@@ -456,14 +456,10 @@ bool FloatingLyricWindow::Show(HWND owner) {
 
     // The strip must be mouse-interactive immediately so the first click after
     // entering the bar cannot fall through to the app below. WS_EX_NOACTIVATE
-    // keeps that click from stealing keyboard focus. The text-only clipboard
-    // window uses WS_EX_APPWINDOW so it shows in the taskbar / Alt+Tab as a
-    // selectable window (the transparent overlay is otherwise easy to lose); the
-    // lyric strip keeps WS_EX_TOOLWINDOW to stay off the taskbar.
-    const DWORD taskbar_ex =
-        (text_only_ && !hook_text_mode_) ? WS_EX_APPWINDOW : WS_EX_TOOLWINDOW;
+    // keeps that click from stealing keyboard focus. WS_EX_TOOLWINDOW keeps
+    // both the lyric strip and the hook text window off the taskbar / Alt+Tab.
     hwnd_ = CreateWindowExW(
-        WS_EX_LAYERED | WS_EX_TOPMOST | taskbar_ex | WS_EX_NOACTIVATE,
+        WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
         kWindowClassName,
         hook_text_mode_ ? L"Fushi Hook Text" : window_title_.c_str(),
         WS_POPUP, x, y, width, height,
@@ -626,16 +622,6 @@ void FloatingLyricWindow::ApplyStyleSize() {
   SetWindowPos(hwnd_, nullptr, 0, 0, target_width, target_height,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
   ClampCurrentPositionToWindowMonitor();
-}
-
-void FloatingLyricWindow::SetWindowTitle(const std::wstring& title) {
-  if (title.empty()) {
-    return;
-  }
-  window_title_ = title;
-  if (hwnd_ != nullptr) {
-    SetWindowTextW(hwnd_, window_title_.c_str());
-  }
 }
 
 void FloatingLyricWindow::UpdateLabels(const Labels& labels) {
@@ -877,8 +863,8 @@ void FloatingLyricWindow::ApplyPassThroughExStyle() {
     return;
   }
   // Only the galgame hook overlay has a pass-through mode. The audiobook lyric
-  // strip and the clipboard text window never reach the branch below, so their
-  // window styles are byte-for-byte what they always were.
+  // strip never reaches the branch below, so its window style is byte-for-byte
+  // what it always was.
   const bool want = hook_text_mode_ && pass_through_ && visible_;
   if (!want) {
     pass_through_toolbar_.Hide();
@@ -1540,7 +1526,15 @@ void FloatingLyricWindow::Render() {
           hook_text_mode_ && style_.text_alignment == 1
               ? DWRITE_TEXT_ALIGNMENT_LEADING
               : DWRITE_TEXT_ALIGNMENT_CENTER);
-      text_format_->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+      // BUG-1890: honour the vertical-alignment preference at creation time
+      // too. In hook mode this initial value is overwritten every frame by
+      // the layout-level call below, but the audiobook lyric strip
+      // (hook_text_mode_ == false) only ever uses this one — it must stay
+      // centred, so the preference is scoped to hook mode here as well.
+      text_format_->SetParagraphAlignment(
+          hook_text_mode_ && style_.vertical_alignment == 1
+              ? DWRITE_PARAGRAPH_ALIGNMENT_NEAR
+              : DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
       text_format_->SetWordWrapping(
           (hook_text_mode_ || text_only_) ? DWRITE_WORD_WRAPPING_WRAP
                                           : DWRITE_WORD_WRAPPING_NO_WRAP);
@@ -1570,7 +1564,7 @@ void FloatingLyricWindow::Render() {
       ScaleForDpi(hook_text_mode_ ? kHookTextButtonSizeDip : kButtonSizeDip) +
       ScaleForDpi(kControlsTopDip);
   // Both modes reserve controls_h at the top: the lyric strip for its transport
-  // row, the text-only clipboard window for its thin Luna-style hover toolbar
+  // row, the hook text window for its thin Luna-style hover toolbar
   // (the text sits below the strip so the toolbar never overlaps it).
   text_rect_.left = pad;
   text_rect_.top = controls_h;
@@ -1641,8 +1635,13 @@ void FloatingLyricWindow::Render() {
       if (hook_text_mode_) {
         DWRITE_TEXT_METRICS metrics = {};
         if (SUCCEEDED(text_layout_->GetMetrics(&metrics))) {
+          // BUG-1890：用户选「顶部对齐」时恒 NEAR；没选则维持 BUG-1095 的原判据
+          // （溢出才顶对齐、放得下仍居中）。两种设置在**溢出**场景下行为完全一致，
+          // 而下面的滚动模型（scroll_max_px_ / text_origin_y）本来就是按 NEAR
+          // 顶对齐推导出来的，恒 NEAR 只会让它更自洽，不需要额外改。
           text_layout_->SetParagraphAlignment(
-              metrics.height > text_rect_.height
+              (style_.vertical_alignment == 1 ||
+               metrics.height > text_rect_.height)
                   ? DWRITE_PARAGRAPH_ALIGNMENT_NEAR
                   : DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
           // BUG-1095 (第二阶段) — 溢出量就是可滚动行程。
@@ -1780,9 +1779,32 @@ void FloatingLyricWindow::Render() {
       // drawing effect，因此描边遍不会被 SetDrawingEffect 换色。
       Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> lyric_outline;
       Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> lyric_shadow;
+      // BUG-1889 — 描边遍改成「图层内不透明叠印 + 整体一次合成」。
+      //
+      // 修前：8 遍描边各自带着用户设定的 alpha（默认 0xE0）直接 src-over 到目标。
+      // 字形边缘像素被覆盖的次数随方向从 1 到 8 不等，累加出来的 alpha 是非线性且
+      // 方向相关的，于是描边粗细沿轮廓忽粗忽细——曲线笔画（の / っ / あ 的弧）最
+      // 明显，看起来就是「奇怪的锯齿」。
+      //
+      // 顺带修掉一个语义 bug：叠 k 遍后的实际不透明度是 1-(1-a)^k，用户把描边设成
+      // 半透明，拿到的却几乎恒为纯色。
+      //
+      // 现在：描边色在图层内强制不透明（各遍叠加只决定**形状的并集**，不再累加
+      // alpha），PopLayer 时按用户真正设定的 alpha 整体合成一次。
+      // CreateLayer 失败时原样降级回旧路径（半透明直绘），不影响可用性。
+      Microsoft::WRL::ComPtr<ID2D1Layer> outline_layer;
+      float outline_alpha = 1.0f;
       if (hook_text_mode_) {
+        render_target_->CreateLayer(nullptr, outline_layer.GetAddressOf());
+        const bool layered = outline_layer != nullptr;
+        outline_alpha =
+            layered
+                ? static_cast<float>((style_.outline_color >> 24) & 0xFF) /
+                      255.0f
+                : 1.0f;
         render_target_->CreateSolidColorBrush(
-            ColorFromArgb(style_.outline_color),
+            ColorFromArgb(layered ? (style_.outline_color | 0xFF000000)
+                                  : style_.outline_color),
             lyric_outline.GetAddressOf());
         render_target_->CreateSolidColorBrush(
             ColorFromArgb(kLyricShadowColor), lyric_shadow.GetAddressOf());
@@ -1794,19 +1816,36 @@ void FloatingLyricWindow::Render() {
             D2D1::Point2F(text_rect_.left + shadow_off * 0.5f,
                           text_origin_y + shadow_off),
             text_layout_.Get(), lyric_shadow.Get(), D2D1_DRAW_TEXT_OPTIONS_NONE);
-        const float r = ScaleForDpi(static_cast<float>(
-            std::clamp(style_.outline_width, 0.0, 8.0)));
+        // BUG-1889 — 偏移必须取整到物理像素。ScaleForDpi 不取整：r = 1.6dip 在
+        // 150% DPI 下是 2.4px，d = r*0.7071 = 1.697px，于是每一遍字形都落在**不同
+        // 的亚像素相位**上栅格化，灰度 AA 的边缘覆盖率各不相同，叠起来就是摩尔纹
+        // 式的毛边。取整后所有描边遍与填充遍同相位，边缘干净。
+        const float r = std::round(ScaleForDpi(static_cast<float>(
+            std::clamp(style_.outline_width, 0.0, 8.0))));
         if (r > 0.0f) {
-          const float d = r * 0.7071f;
-          const D2D1_POINT_2F ring[8] = {
+          const float d = std::round(r * 0.7071f);
+          // 22.5° 环的两个分量：8 向在曲线笔画上留下的扇形缺口由它们补齐。
+          const float n = std::round(r * 0.9239f);
+          const float m = std::round(r * 0.3827f);
+          const D2D1_POINT_2F ring[16] = {
               {r, 0.0f},  {-r, 0.0f}, {0.0f, r},  {0.0f, -r},
-              {d, d},     {d, -d},    {-d, d},    {-d, -d}};
+              {d, d},     {d, -d},    {-d, d},    {-d, -d},
+              {n, m},     {n, -m},    {-n, m},    {-n, -m},
+              {m, n},     {m, -n},    {-m, n},    {-m, -n}};
+          if (outline_layer != nullptr) {
+            render_target_->PushLayer(
+                D2D1::LayerParameters(text_clip, nullptr,
+                                      D2D1_ANTIALIAS_MODE_PER_PRIMITIVE,
+                                      D2D1::IdentityMatrix(), outline_alpha),
+                outline_layer.Get());
+          }
           for (const D2D1_POINT_2F& off : ring) {
             render_target_->DrawTextLayout(
                 D2D1::Point2F(text_rect_.left + off.x, text_origin_y + off.y),
                 text_layout_.Get(), lyric_outline.Get(),
                 D2D1_DRAW_TEXT_OPTIONS_NONE);
           }
+          if (outline_layer != nullptr) render_target_->PopLayer();
         }
       }
       render_target_->DrawTextLayout(
@@ -1844,13 +1883,23 @@ void FloatingLyricWindow::Render() {
               text_origin_y + box.top + ruby_gap_px);
           // 注音的桌面歌词描边：字小，半径收到 0.75 倍、不画投影。
           if (hook_text_mode_ && lyric_outline != nullptr) {
-            const float rr = ScaleForDpi(static_cast<float>(
-                std::clamp(style_.outline_width, 0.0, 8.0) * 0.75));
+            // BUG-1889：与主文本同样取整到物理像素、同样在图层内不透明叠印，
+            // 否则注音描边会比正文描边更黑更实（叠印 k 遍 ≈ 纯色），两处观感不一致。
+            const float rr = std::round(ScaleForDpi(static_cast<float>(
+                std::clamp(style_.outline_width, 0.0, 8.0) * 0.75)));
             if (rr > 0.0f) {
-              const float rd = rr * 0.7071f;
+              const float rd = std::round(rr * 0.7071f);
               const D2D1_POINT_2F ruby_ring[8] = {
                   {rr, 0.0f}, {-rr, 0.0f}, {0.0f, rr},  {0.0f, -rr},
                   {rd, rd},   {rd, -rd},   {-rd, rd},   {-rd, -rd}};
+              if (outline_layer != nullptr) {
+                render_target_->PushLayer(
+                    D2D1::LayerParameters(text_clip, nullptr,
+                                          D2D1_ANTIALIAS_MODE_PER_PRIMITIVE,
+                                          D2D1::IdentityMatrix(),
+                                          outline_alpha),
+                    outline_layer.Get());
+              }
               for (const D2D1_POINT_2F& off : ruby_ring) {
                 const D2D1_RECT_F shifted = D2D1::RectF(
                     ruby_rect.left + off.x, ruby_rect.top + off.y,
@@ -1860,6 +1909,7 @@ void FloatingLyricWindow::Render() {
                     ruby_format_.Get(), shifted, lyric_outline.Get(),
                     D2D1_DRAW_TEXT_OPTIONS_NONE);
               }
+              if (outline_layer != nullptr) render_target_->PopLayer();
             }
           }
           render_target_->DrawTextW(
@@ -1920,16 +1970,13 @@ void FloatingLyricWindow::Render() {
   }
 
   if (text_only_) {
-    // Luna-style hover toolbar for the transparent clipboard window: a thin top
+    // Luna-style hover toolbar for the text-only (hook) window: a thin top
     // strip that is ALWAYS a mouse catch (so the transparent window can be
     // grabbed to move + can reveal its controls), showing only a grip hint at
-    // rest and the lock + one-click-transparency buttons on hover. Geometry
-    // mirrors ControlActionAt(text_only_) exactly.
-    const float t_btn =
-        ScaleForDpi(hook_text_mode_ ? kHookTextButtonSizeDip : kButtonSizeDip);
-    const float t_pad = ScaleForDpi(kHorizontalPaddingDip);
-    const float t_gap =
-        ScaleForDpi(hook_text_mode_ ? kHookTextButtonGapDip : kButtonGapDip);
+    // rest and the shared-slot toolbar on hover. Geometry mirrors
+    // ControlActionAt(text_only_) exactly.
+    const float t_btn = ScaleForDpi(kHookTextButtonSizeDip);
+    const float t_gap = ScaleForDpi(kHookTextButtonGapDip);
     const float t_top = ScaleForDpi(kControlsTopDip);
     const float strip_h = t_top + t_btn;
 
@@ -1972,10 +2019,9 @@ void FloatingLyricWindow::Render() {
       render_target_->FillRoundedRectangle(grip_rect, grip_brush.Get());
     }
 
-    // Controls appear only on hover. Clipboard mode keeps its historical
-    // right-aligned buttons (transparency, pin/topmost, lock); Hook mode uses a
-    // centred shared-slot core toolbar. Their hit areas in ControlActionAt()
-    // are gated on hovered_ too, so a click can never hit an invisible button.
+    // Controls appear only on hover: a centred shared-slot core toolbar. Their
+    // hit areas in ControlActionAt() are gated on hovered_ too, so a click can
+    // never hit an invisible button.
     if (hovered_ && draw_body_toolbar) {
       Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> tb_fg;
       Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> tb_active;
@@ -2023,30 +2069,20 @@ void FloatingLyricWindow::Render() {
           }
         }
       };
-      if (hook_text_mode_) {
-        // 绘制是 HookToolbarSlotAt 的逆向：同一条 RowLeft 决定起点，逐槽步进
-        // (btn + gap)。命中与绘制共用起点，两者不可能各画各的。
-        // Render 的 |width| 是 client px 的 int；显式转 float 与改造前
-        // 「(width - controls_total) / 2.0f」的隐式提升逐位等价。
-        const float left = HookToolbarRowLeft(static_cast<float>(width));
-        // No second pill behind the row: the full-width hover strip is already
-        // the toolbar surface. Only active buttons receive a local soft tint.
-        for (int slot = 0; slot < kHookTextControlSlotCount; ++slot) {
-          draw_tbtn(left + slot * (t_btn + t_gap), slot,
-                    hook_toolbar::SlotActive(slot, tb_states));
-        }
-      } else {
-        const float lock_x = width - t_pad - t_btn;
-        const float top_x = lock_x - t_gap - t_btn;
-        const float trans_x = top_x - t_gap - t_btn;
-        draw_tbtn(trans_x, 4, false);   // one-click background transparency
-        draw_tbtn(top_x, 7, topmost_);  // pin: always-on-top
-        draw_tbtn(lock_x, 5, locked_);
+      // 绘制是 HookToolbarSlotAt 的逆向：同一条 RowLeft 决定起点，逐槽步进
+      // (btn + gap)。命中与绘制共用起点，两者不可能各画各的。
+      // Render 的 |width| 是 client px 的 int；显式转 float 与改造前
+      // 「(width - controls_total) / 2.0f」的隐式提升逐位等价。
+      const float left = HookToolbarRowLeft(static_cast<float>(width));
+      // No second pill behind the row: the full-width hover strip is already
+      // the toolbar surface. Only active buttons receive a local soft tint.
+      for (int slot = 0; slot < kHookTextControlSlotCount; ++slot) {
+        draw_tbtn(left + slot * (t_btn + t_gap), slot,
+                  hook_toolbar::SlotActive(slot, tb_states));
       }
     }
 
-    // Hook text is a real resizable text box. The clipboard text destination
-    // remains intentionally grip-less for compatibility.
+    // Hook text is a real resizable text box.
     if (hook_text_mode_ && !locked_) {
       const float resize = ScaleForDpi(kResizeGripDip);
       Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> resize_brush;
@@ -2186,7 +2222,7 @@ void FloatingLyricWindow::DispatchControlAction(const std::string& action) {
   }
   if (action == "topmost") {
     // 按钮按下 = 翻转，落地走 SetTopmost（与 Dart 的会话复位同一条路径）。
-    // Pin button (clipboard Luna toolbar + galgame hook toolbar slot 7): toggle
+    // Pin button (galgame hook toolbar slot 7): toggle
     // always-on-top locally (LunaTranslator #36). Handled natively — no Dart
     // round-trip — and every window-Z SetWindowPos reads topmost_ so the new
     // state sticks. Re-pinning also re-asserts HWND_TOPMOST, which is the way
@@ -2239,46 +2275,24 @@ int FloatingLyricWindow::HookToolbarSlotAt(float x, float y) const {
 
 std::string FloatingLyricWindow::ControlActionAt(float x, float y) {
   if (text_only_) {
-    // Text-only Luna toolbar: only the lock + one-click-transparency buttons are
-    // control hits, and only while hovered (they are invisible otherwise, so a
-    // click must never land on a phantom button). The grip / empty strip returns
-    // empty so a press there becomes a window drag — geometry mirrors Render().
+    // Text-only Luna toolbar: buttons are control hits only while hovered (they
+    // are invisible otherwise, so a click must never land on a phantom button).
+    // The grip / empty strip returns empty so a press there becomes a window
+    // drag — geometry mirrors Render().
     if (!hovered_) {
       return std::string();
     }
-    RECT rc;
-    GetClientRect(hwnd_, &rc);
-    const float width = static_cast<float>(rc.right - rc.left);
-    const float btn =
-        ScaleForDpi(hook_text_mode_ ? kHookTextButtonSizeDip : kButtonSizeDip);
-    const float gap =
-        ScaleForDpi(hook_text_mode_ ? kHookTextButtonGapDip : kButtonGapDip);
-    const float pad = ScaleForDpi(kHorizontalPaddingDip);
+    const float btn = ScaleForDpi(kHookTextButtonSizeDip);
     const float ctrl_top = ScaleForDpi(kControlsTopDip);
     if (y < ctrl_top || y > ctrl_top + btn) {
       return std::string();
     }
-    if (hook_text_mode_) {
-      // Shared slot table (hook_toolbar::kSlotActions): the standalone
-      // pass-through toolbar indexes the very same array, so the two windows
-      // physically cannot disagree about what a button does. 几何走
-      // HookToolbarSlotAt——悬停提示问的是同一个入口，提示与命中永远指同一颗。
-      const int slot = HookToolbarSlotAt(x, y);
-      return slot >= 0 ? hook_toolbar::kSlotActions[slot] : std::string();
-    }
-    const float lock_x = width - pad - btn;
-    const float top_x = lock_x - gap - btn;
-    const float trans_x = top_x - gap - btn;
-    if (x >= lock_x && x <= lock_x + btn) {
-      return "lock";
-    }
-    if (x >= top_x && x <= top_x + btn) {
-      return "topmost";
-    }
-    if (x >= trans_x && x <= trans_x + btn) {
-      return "toggleTransparency";
-    }
-    return std::string();
+    // Shared slot table (hook_toolbar::kSlotActions): the standalone
+    // pass-through toolbar indexes the very same array, so the two windows
+    // physically cannot disagree about what a button does. 几何走
+    // HookToolbarSlotAt——悬停提示问的是同一个入口，提示与命中永远指同一颗。
+    const int slot = HookToolbarSlotAt(x, y);
+    return slot >= 0 ? hook_toolbar::kSlotActions[slot] : std::string();
   }
   RECT rc;
   GetClientRect(hwnd_, &rc);

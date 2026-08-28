@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi/src/media/manga/aidoku/aidoku_network_session.dart';
 import 'package:fushi/src/media/manga/aidoku/aidoku_package_store.dart';
-import 'package:fushi/src/media/manga/aidoku/aidoku_reader_chapter.dart';
 import 'package:fushi/src/media/manga/aidoku/aidoku_runtime.dart';
 import 'package:fushi/src/media/manga/aidoku/aidoku_source_browse_page.dart';
 import 'package:fushi/src/media/manga/manga_global_search_runner.dart';
@@ -30,10 +30,17 @@ class MangaGlobalSearchPage extends StatefulWidget {
     super.key,
     this.aidokuRuntime,
     this.initialQuery,
+    this.onOpenSources,
   });
 
   /// Mihon 宿主。不支持的平台传 `null`（此时 [mihonSources] 必为空）。
   final MihonManager? mihonManager;
+
+  /// 一个源都没有时空态按钮的去处：把用户带到漫画库的「导入」视图（来源都在那里
+  /// 装 / 启用）。**弹掉本页这一步由壳自己做**（[MediaLibraryShellScope.select]），
+  /// 本页不碰导航栈——本页上面可能还压着别的路由，也可能是别人推的第二个入口。
+  /// 为 null 时只显示文案不显示按钮：调用方不在库页壳里，或壳压根没有「导入」视图。
+  final VoidCallback? onOpenSources;
 
   /// 已启用、且扩展也启用的 Mihon 在线源。
   final List<MangaOnlineSourceRow> mihonSources;
@@ -173,12 +180,31 @@ class _MangaGlobalSearchPageState extends State<MangaGlobalSearchPage> {
 
   Widget _buildBody() {
     if (_sources().isEmpty) {
+      final VoidCallback? onOpenSources = widget.onOpenSources;
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text(
-            t.manga_global_search_no_sources,
-            textAlign: TextAlign.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                t.manga_global_search_no_sources,
+                textAlign: TextAlign.center,
+              ),
+              if (onOpenSources != null) ...<Widget>[
+                const SizedBox(height: 16),
+                FilledButton.tonalIcon(
+                  key: const ValueKey<String>(
+                    'manga_global_search_open_sources',
+                  ),
+                  onPressed: onOpenSources,
+                  // 「导入」的图标（与书架空态引导同一个）。拼图块 extension_outlined
+                  // 恰恰是本 bug 的病根：漫画库里没有叫「扩展」的入口。
+                  icon: const Icon(Icons.library_add_outlined),
+                  label: Text(t.manga_global_search_open_sources),
+                ),
+              ],
+            ],
           ),
         ),
       );
@@ -378,7 +404,7 @@ class _AidokuStripCover extends StatelessWidget {
     return Image.network(
       value,
       fit: BoxFit.cover,
-      headers: const <String, String>{'User-Agent': kAidokuBrowserUserAgent},
+      headers: const <String, String>{'User-Agent': kAidokuUserAgent},
       errorBuilder: (_, __, ___) => const ColoredBox(
         color: Color(0x11000000),
         child: Center(child: Icon(Icons.broken_image_outlined)),

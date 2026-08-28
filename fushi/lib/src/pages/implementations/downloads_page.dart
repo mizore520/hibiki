@@ -77,13 +77,13 @@ class _DownloadsPageState extends ConsumerState<DownloadsPage> {
     final List<MediaSourceRow> sources = backendReady
         ? await appModel.getManagedVideoDownloadSources()
         : const <MediaSourceRow>[];
-    VideoDownloadBackendIdentity? identity;
+    VideoDownloadBackendTarget? target;
     Object? identityError;
     // 没来源就别去连后端了：身份解析要打真后端，白连一趟还会把「缺来源」
     // 盖成一条连接错误。
     if (backendReady && sources.isNotEmpty) {
       try {
-        identity = await appModel.currentVideoDownloadBackendIdentity();
+        target = await appModel.currentVideoDownloadBackendTarget();
       } on Object catch (error) {
         identityError = error;
       }
@@ -93,14 +93,11 @@ class _DownloadsPageState extends ConsumerState<DownloadsPage> {
       managedSourceCount: sources.length,
       identityError: identityError,
     );
-    if (gap == null &&
-        registry != null &&
-        pipeline != null &&
-        identity != null) {
+    if (gap == null && registry != null && pipeline != null && target != null) {
       return _DownloadsResourceReady(
         registry: registry,
         pipeline: pipeline,
-        identity: identity,
+        target: target,
         sources: sources,
         defaultSourceId: appModel.prefsRepo.videoDownloadTargetSourceId,
       );
@@ -126,15 +123,19 @@ class _DownloadsPageState extends ConsumerState<DownloadsPage> {
 
   /// 「后端没配好」空态的动作：就地弹配置引导，配完重算前置条件——与
   /// [_addVideoSource] 同一姿态，不把用户支去设置 tab 再走回来。
-  Future<void> _openBackendSetup() async {
+  ///
+  /// 返回「是否真配完了」：同一个出口还要接给资源 surface 的失败态按钮
+  /// （[VideoDownloadBackendSetupPrompt]），那边据此决定要不要重试原提交。
+  Future<bool> _openBackendSetup() async {
     final bool done = await promptDownloadBackendSetup(
       context: context,
       appModel: ref.read(appProvider),
     );
-    if (!mounted || !done) return;
+    if (!mounted || !done) return false;
     setState(() {
       _resourceDependencies = _loadResourceDependencies();
     });
+    return true;
   }
 
   Widget _buildResourceTab() {
@@ -176,12 +177,15 @@ class _DownloadsPageState extends ConsumerState<DownloadsPage> {
           registry: dependencies.registry,
           sources: dependencies.sources,
           defaultSourceId: dependencies.defaultSourceId,
+          // 页面打开之后后端才变得不可用时，surface 的失败态也要能就地补齐——
+          // 与上面两个空态门同一个出口，不再多一套写法。
+          onConfigureBackend: (BuildContext _) => _openBackendSetup(),
           onSubmit: (VideoDiscoveryDownloadSelection selection) =>
               dependencies.pipeline.enqueue(
             VideoDownloadEnqueueRequest(
               media: selection.media,
               resource: selection.resource,
-              backendIdentity: dependencies.identity,
+              backendTarget: dependencies.target,
               targetSourceId: selection.source.id,
               subtitlePolicy: selection.subtitlePolicy,
             ),
@@ -507,14 +511,14 @@ class _DownloadsResourceReady extends _DownloadsResourceState {
   const _DownloadsResourceReady({
     required this.registry,
     required this.pipeline,
-    required this.identity,
+    required this.target,
     required this.sources,
     required this.defaultSourceId,
   });
 
   final VideoResourceRegistry registry;
   final VideoDownloadPipelineService pipeline;
-  final VideoDownloadBackendIdentity identity;
+  final VideoDownloadBackendTarget target;
   final List<MediaSourceRow> sources;
   final int? defaultSourceId;
 }

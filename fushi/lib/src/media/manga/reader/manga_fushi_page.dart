@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' hide ModifierKey;
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:path/path.dart' as p;
+import 'package:window_manager/window_manager.dart';
 
 import 'package:fushi_anki/fushi_anki.dart';
 import 'package:fushi_audio/fushi_audio.dart';
@@ -48,6 +49,11 @@ import 'package:fushi/src/media/manga/reader/manga_zoom_preference_debouncer.dar
 import 'package:fushi/src/focus/page_focus_ownership.dart';
 import 'package:fushi/src/shortcuts/gamepad_service.dart'
     show GamepadButtonIntent;
+import 'package:fushi/src/shortcuts/global_navigation.dart'
+    show
+        desktopWindowFullscreenSupported,
+        readDesktopWindowFullscreen,
+        setDesktopWindowFullscreen;
 import 'package:fushi/src/shortcuts/input_binding.dart'
     show
         GamepadButton,
@@ -116,6 +122,15 @@ enum MangaReaderInputAction {
   panDown,
   panLeft,
   panRight,
+
+  /// BUG-1888：切换界面（顶栏页码/工具按钮 + 左上返回键）。漫画此前**没有任何**
+  /// 隐藏界面的方式，这两块恒挂在画面上遮住页图；移动端还联动系统栏沉浸，隐藏
+  /// 界面即真全屏。
+  toggleChrome,
+
+  /// Toggle the desktop window's fullscreen presentation without rebuilding
+  /// the manga WebView or losing its current OCR/selection state.
+  toggleFullscreen,
 }
 
 /// 一次键盘平移移动的视口比例。按比例而非像素，1080p 与 4K 手感一致。
@@ -367,6 +382,9 @@ class MangaFushiPage extends BaseSourcePage {
     required MangaReadingMode mode,
   }) {
     if (action == null) return null;
+    if (action == ShortcutAction.globalToggleFullscreen) {
+      return MangaReaderInputAction.toggleFullscreen;
+    }
     if (action == ShortcutAction.mangaDismissDict) {
       return dictionaryShown ? MangaReaderInputAction.dismissDictionary : null;
     }
@@ -379,6 +397,12 @@ class MangaFushiPage extends BaseSourcePage {
       return dictionaryShown
           ? MangaReaderInputAction.dismissDictionary
           : MangaReaderInputAction.backOrExit;
+    }
+    // BUG-1888：切换界面。与平移同理排在两道翻页门控**之前**——它既不翻页也不动
+    // 视野，「webtoon 让位原生滚动」与「弹窗可见让位」对它都不适用：正在查词时
+    // 想把顶栏收掉看清页图，是完全合理的操作。
+    if (action == ShortcutAction.mangaToggleChrome) {
+      return MangaReaderInputAction.toggleChrome;
     }
     // 平移排在两道翻页门控**之前**：它动的是当前页的视野、不是 spread，所以
     // 「webtoon 让位原生滚动」与「弹窗可见让位」都不适用——webtoon 的上下平移本身
@@ -423,7 +447,13 @@ class MangaFushiPage extends BaseSourcePage {
   @visibleForTesting
   static final String navigationKeyBridgeScript = webViewKeyBridgeScript(
     handlerName: 'onMangaNavigationKey',
-    keys: const <String>['ArrowLeft', 'ArrowRight', 'Escape', 'Esc'],
+    keys: const <String>[
+      'ArrowLeft',
+      'ArrowRight',
+      'Escape',
+      'Esc',
+      'F11',
+    ],
     forwardRepeats: false,
     stopPropagation: true,
   );
@@ -646,7 +676,7 @@ class MangaFushiPage extends BaseSourcePage {
 }
 
 class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, WindowListener {
   InAppWebViewController? _controller;
   EpubBookRow? _bookRow;
 
@@ -674,6 +704,15 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
   MangaReadingMode _mode = MangaReadingMode.spread;
   List<MangaSpreadEntry> _spreads = <MangaSpreadEntry>[];
   bool _loadFailed = false;
+
+  /// BUG-1888：界面（顶栏 + 左上返回键）是否可见。隐藏态下右上角仍留一个半透明
+  /// 「显示界面」按钮——漫画正文是原生 WebView，空白点击手势全在注入的 JS 里且
+  /// 已被翻页占用，没有这个按钮的话触屏设备再没有第二条通道能把界面唤回来。
+  bool _chromeVisible = true;
+
+  bool _isWindowFullscreen = false;
+  bool _ownsWindowFullscreen = false;
+  bool _fullscreenTransitioning = false;
 
   /// 双页布局偏好：页内菜单运行时切换，不持久化，默认自动（横屏双页/竖屏单页）。
   MangaSpreadPreference _spreadPreference = MangaSpreadPreference.auto;
@@ -915,6 +954,12 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       ),
     );
     WidgetsBinding.instance.addObserver(this);
+    if (Platform.isWindows || Platform.isLinux) {
+      windowManager.addListener(this);
+    }
+    if (desktopWindowFullscreenSupported) {
+      unawaited(_readInitialFullscreenState());
+    }
     // 进程退出兜底：把未落盘的页码 flush 掉（与 EPUB/PDF 阅读器同纪律）。
     ExitFlushRegistry.instance.register(_flushPosition);
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadBook());
@@ -931,6 +976,13 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
 
   @override
   void dispose() {
+    if (Platform.isWindows || Platform.isLinux) {
+      windowManager.removeListener(this);
+    }
+    if (_ownsWindowFullscreen) {
+      _ownsWindowFullscreen = false;
+      unawaited(_restoreOwnedFullscreenAfterDispose());
+    }
     // 交还音量键所有权：必须早于其它拆栈，且无条件执行。
     _volumeKeyPagingController.dispose();
     ExitFlushRegistry.instance.unregister(_flushPosition);
@@ -962,6 +1014,76 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     super.dispose();
   }
 
+  Future<void> _readInitialFullscreenState() async {
+    final bool? fullscreen = await readDesktopWindowFullscreen();
+    if (!mounted || fullscreen == null || fullscreen == _isWindowFullscreen) {
+      return;
+    }
+    setState(() => _isWindowFullscreen = fullscreen);
+  }
+
+  Future<void> _changeMangaFullscreen({bool? requested}) async {
+    if (!desktopWindowFullscreenSupported || _fullscreenTransitioning) return;
+    _fullscreenTransitioning = true;
+    try {
+      final bool fullscreen = requested ??
+          !((await readDesktopWindowFullscreen()) ?? _isWindowFullscreen);
+      if (!mounted) return;
+      // Claim ownership before the native transition starts. If the route is
+      // removed while the platform call is in flight, dispose can still issue
+      // the matching exit instead of leaking a borderless fullscreen window.
+      if (fullscreen) {
+        _ownsWindowFullscreen = true;
+      }
+      final bool? applied = await setDesktopWindowFullscreen(fullscreen);
+      if (!mounted) {
+        if (fullscreen && _ownsWindowFullscreen) {
+          _ownsWindowFullscreen = false;
+          await _restoreOwnedFullscreenAfterDispose();
+        }
+        return;
+      }
+      if (applied == null) {
+        if (fullscreen) _ownsWindowFullscreen = false;
+        return;
+      }
+      _ownsWindowFullscreen = applied;
+      if (_isWindowFullscreen != applied) {
+        setState(() => _isWindowFullscreen = applied);
+      }
+    } finally {
+      _fullscreenTransitioning = false;
+    }
+  }
+
+  Future<void> _setMangaFullscreen(bool fullscreen) =>
+      _changeMangaFullscreen(requested: fullscreen);
+
+  Future<void> _toggleMangaFullscreen() => _changeMangaFullscreen();
+
+  Future<bool> _exitOwnedFullscreenBeforePop() async {
+    if (!_ownsWindowFullscreen) return false;
+    await _setMangaFullscreen(false);
+    return true;
+  }
+
+  Future<void> _restoreOwnedFullscreenAfterDispose() async {
+    await setDesktopWindowFullscreen(false);
+  }
+
+  @override
+  void onWindowEnterFullScreen() {
+    if (!mounted || _isWindowFullscreen) return;
+    setState(() => _isWindowFullscreen = true);
+  }
+
+  @override
+  void onWindowLeaveFullScreen() {
+    _ownsWindowFullscreen = false;
+    if (!mounted || !_isWindowFullscreen) return;
+    setState(() => _isWindowFullscreen = false);
+  }
+
   Future<void> _closePageSession(MangaReaderSession session) async {
     await session.close();
   }
@@ -984,6 +1106,9 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
 
   @override
   Future<void> onSourcePagePop() async {
+    if (_ownsWindowFullscreen) {
+      await _setMangaFullscreen(false);
+    }
     // 返回书架的正常路径：await 落盘，保证书架 recency/进度立刻正确。
     await _flushPosition();
     _readingTimeTracker?.stop();
@@ -2094,6 +2219,10 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     MangaReaderInputAction action, {
     required _MangaReaderInputSource source,
   }) {
+    if (action == MangaReaderInputAction.toggleFullscreen) {
+      unawaited(_toggleMangaFullscreen());
+      return;
+    }
     // 框选识别模式独占键盘：「返回上一级」/ 关词典键（默认都是 Escape）退出模式，
     // 翻页键一律吞掉——框选途中翻走当前页会让松手时算出的 pageIndex 指向另一页，
     // 回写就落错页。放在去抖之前：两条输入源（Flutter / 原生 WebView 桥）共用这一个
@@ -2114,6 +2243,13 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
                 'window.__mangaPanBy(${panStep.dx}, ${panStep.dy});',
           ) ??
           Future<void>.value());
+      return;
+    }
+    // BUG-1888：切换界面与平移同理就地返回——它不翻页、不关词典，也不该被翻页的
+    // 跨源去抖吃掉（那道去抖压的是「同一次翻页被 Flutter 与 WebView 桥各报一次」，
+    // 与本动作无关）。
+    if (action == MangaReaderInputAction.toggleChrome) {
+      _toggleMangaChrome();
       return;
     }
     final DateTime now = DateTime.now();
@@ -2172,6 +2308,7 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
         // 「返回上一级」（默认 Esc）：弹窗持焦时也要能关弹窗。它在 universal scope，
         // [resolveDictionaryPopupInputToken] 会在 manga 未命中后回落到 universal。
         ShortcutAction.globalBack,
+        ShortcutAction.globalToggleFullscreen,
       };
 
   @override
@@ -2222,6 +2359,11 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
           key,
           modifiers: modifiers,
           scope: ShortcutScope.universal,
+        ) ??
+        registry.resolveKeyboard(
+          key,
+          modifiers: modifiers,
+          scope: ShortcutScope.global,
         );
     final ShortcutAction? corrected = resolveMangaArrowPageTurn(
           key: key,
@@ -2258,6 +2400,10 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
         registry.resolveGamepad(
           button,
           scope: ShortcutScope.universal,
+        ) ??
+        registry.resolveGamepad(
+          button,
+          scope: ShortcutScope.global,
         );
     final ShortcutAction? corrected = resolveMangaDpadPageTurn(
           button: button,
@@ -3258,7 +3404,9 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       if (described.success) {
         return MinePopupResult(ankiConnect: true, noteId: outcome.noteId);
       }
-      return const MinePopupResult();
+      // BUG-1908/1915：重复 ≠ 没制成，见 MinePopupResult.duplicate；
+      // 失败结局一律经 .failed(outcome) 这一个入口，别在各表面散写判据。
+      return MinePopupResult.failed(outcome);
     } catch (e, stack) {
       ErrorLogService.instance.log('MangaFushiPage.onMineFromPopup', e, stack);
       return const MinePopupResult();
@@ -3638,8 +3786,12 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       canPop: false,
       onPopInvokedWithResult: (bool didPop, dynamic result) async {
         if (didPop) return;
-        // 在 await 前拿住 navigator：onWillPop 是异步长操作（落位置 + closeMedia）。
+        // Cache the navigator before either async cleanup step; this callback
+        // must not read BuildContext after an await.
         final NavigatorState navigator = Navigator.of(context);
+        // Fullscreen is a presentation layer above the reader route. Back/Esc
+        // leaves that layer first and keeps the current WebView/page intact.
+        if (await _exitOwnedFullscreenBeforePop()) return;
         final bool shouldPop = await onWillPop();
         if (!mounted || !shouldPop) return;
         navigator.pop();
@@ -3679,7 +3831,7 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
                   key: const ValueKey<String>('manga_dictionary_host'),
                   child: buildDictionary(),
                 ),
-                if (_bookRow != null && !_loadFailed)
+                if (_bookRow != null && !_loadFailed && _chromeVisible)
                   Positioned(
                     top: 0,
                     left: 0,
@@ -3695,17 +3847,59 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
                     ),
                   ),
                 // 顶部 chrome：页码指示 + 阅读模式切换。
-                if (_bookRow != null && !_loadFailed)
+                if (_bookRow != null && !_loadFailed && _chromeVisible)
                   Positioned(
                     top: 0,
                     right: 0,
                     child: SafeArea(child: _buildTopChrome()),
+                  ),
+                // BUG-1888：隐藏态唯一的唤回入口（理由见 [_chromeVisible]）。
+                if (_bookRow != null && !_loadFailed && !_chromeVisible)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: SafeArea(
+                      child: Opacity(
+                        opacity: 0.35,
+                        child: IconButton(
+                          key: const ValueKey<String>(
+                              'manga_chrome_show_button'),
+                          tooltip: t.manga_interface_show,
+                          iconSize: 20,
+                          color: Colors.white,
+                          icon: const Icon(Icons.visibility_outlined),
+                          onPressed: _toggleMangaChrome,
+                        ),
+                      ),
+                    ),
                   ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  /// BUG-1888：切换界面可见性。移动端联动系统栏——隐藏界面即进入沉浸式全屏；
+  /// 桌面的窗口级全屏走全局 F11（[ShortcutAction.globalToggleFullscreen]），
+  /// 与本页无关，两者可叠加使用。
+  void _toggleMangaChrome() {
+    setState(() {
+      _chromeVisible = !_chromeVisible;
+    });
+    _applyMangaImmersiveMode();
+  }
+
+  /// 移动端系统栏跟随界面可见性：隐藏 → immersiveSticky（连状态栏/导航栏一起
+  /// 收掉，边缘滑动可临时唤出）；显示 → 回到 edgeToEdge，与 [AppModel.openMedia]
+  /// 打开媒体后的常规形态一致。桌面无系统栏概念，直接返回。
+  void _applyMangaImmersiveMode() {
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    SystemChrome.setEnabledSystemUIMode(
+      _chromeVisible ? SystemUiMode.edgeToEdge : SystemUiMode.immersiveSticky,
+      overlays:
+          _chromeVisible ? SystemUiOverlay.values : const <SystemUiOverlay>[],
     );
   }
 
@@ -3874,6 +4068,34 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
             onPressed: () => unawaited(_toggleReadingMode()),
           ),
         ),
+        // BUG-1888：隐藏界面。与快捷键（默认 M / 手柄 Y）同一个执行体。
+        Tooltip(
+          message: t.manga_interface_hide,
+          child: IconButton(
+            key: const ValueKey<String>('manga_chrome_hide_button'),
+            icon: const Icon(Icons.visibility_off_outlined,
+                color: Colors.white),
+            onPressed: _toggleMangaChrome,
+          ),
+        ),
+        if (desktopWindowFullscreenSupported)
+          Tooltip(
+            message: t.shortcut_action_global_toggle_fullscreen,
+            child: IconButton(
+              key: const ValueKey<String>('manga_fullscreen_button'),
+              icon: Icon(
+                _isWindowFullscreen
+                    ? Icons.fullscreen_exit_rounded
+                    : Icons.fullscreen_rounded,
+                color: Colors.white,
+              ),
+              // The method itself serializes native transitions. Keeping the
+              // button enabled avoids rebuilding it as permanently disabled
+              // when the final state update occurs before the transition's
+              // finally block clears its guard.
+              onPressed: () => unawaited(_toggleMangaFullscreen()),
+            ),
+          ),
       ],
     );
   }

@@ -335,6 +335,8 @@ enum ShortcutAction {
 
   // 字幕显示
   videoToggleSubtitleList(ShortcutScope.video, 'video_toggle_subtitle_list'),
+  // BUG-1907：在字幕列表里搜索台词（默认 Ctrl+F）。列表没开时先开列表再聚焦搜索框。
+  videoSearchSubtitleList(ShortcutScope.video, 'video_search_subtitle_list'),
   videoToggleSubtitleBlur(ShortcutScope.video, 'video_toggle_subtitle_blur'),
   // TODO-840 Part B：字幕遮蔽模式（不遮蔽/模糊/隐藏，见 VideoSubtitleObscureMode）。
   // videoCycleSubtitleObscure 在三态间循环；videoToggleSubtitleHide 直接开/关「隐藏
@@ -398,6 +400,10 @@ enum ShortcutAction {
   // 「关弹窗并翻页」，那条语义在 [MangaReaderInputAction] 侧，与本动作无关。
   // 退出漫画走 universal 的 [globalBack] 阶梯（弹窗可见先关弹窗，否则退出）。
   mangaDismissDict(ShortcutScope.manga, 'manga_dismiss_dict'),
+  // BUG-1888：切换漫画界面（顶部页码/工具按钮 + 返回键）。与 [readerToggleChrome]
+  // 同形同键（键盘 M / 手柄 Y）——漫画此前**没有任何**隐藏界面的方式，顶栏恒挂在
+  // 画面上。隐藏态下右上角仍留一个半透明「显示界面」按钮，触屏也唤得回来。
+  mangaToggleChrome(ShortcutScope.manga, 'manga_toggle_chrome'),
   // 放大后在页面上平移视野（默认 Ctrl+方向键）。裸方向键已被翻页占死，所以默认
   // 走修饰键组合；用户可在快捷键设置里改成任意键。语义是「视野往哪个方向走」，
   // 与滚动条直觉一致，不随阅读方向镜像（镜像只对**翻页**有意义）。
@@ -450,13 +456,11 @@ enum ShortcutAction {
   // in-app 宿主会被显式注入 `null` 关掉 JS 侧判定——那里由 Dart 负责，两边都开就有在
   // 「WebView 键盘桥把同一次按键同时喂给 Flutter 和 JS」时制出两张卡的风险。
   //
-  // ⚠️ app 外这一端**只有剪贴板面板真能用，且要用户先点过面板**：面板实例走
-  // `SetActivatable(true)`（flutter_window.cpp）故能拿键盘焦点；而**瞬态查词覆盖窗**默认
-  // `activatable_ = false`，带 `WS_EX_NOACTIVATE`（global_lookup_window.cpp:988）——它
-  // 永不接收键盘焦点，runner 侧也没有任何键盘转发/钩子，所以本动作在那个表面上**物理上
-  // 不可能触发**。galgame 场景焦点通常在游戏上，不先点面板就按不到。要覆盖瞬态窗只有两条
-  // 路（去掉 NOACTIVATE = 抢游戏焦点、违背它的设计初衷；或上全局 RegisterHotKey），都是
-  // 产品取舍，未做——别把这里的实现说成「app 内 / app 外 / 浏览器都能用」。
+  // ⚠️ app 外这一端**实际不可触发**：app 外的查词覆盖窗一律 `WS_EX_NOACTIVATE`
+  // （global_lookup_window.cpp OverlayCreateExStyle）——它永不接收键盘焦点，runner 侧
+  // 也没有任何键盘转发/钩子，所以本动作在那个表面上**物理上不可能触发**。要覆盖它只有
+  // 两条路（去掉 NOACTIVATE = 抢游戏焦点、违背它的设计初衷；或上全局 RegisterHotKey），
+  // 都是产品取舍，未做——别把这里的实现说成「app 内 / app 外 / 浏览器都能用」。
   popupMineEntry(ShortcutScope.dictionaryPopup, 'popup_mine_entry'),
 
   // 手柄重设计 P2：播放第一个可见词条的发音（点既有 `.audio-button`，与制卡同一

@@ -25,14 +25,67 @@ part of 'update_checker.dart';
 ///
 /// 与 `video_shader_downloader.dart` 的 `_kGhProxyPrefixes`（BUG-319/271）同一范式——
 /// 那个只下载 raw 资源、不命中 API，故不受本限制影响。
+///
+/// 名单本身已搬到 `src/utils/net/github_mirrors.dart` 的 [kGitHubMirrorPrefixes]
+/// 作全仓唯一真相源（BUG-1875：Mihon 扩展仓库拉取也要同一份镜像）；part 契约禁止
+/// part 内 import，所以由 barrel 引入、这里只保留别名与既有的测试可见名。
 @visibleForTesting
-const List<String> updateCheckProxyPrefixes = <String>[
-  'https://ghfast.top/',
-  'https://gh-proxy.com/',
-  'https://ghproxy.net/',
-  'https://ghproxy.cc/',
-  'https://gh.llkk.cc/',
-];
+const List<String> updateCheckProxyPrefixes = kGitHubMirrorPrefixes;
+
+/// 官网 Cloudflare Worker 暴露的版本化 R2 下载入口。
+///
+/// 必须使用 `/releases/v/<tag>/<name>?src=r2`，而不是滚动的 `/releases/latest/*`：
+/// 更新检查拿到的 release 与真正开始下载之间可能跨过一次发版，版本化路径能保证候选
+/// 始终指向 [url] 里的同一个 tag / asset。`src=r2` 还把「该文件没有镜像」收敛为 404，
+/// 让下载引擎继续回退 GitHub；不带它会由官网 302 到 GitHub，和后续直连候选重复。
+const String _kOfficialUpdateMirrorHost = 'fushi.moe';
+
+/// **纯函数**：把本仓 GitHub Release 资产直链映射到官网 R2 的不可变版本路径。
+///
+/// 只接受 `https://github.com/hajisensai/fushi/releases/download/<tag>/<name>`：
+/// 旧 Hibiki 仓库、任意第三方 host、API URL 或畸形路径都返回 null，避免把不属于官网 R2
+/// 桶的文件送到受信域名。用 [Uri.pathSegments] 解码输入，再交给 [Uri] 重新编码输出，兼容
+/// debug tag 的 `+` 和资产名里的空格等字符。
+@visibleForTesting
+String? officialR2UrlForUpdateAsset(String url) {
+  final Uri? uri = Uri.tryParse(url);
+  if (uri == null ||
+      uri.scheme != 'https' ||
+      uri.host.toLowerCase() != 'github.com') {
+    return null;
+  }
+  final List<String> segments = uri.pathSegments;
+  if (segments.length != 6 ||
+      segments[0].toLowerCase() != 'hajisensai' ||
+      segments[1].toLowerCase() != 'fushi' ||
+      segments[2] != 'releases' ||
+      segments[3] != 'download' ||
+      segments[4].isEmpty ||
+      segments[5].isEmpty) {
+    return null;
+  }
+  return Uri(
+    scheme: 'https',
+    host: _kOfficialUpdateMirrorHost,
+    pathSegments: <String>['releases', 'v', segments[4], segments[5]],
+    queryParameters: const <String, String>{'src': 'r2'},
+  ).toString();
+}
+
+/// **纯函数**：生成 release 资产的下载候选。
+///
+/// 官网 R2 不可变版本路径排第一，优先获得 Cloudflare/R2 的低延迟与免费出网；R2 未镜像
+/// （预发布默认不入桶、单文件超过镜像上限、工作流失败等）会快速 404，随后完整保留原来的
+/// GitHub 直连 + 公共 gh 代理回退链。检查 manifest/API 仍使用 [updateCheckUrls]，不会把
+/// 非下载请求误送进 R2。
+@visibleForTesting
+List<String> updateDownloadUrls(String url) {
+  final String? officialMirror = officialR2UrlForUpdateAsset(url);
+  return <String>[
+    if (officialMirror != null) officialMirror,
+    ...updateCheckUrls(url),
+  ];
+}
 
 /// **纯函数**：为一个 GitHub API / 直链 [url] 生成按优先级排序的候选 URL 列表。
 ///

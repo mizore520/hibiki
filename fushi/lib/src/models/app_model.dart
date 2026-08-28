@@ -51,7 +51,6 @@ import 'package:fushi/src/lookup/effective_lookup_size.dart';
 import 'package:fushi/src/mining/gal_mining_screenshot_size.dart';
 import 'package:fushi/src/models/dictionary_directory.dart';
 import 'package:fushi/src/models/dictionary_repository.dart';
-import 'package:fushi/src/models/clipboard_history_repository.dart';
 import 'package:fushi/src/models/media_history_repository.dart';
 import 'package:fushi/src/models/preferences_repository.dart';
 import 'package:fushi/src/media/manga/manga_ocr_provider.dart';
@@ -880,9 +879,6 @@ class AppModel with ChangeNotifier {
   /// 读词典（例如查词弹窗注入按词典语言分流的字体 CSS）的调用方必须先问这个。
   bool _dictionaryRepoReady = false;
   bool get isDictionaryRepoReady => _dictionaryRepoReady;
-  late ClipboardHistoryRepository clipboardHistoryRepo;
-  final ClipboardHistoryNotifier clipboardHistoryNotifier =
-      ClipboardHistoryNotifier();
 
   /// Extracted sub-managers.
   late final AudioController audioCtrl = AudioController();
@@ -1292,13 +1288,9 @@ class AppModel with ChangeNotifier {
   /// 这种**显式**查词手势，需要把主窗口从阅读器/任意 tab 切到查词 tab，让
   /// [HomeDictionaryPage] 挂载并消费 [DesktopLookupService.pendingText]。
   ///
-  /// 这是与被动剪贴板监听**正交**的显式导航原语：HomePage 监听本信号只切 tab，不监听
-  /// DesktopLookupService、也不在剪贴板被动命中时自动切 tab。
-  ///
-  /// spec 2026-07-10 §7 后的守卫新事实：DesktopLookupService 的 start/stop 已上移
-  /// AppModel（[applyDesktopClipboardLifecycle]，app 级监听），消费按
-  /// resolveDesktopLookupConsumer 分区——mainTab 分区仍只由 HomeDictionaryPage
-  /// 消费（tab 未挂载时 pending 排队），HomePage 根节点依旧不消费查词请求。
+  /// 这是显式导航原语：HomePage 监听本信号只切 tab，不监听 DesktopLookupService；
+  /// pending 只由 HomeDictionaryPage 消费（tab 未挂载时排队），HomePage 根节点
+  /// 依旧不消费查词请求。
   final ValueNotifier<int> homeDictionaryTabRequest = ValueNotifier<int>(0);
 
   /// 发一次「打开查词 tab」请求（桌面悬浮字幕点词等显式手势调）。
@@ -1578,23 +1570,6 @@ class AppModel with ChangeNotifier {
 
   List<DictionarySearchResult> get dictionaryHistory =>
       dictRepo.dictionaryHistory;
-
-  /// Desktop clipboard-copy history (data source for the panel / transient
-  /// popup history button).
-  List<ClipboardHistoryEntry> get clipboardHistory =>
-      clipboardHistoryRepo.entries;
-
-  /// Record one clipboard-copied text (from DesktopLookupService, origin=clipboard).
-  void addClipboardHistoryEntry(String text) {
-    clipboardHistoryRepo.add(text, DateTime.now());
-    clipboardHistoryNotifier.bump();
-  }
-
-  /// Clear clipboard-copy history (the history panel clear button).
-  Future<void> clearClipboardHistory() async {
-    await clipboardHistoryRepo.clear();
-    clipboardHistoryNotifier.bump();
-  }
 
   // ── audio & media streams (delegated to AudioController) ────────────
 
@@ -2301,7 +2276,6 @@ class AppModel with ChangeNotifier {
       );
       _dictionaryRepoReady = true;
       mediaHistoryRepo = MediaHistoryRepository(_database);
-      clipboardHistoryRepo = ClipboardHistoryRepository(_database);
 
       debugPrint('[Fushi] init: repositories (parallel)');
       await Future.wait(<Future<void>>[
@@ -2750,8 +2724,6 @@ class AppModel with ChangeNotifier {
 
       mediaHistoryRepo = MediaHistoryRepository(_database);
       await mediaHistoryRepo.loadFromDb();
-      clipboardHistoryRepo = ClipboardHistoryRepository(_database);
-      await clipboardHistoryRepo.loadFromDb();
 
       // The popup process always runs this full branch (separate :popup
       // process, _isInitialised starts false). PopupDictApp.build() reads
@@ -2994,14 +2966,11 @@ class AppModel with ChangeNotifier {
   /// 注入的 md 变量 / --dict-columns / zoom 同源（dictionary_popup_webview / popup_settings_injection 一致）。
   Map<String, String> browserExtensionThemeColors() {
     final ColorScheme s = themeNotifier.buildColorScheme(
-      themeNotifier.isDarkMode ? Brightness.dark : Brightness.light,
-    );
-    // Niratan 对齐（2026-08-23）：默认卡面纯白/纯黑（popupCardSurface），
-    // 不再用 tinted scheme.surface；override 优先级不变。
-    final Color bgColor = popupCardSurface(
-      scheme: s,
-      override: _overrideDictionaryColor,
-    );
+        themeNotifier.isDarkMode ? Brightness.dark : Brightness.light);
+    // 卡面底色跟随主题 scheme.surface（popupCardSurface 单一真源），
+    // override 优先级不变。
+    final Color bgColor =
+        popupCardSurface(scheme: s, override: _overrideDictionaryColor);
     // BUG-736：核心色/圆角/列数变量的取值统一来自 buildPopupThemeCssVars——与 in-app
     // 弹窗注入器（popup_settings_injection / dictionary_popup_webview）同一真源，
     // 根除「扩展漏抄一处、退化成灰高亮/白字/直角」的手抄漂移。
@@ -3946,36 +3915,33 @@ class AppModel with ChangeNotifier {
     }
     final LegacyVideoDownloadImportReport report =
         await VideoDownloadLegacyImporter(
-          database: database,
-          baseDirectory: baseDir,
-          torrentMatcher: (LegacyTorrentProbe probe) async {
-            final VideoDownloadBackendIdentity? confirmedIdentity = identity;
-            if (confirmedIdentity == null) return null;
-            if (probe.category != confirmedIdentity.category) return null;
-            final TorrentBackend? backend = _createExactTorrentBackend(config);
-            if (backend == null) return null;
-            try {
-              final List<TorrentSnapshot> snapshots = await backend
-                  .listTorrents(category: probe.category);
-              for (final TorrentSnapshot snapshot in snapshots) {
-                if (snapshot.hash.toLowerCase() ==
-                        probe.torrentHash.toLowerCase() &&
-                    snapshot.name.trim() == probe.title.trim()) {
-                  return LegacyTorrentBinding(
-                    torrentHash: snapshot.hash.toLowerCase(),
-                    title: snapshot.name,
-                    category: probe.category,
-                    backendKind: confirmedIdentity.kind,
-                    backendProfileId: confirmedIdentity.profileId,
-                    fingerprint: confirmedIdentity.fingerprint,
-                    backendTaskId: snapshot.hash.toLowerCase(),
-                    observedSavePath: snapshot.savePath,
-                  );
-                }
-              }
-              return null;
-            } finally {
-              backend.close();
+      database: database,
+      baseDirectory: baseDir,
+      torrentMatcher: (LegacyTorrentProbe probe) async {
+        final VideoDownloadBackendIdentity? confirmedIdentity = identity;
+        if (confirmedIdentity == null) return null;
+        // 旧记录自己的分类就是它的事实：拿它去后端核对 hash+title 即可。
+        // 不能再要求它等于**当前配置**的分类——用户改一次分类（或升级后默认
+        // 分类漂移）会让全部旧任务无法被认领（BUG-1879）。
+        final TorrentBackend? backend = _createExactTorrentBackend(config);
+        if (backend == null) return null;
+        try {
+          final List<TorrentSnapshot> snapshots =
+              await backend.listTorrents(category: probe.category);
+          for (final TorrentSnapshot snapshot in snapshots) {
+            if (snapshot.hash.toLowerCase() ==
+                    probe.torrentHash.toLowerCase() &&
+                snapshot.name.trim() == probe.title.trim()) {
+              return LegacyTorrentBinding(
+                torrentHash: snapshot.hash.toLowerCase(),
+                title: snapshot.name,
+                category: probe.category,
+                backendKind: confirmedIdentity.kind,
+                backendProfileId: confirmedIdentity.profileId,
+                fingerprint: confirmedIdentity.fingerprint,
+                backendTaskId: snapshot.hash.toLowerCase(),
+                observedSavePath: snapshot.savePath,
+              );
             }
           },
           // 旧订阅 JSON 没有可同时核对的 torrent hash/title/category，不能仅因
@@ -4010,12 +3976,22 @@ class AppModel with ChangeNotifier {
     );
   }
 
-  /// 当前新任务必须绑定的真实后端身份。UI 只保存此快照，流水线执行时还会再次
-  /// 对比 fingerprint/profile/category，配置切换后不会被另一实例隐式接管。
-  Future<VideoDownloadBackendIdentity> currentVideoDownloadBackendIdentity() =>
-      _currentVideoDownloadBackendIdentity(
-        effectiveTorrentConfig(prefsRepo.qbConnectionConfig),
-      );
+  /// 当前新任务的落点：后端实例身份 + 此刻设置里的投放分类。UI 只保存此快照，
+  /// 流水线执行时还会再次对比 kind/profile/fingerprint，配置切换后不会被另一
+  /// 实例隐式接管；分类则被快照进任务行，之后该任务始终用自己那一份，不再与
+  /// 当前设置比较（BUG-1879）。
+  ///
+  /// 这里**只暴露落点**：裸身份没有「往哪投」，曾经的
+  /// `currentVideoDownloadBackendIdentity()` 让调用方能拿到一个缺分类的落点，
+  /// 已随 BUG-1879 一并删除，别再加回来。
+  Future<VideoDownloadBackendTarget> currentVideoDownloadBackendTarget() async {
+    final QbConnectionConfig config =
+        effectiveTorrentConfig(prefsRepo.qbConnectionConfig);
+    return VideoDownloadBackendTarget(
+      identity: await _currentVideoDownloadBackendIdentity(config),
+      category: config.category,
+    );
+  }
 
   /// 只暴露当前设备可访问的本地受管视频来源，供发现页新任务/订阅选择。
   Future<List<MediaSourceRow>> getManagedVideoDownloadSources() async {
@@ -6167,7 +6143,6 @@ class AppModel with ChangeNotifier {
     }
     dictionaryDownloadController.dispose();
     dictionaryEntriesNotifier.dispose();
-    clipboardHistoryNotifier.dispose();
     dictionarySearchAgainNotifier.dispose();
     dictionaryMenuNotifier.dispose();
     incognitoNotifier.dispose();
@@ -6409,97 +6384,14 @@ class AppModel with ChangeNotifier {
   Future<void> setGalgameLibraryView(String encoded) =>
       prefsRepo.setGalgameLibraryView(encoded);
 
-  bool get desktopClipboardEnabled => prefsRepo.desktopClipboardEnabled;
-  Future<void> setDesktopClipboardEnabled(bool v) async {
-    await prefsRepo.setDesktopClipboardEnabled(v);
-    await applyDesktopClipboardLifecycle();
-  }
-
-  /// 剪切板复制后是否自动查词（默认 true=现状）。false 时面板只显示文字、点词才查。
-  /// 与总开关 [desktopClipboardEnabled] 正交，不影响监听生命周期，故无需重跑
-  /// [applyDesktopClipboardLifecycle]。
-  bool get desktopClipboardAutoLookup => prefsRepo.desktopClipboardAutoLookup;
-  Future<void> setDesktopClipboardAutoLookup(bool v) =>
-      prefsRepo.setDesktopClipboardAutoLookup(v);
-
-  /// spec 2026-07-10 §7 生命周期上移：剪贴板监听归 AppModel 持有（开=start /
-  /// 关=stop），HomeDictionaryPage 退化为 destination==main 分区的消费者。此前
-  /// start/stop 绑词典 tab 挂载周期——那是「去向只有主窗 tab」时代的产物；
-  /// 面板/瞬态去向要求 app 级监听（tab 未挂载时 pending 排队语义 TODO-376 已有）。
-  /// 启动期由 main.dart 桌面块调用一次；设置开关切换时经
-  /// [setDesktopClipboardEnabled] 幂等重入（service.start 对已运行是 no-op）。
-  Future<void> applyDesktopClipboardLifecycle() async {
-    if (!DesktopLookupService.isDesktop) return;
-    // 剪贴板复制历史采集：真实剪贴板变化（origin=clipboard、去重通过）落历史。
-    DesktopLookupService.instance.onClipboardCaptured =
-        addClipboardHistoryEntry;
-    if (desktopClipboardEnabled) {
-      await DesktopLookupService.instance.start(
-        windowMode: desktopClipboardWindowMode,
-      );
-    } else {
-      await DesktopLookupService.instance.stop();
-    }
-  }
-
   // TODO-1030 M0 — 全局查词是否抓取选中文本上下文（隐私敏感，默认关）。
   bool get globalContextCaptureEnabled => prefsRepo.globalContextCaptureEnabled;
   Future<void> setGlobalContextCaptureEnabled(bool v) =>
       prefsRepo.setGlobalContextCaptureEnabled(v);
-  bool get desktopClipboardAlwaysOnTop => prefsRepo.desktopClipboardAlwaysOnTop;
-  Future<void> setDesktopClipboardAlwaysOnTop(bool v) =>
-      prefsRepo.setDesktopClipboardAlwaysOnTop(v);
-  DesktopClipboardWindowMode get desktopClipboardWindowMode =>
-      prefsRepo.desktopClipboardWindowMode;
-  Future<void> setDesktopClipboardWindowMode(
-    DesktopClipboardWindowMode v,
-  ) async {
-    await prefsRepo.setDesktopClipboardWindowMode(v);
-    if (DesktopLookupService.isDesktop) {
-      await DesktopLookupService.instance.configureWindowMode(v);
-    }
-  }
 
-  // spec 2026-07-10 剪贴板独立弹窗 — 剪贴板查词去向 + 面板窗四项偏好（转发）。
-  DesktopClipboardDestination get desktopClipboardDestination =>
-      prefsRepo.desktopClipboardDestination;
-  Future<void> setDesktopClipboardDestination(DesktopClipboardDestination v) =>
-      prefsRepo.setDesktopClipboardDestination(v);
-  double get clipboardPanelOpacity => prefsRepo.clipboardPanelOpacity;
-  Future<void> setClipboardPanelOpacity(double v) =>
-      prefsRepo.setClipboardPanelOpacity(v);
-  // 真透明剪切板文字窗背景不透明度（0.0 = 全透只露文字）。
-  double get clipboardTextWindowBgOpacity =>
-      prefsRepo.clipboardTextWindowBgOpacity;
-  Future<void> setClipboardTextWindowBgOpacity(double v) =>
-      prefsRepo.setClipboardTextWindowBgOpacity(v);
-
-  int get clipboardTextWindowWidth => prefsRepo.clipboardTextWindowWidth;
-  int get clipboardTextWindowHeight => prefsRepo.clipboardTextWindowHeight;
-  Future<void> setClipboardTextWindowSize({
-    required int width,
-    required int height,
-  }) => prefsRepo.setClipboardTextWindowSize(width: width, height: height);
-
-  /// 真透明剪切板文字窗的文字颜色 = 当前主题 onSurface（跟随明暗/配色方案）。背景
-  /// 仍由 [clipboardTextWindowBgOpacity] 滑杆控制、文字恒实心（满 alpha）。明暗解析
-  /// 与悬浮字幕 app 级样式同款（ThemeMode.system 按浅色，保持两处一致）。
-  int clipboardTextWindowTextColor() {
-    final Brightness brightness = themeMode == ThemeMode.dark
-        ? Brightness.dark
-        : Brightness.light;
-    return buildColorScheme(brightness).onSurface.value;
-  }
-
-  String get clipboardPanelRect => prefsRepo.clipboardPanelRect;
-  Future<void> setClipboardPanelRect(String v) =>
-      prefsRepo.setClipboardPanelRect(v);
-  bool get clipboardPanelPinned => prefsRepo.clipboardPanelPinned;
-  Future<void> setClipboardPanelPinned(bool v) =>
-      prefsRepo.setClipboardPanelPinned(v);
-  bool get clipboardPanelBlockCapture => prefsRepo.clipboardPanelBlockCapture;
-  Future<void> setClipboardPanelBlockCapture(bool v) =>
-      prefsRepo.setClipboardPanelBlockCapture(v);
+  /// 防截屏（桌面查词浮窗，Windows）。存储键沿用历史名 `clipboard_panel_block_capture`。
+  bool get lookupBlockCapture => prefsRepo.lookupBlockCapture;
+  Future<void> setLookupBlockCapture(bool v) => prefsRepo.setLookupBlockCapture(v);
 
   Map<String, String> get customDictCSS => prefsRepo.customDictCSS;
   String getCustomCSSForDict(String dictName) =>
@@ -7089,6 +6981,11 @@ class AppModel with ChangeNotifier {
   String get galHookTextAlignment => prefsRepo.galHookTextAlignment;
   Future<void> setGalHookTextAlignment(String value) =>
       prefsRepo.setGalHookTextAlignment(value);
+
+  String get galHookTextVerticalAlignment =>
+      prefsRepo.galHookTextVerticalAlignment;
+  Future<void> setGalHookTextVerticalAlignment(String value) =>
+      prefsRepo.setGalHookTextVerticalAlignment(value);
 
   int get galHookTextColor => prefsRepo.galHookTextColor;
   Future<void> setGalHookTextColor(int value) =>

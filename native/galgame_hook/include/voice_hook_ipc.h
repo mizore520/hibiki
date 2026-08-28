@@ -67,8 +67,103 @@ constexpr uint32_t kSharedMagic = 0x31485648;  // 'H''V''H''1'
 //     Hibiki 宿主进程里的 loopback，却让游戏内 DLL 一加载就无条件创建另一个系统混音捕获线程；
 //     cleanOnly/resourceOnly 因而仍会录音。request_seq 最后发布请求，applied_seq 最后确认
 //     Stop/Release/线程退出；版本不匹配时 DLL 拒绝映射，旧 helper 不能绕过默认 deny。
-constexpr uint32_t kSharedVersion = 16;
+// v17：在头部最尾追加**本次注入所用 hook DLL 的 SHA-256**（`hook_module_sha256`）。
+//     写者是创建该映射的 injector（只在新建映射、memset 清零之后写一次）；读者是**下一次**
+//     injector——它见到已存在的映射时，拿 header 里这条记录跟本次请求 DLL 现算的摘要比。
+//     为什么磁盘摘要不够：驻留身份判据先比路径，路径不等直接 kPathMismatch，所以能走到
+//     摘要比较时两条路径已经相等；此时若两侧都用 Sha256File 读磁盘，读的是同一个文件，
+//     摘要恒等，kDigestMismatch 永不可达。而这道门要挡的恰恰是「Fushi 自更新把磁盘上那份
+//     DLL 换成新构建、游戏进程里仍驻留旧映像」——路径没变、磁盘上是新文件，磁盘里根本
+//     不含「进程里驻留的是哪个构建」这条信息。它只存在于当初完成注入的那一方，所以必须
+//     由注入者在建映射时留档。纯尾部追加：前面各区偏移逐字节不动。
+// v18：`LookupInputSlot::keys` 的**取值语义**换成 WebView2 的
+//     COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS（Shift=4 / Ctrl=8 / 没有 Alt 位），
+//     不再是旧的 Shift=1 / Ctrl=2 / Alt=4 自定义压缩表。布局一字节没动，正因为如此
+//     才必须靠版本号挡：v17 helper + v18 host 时，玩家按住 Shift 会被 host 读成
+//     kLookupInputVirtualKeyLeftButton 塞给 SendMouseInput，move 事件被 WebView2
+//     当成拖拽，症状是「按住 Shift 划过卡片就开始拖选」而不是任何显式错误。
+//     BUG-1881 已经证明「Windows Debug 构建残留旧 helper」是真实发生过的场景，所以
+//     这种**同布局、异语义**的变更同样要升版本：跨进程契约的版本号锁的是解释方式，
+//     不只是偏移。升到 18 之后旧 helper 建的映射会在三处既有门被拒（host 的
+//     ProtocolMatches、DLL 的 header 校验、injector 的驻留映射复用判据）。
+constexpr uint32_t kSharedVersion = 18;
 constexpr uint32_t kStableIpcVersion = 1;
+
+// BUG-1882 — SGRE 的鼠标输入走 DirectInput immediate state，不经过普通
+// Win32 mouse-message 队列。direct galCard 因此需要一条很窄的跨进程发布面：
+//
+//   * injected SGRE adapter 先把 Required 置 1，声明该精确游戏不允许退回已经
+//     证伪的 HHOOK-only 路径；GetDeviceState detour 真正就绪后才最后提交 Ready；
+//   * Fushi 看到 Required 但没有 Ready 时 fail closed；只有 Ready 同时存在才把
+//     当前 direct popup HWND 发布到游戏 HWND；
+//   * detour 只接受仍存在、且 owner 正是游戏 HWND 的该 popup，随后仅清
+//     DIMOUSESTATE2::rgbButtons，绝不碰 lX/lY/lZ。
+//
+// HWND 自带进程崩溃生命周期：Fushi 退出后窗口会被系统销毁，注入侧即使看到陈旧
+// property 也会因 IsWindow/GW_OWNER 校验而 fail open，不会把游戏永久锁死。这里没有
+// 改 SharedHeader 布局，所以不升 kSharedVersion；两端共享名字只是为了杜绝手抄漂移。
+inline constexpr wchar_t kSgreDirectInputShieldReadyProperty[] =
+    L"Fushi.SGRE.DirectInputShield.Ready";
+inline constexpr wchar_t kSgreDirectInputShieldRequiredProperty[] =
+    L"Fushi.SGRE.DirectInputShield.Required";
+inline constexpr wchar_t kSgreDirectInputShieldWindowProperty[] =
+    L"Fushi.SGRE.DirectInputShield.Window";
+inline constexpr uintptr_t kSgreDirectInputShieldReadyValue = 1u;
+inline constexpr uintptr_t kSgreDirectInputShieldRequiredValue = 1u;
+
+// Exact anemoi/Siglus uses GetKeyState(VK_LBUTTON) as an immediate sampled
+// input source.  WH_MOUSE_LL can remove Win32 mouse messages, but it cannot
+// change that physical key-state sample, so the direct WebView route needs the
+// same fail-closed Required -> Ready -> Window publication shape as SGRE.  Keep
+// a distinct property namespace: the admitted hook ABI is GetKeyState rather
+// than DIMOUSESTATE2, and an old host that only understands SGRE must not
+// mistake one contract for the other.
+inline constexpr wchar_t kSiglusSampledInputShieldReadyProperty[] =
+    L"Fushi.Siglus.SampledInputShield.Ready";
+inline constexpr wchar_t kSiglusSampledInputShieldRequiredProperty[] =
+    L"Fushi.Siglus.SampledInputShield.Required";
+inline constexpr wchar_t kSiglusSampledInputShieldWindowProperty[] =
+    L"Fushi.Siglus.SampledInputShield.Window";
+inline constexpr uintptr_t kSiglusSampledInputShieldReadyValue = 1u;
+inline constexpr uintptr_t kSiglusSampledInputShieldRequiredValue = 1u;
+
+// Exact WHITE ALBUM2 / Leaf-AQUAPLUS samples GetAsyncKeyState directly.  A
+// low-level mouse hook can swallow the corresponding Win32 messages, but it
+// cannot hide the physical high/low bits from that poller.  Give this distinct
+// ABI its own Required -> Ready -> Window namespace while reusing the host's
+// sampled-input transaction lifetime.  Unknown Leaf builds never publish
+// Required because executable admission remains hash-pinned in the adapter.
+inline constexpr wchar_t kLeafAquaplusSampledInputShieldReadyProperty[] =
+    L"Fushi.LeafAquaplus.SampledInputShield.Ready";
+inline constexpr wchar_t kLeafAquaplusSampledInputShieldRequiredProperty[] =
+    L"Fushi.LeafAquaplus.SampledInputShield.Required";
+inline constexpr wchar_t kLeafAquaplusSampledInputShieldWindowProperty[] =
+    L"Fushi.LeafAquaplus.SampledInputShield.Window";
+inline constexpr wchar_t kLeafAquaplusSampledInputShieldTailRequestProperty[] =
+    L"Fushi.LeafAquaplus.SampledInputShield.TailRequest";
+inline constexpr wchar_t kLeafAquaplusSampledInputShieldTailAckProperty[] =
+    L"Fushi.LeafAquaplus.SampledInputShield.TailAck";
+inline constexpr uintptr_t kLeafAquaplusSampledInputShieldReadyValue = 1u;
+inline constexpr uintptr_t kLeafAquaplusSampledInputShieldRequiredValue = 1u;
+inline constexpr uint32_t kLeafAquaplusSampledInputLeftButton = 0x1u;
+inline constexpr uint32_t kLeafAquaplusSampledInputRightButton = 0x2u;
+inline constexpr uint32_t kLeafAquaplusSampledInputMiddleButton = 0x4u;
+inline constexpr uint32_t kLeafAquaplusSampledInputButtonMask = 0x7u;
+// Cross-process completion notification sent by the injected Leaf detour after
+// every requested GetAsyncKeyState low bit has been observed and a later raw-0
+// sample proves the transaction tail is drained. WM_APP is fixed at 0x8000.
+inline constexpr uint32_t kSampledInputShieldReleaseWindowMessage = 0x8053u;
+
+inline constexpr uint32_t MakeLeafAquaplusSampledInputTailToken(
+    uint32_t generation, uint32_t buttons) {
+  return ((generation & 0x1fffffffu) << 3u) |
+         (buttons & kLeafAquaplusSampledInputButtonMask);
+}
+
+inline constexpr uint32_t LeafAquaplusSampledInputTailButtons(
+    uint32_t token) {
+  return token & kLeafAquaplusSampledInputButtonMask;
+}
 
 // v16 native loopback policy/control ABI. Only the exact value 1 authorises
 // creation of the loopback worker; zero and every unknown value are deny.
@@ -239,6 +334,17 @@ constexpr uint32_t kXAudioDiagGameResourcePublished = 0x00080000u;
 // 与上面那位分开的理由：那位能宣称负载逐字节等于源 entry，这一位不能——fmt 是本
 // 进程按 XAudio2 报的源格式合成的。混成一位，台账上就分不出这两级证据。
 constexpr uint32_t kXAudioDiagRuntimeXwmaPublished = 0x00100000u;
+// Exact WHITE ALBUM2 Leaf/AQUAPLUS resource capture reuses the shared
+// KernelBase file broker: VOICE.PAK is validated as a LAC archive at install,
+// then a playback-time read queues the original Ogg member for worker-side
+// publication.  These bits live in the existing diagnostics word; no IPC
+// layout or region size changes.
+constexpr uint32_t kXAudioDiagLeafLacHooksReady = 0x00200000u;
+constexpr uint32_t kXAudioDiagLeafLacHandleTracked = 0x00400000u;
+constexpr uint32_t kXAudioDiagLeafLacReadObserved = 0x00800000u;
+constexpr uint32_t kXAudioDiagLeafLacVoiceQueued = 0x01000000u;
+constexpr uint32_t kXAudioDiagLeafLacTaskRejected = 0x02000000u;
+constexpr uint32_t kXAudioDiagLeafLacVoicePublished = 0x04000000u;
 
 // reserved_luna 的资源音频诊断位。KiriKiriZ 的 TVPCreateStream hook 直接导出当前播放的
 // 已解密 Ogg；Siglus 从 OVK 索引导出逐句 Ogg。它们只代表“资源捕获链已安装”，不要求 PCM
@@ -265,6 +371,7 @@ inline constexpr bool HasReadyGameResourceAudio(uint32_t reserved_luna,
          (hook_diagnostics & kDiagMalieLibpHooksReady) != 0 ||
          (hook_diagnostics & kDiagVisualArtsOvkHooksReady) != 0 ||
          (reserved_hook_diagnostics & kDiagElfAi6ArcHooksReady) != 0 ||
+         (xaudio_diagnostics & kXAudioDiagLeafLacHooksReady) != 0 ||
          (xaudio_diagnostics & kXAudioDiagGameResourcePublished) != 0 ||
          unity_ready;
 }
@@ -464,6 +571,27 @@ constexpr uint32_t kLookupDiagCardPlainFallback = 0x00100000u;
 // 随后才逐条 InsertHook；同一入口还要叠加原生查词 detour 时，必须等到这一步完成才能稳定链式
 // 安装，不能拿“管道已连上”冒充“目标地址已改写”。
 constexpr uint32_t kLookupDiagLunaKnownHookReady = 0x00200000u;
+// 精确 profile 的 sampled-input detour 已装，且 ready property 已发布到当前游戏
+// 主窗。SGRE 的实现是 DirectInput GetDeviceState，Siglus 的实现是 GetKeyState；该位只
+// 证明 host 可以安全启用对应输入盾，不声称 popup 正显示。保留旧 SGRE 名为 ABI/源码
+// 兼容别名。
+constexpr uint32_t kLookupDiagSampledInputShieldReady = 0x00400000u;
+constexpr uint32_t kLookupDiagSgreDirectInputShieldReady =
+    kLookupDiagSampledInputShieldReady;
+// Exact anemoi/Siglus 1.1.141.3 lookup gates. Keep identity, installation,
+// and live observations separate so a real-process probe identifies the first
+// failed boundary without inferring it from a missing popup.
+constexpr uint32_t kLookupDiagSiglusProfileMatched = 0x00800000u;
+constexpr uint32_t kLookupDiagSiglusGlyphHookReady = 0x01000000u;
+constexpr uint32_t kLookupDiagSiglusGetKeyStateHookReady = 0x02000000u;
+constexpr uint32_t kLookupDiagSiglusGlyphObserved = 0x04000000u;
+constexpr uint32_t kLookupDiagSiglusGetKeyStateObserved = 0x08000000u;
+// Exact-profile admission diagnostics. These keep the shared layout/version
+// unchanged while making fail-closed identity rejection observable.
+constexpr uint32_t kLookupDiagSiglusProfileChecked = 0x10000000u;
+constexpr uint32_t kLookupDiagSiglusExecutableRead = 0x20000000u;
+constexpr uint32_t kLookupDiagSiglusHashMatched = 0x40000000u;
+constexpr uint32_t kLookupDiagSiglusMachineMatched = 0x80000000u;
 // hook → host：用户真正提交查词时命中了哪个字符。hover 由游戏线程即时画高亮，不写这个
 // 单槽，避免后到 hover 覆盖尚未被 host 消费的 submit。写侧先把 `seq` 清 0，再写 payload，
 // 最后用 Interlocked 发布新 `seq`，与 VoiceClip / LoopbackMarker 同一套纪律。
@@ -545,14 +673,14 @@ constexpr uint32_t kLookupFrameHighlightOnly = 0x00000002u;
 // 当前 route；截图完成后 host 通过一张普通 full frame 恢复。hook 必须等 TJS hide/update 成功且
 // 又经过一次 continuous callback 后，才把本帧 seq 写进 lookup_frame_applied_seq。
 constexpr uint32_t kLookupFrameCaptureSuppress = 0x00000004u;
-// hook → host：落在卡片矩形内、需要喂给离屏 WebView2 的输入事件。
+// hook → host：需要喂给离屏 WebView2 的卡内输入，或由注入侧判定的弹框控制事件。
 struct LookupInputSlot {
   volatile uint64_t seq;  // 单调；**最后**写
   int32_t x;              // 卡片局部坐标（已减去 anchor）
   int32_t y;
   uint32_t kind;          // kLookupInput*
   int32_t wheel;          // 滚轮增量（kind==kLookupInputWheel 时有效）
-  uint32_t keys;          // 修饰键位掩码
+  uint32_t keys;          // kLookupInputVirtualKey*；直接对应 WebView2 virtualKeys
   uint32_t reserved;
 };
 
@@ -561,6 +689,27 @@ constexpr uint32_t kLookupInputLeftDown = 1;
 constexpr uint32_t kLookupInputLeftUp = 2;
 constexpr uint32_t kLookupInputWheel = 3;
 constexpr uint32_t kLookupInputLeave = 4;
+// Injected bitmap presenters cannot receive a window message for a click that
+// lands on the game outside their layered HWND.  They publish this control
+// event after consuming that raw DirectInput transaction so Dart can retire the
+// same lookup session instead of merely hiding one stale bitmap.
+constexpr uint32_t kLookupInputDismissOutside = 5;
+
+// LookupInputSlot::keys 的跨进程真相源。数值与
+// COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS 完全一致；它不是 Win32 MK_* 的任意
+// “修饰键压缩表”。尤其 1 是左键、4 才是 Shift，WebView2 没有 Alt 位。
+constexpr uint32_t kLookupInputVirtualKeyNone = 0x0000u;
+constexpr uint32_t kLookupInputVirtualKeyLeftButton = 0x0001u;
+constexpr uint32_t kLookupInputVirtualKeyRightButton = 0x0002u;
+constexpr uint32_t kLookupInputVirtualKeyShift = 0x0004u;
+constexpr uint32_t kLookupInputVirtualKeyControl = 0x0008u;
+constexpr uint32_t kLookupInputVirtualKeyMiddleButton = 0x0010u;
+constexpr uint32_t kLookupInputVirtualKeyXButton1 = 0x0020u;
+constexpr uint32_t kLookupInputVirtualKeyXButton2 = 0x0040u;
+
+// v17：hook DLL 摘要字段的固定长度 = 64 位十六进制 SHA-256 + 结尾 NUL。定长而不是变长，
+// 是因为它落在跨进程共享内存里：读侧必须能在不信任写侧的前提下有界读（strnlen 上界就是它）。
+constexpr uint32_t kHookModuleDigestChars = 65;
 
 // 共享内存头。injector 创建并清零、填各区偏移；hook DLL 注入后填格式、持续更新计数。
 // volatile 字段跨进程无锁单写单读。绝不在此放指针（跨进程地址无意义）。
@@ -664,6 +813,12 @@ struct SharedHeader {
   volatile uint32_t native_loopback_request_seq;
   volatile uint32_t native_loopback_state;
   volatile uint32_t native_loopback_applied_seq;
+  // ── v17 驻留 hook DLL 构建身份（纯追加；创建映射的 injector 写，下一次 injector 读）──
+  // 64 位小写十六进制 SHA-256 + NUL；全 0 表示「本次注入算不出摘要」，读侧据此走
+  // kDigestUnavailable（有界重试），绝不当成 mismatch 去要求用户重启游戏。
+  // 只在**新建映射**时写一次，复用既有映射时一个字节都不碰——那条记录属于当初真正
+  // 完成注入的那次会话，被本次请求覆盖就等于把要比对的证据自己抹掉了。
+  char hook_module_sha256[kHookModuleDigestChars];
 };
 #pragma pack(pop)
 

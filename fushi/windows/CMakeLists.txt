@@ -166,6 +166,59 @@ install(CODE "
   endif()
 " COMPONENT Runtime)
 
+# === galgame hook helper 随包普通文件（可选，本地/CI 事先构建）===
+# helper（injector exe + hook DLL）**绝不链接进 fushi.exe**。BUG-1449 起，两个架构由
+# install_into_bundle.ps1 在构建期校验 zip 后解包到 exe 同级 voice_hook/<arch>/；安装包
+# 不再携带 galgame_helper/ zip，也不再依赖运行期把第二份副本同步到 plain files。
+#
+# 增量输出目录可能残留上一次构建的 voice_hook/。若这次 dist 不完整，或 dist 的源码指纹
+# 不属于当前 checkout，安装脚本必须让残留 helper **明确不可加载**而不是把旧 DLL 伪装成
+# 新构建（BUG-1881）；功能明确不可用胜过静默注入旧件。脚本用「整目录改名让位」实现，
+# 因为被注进游戏的 hook DLL 删不掉但可以改名——直接 Remove-Item 会让整个
+# flutter build windows 因为「上次玩的游戏还没退」而失败（BUG-1880）。
+#
+# 两档宽容分开门控，因为它们不是同一件事：
+# - `-AllowMissingDistribution`（**所有配置**）：这个工作区还没跑过 build_distribution.ps1。
+#   这不只是开发机的便利——release-desktop.yml 里 `flutter build windows --release` 跑在
+#   build_distribution.ps1 **之前**，发布构建走到这里时 dist 必然为空。发布包真正的
+#   fail-closed 门是随后那一步：它不带任何 Allow* 开关地再调一次同一个脚本，装不上就红，
+#   而 ISCC 打包又在它之后。把这里改成 Profile/Release 硬失败 = 每次发布构建必红。
+# - `$<$<CONFIG:Debug>:-AllowStaleDistribution>`：dist 齐全但指纹来自另一个 checkout。
+#   Debug 允许（禁用旧 helper 继续构建），Profile/Release 拒绝——那是拿另一份源码的
+#   helper 去凑发布产物。
+#
+# 必须用 generator expression：Flutter 的 Visual Studio 生成器是多配置的，configure 期
+# CMAKE_BUILD_TYPE 为空，任何 configure 期判断都只会永远走同一个分支。install(CODE) 支持
+# genex 是 CMake 3.14 起（正好是本文件的 cmake_minimum_required 下限）。
+# 实测（cmake 4.3.3 + "Visual Studio 17 2022"，三个配置各跑一次 cmake --install --config）：
+# Debug 展开成 `-AllowStaleDistribution`，Profile/Release 整个参数消失（不留空参数）。
+#
+# 要在本地拿到 helper：先在 native/galgame_hook 下跑 tools/build_distribution.ps1。
+set(FUSHI_GALGAME_HELPER_DIST_DIR
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../native/galgame_hook/dist")
+set(FUSHI_GALGAME_HELPER_INSTALL_SCRIPT
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../native/galgame_hook/tools/install_into_bundle.ps1")
+install(CODE "
+  execute_process(
+    COMMAND powershell.exe -NoProfile -ExecutionPolicy Bypass
+      -File \"${FUSHI_GALGAME_HELPER_INSTALL_SCRIPT}\"
+      -BundleDirectory \"${CMAKE_INSTALL_PREFIX}\"
+      -DistDirectory \"${FUSHI_GALGAME_HELPER_DIST_DIR}\"
+      -AllowMissingDistribution
+      $<$<CONFIG:Debug>:-AllowStaleDistribution>
+    RESULT_VARIABLE _galgame_helper_result
+    OUTPUT_VARIABLE _galgame_helper_stdout
+    ERROR_VARIABLE _galgame_helper_stderr)
+  if(NOT _galgame_helper_result EQUAL 0)
+    message(FATAL_ERROR
+      \"install_into_bundle.ps1 failed (\${_galgame_helper_result}):\\n\"
+      \"\${_galgame_helper_stdout}\\n\${_galgame_helper_stderr}\")
+  endif()
+  if(NOT \"\${_galgame_helper_stdout}\" STREQUAL \"\")
+    message(STATUS \"\${_galgame_helper_stdout}\")
+  endif()
+" COMPONENT Runtime)
+
 # === Magpie 随包精简归档（可选，本地/CI 事先构建）===
 # 与上面的 helper 规则同源同理由（BUG-1246）：Magpie 删掉下载链路之后，`magpie_bundle/`
 # 只由 CI 在 `flutter build windows` 之后的一个独立 YAML 步骤拷贝，于是 `flutter run` /

@@ -31,6 +31,10 @@ import 'package:fushi/src/media/video/video_cover_extractor.dart'
     show isLocalFrameExtractableVideoSource;
 import 'package:fushi/src/media/video/m3u8_playlist.dart';
 import 'package:fushi/src/media/video/video_book_repository.dart';
+import 'package:fushi/src/media/video/video_library_delete.dart';
+import 'package:fushi/src/sync/local_file_delete_feedback.dart';
+import 'package:fushi/src/media/video/video_local_files.dart'
+    show videoBookHasLocalFiles;
 import 'package:fushi/src/media/video/video_subtitle_attach.dart';
 import 'package:fushi/src/media/video/video_subtitle_attach_messages.dart';
 import 'package:fushi/src/media/video/video_import_dialog.dart';
@@ -324,10 +328,6 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
       const <int, CollectionScrapeMetaRow>{};
   Map<int, VideoMetadataWorkRow> _metadataWorkByCollection =
       const <int, VideoMetadataWorkRow>{};
-  Set<int> _aniDbScrapedCollectionIds = const <int>{};
-  Set<String> _aniDbScrapedBookUids = const <String>{};
-  Map<String, int> _aniDbScrapedCollectionByBookUid = const <String, int>{};
-  Map<String, int> _aniDbScrapedSortIndexByBookUid = const <String, int>{};
   Map<String, VideoMetadataWorkRow> _metadataWorkByBook =
       const <String, VideoMetadataWorkRow>{};
   Map<int, List<VideoMetadataImageRow>> _metadataImagesByWork =
@@ -350,6 +350,31 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
   /// 一决定：下次进库还挂着上次的筛选只会让人以为库空了）。
   VideoYearFilter _yearFilter = const VideoYearFilter.all();
   VideoWatchStatusFilter _watchStatusFilter = VideoWatchStatusFilter.all;
+
+  /// 系列归属筛选（只在「全部视频」露出，同样不持久化）。「全部视频」把整库逐条
+  /// 平铺，系列的每一集都混在里面；这个档位让用户把已归进系列的集数收掉、只看
+  /// 还没成系列的散片（反过来也能只看系列内的集）。
+  VideoSeriesFilter _seriesFilter = VideoSeriesFilter.all;
+
+  /// 系列归属判据依赖的两份映射（[_primaryCollectionByEntry] / [_collectionsById]）
+  /// 是否已由 [_loadLibraryMaps] 落位。
+  ///
+  /// 映射未就位时它们是空 map，[_isCollectionMember] 会对**每一条**返回 false——
+  /// 那是「还不知道」，不是「都不在系列里」。把未知当否会让「系列内」档位在映射
+  /// 到位前把整墙判空，闪一下筛选空态。大库上 [_loadLibraryMaps] 要跑一会儿，
+  /// 用户完全来得及在这段窗口里选档位。
+  bool _libraryMapsReady = false;
+
+  /// 系列归属筛选归「全部视频」独有：控件只在那个分区露出，所以别的分区必须恒
+  /// 按「全部」过滤——否则同一个 State 被 tab 复用时，上个分区留下的档位会在没有
+  /// 任何控件可复位的页面上隐形吃掉条目。
+  ///
+  /// 映射未就位时同样退回「全部」（宁可先按不过滤渲染，也不拿「还不知道」当
+  /// 判据把条目筛掉）。
+  VideoSeriesFilter get _effectiveSeriesFilter =>
+      widget.section == VideoLibrarySection.allVideos && _libraryMapsReady
+          ? _seriesFilter
+          : VideoSeriesFilter.all;
 
   /// TODO-2486：hero 轮播控制器 + 当前页。手动切换（滑动/指示条），**无自动
   /// 轮播**（尊重 prefers-reduced-motion 精神）。
@@ -551,6 +576,22 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
   /// watch-stats 最近观看，外加偏好里的排序方式。
   Future<void> _loadLibraryMaps() async {
     final int requestGeneration = ++_libraryMapsRequestGeneration;
+    try {
+      await _loadLibraryMapsInner(requestGeneration);
+    } catch (_) {
+      // 失败也要标记「这一轮加载结束了」。只在成功路径置位的话，DB 一出错
+      // [_libraryMapsReady] 就永远为 false，系列归属档位**永久静默失效**——chip
+      // 照常显示用户选的档位，却什么都不筛。宁可让它按（空的）映射生效：
+      // 「系列内」筛出空墙，不对劲是看得见的、用户能自己切回「全部」，也好过
+      // 「看起来选了、其实没生效」。异常照常上抛，不吞。
+      if (mounted && requestGeneration == _libraryMapsRequestGeneration) {
+        setState(() => _libraryMapsReady = true);
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _loadLibraryMapsInner(int requestGeneration) async {
     final AppModel appModel = ref.read(appProvider);
     final FushiDatabase db = appModel.database;
     final ShelfSortMode sortMode =
@@ -612,23 +653,6 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
         };
     final List<VideoMetadataWorkRow> metadataWorks = await db
         .getAllVideoMetadataWorks();
-    final Set<int> aniDbScrapedCollectionIds = await db
-        .aniDbScrapedVideoCollectionIds();
-    final Set<String> aniDbScrapedBookUids = await db
-        .aniDbScrapedVideoBookUids();
-    final Map<String, int> aniDbScrapedCollectionByBookUid = <String, int>{};
-    final Map<String, int> aniDbScrapedSortIndexByBookUid = <String, int>{};
-    for (final MediaCollectionItemRow item in collectionItems) {
-      if (item.mediaType != MediaKind.video.dbValue ||
-          !aniDbScrapedCollectionIds.contains(item.collectionId)) {
-        continue;
-      }
-      final int? current = aniDbScrapedCollectionByBookUid[item.entryKey];
-      if (current == null || item.collectionId < current) {
-        aniDbScrapedCollectionByBookUid[item.entryKey] = item.collectionId;
-        aniDbScrapedSortIndexByBookUid[item.entryKey] = item.sortIndex;
-      }
-    }
     final Map<int, VideoMetadataWorkRow> metadataWorkByCollection =
         <int, VideoMetadataWorkRow>{
       for (final VideoMetadataWorkRow work in metadataWorks)
@@ -682,16 +706,13 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
         for (final MediaCollectionRow c in collections) c.id: c,
       };
       _primaryCollectionByEntry = primaryMap;
+      _libraryMapsReady = true;
       _watchAtByUid = watchByUid;
       _legacyWatchAtByTitle = legacyByTitle;
       _airYearByUid = airYearByUid;
       _videoScrapeMetaByUid = scrapeMetaByUid;
       _collectionScrapeMetaById = collectionMetaById;
       _metadataWorkByCollection = metadataWorkByCollection;
-      _aniDbScrapedCollectionIds = aniDbScrapedCollectionIds;
-      _aniDbScrapedBookUids = aniDbScrapedBookUids;
-      _aniDbScrapedCollectionByBookUid = aniDbScrapedCollectionByBookUid;
-      _aniDbScrapedSortIndexByBookUid = aniDbScrapedSortIndexByBookUid;
       _metadataWorkByBook = metadataWorkByBook;
       _metadataImagesByWork = metadataImagesByWork;
       _runtimeMinutesByBookUid = runtimeMinutesByBookUid;
@@ -949,12 +970,13 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
       // 槽 = 来源身份 + 域（BUG-1202）。上面那行 `?? ` 让本方法**故意**不知道拿到的
       // 是互联还是云盘，所以来源身份只能由 source 自己申报；靠调用点分辨来源、或靠
       // 「换后端时记得失效」都治不了串味（换云盘后端根本不经过互联的失效信号）。
-      final List<RemoteVideoInfo> videos = await _remoteCache.read(
-        sourceId: source.remoteLibrarySourceId,
-        key: RemoteLibraryCacheKeys.videos,
+      final List<RemoteVideoInfo>? videos = await _readRemoteVideoList(
+        source: source,
         forceRefresh: forceRefresh,
-        fetch: source.listRemoteVideos,
       );
+      // BUG-1891：Jellyfin/Emby 关掉「自动列出条目」且手里还没有清单 → 本轮一个
+      // 请求都不发，也不渲染远端卡（与「显示远端条目」关闭同款空态，不是失败态）。
+      if (videos == null) return null;
       // #6: 远端与本地是同一视频时（同 bookUid）不在混排网格重复展示。
       final List<VideoBookRow> localVideos = await widget.repo.listAll();
       final Set<String> localUids =
@@ -973,6 +995,39 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
         failed: true,
       );
     }
+  }
+
+  /// 取远端视频清单：默认经 [RemoteLibraryCache] 取数；Jellyfin/Emby 且用户关掉
+  /// 「自动列出条目」时**只读缓存、绝不取数**（BUG-1891）。
+  ///
+  /// 用户报的「加进去直接开始刮削、卡死、封号」不是刮削（Jellyfin/Emby 条目根本
+  /// 不进任何刮削管线），是一进视频页就对整台服务器做全库递归枚举。几十万条目的
+  /// 公共 Emby 服上这就是几十上百个重查询连发，与刮削在观感和服务器负载上完全一致。
+  ///
+  /// 关掉之后仍把**上一次**拉到的清单显示出来（[RemoteLibraryCache.peek] 不看 TTL）
+  /// ——否则切一次 tab 回来卡片全没了，用户只能反复手动刷新，比自动枚举还糟。
+  /// `null` = 本轮无清单可显示（且没有发出任何请求）。
+  /// 手动刷新（下拉 = `forceRefresh: true`）永远照拉，开关不挡用户自己按的那一次。
+  Future<List<RemoteVideoInfo>?> _readRemoteVideoList({
+    required RemoteVideoSource source,
+    required bool forceRefresh,
+  }) async {
+    if (!shouldFetchRemoteVideoList(
+      source: source,
+      forceRefresh: forceRefresh,
+      jellyfinAutoList: appModelNoUpdate.prefsRepo.jellyfinAutoListVideos,
+    )) {
+      return _remoteCache.peek<List<RemoteVideoInfo>>(
+        sourceId: source.remoteLibrarySourceId,
+        key: RemoteLibraryCacheKeys.videos,
+      );
+    }
+    return _remoteCache.read<List<RemoteVideoInfo>>(
+      sourceId: source.remoteLibrarySourceId,
+      key: RemoteLibraryCacheKeys.videos,
+      forceRefresh: forceRefresh,
+      fetch: source.listRemoteVideos,
+    );
   }
 
   /// 多端库联合视图（spec §2.1/§2.4/§2.5）：解析可混排进主网格的远端占位视频。
@@ -1038,16 +1093,67 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     setState(() => _selection.enterWith(slot));
   }
 
-  /// 一个可见视频是否已折进某合集（= 合集成员，不作散卡单选/全选）。
-  bool _isCollectionMember(String bookUid) => _primaryCollectionByEntry
-      .containsKey(MediaKind.video.compositeKey(bookUid));
+  /// 一个视频是否已归进某个系列（= 在系列视图里被折进合集卡）。
+  ///
+  /// 判据与 [_groupVideos] 的折叠判据同源（`collection_grouping.collectionIdOf`）：
+  /// 主合集归属存在 **且那个合集本身还在**。归属指向已删合集的孤儿条目在墙上本来
+  /// 就是散卡，不能算系列成员。「全部视频」的系列归属筛选按这份判据分档。
+  bool _isCollectionMember(String bookUid) {
+    final int? collectionId =
+        _primaryCollectionByEntry[MediaKind.video.compositeKey(bookUid)];
+    return collectionId != null && _collectionsById.containsKey(collectionId);
+  }
 
-  /// 全选 / 反选的候选散卡键：只含未折进合集的可见视频（折进的成员由整合集选中，
-  /// 不单独勾）。两处共用同一份资格判据，避免全选与反选口径漂开。
-  Set<String> _selectableLooseUids() => <String>{
-        for (final VideoBookRow book in _visibleVideos)
-          if (!_isCollectionMember(book.bookUid)) book.bookUid,
-      };
+  /// 首页分区：登记空可见序（首页没有可勾选的格），不产出任何 sliver。
+  List<Widget> _homeSectionSelectionReset() {
+    _visibleCollectionIds = const <int>[];
+    _syncVisibleOrder(loose: const <String>[], collections: const <int>[]);
+    return const <Widget>[];
+  }
+
+  /// 空态 / 筛选空态那一帧的 slivers。
+  ///
+  /// 必须走这里而不是直接 return：这一帧屏幕上一张可勾选的卡都没有，可见序就得
+  /// 跟着清空。此前空态在登记可见序**之前**提前 return，于是「勾了 2 个再切到一个
+  /// 筛不出东西的档位」会停在上一档的可见序——墙上空空如也，底栏还写着「已选 2」，
+  /// 点删除真的会删掉那两个看不见的条目。
+  List<Widget> _emptyStateSlivers(Widget child) {
+    _visibleCollectionIds = const <int>[];
+    _syncVisibleOrder(loose: const <String>[], collections: const <int>[]);
+    return <Widget>[
+      SliverFillRemaining(hasScrollBody: false, child: child),
+    ];
+  }
+
+  /// 登记本帧可见序，并在它真的变了时补一帧。
+  ///
+  /// 可见序是 build 期算出来的（筛选 / 排序的结果，写在 sliver 构建里），而底栏
+  /// 「已选 N」在同一帧更早的位置就读过选中集——切档位那一帧它读到的还是上一帧的
+  /// 可见序，计数会比墙上的卡片慢一拍，而且之后没有任何 setState 把这一帧补上，
+  /// 数字就永久停在旧值。只在多选态补：非多选态选中集恒空，补帧没有意义。
+  void _syncVisibleOrder({
+    required List<String> loose,
+    required List<int> collections,
+  }) {
+    final bool changed = _selection.setVisibleOrder(
+      loose: loose,
+      collections: collections,
+    );
+    if (!changed || !_selectionMode) return;
+    WidgetsBinding.instance.addPostFrameCallback((Duration _) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  /// 全选 / 反选的候选散卡键 = **屏幕上真的画出来的那些散卡**，直接取每帧
+  /// [MediaSelectionController.setVisibleOrder] 登记的可见散卡序。
+  ///
+  /// 此前这里按 `!_isCollectionMember` 自己重推一遍资格。那条规则只在系列墙成立
+  /// （成员折进合集卡、由整卡代选），而「全部视频」墙上压根没有合集卡、每一集都
+  /// 是独立散卡——于是那里的合集成员单击能选、全选却选不上；系列归属筛选选到
+  /// 「系列内」时满墙都是成员，全选/反选直接变成 no-op。系列墙传进去的可见序本来
+  /// 就已排除折叠成员，改取真相源后那边行为逐项不变，两处口径也不会再漂开。
+  Set<String> _selectableLooseUids() => _selection.visibleLooseKeys.toSet();
 
   void _selectAllVisible() {
     setState(() => _selection.selectAll(
@@ -1099,28 +1205,51 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
   Future<void> _batchDeleteConfirm() async {
     // 先剔幽灵键再取数：确认框里的 N / M 必须是真会被删的条数。
     if (!await _pruneStaleSelection() || !mounted) return;
-    final int mediaCount = _selectedUids.length;
-    final int collectionCount = _selectedCollectionIds.length;
+    // **在弹确认框之前就把目标定死**。选中集现在是派生视图（只暴露当前可见的
+    // 那部分），弹窗期间任何一次重建改变可见序——远端拉取落地、标签筛选 provider
+    // 从 null 解析出集合、自动刮削刷新列表——都会让它自己变。跨 await 两侧各读
+    // 一次的话，确认框说「删 5 个」而实际删 3 个，极端情况下甚至一个都没删还弹
+    // 成功提示。
+    final Set<String> targetUids = Set<String>.of(_selectedUids);
+    final Set<int> targetCollectionIds = Set<int>.of(_selectedCollectionIds);
+    final int mediaCount = targetUids.length;
+    final int collectionCount = targetCollectionIds.length;
     if (mediaCount == 0 && collectionCount == 0) return;
     // 纯删媒体分支用视频专用文案（batch_delete_confirm_video，develop 新增 key）；
     // 混选/纯解散仍走合集区分文案（本分支批量删除语义超集）。
-    final String message = collectionCount == 0
+    final String baseMessage = collectionCount == 0
         ? t.batch_delete_confirm_video(n: mediaCount)
         : mediaCount == 0
             ? t.batch_dissolve_confirm(m: collectionCount)
             : t.batch_delete_mixed_confirm(n: mediaCount, m: collectionCount);
+    // 勾过但被当前筛选挡住的那些不会被删（批量操作只作用于看得见的条目），必须
+    // 说出来——否则用户以为勾了几个就删了几个。
+    final int hidden = _selection.hiddenSelectedCount;
+    final String message = hidden == 0
+        ? baseMessage
+        : '$baseMessage\n\n${t.batch_hidden_by_filter_note(n: hidden)}';
     // 混选/纯解散不删媒体本体 → 不展示同步删除选项（合集解散走合集传播机制）；
-    // 纯删媒体才有意义提供「从所有设备删除」。
+    // 纯删媒体才有意义提供「从所有设备删除」与「同时删除本地文件」。
     // 不能写成三元表达式：两分支各含 await 时 analyzer 视互为 async gap，
     // 两处 context 都报 use_build_context_synchronously（CI warning 致命）。
-    final DeleteScope? scope;
+    final DeleteDecision? decision;
     if (collectionCount == 0) {
-      scope = await showDeleteScopeConfirm(context,
+      // 「同时删除本地文件」只在选中集里至少有一条是本地文件时才摆出来
+      // （全是远端流就没有文件可删，与同步勾选框「兑现不了就不显示」同一纪律）。
+      final Set<String> selected = Set<String>.of(_selectedUids);
+      final bool anyLocalFile = (await widget.repo.listAll()).any(
+        (VideoBookRow b) =>
+            selected.contains(b.bookUid) && videoBookHasLocalFiles(b),
+      );
+      if (!mounted) return;
+      decision = await showDeleteScopeConfirm(context,
           title: t.dialog_delete,
           message: message,
-          db: ref.read(appProvider).database);
+          db: ref.read(appProvider).database,
+          localFilesSubtitle:
+              anyLocalFile ? t.delete_local_files_video_desc : null);
     } else {
-      scope = await showAppDialog<DeleteScope>(
+      decision = await showAppDialog<DeleteDecision>(
         context: context,
         builder: (BuildContext ctx) => AlertDialog(
           title: Text(t.dialog_delete),
@@ -1131,7 +1260,10 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
               child: Text(t.dialog_cancel),
             ),
             TextButton(
-              onPressed: () => Navigator.pop(ctx, DeleteScope.keepLocalOnly),
+              onPressed: () => Navigator.pop(
+                ctx,
+                const DeleteDecision(scope: DeleteScope.keepLocalOnly),
+              ),
               child: Text(
                 t.dialog_delete,
                 style: TextStyle(color: Theme.of(ctx).colorScheme.error),
@@ -1141,21 +1273,29 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
         ),
       );
     }
-    if (scope == null || !mounted) return;
+    if (decision == null || !mounted) return;
 
-    final FushiDatabase db = ref.read(appProvider).database;
+    final AppModel appModel = ref.read(appProvider);
+    final FushiDatabase db = appModel.database;
     // 先解散选中合集（只删合集容器 + 成员引用行，绝不删媒体本体）。
-    final Set<int> toDissolve = Set<int>.of(_selectedCollectionIds);
+    // 用确认框弹出前定死的那份目标，不重新读选中集——否则删除量与用户刚点头的
+    // 数字对不上。
+    final Set<int> toDissolve = targetCollectionIds;
     int dissolved = 0;
     for (final int id in toDissolve) {
       final int removed = await deleteMediaCollectionWithAssets(db, id);
       if (removed > 0) dissolved++;
     }
     // 再删选中散卡的媒体本体（现状语义）。
-    final Set<String> toDelete = Set<String>.of(_selectedUids);
-    final int deleted = await widget.repo.deleteVideoBooksAndReclaimAssets(
-      toDelete,
-      scope: scope,
+    // 目标集在确认框弹出前就定死（[targetUids]），删除时不重新读 `_selectedUids`
+    // ——否则删除量与用户刚点头的数字对不上。
+    final Set<String> toDelete = targetUids;
+    final VideoLibraryDeleteResult result = await deleteVideoBooksWithDecision(
+      repo: widget.repo,
+      database: db,
+      pipeline: appModel.videoDownloadPipelineService,
+      bookUids: toDelete,
+      decision: decision,
       afterDeleteBeforeReclaim: () async {
         if (!mounted) return;
         _exitSelectionMode();
@@ -1163,6 +1303,7 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
         await _waitForVideoCardsToUnmount();
       },
     );
+    final int deleted = result.deleted;
     // 纯解散合集时上面的视频删除集合为空，仍需刷新页面。
     if (toDelete.isEmpty && mounted) {
       _exitSelectionMode();
@@ -1186,6 +1327,10 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
       severity: deleted > 0 || dissolved > 0
           ? ToastSeverity.success
           : ToastSeverity.warning,
+    );
+    reportLocalFileDeleteFailures(
+      result.localFiles,
+      source: 'HomeVideoPage.batchDeleteLocalFiles',
     );
   }
 
@@ -2020,9 +2165,27 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
   Future<({String? source, String? format, List<AudioCue> cues})>
       _downloadRemoteSubtitleForBook(
     RemoteVideoClient client,
-    RemoteVideoInfo video,
+    RemoteVideoInfo listInfo,
     String bookUid,
   ) async {
+    // BUG-1891：Jellyfin/Emby 的清单不再带 MediaSources（它是全库枚举里最贵的
+    // 一段），所以清单里的 hasSubtitle 退化成服务器的粗粒度 HasSubtitles（图形轨
+    // 也算 true）且 subtitleFileName 为空 —— 后者会让下面按扩展名选解析器的那行
+    // 恒落 srt，ASS 轨会被 srt 解析器解成 0 条 cue。这里按需补齐一次单条目详情
+    // （只在真要下字幕时打一次 /Items/{id}），拿到精确文本轨与真实文件名。
+    // 互联 / 云盘清单本来就是全量下发，不实现该能力，走不到这条分支、零额外请求。
+    // 经 Object? 中转促成类型提升：RemoteVideoDetailFetch 是能力接口，不是
+    // RemoteVideoClient 的子类型，直接 is 判断不会提升接收者。
+    final Object fetcher = client;
+    RemoteVideoInfo video = listInfo;
+    if (fetcher is RemoteVideoDetailFetch && video.subtitleFileName == null) {
+      try {
+        video = await fetcher.remoteVideoDetail(video);
+      } catch (e) {
+        // 补齐失败不该把整条下载路径拖死：退回清单值，最差就是回到补齐前的行为。
+        debugPrint('[home-video] remote video detail failed: $e');
+      }
+    }
     if (!video.hasSubtitle) {
       return (source: null, format: null, cues: const <AudioCue>[]);
     }
@@ -2356,21 +2519,34 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
   }
 
   Future<void> _confirmDelete(VideoBookRow book) async {
-    final DeleteScope? scope = await showDeleteScopeConfirm(
+    final AppModel appModel = ref.read(appProvider);
+    final DeleteDecision? decision = await showDeleteScopeConfirm(
       context,
       title: t.video_delete_title,
       message: t.video_delete_confirm(title: book.title),
-      db: ref.read(appProvider).database,
+      db: appModel.database,
+      // 远端流（互联直传 / WebDAV / Jellyfin）磁盘上没有文件，不摆勾选框。
+      localFilesSubtitle: videoBookHasLocalFiles(book)
+          ? t.delete_local_files_video_desc
+          : null,
     );
-    if (scope == null || !mounted) return;
-    await widget.repo.deleteVideoBookAndReclaimAssets(
-      book.bookUid,
-      scope: scope,
+    if (decision == null || !mounted) return;
+    final VideoLibraryDeleteResult result = await deleteVideoBooksWithDecision(
+      repo: widget.repo,
+      database: appModel.database,
+      pipeline: appModel.videoDownloadPipelineService,
+      bookUids: <String>[book.bookUid],
+      decision: decision,
       afterDeleteBeforeReclaim: () async {
         if (!mounted) return;
         _refreshAfterTagChange();
         await _waitForVideoCardsToUnmount();
       },
+    );
+    if (!mounted) return;
+    reportLocalFileDeleteFailures(
+      result.localFiles,
+      source: 'HomeVideoPage.deleteLocalFiles',
     );
   }
 
@@ -2497,11 +2673,18 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
         // lastPositionMs 三档判。
         final List<VideoBookRow> ordered = <VideoBookRow>[
           for (final VideoBookRow b in searched)
+            // BUG-1839：系列页**不按刮削身份门控**。用户拍板「没刮削也应该进，
+            // 合集就应该在系列里面」——AniDB primary 身份对没注册 client 的用户
+            // 结构上永远写不出来（isHttpApiAvailable 恒 false），拿它当准入门等于
+            // 把整页清空。系列与「全部视频」的区别是**折叠方式**（合集折成一张卡
+            // vs 逐条平铺），不是刮削资格。只保留花絮/短篇排除。
             if (!(widget.section == VideoLibrarySection.series &&
                     _localExtraBookUids.contains(b.bookUid)) &&
-                (widget.section != VideoLibrarySection.series ||
-                    _isAniDbScrapedSeriesMember(b)) &&
                 _yearFilter.matches(_airYearByUid[b.bookUid]) &&
+                matchesVideoSeriesFilter(
+                  filter: _effectiveSeriesFilter,
+                  inSeries: _isCollectionMember(b.bookUid),
+                ) &&
                 matchesVideoWatchStatus(
                   filter: _watchStatusFilter,
                   completed: b.completedAt != null,
@@ -2533,7 +2716,16 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
             final List<RemoteVideoInfo> remoteVideos = <RemoteVideoInfo>[
               for (final RemoteVideoInfo v in _visibleRemoteVideos(
                   snapState ?? _lastRemoteState, filter))
+                // 远端占位与本地同规则过系列归属筛选，判据同样取**在系列墙上的
+                // 折叠形态**：host 下发的 membership 还要能解析到本机存在的合集
+                // （[_remoteCollectionId]，解析不到系列墙就按散卡降级）。只看
+                // `collection != null` 会让「host 有、本机没有同名合集」的占位卡
+                // 在系列墙上是散卡、在这里却算系列成员。
                 if (_yearFilter.matches(null) &&
+                    matchesVideoSeriesFilter(
+                      filter: _effectiveSeriesFilter,
+                      inSeries: _remoteCollectionId(v) != null,
+                    ) &&
                     matchesVideoWatchStatus(
                       filter: _watchStatusFilter,
                       completed: false,
@@ -2586,6 +2778,13 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
                       if (widget.section == VideoLibrarySection.allVideos)
                         ..._buildAllVideoSlivers(
                             all, ordered, remoteVideos, cardLayout),
+                      // 首页只有 hero + 横滚行，横滚行卡不参与勾选，所以这一帧
+                      // 没有任何可勾选的格。必须如实登记空可见序：三个分区共用
+                      // 同一个 State，多选态下从「全部视频」切到首页时，可见序
+                      // 若停在上一档，底栏计数与批量删除就作用于一批屏幕上根本
+                      // 没有的条目（批量栏不按分区门控，切过来照样显示）。
+                      if (widget.section == VideoLibrarySection.home)
+                        ..._homeSectionSelectionReset(),
                       if (widget.section == VideoLibrarySection.home &&
                           all.isEmpty &&
                           remoteVideos.isEmpty)
@@ -2604,24 +2803,15 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     );
   }
 
-  /// 标签过滤、标题搜索与最终分组共用同一份归属。普通分区沿用用户合集的
-  /// primary；“系列”只认 AniDB canonical collection，book-owned 结果因此为
-  /// loose（null），不会被同时加入的普通播放列表吞掉。
+  /// 标签过滤、标题搜索与最终分组共用同一份归属：条目所属的**主合集**。
+  ///
+  /// BUG-1839：这里曾按分区分叉（系列只认 AniDB canonical collection），于是
+  /// 用户合集在系列页既折不出合集卡、成员也被判成「无归属」。用户拍板合集就该
+  /// 在系列里，分叉去掉后三处（标签过滤 / 标题搜索 / 最终分组）天然同口径。
   int? _effectiveCollectionIdForBook(VideoBookRow book) {
-    if (widget.section == VideoLibrarySection.series) {
-      return _aniDbScrapedCollectionByBookUid[book.bookUid];
-    }
     return _primaryCollectionByEntry[MediaKind.video.compositeKey(
       book.bookUid,
     )];
-  }
-
-  /// “系列”不是文件夹归组的同义词。collection-owned 与 book-owned work 只要
-  /// 绑定了 primary AniDB identity 都是刮削结果；local provisional、TMDB-only
-  /// 和普通用户合集不进入本页。
-  bool _isAniDbScrapedSeriesMember(VideoBookRow book) {
-    return _aniDbScrapedCollectionByBookUid.containsKey(book.bookUid) ||
-        _aniDbScrapedBookUids.contains(book.bookUid);
   }
 
   /// TODO-2486（hayase 式改版）：顶部区 = 全宽 backdrop hero 轮播（最近在看的
@@ -3882,22 +4072,16 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     List<RemoteVideoInfo> remoteVideos,
     ({int columns, double cardWidth}) cardLayout,
   ) {
-    final bool seriesOnly = widget.section == VideoLibrarySection.series;
-    // 远端 placeholder 没有本机 canonical identity 证据，不得仅凭同名合集混进
-    // “系列”。它仍完整保留在“全部视频”与首页远端联合视图。
-    final List<RemoteVideoInfo> groupedRemoteVideos = seriesOnly
-        ? const <RemoteVideoInfo>[]
-        : remoteVideos;
+    // BUG-1839：远端占位卡曾被整体挡在系列外（理由是「没有本机 canonical identity
+    // 证据」）。准入门去掉后这条也一起去：系列与「全部视频」的区别是折叠方式，
+    // 不是条目资格；远端占位照常按 host 下发的主合集归属折进合集卡。
+    final List<RemoteVideoInfo> groupedRemoteVideos = remoteVideos;
     // 空态/筛选空态须把远端占位一并纳入判断：仅本地空但有远端占位时仍要渲染网格。
     if (all.isEmpty && groupedRemoteVideos.isEmpty) {
-      return <Widget>[
-        SliverFillRemaining(hasScrollBody: false, child: _buildEmpty()),
-      ];
+      return _emptyStateSlivers(_buildEmpty());
     }
     if (books.isEmpty && groupedRemoteVideos.isEmpty) {
-      return <Widget>[
-        SliverFillRemaining(hasScrollBody: false, child: _buildFilteredEmpty()),
-      ];
+      return _emptyStateSlivers(_buildFilteredEmpty());
     }
     final FushiDesignTokens tokens = FushiDesignTokens.of(context);
     // 多端库联合视图 §2.3 任务10：把「远端有本地无」视频的**主合集归属**（host 下发的
@@ -3911,22 +4095,6 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     final Map<String, int> memberSortIndex = Map<String, int>.of(
       _memberSortIndex,
     );
-    if (seriesOnly) {
-      for (final VideoBookRow book in books) {
-        final String key = MediaKind.video.compositeKey(book.bookUid);
-        final int? effectiveCollectionId = _effectiveCollectionIdForBook(book);
-        if (effectiveCollectionId != null) {
-          primaryByEntry[key] = effectiveCollectionId;
-          memberSortIndex[key] =
-              _aniDbScrapedSortIndexByBookUid[book.bookUid] ?? 0;
-        } else {
-          // 独立电影即使同时被用户放进普通播放列表，也应按 book-owned 刮削结果
-          // 作为 loose 卡展示，而不是被未刮削合集吞掉后过滤。
-          primaryByEntry.remove(key);
-          memberSortIndex.remove(key);
-        }
-      }
-    }
     for (final RemoteVideoInfo video in groupedRemoteVideos) {
       final RemoteCollectionMembership? membership = video.collection;
       if (membership == null) continue;
@@ -3947,13 +4115,7 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
             primaryByEntry,
             memberSortIndex,
           ))
-            if (!seriesOnly ||
-                (group.collection != null &&
-                    _aniDbScrapedCollectionIds.contains(
-                      group.collection!.id,
-                    )) ||
-                group.collection == null)
-              group,
+            group,
         ];
     // 合集标签过滤：含【全部】选中标签的合集 id（null = 无选中标签，不过滤）。
     // 合集卡（及其成员）按此显隐；散卡由 filteredVideoBookUidsProvider 另行过滤。
@@ -3996,7 +4158,7 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     // Shift 区间选 / 长按扫选的顺序真值：取排序**之后**的散卡序，与用户屏幕上的
     // 排列逐项一致（排序 / 搜索 / 标签筛选都已作用其上）。顺序一变，控制器自动
     // 清锚点，Shift 不会选中一片没看见的条目。
-    _selection.setVisibleOrder(
+    _syncVisibleOrder(
       loose: <String>[
         for (final _VideoLooseCard card in loose)
           if (card.selectionKey != null) card.selectionKey!,
@@ -4035,14 +4197,10 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     ({int columns, double cardWidth}) cardLayout,
   ) {
     if (all.isEmpty && remoteVideos.isEmpty) {
-      return <Widget>[
-        SliverFillRemaining(hasScrollBody: false, child: _buildEmpty()),
-      ];
+      return _emptyStateSlivers(_buildEmpty());
     }
     if (books.isEmpty && remoteVideos.isEmpty) {
-      return <Widget>[
-        SliverFillRemaining(hasScrollBody: false, child: _buildFilteredEmpty()),
-      ];
+      return _emptyStateSlivers(_buildFilteredEmpty());
     }
     final FushiDesignTokens tokens = FushiDesignTokens.of(context);
     final List<VideoBookRow> ordered = books.toList()
@@ -4052,7 +4210,7 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
             _sortMode,
           ));
     _visibleCollectionIds = const <int>[];
-    _selection.setVisibleOrder(
+    _syncVisibleOrder(
       loose: <String>[for (final VideoBookRow book in ordered) book.bookUid],
       collections: const <int>[],
     );
@@ -5175,27 +5333,53 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
   /// UI 巡检 PR-4：此前只有「含字幕」一条且无字幕时正文整块为空（弹窗只剩标题，
   /// 像坏了）。补文件大小行（host 清单带 sizeBytes 时），字幕改为显式两态。
   void _showRemoteVideoInfo(RemoteVideoInfo video) {
-    final int? sizeBytes = video.sizeBytes;
+    // BUG-1891：Jellyfin/Emby 的清单不再带 MediaSources（全库枚举里最贵的一段），
+    // 文件大小与精确字幕轨改为**打开本弹窗时**按需取一次单条目详情。清单值先渲染，
+    // 详情到了再原地补上——不让用户对着 spinner 等一次网络往返。互联/云盘清单本来
+    // 就带全量字段、不实现该能力，走 null 分支，行为与补齐前一字不差。
+    // 经 Object? 中转促成类型提升（同 video_fushi_page._pushRemotePlayback）：
+    // RemoteVideoDetailFetch 是能力接口，不是 RemoteVideoSource 的子类型。
+    final Object? source = _remoteVideoSource;
+    final Future<RemoteVideoInfo>? detail =
+        source is RemoteVideoDetailFetch && video.sizeBytes == null
+            // 必须在这里就接住错误：FutureBuilder 要到下一帧才订阅，中间这段真空期
+            // 里 future 若已失败，Dart 会把它当无人处理的异步错误抛进 Zone。
+            ? source.remoteVideoDetail(video).catchError((Object e) {
+                debugPrint('[home-video] remote video detail failed: $e');
+                return video;
+              })
+            : null;
     showAppDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
         title: Text(video.title),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            if (sizeBytes != null && sizeBytes > 0)
-              Text(
-                t.remote_video_info_size(
-                  size: formatRemoteVideoSize(sizeBytes),
+        content: FutureBuilder<RemoteVideoInfo>(
+          future: detail,
+          builder: (
+            BuildContext context,
+            AsyncSnapshot<RemoteVideoInfo> snapshot,
+          ) {
+            // 详情失败（网络/权限）就用清单值：信息弹窗不该因为补字段失败而报错。
+            final RemoteVideoInfo shown = snapshot.data ?? video;
+            final int? sizeBytes = shown.sizeBytes;
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                if (sizeBytes != null && sizeBytes > 0)
+                  Text(
+                    t.remote_video_info_size(
+                      size: formatRemoteVideoSize(sizeBytes),
+                    ),
+                  ),
+                Text(
+                  shown.hasSubtitle
+                      ? t.remote_video_info_has_subtitle
+                      : t.remote_video_info_no_subtitle,
                 ),
-              ),
-            Text(
-              video.hasSubtitle
-                  ? t.remote_video_info_has_subtitle
-                  : t.remote_video_info_no_subtitle,
-            ),
-          ],
+              ],
+            );
+          },
         ),
         actions: <Widget>[
           TextButton(
@@ -5255,6 +5439,12 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
           _buildYearFilterButton(),
           const SizedBox(width: 8),
           _buildWatchStatusFilterButton(),
+          // 系列归属档位只在「全部视频」露出：那里整库逐条平铺，是唯一会被系列
+          // 集数淹没的视图。系列页本身按合集折叠，再给它这个档位没有意义。
+          if (widget.section == VideoLibrarySection.allVideos) ...<Widget>[
+            const SizedBox(width: 8),
+            _buildSeriesFilterButton(),
+          ],
         ],
       ),
     );
@@ -5323,6 +5513,43 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
       ),
     );
   }
+
+  /// 系列归属下拉筛选（全部 / 系列内 / 非系列）。「全部视频」逐条平铺整库，一部
+  /// 番的几十集会把散片淹掉；这个档位让用户把已归进系列的集数收起来，只看还没
+  /// 成系列的片子（反向档位同理，用来核对某些集是不是漏归系列了）。
+  Widget _buildSeriesFilterButton() {
+    final String label = _seriesFilterLabel(_seriesFilter);
+    return PopupMenuButton<VideoSeriesFilter>(
+      key: const ValueKey<String>('home_video_filter_series'),
+      tooltip: t.video_filter_series,
+      initialValue: _seriesFilter,
+      onSelected: (VideoSeriesFilter value) =>
+          setState(() => _seriesFilter = value),
+      itemBuilder: (BuildContext context) =>
+          <PopupMenuEntry<VideoSeriesFilter>>[
+        for (final VideoSeriesFilter filter in VideoSeriesFilter.values)
+          PopupMenuItem<VideoSeriesFilter>(
+            value: filter,
+            child: Text(filter == VideoSeriesFilter.all
+                ? t.home_filter_all
+                : _seriesFilterLabel(filter)),
+          ),
+      ],
+      child: _filterDropdownChip(
+        label: label,
+        active: _seriesFilter != VideoSeriesFilter.all,
+      ),
+    );
+  }
+
+  /// chip 上的档位名。「全部」态显示维度名（「系列」），因为 chip 要回答的是
+  /// 「这个下拉管什么」；菜单项那边对同一档位显示的是「全部」，两处语义不同，
+  /// 故三元只留在菜单项一侧，这里三个分支都可达。
+  String _seriesFilterLabel(VideoSeriesFilter filter) => switch (filter) {
+        VideoSeriesFilter.all => t.video_filter_series,
+        VideoSeriesFilter.inSeries => t.video_filter_series_in,
+        VideoSeriesFilter.standalone => t.video_filter_series_standalone,
+      };
 
   String _watchStatusFilterLabel(VideoWatchStatusFilter filter) =>
       switch (filter) {
@@ -6383,6 +6610,22 @@ class _VideoSlot {
   final VideoBookRow? local;
   final RemoteVideoInfo? remote;
 }
+
+/// 本轮该不该真的向远端要清单（BUG-1891）。**纯判定**，抽成顶层函数是为了能被
+/// 单测直接锁住——它是「一进视频页就把整台 Emby 递归一遍」的唯一闸门。
+///
+/// 三条放行理由，任一成立就取数：
+///  * [forceRefresh]：用户自己按的下拉刷新。开关不挡手动操作，否则关掉之后清单
+///    永远更新不了。
+///  * [source] 不是 Jellyfin/Emby：互联对端与云盘是自家后端，没有第三方媒体服务器
+///    那种滥用检测，清单也是一次性全量下发，不受本闸门管。
+///  * [jellyfinAutoList]：用户没关自动列出（默认就是没关）。
+bool shouldFetchRemoteVideoList({
+  required Object? source,
+  required bool forceRefresh,
+  required bool jellyfinAutoList,
+}) =>
+    forceRefresh || source is! JellyfinVideoClient || jellyfinAutoList;
 
 class _RemoteVideoState {
   const _RemoteVideoState({
