@@ -256,6 +256,7 @@ struct LunaCtx {
   PFN_Luna_RemoveHook remove_hook = nullptr;
   bool use_pc_hooks = false;       // 连接后是否补装通用 PC hooks（默认否，避免与 GDI 重复）
   bool normalize_mages_controls = false;
+  bool retain_context_in_face = false;
   std::vector<std::wstring> hook_codes;
   std::vector<std::wstring> blocked_hook_codes;
   std::vector<std::wstring> blocked_hook_names;
@@ -696,9 +697,10 @@ uint64_t LunaTextThreadId(const wchar_t* hookcode, const char* hookname,
 // ctx 是调用点（返回地址），同一 hook 面换剧情分支就变；ctx2 是 split H 码声明的
 // 语义分类（角色名/正文），必须保留。判据实现在 luna_text_selector.h，与单测共用。
 uint64_t LunaTextFaceId(const wchar_t* hookcode, const char* hookname,
-                        const LunaThreadParam& tp) {
-  return fushi_voice_hook::LunaTextFaceIdFrom(tp.processId, tp.addr, tp.ctx2,
-                                               hookcode, hookname);
+                        const LunaThreadParam& tp, bool retain_context) {
+  return fushi_voice_hook::LunaTextFaceIdForProfile(
+      tp.processId, tp.addr, tp.ctx, tp.ctx2, hookcode, hookname,
+      retain_context);
 }
 
 // Luna 侧写者状态。**必须定义在所有写路径之前**：v13 起写文本道也要在这把锁下认领，
@@ -908,7 +910,8 @@ void LunaOutput(const wchar_t* hookcode, const char* hookname,
       const bool artifact =
           fushi_voice_hook::LunaTextIsArtifact(normalized_text, normalized_len);
       const uint64_t thread_id = LunaTextThreadId(hookcode, hookname, tp);
-      const uint64_t face_id = LunaTextFaceId(hookcode, hookname, tp);
+      const uint64_t face_id =
+          LunaTextFaceId(hookcode, hookname, tp, g_luna.retain_context_in_face);
       // v12：预览必须写在门控**之前**且无条件（含伪影行）。预览区的全部意义就是让用户
       // 看见未被发布的线程；放到门控之后就只剩已选中的那条，等于没做。
       WriteThreadPreview(g_luna.header, thread_id, artifact, normalized_text,
@@ -975,7 +978,7 @@ void LunaThreadCreate(const wchar_t* hookcode, const char* hookname,
   const uint64_t thread_id = LunaTextThreadId(hookcode, hookname, tp);
   WriteLunaTextEvent(
       g_luna.header, hookcode, hookname, tp, thread_id,
-      LunaTextFaceId(hookcode, hookname, tp),
+      LunaTextFaceId(hookcode, hookname, tp, g_luna.retain_context_in_face),
       fushi_voice_hook::kTextEventThreadDiscovered, embedable ? 1u : 0u,
       nullptr, 0);
 }
@@ -1074,6 +1077,7 @@ void LunaEmbed(const wchar_t* text, LunaThreadParam tp) {
 // target 是目标进程句柄（复用 InjectDll 把 LunaHook<arch>.dll 注入游戏）。成功接线返回 true。
 bool InitLunaHook(SharedHeader* header, HANDLE target, DWORD pid, int codepage,
                   bool use_pc_hooks, bool normalize_mages_controls,
+                  bool retain_context_in_face,
                   const std::vector<std::wstring>& hook_codes,
                   const std::vector<std::wstring>& blocked_hook_codes,
                   const std::vector<std::wstring>& blocked_hook_names,
@@ -1104,6 +1108,7 @@ bool InitLunaHook(SharedHeader* header, HANDLE target, DWORD pid, int codepage,
   g_luna.remove_hook = bridge.remove_hook;
   g_luna.use_pc_hooks = use_pc_hooks && (bridge.insert_pc != nullptr);
   g_luna.normalize_mages_controls = normalize_mages_controls;
+  g_luna.retain_context_in_face = retain_context_in_face;
   g_luna.hook_codes = hook_codes;
   g_luna.blocked_hook_codes = blocked_hook_codes;
   g_luna.blocked_hook_names = blocked_hook_names;
@@ -1180,6 +1185,7 @@ void ShutdownLunaHook() {
     g_luna.confirmed_blocked_hook_names.clear();
     g_luna.preferred_hook_codes.clear();
     g_luna.normalize_mages_controls = false;
+    g_luna.retain_context_in_face = false;
     InterlockedExchange(&g_luna.blocked_hook_remove_requests, 0);
     InterlockedExchange(&g_luna.blocked_hook_remove_confirmations, 0);
     g_luna.pid = 0;
@@ -1192,6 +1198,7 @@ struct LunaOptions {
   int codepage = 932;     // --luna-codepage（日文默认 SHIFT_JIS）
   bool pc_hooks = false;  // --luna-pchooks 补装通用 PC hooks
   bool normalize_mages_controls = false;
+  bool retain_context_in_face = false;
   uint32_t defer_until_running_ms = 0;
   std::vector<std::wstring> hook_codes;  // 版本专用、已验证的 H-code
   std::vector<std::wstring> blocked_hook_codes;  // SHA-256 精确匹配的危险自动 hook
@@ -1216,6 +1223,9 @@ void ApplyLunaProfiles(const std::wstring& executable, DWORD pid,
     if (match.enable_pc_hooks) options->pc_hooks = true;
     if (match.normalize_mages_controls) {
       options->normalize_mages_controls = true;
+    }
+    if (match.retain_context_in_face) {
+      options->retain_context_in_face = true;
     }
     if (match.defer_until_running_ms > options->defer_until_running_ms) {
       options->defer_until_running_ms = match.defer_until_running_ms;
@@ -1833,6 +1843,7 @@ int RunInjection(HANDLE target, DWORD pid, const std::wstring& dll_path,
     luna_initialized =
         InitLunaHook(header, target, pid, luna.codepage, luna.pc_hooks,
                      luna.normalize_mages_controls,
+                     luna.retain_context_in_face,
                      luna.hook_codes, luna.blocked_hook_codes,
                      luna.blocked_hook_names, luna.preferred_hook_codes);
     if (!luna_initialized) return false;
@@ -1977,6 +1988,7 @@ int RunInjection(HANDLE target, DWORD pid, const std::wstring& dll_path,
   if (hold && luna.enabled && !luna_initialized) {
     InitLunaHook(header, target, pid, luna.codepage, luna.pc_hooks,
                  luna.normalize_mages_controls,
+                 luna.retain_context_in_face,
                  luna.hook_codes, luna.blocked_hook_codes,
                  luna.blocked_hook_names,
                  luna.preferred_hook_codes);

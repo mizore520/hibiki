@@ -25,6 +25,7 @@ struct LunaHookProfileMatch {
   int codepage = 0;
   bool enable_pc_hooks = false;
   bool normalize_mages_controls = false;
+  bool retain_context_in_face = false;
   uint32_t defer_until_running_ms = 0;
   std::vector<std::wstring> hook_codes;
   std::vector<std::wstring> blocked_hook_codes;
@@ -100,8 +101,10 @@ inline bool LunaHostLogConfirmsHookRemoval(const wchar_t* log,
 // prefixes before publication; `block=<hook-code-without-module>` removes a known-crashing
 // auto-detected hook; `block-name=<Luna-hook-name>` confirms that asynchronous
 // removal completed; `prefer=<hook-code-without-module>` limits automatic text
-// output to a known-good hook; `defer-ms=<milliseconds>` waits for fragile
-// engines to initialize before installing the guarded hooks. A row may identify
+// output to a known-good hook; `retain-context-in-face` keeps the exact Luna
+// `ctx` in the face id for an exact-version profile whose context is a stable
+// semantic lane (for example Rewrite HF's speaker/body split); `defer-ms=<milliseconds>`
+// waits for fragile engines to initialize before installing the guarded hooks. A row may identify
 // by executable hash, module hash, or both.
 inline LunaHookProfileMatch MatchLunaHookProfiles(
     const std::string& tsv, const LunaTargetIdentity& identity) {
@@ -148,6 +151,8 @@ inline LunaHookProfileMatch MatchLunaHookProfiles(
           result.enable_pc_hooks = true;
         } else if (option == "normalize-mages-controls") {
           result.normalize_mages_controls = true;
+        } else if (option == "retain-context-in-face") {
+          result.retain_context_in_face = true;
         } else if (option.rfind("block=", 0) == 0 && option.size() > 6) {
           const std::string code = option.substr(6);
           result.blocked_hook_codes.emplace_back(code.begin(), code.end());

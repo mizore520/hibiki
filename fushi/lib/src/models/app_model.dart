@@ -2966,11 +2966,14 @@ class AppModel with ChangeNotifier {
   /// 注入的 md 变量 / --dict-columns / zoom 同源（dictionary_popup_webview / popup_settings_injection 一致）。
   Map<String, String> browserExtensionThemeColors() {
     final ColorScheme s = themeNotifier.buildColorScheme(
-        themeNotifier.isDarkMode ? Brightness.dark : Brightness.light);
+      themeNotifier.isDarkMode ? Brightness.dark : Brightness.light,
+    );
     // 卡面底色跟随主题 scheme.surface（popupCardSurface 单一真源），
     // override 优先级不变。
-    final Color bgColor =
-        popupCardSurface(scheme: s, override: _overrideDictionaryColor);
+    final Color bgColor = popupCardSurface(
+      scheme: s,
+      override: _overrideDictionaryColor,
+    );
     // BUG-736：核心色/圆角/列数变量的取值统一来自 buildPopupThemeCssVars——与 in-app
     // 弹窗注入器（popup_settings_injection / dictionary_popup_webview）同一真源，
     // 根除「扩展漏抄一处、退化成灰高亮/白字/直角」的手抄漂移。
@@ -3915,33 +3918,38 @@ class AppModel with ChangeNotifier {
     }
     final LegacyVideoDownloadImportReport report =
         await VideoDownloadLegacyImporter(
-      database: database,
-      baseDirectory: baseDir,
-      torrentMatcher: (LegacyTorrentProbe probe) async {
-        final VideoDownloadBackendIdentity? confirmedIdentity = identity;
-        if (confirmedIdentity == null) return null;
-        // 旧记录自己的分类就是它的事实：拿它去后端核对 hash+title 即可。
-        // 不能再要求它等于**当前配置**的分类——用户改一次分类（或升级后默认
-        // 分类漂移）会让全部旧任务无法被认领（BUG-1879）。
-        final TorrentBackend? backend = _createExactTorrentBackend(config);
-        if (backend == null) return null;
-        try {
-          final List<TorrentSnapshot> snapshots =
-              await backend.listTorrents(category: probe.category);
-          for (final TorrentSnapshot snapshot in snapshots) {
-            if (snapshot.hash.toLowerCase() ==
-                    probe.torrentHash.toLowerCase() &&
-                snapshot.name.trim() == probe.title.trim()) {
-              return LegacyTorrentBinding(
-                torrentHash: snapshot.hash.toLowerCase(),
-                title: snapshot.name,
-                category: probe.category,
-                backendKind: confirmedIdentity.kind,
-                backendProfileId: confirmedIdentity.profileId,
-                fingerprint: confirmedIdentity.fingerprint,
-                backendTaskId: snapshot.hash.toLowerCase(),
-                observedSavePath: snapshot.savePath,
-              );
+          database: database,
+          baseDirectory: baseDir,
+          torrentMatcher: (LegacyTorrentProbe probe) async {
+            final VideoDownloadBackendIdentity? confirmedIdentity = identity;
+            if (confirmedIdentity == null) return null;
+            // 旧记录自己的分类就是它的事实：拿它去后端核对 hash+title 即可。
+            // 不能再要求它等于**当前配置**的分类——用户改一次分类（或升级后默认
+            // 分类漂移）会让全部旧任务无法被认领（BUG-1879）。
+            final TorrentBackend? backend = _createExactTorrentBackend(config);
+            if (backend == null) return null;
+            try {
+              final List<TorrentSnapshot> snapshots = await backend
+                  .listTorrents(category: probe.category);
+              for (final TorrentSnapshot snapshot in snapshots) {
+                if (snapshot.hash.toLowerCase() ==
+                        probe.torrentHash.toLowerCase() &&
+                    snapshot.name.trim() == probe.title.trim()) {
+                  return LegacyTorrentBinding(
+                    torrentHash: snapshot.hash.toLowerCase(),
+                    title: snapshot.name,
+                    category: probe.category,
+                    backendKind: confirmedIdentity.kind,
+                    backendProfileId: confirmedIdentity.profileId,
+                    fingerprint: confirmedIdentity.fingerprint,
+                    backendTaskId: snapshot.hash.toLowerCase(),
+                    observedSavePath: snapshot.savePath,
+                  );
+                }
+              }
+              return null;
+            } finally {
+              backend.close();
             }
           },
           // 旧订阅 JSON 没有可同时核对的 torrent hash/title/category，不能仅因
@@ -3985,8 +3993,9 @@ class AppModel with ChangeNotifier {
   /// `currentVideoDownloadBackendIdentity()` 让调用方能拿到一个缺分类的落点，
   /// 已随 BUG-1879 一并删除，别再加回来。
   Future<VideoDownloadBackendTarget> currentVideoDownloadBackendTarget() async {
-    final QbConnectionConfig config =
-        effectiveTorrentConfig(prefsRepo.qbConnectionConfig);
+    final QbConnectionConfig config = effectiveTorrentConfig(
+      prefsRepo.qbConnectionConfig,
+    );
     return VideoDownloadBackendTarget(
       identity: await _currentVideoDownloadBackendIdentity(config),
       category: config.category,
@@ -6391,7 +6400,8 @@ class AppModel with ChangeNotifier {
 
   /// 防截屏（桌面查词浮窗，Windows）。存储键沿用历史名 `clipboard_panel_block_capture`。
   bool get lookupBlockCapture => prefsRepo.lookupBlockCapture;
-  Future<void> setLookupBlockCapture(bool v) => prefsRepo.setLookupBlockCapture(v);
+  Future<void> setLookupBlockCapture(bool v) =>
+      prefsRepo.setLookupBlockCapture(v);
 
   Map<String, String> get customDictCSS => prefsRepo.customDictCSS;
   String getCustomCSSForDict(String dictName) =>

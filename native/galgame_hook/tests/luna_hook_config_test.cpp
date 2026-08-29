@@ -21,6 +21,19 @@ int main() {
     return 9;
   }
 
+  fushi_voice_hook::LunaTargetIdentity rewrite;
+  rewrite.executable_sha256 =
+      "9ee4b8a2170eb7e251fd9d726426c9e7aca9d8a3575f170f48f385332dacc7ee";
+  const auto rewrite_profile = fushi_voice_hook::MatchLunaHookProfiles(
+      fushi_voice_hook::BuiltInLunaHookProfiles(), rewrite);
+  if (rewrite_profile.codepage != 932 ||
+      rewrite_profile.hook_codes.size() != 1 ||
+      rewrite_profile.hook_codes.front() != L"HWX0@8D890:SiglusEngine.exe" ||
+      !rewrite_profile.retain_context_in_face) {
+    std::fprintf(stderr, "Rewrite HF exact profile did not match\n");
+    return 10;
+  }
+
   fushi_voice_hook::LunaTargetIdentity nine;
   nine.executable_sha256 =
       "36448822f1a8bc3840b304d3993c07de912db6c803dddd8db1202ed676ba7019";

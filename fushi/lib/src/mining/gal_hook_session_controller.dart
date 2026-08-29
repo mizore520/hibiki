@@ -81,7 +81,8 @@ class GalHookSessionIdentity {
       (gameId?.isNotEmpty ?? false) && executablePath != null;
 
   @override
-  String toString() => 'GalHookSessionIdentity(gameId: $gameId, '
+  String toString() =>
+      'GalHookSessionIdentity(gameId: $gameId, '
       'title: $title, executablePath: $executablePath)';
 }
 
@@ -1414,6 +1415,35 @@ class GalHookSessionController extends ChangeNotifier {
       identity: identity,
       mainPid: window.pid,
     );
+    // Attach-specific capture memory is keyed by the real executable path
+    // resolved from the PID.  Keep the attach identity separate from
+    // [GalHookSessionState.launchExe], which must continue to mean a game
+    // launched by Fushi.
+    _attachedCaptureExecutable = attachedExecutable;
+    _restoreAudioFallbackPolicy();
+    _restoreLunaLoopbackTiming();
+    final GalAttachCaptureMode effectiveMode =
+        mode ?? _captureMemory.attachMode ?? GalAttachCaptureMode.nativeHook;
+    _attachedCaptureMode = effectiveMode;
+    if (mode != null && _ensureCaptureMemoryLoaded()) {
+      if (_captureMemory.attachMode != mode) {
+        _saveCaptureMemory(_captureMemory.copyWith(attachMode: mode));
+      }
+    }
+    if (effectiveMode == GalAttachCaptureMode.lunaSafe) {
+      // Luna-safe attachment deliberately never probes architecture, resolves
+      // an injector, or creates an engine source.  Text arrives from the
+      // selected Luna WebSocket thread and audio comes from system loopback.
+      _selectedTextThreadKey = lunaExternalTextThreadKey;
+      _selectedNativeTextThreadId = null;
+      _selectedTextThreadFaceId = 0;
+      _textThreadMemoryApplied = true;
+      _setState(
+        _state.copyWith(audioFallbackPolicy: GalAudioFallbackPolicy.full),
+      );
+      await _activateLunaSafeAttach(generation, gamePid: window.pid);
+      return;
+    }
     _record(
       GalHookEventSeverity.info,
       'resolve',
@@ -3717,11 +3747,13 @@ class GalHookSessionController extends ChangeNotifier {
       final String? probed = _targetImagePathProbe(pid)?.trim();
       if (probed != null && probed.isNotEmpty) exePath = probed;
     }
-    final GalgameEntry? known =
-        exePath == null ? null : await _lookupGalgame(exePath);
+    final GalgameEntry? known = exePath == null
+        ? null
+        : await _lookupGalgame(exePath);
     final String explicitId = gameId?.trim() ?? '';
-    final String resolvedId =
-        explicitId.isNotEmpty ? explicitId : (known?.id ?? '');
+    final String resolvedId = explicitId.isNotEmpty
+        ? explicitId
+        : (known?.id ?? '');
     String title = gameTitle?.trim() ?? '';
     if (title.isEmpty) title = known?.displayName.trim() ?? '';
     if (title.isEmpty) title = fallbackTitle.trim();
@@ -3740,12 +3772,9 @@ class GalHookSessionController extends ChangeNotifier {
     if (database == null) return null;
     try {
       final List<GalgameRow> rows = await database.getAllGalgames();
-      return findGalgameByExePath(
-        <GalgameEntry>[
-          for (final GalgameRow row in rows) galgameEntryFromRow(row),
-        ],
-        exePath,
-      );
+      return findGalgameByExePath(<GalgameEntry>[
+        for (final GalgameRow row in rows) galgameEntryFromRow(row),
+      ], exePath);
     } on Object {
       return null;
     }
@@ -3775,8 +3804,10 @@ class GalHookSessionController extends ChangeNotifier {
     final GalgamePlayTracker tracker = _playTrackerFactory(
       gameId: gameId,
       gameDirectory: File(executablePath).parent.path,
-      onSessionEnded:
-          _makePlaySessionSink(gameId: gameId, title: identity.title),
+      onSessionEnded: _makePlaySessionSink(
+        gameId: gameId,
+        title: identity.title,
+      ),
     );
     _playTracker = tracker;
     tracker.start(mainPid: mainPid ?? 0);

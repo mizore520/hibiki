@@ -222,6 +222,36 @@ int main(int argc, char** argv) {
                                   krkr_face)) {
       return 40;  // 伪影门在选择之前，放宽粒度不得让伪影漏进来
     }
+
+    // Rewrite HF 1.0.17.19 is the deliberate exception: its real HWX0
+    // replay uses stable ctx values for the scenario body and speaker lanes.
+    // Keeping ctx in the face prevents BUG-1159's same-hook fallback from
+    // putting the name lane back into a selected body lane.
+    const wchar_t *rewrite_code = L"HWX0@8D890:SiglusEngine.exe";
+    const char *rewrite_name = "SiglusEngine";
+    const uint64_t rewrite_addr = 0x48d890ull;
+    const uint64_t rewrite_body = fushi_voice_hook::LunaTextThreadIdFrom(
+        pid, rewrite_addr, 0x145aef0284f7d861ull, 0, rewrite_code,
+        rewrite_name);
+    const uint64_t rewrite_speaker = fushi_voice_hook::LunaTextThreadIdFrom(
+        pid, rewrite_addr, 0x340f2a18ec5147b7ull, 0, rewrite_code,
+        rewrite_name);
+    const uint64_t rewrite_body_face =
+        fushi_voice_hook::LunaTextFaceIdForProfile(
+            pid, rewrite_addr, 0x145aef0284f7d861ull, 0, rewrite_code,
+            rewrite_name, true);
+    const uint64_t rewrite_speaker_face =
+        fushi_voice_hook::LunaTextFaceIdForProfile(
+            pid, rewrite_addr, 0x340f2a18ec5147b7ull, 0, rewrite_code,
+            rewrite_name, true);
+    if (rewrite_body == rewrite_speaker ||
+        rewrite_body_face == rewrite_speaker_face ||
+        !face_selector.AcceptsLine(rewrite_body, false, rewrite_body,
+                                   rewrite_body_face) ||
+        face_selector.AcceptsLine(rewrite_speaker, false, rewrite_body,
+                                  rewrite_speaker_face)) {
+      return 52;
+    }
   }
   {
     // face 未知（调用方给 0）时退回精确 thread_id 匹配，与旧实现语义一致。

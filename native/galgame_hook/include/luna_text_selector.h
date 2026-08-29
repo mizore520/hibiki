@@ -234,6 +234,23 @@ inline uint64_t LunaTextFaceIdFrom(uint32_t process_id, uint64_t addr,
   return LunaHashHookNames(hash, hookcode, hookname);
 }
 
+// Exact-version profiles may prove that Luna `ctx` is not a transient callsite
+// but the engine's stable semantic lane. Rewrite Harvest festa 1.0.17.19 is
+// such a target: real replay data shows scenario text and speaker names share
+// addr/ctx2/hookcode but have distinct, stable ctx values. In that profile only,
+// retain ctx in the face so BUG-1159's same-face fallback cannot merge the name
+// lane back into the selected scenario lane. The default stays the global
+// BUG-1159 behavior above.
+inline uint64_t LunaTextFaceIdForProfile(
+    uint32_t process_id, uint64_t addr, uint64_t ctx, uint64_t ctx2,
+    const wchar_t* hookcode, const char* hookname, bool retain_context) {
+  if (!retain_context) {
+    return LunaTextFaceIdFrom(process_id, addr, ctx2, hookcode, hookname);
+  }
+  return LunaTextThreadIdFrom(process_id, addr, ctx, ctx2, hookcode,
+                              hookname);
+}
+
 // 手动/记忆选定的线程是否应放行本行（纯函数，便于单测）。
 //
 // BUG-1159：`selected_text_thread_id` 存的是一个具体的 `TextSlot::thread_id`，而

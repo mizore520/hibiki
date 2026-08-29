@@ -13,12 +13,219 @@ import 'package:fushi/src/utils/misc/error_log_service.dart';
 import 'package:fushi_anki/fushi_anki.dart';
 import 'package:fushi_dictionary/fushi_dictionary.dart';
 import 'package:image/image.dart' as img;
-import 'package:path/path.dart' as p;
 
 const List<String> dictionaryMediaCustomSchemes = <String>[
   'image',
   'dictmedia',
 ];
+
+const String dictionaryMediaWebViewUserDataFolderName =
+    'dictionary_popup_webview2';
+
+/// WebView2 requires custom schemes to be registered when its environment is
+/// created. The per-WebView interception setting alone is not enough on
+/// Windows. Keep this profile separate from other app WebViews because
+/// WebView2 rejects different options sharing one user-data folder.
+WebViewEnvironmentSettings dictionaryMediaWebViewEnvironmentSettings(
+  String appDirectoryPath,
+) {
+  return WebViewEnvironmentSettings(
+    userDataFolder: p.join(
+      appDirectoryPath,
+      dictionaryMediaWebViewUserDataFolderName,
+    ),
+    customSchemeRegistrations: dictionaryMediaCustomSchemes
+        .map(
+          (String scheme) => CustomSchemeRegistration(
+            scheme: scheme,
+            hasAuthorityComponent: true,
+            treatAsSecure: true,
+          ),
+        )
+        .toList(growable: false),
+  );
+}
+
+typedef DictionaryMediaLoader =
+    Uint8List? Function(String dictionary, String path);
+
+/// Reads natural dimensions for the media listed by a mining payload. The
+/// popup can learn raster dimensions from an image load event, but mining can
+/// happen before that event. Header-based dimensions keep the export pass
+/// consistent for PNG/JPEG/WebP, SVG and AVIF without decoding the whole image
+/// in JavaScript.
+List<Map<String, Object>> dictionaryMediaNaturalSizes(
+  String dictionaryMediaJson, {
+  DictionaryMediaLoader? mediaLoader,
+}) {
+  if (dictionaryMediaJson.isEmpty || dictionaryMediaJson == '[]') {
+    return const <Map<String, Object>>[];
+  }
+
+  final List<dynamic> entries;
+  try {
+    entries = jsonDecode(dictionaryMediaJson) as List<dynamic>;
+  } catch (_) {
+    return const <Map<String, Object>>[];
+  }
+
+  final DictionaryMediaLoader? loadMedia =
+      mediaLoader ??
+      (FushiDicts.isInitialized
+          ? (String dictionary, String path) =>
+                FushiDicts.instance.getMediaFile(dictionary, path)
+          : null);
+  if (loadMedia == null) return const <Map<String, Object>>[];
+
+  final List<Map<String, Object>> result = <Map<String, Object>>[];
+  for (final dynamic raw in entries) {
+    if (raw is! Map) continue;
+    final String dictionary = raw['dictionary']?.toString() ?? '';
+    final String path = normalizeDictionaryMediaPath(
+      raw['path']?.toString() ?? '',
+    );
+    if (dictionary.isEmpty || path.isEmpty) continue;
+
+    try {
+      final Uint8List? bytes = loadMedia(dictionary, path);
+      if (bytes == null || bytes.isEmpty) continue;
+      final _DictionaryMediaDimensions? dimensions =
+          _readDictionaryMediaDimensions(bytes, path);
+      if (dimensions == null) continue;
+      result.add(<String, Object>{
+        'dictionary': dictionary,
+        'path': path,
+        'width': dimensions.width,
+        'height': dimensions.height,
+      });
+    } catch (e) {
+      debugPrint(
+        '[DictionaryMedia] size read failed for $dictionary/$path: $e',
+      );
+    }
+  }
+  return result;
+}
+
+_DictionaryMediaDimensions? _readDictionaryMediaDimensions(
+  Uint8List bytes,
+  String path,
+) {
+  if (path.toLowerCase().endsWith('.svg')) {
+    return _readSvgDimensions(bytes);
+  }
+  try {
+    final img.Decoder? decoder = img.findDecoderForData(bytes);
+    final img.DecodeInfo? info = decoder?.startDecode(bytes);
+    if (info != null && info.width > 0 && info.height > 0) {
+      return _DictionaryMediaDimensions(info.width, info.height);
+    }
+  } catch (_) {
+    // Some decoders recognize a container but cannot decode its payload. The
+    // AVIF header fallback below can still provide a safe aspect ratio.
+  }
+  if (path.toLowerCase().endsWith('.avif')) {
+    return _readAvifDimensions(bytes);
+  }
+  return null;
+}
+
+_DictionaryMediaDimensions? _readSvgDimensions(Uint8List bytes) {
+  final String source = utf8.decode(bytes, allowMalformed: true);
+  final RegExpMatch? root = RegExp(
+    r'<svg\b([^>]*)>',
+    caseSensitive: false,
+    dotAll: true,
+  ).firstMatch(source);
+  if (root == null) return null;
+  final String attributes = root.group(1) ?? '';
+
+  final double? width = _readSvgPixelLength(attributes, 'width');
+  final double? height = _readSvgPixelLength(attributes, 'height');
+  if (width != null && height != null) {
+    return _roundedSvgDimensions(width, height);
+  }
+
+  final String? viewBox = _readSvgAttribute(attributes, 'viewBox');
+  if (viewBox == null) return null;
+  final List<double> values =
+      RegExp(r'[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?')
+          .allMatches(viewBox)
+          .map((RegExpMatch match) => double.parse(match.group(0)!))
+          .toList(growable: false);
+  if (values.length != 4) return null;
+  return _roundedSvgDimensions(values[2], values[3]);
+}
+
+String? _readSvgAttribute(String attributes, String name) {
+  final RegExpMatch? match = RegExp(
+    "(?:^|\\s)${RegExp.escape(name)}\\s*=\\s*([\"'])\\s*(.*?)\\s*\\1",
+    caseSensitive: false,
+    dotAll: true,
+  ).firstMatch(attributes);
+  return match?.group(2);
+}
+
+double? _readSvgPixelLength(String attributes, String name) {
+  final String? value = _readSvgAttribute(attributes, name);
+  if (value == null || value.endsWith('%')) return null;
+  final RegExpMatch? number = RegExp(
+    r'^[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?',
+  ).firstMatch(value);
+  if (number == null) return null;
+  final String unit = value.substring(number.end).trim().toLowerCase();
+  if (unit.isNotEmpty && unit != 'px') return null;
+  final double parsed = double.parse(number.group(0)!);
+  return parsed.isFinite && parsed > 0 ? parsed : null;
+}
+
+_DictionaryMediaDimensions? _roundedSvgDimensions(double width, double height) {
+  if (!width.isFinite || !height.isFinite || width <= 0 || height <= 0) {
+    return null;
+  }
+  return _DictionaryMediaDimensions(
+    width.round().clamp(1, 0x7fffffff),
+    height.round().clamp(1, 0x7fffffff),
+  );
+}
+
+_DictionaryMediaDimensions? _readAvifDimensions(Uint8List bytes) {
+  // AVIF is ISO-BMFF. A primary image's dimensions are kept in an `ispe`
+  // full box nested below meta/iprp/ipco, so scan boxes rather than assuming a
+  // fixed parent layout.
+  if (bytes.length < 20 ||
+      bytes[4] != 0x66 ||
+      bytes[5] != 0x74 ||
+      bytes[6] != 0x79 ||
+      bytes[7] != 0x70) {
+    return null;
+  }
+  final ByteData data = ByteData.sublistView(bytes);
+  for (int typeOffset = 4; typeOffset + 16 <= bytes.length; typeOffset++) {
+    if (bytes[typeOffset] != 0x69 ||
+        bytes[typeOffset + 1] != 0x73 ||
+        bytes[typeOffset + 2] != 0x70 ||
+        bytes[typeOffset + 3] != 0x65) {
+      continue;
+    }
+    final int boxOffset = typeOffset - 4;
+    final int boxSize = data.getUint32(boxOffset, Endian.big);
+    if (boxSize < 20 || boxOffset + boxSize > bytes.length) continue;
+    final int width = data.getUint32(typeOffset + 8, Endian.big);
+    final int height = data.getUint32(typeOffset + 12, Endian.big);
+    if (width > 0 && height > 0) {
+      return _DictionaryMediaDimensions(width, height);
+    }
+  }
+  return null;
+}
+
+class _DictionaryMediaDimensions {
+  const _DictionaryMediaDimensions(this.width, this.height);
+
+  final int width;
+  final int height;
+}
 
 /// in-app 查词弹窗给导入词典字体用的虚拟 URL 前缀。
 ///
@@ -181,11 +388,11 @@ void _logFontDenial(String reason) {
 WebResourceResponse dictionaryFontDeniedResponse() => _fontDenied();
 
 WebResourceResponse _fontDenied() => WebResourceResponse(
-      contentType: 'text/plain',
-      statusCode: 403,
-      reasonPhrase: 'Forbidden',
-      data: Uint8List(0),
-    );
+  contentType: 'text/plain',
+  statusCode: 403,
+  reasonPhrase: 'Forbidden',
+  data: Uint8List(0),
+);
 
 /// 制卡前把 JS 负载里的词典媒体（gaiji 外字等）字节落盘到 Anki 媒体缓存目录，
 /// 供 [BaseAnkiRepository] 的 storeMediaFile 读取嵌进卡片。
@@ -242,8 +449,9 @@ Future<void> writeDictionaryMediaCache(String dictionaryMediaJson) async {
       _logDictionaryMediaSkip('媒体条目缺 dictionary/path，无法定位字节: $raw');
       continue;
     }
-    final File file =
-        File('${dir.path}/${ankiDictionaryMediaCacheFilename(dict, path)}');
+    final File file = File(
+      '${dir.path}/${ankiDictionaryMediaCacheFilename(dict, path)}',
+    );
     if (file.existsSync()) continue; // 幂等：已缓存。
     try {
       final Uint8List? bytes = FushiDicts.instance.getMediaFile(dict, path);
@@ -324,8 +532,9 @@ _DictionaryMediaResponse? _dictionaryMediaResponse(Uri url) {
 
   if (url.scheme == 'dictmedia') {
     final String dictName = url.queryParameters['dictionary'] ?? '';
-    final String mediaPath =
-        normalizeDictionaryMediaPath(Uri.decodeComponent(url.host));
+    final String mediaPath = normalizeDictionaryMediaPath(
+      Uri.decodeComponent(url.host),
+    );
     if (dictName.isEmpty || mediaPath.isEmpty) {
       return _DictionaryMediaResponse.notFound();
     }

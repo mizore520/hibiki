@@ -143,14 +143,42 @@ try {
     }
     Copy-Tree (Join-Path $jogampRepo "org") (Join-Path $sourceRoot "hibiki-offline-maven\jogamp\org")
 
-    $archivePath = Join-Path $resolvedCache $temurinArchive
-    if (-not (Test-Path -LiteralPath $archivePath)) {
-        Invoke-WebRequest -Uri $temurinUrl -OutFile $archivePath
-    }
-    $actualSha256 = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
-    if ($actualSha256 -ne $temurinSha256) {
-        throw "Temurin archive checksum mismatch: expected $temurinSha256, got $actualSha256"
-    }
+    $jdkDescriptor = $null
+    if (-not [string]::IsNullOrWhiteSpace($JdkRoot)) {
+        $resolvedJdkRoot = (Resolve-Path -LiteralPath $JdkRoot).Path
+        foreach ($tool in @('java.exe', 'jdeps.exe', 'jlink.exe')) {
+            if (-not (Test-Path -LiteralPath (Join-Path $resolvedJdkRoot "bin\$tool") -PathType Leaf)) {
+                throw "Local JDK is incomplete: missing bin\$tool under $resolvedJdkRoot"
+            }
+        }
+        $javaVersion = (& (Join-Path $resolvedJdkRoot 'bin\java.exe') -version 2>&1 | Select-Object -First 1).ToString()
+        if ($LASTEXITCODE -ne 0 -or $javaVersion -notmatch 'version\s+"21[.]') {
+            throw "Local JDK must be Java 21: $javaVersion"
+        }
+        $jdkRootPath = $resolvedJdkRoot
+        $jdkDescriptor = [ordered]@{
+            provider = 'local-java-21'
+            version = $javaVersion
+            releaseSha256 = if (Test-Path -LiteralPath (Join-Path $resolvedJdkRoot 'release')) {
+                (Get-FileHash -LiteralPath (Join-Path $resolvedJdkRoot 'release') -Algorithm SHA256).Hash.ToLowerInvariant()
+            } else { $null }
+        }
+    } else {
+        $archivePath = Join-Path $resolvedCache $temurinArchive
+        $archiveValid = $false
+        if (Test-Path -LiteralPath $archivePath -PathType Leaf) {
+            $archiveValid = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant() -eq $temurinSha256
+            if (-not $archiveValid) {
+                Remove-Item -LiteralPath $archivePath -Force
+            }
+        }
+        if (-not $archiveValid) {
+            Invoke-VerifiedDownload -Uri $temurinUrl -Destination $archivePath -ExpectedSha256 $temurinSha256
+        }
+        $actualSha256 = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($actualSha256 -ne $temurinSha256) {
+            throw "Temurin archive checksum mismatch: expected $temurinSha256, got $actualSha256"
+        }
 
         $jdkExtractRoot = Join-Path $workingRoot "jdk"
         Expand-Archive -LiteralPath $archivePath -DestinationPath $jdkExtractRoot
