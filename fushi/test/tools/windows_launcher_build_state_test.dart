@@ -6,6 +6,9 @@ void main() {
   final Directory repoRoot = Directory.current.parent;
   final File launcher = File('../启动Hibiki最新版.bat');
   final File stateScript = File('../tool/get_windows_build_state.ps1');
+  final File torrentScript = File(
+    '../tool/prepare_windows_torrent_runtime.ps1',
+  );
   final File helperScript = File('../tool/prepare_windows_gal_helper.ps1');
   final File packager = File('../tool/package_windows_runtime.ps1');
 
@@ -19,6 +22,11 @@ void main() {
       expect(source, contains('.last_built_state'));
       expect(source, isNot(contains('status --porcelain')));
       expect(source, contains('prepare_windows_gal_helper.ps1'));
+      expect(source, contains('prepare_windows_torrent_runtime.ps1'));
+      expect(
+        source.indexOf('prepare_windows_torrent_runtime.ps1'),
+        lessThan(source.indexOf('build windows --release')),
+      );
       expect(
         source.indexOf('prepare_windows_gal_helper.ps1'),
         lessThan(source.indexOf('build windows --release')),
@@ -33,6 +41,15 @@ void main() {
       expect(helper, contains("@('cmake', 'ctest')"));
       expect(helper, contains('build_distribution.ps1'));
       expect(helper, contains('-RunTests'));
+
+      final String torrent = torrentScript.readAsStringSync();
+      expect(torrent, contains('fushi_torrent_ffi.dll'));
+      expect(torrent, contains('torrent-rasterbar.dll'));
+      expect(torrent, contains('libssl-3-x64.dll'));
+      expect(torrent, contains('libcrypto-3-x64.dll'));
+      expect(torrent, contains('Test-SameTorrentSources'));
+      expect(torrent, contains('Get-FileHash'));
+      expect(torrent, contains('FUSHI_VCPKG_ROOT'));
     },
   );
 

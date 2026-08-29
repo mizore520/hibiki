@@ -24,6 +24,7 @@ set "APP=%REPO%\fushi"
 set "BOOTSTRAP=%REPO%\tool\bootstrap.ps1"
 set "PREPARE_ONNX=%REPO%\tool\prepare_windows_onnxruntime.ps1"
 set "PREPARE_SQLITE=%REPO%\tool\prepare_windows_sqlite3.ps1"
+set "PREPARE_TORRENT=%REPO%\tool\prepare_windows_torrent_runtime.ps1"
 set "GET_BUILD_STATE=%REPO%\tool\get_windows_build_state.ps1"
 set "BUILD_HELPER=%REPO%\tool\prepare_windows_gal_helper.ps1"
 set "RUNTIME_UNLOCK_CHECK=%REPO%\tool\check_windows_runtime_unlocked.ps1"
@@ -141,7 +142,7 @@ rem This only disables source tracking for this build; it does not affect output
 set "TrackFileAccess=false"
 
 rem Bootstrap must run from the repository root so ci/apply-patches.sh resolves correctly.
-echo [1/6] Resolving Flutter packages and applying repository patches...
+echo [1/7] Resolving Flutter packages and applying repository patches...
 set "FUSHI_FLUTTER=%FLUTTER%"
 pushd "%REPO%"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%BOOTSTRAP%"
@@ -156,7 +157,7 @@ if not exist "%PREPARE_ONNX%" (
   echo [ERROR] ONNX Runtime preparation script not found: %PREPARE_ONNX%
   goto :fail
 )
-echo [2/6] Preparing persistent ONNX Runtime cache...
+echo [2/7] Preparing persistent ONNX Runtime cache...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PREPARE_ONNX%" -RepoRoot "%REPO%" -CacheDirectory "%REPO%\.build-cache\onnxruntime"
 if errorlevel 1 goto :dependency_failed
 
@@ -164,24 +165,32 @@ if not exist "%PREPARE_SQLITE%" (
   echo [ERROR] SQLite preparation script not found: %PREPARE_SQLITE%
   goto :fail
 )
-echo [3/6] Preparing persistent SQLite native asset cache...
+echo [3/7] Preparing persistent SQLite native asset cache...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PREPARE_SQLITE%" -RepoRoot "%REPO%" -CacheDirectory "%REPO%\.build-cache\sqlite3"
 if errorlevel 1 goto :dependency_failed
 set "FUSHI_SQLITE3_SOURCE_DIR=%REPO%\.build-cache\sqlite3\sqlite-autoconf-3520000"
+
+if not exist "%PREPARE_TORRENT%" (
+  echo [ERROR] Torrent runtime preparation script not found: %PREPARE_TORRENT%
+  goto :fail
+)
+echo [4/7] Preparing the bundled torrent runtime...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PREPARE_TORRENT%" -RepoRoot "%REPO%"
+if errorlevel 1 goto :dependency_failed
 
 if not exist "%BUILD_HELPER%" (
   echo [ERROR] Galgame helper build script not found: %BUILD_HELPER%
   goto :fail
 )
-echo [4/6] Building and testing the bundled Galgame helper...
+echo [5/7] Building and testing the bundled Galgame helper...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%BUILD_HELPER%" -RepoRoot "%REPO%"
 if errorlevel 1 goto :helper_failed
 
-echo [5/6] flutter build windows --release ...
+echo [6/7] flutter build windows --release ...
 call "%FLUTTER%" build windows --release
 if errorlevel 1 goto :build_failed
 
-echo [6/6] Installing bundled Windows runtime (ffmpeg / ffprobe / VC++ CRT) ...
+echo [7/7] Installing bundled Windows runtime (ffmpeg / ffprobe / VC++ CRT) ...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%REPO%\tool\package_windows_runtime.ps1" -RepoRoot "%REPO%" -ReleaseDir "%APP%\build\windows\x64\runner\Release" -HelperAlreadyBuilt
 if errorlevel 1 goto :runtime_failed
 
