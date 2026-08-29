@@ -30,6 +30,8 @@ set "BUILD_HELPER=%REPO%\tool\prepare_windows_gal_helper.ps1"
 set "RUNTIME_UNLOCK_CHECK=%REPO%\tool\check_windows_runtime_unlocked.ps1"
 set "EXE=%APP%\build\windows\x64\runner\Release\fushi.exe"
 set "STAMP=%APP%\build\.last_built_state"
+set "FLUTTER_AOT_CACHE=%APP%\.dart_tool\flutter_build"
+set "FLUTTER_AOT_OUTPUT=%APP%\build\windows\app.so"
 set "FUSHI_ONNXRUNTIME_ROOT=%REPO%\.build-cache\onnxruntime\onnxruntime-win-x64-1.22.0"
 
 if not exist "%APP%\pubspec.yaml" (
@@ -186,6 +188,23 @@ echo [5/7] Building and testing the bundled Galgame helper...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%BUILD_HELPER%" -RepoRoot "%REPO%"
 if errorlevel 1 goto :helper_failed
 
+rem A Git merge/worktree switch can give newly checked-out Dart sources older
+rem timestamps than an existing incremental kernel cache. Flutter may then
+rem relink a fresh app.so around stale package code (for example schema v88
+rem after the source already moved to v89). Remove only the reproducible Dart
+rem AOT cache/output whenever a real source build is required. Native and
+rem downloaded dependency caches remain intact, and the exact-state fast path
+rem above still skips all compilation on subsequent double-clicks.
+if exist "%FLUTTER_AOT_CACHE%" (
+  echo [AOT] Invalidating stale Flutter AOT cache...
+  rmdir /s /q "%FLUTTER_AOT_CACHE%"
+  if exist "%FLUTTER_AOT_CACHE%" (
+    echo [ERROR] Could not remove Flutter AOT cache: %FLUTTER_AOT_CACHE%
+    goto :build_failed
+  )
+)
+if exist "%FLUTTER_AOT_OUTPUT%" del /f /q "%FLUTTER_AOT_OUTPUT%"
+
 echo [6/7] flutter build windows --release ...
 call "%FLUTTER%" build windows --release
 if errorlevel 1 goto :build_failed
@@ -214,6 +233,11 @@ echo [OK] Build succeeded.
 if not exist "%EXE%" (
   echo [ERROR] Executable not found: %EXE%
   goto :fail
+)
+if /i "%FUSHI_BUILD_ONLY%"=="1" (
+  echo [OK] Build-only mode requested; executable was not launched.
+  endlocal
+  exit /b 0
 )
 start "" "%EXE%"
 endlocal

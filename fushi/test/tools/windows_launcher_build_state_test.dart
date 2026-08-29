@@ -22,6 +22,14 @@ void main() {
       expect(source, isNot(contains('status --porcelain')));
       expect(source, contains('prepare_windows_gal_helper.ps1'));
       expect(source, contains('prepare_windows_torrent_runtime.ps1'));
+      expect(source, contains(r'.dart_tool\flutter_build'));
+      expect(source, contains(r'build\windows\app.so'));
+      expect(source, contains(r'rmdir /s /q "%FLUTTER_AOT_CACHE%"'));
+      expect(
+        source.indexOf(r'rmdir /s /q "%FLUTTER_AOT_CACHE%"'),
+        lessThan(source.indexOf('build windows --release')),
+      );
+      expect(source, contains('FUSHI_BUILD_ONLY'));
       expect(
         source.indexOf('prepare_windows_torrent_runtime.ps1'),
         lessThan(source.indexOf('build windows --release')),
