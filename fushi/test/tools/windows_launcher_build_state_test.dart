@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  final Directory repoRoot = Directory.current.parent;
   final File launcher = File('../启动Hibiki最新版.bat');
   final File stateScript = File('../tool/get_windows_build_state.ps1');
   final File torrentScript = File(
