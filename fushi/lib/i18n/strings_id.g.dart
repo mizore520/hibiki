@@ -2,9121 +2,3925 @@ part of 'strings.g.dart';
 
 // Path: <root>
 class _StringsId extends _StringsEn {
-  /// You can call this constructor and build your own translation instance of this locale.
-  /// Constructing via the enum [AppLocale.build] is preferred.
-  _StringsId.build({
-    Map<String, Node>? overrides,
-    PluralResolver? cardinalResolver,
-    PluralResolver? ordinalResolver,
-  }) : assert(
-         overrides == null,
-         'Set "translation_overrides: true" in order to enable this feature.',
-       ),
-       $meta = TranslationMetadata(
-         locale: AppLocale.id,
-         overrides: overrides ?? {},
-         cardinalResolver: cardinalResolver,
-         ordinalResolver: ordinalResolver,
-       ),
-       super.build(
-         cardinalResolver: cardinalResolver,
-         ordinalResolver: ordinalResolver,
-       );
 
-  /// Metadata for the translations of <id>.
-  @override
-  final TranslationMetadata<AppLocale, _StringsEn> $meta;
+	/// You can call this constructor and build your own translation instance of this locale.
+	/// Constructing via the enum [AppLocale.build] is preferred.
+	_StringsId.build({Map<String, Node>? overrides, PluralResolver? cardinalResolver, PluralResolver? ordinalResolver})
+		: assert(overrides == null, 'Set "translation_overrides: true" in order to enable this feature.'),
+		  $meta = TranslationMetadata(
+		    locale: AppLocale.id,
+		    overrides: overrides ?? {},
+		    cardinalResolver: cardinalResolver,
+		    ordinalResolver: ordinalResolver,
+		  ),
+		  super.build(cardinalResolver: cardinalResolver, ordinalResolver: ordinalResolver);
 
-  @override
-  late final _StringsId _root = this; // ignore: unused_field
+	/// Metadata for the translations of <id>.
+	@override final TranslationMetadata<AppLocale, _StringsEn> $meta;
 
-  // Translations
-  @override
-  String get action_exit => 'Keluar';
-  @override
-  String get action_favorite => 'Favorit';
-  @override
-  String activity_days_ago({required Object n}) => '${n} hari lalu';
-  @override
-  String activity_hours_ago({required Object n}) => '${n} jam lalu';
-  @override
-  String get activity_just_now => 'Baru saja';
-  @override
-  String activity_minutes_ago({required Object n}) => '${n} menit lalu';
-  @override
-  String get add_to_collection => 'Tambah ke koleksi';
-  @override
-  String get anime_download_back => 'Kembali';
-  @override
-  String get anime_download_batch => 'Batch';
-  @override
-  String get anime_download_category_all => 'Semua';
-  @override
-  String get anime_download_category_english => 'Terjemahan Inggris';
-  @override
-  String get anime_download_category_non_english => 'Non-Inggris';
-  @override
-  String get anime_download_category_raw => 'Mentah';
-  @override
-  String get anime_download_delete => 'Hapus';
-  @override
-  String anime_download_episode_count({required Object count}) => 'EP ${count}';
-  @override
-  String get anime_download_generic_download => 'Unduh';
-  @override
-  String get anime_download_generic_hint => 'Tautan magnet';
-  @override
-  String get anime_download_generic_title =>
-      'Tempel tautan (buku, video, apa saja)';
-  @override
-  String get anime_download_include_subs => 'Sertakan subtitle';
-  @override
-  String get anime_download_kind_auto => 'Otomatis';
-  @override
-  String get anime_download_kind_book => 'Buku';
-  @override
-  String get anime_download_kind_video => 'Video';
-  @override
-  String get anime_download_magnet_invalid => 'Tautan magnet tidak valid';
-  @override
-  String get anime_download_no_results => 'Tidak ada hasil';
-  @override
-  String get anime_download_no_subs => 'Tanpa subtitle';
-  @override
-  String get anime_download_no_tasks => 'Belum ada tugas unduhan';
-  @override
-  String get anime_download_nyaa_query => 'Kata kunci pencarian Nyaa';
-  @override
-  String get anime_download_play_now => 'Putar sambil mengunduh';
-  @override
-  String get anime_download_play_now_fail =>
-      'Belum siap (metadata tertunda atau koneksi gagal) — coba lagi nanti';
-  @override
-  String get anime_download_play_now_ok =>
-      'Diimpor — buka dari pustaka video untuk memutar sambil mengunduh';
-  @override
-  String get anime_download_push => 'Kirim unduhan';
-  @override
-  String get anime_download_push_failed => 'Gagal mengirim ke qBittorrent';
-  @override
-  String get anime_download_pushed =>
-      'Terkirim — akan diimpor otomatis setelah selesai';
-  @override
-  String get anime_download_refresh => 'Segarkan';
-  @override
-  String get anime_download_relocate => 'Ganti nama / pindah';
-  @override
-  String anime_download_relocate_engine_failed({required Object reason}) =>
-      'Gagal, tidak ada yang berubah: ${reason}';
-  @override
-  String get anime_download_relocate_hint =>
-      'Fushi mengganti nama/memindahkan melalui mesin unduhan, sehingga seeding tidak terganggu. Mengganti nama di Explorer tidak bisa dikembalikan.';
-  @override
-  String anime_download_relocate_library_failed({required Object reason}) =>
-      'File dipindahkan, tetapi pustaka masih mengarah ke jalur lama: ${reason}';
-  @override
-  String get anime_download_relocate_move_title => 'Pindah ke folder';
-  @override
-  String get anime_download_relocate_no_files =>
-      'Tugas ini belum memiliki file untuk diganti nama (metadata belum siap)';
-  @override
-  String anime_download_relocate_ok({required Object rows}) =>
-      'Diganti nama / dipindah; ${rows} entri pustaka diperbarui';
-  @override
-  String get anime_download_relocate_pick_folder => 'Pilih folder tujuan';
-  @override
-  String get anime_download_relocate_rename_title => 'Ganti nama file';
-  @override
-  String get anime_download_retry => 'Coba lagi';
-  @override
-  String get anime_download_search => 'Cari';
-  @override
-  String get anime_download_search_error_proxy_hint =>
-      'Jika situs tidak bisa dijangkau langsung, atur proksi jaringan di pengaturan unduhan.';
-  @override
-  String get anime_download_search_failed =>
-      'Pencarian gagal atau waktu habis. Ketuk coba lagi.';
-  @override
-  String get anime_download_search_hint => 'Judul anime';
-  @override
-  String get anime_download_search_start_hint =>
-      'Cari judul di atas - torrent dan subtitle dicocokkan secara otomatis. Unduhan tidak terbatas pada video: buku, manga, buku audio, dan game juga diimpor.';
-  @override
-  String get anime_download_sort_date => 'Diterbitkan';
-  @override
-  String get anime_download_sort_seeders => 'Seeder';
-  @override
-  String get anime_download_sort_size => 'Ukuran';
-  @override
-  String get anime_download_store_unavailable =>
-      'Penyimpanan rencana unduhan tidak tersedia';
-  @override
-  String get anime_download_subs_badge => 'Sub';
-  @override
-  String get anime_download_subs_failed =>
-      'Pencarian subtitle gagal. Ketuk coba lagi.';
-  @override
-  String get anime_download_subs_need_key =>
-      'Masukkan kunci API Jimaku di atas untuk mencari subtitle.';
-  @override
-  String get anime_download_tasks => 'Tugas unduhan';
-  @override
-  String get anime_download_title => 'Unduhan anime';
-  @override
-  String get anime_download_trusted => 'Terpercaya';
-  @override
-  String get anime_download_trusted_only => 'Hanya terpercaya';
-  @override
-  String get anki_allow_duplicates => 'Izinkan Duplikat';
-  @override
-  String get anki_allow_duplicates_hint =>
-      'Lewati pemeriksaan duplikat saat menambah kartu';
-  @override
-  String get anki_card_action_failed =>
-      'Tindakan kartu gagal. Silakan coba lagi.';
-  @override
-  String get anki_compact_glossaries => 'Glosarium Ringkas';
-  @override
-  String get anki_compact_glossaries_hint =>
-      'Gunakan format ringkas untuk entri glosarium';
-  @override
-  String get anki_connect_api_key => 'Kunci API';
-  @override
-  String get anki_connect_host => 'Host';
-  @override
-  String get anki_connect_port => 'Port';
-  @override
-  String get anki_create_lapis => 'Buat dek Lapis';
-  @override
-  String get anki_create_lapis_exists =>
-      'Tipe catatan dan dek Lapis sudah ada — telah dipilih.';
-  @override
-  String anki_create_lapis_failed({required Object error}) =>
-      'Tidak dapat membuat dek Lapis: ${error}';
-  @override
-  String get anki_create_lapis_hint =>
-      'Menambahkan tipe catatan Lapis dan dek Lapis ke Anki, lalu memilihnya.';
-  @override
-  String get anki_create_lapis_success =>
-      'Tipe catatan dan dek Lapis berhasil dibuat.';
-  @override
-  String get anki_deck => 'Dek';
-  @override
-  String get anki_duplicate_scope => 'Cakupan pemeriksaan duplikat';
-  @override
-  String get anki_duplicate_scope_collection => 'Seluruh koleksi';
-  @override
-  String get anki_duplicate_scope_deck => 'Dek terpilih (dan sub-deknya)';
-  @override
-  String get anki_duplicate_scope_deck_root => 'Dek utama (semua sub-dek)';
-  @override
-  String get anki_duplicate_scope_hint =>
-      'Dek mana yang dicari saat memeriksa apakah kartu sudah ada. Hanya AnkiConnect; AnkiDroid selalu mencari seluruh koleksi.';
-  @override
-  String get anki_error_collection_unavailable =>
-      'Koleksi AnkiDroid saat ini tidak tersedia. Buka AnkiDroid setidaknya sekali, pastikan tidak sedang menyinkron dan API-nya aktif, lalu coba lagi.';
-  @override
-  String get anki_error_connection_refused =>
-      'Tidak dapat terhubung ke Anki: koneksi ditolak. Pastikan Anki Desktop sedang berjalan dan add-on AnkiConnect sudah terpasang.';
-  @override
-  String get anki_error_connection_timeout =>
-      'Tidak dapat terhubung ke Anki: koneksi habis waktu. Periksa host, port, dan pengaturan firewall.';
-  @override
-  String get anki_error_connection_unknown =>
-      'Tidak dapat mengekspor ke Anki: terjadi kesalahan koneksi yang tidak terduga. Lihat log kesalahan untuk detailnya.';
-  @override
-  String get anki_error_http =>
-      'Tidak dapat mengekspor ke Anki: terjadi kesalahan HTTP saat menghubungi AnkiConnect.';
-  @override
-  String get anki_error_permission_denied =>
-      'AnkiDroid belum memberikan izin akses kartu. Setujui dialog izin sistem yang baru muncul, lalu ketuk tombol lagi untuk mengekspor.';
-  @override
-  String get anki_fetch => 'Segarkan dek & tipe catatan';
-  @override
-  String get anki_fetching => 'Mengambil…';
-  @override
-  String get anki_field_mappings => 'Pemetaan Bidang';
-  @override
-  String get anki_field_not_mapped => 'Belum dipetakan';
-  @override
-  String get anki_mine_to_server => 'Kirim kartu ke perangkat berpasangan';
-  @override
-  String get anki_mine_to_server_hint =>
-      'Kirim kartu yang ditambang ke Anki perangkat host berpasangan (dek dan pengaturannya) alih-alih perangkat ini. Memerlukan koneksi Interconnect.';
-  @override
-  String get anki_mined_action_add_duplicate => 'Tambah sebagai kartu baru';
-  @override
-  String get anki_mined_action_overwrite => 'Timpa kartu ini';
-  @override
-  String get anki_mined_action_view => 'Lihat / buka di Anki';
-  @override
-  String get anki_mined_card_subtitle =>
-      'Pilih apa yang dilakukan dengan kartu yang cocok.';
-  @override
-  String get anki_mined_card_title => 'Kartu sudah ada di Anki';
-  @override
-  String anki_mined_multiple_matches({required Object count}) =>
-      '${count} kartu yang cocok';
-  @override
-  String get anki_not_configured =>
-      'Ketuk Segarkan untuk memuat dek dan tipe catatan Anki kamu.';
-  @override
-  String get anki_note_open_failed => 'Tidak dapat membuka kartu di Anki.';
-  @override
-  String get anki_note_type => 'Tipe Catatan';
-  @override
-  String get anki_note_viewer_empty =>
-      'Kartu ini tidak memiliki bidang yang bisa dibaca.';
-  @override
-  String get anki_note_viewer_open_in_anki => 'Buka di Anki';
-  @override
-  String get anki_note_viewer_title => 'Kartu yang sudah ada';
-  @override
-  String get anki_open_no_card => 'Tidak ada kartu untuk kata ini di Anki.';
-  @override
-  String get anki_overwrite_scope => 'Rentang Timpa';
-  @override
-  String get anki_overwrite_scope_all => 'Semua kartu yang cocok';
-  @override
-  String get anki_overwrite_scope_hint =>
-      'Kartu yang sudah dibuat mana saja yang dapat ditimpa oleh ✓ hijau';
-  @override
-  String get anki_overwrite_scope_latest => 'Hanya kartu terakhir';
-  @override
-  String get anki_refresh_hint =>
-      'Setelah membuat atau mengganti nama dek atau tipe catatan di Anki, ketuk di sini untuk menyegarkan.';
-  @override
-  String anki_select_handlebar({required Object field}) =>
-      'Pilih nilai untuk ${field}';
-  @override
-  String get anki_settings_label => 'Pengaturan Anki';
-  @override
-  String get anki_tag_default_section => 'Tag default';
-  @override
-  String get anki_tag_include_category => 'Tambahkan tag kategori sumber';
-  @override
-  String get anki_tag_include_category_hint =>
-      'Buku diberi "book", video diberi "video", gim diberi "game"';
-  @override
-  String get anki_tag_include_fushi => 'Tambahkan tag "fushi"';
-  @override
-  String get anki_tag_include_fushi_hint =>
-      'Tandai setiap kartu yang dibuat oleh Fushi';
-  @override
-  String get anki_tags => 'Tag';
-  @override
-  String get anki_tags_hint =>
-      'Tag dipisahkan spasi yang ditambahkan ke setiap kartu';
-  @override
-  String get app_icon_label => 'Ikon Aplikasi';
-  @override
-  String get app_icon_presets => 'Preset';
-  @override
-  String get app_ui_scale => 'Ukuran UI';
-  @override
-  String get app_ui_scale_hint =>
-      'Scales app text and spacing. Lower it on large screens if controls feel oversized.';
-  @override
-  String get app_version => 'Versi aplikasi';
-  @override
-  String get apply_theme => 'Terapkan Tema';
-  @override
-  String get audio_clip_failed =>
-      'Tidak bisa mengekstrak klip audio — sumber audio mungkin hilang atau tak terbaca';
-  @override
-  String get audio_import => 'Impor Audio';
-  @override
-  String get audio_panel_add_audio => 'Tambah Audio';
-  @override
-  String get audio_panel_auto => 'Otomatis';
-  @override
-  String get audio_panel_pick_new_subtitle => 'Pilih file subtitle baru';
-  @override
-  String get audio_source_added => 'Sumber audio ditambahkan';
-  @override
-  String audio_source_dns_error({required Object host}) =>
-      'Koneksi sumber audio gagal: tidak dapat menemukan "${host}" — periksa jaringan Anda, atau hapus sumber ini di pengaturan';
-  @override
-  String get audio_source_edit_target_gone =>
-      'Sumber audio tersebut sudah tidak ada — perubahan dibatalkan';
-  @override
-  String get audio_source_edit_url => 'Edit tautan sumber audio';
-  @override
-  String audio_source_error({required Object detail}) =>
-      'Kesalahan sumber audio: ${detail}';
-  @override
-  String get audio_source_fushi_interconnect => 'Fushi Interconnect';
-  @override
-  String get audio_source_loopback_warning =>
-      'Mengarah ke perangkat ini — arahkan ulang setelah berganti mesin';
-  @override
-  String audio_source_request_error({required Object detail}) =>
-      'Permintaan sumber audio gagal: ${detail}';
-  @override
-  String audio_source_timeout({required Object host}) =>
-      'Waktu habis sumber audio: "${host}" — server tidak merespons, coba lagi nanti atau ganti sumber';
-  @override
-  String get audio_source_updated => 'Sumber audio diperbarui';
-  @override
-  String get audio_source_url_invalid =>
-      'Tautan harus http(s) dan memuat placeholder term atau reading';
-  @override
-  String get audio_unavailable => 'Tidak ada audio yang ditemukan.';
-  @override
-  String get audio_volume => 'Volume';
-  @override
-  String get audiobook_attached => 'Buku audio terlampir';
-  @override
-  String get audiobook_audio_missing => 'File audio tidak ditemukan';
-  @override
-  String get audiobook_background_play => 'Terus putar setelah keluar';
-  @override
-  String get audiobook_background_play_hint =>
-      'Saat nonaktif, pemutaran buku audio berhenti ketika Anda meninggalkan pembaca. Aktifkan untuk terus memutar di latar belakang.';
-  @override
-  String get audiobook_export_clip => 'Ekspor video klip';
-  @override
-  String get audiobook_export_clip_failed => 'Ekspor klip gagal';
-  @override
-  String get audiobook_export_clip_in_progress => 'Mengekspor klip…';
-  @override
-  String get audiobook_export_clip_no_selection =>
-      'Pilih teks terlebih dahulu untuk mengekspor klip';
-  @override
-  String get audiobook_export_clip_no_text =>
-      'Pilihan ini tidak memiliki teks untuk dirender';
-  @override
-  String get audiobook_export_clip_saved => 'Klip tersimpan';
-  @override
-  String get audiobook_export_clip_unsupported_range =>
-      'Pilihan ini tidak bisa diekspor (melewati bab atau file audio)';
-  @override
-  String get audiobook_import => 'Impor Buku Audio';
-  @override
-  String get audiobook_import_error => 'Impor gagal';
-  @override
-  String audiobook_import_error_copy_failed({required Object name}) =>
-      'Gagal menyalin file: ${name}';
-  @override
-  String audiobook_import_error_disk_full({required Object size}) =>
-      'Ruang disk tidak cukup. Diperlukan: ${size}';
-  @override
-  String get audiobook_import_success => 'Buku audio diimpor';
-  @override
-  String get audiobook_load_error => 'Gagal memuat buku audio.';
-  @override
-  String get audiobook_pick_alignment => 'Pilih File Penyelarasan';
-  @override
-  String get audiobook_reference_original => 'Referensi file asli';
-  @override
-  String get audiobook_reference_original_desc =>
-      'Biarkan audio di tempatnya dan putar dari jalur aslinya; buku akan rusak jika file dipindah atau dihapus.';
-  @override
-  String get audiobook_relocate => 'Pindahkan file';
-  @override
-  String get audiobook_relocate_done => 'Audio dipindahkan';
-  @override
-  String get auto_add_book_name_to_tags =>
-      'Tambahkan judul buku ke tag secara otomatis';
-  @override
-  String auto_chapter({required Object n}) => 'Bab ${n}';
-  @override
-  String get auto_read_on_lookup => 'Baca kata otomatis saat pencarian';
-  @override
-  String get auto_search => 'Pencarian otomatis';
-  @override
-  String get auto_search_debounce_delay => 'Delay debounce pencarian otomatis';
-  @override
-  String get auto_select_search_window => 'Pilih jendela pencarian otomatis';
-  @override
-  String get auto_select_search_window_hint =>
-      'Uji beberapa ukuran jendela saat impor, pilih yang memiliki tingkat kecocokan terbaik';
-  @override
-  String get av_sync => 'Sinkronisasi A/V';
-  @override
-  String get av_sync_reset => 'Atur Ulang';
-  @override
-  String get back => 'Kembali';
-  @override
-  String get background_color => 'Warna latar belakang';
-  @override
-  String get background_color_desc => 'Latar belakang halaman pembaca';
-  @override
-  String get backup_category_audiobooks => 'Audio buku audio';
-  @override
-  String get backup_category_audiobooks_desc =>
-      'Audio buku audio dan penyelarasan';
-  @override
-  String get backup_category_books => 'Buku';
-  @override
-  String get backup_category_books_desc =>
-      'File buku (EPUB dan konten yang diekstrak)';
-  @override
-  String get backup_category_dictionary => 'Kamus';
-  @override
-  String get backup_category_dictionary_desc =>
-      'Kamus yang diimpor dan filenya';
-  @override
-  String get backup_category_fonts => 'Font kustom';
-  @override
-  String get backup_category_fonts_desc => 'File font kustom yang diimpor';
-  @override
-  String get backup_category_local_audio => 'Database audio lokal';
-  @override
-  String get backup_category_local_audio_desc =>
-      'Database audio pengucapan lokal';
-  @override
-  String get backup_category_profiles => 'Profil';
-  @override
-  String get backup_category_profiles_desc => 'Profil konfigurasi';
-  @override
-  String get backup_category_progress => 'Progres membaca';
-  @override
-  String get backup_category_progress_desc => 'Posisi membaca dan penanda';
-  @override
-  String get backup_category_settings => 'Pengaturan';
-  @override
-  String get backup_category_settings_desc => 'Pengaturan aplikasi dan pembaca';
-  @override
-  String get backup_category_statistics => 'Statistik';
-  @override
-  String get backup_category_statistics_desc =>
-      'Statistik membaca, video, dan penambangan kartu';
-  @override
-  String get backup_category_videos => 'Video';
-  @override
-  String get backup_category_videos_desc => 'File video lokal';
-  @override
-  String get backup_export => 'Ekspor Cadangan';
-  @override
-  String get backup_export_books_all => 'Semua buku';
-  @override
-  String backup_export_books_selected({required Object count}) =>
-      '${count} buku dipilih';
-  @override
-  String get backup_export_categories_hint =>
-      'Centang apa yang akan dimasukkan ke cadangan. Tidak mencentang Buku akan menghapus buku-buku tersebut sepenuhnya — konten dan catatannya ikut terhapus.';
-  @override
-  String get backup_export_categories_title => 'Pilih yang akan diekspor';
-  @override
-  String get backup_export_choose_books => 'Pilih buku';
-  @override
-  String get backup_export_choose_videos => 'Pilih video';
-  @override
-  String backup_export_failed({required Object message}) =>
-      'Ekspor cadangan gagal: ${message}';
-  @override
-  String get backup_export_hint =>
-      'Pilih apa yang disertakan; basis data (buku, progres, statistik) selalu disertakan. Hapus centang item besar (audio lokal, video) untuk memperkecil cadangan.';
-  @override
-  String get backup_export_no_books => 'Tidak ada buku untuk dipilih';
-  @override
-  String get backup_export_no_videos => 'Tidak ada video untuk dipilih';
-  @override
-  String get backup_export_select_all => 'Pilih semua';
-  @override
-  String get backup_export_select_none => 'Batalkan semua';
-  @override
-  String get backup_export_success => 'Cadangan berhasil diekspor';
-  @override
-  String get backup_export_videos_all => 'Semua video';
-  @override
-  String backup_export_videos_selected({required Object count}) =>
-      '${count} video dipilih';
-  @override
-  String get backup_exporting => 'Membuat cadangan…';
-  @override
-  String get backup_import => 'Impor Cadangan';
-  @override
-  String backup_import_confirm({
-    required Object date,
-    required Object bookCount,
-    required Object statsCount,
-  }) =>
-      'Ini akan menggantikan semua data saat ini dengan cadangan dari ${date}.\n\n${bookCount} buku, ${statsCount} catatan statistik.\n\nAplikasi akan dimulai ulang setelah pemulihan.';
-  @override
-  String get backup_import_confirm_title => 'Pulihkan Cadangan?';
-  @override
-  String get backup_import_contents_hint =>
-      'Hapus centang item untuk melewatinya.';
-  @override
-  String get backup_import_contents_title => 'Cadangan ini berisi';
-  @override
-  String backup_import_failed({required Object message}) =>
-      'Impor cadangan gagal: ${message}';
-  @override
-  String get backup_import_hint =>
-      'Pulihkan dari berkas cadangan. Aplikasi akan dimulai ulang.';
-  @override
-  String get backup_import_invalid => 'Berkas cadangan tidak valid';
-  @override
-  String backup_import_merge_preview({
-    required Object bookCount,
-    required Object progressCount,
-  }) =>
-      'Penggabungan akan menambah ${bookCount} buku dan memperbarui ${progressCount} posisi membaca.';
-  @override
-  String get backup_import_mode_label => 'Mode impor';
-  @override
-  String get backup_import_mode_merge => 'Gabung ke pustaka saat ini';
-  @override
-  String get backup_import_mode_overwrite => 'Timpa seluruh pustaka';
-  @override
-  String get backup_import_overlay_title => 'Mengimpor cadangan';
-  @override
-  String get backup_import_overlay_warning =>
-      'Memulihkan data Anda. Jangan tutup aplikasi.';
-  @override
-  String get backup_import_preserve_sync_note =>
-      'Pengaturan sinkronisasi di perangkat ini (akun dan kredensial) akan dipertahankan.';
-  @override
-  String get backup_import_restart_button => 'Mulai ulang sekarang';
-  @override
-  String get backup_import_settings_off_hint =>
-      'Pertahankan font/tampilan/profil perangkat ini; pulihkan hanya buku & data membaca.';
-  @override
-  String get backup_import_settings_on_hint =>
-      'Pemulihan penuh: font, tampilan, dan profil diambil dari cadangan.';
-  @override
-  String get backup_import_settings_toggle => 'Impor pengaturan & profil';
-  @override
-  String get backup_import_success => 'Cadangan dipulihkan. Memulai ulang…';
-  @override
-  String get backup_import_validating_hint =>
-      'Memeriksa dan melihat pratinjau file cadangan. Ini mungkin memerlukan waktu.';
-  @override
-  String get backup_import_validating_title => 'Membaca cadangan…';
-  @override
-  String backup_schema_newer({required Object version}) =>
-      'Cadangan ini memerlukan versi aplikasi yang lebih baru (skema ${version}). Mohon perbarui terlebih dahulu.';
-  @override
-  String batch_add_to_collection_success({required Object n}) =>
-      'Menambahkan ${n} item ke koleksi.';
-  @override
-  String batch_delete_confirm({required Object n}) =>
-      'Hapus ${n} buku? Tindakan ini tidak dapat dibatalkan.';
-  @override
-  String batch_delete_confirm_video({required Object n}) =>
-      'Hapus ${n} video? Ini tidak bisa dibatalkan.';
-  @override
-  String batch_delete_mixed_confirm({required Object n, required Object m}) =>
-      'Hapus ${n} media dan bubarkan ${m} koleksi? Ini tidak bisa dibatalkan.';
-  @override
-  String batch_delete_mixed_success({required Object n, required Object m}) =>
-      'Menghapus ${n} media, membubarkan ${m} koleksi.';
-  @override
-  String batch_delete_success({required Object n}) => '${n} buku dihapus.';
-  @override
-  String batch_delete_success_video({required Object n}) =>
-      'Menghapus ${n} video.';
-  @override
-  String batch_dissolve_confirm({required Object m}) =>
-      'Bubarkan ${m} koleksi? Pengelompokan dihapus; medianya tetap ada.';
-  @override
-  String batch_dissolve_success({required Object m}) =>
-      'Membubarkan ${m} koleksi.';
-  @override
-  String get batch_invert_selection => 'Balik';
-  @override
-  String get batch_select => 'Pilih';
-  @override
-  String get batch_select_all => 'Semua';
-  @override
-  String batch_selected_count({required Object n}) => '${n} dipilih';
-  @override
-  String get batch_tag_add => 'Tambah';
-  @override
-  String batch_tag_added({required Object name, required Object n}) =>
-      'Tag "${name}" ditambahkan ke ${n} buku.';
-  @override
-  String batch_tag_added_video({required Object name, required Object n}) =>
-      'Menambahkan tag "${name}" ke ${n} video.';
-  @override
-  String get batch_tag_apply => 'Terapkan';
-  @override
-  String get batch_tag_keep => 'Pertahankan';
-  @override
-  String get batch_tag_remove => 'Hapus';
-  @override
-  String batch_tag_removed({required Object name, required Object n}) =>
-      'Tag "${name}" dihapus dari ${n} buku.';
-  @override
-  String batch_tag_removed_video({required Object name, required Object n}) =>
-      'Menghapus tag "${name}" dari ${n} video.';
-  @override
-  String get batch_tag_title => 'Kelola Tag';
-  @override
-  String get book_continue_reading => 'Continue Reading';
-  @override
-  String get book_css_editor_cancel => 'Batal';
-  @override
-  String get book_css_editor_confirm_reset => 'Reset CSS file ini ke default?';
-  @override
-  String get book_css_editor_confirm_reset_all =>
-      'Reset CSS SEMUA file ke default?';
-  @override
-  String get book_css_editor_discard => 'Buang';
-  @override
-  String get book_css_editor_edit_css => 'Edit CSS Buku';
-  @override
-  String get book_css_editor_no_css_files =>
-      'Tidak ada file CSS ditemukan di buku ini.';
-  @override
-  String get book_css_editor_no_extract_dir =>
-      'Direktori buku tidak ditemukan. Impor ulang buku untuk mengedit CSS.';
-  @override
-  String get book_css_editor_reset_all => 'Reset Semua';
-  @override
-  String get book_css_editor_reset_current => 'Reset Saat Ini';
-  @override
-  String get book_css_editor_reset_done => 'CSS telah direset.';
-  @override
-  String get book_css_editor_save => 'Simpan';
-  @override
-  String get book_css_editor_saved => 'CSS disimpan.';
-  @override
-  String get book_css_editor_title => 'Editor CSS Buku';
-  @override
-  String get book_css_editor_unsaved_changes => 'Perubahan Belum Disimpan';
-  @override
-  String get book_css_editor_unsaved_changes_message =>
-      'Anda memiliki perubahan yang belum disimpan. Buang?';
-  @override
-  String get book_directory_not_found => 'Direktori buku tidak ditemukan.';
-  @override
-  String get book_edit_author => 'Penulis';
-  @override
-  String get book_file_not_found => 'Berkas buku tidak ditemukan';
-  @override
-  String get book_import_duplicate_cancel => 'Tidak, batalkan';
-  @override
-  String get book_import_duplicate_cancelled => 'Impor dibatalkan';
-  @override
-  String get book_import_duplicate_keep => 'Ya, tambahkan akhiran';
-  @override
-  String book_import_duplicate_message({required Object name}) =>
-      'Buku bernama "${name}" sudah ada. Tetap impor? "Ya" mengimpor dengan akhiran bernomor; "Tidak" membatalkan.';
-  @override
-  String get book_import_duplicate_title => 'Buku duplikat';
-  @override
-  String get book_mark_completed_action => 'Tandai selesai';
-  @override
-  String get book_mark_uncompleted_action => 'Tandai belum selesai';
-  @override
-  String get book_marked_completed => 'Ditandai selesai';
-  @override
-  String get book_marked_uncompleted => 'Ditandai belum selesai';
-  @override
-  String get book_mode => 'Mode Buku';
-  @override
-  String book_read_progress({required Object percent}) => 'Terbaca ${percent}%';
-  @override
-  String get book_scrape_cover => 'Cari sampul online';
-  @override
-  String get book_scrape_empty => 'Tidak ada sampul yang cocok';
-  @override
-  String get book_scrape_failed => 'Gagal mengambil sampul';
-  @override
-  String get book_scrape_hint => 'Judul buku / penulis';
-  @override
-  String get book_scrape_search => 'Cari';
-  @override
-  String get book_scrape_search_failed =>
-      'Pencarian gagal. Ketuk Cari untuk mencoba lagi.';
-  @override
-  String get book_scrape_title => 'Cocokkan sampul online';
-  @override
-  String get book_scrape_use => 'Gunakan';
-  @override
-  String get book_search => 'Cari di buku';
-  @override
-  String get book_search_hint => 'Masukkan teks pencarian…';
-  @override
-  String get book_search_no_results => 'Tidak ada hasil';
-  @override
-  String book_search_results({required Object n}) => '${n} hasil';
-  @override
-  String get books => 'Buku';
-  @override
-  String get browser_extension_enable_server_first =>
-      'Tips: aktifkan "Server API Yomitan" dan atur kunci API di atas terlebih dahulu, agar ekstensi otomatis terkonfigurasi dengan koneksi yang berfungsi.';
-  @override
-  String get browser_extension_mobile_unsupported =>
-      'Peramban seluler tidak dapat memuat ekstensi ini. Gunakan pencarian dalam aplikasi di pembaca atau pemutar video sebagai gantinya.';
-  @override
-  String get browser_extension_page_intro =>
-      'Di desktop, cari kata, parsing subtitle, dan buat kartu langsung di Chrome atau Edge. Siapkan ekstensi di bawah, lalu muat di browser Anda.';
-  @override
-  String get browser_extension_prepare_button => 'Siapkan file ekstensi';
-  @override
-  String get browser_extension_prepare_hint =>
-      'Memulai server pencarian dan mengekstrak ekstensi secara lokal; jalur folder disalin ke clipboard.';
-  @override
-  String get browser_extension_reinstall_button =>
-      'Siapkan ulang / segarkan file';
-  @override
-  String get browser_extension_server_off => 'Server pencarian mati';
-  @override
-  String get browser_extension_server_on => 'Server pencarian aktif';
-  @override
-  String get browser_extension_status_connected => 'Ekstensi terhubung';
-  @override
-  String get browser_extension_status_never => 'Ekstensi belum terdeteksi';
-  @override
-  String get browser_extension_step_dev_mode =>
-      'Aktifkan "Mode pengembang" (tombol di pojok kanan atas).';
-  @override
-  String get browser_extension_step_done_auto =>
-      'Selesai. Ekstensi sudah diatur untuk terhubung ke Fushi untuk pencarian kata — tidak perlu mengisi apa pun secara manual.';
-  @override
-  String get browser_extension_step_load_unpacked =>
-      'Klik "Muat yang belum dikemas".';
-  @override
-  String get browser_extension_step_open_page =>
-      'Buka halaman ekstensi browser:';
-  @override
-  String get browser_extension_step_pick_folder =>
-      'Pilih folder ekstensi di bawah (jalurnya sudah disalin ke clipboard Anda).';
-  @override
-  String get browser_extension_step_verify =>
-      'Verifikasi ekstensi dimuat dan terhubung';
-  @override
-  String get browser_extension_verify_button => 'Periksa koneksi';
-  @override
-  String get browser_extension_verify_checking => 'Memeriksa…';
-  @override
-  String get browser_extension_verify_connected =>
-      'Ekstensi terdeteksi dan terhubung.';
-  @override
-  String get browser_extension_verify_not_detected =>
-      'Ekstensi belum terdeteksi. Pastikan sudah dimuat dan diaktifkan di browser Anda, lalu periksa lagi.';
-  @override
-  String get browser_extension_version_app => 'Dibundel dalam aplikasi';
-  @override
-  String get browser_extension_version_browser => 'Dimuat di browser';
-  @override
-  String get browser_extension_version_label => 'Versi ekstensi';
-  @override
-  String get browser_extension_version_mismatch =>
-      'Ekstensi yang dimuat di browser Anda sudah usang. Siapkan ulang ekstensi jika perlu, lalu muat ulang dari halaman ekstensi browser Anda (chrome://extensions).';
-  @override
-  String browser_extension_yomitan_port_conflict({required Object port}) =>
-      'Port ${port} sedang digunakan oleh proses lain (biasanya komponen yomitan-api — proses Python yang diluncurkan oleh browser Anda). Akhiri proses tersebut, atau nonaktifkan API Yomitan di pengaturan lanjutan Yomitan, lalu aktifkan kembali server API Yomitan di Fushi.';
-  @override
-  String get cancel => 'Batal';
-  @override
-  String card_cover_degraded_to_static({required Object reason}) =>
-      'Sampul kartu menggunakan bingkai diam (klip animasi tidak tersedia): ${reason}';
-  @override
-  String get card_duplicate => 'Kartu duplikat — tidak diekspor.';
-  @override
-  String get card_export_failed => 'Gagal mengekspor kartu.';
-  @override
-  String card_export_failed_detail({required Object reason}) =>
-      'Gagal mengekspor kartu: ${reason}';
-  @override
-  String get card_export_not_configured =>
-      'Anki belum dikonfigurasi. Buka pengaturan Anki dan ketuk Ambil.';
-  @override
-  String card_exported({required Object deck}) => 'Kartu diekspor ke『${deck}』.';
-  @override
-  String card_exported_audio_failed({required Object reason}) =>
-      'Kartu diekspor, tetapi audio gagal diunduh (${reason}).';
-  @override
-  String get card_mined_no_sentence_captured =>
-      'Kartu dibuat, tetapi tidak ada kalimat yang diambil (pilih ulang kata, atau teks ini tidak memiliki kalimat yang bisa dikenali).';
-  @override
-  String get card_mined_unmapped_sentence_audio_field =>
-      'Kartu dibuat dengan audio kalimat, tetapi tipe catatan Anki Anda tidak memiliki bidang yang dipetakan ke sana. Petakan bidang ke {sentence-audio}.';
-  @override
-  String get card_mined_unmapped_sentence_field =>
-      'Kartu dibuat, tetapi tipe catatan Anki Anda tidak memiliki bidang yang dipetakan ke kalimat. Gunakan Pengaturan -> \'Buat dek Lapis\' atau petakan bidang ke {sentence}.';
-  @override
-  String get card_mined_without_sentence_audio =>
-      'Kartu dibuat tanpa audio kalimat (tidak ditemukan untuk pilihan ini).';
-  @override
-  String get card_mining_pending => 'Menambah kartu…';
-  @override
-  String card_overwritten({required Object deck}) =>
-      'Kartu ditimpa di 『${deck}』.';
-  @override
-  String get change_source => 'Ubah Sumber';
-  @override
-  String get changelog_empty =>
-      'Tidak ada catatan perubahan. Periksa jaringan atau pengaturan proksi Anda.';
-  @override
-  String get changelog_open_releases => 'Buka halaman rilis';
-  @override
-  String get changelog_prerelease => 'Prarilis';
-  @override
-  String chapter_progress({
-    required Object idx,
-    required Object total,
-    required Object suffix,
-    required Object pct,
-  }) => 'Bab ${idx} / ${total}${suffix} · ${pct}%';
-  @override
-  String get clear => 'Hapus';
-  @override
-  String get clear_dictionary_description =>
-      'Ini akan menghapus semua hasil kamus dari riwayat. Apakah Anda yakin?';
-  @override
-  String get clear_dictionary_title => 'Hapus Riwayat Hasil Kamus';
-  @override
-  String get lookup_block_capture => 'Blokir tangkapan layar';
-  @override
-  String get lookup_block_capture_hint =>
-      'Kecualikan jendela popup pencarian dan clipboard dari tangkapan layar, perekaman layar, dan streaming langsung (Windows). Nonaktifkan ini agar tangkapan layar, perekaman, dan streaming bisa menangkap popup pencarian.';
-  @override
-  String get collapse_dictionaries => 'Ciutkan kamus';
-  @override
-  String get collection_bookmark => 'Penanda';
-  @override
-  String get collection_clear_confirm =>
-      'Hapus koleksi yang dipilih secara permanen? Ini tidak bisa dibatalkan.';
-  @override
-  String get collection_clear_scope => 'Hapus cakupan';
-  @override
-  String get collection_collapse => 'Ciutkan';
-  @override
-  String collection_continue_progress({required Object n}) =>
-      'Lanjutkan · EP ${n}';
-  @override
-  String get collection_empty => 'Koleksi kosong';
-  @override
-  String get collection_expand => 'Perluas';
-  @override
-  String get collection_export_all_books => 'Semua buku';
-  @override
-  String get collection_export_all_mined => 'Semua kalimat yang ditambang';
-  @override
-  String get collection_export_all_words => 'Semua kata favorit';
-  @override
-  String get collection_export_dedupe => 'Deduplikasi berdasarkan kalimat';
-  @override
-  String get collection_export_failed => 'Ekspor gagal';
-  @override
-  String get collection_export_favorites_scope => 'Kalimat favorit';
-  @override
-  String get collection_export_format => 'Format';
-  @override
-  String get collection_export_mined_title => 'Mined Sentences';
-  @override
-  String get collection_export_no_items => 'Tidak ada yang diekspor';
-  @override
-  String get collection_export_pick_book => 'Pilih buku';
-  @override
-  String get collection_export_save => 'Save Export';
-  @override
-  String get collection_export_saved => 'Ekspor tersimpan';
-  @override
-  String get collection_export_scope => 'Cakupan ekspor';
-  @override
-  String get collection_export_sentences_title => 'Favorite Sentences';
-  @override
-  String get collection_export_words_title => 'Favorite Words';
-  @override
-  String get collection_loading_hint =>
-      'Memuat koleksi dan mencocokkan file audio…';
-  @override
-  String get collection_member_removed => 'Dihapus dari koleksi';
-  @override
-  String get collection_merge_title => 'Gabung koleksi';
-  @override
-  String get collection_merged => 'Koleksi digabung.';
-  @override
-  String get collection_mined => 'Dibuat kartu';
-  @override
-  String get collection_open => 'Buka';
-  @override
-  String get collection_play => 'Putar';
-  @override
-  String get collection_remove_member => 'Hapus dari koleksi';
-  @override
-  String get collection_remove_member_confirm =>
-      'Hapus item ini dari koleksi? Item itu sendiri tetap ada.';
-  @override
-  String get collection_sentence => 'Kalimat';
-  @override
-  String get collection_sort_by_imported => 'Urutkan berdasarkan tanggal impor';
-  @override
-  String get collection_sort_by_title => 'Urutkan berdasarkan nama';
-  @override
-  String get collection_view_all => 'Lihat semua';
-  @override
-  String collection_watched_progress({
-    required Object done,
-    required Object total,
-  }) => 'Ditonton ${done}/${total}';
-  @override
-  String get collection_word => 'Kata';
-  @override
-  String get collections => 'Koleksi';
-  @override
-  String get color_container => 'Kontainer';
-  @override
-  String get color_container_desc => 'Ganti trek, latar belakang bilah putar';
-  @override
-  String get color_link => 'Warna tautan';
-  @override
-  String get color_link_desc => 'Warna hyperlink di pembaca';
-  @override
-  String get color_primary => 'Primer';
-  @override
-  String get color_primary_desc => 'Sorotan audio, tombol, sakelar';
-  @override
-  String get color_sentence_audio_highlight => 'Sorotan audio';
-  @override
-  String get color_sentence_audio_highlight_desc =>
-      'Sorotan sinkronisasi subtitle buku audio';
-  @override
-  String get color_secondary => 'Sekunder';
-  @override
-  String get color_secondary_desc => 'Entri kamus, lencana rak buku';
-  @override
-  String get color_tertiary => 'Tersier';
-  @override
-  String get color_tertiary_desc => 'Koleksi, statistik membaca';
-  @override
-  String get columns_per_page => 'Kolom per halaman';
-  @override
-  String get combine_into_series => 'Gabung menjadi seri';
-  @override
-  String get copied => 'Disalin';
-  @override
-  String get copied_to_clipboard => 'Disalin ke papan klip.';
-  @override
-  String get copy => 'Salin';
-  @override
-  String get copy_error => 'Salin Galat';
-  @override
-  String get crash_dump_empty => 'Tidak ada crash dump';
-  @override
-  String crash_dump_label({required Object n}) => 'Crash Dump (${n})';
-  @override
-  String get crash_dump_open_folder => 'Buka folder dump';
-  @override
-  String get crash_dump_privacy_notice =>
-      'Crash dump (.dmp) berisi snapshot memori proses dan mungkin mencakup teks yang sedang kamu baca, kata yang kamu cari, atau data lain di dalam aplikasi. Bagikan hanya kepada pengembang yang kamu percaya.';
-  @override
-  String get crash_dump_share => 'Bagikan dump';
-  @override
-  String get crash_dump_share_subject => 'Crash Dump Fushi';
-  @override
-  String get create_series => 'Buat seri';
-  @override
-  String get creator_action_add_to_stash => 'Tambah ke simpanan';
-  @override
-  String get creator_action_copy_to_clipboard => 'Salin ke papan klip';
-  @override
-  String get creator_action_play_audio => 'Putar audio';
-  @override
-  String get creator_action_share => 'Bagikan';
-  @override
-  String get creator_enhancement_audio_recorder => 'Perekam suara';
-  @override
-  String get creator_enhancement_camera => 'Kamera';
-  @override
-  String get creator_enhancement_clear_field => 'Hapus bidang';
-  @override
-  String get creator_enhancement_crop_image => 'Potong gambar';
-  @override
-  String get creator_enhancement_local_audio => 'Audio lokal';
-  @override
-  String get creator_enhancement_open_stash => 'Buka simpanan';
-  @override
-  String get creator_enhancement_pick_audio => 'Pilih audio';
-  @override
-  String get creator_enhancement_pick_image => 'Pilih gambar';
-  @override
-  String get creator_enhancement_pop_from_stash => 'Ambil dari simpanan';
-  @override
-  String get creator_enhancement_save_tags => 'Simpan tag';
-  @override
-  String get creator_enhancement_search_dictionary => 'Cari kamus';
-  @override
-  String get creator_enhancement_sentence_picker => 'Pilih kalimat';
-  @override
-  String get creator_enhancement_text_segmentation => 'Segmentasi teks';
-  @override
-  String get creator_export_card => 'Buat Kartu';
-  @override
-  String get creator_field_audio => 'Audio kata';
-  @override
-  String get creator_field_audio_sentence => 'Audio kalimat';
-  @override
-  String get creator_field_cloze_after => 'Setelah isian';
-  @override
-  String get creator_field_cloze_before => 'Sebelum isian';
-  @override
-  String get creator_field_cloze_inside => 'Isi isian';
-  @override
-  String get creator_field_collapsed_meaning => 'Arti dilipat';
-  @override
-  String get creator_field_context => 'Konteks';
-  @override
-  String get creator_field_cue_sentence => 'Kalimat subtitle';
-  @override
-  String get creator_field_expanded_meaning => 'Arti diperluas';
-  @override
-  String get creator_field_frequency => 'Frekuensi';
-  @override
-  String get creator_field_furigana => 'Furigana';
-  @override
-  String get creator_field_hidden_meaning => 'Arti tersembunyi';
-  @override
-  String get creator_field_image => 'Gambar';
-  @override
-  String get creator_field_meaning => 'Arti';
-  @override
-  String get creator_field_notes => 'Catatan';
-  @override
-  String get creator_field_pitch_accent => 'Aksen';
-  @override
-  String get creator_field_reading => 'Bacaan';
-  @override
-  String get creator_field_sentence => 'Kalimat';
-  @override
-  String get creator_field_tags => 'Tag';
-  @override
-  String get creator_field_term => 'Kata';
-  @override
-  String get custom_dict_css => 'CSS Kustom';
-  @override
-  String get custom_dict_css_global => 'Global (semua kamus)';
-  @override
-  String get custom_fonts => 'Font Kustom';
-  @override
-  String get custom_fonts_add_system => 'Tambah Font Sistem';
-  @override
-  String get custom_fonts_archive_error => 'Gagal mengekstrak arsip';
-  @override
-  String get custom_fonts_catalog_title => 'Pustaka font';
-  @override
-  String get custom_fonts_download_failed => 'Unduhan gagal';
-  @override
-  String get custom_fonts_downloading => 'Mengunduh…';
-  @override
-  String get custom_fonts_drag_hint =>
-      'Seret untuk mengatur ulang prioritas font';
-  @override
-  String get custom_fonts_empty => 'Belum ada font kustom';
-  @override
-  String get custom_fonts_font_roles => 'Peran font';
-  @override
-  String get custom_fonts_import_file => 'Impor File Font';
-  @override
-  String get custom_fonts_import_url => 'Impor dari URL';
-  @override
-  String custom_fonts_imported_count({required Object count}) =>
-      '${count} font berhasil diimpor';
-  @override
-  String get custom_fonts_manage => 'Kelola Font';
-  @override
-  String get custom_fonts_no_fonts_in_archive =>
-      'Tidak ada file font dalam arsip';
-  @override
-  String get custom_fonts_recommended => 'Font Rekomendasi';
-  @override
-  String get custom_fonts_removed => 'Font dihapus';
-  @override
-  String get custom_fonts_search_hint => 'Cari font';
-  @override
-  String get custom_theme => 'Tema Kustom';
-  @override
-  String custom_theme_default_name({required Object n}) => 'Kustom ${n}';
-  @override
-  String get custom_theme_long_press_hint =>
-      'Ketuk untuk beralih · tekan lama untuk mengedit';
-  @override
-  String get custom_theme_name => 'Nama';
-  @override
-  String get dark_mode => 'Mode Gelap';
-  @override
-  String get dark_mode_dark => 'Gelap';
-  @override
-  String get dark_mode_light => 'Terang';
-  @override
-  String get dark_mode_system => 'Sistem';
-  @override
-  String data_root_unavailable_message({required Object path}) =>
-      'Lokasi data Anda yang dikonfigurasi ${path} sementara tidak dapat dijangkau (drive mungkin tidur, sibuk, atau terputus). Data Anda aman dan tidak tersentuh di sana — tidak ada yang hilang. Ketuk Coba Lagi setelah drive siap untuk memuat data Anda, atau mulai dengan lokasi default untuk saat ini (data Anda yang ada TIDAK akan diubah).';
-  @override
-  String get data_root_unavailable_title => 'Lokasi data tidak merespons';
-  @override
-  String get data_root_use_default_button => 'Mulai dengan lokasi default';
-  @override
-  String get data_storage_change_button => 'Ubah lokasi';
-  @override
-  String get data_storage_change_confirm_body =>
-      'Fushi akan memindahkan semua data Anda ke folder baru lalu memulai ulang. Jangan tutup aplikasi selama pemindahan.';
-  @override
-  String get data_storage_change_confirm_title =>
-      'Ubah lokasi penyimpanan data?';
-  @override
-  String get data_storage_location_default => 'Lokasi default';
-  @override
-  String get data_storage_location_hint =>
-      'Tempat Fushi menyimpan pustaka, buku audio, dan database Anda. Hanya desktop.';
-  @override
-  String get data_storage_location_title => 'Lokasi penyimpanan data';
-  @override
-  String data_storage_migrate_failed({required Object message}) =>
-      'Tidak bisa memindahkan data: ${message}';
-  @override
-  String get data_storage_migrate_failed_restart => 'Mulai ulang';
-  @override
-  String get data_storage_migrate_failed_suggestions =>
-      'Silakan coba lagi dengan folder kosong yang berbeda. Jangan pilih folder instalasi aplikasi, dan pastikan tidak ada file di lokasi tersebut yang sedang digunakan.';
-  @override
-  String get data_storage_migrate_failed_title => 'Migrasi data gagal';
-  @override
-  String data_storage_migrate_overlay_progress({
-    required Object copied,
-    required Object total,
-  }) => 'Menyalin file: ${copied} / ${total}';
-  @override
-  String get data_storage_migrate_overlay_title => 'Memindahkan data Anda';
-  @override
-  String get data_storage_migrate_overlay_warning =>
-      'Harap biarkan aplikasi tetap terbuka. Jangan tutup atau matikan komputer sampai selesai.';
-  @override
-  String get data_storage_migrate_success => 'Data dipindahkan. Memulai ulang…';
-  @override
-  String get data_storage_migrating => 'Memindahkan data…';
-  @override
-  String get data_storage_reject_install_dir =>
-      'Folder tersebut adalah lokasi instalasi aplikasi dan tidak bisa menyimpan data Anda. Silakan pilih folder kosong yang berbeda.';
-  @override
-  String get data_storage_restart_failed =>
-      'Data dipindahkan, tetapi mulai ulang otomatis gagal. Silakan buka Fushi secara manual.';
-  @override
-  String db_downgrade_message({
-    required Object dbVersion,
-    required Object appVersion,
-  }) =>
-      'Basis data ini dibuat oleh versi Fushi yang lebih baru (schema v${dbVersion}). Aplikasimu saat ini terlalu lama (v${appVersion}). Pembukaan diblokir untuk melindungi datamu. Silakan perbarui aplikasi lalu coba lagi.';
-  @override
-  String get db_downgrade_title => 'Perbarui Fushi';
-  @override
-  String get db_unrecoverable_message =>
-      'Database tidak bisa dibuka bahkan setelah perbaikan otomatis. Kemungkinan besar rusak. Anda bisa memulihkan cadangan di Pengaturan, atau hapus data aplikasi untuk memulai dari awal.';
-  @override
-  String get db_unrecoverable_title => 'Database rusak';
-  @override
-  String get debug_log_share_subject => 'Log Debug Fushi';
-  @override
-  String debug_log_title({required Object count}) => 'Log Debug (${count})';
-  @override
-  String get debug_log_toggle => 'Aktifkan log debug';
-  @override
-  String get decrease => 'Kurangi';
-  @override
-  String get deduplicate_pitch_accents => 'Hapus duplikat aksen nada';
-  @override
-  String get delete_collection => 'Hapus koleksi';
-  @override
-  String get delete_collection_also_books => 'Hapus juga buku di dalamnya';
-  @override
-  String get delete_collection_also_videos =>
-      'Hapus juga video (file video asli Anda tetap ada)';
-  @override
-  String get delete_custom_theme => 'Hapus tema';
-  @override
-  String get delete_custom_theme_confirm =>
-      'Hapus tema kustom ini? Ini tidak bisa dibatalkan.';
-  @override
-  String get delete_in_progress => 'Sedang menghapus';
-  @override
-  String get delete_prompt_delete_selected => 'Hapus yang dipilih';
-  @override
-  String get delete_prompt_message =>
-      'Item-item ini dihapus di perangkat lain. Hapus juga di sini?';
-  @override
-  String get delete_prompt_select_all => 'Pilih semua';
-  @override
-  String get delete_prompt_title => 'Dihapus di perangkat lain';
-  @override
-  String get delete_scope_keep_local_desc =>
-      'Perangkat lain menyimpan salinannya';
-  @override
-  String get delete_scope_sync_everywhere => 'Hapus dari semua perangkat';
-  @override
-  String get delete_scope_sync_everywhere_desc =>
-      'Perangkat lain mengonfirmasi penghapusan pada sinkronisasi berikutnya';
-  @override
-  String get design_system_auto => 'Otomatis';
-  @override
-  String get design_system_hint => 'Mengontrol gaya visual aplikasi';
-  @override
-  String get design_system_label => 'Sistem Desain';
-  @override
-  String get dialog_add => 'TAMBAH';
-  @override
-  String get dialog_append => 'TAMBAHKAN';
-  @override
-  String get dialog_cancel => 'BATAL';
-  @override
-  String get dialog_clear => 'HAPUS';
-  @override
-  String get dialog_clear_all_dictionaries => 'Hapus Semua Kamus';
-  @override
-  String get dialog_close => 'TUTUP';
-  @override
-  String get dialog_connect => 'HUBUNGKAN';
-  @override
-  String get dialog_content_dictionary_clear =>
-      'Menghapus database kamus juga akan menghapus semua hasil pencarian di riwayat.';
-  @override
-  String get dialog_content_dictionary_delete =>
-      'Menghapus satu kamus mungkin memakan waktu lebih lama daripada menghapus seluruh database kamus. Ini juga akan menghapus semua hasil pencarian di riwayat.';
-  @override
-  String get dialog_create => 'BUAT';
-  @override
-  String get dialog_crop => 'POTONG';
-  @override
-  String get dialog_delete => 'HAPUS';
-  @override
-  String get dialog_done => 'SELESAI';
-  @override
-  String get dialog_edit => 'EDIT';
-  @override
-  String get dialog_edit_info => 'Edit Info';
-  @override
-  String get dialog_exit => 'KELUAR';
-  @override
-  String get dialog_export => 'EKSPOR';
-  @override
-  String get dialog_import => 'IMPOR';
-  @override
-  String get dialog_import_dictionary => 'Impor Kamus';
-  @override
-  String get dialog_import_folder => 'Impor Kamus dari Folder';
-  @override
-  String get dialog_importing => 'MENGIMPOR…';
-  @override
-  String get dialog_launch_ankidroid => 'BUKA ANKIDROID';
-  @override
-  String get dialog_ok => 'OK';
-  @override
-  String get dialog_play => 'PUTAR';
-  @override
-  String get dialog_read => 'BACA';
-  @override
-  String get dialog_record => 'REKAM';
-  @override
-  String get dialog_replace => 'Ganti';
-  @override
-  String get dialog_save => 'SIMPAN';
-  @override
-  String get dialog_search => 'CARI';
-  @override
-  String get dialog_select => 'PILIH';
-  @override
-  String get dialog_share => 'BAGIKAN';
-  @override
-  String get dialog_stash => 'SIMPAN';
-  @override
-  String get dialog_stop => 'BERHENTI';
-  @override
-  String get dialog_title_dictionary_clear => 'Hapus semua kamus?';
-  @override
-  String dialog_title_dictionary_delete({required Object name}) =>
-      'Hapus『${name}』?';
-  @override
-  String get dict_auto_update => 'Perbarui otomatis';
-  @override
-  String get dict_auto_update_hint =>
-      'Periksa pembaruan kamus saat aplikasi dibuka';
-  @override
-  String dict_auto_update_last({required Object time}) =>
-      'Pemeriksaan berhasil terakhir: ${time}';
-  @override
-  String get dict_auto_update_never => 'Tidak pernah';
-  @override
-  String get dict_category_frequency => 'Frekuensi';
-  @override
-  String get dict_category_grammar => 'Tata Bahasa';
-  @override
-  String get dict_category_ja_en => 'Jepang–Inggris';
-  @override
-  String get dict_category_ja_ja => 'Jepang–Jepang';
-  @override
-  String get dict_category_ja_other => 'Jepang Lainnya';
-  @override
-  String get dict_category_kanji => 'Kanji';
-  @override
-  String get dict_category_names => 'Nama';
-  @override
-  String get dict_category_supplementary => 'Tambahan';
-  @override
-  String get dict_download_browse => 'Unduh Kamus';
-  @override
-  String dict_download_button({required Object count}) => 'Unduh (${count})';
-  @override
-  String get dict_download_complete => 'Unduhan selesai.';
-  @override
-  String dict_download_failed({required Object error}) =>
-      'Unduhan gagal: ${error}';
-  @override
-  String get dict_download_installed => 'Terpasang';
-  @override
-  String get dict_download_language => 'Bahasa Anda';
-  @override
-  String dict_download_partial({
-    required Object success,
-    required Object total,
-    required Object error,
-  }) => '${success} / ${total} OK. Gagal: ${error}';
-  @override
-  String get dict_download_select_title => 'Pilih Kamus';
-  @override
-  String dict_downloading({required Object name}) => 'Mengunduh ${name}…';
-  @override
-  String dict_import_failed_summary({required Object n}) =>
-      'Gagal mengimpor ${n} kamus';
-  @override
-  String get dict_import_started => 'Mengimpor kamus di latar belakang...';
-  @override
-  String dict_import_success_summary({required Object n}) =>
-      'Mengimpor ${n} kamus';
-  @override
-  String get dict_update_check => 'Cek Pembaruan';
-  @override
-  String get dict_update_checking => 'Memeriksa pembaruan…';
-  @override
-  String dict_update_done({required Object name}) => '${name} diperbarui.';
-  @override
-  String dict_update_failed({required Object error}) =>
-      'Pembaruan gagal: ${error}';
-  @override
-  String get dict_update_interval_daily => 'Harian';
-  @override
-  String get dict_update_interval_monthly => 'Bulanan';
-  @override
-  String get dict_update_interval_weekly => 'Mingguan';
-  @override
-  String get dict_update_latest => 'Sudah yang terbaru.';
-  @override
-  String dict_update_name_mismatch_body({
-    required Object incoming,
-    required Object existing,
-  }) =>
-      'File yang dipilih adalah "${incoming}", tetapi Anda memperbarui "${existing}". Tetap ganti?';
-  @override
-  String get dict_update_name_mismatch_title => 'Nama tidak cocok';
-  @override
-  String get dict_update_none => 'Semua kamus sudah yang terbaru.';
-  @override
-  String dict_update_summary({
-    required Object updated,
-    required Object current,
-    required Object failed,
-  }) => '${updated} diperbarui, ${current} terbaru, ${failed} gagal.';
-  @override
-  String get dict_update_tooltip => 'Perbarui kamus';
-  @override
-  String dict_update_updating({required Object name}) => 'Memperbarui ${name}…';
-  @override
-  String get dictionaries => 'Kamus';
-  @override
-  String get dictionaries_delete_failed => 'Gagal menghapus kamus';
-  @override
-  String get dictionaries_deleting_data => 'Menghapus data kamus...';
-  @override
-  String get dictionaries_menu_empty => 'Impor kamus untuk digunakan';
-  @override
-  String get dictionary_delete_failed => 'Gagal menghapus kamus';
-  @override
-  String get dictionary_font_size => 'Ukuran font kamus';
-  @override
-  String get dictionary_font_size_zoom_hint =>
-      'Ctrl + scroll wheel memperbesar/memperkecil konten popup';
-  @override
-  String get dictionary_section_frequency => 'Kamus Frekuensi';
-  @override
-  String get dictionary_section_kanji => 'Kamus Kanji';
-  @override
-  String get dictionary_section_pitch => 'Kamus Nada';
-  @override
-  String get dictionary_section_term => 'Kamus Istilah';
-  @override
-  String get dictionary_settings => 'Pengaturan Kamus';
-  @override
-  String get dictionary_type_frequency => 'Frekuensi';
-  @override
-  String get dictionary_type_pitch => 'Nada';
-  @override
-  String get dictionary_type_term => 'Istilah';
-  @override
-  String get dictionary_unrecognized_format => 'Format kamus tidak dikenali';
-  @override
-  String get dismiss_swipe_sensitivity => 'Sensitivitas swipe untuk menutup';
-  @override
-  String get display_settings => 'Pengaturan Tampilan';
-  @override
-  String get download_backend_not_configured =>
-      'Backend unduhan belum dikonfigurasi.';
-  @override
-  String get download_clear_finished => 'Bersihkan yang selesai';
-  @override
-  String get download_detail_backend_offline =>
-      'Backend unduhan asli sedang offline. Informasi tugas yang tersimpan ditampilkan; parameter langsung tidak tersedia.';
-  @override
-  String get download_network_proxy_auto => 'Otomatis';
-  @override
-  String get download_network_proxy_auto_hint =>
-      'Berlaku untuk AniList, Nyaa, dan Jimaku saja. Otomatis menggunakan variabel lingkungan, lalu proksi sistem yang aktif; lalu lintas torrent tidak berubah.';
-  @override
-  String get download_network_proxy_custom => 'Kustom';
-  @override
-  String get download_network_proxy_custom_label => 'Proksi kustom';
-  @override
-  String get download_network_proxy_direct => 'Langsung';
-  @override
-  String get download_network_proxy_section => 'Jaringan pencarian';
-  @override
-  String get download_open_settings => 'Buka pengaturan';
-  @override
-  String get download_save_root_change => 'Ubah folder';
-  @override
-  String get download_save_root_create_failed =>
-      'Tidak bisa membuat folder tersebut. Periksa drive dan izin.';
-  @override
-  String get download_save_root_fallback_warning =>
-      'Folder unduhan yang dikonfigurasi tidak tersedia, jadi folder default sedang digunakan.';
-  @override
-  String get download_save_root_hint =>
-      'Unduhan baru disimpan di sini. Tugas yang ada tetap di folder aslinya.';
-  @override
-  String get download_save_root_not_absolute =>
-      'Silakan pilih jalur folder absolut.';
-  @override
-  String get download_save_root_not_writable =>
-      'Folder tersebut tidak bisa ditulis.';
-  @override
-  String get download_save_root_reset => 'Kembalikan ke default';
-  @override
-  String get download_save_root_title => 'Folder unduhan';
-  @override
-  String get download_settings => 'Pengaturan unduhan';
-  @override
-  String get download_status_cancelled => 'Dibatalkan';
-  @override
-  String get download_status_queued => 'Dalam antrean';
-  @override
-  String download_subscription_after_episode({required Object episode}) =>
-      'Setelah episode ${episode}';
-  @override
-  String get download_subscription_check_all => 'Periksa semua';
-  @override
-  String get download_subscription_check_now => 'Periksa sekarang';
-  @override
-  String download_subscription_choice_hint({
-    required Object group,
-    required Object resolution,
-  }) => 'Ikuti ${group} · ${resolution}. Rilis episode baru akan diantrean.';
-  @override
-  String get download_subscription_created =>
-      'Unduhan diantrean dan langganan dibuat';
-  @override
-  String get download_subscription_delete => 'Hapus langganan';
-  @override
-  String download_subscription_delete_confirm({required Object title}) =>
-      'Hapus langganan untuk ${title}? Tugas yang sudah diunduh tetap ada.';
-  @override
-  String get download_subscription_download_and_create =>
-      'Unduh dan berlangganan';
-  @override
-  String get download_subscription_empty_body =>
-      'Di Jelajahi, pilih rilis satu episode dan gunakan Unduh dan berlangganan.';
-  @override
-  String get download_subscription_empty_title => 'Belum ada langganan';
-  @override
-  String download_subscription_last_checked({required Object time}) =>
-      'Terakhir diperiksa: ${time}';
-  @override
-  String download_subscription_latest_episode({required Object episode}) =>
-      'Terbaru diantrean: episode ${episode}';
-  @override
-  String get download_subscription_never_checked => 'Belum pernah diperiksa';
-  @override
-  String get download_subscription_running_hint =>
-      'Fushi memeriksa langganan aktif setiap 15 menit selama aplikasi berjalan.';
-  @override
-  String get download_subscription_unavailable_hint =>
-      'Pilih rilis satu episode dengan grup rilis yang bisa dikenali untuk berlangganan.';
-  @override
-  String get download_subscriptions_tab => 'Langganan';
-  @override
-  String download_task_action_failed({required Object error}) =>
-      'Tindakan tugas gagal: ${error}';
-  @override
-  String get download_task_delete => 'Hapus tugas';
-  @override
-  String download_task_delete_confirm({required Object title}) =>
-      'Hapus tugas unduhan untuk ${title}?';
-  @override
-  String get download_task_delete_files => 'Hapus juga file yang diunduh';
-  @override
-  String get download_task_details => 'Lihat detail';
-  @override
-  String get download_tasks_tab => 'Tugas';
-  @override
-  String get download_test_connection => 'Tes koneksi';
-  @override
-  String get download_test_connection_failed =>
-      'Koneksi gagal. Periksa alamat dan kredensial.';
-  @override
-  String download_test_connection_ok({required Object version}) =>
-      'Terhubung (versi: ${version})';
-  @override
-  String get drag_drop_need_card_target =>
-      'Jatuhkan subtitle atau audio ke sebuah buku atau video';
-  @override
-  String get drag_drop_unsupported_on_books =>
-      'Jatuhkan file buku di sini. Beralih ke Video atau Kamus untuk file tersebut.';
-  @override
-  String get drag_drop_unsupported_on_dictionary =>
-      'Jatuhkan file kamus .zip, .dsl, atau .mdx di sini. File CSS hanya berfungsi bersama paket kamus.';
-  @override
-  String get drag_drop_unsupported_on_video =>
-      'Jatuhkan video, playlist, atau subtitle di sini. Beralih ke Buku atau Kamus untuk file tersebut.';
-  @override
-  String get edit_custom_theme => 'Edit tema kustom';
-  @override
-  String get eink_mode => 'Mode E-ink';
-  @override
-  String get eink_mode_hint =>
-      'Tema hitam-putih murni tanpa animasi dan sorotan garis, untuk layar e-ink';
-  @override
-  String get enable_swipe_to_close => 'Geser untuk menutup popup';
-  @override
-  String get epub_delete_error => 'Gagal menghapus buku';
-  @override
-  String get epub_delete_title => 'Hapus Buku';
-  @override
-  String get epub_parse_fallback => 'Metadata buku dipulihkan dari basis data';
-  @override
-  String get error_ankidroid_api => 'Error AnkiDroid';
-  @override
-  String get error_ankidroid_api_content =>
-      'Terjadi masalah saat berkomunikasi dengan AnkiDroid.\n\nPastikan layanan latar belakang AnkiDroid aktif dan semua izin aplikasi yang diperlukan telah diberikan.';
-  @override
-  String get error_copied => 'Galat disalin ke papan klip';
-  @override
-  String get error_load_failed => 'Terjadi kesalahan saat memuat';
-  @override
-  String get error_log_diagnostics_section =>
-      'Diagnostik / forensik (bukan kesalahan aplikasi)';
-  @override
-  String get error_log_empty => 'Tidak ada log kesalahan';
-  @override
-  String error_log_label({required Object n}) => 'Log Error (${n})';
-  @override
-  String get error_log_previous_run => 'Log sebelumnya (sebelum sesi terakhir)';
-  @override
-  String get error_log_share_subject => 'Log Error Fushi';
-  @override
-  String get extension_popup_independent_size =>
-      'Ukuran terpisah untuk ekstensi browser';
-  @override
-  String get extension_popup_independent_size_hint =>
-      'Berikan popup pencarian ekstensi browser ukuran maksimumnya sendiri alih-alih mengikuti popup dalam aplikasi';
-  @override
-  String get extension_popup_max_height => 'Tinggi maks popup ekstensi';
-  @override
-  String get extension_popup_max_width => 'Lebar maks popup ekstensi';
-  @override
-  String get external_window_capture_failed => 'Tangkapan jendela gagal';
-  @override
-  String get external_window_current_game => 'Game saat ini';
-  @override
-  String get external_window_mining => 'Penambangan jendela eksternal';
-  @override
-  String get external_window_no_windows =>
-      'Tidak ada jendela yang bisa ditangkap';
-  @override
-  String get external_window_none =>
-      'Tidak ada jendela terikat (ketuk untuk memilih)';
-  @override
-  String get external_window_refresh => 'Segarkan daftar jendela';
-  @override
-  String get external_window_select => 'Pilih jendela target';
-  @override
-  String get external_window_unbind => 'Lepas jendela';
-  @override
-  String get external_window_unsupported =>
-      'Penambangan jendela eksternal hanya tersedia di Windows';
-  @override
-  String get failed_online_service => 'Gagal terhubung ke layanan online';
-  @override
-  String get favorite_added => 'Kalimat disimpan ke favorit';
-  @override
-  String get favorite_removed => 'Kalimat dihapus dari favorit';
-  @override
-  String favorites({required Object n}) => 'Favorit (${n})';
-  @override
-  String field_fallback_used({
-    required Object field,
-    required Object secondField,
-  }) =>
-      'Field ${field} menggunakan ${secondField} sebagai kata pencarian cadangan.';
-  @override
-  String file_count({required Object count}) => '${count} file';
-  @override
-  String get floating_dict_close => 'Tutup';
-  @override
-  String get floating_dict_title => 'Kamus';
-  @override
-  String get floating_lyric_bg_opacity => 'Opasitas latar subtitle melayang';
-  @override
-  String get floating_lyric_button_bg_opacity =>
-      'Opasitas latar tombol subtitle melayang';
-  @override
-  String get floating_lyric_click_lookup =>
-      'Ketuk subtitle melayang untuk mencari kata';
-  @override
-  String get floating_lyric_click_lookup_hint =>
-      'Biarkan ini aktif dengan kunci posisi jika kamu masih ingin pencarian kata.';
-  @override
-  String get floating_lyric_close => 'Tutup';
-  @override
-  String get floating_lyric_context_lines =>
-      'Baris konteks subtitle mengambang';
-  @override
-  String get floating_lyric_context_lines_hint =>
-      '0 hanya menampilkan baris saat ini (satu baris, tidak berubah); atur 1-3 untuk menampilkan sebanyak itu baris sebelum dan sesudahnya';
-  @override
-  String get floating_lyric_corner_radius => 'Radius sudut subtitle mengambang';
-  @override
-  String get floating_lyric_corner_radius_hint =>
-      '0 menggunakan sudut default setiap platform; naikkan untuk membulatkan bar dan tombol lebih banyak';
-  @override
-  String get floating_lyric_font_size => 'Ukuran font subtitle mengambang';
-  @override
-  String get floating_lyric_hint =>
-      'Tampilkan kalimat saat ini di atas aplikasi lain.';
-  @override
-  String get floating_lyric_lock => 'Kunci';
-  @override
-  String get floating_lyric_next => 'Berikutnya';
-  @override
-  String get floating_lyric_no_audio =>
-      'Buku ini tidak punya audio untuk didengarkan';
-  @override
-  String get floating_lyric_permission_hint =>
-      'Izin overlay diperlukan untuk menampilkan lirik mengambang.';
-  @override
-  String get floating_lyric_permission_hint_coloros =>
-      'Jika sistem terus menolak izin overlay: instal ulang APK aplikasi ini sekali dengan pengelola file, atau nonaktifkan pemantauan izin di opsi Pengembang, lalu coba lagi.';
-  @override
-  String get floating_lyric_play_pause => 'Putar';
-  @override
-  String get floating_lyric_previous => 'Sebelumnya';
-  @override
-  String get floating_lyric_text_opacity => 'Opasitas teks subtitle melayang';
-  @override
-  String get floating_lyric_toggle_action => 'Subtitle melayang';
-  @override
-  String get floating_lyric_unavailable_hint =>
-      'Tidak dapat menampilkan jendela subtitle melayang.';
-  @override
-  String get floating_lyric_unlock => 'Buka Kunci';
-  @override
-  String get floating_lyric_width => 'Lebar subtitle mengambang';
-  @override
-  String get floating_lyric_width_hint =>
-      '0 menggunakan lebar default platform; atur nilai untuk membuat bar dengan lebar tetap';
-  @override
-  String get focus_navigation_enabled => 'Navigasi fokus keyboard & gamepad';
-  @override
-  String get focus_navigation_enabled_hint =>
-      'Pindahkan fokus dengan tombol panah atau gamepad dan tampilkan cincin fokus.';
-  @override
-  String get folder_picker_permission_required =>
-      'Izin penyimpanan diperlukan untuk menelusuri folder';
-  @override
-  String get follow_audio_off_tooltip => 'Ikuti audio: NONAKTIF';
-  @override
-  String get follow_audio_on_tooltip => 'Ikuti audio: AKTIF';
-  @override
-  String get font_color => 'Warna Font';
-  @override
-  String get font_color_desc => 'Warna teks pembaca';
-  @override
-  String get font_desc_hina_mincho =>
-      'Mincho dekoratif lembut · Pasangkan dengan Noto Sans JP';
-  @override
-  String get font_desc_klee_one =>
-      'Gaya tulisan tangan · Jelas dan mudah dibaca · Cocok dipasangkan dengan Noto Sans JP';
-  @override
-  String get font_desc_mplus_rounded_1c =>
-      'Gaya bulat lucu · Ideal untuk light novel · Pasangkan dengan Noto Sans JP';
-  @override
-  String get font_desc_noto_sans_jp =>
-      'Google/Adobe Gothic · Prioritas huruf Jepang · Berat variabel';
-  @override
-  String get font_desc_noto_sans_sc =>
-      'Google/Adobe Gothic · Prioritas Tionghoa Sederhana · Gunakan sebagai cadangan';
-  @override
-  String get font_desc_noto_sans_tc =>
-      'Google/Adobe Gothic · Prioritas Tionghoa Tradisional';
-  @override
-  String get font_desc_noto_serif_jp =>
-      'Google/Adobe Serif · Prioritas huruf Jepang · Ideal untuk baca vertikal';
-  @override
-  String get font_desc_noto_serif_sc =>
-      'Google/Adobe Serif · Prioritas Tionghoa Sederhana · Gunakan sebagai cadangan';
-  @override
-  String get font_desc_noto_serif_tc =>
-      'Google/Adobe Serif · Prioritas glif Cina Tradisional · Ideal untuk membaca vertikal';
-  @override
-  String get font_desc_shippori_mincho =>
-      'Mincho elegan · Cocok untuk sastra · Pasangkan dengan Noto Sans JP';
-  @override
-  String get font_desc_zen_kaku_gothic_new =>
-      'Kaku Gothic modern · Bacaan umum · Pasangkan dengan Noto Sans JP';
-  @override
-  String get font_desc_zen_maru_gothic =>
-      'Gothic bulat lembut · Pasangkan dengan Noto Sans JP';
-  @override
-  String get font_desc_zen_old_mincho =>
-      'Mincho vintage · Gaya sastra klasik · Pasangkan dengan Noto Sans JP';
-  @override
-  String get font_source_file => 'Berkas';
-  @override
-  String get font_source_system => 'Sistem';
-  @override
-  String get font_target_app_ui => 'Font Antarmuka Sistem';
-  @override
-  String get font_target_body => 'Font Teks Novel';
-  @override
-  String get font_target_dictionary => 'Font Kamus';
-  @override
-  String get font_target_video_subtitle => 'Video Subtitle Font';
-  @override
-  String get gal_hook_text_font_size => 'Ukuran font teks galgame';
-  @override
-  String get gal_hook_text_font_size_hint =>
-      'Seret sudut overlay untuk mengubah ukuran jendela; ukuran teks diatur di sini.';
-  @override
-  String get game_add => 'Tambah game';
-  @override
-  String get game_already_added => 'Game ini sudah ada di pustaka';
-  @override
-  String get game_audio_backend_engine => 'PCM mesin';
-  @override
-  String get game_audio_backend_loopback => 'Loopback sistem (tercampur)';
-  @override
-  String get game_audio_backend_none => 'Tidak ada sumber audio';
-  @override
-  String get game_audio_backend_resource => 'Audio sumber daya game';
-  @override
-  String get game_audio_duration => 'Durasi audio';
-  @override
-  String get game_audio_fallback_disabled_missing =>
-      '未找到与该句匹配的游戏资源音频；已关闭降级，未制卡';
-  @override
-  String get game_audio_resource_id => '音频资源 ID';
-  @override
-  String get game_audio_tracks => 'Trek audio aktif';
-  @override
-  String get game_auto_cover => 'Ambil sampul otomatis';
-  @override
-  String get game_back_to_capture => 'Kembali ke ruang kerja tangkapan';
-  @override
-  String get game_back_to_library => 'Kembali ke pustaka game';
-  @override
-  String get game_capture_active => 'Tangkapan aktif';
-  @override
-  String get game_capture_degraded_loopback =>
-      'Game berjalan, tetapi injeksi mesin gagal; menggunakan audio sistem sebagai cadangan, yang bisa mencampur BGM dan efek.';
-  @override
-  String get game_capture_description =>
-      'Luncurkan atau tautkan game, lalu pantau teks, suara, tangkapan layar, dan output Anki.';
-  @override
-  String get game_capture_empty_body =>
-      'Luncurkan atau tautkan game; status teks dan audio kalimat akan muncul di sini.';
-  @override
-  String get game_capture_empty_title => 'Belum ada baris yang diterima';
-  @override
-  String get game_capture_launch_failed =>
-      'Peluncuran atau tangkapan game gagal';
-  @override
-  String get game_capture_launching =>
-      'Meluncurkan game dan memulai tangkapan...';
-  @override
-  String get game_capture_running => 'Sesi tangkapan sedang berjalan';
-  @override
-  String get game_capture_window_missing =>
-      'Proses game dimulai tetapi jendelanya tidak pernah muncul, jadi game mungkin tidak diluncurkan. Coba mulai lagi.';
-  @override
-  String get game_capture_workbench => 'Ruang kerja tangkapan';
-  @override
-  String get game_captured_lines => 'Baris yang ditangkap';
-  @override
-  String get game_card_mapping_missing =>
-      'Pemetaan bidang Anki tidak memiliki token kartu game';
-  @override
-  String get game_card_sentence_audio_missing =>
-      'Kartu dibuat tanpa audio kalimat; tidak ada audio baris lain yang disubstitusi.';
-  @override
-  String get game_clear_events => 'Bersihkan peristiwa';
-  @override
-  String get game_cover_not_found =>
-      'Tidak ditemukan sampul yang bisa digunakan di folder game atau eksekutabel';
-  @override
-  String get game_cover_searching => 'Mencari sampul...';
-  @override
-  String get game_cover_updated => 'Sampul diperbarui';
-  @override
-  String get game_dashboard => 'Beranda';
-  @override
-  String get game_detail_missing => 'Game ini tidak lagi ada di pustaka';
-  @override
-  String get game_detail_tab_edit => 'Edit';
-  @override
-  String get game_detail_tab_stats => 'Statistik';
-  @override
-  String get game_detail_tab_summary => 'Ringkasan';
-  @override
-  String get game_diagnostics => 'Diagnostik kompatibilitas';
-  @override
-  String get game_diagnostics_subtitle =>
-      'Tahapan sesi, endpoint, trek audio, dan peristiwa terstruktur';
-  @override
-  String game_drop_imported({required Object count}) =>
-      'Menambahkan ${count} game';
-  @override
-  String get game_drop_no_exe =>
-      'Tidak ada .exe game baru di antara file yang dijatuhkan';
-  @override
-  String get game_edit_developer => 'Pengembang';
-  @override
-  String get game_edit_display_name => 'Nama tampilan';
-  @override
-  String get game_edit_exe_path => 'Jalur eksekutabel';
-  @override
-  String get game_edit_invalid_date => 'Tanggal rilis harus YYYY-MM-DD';
-  @override
-  String get game_edit_launch_args => 'Argumen peluncuran';
-  @override
-  String get game_edit_launch_args_hint =>
-      'Diteruskan ke game saat diluncurkan, mis. -windowed';
-  @override
-  String get game_edit_nsfw => 'Judul dewasa';
-  @override
-  String get game_edit_release_date => 'Tanggal rilis (YYYY-MM-DD)';
-  @override
-  String get game_edit_save => 'Simpan';
-  @override
-  String get game_edit_saved => 'Tersimpan';
-  @override
-  String get game_edit_summary => 'Deskripsi';
-  @override
-  String get game_edit_tags => 'Tag (dipisah koma)';
-  @override
-  String get game_edit_user_rating => 'Penilaian saya (0-10)';
-  @override
-  String get game_edit_user_review => 'Ulasan saya';
-  @override
-  String get game_edit_workdir => 'Direktori kerja';
-  @override
-  String get game_empty => 'Belum ada game ditambahkan';
-  @override
-  String get game_endpoint_phase_connected => 'Terhubung';
-  @override
-  String get game_endpoint_phase_connecting => 'Menghubungkan';
-  @override
-  String get game_endpoint_phase_retrying => 'Mencoba ulang';
-  @override
-  String get game_endpoint_phase_stopped => 'Berhenti';
-  @override
-  String get game_endpoints_engine_active =>
-      'Teks disediakan oleh hook mesin; endpoint ini opsional';
-  @override
-  String get game_endpoints_hint =>
-      'Port untuk alat teks eksternal (Textractor / LunaTranslator dll.); abaikan jika tidak menggunakannya';
-  @override
-  String get game_event_all => 'Semua peristiwa';
-  @override
-  String get game_event_warnings => 'Peringatan dan kesalahan';
-  @override
-  String get game_exe_missing => 'Eksekutabel game tidak ditemukan';
-  @override
-  String get game_filter => 'Filter';
-  @override
-  String get game_filter_all => 'Semua';
-  @override
-  String get game_filter_favorited => 'Difavoritkan';
-  @override
-  String get game_filter_hide_nsfw => 'Sembunyikan judul dewasa';
-  @override
-  String get game_filter_local_only => 'Memiliki file lokal';
-  @override
-  String get game_filter_metadata_only => 'Hanya metadata';
-  @override
-  String get game_filter_mined => 'Ditambang';
-  @override
-  String get game_filter_reset => 'Hapus filter';
-  @override
-  String get game_filter_source => 'Ketersediaan';
-  @override
-  String get game_filter_status => 'Status bermain';
-  @override
-  String get game_filter_tags => 'Tag';
-  @override
-  String get game_filter_with_audio => 'Dengan audio';
-  @override
-  String get game_focus_continue => 'Lanjutkan';
-  @override
-  String get game_follow_live => 'Ikuti langsung';
-  @override
-  String get game_health => 'Status kesehatan';
-  @override
-  String get game_health_anki => 'Output Anki';
-  @override
-  String get game_health_audio => 'Sumber audio';
-  @override
-  String get game_health_helper => 'Helper hook';
-  @override
-  String get game_health_process => 'Proses game';
-  @override
-  String get game_health_text => 'Sumber teks';
-  @override
-  String get game_health_upscaling => 'Upscaling jendela';
-  @override
-  String get game_health_window => 'Jendela game';
-  @override
-  String get game_helper_download => 'Unduh';
-  @override
-  String game_helper_download_failed({required Object error}) =>
-      'Unduhan komponen mesin gagal: ${error}';
-  @override
-  String get game_helper_downloading => 'Mengunduh komponen mesin…';
-  @override
-  String get game_helper_install_incomplete =>
-      'Instalasi komponen mesin tidak lengkap, silakan coba lagi';
-  @override
-  String game_helper_needed_body({required Object size}) =>
-      'Meluncurkan galgame memerlukan komponen injektor hook mesin (sekitar ${size}). Ini berisi kode injeksi proses dan dikirim terpisah dari aplikasi untuk menghindari positif palsu antivirus. Unduh sekarang?';
-  @override
-  String get game_helper_needed_title => 'Komponen mesin galgame diperlukan';
-  @override
-  String get game_helper_size_unknown => 'ukuran tidak diketahui';
-  @override
-  String get game_helper_verification_failed =>
-      'Komponen mesin diblokir: checksum-nya tidak bisa diverifikasi (file .sha256 dari GitHub tidak bisa dijangkau, tidak ada, atau tidak cocok). Fushi menolak menginstal kode injektor yang tidak terverifikasi.';
-  @override
-  String get game_home_subtitle => 'Pustaka game dan pemantauan tangkapan';
-  @override
-  String get game_hook_fallback_all_audio_sources_failed =>
-      'Hook suara mesin maupun loopback sistem tidak bisa dimulai; tidak ada audio yang bisa ditangkap.';
-  @override
-  String get game_hook_fallback_engine_attach_failed =>
-      'Menautkan hook suara mesin ke game yang berjalan gagal; campuran sistem digunakan sebagai gantinya.';
-  @override
-  String get game_hook_fallback_engine_pcm_unavailable =>
-      'Hook suara mesin terinstal, tetapi game belum memutar suara apa pun. Campuran sistem digunakan untuk sementara dan akan beralih kembali secara otomatis setelah suara pertama tiba.';
-  @override
-  String get game_hook_fallback_launch_injection_failed =>
-      'Game berjalan, tetapi injeksi mesin awal gagal; campuran sistem digunakan sebagai gantinya.';
-  @override
-  String get game_hook_fallback_window_not_found =>
-      'Tangkapan audio berjalan, tetapi jendela game belum muncul, jadi tangkapan layar tidak tersedia. Akan terikat secara otomatis setelah jendela muncul.';
-  @override
-  String get game_hook_line_unavailable =>
-      'Baris yang ditangkap ini tidak lagi tersedia.';
-  @override
-  String get game_hook_reason_access_denied =>
-      'Game berjalan dengan hak istimewa lebih tinggi; jalankan Fushi sebagai administrator dan coba lagi.';
-  @override
-  String get game_hook_reason_bitness_mismatch =>
-      'Arsitektur helper tidak cocok dengan game (32-bit vs 64-bit); instal ulang helper.';
-  @override
-  String get game_hook_reason_create_process_failed =>
-      'Game tidak bisa dimulai dari Fushi; periksa jalur eksekutabel.';
-  @override
-  String get game_hook_reason_elevation_required =>
-      'Game ini memerlukan hak administrator; jalankan Fushi sebagai administrator dan luncurkan lagi.';
-  @override
-  String get game_hook_reason_game_exe_missing =>
-      'Eksekutabel game tidak lagi ada di jalur yang tersimpan.';
-  @override
-  String get game_hook_reason_guarded_hook_failed =>
-      'Hook yang dijaga profil tidak bisa diinstal tepat waktu; mencoba ulang secara otomatis.';
-  @override
-  String get game_hook_reason_handshake_timeout =>
-      'Game di-hook tetapi tidak menghasilkan teks atau audio tepat waktu; mesin ini mungkin belum didukung.';
-  @override
-  String get game_hook_reason_helper_missing =>
-      'Helper hook suara tidak terinstal untuk arsitektur game ini; instal dan coba lagi.';
-  @override
-  String get game_hook_reason_hook_dll_missing =>
-      'Paket helper tidak lengkap (pustaka hook hilang); instal ulang.';
-  @override
-  String get game_hook_reason_injection_failed =>
-      'Injeksi ke game diblokir; tambahkan Fushi dan game ke pengecualian antivirus.';
-  @override
-  String get game_hook_reason_ready_timeout =>
-      'Pustaka hook tidak selesai dimuat tepat waktu; pemindaian antivirus bisa menyebabkan ini.';
-  @override
-  String get game_hook_reason_resume_failed =>
-      'Game yang diluncurkan tidak bisa dilanjutkan dan dihentikan; luncurkan lagi.';
-  @override
-  String get game_hook_reason_shared_memory_unavailable =>
-      'Saluran tangkapan tidak bisa dibuka; mulai ulang Fushi.';
-  @override
-  String get game_hook_reason_spawn_failed =>
-      'Helper tidak bisa dimulai; periksa apakah antivirus telah menghapus atau memblokirnya.';
-  @override
-  String get game_hook_reason_resident_hook_mismatch =>
-      'Sesi tangkapan sebelumnya masih dimuat di game; mulai ulang game sekali.';
-  @override
-  String get game_hook_reason_steam_timeout =>
-      'Steam menerima permintaan peluncuran tetapi proses game tidak pernah muncul.';
-  @override
-  String get game_hook_reason_target_missing =>
-      'Tidak ada proses game atau eksekutabel yang dipilih untuk ditangkap.';
-  @override
-  String get game_hook_recapture_empty =>
-      'Tidak ada audio yang ditangkap dalam jendela tangkap ulang';
-  @override
-  String get game_hook_recapture_saved =>
-      'Suara tangkap ulang disimpan ke baris ini';
-  @override
-  String get game_hook_recapture_started =>
-      'Merekam — putar ulang baris ini di game';
-  @override
-  String get game_hook_recapture_unavailable =>
-      'Tangkap ulang suara memerlukan audio loopback sistem';
-  @override
-  String get game_kpi_total_games => 'Game';
-  @override
-  String get game_kpi_week => 'Minggu ini';
-  @override
-  String get game_latest_line => 'Baris terbaru';
-  @override
-  String get game_launch => 'Luncurkan';
-  @override
-  String get game_launch_and_capture => 'Luncurkan dan tangkap';
-  @override
-  String get game_launch_unsupported =>
-      'Meluncurkan game hanya didukung di Windows';
-  @override
-  String get game_library => 'Pustaka game';
-  @override
-  String get game_line_audio_encoded => 'Audio diekstrak';
-  @override
-  String get game_line_audio_fallback => 'Cadangan';
-  @override
-  String get game_line_audio_matched => 'Audio siap';
-  @override
-  String get game_line_audio_missing => 'Tidak ada audio';
-  @override
-  String get game_line_audio_pending => 'Mencocokkan';
-  @override
-  String get game_line_audio_unavailable => 'Hanya teks';
-  @override
-  String get game_line_favorite_tooltip => 'Favoritkan baris ini';
-  @override
-  String get game_line_mined => 'Ditambang';
-  @override
-  String get game_line_preview_failed =>
-      'Tidak ada audio yang bisa diputar untuk baris ini';
-  @override
-  String get game_line_preview_tooltip => 'Putar audio baris ini';
-  @override
-  String get game_line_track_applied => 'Trek suara diterapkan ke baris ini';
-  @override
-  String get game_line_track_dialog_title => 'Trek suara untuk baris ini';
-  @override
-  String get game_line_track_failed =>
-      'Trek itu tidak memiliki audio di sekitar baris ini';
-  @override
-  String get game_line_track_tooltip => 'Pilih trek suara untuk baris ini';
-  @override
-  String get game_line_unfavorite_tooltip => 'Hapus favorit';
-  @override
-  String get game_live_lines => 'Baris langsung';
-  @override
-  String get game_manage_tracks => 'Kelola trek audio';
-  @override
-  String get game_meta_added => 'Ditambahkan';
-  @override
-  String get game_meta_ranking => 'Peringkat';
-  @override
-  String get game_meta_source => 'Sumber data';
-  @override
-  String get game_never_played => 'Belum pernah dimainkan';
-  @override
-  String get game_no_active_line =>
-      'Pilih baris untuk memeriksa status audio kalimatnya.';
-  @override
-  String get game_no_events => 'Belum ada peristiwa sesi';
-  @override
-  String get game_no_match =>
-      'Tidak ada game yang cocok dengan filter saat ini';
-  @override
-  String get game_no_tracks => 'Belum ada data trek audio';
-  @override
-  String get game_open_capture_workspace => 'Buka ruang kerja tangkapan';
-  @override
-  String get game_phase_attaching => 'Menautkan';
-  @override
-  String get game_phase_degraded => 'Terdegradasi';
-  @override
-  String get game_phase_error => 'Kesalahan';
-  @override
-  String get game_phase_idle => 'Menganggur';
-  @override
-  String get game_phase_injecting => 'Menginjeksi';
-  @override
-  String get game_phase_launching => 'Meluncurkan';
-  @override
-  String get game_phase_resolving => 'Menyelesaikan';
-  @override
-  String get game_phase_running => 'Berjalan';
-  @override
-  String get game_phase_stopping => 'Menghentikan';
-  @override
-  String get game_phase_waiting_signals => 'Menunggu sinyal';
-  @override
-  String get game_pipeline => 'Pipeline sesi';
-  @override
-  String get game_play_status => 'Status bermain';
-  @override
-  String get game_random_reroll => 'Acak';
-  @override
-  String get game_random_title => 'Pilihkan untukku';
-  @override
-  String get game_recently_played => 'Baru dimainkan';
-  @override
-  String get game_refresh_tracks => 'Segarkan trek';
-  @override
-  String get game_remove => 'Hapus';
-  @override
-  String get game_rename => 'Ganti nama';
-  @override
-  String get game_rename_label => 'Nama game';
-  @override
-  String get game_scrape => 'Ambil metadata';
-  @override
-  String get game_scrape_applied => 'Metadata diperbarui';
-  @override
-  String get game_scrape_failed => 'Pengambilan metadata gagal';
-  @override
-  String get game_scrape_no_result => 'Tidak ada entri yang cocok ditemukan';
-  @override
-  String get game_scrape_query => 'Judul atau ID sumber';
-  @override
-  String get game_search => 'Cari game';
-  @override
-  String get game_session_events => 'Peristiwa sesi';
-  @override
-  String get game_session_idle => 'Tangkapan belum dimulai';
-  @override
-  String get game_session_listening => 'Mendengarkan';
-  @override
-  String get game_set_cover => 'Atur sampul';
-  @override
-  String get game_show_hook_text_window => 'Tampilkan jendela teks Hook';
-  @override
-  String get game_site_score => 'Penilaian situs';
-  @override
-  String get game_sort => 'Urutkan';
-  @override
-  String get game_sort_added => 'Tanggal ditambahkan';
-  @override
-  String get game_sort_last_played => 'Terakhir dimainkan';
-  @override
-  String get game_sort_name => 'Nama';
-  @override
-  String get game_sort_release => 'Tanggal rilis';
-  @override
-  String get game_sort_site_score => 'Penilaian situs';
-  @override
-  String get game_sort_user_rating => 'Penilaian saya';
-  @override
-  String get game_stat_daily => 'Waktu bermain harian';
-  @override
-  String get game_stat_delete_session => 'Hapus sesi ini';
-  @override
-  String get game_stat_last_played => 'Terakhir dimainkan';
-  @override
-  String get game_stat_no_sessions => 'Belum ada sesi bermain yang tercatat';
-  @override
-  String get game_stat_session_list => 'Riwayat sesi';
-  @override
-  String get game_stat_sessions => 'Sesi';
-  @override
-  String get game_stat_today => 'Waktu bermain hari ini';
-  @override
-  String get game_stat_total_time => 'Total waktu bermain';
-  @override
-  String get game_status_dropped => 'Dihentikan';
-  @override
-  String get game_status_not_configured => 'Belum diverifikasi';
-  @override
-  String get game_status_on_hold => 'Ditunda';
-  @override
-  String get game_status_played => 'Dimainkan';
-  @override
-  String get game_status_playing => 'Sedang bermain';
-  @override
-  String get game_status_ready => 'Siap';
-  @override
-  String get game_status_unset => 'Belum diatur';
-  @override
-  String get game_status_waiting => 'Menunggu';
-  @override
-  String get game_status_want_to_play => 'Ingin dimainkan';
-  @override
-  String get game_stop_listening => 'Hentikan pendengar';
-  @override
-  String get game_summary_aliases => 'Alias';
-  @override
-  String get game_summary_all_titles => 'Semua judul';
-  @override
-  String get game_summary_average_hours => 'Rata-rata waktu bermain';
-  @override
-  String get game_summary_none =>
-      'Belum ada deskripsi. Ambil metadata untuk mengisinya.';
-  @override
-  String get game_summary_release_date => 'Tanggal rilis';
-  @override
-  String get game_tags_clear => 'Hapus pilihan';
-  @override
-  String get game_tags_title => 'Tag game';
-  @override
-  String get game_text_endpoints => 'Endpoint teks';
-  @override
-  String get game_text_gaps => 'Celah urutan';
-  @override
-  String get game_text_gaps_hint =>
-      'Celah urutan = jumlah baris yang terlewat dalam ring teks hook; 0 adalah normal';
-  @override
-  String get game_text_source_engine => 'Hook mesin';
-  @override
-  String get game_text_source_unknown => 'Sumber tidak diketahui';
-  @override
-  String get game_text_source_websocket => 'WebSocket';
-  @override
-  String get game_text_thread => 'Thread teks';
-  @override
-  String game_text_thread_audio_count({required Object count}) =>
-      '${count} dengan audio';
-  @override
-  String get game_text_thread_hint =>
-      'Pilih thread dialog bersih, seperti Luna Translator';
-  @override
-  String get game_track_auto => 'Pemilihan otomatis';
-  @override
-  String get game_track_clips => 'Klip';
-  @override
-  String get game_track_energy => 'Energi';
-  @override
-  String get game_track_exclude_bgm => 'Tandai sebagai BGM';
-  @override
-  String get game_track_exclusion_hint =>
-      'Tandai trek BGM/ambiens sebagai dikecualikan agar pemilihan otomatis tidak pernah memperlakukannya sebagai suara — baris tanpa ucapan tidak lagi mengambil BGM.';
-  @override
-  String get game_track_exclusion_title => 'Kecualikan trek audio';
-  @override
-  String get game_track_preview => 'Pratinjau trek ini';
-  @override
-  String get game_track_preview_failed =>
-      'Tidak ada audio terbaru yang bisa ditangkap dari trek ini';
-  @override
-  String get game_track_preview_stop => 'Hentikan pratinjau';
-  @override
-  String get game_track_restore => 'Pulihkan trek';
-  @override
-  String get game_track_select_as_voice => 'Gunakan sebagai trek suara';
-  @override
-  String get game_track_select_requires_engine =>
-      'Pemilihan trek memerlukan sesi hook mesin yang aktif';
-  @override
-  String get game_track_voice => 'Suara';
-  @override
-  String get game_tracks_loopback_hint =>
-      'Loopback sistem menangkap seluruh output campuran sistem sebagai satu stream; enumerasi per-trek tidak tersedia.';
-  @override
-  String get game_tracks_pcm_only_hint =>
-      'Pemilihan per-trek hanya memengaruhi tangkapan saat PCM mesin adalah backend audio aktif. Daftar di bawah hanya-baca di bawah backend saat ini.';
-  @override
-  String get game_tracks_resource_mode_hint =>
-      'Dalam mode audio sumber daya game, setiap baris suara diekstrak langsung dari file game, jadi tidak ada daftar trek PCM di sini. Pemilihan trek otomatis atau manual hanya berlaku untuk tangkapan PCM mesin.';
-  @override
-  String get game_unread_lines => 'Belum dibaca';
-  @override
-  String get game_upscaling => 'Upscaling jendela game';
-  @override
-  String get game_upscaling_auto => 'Otomatis';
-  @override
-  String get game_upscaling_hint_external =>
-      'Salinan Magpie sudah berjalan, jadi Fushi membiarkannya. Tekan Win+Shift+A untuk upscale jendela game.';
-  @override
-  String get game_upscaling_hint_first_run =>
-      'Magpie masih harus mengatur dirinya sendiri kali ini. Tekan Win+Shift+A untuk upscale sekarang — lain kali saat Anda memulai game akan terjadi otomatis.';
-  @override
-  String get game_upscaling_hint_manual =>
-      'Tekan Win+Shift+A untuk upscale jendela game.';
-  @override
-  String get game_upscaling_installed_only => 'Hanya yang terinstal';
-  @override
-  String get game_upscaling_off => 'Mati';
-  @override
-  String get game_upscaling_status_active => 'Upscaling jendela aktif';
-  @override
-  String get game_upscaling_status_failed =>
-      'Upscaling jendela tidak bisa dimulai';
-  @override
-  String get game_upscaling_status_manual =>
-      'Upscaling jendela siap, tetapi tidak dimulai sendiri';
-  @override
-  String get game_upscaling_status_unavailable =>
-      'Upscaling jendela tidak tersedia';
-  @override
-  String get game_user_rating => 'Penilaian saya';
-  @override
-  String get game_view_detail => 'Lihat detail';
-  @override
-  String get game_waiting_for_text => 'Menunggu teks';
-  @override
-  String game_waveform_range_label({
-    required Object start,
-    required Object end,
-    required Object duration,
-    required Object total,
-  }) => '${start} - ${end} (dipilih ${duration} / total ${total})';
-  @override
-  String get game_waveform_select_title => 'Pilih rentang audio';
-  @override
-  String get game_window_bound => 'Terikat';
-  @override
-  String get game_window_missing => 'Tidak terikat';
-  @override
-  String get games => 'Game';
-  @override
-  String get global_context_capture => 'Tangkap konteks seleksi';
-  @override
-  String get global_context_capture_hint =>
-      'Baca teks sekitar dari aplikasi yang aktif untuk menampilkan kalimat saat ini (khusus Windows)';
-  @override
-  String go_to_chapter({required Object n}) => 'Bab ${n}';
-  @override
-  String get handlebar_audio => 'Audio';
-  @override
-  String get handlebar_book_cover => 'Sampul buku';
-  @override
-  String get handlebar_card_image => 'Card Image (Cover / GIF)';
-  @override
-  String get handlebar_cue_sentence => 'Kalimat subtitle';
-  @override
-  String handlebar_deprecated_label({required Object label}) =>
-      '${label} (usang)';
-  @override
-  String get handlebar_document_title => 'Judul dokumen';
-  @override
-  String get handlebar_expression => 'Ekspresi';
-  @override
-  String get handlebar_frequencies => 'Frekuensi (HTML)';
-  @override
-  String get handlebar_frequency_harmonic_rank => 'Frekuensi (Peringkat)';
-  @override
-  String get handlebar_furigana_plain => 'Furigana';
-  @override
-  String get handlebar_glossary => 'Glosarium';
-  @override
-  String get handlebar_glossary_first => 'Glosarium (Pertama)';
-  @override
-  String get handlebar_pitch_accent_categories => 'Kategori aksen';
-  @override
-  String get handlebar_pitch_accent_positions => 'Posisi aksen';
-  @override
-  String get handlebar_popup_selection_text => 'Teks pilihan popup';
-  @override
-  String get handlebar_reading => 'Bacaan';
-  @override
-  String get handlebar_selected_glossary => 'Glosarium terpilih';
-  @override
-  String get handlebar_sentence => 'Kalimat';
-  @override
-  String get handlebar_sentence_audio => 'Sentence Audio';
-  @override
-  String get handlebar_video_clip => 'Video Clip (GIF)';
-  @override
-  String get harmonic_frequency => 'Gabungkan frekuensi kata';
-  @override
-  String health_match_summary({required Object pct}) => 'Kecocokan ${pct}%';
-  @override
-  String get highlight_on_tap => 'Sorot teks saat ketuk';
-  @override
-  String get home_activity => 'Aktivitas';
-  @override
-  String get home_activity_empty => 'Belum ada aktivitas';
-  @override
-  String get home_continue => 'Lanjutkan';
-  @override
-  String get home_filter_added => 'Ditambahkan';
-  @override
-  String get home_filter_all => 'Semua';
-  @override
-  String get home_filter_game => 'Game';
-  @override
-  String get home_filter_read => 'Baca';
-  @override
-  String get home_filter_watch => 'Tonton';
-  @override
-  String get home_recently_added => 'Baru ditambahkan';
-  @override
-  String get home_remote_source => 'Remote';
-  @override
-  String home_session_count({required Object n}) => '${n} sesi';
-  @override
-  String get home_today => 'Hari ini';
-  @override
-  String get home_yesterday => 'Kemarin';
-  @override
-  String get hover_auto_lookup => 'Cari saat hover';
-  @override
-  String get hover_auto_lookup_hint =>
-      'Cari otomatis saat mouse diarahkan ke sebuah karakter; tanpa mengeklik atau menahan Shift. Memunculkan maksimal satu lapis popup. Hanya desktop.';
-  @override
-  String get icon_custom => 'Kustom';
-  @override
-  String get icon_custom_confirm_body =>
-      'Ini akan membuat pintasan di layar beranda dengan gambar yang Anda pilih. Lanjutkan?';
-  @override
-  String get icon_custom_confirm_title => 'Ikon Kustom';
-  @override
-  String get icon_custom_hint =>
-      'Ketuk ikon untuk mengganti, atau pilih gambar kustom di bawah.';
-  @override
-  String get icon_default => 'Default';
-  @override
-  String get icon_full => 'Penuh';
-  @override
-  String get icon_shortcut_created => 'Pintasan layar beranda dibuat.';
-  @override
-  String get icon_shortcut_unsupported =>
-      'Pintasan tidak didukung di perangkat ini.';
-  @override
-  String get icon_switch_success => 'Ikon aplikasi berhasil diubah.';
-  @override
-  String get icon_transparent => 'Transparan';
-  @override
-  String image_page_counter({required Object current, required Object total}) =>
-      '${current} / ${total}';
-  @override
-  String get image_pause => 'Jeda pada Gambar';
-  @override
-  String get image_pause_hint =>
-      'Jeda otomatis saat gambar muncul selama pemutaran.';
-  @override
-  String get image_pause_off => 'Mati';
-  @override
-  String get image_search_label_after => 'ditemukan untuk';
-  @override
-  String get image_search_label_before => 'Memilih gambar ';
-  @override
-  String get image_search_label_middle => 'dari ';
-  @override
-  String get image_search_label_none_before => 'Memilih ';
-  @override
-  String get image_search_label_none_middle => 'tidak ada gambar ';
-  @override
-  String get import_complete => 'Impor kamus selesai.';
-  @override
-  String import_duplicate({required Object name}) =>
-      'Kamus dengan nama『${name}』sudah diimpor.';
-  @override
-  String get import_extract => 'Mengekstrak file...';
-  @override
-  String get import_failed => 'Impor kamus gagal.';
-  @override
-  String get import_in_progress => 'Sedang mengimpor';
-  @override
-  String import_name({required Object name}) => 'Mengimpor『${name}』...';
-  @override
-  String import_sidecar_audio({required Object count}) =>
-      '${count} file audio terlampir otomatis';
-  @override
-  String import_sidecar_subtitle({required Object name}) =>
-      'Subtitle terlampir otomatis: ${name}';
-  @override
-  String get import_start => 'Mempersiapkan impor...';
-  @override
-  String get import_step_building_epub => 'Membangun EPUB…';
-  @override
-  String get import_step_converting_epub => 'Mengonversi ke EPUB…';
-  @override
-  String import_step_copying_file({required Object name}) =>
-      'Menyalin ${name}…';
-  @override
-  String get import_step_done => 'Selesai';
-  @override
-  String get import_step_importing_epub => 'Mengimpor EPUB…';
-  @override
-  String get import_step_matching => 'Penyelarasan audio…';
-  @override
-  String get import_step_parsing => 'Mengurai subtitle…';
-  @override
-  String get import_step_persisting => 'Menyimpan file…';
-  @override
-  String get import_step_reading => 'Membaca file…';
-  @override
-  String get import_step_reading_idb => 'Membaca info buku…';
-  @override
-  String get import_step_saving => 'Menyimpan catatan…';
-  @override
-  String get import_theme => 'Impor Tema';
-  @override
-  String get import_theme_hint => 'Tempel kode tema';
-  @override
-  String get import_theme_invalid => 'Kode tema tidak valid';
-  @override
-  String get import_theme_success => 'Tema berhasil diimpor';
-  @override
-  String import_unsupported_file_format({required Object ext}) =>
-      'Format file tidak didukung: ${ext}';
-  @override
-  String get increase => 'Tambah';
-  @override
-  String get info_empty_home_tab => 'Riwayat kosong';
-  @override
-  String init_error_message({required Object error}) =>
-      'Inisialisasi gagal: ${error}';
-  @override
-  String get initialization_failed => 'Inisialisasi gagal';
-  @override
-  String get interconnect_backup_backend =>
-      'Gunakan interconnect sebagai backend cadangan';
-  @override
-  String get interconnect_backup_backend_active =>
-      'Cadangan sudah menuju perangkat berpasangan. Pilih backend lain di Sinkronisasi & cadangan untuk beralih.';
-  @override
-  String get interconnect_backup_backend_apply =>
-      'Atur sebagai backend cadangan';
-  @override
-  String interconnect_backup_backend_current({required Object backend}) =>
-      'Backend cadangan saat ini: ${backend}';
-  @override
-  String get interconnect_backup_backend_hint =>
-      'Cadangkan dan sinkronkan ke perangkat berpasangan alih-alih drive cloud. Semua yang diizinkan oleh pengalih unggah perangkat berpasangan di atas adalah yang ditulis di sana.';
-  @override
-  String get interconnect_backup_backend_needs_pairing =>
-      'Hubungkan ke perangkat di atas terlebih dahulu.';
-  @override
-  String get interconnect_enable => 'Aktifkan interconnect';
-  @override
-  String get interconnect_enable_hint =>
-      'Hubungkan ke perangkat Anda yang lain melalui LAN. Berfungsi bersama backend cadangan cloud — tidak konflik.';
-  @override
-  String get interconnect_moved_note =>
-      'Pengaturan koneksi & server ada di kategori Fushi Interconnect';
-  @override
-  String get interconnect_section_client => 'Hubungkan ke perangkat lain';
-  @override
-  String get interconnect_section_delegate =>
-      'Delegasikan ke perangkat berpasangan';
-  @override
-  String get interconnect_section_related => 'Konten & pencarian remote';
-  @override
-  String get interconnect_summary =>
-      'Sinkronisasi langsung perangkat-ke-perangkat & jadi host untuk perangkat ini sebagai server';
-  @override
-  String get interconnect_upload_audiobook_files => 'Unggah file buku audio';
-  @override
-  String get interconnect_upload_audiobook_files_hint =>
-      'Sinkronkan audio dan paket subtitle buku audio perangkat ini ke peer interconnect (besar).';
-  @override
-  String get interconnect_upload_content => 'Unggah file buku';
-  @override
-  String get interconnect_upload_content_hint =>
-      'Sinkronkan buku dan konten bacaan perangkat ini ke peer interconnect.';
-  @override
-  String get interconnect_upload_dictionary => 'Unggah kamus';
-  @override
-  String get interconnect_upload_dictionary_hint =>
-      'Sinkronkan kamus perangkat ini ke peer interconnect.';
-  @override
-  String get interconnect_upload_section => 'Unggah ke peer interconnect';
-  @override
-  String get interconnect_upload_video_files => 'Unggah file video';
-  @override
-  String get interconnect_upload_video_files_hint =>
-      'Sinkronkan file video lokal perangkat ini ke peer interconnect (besar).';
-  @override
-  String get invert_audiobook_skip_direction =>
-      'Balik tombol lewat bilah bawah';
-  @override
-  String get invert_swipe_direction =>
-      'Balik arah geser untuk membalik halaman';
-  @override
-  String get invert_volume_buttons => 'Balik tombol volume';
-  @override
-  String get jump_to_char => 'Lompat ke Karakter';
-  @override
-  String jump_to_char_current({
-    required Object current,
-    required Object total,
-  }) => 'Saat ini: ${current} / ${total}';
-  @override
-  String get jump_to_char_hint => 'Masukkan posisi karakter…';
-  @override
-  String get keep_screen_awake => 'Layar selalu menyala';
-  @override
-  String get library_search => 'Cari pustaka';
-  @override
-  String get loading_illustrations => 'Memuat ilustrasi…';
-  @override
-  String get loading_slow_message =>
-      'Jika lokasi penyimpanan data Anda ada di drive jaringan atau lepas-pasang yang saat ini terputus, startup bisa macet. Ketuk Coba Lagi untuk meluncurkan menggunakan lokasi penyimpanan default untuk sesi ini; data Anda tetap di tempatnya.';
-  @override
-  String get loading_slow_message_mobile =>
-      'Startup memakan waktu lebih lama dari biasanya — Fushi mungkin sedang memuat pustaka besar atau kamus. Harap tunggu sebentar, atau ketuk Coba Lagi untuk memuat ulang. Data Anda aman dan tidak akan hilang.';
-  @override
-  String get loading_slow_title =>
-      'Startup memakan waktu lebih lama dari biasanya';
-  @override
-  String get local_audio => 'Audio lokal';
-  @override
-  String get local_audio_add_db => 'Tambah Database Audio Lokal';
-  @override
-  String get local_audio_edit_sources => 'Edit sumber';
-  @override
-  String local_audio_import_failed_detail({required Object reason}) =>
-      'Gagal mengimpor database audio: ${reason}';
-  @override
-  String get local_audio_imported => 'Basis data audio ditambahkan';
-  @override
-  String get local_audio_invalid_db =>
-      'File ini bukan database audio yang bisa digunakan (bukan database Local Audio Server, atau tidak memiliki audio).';
-  @override
-  String get local_audio_no_sources => 'Tidak ada sumber di basis data ini';
-  @override
-  String get local_audio_reference_original =>
-      'Referensi file asli (jangan salin)';
-  @override
-  String get local_audio_reference_original_desc =>
-      'Biarkan database di tempatnya dan baca dari jalur aslinya; sumber rusak jika file dipindah atau dihapus.';
-  @override
-  String get local_audio_source_order_title => 'Prioritas sumber';
-  @override
-  String get log_copy_all => 'Salin Semua';
-  @override
-  String get log_export_failed => 'Ekspor gagal';
-  @override
-  String get log_export_file => 'Ekspor ke file';
-  @override
-  String get log_export_saved => 'Log tersimpan';
-  @override
-  String get log_upload_action => 'Unggah ke server';
-  @override
-  String get log_upload_consent_agree => 'Setuju & unggah';
-  @override
-  String get log_upload_consent_body =>
-      'Teks log (yang mungkin berisi pesan error, jalur file, dan judul buku) ditambah versi aplikasi, platform, dan model perangkat kamu akan diunggah ke server pengembang untuk membantu mendiagnosis masalah. Ini hanya terjadi saat kamu mengetuk unggah — tidak ada yang dikirim otomatis.';
-  @override
-  String get log_upload_consent_title => 'Unggah log ke server?';
-  @override
-  String get log_upload_failed => 'Unggahan gagal';
-  @override
-  String get log_upload_in_progress => 'Mengunggah log…';
-  @override
-  String get log_upload_success => 'Log terunggah';
-  @override
-  String get log_upload_too_large => 'Log terlalu besar untuk diunggah';
-  @override
-  String get login => 'Masuk';
-  @override
-  String get lookup_audio_volume => 'Volume audio pencarian kata';
-  @override
-  String get low_memory_mode => 'Mode Memori Rendah';
-  @override
-  String get low_memory_mode_hint =>
-      'Mengurangi penggunaan cache dan memori untuk perangkat kelas bawah. Beberapa perubahan berlaku setelah mulai ulang.';
-  @override
-  String get low_memory_mode_suggestion =>
-      'Coba aktifkan Mode Memori Rendah di Pengaturan → Lain-lain.';
-  @override
-  String get lyrics_artist => 'Artis';
-  @override
-  String get lyrics_blur => 'Buramkan lirik';
-  @override
-  String get lyrics_blur_hint =>
-      'Buramkan baris saat ini untuk imersi mendengarkan; arahkan kursor atau ketuk untuk menampilkan';
-  @override
-  String get lyrics_font_size => 'Ukuran Font Lirik';
-  @override
-  String get lyrics_font_size_hint =>
-      'Ukuran font lirik tidak bergantung pada mode buku';
-  @override
-  String get lyrics_mode => 'Mode Lirik';
-  @override
-  String get lyrics_mode_hint_body =>
-      'Mode lirik memiliki pengaturan ukuran font sendiri. Anda dapat menyesuaikannya di ⚙ Pengaturan → Tipografi.';
-  @override
-  String get lyrics_mode_hint_title => 'Mode Lirik';
-  @override
-  String get lyrics_text_color => 'Warna teks lirik';
-  @override
-  String get lyrics_text_color_hint =>
-      'Gunakan warna kustom untuk teks lirik alih-alih mengikuti tema';
-  @override
-  String get lyrics_title => 'Judul';
-  @override
-  String get lyrics_vertical_writing => 'Lirik vertikal';
-  @override
-  String get lyrics_vertical_writing_hint =>
-      'Baca lirik atas-ke-bawah, kanan-ke-kiri (independen dari mode buku)';
-  @override
-  String get manage_audio_sources => 'Kelola sumber audio';
-  @override
-  String get manager => 'Manajer';
-  @override
-  String get manga_mode_toggle => 'Reading Mode';
-  @override
-  String get manga_ocr_delete => 'Hapus model';
-  @override
-  String get manga_ocr_delete_confirm_message =>
-      'Ini membebaskan ruang disk. Anda bisa mengunduhnya lagi nanti.';
-  @override
-  String get manga_ocr_delete_confirm_title => 'Hapus model OCR?';
-  @override
-  String get manga_ocr_delete_done => 'Model dihapus';
-  @override
-  String get manga_ocr_download => 'Unduh model';
-  @override
-  String get manga_ocr_download_done => 'Model diunduh';
-  @override
-  String get manga_ocr_download_failed => 'Unduhan model gagal';
-  @override
-  String manga_ocr_downloading_file({required Object file}) =>
-      'Mengunduh ${file}…';
-  @override
-  String get manga_ocr_engine_builtin => 'Bawaan';
-  @override
-  String get manga_ocr_engine_external => 'mokuro eksternal';
-  @override
-  String get manga_ocr_engine_none =>
-      'Tidak ada mesin OCR yang tersedia. Unduh model bawaan atau atur jalur CLI mokuro di pengaturan.';
-  @override
-  String get manga_ocr_external_cli_hint =>
-      'Biarkan kosong untuk deteksi otomatis (FUSHI_MOKURO / PATH)';
-  @override
-  String get manga_ocr_external_cli_label => 'Jalur CLI mokuro eksternal';
-  @override
-  String get manga_ocr_external_detect => 'Deteksi';
-  @override
-  String manga_ocr_external_detected({required Object version}) =>
-      'Terdeteksi: ${version}';
-  @override
-  String get manga_ocr_external_not_found => 'mokuro tidak ditemukan';
-  @override
-  String get manga_ocr_model_status_missing => 'Model OCR belum diunduh';
-  @override
-  String get manga_ocr_model_status_ready => 'Model OCR siap';
-  @override
-  String get manga_ocr_section => 'OCR Manga';
-  @override
-  String get manga_ocr_section_summary =>
-      'Model OCR bawaan dan CLI mokuro eksternal';
-  @override
-  String get manga_ocr_unsupported =>
-      'OCR manga bawaan belum tersedia di platform ini.';
-  @override
-  String get manga_ocr_wizard_done => 'Manga diimpor';
-  @override
-  String get manga_ocr_wizard_failed => 'OCR gagal';
-  @override
-  String get manga_ocr_wizard_has_mokuro =>
-      'Folder ini sudah memiliki file .mokuro — gunakan impor biasa.';
-  @override
-  String get manga_ocr_wizard_importing => 'Mengimpor…';
-  @override
-  String get manga_ocr_wizard_no_images =>
-      'Tidak ada gambar ditemukan di folder ini.';
-  @override
-  String manga_ocr_wizard_page_progress({
-    required Object done,
-    required Object total,
-  }) => 'Halaman ${done} / ${total}';
-  @override
-  String get manga_ocr_wizard_pick_folder => 'Pilih folder gambar';
-  @override
-  String get manga_ocr_wizard_run => 'Jalankan OCR';
-  @override
-  String get manga_ocr_wizard_running => 'Menjalankan OCR…';
-  @override
-  String get manga_ocr_wizard_title => 'Impor manga dengan OCR';
-  @override
-  String get manga_ocr_wizard_title_label => 'Judul (opsional)';
-  @override
-  String get manga_online_base_url_label => 'URL katalog online';
-  @override
-  String get manga_online_catalog_title => 'Katalog online';
-  @override
-  String get manga_online_download_selected => 'Unduh yang dipilih';
-  @override
-  String get manga_online_downloaded => 'Diimpor';
-  @override
-  String get manga_online_failed => 'Unduhan gagal';
-  @override
-  String get manga_online_load_failed => 'Gagal memuat katalog';
-  @override
-  String get manga_online_queue_added => 'Ditambahkan ke antrean unduhan';
-  @override
-  String manga_online_queue_progress({
-    required Object done,
-    required Object total,
-  }) => 'Volume ${done} / ${total}';
-  @override
-  String get manga_online_queue_section => 'Unduhan katalog manga';
-  @override
-  String get manga_online_search_hint => 'Cari seri';
-  @override
-  String get manga_online_stage_cbz => 'Mengunduh volume…';
-  @override
-  String get manga_online_stage_extract => 'Mengekstrak…';
-  @override
-  String get manga_online_stage_mokuro => 'Mengunduh data OCR…';
-  @override
-  String get manga_reading_mode_spread => 'Spread';
-  @override
-  String get manga_reading_mode_webtoon => 'Webtoon';
-  @override
-  String get manga_remote_ocr_cancelled => 'OCR remote dibatalkan di host.';
-  @override
-  String get manga_remote_ocr_engine => 'Host berpasangan';
-  @override
-  String get manga_remote_ocr_failed => 'OCR remote gagal';
-  @override
-  String get manga_remote_ocr_no_host =>
-      'Tidak ada host berpasangan dengan OCR manga yang bisa dijangkau.';
-  @override
-  String get manga_remote_ocr_not_ready =>
-      'Model OCR host berpasangan belum diunduh. Unduh di host terlebih dahulu.';
-  @override
-  String get manga_remote_ocr_running =>
-      'Host berpasangan sedang menjalankan OCR…';
-  @override
-  String get manga_remote_ocr_unsupported =>
-      'Host berpasangan tidak mendukung OCR manga.';
-  @override
-  String manga_remote_ocr_uploading({
-    required Object done,
-    required Object total,
-  }) => 'Mengunggah halaman ${done} / ${total}…';
-  @override
-  String get margin_bottom => 'Margin bawah';
-  @override
-  String get margin_left => 'Margin kiri';
-  @override
-  String get margin_right => 'Margin kanan';
-  @override
-  String get margin_top => 'Margin atas';
-  @override
-  String get maximum_terms => 'Jumlah maksimum kata kunci kamus dalam hasil';
-  @override
-  String get media_source_add => 'Add Source';
-  @override
-  String get media_source_add_local_folder => 'Local Folder';
-  @override
-  String get media_source_add_network => 'Jaringan';
-  @override
-  String media_source_count_book({required Object n}) => '${n} buku';
-  @override
-  String media_source_count_video({required Object n}) => '${n} video';
-  @override
-  String media_source_last_scan({required Object time}) =>
-      'Pemindaian terakhir ${time}';
-  @override
-  String get media_source_manage_title => 'Manage Sources';
-  @override
-  String get media_source_network_label_optional => 'Nama tampilan (opsional)';
-  @override
-  String get media_source_network_missing_fields =>
-      'Masukkan host, nama pengguna, jalur remote, dan kata sandi atau kunci';
-  @override
-  String get media_source_network_remote_path => 'Jalur remote';
-  @override
-  String get media_source_network_subtitle =>
-      'Pustaka remote SFTP / FTP / WebDAV';
-  @override
-  String get media_source_no_sources => 'Belum ada sumber';
-  @override
-  String get media_source_open_folder => 'Open Folder';
-  @override
-  String get media_source_remove => 'Remove Source';
-  @override
-  String get media_source_remove_keeps_media =>
-      'Menghapus sumber tidak menghapus media yang diimpor.';
-  @override
-  String get media_source_rescan => 'Pindai ulang';
-  @override
-  String get media_source_scan_error => 'Pemindaian gagal';
-  @override
-  String get media_tracking_access_token => 'Token akses';
-  @override
-  String get media_tracking_access_token_hint =>
-      'Buat token akses personal dengan izin tulis';
-  @override
-  String get media_tracking_account => 'Akun Bangumi';
-  @override
-  String get media_tracking_add_mapping => 'Tambah pemetaan';
-  @override
-  String get media_tracking_anime => 'Anime';
-  @override
-  String get media_tracking_chapter => 'Bab';
-  @override
-  String get media_tracking_connect => 'Hubungkan dan verifikasi';
-  @override
-  String get media_tracking_connected_as => 'Akun terhubung';
-  @override
-  String get media_tracking_delete_mapping => 'Hapus pemetaan';
-  @override
-  String get media_tracking_episode => 'Episode';
-  @override
-  String get media_tracking_kind => 'Kategori';
-  @override
-  String get media_tracking_local_item => 'Item lokal';
-  @override
-  String get media_tracking_manga => 'Manga';
-  @override
-  String get media_tracking_mappings => 'Pemetaan item';
-  @override
-  String get media_tracking_no_mappings =>
-      'Belum ada pemetaan manual. Fushi mencocokkan secara otomatis saat episode pertama selesai atau ada progres membaca; tambahkan item ambigu di sini.';
-  @override
-  String get media_tracking_novel => 'Novel';
-  @override
-  String get media_tracking_pending => 'Pembaruan tertunda';
-  @override
-  String get media_tracking_progress_mode => 'Unit progres';
-  @override
-  String get media_tracking_progress_offset => 'Nomor awal';
-  @override
-  String get media_tracking_saved => 'Pemetaan tersimpan';
-  @override
-  String get media_tracking_search => 'Cari Bangumi';
-  @override
-  String get media_tracking_search_results => 'Hasil Bangumi';
-  @override
-  String get media_tracking_summary =>
-      'Otomatis mencatat progres anime, novel, dan manga ke Bangumi';
-  @override
-  String get media_tracking_sync_failed =>
-      'Sinkronisasi gagal. Pembaruan tetap dalam antrean.';
-  @override
-  String get media_tracking_sync_now => 'Sinkronkan sekarang';
-  @override
-  String get media_tracking_sync_success => 'Sinkronisasi selesai';
-  @override
-  String get media_tracking_token_required =>
-      'Masukkan dan verifikasi token akses terlebih dahulu';
-  @override
-  String get media_tracking_volume => 'Volume';
-  @override
-  String get microphone_permission_denied =>
-      'Izin mikrofon diperlukan untuk merekam.';
-  @override
-  String get mining_audio_quality => 'Kualitas audio';
-  @override
-  String get mining_audio_quality_high => 'Tinggi';
-  @override
-  String get mining_audio_quality_hint =>
-      'Bitrate lebih tinggi lebih jernih tetapi membuat kartu lebih besar.';
-  @override
-  String get mining_audio_quality_max => 'Maksimum';
-  @override
-  String get mining_audio_quality_standard => 'Standar';
-  @override
-  String get mining_image_quality => 'Kualitas gambar / GIF';
-  @override
-  String get mining_image_quality_hd => 'HD';
-  @override
-  String get mining_image_quality_hint =>
-      'Lebih tinggi lebih tajam tetapi membuat kartu lebih besar. Maksimum mempertahankan resolusi sumber tangkapan layar; GIF animasi tetap dibatasi agar kartu tetap bisa digunakan.';
-  @override
-  String get mining_image_quality_max => 'Maksimum';
-  @override
-  String get mining_image_quality_standard => 'Standar';
-  @override
-  String get mining_image_quality_thrift => 'Hemat data';
-  @override
-  String get move_down => 'Turunkan';
-  @override
-  String get move_up => 'Naikkan';
-  @override
-  String get name => 'Nama';
-  @override
-  String get nav_browser_extension => 'Ekstensi';
-  @override
-  String get nav_downloads => 'Unduhan';
-  @override
-  String get nav_game => 'Game';
-  @override
-  String get nav_home => 'Beranda';
-  @override
-  String get nav_lookup => 'Cari Kata';
-  @override
-  String get nav_video => 'Video';
-  @override
-  String get next_sentence => 'Kalimat berikutnya';
-  @override
-  String get no_audio_file => 'Tidak ada file audio untuk disimpan.';
-  @override
-  String get no_collections => 'Tidak ada bookmark atau kalimat tersimpan';
-  @override
-  String get no_debug_logs => 'Tidak ada log debug.';
-  @override
-  String get no_illustrations_found => 'Tidak ada ilustrasi ditemukan';
-  @override
-  String get no_results_found => 'Tidak ada hasil ditemukan.';
-  @override
-  String get no_search_results => 'Tidak ada hasil pencarian.';
-  @override
-  String get no_sentence_selected => 'Tidak ada kalimat yang dipilih';
-  @override
-  String get no_sentences_found => 'Tidak ada kalimat ditemukan';
-  @override
-  String get no_text => 'Tidak ada teks.';
-  @override
-  String get no_text_to_search => 'Tidak ada teks untuk dicari.';
-  @override
-  String get now_listening_label => 'Sedang mendengarkan';
-  @override
-  String get on_screen_keyboard => 'Keyboard di layar';
-  @override
-  String get options_collapse => 'Ciutkan saat pencarian';
-  @override
-  String get options_delete => 'Hapus';
-  @override
-  String get options_edit => 'Edit';
-  @override
-  String get options_expand => 'Perluas saat pencarian';
-  @override
-  String get options_github => 'Lihat repositori di GitHub';
-  @override
-  String get options_hide => 'Sembunyikan saat pencarian';
-  @override
-  String get options_language => 'Pengaturan bahasa';
-  @override
-  String get options_show => 'Tampilkan saat pencarian';
-  @override
-  String get overlay_lookup_independent_size =>
-      'Ukuran terpisah untuk pencarian pop-out';
-  @override
-  String get overlay_lookup_independent_size_hint =>
-      'Berikan jendela pencarian pop-out eksternal aplikasi ukuran maksimumnya sendiri alih-alih mengikuti popup dalam aplikasi';
-  @override
-  String get overlay_lookup_max_height => 'Tinggi maks pencarian pop-out';
-  @override
-  String get overlay_lookup_max_width => 'Lebar maks pencarian pop-out';
-  @override
-  String page_progress({required Object current, required Object total}) =>
-      'Halaman ${current} / ${total}';
-  @override
-  String get paste => 'Tempel';
-  @override
-  String get pause => 'Jeda';
-  @override
-  String get pause_on_lookup => 'Jeda saat Pencarian';
-  @override
-  String get pdf_bookmark_added => 'Penanda ditambahkan';
-  @override
-  String get pdf_bookmarks => 'Penanda';
-  @override
-  String get pdf_bookmarks_empty => 'Belum ada penanda.';
-  @override
-  String get pdf_no_text_layer =>
-      'PDF ini tidak memiliki lapisan teks (gambar pindaian), jadi pencarian tidak tersedia.';
-  @override
-  String get pdf_outline => 'Daftar isi';
-  @override
-  String get pdf_outline_empty => 'PDF ini tidak memiliki daftar isi.';
-  @override
-  String get pick_image => 'Pilih Gambar';
-  @override
-  String get play => 'Putar';
-  @override
-  String get play_from_cue => 'Putar dari kalimat';
-  @override
-  String get playback_auto_pause => 'Mode Jeda Subtitle';
-  @override
-  String get playback_speed => 'Kecepatan';
-  @override
-  String get popup_append_sentence_tooltip => 'Tambahkan kalimat ini ke kartu';
-  @override
-  String get popup_auto_expand_dictionaries => 'Perluas baris otomatis';
-  @override
-  String get popup_auto_expand_dictionaries_hint =>
-      'Pertahankan N baris pertama blok kamus terbuka meskipun \'Ciutkan kamus\' aktif. Jumlah yang diperluas mengikuti pengaturan kolom: baris x kolom (0 = ciutkan semua)';
-  @override
-  String get popup_bottom_docked => 'Popup tertambat di bawah';
-  @override
-  String get popup_bottom_docked_hint =>
-      'Sematkan popup pencarian sebagai panel selebar layar di bagian bawah, bukan mengikuti kata yang dicari.';
-  @override
-  String get popup_clear_sentence_draft_tooltip =>
-      'Kosongkan kalimat yang ditambahkan';
-  @override
-  String get popup_ctx_adjust_button => 'Sesuaikan konteks';
-  @override
-  String get popup_ctx_box_current => 'Current';
-  @override
-  String get popup_ctx_box_empty => '(tidak ada)';
-  @override
-  String get popup_ctx_box_next => 'After';
-  @override
-  String get popup_ctx_box_prev => 'Before';
-  @override
-  String get popup_ctx_cancel => 'Batal';
-  @override
-  String get popup_ctx_confirm => 'Confirm';
-  @override
-  String get popup_ctx_modal_count => 'Selected %d';
-  @override
-  String get popup_ctx_modal_eyebrow => 'Before mining';
-  @override
-  String get popup_ctx_modal_title => 'Pilih konteks kalimat';
-  @override
-  String get popup_ctx_next_minus => 'Remove after';
-  @override
-  String get popup_ctx_next_plus => 'Add after';
-  @override
-  String get popup_ctx_prev_minus => 'Remove before';
-  @override
-  String get popup_ctx_prev_plus => 'Add before';
-  @override
-  String get popup_dictionary_max_columns => 'Kolom kamus maks (isi otomatis)';
-  @override
-  String get popup_dictionary_max_columns_hint =>
-      'Isi otomatis hingga sebanyak ini kolom kamus per baris; layar lebih sempit menggunakan lebih sedikit';
-  @override
-  String get popup_font_size_decrease => 'Perkecil teks kamus';
-  @override
-  String get popup_font_size_increase => 'Perbesar teks kamus';
-  @override
-  String get popup_instant_scroll => 'Gulir popup seketika';
-  @override
-  String get popup_instant_scroll_hint =>
-      'Pindahkan popup pencarian dengan jarak tetap tanpa animasi gulir untuk layar e-ink.';
-  @override
-  String get popup_max_height => 'Tinggi maks popup';
-  @override
-  String get popup_max_width => 'Lebar maks popup';
-  @override
-  String get popup_no_audio_available => 'Tidak ada audio tersedia';
-  @override
-  String get popup_sentence_context_next_label => 'Sesudah';
-  @override
-  String get popup_sentence_context_prev_label => 'Sebelum';
-  @override
-  String get popup_wheel_speed => 'Kecepatan gulir popup';
-  @override
-  String get popup_wheel_speed_hint =>
-      'Kecepatan gulir roda mouse untuk popup kamus (juga berlaku untuk ekstensi browser).';
-  @override
-  String get prev_sentence => 'Kalimat sebelumnya';
-  @override
-  String get preview => 'Pratinjau';
-  @override
-  String get preview_badge => 'Lencana';
-  @override
-  String get preview_switch => 'Sakelar';
-  @override
-  String get processing_in_progress => 'Memproses gambar';
-  @override
-  String get profile_book_profile => 'Tetapkan Profil';
-  @override
-  String profile_confirm_delete({required Object name}) =>
-      'Hapus profil "${name}"?';
-  @override
-  String get profile_copy => 'Salin';
-  @override
-  String get profile_copy_suffix => '(Salinan)';
-  @override
-  String get profile_create => 'Buat Profil';
-  @override
-  String get profile_delete => 'Hapus';
-  @override
-  String get profile_export => 'Ekspor';
-  @override
-  String get profile_export_failed => 'Ekspor gagal';
-  @override
-  String profile_follow_default_current({required Object name}) =>
-      'Mengikuti default (${name})';
-  @override
-  String get profile_import => 'Impor';
-  @override
-  String get profile_import_failed => 'Impor gagal';
-  @override
-  String get profile_import_invalid => 'File profil tidak valid';
-  @override
-  String get profile_import_success => 'Profil diimpor';
-  @override
-  String get profile_label => 'Profil';
-  @override
-  String get profile_management => 'Manajemen Profil';
-  @override
-  String get profile_media_audiobook => 'Buku Audio';
-  @override
-  String get profile_media_epub => 'Buku';
-  @override
-  String get profile_media_lyrics => 'Mode lirik';
-  @override
-  String get profile_media_none => 'Tidak Ada';
-  @override
-  String get profile_media_srtbook => 'Buku subtitle';
-  @override
-  String get profile_media_type_bindings => 'Pengikatan Tipe Media';
-  @override
-  String get profile_media_video => 'Video';
-  @override
-  String get profile_name_hint => 'Nama profil';
-  @override
-  String get profile_rename => 'Ganti Nama';
-  @override
-  String get reader_auto_hide_chrome_duration =>
-      'Sembunyikan kontrol mengambang otomatis setelah';
-  @override
-  String get reader_content_timeout =>
-      'Pemuatan konten habis waktu. Buka ulang jika tampilan tidak normal';
-  @override
-  String get reader_copy_image => 'Salin gambar';
-  @override
-  String get reader_gallery => 'Galeri';
-  @override
-  String get reader_gallery_current => 'Sedang membaca di sini';
-  @override
-  String get reader_gallery_empty => 'Tidak ada ilustrasi di buku ini';
-  @override
-  String get reader_gallery_jump => 'Lompat ke ilustrasi ini';
-  @override
-  String get reader_gallery_tooltip => 'Jelajahi ilustrasi';
-  @override
-  String reader_image_copy_failed({required Object error}) =>
-      'Gagal menyalin gambar: ${error}';
-  @override
-  String get reader_image_file_unavailable => 'File gambar tidak tersedia.';
-  @override
-  String reader_image_share_failed({required Object error}) =>
-      'Gagal membagikan gambar: ${error}';
-  @override
-  String get reader_open_failed => 'Gagal membuka buku';
-  @override
-  String get reader_settings_section => 'Pengaturan Pembaca';
-  @override
-  String get reader_theme_black => 'Hitam';
-  @override
-  String get reader_theme_dark => 'Gelap';
-  @override
-  String get reader_theme_ecru => 'Krem';
-  @override
-  String get reader_theme_eyecare => 'Eye Care';
-  @override
-  String get reader_theme_gray => 'Abu-abu';
-  @override
-  String get reader_theme_light => 'Putih';
-  @override
-  String get reader_theme_water => 'Biru Air';
-  @override
-  String get reader_top_progress_floating => 'Progres membaca mengambang';
-  @override
-  String get reader_unsupported_platform =>
-      'Pembaca belum tersedia di platform ini.';
-  @override
-  String get reading_activity => 'Aktivitas belajar';
-  @override
-  String get reading_progress => 'Progres Membaca';
-  @override
-  String get reading_section_mode => 'Mode & orientasi';
-  @override
-  String get reading_statistics => 'Statistik Membaca';
-  @override
-  String get record => 'Rekam';
-  @override
-  String get refresh => 'Segarkan';
-  @override
-  String get rematch_adjust_window =>
-      'Sesuaikan jendela pencarian dan cocokkan ulang';
-  @override
-  String get rematch_run => 'Jalankan Pencocokan Ulang';
-  @override
-  String get remote_audio_source => 'Audio jarak jauh';
-  @override
-  String get remote_book_audiobook_download_failed =>
-      'Tidak dapat mengunduh buku audio untuk buku ini';
-  @override
-  String get remote_book_download => 'Unduh ke perangkat ini';
-  @override
-  String get remote_book_download_failed =>
-      'Tidak dapat mengunduh buku jarak jauh';
-  @override
-  String get remote_book_downloaded => 'Buku jarak jauh terunduh';
-  @override
-  String get remote_book_downloading => 'Mengunduh…';
-  @override
-  String get remote_book_info => 'Info';
-  @override
-  String get remote_book_info_has_audiobook => 'Termasuk buku audio';
-  @override
-  String get remote_book_unavailable => 'Perangkat berpasangan tidak tersedia';
-  @override
-  String get remote_dict_lookup => 'Pencarian kamus jarak jauh';
-  @override
-  String get remote_dict_lookup_hint =>
-      'Ketika kamus lokal tidak menemukan hasil, kueri ke server Fushi yang dikonfigurasi';
-  @override
-  String get remote_video_download => 'Unduh ke perangkat ini';
-  @override
-  String get remote_video_download_failed =>
-      'Tidak dapat mengunduh video jarak jauh';
-  @override
-  String get remote_video_downloaded => 'Video jarak jauh terunduh';
-  @override
-  String get remote_video_downloading => 'Mengunduh…';
-  @override
-  String get remote_video_info => 'Info';
-  @override
-  String get remote_video_info_has_subtitle => 'Termasuk subtitle';
-  @override
-  String get remote_video_info_no_subtitle => 'Tanpa subtitle';
-  @override
-  String remote_video_info_size({required Object size}) => 'Ukuran: ${size}';
-  @override
-  String get remote_video_list_failed =>
-      'Tidak bisa memuat video remote. Pastikan perangkat lain online dan di jaringan yang sama, lalu coba lagi.';
-  @override
-  String get remote_video_unavailable => 'Perangkat berpasangan tidak tersedia';
-  @override
-  String get rename_collection => 'Ganti nama koleksi';
-  @override
-  String get render_restart_required =>
-      'Berlaku setelah memulai ulang aplikasi';
-  @override
-  String get repeat_cue => 'Ulangi kalimat';
-  @override
-  String get reset => 'Atur Ulang';
-  @override
-  String get retry => 'Coba Lagi';
-  @override
-  String get reverse_arrow_page_turn =>
-      'Balik arah ganti halaman kiri/kanan keyboard';
-  @override
-  String get reverse_navigation_bar => 'Balik bilah navigasi';
-  @override
-  String get reverse_reader_bottom_bar => 'Balik bilah bawah pembaca';
-  @override
-  String get audiobook_rematch_all_zero =>
-      'Semua jendela skor 0%, silakan sesuaikan secara manual';
-  @override
-  String audiobook_rematch_auto_failed({required Object error}) =>
-      'Pencocokan otomatis gagal: ${error}';
-  @override
-  String get audiobook_rematch_auto_match => 'Pencocokan Otomatis';
-  @override
-  String audiobook_rematch_auto_picked({
-    required Object window,
-    required Object pct,
-  }) => 'Otomatis memilih ${window} (cocok ${pct}%)';
-  @override
-  String audiobook_rematch_default_value({required Object n}) => 'Default ${n}';
-  @override
-  String audiobook_rematch_health_label({
-    required Object pct,
-    required Object detail,
-  }) => '${pct} cocok — ${detail}';
-  @override
-  String get audiobook_rematch_matching => 'Mencocokkan...';
-  @override
-  String get audiobook_rematch_no_chapters => 'EPUB tidak memiliki teks bab';
-  @override
-  String get audiobook_rematch_no_cues_to_match =>
-      'Tidak ada cue untuk dicocokkan';
-  @override
-  String get audiobook_rematch_no_sections =>
-      'Teks bab tidak ditemukan, tidak dapat mencocokkan otomatis';
-  @override
-  String get audiobook_rematch_no_stored_cues =>
-      'Tidak ada cue tersimpan, tidak dapat menjalankan ulang';
-  @override
-  String audiobook_rematch_failed({required Object error}) =>
-      'Pencocokan ulang gagal: ${error}';
-  @override
-  String audiobook_rematch_result({
-    required Object pct,
-    required Object window,
-  }) => 'Dicocokkan ulang: ${pct}% (jendela: ${window})';
-  @override
-  String get audiobook_rematch_search_window => 'Jendela Pencarian';
-  @override
-  String get audiobook_rematch_similarity_threshold => 'Ambang Kemiripan';
-  @override
-  String get audiobook_rematch_threshold_hint =>
-      'Kemiripan minimum untuk pencocokan fuzzy (koefisien Dice). Turunkan untuk mentoleransi lebih banyak perbedaan teks, tapi terlalu rendah menyebabkan kecocokan palsu.';
-  @override
-  String get audiobook_rematch_window_hint =>
-      'Jumlah karakter untuk dicari ke depan per cue dalam teks. Sesuaikan jika tingkat kecocokan rendah; terlalu besar dapat menggeser kursor dengan cue pendek yang berisik.';
-  @override
-  String get saved_tags => 'Tag disimpan.';
-  @override
-  String get scan_non_japanese_text => 'Pindai teks non-Jepang';
-  @override
-  String get scan_non_japanese_text_hint =>
-      'Saat mati, seleksi berhenti di karakter non-Jepang';
-  @override
-  String get search => 'Cari';
-  @override
-  String get search_ellipsis => 'Cari...';
-  @override
-  String get searching_in_progress => 'Mencari ';
-  @override
-  String get section_advanced_colors => 'Lanjutan';
-  @override
-  String get section_advanced_typography => 'Lanjutan';
-  @override
-  String get section_audiobook => 'Buku Audio';
-  @override
-  String get section_audiobook_lyrics => 'Buku Audio & Lirik';
-  @override
-  String get section_epub => 'Perpustakaan EPUB';
-  @override
-  String get section_floating_lyric => 'Lirik mengambang';
-  @override
-  String get section_interface => 'Antarmuka';
-  @override
-  String get section_layout => 'Tata Letak & Tampilan';
-  @override
-  String get section_navigation => 'Navigasi';
-  @override
-  String get section_page_turn_direction => 'Arah ganti halaman';
-  @override
-  String get section_reader_colors => 'Warna Pembaca';
-  @override
-  String get section_system_theme => 'Warna Tema Sistem';
-  @override
-  String get section_typography => 'Tipografi';
-  @override
-  String get section_update => 'Pengaturan Pembaruan';
-  @override
-  String get section_video_danmaku => 'Danmaku';
-  @override
-  String get section_video_library => 'Pustaka';
-  @override
-  String get section_video_playback => 'Pemutaran';
-  @override
-  String get section_video_subtitles => 'Subtitle';
-  @override
-  String get seed_color => 'Warna Dasar';
-  @override
-  String get seed_color_desc => 'Menghasilkan semua warna default di bawah';
-  @override
-  String get selection_color => 'Warna sorotan';
-  @override
-  String get selection_color_desc => 'Sorotan pilihan teks pembaca';
-  @override
-  String get send => 'Kirim';
-  @override
-  String get series => 'Seri';
-  @override
-  String get series_created => 'Seri dibuat';
-  @override
-  String get series_default_name => 'Seri baru';
-  @override
-  String series_item_count({required Object n}) => '${n} item';
-  @override
-  String get series_name_hint => 'Nama seri';
-  @override
-  String get server_address => 'Alamat Server';
-  @override
-  String get settings => 'Pengaturan';
-  @override
-  String get settings_check_update_now => 'Periksa pembaruan';
-  @override
-  String get settings_destination_appearance => 'Tampilan';
-  @override
-  String get settings_destination_card_creation => 'Pembuatan Kartu';
-  @override
-  String get settings_destination_diagnostics => 'Diagnostik';
-  @override
-  String get settings_destination_interconnect => 'Fushi Interconnect';
-  @override
-  String get settings_destination_listening => 'Mendengarkan';
-  @override
-  String get settings_destination_lookup => 'Pencarian';
-  @override
-  String get settings_destination_profiles => 'Skema Konfigurasi';
-  @override
-  String get settings_destination_reading => 'Membaca';
-  @override
-  String get settings_destination_reading_controls => 'Kontrol Baca';
-  @override
-  String get settings_destination_sync_backup => 'Sinkronisasi & Cadangan';
-  @override
-  String get settings_destination_system => 'Sistem';
-  @override
-  String get settings_destination_system_summary =>
-      'Umum, pembaruan & diagnostik';
-  @override
-  String get settings_destination_tracking => 'Pelacakan media';
-  @override
-  String get settings_destination_video => 'Video';
-  @override
-  String get settings_search_hint => 'Cari pengaturan';
-  @override
-  String get settings_search_no_results => 'Tidak ada pengaturan yang cocok';
-  @override
-  String get settings_secret_hide => 'Sembunyikan nilai';
-  @override
-  String get settings_secret_show => 'Tampilkan nilai';
-  @override
-  String get settings_section_app_shell => 'Aplikasi';
-  @override
-  String get settings_section_data_storage => 'Lokasi penyimpanan data';
-  @override
-  String get settings_section_gal_hook_overlay => 'Overlay teks galgame';
-  @override
-  String get settings_section_general => 'Umum';
-  @override
-  String get settings_section_lookup_audio => 'Pengucapan & umpan balik';
-  @override
-  String get settings_section_lookup_content => 'Konten entri';
-  @override
-  String get settings_section_lookup_integrations => 'Integrasi eksternal';
-  @override
-  String get settings_section_lookup_popup_window => 'Jendela popup';
-  @override
-  String get settings_section_lookup_trigger => 'Pemicu pencarian';
-  @override
-  String get settings_section_page_turn_input =>
-      'Pergantian halaman & interaksi';
-  @override
-  String get settings_section_reader_chrome => 'Antarmuka pembaca';
-  @override
-  String get settings_section_update_channel => 'Saluran Pembaruan';
-  @override
-  String get settings_view_changelog => 'Lihat catatan perubahan';
-  @override
-  String get share => 'Bagikan';
-  @override
-  String get share_theme => 'Bagikan Tema';
-  @override
-  String get shortcut_action_audiobook_next_sentence => 'Kalimat Berikutnya';
-  @override
-  String get shortcut_action_audiobook_play_pause => 'Putar / Jeda';
-  @override
-  String get shortcut_action_audiobook_prev_sentence => 'Kalimat Sebelumnya';
-  @override
-  String get shortcut_action_audiobook_seek_clicked =>
-      'Lompat audio ke kalimat yang diklik';
-  @override
-  String get shortcut_action_dpad_down => 'D-pad Bawah';
-  @override
-  String get shortcut_action_dpad_left => 'D-pad Kiri';
-  @override
-  String get shortcut_action_dpad_right => 'D-pad Kanan';
-  @override
-  String get shortcut_action_dpad_up => 'D-pad Atas';
-  @override
-  String get shortcut_action_global_back => 'Kembali';
-  @override
-  String get shortcut_action_global_external_lookup =>
-      'App-external lookup hotkey';
-  @override
-  String get shortcut_action_global_scroll_page_down =>
-      'Gulir bawah satu layar';
-  @override
-  String get shortcut_action_global_scroll_page_up => 'Gulir atas satu layar';
-  @override
-  String get shortcut_action_global_toggle_fullscreen => 'Alihkan layar penuh';
-  @override
-  String get shortcut_action_home_focus_search => 'Fokus Pencarian';
-  @override
-  String get shortcut_action_home_tab_books => 'Tab Buku';
-  @override
-  String get shortcut_action_home_tab_dict => 'Tab Kamus';
-  @override
-  String get shortcut_action_home_tab_next => 'Tab berikutnya';
-  @override
-  String get shortcut_action_home_tab_prev => 'Tab sebelumnya';
-  @override
-  String get shortcut_action_home_tab_settings => 'Tab Pengaturan';
-  @override
-  String get shortcut_action_popup_next_entry => 'Entri kata berikutnya';
-  @override
-  String get shortcut_action_popup_prev_entry => 'Entri kata sebelumnya';
-  @override
-  String get shortcut_action_reader_create_card_from_popup =>
-      'Buat kartu dari popup';
-  @override
-  String get shortcut_action_reader_dismiss_dict => 'Tutup Kamus';
-  @override
-  String get shortcut_action_reader_enter_caret => 'Masuk kursor pencarian';
-  @override
-  String get shortcut_action_reader_lookup_at_cursor =>
-      'Cari kata / aktifkan kursor';
-  @override
-  String get shortcut_action_reader_open_menu => 'Open Settings Menu';
-  @override
-  String get shortcut_action_reader_open_navigation => 'Open Navigation';
-  @override
-  String get shortcut_action_reader_page_backward => 'Halaman Sebelumnya';
-  @override
-  String get shortcut_action_reader_page_forward => 'Halaman Berikutnya';
-  @override
-  String get shortcut_action_reader_shift_lookup => 'Cari kata dengan Shift';
-  @override
-  String get shortcut_action_reader_toggle_chrome => 'Alihkan Kontrol';
-  @override
-  String get shortcut_action_reader_toggle_furigana => 'Alihkan furigana';
-  @override
-  String get shortcut_action_video_align_subtitle_to_next =>
-      'Selaraskan subtitle berikutnya ke sekarang';
-  @override
-  String get shortcut_action_video_align_subtitle_to_prev =>
-      'Selaraskan subtitle sebelumnya ke sekarang';
-  @override
-  String get shortcut_action_video_cycle_secondary_subtitle_obscure =>
-      'Cycle Secondary Subtitle Obscure';
-  @override
-  String get shortcut_action_video_cycle_subtitle_obscure =>
-      'Cycle Subtitle Obscure Mode';
-  @override
-  String get shortcut_action_video_next_chapter => 'Bab berikutnya';
-  @override
-  String get shortcut_action_video_next_frame => 'Frame Berikutnya';
-  @override
-  String get shortcut_action_video_next_subtitle => 'Subtitle Berikutnya';
-  @override
-  String get shortcut_action_video_open_subtitle_align =>
-      'Buka penyelarasan waveform subtitle';
-  @override
-  String get shortcut_action_video_pause => 'Jeda';
-  @override
-  String get shortcut_action_video_play => 'Putar';
-  @override
-  String get shortcut_action_video_previous_chapter => 'Bab sebelumnya';
-  @override
-  String get shortcut_action_video_previous_frame => 'Frame Sebelumnya';
-  @override
-  String get shortcut_action_video_previous_subtitle => 'Subtitle Sebelumnya';
-  @override
-  String get shortcut_action_video_replay_current_subtitle =>
-      'Putar ulang subtitle saat ini';
-  @override
-  String get shortcut_action_video_replay_previous_subtitle =>
-      'Putar ulang subtitle sebelumnya';
-  @override
-  String get shortcut_action_video_reset_speed => 'Setel Ulang Kecepatan';
-  @override
-  String get shortcut_action_video_screenshot => 'Tangkapan Layar';
-  @override
-  String get shortcut_action_video_seek_backward => 'Mundur';
-  @override
-  String get shortcut_action_video_seek_forward => 'Maju';
-  @override
-  String get shortcut_action_video_speed_down => 'Perlambat';
-  @override
-  String get shortcut_action_video_speed_up => 'Percepat';
-  @override
-  String get shortcut_action_video_subtitle_delay_decrease =>
-      'Tunda subtitle −';
-  @override
-  String get shortcut_action_video_subtitle_delay_increase =>
-      'Tunda subtitle +';
-  @override
-  String get shortcut_action_video_toggle_favorite_sentence =>
-      'Favoritkan kalimat saat ini';
-  @override
-  String get shortcut_action_video_toggle_fullscreen => 'Alihkan Layar Penuh';
-  @override
-  String get shortcut_action_video_toggle_immersive_lock =>
-      'Alihkan Kunci Imersif';
-  @override
-  String get shortcut_action_video_toggle_mute => 'Alihkan Bisukan';
-  @override
-  String get shortcut_action_video_toggle_play_pause => 'Putar / Jeda';
-  @override
-  String get shortcut_action_video_toggle_secondary_subtitle_hide =>
-      'Toggle Hide Secondary Subtitle';
-  @override
-  String get shortcut_action_video_toggle_shader_compare =>
-      'Alihkan Bandingkan Shader';
-  @override
-  String get shortcut_action_video_toggle_subtitle_blur =>
-      'Alihkan Buram Subtitle';
-  @override
-  String get shortcut_action_video_toggle_subtitle_hide =>
-      'Toggle Hide Subtitles';
-  @override
-  String get shortcut_action_video_toggle_subtitle_list =>
-      'Alihkan Daftar Subtitle';
-  @override
-  String get shortcut_action_video_volume_down => 'Volume -';
-  @override
-  String get shortcut_action_video_volume_up => 'Volume +';
-  @override
-  String get shortcut_assign_pick_action => 'Tetapkan ke tindakan…';
-  @override
-  String get shortcut_clear => 'Hapus';
-  @override
-  String shortcut_conflict({required Object s}) => 'Sudah dipakai oleh: ${s}';
-  @override
-  String shortcut_conflict_replace_confirm({required Object s}) =>
-      'Pintasan ini sudah dipakai oleh ${s}. Pindahkan ke tindakan ini?';
-  @override
-  String get shortcut_gamepad => 'Gamepad';
-  @override
-  String get shortcut_gamepad_brand_label => 'Gaya tombol gamepad';
-  @override
-  String get shortcut_gamepad_brand_playstation => 'PlayStation';
-  @override
-  String get shortcut_gamepad_brand_switch => 'Nintendo Switch';
-  @override
-  String get shortcut_gamepad_brand_xbox => 'Xbox';
-  @override
-  String get shortcut_gamepad_pick_list => 'Pilih dari daftar';
-  @override
-  String get shortcut_gamepad_unavailable_hint =>
-      'Komponen GameInput tidak terdeteksi — dukungan gamepad tidak tersedia. Instal Windows Gaming Services untuk mengaktifkan dukungan kontroler.';
-  @override
-  String get shortcut_keyboard => 'Keyboard';
-  @override
-  String get shortcut_mouse_back => 'Tombol kembali';
-  @override
-  String get shortcut_mouse_button => 'Tombol mouse';
-  @override
-  String get shortcut_mouse_forward => 'Tombol maju';
-  @override
-  String get shortcut_mouse_left => 'Klik kiri';
-  @override
-  String get shortcut_mouse_middle => 'Klik tengah';
-  @override
-  String get shortcut_mouse_right => 'Klik kanan';
-  @override
-  String get shortcut_press_gamepad => 'Tekan tombol gamepad...';
-  @override
-  String get shortcut_press_key => 'Tekan kombinasi tombol...';
-  @override
-  String get shortcut_press_mouse_button => 'Tekan tombol mouse...';
-  @override
-  String get shortcut_press_wheel => 'Tahan tombol modifier dan gulir di sini';
-  @override
-  String get shortcut_reset_confirm =>
-      'Kembalikan semua pintasan di bagian ini ke default?';
-  @override
-  String get shortcut_reset_defaults => 'Kembalikan ke Default';
-  @override
-  String get shortcut_scope_audiobook => 'Buku Audio';
-  @override
-  String get shortcut_scope_dictionary_popup => 'Popup kamus';
-  @override
-  String get shortcut_scope_dictionary_popup_note =>
-      'Berfungsi saat pointer berada di atas popup kamus';
-  @override
-  String get shortcut_scope_gamepad => 'Gamepad';
-  @override
-  String get shortcut_scope_global => 'Global';
-  @override
-  String get shortcut_scope_global_external => 'Global (eksternal aplikasi)';
-  @override
-  String get shortcut_scope_global_external_mobile_note =>
-      'Triggered by the system (text selection menu, share, floating ball); the OS does not allow apps to remap this hotkey.';
-  @override
-  String get shortcut_scope_home => 'Beranda';
-  @override
-  String get shortcut_scope_reader => 'Pembaca';
-  @override
-  String get shortcut_scope_video => 'Video';
-  @override
-  String get shortcut_settings_title => 'Pintasan Keyboard';
-  @override
-  String get shortcut_stop_capture => 'Berhenti';
-  @override
-  String get shortcut_tap_to_assign => 'Belum diatur · ketuk untuk menetapkan';
-  @override
-  String get shortcut_view_list => 'Tampilan daftar';
-  @override
-  String get shortcut_view_visual => 'Tata letak kontroler';
-  @override
-  String get shortcut_wheel => 'Roda mouse';
-  @override
-  String get shortcut_wheel_down => 'Roda ke bawah';
-  @override
-  String get shortcut_wheel_needs_modifier =>
-      'Roda tanpa modifier menggulir popup — tahan Alt / Ctrl / Shift sambil menggulir';
-  @override
-  String get shortcut_wheel_up => 'Roda ke atas';
-  @override
-  String get show_bottom_bar_cue => 'Tampilkan kalimat saat ini';
-  @override
-  String get show_expression_tags => 'Tampilkan tag ekspresi';
-  @override
-  String get show_floating_lyric => 'Overlay subtitle mengambang';
-  @override
-  String get show_media_notification => 'Tampilkan notifikasi media';
-  @override
-  String get show_options => 'Tampilkan Opsi';
-  @override
-  String get show_top_progress_bar => 'Indikator progres baca';
-  @override
-  String get skip_action => 'Lewati Aksi';
-  @override
-  String skip_action_seconds({required Object n}) => '${n} detik';
-  @override
-  String get skip_action_sentence => '1 kalimat';
-  @override
-  String get sort_by => 'Urutkan';
-  @override
-  String get sort_imported => 'Tanggal impor';
-  @override
-  String get sort_recent_read => 'Baru dibaca';
-  @override
-  String get sort_recent_watched => 'Baru ditonton';
-  @override
-  String get sort_title => 'Nama';
-  @override
-  String get source_description_epub => 'Baca EPUB & pencarian kamus';
-  @override
-  String get source_name_bookshelf => 'Rak Buku';
-  @override
-  String get spread_auto => 'Otomatis';
-  @override
-  String get spread_direction => 'Arah Bentangan';
-  @override
-  String get spread_direction_ltr => 'Kiri ke Kanan';
-  @override
-  String get spread_direction_rtl => 'Kanan ke Kiri';
-  @override
-  String get spread_mode => 'Mode Bentangan';
-  @override
-  String get spread_off => 'Mati';
-  @override
-  String get spread_on => 'Nyala';
-  @override
-  String get srt_audio_unresolved =>
-      'File audio tidak ditemukan — silakan lampirkan ulang';
-  @override
-  String get srt_books_section => 'Buku Audio Subtitle';
-  @override
-  String srt_delete_confirm({required Object title}) =>
-      'Hapus『${title}』? Tindakan ini tidak dapat dibatalkan.';
-  @override
-  String get srt_delete_title => 'Hapus Buku Subtitle';
-  @override
-  String get srt_epub_not_ready => 'Buku belum siap — silakan impor ulang';
-  @override
-  String get srt_import => 'Impor Buku';
-  @override
-  String get srt_import_audio_needs_subtitle =>
-      'Audio harus dipasangkan dengan subtitle. Untuk melampirkan audio ke EPUB yang ada, tekan lama buku di rak.';
-  @override
-  String get srt_import_author_hint => 'Penulis (opsional)';
-  @override
-  String get srt_import_error => 'Impor gagal';
-  @override
-  String srt_import_files_selected({required Object n}) => '${n} file dipilih';
-  @override
-  String get srt_import_hint_epub_or_srt =>
-      'Pilih file EPUB atau subtitle untuk diimpor.';
-  @override
-  String get srt_import_missing_input =>
-      'Silakan pilih setidaknya EPUB atau file subtitle';
-  @override
-  String get srt_import_missing_title => 'Silakan masukkan judul buku';
-  @override
-  String get srt_import_pick_audio_dir => 'Pilih Direktori Audio';
-  @override
-  String get srt_import_pick_audio_files => 'Pilih File Audio';
-  @override
-  String get srt_import_pick_cover => 'Pilih Gambar Sampul';
-  @override
-  String get srt_import_pick_epub => 'Pilih EPUB';
-  @override
-  String get srt_import_pick_subtitle_files => 'Pilih file subtitle';
-  @override
-  String get srt_import_success => 'Buku diimpor';
-  @override
-  String get srt_import_title_hint => 'Judul buku';
-  @override
-  String get startup_default_dictionary_tab => 'Buka pencarian kata saat mulai';
-  @override
-  String get startup_default_dictionary_tab_hint =>
-      'Mulai layar beranda pada tab pencarian kata, bukan default saat ini.';
-  @override
-  String get stash => 'Simpanan';
-  @override
-  String get stash_added_multiple =>
-      'Beberapa item telah ditambahkan ke Simpanan.';
-  @override
-  String stash_added_single({required Object term}) =>
-      '『${term}』telah ditambahkan ke Simpanan.';
-  @override
-  String get stash_clear_description =>
-      'Semua isi akan dihapus. Apakah Anda yakin?';
-  @override
-  String stash_clear_single({required Object term}) =>
-      '『${term}』telah dihapus dari Simpanan.';
-  @override
-  String get stash_clear_title => 'Hapus Simpanan';
-  @override
-  String get stash_nothing_to_pop =>
-      'Tidak ada item untuk diambil dari Simpanan.';
-  @override
-  String get stash_placeholder => 'Tidak ada item di Simpanan';
-  @override
-  String get stat_all_time => 'Sepanjang Waktu';
-  @override
-  String get stat_bookshelf_compare => 'Rak buku';
-  @override
-  String get stat_clear_all => 'Hapus statistik';
-  @override
-  String get stat_clear_all_confirm => 'Hapus';
-  @override
-  String get stat_clear_all_reading_message =>
-      'Hapus semua waktu membaca, hitungan karakter, dan hitungan pencarian/penambangan? Kata, kalimat, dan kartu yang disimpan tetap ada. Ini tidak bisa dibatalkan.';
-  @override
-  String get stat_clear_all_title => 'Hapus semua statistik';
-  @override
-  String get stat_clear_all_video_message =>
-      'Hapus semua waktu menonton, hitungan karakter subtitle, dan hitungan pencarian/penambangan? Kata, kalimat, dan kartu yang disimpan tetap ada. Ini tidak bisa dibatalkan.';
-  @override
-  String get stat_daily_average => 'Rata-rata harian';
-  @override
-  String get stat_delete_message =>
-      'Hapus waktu, hitungan karakter, dan statistik pencarian/penambangan item ini? Kata dan kalimat yang disimpan tidak terpengaruh.';
-  @override
-  String get stat_delete_title => 'Hapus statistik';
-  @override
-  String get stat_fastest_day => 'Fastest Day';
-  @override
-  String get stat_favorited => 'Difavoritkan';
-  @override
-  String get stat_favorited_sentence => 'Kalimat difavoritkan';
-  @override
-  String stat_format_chars({required Object n}) => '${n} karakter';
-  @override
-  String stat_format_chars_wan({required Object n}) => '${n}万 karakter';
-  @override
-  String stat_format_days({required Object n}) => '${n} hari';
-  @override
-  String stat_format_hours_minutes({required Object h, required Object m}) =>
-      '${h} jam ${m} mnt';
-  @override
-  String stat_format_minutes({required Object n}) => '${n} mnt';
-  @override
-  String get stat_goal => 'Daily Goal';
-  @override
-  String get stat_goal_daily => 'Daily Goal';
-  @override
-  String get stat_goal_presets => 'Preset';
-  @override
-  String stat_goal_progress({required Object read, required Object goal}) =>
-      '${read} / ${goal} karakter';
-  @override
-  String get stat_goal_reached => 'Target tercapai';
-  @override
-  String stat_goal_recent_average({required Object n}) =>
-      '7 hari terakhir: ${n} karakter/hari rata-rata';
-  @override
-  String get stat_goal_set => 'Set Goal';
-  @override
-  String get stat_goal_unit_chars => 'karakter';
-  @override
-  String get stat_goal_weekly => 'Weekly Goal';
-  @override
-  String get stat_last_30_days => '30 Hari Terakhir';
-  @override
-  String get stat_lookup => 'Pencarian';
-  @override
-  String get stat_metric_chars => 'Karakter';
-  @override
-  String get stat_metric_speed => 'Kecepatan';
-  @override
-  String get stat_metric_time => 'Waktu';
-  @override
-  String get stat_mined => 'Kartu dibuat';
-  @override
-  String get stat_no_data => 'Belum ada data membaca';
-  @override
-  String get stat_range_and_trend => 'Range & Trend';
-  @override
-  String get stat_recent_active => 'Hari Aktif (7h)';
-  @override
-  String get stat_refresh => 'Segarkan';
-  @override
-  String get stat_slowest_day => 'Slowest Day';
-  @override
-  String get stat_sort_by_chars => 'Per Karakter';
-  @override
-  String get stat_sort_by_speed => 'Per Kecepatan';
-  @override
-  String get stat_sort_by_time => 'Per Waktu';
-  @override
-  String get stat_speed_anomaly => 'Anomali';
-  @override
-  String get stat_speed_avg => 'Rata-rata Bergerak';
-  @override
-  String stat_speed_cph({required Object n}) => '${n} karakter/jam';
-  @override
-  String get stat_speed_summary => 'Speed Summary';
-  @override
-  String get stat_streak => 'Streak';
-  @override
-  String get stat_this_month => 'Bulan Ini';
-  @override
-  String get stat_this_week => 'Minggu Ini';
-  @override
-  String get stat_today => 'Hari Ini';
-  @override
-  String get stat_today_hourly => 'Hari Ini per Jam';
-  @override
-  String get stat_trend_daily => 'Harian';
-  @override
-  String get stat_trend_monthly => 'Bulanan';
-  @override
-  String get stat_trend_weekly => 'Mingguan';
-  @override
-  String get stat_typical_day => 'Typical Day';
-  @override
-  String get stat_vs_prev => 'vs 14h sebelumnya';
-  @override
-  String get stat_weighted_avg_speed => 'Weighted Avg';
-  @override
-  String get stop => 'Berhenti';
-  @override
-  String get storage_permissions =>
-      'Mohon berikan izin berikut untuk mengekspor ke AnkiDroid.';
-  @override
-  String get stream => 'Streaming';
-  @override
-  String get swipe_page_turn_sensitivity => 'Sensitivitas geser ganti halaman';
-  @override
-  String get sync_account => 'Akun';
-  @override
-  String get sync_audiobook => 'Sinkronkan Posisi Buku Audio';
-  @override
-  String get sync_audiobook_files => 'Sinkronkan berkas buku audio';
-  @override
-  String get sync_audiobook_files_warning =>
-      'Audio dan subtitle bisa berukuran besar.';
-  @override
-  String sync_auth_error({required Object message}) =>
-      'Autentikasi gagal: ${message}';
-  @override
-  String get sync_auto_sync => 'Sinkronisasi Otomatis';
-  @override
-  String get sync_backend => 'Backend penyimpanan';
-  @override
-  String get sync_backend_dropbox => 'Dropbox';
-  @override
-  String get sync_backend_ftp => 'FTP';
-  @override
-  String get sync_backend_google_drive => 'Google Drive';
-  @override
-  String get sync_backend_fushi_server => 'Fushi Interconnect';
-  @override
-  String get sync_backend_onedrive => 'OneDrive';
-  @override
-  String get sync_backend_sftp => 'SFTP';
-  @override
-  String get sync_backend_webdav => 'WebDAV';
-  @override
-  String get sync_checking_account => 'Memeriksa akun…';
-  @override
-  String get sync_client_connected => 'Terhubung';
-  @override
-  String get sync_client_token => 'Token akses peer';
-  @override
-  String get sync_client_token_manual => 'Masukkan token secara manual';
-  @override
-  String get sync_compare => 'Bandingkan Data';
-  @override
-  String get sync_compare_all_books => 'Semua Buku';
-  @override
-  String get sync_compare_all_local => 'Semua → Lokal';
-  @override
-  String get sync_compare_all_remote => 'Semua → Jarak Jauh';
-  @override
-  String get sync_compare_all_skip => 'Semua → Lewati';
-  @override
-  String sync_compare_applied({required Object count}) =>
-      '${count} perubahan diterapkan';
-  @override
-  String sync_compare_apply({required Object count}) =>
-      'Sinkronkan sekarang (${count})';
-  @override
-  String get sync_compare_close => 'Tutup';
-  @override
-  String get sync_compare_conflicts => 'Konflik';
-  @override
-  String get sync_compare_days => 'hari';
-  @override
-  String get sync_compare_delete_audiobook => 'Hapus buku audio di jarak jauh';
-  @override
-  String get sync_compare_delete_book => 'Hapus buku di jarak jauh';
-  @override
-  String sync_compare_delete_confirm({required Object name}) =>
-      'Hapus "${name}" dari jarak jauh? Data lokal dipertahankan. Ini tidak dapat dibatalkan.';
-  @override
-  String get sync_compare_delete_dict => 'Hapus kamus di jarak jauh';
-  @override
-  String get sync_compare_deleted => 'Dihapus dari jarak jauh';
-  @override
-  String get sync_compare_dictionaries => 'Kamus';
-  @override
-  String get sync_compare_download => 'Unduh';
-  @override
-  String get sync_compare_empty => 'Tidak ada buku';
-  @override
-  String get sync_compare_local => 'Lokal';
-  @override
-  String get sync_compare_no_content =>
-      'Hanya data cloud — tidak ada buku untuk diunduh';
-  @override
-  String get sync_compare_no_data => 'Tidak ada data';
-  @override
-  String get sync_compare_remote => 'Jarak Jauh';
-  @override
-  String get sync_compare_select_all => 'Pilih Semua';
-  @override
-  String get sync_compare_skip => 'Lewati';
-  @override
-  String get sync_compare_title => 'Lokal vs Jarak Jauh';
-  @override
-  String get sync_compare_unavailable => 'Set up sync first';
-  @override
-  String get sync_compare_use_local => 'Lokal';
-  @override
-  String get sync_compare_use_remote => 'Jarak Jauh';
-  @override
-  String get sync_connection_failed => 'Koneksi gagal';
-  @override
-  String get sync_connection_success => 'Koneksi berhasil';
-  @override
-  String get sync_content => 'Sinkronkan berkas buku';
-  @override
-  String get sync_content_warning =>
-      'Berkas besar akan memakai ruang penyimpanan dan kuota data';
-  @override
-  String get sync_err_auth_expired =>
-      'Sesi masuk kedaluwarsa — mohon masuk kembali.';
-  @override
-  String get sync_err_invalid_client =>
-      'Kredensial klien tidak valid untuk build ini — silakan perbarui aplikasi.';
-  @override
-  String get sync_err_network =>
-      'Tidak dapat menjangkau server — periksa jaringan atau pengaturan proksi Anda.';
-  @override
-  String get sync_err_not_configured =>
-      'Kredensial Google sync tidak dikonfigurasi di build ini.';
-  @override
-  String get sync_err_quota => 'Penyimpanan cloud penuh (kuota tercapai).';
-  @override
-  String get sync_err_scope_upgrade =>
-      'Izin sinkronisasi berubah — silakan masuk ke Google lagi untuk melanjutkan sinkronisasi.';
-  @override
-  String get sync_err_timeout =>
-      'Koneksi habis waktu — server tidak merespons tepat waktu.';
-  @override
-  String sync_error({required Object message}) =>
-      'Kesalahan sinkronisasi: ${message}';
-  @override
-  String get sync_exit_warning =>
-      'Sinkronisasi masih berlangsung. Keluar sekarang dapat menyebabkan kehilangan data.';
-  @override
-  String get sync_exit_warning_title => 'Sinkronisasi Berlangsung';
-  @override
-  String get sync_host => 'Host';
-  @override
-  String get sync_lan_discovery => 'Perangkat LAN';
-  @override
-  String get sync_lan_no_devices => 'Tidak ada perangkat ditemukan';
-  @override
-  String get sync_lan_scan_failed =>
-      'Pemindaian gagal — periksa izin jaringan atau firewall.';
-  @override
-  String get sync_not_signed_in => 'Belum masuk';
-  @override
-  String get sync_now => 'Sinkronkan sekarang';
-  @override
-  String sync_now_audio_in({required Object count}) => '↓${count} buku audio';
-  @override
-  String sync_now_audio_out({required Object count}) => '↑${count} buku audio';
-  @override
-  String sync_now_books_in({required Object count}) => '↓${count} buku';
-  @override
-  String get sync_now_busy => 'Sinkronisasi sedang berjalan';
-  @override
-  String sync_now_dicts_in({required Object count}) => '↓${count} kamus';
-  @override
-  String sync_now_dicts_out({required Object count}) => '↑${count} kamus';
-  @override
-  String sync_now_done({required Object detail}) => 'Tersinkron · ${detail}';
-  @override
-  String sync_now_failed_suffix({required Object count}) => ' · ${count} gagal';
-  @override
-  String get sync_now_hint =>
-      'Jalankan sinkronisasi dua arah penuh dengan cloud sekarang';
-  @override
-  String sync_now_local_audio_in({required Object count}) =>
-      '↓${count} sumber audio';
-  @override
-  String sync_now_local_audio_out({required Object count}) =>
-      '↑${count} sumber audio';
-  @override
-  String get sync_now_no_changes => 'tidak ada perubahan';
-  @override
-  String get sync_pair_allow => 'Izinkan';
-  @override
-  String sync_pair_confirm_identity_body({required Object device}) =>
-      'Anda memasangkan dengan ${device}. Konfirmasi bahwa ini adalah perangkat yang Anda harapkan sebelum melanjutkan.';
-  @override
-  String get sync_pair_confirm_identity_title => 'Konfirmasi perangkat';
-  @override
-  String get sync_pair_continue => 'Lanjutkan';
-  @override
-  String get sync_pair_denied => 'Perangkat lain menolak pemasangan';
-  @override
-  String get sync_pair_deny => 'Tolak';
-  @override
-  String get sync_pair_enter_pin_body =>
-      'Masukkan PIN 6 digit yang ditampilkan di perangkat lain.';
-  @override
-  String get sync_pair_enter_pin_title => 'Masukkan PIN';
-  @override
-  String get sync_pair_failed => 'Pemasangan gagal';
-  @override
-  String get sync_pair_fingerprint_changed =>
-      'Sertifikat berubah — pemasangan dibatalkan demi keamanan (kemungkinan intersepsi).';
-  @override
-  String get sync_pair_fingerprint_label => 'Sidik jari sertifikat';
-  @override
-  String get sync_pair_not_fushi =>
-      'Tidak ada perangkat Fushi ditemukan di alamat ini. Alamat telah disimpan.';
-  @override
-  String get sync_pair_pairing => 'Memasangkan…';
-  @override
-  String get sync_pair_pin_label => 'Masukkan PIN ini di perangkat lain';
-  @override
-  String get sync_pair_pin_waiting =>
-      'Menunggu perangkat lain memasukkan PIN ini…';
-  @override
-  String get sync_pair_pin_wrong => 'PIN salah — coba lagi';
-  @override
-  String get sync_pair_repair => 'Pasangkan lagi';
-  @override
-  String get sync_pair_request_body =>
-      'Sebuah perangkat meminta untuk dipasangkan. Izinkan untuk menyinkronkan dengan perangkat ini?';
-  @override
-  String get sync_pair_request_title => 'Permintaan pemasangan';
-  @override
-  String get sync_pair_success => 'Terpasang — token telah diisi';
-  @override
-  String get sync_pair_unavailable =>
-      'Perangkat lain belum siap atau menggunakan versi lama. Perbarui dan aktifkan sinkronisasi, lalu coba lagi.';
-  @override
-  String get sync_pair_unknown_device => 'Perangkat tidak dikenal';
-  @override
-  String get sync_paired_peer_remove => 'Hapus';
-  @override
-  String get sync_paired_peer_removed => 'Perangkat berpasangan dihapus';
-  @override
-  String get sync_paired_peer_unknown => 'Perangkat tidak dikenal';
-  @override
-  String get sync_paired_peers_empty => 'Belum ada perangkat berpasangan';
-  @override
-  String get sync_paired_peers_title => 'Perangkat berpasangan';
-  @override
-  String get sync_password => 'Kata sandi';
-  @override
-  String get sync_port => 'Port';
-  @override
-  String get sync_private_key => 'Kunci privat';
-  @override
-  String get sync_progress_audiobooks => 'Menyinkronkan buku audio';
-  @override
-  String get sync_progress_books => 'Mengimpor buku';
-  @override
-  String get sync_progress_dictionaries => 'Menyinkronkan kamus';
-  @override
-  String get sync_progress_local_audio => 'Menyinkronkan audio lokal';
-  @override
-  String get sync_progress_reading => 'Menyinkronkan data baca';
-  @override
-  String get sync_progress_videos => 'Menyinkronkan video';
-  @override
-  String get sync_role_locked_by_client =>
-      'Sudah terhubung ke perangkat lain. Hapus koneksi sebelum menjadi host sebagai server.';
-  @override
-  String get sync_role_locked_by_server =>
-      'Perangkat ini menjadi host sebagai server. Matikan server sebelum terhubung ke perangkat lain.';
-  @override
-  String get sync_section_actions => 'Aksi sinkronisasi';
-  @override
-  String get sync_section_backup => 'Cadangan lokal';
-  @override
-  String get sync_section_content => 'Apa yang disinkronkan';
-  @override
-  String get sync_section_host_server =>
-      'Perangkat ini sebagai server sinkronisasi';
-  @override
-  String get sync_section_host_server_footer =>
-      'Biarkan perangkat lain menyinkronkan dari perangkat ini. Terpisah dari backend sinkronisasi di atas.';
-  @override
-  String get sync_section_method => 'Metode sinkronisasi';
-  @override
-  String get sync_server_copy_token => 'Salin token';
-  @override
-  String get sync_server_enable => 'Aktifkan server sinkronisasi';
-  @override
-  String get sync_server_mode_active =>
-      'Perangkat ini adalah server sinkronisasi';
-  @override
-  String get sync_server_mode_clients_drive =>
-      'Sinkronisasi dimulai oleh klien yang terhubung — tidak perlu sinkron manual di sini.';
-  @override
-  String get sync_server_port => 'Port server';
-  @override
-  String sync_server_port_in_use({required Object port}) =>
-      'Port ${port} sudah digunakan — pilih port lain.';
-  @override
-  String get sync_server_regenerate_token => 'Buat ulang token';
-  @override
-  String get sync_server_running => 'Server berjalan';
-  @override
-  String get sync_server_stopped => 'Server berhenti';
-  @override
-  String get sync_server_tls_enable => 'Enkripsi interconnect (HTTPS/TLS)';
-  @override
-  String get sync_server_tls_repair_hint =>
-      'Mengubah ini memerlukan perangkat berpasangan untuk memasangkan lagi';
-  @override
-  String get sync_server_token => 'Token akses';
-  @override
-  String get sync_show_remote_entries => 'Tampilkan entri remote';
-  @override
-  String get sync_show_remote_entries_warning =>
-      'Tampilkan buku dan video yang ada di perangkat berpasangan atau cloud sebagai kartu placeholder yang bisa diunduh atau di-streaming.';
-  @override
-  String get sync_sign_in => 'Masuk';
-  @override
-  String get sync_sign_out => 'Keluar';
-  @override
-  String get sync_signed_in => 'Sudah masuk';
-  @override
-  String get sync_statistics => 'Sinkronkan Statistik';
-  @override
-  String get sync_summary => 'Cloud, LAN P2P & cadangan lokal';
-  @override
-  String get sync_test_connection => 'Uji koneksi';
-  @override
-  String get sync_use_tls => 'Gunakan TLS';
-  @override
-  String get sync_username => 'Nama pengguna';
-  @override
-  String get sync_video_files => 'Unggah file video';
-  @override
-  String get sync_video_files_warning => 'File video bisa sangat besar.';
-  @override
-  String get sync_webdav_missing_fields => 'Ada kolom yang belum diisi';
-  @override
-  String sync_webdav_test_failed({required Object message}) =>
-      'Koneksi gagal: ${message}';
-  @override
-  String get sync_webdav_url => 'URL server';
-  @override
-  String tag_added_to_book({required Object name}) =>
-      'Tag "${name}" ditambahkan ke buku.';
-  @override
-  String tag_added_to_collection({required Object name}) =>
-      'Tag ${name} ditambahkan ke koleksi.';
-  @override
-  String tag_added_to_video({required Object name}) =>
-      'Tag ${name} ditambahkan ke video.';
-  @override
-  String tag_already_on_book({required Object name}) =>
-      'Tag "${name}" sudah ada di buku ini.';
-  @override
-  String tag_already_on_collection({required Object name}) =>
-      'Tag ${name} sudah ada di koleksi ini.';
-  @override
-  String tag_book_count({required Object count}) => '${count} buku';
-  @override
-  String get tag_clear_filter => 'Hapus Filter';
-  @override
-  String get tag_color => 'Warna';
-  @override
-  String tag_delete_confirm({required Object name}) => 'Hapus tag "${name}"?';
-  @override
-  String get tag_filter_title => 'Filter berdasarkan Tag';
-  @override
-  String get tag_label => 'Tag';
-  @override
-  String get tag_manage => 'Kelola Tag';
-  @override
-  String get tag_manage_title => 'Kelola Tag';
-  @override
-  String get tag_name_duplicate => 'Tag dengan nama ini sudah ada.';
-  @override
-  String get tag_name_empty => 'Nama tag tidak boleh kosong.';
-  @override
-  String get tag_name_hint => 'Nama tag';
-  @override
-  String get tag_new => 'Tag Baru';
-  @override
-  String get tag_no_books_for_filter =>
-      'Tidak ada buku yang cocok dengan tag yang dipilih.';
-  @override
-  String get tag_no_tags_hint => 'Belum ada tag. Buat satu untuk memulai.';
-  @override
-  String get tag_seed_stars => 'Tambah tag penilaian bintang';
-  @override
-  String get tag_seed_stars_added => 'Tag penilaian bintang ditambahkan';
-  @override
-  String get tag_seed_stars_exists => 'Tag penilaian bintang sudah ada';
-  @override
-  String get tap_empty_hide_chrome => 'Bilah kontrol mengambang';
-  @override
-  String get text_segmentation => 'Segmentasi Teks';
-  @override
-  String get texthooker => 'Texthooker';
-  @override
-  String get texthooker_enabled => 'Texthooker (terima teks)';
-  @override
-  String get texthooker_enabled_hint =>
-      'Hubungkan ke Textractor/mpv/agent dan cari teks yang masuk';
-  @override
-  String get theme_black => 'Hitam murni';
-  @override
-  String get theme_code_copied => 'Kode tema disalin ke papan klip';
-  @override
-  String get theme_dark => 'Gelap pekat';
-  @override
-  String get theme_ecru => 'Krem';
-  @override
-  String get theme_eyecare => 'Eye Care';
-  @override
-  String get theme_gray => 'Abu-abu gelap';
-  @override
-  String get theme_light => 'Putih';
-  @override
-  String get theme_seed_preview_hint =>
-      'Petak warna di bawah menampilkan pratinjau warna yang sebenarnya dihasilkan dari warna benih kamu. Untuk memaksa warna tertentu sebagai aksen utama, aktifkan toggle Primer dan pilih warnanya secara eksplisit.';
-  @override
-  String get theme_water => 'Biru air';
-  @override
-  String toc_section({required Object n}) => 'Daftar Isi (${n})';
-  @override
-  String get top_progress_pos_center => 'Tengah';
-  @override
-  String get top_progress_pos_left => 'Kiri atas';
-  @override
-  String get top_progress_pos_right => 'Kanan atas';
-  @override
-  String get top_progress_position => 'Posisi progres';
-  @override
-  String get torrent_upload_intro_body =>
-      'Mengunggah (seeding) dimatikan secara default. Aktifkan untuk berbagi konten yang diunduh kembali ke swarm — ini menggunakan bandwidth unggah Anda. Anda bisa mengubahnya kapan saja di Pengaturan.';
-  @override
-  String get torrent_upload_intro_confirm => 'Simpan';
-  @override
-  String get torrent_upload_intro_enable => 'Aktifkan unggah / seeding';
-  @override
-  String get torrent_upload_intro_keep_off => 'Tetap matikan';
-  @override
-  String get torrent_upload_intro_title => 'Unggah / seeding';
-  @override
-  String get reader_blur_images => 'Buramkan gambar (pelindung spoiler)';
-  @override
-  String get reader_font_size => 'Ukuran Font';
-  @override
-  String get reader_font_vpal => 'VPAL (Alt Vertikal)';
-  @override
-  String get reader_furigana_hide => 'Sembunyikan';
-  @override
-  String get reader_furigana_mode => 'Furigana';
-  @override
-  String get reader_furigana_mode_hint => '';
-  @override
-  String get reader_furigana_partial => 'Sebagian';
-  @override
-  String get reader_furigana_show => 'Tampilkan';
-  @override
-  String get reader_furigana_toggle => 'Alihkan';
-  @override
-  String get reader_horizontal => 'Horizontal';
-  @override
-  String get reader_line_height => 'Tinggi Baris';
-  @override
-  String get reader_merge_image_pages =>
-      'Gabung halaman ilustrasi ke dalam teks';
-  @override
-  String get reader_merge_image_pages_subtitle =>
-      'Bab gambar tunggal yang berdiri sendiri dirender di dalam bab teks yang berdekatan alih-alih di halaman sendiri';
-  @override
-  String get reader_no_books_added => 'Belum ada buku di perpustakaan';
-  @override
-  String get reader_not_bound_cannot_rematch =>
-      'Buku audio tidak terikat ke buku, tidak dapat mencocokkan ulang';
-  @override
-  String get reader_orient_mixed => 'Campuran';
-  @override
-  String get reader_orient_upright => 'Tegak';
-  @override
-  String get reader_page_columns_auto => 'Otomatis';
-  @override
-  String get reader_paginated => 'Paginasi';
-  @override
-  String get reader_paragraph_spacing => 'Jarak paragraf';
-  @override
-  String get reader_reader_styles => 'Prioritaskan Gaya Buku';
-  @override
-  String get reader_scroll => 'Gulir';
-  @override
-  String get reader_text_indentation => 'Indentasi Paragraf';
-  @override
-  String get reader_text_justify => 'Perataan Teks';
-  @override
-  String get reader_theme => 'Tema';
-  @override
-  String get reader_vert_kerning => 'Kerning Font (Vertikal)';
-  @override
-  String get reader_vert_text_orient => 'Orientasi Teks';
-  @override
-  String get reader_vertical => 'Vertikal';
-  @override
-  String get reader_view_mode_label => 'Halaman / Gulir';
-  @override
-  String get reader_vn => 'Visual Novel';
-  @override
-  String get reader_writing_direction => 'Arah Penulisan';
-  @override
-  String get undo => 'Urungkan';
-  @override
-  String get unit_milliseconds => 'md';
-  @override
-  String get unit_pixels => 'px';
-  @override
-  String untitled_book({required Object id}) => 'Buku ${id}';
-  @override
-  String get untitled_chapter => '(Tanpa Judul)';
-  @override
-  String get update_already_latest => 'Anda sudah menggunakan versi terbaru';
-  @override
-  String get update_auto_install => 'Pasang pembaruan otomatis';
-  @override
-  String get update_available => 'Pembaruan Tersedia';
-  @override
-  String update_cached_newer({required Object version}) =>
-      'Pembaruan ${version} tersedia (memverifikasi…)';
-  @override
-  String update_cached_up_to_date({required Object version}) =>
-      'Di versi terbaru yang diketahui ${version} (memeriksa…)';
-  @override
-  String get update_cancel => 'Batal';
-  @override
-  String get update_cancelled => 'Unduhan dibatalkan';
-  @override
-  String get update_cancelling => 'Membatalkan…';
-  @override
-  String get update_channel_beta => 'Beta';
-  @override
-  String get update_channel_debug => 'Debug';
-  @override
-  String get update_channel_stable => 'Stabil';
-  @override
-  String get update_check_failed => 'Pemeriksaan pembaruan gagal';
-  @override
-  String get update_checking_now => 'Memeriksa pembaruan…';
-  @override
-  String get update_connecting => 'Menghubungkan…';
-  @override
-  String get update_custom_proxy_auto_hint =>
-      'Leave blank to use environment variables, then the enabled system proxy.';
-  @override
-  String get update_custom_proxy_hint =>
-      'host:port, mis. 127.0.0.1:7890 (khusus IPv4/host)';
-  @override
-  String get update_custom_proxy_invalid =>
-      'Proksi tidak valid. Gunakan host:port';
-  @override
-  String get update_custom_proxy_label => 'Custom update proxy';
-  @override
-  String get update_debug_channel => 'Kanal Pembaruan Debug';
-  @override
-  String get update_debug_channel_warning =>
-      'Build kanal debug mungkin tidak stabil. Gunakan dengan risiko sendiri.';
-  @override
-  String get update_download => 'Unduh';
-  @override
-  String get update_download_failed => 'Unduhan gagal';
-  @override
-  String get update_download_restarted_from_zero => 'diulang dari nol';
-  @override
-  String update_download_resume_status({required Object status}) =>
-      'Lanjut: ${status}';
-  @override
-  String get update_download_resumed => 'dilanjutkan';
-  @override
-  String update_download_size({
-    required Object received,
-    required Object total,
-  }) => 'Terunduh: ${received} / ${total}';
-  @override
-  String update_download_source({required Object source}) =>
-      'Sumber: ${source}';
-  @override
-  String update_download_speed({required Object speed}) =>
-      'Kecepatan: ${speed}';
-  @override
-  String get update_downloading => 'Mengunduh pembaruan…';
-  @override
-  String get update_hide => 'Sembunyikan';
-  @override
-  String update_install_current_executable({required Object path}) =>
-      'Eksekutabel yang berjalan: ${path}';
-  @override
-  String update_install_deletefile_failure({
-    required Object path,
-    required Object code,
-  }) => 'Penginstal gagal mengganti ${path} (kode ${code})';
-  @override
-  String update_install_detected_location({
-    required Object source,
-    required Object path,
-  }) => 'Lokasi pemasangan terdeteksi (${source}): ${path}';
-  @override
-  String update_install_failure_summary({required Object summary}) =>
-      'Alasan: ${summary}';
-  @override
-  String get update_install_incomplete_message =>
-      'Penginstal sudah dimulai, tetapi Fushi masih pada versi sebelumnya. Periksa log penginstal di bawah.';
-  @override
-  String get update_install_incomplete_title => 'Pembaruan tidak selesai';
-  @override
-  String update_install_installer_pid({required Object pid}) =>
-      'PID penginstal: ${pid}';
-  @override
-  String update_install_launch_failed_message({required Object version}) =>
-      'Fushi tidak dapat memulai penginstal untuk versi ${version}. Periksa jalur log di bawah.';
-  @override
-  String get update_install_launch_failed_title =>
-      'Penginstal pembaruan tidak dimulai';
-  @override
-  String update_install_launcher_pid({required Object pid}) =>
-      'PID peluncur pembaruan: ${pid}';
-  @override
-  String update_install_libmpv_holder({
-    required Object pid,
-    required Object path,
-  }) => 'Pemegang libmpv: PID ${pid} - ${path}';
-  @override
-  String get update_install_log_not_observed =>
-      'Log penginstal tidak dibuat selama pemeriksaan pasca-peluncuran.';
-  @override
-  String get update_install_log_observed =>
-      'Log penginstal dibuat selama pemeriksaan pasca-peluncuran.';
-  @override
-  String update_install_log_path({required Object path}) =>
-      'Log penginstal: ${path}';
-  @override
-  String get update_install_manual_close_retry =>
-      'Tutup Fushi sesuai PID/jalur yang tercantum, lalu coba lagi pembaruan atau jalankan kembali penginstal.';
-  @override
-  String get update_install_parent_exit_not_observed =>
-      'Peluncur pembaruan tidak mendeteksi Fushi keluar sebelum peluncuran penginstal.';
-  @override
-  String get update_install_parent_exit_observed =>
-      'Fushi keluar sebelum penginstal diluncurkan.';
-  @override
-  String update_install_path_mismatch({required Object warning}) =>
-      'Direktori pemasangan tidak cocok: ${warning}';
-  @override
-  String get update_install_permission_cancel => 'Batal';
-  @override
-  String get update_install_permission_message =>
-      'Silakan izinkan Fushi menginstal aplikasi di pengaturan sistem, lalu coba lagi.';
-  @override
-  String get update_install_permission_retry => 'Coba instal lagi';
-  @override
-  String get update_install_permission_title => 'Izinkan menginstal pembaruan';
-  @override
-  String get update_install_restart_windows_hint =>
-      'Jika proses yang tercantum sudah ditutup tetapi libmpv-2.dll masih terkunci, mulai ulang Windows lalu pasang lagi.';
-  @override
-  String update_install_running_process({
-    required Object pid,
-    required Object path,
-  }) => 'Proses Fushi yang berjalan: PID ${pid} - ${path}';
-  @override
-  String update_install_success_message({required Object version}) =>
-      'Fushi diperbarui ke versi ${version}.';
-  @override
-  String get update_install_success_title => 'Pembaruan terpasang';
-  @override
-  String update_install_target_dir({required Object path}) =>
-      'Target pemasangan: ${path}';
-  @override
-  String get update_installing => 'Memasang…';
-  @override
-  String get update_mac_install_incomplete_message =>
-      'Pembaruan tidak bisa diterapkan, jadi Fushi masih di versi sebelumnya. Anda bisa mencoba pembaruan lagi, atau unduh rilis terbaru secara manual.';
-  @override
-  String update_message({required Object version}) =>
-      'Versi ${version} tersedia.';
-  @override
-  String update_network_failure({
-    required Object host,
-    required Object reason,
-  }) => 'Tidak dapat menjangkau ${host}: ${reason}';
-  @override
-  String get update_never_remind => 'Jangan ingatkan lagi';
-  @override
-  String get update_skip => 'Lewati';
-  @override
-  String get url => 'URL';
-  @override
-  String get video_audio_track => 'Trek audio';
-  @override
-  String get video_audio_track_empty =>
-      'Tidak ada trek audio yang bisa dialihkan';
-  @override
-  String video_audio_track_switched({required Object label}) =>
-      'Trek audio: ${label}';
-  @override
-  String get video_auto_play_next_cancel => 'Batal';
-  @override
-  String video_auto_play_next_countdown({required Object seconds}) =>
-      'Episode berikutnya dalam ${seconds}d';
-  @override
-  String get video_black_flash_notice_action => 'Lihat saran';
-  @override
-  String get video_black_flash_notice_dont_show_again =>
-      'Jangan tampilkan lagi';
-  @override
-  String get video_bottom_next_cue =>
-      'Subtitle berikutnya (maju sedikit jika tidak ada)';
-  @override
-  String get video_bottom_play_pause => 'Putar / Jeda';
-  @override
-  String get video_bottom_prev_cue =>
-      'Subtitle sebelumnya (mundur sedikit jika tidak ada)';
-  @override
-  String get video_bottom_seek_back => 'Mundur 10d';
-  @override
-  String get video_bottom_seek_back_label => '−10d';
-  @override
-  String get video_bottom_seek_forward => 'Maju 10d';
-  @override
-  String get video_bottom_seek_forward_label => '+10d';
-  @override
-  String video_chapter_n({required Object n}) => 'Bab ${n}';
-  @override
-  String get video_chapters => 'Bab';
-  @override
-  String get video_chapters_empty => 'Tidak ada bab';
-  @override
-  String get video_clip_export => 'Ekspor klip';
-  @override
-  String get video_clip_export_cancelled => 'Ekspor klip dibatalkan';
-  @override
-  String video_clip_export_failed({required Object reason}) =>
-      'Ekspor klip gagal: ${reason}';
-  @override
-  String get video_clip_export_ffmpeg_failed => 'ffmpeg gagal';
-  @override
-  String get video_clip_export_ffmpeg_unavailable => 'ffmpeg tidak tersedia';
-  @override
-  String get video_clip_export_input_missing => 'Video sumber tidak tersedia';
-  @override
-  String get video_clip_export_invalid_range =>
-      'Tidak ada rentang klip yang valid';
-  @override
-  String get video_clip_export_output_missing =>
-      'Tidak ada file output yang dibuat';
-  @override
-  String get video_clip_export_remote_download_required =>
-      'Unduh video jarak jauh ke perangkat ini sebelum mengekspor klip';
-  @override
-  String get video_clip_export_source_changed =>
-      'Sumber video berubah; ekspor klip dibatalkan';
-  @override
-  String get video_clip_export_start => 'Mulai ekspor klip';
-  @override
-  String get video_clip_export_stop => 'Hentikan dan ekspor klip';
-  @override
-  String video_clip_exported({required Object path}) =>
-      'Klip diekspor: ${path}';
-  @override
-  String video_clip_exported_with_subtitles({required Object path}) =>
-      'Klip diekspor dengan subtitle: ${path}';
-  @override
-  String get video_clip_exporting => 'Mengekspor klip…';
-  @override
-  String get video_continue_watching => 'Continue Watching';
-  @override
-  String get video_control_audio_track => 'Trek audio';
-  @override
-  String get video_control_customize_hint =>
-      'Pilih posisi tiap tombol di pemutar, atau pindahkan keluar.';
-  @override
-  String get video_control_episode_list => 'Daftar episode';
-  @override
-  String get video_control_favorite_sentence => 'Favoritkan kalimat saat ini';
-  @override
-  String get video_control_fullscreen => 'Layar penuh';
-  @override
-  String get video_control_next_cue => 'Subtitle berikutnya';
-  @override
-  String get video_control_palette_hint =>
-      'Seret tombol ke sebuah slot untuk menambahkannya; satu tombol bisa berada di beberapa slot.';
-  @override
-  String get video_control_palette_title => 'Semua tombol';
-  @override
-  String get video_control_play_pause => 'Putar/Jeda';
-  @override
-  String get video_control_previous_cue => 'Subtitle sebelumnya';
-  @override
-  String get video_control_reject_required =>
-      'Kontrol wajib harus tetap di pemutar.';
-  @override
-  String get video_control_reject_unavailable =>
-      'Kontrol ini tidak dapat ditempatkan di sana.';
-  @override
-  String get video_control_reject_volume_bottom =>
-      'Volume hanya bisa berada di bilah bawah.';
-  @override
-  String get video_control_remove_from_slot => 'Pindahkan keluar';
-  @override
-  String get video_control_reset_layout =>
-      'Setel ulang tata letak tombol pemutar';
-  @override
-  String get video_control_screenshot => 'Tangkapan layar';
-  @override
-  String get video_control_seek_backward => 'Mundur 10d';
-  @override
-  String get video_control_seek_forward => 'Maju 10d';
-  @override
-  String get video_control_settings => 'Setelan pemutar';
-  @override
-  String get video_control_slot_bottom_center => 'Bilah bawah (tengah)';
-  @override
-  String get video_control_slot_bottom_left => 'Bilah bawah (kiri)';
-  @override
-  String get video_control_slot_bottom_right => 'Bilah bawah (kanan)';
-  @override
-  String get video_control_slot_drop_hint => 'Seret tombol ke sini';
-  @override
-  String get video_control_slot_hidden => 'Dihapus dari pemutar';
-  @override
-  String get video_control_slot_screen_left => 'Kiri layar';
-  @override
-  String get video_control_slot_screen_right => 'Kanan layar';
-  @override
-  String get video_control_slot_top_center => 'Bilah atas (tengah)';
-  @override
-  String get video_control_slot_top_left => 'Bilah atas (kiri)';
-  @override
-  String get video_control_slot_top_right => 'Bilah atas (kanan)';
-  @override
-  String get video_control_speed => 'Kecepatan';
-  @override
-  String get video_control_subtitle_list => 'Daftar subtitle';
-  @override
-  String get video_control_subtitle_track => 'Trek subtitle';
-  @override
-  String get video_control_title => 'Judul video';
-  @override
-  String get video_control_volume => 'Volume';
-  @override
-  String get video_danmaku_manual_bind_empty =>
-      'Belum ada danmaku untuk episode ini.';
-  @override
-  String get video_danmaku_manual_bind_failed =>
-      'Tidak bisa memuat danmaku untuk episode ini. Coba lagi nanti.';
-  @override
-  String get video_danmaku_manual_bind_server_error =>
-      'Server danmaku menolak permintaan. Coba lagi nanti.';
-  @override
-  String get video_danmaku_manual_match_title => 'Cocokkan danmaku';
-  @override
-  String get video_danmaku_manual_network_error =>
-      'Kesalahan jaringan. Periksa koneksi Anda dan coba lagi.';
-  @override
-  String get video_danmaku_manual_no_result =>
-      'Tidak ada anime yang cocok ditemukan.';
-  @override
-  String get video_danmaku_manual_search_action => 'Cari';
-  @override
-  String get video_danmaku_manual_search_hint => 'Judul anime';
-  @override
-  String get video_danmaku_manual_search_prompt =>
-      'Cari Dandanplay berdasarkan judul anime, lalu pilih episode.';
-  @override
-  String get video_danmaku_manual_server_error =>
-      'Pencarian gagal. Coba lagi nanti.';
-  @override
-  String video_delete_confirm({required Object title}) =>
-      'Hapus 『${title}』? Tindakan ini tidak dapat dibatalkan.';
-  @override
-  String get video_delete_title => 'Hapus Video';
-  @override
-  String get video_double_tap_next_cue => 'Baris berikutnya';
-  @override
-  String get video_double_tap_prev_cue => 'Baris sebelumnya';
-  @override
-  String get video_drop_audio_unsupported =>
-      'Jatuhkan file subtitle ke video saat ini. File audio tidak bisa dilampirkan di sini.';
-  @override
-  String get video_drop_subtitle_only =>
-      'Jatuhkan file subtitle ke video saat ini.';
-  @override
-  String get video_episode_list => 'Episode';
-  @override
-  String get video_episode_list_empty => 'Tidak ada episode';
-  @override
-  String video_favorite_count({required Object count}) => '${count} favorit';
-  @override
-  String get video_file_error_content =>
-      'Tidak dapat memuat file video. Pastikan file ini ada dan berada di direktori yang dapat diakses oleh aplikasi.';
-  @override
-  String get video_file_not_found => 'File video tidak ditemukan';
-  @override
-  String get video_immersive_locked => 'Mode imersif aktif';
-  @override
-  String get video_immersive_mode_full => 'Kontrol penuh';
-  @override
-  String get video_immersive_mode_lookup_only => 'Hanya pencarian kata';
-  @override
-  String get video_immersive_mode_seek_lookup => 'Pintasan + pencarian kata';
-  @override
-  String get video_immersive_mode_unlock_only => 'Hanya buka kunci';
-  @override
-  String get video_immersive_unlock => 'Buka kunci';
-  @override
-  String get video_immersive_unlocked => 'Mode imersif nonaktif';
-  @override
-  String get video_import_action => 'Impor video';
-  @override
-  String get video_import_confirm => 'Impor';
-  @override
-  String get video_import_pick_subtitle => 'Pilih subtitle';
-  @override
-  String get video_import_pick_video => 'Pilih file video';
-  @override
-  String get video_import_stream_advanced => 'Lanjutan (header anti-leech)';
-  @override
-  String get video_import_stream_referer => 'Referer (opsional)';
-  @override
-  String get video_import_stream_subtitle_url_field =>
-      'URL subtitle eksternal (opsional)';
-  @override
-  String get video_import_stream_url_field => 'URL stream video';
-  @override
-  String get video_import_stream_url_hint =>
-      'Putar URL stream HLS/m3u8/mp4 (dengan URL subtitle eksternal opsional dan Referer/User-Agent anti-leech)';
-  @override
-  String get video_import_stream_user_agent => 'User-Agent (opsional)';
-  @override
-  String get video_import_subtitle_optional =>
-      'Subtitle eksternal opsional (kamu bisa beralih antara subtitle tertanam/eksternal kapan saja saat pemutaran)';
-  @override
-  String get video_import_title => 'Impor Video';
-  @override
-  String get video_jimaku_anime_match => 'Kecocokan anime';
-  @override
-  String get video_jimaku_api_key => 'Kunci API Jimaku';
-  @override
-  String get video_jimaku_api_key_hint =>
-      'Dapatkan API key gratis di jimaku.cc/account';
-  @override
-  String get video_jimaku_api_key_set => 'API key telah diatur';
-  @override
-  String video_jimaku_batch_done({
-    required Object done,
-    required Object total,
-  }) => 'Subtitle diambil: ${done}/${total}';
-  @override
-  String get video_jimaku_batch_download => 'Unduh semua';
-  @override
-  String get video_jimaku_batch_title => 'Ambil subtitle untuk koleksi';
-  @override
-  String get video_jimaku_download_failed => 'Unduhan gagal';
-  @override
-  String get video_jimaku_downloaded => 'Subtitle diunduh dan diterapkan';
-  @override
-  String get video_jimaku_episode => 'Episode (opsional)';
-  @override
-  String get video_jimaku_episode_hint =>
-      'Biarkan kosong untuk menampilkan semua';
-  @override
-  String get video_jimaku_fetch => 'Ambil subtitle (Jimaku)';
-  @override
-  String get video_jimaku_filter => 'Saring hasil (mis. WEBRip, BD)';
-  @override
-  String get video_jimaku_find_sources => 'Cari subtitle';
-  @override
-  String get video_jimaku_language => 'Bahasa';
-  @override
-  String get video_jimaku_language_all => 'Semua';
-  @override
-  String get video_jimaku_no_key => 'Masukkan API key Jimaku kamu dulu';
-  @override
-  String get video_jimaku_no_results => 'Subtitle tidak ditemukan';
-  @override
-  String get video_jimaku_query => 'Nama seri';
-  @override
-  String get video_jimaku_search => 'Cari';
-  @override
-  String get video_jimaku_series => 'Seri';
-  @override
-  String get video_jimaku_show_all_episodes => 'Tampilkan semua episode';
-  @override
-  String get video_jimaku_source => 'Sumber subtitle';
-  @override
-  String get video_jimaku_source_hint =>
-      'Pilih satu entri Jimaku. Paket musim dicocokkan berdasarkan episode secara otomatis.';
-  @override
-  String video_last_watched({required Object date}) =>
-      'Terakhir ditonton ${date}';
-  @override
-  String get video_library_empty => 'Belum ada video yang diimpor';
-  @override
-  String get video_load_failed_back => 'Kembali';
-  @override
-  String get video_load_failed_generic => 'Tidak bisa memuat video ini.';
-  @override
-  String get video_load_failed_network =>
-      'Kesalahan jaringan - periksa koneksi Anda dan coba lagi.';
-  @override
-  String get video_load_failed_not_found =>
-      'Item ini tidak ditemukan di pustaka Anda.';
-  @override
-  String get video_load_failed_retry => 'Coba lagi';
-  @override
-  String get video_load_failed_timeout =>
-      'Koneksi waktu habis - jaringan lambat atau sumber membatasi kecepatan. Silakan coba lagi.';
-  @override
-  String get video_load_failed_title => 'Video gagal dimuat';
-  @override
-  String get video_load_failed_unavailable =>
-      'Tidak bisa mendapatkan stream video - mungkin tidak tersedia, dibatasi wilayah atau usia, atau sumbernya berubah.';
-  @override
-  String get video_loading_buffering => 'Buffering…';
-  @override
-  String get video_loading_connecting => 'Menghubungkan ke stream…';
-  @override
-  String get video_loading_preparing => 'Mempersiapkan…';
-  @override
-  String get video_loading_subtitle => 'Mengunduh subtitle…';
-  @override
-  String get video_menu_fullscreen => 'Alihkan layar penuh';
-  @override
-  String get video_menu_lock => 'Mode imersif / kunci';
-  @override
-  String get video_menu_play_pause => 'Putar / Jeda';
-  @override
-  String get video_menu_subtitle_track => 'Trek subtitle';
-  @override
-  String get video_mining_image_mode => 'Gambar kartu video';
-  @override
-  String get video_mining_image_mode_current_frame =>
-      'Tangkapan layar saat menambang';
-  @override
-  String get video_mining_image_mode_gif => 'GIF animasi (klip subtitle)';
-  @override
-  String get video_mining_image_mode_hint =>
-      'Apakah sampul kartu video adalah animasi klip subtitle atau satu bingkai diam — dan bingkai mana';
-  @override
-  String get video_mining_image_mode_subtitle_start =>
-      'Tangkapan layar saat subtitle dimulai';
-  @override
-  String get video_next_episode => 'Episode berikutnya';
-  @override
-  String video_playlist_episodes({required Object count}) => '${count} ep';
-  @override
-  String get video_prev_episode => 'Episode sebelumnya';
-  @override
-  String get video_quality => 'Kualitas';
-  @override
-  String get video_quality_auto => 'Otomatis';
-  @override
-  String get video_quality_empty =>
-      'Tidak ada kualitas yang bisa dialihkan untuk video ini';
-  @override
-  String get video_quality_enhancement_hint =>
-      'Aktifkan ini untuk menajamkan gambar dengan penskalaan kualitas tinggi bawaan mpv. Cocok untuk anime maupun film/acara live-action. Untuk lebih jauh dengan shader seperti Anime4K, buka Peningkatan gambar saat video diputar dan pilih levelnya di sana.';
-  @override
-  String get video_quality_load_failed =>
-      'Tidak bisa memuat kualitas untuk video ini.';
-  @override
-  String get video_quality_loading => 'Memuat kualitas yang tersedia…';
-  @override
-  String video_quality_switched({required Object label}) =>
-      'Kualitas: ${label}';
-  @override
-  String get video_rename => 'Ganti nama';
-  @override
-  String get video_rename_hint => 'Judul';
-  @override
-  String get video_render_skia_fix_confirm_action => 'Mulai ulang';
-  @override
-  String get video_render_skia_fix_confirm_body =>
-      'Ini menonaktifkan renderer Impeller dan memulai ulang aplikasi untuk menerapkannya.';
-  @override
-  String get video_render_skia_fix_confirm_title =>
-      'Beralih ke Skia dan mulai ulang?';
-  @override
-  String get video_render_skia_fix_hint =>
-      'Gunakan jika audio berputar tetapi video tetap hitam. Menonaktifkan Impeller; memulai ulang untuk menerapkan.';
-  @override
-  String get video_render_skia_fix_title =>
-      'Layar hitam? Ganti renderer (Skia)';
-  @override
-  String video_resource_missing_message({required Object title}) =>
-      'File untuk 『${title}』 tidak bisa ditemukan. Lokasinya mungkin berubah, atau drive mungkin tidak terhubung. Anda bisa mengimpor ulang, atau menghapus entri ini.';
-  @override
-  String get video_resource_missing_reimport => 'Impor ulang';
-  @override
-  String get video_resource_missing_title => 'Video tidak tersedia';
-  @override
-  String get video_resource_relink_success => 'Video ditautkan ulang';
-  @override
-  String get video_scrape_episodes => 'Episode';
-  @override
-  String get video_scrape_info => 'Info seri';
-  @override
-  String video_scrape_rating_votes({required Object count}) =>
-      '${count} penilaian';
-  @override
-  String get video_screenshot => 'Tangkapan layar';
-  @override
-  String video_screenshot_failed_reason({required Object reason}) =>
-      'Tangkapan layar gagal: ${reason}';
-  @override
-  String video_screenshot_ready({required Object file}) =>
-      'Tangkapan layar siap: ${file}';
-  @override
-  String video_screenshot_saved_to({required Object path}) =>
-      'Tangkapan layar tersimpan: ${path}';
-  @override
-  String get video_secondary_subtitle_hint =>
-      'Dirender oleh pemutar (tidak bisa dicari)';
-  @override
-  String get video_secondary_subtitle_sources => 'Subtitle sekunder';
-  @override
-  String get video_setting_auto_play_next =>
-      'Putar otomatis episode berikutnya';
-  @override
-  String get video_setting_auto_scrape => 'Ambil info seri otomatis';
-  @override
-  String get video_setting_av_delay => 'Sinkron subtitle';
-  @override
-  String get video_setting_av_delay_hint =>
-      'Positif = subtitle lebih lambat (baris digeser mundur); negatif = subtitle lebih cepat. Pakai slider, tombol +/-, atau ketik nilainya.';
-  @override
-  String get video_setting_danmaku_area => 'Area tampilan';
-  @override
-  String get video_setting_danmaku_area_hint =>
-      'Fraksi tinggi layar yang bisa ditempati danmaku, dari atas.';
-  @override
-  String get video_setting_danmaku_block_rules => 'Blokir kata / regex';
-  @override
-  String get video_setting_danmaku_block_rules_hint =>
-      'Satu aturan per baris. Bungkus baris dalam garis miring seperti /pola/ untuk ekspresi reguler; jika tidak, cocokkan sebagai teks tidak peka huruf besar.';
-  @override
-  String get video_setting_danmaku_block_rules_placeholder =>
-      'mis. spoiler atau /pola/';
-  @override
-  String get video_setting_danmaku_enabled => 'Tampilkan danmaku';
-  @override
-  String get video_setting_danmaku_enabled_hint =>
-      'Render danmaku lokal atau hasil pencocokan di atas video tanpa menghalangi kontrol.';
-  @override
-  String get video_setting_danmaku_font_scale => 'Ukuran font';
-  @override
-  String get video_setting_danmaku_font_scale_hint =>
-      'Skalakan ukuran teks danmaku.';
-  @override
-  String get video_setting_danmaku_manual_match => 'Cocokkan manual';
-  @override
-  String get video_setting_danmaku_manual_match_hint =>
-      'Cari Dandanplay berdasarkan judul dan pilih episode saat pencocokan otomatis gagal atau salah.';
-  @override
-  String get video_setting_danmaku_max_active => 'Batas danmaku aktif';
-  @override
-  String get video_setting_danmaku_max_active_hint =>
-      'Membatasi komentar yang dirender per frame agar file besar tetap responsif.';
-  @override
-  String get video_setting_danmaku_online => 'Pencocokan online Dandanplay';
-  @override
-  String get video_setting_danmaku_online_hint =>
-      'Saat tidak ada sidecar lokal yang dapat dipakai, cocokkan video yang dibuka dengan Dandanplay dan ambil komentar terkait.';
-  @override
-  String get video_setting_danmaku_opacity => 'Opasitas';
-  @override
-  String get video_setting_danmaku_opacity_hint =>
-      'Transparansi danmaku secara keseluruhan.';
-  @override
-  String get video_setting_danmaku_server_url => 'URL server danmaku';
-  @override
-  String get video_setting_danmaku_speed => 'Kecepatan';
-  @override
-  String get video_setting_danmaku_speed_hint =>
-      'Lebih tinggi lebih cepat; danmaku bergulir melintasi layar lebih cepat.';
-  @override
-  String get video_setting_double_tap => 'Ketuk dua kali untuk melompat';
-  @override
-  String get video_setting_double_tap_hint =>
-      'Ketuk dua kali sisi kiri atau kanan video untuk melompat';
-  @override
-  String get video_setting_double_tap_off => 'Mati';
-  @override
-  String get video_setting_double_tap_subtitle => 'Subtitle';
-  @override
-  String get video_setting_immersive_mode => 'Mode imersif';
-  @override
-  String get video_setting_immersive_mode_hint =>
-      'Mengatur apa yang tetap tersedia setelah menekan tombol kunci samping';
-  @override
-  String get video_setting_lock_window_aspect => 'Kunci jendela ke rasio video';
-  @override
-  String get video_setting_long_press_speed => 'Kecepatan tekan lama';
-  @override
-  String get video_setting_long_press_speed_hint =>
-      'Sementara gunakan kecepatan ini selama menahan video.';
-  @override
-  String get video_setting_mpv_aspect => 'Rasio aspek';
-  @override
-  String get video_setting_mpv_aspect_auto => 'Asli';
-  @override
-  String get video_setting_mpv_brightness => 'Kecerahan';
-  @override
-  String get video_setting_mpv_channels => 'Kanal';
-  @override
-  String get video_setting_mpv_channels_auto => 'Otomatis';
-  @override
-  String get video_setting_mpv_channels_mono => 'Mono';
-  @override
-  String get video_setting_mpv_channels_stereo => 'Stereo (downmix)';
-  @override
-  String get video_setting_mpv_contrast => 'Kontras';
-  @override
-  String get video_setting_mpv_correct_downscale => 'Downscaling linier';
-  @override
-  String get video_setting_mpv_deband => 'Hilangkan banding';
-  @override
-  String get video_setting_mpv_deinterlace => 'Deinterlace';
-  @override
-  String get video_setting_mpv_dither => 'Dithering';
-  @override
-  String get video_setting_mpv_gamma => 'Gamma';
-  @override
-  String get video_setting_mpv_group_advanced => 'Lanjutan';
-  @override
-  String get video_setting_mpv_group_audio => 'Audio';
-  @override
-  String get video_setting_mpv_group_color => 'Warna';
-  @override
-  String get video_setting_mpv_group_decode => 'Dekode';
-  @override
-  String get video_setting_mpv_group_geometry => 'Geometri';
-  @override
-  String get video_setting_mpv_group_playback => 'Pemutaran';
-  @override
-  String get video_setting_mpv_group_quality => 'Kualitas gambar';
-  @override
-  String get video_setting_mpv_hue => 'Rona';
-  @override
-  String get video_setting_mpv_hwdec => 'Dekode perangkat keras';
-  @override
-  String get video_setting_mpv_hwdec_auto => 'Otomatis (aman)';
-  @override
-  String get video_setting_mpv_hwdec_copy => 'Otomatis (salin)';
-  @override
-  String get video_setting_mpv_hwdec_off => 'Mati';
-  @override
-  String get video_setting_mpv_interpolation => 'Interpolasi gerak';
-  @override
-  String get video_setting_mpv_loop => 'Ulang file';
-  @override
-  String get video_setting_mpv_normalize => 'Normalkan kenyaringan downmix';
-  @override
-  String get video_setting_mpv_panscan => 'Pan & scan (potong tepi)';
-  @override
-  String get video_setting_mpv_pitch => 'Pertahankan nada saat mempercepat';
-  @override
-  String get video_setting_mpv_raw =>
-      'Opsi mpv tambahan (satu per baris, key=value)';
-  @override
-  String get video_setting_mpv_raw_hint =>
-      'Hanya desktop; opsi yang tidak bisa diterapkan saat berjalan (mis. vo, profile) diabaikan. SVP/RIFE butuh alat eksternal dan tidak didukung.';
-  @override
-  String get video_setting_mpv_reset => 'Setel ulang semua';
-  @override
-  String get video_setting_mpv_rotate => 'Rotasi';
-  @override
-  String get video_setting_mpv_saturation => 'Saturasi';
-  @override
-  String get video_setting_mpv_sigmoid => 'Upscaling sigmoid';
-  @override
-  String get video_setting_mpv_sigmoid_hint =>
-      'Upscaling kurva sigmoid mengurangi ringing tetapi memakan GPU. Mati secara default untuk performa; aktifkan jika Anda menginginkan upscaling lebih tajam.';
-  @override
-  String get video_setting_mpv_zoom => 'Zoom';
-  @override
-  String get video_setting_picture_fit => 'Penskalaan gambar';
-  @override
-  String get video_setting_picture_fit_contain =>
-      'Pas pertahankan rasio tambah bilah hitam';
-  @override
-  String get video_setting_picture_fit_cover =>
-      'Isi pertahankan rasio potong tepi';
-  @override
-  String get video_setting_picture_fit_fill => 'Regangkan untuk mengisi';
-  @override
-  String get video_setting_picture_fit_hint =>
-      'Bagaimana gambar mengisi area pemutar';
-  @override
-  String get video_setting_qb_category => 'Kategori qBittorrent';
-  @override
-  String get video_setting_qb_category_hint =>
-      'Unduhan yang didorong oleh Fushi mendapat kategori ini; pelacakan penyelesaian hanya memantaunya.';
-  @override
-  String get video_setting_qb_password => 'Kata sandi WebUI';
-  @override
-  String get video_setting_qb_url => 'URL WebUI qBittorrent';
-  @override
-  String get video_setting_qb_url_hint =>
-      'mis. http://127.0.0.1:8080. Biarkan kosong untuk menonaktifkan unduhan anime.';
-  @override
-  String get video_setting_qb_username => 'Nama pengguna WebUI';
-  @override
-  String get video_setting_secondary_subtitle_obscure =>
-      'Samarkan subtitle sekunder';
-  @override
-  String get video_setting_secondary_subtitle_obscure_hint =>
-      'Buramkan atau sembunyikan subtitle sekunder (terjemahan)';
-  @override
-  String get video_setting_seek_seconds => 'Detik lompatan';
-  @override
-  String get video_setting_speed => 'Kecepatan putar';
-  @override
-  String get video_setting_speed_step => 'Langkah kecepatan';
-  @override
-  String get video_setting_subtitle_appearance => 'Tampilan subtitle';
-  @override
-  String get video_setting_subtitle_bg_color => 'Warna latar belakang';
-  @override
-  String get video_setting_subtitle_bg_opacity => 'Opasitas latar';
-  @override
-  String get video_setting_subtitle_font_size => 'Ukuran font';
-  @override
-  String get video_setting_subtitle_font_weight => 'Ketebalan font';
-  @override
-  String get video_setting_subtitle_no_background => 'Tanpa latar';
-  @override
-  String get video_setting_subtitle_no_background_hint =>
-      'Buat latar subtitle transparan.';
-  @override
-  String get video_setting_subtitle_obscure => 'Samarkan subtitle';
-  @override
-  String get video_setting_subtitle_obscure_blur => 'Buramkan';
-  @override
-  String get video_setting_subtitle_obscure_hide => 'Sembunyikan';
-  @override
-  String get video_setting_subtitle_obscure_hint =>
-      'Pilih bagaimana subtitle disamarkan untuk latihan mendengarkan: mati, buram (arahkan kursor atau ketuk untuk menampilkan), atau tersembunyi.';
-  @override
-  String get video_setting_subtitle_obscure_none => 'Mati';
-  @override
-  String get video_setting_subtitle_position => 'Posisi vertikal';
-  @override
-  String get video_setting_subtitle_reset => 'Setel ulang ke default';
-  @override
-  String get video_setting_subtitle_respect_ass =>
-      'Hormati gaya bawaan subtitle';
-  @override
-  String get video_setting_subtitle_respect_ass_hint =>
-      'Gunakan font, warna, dan outline yang tertanam dalam subtitle .ass saat tersedia; matikan untuk memaksa pengaturan tampilan Anda.';
-  @override
-  String get video_setting_subtitle_shadow => 'Bayangan';
-  @override
-  String get video_setting_subtitle_sync_input => 'Offset (ms)';
-  @override
-  String get video_setting_subtitle_text_color => 'Warna teks';
-  @override
-  String get video_setting_theme => 'Tema';
-  @override
-  String get video_setting_torrent_active_downloads => 'Unduhan aktif maks';
-  @override
-  String get video_setting_torrent_active_seeds => 'Seed aktif maks';
-  @override
-  String get video_setting_torrent_anonymous => 'Mode anonim';
-  @override
-  String get video_setting_torrent_antileech => 'Aktifkan anti-leech';
-  @override
-  String get video_setting_torrent_backend_qb => 'qBittorrent eksternal';
-  @override
-  String get video_setting_torrent_ban_progress_cheat =>
-      'Blokir kecurangan progres';
-  @override
-  String get video_setting_torrent_ban_relative_cheat =>
-      'Blokir kecurangan progres relatif';
-  @override
-  String get video_setting_torrent_ban_time => 'Durasi blokir (menit)';
-  @override
-  String get video_setting_torrent_ban_time_hint => '0 = permanen';
-  @override
-  String get video_setting_torrent_connections_hint => '0 = default mesin';
-  @override
-  String get video_setting_torrent_dht => 'DHT';
-  @override
-  String get video_setting_torrent_download_limit => 'Batas unduh (KB/s)';
-  @override
-  String get video_setting_torrent_encryption_disabled => 'Dinonaktifkan';
-  @override
-  String get video_setting_torrent_encryption_forced => 'Paksa';
-  @override
-  String get video_setting_torrent_encryption_prefer => 'Preferensikan';
-  @override
-  String get video_setting_torrent_limit_hint => '0 = tidak terbatas';
-  @override
-  String get video_setting_torrent_listen_port => 'Port dengar';
-  @override
-  String get video_setting_torrent_listen_port_hint => '0 = default (6881)';
-  @override
-  String get video_setting_torrent_lsd => 'Penemuan peer lokal (LSD)';
-  @override
-  String get video_setting_torrent_max_connections => 'Koneksi maks';
-  @override
-  String get video_setting_torrent_max_ip_ports => 'Port maks per IP';
-  @override
-  String get video_setting_torrent_memory_hint =>
-      'Batasi memori mesin. 0 = otomatis (berdasarkan RAM perangkat).';
-  @override
-  String get video_setting_torrent_memory_limit => 'Batas memori (MB)';
-  @override
-  String get video_setting_torrent_natpmp => 'Pemetaan port NAT-PMP';
-  @override
-  String get video_setting_torrent_section_antileech => 'Anti-leech';
-  @override
-  String get video_setting_torrent_section_session => 'Sesi';
-  @override
-  String get video_setting_torrent_seed_ratio_hint =>
-      'Berhenti mengunggah saat rasio diunggah/diunduh mencapai ini. 0 = tidak terbatas.';
-  @override
-  String get video_setting_torrent_seed_ratio_limit => 'Batas rasio seed';
-  @override
-  String get video_setting_torrent_seed_time_hint =>
-      'Berhenti mengunggah setelah seeding selama ini. 0 = tidak terbatas.';
-  @override
-  String get video_setting_torrent_seed_time_limit =>
-      'Batas waktu seed (menit)';
-  @override
-  String get video_setting_torrent_upload_enabled =>
-      'Aktifkan unggah / seeding';
-  @override
-  String get video_setting_torrent_upload_enabled_hint =>
-      'Mati secara default. Seed kembali ke swarm setelah mengunduh.';
-  @override
-  String get video_setting_torrent_upload_limit => 'Batas unggah (KB/s)';
-  @override
-  String get video_setting_torrent_upload_slots => 'Slot unggah maks';
-  @override
-  String get video_setting_torrent_upnp => 'Pemetaan port UPnP';
-  @override
-  String get video_setting_torrent_zero_default => '0 = default';
-  @override
-  String get video_setting_torrent_zero_off => '0 = mati';
-  @override
-  String get video_settings_cat_audio => 'Audio';
-  @override
-  String get video_settings_cat_controls => 'Kontrol';
-  @override
-  String get video_settings_cat_danmaku => 'Danmaku';
-  @override
-  String get video_settings_cat_mpv => 'mpv';
-  @override
-  String get video_settings_cat_playback => 'Pemutaran';
-  @override
-  String get video_settings_cat_shaders => 'Peningkatan gambar';
-  @override
-  String get video_settings_cat_subtitle => 'Subtitle';
-  @override
-  String get video_settings_title => 'Setelan video';
-  @override
-  String get video_shader_anime4k_hint =>
-      'Pilih preset untuk diunduh. Setelah diunduh, centang di daftar untuk mengaktifkan. Hanya desktop.';
-  @override
-  String get video_shader_anime4k_title => 'Shader rekomendasi Anime4K';
-  @override
-  String get video_shader_download_anime4k => 'Unduh preset Anime4K';
-  @override
-  String video_shader_download_done({required Object count}) =>
-      'Mengunduh ${count} shader';
-  @override
-  String get video_shader_download_failed => 'Unduhan shader gagal';
-  @override
-  String video_shader_download_partial({
-    required Object ok,
-    required Object failed,
-  }) => 'Mengunduh ${ok} shader, ${failed} gagal';
-  @override
-  String get video_shader_download_url => 'Unduh dari tautan';
-  @override
-  String get video_shader_downloaded_label => 'Terunduh';
-  @override
-  String get video_shader_downloading => 'Mengunduh shader…';
-  @override
-  String get video_shader_first_use_body =>
-      '想让动画画面更清晰，可以进入“画质增强”并点击“下载 Anime4K 推荐着色器”。下载后在已安装列表里勾选即可启用。';
-  @override
-  String get video_shader_first_use_download => 'Unduh dan aktifkan';
-  @override
-  String get video_shader_first_use_title => '试试 Anime4K 画质增强';
-  @override
-  String get video_shader_import => 'Impor shader (.glsl)';
-  @override
-  String video_shader_import_done({required Object count}) =>
-      'Mengimpor ${count} shader';
-  @override
-  String get video_shader_import_from_mpv => 'Impor dari mpv lokal';
-  @override
-  String get video_shader_import_from_mpv_hint =>
-      '自动搜索本机 mpv；未找到时可手动选择 mpv 目录。';
-  @override
-  String get video_shader_mobile_perf_hint =>
-      'Di ponsel, shader hanya berlaku pada jalur render GPU standar dan efektivitasnya bervariasi per GPU perangkat; tingkat yang lebih tinggi mungkin menyebabkan frame drop atau panas. Coba Rendah/Sedang dulu dan periksa hasilnya di perangkatmu.';
-  @override
-  String video_shader_mpv_dir_current({required Object path}) =>
-      'Folder mpv: ${path}';
-  @override
-  String get video_shader_mpv_dir_empty => 'Tidak ada shader di folder itu';
-  @override
-  String get video_shader_mpv_not_found =>
-      'Tidak ada shader mpv lokal yang ditemukan';
-  @override
-  String get video_shader_mpv_pick_title => 'Impor shader dari mpv';
-  @override
-  String get video_shader_pick_mpv_dir => 'Specify mpv folder';
-  @override
-  String get video_shader_preset_mode_a_fast =>
-      'Untuk sebagian besar anime 1080p. Beban GPU lebih ringan.';
-  @override
-  String get video_shader_preset_mode_a_hq =>
-      'Kualitas tertinggi untuk anime 1080p. Butuh GPU kuat.';
-  @override
-  String get video_shader_preset_mode_b_fast =>
-      'Untuk anime 720p lama dengan artefak resampling.';
-  @override
-  String get video_shader_preset_mode_b_hq =>
-      'Kualitas tinggi untuk anime 720p lama dengan artefak resampling. Butuh GPU kuat.';
-  @override
-  String get video_shader_preset_mode_c_fast =>
-      'Untuk anime SD (480p) lama dengan noda kompresi.';
-  @override
-  String get video_shader_preset_mode_c_hq =>
-      'Kualitas tinggi untuk anime SD (480p) lama dengan noda kompresi. Butuh GPU kuat.';
-  @override
-  String get video_shader_quality_tier => 'Peningkatan kualitas';
-  @override
-  String get video_shader_section_advanced => 'Lanjutan (shader manual)';
-  @override
-  String get video_shader_section_installed => 'Shader terpasang';
-  @override
-  String get video_shader_showing_original => 'Shader mati (asli)';
-  @override
-  String get video_shader_showing_shaded => 'Shader aktif';
-  @override
-  String get video_shader_tier_custom_hint =>
-      'Pilihan shader kustom. Pilih tingkat di atas untuk beralih ke preset.';
-  @override
-  String get video_shader_tier_high => 'Tinggi';
-  @override
-  String get video_shader_tier_high_hint =>
-      'Anime4K HQ. Lebih tajam; terbaik untuk animasi, juga bisa untuk live-action (peningkatan lebih kecil). Butuh GPU menengah atas (NVIDIA RTX 4060 / RTX 3070, AMD RX 6700 XT / RX 7700 XT).';
-  @override
-  String get video_shader_tier_low => 'Rendah';
-  @override
-  String get video_shader_tier_low_hint =>
-      'Penajaman bawaan mpv (ewa_lanczossharp). Cocok untuk video apa pun (animasi dan live-action). Tanpa unduhan, beban GPU terendah. Pilih ini di kartu terintegrasi atau lawas (NVIDIA GTX 1050, AMD RX 560, iGPU Intel).';
-  @override
-  String get video_shader_tier_medium => 'Sedang';
-  @override
-  String get video_shader_tier_medium_hint =>
-      'Anime4K Fast. Terbaik untuk animasi, tapi juga cocok untuk film/TV live-action (peningkatan lebih kecil). Berjalan di GPU kelas menengah (NVIDIA GTX 1660 / RTX 3050, AMD RX 6600).';
-  @override
-  String get video_shader_tier_off => 'Tidak ada';
-  @override
-  String get video_shader_tier_off_hint =>
-      'Tanpa peningkatan. Memutar video asli apa adanya.';
-  @override
-  String get video_shader_tier_ultra => 'Ultra';
-  @override
-  String get video_shader_tier_ultra_hint =>
-      'Anime4K Mode A (UL, jaringan ultra besar). Rekonstruksi Anime4K terkuat; juga bisa untuk live-action (peningkatan lebih kecil). Butuh GPU flagship (NVIDIA RTX 4080 / RTX 5090, AMD RX 7900 XTX). Pilih tingkat lebih rendah jika GPU-mu lebih lemah.';
-  @override
-  String get video_shader_url_hint =>
-      'Tempel tautan shader .glsl (mis. GitHub)';
-  @override
-  String get video_shaders_empty => 'Belum ada shader yang diimpor';
-  @override
-  String get video_stat_by_video => 'Per Video';
-  @override
-  String get video_stat_completed => 'Selesai';
-  @override
-  String get video_stat_no_data => 'Belum ada statistik video';
-  @override
-  String get video_statistics => 'Statistik Video';
-  @override
-  String get video_subtitle_attach_playlist_hint =>
-      'Buka playlist untuk melampirkan subtitle per episode';
-  @override
-  String video_subtitle_attached_to_video({
-    required Object title,
-    required Object count,
-  }) => 'Subtitle dilampirkan ke ${title} (${count} baris)';
-  @override
-  String get video_subtitle_auto_align => 'Sejajarkan subtitle otomatis';
-  @override
-  String video_subtitle_auto_align_done({required Object ms}) =>
-      'Subtitle disejajarkan otomatis sebesar ${ms} ms';
-  @override
-  String get video_subtitle_auto_align_low_confidence =>
-      'Tidak dapat menyejajarkan otomatis dengan yakin (tidak ada kecocokan suara yang jelas)';
-  @override
-  String get video_subtitle_auto_align_running =>
-      'Menyejajarkan subtitle otomatis…';
-  @override
-  String get video_subtitle_color_note =>
-      'Warna subtitle video diatur di dalam pemutar video.';
-  @override
-  String video_subtitle_delay_osd({required Object ms}) =>
-      'Sinkron subtitle: ${ms} ms';
-  @override
-  String get video_subtitle_filter_all => 'Semua';
-  @override
-  String get video_subtitle_filter_favorites => 'Favorit';
-  @override
-  String get video_subtitle_filter_favorites_empty =>
-      'Belum ada baris yang difavoritkan';
-  @override
-  String get video_subtitle_graphic_hint =>
-      'Subtitle grafis · ditampilkan di video · tanpa pencarian kata';
-  @override
-  String video_subtitle_graphic_shown({required Object label}) =>
-      'Subtitle grafis ditampilkan di video (tanpa pencarian kata): ${label}';
-  @override
-  String get video_subtitle_import_failed => 'Gagal mengimpor subtitle';
-  @override
-  String get video_subtitle_import_file => 'Impor file subtitle…';
-  @override
-  String get video_subtitle_import_unsupported =>
-      'Format subtitle tidak didukung';
-  @override
-  String get video_subtitle_list => 'Daftar subtitle';
-  @override
-  String get video_subtitle_list_auto_scroll => 'Gulir otomatis';
-  @override
-  String get video_subtitle_list_empty => 'Tidak ada subtitle yang dimuat';
-  @override
-  String get video_subtitle_list_font_larger => 'Teks lebih besar';
-  @override
-  String get video_subtitle_list_font_smaller => 'Teks lebih kecil';
-  @override
-  String get video_subtitle_list_jump => 'Lompat ke baris ini';
-  @override
-  String get video_subtitle_list_loading => 'Memuat subtitle...';
-  @override
-  String video_subtitle_load_failed({required Object label}) =>
-      'Tidak bisa memuat subtitle ini (trek grafis atau tidak didukung): ${label}';
-  @override
-  String get video_subtitle_off => 'Matikan subtitle';
-  @override
-  String get video_subtitle_remote_host => 'Subtitle perangkat berpasangan';
-  @override
-  String video_subtitle_switched({required Object label}) =>
-      'Subtitle: ${label}';
-  @override
-  String get video_subtitle_waveform_cue_list => 'Daftar subtitle';
-  @override
-  String get video_subtitle_waveform_jump_playhead => 'Lompat ke playhead';
-  @override
-  String get video_subtitle_waveform_legend_cue => 'Cue subtitle';
-  @override
-  String get video_subtitle_waveform_legend_energy => 'Kekerasan';
-  @override
-  String get video_subtitle_waveform_legend_playhead => 'Playhead';
-  @override
-  String get video_subtitle_waveform_open => 'Penyelarasan waveform';
-  @override
-  String get video_subtitle_waveform_open_hint =>
-      'Ketuk untuk memperbesar dan menyelaraskan';
-  @override
-  String get video_subtitle_waveform_scroll_hint =>
-      'Seret untuk memindai timeline; gunakan kontrol di bawah untuk menyelaraskan';
-  @override
-  String get video_subtitle_waveform_unavailable =>
-      'Waveform tidak tersedia di perangkat ini';
-  @override
-  String get video_subtitle_waveform_zoom_in => 'Perbesar';
-  @override
-  String get video_subtitle_waveform_zoom_out => 'Perkecil';
-  @override
-  String get video_subtitle_youtube_empty =>
-      'Trek teks ini tidak memiliki teks';
-  @override
-  String video_subtitle_youtube_translated({required Object lang}) =>
-      '${lang} (diterjemahkan)';
-  @override
-  String video_watched_up_to({required Object time}) =>
-      'Ditonton sampai ${time}';
-  @override
-  String get video_windows_black_flash_notice_body =>
-      'Di Windows, video mungkin berkedip hitam saat GPU sibuk. Untuk mengurangi beban, coba matikan Peningkatan kualitas, Upscaling sigmoid, dan Debanding di atas, atau alihkan Dekoding perangkat keras ke Salin.';
-  @override
-  String get video_windows_black_flash_notice_title =>
-      'Kedipan hitam di Windows?';
-  @override
-  String get view_illustrations => 'Ilustrasi';
-  @override
-  String get volume_button_page_turning => 'Tombol volume untuk ganti halaman';
-  @override
-  String get volume_key_sentence_nav => 'Navigasi kalimat dengan tombol volume';
-  @override
-  String get wheel_page_turn_interval => 'Interval ganti halaman roda mouse';
-  @override
-  String get word_favorite_added => 'Kata disimpan ke favorit';
-  @override
-  String get word_favorite_removed => 'Kata dihapus dari favorit';
-  @override
-  String get yomitan_api_key => 'Yomitan API key (opsional)';
-  @override
-  String get yomitan_api_server => 'Server Yomitan API';
-  @override
-  String get yomitan_api_server_hint =>
-      'Izinkan klien yomitan-api mencari di kamus Fushi (port 19633)';
-  @override
-  String get yomitan_api_server_started => 'Server API Yomitan dimulai';
-  @override
-  String get yomitan_port_kill_action => 'Akhiri proses dan coba lagi';
-  @override
-  String get yomitan_port_kill_confirm => 'Akhiri proses';
-  @override
-  String yomitan_port_kill_confirm_message({required Object process}) =>
-      'Port sedang digunakan oleh: ${process}';
-  @override
-  String yomitan_port_kill_confirm_title({required Object port}) =>
-      'Akhiri proses yang menggunakan port ${port}?';
-  @override
-  String yomitan_port_kill_failed({required Object process}) =>
-      'Tidak bisa mengakhiri ${process}. Silakan akhiri secara manual, lalu coba lagi.';
-  @override
-  String yomitan_port_kill_protected({required Object process}) =>
-      '${process} adalah proses sistem penting — Fushi tidak akan mengakhirinya. Ganti port saja.';
-  @override
-  String get yomitan_port_kill_self_instance =>
-      'Proses ini adalah instance lain dari aplikasi ini yang sedang berjalan.';
-  @override
-  String get game_track_bgm => 'BGM / dikecualikan';
-  @override
-  String get game_line_audio_no_voice => 'Tidak ada suara';
-  @override
-  String get game_line_audio_overlong => 'Klip terlalu panjang';
-  @override
-  String get game_line_audio_overlong_hint =>
-      'Jauh lebih panjang dari satu baris; mungkin mengandung BGM atau audio campuran lainnya';
-  @override
-  String get game_line_audio_loopback_hint =>
-      'Fallback campuran sistem; mungkin mengandung BGM';
-  @override
-  String get game_line_recapture => 'Tangkap ulang suara';
-  @override
-  String get game_line_recapture_stop => 'Selesai tangkap ulang';
-  @override
-  String get game_line_tracks => 'Trek untuk baris ini';
-  @override
-  String get game_line_tracks_hint =>
-      'Pratinjau setiap trek pada momen baris ini, lalu kecualikan yang berisi BGM';
-  @override
-  String get game_line_track_use => 'Gunakan untuk baris ini';
-  @override
-  String get game_user_tags_title => 'Tag saya';
-  @override
-  String get anki_lapis_section => 'Gaya kartu Lapis';
-  @override
-  String get anki_lapis_font_scale => 'Skala font kartu';
-  @override
-  String get anki_lapis_font_scale_hint =>
-      'Menskalakan semua ukuran font Lapis; berlaku melalui "Terapkan gaya ke Anki".';
-  @override
-  String get anki_lapis_custom_css => 'CSS kustom';
-  @override
-  String get anki_lapis_custom_css_hint =>
-      'Ditambahkan ke stylesheet Lapis dalam bagian pengguna yang dilindungi.';
-  @override
-  String get anki_lapis_apply => 'Terapkan gaya ke Anki';
-  @override
-  String get anki_lapis_apply_done =>
-      'Gaya Lapis diterapkan. Cadangan telah disimpan terlebih dahulu.';
-  @override
-  String anki_lapis_apply_failed({required Object error}) =>
-      'Tidak bisa menerapkan gaya: ${error}';
-  @override
-  String get anki_lapis_up_to_date => 'Gaya Lapis sudah terbaru.';
-  @override
-  String get anki_lapis_foreign_edit_title => 'Templat diubah di Anki';
-  @override
-  String get anki_lapis_foreign_edit_body =>
-      'Templat Lapis di Anki berbeda dari yang terakhir diterapkan Fushi - mungkin telah diedit secara manual. Menerapkan akan menimpanya; cadangan disimpan terlebih dahulu. Lanjutkan?';
-  @override
-  String get anki_lapis_backup => 'Cadangkan templat Lapis';
-  @override
-  String anki_lapis_backup_done({required Object path}) =>
-      'Templat dicadangkan: ${path}';
-  @override
-  String anki_lapis_backup_failed({required Object error}) =>
-      'Pencadangan gagal: ${error}';
-  @override
-  String get anki_lapis_not_found =>
-      'Tipe catatan Lapis tidak ditemukan di Anki.';
-  @override
-  String get anki_lapis_restore => 'Pulihkan dari cadangan';
-  @override
-  String get anki_lapis_restore_empty => 'Belum ada cadangan.';
-  @override
-  String get anki_lapis_restore_confirm =>
-      'Timpa templat Lapis di Anki dengan cadangan ini? Status saat ini dicadangkan terlebih dahulu.';
-  @override
-  String get anki_lapis_restore_done => 'Templat dipulihkan.';
-  @override
-  String anki_lapis_restore_failed({required Object error}) =>
-      'Pemulihan gagal: ${error}';
-  @override
-  String get anki_dedup_section => 'Optimasi penyimpanan media Anki';
-  @override
-  String get anki_dedup_scan => 'Pindai duplikat (tanpa perubahan)';
-  @override
-  String get anki_dedup_run => 'Deduplikasi sekarang';
-  @override
-  String get anki_dedup_report_title => 'Laporan deduplikasi media';
-  @override
-  String anki_dedup_report_body({
-    required Object groups,
-    required Object removed,
-    required Object size,
-    required Object notes,
-    required Object models,
-    required Object skipped,
-  }) =>
-      '${groups} kelompok duplikat; ${removed} salinan ekstra (${size}); ${notes} catatan dan ${models} tipe catatan ditulis ulang; ${skipped} dilewati.';
-  @override
-  String get anki_dedup_report_dry_note =>
-      'Pemindaian saja - tidak ada yang diubah.';
-  @override
-  String get anki_dedup_report_clean =>
-      'Tidak ditemukan duplikat yang identik byte-per-byte.';
-  @override
-  String anki_dedup_failed({required Object error}) =>
-      'Deduplikasi gagal: ${error}';
-  @override
-  String get anki_dedup_unavailable =>
-      'Memerlukan Anki yang berjalan di mesin ini (AnkiConnect).';
-  @override
-  String get anki_dedup_run_hint =>
-      'Memindai terlebih dahulu dan menampilkan apa yang akan dihapus; tidak ada yang dihapus sampai Anda mengonfirmasi.';
-  @override
-  String get anki_dedup_plan_title => 'File yang akan dihapus';
-  @override
-  String anki_dedup_plan_intro({required Object count, required Object size}) =>
-      '${count} salinan ekstra, ${size} dapat diklaim kembali. Satu salinan tiap file dipertahankan dan setiap referensi diarahkan ulang terlebih dahulu; tidak ada yang pernah di-encode ulang.';
-  @override
-  String anki_dedup_plan_entry({
-    required Object file,
-    required Object size,
-    required Object canonical,
-  }) => 'Hapus ${file} (${size}) - pertahankan ${canonical}';
-  @override
-  String get anki_dedup_plan_delete => 'Hapus file-file ini';
-  @override
-  String get anki_dedup_plan_journal =>
-      'Jurnal setiap penulisan ulang dan penghapusan ditulis ke folder cadangan terlebih dahulu.';
-  @override
-  String get manga_ocr_default_engine => 'Mesin OCR default';
-  @override
-  String get manga_ocr_engine_auto =>
-      'Otomatis (tidak pernah mengunggah ke Lens)';
-  @override
-  String get manga_ocr_engine_local_onnx => 'ONNX lokal';
-  @override
-  String get manga_ocr_engine_google_lens => 'Google Lens';
-  @override
-  String get manga_google_lens_disclosure_title =>
-      'Kirim halaman manga ke Google Lens?';
-  @override
-  String get manga_google_lens_disclosure_body =>
-      'Mengenali manga ini akan mengirim salinan JPEG yang diperkecil dari setiap halaman tanpa teks OCR ke Google. Hasil di-cache di perangkat ini. Endpoint tidak resmi dan mungkin berhenti bekerja. Tidak ada yang diunggah kecuali Anda menyetujui.';
-  @override
-  String get manga_google_lens_disclosure_accept => 'Setuju dan mulai OCR';
-  @override
-  String get manga_google_lens_disclosure_decline => 'Batal';
-  @override
-  String get manga_reading_direction => 'Arah baca';
-  @override
-  String get manga_direction_rtl => 'Kanan ke kiri';
-  @override
-  String get manga_direction_ltr => 'Kiri ke kanan';
-  @override
-  String get manga_zoom => 'Perbesar';
-  @override
-  String get manga_jump_to_page => 'Loncat ke halaman';
-  @override
-  String get manga_previous_page => 'Halaman sebelumnya';
-  @override
-  String get manga_next_page => 'Halaman berikutnya';
-  @override
-  String manga_page_number_hint({required Object total}) =>
-      'Nomor halaman (1-${total})';
-  @override
-  String get manga_import_direct => 'Impor tanpa OCR';
-  @override
-  String get manga_library => 'Manga';
-  @override
-  String get manga_import_action => 'Impor Manga';
-  @override
-  String get game_scrape_search => 'Cari';
-  @override
-  String get game_scrape_use => 'Gunakan';
-  @override
-  String get game_scrape_search_failed =>
-      'Pencarian gagal. Periksa jaringan Anda dan coba lagi.';
-  @override
-  String get game_remove_confirm =>
-      'Hapus game ini dari perpustakaan? File game di disk tidak akan dihapus.';
-  @override
-  String manga_ocr_acceleration_status({required Object engine}) =>
-      'Akselerasi OCR: ${engine}';
-  @override
-  String manga_ocr_acceleration_degraded({
-    required Object engine,
-    required Object reason,
-  }) =>
-      'Akselerasi GPU tidak tersedia, menjalankan OCR di ${engine}: ${reason}';
-  @override
-  String get media_tracking_status => 'Status koleksi';
-  @override
-  String get media_tracking_signup => 'Buat akun Bangumi';
-  @override
-  String get media_tracking_game => 'Game';
-  @override
-  String get download_rate_limit_lan_exempt =>
-      'Tidak berlaku dalam jaringan lokal Anda; transfer LAN selalu berjalan pada kecepatan penuh.';
-  @override
-  String get scrape_reason_network =>
-      'Tidak bisa mendapatkan respons yang valid dari sumber sampul. Periksa jaringan Anda dan coba lagi.';
-  @override
-  String get scrape_reason_server =>
-      'Sumber sampul mengembalikan error. Coba lagi nanti atau pilih kandidat lain.';
-  @override
-  String get common_more_actions => 'Tindakan lainnya';
-  @override
-  String get collection_already_has_item => 'Item ini sudah ada dalam koleksi.';
-  @override
-  String get drag_drop_manga_archive_unsupported =>
-      'Tidak bisa mengimpor arsip komik .cbr/.rar — kemas ulang sebagai .cbz atau folder berisi gambar.';
-  @override
-  String get collection_add_failed =>
-      'Tidak bisa menambahkan item ke koleksi. Silakan coba lagi.';
-  @override
-  String get anki_dedup_auto => 'Pemrosesan otomatis';
-  @override
-  String get anki_dedup_auto_hint =>
-      'Nonaktif secara default. Saat aktif, Fushi memindai saat startup (paling sering sekali seminggu) dan menampilkan daftar terlebih dahulu — tidak ada yang dihapus sampai Anda mengonfirmasi.';
-  @override
-  String get anki_dedup_auto_delete => 'Hapus otomatis tanpa bertanya';
-  @override
-  String get anki_dedup_auto_delete_hint =>
-      'Melewati dialog konfirmasi. Hanya salinan ekstra yang identik byte-per-byte yang dihapus dan tidak ada yang di-encode ulang, tetapi penghapusan tidak bisa dibatalkan.';
-  @override
-  String anki_dedup_auto_found({required Object count, required Object size}) =>
-      'Ditemukan ${count} file media Anki duplikat (${size} dapat diklaim kembali)';
-  @override
-  String get anki_dedup_auto_review => 'Tinjau';
-  @override
-  String anki_dedup_auto_done({required Object count, required Object size}) =>
-      'Dihapus ${count} file media Anki duplikat, ${size} diklaim kembali';
-  @override
-  String anki_lapis_backup_done_pruned({
-    required Object path,
-    required Object count,
-  }) =>
-      'Dicadangkan ke ${path} (${count} cadangan lama dihapus berdasarkan kebijakan 90 hari / simpan 10)';
-  @override
-  String get game_audio_fallback_policy => 'Fallback audio';
-  @override
-  String get game_audio_fallback_full => 'Izinkan audio campuran';
-  @override
-  String get game_audio_fallback_clean => 'Hanya sumber bersih';
-  @override
-  String get game_audio_fallback_resource => 'Hanya sumber daya asli';
-  @override
-  String get game_track_silent_at_cue => 'Tidak ada suara di baris ini';
-  @override
-  String get game_audio_fallback_full_hint =>
-      'Beralih ke campuran sistem ketika tidak ada suara bersih yang ditangkap; klip mungkin mengandung BGM dan efek.';
-  @override
-  String get game_audio_fallback_clean_hint =>
-      'Menggunakan audio sumber daya game dan PCM mesin saja. Baris tanpa suara dibuat kartu tanpa audio alih-alih mengambil BGM.';
-  @override
-  String get game_audio_fallback_resource_hint =>
-      'Memerlukan file suara asli yang disertakan dengan game; pembuatan kartu ditolak ketika file tidak ada.';
-  @override
-  String get game_line_audio_suppressed => 'Campuran dilewati';
-  @override
-  String get game_line_audio_suppressed_hint =>
-      'Tidak ada sumber audio bersih yang menghasilkan audio untuk baris ini, dan campuran sistem dilewati oleh kebijakan fallback audio Anda. Ini tidak berarti baris tersebut tidak memiliki suara.';
-  @override
-  String get video_setting_torrent_limit_lan => 'Terapkan batas ke peer LAN';
-  @override
-  String get video_setting_torrent_limit_lan_hint =>
-      'Nonaktif secara default: transfer dengan peer di jaringan lokal Anda mengabaikan batas di atas.';
-  @override
-  String get download_rate_limit_lan_included =>
-      'Juga berlaku dalam jaringan lokal Anda.';
-  @override
-  String get video_collection_no_local_member =>
-      'Tidak ada video lokal dalam koleksi ini';
-  @override
-  String get gal_mining_image_mode => 'Gambar kartu galgame';
-  @override
-  String get gal_mining_image_mode_screenshot => 'Tangkapan layar';
-  @override
-  String get gal_mining_image_mode_hint =>
-      'Adegan galgame hampir tidak bergerak dalam satu baris, jadi tangkapan layar diam biasanya lebih kecil dan sama bergunanya.';
-  @override
-  String get shortcut_scope_manga => 'Manga';
-  @override
-  String get shortcut_action_manga_page_forward => 'Halaman berikutnya';
-  @override
-  String get shortcut_action_manga_page_backward => 'Halaman sebelumnya';
-  @override
-  String get shortcut_action_manga_dismiss_dict => 'Tutup kamus';
-  @override
-  String get video_setting_jimaku_default_language => 'Bahasa subtitle default';
-  @override
-  String get video_jimaku_api_key_settings_hint =>
-      'Juga dapat diedit di Pengaturan > Video > Subtitle';
-  @override
-  String get anime_download_subs_episodes_unverified =>
-      'Nomor episode belum diverifikasi terhadap paket ini - subtitle mungkin berasal dari musim lain.';
-  @override
-  String get anime_download_subs_deferred =>
-      'Subtitle dicocokkan setelah unduhan, dari file aktual paket';
-  @override
-  String get anime_download_subs_pending =>
-      'Subtitle: menunggu sampai unduhan selesai';
-  @override
-  String get anime_download_subs_unmatched =>
-      'Subtitle: tidak ada kecocokan untuk paket ini';
-  @override
-  String get stat_source_breakdown => 'Berdasarkan sumber';
-  @override
-  String stat_format_pages({required Object n}) => '${n} halaman';
-  @override
-  String anime_download_subs_season_mismatch({required Object season}) =>
-      'Tidak ada entri subtitle yang cocok dengan musim ${season} dari paket ini - tidak dipilih otomatis. Pilih satu secara manual jika tetap ingin.';
-  @override
-  String get media_tracking_card_title => 'Sinkronisasi Bangumi';
-  @override
-  String get media_tracking_not_connected =>
-      'Tidak terhubung. Progres tetap lokal dan tidak ada yang dikirim ke Bangumi.';
-  @override
-  String get media_tracking_last_sync => 'Sinkronisasi terakhir';
-  @override
-  String get media_tracking_never_synced => 'Belum pernah disinkronkan';
-  @override
-  String media_tracking_linked_count({required Object n}) => '${n} ditautkan';
-  @override
-  String media_tracking_pending_count({required Object n}) =>
-      '${n} menunggu untuk dikirim';
-  @override
-  String get media_tracking_all_synced => 'Semua sudah terkirim';
-  @override
-  String get media_tracking_unauthorized =>
-      'Bangumi menolak token akses. Hubungkan kembali di pengaturan.';
-  @override
-  String get media_tracking_open_subject => 'Buka di Bangumi';
-  @override
-  String get media_tracking_manage_links => 'Kelola tautan';
-  @override
-  String get media_tracking_last_error => 'Error terakhir';
-  @override
-  String get shortcut_action_popup_mine_entry => 'Buat kartu (tambang)';
-  @override
-  String get game_upscaling_auto_hint =>
-      'Gunakan Magpie jika sudah berjalan; jika tidak, gunakan versi yang dibundel dengan Fushi. Tidak perlu unduhan.';
-  @override
-  String get game_upscaling_installed_only_hint =>
-      'Hanya gunakan Magpie jika sudah diinstal atau berjalan. Jangan membongkar versi bundel Fushi.';
-  @override
-  String get game_upscaling_off_hint =>
-      'Jangan pernah memperbesar jendela game.';
-  @override
-  String get game_helper_bundle_missing =>
-      'Helper hook galgame tidak disertakan dalam build ini. Perbarui Fushi untuk mendapatkannya.';
-  @override
-  String game_upscaling_pick_title({required Object name}) =>
-      'Pembesaran jendela untuk ${name}';
-  @override
-  String get game_upscaling_pick_body =>
-      'Memperbesar jendela game ini dengan Magpie saat sesi tangkap berjalan. Diatur per game - hanya membantu untuk game yang resolusi aslinya lebih rendah dari layar Anda. Menggunakan GPU Anda.';
-  @override
-  String get game_upscaling_hint_not_installed =>
-      'Magpie belum siap. Atur pembesaran jendela ke Otomatis untuk menggunakan salinan yang dibundel dengan Fushi; jika masih tidak dimulai, perbarui atau instal ulang Fushi.';
-  @override
-  String media_source_count_manga({required Object n}) => '${n} volume';
-  @override
-  String get library_view_shelf => 'Rak';
-  @override
-  String get library_view_browse => 'Jelajahi';
-  @override
-  String get library_view_media => 'Perpustakaan';
-  @override
-  String get scrape_failure_detail_show => 'Tampilkan detail';
-  @override
-  String get scrape_failure_detail_hide => 'Sembunyikan detail';
-  @override
-  String get media_tracking_retry_mapping => 'Coba cocokkan ulang';
-  @override
-  String get media_tracking_retry_matched =>
-      'Dicocokkan dan progres saat ini diantrikan';
-  @override
-  String get media_tracking_retry_no_match =>
-      'Tidak ditemukan kecocokan. Coba tautkan secara manual.';
-  @override
-  String get game_statistics => 'Statistik game';
-  @override
-  String get game_stat_by_game => 'Berdasarkan game';
-  @override
-  String get stat_clear_all_game_message =>
-      'Hapus semua waktu bermain game dan jumlah sesi? Perpustakaan game dan garis waktu aktivitas Anda dipertahankan. Ini tidak bisa dibatalkan.';
-  @override
-  String batch_selection_stale_skipped({
-    required Object m,
-    required Object n,
-  }) => 'Melewati ${m} dari ${n} item yang dipilih yang sudah tidak ada lagi';
-  @override
-  String get game_text_thread_unset =>
-      'Belum ada thread yang dipilih — pilih satu untuk mulai menangkap';
-  @override
-  String get media_tracking_watched_show => 'Lihat semua anime yang ditonton';
-  @override
-  String get media_tracking_watched_title => 'Ditonton di Bangumi';
-  @override
-  String get media_tracking_watched_empty =>
-      'Tidak ada anime yang ditandai sebagai ditonton di akun Bangumi ini.';
-  @override
-  String media_tracking_watched_load_failed({required Object error}) =>
-      'Tidak bisa memuat anime yang ditonton: ${error}';
-  @override
-  String media_tracking_watched_progress({required Object n}) =>
-      'Menonton ${n} episode';
-  @override
-  String get media_tracking_manual_required => 'Perlu tautan manual';
-  @override
-  String media_tracking_manual_required_count({required Object n}) =>
-      '${n} item perlu tautan manual';
-  @override
-  String get media_tracking_manual_required_hint =>
-      'Item lokal ini sudah memiliki progres tetapi belum ditautkan ke Bangumi.';
-  @override
-  String get media_tracking_no_local_history =>
-      'Tidak ada progres tontonan, bacaan, atau game lokal yang perlu ditautkan.';
-  @override
-  String media_tracking_more_manual_required({required Object n}) =>
-      '${n} item lagi perlu tautan manual';
-  @override
-  String get manga_import_hint =>
-      'Pilih folder manga, arsip halaman .cbz/.zip, .pdf, atau file .mokuro.';
-  @override
-  String get manga_import_pick_file => 'Pilih file manga';
-  @override
-  String get manga_import_pick_folder => 'Pilih folder manga';
-  @override
-  String get manga_import_missing_input =>
-      'Pilih file atau folder manga terlebih dahulu.';
-  @override
-  String get manga_import_detected_title => 'Ini sepertinya manga';
-  @override
-  String get manga_import_detected_confirm => 'Impor sebagai manga';
-  @override
-  String manga_import_detected_message({required Object name}) =>
-      '"${name}" adalah file manga, jadi akan melalui pengimpor manga alih-alih pengimpor buku.';
-  @override
-  String get video_jimaku_source_loading =>
-      'Memeriksa ketersediaan subtitle...';
-  @override
-  String get video_jimaku_source_failed =>
-      'Tidak bisa memeriksa ketersediaan subtitle. Coba cari lagi.';
-  @override
-  String get video_jimaku_language_unknown => 'Bahasa tidak dilabeli';
-  @override
-  String video_jimaku_source_summary({
-    required Object files,
-    required Object episodes,
-    required Object languages,
-  }) => '${files} file subtitle · ${episodes} episode · ${languages}';
-  @override
-  String video_jimaku_episode_unlabeled({
-    required Object episode,
-    required Object count,
-  }) =>
-      'Tidak ada subtitle berlabel episode ${episode}; ${count} file tanpa label mungkin masih cocok';
-  @override
-  String video_jimaku_episode_unavailable({required Object episode}) =>
-      'Tidak ditemukan subtitle untuk episode ${episode}';
-  @override
-  String video_jimaku_episode_available({
-    required Object count,
-    required Object languages,
-  }) => '${count} subtitle tersedia · ${languages}';
-  @override
-  String get manga_online_source_disabled =>
-      'Sumber internet ini dinonaktifkan. Aktifkan di Sumber untuk menjelajahi katalog.';
-  @override
-  String get selection_web_search => 'Cari di web';
-  @override
-  String get selection_web_search_unavailable =>
-      'Tidak ada aplikasi yang dapat mencari di web.';
-  @override
-  String get selection_share_failed => 'Tidak bisa membuka lembar berbagi.';
-  @override
-  String video_subtitle_youtube_auto_generated({required Object lang}) =>
-      '${lang} (dibuat otomatis)';
-  @override
-  String get anki_dedup_progress_title => 'Mendeduplikasi media';
-  @override
-  String anki_dedup_progress_scanning({required Object count}) =>
-      'Memindai folder media... (${count} file ditemukan)';
-  @override
-  String anki_dedup_progress_hashing({
-    required Object done,
-    required Object total,
-  }) => 'Membandingkan file berukuran sama... (${done} / ${total})';
-  @override
-  String anki_dedup_progress_resolving({
-    required Object done,
-    required Object total,
-  }) => 'Memproses duplikat... (${done} / ${total})';
-  @override
-  String anki_dedup_progress_freed({required Object size}) =>
-      'Dibebaskan ${size} sejauh ini';
-  @override
-  String get anki_dedup_cancelling => 'Membatalkan...';
-  @override
-  String get anki_dedup_cancelled =>
-      'Deduplikasi dibatalkan; perubahan yang sudah selesai dipertahankan.';
-  @override
-  String get anki_dedup_report_cancelled_note =>
-      'Dibatalkan lebih awal — angka di bawah hanya mencakup yang sudah selesai.';
-  @override
-  String get anki_dedup_plan_busy_note =>
-      'Anki mungkin tidak responsif saat ini berjalan; hindari menggunakan Anki sampai selesai.';
-  @override
-  String get video_setting_subtitle_position_secondary =>
-      'Posisi subtitle sekunder';
-  @override
-  String get dict_download_learning_language => 'Bahasa yang dipelajari';
-  @override
-  String get dict_category_bilingual => 'Dwibahasa';
-  @override
-  String get dict_category_monolingual => 'Ekabahasa';
-  @override
-  String get shortcut_action_video_hold_speed =>
-      'Tahan untuk kecepatan sementara';
-  @override
-  String get handlebar_phonetic_transcriptions => 'Transkripsi fonetik';
-  @override
-  String get sync_progress_preparing => 'Menyiapkan sinkronisasi';
-  @override
-  String get sync_progress_collections => 'Menyinkronkan koleksi';
-  @override
-  String get sync_progress_book => 'Menyinkronkan buku';
-  @override
-  String sync_progress_book_titled({required Object title}) =>
-      'Menyinkronkan ${title}';
-  @override
-  String sync_last_completed({required Object count}) =>
-      'Sinkronisasi terakhir: selesai (${count} kanal)';
-  @override
-  String get sync_last_no_channels =>
-      'Sinkronisasi terakhir: tidak ada yang disinkronkan - tidak ada kanal sinkronisasi yang terhubung';
-  @override
-  String get sync_last_nothing =>
-      'Sinkronisasi terakhir: tidak ada yang perlu disinkronkan';
-  @override
-  String get sync_last_auto_disabled =>
-      'Sinkronisasi terakhir: dilewati - sinkronisasi otomatis nonaktif';
-  @override
-  String get sync_last_cooled_down =>
-      'Sinkronisasi terakhir: dilewati - baru saja disinkronkan';
-  @override
-  String get sync_last_failed => 'Sinkronisasi terakhir: gagal';
-  @override
-  String anime_download_no_results_detail({
-    required Object query,
-    required Object filters,
-  }) =>
-      'Layanan merespons dengan sukses tetapi mengembalikan 0 item. Kueri: ${query}; filter: ${filters}. Coba judul lain atau longgarkan filter.';
-  @override
-  String get anime_download_streaming_ready =>
-      'Di perpustakaan · unduhan berlanjut';
-  @override
-  String get anime_download_unfiltered => 'Tanpa filter Terpercaya';
-  @override
-  String get interconnect_enable_footer =>
-      'Cara penggunaan: di perangkat yang menyimpan perpustakaan Anda, aktifkan sakelar server sinkronisasi di bawah; di perangkat Anda yang lain, tambahkan alamat server tersebut untuk berpasangan. Satu perangkat hanya bisa berperan sebagai satu hal pada satu waktu — server atau klien.';
-  @override
-  String get interconnect_peer_list_title => 'Peer yang ditambahkan';
-  @override
-  String get interconnect_peer_list_empty =>
-      'Belum ada peer yang ditambahkan. Pilih perangkat yang ditemukan dari daftar perangkat LAN di bawah untuk berpasangan secara otomatis, atau tambahkan alamat peer secara manual.';
-  @override
-  String get anki_lapis_visual_editor => 'Editor visual';
-  @override
-  String get anki_lapis_visual_editor_hint =>
-      'Pratinjau kartu Lapis, lalu ubah gaya, posisi, dan pemetaan field setiap area tanpa menulis CSS.';
-  @override
-  String get anki_lapis_visual_front => 'Depan';
-  @override
-  String get anki_lapis_visual_back => 'Belakang';
-  @override
-  String get anki_lapis_visual_preview => 'Pratinjau kartu Lapis';
-  @override
-  String get anki_lapis_visual_select_field => 'Pilih yang akan diedit';
-  @override
-  String get anki_lapis_visual_reset_field => 'Reset field';
-  @override
-  String anki_lapis_visual_font_size({required Object percent}) =>
-      'Ukuran font: ${percent}%';
-  @override
-  String get anki_lapis_visual_bold => 'Tebal';
-  @override
-  String get anki_lapis_visual_alignment => 'Perataan';
-  @override
-  String get anki_lapis_visual_color => 'Warna teks';
-  @override
-  String get anki_lapis_visual_default => 'Default';
-  @override
-  String get anki_lapis_visual_advanced_css => 'CSS lanjutan';
-  @override
-  String get anki_lapis_visual_field_expression => 'Kata';
-  @override
-  String get anki_lapis_visual_field_reading => 'Bacaan';
-  @override
-  String get anki_lapis_visual_field_sentence => 'Kalimat';
-  @override
-  String get anki_lapis_visual_field_primary_definition => 'Definisi utama';
-  @override
-  String get anki_lapis_visual_field_glossaries => 'Definisi lainnya';
-  @override
-  String get anki_lapis_visual_target_card_content => 'Konten kartu';
-  @override
-  String get anki_lapis_visual_target_definition => 'Definisi';
-  @override
-  String get anki_lapis_visual_target_inside_definition => 'Di dalam definisi';
-  @override
-  String get anki_lapis_visual_field_definition_info => 'Indikator definisi';
-  @override
-  String get anki_lapis_visual_field_definition_box => 'Kotak definisi';
-  @override
-  String get anki_lapis_visual_field_definition_content => 'Seluruh definisi';
-  @override
-  String get anki_lapis_visual_field_selected_definition =>
-      'Definisi yang dipilih';
-  @override
-  String get anki_lapis_visual_field_dictionary_entry => 'Entri kamus';
-  @override
-  String get anki_lapis_visual_field_dictionary_name => 'Nama kamus';
-  @override
-  String get anki_lapis_visual_field_definition_example => 'Contoh definisi';
-  @override
-  String get anki_lapis_visual_line_height => 'Tinggi baris';
-  @override
-  String get anki_lapis_visual_background_color => 'Sorotan latar';
-  @override
-  String get anki_lapis_visual_box_layout => 'Tampilan kotak';
-  @override
-  String get anki_lapis_visual_border_width => 'Batas';
-  @override
-  String get anki_lapis_visual_border_color => 'Warna batas';
-  @override
-  String get anki_lapis_visual_corner_radius => 'Radius sudut';
-  @override
-  String get anki_lapis_visual_padding => 'Jarak dalam';
-  @override
-  String get anki_lapis_visual_margin => 'Jarak luar';
-  @override
-  String get anki_lapis_visual_field_definition_info_note =>
-      'Hanya terlihat pada kartu yang memiliki lebih dari satu blok definisi; kartu dengan satu definisi menyembunyikannya.';
-  @override
-  String get anki_lapis_visual_field_dictionary_name_note =>
-      'Pada kartu Fushi, label ini juga membawa tag kelas kata, sehingga keduanya tidak bisa diberi gaya terpisah.';
-  @override
-  String get game_upscaling_error_bundle_missing =>
-      'Instalasi Fushi tidak lengkap: komponen Magpie yang dibundel tidak ada. Instal ulang atau perbarui Fushi.';
-  @override
-  String get game_upscaling_error_bundle_invalid =>
-      'Komponen Magpie yang dibundel rusak atau tidak lolos verifikasi. Instal ulang atau perbarui Fushi.';
-  @override
-  String download_test_connection_failed_reason({required Object message}) =>
-      'Koneksi gagal: ${message}';
-  @override
-  String get delete_disclosure_will_delete_label => 'Akan dihapus';
-  @override
-  String get delete_disclosure_will_keep_label => 'Akan dipertahankan';
-  @override
-  String get delete_disclosure_book_records =>
-      'Progres bacaan, penanda, tag, dan data subtitle';
-  @override
-  String get delete_disclosure_book_extracted =>
-      'File buku yang diekstrak Fushi ke penyimpanan sendiri';
-  @override
-  String get delete_disclosure_book_audiobook =>
-      'Audio dan subtitle yang diselaraskan dari buku audio terlampir, jika ada';
-  @override
-  String get delete_disclosure_source_kept =>
-      'File asli yang Anda impor (buku, subtitle, audio)';
-  @override
-  String get delete_disclosure_stats_kept => 'Statistik bacaan';
-  @override
-  String get delete_disclosure_audiobook_files =>
-      'Audio dan subtitle yang diselaraskan yang disalin Fushi ke penyimpanan sendiri';
-  @override
-  String get delete_disclosure_audiobook_book_kept =>
-      'Buku itu sendiri dan progres bacaannya';
-  @override
-  String get delete_disclosure_audiobook_source_kept =>
-      'File audio asli yang Anda impor';
-  @override
-  String get audiobook_delete => 'Hapus buku audio';
-  @override
-  String get audiobook_delete_confirm =>
-      'Hapus buku audio terlampir? File audionya akan dihapus dari perangkat ini.';
-  @override
-  String get delete_collection_confirm =>
-      'Hanya pengelompokan yang dihapus. Item di dalamnya dipertahankan.';
-  @override
-  String get shortcut_action_video_enter_caret =>
-      'Masuk kursor pencarian subtitle';
-  @override
-  String get audiobook_export_clip_too_long =>
-      'Audio pilihan terlalu panjang untuk diekspor (batas: 5 menit)';
-  @override
-  String get sync_err_forbidden =>
-      'Server menolak permintaan ini. Masuk Anda baik-baik saja - periksa pengaturan server.';
-  @override
-  String sync_err_forbidden_detail({required Object reason}) =>
-      'Server menolak permintaan ini: ${reason} (masuk Anda baik-baik saja)';
-  @override
-  String get collection_group_extras => 'Ekstra & PV';
-  @override
-  String collection_group_season({required Object n}) => 'Musim ${n}';
-  @override
-  String get collection_sort_by_season => 'Urutkan berdasarkan musim';
-  @override
-  String get mining_animated_format_avif => 'AVIF (terkecil)';
-  @override
-  String get mining_animated_format_webp => 'WebP (dukungan lebih luas)';
-  @override
-  String get mining_animated_format_gif => 'GIF (paling kompatibel)';
-  @override
-  String get video_mining_animated_format => 'Format animasi kartu video';
-  @override
-  String get video_mining_animated_format_hint =>
-      'AVIF jauh lebih kecil dari GIF pada kualitas yang sama, dan tier kualitas tertingginya memungkinkan resolusi dan frame rate lebih tinggi dari GIF atau WebP. Beralih ke GIF secara otomatis ketika encoder bawaan tidak bisa membuatnya.';
-  @override
-  String get gal_mining_animated_format => 'Format animasi kartu game';
-  @override
-  String get gal_mining_animated_format_hint =>
-      'Format yang sama seperti kartu video, disimpan terpisah: frame galgame hampir tidak bergerak dalam satu baris, jadi pertimbangannya berbeda.';
-  @override
-  String get scrape_all => 'Scrape semua';
-  @override
-  String scrape_all_title({required Object kind}) => 'Scrape semua ${kind}';
-  @override
-  String scrape_all_running({required Object current, required Object total}) =>
-      'Scraping ${current} / ${total}';
-  @override
-  String scrape_all_item({required Object title}) => 'Memproses: ${title}';
-  @override
-  String scrape_all_done({
-    required Object applied,
-    required Object review,
-    required Object skipped,
-    required Object failed,
-  }) =>
-      'Selesai: ${applied} diterapkan, ${review} perlu ditinjau, ${skipped} dilewati, ${failed} gagal';
-  @override
-  String get scrape_all_empty =>
-      'Tidak ada item untuk di-scrape di perpustakaan ini.';
-  @override
-  String get scrape_all_start => 'Mulai';
-  @override
-  String collection_hero_total_episodes({required Object count}) =>
-      '${count} episode';
-  @override
-  String get video_scrape_collection_rename_title => 'Ganti nama koleksi ini?';
-  @override
-  String get video_scrape_collection_rename_body =>
-      'Entri yang dicocokkan memiliki nama berbeda. Mengganti nama bersifat opsional: sampul dan detail tetap disimpan, dan penggantian nama juga mengganti nama lama di perangkat tersinkronisasi Anda yang lain.';
-  @override
-  String video_scrape_collection_rename_from({required Object name}) =>
-      'Nama saat ini: ${name}';
-  @override
-  String video_scrape_collection_rename_to({required Object name}) =>
-      'Nama baru: ${name}';
-  @override
-  String get video_scrape_collection_rename_keep => 'Pertahankan nama saat ini';
-  @override
-  String get download_task_toggle_failed => 'Jeda/lanjutkan gagal';
-  @override
-  String get download_task_eta => 'Perkiraan waktu';
-  @override
-  String get download_task_ratio => 'Rasio';
-  @override
-  String get download_task_status_downloading => 'Mengunduh';
-  @override
-  String get download_task_status_seeding => 'Seeding';
-  @override
-  String get download_task_status_completed => 'Selesai';
-  @override
-  String get download_task_status_paused => 'Dijeda';
-  @override
-  String get download_task_status_queued => 'Diantrikan';
-  @override
-  String get download_task_status_stalled => 'Terhenti';
-  @override
-  String get download_task_status_checking => 'Memeriksa';
-  @override
-  String get download_task_status_metadata => 'Mengambil metadata';
-  @override
-  String get download_task_status_moving => 'Memindahkan';
-  @override
-  String get download_task_status_error => 'Error';
-  @override
-  String get download_task_pause => 'Jeda';
-  @override
-  String get download_task_resume => 'Lanjutkan';
-  @override
-  String get download_airing_calendar_title => 'Kalender tayang';
-  @override
-  String get download_airing_calendar_show_all => 'Tampilkan semua musim ini';
-  @override
-  String get download_airing_calendar_empty_guidance =>
-      'Belum ada yang ditampilkan: tautkan koleksi ke AniList atau tambahkan langganan unduhan, dan jadwal tayangnya akan muncul di sini.';
-  @override
-  String get download_airing_calendar_error => 'Gagal memuat jadwal tayang';
-  @override
-  String get download_airing_calendar_in_library => 'Di perpustakaan';
-  @override
-  String get download_airing_calendar_subscribed => 'Berlangganan';
-  @override
-  String download_airing_calendar_episode_label({required Object episode}) =>
-      'Ep ${episode}';
-  @override
-  String get download_airing_calendar_week_prev => 'Minggu sebelumnya';
-  @override
-  String get download_airing_calendar_week_next => 'Minggu berikutnya';
-  @override
-  String get download_airing_calendar_week_empty =>
-      'Tidak ada yang tayang minggu ini';
-  @override
-  String get video_jimaku_format => 'Format';
-  @override
-  String get video_jimaku_format_all => 'Semua';
-  @override
-  String get video_setting_tmdb_key => 'Kunci API TMDB kustom';
-  @override
-  String get video_setting_tmdb_key_hint =>
-      'Opsional. Biarkan kosong untuk menggunakan kunci bawaan. Isi dengan kunci Anda sendiri hanya jika scraping berhenti bekerja atau Anda ingin menggunakan kuota sendiri.';
-  @override
-  String get about_tmdb_attribution =>
-      'Aplikasi ini menggunakan TMDB dan API TMDB tetapi tidak didukung, disertifikasi, atau disetujui oleh TMDB.';
-  @override
-  String get anki_lapis_visual_layout => 'Tata letak';
-  @override
-  String get anki_lapis_visual_layout_hint =>
-      'Menggunakan sakelar tata letak milik Lapis, sehingga Anki desktop dan mobile mengikutinya.';
-  @override
-  String get anki_lapis_visual_layout_sentence => 'Posisi kalimat';
-  @override
-  String get anki_lapis_visual_layout_sentence_above => 'Di atas definisi';
-  @override
-  String get anki_lapis_visual_layout_sentence_below => 'Di bawah definisi';
-  @override
-  String get anki_lapis_visual_layout_picture => 'Posisi gambar';
-  @override
-  String get anki_lapis_visual_layout_picture_right => 'Di kanan kata';
-  @override
-  String get anki_lapis_visual_layout_picture_left => 'Di kiri kata';
-  @override
-  String get anki_lapis_visual_layout_picture_alt => 'Di dalam kalimat';
-  @override
-  String get anki_lapis_visual_layout_audio => 'Tombol audio';
-  @override
-  String get anki_lapis_visual_layout_audio_header => 'Di samping bacaan';
-  @override
-  String get anki_lapis_visual_layout_audio_fixed => 'Disematkan di bawah';
-  @override
-  String get anki_lapis_visual_layout_audio_alt => 'Di dalam kalimat';
-  @override
-  String get anki_lapis_visual_mapping_hint =>
-      'Field Anki yang mengisi area yang dipilih. Perubahan disimpan bersama gayanya.';
-  @override
-  String get anki_lapis_visual_mapping_none =>
-      'Area ini digambar oleh templat sendiri dan tidak memiliki field.';
-  @override
-  String get anki_lapis_visual_color_custom => 'Kustom';
-  @override
-  String get anki_lapis_visual_color_picker_title => 'Pilih warna';
-  @override
-  String get video_scrape_tmdb_key_hint => 'Masukkan kunci API TMDB';
-  @override
-  String get video_scrape_tmdb_key_required => 'TMDB memerlukan kunci API';
-  @override
-  String get video_scrape_tmdb_key_save => 'Simpan';
-  @override
-  String get video_scrape_tmdb_key_empty =>
-      'Simpan kunci API TMDB, lalu tekan Cari. Hasil dari sumber lain tidak ditampilkan di sini.';
-  @override
-  String get download_detail_tab_overview => 'Ikhtisar';
-  @override
-  String get download_detail_tab_files => 'File';
-  @override
-  String get download_detail_tab_peers => 'Peer';
-  @override
-  String get download_detail_tab_trackers => 'Tracker';
-  @override
-  String get download_detail_backend_unsupported =>
-      'Tidak didukung oleh backend unduhan saat ini';
-  @override
-  String get download_detail_task_gone => 'Tugas tidak ditemukan di backend';
-  @override
-  String get download_detail_task_missing =>
-      'Backend unduhan asli online, tetapi torrent ini sudah tidak ada lagi. Peer langsung dan tracker tidak bisa dipulihkan; informasi tugas yang tersimpan ditampilkan.';
-  @override
-  String get download_detail_section_transfer => 'Transfer';
-  @override
-  String get download_detail_section_network => 'Jaringan';
-  @override
-  String get download_detail_section_task => 'Tugas';
-  @override
-  String get download_detail_seeds_label => 'Seed';
-  @override
-  String get download_detail_leechers_label => 'Leecher';
-  @override
-  String get download_detail_connections_label => 'Koneksi';
-  @override
-  String get download_detail_content_path_label => 'Path konten';
-  @override
-  String get download_detail_time_active => 'Waktu aktif';
-  @override
-  String get download_detail_time_seeding => 'Waktu seeding';
-  @override
-  String get download_detail_total_size_label => 'Ukuran total';
-  @override
-  String get download_detail_listen_port => 'Port pendengar';
-  @override
-  String get download_detail_dht_nodes => 'Node DHT';
-  @override
-  String get download_detail_hash_label => 'Info hash';
-  @override
-  String get download_detail_port_mapping => 'Pemetaan port';
-  @override
-  String get download_detail_session_rates => 'Kecepatan sesi';
-  @override
-  String get download_detail_pieces_label => 'Potongan';
-  @override
-  String get download_detail_priority_skip => 'Jangan unduh';
-  @override
-  String get download_detail_raw_state_label => 'Status backend';
-  @override
-  String get download_detail_remaining_label => 'Sisa';
-  @override
-  String get download_detail_save_path_label => 'Path simpan';
-  @override
-  String get download_detail_priority_normal => 'Normal';
-  @override
-  String get download_detail_priority_high => 'Tinggi';
-  @override
-  String get download_detail_tracker_working => 'Berfungsi';
-  @override
-  String get download_detail_tracker_updating => 'Memperbarui';
-  @override
-  String get download_detail_tracker_not_contacted => 'Belum dihubungi';
-  @override
-  String get download_detail_tracker_not_working => 'Tidak berfungsi';
-  @override
-  String get download_detail_tracker_disabled => 'Dinonaktifkan';
-  @override
-  String get download_detail_no_peers => 'Tidak ada peer yang terhubung';
-  @override
-  String get download_detail_no_trackers => 'Tidak ada tracker';
-  @override
-  String get video_filter_year => 'Tahun';
-  @override
-  String get video_filter_year_unknown => 'Tahun tidak diketahui';
-  @override
-  String get video_filter_watch_status => 'Status tontonan';
-  @override
-  String get video_filter_watch_status_unwatched => 'Belum ditonton';
-  @override
-  String get video_filter_watch_status_watching => 'Sedang ditonton';
-  @override
-  String get video_filter_watch_status_completed => 'Selesai';
-  @override
-  String get video_hero_detail_view => 'Detail';
-  @override
-  String video_hero_episodes_watched({required Object n}) => '${n} ep ditonton';
-  @override
-  String get video_recently_added_badge => 'BARU';
-  @override
-  String get video_air_season_winter => 'Musim dingin';
-  @override
-  String get video_air_season_spring => 'Musim semi';
-  @override
-  String get video_air_season_summer => 'Musim panas';
-  @override
-  String get video_air_season_autumn => 'Musim gugur';
-  @override
-  String get delete_scope_no_channel =>
-      'Tidak ada sinkronisasi yang dikonfigurasi - penghapusan ini hanya memengaruhi perangkat ini';
-  @override
-  String get mihon_sources_title => 'Sumber manga';
-  @override
-  String get mihon_extensions_title => 'Ekstensi manga';
-  @override
-  String get mihon_store_add => 'Tambah toko ekstensi';
-  @override
-  String get mihon_store_url => 'URL toko ekstensi';
-  @override
-  String get mihon_store_empty =>
-      'Belum ada toko ekstensi. Tambahkan toko Mihon yang kompatibel atau impor APK lokal.';
-  @override
-  String get mihon_extension_import => 'Impor APK lokal';
-  @override
-  String get mihon_extension_warning =>
-      'Ekstensi pihak ketiga menjalankan kode dengan izin Fushi. Hanya instal ekstensi dan penanda tangan yang Anda percayai.';
-  @override
-  String get mihon_extension_install => 'Instal';
-  @override
-  String get mihon_extension_update => 'Perbarui';
-  @override
-  String get mihon_extension_uninstall => 'Hapus instalasi';
-  @override
-  String get mihon_extension_installed => 'Terinstal';
-  @override
-  String get mihon_extension_disabled => 'Dinonaktifkan';
-  @override
-  String get mihon_source_empty =>
-      'Tidak ada sumber manga yang aktif. Instal dan aktifkan ekstensi terlebih dahulu.';
-  @override
-  String get mihon_source_popular => 'Populer';
-  @override
-  String get mihon_source_latest => 'Terbaru';
-  @override
-  String get mihon_source_search => 'Cari manga';
-  @override
-  String get mihon_source_preferences => 'Preferensi sumber';
-  @override
-  String get mihon_source_clear_data => 'Hapus data sumber';
-  @override
-  String get mihon_source_clear_data_hint =>
-      'Menghapus preferensi dan cookie sumber ini. Ekstensi yang terinstal dipertahankan.';
-  @override
-  String get mihon_signer_trust_title => 'Percayai penanda tangan ekstensi?';
-  @override
-  String get mihon_signer_fingerprint => 'SHA-256 penanda tangan';
-  @override
-  String get mihon_runtime_unavailable =>
-      'Ekstensi Mihon tidak tersedia di platform ini.';
-  @override
-  String get mihon_extension_incompatible => 'Ekstensi tidak kompatibel';
-  @override
-  String get mihon_store_refresh => 'Segarkan toko';
-  @override
-  String get mihon_source_browse_mokuro => 'Katalog Mokuro bawaan';
-  @override
-  String get mihon_source_no_results => 'Manga tidak ditemukan.';
-  @override
-  String get mihon_chapters_title => 'Chapter';
-  @override
-  String get mihon_extension_language_filter => 'Bahasa';
-  @override
-  String get mihon_extension_language_all => 'Semua bahasa';
-  @override
-  String get mihon_filter_ignore => 'Abaikan';
-  @override
-  String get mihon_filter_include => 'Sertakan';
-  @override
-  String get mihon_filter_exclude => 'Kecualikan';
-  @override
-  String get mihon_filter_ascending => 'Naik';
-  @override
-  String get mihon_filter_descending => 'Turun';
-  @override
-  String get mihon_add_to_bookshelf => 'Tambah ke rak manga';
-  @override
-  String get mihon_in_bookshelf => 'Di rak manga';
-  @override
-  String scrape_all_confirm({required Object n}) =>
-      'Cocokkan semua ${n} item perpustakaan berdasarkan judul. Hanya kecocokan kepercayaan tinggi yang diterapkan secara otomatis — video dinilai dari judul bersama tahun, tipe, dan sinyal lainnya, sementara buku dan game memerlukan kecocokan judul persis yang unik. Sampul yang Anda pilih sendiri tidak pernah ditimpa (gambar lokal yang Anda atur, entri yang Anda pilih di dialog pencocokan, dan file poster yang ditempatkan di folder), dan hasil yang ambigu tetap menunggu untuk ditinjau manual.';
-  @override
-  String get collection_related_title => 'Karya terkait';
-  @override
-  String get collection_relation_prequel => 'Prekuel';
-  @override
-  String get collection_relation_sequel => 'Sekuel';
-  @override
-  String get collection_relation_side_story => 'Cerita sampingan';
-  @override
-  String get collection_relation_movie => 'Film';
-  @override
-  String get collection_relation_spin_off => 'Spin-off';
-  @override
-  String get collection_relation_other => 'Terkait';
-  @override
-  String get collection_relation_download => 'Unduh';
-  @override
-  String get collection_relation_bind => 'Tautkan ke koleksi yang ada';
-  @override
-  String get collection_episode_rename => 'Ganti nama episode dari scrape';
-  @override
-  String get collection_episode_rename_title => 'Ganti nama episode';
-  @override
-  String get collection_episode_rename_empty =>
-      'Tidak ada yang perlu diganti nama';
-  @override
-  String get collection_episode_download => 'Unduh episode ini';
-  @override
-  String get collection_episode_fill_missing => 'Isi episode yang kurang';
-  @override
-  String get collection_episode_no_missing => 'Tidak ada episode yang kurang';
-  @override
-  String get collection_split_by_season => 'Pisah berdasarkan musim';
-  @override
-  String get collection_split_keep_original => 'Pertahankan koleksi asli';
-  @override
-  String get collection_split_confirm => 'Pisah';
-  @override
-  String collection_relation_bound({required Object name}) =>
-      'Ditautkan ke ${name}';
-  @override
-  String collection_episode_rename_apply({required Object n}) =>
-      'Ganti nama ${n} episode';
-  @override
-  String collection_split_done({required Object n}) =>
-      'Dipisah menjadi ${n} koleksi';
-  @override
-  String collection_episode_watched_at({required Object position}) =>
-      'Ditonton sampai ${position}';
-  @override
-  String collection_episode_rename_partial({
-    required Object n,
-    required Object m,
-  }) => '${n} episode diganti nama, ${m} gagal';
-  @override
-  String get sync_err_browser_timeout =>
-      'Browser tidak pernah mengembalikan otorisasi. Coba lagi, dan pastikan proxy Anda mengizinkan 127.0.0.1.';
-  @override
-  String get manga_rescan_running => 'Mengenali kotak yang dipilih...';
-  @override
-  String get manga_rescan_empty => 'Tidak ada teks yang dikenali di kotak ini.';
-  @override
-  String get stat_hourly_band_epub => 'Buku teks';
-  @override
-  String get stat_hourly_band_pdf => 'PDF';
-  @override
-  String get stat_hourly_band_manga => 'Manga';
-  @override
-  String get stat_hourly_band_unattributed => 'Riwayat tidak terpisah';
-  @override
-  String get stat_hourly_unattributed_note =>
-      'Jam yang dicatat sebelum pelacakan per-format ada tidak memiliki tipe yang tersimpan, sehingga tidak bisa dipisah. Ditampilkan sebagai total gabungan dan tidak diatribusikan ke tipe apa pun.';
-  @override
-  String get book_convert_to_manga_action => 'Konversi ke manga';
-  @override
-  String get book_convert_to_book_action => 'Konversi kembali ke buku';
-  @override
-  String get book_convert_running => 'Mengkonversi...';
-  @override
-  String get book_convert_done => 'Konversi selesai';
-  @override
-  String get book_convert_failed => 'Konversi gagal';
-  @override
-  String get book_convert_blocked_already =>
-      'Buku ini sudah dalam format tersebut.';
-  @override
-  String get book_convert_blocked_text_only =>
-      'Ini adalah buku teks tanpa gambar halaman. Hanya buku gambar yang dipindai yang bisa menjadi manga.';
-  @override
-  String get book_convert_blocked_no_original =>
-      'Manga ini diimpor dari gambar, jadi tidak ada buku asli untuk dikonversi kembali.';
-  @override
-  String get book_convert_blocked_source_missing =>
-      'File sumber sudah tidak ada di disk.';
-  @override
-  String manga_online_retry_waiting({
-    required Object attempt,
-    required Object total,
-  }) => 'Mencoba ulang secara otomatis (${attempt}/${total})';
-  @override
-  String get manga_ocr_wizard_already_ocred =>
-      'Volume ini sudah memiliki data OCR di setiap halaman. Menjalankan OCR lagi akan menimpanya.';
-  @override
-  String get shortcut_scope_universal => 'Kembali / Keluar';
-  @override
-  String get game_attach_and_capture => 'Lampirkan dan tangkap';
-  @override
-  String get remote_delete_failed =>
-      'Tidak bisa menghapus di perangkat pasangan';
-  @override
-  String get remote_delete_unsupported =>
-      'Perangkat pasangan terlalu lama untuk mendukung penghapusan jarak jauh. Perbarui Fushi di sana terlebih dahulu.';
-  @override
-  String get anki_lapis_visual_blocks => 'Area kustom';
-  @override
-  String get anki_lapis_visual_blocks_hint =>
-      'Tampilkan field yang ada di tempat lain pada kartu. Hanya tampilan: tidak ada field Anki yang ditambah atau dihapus.';
-  @override
-  String get anki_lapis_visual_block_add => 'Tambah area';
-  @override
-  String get anki_lapis_visual_block_delete => 'Hapus area';
-  @override
-  String anki_lapis_visual_block_name({required Object index}) =>
-      'Area ${index}';
-  @override
-  String get anki_lapis_visual_block_anchor => 'Posisi di kartu';
-  @override
-  String get anki_lapis_visual_block_anchor_top => 'Atas kartu';
-  @override
-  String get anki_lapis_visual_block_anchor_above_sentence => 'Di bawah kata';
-  @override
-  String get anki_lapis_visual_block_anchor_above_definition =>
-      'Di bawah kalimat';
-  @override
-  String get anki_lapis_visual_block_anchor_below_definition =>
-      'Di bawah definisi';
-  @override
-  String get anki_lapis_visual_block_anchor_bottom => 'Bawah kartu';
-  @override
-  String get anki_lapis_visual_block_fields => 'Field yang ditampilkan di sini';
-  @override
-  String get anki_lapis_visual_block_no_fields =>
-      'Belum ada field yang dipilih';
-  @override
-  String get anki_lapis_visual_block_needs_note_type =>
-      'Pilih tipe catatan terlebih dahulu untuk memilih field.';
-  @override
-  String get anki_lapis_restore_factory => 'Pulihkan Lapis bawaan pabrik';
-  @override
-  String get anki_lapis_restore_factory_hint =>
-      'Timpa tipe catatan Lapis di Anki dengan versi yang dibundel di Fushi dan hapus semua kustomisasi di sini.';
-  @override
-  String get anki_lapis_restore_factory_confirm =>
-      'Ini akan menimpa gaya dan templat kartu Lapis di Anki dengan versi bawaan Fushi, serta mereset ukuran font, CSS kustom, dan area kustom. Cadangan status saat ini disimpan terlebih dahulu. Data kartu tidak tersentuh.';
-  @override
-  String get anki_lapis_restore_factory_done =>
-      'Lapis dipulihkan ke default pabrik';
-  @override
-  String anki_lapis_restore_factory_failed({required Object error}) =>
-      'Pemulihan gagal: ${error}';
-  @override
-  String get anki_lapis_visual_select_field_hint =>
-      'Klik bagian mana pun dari pratinjau, atau pilih satu di bawah. Yang Anda pilih adalah yang akan diedit oleh kontrol di bawahnya.';
-  @override
-  String get anki_lapis_visual_editing_now => 'Mengedit';
-  @override
-  String get mihon_extension_preview => 'Pratinjau';
-  @override
-  String get mihon_extension_preview_warning =>
-      'Pratinjau menjalankan kode ekstensi ini sebelum diinstal. Tidak ada yang ditambahkan ke perpustakaan Anda sampai Anda memilih untuk menginstal.';
-  @override
-  String get mihon_extension_preview_discard => 'Buang';
-  @override
-  String get mihon_extension_preview_source_select =>
-      'Pilih sumber untuk dipratinjau';
-  @override
-  String get mihon_extension_sources_included => 'Sumber yang disertakan';
-  @override
-  String get mihon_extension_preview_read_only =>
-      'Pratinjau hanya baca. Instal ekstensi untuk membuka dan membaca.';
-  @override
-  String get selection_copy_empty => 'Tidak ada teks yang dipilih.';
-  @override
-  String get video_library_empty_source_hint =>
-      'Tambahkan folder video dari Sumber untuk membangun perpustakaan Anda';
-  @override
-  String get video_source_scrape_action => 'Scrape sumber ini';
-  @override
-  String get video_source_scrape_settings => 'Pengaturan scrape sumber';
-  @override
-  String get video_source_scrape_auto_after_scan => 'Scrape setelah pemindaian';
-  @override
-  String get video_source_scrape_auto_after_scan_hint =>
-      'Jalankan scraping metadata secara otomatis setelah sumber ini dipindai';
-  @override
-  String get video_source_scrape_write_nfo => 'Tulis file NFO';
-  @override
-  String get video_source_scrape_write_images => 'Tulis file gambar';
-  @override
-  String video_source_scrape_progress({
-    required Object phase,
-    required Object current,
-    required Object total,
-  }) => '${phase} · ${current}/${total}';
-  @override
-  String video_source_scrape_last_summary({
-    required Object status,
-    required Object succeeded,
-    required Object pending,
-    required Object failed,
-  }) =>
-      'Scrape terakhir (${status}): ${succeeded} berhasil, ${pending} menunggu, ${failed} gagal';
-  @override
-  String get video_source_scrape_phase_planning => 'Merencanakan';
-  @override
-  String get video_source_scrape_phase_recognizing => 'Mencocokkan';
-  @override
-  String get video_source_scrape_phase_fetching => 'Mengambil metadata';
-  @override
-  String get video_source_scrape_phase_applying => 'Menyimpan metadata';
-  @override
-  String get video_source_scrape_phase_writing_sidecars => 'Menulis sidecar';
-  @override
-  String get video_source_scrape_status_interrupted => 'Terinterupsi';
-  @override
-  String get video_source_scrape_locale => 'Bahasa metadata';
-  @override
-  String get video_source_scrape_locale_hint =>
-      'Bahasa yang diutamakan untuk judul, ringkasan, dan gambar';
-  @override
-  String get video_source_scrape_confirmation_title =>
-      'Konfirmasi kecocokan metadata';
-  @override
-  String get video_source_scrape_confirmation_hint =>
-      'Ditemukan beberapa kecocokan persis. Pilih karya yang benar untuk menyimpan pengikatan penyedianya.';
-  @override
-  String get video_source_scrape_confirmation_skip => 'Lewati karya ini';
-  @override
-  String get video_source_scrape_nfo_policy => 'Kebijakan penulisan NFO';
-  @override
-  String get video_source_scrape_image_policy => 'Kebijakan penulisan gambar';
-  @override
-  String get video_source_scrape_policy_skip => 'Jangan tulis';
-  @override
-  String get video_source_scrape_policy_missing_only =>
-      'Hanya ketika tidak ada';
-  @override
-  String get video_source_scrape_policy_overwrite => 'Perbarui file Fushi';
-  @override
-  String get video_source_scrape_external_overwrite =>
-      'Izinkan penimpaan sidecar yang dilindungi';
-  @override
-  String get video_source_scrape_external_overwrite_hint =>
-      'File pihak ketiga atau yang dimodifikasi pengguna tetap dilindungi sampai Anda mengonfirmasi setiap batch scrape manual lagi.';
-  @override
-  String get video_source_scrape_external_overwrite_confirm_title =>
-      'Timpa sidecar yang dilindungi?';
-  @override
-  String get video_source_scrape_external_overwrite_confirm_body =>
-      'Batch ini mungkin mengganti NFO/gambar pihak ketiga atau file Fushi yang Anda edit. File media tidak diubah. Lanjutkan?';
-  @override
-  String get video_source_scrape_tasks_open => 'Tugas latar belakang';
-  @override
-  String get video_source_scrape_background_started =>
-      'Scraping berjalan di latar belakang';
-  @override
-  String get video_source_scrape_tasks_current => 'Tugas saat ini';
-  @override
-  String get video_source_scrape_tasks_history => 'Tugas terbaru';
-  @override
-  String get video_source_scrape_tasks_empty => 'Belum ada tugas scrape';
-  @override
-  String get video_source_scrape_waiting_confirmation =>
-      'Menunggu konfirmasi Anda';
-  @override
-  String get video_source_scrape_phase_scanning => 'Memindai sumber';
-  @override
-  String get video_library_all_videos => 'Semua video';
-  @override
-  String get video_work_voice_roles => 'Pengisi suara dan karakter';
-  @override
-  String get video_work_cast_crew => 'Pemeran dan kru';
-  @override
-  String get video_work_trailers => 'Trailer';
-  @override
-  String get video_work_extras => 'Ekstra';
-  @override
-  String get video_work_details => 'Detail';
-  @override
-  String get video_work_external_ids => 'ID eksternal';
-  @override
-  String get video_work_metadata_pending =>
-      'Metadata detail belum di-scrape. Coba ulang sumber ini dari Sumber, lalu buka kembali karyanya.';
-  @override
-  String get video_work_genres => 'Genre';
-  @override
-  String get video_work_keywords => 'Kata kunci';
-  @override
-  String get video_work_studios => 'Studio';
-  @override
-  String get video_work_countries => 'Negara';
-  @override
-  String get video_work_content_rating => 'Rating konten';
-  @override
-  String get video_all_videos_list_view => 'Tampilan daftar';
-  @override
-  String get video_all_videos_grid_view => 'Tampilan kotak';
-  @override
-  String video_home_continue_episode_number({required Object n}) =>
-      'Memutar episode ${n}';
-  @override
-  String video_home_next_episode_number({required Object n}) =>
-      'Berikutnya · Episode ${n}';
-  @override
-  String video_home_recent_episode_number({required Object n}) =>
-      'Baru ditambahkan · Episode ${n}';
-  @override
-  String video_home_remaining_minutes({required Object minutes}) =>
-      '${minutes} menit tersisa';
-  @override
-  String get video_subtitle_replay => 'Putar ulang baris ini';
-  @override
-  String get manga_ocr_done => 'OCR selesai';
-  @override
-  String get settings_destination_manga_summary =>
-      'Pembaca, OCR, dan katalog online';
-  @override
-  String get manga_page_animation => 'Animasi pergantian halaman';
-  @override
-  String get manga_page_animation_none => 'Tidak ada';
-  @override
-  String get manga_page_animation_slide => 'Geser';
-  @override
-  String get manga_page_animation_fade => 'Pudar';
-  @override
-  String get manga_default_zoom => 'Zoom default';
-  @override
-  String get manga_zoom_sensitivity => 'Sensitivitas zoom';
-  @override
-  String get manga_volume_key_paging => 'Tombol volume untuk ganti halaman';
-  @override
-  String get manga_volume_key_paging_subtitle =>
-      'Gunakan tombol volume naik dan turun untuk mengganti halaman di pembaca manga';
-  @override
-  String get manga_tap_zone_paging => 'Ketuk tepi untuk ganti halaman';
-  @override
-  String get manga_tap_zone_paging_subtitle =>
-      'Ketuk tepi kiri atau kanan halaman untuk mengganti';
-  @override
-  String get manga_section_viewing => 'Tampilan dan pergantian halaman';
-  @override
-  String get game_capture_setup_title => 'Selesaikan pengaturan tangkapan';
-  @override
-  String get game_capture_setup_hint =>
-      'Pilih thread dialog terlebih dahulu. Fushi hanya bisa memasangkan audio dengan baris dari thread yang dipilih.';
-  @override
-  String get game_audio_requires_thread =>
-      'Sumber tangkapan audio mungkin sudah siap, tetapi audio kalimat tidak akan ada sampai thread dipilih dan baris diterima.';
-  @override
-  String get game_session_waiting_thread => 'Menunggu thread dialog';
-  @override
-  String get anki_connect_use_on_mobile => 'Use AnkiConnect on Android';
-  @override
-  String get anki_connect_use_on_mobile_hint =>
-      'Gunakan hanya di jaringan terpercaya. AnkiConnect menggunakan HTTP tanpa enkripsi; konfigurasikan kunci API yang cocok, lalu segarkan dek dan tipe catatan setelah beralih.';
-  @override
-  String get anki_connect_api_key_hint =>
-      'Diperlukan untuk AnkiConnect jarak jauh; harus cocok dengan kunci yang dikonfigurasi di add-on';
-  @override
-  String get anki_connect_mobile_api_key_required =>
-      'Configure a matching AnkiConnect API key before enabling the Android backend.';
-  @override
-  String anki_connect_backend_switch_failed({required Object error}) =>
-      'Tidak bisa beralih backend Anki: ${error}';
-  @override
-  String get migration_settings_entry => 'Migrasi ke Fushi';
-  @override
-  String get migration_settings_entry_subtitle =>
-      'Pindahkan semua data ke aplikasi Fushi yang baru';
-  @override
-  String get migration_intro =>
-      'Fushi adalah nama baru aplikasi ini. Migrasi mengekspor semua data Anda secara batch ke folder transfer, lalu Fushi mengimpor dan memverifikasinya. Data Anda di sini tetap tidak tersentuh sampai Anda menghapus aplikasi ini.';
-  @override
-  String get migration_target_missing =>
-      'Fushi belum diinstal. Instal Fushi terlebih dahulu, lalu kembali ke sini.';
-  @override
-  String get migration_download_fushi => 'Dapatkan Fushi';
-  @override
-  String get migration_start => 'Mulai migrasi';
-  @override
-  String get migration_open_fushi => 'Buka Fushi';
-  @override
-  String get migration_include_local_audio =>
-      'Juga ekspor audio pengucapan lokal (bisa berukuran besar)';
-  @override
-  String migration_batch_running({required Object batch}) =>
-      'Mengekspor ${batch}...';
-  @override
-  String migration_batch_done({required Object batch}) => '${batch} diekspor';
-  @override
-  String get migration_export_done =>
-      'Ekspor selesai. Buka Fushi untuk mengimpor dan memverifikasi.';
-  @override
-  String migration_export_failed({required Object error}) =>
-      'Ekspor gagal: ${error}';
-  @override
-  String get migration_readonly_note =>
-      'Data Anda telah diekspor ke Fushi. Aplikasi ini sekarang hanya baca: gunakan Fushi untuk membaca dan membuat kartu. Anda bisa mengekspor ulang kapan saja jika Fushi melaporkan data yang hilang.';
-  @override
-  String get migration_reexport => 'Ekspor ulang';
-  @override
-  String get migration_batch_core_label => 'Pengaturan, progres & statistik';
-  @override
-  String get migration_import_entry => 'Impor dari Hibiki';
-  @override
-  String get migration_import_entry_subtitle =>
-      'Impor data yang diekspor oleh aplikasi Hibiki lama';
-  @override
-  String get migration_import_detected =>
-      'Data migrasi Hibiki terdeteksi. Impor sekarang?';
-  @override
-  String get migration_import_start => 'Mulai impor';
-  @override
-  String migration_import_running({required Object batch}) =>
-      'Mengimpor ${batch}...';
-  @override
-  String migration_import_verify_failed({
-    required Object batch,
-    required Object detail,
-  }) => '${batch} gagal verifikasi dan disimpan untuk ekspor ulang: ${detail}';
-  @override
-  String migration_import_counts_failed({required Object detail}) =>
-      'Data yang diimpor tidak lengkap: ${detail}. Ekspor ulang bagian yang hilang dari Hibiki, lalu impor lagi.';
-  @override
-  String get migration_import_success => 'Impor selesai dan terverifikasi.';
-  @override
-  String get migration_import_nothing =>
-      'Tidak ditemukan data migrasi di folder transfer.';
-  @override
-  String get migration_uninstall_prompt =>
-      'Migrasi selesai. Hapus instalasi aplikasi Hibiki lama?';
-  @override
-  String get migration_uninstall_button => 'Hapus instalasi Hibiki';
-  @override
-  String get migration_uninstall_still_installed =>
-      'Hibiki masih terinstal. Anda bisa menghapus instalasinya kapan saja.';
-  @override
-  String get migration_import_permission_title => 'Izin penyimpanan diperlukan';
-  @override
-  String get migration_import_permission_body =>
-      'Folder transfer dibuat oleh aplikasi lama. Tanpa "Akses semua file", Fushi tidak bisa membacanya — data tetap utuh, hanya tidak bisa dibuka.';
-  @override
-  String get migration_import_permission_grant => 'Berikan izin';
-  @override
-  String migration_import_verifying({
-    required Object batch,
-    required Object done,
-    required Object total,
-  }) => 'Memverifikasi ${batch} (${done}/${total})';
-  @override
-  String get migration_import_verifying_hint =>
-      'Menghitung checksum arsip. Perpustakaan besar bisa memakan waktu beberapa menit.';
-  @override
-  String get game_line_copy_tooltip => 'Salin kalimat';
-  @override
-  String get game_japanese_locale_auto => 'Otomatis';
-  @override
-  String get game_japanese_locale_on => 'Selalu aktif';
-  @override
-  String get game_japanese_locale_off => 'Nonaktif';
-  @override
-  String get game_japanese_locale => 'Locale Jepang';
-  @override
-  String get game_japanese_locale_hint =>
-      'Build dengan patch Cina/Inggris harus menonaktifkan ini, atau game akan crash saat diluncurkan';
-  @override
-  String get video_scrape_diagnostic_export => 'Ekspor diagnostik scrape';
-  @override
-  String get video_scrape_diagnostic_confirm_title =>
-      'Ekspor diagnostik scrape?';
-  @override
-  String get video_scrape_diagnostic_saved => 'Paket diagnostik tersimpan';
-  @override
-  String video_scrape_diagnostic_failed({required Object reason}) =>
-      'Tidak bisa mengekspor paket diagnostik: ${reason}';
-  @override
-  String get video_scrape_diagnostic_share_subject =>
-      'Diagnostik scrape video Fushi';
-  @override
-  String get video_scrape_diagnostic_confirm_body =>
-      'Paket ini mencakup nama file dan folder relatif, ringkasan scrape, dan konten NFO asli. Tidak menambahkan video, subtitle, gambar, path absolut, konfigurasi aplikasi, atau kredensial aplikasi. File NFO asli dipertahankan apa adanya dan mungkin mengandung informasi pribadi atau rahasia; tinjau paket sebelum membagikan secara publik.';
-  @override
-  String get video_discovery_search_hint => 'Cari film, serial, anime';
-  @override
-  String get video_discovery_hot => 'Populer sekarang';
-  @override
-  String get video_discovery_seasonal_anime => 'Anime musiman';
-  @override
-  String get video_discovery_all_works => 'Semua judul';
-  @override
-  String get video_discovery_search_results => 'Hasil pencarian';
-  @override
-  String get video_discovery_provider_warning =>
-      'Beberapa penyedia tidak tersedia. Menampilkan hasil yang tersedia.';
-  @override
-  String get video_discovery_load_failed =>
-      'Tidak bisa memuat hasil pencarian.';
-  @override
-  String get video_discovery_empty => 'Tidak ada judul yang cocok.';
-  @override
-  String get video_discovery_resource_search => 'Cari sumber daya';
-  @override
-  String get video_discovery_subtitle_search => 'Cari subtitle';
-  @override
-  String get video_discovery_subscribe => 'Berlangganan';
-  @override
-  String get video_discovery_subscription_manage => 'Kelola langganan';
-  @override
-  String get video_discovery_pipeline_idle =>
-      'Belum diunduh > Unduh > Organisir > Subtitle > Scrape > Perpustakaan';
-  @override
-  String get video_discovery_details_load_failed =>
-      'Tidak bisa memuat detail judul.';
-  @override
-  String get video_discovery_sort_popularity => 'Popularitas';
-  @override
-  String get video_discovery_sort_rating => 'Rating';
-  @override
-  String get video_discovery_sort_release => 'Tanggal rilis';
-  @override
-  String get video_discovery_in_library => 'Di perpustakaan';
-  @override
-  String get video_discovery_play => 'Putar';
-  @override
-  String get download_resources_tab => 'Sumber daya';
-  @override
-  String get video_external_settings_section =>
-      'Penyedia sumber daya dan subtitle eksternal';
-  @override
-  String get video_torznab_settings_title => 'Indexer Torznab';
-  @override
-  String get video_torznab_add => 'Tambah indexer';
-  @override
-  String get video_torznab_name => 'Nama';
-  @override
-  String get video_torznab_endpoint => 'Endpoint';
-  @override
-  String get video_torznab_endpoint_hint =>
-      'HTTPS diperlukan kecuali untuk alamat loopback.';
-  @override
-  String get video_torznab_api_key => 'Kunci API';
-  @override
-  String get video_torznab_priority => 'Prioritas';
-  @override
-  String get video_torznab_categories => 'Kategori';
-  @override
-  String get video_torznab_categories_hint =>
-      'ID kategori numerik yang dipisahkan koma';
-  @override
-  String get video_external_enabled => 'Aktif';
-  @override
-  String get video_external_insecure_http => 'Izinkan HTTP tidak aman';
-  @override
-  String get video_external_insecure_http_hint =>
-      'Gunakan hanya untuk endpoint jaringan lokal terpercaya.';
-  @override
-  String get video_external_endpoint_invalid =>
-      'Masukkan endpoint yang valid tanpa kredensial, parameter kueri, atau fragmen.';
-  @override
-  String get video_opensubtitles_settings_title => 'OpenSubtitles';
-  @override
-  String get video_opensubtitles_user_agent => 'User-Agent';
-  @override
-  String get video_opensubtitles_languages_hint =>
-      'Kode bahasa yang dipisahkan koma, misalnya zh-CN,en,ja';
-  @override
-  String get video_download_path_mappings_title => 'Pemetaan path qBittorrent';
-  @override
-  String get video_download_path_mappings_hint =>
-      'Petakan setiap root jarak jauh qBittorrent ke folder yang dapat diakses secara lokal.';
-  @override
-  String get video_download_path_mapping_add => 'Tambah pemetaan path';
-  @override
-  String get video_download_backend_profile_id => 'ID profil backend';
-  @override
-  String get video_download_remote_root => 'Root jarak jauh';
-  @override
-  String get video_download_local_root => 'Root lokal';
-  @override
-  String get video_download_target_source_title =>
-      'Sumber video terkelola default';
-  @override
-  String get video_download_target_source_hint =>
-      'Unduhan baru diorganisir ke sumber video lokal ini.';
-  @override
-  String get video_download_target_source_none => 'Pilih sumber video lokal';
-  @override
-  String get video_external_remove => 'Hapus';
-  @override
-  String get video_external_username_optional => 'Nama pengguna (opsional)';
-  @override
-  String get video_external_password_optional => 'Kata sandi (opsional)';
-  @override
-  String get video_external_api_key => 'Kunci API';
-  @override
-  String get video_external_save_error =>
-      'Konfigurasi tidak bisa disimpan. Periksa kolom yang disorot.';
-  @override
-  String get video_external_categories_invalid =>
-      'Kategori harus berupa ID numerik yang dipisahkan koma.';
-  @override
-  String get video_download_path_mapping_invalid =>
-      'Masukkan ID profil, root jarak jauh, dan root lokal absolut.';
-  @override
-  String get video_opensubtitles_endpoint => 'Endpoint API';
-  @override
-  String get video_download_target_source_empty =>
-      'Tidak ada sumber video yang dapat diakses secara lokal. Tambahkan satu di tab Sumber terlebih dahulu.';
-  @override
-  String get video_setting_drag_seek_sensitivity =>
-      'Sensitivitas geser untuk seek';
-  @override
-  String get video_setting_drag_seek_sensitivity_hint =>
-      'Seberapa jauh satu gesekan layar penuh mencari di layar sentuh: Rendah sekitar 45 detik, Sedang sekitar 90 detik, Tinggi sekitar 180 detik. Tidak tergantung pada durasi total video. Hanya geser sentuh; pencarian dengan mouse dan keyboard tidak terpengaruh.';
-  @override
-  String get video_setting_drag_seek_sensitivity_low => 'Rendah';
-  @override
-  String get video_setting_drag_seek_sensitivity_medium => 'Sedang';
-  @override
-  String get video_setting_drag_seek_sensitivity_high => 'Tinggi';
-  @override
-  String video_subtitle_read_failed({required Object label}) =>
-      'Tidak bisa membaca file subtitle ini (rusak atau kosong): ${label}';
-  @override
-  String dict_downloading_size({
-    required Object name,
-    required Object done,
-    required Object total,
-  }) => 'Mengunduh ${name} (${done} / ${total})';
-  @override
-  String get video_subtitle_attach_book_missing =>
-      'Video ini tidak ada di perpustakaan Anda, jadi subtitle tidak dilampirkan';
-  @override
-  String get dict_download_hide => 'Jalankan di latar belakang';
-  @override
-  String get dict_download_progress_show => 'Lihat progres';
-  @override
-  String get dict_download_cancelled => 'Unduhan dibatalkan.';
-  @override
-  String get dict_download_import_uncancellable =>
-      'Impor tidak bisa diinterupsi';
-  @override
-  String get dict_download_busy => 'Unduhan kamus sudah berjalan.';
-  @override
-  String get gal_hook_ingame_lookup => 'Pencarian kamus dalam game';
-  @override
-  String get gal_hook_ingame_lookup_hint =>
-      'Tampilkan kartu kamus di dalam jendela game itu sendiri (mesin KiriKiri, hanya Windows)';
-  @override
-  String download_subscription_start_episode({required Object episode}) =>
-      '从第 ${episode} 集开始';
-  @override
-  String get drag_drop_failed =>
-      'Tidak bisa menangani file yang dijatuhkan. Silakan coba lagi.';
-  @override
-  String get tag_add_failed => 'Tidak bisa menambahkan tag. Silakan coba lagi.';
-  @override
-  String get tag_reorder_failed =>
-      'Tidak bisa menyimpan urutan tag baru. Silakan coba lagi.';
-  @override
-  String get download_task_error_summary_source_missing =>
-      'Sumber video terkelola tidak ada atau tidak dapat diakses';
-  @override
-  String get download_task_error_summary_backend_unconfirmed =>
-      'Torrent tidak bisa dikonfirmasi berdasarkan hash, judul, dan kategori';
-  @override
-  String get download_task_error_summary_subtitle =>
-      'Subtitle tidak tersedia atau tidak bisa diinstal';
-  @override
-  String get download_task_error_summary_backend_unavailable =>
-      'Backend unduhan tidak tersedia atau sudah tidak cocok';
-  @override
-  String get download_task_error_summary_legacy =>
-      'Impor lama memerlukan perhatian manual';
-  @override
-  String get download_task_error_summary_torrent_info =>
-      'Identitas torrent tidak ada atau tidak bisa diverifikasi';
-  @override
-  String get download_task_error_summary_generic => 'Tugas mengalami error';
-  @override
-  String get download_task_error_view_detail => 'Lihat detail';
-  @override
-  String get download_task_error_detail_title => 'Detail error';
-  @override
-  String get download_task_error_copied => 'Detail error disalin';
-  @override
-  String get download_task_lifecycle_active => 'Sedang berlangsung';
-  @override
-  String get download_task_lifecycle_needs_attention => 'Perlu perhatian';
-  @override
-  String get download_task_location_missing =>
-      'Lokasi file tugas tidak tersedia.';
-  @override
-  String get download_task_location_open_failed =>
-      'Tidak bisa membuka lokasi file.';
-  @override
-  String get download_task_open_location => 'Tampilkan di folder';
-  @override
-  String get download_task_lifecycle_completed => 'Selesai';
-  @override
-  String get download_task_lifecycle_failed => 'Gagal';
-  @override
-  String get download_task_lifecycle_cancelled => 'Dibatalkan';
-  @override
-  String get download_task_stage_enqueue => 'Antri';
-  @override
-  String get download_task_stage_download => 'Unduh';
-  @override
-  String get download_task_stage_organize => 'Organisir';
-  @override
-  String get download_task_stage_subtitle => 'Subtitle';
-  @override
-  String get download_task_stage_import => 'Impor';
-  @override
-  String get download_task_stage_scrape => 'Scrape';
-  @override
-  String get video_discovery_manual_identity_hint =>
-      'Masukkan judul, ID eksternal, dan tahun di atas untuk mengaktifkan pencarian';
-  @override
-  String get collection_split_move_to => 'Pindah ke';
-  @override
-  String get collection_split_new_group => 'Grup baru';
-  @override
-  String collection_split_selected({required Object n}) => '${n} dipilih';
-  @override
-  String get sync_pair_rate_limited =>
-      'Terlalu banyak percobaan. Tunggu beberapa menit dan coba lagi.';
-  @override
-  String get sync_pair_tls_failed =>
-      'Pemeriksaan sertifikat gagal. Sertifikat peer tidak cocok dengan yang disematkan.';
-  @override
-  String get sync_pair_timeout => 'Peer tidak merespons tepat waktu.';
-  @override
-  String get sync_pair_expired =>
-      'Pemasangan kedaluwarsa. Mulai pemasangan lagi dari perangkat ini.';
-  @override
-  String get sync_pair_upgrade_required =>
-      'Perangkat lain menjalankan versi yang lebih lama dan tidak bisa berpasangan secara aman dari jaringan ini. Perbarui perangkat tersebut, lalu pasangkan lagi.';
-  @override
-  String get sync_pair_fingerprint_changed_title => 'Sertifikat berubah';
-  @override
-  String get sync_pair_fingerprint_stored_label => 'Disematkan sebelumnya';
-  @override
-  String get sync_pair_fingerprint_new_label => 'Terlihat sekarang';
-  @override
-  String get sync_pair_fingerprint_retrust => 'Hapus dan percayai lagi';
-  @override
-  String get sync_pair_fingerprint_changed_body =>
-      'Alamat ini sebelumnya disematkan ke sertifikat yang berbeda. Lanjutkan hanya jika Anda tahu peer menginstal ulang atau meresetnya — jika tidak, seseorang mungkin menyadap koneksi.';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Pilih apa yang perangkat ini unggah ke peer yang terhubung. Tidak tergantung pada sakelar cadangan cloud dan nonaktif secara default. Sakelar ini hanya berlaku saat Aktifkan interkoneksi diaktifkan: menonaktifkan interkoneksi menghentikan semua unggahan di sini.';
-  @override
-  String get remote_delete_audiobook_partial =>
-      'Buku dihapus, tetapi buku audionya tidak bisa dihapus di perangkat pasangan';
-  @override
-  String get download_detail_task_queued =>
-      'Diantrikan: menunggu unduhan lain membebaskan slot. Tugas ini belum diserahkan ke pengunduh, jadi tidak ada data peer atau tracker langsung.';
-  @override
-  String video_subscription_group_release_count({required Object count}) =>
-      '${count} rilis';
-  @override
-  String get download_task_priority => 'Prioritas antrian';
-  @override
-  String get download_task_priority_high => 'Tinggi';
-  @override
-  String get download_task_priority_normal => 'Normal';
-  @override
-  String get download_task_priority_low => 'Rendah';
-  @override
-  String get library_view_import => 'Impor';
-  @override
-  String get quick_import_title => 'Impor cepat';
-  @override
-  String get media_source_section_title => 'Sumber perpustakaan';
-  @override
-  String get media_import_folder => 'Folder impor';
-  @override
-  String get media_import_folder_as_source =>
-      'Tambah sebagai sumber perpustakaan';
-  @override
-  String get book_import_folder_as_source_hint =>
-      'Terus pindai folder ini untuk buku baru';
-  @override
-  String get media_import_folder_once => 'Impor sekali saja';
-  @override
-  String get library_empty_go_import => 'Ke halaman impor';
-  @override
-  String get game_import_drop_hint =>
-      'Anda juga bisa menyeret file .exe ke perpustakaan game';
-  @override
-  String get library_view_sources => 'Sumber';
-  @override
-  String get video_setting_secondary_av_delay =>
-      'Sinkronisasi subtitle sekunder';
-  @override
-  String get video_setting_secondary_av_delay_hint =>
-      'Sesuaikan offset subtitle sekunder secara independen. Mengikuti offset primer sampai diatur di sini.';
-  @override
-  String get video_setting_secondary_delay_follow => 'Ikuti primer';
-  @override
-  String video_subtitle_secondary_delay_osd({required Object ms}) =>
-      'Sinkronisasi subtitle sekunder: ${ms} md';
-  @override
-  String get video_subtitle_secondary_delay_follow_osd =>
-      'Sinkronisasi subtitle sekunder: ikuti primer';
-  @override
-  String get video_setting_subtitle_anchor => 'Jangkar subtitle utama';
-  @override
-  String get video_subtitle_anchor_bottom => 'Bawah';
-  @override
-  String get video_subtitle_anchor_top => 'Atas';
-  @override
-  String get video_setting_subtitle_drag_adjust =>
-      'Seret untuk menyesuaikan posisi';
-  @override
-  String get video_subtitle_drag_adjust_hint =>
-      'Seret subtitle ke atas atau ke bawah untuk memposisikan ulang';
-  @override
-  String get anki_connect_mobile_disabled_key_cleared =>
-      'AnkiConnect memerlukan kunci API di perangkat seluler, jadi menghapusnya mematikan sakelar kembali. Anki sekarang melalui backend bawaan lagi.';
-  @override
-  String manga_import_batch_hint({required Object n}) =>
-      'Folder ini berisi ${n} file volume; masing-masing diimpor sebagai buku tersendiri, dinamai sesuai filenya.';
-  @override
-  String manga_import_batch_done({
-    required Object imported,
-    required Object skipped,
-    required Object failed,
-  }) => 'Diimpor ${imported}, dilewati ${skipped}, gagal ${failed}.';
-  @override
-  String get srt_book_reimport => 'Impor ulang';
-  @override
-  String get srt_book_reimport_subtitle_hint =>
-      'Mengganti subtitle akan membangun ulang teks buku dari cue baru.';
-  @override
-  String get srt_book_reimport_no_cues =>
-      'Tidak ditemukan baris subtitle di file tersebut';
-  @override
-  String get srt_book_reimport_body_rebuilt =>
-      'Teks buku dibangun ulang — buka kembali buku untuk membacanya';
-  @override
-  String get video_setting_torrent_backend_embedded => 'Mesin bawaan';
-  @override
-  String get download_backend_unsupported_note =>
-      'Mesin bawaan tidak tersedia di platform ini. Unduhan menggunakan qBittorrent eksternal.';
-  @override
-  String get aidoku_runtime_unavailable =>
-      'Ekstensi Aidoku saat ini hanya tersedia di macOS.';
-  @override
-  String get aidoku_extensions_title => 'Ekstensi Aidoku';
-  @override
-  String get aidoku_extension_empty =>
-      'Tidak ada ekstensi Aidoku yang terinstal.';
-  @override
-  String get aidoku_extension_remove => 'Hapus ekstensi Aidoku';
-  @override
-  String get aidoku_extension_warning =>
-      'Ekstensi Aidoku menjalankan kode WebAssembly pihak ketiga dengan akses jaringan. Lanjutkan hanya dengan sumber yang Anda percayai.';
-  @override
-  String get aidoku_webview_unsupported =>
-      'Sumber ini memerlukan API WebView Aidoku yang belum didukung.';
-  @override
-  String get aidoku_extension_imported => 'Ekstensi Aidoku diimpor';
-  @override
-  String get aidoku_extension_import => 'Impor ekstensi Aidoku (.aix)';
-  @override
-  String get aidoku_extension_confirm_title => 'Instal ekstensi Aidoku?';
-  @override
-  String get aidoku_extension_version => 'Versi';
-  @override
-  String get aidoku_repository_url => 'URL repositori';
-  @override
-  String get aidoku_repository_sources => 'Sumber repositori';
-  @override
-  String get aidoku_repository_identity_mismatch =>
-      'Paket yang diunduh tidak cocok dengan indeks repositori.';
-  @override
-  String get aidoku_repository_installed => 'Terinstal';
-  @override
-  String get aidoku_repository_search => 'Cari sumber repositori';
-  @override
-  String get aidoku_repository_install => 'Instal';
-  @override
-  String get aidoku_repository_update => 'Perbarui';
-  @override
-  String get aidoku_repository_add => 'Tambah repositori Aidoku';
-  @override
-  String get aidoku_repository_added => 'Repositori Aidoku ditambahkan';
-  @override
-  String get aidoku_repository_browse => 'Jelajahi repositori';
-  @override
-  String get aidoku_repository_hint =>
-      'Tempelkan URL beranda repositori Aidoku atau index.min.json. Repositori komunitas diisi secara default.';
-  @override
-  String get aidoku_repository_remove => 'Hapus repositori';
-  @override
-  String get aidoku_repository_empty =>
-      'Tidak ada repositori Aidoku yang ditambahkan.';
-  @override
-  String get dict_language_tooltip => 'Bahasa konten';
-  @override
-  String get dict_language_title => 'Bahasa konten kamus';
-  @override
-  String get dict_language_description =>
-      'Menentukan font mana yang merender teks kamus ini. Otomatis menggunakan bahasa yang dideklarasikan kamus.';
-  @override
-  String get dict_language_auto => 'Otomatis';
-  @override
-  String get book_language_action => 'Bahasa konten';
-  @override
-  String get book_language_description =>
-      'Menentukan font mana yang merender teks buku ini. Otomatis menggunakan bahasa yang dideklarasikan dalam EPUB.';
-  @override
-  String get local_audio_reference_unavailable =>
-      'Tidak bisa mereferensikan file asli tanpa akses semua file; salinan diimpor sebagai gantinya.';
-  @override
-  String get video_collection_scrape => 'Scrape info & sampul';
-  @override
-  String get update_testflight_open => 'Buka TestFlight';
-  @override
-  String get update_app_store_open => 'Buka App Store';
-  @override
-  String get update_release_page_open => 'Halaman rilis';
-  @override
-  String update_install_gal_hook_holder({
-    required Object pid,
-    required Object path,
-  }) =>
-      'Komponen tangkapan galgame sedang digunakan: PID ${pid} - ${path} (ini adalah game yang sedang Anda mainkan, atau host tangkapannya). Tutup game, lalu perbarui lagi.';
-  @override
-  String get game_hook_reason_protocol_mismatch =>
-      'Komponen tangkapan tidak cocok dengan build Fushi ini. Komponen ini dikirimkan di dalam Fushi, jadi tidak ada yang perlu diinstal terpisah. Pertama, tutup game sepenuhnya dan luncurkan lagi: proses game mungkin masih menyimpan komponen yang diinjeksi oleh sesi sebelumnya. Jika masih tidak cocok, file komponen di disk lebih lama dari Fushi, karena pembaruan Fushi terakhir tidak bisa menggantinya saat game sedang berjalan. Tutup semua game, lalu jalankan penginstal Fushi lagi.';
-  @override
-  String get video_mining_still_format => 'Format tangkapan layar kartu video';
-  @override
-  String get video_mining_still_format_hint =>
-      'Encoding yang digunakan saat gambar kartu adalah tangkapan layar diam. JPG jauh lebih kecil; PNG tanpa kehilangan tetapi beberapa kali lebih besar. Sampul animasi tidak terpengaruh — mengikuti pengaturan format animasi.';
-  @override
-  String get mining_still_format_jpg => 'JPG (lebih kecil)';
-  @override
-  String get mining_still_format_png => 'PNG (tanpa kehilangan)';
-  @override
-  String get gal_mining_still_format => 'Format tangkapan layar kartu game';
-  @override
-  String get gal_mining_still_format_hint =>
-      'Format yang sama seperti kartu video, disimpan terpisah. Tangkapan jendela game masuk sebagai PNG: mempertahankan PNG tanpa kehilangan tetapi beberapa kali lebih besar, sementara JPG sesuai dengan cara tangkapan layar ini dikompres sebelumnya.';
-  @override
-  String get manga_source_cloudflare_blocked =>
-      'Sumber ini dilindungi oleh Cloudflare dan belum bisa dijangkau oleh pembaca bawaan.';
-  @override
-  String get manga_global_search_title => 'Cari semua sumber';
-  @override
-  String get manga_global_search_hint => 'Cari setiap sumber yang aktif';
-  @override
-  String get manga_global_search_prompt =>
-      'Ketik judul untuk mencari setiap sumber manga yang aktif sekaligus.';
-  @override
-  String get anki_connect_addon_install => 'Instal AnkiConnect';
-  @override
-  String get anki_connect_addon_install_hint =>
-      'Mengunduh AnkiConnect dari AnkiWeb dan menyerahkannya ke Anki yang sedang berjalan. Anki akan meminta Anda untuk mengonfirmasi, lalu menyarankan restart.';
-  @override
-  String get anki_connect_addon_handed =>
-      'AnkiConnect diserahkan ke Anki. Konfirmasi dialog di Anki, lalu restart Anki sesuai saran.';
-  @override
-  String get anki_connect_addon_anki_not_running =>
-      'Tidak ditemukan Anki yang berjalan. Jalankan Anki desktop terlebih dahulu, lalu coba lagi.';
-  @override
-  String anki_connect_addon_download_failed({required Object error}) =>
-      'Tidak bisa mengunduh AnkiConnect dari AnkiWeb: ${error}';
-  @override
-  String get anki_connect_addon_invalid =>
-      'AnkiWeb mengembalikan sesuatu yang bukan paket add-on yang bisa digunakan.';
-  @override
-  String anki_connect_addon_launch_failed({required Object error}) =>
-      'Tidak bisa menyerahkan add-on ke Anki: ${error}';
-  @override
-  String get settings_content_language_title => 'Bahasa konten default';
-  @override
-  String get settings_content_language_unset => 'Belum diatur';
-  @override
-  String get settings_content_language_description =>
-      'Bahasa fallback untuk konten yang tidak mendeklarasikan bahasanya. Pengaturan per-buku, per-video, per-game, dan per-kamus menimpa ini.';
-  @override
-  String get manga_ocr_lens_language_label => 'Bahasa pengenalan';
-  @override
-  String get sync_err_peer_unreachable =>
-      'Tidak bisa menjangkau perangkat pasangan - mungkin offline atau Fushi tidak berjalan.';
-  @override
-  String get remote_book_list_failed =>
-      'Tidak bisa mengambil perpustakaan jarak jauh dari perangkat pasangan.';
-  @override
-  String get video_torznab_settings_hint =>
-      'Konfigurasikan satu atau lebih endpoint Jackett, Prowlarr, atau Torznab yang kompatibel. Rahasia tidak pernah diekspor dalam cadangan; mungkin disinkronkan ke perangkat pasangan melalui Interconnect (bisa dinonaktifkan di pengaturan Interconnect).';
-  @override
-  String get video_opensubtitles_settings_hint =>
-      'Kredensial API tidak pernah diekspor dalam cadangan; mungkin disinkronkan ke perangkat pasangan melalui Interconnect (bisa dinonaktifkan di pengaturan Interconnect).';
-  @override
-  String get sync_interconnect_service_config_toggle =>
-      'Sinkronkan konfigurasi layanan dari host';
-  @override
-  String get sync_interconnect_service_config_toggle_desc =>
-      'Terima pengaturan layanan eksternal dan kunci API (Jimaku, TMDB, Torznab, OpenSubtitles, pelacakan) dari host pasangan melalui kanal Interconnect terenkripsi. Memerlukan TLS.';
-  @override
-  String get video_setting_subtitle_backfill =>
-      'Ambil subtitle otomatis setelah scraping';
-  @override
-  String get video_setting_subtitle_backfill_hint =>
-      'Ketika scrape selesai, video yang masih belum memiliki subtitle mendapat satu dari sumber online Anda yang dikonfigurasi. Tidak pernah mengganti subtitle yang sudah ada.';
-  @override
-  String get video_setting_subtitle_sources_section => 'Sumber subtitle online';
-  @override
-  String get video_subtitle_no_source_configured =>
-      'Subtitle tidak ditemukan · atur sumber subtitle online';
-  @override
-  String get anime_download_subs_retrying =>
-      'Subtitle: belum tersedia — akan mencoba ulang secara otomatis';
-  @override
-  String get video_jimaku_language_follow_video => 'Ikuti bahasa video';
-  @override
-  String get video_setting_jimaku_default_language_hint =>
-      'Default ke bahasa video itu sendiri (trek audio / metadata scrape). Pilih satu untuk selalu mengutamakan bahasa tersebut.';
-  @override
-  String get onboarding_title => 'Memulai';
-  @override
-  String get onboarding_welcome_headline => 'Selamat datang!';
-  @override
-  String get onboarding_feature_anki => 'Kartu flash Anki';
-  @override
-  String get onboarding_feature_anki_hint =>
-      'Hubungkan AnkiConnect atau AnkiDroid untuk membuat kartu flash';
-  @override
-  String get onboarding_feature_backup => 'Cadangan & sinkronisasi';
-  @override
-  String get onboarding_feature_backup_hint =>
-      'Cadangkan data Anda ke Google Drive, WebDAV, dan backend lainnya';
-  @override
-  String get onboarding_feature_interconnect => 'Interkoneksi perangkat';
-  @override
-  String get onboarding_feature_interconnect_hint =>
-      'Pasangkan perangkat di LAN Anda untuk berbagi perpustakaan dan progres';
-  @override
-  String get onboarding_step_dictionary_action => 'Buka manajer kamus';
-  @override
-  String get onboarding_step_anki_title => 'Siapkan Anki';
-  @override
-  String get onboarding_step_anki_action => 'Buka pengaturan pembuatan kartu';
-  @override
-  String get onboarding_step_backup_title => 'Siapkan cadangan';
-  @override
-  String get onboarding_step_backup_body =>
-      'Pilih backend cadangan dan masuk, atau ekspor file cadangan lokal.';
-  @override
-  String get onboarding_step_backup_action => 'Buka pengaturan cadangan';
-  @override
-  String get onboarding_step_interconnect_title => 'Siapkan interkoneksi';
-  @override
-  String get onboarding_step_interconnect_body =>
-      'Aktifkan interkoneksi dan pasangkan dengan perangkat lain di LAN Anda untuk berbagi perpustakaan, progres, dan pencarian.';
-  @override
-  String get onboarding_step_interconnect_action =>
-      'Buka pengaturan interkoneksi';
-  @override
-  String get onboarding_finish_title => 'Semuanya siap';
-  @override
-  String get onboarding_finish_body =>
-      'Anda bisa membuka panduan ini kapan saja dari Pengaturan > Sistem.';
-  @override
-  String get onboarding_action_next => 'Berikutnya';
-  @override
-  String get onboarding_action_finish => 'Selesai';
-  @override
-  String get onboarding_action_skip => 'Lewati untuk sekarang';
-  @override
-  String get onboarding_reopen => 'Panduan memulai';
-  @override
-  String get onboarding_welcome_body =>
-      'Atur bahasa antarmuka dan tema Anda terlebih dahulu — langkah-langkah berikutnya akan memandu Anda melalui sisanya.';
-  @override
-  String get onboarding_features_title => 'Pilih yang Anda gunakan';
-  @override
-  String get onboarding_features_modules_label =>
-      'Tab perpustakaan (yang tidak dicentang disembunyikan dari bilah navigasi; bisa diubah kapan saja di Pengaturan)';
-  @override
-  String get onboarding_features_setup_label =>
-      'Apa yang akan diatur selanjutnya';
-  @override
-  String get onboarding_feature_manga => 'Perpustakaan manga';
-  @override
-  String get onboarding_feature_manga_hint => 'Baca manga dengan pencarian OCR';
-  @override
-  String get onboarding_feature_video => 'Perpustakaan video';
-  @override
-  String get onboarding_feature_video_hint =>
-      'Tonton video dengan pencarian subtitle dan pembuatan kartu';
-  @override
-  String get onboarding_feature_games => 'Perpustakaan galgame';
-  @override
-  String get onboarding_feature_games_hint =>
-      'Luncurkan galgame dengan pencarian text-hook (hanya Windows)';
-  @override
-  String get onboarding_feature_pack => 'Paket rekomendasi (kamus + audio)';
-  @override
-  String get onboarding_feature_pack_hint =>
-      'Satu unduhan menyiapkan kamus Jepang plus audio pengucapan JA/EN';
-  @override
-  String get onboarding_step_pack_title => 'Instal paket rekomendasi';
-  @override
-  String get onboarding_step_pack_body =>
-      'Paket rekomendasi membundel kamus kata, aksen nada, dan frekuensi Jepang plus database audio pengucapan Jepang/Inggris. Unduh dan impor di sini; mengimpor mengganti data lokal, jadi jalankan pada instalasi baru. Belajar bahasa lain? Gunakan manajer kamus untuk mengimpor kamus Anda sendiri.';
-  @override
-  String get onboarding_step_pack_download_action => 'Unduh dan impor';
-  @override
-  String get onboarding_step_pack_import_existing_action =>
-      'Impor paket yang sudah diunduh';
-  @override
-  String get onboarding_step_pack_pick_action => 'Pilih file paket lokal';
-  @override
-  String get onboarding_pack_downloading =>
-      'Mengunduh... batalkan kapan saja, dilanjutkan lain kali';
-  @override
-  String onboarding_pack_download_failed({required Object message}) =>
-      'Unduhan gagal: ${message}';
-  @override
-  String get onboarding_step_extension_title => 'Ekstensi browser';
-  @override
-  String get onboarding_step_extension_body =>
-      'Instal ekstensi browser pendamping untuk mencari kata di halaman web mana pun.';
-  @override
-  String get onboarding_step_extension_action => 'Buka panduan ekstensi';
-  @override
-  String get onboarding_step_fonts_title => 'Font bacaan';
-  @override
-  String get onboarding_step_fonts_body =>
-      'Impor font kustom dan pilih mana yang digunakan oleh UI, teks buku, dan kamus.';
-  @override
-  String get settings_section_modules => 'Modul fitur';
-  @override
-  String get module_toggle_hint =>
-      'Tampilkan tab perpustakaan ini di bilah navigasi; matikan untuk menyembunyikannya';
-  @override
-  String get video_setting_youtube_quality => 'Kualitas YouTube';
-  @override
-  String get video_setting_youtube_quality_hint =>
-      'Mulai streaming pada tier tertinggi hingga target ini; Otomatis mengutamakan pemutaran lancar (codec ramah perangkat keras, hingga 1080p)';
-  @override
-  String get library_view_discover => 'Jelajahi';
-  @override
-  String get manga_discovery_section_trending => 'Trending';
-  @override
-  String get manga_discovery_section_popular => 'Populer';
-  @override
-  String get manga_discovery_section_top_rated => 'Rating tertinggi';
-  @override
-  String get manga_discovery_section_latest_finished => 'Baru selesai';
-  @override
-  String get manga_discovery_load_failed => 'Tidak bisa memuat umpan jelajahi.';
-  @override
-  String get manga_discovery_match_section => 'Baca dari sumber';
-  @override
-  String get manga_discovery_match_running =>
-      'Mencocokkan di sumber Anda yang aktif...';
-  @override
-  String get manga_discovery_match_none =>
-      'Tidak ditemukan kecocokan di sumber yang aktif.';
-  @override
-  String get manga_discovery_status_releasing => 'Berlanjut';
-  @override
-  String get manga_discovery_status_finished => 'Selesai';
-  @override
-  String get manga_discovery_status_hiatus => 'Hiatus';
-  @override
-  String get manga_discovery_status_cancelled => 'Dibatalkan';
-  @override
-  String get manga_discovery_status_not_yet_released => 'Belum dirilis';
-  @override
-  String manga_discovery_source_popular({required Object source}) =>
-      'Populer di ${source}';
-  @override
-  String get mihon_extension_error => 'Error ekstensi';
-  @override
-  String get discovery_all_sources => 'Semua sumber';
-  @override
-  String get discovery_search_hint => 'Cari sumber daya online';
-  @override
-  String get discovery_enter_query_hint => 'Masukkan kata kunci untuk mencari';
-  @override
-  String get discovery_empty => 'Tidak ada hasil';
-  @override
-  String get discovery_partial_failure => 'Beberapa sumber tidak tersedia';
-  @override
-  String get discovery_load_more => 'Muat lebih banyak';
-  @override
-  String get discovery_download_queued => 'Ditambahkan ke unduhan';
-  @override
-  String get discovery_torrent_pushed => 'Tugas torrent ditambahkan';
-  @override
-  String get discovery_torrent_failed => 'Gagal menambahkan tugas torrent';
-  @override
-  String get discovery_kind_novel => 'Novel';
-  @override
-  String get discovery_kind_audiobook => 'Buku audio';
-  @override
-  String get discovery_source_pick_hint =>
-      'Pilih sumber untuk dijelajahi, atau ketik kata kunci untuk mencari setiap sumber';
-  @override
-  String get discovery_source_query_required =>
-      'Sumber ini hanya mendukung pencarian kata kunci';
-  @override
-  String get manga_discovery_sources_browse => 'Jelajahi sumber';
-  @override
-  String get discovery_kind_manga => 'Manga';
-  @override
-  String get game_capture_workbench_tab => 'Ruang kerja tangkapan';
-  @override
-  String get video_builtin_sources_title => 'Sumber bawaan';
-  @override
-  String get video_resource_no_provider_title =>
-      'Tidak ada indexer sumber daya yang dikonfigurasi';
-  @override
-  String get video_subtitle_no_provider_title =>
-      'Tidak ada penyedia subtitle yang dikonfigurasi';
-  @override
-  String get video_subtitle_no_provider_hint =>
-      'Masukkan kunci API Jimaku atau aktifkan OpenSubtitles di Pengaturan, Unduhan, Penyedia sumber daya dan subtitle eksternal.';
-  @override
-  String get anime_download_require_subs => 'Subtitle diperlukan';
-  @override
-  String get video_jimaku_scope_hint =>
-      'Subtitle Jepang untuk anime dan judul live-action Jepang. Diperlukan kunci API gratis.';
-  @override
-  String get video_builtin_apibay_hint =>
-      'Film dan acara TV. Indeks publik, tidak perlu akun.';
-  @override
-  String get video_builtin_knaben_hint =>
-      'Film dan acara TV. Mengagregasi beberapa indexer publik.';
-  @override
-  String get video_jimaku_enabled_hint =>
-      'Nonaktif berarti Jimaku dilewati meskipun kunci API tersimpan.';
-  @override
-  String get discovery_sources_settings_title => 'Sumber pencarian';
-  @override
-  String get discovery_sources_settings_hint =>
-      'Sumber bawaan mana yang berpartisipasi dalam pencarian Semua sumber halaman Jelajahi. Memilih satu sumber di dropdown sumber selalu berfungsi, bahkan saat dinonaktifkan di sini.';
-  @override
-  String get video_builtin_sources_hint =>
-      'Dikirimkan bersama aplikasi: tanpa akun, tanpa kunci API. Nonaktifkan satu untuk mengecualikannya dari pencarian sumber daya.';
-  @override
-  String get video_builtin_nyaa_hint =>
-      'Hanya anime. Film dan acara TV dicakup oleh dua indexer publik di bawah.';
-  @override
-  String get video_resource_no_provider_hint =>
-      'Pencarian ini tidak memiliki penyedia untuk dikueri. Aktifkan kembali sumber bawaan, atau tambahkan indexer Torznab, di Pengaturan, Unduhan, Penyedia sumber daya dan subtitle eksternal.';
-  @override
-  String discovery_source_kinds_label({required Object kinds}) =>
-      'Mencakup: ${kinds}';
-  @override
-  String get video_source_scrape_rescrape_source => 'Scrape ulang sumber ini';
-  @override
-  String get video_source_scrape_run_detail_title => 'Hasil scrape';
-  @override
-  String get video_source_scrape_run_no_issues =>
-      'Tidak ada peringatan atau error yang dicatat.';
-  @override
-  String get video_source_scrape_manual_search_title =>
-      'Tentukan karya secara manual';
-  @override
-  String get video_source_scrape_manual_search_hint =>
-      'Cari penyedia metadata berdasarkan judul, lalu pilih karya yang benar.';
-  @override
-  String get video_source_scrape_manual_search_action => 'Cari';
-  @override
-  String get video_source_scrape_manual_search_empty => 'Tidak ada hasil';
-  @override
-  String get profile_media_manga => 'Manga';
-  @override
-  String get profile_media_game => 'Game';
-  @override
-  String get profile_media_browser => 'Browser';
-  @override
-  String get mihon_store_remove => 'Hapus toko ekstensi';
-  @override
-  String get video_import_folder_as_source_hint =>
-      'Terus pindai folder ini untuk video baru';
-  @override
-  String get manga_import_folder_as_source_hint =>
-      'Terus pindai folder ini untuk manga baru';
-  @override
-  String get download_no_managed_video_source =>
-      'Belum ada sumber video terkelola. Unduhan memerlukan folder video lokal sebagai tujuan.';
-  @override
-  String get download_add_video_source => 'Tambah sumber video';
-  @override
-  String get video_subtitle_prev_cue_align =>
-      'Selaraskan baris sebelumnya ke sekarang';
-  @override
-  String get video_subtitle_next_cue_align =>
-      'Selaraskan baris berikutnya ke sekarang';
-  @override
-  String video_control_custom_action({required Object index}) =>
-      'Pintasan ${index}';
-  @override
-  String get video_control_custom_action_none => 'Tidak ditetapkan';
-  @override
-  String get settings_destination_storage => 'Penyimpanan';
-  @override
-  String get settings_destination_storage_summary =>
-      'Lokasi data dan penggunaan disk';
-  @override
-  String get storage_overview_section => 'Penggunaan disk';
-  @override
-  String get storage_overview_total => 'Total';
-  @override
-  String get storage_overview_refresh => 'Pindai ulang';
-  @override
-  String get storage_overview_scanning => 'Memindai...';
-  @override
-  String get storage_category_books => 'Buku & buku audio';
-  @override
-  String get storage_category_dictionaries => 'Kamus';
-  @override
-  String get storage_category_video_downloads => 'Unduhan video';
-  @override
-  String get storage_category_covers => 'Sampul & thumbnail';
-  @override
-  String get storage_category_subtitles => 'Subtitle';
-  @override
-  String get storage_category_shaders => 'Shader video';
-  @override
-  String get storage_category_custom_fonts => 'Font kustom';
-  @override
-  String get storage_category_web => 'Arsip web & data browser';
-  @override
-  String get storage_category_exports => 'Ekspor';
-  @override
-  String get storage_category_database => 'Database & data internal';
-  @override
-  String get storage_category_ocr_models => 'Model OCR manga';
-  @override
-  String storage_entry_more_rest({required Object n, required Object size}) =>
-      '${n} item lagi, ${size} total';
-  @override
-  String storage_entry_delete_confirm_title({required Object name}) =>
-      'Hapus ${name}?';
-  @override
-  String get storage_entry_delete_book_confirm_body =>
-      'Ini menghapus buku, progres bacaan, dan salinan audio pasangannya dari perangkat ini.';
-  @override
-  String get storage_entry_delete_dictionary_confirm_body =>
-      'Ini menghapus kamus dan data yang diimpornya.';
-  @override
-  String get storage_entry_delete_done => 'Dihapus';
-  @override
-  String storage_entry_delete_failed({required Object reason}) =>
-      'Penghapusan gagal: ${reason}';
-  @override
-  String get storage_modules_anime4k_title => 'Shader Anime4K';
-  @override
-  String get storage_modules_anime4k_hint =>
-      'Bisa diunduh lagi kapan saja di pengaturan video';
-  @override
-  String storage_modules_anime4k_delete_done({required Object n}) =>
-      'Dihapus ${n} file shader';
-  @override
-  String get storage_bundled_section => 'Komponen bawaan';
-  @override
-  String get storage_bundled_hint =>
-      'Dikirimkan bersama penginstal; file yang dihapus akan kembali pada pembaruan berikutnya, ditampilkan hanya sebagai referensi.';
-  @override
-  String get storage_dictionary_delete_incomplete =>
-      'Kamus masih ada setelah penghapusan, lihat log error';
-  @override
-  String get module_extension_label => 'Ekstensi browser';
-  @override
-  String get onboarding_feature_books => 'Perpustakaan novel';
-  @override
-  String get onboarding_feature_books_hint =>
-      'Baca novel EPUB dengan pencarian kamus dan sinkronisasi buku audio';
-  @override
-  String get onboarding_feature_extension_hint =>
-      'Cari kata di halaman web mana pun (hanya desktop)';
-  @override
-  String get video_setting_tap_toggles_playback =>
-      'Ketuk video untuk putar/jeda';
-  @override
-  String get video_setting_tap_toggles_playback_hint =>
-      'Matikan agar mengetuk video hanya menampilkan kontrol';
-  @override
-  String get manga_ocr_engine_auto_desc =>
-      'Mengutamakan mesin offline yang sudah Anda siapkan; tidak pernah mengunggah ke Lens sendiri.';
-  @override
-  String get manga_ocr_engine_local_onnx_desc =>
-      'Sepenuhnya offline, kualitas terbaik. Perlu unduhan model satu kali dan lambat di perangkat keras lama.';
-  @override
-  String get manga_ocr_engine_google_lens_desc =>
-      'Perlu internet dan mengunggah gambar halaman ke Google. Cepat tanpa unduhan, tetapi kualitas di bawah model lokal.';
-  @override
-  String get manga_ocr_engine_external_desc =>
-      'Memanggil baris perintah mokuro yang Anda instal sendiri. Hanya desktop.';
-  @override
-  String get manga_ocr_engine_paired_host_desc =>
-      'Menyerahkan pekerjaan ke perangkat pasangan di jaringan Anda. Tidak ada yang diunduh di sini.';
-  @override
-  String manga_ocr_model_disk_usage({required Object size}) =>
-      'Menggunakan ${size} di disk';
-  @override
-  String manga_ocr_model_download_size({required Object size}) =>
-      'Memerlukan ${size}';
-  @override
-  String manga_ocr_delete_done_freed({required Object size}) =>
-      'Model dihapus, dibebaskan ${size}';
-  @override
-  String get manga_ocr_model_unused_by_engine =>
-      'Mesin saat ini tidak menggunakan file model lokal ini.';
-  @override
-  String manga_ocr_download_total_progress({
-    required Object done,
-    required Object total,
-  }) => '${done} dari ${total}';
-  @override
-  String get media_source_network_subtitle_video =>
-      'Perpustakaan jarak jauh WebDAV (streaming langsung)';
-  @override
-  String get jellyfin_settings_title => 'Server media (Jellyfin / Emby)';
-  @override
-  String get jellyfin_server_url => 'URL server';
-  @override
-  String get jellyfin_sign_in => 'Masuk';
-  @override
-  String get jellyfin_sign_out => 'Keluar';
-  @override
-  String get jellyfin_sign_in_failed => 'Gagal masuk';
-  @override
-  String get jellyfin_settings_hint =>
-      'Video di server ditampilkan di perpustakaan video dan streaming langsung.';
-  @override
-  String get video_setting_mpv_lua_scripts => 'Muat skrip Lua';
-  @override
-  String get video_setting_mpv_lua_scripts_hint =>
-      'Muat semua file .lua di folder mpv_scripts ke pemutar. Mematikan berlaku saat video berikutnya dibuka.';
-  @override
-  String get video_setting_mpv_lua_scripts_import => 'Impor skrip Lua';
-  @override
-  String get video_setting_mpv_lua_scripts_imported => 'Skrip diimpor';
-  @override
-  String get video_setting_mpv_lua_scripts_dir_copy =>
-      'Salin path folder skrip';
-  @override
-  String get video_setting_mpv_lua_scripts_dir_copied => 'Path folder disalin';
-  @override
-  String get interconnect_share_statistics => 'Bagikan statistik';
-  @override
-  String get interconnect_share_statistics_hint =>
-      'Waktu membaca dan menonton, jumlah karakter, penghitung pencarian dan pembuatan kartu';
-  @override
-  String get interconnect_share_favorites => 'Bagikan favorit';
-  @override
-  String get interconnect_share_favorites_hint =>
-      'Kata dan kalimat favorit, termasuk pembatalan favorit';
-  @override
-  String get interconnect_share_section => 'Bagikan dengan perangkat pasangan';
-  @override
-  String get interconnect_share_section_footer =>
-      'Ini digabungkan dua arah dengan perangkat pasangan dan aktif secara default. Mematikan satu menghentikan pengiriman dan penerimaan.';
-  @override
-  String get game_hook_mining_no_session_lines =>
-      'Belum ada baris yang ditangkap, jadi tidak ada yang bisa dilampirkan ke kartu ini. Pilih thread teks yang berbeda di ruang kerja.';
-  @override
-  String get shortcut_action_manga_pan_up => 'Geser ke atas';
-  @override
-  String get shortcut_action_manga_pan_down => 'Geser ke bawah';
-  @override
-  String get shortcut_action_manga_pan_left => 'Geser ke kiri';
-  @override
-  String get shortcut_action_manga_pan_right => 'Geser ke kanan';
-  @override
-  String get drag_drop_folder_source_added =>
-      'Folder ditambahkan sebagai sumber perpustakaan dan dipindai.';
-  @override
-  String get drag_drop_folder_source_exists =>
-      'Folder tersebut sudah menjadi sumber perpustakaan.';
-  @override
-  String get sync_pair_invalid_url => 'Format alamat tidak valid';
-  @override
-  String get sync_pair_peer_requires_https =>
-      'Perangkat ini hanya menerima HTTPS. Gunakan alamat https://.';
-  @override
-  String get sync_pair_peer_not_https =>
-      'Peer tidak menggunakan HTTPS di port ini. Gunakan alamat http://.';
-  @override
-  String get sync_pair_not_fushi_discovered =>
-      'Tidak ditemukan perangkat Fushi di alamat ini.';
-  @override
-  String get shortcut_action_popup_play_audio => 'Putar audio kata';
-  @override
-  String get sync_progress_asset_transfer => 'Menyiapkan transfer';
-  @override
-  String get sync_asset_dictionary_upload => 'Unggah kamus';
-  @override
-  String get sync_asset_dictionary_download => 'Unduh kamus';
-  @override
-  String get sync_asset_local_audio_upload => 'Unggah database audio lokal';
-  @override
-  String get sync_asset_local_audio_download => 'Unduh database audio lokal';
-  @override
-  String get sync_asset_upload_hint =>
-      'Mengirim apa yang perangkat ini miliki dan yang tidak dimiliki perangkat jarak jauh. Paket bisa berukuran besar.';
-  @override
-  String get sync_asset_upload_action => 'Unggah';
-  @override
-  String get sync_asset_download_action => 'Unduh';
-  @override
-  String get sync_asset_download_hint =>
-      'Mengambil apa yang dimiliki perangkat jarak jauh dan tidak dimiliki perangkat ini - termasuk entri yang Anda hapus secara lokal.';
-  @override
-  String get sync_asset_legacy_notice_title =>
-      'Sinkronisasi kamus dan audio sekarang manual';
-  @override
-  String get sync_asset_legacy_notice_body =>
-      'Perangkat ini memiliki sinkronisasi otomatis yang aktif untuk kamus dan database audio lokal. Sakelar itu sudah tidak ada - gunakan tindakan Unggah / Unduh di bawah saat Anda ingin mentransfernya. Tidak ada yang dihapus, tetapi kamus baru tidak lagi dicadangkan secara otomatis.';
-  @override
-  String get sync_asset_legacy_notice_dismiss => 'Mengerti';
-  @override
-  String get download_task_add => 'Tambah tugas';
-  @override
-  String get download_task_add_pick_torrent => 'Pilih file torrent';
-  @override
-  String get download_task_add_title_label => 'Judul';
-  @override
-  String get download_task_add_content_kind => 'Jenis konten';
-  @override
-  String get download_task_add_invalid =>
-      'Tautan magnet atau file torrent tidak dikenali';
-  @override
-  String get download_task_add_submitted => 'Tugas ditambahkan';
-  @override
-  String get download_task_search_hint => 'Cari tugas';
-  @override
-  String get download_task_sort_created => 'Tanggal ditambahkan';
-  @override
-  String get download_task_sort_progress => 'Progres';
-  @override
-  String get download_task_sort_status => 'Status';
-  @override
-  String get download_task_no_match => 'Tidak ada tugas yang cocok';
-  @override
-  String subtitle_version_episode_count({required Object n}) => '${n} episode';
-  @override
-  String subtitle_version_unnumbered_count({required Object n}) =>
-      '${n} tanpa nomor';
-  @override
-  String get subtitle_version_ai_translated => 'Diterjemahkan AI';
-  @override
-  String get subtitle_version_content_language => 'Konten';
-  @override
-  String get subtitle_version_show_files => 'Tampilkan file';
-  @override
-  String get subtitle_version_view_files => 'Daftar file';
-  @override
-  String get resource_version_batch => 'Batch';
-  @override
-  String get resource_version_view_flat => 'Semua rilis';
-  @override
-  String get subscription_mode_one_shot => 'Sekali saja';
-  @override
-  String get subscription_mode_ongoing => 'Berlangsung';
-  @override
-  String get subscription_legacy_badge => 'Lama';
-  @override
-  String get subscription_legacy_hint =>
-      'Diimpor dari sistem lama; pemeriksaan otomatis tidak berlaku.';
-  @override
-  String subscription_next_check({required Object time}) =>
-      'Pemeriksaan berikutnya: ${time}';
-  @override
-  String subscription_last_matched({required Object time}) =>
-      'Kecocokan terakhir: ${time}';
-  @override
-  String get subscription_item_status_discovered => 'Menunggu';
-  @override
-  String get subscription_item_status_queued => 'Diantrikan';
-  @override
-  String get subscription_item_status_processed => 'Diimpor';
-  @override
-  String get subscription_item_status_skipped => 'Dilewati';
-  @override
-  String get subscription_item_status_failed => 'Gagal';
-  @override
-  String get subscription_items_empty => 'Belum ada rilis yang dilacak';
-  @override
-  String get subscription_edit_title => 'Edit langganan';
-  @override
-  String get subscription_edit_rule_hint =>
-      'Aturan identitas dan versi tidak bisa diubah di sini. Berlangganan ulang untuk mengganti versi - riwayat dipertahankan.';
-  @override
-  String get subscription_search_hint => 'Cari langganan';
-  @override
-  String get subscription_sort_last_checked => 'Terakhir diperiksa';
-  @override
-  String get subscription_sort_last_matched => 'Kecocokan terakhir';
-  @override
-  String get subscription_show_items => 'Riwayat episode';
-  @override
-  String get subscription_sort_created => 'Tanggal ditambahkan';
-  @override
-  String get subscription_no_match => 'Tidak ada langganan yang cocok';
-  @override
-  String get download_subscription_start_episode_invalid =>
-      'Masukkan bilangan bulat (0 atau lebih), atau biarkan kosong';
-  @override
-  String get download_subscription_source_unavailable =>
-      'Target saat ini (tidak tersedia)';
-  @override
-  String resource_version_episode_count({required Object n}) => '${n} episode';
-  @override
-  String get resource_version_show_files => 'Tampilkan file';
-  @override
-  String get manga_online_detail_load_failed => 'Tidak bisa memuat manga ini.';
-  @override
-  String get manga_online_error_view_detail => 'Lihat detail';
-  @override
-  String get discovery_sources_unavailable => 'Semua sumber tidak tersedia';
-  @override
-  String get font_target_game_lookup => 'Font jendela pencarian game';
-  @override
-  String get gal_hook_text_font => 'Font jendela pencarian game';
-  @override
-  String get gal_hook_text_font_hint =>
-      'Pilih font dari pustaka font terkelola. Font aktif pertama yang digunakan.';
-  @override
-  String get gal_hook_text_letter_spacing => 'Jarak huruf';
-  @override
-  String get gal_hook_text_letter_spacing_hint =>
-      'Sesuaikan jarak antar karakter tanpa mengubah pengujian hit pencarian.';
-  @override
-  String get gal_hook_text_line_height => 'Tinggi baris';
-  @override
-  String get gal_hook_text_line_height_hint =>
-      'Sesuaikan jarak vertikal baris yang terbungkus.';
-  @override
-  String get gal_hook_text_bold => 'Teks tebal';
-  @override
-  String get gal_hook_text_bold_hint =>
-      'Gunakan teks semitebal untuk keterbacaan yang lebih baik di atas grafis game.';
-  @override
-  String get gal_hook_text_alignment => 'Perataan teks';
-  @override
-  String get gal_hook_text_alignment_center => 'Tengah';
-  @override
-  String get gal_hook_text_alignment_left => 'Kiri';
-  @override
-  String get gal_hook_text_color => 'Warna teks';
-  @override
-  String get gal_hook_overlay_legibility_section => 'Jendela dan keterbacaan';
-  @override
-  String get gal_hook_text_background_color => 'Warna latar jendela';
-  @override
-  String get gal_hook_text_background_opacity => 'Opasitas latar jendela';
-  @override
-  String get gal_hook_text_background_opacity_hint =>
-      'Atur ke 0% untuk jendela transparan bergaya lirik desktop.';
-  @override
-  String get gal_hook_text_outline_color => 'Warna garis tepi';
-  @override
-  String get gal_hook_text_outline_width => 'Lebar garis tepi';
-  @override
-  String get gal_hook_text_outline_width_hint =>
-      'Atur ke 0 untuk menonaktifkan garis tepi; bayangan halus tetap ada.';
-  @override
-  String get gal_hook_text_padding => 'Padding teks horizontal';
-  @override
-  String get gal_hook_text_padding_hint =>
-      'Jauhkan teks dari tepi jendela dan pegangan resize.';
-  @override
-  String get gal_hook_text_corner_radius => 'Radius sudut jendela';
-  @override
-  String get gal_hook_text_corner_radius_hint =>
-      'Sesuaikan radius sudut latar belakang.';
-  @override
-  String get storage_shaders_delete_anime4k => 'Hapus shader Anime4K';
-  @override
-  String get video_jimaku_series_lookup_degraded =>
-      'Tidak bisa mengonfirmasi seri di AniList kali ini, jadi hasil ini berasal dari pencarian judul biasa dan mungkin mencampur musim lain dari seri yang sama.';
-  @override
-  String get dict_style_tab_visual => 'Visual';
-  @override
-  String get dict_style_tab_code => 'CSS';
-  @override
-  String get dict_style_scope_all => 'Semua kamus';
-  @override
-  String get dict_style_part_entry_card => 'Kartu entri';
-  @override
-  String get dict_style_part_expression => 'Kata utama';
-  @override
-  String get dict_style_part_ruby => 'Furigana';
-  @override
-  String get dict_style_part_deinflection_tag => 'Rantai deinfleksi';
-  @override
-  String get dict_style_part_frequency => 'Frekuensi';
-  @override
-  String get dict_style_part_pitch => 'Aksen nada';
-  @override
-  String get dict_style_part_dictionary_label => 'Nama kamus';
-  @override
-  String get dict_style_part_glossary_content => 'Definisi';
-  @override
-  String get dict_style_part_glossary_tag => 'Tag definisi';
-  @override
-  String get dict_style_prop_text_color => 'Warna teks';
-  @override
-  String get dict_style_prop_background => 'Sorotan';
-  @override
-  String get dict_style_prop_bold => 'Tebal';
-  @override
-  String get dict_style_prop_italic => 'Miring';
-  @override
-  String get dict_style_prop_underline => 'Garis bawah';
-  @override
-  String get dict_style_prop_font_scale => 'Ukuran font';
-  @override
-  String get dict_style_prop_corner_radius => 'Radius sudut';
-  @override
-  String get dict_style_part_reset => 'Reset bagian';
-  @override
-  String get dict_style_reset_all => 'Reset semua';
-  @override
-  String get dict_style_global_only =>
-      'Hanya dapat disesuaikan untuk semua kamus';
-  @override
-  String get dict_style_preview_title => 'Pratinjau';
-  @override
-  String get dict_style_pick_hint =>
-      'Ketuk bagian di pratinjau untuk meloncati';
-  @override
-  String get dict_style_prop_default => 'Default';
-  @override
-  String get dict_style_part_expression_tag => 'Tag ekspresi';
-  @override
-  String get dict_style_prop_on => 'Aktif';
-  @override
-  String get dict_style_prop_off => 'Nonaktif';
-  @override
-  String get dict_style_title => 'Gaya kamus';
-  @override
-  String get video_source_scrape_anidb_client => 'Nama klien AniDB';
-  @override
-  String get video_source_scrape_anidb_client_hint =>
-      'Nama klien API HTTP AniDB terdaftar; biarkan kosong untuk hanya menggunakan katalog judul yang di-cache';
-  @override
-  String get video_source_scrape_anidb_client_version => 'Versi klien AniDB';
-  @override
-  String get video_source_scrape_anidb_client_version_hint =>
-      'Versi positif yang terdaftar di AniDB; API HTTP tetap nonaktif sampai kedua kolom valid';
-  @override
-  String get video_scrape_view_source => 'Lihat detail sumber';
-  @override
-  String get video_setting_auto_scrape_hint =>
-      'Identifikasi dan ambil metadata video secara otomatis setelah pemindaian perpustakaan';
-  @override
-  String get video_resource_identity_provider => 'Sumber identitas sumber daya';
-  @override
-  String get video_source_scrape_clear_all => 'Hapus semua catatan scrape';
-  @override
-  String get video_source_scrape_clear_all_hint =>
-      'Hapus semua metadata scrape video dan sampul serta file NFO yang dibuat Fushi.';
-  @override
-  String get video_source_scrape_clear_all_confirm_title =>
-      'Hapus semua catatan scrape video?';
-  @override
-  String get video_source_scrape_clear_all_confirm_body =>
-      'Ini menghapus semua metadata yang di-scrape dan pengikatan sumber, mengosongkan hasil Seri, dan menghapus sampul dan file NFO yang tidak dimodifikasi yang dibuat oleh Fushi. File video, entri perpustakaan, grup, progres tontonan, subtitle, tag, sampul yang dipilih secara manual, dan sidecar yang dimodifikasi pengguna dipertahankan. Ini tidak bisa dibatalkan.';
-  @override
-  String get video_source_scrape_clear_all_confirm_action => 'Hapus';
-  @override
-  String get video_source_scrape_clear_all_completed =>
-      'Semua catatan scrape video telah dihapus.';
-  @override
-  String get video_source_scrape_clear_all_completed_protected =>
-      'Catatan scrape dihapus. File sidecar yang dimodifikasi atau tidak dapat diverifikasi dipertahankan.';
-  @override
-  String get video_source_scrape_clear_all_busy =>
-      'Pemindaian atau scrape video masih berjalan. Coba lagi setelah selesai.';
-  @override
-  String get video_source_scrape_clear_all_failed =>
-      'Tidak bisa menghapus semua catatan scrape. Tidak ada file pengguna yang tidak terverifikasi yang dihapus.';
-  @override
-  String get video_source_scrape_clear_all_in_progress =>
-      'Pembersihan catatan scrape sudah berlangsung.';
-  @override
-  String get game_session_japanese_locale => 'Locale Jepang';
-  @override
-  String get game_session_japanese_locale_hint =>
-      'Game dimulai dengan locale Jepang (CP932). Jika teksnya terlihat kacau atau muncul error skrip, atur locale Jepang game ini ke Tidak Pernah.';
-  @override
-  String get onboarding_anki_intro_body =>
-      'Anki adalah aplikasi kartu flash pengulangan berjarak gratis: kata-kata baru menjadi kartu, dan ulasan dijadwalkan mengikuti kurva kelupaan. Setelah pencarian, Fushi bisa mengubah kata menjadi kartu Anki dalam satu ketukan, dengan makna, kalimat, audio, dan tangkapan layar.';
-  @override
-  String get onboarding_anki_setup_desktop_hint =>
-      'Instal aplikasi Anki desktop, lalu tambahkan add-on AnkiConnect: di Anki, buka Tools - Add-ons - Get Add-ons dan masukkan kode 2055492159. Biarkan Anki berjalan saat membuat kartu.';
-  @override
-  String get onboarding_anki_setup_ios_hint =>
-      'Dengan AnkiMobile terinstal, menambahkan kartu langsung berfungsi. Untuk fitur lengkap, hubungkan ke Anki yang berjalan di komputer dalam jaringan yang sama melalui AnkiConnect.';
-  @override
-  String get onboarding_anki_backend_label => 'Koneksi';
-  @override
-  String get onboarding_anki_test_action => 'Tes koneksi';
-  @override
-  String onboarding_anki_test_success({required Object count}) =>
-      'Terhubung: ditemukan ${count} dek';
-  @override
-  String get onboarding_anki_get_anki_action => 'Dapatkan Anki (desktop)';
-  @override
-  String get onboarding_anki_get_ankidroid_action => 'Dapatkan AnkiDroid';
-  @override
-  String get onboarding_anki_mobile_ankiconnect_title =>
-      'Lanjutan: gunakan AnkiConnect di perangkat ini';
-  @override
-  String get onboarding_anki_mobile_ankiconnect_hint =>
-      'Perangkat ini juga bisa membuat kartu ke Anki yang berjalan di komputer dalam jaringan yang sama: aktifkan AnkiConnect di pengaturan pembuatan kartu dan masukkan alamat komputer.';
-  @override
-  String get onboarding_anki_fsrs_title => 'Beralih Anki ke FSRS';
-  @override
-  String get onboarding_anki_fsrs_body =>
-      'Anki dilengkapi FSRS, penjadwal yang jauh lebih baik dari default SM-2 berusia 30 tahun: retensi lebih baik dengan ulasan lebih sedikit. Di Anki, buka opsi dek dan aktifkan FSRS (satu sakelar mencakup seluruh koleksi). Ini harus dilakukan di dalam Anki sendiri.';
-  @override
-  String get onboarding_step_pack_browser_action => 'Unduh di browser';
-  @override
-  String get onboarding_anki_setup_android_hint =>
-      'Instal AnkiDroid dan buka sekali untuk menyelesaikan pengaturan awalnya. Kembali di Fushi, ketuk Izinkan pada dialog izin yang muncul saat kartu pertama Anda - tidak perlu mengubah pengaturan AnkiDroid.';
-  @override
-  String get onboarding_anki_install_addon_action =>
-      'Instal add-on AnkiConnect';
-  @override
-  String get onboarding_anki_addon_installed =>
-      'AnkiConnect terinstal. Jalankan (atau restart) Anki, lalu ketuk Tes koneksi.';
-  @override
-  String get onboarding_anki_addon_no_anki =>
-      'Folder data Anki tidak ditemukan. Instal Anki dan buka sekali, lalu coba lagi.';
-  @override
-  String onboarding_anki_addon_failed({required Object message}) =>
-      'Instalasi gagal: ${message}';
-  @override
-  String get game_hook_reason_capability_probe_failed =>
-      'Komponen tangkapan tidak menjawab pemeriksaan kapabilitas. Ditemukan di disk tetapi tidak bisa dijalankan atau tidak merespons tepat waktu - antivirus mungkin memblokirnya, Fushi mungkin tidak memiliki izin untuk meluncurkannya, atau proses helper yang tersisa mungkin macet. Tutup semua game, periksa karantina antivirus Anda, lalu coba lagi.';
-  @override
-  String get download_backend_setup_title => 'Siapkan backend unduhan';
-  @override
-  String get download_backend_setup_intro =>
-      'Pilih mesin mana yang menjalankan unduhan Anda. Anda bisa mengubahnya kapan saja di pengaturan unduhan.';
-  @override
-  String get download_backend_embedded_hint =>
-      'Disarankan. Unduhan berjalan di dalam Fushi — tidak perlu memasang apa pun lagi.';
-  @override
-  String get download_backend_qb_hint =>
-      'Hubungkan Fushi ke qBittorrent WebUI yang sudah Anda jalankan.';
-  @override
-  String get download_backend_setup_start => 'Siapkan sekarang';
-  @override
-  String get download_backend_embedded_unavailable =>
-      'Pemasangan ini tidak memiliki runtime mesin bawaan. Pasang ulang paket lengkap, atau gunakan qBittorrent eksternal.';
-  @override
-  String get download_backend_qb_url_invalid =>
-      'Masukkan alamat lengkap, mis. http://127.0.0.1:8080';
-  @override
-  String get mihon_store_zero_extensions =>
-      'Repositori ini mengembalikan 0 ekstensi. Alamatnya mungkin menunjuk ke indeks lama.';
-  @override
-  String get mihon_store_edit => 'Ubah alamat repositori';
-  @override
-  String get manga_ocr_download_resume => 'Lanjutkan unduhan';
-  @override
-  String get manga_ocr_import => 'Impor model lokal';
-  @override
-  String get manga_ocr_import_title => 'Impor model yang sudah diunduh';
-  @override
-  String get manga_ocr_import_intro =>
-      'Jika unduhan di dalam aplikasi tidak berhasil, unduh sendiri berkas-berkas ini lalu impor di sini. Berkas zip yang memuatnya juga bisa.';
-  @override
-  String get manga_ocr_import_copy_urls => 'Salin tautan unduhan';
-  @override
-  String get manga_ocr_import_urls_copied => 'Tautan unduhan disalin';
-  @override
-  String get manga_ocr_import_pick_folder => 'Pilih folder';
-  @override
-  String get manga_ocr_import_pick_files => 'Pilih berkas';
-  @override
-  String get manga_ocr_import_running => 'Mengimpor…';
-  @override
-  String manga_ocr_import_done({required Object count}) =>
-      '${count} berkas diimpor';
-  @override
-  String get manga_ocr_import_matched_nothing =>
-      'Tidak ada berkas model yang dapat dipakai dikenali';
-  @override
-  String manga_ocr_import_size_mismatch({
-    required Object file,
-    required Object expected,
-    required Object actual,
-  }) => 'Ukuran ${file} salah: diharapkan ${expected}, diperoleh ${actual}';
-  @override
-  String manga_ocr_import_still_missing({required Object count}) =>
-      'Masih kurang ${count} berkas';
-  @override
-  String get manga_ocr_import_failed => 'Impor model gagal';
-  @override
-  String get manga_tap_ocr_notice_title => 'Ketuk untuk mengenali';
-  @override
-  String get manga_tap_ocr_notice_body =>
-      'Halaman ini belum punya data teks. Fushi akan mengenalinya dengan mesin OCR yang Anda pilih di pengaturan, lalu Anda bisa mengetuk kata untuk mencarinya. Mesin bisa diganti atau fitur ini dimatikan di Pengaturan › OCR Manga.';
-  @override
-  String get manga_tap_ocr_notice_confirm => 'Kenali sekarang';
-  @override
-  String get manga_tap_ocr_running => 'Mengenali halaman ini…';
-  @override
-  String get manga_tap_to_ocr => 'Ketuk untuk mengenali';
-  @override
-  String get manga_tap_to_ocr_desc =>
-      'Ketuk balon percakapan yang belum dikenali untuk mengenali halaman dan langsung mencari kata.';
-  @override
-  String get manga_ocr_engine_system => 'OCR perangkat';
-  @override
-  String get manga_ocr_engine_system_desc =>
-      'Memakai pengenalan teks bawaan perangkat Anda. Tanpa unduhan, sepenuhnya luring, tidak ada yang diunggah — tetapi jelas lebih lemah pada balon percakapan vertikal dan tulisan tangan dibanding model lokal.';
-  @override
-  String get manga_ocr_engine_system_unavailable =>
-      'Perangkat ini tidak punya pengenalan teks bawaan yang tersedia';
-  @override
-  String get manga_tap_ocr_online_lens_only =>
-      'Bab daring tidak disimpan di perangkat, jadi hanya Google Lens yang bisa membacanya — gambar halaman diunggah ke Google.';
-  @override
-  String get settings_destination_services => 'Layanan daring';
-  @override
-  String get settings_destination_services_summary =>
-      'API pihak ketiga, pengindeks, dan server media';
-  @override
-  String get section_services_subtitles => 'Sumber subtitle';
-  @override
-  String get section_services_resources => 'Pengindeks sumber daya';
-  @override
-  String get section_services_metadata => 'Pengambilan metadata';
-  @override
-  String get settings_services_link_subtitle =>
-      'Jimaku, OpenSubtitles, Torznab, Jellyfin, AniDB, dan TMDB dikonfigurasi bersama di sini';
-  @override
-  String get game_hook_btn_replay => 'Putar ulang suara baris ini';
-  @override
-  String get game_hook_btn_recapture => 'Rekam ulang suaranya';
-  @override
-  String get game_hook_btn_follow => 'Ikuti baris baru';
-  @override
-  String get game_hook_btn_passthrough => 'Teruskan klik ke game';
-  @override
-  String get game_hook_btn_transparency => 'Ganti latar';
-  @override
-  String get game_hook_btn_lock => 'Kunci posisi';
-  @override
-  String get game_hook_btn_workbench => 'Buka meja kerja penangkapan';
-  @override
-  String get game_hook_btn_topmost => 'Selalu di atas';
-  @override
-  String get game_hook_btn_close => 'Tutup overlay';
-  @override
-  String get video_jimaku_search_failed => 'Pencarian subtitle gagal';
-  @override
-  String video_subtitle_error_with_code({
-    required Object msg,
-    required Object code,
-  }) => '${msg} (HTTP ${code})';
-  @override
-  String get manga_rescan_run => 'Kenali ulang area terpilih';
-  @override
-  String get manga_rescan_failed => 'Gagal mengenali ulang area terpilih';
-  @override
-  String get manga_rescan_region_updated =>
-      'Area terpilih dikenali ulang dan disimpan ke halaman';
-  @override
-  String get manga_ocr_mobile_note =>
-      'Di ponsel, model-model ini menjalankan mesin lokal untuk OCR satu volume penuh, ketukan, dan area terpilih di pembaca manga.';
-  @override
-  String get manga_rescan_hint =>
-      'Seret kotak di atas teks yang ingin dikenali ulang. Hasilnya menggantikan lapisan teks yang sudah ada di dalam kotak itu.';
-  @override
-  String get manga_rescan_undone =>
-      'Lapisan teks sebelum pemindaian ulang telah dipulihkan';
-  @override
-  String get manga_rescan_undo_failed =>
-      'Tidak dapat memulihkan lapisan teks sebelumnya';
-  @override
-  String get module_tool_toggle_hint =>
-      'Tampilkan tab ini di bilah navigasi; matikan untuk menyembunyikannya';
-  @override
-  String get module_downloads_hidden_hint =>
-      'Tab Unduhan disembunyikan di Pengaturan → Tampilan → Modul fitur; nyalakan lagi untuk mengelola langganan.';
-  @override
-  String get book_file_location_open => 'Buka lokasi berkas';
-  @override
-  String get book_file_location_failed =>
-      'Tidak dapat membuka lokasi berkas buku ini.';
-  @override
-  String storage_entry_database_snapshots_label({required Object n}) =>
-      'Snapshot cadangan basis data (${n} berkas)';
-  @override
-  String get storage_entry_delete_database_snapshots_confirm_body =>
-      'Ini menghapus semua sisa snapshot cadangan basis data (corrupt-bak / pre-restore / salinan migrasi lama). Basis data yang aktif beserta berkas -wal/-shm miliknya tidak disentuh.';
-  @override
-  String get manga_global_search_no_sources =>
-      'Belum ada sumber manga yang aktif. Tambahkan satu di tab Impor.';
-  @override
-  String get manga_global_search_open_sources => 'Ke Impor';
-  @override
-  String get settings_downloads_open_page_hint =>
-      'Buka halaman Unduhan (tugas, sumber daya, langganan)';
-  @override
-  String get download_video_source_required => 'Perlu sumber video';
-  @override
-  String get game_hook_reason_stale_session =>
-      'Sesi penangkapan sebelumnya belum dilepaskan; Fushi sedang mencoba lagi sendiri, tidak perlu melakukan apa pun.';
-  @override
-  String get video_subtitle_delete => 'Hapus berkas subtitle';
-  @override
-  String video_subtitle_delete_confirm({required Object path}) =>
-      'Hapus berkas subtitle ini dari disk? Tindakan ini tidak bisa dibatalkan.\n${path}';
-  @override
-  String video_subtitle_deleted({required Object label}) =>
-      'Berkas subtitle dihapus: ${label}';
-  @override
-  String video_subtitle_delete_failed({required Object label}) =>
-      'Gagal menghapus berkas subtitle: ${label}';
-  @override
-  String get shortcut_action_manga_toggle_chrome => 'Alihkan antarmuka manga';
-  @override
-  String get manga_interface_hide => 'Sembunyikan antarmuka';
-  @override
-  String get manga_interface_show => 'Tampilkan antarmuka';
-  @override
-  String get gal_hook_text_vertical_alignment => 'Perataan vertikal';
-  @override
-  String get gal_hook_text_vertical_alignment_center => 'Tengah';
-  @override
-  String get gal_hook_text_vertical_alignment_top => 'Atas';
-  @override
-  String get storage_entry_external_audio_hint =>
-      'Audio merujuk ke berkas aslinya, tidak memakai penyimpanan aplikasi';
-  @override
-  String get jellyfin_auto_list_title =>
-      'Daftarkan item otomatis saat masuk Video';
-  @override
-  String get jellyfin_auto_list_hint =>
-      'Mati: masuk ke halaman video tidak mengirim permintaan apa pun ke server media; tarik untuk menyegarkan di pustaka video agar item didaftar manual. Disarankan untuk server yang sangat besar, karena pendaftaran otomatis terlihat seperti scraping dan bisa memicu deteksi penyalahgunaan.';
-  @override
-  String get jellyfin_libraries_title => 'Pustaka yang didaftarkan';
-  @override
-  String get jellyfin_libraries_hint =>
-      'Tidak memilih apa pun akan mendaftarkan semua pustaka video. Membatasi ke pustaka yang benar-benar Anda tonton mencegah server raksasa didaftar seluruhnya.';
-  @override
-  String get jellyfin_libraries_load_failed =>
-      'Tidak dapat memuat daftar pustaka';
-  @override
-  String get video_filter_series => 'Seri';
-  @override
-  String get video_filter_series_in => 'Dalam seri';
-  @override
-  String get video_filter_series_standalone => 'Tanpa seri';
-  @override
-  String get manga_source_cloudflare_verify_title => 'Verifikasi situs';
-  @override
-  String get manga_source_cloudflare_verify_hint =>
-      'Selesaikan pemeriksaan Cloudflare di bawah ini. Pemuatan akan dilanjutkan otomatis setelah lolos.';
-  @override
-  String get db_cannot_open_title => 'Lokasi data tidak tersedia';
-  @override
-  String get db_cannot_open_message =>
-      'Fushi tidak dapat membuka atau membuat basis datanya di lokasi data yang dikonfigurasi. Tidak ada yang rusak — folder mungkin hilang, hanya-baca, atau berada di drive yang terputus. Periksa lokasi data di Pengaturan, atau mulai ulang untuk memakai lokasi default.';
-  @override
-  String get anki_error_field_mapping_mismatch =>
-      'Tidak ada pemetaan bidang Anda yang cocok dengan tipe catatan yang dipilih, sehingga Anki menolak kartu ini. Buka Pengaturan Anki untuk memetakan ulang bidang, atau gunakan \'Buat dek Lapis\'.';
-  @override
-  String get anki_error_first_field_empty =>
-      'Bidang pertama dari tipe catatan yang dipilih kosong, dan Anki menolak catatan seperti itu. Petakan sebuah bidang ke sana di Pengaturan Anki.';
-  @override
-  String get storage_category_cache => 'Cache dan file sementara';
-  @override
-  String get storage_category_other => 'Lainnya tanpa kategori';
-  @override
-  String get collection_export_pick_source => 'Pilih sumber';
-  @override
-  String get collection_export_all_sources => 'Semua sumber';
-  @override
-  String get video_subtitle_list_search => 'Cari subtitle';
-  @override
-  String get video_subtitle_list_search_hint => 'Ketik untuk menyaring baris';
-  @override
-  String get video_subtitle_list_search_empty => 'Tidak ada baris yang cocok';
-  @override
-  String get video_subtitle_list_export_favorites => 'Ekspor baris favorit';
-  @override
-  String get shortcut_action_video_search_subtitle_list =>
-      'Cari di daftar subtitle';
-  @override
-  String get game_hook_code_paste_title => 'Tempel kode hook';
-  @override
-  String get game_hook_code_paste_hint =>
-      'Tempel kode mentahnya, mis. /HQN4@4CE90:game.exe';
-  @override
-  String get game_hook_code_paste_body =>
-      'Kode ini terikat pada file eksekusi game yang sedang berjalan, sehingga Fushi dapat memakainya lagi lain kali.';
-  @override
-  String get game_hook_code_paste_saved => 'Kode hook disimpan untuk game ini';
-  @override
-  String get game_hook_code_paste_invalid => 'Ini sepertinya bukan kode hook';
-  @override
-  String get game_hook_code_label => 'Label (opsional)';
-  @override
-  String get discovery_game_type_all => 'Semua';
-  @override
-  String get discovery_game_type_raw => 'Belum diterjemahkan';
-  @override
-  String get discovery_game_type_translated => 'Sudah diterjemahkan';
-  @override
-  String get discovery_game_type_mobile => 'Seluler';
-  @override
-  String get discovery_game_type_unlabelled => 'Tanpa label';
-  @override
-  String get game_library_downloading => 'Mengunduh';
-  @override
-  String get game_library_download_queued => 'Diantrikan';
-  @override
-  String get game_library_download_retrying => 'Mencoba ulang';
-  @override
-  String get delete_disclosure_audio_source_files =>
-      'File audio asli yang Anda impor';
-  @override
-  String get delete_local_files => 'Hapus juga berkas lokal';
-  @override
-  String get delete_local_files_video_desc =>
-      'Berkas video dihapus dari perangkat ini beserta tugas unduhannya. Tindakan ini tidak dapat dibatalkan.';
-  @override
-  String get delete_local_files_audio_desc =>
-      'Berkas audio asli dihapus dari perangkat ini; berkas buku dan takarir asli tetap disimpan. Tindakan ini tidak dapat dibatalkan.';
-  @override
-  String get delete_disclosure_book_source_kept =>
-      'Berkas buku dan takarir asli yang kamu impor';
-  @override
-  String get download_task_delete_files_failed =>
-      'Data unduhan tidak dapat dihapus; mesin unduhan tidak mengonfirmasinya';
-  @override
-  String delete_local_files_failed({required Object n}) =>
-      'Gagal menghapus ${n} berkas lokal; mungkin masih digunakan';
-  @override
-  String batch_hidden_by_filter_note({required Object n}) =>
-      '${n} item terpilih lainnya disembunyikan oleh filter saat ini dan tidak akan diproses.';
-  @override
-  String get custom_fonts_default => 'Default (Yu Gothic UI)';
-  @override
-  String get custom_fonts_default_hint =>
-      'Use the built-in Yu Gothic UI rendering for the Galgame Hook overlay.';
-  @override
-  String get gal_hook_text_font_family => 'Galgame caption font';
-  @override
-  String get gal_mining_screenshot_size => 'Galgame screenshot size';
-  @override
-  String get gal_mining_screenshot_size_full_hd =>
-      'Up to 1920 × 1080 (recommended)';
-  @override
-  String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
-  @override
-  String get gal_mining_screenshot_size_hint =>
-      'Applies to still screenshots and animated-capture fallbacks. Keeps the aspect ratio, never enlarges, and saves as JPEG at quality 90.';
-  @override
-  String get gal_mining_screenshot_size_original => 'Original size (JPEG)';
-  @override
-  String get game_attach_mode_last_used => 'Last used';
-  @override
-  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
-  @override
-  String get game_attach_mode_luna_safe_hint =>
-      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
-  @override
-  String get game_attach_mode_native => 'Fushi native attachment';
-  @override
-  String get game_attach_mode_native_hint =>
-      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
-  @override
-  String get game_attach_mode_title => 'Choose attachment mode';
-  @override
-  String get game_line_bulk_text_hint =>
-      'Bulk text detected. Character lookup is paused.';
-  @override
-  String get game_luna_audio_lead_in => 'Complete sentence start';
-  @override
-  String get game_luna_audio_lead_in_hint =>
-      'If the beginning of this sentence is cut off, increase this value.';
-  @override
-  String get game_luna_audio_per_game_hint =>
-      'Saved separately for each attached game.';
-  @override
-  String get game_luna_audio_tail_trim => 'Remove next-line audio';
-  @override
-  String get game_luna_audio_tail_trim_hint =>
-      'If the end of this sentence includes the next line, increase this value.';
-  @override
-  String get game_luna_audio_timing => 'Audio alignment';
-  @override
-  String get game_text_source_luna => 'LunaTranslator (external original text)';
-  @override
-  String get game_text_source_luna_connected =>
-      'Connected. Fushi will use the original text selected in LunaTranslator.';
-  @override
-  String get game_text_source_luna_waiting =>
-      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
-  @override
-  String get game_text_thread_recommended => 'Recommended';
-  @override
-  String get game_text_threads_dormant_hide => 'Hide threads without text';
-  @override
-  String game_text_threads_dormant_show({required Object count}) =>
-      'Show threads without text (${count})';
-  @override
-  String get video_setting_subtitle_language_filter => 'Subtitle language';
-  @override
-  String get video_setting_subtitle_language_filter_all => 'All';
-  @override
-  String get video_setting_subtitle_language_filter_chinese => 'Chinese';
-  @override
-  String get video_setting_subtitle_language_filter_hint =>
-      'Filter Chinese and Japanese content inside the selected subtitle track.';
-  @override
-  String get video_setting_subtitle_language_filter_japanese => 'Japanese';
+	@override late final _StringsId _root = this; // ignore: unused_field
+
+	// Translations
+	@override String get action_exit => 'Keluar';
+	@override String get action_favorite => 'Favorit';
+	@override String activity_days_ago({required Object n}) => '${n} hari lalu';
+	@override String activity_hours_ago({required Object n}) => '${n} jam lalu';
+	@override String get activity_just_now => 'Baru saja';
+	@override String activity_minutes_ago({required Object n}) => '${n} menit lalu';
+	@override String get add_to_collection => 'Tambah ke koleksi';
+	@override String get anime_download_back => 'Kembali';
+	@override String get anime_download_batch => 'Batch';
+	@override String get anime_download_category_all => 'Semua';
+	@override String get anime_download_category_english => 'Terjemahan Inggris';
+	@override String get anime_download_category_non_english => 'Non-Inggris';
+	@override String get anime_download_category_raw => 'Mentah';
+	@override String get anime_download_delete => 'Hapus';
+	@override String anime_download_episode_count({required Object count}) => 'EP ${count}';
+	@override String get anime_download_generic_download => 'Unduh';
+	@override String get anime_download_generic_hint => 'Tautan magnet';
+	@override String get anime_download_generic_title => 'Tempel tautan (buku, video, apa saja)';
+	@override String get anime_download_include_subs => 'Sertakan subtitle';
+	@override String get anime_download_kind_auto => 'Otomatis';
+	@override String get anime_download_kind_book => 'Buku';
+	@override String get anime_download_kind_video => 'Video';
+	@override String get anime_download_magnet_invalid => 'Tautan magnet tidak valid';
+	@override String get anime_download_no_results => 'Tidak ada hasil';
+	@override String get anime_download_no_subs => 'Tanpa subtitle';
+	@override String get anime_download_no_tasks => 'Belum ada tugas unduhan';
+	@override String get anime_download_nyaa_query => 'Kata kunci pencarian Nyaa';
+	@override String get anime_download_play_now => 'Putar sambil mengunduh';
+	@override String get anime_download_play_now_fail => 'Belum siap (metadata tertunda atau koneksi gagal) — coba lagi nanti';
+	@override String get anime_download_play_now_ok => 'Diimpor — buka dari pustaka video untuk memutar sambil mengunduh';
+	@override String get anime_download_push => 'Kirim unduhan';
+	@override String get anime_download_push_failed => 'Gagal mengirim ke qBittorrent';
+	@override String get anime_download_pushed => 'Terkirim — akan diimpor otomatis setelah selesai';
+	@override String get anime_download_refresh => 'Segarkan';
+	@override String get anime_download_relocate => 'Ganti nama / pindah';
+	@override String anime_download_relocate_engine_failed({required Object reason}) => 'Gagal, tidak ada yang berubah: ${reason}';
+	@override String get anime_download_relocate_hint => 'Fushi mengganti nama/memindahkan melalui mesin unduhan, sehingga seeding tidak terganggu. Mengganti nama di Explorer tidak bisa dikembalikan.';
+	@override String anime_download_relocate_library_failed({required Object reason}) => 'File dipindahkan, tetapi pustaka masih mengarah ke jalur lama: ${reason}';
+	@override String get anime_download_relocate_move_title => 'Pindah ke folder';
+	@override String get anime_download_relocate_no_files => 'Tugas ini belum memiliki file untuk diganti nama (metadata belum siap)';
+	@override String anime_download_relocate_ok({required Object rows}) => 'Diganti nama / dipindah; ${rows} entri pustaka diperbarui';
+	@override String get anime_download_relocate_pick_folder => 'Pilih folder tujuan';
+	@override String get anime_download_relocate_rename_title => 'Ganti nama file';
+	@override String get anime_download_retry => 'Coba lagi';
+	@override String get anime_download_search => 'Cari';
+	@override String get anime_download_search_error_proxy_hint => 'Jika situs tidak bisa dijangkau langsung, atur proksi jaringan di pengaturan unduhan.';
+	@override String get anime_download_search_failed => 'Pencarian gagal atau waktu habis. Ketuk coba lagi.';
+	@override String get anime_download_search_hint => 'Judul anime';
+	@override String get anime_download_search_start_hint => 'Cari judul di atas - torrent dan subtitle dicocokkan secara otomatis. Unduhan tidak terbatas pada video: buku, manga, buku audio, dan game juga diimpor.';
+	@override String get anime_download_sort_date => 'Diterbitkan';
+	@override String get anime_download_sort_seeders => 'Seeder';
+	@override String get anime_download_sort_size => 'Ukuran';
+	@override String get anime_download_store_unavailable => 'Penyimpanan rencana unduhan tidak tersedia';
+	@override String get anime_download_subs_badge => 'Sub';
+	@override String get anime_download_subs_failed => 'Pencarian subtitle gagal. Ketuk coba lagi.';
+	@override String get anime_download_subs_need_key => 'Masukkan kunci API Jimaku di atas untuk mencari subtitle.';
+	@override String get anime_download_tasks => 'Tugas unduhan';
+	@override String get anime_download_title => 'Unduhan anime';
+	@override String get anime_download_trusted => 'Terpercaya';
+	@override String get anime_download_trusted_only => 'Hanya terpercaya';
+	@override String get anki_allow_duplicates => 'Izinkan Duplikat';
+	@override String get anki_allow_duplicates_hint => 'Lewati pemeriksaan duplikat saat menambah kartu';
+	@override String get anki_card_action_failed => 'Tindakan kartu gagal. Silakan coba lagi.';
+	@override String get anki_compact_glossaries => 'Glosarium Ringkas';
+	@override String get anki_compact_glossaries_hint => 'Gunakan format ringkas untuk entri glosarium';
+	@override String get anki_connect_api_key => 'Kunci API';
+	@override String get anki_connect_host => 'Host';
+	@override String get anki_connect_port => 'Port';
+	@override String get anki_create_lapis => 'Buat dek Lapis';
+	@override String get anki_create_lapis_exists => 'Tipe catatan dan dek Lapis sudah ada — telah dipilih.';
+	@override String anki_create_lapis_failed({required Object error}) => 'Tidak dapat membuat dek Lapis: ${error}';
+	@override String get anki_create_lapis_hint => 'Menambahkan tipe catatan Lapis dan dek Lapis ke Anki, lalu memilihnya.';
+	@override String get anki_create_lapis_success => 'Tipe catatan dan dek Lapis berhasil dibuat.';
+	@override String get anki_deck => 'Dek';
+	@override String get anki_duplicate_scope => 'Cakupan pemeriksaan duplikat';
+	@override String get anki_duplicate_scope_collection => 'Seluruh koleksi';
+	@override String get anki_duplicate_scope_deck => 'Dek terpilih (dan sub-deknya)';
+	@override String get anki_duplicate_scope_deck_root => 'Dek utama (semua sub-dek)';
+	@override String get anki_duplicate_scope_hint => 'Dek mana yang dicari saat memeriksa apakah kartu sudah ada. Hanya AnkiConnect; AnkiDroid selalu mencari seluruh koleksi.';
+	@override String get anki_error_collection_unavailable => 'Koleksi AnkiDroid saat ini tidak tersedia. Buka AnkiDroid setidaknya sekali, pastikan tidak sedang menyinkron dan API-nya aktif, lalu coba lagi.';
+	@override String get anki_error_connection_refused => 'Tidak dapat terhubung ke Anki: koneksi ditolak. Pastikan Anki Desktop sedang berjalan dan add-on AnkiConnect sudah terpasang.';
+	@override String get anki_error_connection_timeout => 'Tidak dapat terhubung ke Anki: koneksi habis waktu. Periksa host, port, dan pengaturan firewall.';
+	@override String get anki_error_connection_unknown => 'Tidak dapat mengekspor ke Anki: terjadi kesalahan koneksi yang tidak terduga. Lihat log kesalahan untuk detailnya.';
+	@override String get anki_error_http => 'Tidak dapat mengekspor ke Anki: terjadi kesalahan HTTP saat menghubungi AnkiConnect.';
+	@override String get anki_error_permission_denied => 'AnkiDroid belum memberikan izin akses kartu. Setujui dialog izin sistem yang baru muncul, lalu ketuk tombol lagi untuk mengekspor.';
+	@override String get anki_fetch => 'Segarkan dek & tipe catatan';
+	@override String get anki_fetching => 'Mengambil…';
+	@override String get anki_field_mappings => 'Pemetaan Bidang';
+	@override String get anki_field_not_mapped => 'Belum dipetakan';
+	@override String get anki_mine_to_server => 'Kirim kartu ke perangkat berpasangan';
+	@override String get anki_mine_to_server_hint => 'Kirim kartu yang ditambang ke Anki perangkat host berpasangan (dek dan pengaturannya) alih-alih perangkat ini. Memerlukan koneksi Interconnect.';
+	@override String get anki_mined_action_add_duplicate => 'Tambah sebagai kartu baru';
+	@override String get anki_mined_action_overwrite => 'Timpa kartu ini';
+	@override String get anki_mined_action_view => 'Lihat / buka di Anki';
+	@override String get anki_mined_card_subtitle => 'Pilih apa yang dilakukan dengan kartu yang cocok.';
+	@override String get anki_mined_card_title => 'Kartu sudah ada di Anki';
+	@override String anki_mined_multiple_matches({required Object count}) => '${count} kartu yang cocok';
+	@override String get anki_not_configured => 'Ketuk Segarkan untuk memuat dek dan tipe catatan Anki kamu.';
+	@override String get anki_note_open_failed => 'Tidak dapat membuka kartu di Anki.';
+	@override String get anki_note_type => 'Tipe Catatan';
+	@override String get anki_note_viewer_empty => 'Kartu ini tidak memiliki bidang yang bisa dibaca.';
+	@override String get anki_note_viewer_open_in_anki => 'Buka di Anki';
+	@override String get anki_note_viewer_title => 'Kartu yang sudah ada';
+	@override String get anki_open_no_card => 'Tidak ada kartu untuk kata ini di Anki.';
+	@override String get anki_overwrite_scope => 'Rentang Timpa';
+	@override String get anki_overwrite_scope_all => 'Semua kartu yang cocok';
+	@override String get anki_overwrite_scope_hint => 'Kartu yang sudah dibuat mana saja yang dapat ditimpa oleh ✓ hijau';
+	@override String get anki_overwrite_scope_latest => 'Hanya kartu terakhir';
+	@override String get anki_refresh_hint => 'Setelah membuat atau mengganti nama dek atau tipe catatan di Anki, ketuk di sini untuk menyegarkan.';
+	@override String anki_select_handlebar({required Object field}) => 'Pilih nilai untuk ${field}';
+	@override String get anki_settings_label => 'Pengaturan Anki';
+	@override String get anki_tag_default_section => 'Tag default';
+	@override String get anki_tag_include_category => 'Tambahkan tag kategori sumber';
+	@override String get anki_tag_include_category_hint => 'Buku diberi "book", video diberi "video", gim diberi "game"';
+	@override String get anki_tag_include_fushi => 'Tambahkan tag "fushi"';
+	@override String get anki_tag_include_fushi_hint => 'Tandai setiap kartu yang dibuat oleh Fushi';
+	@override String get anki_tags => 'Tag';
+	@override String get anki_tags_hint => 'Tag dipisahkan spasi yang ditambahkan ke setiap kartu';
+	@override String get app_icon_label => 'Ikon Aplikasi';
+	@override String get app_icon_presets => 'Preset';
+	@override String get app_ui_scale => 'Ukuran UI';
+	@override String get app_ui_scale_hint => 'Scales app text and spacing. Lower it on large screens if controls feel oversized.';
+	@override String get app_version => 'Versi aplikasi';
+	@override String get apply_theme => 'Terapkan Tema';
+	@override String get audio_clip_failed => 'Tidak bisa mengekstrak klip audio — sumber audio mungkin hilang atau tak terbaca';
+	@override String get audio_import => 'Impor Audio';
+	@override String get audio_panel_add_audio => 'Tambah Audio';
+	@override String get audio_panel_auto => 'Otomatis';
+	@override String get audio_panel_pick_new_subtitle => 'Pilih file subtitle baru';
+	@override String get audio_source_added => 'Sumber audio ditambahkan';
+	@override String audio_source_dns_error({required Object host}) => 'Koneksi sumber audio gagal: tidak dapat menemukan "${host}" — periksa jaringan Anda, atau hapus sumber ini di pengaturan';
+	@override String get audio_source_edit_target_gone => 'Sumber audio tersebut sudah tidak ada — perubahan dibatalkan';
+	@override String get audio_source_edit_url => 'Edit tautan sumber audio';
+	@override String audio_source_error({required Object detail}) => 'Kesalahan sumber audio: ${detail}';
+	@override String get audio_source_fushi_interconnect => 'Fushi Interconnect';
+	@override String get audio_source_loopback_warning => 'Mengarah ke perangkat ini — arahkan ulang setelah berganti mesin';
+	@override String audio_source_request_error({required Object detail}) => 'Permintaan sumber audio gagal: ${detail}';
+	@override String audio_source_timeout({required Object host}) => 'Waktu habis sumber audio: "${host}" — server tidak merespons, coba lagi nanti atau ganti sumber';
+	@override String get audio_source_updated => 'Sumber audio diperbarui';
+	@override String get audio_source_url_invalid => 'Tautan harus http(s) dan memuat placeholder term atau reading';
+	@override String get audio_unavailable => 'Tidak ada audio yang ditemukan.';
+	@override String get audio_volume => 'Volume';
+	@override String get audiobook_attached => 'Buku audio terlampir';
+	@override String get audiobook_audio_missing => 'File audio tidak ditemukan';
+	@override String get audiobook_background_play => 'Terus putar setelah keluar';
+	@override String get audiobook_background_play_hint => 'Saat nonaktif, pemutaran buku audio berhenti ketika Anda meninggalkan pembaca. Aktifkan untuk terus memutar di latar belakang.';
+	@override String get audiobook_export_clip => 'Ekspor video klip';
+	@override String get audiobook_export_clip_failed => 'Ekspor klip gagal';
+	@override String get audiobook_export_clip_in_progress => 'Mengekspor klip…';
+	@override String get audiobook_export_clip_no_selection => 'Pilih teks terlebih dahulu untuk mengekspor klip';
+	@override String get audiobook_export_clip_no_text => 'Pilihan ini tidak memiliki teks untuk dirender';
+	@override String get audiobook_export_clip_saved => 'Klip tersimpan';
+	@override String get audiobook_export_clip_unsupported_range => 'Pilihan ini tidak bisa diekspor (melewati bab atau file audio)';
+	@override String get audiobook_import => 'Impor Buku Audio';
+	@override String get audiobook_import_error => 'Impor gagal';
+	@override String audiobook_import_error_copy_failed({required Object name}) => 'Gagal menyalin file: ${name}';
+	@override String audiobook_import_error_disk_full({required Object size}) => 'Ruang disk tidak cukup. Diperlukan: ${size}';
+	@override String get audiobook_import_success => 'Buku audio diimpor';
+	@override String get audiobook_load_error => 'Gagal memuat buku audio.';
+	@override String get audiobook_pick_alignment => 'Pilih File Penyelarasan';
+	@override String get audiobook_reference_original => 'Referensi file asli';
+	@override String get audiobook_reference_original_desc => 'Biarkan audio di tempatnya dan putar dari jalur aslinya; buku akan rusak jika file dipindah atau dihapus.';
+	@override String get audiobook_relocate => 'Pindahkan file';
+	@override String get audiobook_relocate_done => 'Audio dipindahkan';
+	@override String get auto_add_book_name_to_tags => 'Tambahkan judul buku ke tag secara otomatis';
+	@override String auto_chapter({required Object n}) => 'Bab ${n}';
+	@override String get auto_read_on_lookup => 'Baca kata otomatis saat pencarian';
+	@override String get auto_search => 'Pencarian otomatis';
+	@override String get auto_search_debounce_delay => 'Delay debounce pencarian otomatis';
+	@override String get auto_select_search_window => 'Pilih jendela pencarian otomatis';
+	@override String get auto_select_search_window_hint => 'Uji beberapa ukuran jendela saat impor, pilih yang memiliki tingkat kecocokan terbaik';
+	@override String get av_sync => 'Sinkronisasi A/V';
+	@override String get av_sync_reset => 'Atur Ulang';
+	@override String get back => 'Kembali';
+	@override String get background_color => 'Warna latar belakang';
+	@override String get background_color_desc => 'Latar belakang halaman pembaca';
+	@override String get backup_category_audiobooks => 'Audio buku audio';
+	@override String get backup_category_audiobooks_desc => 'Audio buku audio dan penyelarasan';
+	@override String get backup_category_books => 'Buku';
+	@override String get backup_category_books_desc => 'File buku (EPUB dan konten yang diekstrak)';
+	@override String get backup_category_dictionary => 'Kamus';
+	@override String get backup_category_dictionary_desc => 'Kamus yang diimpor dan filenya';
+	@override String get backup_category_fonts => 'Font kustom';
+	@override String get backup_category_fonts_desc => 'File font kustom yang diimpor';
+	@override String get backup_category_local_audio => 'Database audio lokal';
+	@override String get backup_category_local_audio_desc => 'Database audio pengucapan lokal';
+	@override String get backup_category_profiles => 'Profil';
+	@override String get backup_category_profiles_desc => 'Profil konfigurasi';
+	@override String get backup_category_progress => 'Progres membaca';
+	@override String get backup_category_progress_desc => 'Posisi membaca dan penanda';
+	@override String get backup_category_settings => 'Pengaturan';
+	@override String get backup_category_settings_desc => 'Pengaturan aplikasi dan pembaca';
+	@override String get backup_category_statistics => 'Statistik';
+	@override String get backup_category_statistics_desc => 'Statistik membaca, video, dan penambangan kartu';
+	@override String get backup_category_videos => 'Video';
+	@override String get backup_category_videos_desc => 'File video lokal';
+	@override String get backup_export => 'Ekspor Cadangan';
+	@override String get backup_export_books_all => 'Semua buku';
+	@override String backup_export_books_selected({required Object count}) => '${count} buku dipilih';
+	@override String get backup_export_categories_hint => 'Centang apa yang akan dimasukkan ke cadangan. Tidak mencentang Buku akan menghapus buku-buku tersebut sepenuhnya — konten dan catatannya ikut terhapus.';
+	@override String get backup_export_categories_title => 'Pilih yang akan diekspor';
+	@override String get backup_export_choose_books => 'Pilih buku';
+	@override String get backup_export_choose_videos => 'Pilih video';
+	@override String backup_export_failed({required Object message}) => 'Ekspor cadangan gagal: ${message}';
+	@override String get backup_export_hint => 'Pilih apa yang disertakan; basis data (buku, progres, statistik) selalu disertakan. Hapus centang item besar (audio lokal, video) untuk memperkecil cadangan.';
+	@override String get backup_export_no_books => 'Tidak ada buku untuk dipilih';
+	@override String get backup_export_no_videos => 'Tidak ada video untuk dipilih';
+	@override String get backup_export_select_all => 'Pilih semua';
+	@override String get backup_export_select_none => 'Batalkan semua';
+	@override String get backup_export_success => 'Cadangan berhasil diekspor';
+	@override String get backup_export_videos_all => 'Semua video';
+	@override String backup_export_videos_selected({required Object count}) => '${count} video dipilih';
+	@override String get backup_exporting => 'Membuat cadangan…';
+	@override String get backup_import => 'Impor Cadangan';
+	@override String backup_import_confirm({required Object date, required Object bookCount, required Object statsCount}) => 'Ini akan menggantikan semua data saat ini dengan cadangan dari ${date}.\n\n${bookCount} buku, ${statsCount} catatan statistik.\n\nAplikasi akan dimulai ulang setelah pemulihan.';
+	@override String get backup_import_confirm_title => 'Pulihkan Cadangan?';
+	@override String get backup_import_contents_hint => 'Hapus centang item untuk melewatinya.';
+	@override String get backup_import_contents_title => 'Cadangan ini berisi';
+	@override String backup_import_failed({required Object message}) => 'Impor cadangan gagal: ${message}';
+	@override String get backup_import_hint => 'Pulihkan dari berkas cadangan. Aplikasi akan dimulai ulang.';
+	@override String get backup_import_invalid => 'Berkas cadangan tidak valid';
+	@override String backup_import_merge_preview({required Object bookCount, required Object progressCount}) => 'Penggabungan akan menambah ${bookCount} buku dan memperbarui ${progressCount} posisi membaca.';
+	@override String get backup_import_mode_label => 'Mode impor';
+	@override String get backup_import_mode_merge => 'Gabung ke pustaka saat ini';
+	@override String get backup_import_mode_overwrite => 'Timpa seluruh pustaka';
+	@override String get backup_import_overlay_title => 'Mengimpor cadangan';
+	@override String get backup_import_overlay_warning => 'Memulihkan data Anda. Jangan tutup aplikasi.';
+	@override String get backup_import_preserve_sync_note => 'Pengaturan sinkronisasi di perangkat ini (akun dan kredensial) akan dipertahankan.';
+	@override String get backup_import_restart_button => 'Mulai ulang sekarang';
+	@override String get backup_import_settings_off_hint => 'Pertahankan font/tampilan/profil perangkat ini; pulihkan hanya buku & data membaca.';
+	@override String get backup_import_settings_on_hint => 'Pemulihan penuh: font, tampilan, dan profil diambil dari cadangan.';
+	@override String get backup_import_settings_toggle => 'Impor pengaturan & profil';
+	@override String get backup_import_success => 'Cadangan dipulihkan. Memulai ulang…';
+	@override String get backup_import_validating_hint => 'Memeriksa dan melihat pratinjau file cadangan. Ini mungkin memerlukan waktu.';
+	@override String get backup_import_validating_title => 'Membaca cadangan…';
+	@override String backup_schema_newer({required Object version}) => 'Cadangan ini memerlukan versi aplikasi yang lebih baru (skema ${version}). Mohon perbarui terlebih dahulu.';
+	@override String batch_add_to_collection_success({required Object n}) => 'Menambahkan ${n} item ke koleksi.';
+	@override String batch_delete_confirm({required Object n}) => 'Hapus ${n} buku? Tindakan ini tidak dapat dibatalkan.';
+	@override String batch_delete_confirm_video({required Object n}) => 'Hapus ${n} video? Ini tidak bisa dibatalkan.';
+	@override String batch_delete_mixed_confirm({required Object n, required Object m}) => 'Hapus ${n} media dan bubarkan ${m} koleksi? Ini tidak bisa dibatalkan.';
+	@override String batch_delete_mixed_success({required Object n, required Object m}) => 'Menghapus ${n} media, membubarkan ${m} koleksi.';
+	@override String batch_delete_success({required Object n}) => '${n} buku dihapus.';
+	@override String batch_delete_success_video({required Object n}) => 'Menghapus ${n} video.';
+	@override String batch_dissolve_confirm({required Object m}) => 'Bubarkan ${m} koleksi? Pengelompokan dihapus; medianya tetap ada.';
+	@override String batch_dissolve_success({required Object m}) => 'Membubarkan ${m} koleksi.';
+	@override String get batch_invert_selection => 'Balik';
+	@override String get batch_select => 'Pilih';
+	@override String get batch_select_all => 'Semua';
+	@override String batch_selected_count({required Object n}) => '${n} dipilih';
+	@override String get batch_tag_add => 'Tambah';
+	@override String batch_tag_added({required Object name, required Object n}) => 'Tag "${name}" ditambahkan ke ${n} buku.';
+	@override String batch_tag_added_video({required Object name, required Object n}) => 'Menambahkan tag "${name}" ke ${n} video.';
+	@override String get batch_tag_apply => 'Terapkan';
+	@override String get batch_tag_keep => 'Pertahankan';
+	@override String get batch_tag_remove => 'Hapus';
+	@override String batch_tag_removed({required Object name, required Object n}) => 'Tag "${name}" dihapus dari ${n} buku.';
+	@override String batch_tag_removed_video({required Object name, required Object n}) => 'Menghapus tag "${name}" dari ${n} video.';
+	@override String get batch_tag_title => 'Kelola Tag';
+	@override String get book_continue_reading => 'Continue Reading';
+	@override String get book_css_editor_cancel => 'Batal';
+	@override String get book_css_editor_confirm_reset => 'Reset CSS file ini ke default?';
+	@override String get book_css_editor_confirm_reset_all => 'Reset CSS SEMUA file ke default?';
+	@override String get book_css_editor_discard => 'Buang';
+	@override String get book_css_editor_edit_css => 'Edit CSS Buku';
+	@override String get book_css_editor_no_css_files => 'Tidak ada file CSS ditemukan di buku ini.';
+	@override String get book_css_editor_no_extract_dir => 'Direktori buku tidak ditemukan. Impor ulang buku untuk mengedit CSS.';
+	@override String get book_css_editor_reset_all => 'Reset Semua';
+	@override String get book_css_editor_reset_current => 'Reset Saat Ini';
+	@override String get book_css_editor_reset_done => 'CSS telah direset.';
+	@override String get book_css_editor_save => 'Simpan';
+	@override String get book_css_editor_saved => 'CSS disimpan.';
+	@override String get book_css_editor_title => 'Editor CSS Buku';
+	@override String get book_css_editor_unsaved_changes => 'Perubahan Belum Disimpan';
+	@override String get book_css_editor_unsaved_changes_message => 'Anda memiliki perubahan yang belum disimpan. Buang?';
+	@override String get book_directory_not_found => 'Direktori buku tidak ditemukan.';
+	@override String get book_edit_author => 'Penulis';
+	@override String get book_file_not_found => 'Berkas buku tidak ditemukan';
+	@override String get book_import_duplicate_cancel => 'Tidak, batalkan';
+	@override String get book_import_duplicate_cancelled => 'Impor dibatalkan';
+	@override String get book_import_duplicate_keep => 'Ya, tambahkan akhiran';
+	@override String book_import_duplicate_message({required Object name}) => 'Buku bernama "${name}" sudah ada. Tetap impor? "Ya" mengimpor dengan akhiran bernomor; "Tidak" membatalkan.';
+	@override String get book_import_duplicate_title => 'Buku duplikat';
+	@override String get book_mark_completed_action => 'Tandai selesai';
+	@override String get book_mark_uncompleted_action => 'Tandai belum selesai';
+	@override String get book_marked_completed => 'Ditandai selesai';
+	@override String get book_marked_uncompleted => 'Ditandai belum selesai';
+	@override String get book_mode => 'Mode Buku';
+	@override String book_read_progress({required Object percent}) => 'Terbaca ${percent}%';
+	@override String get book_scrape_cover => 'Cari sampul online';
+	@override String get book_scrape_empty => 'Tidak ada sampul yang cocok';
+	@override String get book_scrape_failed => 'Gagal mengambil sampul';
+	@override String get book_scrape_hint => 'Judul buku / penulis';
+	@override String get book_scrape_search => 'Cari';
+	@override String get book_scrape_search_failed => 'Pencarian gagal. Ketuk Cari untuk mencoba lagi.';
+	@override String get book_scrape_title => 'Cocokkan sampul online';
+	@override String get book_scrape_use => 'Gunakan';
+	@override String get book_search => 'Cari di buku';
+	@override String get book_search_hint => 'Masukkan teks pencarian…';
+	@override String get book_search_no_results => 'Tidak ada hasil';
+	@override String book_search_results({required Object n}) => '${n} hasil';
+	@override String get books => 'Buku';
+	@override String get browser_extension_enable_server_first => 'Tips: aktifkan "Server API Yomitan" dan atur kunci API di atas terlebih dahulu, agar ekstensi otomatis terkonfigurasi dengan koneksi yang berfungsi.';
+	@override String get browser_extension_mobile_unsupported => 'Peramban seluler tidak dapat memuat ekstensi ini. Gunakan pencarian dalam aplikasi di pembaca atau pemutar video sebagai gantinya.';
+	@override String get browser_extension_page_intro => 'Di desktop, cari kata, parsing subtitle, dan buat kartu langsung di Chrome atau Edge. Siapkan ekstensi di bawah, lalu muat di browser Anda.';
+	@override String get browser_extension_prepare_button => 'Siapkan file ekstensi';
+	@override String get browser_extension_prepare_hint => 'Memulai server pencarian dan mengekstrak ekstensi secara lokal; jalur folder disalin ke clipboard.';
+	@override String get browser_extension_reinstall_button => 'Siapkan ulang / segarkan file';
+	@override String get browser_extension_server_off => 'Server pencarian mati';
+	@override String get browser_extension_server_on => 'Server pencarian aktif';
+	@override String get browser_extension_status_connected => 'Ekstensi terhubung';
+	@override String get browser_extension_status_never => 'Ekstensi belum terdeteksi';
+	@override String get browser_extension_step_dev_mode => 'Aktifkan "Mode pengembang" (tombol di pojok kanan atas).';
+	@override String get browser_extension_step_done_auto => 'Selesai. Ekstensi sudah diatur untuk terhubung ke Fushi untuk pencarian kata — tidak perlu mengisi apa pun secara manual.';
+	@override String get browser_extension_step_load_unpacked => 'Klik "Muat yang belum dikemas".';
+	@override String get browser_extension_step_open_page => 'Buka halaman ekstensi browser:';
+	@override String get browser_extension_step_pick_folder => 'Pilih folder ekstensi di bawah (jalurnya sudah disalin ke clipboard Anda).';
+	@override String get browser_extension_step_verify => 'Verifikasi ekstensi dimuat dan terhubung';
+	@override String get browser_extension_verify_button => 'Periksa koneksi';
+	@override String get browser_extension_verify_checking => 'Memeriksa…';
+	@override String get browser_extension_verify_connected => 'Ekstensi terdeteksi dan terhubung.';
+	@override String get browser_extension_verify_not_detected => 'Ekstensi belum terdeteksi. Pastikan sudah dimuat dan diaktifkan di browser Anda, lalu periksa lagi.';
+	@override String get browser_extension_version_app => 'Dibundel dalam aplikasi';
+	@override String get browser_extension_version_browser => 'Dimuat di browser';
+	@override String get browser_extension_version_label => 'Versi ekstensi';
+	@override String get browser_extension_version_mismatch => 'Ekstensi yang dimuat di browser Anda sudah usang. Siapkan ulang ekstensi jika perlu, lalu muat ulang dari halaman ekstensi browser Anda (chrome://extensions).';
+	@override String browser_extension_yomitan_port_conflict({required Object port}) => 'Port ${port} sedang digunakan oleh proses lain (biasanya komponen yomitan-api — proses Python yang diluncurkan oleh browser Anda). Akhiri proses tersebut, atau nonaktifkan API Yomitan di pengaturan lanjutan Yomitan, lalu aktifkan kembali server API Yomitan di Fushi.';
+	@override String get cancel => 'Batal';
+	@override String card_cover_degraded_to_static({required Object reason}) => 'Sampul kartu menggunakan bingkai diam (klip animasi tidak tersedia): ${reason}';
+	@override String get card_duplicate => 'Kartu duplikat — tidak diekspor.';
+	@override String get card_export_failed => 'Gagal mengekspor kartu.';
+	@override String card_export_failed_detail({required Object reason}) => 'Gagal mengekspor kartu: ${reason}';
+	@override String get card_export_not_configured => 'Anki belum dikonfigurasi. Buka pengaturan Anki dan ketuk Ambil.';
+	@override String card_exported({required Object deck}) => 'Kartu diekspor ke『${deck}』.';
+	@override String card_exported_audio_failed({required Object reason}) => 'Kartu diekspor, tetapi audio gagal diunduh (${reason}).';
+	@override String get card_mined_no_sentence_captured => 'Kartu dibuat, tetapi tidak ada kalimat yang diambil (pilih ulang kata, atau teks ini tidak memiliki kalimat yang bisa dikenali).';
+	@override String get card_mined_unmapped_sentence_audio_field => 'Kartu dibuat dengan audio kalimat, tetapi tipe catatan Anki Anda tidak memiliki bidang yang dipetakan ke sana. Petakan bidang ke {sentence-audio}.';
+	@override String get card_mined_unmapped_sentence_field => 'Kartu dibuat, tetapi tipe catatan Anki Anda tidak memiliki bidang yang dipetakan ke kalimat. Gunakan Pengaturan -> \'Buat dek Lapis\' atau petakan bidang ke {sentence}.';
+	@override String get card_mined_without_sentence_audio => 'Kartu dibuat tanpa audio kalimat (tidak ditemukan untuk pilihan ini).';
+	@override String get card_mining_pending => 'Menambah kartu…';
+	@override String card_overwritten({required Object deck}) => 'Kartu ditimpa di 『${deck}』.';
+	@override String get change_source => 'Ubah Sumber';
+	@override String get changelog_empty => 'Tidak ada catatan perubahan. Periksa jaringan atau pengaturan proksi Anda.';
+	@override String get changelog_open_releases => 'Buka halaman rilis';
+	@override String get changelog_prerelease => 'Prarilis';
+	@override String chapter_progress({required Object idx, required Object total, required Object suffix, required Object pct}) => 'Bab ${idx} / ${total}${suffix} · ${pct}%';
+	@override String get clear => 'Hapus';
+	@override String get clear_dictionary_description => 'Ini akan menghapus semua hasil kamus dari riwayat. Apakah Anda yakin?';
+	@override String get clear_dictionary_title => 'Hapus Riwayat Hasil Kamus';
+	@override String get lookup_block_capture => 'Blokir tangkapan layar';
+	@override String get lookup_block_capture_hint => 'Kecualikan jendela popup pencarian dan clipboard dari tangkapan layar, perekaman layar, dan streaming langsung (Windows). Nonaktifkan ini agar tangkapan layar, perekaman, dan streaming bisa menangkap popup pencarian.';
+	@override String get collapse_dictionaries => 'Ciutkan kamus';
+	@override String get collection_bookmark => 'Penanda';
+	@override String get collection_clear_confirm => 'Hapus koleksi yang dipilih secara permanen? Ini tidak bisa dibatalkan.';
+	@override String get collection_clear_scope => 'Hapus cakupan';
+	@override String get collection_collapse => 'Ciutkan';
+	@override String collection_continue_progress({required Object n}) => 'Lanjutkan · EP ${n}';
+	@override String get collection_empty => 'Koleksi kosong';
+	@override String get collection_expand => 'Perluas';
+	@override String get collection_export_all_books => 'Semua buku';
+	@override String get collection_export_all_mined => 'Semua kalimat yang ditambang';
+	@override String get collection_export_all_words => 'Semua kata favorit';
+	@override String get collection_export_dedupe => 'Deduplikasi berdasarkan kalimat';
+	@override String get collection_export_failed => 'Ekspor gagal';
+	@override String get collection_export_favorites_scope => 'Kalimat favorit';
+	@override String get collection_export_format => 'Format';
+	@override String get collection_export_mined_title => 'Mined Sentences';
+	@override String get collection_export_no_items => 'Tidak ada yang diekspor';
+	@override String get collection_export_pick_book => 'Pilih buku';
+	@override String get collection_export_save => 'Save Export';
+	@override String get collection_export_saved => 'Ekspor tersimpan';
+	@override String get collection_export_scope => 'Cakupan ekspor';
+	@override String get collection_export_sentences_title => 'Favorite Sentences';
+	@override String get collection_export_words_title => 'Favorite Words';
+	@override String get collection_loading_hint => 'Memuat koleksi dan mencocokkan file audio…';
+	@override String get collection_member_removed => 'Dihapus dari koleksi';
+	@override String get collection_merge_title => 'Gabung koleksi';
+	@override String get collection_merged => 'Koleksi digabung.';
+	@override String get collection_mined => 'Dibuat kartu';
+	@override String get collection_open => 'Buka';
+	@override String get collection_play => 'Putar';
+	@override String get collection_remove_member => 'Hapus dari koleksi';
+	@override String get collection_remove_member_confirm => 'Hapus item ini dari koleksi? Item itu sendiri tetap ada.';
+	@override String get collection_sentence => 'Kalimat';
+	@override String get collection_sort_by_imported => 'Urutkan berdasarkan tanggal impor';
+	@override String get collection_sort_by_title => 'Urutkan berdasarkan nama';
+	@override String get collection_view_all => 'Lihat semua';
+	@override String collection_watched_progress({required Object done, required Object total}) => 'Ditonton ${done}/${total}';
+	@override String get collection_word => 'Kata';
+	@override String get collections => 'Koleksi';
+	@override String get color_container => 'Kontainer';
+	@override String get color_container_desc => 'Ganti trek, latar belakang bilah putar';
+	@override String get color_link => 'Warna tautan';
+	@override String get color_link_desc => 'Warna hyperlink di pembaca';
+	@override String get color_primary => 'Primer';
+	@override String get color_primary_desc => 'Sorotan audio, tombol, sakelar';
+	@override String get color_sentence_audio_highlight => 'Sorotan audio';
+	@override String get color_sentence_audio_highlight_desc => 'Sorotan sinkronisasi subtitle buku audio';
+	@override String get color_secondary => 'Sekunder';
+	@override String get color_secondary_desc => 'Entri kamus, lencana rak buku';
+	@override String get color_tertiary => 'Tersier';
+	@override String get color_tertiary_desc => 'Koleksi, statistik membaca';
+	@override String get columns_per_page => 'Kolom per halaman';
+	@override String get combine_into_series => 'Gabung menjadi seri';
+	@override String get copied => 'Disalin';
+	@override String get copied_to_clipboard => 'Disalin ke papan klip.';
+	@override String get copy => 'Salin';
+	@override String get copy_error => 'Salin Galat';
+	@override String get crash_dump_empty => 'Tidak ada crash dump';
+	@override String crash_dump_label({required Object n}) => 'Crash Dump (${n})';
+	@override String get crash_dump_open_folder => 'Buka folder dump';
+	@override String get crash_dump_privacy_notice => 'Crash dump (.dmp) berisi snapshot memori proses dan mungkin mencakup teks yang sedang kamu baca, kata yang kamu cari, atau data lain di dalam aplikasi. Bagikan hanya kepada pengembang yang kamu percaya.';
+	@override String get crash_dump_share => 'Bagikan dump';
+	@override String get crash_dump_share_subject => 'Crash Dump Fushi';
+	@override String get create_series => 'Buat seri';
+	@override String get creator_action_add_to_stash => 'Tambah ke simpanan';
+	@override String get creator_action_copy_to_clipboard => 'Salin ke papan klip';
+	@override String get creator_action_play_audio => 'Putar audio';
+	@override String get creator_action_share => 'Bagikan';
+	@override String get creator_enhancement_audio_recorder => 'Perekam suara';
+	@override String get creator_enhancement_camera => 'Kamera';
+	@override String get creator_enhancement_clear_field => 'Hapus bidang';
+	@override String get creator_enhancement_crop_image => 'Potong gambar';
+	@override String get creator_enhancement_local_audio => 'Audio lokal';
+	@override String get creator_enhancement_open_stash => 'Buka simpanan';
+	@override String get creator_enhancement_pick_audio => 'Pilih audio';
+	@override String get creator_enhancement_pick_image => 'Pilih gambar';
+	@override String get creator_enhancement_pop_from_stash => 'Ambil dari simpanan';
+	@override String get creator_enhancement_save_tags => 'Simpan tag';
+	@override String get creator_enhancement_search_dictionary => 'Cari kamus';
+	@override String get creator_enhancement_sentence_picker => 'Pilih kalimat';
+	@override String get creator_enhancement_text_segmentation => 'Segmentasi teks';
+	@override String get creator_export_card => 'Buat Kartu';
+	@override String get creator_field_audio => 'Audio kata';
+	@override String get creator_field_audio_sentence => 'Audio kalimat';
+	@override String get creator_field_cloze_after => 'Setelah isian';
+	@override String get creator_field_cloze_before => 'Sebelum isian';
+	@override String get creator_field_cloze_inside => 'Isi isian';
+	@override String get creator_field_collapsed_meaning => 'Arti dilipat';
+	@override String get creator_field_context => 'Konteks';
+	@override String get creator_field_cue_sentence => 'Kalimat subtitle';
+	@override String get creator_field_expanded_meaning => 'Arti diperluas';
+	@override String get creator_field_frequency => 'Frekuensi';
+	@override String get creator_field_furigana => 'Furigana';
+	@override String get creator_field_hidden_meaning => 'Arti tersembunyi';
+	@override String get creator_field_image => 'Gambar';
+	@override String get creator_field_meaning => 'Arti';
+	@override String get creator_field_notes => 'Catatan';
+	@override String get creator_field_pitch_accent => 'Aksen';
+	@override String get creator_field_reading => 'Bacaan';
+	@override String get creator_field_sentence => 'Kalimat';
+	@override String get creator_field_tags => 'Tag';
+	@override String get creator_field_term => 'Kata';
+	@override String get custom_dict_css => 'CSS Kustom';
+	@override String get custom_dict_css_global => 'Global (semua kamus)';
+	@override String get custom_fonts => 'Font Kustom';
+	@override String get custom_fonts_add_system => 'Tambah Font Sistem';
+	@override String get custom_fonts_archive_error => 'Gagal mengekstrak arsip';
+	@override String get custom_fonts_catalog_title => 'Pustaka font';
+	@override String get custom_fonts_download_failed => 'Unduhan gagal';
+	@override String get custom_fonts_downloading => 'Mengunduh…';
+	@override String get custom_fonts_drag_hint => 'Seret untuk mengatur ulang prioritas font';
+	@override String get custom_fonts_empty => 'Belum ada font kustom';
+	@override String get custom_fonts_font_roles => 'Peran font';
+	@override String get custom_fonts_import_file => 'Impor File Font';
+	@override String get custom_fonts_import_url => 'Impor dari URL';
+	@override String custom_fonts_imported_count({required Object count}) => '${count} font berhasil diimpor';
+	@override String get custom_fonts_manage => 'Kelola Font';
+	@override String get custom_fonts_no_fonts_in_archive => 'Tidak ada file font dalam arsip';
+	@override String get custom_fonts_recommended => 'Font Rekomendasi';
+	@override String get custom_fonts_removed => 'Font dihapus';
+	@override String get custom_fonts_search_hint => 'Cari font';
+	@override String get custom_theme => 'Tema Kustom';
+	@override String custom_theme_default_name({required Object n}) => 'Kustom ${n}';
+	@override String get custom_theme_long_press_hint => 'Ketuk untuk beralih · tekan lama untuk mengedit';
+	@override String get custom_theme_name => 'Nama';
+	@override String get dark_mode => 'Mode Gelap';
+	@override String get dark_mode_dark => 'Gelap';
+	@override String get dark_mode_light => 'Terang';
+	@override String get dark_mode_system => 'Sistem';
+	@override String data_root_unavailable_message({required Object path}) => 'Lokasi data Anda yang dikonfigurasi ${path} sementara tidak dapat dijangkau (drive mungkin tidur, sibuk, atau terputus). Data Anda aman dan tidak tersentuh di sana — tidak ada yang hilang. Ketuk Coba Lagi setelah drive siap untuk memuat data Anda, atau mulai dengan lokasi default untuk saat ini (data Anda yang ada TIDAK akan diubah).';
+	@override String get data_root_unavailable_title => 'Lokasi data tidak merespons';
+	@override String get data_root_use_default_button => 'Mulai dengan lokasi default';
+	@override String get data_storage_change_button => 'Ubah lokasi';
+	@override String get data_storage_change_confirm_body => 'Fushi akan memindahkan semua data Anda ke folder baru lalu memulai ulang. Jangan tutup aplikasi selama pemindahan.';
+	@override String get data_storage_change_confirm_title => 'Ubah lokasi penyimpanan data?';
+	@override String get data_storage_location_default => 'Lokasi default';
+	@override String get data_storage_location_hint => 'Tempat Fushi menyimpan pustaka, buku audio, dan database Anda. Hanya desktop.';
+	@override String get data_storage_location_title => 'Lokasi penyimpanan data';
+	@override String data_storage_migrate_failed({required Object message}) => 'Tidak bisa memindahkan data: ${message}';
+	@override String get data_storage_migrate_failed_restart => 'Mulai ulang';
+	@override String get data_storage_migrate_failed_suggestions => 'Silakan coba lagi dengan folder kosong yang berbeda. Jangan pilih folder instalasi aplikasi, dan pastikan tidak ada file di lokasi tersebut yang sedang digunakan.';
+	@override String get data_storage_migrate_failed_title => 'Migrasi data gagal';
+	@override String data_storage_migrate_overlay_progress({required Object copied, required Object total}) => 'Menyalin file: ${copied} / ${total}';
+	@override String get data_storage_migrate_overlay_title => 'Memindahkan data Anda';
+	@override String get data_storage_migrate_overlay_warning => 'Harap biarkan aplikasi tetap terbuka. Jangan tutup atau matikan komputer sampai selesai.';
+	@override String get data_storage_migrate_success => 'Data dipindahkan. Memulai ulang…';
+	@override String get data_storage_migrating => 'Memindahkan data…';
+	@override String get data_storage_reject_install_dir => 'Folder tersebut adalah lokasi instalasi aplikasi dan tidak bisa menyimpan data Anda. Silakan pilih folder kosong yang berbeda.';
+	@override String get data_storage_restart_failed => 'Data dipindahkan, tetapi mulai ulang otomatis gagal. Silakan buka Fushi secara manual.';
+	@override String db_downgrade_message({required Object dbVersion, required Object appVersion}) => 'Basis data ini dibuat oleh versi Fushi yang lebih baru (schema v${dbVersion}). Aplikasimu saat ini terlalu lama (v${appVersion}). Pembukaan diblokir untuk melindungi datamu. Silakan perbarui aplikasi lalu coba lagi.';
+	@override String get db_downgrade_title => 'Perbarui Fushi';
+	@override String get db_unrecoverable_message => 'Database tidak bisa dibuka bahkan setelah perbaikan otomatis. Kemungkinan besar rusak. Anda bisa memulihkan cadangan di Pengaturan, atau hapus data aplikasi untuk memulai dari awal.';
+	@override String get db_unrecoverable_title => 'Database rusak';
+	@override String get debug_log_share_subject => 'Log Debug Fushi';
+	@override String debug_log_title({required Object count}) => 'Log Debug (${count})';
+	@override String get debug_log_toggle => 'Aktifkan log debug';
+	@override String get decrease => 'Kurangi';
+	@override String get deduplicate_pitch_accents => 'Hapus duplikat aksen nada';
+	@override String get delete_collection => 'Hapus koleksi';
+	@override String get delete_collection_also_books => 'Hapus juga buku di dalamnya';
+	@override String get delete_collection_also_videos => 'Hapus juga video (file video asli Anda tetap ada)';
+	@override String get delete_custom_theme => 'Hapus tema';
+	@override String get delete_custom_theme_confirm => 'Hapus tema kustom ini? Ini tidak bisa dibatalkan.';
+	@override String get delete_in_progress => 'Sedang menghapus';
+	@override String get delete_prompt_delete_selected => 'Hapus yang dipilih';
+	@override String get delete_prompt_message => 'Item-item ini dihapus di perangkat lain. Hapus juga di sini?';
+	@override String get delete_prompt_select_all => 'Pilih semua';
+	@override String get delete_prompt_title => 'Dihapus di perangkat lain';
+	@override String get delete_scope_keep_local_desc => 'Perangkat lain menyimpan salinannya';
+	@override String get delete_scope_sync_everywhere => 'Hapus dari semua perangkat';
+	@override String get delete_scope_sync_everywhere_desc => 'Perangkat lain mengonfirmasi penghapusan pada sinkronisasi berikutnya';
+	@override String get design_system_auto => 'Otomatis';
+	@override String get design_system_hint => 'Mengontrol gaya visual aplikasi';
+	@override String get design_system_label => 'Sistem Desain';
+	@override String get dialog_add => 'TAMBAH';
+	@override String get dialog_append => 'TAMBAHKAN';
+	@override String get dialog_cancel => 'BATAL';
+	@override String get dialog_clear => 'HAPUS';
+	@override String get dialog_clear_all_dictionaries => 'Hapus Semua Kamus';
+	@override String get dialog_close => 'TUTUP';
+	@override String get dialog_connect => 'HUBUNGKAN';
+	@override String get dialog_content_dictionary_clear => 'Menghapus database kamus juga akan menghapus semua hasil pencarian di riwayat.';
+	@override String get dialog_content_dictionary_delete => 'Menghapus satu kamus mungkin memakan waktu lebih lama daripada menghapus seluruh database kamus. Ini juga akan menghapus semua hasil pencarian di riwayat.';
+	@override String get dialog_create => 'BUAT';
+	@override String get dialog_crop => 'POTONG';
+	@override String get dialog_delete => 'HAPUS';
+	@override String get dialog_done => 'SELESAI';
+	@override String get dialog_edit => 'EDIT';
+	@override String get dialog_edit_info => 'Edit Info';
+	@override String get dialog_exit => 'KELUAR';
+	@override String get dialog_export => 'EKSPOR';
+	@override String get dialog_import => 'IMPOR';
+	@override String get dialog_import_dictionary => 'Impor Kamus';
+	@override String get dialog_import_folder => 'Impor Kamus dari Folder';
+	@override String get dialog_importing => 'MENGIMPOR…';
+	@override String get dialog_launch_ankidroid => 'BUKA ANKIDROID';
+	@override String get dialog_ok => 'OK';
+	@override String get dialog_play => 'PUTAR';
+	@override String get dialog_read => 'BACA';
+	@override String get dialog_record => 'REKAM';
+	@override String get dialog_replace => 'Ganti';
+	@override String get dialog_save => 'SIMPAN';
+	@override String get dialog_search => 'CARI';
+	@override String get dialog_select => 'PILIH';
+	@override String get dialog_share => 'BAGIKAN';
+	@override String get dialog_stash => 'SIMPAN';
+	@override String get dialog_stop => 'BERHENTI';
+	@override String get dialog_title_dictionary_clear => 'Hapus semua kamus?';
+	@override String dialog_title_dictionary_delete({required Object name}) => 'Hapus『${name}』?';
+	@override String get dict_auto_update => 'Perbarui otomatis';
+	@override String get dict_auto_update_hint => 'Periksa pembaruan kamus saat aplikasi dibuka';
+	@override String dict_auto_update_last({required Object time}) => 'Pemeriksaan berhasil terakhir: ${time}';
+	@override String get dict_auto_update_never => 'Tidak pernah';
+	@override String get dict_category_frequency => 'Frekuensi';
+	@override String get dict_category_grammar => 'Tata Bahasa';
+	@override String get dict_category_ja_en => 'Jepang–Inggris';
+	@override String get dict_category_ja_ja => 'Jepang–Jepang';
+	@override String get dict_category_ja_other => 'Jepang Lainnya';
+	@override String get dict_category_kanji => 'Kanji';
+	@override String get dict_category_names => 'Nama';
+	@override String get dict_category_supplementary => 'Tambahan';
+	@override String get dict_download_browse => 'Unduh Kamus';
+	@override String dict_download_button({required Object count}) => 'Unduh (${count})';
+	@override String get dict_download_complete => 'Unduhan selesai.';
+	@override String dict_download_failed({required Object error}) => 'Unduhan gagal: ${error}';
+	@override String get dict_download_installed => 'Terpasang';
+	@override String get dict_download_language => 'Bahasa Anda';
+	@override String dict_download_partial({required Object success, required Object total, required Object error}) => '${success} / ${total} OK. Gagal: ${error}';
+	@override String get dict_download_select_title => 'Pilih Kamus';
+	@override String dict_downloading({required Object name}) => 'Mengunduh ${name}…';
+	@override String dict_import_failed_summary({required Object n}) => 'Gagal mengimpor ${n} kamus';
+	@override String get dict_import_started => 'Mengimpor kamus di latar belakang...';
+	@override String dict_import_success_summary({required Object n}) => 'Mengimpor ${n} kamus';
+	@override String get dict_update_check => 'Cek Pembaruan';
+	@override String get dict_update_checking => 'Memeriksa pembaruan…';
+	@override String dict_update_done({required Object name}) => '${name} diperbarui.';
+	@override String dict_update_failed({required Object error}) => 'Pembaruan gagal: ${error}';
+	@override String get dict_update_interval_daily => 'Harian';
+	@override String get dict_update_interval_monthly => 'Bulanan';
+	@override String get dict_update_interval_weekly => 'Mingguan';
+	@override String get dict_update_latest => 'Sudah yang terbaru.';
+	@override String dict_update_name_mismatch_body({required Object incoming, required Object existing}) => 'File yang dipilih adalah "${incoming}", tetapi Anda memperbarui "${existing}". Tetap ganti?';
+	@override String get dict_update_name_mismatch_title => 'Nama tidak cocok';
+	@override String get dict_update_none => 'Semua kamus sudah yang terbaru.';
+	@override String dict_update_summary({required Object updated, required Object current, required Object failed}) => '${updated} diperbarui, ${current} terbaru, ${failed} gagal.';
+	@override String get dict_update_tooltip => 'Perbarui kamus';
+	@override String dict_update_updating({required Object name}) => 'Memperbarui ${name}…';
+	@override String get dictionaries => 'Kamus';
+	@override String get dictionaries_delete_failed => 'Gagal menghapus kamus';
+	@override String get dictionaries_deleting_data => 'Menghapus data kamus...';
+	@override String get dictionaries_menu_empty => 'Impor kamus untuk digunakan';
+	@override String get dictionary_delete_failed => 'Gagal menghapus kamus';
+	@override String get dictionary_font_size => 'Ukuran font kamus';
+	@override String get dictionary_font_size_zoom_hint => 'Ctrl + scroll wheel memperbesar/memperkecil konten popup';
+	@override String get dictionary_section_frequency => 'Kamus Frekuensi';
+	@override String get dictionary_section_kanji => 'Kamus Kanji';
+	@override String get dictionary_section_pitch => 'Kamus Nada';
+	@override String get dictionary_section_term => 'Kamus Istilah';
+	@override String get dictionary_settings => 'Pengaturan Kamus';
+	@override String get dictionary_type_frequency => 'Frekuensi';
+	@override String get dictionary_type_pitch => 'Nada';
+	@override String get dictionary_type_term => 'Istilah';
+	@override String get dictionary_unrecognized_format => 'Format kamus tidak dikenali';
+	@override String get dismiss_swipe_sensitivity => 'Sensitivitas swipe untuk menutup';
+	@override String get display_settings => 'Pengaturan Tampilan';
+	@override String get download_backend_not_configured => 'Backend unduhan belum dikonfigurasi.';
+	@override String get download_clear_finished => 'Bersihkan yang selesai';
+	@override String get download_detail_backend_offline => 'Backend unduhan asli sedang offline. Informasi tugas yang tersimpan ditampilkan; parameter langsung tidak tersedia.';
+	@override String get download_network_proxy_auto => 'Otomatis';
+	@override String get download_network_proxy_auto_hint => 'Berlaku untuk AniList, Nyaa, dan Jimaku saja. Otomatis menggunakan variabel lingkungan, lalu proksi sistem yang aktif; lalu lintas torrent tidak berubah.';
+	@override String get download_network_proxy_custom => 'Kustom';
+	@override String get download_network_proxy_custom_label => 'Proksi kustom';
+	@override String get download_network_proxy_direct => 'Langsung';
+	@override String get download_network_proxy_section => 'Jaringan pencarian';
+	@override String get download_open_settings => 'Buka pengaturan';
+	@override String get download_save_root_change => 'Ubah folder';
+	@override String get download_save_root_create_failed => 'Tidak bisa membuat folder tersebut. Periksa drive dan izin.';
+	@override String get download_save_root_fallback_warning => 'Folder unduhan yang dikonfigurasi tidak tersedia, jadi folder default sedang digunakan.';
+	@override String get download_save_root_hint => 'Unduhan baru disimpan di sini. Tugas yang ada tetap di folder aslinya.';
+	@override String get download_save_root_not_absolute => 'Silakan pilih jalur folder absolut.';
+	@override String get download_save_root_not_writable => 'Folder tersebut tidak bisa ditulis.';
+	@override String get download_save_root_reset => 'Kembalikan ke default';
+	@override String get download_save_root_title => 'Folder unduhan';
+	@override String get download_settings => 'Pengaturan unduhan';
+	@override String get download_status_cancelled => 'Dibatalkan';
+	@override String get download_status_queued => 'Dalam antrean';
+	@override String download_subscription_after_episode({required Object episode}) => 'Setelah episode ${episode}';
+	@override String get download_subscription_check_all => 'Periksa semua';
+	@override String get download_subscription_check_now => 'Periksa sekarang';
+	@override String download_subscription_choice_hint({required Object group, required Object resolution}) => 'Ikuti ${group} · ${resolution}. Rilis episode baru akan diantrean.';
+	@override String get download_subscription_created => 'Unduhan diantrean dan langganan dibuat';
+	@override String get download_subscription_delete => 'Hapus langganan';
+	@override String download_subscription_delete_confirm({required Object title}) => 'Hapus langganan untuk ${title}? Tugas yang sudah diunduh tetap ada.';
+	@override String get download_subscription_download_and_create => 'Unduh dan berlangganan';
+	@override String get download_subscription_empty_body => 'Di Jelajahi, pilih rilis satu episode dan gunakan Unduh dan berlangganan.';
+	@override String get download_subscription_empty_title => 'Belum ada langganan';
+	@override String download_subscription_last_checked({required Object time}) => 'Terakhir diperiksa: ${time}';
+	@override String download_subscription_latest_episode({required Object episode}) => 'Terbaru diantrean: episode ${episode}';
+	@override String get download_subscription_never_checked => 'Belum pernah diperiksa';
+	@override String get download_subscription_running_hint => 'Fushi memeriksa langganan aktif setiap 15 menit selama aplikasi berjalan.';
+	@override String get download_subscription_unavailable_hint => 'Pilih rilis satu episode dengan grup rilis yang bisa dikenali untuk berlangganan.';
+	@override String get download_subscriptions_tab => 'Langganan';
+	@override String download_task_action_failed({required Object error}) => 'Tindakan tugas gagal: ${error}';
+	@override String get download_task_delete => 'Hapus tugas';
+	@override String download_task_delete_confirm({required Object title}) => 'Hapus tugas unduhan untuk ${title}?';
+	@override String get download_task_delete_files => 'Hapus juga file yang diunduh';
+	@override String get download_task_details => 'Lihat detail';
+	@override String get download_tasks_tab => 'Tugas';
+	@override String get download_test_connection => 'Tes koneksi';
+	@override String get download_test_connection_failed => 'Koneksi gagal. Periksa alamat dan kredensial.';
+	@override String download_test_connection_ok({required Object version}) => 'Terhubung (versi: ${version})';
+	@override String get drag_drop_need_card_target => 'Jatuhkan subtitle atau audio ke sebuah buku atau video';
+	@override String get drag_drop_unsupported_on_books => 'Jatuhkan file buku di sini. Beralih ke Video atau Kamus untuk file tersebut.';
+	@override String get drag_drop_unsupported_on_dictionary => 'Jatuhkan file kamus .zip, .dsl, atau .mdx di sini. File CSS hanya berfungsi bersama paket kamus.';
+	@override String get drag_drop_unsupported_on_video => 'Jatuhkan video, playlist, atau subtitle di sini. Beralih ke Buku atau Kamus untuk file tersebut.';
+	@override String get edit_custom_theme => 'Edit tema kustom';
+	@override String get eink_mode => 'Mode E-ink';
+	@override String get eink_mode_hint => 'Tema hitam-putih murni tanpa animasi dan sorotan garis, untuk layar e-ink';
+	@override String get enable_swipe_to_close => 'Geser untuk menutup popup';
+	@override String get epub_delete_error => 'Gagal menghapus buku';
+	@override String get epub_delete_title => 'Hapus Buku';
+	@override String get epub_parse_fallback => 'Metadata buku dipulihkan dari basis data';
+	@override String get error_ankidroid_api => 'Error AnkiDroid';
+	@override String get error_ankidroid_api_content => 'Terjadi masalah saat berkomunikasi dengan AnkiDroid.\n\nPastikan layanan latar belakang AnkiDroid aktif dan semua izin aplikasi yang diperlukan telah diberikan.';
+	@override String get error_copied => 'Galat disalin ke papan klip';
+	@override String get error_load_failed => 'Terjadi kesalahan saat memuat';
+	@override String get error_log_diagnostics_section => 'Diagnostik / forensik (bukan kesalahan aplikasi)';
+	@override String get error_log_empty => 'Tidak ada log kesalahan';
+	@override String error_log_label({required Object n}) => 'Log Error (${n})';
+	@override String get error_log_previous_run => 'Log sebelumnya (sebelum sesi terakhir)';
+	@override String get error_log_share_subject => 'Log Error Fushi';
+	@override String get extension_popup_independent_size => 'Ukuran terpisah untuk ekstensi browser';
+	@override String get extension_popup_independent_size_hint => 'Berikan popup pencarian ekstensi browser ukuran maksimumnya sendiri alih-alih mengikuti popup dalam aplikasi';
+	@override String get extension_popup_max_height => 'Tinggi maks popup ekstensi';
+	@override String get extension_popup_max_width => 'Lebar maks popup ekstensi';
+	@override String get external_window_capture_failed => 'Tangkapan jendela gagal';
+	@override String get external_window_current_game => 'Game saat ini';
+	@override String get external_window_mining => 'Penambangan jendela eksternal';
+	@override String get external_window_no_windows => 'Tidak ada jendela yang bisa ditangkap';
+	@override String get external_window_none => 'Tidak ada jendela terikat (ketuk untuk memilih)';
+	@override String get external_window_refresh => 'Segarkan daftar jendela';
+	@override String get external_window_select => 'Pilih jendela target';
+	@override String get external_window_unbind => 'Lepas jendela';
+	@override String get external_window_unsupported => 'Penambangan jendela eksternal hanya tersedia di Windows';
+	@override String get failed_online_service => 'Gagal terhubung ke layanan online';
+	@override String get favorite_added => 'Kalimat disimpan ke favorit';
+	@override String get favorite_removed => 'Kalimat dihapus dari favorit';
+	@override String favorites({required Object n}) => 'Favorit (${n})';
+	@override String field_fallback_used({required Object field, required Object secondField}) => 'Field ${field} menggunakan ${secondField} sebagai kata pencarian cadangan.';
+	@override String file_count({required Object count}) => '${count} file';
+	@override String get floating_dict_close => 'Tutup';
+	@override String get floating_dict_title => 'Kamus';
+	@override String get floating_lyric_bg_opacity => 'Opasitas latar subtitle melayang';
+	@override String get floating_lyric_button_bg_opacity => 'Opasitas latar tombol subtitle melayang';
+	@override String get floating_lyric_click_lookup => 'Ketuk subtitle melayang untuk mencari kata';
+	@override String get floating_lyric_click_lookup_hint => 'Biarkan ini aktif dengan kunci posisi jika kamu masih ingin pencarian kata.';
+	@override String get floating_lyric_close => 'Tutup';
+	@override String get floating_lyric_context_lines => 'Baris konteks subtitle mengambang';
+	@override String get floating_lyric_context_lines_hint => '0 hanya menampilkan baris saat ini (satu baris, tidak berubah); atur 1-3 untuk menampilkan sebanyak itu baris sebelum dan sesudahnya';
+	@override String get floating_lyric_corner_radius => 'Radius sudut subtitle mengambang';
+	@override String get floating_lyric_corner_radius_hint => '0 menggunakan sudut default setiap platform; naikkan untuk membulatkan bar dan tombol lebih banyak';
+	@override String get floating_lyric_font_size => 'Ukuran font subtitle mengambang';
+	@override String get floating_lyric_hint => 'Tampilkan kalimat saat ini di atas aplikasi lain.';
+	@override String get floating_lyric_lock => 'Kunci';
+	@override String get floating_lyric_next => 'Berikutnya';
+	@override String get floating_lyric_no_audio => 'Buku ini tidak punya audio untuk didengarkan';
+	@override String get floating_lyric_permission_hint => 'Izin overlay diperlukan untuk menampilkan lirik mengambang.';
+	@override String get floating_lyric_permission_hint_coloros => 'Jika sistem terus menolak izin overlay: instal ulang APK aplikasi ini sekali dengan pengelola file, atau nonaktifkan pemantauan izin di opsi Pengembang, lalu coba lagi.';
+	@override String get floating_lyric_play_pause => 'Putar';
+	@override String get floating_lyric_previous => 'Sebelumnya';
+	@override String get floating_lyric_text_opacity => 'Opasitas teks subtitle melayang';
+	@override String get floating_lyric_toggle_action => 'Subtitle melayang';
+	@override String get floating_lyric_unavailable_hint => 'Tidak dapat menampilkan jendela subtitle melayang.';
+	@override String get floating_lyric_unlock => 'Buka Kunci';
+	@override String get floating_lyric_width => 'Lebar subtitle mengambang';
+	@override String get floating_lyric_width_hint => '0 menggunakan lebar default platform; atur nilai untuk membuat bar dengan lebar tetap';
+	@override String get focus_navigation_enabled => 'Navigasi fokus keyboard & gamepad';
+	@override String get focus_navigation_enabled_hint => 'Pindahkan fokus dengan tombol panah atau gamepad dan tampilkan cincin fokus.';
+	@override String get folder_picker_permission_required => 'Izin penyimpanan diperlukan untuk menelusuri folder';
+	@override String get follow_audio_off_tooltip => 'Ikuti audio: NONAKTIF';
+	@override String get follow_audio_on_tooltip => 'Ikuti audio: AKTIF';
+	@override String get font_color => 'Warna Font';
+	@override String get font_color_desc => 'Warna teks pembaca';
+	@override String get font_desc_hina_mincho => 'Mincho dekoratif lembut · Pasangkan dengan Noto Sans JP';
+	@override String get font_desc_klee_one => 'Gaya tulisan tangan · Jelas dan mudah dibaca · Cocok dipasangkan dengan Noto Sans JP';
+	@override String get font_desc_mplus_rounded_1c => 'Gaya bulat lucu · Ideal untuk light novel · Pasangkan dengan Noto Sans JP';
+	@override String get font_desc_noto_sans_jp => 'Google/Adobe Gothic · Prioritas huruf Jepang · Berat variabel';
+	@override String get font_desc_noto_sans_sc => 'Google/Adobe Gothic · Prioritas Tionghoa Sederhana · Gunakan sebagai cadangan';
+	@override String get font_desc_noto_sans_tc => 'Google/Adobe Gothic · Prioritas Tionghoa Tradisional';
+	@override String get font_desc_noto_serif_jp => 'Google/Adobe Serif · Prioritas huruf Jepang · Ideal untuk baca vertikal';
+	@override String get font_desc_noto_serif_sc => 'Google/Adobe Serif · Prioritas Tionghoa Sederhana · Gunakan sebagai cadangan';
+	@override String get font_desc_noto_serif_tc => 'Google/Adobe Serif · Prioritas glif Cina Tradisional · Ideal untuk membaca vertikal';
+	@override String get font_desc_shippori_mincho => 'Mincho elegan · Cocok untuk sastra · Pasangkan dengan Noto Sans JP';
+	@override String get font_desc_zen_kaku_gothic_new => 'Kaku Gothic modern · Bacaan umum · Pasangkan dengan Noto Sans JP';
+	@override String get font_desc_zen_maru_gothic => 'Gothic bulat lembut · Pasangkan dengan Noto Sans JP';
+	@override String get font_desc_zen_old_mincho => 'Mincho vintage · Gaya sastra klasik · Pasangkan dengan Noto Sans JP';
+	@override String get font_source_file => 'Berkas';
+	@override String get font_source_system => 'Sistem';
+	@override String get font_target_app_ui => 'Font Antarmuka Sistem';
+	@override String get font_target_body => 'Font Teks Novel';
+	@override String get font_target_dictionary => 'Font Kamus';
+	@override String get font_target_video_subtitle => 'Video Subtitle Font';
+	@override String get gal_hook_text_font_size => 'Ukuran font teks galgame';
+	@override String get gal_hook_text_font_size_hint => 'Seret sudut overlay untuk mengubah ukuran jendela; ukuran teks diatur di sini.';
+	@override String get game_add => 'Tambah game';
+	@override String get game_already_added => 'Game ini sudah ada di pustaka';
+	@override String get game_audio_backend_engine => 'PCM mesin';
+	@override String get game_audio_backend_loopback => 'Loopback sistem (tercampur)';
+	@override String get game_audio_backend_none => 'Tidak ada sumber audio';
+	@override String get game_audio_backend_resource => 'Audio sumber daya game';
+	@override String get game_audio_duration => 'Durasi audio';
+	@override String get game_audio_fallback_disabled_missing => '未找到与该句匹配的游戏资源音频；已关闭降级，未制卡';
+	@override String get game_audio_resource_id => '音频资源 ID';
+	@override String get game_audio_tracks => 'Trek audio aktif';
+	@override String get game_auto_cover => 'Ambil sampul otomatis';
+	@override String get game_back_to_capture => 'Kembali ke ruang kerja tangkapan';
+	@override String get game_back_to_library => 'Kembali ke pustaka game';
+	@override String get game_capture_active => 'Tangkapan aktif';
+	@override String get game_capture_degraded_loopback => 'Game berjalan, tetapi injeksi mesin gagal; menggunakan audio sistem sebagai cadangan, yang bisa mencampur BGM dan efek.';
+	@override String get game_capture_description => 'Luncurkan atau tautkan game, lalu pantau teks, suara, tangkapan layar, dan output Anki.';
+	@override String get game_capture_empty_body => 'Luncurkan atau tautkan game; status teks dan audio kalimat akan muncul di sini.';
+	@override String get game_capture_empty_title => 'Belum ada baris yang diterima';
+	@override String get game_capture_launch_failed => 'Peluncuran atau tangkapan game gagal';
+	@override String get game_capture_launching => 'Meluncurkan game dan memulai tangkapan...';
+	@override String get game_capture_running => 'Sesi tangkapan sedang berjalan';
+	@override String get game_capture_window_missing => 'Proses game dimulai tetapi jendelanya tidak pernah muncul, jadi game mungkin tidak diluncurkan. Coba mulai lagi.';
+	@override String get game_capture_workbench => 'Ruang kerja tangkapan';
+	@override String get game_captured_lines => 'Baris yang ditangkap';
+	@override String get game_card_mapping_missing => 'Pemetaan bidang Anki tidak memiliki token kartu game';
+	@override String get game_card_sentence_audio_missing => 'Kartu dibuat tanpa audio kalimat; tidak ada audio baris lain yang disubstitusi.';
+	@override String get game_clear_events => 'Bersihkan peristiwa';
+	@override String get game_cover_not_found => 'Tidak ditemukan sampul yang bisa digunakan di folder game atau eksekutabel';
+	@override String get game_cover_searching => 'Mencari sampul...';
+	@override String get game_cover_updated => 'Sampul diperbarui';
+	@override String get game_dashboard => 'Beranda';
+	@override String get game_detail_missing => 'Game ini tidak lagi ada di pustaka';
+	@override String get game_detail_tab_edit => 'Edit';
+	@override String get game_detail_tab_stats => 'Statistik';
+	@override String get game_detail_tab_summary => 'Ringkasan';
+	@override String get game_diagnostics => 'Diagnostik kompatibilitas';
+	@override String get game_diagnostics_subtitle => 'Tahapan sesi, endpoint, trek audio, dan peristiwa terstruktur';
+	@override String game_drop_imported({required Object count}) => 'Menambahkan ${count} game';
+	@override String get game_drop_no_exe => 'Tidak ada .exe game baru di antara file yang dijatuhkan';
+	@override String get game_edit_developer => 'Pengembang';
+	@override String get game_edit_display_name => 'Nama tampilan';
+	@override String get game_edit_exe_path => 'Jalur eksekutabel';
+	@override String get game_edit_invalid_date => 'Tanggal rilis harus YYYY-MM-DD';
+	@override String get game_edit_launch_args => 'Argumen peluncuran';
+	@override String get game_edit_launch_args_hint => 'Diteruskan ke game saat diluncurkan, mis. -windowed';
+	@override String get game_edit_nsfw => 'Judul dewasa';
+	@override String get game_edit_release_date => 'Tanggal rilis (YYYY-MM-DD)';
+	@override String get game_edit_save => 'Simpan';
+	@override String get game_edit_saved => 'Tersimpan';
+	@override String get game_edit_summary => 'Deskripsi';
+	@override String get game_edit_tags => 'Tag (dipisah koma)';
+	@override String get game_edit_user_rating => 'Penilaian saya (0-10)';
+	@override String get game_edit_user_review => 'Ulasan saya';
+	@override String get game_edit_workdir => 'Direktori kerja';
+	@override String get game_empty => 'Belum ada game ditambahkan';
+	@override String get game_endpoint_phase_connected => 'Terhubung';
+	@override String get game_endpoint_phase_connecting => 'Menghubungkan';
+	@override String get game_endpoint_phase_retrying => 'Mencoba ulang';
+	@override String get game_endpoint_phase_stopped => 'Berhenti';
+	@override String get game_endpoints_engine_active => 'Teks disediakan oleh hook mesin; endpoint ini opsional';
+	@override String get game_endpoints_hint => 'Port untuk alat teks eksternal (Textractor / LunaTranslator dll.); abaikan jika tidak menggunakannya';
+	@override String get game_event_all => 'Semua peristiwa';
+	@override String get game_event_warnings => 'Peringatan dan kesalahan';
+	@override String get game_exe_missing => 'Eksekutabel game tidak ditemukan';
+	@override String get game_filter => 'Filter';
+	@override String get game_filter_all => 'Semua';
+	@override String get game_filter_favorited => 'Difavoritkan';
+	@override String get game_filter_hide_nsfw => 'Sembunyikan judul dewasa';
+	@override String get game_filter_local_only => 'Memiliki file lokal';
+	@override String get game_filter_metadata_only => 'Hanya metadata';
+	@override String get game_filter_mined => 'Ditambang';
+	@override String get game_filter_reset => 'Hapus filter';
+	@override String get game_filter_source => 'Ketersediaan';
+	@override String get game_filter_status => 'Status bermain';
+	@override String get game_filter_tags => 'Tag';
+	@override String get game_filter_with_audio => 'Dengan audio';
+	@override String get game_focus_continue => 'Lanjutkan';
+	@override String get game_follow_live => 'Ikuti langsung';
+	@override String get game_health => 'Status kesehatan';
+	@override String get game_health_anki => 'Output Anki';
+	@override String get game_health_audio => 'Sumber audio';
+	@override String get game_health_helper => 'Helper hook';
+	@override String get game_health_process => 'Proses game';
+	@override String get game_health_text => 'Sumber teks';
+	@override String get game_health_upscaling => 'Upscaling jendela';
+	@override String get game_health_window => 'Jendela game';
+	@override String get game_helper_download => 'Unduh';
+	@override String game_helper_download_failed({required Object error}) => 'Unduhan komponen mesin gagal: ${error}';
+	@override String get game_helper_downloading => 'Mengunduh komponen mesin…';
+	@override String get game_helper_install_incomplete => 'Instalasi komponen mesin tidak lengkap, silakan coba lagi';
+	@override String game_helper_needed_body({required Object size}) => 'Meluncurkan galgame memerlukan komponen injektor hook mesin (sekitar ${size}). Ini berisi kode injeksi proses dan dikirim terpisah dari aplikasi untuk menghindari positif palsu antivirus. Unduh sekarang?';
+	@override String get game_helper_needed_title => 'Komponen mesin galgame diperlukan';
+	@override String get game_helper_size_unknown => 'ukuran tidak diketahui';
+	@override String get game_helper_verification_failed => 'Komponen mesin diblokir: checksum-nya tidak bisa diverifikasi (file .sha256 dari GitHub tidak bisa dijangkau, tidak ada, atau tidak cocok). Fushi menolak menginstal kode injektor yang tidak terverifikasi.';
+	@override String get game_home_subtitle => 'Pustaka game dan pemantauan tangkapan';
+	@override String get game_hook_fallback_all_audio_sources_failed => 'Hook suara mesin maupun loopback sistem tidak bisa dimulai; tidak ada audio yang bisa ditangkap.';
+	@override String get game_hook_fallback_engine_attach_failed => 'Menautkan hook suara mesin ke game yang berjalan gagal; campuran sistem digunakan sebagai gantinya.';
+	@override String get game_hook_fallback_engine_pcm_unavailable => 'Hook suara mesin terinstal, tetapi game belum memutar suara apa pun. Campuran sistem digunakan untuk sementara dan akan beralih kembali secara otomatis setelah suara pertama tiba.';
+	@override String get game_hook_fallback_launch_injection_failed => 'Game berjalan, tetapi injeksi mesin awal gagal; campuran sistem digunakan sebagai gantinya.';
+	@override String get game_hook_fallback_window_not_found => 'Tangkapan audio berjalan, tetapi jendela game belum muncul, jadi tangkapan layar tidak tersedia. Akan terikat secara otomatis setelah jendela muncul.';
+	@override String get game_hook_line_unavailable => 'Baris yang ditangkap ini tidak lagi tersedia.';
+	@override String get game_hook_reason_access_denied => 'Game berjalan dengan hak istimewa lebih tinggi; jalankan Fushi sebagai administrator dan coba lagi.';
+	@override String get game_hook_reason_bitness_mismatch => 'Arsitektur helper tidak cocok dengan game (32-bit vs 64-bit); instal ulang helper.';
+	@override String get game_hook_reason_create_process_failed => 'Game tidak bisa dimulai dari Fushi; periksa jalur eksekutabel.';
+	@override String get game_hook_reason_elevation_required => 'Game ini memerlukan hak administrator; jalankan Fushi sebagai administrator dan luncurkan lagi.';
+	@override String get game_hook_reason_game_exe_missing => 'Eksekutabel game tidak lagi ada di jalur yang tersimpan.';
+	@override String get game_hook_reason_guarded_hook_failed => 'Hook yang dijaga profil tidak bisa diinstal tepat waktu; mencoba ulang secara otomatis.';
+	@override String get game_hook_reason_handshake_timeout => 'Game di-hook tetapi tidak menghasilkan teks atau audio tepat waktu; mesin ini mungkin belum didukung.';
+	@override String get game_hook_reason_helper_missing => 'Helper hook suara tidak terinstal untuk arsitektur game ini; instal dan coba lagi.';
+	@override String get game_hook_reason_hook_dll_missing => 'Paket helper tidak lengkap (pustaka hook hilang); instal ulang.';
+	@override String get game_hook_reason_injection_failed => 'Injeksi ke game diblokir; tambahkan Fushi dan game ke pengecualian antivirus.';
+	@override String get game_hook_reason_ready_timeout => 'Pustaka hook tidak selesai dimuat tepat waktu; pemindaian antivirus bisa menyebabkan ini.';
+	@override String get game_hook_reason_resume_failed => 'Game yang diluncurkan tidak bisa dilanjutkan dan dihentikan; luncurkan lagi.';
+	@override String get game_hook_reason_shared_memory_unavailable => 'Saluran tangkapan tidak bisa dibuka; mulai ulang Fushi.';
+	@override String get game_hook_reason_spawn_failed => 'Helper tidak bisa dimulai; periksa apakah antivirus telah menghapus atau memblokirnya.';
+	@override String get game_hook_reason_resident_hook_mismatch => 'Sesi tangkapan sebelumnya masih dimuat di game; mulai ulang game sekali.';
+	@override String get game_hook_reason_steam_timeout => 'Steam menerima permintaan peluncuran tetapi proses game tidak pernah muncul.';
+	@override String get game_hook_reason_target_missing => 'Tidak ada proses game atau eksekutabel yang dipilih untuk ditangkap.';
+	@override String get game_hook_recapture_empty => 'Tidak ada audio yang ditangkap dalam jendela tangkap ulang';
+	@override String get game_hook_recapture_saved => 'Suara tangkap ulang disimpan ke baris ini';
+	@override String get game_hook_recapture_started => 'Merekam — putar ulang baris ini di game';
+	@override String get game_hook_recapture_unavailable => 'Tangkap ulang suara memerlukan audio loopback sistem';
+	@override String get game_kpi_total_games => 'Game';
+	@override String get game_kpi_week => 'Minggu ini';
+	@override String get game_latest_line => 'Baris terbaru';
+	@override String get game_launch => 'Luncurkan';
+	@override String get game_launch_and_capture => 'Luncurkan dan tangkap';
+	@override String get game_launch_unsupported => 'Meluncurkan game hanya didukung di Windows';
+	@override String get game_library => 'Pustaka game';
+	@override String get game_line_audio_encoded => 'Audio diekstrak';
+	@override String get game_line_audio_fallback => 'Cadangan';
+	@override String get game_line_audio_matched => 'Audio siap';
+	@override String get game_line_audio_missing => 'Tidak ada audio';
+	@override String get game_line_audio_pending => 'Mencocokkan';
+	@override String get game_line_audio_unavailable => 'Hanya teks';
+	@override String get game_line_favorite_tooltip => 'Favoritkan baris ini';
+	@override String get game_line_mined => 'Ditambang';
+	@override String get game_line_preview_failed => 'Tidak ada audio yang bisa diputar untuk baris ini';
+	@override String get game_line_preview_tooltip => 'Putar audio baris ini';
+	@override String get game_line_track_applied => 'Trek suara diterapkan ke baris ini';
+	@override String get game_line_track_dialog_title => 'Trek suara untuk baris ini';
+	@override String get game_line_track_failed => 'Trek itu tidak memiliki audio di sekitar baris ini';
+	@override String get game_line_track_tooltip => 'Pilih trek suara untuk baris ini';
+	@override String get game_line_unfavorite_tooltip => 'Hapus favorit';
+	@override String get game_live_lines => 'Baris langsung';
+	@override String get game_manage_tracks => 'Kelola trek audio';
+	@override String get game_meta_added => 'Ditambahkan';
+	@override String get game_meta_ranking => 'Peringkat';
+	@override String get game_meta_source => 'Sumber data';
+	@override String get game_never_played => 'Belum pernah dimainkan';
+	@override String get game_no_active_line => 'Pilih baris untuk memeriksa status audio kalimatnya.';
+	@override String get game_no_events => 'Belum ada peristiwa sesi';
+	@override String get game_no_match => 'Tidak ada game yang cocok dengan filter saat ini';
+	@override String get game_no_tracks => 'Belum ada data trek audio';
+	@override String get game_open_capture_workspace => 'Buka ruang kerja tangkapan';
+	@override String get game_phase_attaching => 'Menautkan';
+	@override String get game_phase_degraded => 'Terdegradasi';
+	@override String get game_phase_error => 'Kesalahan';
+	@override String get game_phase_idle => 'Menganggur';
+	@override String get game_phase_injecting => 'Menginjeksi';
+	@override String get game_phase_launching => 'Meluncurkan';
+	@override String get game_phase_resolving => 'Menyelesaikan';
+	@override String get game_phase_running => 'Berjalan';
+	@override String get game_phase_stopping => 'Menghentikan';
+	@override String get game_phase_waiting_signals => 'Menunggu sinyal';
+	@override String get game_pipeline => 'Pipeline sesi';
+	@override String get game_play_status => 'Status bermain';
+	@override String get game_random_reroll => 'Acak';
+	@override String get game_random_title => 'Pilihkan untukku';
+	@override String get game_recently_played => 'Baru dimainkan';
+	@override String get game_refresh_tracks => 'Segarkan trek';
+	@override String get game_remove => 'Hapus';
+	@override String get game_rename => 'Ganti nama';
+	@override String get game_rename_label => 'Nama game';
+	@override String get game_scrape => 'Ambil metadata';
+	@override String get game_scrape_applied => 'Metadata diperbarui';
+	@override String get game_scrape_failed => 'Pengambilan metadata gagal';
+	@override String get game_scrape_no_result => 'Tidak ada entri yang cocok ditemukan';
+	@override String get game_scrape_query => 'Judul atau ID sumber';
+	@override String get game_search => 'Cari game';
+	@override String get game_session_events => 'Peristiwa sesi';
+	@override String get game_session_idle => 'Tangkapan belum dimulai';
+	@override String get game_session_listening => 'Mendengarkan';
+	@override String get game_set_cover => 'Atur sampul';
+	@override String get game_show_hook_text_window => 'Tampilkan jendela teks Hook';
+	@override String get game_site_score => 'Penilaian situs';
+	@override String get game_sort => 'Urutkan';
+	@override String get game_sort_added => 'Tanggal ditambahkan';
+	@override String get game_sort_last_played => 'Terakhir dimainkan';
+	@override String get game_sort_name => 'Nama';
+	@override String get game_sort_release => 'Tanggal rilis';
+	@override String get game_sort_site_score => 'Penilaian situs';
+	@override String get game_sort_user_rating => 'Penilaian saya';
+	@override String get game_stat_daily => 'Waktu bermain harian';
+	@override String get game_stat_delete_session => 'Hapus sesi ini';
+	@override String get game_stat_last_played => 'Terakhir dimainkan';
+	@override String get game_stat_no_sessions => 'Belum ada sesi bermain yang tercatat';
+	@override String get game_stat_session_list => 'Riwayat sesi';
+	@override String get game_stat_sessions => 'Sesi';
+	@override String get game_stat_today => 'Waktu bermain hari ini';
+	@override String get game_stat_total_time => 'Total waktu bermain';
+	@override String get game_status_dropped => 'Dihentikan';
+	@override String get game_status_not_configured => 'Belum diverifikasi';
+	@override String get game_status_on_hold => 'Ditunda';
+	@override String get game_status_played => 'Dimainkan';
+	@override String get game_status_playing => 'Sedang bermain';
+	@override String get game_status_ready => 'Siap';
+	@override String get game_status_unset => 'Belum diatur';
+	@override String get game_status_waiting => 'Menunggu';
+	@override String get game_status_want_to_play => 'Ingin dimainkan';
+	@override String get game_stop_listening => 'Hentikan pendengar';
+	@override String get game_summary_aliases => 'Alias';
+	@override String get game_summary_all_titles => 'Semua judul';
+	@override String get game_summary_average_hours => 'Rata-rata waktu bermain';
+	@override String get game_summary_none => 'Belum ada deskripsi. Ambil metadata untuk mengisinya.';
+	@override String get game_summary_release_date => 'Tanggal rilis';
+	@override String get game_tags_clear => 'Hapus pilihan';
+	@override String get game_tags_title => 'Tag game';
+	@override String get game_text_endpoints => 'Endpoint teks';
+	@override String get game_text_gaps => 'Celah urutan';
+	@override String get game_text_gaps_hint => 'Celah urutan = jumlah baris yang terlewat dalam ring teks hook; 0 adalah normal';
+	@override String get game_text_source_engine => 'Hook mesin';
+	@override String get game_text_source_unknown => 'Sumber tidak diketahui';
+	@override String get game_text_source_websocket => 'WebSocket';
+	@override String get game_text_thread => 'Thread teks';
+	@override String game_text_thread_audio_count({required Object count}) => '${count} dengan audio';
+	@override String get game_text_thread_hint => 'Pilih thread dialog bersih, seperti Luna Translator';
+	@override String get game_track_auto => 'Pemilihan otomatis';
+	@override String get game_track_clips => 'Klip';
+	@override String get game_track_energy => 'Energi';
+	@override String get game_track_exclude_bgm => 'Tandai sebagai BGM';
+	@override String get game_track_exclusion_hint => 'Tandai trek BGM/ambiens sebagai dikecualikan agar pemilihan otomatis tidak pernah memperlakukannya sebagai suara — baris tanpa ucapan tidak lagi mengambil BGM.';
+	@override String get game_track_exclusion_title => 'Kecualikan trek audio';
+	@override String get game_track_preview => 'Pratinjau trek ini';
+	@override String get game_track_preview_failed => 'Tidak ada audio terbaru yang bisa ditangkap dari trek ini';
+	@override String get game_track_preview_stop => 'Hentikan pratinjau';
+	@override String get game_track_restore => 'Pulihkan trek';
+	@override String get game_track_select_as_voice => 'Gunakan sebagai trek suara';
+	@override String get game_track_select_requires_engine => 'Pemilihan trek memerlukan sesi hook mesin yang aktif';
+	@override String get game_track_voice => 'Suara';
+	@override String get game_tracks_loopback_hint => 'Loopback sistem menangkap seluruh output campuran sistem sebagai satu stream; enumerasi per-trek tidak tersedia.';
+	@override String get game_tracks_pcm_only_hint => 'Pemilihan per-trek hanya memengaruhi tangkapan saat PCM mesin adalah backend audio aktif. Daftar di bawah hanya-baca di bawah backend saat ini.';
+	@override String get game_tracks_resource_mode_hint => 'Dalam mode audio sumber daya game, setiap baris suara diekstrak langsung dari file game, jadi tidak ada daftar trek PCM di sini. Pemilihan trek otomatis atau manual hanya berlaku untuk tangkapan PCM mesin.';
+	@override String get game_unread_lines => 'Belum dibaca';
+	@override String get game_upscaling => 'Upscaling jendela game';
+	@override String get game_upscaling_auto => 'Otomatis';
+	@override String get game_upscaling_hint_external => 'Salinan Magpie sudah berjalan, jadi Fushi membiarkannya. Tekan Win+Shift+A untuk upscale jendela game.';
+	@override String get game_upscaling_hint_first_run => 'Magpie masih harus mengatur dirinya sendiri kali ini. Tekan Win+Shift+A untuk upscale sekarang — lain kali saat Anda memulai game akan terjadi otomatis.';
+	@override String get game_upscaling_hint_manual => 'Tekan Win+Shift+A untuk upscale jendela game.';
+	@override String get game_upscaling_installed_only => 'Hanya yang terinstal';
+	@override String get game_upscaling_off => 'Mati';
+	@override String get game_upscaling_status_active => 'Upscaling jendela aktif';
+	@override String get game_upscaling_status_failed => 'Upscaling jendela tidak bisa dimulai';
+	@override String get game_upscaling_status_manual => 'Upscaling jendela siap, tetapi tidak dimulai sendiri';
+	@override String get game_upscaling_status_unavailable => 'Upscaling jendela tidak tersedia';
+	@override String get game_user_rating => 'Penilaian saya';
+	@override String get game_view_detail => 'Lihat detail';
+	@override String get game_waiting_for_text => 'Menunggu teks';
+	@override String game_waveform_range_label({required Object start, required Object end, required Object duration, required Object total}) => '${start} - ${end} (dipilih ${duration} / total ${total})';
+	@override String get game_waveform_select_title => 'Pilih rentang audio';
+	@override String get game_window_bound => 'Terikat';
+	@override String get game_window_missing => 'Tidak terikat';
+	@override String get games => 'Game';
+	@override String get global_context_capture => 'Tangkap konteks seleksi';
+	@override String get global_context_capture_hint => 'Baca teks sekitar dari aplikasi yang aktif untuk menampilkan kalimat saat ini (khusus Windows)';
+	@override String go_to_chapter({required Object n}) => 'Bab ${n}';
+	@override String get handlebar_audio => 'Audio';
+	@override String get handlebar_book_cover => 'Sampul buku';
+	@override String get handlebar_card_image => 'Card Image (Cover / GIF)';
+	@override String get handlebar_cue_sentence => 'Kalimat subtitle';
+	@override String handlebar_deprecated_label({required Object label}) => '${label} (usang)';
+	@override String get handlebar_document_title => 'Judul dokumen';
+	@override String get handlebar_expression => 'Ekspresi';
+	@override String get handlebar_frequencies => 'Frekuensi (HTML)';
+	@override String get handlebar_frequency_harmonic_rank => 'Frekuensi (Peringkat)';
+	@override String get handlebar_furigana_plain => 'Furigana';
+	@override String get handlebar_glossary => 'Glosarium';
+	@override String get handlebar_glossary_first => 'Glosarium (Pertama)';
+	@override String get handlebar_pitch_accent_categories => 'Kategori aksen';
+	@override String get handlebar_pitch_accent_positions => 'Posisi aksen';
+	@override String get handlebar_popup_selection_text => 'Teks pilihan popup';
+	@override String get handlebar_reading => 'Bacaan';
+	@override String get handlebar_selected_glossary => 'Glosarium terpilih';
+	@override String get handlebar_sentence => 'Kalimat';
+	@override String get handlebar_sentence_audio => 'Sentence Audio';
+	@override String get handlebar_video_clip => 'Video Clip (GIF)';
+	@override String get harmonic_frequency => 'Gabungkan frekuensi kata';
+	@override String health_match_summary({required Object pct}) => 'Kecocokan ${pct}%';
+	@override String get highlight_on_tap => 'Sorot teks saat ketuk';
+	@override String get home_activity => 'Aktivitas';
+	@override String get home_activity_empty => 'Belum ada aktivitas';
+	@override String get home_continue => 'Lanjutkan';
+	@override String get home_filter_added => 'Ditambahkan';
+	@override String get home_filter_all => 'Semua';
+	@override String get home_filter_game => 'Game';
+	@override String get home_filter_read => 'Baca';
+	@override String get home_filter_watch => 'Tonton';
+	@override String get home_recently_added => 'Baru ditambahkan';
+	@override String get home_remote_source => 'Remote';
+	@override String home_session_count({required Object n}) => '${n} sesi';
+	@override String get home_today => 'Hari ini';
+	@override String get home_yesterday => 'Kemarin';
+	@override String get hover_auto_lookup => 'Cari saat hover';
+	@override String get hover_auto_lookup_hint => 'Cari otomatis saat mouse diarahkan ke sebuah karakter; tanpa mengeklik atau menahan Shift. Memunculkan maksimal satu lapis popup. Hanya desktop.';
+	@override String get icon_custom => 'Kustom';
+	@override String get icon_custom_confirm_body => 'Ini akan membuat pintasan di layar beranda dengan gambar yang Anda pilih. Lanjutkan?';
+	@override String get icon_custom_confirm_title => 'Ikon Kustom';
+	@override String get icon_custom_hint => 'Ketuk ikon untuk mengganti, atau pilih gambar kustom di bawah.';
+	@override String get icon_default => 'Default';
+	@override String get icon_full => 'Penuh';
+	@override String get icon_shortcut_created => 'Pintasan layar beranda dibuat.';
+	@override String get icon_shortcut_unsupported => 'Pintasan tidak didukung di perangkat ini.';
+	@override String get icon_switch_success => 'Ikon aplikasi berhasil diubah.';
+	@override String get icon_transparent => 'Transparan';
+	@override String image_page_counter({required Object current, required Object total}) => '${current} / ${total}';
+	@override String get image_pause => 'Jeda pada Gambar';
+	@override String get image_pause_hint => 'Jeda otomatis saat gambar muncul selama pemutaran.';
+	@override String get image_pause_off => 'Mati';
+	@override String get image_search_label_after => 'ditemukan untuk';
+	@override String get image_search_label_before => 'Memilih gambar ';
+	@override String get image_search_label_middle => 'dari ';
+	@override String get image_search_label_none_before => 'Memilih ';
+	@override String get image_search_label_none_middle => 'tidak ada gambar ';
+	@override String get import_complete => 'Impor kamus selesai.';
+	@override String import_duplicate({required Object name}) => 'Kamus dengan nama『${name}』sudah diimpor.';
+	@override String get import_extract => 'Mengekstrak file...';
+	@override String get import_failed => 'Impor kamus gagal.';
+	@override String get import_in_progress => 'Sedang mengimpor';
+	@override String import_name({required Object name}) => 'Mengimpor『${name}』...';
+	@override String import_sidecar_audio({required Object count}) => '${count} file audio terlampir otomatis';
+	@override String import_sidecar_subtitle({required Object name}) => 'Subtitle terlampir otomatis: ${name}';
+	@override String get import_start => 'Mempersiapkan impor...';
+	@override String get import_step_building_epub => 'Membangun EPUB…';
+	@override String get import_step_converting_epub => 'Mengonversi ke EPUB…';
+	@override String import_step_copying_file({required Object name}) => 'Menyalin ${name}…';
+	@override String get import_step_done => 'Selesai';
+	@override String get import_step_importing_epub => 'Mengimpor EPUB…';
+	@override String get import_step_matching => 'Penyelarasan audio…';
+	@override String get import_step_parsing => 'Mengurai subtitle…';
+	@override String get import_step_persisting => 'Menyimpan file…';
+	@override String get import_step_reading => 'Membaca file…';
+	@override String get import_step_reading_idb => 'Membaca info buku…';
+	@override String get import_step_saving => 'Menyimpan catatan…';
+	@override String get import_theme => 'Impor Tema';
+	@override String get import_theme_hint => 'Tempel kode tema';
+	@override String get import_theme_invalid => 'Kode tema tidak valid';
+	@override String get import_theme_success => 'Tema berhasil diimpor';
+	@override String import_unsupported_file_format({required Object ext}) => 'Format file tidak didukung: ${ext}';
+	@override String get increase => 'Tambah';
+	@override String get info_empty_home_tab => 'Riwayat kosong';
+	@override String init_error_message({required Object error}) => 'Inisialisasi gagal: ${error}';
+	@override String get initialization_failed => 'Inisialisasi gagal';
+	@override String get interconnect_backup_backend => 'Gunakan interconnect sebagai backend cadangan';
+	@override String get interconnect_backup_backend_active => 'Cadangan sudah menuju perangkat berpasangan. Pilih backend lain di Sinkronisasi & cadangan untuk beralih.';
+	@override String get interconnect_backup_backend_apply => 'Atur sebagai backend cadangan';
+	@override String interconnect_backup_backend_current({required Object backend}) => 'Backend cadangan saat ini: ${backend}';
+	@override String get interconnect_backup_backend_hint => 'Cadangkan dan sinkronkan ke perangkat berpasangan alih-alih drive cloud. Semua yang diizinkan oleh pengalih unggah perangkat berpasangan di atas adalah yang ditulis di sana.';
+	@override String get interconnect_backup_backend_needs_pairing => 'Hubungkan ke perangkat di atas terlebih dahulu.';
+	@override String get interconnect_enable => 'Aktifkan interconnect';
+	@override String get interconnect_enable_hint => 'Hubungkan ke perangkat Anda yang lain melalui LAN. Berfungsi bersama backend cadangan cloud — tidak konflik.';
+	@override String get interconnect_moved_note => 'Pengaturan koneksi & server ada di kategori Fushi Interconnect';
+	@override String get interconnect_section_client => 'Hubungkan ke perangkat lain';
+	@override String get interconnect_section_delegate => 'Delegasikan ke perangkat berpasangan';
+	@override String get interconnect_section_related => 'Konten & pencarian remote';
+	@override String get interconnect_summary => 'Sinkronisasi langsung perangkat-ke-perangkat & jadi host untuk perangkat ini sebagai server';
+	@override String get interconnect_upload_audiobook_files => 'Unggah file buku audio';
+	@override String get interconnect_upload_audiobook_files_hint => 'Sinkronkan audio dan paket subtitle buku audio perangkat ini ke peer interconnect (besar).';
+	@override String get interconnect_upload_content => 'Unggah file buku';
+	@override String get interconnect_upload_content_hint => 'Sinkronkan buku dan konten bacaan perangkat ini ke peer interconnect.';
+	@override String get interconnect_upload_dictionary => 'Unggah kamus';
+	@override String get interconnect_upload_dictionary_hint => 'Sinkronkan kamus perangkat ini ke peer interconnect.';
+	@override String get interconnect_upload_section => 'Unggah ke peer interconnect';
+	@override String get interconnect_upload_video_files => 'Unggah file video';
+	@override String get interconnect_upload_video_files_hint => 'Sinkronkan file video lokal perangkat ini ke peer interconnect (besar).';
+	@override String get invert_audiobook_skip_direction => 'Balik tombol lewat bilah bawah';
+	@override String get invert_swipe_direction => 'Balik arah geser untuk membalik halaman';
+	@override String get invert_volume_buttons => 'Balik tombol volume';
+	@override String get jump_to_char => 'Lompat ke Karakter';
+	@override String jump_to_char_current({required Object current, required Object total}) => 'Saat ini: ${current} / ${total}';
+	@override String get jump_to_char_hint => 'Masukkan posisi karakter…';
+	@override String get keep_screen_awake => 'Layar selalu menyala';
+	@override String get library_search => 'Cari pustaka';
+	@override String get loading_illustrations => 'Memuat ilustrasi…';
+	@override String get loading_slow_message => 'Jika lokasi penyimpanan data Anda ada di drive jaringan atau lepas-pasang yang saat ini terputus, startup bisa macet. Ketuk Coba Lagi untuk meluncurkan menggunakan lokasi penyimpanan default untuk sesi ini; data Anda tetap di tempatnya.';
+	@override String get loading_slow_message_mobile => 'Startup memakan waktu lebih lama dari biasanya — Fushi mungkin sedang memuat pustaka besar atau kamus. Harap tunggu sebentar, atau ketuk Coba Lagi untuk memuat ulang. Data Anda aman dan tidak akan hilang.';
+	@override String get loading_slow_title => 'Startup memakan waktu lebih lama dari biasanya';
+	@override String get local_audio => 'Audio lokal';
+	@override String get local_audio_add_db => 'Tambah Database Audio Lokal';
+	@override String get local_audio_edit_sources => 'Edit sumber';
+	@override String local_audio_import_failed_detail({required Object reason}) => 'Gagal mengimpor database audio: ${reason}';
+	@override String get local_audio_imported => 'Basis data audio ditambahkan';
+	@override String get local_audio_invalid_db => 'File ini bukan database audio yang bisa digunakan (bukan database Local Audio Server, atau tidak memiliki audio).';
+	@override String get local_audio_no_sources => 'Tidak ada sumber di basis data ini';
+	@override String get local_audio_reference_original => 'Referensi file asli (jangan salin)';
+	@override String get local_audio_reference_original_desc => 'Biarkan database di tempatnya dan baca dari jalur aslinya; sumber rusak jika file dipindah atau dihapus.';
+	@override String get local_audio_source_order_title => 'Prioritas sumber';
+	@override String get log_copy_all => 'Salin Semua';
+	@override String get log_export_failed => 'Ekspor gagal';
+	@override String get log_export_file => 'Ekspor ke file';
+	@override String get log_export_saved => 'Log tersimpan';
+	@override String get log_upload_action => 'Unggah ke server';
+	@override String get log_upload_consent_agree => 'Setuju & unggah';
+	@override String get log_upload_consent_body => 'Teks log (yang mungkin berisi pesan error, jalur file, dan judul buku) ditambah versi aplikasi, platform, dan model perangkat kamu akan diunggah ke server pengembang untuk membantu mendiagnosis masalah. Ini hanya terjadi saat kamu mengetuk unggah — tidak ada yang dikirim otomatis.';
+	@override String get log_upload_consent_title => 'Unggah log ke server?';
+	@override String get log_upload_failed => 'Unggahan gagal';
+	@override String get log_upload_in_progress => 'Mengunggah log…';
+	@override String get log_upload_success => 'Log terunggah';
+	@override String get log_upload_too_large => 'Log terlalu besar untuk diunggah';
+	@override String get login => 'Masuk';
+	@override String get lookup_audio_volume => 'Volume audio pencarian kata';
+	@override String get low_memory_mode => 'Mode Memori Rendah';
+	@override String get low_memory_mode_hint => 'Mengurangi penggunaan cache dan memori untuk perangkat kelas bawah. Beberapa perubahan berlaku setelah mulai ulang.';
+	@override String get low_memory_mode_suggestion => 'Coba aktifkan Mode Memori Rendah di Pengaturan → Lain-lain.';
+	@override String get lyrics_artist => 'Artis';
+	@override String get lyrics_blur => 'Buramkan lirik';
+	@override String get lyrics_blur_hint => 'Buramkan baris saat ini untuk imersi mendengarkan; arahkan kursor atau ketuk untuk menampilkan';
+	@override String get lyrics_font_size => 'Ukuran Font Lirik';
+	@override String get lyrics_font_size_hint => 'Ukuran font lirik tidak bergantung pada mode buku';
+	@override String get lyrics_mode => 'Mode Lirik';
+	@override String get lyrics_mode_hint_body => 'Mode lirik memiliki pengaturan ukuran font sendiri. Anda dapat menyesuaikannya di ⚙ Pengaturan → Tipografi.';
+	@override String get lyrics_mode_hint_title => 'Mode Lirik';
+	@override String get lyrics_text_color => 'Warna teks lirik';
+	@override String get lyrics_text_color_hint => 'Gunakan warna kustom untuk teks lirik alih-alih mengikuti tema';
+	@override String get lyrics_title => 'Judul';
+	@override String get lyrics_vertical_writing => 'Lirik vertikal';
+	@override String get lyrics_vertical_writing_hint => 'Baca lirik atas-ke-bawah, kanan-ke-kiri (independen dari mode buku)';
+	@override String get manage_audio_sources => 'Kelola sumber audio';
+	@override String get manager => 'Manajer';
+	@override String get manga_mode_toggle => 'Reading Mode';
+	@override String get manga_ocr_delete => 'Hapus model';
+	@override String get manga_ocr_delete_confirm_message => 'Ini membebaskan ruang disk. Anda bisa mengunduhnya lagi nanti.';
+	@override String get manga_ocr_delete_confirm_title => 'Hapus model OCR?';
+	@override String get manga_ocr_delete_done => 'Model dihapus';
+	@override String get manga_ocr_download => 'Unduh model';
+	@override String get manga_ocr_download_done => 'Model diunduh';
+	@override String get manga_ocr_download_failed => 'Unduhan model gagal';
+	@override String manga_ocr_downloading_file({required Object file}) => 'Mengunduh ${file}…';
+	@override String get manga_ocr_engine_builtin => 'Bawaan';
+	@override String get manga_ocr_engine_external => 'mokuro eksternal';
+	@override String get manga_ocr_engine_none => 'Tidak ada mesin OCR yang tersedia. Unduh model bawaan atau atur jalur CLI mokuro di pengaturan.';
+	@override String get manga_ocr_external_cli_hint => 'Biarkan kosong untuk deteksi otomatis (FUSHI_MOKURO / PATH)';
+	@override String get manga_ocr_external_cli_label => 'Jalur CLI mokuro eksternal';
+	@override String get manga_ocr_external_detect => 'Deteksi';
+	@override String manga_ocr_external_detected({required Object version}) => 'Terdeteksi: ${version}';
+	@override String get manga_ocr_external_not_found => 'mokuro tidak ditemukan';
+	@override String get manga_ocr_model_status_missing => 'Model OCR belum diunduh';
+	@override String get manga_ocr_model_status_ready => 'Model OCR siap';
+	@override String get manga_ocr_section => 'OCR Manga';
+	@override String get manga_ocr_section_summary => 'Model OCR bawaan dan CLI mokuro eksternal';
+	@override String get manga_ocr_unsupported => 'OCR manga bawaan belum tersedia di platform ini.';
+	@override String get manga_ocr_wizard_done => 'Manga diimpor';
+	@override String get manga_ocr_wizard_failed => 'OCR gagal';
+	@override String get manga_ocr_wizard_has_mokuro => 'Folder ini sudah memiliki file .mokuro — gunakan impor biasa.';
+	@override String get manga_ocr_wizard_importing => 'Mengimpor…';
+	@override String get manga_ocr_wizard_no_images => 'Tidak ada gambar ditemukan di folder ini.';
+	@override String manga_ocr_wizard_page_progress({required Object done, required Object total}) => 'Halaman ${done} / ${total}';
+	@override String get manga_ocr_wizard_pick_folder => 'Pilih folder gambar';
+	@override String get manga_ocr_wizard_run => 'Jalankan OCR';
+	@override String get manga_ocr_wizard_running => 'Menjalankan OCR…';
+	@override String get manga_ocr_wizard_title => 'Impor manga dengan OCR';
+	@override String get manga_ocr_wizard_title_label => 'Judul (opsional)';
+	@override String get manga_online_base_url_label => 'URL katalog online';
+	@override String get manga_online_catalog_title => 'Katalog online';
+	@override String get manga_online_download_selected => 'Unduh yang dipilih';
+	@override String get manga_online_downloaded => 'Diimpor';
+	@override String get manga_online_failed => 'Unduhan gagal';
+	@override String get manga_online_load_failed => 'Gagal memuat katalog';
+	@override String get manga_online_queue_added => 'Ditambahkan ke antrean unduhan';
+	@override String manga_online_queue_progress({required Object done, required Object total}) => 'Volume ${done} / ${total}';
+	@override String get manga_online_queue_section => 'Unduhan katalog manga';
+	@override String get manga_online_search_hint => 'Cari seri';
+	@override String get manga_online_stage_cbz => 'Mengunduh volume…';
+	@override String get manga_online_stage_extract => 'Mengekstrak…';
+	@override String get manga_online_stage_mokuro => 'Mengunduh data OCR…';
+	@override String get manga_reading_mode_spread => 'Spread';
+	@override String get manga_reading_mode_webtoon => 'Webtoon';
+	@override String get manga_remote_ocr_cancelled => 'OCR remote dibatalkan di host.';
+	@override String get manga_remote_ocr_engine => 'Host berpasangan';
+	@override String get manga_remote_ocr_failed => 'OCR remote gagal';
+	@override String get manga_remote_ocr_no_host => 'Tidak ada host berpasangan dengan OCR manga yang bisa dijangkau.';
+	@override String get manga_remote_ocr_not_ready => 'Model OCR host berpasangan belum diunduh. Unduh di host terlebih dahulu.';
+	@override String get manga_remote_ocr_running => 'Host berpasangan sedang menjalankan OCR…';
+	@override String get manga_remote_ocr_unsupported => 'Host berpasangan tidak mendukung OCR manga.';
+	@override String manga_remote_ocr_uploading({required Object done, required Object total}) => 'Mengunggah halaman ${done} / ${total}…';
+	@override String get margin_bottom => 'Margin bawah';
+	@override String get margin_left => 'Margin kiri';
+	@override String get margin_right => 'Margin kanan';
+	@override String get margin_top => 'Margin atas';
+	@override String get maximum_terms => 'Jumlah maksimum kata kunci kamus dalam hasil';
+	@override String get media_source_add => 'Add Source';
+	@override String get media_source_add_local_folder => 'Local Folder';
+	@override String get media_source_add_network => 'Jaringan';
+	@override String media_source_count_book({required Object n}) => '${n} buku';
+	@override String media_source_count_video({required Object n}) => '${n} video';
+	@override String media_source_last_scan({required Object time}) => 'Pemindaian terakhir ${time}';
+	@override String get media_source_manage_title => 'Manage Sources';
+	@override String get media_source_network_label_optional => 'Nama tampilan (opsional)';
+	@override String get media_source_network_missing_fields => 'Masukkan host, nama pengguna, jalur remote, dan kata sandi atau kunci';
+	@override String get media_source_network_remote_path => 'Jalur remote';
+	@override String get media_source_network_subtitle => 'Pustaka remote SFTP / FTP / WebDAV';
+	@override String get media_source_no_sources => 'Belum ada sumber';
+	@override String get media_source_open_folder => 'Open Folder';
+	@override String get media_source_remove => 'Remove Source';
+	@override String get media_source_remove_keeps_media => 'Menghapus sumber tidak menghapus media yang diimpor.';
+	@override String get media_source_rescan => 'Pindai ulang';
+	@override String get media_source_scan_error => 'Pemindaian gagal';
+	@override String get media_tracking_access_token => 'Token akses';
+	@override String get media_tracking_access_token_hint => 'Buat token akses personal dengan izin tulis';
+	@override String get media_tracking_account => 'Akun Bangumi';
+	@override String get media_tracking_add_mapping => 'Tambah pemetaan';
+	@override String get media_tracking_anime => 'Anime';
+	@override String get media_tracking_chapter => 'Bab';
+	@override String get media_tracking_connect => 'Hubungkan dan verifikasi';
+	@override String get media_tracking_connected_as => 'Akun terhubung';
+	@override String get media_tracking_delete_mapping => 'Hapus pemetaan';
+	@override String get media_tracking_episode => 'Episode';
+	@override String get media_tracking_kind => 'Kategori';
+	@override String get media_tracking_local_item => 'Item lokal';
+	@override String get media_tracking_manga => 'Manga';
+	@override String get media_tracking_mappings => 'Pemetaan item';
+	@override String get media_tracking_no_mappings => 'Belum ada pemetaan manual. Fushi mencocokkan secara otomatis saat episode pertama selesai atau ada progres membaca; tambahkan item ambigu di sini.';
+	@override String get media_tracking_novel => 'Novel';
+	@override String get media_tracking_pending => 'Pembaruan tertunda';
+	@override String get media_tracking_progress_mode => 'Unit progres';
+	@override String get media_tracking_progress_offset => 'Nomor awal';
+	@override String get media_tracking_saved => 'Pemetaan tersimpan';
+	@override String get media_tracking_search => 'Cari Bangumi';
+	@override String get media_tracking_search_results => 'Hasil Bangumi';
+	@override String get media_tracking_summary => 'Otomatis mencatat progres anime, novel, dan manga ke Bangumi';
+	@override String get media_tracking_sync_failed => 'Sinkronisasi gagal. Pembaruan tetap dalam antrean.';
+	@override String get media_tracking_sync_now => 'Sinkronkan sekarang';
+	@override String get media_tracking_sync_success => 'Sinkronisasi selesai';
+	@override String get media_tracking_token_required => 'Masukkan dan verifikasi token akses terlebih dahulu';
+	@override String get media_tracking_volume => 'Volume';
+	@override String get microphone_permission_denied => 'Izin mikrofon diperlukan untuk merekam.';
+	@override String get mining_audio_quality => 'Kualitas audio';
+	@override String get mining_audio_quality_high => 'Tinggi';
+	@override String get mining_audio_quality_hint => 'Bitrate lebih tinggi lebih jernih tetapi membuat kartu lebih besar.';
+	@override String get mining_audio_quality_max => 'Maksimum';
+	@override String get mining_audio_quality_standard => 'Standar';
+	@override String get mining_image_quality => 'Kualitas gambar / GIF';
+	@override String get mining_image_quality_hd => 'HD';
+	@override String get mining_image_quality_hint => 'Lebih tinggi lebih tajam tetapi membuat kartu lebih besar. Maksimum mempertahankan resolusi sumber tangkapan layar; GIF animasi tetap dibatasi agar kartu tetap bisa digunakan.';
+	@override String get mining_image_quality_max => 'Maksimum';
+	@override String get mining_image_quality_standard => 'Standar';
+	@override String get mining_image_quality_thrift => 'Hemat data';
+	@override String get move_down => 'Turunkan';
+	@override String get move_up => 'Naikkan';
+	@override String get name => 'Nama';
+	@override String get nav_browser_extension => 'Ekstensi';
+	@override String get nav_downloads => 'Unduhan';
+	@override String get nav_game => 'Game';
+	@override String get nav_home => 'Beranda';
+	@override String get nav_lookup => 'Cari Kata';
+	@override String get nav_video => 'Video';
+	@override String get next_sentence => 'Kalimat berikutnya';
+	@override String get no_audio_file => 'Tidak ada file audio untuk disimpan.';
+	@override String get no_collections => 'Tidak ada bookmark atau kalimat tersimpan';
+	@override String get no_debug_logs => 'Tidak ada log debug.';
+	@override String get no_illustrations_found => 'Tidak ada ilustrasi ditemukan';
+	@override String get no_results_found => 'Tidak ada hasil ditemukan.';
+	@override String get no_search_results => 'Tidak ada hasil pencarian.';
+	@override String get no_sentence_selected => 'Tidak ada kalimat yang dipilih';
+	@override String get no_sentences_found => 'Tidak ada kalimat ditemukan';
+	@override String get no_text => 'Tidak ada teks.';
+	@override String get no_text_to_search => 'Tidak ada teks untuk dicari.';
+	@override String get now_listening_label => 'Sedang mendengarkan';
+	@override String get on_screen_keyboard => 'Keyboard di layar';
+	@override String get options_collapse => 'Ciutkan saat pencarian';
+	@override String get options_delete => 'Hapus';
+	@override String get options_edit => 'Edit';
+	@override String get options_expand => 'Perluas saat pencarian';
+	@override String get options_github => 'Lihat repositori di GitHub';
+	@override String get options_hide => 'Sembunyikan saat pencarian';
+	@override String get options_language => 'Pengaturan bahasa';
+	@override String get options_show => 'Tampilkan saat pencarian';
+	@override String get overlay_lookup_independent_size => 'Ukuran terpisah untuk pencarian pop-out';
+	@override String get overlay_lookup_independent_size_hint => 'Berikan jendela pencarian pop-out eksternal aplikasi ukuran maksimumnya sendiri alih-alih mengikuti popup dalam aplikasi';
+	@override String get overlay_lookup_max_height => 'Tinggi maks pencarian pop-out';
+	@override String get overlay_lookup_max_width => 'Lebar maks pencarian pop-out';
+	@override String page_progress({required Object current, required Object total}) => 'Halaman ${current} / ${total}';
+	@override String get paste => 'Tempel';
+	@override String get pause => 'Jeda';
+	@override String get pause_on_lookup => 'Jeda saat Pencarian';
+	@override String get pdf_bookmark_added => 'Penanda ditambahkan';
+	@override String get pdf_bookmarks => 'Penanda';
+	@override String get pdf_bookmarks_empty => 'Belum ada penanda.';
+	@override String get pdf_no_text_layer => 'PDF ini tidak memiliki lapisan teks (gambar pindaian), jadi pencarian tidak tersedia.';
+	@override String get pdf_outline => 'Daftar isi';
+	@override String get pdf_outline_empty => 'PDF ini tidak memiliki daftar isi.';
+	@override String get pick_image => 'Pilih Gambar';
+	@override String get play => 'Putar';
+	@override String get play_from_cue => 'Putar dari kalimat';
+	@override String get playback_auto_pause => 'Mode Jeda Subtitle';
+	@override String get playback_speed => 'Kecepatan';
+	@override String get popup_append_sentence_tooltip => 'Tambahkan kalimat ini ke kartu';
+	@override String get popup_auto_expand_dictionaries => 'Perluas baris otomatis';
+	@override String get popup_auto_expand_dictionaries_hint => 'Pertahankan N baris pertama blok kamus terbuka meskipun \'Ciutkan kamus\' aktif. Jumlah yang diperluas mengikuti pengaturan kolom: baris x kolom (0 = ciutkan semua)';
+	@override String get popup_bottom_docked => 'Popup tertambat di bawah';
+	@override String get popup_bottom_docked_hint => 'Sematkan popup pencarian sebagai panel selebar layar di bagian bawah, bukan mengikuti kata yang dicari.';
+	@override String get popup_clear_sentence_draft_tooltip => 'Kosongkan kalimat yang ditambahkan';
+	@override String get popup_ctx_adjust_button => 'Sesuaikan konteks';
+	@override String get popup_ctx_box_current => 'Current';
+	@override String get popup_ctx_box_empty => '(tidak ada)';
+	@override String get popup_ctx_box_next => 'After';
+	@override String get popup_ctx_box_prev => 'Before';
+	@override String get popup_ctx_cancel => 'Batal';
+	@override String get popup_ctx_confirm => 'Confirm';
+	@override String get popup_ctx_modal_count => 'Selected %d';
+	@override String get popup_ctx_modal_eyebrow => 'Before mining';
+	@override String get popup_ctx_modal_title => 'Pilih konteks kalimat';
+	@override String get popup_ctx_next_minus => 'Remove after';
+	@override String get popup_ctx_next_plus => 'Add after';
+	@override String get popup_ctx_prev_minus => 'Remove before';
+	@override String get popup_ctx_prev_plus => 'Add before';
+	@override String get popup_dictionary_max_columns => 'Kolom kamus maks (isi otomatis)';
+	@override String get popup_dictionary_max_columns_hint => 'Isi otomatis hingga sebanyak ini kolom kamus per baris; layar lebih sempit menggunakan lebih sedikit';
+	@override String get popup_font_size_decrease => 'Perkecil teks kamus';
+	@override String get popup_font_size_increase => 'Perbesar teks kamus';
+	@override String get popup_instant_scroll => 'Gulir popup seketika';
+	@override String get popup_instant_scroll_hint => 'Pindahkan popup pencarian dengan jarak tetap tanpa animasi gulir untuk layar e-ink.';
+	@override String get popup_max_height => 'Tinggi maks popup';
+	@override String get popup_max_width => 'Lebar maks popup';
+	@override String get popup_no_audio_available => 'Tidak ada audio tersedia';
+	@override String get popup_sentence_context_next_label => 'Sesudah';
+	@override String get popup_sentence_context_prev_label => 'Sebelum';
+	@override String get popup_wheel_speed => 'Kecepatan gulir popup';
+	@override String get popup_wheel_speed_hint => 'Kecepatan gulir roda mouse untuk popup kamus (juga berlaku untuk ekstensi browser).';
+	@override String get prev_sentence => 'Kalimat sebelumnya';
+	@override String get preview => 'Pratinjau';
+	@override String get preview_badge => 'Lencana';
+	@override String get preview_switch => 'Sakelar';
+	@override String get processing_in_progress => 'Memproses gambar';
+	@override String get profile_book_profile => 'Tetapkan Profil';
+	@override String profile_confirm_delete({required Object name}) => 'Hapus profil "${name}"?';
+	@override String get profile_copy => 'Salin';
+	@override String get profile_copy_suffix => '(Salinan)';
+	@override String get profile_create => 'Buat Profil';
+	@override String get profile_delete => 'Hapus';
+	@override String get profile_export => 'Ekspor';
+	@override String get profile_export_failed => 'Ekspor gagal';
+	@override String profile_follow_default_current({required Object name}) => 'Mengikuti default (${name})';
+	@override String get profile_import => 'Impor';
+	@override String get profile_import_failed => 'Impor gagal';
+	@override String get profile_import_invalid => 'File profil tidak valid';
+	@override String get profile_import_success => 'Profil diimpor';
+	@override String get profile_label => 'Profil';
+	@override String get profile_management => 'Manajemen Profil';
+	@override String get profile_media_audiobook => 'Buku Audio';
+	@override String get profile_media_epub => 'Buku';
+	@override String get profile_media_lyrics => 'Mode lirik';
+	@override String get profile_media_none => 'Tidak Ada';
+	@override String get profile_media_srtbook => 'Buku subtitle';
+	@override String get profile_media_type_bindings => 'Pengikatan Tipe Media';
+	@override String get profile_media_video => 'Video';
+	@override String get profile_name_hint => 'Nama profil';
+	@override String get profile_rename => 'Ganti Nama';
+	@override String get reader_auto_hide_chrome_duration => 'Sembunyikan kontrol mengambang otomatis setelah';
+	@override String get reader_content_timeout => 'Pemuatan konten habis waktu. Buka ulang jika tampilan tidak normal';
+	@override String get reader_copy_image => 'Salin gambar';
+	@override String get reader_gallery => 'Galeri';
+	@override String get reader_gallery_current => 'Sedang membaca di sini';
+	@override String get reader_gallery_empty => 'Tidak ada ilustrasi di buku ini';
+	@override String get reader_gallery_jump => 'Lompat ke ilustrasi ini';
+	@override String get reader_gallery_tooltip => 'Jelajahi ilustrasi';
+	@override String reader_image_copy_failed({required Object error}) => 'Gagal menyalin gambar: ${error}';
+	@override String get reader_image_file_unavailable => 'File gambar tidak tersedia.';
+	@override String reader_image_share_failed({required Object error}) => 'Gagal membagikan gambar: ${error}';
+	@override String get reader_open_failed => 'Gagal membuka buku';
+	@override String get reader_settings_section => 'Pengaturan Pembaca';
+	@override String get reader_theme_black => 'Hitam';
+	@override String get reader_theme_dark => 'Gelap';
+	@override String get reader_theme_ecru => 'Krem';
+	@override String get reader_theme_eyecare => 'Eye Care';
+	@override String get reader_theme_gray => 'Abu-abu';
+	@override String get reader_theme_light => 'Putih';
+	@override String get reader_theme_water => 'Biru Air';
+	@override String get reader_top_progress_floating => 'Progres membaca mengambang';
+	@override String get reader_unsupported_platform => 'Pembaca belum tersedia di platform ini.';
+	@override String get reading_activity => 'Aktivitas belajar';
+	@override String get reading_progress => 'Progres Membaca';
+	@override String get reading_section_mode => 'Mode & orientasi';
+	@override String get reading_statistics => 'Statistik Membaca';
+	@override String get record => 'Rekam';
+	@override String get refresh => 'Segarkan';
+	@override String get rematch_adjust_window => 'Sesuaikan jendela pencarian dan cocokkan ulang';
+	@override String get rematch_run => 'Jalankan Pencocokan Ulang';
+	@override String get remote_audio_source => 'Audio jarak jauh';
+	@override String get remote_book_audiobook_download_failed => 'Tidak dapat mengunduh buku audio untuk buku ini';
+	@override String get remote_book_download => 'Unduh ke perangkat ini';
+	@override String get remote_book_download_failed => 'Tidak dapat mengunduh buku jarak jauh';
+	@override String get remote_book_downloaded => 'Buku jarak jauh terunduh';
+	@override String get remote_book_downloading => 'Mengunduh…';
+	@override String get remote_book_info => 'Info';
+	@override String get remote_book_info_has_audiobook => 'Termasuk buku audio';
+	@override String get remote_book_unavailable => 'Perangkat berpasangan tidak tersedia';
+	@override String get remote_dict_lookup => 'Pencarian kamus jarak jauh';
+	@override String get remote_dict_lookup_hint => 'Ketika kamus lokal tidak menemukan hasil, kueri ke server Fushi yang dikonfigurasi';
+	@override String get remote_video_download => 'Unduh ke perangkat ini';
+	@override String get remote_video_download_failed => 'Tidak dapat mengunduh video jarak jauh';
+	@override String get remote_video_downloaded => 'Video jarak jauh terunduh';
+	@override String get remote_video_downloading => 'Mengunduh…';
+	@override String get remote_video_info => 'Info';
+	@override String get remote_video_info_has_subtitle => 'Termasuk subtitle';
+	@override String get remote_video_info_no_subtitle => 'Tanpa subtitle';
+	@override String remote_video_info_size({required Object size}) => 'Ukuran: ${size}';
+	@override String get remote_video_list_failed => 'Tidak bisa memuat video remote. Pastikan perangkat lain online dan di jaringan yang sama, lalu coba lagi.';
+	@override String get remote_video_unavailable => 'Perangkat berpasangan tidak tersedia';
+	@override String get rename_collection => 'Ganti nama koleksi';
+	@override String get render_restart_required => 'Berlaku setelah memulai ulang aplikasi';
+	@override String get repeat_cue => 'Ulangi kalimat';
+	@override String get reset => 'Atur Ulang';
+	@override String get retry => 'Coba Lagi';
+	@override String get reverse_arrow_page_turn => 'Balik arah ganti halaman kiri/kanan keyboard';
+	@override String get reverse_navigation_bar => 'Balik bilah navigasi';
+	@override String get reverse_reader_bottom_bar => 'Balik bilah bawah pembaca';
+	@override String get audiobook_rematch_all_zero => 'Semua jendela skor 0%, silakan sesuaikan secara manual';
+	@override String audiobook_rematch_auto_failed({required Object error}) => 'Pencocokan otomatis gagal: ${error}';
+	@override String get audiobook_rematch_auto_match => 'Pencocokan Otomatis';
+	@override String audiobook_rematch_auto_picked({required Object window, required Object pct}) => 'Otomatis memilih ${window} (cocok ${pct}%)';
+	@override String audiobook_rematch_default_value({required Object n}) => 'Default ${n}';
+	@override String audiobook_rematch_health_label({required Object pct, required Object detail}) => '${pct} cocok — ${detail}';
+	@override String get audiobook_rematch_matching => 'Mencocokkan...';
+	@override String get audiobook_rematch_no_chapters => 'EPUB tidak memiliki teks bab';
+	@override String get audiobook_rematch_no_cues_to_match => 'Tidak ada cue untuk dicocokkan';
+	@override String get audiobook_rematch_no_sections => 'Teks bab tidak ditemukan, tidak dapat mencocokkan otomatis';
+	@override String get audiobook_rematch_no_stored_cues => 'Tidak ada cue tersimpan, tidak dapat menjalankan ulang';
+	@override String audiobook_rematch_failed({required Object error}) => 'Pencocokan ulang gagal: ${error}';
+	@override String audiobook_rematch_result({required Object pct, required Object window}) => 'Dicocokkan ulang: ${pct}% (jendela: ${window})';
+	@override String get audiobook_rematch_search_window => 'Jendela Pencarian';
+	@override String get audiobook_rematch_similarity_threshold => 'Ambang Kemiripan';
+	@override String get audiobook_rematch_threshold_hint => 'Kemiripan minimum untuk pencocokan fuzzy (koefisien Dice). Turunkan untuk mentoleransi lebih banyak perbedaan teks, tapi terlalu rendah menyebabkan kecocokan palsu.';
+	@override String get audiobook_rematch_window_hint => 'Jumlah karakter untuk dicari ke depan per cue dalam teks. Sesuaikan jika tingkat kecocokan rendah; terlalu besar dapat menggeser kursor dengan cue pendek yang berisik.';
+	@override String get saved_tags => 'Tag disimpan.';
+	@override String get scan_non_japanese_text => 'Pindai teks non-Jepang';
+	@override String get scan_non_japanese_text_hint => 'Saat mati, seleksi berhenti di karakter non-Jepang';
+	@override String get search => 'Cari';
+	@override String get search_ellipsis => 'Cari...';
+	@override String get searching_in_progress => 'Mencari ';
+	@override String get section_advanced_colors => 'Lanjutan';
+	@override String get section_advanced_typography => 'Lanjutan';
+	@override String get section_audiobook => 'Buku Audio';
+	@override String get section_audiobook_lyrics => 'Buku Audio & Lirik';
+	@override String get section_epub => 'Perpustakaan EPUB';
+	@override String get section_floating_lyric => 'Lirik mengambang';
+	@override String get section_interface => 'Antarmuka';
+	@override String get section_layout => 'Tata Letak & Tampilan';
+	@override String get section_navigation => 'Navigasi';
+	@override String get section_page_turn_direction => 'Arah ganti halaman';
+	@override String get section_reader_colors => 'Warna Pembaca';
+	@override String get section_system_theme => 'Warna Tema Sistem';
+	@override String get section_typography => 'Tipografi';
+	@override String get section_update => 'Pengaturan Pembaruan';
+	@override String get section_video_danmaku => 'Danmaku';
+	@override String get section_video_library => 'Pustaka';
+	@override String get section_video_playback => 'Pemutaran';
+	@override String get section_video_subtitles => 'Subtitle';
+	@override String get seed_color => 'Warna Dasar';
+	@override String get seed_color_desc => 'Menghasilkan semua warna default di bawah';
+	@override String get selection_color => 'Warna sorotan';
+	@override String get selection_color_desc => 'Sorotan pilihan teks pembaca';
+	@override String get send => 'Kirim';
+	@override String get series => 'Seri';
+	@override String get series_created => 'Seri dibuat';
+	@override String get series_default_name => 'Seri baru';
+	@override String series_item_count({required Object n}) => '${n} item';
+	@override String get series_name_hint => 'Nama seri';
+	@override String get server_address => 'Alamat Server';
+	@override String get settings => 'Pengaturan';
+	@override String get settings_check_update_now => 'Periksa pembaruan';
+	@override String get settings_destination_appearance => 'Tampilan';
+	@override String get settings_destination_card_creation => 'Pembuatan Kartu';
+	@override String get settings_destination_diagnostics => 'Diagnostik';
+	@override String get settings_destination_interconnect => 'Fushi Interconnect';
+	@override String get settings_destination_listening => 'Mendengarkan';
+	@override String get settings_destination_lookup => 'Pencarian';
+	@override String get settings_destination_profiles => 'Skema Konfigurasi';
+	@override String get settings_destination_reading => 'Membaca';
+	@override String get settings_destination_reading_controls => 'Kontrol Baca';
+	@override String get settings_destination_sync_backup => 'Sinkronisasi & Cadangan';
+	@override String get settings_destination_system => 'Sistem';
+	@override String get settings_destination_system_summary => 'Umum, pembaruan & diagnostik';
+	@override String get settings_destination_tracking => 'Pelacakan media';
+	@override String get settings_destination_video => 'Video';
+	@override String get settings_search_hint => 'Cari pengaturan';
+	@override String get settings_search_no_results => 'Tidak ada pengaturan yang cocok';
+	@override String get settings_secret_hide => 'Sembunyikan nilai';
+	@override String get settings_secret_show => 'Tampilkan nilai';
+	@override String get settings_section_app_shell => 'Aplikasi';
+	@override String get settings_section_data_storage => 'Lokasi penyimpanan data';
+	@override String get settings_section_gal_hook_overlay => 'Overlay teks galgame';
+	@override String get settings_section_general => 'Umum';
+	@override String get settings_section_lookup_audio => 'Pengucapan & umpan balik';
+	@override String get settings_section_lookup_content => 'Konten entri';
+	@override String get settings_section_lookup_integrations => 'Integrasi eksternal';
+	@override String get settings_section_lookup_popup_window => 'Jendela popup';
+	@override String get settings_section_lookup_trigger => 'Pemicu pencarian';
+	@override String get settings_section_page_turn_input => 'Pergantian halaman & interaksi';
+	@override String get settings_section_reader_chrome => 'Antarmuka pembaca';
+	@override String get settings_section_update_channel => 'Saluran Pembaruan';
+	@override String get settings_view_changelog => 'Lihat catatan perubahan';
+	@override String get share => 'Bagikan';
+	@override String get share_theme => 'Bagikan Tema';
+	@override String get shortcut_action_audiobook_next_sentence => 'Kalimat Berikutnya';
+	@override String get shortcut_action_audiobook_play_pause => 'Putar / Jeda';
+	@override String get shortcut_action_audiobook_prev_sentence => 'Kalimat Sebelumnya';
+	@override String get shortcut_action_audiobook_seek_clicked => 'Lompat audio ke kalimat yang diklik';
+	@override String get shortcut_action_dpad_down => 'D-pad Bawah';
+	@override String get shortcut_action_dpad_left => 'D-pad Kiri';
+	@override String get shortcut_action_dpad_right => 'D-pad Kanan';
+	@override String get shortcut_action_dpad_up => 'D-pad Atas';
+	@override String get shortcut_action_global_back => 'Kembali';
+	@override String get shortcut_action_global_external_lookup => 'App-external lookup hotkey';
+	@override String get shortcut_action_global_scroll_page_down => 'Gulir bawah satu layar';
+	@override String get shortcut_action_global_scroll_page_up => 'Gulir atas satu layar';
+	@override String get shortcut_action_global_toggle_fullscreen => 'Alihkan layar penuh';
+	@override String get shortcut_action_home_focus_search => 'Fokus Pencarian';
+	@override String get shortcut_action_home_tab_books => 'Tab Buku';
+	@override String get shortcut_action_home_tab_dict => 'Tab Kamus';
+	@override String get shortcut_action_home_tab_next => 'Tab berikutnya';
+	@override String get shortcut_action_home_tab_prev => 'Tab sebelumnya';
+	@override String get shortcut_action_home_tab_settings => 'Tab Pengaturan';
+	@override String get shortcut_action_popup_next_entry => 'Entri kata berikutnya';
+	@override String get shortcut_action_popup_prev_entry => 'Entri kata sebelumnya';
+	@override String get shortcut_action_reader_create_card_from_popup => 'Buat kartu dari popup';
+	@override String get shortcut_action_reader_dismiss_dict => 'Tutup Kamus';
+	@override String get shortcut_action_reader_enter_caret => 'Masuk kursor pencarian';
+	@override String get shortcut_action_reader_lookup_at_cursor => 'Cari kata / aktifkan kursor';
+	@override String get shortcut_action_reader_open_menu => 'Open Settings Menu';
+	@override String get shortcut_action_reader_open_navigation => 'Open Navigation';
+	@override String get shortcut_action_reader_page_backward => 'Halaman Sebelumnya';
+	@override String get shortcut_action_reader_page_forward => 'Halaman Berikutnya';
+	@override String get shortcut_action_reader_shift_lookup => 'Cari kata dengan Shift';
+	@override String get shortcut_action_reader_toggle_chrome => 'Alihkan Kontrol';
+	@override String get shortcut_action_reader_toggle_furigana => 'Alihkan furigana';
+	@override String get shortcut_action_video_align_subtitle_to_next => 'Selaraskan subtitle berikutnya ke sekarang';
+	@override String get shortcut_action_video_align_subtitle_to_prev => 'Selaraskan subtitle sebelumnya ke sekarang';
+	@override String get shortcut_action_video_cycle_secondary_subtitle_obscure => 'Cycle Secondary Subtitle Obscure';
+	@override String get shortcut_action_video_cycle_subtitle_obscure => 'Cycle Subtitle Obscure Mode';
+	@override String get shortcut_action_video_next_chapter => 'Bab berikutnya';
+	@override String get shortcut_action_video_next_frame => 'Frame Berikutnya';
+	@override String get shortcut_action_video_next_subtitle => 'Subtitle Berikutnya';
+	@override String get shortcut_action_video_open_subtitle_align => 'Buka penyelarasan waveform subtitle';
+	@override String get shortcut_action_video_pause => 'Jeda';
+	@override String get shortcut_action_video_play => 'Putar';
+	@override String get shortcut_action_video_previous_chapter => 'Bab sebelumnya';
+	@override String get shortcut_action_video_previous_frame => 'Frame Sebelumnya';
+	@override String get shortcut_action_video_previous_subtitle => 'Subtitle Sebelumnya';
+	@override String get shortcut_action_video_replay_current_subtitle => 'Putar ulang subtitle saat ini';
+	@override String get shortcut_action_video_replay_previous_subtitle => 'Putar ulang subtitle sebelumnya';
+	@override String get shortcut_action_video_reset_speed => 'Setel Ulang Kecepatan';
+	@override String get shortcut_action_video_screenshot => 'Tangkapan Layar';
+	@override String get shortcut_action_video_seek_backward => 'Mundur';
+	@override String get shortcut_action_video_seek_forward => 'Maju';
+	@override String get shortcut_action_video_speed_down => 'Perlambat';
+	@override String get shortcut_action_video_speed_up => 'Percepat';
+	@override String get shortcut_action_video_subtitle_delay_decrease => 'Tunda subtitle −';
+	@override String get shortcut_action_video_subtitle_delay_increase => 'Tunda subtitle +';
+	@override String get shortcut_action_video_toggle_favorite_sentence => 'Favoritkan kalimat saat ini';
+	@override String get shortcut_action_video_toggle_fullscreen => 'Alihkan Layar Penuh';
+	@override String get shortcut_action_video_toggle_immersive_lock => 'Alihkan Kunci Imersif';
+	@override String get shortcut_action_video_toggle_mute => 'Alihkan Bisukan';
+	@override String get shortcut_action_video_toggle_play_pause => 'Putar / Jeda';
+	@override String get shortcut_action_video_toggle_secondary_subtitle_hide => 'Toggle Hide Secondary Subtitle';
+	@override String get shortcut_action_video_toggle_shader_compare => 'Alihkan Bandingkan Shader';
+	@override String get shortcut_action_video_toggle_subtitle_blur => 'Alihkan Buram Subtitle';
+	@override String get shortcut_action_video_toggle_subtitle_hide => 'Toggle Hide Subtitles';
+	@override String get shortcut_action_video_toggle_subtitle_list => 'Alihkan Daftar Subtitle';
+	@override String get shortcut_action_video_volume_down => 'Volume -';
+	@override String get shortcut_action_video_volume_up => 'Volume +';
+	@override String get shortcut_assign_pick_action => 'Tetapkan ke tindakan…';
+	@override String get shortcut_clear => 'Hapus';
+	@override String shortcut_conflict({required Object s}) => 'Sudah dipakai oleh: ${s}';
+	@override String shortcut_conflict_replace_confirm({required Object s}) => 'Pintasan ini sudah dipakai oleh ${s}. Pindahkan ke tindakan ini?';
+	@override String get shortcut_gamepad => 'Gamepad';
+	@override String get shortcut_gamepad_brand_label => 'Gaya tombol gamepad';
+	@override String get shortcut_gamepad_brand_playstation => 'PlayStation';
+	@override String get shortcut_gamepad_brand_switch => 'Nintendo Switch';
+	@override String get shortcut_gamepad_brand_xbox => 'Xbox';
+	@override String get shortcut_gamepad_pick_list => 'Pilih dari daftar';
+	@override String get shortcut_gamepad_unavailable_hint => 'Komponen GameInput tidak terdeteksi — dukungan gamepad tidak tersedia. Instal Windows Gaming Services untuk mengaktifkan dukungan kontroler.';
+	@override String get shortcut_keyboard => 'Keyboard';
+	@override String get shortcut_mouse_back => 'Tombol kembali';
+	@override String get shortcut_mouse_button => 'Tombol mouse';
+	@override String get shortcut_mouse_forward => 'Tombol maju';
+	@override String get shortcut_mouse_left => 'Klik kiri';
+	@override String get shortcut_mouse_middle => 'Klik tengah';
+	@override String get shortcut_mouse_right => 'Klik kanan';
+	@override String get shortcut_press_gamepad => 'Tekan tombol gamepad...';
+	@override String get shortcut_press_key => 'Tekan kombinasi tombol...';
+	@override String get shortcut_press_mouse_button => 'Tekan tombol mouse...';
+	@override String get shortcut_press_wheel => 'Tahan tombol modifier dan gulir di sini';
+	@override String get shortcut_reset_confirm => 'Kembalikan semua pintasan di bagian ini ke default?';
+	@override String get shortcut_reset_defaults => 'Kembalikan ke Default';
+	@override String get shortcut_scope_audiobook => 'Buku Audio';
+	@override String get shortcut_scope_dictionary_popup => 'Popup kamus';
+	@override String get shortcut_scope_dictionary_popup_note => 'Berfungsi saat pointer berada di atas popup kamus';
+	@override String get shortcut_scope_gamepad => 'Gamepad';
+	@override String get shortcut_scope_global => 'Global';
+	@override String get shortcut_scope_global_external => 'Global (eksternal aplikasi)';
+	@override String get shortcut_scope_global_external_mobile_note => 'Triggered by the system (text selection menu, share, floating ball); the OS does not allow apps to remap this hotkey.';
+	@override String get shortcut_scope_home => 'Beranda';
+	@override String get shortcut_scope_reader => 'Pembaca';
+	@override String get shortcut_scope_video => 'Video';
+	@override String get shortcut_settings_title => 'Pintasan Keyboard';
+	@override String get shortcut_stop_capture => 'Berhenti';
+	@override String get shortcut_tap_to_assign => 'Belum diatur · ketuk untuk menetapkan';
+	@override String get shortcut_view_list => 'Tampilan daftar';
+	@override String get shortcut_view_visual => 'Tata letak kontroler';
+	@override String get shortcut_wheel => 'Roda mouse';
+	@override String get shortcut_wheel_down => 'Roda ke bawah';
+	@override String get shortcut_wheel_needs_modifier => 'Roda tanpa modifier menggulir popup — tahan Alt / Ctrl / Shift sambil menggulir';
+	@override String get shortcut_wheel_up => 'Roda ke atas';
+	@override String get show_bottom_bar_cue => 'Tampilkan kalimat saat ini';
+	@override String get show_expression_tags => 'Tampilkan tag ekspresi';
+	@override String get show_floating_lyric => 'Overlay subtitle mengambang';
+	@override String get show_media_notification => 'Tampilkan notifikasi media';
+	@override String get show_options => 'Tampilkan Opsi';
+	@override String get show_top_progress_bar => 'Indikator progres baca';
+	@override String get skip_action => 'Lewati Aksi';
+	@override String skip_action_seconds({required Object n}) => '${n} detik';
+	@override String get skip_action_sentence => '1 kalimat';
+	@override String get sort_by => 'Urutkan';
+	@override String get sort_imported => 'Tanggal impor';
+	@override String get sort_recent_read => 'Baru dibaca';
+	@override String get sort_recent_watched => 'Baru ditonton';
+	@override String get sort_title => 'Nama';
+	@override String get source_description_epub => 'Baca EPUB & pencarian kamus';
+	@override String get source_name_bookshelf => 'Rak Buku';
+	@override String get spread_auto => 'Otomatis';
+	@override String get spread_direction => 'Arah Bentangan';
+	@override String get spread_direction_ltr => 'Kiri ke Kanan';
+	@override String get spread_direction_rtl => 'Kanan ke Kiri';
+	@override String get spread_mode => 'Mode Bentangan';
+	@override String get spread_off => 'Mati';
+	@override String get spread_on => 'Nyala';
+	@override String get srt_audio_unresolved => 'File audio tidak ditemukan — silakan lampirkan ulang';
+	@override String get srt_books_section => 'Buku Audio Subtitle';
+	@override String srt_delete_confirm({required Object title}) => 'Hapus『${title}』? Tindakan ini tidak dapat dibatalkan.';
+	@override String get srt_delete_title => 'Hapus Buku Subtitle';
+	@override String get srt_epub_not_ready => 'Buku belum siap — silakan impor ulang';
+	@override String get srt_import => 'Impor Buku';
+	@override String get srt_import_audio_needs_subtitle => 'Audio harus dipasangkan dengan subtitle. Untuk melampirkan audio ke EPUB yang ada, tekan lama buku di rak.';
+	@override String get srt_import_author_hint => 'Penulis (opsional)';
+	@override String get srt_import_error => 'Impor gagal';
+	@override String srt_import_files_selected({required Object n}) => '${n} file dipilih';
+	@override String get srt_import_hint_epub_or_srt => 'Pilih file EPUB atau subtitle untuk diimpor.';
+	@override String get srt_import_missing_input => 'Silakan pilih setidaknya EPUB atau file subtitle';
+	@override String get srt_import_missing_title => 'Silakan masukkan judul buku';
+	@override String get srt_import_pick_audio_dir => 'Pilih Direktori Audio';
+	@override String get srt_import_pick_audio_files => 'Pilih File Audio';
+	@override String get srt_import_pick_cover => 'Pilih Gambar Sampul';
+	@override String get srt_import_pick_epub => 'Pilih EPUB';
+	@override String get srt_import_pick_subtitle_files => 'Pilih file subtitle';
+	@override String get srt_import_success => 'Buku diimpor';
+	@override String get srt_import_title_hint => 'Judul buku';
+	@override String get startup_default_dictionary_tab => 'Buka pencarian kata saat mulai';
+	@override String get startup_default_dictionary_tab_hint => 'Mulai layar beranda pada tab pencarian kata, bukan default saat ini.';
+	@override String get stash => 'Simpanan';
+	@override String get stash_added_multiple => 'Beberapa item telah ditambahkan ke Simpanan.';
+	@override String stash_added_single({required Object term}) => '『${term}』telah ditambahkan ke Simpanan.';
+	@override String get stash_clear_description => 'Semua isi akan dihapus. Apakah Anda yakin?';
+	@override String stash_clear_single({required Object term}) => '『${term}』telah dihapus dari Simpanan.';
+	@override String get stash_clear_title => 'Hapus Simpanan';
+	@override String get stash_nothing_to_pop => 'Tidak ada item untuk diambil dari Simpanan.';
+	@override String get stash_placeholder => 'Tidak ada item di Simpanan';
+	@override String get stat_all_time => 'Sepanjang Waktu';
+	@override String get stat_bookshelf_compare => 'Rak buku';
+	@override String get stat_clear_all => 'Hapus statistik';
+	@override String get stat_clear_all_confirm => 'Hapus';
+	@override String get stat_clear_all_reading_message => 'Hapus semua waktu membaca, hitungan karakter, dan hitungan pencarian/penambangan? Kata, kalimat, dan kartu yang disimpan tetap ada. Ini tidak bisa dibatalkan.';
+	@override String get stat_clear_all_title => 'Hapus semua statistik';
+	@override String get stat_clear_all_video_message => 'Hapus semua waktu menonton, hitungan karakter subtitle, dan hitungan pencarian/penambangan? Kata, kalimat, dan kartu yang disimpan tetap ada. Ini tidak bisa dibatalkan.';
+	@override String get stat_daily_average => 'Rata-rata harian';
+	@override String get stat_delete_message => 'Hapus waktu, hitungan karakter, dan statistik pencarian/penambangan item ini? Kata dan kalimat yang disimpan tidak terpengaruh.';
+	@override String get stat_delete_title => 'Hapus statistik';
+	@override String get stat_fastest_day => 'Fastest Day';
+	@override String get stat_favorited => 'Difavoritkan';
+	@override String get stat_favorited_sentence => 'Kalimat difavoritkan';
+	@override String stat_format_chars({required Object n}) => '${n} karakter';
+	@override String stat_format_chars_wan({required Object n}) => '${n}万 karakter';
+	@override String stat_format_days({required Object n}) => '${n} hari';
+	@override String stat_format_hours_minutes({required Object h, required Object m}) => '${h} jam ${m} mnt';
+	@override String stat_format_minutes({required Object n}) => '${n} mnt';
+	@override String get stat_goal => 'Daily Goal';
+	@override String get stat_goal_daily => 'Daily Goal';
+	@override String get stat_goal_presets => 'Preset';
+	@override String stat_goal_progress({required Object read, required Object goal}) => '${read} / ${goal} karakter';
+	@override String get stat_goal_reached => 'Target tercapai';
+	@override String stat_goal_recent_average({required Object n}) => '7 hari terakhir: ${n} karakter/hari rata-rata';
+	@override String get stat_goal_set => 'Set Goal';
+	@override String get stat_goal_unit_chars => 'karakter';
+	@override String get stat_goal_weekly => 'Weekly Goal';
+	@override String get stat_last_30_days => '30 Hari Terakhir';
+	@override String get stat_lookup => 'Pencarian';
+	@override String get stat_metric_chars => 'Karakter';
+	@override String get stat_metric_speed => 'Kecepatan';
+	@override String get stat_metric_time => 'Waktu';
+	@override String get stat_mined => 'Kartu dibuat';
+	@override String get stat_no_data => 'Belum ada data membaca';
+	@override String get stat_range_and_trend => 'Range & Trend';
+	@override String get stat_recent_active => 'Hari Aktif (7h)';
+	@override String get stat_refresh => 'Segarkan';
+	@override String get stat_slowest_day => 'Slowest Day';
+	@override String get stat_sort_by_chars => 'Per Karakter';
+	@override String get stat_sort_by_speed => 'Per Kecepatan';
+	@override String get stat_sort_by_time => 'Per Waktu';
+	@override String get stat_speed_anomaly => 'Anomali';
+	@override String get stat_speed_avg => 'Rata-rata Bergerak';
+	@override String stat_speed_cph({required Object n}) => '${n} karakter/jam';
+	@override String get stat_speed_summary => 'Speed Summary';
+	@override String get stat_streak => 'Streak';
+	@override String get stat_this_month => 'Bulan Ini';
+	@override String get stat_this_week => 'Minggu Ini';
+	@override String get stat_today => 'Hari Ini';
+	@override String get stat_today_hourly => 'Hari Ini per Jam';
+	@override String get stat_trend_daily => 'Harian';
+	@override String get stat_trend_monthly => 'Bulanan';
+	@override String get stat_trend_weekly => 'Mingguan';
+	@override String get stat_typical_day => 'Typical Day';
+	@override String get stat_vs_prev => 'vs 14h sebelumnya';
+	@override String get stat_weighted_avg_speed => 'Weighted Avg';
+	@override String get stop => 'Berhenti';
+	@override String get storage_permissions => 'Mohon berikan izin berikut untuk mengekspor ke AnkiDroid.';
+	@override String get stream => 'Streaming';
+	@override String get swipe_page_turn_sensitivity => 'Sensitivitas geser ganti halaman';
+	@override String get sync_account => 'Akun';
+	@override String get sync_audiobook => 'Sinkronkan Posisi Buku Audio';
+	@override String get sync_audiobook_files => 'Sinkronkan berkas buku audio';
+	@override String get sync_audiobook_files_warning => 'Audio dan subtitle bisa berukuran besar.';
+	@override String sync_auth_error({required Object message}) => 'Autentikasi gagal: ${message}';
+	@override String get sync_auto_sync => 'Sinkronisasi Otomatis';
+	@override String get sync_backend => 'Backend penyimpanan';
+	@override String get sync_backend_dropbox => 'Dropbox';
+	@override String get sync_backend_ftp => 'FTP';
+	@override String get sync_backend_google_drive => 'Google Drive';
+	@override String get sync_backend_fushi_server => 'Fushi Interconnect';
+	@override String get sync_backend_onedrive => 'OneDrive';
+	@override String get sync_backend_sftp => 'SFTP';
+	@override String get sync_backend_webdav => 'WebDAV';
+	@override String get sync_checking_account => 'Memeriksa akun…';
+	@override String get sync_client_connected => 'Terhubung';
+	@override String get sync_client_token => 'Token akses peer';
+	@override String get sync_client_token_manual => 'Masukkan token secara manual';
+	@override String get sync_compare => 'Bandingkan Data';
+	@override String get sync_compare_all_books => 'Semua Buku';
+	@override String get sync_compare_all_local => 'Semua → Lokal';
+	@override String get sync_compare_all_remote => 'Semua → Jarak Jauh';
+	@override String get sync_compare_all_skip => 'Semua → Lewati';
+	@override String sync_compare_applied({required Object count}) => '${count} perubahan diterapkan';
+	@override String sync_compare_apply({required Object count}) => 'Sinkronkan sekarang (${count})';
+	@override String get sync_compare_close => 'Tutup';
+	@override String get sync_compare_conflicts => 'Konflik';
+	@override String get sync_compare_days => 'hari';
+	@override String get sync_compare_delete_audiobook => 'Hapus buku audio di jarak jauh';
+	@override String get sync_compare_delete_book => 'Hapus buku di jarak jauh';
+	@override String sync_compare_delete_confirm({required Object name}) => 'Hapus "${name}" dari jarak jauh? Data lokal dipertahankan. Ini tidak dapat dibatalkan.';
+	@override String get sync_compare_delete_dict => 'Hapus kamus di jarak jauh';
+	@override String get sync_compare_deleted => 'Dihapus dari jarak jauh';
+	@override String get sync_compare_dictionaries => 'Kamus';
+	@override String get sync_compare_download => 'Unduh';
+	@override String get sync_compare_empty => 'Tidak ada buku';
+	@override String get sync_compare_local => 'Lokal';
+	@override String get sync_compare_no_content => 'Hanya data cloud — tidak ada buku untuk diunduh';
+	@override String get sync_compare_no_data => 'Tidak ada data';
+	@override String get sync_compare_remote => 'Jarak Jauh';
+	@override String get sync_compare_select_all => 'Pilih Semua';
+	@override String get sync_compare_skip => 'Lewati';
+	@override String get sync_compare_title => 'Lokal vs Jarak Jauh';
+	@override String get sync_compare_unavailable => 'Set up sync first';
+	@override String get sync_compare_use_local => 'Lokal';
+	@override String get sync_compare_use_remote => 'Jarak Jauh';
+	@override String get sync_connection_failed => 'Koneksi gagal';
+	@override String get sync_connection_success => 'Koneksi berhasil';
+	@override String get sync_content => 'Sinkronkan berkas buku';
+	@override String get sync_content_warning => 'Berkas besar akan memakai ruang penyimpanan dan kuota data';
+	@override String get sync_err_auth_expired => 'Sesi masuk kedaluwarsa — mohon masuk kembali.';
+	@override String get sync_err_invalid_client => 'Kredensial klien tidak valid untuk build ini — silakan perbarui aplikasi.';
+	@override String get sync_err_network => 'Tidak dapat menjangkau server — periksa jaringan atau pengaturan proksi Anda.';
+	@override String get sync_err_not_configured => 'Kredensial Google sync tidak dikonfigurasi di build ini.';
+	@override String get sync_err_quota => 'Penyimpanan cloud penuh (kuota tercapai).';
+	@override String get sync_err_scope_upgrade => 'Izin sinkronisasi berubah — silakan masuk ke Google lagi untuk melanjutkan sinkronisasi.';
+	@override String get sync_err_timeout => 'Koneksi habis waktu — server tidak merespons tepat waktu.';
+	@override String sync_error({required Object message}) => 'Kesalahan sinkronisasi: ${message}';
+	@override String get sync_exit_warning => 'Sinkronisasi masih berlangsung. Keluar sekarang dapat menyebabkan kehilangan data.';
+	@override String get sync_exit_warning_title => 'Sinkronisasi Berlangsung';
+	@override String get sync_host => 'Host';
+	@override String get sync_lan_discovery => 'Perangkat LAN';
+	@override String get sync_lan_no_devices => 'Tidak ada perangkat ditemukan';
+	@override String get sync_lan_scan_failed => 'Pemindaian gagal — periksa izin jaringan atau firewall.';
+	@override String get sync_not_signed_in => 'Belum masuk';
+	@override String get sync_now => 'Sinkronkan sekarang';
+	@override String sync_now_audio_in({required Object count}) => '↓${count} buku audio';
+	@override String sync_now_audio_out({required Object count}) => '↑${count} buku audio';
+	@override String sync_now_books_in({required Object count}) => '↓${count} buku';
+	@override String get sync_now_busy => 'Sinkronisasi sedang berjalan';
+	@override String sync_now_dicts_in({required Object count}) => '↓${count} kamus';
+	@override String sync_now_dicts_out({required Object count}) => '↑${count} kamus';
+	@override String sync_now_done({required Object detail}) => 'Tersinkron · ${detail}';
+	@override String sync_now_failed_suffix({required Object count}) => ' · ${count} gagal';
+	@override String get sync_now_hint => 'Jalankan sinkronisasi dua arah penuh dengan cloud sekarang';
+	@override String sync_now_local_audio_in({required Object count}) => '↓${count} sumber audio';
+	@override String sync_now_local_audio_out({required Object count}) => '↑${count} sumber audio';
+	@override String get sync_now_no_changes => 'tidak ada perubahan';
+	@override String get sync_pair_allow => 'Izinkan';
+	@override String sync_pair_confirm_identity_body({required Object device}) => 'Anda memasangkan dengan ${device}. Konfirmasi bahwa ini adalah perangkat yang Anda harapkan sebelum melanjutkan.';
+	@override String get sync_pair_confirm_identity_title => 'Konfirmasi perangkat';
+	@override String get sync_pair_continue => 'Lanjutkan';
+	@override String get sync_pair_denied => 'Perangkat lain menolak pemasangan';
+	@override String get sync_pair_deny => 'Tolak';
+	@override String get sync_pair_enter_pin_body => 'Masukkan PIN 6 digit yang ditampilkan di perangkat lain.';
+	@override String get sync_pair_enter_pin_title => 'Masukkan PIN';
+	@override String get sync_pair_failed => 'Pemasangan gagal';
+	@override String get sync_pair_fingerprint_changed => 'Sertifikat berubah — pemasangan dibatalkan demi keamanan (kemungkinan intersepsi).';
+	@override String get sync_pair_fingerprint_label => 'Sidik jari sertifikat';
+	@override String get sync_pair_not_fushi => 'Tidak ada perangkat Fushi ditemukan di alamat ini. Alamat telah disimpan.';
+	@override String get sync_pair_pairing => 'Memasangkan…';
+	@override String get sync_pair_pin_label => 'Masukkan PIN ini di perangkat lain';
+	@override String get sync_pair_pin_waiting => 'Menunggu perangkat lain memasukkan PIN ini…';
+	@override String get sync_pair_pin_wrong => 'PIN salah — coba lagi';
+	@override String get sync_pair_repair => 'Pasangkan lagi';
+	@override String get sync_pair_request_body => 'Sebuah perangkat meminta untuk dipasangkan. Izinkan untuk menyinkronkan dengan perangkat ini?';
+	@override String get sync_pair_request_title => 'Permintaan pemasangan';
+	@override String get sync_pair_success => 'Terpasang — token telah diisi';
+	@override String get sync_pair_unavailable => 'Perangkat lain belum siap atau menggunakan versi lama. Perbarui dan aktifkan sinkronisasi, lalu coba lagi.';
+	@override String get sync_pair_unknown_device => 'Perangkat tidak dikenal';
+	@override String get sync_paired_peer_remove => 'Hapus';
+	@override String get sync_paired_peer_removed => 'Perangkat berpasangan dihapus';
+	@override String get sync_paired_peer_unknown => 'Perangkat tidak dikenal';
+	@override String get sync_paired_peers_empty => 'Belum ada perangkat berpasangan';
+	@override String get sync_paired_peers_title => 'Perangkat berpasangan';
+	@override String get sync_password => 'Kata sandi';
+	@override String get sync_port => 'Port';
+	@override String get sync_private_key => 'Kunci privat';
+	@override String get sync_progress_audiobooks => 'Menyinkronkan buku audio';
+	@override String get sync_progress_books => 'Mengimpor buku';
+	@override String get sync_progress_dictionaries => 'Menyinkronkan kamus';
+	@override String get sync_progress_local_audio => 'Menyinkronkan audio lokal';
+	@override String get sync_progress_reading => 'Menyinkronkan data baca';
+	@override String get sync_progress_videos => 'Menyinkronkan video';
+	@override String get sync_role_locked_by_client => 'Sudah terhubung ke perangkat lain. Hapus koneksi sebelum menjadi host sebagai server.';
+	@override String get sync_role_locked_by_server => 'Perangkat ini menjadi host sebagai server. Matikan server sebelum terhubung ke perangkat lain.';
+	@override String get sync_section_actions => 'Aksi sinkronisasi';
+	@override String get sync_section_backup => 'Cadangan lokal';
+	@override String get sync_section_content => 'Apa yang disinkronkan';
+	@override String get sync_section_host_server => 'Perangkat ini sebagai server sinkronisasi';
+	@override String get sync_section_host_server_footer => 'Biarkan perangkat lain menyinkronkan dari perangkat ini. Terpisah dari backend sinkronisasi di atas.';
+	@override String get sync_section_method => 'Metode sinkronisasi';
+	@override String get sync_server_copy_token => 'Salin token';
+	@override String get sync_server_enable => 'Aktifkan server sinkronisasi';
+	@override String get sync_server_mode_active => 'Perangkat ini adalah server sinkronisasi';
+	@override String get sync_server_mode_clients_drive => 'Sinkronisasi dimulai oleh klien yang terhubung — tidak perlu sinkron manual di sini.';
+	@override String get sync_server_port => 'Port server';
+	@override String sync_server_port_in_use({required Object port}) => 'Port ${port} sudah digunakan — pilih port lain.';
+	@override String get sync_server_regenerate_token => 'Buat ulang token';
+	@override String get sync_server_running => 'Server berjalan';
+	@override String get sync_server_stopped => 'Server berhenti';
+	@override String get sync_server_tls_enable => 'Enkripsi interconnect (HTTPS/TLS)';
+	@override String get sync_server_tls_repair_hint => 'Mengubah ini memerlukan perangkat berpasangan untuk memasangkan lagi';
+	@override String get sync_server_token => 'Token akses';
+	@override String get sync_show_remote_entries => 'Tampilkan entri remote';
+	@override String get sync_show_remote_entries_warning => 'Tampilkan buku dan video yang ada di perangkat berpasangan atau cloud sebagai kartu placeholder yang bisa diunduh atau di-streaming.';
+	@override String get sync_sign_in => 'Masuk';
+	@override String get sync_sign_out => 'Keluar';
+	@override String get sync_signed_in => 'Sudah masuk';
+	@override String get sync_statistics => 'Sinkronkan Statistik';
+	@override String get sync_summary => 'Cloud, LAN P2P & cadangan lokal';
+	@override String get sync_test_connection => 'Uji koneksi';
+	@override String get sync_use_tls => 'Gunakan TLS';
+	@override String get sync_username => 'Nama pengguna';
+	@override String get sync_video_files => 'Unggah file video';
+	@override String get sync_video_files_warning => 'File video bisa sangat besar.';
+	@override String get sync_webdav_missing_fields => 'Ada kolom yang belum diisi';
+	@override String sync_webdav_test_failed({required Object message}) => 'Koneksi gagal: ${message}';
+	@override String get sync_webdav_url => 'URL server';
+	@override String tag_added_to_book({required Object name}) => 'Tag "${name}" ditambahkan ke buku.';
+	@override String tag_added_to_collection({required Object name}) => 'Tag ${name} ditambahkan ke koleksi.';
+	@override String tag_added_to_video({required Object name}) => 'Tag ${name} ditambahkan ke video.';
+	@override String tag_already_on_book({required Object name}) => 'Tag "${name}" sudah ada di buku ini.';
+	@override String tag_already_on_collection({required Object name}) => 'Tag ${name} sudah ada di koleksi ini.';
+	@override String tag_book_count({required Object count}) => '${count} buku';
+	@override String get tag_clear_filter => 'Hapus Filter';
+	@override String get tag_color => 'Warna';
+	@override String tag_delete_confirm({required Object name}) => 'Hapus tag "${name}"?';
+	@override String get tag_filter_title => 'Filter berdasarkan Tag';
+	@override String get tag_label => 'Tag';
+	@override String get tag_manage => 'Kelola Tag';
+	@override String get tag_manage_title => 'Kelola Tag';
+	@override String get tag_name_duplicate => 'Tag dengan nama ini sudah ada.';
+	@override String get tag_name_empty => 'Nama tag tidak boleh kosong.';
+	@override String get tag_name_hint => 'Nama tag';
+	@override String get tag_new => 'Tag Baru';
+	@override String get tag_no_books_for_filter => 'Tidak ada buku yang cocok dengan tag yang dipilih.';
+	@override String get tag_no_tags_hint => 'Belum ada tag. Buat satu untuk memulai.';
+	@override String get tag_seed_stars => 'Tambah tag penilaian bintang';
+	@override String get tag_seed_stars_added => 'Tag penilaian bintang ditambahkan';
+	@override String get tag_seed_stars_exists => 'Tag penilaian bintang sudah ada';
+	@override String get tap_empty_hide_chrome => 'Bilah kontrol mengambang';
+	@override String get text_segmentation => 'Segmentasi Teks';
+	@override String get texthooker => 'Texthooker';
+	@override String get texthooker_enabled => 'Texthooker (terima teks)';
+	@override String get texthooker_enabled_hint => 'Hubungkan ke Textractor/mpv/agent dan cari teks yang masuk';
+	@override String get theme_black => 'Hitam murni';
+	@override String get theme_code_copied => 'Kode tema disalin ke papan klip';
+	@override String get theme_dark => 'Gelap pekat';
+	@override String get theme_ecru => 'Krem';
+	@override String get theme_eyecare => 'Eye Care';
+	@override String get theme_gray => 'Abu-abu gelap';
+	@override String get theme_light => 'Putih';
+	@override String get theme_seed_preview_hint => 'Petak warna di bawah menampilkan pratinjau warna yang sebenarnya dihasilkan dari warna benih kamu. Untuk memaksa warna tertentu sebagai aksen utama, aktifkan toggle Primer dan pilih warnanya secara eksplisit.';
+	@override String get theme_water => 'Biru air';
+	@override String toc_section({required Object n}) => 'Daftar Isi (${n})';
+	@override String get top_progress_pos_center => 'Tengah';
+	@override String get top_progress_pos_left => 'Kiri atas';
+	@override String get top_progress_pos_right => 'Kanan atas';
+	@override String get top_progress_position => 'Posisi progres';
+	@override String get torrent_upload_intro_body => 'Mengunggah (seeding) dimatikan secara default. Aktifkan untuk berbagi konten yang diunduh kembali ke swarm — ini menggunakan bandwidth unggah Anda. Anda bisa mengubahnya kapan saja di Pengaturan.';
+	@override String get torrent_upload_intro_confirm => 'Simpan';
+	@override String get torrent_upload_intro_enable => 'Aktifkan unggah / seeding';
+	@override String get torrent_upload_intro_keep_off => 'Tetap matikan';
+	@override String get torrent_upload_intro_title => 'Unggah / seeding';
+	@override String get reader_blur_images => 'Buramkan gambar (pelindung spoiler)';
+	@override String get reader_font_size => 'Ukuran Font';
+	@override String get reader_font_vpal => 'VPAL (Alt Vertikal)';
+	@override String get reader_furigana_hide => 'Sembunyikan';
+	@override String get reader_furigana_mode => 'Furigana';
+	@override String get reader_furigana_mode_hint => '';
+	@override String get reader_furigana_partial => 'Sebagian';
+	@override String get reader_furigana_show => 'Tampilkan';
+	@override String get reader_furigana_toggle => 'Alihkan';
+	@override String get reader_horizontal => 'Horizontal';
+	@override String get reader_line_height => 'Tinggi Baris';
+	@override String get reader_merge_image_pages => 'Gabung halaman ilustrasi ke dalam teks';
+	@override String get reader_merge_image_pages_subtitle => 'Bab gambar tunggal yang berdiri sendiri dirender di dalam bab teks yang berdekatan alih-alih di halaman sendiri';
+	@override String get reader_no_books_added => 'Belum ada buku di perpustakaan';
+	@override String get reader_not_bound_cannot_rematch => 'Buku audio tidak terikat ke buku, tidak dapat mencocokkan ulang';
+	@override String get reader_orient_mixed => 'Campuran';
+	@override String get reader_orient_upright => 'Tegak';
+	@override String get reader_page_columns_auto => 'Otomatis';
+	@override String get reader_paginated => 'Paginasi';
+	@override String get reader_paragraph_spacing => 'Jarak paragraf';
+	@override String get reader_reader_styles => 'Prioritaskan Gaya Buku';
+	@override String get reader_scroll => 'Gulir';
+	@override String get reader_text_indentation => 'Indentasi Paragraf';
+	@override String get reader_text_justify => 'Perataan Teks';
+	@override String get reader_theme => 'Tema';
+	@override String get reader_vert_kerning => 'Kerning Font (Vertikal)';
+	@override String get reader_vert_text_orient => 'Orientasi Teks';
+	@override String get reader_vertical => 'Vertikal';
+	@override String get reader_view_mode_label => 'Halaman / Gulir';
+	@override String get reader_vn => 'Visual Novel';
+	@override String get reader_writing_direction => 'Arah Penulisan';
+	@override String get undo => 'Urungkan';
+	@override String get unit_milliseconds => 'md';
+	@override String get unit_pixels => 'px';
+	@override String untitled_book({required Object id}) => 'Buku ${id}';
+	@override String get untitled_chapter => '(Tanpa Judul)';
+	@override String get update_already_latest => 'Anda sudah menggunakan versi terbaru';
+	@override String get update_auto_install => 'Pasang pembaruan otomatis';
+	@override String get update_available => 'Pembaruan Tersedia';
+	@override String update_cached_newer({required Object version}) => 'Pembaruan ${version} tersedia (memverifikasi…)';
+	@override String update_cached_up_to_date({required Object version}) => 'Di versi terbaru yang diketahui ${version} (memeriksa…)';
+	@override String get update_cancel => 'Batal';
+	@override String get update_cancelled => 'Unduhan dibatalkan';
+	@override String get update_cancelling => 'Membatalkan…';
+	@override String get update_channel_beta => 'Beta';
+	@override String get update_channel_debug => 'Debug';
+	@override String get update_channel_stable => 'Stabil';
+	@override String get update_check_failed => 'Pemeriksaan pembaruan gagal';
+	@override String get update_checking_now => 'Memeriksa pembaruan…';
+	@override String get update_connecting => 'Menghubungkan…';
+	@override String get update_custom_proxy_auto_hint => 'Leave blank to use environment variables, then the enabled system proxy.';
+	@override String get update_custom_proxy_hint => 'host:port, mis. 127.0.0.1:7890 (khusus IPv4/host)';
+	@override String get update_custom_proxy_invalid => 'Proksi tidak valid. Gunakan host:port';
+	@override String get update_custom_proxy_label => 'Custom update proxy';
+	@override String get update_debug_channel => 'Kanal Pembaruan Debug';
+	@override String get update_debug_channel_warning => 'Build kanal debug mungkin tidak stabil. Gunakan dengan risiko sendiri.';
+	@override String get update_download => 'Unduh';
+	@override String get update_download_failed => 'Unduhan gagal';
+	@override String get update_download_restarted_from_zero => 'diulang dari nol';
+	@override String update_download_resume_status({required Object status}) => 'Lanjut: ${status}';
+	@override String get update_download_resumed => 'dilanjutkan';
+	@override String update_download_size({required Object received, required Object total}) => 'Terunduh: ${received} / ${total}';
+	@override String update_download_source({required Object source}) => 'Sumber: ${source}';
+	@override String update_download_speed({required Object speed}) => 'Kecepatan: ${speed}';
+	@override String get update_downloading => 'Mengunduh pembaruan…';
+	@override String get update_hide => 'Sembunyikan';
+	@override String update_install_current_executable({required Object path}) => 'Eksekutabel yang berjalan: ${path}';
+	@override String update_install_deletefile_failure({required Object path, required Object code}) => 'Penginstal gagal mengganti ${path} (kode ${code})';
+	@override String update_install_detected_location({required Object source, required Object path}) => 'Lokasi pemasangan terdeteksi (${source}): ${path}';
+	@override String update_install_failure_summary({required Object summary}) => 'Alasan: ${summary}';
+	@override String get update_install_incomplete_message => 'Penginstal sudah dimulai, tetapi Fushi masih pada versi sebelumnya. Periksa log penginstal di bawah.';
+	@override String get update_install_incomplete_title => 'Pembaruan tidak selesai';
+	@override String update_install_installer_pid({required Object pid}) => 'PID penginstal: ${pid}';
+	@override String update_install_launch_failed_message({required Object version}) => 'Fushi tidak dapat memulai penginstal untuk versi ${version}. Periksa jalur log di bawah.';
+	@override String get update_install_launch_failed_title => 'Penginstal pembaruan tidak dimulai';
+	@override String update_install_launcher_pid({required Object pid}) => 'PID peluncur pembaruan: ${pid}';
+	@override String update_install_libmpv_holder({required Object pid, required Object path}) => 'Pemegang libmpv: PID ${pid} - ${path}';
+	@override String get update_install_log_not_observed => 'Log penginstal tidak dibuat selama pemeriksaan pasca-peluncuran.';
+	@override String get update_install_log_observed => 'Log penginstal dibuat selama pemeriksaan pasca-peluncuran.';
+	@override String update_install_log_path({required Object path}) => 'Log penginstal: ${path}';
+	@override String get update_install_manual_close_retry => 'Tutup Fushi sesuai PID/jalur yang tercantum, lalu coba lagi pembaruan atau jalankan kembali penginstal.';
+	@override String get update_install_parent_exit_not_observed => 'Peluncur pembaruan tidak mendeteksi Fushi keluar sebelum peluncuran penginstal.';
+	@override String get update_install_parent_exit_observed => 'Fushi keluar sebelum penginstal diluncurkan.';
+	@override String update_install_path_mismatch({required Object warning}) => 'Direktori pemasangan tidak cocok: ${warning}';
+	@override String get update_install_permission_cancel => 'Batal';
+	@override String get update_install_permission_message => 'Silakan izinkan Fushi menginstal aplikasi di pengaturan sistem, lalu coba lagi.';
+	@override String get update_install_permission_retry => 'Coba instal lagi';
+	@override String get update_install_permission_title => 'Izinkan menginstal pembaruan';
+	@override String get update_install_restart_windows_hint => 'Jika proses yang tercantum sudah ditutup tetapi libmpv-2.dll masih terkunci, mulai ulang Windows lalu pasang lagi.';
+	@override String update_install_running_process({required Object pid, required Object path}) => 'Proses Fushi yang berjalan: PID ${pid} - ${path}';
+	@override String update_install_success_message({required Object version}) => 'Fushi diperbarui ke versi ${version}.';
+	@override String get update_install_success_title => 'Pembaruan terpasang';
+	@override String update_install_target_dir({required Object path}) => 'Target pemasangan: ${path}';
+	@override String get update_installing => 'Memasang…';
+	@override String get update_mac_install_incomplete_message => 'Pembaruan tidak bisa diterapkan, jadi Fushi masih di versi sebelumnya. Anda bisa mencoba pembaruan lagi, atau unduh rilis terbaru secara manual.';
+	@override String update_message({required Object version}) => 'Versi ${version} tersedia.';
+	@override String update_network_failure({required Object host, required Object reason}) => 'Tidak dapat menjangkau ${host}: ${reason}';
+	@override String get update_never_remind => 'Jangan ingatkan lagi';
+	@override String get update_skip => 'Lewati';
+	@override String get url => 'URL';
+	@override String get video_audio_track => 'Trek audio';
+	@override String get video_audio_track_empty => 'Tidak ada trek audio yang bisa dialihkan';
+	@override String video_audio_track_switched({required Object label}) => 'Trek audio: ${label}';
+	@override String get video_auto_play_next_cancel => 'Batal';
+	@override String video_auto_play_next_countdown({required Object seconds}) => 'Episode berikutnya dalam ${seconds}d';
+	@override String get video_black_flash_notice_action => 'Lihat saran';
+	@override String get video_black_flash_notice_dont_show_again => 'Jangan tampilkan lagi';
+	@override String get video_bottom_next_cue => 'Subtitle berikutnya (maju sedikit jika tidak ada)';
+	@override String get video_bottom_play_pause => 'Putar / Jeda';
+	@override String get video_bottom_prev_cue => 'Subtitle sebelumnya (mundur sedikit jika tidak ada)';
+	@override String get video_bottom_seek_back => 'Mundur 10d';
+	@override String get video_bottom_seek_back_label => '−10d';
+	@override String get video_bottom_seek_forward => 'Maju 10d';
+	@override String get video_bottom_seek_forward_label => '+10d';
+	@override String video_chapter_n({required Object n}) => 'Bab ${n}';
+	@override String get video_chapters => 'Bab';
+	@override String get video_chapters_empty => 'Tidak ada bab';
+	@override String get video_clip_export => 'Ekspor klip';
+	@override String get video_clip_export_cancelled => 'Ekspor klip dibatalkan';
+	@override String video_clip_export_failed({required Object reason}) => 'Ekspor klip gagal: ${reason}';
+	@override String get video_clip_export_ffmpeg_failed => 'ffmpeg gagal';
+	@override String get video_clip_export_ffmpeg_unavailable => 'ffmpeg tidak tersedia';
+	@override String get video_clip_export_input_missing => 'Video sumber tidak tersedia';
+	@override String get video_clip_export_invalid_range => 'Tidak ada rentang klip yang valid';
+	@override String get video_clip_export_output_missing => 'Tidak ada file output yang dibuat';
+	@override String get video_clip_export_remote_download_required => 'Unduh video jarak jauh ke perangkat ini sebelum mengekspor klip';
+	@override String get video_clip_export_source_changed => 'Sumber video berubah; ekspor klip dibatalkan';
+	@override String get video_clip_export_start => 'Mulai ekspor klip';
+	@override String get video_clip_export_stop => 'Hentikan dan ekspor klip';
+	@override String video_clip_exported({required Object path}) => 'Klip diekspor: ${path}';
+	@override String video_clip_exported_with_subtitles({required Object path}) => 'Klip diekspor dengan subtitle: ${path}';
+	@override String get video_clip_exporting => 'Mengekspor klip…';
+	@override String get video_continue_watching => 'Continue Watching';
+	@override String get video_control_audio_track => 'Trek audio';
+	@override String get video_control_customize_hint => 'Pilih posisi tiap tombol di pemutar, atau pindahkan keluar.';
+	@override String get video_control_episode_list => 'Daftar episode';
+	@override String get video_control_favorite_sentence => 'Favoritkan kalimat saat ini';
+	@override String get video_control_fullscreen => 'Layar penuh';
+	@override String get video_control_next_cue => 'Subtitle berikutnya';
+	@override String get video_control_palette_hint => 'Seret tombol ke sebuah slot untuk menambahkannya; satu tombol bisa berada di beberapa slot.';
+	@override String get video_control_palette_title => 'Semua tombol';
+	@override String get video_control_play_pause => 'Putar/Jeda';
+	@override String get video_control_previous_cue => 'Subtitle sebelumnya';
+	@override String get video_control_reject_required => 'Kontrol wajib harus tetap di pemutar.';
+	@override String get video_control_reject_unavailable => 'Kontrol ini tidak dapat ditempatkan di sana.';
+	@override String get video_control_reject_volume_bottom => 'Volume hanya bisa berada di bilah bawah.';
+	@override String get video_control_remove_from_slot => 'Pindahkan keluar';
+	@override String get video_control_reset_layout => 'Setel ulang tata letak tombol pemutar';
+	@override String get video_control_screenshot => 'Tangkapan layar';
+	@override String get video_control_seek_backward => 'Mundur 10d';
+	@override String get video_control_seek_forward => 'Maju 10d';
+	@override String get video_control_settings => 'Setelan pemutar';
+	@override String get video_control_slot_bottom_center => 'Bilah bawah (tengah)';
+	@override String get video_control_slot_bottom_left => 'Bilah bawah (kiri)';
+	@override String get video_control_slot_bottom_right => 'Bilah bawah (kanan)';
+	@override String get video_control_slot_drop_hint => 'Seret tombol ke sini';
+	@override String get video_control_slot_hidden => 'Dihapus dari pemutar';
+	@override String get video_control_slot_screen_left => 'Kiri layar';
+	@override String get video_control_slot_screen_right => 'Kanan layar';
+	@override String get video_control_slot_top_center => 'Bilah atas (tengah)';
+	@override String get video_control_slot_top_left => 'Bilah atas (kiri)';
+	@override String get video_control_slot_top_right => 'Bilah atas (kanan)';
+	@override String get video_control_speed => 'Kecepatan';
+	@override String get video_control_subtitle_list => 'Daftar subtitle';
+	@override String get video_control_subtitle_track => 'Trek subtitle';
+	@override String get video_control_title => 'Judul video';
+	@override String get video_control_volume => 'Volume';
+	@override String get video_danmaku_manual_bind_empty => 'Belum ada danmaku untuk episode ini.';
+	@override String get video_danmaku_manual_bind_failed => 'Tidak bisa memuat danmaku untuk episode ini. Coba lagi nanti.';
+	@override String get video_danmaku_manual_bind_server_error => 'Server danmaku menolak permintaan. Coba lagi nanti.';
+	@override String get video_danmaku_manual_match_title => 'Cocokkan danmaku';
+	@override String get video_danmaku_manual_network_error => 'Kesalahan jaringan. Periksa koneksi Anda dan coba lagi.';
+	@override String get video_danmaku_manual_no_result => 'Tidak ada anime yang cocok ditemukan.';
+	@override String get video_danmaku_manual_search_action => 'Cari';
+	@override String get video_danmaku_manual_search_hint => 'Judul anime';
+	@override String get video_danmaku_manual_search_prompt => 'Cari Dandanplay berdasarkan judul anime, lalu pilih episode.';
+	@override String get video_danmaku_manual_server_error => 'Pencarian gagal. Coba lagi nanti.';
+	@override String video_delete_confirm({required Object title}) => 'Hapus 『${title}』? Tindakan ini tidak dapat dibatalkan.';
+	@override String get video_delete_title => 'Hapus Video';
+	@override String get video_double_tap_next_cue => 'Baris berikutnya';
+	@override String get video_double_tap_prev_cue => 'Baris sebelumnya';
+	@override String get video_drop_audio_unsupported => 'Jatuhkan file subtitle ke video saat ini. File audio tidak bisa dilampirkan di sini.';
+	@override String get video_drop_subtitle_only => 'Jatuhkan file subtitle ke video saat ini.';
+	@override String get video_episode_list => 'Episode';
+	@override String get video_episode_list_empty => 'Tidak ada episode';
+	@override String video_favorite_count({required Object count}) => '${count} favorit';
+	@override String get video_file_error_content => 'Tidak dapat memuat file video. Pastikan file ini ada dan berada di direktori yang dapat diakses oleh aplikasi.';
+	@override String get video_file_not_found => 'File video tidak ditemukan';
+	@override String get video_immersive_locked => 'Mode imersif aktif';
+	@override String get video_immersive_mode_full => 'Kontrol penuh';
+	@override String get video_immersive_mode_lookup_only => 'Hanya pencarian kata';
+	@override String get video_immersive_mode_seek_lookup => 'Pintasan + pencarian kata';
+	@override String get video_immersive_mode_unlock_only => 'Hanya buka kunci';
+	@override String get video_immersive_unlock => 'Buka kunci';
+	@override String get video_immersive_unlocked => 'Mode imersif nonaktif';
+	@override String get video_import_action => 'Impor video';
+	@override String get video_import_confirm => 'Impor';
+	@override String get video_import_pick_subtitle => 'Pilih subtitle';
+	@override String get video_import_pick_video => 'Pilih file video';
+	@override String get video_import_stream_advanced => 'Lanjutan (header anti-leech)';
+	@override String get video_import_stream_referer => 'Referer (opsional)';
+	@override String get video_import_stream_subtitle_url_field => 'URL subtitle eksternal (opsional)';
+	@override String get video_import_stream_url_field => 'URL stream video';
+	@override String get video_import_stream_url_hint => 'Putar URL stream HLS/m3u8/mp4 (dengan URL subtitle eksternal opsional dan Referer/User-Agent anti-leech)';
+	@override String get video_import_stream_user_agent => 'User-Agent (opsional)';
+	@override String get video_import_subtitle_optional => 'Subtitle eksternal opsional (kamu bisa beralih antara subtitle tertanam/eksternal kapan saja saat pemutaran)';
+	@override String get video_import_title => 'Impor Video';
+	@override String get video_jimaku_anime_match => 'Kecocokan anime';
+	@override String get video_jimaku_api_key => 'Kunci API Jimaku';
+	@override String get video_jimaku_api_key_hint => 'Dapatkan API key gratis di jimaku.cc/account';
+	@override String get video_jimaku_api_key_set => 'API key telah diatur';
+	@override String video_jimaku_batch_done({required Object done, required Object total}) => 'Subtitle diambil: ${done}/${total}';
+	@override String get video_jimaku_batch_download => 'Unduh semua';
+	@override String get video_jimaku_batch_title => 'Ambil subtitle untuk koleksi';
+	@override String get video_jimaku_download_failed => 'Unduhan gagal';
+	@override String get video_jimaku_downloaded => 'Subtitle diunduh dan diterapkan';
+	@override String get video_jimaku_episode => 'Episode (opsional)';
+	@override String get video_jimaku_episode_hint => 'Biarkan kosong untuk menampilkan semua';
+	@override String get video_jimaku_fetch => 'Ambil subtitle (Jimaku)';
+	@override String get video_jimaku_filter => 'Saring hasil (mis. WEBRip, BD)';
+	@override String get video_jimaku_find_sources => 'Cari subtitle';
+	@override String get video_jimaku_language => 'Bahasa';
+	@override String get video_jimaku_language_all => 'Semua';
+	@override String get video_jimaku_no_key => 'Masukkan API key Jimaku kamu dulu';
+	@override String get video_jimaku_no_results => 'Subtitle tidak ditemukan';
+	@override String get video_jimaku_query => 'Nama seri';
+	@override String get video_jimaku_search => 'Cari';
+	@override String get video_jimaku_series => 'Seri';
+	@override String get video_jimaku_show_all_episodes => 'Tampilkan semua episode';
+	@override String get video_jimaku_source => 'Sumber subtitle';
+	@override String get video_jimaku_source_hint => 'Pilih satu entri Jimaku. Paket musim dicocokkan berdasarkan episode secara otomatis.';
+	@override String video_last_watched({required Object date}) => 'Terakhir ditonton ${date}';
+	@override String get video_library_empty => 'Belum ada video yang diimpor';
+	@override String get video_load_failed_back => 'Kembali';
+	@override String get video_load_failed_generic => 'Tidak bisa memuat video ini.';
+	@override String get video_load_failed_network => 'Kesalahan jaringan - periksa koneksi Anda dan coba lagi.';
+	@override String get video_load_failed_not_found => 'Item ini tidak ditemukan di pustaka Anda.';
+	@override String get video_load_failed_retry => 'Coba lagi';
+	@override String get video_load_failed_timeout => 'Koneksi waktu habis - jaringan lambat atau sumber membatasi kecepatan. Silakan coba lagi.';
+	@override String get video_load_failed_title => 'Video gagal dimuat';
+	@override String get video_load_failed_unavailable => 'Tidak bisa mendapatkan stream video - mungkin tidak tersedia, dibatasi wilayah atau usia, atau sumbernya berubah.';
+	@override String get video_loading_buffering => 'Buffering…';
+	@override String get video_loading_connecting => 'Menghubungkan ke stream…';
+	@override String get video_loading_preparing => 'Mempersiapkan…';
+	@override String get video_loading_subtitle => 'Mengunduh subtitle…';
+	@override String get video_menu_fullscreen => 'Alihkan layar penuh';
+	@override String get video_menu_lock => 'Mode imersif / kunci';
+	@override String get video_menu_play_pause => 'Putar / Jeda';
+	@override String get video_menu_subtitle_track => 'Trek subtitle';
+	@override String get video_mining_image_mode => 'Gambar kartu video';
+	@override String get video_mining_image_mode_current_frame => 'Tangkapan layar saat menambang';
+	@override String get video_mining_image_mode_gif => 'GIF animasi (klip subtitle)';
+	@override String get video_mining_image_mode_hint => 'Apakah sampul kartu video adalah animasi klip subtitle atau satu bingkai diam — dan bingkai mana';
+	@override String get video_mining_image_mode_subtitle_start => 'Tangkapan layar saat subtitle dimulai';
+	@override String get video_next_episode => 'Episode berikutnya';
+	@override String video_playlist_episodes({required Object count}) => '${count} ep';
+	@override String get video_prev_episode => 'Episode sebelumnya';
+	@override String get video_quality => 'Kualitas';
+	@override String get video_quality_auto => 'Otomatis';
+	@override String get video_quality_empty => 'Tidak ada kualitas yang bisa dialihkan untuk video ini';
+	@override String get video_quality_enhancement_hint => 'Aktifkan ini untuk menajamkan gambar dengan penskalaan kualitas tinggi bawaan mpv. Cocok untuk anime maupun film/acara live-action. Untuk lebih jauh dengan shader seperti Anime4K, buka Peningkatan gambar saat video diputar dan pilih levelnya di sana.';
+	@override String get video_quality_load_failed => 'Tidak bisa memuat kualitas untuk video ini.';
+	@override String get video_quality_loading => 'Memuat kualitas yang tersedia…';
+	@override String video_quality_switched({required Object label}) => 'Kualitas: ${label}';
+	@override String get video_rename => 'Ganti nama';
+	@override String get video_rename_hint => 'Judul';
+	@override String get video_render_skia_fix_confirm_action => 'Mulai ulang';
+	@override String get video_render_skia_fix_confirm_body => 'Ini menonaktifkan renderer Impeller dan memulai ulang aplikasi untuk menerapkannya.';
+	@override String get video_render_skia_fix_confirm_title => 'Beralih ke Skia dan mulai ulang?';
+	@override String get video_render_skia_fix_hint => 'Gunakan jika audio berputar tetapi video tetap hitam. Menonaktifkan Impeller; memulai ulang untuk menerapkan.';
+	@override String get video_render_skia_fix_title => 'Layar hitam? Ganti renderer (Skia)';
+	@override String video_resource_missing_message({required Object title}) => 'File untuk 『${title}』 tidak bisa ditemukan. Lokasinya mungkin berubah, atau drive mungkin tidak terhubung. Anda bisa mengimpor ulang, atau menghapus entri ini.';
+	@override String get video_resource_missing_reimport => 'Impor ulang';
+	@override String get video_resource_missing_title => 'Video tidak tersedia';
+	@override String get video_resource_relink_success => 'Video ditautkan ulang';
+	@override String get video_scrape_episodes => 'Episode';
+	@override String get video_scrape_info => 'Info seri';
+	@override String video_scrape_rating_votes({required Object count}) => '${count} penilaian';
+	@override String get video_screenshot => 'Tangkapan layar';
+	@override String video_screenshot_failed_reason({required Object reason}) => 'Tangkapan layar gagal: ${reason}';
+	@override String video_screenshot_ready({required Object file}) => 'Tangkapan layar siap: ${file}';
+	@override String video_screenshot_saved_to({required Object path}) => 'Tangkapan layar tersimpan: ${path}';
+	@override String get video_secondary_subtitle_hint => 'Dirender oleh pemutar (tidak bisa dicari)';
+	@override String get video_secondary_subtitle_sources => 'Subtitle sekunder';
+	@override String get video_setting_auto_play_next => 'Putar otomatis episode berikutnya';
+	@override String get video_setting_auto_scrape => 'Ambil info seri otomatis';
+	@override String get video_setting_av_delay => 'Sinkron subtitle';
+	@override String get video_setting_av_delay_hint => 'Positif = subtitle lebih lambat (baris digeser mundur); negatif = subtitle lebih cepat. Pakai slider, tombol +/-, atau ketik nilainya.';
+	@override String get video_setting_danmaku_area => 'Area tampilan';
+	@override String get video_setting_danmaku_area_hint => 'Fraksi tinggi layar yang bisa ditempati danmaku, dari atas.';
+	@override String get video_setting_danmaku_block_rules => 'Blokir kata / regex';
+	@override String get video_setting_danmaku_block_rules_hint => 'Satu aturan per baris. Bungkus baris dalam garis miring seperti /pola/ untuk ekspresi reguler; jika tidak, cocokkan sebagai teks tidak peka huruf besar.';
+	@override String get video_setting_danmaku_block_rules_placeholder => 'mis. spoiler atau /pola/';
+	@override String get video_setting_danmaku_enabled => 'Tampilkan danmaku';
+	@override String get video_setting_danmaku_enabled_hint => 'Render danmaku lokal atau hasil pencocokan di atas video tanpa menghalangi kontrol.';
+	@override String get video_setting_danmaku_font_scale => 'Ukuran font';
+	@override String get video_setting_danmaku_font_scale_hint => 'Skalakan ukuran teks danmaku.';
+	@override String get video_setting_danmaku_manual_match => 'Cocokkan manual';
+	@override String get video_setting_danmaku_manual_match_hint => 'Cari Dandanplay berdasarkan judul dan pilih episode saat pencocokan otomatis gagal atau salah.';
+	@override String get video_setting_danmaku_max_active => 'Batas danmaku aktif';
+	@override String get video_setting_danmaku_max_active_hint => 'Membatasi komentar yang dirender per frame agar file besar tetap responsif.';
+	@override String get video_setting_danmaku_online => 'Pencocokan online Dandanplay';
+	@override String get video_setting_danmaku_online_hint => 'Saat tidak ada sidecar lokal yang dapat dipakai, cocokkan video yang dibuka dengan Dandanplay dan ambil komentar terkait.';
+	@override String get video_setting_danmaku_opacity => 'Opasitas';
+	@override String get video_setting_danmaku_opacity_hint => 'Transparansi danmaku secara keseluruhan.';
+	@override String get video_setting_danmaku_server_url => 'URL server danmaku';
+	@override String get video_setting_danmaku_speed => 'Kecepatan';
+	@override String get video_setting_danmaku_speed_hint => 'Lebih tinggi lebih cepat; danmaku bergulir melintasi layar lebih cepat.';
+	@override String get video_setting_double_tap => 'Ketuk dua kali untuk melompat';
+	@override String get video_setting_double_tap_hint => 'Ketuk dua kali sisi kiri atau kanan video untuk melompat';
+	@override String get video_setting_double_tap_off => 'Mati';
+	@override String get video_setting_double_tap_subtitle => 'Subtitle';
+	@override String get video_setting_immersive_mode => 'Mode imersif';
+	@override String get video_setting_immersive_mode_hint => 'Mengatur apa yang tetap tersedia setelah menekan tombol kunci samping';
+	@override String get video_setting_lock_window_aspect => 'Kunci jendela ke rasio video';
+	@override String get video_setting_long_press_speed => 'Kecepatan tekan lama';
+	@override String get video_setting_long_press_speed_hint => 'Sementara gunakan kecepatan ini selama menahan video.';
+	@override String get video_setting_mpv_aspect => 'Rasio aspek';
+	@override String get video_setting_mpv_aspect_auto => 'Asli';
+	@override String get video_setting_mpv_brightness => 'Kecerahan';
+	@override String get video_setting_mpv_channels => 'Kanal';
+	@override String get video_setting_mpv_channels_auto => 'Otomatis';
+	@override String get video_setting_mpv_channels_mono => 'Mono';
+	@override String get video_setting_mpv_channels_stereo => 'Stereo (downmix)';
+	@override String get video_setting_mpv_contrast => 'Kontras';
+	@override String get video_setting_mpv_correct_downscale => 'Downscaling linier';
+	@override String get video_setting_mpv_deband => 'Hilangkan banding';
+	@override String get video_setting_mpv_deinterlace => 'Deinterlace';
+	@override String get video_setting_mpv_dither => 'Dithering';
+	@override String get video_setting_mpv_gamma => 'Gamma';
+	@override String get video_setting_mpv_group_advanced => 'Lanjutan';
+	@override String get video_setting_mpv_group_audio => 'Audio';
+	@override String get video_setting_mpv_group_color => 'Warna';
+	@override String get video_setting_mpv_group_decode => 'Dekode';
+	@override String get video_setting_mpv_group_geometry => 'Geometri';
+	@override String get video_setting_mpv_group_playback => 'Pemutaran';
+	@override String get video_setting_mpv_group_quality => 'Kualitas gambar';
+	@override String get video_setting_mpv_hue => 'Rona';
+	@override String get video_setting_mpv_hwdec => 'Dekode perangkat keras';
+	@override String get video_setting_mpv_hwdec_auto => 'Otomatis (aman)';
+	@override String get video_setting_mpv_hwdec_copy => 'Otomatis (salin)';
+	@override String get video_setting_mpv_hwdec_off => 'Mati';
+	@override String get video_setting_mpv_interpolation => 'Interpolasi gerak';
+	@override String get video_setting_mpv_loop => 'Ulang file';
+	@override String get video_setting_mpv_normalize => 'Normalkan kenyaringan downmix';
+	@override String get video_setting_mpv_panscan => 'Pan & scan (potong tepi)';
+	@override String get video_setting_mpv_pitch => 'Pertahankan nada saat mempercepat';
+	@override String get video_setting_mpv_raw => 'Opsi mpv tambahan (satu per baris, key=value)';
+	@override String get video_setting_mpv_raw_hint => 'Hanya desktop; opsi yang tidak bisa diterapkan saat berjalan (mis. vo, profile) diabaikan. SVP/RIFE butuh alat eksternal dan tidak didukung.';
+	@override String get video_setting_mpv_reset => 'Setel ulang semua';
+	@override String get video_setting_mpv_rotate => 'Rotasi';
+	@override String get video_setting_mpv_saturation => 'Saturasi';
+	@override String get video_setting_mpv_sigmoid => 'Upscaling sigmoid';
+	@override String get video_setting_mpv_sigmoid_hint => 'Upscaling kurva sigmoid mengurangi ringing tetapi memakan GPU. Mati secara default untuk performa; aktifkan jika Anda menginginkan upscaling lebih tajam.';
+	@override String get video_setting_mpv_zoom => 'Zoom';
+	@override String get video_setting_picture_fit => 'Penskalaan gambar';
+	@override String get video_setting_picture_fit_contain => 'Pas pertahankan rasio tambah bilah hitam';
+	@override String get video_setting_picture_fit_cover => 'Isi pertahankan rasio potong tepi';
+	@override String get video_setting_picture_fit_fill => 'Regangkan untuk mengisi';
+	@override String get video_setting_picture_fit_hint => 'Bagaimana gambar mengisi area pemutar';
+	@override String get video_setting_qb_category => 'Kategori qBittorrent';
+	@override String get video_setting_qb_category_hint => 'Unduhan yang didorong oleh Fushi mendapat kategori ini; pelacakan penyelesaian hanya memantaunya.';
+	@override String get video_setting_qb_password => 'Kata sandi WebUI';
+	@override String get video_setting_qb_url => 'URL WebUI qBittorrent';
+	@override String get video_setting_qb_url_hint => 'mis. http://127.0.0.1:8080. Biarkan kosong untuk menonaktifkan unduhan anime.';
+	@override String get video_setting_qb_username => 'Nama pengguna WebUI';
+	@override String get video_setting_secondary_subtitle_obscure => 'Samarkan subtitle sekunder';
+	@override String get video_setting_secondary_subtitle_obscure_hint => 'Buramkan atau sembunyikan subtitle sekunder (terjemahan)';
+	@override String get video_setting_seek_seconds => 'Detik lompatan';
+	@override String get video_setting_speed => 'Kecepatan putar';
+	@override String get video_setting_speed_step => 'Langkah kecepatan';
+	@override String get video_setting_subtitle_appearance => 'Tampilan subtitle';
+	@override String get video_setting_subtitle_bg_color => 'Warna latar belakang';
+	@override String get video_setting_subtitle_bg_opacity => 'Opasitas latar';
+	@override String get video_setting_subtitle_font_size => 'Ukuran font';
+	@override String get video_setting_subtitle_font_weight => 'Ketebalan font';
+	@override String get video_setting_subtitle_no_background => 'Tanpa latar';
+	@override String get video_setting_subtitle_no_background_hint => 'Buat latar subtitle transparan.';
+	@override String get video_setting_subtitle_obscure => 'Samarkan subtitle';
+	@override String get video_setting_subtitle_obscure_blur => 'Buramkan';
+	@override String get video_setting_subtitle_obscure_hide => 'Sembunyikan';
+	@override String get video_setting_subtitle_obscure_hint => 'Pilih bagaimana subtitle disamarkan untuk latihan mendengarkan: mati, buram (arahkan kursor atau ketuk untuk menampilkan), atau tersembunyi.';
+	@override String get video_setting_subtitle_obscure_none => 'Mati';
+	@override String get video_setting_subtitle_position => 'Posisi vertikal';
+	@override String get video_setting_subtitle_reset => 'Setel ulang ke default';
+	@override String get video_setting_subtitle_respect_ass => 'Hormati gaya bawaan subtitle';
+	@override String get video_setting_subtitle_respect_ass_hint => 'Gunakan font, warna, dan outline yang tertanam dalam subtitle .ass saat tersedia; matikan untuk memaksa pengaturan tampilan Anda.';
+	@override String get video_setting_subtitle_shadow => 'Bayangan';
+	@override String get video_setting_subtitle_sync_input => 'Offset (ms)';
+	@override String get video_setting_subtitle_text_color => 'Warna teks';
+	@override String get video_setting_theme => 'Tema';
+	@override String get video_setting_torrent_active_downloads => 'Unduhan aktif maks';
+	@override String get video_setting_torrent_active_seeds => 'Seed aktif maks';
+	@override String get video_setting_torrent_anonymous => 'Mode anonim';
+	@override String get video_setting_torrent_antileech => 'Aktifkan anti-leech';
+	@override String get video_setting_torrent_backend_qb => 'qBittorrent eksternal';
+	@override String get video_setting_torrent_ban_progress_cheat => 'Blokir kecurangan progres';
+	@override String get video_setting_torrent_ban_relative_cheat => 'Blokir kecurangan progres relatif';
+	@override String get video_setting_torrent_ban_time => 'Durasi blokir (menit)';
+	@override String get video_setting_torrent_ban_time_hint => '0 = permanen';
+	@override String get video_setting_torrent_connections_hint => '0 = default mesin';
+	@override String get video_setting_torrent_dht => 'DHT';
+	@override String get video_setting_torrent_download_limit => 'Batas unduh (KB/s)';
+	@override String get video_setting_torrent_encryption_disabled => 'Dinonaktifkan';
+	@override String get video_setting_torrent_encryption_forced => 'Paksa';
+	@override String get video_setting_torrent_encryption_prefer => 'Preferensikan';
+	@override String get video_setting_torrent_limit_hint => '0 = tidak terbatas';
+	@override String get video_setting_torrent_listen_port => 'Port dengar';
+	@override String get video_setting_torrent_listen_port_hint => '0 = default (6881)';
+	@override String get video_setting_torrent_lsd => 'Penemuan peer lokal (LSD)';
+	@override String get video_setting_torrent_max_connections => 'Koneksi maks';
+	@override String get video_setting_torrent_max_ip_ports => 'Port maks per IP';
+	@override String get video_setting_torrent_memory_hint => 'Batasi memori mesin. 0 = otomatis (berdasarkan RAM perangkat).';
+	@override String get video_setting_torrent_memory_limit => 'Batas memori (MB)';
+	@override String get video_setting_torrent_natpmp => 'Pemetaan port NAT-PMP';
+	@override String get video_setting_torrent_section_antileech => 'Anti-leech';
+	@override String get video_setting_torrent_section_session => 'Sesi';
+	@override String get video_setting_torrent_seed_ratio_hint => 'Berhenti mengunggah saat rasio diunggah/diunduh mencapai ini. 0 = tidak terbatas.';
+	@override String get video_setting_torrent_seed_ratio_limit => 'Batas rasio seed';
+	@override String get video_setting_torrent_seed_time_hint => 'Berhenti mengunggah setelah seeding selama ini. 0 = tidak terbatas.';
+	@override String get video_setting_torrent_seed_time_limit => 'Batas waktu seed (menit)';
+	@override String get video_setting_torrent_upload_enabled => 'Aktifkan unggah / seeding';
+	@override String get video_setting_torrent_upload_enabled_hint => 'Mati secara default. Seed kembali ke swarm setelah mengunduh.';
+	@override String get video_setting_torrent_upload_limit => 'Batas unggah (KB/s)';
+	@override String get video_setting_torrent_upload_slots => 'Slot unggah maks';
+	@override String get video_setting_torrent_upnp => 'Pemetaan port UPnP';
+	@override String get video_setting_torrent_zero_default => '0 = default';
+	@override String get video_setting_torrent_zero_off => '0 = mati';
+	@override String get video_settings_cat_audio => 'Audio';
+	@override String get video_settings_cat_controls => 'Kontrol';
+	@override String get video_settings_cat_danmaku => 'Danmaku';
+	@override String get video_settings_cat_mpv => 'mpv';
+	@override String get video_settings_cat_playback => 'Pemutaran';
+	@override String get video_settings_cat_shaders => 'Peningkatan gambar';
+	@override String get video_settings_cat_subtitle => 'Subtitle';
+	@override String get video_settings_title => 'Setelan video';
+	@override String get video_shader_anime4k_hint => 'Pilih preset untuk diunduh. Setelah diunduh, centang di daftar untuk mengaktifkan. Hanya desktop.';
+	@override String get video_shader_anime4k_title => 'Shader rekomendasi Anime4K';
+	@override String get video_shader_download_anime4k => 'Unduh preset Anime4K';
+	@override String video_shader_download_done({required Object count}) => 'Mengunduh ${count} shader';
+	@override String get video_shader_download_failed => 'Unduhan shader gagal';
+	@override String video_shader_download_partial({required Object ok, required Object failed}) => 'Mengunduh ${ok} shader, ${failed} gagal';
+	@override String get video_shader_download_url => 'Unduh dari tautan';
+	@override String get video_shader_downloaded_label => 'Terunduh';
+	@override String get video_shader_downloading => 'Mengunduh shader…';
+	@override String get video_shader_first_use_body => '想让动画画面更清晰，可以进入“画质增强”并点击“下载 Anime4K 推荐着色器”。下载后在已安装列表里勾选即可启用。';
+	@override String get video_shader_first_use_download => 'Unduh dan aktifkan';
+	@override String get video_shader_first_use_title => '试试 Anime4K 画质增强';
+	@override String get video_shader_import => 'Impor shader (.glsl)';
+	@override String video_shader_import_done({required Object count}) => 'Mengimpor ${count} shader';
+	@override String get video_shader_import_from_mpv => 'Impor dari mpv lokal';
+	@override String get video_shader_import_from_mpv_hint => '自动搜索本机 mpv；未找到时可手动选择 mpv 目录。';
+	@override String get video_shader_mobile_perf_hint => 'Di ponsel, shader hanya berlaku pada jalur render GPU standar dan efektivitasnya bervariasi per GPU perangkat; tingkat yang lebih tinggi mungkin menyebabkan frame drop atau panas. Coba Rendah/Sedang dulu dan periksa hasilnya di perangkatmu.';
+	@override String video_shader_mpv_dir_current({required Object path}) => 'Folder mpv: ${path}';
+	@override String get video_shader_mpv_dir_empty => 'Tidak ada shader di folder itu';
+	@override String get video_shader_mpv_not_found => 'Tidak ada shader mpv lokal yang ditemukan';
+	@override String get video_shader_mpv_pick_title => 'Impor shader dari mpv';
+	@override String get video_shader_pick_mpv_dir => 'Specify mpv folder';
+	@override String get video_shader_preset_mode_a_fast => 'Untuk sebagian besar anime 1080p. Beban GPU lebih ringan.';
+	@override String get video_shader_preset_mode_a_hq => 'Kualitas tertinggi untuk anime 1080p. Butuh GPU kuat.';
+	@override String get video_shader_preset_mode_b_fast => 'Untuk anime 720p lama dengan artefak resampling.';
+	@override String get video_shader_preset_mode_b_hq => 'Kualitas tinggi untuk anime 720p lama dengan artefak resampling. Butuh GPU kuat.';
+	@override String get video_shader_preset_mode_c_fast => 'Untuk anime SD (480p) lama dengan noda kompresi.';
+	@override String get video_shader_preset_mode_c_hq => 'Kualitas tinggi untuk anime SD (480p) lama dengan noda kompresi. Butuh GPU kuat.';
+	@override String get video_shader_quality_tier => 'Peningkatan kualitas';
+	@override String get video_shader_section_advanced => 'Lanjutan (shader manual)';
+	@override String get video_shader_section_installed => 'Shader terpasang';
+	@override String get video_shader_showing_original => 'Shader mati (asli)';
+	@override String get video_shader_showing_shaded => 'Shader aktif';
+	@override String get video_shader_tier_custom_hint => 'Pilihan shader kustom. Pilih tingkat di atas untuk beralih ke preset.';
+	@override String get video_shader_tier_high => 'Tinggi';
+	@override String get video_shader_tier_high_hint => 'Anime4K HQ. Lebih tajam; terbaik untuk animasi, juga bisa untuk live-action (peningkatan lebih kecil). Butuh GPU menengah atas (NVIDIA RTX 4060 / RTX 3070, AMD RX 6700 XT / RX 7700 XT).';
+	@override String get video_shader_tier_low => 'Rendah';
+	@override String get video_shader_tier_low_hint => 'Penajaman bawaan mpv (ewa_lanczossharp). Cocok untuk video apa pun (animasi dan live-action). Tanpa unduhan, beban GPU terendah. Pilih ini di kartu terintegrasi atau lawas (NVIDIA GTX 1050, AMD RX 560, iGPU Intel).';
+	@override String get video_shader_tier_medium => 'Sedang';
+	@override String get video_shader_tier_medium_hint => 'Anime4K Fast. Terbaik untuk animasi, tapi juga cocok untuk film/TV live-action (peningkatan lebih kecil). Berjalan di GPU kelas menengah (NVIDIA GTX 1660 / RTX 3050, AMD RX 6600).';
+	@override String get video_shader_tier_off => 'Tidak ada';
+	@override String get video_shader_tier_off_hint => 'Tanpa peningkatan. Memutar video asli apa adanya.';
+	@override String get video_shader_tier_ultra => 'Ultra';
+	@override String get video_shader_tier_ultra_hint => 'Anime4K Mode A (UL, jaringan ultra besar). Rekonstruksi Anime4K terkuat; juga bisa untuk live-action (peningkatan lebih kecil). Butuh GPU flagship (NVIDIA RTX 4080 / RTX 5090, AMD RX 7900 XTX). Pilih tingkat lebih rendah jika GPU-mu lebih lemah.';
+	@override String get video_shader_url_hint => 'Tempel tautan shader .glsl (mis. GitHub)';
+	@override String get video_shaders_empty => 'Belum ada shader yang diimpor';
+	@override String get video_stat_by_video => 'Per Video';
+	@override String get video_stat_completed => 'Selesai';
+	@override String get video_stat_no_data => 'Belum ada statistik video';
+	@override String get video_statistics => 'Statistik Video';
+	@override String get video_subtitle_attach_playlist_hint => 'Buka playlist untuk melampirkan subtitle per episode';
+	@override String video_subtitle_attached_to_video({required Object title, required Object count}) => 'Subtitle dilampirkan ke ${title} (${count} baris)';
+	@override String get video_subtitle_auto_align => 'Sejajarkan subtitle otomatis';
+	@override String video_subtitle_auto_align_done({required Object ms}) => 'Subtitle disejajarkan otomatis sebesar ${ms} ms';
+	@override String get video_subtitle_auto_align_low_confidence => 'Tidak dapat menyejajarkan otomatis dengan yakin (tidak ada kecocokan suara yang jelas)';
+	@override String get video_subtitle_auto_align_running => 'Menyejajarkan subtitle otomatis…';
+	@override String get video_subtitle_color_note => 'Warna subtitle video diatur di dalam pemutar video.';
+	@override String video_subtitle_delay_osd({required Object ms}) => 'Sinkron subtitle: ${ms} ms';
+	@override String get video_subtitle_filter_all => 'Semua';
+	@override String get video_subtitle_filter_favorites => 'Favorit';
+	@override String get video_subtitle_filter_favorites_empty => 'Belum ada baris yang difavoritkan';
+	@override String get video_subtitle_graphic_hint => 'Subtitle grafis · ditampilkan di video · tanpa pencarian kata';
+	@override String video_subtitle_graphic_shown({required Object label}) => 'Subtitle grafis ditampilkan di video (tanpa pencarian kata): ${label}';
+	@override String get video_subtitle_import_failed => 'Gagal mengimpor subtitle';
+	@override String get video_subtitle_import_file => 'Impor file subtitle…';
+	@override String get video_subtitle_import_unsupported => 'Format subtitle tidak didukung';
+	@override String get video_subtitle_list => 'Daftar subtitle';
+	@override String get video_subtitle_list_auto_scroll => 'Gulir otomatis';
+	@override String get video_subtitle_list_empty => 'Tidak ada subtitle yang dimuat';
+	@override String get video_subtitle_list_font_larger => 'Teks lebih besar';
+	@override String get video_subtitle_list_font_smaller => 'Teks lebih kecil';
+	@override String get video_subtitle_list_jump => 'Lompat ke baris ini';
+	@override String get video_subtitle_list_loading => 'Memuat subtitle...';
+	@override String video_subtitle_load_failed({required Object label}) => 'Tidak bisa memuat subtitle ini (trek grafis atau tidak didukung): ${label}';
+	@override String get video_subtitle_off => 'Matikan subtitle';
+	@override String get video_subtitle_remote_host => 'Subtitle perangkat berpasangan';
+	@override String video_subtitle_switched({required Object label}) => 'Subtitle: ${label}';
+	@override String get video_subtitle_waveform_cue_list => 'Daftar subtitle';
+	@override String get video_subtitle_waveform_jump_playhead => 'Lompat ke playhead';
+	@override String get video_subtitle_waveform_legend_cue => 'Cue subtitle';
+	@override String get video_subtitle_waveform_legend_energy => 'Kekerasan';
+	@override String get video_subtitle_waveform_legend_playhead => 'Playhead';
+	@override String get video_subtitle_waveform_open => 'Penyelarasan waveform';
+	@override String get video_subtitle_waveform_open_hint => 'Ketuk untuk memperbesar dan menyelaraskan';
+	@override String get video_subtitle_waveform_scroll_hint => 'Seret untuk memindai timeline; gunakan kontrol di bawah untuk menyelaraskan';
+	@override String get video_subtitle_waveform_unavailable => 'Waveform tidak tersedia di perangkat ini';
+	@override String get video_subtitle_waveform_zoom_in => 'Perbesar';
+	@override String get video_subtitle_waveform_zoom_out => 'Perkecil';
+	@override String get video_subtitle_youtube_empty => 'Trek teks ini tidak memiliki teks';
+	@override String video_subtitle_youtube_translated({required Object lang}) => '${lang} (diterjemahkan)';
+	@override String video_watched_up_to({required Object time}) => 'Ditonton sampai ${time}';
+	@override String get video_windows_black_flash_notice_body => 'Di Windows, video mungkin berkedip hitam saat GPU sibuk. Untuk mengurangi beban, coba matikan Peningkatan kualitas, Upscaling sigmoid, dan Debanding di atas, atau alihkan Dekoding perangkat keras ke Salin.';
+	@override String get video_windows_black_flash_notice_title => 'Kedipan hitam di Windows?';
+	@override String get view_illustrations => 'Ilustrasi';
+	@override String get volume_button_page_turning => 'Tombol volume untuk ganti halaman';
+	@override String get volume_key_sentence_nav => 'Navigasi kalimat dengan tombol volume';
+	@override String get wheel_page_turn_interval => 'Interval ganti halaman roda mouse';
+	@override String get word_favorite_added => 'Kata disimpan ke favorit';
+	@override String get word_favorite_removed => 'Kata dihapus dari favorit';
+	@override String get yomitan_api_key => 'Yomitan API key (opsional)';
+	@override String get yomitan_api_server => 'Server Yomitan API';
+	@override String get yomitan_api_server_hint => 'Izinkan klien yomitan-api mencari di kamus Fushi (port 19633)';
+	@override String get yomitan_api_server_started => 'Server API Yomitan dimulai';
+	@override String get yomitan_port_kill_action => 'Akhiri proses dan coba lagi';
+	@override String get yomitan_port_kill_confirm => 'Akhiri proses';
+	@override String yomitan_port_kill_confirm_message({required Object process}) => 'Port sedang digunakan oleh: ${process}';
+	@override String yomitan_port_kill_confirm_title({required Object port}) => 'Akhiri proses yang menggunakan port ${port}?';
+	@override String yomitan_port_kill_failed({required Object process}) => 'Tidak bisa mengakhiri ${process}. Silakan akhiri secara manual, lalu coba lagi.';
+	@override String yomitan_port_kill_protected({required Object process}) => '${process} adalah proses sistem penting — Fushi tidak akan mengakhirinya. Ganti port saja.';
+	@override String get yomitan_port_kill_self_instance => 'Proses ini adalah instance lain dari aplikasi ini yang sedang berjalan.';
+	@override String get game_track_bgm => 'BGM / dikecualikan';
+	@override String get game_line_audio_no_voice => 'Tidak ada suara';
+	@override String get game_line_audio_overlong => 'Klip terlalu panjang';
+	@override String get game_line_audio_overlong_hint => 'Jauh lebih panjang dari satu baris; mungkin mengandung BGM atau audio campuran lainnya';
+	@override String get game_line_audio_loopback_hint => 'Fallback campuran sistem; mungkin mengandung BGM';
+	@override String get game_line_recapture => 'Tangkap ulang suara';
+	@override String get game_line_recapture_stop => 'Selesai tangkap ulang';
+	@override String get game_line_tracks => 'Trek untuk baris ini';
+	@override String get game_line_tracks_hint => 'Pratinjau setiap trek pada momen baris ini, lalu kecualikan yang berisi BGM';
+	@override String get game_line_track_use => 'Gunakan untuk baris ini';
+	@override String get game_user_tags_title => 'Tag saya';
+	@override String get anki_lapis_section => 'Gaya kartu Lapis';
+	@override String get anki_lapis_font_scale => 'Skala font kartu';
+	@override String get anki_lapis_font_scale_hint => 'Menskalakan semua ukuran font Lapis; berlaku melalui "Terapkan gaya ke Anki".';
+	@override String get anki_lapis_custom_css => 'CSS kustom';
+	@override String get anki_lapis_custom_css_hint => 'Ditambahkan ke stylesheet Lapis dalam bagian pengguna yang dilindungi.';
+	@override String get anki_lapis_apply => 'Terapkan gaya ke Anki';
+	@override String get anki_lapis_apply_done => 'Gaya Lapis diterapkan. Cadangan telah disimpan terlebih dahulu.';
+	@override String anki_lapis_apply_failed({required Object error}) => 'Tidak bisa menerapkan gaya: ${error}';
+	@override String get anki_lapis_up_to_date => 'Gaya Lapis sudah terbaru.';
+	@override String get anki_lapis_foreign_edit_title => 'Templat diubah di Anki';
+	@override String get anki_lapis_foreign_edit_body => 'Templat Lapis di Anki berbeda dari yang terakhir diterapkan Fushi - mungkin telah diedit secara manual. Menerapkan akan menimpanya; cadangan disimpan terlebih dahulu. Lanjutkan?';
+	@override String get anki_lapis_backup => 'Cadangkan templat Lapis';
+	@override String anki_lapis_backup_done({required Object path}) => 'Templat dicadangkan: ${path}';
+	@override String anki_lapis_backup_failed({required Object error}) => 'Pencadangan gagal: ${error}';
+	@override String get anki_lapis_not_found => 'Tipe catatan Lapis tidak ditemukan di Anki.';
+	@override String get anki_lapis_restore => 'Pulihkan dari cadangan';
+	@override String get anki_lapis_restore_empty => 'Belum ada cadangan.';
+	@override String get anki_lapis_restore_confirm => 'Timpa templat Lapis di Anki dengan cadangan ini? Status saat ini dicadangkan terlebih dahulu.';
+	@override String get anki_lapis_restore_done => 'Templat dipulihkan.';
+	@override String anki_lapis_restore_failed({required Object error}) => 'Pemulihan gagal: ${error}';
+	@override String get anki_dedup_section => 'Optimasi penyimpanan media Anki';
+	@override String get anki_dedup_scan => 'Pindai duplikat (tanpa perubahan)';
+	@override String get anki_dedup_run => 'Deduplikasi sekarang';
+	@override String get anki_dedup_report_title => 'Laporan deduplikasi media';
+	@override String anki_dedup_report_body({required Object groups, required Object removed, required Object size, required Object notes, required Object models, required Object skipped}) => '${groups} kelompok duplikat; ${removed} salinan ekstra (${size}); ${notes} catatan dan ${models} tipe catatan ditulis ulang; ${skipped} dilewati.';
+	@override String get anki_dedup_report_dry_note => 'Pemindaian saja - tidak ada yang diubah.';
+	@override String get anki_dedup_report_clean => 'Tidak ditemukan duplikat yang identik byte-per-byte.';
+	@override String anki_dedup_failed({required Object error}) => 'Deduplikasi gagal: ${error}';
+	@override String get anki_dedup_unavailable => 'Memerlukan Anki yang berjalan di mesin ini (AnkiConnect).';
+	@override String get anki_dedup_run_hint => 'Memindai terlebih dahulu dan menampilkan apa yang akan dihapus; tidak ada yang dihapus sampai Anda mengonfirmasi.';
+	@override String get anki_dedup_plan_title => 'File yang akan dihapus';
+	@override String anki_dedup_plan_intro({required Object count, required Object size}) => '${count} salinan ekstra, ${size} dapat diklaim kembali. Satu salinan tiap file dipertahankan dan setiap referensi diarahkan ulang terlebih dahulu; tidak ada yang pernah di-encode ulang.';
+	@override String anki_dedup_plan_entry({required Object file, required Object size, required Object canonical}) => 'Hapus ${file} (${size}) - pertahankan ${canonical}';
+	@override String get anki_dedup_plan_delete => 'Hapus file-file ini';
+	@override String get anki_dedup_plan_journal => 'Jurnal setiap penulisan ulang dan penghapusan ditulis ke folder cadangan terlebih dahulu.';
+	@override String get manga_ocr_default_engine => 'Mesin OCR default';
+	@override String get manga_ocr_engine_auto => 'Otomatis (tidak pernah mengunggah ke Lens)';
+	@override String get manga_ocr_engine_local_onnx => 'ONNX lokal';
+	@override String get manga_ocr_engine_google_lens => 'Google Lens';
+	@override String get manga_google_lens_disclosure_title => 'Kirim halaman manga ke Google Lens?';
+	@override String get manga_google_lens_disclosure_body => 'Mengenali manga ini akan mengirim salinan JPEG yang diperkecil dari setiap halaman tanpa teks OCR ke Google. Hasil di-cache di perangkat ini. Endpoint tidak resmi dan mungkin berhenti bekerja. Tidak ada yang diunggah kecuali Anda menyetujui.';
+	@override String get manga_google_lens_disclosure_accept => 'Setuju dan mulai OCR';
+	@override String get manga_google_lens_disclosure_decline => 'Batal';
+	@override String get manga_reading_direction => 'Arah baca';
+	@override String get manga_direction_rtl => 'Kanan ke kiri';
+	@override String get manga_direction_ltr => 'Kiri ke kanan';
+	@override String get manga_zoom => 'Perbesar';
+	@override String get manga_jump_to_page => 'Loncat ke halaman';
+	@override String get manga_previous_page => 'Halaman sebelumnya';
+	@override String get manga_next_page => 'Halaman berikutnya';
+	@override String manga_page_number_hint({required Object total}) => 'Nomor halaman (1-${total})';
+	@override String get manga_import_direct => 'Impor tanpa OCR';
+	@override String get manga_library => 'Manga';
+	@override String get manga_import_action => 'Impor Manga';
+	@override String get game_scrape_search => 'Cari';
+	@override String get game_scrape_use => 'Gunakan';
+	@override String get game_scrape_search_failed => 'Pencarian gagal. Periksa jaringan Anda dan coba lagi.';
+	@override String get game_remove_confirm => 'Hapus game ini dari perpustakaan? File game di disk tidak akan dihapus.';
+	@override String manga_ocr_acceleration_status({required Object engine}) => 'Akselerasi OCR: ${engine}';
+	@override String manga_ocr_acceleration_degraded({required Object engine, required Object reason}) => 'Akselerasi GPU tidak tersedia, menjalankan OCR di ${engine}: ${reason}';
+	@override String get media_tracking_status => 'Status koleksi';
+	@override String get media_tracking_signup => 'Buat akun Bangumi';
+	@override String get media_tracking_game => 'Game';
+	@override String get download_rate_limit_lan_exempt => 'Tidak berlaku dalam jaringan lokal Anda; transfer LAN selalu berjalan pada kecepatan penuh.';
+	@override String get scrape_reason_network => 'Tidak bisa mendapatkan respons yang valid dari sumber sampul. Periksa jaringan Anda dan coba lagi.';
+	@override String get scrape_reason_server => 'Sumber sampul mengembalikan error. Coba lagi nanti atau pilih kandidat lain.';
+	@override String get common_more_actions => 'Tindakan lainnya';
+	@override String get collection_already_has_item => 'Item ini sudah ada dalam koleksi.';
+	@override String get drag_drop_manga_archive_unsupported => 'Tidak bisa mengimpor arsip komik .cbr/.rar — kemas ulang sebagai .cbz atau folder berisi gambar.';
+	@override String get collection_add_failed => 'Tidak bisa menambahkan item ke koleksi. Silakan coba lagi.';
+	@override String get anki_dedup_auto => 'Pemrosesan otomatis';
+	@override String get anki_dedup_auto_hint => 'Nonaktif secara default. Saat aktif, Fushi memindai saat startup (paling sering sekali seminggu) dan menampilkan daftar terlebih dahulu — tidak ada yang dihapus sampai Anda mengonfirmasi.';
+	@override String get anki_dedup_auto_delete => 'Hapus otomatis tanpa bertanya';
+	@override String get anki_dedup_auto_delete_hint => 'Melewati dialog konfirmasi. Hanya salinan ekstra yang identik byte-per-byte yang dihapus dan tidak ada yang di-encode ulang, tetapi penghapusan tidak bisa dibatalkan.';
+	@override String anki_dedup_auto_found({required Object count, required Object size}) => 'Ditemukan ${count} file media Anki duplikat (${size} dapat diklaim kembali)';
+	@override String get anki_dedup_auto_review => 'Tinjau';
+	@override String anki_dedup_auto_done({required Object count, required Object size}) => 'Dihapus ${count} file media Anki duplikat, ${size} diklaim kembali';
+	@override String anki_lapis_backup_done_pruned({required Object path, required Object count}) => 'Dicadangkan ke ${path} (${count} cadangan lama dihapus berdasarkan kebijakan 90 hari / simpan 10)';
+	@override String get game_audio_fallback_policy => 'Fallback audio';
+	@override String get game_audio_fallback_full => 'Izinkan audio campuran';
+	@override String get game_audio_fallback_clean => 'Hanya sumber bersih';
+	@override String get game_audio_fallback_resource => 'Hanya sumber daya asli';
+	@override String get game_track_silent_at_cue => 'Tidak ada suara di baris ini';
+	@override String get game_audio_fallback_full_hint => 'Beralih ke campuran sistem ketika tidak ada suara bersih yang ditangkap; klip mungkin mengandung BGM dan efek.';
+	@override String get game_audio_fallback_clean_hint => 'Menggunakan audio sumber daya game dan PCM mesin saja. Baris tanpa suara dibuat kartu tanpa audio alih-alih mengambil BGM.';
+	@override String get game_audio_fallback_resource_hint => 'Memerlukan file suara asli yang disertakan dengan game; pembuatan kartu ditolak ketika file tidak ada.';
+	@override String get game_line_audio_suppressed => 'Campuran dilewati';
+	@override String get game_line_audio_suppressed_hint => 'Tidak ada sumber audio bersih yang menghasilkan audio untuk baris ini, dan campuran sistem dilewati oleh kebijakan fallback audio Anda. Ini tidak berarti baris tersebut tidak memiliki suara.';
+	@override String get video_setting_torrent_limit_lan => 'Terapkan batas ke peer LAN';
+	@override String get video_setting_torrent_limit_lan_hint => 'Nonaktif secara default: transfer dengan peer di jaringan lokal Anda mengabaikan batas di atas.';
+	@override String get download_rate_limit_lan_included => 'Juga berlaku dalam jaringan lokal Anda.';
+	@override String get video_collection_no_local_member => 'Tidak ada video lokal dalam koleksi ini';
+	@override String get gal_mining_image_mode => 'Gambar kartu galgame';
+	@override String get gal_mining_image_mode_screenshot => 'Tangkapan layar';
+	@override String get gal_mining_image_mode_hint => 'Adegan galgame hampir tidak bergerak dalam satu baris, jadi tangkapan layar diam biasanya lebih kecil dan sama bergunanya.';
+	@override String get shortcut_scope_manga => 'Manga';
+	@override String get shortcut_action_manga_page_forward => 'Halaman berikutnya';
+	@override String get shortcut_action_manga_page_backward => 'Halaman sebelumnya';
+	@override String get shortcut_action_manga_dismiss_dict => 'Tutup kamus';
+	@override String get video_setting_jimaku_default_language => 'Bahasa subtitle default';
+	@override String get video_jimaku_api_key_settings_hint => 'Juga dapat diedit di Pengaturan > Video > Subtitle';
+	@override String get anime_download_subs_episodes_unverified => 'Nomor episode belum diverifikasi terhadap paket ini - subtitle mungkin berasal dari musim lain.';
+	@override String get anime_download_subs_deferred => 'Subtitle dicocokkan setelah unduhan, dari file aktual paket';
+	@override String get anime_download_subs_pending => 'Subtitle: menunggu sampai unduhan selesai';
+	@override String get anime_download_subs_unmatched => 'Subtitle: tidak ada kecocokan untuk paket ini';
+	@override String get stat_source_breakdown => 'Berdasarkan sumber';
+	@override String stat_format_pages({required Object n}) => '${n} halaman';
+	@override String anime_download_subs_season_mismatch({required Object season}) => 'Tidak ada entri subtitle yang cocok dengan musim ${season} dari paket ini - tidak dipilih otomatis. Pilih satu secara manual jika tetap ingin.';
+	@override String get media_tracking_card_title => 'Sinkronisasi Bangumi';
+	@override String get media_tracking_not_connected => 'Tidak terhubung. Progres tetap lokal dan tidak ada yang dikirim ke Bangumi.';
+	@override String get media_tracking_last_sync => 'Sinkronisasi terakhir';
+	@override String get media_tracking_never_synced => 'Belum pernah disinkronkan';
+	@override String media_tracking_linked_count({required Object n}) => '${n} ditautkan';
+	@override String media_tracking_pending_count({required Object n}) => '${n} menunggu untuk dikirim';
+	@override String get media_tracking_all_synced => 'Semua sudah terkirim';
+	@override String get media_tracking_unauthorized => 'Bangumi menolak token akses. Hubungkan kembali di pengaturan.';
+	@override String get media_tracking_open_subject => 'Buka di Bangumi';
+	@override String get media_tracking_manage_links => 'Kelola tautan';
+	@override String get media_tracking_last_error => 'Error terakhir';
+	@override String get shortcut_action_popup_mine_entry => 'Buat kartu (tambang)';
+	@override String get game_upscaling_auto_hint => 'Gunakan Magpie jika sudah berjalan; jika tidak, gunakan versi yang dibundel dengan Fushi. Tidak perlu unduhan.';
+	@override String get game_upscaling_installed_only_hint => 'Hanya gunakan Magpie jika sudah diinstal atau berjalan. Jangan membongkar versi bundel Fushi.';
+	@override String get game_upscaling_off_hint => 'Jangan pernah memperbesar jendela game.';
+	@override String get game_helper_bundle_missing => 'Helper hook galgame tidak disertakan dalam build ini. Perbarui Fushi untuk mendapatkannya.';
+	@override String game_upscaling_pick_title({required Object name}) => 'Pembesaran jendela untuk ${name}';
+	@override String get game_upscaling_pick_body => 'Memperbesar jendela game ini dengan Magpie saat sesi tangkap berjalan. Diatur per game - hanya membantu untuk game yang resolusi aslinya lebih rendah dari layar Anda. Menggunakan GPU Anda.';
+	@override String get game_upscaling_hint_not_installed => 'Magpie belum siap. Atur pembesaran jendela ke Otomatis untuk menggunakan salinan yang dibundel dengan Fushi; jika masih tidak dimulai, perbarui atau instal ulang Fushi.';
+	@override String media_source_count_manga({required Object n}) => '${n} volume';
+	@override String get library_view_shelf => 'Rak';
+	@override String get library_view_browse => 'Jelajahi';
+	@override String get library_view_media => 'Perpustakaan';
+	@override String get scrape_failure_detail_show => 'Tampilkan detail';
+	@override String get scrape_failure_detail_hide => 'Sembunyikan detail';
+	@override String get media_tracking_retry_mapping => 'Coba cocokkan ulang';
+	@override String get media_tracking_retry_matched => 'Dicocokkan dan progres saat ini diantrikan';
+	@override String get media_tracking_retry_no_match => 'Tidak ditemukan kecocokan. Coba tautkan secara manual.';
+	@override String get game_statistics => 'Statistik game';
+	@override String get game_stat_by_game => 'Berdasarkan game';
+	@override String get stat_clear_all_game_message => 'Hapus semua waktu bermain game dan jumlah sesi? Perpustakaan game dan garis waktu aktivitas Anda dipertahankan. Ini tidak bisa dibatalkan.';
+	@override String batch_selection_stale_skipped({required Object m, required Object n}) => 'Melewati ${m} dari ${n} item yang dipilih yang sudah tidak ada lagi';
+	@override String get game_text_thread_unset => 'Belum ada thread yang dipilih — pilih satu untuk mulai menangkap';
+	@override String get media_tracking_watched_show => 'Lihat semua anime yang ditonton';
+	@override String get media_tracking_watched_title => 'Ditonton di Bangumi';
+	@override String get media_tracking_watched_empty => 'Tidak ada anime yang ditandai sebagai ditonton di akun Bangumi ini.';
+	@override String media_tracking_watched_load_failed({required Object error}) => 'Tidak bisa memuat anime yang ditonton: ${error}';
+	@override String media_tracking_watched_progress({required Object n}) => 'Menonton ${n} episode';
+	@override String get media_tracking_manual_required => 'Perlu tautan manual';
+	@override String media_tracking_manual_required_count({required Object n}) => '${n} item perlu tautan manual';
+	@override String get media_tracking_manual_required_hint => 'Item lokal ini sudah memiliki progres tetapi belum ditautkan ke Bangumi.';
+	@override String get media_tracking_no_local_history => 'Tidak ada progres tontonan, bacaan, atau game lokal yang perlu ditautkan.';
+	@override String media_tracking_more_manual_required({required Object n}) => '${n} item lagi perlu tautan manual';
+	@override String get manga_import_hint => 'Pilih folder manga, arsip halaman .cbz/.zip, .pdf, atau file .mokuro.';
+	@override String get manga_import_pick_file => 'Pilih file manga';
+	@override String get manga_import_pick_folder => 'Pilih folder manga';
+	@override String get manga_import_missing_input => 'Pilih file atau folder manga terlebih dahulu.';
+	@override String get manga_import_detected_title => 'Ini sepertinya manga';
+	@override String get manga_import_detected_confirm => 'Impor sebagai manga';
+	@override String manga_import_detected_message({required Object name}) => '"${name}" adalah file manga, jadi akan melalui pengimpor manga alih-alih pengimpor buku.';
+	@override String get video_jimaku_source_loading => 'Memeriksa ketersediaan subtitle...';
+	@override String get video_jimaku_source_failed => 'Tidak bisa memeriksa ketersediaan subtitle. Coba cari lagi.';
+	@override String get video_jimaku_language_unknown => 'Bahasa tidak dilabeli';
+	@override String video_jimaku_source_summary({required Object files, required Object episodes, required Object languages}) => '${files} file subtitle · ${episodes} episode · ${languages}';
+	@override String video_jimaku_episode_unlabeled({required Object episode, required Object count}) => 'Tidak ada subtitle berlabel episode ${episode}; ${count} file tanpa label mungkin masih cocok';
+	@override String video_jimaku_episode_unavailable({required Object episode}) => 'Tidak ditemukan subtitle untuk episode ${episode}';
+	@override String video_jimaku_episode_available({required Object count, required Object languages}) => '${count} subtitle tersedia · ${languages}';
+	@override String get manga_online_source_disabled => 'Sumber internet ini dinonaktifkan. Aktifkan di Sumber untuk menjelajahi katalog.';
+	@override String get selection_web_search => 'Cari di web';
+	@override String get selection_web_search_unavailable => 'Tidak ada aplikasi yang dapat mencari di web.';
+	@override String get selection_share_failed => 'Tidak bisa membuka lembar berbagi.';
+	@override String video_subtitle_youtube_auto_generated({required Object lang}) => '${lang} (dibuat otomatis)';
+	@override String get anki_dedup_progress_title => 'Mendeduplikasi media';
+	@override String anki_dedup_progress_scanning({required Object count}) => 'Memindai folder media... (${count} file ditemukan)';
+	@override String anki_dedup_progress_hashing({required Object done, required Object total}) => 'Membandingkan file berukuran sama... (${done} / ${total})';
+	@override String anki_dedup_progress_resolving({required Object done, required Object total}) => 'Memproses duplikat... (${done} / ${total})';
+	@override String anki_dedup_progress_freed({required Object size}) => 'Dibebaskan ${size} sejauh ini';
+	@override String get anki_dedup_cancelling => 'Membatalkan...';
+	@override String get anki_dedup_cancelled => 'Deduplikasi dibatalkan; perubahan yang sudah selesai dipertahankan.';
+	@override String get anki_dedup_report_cancelled_note => 'Dibatalkan lebih awal — angka di bawah hanya mencakup yang sudah selesai.';
+	@override String get anki_dedup_plan_busy_note => 'Anki mungkin tidak responsif saat ini berjalan; hindari menggunakan Anki sampai selesai.';
+	@override String get video_setting_subtitle_position_secondary => 'Posisi subtitle sekunder';
+	@override String get dict_download_learning_language => 'Bahasa yang dipelajari';
+	@override String get dict_category_bilingual => 'Dwibahasa';
+	@override String get dict_category_monolingual => 'Ekabahasa';
+	@override String get shortcut_action_video_hold_speed => 'Tahan untuk kecepatan sementara';
+	@override String get handlebar_phonetic_transcriptions => 'Transkripsi fonetik';
+	@override String get sync_progress_preparing => 'Menyiapkan sinkronisasi';
+	@override String get sync_progress_collections => 'Menyinkronkan koleksi';
+	@override String get sync_progress_book => 'Menyinkronkan buku';
+	@override String sync_progress_book_titled({required Object title}) => 'Menyinkronkan ${title}';
+	@override String sync_last_completed({required Object count}) => 'Sinkronisasi terakhir: selesai (${count} kanal)';
+	@override String get sync_last_no_channels => 'Sinkronisasi terakhir: tidak ada yang disinkronkan - tidak ada kanal sinkronisasi yang terhubung';
+	@override String get sync_last_nothing => 'Sinkronisasi terakhir: tidak ada yang perlu disinkronkan';
+	@override String get sync_last_auto_disabled => 'Sinkronisasi terakhir: dilewati - sinkronisasi otomatis nonaktif';
+	@override String get sync_last_cooled_down => 'Sinkronisasi terakhir: dilewati - baru saja disinkronkan';
+	@override String get sync_last_failed => 'Sinkronisasi terakhir: gagal';
+	@override String anime_download_no_results_detail({required Object query, required Object filters}) => 'Layanan merespons dengan sukses tetapi mengembalikan 0 item. Kueri: ${query}; filter: ${filters}. Coba judul lain atau longgarkan filter.';
+	@override String get anime_download_streaming_ready => 'Di perpustakaan · unduhan berlanjut';
+	@override String get anime_download_unfiltered => 'Tanpa filter Terpercaya';
+	@override String get interconnect_enable_footer => 'Cara penggunaan: di perangkat yang menyimpan perpustakaan Anda, aktifkan sakelar server sinkronisasi di bawah; di perangkat Anda yang lain, tambahkan alamat server tersebut untuk berpasangan. Satu perangkat hanya bisa berperan sebagai satu hal pada satu waktu — server atau klien.';
+	@override String get interconnect_peer_list_title => 'Peer yang ditambahkan';
+	@override String get interconnect_peer_list_empty => 'Belum ada peer yang ditambahkan. Pilih perangkat yang ditemukan dari daftar perangkat LAN di bawah untuk berpasangan secara otomatis, atau tambahkan alamat peer secara manual.';
+	@override String get anki_lapis_visual_editor => 'Editor visual';
+	@override String get anki_lapis_visual_editor_hint => 'Pratinjau kartu Lapis, lalu ubah gaya, posisi, dan pemetaan field setiap area tanpa menulis CSS.';
+	@override String get anki_lapis_visual_front => 'Depan';
+	@override String get anki_lapis_visual_back => 'Belakang';
+	@override String get anki_lapis_visual_preview => 'Pratinjau kartu Lapis';
+	@override String get anki_lapis_visual_select_field => 'Pilih yang akan diedit';
+	@override String get anki_lapis_visual_reset_field => 'Reset field';
+	@override String anki_lapis_visual_font_size({required Object percent}) => 'Ukuran font: ${percent}%';
+	@override String get anki_lapis_visual_bold => 'Tebal';
+	@override String get anki_lapis_visual_alignment => 'Perataan';
+	@override String get anki_lapis_visual_color => 'Warna teks';
+	@override String get anki_lapis_visual_default => 'Default';
+	@override String get anki_lapis_visual_advanced_css => 'CSS lanjutan';
+	@override String get anki_lapis_visual_field_expression => 'Kata';
+	@override String get anki_lapis_visual_field_reading => 'Bacaan';
+	@override String get anki_lapis_visual_field_sentence => 'Kalimat';
+	@override String get anki_lapis_visual_field_primary_definition => 'Definisi utama';
+	@override String get anki_lapis_visual_field_glossaries => 'Definisi lainnya';
+	@override String get anki_lapis_visual_target_card_content => 'Konten kartu';
+	@override String get anki_lapis_visual_target_definition => 'Definisi';
+	@override String get anki_lapis_visual_target_inside_definition => 'Di dalam definisi';
+	@override String get anki_lapis_visual_field_definition_info => 'Indikator definisi';
+	@override String get anki_lapis_visual_field_definition_box => 'Kotak definisi';
+	@override String get anki_lapis_visual_field_definition_content => 'Seluruh definisi';
+	@override String get anki_lapis_visual_field_selected_definition => 'Definisi yang dipilih';
+	@override String get anki_lapis_visual_field_dictionary_entry => 'Entri kamus';
+	@override String get anki_lapis_visual_field_dictionary_name => 'Nama kamus';
+	@override String get anki_lapis_visual_field_definition_example => 'Contoh definisi';
+	@override String get anki_lapis_visual_line_height => 'Tinggi baris';
+	@override String get anki_lapis_visual_background_color => 'Sorotan latar';
+	@override String get anki_lapis_visual_box_layout => 'Tampilan kotak';
+	@override String get anki_lapis_visual_border_width => 'Batas';
+	@override String get anki_lapis_visual_border_color => 'Warna batas';
+	@override String get anki_lapis_visual_corner_radius => 'Radius sudut';
+	@override String get anki_lapis_visual_padding => 'Jarak dalam';
+	@override String get anki_lapis_visual_margin => 'Jarak luar';
+	@override String get anki_lapis_visual_field_definition_info_note => 'Hanya terlihat pada kartu yang memiliki lebih dari satu blok definisi; kartu dengan satu definisi menyembunyikannya.';
+	@override String get anki_lapis_visual_field_dictionary_name_note => 'Pada kartu Fushi, label ini juga membawa tag kelas kata, sehingga keduanya tidak bisa diberi gaya terpisah.';
+	@override String get game_upscaling_error_bundle_missing => 'Instalasi Fushi tidak lengkap: komponen Magpie yang dibundel tidak ada. Instal ulang atau perbarui Fushi.';
+	@override String get game_upscaling_error_bundle_invalid => 'Komponen Magpie yang dibundel rusak atau tidak lolos verifikasi. Instal ulang atau perbarui Fushi.';
+	@override String download_test_connection_failed_reason({required Object message}) => 'Koneksi gagal: ${message}';
+	@override String get delete_disclosure_will_delete_label => 'Akan dihapus';
+	@override String get delete_disclosure_will_keep_label => 'Akan dipertahankan';
+	@override String get delete_disclosure_book_records => 'Progres bacaan, penanda, tag, dan data subtitle';
+	@override String get delete_disclosure_book_extracted => 'File buku yang diekstrak Fushi ke penyimpanan sendiri';
+	@override String get delete_disclosure_book_audiobook => 'Audio dan subtitle yang diselaraskan dari buku audio terlampir, jika ada';
+	@override String get delete_disclosure_source_kept => 'File asli yang Anda impor (buku, subtitle, audio)';
+	@override String get delete_disclosure_stats_kept => 'Statistik bacaan';
+	@override String get delete_disclosure_audiobook_files => 'Audio dan subtitle yang diselaraskan yang disalin Fushi ke penyimpanan sendiri';
+	@override String get delete_disclosure_audiobook_book_kept => 'Buku itu sendiri dan progres bacaannya';
+	@override String get delete_disclosure_audiobook_source_kept => 'File audio asli yang Anda impor';
+	@override String get audiobook_delete => 'Hapus buku audio';
+	@override String get audiobook_delete_confirm => 'Hapus buku audio terlampir? File audionya akan dihapus dari perangkat ini.';
+	@override String get delete_collection_confirm => 'Hanya pengelompokan yang dihapus. Item di dalamnya dipertahankan.';
+	@override String get shortcut_action_video_enter_caret => 'Masuk kursor pencarian subtitle';
+	@override String get audiobook_export_clip_too_long => 'Audio pilihan terlalu panjang untuk diekspor (batas: 5 menit)';
+	@override String get sync_err_forbidden => 'Server menolak permintaan ini. Masuk Anda baik-baik saja - periksa pengaturan server.';
+	@override String sync_err_forbidden_detail({required Object reason}) => 'Server menolak permintaan ini: ${reason} (masuk Anda baik-baik saja)';
+	@override String get collection_group_extras => 'Ekstra & PV';
+	@override String collection_group_season({required Object n}) => 'Musim ${n}';
+	@override String get collection_sort_by_season => 'Urutkan berdasarkan musim';
+	@override String get mining_animated_format_avif => 'AVIF (terkecil)';
+	@override String get mining_animated_format_webp => 'WebP (dukungan lebih luas)';
+	@override String get mining_animated_format_gif => 'GIF (paling kompatibel)';
+	@override String get video_mining_animated_format => 'Format animasi kartu video';
+	@override String get video_mining_animated_format_hint => 'AVIF jauh lebih kecil dari GIF pada kualitas yang sama, dan tier kualitas tertingginya memungkinkan resolusi dan frame rate lebih tinggi dari GIF atau WebP. Beralih ke GIF secara otomatis ketika encoder bawaan tidak bisa membuatnya.';
+	@override String get gal_mining_animated_format => 'Format animasi kartu game';
+	@override String get gal_mining_animated_format_hint => 'Format yang sama seperti kartu video, disimpan terpisah: frame galgame hampir tidak bergerak dalam satu baris, jadi pertimbangannya berbeda.';
+	@override String get scrape_all => 'Scrape semua';
+	@override String scrape_all_title({required Object kind}) => 'Scrape semua ${kind}';
+	@override String scrape_all_running({required Object current, required Object total}) => 'Scraping ${current} / ${total}';
+	@override String scrape_all_item({required Object title}) => 'Memproses: ${title}';
+	@override String scrape_all_done({required Object applied, required Object review, required Object skipped, required Object failed}) => 'Selesai: ${applied} diterapkan, ${review} perlu ditinjau, ${skipped} dilewati, ${failed} gagal';
+	@override String get scrape_all_empty => 'Tidak ada item untuk di-scrape di perpustakaan ini.';
+	@override String get scrape_all_start => 'Mulai';
+	@override String collection_hero_total_episodes({required Object count}) => '${count} episode';
+	@override String get video_scrape_collection_rename_title => 'Ganti nama koleksi ini?';
+	@override String get video_scrape_collection_rename_body => 'Entri yang dicocokkan memiliki nama berbeda. Mengganti nama bersifat opsional: sampul dan detail tetap disimpan, dan penggantian nama juga mengganti nama lama di perangkat tersinkronisasi Anda yang lain.';
+	@override String video_scrape_collection_rename_from({required Object name}) => 'Nama saat ini: ${name}';
+	@override String video_scrape_collection_rename_to({required Object name}) => 'Nama baru: ${name}';
+	@override String get video_scrape_collection_rename_keep => 'Pertahankan nama saat ini';
+	@override String get download_task_toggle_failed => 'Jeda/lanjutkan gagal';
+	@override String get download_task_eta => 'Perkiraan waktu';
+	@override String get download_task_ratio => 'Rasio';
+	@override String get download_task_status_downloading => 'Mengunduh';
+	@override String get download_task_status_seeding => 'Seeding';
+	@override String get download_task_status_completed => 'Selesai';
+	@override String get download_task_status_paused => 'Dijeda';
+	@override String get download_task_status_queued => 'Diantrikan';
+	@override String get download_task_status_stalled => 'Terhenti';
+	@override String get download_task_status_checking => 'Memeriksa';
+	@override String get download_task_status_metadata => 'Mengambil metadata';
+	@override String get download_task_status_moving => 'Memindahkan';
+	@override String get download_task_status_error => 'Error';
+	@override String get download_task_pause => 'Jeda';
+	@override String get download_task_resume => 'Lanjutkan';
+	@override String get download_airing_calendar_title => 'Kalender tayang';
+	@override String get download_airing_calendar_show_all => 'Tampilkan semua musim ini';
+	@override String get download_airing_calendar_empty_guidance => 'Belum ada yang ditampilkan: tautkan koleksi ke AniList atau tambahkan langganan unduhan, dan jadwal tayangnya akan muncul di sini.';
+	@override String get download_airing_calendar_error => 'Gagal memuat jadwal tayang';
+	@override String get download_airing_calendar_in_library => 'Di perpustakaan';
+	@override String get download_airing_calendar_subscribed => 'Berlangganan';
+	@override String download_airing_calendar_episode_label({required Object episode}) => 'Ep ${episode}';
+	@override String get download_airing_calendar_week_prev => 'Minggu sebelumnya';
+	@override String get download_airing_calendar_week_next => 'Minggu berikutnya';
+	@override String get download_airing_calendar_week_empty => 'Tidak ada yang tayang minggu ini';
+	@override String get video_jimaku_format => 'Format';
+	@override String get video_jimaku_format_all => 'Semua';
+	@override String get video_setting_tmdb_key => 'Kunci API TMDB kustom';
+	@override String get video_setting_tmdb_key_hint => 'Opsional. Biarkan kosong untuk menggunakan kunci bawaan. Isi dengan kunci Anda sendiri hanya jika scraping berhenti bekerja atau Anda ingin menggunakan kuota sendiri.';
+	@override String get about_tmdb_attribution => 'Aplikasi ini menggunakan TMDB dan API TMDB tetapi tidak didukung, disertifikasi, atau disetujui oleh TMDB.';
+	@override String get anki_lapis_visual_layout => 'Tata letak';
+	@override String get anki_lapis_visual_layout_hint => 'Menggunakan sakelar tata letak milik Lapis, sehingga Anki desktop dan mobile mengikutinya.';
+	@override String get anki_lapis_visual_layout_sentence => 'Posisi kalimat';
+	@override String get anki_lapis_visual_layout_sentence_above => 'Di atas definisi';
+	@override String get anki_lapis_visual_layout_sentence_below => 'Di bawah definisi';
+	@override String get anki_lapis_visual_layout_picture => 'Posisi gambar';
+	@override String get anki_lapis_visual_layout_picture_right => 'Di kanan kata';
+	@override String get anki_lapis_visual_layout_picture_left => 'Di kiri kata';
+	@override String get anki_lapis_visual_layout_picture_alt => 'Di dalam kalimat';
+	@override String get anki_lapis_visual_layout_audio => 'Tombol audio';
+	@override String get anki_lapis_visual_layout_audio_header => 'Di samping bacaan';
+	@override String get anki_lapis_visual_layout_audio_fixed => 'Disematkan di bawah';
+	@override String get anki_lapis_visual_layout_audio_alt => 'Di dalam kalimat';
+	@override String get anki_lapis_visual_mapping_hint => 'Field Anki yang mengisi area yang dipilih. Perubahan disimpan bersama gayanya.';
+	@override String get anki_lapis_visual_mapping_none => 'Area ini digambar oleh templat sendiri dan tidak memiliki field.';
+	@override String get anki_lapis_visual_color_custom => 'Kustom';
+	@override String get anki_lapis_visual_color_picker_title => 'Pilih warna';
+	@override String get video_scrape_tmdb_key_hint => 'Masukkan kunci API TMDB';
+	@override String get video_scrape_tmdb_key_required => 'TMDB memerlukan kunci API';
+	@override String get video_scrape_tmdb_key_save => 'Simpan';
+	@override String get video_scrape_tmdb_key_empty => 'Simpan kunci API TMDB, lalu tekan Cari. Hasil dari sumber lain tidak ditampilkan di sini.';
+	@override String get download_detail_tab_overview => 'Ikhtisar';
+	@override String get download_detail_tab_files => 'File';
+	@override String get download_detail_tab_peers => 'Peer';
+	@override String get download_detail_tab_trackers => 'Tracker';
+	@override String get download_detail_backend_unsupported => 'Tidak didukung oleh backend unduhan saat ini';
+	@override String get download_detail_task_gone => 'Tugas tidak ditemukan di backend';
+	@override String get download_detail_task_missing => 'Backend unduhan asli online, tetapi torrent ini sudah tidak ada lagi. Peer langsung dan tracker tidak bisa dipulihkan; informasi tugas yang tersimpan ditampilkan.';
+	@override String get download_detail_section_transfer => 'Transfer';
+	@override String get download_detail_section_network => 'Jaringan';
+	@override String get download_detail_section_task => 'Tugas';
+	@override String get download_detail_seeds_label => 'Seed';
+	@override String get download_detail_leechers_label => 'Leecher';
+	@override String get download_detail_connections_label => 'Koneksi';
+	@override String get download_detail_content_path_label => 'Path konten';
+	@override String get download_detail_time_active => 'Waktu aktif';
+	@override String get download_detail_time_seeding => 'Waktu seeding';
+	@override String get download_detail_total_size_label => 'Ukuran total';
+	@override String get download_detail_listen_port => 'Port pendengar';
+	@override String get download_detail_dht_nodes => 'Node DHT';
+	@override String get download_detail_hash_label => 'Info hash';
+	@override String get download_detail_port_mapping => 'Pemetaan port';
+	@override String get download_detail_session_rates => 'Kecepatan sesi';
+	@override String get download_detail_pieces_label => 'Potongan';
+	@override String get download_detail_priority_skip => 'Jangan unduh';
+	@override String get download_detail_raw_state_label => 'Status backend';
+	@override String get download_detail_remaining_label => 'Sisa';
+	@override String get download_detail_save_path_label => 'Path simpan';
+	@override String get download_detail_priority_normal => 'Normal';
+	@override String get download_detail_priority_high => 'Tinggi';
+	@override String get download_detail_tracker_working => 'Berfungsi';
+	@override String get download_detail_tracker_updating => 'Memperbarui';
+	@override String get download_detail_tracker_not_contacted => 'Belum dihubungi';
+	@override String get download_detail_tracker_not_working => 'Tidak berfungsi';
+	@override String get download_detail_tracker_disabled => 'Dinonaktifkan';
+	@override String get download_detail_no_peers => 'Tidak ada peer yang terhubung';
+	@override String get download_detail_no_trackers => 'Tidak ada tracker';
+	@override String get video_filter_year => 'Tahun';
+	@override String get video_filter_year_unknown => 'Tahun tidak diketahui';
+	@override String get video_filter_watch_status => 'Status tontonan';
+	@override String get video_filter_watch_status_unwatched => 'Belum ditonton';
+	@override String get video_filter_watch_status_watching => 'Sedang ditonton';
+	@override String get video_filter_watch_status_completed => 'Selesai';
+	@override String get video_hero_detail_view => 'Detail';
+	@override String video_hero_episodes_watched({required Object n}) => '${n} ep ditonton';
+	@override String get video_recently_added_badge => 'BARU';
+	@override String get video_air_season_winter => 'Musim dingin';
+	@override String get video_air_season_spring => 'Musim semi';
+	@override String get video_air_season_summer => 'Musim panas';
+	@override String get video_air_season_autumn => 'Musim gugur';
+	@override String get delete_scope_no_channel => 'Tidak ada sinkronisasi yang dikonfigurasi - penghapusan ini hanya memengaruhi perangkat ini';
+	@override String get mihon_sources_title => 'Sumber manga';
+	@override String get mihon_extensions_title => 'Ekstensi manga';
+	@override String get mihon_store_add => 'Tambah toko ekstensi';
+	@override String get mihon_store_url => 'URL toko ekstensi';
+	@override String get mihon_store_empty => 'Belum ada toko ekstensi. Tambahkan toko Mihon yang kompatibel atau impor APK lokal.';
+	@override String get mihon_extension_import => 'Impor APK lokal';
+	@override String get mihon_extension_warning => 'Ekstensi pihak ketiga menjalankan kode dengan izin Fushi. Hanya instal ekstensi dan penanda tangan yang Anda percayai.';
+	@override String get mihon_extension_install => 'Instal';
+	@override String get mihon_extension_update => 'Perbarui';
+	@override String get mihon_extension_uninstall => 'Hapus instalasi';
+	@override String get mihon_extension_installed => 'Terinstal';
+	@override String get mihon_extension_disabled => 'Dinonaktifkan';
+	@override String get mihon_source_empty => 'Tidak ada sumber manga yang aktif. Instal dan aktifkan ekstensi terlebih dahulu.';
+	@override String get mihon_source_popular => 'Populer';
+	@override String get mihon_source_latest => 'Terbaru';
+	@override String get mihon_source_search => 'Cari manga';
+	@override String get mihon_source_preferences => 'Preferensi sumber';
+	@override String get mihon_source_clear_data => 'Hapus data sumber';
+	@override String get mihon_source_clear_data_hint => 'Menghapus preferensi dan cookie sumber ini. Ekstensi yang terinstal dipertahankan.';
+	@override String get mihon_signer_trust_title => 'Percayai penanda tangan ekstensi?';
+	@override String get mihon_signer_fingerprint => 'SHA-256 penanda tangan';
+	@override String get mihon_runtime_unavailable => 'Ekstensi Mihon tidak tersedia di platform ini.';
+	@override String get mihon_extension_incompatible => 'Ekstensi tidak kompatibel';
+	@override String get mihon_store_refresh => 'Segarkan toko';
+	@override String get mihon_source_browse_mokuro => 'Katalog Mokuro bawaan';
+	@override String get mihon_source_no_results => 'Manga tidak ditemukan.';
+	@override String get mihon_chapters_title => 'Chapter';
+	@override String get mihon_extension_language_filter => 'Bahasa';
+	@override String get mihon_extension_language_all => 'Semua bahasa';
+	@override String get mihon_filter_ignore => 'Abaikan';
+	@override String get mihon_filter_include => 'Sertakan';
+	@override String get mihon_filter_exclude => 'Kecualikan';
+	@override String get mihon_filter_ascending => 'Naik';
+	@override String get mihon_filter_descending => 'Turun';
+	@override String get mihon_add_to_bookshelf => 'Tambah ke rak manga';
+	@override String get mihon_in_bookshelf => 'Di rak manga';
+	@override String scrape_all_confirm({required Object n}) => 'Cocokkan semua ${n} item perpustakaan berdasarkan judul. Hanya kecocokan kepercayaan tinggi yang diterapkan secara otomatis — video dinilai dari judul bersama tahun, tipe, dan sinyal lainnya, sementara buku dan game memerlukan kecocokan judul persis yang unik. Sampul yang Anda pilih sendiri tidak pernah ditimpa (gambar lokal yang Anda atur, entri yang Anda pilih di dialog pencocokan, dan file poster yang ditempatkan di folder), dan hasil yang ambigu tetap menunggu untuk ditinjau manual.';
+	@override String get collection_related_title => 'Karya terkait';
+	@override String get collection_relation_prequel => 'Prekuel';
+	@override String get collection_relation_sequel => 'Sekuel';
+	@override String get collection_relation_side_story => 'Cerita sampingan';
+	@override String get collection_relation_movie => 'Film';
+	@override String get collection_relation_spin_off => 'Spin-off';
+	@override String get collection_relation_other => 'Terkait';
+	@override String get collection_relation_download => 'Unduh';
+	@override String get collection_relation_bind => 'Tautkan ke koleksi yang ada';
+	@override String get collection_episode_rename => 'Ganti nama episode dari scrape';
+	@override String get collection_episode_rename_title => 'Ganti nama episode';
+	@override String get collection_episode_rename_empty => 'Tidak ada yang perlu diganti nama';
+	@override String get collection_episode_download => 'Unduh episode ini';
+	@override String get collection_episode_fill_missing => 'Isi episode yang kurang';
+	@override String get collection_episode_no_missing => 'Tidak ada episode yang kurang';
+	@override String get collection_split_by_season => 'Pisah berdasarkan musim';
+	@override String get collection_split_keep_original => 'Pertahankan koleksi asli';
+	@override String get collection_split_confirm => 'Pisah';
+	@override String collection_relation_bound({required Object name}) => 'Ditautkan ke ${name}';
+	@override String collection_episode_rename_apply({required Object n}) => 'Ganti nama ${n} episode';
+	@override String collection_split_done({required Object n}) => 'Dipisah menjadi ${n} koleksi';
+	@override String collection_episode_watched_at({required Object position}) => 'Ditonton sampai ${position}';
+	@override String collection_episode_rename_partial({required Object n, required Object m}) => '${n} episode diganti nama, ${m} gagal';
+	@override String get sync_err_browser_timeout => 'Browser tidak pernah mengembalikan otorisasi. Coba lagi, dan pastikan proxy Anda mengizinkan 127.0.0.1.';
+	@override String get manga_rescan_running => 'Mengenali kotak yang dipilih...';
+	@override String get manga_rescan_empty => 'Tidak ada teks yang dikenali di kotak ini.';
+	@override String get stat_hourly_band_epub => 'Buku teks';
+	@override String get stat_hourly_band_pdf => 'PDF';
+	@override String get stat_hourly_band_manga => 'Manga';
+	@override String get stat_hourly_band_unattributed => 'Riwayat tidak terpisah';
+	@override String get stat_hourly_unattributed_note => 'Jam yang dicatat sebelum pelacakan per-format ada tidak memiliki tipe yang tersimpan, sehingga tidak bisa dipisah. Ditampilkan sebagai total gabungan dan tidak diatribusikan ke tipe apa pun.';
+	@override String get book_convert_to_manga_action => 'Konversi ke manga';
+	@override String get book_convert_to_book_action => 'Konversi kembali ke buku';
+	@override String get book_convert_running => 'Mengkonversi...';
+	@override String get book_convert_done => 'Konversi selesai';
+	@override String get book_convert_failed => 'Konversi gagal';
+	@override String get book_convert_blocked_already => 'Buku ini sudah dalam format tersebut.';
+	@override String get book_convert_blocked_text_only => 'Ini adalah buku teks tanpa gambar halaman. Hanya buku gambar yang dipindai yang bisa menjadi manga.';
+	@override String get book_convert_blocked_no_original => 'Manga ini diimpor dari gambar, jadi tidak ada buku asli untuk dikonversi kembali.';
+	@override String get book_convert_blocked_source_missing => 'File sumber sudah tidak ada di disk.';
+	@override String manga_online_retry_waiting({required Object attempt, required Object total}) => 'Mencoba ulang secara otomatis (${attempt}/${total})';
+	@override String get manga_ocr_wizard_already_ocred => 'Volume ini sudah memiliki data OCR di setiap halaman. Menjalankan OCR lagi akan menimpanya.';
+	@override String get shortcut_scope_universal => 'Kembali / Keluar';
+	@override String get game_attach_and_capture => 'Lampirkan dan tangkap';
+	@override String get remote_delete_failed => 'Tidak bisa menghapus di perangkat pasangan';
+	@override String get remote_delete_unsupported => 'Perangkat pasangan terlalu lama untuk mendukung penghapusan jarak jauh. Perbarui Fushi di sana terlebih dahulu.';
+	@override String get anki_lapis_visual_blocks => 'Area kustom';
+	@override String get anki_lapis_visual_blocks_hint => 'Tampilkan field yang ada di tempat lain pada kartu. Hanya tampilan: tidak ada field Anki yang ditambah atau dihapus.';
+	@override String get anki_lapis_visual_block_add => 'Tambah area';
+	@override String get anki_lapis_visual_block_delete => 'Hapus area';
+	@override String anki_lapis_visual_block_name({required Object index}) => 'Area ${index}';
+	@override String get anki_lapis_visual_block_anchor => 'Posisi di kartu';
+	@override String get anki_lapis_visual_block_anchor_top => 'Atas kartu';
+	@override String get anki_lapis_visual_block_anchor_above_sentence => 'Di bawah kata';
+	@override String get anki_lapis_visual_block_anchor_above_definition => 'Di bawah kalimat';
+	@override String get anki_lapis_visual_block_anchor_below_definition => 'Di bawah definisi';
+	@override String get anki_lapis_visual_block_anchor_bottom => 'Bawah kartu';
+	@override String get anki_lapis_visual_block_fields => 'Field yang ditampilkan di sini';
+	@override String get anki_lapis_visual_block_no_fields => 'Belum ada field yang dipilih';
+	@override String get anki_lapis_visual_block_needs_note_type => 'Pilih tipe catatan terlebih dahulu untuk memilih field.';
+	@override String get anki_lapis_restore_factory => 'Pulihkan Lapis bawaan pabrik';
+	@override String get anki_lapis_restore_factory_hint => 'Timpa tipe catatan Lapis di Anki dengan versi yang dibundel di Fushi dan hapus semua kustomisasi di sini.';
+	@override String get anki_lapis_restore_factory_confirm => 'Ini akan menimpa gaya dan templat kartu Lapis di Anki dengan versi bawaan Fushi, serta mereset ukuran font, CSS kustom, dan area kustom. Cadangan status saat ini disimpan terlebih dahulu. Data kartu tidak tersentuh.';
+	@override String get anki_lapis_restore_factory_done => 'Lapis dipulihkan ke default pabrik';
+	@override String anki_lapis_restore_factory_failed({required Object error}) => 'Pemulihan gagal: ${error}';
+	@override String get anki_lapis_visual_select_field_hint => 'Klik bagian mana pun dari pratinjau, atau pilih satu di bawah. Yang Anda pilih adalah yang akan diedit oleh kontrol di bawahnya.';
+	@override String get anki_lapis_visual_editing_now => 'Mengedit';
+	@override String get mihon_extension_preview => 'Pratinjau';
+	@override String get mihon_extension_preview_warning => 'Pratinjau menjalankan kode ekstensi ini sebelum diinstal. Tidak ada yang ditambahkan ke perpustakaan Anda sampai Anda memilih untuk menginstal.';
+	@override String get mihon_extension_preview_discard => 'Buang';
+	@override String get mihon_extension_preview_source_select => 'Pilih sumber untuk dipratinjau';
+	@override String get mihon_extension_sources_included => 'Sumber yang disertakan';
+	@override String get mihon_extension_preview_read_only => 'Pratinjau hanya baca. Instal ekstensi untuk membuka dan membaca.';
+	@override String get selection_copy_empty => 'Tidak ada teks yang dipilih.';
+	@override String get video_library_empty_source_hint => 'Tambahkan folder video dari Sumber untuk membangun perpustakaan Anda';
+	@override String get video_source_scrape_action => 'Scrape sumber ini';
+	@override String get video_source_scrape_settings => 'Pengaturan scrape sumber';
+	@override String get video_source_scrape_auto_after_scan => 'Scrape setelah pemindaian';
+	@override String get video_source_scrape_auto_after_scan_hint => 'Jalankan scraping metadata secara otomatis setelah sumber ini dipindai';
+	@override String get video_source_scrape_write_nfo => 'Tulis file NFO';
+	@override String get video_source_scrape_write_images => 'Tulis file gambar';
+	@override String video_source_scrape_progress({required Object phase, required Object current, required Object total}) => '${phase} · ${current}/${total}';
+	@override String video_source_scrape_last_summary({required Object status, required Object succeeded, required Object pending, required Object failed}) => 'Scrape terakhir (${status}): ${succeeded} berhasil, ${pending} menunggu, ${failed} gagal';
+	@override String get video_source_scrape_phase_planning => 'Merencanakan';
+	@override String get video_source_scrape_phase_recognizing => 'Mencocokkan';
+	@override String get video_source_scrape_phase_fetching => 'Mengambil metadata';
+	@override String get video_source_scrape_phase_applying => 'Menyimpan metadata';
+	@override String get video_source_scrape_phase_writing_sidecars => 'Menulis sidecar';
+	@override String get video_source_scrape_status_interrupted => 'Terinterupsi';
+	@override String get video_source_scrape_locale => 'Bahasa metadata';
+	@override String get video_source_scrape_locale_hint => 'Bahasa yang diutamakan untuk judul, ringkasan, dan gambar';
+	@override String get video_source_scrape_confirmation_title => 'Konfirmasi kecocokan metadata';
+	@override String get video_source_scrape_confirmation_hint => 'Ditemukan beberapa kecocokan persis. Pilih karya yang benar untuk menyimpan pengikatan penyedianya.';
+	@override String get video_source_scrape_confirmation_skip => 'Lewati karya ini';
+	@override String get video_source_scrape_nfo_policy => 'Kebijakan penulisan NFO';
+	@override String get video_source_scrape_image_policy => 'Kebijakan penulisan gambar';
+	@override String get video_source_scrape_policy_skip => 'Jangan tulis';
+	@override String get video_source_scrape_policy_missing_only => 'Hanya ketika tidak ada';
+	@override String get video_source_scrape_policy_overwrite => 'Perbarui file Fushi';
+	@override String get video_source_scrape_external_overwrite => 'Izinkan penimpaan sidecar yang dilindungi';
+	@override String get video_source_scrape_external_overwrite_hint => 'File pihak ketiga atau yang dimodifikasi pengguna tetap dilindungi sampai Anda mengonfirmasi setiap batch scrape manual lagi.';
+	@override String get video_source_scrape_external_overwrite_confirm_title => 'Timpa sidecar yang dilindungi?';
+	@override String get video_source_scrape_external_overwrite_confirm_body => 'Batch ini mungkin mengganti NFO/gambar pihak ketiga atau file Fushi yang Anda edit. File media tidak diubah. Lanjutkan?';
+	@override String get video_source_scrape_tasks_open => 'Tugas latar belakang';
+	@override String get video_source_scrape_background_started => 'Scraping berjalan di latar belakang';
+	@override String get video_source_scrape_tasks_current => 'Tugas saat ini';
+	@override String get video_source_scrape_tasks_history => 'Tugas terbaru';
+	@override String get video_source_scrape_tasks_empty => 'Belum ada tugas scrape';
+	@override String get video_source_scrape_waiting_confirmation => 'Menunggu konfirmasi Anda';
+	@override String get video_source_scrape_phase_scanning => 'Memindai sumber';
+	@override String get video_library_all_videos => 'Semua video';
+	@override String get video_work_voice_roles => 'Pengisi suara dan karakter';
+	@override String get video_work_cast_crew => 'Pemeran dan kru';
+	@override String get video_work_trailers => 'Trailer';
+	@override String get video_work_extras => 'Ekstra';
+	@override String get video_work_details => 'Detail';
+	@override String get video_work_external_ids => 'ID eksternal';
+	@override String get video_work_metadata_pending => 'Metadata detail belum di-scrape. Coba ulang sumber ini dari Sumber, lalu buka kembali karyanya.';
+	@override String get video_work_genres => 'Genre';
+	@override String get video_work_keywords => 'Kata kunci';
+	@override String get video_work_studios => 'Studio';
+	@override String get video_work_countries => 'Negara';
+	@override String get video_work_content_rating => 'Rating konten';
+	@override String get video_all_videos_list_view => 'Tampilan daftar';
+	@override String get video_all_videos_grid_view => 'Tampilan kotak';
+	@override String video_home_continue_episode_number({required Object n}) => 'Memutar episode ${n}';
+	@override String video_home_next_episode_number({required Object n}) => 'Berikutnya · Episode ${n}';
+	@override String video_home_recent_episode_number({required Object n}) => 'Baru ditambahkan · Episode ${n}';
+	@override String video_home_remaining_minutes({required Object minutes}) => '${minutes} menit tersisa';
+	@override String get video_subtitle_replay => 'Putar ulang baris ini';
+	@override String get manga_ocr_done => 'OCR selesai';
+	@override String get settings_destination_manga_summary => 'Pembaca, OCR, dan katalog online';
+	@override String get manga_page_animation => 'Animasi pergantian halaman';
+	@override String get manga_page_animation_none => 'Tidak ada';
+	@override String get manga_page_animation_slide => 'Geser';
+	@override String get manga_page_animation_fade => 'Pudar';
+	@override String get manga_default_zoom => 'Zoom default';
+	@override String get manga_zoom_sensitivity => 'Sensitivitas zoom';
+	@override String get manga_volume_key_paging => 'Tombol volume untuk ganti halaman';
+	@override String get manga_volume_key_paging_subtitle => 'Gunakan tombol volume naik dan turun untuk mengganti halaman di pembaca manga';
+	@override String get manga_tap_zone_paging => 'Ketuk tepi untuk ganti halaman';
+	@override String get manga_tap_zone_paging_subtitle => 'Ketuk tepi kiri atau kanan halaman untuk mengganti';
+	@override String get manga_section_viewing => 'Tampilan dan pergantian halaman';
+	@override String get game_capture_setup_title => 'Selesaikan pengaturan tangkapan';
+	@override String get game_capture_setup_hint => 'Pilih thread dialog terlebih dahulu. Fushi hanya bisa memasangkan audio dengan baris dari thread yang dipilih.';
+	@override String get game_audio_requires_thread => 'Sumber tangkapan audio mungkin sudah siap, tetapi audio kalimat tidak akan ada sampai thread dipilih dan baris diterima.';
+	@override String get game_session_waiting_thread => 'Menunggu thread dialog';
+	@override String get anki_connect_use_on_mobile => 'Use AnkiConnect on Android';
+	@override String get anki_connect_use_on_mobile_hint => 'Gunakan hanya di jaringan terpercaya. AnkiConnect menggunakan HTTP tanpa enkripsi; konfigurasikan kunci API yang cocok, lalu segarkan dek dan tipe catatan setelah beralih.';
+	@override String get anki_connect_api_key_hint => 'Diperlukan untuk AnkiConnect jarak jauh; harus cocok dengan kunci yang dikonfigurasi di add-on';
+	@override String get anki_connect_mobile_api_key_required => 'Configure a matching AnkiConnect API key before enabling the Android backend.';
+	@override String anki_connect_backend_switch_failed({required Object error}) => 'Tidak bisa beralih backend Anki: ${error}';
+	@override String get migration_settings_entry => 'Migrasi ke Fushi';
+	@override String get migration_settings_entry_subtitle => 'Pindahkan semua data ke aplikasi Fushi yang baru';
+	@override String get migration_intro => 'Fushi adalah nama baru aplikasi ini. Migrasi mengekspor semua data Anda secara batch ke folder transfer, lalu Fushi mengimpor dan memverifikasinya. Data Anda di sini tetap tidak tersentuh sampai Anda menghapus aplikasi ini.';
+	@override String get migration_target_missing => 'Fushi belum diinstal. Instal Fushi terlebih dahulu, lalu kembali ke sini.';
+	@override String get migration_download_fushi => 'Dapatkan Fushi';
+	@override String get migration_start => 'Mulai migrasi';
+	@override String get migration_open_fushi => 'Buka Fushi';
+	@override String get migration_include_local_audio => 'Juga ekspor audio pengucapan lokal (bisa berukuran besar)';
+	@override String migration_batch_running({required Object batch}) => 'Mengekspor ${batch}...';
+	@override String migration_batch_done({required Object batch}) => '${batch} diekspor';
+	@override String get migration_export_done => 'Ekspor selesai. Buka Fushi untuk mengimpor dan memverifikasi.';
+	@override String migration_export_failed({required Object error}) => 'Ekspor gagal: ${error}';
+	@override String get migration_readonly_note => 'Data Anda telah diekspor ke Fushi. Aplikasi ini sekarang hanya baca: gunakan Fushi untuk membaca dan membuat kartu. Anda bisa mengekspor ulang kapan saja jika Fushi melaporkan data yang hilang.';
+	@override String get migration_reexport => 'Ekspor ulang';
+	@override String get migration_batch_core_label => 'Pengaturan, progres & statistik';
+	@override String get migration_import_entry => 'Impor dari Hibiki';
+	@override String get migration_import_entry_subtitle => 'Impor data yang diekspor oleh aplikasi Hibiki lama';
+	@override String get migration_import_detected => 'Data migrasi Hibiki terdeteksi. Impor sekarang?';
+	@override String get migration_import_start => 'Mulai impor';
+	@override String migration_import_running({required Object batch}) => 'Mengimpor ${batch}...';
+	@override String migration_import_verify_failed({required Object batch, required Object detail}) => '${batch} gagal verifikasi dan disimpan untuk ekspor ulang: ${detail}';
+	@override String migration_import_counts_failed({required Object detail}) => 'Data yang diimpor tidak lengkap: ${detail}. Ekspor ulang bagian yang hilang dari Hibiki, lalu impor lagi.';
+	@override String get migration_import_success => 'Impor selesai dan terverifikasi.';
+	@override String get migration_import_nothing => 'Tidak ditemukan data migrasi di folder transfer.';
+	@override String get migration_uninstall_prompt => 'Migrasi selesai. Hapus instalasi aplikasi Hibiki lama?';
+	@override String get migration_uninstall_button => 'Hapus instalasi Hibiki';
+	@override String get migration_uninstall_still_installed => 'Hibiki masih terinstal. Anda bisa menghapus instalasinya kapan saja.';
+	@override String get migration_import_permission_title => 'Izin penyimpanan diperlukan';
+	@override String get migration_import_permission_body => 'Folder transfer dibuat oleh aplikasi lama. Tanpa "Akses semua file", Fushi tidak bisa membacanya — data tetap utuh, hanya tidak bisa dibuka.';
+	@override String get migration_import_permission_grant => 'Berikan izin';
+	@override String migration_import_verifying({required Object batch, required Object done, required Object total}) => 'Memverifikasi ${batch} (${done}/${total})';
+	@override String get migration_import_verifying_hint => 'Menghitung checksum arsip. Perpustakaan besar bisa memakan waktu beberapa menit.';
+	@override String get game_line_copy_tooltip => 'Salin kalimat';
+	@override String get game_japanese_locale_auto => 'Otomatis';
+	@override String get game_japanese_locale_on => 'Selalu aktif';
+	@override String get game_japanese_locale_off => 'Nonaktif';
+	@override String get game_japanese_locale => 'Locale Jepang';
+	@override String get game_japanese_locale_hint => 'Build dengan patch Cina/Inggris harus menonaktifkan ini, atau game akan crash saat diluncurkan';
+	@override String get video_scrape_diagnostic_export => 'Ekspor diagnostik scrape';
+	@override String get video_scrape_diagnostic_confirm_title => 'Ekspor diagnostik scrape?';
+	@override String get video_scrape_diagnostic_saved => 'Paket diagnostik tersimpan';
+	@override String video_scrape_diagnostic_failed({required Object reason}) => 'Tidak bisa mengekspor paket diagnostik: ${reason}';
+	@override String get video_scrape_diagnostic_share_subject => 'Diagnostik scrape video Fushi';
+	@override String get video_scrape_diagnostic_confirm_body => 'Paket ini mencakup nama file dan folder relatif, ringkasan scrape, dan konten NFO asli. Tidak menambahkan video, subtitle, gambar, path absolut, konfigurasi aplikasi, atau kredensial aplikasi. File NFO asli dipertahankan apa adanya dan mungkin mengandung informasi pribadi atau rahasia; tinjau paket sebelum membagikan secara publik.';
+	@override String get video_discovery_search_hint => 'Cari film, serial, anime';
+	@override String get video_discovery_hot => 'Populer sekarang';
+	@override String get video_discovery_seasonal_anime => 'Anime musiman';
+	@override String get video_discovery_all_works => 'Semua judul';
+	@override String get video_discovery_search_results => 'Hasil pencarian';
+	@override String get video_discovery_provider_warning => 'Beberapa penyedia tidak tersedia. Menampilkan hasil yang tersedia.';
+	@override String get video_discovery_load_failed => 'Tidak bisa memuat hasil pencarian.';
+	@override String get video_discovery_empty => 'Tidak ada judul yang cocok.';
+	@override String get video_discovery_resource_search => 'Cari sumber daya';
+	@override String get video_discovery_subtitle_search => 'Cari subtitle';
+	@override String get video_discovery_subscribe => 'Berlangganan';
+	@override String get video_discovery_subscription_manage => 'Kelola langganan';
+	@override String get video_discovery_pipeline_idle => 'Belum diunduh > Unduh > Organisir > Subtitle > Scrape > Perpustakaan';
+	@override String get video_discovery_details_load_failed => 'Tidak bisa memuat detail judul.';
+	@override String get video_discovery_sort_popularity => 'Popularitas';
+	@override String get video_discovery_sort_rating => 'Rating';
+	@override String get video_discovery_sort_release => 'Tanggal rilis';
+	@override String get video_discovery_in_library => 'Di perpustakaan';
+	@override String get video_discovery_play => 'Putar';
+	@override String get download_resources_tab => 'Sumber daya';
+	@override String get video_external_settings_section => 'Penyedia sumber daya dan subtitle eksternal';
+	@override String get video_torznab_settings_title => 'Indexer Torznab';
+	@override String get video_torznab_add => 'Tambah indexer';
+	@override String get video_torznab_name => 'Nama';
+	@override String get video_torznab_endpoint => 'Endpoint';
+	@override String get video_torznab_endpoint_hint => 'HTTPS diperlukan kecuali untuk alamat loopback.';
+	@override String get video_torznab_api_key => 'Kunci API';
+	@override String get video_torznab_priority => 'Prioritas';
+	@override String get video_torznab_categories => 'Kategori';
+	@override String get video_torznab_categories_hint => 'ID kategori numerik yang dipisahkan koma';
+	@override String get video_external_enabled => 'Aktif';
+	@override String get video_external_insecure_http => 'Izinkan HTTP tidak aman';
+	@override String get video_external_insecure_http_hint => 'Gunakan hanya untuk endpoint jaringan lokal terpercaya.';
+	@override String get video_external_endpoint_invalid => 'Masukkan endpoint yang valid tanpa kredensial, parameter kueri, atau fragmen.';
+	@override String get video_opensubtitles_settings_title => 'OpenSubtitles';
+	@override String get video_opensubtitles_user_agent => 'User-Agent';
+	@override String get video_opensubtitles_languages_hint => 'Kode bahasa yang dipisahkan koma, misalnya zh-CN,en,ja';
+	@override String get video_download_path_mappings_title => 'Pemetaan path qBittorrent';
+	@override String get video_download_path_mappings_hint => 'Petakan setiap root jarak jauh qBittorrent ke folder yang dapat diakses secara lokal.';
+	@override String get video_download_path_mapping_add => 'Tambah pemetaan path';
+	@override String get video_download_backend_profile_id => 'ID profil backend';
+	@override String get video_download_remote_root => 'Root jarak jauh';
+	@override String get video_download_local_root => 'Root lokal';
+	@override String get video_download_target_source_title => 'Sumber video terkelola default';
+	@override String get video_download_target_source_hint => 'Unduhan baru diorganisir ke sumber video lokal ini.';
+	@override String get video_download_target_source_none => 'Pilih sumber video lokal';
+	@override String get video_external_remove => 'Hapus';
+	@override String get video_external_username_optional => 'Nama pengguna (opsional)';
+	@override String get video_external_password_optional => 'Kata sandi (opsional)';
+	@override String get video_external_api_key => 'Kunci API';
+	@override String get video_external_save_error => 'Konfigurasi tidak bisa disimpan. Periksa kolom yang disorot.';
+	@override String get video_external_categories_invalid => 'Kategori harus berupa ID numerik yang dipisahkan koma.';
+	@override String get video_download_path_mapping_invalid => 'Masukkan ID profil, root jarak jauh, dan root lokal absolut.';
+	@override String get video_opensubtitles_endpoint => 'Endpoint API';
+	@override String get video_download_target_source_empty => 'Tidak ada sumber video yang dapat diakses secara lokal. Tambahkan satu di tab Sumber terlebih dahulu.';
+	@override String get video_setting_drag_seek_sensitivity => 'Sensitivitas geser untuk seek';
+	@override String get video_setting_drag_seek_sensitivity_hint => 'Seberapa jauh satu gesekan layar penuh mencari di layar sentuh: Rendah sekitar 45 detik, Sedang sekitar 90 detik, Tinggi sekitar 180 detik. Tidak tergantung pada durasi total video. Hanya geser sentuh; pencarian dengan mouse dan keyboard tidak terpengaruh.';
+	@override String get video_setting_drag_seek_sensitivity_low => 'Rendah';
+	@override String get video_setting_drag_seek_sensitivity_medium => 'Sedang';
+	@override String get video_setting_drag_seek_sensitivity_high => 'Tinggi';
+	@override String video_subtitle_read_failed({required Object label}) => 'Tidak bisa membaca file subtitle ini (rusak atau kosong): ${label}';
+	@override String dict_downloading_size({required Object name, required Object done, required Object total}) => 'Mengunduh ${name} (${done} / ${total})';
+	@override String get video_subtitle_attach_book_missing => 'Video ini tidak ada di perpustakaan Anda, jadi subtitle tidak dilampirkan';
+	@override String get dict_download_hide => 'Jalankan di latar belakang';
+	@override String get dict_download_progress_show => 'Lihat progres';
+	@override String get dict_download_cancelled => 'Unduhan dibatalkan.';
+	@override String get dict_download_import_uncancellable => 'Impor tidak bisa diinterupsi';
+	@override String get dict_download_busy => 'Unduhan kamus sudah berjalan.';
+	@override String get gal_hook_ingame_lookup => 'Pencarian kamus dalam game';
+	@override String get gal_hook_ingame_lookup_hint => 'Tampilkan kartu kamus di dalam jendela game itu sendiri (mesin KiriKiri, hanya Windows)';
+	@override String download_subscription_start_episode({required Object episode}) => '从第 ${episode} 集开始';
+	@override String get drag_drop_failed => 'Tidak bisa menangani file yang dijatuhkan. Silakan coba lagi.';
+	@override String get tag_add_failed => 'Tidak bisa menambahkan tag. Silakan coba lagi.';
+	@override String get tag_reorder_failed => 'Tidak bisa menyimpan urutan tag baru. Silakan coba lagi.';
+	@override String get download_task_error_summary_source_missing => 'Sumber video terkelola tidak ada atau tidak dapat diakses';
+	@override String get download_task_error_summary_backend_unconfirmed => 'Torrent tidak bisa dikonfirmasi berdasarkan hash, judul, dan kategori';
+	@override String get download_task_error_summary_subtitle => 'Subtitle tidak tersedia atau tidak bisa diinstal';
+	@override String get download_task_error_summary_backend_unavailable => 'Backend unduhan tidak tersedia atau sudah tidak cocok';
+	@override String get download_task_error_summary_legacy => 'Impor lama memerlukan perhatian manual';
+	@override String get download_task_error_summary_torrent_info => 'Identitas torrent tidak ada atau tidak bisa diverifikasi';
+	@override String get download_task_error_summary_generic => 'Tugas mengalami error';
+	@override String get download_task_error_view_detail => 'Lihat detail';
+	@override String get download_task_error_detail_title => 'Detail error';
+	@override String get download_task_error_copied => 'Detail error disalin';
+	@override String get download_task_lifecycle_active => 'Sedang berlangsung';
+	@override String get download_task_lifecycle_needs_attention => 'Perlu perhatian';
+	@override String get download_task_location_missing => 'Lokasi file tugas tidak tersedia.';
+	@override String get download_task_location_open_failed => 'Tidak bisa membuka lokasi file.';
+	@override String get download_task_open_location => 'Tampilkan di folder';
+	@override String get download_task_lifecycle_completed => 'Selesai';
+	@override String get download_task_lifecycle_failed => 'Gagal';
+	@override String get download_task_lifecycle_cancelled => 'Dibatalkan';
+	@override String get download_task_stage_enqueue => 'Antri';
+	@override String get download_task_stage_download => 'Unduh';
+	@override String get download_task_stage_organize => 'Organisir';
+	@override String get download_task_stage_subtitle => 'Subtitle';
+	@override String get download_task_stage_import => 'Impor';
+	@override String get download_task_stage_scrape => 'Scrape';
+	@override String get video_discovery_manual_identity_hint => 'Masukkan judul, ID eksternal, dan tahun di atas untuk mengaktifkan pencarian';
+	@override String get collection_split_move_to => 'Pindah ke';
+	@override String get collection_split_new_group => 'Grup baru';
+	@override String collection_split_selected({required Object n}) => '${n} dipilih';
+	@override String get sync_pair_rate_limited => 'Terlalu banyak percobaan. Tunggu beberapa menit dan coba lagi.';
+	@override String get sync_pair_tls_failed => 'Pemeriksaan sertifikat gagal. Sertifikat peer tidak cocok dengan yang disematkan.';
+	@override String get sync_pair_timeout => 'Peer tidak merespons tepat waktu.';
+	@override String get sync_pair_expired => 'Pemasangan kedaluwarsa. Mulai pemasangan lagi dari perangkat ini.';
+	@override String get sync_pair_upgrade_required => 'Perangkat lain menjalankan versi yang lebih lama dan tidak bisa berpasangan secara aman dari jaringan ini. Perbarui perangkat tersebut, lalu pasangkan lagi.';
+	@override String get sync_pair_fingerprint_changed_title => 'Sertifikat berubah';
+	@override String get sync_pair_fingerprint_stored_label => 'Disematkan sebelumnya';
+	@override String get sync_pair_fingerprint_new_label => 'Terlihat sekarang';
+	@override String get sync_pair_fingerprint_retrust => 'Hapus dan percayai lagi';
+	@override String get sync_pair_fingerprint_changed_body => 'Alamat ini sebelumnya disematkan ke sertifikat yang berbeda. Lanjutkan hanya jika Anda tahu peer menginstal ulang atau meresetnya — jika tidak, seseorang mungkin menyadap koneksi.';
+	@override String get interconnect_upload_section_footer => 'Pilih apa yang perangkat ini unggah ke peer yang terhubung. Tidak tergantung pada sakelar cadangan cloud dan nonaktif secara default. Sakelar ini hanya berlaku saat Aktifkan interkoneksi diaktifkan: menonaktifkan interkoneksi menghentikan semua unggahan di sini.';
+	@override String get remote_delete_audiobook_partial => 'Buku dihapus, tetapi buku audionya tidak bisa dihapus di perangkat pasangan';
+	@override String get download_detail_task_queued => 'Diantrikan: menunggu unduhan lain membebaskan slot. Tugas ini belum diserahkan ke pengunduh, jadi tidak ada data peer atau tracker langsung.';
+	@override String video_subscription_group_release_count({required Object count}) => '${count} rilis';
+	@override String get download_task_priority => 'Prioritas antrian';
+	@override String get download_task_priority_high => 'Tinggi';
+	@override String get download_task_priority_normal => 'Normal';
+	@override String get download_task_priority_low => 'Rendah';
+	@override String get library_view_import => 'Impor';
+	@override String get quick_import_title => 'Impor cepat';
+	@override String get media_source_section_title => 'Sumber perpustakaan';
+	@override String get media_import_folder => 'Folder impor';
+	@override String get media_import_folder_as_source => 'Tambah sebagai sumber perpustakaan';
+	@override String get book_import_folder_as_source_hint => 'Terus pindai folder ini untuk buku baru';
+	@override String get media_import_folder_once => 'Impor sekali saja';
+	@override String get library_empty_go_import => 'Ke halaman impor';
+	@override String get game_import_drop_hint => 'Anda juga bisa menyeret file .exe ke perpustakaan game';
+	@override String get library_view_sources => 'Sumber';
+	@override String get video_setting_secondary_av_delay => 'Sinkronisasi subtitle sekunder';
+	@override String get video_setting_secondary_av_delay_hint => 'Sesuaikan offset subtitle sekunder secara independen. Mengikuti offset primer sampai diatur di sini.';
+	@override String get video_setting_secondary_delay_follow => 'Ikuti primer';
+	@override String video_subtitle_secondary_delay_osd({required Object ms}) => 'Sinkronisasi subtitle sekunder: ${ms} md';
+	@override String get video_subtitle_secondary_delay_follow_osd => 'Sinkronisasi subtitle sekunder: ikuti primer';
+	@override String get video_setting_subtitle_anchor => 'Jangkar subtitle utama';
+	@override String get video_subtitle_anchor_bottom => 'Bawah';
+	@override String get video_subtitle_anchor_top => 'Atas';
+	@override String get video_setting_subtitle_drag_adjust => 'Seret untuk menyesuaikan posisi';
+	@override String get video_subtitle_drag_adjust_hint => 'Seret subtitle ke atas atau ke bawah untuk memposisikan ulang';
+	@override String get anki_connect_mobile_disabled_key_cleared => 'AnkiConnect memerlukan kunci API di perangkat seluler, jadi menghapusnya mematikan sakelar kembali. Anki sekarang melalui backend bawaan lagi.';
+	@override String manga_import_batch_hint({required Object n}) => 'Folder ini berisi ${n} file volume; masing-masing diimpor sebagai buku tersendiri, dinamai sesuai filenya.';
+	@override String manga_import_batch_done({required Object imported, required Object skipped, required Object failed}) => 'Diimpor ${imported}, dilewati ${skipped}, gagal ${failed}.';
+	@override String get srt_book_reimport => 'Impor ulang';
+	@override String get srt_book_reimport_subtitle_hint => 'Mengganti subtitle akan membangun ulang teks buku dari cue baru.';
+	@override String get srt_book_reimport_no_cues => 'Tidak ditemukan baris subtitle di file tersebut';
+	@override String get srt_book_reimport_body_rebuilt => 'Teks buku dibangun ulang — buka kembali buku untuk membacanya';
+	@override String get video_setting_torrent_backend_embedded => 'Mesin bawaan';
+	@override String get download_backend_unsupported_note => 'Mesin bawaan tidak tersedia di platform ini. Unduhan menggunakan qBittorrent eksternal.';
+	@override String get aidoku_runtime_unavailable => 'Ekstensi Aidoku saat ini hanya tersedia di macOS.';
+	@override String get aidoku_extensions_title => 'Ekstensi Aidoku';
+	@override String get aidoku_extension_empty => 'Tidak ada ekstensi Aidoku yang terinstal.';
+	@override String get aidoku_extension_remove => 'Hapus ekstensi Aidoku';
+	@override String get aidoku_extension_warning => 'Ekstensi Aidoku menjalankan kode WebAssembly pihak ketiga dengan akses jaringan. Lanjutkan hanya dengan sumber yang Anda percayai.';
+	@override String get aidoku_webview_unsupported => 'Sumber ini memerlukan API WebView Aidoku yang belum didukung.';
+	@override String get aidoku_extension_imported => 'Ekstensi Aidoku diimpor';
+	@override String get aidoku_extension_import => 'Impor ekstensi Aidoku (.aix)';
+	@override String get aidoku_extension_confirm_title => 'Instal ekstensi Aidoku?';
+	@override String get aidoku_extension_version => 'Versi';
+	@override String get aidoku_repository_url => 'URL repositori';
+	@override String get aidoku_repository_sources => 'Sumber repositori';
+	@override String get aidoku_repository_identity_mismatch => 'Paket yang diunduh tidak cocok dengan indeks repositori.';
+	@override String get aidoku_repository_installed => 'Terinstal';
+	@override String get aidoku_repository_search => 'Cari sumber repositori';
+	@override String get aidoku_repository_install => 'Instal';
+	@override String get aidoku_repository_update => 'Perbarui';
+	@override String get aidoku_repository_add => 'Tambah repositori Aidoku';
+	@override String get aidoku_repository_added => 'Repositori Aidoku ditambahkan';
+	@override String get aidoku_repository_browse => 'Jelajahi repositori';
+	@override String get aidoku_repository_hint => 'Tempelkan URL beranda repositori Aidoku atau index.min.json. Repositori komunitas diisi secara default.';
+	@override String get aidoku_repository_remove => 'Hapus repositori';
+	@override String get aidoku_repository_empty => 'Tidak ada repositori Aidoku yang ditambahkan.';
+	@override String get dict_language_tooltip => 'Bahasa konten';
+	@override String get dict_language_title => 'Bahasa konten kamus';
+	@override String get dict_language_description => 'Menentukan font mana yang merender teks kamus ini. Otomatis menggunakan bahasa yang dideklarasikan kamus.';
+	@override String get dict_language_auto => 'Otomatis';
+	@override String get book_language_action => 'Bahasa konten';
+	@override String get book_language_description => 'Menentukan font mana yang merender teks buku ini. Otomatis menggunakan bahasa yang dideklarasikan dalam EPUB.';
+	@override String get local_audio_reference_unavailable => 'Tidak bisa mereferensikan file asli tanpa akses semua file; salinan diimpor sebagai gantinya.';
+	@override String get video_collection_scrape => 'Scrape info & sampul';
+	@override String get update_testflight_open => 'Buka TestFlight';
+	@override String get update_app_store_open => 'Buka App Store';
+	@override String get update_release_page_open => 'Halaman rilis';
+	@override String update_install_gal_hook_holder({required Object pid, required Object path}) => 'Komponen tangkapan galgame sedang digunakan: PID ${pid} - ${path} (ini adalah game yang sedang Anda mainkan, atau host tangkapannya). Tutup game, lalu perbarui lagi.';
+	@override String get game_hook_reason_protocol_mismatch => 'Komponen tangkapan tidak cocok dengan build Fushi ini. Komponen ini dikirimkan di dalam Fushi, jadi tidak ada yang perlu diinstal terpisah. Pertama, tutup game sepenuhnya dan luncurkan lagi: proses game mungkin masih menyimpan komponen yang diinjeksi oleh sesi sebelumnya. Jika masih tidak cocok, file komponen di disk lebih lama dari Fushi, karena pembaruan Fushi terakhir tidak bisa menggantinya saat game sedang berjalan. Tutup semua game, lalu jalankan penginstal Fushi lagi.';
+	@override String get video_mining_still_format => 'Format tangkapan layar kartu video';
+	@override String get video_mining_still_format_hint => 'Encoding yang digunakan saat gambar kartu adalah tangkapan layar diam. JPG jauh lebih kecil; PNG tanpa kehilangan tetapi beberapa kali lebih besar. Sampul animasi tidak terpengaruh — mengikuti pengaturan format animasi.';
+	@override String get mining_still_format_jpg => 'JPG (lebih kecil)';
+	@override String get mining_still_format_png => 'PNG (tanpa kehilangan)';
+	@override String get gal_mining_still_format => 'Format tangkapan layar kartu game';
+	@override String get gal_mining_still_format_hint => 'Format yang sama seperti kartu video, disimpan terpisah. Tangkapan jendela game masuk sebagai PNG: mempertahankan PNG tanpa kehilangan tetapi beberapa kali lebih besar, sementara JPG sesuai dengan cara tangkapan layar ini dikompres sebelumnya.';
+	@override String get manga_source_cloudflare_blocked => 'Sumber ini dilindungi oleh Cloudflare dan belum bisa dijangkau oleh pembaca bawaan.';
+	@override String get manga_global_search_title => 'Cari semua sumber';
+	@override String get manga_global_search_hint => 'Cari setiap sumber yang aktif';
+	@override String get manga_global_search_prompt => 'Ketik judul untuk mencari setiap sumber manga yang aktif sekaligus.';
+	@override String get anki_connect_addon_install => 'Instal AnkiConnect';
+	@override String get anki_connect_addon_install_hint => 'Mengunduh AnkiConnect dari AnkiWeb dan menyerahkannya ke Anki yang sedang berjalan. Anki akan meminta Anda untuk mengonfirmasi, lalu menyarankan restart.';
+	@override String get anki_connect_addon_handed => 'AnkiConnect diserahkan ke Anki. Konfirmasi dialog di Anki, lalu restart Anki sesuai saran.';
+	@override String get anki_connect_addon_anki_not_running => 'Tidak ditemukan Anki yang berjalan. Jalankan Anki desktop terlebih dahulu, lalu coba lagi.';
+	@override String anki_connect_addon_download_failed({required Object error}) => 'Tidak bisa mengunduh AnkiConnect dari AnkiWeb: ${error}';
+	@override String get anki_connect_addon_invalid => 'AnkiWeb mengembalikan sesuatu yang bukan paket add-on yang bisa digunakan.';
+	@override String anki_connect_addon_launch_failed({required Object error}) => 'Tidak bisa menyerahkan add-on ke Anki: ${error}';
+	@override String get settings_content_language_title => 'Bahasa konten default';
+	@override String get settings_content_language_unset => 'Belum diatur';
+	@override String get settings_content_language_description => 'Bahasa fallback untuk konten yang tidak mendeklarasikan bahasanya. Pengaturan per-buku, per-video, per-game, dan per-kamus menimpa ini.';
+	@override String get manga_ocr_lens_language_label => 'Bahasa pengenalan';
+	@override String get sync_err_peer_unreachable => 'Tidak bisa menjangkau perangkat pasangan - mungkin offline atau Fushi tidak berjalan.';
+	@override String get remote_book_list_failed => 'Tidak bisa mengambil perpustakaan jarak jauh dari perangkat pasangan.';
+	@override String get video_torznab_settings_hint => 'Konfigurasikan satu atau lebih endpoint Jackett, Prowlarr, atau Torznab yang kompatibel. Rahasia tidak pernah diekspor dalam cadangan; mungkin disinkronkan ke perangkat pasangan melalui Interconnect (bisa dinonaktifkan di pengaturan Interconnect).';
+	@override String get video_opensubtitles_settings_hint => 'Kredensial API tidak pernah diekspor dalam cadangan; mungkin disinkronkan ke perangkat pasangan melalui Interconnect (bisa dinonaktifkan di pengaturan Interconnect).';
+	@override String get sync_interconnect_service_config_toggle => 'Sinkronkan konfigurasi layanan dari host';
+	@override String get sync_interconnect_service_config_toggle_desc => 'Terima pengaturan layanan eksternal dan kunci API (Jimaku, TMDB, Torznab, OpenSubtitles, pelacakan) dari host pasangan melalui kanal Interconnect terenkripsi. Memerlukan TLS.';
+	@override String get video_setting_subtitle_backfill => 'Ambil subtitle otomatis setelah scraping';
+	@override String get video_setting_subtitle_backfill_hint => 'Ketika scrape selesai, video yang masih belum memiliki subtitle mendapat satu dari sumber online Anda yang dikonfigurasi. Tidak pernah mengganti subtitle yang sudah ada.';
+	@override String get video_setting_subtitle_sources_section => 'Sumber subtitle online';
+	@override String get video_subtitle_no_source_configured => 'Subtitle tidak ditemukan · atur sumber subtitle online';
+	@override String get anime_download_subs_retrying => 'Subtitle: belum tersedia — akan mencoba ulang secara otomatis';
+	@override String get video_jimaku_language_follow_video => 'Ikuti bahasa video';
+	@override String get video_setting_jimaku_default_language_hint => 'Default ke bahasa video itu sendiri (trek audio / metadata scrape). Pilih satu untuk selalu mengutamakan bahasa tersebut.';
+	@override String get onboarding_title => 'Memulai';
+	@override String get onboarding_welcome_headline => 'Selamat datang!';
+	@override String get onboarding_feature_anki => 'Kartu flash Anki';
+	@override String get onboarding_feature_anki_hint => 'Hubungkan AnkiConnect atau AnkiDroid untuk membuat kartu flash';
+	@override String get onboarding_feature_backup => 'Cadangan & sinkronisasi';
+	@override String get onboarding_feature_backup_hint => 'Cadangkan data Anda ke Google Drive, WebDAV, dan backend lainnya';
+	@override String get onboarding_feature_interconnect => 'Interkoneksi perangkat';
+	@override String get onboarding_feature_interconnect_hint => 'Pasangkan perangkat di LAN Anda untuk berbagi perpustakaan dan progres';
+	@override String get onboarding_step_dictionary_action => 'Buka manajer kamus';
+	@override String get onboarding_step_anki_title => 'Siapkan Anki';
+	@override String get onboarding_step_anki_action => 'Buka pengaturan pembuatan kartu';
+	@override String get onboarding_step_backup_title => 'Siapkan cadangan';
+	@override String get onboarding_step_backup_body => 'Pilih backend cadangan dan masuk, atau ekspor file cadangan lokal.';
+	@override String get onboarding_step_backup_action => 'Buka pengaturan cadangan';
+	@override String get onboarding_step_interconnect_title => 'Siapkan interkoneksi';
+	@override String get onboarding_step_interconnect_body => 'Aktifkan interkoneksi dan pasangkan dengan perangkat lain di LAN Anda untuk berbagi perpustakaan, progres, dan pencarian.';
+	@override String get onboarding_step_interconnect_action => 'Buka pengaturan interkoneksi';
+	@override String get onboarding_finish_title => 'Semuanya siap';
+	@override String get onboarding_finish_body => 'Anda bisa membuka panduan ini kapan saja dari Pengaturan > Sistem.';
+	@override String get onboarding_action_next => 'Berikutnya';
+	@override String get onboarding_action_finish => 'Selesai';
+	@override String get onboarding_action_skip => 'Lewati untuk sekarang';
+	@override String get onboarding_reopen => 'Panduan memulai';
+	@override String get onboarding_welcome_body => 'Atur bahasa antarmuka dan tema Anda terlebih dahulu — langkah-langkah berikutnya akan memandu Anda melalui sisanya.';
+	@override String get onboarding_features_title => 'Pilih yang Anda gunakan';
+	@override String get onboarding_features_modules_label => 'Tab perpustakaan (yang tidak dicentang disembunyikan dari bilah navigasi; bisa diubah kapan saja di Pengaturan)';
+	@override String get onboarding_features_setup_label => 'Apa yang akan diatur selanjutnya';
+	@override String get onboarding_feature_manga => 'Perpustakaan manga';
+	@override String get onboarding_feature_manga_hint => 'Baca manga dengan pencarian OCR';
+	@override String get onboarding_feature_video => 'Perpustakaan video';
+	@override String get onboarding_feature_video_hint => 'Tonton video dengan pencarian subtitle dan pembuatan kartu';
+	@override String get onboarding_feature_games => 'Perpustakaan galgame';
+	@override String get onboarding_feature_games_hint => 'Luncurkan galgame dengan pencarian text-hook (hanya Windows)';
+	@override String get onboarding_feature_pack => 'Paket rekomendasi (kamus + audio)';
+	@override String get onboarding_feature_pack_hint => 'Satu unduhan menyiapkan kamus Jepang plus audio pengucapan JA/EN';
+	@override String get onboarding_step_pack_title => 'Instal paket rekomendasi';
+	@override String get onboarding_step_pack_body => 'Paket rekomendasi membundel kamus kata, aksen nada, dan frekuensi Jepang plus database audio pengucapan Jepang/Inggris. Unduh dan impor di sini; mengimpor mengganti data lokal, jadi jalankan pada instalasi baru. Belajar bahasa lain? Gunakan manajer kamus untuk mengimpor kamus Anda sendiri.';
+	@override String get onboarding_step_pack_download_action => 'Unduh dan impor';
+	@override String get onboarding_step_pack_import_existing_action => 'Impor paket yang sudah diunduh';
+	@override String get onboarding_step_pack_pick_action => 'Pilih file paket lokal';
+	@override String get onboarding_pack_downloading => 'Mengunduh... batalkan kapan saja, dilanjutkan lain kali';
+	@override String onboarding_pack_download_failed({required Object message}) => 'Unduhan gagal: ${message}';
+	@override String get onboarding_step_extension_title => 'Ekstensi browser';
+	@override String get onboarding_step_extension_body => 'Instal ekstensi browser pendamping untuk mencari kata di halaman web mana pun.';
+	@override String get onboarding_step_extension_action => 'Buka panduan ekstensi';
+	@override String get onboarding_step_fonts_title => 'Font bacaan';
+	@override String get onboarding_step_fonts_body => 'Impor font kustom dan pilih mana yang digunakan oleh UI, teks buku, dan kamus.';
+	@override String get settings_section_modules => 'Modul fitur';
+	@override String get module_toggle_hint => 'Tampilkan tab perpustakaan ini di bilah navigasi; matikan untuk menyembunyikannya';
+	@override String get video_setting_youtube_quality => 'Kualitas YouTube';
+	@override String get video_setting_youtube_quality_hint => 'Mulai streaming pada tier tertinggi hingga target ini; Otomatis mengutamakan pemutaran lancar (codec ramah perangkat keras, hingga 1080p)';
+	@override String get library_view_discover => 'Jelajahi';
+	@override String get manga_discovery_section_trending => 'Trending';
+	@override String get manga_discovery_section_popular => 'Populer';
+	@override String get manga_discovery_section_top_rated => 'Rating tertinggi';
+	@override String get manga_discovery_section_latest_finished => 'Baru selesai';
+	@override String get manga_discovery_load_failed => 'Tidak bisa memuat umpan jelajahi.';
+	@override String get manga_discovery_match_section => 'Baca dari sumber';
+	@override String get manga_discovery_match_running => 'Mencocokkan di sumber Anda yang aktif...';
+	@override String get manga_discovery_match_none => 'Tidak ditemukan kecocokan di sumber yang aktif.';
+	@override String get manga_discovery_status_releasing => 'Berlanjut';
+	@override String get manga_discovery_status_finished => 'Selesai';
+	@override String get manga_discovery_status_hiatus => 'Hiatus';
+	@override String get manga_discovery_status_cancelled => 'Dibatalkan';
+	@override String get manga_discovery_status_not_yet_released => 'Belum dirilis';
+	@override String manga_discovery_source_popular({required Object source}) => 'Populer di ${source}';
+	@override String get mihon_extension_error => 'Error ekstensi';
+	@override String get discovery_all_sources => 'Semua sumber';
+	@override String get discovery_search_hint => 'Cari sumber daya online';
+	@override String get discovery_enter_query_hint => 'Masukkan kata kunci untuk mencari';
+	@override String get discovery_empty => 'Tidak ada hasil';
+	@override String get discovery_partial_failure => 'Beberapa sumber tidak tersedia';
+	@override String get discovery_load_more => 'Muat lebih banyak';
+	@override String get discovery_download_queued => 'Ditambahkan ke unduhan';
+	@override String get discovery_torrent_pushed => 'Tugas torrent ditambahkan';
+	@override String get discovery_torrent_failed => 'Gagal menambahkan tugas torrent';
+	@override String get discovery_kind_novel => 'Novel';
+	@override String get discovery_kind_audiobook => 'Buku audio';
+	@override String get discovery_source_pick_hint => 'Pilih sumber untuk dijelajahi, atau ketik kata kunci untuk mencari setiap sumber';
+	@override String get discovery_source_query_required => 'Sumber ini hanya mendukung pencarian kata kunci';
+	@override String get manga_discovery_sources_browse => 'Jelajahi sumber';
+	@override String get discovery_kind_manga => 'Manga';
+	@override String get game_capture_workbench_tab => 'Ruang kerja tangkapan';
+	@override String get video_builtin_sources_title => 'Sumber bawaan';
+	@override String get video_resource_no_provider_title => 'Tidak ada indexer sumber daya yang dikonfigurasi';
+	@override String get video_subtitle_no_provider_title => 'Tidak ada penyedia subtitle yang dikonfigurasi';
+	@override String get video_subtitle_no_provider_hint => 'Masukkan kunci API Jimaku atau aktifkan OpenSubtitles di Pengaturan, Unduhan, Penyedia sumber daya dan subtitle eksternal.';
+	@override String get anime_download_require_subs => 'Subtitle diperlukan';
+	@override String get video_jimaku_scope_hint => 'Subtitle Jepang untuk anime dan judul live-action Jepang. Diperlukan kunci API gratis.';
+	@override String get video_builtin_apibay_hint => 'Film dan acara TV. Indeks publik, tidak perlu akun.';
+	@override String get video_builtin_knaben_hint => 'Film dan acara TV. Mengagregasi beberapa indexer publik.';
+	@override String get video_jimaku_enabled_hint => 'Nonaktif berarti Jimaku dilewati meskipun kunci API tersimpan.';
+	@override String get discovery_sources_settings_title => 'Sumber pencarian';
+	@override String get discovery_sources_settings_hint => 'Sumber bawaan mana yang berpartisipasi dalam pencarian Semua sumber halaman Jelajahi. Memilih satu sumber di dropdown sumber selalu berfungsi, bahkan saat dinonaktifkan di sini.';
+	@override String get video_builtin_sources_hint => 'Dikirimkan bersama aplikasi: tanpa akun, tanpa kunci API. Nonaktifkan satu untuk mengecualikannya dari pencarian sumber daya.';
+	@override String get video_builtin_nyaa_hint => 'Hanya anime. Film dan acara TV dicakup oleh dua indexer publik di bawah.';
+	@override String get video_resource_no_provider_hint => 'Pencarian ini tidak memiliki penyedia untuk dikueri. Aktifkan kembali sumber bawaan, atau tambahkan indexer Torznab, di Pengaturan, Unduhan, Penyedia sumber daya dan subtitle eksternal.';
+	@override String discovery_source_kinds_label({required Object kinds}) => 'Mencakup: ${kinds}';
+	@override String get video_source_scrape_rescrape_source => 'Scrape ulang sumber ini';
+	@override String get video_source_scrape_run_detail_title => 'Hasil scrape';
+	@override String get video_source_scrape_run_no_issues => 'Tidak ada peringatan atau error yang dicatat.';
+	@override String get video_source_scrape_manual_search_title => 'Tentukan karya secara manual';
+	@override String get video_source_scrape_manual_search_hint => 'Cari penyedia metadata berdasarkan judul, lalu pilih karya yang benar.';
+	@override String get video_source_scrape_manual_search_action => 'Cari';
+	@override String get video_source_scrape_manual_search_empty => 'Tidak ada hasil';
+	@override String get profile_media_manga => 'Manga';
+	@override String get profile_media_game => 'Game';
+	@override String get profile_media_browser => 'Browser';
+	@override String get mihon_store_remove => 'Hapus toko ekstensi';
+	@override String get video_import_folder_as_source_hint => 'Terus pindai folder ini untuk video baru';
+	@override String get manga_import_folder_as_source_hint => 'Terus pindai folder ini untuk manga baru';
+	@override String get download_no_managed_video_source => 'Belum ada sumber video terkelola. Unduhan memerlukan folder video lokal sebagai tujuan.';
+	@override String get download_add_video_source => 'Tambah sumber video';
+	@override String get video_subtitle_prev_cue_align => 'Selaraskan baris sebelumnya ke sekarang';
+	@override String get video_subtitle_next_cue_align => 'Selaraskan baris berikutnya ke sekarang';
+	@override String video_control_custom_action({required Object index}) => 'Pintasan ${index}';
+	@override String get video_control_custom_action_none => 'Tidak ditetapkan';
+	@override String get settings_destination_storage => 'Penyimpanan';
+	@override String get settings_destination_storage_summary => 'Lokasi data dan penggunaan disk';
+	@override String get storage_overview_section => 'Penggunaan disk';
+	@override String get storage_overview_total => 'Total';
+	@override String get storage_overview_refresh => 'Pindai ulang';
+	@override String get storage_overview_scanning => 'Memindai...';
+	@override String get storage_category_books => 'Buku & buku audio';
+	@override String get storage_category_dictionaries => 'Kamus';
+	@override String get storage_category_video_downloads => 'Unduhan video';
+	@override String get storage_category_covers => 'Sampul & thumbnail';
+	@override String get storage_category_subtitles => 'Subtitle';
+	@override String get storage_category_shaders => 'Shader video';
+	@override String get storage_category_custom_fonts => 'Font kustom';
+	@override String get storage_category_web => 'Arsip web & data browser';
+	@override String get storage_category_exports => 'Ekspor';
+	@override String get storage_category_database => 'Database & data internal';
+	@override String get storage_category_ocr_models => 'Model OCR manga';
+	@override String storage_entry_more_rest({required Object n, required Object size}) => '${n} item lagi, ${size} total';
+	@override String storage_entry_delete_confirm_title({required Object name}) => 'Hapus ${name}?';
+	@override String get storage_entry_delete_book_confirm_body => 'Ini menghapus buku, progres bacaan, dan salinan audio pasangannya dari perangkat ini.';
+	@override String get storage_entry_delete_dictionary_confirm_body => 'Ini menghapus kamus dan data yang diimpornya.';
+	@override String get storage_entry_delete_done => 'Dihapus';
+	@override String storage_entry_delete_failed({required Object reason}) => 'Penghapusan gagal: ${reason}';
+	@override String get storage_modules_anime4k_title => 'Shader Anime4K';
+	@override String get storage_modules_anime4k_hint => 'Bisa diunduh lagi kapan saja di pengaturan video';
+	@override String storage_modules_anime4k_delete_done({required Object n}) => 'Dihapus ${n} file shader';
+	@override String get storage_bundled_section => 'Komponen bawaan';
+	@override String get storage_bundled_hint => 'Dikirimkan bersama penginstal; file yang dihapus akan kembali pada pembaruan berikutnya, ditampilkan hanya sebagai referensi.';
+	@override String get storage_dictionary_delete_incomplete => 'Kamus masih ada setelah penghapusan, lihat log error';
+	@override String get module_extension_label => 'Ekstensi browser';
+	@override String get onboarding_feature_books => 'Perpustakaan novel';
+	@override String get onboarding_feature_books_hint => 'Baca novel EPUB dengan pencarian kamus dan sinkronisasi buku audio';
+	@override String get onboarding_feature_extension_hint => 'Cari kata di halaman web mana pun (hanya desktop)';
+	@override String get video_setting_tap_toggles_playback => 'Ketuk video untuk putar/jeda';
+	@override String get video_setting_tap_toggles_playback_hint => 'Matikan agar mengetuk video hanya menampilkan kontrol';
+	@override String get manga_ocr_engine_auto_desc => 'Mengutamakan mesin offline yang sudah Anda siapkan; tidak pernah mengunggah ke Lens sendiri.';
+	@override String get manga_ocr_engine_local_onnx_desc => 'Sepenuhnya offline, kualitas terbaik. Perlu unduhan model satu kali dan lambat di perangkat keras lama.';
+	@override String get manga_ocr_engine_google_lens_desc => 'Perlu internet dan mengunggah gambar halaman ke Google. Cepat tanpa unduhan, tetapi kualitas di bawah model lokal.';
+	@override String get manga_ocr_engine_external_desc => 'Memanggil baris perintah mokuro yang Anda instal sendiri. Hanya desktop.';
+	@override String get manga_ocr_engine_paired_host_desc => 'Menyerahkan pekerjaan ke perangkat pasangan di jaringan Anda. Tidak ada yang diunduh di sini.';
+	@override String manga_ocr_model_disk_usage({required Object size}) => 'Menggunakan ${size} di disk';
+	@override String manga_ocr_model_download_size({required Object size}) => 'Memerlukan ${size}';
+	@override String manga_ocr_delete_done_freed({required Object size}) => 'Model dihapus, dibebaskan ${size}';
+	@override String get manga_ocr_model_unused_by_engine => 'Mesin saat ini tidak menggunakan file model lokal ini.';
+	@override String manga_ocr_download_total_progress({required Object done, required Object total}) => '${done} dari ${total}';
+	@override String get media_source_network_subtitle_video => 'Perpustakaan jarak jauh WebDAV (streaming langsung)';
+	@override String get jellyfin_settings_title => 'Server media (Jellyfin / Emby)';
+	@override String get jellyfin_server_url => 'URL server';
+	@override String get jellyfin_sign_in => 'Masuk';
+	@override String get jellyfin_sign_out => 'Keluar';
+	@override String get jellyfin_sign_in_failed => 'Gagal masuk';
+	@override String get jellyfin_settings_hint => 'Video di server ditampilkan di perpustakaan video dan streaming langsung.';
+	@override String get video_setting_mpv_lua_scripts => 'Muat skrip Lua';
+	@override String get video_setting_mpv_lua_scripts_hint => 'Muat semua file .lua di folder mpv_scripts ke pemutar. Mematikan berlaku saat video berikutnya dibuka.';
+	@override String get video_setting_mpv_lua_scripts_import => 'Impor skrip Lua';
+	@override String get video_setting_mpv_lua_scripts_imported => 'Skrip diimpor';
+	@override String get video_setting_mpv_lua_scripts_dir_copy => 'Salin path folder skrip';
+	@override String get video_setting_mpv_lua_scripts_dir_copied => 'Path folder disalin';
+	@override String get interconnect_share_statistics => 'Bagikan statistik';
+	@override String get interconnect_share_statistics_hint => 'Waktu membaca dan menonton, jumlah karakter, penghitung pencarian dan pembuatan kartu';
+	@override String get interconnect_share_favorites => 'Bagikan favorit';
+	@override String get interconnect_share_favorites_hint => 'Kata dan kalimat favorit, termasuk pembatalan favorit';
+	@override String get interconnect_share_section => 'Bagikan dengan perangkat pasangan';
+	@override String get interconnect_share_section_footer => 'Ini digabungkan dua arah dengan perangkat pasangan dan aktif secara default. Mematikan satu menghentikan pengiriman dan penerimaan.';
+	@override String get game_hook_mining_no_session_lines => 'Belum ada baris yang ditangkap, jadi tidak ada yang bisa dilampirkan ke kartu ini. Pilih thread teks yang berbeda di ruang kerja.';
+	@override String get shortcut_action_manga_pan_up => 'Geser ke atas';
+	@override String get shortcut_action_manga_pan_down => 'Geser ke bawah';
+	@override String get shortcut_action_manga_pan_left => 'Geser ke kiri';
+	@override String get shortcut_action_manga_pan_right => 'Geser ke kanan';
+	@override String get drag_drop_folder_source_added => 'Folder ditambahkan sebagai sumber perpustakaan dan dipindai.';
+	@override String get drag_drop_folder_source_exists => 'Folder tersebut sudah menjadi sumber perpustakaan.';
+	@override String get sync_pair_invalid_url => 'Format alamat tidak valid';
+	@override String get sync_pair_peer_requires_https => 'Perangkat ini hanya menerima HTTPS. Gunakan alamat https://.';
+	@override String get sync_pair_peer_not_https => 'Peer tidak menggunakan HTTPS di port ini. Gunakan alamat http://.';
+	@override String get sync_pair_not_fushi_discovered => 'Tidak ditemukan perangkat Fushi di alamat ini.';
+	@override String get shortcut_action_popup_play_audio => 'Putar audio kata';
+	@override String get sync_progress_asset_transfer => 'Menyiapkan transfer';
+	@override String get sync_asset_dictionary_upload => 'Unggah kamus';
+	@override String get sync_asset_dictionary_download => 'Unduh kamus';
+	@override String get sync_asset_local_audio_upload => 'Unggah database audio lokal';
+	@override String get sync_asset_local_audio_download => 'Unduh database audio lokal';
+	@override String get sync_asset_upload_hint => 'Mengirim apa yang perangkat ini miliki dan yang tidak dimiliki perangkat jarak jauh. Paket bisa berukuran besar.';
+	@override String get sync_asset_upload_action => 'Unggah';
+	@override String get sync_asset_download_action => 'Unduh';
+	@override String get sync_asset_download_hint => 'Mengambil apa yang dimiliki perangkat jarak jauh dan tidak dimiliki perangkat ini - termasuk entri yang Anda hapus secara lokal.';
+	@override String get sync_asset_legacy_notice_title => 'Sinkronisasi kamus dan audio sekarang manual';
+	@override String get sync_asset_legacy_notice_body => 'Perangkat ini memiliki sinkronisasi otomatis yang aktif untuk kamus dan database audio lokal. Sakelar itu sudah tidak ada - gunakan tindakan Unggah / Unduh di bawah saat Anda ingin mentransfernya. Tidak ada yang dihapus, tetapi kamus baru tidak lagi dicadangkan secara otomatis.';
+	@override String get sync_asset_legacy_notice_dismiss => 'Mengerti';
+	@override String get download_task_add => 'Tambah tugas';
+	@override String get download_task_add_pick_torrent => 'Pilih file torrent';
+	@override String get download_task_add_title_label => 'Judul';
+	@override String get download_task_add_content_kind => 'Jenis konten';
+	@override String get download_task_add_invalid => 'Tautan magnet atau file torrent tidak dikenali';
+	@override String get download_task_add_submitted => 'Tugas ditambahkan';
+	@override String get download_task_search_hint => 'Cari tugas';
+	@override String get download_task_sort_created => 'Tanggal ditambahkan';
+	@override String get download_task_sort_progress => 'Progres';
+	@override String get download_task_sort_status => 'Status';
+	@override String get download_task_no_match => 'Tidak ada tugas yang cocok';
+	@override String subtitle_version_episode_count({required Object n}) => '${n} episode';
+	@override String subtitle_version_unnumbered_count({required Object n}) => '${n} tanpa nomor';
+	@override String get subtitle_version_ai_translated => 'Diterjemahkan AI';
+	@override String get subtitle_version_content_language => 'Konten';
+	@override String get subtitle_version_show_files => 'Tampilkan file';
+	@override String get subtitle_version_view_files => 'Daftar file';
+	@override String get resource_version_batch => 'Batch';
+	@override String get resource_version_view_flat => 'Semua rilis';
+	@override String get subscription_mode_one_shot => 'Sekali saja';
+	@override String get subscription_mode_ongoing => 'Berlangsung';
+	@override String get subscription_legacy_badge => 'Lama';
+	@override String get subscription_legacy_hint => 'Diimpor dari sistem lama; pemeriksaan otomatis tidak berlaku.';
+	@override String subscription_next_check({required Object time}) => 'Pemeriksaan berikutnya: ${time}';
+	@override String subscription_last_matched({required Object time}) => 'Kecocokan terakhir: ${time}';
+	@override String get subscription_item_status_discovered => 'Menunggu';
+	@override String get subscription_item_status_queued => 'Diantrikan';
+	@override String get subscription_item_status_processed => 'Diimpor';
+	@override String get subscription_item_status_skipped => 'Dilewati';
+	@override String get subscription_item_status_failed => 'Gagal';
+	@override String get subscription_items_empty => 'Belum ada rilis yang dilacak';
+	@override String get subscription_edit_title => 'Edit langganan';
+	@override String get subscription_edit_rule_hint => 'Aturan identitas dan versi tidak bisa diubah di sini. Berlangganan ulang untuk mengganti versi - riwayat dipertahankan.';
+	@override String get subscription_search_hint => 'Cari langganan';
+	@override String get subscription_sort_last_checked => 'Terakhir diperiksa';
+	@override String get subscription_sort_last_matched => 'Kecocokan terakhir';
+	@override String get subscription_show_items => 'Riwayat episode';
+	@override String get subscription_sort_created => 'Tanggal ditambahkan';
+	@override String get subscription_no_match => 'Tidak ada langganan yang cocok';
+	@override String get download_subscription_start_episode_invalid => 'Masukkan bilangan bulat (0 atau lebih), atau biarkan kosong';
+	@override String get download_subscription_source_unavailable => 'Target saat ini (tidak tersedia)';
+	@override String resource_version_episode_count({required Object n}) => '${n} episode';
+	@override String get resource_version_show_files => 'Tampilkan file';
+	@override String get manga_online_detail_load_failed => 'Tidak bisa memuat manga ini.';
+	@override String get manga_online_error_view_detail => 'Lihat detail';
+	@override String get discovery_sources_unavailable => 'Semua sumber tidak tersedia';
+	@override String get font_target_game_lookup => 'Font jendela pencarian game';
+	@override String get gal_hook_text_font => 'Font jendela pencarian game';
+	@override String get gal_hook_text_font_hint => 'Pilih font dari pustaka font terkelola. Font aktif pertama yang digunakan.';
+	@override String get gal_hook_text_letter_spacing => 'Jarak huruf';
+	@override String get gal_hook_text_letter_spacing_hint => 'Sesuaikan jarak antar karakter tanpa mengubah pengujian hit pencarian.';
+	@override String get gal_hook_text_line_height => 'Tinggi baris';
+	@override String get gal_hook_text_line_height_hint => 'Sesuaikan jarak vertikal baris yang terbungkus.';
+	@override String get gal_hook_text_bold => 'Teks tebal';
+	@override String get gal_hook_text_bold_hint => 'Gunakan teks semitebal untuk keterbacaan yang lebih baik di atas grafis game.';
+	@override String get gal_hook_text_alignment => 'Perataan teks';
+	@override String get gal_hook_text_alignment_center => 'Tengah';
+	@override String get gal_hook_text_alignment_left => 'Kiri';
+	@override String get gal_hook_text_color => 'Warna teks';
+	@override String get gal_hook_overlay_legibility_section => 'Jendela dan keterbacaan';
+	@override String get gal_hook_text_background_color => 'Warna latar jendela';
+	@override String get gal_hook_text_background_opacity => 'Opasitas latar jendela';
+	@override String get gal_hook_text_background_opacity_hint => 'Atur ke 0% untuk jendela transparan bergaya lirik desktop.';
+	@override String get gal_hook_text_outline_color => 'Warna garis tepi';
+	@override String get gal_hook_text_outline_width => 'Lebar garis tepi';
+	@override String get gal_hook_text_outline_width_hint => 'Atur ke 0 untuk menonaktifkan garis tepi; bayangan halus tetap ada.';
+	@override String get gal_hook_text_padding => 'Padding teks horizontal';
+	@override String get gal_hook_text_padding_hint => 'Jauhkan teks dari tepi jendela dan pegangan resize.';
+	@override String get gal_hook_text_corner_radius => 'Radius sudut jendela';
+	@override String get gal_hook_text_corner_radius_hint => 'Sesuaikan radius sudut latar belakang.';
+	@override String get storage_shaders_delete_anime4k => 'Hapus shader Anime4K';
+	@override String get video_jimaku_series_lookup_degraded => 'Tidak bisa mengonfirmasi seri di AniList kali ini, jadi hasil ini berasal dari pencarian judul biasa dan mungkin mencampur musim lain dari seri yang sama.';
+	@override String get dict_style_tab_visual => 'Visual';
+	@override String get dict_style_tab_code => 'CSS';
+	@override String get dict_style_scope_all => 'Semua kamus';
+	@override String get dict_style_part_entry_card => 'Kartu entri';
+	@override String get dict_style_part_expression => 'Kata utama';
+	@override String get dict_style_part_ruby => 'Furigana';
+	@override String get dict_style_part_deinflection_tag => 'Rantai deinfleksi';
+	@override String get dict_style_part_frequency => 'Frekuensi';
+	@override String get dict_style_part_pitch => 'Aksen nada';
+	@override String get dict_style_part_dictionary_label => 'Nama kamus';
+	@override String get dict_style_part_glossary_content => 'Definisi';
+	@override String get dict_style_part_glossary_tag => 'Tag definisi';
+	@override String get dict_style_prop_text_color => 'Warna teks';
+	@override String get dict_style_prop_background => 'Sorotan';
+	@override String get dict_style_prop_bold => 'Tebal';
+	@override String get dict_style_prop_italic => 'Miring';
+	@override String get dict_style_prop_underline => 'Garis bawah';
+	@override String get dict_style_prop_font_scale => 'Ukuran font';
+	@override String get dict_style_prop_corner_radius => 'Radius sudut';
+	@override String get dict_style_part_reset => 'Reset bagian';
+	@override String get dict_style_reset_all => 'Reset semua';
+	@override String get dict_style_global_only => 'Hanya dapat disesuaikan untuk semua kamus';
+	@override String get dict_style_preview_title => 'Pratinjau';
+	@override String get dict_style_pick_hint => 'Ketuk bagian di pratinjau untuk meloncati';
+	@override String get dict_style_prop_default => 'Default';
+	@override String get dict_style_part_expression_tag => 'Tag ekspresi';
+	@override String get dict_style_prop_on => 'Aktif';
+	@override String get dict_style_prop_off => 'Nonaktif';
+	@override String get dict_style_title => 'Gaya kamus';
+	@override String get video_source_scrape_anidb_client => 'Nama klien AniDB';
+	@override String get video_source_scrape_anidb_client_hint => 'Nama klien API HTTP AniDB terdaftar; biarkan kosong untuk hanya menggunakan katalog judul yang di-cache';
+	@override String get video_source_scrape_anidb_client_version => 'Versi klien AniDB';
+	@override String get video_source_scrape_anidb_client_version_hint => 'Versi positif yang terdaftar di AniDB; API HTTP tetap nonaktif sampai kedua kolom valid';
+	@override String get video_scrape_view_source => 'Lihat detail sumber';
+	@override String get video_setting_auto_scrape_hint => 'Identifikasi dan ambil metadata video secara otomatis setelah pemindaian perpustakaan';
+	@override String get video_resource_identity_provider => 'Sumber identitas sumber daya';
+	@override String get video_source_scrape_clear_all => 'Hapus semua catatan scrape';
+	@override String get video_source_scrape_clear_all_hint => 'Hapus semua metadata scrape video dan sampul serta file NFO yang dibuat Fushi.';
+	@override String get video_source_scrape_clear_all_confirm_title => 'Hapus semua catatan scrape video?';
+	@override String get video_source_scrape_clear_all_confirm_body => 'Ini menghapus semua metadata yang di-scrape dan pengikatan sumber, mengosongkan hasil Seri, dan menghapus sampul dan file NFO yang tidak dimodifikasi yang dibuat oleh Fushi. File video, entri perpustakaan, grup, progres tontonan, subtitle, tag, sampul yang dipilih secara manual, dan sidecar yang dimodifikasi pengguna dipertahankan. Ini tidak bisa dibatalkan.';
+	@override String get video_source_scrape_clear_all_confirm_action => 'Hapus';
+	@override String get video_source_scrape_clear_all_completed => 'Semua catatan scrape video telah dihapus.';
+	@override String get video_source_scrape_clear_all_completed_protected => 'Catatan scrape dihapus. File sidecar yang dimodifikasi atau tidak dapat diverifikasi dipertahankan.';
+	@override String get video_source_scrape_clear_all_busy => 'Pemindaian atau scrape video masih berjalan. Coba lagi setelah selesai.';
+	@override String get video_source_scrape_clear_all_failed => 'Tidak bisa menghapus semua catatan scrape. Tidak ada file pengguna yang tidak terverifikasi yang dihapus.';
+	@override String get video_source_scrape_clear_all_in_progress => 'Pembersihan catatan scrape sudah berlangsung.';
+	@override String get game_session_japanese_locale => 'Locale Jepang';
+	@override String get game_session_japanese_locale_hint => 'Game dimulai dengan locale Jepang (CP932). Jika teksnya terlihat kacau atau muncul error skrip, atur locale Jepang game ini ke Tidak Pernah.';
+	@override String get onboarding_anki_intro_body => 'Anki adalah aplikasi kartu flash pengulangan berjarak gratis: kata-kata baru menjadi kartu, dan ulasan dijadwalkan mengikuti kurva kelupaan. Setelah pencarian, Fushi bisa mengubah kata menjadi kartu Anki dalam satu ketukan, dengan makna, kalimat, audio, dan tangkapan layar.';
+	@override String get onboarding_anki_setup_desktop_hint => 'Instal aplikasi Anki desktop, lalu tambahkan add-on AnkiConnect: di Anki, buka Tools - Add-ons - Get Add-ons dan masukkan kode 2055492159. Biarkan Anki berjalan saat membuat kartu.';
+	@override String get onboarding_anki_setup_ios_hint => 'Dengan AnkiMobile terinstal, menambahkan kartu langsung berfungsi. Untuk fitur lengkap, hubungkan ke Anki yang berjalan di komputer dalam jaringan yang sama melalui AnkiConnect.';
+	@override String get onboarding_anki_backend_label => 'Koneksi';
+	@override String get onboarding_anki_test_action => 'Tes koneksi';
+	@override String onboarding_anki_test_success({required Object count}) => 'Terhubung: ditemukan ${count} dek';
+	@override String get onboarding_anki_get_anki_action => 'Dapatkan Anki (desktop)';
+	@override String get onboarding_anki_get_ankidroid_action => 'Dapatkan AnkiDroid';
+	@override String get onboarding_anki_mobile_ankiconnect_title => 'Lanjutan: gunakan AnkiConnect di perangkat ini';
+	@override String get onboarding_anki_mobile_ankiconnect_hint => 'Perangkat ini juga bisa membuat kartu ke Anki yang berjalan di komputer dalam jaringan yang sama: aktifkan AnkiConnect di pengaturan pembuatan kartu dan masukkan alamat komputer.';
+	@override String get onboarding_anki_fsrs_title => 'Beralih Anki ke FSRS';
+	@override String get onboarding_anki_fsrs_body => 'Anki dilengkapi FSRS, penjadwal yang jauh lebih baik dari default SM-2 berusia 30 tahun: retensi lebih baik dengan ulasan lebih sedikit. Di Anki, buka opsi dek dan aktifkan FSRS (satu sakelar mencakup seluruh koleksi). Ini harus dilakukan di dalam Anki sendiri.';
+	@override String get onboarding_step_pack_browser_action => 'Unduh di browser';
+	@override String get onboarding_anki_setup_android_hint => 'Instal AnkiDroid dan buka sekali untuk menyelesaikan pengaturan awalnya. Kembali di Fushi, ketuk Izinkan pada dialog izin yang muncul saat kartu pertama Anda - tidak perlu mengubah pengaturan AnkiDroid.';
+	@override String get onboarding_anki_install_addon_action => 'Instal add-on AnkiConnect';
+	@override String get onboarding_anki_addon_installed => 'AnkiConnect terinstal. Jalankan (atau restart) Anki, lalu ketuk Tes koneksi.';
+	@override String get onboarding_anki_addon_no_anki => 'Folder data Anki tidak ditemukan. Instal Anki dan buka sekali, lalu coba lagi.';
+	@override String onboarding_anki_addon_failed({required Object message}) => 'Instalasi gagal: ${message}';
+	@override String get game_hook_reason_capability_probe_failed => 'Komponen tangkapan tidak menjawab pemeriksaan kapabilitas. Ditemukan di disk tetapi tidak bisa dijalankan atau tidak merespons tepat waktu - antivirus mungkin memblokirnya, Fushi mungkin tidak memiliki izin untuk meluncurkannya, atau proses helper yang tersisa mungkin macet. Tutup semua game, periksa karantina antivirus Anda, lalu coba lagi.';
+	@override String get download_backend_setup_title => 'Siapkan backend unduhan';
+	@override String get download_backend_setup_intro => 'Pilih mesin mana yang menjalankan unduhan Anda. Anda bisa mengubahnya kapan saja di pengaturan unduhan.';
+	@override String get download_backend_embedded_hint => 'Disarankan. Unduhan berjalan di dalam Fushi — tidak perlu memasang apa pun lagi.';
+	@override String get download_backend_qb_hint => 'Hubungkan Fushi ke qBittorrent WebUI yang sudah Anda jalankan.';
+	@override String get download_backend_setup_start => 'Siapkan sekarang';
+	@override String get download_backend_embedded_unavailable => 'Pemasangan ini tidak memiliki runtime mesin bawaan. Pasang ulang paket lengkap, atau gunakan qBittorrent eksternal.';
+	@override String get download_backend_qb_url_invalid => 'Masukkan alamat lengkap, mis. http://127.0.0.1:8080';
+	@override String get mihon_store_zero_extensions => 'Repositori ini mengembalikan 0 ekstensi. Alamatnya mungkin menunjuk ke indeks lama.';
+	@override String get mihon_store_edit => 'Ubah alamat repositori';
+	@override String get manga_ocr_download_resume => 'Lanjutkan unduhan';
+	@override String get manga_ocr_import => 'Impor model lokal';
+	@override String get manga_ocr_import_title => 'Impor model yang sudah diunduh';
+	@override String get manga_ocr_import_intro => 'Jika unduhan di dalam aplikasi tidak berhasil, unduh sendiri berkas-berkas ini lalu impor di sini. Berkas zip yang memuatnya juga bisa.';
+	@override String get manga_ocr_import_copy_urls => 'Salin tautan unduhan';
+	@override String get manga_ocr_import_urls_copied => 'Tautan unduhan disalin';
+	@override String get manga_ocr_import_pick_folder => 'Pilih folder';
+	@override String get manga_ocr_import_pick_files => 'Pilih berkas';
+	@override String get manga_ocr_import_running => 'Mengimpor…';
+	@override String manga_ocr_import_done({required Object count}) => '${count} berkas diimpor';
+	@override String get manga_ocr_import_matched_nothing => 'Tidak ada berkas model yang dapat dipakai dikenali';
+	@override String manga_ocr_import_size_mismatch({required Object file, required Object expected, required Object actual}) => 'Ukuran ${file} salah: diharapkan ${expected}, diperoleh ${actual}';
+	@override String manga_ocr_import_still_missing({required Object count}) => 'Masih kurang ${count} berkas';
+	@override String get manga_ocr_import_failed => 'Impor model gagal';
+	@override String get manga_tap_ocr_notice_title => 'Ketuk untuk mengenali';
+	@override String get manga_tap_ocr_notice_body => 'Halaman ini belum punya data teks. Fushi akan mengenalinya dengan mesin OCR yang Anda pilih di pengaturan, lalu Anda bisa mengetuk kata untuk mencarinya. Mesin bisa diganti atau fitur ini dimatikan di Pengaturan › OCR Manga.';
+	@override String get manga_tap_ocr_notice_confirm => 'Kenali sekarang';
+	@override String get manga_tap_ocr_running => 'Mengenali halaman ini…';
+	@override String get manga_tap_to_ocr => 'Ketuk untuk mengenali';
+	@override String get manga_tap_to_ocr_desc => 'Ketuk balon percakapan yang belum dikenali untuk mengenali halaman dan langsung mencari kata.';
+	@override String get manga_ocr_engine_system => 'OCR perangkat';
+	@override String get manga_ocr_engine_system_desc => 'Memakai pengenalan teks bawaan perangkat Anda. Tanpa unduhan, sepenuhnya luring, tidak ada yang diunggah — tetapi jelas lebih lemah pada balon percakapan vertikal dan tulisan tangan dibanding model lokal.';
+	@override String get manga_ocr_engine_system_unavailable => 'Perangkat ini tidak punya pengenalan teks bawaan yang tersedia';
+	@override String get manga_tap_ocr_online_lens_only => 'Bab daring tidak disimpan di perangkat, jadi hanya Google Lens yang bisa membacanya — gambar halaman diunggah ke Google.';
+	@override String get settings_destination_services => 'Layanan daring';
+	@override String get settings_destination_services_summary => 'API pihak ketiga, pengindeks, dan server media';
+	@override String get section_services_subtitles => 'Sumber subtitle';
+	@override String get section_services_resources => 'Pengindeks sumber daya';
+	@override String get section_services_metadata => 'Pengambilan metadata';
+	@override String get settings_services_link_subtitle => 'Jimaku, OpenSubtitles, Torznab, Jellyfin, AniDB, dan TMDB dikonfigurasi bersama di sini';
+	@override String get game_hook_btn_replay => 'Putar ulang suara baris ini';
+	@override String get game_hook_btn_recapture => 'Rekam ulang suaranya';
+	@override String get game_hook_btn_follow => 'Ikuti baris baru';
+	@override String get game_hook_btn_passthrough => 'Teruskan klik ke game';
+	@override String get game_hook_btn_transparency => 'Ganti latar';
+	@override String get game_hook_btn_lock => 'Kunci posisi';
+	@override String get game_hook_btn_workbench => 'Buka meja kerja penangkapan';
+	@override String get game_hook_btn_topmost => 'Selalu di atas';
+	@override String get game_hook_btn_close => 'Tutup overlay';
+	@override String get video_jimaku_search_failed => 'Pencarian subtitle gagal';
+	@override String video_subtitle_error_with_code({required Object msg, required Object code}) => '${msg} (HTTP ${code})';
+	@override String get manga_rescan_run => 'Kenali ulang area terpilih';
+	@override String get manga_rescan_failed => 'Gagal mengenali ulang area terpilih';
+	@override String get manga_rescan_region_updated => 'Area terpilih dikenali ulang dan disimpan ke halaman';
+	@override String get manga_ocr_mobile_note => 'Di ponsel, model-model ini menjalankan mesin lokal untuk OCR satu volume penuh, ketukan, dan area terpilih di pembaca manga.';
+	@override String get manga_rescan_hint => 'Seret kotak di atas teks yang ingin dikenali ulang. Hasilnya menggantikan lapisan teks yang sudah ada di dalam kotak itu.';
+	@override String get manga_rescan_undone => 'Lapisan teks sebelum pemindaian ulang telah dipulihkan';
+	@override String get manga_rescan_undo_failed => 'Tidak dapat memulihkan lapisan teks sebelumnya';
+	@override String get module_tool_toggle_hint => 'Tampilkan tab ini di bilah navigasi; matikan untuk menyembunyikannya';
+	@override String get module_downloads_hidden_hint => 'Tab Unduhan disembunyikan di Pengaturan → Tampilan → Modul fitur; nyalakan lagi untuk mengelola langganan.';
+	@override String get book_file_location_open => 'Buka lokasi berkas';
+	@override String get book_file_location_failed => 'Tidak dapat membuka lokasi berkas buku ini.';
+	@override String storage_entry_database_snapshots_label({required Object n}) => 'Snapshot cadangan basis data (${n} berkas)';
+	@override String get storage_entry_delete_database_snapshots_confirm_body => 'Ini menghapus semua sisa snapshot cadangan basis data (corrupt-bak / pre-restore / salinan migrasi lama). Basis data yang aktif beserta berkas -wal/-shm miliknya tidak disentuh.';
+	@override String get manga_global_search_no_sources => 'Belum ada sumber manga yang aktif. Tambahkan satu di tab Impor.';
+	@override String get manga_global_search_open_sources => 'Ke Impor';
+	@override String get settings_downloads_open_page_hint => 'Buka halaman Unduhan (tugas, sumber daya, langganan)';
+	@override String get download_video_source_required => 'Perlu sumber video';
+	@override String get game_hook_reason_stale_session => 'Sesi penangkapan sebelumnya belum dilepaskan; Fushi sedang mencoba lagi sendiri, tidak perlu melakukan apa pun.';
+	@override String get video_subtitle_delete => 'Hapus berkas subtitle';
+	@override String video_subtitle_delete_confirm({required Object path}) => 'Hapus berkas subtitle ini dari disk? Tindakan ini tidak bisa dibatalkan.\n${path}';
+	@override String video_subtitle_deleted({required Object label}) => 'Berkas subtitle dihapus: ${label}';
+	@override String video_subtitle_delete_failed({required Object label}) => 'Gagal menghapus berkas subtitle: ${label}';
+	@override String get shortcut_action_manga_toggle_chrome => 'Alihkan antarmuka manga';
+	@override String get manga_interface_hide => 'Sembunyikan antarmuka';
+	@override String get manga_interface_show => 'Tampilkan antarmuka';
+	@override String get gal_hook_text_vertical_alignment => 'Perataan vertikal';
+	@override String get gal_hook_text_vertical_alignment_center => 'Tengah';
+	@override String get gal_hook_text_vertical_alignment_top => 'Atas';
+	@override String get storage_entry_external_audio_hint => 'Audio merujuk ke berkas aslinya, tidak memakai penyimpanan aplikasi';
+	@override String get jellyfin_auto_list_title => 'Daftarkan item otomatis saat masuk Video';
+	@override String get jellyfin_auto_list_hint => 'Mati: masuk ke halaman video tidak mengirim permintaan apa pun ke server media; tarik untuk menyegarkan di pustaka video agar item didaftar manual. Disarankan untuk server yang sangat besar, karena pendaftaran otomatis terlihat seperti scraping dan bisa memicu deteksi penyalahgunaan.';
+	@override String get jellyfin_libraries_title => 'Pustaka yang didaftarkan';
+	@override String get jellyfin_libraries_hint => 'Tidak memilih apa pun akan mendaftarkan semua pustaka video. Membatasi ke pustaka yang benar-benar Anda tonton mencegah server raksasa didaftar seluruhnya.';
+	@override String get jellyfin_libraries_load_failed => 'Tidak dapat memuat daftar pustaka';
+	@override String get video_filter_series => 'Seri';
+	@override String get video_filter_series_in => 'Dalam seri';
+	@override String get video_filter_series_standalone => 'Tanpa seri';
+	@override String get manga_source_cloudflare_verify_title => 'Verifikasi situs';
+	@override String get manga_source_cloudflare_verify_hint => 'Selesaikan pemeriksaan Cloudflare di bawah ini. Pemuatan akan dilanjutkan otomatis setelah lolos.';
+	@override String get db_cannot_open_title => 'Lokasi data tidak tersedia';
+	@override String get db_cannot_open_message => 'Fushi tidak dapat membuka atau membuat basis datanya di lokasi data yang dikonfigurasi. Tidak ada yang rusak — folder mungkin hilang, hanya-baca, atau berada di drive yang terputus. Periksa lokasi data di Pengaturan, atau mulai ulang untuk memakai lokasi default.';
+	@override String get anki_error_field_mapping_mismatch => 'Tidak ada pemetaan bidang Anda yang cocok dengan tipe catatan yang dipilih, sehingga Anki menolak kartu ini. Buka Pengaturan Anki untuk memetakan ulang bidang, atau gunakan \'Buat dek Lapis\'.';
+	@override String get anki_error_first_field_empty => 'Bidang pertama dari tipe catatan yang dipilih kosong, dan Anki menolak catatan seperti itu. Petakan sebuah bidang ke sana di Pengaturan Anki.';
+	@override String get storage_category_cache => 'Cache dan file sementara';
+	@override String get storage_category_other => 'Lainnya tanpa kategori';
+	@override String get collection_export_pick_source => 'Pilih sumber';
+	@override String get collection_export_all_sources => 'Semua sumber';
+	@override String get video_subtitle_list_search => 'Cari subtitle';
+	@override String get video_subtitle_list_search_hint => 'Ketik untuk menyaring baris';
+	@override String get video_subtitle_list_search_empty => 'Tidak ada baris yang cocok';
+	@override String get video_subtitle_list_export_favorites => 'Ekspor baris favorit';
+	@override String get shortcut_action_video_search_subtitle_list => 'Cari di daftar subtitle';
+	@override String get game_hook_code_paste_title => 'Tempel kode hook';
+	@override String get game_hook_code_paste_hint => 'Tempel kode mentahnya, mis. /HQN4@4CE90:game.exe';
+	@override String get game_hook_code_paste_body => 'Kode ini terikat pada file eksekusi game yang sedang berjalan, sehingga Fushi dapat memakainya lagi lain kali.';
+	@override String get game_hook_code_paste_saved => 'Kode hook disimpan untuk game ini';
+	@override String get game_hook_code_paste_invalid => 'Ini sepertinya bukan kode hook';
+	@override String get game_hook_code_label => 'Label (opsional)';
+	@override String get discovery_game_type_all => 'Semua';
+	@override String get discovery_game_type_raw => 'Belum diterjemahkan';
+	@override String get discovery_game_type_translated => 'Sudah diterjemahkan';
+	@override String get discovery_game_type_mobile => 'Seluler';
+	@override String get discovery_game_type_unlabelled => 'Tanpa label';
+	@override String get game_library_downloading => 'Mengunduh';
+	@override String get game_library_download_queued => 'Diantrikan';
+	@override String get game_library_download_retrying => 'Mencoba ulang';
+	@override String get delete_disclosure_audio_source_files => 'File audio asli yang Anda impor';
+	@override String get delete_local_files => 'Hapus juga berkas lokal';
+	@override String get delete_local_files_video_desc => 'Berkas video dihapus dari perangkat ini beserta tugas unduhannya. Tindakan ini tidak dapat dibatalkan.';
+	@override String get delete_local_files_audio_desc => 'Berkas audio asli dihapus dari perangkat ini; berkas buku dan takarir asli tetap disimpan. Tindakan ini tidak dapat dibatalkan.';
+	@override String get delete_disclosure_book_source_kept => 'Berkas buku dan takarir asli yang kamu impor';
+	@override String get download_task_delete_files_failed => 'Data unduhan tidak dapat dihapus; mesin unduhan tidak mengonfirmasinya';
+	@override String delete_local_files_failed({required Object n}) => 'Gagal menghapus ${n} berkas lokal; mungkin masih digunakan';
+	@override String batch_hidden_by_filter_note({required Object n}) => '${n} item terpilih lainnya disembunyikan oleh filter saat ini dan tidak akan diproses.';
+	@override String get custom_fonts_default => 'Default (Yu Gothic UI)';
+	@override String get custom_fonts_default_hint => 'Use the built-in Yu Gothic UI rendering for the Galgame Hook overlay.';
+	@override String get gal_hook_text_font_family => 'Galgame caption font';
+	@override String get gal_mining_screenshot_size => 'Galgame screenshot size';
+	@override String get gal_mining_screenshot_size_full_hd => 'Up to 1920 × 1080 (recommended)';
+	@override String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+	@override String get gal_mining_screenshot_size_hint => 'Applies to still screenshots and animated-capture fallbacks. Keeps the aspect ratio, never enlarges, and saves as JPEG at quality 90.';
+	@override String get gal_mining_screenshot_size_original => 'Original size (JPEG)';
+	@override String get game_attach_mode_last_used => 'Last used';
+	@override String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+	@override String get game_attach_mode_luna_safe_hint => 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+	@override String get game_attach_mode_native => 'Fushi native attachment';
+	@override String get game_attach_mode_native_hint => 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+	@override String get game_attach_mode_title => 'Choose attachment mode';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
+	@override String get game_luna_audio_lead_in => 'Complete sentence start';
+	@override String get game_luna_audio_lead_in_hint => 'If the beginning of this sentence is cut off, increase this value.';
+	@override String get game_luna_audio_per_game_hint => 'Saved separately for each attached game.';
+	@override String get game_luna_audio_tail_trim => 'Remove next-line audio';
+	@override String get game_luna_audio_tail_trim_hint => 'If the end of this sentence includes the next line, increase this value.';
+	@override String get game_luna_audio_timing => 'Audio alignment';
+	@override String get game_text_source_luna => 'LunaTranslator (external original text)';
+	@override String get game_text_source_luna_connected => 'Connected. Fushi will use the original text selected in LunaTranslator.';
+	@override String get game_text_source_luna_waiting => 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+	@override String get game_text_thread_recommended => 'Recommended';
+	@override String get game_text_threads_dormant_hide => 'Hide threads without text';
+	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
+	@override String get video_setting_subtitle_language_filter => 'Subtitle language';
+	@override String get video_setting_subtitle_language_filter_all => 'All';
+	@override String get video_setting_subtitle_language_filter_chinese => 'Chinese';
+	@override String get video_setting_subtitle_language_filter_hint => 'Filter Chinese and Japanese content inside the selected subtitle track.';
+	@override String get video_setting_subtitle_language_filter_japanese => 'Japanese';
+	@override String get download_direct_queue_section => 'Direct downloads';
+	@override String get download_task_kind_all => 'All types';
+	@override String get download_task_kind_filter => 'Filter by type';
+	@override String get manga_online_series_empty => 'Seri ini tidak memiliki volume.';
+	@override String sync_peer_book_delete_confirm({required Object name}) => 'Hapus "${name}" dari perangkat pasangan? Berkas dan progres bacanya di sana akan dihapus permanen, dan perangkat ini tidak punya salinan. Tindakan ini tidak dapat dibatalkan.';
+	@override String sync_peer_video_delete_confirm({required Object name}) => 'Hapus "${name}" dari pustaka perangkat pasangan? Berkas video yang diimpor sendiri oleh perangkat itu tetap disimpan. Tindakan ini tidak dapat dibatalkan.';
+	@override String get storage_entry_delete_files_confirm_body => 'Akan langsung dihapus dari disk. Tidak ada di pustaka Anda yang merujuk ke sini — isinya data cache, hasil ekspor, atau yang bisa diunduh ulang.';
+	@override String get manga_series_refresh => 'Segarkan bab';
+	@override String get manga_series_refresh_failed => 'Tidak dapat menyegarkan dari sumber';
+	@override String get manga_series_source_disabled => 'Sumber ini belum dipasang atau dinonaktifkan';
+	@override String get manga_series_platform_unsupported => 'Sumber ini tidak tersedia di platform ini';
+	@override String get manga_series_offline_hint => 'Menampilkan bab yang tersimpan di perangkat ini';
+	@override String get manga_series_no_chapters => 'Belum ada bab';
+	@override String get manga_series_all_read => 'Semua bab telah dibaca';
+	@override String get manga_series_sort_newest => 'Terbaru dulu';
+	@override String get manga_series_sort_oldest => 'Terlama dulu';
+	@override String get manga_series_unread_only => 'Hanya yang belum dibaca';
+	@override String get manga_series_mark_read => 'Tandai sudah dibaca';
+	@override String get manga_series_mark_unread => 'Tandai belum dibaca';
+	@override String get manga_series_mark_previous_read => 'Tandai bab ini dan sebelumnya sudah dibaca';
+	@override String get manga_series_local_volume => 'Volume lokal';
+	@override String get manga_series_volume_info => 'Volume';
+	@override String get manga_series_page_count => 'Halaman';
+	@override String get manga_series_chapters_action => 'Bab';
+	@override String get manga_series_next_chapter => 'Bab berikutnya';
+	@override String get manga_series_previous_chapter => 'Bab sebelumnya';
+	@override String get manga_series_last_chapter_reached => 'Ini bab terbaru';
+	@override String get manga_series_first_chapter_reached => 'Ini bab pertama';
+	@override String get manga_series_open_series => 'Halaman karya';
+	@override String manga_series_read_progress({required Object page, required Object total}) => 'Dibaca sampai halaman ${page} dari ${total}';
+	@override String manga_series_read_progress_partial({required Object page}) => 'Dibaca sampai halaman ${page}';
+	@override String mihon_store_extension_count({required Object count}) => '${count} extensions';
+	@override String mihon_extension_sources_more({required Object count}) => 'Show all ${count} sources';
+	@override String get mihon_extension_sources_less => 'Show fewer sources';
+	@override String get options_website => 'Kunjungi situs web resmi';
 }
