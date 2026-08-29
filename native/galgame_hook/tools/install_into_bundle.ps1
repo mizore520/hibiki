@@ -281,20 +281,6 @@ if ($recordedSourceFingerprint -ne $currentSourceFingerprint) {
   return
 }
 
-# BUG-1599: older Flutter CMake rules copied the same archives into
-# <Bundle>\galgame_helper. At runtime those archives could replace the freshly
-# installed plain files below with an older IPC protocol. Plain files are the
-# only shipping layout now, so incremental bundles must drop the obsolete copy.
-$legacyBundle = [IO.Path]::GetFullPath((Join-Path $BundleDirectory 'galgame_helper'))
-$bundlePrefix = [IO.Path]::GetFullPath($BundleDirectory).TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
-if (-not $legacyBundle.StartsWith($bundlePrefix, [StringComparison]::OrdinalIgnoreCase)) {
-  throw "Refusing to remove legacy helper archive outside bundle: $legacyBundle"
-}
-if (Test-Path -LiteralPath $legacyBundle) {
-  Remove-Item -LiteralPath $legacyBundle -Recurse -Force
-  Write-Host "removed obsolete galgame_helper archive directory: $legacyBundle"
-}
-
 foreach ($arch in @('x86', 'x64')) {
   $zip = Join-Path $DistDirectory "voice_hook_$arch.zip"
   $sidecar = "$zip.sha256"

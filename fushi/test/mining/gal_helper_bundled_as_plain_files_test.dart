@@ -61,18 +61,28 @@ void main() {
 
   test('本地 Flutter 构建不得重新复制运行时 helper 归档 (BUG-1599)', () {
     final String cmake = windowsCmake.readAsStringSync();
-    expect(cmake.contains('FUSHI_GALGAME_HELPER_FILES'), isFalse,
-        reason: 'Flutter install 又把 zip 放回 galgame_helper，可能用旧归档降级新版 helper');
-    expect(cmake.contains('voice_hook_x64.zip'), isFalse,
-        reason: 'Windows CMake 不应再携带 helper zip；普通文件由共用打包脚本安装');
+    expect(
+      cmake.contains('FUSHI_GALGAME_HELPER_FILES'),
+      isFalse,
+      reason: 'Flutter install 又把 zip 放回 galgame_helper，可能用旧归档降级新版 helper',
+    );
+    expect(
+      cmake.contains('voice_hook_x64.zip'),
+      isFalse,
+      reason: 'Windows CMake 不应再携带 helper zip；普通文件由共用打包脚本安装',
+    );
 
     final String installer = script.readAsStringSync();
-    expect(installer.contains("Join-Path \$BundleDirectory 'galgame_helper'"),
-        isTrue,
-        reason: '增量构建必须清除旧版留下的 galgame_helper 目录');
     expect(
-        installer.contains('Remove-Item -LiteralPath \$legacyBundle'), isTrue,
-        reason: '只停止新增不够，现有构建目录里的旧归档仍会触发降级');
+      installer.contains("Join-Path \$BundleDirectory 'galgame_helper'"),
+      isTrue,
+      reason: '增量构建必须清除旧版留下的 galgame_helper 目录',
+    );
+    expect(
+      installer.contains(r'Disable-FushiStaleHelper -Path $legacyBundle'),
+      isTrue,
+      reason: '只停止新增不够，现有构建目录里的旧归档仍会触发降级',
+    );
   });
 
   group('构建期解压脚本与 Dart 清单不得漂移 (BUG-1449)', () {
@@ -357,9 +367,9 @@ void main() {
       ..createSync(recursive: true);
     final File injector = File('${plain.path}/fushi_voice_injector.exe');
     // ping.exe 只是「一个能长期运行的真 exe」：文件名才是运行期判据。
-    File('${Platform.environment['WINDIR']}\\System32\\ping.exe').copySync(
-      injector.path,
-    );
+    File(
+      '${Platform.environment['WINDIR']}\\System32\\ping.exe',
+    ).copySync(injector.path);
 
     final Process holder = await Process.start(injector.path, <String>[
       '-n',
@@ -460,21 +470,13 @@ void main() {
     );
     final String stderr = '${result.stderr}';
     expect(stderr, contains('Cannot disable the stale galgame helper'));
-    expect(
-      stderr,
-      contains('voice_hook'),
-      reason: '错误必须指出是哪个目录，否则用户无从知道该关掉什么',
-    );
+    expect(stderr, contains('voice_hook'), reason: '错误必须指出是哪个目录，否则用户无从知道该关掉什么');
     expect(
       stderr,
       contains('fushi_voice_injector.exe'),
       reason: '错误必须提示先退出游戏 / helper 进程',
     );
-    expect(
-      dll.existsSync(),
-      isTrue,
-      reason: '硬失败时不得留下半删状态',
-    );
+    expect(dll.existsSync(), isTrue, reason: '硬失败时不得留下半删状态');
   });
 
   test('组包与安装必须共享当前源码指纹契约 (BUG-1881)', () {

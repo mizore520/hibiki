@@ -114,7 +114,6 @@ void main() {
     () {
       for (final String relativePath in <String>[
         'native/galgame_hook/tools/build_distribution.ps1',
-        'native/galgame_hook/tools/install_into_bundle.ps1',
         'native/galgame_hook/tools/sync_lunahook.ps1',
       ]) {
         final File file = File(
@@ -131,6 +130,20 @@ void main() {
               '$relativePath runs under the normalized launcher environment',
         );
       }
+
+      final String installer = File(
+        '${repoRoot.path}${Platform.pathSeparator}native'
+        '${Platform.pathSeparator}galgame_hook${Platform.pathSeparator}tools'
+        '${Platform.pathSeparator}install_into_bundle.ps1',
+      ).readAsStringSync();
+      final String fingerprint = File(
+        '${repoRoot.path}${Platform.pathSeparator}native'
+        '${Platform.pathSeparator}galgame_hook${Platform.pathSeparator}tools'
+        '${Platform.pathSeparator}helper_source_fingerprint.ps1',
+      ).readAsStringSync();
+      expect(installer, contains(r'. $fingerprintScript'));
+      expect(fingerprint, contains('[Security.Cryptography.SHA256]::Create()'));
+      expect(installer, isNot(contains('Get-FileHash -')));
     },
   );
 
