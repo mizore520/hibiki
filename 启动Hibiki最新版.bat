@@ -25,7 +25,7 @@ set "BOOTSTRAP=%REPO%\tool\bootstrap.ps1"
 set "PREPARE_ONNX=%REPO%\tool\prepare_windows_onnxruntime.ps1"
 set "PREPARE_SQLITE=%REPO%\tool\prepare_windows_sqlite3.ps1"
 set "GET_BUILD_STATE=%REPO%\tool\get_windows_build_state.ps1"
-set "BUILD_HELPER=%REPO%\native\galgame_hook\tools\build_distribution.ps1"
+set "BUILD_HELPER=%REPO%\tool\prepare_windows_gal_helper.ps1"
 set "RUNTIME_UNLOCK_CHECK=%REPO%\tool\check_windows_runtime_unlocked.ps1"
 set "EXE=%APP%\build\windows\x64\runner\Release\fushi.exe"
 set "STAMP=%APP%\build\.last_built_state"
@@ -174,7 +174,7 @@ if not exist "%BUILD_HELPER%" (
   goto :fail
 )
 echo [4/6] Building and testing the bundled Galgame helper...
-powershell -NoProfile -ExecutionPolicy Bypass -File "%BUILD_HELPER%" -RunTests
+powershell -NoProfile -ExecutionPolicy Bypass -File "%BUILD_HELPER%" -RepoRoot "%REPO%"
 if errorlevel 1 goto :helper_failed
 
 echo [5/6] flutter build windows --release ...

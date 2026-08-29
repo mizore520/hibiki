@@ -6,6 +6,7 @@ void main() {
   final Directory repoRoot = Directory.current.parent;
   final File launcher = File('../启动Hibiki最新版.bat');
   final File stateScript = File('../tool/get_windows_build_state.ps1');
+  final File helperScript = File('../tool/prepare_windows_gal_helper.ps1');
   final File packager = File('../tool/package_windows_runtime.ps1');
 
   test(
@@ -17,13 +18,21 @@ void main() {
       expect(source, contains('get_windows_build_state.ps1'));
       expect(source, contains('.last_built_state'));
       expect(source, isNot(contains('status --porcelain')));
+      expect(source, contains('prepare_windows_gal_helper.ps1'));
       expect(
-        source.indexOf('build_distribution.ps1'),
+        source.indexOf('prepare_windows_gal_helper.ps1'),
         lessThan(source.indexOf('build windows --release')),
       );
       expect(source, contains('-HelperAlreadyBuilt'));
       expect(packaging, contains(r'[switch]$HelperAlreadyBuilt'));
       expect(packaging, contains(r'if (-not $HelperAlreadyBuilt)'));
+
+      final String helper = helperScript.readAsStringSync();
+      expect(helper, contains('vswhere.exe'));
+      expect(helper, contains(r'CommonExtensions\Microsoft\CMake\CMake\bin'));
+      expect(helper, contains("@('cmake', 'ctest')"));
+      expect(helper, contains('build_distribution.ps1'));
+      expect(helper, contains('-RunTests'));
     },
   );
 
