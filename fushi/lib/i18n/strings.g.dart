@@ -1,9 +1,9 @@
 /// Generated file. Do not edit.
 ///
 /// Locales: 17
-/// Strings: 65263 (3839 per locale)
+/// Strings: 65195 (3835 per locale)
 ///
-/// Built on 2026-08-28 at 13:18 UTC
+/// Built on 2026-08-28 at 14:52 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -4629,9 +4629,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get onboarding_step_fonts_body =>
       'Import custom fonts and choose which of UI, book text and dictionary use them.';
   String get settings_section_modules => 'Feature modules';
-  String get module_manga_label => 'Manga';
-  String get module_video_label => 'Video';
-  String get module_games_label => 'Galgame';
   String get module_toggle_hint =>
       'Show this library tab in the navigation bar; turn off to hide it';
   String get video_setting_youtube_quality => 'YouTube quality';
@@ -4765,7 +4762,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
       'Shipped with the installer; deleted files come back on the next update, listed for reference only.';
   String get storage_dictionary_delete_incomplete =>
       'Dictionary still present after deletion, see error log';
-  String get module_books_label => 'Novels';
   String get module_extension_label => 'Browser extension';
   String get onboarding_feature_books => 'Novel library';
   String get onboarding_feature_books_hint =>
@@ -5126,7 +5122,7 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get module_tool_toggle_hint =>
       'Show this tab in the navigation bar; turn off to hide it';
   String get module_downloads_hidden_hint =>
-      'The Downloads tab is hidden in Settings → System → Feature modules; turn it back on to manage subscriptions.';
+      'The Downloads tab is hidden in Settings → Appearance → Feature modules; turn it back on to manage subscriptions.';
   String get book_file_location_open => 'Open file location';
   String get book_file_location_failed =>
       'Could not open this book\'s file location.';
@@ -13110,12 +13106,6 @@ class _StringsAr extends _StringsEn {
   @override
   String get settings_section_modules => 'وحدات الميزات';
   @override
-  String get module_manga_label => 'مانغا';
-  @override
-  String get module_video_label => 'فيديو';
-  @override
-  String get module_games_label => 'Galgame';
-  @override
   String get module_toggle_hint =>
       'إظهار تبويب المكتبة هذا في شريط التنقل؛ أوقفه لإخفائه';
   @override
@@ -13344,8 +13334,6 @@ class _StringsAr extends _StringsEn {
   @override
   String get storage_dictionary_delete_incomplete =>
       'القاموس لا يزال موجوداً بعد الحذف، راجع سجل الأخطاء';
-  @override
-  String get module_books_label => 'روايات';
   @override
   String get module_extension_label => 'إضافة المتصفح';
   @override
@@ -13961,7 +13949,7 @@ class _StringsAr extends _StringsEn {
       'إظهار هذا التبويب في شريط التنقل؛ أوقفه لإخفائه';
   @override
   String get module_downloads_hidden_hint =>
-      'تبويب التحميلات مخفي في الإعدادات → النظام → وحدات الميزات؛ أعد تشغيله لإدارة الاشتراكات.';
+      'تبويب التحميلات مخفي في الإعدادات → المظهر → وحدات الميزات؛ أعد تشغيله لإدارة الاشتراكات.';
   @override
   String get book_file_location_open => 'فتح موقع الملف';
   @override
@@ -22190,12 +22178,6 @@ class _StringsDe extends _StringsEn {
   @override
   String get settings_section_modules => 'Funktionsmodule';
   @override
-  String get module_manga_label => 'Manga';
-  @override
-  String get module_video_label => 'Video';
-  @override
-  String get module_games_label => 'Galgame';
-  @override
   String get module_toggle_hint =>
       'Diesen Bibliotheks-Tab in der Navigationsleiste anzeigen; ausschalten zum Ausblenden';
   @override
@@ -22432,8 +22414,6 @@ class _StringsDe extends _StringsEn {
   @override
   String get storage_dictionary_delete_incomplete =>
       'Wörterbuch nach dem Löschen noch vorhanden, siehe Fehlerprotokoll';
-  @override
-  String get module_books_label => 'Romane';
   @override
   String get module_extension_label => 'Browser-Erweiterung';
   @override
@@ -23058,7 +23038,7 @@ class _StringsDe extends _StringsEn {
       'Diesen Tab in der Navigationsleiste anzeigen; ausschalten, um ihn auszublenden';
   @override
   String get module_downloads_hidden_hint =>
-      'Der Tab „Downloads“ ist unter Einstellungen → System → Funktionsmodule ausgeblendet; schalte ihn wieder ein, um Abos zu verwalten.';
+      'Der Tab „Downloads“ ist unter Einstellungen → Erscheinungsbild → Funktionsmodule ausgeblendet; schalte ihn wieder ein, um Abos zu verwalten.';
   @override
   String get book_file_location_open => 'Speicherort öffnen';
   @override
@@ -31326,12 +31306,6 @@ class _StringsEs extends _StringsEn {
   @override
   String get settings_section_modules => 'Módulos de funciones';
   @override
-  String get module_manga_label => 'Manga';
-  @override
-  String get module_video_label => 'Vídeo';
-  @override
-  String get module_games_label => 'Galgame';
-  @override
   String get module_toggle_hint =>
       'Mostrar esta pestaña de biblioteca en la barra de navegación; desactive para ocultarla';
   @override
@@ -31570,8 +31544,6 @@ class _StringsEs extends _StringsEn {
   @override
   String get storage_dictionary_delete_incomplete =>
       'Diccionario aún presente después de la eliminación, ver registro de errores';
-  @override
-  String get module_books_label => 'Novelas';
   @override
   String get module_extension_label => 'Extensión del navegador';
   @override
@@ -32206,7 +32178,7 @@ class _StringsEs extends _StringsEn {
       'Mostrar esta pestaña en la barra de navegación; desactívalo para ocultarla';
   @override
   String get module_downloads_hidden_hint =>
-      'La pestaña Descargas está oculta en Configuración → Sistema → Módulos de funciones; vuelve a activarla para gestionar las suscripciones.';
+      'La pestaña Descargas está oculta en Configuración → Apariencia → Módulos de funciones; vuelve a activarla para gestionar las suscripciones.';
   @override
   String get book_file_location_open => 'Abrir ubicación del archivo';
   @override
@@ -40505,12 +40477,6 @@ class _StringsFr extends _StringsEn {
   @override
   String get settings_section_modules => 'Modules de fonctionnalités';
   @override
-  String get module_manga_label => 'Manga';
-  @override
-  String get module_video_label => 'Vidéo';
-  @override
-  String get module_games_label => 'Galgame';
-  @override
   String get module_toggle_hint =>
       'Afficher cet onglet de bibliothèque dans la barre de navigation ; désactivez pour le masquer';
   @override
@@ -40748,8 +40714,6 @@ class _StringsFr extends _StringsEn {
   @override
   String get storage_dictionary_delete_incomplete =>
       'Dictionnaire toujours présent après suppression, voir le journal d\'erreurs';
-  @override
-  String get module_books_label => 'Romans';
   @override
   String get module_extension_label => 'Extension navigateur';
   @override
@@ -41385,7 +41349,7 @@ class _StringsFr extends _StringsEn {
       'Afficher cet onglet dans la barre de navigation ; désactiver pour le masquer';
   @override
   String get module_downloads_hidden_hint =>
-      'L\'onglet Téléchargements est masqué dans Paramètres → Système → Modules de fonctionnalités ; réactivez-le pour gérer les abonnements.';
+      'L\'onglet Téléchargements est masqué dans Paramètres → Apparence → Modules de fonctionnalités ; réactivez-le pour gérer les abonnements.';
   @override
   String get book_file_location_open => 'Ouvrir l\'emplacement du fichier';
   @override
@@ -49538,12 +49502,6 @@ class _StringsId extends _StringsEn {
   @override
   String get settings_section_modules => 'Modul fitur';
   @override
-  String get module_manga_label => 'Manga';
-  @override
-  String get module_video_label => 'Video';
-  @override
-  String get module_games_label => 'Galgame';
-  @override
   String get module_toggle_hint =>
       'Tampilkan tab perpustakaan ini di bilah navigasi; matikan untuk menyembunyikannya';
   @override
@@ -49777,8 +49735,6 @@ class _StringsId extends _StringsEn {
   @override
   String get storage_dictionary_delete_incomplete =>
       'Kamus masih ada setelah penghapusan, lihat log error';
-  @override
-  String get module_books_label => 'Novel';
   @override
   String get module_extension_label => 'Ekstensi browser';
   @override
@@ -50398,7 +50354,7 @@ class _StringsId extends _StringsEn {
       'Tampilkan tab ini di bilah navigasi; matikan untuk menyembunyikannya';
   @override
   String get module_downloads_hidden_hint =>
-      'Tab Unduhan disembunyikan di Pengaturan → Sistem → Modul fitur; nyalakan lagi untuk mengelola langganan.';
+      'Tab Unduhan disembunyikan di Pengaturan → Tampilan → Modul fitur; nyalakan lagi untuk mengelola langganan.';
   @override
   String get book_file_location_open => 'Buka lokasi berkas';
   @override
@@ -58612,12 +58568,6 @@ class _StringsIt extends _StringsEn {
   @override
   String get settings_section_modules => 'Moduli funzionalità';
   @override
-  String get module_manga_label => 'Manga';
-  @override
-  String get module_video_label => 'Video';
-  @override
-  String get module_games_label => 'Galgame';
-  @override
   String get module_toggle_hint =>
       'Mostra questa scheda libreria nella barra di navigazione; disattiva per nasconderla';
   @override
@@ -58854,8 +58804,6 @@ class _StringsIt extends _StringsEn {
   @override
   String get storage_dictionary_delete_incomplete =>
       'Dizionario ancora presente dopo l\'eliminazione, vedi registro errori';
-  @override
-  String get module_books_label => 'Romanzi';
   @override
   String get module_extension_label => 'Estensione browser';
   @override
@@ -59480,7 +59428,7 @@ class _StringsIt extends _StringsEn {
       'Mostra questa scheda nella barra di navigazione; disattiva per nasconderla';
   @override
   String get module_downloads_hidden_hint =>
-      'La scheda Download è nascosta in Impostazioni → Sistema → Moduli funzionalità; riattivala per gestire le sottoscrizioni.';
+      'La scheda Download è nascosta in Impostazioni → Aspetto → Moduli funzionalità; riattivala per gestire le sottoscrizioni.';
   @override
   String get book_file_location_open => 'Apri posizione del file';
   @override
@@ -67210,12 +67158,6 @@ class _StringsJa extends _StringsEn {
   @override
   String get settings_section_modules => '機能モジュール';
   @override
-  String get module_manga_label => 'マンガ';
-  @override
-  String get module_video_label => '動画';
-  @override
-  String get module_games_label => 'ゲーム';
-  @override
   String get module_toggle_hint => 'このライブラリタブをナビゲーションバーに表示します。オフにすると非表示になります';
   @override
   String get video_setting_youtube_quality => 'YouTube画質';
@@ -67429,8 +67371,6 @@ class _StringsJa extends _StringsEn {
   @override
   String get storage_dictionary_delete_incomplete =>
       '削除後も辞書が残っています。エラーログを確認してください';
-  @override
-  String get module_books_label => '小説';
   @override
   String get module_extension_label => 'ブラウザ拡張機能';
   @override
@@ -68018,7 +67958,7 @@ class _StringsJa extends _StringsEn {
   String get module_tool_toggle_hint => 'このタブをナビゲーションバーに表示します。オフにすると非表示になります';
   @override
   String get module_downloads_hidden_hint =>
-      '「ダウンロード」タブは 設定 → システム → 機能モジュール で非表示になっています。購読を管理するには再度オンにしてください。';
+      '「ダウンロード」タブは 設定 → 外観 → 機能モジュール で非表示になっています。購読を管理するには再度オンにしてください。';
   @override
   String get book_file_location_open => 'ファイルの場所を開く';
   @override
@@ -75751,12 +75691,6 @@ class _StringsKo extends _StringsEn {
   @override
   String get settings_section_modules => '기능 모듈';
   @override
-  String get module_manga_label => '만화';
-  @override
-  String get module_video_label => '동영상';
-  @override
-  String get module_games_label => '게임';
-  @override
   String get module_toggle_hint => '내비게이션 바에 이 라이브러리 탭 표시; 끄면 숨김';
   @override
   String get video_setting_youtube_quality => 'YouTube 화질';
@@ -75971,8 +75905,6 @@ class _StringsKo extends _StringsEn {
   @override
   String get storage_dictionary_delete_incomplete =>
       '삭제 후에도 사전이 남아 있습니다. 오류 로그를 확인하세요';
-  @override
-  String get module_books_label => '소설';
   @override
   String get module_extension_label => '브라우저 확장';
   @override
@@ -76563,7 +76495,7 @@ class _StringsKo extends _StringsEn {
   String get module_tool_toggle_hint => '이 탭을 내비게이션 바에 표시해요. 끄면 숨겨져요';
   @override
   String get module_downloads_hidden_hint =>
-      '‘다운로드’ 탭이 설정 → 시스템 → 기능 모듈에서 숨겨져 있어요. 구독을 관리하려면 다시 켜세요.';
+      '‘다운로드’ 탭이 설정 → 외관 → 기능 모듈에서 숨겨져 있어요. 구독을 관리하려면 다시 켜세요.';
   @override
   String get book_file_location_open => '파일 위치 열기';
   @override
@@ -84733,12 +84665,6 @@ class _StringsNl extends _StringsEn {
   @override
   String get settings_section_modules => 'Functiemodules';
   @override
-  String get module_manga_label => 'Manga';
-  @override
-  String get module_video_label => 'Video';
-  @override
-  String get module_games_label => 'Galgame';
-  @override
   String get module_toggle_hint =>
       'Toon dit bibliotheektabblad in de navigatiebalk; schakel uit om het te verbergen';
   @override
@@ -84972,8 +84898,6 @@ class _StringsNl extends _StringsEn {
   @override
   String get storage_dictionary_delete_incomplete =>
       'Woordenboek nog aanwezig na verwijdering, zie foutenlog';
-  @override
-  String get module_books_label => 'Romans';
   @override
   String get module_extension_label => 'Browserextensie';
   @override
@@ -85596,7 +85520,7 @@ class _StringsNl extends _StringsEn {
       'Dit tabblad in de navigatiebalk tonen; uitschakelen om het te verbergen';
   @override
   String get module_downloads_hidden_hint =>
-      'Het tabblad Downloads is verborgen via Instellingen → Systeem → Functiemodules; zet het weer aan om abonnementen te beheren.';
+      'Het tabblad Downloads is verborgen via Instellingen → Uiterlijk → Functiemodules; zet het weer aan om abonnementen te beheren.';
   @override
   String get book_file_location_open => 'Bestandslocatie openen';
   @override
@@ -93816,12 +93740,6 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get settings_section_modules => 'Módulos de funcionalidades';
   @override
-  String get module_manga_label => 'Mangá';
-  @override
-  String get module_video_label => 'Vídeo';
-  @override
-  String get module_games_label => 'Galgame';
-  @override
   String get module_toggle_hint =>
       'Mostrar esta aba de biblioteca na barra de navegação; desative para ocultá-la';
   @override
@@ -94059,8 +93977,6 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get storage_dictionary_delete_incomplete =>
       'Dicionário ainda presente após exclusão, veja o log de erros';
-  @override
-  String get module_books_label => 'Romances';
   @override
   String get module_extension_label => 'Extensão do navegador';
   @override
@@ -94692,7 +94608,7 @@ class _StringsPtBr extends _StringsEn {
       'Mostrar esta aba na barra de navegação; desative para ocultá-la';
   @override
   String get module_downloads_hidden_hint =>
-      'A aba Downloads está oculta em Configurações → Sistema → Módulos de funcionalidades; reative-a para gerenciar as assinaturas.';
+      'A aba Downloads está oculta em Configurações → Aparência → Módulos de funcionalidades; reative-a para gerenciar as assinaturas.';
   @override
   String get book_file_location_open => 'Abrir local do arquivo';
   @override
@@ -102895,12 +102811,6 @@ class _StringsRu extends _StringsEn {
   @override
   String get settings_section_modules => 'Функциональные модули';
   @override
-  String get module_manga_label => 'Манга';
-  @override
-  String get module_video_label => 'Видео';
-  @override
-  String get module_games_label => 'Galgame';
-  @override
   String get module_toggle_hint =>
       'Показывать вкладку этой библиотеки в панели навигации; отключите, чтобы скрыть';
   @override
@@ -103136,8 +103046,6 @@ class _StringsRu extends _StringsEn {
   @override
   String get storage_dictionary_delete_incomplete =>
       'Словарь всё ещё присутствует после удаления, см. журнал ошибок';
-  @override
-  String get module_books_label => 'Романы';
   @override
   String get module_extension_label => 'Расширение для браузера';
   @override
@@ -103765,7 +103673,7 @@ class _StringsRu extends _StringsEn {
       'Показывать эту вкладку в панели навигации; выключите, чтобы скрыть';
   @override
   String get module_downloads_hidden_hint =>
-      'Вкладка «Загрузки» скрыта в разделе Настройки → Система → Функциональные модули; включите её снова, чтобы управлять подписками.';
+      'Вкладка «Загрузки» скрыта в разделе Настройки → Внешний вид → Функциональные модули; включите её снова, чтобы управлять подписками.';
   @override
   String get book_file_location_open => 'Открыть расположение файла';
   @override
@@ -111804,12 +111712,6 @@ class _StringsTh extends _StringsEn {
   @override
   String get settings_section_modules => 'โมดูลฟีเจอร์';
   @override
-  String get module_manga_label => 'มังงะ';
-  @override
-  String get module_video_label => 'วิดีโอ';
-  @override
-  String get module_games_label => 'เกม';
-  @override
   String get module_toggle_hint => 'แสดงแท็บไลบรารีนี้ในแถบนำทาง ปิดเพื่อซ่อน';
   @override
   String get video_setting_youtube_quality => 'คุณภาพ YouTube';
@@ -112040,8 +111942,6 @@ class _StringsTh extends _StringsEn {
   @override
   String get storage_dictionary_delete_incomplete =>
       'พจนานุกรมยังคงอยู่หลังจากลบ ดูบันทึกข้อผิดพลาด';
-  @override
-  String get module_books_label => 'นิยาย';
   @override
   String get module_extension_label => 'ส่วนขยายเบราว์เซอร์';
   @override
@@ -112659,7 +112559,7 @@ class _StringsTh extends _StringsEn {
   String get module_tool_toggle_hint => 'แสดงแท็บนี้ในแถบนำทาง ปิดเพื่อซ่อน';
   @override
   String get module_downloads_hidden_hint =>
-      'แท็บดาวน์โหลดถูกซ่อนไว้ใน การตั้งค่า → ระบบ → โมดูลฟีเจอร์ ต้องเปิดกลับมาจึงจะจัดการรายการติดตามได้';
+      'แท็บดาวน์โหลดถูกซ่อนไว้ใน การตั้งค่า → รูปลักษณ์ → โมดูลฟีเจอร์ ต้องเปิดกลับมาจึงจะจัดการรายการติดตามได้';
   @override
   String get book_file_location_open => 'เปิดตำแหน่งไฟล์';
   @override
@@ -120790,12 +120690,6 @@ class _StringsTr extends _StringsEn {
   @override
   String get settings_section_modules => 'Özellik modülleri';
   @override
-  String get module_manga_label => 'Manga';
-  @override
-  String get module_video_label => 'Video';
-  @override
-  String get module_games_label => 'Galgame';
-  @override
   String get module_toggle_hint =>
       'Bu kütüphane sekmesini gezinme çubuğunda göster; gizlemek için kapatın';
   @override
@@ -121028,8 +120922,6 @@ class _StringsTr extends _StringsEn {
   @override
   String get storage_dictionary_delete_incomplete =>
       'Silme sonrası sözlük hâlâ mevcut, hata günlüğüne bakın';
-  @override
-  String get module_books_label => 'Romanlar';
   @override
   String get module_extension_label => 'Tarayıcı eklentisi';
   @override
@@ -121653,7 +121545,7 @@ class _StringsTr extends _StringsEn {
       'Bu sekmeyi gezinme çubuğunda göster; gizlemek için kapatın';
   @override
   String get module_downloads_hidden_hint =>
-      'İndirmeler sekmesi Ayarlar → Sistem → Özellik modülleri altında gizli; abonelikleri yönetmek için yeniden açın.';
+      'İndirmeler sekmesi Ayarlar → Görünüm → Özellik modülleri altında gizli; abonelikleri yönetmek için yeniden açın.';
   @override
   String get book_file_location_open => 'Dosya konumunu aç';
   @override
@@ -129763,12 +129655,6 @@ class _StringsVi extends _StringsEn {
   @override
   String get settings_section_modules => 'Mô-đun tính năng';
   @override
-  String get module_manga_label => 'Truyện tranh';
-  @override
-  String get module_video_label => 'Video';
-  @override
-  String get module_games_label => 'Galgame';
-  @override
   String get module_toggle_hint =>
       'Hiển thị tab thư viện này trong thanh điều hướng; tắt để ẩn';
   @override
@@ -130002,8 +129888,6 @@ class _StringsVi extends _StringsEn {
   @override
   String get storage_dictionary_delete_incomplete =>
       'Từ điển vẫn còn sau khi xóa, xem nhật ký lỗi';
-  @override
-  String get module_books_label => 'Tiểu thuyết';
   @override
   String get module_extension_label => 'Tiện ích mở rộng trình duyệt';
   @override
@@ -130628,7 +130512,7 @@ class _StringsVi extends _StringsEn {
       'Hiện tab này trên thanh điều hướng; tắt để ẩn';
   @override
   String get module_downloads_hidden_hint =>
-      'Tab Tải xuống đang bị ẩn trong Cài đặt → Hệ thống → Mô-đun tính năng; bật lại để quản lý đăng ký.';
+      'Tab Tải xuống đang bị ẩn trong Cài đặt → Giao diện → Mô-đun tính năng; bật lại để quản lý đăng ký.';
   @override
   String get book_file_location_open => 'Mở vị trí tệp';
   @override
@@ -138126,12 +138010,6 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get settings_section_modules => '功能模块';
   @override
-  String get module_manga_label => '漫画';
-  @override
-  String get module_video_label => '视频';
-  @override
-  String get module_games_label => 'Galgame';
-  @override
   String get module_toggle_hint => '在底栏/侧栏显示该库页；关闭即隐藏';
   @override
   String get video_setting_youtube_quality => 'YouTube 画质';
@@ -138339,8 +138217,6 @@ class _StringsZhCn extends _StringsEn {
   String get storage_bundled_hint => '随安装包携带，删除后下次更新会自动恢复，此处仅展示。';
   @override
   String get storage_dictionary_delete_incomplete => '词典删除未完成、条目仍在，详见错误日志';
-  @override
-  String get module_books_label => '小说';
   @override
   String get module_extension_label => '浏览器扩展';
   @override
@@ -138900,7 +138776,7 @@ class _StringsZhCn extends _StringsEn {
   String get module_tool_toggle_hint => '在底栏/侧栏显示该页；关闭即隐藏';
   @override
   String get module_downloads_hidden_hint =>
-      '「下载」页已在 设置 → 系统 → 功能模块 中隐藏；重新打开它才能管理订阅。';
+      '「下载」页已在 设置 → 外观 → 功能模块 中隐藏；重新打开它才能管理订阅。';
   @override
   String get book_file_location_open => '打开文件位置';
   @override
@@ -146389,12 +146265,6 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get settings_section_modules => '功能模塊';
   @override
-  String get module_manga_label => '漫畫';
-  @override
-  String get module_video_label => '影片';
-  @override
-  String get module_games_label => 'Galgame';
-  @override
   String get module_toggle_hint => '在底欄/側欄顯示該庫頁；關閉即隱藏';
   @override
   String get video_setting_youtube_quality => 'YouTube 畫質';
@@ -146602,8 +146472,6 @@ class _StringsZhHk extends _StringsEn {
   String get storage_bundled_hint => '隨安裝包攜帶，刪除後下次更新會自動恢復，此處僅展示。';
   @override
   String get storage_dictionary_delete_incomplete => '詞典刪除未完成、條目仍在，詳見錯誤日志';
-  @override
-  String get module_books_label => '小說';
   @override
   String get module_extension_label => '瀏覽器擴展';
   @override
@@ -147163,7 +147031,7 @@ class _StringsZhHk extends _StringsEn {
   String get module_tool_toggle_hint => '在導覽列顯示此頁；關閉即隱藏';
   @override
   String get module_downloads_hidden_hint =>
-      '「下載」頁已在 設定 → 系統 → 功能模塊 中隱藏；重新開啟才能管理訂閱。';
+      '「下載」頁已在 設定 → 外觀 → 功能模塊 中隱藏；重新開啟才能管理訂閱。';
   @override
   String get book_file_location_open => '開啟檔案位置';
   @override
@@ -154325,12 +154193,6 @@ extension on _StringsEn {
         return 'Import custom fonts and choose which of UI, book text and dictionary use them.';
       case 'settings_section_modules':
         return 'Feature modules';
-      case 'module_manga_label':
-        return 'Manga';
-      case 'module_video_label':
-        return 'Video';
-      case 'module_games_label':
-        return 'Galgame';
       case 'module_toggle_hint':
         return 'Show this library tab in the navigation bar; turn off to hide it';
       case 'video_setting_youtube_quality':
@@ -154528,8 +154390,6 @@ extension on _StringsEn {
         return 'Shipped with the installer; deleted files come back on the next update, listed for reference only.';
       case 'storage_dictionary_delete_incomplete':
         return 'Dictionary still present after deletion, see error log';
-      case 'module_books_label':
-        return 'Novels';
       case 'module_extension_label':
         return 'Browser extension';
       case 'onboarding_feature_books':
@@ -155049,7 +154909,7 @@ extension on _StringsEn {
       case 'module_tool_toggle_hint':
         return 'Show this tab in the navigation bar; turn off to hide it';
       case 'module_downloads_hidden_hint':
-        return 'The Downloads tab is hidden in Settings → System → Feature modules; turn it back on to manage subscriptions.';
+        return 'The Downloads tab is hidden in Settings → Appearance → Feature modules; turn it back on to manage subscriptions.';
       case 'book_file_location_open':
         return 'Open file location';
       case 'book_file_location_failed':
@@ -162199,12 +162059,6 @@ extension on _StringsAr {
         return 'استورد خطوطاً مخصصة واختر أيها يُستخدم للواجهة ونص الكتاب والقاموس.';
       case 'settings_section_modules':
         return 'وحدات الميزات';
-      case 'module_manga_label':
-        return 'مانغا';
-      case 'module_video_label':
-        return 'فيديو';
-      case 'module_games_label':
-        return 'Galgame';
       case 'module_toggle_hint':
         return 'إظهار تبويب المكتبة هذا في شريط التنقل؛ أوقفه لإخفائه';
       case 'video_setting_youtube_quality':
@@ -162402,8 +162256,6 @@ extension on _StringsAr {
         return 'مُرفقة مع المُثبّت؛ الملفات المحذوفة تعود مع التحديث التالي، مدرجة للعلم فقط.';
       case 'storage_dictionary_delete_incomplete':
         return 'القاموس لا يزال موجوداً بعد الحذف، راجع سجل الأخطاء';
-      case 'module_books_label':
-        return 'روايات';
       case 'module_extension_label':
         return 'إضافة المتصفح';
       case 'onboarding_feature_books':
@@ -162924,7 +162776,7 @@ extension on _StringsAr {
       case 'module_tool_toggle_hint':
         return 'إظهار هذا التبويب في شريط التنقل؛ أوقفه لإخفائه';
       case 'module_downloads_hidden_hint':
-        return 'تبويب التحميلات مخفي في الإعدادات → النظام → وحدات الميزات؛ أعد تشغيله لإدارة الاشتراكات.';
+        return 'تبويب التحميلات مخفي في الإعدادات → المظهر → وحدات الميزات؛ أعد تشغيله لإدارة الاشتراكات.';
       case 'book_file_location_open':
         return 'فتح موقع الملف';
       case 'book_file_location_failed':
@@ -170110,12 +169962,6 @@ extension on _StringsDe {
         return 'Importieren Sie benutzerdefinierte Schriften und wählen Sie, welche für Oberfläche, Buchtext und Wörterbuch verwendet werden.';
       case 'settings_section_modules':
         return 'Funktionsmodule';
-      case 'module_manga_label':
-        return 'Manga';
-      case 'module_video_label':
-        return 'Video';
-      case 'module_games_label':
-        return 'Galgame';
       case 'module_toggle_hint':
         return 'Diesen Bibliotheks-Tab in der Navigationsleiste anzeigen; ausschalten zum Ausblenden';
       case 'video_setting_youtube_quality':
@@ -170314,8 +170160,6 @@ extension on _StringsDe {
         return 'Mit dem Installationsprogramm ausgeliefert; gelöschte Dateien werden beim nächsten Update wiederhergestellt, nur zur Information aufgelistet.';
       case 'storage_dictionary_delete_incomplete':
         return 'Wörterbuch nach dem Löschen noch vorhanden, siehe Fehlerprotokoll';
-      case 'module_books_label':
-        return 'Romane';
       case 'module_extension_label':
         return 'Browser-Erweiterung';
       case 'onboarding_feature_books':
@@ -170839,7 +170683,7 @@ extension on _StringsDe {
       case 'module_tool_toggle_hint':
         return 'Diesen Tab in der Navigationsleiste anzeigen; ausschalten, um ihn auszublenden';
       case 'module_downloads_hidden_hint':
-        return 'Der Tab „Downloads“ ist unter Einstellungen → System → Funktionsmodule ausgeblendet; schalte ihn wieder ein, um Abos zu verwalten.';
+        return 'Der Tab „Downloads“ ist unter Einstellungen → Erscheinungsbild → Funktionsmodule ausgeblendet; schalte ihn wieder ein, um Abos zu verwalten.';
       case 'book_file_location_open':
         return 'Speicherort öffnen';
       case 'book_file_location_failed':
@@ -178020,12 +177864,6 @@ extension on _StringsEs {
         return 'Importe fuentes personalizadas y elija cuáles usan la interfaz, el texto del libro y el diccionario.';
       case 'settings_section_modules':
         return 'Módulos de funciones';
-      case 'module_manga_label':
-        return 'Manga';
-      case 'module_video_label':
-        return 'Vídeo';
-      case 'module_games_label':
-        return 'Galgame';
       case 'module_toggle_hint':
         return 'Mostrar esta pestaña de biblioteca en la barra de navegación; desactive para ocultarla';
       case 'video_setting_youtube_quality':
@@ -178223,8 +178061,6 @@ extension on _StringsEs {
         return 'Incluidos con el instalador; los archivos eliminados regresan en la próxima actualización, listados solo como referencia.';
       case 'storage_dictionary_delete_incomplete':
         return 'Diccionario aún presente después de la eliminación, ver registro de errores';
-      case 'module_books_label':
-        return 'Novelas';
       case 'module_extension_label':
         return 'Extensión del navegador';
       case 'onboarding_feature_books':
@@ -178748,7 +178584,7 @@ extension on _StringsEs {
       case 'module_tool_toggle_hint':
         return 'Mostrar esta pestaña en la barra de navegación; desactívalo para ocultarla';
       case 'module_downloads_hidden_hint':
-        return 'La pestaña Descargas está oculta en Configuración → Sistema → Módulos de funciones; vuelve a activarla para gestionar las suscripciones.';
+        return 'La pestaña Descargas está oculta en Configuración → Apariencia → Módulos de funciones; vuelve a activarla para gestionar las suscripciones.';
       case 'book_file_location_open':
         return 'Abrir ubicación del archivo';
       case 'book_file_location_failed':
@@ -185938,12 +185774,6 @@ extension on _StringsFr {
         return 'Importez des polices personnalisées et choisissez lesquelles utiliser pour l\'interface, le texte des livres et le dictionnaire.';
       case 'settings_section_modules':
         return 'Modules de fonctionnalités';
-      case 'module_manga_label':
-        return 'Manga';
-      case 'module_video_label':
-        return 'Vidéo';
-      case 'module_games_label':
-        return 'Galgame';
       case 'module_toggle_hint':
         return 'Afficher cet onglet de bibliothèque dans la barre de navigation ; désactivez pour le masquer';
       case 'video_setting_youtube_quality':
@@ -186141,8 +185971,6 @@ extension on _StringsFr {
         return 'Livrés avec l\'installateur ; les fichiers supprimés reviennent à la prochaine mise à jour, listés pour référence uniquement.';
       case 'storage_dictionary_delete_incomplete':
         return 'Dictionnaire toujours présent après suppression, voir le journal d\'erreurs';
-      case 'module_books_label':
-        return 'Romans';
       case 'module_extension_label':
         return 'Extension navigateur';
       case 'onboarding_feature_books':
@@ -186665,7 +186493,7 @@ extension on _StringsFr {
       case 'module_tool_toggle_hint':
         return 'Afficher cet onglet dans la barre de navigation ; désactiver pour le masquer';
       case 'module_downloads_hidden_hint':
-        return 'L\'onglet Téléchargements est masqué dans Paramètres → Système → Modules de fonctionnalités ; réactivez-le pour gérer les abonnements.';
+        return 'L\'onglet Téléchargements est masqué dans Paramètres → Apparence → Modules de fonctionnalités ; réactivez-le pour gérer les abonnements.';
       case 'book_file_location_open':
         return 'Ouvrir l\'emplacement du fichier';
       case 'book_file_location_failed':
@@ -193831,12 +193659,6 @@ extension on _StringsId {
         return 'Impor font kustom dan pilih mana yang digunakan oleh UI, teks buku, dan kamus.';
       case 'settings_section_modules':
         return 'Modul fitur';
-      case 'module_manga_label':
-        return 'Manga';
-      case 'module_video_label':
-        return 'Video';
-      case 'module_games_label':
-        return 'Galgame';
       case 'module_toggle_hint':
         return 'Tampilkan tab perpustakaan ini di bilah navigasi; matikan untuk menyembunyikannya';
       case 'video_setting_youtube_quality':
@@ -194034,8 +193856,6 @@ extension on _StringsId {
         return 'Dikirimkan bersama penginstal; file yang dihapus akan kembali pada pembaruan berikutnya, ditampilkan hanya sebagai referensi.';
       case 'storage_dictionary_delete_incomplete':
         return 'Kamus masih ada setelah penghapusan, lihat log error';
-      case 'module_books_label':
-        return 'Novel';
       case 'module_extension_label':
         return 'Ekstensi browser';
       case 'onboarding_feature_books':
@@ -194555,7 +194375,7 @@ extension on _StringsId {
       case 'module_tool_toggle_hint':
         return 'Tampilkan tab ini di bilah navigasi; matikan untuk menyembunyikannya';
       case 'module_downloads_hidden_hint':
-        return 'Tab Unduhan disembunyikan di Pengaturan → Sistem → Modul fitur; nyalakan lagi untuk mengelola langganan.';
+        return 'Tab Unduhan disembunyikan di Pengaturan → Tampilan → Modul fitur; nyalakan lagi untuk mengelola langganan.';
       case 'book_file_location_open':
         return 'Buka lokasi berkas';
       case 'book_file_location_failed':
@@ -201738,12 +201558,6 @@ extension on _StringsIt {
         return 'Importa font personalizzati e scegli quale usano UI, testo dei libri e dizionario.';
       case 'settings_section_modules':
         return 'Moduli funzionalità';
-      case 'module_manga_label':
-        return 'Manga';
-      case 'module_video_label':
-        return 'Video';
-      case 'module_games_label':
-        return 'Galgame';
       case 'module_toggle_hint':
         return 'Mostra questa scheda libreria nella barra di navigazione; disattiva per nasconderla';
       case 'video_setting_youtube_quality':
@@ -201941,8 +201755,6 @@ extension on _StringsIt {
         return 'Forniti con l\'installer; i file eliminati tornano al prossimo aggiornamento, elencati solo come riferimento.';
       case 'storage_dictionary_delete_incomplete':
         return 'Dizionario ancora presente dopo l\'eliminazione, vedi registro errori';
-      case 'module_books_label':
-        return 'Romanzi';
       case 'module_extension_label':
         return 'Estensione browser';
       case 'onboarding_feature_books':
@@ -202464,7 +202276,7 @@ extension on _StringsIt {
       case 'module_tool_toggle_hint':
         return 'Mostra questa scheda nella barra di navigazione; disattiva per nasconderla';
       case 'module_downloads_hidden_hint':
-        return 'La scheda Download è nascosta in Impostazioni → Sistema → Moduli funzionalità; riattivala per gestire le sottoscrizioni.';
+        return 'La scheda Download è nascosta in Impostazioni → Aspetto → Moduli funzionalità; riattivala per gestire le sottoscrizioni.';
       case 'book_file_location_open':
         return 'Apri posizione del file';
       case 'book_file_location_failed':
@@ -209586,12 +209398,6 @@ extension on _StringsJa {
         return 'カスタムフォントをインポートし、UI、本文、辞書のどこで使用するかを選択します。';
       case 'settings_section_modules':
         return '機能モジュール';
-      case 'module_manga_label':
-        return 'マンガ';
-      case 'module_video_label':
-        return '動画';
-      case 'module_games_label':
-        return 'ゲーム';
       case 'module_toggle_hint':
         return 'このライブラリタブをナビゲーションバーに表示します。オフにすると非表示になります';
       case 'video_setting_youtube_quality':
@@ -209789,8 +209595,6 @@ extension on _StringsJa {
         return 'インストーラーに同梱。削除したファイルは次回更新時に復元されます。参照用です。';
       case 'storage_dictionary_delete_incomplete':
         return '削除後も辞書が残っています。エラーログを確認してください';
-      case 'module_books_label':
-        return '小説';
       case 'module_extension_label':
         return 'ブラウザ拡張機能';
       case 'onboarding_feature_books':
@@ -210310,7 +210114,7 @@ extension on _StringsJa {
       case 'module_tool_toggle_hint':
         return 'このタブをナビゲーションバーに表示します。オフにすると非表示になります';
       case 'module_downloads_hidden_hint':
-        return '「ダウンロード」タブは 設定 → システム → 機能モジュール で非表示になっています。購読を管理するには再度オンにしてください。';
+        return '「ダウンロード」タブは 設定 → 外観 → 機能モジュール で非表示になっています。購読を管理するには再度オンにしてください。';
       case 'book_file_location_open':
         return 'ファイルの場所を開く';
       case 'book_file_location_failed':
@@ -217431,12 +217235,6 @@ extension on _StringsKo {
         return '사용자 지정 글꼴을 가져와서 UI, 책 텍스트, 사전 중 어디에서 사용할지 선택하세요.';
       case 'settings_section_modules':
         return '기능 모듈';
-      case 'module_manga_label':
-        return '만화';
-      case 'module_video_label':
-        return '동영상';
-      case 'module_games_label':
-        return '게임';
       case 'module_toggle_hint':
         return '내비게이션 바에 이 라이브러리 탭 표시; 끄면 숨김';
       case 'video_setting_youtube_quality':
@@ -217634,8 +217432,6 @@ extension on _StringsKo {
         return '설치 프로그램에 포함됨; 삭제된 파일은 다음 업데이트 시 복원되며, 참고용으로만 표시됩니다.';
       case 'storage_dictionary_delete_incomplete':
         return '삭제 후에도 사전이 남아 있습니다. 오류 로그를 확인하세요';
-      case 'module_books_label':
-        return '소설';
       case 'module_extension_label':
         return '브라우저 확장';
       case 'onboarding_feature_books':
@@ -218155,7 +217951,7 @@ extension on _StringsKo {
       case 'module_tool_toggle_hint':
         return '이 탭을 내비게이션 바에 표시해요. 끄면 숨겨져요';
       case 'module_downloads_hidden_hint':
-        return '‘다운로드’ 탭이 설정 → 시스템 → 기능 모듈에서 숨겨져 있어요. 구독을 관리하려면 다시 켜세요.';
+        return '‘다운로드’ 탭이 설정 → 외관 → 기능 모듈에서 숨겨져 있어요. 구독을 관리하려면 다시 켜세요.';
       case 'book_file_location_open':
         return '파일 위치 열기';
       case 'book_file_location_failed':
@@ -225329,12 +225125,6 @@ extension on _StringsNl {
         return 'Importeer aangepaste lettertypen en kies welke voor UI, boektekst en woordenboek worden gebruikt.';
       case 'settings_section_modules':
         return 'Functiemodules';
-      case 'module_manga_label':
-        return 'Manga';
-      case 'module_video_label':
-        return 'Video';
-      case 'module_games_label':
-        return 'Galgame';
       case 'module_toggle_hint':
         return 'Toon dit bibliotheektabblad in de navigatiebalk; schakel uit om het te verbergen';
       case 'video_setting_youtube_quality':
@@ -225532,8 +225322,6 @@ extension on _StringsNl {
         return 'Meegeleverd met het installatieprogramma; verwijderde bestanden komen terug bij de volgende update, vermeld ter referentie.';
       case 'storage_dictionary_delete_incomplete':
         return 'Woordenboek nog aanwezig na verwijdering, zie foutenlog';
-      case 'module_books_label':
-        return 'Romans';
       case 'module_extension_label':
         return 'Browserextensie';
       case 'onboarding_feature_books':
@@ -226056,7 +225844,7 @@ extension on _StringsNl {
       case 'module_tool_toggle_hint':
         return 'Dit tabblad in de navigatiebalk tonen; uitschakelen om het te verbergen';
       case 'module_downloads_hidden_hint':
-        return 'Het tabblad Downloads is verborgen via Instellingen → Systeem → Functiemodules; zet het weer aan om abonnementen te beheren.';
+        return 'Het tabblad Downloads is verborgen via Instellingen → Uiterlijk → Functiemodules; zet het weer aan om abonnementen te beheren.';
       case 'book_file_location_open':
         return 'Bestandslocatie openen';
       case 'book_file_location_failed':
@@ -233229,12 +233017,6 @@ extension on _StringsPtBr {
         return 'Importe fontes personalizadas e escolha quais da interface, texto do livro e dicionário as usam.';
       case 'settings_section_modules':
         return 'Módulos de funcionalidades';
-      case 'module_manga_label':
-        return 'Mangá';
-      case 'module_video_label':
-        return 'Vídeo';
-      case 'module_games_label':
-        return 'Galgame';
       case 'module_toggle_hint':
         return 'Mostrar esta aba de biblioteca na barra de navegação; desative para ocultá-la';
       case 'video_setting_youtube_quality':
@@ -233432,8 +233214,6 @@ extension on _StringsPtBr {
         return 'Distribuídos com o instalador; arquivos excluídos voltam na próxima atualização, listados apenas para referência.';
       case 'storage_dictionary_delete_incomplete':
         return 'Dicionário ainda presente após exclusão, veja o log de erros';
-      case 'module_books_label':
-        return 'Romances';
       case 'module_extension_label':
         return 'Extensão do navegador';
       case 'onboarding_feature_books':
@@ -233955,7 +233735,7 @@ extension on _StringsPtBr {
       case 'module_tool_toggle_hint':
         return 'Mostrar esta aba na barra de navegação; desative para ocultá-la';
       case 'module_downloads_hidden_hint':
-        return 'A aba Downloads está oculta em Configurações → Sistema → Módulos de funcionalidades; reative-a para gerenciar as assinaturas.';
+        return 'A aba Downloads está oculta em Configurações → Aparência → Módulos de funcionalidades; reative-a para gerenciar as assinaturas.';
       case 'book_file_location_open':
         return 'Abrir local do arquivo';
       case 'book_file_location_failed':
@@ -241135,12 +240915,6 @@ extension on _StringsRu {
         return 'Импортируйте пользовательские шрифты и выберите, где их использовать: в интерфейсе, тексте книг или словарях.';
       case 'settings_section_modules':
         return 'Функциональные модули';
-      case 'module_manga_label':
-        return 'Манга';
-      case 'module_video_label':
-        return 'Видео';
-      case 'module_games_label':
-        return 'Galgame';
       case 'module_toggle_hint':
         return 'Показывать вкладку этой библиотеки в панели навигации; отключите, чтобы скрыть';
       case 'video_setting_youtube_quality':
@@ -241338,8 +241112,6 @@ extension on _StringsRu {
         return 'Поставляются с установщиком; удалённые файлы вернутся при следующем обновлении, показаны для справки.';
       case 'storage_dictionary_delete_incomplete':
         return 'Словарь всё ещё присутствует после удаления, см. журнал ошибок';
-      case 'module_books_label':
-        return 'Романы';
       case 'module_extension_label':
         return 'Расширение для браузера';
       case 'onboarding_feature_books':
@@ -241861,7 +241633,7 @@ extension on _StringsRu {
       case 'module_tool_toggle_hint':
         return 'Показывать эту вкладку в панели навигации; выключите, чтобы скрыть';
       case 'module_downloads_hidden_hint':
-        return 'Вкладка «Загрузки» скрыта в разделе Настройки → Система → Функциональные модули; включите её снова, чтобы управлять подписками.';
+        return 'Вкладка «Загрузки» скрыта в разделе Настройки → Внешний вид → Функциональные модули; включите её снова, чтобы управлять подписками.';
       case 'book_file_location_open':
         return 'Открыть расположение файла';
       case 'book_file_location_failed':
@@ -249016,12 +248788,6 @@ extension on _StringsTh {
         return 'นำเข้าฟอนต์กำหนดเองและเลือกว่า UI ข้อความหนังสือ และพจนานุกรมใช้ฟอนต์ใด';
       case 'settings_section_modules':
         return 'โมดูลฟีเจอร์';
-      case 'module_manga_label':
-        return 'มังงะ';
-      case 'module_video_label':
-        return 'วิดีโอ';
-      case 'module_games_label':
-        return 'เกม';
       case 'module_toggle_hint':
         return 'แสดงแท็บไลบรารีนี้ในแถบนำทาง ปิดเพื่อซ่อน';
       case 'video_setting_youtube_quality':
@@ -249219,8 +248985,6 @@ extension on _StringsTh {
         return 'มาพร้อมตัวติดตั้ง ไฟล์ที่ลบจะกลับมาในการอัปเดตครั้งถัดไป แสดงเพื่อเป็นข้อมูลอ้างอิงเท่านั้น';
       case 'storage_dictionary_delete_incomplete':
         return 'พจนานุกรมยังคงอยู่หลังจากลบ ดูบันทึกข้อผิดพลาด';
-      case 'module_books_label':
-        return 'นิยาย';
       case 'module_extension_label':
         return 'ส่วนขยายเบราว์เซอร์';
       case 'onboarding_feature_books':
@@ -249740,7 +249504,7 @@ extension on _StringsTh {
       case 'module_tool_toggle_hint':
         return 'แสดงแท็บนี้ในแถบนำทาง ปิดเพื่อซ่อน';
       case 'module_downloads_hidden_hint':
-        return 'แท็บดาวน์โหลดถูกซ่อนไว้ใน การตั้งค่า → ระบบ → โมดูลฟีเจอร์ ต้องเปิดกลับมาจึงจะจัดการรายการติดตามได้';
+        return 'แท็บดาวน์โหลดถูกซ่อนไว้ใน การตั้งค่า → รูปลักษณ์ → โมดูลฟีเจอร์ ต้องเปิดกลับมาจึงจะจัดการรายการติดตามได้';
       case 'book_file_location_open':
         return 'เปิดตำแหน่งไฟล์';
       case 'book_file_location_failed':
@@ -256907,12 +256671,6 @@ extension on _StringsTr {
         return 'Özel yazı tipleri içe aktarın ve arayüz, kitap metni ve sözlük hangilerini kullanacağını seçin.';
       case 'settings_section_modules':
         return 'Özellik modülleri';
-      case 'module_manga_label':
-        return 'Manga';
-      case 'module_video_label':
-        return 'Video';
-      case 'module_games_label':
-        return 'Galgame';
       case 'module_toggle_hint':
         return 'Bu kütüphane sekmesini gezinme çubuğunda göster; gizlemek için kapatın';
       case 'video_setting_youtube_quality':
@@ -257110,8 +256868,6 @@ extension on _StringsTr {
         return 'Yükleyici ile birlikte gelir; silinen dosyalar sonraki güncellemede geri gelir, yalnızca referans amaçlı listelenmiştir.';
       case 'storage_dictionary_delete_incomplete':
         return 'Silme sonrası sözlük hâlâ mevcut, hata günlüğüne bakın';
-      case 'module_books_label':
-        return 'Romanlar';
       case 'module_extension_label':
         return 'Tarayıcı eklentisi';
       case 'onboarding_feature_books':
@@ -257632,7 +257388,7 @@ extension on _StringsTr {
       case 'module_tool_toggle_hint':
         return 'Bu sekmeyi gezinme çubuğunda göster; gizlemek için kapatın';
       case 'module_downloads_hidden_hint':
-        return 'İndirmeler sekmesi Ayarlar → Sistem → Özellik modülleri altında gizli; abonelikleri yönetmek için yeniden açın.';
+        return 'İndirmeler sekmesi Ayarlar → Görünüm → Özellik modülleri altında gizli; abonelikleri yönetmek için yeniden açın.';
       case 'book_file_location_open':
         return 'Dosya konumunu aç';
       case 'book_file_location_failed':
@@ -264795,12 +264551,6 @@ extension on _StringsVi {
         return 'Nhập phông chữ tùy chỉnh và chọn giao diện, văn bản sách và từ điển sử dụng chúng.';
       case 'settings_section_modules':
         return 'Mô-đun tính năng';
-      case 'module_manga_label':
-        return 'Truyện tranh';
-      case 'module_video_label':
-        return 'Video';
-      case 'module_games_label':
-        return 'Galgame';
       case 'module_toggle_hint':
         return 'Hiển thị tab thư viện này trong thanh điều hướng; tắt để ẩn';
       case 'video_setting_youtube_quality':
@@ -264998,8 +264748,6 @@ extension on _StringsVi {
         return 'Đi kèm với bộ cài; các tệp đã xóa sẽ quay lại khi cập nhật tiếp theo, chỉ liệt kê để tham khảo.';
       case 'storage_dictionary_delete_incomplete':
         return 'Từ điển vẫn còn sau khi xóa, xem nhật ký lỗi';
-      case 'module_books_label':
-        return 'Tiểu thuyết';
       case 'module_extension_label':
         return 'Tiện ích mở rộng trình duyệt';
       case 'onboarding_feature_books':
@@ -265520,7 +265268,7 @@ extension on _StringsVi {
       case 'module_tool_toggle_hint':
         return 'Hiện tab này trên thanh điều hướng; tắt để ẩn';
       case 'module_downloads_hidden_hint':
-        return 'Tab Tải xuống đang bị ẩn trong Cài đặt → Hệ thống → Mô-đun tính năng; bật lại để quản lý đăng ký.';
+        return 'Tab Tải xuống đang bị ẩn trong Cài đặt → Giao diện → Mô-đun tính năng; bật lại để quản lý đăng ký.';
       case 'book_file_location_open':
         return 'Mở vị trí tệp';
       case 'book_file_location_failed':
@@ -272621,12 +272369,6 @@ extension on _StringsZhCn {
         return '导入自定义字体，并选择界面/正文/词典分别使用哪套字体。';
       case 'settings_section_modules':
         return '功能模块';
-      case 'module_manga_label':
-        return '漫画';
-      case 'module_video_label':
-        return '视频';
-      case 'module_games_label':
-        return 'Galgame';
       case 'module_toggle_hint':
         return '在底栏/侧栏显示该库页；关闭即隐藏';
       case 'video_setting_youtube_quality':
@@ -272824,8 +272566,6 @@ extension on _StringsZhCn {
         return '随安装包携带，删除后下次更新会自动恢复，此处仅展示。';
       case 'storage_dictionary_delete_incomplete':
         return '词典删除未完成、条目仍在，详见错误日志';
-      case 'module_books_label':
-        return '小说';
       case 'module_extension_label':
         return '浏览器扩展';
       case 'onboarding_feature_books':
@@ -273345,7 +273085,7 @@ extension on _StringsZhCn {
       case 'module_tool_toggle_hint':
         return '在底栏/侧栏显示该页；关闭即隐藏';
       case 'module_downloads_hidden_hint':
-        return '「下载」页已在 设置 → 系统 → 功能模块 中隐藏；重新打开它才能管理订阅。';
+        return '「下载」页已在 设置 → 外观 → 功能模块 中隐藏；重新打开它才能管理订阅。';
       case 'book_file_location_open':
         return '打开文件位置';
       case 'book_file_location_failed':
@@ -280443,12 +280183,6 @@ extension on _StringsZhHk {
         return '導入自定義字體，並選擇界面/正文/詞典分別使用哪套字體。';
       case 'settings_section_modules':
         return '功能模塊';
-      case 'module_manga_label':
-        return '漫畫';
-      case 'module_video_label':
-        return '影片';
-      case 'module_games_label':
-        return 'Galgame';
       case 'module_toggle_hint':
         return '在底欄/側欄顯示該庫頁；關閉即隱藏';
       case 'video_setting_youtube_quality':
@@ -280646,8 +280380,6 @@ extension on _StringsZhHk {
         return '隨安裝包攜帶，刪除後下次更新會自動恢復，此處僅展示。';
       case 'storage_dictionary_delete_incomplete':
         return '詞典刪除未完成、條目仍在，詳見錯誤日志';
-      case 'module_books_label':
-        return '小說';
       case 'module_extension_label':
         return '瀏覽器擴展';
       case 'onboarding_feature_books':
@@ -281167,7 +280899,7 @@ extension on _StringsZhHk {
       case 'module_tool_toggle_hint':
         return '在導覽列顯示此頁；關閉即隱藏';
       case 'module_downloads_hidden_hint':
-        return '「下載」頁已在 設定 → 系統 → 功能模塊 中隱藏；重新開啟才能管理訂閱。';
+        return '「下載」頁已在 設定 → 外觀 → 功能模塊 中隱藏；重新開啟才能管理訂閱。';
       case 'book_file_location_open':
         return '開啟檔案位置';
       case 'book_file_location_failed':
