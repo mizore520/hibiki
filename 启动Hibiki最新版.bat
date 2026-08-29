@@ -14,7 +14,7 @@ set "FUSHI_CANONICAL_PATH="
 rem ============================================================
 rem  Fushi smart launcher
 rem  - locate the repository from this BAT file, not from a hard-coded path
-rem  - build automatically when the source commit changed or no EXE exists
+rem  - build automatically when build-relevant source content changed
 rem  - pass "clean" to force a clean rebuild
 rem ============================================================
 
@@ -24,9 +24,11 @@ set "APP=%REPO%\fushi"
 set "BOOTSTRAP=%REPO%\tool\bootstrap.ps1"
 set "PREPARE_ONNX=%REPO%\tool\prepare_windows_onnxruntime.ps1"
 set "PREPARE_SQLITE=%REPO%\tool\prepare_windows_sqlite3.ps1"
+set "GET_BUILD_STATE=%REPO%\tool\get_windows_build_state.ps1"
+set "BUILD_HELPER=%REPO%\native\galgame_hook\tools\build_distribution.ps1"
 set "RUNTIME_UNLOCK_CHECK=%REPO%\tool\check_windows_runtime_unlocked.ps1"
 set "EXE=%APP%\build\windows\x64\runner\Release\fushi.exe"
-set "STAMP=%APP%\build\.last_built_commit"
+set "STAMP=%APP%\build\.last_built_state"
 set "FUSHI_ONNXRUNTIME_ROOT=%REPO%\.build-cache\onnxruntime\onnxruntime-win-x64-1.22.0"
 
 if not exist "%APP%\pubspec.yaml" (
@@ -57,12 +59,15 @@ if not defined FLUTTER (
 )
 echo [INFO] Flutter: %FLUTTER%
 
-rem --- read current git HEAD ----------------------------------------------
-set "HEAD="
-for /f "delims=" %%i in ('git -C "%REPO%" rev-parse --verify HEAD 2^>nul') do set "HEAD=%%i"
-if not defined HEAD (
-  echo [ERROR] Cannot read the Git HEAD for: %REPO%
-  echo         Run this BAT from a valid Git checkout.
+rem --- compute current build-input state ----------------------------------
+if not exist "%GET_BUILD_STATE%" (
+  echo [ERROR] Build-state script not found: %GET_BUILD_STATE%
+  goto :fail
+)
+set "STATE="
+for /f "delims=" %%i in ('powershell -NoProfile -ExecutionPolicy Bypass -File "%GET_BUILD_STATE%" -RepoRoot "%REPO%" 2^>nul') do set "STATE=%%i"
+if not defined STATE (
+  echo [ERROR] Cannot compute the source state for: %REPO%
   goto :fail
 )
 
@@ -84,7 +89,7 @@ if /i "%~1"=="clean" (
   goto :build
 )
 
-rem --- compare the last built commit --------------------------------------
+rem --- compare the last built source state --------------------------------
 set "BUILT="
 if exist "%STAMP%" set /p BUILT=<"%STAMP%"
 
@@ -92,24 +97,16 @@ if not exist "%EXE%" (
   echo [BUILD] No existing build, compiling for the first time...
   goto :build
 )
-if not "!BUILT!"=="!HEAD!" (
+if not "!BUILT!"=="!STATE!" (
   echo [BUILD] Source changed:
   echo         old: !BUILT!
-  echo         new: !HEAD!
+  echo         new: !STATE!
   echo         Compiling, please wait...
   goto :build
 )
 
-rem A user may edit custom code without committing it.  HEAD alone cannot see
-rem that case, so any tracked/untracked working-tree change also rebuilds.
-for /f "delims=" %%S in ('git -C "%REPO%" status --porcelain --untracked-files=all 2^>nul') do goto :dirty_build
-
-echo [SKIP] Already built at !HEAD:~0,12!, launching directly.
+echo [SKIP] This exact source state is already built; launching directly.
 goto :launch
-
-:dirty_build
-echo [BUILD] Working tree has local changes; compiling the current checkout...
-goto :build
 
 :build
 if not exist "%BOOTSTRAP%" (
@@ -144,7 +141,7 @@ rem This only disables source tracking for this build; it does not affect output
 set "TrackFileAccess=false"
 
 rem Bootstrap must run from the repository root so ci/apply-patches.sh resolves correctly.
-echo [1/5] Resolving Flutter packages and applying repository patches...
+echo [1/6] Resolving Flutter packages and applying repository patches...
 set "FUSHI_FLUTTER=%FLUTTER%"
 pushd "%REPO%"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%BOOTSTRAP%"
@@ -159,7 +156,7 @@ if not exist "%PREPARE_ONNX%" (
   echo [ERROR] ONNX Runtime preparation script not found: %PREPARE_ONNX%
   goto :fail
 )
-echo [2/5] Preparing persistent ONNX Runtime cache...
+echo [2/6] Preparing persistent ONNX Runtime cache...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PREPARE_ONNX%" -RepoRoot "%REPO%" -CacheDirectory "%REPO%\.build-cache\onnxruntime"
 if errorlevel 1 goto :dependency_failed
 
@@ -167,24 +164,41 @@ if not exist "%PREPARE_SQLITE%" (
   echo [ERROR] SQLite preparation script not found: %PREPARE_SQLITE%
   goto :fail
 )
-echo [3/5] Preparing persistent SQLite native asset cache...
+echo [3/6] Preparing persistent SQLite native asset cache...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PREPARE_SQLITE%" -RepoRoot "%REPO%" -CacheDirectory "%REPO%\.build-cache\sqlite3"
 if errorlevel 1 goto :dependency_failed
 set "FUSHI_SQLITE3_SOURCE_DIR=%REPO%\.build-cache\sqlite3\sqlite-autoconf-3520000"
 
-echo [4/5] flutter build windows --release ...
+if not exist "%BUILD_HELPER%" (
+  echo [ERROR] Galgame helper build script not found: %BUILD_HELPER%
+  goto :fail
+)
+echo [4/6] Building and testing the bundled Galgame helper...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%BUILD_HELPER%" -RunTests
+if errorlevel 1 goto :helper_failed
+
+echo [5/6] flutter build windows --release ...
 call "%FLUTTER%" build windows --release
 if errorlevel 1 goto :build_failed
 
-echo [5/5] Installing bundled Windows runtime (ffmpeg / ffprobe / VC++ CRT) ...
-powershell -NoProfile -ExecutionPolicy Bypass -File "%REPO%\tool\package_windows_runtime.ps1" -RepoRoot "%REPO%" -ReleaseDir "%APP%\build\windows\x64\runner\Release"
+echo [6/6] Installing bundled Windows runtime (ffmpeg / ffprobe / VC++ CRT) ...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%REPO%\tool\package_windows_runtime.ps1" -RepoRoot "%REPO%" -ReleaseDir "%APP%\build\windows\x64\runner\Release" -HelperAlreadyBuilt
 if errorlevel 1 goto :runtime_failed
 
 if not exist "%EXE%" (
   echo [ERROR] Build completed but executable was not found: %EXE%
   goto :fail
 )
->"%STAMP%" echo !HEAD!
+rem Bootstrap may update generated dependency state but not source inputs. Re-read
+rem the fingerprint after the successful build so the stamp names exactly what
+rem is in the bundle.
+set "STATE="
+for /f "delims=" %%i in ('powershell -NoProfile -ExecutionPolicy Bypass -File "%GET_BUILD_STATE%" -RepoRoot "%REPO%" 2^>nul') do set "STATE=%%i"
+if not defined STATE (
+  echo [ERROR] Build succeeded but the source state could not be recorded.
+  goto :fail
+)
+>"%STAMP%" echo !STATE!
 echo [OK] Build succeeded.
 
 :launch
@@ -202,6 +216,10 @@ goto :fail
 
 :dependency_failed
 echo [ERROR] Windows native dependency setup failed. The app was not launched.
+goto :fail
+
+:helper_failed
+echo [ERROR] Galgame helper build or tests failed. The app was not launched.
 goto :fail
 
 :runtime_failed

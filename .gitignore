@@ -32,6 +32,7 @@ melos_*.iml
 .pub/
 /build/
 /.build-cache/
+/fushi/.flutter_tool_state
 # Melos 6 时代的产物：那时每个包各自解析，melos 用 pubspec_overrides.yaml 把
 # 兄弟包指到本地路径。改用 pub workspace 后解析只在根发生一次，这两样都不再生成
 # （规则留着兜底，防止有人用老版 melos 跑一次又把它们造出来）。

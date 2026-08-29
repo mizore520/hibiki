@@ -4,7 +4,12 @@ param(
     [string]$RepoRoot,
 
     [Parameter(Mandatory = $true)]
-    [string]$ReleaseDir
+    [string]$ReleaseDir,
+
+    # The smart launcher builds and tests the helper before Flutter so CMake's
+    # install step can never encounter a stale distribution. Other callers keep
+    # the original self-contained behavior by omitting this switch.
+    [switch]$HelperAlreadyBuilt
 )
 
 $ErrorActionPreference = 'Stop'
@@ -83,7 +88,9 @@ function Invoke-CheckedPowerShellScript {
 $helperToolsDir = Join-Path $repo 'native\galgame_hook\tools'
 $helperBuildScript = Join-Path $helperToolsDir 'build_distribution.ps1'
 $helperInstallScript = Join-Path $helperToolsDir 'install_into_bundle.ps1'
-Invoke-CheckedPowerShellScript -ScriptPath $helperBuildScript -ScriptArguments @('-RunTests')
+if (-not $HelperAlreadyBuilt) {
+    Invoke-CheckedPowerShellScript -ScriptPath $helperBuildScript -ScriptArguments @('-RunTests')
+}
 Invoke-CheckedPowerShellScript -ScriptPath $helperInstallScript -ScriptArguments @(
     '-BundleDirectory',
     $release
