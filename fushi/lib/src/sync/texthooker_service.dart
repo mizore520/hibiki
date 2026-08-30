@@ -1,5 +1,6 @@
 import 'package:characters/characters.dart';
 import 'package:flutter/foundation.dart';
+import 'package:fushi/src/sync/texthooker_line_fold.dart';
 import 'package:fushi/src/utils/misc/ruby_markup.dart';
 
 enum TexthookerLineSource { websocket, engineHook, unknown }
@@ -203,23 +204,21 @@ class TexthookerTextThread {
     int? observedArtifactCount,
     bool? previewIsArtifact,
     List<String>? recentPreviewTexts,
-  }) =>
-      TexthookerTextThread(
-        key: key,
-        label: label ?? this.label,
-        hookCode: hookCode,
-        nativeThreadId: nativeThreadId,
-        lineCount: lineCount,
-        latestAt: latestAt,
-        latestText: latestText,
-        audioLineCount: audioLineCount,
-        previewText: previewText ?? this.previewText,
-        observedLineCount: observedLineCount ?? this.observedLineCount,
-        observedArtifactCount:
-            observedArtifactCount ?? this.observedArtifactCount,
-        previewIsArtifact: previewIsArtifact ?? this.previewIsArtifact,
-        recentPreviewTexts: recentPreviewTexts ?? this.recentPreviewTexts,
-      );
+  }) => TexthookerTextThread(
+    key: key,
+    label: label ?? this.label,
+    hookCode: hookCode,
+    nativeThreadId: nativeThreadId,
+    lineCount: lineCount,
+    latestAt: latestAt,
+    latestText: latestText,
+    audioLineCount: audioLineCount,
+    previewText: previewText ?? this.previewText,
+    observedLineCount: observedLineCount ?? this.observedLineCount,
+    observedArtifactCount: observedArtifactCount ?? this.observedArtifactCount,
+    previewIsArtifact: previewIsArtifact ?? this.previewIsArtifact,
+    recentPreviewTexts: recentPreviewTexts ?? this.recentPreviewTexts,
+  );
 
   final String key;
   final String label;
@@ -362,17 +361,19 @@ class TexthookerLineEntry {
   /// 本行是否已有可用句音：matched（配到游戏资源）/ encoded（音频已提取进卡）/
   /// fallback（回退环回声）三态即有音频；pending/missing/unavailable 视作无。
   bool get hasAudio => switch (audioStatus) {
-        TexthookerLineAudioStatus.matched ||
-        TexthookerLineAudioStatus.encoded ||
-        TexthookerLineAudioStatus.fallback =>
-          true,
-        TexthookerLineAudioStatus.pending ||
-        TexthookerLineAudioStatus.missing ||
-        TexthookerLineAudioStatus.unavailable =>
-          false,
-      };
+    TexthookerLineAudioStatus.matched ||
+    TexthookerLineAudioStatus.encoded ||
+    TexthookerLineAudioStatus.fallback => true,
+    TexthookerLineAudioStatus.pending ||
+    TexthookerLineAudioStatus.missing ||
+    TexthookerLineAudioStatus.unavailable => false,
+  };
 
   TexthookerLineEntry copyWith({
+    String? text,
+    List<RubySpan>? rubySpans,
+    int? sourceSequence,
+    int? hookTimestampMs,
     TexthookerLineAudioStatus? audioStatus,
     String? audioBackend,
     String? audioResourceId,
@@ -387,11 +388,11 @@ class TexthookerLineEntry {
   }) {
     return TexthookerLineEntry(
       id: id,
-      text: text,
+      text: text ?? this.text,
       source: source,
       sourceLabel: sourceLabel,
-      sourceSequence: sourceSequence,
-      hookTimestampMs: hookTimestampMs,
+      sourceSequence: sourceSequence ?? this.sourceSequence,
+      hookTimestampMs: hookTimestampMs ?? this.hookTimestampMs,
       textThreadKey: textThreadKey,
       textThreadLabel: textThreadLabel,
       textHookCode: textHookCode,
@@ -399,15 +400,17 @@ class TexthookerLineEntry {
       receivedAt: receivedAt,
       audioStatus: audioStatus ?? this.audioStatus,
       audioBackend: audioBackend ?? this.audioBackend,
-      audioResourceId:
-          clearAudioResourceId ? null : audioResourceId ?? this.audioResourceId,
+      audioResourceId: clearAudioResourceId
+          ? null
+          : audioResourceId ?? this.audioResourceId,
       audioDurationMs: audioDurationMs ?? this.audioDurationMs,
-      fallbackReason:
-          clearFallbackReason ? null : fallbackReason ?? this.fallbackReason,
+      fallbackReason: clearFallbackReason
+          ? null
+          : fallbackReason ?? this.fallbackReason,
       mined: mined ?? this.mined,
       minedNoteId: clearMinedNoteId ? null : minedNoteId ?? this.minedNoteId,
       favorited: favorited ?? this.favorited,
-      rubySpans: rubySpans,
+      rubySpans: rubySpans ?? this.rubySpans,
     );
   }
 }
@@ -417,11 +420,7 @@ class TexthookerLineEntry {
 /// 正常台词保留逐字查词；较长台词改用单个文本段落；疑似快进/历史回放批量输出的
 /// 超长文本默认折叠。这里只改变 UI 的渲染成本，不截断 [TexthookerLineEntry.text]，
 /// 因而复制、导出与诊断仍能取得完整原文（BUG-1597）。
-enum TexthookerLinePresentation {
-  interactive,
-  plain,
-  collapsed,
-}
+enum TexthookerLinePresentation { interactive, plain, collapsed }
 
 const int texthookerInteractiveTextLimit = 300;
 const int texthookerCollapsedTextLimit = 800;
@@ -458,6 +457,38 @@ class TexthookerService extends ChangeNotifier {
   static const int maxLines = 500;
 
   final List<TexthookerLineEntry> _entries = <TexthookerLineEntry>[];
+
+  /// buffer 里最后一条（没有则 null）。
+  ///
+  /// [entries] 每次都要复制整张表；折叠判定是**每条 hook 行**都要做一次的热路径，
+  /// 走这个 O(1) 的入口。
+  TexthookerLineEntry? get lastEntry => _entries.isEmpty ? null : _entries.last;
+
+  /// 折叠「同一句台词的多次快照」（见 [isProgressiveTextUpdate]）。
+  ///
+  /// 默认开：引擎逐段重绘是 galgame 的常态，不折的话工作台、字数统计、浮窗全都会
+  /// 把同一句重复计一遍。留开关是因为万一某个引擎的两句不同台词真的构成前缀关系，
+  /// 用户需要一个不改代码就能退回旧行为的逃生口。
+  bool foldProgressiveLines = true;
+
+  /// 上一次 [appendLine] 实际**新增**的文本。
+  ///
+  /// 折叠会把已经在 buffer 里的几条回吞成一条，那时新增的只是增量（甚至为空）。
+  /// 学习统计必须按这个值计字，按 `entry.text` 计会把同一句每重绘一次就再算一遍。
+  /// 只在 [appendLine] 返回非 null 时有意义。
+  String lastAppendedDelta = '';
+
+  /// 上一次 [appendLine] 折叠时**被吞掉、id 就此作废**的那些行 id
+  /// （不含合并结果自身——它复用最早那条的 id，见折叠分支）。
+  ///
+  /// 调用方必须在 [appendLine] 返回后**立刻**读走：这些 id 在 galgame 会话侧是
+  /// 一整批 map/timer 的活键（逐行语音缓存、待配对资源、loopback 冻结定时器、
+  /// 用户裁决集合…），不迁走就意味着晚到的语音写进死 id 被静默丢弃、用户手动
+  /// 裁决失效。与 [lastAppendedDelta] 同址、同生命周期：不用回调，就没有注册/
+  /// 注销的生命周期和 observer 顺序问题。
+  List<String> get lastFoldedLineIds =>
+      List<String>.unmodifiable(_lastFoldedLineIds);
+  final List<String> _lastFoldedLineIds = <String>[];
   final Map<String, TexthookerTextThread> _discoveredTextThreads =
       <String, TexthookerTextThread>{};
   int _nextId = 0;
@@ -487,11 +518,11 @@ class TexthookerService extends ChangeNotifier {
   List<TexthookerTextThread> textThreadsSince(DateTime? startedAt) {
     final Map<String, TexthookerTextThread> byKey =
         <String, TexthookerTextThread>{
-      for (final MapEntry<String, TexthookerTextThread> entry
-          in _discoveredTextThreads.entries)
-        if (startedAt == null || !entry.value.latestAt.isBefore(startedAt))
-          entry.key: entry.value,
-    };
+          for (final MapEntry<String, TexthookerTextThread> entry
+              in _discoveredTextThreads.entries)
+            if (startedAt == null || !entry.value.latestAt.isBefore(startedAt))
+              entry.key: entry.value,
+        };
     for (final TexthookerLineEntry entry in _entries) {
       if (startedAt != null && entry.receivedAt.isBefore(startedAt)) continue;
       final String? key = entry.textThreadKey;
@@ -595,9 +626,11 @@ class TexthookerService extends ChangeNotifier {
     }
     // 干净线程排在脏线程之前：伪影占比低者优先。脏线程仍然可见可选（对齐 Luna），
     // 只是不该挡在真台词前面。
-    final bool aDirty = a.observedArtifactCount * 2 > a.observedLineCount &&
+    final bool aDirty =
+        a.observedArtifactCount * 2 > a.observedLineCount &&
         a.observedLineCount > 0;
-    final bool bDirty = b.observedArtifactCount * 2 > b.observedLineCount &&
+    final bool bDirty =
+        b.observedArtifactCount * 2 > b.observedLineCount &&
         b.observedLineCount > 0;
     if (aDirty != bDirty) return aDirty ? 1 : -1;
     if (a.observedLineCount != b.observedLineCount) {
@@ -780,6 +813,132 @@ class TexthookerService extends ChangeNotifier {
     final RubyMarkupText parsed = parseRubyMarkup(line).trimmed();
     final String trimmed = parsed.text;
     if (trimmed.isEmpty) return null;
+    _lastFoldedLineIds.clear();
+
+    // 同一句被引擎分多次吐出来时，把 buffer 尾巴上属于这一句的几条**一次性回吞**成
+    // 一条，而不是追加新行。用户报的 Zato 序列是三拍：
+    //
+    //   ① "Some would call it a miracle."                  第一次点击
+    //   ② "And of course, that's a lovely way to put it…"  第二次点击画的新段
+    //   ③ "Some would call it a miracle. And of course…"    同一次点击重绘的整行
+    //
+    // ③ 与 ② 是后缀关系、与 ① 是前缀关系。只折「紧邻的上一条」的话 ② 会被吞掉但
+    // ① 留下，第一句照样出现两次；所以要沿尾巴一直回吞到不再相关为止。
+    final List<TexthookerLineEntry> absorbed = <TexthookerLineEntry>[];
+    String mergedText = trimmed;
+    List<RubySpan> mergedSpans = parsed.spans;
+    // 折叠只对**引擎 hook 行**成立：逐段重绘是 galgame 引擎的行为；Textractor /
+    // mpv / 浏览器扩展经 WebSocket 送来的行是外部工具已经成句的输出，那边的前缀
+    // 关系就是两句不同的话。
+    //
+    // 这个来源门**同时就是平台门**：engineHook 行只由 GalHookSessionController
+    // 产出，而它是 Windows-only 的（设置里的 game destination 同门）。所以这里
+    // 不要写 `Platform.isWindows` —— 本文件不 import dart:io，而 CI 的真单测门跑
+    // 在 Linux 上，那样写会让折叠的 17 条用例集体变成「折叠不发生」而全红。
+    if (foldProgressiveLines && source == TexthookerLineSource.engineHook) {
+      // 回吞深度上限：一句台词的快照数是个位数，给个上限免得畸形输入把每行的
+      // 折叠判定拖成 O(buffer)。
+      const int maxAbsorb = 8;
+      while (absorbed.length < maxAbsorb && _entries.isNotEmpty) {
+        final TexthookerLineEntry tail = _entries[_entries.length - 1];
+        // 折叠只在**同一个生产端点**内成立，三段判据缺一不可：
+        //   source        —— 通道种类（WS / 引擎 hook）；
+        //   sourceLabel   —— 端点身份。WS 路径下 textThreadKey 恒 null、source 恒
+        //                    websocket，能区分 Textractor / mpv / 浏览器扩展三个
+        //                    并发连接的**只有**它（ws client 传的是 url）；漏了它
+        //                    就是把两个工具的输出折成一条。
+        //   textThreadKey —— 引擎 hook 的并行线程。
+        if (tail.source != source ||
+            tail.sourceLabel != sourceLabel ||
+            tail.textThreadKey != textThreadKey) {
+          break;
+        }
+        if (!isProgressiveTextUpdate(tail.text, mergedText)) break;
+        if (normalizeForFold(tail.text).length >
+            normalizeForFold(mergedText).length) {
+          mergedText = tail.text;
+          mergedSpans = tail.rubySpans;
+        }
+        absorbed.add(_entries.removeLast());
+      }
+    }
+
+    if (absorbed.isNotEmpty) {
+      // 身份取**最早**那条：这句话是从那一刻开始说的，浮窗与游戏内卡片的 lineId
+      // 因此在整句成型过程中保持稳定（文本变化由各自的文本镜像驱动重推）。
+      final TexthookerLineEntry base = absorbed.last;
+      // absorbed 是新→旧，base 是最老那条、merged 复用它的 id，所以它不算「被吞」。
+      // 这条不变式同时保证重定向链不会形成：base 永远是尾巴上最老的，它自己不会
+      // 再被别的 id 指走。
+      for (int i = 0; i < absorbed.length - 1; i++) {
+        _lastFoldedLineIds.add(absorbed[i].id);
+      }
+      // 语音：回吞掉的几条里只要有一条已经配上了资源，就把它带到合并结果上，
+      // 否则「先配上音、再被后续重绘吞掉」等于把那段语音丢了。
+      TexthookerLineEntry audioDonor = base;
+      for (final TexthookerLineEntry candidate in absorbed) {
+        if (candidate.audioStatus == TexthookerLineAudioStatus.matched) {
+          audioDonor = candidate;
+          break;
+        }
+      }
+      // 制卡 / 收藏位取并集：被吞的那几条里只要有一条已制卡（或已收藏），合并
+      // 结果就该带着那个徽章 —— 只从 base 继承的话，用户刚给第 ② 拍制的卡会在
+      // 第 ③ 拍折叠后从工作台上「消失」。
+      final bool anyMined = absorbed.any((TexthookerLineEntry e) => e.mined);
+      final bool anyFavorited = absorbed.any(
+        (TexthookerLineEntry e) => e.favorited,
+      );
+      final int? mergedNoteId = absorbed
+          .firstWhere(
+            (TexthookerLineEntry e) => e.minedNoteId != null,
+            orElse: () => base,
+          )
+          .minedNoteId;
+      final TexthookerLineEntry merged = base.copyWith(
+        text: mergedText,
+        rubySpans: mergedSpans,
+        mined: anyMined,
+        minedNoteId: mergedNoteId,
+        favorited: anyFavorited,
+        // 身份元数据前移到最新这次事件：逐句语音是按 seq / hook 时间戳配对的，
+        // 合并后这一条仍要认领得到本次重绘带出来的那段语音。
+        sourceSequence: sourceSequence,
+        hookTimestampMs: hookTimestampMs,
+        audioStatus: audioDonor.audioStatus,
+        audioBackend: audioDonor.audioBackend,
+        audioResourceId: audioDonor.audioResourceId,
+        audioDurationMs: audioDonor.audioDurationMs,
+      );
+      // 字数只计真正新增的那段。不变式：buffer 里每条都已经按它**当前**的文本计过
+      // 一次，所以这次新增 = 合并结果里**没被任何一条盖住**的部分。被吞掉的每条都
+      // 是合并结果的前缀或后缀（[isProgressiveTextUpdate] 的判据），于是已覆盖区间
+      // 就是「最长前缀 ∪ 最长后缀」，中间那段才是新字。Zato 三拍走完前后缀正好拼满
+      // 整句，新增为空——一个字都不会被重复计进学习统计。
+      //
+      // 覆盖长度在**归一化**坐标系里判、在**原文**坐标系里切（rawPrefixCoverage /
+      // rawSuffixCoverage 同时做这两件事）：在归一化串上切会把空白抹掉，而
+      // `countGalgameChars` 对拉丁文本按**词**计数、空白是唯一的词边界 ——
+      // `"…a lovely way to put it"` 会被焊成一个词，整段英文台词算成 1。
+      int coveredPrefix = 0; // mergedText 上的原始下标
+      int coveredSuffix = 0; // mergedText 上的原始后缀长度
+      for (final TexthookerLineEntry candidate in absorbed) {
+        final int p = rawPrefixCoverage(mergedText, candidate.text);
+        if (p > coveredPrefix) coveredPrefix = p;
+        final int suffix = rawSuffixCoverage(mergedText, candidate.text);
+        if (suffix > coveredSuffix) coveredSuffix = suffix;
+      }
+      final int uncoveredEnd = mergedText.length - coveredSuffix;
+      // 两条路径交给下游的口径统一为「原文（保留内部空白）、两端 trim」。
+      lastAppendedDelta = uncoveredEnd > coveredPrefix
+          ? mergedText.substring(coveredPrefix, uncoveredEnd).trim()
+          : '';
+      _entries.add(merged);
+      notifyListeners();
+      return merged;
+    }
+
+    lastAppendedDelta = trimmed;
     final DateTime now = receivedAt ?? DateTime.now();
     final TexthookerLineEntry entry = TexthookerLineEntry(
       id: '${now.microsecondsSinceEpoch}-${_nextId++}',
@@ -911,13 +1070,14 @@ class TexthookerService extends ChangeNotifier {
 /// 实时台词筛选的唯一 predicate：枚举驱动、无特殊分支。页面/服务共用，
 /// 保证「有音频 / 已制卡 / 已收藏」的判据单一真相源。
 bool lineMatchesFilter(
-        TexthookerLineEntry entry, TexthookerLineFilter filter) =>
-    switch (filter) {
-      TexthookerLineFilter.all => true,
-      TexthookerLineFilter.withAudio => entry.hasAudio,
-      TexthookerLineFilter.mined => entry.mined,
-      TexthookerLineFilter.favorited => entry.favorited,
-    };
+  TexthookerLineEntry entry,
+  TexthookerLineFilter filter,
+) => switch (filter) {
+  TexthookerLineFilter.all => true,
+  TexthookerLineFilter.withAudio => entry.hasAudio,
+  TexthookerLineFilter.mined => entry.mined,
+  TexthookerLineFilter.favorited => entry.favorited,
+};
 
 /// 「全部文本线程」的展示投影：折叠同一渲染瞬间被不同 Luna 线程各回传一次的同文行。
 ///
@@ -940,8 +1100,8 @@ List<TexthookerLineEntry> collapseParallelTextThreadDuplicates(
     final int? currentHookAt = entry.hookTimestampMs;
     final String? previousThread = previous.textThreadKey;
     final String? currentThread = entry.textThreadKey;
-    final bool parallelDuplicate = previous.source ==
-            TexthookerLineSource.engineHook &&
+    final bool parallelDuplicate =
+        previous.source == TexthookerLineSource.engineHook &&
         entry.source == TexthookerLineSource.engineHook &&
         previousThread != null &&
         currentThread != null &&

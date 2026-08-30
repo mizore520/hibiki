@@ -20,8 +20,9 @@ void main() {
   final String importPage = File(
     'lib/src/pages/implementations/migration_import_page.dart',
   ).readAsStringSync();
-  final String appModel =
-      File('lib/src/models/app_model.dart').readAsStringSync();
+  final String appModel = File(
+    'lib/src/models/app_model.dart',
+  ).readAsStringSync();
 
   group('BUG-1505 导入失败不再强制重启', () {
     test('两条失败路径都不再自动重启（成功路径保留）', () {
@@ -29,35 +30,51 @@ void main() {
       final int catchIndex = importPage.indexOf('} catch (e, st) {');
       expect(catchIndex, isNot(-1));
       final String catchBlock = importPage.substring(catchIndex);
-      expect(catchBlock.contains('backupImportRestart'), isFalse,
-          reason: '失败要停在遮罩上让用户读完原因，重启由他手点');
+      expect(
+        catchBlock.contains('backupImportRestart'),
+        isFalse,
+        reason: '失败要停在遮罩上让用户读完原因，重启由他手点',
+      );
 
       final int countsIndex = importPage.indexOf('countProblems.isNotEmpty');
       expect(countsIndex, isNot(-1));
       // 切片终点用**代码符号**而不是中文注释：上一版拿「校验通过」这句注释当锚点，
       // BUG-1510 顺手改了那行注释，守卫就 indexOf 返回 -1 直接炸。
-      final int countsEnd =
-          importPage.indexOf('MigrationImporter.writeCompletionPrefs(');
+      final int countsEnd = importPage.indexOf(
+        'MigrationImporter.writeCompletionPrefs(',
+      );
       expect(countsEnd, greaterThan(countsIndex));
       final String countsBlock = importPage.substring(countsIndex, countsEnd);
-      expect(countsBlock.contains('backupImportRestart'), isFalse,
-          reason: '行数校验失败同理：不许把页面和原因一起带走');
+      expect(
+        countsBlock.contains('backupImportRestart'),
+        isFalse,
+        reason: '行数校验失败同理：不许把页面和原因一起带走',
+      );
 
       // 成功路径仍自动重启（DB 已关，且没有要读的东西）。
       expect(importPage, contains('completeBackupImport'));
-      expect(importPage, contains('await backupImportRestart(appModel)'),
-          reason: '成功路径的自动重启是刻意保留的，别一起删掉');
+      expect(
+        importPage,
+        contains('await backupImportRestart(appModel)'),
+        reason: '成功路径的自动重启是刻意保留的，别一起删掉',
+      );
     });
 
     test('失败原因必须 await 落盘，否则重启后「错误日志 (0)」', () {
-      expect(importPage, contains('await ErrorLogService.instance.flush()'),
-          reason: 'log() 只是把 append 挂进 fire-and-forget 链，不 await 就会随进程消失');
+      expect(
+        importPage,
+        contains('await ErrorLogService.instance.flush()'),
+        reason: 'log() 只是把 append 挂进 fire-and-forget 链，不 await 就会随进程消失',
+      );
       // 两条失败路径各一次。
       final int occurrences = 'await ErrorLogService.instance.flush()'
           .allMatches(importPage)
           .length;
-      expect(occurrences, greaterThanOrEqualTo(2),
-          reason: 'verifyCounts 与 catch 两条失败路径都要等落盘');
+      expect(
+        occurrences,
+        greaterThanOrEqualTo(2),
+        reason: 'verifyCounts 与 catch 两条失败路径都要等落盘',
+      );
     });
   });
 
@@ -66,31 +83,74 @@ void main() {
       // 断言必须收在 closeDatabase **方法体内**：变异实测发现，跨方法找下一处
       // `await _database.close();` 会匹配到 closeForPopup 那句，于是把顺序颠倒过来
       // 守卫照样绿——这条断言本身就是被变异测试咬出来的洞。
-      final int start =
-          appModel.indexOf('Future<void> closeDatabase() async {');
+      final int start = appModel.indexOf(
+        'Future<void> closeDatabase({Duration? pipelineDrainTimeout})',
+      );
       expect(start, isNot(-1));
       final int end = appModel.indexOf('\n  }', start);
       expect(end, greaterThan(start));
       final String body = appModel.substring(start, end);
 
-      final int quiesce =
-          body.indexOf('await quiesceBackgroundDatabaseWriters();');
-      expect(quiesce, isNot(-1),
-          reason: 'closeDatabase 只关连接不停任何人，下载流水线会继续撞已关闭的 drift 连接');
+      final int quiesce = body.indexOf(
+        'await quiesceBackgroundDatabaseWriters(',
+      );
+      expect(
+        quiesce,
+        isNot(-1),
+        reason: 'closeDatabase 只关连接不停任何人，下载流水线会继续撞已关闭的 drift 连接',
+      );
       final int close = body.indexOf('await _database.close();');
       expect(close, isNot(-1));
       expect(close, greaterThan(quiesce), reason: '必须先停写手再关库——反过来等于没停');
     });
 
     test('quiesce 覆盖会后台写库的下载/订阅/漫画队列', () {
-      final int start = appModel
-          .indexOf('Future<void> quiesceBackgroundDatabaseWriters() async {');
+      final int start = appModel.indexOf(
+        'Future<void> quiesceBackgroundDatabaseWriters({',
+      );
       expect(start, isNot(-1));
       final String body = appModel.substring(start, start + 600);
       expect(body, contains('_animeDownloadService?.stop()'));
       expect(body, contains('_animeDownloadSubscriptionService?.stop()'));
-      expect(body, contains('_disposeVideoDownloadPipelineRuntime()'),
-          reason: '用户日志里的 8 条 connection-closed 就来自这个流水线');
+      expect(
+        body,
+        contains('_disposeVideoDownloadPipelineRuntime('),
+        reason: '用户日志里的 8 条 connection-closed 就来自这个流水线',
+      );
+    });
+
+    test('管线收尾的上界是可选的：只有退出路径给，迁移路径必须等到真收尾', () {
+      // 这是 BUG-1505 的另一半：把上界写死成 stop() 的全局语义，迁移/备份导入/
+      // 数据根迁移这三条**也走 closeDatabase** 的路径就会放行一个在飞的 `_process`
+      // —— 它随后被 `_videoDownloadBackend?.close()` 抽掉句柄，并在 `_database.close()`
+      // 之后继续打已关闭的连接。而它们关库后紧接着要在**文件层**合并/替换整个 DB
+      // 目录，那是数据安全问题，不是噪声问题。
+      final String pipeline = File(
+        'lib/src/media/video/download/video_download_pipeline_service.dart',
+      ).readAsStringSync();
+      expect(
+        pipeline,
+        contains('Future<void> stop({Duration? drainTimeout}) async {'),
+        reason: '上界必须是可选参数，不能是 stop() 的全局语义',
+      );
+      expect(
+        pipeline,
+        contains('Future<void> dispose({Duration? drainTimeout}) async {'),
+        reason: 'dispose 要能把「不设上界」传下去',
+      );
+      // 反向：closeDatabase 自己不得写死上界。
+      final int closeAt = appModel.indexOf(
+        'Future<void> closeDatabase({Duration? pipelineDrainTimeout})',
+      );
+      final String closeBody = appModel.substring(
+        closeAt,
+        appModel.indexOf('\n  }', closeAt),
+      );
+      expect(
+        closeBody,
+        isNot(contains('stopDrainTimeout')),
+        reason: '上界由调用方给：写死在这里等于所有路径又都被放行了',
+      );
     });
   });
 }

@@ -2042,14 +2042,18 @@ class PreferencesRepository extends ChangeNotifier {
   /// 窗口时才走，放得下就强制居中。长短句交替时台词会上下跳，这个偏好让用户把它钉死
   /// 在顶部。
   String get galHookTextVerticalAlignment {
-    final Object? value =
-        getPref('gal_hook_text_vertical_alignment', defaultValue: 'center');
+    final Object? value = getPref(
+      'gal_hook_text_vertical_alignment',
+      defaultValue: 'center',
+    );
     return value == 'top' ? 'top' : 'center';
   }
 
   Future<void> setGalHookTextVerticalAlignment(String value) async {
     await setPref(
-        'gal_hook_text_vertical_alignment', value == 'top' ? 'top' : 'center');
+      'gal_hook_text_vertical_alignment',
+      value == 'top' ? 'top' : 'center',
+    );
     notifyListeners();
   }
 
@@ -2203,6 +2207,95 @@ class PreferencesRepository extends ChangeNotifier {
   /// 反过来默认关的代价是实打实的：用户不知道有这个功能，知道了也要先退出这一局、
   /// 去设置里翻开关、再重开一局才生效。
   static const bool galIngameLookupEnabledDefault = true;
+
+  /// hook 台词浮窗「单击查词」。native 侧一直支持（`clickLookupEnabled`），Dart
+  /// 侧此前写死 true，于是设置里根本没有这个开关。用户「至少开启穿透的时候我不是
+  /// 很想单击点到单词，还是习惯用侧键查」。
+  static const bool galHookClickLookupDefault = true;
+
+  bool get galHookClickLookup =>
+      getPref(
+        'gal_hook_click_lookup',
+        defaultValue: galHookClickLookupDefault,
+      ) ==
+      true;
+
+  Future<void> setGalHookClickLookup(bool value) async {
+    await setPref('gal_hook_click_lookup', value);
+    notifyListeners();
+  }
+
+  /// 查词触发方式：0 = 左键单击（默认）/ 1 = 鼠标中键 / 2 = 鼠标侧键。
+  ///
+  /// 与 [galHookClickLookup] **正交**：前者决定「查不查」，本项决定「用哪个键查」。
+  /// 两者都关 = 浮窗上完全不查词，只用工具条。
+  static const int galHookLookupTriggerDefault = 0;
+
+  int get galHookLookupTrigger {
+    final Object? stored = getPref(
+      'gal_hook_lookup_trigger',
+      defaultValue: galHookLookupTriggerDefault,
+    );
+    final int value = stored is num
+        ? stored.toInt()
+        : galHookLookupTriggerDefault;
+    // 值域收在读这一层：越界值直接退回默认，别让一个坏值把 native 的分派打成
+    // 「哪个键都不触发」。
+    return value >= 0 && value <= 2 ? value : galHookLookupTriggerDefault;
+  }
+
+  Future<void> setGalHookLookupTrigger(int value) async {
+    await setPref('gal_hook_lookup_trigger', value.clamp(0, 2));
+    notifyListeners();
+  }
+
+  /// 工具条自动隐藏（LunaHook 式）：平时整条隐藏，鼠标进入台词框才现身。
+  static const bool galHookToolbarAutoHideDefault = true;
+
+  bool get galHookToolbarAutoHide =>
+      getPref(
+        'gal_hook_toolbar_auto_hide',
+        defaultValue: galHookToolbarAutoHideDefault,
+      ) ==
+      true;
+
+  Future<void> setGalHookToolbarAutoHide(bool value) async {
+    await setPref('gal_hook_toolbar_auto_hide', value);
+    notifyListeners();
+  }
+
+  /// 穿透态下浮窗是否仍拦截落在**文字行盒**上的鼠标（默认 true = 拦截，点字查词才
+  /// 成立）。关掉后整窗对游戏彻底透明——用户原话「穿透不彻底等于彻底不穿透」。
+  static const bool galHookPassThroughBlocksMouseDefault = true;
+
+  bool get galHookPassThroughBlocksMouse =>
+      getPref(
+        'gal_hook_passthrough_blocks_mouse',
+        defaultValue: galHookPassThroughBlocksMouseDefault,
+      ) ==
+      true;
+
+  Future<void> setGalHookPassThroughBlocksMouse(bool value) async {
+    await setPref('gal_hook_passthrough_blocks_mouse', value);
+    notifyListeners();
+  }
+
+  /// 折叠「同一句台词的多次快照」（Zato 症状：一句台词分多次点击显示，工作台里
+  /// 第二句出现两次）。默认开——引擎逐段重绘是 galgame 常态；留开关是给「某个引擎的
+  /// 两句不同台词真的构成前缀关系」这种情形一个不改代码就能退回旧行为的逃生口。
+  static const bool galHookFoldProgressiveLinesDefault = true;
+
+  bool get galHookFoldProgressiveLines =>
+      getPref(
+        'gal_hook_fold_progressive_lines',
+        defaultValue: galHookFoldProgressiveLinesDefault,
+      ) ==
+      true;
+
+  Future<void> setGalHookFoldProgressiveLines(bool value) async {
+    await setPref('gal_hook_fold_progressive_lines', value);
+    notifyListeners();
+  }
 
   /// 游戏内查词总开关（仅 Windows 生效）。
   bool get galIngameLookupEnabled =>
@@ -2412,10 +2505,12 @@ class PreferencesRepository extends ChangeNotifier {
   /// 削弱隐私边界——真正的上传闸门是 [ensureGoogleLensDisclosure] 的逐设备一次性
   /// 同意弹窗，用户拒绝即不发任何字节；想彻底离线的用户把本偏好改回 `auto`，
   /// `auto` 的解析链依旧永不跨到 Lens。
-  String get mangaOcrEnginePreference => getPref(
-        'manga_ocr_engine_preference',
-        defaultValue: kDefaultMangaOcrEnginePreference.key,
-      ) as String;
+  String get mangaOcrEnginePreference =>
+      getPref(
+            'manga_ocr_engine_preference',
+            defaultValue: kDefaultMangaOcrEnginePreference.key,
+          )
+          as String;
 
   Future<void> setMangaOcrEnginePreference(String value) async {
     await setPref('manga_ocr_engine_preference', value);

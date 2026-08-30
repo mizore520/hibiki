@@ -82,8 +82,11 @@ enum VideoGroup { playback, audio, subtitle, shaders, mpv, danmaku, controls }
 /// 描述某个 [SettingsItem] 在视频快捷面板里的放置位置。
 /// 为 null 表示该项不出现在视频面板（仅全局可见）。
 class VideoPlacement {
-  const VideoPlacement(
-      {required this.group, required this.order, this.section});
+  const VideoPlacement({
+    required this.group,
+    required this.order,
+    this.section,
+  });
 
   final VideoGroup group;
 
@@ -96,20 +99,22 @@ class VideoPlacement {
 }
 
 typedef SettingsVisibility = bool Function(SettingsContext context);
+
+/// 渲染时求值的副标题。返回 null = 用静态 [SettingsItem.subtitle]。
+///
+/// 与 [SettingsItem.titleBuilder] 同一条纪律：schema 树按 locale 缓存、构造期求值，
+/// 任何运行期状态都不许插进 `subtitle` 字面量（守卫见 settings_schema_cache_test 的
+/// 「静态文案逐字不变」）。副标题要随运行期状态变，只能走这个闭包。
+typedef SettingsSubtitleBuilder = String? Function(SettingsContext context);
 typedef SettingsItemAction = FutureOr<void> Function(SettingsContext context);
 typedef SettingsItemBuilder = Widget Function(SettingsContext context);
-typedef SettingsValueGetter<T extends Object> = T Function(
-  SettingsContext context,
-);
-typedef SettingsValueChanged<T extends Object> = FutureOr<void> Function(
-  SettingsContext context,
-  T value,
-);
+typedef SettingsValueGetter<T extends Object> =
+    T Function(SettingsContext context);
+typedef SettingsValueChanged<T extends Object> =
+    FutureOr<void> Function(SettingsContext context, T value);
 typedef SettingsSwitchGetter = bool Function(SettingsContext context);
-typedef SettingsSwitchChanged = FutureOr<void> Function(
-  SettingsContext context,
-  bool value,
-);
+typedef SettingsSwitchChanged =
+    FutureOr<void> Function(SettingsContext context, bool value);
 typedef SettingsDoubleFormatter = String Function(double value);
 
 class SettingsDestination {
@@ -224,6 +229,7 @@ sealed class SettingsItem {
     required this.title,
     this.titleBuilder,
     this.subtitle,
+    this.subtitleBuilder,
     this.icon,
     this.visible,
     this.reader,
@@ -251,6 +257,14 @@ sealed class SettingsItem {
   final SettingsValueGetter<String>? titleBuilder;
 
   final String? subtitle;
+
+  /// 渲染时求值的副标题；返回非 null 时覆盖 [subtitle]。见 [SettingsSubtitleBuilder]。
+  ///
+  /// 目前只有 [SettingsSwitchItem] / [SettingsActionItem] 透传（游戏内查词要按 hook
+  /// 报上来的准入状态说明为什么开关被灰了，并把游戏 exe 摘要摆出来）；其它 item
+  /// 类型需要时照此加 `super.subtitleBuilder`。
+  final SettingsSubtitleBuilder? subtitleBuilder;
+
   final IconData? icon;
   final SettingsVisibility? visible;
 
@@ -265,6 +279,11 @@ sealed class SettingsItem {
   /// 渲染 / 搜索展示用的标题：有 [titleBuilder] 就用它，否则用静态 [title]。
   String resolveTitle(SettingsContext context) =>
       titleBuilder?.call(context) ?? title;
+
+  /// 渲染 / 搜索展示用的副标题：有 [subtitleBuilder] 且它给了值就用它，否则用静态
+  /// [subtitle]。
+  String? resolveSubtitle(SettingsContext context) =>
+      subtitleBuilder?.call(context) ?? subtitle;
 }
 
 class SettingsNavigationItem extends SettingsItem {
@@ -293,6 +312,7 @@ class SettingsActionItem extends SettingsItem {
     required super.title,
     required this.onTap,
     super.subtitle,
+    super.subtitleBuilder,
     super.icon,
     super.visible,
     super.reader,
@@ -309,6 +329,7 @@ class SettingsSwitchItem extends SettingsItem {
     required this.value,
     required this.onChanged,
     super.subtitle,
+    super.subtitleBuilder,
     super.icon,
     super.visible,
     super.reader,
@@ -385,9 +406,9 @@ class SettingsSliderItem extends SettingsItem {
     this.titleReadout = false,
     this.commitOnRelease = false,
   }) : assert(
-          !commitOnRelease || onChangeEnd == null,
-          'commitOnRelease 滑条松手统一走 onChanged 提交，不得再声明 onChangeEnd',
-        );
+         !commitOnRelease || onChangeEnd == null,
+         'commitOnRelease 滑条松手统一走 onChanged 提交，不得再声明 onChangeEnd',
+       );
 
   final double Function(SettingsContext context) value;
   final double min;

@@ -34,16 +34,16 @@ class AudiobookSession extends ChangeNotifier {
     required bool Function() floatingLyricClickLookup,
     required FloatingLyricLookupHandler onFloatingLyricLookup,
     required AudioControlStreams controlStreams,
-  })  : _audioHandlerGetter = audioHandler,
-        _showFloatingLyric = showFloatingLyric,
-        _showMediaNotification = showMediaNotification,
-        _floatingLyricStyle = floatingLyricStyle,
-        _floatingLyricContextLines = floatingLyricContextLines,
-        _floatingLyricClickLookup = floatingLyricClickLookup,
-        _onFloatingLyricLookup = onFloatingLyricLookup,
-        _defaultFloatingLyricStyle = floatingLyricStyle,
-        _defaultFloatingLyricLookup = onFloatingLyricLookup,
-        _controlStreams = controlStreams;
+  }) : _audioHandlerGetter = audioHandler,
+       _showFloatingLyric = showFloatingLyric,
+       _showMediaNotification = showMediaNotification,
+       _floatingLyricStyle = floatingLyricStyle,
+       _floatingLyricContextLines = floatingLyricContextLines,
+       _floatingLyricClickLookup = floatingLyricClickLookup,
+       _onFloatingLyricLookup = onFloatingLyricLookup,
+       _defaultFloatingLyricStyle = floatingLyricStyle,
+       _defaultFloatingLyricLookup = onFloatingLyricLookup,
+       _controlStreams = controlStreams;
 
   final FushiAudioHandler? Function() _audioHandlerGetter;
   final bool Function() _showFloatingLyric;
@@ -417,8 +417,11 @@ class AudiobookSession extends ChangeNotifier {
       // display cue 在选定列表中的下标（TODO-1065, BUG-509）：与 N=0 分支同源，
       // 首句前=首句、gap=下一句，让上下文窗口在引子期 / gap 也对齐即将播的句。
       final int index = controller.displayCueIndexIn(cues);
-      final FloatingLyricBlock block =
-          buildFloatingLyricBlock(cues: cues, index: index, n: n);
+      final FloatingLyricBlock block = buildFloatingLyricBlock(
+        cues: cues,
+        index: index,
+        n: n,
+      );
       FloatingLyricChannel.updateText(
         block.text,
         currentLineStart: block.start,
@@ -535,12 +538,26 @@ class AudiobookSession extends ChangeNotifier {
       cornerRadius: style.cornerRadius,
       windowWidth: style.windowWidth,
       clickLookupEnabled: _floatingLyricClickLookup(),
+      slotTooltips: _slotTooltips,
     );
     if (!shown) return false;
     await _applyFloatingLyricStyle(style);
     _setupFloatingLyricHandlers();
     return true;
   }
+
+  /// 工具条槽位悬停提示文案，**下标与 native `hook_toolbar::kAudiobookSlotActions`
+  /// 严格同序**（上一句 / 播放暂停 / 下一句 / 锁定 / 置顶 / 关闭）。
+  /// native 不持有 i18n，文案只能由这里按当前 locale 下发；表按 profile 分开存，
+  /// 不会和 galgame hook 台词浮窗的提示互相覆盖。
+  List<String> get _slotTooltips => <String>[
+    t.floating_lyric_previous,
+    t.floating_lyric_play_pause,
+    t.floating_lyric_next,
+    t.floating_lyric_lock,
+    t.floating_lyric_topmost,
+    t.floating_lyric_close,
+  ];
 
   Future<void> _applyFloatingLyricStyle(FloatingLyricStyle style) async {
     await FloatingLyricChannel.updateStyle(
@@ -555,7 +572,8 @@ class AudiobookSession extends ChangeNotifier {
       windowWidth: style.windowWidth,
     );
     await FloatingLyricChannel.setClickLookupEnabled(
-        _floatingLyricClickLookup());
+      _floatingLyricClickLookup(),
+    );
     await FloatingLyricChannel.updateLabels(
       previous: t.floating_lyric_previous,
       playPause: t.floating_lyric_play_pause,
@@ -567,9 +585,8 @@ class AudiobookSession extends ChangeNotifier {
   }
 
   /// 同步悬浮窗样式（reader 改主题 / 字号后调用）。无活动会话也允许（幂等）。
-  Future<void> applyFloatingLyricStyle() => _applyFloatingLyricStyle(
-        _floatingLyricStyle(),
-      );
+  Future<void> applyFloatingLyricStyle() =>
+      _applyFloatingLyricStyle(_floatingLyricStyle());
 
   void _setupFloatingLyricHandlers() {
     FloatingLyricChannel.setEventHandlers(
@@ -578,6 +595,19 @@ class AudiobookSession extends ChangeNotifier {
       onPreviousCue: () => _controller?.skipToPrevCue(),
       onNextCue: () => _controller?.skipToNextCue(),
       onClose: _onFloatingLyricClose,
+      // 不接 onTogglePassThrough / onToggleTransparency：有声书的槽表里已经
+      // **没有**这两颗按钮了（hook_toolbar_window.h 的 kAudiobookSlotActions）。
+      //
+      // 原来这里各挂了一行 debugPrint，并注释说「native 就地生效、Dart 只做镜像」
+      // —— 那句话对 lock / topmost 成立（DispatchControlAction 里就地翻转），对这
+      // 两个 action **不成立**：它们经 on_control_ 转给 Dart，Dart 这边只打日志，
+      // 于是按钮画得出、点得到、按下去什么也不发生。galgame 那侧有真实现（穿透是
+      // hook 浮窗的核心能力），有声书没有。要加回来：先在这里接上真正的翻转，
+      // 再把 action 放回槽表。
+      onPassThroughChanged: (bool passThrough) {
+        // native 可能否决穿透（工具条窗建不出来时），所以真值以这条事件为准。
+        debugPrint('[Fushi] floating-lyric pass-through -> $passThrough');
+      },
       onLockChanged: (bool locked) {
         debugPrint('[Fushi] floating-lyric position lock -> $locked');
       },

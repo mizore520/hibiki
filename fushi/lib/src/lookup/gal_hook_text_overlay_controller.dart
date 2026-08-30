@@ -142,10 +142,18 @@ class GalHookTextOverlayController extends ChangeNotifier {
   int? _sessionKey;
   String? _displayedLineId;
 
+  /// 与 [_displayedLineId] 配对的文本镜像：折叠后同一句的后续快照不产生新 id，
+  /// 只比 id 的话浮窗会永远停在这句的第一段上。
+  String? _displayedLineText;
+
   /// 游戏内查词用的「会话最新行」镜像，与 [_displayedLineId]（浮窗显示的那行）分开：
   /// 浮窗被关掉时仍要能观察新文本事件。ID 只是触发镜像；是否真换句
   /// 由 [GalIngameLookupController.onLineChanged] 用当前 submit 的句子内容裁决。
   String? _ingameLatestLineId;
+
+  /// 与 [_ingameLatestLineId] 配对的文本镜像。同一句被引擎分多次吐出来时会**就地
+  /// 扩写**（id 不变、文本变长），只比 id 会让游戏内卡片继续挂在旧排版的字形坐标上。
+  String? _ingameLatestLineText;
   double _opacity = _defaultOpacity;
   double _lastNonZeroOpacity = _defaultRestoreOpacity;
   double _fontSize = kGalHookTextFontSize;
@@ -264,6 +272,9 @@ class GalHookTextOverlayController extends ChangeNotifier {
       // 游戏内查词：hook 报命中 / 转发卡片内输入，两条都直通编排器，本控制器不解释。
       onGalLookupHit: _ingameLookup.handleHit,
       onGalLookupInput: _ingameLookup.handleInput,
+      // 查词准入（v19）：与开关正交，runner 在会话在的时候一直报。设置页据此决定
+      // 「游戏内查词」那一行灰不灰、说什么。
+      onGalLookupAdmission: _ingameLookup.handleAdmission,
     );
     _session.addListener(_scheduleSync);
     _scheduleSync();
@@ -368,12 +379,12 @@ class GalHookTextOverlayController extends ChangeNotifier {
     _bold = _readPreference(_boldPreferenceKey, true) == true;
     _textAlignment =
         _readPreference(_alignmentPreferenceKey, 'center') == 'left'
-            ? 'left'
-            : 'center';
+        ? 'left'
+        : 'center';
     _verticalAlignment =
         _readPreference(_verticalAlignmentPreferenceKey, 'center') == 'top'
-            ? 'top'
-            : 'center';
+        ? 'top'
+        : 'center';
     _textColor = _readColor(
       _textColorPreferenceKey,
       PreferencesRepository.galHookTextColorDefault,
@@ -486,7 +497,9 @@ class GalHookTextOverlayController extends ChangeNotifier {
       _passThrough = false;
       _locked = false;
       _displayedLineId = null;
+      _displayedLineText = null;
       _ingameLatestLineId = null;
+      _ingameLatestLineText = null;
       // 新会话：上一局的试听计时不能把高亮留在新浮窗上。
       _replayResetTimer?.cancel();
       _replayResetTimer = null;
@@ -531,9 +544,14 @@ class GalHookTextOverlayController extends ChangeNotifier {
     // 文本服务仍保留这些 occurrence（配音/制卡身份需要），只有查词 surface
     // 会把同句重发折叠为同一生命周期。
     final String? latestLineId = lines.isEmpty ? null : lines.last.id;
-    if (latestLineId != _ingameLatestLineId) {
+    final String? latestLineText = lines.isEmpty ? null : lines.last.text;
+    // 文本也要比：就地扩写时 id 不变但屏上排版已经变了，卡片锚定的字形位置不再
+    // 作数，必须一并消场。
+    if (latestLineId != _ingameLatestLineId ||
+        latestLineText != _ingameLatestLineText) {
       _ingameLatestLineId = latestLineId;
-      await _ingameLookup.onLineChanged(lines.isEmpty ? null : lines.last.text);
+      _ingameLatestLineText = latestLineText;
+      await _ingameLookup.onLineChanged(latestLineText);
     }
 
     if (_suppressedForSession) return;
@@ -566,6 +584,10 @@ class GalHookTextOverlayController extends ChangeNotifier {
         passThrough: _passThrough,
         locked: _locked,
         hoverAutoLookup: hoverAutoLookup,
+        clickLookupEnabled: _readClickLookupEnabled(),
+        lookupTrigger: _readLookupTrigger(),
+        toolbarAutoHide: _readToolbarAutoHide(),
+        passThroughBlocksMouse: _readPassThroughBlocksMouse(),
         slotTooltips: _slotTooltips,
       );
       _pushedHoverAutoLookup = hoverAutoLookup;
@@ -573,18 +595,24 @@ class GalHookTextOverlayController extends ChangeNotifier {
       // 否则下一次 _syncVoiceState 会认为「已经推过了」而不再推。
       _pushedReplaying = false;
       _pushedRecapturing = false;
-      if (_visible) _displayedLineId = latest.id;
+      if (_visible) {
+        _displayedLineId = latest.id;
+        _displayedLineText = latest.text;
+      }
       notifyListeners();
       await _syncVoiceState();
       return;
     }
-    if (_following && latest.id != _displayedLineId) {
+    // 换句（id 变）或就地扩写（id 不变、文本变长）都要重推。
+    if (_following &&
+        (latest.id != _displayedLineId || latest.text != _displayedLineText)) {
       await GalHookTextOverlayChannel.updateText(
         lineId: latest.id,
         text: latest.text,
         rubySpans: rubySpansToChannel(latest.rubySpans),
       );
       _displayedLineId = latest.id;
+      _displayedLineText = latest.text;
       notifyListeners();
     }
     // 补录窗口可能由 session 侧超时自行收束：每轮都比对一次，浮窗上的「录音中」
@@ -596,16 +624,16 @@ class GalHookTextOverlayController extends ChangeNotifier {
   /// 严格同序**（重播 / 重录 / 跟随 / 穿透 / 底板 / 锁定 / 工作台 / 置顶 /
   /// 关闭）。native 不持有 i18n，文案只能由这里按当前 locale 下发。
   List<String> get _slotTooltips => <String>[
-        t.game_hook_btn_replay,
-        t.game_hook_btn_recapture,
-        t.game_hook_btn_follow,
-        t.game_hook_btn_passthrough,
-        t.game_hook_btn_transparency,
-        t.game_hook_btn_lock,
-        t.game_hook_btn_workbench,
-        t.game_hook_btn_topmost,
-        t.game_hook_btn_close,
-      ];
+    t.game_hook_btn_replay,
+    t.game_hook_btn_recapture,
+    t.game_hook_btn_follow,
+    t.game_hook_btn_passthrough,
+    t.game_hook_btn_transparency,
+    t.game_hook_btn_lock,
+    t.game_hook_btn_workbench,
+    t.game_hook_btn_topmost,
+    t.game_hook_btn_close,
+  ];
 
   int get _backgroundColor {
     final int alpha = (_opacity.clamp(0.0, 1.0) * 255).round();
@@ -613,21 +641,21 @@ class GalHookTextOverlayController extends ChangeNotifier {
   }
 
   Future<void> _pushStyle() => GalHookTextOverlayChannel.updateStyle(
-        bgColor: _backgroundColor,
-        fontSize: _fontSize,
-        fontFamily: _fontSelection?.family ?? '',
-        fontPath: _fontSelection?.path,
-        letterSpacing: _letterSpacing,
-        lineHeight: _lineHeight,
-        bold: _bold,
-        textAlignment: _textAlignment,
-        verticalAlignment: _verticalAlignment,
-        textColor: _textColor,
-        outlineColor: _outlineColor,
-        outlineWidth: _outlineWidth,
-        textPadding: _textPadding,
-        cornerRadius: _cornerRadius,
-      );
+    bgColor: _backgroundColor,
+    fontSize: _fontSize,
+    fontFamily: _fontSelection?.family ?? '',
+    fontPath: _fontSelection?.path,
+    letterSpacing: _letterSpacing,
+    lineHeight: _lineHeight,
+    bold: _bold,
+    textAlignment: _textAlignment,
+    verticalAlignment: _verticalAlignment,
+    textColor: _textColor,
+    outlineColor: _outlineColor,
+    outlineWidth: _outlineWidth,
+    textPadding: _textPadding,
+    cornerRadius: _cornerRadius,
+  );
 
   Future<void> showManually() async {
     if (!_started) return;
@@ -739,6 +767,51 @@ class GalHookTextOverlayController extends ChangeNotifier {
 
   /// 「悬停即查词」当前值。默认真值在 [ReaderFushiSource]（与阅读器 / 视频字幕
   /// 同一个开关），测试可注入替身。
+  /// hook 浮窗交互偏好四件套。走同一个 [_readPreference]（测试可注入），坏值一律
+  /// 退回默认——一个越界的触发方式会让 native 的分派变成「哪个键都不触发」。
+  bool _readClickLookupEnabled() {
+    final Object? stored = _readPreference(
+      'gal_hook_click_lookup',
+      PreferencesRepository.galHookClickLookupDefault,
+    );
+    return stored is bool
+        ? stored
+        : PreferencesRepository.galHookClickLookupDefault;
+  }
+
+  int _readLookupTrigger() {
+    final Object? stored = _readPreference(
+      'gal_hook_lookup_trigger',
+      PreferencesRepository.galHookLookupTriggerDefault,
+    );
+    final int value = stored is num
+        ? stored.toInt()
+        : PreferencesRepository.galHookLookupTriggerDefault;
+    return value >= 0 && value <= 2
+        ? value
+        : PreferencesRepository.galHookLookupTriggerDefault;
+  }
+
+  bool _readToolbarAutoHide() {
+    final Object? stored = _readPreference(
+      'gal_hook_toolbar_auto_hide',
+      PreferencesRepository.galHookToolbarAutoHideDefault,
+    );
+    return stored is bool
+        ? stored
+        : PreferencesRepository.galHookToolbarAutoHideDefault;
+  }
+
+  bool _readPassThroughBlocksMouse() {
+    final Object? stored = _readPreference(
+      'gal_hook_passthrough_blocks_mouse',
+      PreferencesRepository.galHookPassThroughBlocksMouseDefault,
+    );
+    return stored is bool
+        ? stored
+        : PreferencesRepository.galHookPassThroughBlocksMouseDefault;
+  }
+
   bool _readHoverAutoLookup() {
     final GalHookHoverAutoLookupReader? reader = _hoverAutoLookupReader;
     if (reader != null) return reader();
@@ -1047,8 +1120,8 @@ class GalHookTextOverlayController extends ChangeNotifier {
       final String abortMessage = result.audioFallbackDisabled
           ? t.game_audio_fallback_disabled_missing
           : result.failureReason != null
-              ? '${t.external_window_capture_failed}：${result.failureReason}'
-              : t.external_window_capture_failed;
+          ? '${t.external_window_capture_failed}：${result.failureReason}'
+          : t.external_window_capture_failed;
       FushiToast.showMine(msg: abortMessage, status: MineToastStatus.failed);
       // BUG-1908：同一句话也回给浮窗——游戏全屏时主 app 窗在后台，上面那个 toast
       // 用户看不见。

@@ -162,6 +162,7 @@ import 'package:fushi/src/mining/youtube_clip_miner.dart';
 import 'package:fushi/src/sync/fushi_sync_server.dart';
 import 'package:fushi/src/sync/manga_sync_package.dart';
 import 'package:fushi/src/sync/desktop_lookup_service.dart';
+import 'package:fushi/src/sync/texthooker_service.dart';
 import 'package:fushi/src/sync/texthooker_ws_client_manager.dart';
 import 'package:fushi/src/sync/fushi_remote_api_handlers.dart'
     show RemotePopupDictionaryCss;
@@ -898,7 +899,7 @@ class AppModel with ChangeNotifier {
           floatingLyricStyle: _appLevelFloatingLyricStyle,
           floatingLyricContextLines: () => floatingLyricContextLines,
           floatingLyricClickLookup: () => floatingLyricClickLookup,
-          onFloatingLyricLookup: (String text, int index) {
+          onFloatingLyricLookup: (String text, int index, Rect? wordRect) {
             // app 级（无 reader attach）桌面悬浮窗点词：Windows 优先弹 867 app 外全局
             // 查词覆盖窗（TODO-872，主窗最小化/被遮挡也看得见）；覆盖窗不可用才回落
             // 常驻主窗口的 in-app 查词宿主 [FloatingLyricLookupHost]（main.dart 根
@@ -909,6 +910,7 @@ class AppModel with ChangeNotifier {
                 appModel: this,
                 text: text,
                 index: index,
+                wordRect: wordRect,
               )) {
                 return;
               }
@@ -1234,8 +1236,9 @@ class AppModel with ChangeNotifier {
   /// 打包阶段的确定进度（0..1）；null = 尚未进入打包。准备阶段（VACUUM INTO、按
   /// 分类裁剪行、枚举待打包文件）没有可分的量，UI 此时走不确定动画。与导入侧同理用
   /// [ValueNotifier]，让**只有进度条**随每个文件落盘重建，而不是整行重绘。
-  final ValueNotifier<double?> backupExportProgress =
-      ValueNotifier<double?>(null);
+  final ValueNotifier<double?> backupExportProgress = ValueNotifier<double?>(
+    null,
+  );
 
   void beginBackupExport() {
     if (_backupExportActive) return;
@@ -2325,6 +2328,10 @@ class AppModel with ChangeNotifier {
         mediaHistoryRepo.loadFromDb(),
       ]);
       prefsRepo.addListener(notifyListeners);
+      // 偏好一装载就把折叠开关推给 TexthookerService（进程级单例、无 ref）。漏了这一步
+      // 开关就只在「本次会话里手动改过」时才生效，重启后静默退回默认值。
+      TexthookerService.instance.foldProgressiveLines =
+          prefsRepo.galHookFoldProgressiveLines;
       // 代理是**进程级**网络出口配置，却只存在偏好里；同步层的单例（GoogleDriveAuth 等）
       // 拿不到 AppModel，以前就只能各自裸连——BUG-1348 的谷歌云盘登录超时正是如此。偏好
       // 一装载好就把进程级读取器接上去，此后任何 applyAppProxy(client) 都自动拿到同一个值，
@@ -4319,7 +4326,9 @@ class AppModel with ChangeNotifier {
     );
   }
 
-  Future<void> _disposeVideoDownloadPipelineRuntime() async {
+  Future<void> _disposeVideoDownloadPipelineRuntime({
+    Duration? pipelineDrainTimeout,
+  }) async {
     final VideoDownloadSubscriptionService? subscriptions =
         _videoDownloadSubscriptionService;
     _videoDownloadSubscriptionService = null;
@@ -4327,7 +4336,9 @@ class AppModel with ChangeNotifier {
     final VideoDownloadPipelineService? pipeline =
         _videoDownloadPipelineService;
     _videoDownloadPipelineService = null;
-    if (pipeline != null) await pipeline.dispose();
+    if (pipeline != null) {
+      await pipeline.dispose(drainTimeout: pipelineDrainTimeout);
+    }
     _videoResourceRegistry?.close();
     _videoResourceRegistry = null;
     _videoSubtitleRegistry?.close();
@@ -6153,16 +6164,26 @@ class AppModel with ChangeNotifier {
   ///
   /// 只停「后台自己会写库」的那几个（下载/订阅/漫画队列），不碰查词、TTS 这类只读
   /// 子系统：closeDatabase 之后调用方一律走重启，停多了没收益、只增加爆炸半径。
-  Future<void> quiesceBackgroundDatabaseWriters() async {
+  ///
+  /// [pipelineDrainTimeout] 只在**退出路径**给：见
+  /// [VideoDownloadPipelineService.stop] 的注释——迁移导入 / 备份导入 / 数据根迁移
+  /// 也走这条链，它们在关库后要在文件层动整个 DB 目录，放行一个仍在飞的 `_process`
+  /// 会让它继续打已关闭的连接、并被随后的 `_videoDownloadBackend?.close()` 抽掉
+  /// 句柄。那些路径必须等到真收尾。
+  Future<void> quiesceBackgroundDatabaseWriters({
+    Duration? pipelineDrainTimeout,
+  }) async {
     _animeDownloadService?.stop();
     _animeDownloadSubscriptionService?.stop();
     _mokuroMoeDownloadQueue?.dispose();
     _mokuroMoeDownloadQueue = null;
     _videoDownloadPipelineRuntimeWanted = false;
-    await _disposeVideoDownloadPipelineRuntime();
+    await _disposeVideoDownloadPipelineRuntime(
+      pipelineDrainTimeout: pipelineDrainTimeout,
+    );
   }
 
-  Future<void> closeDatabase() async {
+  Future<void> closeDatabase({Duration? pipelineDrainTimeout}) async {
     _isInitialised = false;
     // BUG-1569②：合集观察者持有本库的表订阅 + 未决防抖 Timer，关库前必须撤——
     // 否则防抖到点后 _runCollectionsSync 会对已关闭的 db 发起查询（drift「connection
@@ -6170,7 +6191,9 @@ class AppModel with ChangeNotifier {
     // 测试 teardown 调过 uninstall，生产三条关库路径全都不撤订阅。
     uninstallCollectionsSyncWatcher();
     databaseCloseNotifier.notifyListeners();
-    await quiesceBackgroundDatabaseWriters();
+    await quiesceBackgroundDatabaseWriters(
+      pipelineDrainTimeout: pipelineDrainTimeout,
+    );
     await _database.close();
   }
 
@@ -6771,7 +6794,8 @@ class AppModel with ChangeNotifier {
       audioSourcesProvider: () => enabledAudioSources,
       // 查词后自动朗读：与 app 内弹窗/app 外浮窗/剪贴板面板同一个全局偏好（读同一个
       // ReaderFushiSource 真相源），扩展弹窗渲染后自动播首条词发音，不再只能手动点 ♪。
-      autoReadOnLookupProvider: () => ReaderFushiSource.instance.autoReadOnLookup,
+      autoReadOnLookupProvider: () =>
+          ReaderFushiSource.instance.autoReadOnLookup,
       // BUG-726：内置扩展内容指纹随查词响应下发（`extensionBuild`），扩展 background
       // 与自身 FUSHI_DEFAULTS.build 比对，不一致即 chrome.runtime.reload() 从磁盘拉新。
       // 指纹由 refreshBrowserExtensionCopy 在启动时算好缓存；算好前返回 null（字段省略）。
@@ -7120,6 +7144,31 @@ class AppModel with ChangeNotifier {
   bool get galIngameLookupEnabled => prefsRepo.galIngameLookupEnabled;
   Future<void> setGalIngameLookupEnabled(bool value) =>
       prefsRepo.setGalIngameLookupEnabled(value);
+
+  // hook 台词浮窗的交互偏好四件套（仅 Windows 生效）。
+  bool get galHookClickLookup => prefsRepo.galHookClickLookup;
+  Future<void> setGalHookClickLookup(bool value) =>
+      prefsRepo.setGalHookClickLookup(value);
+
+  int get galHookLookupTrigger => prefsRepo.galHookLookupTrigger;
+  Future<void> setGalHookLookupTrigger(int value) =>
+      prefsRepo.setGalHookLookupTrigger(value);
+
+  bool get galHookToolbarAutoHide => prefsRepo.galHookToolbarAutoHide;
+  Future<void> setGalHookToolbarAutoHide(bool value) =>
+      prefsRepo.setGalHookToolbarAutoHide(value);
+
+  bool get galHookPassThroughBlocksMouse =>
+      prefsRepo.galHookPassThroughBlocksMouse;
+  Future<void> setGalHookPassThroughBlocksMouse(bool value) =>
+      prefsRepo.setGalHookPassThroughBlocksMouse(value);
+  // 折叠「同一句台词的多次快照」。TexthookerService 是没有 ref 的进程级单例，
+  // 拿不到偏好；真值由这里单向推给它（启动期一次 + 每次改开关一次）。
+  bool get galHookFoldProgressiveLines => prefsRepo.galHookFoldProgressiveLines;
+  Future<void> setGalHookFoldProgressiveLines(bool value) async {
+    await prefsRepo.setGalHookFoldProgressiveLines(value);
+    TexthookerService.instance.foldProgressiveLines = value;
+  }
 
   // TODO-370: 悬浮字幕透明度（按钮底色 / 文字），0..100 百分比，100=保持现观感。
   int get floatingLyricButtonBgOpacity =>
