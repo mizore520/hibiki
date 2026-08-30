@@ -104,6 +104,13 @@ void main() {
     expect(script, contains('sqlite-autoconf-\$cmakeVersion'));
     expect(script, contains('Test-VerifiedCmakeSource'));
     expect(script, contains("'sqlite3.c' = 'a503acc9"));
+    expect(script, contains('Push-Location -LiteralPath \$sourceStage'));
+    expect(script, contains('& tar.exe -xzf \$archiveLeaf -C .'));
+    expect(
+      script,
+      isNot(contains('& tar.exe -xzf \$sourceArchive')),
+      reason: 'bsdtar 会把 E:\\\\... 这类带冒号的绝对路径当成 host:path',
+    );
     expect(launcher, contains('FUSHI_SQLITE3_SOURCE_DIR'));
     expect(windowsCmake, contains(r'ENV{FUSHI_SQLITE3_SOURCE_DIR}'));
     expect(windowsCmake, contains('FETCHCONTENT_SOURCE_DIR_SQLITE3'));

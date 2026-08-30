@@ -147,9 +147,22 @@ function Publish-CmakeSource {
     if ($LASTEXITCODE -ne 0) {
       throw "curl.exe failed with exit code $LASTEXITCODE"
     }
-    & tar.exe -xzf $sourceArchive -C $sourceStage
-    if ($LASTEXITCODE -ne 0) {
-      throw "tar.exe failed with exit code $LASTEXITCODE"
+    # bsdtar (including Windows' inbox tar.exe) interprets a colon in an
+    # archive operand as `host:path`. Passing `E:\...\archive.tar.gz` therefore
+    # tries to connect to a host named E. Extract from inside the stage and pass
+    # only the leaf name so every drive-letter path remains unambiguously local.
+    $archiveLeaf = Split-Path -Leaf $sourceArchive
+    $tarExitCode = 1
+    Push-Location -LiteralPath $sourceStage
+    try {
+      & tar.exe -xzf $archiveLeaf -C .
+      $tarExitCode = $LASTEXITCODE
+    }
+    finally {
+      Pop-Location
+    }
+    if ($tarExitCode -ne 0) {
+      throw "tar.exe failed with exit code $tarExitCode"
     }
     $extracted = Join-Path $sourceStage $cmakeSourceName
     if (-not (Test-VerifiedCmakeSource -Root $extracted)) {
