@@ -1,22 +1,17 @@
 <#
 .SYNOPSIS
-  Prepare a verified, persistent ONNX Runtime cache for Windows builds.
+  Prepare a verified, persistent ONNX Runtime DirectML cache for Windows.
 
 .DESCRIPTION
-  flutter_onnxruntime normally downloads ONNX Runtime under fushi/build.  A
-  flutter clean therefore deletes it, and the plugin used to ignore download
-  and extraction failures before reporting only a missing-directory error.
-  This script validates a project-local cache outside build/, reuses a valid
-  legacy build copy when available, and otherwise downloads and verifies the
-  pinned runtime before CMake starts.
+  The Windows OCR runtime uses the official ONNX Runtime DirectML and DirectML
+  NuGet packages. Keep their verified extraction outside fushi/build so the
+  smart launcher, clean rebuilds, and sibling worktrees reuse the same files.
 #>
 [CmdletBinding()]
 param(
   [Parameter(Mandatory = $true)]
   [string] $RepoRoot,
-
   [string] $CacheDirectory,
-
   [string] $SeedDirectory
 )
 
@@ -33,15 +28,26 @@ if (-not $cache.StartsWith($repoPrefix, [StringComparison]::OrdinalIgnoreCase)) 
   throw "ONNX Runtime cache must stay inside the repository: $cache"
 }
 
-$version = '1.22.0'
-$packageName = "onnxruntime-win-x64-$version"
+$ortVersion = '1.22.0'
+$directmlVersion = '1.15.4'
+$packageName = "onnxruntime-directml-$ortVersion"
 $target = Join-Path $cache $packageName
-$downloadUrl = "https://github.com/microsoft/onnxruntime/releases/download/v$version/$packageName.zip"
-$required = @{
-  'include\onnxruntime_cxx_api.h' = '7606924bbc40810a72fca54d8aff75c9564908301241eb835bc1814a3aee4ad8'
-  'lib\onnxruntime.lib' = 'ab00cba665b186c0d29df9c575d34fd2bcc8f9b9ecae997f81610d07b2fc8ebc'
-  'lib\onnxruntime.dll' = '579b636403983254346a5c1d80bd28f1519cd1e284cd204f8d4ff41f8d711559'
-}
+$downloads = Join-Path $cache '.downloads'
+$ortArchiveName = "microsoft.ml.onnxruntime.directml.$ortVersion.nupkg"
+$directmlArchiveName = "microsoft.ai.directml.$directmlVersion.nupkg"
+$ortArchive = Join-Path $downloads $ortArchiveName
+$directmlArchive = Join-Path $downloads $directmlArchiveName
+$ortUrl = "https://api.nuget.org/v3-flatcontainer/microsoft.ml.onnxruntime.directml/$ortVersion/$ortArchiveName"
+$directmlUrl = "https://api.nuget.org/v3-flatcontainer/microsoft.ai.directml/$directmlVersion/$directmlArchiveName"
+$ortArchiveSha256 = '29f9872d786236b79aa83f94482f3a17c14297e4833768d6d0ed4883ee732e60'
+$directmlArchiveSha256 = '4e7cb7ddce8cf837a7a75dc029209b520ca0101470fcdf275c1f49736a3615b9'
+$requiredFiles = @(
+  'onnxruntime\build\native\include\dml_provider_factory.h',
+  'onnxruntime\runtimes\win-x64\native\onnxruntime.lib',
+  'onnxruntime\runtimes\win-x64\native\onnxruntime.dll',
+  'onnxruntime\runtimes\win-x64\native\onnxruntime_providers_shared.dll',
+  'directml\bin\x64-win\DirectML.dll'
+)
 
 function Get-SharedCheckoutRoot {
   try {
@@ -61,16 +67,13 @@ function Get-SharedCheckoutRoot {
 function Get-Sha256Hex {
   param([Parameter(Mandatory = $true)][string] $Path)
 
-  # BUG-1601: Get-FileHash is module-backed and can disappear when the BAT
-  # canonicalizes PATH/PSModulePath for MSBuild.  The cache verifier runs before
-  # compilation, so use the framework crypto API that is available in both
-  # Windows PowerShell 5.1 and PowerShell 7 without module auto-loading.
+  # BUG-1601: module auto-loading can be unavailable in the BAT-normalized
+  # MSBuild environment. Use the framework API instead of Get-FileHash.
   $stream = [IO.File]::OpenRead($Path)
   try {
     $sha256 = [Security.Cryptography.SHA256]::Create()
     try {
-      $hashBytes = $sha256.ComputeHash($stream)
-      return ([BitConverter]::ToString($hashBytes).Replace('-', '')).ToLowerInvariant()
+      return ([BitConverter]::ToString($sha256.ComputeHash($stream)).Replace('-', '')).ToLowerInvariant()
     }
     finally {
       $sha256.Dispose()
@@ -81,31 +84,85 @@ function Get-Sha256Hex {
   }
 }
 
+function Test-Archive {
+  param(
+    [Parameter(Mandatory = $true)][string] $Path,
+    [Parameter(Mandatory = $true)][string] $ExpectedSha256
+  )
+
+  return (Test-Path -LiteralPath $Path -PathType Leaf) -and
+    ((Get-Sha256Hex -Path $Path) -eq $ExpectedSha256)
+}
+
 function Test-VerifiedRuntime {
   param([Parameter(Mandatory = $true)][string] $Root)
 
   if (-not (Test-Path -LiteralPath $Root -PathType Container)) {
     return $false
   }
-  foreach ($entry in $required.GetEnumerator()) {
-    $path = Join-Path $Root $entry.Key
-    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
-      return $false
-    }
-    $actual = Get-Sha256Hex -Path $path
-    if ($actual -ne $entry.Value) {
+  foreach ($relativePath in $requiredFiles) {
+    if (-not (Test-Path -LiteralPath (Join-Path $Root $relativePath) -PathType Leaf)) {
       return $false
     }
   }
   return $true
 }
 
+function Get-VerifiedArchive {
+  param(
+    [Parameter(Mandatory = $true)][string] $Url,
+    [Parameter(Mandatory = $true)][string] $Destination,
+    [Parameter(Mandatory = $true)][string] $ExpectedSha256
+  )
+
+  if (Test-Archive -Path $Destination -ExpectedSha256 $ExpectedSha256) {
+    Write-Host "[onnxruntime] verified cached package: $Destination"
+    return
+  }
+
+  $partial = "$Destination.partial"
+  $lastError = $null
+  foreach ($attempt in 1..3) {
+    try {
+      Write-Host "[onnxruntime] download attempt $attempt/3: $Url"
+      $curl = Get-Command 'curl.exe' -ErrorAction SilentlyContinue
+      if ($curl) {
+        & $curl.Source --fail --location --silent --show-error `
+          --continue-at - --connect-timeout 20 --max-time 180 `
+          --output $partial $Url
+        if ($LASTEXITCODE -ne 0 -and
+            -not (Test-Archive -Path $partial -ExpectedSha256 $ExpectedSha256)) {
+          throw "curl.exe failed with exit code $LASTEXITCODE"
+        }
+      }
+      else {
+        Invoke-WebRequest -Uri $Url -OutFile $partial -UseBasicParsing -TimeoutSec 120
+      }
+
+      if (-not (Test-Archive -Path $partial -ExpectedSha256 $ExpectedSha256)) {
+        Remove-Item -LiteralPath $partial -Force -ErrorAction SilentlyContinue
+        throw 'downloaded package failed its pinned SHA-256'
+      }
+      Move-Item -LiteralPath $partial -Destination $Destination -Force
+      return
+    }
+    catch {
+      $lastError = $_
+      Write-Warning "ONNX Runtime package attempt $attempt failed: $($_.Exception.Message)"
+      if ($attempt -lt 3) {
+        Start-Sleep -Seconds 2
+      }
+    }
+  }
+  throw "Unable to download verified ONNX Runtime package after 3 attempts: $($lastError.Exception.Message)"
+}
+
 if (Test-VerifiedRuntime -Root $target) {
-  Write-Host "[onnxruntime] verified persistent cache: $target"
+  Write-Host "[onnxruntime] verified persistent DirectML cache: $target"
   exit 0
 }
 
-New-Item -ItemType Directory -Force -Path $cache | Out-Null
+New-Item -ItemType Directory -Force -Path $cache, $downloads | Out-Null
 $stage = Join-Path $cache ('.stage-' + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $stage | Out-Null
 
@@ -115,78 +172,50 @@ try {
   if (-not [string]::IsNullOrWhiteSpace($SeedDirectory)) {
     $candidates += [IO.Path]::GetFullPath($SeedDirectory)
   }
-  # All worktrees share one Git common directory. Reuse the main checkout's
-  # verified persistent cache instead of downloading the same 72 MB runtime in
-  # every feature worktree.
   $sharedCheckoutRoot = Get-SharedCheckoutRoot
   if ($sharedCheckoutRoot -and
       -not $sharedCheckoutRoot.Equals($repo, [StringComparison]::OrdinalIgnoreCase)) {
     $candidates += Join-Path $sharedCheckoutRoot ".build-cache\onnxruntime\$packageName"
   }
-  $candidates += Join-Path $repo "fushi\build\windows\x64\plugins\flutter_onnxruntime\onnxruntime\$packageName"
-
   $seed = $candidates |
     Where-Object { Test-VerifiedRuntime -Root $_ } |
     Select-Object -First 1
+
   if ($seed) {
-    Write-Host "[onnxruntime] migrating verified existing runtime: $seed"
+    Write-Host "[onnxruntime] migrating verified existing DirectML runtime: $seed"
     Copy-Item -LiteralPath $seed -Destination $payload -Recurse -Force
   }
   else {
-    $persistentDownloadDir = Join-Path $cache '.downloads'
-    New-Item -ItemType Directory -Force -Path $persistentDownloadDir | Out-Null
-    $partialZip = Join-Path $persistentDownloadDir "$packageName.zip.partial"
-    $downloaded = $false
-    $lastError = $null
-    foreach ($attempt in 1..3) {
-      $attemptDir = Join-Path $stage "download-$attempt"
-      $zip = Join-Path $attemptDir "$packageName.zip"
-      New-Item -ItemType Directory -Path $attemptDir | Out-Null
-      try {
-        Write-Host "[onnxruntime] download attempt $attempt/3: $downloadUrl"
-        $curl = Get-Command 'curl.exe' -ErrorAction SilentlyContinue
-        if ($curl) {
-          & $curl.Source --fail --location --silent --show-error `
-            --continue-at - --connect-timeout 20 --max-time 180 `
-            --output $partialZip $downloadUrl
-          if ($LASTEXITCODE -ne 0) {
-            throw "curl.exe failed with exit code $LASTEXITCODE"
-          }
-        }
-        else {
-          Invoke-WebRequest -Uri $downloadUrl -OutFile $partialZip -UseBasicParsing -TimeoutSec 120
-        }
-        if ((Get-Item -LiteralPath $partialZip).Length -le 0) {
-          throw 'downloaded archive is empty'
-        }
-        Copy-Item -LiteralPath $partialZip -Destination $zip -Force
-        Expand-Archive -LiteralPath $zip -DestinationPath $attemptDir -Force
-        $extracted = Join-Path $attemptDir $packageName
-        if (-not (Test-VerifiedRuntime -Root $extracted)) {
-          # A complete but invalid archive cannot be resumed into validity.
-          Remove-Item -LiteralPath $partialZip -Force -ErrorAction SilentlyContinue
-          throw 'downloaded runtime failed the pinned SHA-256 manifest'
-        }
-        Move-Item -LiteralPath $extracted -Destination $payload
-        Remove-Item -LiteralPath $partialZip -Force -ErrorAction SilentlyContinue
-        $downloaded = $true
-        break
+    Get-VerifiedArchive -Url $ortUrl -Destination $ortArchive -ExpectedSha256 $ortArchiveSha256
+    Get-VerifiedArchive -Url $directmlUrl -Destination $directmlArchive -ExpectedSha256 $directmlArchiveSha256
+
+    $ortStage = Join-Path $payload 'onnxruntime'
+    $directmlStage = Join-Path $payload 'directml'
+    New-Item -ItemType Directory -Force -Path $ortStage, $directmlStage | Out-Null
+    # bootstrap prepends Git Bash to PATH, where tar.exe is GNU tar and cannot
+    # unpack ZIP-based NuGet packages. Select Windows bsdtar explicitly.
+    $windowsTar = Join-Path $env:SystemRoot 'System32\tar.exe'
+    if (-not (Test-Path -LiteralPath $windowsTar -PathType Leaf)) {
+      throw "Windows archive tool not found: $windowsTar"
+    }
+    Push-Location -LiteralPath $downloads
+    try {
+      & $windowsTar -xf $ortArchiveName -C $ortStage
+      if ($LASTEXITCODE -ne 0) {
+        throw "failed to extract $ortArchiveName (exit $LASTEXITCODE)"
       }
-      catch {
-        $lastError = $_
-        Write-Warning "ONNX Runtime attempt $attempt failed: $($_.Exception.Message)"
-        if ($attempt -lt 3) {
-          Start-Sleep -Seconds 2
-        }
+      & $windowsTar -xf $directmlArchiveName -C $directmlStage
+      if ($LASTEXITCODE -ne 0) {
+        throw "failed to extract $directmlArchiveName (exit $LASTEXITCODE)"
       }
     }
-    if (-not $downloaded) {
-      throw "Unable to prepare ONNX Runtime after 3 attempts: $($lastError.Exception.Message)"
+    finally {
+      Pop-Location
     }
   }
 
   if (-not (Test-VerifiedRuntime -Root $payload)) {
-    throw 'prepared ONNX Runtime failed final verification'
+    throw 'prepared ONNX Runtime DirectML cache is incomplete'
   }
   if (Test-Path -LiteralPath $target) {
     Remove-Item -LiteralPath $target -Recurse -Force

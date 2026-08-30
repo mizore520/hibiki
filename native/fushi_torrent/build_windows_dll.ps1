@@ -25,12 +25,18 @@ param(
 
     [string]$Triplet = "x64-windows",
 
-    [string]$Config = "Release"
+    [string]$Config = "Release",
+
+    [string]$BuildDirectory
 )
 
 $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$buildDir = Join-Path $scriptDir "build"
+$buildDir = if ($BuildDirectory) {
+    [IO.Path]::GetFullPath($BuildDirectory)
+} else {
+    Join-Path $scriptDir "build"
+}
 $outDir = Join-Path $scriptDir "prebuilt\windows-x64"
 
 $toolchain = Join-Path $VcpkgRoot "scripts\buildsystems\vcpkg.cmake"

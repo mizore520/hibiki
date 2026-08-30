@@ -105,6 +105,10 @@ const String kManualVideoDownloadResourceProvider = 'manual';
 /// 进受管视频来源），import 阶段整包交给发现导入执行器按域入库。
 const String kManualDiscoveryPolicyPrefix = 'discovery-';
 
+/// 只下载、不自动入库的非视频任务策略。CoreAudio 单卷 m4b 没有正文/字幕，
+/// 下载完成后保留文件并正常结束任务，不能送进“正文 + 字幕 + 音频”的对齐导入器。
+const String kManualDownloadOnlyPolicyPrefix = 'download-only-';
+
 /// [kind] 域的手动任务 organizationPolicy 值。
 String manualDiscoveryOrganizationPolicy(DiscoveryMediaKind kind) =>
     '$kManualDiscoveryPolicyPrefix${kind.name}';
@@ -114,6 +118,16 @@ DiscoveryMediaKind? discoveryKindOfOrganizationPolicy(String policy) {
   if (!policy.startsWith(kManualDiscoveryPolicyPrefix)) return null;
   return DiscoveryMediaKind.values.asNameMap()[policy.substring(
     kManualDiscoveryPolicyPrefix.length,
+  )];
+}
+
+String manualDownloadOnlyOrganizationPolicy(DiscoveryMediaKind kind) =>
+    '$kManualDownloadOnlyPolicyPrefix${kind.name}';
+
+DiscoveryMediaKind? downloadOnlyKindOfOrganizationPolicy(String policy) {
+  if (!policy.startsWith(kManualDownloadOnlyPolicyPrefix)) return null;
+  return DiscoveryMediaKind.values.asNameMap()[policy.substring(
+    kManualDownloadOnlyPolicyPrefix.length,
   )];
 }
 
@@ -127,7 +141,13 @@ class VideoDownloadManualEnqueueRequest {
     required this.backendTarget,
     this.magnetUri,
     this.metainfo,
+    this.selectedFileIndexes,
+    this.resourceTitle,
+    this.coverUrl,
+    this.metadataProvider,
+    this.externalId,
     this.discoveryKind,
+    this.importAfterDownload = true,
     this.mediaKind = VideoMetadataMediaKind.movie,
     this.targetSourceId,
     this.subtitlePolicy = VideoDownloadSubtitlePolicy.none,
@@ -141,7 +161,18 @@ class VideoDownloadManualEnqueueRequest {
   final VideoDownloadBackendTarget backendTarget;
   final String? magnetUri;
   final InspectedTorrentMetainfo? metainfo;
+
+  /// null = 普通整颗 torrent；非空 = 只下载这些 metainfo file index。
+  /// 选择清单会在 add 之前写入 VideoDownloadJobFiles，作为崩溃恢复真相。
+  final Set<int>? selectedFileIndexes;
+  final String? resourceTitle;
+  final String? coverUrl;
+  final String? metadataProvider;
+  final String? externalId;
   final DiscoveryMediaKind? discoveryKind;
+
+  /// 非视频任务下载后是否交给发现导入器。false 时只完成下载任务。
+  final bool importAfterDownload;
 
   /// 视频任务的组织形态：movie = 单文件；tv = 按季/集组织。
   final VideoMetadataMediaKind mediaKind;
@@ -390,12 +421,16 @@ Future<void> deletePersistedVideoDownloadJob({
   if (deleteFiles) {
     final List<VideoDownloadJobFileRow> files = await database
         .getVideoDownloadJobFiles(job.jobId);
+    final bool selective = files.any(
+      (VideoDownloadJobFileRow file) => !file.selected,
+    );
     final List<VideoDownloadJobSubtitleRow> subtitles = await database
         .getVideoDownloadJobSubtitles(job.jobId);
     final Set<String> managedPaths = <String>{
       for (final VideoDownloadJobFileRow file in files)
-        if (file.finalAbsolutePath?.trim().isNotEmpty == true)
-          p.normalize(file.finalAbsolutePath!.trim()),
+        if (!selective || file.selected)
+          if (file.finalAbsolutePath?.trim().isNotEmpty == true)
+            p.normalize(file.finalAbsolutePath!.trim()),
       for (final VideoDownloadJobSubtitleRow subtitle in subtitles)
         if (subtitle.finalPath?.trim().isNotEmpty == true)
           p.normalize(subtitle.finalPath!.trim()),
@@ -406,6 +441,7 @@ Future<void> deletePersistedVideoDownloadJob({
     final String observedSavePath = job.observedSavePath?.trim() ?? '';
     if (observedSavePath.isNotEmpty) {
       for (final VideoDownloadJobFileRow file in files) {
+        if (selective && !file.selected) continue;
         if (file.currentRelativePath.trim().isEmpty) continue;
         final String? resolved = resolveManagedPathWithinRoot(
           root: observedSavePath,
@@ -866,16 +902,48 @@ class VideoDownloadPipelineService {
     if (request.maxAttempts <= 0) {
       throw ArgumentError.value(request.maxAttempts, 'maxAttempts');
     }
+    final Set<int>? selectedFileIndexes = request.selectedFileIndexes;
+    if (selectedFileIndexes != null) {
+      if (metainfo == null || selectedFileIndexes.isEmpty) {
+        throw ArgumentError(
+          'selectedFileIndexes requires non-empty .torrent metainfo selection',
+        );
+      }
+      final Set<int> available = <int>{
+        for (final InspectedTorrentFile file in metainfo.files) file.index,
+      };
+      if (available.isEmpty || !available.containsAll(selectedFileIndexes)) {
+        throw ArgumentError.value(
+          selectedFileIndexes,
+          'selectedFileIndexes',
+          'selection contains an index absent from metainfo',
+        );
+      }
+    }
     final DiscoveryMediaKind? discoveryKind = request.discoveryKind;
     final bool video = discoveryKind == null;
+    if (video && !request.importAfterDownload) {
+      throw ArgumentError('video tasks cannot use download-only policy');
+    }
     if (video) {
       final MediaSourceRow? source = request.targetSourceId == null
           ? null
           : await database.getMediaSourceById(request.targetSourceId!);
       _validateManagedSource(source);
-    } else if (discoveryImporter == null) {
+    } else if (request.importAfterDownload && discoveryImporter == null) {
       throw const VideoDownloadPipelineActionRequired(
         'Importing this content kind is not supported on this device',
+      );
+    }
+    final VideoDownloadJobRow? duplicate = await database
+        .findVideoDownloadJobByFingerprintAndTorrentHash(
+          request.backendTarget.fingerprint,
+          hash.toLowerCase(),
+        );
+    if (duplicate != null) {
+      throw VideoDownloadPipelineActionRequired(
+        'This torrent is already managed by job ${duplicate.jobId}; '
+        'remove that task before selecting another volume from the same pack',
       );
     }
     final String jobId = generateVideoDownloadInstallationId();
@@ -894,48 +962,82 @@ class VideoDownloadPipelineService {
       ).writeAsBytes(metainfo.bytes, flush: true);
     }
     final int now = DateTime.now().millisecondsSinceEpoch;
-    await database.upsertVideoDownloadJob(
-      VideoDownloadJobsCompanion(
-        jobId: Value<String>(jobId),
-        resourceProvider: const Value<String>(
-          kManualVideoDownloadResourceProvider,
+    await database.transaction(() async {
+      await database.upsertVideoDownloadJob(
+        VideoDownloadJobsCompanion(
+          jobId: Value<String>(jobId),
+          resourceProvider: const Value<String>(
+            kManualVideoDownloadResourceProvider,
+          ),
+          selectedResourceId: Value<String>(hash),
+          resourceTitle: Value<String?>(
+            request.resourceTitle?.trim().isNotEmpty == true
+                ? request.resourceTitle!.trim()
+                : title,
+          ),
+          torrentHash: Value<String?>(hash.toLowerCase()),
+          magnetUri: Value<String?>(magnet),
+          metadataProvider: Value<String?>(request.metadataProvider),
+          externalId: Value<String?>(request.externalId),
+          // mediaKind 的值域按 organizationPolicy 分治：视频任务放
+          // VideoMetadataMediaKind.name（organize/import 消费），discovery 任务放
+          // DiscoveryMediaKind.name（仅展示与 import 阶段消费，二者不交叉读）。
+          mediaKind: Value<String>(
+            video ? request.mediaKind.name : discoveryKind.name,
+          ),
+          discoveryCategory: const Value<String?>(null),
+          title: Value<String>(title),
+          year: const Value<int?>(null),
+          coverUrl: Value<String?>(request.coverUrl),
+          backendKind: Value<String>(request.backendTarget.kind),
+          backendProfileId: Value<String?>(request.backendTarget.profileId),
+          fingerprint: Value<String>(request.backendTarget.fingerprint),
+          category: Value<String?>(request.backendTarget.category),
+          targetSourceId: Value<int?>(video ? request.targetSourceId : null),
+          organizationPolicy: Value<String>(
+            video
+                ? 'library'
+                : request.importAfterDownload
+                ? manualDiscoveryOrganizationPolicy(discoveryKind)
+                : manualDownloadOnlyOrganizationPolicy(discoveryKind),
+          ),
+          subtitlePolicy: Value<String>(
+            // 非视频内容没有字幕概念；强制 none 免得 subtitle 阶段空转。
+            (video ? request.subtitlePolicy : VideoDownloadSubtitlePolicy.none)
+                .name,
+          ),
+          lifecycle: const Value<String>(VideoDownloadJobLifecycle.active),
+          stage: const Value<String>(VideoDownloadJobStage.enqueue),
+          priority: Value<int>(request.priority),
+          maxAttempts: Value<int>(request.maxAttempts),
+          createdAt: Value<int>(now),
+          updatedAt: Value<int>(now),
         ),
-        selectedResourceId: Value<String>(hash),
-        resourceTitle: Value<String?>(title),
-        torrentHash: Value<String?>(hash.toLowerCase()),
-        magnetUri: Value<String?>(magnet),
-        metadataProvider: const Value<String?>(null),
-        externalId: const Value<String?>(null),
-        // mediaKind 的值域按 organizationPolicy 分治：视频任务放
-        // VideoMetadataMediaKind.name（organize/import 消费），discovery 任务放
-        // DiscoveryMediaKind.name（仅展示与 import 阶段消费，二者不交叉读）。
-        mediaKind: Value<String>(
-          video ? request.mediaKind.name : discoveryKind.name,
-        ),
-        discoveryCategory: const Value<String?>(null),
-        title: Value<String>(title),
-        year: const Value<int?>(null),
-        backendKind: Value<String>(request.backendTarget.kind),
-        backendProfileId: Value<String?>(request.backendTarget.profileId),
-        fingerprint: Value<String>(request.backendTarget.fingerprint),
-        category: Value<String?>(request.backendTarget.category),
-        targetSourceId: Value<int?>(video ? request.targetSourceId : null),
-        organizationPolicy: Value<String>(
-          video ? 'library' : manualDiscoveryOrganizationPolicy(discoveryKind),
-        ),
-        subtitlePolicy: Value<String>(
-          // 非视频内容没有字幕概念；强制 none 免得 subtitle 阶段空转。
-          (video ? request.subtitlePolicy : VideoDownloadSubtitlePolicy.none)
-              .name,
-        ),
-        lifecycle: const Value<String>(VideoDownloadJobLifecycle.active),
-        stage: const Value<String>(VideoDownloadJobStage.enqueue),
-        priority: Value<int>(request.priority),
-        maxAttempts: Value<int>(request.maxAttempts),
-        createdAt: Value<int>(now),
-        updatedAt: Value<int>(now),
-      ),
-    );
+      );
+      if (selectedFileIndexes != null) {
+        for (final InspectedTorrentFile file in metainfo!.files) {
+          final bool selected = selectedFileIndexes.contains(file.index);
+          await database.upsertVideoDownloadJobFile(
+            VideoDownloadJobFilesCompanion(
+              jobId: Value<String>(jobId),
+              backendFileIndex: Value<int?>(file.index),
+              originalRelativePath: Value<String>(file.path),
+              currentRelativePath: Value<String>(file.path),
+              kind: const Value<String>('other'),
+              sizeBytes: Value<int?>(file.length),
+              selected: Value<bool>(selected),
+              status: Value<String>(
+                selected
+                    ? VideoDownloadJobFileStatus.pending
+                    : VideoDownloadJobFileStatus.skipped,
+              ),
+              createdAt: Value<int>(now),
+              updatedAt: Value<int>(now),
+            ),
+          );
+        }
+      }
+    });
     wake();
     return jobId;
   }
@@ -1353,15 +1455,22 @@ class VideoDownloadPipelineService {
 
     final String torrentId = (job.backendTaskId ?? job.torrentHash ?? '')
         .trim();
+    final List<VideoDownloadJobFileRow> persistedFiles = await database
+        .getVideoDownloadJobFiles(job.jobId);
+    final bool selective = persistedFiles.any(
+      (VideoDownloadJobFileRow file) => !file.selected,
+    );
     if (torrentId.isNotEmpty) {
       try {
         final VideoDownloadBackendBinding? binding = await backendResolver(job);
         _validateBackendBinding(job, binding);
         final TorrentBackend backend = binding!.backend;
         if (backend is TorrentRemovalBackend) {
+          // 选择下载任务共用整颗合集 torrent。后端 deleteFiles 会删除合集下
+          // 全部文件；这里只移除后端任务，选中卷由下面的精确路径删除负责。
           await backend.removeTorrent(
             torrentId,
-            deleteFiles: deleteFiles && deleteBackendPayload,
+            deleteFiles: deleteFiles && deleteBackendPayload && !selective,
           );
         }
       } on Object {
@@ -1652,19 +1761,34 @@ class VideoDownloadPipelineService {
       VideoDownloadJobsCompanion(torrentHash: Value<String?>(hash)),
     );
     _ensureLeaseHeld();
-    final bool added = await TorrentAddCoordinator(
-      binding.backend,
-    ).add(payload, category: category);
+    final List<VideoDownloadJobFileRow> persistedFiles = await database
+        .getVideoDownloadJobFiles(job.jobId);
     _ensureLeaseHeld();
-    if (!added) {
-      final List<TorrentSnapshot> current = await binding.backend.listTorrents(
+    final bool selective = persistedFiles.any(
+      (VideoDownloadJobFileRow row) => !row.selected,
+    );
+    if (selective) {
+      await _addSelectedTorrentPaused(
+        job: job,
+        backend: binding.backend,
+        payload: payload,
         category: category,
+        torrentId: hash,
       );
+    } else {
+      final bool added = await TorrentAddCoordinator(
+        binding.backend,
+      ).add(payload, category: category);
       _ensureLeaseHeld();
-      if (!current.any(
-        (TorrentSnapshot value) => value.hash.toLowerCase() == hash,
-      )) {
-        throw StateError('download backend rejected the torrent');
+      if (!added) {
+        final List<TorrentSnapshot> current = await binding.backend
+            .listTorrents(category: category);
+        _ensureLeaseHeld();
+        if (!current.any(
+          (TorrentSnapshot value) => value.hash.toLowerCase() == hash,
+        )) {
+          throw StateError('download backend rejected the torrent');
+        }
       }
     }
     final Future<void> Function(VideoDownloadJobRow job)? checkpoint =
@@ -1685,6 +1809,160 @@ class VideoDownloadPipelineService {
       // organize) and by an explicit user retry.
       resetAttempts: false,
     );
+  }
+
+  /// 选择下载必须在产生任何网络副作用前确认能力，并拒绝接管后端中已有的同
+  /// hash 任务。后端以暂停态添加后才写优先级；失败时任务最多残留为暂停态，
+  /// 不会静默开始整包下载。
+  Future<void> _addSelectedTorrentPaused({
+    required VideoDownloadJobRow job,
+    required TorrentBackend backend,
+    required TorrentAddPayload payload,
+    required String category,
+    required String torrentId,
+  }) async {
+    if (payload is! TorrentMetainfoPayload ||
+        backend is! TorrentPausedMetainfoBackend ||
+        backend is! TorrentDetailBackend ||
+        backend is! TorrentPauseBackend ||
+        !(backend as TorrentDetailBackend).detailAvailable ||
+        !(backend as TorrentPauseBackend).pauseControlAvailable) {
+      throw const VideoDownloadPipelineActionRequired(
+        'The download backend cannot safely apply a single-file selection',
+      );
+    }
+    final TorrentPausedMetainfoBackend pausedBackend = backend;
+    final TorrentDetailBackend detailBackend = backend as TorrentDetailBackend;
+    final TorrentPauseBackend pauseBackend = backend as TorrentPauseBackend;
+    final List<TorrentSnapshot> existing = await backend.listTorrents();
+    _ensureLeaseHeld();
+    if (existing.any(
+      (TorrentSnapshot value) => value.hash.toLowerCase() == torrentId,
+    )) {
+      throw const VideoDownloadPipelineActionRequired(
+        'This torrent already exists in the download backend; '
+        'it will not be taken over or have its file priorities changed',
+      );
+    }
+    final bool added = await pausedBackend.addTorrentMetainfoPaused(
+      payload,
+      category: category,
+    );
+    _ensureLeaseHeld();
+    if (!added) {
+      throw StateError('download backend rejected the paused torrent');
+    }
+    try {
+      await _applyPersistedFileSelection(
+        job: job,
+        backend: backend,
+        detail: detailBackend,
+        pause: pauseBackend,
+        torrentId: torrentId,
+      );
+    } on Object {
+      if (backend is TorrentRemovalBackend) {
+        await (backend as TorrentRemovalBackend).removeTorrent(
+          torrentId,
+          deleteFiles: false,
+        );
+        _ensureLeaseHeld();
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _applyPersistedFileSelection({
+    required VideoDownloadJobRow job,
+    required TorrentBackend backend,
+    required TorrentDetailBackend detail,
+    required TorrentPauseBackend pause,
+    required String torrentId,
+  }) async {
+    final List<VideoDownloadJobFileRow> rows = await database
+        .getVideoDownloadJobFiles(job.jobId);
+    _ensureLeaseHeld();
+    final List<int> skipped = <int>[
+      for (final VideoDownloadJobFileRow row in rows)
+        if (!row.selected && row.backendFileIndex != null)
+          row.backendFileIndex!,
+    ];
+    final List<int> selected = <int>[
+      for (final VideoDownloadJobFileRow row in rows)
+        if (row.selected && row.backendFileIndex != null) row.backendFileIndex!,
+    ];
+    if (selected.isEmpty || skipped.isEmpty) {
+      throw const VideoDownloadPipelineActionRequired(
+        'The persisted torrent file selection is incomplete',
+      );
+    }
+    if (!await _setFilePriorities(
+      backend,
+      detail,
+      torrentId,
+      skipped,
+      TorrentFilePriority.skip,
+    )) {
+      throw const VideoDownloadPipelineActionRequired(
+        'The backend rejected skipped torrent files',
+      );
+    }
+    _ensureLeaseHeld();
+    if (!await _setFilePriorities(
+      backend,
+      detail,
+      torrentId,
+      selected,
+      TorrentFilePriority.normal,
+    )) {
+      throw const VideoDownloadPipelineActionRequired(
+        'The backend rejected selected torrent files',
+      );
+    }
+    _ensureLeaseHeld();
+    final List<TorrentFilePriority>? priorities = await detail.filePriorities(
+      torrentId,
+    );
+    _ensureLeaseHeld();
+    if (priorities == null ||
+        skipped.any(
+          (int index) =>
+              index >= priorities.length ||
+              priorities[index] != TorrentFilePriority.skip,
+        ) ||
+        selected.any(
+          (int index) =>
+              index >= priorities.length ||
+              priorities[index] == TorrentFilePriority.skip,
+        )) {
+      throw const VideoDownloadPipelineActionRequired(
+        'The backend did not confirm the requested torrent file selection',
+      );
+    }
+    if (!await pause.resumeTorrent(torrentId)) {
+      throw const VideoDownloadPipelineActionRequired(
+        'The selected torrent could not be resumed',
+      );
+    }
+  }
+
+  Future<bool> _setFilePriorities(
+    TorrentBackend backend,
+    TorrentDetailBackend detail,
+    String torrentId,
+    List<int> indexes,
+    TorrentFilePriority priority,
+  ) async {
+    if (indexes.isEmpty) return true;
+    if (backend is TorrentBulkFilePriorityBackend) {
+      return backend.setFilePriorities(torrentId, indexes, priority);
+    }
+    for (final int index in indexes) {
+      if (!await detail.setFilePriority(torrentId, index, priority)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   Future<TorrentAddPayload> _resolvePayload(VideoDownloadJobRow job) async {
@@ -1905,6 +2183,9 @@ class VideoDownloadPipelineService {
           for (final VideoDownloadJobFileRow row in existing)
             if (row.backendFileIndex != null) row.backendFileIndex!: row,
         };
+    final bool selective = existing.any(
+      (VideoDownloadJobFileRow row) => !row.selected,
+    );
     final int now = DateTime.now().millisecondsSinceEpoch;
     for (final TorrentFileEntry file in files) {
       _ensureLeaseHeld();
@@ -1915,7 +2196,11 @@ class VideoDownloadPipelineService {
           VideoDownloadJobFilesCompanion(
             currentRelativePath: Value<String>(file.name),
             sizeBytes: Value<int?>(file.size),
-            status: const Value<String>(VideoDownloadJobFileStatus.downloaded),
+            status: Value<String>(
+              row.selected
+                  ? VideoDownloadJobFileStatus.downloaded
+                  : VideoDownloadJobFileStatus.skipped,
+            ),
             updatedAt: Value<int>(now),
           ),
         );
@@ -1929,7 +2214,12 @@ class VideoDownloadPipelineService {
           currentRelativePath: Value<String>(file.name),
           kind: const Value<String>('other'),
           sizeBytes: Value<int?>(file.size),
-          status: const Value<String>(VideoDownloadJobFileStatus.downloaded),
+          selected: Value<bool>(!selective),
+          status: Value<String>(
+            selective
+                ? VideoDownloadJobFileStatus.skipped
+                : VideoDownloadJobFileStatus.downloaded,
+          ),
           createdAt: Value<int>(now),
           updatedAt: Value<int>(now),
         ),
@@ -1944,6 +2234,10 @@ class VideoDownloadPipelineService {
       return;
     }
     if (discoveryKindOfOrganizationPolicy(job.organizationPolicy) != null) {
+      await _resolveDiscoveryDownloadPaths(job);
+      return;
+    }
+    if (downloadOnlyKindOfOrganizationPolicy(job.organizationPolicy) != null) {
       await _resolveDiscoveryDownloadPaths(job);
       return;
     }
@@ -2056,14 +2350,27 @@ class VideoDownloadPipelineService {
     final Map<int, TorrentFileEntry> byIndex = <int, TorrentFileEntry>{
       for (final TorrentFileEntry file in backendFiles) file.index: file,
     };
+    final List<VideoDownloadJobFileRow> selectedRows =
+        (await database.getVideoDownloadJobFiles(job.jobId))
+            .where((VideoDownloadJobFileRow row) => row.selected)
+            .toList(growable: false);
+    if (selectedRows.isEmpty) {
+      throw const VideoDownloadPipelineActionRequired(
+        'The download task has no selected files',
+      );
+    }
     final int now = DateTime.now().millisecondsSinceEpoch;
-    for (final VideoDownloadJobFileRow row
-        in await database.getVideoDownloadJobFiles(job.jobId)) {
+    for (final VideoDownloadJobFileRow row in selectedRows) {
       _ensureLeaseHeld();
       final TorrentFileEntry? backendFile = row.backendFileIndex == null
           ? null
           : byIndex[row.backendFileIndex!];
-      if (backendFile == null) continue;
+      if (backendFile == null) {
+        throw VideoDownloadPipelineActionRequired(
+          'A selected torrent file is missing from the backend: '
+          '${row.currentRelativePath}',
+        );
+      }
       final String? absolutePath = _resolveBackendFileLocalPath(
         remoteSavePath: job.observedSavePath!,
         relativePath: backendFile.name,
@@ -2100,6 +2407,34 @@ class VideoDownloadPipelineService {
           updatedAt: Value<int>(now),
         ),
       );
+    }
+    if (downloadOnlyKindOfOrganizationPolicy(job.organizationPolicy) != null) {
+      final TorrentBackend backend = binding.backend;
+      if (backend is! TorrentRemovalBackend ||
+          !await backend.removeTorrent(hash, deleteFiles: false)) {
+        throw const VideoDownloadPipelineActionRequired(
+          'The completed pack could not be detached from the download backend',
+        );
+      }
+      _ensureLeaseHeld();
+      // 释放物理 torrent 所有权与唯一索引槽位；下载文件和历史任务仍保留，
+      // 用户随后可以从同一 TMW Part 再挑另一本。
+      await database.updateVideoDownloadJob(
+        job.jobId,
+        const VideoDownloadJobsCompanion(
+          backendTaskId: Value<String?>(null),
+          torrentHash: Value<String?>(null),
+        ),
+      );
+      _ensureLeaseHeld();
+      await _releaseLeaseWith(
+        () => database.completeVideoDownloadJob(
+          jobId: job.jobId,
+          workerId: workerId,
+          completedAt: DateTime.now().millisecondsSinceEpoch,
+        ),
+      );
+      return;
     }
     await _advance(job, VideoDownloadJobStage.import);
   }
@@ -3101,7 +3436,7 @@ class VideoDownloadPipelineService {
         .getVideoDownloadJobFiles(job.jobId);
     final List<String> paths = <String>[
       for (final VideoDownloadJobFileRow row in rows)
-        if (row.finalAbsolutePath?.trim().isNotEmpty ?? false)
+        if (row.selected && (row.finalAbsolutePath?.trim().isNotEmpty ?? false))
           row.finalAbsolutePath!,
     ];
     if (paths.isEmpty) {
@@ -3126,7 +3461,7 @@ class VideoDownloadPipelineService {
     // importedCount == 0（库里已有同一本）也算完成：文件就位、库里可见，用户
     // 无事可做。真正的失败在上面以异常表达。
     for (final VideoDownloadJobFileRow row in rows) {
-      if (row.finalAbsolutePath == null) continue;
+      if (!row.selected || row.finalAbsolutePath == null) continue;
       await database.updateVideoDownloadJobFile(
         row.id,
         VideoDownloadJobFilesCompanion(

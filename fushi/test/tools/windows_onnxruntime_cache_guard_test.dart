@@ -16,6 +16,7 @@ void main() {
 
     expect(launcher, contains('FUSHI_ONNXRUNTIME_ROOT'));
     expect(launcher, contains('.build-cache\\onnxruntime'));
+    expect(launcher, contains('onnxruntime-directml-1.22.0'));
     expect(launcher, contains('prepare_windows_onnxruntime.ps1'));
     expect(
       launcher.indexOf('prepare_windows_onnxruntime.ps1'),
@@ -39,15 +40,32 @@ void main() {
     expect(script, contains('.build-cache\\onnxruntime\\\$packageName'));
     expect(script, contains("Join-Path \$cache '.downloads'"));
     expect(script, contains('--continue-at -'));
-    expect(script, contains('.zip.partial'));
+    expect(script, contains('.nupkg'));
+    expect(script, contains('\$Destination.partial'));
+    expect(
+      script,
+      contains('29f9872d786236b79aa83f94482f3a17'),
+      reason: 'ONNX Runtime DirectML NuGet archive must remain pinned',
+    );
+    expect(
+      script,
+      contains('4e7cb7ddce8cf837a7a75dc029209b5'),
+      reason: 'DirectML redistributable NuGet archive must remain pinned',
+    );
+    expect(script, contains('onnxruntime_providers_shared.dll'));
+    expect(script, contains('DirectML.dll'));
     expect(script, contains('--connect-timeout 20'));
     expect(script, contains('-TimeoutSec 120'));
     expect(script, contains('foreach (\$attempt in 1..3)'));
-    expect(script, contains('fushi\\build\\windows'));
+    expect(script, contains("Join-Path \$env:SystemRoot 'System32\\tar.exe'"));
     expect(
       script,
-      isNot(contains('hibiki\\build\\windows')),
-      reason: '旧 app 子目录不得作为缓存候选继续残留',
+      contains('& \$windowsTar -xf \$ortArchiveName -C \$ortStage'),
+    );
+    expect(
+      script,
+      isNot(contains('fushi\\build\\windows')),
+      reason: 'DirectML cache must not be coupled to flutter clean output',
     );
   });
 
@@ -176,10 +194,11 @@ void main() {
     ).readAsStringSync();
 
     expect(cmake, contains(r'ENV{FUSHI_ONNXRUNTIME_ROOT}'));
-    expect(cmake, contains('ONNXRUNTIME_DOWNLOAD_STATUS'));
+    expect(cmake, contains('ONNXRUNTIME_PREPARED_EXTERNALLY'));
     expect(cmake, contains('ONNXRUNTIME_EXTRACT_RESULT'));
-    expect(cmake, contains('file(SHA256'));
-    expect(cmake, contains('579b636403983254346a5c1d80bd28f1'));
+    expect(cmake, contains('EXPECTED_HASH "SHA256='));
+    expect(cmake, contains('onnxruntime_providers_shared.dll'));
+    expect(cmake, contains('DirectML.dll'));
   });
 
   test('modern CMake TARGET commands do not carry invalid DEPENDS', () {

@@ -29,11 +29,41 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 1824 条。点号进各自文件。
+> 共 1855 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-1978](bugs/BUG-1978-hunex-toolbar-thread-merged.md) | ✅ | ✅ | HUNEX 顶部控制栏线程被并入剧情台词 |
+| [BUG-1977](bugs/BUG-1977-hunex-hfa-voice-resource-pairing.md) | 🚧 | ✅ | HUNEX HFA/HW 源语音未与台词配对 |
+| [BUG-1976](bugs/BUG-1976-lookup-webview-text-blur.md) | ✅ | ✅ | Windows 查词 WebView 被超分通路无条件重采样导致字体发糊 |
+| [BUG-1975](bugs/BUG-1975-webpage-video-ffmpeg-cover.md) | ✅ | ✅ | 网页视频导入不应让 FFmpeg 抽 HTML 页面封面 |
+| [BUG-1974](bugs/BUG-1974-video-resource-unknown-group.md) | ✅ | ✅ | 资源搜索把未知发布组跨季误聚为合集 |
+| [BUG-1973](bugs/BUG-1973-sync-progress-ordinal-fraction.md) | ✅ | ✅ | 同步进度文案到 2/2 时进度条仍停在一半 |
+| [BUG-1972](bugs/BUG-1972-selected-glossary-mining.md) | ✅ | ✅ | 桌面选中释义制卡丢失选区 |
+| [BUG-1971](bugs/BUG-1971-library-tabs-overflow-cue.md) | ✅ | ✅ | 库页顶栏横向标签缺少后续内容提示 |
+| [BUG-1970](bugs/BUG-1970-onboarding-feature-tile-height.md) | ✅ | ✅ | 新手引导功能选中态高度变化 |
+| [BUG-1969](bugs/BUG-1969-organizer-filename-extra-collision.md) | ✅ | ✅ | 剧集整理把平铺 NCED 文件当正片，与同集正片撞号 |
+| [BUG-1968](bugs/BUG-1968-windows-manga-ocr-directml-runtime.md) | ✅ | ✅ | Windows 漫画 OCR detector 未实际启用 DirectML |
+| [BUG-1967](bugs/BUG-1967-dictionary-order-render-contract.md) | ✅ | ✅ | 词典管理顺序未约束弹窗释义卡顺序 |
+| [BUG-1966](bugs/BUG-1966-flutter-error-context-description.md) | ✅ | ✅ | Flutter 错误日志显示 ErrorDescription 实例名 |
+| [BUG-1965](bugs/BUG-1965-ankiconnect-bundled-addon-missing-modules.md) | ✅ | ✅ | 内置 AnkiConnect 插件包漏打 web/edit/util 三个模块，装上必 ImportError |
+| [BUG-1964](bugs/BUG-1964-ankiconnect-port-busy-timeout-misleading.md) | ✅ | ✅ | AnkiConnect 端口被占用时只报超时，提示指向防火墙且泄漏裸 TimeoutException |
+| [BUG-1963](bugs/BUG-1963-windows-titlebar-focus-ring-offset.md) | ✅ | ✅ | Windows 自定义标题栏下焦点环整体向下错位 |
+| [BUG-1962](bugs/BUG-1962-windows-icon-shortcuts.md) | ✅ | ✅ | Windows 换图标未同步固定任务栏且启动后快捷方式不自愈 |
+| [BUG-1960](bugs/BUG-1960-app-wheel-scroll-jump.md) | ✅ | ✅ | App 桌面滚轮滚动逐事件瞬移不流畅 |
+| [BUG-1959](bugs/BUG-1959-dashboard-activity-scroll-jank.md) | ✅ | ✅ | Windows/Linux 粗鼠标滚轮一格跳动范围过大 |
+| [BUG-1958](bugs/BUG-1958-online-manga-local-ocr.md) | ✅ | ✅ | 在线漫画点击查词无视已下载本地模型并强制 Google Lens |
+| [BUG-1957](bugs/BUG-1957-galgame-xwma-card-audio.md) | ✅ | ✅ | Galgame 制卡把 xWMA 原样写入卡片，手机无法播放 |
+| [BUG-1956](bugs/BUG-1956-downloads-center-sections-global-search.md) | ✅ | ✅ | 下载中心四分区被移除且资源页发现入口失去模块复用 |
+| [BUG-1955](bugs/BUG-1955-selective-download-backend-target.md) | ✅ | ✅ | 选择性下载仍调用已删除的后端身份接口导致 Windows 构建失败 |
+| [BUG-1954](bugs/BUG-1954-downloads-dropdown-back-button.md) | ✅ | ✅ | 下载页展开下拉框时左上角误显返回键 |
+| [BUG-1953](bugs/BUG-1953-torrent-detail-missing-live-data-layout.md) | ✅ | ✅ | Torrent 详情缺少实时数据时空态布局失衡 |
 | [BUG-1952](bugs/BUG-1952-gal-progressive-line-fold.md) | ✅ | ✅ | 一句台词分多次显示时工作台重复出现且字数重复统计（Zato） |
+| [BUG-1951](bugs/BUG-1951-webview2-cookie-expires-seconds-as-ms.md) | ✅ | ✅ | WebView2 fork getCookies 把 CDP 的秒级 expires 当毫秒回给 Dart：环境间复制 cookie 一律 1970 过期被丢弃、cf_clearance 落库即判过期 |
+| [BUG-1950](bugs/BUG-1950-sgre-single-hash-gate-no-attempt.md) | ✅ | ✅ | STEINS;GATE RE:BOOT 内嵌查词对非首日构建静默失效：SGRE 适配把单个 exe 哈希当准入门，从不尝试其它构建 |
+| [BUG-1949](bugs/BUG-1949-netflix-bridge-timedtext-zero-hits.md) | ✅ | ✅ | netflix-bridge 整集字幕轨在当前 Netflix 上零命中（JSON.parse 钩子看不到 timedtexttracks） |
+| [BUG-1948](bugs/BUG-1948-video-watch-tracker-stop-double-activity.md) | ✅ | ✅ | VideoWatchTracker.stop 在 await 后才清零累计器：dispose 与进程退出并发各写一条活动行 |
+| [BUG-1947](bugs/BUG-1947-video-stats-sync-title-collapse.md) | ✅ | ✅ | 视频统计同步按 title 塌缩：分集裸集号跨作品相加、per-uid 行被删成无身份行 |
 | [BUG-1946](bugs/BUG-1946-sukebei-rss-namespace-rejected.md) | ✅ | ✅ | Sukebei 发现源结果恒空：NyaaClient 严格解析硬编码 nyaa.si 命名空间，sukebei RSS 的 sukebei.nyaa.si/xmlns/nyaa 被判 invalidNamespace |
 | [BUG-1945](bugs/BUG-1945-video-fullscreen-exit-deactivated-context.md) | ✅ | ✅ | 视频取消全屏短暂闪现 deactivated widget 红屏 |
 | [BUG-1944](bugs/BUG-1944-mokuro-retry-cancel-test-wall-clock-race.md) | ✅ | ✅ | mokuro 退避取消测试拿真时钟当同步原语，CI 上偶发红 |
@@ -47,6 +77,7 @@
 | [BUG-1936](bugs/BUG-1936-downloads-discovery-queue-invisible.md) | ✅ | ✅ | 发现页直链下载（游戏等）提示已加入下载，下载页任务 tab 却不显示 |
 | [BUG-1935](bugs/BUG-1935-gal-ingame-lookup-no-engine-gating.md) | ✅ | ✅ | 内嵌查词在 Siglus/白2 上 hash 钉定不中时静默失效且无任何提示 |
 | [BUG-1934](bugs/BUG-1934-tombstone-partial-read-baseline.md) | ✅ | ✅ | 远端删除墓碑单条读失败被跳过，基线照常推进 → 该条删除永久不再提示 |
+| [BUG-1933](bugs/BUG-1933-win-fullscreen-white-flash.md) | ✅ | ✅ | 全屏与取消全屏时闪一帧白色 |
 | [BUG-1932](bugs/BUG-1932-lookup-pending-dismiss-freezes-popup.md) | ✅ | ✅ | 挂起期关栈后查词界面卡死、播放控件再也唤不回 |
 | [BUG-1931](bugs/BUG-1931-backup-archive-cannot-be-deleted.md) | ✅ | ✅ | 导出的备份包无法删除，且移动端从不清理 |
 | [BUG-1930](bugs/BUG-1930-backup-export-cancelled-by-collapse.md) | ✅ | ✅ | 折叠「本地备份」分区会取消进行中的备份 |
@@ -62,7 +93,7 @@
 | [BUG-1920](bugs/BUG-1920-app-icon-rail-live-sync.md) | ✅ | ✅ | 应用图标切换未同步到主侧栏 |
 | [BUG-1919](bugs/BUG-1919-desktop-fullscreen-read-escapes-try.md) | ✅ | ✅ | Linux/macOS 上桌面全屏读写的异常逃出 try，漫画页 widget test 在 CI 上全红 |
 | [BUG-1918](bugs/BUG-1918-dict-style-preview-crash.md) | ✅ | ✅ | 打开词典样式可视化编辑器闪退（Windows） |
-| [BUG-1917](bugs/BUG-1917-win-drag-low-fps-unreproduced.md) | 🚧 | 🚧 | 窗口拖动帧率低（未复现） |
+| [BUG-1917](bugs/BUG-1917-win-resize-heatmap-repaint.md) | ✅ | ✅ | Windows 拖边缩放帧率低：首页仪表盘每步重画整张热力图 |
 | [BUG-1916](bugs/BUG-1916-win-resize-backdrop-layer.md) | ✅ | ✅ | 窗口缩放时露出深青底色层 |
 | [BUG-1915](bugs/BUG-1915-anki-dup-check-cross-model.md) | ✅ | ✅ | 查词弹窗查重与制卡判重不同源：跨笔记类型的重复卡画成可制卡 + |
 | [BUG-1914](bugs/BUG-1914-mine-button-lost-text-marker-restore.md) | ✅ | ✅ | 制卡按钮被加回 inline-action-button 基类，三条 TODO-1325 还原守卫在 develop 上已红 |

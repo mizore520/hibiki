@@ -32,7 +32,7 @@ set "EXE=%APP%\build\windows\x64\runner\Release\fushi.exe"
 set "STAMP=%APP%\build\.last_built_state"
 set "FLUTTER_AOT_CACHE=%APP%\.dart_tool\flutter_build"
 set "FLUTTER_AOT_OUTPUT=%APP%\build\windows\app.so"
-set "FUSHI_ONNXRUNTIME_ROOT=%REPO%\.build-cache\onnxruntime\onnxruntime-win-x64-1.22.0"
+set "FUSHI_ONNXRUNTIME_ROOT=%REPO%\.build-cache\onnxruntime\onnxruntime-directml-1.22.0"
 
 if not exist "%APP%\pubspec.yaml" (
   echo [ERROR] Fushi app directory not found: %APP%

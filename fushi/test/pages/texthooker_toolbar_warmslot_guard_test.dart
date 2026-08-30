@@ -66,20 +66,17 @@ void main() {
     });
 
     test('嵌入与独立两模式都复用同一构建方法', () {
-      expect(
-        RegExp(
-          r'_buildToolbarActions\(\s*context,\s*embedded: false,?\s*\)',
-        ).hasMatch(pageSrc),
-        isTrue,
-        reason: '独立模式 AppBar actions 走共用方法',
-      );
-      expect(
-        RegExp(
-          r'_buildToolbarActions\(\s*context,\s*embedded: true,?\s*\)',
-        ).hasMatch(pageSrc),
-        isTrue,
-        reason: '嵌入模式页头 actions 走共用方法',
-      );
+      // 锚点用跨行正则而不是单行字面量：调用点会被格式化折行（#1093 之后嵌入模式
+      // 那处就是三行）。要钉的是「两模式都调同一个方法、且各自传对 embedded」，
+      // 不是这行当天怎么折。
+      bool callsWith(bool embedded) => RegExp(
+        r'_buildToolbarActions\(\s*context,\s*embedded:\s*' +
+            embedded.toString() +
+            r'\s*,?\s*\)',
+        dotAll: true,
+      ).hasMatch(pageSrc);
+      expect(callsWith(false), isTrue, reason: '独立模式 AppBar actions 走共用方法');
+      expect(callsWith(true), isTrue, reason: '嵌入模式页头 actions 走共用方法');
     });
 
     test('低频开关直接摊在工具栏上，不再有「更多」菜单', () {

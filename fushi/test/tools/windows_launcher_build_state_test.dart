@@ -63,6 +63,32 @@ void main() {
         reason: '启动 BAT 规范化模块路径后 Get-FileHash 可能不可用（BUG-1601）',
       );
       expect(torrent, contains('FUSHI_VCPKG_ROOT'));
+      expect(torrent, contains('vswhere.exe'));
+      expect(torrent, contains(r'.build-cache\vcpkg'));
+      expect(torrent, contains(r'.build-cache\fushi_torrent'));
+      expect(torrent, contains('Get-StringSha256Hex'));
+      expect(torrent, contains(r'-BuildDirectory $torrentBuildDirectory'));
+      expect(torrent, contains('VCPKG_TOOL_RELEASE_TAG'));
+      expect(torrent, contains('Test-VcpkgToolVersion'));
+      expect(
+        torrent,
+        contains('github.com/microsoft/vcpkg-tool/releases/download'),
+      );
+      expect(torrent, contains('pinned vcpkg tool ready'));
+      expect(
+        torrent,
+        isNot(contains('seeded vcpkg tool from Visual Studio')),
+        reason:
+            'VS bundled tool can be older than the pinned baseline contract',
+      );
+      expect(torrent, contains('fetch --depth 1 origin \$baseline'));
+      expect(torrent, contains('-Raw -Encoding UTF8'));
+      expect(torrent, contains(r'CommonExtensions\Microsoft\CMake'));
+      expect(
+        torrent,
+        isNot(contains('Refusing to reuse stale native binaries')),
+        reason: 'different-source cache must be ignored, then rebuilt locally',
+      );
     },
   );
 

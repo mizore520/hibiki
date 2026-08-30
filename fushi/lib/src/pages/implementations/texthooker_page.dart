@@ -27,6 +27,7 @@ import 'package:fushi/src/mining/galgame_library.dart';
 import 'package:fushi/src/mining/window_capture_channel.dart';
 import 'package:fushi/src/pages/implementations/dictionary_page_mixin.dart';
 import 'package:fushi/src/pages/implementations/gal_capture_setup_dialog.dart';
+import 'package:fushi/src/pages/implementations/gal_attached_lookup_workbench.dart';
 import 'package:fushi/src/pages/implementations/game_shared.dart';
 import 'package:fushi/src/pages/implementations/dictionary_popup_controller.dart';
 import 'package:fushi/src/pages/implementations/dictionary_popup_layer.dart';
@@ -60,6 +61,17 @@ Map<String, String> injectActiveSentence(
     return fields;
   }
   return Map<String, String>.from(fields)..['sentence'] = activeSentence;
+}
+
+String _selectedThreadPreview(
+  List<TexthookerTextThread> threads,
+  String? selectedKey,
+) {
+  if (selectedKey == null) return '';
+  for (final TexthookerTextThread thread in threads) {
+    if (thread.key == selectedKey) return thread.displayPreviewText ?? '';
+  }
+  return '';
 }
 
 /// texthooker 捕获工作台：实时展示 WebSocket 收到的文本行，逐词查词 + 挖词。
@@ -2075,48 +2087,48 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
                   // 全仓横向滚动区的统一包裹件，由 horizontal_drag_scroll_guard 钉死。
                   child: HorizontalDragScrollable(
                     child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        // 粘贴一串现成的特殊码。此前唯一能把自定义 H-code 送进
-                        // native 的用户路径是「导入一个七列 TSV 文件」，而首列还必须
-                        // 是游戏 exe 的 SHA-256——用户拿到的只是一串字符。
-                        IconButton(
-                          tooltip: t.game_hook_code_paste_title,
-                          icon: const Icon(
-                            Icons.content_paste_go_outlined,
-                            size: 20,
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          // 粘贴一串现成的特殊码。此前唯一能把自定义 H-code 送进
+                          // native 的用户路径是「导入一个七列 TSV 文件」，而首列还必须
+                          // 是游戏 exe 的 SHA-256——用户拿到的只是一串字符。
+                          IconButton(
+                            tooltip: t.game_hook_code_paste_title,
+                            icon: const Icon(
+                              Icons.content_paste_go_outlined,
+                              size: 20,
+                            ),
+                            onPressed: _pasteLunaHookCode,
                           ),
-                          onPressed: _pasteLunaHookCode,
-                        ),
-                        IconButton(
-                          tooltip: 'Hook Code · ${t.dialog_save}',
-                          icon: const Icon(
-                            Icons.bookmark_add_outlined,
-                            size: 20,
+                          IconButton(
+                            tooltip: 'Hook Code · ${t.dialog_save}',
+                            icon: const Icon(
+                              Icons.bookmark_add_outlined,
+                              size: 20,
+                            ),
+                            onPressed: _saveSelectedLunaHookCode,
                           ),
-                          onPressed: _saveSelectedLunaHookCode,
-                        ),
-                        IconButton(
-                          tooltip: 'Hook Code · ${t.dialog_import}',
-                          icon: const Icon(
-                            Icons.file_download_outlined,
-                            size: 20,
+                          IconButton(
+                            tooltip: 'Hook Code · ${t.dialog_import}',
+                            icon: const Icon(
+                              Icons.file_download_outlined,
+                              size: 20,
+                            ),
+                            onPressed: _importLunaHookProfiles,
                           ),
-                          onPressed: _importLunaHookProfiles,
-                        ),
-                        IconButton(
-                          tooltip: 'Hook Code · ${t.dialog_export}',
-                          icon: const Icon(
-                            Icons.file_upload_outlined,
-                            size: 20,
+                          IconButton(
+                            tooltip: 'Hook Code · ${t.dialog_export}',
+                            icon: const Icon(
+                              Icons.file_upload_outlined,
+                              size: 20,
+                            ),
+                            onPressed: _exportLunaHookProfiles,
                           ),
-                          onPressed: _exportLunaHookProfiles,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
                   ),
                 ),
               ],
@@ -2252,6 +2264,20 @@ class _TexthookerPageState extends ConsumerState<TexthookerPage>
               ],
             ),
           ),
+          if (Platform.isWindows)
+            GalAttachedLookupWorkbench(
+              controller: GalHookTextOverlayController.instance.attachedText,
+              hasSelectedBodyThread:
+                  selectedTextThreadKey != null &&
+                  textThreads.any(
+                    (TexthookerTextThread thread) =>
+                        thread.key == selectedTextThreadKey,
+                  ),
+              bodyPreview: _selectedThreadPreview(
+                textThreads,
+                selectedTextThreadKey,
+              ),
+            ),
           const Divider(height: 1),
           Expanded(
             child: lines.isEmpty

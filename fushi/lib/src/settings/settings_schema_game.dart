@@ -103,8 +103,8 @@ SettingsDestination buildGameDestination() {
               await settingsContext.appModel.setGalIngameLookupEnabled(value);
               // 与台词浮窗字号同款纪律：写完 pref 立刻推给编排器，否则开关只落了盘，
               // 本局游戏里不生效（要退出重进一局）。
-              await GalIngameLookupController.instance
-                  .applyEnabledFromPreferences();
+              await GalHookTextOverlayController.instance
+                  .applyIngameLookupEnabledFromPreferences();
               settingsContext.refresh();
             },
           ),

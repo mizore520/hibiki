@@ -39,10 +39,8 @@ import 'package:fushi/src/media/manga/library/online_manga_runtime_adapter.dart'
 import 'package:fushi/src/media/manga/mihon/mihon_online_ocr.dart';
 import 'package:fushi/src/media/manga/mihon/mihon_reader_chapter.dart';
 import 'package:fushi/src/media/manga/mokuro_payload.dart';
-import 'package:fushi/src/media/manga/ocr/google_lens_disclosure.dart';
 import 'package:fushi/src/media/manga/ocr/google_lens_protocol.dart';
 import 'package:fushi/src/media/manga/ocr/manga_ocr_auto_start.dart';
-import 'package:fushi/src/media/manga/ocr/manga_ocr_engine.dart';
 import 'package:fushi/src/media/manga/ocr/manga_ocr_cache_recovery.dart';
 import 'package:fushi/src/media/manga/ocr/manga_region_rescan.dart';
 import 'package:fushi/src/media/manga/reader/manga_volume_key_paging_controller.dart';
@@ -319,7 +317,7 @@ Future<int?> showMangaPageJumpDialog(
 /// 页图 + 透明 OCR 覆盖层在 WebView 里渲染（文档由 [mangaWindowDocument] 生成），
 /// 汇入同一批共享设施：[BaseSourcePageState.searchDictionaryResult]（查词弹窗）、
 /// [ReaderPositionRepository]（阅读位置，sectionIndex=0-based 页码）、
-/// [ReadingTimeTracker]（时长统计；v60 起同时落 OCR 字数与页数，见
+/// [StudyClock]（时长 / OCR 字数 / 页数统计，见
 /// [mangaAccumulateReadingStats]）、[AnkiMiningContext]（制卡，
 /// 卡图=当前页图文件路径）。
 ///
@@ -862,22 +860,14 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
   @override
   bool get popupVerticalWriting => _popupVerticalWriting;
 
-  ReadingTimeTracker? _readingTimeTracker;
+  /// v92：本页唯一的阅读时钟兼累计器（时长 / OCR 字数 / 页数同一段同一 uid），同
+  /// EPUB / PDF 侧。页面不再持有任何会话时长 / 字数 / 页数字段。（守卫
+  /// manga_stats_dwell_guard_test 钉死旧的会话累计器形态不得回潮。）
+  StudyClock? _studyClock;
 
-  /// 本 session 尚未落库的阅读时长（ms），由 [_readingTimeTracker] 的 gap 守卫
-  /// tick 经 onDelta 累加（BUG-1052 同款，对齐 PDF）。取代旧的会话起点墙钟字段
-  /// ——旧实现把**整段** `now - 起点` 交给 gap 谓词判一次，而漫画只在退出/失焦
-  /// 才 flush，于是任何超过 120s 的正常阅读会话都被整段判成「非连续窗口」，时长
-  /// 直接丢弃。改成按 tick 累计后守卫仍逐 tick 生效（后台/睡眠照样不计），长会话
-  /// 正常累计。（守卫 manga_stats_dwell_guard_test 钉死旧形态不得回潮。）
-  int _sessionReadingMs = 0;
-
-  /// 本次会话尚未落库的 OCR 字符数与页数，以及已记账过的页（同一页只计一次，来回
-  /// 翻页刷不出数；恢复存档时把恢复位置之前的页也预置进来，见
-  /// [_seedCountedPagesFromRestore]）。字数口径与 EPUB 同源，见
+  /// 已记账过的页（同一页只计一次，来回翻页刷不出数；恢复存档时把恢复位置之前的
+  /// 页也预置进来，见 [_seedCountedPagesFromRestore]）。字数口径与 EPUB 同源，见
   /// [mangaAccumulateReadingStats]。
-  int _sessionCharsRead = 0;
-  int _sessionPagesRead = 0;
   final Set<int> _sessionCountedPages = <int>{};
 
   /// BUG-1761 停留门：页面成为当前页并停留 ≥ [_kPageDwellThreshold] 才入账。
@@ -896,6 +886,8 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
   /// webtoon 页内滚动会连续触发 [_recordProgress]：同一页**不重置**计时，否则
   /// 慢速连续滚读永远攒不满停留门。
   void _armPageDwellCount() {
+    // v92 阅读空闲门：翻页 / 页内滚动 = 用户输入。
+    _studyClock?.touch();
     final bool isWebtoon = _mode == MangaReadingMode.webtoon;
     final int key = isWebtoon ? _currentPage : _currentSpread;
     if (_pageDwellTimer != null && key == _pageDwellKey) return;
@@ -1035,7 +1027,7 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     // dispose 里只能 fire-and-forget；正常退出走 onSourcePagePop 的 await 路径，
     // 这里是崩溃/异常拆栈时的兜底。
     unawaited(_flushPosition());
-    _readingTimeTracker?.dispose();
+    _studyClock?.dispose();
     _pageNotifier.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -1120,12 +1112,12 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
+      // 切屏 / 进后台自动暂停阅读计时（BUG-892）：stop 先结算部分窗口再封段落库。
+      unawaited(_studyClock?.stop());
       unawaited(_flushPosition());
-      _readingTimeTracker?.stop();
     } else if (state == AppLifecycleState.resumed) {
-      // BUG-892 同款纪律：tracker 的 start() 自带重锚（_tickStart = now），后台
-      // 时长不会被计入；会话时长经 onDelta 与它共用同一个守卫时钟（BUG-1761）。
-      _readingTimeTracker?.start();
+      // BUG-892 同款纪律：start() 只重锚 tick 起点并开新段，后台时长不会被计入。
+      _studyClock?.start();
       // OS 层焦点丢失后 Flutter 不保证归还到原节点：切窗回来若不收回，翻页键全死。
       _focusOwnership.reclaim(FocusReclaimCause.appResumed);
     }
@@ -1138,7 +1130,7 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     }
     // 返回书架的正常路径：await 落盘，保证书架 recency/进度立刻正确。
     await _flushPosition();
-    _readingTimeTracker?.stop();
+    await _studyClock?.stop();
   }
 
   @override
@@ -1290,11 +1282,7 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       }
     }
 
-    _readingTimeTracker ??= ReadingTimeTracker(
-      db,
-      format: BookFormat.manga,
-      onDelta: (int deltaMs) => _sessionReadingMs += deltaMs,
-    )..start();
+    _ensureStudyClock(db);
     // BUG-1761：续读不重复计——恢复位置之前（含恢复页）的页上个会话已入账。
     if (saved != null) {
       _seedCountedPagesFromRestore(restoredPage);
@@ -1557,11 +1545,7 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     restoredPage =
         restoredPage.clamp(0, math.max(0, payload.images.length - 1));
 
-    _readingTimeTracker ??= ReadingTimeTracker(
-      appModel.database,
-      format: BookFormat.manga,
-      onDelta: (int deltaMs) => _sessionReadingMs += deltaMs,
-    )..start();
+    _ensureStudyClock(appModel.database);
     // BUG-1761：只有存档续读预置已计页；initialPage 显式跳页不预置（是否读过未知，
     // 宁可少算——反正跳过去的页没有 1.5s 停留也不会入账）。
     if (saved != null) {
@@ -2719,8 +2703,19 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       final OnlineMangaReaderChapter? online = _onlineChapter;
       final MangaOcrBackgroundJob? job;
       if (online != null) {
-        job = await _buildOnlineOcrJob(online);
-        if (job == null || !mounted) return;
+        final MangaOcrAutoStartResult result =
+            await _buildOnlineOcrJob(online);
+        if (!mounted) return;
+        if (!result.started) {
+          if (!result.cancelled) {
+            FushiToast.show(
+              msg: result.unavailableReason ?? t.manga_ocr_engine_none,
+              severity: ToastSeverity.warning,
+            );
+          }
+          return;
+        }
+        job = result.job;
       } else {
         job = await MangaModule.openBookOcr(
           context: context,
@@ -2838,22 +2833,19 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
 
       final OnlineMangaReaderChapter? online = _onlineChapter;
       if (online != null) {
-        // 在线章节的页面是网络流，本地没有图片目录，Lens 是唯一能读它的引擎。
-        // 这跟「绝不悄悄换引擎」并不矛盾——但必须说出来：设了离线引擎的用户点
-        // 一下就拿到 Lens，不告知就等于替他把上传的决定做了。上传同意门
-        // （ensureGoogleLensDisclosure）仍在 _buildOnlineOcrJob 里把关。
-        if (_preferredOfflineEngineForTapOcr() != null) {
-          FushiToast.show(
-            msg: t.manga_tap_ocr_online_lens_only,
-            severity: ToastSeverity.info,
-          );
-        }
-        final MangaOcrBackgroundJob? job = await _buildOnlineOcrJob(online);
-        if (job == null || !mounted) {
+        final MangaOcrAutoStartResult result =
+            await _buildOnlineOcrJob(online);
+        if (!mounted) return;
+        if (!result.started) {
           _pendingTapLookup = null;
+          if (result.cancelled) return;
+          FushiToast.show(
+            msg: result.unavailableReason ?? t.manga_ocr_engine_none,
+            severity: ToastSeverity.warning,
+          );
           return;
         }
-        _attachWholeVolumeOcrJob(job);
+        _attachWholeVolumeOcrJob(result.job!);
         return;
       }
 
@@ -2897,26 +2889,6 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     }
   }
 
-  /// 用户显式选了某个**离线**引擎时返回它，否则返回 null。
-  ///
-  /// 只用来决定在线章节要不要多说一句「这里只能用 Lens」：偏好本来就是 Lens
-  /// 或 auto 的用户不需要被提醒，提醒多了就成了噪音。
-  MangaOcrEngineId? _preferredOfflineEngineForTapOcr() {
-    final MangaOcrEngineId? explicit = MangaOcrEnginePreferenceKey.fromKey(
-      appModel.mangaOcrEnginePreference,
-    ).explicitEngine;
-    switch (explicit) {
-      case MangaOcrEngineId.localOnnx:
-      case MangaOcrEngineId.systemOcr:
-      case MangaOcrEngineId.externalMokuro:
-        return explicit;
-      case MangaOcrEngineId.googleLens:
-      case MangaOcrEngineId.pairedHost:
-      case null:
-        return null;
-    }
-  }
-
   /// 首次说明：这一点会触发一次识别，用的是设置里选的哪个引擎，去哪儿改。
   ///
   /// 只弹一次。它与 Lens 的上传告知是两件事——那条只讲「图片会发给 Google」，
@@ -2954,34 +2926,37 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     );
   }
 
-  /// 在线章节的 OCR 任务（Lens 逐页、当前页优先）。
+  /// 在线章节的 OCR 任务（按用户偏好；在线页先物化成本地缓存供离线引擎读取）。
   ///
   /// 抽出来是因为「点一下就识别」和顶栏整卷按钮要的是同一个任务，只是入口不同。
-  Future<MangaOcrBackgroundJob?> _buildOnlineOcrJob(
+  Future<MangaOcrAutoStartResult> _buildOnlineOcrJob(
     OnlineMangaReaderChapter online,
   ) async {
-    if (!await ensureGoogleLensDisclosure(context) || !mounted) return null;
     final MangaReaderSession? session = _pageSession;
     final MokuroPayload? payload = _payload;
-    if (session == null || payload == null) return null;
+    if (session == null || payload == null) {
+      return MangaOcrAutoStartResult.unavailable(
+        t.manga_ocr_engine_none,
+        null,
+      );
+    }
     _onlineGeometryPersistDebounce?.cancel();
     await _persistOnlinePayloadGeometry();
-    return MangaOcrBackgroundJob(
+    if (!mounted) {
+      return const MangaOcrAutoStartResult.cancelled();
+    }
+    return startOnlineMangaOcrWithPreferredEngine(
+      context: context,
+      db: appModel.database,
       bookKey: widget.bookKey,
-      managedDirectory: online.managedDirectory.path,
-      engine: MangaOcrEngineId.googleLens,
-      events: MihonOnlineMangaOcr(
-        session: session,
-        managedDirectory: online.managedDirectory,
-        initialPayload: payload,
-        startPage: _currentPage,
-        // 在线源自带内容语言（Mihon lang / Aidoku 单语言 manifest）；多语言
-        // 或未声明时回退用户的 Lens 语言偏好。
-        language: normalizeLensLanguage(
-          online.sourceLanguage,
-          fallback: appModel.mangaOcrLensLanguage,
-        ),
-      ).run(),
+      session: session,
+      managedDirectory: online.managedDirectory,
+      initialPayload: payload,
+      startPage: _currentPage,
+      lensLanguage: normalizeLensLanguage(
+        online.sourceLanguage,
+        fallback: appModel.mangaOcrLensLanguage,
+      ),
     );
   }
 
@@ -3676,8 +3651,25 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       pageIndices: pages,
       counted: _sessionCountedPages,
     );
-    _sessionCharsRead += added.chars;
-    _sessionPagesRead += added.pages;
+    // v92：字数 / 页数直接记进当前打开段（与时长同一 uid 同一行）。
+    _studyClock?.addChars(added.chars);
+    _studyClock?.addPages(added.pages);
+  }
+
+  /// v92：建好并启动本页唯一的阅读时钟（幂等）。空闲门 + 生命周期前台门只对
+  /// 阅读面生效（用户拍板：视频以播放态为准）。
+  void _ensureStudyClock(FushiDatabase db) {
+    _studyClock ??= StudyClock(
+      database: db,
+      mediaKind: kActivityMediaBook,
+      mediaKey: widget.bookKey,
+      title: _bookRow?.title ?? widget.bookKey,
+      format: BookFormat.manga.dbValue,
+      idleTimeout: appModel.readingIdleTimeout,
+      onWriteError: (Object e, StackTrace st) =>
+          ErrorLogService.instance.log('StudyClock.write(manga)', e, st),
+    );
+    _studyClock!.start();
   }
 
   Future<void> _persistPosition(int page, double fraction) async {
@@ -3746,55 +3738,11 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     await _flushReadingStats();
   }
 
-  /// 落本次会话的阅读时长 + OCR 字数 + 页数 + 首页「学习活动」事件。
-  ///
-  /// 与 PDF 同款纪律（BUG-1052）、刻意不复用 EPUB 的实现：EPUB 那条以
-  /// `charsRead <= 0` 早退，漫画只有时长没字数的那些段会整段被丢。
-  ///
-  /// 时长 = [_readingTimeTracker] 逐 tick 确认的累计增量（onDelta）。BUG-892 的
-  /// `isContinuousReadingGap` 守卫仍然生效，但作用在**每个 tick 窗口**上（tracker
-  /// 内部），不再拿整段会话去过一次守卫——旧写法把 `now - _sessionStartTime` 整段
-  /// 交给守卫判一次，而漫画只在退出/失焦才 flush，任何 >120s 的正常阅读会话都被
-  /// 整段判成非连续窗口，时长直接丢弃（BUG-1761 附带修复）。
-  ///
-  /// v60 起漫画同时落两个独立量纲：`charsRead` = 已读页的 OCR 实义字符数（口径与
-  /// EPUB 同源），`pagesRead` = 已读页数。页数仍然绝不塞进 charsRead——那会污染
-  /// 字数口径与阅读速度；两者分列，统计页分别展示。
+  /// 把「上一次 tick 到现在」的部分窗口结算并落库（不停表）。时长 / OCR 字数 / 页数
+  /// 三个量纲在同一段同一行、绝对值写回：落库失败由时钟在下个 tick 重写，没有任何
+  /// 计数器可清、也没有任何东西能重复累加。页数仍然绝不塞进字数口径。
   Future<void> _flushReadingStats() async {
-    // 先结算「上一次 tick 到现在」这段未满一个 tick 的窗口（不停表）。
-    _readingTimeTracker?.sampleNow();
-    final EpubBookRow? row = _bookRow;
-    if (row == null) return;
-    final DateTime now = DateTime.now();
-    final int elapsedMs = _sessionReadingMs;
-    // 太短且无内容账的段不落库（生命周期抖动刷屏）；未达阈值时保留累计器，留到
-    // 下次 flush 一并计入。字数/页数与时长不同门：最后一段哪怕 <1s 也不能把已
-    // 停留入账的页丢掉（dispose 后没有下一次 flush 了）。
-    if (elapsedMs < 1000 && _sessionCharsRead <= 0 && _sessionPagesRead <= 0) {
-      return;
-    }
-    _sessionReadingMs = 0;
-    // 未落库的字数/页数先取走再清零：落库失败时不重复计（下一段仍会记新翻的页），
-    // 也不会因异常把同一批重复写进 DB。
-    final int charsRead = _sessionCharsRead;
-    final int pagesRead = _sessionPagesRead;
-    _sessionCharsRead = 0;
-    _sessionPagesRead = 0;
-
-    try {
-      // P4：事实 + 派生投影走单一复合入口（数字与时刻只进一次）。
-      await appModel.database.recordReadingSession(
-        title: row.title,
-        mediaKey: widget.bookKey,
-        charsRead: charsRead,
-        timeMs: elapsedMs,
-        pagesRead: pagesRead,
-        at: now,
-      );
-    } catch (e, stack) {
-      ErrorLogService.instance
-          .log('MangaFushiPage._flushReadingStats', e, stack);
-    }
+    await _studyClock?.flushNow();
   }
 
   Future<void> _setSpreadDirection(String direction) async {

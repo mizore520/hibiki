@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:fushi_core/fushi_core.dart';
 
 import 'package:fushi/src/mining/gal_hook_activity_accumulator.dart';
@@ -26,7 +27,7 @@ import 'package:fushi/src/sync/texthooker_ws_client_manager.dart';
 import 'package:fushi/src/utils/misc/fushi_time_format.dart';
 
 /// 落 `activity_events` 的一条游戏活动写入契约。默认实现走 [FushiDatabase.
-/// addActivityEvent]（[kActivityGame] / [kActivityMediaGame]）；单测可注入假写入方
+/// upsertStudySegment]（chars-only 游戏段）；单测可注入假写入方
 /// 断言 flush 时机与聚合值，无需真实 DB。
 ///
 /// **只写字符数，不写 `durationMs`**（契约 §3.1）：游玩时长的真相源已经是
@@ -2492,7 +2493,8 @@ class GalHookSessionController extends ChangeNotifier {
   /// 判据逐条对应 native 的 `LunaSelectedThreadAccepts`：
   /// * 未选定线程 → 一行都不放行（与 v12 起的 UX 一致：由 UI 引导用户从线程预览里挑）；
   /// * 精确 threadId 命中 → 放行，并顺手记下它的 hook 面；
-  /// * 同一 hook 面命中 → 放行（BUG-1159：同 hook 面换调用点会让 threadId 变）。
+  /// * 要求精确上下文的引擎行 → 到此拒绝，保持 LunaHook 的线程边界；
+  /// * 其余同一 hook 面命中 → 放行（BUG-1159：同 hook 面换调用点会让 threadId 变）。
   bool _acceptsLineFromSelectedThread(GalHookedLine line) {
     final int? selected = _selectedNativeTextThreadId;
     if (selected == null || selected == 0) return false;
@@ -2501,6 +2503,10 @@ class GalHookSessionController extends ChangeNotifier {
       _claimThreadKey(line);
       return true;
     }
+    // HUNEX/TYPEMOON 的剧情文本与顶部控制栏共用一个 hook face，却由不同
+    // ThreadParam.ctx 分成两条 Luna 线程。普通 face fallback 会把控制栏说明重新并入
+    // 用户选中的剧情线程；native 的显式标志要求这里保持精确 threadId 语义。
+    if (line.requiresExactThreadContext) return false;
     if (_selectedTextThreadFaceId != 0 &&
         line.faceId == _selectedTextThreadFaceId) {
       _claimThreadKey(line);
@@ -3922,16 +3928,8 @@ class GalHookSessionController extends ChangeNotifier {
             dateKey: dateKey,
           ),
         );
-        await database.addActivityEvent(
-          eventType: kActivityGame,
-          mediaType: kActivityMediaGame,
-          title: title,
-          mediaKey: gameId,
-          dateKey: dateKey,
-          timestampMs: result.endMs,
-          durationMs: result.durationSeconds * 1000,
-          // charsDelta 刻意不传（留 null）：字符数由 hook 文本路径独立写行。
-        );
+        // v92：时长只落 galgame_sessions 这一张事实表；首页活动流 / 热力图从它
+        // 派生，不再另写 activity 行（那是第二本账）。
       } catch (error, stack) {
         // 会话在游戏退出瞬间结算，游戏可能已被用户从库里删除（FK cascade 把
         // galgame_sessions 一并清了，这条账本来就该消失）——落库失败降级为
@@ -4045,16 +4043,29 @@ class GalHookSessionController extends ChangeNotifier {
       required String dateKey,
       required int timestampMs,
       required int charsDelta,
-    }) => database.addActivityEvent(
-      eventType: kActivityGame,
-      mediaType: kActivityMediaGame,
-      title: title,
-      mediaKey: mediaKey,
-      dateKey: dateKey,
-      timestampMs: timestampMs,
-      // durationMs 刻意不传（留 null）：时长由 GalgamePlayTracker 独立写行。
-      charsDelta: charsDelta,
-    );
+    }) async {
+      // v92：hook 字数落 study_segments 一条 chars-only 段（时长恒 0：时长真相源
+      // 是 galgame_sessions，两者量纲分列、SUM 不会双计）。无稳定身份（不在游戏库）
+      // 的文本流没有可归属的 media_key，不落——统计永不按 title 认身份。
+      if (mediaKey == null || mediaKey.isEmpty) return;
+      final String deviceId = await database.getOrCreateStudyDeviceId();
+      final DateTime at = DateTime.fromMillisecondsSinceEpoch(timestampMs);
+      await database.upsertStudySegment(
+        StudySegmentsCompanion.insert(
+          uid: FushiDatabase.newStudySegmentUid(),
+          deviceId: deviceId,
+          mediaKind: kActivityMediaGame,
+          mediaKey: mediaKey,
+          title: title,
+          startAt: timestampMs,
+          endAt: timestampMs,
+          dateKey: dateKey,
+          hour: at.hour,
+          chars: Value(charsDelta),
+          updatedAt: timestampMs,
+        ),
+      );
+    };
   }
 
   Future<void> _safeWriteActivity({

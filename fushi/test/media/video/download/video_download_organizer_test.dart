@@ -323,6 +323,57 @@ void main() {
     );
   });
 
+  test(
+    'flat numbered NCED stays in Extras instead of colliding (BUG-1969)',
+    () {
+      // 用户截图的真实形状：正片与 NCED 平铺在种子根目录，两者文件名都含 `- 24`。
+      // 只看目录的 BUG-1865 修复拦不住它；若先解析集号，两者都会抢 S01E24。
+      const String suffix = '(BD 1920x1080 x265 10bit FLAC).mkv';
+      final VideoOrganizationPlan plan = const VideoDownloadOrganizer().plan(
+        VideoOrganizationRequest(
+          torrentId: 'hash',
+          title: '薬屋のひとりごと 第3期',
+          year: 2026,
+          kind: VideoOrganizationKind.episodic,
+          sourceRoot: _localRoot,
+          pathMapping: VideoDownloadPathMapping(
+            remoteRoot: '/library',
+            localRoot: _localRoot,
+          ),
+        ),
+        <TorrentFileEntry>[
+          const TorrentFileEntry(
+            name: '[Shiniori-Raws] Kusuriya no Hitorigoto - 24 END $suffix',
+            size: 900,
+            progress: 1,
+            index: 0,
+          ),
+          const TorrentFileEntry(
+            name:
+                '[Shiniori-Raws] Kusuriya no Hitorigoto - 24 NCED Version '
+                '$suffix',
+            size: 40,
+            progress: 1,
+            index: 1,
+          ),
+        ],
+      );
+
+      expect(
+        plan.files.first.targetRelativePath,
+        '薬屋のひとりごと 第3期 (2026)/Season 01/'
+        '薬屋のひとりごと 第3期 (2026) - S01E24.mkv',
+      );
+      expect(plan.files.first.episodeNumber, 24);
+      expect(
+        plan.files.last.targetRelativePath,
+        '薬屋のひとりごと 第3期 (2026)/Extras/'
+        '[Shiniori-Raws] Kusuriya no Hitorigoto - 24 NCED Version $suffix',
+      );
+      expect(plan.files.last.episodeNumber, isNull);
+    },
+  );
+
   test('numbered specials in SPs/Previews directories stay out of Season '
       '(BUG-1865)', () async {
     final Directory root = await Directory.systemTemp.createTemp(
