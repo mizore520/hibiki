@@ -55,7 +55,13 @@ void main() {
       expect(torrent, contains('libssl-3-x64.dll'));
       expect(torrent, contains('libcrypto-3-x64.dll'));
       expect(torrent, contains('Test-SameTorrentSources'));
-      expect(torrent, contains('Get-FileHash'));
+      expect(torrent, contains('Get-Sha256Hex'));
+      expect(torrent, contains('[Security.Cryptography.SHA256]::Create()'));
+      expect(
+        torrent,
+        isNot(contains('Get-FileHash -')),
+        reason: '启动 BAT 规范化模块路径后 Get-FileHash 可能不可用（BUG-1601）',
+      );
       expect(torrent, contains('FUSHI_VCPKG_ROOT'));
     },
   );

@@ -18,6 +18,28 @@ $requiredDlls = @(
     "libcrypto-3-x64.dll"
 )
 
+function Get-Sha256Hex {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    # BUG-1601: Get-FileHash is module-backed and can disappear after the
+    # launcher normalizes PATH/PSModulePath for MSBuild. Use framework crypto,
+    # which is available in both Windows PowerShell 5.1 and PowerShell 7.
+    $stream = [IO.File]::OpenRead($Path)
+    try {
+        $sha256 = [Security.Cryptography.SHA256]::Create()
+        try {
+            $hashBytes = $sha256.ComputeHash($stream)
+            return ([BitConverter]::ToString($hashBytes).Replace('-', '')).ToLowerInvariant()
+        }
+        finally {
+            $sha256.Dispose()
+        }
+    }
+    finally {
+        $stream.Dispose()
+    }
+}
+
 function Test-CompleteRuntime {
     param([Parameter(Mandatory = $true)][string]$Directory)
 
@@ -59,7 +81,7 @@ function Get-TorrentSourceManifest {
             "MISSING $relativePath"
             continue
         }
-        $hash = (Get-FileHash -LiteralPath $fullPath -Algorithm SHA256).Hash
+        $hash = Get-Sha256Hex -Path $fullPath
         "$hash $relativePath"
     }
     return @($manifest)
@@ -107,8 +129,8 @@ if (
         $source = Join-Path $seedDirectory $dll
         $destination = Join-Path $targetDirectory $dll
         Copy-Item -LiteralPath $source -Destination $destination -Force
-        $sourceHash = (Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash
-        $destinationHash = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash
+        $sourceHash = Get-Sha256Hex -Path $source
+        $destinationHash = Get-Sha256Hex -Path $destination
         if ($sourceHash -ne $destinationHash) {
             throw "Torrent runtime cache verification failed after copying: $dll"
         }

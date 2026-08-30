@@ -154,6 +154,19 @@ void main() {
     },
   );
 
+  test(
+    'torrent runtime cache hashes avoid module-only commands (BUG-1601)',
+    () {
+      final String script = File(
+        '${repoRoot.path}${Platform.pathSeparator}tool'
+        '${Platform.pathSeparator}prepare_windows_torrent_runtime.ps1',
+      ).readAsStringSync();
+      expect(script, contains('Get-Sha256Hex'));
+      expect(script, contains('[Security.Cryptography.SHA256]::Create()'));
+      expect(script, isNot(contains('Get-FileHash -')));
+    },
+  );
+
   test('ONNX CMake validates prepared cache and fallback operations', () {
     final String cmake = File(
       '${repoRoot.path}${Platform.pathSeparator}third_party'
