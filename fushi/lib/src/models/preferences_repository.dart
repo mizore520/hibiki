@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:fushi_audio/fushi_audio.dart'
+    show kDefaultReadingIdleTimeout, kStudyIdleTimeoutPrefKey;
 import 'package:fushi_core/fushi_core.dart';
 import 'package:fushi/src/dictionary/dict_style_rules.dart';
 import 'package:fushi/src/media/manga/ocr/manga_ocr_engine.dart';
@@ -10,6 +12,8 @@ import 'package:fushi/src/media/video/download/video_download_path_mapping.dart'
 import 'package:fushi/src/media/video/download/video_download_backend_identity.dart';
 import 'package:fushi/src/media/video/subtitle/open_subtitles_client.dart';
 import 'package:fushi/src/media/video/video_danmaku_model.dart';
+import 'package:fushi/src/media/video/video_hdr_output.dart'
+    show VideoHdrOutputMode, kVideoHdrOutputPref;
 import 'package:fushi/src/media/video/video_control_customization.dart';
 import 'package:fushi/src/media/video/video_custom_action_bindings.dart';
 import 'package:fushi/src/media/video/video_immersive_mode.dart';
@@ -1243,6 +1247,17 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Windows HDR 直通 / 10-bit 输出模式（默认 auto：显示器 HDR 开着且片源 HDR 时直通）。
+  VideoHdrOutputMode get videoHdrOutputMode => VideoHdrOutputMode.fromStorage(
+        getPref(kVideoHdrOutputPref,
+            defaultValue: VideoHdrOutputMode.auto.storageValue) as String,
+      );
+
+  Future<void> setVideoHdrOutputMode(VideoHdrOutputMode mode) async {
+    await setPref(kVideoHdrOutputPref, mode.storageValue);
+    notifyListeners();
+  }
+
   String get videoAsbplayerConfig =>
       getPref('video_asbplayer_config', defaultValue: '') as String;
 
@@ -1440,6 +1455,18 @@ class PreferencesRepository extends ChangeNotifier {
 
   Future<void> setVideoSubtitleBackfillAfterScrape(bool enabled) async {
     await setPref('video_subtitle_backfill_after_scrape', enabled);
+    notifyListeners();
+  }
+
+  /// AJATT 日语字幕库（`subtitles.ajatt.top`，kitsunekko 镜像）是否参与字幕搜索。
+  ///
+  /// 零配置：无 API key、无配额，所以只有这一个开关（不像 Jimaku / OpenSubtitles
+  /// 的 `enabled && key` 双门控）。默认 true——它是没填任何 key 的用户唯一能用的源。
+  bool get videoSubtitleAjattEnabled =>
+      getPref('video_subtitle_ajatt_enabled', defaultValue: true) as bool;
+
+  Future<void> setVideoSubtitleAjattEnabled(bool enabled) async {
+    await setPref('video_subtitle_ajatt_enabled', enabled);
     notifyListeners();
   }
 
@@ -2443,6 +2470,17 @@ class PreferencesRepository extends ChangeNotifier {
 
   // ── update preferences ───────────────────────────────────────────────
 
+  /// P2P（torrent）传输是否也走全局代理。**默认 false = 直连**：走代理可能
+  /// 降速，且不少代理服务商禁止 BT 流量（限速/警告/封号），只有用户明确
+  /// 开了才下发给内置引擎（外接 qBittorrent 自管）。
+  bool get p2pProxyEnabled =>
+      getPref('network_proxy_p2p_enabled', defaultValue: false) as bool;
+
+  Future<void> setP2pProxyEnabled(bool value) async {
+    await setPref('network_proxy_p2p_enabled', value);
+    notifyListeners();
+  }
+
   bool get updateNeverRemind =>
       getPref('update_never_remind', defaultValue: false) as bool;
 
@@ -2670,24 +2708,9 @@ class PreferencesRepository extends ChangeNotifier {
   // 副本，不迁移到任何游戏；旧 Profile apply/JSON import 也会拒绝它复活。全局值
   // 无法映射成「每个游戏各自开不开」，新结构仍一律从关闭起步，用户按游戏自己开。
 
-  /// AniList/Nyaa/Jimaku requests: direct (default, BUG-1538 —— 下载域默认不走
-  /// 代理), auto (env > enabled system proxy > direct), or a user-provided
-  /// host:port proxy. 已显式存过 'auto' 的用户不受默认值变更影响。
-  String get downloadNetworkProxyMode =>
-      getPref('download_network_proxy_mode', defaultValue: 'direct') as String;
-
-  Future<void> setDownloadNetworkProxyMode(String value) async {
-    await setPref('download_network_proxy_mode', value);
-    notifyListeners();
-  }
-
-  String get downloadCustomProxy =>
-      getPref('download_custom_proxy', defaultValue: '') as String;
-
-  Future<void> setDownloadCustomProxy(String value) async {
-    await setPref('download_custom_proxy', value);
-    notifyListeners();
-  }
+  // 下载域曾有独立的代理三态（`download_network_proxy_mode` /
+  // `download_custom_proxy`），2026-08-29 合并进唯一的全局代理项
+  // [updateCustomProxy]；存量行由 schema v90 迁移归并后删除，这里不再有读写器。
 
   /// TODO-1961：内置下载引擎的下载根（新任务落点）。空串 = 未设置 → 用默认根
   /// `<documents>/anime_downloads/content`（与本 key 出现之前逐字节一致）。
@@ -2772,6 +2795,24 @@ class PreferencesRepository extends ChangeNotifier {
   // and write clamped so a corrupt/out-of-range stored value can never reach
   // the progress UI as an absurd goal. Per-Profile (not excluded in
   // ProfileKeys), so each profile keeps its own targets.
+
+  /// v90 阅读空闲门（分钟）：这么久没有翻页 / 滚动 / 查词等输入就视为没在读，
+  /// 之后的时长不入账。只对阅读面（小说 / PDF / 漫画）生效，视频以播放态为准
+  /// （用户拍板）。偏好键与 fushi_audio 的 [kStudyIdleTimeoutPrefKey] 同名。
+  static const int readingIdleTimeoutMinutesMin = 1;
+  static const int readingIdleTimeoutMinutesMax = 120;
+
+  int get readingIdleTimeoutMinutes => (getPref(kStudyIdleTimeoutPrefKey,
+          defaultValue: kDefaultReadingIdleTimeout.inMinutes) as int)
+      .clamp(readingIdleTimeoutMinutesMin, readingIdleTimeoutMinutesMax);
+
+  Future<void> setReadingIdleTimeoutMinutes(int value) async {
+    await setPref(
+      kStudyIdleTimeoutPrefKey,
+      value.clamp(readingIdleTimeoutMinutesMin, readingIdleTimeoutMinutesMax),
+    );
+    notifyListeners();
+  }
 
   int get readingGoalDailyChars =>
       (getPref('reading_goal_daily_chars', defaultValue: 0) as int).clamp(

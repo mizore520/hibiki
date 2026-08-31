@@ -121,21 +121,99 @@ if (
     (Test-CompleteRuntime -Directory $seedDirectory)
 ) {
     if (-not (Test-SameTorrentSources -LeftRoot $repo -RightRoot $commonCheckout)) {
-        throw "The common checkout has cached torrent DLLs, but its torrent sources differ. Refusing to reuse stale native binaries."
+        Write-Warning "The common checkout torrent cache belongs to different sources; ignoring it and rebuilding from this worktree."
     }
-
-    New-Item -ItemType Directory -Force -Path $targetDirectory | Out-Null
-    foreach ($dll in $requiredDlls) {
-        $source = Join-Path $seedDirectory $dll
-        $destination = Join-Path $targetDirectory $dll
-        Copy-Item -LiteralPath $source -Destination $destination -Force
-        $sourceHash = Get-Sha256Hex -Path $source
-        $destinationHash = Get-Sha256Hex -Path $destination
-        if ($sourceHash -ne $destinationHash) {
-            throw "Torrent runtime cache verification failed after copying: $dll"
+    else {
+        New-Item -ItemType Directory -Force -Path $targetDirectory | Out-Null
+        foreach ($dll in $requiredDlls) {
+            $source = Join-Path $seedDirectory $dll
+            $destination = Join-Path $targetDirectory $dll
+            Copy-Item -LiteralPath $source -Destination $destination -Force
+            $sourceHash = Get-Sha256Hex -Path $source
+            $destinationHash = Get-Sha256Hex -Path $destination
+            if ($sourceHash -ne $destinationHash) {
+                throw "Torrent runtime cache verification failed after copying: $dll"
+            }
+            Write-Host "[torrent] seeded same-source cache: $dll"
         }
-        Write-Host "[torrent] seeded same-source cache: $dll"
     }
+}
+
+function Get-StringSha256Hex {
+    param([Parameter(Mandatory = $true)][string]$Value)
+
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes = [Text.Encoding]::UTF8.GetBytes($Value)
+        $hashBytes = $sha256.ComputeHash($bytes)
+        return ([BitConverter]::ToString($hashBytes).Replace('-', '')).ToLowerInvariant()
+    }
+    finally {
+        $sha256.Dispose()
+    }
+}
+
+function Get-RequiredVcpkgToolTag {
+    param([Parameter(Mandatory = $true)][string]$CheckoutRoot)
+
+    $metadataPath = Join-Path $CheckoutRoot 'scripts\vcpkg-tool-metadata.txt'
+    if (-not (Test-Path -LiteralPath $metadataPath -PathType Leaf)) {
+        throw "Pinned vcpkg checkout has no tool metadata: $metadataPath"
+    }
+    $releaseLine = Get-Content -LiteralPath $metadataPath -Encoding UTF8 |
+        Where-Object { $_ -match '^VCPKG_TOOL_RELEASE_TAG=(.+)$' } |
+        Select-Object -First 1
+    if (-not $releaseLine -or $releaseLine -notmatch '^VCPKG_TOOL_RELEASE_TAG=(.+)$') {
+        throw "Pinned vcpkg checkout has no tool release tag: $metadataPath"
+    }
+    return $Matches[1].Trim()
+}
+
+function Test-VcpkgToolVersion {
+    param(
+        [Parameter(Mandatory = $true)][string]$Executable,
+        [Parameter(Mandatory = $true)][string]$RequiredTag
+    )
+
+    if (-not (Test-Path -LiteralPath $Executable -PathType Leaf)) {
+        return $false
+    }
+    $versionOutput = @(& $Executable version --disable-metrics 2>&1) -join "`n"
+    return $LASTEXITCODE -eq 0 -and $versionOutput.Contains($RequiredTag)
+}
+
+function Install-PinnedVcpkgTool {
+    param(
+        [Parameter(Mandatory = $true)][string]$RequiredTag,
+        [Parameter(Mandatory = $true)][string]$Destination
+    )
+
+    $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
+    if (-not $curl) {
+        throw 'curl.exe is required to download the pinned vcpkg tool'
+    }
+    $downloadUrl = "https://github.com/microsoft/vcpkg-tool/releases/download/$RequiredTag/vcpkg.exe"
+    # Keep the temporary file executable so Windows PowerShell can actually
+    # invoke it for the version gate before installation.
+    $partial = "$Destination.download.exe"
+    if (Test-Path -LiteralPath $partial) {
+        Remove-Item -LiteralPath $partial -Force
+    }
+    Write-Host "[torrent] downloading pinned vcpkg tool $RequiredTag..."
+    & $curl.Source --fail --location --silent --show-error `
+        --connect-timeout 20 --max-time 180 `
+        --output $partial $downloadUrl
+    if ($LASTEXITCODE -ne 0) {
+        throw "Pinned vcpkg tool download failed with exit code $LASTEXITCODE"
+    }
+    if (-not (Test-VcpkgToolVersion -Executable $partial -RequiredTag $RequiredTag)) {
+        throw "Downloaded vcpkg tool does not report required version $RequiredTag"
+    }
+    Move-Item -LiteralPath $partial -Destination $Destination -Force
+    if (-not (Test-VcpkgToolVersion -Executable $Destination -RequiredTag $RequiredTag)) {
+        throw "Installed vcpkg tool does not report required version $RequiredTag"
+    }
+    Write-Host "[torrent] pinned vcpkg tool ready: $RequiredTag"
 }
 
 if (-not (Test-CompleteRuntime -Directory $targetDirectory)) {
@@ -143,12 +221,65 @@ if (-not (Test-CompleteRuntime -Directory $targetDirectory)) {
     if (-not $VcpkgRoot) { $VcpkgRoot = $env:VCPKG_ROOT }
     if (-not $VcpkgRoot) { $VcpkgRoot = $env:VCPKG_INSTALLATION_ROOT }
 
+    # CMake is bundled with Visual Studio even when it is not on PATH.
+    $vsInstall = $null
+    $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+    if (Test-Path -LiteralPath $vswhere -PathType Leaf) {
+        $vsInstall = (& $vswhere -latest -products * -property installationPath |
+            Select-Object -First 1)
+    }
+    # VS 2026 ships a vcpkg executable snapshot without .git/ports/versions;
+    # this project's builtin-baseline contract cannot be proved from it. Keep
+    # a shallow, baseline-pinned checkout in the repository build cache instead.
     if (-not $VcpkgRoot) {
-        throw "Torrent runtime is missing and no same-source cache is available. Set FUSHI_VCPKG_ROOT to a vcpkg checkout, then run this launcher again."
+        $torrentManifest = Get-Content -LiteralPath (Join-Path $repo 'native\fushi_torrent\vcpkg.json') -Raw -Encoding UTF8 |
+            ConvertFrom-Json
+        $baseline = $torrentManifest.'builtin-baseline'
+        if ([string]::IsNullOrWhiteSpace($baseline)) {
+            throw 'Torrent vcpkg manifest has no builtin-baseline'
+        }
+        # Keep native dependency paths short. Autotools/libtool still reaches
+        # legacy MAX_PATH behavior when it combines a long worktree path with
+        # vcpkg's package DESTDIR (BUG-1772).
+        $VcpkgRoot = Join-Path $commonCheckout ".build-cache\vcpkg\$baseline"
+        if (-not (Test-Path -LiteralPath (Join-Path $VcpkgRoot '.git'))) {
+            if (Test-Path -LiteralPath $VcpkgRoot) {
+                throw "Incomplete vcpkg cache is not a Git checkout: $VcpkgRoot"
+            }
+            New-Item -ItemType Directory -Force -Path $VcpkgRoot | Out-Null
+            Write-Host "[torrent] creating pinned vcpkg cache: $VcpkgRoot"
+            & git -C $VcpkgRoot init
+            if ($LASTEXITCODE -ne 0) { throw 'vcpkg cache git init failed' }
+            & git -C $VcpkgRoot remote add origin https://github.com/microsoft/vcpkg.git
+            if ($LASTEXITCODE -ne 0) { throw 'vcpkg cache remote setup failed' }
+            & git -C $VcpkgRoot fetch --depth 1 origin $baseline
+            if ($LASTEXITCODE -ne 0) { throw "vcpkg baseline fetch failed: $baseline" }
+            & git -C $VcpkgRoot checkout --detach FETCH_HEAD
+            if ($LASTEXITCODE -ne 0) { throw "vcpkg baseline checkout failed: $baseline" }
+        }
+        $requiredToolTag = Get-RequiredVcpkgToolTag -CheckoutRoot $VcpkgRoot
+        $vcpkgExe = Join-Path $VcpkgRoot 'vcpkg.exe'
+        if (-not (Test-VcpkgToolVersion -Executable $vcpkgExe -RequiredTag $requiredToolTag)) {
+            Install-PinnedVcpkgTool `
+                -RequiredTag $requiredToolTag `
+                -Destination $vcpkgExe
+        }
+        Write-Host "[torrent] using pinned vcpkg cache: $VcpkgRoot"
+    }
+
+    if (-not (Get-Command cmake -ErrorAction SilentlyContinue) -and $vsInstall) {
+        $visualStudioCmakeBin = Join-Path $vsInstall 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin'
+        if (Test-Path -LiteralPath (Join-Path $visualStudioCmakeBin 'cmake.exe')) {
+            $env:PATH = "$visualStudioCmakeBin;$env:PATH"
+            Write-Host "[torrent] using Visual Studio CMake: $visualStudioCmakeBin"
+        }
     }
 
     $builder = Join-Path $repo "native\fushi_torrent\build_windows_dll.ps1"
-    & $builder -VcpkgRoot $VcpkgRoot
+    $repoKey = (Get-StringSha256Hex -Value $repo).Substring(0, 12)
+    $torrentBuildDirectory = Join-Path $commonCheckout ".build-cache\fushi_torrent\$repoKey"
+    Write-Host "[torrent] using short build directory: $torrentBuildDirectory"
+    & $builder -VcpkgRoot $VcpkgRoot -BuildDirectory $torrentBuildDirectory
     if ($LASTEXITCODE -ne 0) {
         throw "Torrent runtime build failed with exit code $LASTEXITCODE"
     }

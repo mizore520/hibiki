@@ -2,9431 +2,4130 @@ part of 'strings.g.dart';
 
 // Path: <root>
 class _StringsEs extends _StringsEn {
-  /// You can call this constructor and build your own translation instance of this locale.
-  /// Constructing via the enum [AppLocale.build] is preferred.
-  _StringsEs.build({
-    Map<String, Node>? overrides,
-    PluralResolver? cardinalResolver,
-    PluralResolver? ordinalResolver,
-  }) : assert(
-         overrides == null,
-         'Set "translation_overrides: true" in order to enable this feature.',
-       ),
-       $meta = TranslationMetadata(
-         locale: AppLocale.es,
-         overrides: overrides ?? {},
-         cardinalResolver: cardinalResolver,
-         ordinalResolver: ordinalResolver,
-       ),
-       super.build(
-         cardinalResolver: cardinalResolver,
-         ordinalResolver: ordinalResolver,
-       );
 
-  /// Metadata for the translations of <es>.
-  @override
-  final TranslationMetadata<AppLocale, _StringsEn> $meta;
+	/// You can call this constructor and build your own translation instance of this locale.
+	/// Constructing via the enum [AppLocale.build] is preferred.
+	_StringsEs.build({Map<String, Node>? overrides, PluralResolver? cardinalResolver, PluralResolver? ordinalResolver})
+		: assert(overrides == null, 'Set "translation_overrides: true" in order to enable this feature.'),
+		  $meta = TranslationMetadata(
+		    locale: AppLocale.es,
+		    overrides: overrides ?? {},
+		    cardinalResolver: cardinalResolver,
+		    ordinalResolver: ordinalResolver,
+		  ),
+		  super.build(cardinalResolver: cardinalResolver, ordinalResolver: ordinalResolver);
 
-  @override
-  late final _StringsEs _root = this; // ignore: unused_field
+	/// Metadata for the translations of <es>.
+	@override final TranslationMetadata<AppLocale, _StringsEn> $meta;
 
-  // Translations
-  @override
-  String get action_exit => 'Salir';
-  @override
-  String get action_favorite => 'Favorito';
-  @override
-  String activity_days_ago({required Object n}) => 'hace ${n} d';
-  @override
-  String activity_hours_ago({required Object n}) => 'hace ${n} h';
-  @override
-  String get activity_just_now => 'Ahora mismo';
-  @override
-  String activity_minutes_ago({required Object n}) => 'hace ${n} min';
-  @override
-  String get add_to_collection => 'Añadir a colección';
-  @override
-  String get anime_download_back => 'Atrás';
-  @override
-  String get anime_download_batch => 'Lote';
-  @override
-  String get anime_download_category_all => 'Todos';
-  @override
-  String get anime_download_category_english => 'Traducido al inglés';
-  @override
-  String get anime_download_category_non_english => 'No inglés';
-  @override
-  String get anime_download_category_raw => 'Sin traducir';
-  @override
-  String get anime_download_delete => 'Eliminar';
-  @override
-  String anime_download_episode_count({required Object count}) => 'EP ${count}';
-  @override
-  String get anime_download_generic_download => 'Descargar';
-  @override
-  String get anime_download_generic_hint => 'Enlace magnet';
-  @override
-  String get anime_download_generic_title =>
-      'Pegar un enlace (libros, vídeos, cualquier cosa)';
-  @override
-  String get anime_download_include_subs => 'Incluir subtítulos';
-  @override
-  String get anime_download_kind_auto => 'Auto';
-  @override
-  String get anime_download_kind_book => 'Libro';
-  @override
-  String get anime_download_kind_video => 'Vídeo';
-  @override
-  String get anime_download_magnet_invalid => 'Enlace magnet no válido';
-  @override
-  String get anime_download_no_results => 'Sin resultados';
-  @override
-  String get anime_download_no_subs => 'Sin subtítulos';
-  @override
-  String get anime_download_no_tasks => 'Aún no hay tareas de descarga';
-  @override
-  String get anime_download_nyaa_query => 'Términos de búsqueda en Nyaa';
-  @override
-  String get anime_download_play_now => 'Reproducir mientras descarga';
-  @override
-  String get anime_download_play_now_fail =>
-      'Aún no está listo (metadatos pendientes o conexión fallida) — inténtelo más tarde';
-  @override
-  String get anime_download_play_now_ok =>
-      'Importado — ábralo desde la biblioteca de vídeos para reproducir mientras descarga';
-  @override
-  String get anime_download_push => 'Enviar descarga';
-  @override
-  String get anime_download_push_failed => 'No se pudo enviar a qBittorrent';
-  @override
-  String get anime_download_pushed =>
-      'Enviado — se importará automáticamente al finalizar';
-  @override
-  String get anime_download_refresh => 'Actualizar';
-  @override
-  String get anime_download_relocate => 'Renombrar / mover';
-  @override
-  String anime_download_relocate_engine_failed({required Object reason}) =>
-      'Falló, nada cambió: ${reason}';
-  @override
-  String get anime_download_relocate_hint =>
-      'Fushi renombra/mueve a través del motor de descarga, por lo que la siembra no se interrumpe. Renombrar en el Explorador no se puede recuperar.';
-  @override
-  String anime_download_relocate_library_failed({required Object reason}) =>
-      'Archivos movidos, pero la biblioteca sigue apuntando a la ruta anterior: ${reason}';
-  @override
-  String get anime_download_relocate_move_title => 'Mover a carpeta';
-  @override
-  String get anime_download_relocate_no_files =>
-      'Esta tarea aún no tiene archivos para renombrar (metadatos no listos)';
-  @override
-  String anime_download_relocate_ok({required Object rows}) =>
-      'Renombrado / movido; ${rows} entradas de biblioteca actualizadas';
-  @override
-  String get anime_download_relocate_pick_folder => 'Elegir carpeta de destino';
-  @override
-  String get anime_download_relocate_rename_title => 'Renombrar archivo';
-  @override
-  String get anime_download_retry => 'Reintentar';
-  @override
-  String get anime_download_search => 'Buscar';
-  @override
-  String get anime_download_search_error_proxy_hint =>
-      'Si no puede acceder al sitio directamente, configure un proxy de red en los ajustes de descarga.';
-  @override
-  String get anime_download_search_failed =>
-      'La búsqueda falló o se agotó el tiempo. Toque reintentar.';
-  @override
-  String get anime_download_search_hint => 'Título del anime';
-  @override
-  String get anime_download_search_start_hint =>
-      'Busque un título arriba — los torrents y subtítulos se emparejan automáticamente. Las descargas no se limitan a vídeo: libros, manga, audiolibros y juegos también se importan.';
-  @override
-  String get anime_download_sort_date => 'Publicado';
-  @override
-  String get anime_download_sort_seeders => 'Seeders';
-  @override
-  String get anime_download_sort_size => 'Tamaño';
-  @override
-  String get anime_download_store_unavailable =>
-      'El almacenamiento del plan de descarga no está disponible';
-  @override
-  String get anime_download_subs_badge => 'Subs';
-  @override
-  String get anime_download_subs_failed =>
-      'La búsqueda de subtítulos falló. Toque reintentar.';
-  @override
-  String get anime_download_subs_need_key =>
-      'Introduzca una clave API de Jimaku arriba para buscar subtítulos.';
-  @override
-  String get anime_download_tasks => 'Tareas de descarga';
-  @override
-  String get anime_download_title => 'Descarga de anime';
-  @override
-  String get anime_download_trusted => 'De confianza';
-  @override
-  String get anime_download_trusted_only => 'Solo de confianza';
-  @override
-  String get anki_allow_duplicates => 'Permitir duplicados';
-  @override
-  String get anki_allow_duplicates_hint =>
-      'Omitir la comprobación de duplicados al añadir tarjetas';
-  @override
-  String get anki_card_action_failed =>
-      'La acción de la tarjeta falló. Inténtelo de nuevo.';
-  @override
-  String get anki_compact_glossaries => 'Glosarios compactos';
-  @override
-  String get anki_compact_glossaries_hint =>
-      'Usar formato compacto para las entradas del glosario';
-  @override
-  String get anki_connect_api_key => 'Clave de API';
-  @override
-  String get anki_connect_host => 'Servidor';
-  @override
-  String get anki_connect_port => 'Puerto';
-  @override
-  String get anki_create_lapis => 'Crear mazo Lapis';
-  @override
-  String get anki_create_lapis_exists =>
-      'El tipo de nota y el mazo Lapis ya existen: se han seleccionado.';
-  @override
-  String anki_create_lapis_failed({required Object error}) =>
-      'No se pudo crear el mazo Lapis: ${error}';
-  @override
-  String get anki_create_lapis_hint =>
-      'Añade el tipo de nota Lapis y un mazo Lapis a Anki y los selecciona.';
-  @override
-  String get anki_create_lapis_success => 'Tipo de nota y mazo Lapis creados.';
-  @override
-  String get anki_deck => 'Mazo';
-  @override
-  String get anki_duplicate_scope => 'Ámbito de verificación de duplicados';
-  @override
-  String get anki_duplicate_scope_collection => 'Colección completa';
-  @override
-  String get anki_duplicate_scope_deck => 'Mazo seleccionado (y sus submazos)';
-  @override
-  String get anki_duplicate_scope_deck_root => 'Mazo raíz (todos los submazos)';
-  @override
-  String get anki_duplicate_scope_hint =>
-      'Qué mazos se buscan al verificar si una tarjeta ya existe. Solo AnkiConnect; AnkiDroid siempre busca en toda la colección.';
-  @override
-  String get anki_error_collection_unavailable =>
-      'La colección de AnkiDroid no está disponible ahora mismo. Abre AnkiDroid al menos una vez, asegúrate de que no está sincronizando y de que la API está activada, y vuelve a intentarlo.';
-  @override
-  String get anki_error_connection_refused =>
-      'No se pudo conectar con Anki: conexión rechazada. Asegúrate de que Anki Desktop esté abierto y el complemento AnkiConnect instalado.';
-  @override
-  String get anki_error_connection_timeout =>
-      'No se pudo conectar con Anki: se agotó el tiempo de espera. Revisa el servidor, el puerto y el cortafuegos.';
-  @override
-  String get anki_error_connection_unknown =>
-      'No se pudo exportar a Anki: error de conexión inesperado. Consulta el registro de errores.';
-  @override
-  String get anki_error_http =>
-      'No se pudo exportar a Anki: ocurrió un error HTTP al contactar con AnkiConnect.';
-  @override
-  String get anki_error_permission_denied =>
-      'AnkiDroid no ha concedido permiso de acceso a tarjetas. Apruebe el diálogo de permisos que acaba de aparecer, luego toque el botón de nuevo para exportar.';
-  @override
-  String get anki_fetch => 'Actualizar mazos y tipos de nota';
-  @override
-  String get anki_fetching => 'Obteniendo...';
-  @override
-  String get anki_field_mappings => 'Mapeo de campos';
-  @override
-  String get anki_field_not_mapped => 'Sin mapear';
-  @override
-  String get anki_mine_to_server => 'Enviar al dispositivo emparejado';
-  @override
-  String get anki_mine_to_server_hint =>
-      'Envía las tarjetas creadas al Anki del dispositivo emparejado (sus mazos y ajustes) en lugar de este dispositivo. Requiere emparejamiento por Interconnect.';
-  @override
-  String get anki_mined_action_add_duplicate => 'Añadir como tarjeta nueva';
-  @override
-  String get anki_mined_action_overwrite => 'Sobrescribir esta tarjeta';
-  @override
-  String get anki_mined_action_view => 'Ver / abrir en Anki';
-  @override
-  String get anki_mined_card_subtitle =>
-      'Elija qué hacer con la tarjeta coincidente.';
-  @override
-  String get anki_mined_card_title => 'Tarjeta ya existente en Anki';
-  @override
-  String anki_mined_multiple_matches({required Object count}) =>
-      '${count} tarjetas coincidentes';
-  @override
-  String get anki_not_configured =>
-      'Toca Actualizar para cargar tus mazos y tipos de nota de Anki.';
-  @override
-  String get anki_note_open_failed => 'No se pudo abrir la tarjeta en Anki.';
-  @override
-  String get anki_note_type => 'Tipo de nota';
-  @override
-  String get anki_note_viewer_empty => 'Esta tarjeta no tiene campos legibles.';
-  @override
-  String get anki_note_viewer_open_in_anki => 'Abrir en Anki';
-  @override
-  String get anki_note_viewer_title => 'Tarjeta existente';
-  @override
-  String get anki_open_no_card =>
-      'No se encontró tarjeta para esta palabra en Anki.';
-  @override
-  String get anki_overwrite_scope => 'Alcance de sobrescritura';
-  @override
-  String get anki_overwrite_scope_all => 'Todas las tarjetas coincidentes';
-  @override
-  String get anki_overwrite_scope_hint =>
-      'Qué tarjetas ya creadas puede sobrescribir el ✓ verde';
-  @override
-  String get anki_overwrite_scope_latest => 'Solo la última tarjeta';
-  @override
-  String get anki_refresh_hint =>
-      'Después de crear o renombrar un mazo o tipo de nota en Anki, toca aquí para actualizar.';
-  @override
-  String anki_select_handlebar({required Object field}) =>
-      'Seleccionar valor para ${field}';
-  @override
-  String get anki_settings_label => 'Configuración de Anki';
-  @override
-  String get anki_tag_default_section => 'Etiquetas predeterminadas';
-  @override
-  String get anki_tag_include_category =>
-      'Añadir etiqueta de categoría de origen';
-  @override
-  String get anki_tag_include_category_hint =>
-      'Los libros llevan «book», los vídeos «video» y los juegos «game»';
-  @override
-  String get anki_tag_include_fushi => 'Añadir la etiqueta «fushi»';
-  @override
-  String get anki_tag_include_fushi_hint =>
-      'Marca todas las tarjetas creadas por Fushi';
-  @override
-  String get anki_tags => 'Etiquetas';
-  @override
-  String get anki_tags_hint =>
-      'Etiquetas separadas por espacios añadidas a cada tarjeta';
-  @override
-  String get app_icon_label => 'Icono de la app';
-  @override
-  String get app_icon_presets => 'Presets';
-  @override
-  String get app_ui_scale => 'Tamaño de la interfaz';
-  @override
-  String get app_ui_scale_hint =>
-      'Scales app text and spacing. Lower it on large screens if controls feel oversized.';
-  @override
-  String get app_version => 'Versión de la app';
-  @override
-  String get apply_theme => 'Aplicar tema';
-  @override
-  String get audio_clip_failed =>
-      'No se pudo extraer el fragmento de audio: la fuente de audio puede faltar o no poder leerse';
-  @override
-  String get audio_import => 'Importar audio';
-  @override
-  String get audio_panel_add_audio => 'Añadir audio';
-  @override
-  String get audio_panel_auto => 'Automático';
-  @override
-  String get audio_panel_pick_new_subtitle =>
-      'Elegir nuevo archivo de subtítulos';
-  @override
-  String get audio_source_added => 'Fuente de audio añadida';
-  @override
-  String audio_source_dns_error({required Object host}) =>
-      'Error de conexión de fuente de audio: no se puede resolver "${host}" — verifica tu red o elimina esta fuente en ajustes';
-  @override
-  String get audio_source_edit_target_gone =>
-      'Esa fuente de audio ya no existe — edición descartada';
-  @override
-  String get audio_source_edit_url => 'Editar enlace de fuente de audio';
-  @override
-  String audio_source_error({required Object detail}) =>
-      'Error de fuente de audio: ${detail}';
-  @override
-  String get audio_source_fushi_interconnect => 'Fushi Interconnect';
-  @override
-  String get audio_source_loopback_warning =>
-      'Apunta a este dispositivo — redirija después de cambiar de máquina';
-  @override
-  String audio_source_request_error({required Object detail}) =>
-      'Error en solicitud de fuente de audio: ${detail}';
-  @override
-  String audio_source_timeout({required Object host}) =>
-      'Tiempo de espera de fuente de audio: "${host}" — servidor no responde, inténtalo más tarde o cambia la fuente';
-  @override
-  String get audio_source_updated => 'Fuente de audio actualizada';
-  @override
-  String get audio_source_url_invalid =>
-      'El enlace debe ser http(s) y contener un marcador de término o lectura';
-  @override
-  String get audio_unavailable => 'No se encontró audio.';
-  @override
-  String get audio_volume => 'Volumen';
-  @override
-  String get audiobook_attached => 'Audiolibro adjunto';
-  @override
-  String get audiobook_audio_missing => 'Archivo de audio faltante';
-  @override
-  String get audiobook_background_play => 'Seguir tras salir';
-  @override
-  String get audiobook_background_play_hint =>
-      'Si está desactivado, el audiolibro se detiene al salir del lector. Actívalo para seguir en segundo plano.';
-  @override
-  String get audiobook_export_clip => 'Exportar clip de vídeo';
-  @override
-  String get audiobook_export_clip_failed => 'La exportación del clip falló';
-  @override
-  String get audiobook_export_clip_in_progress => 'Exportando clip…';
-  @override
-  String get audiobook_export_clip_no_selection =>
-      'Seleccione texto primero para exportar un clip';
-  @override
-  String get audiobook_export_clip_no_text =>
-      'Esta selección no tiene texto para renderizar';
-  @override
-  String get audiobook_export_clip_saved => 'Clip guardado';
-  @override
-  String get audiobook_export_clip_unsupported_range =>
-      'Esta selección no se puede exportar (cruza capítulo o archivo de audio)';
-  @override
-  String get audiobook_import => 'Importar audiolibro';
-  @override
-  String get audiobook_import_error => 'Error en la importación';
-  @override
-  String audiobook_import_error_copy_failed({required Object name}) =>
-      'Error al copiar el archivo: ${name}';
-  @override
-  String audiobook_import_error_disk_full({required Object size}) =>
-      'Espacio en disco insuficiente. Requerido: ${size}';
-  @override
-  String get audiobook_import_success => 'Audiolibro importado';
-  @override
-  String get audiobook_load_error => 'Error al cargar el audiolibro.';
-  @override
-  String get audiobook_pick_alignment => 'Elegir archivo de alineación';
-  @override
-  String get audiobook_reference_original => 'Referenciar archivos originales';
-  @override
-  String get audiobook_reference_original_desc =>
-      'Mantener el audio donde está y reproducir desde su ruta original; el libro se rompe si el archivo se mueve o elimina.';
-  @override
-  String get audiobook_relocate => 'Reubicar archivo';
-  @override
-  String get audiobook_relocate_done => 'Audio reubicado';
-  @override
-  String get auto_add_book_name_to_tags =>
-      'Añadir título del libro a las etiquetas automáticamente';
-  @override
-  String auto_chapter({required Object n}) => 'Capítulo ${n}';
-  @override
-  String get auto_read_on_lookup => 'Leer palabra automáticamente al buscar';
-  @override
-  String get auto_search => 'Búsqueda automática';
-  @override
-  String get auto_search_debounce_delay => 'Retardo de búsqueda automática';
-  @override
-  String get auto_select_search_window =>
-      'Selección automática de ventana de búsqueda';
-  @override
-  String get auto_select_search_window_hint =>
-      'Probar múltiples tamaños de ventana al importar, elegir el que tenga la mejor tasa de acierto';
-  @override
-  String get av_sync => 'Sincronización A/V';
-  @override
-  String get av_sync_reset => 'Restablecer';
-  @override
-  String get back => 'Atrás';
-  @override
-  String get background_color => 'Color de fondo';
-  @override
-  String get background_color_desc => 'Fondo de la página del lector';
-  @override
-  String get backup_category_audiobooks => 'Audio de audiolibros';
-  @override
-  String get backup_category_audiobooks_desc =>
-      'Audio y alineación de audiolibros';
-  @override
-  String get backup_category_books => 'Libros';
-  @override
-  String get backup_category_books_desc =>
-      'Archivos de libros (EPUB y contenido extraído)';
-  @override
-  String get backup_category_dictionary => 'Diccionarios';
-  @override
-  String get backup_category_dictionary_desc =>
-      'Diccionarios importados y sus archivos';
-  @override
-  String get backup_category_fonts => 'Fuentes personalizadas';
-  @override
-  String get backup_category_fonts_desc =>
-      'Archivos de fuentes personalizadas importados';
-  @override
-  String get backup_category_local_audio => 'Bases de datos de audio local';
-  @override
-  String get backup_category_local_audio_desc =>
-      'Bases de datos de audio de pronunciación local';
-  @override
-  String get backup_category_profiles => 'Perfiles';
-  @override
-  String get backup_category_profiles_desc => 'Perfiles de configuración';
-  @override
-  String get backup_category_progress => 'Progreso de lectura';
-  @override
-  String get backup_category_progress_desc =>
-      'Posiciones de lectura y marcadores';
-  @override
-  String get backup_category_settings => 'Ajustes';
-  @override
-  String get backup_category_settings_desc => 'Ajustes de la app y del lector';
-  @override
-  String get backup_category_statistics => 'Estadísticas';
-  @override
-  String get backup_category_statistics_desc =>
-      'Estadísticas de lectura, vídeo y creación de tarjetas';
-  @override
-  String get backup_category_videos => 'Vídeos';
-  @override
-  String get backup_category_videos_desc => 'Archivos de vídeo locales';
-  @override
-  String get backup_export => 'Exportar copia de seguridad';
-  @override
-  String get backup_export_books_all => 'Todos los libros';
-  @override
-  String backup_export_books_selected({required Object count}) =>
-      '${count} libros seleccionados';
-  @override
-  String get backup_export_categories_hint =>
-      'Marque qué incluir en la copia de seguridad. Desmarcar Libros los elimina por completo — su contenido y registros desaparecen con ellos.';
-  @override
-  String get backup_export_categories_title => 'Elige qué exportar';
-  @override
-  String get backup_export_choose_books => 'Elegir libros';
-  @override
-  String get backup_export_choose_videos => 'Elegir vídeos';
-  @override
-  String backup_export_failed({required Object message}) =>
-      'Error al exportar la copia de seguridad: ${message}';
-  @override
-  String get backup_export_hint =>
-      'Elige qué incluir; la base de datos (libros, progreso, estadísticas) siempre se incluye. Desmarca elementos grandes (audio local, vídeos) para reducir el tamaño de la copia.';
-  @override
-  String get backup_export_no_books => 'No hay libros para elegir';
-  @override
-  String get backup_export_no_videos => 'No hay vídeos para elegir';
-  @override
-  String get backup_export_select_all => 'Seleccionar todos';
-  @override
-  String get backup_export_select_none => 'No seleccionar ninguno';
-  @override
-  String get backup_export_success =>
-      'Copia de seguridad exportada correctamente';
-  @override
-  String get backup_export_videos_all => 'Todos los vídeos';
-  @override
-  String backup_export_videos_selected({required Object count}) =>
-      '${count} vídeos seleccionados';
-  @override
-  String get backup_exporting => 'Creando copia de seguridad…';
-  @override
-  String get backup_import => 'Importar copia de seguridad';
-  @override
-  String backup_import_confirm({
-    required Object date,
-    required Object bookCount,
-    required Object statsCount,
-  }) =>
-      'Esto reemplazará todos los datos actuales con la copia de seguridad del ${date}.\n\n${bookCount} libros, ${statsCount} registros de estadísticas.\n\nLa app se reiniciará tras la restauración.';
-  @override
-  String get backup_import_confirm_title => '¿Restaurar copia de seguridad?';
-  @override
-  String get backup_import_contents_hint =>
-      'Desmarque un elemento para omitirlo.';
-  @override
-  String get backup_import_contents_title => 'Esta copia de seguridad contiene';
-  @override
-  String backup_import_failed({required Object message}) =>
-      'Error al importar la copia de seguridad: ${message}';
-  @override
-  String get backup_import_hint =>
-      'Restaura desde un archivo de copia de seguridad. La app se reiniciará.';
-  @override
-  String get backup_import_invalid => 'Archivo de copia de seguridad no válido';
-  @override
-  String backup_import_merge_preview({
-    required Object bookCount,
-    required Object progressCount,
-  }) =>
-      'La fusión añadirá ${bookCount} libros y actualizará ${progressCount} posiciones de lectura.';
-  @override
-  String get backup_import_mode_label => 'Modo de importación';
-  @override
-  String get backup_import_mode_merge => 'Fusionar con la biblioteca actual';
-  @override
-  String get backup_import_mode_overwrite => 'Sobrescribir toda la biblioteca';
-  @override
-  String get backup_import_overlay_title => 'Importando copia de seguridad';
-  @override
-  String get backup_import_overlay_warning =>
-      'Restaurando sus datos. No cierre la aplicación.';
-  @override
-  String get backup_import_preserve_sync_note =>
-      'Se conservarán los ajustes de sincronización de este dispositivo (cuenta y credenciales).';
-  @override
-  String get backup_import_restart_button => 'Reiniciar ahora';
-  @override
-  String get backup_import_settings_off_hint =>
-      'Conserva las fuentes/apariencia/perfiles de este dispositivo; restaura solo los libros y los datos de lectura.';
-  @override
-  String get backup_import_settings_on_hint =>
-      'Restauración completa: las fuentes, la apariencia y los perfiles provienen de la copia de seguridad.';
-  @override
-  String get backup_import_settings_toggle => 'Importar ajustes y perfiles';
-  @override
-  String get backup_import_success => 'Copia restaurada. Reiniciando…';
-  @override
-  String get backup_import_validating_hint =>
-      'Verificando y previsualizando el archivo de copia de seguridad. Esto puede tardar un momento.';
-  @override
-  String get backup_import_validating_title => 'Leyendo copia de seguridad…';
-  @override
-  String backup_schema_newer({required Object version}) =>
-      'Esta copia de seguridad requiere una versión más reciente de la app (esquema ${version}). Actualiza primero.';
-  @override
-  String batch_add_to_collection_success({required Object n}) =>
-      'Se añadieron ${n} elemento(s) a la colección.';
-  @override
-  String batch_delete_confirm({required Object n}) =>
-      '¿Eliminar ${n} libro(s)? Esta acción no se puede deshacer.';
-  @override
-  String batch_delete_confirm_video({required Object n}) =>
-      '¿Eliminar ${n} vídeo(s)? Esto no se puede deshacer.';
-  @override
-  String batch_delete_mixed_confirm({required Object n, required Object m}) =>
-      '¿Eliminar ${n} medios y disolver ${m} colección(es)? Esto no se puede deshacer.';
-  @override
-  String batch_delete_mixed_success({required Object n, required Object m}) =>
-      'Se eliminaron ${n} medios, se disolvieron ${m} colección(es).';
-  @override
-  String batch_delete_success({required Object n}) =>
-      '${n} libro(s) eliminado(s).';
-  @override
-  String batch_delete_success_video({required Object n}) =>
-      'Se eliminaron ${n} vídeo(s).';
-  @override
-  String batch_dissolve_confirm({required Object m}) =>
-      '¿Disolver ${m} colección(es)? La agrupación se elimina; los medios se conservan.';
-  @override
-  String batch_dissolve_success({required Object m}) =>
-      'Se disolvieron ${m} colección(es).';
-  @override
-  String get batch_invert_selection => 'Invertir';
-  @override
-  String get batch_select => 'Seleccionar';
-  @override
-  String get batch_select_all => 'Todos';
-  @override
-  String batch_selected_count({required Object n}) => '${n} seleccionado(s)';
-  @override
-  String get batch_tag_add => 'Añadir';
-  @override
-  String batch_tag_added({required Object name, required Object n}) =>
-      'Etiqueta "${name}" añadida a ${n} libro(s).';
-  @override
-  String batch_tag_added_video({required Object name, required Object n}) =>
-      'Se añadió la etiqueta "${name}" a ${n} vídeo(s).';
-  @override
-  String get batch_tag_apply => 'Aplicar';
-  @override
-  String get batch_tag_keep => 'Mantener';
-  @override
-  String get batch_tag_remove => 'Eliminar';
-  @override
-  String batch_tag_removed({required Object name, required Object n}) =>
-      'Etiqueta "${name}" eliminada de ${n} libro(s).';
-  @override
-  String batch_tag_removed_video({required Object name, required Object n}) =>
-      'Se eliminó la etiqueta "${name}" de ${n} vídeo(s).';
-  @override
-  String get batch_tag_title => 'Gestionar etiquetas';
-  @override
-  String get book_continue_reading => 'Continue Reading';
-  @override
-  String get book_css_editor_cancel => 'Cancelar';
-  @override
-  String get book_css_editor_confirm_reset =>
-      '¿Restablecer el CSS de este archivo al predeterminado?';
-  @override
-  String get book_css_editor_confirm_reset_all =>
-      '¿Restablecer el CSS de TODOS los archivos al predeterminado?';
-  @override
-  String get book_css_editor_discard => 'Descartar';
-  @override
-  String get book_css_editor_edit_css => 'Editar CSS del libro';
-  @override
-  String get book_css_editor_no_css_files =>
-      'No se encontraron archivos CSS en este libro.';
-  @override
-  String get book_css_editor_no_extract_dir =>
-      'Directorio del libro no encontrado. Reimporte el libro para editar el CSS.';
-  @override
-  String get book_css_editor_reset_all => 'Restablecer todo';
-  @override
-  String get book_css_editor_reset_current => 'Restablecer actual';
-  @override
-  String get book_css_editor_reset_done => 'CSS restablecido.';
-  @override
-  String get book_css_editor_save => 'Guardar';
-  @override
-  String get book_css_editor_saved => 'CSS guardado.';
-  @override
-  String get book_css_editor_title => 'Editor CSS del libro';
-  @override
-  String get book_css_editor_unsaved_changes => 'Cambios sin guardar';
-  @override
-  String get book_css_editor_unsaved_changes_message =>
-      'Tiene cambios sin guardar. ¿Descartarlos?';
-  @override
-  String get book_directory_not_found => 'Directorio del libro no encontrado.';
-  @override
-  String get book_edit_author => 'Autor';
-  @override
-  String get book_file_not_found => 'Archivo del libro no encontrado';
-  @override
-  String get book_import_duplicate_cancel => 'No, cancelar';
-  @override
-  String get book_import_duplicate_cancelled => 'Importación cancelada';
-  @override
-  String get book_import_duplicate_keep => 'Sí, añadir sufijo';
-  @override
-  String book_import_duplicate_message({required Object name}) =>
-      'Ya existe un libro llamado "${name}". ¿Importarlo igualmente? "Sí" lo importa con un sufijo numerado; "No" cancela.';
-  @override
-  String get book_import_duplicate_title => 'Libro duplicado';
-  @override
-  String get book_mark_completed_action => 'Marcar como completado';
-  @override
-  String get book_mark_uncompleted_action => 'Marcar como no completado';
-  @override
-  String get book_marked_completed => 'Marcado como completado';
-  @override
-  String get book_marked_uncompleted => 'Marcado como no completado';
-  @override
-  String get book_mode => 'Modo de libro';
-  @override
-  String book_read_progress({required Object percent}) => 'Leído ${percent}%';
-  @override
-  String get book_scrape_cover => 'Buscar portada en línea';
-  @override
-  String get book_scrape_empty => 'Sin portadas coincidentes';
-  @override
-  String get book_scrape_failed => 'No se pudo obtener la portada';
-  @override
-  String get book_scrape_hint => 'Título del libro / autor';
-  @override
-  String get book_scrape_search => 'Buscar';
-  @override
-  String get book_scrape_search_failed =>
-      'La búsqueda falló. Toque Buscar para reintentar.';
-  @override
-  String get book_scrape_title => 'Buscar portada en línea';
-  @override
-  String get book_scrape_use => 'Usar';
-  @override
-  String get book_search => 'Buscar en el libro';
-  @override
-  String get book_search_hint => 'Ingrese texto de búsqueda…';
-  @override
-  String get book_search_no_results => 'Sin resultados';
-  @override
-  String book_search_results({required Object n}) => '${n} resultado(s)';
-  @override
-  String get books => 'Libros';
-  @override
-  String get browser_extension_enable_server_first =>
-      'Consejo: active primero el "servidor API Yomitan" y establezca una clave API arriba, para que la extensión se configure automáticamente con una conexión funcional.';
-  @override
-  String get browser_extension_mobile_unsupported =>
-      'Los navegadores móviles no pueden cargar esta extensión. Usa la búsqueda dentro de la app en el lector o el reproductor de vídeo.';
-  @override
-  String get browser_extension_page_intro =>
-      'En escritorio, busque palabras, analice subtítulos y cree tarjetas directamente en Chrome o Edge. Prepare la extensión abajo, luego cárguela en su navegador.';
-  @override
-  String get browser_extension_prepare_button =>
-      'Preparar archivos de extensión';
-  @override
-  String get browser_extension_prepare_hint =>
-      'Inicia el servidor de búsqueda y desempaqueta la extensión localmente; la ruta de la carpeta se copia al portapapeles.';
-  @override
-  String get browser_extension_reinstall_button =>
-      'Volver a preparar / actualizar archivos';
-  @override
-  String get browser_extension_server_off => 'Servidor de búsqueda apagado';
-  @override
-  String get browser_extension_server_on => 'Servidor de búsqueda encendido';
-  @override
-  String get browser_extension_status_connected => 'Extensión conectada';
-  @override
-  String get browser_extension_status_never => 'Extensión aún no detectada';
-  @override
-  String get browser_extension_step_dev_mode =>
-      'Active el "Modo desarrollador" (interruptor en la esquina superior derecha).';
-  @override
-  String get browser_extension_step_done_auto =>
-      'Listo. La extensión ya está configurada para conectarse a Fushi para búsquedas — no necesita rellenar nada a mano.';
-  @override
-  String get browser_extension_step_load_unpacked =>
-      'Haga clic en "Cargar descomprimida".';
-  @override
-  String get browser_extension_step_open_page =>
-      'Abra la página de extensiones del navegador:';
-  @override
-  String get browser_extension_step_pick_folder =>
-      'Seleccione la carpeta de extensión abajo (la ruta ya se copió a su portapapeles).';
-  @override
-  String get browser_extension_step_verify =>
-      'Verifique que la extensión esté cargada y conectada';
-  @override
-  String get browser_extension_verify_button => 'Verificar conexión';
-  @override
-  String get browser_extension_verify_checking => 'Verificando…';
-  @override
-  String get browser_extension_verify_connected =>
-      'Extensión detectada y conectada.';
-  @override
-  String get browser_extension_verify_not_detected =>
-      'Extensión aún no detectada. Asegúrese de que esté cargada y habilitada en su navegador, luego verifique de nuevo.';
-  @override
-  String get browser_extension_version_app => 'Incluida en la app';
-  @override
-  String get browser_extension_version_browser => 'Cargada en navegador';
-  @override
-  String get browser_extension_version_label => 'Versión de extensión';
-  @override
-  String get browser_extension_version_mismatch =>
-      'La extensión cargada en su navegador está desactualizada. Prepare la extensión de nuevo si es necesario, luego recárguela desde la página de extensiones del navegador (chrome://extensions).';
-  @override
-  String browser_extension_yomitan_port_conflict({required Object port}) =>
-      'El puerto ${port} está en uso por otro proceso (generalmente el componente yomitan-api — un proceso Python lanzado por su navegador). Finalice ese proceso, o desactive la API de Yomitan en la configuración avanzada de Yomitan, luego active de nuevo el servidor API Yomitan en Fushi.';
-  @override
-  String get cancel => 'Cancelar';
-  @override
-  String card_cover_degraded_to_static({required Object reason}) =>
-      'La portada de la tarjeta recurrió a un fotograma estático (clip animado no disponible): ${reason}';
-  @override
-  String get card_duplicate => 'Tarjeta duplicada — no exportada.';
-  @override
-  String get card_export_failed => 'Error al exportar la tarjeta.';
-  @override
-  String card_export_failed_detail({required Object reason}) =>
-      'Error al exportar la tarjeta: ${reason}';
-  @override
-  String get card_export_not_configured =>
-      'Anki no configurado. Abre la configuración de Anki y toca Obtener.';
-  @override
-  String card_exported({required Object deck}) =>
-      'Tarjeta exportada a 『${deck}』.';
-  @override
-  String card_exported_audio_failed({required Object reason}) =>
-      'Tarjeta exportada, pero falló la descarga del audio (${reason}).';
-  @override
-  String get card_mined_no_sentence_captured =>
-      'Tarjeta creada, pero no se capturó oración (vuelva a seleccionar la palabra, o este texto no tiene oración reconocible).';
-  @override
-  String get card_mined_unmapped_sentence_audio_field =>
-      'Tarjeta creada con audio de oración, pero su tipo de nota de Anki no tiene campo mapeado para ello. Mapee un campo a {sentence-audio}.';
-  @override
-  String get card_mined_unmapped_sentence_field =>
-      'Tarjeta creada, pero su tipo de nota de Anki no tiene campo mapeado a la oración. Use Ajustes -> \'Crear mazo Lapis\' o mapee un campo a {sentence}.';
-  @override
-  String get card_mined_without_sentence_audio =>
-      'Tarjeta creada sin audio de frase (no se encontró para esta selección).';
-  @override
-  String get card_mining_pending => 'Añadiendo tarjeta…';
-  @override
-  String card_overwritten({required Object deck}) =>
-      'Tarjeta sobrescrita en 『${deck}』.';
-  @override
-  String get change_source => 'Cambiar fuente';
-  @override
-  String get changelog_empty =>
-      'No se encontró registro de cambios. Verifique su red o ajustes de proxy.';
-  @override
-  String get changelog_open_releases => 'Abrir página de versiones';
-  @override
-  String get changelog_prerelease => 'Prelanzamiento';
-  @override
-  String chapter_progress({
-    required Object idx,
-    required Object total,
-    required Object suffix,
-    required Object pct,
-  }) => 'Capítulo ${idx} / ${total}${suffix} · ${pct}%';
-  @override
-  String get clear => 'Limpiar';
-  @override
-  String get clear_dictionary_description =>
-      'Esto eliminará todos los resultados del diccionario del historial. ?Estás seguro?';
-  @override
-  String get clear_dictionary_title =>
-      'Borrar historial de resultados del diccionario';
-  @override
-  String get lookup_block_capture => 'Bloquear captura de pantalla';
-  @override
-  String get lookup_block_capture_hint =>
-      'Excluye las ventanas emergentes de búsqueda y portapapeles de capturas de pantalla, grabación de pantalla y transmisión en vivo (Windows). Desactive esto para permitir que las capturas, grabación y transmisión capturen la ventana emergente de búsqueda.';
-  @override
-  String get collapse_dictionaries => 'Contraer diccionarios';
-  @override
-  String get collection_bookmark => 'Marcador';
-  @override
-  String get collection_clear_confirm =>
-      '¿Eliminar permanentemente las colecciones seleccionadas? Esto no se puede deshacer.';
-  @override
-  String get collection_clear_scope => 'Ámbito de limpieza';
-  @override
-  String get collection_collapse => 'Contraer';
-  @override
-  String collection_continue_progress({required Object n}) =>
-      'Continuar · EP ${n}';
-  @override
-  String get collection_empty => 'La colección está vacía';
-  @override
-  String get collection_expand => 'Expandir';
-  @override
-  String get collection_export_all_books => 'Todos los libros';
-  @override
-  String get collection_export_all_mined => 'Todas las oraciones creadas';
-  @override
-  String get collection_export_all_words => 'Todas las palabras favoritas';
-  @override
-  String get collection_export_dedupe => 'Deduplicar por oración';
-  @override
-  String get collection_export_failed => 'La exportación falló';
-  @override
-  String get collection_export_favorites_scope => 'Oraciones favoritas';
-  @override
-  String get collection_export_format => 'Formato';
-  @override
-  String get collection_export_mined_title => 'Mined Sentences';
-  @override
-  String get collection_export_no_items => 'Nada que exportar';
-  @override
-  String get collection_export_pick_book => 'Elegir un libro';
-  @override
-  String get collection_export_save => 'Save Export';
-  @override
-  String get collection_export_saved => 'Exportación guardada';
-  @override
-  String get collection_export_scope => 'Ámbito de exportación';
-  @override
-  String get collection_export_sentences_title => 'Favorite Sentences';
-  @override
-  String get collection_export_words_title => 'Favorite Words';
-  @override
-  String get collection_loading_hint =>
-      'Cargando colecciones y emparejando archivos de audio…';
-  @override
-  String get collection_member_removed => 'Eliminado de la colección';
-  @override
-  String get collection_merge_title => 'Fusionar colecciones';
-  @override
-  String get collection_merged => 'Colecciones fusionadas.';
-  @override
-  String get collection_mined => 'Creadas';
-  @override
-  String get collection_open => 'Abrir';
-  @override
-  String get collection_play => 'Reproducir';
-  @override
-  String get collection_remove_member => 'Quitar de la colección';
-  @override
-  String get collection_remove_member_confirm =>
-      '¿Quitar este elemento de la colección? El elemento se conserva.';
-  @override
-  String get collection_sentence => 'Oración';
-  @override
-  String get collection_sort_by_imported => 'Ordenar por fecha de importación';
-  @override
-  String get collection_sort_by_title => 'Ordenar por nombre';
-  @override
-  String get collection_view_all => 'Ver todo';
-  @override
-  String collection_watched_progress({
-    required Object done,
-    required Object total,
-  }) => 'Visto ${done}/${total}';
-  @override
-  String get collection_word => 'Palabra';
-  @override
-  String get collections => 'Colecciones';
-  @override
-  String get color_container => 'Contenedor';
-  @override
-  String get color_container_desc => 'Fondo de pistas y barra de reproducción';
-  @override
-  String get color_link => 'Color de enlace';
-  @override
-  String get color_link_desc => 'Color de los hipervínculos del lector';
-  @override
-  String get color_primary => 'Primario';
-  @override
-  String get color_primary_desc => 'Resaltado de audio, botones, interruptores';
-  @override
-  String get color_sentence_audio_highlight => 'Resaltado de audio';
-  @override
-  String get color_sentence_audio_highlight_desc =>
-      'Resaltado de sincronización de subtítulos del audiolibro';
-  @override
-  String get color_secondary => 'Secundario';
-  @override
-  String get color_secondary_desc =>
-      'Entradas del diccionario, insignias de la estantería';
-  @override
-  String get color_tertiary => 'Terciario';
-  @override
-  String get color_tertiary_desc => 'Colecciones, estadísticas de lectura';
-  @override
-  String get columns_per_page => 'Columnas por página';
-  @override
-  String get combine_into_series => 'Combinar en serie';
-  @override
-  String get copied => 'Copiado';
-  @override
-  String get copied_to_clipboard => 'Copiado al portapapeles.';
-  @override
-  String get copy => 'Copiar';
-  @override
-  String get copy_error => 'Copiar error';
-  @override
-  String get crash_dump_empty => 'No hay volcados de fallo';
-  @override
-  String crash_dump_label({required Object n}) => 'Volcados de fallo (${n})';
-  @override
-  String get crash_dump_open_folder => 'Abrir carpeta de volcados';
-  @override
-  String get crash_dump_privacy_notice =>
-      'Los volcados de fallo (.dmp) contienen una instantánea de la memoria del proceso y pueden incluir texto que estabas leyendo, palabras que consultaste u otros datos de la app. Compártelos solo con desarrolladores de tu confianza.';
-  @override
-  String get crash_dump_share => 'Compartir volcado';
-  @override
-  String get crash_dump_share_subject => 'Volcado de fallo de Fushi';
-  @override
-  String get create_series => 'Crear serie';
-  @override
-  String get creator_action_add_to_stash => 'Agregar a reserva';
-  @override
-  String get creator_action_copy_to_clipboard => 'Copiar al portapapeles';
-  @override
-  String get creator_action_play_audio => 'Reproducir audio';
-  @override
-  String get creator_action_share => 'Compartir';
-  @override
-  String get creator_enhancement_audio_recorder => 'Grabadora';
-  @override
-  String get creator_enhancement_camera => 'Cámara';
-  @override
-  String get creator_enhancement_clear_field => 'Limpiar campo';
-  @override
-  String get creator_enhancement_crop_image => 'Recortar imagen';
-  @override
-  String get creator_enhancement_local_audio => 'Audio local';
-  @override
-  String get creator_enhancement_open_stash => 'Abrir reserva';
-  @override
-  String get creator_enhancement_pick_audio => 'Elegir audio';
-  @override
-  String get creator_enhancement_pick_image => 'Elegir imagen';
-  @override
-  String get creator_enhancement_pop_from_stash => 'Sacar de reserva';
-  @override
-  String get creator_enhancement_save_tags => 'Guardar etiquetas';
-  @override
-  String get creator_enhancement_search_dictionary => 'Buscar diccionario';
-  @override
-  String get creator_enhancement_sentence_picker => 'Elegir oración';
-  @override
-  String get creator_enhancement_text_segmentation => 'Segmentación de texto';
-  @override
-  String get creator_export_card => 'Crear tarjeta';
-  @override
-  String get creator_field_audio => 'Audio del término';
-  @override
-  String get creator_field_audio_sentence => 'Audio de la oración';
-  @override
-  String get creator_field_cloze_after => 'Después del espacio';
-  @override
-  String get creator_field_cloze_before => 'Antes del espacio';
-  @override
-  String get creator_field_cloze_inside => 'Contenido del espacio';
-  @override
-  String get creator_field_collapsed_meaning => 'Significado contraído';
-  @override
-  String get creator_field_context => 'Contexto';
-  @override
-  String get creator_field_cue_sentence => 'Oración de subtítulo';
-  @override
-  String get creator_field_expanded_meaning => 'Significado expandido';
-  @override
-  String get creator_field_frequency => 'Frecuencia';
-  @override
-  String get creator_field_furigana => 'Furigana';
-  @override
-  String get creator_field_hidden_meaning => 'Significado oculto';
-  @override
-  String get creator_field_image => 'Imagen';
-  @override
-  String get creator_field_meaning => 'Significado';
-  @override
-  String get creator_field_notes => 'Notas';
-  @override
-  String get creator_field_pitch_accent => 'Acento tonal';
-  @override
-  String get creator_field_reading => 'Lectura';
-  @override
-  String get creator_field_sentence => 'Oración';
-  @override
-  String get creator_field_tags => 'Etiquetas';
-  @override
-  String get creator_field_term => 'Término';
-  @override
-  String get custom_dict_css => 'CSS personalizado';
-  @override
-  String get custom_dict_css_global => 'Global (todos los diccionarios)';
-  @override
-  String get custom_fonts => 'Fuentes personalizadas';
-  @override
-  String get custom_fonts_add_system => 'Añadir fuente del sistema';
-  @override
-  String get custom_fonts_archive_error => 'Error al extraer el archivo';
-  @override
-  String get custom_fonts_catalog_title => 'Biblioteca de fuentes';
-  @override
-  String get custom_fonts_download_failed => 'Error en la descarga';
-  @override
-  String get custom_fonts_downloading => 'Descargando...';
-  @override
-  String get custom_fonts_drag_hint =>
-      'Arrastra para reordenar la prioridad de fuentes';
-  @override
-  String get custom_fonts_empty => 'No se han añadido fuentes personalizadas';
-  @override
-  String get custom_fonts_font_roles => 'Roles de fuente';
-  @override
-  String get custom_fonts_import_file => 'Importar archivo de fuente';
-  @override
-  String get custom_fonts_import_url => 'Importar desde URL';
-  @override
-  String custom_fonts_imported_count({required Object count}) =>
-      '${count} fuente(s) importada(s)';
-  @override
-  String get custom_fonts_manage => 'Gestionar fuentes';
-  @override
-  String get custom_fonts_no_fonts_in_archive =>
-      'No se encontraron fuentes en el archivo';
-  @override
-  String get custom_fonts_recommended => 'Fuentes recomendadas';
-  @override
-  String get custom_fonts_removed => 'Fuente eliminada';
-  @override
-  String get custom_fonts_search_hint => 'Buscar fuentes';
-  @override
-  String get custom_theme => 'Tema personalizado';
-  @override
-  String custom_theme_default_name({required Object n}) => 'Personalizado ${n}';
-  @override
-  String get custom_theme_long_press_hint =>
-      'Toque para cambiar · mantenga presionado para editar';
-  @override
-  String get custom_theme_name => 'Nombre';
-  @override
-  String get dark_mode => 'Modo oscuro';
-  @override
-  String get dark_mode_dark => 'Oscuro';
-  @override
-  String get dark_mode_light => 'Claro';
-  @override
-  String get dark_mode_system => 'Sistema';
-  @override
-  String data_root_unavailable_message({required Object path}) =>
-      'Su ubicación de datos configurada ${path} no responde temporalmente (la unidad puede estar dormida, ocupada o desconectada). Sus datos están seguros e intactos allí — nada se ha perdido. Toque Reintentar una vez que la unidad esté lista para cargar sus datos, o inicie con la ubicación predeterminada por ahora (sus datos existentes NO serán modificados).';
-  @override
-  String get data_root_unavailable_title => 'La ubicación de datos no responde';
-  @override
-  String get data_root_use_default_button =>
-      'Iniciar con ubicación predeterminada';
-  @override
-  String get data_storage_change_button => 'Cambiar ubicación';
-  @override
-  String get data_storage_change_confirm_body =>
-      'Fushi moverá todos sus datos a la nueva carpeta y luego se reiniciará. No cierre la aplicación durante la mudanza.';
-  @override
-  String get data_storage_change_confirm_title =>
-      '¿Cambiar la ubicación de almacenamiento?';
-  @override
-  String get data_storage_location_default => 'Ubicación predeterminada';
-  @override
-  String get data_storage_location_hint =>
-      'Donde Fushi guarda su biblioteca, audiolibros y base de datos. Solo escritorio.';
-  @override
-  String get data_storage_location_title =>
-      'Ubicación de almacenamiento de datos';
-  @override
-  String data_storage_migrate_failed({required Object message}) =>
-      'No se pudieron mover los datos: ${message}';
-  @override
-  String get data_storage_migrate_failed_restart => 'Reiniciar';
-  @override
-  String get data_storage_migrate_failed_suggestions =>
-      'Inténtelo de nuevo con una carpeta diferente y vacía. No elija la carpeta de instalación de la app, y asegúrese de que ningún archivo en esa ubicación esté en uso.';
-  @override
-  String get data_storage_migrate_failed_title => 'La migración de datos falló';
-  @override
-  String data_storage_migrate_overlay_progress({
-    required Object copied,
-    required Object total,
-  }) => 'Copiando archivos: ${copied} / ${total}';
-  @override
-  String get data_storage_migrate_overlay_title => 'Moviendo sus datos';
-  @override
-  String get data_storage_migrate_overlay_warning =>
-      'Mantenga la aplicación abierta. No cierre ni apague su computadora hasta que termine.';
-  @override
-  String get data_storage_migrate_success => 'Datos movidos. Reiniciando…';
-  @override
-  String get data_storage_migrating => 'Moviendo datos…';
-  @override
-  String get data_storage_reject_install_dir =>
-      'Esa carpeta es la ubicación de instalación de la app y no puede almacenar sus datos. Elija una carpeta diferente y vacía.';
-  @override
-  String get data_storage_restart_failed =>
-      'Datos movidos, pero el reinicio automático falló. Vuelva a abrir Fushi manualmente.';
-  @override
-  String db_downgrade_message({
-    required Object dbVersion,
-    required Object appVersion,
-  }) =>
-      'Esta base de datos la creó una versión más reciente de Fushi (esquema v${dbVersion}). Tu app actual es demasiado antigua (v${appVersion}). Se bloqueó la apertura para proteger tus datos. Actualiza la app e inténtalo de nuevo.';
-  @override
-  String get db_downgrade_title => 'Actualiza Fushi';
-  @override
-  String get db_unrecoverable_message =>
-      'La base de datos no pudo abrirse ni después de la reparación automática. Probablemente está corrupta. Puede restaurar una copia de seguridad en Ajustes, o borrar los datos de la app para empezar de nuevo.';
-  @override
-  String get db_unrecoverable_title => 'Base de datos dañada';
-  @override
-  String get debug_log_share_subject => 'Registro de depuración de Fushi';
-  @override
-  String debug_log_title({required Object count}) =>
-      'Registro de depuración (${count})';
-  @override
-  String get debug_log_toggle => 'Activar registro de depuración';
-  @override
-  String get decrease => 'Disminuir';
-  @override
-  String get deduplicate_pitch_accents => 'Deduplicar acentos tonales';
-  @override
-  String get delete_collection => 'Eliminar colección';
-  @override
-  String get delete_collection_also_books =>
-      'También eliminar los libros que contiene';
-  @override
-  String get delete_collection_also_videos =>
-      'También eliminar los vídeos (conserva sus archivos de vídeo originales)';
-  @override
-  String get delete_custom_theme => 'Eliminar tema';
-  @override
-  String get delete_custom_theme_confirm =>
-      '¿Eliminar este tema personalizado? Esto no se puede deshacer.';
-  @override
-  String get delete_in_progress => 'Eliminación en progreso';
-  @override
-  String get delete_prompt_delete_selected => 'Eliminar seleccionados';
-  @override
-  String get delete_prompt_message =>
-      'Estos elementos fueron eliminados en otro dispositivo. ¿Eliminarlos aquí también?';
-  @override
-  String get delete_prompt_select_all => 'Seleccionar todos';
-  @override
-  String get delete_prompt_title => 'Eliminados en otro dispositivo';
-  @override
-  String get delete_scope_keep_local_desc =>
-      'Otros dispositivos conservan su copia';
-  @override
-  String get delete_scope_sync_everywhere =>
-      'Eliminar de todos los dispositivos';
-  @override
-  String get delete_scope_sync_everywhere_desc =>
-      'Otros dispositivos confirman la eliminación en la próxima sincronización';
-  @override
-  String get design_system_auto => 'Automático';
-  @override
-  String get design_system_hint => 'Controla el estilo visual de la app';
-  @override
-  String get design_system_label => 'Sistema de diseño';
-  @override
-  String get dialog_add => 'AÑADIR';
-  @override
-  String get dialog_append => 'AÑADIR';
-  @override
-  String get dialog_cancel => 'CANCELAR';
-  @override
-  String get dialog_clear => 'LIMPIAR';
-  @override
-  String get dialog_clear_all_dictionaries => 'Eliminar todos los diccionarios';
-  @override
-  String get dialog_close => 'CERRAR';
-  @override
-  String get dialog_connect => 'CONECTAR';
-  @override
-  String get dialog_content_dictionary_clear =>
-      'Borrar la base de datos de diccionarios también eliminará todos los resultados de búsqueda del historial.';
-  @override
-  String get dialog_content_dictionary_delete =>
-      'Eliminar un solo diccionario puede tardar más que borrar toda la base de datos. Esto también eliminará todos los resultados de búsqueda del historial.';
-  @override
-  String get dialog_create => 'CREAR';
-  @override
-  String get dialog_crop => 'RECORTAR';
-  @override
-  String get dialog_delete => 'ELIMINAR';
-  @override
-  String get dialog_done => 'HECHO';
-  @override
-  String get dialog_edit => 'EDITAR';
-  @override
-  String get dialog_edit_info => 'Editar info';
-  @override
-  String get dialog_exit => 'SALIR';
-  @override
-  String get dialog_export => 'EXPORTAR';
-  @override
-  String get dialog_import => 'IMPORTAR';
-  @override
-  String get dialog_import_dictionary => 'Importar diccionario';
-  @override
-  String get dialog_import_folder => 'Importar diccionario de carpeta';
-  @override
-  String get dialog_importing => 'IMPORTANDO…';
-  @override
-  String get dialog_launch_ankidroid => 'ABRIR ANKIDROID';
-  @override
-  String get dialog_ok => 'Aceptar';
-  @override
-  String get dialog_play => 'REPRODUCIR';
-  @override
-  String get dialog_read => 'LEER';
-  @override
-  String get dialog_record => 'GRABAR';
-  @override
-  String get dialog_replace => 'Reemplazar';
-  @override
-  String get dialog_save => 'GUARDAR';
-  @override
-  String get dialog_search => 'BUSCAR';
-  @override
-  String get dialog_select => 'SELECCIONAR';
-  @override
-  String get dialog_share => 'COMPARTIR';
-  @override
-  String get dialog_stash => 'GUARDAR';
-  @override
-  String get dialog_stop => 'DETENER';
-  @override
-  String get dialog_title_dictionary_clear =>
-      '?Eliminar todos los diccionarios?';
-  @override
-  String dialog_title_dictionary_delete({required Object name}) =>
-      '?Eliminar 『${name}』?';
-  @override
-  String get dict_auto_update => 'Actualizar automáticamente';
-  @override
-  String get dict_auto_update_hint =>
-      'Buscar actualizaciones de diccionarios al iniciar';
-  @override
-  String dict_auto_update_last({required Object time}) =>
-      'Última comprobación correcta: ${time}';
-  @override
-  String get dict_auto_update_never => 'Nunca';
-  @override
-  String get dict_category_frequency => 'Frecuencia';
-  @override
-  String get dict_category_grammar => 'Gramática';
-  @override
-  String get dict_category_ja_en => 'Japonés–Inglés';
-  @override
-  String get dict_category_ja_ja => 'Japonés–Japonés';
-  @override
-  String get dict_category_ja_other => 'Otro japonés';
-  @override
-  String get dict_category_kanji => 'Kanji';
-  @override
-  String get dict_category_names => 'Nombres';
-  @override
-  String get dict_category_supplementary => 'Suplementario';
-  @override
-  String get dict_download_browse => 'Descargar diccionarios';
-  @override
-  String dict_download_button({required Object count}) =>
-      'Descargar (${count})';
-  @override
-  String get dict_download_complete => 'Descarga completada.';
-  @override
-  String dict_download_failed({required Object error}) =>
-      'Descarga fallida: ${error}';
-  @override
-  String get dict_download_installed => 'Instalado';
-  @override
-  String get dict_download_language => 'Tu idioma';
-  @override
-  String dict_download_partial({
-    required Object success,
-    required Object total,
-    required Object error,
-  }) => '${success} / ${total} correctos. Fallidos: ${error}';
-  @override
-  String get dict_download_select_title => 'Seleccionar diccionarios';
-  @override
-  String dict_downloading({required Object name}) => 'Descargando ${name}…';
-  @override
-  String dict_import_failed_summary({required Object n}) =>
-      'No se pudieron importar ${n} diccionario(s)';
-  @override
-  String get dict_import_started =>
-      'Importando diccionarios en segundo plano...';
-  @override
-  String dict_import_success_summary({required Object n}) =>
-      'Se importaron ${n} diccionario(s)';
-  @override
-  String get dict_update_check => 'Buscar actualizaciones';
-  @override
-  String get dict_update_checking => 'Buscando actualizaciones…';
-  @override
-  String dict_update_done({required Object name}) => '${name} actualizado.';
-  @override
-  String dict_update_failed({required Object error}) =>
-      'Error al actualizar: ${error}';
-  @override
-  String get dict_update_interval_daily => 'Diariamente';
-  @override
-  String get dict_update_interval_monthly => 'Mensualmente';
-  @override
-  String get dict_update_interval_weekly => 'Semanalmente';
-  @override
-  String get dict_update_latest => 'Ya está actualizado.';
-  @override
-  String dict_update_name_mismatch_body({
-    required Object incoming,
-    required Object existing,
-  }) =>
-      'El archivo seleccionado es «${incoming}», pero estás actualizando «${existing}». ¿Reemplazar de todos modos?';
-  @override
-  String get dict_update_name_mismatch_title => 'Los nombres no coinciden';
-  @override
-  String get dict_update_none => 'Todos los diccionarios están actualizados.';
-  @override
-  String dict_update_summary({
-    required Object updated,
-    required Object current,
-    required Object failed,
-  }) => '${updated} actualizados, ${current} al día, ${failed} fallaron.';
-  @override
-  String get dict_update_tooltip => 'Actualizar diccionario';
-  @override
-  String dict_update_updating({required Object name}) =>
-      'Actualizando ${name}…';
-  @override
-  String get dictionaries => 'Diccionarios';
-  @override
-  String get dictionaries_delete_failed =>
-      'No se pudieron eliminar los diccionarios';
-  @override
-  String get dictionaries_deleting_data =>
-      'Eliminando datos del diccionario...';
-  @override
-  String get dictionaries_menu_empty => 'Importa un diccionario para usar';
-  @override
-  String get dictionary_delete_failed => 'No se pudo eliminar el diccionario';
-  @override
-  String get dictionary_font_size => 'Tamaño de fuente del diccionario';
-  @override
-  String get dictionary_font_size_zoom_hint =>
-      'Ctrl + rueda del ratón amplía el contenido emergente';
-  @override
-  String get dictionary_section_frequency => 'Diccionarios de frecuencia';
-  @override
-  String get dictionary_section_kanji => 'Diccionarios de kanji';
-  @override
-  String get dictionary_section_pitch => 'Diccionarios de tono';
-  @override
-  String get dictionary_section_term => 'Diccionarios de términos';
-  @override
-  String get dictionary_settings => 'Configuración del diccionario';
-  @override
-  String get dictionary_type_frequency => 'Frecuencia';
-  @override
-  String get dictionary_type_pitch => 'Tono';
-  @override
-  String get dictionary_type_term => 'Término';
-  @override
-  String get dictionary_unrecognized_format =>
-      'Formato de diccionario no reconocido';
-  @override
-  String get dismiss_swipe_sensitivity =>
-      'Sensibilidad de deslizar para cerrar';
-  @override
-  String get display_settings => 'Configuración de pantalla';
-  @override
-  String get download_backend_not_configured =>
-      'El motor de descarga aún no está configurado.';
-  @override
-  String get download_clear_finished => 'Limpiar finalizados';
-  @override
-  String get download_detail_backend_offline =>
-      'El motor de descarga original está desconectado. Se muestra la información persistida de la tarea; los parámetros en tiempo real no están disponibles.';
-  @override
-  String get download_network_proxy_auto => 'Auto';
-  @override
-  String get download_network_proxy_auto_hint =>
-      'Se aplica solo a AniList, Nyaa y Jimaku. Auto usa variables de entorno, luego el proxy del sistema habilitado; el tráfico de torrents no se modifica.';
-  @override
-  String get download_network_proxy_custom => 'Personalizado';
-  @override
-  String get download_network_proxy_custom_label => 'Proxy personalizado';
-  @override
-  String get download_network_proxy_direct => 'Directo';
-  @override
-  String get download_network_proxy_section => 'Red de descubrimiento';
-  @override
-  String get download_open_settings => 'Abrir ajustes';
-  @override
-  String get download_save_root_change => 'Cambiar carpeta';
-  @override
-  String get download_save_root_create_failed =>
-      'No se puede crear esa carpeta. Verifique la unidad y los permisos.';
-  @override
-  String get download_save_root_fallback_warning =>
-      'La carpeta de descarga configurada no está disponible, se está usando la carpeta predeterminada.';
-  @override
-  String get download_save_root_hint =>
-      'Las nuevas descargas se guardan aquí. Las tareas existentes conservan su carpeta original.';
-  @override
-  String get download_save_root_not_absolute =>
-      'Elija una ruta de carpeta absoluta.';
-  @override
-  String get download_save_root_not_writable =>
-      'Esa carpeta no tiene permisos de escritura.';
-  @override
-  String get download_save_root_reset => 'Restaurar predeterminado';
-  @override
-  String get download_save_root_title => 'Carpeta de descarga';
-  @override
-  String get download_settings => 'Ajustes de descarga';
-  @override
-  String get download_status_cancelled => 'Cancelado';
-  @override
-  String get download_status_queued => 'En cola';
-  @override
-  String download_subscription_after_episode({required Object episode}) =>
-      'Después del episodio ${episode}';
-  @override
-  String get download_subscription_check_all => 'Verificar todos';
-  @override
-  String get download_subscription_check_now => 'Verificar ahora';
-  @override
-  String download_subscription_choice_hint({
-    required Object group,
-    required Object resolution,
-  }) =>
-      'Seguir ${group} · ${resolution}. Los nuevos episodios individuales se pondrán en cola.';
-  @override
-  String get download_subscription_created =>
-      'Descarga en cola y suscripción creada';
-  @override
-  String get download_subscription_delete => 'Eliminar suscripción';
-  @override
-  String download_subscription_delete_confirm({required Object title}) =>
-      '¿Eliminar la suscripción de ${title}? Las tareas descargadas se conservan.';
-  @override
-  String get download_subscription_download_and_create =>
-      'Descargar y suscribirse';
-  @override
-  String get download_subscription_empty_body =>
-      'En Descubrir, elija un episodio individual y use Descargar y suscribirse.';
-  @override
-  String get download_subscription_empty_title => 'Aún no hay suscripciones';
-  @override
-  String download_subscription_last_checked({required Object time}) =>
-      'Última verificación: ${time}';
-  @override
-  String download_subscription_latest_episode({required Object episode}) =>
-      'Último en cola: episodio ${episode}';
-  @override
-  String get download_subscription_never_checked => 'Nunca verificado';
-  @override
-  String get download_subscription_running_hint =>
-      'Fushi verifica las suscripciones activas cada 15 minutos mientras la app está abierta.';
-  @override
-  String get download_subscription_unavailable_hint =>
-      'Elija un episodio individual con un grupo de lanzamiento reconocible para suscribirse.';
-  @override
-  String get download_subscriptions_tab => 'Suscripciones';
-  @override
-  String download_task_action_failed({required Object error}) =>
-      'La acción de la tarea falló: ${error}';
-  @override
-  String get download_task_delete => 'Eliminar tarea';
-  @override
-  String download_task_delete_confirm({required Object title}) =>
-      '¿Eliminar la tarea de descarga de ${title}?';
-  @override
-  String get download_task_delete_files =>
-      'También eliminar archivos descargados';
-  @override
-  String get download_task_details => 'Ver detalles';
-  @override
-  String get download_tasks_tab => 'Tareas';
-  @override
-  String get download_test_connection => 'Probar conexión';
-  @override
-  String get download_test_connection_failed =>
-      'La conexión falló. Verifique la dirección y las credenciales.';
-  @override
-  String download_test_connection_ok({required Object version}) =>
-      'Conectado (versión: ${version})';
-  @override
-  String get drag_drop_need_card_target =>
-      'Suelta subtítulos o audio sobre un libro o un vídeo';
-  @override
-  String get drag_drop_unsupported_on_books =>
-      'Suelta archivos de libros aquí. Cambia a Vídeo o Diccionarios para esos archivos.';
-  @override
-  String get drag_drop_unsupported_on_dictionary =>
-      'Suelta aquí archivos de diccionario .zip, .dsl o .mdx. Los archivos CSS solo funcionan junto con un paquete de diccionario.';
-  @override
-  String get drag_drop_unsupported_on_video =>
-      'Suelta vídeos, listas de reproducción o subtítulos aquí. Cambia a Libros o Diccionarios para esos archivos.';
-  @override
-  String get edit_custom_theme => 'Editar tema personalizado';
-  @override
-  String get eink_mode => 'Modo e-ink';
-  @override
-  String get eink_mode_hint =>
-      'Tema en blanco y negro puro sin animaciones y con resaltados de línea, para pantallas de tinta electrónica';
-  @override
-  String get enable_swipe_to_close => 'Deslizar para cerrar la ventana';
-  @override
-  String get epub_delete_error => 'Error al eliminar el libro';
-  @override
-  String get epub_delete_title => 'Eliminar libro';
-  @override
-  String get epub_parse_fallback =>
-      'Metadatos del libro reparados desde la base de datos';
-  @override
-  String get error_ankidroid_api => 'Error de AnkiDroid';
-  @override
-  String get error_ankidroid_api_content =>
-      'Hubo un problema al comunicarse con AnkiDroid.\n\nAsegúrate de que el servicio en segundo plano de AnkiDroid esté activo y de que se hayan concedido todos los permisos necesarios.';
-  @override
-  String get error_copied => 'Error copiado al portapapeles';
-  @override
-  String get error_load_failed => 'Algo salió mal al cargar';
-  @override
-  String get error_log_diagnostics_section =>
-      'Diagnóstico / forense (no son errores de la app)';
-  @override
-  String get error_log_empty => 'Sin registros de errores';
-  @override
-  String error_log_label({required Object n}) => 'Registro de errores (${n})';
-  @override
-  String get error_log_previous_run =>
-      'Registros anteriores (antes de la última ejecución)';
-  @override
-  String get error_log_share_subject => 'Registro de errores de Fushi';
-  @override
-  String get extension_popup_independent_size =>
-      'Tamaño separado para extensión del navegador';
-  @override
-  String get extension_popup_independent_size_hint =>
-      'Dale a la ventana emergente de la extensión del navegador su propio tamaño máximo en lugar de seguir la ventana emergente de la app';
-  @override
-  String get extension_popup_max_height => 'Altura máxima de extensión';
-  @override
-  String get extension_popup_max_width => 'Ancho máximo de extensión';
-  @override
-  String get external_window_capture_failed => 'La captura de ventana falló';
-  @override
-  String get external_window_current_game => 'Juego actual';
-  @override
-  String get external_window_mining => 'Creación desde ventana externa';
-  @override
-  String get external_window_no_windows =>
-      'No se encontraron ventanas capturables';
-  @override
-  String get external_window_none =>
-      'Sin ventana vinculada (toque para seleccionar)';
-  @override
-  String get external_window_refresh => 'Actualizar lista de ventanas';
-  @override
-  String get external_window_select => 'Seleccionar ventana objetivo';
-  @override
-  String get external_window_unbind => 'Desvincular ventana';
-  @override
-  String get external_window_unsupported =>
-      'La creación desde ventana externa solo está disponible en Windows';
-  @override
-  String get failed_online_service =>
-      'Error al comunicarse con el servicio en línea';
-  @override
-  String get favorite_added => 'Oración guardada en favoritos';
-  @override
-  String get favorite_removed => 'Frase eliminada de favoritos';
-  @override
-  String favorites({required Object n}) => 'Favoritos (${n})';
-  @override
-  String field_fallback_used({
-    required Object field,
-    required Object secondField,
-  }) =>
-      'El campo ${field} usó ${secondField} como término de búsqueda alternativo.';
-  @override
-  String file_count({required Object count}) => '${count} archivos';
-  @override
-  String get floating_dict_close => 'Cerrar';
-  @override
-  String get floating_dict_title => 'Diccionario';
-  @override
-  String get floating_lyric_bg_opacity =>
-      'Opacidad del fondo del subtítulo flotante';
-  @override
-  String get floating_lyric_button_bg_opacity =>
-      'Opacidad del fondo de los botones del subtítulo flotante';
-  @override
-  String get floating_lyric_click_lookup =>
-      'Tocar el subtítulo flotante para consultar';
-  @override
-  String get floating_lyric_click_lookup_hint =>
-      'Mantén esto activado con el bloqueo de posición si aún quieres consultar palabras.';
-  @override
-  String get floating_lyric_close => 'Cerrar';
-  @override
-  String get floating_lyric_context_lines =>
-      'Líneas de contexto del subtítulo flotante';
-  @override
-  String get floating_lyric_context_lines_hint =>
-      '0 muestra solo la línea actual (una sola línea, sin cambios); establezca 1-3 para mostrar esas líneas antes y después';
-  @override
-  String get floating_lyric_corner_radius =>
-      'Radio de esquinas del subtítulo flotante';
-  @override
-  String get floating_lyric_corner_radius_hint =>
-      '0 mantiene las esquinas predeterminadas de cada plataforma; aumente para redondear más la barra y los botones';
-  @override
-  String get floating_lyric_font_size =>
-      'Tamaño de fuente del subtítulo flotante';
-  @override
-  String get floating_lyric_hint =>
-      'Mostrar la oración actual sobre otras apps.';
-  @override
-  String get floating_lyric_lock => 'Bloquear';
-  @override
-  String get floating_lyric_next => 'Siguiente';
-  @override
-  String get floating_lyric_no_audio =>
-      'Este libro no tiene audio para escuchar';
-  @override
-  String get floating_lyric_permission_hint =>
-      'Se requiere permiso de superposición para mostrar subtítulos flotantes.';
-  @override
-  String get floating_lyric_permission_hint_coloros =>
-      'Si el sistema sigue rechazando el permiso de superposición: reinstale el APK de esta app una vez con un administrador de archivos, o desactive la monitorización de permisos en las opciones de desarrollador, luego inténtelo de nuevo.';
-  @override
-  String get floating_lyric_play_pause => 'Reproducir';
-  @override
-  String get floating_lyric_previous => 'Anterior';
-  @override
-  String get floating_lyric_text_opacity =>
-      'Opacidad del texto del subtítulo flotante';
-  @override
-  String get floating_lyric_toggle_action => 'Subtítulo flotante';
-  @override
-  String get floating_lyric_unavailable_hint =>
-      'No se pudo mostrar la ventana de subtítulo flotante.';
-  @override
-  String get floating_lyric_unlock => 'Desbloquear';
-  @override
-  String get floating_lyric_width => 'Ancho del subtítulo flotante';
-  @override
-  String get floating_lyric_width_hint =>
-      '0 usa el ancho predeterminado de la plataforma; establezca un valor para que la barra tenga un ancho fijo';
-  @override
-  String get focus_navigation_enabled =>
-      'Navegación por foco con teclado y mando';
-  @override
-  String get focus_navigation_enabled_hint =>
-      'Mueve el foco con las flechas o un mando y muestra un anillo de foco.';
-  @override
-  String get folder_picker_permission_required =>
-      'Se necesita permiso de almacenamiento para explorar carpetas';
-  @override
-  String get follow_audio_off_tooltip => 'Seguir audio: DESACTIVADO';
-  @override
-  String get follow_audio_on_tooltip => 'Seguir audio: ACTIVADO';
-  @override
-  String get font_color => 'Color de fuente';
-  @override
-  String get font_color_desc => 'Color del texto del lector';
-  @override
-  String get font_desc_hina_mincho =>
-      'Mincho decorativo suave · Combina bien con Noto Sans JP';
-  @override
-  String get font_desc_klee_one =>
-      'Estilo manuscrito · Clara y legible · Combina bien con Noto Sans JP';
-  @override
-  String get font_desc_mplus_rounded_1c =>
-      'Estilo redondeado lindo · Ideal para novelas ligeras · Combina bien con Noto Sans JP';
-  @override
-  String get font_desc_noto_sans_jp =>
-      'Google/Adobe Gothic · Prioridad glifos japoneses · Peso variable';
-  @override
-  String get font_desc_noto_sans_sc =>
-      'Google/Adobe Gothic · Prioridad chino simplificado · Usar como fuente alternativa';
-  @override
-  String get font_desc_noto_sans_tc =>
-      'Google/Adobe Gothic · Prioridad chino tradicional';
-  @override
-  String get font_desc_noto_serif_jp =>
-      'Google/Adobe Serif · Prioridad glifos japoneses · Ideal para lectura vertical';
-  @override
-  String get font_desc_noto_serif_sc =>
-      'Google/Adobe Serif · Prioridad chino simplificado · Usar como fuente alternativa';
-  @override
-  String get font_desc_noto_serif_tc =>
-      'Google/Adobe Serif · Prioridad de glifos chinos tradicionales · Ideal para lectura vertical';
-  @override
-  String get font_desc_shippori_mincho =>
-      'Mincho elegante · Ideal para literatura · Combina bien con Noto Sans JP';
-  @override
-  String get font_desc_zen_kaku_gothic_new =>
-      'Kaku Gothic moderno · Lectura general · Combina bien con Noto Sans JP';
-  @override
-  String get font_desc_zen_maru_gothic =>
-      'Gothic redondeado suave · Combina bien con Noto Sans JP';
-  @override
-  String get font_desc_zen_old_mincho =>
-      'Mincho vintage · Estilo literario clásico · Combina bien con Noto Sans JP';
-  @override
-  String get font_source_file => 'Archivo';
-  @override
-  String get font_source_system => 'Sistema';
-  @override
-  String get font_target_app_ui => 'Fuente de la interfaz';
-  @override
-  String get font_target_body => 'Fuente del texto de la novela';
-  @override
-  String get font_target_dictionary => 'Fuente del diccionario';
-  @override
-  String get font_target_video_subtitle => 'Video Subtitle Font';
-  @override
-  String get gal_hook_text_font_size =>
-      'Tamaño de fuente del subtítulo de galgame';
-  @override
-  String get gal_hook_text_font_size_hint =>
-      'Arrastre la esquina de la superposición para redimensionar la ventana; el tamaño del subtítulo se establece aquí.';
-  @override
-  String get game_add => 'Añadir juego';
-  @override
-  String get game_already_added => 'Este juego ya está en la biblioteca';
-  @override
-  String get game_audio_backend_engine => 'PCM del motor';
-  @override
-  String get game_audio_backend_loopback => 'Loopback del sistema (mezclado)';
-  @override
-  String get game_audio_backend_none => 'Sin fuente de audio';
-  @override
-  String get game_audio_backend_resource => 'Audio de recursos del juego';
-  @override
-  String get game_audio_duration => 'Duración del audio';
-  @override
-  String get game_audio_fallback_disabled_missing =>
-      '未找到与该句匹配的游戏资源音频；已关闭降级，未制卡';
-  @override
-  String get game_audio_resource_id => '音频资源 ID';
-  @override
-  String get game_audio_tracks => 'Pistas de audio activas';
-  @override
-  String get game_auto_cover => 'Obtener portada automáticamente';
-  @override
-  String get game_back_to_capture => 'Volver al espacio de captura';
-  @override
-  String get game_back_to_library => 'Volver a biblioteca de juegos';
-  @override
-  String get game_capture_active => 'La captura está activa';
-  @override
-  String get game_capture_degraded_loopback =>
-      'El juego está en ejecución, pero la inyección al motor falló; se usa audio del sistema, que puede mezclar BGM y efectos.';
-  @override
-  String get game_capture_description =>
-      'Inicie o vincule un juego, luego monitoree texto, voz, capturas de pantalla y salida a Anki.';
-  @override
-  String get game_capture_empty_body =>
-      'Inicie o vincule un juego; el estado de texto y audio de oraciones aparecerá aquí.';
-  @override
-  String get game_capture_empty_title => 'Aún no se han recibido líneas';
-  @override
-  String get game_capture_launch_failed =>
-      'El inicio o la captura del juego falló';
-  @override
-  String get game_capture_launching =>
-      'Iniciando juego y comenzando captura...';
-  @override
-  String get game_capture_running => 'La sesión de captura está en ejecución';
-  @override
-  String get game_capture_window_missing =>
-      'El proceso del juego se inició pero su ventana nunca apareció, por lo que el juego puede no haberse iniciado. Intente iniciarlo de nuevo.';
-  @override
-  String get game_capture_workbench => 'Espacio de captura';
-  @override
-  String get game_captured_lines => 'Líneas capturadas';
-  @override
-  String get game_card_mapping_missing =>
-      'Los mapeos de campos de Anki no tienen tokens de tarjeta de juego';
-  @override
-  String get game_card_sentence_audio_missing =>
-      'La tarjeta fue creada sin audio de oración; no se sustituyó audio de otra línea.';
-  @override
-  String get game_clear_events => 'Limpiar eventos';
-  @override
-  String get game_cover_not_found =>
-      'No se encontró portada utilizable en la carpeta o ejecutable del juego';
-  @override
-  String get game_cover_searching => 'Buscando portada...';
-  @override
-  String get game_cover_updated => 'Portada actualizada';
-  @override
-  String get game_dashboard => 'Inicio';
-  @override
-  String get game_detail_missing => 'Este juego ya no está en la biblioteca';
-  @override
-  String get game_detail_tab_edit => 'Editar';
-  @override
-  String get game_detail_tab_stats => 'Estadísticas';
-  @override
-  String get game_detail_tab_summary => 'Resumen';
-  @override
-  String get game_diagnostics => 'Diagnóstico de compatibilidad';
-  @override
-  String get game_diagnostics_subtitle =>
-      'Etapas de sesión, puntos finales, pistas de audio y eventos estructurados';
-  @override
-  String game_drop_imported({required Object count}) =>
-      'Se añadieron ${count} juego(s)';
-  @override
-  String get game_drop_no_exe =>
-      'No se encontró ningún .exe de juego nuevo entre los archivos soltados';
-  @override
-  String get game_edit_developer => 'Desarrollador';
-  @override
-  String get game_edit_display_name => 'Nombre para mostrar';
-  @override
-  String get game_edit_exe_path => 'Ruta del ejecutable';
-  @override
-  String get game_edit_invalid_date =>
-      'La fecha de lanzamiento debe ser AAAA-MM-DD';
-  @override
-  String get game_edit_launch_args => 'Argumentos de inicio';
-  @override
-  String get game_edit_launch_args_hint =>
-      'Se pasan al juego al iniciar, ej. -windowed';
-  @override
-  String get game_edit_nsfw => 'Título para adultos';
-  @override
-  String get game_edit_release_date => 'Fecha de lanzamiento (AAAA-MM-DD)';
-  @override
-  String get game_edit_save => 'Guardar';
-  @override
-  String get game_edit_saved => 'Guardado';
-  @override
-  String get game_edit_summary => 'Descripción';
-  @override
-  String get game_edit_tags => 'Etiquetas (separadas por coma)';
-  @override
-  String get game_edit_user_rating => 'Mi puntuación (0-10)';
-  @override
-  String get game_edit_user_review => 'Mi reseña';
-  @override
-  String get game_edit_workdir => 'Directorio de trabajo';
-  @override
-  String get game_empty => 'Aún no se han añadido juegos';
-  @override
-  String get game_endpoint_phase_connected => 'Conectado';
-  @override
-  String get game_endpoint_phase_connecting => 'Conectando';
-  @override
-  String get game_endpoint_phase_retrying => 'Reintentando';
-  @override
-  String get game_endpoint_phase_stopped => 'Detenido';
-  @override
-  String get game_endpoints_engine_active =>
-      'El texto es proporcionado por el hook del motor; estos endpoints son opcionales';
-  @override
-  String get game_endpoints_hint =>
-      'Puertos para herramientas de texto externas (Textractor / LunaTranslator etc.); ignórelos si no los usa';
-  @override
-  String get game_event_all => 'Todos los eventos';
-  @override
-  String get game_event_warnings => 'Advertencias y errores';
-  @override
-  String get game_exe_missing => 'Ejecutable del juego no encontrado';
-  @override
-  String get game_filter => 'Filtrar';
-  @override
-  String get game_filter_all => 'Todos';
-  @override
-  String get game_filter_favorited => 'Favoritos';
-  @override
-  String get game_filter_hide_nsfw => 'Ocultar títulos para adultos';
-  @override
-  String get game_filter_local_only => 'Con archivo local';
-  @override
-  String get game_filter_metadata_only => 'Solo metadatos';
-  @override
-  String get game_filter_mined => 'Con tarjetas';
-  @override
-  String get game_filter_reset => 'Limpiar filtros';
-  @override
-  String get game_filter_source => 'Disponibilidad';
-  @override
-  String get game_filter_status => 'Estado de juego';
-  @override
-  String get game_filter_tags => 'Etiquetas';
-  @override
-  String get game_filter_with_audio => 'Con audio';
-  @override
-  String get game_focus_continue => 'Continuar';
-  @override
-  String get game_follow_live => 'Seguir en vivo';
-  @override
-  String get game_health => 'Estado de salud';
-  @override
-  String get game_health_anki => 'Salida a Anki';
-  @override
-  String get game_health_audio => 'Fuente de audio';
-  @override
-  String get game_health_helper => 'Helper de hook';
-  @override
-  String get game_health_process => 'Proceso del juego';
-  @override
-  String get game_health_text => 'Fuente de texto';
-  @override
-  String get game_health_upscaling => 'Escalado de ventana';
-  @override
-  String get game_health_window => 'Ventana del juego';
-  @override
-  String get game_helper_download => 'Descargar';
-  @override
-  String game_helper_download_failed({required Object error}) =>
-      'La descarga del componente del motor falló: ${error}';
-  @override
-  String get game_helper_downloading => 'Descargando componente del motor…';
-  @override
-  String get game_helper_install_incomplete =>
-      'Instalación del componente del motor incompleta, inténtelo de nuevo';
-  @override
-  String game_helper_needed_body({required Object size}) =>
-      'Iniciar un galgame necesita el componente inyector del motor del hook (aproximadamente ${size}). Contiene código de inyección de procesos y se distribuye por separado de la app para evitar falsos positivos del antivirus. ¿Descargar ahora?';
-  @override
-  String get game_helper_needed_title =>
-      'Se necesita componente del motor de galgame';
-  @override
-  String get game_helper_size_unknown => 'tamaño desconocido';
-  @override
-  String get game_helper_verification_failed =>
-      'Componente del motor bloqueado: no se pudo verificar su checksum (el archivo .sha256 de GitHub es inaccesible, falta, o no coincide). Fushi rechaza instalar código inyector sin verificar.';
-  @override
-  String get game_home_subtitle =>
-      'Biblioteca de juegos y monitoreo de captura';
-  @override
-  String get game_hook_fallback_all_audio_sources_failed =>
-      'Ni el hook de voz del motor ni el loopback del sistema pudieron iniciarse; no se puede capturar audio.';
-  @override
-  String get game_hook_fallback_engine_attach_failed =>
-      'Falló al vincular el hook de voz del motor al juego en ejecución; se usa mezcla del sistema en su lugar.';
-  @override
-  String get game_hook_fallback_engine_pcm_unavailable =>
-      'El hook de voz del motor está instalado, pero el juego aún no ha reproducido ninguna voz. Se usa mezcla del sistema por ahora y cambiará automáticamente cuando llegue la primera voz.';
-  @override
-  String get game_hook_fallback_launch_injection_failed =>
-      'El juego está en ejecución, pero la inyección temprana al motor falló; se usa mezcla del sistema en su lugar.';
-  @override
-  String get game_hook_fallback_window_not_found =>
-      'La captura de audio está en ejecución, pero la ventana del juego aún no ha aparecido, por lo que las capturas de pantalla no están disponibles. Se vinculará automáticamente cuando la ventana aparezca.';
-  @override
-  String get game_hook_line_unavailable =>
-      'Esta línea capturada ya no está disponible.';
-  @override
-  String get game_hook_reason_access_denied =>
-      'El juego se ejecuta con mayores privilegios; inicie Fushi como administrador e inténtelo de nuevo.';
-  @override
-  String get game_hook_reason_bitness_mismatch =>
-      'La arquitectura del helper no coincide con el juego (32-bit vs 64-bit); reinstale el helper.';
-  @override
-  String get game_hook_reason_create_process_failed =>
-      'El juego no pudo iniciarse desde Fushi; verifique la ruta del ejecutable.';
-  @override
-  String get game_hook_reason_elevation_required =>
-      'Este juego requiere derechos de administrador; inicie Fushi como administrador y láncelo de nuevo.';
-  @override
-  String get game_hook_reason_game_exe_missing =>
-      'El ejecutable del juego ya no existe en la ruta guardada.';
-  @override
-  String get game_hook_reason_guarded_hook_failed =>
-      'Un hook protegido por perfil no pudo instalarse a tiempo; reintentando automáticamente.';
-  @override
-  String get game_hook_reason_handshake_timeout =>
-      'Se enganchó al juego pero no produjo texto ni audio a tiempo; este motor puede no ser compatible aún.';
-  @override
-  String get game_hook_reason_helper_missing =>
-      'El helper de hook de voz no está instalado para la arquitectura de este juego; instálelo e inténtelo de nuevo.';
-  @override
-  String get game_hook_reason_hook_dll_missing =>
-      'El paquete del helper está incompleto (falta biblioteca de hook); reinstálelo.';
-  @override
-  String get game_hook_reason_injection_failed =>
-      'La inyección al juego fue bloqueada; añada Fushi y el juego a las exclusiones del antivirus.';
-  @override
-  String get game_hook_reason_ready_timeout =>
-      'La biblioteca de hook no terminó de cargarse a tiempo; el escaneo del antivirus puede causar esto.';
-  @override
-  String get game_hook_reason_resume_failed =>
-      'El juego iniciado no pudo reanudarse y fue detenido; láncelo de nuevo.';
-  @override
-  String get game_hook_reason_shared_memory_unavailable =>
-      'El canal de captura no pudo abrirse; reinicie Fushi.';
-  @override
-  String get game_hook_reason_spawn_failed =>
-      'El helper no pudo iniciarse; verifique que el antivirus no lo haya eliminado o bloqueado.';
-  @override
-  String get game_hook_reason_resident_hook_mismatch =>
-      'Una sesión de captura anterior aún está cargada en el juego; reinicie el juego una vez.';
-  @override
-  String get game_hook_reason_steam_timeout =>
-      'Steam aceptó la solicitud de inicio pero el proceso del juego nunca apareció.';
-  @override
-  String get game_hook_reason_target_missing =>
-      'No se seleccionó proceso o ejecutable del juego para capturar.';
-  @override
-  String get game_hook_recapture_empty =>
-      'No se capturó audio en la ventana de recaptura';
-  @override
-  String get game_hook_recapture_saved =>
-      'Voz recapturada guardada en esta línea';
-  @override
-  String get game_hook_recapture_started =>
-      'Grabando — reproduzca esta línea en el juego';
-  @override
-  String get game_hook_recapture_unavailable =>
-      'La recaptura de voz necesita audio loopback del sistema';
-  @override
-  String get game_kpi_total_games => 'Juegos';
-  @override
-  String get game_kpi_week => 'Esta semana';
-  @override
-  String get game_latest_line => 'Última línea';
-  @override
-  String get game_launch => 'Iniciar';
-  @override
-  String get game_launch_and_capture => 'Iniciar y capturar';
-  @override
-  String get game_launch_unsupported =>
-      'Iniciar juegos solo está soportado en Windows';
-  @override
-  String get game_library => 'Biblioteca de juegos';
-  @override
-  String get game_line_audio_encoded => 'Audio extraído';
-  @override
-  String get game_line_audio_fallback => 'Respaldo';
-  @override
-  String get game_line_audio_matched => 'Audio listo';
-  @override
-  String get game_line_audio_missing => 'Sin audio';
-  @override
-  String get game_line_audio_pending => 'Emparejando';
-  @override
-  String get game_line_audio_unavailable => 'Solo texto';
-  @override
-  String get game_line_favorite_tooltip => 'Marcar esta línea como favorita';
-  @override
-  String get game_line_mined => 'Tarjeta creada';
-  @override
-  String get game_line_preview_failed =>
-      'No hay audio reproducible para esta línea';
-  @override
-  String get game_line_preview_tooltip => 'Reproducir audio de esta línea';
-  @override
-  String get game_line_track_applied => 'Pista de voz aplicada a esta línea';
-  @override
-  String get game_line_track_dialog_title => 'Pista de voz para esta línea';
-  @override
-  String get game_line_track_failed =>
-      'Esa pista no tiene audio cerca de esta línea';
-  @override
-  String get game_line_track_tooltip =>
-      'Elegir la pista de voz para esta línea';
-  @override
-  String get game_line_unfavorite_tooltip => 'Quitar de favoritos';
-  @override
-  String get game_live_lines => 'Líneas en vivo';
-  @override
-  String get game_manage_tracks => 'Administrar pistas de audio';
-  @override
-  String get game_meta_added => 'Añadido';
-  @override
-  String get game_meta_ranking => 'Clasificación';
-  @override
-  String get game_meta_source => 'Fuente de datos';
-  @override
-  String get game_never_played => 'Nunca jugado';
-  @override
-  String get game_no_active_line =>
-      'Seleccione una línea para inspeccionar el estado de su audio.';
-  @override
-  String get game_no_events => 'Aún no hay eventos de sesión';
-  @override
-  String get game_no_match => 'Ningún juego coincide con los filtros actuales';
-  @override
-  String get game_no_tracks => 'Aún no hay datos de pistas de audio';
-  @override
-  String get game_open_capture_workspace => 'Abrir espacio de captura';
-  @override
-  String get game_phase_attaching => 'Vinculando';
-  @override
-  String get game_phase_degraded => 'Degradado';
-  @override
-  String get game_phase_error => 'Error';
-  @override
-  String get game_phase_idle => 'Inactivo';
-  @override
-  String get game_phase_injecting => 'Inyectando';
-  @override
-  String get game_phase_launching => 'Iniciando';
-  @override
-  String get game_phase_resolving => 'Resolviendo';
-  @override
-  String get game_phase_running => 'En ejecución';
-  @override
-  String get game_phase_stopping => 'Deteniendo';
-  @override
-  String get game_phase_waiting_signals => 'Esperando señales';
-  @override
-  String get game_pipeline => 'Pipeline de sesión';
-  @override
-  String get game_play_status => 'Estado de juego';
-  @override
-  String get game_random_reroll => 'Aleatorio';
-  @override
-  String get game_random_title => 'Elegir por mí';
-  @override
-  String get game_recently_played => 'Jugado recientemente';
-  @override
-  String get game_refresh_tracks => 'Actualizar pistas';
-  @override
-  String get game_remove => 'Eliminar';
-  @override
-  String get game_rename => 'Renombrar';
-  @override
-  String get game_rename_label => 'Nombre del juego';
-  @override
-  String get game_scrape => 'Obtener metadatos';
-  @override
-  String get game_scrape_applied => 'Metadatos actualizados';
-  @override
-  String get game_scrape_failed => 'La obtención de metadatos falló';
-  @override
-  String get game_scrape_no_result => 'No se encontró entrada coincidente';
-  @override
-  String get game_scrape_query => 'Título o ID de fuente';
-  @override
-  String get game_search => 'Buscar juegos';
-  @override
-  String get game_session_events => 'Eventos de sesión';
-  @override
-  String get game_session_idle => 'La captura no ha comenzado';
-  @override
-  String get game_session_listening => 'Escuchando';
-  @override
-  String get game_set_cover => 'Establecer portada';
-  @override
-  String get game_show_hook_text_window => 'Mostrar ventana de texto del hook';
-  @override
-  String get game_site_score => 'Puntuación del sitio';
-  @override
-  String get game_sort => 'Ordenar';
-  @override
-  String get game_sort_added => 'Fecha de adición';
-  @override
-  String get game_sort_last_played => 'Último jugado';
-  @override
-  String get game_sort_name => 'Nombre';
-  @override
-  String get game_sort_release => 'Fecha de lanzamiento';
-  @override
-  String get game_sort_site_score => 'Puntuación del sitio';
-  @override
-  String get game_sort_user_rating => 'Mi puntuación';
-  @override
-  String get game_stat_daily => 'Tiempo de juego diario';
-  @override
-  String get game_stat_delete_session => 'Eliminar esta sesión';
-  @override
-  String get game_stat_last_played => 'Último jugado';
-  @override
-  String get game_stat_no_sessions =>
-      'Aún no se han registrado sesiones de juego';
-  @override
-  String get game_stat_session_list => 'Historial de sesiones';
-  @override
-  String get game_stat_sessions => 'Sesiones';
-  @override
-  String get game_stat_today => 'Tiempo de juego hoy';
-  @override
-  String get game_stat_total_time => 'Tiempo total de juego';
-  @override
-  String get game_status_dropped => 'Abandonado';
-  @override
-  String get game_status_not_configured => 'No verificado';
-  @override
-  String get game_status_on_hold => 'En pausa';
-  @override
-  String get game_status_played => 'Jugado';
-  @override
-  String get game_status_playing => 'Jugando';
-  @override
-  String get game_status_ready => 'Listo';
-  @override
-  String get game_status_unset => 'Sin definir';
-  @override
-  String get game_status_waiting => 'En espera';
-  @override
-  String get game_status_want_to_play => 'Quiero jugar';
-  @override
-  String get game_stop_listening => 'Detener escucha';
-  @override
-  String get game_summary_aliases => 'Alias';
-  @override
-  String get game_summary_all_titles => 'Todos los títulos';
-  @override
-  String get game_summary_average_hours => 'Tiempo promedio de juego';
-  @override
-  String get game_summary_none =>
-      'Sin descripción aún. Obtenga metadatos para completarla.';
-  @override
-  String get game_summary_release_date => 'Fecha de lanzamiento';
-  @override
-  String get game_tags_clear => 'Limpiar selección';
-  @override
-  String get game_tags_title => 'Etiquetas del juego';
-  @override
-  String get game_text_endpoints => 'Endpoints de texto';
-  @override
-  String get game_text_gaps => 'Brechas de secuencia';
-  @override
-  String get game_text_gaps_hint =>
-      'Brechas de secuencia = conteo de líneas perdidas en el anillo de texto del hook; 0 es normal';
-  @override
-  String get game_text_source_engine => 'Hook del motor';
-  @override
-  String get game_text_source_unknown => 'Fuente desconocida';
-  @override
-  String get game_text_source_websocket => 'WebSocket';
-  @override
-  String get game_text_thread => 'Hilo de texto';
-  @override
-  String game_text_thread_audio_count({required Object count}) =>
-      '${count} con audio';
-  @override
-  String get game_text_thread_hint =>
-      'Elija el hilo de diálogo limpio, como Luna Translator';
-  @override
-  String get game_track_auto => 'Selección automática';
-  @override
-  String get game_track_clips => 'Clips';
-  @override
-  String get game_track_energy => 'Energía';
-  @override
-  String get game_track_exclude_bgm => 'Marcar como BGM';
-  @override
-  String get game_track_exclusion_hint =>
-      'Marque una pista de BGM/ambiente como excluida para que la selección automática nunca la trate como voz — las líneas sin habla ya no capturarán BGM.';
-  @override
-  String get game_track_exclusion_title => 'Excluir pistas de audio';
-  @override
-  String get game_track_preview => 'Previsualizar esta pista';
-  @override
-  String get game_track_preview_failed =>
-      'No se pudo capturar audio reciente de esta pista';
-  @override
-  String get game_track_preview_stop => 'Detener vista previa';
-  @override
-  String get game_track_restore => 'Restaurar pista';
-  @override
-  String get game_track_select_as_voice => 'Usar como pista de voz';
-  @override
-  String get game_track_select_requires_engine =>
-      'La selección de pista requiere una sesión activa del hook del motor';
-  @override
-  String get game_track_voice => 'Voz';
-  @override
-  String get game_tracks_loopback_hint =>
-      'El loopback del sistema captura la salida mezclada completa del sistema como un solo flujo; la enumeración por pista no está disponible.';
-  @override
-  String get game_tracks_pcm_only_hint =>
-      'La selección por pista solo afecta la captura mientras PCM del motor es el backend de audio activo. La lista de abajo es de solo lectura con el backend actual.';
-  @override
-  String get game_tracks_resource_mode_hint =>
-      'En el modo de audio por recursos del juego, cada línea de voz se extrae directamente de los archivos del juego, por lo que no existe lista de pistas PCM aquí. La selección automática o manual de pistas solo se aplica a la captura PCM del motor.';
-  @override
-  String get game_unread_lines => 'Sin leer';
-  @override
-  String get game_upscaling => 'Escalado de ventana del juego';
-  @override
-  String get game_upscaling_auto => 'Auto';
-  @override
-  String get game_upscaling_hint_external =>
-      'Ya se estaba ejecutando una copia de Magpie, así que Fushi la dejó como está. Presione Win+Shift+A para escalar la ventana del juego.';
-  @override
-  String get game_upscaling_hint_first_run =>
-      'Magpie tuvo que configurarse esta vez. Presione Win+Shift+A para escalar ahora — la próxima vez que inicie el juego se hará automáticamente.';
-  @override
-  String get game_upscaling_hint_manual =>
-      'Presione Win+Shift+A para escalar la ventana del juego.';
-  @override
-  String get game_upscaling_installed_only => 'Solo si está instalado';
-  @override
-  String get game_upscaling_off => 'Apagado';
-  @override
-  String get game_upscaling_status_active =>
-      'El escalado de ventana está activo';
-  @override
-  String get game_upscaling_status_failed =>
-      'El escalado de ventana no pudo iniciarse';
-  @override
-  String get game_upscaling_status_manual =>
-      'El escalado de ventana está listo, pero no se inició solo';
-  @override
-  String get game_upscaling_status_unavailable =>
-      'El escalado de ventana no está disponible';
-  @override
-  String get game_user_rating => 'Mi puntuación';
-  @override
-  String get game_view_detail => 'Ver detalles';
-  @override
-  String get game_waiting_for_text => 'Esperando texto';
-  @override
-  String game_waveform_range_label({
-    required Object start,
-    required Object end,
-    required Object duration,
-    required Object total,
-  }) => '${start} - ${end} (seleccionado ${duration} / total ${total})';
-  @override
-  String get game_waveform_select_title => 'Seleccionar rango de audio';
-  @override
-  String get game_window_bound => 'Vinculado';
-  @override
-  String get game_window_missing => 'No vinculado';
-  @override
-  String get games => 'Juegos';
-  @override
-  String get global_context_capture => 'Capturar contexto de selección';
-  @override
-  String get global_context_capture_hint =>
-      'Lee texto circundante de la app en primer plano para mostrar la oración actual (solo Windows)';
-  @override
-  String go_to_chapter({required Object n}) => 'Capítulo ${n}';
-  @override
-  String get handlebar_audio => 'Audio';
-  @override
-  String get handlebar_book_cover => 'Portada del libro';
-  @override
-  String get handlebar_card_image => 'Card Image (Cover / GIF)';
-  @override
-  String get handlebar_cue_sentence => 'Oración de subtítulo';
-  @override
-  String handlebar_deprecated_label({required Object label}) =>
-      '${label} (obsoleto)';
-  @override
-  String get handlebar_document_title => 'Título del documento';
-  @override
-  String get handlebar_expression => 'Expresión';
-  @override
-  String get handlebar_frequencies => 'Frecuencias (HTML)';
-  @override
-  String get handlebar_frequency_harmonic_rank => 'Frecuencia (Rango)';
-  @override
-  String get handlebar_furigana_plain => 'Furigana';
-  @override
-  String get handlebar_glossary => 'Glosario';
-  @override
-  String get handlebar_glossary_first => 'Glosario (Primero)';
-  @override
-  String get handlebar_pitch_accent_categories => 'Categorías de acento';
-  @override
-  String get handlebar_pitch_accent_positions => 'Posiciones de acento';
-  @override
-  String get handlebar_popup_selection_text => 'Texto de selección del popup';
-  @override
-  String get handlebar_reading => 'Lectura';
-  @override
-  String get handlebar_selected_glossary => 'Glosario seleccionado';
-  @override
-  String get handlebar_sentence => 'Oración';
-  @override
-  String get handlebar_sentence_audio => 'Sentence Audio';
-  @override
-  String get handlebar_video_clip => 'Video Clip (GIF)';
-  @override
-  String get harmonic_frequency => 'Agregar frecuencias de palabras';
-  @override
-  String health_match_summary({required Object pct}) => 'Coincidencia ${pct}%';
-  @override
-  String get highlight_on_tap => 'Resaltar texto al tocar';
-  @override
-  String get home_activity => 'Actividad';
-  @override
-  String get home_activity_empty => 'Aún no hay actividad';
-  @override
-  String get home_continue => 'Continuar';
-  @override
-  String get home_filter_added => 'Añadido';
-  @override
-  String get home_filter_all => 'Todo';
-  @override
-  String get home_filter_game => 'Juego';
-  @override
-  String get home_filter_read => 'Leer';
-  @override
-  String get home_filter_watch => 'Ver';
-  @override
-  String get home_recently_added => 'Añadido recientemente';
-  @override
-  String get home_remote_source => 'Remoto';
-  @override
-  String home_session_count({required Object n}) => '${n} sesiones';
-  @override
-  String get home_today => 'Hoy';
-  @override
-  String get home_yesterday => 'Ayer';
-  @override
-  String get hover_auto_lookup => 'Buscar al pasar el cursor';
-  @override
-  String get hover_auto_lookup_hint =>
-      'Busca automáticamente al pasar el ratón sobre un carácter; sin hacer clic ni mantener Mayús. Muestra como máximo una capa de ventana emergente. Solo en escritorio.';
-  @override
-  String get icon_custom => 'Personalizado';
-  @override
-  String get icon_custom_confirm_body =>
-      'Esto creará un acceso directo en la pantalla de inicio con la imagen elegida. ¿Continuar?';
-  @override
-  String get icon_custom_confirm_title => 'Icono personalizado';
-  @override
-  String get icon_custom_hint =>
-      'Toca un icono para cambiar, o elige una imagen personalizada abajo.';
-  @override
-  String get icon_default => 'Predeterminado';
-  @override
-  String get icon_full => 'Completo';
-  @override
-  String get icon_shortcut_created =>
-      'Acceso directo creado en la pantalla de inicio.';
-  @override
-  String get icon_shortcut_unsupported =>
-      'Los accesos directos no son compatibles con este dispositivo.';
-  @override
-  String get icon_switch_success => 'Icono de la app cambiado correctamente.';
-  @override
-  String get icon_transparent => 'Transparente';
-  @override
-  String image_page_counter({required Object current, required Object total}) =>
-      '${current} / ${total}';
-  @override
-  String get image_pause => 'Pausar en imagen';
-  @override
-  String get image_pause_hint =>
-      'Pausar automáticamente cuando aparece una imagen durante la reproducción.';
-  @override
-  String get image_pause_off => 'Desactivado';
-  @override
-  String get image_search_label_after => 'encontradas para';
-  @override
-  String get image_search_label_before => 'Seleccionando imagen ';
-  @override
-  String get image_search_label_middle => 'de ';
-  @override
-  String get image_search_label_none_before => 'Seleccionando ';
-  @override
-  String get image_search_label_none_middle => 'ninguna imagen ';
-  @override
-  String get import_complete => 'Importación del diccionario completada.';
-  @override
-  String import_duplicate({required Object name}) =>
-      'Ya existe un diccionario importado con el nombre 『${name}』.';
-  @override
-  String get import_extract => 'Extrayendo archivos...';
-  @override
-  String get import_failed => 'Error al importar el diccionario.';
-  @override
-  String get import_in_progress => 'Importación en progreso';
-  @override
-  String import_name({required Object name}) => 'Importando 『${name}』...';
-  @override
-  String import_sidecar_audio({required Object count}) =>
-      'Se adjuntaron automáticamente ${count} archivo(s) de audio';
-  @override
-  String import_sidecar_subtitle({required Object name}) =>
-      'Subtítulo adjuntado automáticamente: ${name}';
-  @override
-  String get import_start => 'Preparando la importación...';
-  @override
-  String get import_step_building_epub => 'Generando EPUB…';
-  @override
-  String get import_step_converting_epub => 'Convirtiendo a EPUB…';
-  @override
-  String import_step_copying_file({required Object name}) =>
-      'Copiando ${name}…';
-  @override
-  String get import_step_done => 'Hecho';
-  @override
-  String get import_step_importing_epub => 'Importando EPUB…';
-  @override
-  String get import_step_matching => 'Alineación de audio…';
-  @override
-  String get import_step_parsing => 'Analizando subtítulos…';
-  @override
-  String get import_step_persisting => 'Guardando archivos…';
-  @override
-  String get import_step_reading => 'Leyendo archivo…';
-  @override
-  String get import_step_reading_idb => 'Leyendo información del libro…';
-  @override
-  String get import_step_saving => 'Guardando registros…';
-  @override
-  String get import_theme => 'Importar tema';
-  @override
-  String get import_theme_hint => 'Pegar código de tema';
-  @override
-  String get import_theme_invalid => 'Código de tema no válido';
-  @override
-  String get import_theme_success => 'Tema importado';
-  @override
-  String import_unsupported_file_format({required Object ext}) =>
-      'Formato de archivo no compatible: ${ext}';
-  @override
-  String get increase => 'Aumentar';
-  @override
-  String get info_empty_home_tab => 'El historial está vacío';
-  @override
-  String init_error_message({required Object error}) =>
-      'Error de inicialización: ${error}';
-  @override
-  String get initialization_failed => 'Error de inicialización';
-  @override
-  String get interconnect_backup_backend =>
-      'Usar Interconnect como backend de copia de seguridad';
-  @override
-  String get interconnect_backup_backend_active =>
-      'Las copias de seguridad ya se envían al dispositivo emparejado. Elija otro backend en Sincronización y respaldo para cambiarlo.';
-  @override
-  String get interconnect_backup_backend_apply =>
-      'Establecer como backend de respaldo';
-  @override
-  String interconnect_backup_backend_current({required Object backend}) =>
-      'Backend de respaldo actual: ${backend}';
-  @override
-  String get interconnect_backup_backend_hint =>
-      'Respalda y sincroniza con el dispositivo emparejado en lugar de una nube. Todo lo que los interruptores de arriba permiten subir al dispositivo emparejado es lo que se escribirá allí.';
-  @override
-  String get interconnect_backup_backend_needs_pairing =>
-      'Primero conéctese a un dispositivo arriba.';
-  @override
-  String get interconnect_enable => 'Activar Interconnect';
-  @override
-  String get interconnect_enable_hint =>
-      'Conéctese a sus otros dispositivos por LAN. Funciona junto con un backend de respaldo en la nube — no entran en conflicto.';
-  @override
-  String get interconnect_moved_note =>
-      'Los ajustes de conexión y servidor están en la categoría Fushi Interconnect';
-  @override
-  String get interconnect_section_client => 'Conectar a otros dispositivos';
-  @override
-  String get interconnect_section_delegate =>
-      'Delegar al dispositivo emparejado';
-  @override
-  String get interconnect_section_related => 'Contenido y búsqueda remotos';
-  @override
-  String get interconnect_summary =>
-      'Sincronización directa entre dispositivos y alojamiento como servidor';
-  @override
-  String get interconnect_upload_audiobook_files =>
-      'Subir archivos de audiolibros';
-  @override
-  String get interconnect_upload_audiobook_files_hint =>
-      'Sincroniza los audios y paquetes de subtítulos de audiolibros de este dispositivo al par de Interconnect (archivos grandes).';
-  @override
-  String get interconnect_upload_content => 'Subir archivos de libros';
-  @override
-  String get interconnect_upload_content_hint =>
-      'Sincroniza los libros y contenido de lectura de este dispositivo al par de Interconnect.';
-  @override
-  String get interconnect_upload_dictionary => 'Subir diccionarios';
-  @override
-  String get interconnect_upload_dictionary_hint =>
-      'Sincroniza los diccionarios de este dispositivo al par de Interconnect.';
-  @override
-  String get interconnect_upload_section => 'Subir al par de Interconnect';
-  @override
-  String get interconnect_upload_video_files => 'Subir archivos de vídeo';
-  @override
-  String get interconnect_upload_video_files_hint =>
-      'Sincroniza los archivos de vídeo locales de este dispositivo al par de Interconnect (archivos grandes).';
-  @override
-  String get invert_audiobook_skip_direction =>
-      'Invertir botones de avance de la barra inferior';
-  @override
-  String get invert_swipe_direction =>
-      'Invertir dirección de deslizamiento para pasar páginas';
-  @override
-  String get invert_volume_buttons => 'Invertir botones de volumen';
-  @override
-  String get jump_to_char => 'Ir al carácter';
-  @override
-  String jump_to_char_current({
-    required Object current,
-    required Object total,
-  }) => 'Actual: ${current} / ${total}';
-  @override
-  String get jump_to_char_hint => 'Introduce la posición del carácter…';
-  @override
-  String get keep_screen_awake => 'Mantener pantalla encendida';
-  @override
-  String get library_search => 'Buscar biblioteca';
-  @override
-  String get loading_illustrations => 'Cargando ilustraciones…';
-  @override
-  String get loading_slow_message =>
-      'Si su ubicación de almacenamiento de datos está en una unidad de red o extraíble que está desconectada, el inicio puede detenerse. Toque Reintentar para iniciar usando la ubicación de almacenamiento predeterminada para esta sesión; sus datos permanecen donde están.';
-  @override
-  String get loading_slow_message_mobile =>
-      'El inicio está tardando más de lo usual — Fushi puede estar cargando una biblioteca grande o diccionarios. Espere un momento, o toque Reintentar para recargar. Sus datos están seguros y no se perderán.';
-  @override
-  String get loading_slow_title => 'El inicio está tardando más de lo usual';
-  @override
-  String get local_audio => 'Audio local';
-  @override
-  String get local_audio_add_db => 'Agregar base de datos de audio local';
-  @override
-  String get local_audio_edit_sources => 'Editar fuentes';
-  @override
-  String local_audio_import_failed_detail({required Object reason}) =>
-      'Falló la importación de la base de datos de audio: ${reason}';
-  @override
-  String get local_audio_imported => 'Base de datos de audio añadida';
-  @override
-  String get local_audio_invalid_db =>
-      'Este archivo no es una base de datos de audio utilizable (no es una base de datos de Local Audio Server, o no tiene audio).';
-  @override
-  String get local_audio_no_sources =>
-      'No se encontraron fuentes en esta base de datos';
-  @override
-  String get local_audio_reference_original =>
-      'Referenciar archivo original (no copiar)';
-  @override
-  String get local_audio_reference_original_desc =>
-      'Mantener la base de datos donde está y leer desde su ruta original; la fuente se rompe si el archivo se mueve o elimina.';
-  @override
-  String get local_audio_source_order_title => 'Prioridad de las fuentes';
-  @override
-  String get log_copy_all => 'Copiar todo';
-  @override
-  String get log_export_failed => 'Error al exportar';
-  @override
-  String get log_export_file => 'Exportar a archivo';
-  @override
-  String get log_export_saved => 'Registro guardado';
-  @override
-  String get log_upload_action => 'Subir al servidor';
-  @override
-  String get log_upload_consent_agree => 'Aceptar y subir';
-  @override
-  String get log_upload_consent_body =>
-      'El texto del registro (que puede incluir mensajes de error, rutas de archivos y títulos de libros), junto con la versión de la app, la plataforma y el modelo del dispositivo, se subirá al servidor del desarrollador para ayudar a diagnosticar problemas. Esto solo ocurre cuando tocas subir; no se envía nada de forma automática.';
-  @override
-  String get log_upload_consent_title => '¿Subir el registro al servidor?';
-  @override
-  String get log_upload_failed => 'Error al subir';
-  @override
-  String get log_upload_in_progress => 'Subiendo registro…';
-  @override
-  String get log_upload_success => 'Registro subido';
-  @override
-  String get log_upload_too_large =>
-      'El registro es demasiado grande para subirlo';
-  @override
-  String get login => 'Iniciar sesión';
-  @override
-  String get lookup_audio_volume => 'Volumen del audio de consulta';
-  @override
-  String get low_memory_mode => 'Modo de poca memoria';
-  @override
-  String get low_memory_mode_hint =>
-      'Reduce el uso de caché y memoria para dispositivos de gama baja. Algunos cambios requieren reinicio.';
-  @override
-  String get low_memory_mode_suggestion =>
-      'Intente activar el modo de poca memoria en Ajustes → Varios.';
-  @override
-  String get lyrics_artist => 'Artista';
-  @override
-  String get lyrics_blur => 'Difuminar letras';
-  @override
-  String get lyrics_blur_hint =>
-      'Difumina la línea actual para inmersión auditiva; pase el cursor o toque para revelar';
-  @override
-  String get lyrics_font_size => 'Tamaño de fuente de letras';
-  @override
-  String get lyrics_font_size_hint =>
-      'El tamaño de fuente de las letras es independiente del modo libro';
-  @override
-  String get lyrics_mode => 'Modo de letra';
-  @override
-  String get lyrics_mode_hint_body =>
-      'El modo de letras tiene su propia configuración de tamaño de fuente. Puedes ajustarlo en ⚙ Ajustes → Tipografía.';
-  @override
-  String get lyrics_mode_hint_title => 'Modo de letras';
-  @override
-  String get lyrics_text_color => 'Color del texto de las letras';
-  @override
-  String get lyrics_text_color_hint =>
-      'Usa un color personalizado para el texto de las letras en lugar de seguir el tema';
-  @override
-  String get lyrics_title => 'Título';
-  @override
-  String get lyrics_vertical_writing => 'Letras verticales';
-  @override
-  String get lyrics_vertical_writing_hint =>
-      'Leer letras de arriba a abajo, de derecha a izquierda (independiente del modo del libro)';
-  @override
-  String get manage_audio_sources => 'Gestionar fuentes de audio';
-  @override
-  String get manager => 'Gestor';
-  @override
-  String get manga_mode_toggle => 'Reading Mode';
-  @override
-  String get manga_ocr_delete => 'Eliminar modelos';
-  @override
-  String get manga_ocr_delete_confirm_message =>
-      'Esto libera espacio en disco. Puede descargarlos de nuevo más tarde.';
-  @override
-  String get manga_ocr_delete_confirm_title => '¿Eliminar modelos de OCR?';
-  @override
-  String get manga_ocr_delete_done => 'Modelos eliminados';
-  @override
-  String get manga_ocr_download => 'Descargar modelos';
-  @override
-  String get manga_ocr_download_done => 'Modelos descargados';
-  @override
-  String get manga_ocr_download_failed => 'La descarga de modelos falló';
-  @override
-  String manga_ocr_downloading_file({required Object file}) =>
-      'Descargando ${file}…';
-  @override
-  String get manga_ocr_engine_builtin => 'Integrado';
-  @override
-  String get manga_ocr_engine_external => 'mokuro externo';
-  @override
-  String get manga_ocr_engine_none =>
-      'No hay motor de OCR disponible. Descargue los modelos integrados o establezca la ruta del CLI de mokuro en los ajustes.';
-  @override
-  String get manga_ocr_external_cli_hint =>
-      'Deje vacío para auto-detectar (FUSHI_MOKURO / PATH)';
-  @override
-  String get manga_ocr_external_cli_label => 'Ruta del CLI de mokuro externo';
-  @override
-  String get manga_ocr_external_detect => 'Detectar';
-  @override
-  String manga_ocr_external_detected({required Object version}) =>
-      'Detectado: ${version}';
-  @override
-  String get manga_ocr_external_not_found => 'mokuro no encontrado';
-  @override
-  String get manga_ocr_model_status_missing => 'Modelos de OCR no descargados';
-  @override
-  String get manga_ocr_model_status_ready => 'Modelos de OCR listos';
-  @override
-  String get manga_ocr_section => 'OCR de manga';
-  @override
-  String get manga_ocr_section_summary =>
-      'Modelos de OCR integrados y CLI de mokuro externo';
-  @override
-  String get manga_ocr_unsupported =>
-      'El OCR de manga integrado aún no está disponible en esta plataforma.';
-  @override
-  String get manga_ocr_wizard_done => 'Manga importado';
-  @override
-  String get manga_ocr_wizard_failed => 'El OCR falló';
-  @override
-  String get manga_ocr_wizard_has_mokuro =>
-      'Esta carpeta ya tiene un archivo .mokuro — use la importación normal en su lugar.';
-  @override
-  String get manga_ocr_wizard_importing => 'Importando…';
-  @override
-  String get manga_ocr_wizard_no_images =>
-      'No se encontraron imágenes en esta carpeta.';
-  @override
-  String manga_ocr_wizard_page_progress({
-    required Object done,
-    required Object total,
-  }) => 'Página ${done} / ${total}';
-  @override
-  String get manga_ocr_wizard_pick_folder => 'Elegir carpeta de imágenes';
-  @override
-  String get manga_ocr_wizard_run => 'Ejecutar OCR';
-  @override
-  String get manga_ocr_wizard_running => 'Ejecutando OCR…';
-  @override
-  String get manga_ocr_wizard_title => 'Importar manga con OCR';
-  @override
-  String get manga_ocr_wizard_title_label => 'Título (opcional)';
-  @override
-  String get manga_online_base_url_label => 'URL del catálogo en línea';
-  @override
-  String get manga_online_catalog_title => 'Catálogo en línea';
-  @override
-  String get manga_online_download_selected => 'Descargar seleccionados';
-  @override
-  String get manga_online_downloaded => 'Importado';
-  @override
-  String get manga_online_failed => 'La descarga falló';
-  @override
-  String get manga_online_load_failed => 'No se pudo cargar el catálogo';
-  @override
-  String get manga_online_queue_added => 'Añadido a la cola de descarga';
-  @override
-  String manga_online_queue_progress({
-    required Object done,
-    required Object total,
-  }) => 'Volumen ${done} / ${total}';
-  @override
-  String get manga_online_queue_section => 'Descargas del catálogo de manga';
-  @override
-  String get manga_online_search_hint => 'Buscar series';
-  @override
-  String get manga_online_stage_cbz => 'Descargando volumen…';
-  @override
-  String get manga_online_stage_extract => 'Extrayendo…';
-  @override
-  String get manga_online_stage_mokuro => 'Descargando datos de OCR…';
-  @override
-  String get manga_reading_mode_spread => 'Doble página';
-  @override
-  String get manga_reading_mode_webtoon => 'Webtoon';
-  @override
-  String get manga_remote_ocr_cancelled =>
-      'El OCR remoto fue cancelado en el host.';
-  @override
-  String get manga_remote_ocr_engine => 'Host emparejado';
-  @override
-  String get manga_remote_ocr_failed => 'El OCR remoto falló';
-  @override
-  String get manga_remote_ocr_no_host =>
-      'No hay host emparejado con OCR de manga accesible.';
-  @override
-  String get manga_remote_ocr_not_ready =>
-      'Los modelos de OCR del host emparejado no están descargados. Descárguelos en el host primero.';
-  @override
-  String get manga_remote_ocr_running =>
-      'El host emparejado está ejecutando OCR…';
-  @override
-  String get manga_remote_ocr_unsupported =>
-      'El host emparejado no soporta OCR de manga.';
-  @override
-  String manga_remote_ocr_uploading({
-    required Object done,
-    required Object total,
-  }) => 'Subiendo páginas ${done} / ${total}…';
-  @override
-  String get margin_bottom => 'Margen inferior';
-  @override
-  String get margin_left => 'Margen izquierdo';
-  @override
-  String get margin_right => 'Margen derecho';
-  @override
-  String get margin_top => 'Margen superior';
-  @override
-  String get maximum_terms =>
-      'Máximo de entradas en el resultado del diccionario';
-  @override
-  String get media_source_add => 'Add Source';
-  @override
-  String get media_source_add_local_folder => 'Local Folder';
-  @override
-  String get media_source_add_network => 'Red';
-  @override
-  String media_source_count_book({required Object n}) => '${n} libros';
-  @override
-  String media_source_count_video({required Object n}) => '${n} vídeos';
-  @override
-  String media_source_last_scan({required Object time}) =>
-      'Último escaneo ${time}';
-  @override
-  String get media_source_manage_title => 'Manage Sources';
-  @override
-  String get media_source_network_label_optional =>
-      'Nombre para mostrar (opcional)';
-  @override
-  String get media_source_network_missing_fields =>
-      'Introduzca host, usuario, ruta remota y una contraseña o clave';
-  @override
-  String get media_source_network_remote_path => 'Ruta remota';
-  @override
-  String get media_source_network_subtitle =>
-      'Biblioteca remota SFTP / FTP / WebDAV';
-  @override
-  String get media_source_no_sources => 'Aún no hay fuentes';
-  @override
-  String get media_source_open_folder => 'Open Folder';
-  @override
-  String get media_source_remove => 'Remove Source';
-  @override
-  String get media_source_remove_keeps_media =>
-      'Eliminar una fuente no borra los medios importados.';
-  @override
-  String get media_source_rescan => 'Re-escanear';
-  @override
-  String get media_source_scan_error => 'El escaneo falló';
-  @override
-  String get media_tracking_access_token => 'Token de acceso';
-  @override
-  String get media_tracking_access_token_hint =>
-      'Cree un token de acceso personal con permiso de escritura';
-  @override
-  String get media_tracking_account => 'Cuenta de Bangumi';
-  @override
-  String get media_tracking_add_mapping => 'Añadir mapeo';
-  @override
-  String get media_tracking_anime => 'Anime';
-  @override
-  String get media_tracking_chapter => 'Capítulo';
-  @override
-  String get media_tracking_connect => 'Conectar y verificar';
-  @override
-  String get media_tracking_connected_as => 'Cuenta conectada';
-  @override
-  String get media_tracking_delete_mapping => 'Eliminar mapeo';
-  @override
-  String get media_tracking_episode => 'Episodio';
-  @override
-  String get media_tracking_kind => 'Categoría';
-  @override
-  String get media_tracking_local_item => 'Elemento local';
-  @override
-  String get media_tracking_manga => 'Manga';
-  @override
-  String get media_tracking_mappings => 'Mapeos de elementos';
-  @override
-  String get media_tracking_no_mappings =>
-      'Aún no hay mapeos manuales. Fushi empareja automáticamente en el primer episodio completado o progreso de lectura; añada elementos ambiguos aquí.';
-  @override
-  String get media_tracking_novel => 'Novela';
-  @override
-  String get media_tracking_pending => 'Actualizaciones pendientes';
-  @override
-  String get media_tracking_progress_mode => 'Unidad de progreso';
-  @override
-  String get media_tracking_progress_offset => 'Número inicial';
-  @override
-  String get media_tracking_saved => 'Mapeo guardado';
-  @override
-  String get media_tracking_search => 'Buscar en Bangumi';
-  @override
-  String get media_tracking_search_results => 'Resultados de Bangumi';
-  @override
-  String get media_tracking_summary =>
-      'Registra automáticamente el progreso de anime, novelas y manga en Bangumi';
-  @override
-  String get media_tracking_sync_failed =>
-      'La sincronización falló. La actualización permanece en cola.';
-  @override
-  String get media_tracking_sync_now => 'Sincronizar ahora';
-  @override
-  String get media_tracking_sync_success => 'Sincronización completada';
-  @override
-  String get media_tracking_token_required =>
-      'Primero introduzca y verifique un token de acceso';
-  @override
-  String get media_tracking_volume => 'Volumen';
-  @override
-  String get microphone_permission_denied =>
-      'Se requiere permiso de micrófono para grabar.';
-  @override
-  String get mining_audio_quality => 'Calidad de audio';
-  @override
-  String get mining_audio_quality_high => 'Alta';
-  @override
-  String get mining_audio_quality_hint =>
-      'Mayor tasa de bits es más clara pero crea tarjetas más grandes.';
-  @override
-  String get mining_audio_quality_max => 'Máxima';
-  @override
-  String get mining_audio_quality_standard => 'Estándar';
-  @override
-  String get mining_image_quality => 'Calidad de imagen / GIF';
-  @override
-  String get mining_image_quality_hd => 'HD';
-  @override
-  String get mining_image_quality_hint =>
-      'Mayor calidad es más nítida pero crea tarjetas más grandes. Máxima mantiene las capturas a la resolución original; los GIF animados se limitan para que las tarjetas sigan siendo usables.';
-  @override
-  String get mining_image_quality_max => 'Máxima';
-  @override
-  String get mining_image_quality_standard => 'Estándar';
-  @override
-  String get mining_image_quality_thrift => 'Ahorro de datos';
-  @override
-  String get move_down => 'Mover abajo';
-  @override
-  String get move_up => 'Mover arriba';
-  @override
-  String get name => 'Nombre';
-  @override
-  String get nav_browser_extension => 'Extensión';
-  @override
-  String get nav_downloads => 'Descargas';
-  @override
-  String get nav_game => 'Juego';
-  @override
-  String get nav_home => 'Inicio';
-  @override
-  String get nav_lookup => 'Consultar';
-  @override
-  String get nav_video => 'Vídeo';
-  @override
-  String get next_sentence => 'Oración siguiente';
-  @override
-  String get no_audio_file => 'No hay archivo de audio para guardar.';
-  @override
-  String get no_collections => 'No hay marcadores ni oraciones guardadas';
-  @override
-  String get no_debug_logs => 'Sin registros de depuración.';
-  @override
-  String get no_illustrations_found => 'No se encontraron ilustraciones';
-  @override
-  String get no_results_found => 'No se encontraron resultados.';
-  @override
-  String get no_search_results => 'No se encontraron resultados.';
-  @override
-  String get no_sentence_selected => 'No se ha seleccionado ninguna frase';
-  @override
-  String get no_sentences_found => 'No se encontraron oraciones';
-  @override
-  String get no_text => 'Sin texto.';
-  @override
-  String get no_text_to_search => 'No hay texto para buscar.';
-  @override
-  String get now_listening_label => 'Escuchando ahora';
-  @override
-  String get on_screen_keyboard => 'Teclado en pantalla';
-  @override
-  String get options_collapse => 'Contraer en búsqueda';
-  @override
-  String get options_delete => 'Eliminar';
-  @override
-  String get options_edit => 'Editar';
-  @override
-  String get options_expand => 'Expandir en búsqueda';
-  @override
-  String get options_github => 'Ver repositorio en GitHub';
-  @override
-  String get options_hide => 'Ocultar en búsqueda';
-  @override
-  String get options_language => 'Configuración de idioma';
-  @override
-  String get options_show => 'Mostrar en búsqueda';
-  @override
-  String get overlay_lookup_independent_size =>
-      'Tamaño separado para búsqueda emergente';
-  @override
-  String get overlay_lookup_independent_size_hint =>
-      'Dale a la ventana de búsqueda emergente externa su propio tamaño máximo en lugar de seguir la ventana emergente de la app';
-  @override
-  String get overlay_lookup_max_height => 'Altura máxima de búsqueda emergente';
-  @override
-  String get overlay_lookup_max_width => 'Ancho máximo de búsqueda emergente';
-  @override
-  String page_progress({required Object current, required Object total}) =>
-      'Página ${current} / ${total}';
-  @override
-  String get paste => 'Pegar';
-  @override
-  String get pause => 'Pausar';
-  @override
-  String get pause_on_lookup => 'Pausar al buscar';
-  @override
-  String get pdf_bookmark_added => 'Marcador añadido';
-  @override
-  String get pdf_bookmarks => 'Marcadores';
-  @override
-  String get pdf_bookmarks_empty => 'Aún no hay marcadores.';
-  @override
-  String get pdf_no_text_layer =>
-      'Este PDF no tiene capa de texto (imagen escaneada), por lo que la búsqueda no está disponible.';
-  @override
-  String get pdf_outline => 'Contenidos';
-  @override
-  String get pdf_outline_empty => 'Este PDF no tiene tabla de contenidos.';
-  @override
-  String get pick_image => 'Elegir imagen';
-  @override
-  String get play => 'Reproducir';
-  @override
-  String get play_from_cue => 'Reproducir desde la oración';
-  @override
-  String get playback_auto_pause => 'Modo de pausa en subtítulos';
-  @override
-  String get playback_speed => 'Velocidad';
-  @override
-  String get popup_append_sentence_tooltip => 'Añadir esta frase a la tarjeta';
-  @override
-  String get popup_auto_expand_dictionaries => 'Auto-expandir filas';
-  @override
-  String get popup_auto_expand_dictionaries_hint =>
-      'Mantener las primeras N filas de bloques de diccionario expandidas incluso cuando \'Contraer diccionarios\' está activado. El conteo expandido sigue la configuración de columnas: filas x columnas (0 = contraer todo)';
-  @override
-  String get popup_bottom_docked => 'Ventana acoplada abajo';
-  @override
-  String get popup_bottom_docked_hint =>
-      'Fija la ventana de consulta como un panel de ancho completo en la parte inferior de la pantalla, en lugar de seguir a la palabra consultada.';
-  @override
-  String get popup_clear_sentence_draft_tooltip => 'Borrar las frases añadidas';
-  @override
-  String get popup_ctx_adjust_button => 'Ajustar contexto';
-  @override
-  String get popup_ctx_box_current => 'Current';
-  @override
-  String get popup_ctx_box_empty => '(ninguno)';
-  @override
-  String get popup_ctx_box_next => 'After';
-  @override
-  String get popup_ctx_box_prev => 'Before';
-  @override
-  String get popup_ctx_cancel => 'Cancelar';
-  @override
-  String get popup_ctx_confirm => 'Confirm';
-  @override
-  String get popup_ctx_modal_count => 'Selected %d';
-  @override
-  String get popup_ctx_modal_eyebrow => 'Before mining';
-  @override
-  String get popup_ctx_modal_title => 'Seleccionar contexto de oración';
-  @override
-  String get popup_ctx_next_minus => 'Remove after';
-  @override
-  String get popup_ctx_next_plus => 'Add after';
-  @override
-  String get popup_ctx_prev_minus => 'Remove before';
-  @override
-  String get popup_ctx_prev_plus => 'Add before';
-  @override
-  String get popup_dictionary_max_columns =>
-      'Máximo de columnas de diccionario (auto-fill)';
-  @override
-  String get popup_dictionary_max_columns_hint =>
-      'Llena automáticamente hasta este número de columnas de diccionario por fila; pantallas más angostas usan menos';
-  @override
-  String get popup_font_size_decrease => 'Texto de diccionario más pequeño';
-  @override
-  String get popup_font_size_increase => 'Texto de diccionario más grande';
-  @override
-  String get popup_instant_scroll => 'Desplazamiento instantáneo de la ventana';
-  @override
-  String get popup_instant_scroll_hint =>
-      'Mueve la ventana de consulta a distancias fijas sin animación de desplazamiento, para pantallas de tinta electrónica.';
-  @override
-  String get popup_max_height => 'Altura máxima de la ventana';
-  @override
-  String get popup_max_width => 'Ancho máximo del popup';
-  @override
-  String get popup_no_audio_available => 'No hay audio disponible';
-  @override
-  String get popup_sentence_context_next_label => 'Después';
-  @override
-  String get popup_sentence_context_prev_label => 'Antes';
-  @override
-  String get popup_wheel_speed => 'Velocidad de desplazamiento del popup';
-  @override
-  String get popup_wheel_speed_hint =>
-      'Velocidad de desplazamiento con rueda del ratón para la ventana emergente del diccionario (también se aplica a la extensión del navegador).';
-  @override
-  String get prev_sentence => 'Oración anterior';
-  @override
-  String get preview => 'Vista previa';
-  @override
-  String get preview_badge => 'Insignia';
-  @override
-  String get preview_switch => 'Interruptor';
-  @override
-  String get processing_in_progress => 'Procesando imágenes';
-  @override
-  String get profile_book_profile => 'Asignar perfil';
-  @override
-  String profile_confirm_delete({required Object name}) =>
-      '¿Eliminar perfil "${name}"?';
-  @override
-  String get profile_copy => 'Copiar';
-  @override
-  String get profile_copy_suffix => '(Copia)';
-  @override
-  String get profile_create => 'Crear perfil';
-  @override
-  String get profile_delete => 'Eliminar';
-  @override
-  String get profile_export => 'Exportar';
-  @override
-  String get profile_export_failed => 'La exportación falló';
-  @override
-  String profile_follow_default_current({required Object name}) =>
-      'Siguiendo el predeterminado (${name})';
-  @override
-  String get profile_import => 'Importar';
-  @override
-  String get profile_import_failed => 'La importación falló';
-  @override
-  String get profile_import_invalid => 'Archivo de perfil no válido';
-  @override
-  String get profile_import_success => 'Perfil importado';
-  @override
-  String get profile_label => 'Perfil';
-  @override
-  String get profile_management => 'Gestión de perfiles';
-  @override
-  String get profile_media_audiobook => 'Audiolibro';
-  @override
-  String get profile_media_epub => 'Libro';
-  @override
-  String get profile_media_lyrics => 'Modo letras';
-  @override
-  String get profile_media_none => 'Ninguno';
-  @override
-  String get profile_media_srtbook => 'Libro de subtítulos';
-  @override
-  String get profile_media_type_bindings => 'Asociaciones de tipo de medio';
-  @override
-  String get profile_media_video => 'Vídeo';
-  @override
-  String get profile_name_hint => 'Nombre del perfil';
-  @override
-  String get profile_rename => 'Renombrar';
-  @override
-  String get reader_auto_hide_chrome_duration =>
-      'Ocultar controles flotantes después de';
-  @override
-  String get reader_content_timeout =>
-      'Se agotó el tiempo al cargar el contenido. Reabre si la visualización es anómala';
-  @override
-  String get reader_copy_image => 'Copiar imagen';
-  @override
-  String get reader_gallery => 'Galería';
-  @override
-  String get reader_gallery_current => 'Leyendo aquí';
-  @override
-  String get reader_gallery_empty => 'No hay ilustraciones en este libro';
-  @override
-  String get reader_gallery_jump => 'Ir a esta ilustración';
-  @override
-  String get reader_gallery_tooltip => 'Explorar ilustraciones';
-  @override
-  String reader_image_copy_failed({required Object error}) =>
-      'Error al copiar la imagen: ${error}';
-  @override
-  String get reader_image_file_unavailable =>
-      'El archivo de imagen no está disponible.';
-  @override
-  String reader_image_share_failed({required Object error}) =>
-      'Error al compartir la imagen: ${error}';
-  @override
-  String get reader_open_failed => 'No se pudo abrir el libro';
-  @override
-  String get reader_settings_section => 'Configuración del lector';
-  @override
-  String get reader_theme_black => 'Negro';
-  @override
-  String get reader_theme_dark => 'Oscuro';
-  @override
-  String get reader_theme_ecru => 'Crudo';
-  @override
-  String get reader_theme_eyecare => 'Eye Care';
-  @override
-  String get reader_theme_gray => 'Gris';
-  @override
-  String get reader_theme_light => 'Blanco';
-  @override
-  String get reader_theme_water => 'Azul agua';
-  @override
-  String get reader_top_progress_floating => 'Progreso de lectura flotante';
-  @override
-  String get reader_unsupported_platform =>
-      'El lector aún no está disponible en esta plataforma.';
-  @override
-  String get reading_activity => 'Actividad de estudio';
-  @override
-  String get reading_progress => 'Progreso de lectura';
-  @override
-  String get reading_section_mode => 'Modo y orientación';
-  @override
-  String get reading_statistics => 'Estadísticas de lectura';
-  @override
-  String get record => 'Grabar';
-  @override
-  String get refresh => 'Actualizar';
-  @override
-  String get rematch_adjust_window =>
-      'Ajustar ventana de búsqueda y re-emparejar';
-  @override
-  String get rematch_run => 'Ejecutar re-emparejamiento';
-  @override
-  String get remote_audio_source => 'Audio remoto';
-  @override
-  String get remote_book_audiobook_download_failed =>
-      'No se pudo descargar el audiolibro de este libro';
-  @override
-  String get remote_book_download => 'Descargar a este dispositivo';
-  @override
-  String get remote_book_download_failed =>
-      'No se pudo descargar el libro remoto';
-  @override
-  String get remote_book_downloaded => 'Libro remoto descargado';
-  @override
-  String get remote_book_downloading => 'Descargando…';
-  @override
-  String get remote_book_info => 'Información';
-  @override
-  String get remote_book_info_has_audiobook => 'Incluye audiolibro';
-  @override
-  String get remote_book_unavailable => 'Dispositivo emparejado no disponible';
-  @override
-  String get remote_dict_lookup => 'Búsqueda en diccionario remoto';
-  @override
-  String get remote_dict_lookup_hint =>
-      'Cuando los diccionarios locales no encuentran resultados, consulta el servidor Fushi configurado';
-  @override
-  String get remote_video_download => 'Descargar a este dispositivo';
-  @override
-  String get remote_video_download_failed =>
-      'No se pudo descargar el vídeo remoto';
-  @override
-  String get remote_video_downloaded => 'Vídeo remoto descargado';
-  @override
-  String get remote_video_downloading => 'Descargando…';
-  @override
-  String get remote_video_info => 'Información';
-  @override
-  String get remote_video_info_has_subtitle => 'Incluye subtítulos';
-  @override
-  String get remote_video_info_no_subtitle => 'Sin subtítulos';
-  @override
-  String remote_video_info_size({required Object size}) => 'Tamaño: ${size}';
-  @override
-  String get remote_video_list_failed =>
-      'No se pudieron cargar los vídeos remotos. Asegúrese de que el otro dispositivo esté en línea y en la misma red, luego inténtelo de nuevo.';
-  @override
-  String get remote_video_unavailable => 'Dispositivo emparejado no disponible';
-  @override
-  String get rename_collection => 'Renombrar colección';
-  @override
-  String get render_restart_required => 'Se aplica después de reiniciar la app';
-  @override
-  String get repeat_cue => 'Repetir oración';
-  @override
-  String get reset => 'Restablecer';
-  @override
-  String get retry => 'Reintentar';
-  @override
-  String get reverse_arrow_page_turn =>
-      'Invertir la dirección de pasar página con las flechas izquierda/derecha';
-  @override
-  String get reverse_navigation_bar => 'Invertir barra de navegación';
-  @override
-  String get reverse_reader_bottom_bar => 'Invertir barra inferior del lector';
-  @override
-  String get audiobook_rematch_all_zero =>
-      'Todas las ventanas obtuvieron 0%, ajusta manualmente';
-  @override
-  String audiobook_rematch_auto_failed({required Object error}) =>
-      'Emparejamiento automático fallido: ${error}';
-  @override
-  String get audiobook_rematch_auto_match => 'Emparejamiento automático';
-  @override
-  String audiobook_rematch_auto_picked({
-    required Object window,
-    required Object pct,
-  }) => 'Selección automática ${window} (acierto ${pct}%)';
-  @override
-  String audiobook_rematch_default_value({required Object n}) =>
-      'Predeterminado ${n}';
-  @override
-  String audiobook_rematch_health_label({
-    required Object pct,
-    required Object detail,
-  }) => '${pct} coincidencia — ${detail}';
-  @override
-  String get audiobook_rematch_matching => 'Emparejando...';
-  @override
-  String get audiobook_rematch_no_chapters =>
-      'EPUB no tiene texto de capítulos';
-  @override
-  String get audiobook_rematch_no_cues_to_match =>
-      'No hay marcas para emparejar';
-  @override
-  String get audiobook_rematch_no_sections =>
-      'No se encontró texto de capítulo, no se puede emparejar automáticamente';
-  @override
-  String get audiobook_rematch_no_stored_cues =>
-      'No hay marcas almacenadas, no se puede re-ejecutar';
-  @override
-  String audiobook_rematch_failed({required Object error}) =>
-      'Re-emparejamiento fallido: ${error}';
-  @override
-  String audiobook_rematch_result({
-    required Object pct,
-    required Object window,
-  }) => 'Reemparejado: ${pct}% (ventana: ${window})';
-  @override
-  String get audiobook_rematch_search_window => 'Ventana de búsqueda';
-  @override
-  String get audiobook_rematch_similarity_threshold => 'Umbral de similitud';
-  @override
-  String get audiobook_rematch_threshold_hint =>
-      'Similitud mínima para emparejamiento difuso (coeficiente de Dice). Reduce para tolerar más diferencias de texto, pero un valor demasiado bajo causa coincidencias falsas.';
-  @override
-  String get audiobook_rematch_window_hint =>
-      'Número de caracteres a buscar hacia adelante por marca en el texto. Ajusta si la tasa de aciertos es baja; demasiado grande puede desviar el cursor con marcas cortas y ruidosas.';
-  @override
-  String get saved_tags => 'Etiquetas guardadas.';
-  @override
-  String get scan_non_japanese_text => 'Escanear texto no japonés';
-  @override
-  String get scan_non_japanese_text_hint =>
-      'Cuando está apagado, la selección se detiene en caracteres no japoneses';
-  @override
-  String get search => 'Buscar';
-  @override
-  String get search_ellipsis => 'Buscar...';
-  @override
-  String get searching_in_progress => 'Buscando ';
-  @override
-  String get section_advanced_colors => 'Avanzado';
-  @override
-  String get section_advanced_typography => 'Avanzado';
-  @override
-  String get section_audiobook => 'Audiolibro';
-  @override
-  String get section_audiobook_lyrics => 'Audiolibro y letras';
-  @override
-  String get section_epub => 'Biblioteca EPUB';
-  @override
-  String get section_floating_lyric => 'Subtítulo flotante';
-  @override
-  String get section_interface => 'Interfaz';
-  @override
-  String get section_layout => 'Diseño y visualización';
-  @override
-  String get section_navigation => 'Navegación';
-  @override
-  String get section_page_turn_direction => 'Dirección de paso de página';
-  @override
-  String get section_reader_colors => 'Colores del lector';
-  @override
-  String get section_system_theme => 'Color del tema del sistema';
-  @override
-  String get section_typography => 'Tipografía';
-  @override
-  String get section_update => 'Configuración de actualizaciones';
-  @override
-  String get section_video_danmaku => 'Danmaku';
-  @override
-  String get section_video_library => 'Biblioteca';
-  @override
-  String get section_video_playback => 'Reproducción';
-  @override
-  String get section_video_subtitles => 'Subtítulos';
-  @override
-  String get seed_color => 'Color base';
-  @override
-  String get seed_color_desc =>
-      'Genera todos los colores predeterminados a continuación';
-  @override
-  String get selection_color => 'Color de selección';
-  @override
-  String get selection_color_desc =>
-      'Resaltado de selección de texto del lector';
-  @override
-  String get send => 'Enviar';
-  @override
-  String get series => 'Series';
-  @override
-  String get series_created => 'Serie creada';
-  @override
-  String get series_default_name => 'Nueva serie';
-  @override
-  String series_item_count({required Object n}) => '${n} elementos';
-  @override
-  String get series_name_hint => 'Nombre de la serie';
-  @override
-  String get server_address => 'Dirección del servidor';
-  @override
-  String get settings => 'Configuración';
-  @override
-  String get settings_check_update_now => 'Buscar actualizaciones';
-  @override
-  String get settings_destination_appearance => 'Apariencia';
-  @override
-  String get settings_destination_card_creation => 'Creación de tarjetas';
-  @override
-  String get settings_destination_diagnostics => 'Diagnóstico';
-  @override
-  String get settings_destination_interconnect => 'Fushi Interconnect';
-  @override
-  String get settings_destination_listening => 'Escucha';
-  @override
-  String get settings_destination_lookup => 'Búsqueda';
-  @override
-  String get settings_destination_profiles => 'Esquemas de configuración';
-  @override
-  String get settings_destination_reading => 'Lectura';
-  @override
-  String get settings_destination_reading_controls => 'Controles de lectura';
-  @override
-  String get settings_destination_sync_backup =>
-      'Sincronización y copia de seguridad';
-  @override
-  String get settings_destination_system => 'Sistema';
-  @override
-  String get settings_destination_system_summary =>
-      'General, actualizaciones y diagnóstico';
-  @override
-  String get settings_destination_tracking => 'Seguimiento de medios';
-  @override
-  String get settings_destination_video => 'Vídeo';
-  @override
-  String get settings_search_hint => 'Buscar ajustes';
-  @override
-  String get settings_search_no_results => 'Sin ajustes coincidentes';
-  @override
-  String get settings_secret_hide => 'Ocultar valor';
-  @override
-  String get settings_secret_show => 'Mostrar valor';
-  @override
-  String get settings_section_app_shell => 'Aplicación';
-  @override
-  String get settings_section_data_storage =>
-      'Ubicación de almacenamiento de datos';
-  @override
-  String get settings_section_gal_hook_overlay =>
-      'Superposición de subtítulos de galgame';
-  @override
-  String get settings_section_general => 'General';
-  @override
-  String get settings_section_lookup_audio =>
-      'Pronunciación y retroalimentación';
-  @override
-  String get settings_section_lookup_content => 'Contenido de la entrada';
-  @override
-  String get settings_section_lookup_integrations => 'Integraciones externas';
-  @override
-  String get settings_section_lookup_popup_window => 'Ventana emergente';
-  @override
-  String get settings_section_lookup_trigger => 'Activación de búsqueda';
-  @override
-  String get settings_section_page_turn_input => 'Paso de página e interacción';
-  @override
-  String get settings_section_reader_chrome => 'Interfaz del lector';
-  @override
-  String get settings_section_update_channel => 'Canal de actualización';
-  @override
-  String get settings_view_changelog => 'Ver registro de cambios';
-  @override
-  String get share => 'Compartir';
-  @override
-  String get share_theme => 'Compartir tema';
-  @override
-  String get shortcut_action_audiobook_next_sentence => 'Frase siguiente';
-  @override
-  String get shortcut_action_audiobook_play_pause => 'Reproducir / Pausar';
-  @override
-  String get shortcut_action_audiobook_prev_sentence => 'Frase anterior';
-  @override
-  String get shortcut_action_audiobook_seek_clicked =>
-      'Saltar el audio a la frase pulsada';
-  @override
-  String get shortcut_action_dpad_down => 'Cruceta Abajo';
-  @override
-  String get shortcut_action_dpad_left => 'Cruceta Izquierda';
-  @override
-  String get shortcut_action_dpad_right => 'Cruceta Derecha';
-  @override
-  String get shortcut_action_dpad_up => 'Cruceta Arriba';
-  @override
-  String get shortcut_action_global_back => 'Volver';
-  @override
-  String get shortcut_action_global_external_lookup =>
-      'App-external lookup hotkey';
-  @override
-  String get shortcut_action_global_scroll_page_down =>
-      'Desplazar una pantalla hacia abajo';
-  @override
-  String get shortcut_action_global_scroll_page_up =>
-      'Desplazar una pantalla hacia arriba';
-  @override
-  String get shortcut_action_global_toggle_fullscreen =>
-      'Alternar pantalla completa';
-  @override
-  String get shortcut_action_home_focus_search => 'Enfocar búsqueda';
-  @override
-  String get shortcut_action_home_tab_books => 'Pestaña de libros';
-  @override
-  String get shortcut_action_home_tab_dict => 'Pestaña de diccionario';
-  @override
-  String get shortcut_action_home_tab_next => 'Pestaña siguiente';
-  @override
-  String get shortcut_action_home_tab_prev => 'Pestaña anterior';
-  @override
-  String get shortcut_action_home_tab_settings => 'Pestaña de ajustes';
-  @override
-  String get shortcut_action_popup_next_entry => 'Siguiente entrada de palabra';
-  @override
-  String get shortcut_action_popup_prev_entry => 'Entrada de palabra anterior';
-  @override
-  String get shortcut_action_reader_create_card_from_popup =>
-      'Crear tarjeta desde la ventana';
-  @override
-  String get shortcut_action_reader_dismiss_dict => 'Cerrar diccionario';
-  @override
-  String get shortcut_action_reader_enter_caret => 'Activar cursor de búsqueda';
-  @override
-  String get shortcut_action_reader_lookup_at_cursor =>
-      'Consultar / activar cursor';
-  @override
-  String get shortcut_action_reader_open_menu => 'Open Settings Menu';
-  @override
-  String get shortcut_action_reader_open_navigation => 'Open Navigation';
-  @override
-  String get shortcut_action_reader_page_backward => 'Página anterior';
-  @override
-  String get shortcut_action_reader_page_forward => 'Página siguiente';
-  @override
-  String get shortcut_action_reader_shift_lookup => 'Consulta con Shift';
-  @override
-  String get shortcut_action_reader_toggle_chrome =>
-      'Mostrar/ocultar controles';
-  @override
-  String get shortcut_action_reader_toggle_furigana =>
-      'Mostrar/ocultar furigana';
-  @override
-  String get shortcut_action_video_align_subtitle_to_next =>
-      'Alinear siguiente subtítulo al ahora';
-  @override
-  String get shortcut_action_video_align_subtitle_to_prev =>
-      'Alinear subtítulo anterior al ahora';
-  @override
-  String get shortcut_action_video_cycle_secondary_subtitle_obscure =>
-      'Cycle Secondary Subtitle Obscure';
-  @override
-  String get shortcut_action_video_cycle_subtitle_obscure =>
-      'Cycle Subtitle Obscure Mode';
-  @override
-  String get shortcut_action_video_next_chapter => 'Capítulo siguiente';
-  @override
-  String get shortcut_action_video_next_frame => 'Fotograma siguiente';
-  @override
-  String get shortcut_action_video_next_subtitle => 'Subtítulo siguiente';
-  @override
-  String get shortcut_action_video_open_subtitle_align =>
-      'Abrir alineación de subtítulos con onda';
-  @override
-  String get shortcut_action_video_pause => 'Pausar';
-  @override
-  String get shortcut_action_video_play => 'Reproducir';
-  @override
-  String get shortcut_action_video_previous_chapter => 'Capítulo anterior';
-  @override
-  String get shortcut_action_video_previous_frame => 'Fotograma anterior';
-  @override
-  String get shortcut_action_video_previous_subtitle => 'Subtítulo anterior';
-  @override
-  String get shortcut_action_video_replay_current_subtitle =>
-      'Repetir el subtítulo actual';
-  @override
-  String get shortcut_action_video_replay_previous_subtitle =>
-      'Repetir el subtítulo anterior';
-  @override
-  String get shortcut_action_video_reset_speed => 'Restablecer velocidad';
-  @override
-  String get shortcut_action_video_screenshot => 'Captura de pantalla';
-  @override
-  String get shortcut_action_video_seek_backward => 'Retroceder';
-  @override
-  String get shortcut_action_video_seek_forward => 'Avanzar';
-  @override
-  String get shortcut_action_video_speed_down => 'Reducir velocidad';
-  @override
-  String get shortcut_action_video_speed_up => 'Acelerar';
-  @override
-  String get shortcut_action_video_subtitle_delay_decrease =>
-      'Retraso de subtítulos −';
-  @override
-  String get shortcut_action_video_subtitle_delay_increase =>
-      'Retraso de subtítulos +';
-  @override
-  String get shortcut_action_video_toggle_favorite_sentence =>
-      'Añadir la frase actual a favoritos';
-  @override
-  String get shortcut_action_video_toggle_fullscreen =>
-      'Alternar pantalla completa';
-  @override
-  String get shortcut_action_video_toggle_immersive_lock =>
-      'Alternar bloqueo inmersivo';
-  @override
-  String get shortcut_action_video_toggle_mute => 'Alternar silencio';
-  @override
-  String get shortcut_action_video_toggle_play_pause => 'Reproducir / Pausar';
-  @override
-  String get shortcut_action_video_toggle_secondary_subtitle_hide =>
-      'Toggle Hide Secondary Subtitle';
-  @override
-  String get shortcut_action_video_toggle_shader_compare =>
-      'Alternar comparación de shaders';
-  @override
-  String get shortcut_action_video_toggle_subtitle_blur =>
-      'Alternar difuminado de subtítulos';
-  @override
-  String get shortcut_action_video_toggle_subtitle_hide =>
-      'Toggle Hide Subtitles';
-  @override
-  String get shortcut_action_video_toggle_subtitle_list =>
-      'Alternar lista de subtítulos';
-  @override
-  String get shortcut_action_video_volume_down => 'Bajar volumen';
-  @override
-  String get shortcut_action_video_volume_up => 'Subir volumen';
-  @override
-  String get shortcut_assign_pick_action => 'Asignar a acción…';
-  @override
-  String get shortcut_clear => 'Borrar';
-  @override
-  String shortcut_conflict({required Object s}) => 'Ya usado por: ${s}';
-  @override
-  String shortcut_conflict_replace_confirm({required Object s}) =>
-      'Este atajo ya lo usa ${s}. ¿Moverlo a esta acción?';
-  @override
-  String get shortcut_gamepad => 'Mando';
-  @override
-  String get shortcut_gamepad_brand_label => 'Estilo de botones del gamepad';
-  @override
-  String get shortcut_gamepad_brand_playstation => 'PlayStation';
-  @override
-  String get shortcut_gamepad_brand_switch => 'Nintendo Switch';
-  @override
-  String get shortcut_gamepad_brand_xbox => 'Xbox';
-  @override
-  String get shortcut_gamepad_pick_list => 'Elegir de la lista';
-  @override
-  String get shortcut_gamepad_unavailable_hint =>
-      'Componente GameInput no detectado — el soporte de gamepad no está disponible. Instale los Windows Gaming Services para habilitar soporte de controles.';
-  @override
-  String get shortcut_keyboard => 'Teclado';
-  @override
-  String get shortcut_mouse_back => 'Botón atrás';
-  @override
-  String get shortcut_mouse_button => 'Botón del ratón';
-  @override
-  String get shortcut_mouse_forward => 'Botón adelante';
-  @override
-  String get shortcut_mouse_left => 'Clic izquierdo';
-  @override
-  String get shortcut_mouse_middle => 'Clic central';
-  @override
-  String get shortcut_mouse_right => 'Clic derecho';
-  @override
-  String get shortcut_press_gamepad => 'Presione un botón del gamepad...';
-  @override
-  String get shortcut_press_key => 'Pulsa una combinación de teclas...';
-  @override
-  String get shortcut_press_mouse_button => 'Presione un botón del ratón...';
-  @override
-  String get shortcut_press_wheel =>
-      'Mantenga una tecla modificadora y desplace aquí';
-  @override
-  String get shortcut_reset_confirm =>
-      '¿Restablecer todos los atajos de esta sección a los valores predeterminados?';
-  @override
-  String get shortcut_reset_defaults => 'Restablecer valores predeterminados';
-  @override
-  String get shortcut_scope_audiobook => 'Audiolibro';
-  @override
-  String get shortcut_scope_dictionary_popup => 'Popup del diccionario';
-  @override
-  String get shortcut_scope_dictionary_popup_note =>
-      'Funciona cuando el cursor está sobre un popup del diccionario';
-  @override
-  String get shortcut_scope_gamepad => 'Mando';
-  @override
-  String get shortcut_scope_global => 'Global';
-  @override
-  String get shortcut_scope_global_external => 'Global (fuera de la app)';
-  @override
-  String get shortcut_scope_global_external_mobile_note =>
-      'Triggered by the system (text selection menu, share, floating ball); the OS does not allow apps to remap this hotkey.';
-  @override
-  String get shortcut_scope_home => 'Inicio';
-  @override
-  String get shortcut_scope_reader => 'Lector';
-  @override
-  String get shortcut_scope_video => 'Vídeo';
-  @override
-  String get shortcut_settings_title => 'Atajos de teclado';
-  @override
-  String get shortcut_stop_capture => 'Detener';
-  @override
-  String get shortcut_tap_to_assign => 'Sin asignar · toque para asignar';
-  @override
-  String get shortcut_view_list => 'Vista de lista';
-  @override
-  String get shortcut_view_visual => 'Disposición del control';
-  @override
-  String get shortcut_wheel => 'Rueda del ratón';
-  @override
-  String get shortcut_wheel_down => 'Rueda abajo';
-  @override
-  String get shortcut_wheel_needs_modifier =>
-      'La rueda sola desplaza el popup — mantenga Alt / Ctrl / Shift mientras desplaza';
-  @override
-  String get shortcut_wheel_up => 'Rueda arriba';
-  @override
-  String get show_bottom_bar_cue => 'Mostrar oración actual';
-  @override
-  String get show_expression_tags => 'Mostrar etiquetas de expresión';
-  @override
-  String get show_floating_lyric => 'Letra flotante superpuesta';
-  @override
-  String get show_media_notification => 'Mostrar notificación multimedia';
-  @override
-  String get show_options => 'Mostrar opciones';
-  @override
-  String get show_top_progress_bar => 'Indicador de progreso';
-  @override
-  String get skip_action => 'Acción de salto';
-  @override
-  String skip_action_seconds({required Object n}) => '${n} segundos';
-  @override
-  String get skip_action_sentence => '1 frase';
-  @override
-  String get sort_by => 'Ordenar';
-  @override
-  String get sort_imported => 'Fecha de importación';
-  @override
-  String get sort_recent_read => 'Leído recientemente';
-  @override
-  String get sort_recent_watched => 'Visto recientemente';
-  @override
-  String get sort_title => 'Nombre';
-  @override
-  String get source_description_epub =>
-      'Lectura de EPUB y búsqueda en diccionario';
-  @override
-  String get source_name_bookshelf => 'Estantería';
-  @override
-  String get spread_auto => 'Automático';
-  @override
-  String get spread_direction => 'Dirección de extensión';
-  @override
-  String get spread_direction_ltr => 'De izquierda a derecha';
-  @override
-  String get spread_direction_rtl => 'De derecha a izquierda';
-  @override
-  String get spread_mode => 'Modo de extensión';
-  @override
-  String get spread_off => 'Desactivado';
-  @override
-  String get spread_on => 'Activado';
-  @override
-  String get srt_audio_unresolved =>
-      'Archivo de audio no encontrado — por favor vuelve a adjuntarlo';
-  @override
-  String get srt_books_section => 'Audiolibros con subtítulos';
-  @override
-  String srt_delete_confirm({required Object title}) =>
-      '?Eliminar 『${title}』? Esta acción no se puede deshacer.';
-  @override
-  String get srt_delete_title => 'Eliminar libro de subtítulos';
-  @override
-  String get srt_epub_not_ready => 'Libro no preparado — por favor reimporta';
-  @override
-  String get srt_import => 'Importar libro';
-  @override
-  String get srt_import_audio_needs_subtitle =>
-      'El audio debe emparejarse con subtítulos. Para adjuntar audio a un EPUB existente, mantén pulsado el libro en la estantería.';
-  @override
-  String get srt_import_author_hint => 'Autor (opcional)';
-  @override
-  String get srt_import_error => 'Error en la importación';
-  @override
-  String srt_import_files_selected({required Object n}) =>
-      '${n} archivos seleccionados';
-  @override
-  String get srt_import_hint_epub_or_srt =>
-      'Elige un archivo EPUB o de subtítulos para importar.';
-  @override
-  String get srt_import_missing_input =>
-      'Selecciona al menos un EPUB o un archivo de subtítulos';
-  @override
-  String get srt_import_missing_title => 'Introduce un título para el libro';
-  @override
-  String get srt_import_pick_audio_dir => 'Elegir directorio de audio';
-  @override
-  String get srt_import_pick_audio_files => 'Elegir archivos de audio';
-  @override
-  String get srt_import_pick_cover => 'Elegir imagen de portada';
-  @override
-  String get srt_import_pick_epub => 'Elegir EPUB';
-  @override
-  String get srt_import_pick_subtitle_files => 'Elegir archivos de subtítulos';
-  @override
-  String get srt_import_success => 'Libro importado';
-  @override
-  String get srt_import_title_hint => 'Título del libro';
-  @override
-  String get startup_default_dictionary_tab => 'Abrir la consulta al iniciar';
-  @override
-  String get startup_default_dictionary_tab_hint =>
-      'Inicia la pantalla principal en la pestaña de consulta en lugar del valor predeterminado actual.';
-  @override
-  String get stash => 'Guardado rápido';
-  @override
-  String get stash_added_multiple =>
-      'Se han añadido varios elementos al Guardado rápido.';
-  @override
-  String stash_added_single({required Object term}) =>
-      '『${term}』se ha añadido al Guardado rápido.';
-  @override
-  String get stash_clear_description =>
-      'Se eliminará todo el contenido. ?Estás seguro?';
-  @override
-  String stash_clear_single({required Object term}) =>
-      '『${term}』 se ha eliminado del Guardado rápido.';
-  @override
-  String get stash_clear_title => 'Vaciar Guardado rápido';
-  @override
-  String get stash_nothing_to_pop =>
-      'No hay elementos para sacar del Guardado rápido.';
-  @override
-  String get stash_placeholder => 'No hay elementos en el Guardado rápido';
-  @override
-  String get stat_all_time => 'Todo el tiempo';
-  @override
-  String get stat_bookshelf_compare => 'Estantería';
-  @override
-  String get stat_clear_all => 'Borrar estadísticas';
-  @override
-  String get stat_clear_all_confirm => 'Borrar';
-  @override
-  String get stat_clear_all_reading_message =>
-      '¿Borrar todo el tiempo de lectura, conteos de caracteres y conteos de búsquedas/tarjetas? Sus palabras guardadas, oraciones y tarjetas creadas se conservan. Esto no se puede deshacer.';
-  @override
-  String get stat_clear_all_title => 'Borrar todas las estadísticas';
-  @override
-  String get stat_clear_all_video_message =>
-      '¿Borrar todo el tiempo de visualización, conteos de caracteres de subtítulos y conteos de búsquedas/tarjetas? Sus palabras guardadas, oraciones y tarjetas creadas se conservan. Esto no se puede deshacer.';
-  @override
-  String get stat_daily_average => 'Promedio diario';
-  @override
-  String get stat_delete_message =>
-      '¿Eliminar el tiempo, conteo de caracteres y estadísticas de búsquedas/tarjetas de este elemento? Sus palabras y oraciones guardadas no se verán afectadas.';
-  @override
-  String get stat_delete_title => 'Eliminar estadísticas';
-  @override
-  String get stat_fastest_day => 'Fastest Day';
-  @override
-  String get stat_favorited => 'Favoritos';
-  @override
-  String get stat_favorited_sentence => 'Frases favoritas';
-  @override
-  String stat_format_chars({required Object n}) => '${n} caracteres';
-  @override
-  String stat_format_chars_wan({required Object n}) => '${n}万 caracteres';
-  @override
-  String stat_format_days({required Object n}) => '${n} días';
-  @override
-  String stat_format_hours_minutes({required Object h, required Object m}) =>
-      '${h} h ${m} min';
-  @override
-  String stat_format_minutes({required Object n}) => '${n} min';
-  @override
-  String get stat_goal => 'Daily Goal';
-  @override
-  String get stat_goal_daily => 'Daily Goal';
-  @override
-  String get stat_goal_presets => 'Presets';
-  @override
-  String stat_goal_progress({required Object read, required Object goal}) =>
-      '${read} / ${goal} caracteres';
-  @override
-  String get stat_goal_reached => 'Meta alcanzada';
-  @override
-  String stat_goal_recent_average({required Object n}) =>
-      'Últimos 7 días: ${n} caracteres/día en promedio';
-  @override
-  String get stat_goal_set => 'Set Goal';
-  @override
-  String get stat_goal_unit_chars => 'caracteres';
-  @override
-  String get stat_goal_weekly => 'Weekly Goal';
-  @override
-  String get stat_last_30_days => 'últimos 30 días';
-  @override
-  String get stat_lookup => 'Búsquedas';
-  @override
-  String get stat_metric_chars => 'Caracteres';
-  @override
-  String get stat_metric_speed => 'Velocidad';
-  @override
-  String get stat_metric_time => 'Tiempo';
-  @override
-  String get stat_mined => 'Tarjetas creadas';
-  @override
-  String get stat_no_data => 'Aún no hay datos de lectura';
-  @override
-  String get stat_range_and_trend => 'Range & Trend';
-  @override
-  String get stat_recent_active => 'Días activos (7d)';
-  @override
-  String get stat_refresh => 'Actualizar';
-  @override
-  String get stat_slowest_day => 'Slowest Day';
-  @override
-  String get stat_sort_by_chars => 'Por caracteres';
-  @override
-  String get stat_sort_by_speed => 'Por velocidad';
-  @override
-  String get stat_sort_by_time => 'Por tiempo';
-  @override
-  String get stat_speed_anomaly => 'Anomalía';
-  @override
-  String get stat_speed_avg => 'Media móvil';
-  @override
-  String stat_speed_cph({required Object n}) => '${n} caracteres/h';
-  @override
-  String get stat_speed_summary => 'Speed Summary';
-  @override
-  String get stat_streak => 'Racha';
-  @override
-  String get stat_this_month => 'Este mes';
-  @override
-  String get stat_this_week => 'Esta semana';
-  @override
-  String get stat_today => 'Hoy';
-  @override
-  String get stat_today_hourly => 'Hoy por hora';
-  @override
-  String get stat_trend_daily => 'Diaria';
-  @override
-  String get stat_trend_monthly => 'Mensual';
-  @override
-  String get stat_trend_weekly => 'Semanal';
-  @override
-  String get stat_typical_day => 'Typical Day';
-  @override
-  String get stat_vs_prev => 'vs 14d ant.';
-  @override
-  String get stat_weighted_avg_speed => 'Weighted Avg';
-  @override
-  String get stop => 'Detener';
-  @override
-  String get storage_permissions =>
-      'Por favor concede los siguientes permisos para exportar a AnkiDroid.';
-  @override
-  String get stream => 'Transmisión';
-  @override
-  String get swipe_page_turn_sensitivity =>
-      'Sensibilidad de pasar página al deslizar';
-  @override
-  String get sync_account => 'Cuenta';
-  @override
-  String get sync_audiobook => 'Sincronizar posición del audiolibro';
-  @override
-  String get sync_audiobook_files => 'Sincronizar archivos de audiolibros';
-  @override
-  String get sync_audiobook_files_warning =>
-      'El audio y los subtítulos pueden ser grandes.';
-  @override
-  String sync_auth_error({required Object message}) =>
-      'Error de autenticación: ${message}';
-  @override
-  String get sync_auto_sync => 'Sincronización automática';
-  @override
-  String get sync_backend => 'Backend de almacenamiento';
-  @override
-  String get sync_backend_dropbox => 'Dropbox';
-  @override
-  String get sync_backend_ftp => 'FTP';
-  @override
-  String get sync_backend_google_drive => 'Google Drive';
-  @override
-  String get sync_backend_fushi_server => 'Fushi Interconnect';
-  @override
-  String get sync_backend_onedrive => 'OneDrive';
-  @override
-  String get sync_backend_sftp => 'SFTP';
-  @override
-  String get sync_backend_webdav => 'WebDAV';
-  @override
-  String get sync_checking_account => 'Verificando cuenta…';
-  @override
-  String get sync_client_connected => 'Conectado';
-  @override
-  String get sync_client_token => 'Token de acceso del par';
-  @override
-  String get sync_client_token_manual => 'Introducir token manualmente';
-  @override
-  String get sync_compare => 'Comparar datos';
-  @override
-  String get sync_compare_all_books => 'Todos los libros';
-  @override
-  String get sync_compare_all_local => 'Todo → Local';
-  @override
-  String get sync_compare_all_remote => 'Todo → Remoto';
-  @override
-  String get sync_compare_all_skip => 'Todo → Omitir';
-  @override
-  String sync_compare_applied({required Object count}) =>
-      'Se aplicaron ${count} cambios';
-  @override
-  String sync_compare_apply({required Object count}) =>
-      'Sincronizar ahora (${count})';
-  @override
-  String get sync_compare_close => 'Cerrar';
-  @override
-  String get sync_compare_conflicts => 'Conflictos';
-  @override
-  String get sync_compare_days => 'días';
-  @override
-  String get sync_compare_delete_audiobook =>
-      'Eliminar audiolibro en el remoto';
-  @override
-  String get sync_compare_delete_book => 'Eliminar libro en el remoto';
-  @override
-  String sync_compare_delete_confirm({required Object name}) =>
-      '¿Eliminar "${name}" del remoto? Los datos locales se conservan. Esto no se puede deshacer.';
-  @override
-  String get sync_compare_delete_dict => 'Eliminar diccionario en el remoto';
-  @override
-  String get sync_compare_deleted => 'Eliminado del remoto';
-  @override
-  String get sync_compare_dictionaries => 'Diccionarios';
-  @override
-  String get sync_compare_download => 'Descargar';
-  @override
-  String get sync_compare_empty => 'No se encontraron libros';
-  @override
-  String get sync_compare_local => 'Local';
-  @override
-  String get sync_compare_no_content =>
-      'Solo datos en la nube: no hay libro para descargar';
-  @override
-  String get sync_compare_no_data => 'Sin datos';
-  @override
-  String get sync_compare_remote => 'Remoto';
-  @override
-  String get sync_compare_select_all => 'Seleccionar todo';
-  @override
-  String get sync_compare_skip => 'Omitir';
-  @override
-  String get sync_compare_title => 'Local vs. remoto';
-  @override
-  String get sync_compare_unavailable => 'Set up sync first';
-  @override
-  String get sync_compare_use_local => 'Local';
-  @override
-  String get sync_compare_use_remote => 'Remoto';
-  @override
-  String get sync_connection_failed => 'Error de conexión';
-  @override
-  String get sync_connection_success => 'Conexión correcta';
-  @override
-  String get sync_content => 'Sincronizar archivos de libros';
-  @override
-  String get sync_content_warning =>
-      'Los archivos grandes consumirán almacenamiento y datos';
-  @override
-  String get sync_err_auth_expired =>
-      'La sesión ha caducado: inicia sesión de nuevo.';
-  @override
-  String get sync_err_invalid_client =>
-      'Las credenciales del cliente no son válidas para esta versión: actualiza la app.';
-  @override
-  String get sync_err_network =>
-      'No se puede conectar con el servidor: revisa tu red o los ajustes de proxy.';
-  @override
-  String get sync_err_not_configured =>
-      'Las credenciales de sincronización de Google no están configuradas en esta versión.';
-  @override
-  String get sync_err_quota =>
-      'El almacenamiento en la nube está lleno (cuota alcanzada).';
-  @override
-  String get sync_err_scope_upgrade =>
-      'Los permisos de sincronización cambiaron — inicie sesión en Google de nuevo para continuar sincronizando.';
-  @override
-  String get sync_err_timeout =>
-      'Se agotó el tiempo de conexión: el servidor no respondió a tiempo.';
-  @override
-  String sync_error({required Object message}) =>
-      'Error de sincronización: ${message}';
-  @override
-  String get sync_exit_warning =>
-      'La sincronización aún está en curso. Salir ahora puede provocar pérdida de datos.';
-  @override
-  String get sync_exit_warning_title => 'Sincronización en curso';
-  @override
-  String get sync_host => 'Servidor';
-  @override
-  String get sync_lan_discovery => 'Dispositivos en la red local';
-  @override
-  String get sync_lan_no_devices => 'No se encontraron dispositivos';
-  @override
-  String get sync_lan_scan_failed =>
-      'Error al buscar: revisa los permisos de red o el firewall.';
-  @override
-  String get sync_not_signed_in => 'No conectado';
-  @override
-  String get sync_now => 'Sincronizar ahora';
-  @override
-  String sync_now_audio_in({required Object count}) => '↓${count} audiolibros';
-  @override
-  String sync_now_audio_out({required Object count}) => '↑${count} audiolibros';
-  @override
-  String sync_now_books_in({required Object count}) => '↓${count} libros';
-  @override
-  String get sync_now_busy => 'Ya hay una sincronización en curso';
-  @override
-  String sync_now_dicts_in({required Object count}) => '↓${count} diccionarios';
-  @override
-  String sync_now_dicts_out({required Object count}) =>
-      '↑${count} diccionarios';
-  @override
-  String sync_now_done({required Object detail}) => 'Sincronizado · ${detail}';
-  @override
-  String sync_now_failed_suffix({required Object count}) =>
-      ' · ${count} fallidos';
-  @override
-  String get sync_now_hint =>
-      'Ejecutar ahora una sincronización bidireccional completa con la nube';
-  @override
-  String sync_now_local_audio_in({required Object count}) =>
-      '↓${count} fuentes de audio';
-  @override
-  String sync_now_local_audio_out({required Object count}) =>
-      '↑${count} fuentes de audio';
-  @override
-  String get sync_now_no_changes => 'sin cambios';
-  @override
-  String get sync_pair_allow => 'Permitir';
-  @override
-  String sync_pair_confirm_identity_body({required Object device}) =>
-      'Se está emparejando con ${device}. Confirme que es el dispositivo que espera antes de continuar.';
-  @override
-  String get sync_pair_confirm_identity_title => 'Confirmar dispositivo';
-  @override
-  String get sync_pair_continue => 'Continuar';
-  @override
-  String get sync_pair_denied =>
-      'El otro dispositivo rechazó el emparejamiento';
-  @override
-  String get sync_pair_deny => 'Denegar';
-  @override
-  String get sync_pair_enter_pin_body =>
-      'Introduzca el PIN de 6 dígitos que se muestra en el otro dispositivo.';
-  @override
-  String get sync_pair_enter_pin_title => 'Introducir PIN';
-  @override
-  String get sync_pair_failed => 'Error de emparejamiento';
-  @override
-  String get sync_pair_fingerprint_changed =>
-      'Certificado cambiado — emparejamiento abortado por seguridad (posible intercepción).';
-  @override
-  String get sync_pair_fingerprint_label => 'Huella del certificado';
-  @override
-  String get sync_pair_not_fushi =>
-      'No se encontró dispositivo Fushi en esta dirección. La dirección fue guardada.';
-  @override
-  String get sync_pair_pairing => 'Emparejando…';
-  @override
-  String get sync_pair_pin_label =>
-      'Introduzca este PIN en el otro dispositivo';
-  @override
-  String get sync_pair_pin_waiting =>
-      'Esperando que el otro dispositivo introduzca este PIN…';
-  @override
-  String get sync_pair_pin_wrong => 'PIN incorrecto — inténtelo de nuevo';
-  @override
-  String get sync_pair_repair => 'Emparejar de nuevo';
-  @override
-  String get sync_pair_request_body =>
-      'Un dispositivo solicita emparejarse. ¿Permitir que se sincronice con este dispositivo?';
-  @override
-  String get sync_pair_request_title => 'Solicitud de emparejamiento';
-  @override
-  String get sync_pair_success => 'Emparejado: token rellenado';
-  @override
-  String get sync_pair_unavailable =>
-      'El otro dispositivo no está listo o tiene una versión anterior. Actualízalo y activa la sincronización, luego inténtalo de nuevo.';
-  @override
-  String get sync_pair_unknown_device => 'Dispositivo desconocido';
-  @override
-  String get sync_paired_peer_remove => 'Eliminar';
-  @override
-  String get sync_paired_peer_removed => 'Dispositivo emparejado eliminado';
-  @override
-  String get sync_paired_peer_unknown => 'Dispositivo desconocido';
-  @override
-  String get sync_paired_peers_empty => 'Aún no hay dispositivos emparejados';
-  @override
-  String get sync_paired_peers_title => 'Dispositivos emparejados';
-  @override
-  String get sync_password => 'Contraseña';
-  @override
-  String get sync_port => 'Puerto';
-  @override
-  String get sync_private_key => 'Clave privada';
-  @override
-  String get sync_progress_audiobooks => 'Sincronizando audiolibros';
-  @override
-  String get sync_progress_books => 'Importando libros';
-  @override
-  String get sync_progress_dictionaries => 'Sincronizando diccionarios';
-  @override
-  String get sync_progress_local_audio => 'Sincronizando audio local';
-  @override
-  String get sync_progress_reading => 'Sincronizando datos de lectura';
-  @override
-  String get sync_progress_videos => 'Sincronizando vídeos';
-  @override
-  String get sync_role_locked_by_client =>
-      'Ya conectado a otro dispositivo. Quita la conexión antes de actuar como servidor.';
-  @override
-  String get sync_role_locked_by_server =>
-      'Este dispositivo actúa como servidor. Apaga el servidor antes de conectarte a otros dispositivos.';
-  @override
-  String get sync_section_actions => 'Acciones de sincronización';
-  @override
-  String get sync_section_backup => 'Copia de seguridad local';
-  @override
-  String get sync_section_content => 'Qué sincronizar';
-  @override
-  String get sync_section_host_server =>
-      'Este dispositivo como servidor de sincronización';
-  @override
-  String get sync_section_host_server_footer =>
-      'Permite que otros dispositivos sincronicen desde este dispositivo. Independiente del backend de sincronización anterior.';
-  @override
-  String get sync_section_method => 'Método de sincronización';
-  @override
-  String get sync_server_copy_token => 'Copiar token';
-  @override
-  String get sync_server_enable => 'Activar servidor de sincronización';
-  @override
-  String get sync_server_mode_active =>
-      'Este dispositivo es un servidor de sincronización';
-  @override
-  String get sync_server_mode_clients_drive =>
-      'Los clientes conectados inician la sincronización: aquí no hace falta sincronizar manualmente.';
-  @override
-  String get sync_server_port => 'Puerto del servidor';
-  @override
-  String sync_server_port_in_use({required Object port}) =>
-      'El puerto ${port} ya está en uso: elige otro puerto.';
-  @override
-  String get sync_server_regenerate_token => 'Regenerar token';
-  @override
-  String get sync_server_running => 'Servidor en ejecución';
-  @override
-  String get sync_server_stopped => 'Servidor detenido';
-  @override
-  String get sync_server_tls_enable => 'Cifrado de Interconnect (HTTPS/TLS)';
-  @override
-  String get sync_server_tls_repair_hint =>
-      'Cambiar esto requiere que los dispositivos emparejados se emparejen de nuevo';
-  @override
-  String get sync_server_token => 'Token de acceso';
-  @override
-  String get sync_show_remote_entries => 'Mostrar entradas remotas';
-  @override
-  String get sync_show_remote_entries_warning =>
-      'Muestra libros y vídeos que existen en dispositivos emparejados o la nube como tarjetas de marcador que puede descargar o transmitir.';
-  @override
-  String get sync_sign_in => 'Iniciar sesión';
-  @override
-  String get sync_sign_out => 'Cerrar sesión';
-  @override
-  String get sync_signed_in => 'Conectado';
-  @override
-  String get sync_statistics => 'Sincronizar estadísticas';
-  @override
-  String get sync_summary =>
-      'Nube, P2P por red local y copia de seguridad local';
-  @override
-  String get sync_test_connection => 'Probar conexión';
-  @override
-  String get sync_use_tls => 'Usar TLS';
-  @override
-  String get sync_username => 'Usuario';
-  @override
-  String get sync_video_files => 'Subir archivos de vídeo';
-  @override
-  String get sync_video_files_warning =>
-      'Los archivos de vídeo pueden ser muy grandes.';
-  @override
-  String get sync_webdav_missing_fields => 'Faltan campos';
-  @override
-  String sync_webdav_test_failed({required Object message}) =>
-      'Error de conexión: ${message}';
-  @override
-  String get sync_webdav_url => 'URL del servidor';
-  @override
-  String tag_added_to_book({required Object name}) =>
-      'Etiqueta "${name}" añadida al libro.';
-  @override
-  String tag_added_to_collection({required Object name}) =>
-      'Etiqueta ${name} añadida a la colección.';
-  @override
-  String tag_added_to_video({required Object name}) =>
-      'Etiqueta ${name} añadida al vídeo.';
-  @override
-  String tag_already_on_book({required Object name}) =>
-      'La etiqueta "${name}" ya está en este libro.';
-  @override
-  String tag_already_on_collection({required Object name}) =>
-      'La etiqueta ${name} ya está en esta colección.';
-  @override
-  String tag_book_count({required Object count}) => '${count} libro(s)';
-  @override
-  String get tag_clear_filter => 'Borrar filtro';
-  @override
-  String get tag_color => 'Color';
-  @override
-  String tag_delete_confirm({required Object name}) =>
-      '¿Eliminar etiqueta "${name}"?';
-  @override
-  String get tag_filter_title => 'Filtrar por etiqueta';
-  @override
-  String get tag_label => 'Etiquetas';
-  @override
-  String get tag_manage => 'Gestionar etiquetas';
-  @override
-  String get tag_manage_title => 'Gestionar etiquetas';
-  @override
-  String get tag_name_duplicate => 'Ya existe una etiqueta con este nombre.';
-  @override
-  String get tag_name_empty => 'El nombre de la etiqueta no puede estar vacío.';
-  @override
-  String get tag_name_hint => 'Nombre de la etiqueta';
-  @override
-  String get tag_new => 'Nueva etiqueta';
-  @override
-  String get tag_no_books_for_filter =>
-      'Ningún libro coincide con las etiquetas seleccionadas.';
-  @override
-  String get tag_no_tags_hint => 'Aún no hay etiquetas. Crea una para empezar.';
-  @override
-  String get tag_seed_stars => 'Añadir etiquetas de calificación por estrellas';
-  @override
-  String get tag_seed_stars_added =>
-      'Etiquetas de calificación por estrellas añadidas';
-  @override
-  String get tag_seed_stars_exists =>
-      'Las etiquetas de calificación por estrellas ya existen';
-  @override
-  String get tap_empty_hide_chrome => 'Barra de control flotante';
-  @override
-  String get text_segmentation => 'Segmentación de texto';
-  @override
-  String get texthooker => 'Texthooker';
-  @override
-  String get texthooker_enabled => 'Texthooker (recibir texto)';
-  @override
-  String get texthooker_enabled_hint =>
-      'Conéctate a Textractor/mpv/agente y consulta el texto entrante';
-  @override
-  String get theme_black => 'Negro puro';
-  @override
-  String get theme_code_copied => 'Código de tema copiado al portapapeles';
-  @override
-  String get theme_dark => 'Oscuro profundo';
-  @override
-  String get theme_ecru => 'Crudo';
-  @override
-  String get theme_eyecare => 'Eye Care';
-  @override
-  String get theme_gray => 'Gris oscuro';
-  @override
-  String get theme_light => 'Blanco';
-  @override
-  String get theme_seed_preview_hint =>
-      'Las muestras de abajo previsualizan los colores generados a partir de tu color semilla. Para fijar un color concreto como acento principal, activa el interruptor Principal y elígelo de forma explícita.';
-  @override
-  String get theme_water => 'Azul agua';
-  @override
-  String toc_section({required Object n}) => 'índice (${n})';
-  @override
-  String get top_progress_pos_center => 'Centro';
-  @override
-  String get top_progress_pos_left => 'Arriba-izquierda';
-  @override
-  String get top_progress_pos_right => 'Arriba-derecha';
-  @override
-  String get top_progress_position => 'Posición del progreso';
-  @override
-  String get torrent_upload_intro_body =>
-      'La subida (seeding) está desactivada por defecto. Actívela para compartir contenido descargado de vuelta al enjambre — esto usa su ancho de banda de subida. Puede cambiar esto en cualquier momento en Ajustes.';
-  @override
-  String get torrent_upload_intro_confirm => 'Guardar';
-  @override
-  String get torrent_upload_intro_enable => 'Activar subida / seeding';
-  @override
-  String get torrent_upload_intro_keep_off => 'Mantener apagado';
-  @override
-  String get torrent_upload_intro_title => 'Subida / seeding';
-  @override
-  String get reader_blur_images =>
-      'Difuminar imágenes (protección de spoilers)';
-  @override
-  String get reader_font_size => 'Tamaño de fuente';
-  @override
-  String get reader_font_vpal => 'VPAL (alt. vertical)';
-  @override
-  String get reader_furigana_hide => 'Ocultar';
-  @override
-  String get reader_furigana_mode => 'Furigana';
-  @override
-  String get reader_furigana_mode_hint => '';
-  @override
-  String get reader_furigana_partial => 'Parcial';
-  @override
-  String get reader_furigana_show => 'Mostrar';
-  @override
-  String get reader_furigana_toggle => 'Alternar';
-  @override
-  String get reader_horizontal => 'Horizontal';
-  @override
-  String get reader_line_height => 'Altura de línea';
-  @override
-  String get reader_merge_image_pages =>
-      'Integrar páginas de ilustración en el texto';
-  @override
-  String get reader_merge_image_pages_subtitle =>
-      'Los capítulos independientes de una sola imagen se renderizan en línea en el capítulo de texto adyacente en lugar de en su propia página';
-  @override
-  String get reader_no_books_added => 'No hay libros en la biblioteca';
-  @override
-  String get reader_not_bound_cannot_rematch =>
-      'El audiolibro no está vinculado a un libro, no se puede re-emparejar';
-  @override
-  String get reader_orient_mixed => 'Mixto';
-  @override
-  String get reader_orient_upright => 'Vertical';
-  @override
-  String get reader_page_columns_auto => 'Automático';
-  @override
-  String get reader_paginated => 'Paginado';
-  @override
-  String get reader_paragraph_spacing => 'Espaciado de párrafos';
-  @override
-  String get reader_reader_styles => 'Priorizar estilos del libro';
-  @override
-  String get reader_scroll => 'Desplazamiento';
-  @override
-  String get reader_text_indentation => 'Sangría de párrafo';
-  @override
-  String get reader_text_justify => 'Justificación de texto';
-  @override
-  String get reader_theme => 'Tema';
-  @override
-  String get reader_vert_kerning => 'Interletraje (vertical)';
-  @override
-  String get reader_vert_text_orient => 'Orientación del texto';
-  @override
-  String get reader_vertical => 'Vertical';
-  @override
-  String get reader_view_mode_label => 'Páginas / Desplazamiento';
-  @override
-  String get reader_vn => 'Visual Novel';
-  @override
-  String get reader_writing_direction => 'Dirección de escritura';
-  @override
-  String get undo => 'Deshacer';
-  @override
-  String get unit_milliseconds => 'ms';
-  @override
-  String get unit_pixels => 'px';
-  @override
-  String untitled_book({required Object id}) => 'Libro ${id}';
-  @override
-  String get untitled_chapter => '(Sin título)';
-  @override
-  String get update_already_latest => 'Ya tiene la última versión';
-  @override
-  String get update_auto_install => 'Instalar actualizaciones automáticamente';
-  @override
-  String get update_available => 'Actualización disponible';
-  @override
-  String update_cached_newer({required Object version}) =>
-      'Actualización ${version} disponible (verificando…)';
-  @override
-  String update_cached_up_to_date({required Object version}) =>
-      'En la última versión conocida ${version} (verificando…)';
-  @override
-  String get update_cancel => 'Cancelar';
-  @override
-  String get update_cancelled => 'Descarga cancelada';
-  @override
-  String get update_cancelling => 'Cancelando…';
-  @override
-  String get update_channel_beta => 'Beta';
-  @override
-  String get update_channel_debug => 'Depuración';
-  @override
-  String get update_channel_stable => 'Estable';
-  @override
-  String get update_check_failed => 'Error al buscar actualizaciones';
-  @override
-  String get update_checking_now => 'Buscando actualizaciones…';
-  @override
-  String get update_connecting => 'Conectando…';
-  @override
-  String get update_custom_proxy_auto_hint =>
-      'Leave blank to use environment variables, then the enabled system proxy.';
-  @override
-  String get update_custom_proxy_hint =>
-      'host:puerto, ej. 127.0.0.1:7890 (solo IPv4/host)';
-  @override
-  String get update_custom_proxy_invalid => 'Proxy no válido. Use host:puerto';
-  @override
-  String get update_custom_proxy_label => 'Custom update proxy';
-  @override
-  String get update_debug_channel => 'Canal de actualización de depuración';
-  @override
-  String get update_debug_channel_warning =>
-      'Las compilaciones del canal de depuración pueden ser inestables. Úselas bajo su propio riesgo.';
-  @override
-  String get update_download => 'Descargar';
-  @override
-  String get update_download_failed => 'Error al descargar';
-  @override
-  String get update_download_restarted_from_zero => 'reiniciada desde cero';
-  @override
-  String update_download_resume_status({required Object status}) =>
-      'Reanudación: ${status}';
-  @override
-  String get update_download_resumed => 'reanudada';
-  @override
-  String update_download_size({
-    required Object received,
-    required Object total,
-  }) => 'Descargado: ${received} / ${total}';
-  @override
-  String update_download_source({required Object source}) =>
-      'Fuente: ${source}';
-  @override
-  String update_download_speed({required Object speed}) =>
-      'Velocidad: ${speed}';
-  @override
-  String get update_downloading => 'Descargando actualización…';
-  @override
-  String get update_hide => 'Ocultar';
-  @override
-  String update_install_current_executable({required Object path}) =>
-      'Ejecutable en uso: ${path}';
-  @override
-  String update_install_deletefile_failure({
-    required Object path,
-    required Object code,
-  }) => 'El instalador no pudo reemplazar ${path} (código ${code})';
-  @override
-  String update_install_detected_location({
-    required Object source,
-    required Object path,
-  }) => 'Ubicación de instalación detectada (${source}): ${path}';
-  @override
-  String update_install_failure_summary({required Object summary}) =>
-      'Motivo: ${summary}';
-  @override
-  String get update_install_incomplete_message =>
-      'El instalador se inició, pero Fushi sigue en la versión anterior. Revisa el registro del instalador más abajo.';
-  @override
-  String get update_install_incomplete_title => 'La actualización no terminó';
-  @override
-  String update_install_installer_pid({required Object pid}) =>
-      'PID del instalador: ${pid}';
-  @override
-  String update_install_launch_failed_message({required Object version}) =>
-      'Fushi no pudo iniciar el instalador de la versión ${version}. Revisa la ruta del registro más abajo.';
-  @override
-  String get update_install_launch_failed_title =>
-      'El instalador de la actualización no se inició';
-  @override
-  String update_install_launcher_pid({required Object pid}) =>
-      'PID del lanzador de actualización: ${pid}';
-  @override
-  String update_install_libmpv_holder({
-    required Object pid,
-    required Object path,
-  }) => 'Proceso que retiene libmpv: PID ${pid} - ${path}';
-  @override
-  String get update_install_log_not_observed =>
-      'El registro del instalador no se creó durante la comprobación posterior al inicio.';
-  @override
-  String get update_install_log_observed =>
-      'El registro del instalador se creó durante la comprobación posterior al inicio.';
-  @override
-  String update_install_log_path({required Object path}) =>
-      'Registro del instalador: ${path}';
-  @override
-  String get update_install_manual_close_retry =>
-      'Cierra Fushi según el PID/ruta indicados y vuelve a intentar la actualización o ejecuta el instalador de nuevo.';
-  @override
-  String get update_install_parent_exit_not_observed =>
-      'El lanzador de la actualización no comprobó que Fushi se cerrara antes de iniciar el instalador.';
-  @override
-  String get update_install_parent_exit_observed =>
-      'Fushi se cerró antes de iniciar el instalador.';
-  @override
-  String update_install_path_mismatch({required Object warning}) =>
-      'Directorio de instalación no coincidente: ${warning}';
-  @override
-  String get update_install_permission_cancel => 'Cancelar';
-  @override
-  String get update_install_permission_message =>
-      'Permita que Fushi instale apps en los ajustes del sistema, luego reintente.';
-  @override
-  String get update_install_permission_retry => 'Reintentar instalación';
-  @override
-  String get update_install_permission_title =>
-      'Permitir instalar actualizaciones';
-  @override
-  String get update_install_restart_windows_hint =>
-      'Si los procesos indicados están cerrados pero libmpv-2.dll sigue bloqueado, reinicia Windows e instala de nuevo.';
-  @override
-  String update_install_running_process({
-    required Object pid,
-    required Object path,
-  }) => 'Proceso de Fushi en ejecución: PID ${pid} - ${path}';
-  @override
-  String update_install_success_message({required Object version}) =>
-      'Fushi se actualizó a la versión ${version}.';
-  @override
-  String get update_install_success_title => 'Actualización instalada';
-  @override
-  String update_install_target_dir({required Object path}) =>
-      'Destino de instalación: ${path}';
-  @override
-  String get update_installing => 'Instalando…';
-  @override
-  String get update_mac_install_incomplete_message =>
-      'La actualización no pudo aplicarse, por lo que Fushi sigue en la versión anterior. Puede reintentar la actualización, o descargar la última versión manualmente.';
-  @override
-  String update_message({required Object version}) =>
-      'La versión ${version} está disponible.';
-  @override
-  String update_network_failure({
-    required Object host,
-    required Object reason,
-  }) => 'No se pudo conectar con ${host}: ${reason}';
-  @override
-  String get update_never_remind => 'No recordar de nuevo';
-  @override
-  String get update_skip => 'Omitir';
-  @override
-  String get url => 'URL';
-  @override
-  String get video_audio_track => 'Pista de audio';
-  @override
-  String get video_audio_track_empty => 'Sin pistas de audio intercambiables';
-  @override
-  String video_audio_track_switched({required Object label}) =>
-      'Pista de audio: ${label}';
-  @override
-  String get video_auto_play_next_cancel => 'Cancelar';
-  @override
-  String video_auto_play_next_countdown({required Object seconds}) =>
-      'Siguiente episodio en ${seconds} s';
-  @override
-  String get video_black_flash_notice_action => 'Ver sugerencias';
-  @override
-  String get video_black_flash_notice_dont_show_again => 'No mostrar de nuevo';
-  @override
-  String get video_bottom_next_cue =>
-      'Subtítulo siguiente (avanza un poco si no hay)';
-  @override
-  String get video_bottom_play_pause => 'Reproducir / Pausar';
-  @override
-  String get video_bottom_prev_cue =>
-      'Subtítulo anterior (retrocede un poco si no hay)';
-  @override
-  String get video_bottom_seek_back => 'Atrás 10 s';
-  @override
-  String get video_bottom_seek_back_label => '−10s';
-  @override
-  String get video_bottom_seek_forward => 'Adelante 10 s';
-  @override
-  String get video_bottom_seek_forward_label => '+10s';
-  @override
-  String video_chapter_n({required Object n}) => 'Capítulo ${n}';
-  @override
-  String get video_chapters => 'Capítulos';
-  @override
-  String get video_chapters_empty => 'Sin capítulos';
-  @override
-  String get video_clip_export => 'Exportar fragmento';
-  @override
-  String get video_clip_export_cancelled => 'Exportación de clip cancelada';
-  @override
-  String video_clip_export_failed({required Object reason}) =>
-      'Error al exportar el fragmento: ${reason}';
-  @override
-  String get video_clip_export_ffmpeg_failed => 'ffmpeg falló';
-  @override
-  String get video_clip_export_ffmpeg_unavailable =>
-      'ffmpeg no está disponible';
-  @override
-  String get video_clip_export_input_missing =>
-      'El vídeo de origen no está disponible';
-  @override
-  String get video_clip_export_invalid_range =>
-      'No hay un rango de fragmento válido';
-  @override
-  String get video_clip_export_output_missing =>
-      'No se creó ningún archivo de salida';
-  @override
-  String get video_clip_export_remote_download_required =>
-      'Descarga el vídeo remoto a este dispositivo antes de exportar un fragmento';
-  @override
-  String get video_clip_export_source_changed =>
-      'Cambió la fuente de vídeo; se canceló la exportación del fragmento';
-  @override
-  String get video_clip_export_start => 'Iniciar exportación de fragmento';
-  @override
-  String get video_clip_export_stop => 'Detener y exportar fragmento';
-  @override
-  String video_clip_exported({required Object path}) =>
-      'Fragmento exportado: ${path}';
-  @override
-  String video_clip_exported_with_subtitles({required Object path}) =>
-      'Clip exportado con subtítulos: ${path}';
-  @override
-  String get video_clip_exporting => 'Exportando fragmento…';
-  @override
-  String get video_continue_watching => 'Continue Watching';
-  @override
-  String get video_control_audio_track => 'Pista de audio';
-  @override
-  String get video_control_customize_hint =>
-      'Elige dónde se coloca cada botón en el reproductor, o quítalo.';
-  @override
-  String get video_control_episode_list => 'Lista de episodios';
-  @override
-  String get video_control_favorite_sentence =>
-      'Añadir la frase actual a favoritos';
-  @override
-  String get video_control_fullscreen => 'Pantalla completa';
-  @override
-  String get video_control_next_cue => 'Subtítulo siguiente';
-  @override
-  String get video_control_palette_hint =>
-      'Arrastra un botón a una posición para añadirlo; un botón puede estar en varias posiciones.';
-  @override
-  String get video_control_palette_title => 'Todos los botones';
-  @override
-  String get video_control_play_pause => 'Reproducir/Pausar';
-  @override
-  String get video_control_previous_cue => 'Subtítulo anterior';
-  @override
-  String get video_control_reject_required =>
-      'Los controles obligatorios deben permanecer en el reproductor.';
-  @override
-  String get video_control_reject_unavailable =>
-      'Este control no se puede colocar ahí.';
-  @override
-  String get video_control_reject_volume_bottom =>
-      'El volumen solo puede ir en la barra inferior.';
-  @override
-  String get video_control_remove_from_slot => 'Quitar';
-  @override
-  String get video_control_reset_layout =>
-      'Restablecer la disposición de los botones del reproductor';
-  @override
-  String get video_control_screenshot => 'Captura de pantalla';
-  @override
-  String get video_control_seek_backward => 'Atrás 10 s';
-  @override
-  String get video_control_seek_forward => 'Adelante 10 s';
-  @override
-  String get video_control_settings => 'Ajustes del reproductor';
-  @override
-  String get video_control_slot_bottom_center => 'Barra inferior (centro)';
-  @override
-  String get video_control_slot_bottom_left => 'Barra inferior (izquierda)';
-  @override
-  String get video_control_slot_bottom_right => 'Barra inferior (derecha)';
-  @override
-  String get video_control_slot_drop_hint => 'Arrastra un botón aquí';
-  @override
-  String get video_control_slot_hidden => 'Quitado del reproductor';
-  @override
-  String get video_control_slot_screen_left => 'Lado izquierdo de la pantalla';
-  @override
-  String get video_control_slot_screen_right => 'Lado derecho de la pantalla';
-  @override
-  String get video_control_slot_top_center => 'Barra superior (centro)';
-  @override
-  String get video_control_slot_top_left => 'Barra superior (izquierda)';
-  @override
-  String get video_control_slot_top_right => 'Barra superior (derecha)';
-  @override
-  String get video_control_speed => 'Velocidad';
-  @override
-  String get video_control_subtitle_list => 'Lista de subtítulos';
-  @override
-  String get video_control_subtitle_track => 'Pista de subtítulos';
-  @override
-  String get video_control_title => 'Nombre del vídeo';
-  @override
-  String get video_control_volume => 'Volumen';
-  @override
-  String get video_danmaku_manual_bind_empty =>
-      'Aún no hay danmaku para este episodio.';
-  @override
-  String get video_danmaku_manual_bind_failed =>
-      'No se pudo cargar danmaku para este episodio. Inténtelo más tarde.';
-  @override
-  String get video_danmaku_manual_bind_server_error =>
-      'El servidor de danmaku rechazó la solicitud. Inténtelo más tarde.';
-  @override
-  String get video_danmaku_manual_match_title => 'Emparejar danmaku';
-  @override
-  String get video_danmaku_manual_network_error =>
-      'Error de red. Verifique su conexión e inténtelo de nuevo.';
-  @override
-  String get video_danmaku_manual_no_result =>
-      'No se encontró anime coincidente.';
-  @override
-  String get video_danmaku_manual_search_action => 'Buscar';
-  @override
-  String get video_danmaku_manual_search_hint => 'Título del anime';
-  @override
-  String get video_danmaku_manual_search_prompt =>
-      'Busque en Dandanplay por título de anime, luego elija un episodio.';
-  @override
-  String get video_danmaku_manual_server_error =>
-      'La búsqueda falló. Inténtelo más tarde.';
-  @override
-  String video_delete_confirm({required Object title}) =>
-      '¿Eliminar 『${title}』? Esta acción no se puede deshacer.';
-  @override
-  String get video_delete_title => 'Eliminar vídeo';
-  @override
-  String get video_double_tap_next_cue => 'Línea siguiente';
-  @override
-  String get video_double_tap_prev_cue => 'Línea anterior';
-  @override
-  String get video_drop_audio_unsupported =>
-      'Suelta archivos de subtítulos sobre el vídeo actual. Aquí no se pueden adjuntar archivos de audio.';
-  @override
-  String get video_drop_subtitle_only =>
-      'Suelta archivos de subtítulos sobre el vídeo actual.';
-  @override
-  String get video_episode_list => 'Episodios';
-  @override
-  String get video_episode_list_empty => 'Sin episodios';
-  @override
-  String video_favorite_count({required Object count}) => '${count} favoritos';
-  @override
-  String get video_file_error_content =>
-      'No se pudo cargar el archivo de vídeo. Asegúrate de que el archivo existe y está en un directorio accesible por la aplicación.';
-  @override
-  String get video_file_not_found => 'Archivo de vídeo no encontrado';
-  @override
-  String get video_immersive_locked => 'Modo inmersivo activado';
-  @override
-  String get video_immersive_mode_full => 'Todos los controles';
-  @override
-  String get video_immersive_mode_lookup_only => 'Solo consulta';
-  @override
-  String get video_immersive_mode_seek_lookup => 'Atajo + consulta';
-  @override
-  String get video_immersive_mode_unlock_only => 'Solo desbloquear';
-  @override
-  String get video_immersive_unlock => 'Desbloquear';
-  @override
-  String get video_immersive_unlocked => 'Modo inmersivo desactivado';
-  @override
-  String get video_import_action => 'Importar vídeo';
-  @override
-  String get video_import_confirm => 'Importar';
-  @override
-  String get video_import_pick_subtitle => 'Elegir subtítulo';
-  @override
-  String get video_import_pick_video => 'Elegir archivo de vídeo';
-  @override
-  String get video_import_stream_advanced =>
-      'Avanzado (cabeceras anti-leeching)';
-  @override
-  String get video_import_stream_referer => 'Referer (opcional)';
-  @override
-  String get video_import_stream_subtitle_url_field =>
-      'URL de subtítulos externos (opcional)';
-  @override
-  String get video_import_stream_url_field => 'URL del flujo de vídeo';
-  @override
-  String get video_import_stream_url_hint =>
-      'Reproduce URL de flujo HLS/m3u8/mp4 (con URL de subtítulos externos y Referer/User-Agent anti-leeching opcionales)';
-  @override
-  String get video_import_stream_user_agent => 'User-Agent (opcional)';
-  @override
-  String get video_import_subtitle_optional =>
-      'Subtítulo externo opcional (puedes cambiar entre subtítulos incrustados/externos en cualquier momento durante la reproducción)';
-  @override
-  String get video_import_title => 'Importar vídeo';
-  @override
-  String get video_jimaku_anime_match => 'Emparejamiento de anime';
-  @override
-  String get video_jimaku_api_key => 'Clave API de Jimaku';
-  @override
-  String get video_jimaku_api_key_hint =>
-      'Consigue una API key gratuita en jimaku.cc/account';
-  @override
-  String get video_jimaku_api_key_set => 'API key configurada';
-  @override
-  String video_jimaku_batch_done({
-    required Object done,
-    required Object total,
-  }) => 'Subtítulos obtenidos: ${done}/${total}';
-  @override
-  String get video_jimaku_batch_download => 'Descargar todos';
-  @override
-  String get video_jimaku_batch_title => 'Obtener subtítulos para colección';
-  @override
-  String get video_jimaku_download_failed => 'Error al descargar';
-  @override
-  String get video_jimaku_downloaded => 'Subtítulo descargado y aplicado';
-  @override
-  String get video_jimaku_episode => 'Episodio (opcional)';
-  @override
-  String get video_jimaku_episode_hint => 'Deje vacío para listar todos';
-  @override
-  String get video_jimaku_fetch => 'Obtener subtítulos (Jimaku)';
-  @override
-  String get video_jimaku_filter => 'Filtrar resultados (p. ej. WEBRip, BD)';
-  @override
-  String get video_jimaku_find_sources => 'Buscar subtítulos';
-  @override
-  String get video_jimaku_language => 'Idioma';
-  @override
-  String get video_jimaku_language_all => 'Todos';
-  @override
-  String get video_jimaku_no_key => 'Introduce primero tu API key de Jimaku';
-  @override
-  String get video_jimaku_no_results => 'No se encontraron subtítulos';
-  @override
-  String get video_jimaku_query => 'Nombre de la serie';
-  @override
-  String get video_jimaku_search => 'Buscar';
-  @override
-  String get video_jimaku_series => 'Serie';
-  @override
-  String get video_jimaku_show_all_episodes => 'Mostrar todos los episodios';
-  @override
-  String get video_jimaku_source => 'Fuente de subtítulos';
-  @override
-  String get video_jimaku_source_hint =>
-      'Elija una entrada de Jimaku. Los packs de temporada se emparejan por episodio automáticamente.';
-  @override
-  String video_last_watched({required Object date}) => 'Último visto ${date}';
-  @override
-  String get video_library_empty => 'Aún no se ha importado ningún vídeo';
-  @override
-  String get video_load_failed_back => 'Atrás';
-  @override
-  String get video_load_failed_generic => 'No se pudo cargar este vídeo.';
-  @override
-  String get video_load_failed_network =>
-      'Error de red — verifique su conexión e inténtelo de nuevo.';
-  @override
-  String get video_load_failed_not_found =>
-      'Este elemento no se encontró en su biblioteca.';
-  @override
-  String get video_load_failed_retry => 'Reintentar';
-  @override
-  String get video_load_failed_timeout =>
-      'La conexión agotó el tiempo — la red está lenta o la fuente limita la velocidad. Inténtelo de nuevo.';
-  @override
-  String get video_load_failed_title => 'El vídeo no pudo cargarse';
-  @override
-  String get video_load_failed_unavailable =>
-      'No se pudo obtener el flujo de vídeo — puede no estar disponible, tener restricción regional o de edad, o la fuente cambió.';
-  @override
-  String get video_loading_buffering => 'Cargando búfer…';
-  @override
-  String get video_loading_connecting => 'Conectando al flujo…';
-  @override
-  String get video_loading_preparing => 'Preparando…';
-  @override
-  String get video_loading_subtitle => 'Descargando subtítulos…';
-  @override
-  String get video_menu_fullscreen => 'Alternar pantalla completa';
-  @override
-  String get video_menu_lock => 'Modo inmersivo / bloqueo';
-  @override
-  String get video_menu_play_pause => 'Reproducir / Pausar';
-  @override
-  String get video_menu_subtitle_track => 'Pista de subtítulos';
-  @override
-  String get video_mining_image_mode => 'Imagen de tarjeta de vídeo';
-  @override
-  String get video_mining_image_mode_current_frame =>
-      'Captura al momento de crear';
-  @override
-  String get video_mining_image_mode_gif => 'GIF animado (clip de subtítulo)';
-  @override
-  String get video_mining_image_mode_hint =>
-      'Si la portada de la tarjeta de vídeo es una animación del clip de subtítulo o un fotograma estático — y cuál fotograma';
-  @override
-  String get video_mining_image_mode_subtitle_start =>
-      'Captura al inicio del subtítulo';
-  @override
-  String get video_next_episode => 'Episodio siguiente';
-  @override
-  String video_playlist_episodes({required Object count}) => '${count} ep.';
-  @override
-  String get video_prev_episode => 'Episodio anterior';
-  @override
-  String get video_quality => 'Calidad';
-  @override
-  String get video_quality_auto => 'Auto';
-  @override
-  String get video_quality_empty =>
-      'No hay calidad intercambiable para este vídeo';
-  @override
-  String get video_quality_enhancement_hint =>
-      'Actívalo para nitidez de imagen con el escalado de alta calidad integrado en mpv. Funciona tanto en anime como en series y películas de acción real. Para ir más allá con shaders como Anime4K, abre Mejora de imagen mientras se reproduce un vídeo y elige un nivel allí.';
-  @override
-  String get video_quality_load_failed =>
-      'No se pudieron cargar las calidades para este vídeo.';
-  @override
-  String get video_quality_loading => 'Cargando calidades disponibles…';
-  @override
-  String video_quality_switched({required Object label}) => 'Calidad: ${label}';
-  @override
-  String get video_rename => 'Cambiar nombre';
-  @override
-  String get video_rename_hint => 'Título';
-  @override
-  String get video_render_skia_fix_confirm_action => 'Reiniciar';
-  @override
-  String get video_render_skia_fix_confirm_body =>
-      'Esto desactiva el renderizador Impeller y reinicia la app para aplicar.';
-  @override
-  String get video_render_skia_fix_confirm_title =>
-      '¿Cambiar a Skia y reiniciar?';
-  @override
-  String get video_render_skia_fix_hint =>
-      'Use si el audio se reproduce pero el vídeo permanece negro. Desactiva Impeller; reinicia para aplicar.';
-  @override
-  String get video_render_skia_fix_title =>
-      '¿Pantalla negra? Cambiar renderizador (Skia)';
-  @override
-  String video_resource_missing_message({required Object title}) =>
-      'No se pudo encontrar el archivo de 『${title}』. Su ubicación puede haber cambiado, o la unidad puede no estar conectada. Puede reimportarlo o eliminar esta entrada.';
-  @override
-  String get video_resource_missing_reimport => 'Reimportar';
-  @override
-  String get video_resource_missing_title => 'Vídeo no disponible';
-  @override
-  String get video_resource_relink_success => 'Vídeo revinculado';
-  @override
-  String get video_scrape_episodes => 'Episodios';
-  @override
-  String get video_scrape_info => 'Información de la serie';
-  @override
-  String video_scrape_rating_votes({required Object count}) =>
-      '${count} calificaciones';
-  @override
-  String get video_screenshot => 'Captura de pantalla';
-  @override
-  String video_screenshot_failed_reason({required Object reason}) =>
-      'Error al capturar la pantalla: ${reason}';
-  @override
-  String video_screenshot_ready({required Object file}) =>
-      'Captura lista: ${file}';
-  @override
-  String video_screenshot_saved_to({required Object path}) =>
-      'Captura guardada: ${path}';
-  @override
-  String get video_secondary_subtitle_hint =>
-      'Renderizado por el reproductor (no se puede buscar)';
-  @override
-  String get video_secondary_subtitle_sources => 'Subtítulo secundario';
-  @override
-  String get video_setting_auto_play_next =>
-      'Reproducir automáticamente el siguiente episodio';
-  @override
-  String get video_setting_auto_scrape =>
-      'Obtener info de la serie automáticamente';
-  @override
-  String get video_setting_av_delay => 'Sincronía de subtítulos';
-  @override
-  String get video_setting_av_delay_hint =>
-      'Positivo = subtítulo más tarde (las líneas se retrasan); negativo = subtítulo antes. Usa el control deslizante, los botones +/- o escribe un valor.';
-  @override
-  String get video_setting_danmaku_area => 'Área de visualización';
-  @override
-  String get video_setting_danmaku_area_hint =>
-      'Fracción de la altura de pantalla que el danmaku puede ocupar, desde arriba.';
-  @override
-  String get video_setting_danmaku_block_rules => 'Bloquear palabras / regex';
-  @override
-  String get video_setting_danmaku_block_rules_hint =>
-      'Una regla por línea. Envuelva una línea en barras como /patrón/ para una expresión regular; de lo contrario coincide como texto sin distinción de mayúsculas.';
-  @override
-  String get video_setting_danmaku_block_rules_placeholder =>
-      'ej. spoiler o /patrón/';
-  @override
-  String get video_setting_danmaku_enabled => 'Mostrar danmaku';
-  @override
-  String get video_setting_danmaku_enabled_hint =>
-      'Muestra danmaku local o coincidente sobre el vídeo sin bloquear los controles.';
-  @override
-  String get video_setting_danmaku_font_scale => 'Tamaño de fuente';
-  @override
-  String get video_setting_danmaku_font_scale_hint =>
-      'Escala el tamaño del texto del danmaku.';
-  @override
-  String get video_setting_danmaku_manual_match => 'Emparejamiento manual';
-  @override
-  String get video_setting_danmaku_manual_match_hint =>
-      'Busque en Dandanplay por título y elija el episodio cuando el emparejamiento automático falle o sea incorrecto.';
-  @override
-  String get video_setting_danmaku_max_active => 'Límite de danmaku activos';
-  @override
-  String get video_setting_danmaku_max_active_hint =>
-      'Limita los comentarios renderizados por fotograma para que los archivos grandes sigan respondiendo.';
-  @override
-  String get video_setting_danmaku_online =>
-      'Coincidencia en línea con Dandanplay';
-  @override
-  String get video_setting_danmaku_online_hint =>
-      'Cuando no hay un sidecar local utilizable, busca coincidencias del vídeo abierto con Dandanplay y obtiene los comentarios relacionados.';
-  @override
-  String get video_setting_danmaku_opacity => 'Opacidad';
-  @override
-  String get video_setting_danmaku_opacity_hint =>
-      'Transparencia general del danmaku.';
-  @override
-  String get video_setting_danmaku_server_url => 'URL del servidor de danmaku';
-  @override
-  String get video_setting_danmaku_speed => 'Velocidad';
-  @override
-  String get video_setting_danmaku_speed_hint =>
-      'Mayor es más rápido; el danmaku desplazable cruza la pantalla antes.';
-  @override
-  String get video_setting_double_tap => 'Doble toque para saltar';
-  @override
-  String get video_setting_double_tap_hint =>
-      'Toca dos veces a la izquierda o a la derecha del vídeo para avanzar o retroceder';
-  @override
-  String get video_setting_double_tap_off => 'Desactivado';
-  @override
-  String get video_setting_double_tap_subtitle => 'Subtítulo';
-  @override
-  String get video_setting_immersive_mode => 'Modo inmersivo';
-  @override
-  String get video_setting_immersive_mode_hint =>
-      'Controla qué sigue disponible tras pulsar el botón de bloqueo lateral';
-  @override
-  String get video_setting_lock_window_aspect =>
-      'Bloquear la ventana a la proporción del vídeo';
-  @override
-  String get video_setting_long_press_speed => 'Velocidad al mantener pulsado';
-  @override
-  String get video_setting_long_press_speed_hint =>
-      'Usa temporalmente esta velocidad mientras mantienes pulsado el vídeo.';
-  @override
-  String get video_setting_mpv_aspect => 'Relación de aspecto';
-  @override
-  String get video_setting_mpv_aspect_auto => 'Original';
-  @override
-  String get video_setting_mpv_brightness => 'Brillo';
-  @override
-  String get video_setting_mpv_channels => 'Canales';
-  @override
-  String get video_setting_mpv_channels_auto => 'Automático';
-  @override
-  String get video_setting_mpv_channels_mono => 'Mono';
-  @override
-  String get video_setting_mpv_channels_stereo => 'Estéreo (mezcla)';
-  @override
-  String get video_setting_mpv_contrast => 'Contraste';
-  @override
-  String get video_setting_mpv_correct_downscale => 'Reducción lineal';
-  @override
-  String get video_setting_mpv_deband => 'Reducción de bandas';
-  @override
-  String get video_setting_mpv_deinterlace => 'Desentrelazado';
-  @override
-  String get video_setting_mpv_dither => 'Tramado';
-  @override
-  String get video_setting_mpv_gamma => 'Gamma';
-  @override
-  String get video_setting_mpv_group_advanced => 'Avanzado';
-  @override
-  String get video_setting_mpv_group_audio => 'Audio';
-  @override
-  String get video_setting_mpv_group_color => 'Color';
-  @override
-  String get video_setting_mpv_group_decode => 'Decodificación';
-  @override
-  String get video_setting_mpv_group_geometry => 'Geometría';
-  @override
-  String get video_setting_mpv_group_playback => 'Reproducción';
-  @override
-  String get video_setting_mpv_group_quality => 'Calidad de imagen';
-  @override
-  String get video_setting_mpv_hue => 'Tono';
-  @override
-  String get video_setting_mpv_hwdec => 'Decodificación por hardware';
-  @override
-  String get video_setting_mpv_hwdec_auto => 'Automática (segura)';
-  @override
-  String get video_setting_mpv_hwdec_copy => 'Automática (copia)';
-  @override
-  String get video_setting_mpv_hwdec_off => 'Desactivada';
-  @override
-  String get video_setting_mpv_interpolation => 'Interpolación de movimiento';
-  @override
-  String get video_setting_mpv_loop => 'Repetir archivo';
-  @override
-  String get video_setting_mpv_normalize =>
-      'Normalizar el volumen de la mezcla';
-  @override
-  String get video_setting_mpv_panscan => 'Pan & scan (recortar bordes)';
-  @override
-  String get video_setting_mpv_pitch =>
-      'Mantener el tono al cambiar la velocidad';
-  @override
-  String get video_setting_mpv_raw =>
-      'Opciones adicionales de mpv (una por línea, clave=valor)';
-  @override
-  String get video_setting_mpv_raw_hint =>
-      'Solo en escritorio; las opciones que no se pueden aplicar en tiempo de ejecución (p. ej. vo, profile) se ignoran. SVP/RIFE requieren herramientas externas y no son compatibles.';
-  @override
-  String get video_setting_mpv_reset => 'Restablecer todo';
-  @override
-  String get video_setting_mpv_rotate => 'Rotación';
-  @override
-  String get video_setting_mpv_saturation => 'Saturación';
-  @override
-  String get video_setting_mpv_sigmoid => 'Escalado sigmoidal';
-  @override
-  String get video_setting_mpv_sigmoid_hint =>
-      'El escalado con curva sigmoide reduce el ringing pero consume GPU. Apagado por defecto por rendimiento; actívelo si quiere escalado más nítido.';
-  @override
-  String get video_setting_mpv_zoom => 'Zoom';
-  @override
-  String get video_setting_picture_fit => 'Escalado de imagen';
-  @override
-  String get video_setting_picture_fit_contain =>
-      'Ajustar manteniendo proporción y añadir bandas negras';
-  @override
-  String get video_setting_picture_fit_cover =>
-      'Rellenar manteniendo proporción y recortar bordes';
-  @override
-  String get video_setting_picture_fit_fill => 'Estirar para rellenar';
-  @override
-  String get video_setting_picture_fit_hint =>
-      'Cómo llena la imagen el área del reproductor';
-  @override
-  String get video_setting_qb_category => 'Categoría de qBittorrent';
-  @override
-  String get video_setting_qb_category_hint =>
-      'Las descargas enviadas por Fushi obtienen esta categoría; el seguimiento de completado solo la monitorea.';
-  @override
-  String get video_setting_qb_password => 'Contraseña de WebUI';
-  @override
-  String get video_setting_qb_url => 'URL de WebUI de qBittorrent';
-  @override
-  String get video_setting_qb_url_hint =>
-      'ej. http://127.0.0.1:8080. Deje vacío para desactivar la descarga de anime.';
-  @override
-  String get video_setting_qb_username => 'Usuario de WebUI';
-  @override
-  String get video_setting_secondary_subtitle_obscure =>
-      'Ocultar subtítulo secundario';
-  @override
-  String get video_setting_secondary_subtitle_obscure_hint =>
-      'Difumina u oculta el subtítulo secundario (traducción)';
-  @override
-  String get video_setting_seek_seconds => 'Segundos de salto';
-  @override
-  String get video_setting_speed => 'Velocidad de reproducción';
-  @override
-  String get video_setting_speed_step => 'Paso de velocidad';
-  @override
-  String get video_setting_subtitle_appearance => 'Aspecto de los subtítulos';
-  @override
-  String get video_setting_subtitle_bg_color => 'Color de fondo';
-  @override
-  String get video_setting_subtitle_bg_opacity => 'Opacidad del fondo';
-  @override
-  String get video_setting_subtitle_font_size => 'Tamaño de fuente';
-  @override
-  String get video_setting_subtitle_font_weight => 'Grosor de fuente';
-  @override
-  String get video_setting_subtitle_no_background => 'Sin fondo';
-  @override
-  String get video_setting_subtitle_no_background_hint =>
-      'Hace transparente el fondo del subtítulo.';
-  @override
-  String get video_setting_subtitle_obscure => 'Ocultar subtítulos';
-  @override
-  String get video_setting_subtitle_obscure_blur => 'Difuminar';
-  @override
-  String get video_setting_subtitle_obscure_hide => 'Ocultar';
-  @override
-  String get video_setting_subtitle_obscure_hint =>
-      'Elija cómo se ocultan los subtítulos para práctica de escucha: apagado, difuminado (pase el cursor o toque para revelar), u oculto.';
-  @override
-  String get video_setting_subtitle_obscure_none => 'Apagado';
-  @override
-  String get video_setting_subtitle_position => 'Posición vertical';
-  @override
-  String get video_setting_subtitle_reset => 'Restablecer valores por defecto';
-  @override
-  String get video_setting_subtitle_respect_ass =>
-      'Respetar el estilo propio del subtítulo';
-  @override
-  String get video_setting_subtitle_respect_ass_hint =>
-      'Usa la fuente, color y contorno integrados en los subtítulos .ass cuando están disponibles; desactívelo para forzar sus ajustes de apariencia.';
-  @override
-  String get video_setting_subtitle_shadow => 'Sombra';
-  @override
-  String get video_setting_subtitle_sync_input => 'Desfase (ms)';
-  @override
-  String get video_setting_subtitle_text_color => 'Color de texto';
-  @override
-  String get video_setting_theme => 'Tema';
-  @override
-  String get video_setting_torrent_active_downloads =>
-      'Descargas activas máximas';
-  @override
-  String get video_setting_torrent_active_seeds => 'Seeds activos máximos';
-  @override
-  String get video_setting_torrent_anonymous => 'Modo anónimo';
-  @override
-  String get video_setting_torrent_antileech => 'Activar anti-leech';
-  @override
-  String get video_setting_torrent_backend_qb => 'qBittorrent externo';
-  @override
-  String get video_setting_torrent_ban_progress_cheat =>
-      'Banear trampa de progreso';
-  @override
-  String get video_setting_torrent_ban_relative_cheat =>
-      'Banear trampa de progreso relativo';
-  @override
-  String get video_setting_torrent_ban_time => 'Duración del baneo (min)';
-  @override
-  String get video_setting_torrent_ban_time_hint => '0 = permanente';
-  @override
-  String get video_setting_torrent_connections_hint =>
-      '0 = predeterminado del motor';
-  @override
-  String get video_setting_torrent_dht => 'DHT';
-  @override
-  String get video_setting_torrent_download_limit =>
-      'Límite de descarga (KB/s)';
-  @override
-  String get video_setting_torrent_encryption_disabled => 'Desactivado';
-  @override
-  String get video_setting_torrent_encryption_forced => 'Forzar';
-  @override
-  String get video_setting_torrent_encryption_prefer => 'Preferir';
-  @override
-  String get video_setting_torrent_limit_hint => '0 = sin límite';
-  @override
-  String get video_setting_torrent_listen_port => 'Puerto de escucha';
-  @override
-  String get video_setting_torrent_listen_port_hint =>
-      '0 = predeterminado (6881)';
-  @override
-  String get video_setting_torrent_lsd => 'Descubrimiento local de pares (LSD)';
-  @override
-  String get video_setting_torrent_max_connections => 'Conexiones máximas';
-  @override
-  String get video_setting_torrent_max_ip_ports => 'Puertos máximos por IP';
-  @override
-  String get video_setting_torrent_memory_hint =>
-      'Limitar memoria del motor. 0 = auto (basado en RAM del dispositivo).';
-  @override
-  String get video_setting_torrent_memory_limit => 'Límite de memoria (MB)';
-  @override
-  String get video_setting_torrent_natpmp => 'Mapeo de puertos NAT-PMP';
-  @override
-  String get video_setting_torrent_section_antileech => 'Anti-leech';
-  @override
-  String get video_setting_torrent_section_session => 'Sesión';
-  @override
-  String get video_setting_torrent_seed_ratio_hint =>
-      'Dejar de subir cuando subido/descargado alcance esto. 0 = sin límite.';
-  @override
-  String get video_setting_torrent_seed_ratio_limit =>
-      'Límite de ratio de seeding';
-  @override
-  String get video_setting_torrent_seed_time_hint =>
-      'Dejar de subir después de hacer seed este tiempo. 0 = sin límite.';
-  @override
-  String get video_setting_torrent_seed_time_limit =>
-      'Límite de tiempo de seeding (minutos)';
-  @override
-  String get video_setting_torrent_upload_enabled => 'Activar subida / seeding';
-  @override
-  String get video_setting_torrent_upload_enabled_hint =>
-      'Apagado por defecto. Comparta de vuelta al enjambre después de descargar.';
-  @override
-  String get video_setting_torrent_upload_limit => 'Límite de subida (KB/s)';
-  @override
-  String get video_setting_torrent_upload_slots => 'Slots de subida máximos';
-  @override
-  String get video_setting_torrent_upnp => 'Mapeo de puertos UPnP';
-  @override
-  String get video_setting_torrent_zero_default => '0 = predeterminado';
-  @override
-  String get video_setting_torrent_zero_off => '0 = apagado';
-  @override
-  String get video_settings_cat_audio => 'Audio';
-  @override
-  String get video_settings_cat_controls => 'Controles';
-  @override
-  String get video_settings_cat_danmaku => 'Danmaku';
-  @override
-  String get video_settings_cat_mpv => 'mpv';
-  @override
-  String get video_settings_cat_playback => 'Reproducción';
-  @override
-  String get video_settings_cat_shaders => 'Mejora de imagen';
-  @override
-  String get video_settings_cat_subtitle => 'Subtítulos';
-  @override
-  String get video_settings_title => 'Ajustes de vídeo';
-  @override
-  String get video_shader_anime4k_hint =>
-      'Elige un preset para descargar. Tras descargarlo, márcalo en la lista para activarlo. Solo en escritorio.';
-  @override
-  String get video_shader_anime4k_title => 'Shaders recomendados de Anime4K';
-  @override
-  String get video_shader_download_anime4k => 'Descargar presets de Anime4K';
-  @override
-  String video_shader_download_done({required Object count}) =>
-      'Se descargaron ${count} shader(s)';
-  @override
-  String get video_shader_download_failed => 'Error al descargar el shader';
-  @override
-  String video_shader_download_partial({
-    required Object ok,
-    required Object failed,
-  }) => 'Se descargaron ${ok} shader(s), ${failed} fallaron';
-  @override
-  String get video_shader_download_url => 'Descargar desde enlace';
-  @override
-  String get video_shader_downloaded_label => 'Descargado';
-  @override
-  String get video_shader_downloading => 'Descargando shaders…';
-  @override
-  String get video_shader_first_use_body =>
-      '想让动画画面更清晰，可以进入“画质增强”并点击“下载 Anime4K 推荐着色器”。下载后在已安装列表里勾选即可启用。';
-  @override
-  String get video_shader_first_use_download => 'Descargar y activar';
-  @override
-  String get video_shader_first_use_title => '试试 Anime4K 画质增强';
-  @override
-  String get video_shader_import => 'Importar shader (.glsl)';
-  @override
-  String video_shader_import_done({required Object count}) =>
-      'Se importaron ${count} shader(s)';
-  @override
-  String get video_shader_import_from_mpv => 'Importar desde mpv local';
-  @override
-  String get video_shader_import_from_mpv_hint =>
-      '自动搜索本机 mpv；未找到时可手动选择 mpv 目录。';
-  @override
-  String get video_shader_mobile_perf_hint =>
-      'En teléfonos, los shaders solo se aplican en la ruta de renderizado de GPU estándar y su eficacia varía según la GPU del dispositivo; los niveles más altos pueden provocar caídas de fotogramas o calentamiento. Prueba primero Baja/Media y comprueba el resultado en tu dispositivo.';
-  @override
-  String video_shader_mpv_dir_current({required Object path}) =>
-      'Carpeta de mpv: ${path}';
-  @override
-  String get video_shader_mpv_dir_empty =>
-      'No se encontraron shaders en esa carpeta';
-  @override
-  String get video_shader_mpv_not_found =>
-      'No se encontraron shaders de mpv locales';
-  @override
-  String get video_shader_mpv_pick_title => 'Importar shaders desde mpv';
-  @override
-  String get video_shader_pick_mpv_dir => 'Specify mpv folder';
-  @override
-  String get video_shader_preset_mode_a_fast =>
-      'Para la mayoría del anime en 1080p. Menor carga de GPU.';
-  @override
-  String get video_shader_preset_mode_a_hq =>
-      'Máxima calidad para anime en 1080p. Necesita una GPU potente.';
-  @override
-  String get video_shader_preset_mode_b_fast =>
-      'Para anime antiguo en 720p con artefactos de remuestreo.';
-  @override
-  String get video_shader_preset_mode_b_hq =>
-      'Alta calidad para anime antiguo en 720p con artefactos de remuestreo. Necesita una GPU potente.';
-  @override
-  String get video_shader_preset_mode_c_fast =>
-      'Para anime SD antiguo (480p) con manchas de compresión.';
-  @override
-  String get video_shader_preset_mode_c_hq =>
-      'Alta calidad para anime SD antiguo (480p) con manchas de compresión. Necesita una GPU potente.';
-  @override
-  String get video_shader_quality_tier => 'Mejora de calidad';
-  @override
-  String get video_shader_section_advanced => 'Avanzado (shaders manuales)';
-  @override
-  String get video_shader_section_installed => 'Shaders instalados';
-  @override
-  String get video_shader_showing_original => 'Shaders desactivados (original)';
-  @override
-  String get video_shader_showing_shaded => 'Shaders activados';
-  @override
-  String get video_shader_tier_custom_hint =>
-      'Selección de shaders personalizada. Elige un nivel arriba para volver a un preset.';
-  @override
-  String get video_shader_tier_high => 'Alta';
-  @override
-  String get video_shader_tier_high_hint =>
-      'Anime4K HQ. Más nítido; lo mejor para animación, también utilizable en acción real (mejora menor). Necesita una GPU de gama media-alta (NVIDIA RTX 4060 / RTX 3070, AMD RX 6700 XT / RX 7700 XT).';
-  @override
-  String get video_shader_tier_low => 'Baja';
-  @override
-  String get video_shader_tier_low_hint =>
-      'Nitidez integrada de mpv (ewa_lanczossharp). Funciona en cualquier vídeo (animación y acción real). Sin descargas, mínima carga de GPU. Elige esta opción en gráficas integradas o antiguas (NVIDIA GTX 1050, AMD RX 560, iGPU de Intel).';
-  @override
-  String get video_shader_tier_medium => 'Media';
-  @override
-  String get video_shader_tier_medium_hint =>
-      'Anime4K Fast. Lo mejor para animación, pero también sirve para películas/series de acción real (mejora menor). Funciona en GPU de gama media (NVIDIA GTX 1660 / RTX 3050, AMD RX 6600).';
-  @override
-  String get video_shader_tier_off => 'Ninguna';
-  @override
-  String get video_shader_tier_off_hint =>
-      'Sin mejora. Reproduce el vídeo original tal cual.';
-  @override
-  String get video_shader_tier_ultra => 'Ultra';
-  @override
-  String get video_shader_tier_ultra_hint =>
-      'Anime4K Mode A (UL, red ultra grande). La reconstrucción Anime4K más potente; también utilizable en acción real (mejora menor). Necesita una GPU tope de gama (NVIDIA RTX 4080 / RTX 5090, AMD RX 7900 XTX). Elige un nivel inferior si tu GPU es más débil.';
-  @override
-  String get video_shader_url_hint =>
-      'Pega un enlace .glsl de shader (p. ej. GitHub)';
-  @override
-  String get video_shaders_empty => 'Aún no se ha importado ningún shader';
-  @override
-  String get video_stat_by_video => 'Por vídeo';
-  @override
-  String get video_stat_completed => 'Completado';
-  @override
-  String get video_stat_no_data => 'Aún no hay estadísticas de vídeo';
-  @override
-  String get video_statistics => 'Estadísticas de vídeo';
-  @override
-  String get video_subtitle_attach_playlist_hint =>
-      'Abre la lista de reproducción para adjuntar un subtítulo por episodio';
-  @override
-  String video_subtitle_attached_to_video({
-    required Object title,
-    required Object count,
-  }) => 'Subtítulo adjuntado a ${title} (${count} líneas)';
-  @override
-  String get video_subtitle_auto_align => 'Alinear subtítulos';
-  @override
-  String video_subtitle_auto_align_done({required Object ms}) =>
-      'Subtítulos alineados ${ms} ms';
-  @override
-  String get video_subtitle_auto_align_low_confidence =>
-      'No se pudo alinear con fiabilidad (sin coincidencia de voz clara)';
-  @override
-  String get video_subtitle_auto_align_running => 'Alineando subtítulos…';
-  @override
-  String get video_subtitle_color_note =>
-      'Los colores de los subtítulos se ajustan dentro del reproductor de vídeo.';
-  @override
-  String video_subtitle_delay_osd({required Object ms}) =>
-      'Sincronía de subtítulos: ${ms} ms';
-  @override
-  String get video_subtitle_filter_all => 'Todos';
-  @override
-  String get video_subtitle_filter_favorites => 'Favoritos';
-  @override
-  String get video_subtitle_filter_favorites_empty =>
-      'Aún no hay líneas favoritas';
-  @override
-  String get video_subtitle_graphic_hint =>
-      'Subtítulo gráfico · se muestra en el vídeo · sin consulta de palabras';
-  @override
-  String video_subtitle_graphic_shown({required Object label}) =>
-      'Subtítulo gráfico mostrado en el vídeo (sin consulta de palabras): ${label}';
-  @override
-  String get video_subtitle_import_failed => 'Error al importar el subtítulo';
-  @override
-  String get video_subtitle_import_file => 'Importar archivo de subtítulos…';
-  @override
-  String get video_subtitle_import_unsupported =>
-      'Formato de subtítulos no compatible';
-  @override
-  String get video_subtitle_list => 'Lista de subtítulos';
-  @override
-  String get video_subtitle_list_auto_scroll => 'Desplazamiento automático';
-  @override
-  String get video_subtitle_list_empty => 'No hay subtítulos cargados';
-  @override
-  String get video_subtitle_list_font_larger => 'Texto más grande';
-  @override
-  String get video_subtitle_list_font_smaller => 'Texto más pequeño';
-  @override
-  String get video_subtitle_list_jump => 'Saltar a esta línea';
-  @override
-  String get video_subtitle_list_loading => 'Cargando subtítulos...';
-  @override
-  String video_subtitle_load_failed({required Object label}) =>
-      'No se pudo cargar este subtítulo (pista gráfica o no compatible): ${label}';
-  @override
-  String get video_subtitle_off => 'Desactivar subtítulos';
-  @override
-  String get video_subtitle_remote_host =>
-      'Subtítulo del dispositivo emparejado';
-  @override
-  String video_subtitle_switched({required Object label}) =>
-      'Subtítulo: ${label}';
-  @override
-  String get video_subtitle_waveform_cue_list => 'Lista de subtítulos';
-  @override
-  String get video_subtitle_waveform_jump_playhead => 'Ir al cabezal';
-  @override
-  String get video_subtitle_waveform_legend_cue => 'Señal de subtítulo';
-  @override
-  String get video_subtitle_waveform_legend_energy => 'Volumen';
-  @override
-  String get video_subtitle_waveform_legend_playhead => 'Cabezal';
-  @override
-  String get video_subtitle_waveform_open => 'Alineación de forma de onda';
-  @override
-  String get video_subtitle_waveform_open_hint =>
-      'Toque para ampliar y alinear';
-  @override
-  String get video_subtitle_waveform_scroll_hint =>
-      'Arrastre para recorrer la línea de tiempo; use los controles de abajo para alinear';
-  @override
-  String get video_subtitle_waveform_unavailable =>
-      'Forma de onda no disponible en este dispositivo';
-  @override
-  String get video_subtitle_waveform_zoom_in => 'Ampliar';
-  @override
-  String get video_subtitle_waveform_zoom_out => 'Reducir';
-  @override
-  String get video_subtitle_youtube_empty =>
-      'Esta pista de subtítulos no tiene texto';
-  @override
-  String video_subtitle_youtube_translated({required Object lang}) =>
-      '${lang} (traducido)';
-  @override
-  String video_watched_up_to({required Object time}) => 'Visto hasta ${time}';
-  @override
-  String get video_windows_black_flash_notice_body =>
-      'En Windows, el vídeo puede parpadear en negro bajo carga pesada de GPU. Para reducir la carga, intente desactivar Mejora de calidad, Escalado Sigmoide y Debanding arriba, o cambie la decodificación por hardware a Copia.';
-  @override
-  String get video_windows_black_flash_notice_title =>
-      '¿Parpadeo negro en Windows?';
-  @override
-  String get view_illustrations => 'Ilustraciones';
-  @override
-  String get volume_button_page_turning =>
-      'Pasar página con botones de volumen';
-  @override
-  String get volume_key_sentence_nav =>
-      'Navegación de oraciones con teclas de volumen';
-  @override
-  String get wheel_page_turn_interval =>
-      'Intervalo de pasar página con la rueda';
-  @override
-  String get word_favorite_added => 'Palabra guardada en favoritos';
-  @override
-  String get word_favorite_removed => 'Palabra eliminada de favoritos';
-  @override
-  String get yomitan_api_key => 'API key de Yomitan (opcional)';
-  @override
-  String get yomitan_api_server => 'Servidor API de Yomitan';
-  @override
-  String get yomitan_api_server_hint =>
-      'Permite que los clientes de yomitan-api consulten los diccionarios de Fushi (puerto 19633)';
-  @override
-  String get yomitan_api_server_started => 'Servidor API Yomitan iniciado';
-  @override
-  String get yomitan_port_kill_action => 'Finalizar proceso y reintentar';
-  @override
-  String get yomitan_port_kill_confirm => 'Finalizar proceso';
-  @override
-  String yomitan_port_kill_confirm_message({required Object process}) =>
-      'El puerto está actualmente en uso por: ${process}';
-  @override
-  String yomitan_port_kill_confirm_title({required Object port}) =>
-      '¿Finalizar el proceso usando el puerto ${port}?';
-  @override
-  String yomitan_port_kill_failed({required Object process}) =>
-      'No se pudo finalizar ${process}. Finalícelo manualmente, luego reintente.';
-  @override
-  String yomitan_port_kill_protected({required Object process}) =>
-      '${process} es un proceso crítico del sistema — Fushi no lo finalizará. Cambie el puerto en su lugar.';
-  @override
-  String get yomitan_port_kill_self_instance =>
-      'Este proceso es otra instancia en ejecución de esta app.';
-  @override
-  String get game_track_bgm => 'BGM / excluido';
-  @override
-  String get game_line_audio_no_voice => 'Sin voz';
-  @override
-  String get game_line_audio_overlong => 'Clip demasiado largo';
-  @override
-  String get game_line_audio_overlong_hint =>
-      'Mucho más largo que una sola línea; puede contener BGM u otro audio mezclado';
-  @override
-  String get game_line_audio_loopback_hint =>
-      'Respaldo de mezcla del sistema; puede contener BGM';
-  @override
-  String get game_line_recapture => 'Recapturar voz';
-  @override
-  String get game_line_recapture_stop => 'Finalizar recaptura';
-  @override
-  String get game_line_tracks => 'Pistas para esta línea';
-  @override
-  String get game_line_tracks_hint =>
-      'Previsualice cada pista en el momento de esta línea, luego excluya las de BGM';
-  @override
-  String get game_line_track_use => 'Usar para esta línea';
-  @override
-  String get game_user_tags_title => 'Mis etiquetas';
-  @override
-  String get anki_lapis_section => 'Estilo de tarjeta Lapis';
-  @override
-  String get anki_lapis_font_scale => 'Escala de fuente de tarjeta';
-  @override
-  String get anki_lapis_font_scale_hint =>
-      'Escala cada tamaño de fuente de Lapis; se aplica vía "Aplicar estilo a Anki".';
-  @override
-  String get anki_lapis_custom_css => 'CSS personalizado';
-  @override
-  String get anki_lapis_custom_css_hint =>
-      'Se añade a la hoja de estilos de Lapis en una sección de usuario protegida.';
-  @override
-  String get anki_lapis_apply => 'Aplicar estilo a Anki';
-  @override
-  String get anki_lapis_apply_done =>
-      'Estilo Lapis aplicado. Se guardó una copia de seguridad primero.';
-  @override
-  String anki_lapis_apply_failed({required Object error}) =>
-      'No se pudo aplicar el estilo: ${error}';
-  @override
-  String get anki_lapis_up_to_date => 'El estilo Lapis ya está actualizado.';
-  @override
-  String get anki_lapis_foreign_edit_title => 'Plantilla cambiada en Anki';
-  @override
-  String get anki_lapis_foreign_edit_body =>
-      'La plantilla Lapis en Anki difiere de lo que Fushi aplicó por última vez — puede haber sido editada a mano. Al aplicar se sobrescribirá; se guarda una copia de seguridad primero. ¿Continuar?';
-  @override
-  String get anki_lapis_backup => 'Respaldar plantilla Lapis';
-  @override
-  String anki_lapis_backup_done({required Object path}) =>
-      'Plantilla respaldada: ${path}';
-  @override
-  String anki_lapis_backup_failed({required Object error}) =>
-      'El respaldo falló: ${error}';
-  @override
-  String get anki_lapis_not_found =>
-      'Tipo de nota Lapis no encontrado en Anki.';
-  @override
-  String get anki_lapis_restore => 'Restaurar desde respaldo';
-  @override
-  String get anki_lapis_restore_empty => 'Aún no hay respaldos.';
-  @override
-  String get anki_lapis_restore_confirm =>
-      '¿Sobrescribir la plantilla Lapis en Anki con este respaldo? El estado actual se respalda primero.';
-  @override
-  String get anki_lapis_restore_done => 'Plantilla restaurada.';
-  @override
-  String anki_lapis_restore_failed({required Object error}) =>
-      'La restauración falló: ${error}';
-  @override
-  String get anki_dedup_section =>
-      'Optimización de almacenamiento de medios de Anki';
-  @override
-  String get anki_dedup_scan => 'Escanear duplicados (sin cambios)';
-  @override
-  String get anki_dedup_run => 'Deduplicar ahora';
-  @override
-  String get anki_dedup_report_title => 'Reporte de deduplicación de medios';
-  @override
-  String anki_dedup_report_body({
-    required Object groups,
-    required Object removed,
-    required Object size,
-    required Object notes,
-    required Object models,
-    required Object skipped,
-  }) =>
-      '${groups} grupos duplicados; ${removed} copias extra (${size}); ${notes} notas y ${models} tipos de nota reescritos; ${skipped} omitidos.';
-  @override
-  String get anki_dedup_report_dry_note => 'Solo escaneo — nada fue cambiado.';
-  @override
-  String get anki_dedup_report_clean =>
-      'No se encontraron duplicados idénticos por bytes.';
-  @override
-  String anki_dedup_failed({required Object error}) =>
-      'La deduplicación falló: ${error}';
-  @override
-  String get anki_dedup_unavailable =>
-      'Requiere Anki ejecutándose en esta máquina (AnkiConnect).';
-  @override
-  String get anki_dedup_run_hint =>
-      'Escanea primero y lista exactamente qué se eliminaría; nada se elimina hasta que confirme.';
-  @override
-  String get anki_dedup_plan_title => 'Archivos a eliminar';
-  @override
-  String anki_dedup_plan_intro({required Object count, required Object size}) =>
-      '${count} copias extra, ${size} recuperable. Se conserva una copia de cada archivo y cada referencia se redirige primero; nada se re-codifica.';
-  @override
-  String anki_dedup_plan_entry({
-    required Object file,
-    required Object size,
-    required Object canonical,
-  }) => 'Eliminar ${file} (${size}) — conservando ${canonical}';
-  @override
-  String get anki_dedup_plan_delete => 'Eliminar estos archivos';
-  @override
-  String get anki_dedup_plan_journal =>
-      'Un registro de cada reescritura y eliminación se escribe en la carpeta de respaldo primero.';
-  @override
-  String get manga_ocr_default_engine => 'Motor de OCR predeterminado';
-  @override
-  String get manga_ocr_engine_auto => 'Automático (nunca sube a Lens)';
-  @override
-  String get manga_ocr_engine_local_onnx => 'ONNX local';
-  @override
-  String get manga_ocr_engine_google_lens => 'Google Lens';
-  @override
-  String get manga_google_lens_disclosure_title =>
-      '¿Enviar páginas de manga a Google Lens?';
-  @override
-  String get manga_google_lens_disclosure_body =>
-      'Reconocer este manga envía una copia JPEG reducida de cada página sin texto OCR a Google. Los resultados se almacenan en caché en este dispositivo. El endpoint es no oficial y puede dejar de funcionar. Nada se sube a menos que acepte.';
-  @override
-  String get manga_google_lens_disclosure_accept => 'Aceptar e iniciar OCR';
-  @override
-  String get manga_google_lens_disclosure_decline => 'Cancelar';
-  @override
-  String get manga_reading_direction => 'Dirección de lectura';
-  @override
-  String get manga_direction_rtl => 'Derecha a izquierda';
-  @override
-  String get manga_direction_ltr => 'Izquierda a derecha';
-  @override
-  String get manga_zoom => 'Zoom';
-  @override
-  String get manga_jump_to_page => 'Ir a página';
-  @override
-  String get manga_previous_page => 'Página anterior';
-  @override
-  String get manga_next_page => 'Página siguiente';
-  @override
-  String manga_page_number_hint({required Object total}) =>
-      'Número de página (1-${total})';
-  @override
-  String get manga_import_direct => 'Importar sin OCR';
-  @override
-  String get manga_library => 'Manga';
-  @override
-  String get manga_import_action => 'Importar manga';
-  @override
-  String get game_scrape_search => 'Buscar';
-  @override
-  String get game_scrape_use => 'Usar';
-  @override
-  String get game_scrape_search_failed =>
-      'La búsqueda falló. Verifique su red e inténtelo de nuevo.';
-  @override
-  String get game_remove_confirm =>
-      '¿Eliminar este juego de la biblioteca? Los archivos del juego en disco no se eliminarán.';
-  @override
-  String manga_ocr_acceleration_status({required Object engine}) =>
-      'Aceleración de OCR: ${engine}';
-  @override
-  String manga_ocr_acceleration_degraded({
-    required Object engine,
-    required Object reason,
-  }) =>
-      'Aceleración por GPU no disponible, ejecutando OCR en ${engine}: ${reason}';
-  @override
-  String get media_tracking_status => 'Estado de colección';
-  @override
-  String get media_tracking_signup => 'Crear cuenta de Bangumi';
-  @override
-  String get media_tracking_game => 'Juego';
-  @override
-  String get download_rate_limit_lan_exempt =>
-      'No se aplica en su red local; las transferencias LAN siempre se ejecutan a máxima velocidad.';
-  @override
-  String get scrape_reason_network =>
-      'No se pudo obtener una respuesta válida de la fuente de portadas. Verifique su red y reintente.';
-  @override
-  String get scrape_reason_server =>
-      'La fuente de portadas devolvió un error. Inténtelo más tarde o elija otro candidato.';
-  @override
-  String get common_more_actions => 'Más acciones';
-  @override
-  String get collection_already_has_item =>
-      'Este elemento ya está en la colección.';
-  @override
-  String get drag_drop_manga_archive_unsupported =>
-      'No se pueden importar archivos .cbr/.rar de cómic — reempaquete como .cbz o una carpeta de imágenes.';
-  @override
-  String get collection_add_failed =>
-      'No se pudo añadir el elemento a la colección. Inténtelo de nuevo.';
-  @override
-  String get anki_dedup_auto => 'Procesamiento automático';
-  @override
-  String get anki_dedup_auto_hint =>
-      'Apagado por defecto. Cuando está activo, Fushi escanea al inicio (máximo una vez por semana) y le muestra la lista primero — nada se elimina hasta que confirme.';
-  @override
-  String get anki_dedup_auto_delete => 'Eliminar automáticamente sin preguntar';
-  @override
-  String get anki_dedup_auto_delete_hint =>
-      'Omite el diálogo de confirmación. Solo se eliminan copias extra idénticas por bytes y nada se re-codifica, pero la eliminación no se puede deshacer.';
-  @override
-  String anki_dedup_auto_found({required Object count, required Object size}) =>
-      'Se encontraron ${count} archivos de medios duplicados en Anki (${size} recuperable)';
-  @override
-  String get anki_dedup_auto_review => 'Revisar';
-  @override
-  String anki_dedup_auto_done({required Object count, required Object size}) =>
-      'Se eliminaron ${count} archivos de medios duplicados de Anki, ${size} recuperado';
-  @override
-  String anki_lapis_backup_done_pruned({
-    required Object path,
-    required Object count,
-  }) =>
-      'Respaldado en ${path} (${count} respaldos antiguos eliminados por la política de 90 días / mantener 10)';
-  @override
-  String get game_audio_fallback_policy => 'Respaldo de audio';
-  @override
-  String get game_audio_fallback_full => 'Permitir audio mezclado';
-  @override
-  String get game_audio_fallback_clean => 'Solo fuentes limpias';
-  @override
-  String get game_audio_fallback_resource => 'Solo recursos originales';
-  @override
-  String get game_track_silent_at_cue => 'Sin sonido en esta línea';
-  @override
-  String get game_audio_fallback_full_hint =>
-      'Recurre a la mezcla del sistema cuando no se captura voz limpia; el clip puede contener BGM y efectos.';
-  @override
-  String get game_audio_fallback_clean_hint =>
-      'Usa solo audio de recursos del juego y PCM del motor. Las líneas sin voz se crean sin audio en lugar de capturar BGM.';
-  @override
-  String get game_audio_fallback_resource_hint =>
-      'Requiere el archivo de voz original incluido con el juego; la creación de tarjeta se rechaza cuando falta.';
-  @override
-  String get game_line_audio_suppressed => 'Mezcla omitida';
-  @override
-  String get game_line_audio_suppressed_hint =>
-      'Ninguna fuente de audio limpia produjo audio para esta línea, y la mezcla del sistema fue omitida por su política de respaldo de audio. Esto no significa que la línea no tenga voz.';
-  @override
-  String get video_setting_torrent_limit_lan => 'Aplicar límites a pares LAN';
-  @override
-  String get video_setting_torrent_limit_lan_hint =>
-      'Apagado por defecto: las transferencias con pares en su red local ignoran los límites de arriba.';
-  @override
-  String get download_rate_limit_lan_included =>
-      'También se aplica en su red local.';
-  @override
-  String get video_collection_no_local_member =>
-      'No hay vídeo local en esta colección';
-  @override
-  String get gal_mining_image_mode => 'Imagen de tarjeta de galgame';
-  @override
-  String get gal_mining_image_mode_screenshot => 'Captura de pantalla';
-  @override
-  String get gal_mining_image_mode_hint =>
-      'Las escenas de galgame apenas se mueven dentro de una línea, por lo que una captura estática suele ser más pequeña y igual de útil.';
-  @override
-  String get shortcut_scope_manga => 'Manga';
-  @override
-  String get shortcut_action_manga_page_forward => 'Página siguiente';
-  @override
-  String get shortcut_action_manga_page_backward => 'Página anterior';
-  @override
-  String get shortcut_action_manga_dismiss_dict => 'Cerrar diccionario';
-  @override
-  String get video_setting_jimaku_default_language =>
-      'Idioma de subtítulos predeterminado';
-  @override
-  String get video_jimaku_api_key_settings_hint =>
-      'También editable en Ajustes → Vídeo → Subtítulos';
-  @override
-  String get anime_download_subs_episodes_unverified =>
-      'Los números de episodio no están verificados para este pack — los subtítulos pueden ser de otra temporada.';
-  @override
-  String get anime_download_subs_deferred =>
-      'Los subtítulos se emparejan después de la descarga, desde los archivos reales del pack';
-  @override
-  String get anime_download_subs_pending =>
-      'Subtítulos: pendientes hasta que la descarga se complete';
-  @override
-  String get anime_download_subs_unmatched =>
-      'Subtítulos: sin coincidencia para este pack';
-  @override
-  String get stat_source_breakdown => 'Por fuente';
-  @override
-  String stat_format_pages({required Object n}) => '${n} páginas';
-  @override
-  String anime_download_subs_season_mismatch({required Object season}) =>
-      'Ninguna entrada de subtítulos coincide con la temporada ${season} de este pack — no seleccionado automáticamente. Elija uno manualmente si lo desea.';
-  @override
-  String get media_tracking_card_title => 'Sincronización con Bangumi';
-  @override
-  String get media_tracking_not_connected =>
-      'No conectado. El progreso se queda local y nada llega a Bangumi.';
-  @override
-  String get media_tracking_last_sync => 'Última sincronización';
-  @override
-  String get media_tracking_never_synced => 'Nunca sincronizado';
-  @override
-  String media_tracking_linked_count({required Object n}) => '${n} vinculados';
-  @override
-  String media_tracking_pending_count({required Object n}) =>
-      '${n} esperando envío';
-  @override
-  String get media_tracking_all_synced => 'Todo enviado';
-  @override
-  String get media_tracking_unauthorized =>
-      'Bangumi rechazó el token de acceso. Reconéctelo en ajustes.';
-  @override
-  String get media_tracking_open_subject => 'Abrir en Bangumi';
-  @override
-  String get media_tracking_manage_links => 'Administrar vínculos';
-  @override
-  String get media_tracking_last_error => 'Último error';
-  @override
-  String get shortcut_action_popup_mine_entry => 'Crear tarjeta (mine)';
-  @override
-  String get game_upscaling_auto_hint =>
-      'Usa Magpie si ya está en ejecución; de lo contrario usa la versión incluida con Fushi. No se necesita descarga.';
-  @override
-  String get game_upscaling_installed_only_hint =>
-      'Solo usa Magpie si ya está instalado o en ejecución. No desempaqueta la versión incluida de Fushi.';
-  @override
-  String get game_upscaling_off_hint => 'Nunca escalar la ventana del juego.';
-  @override
-  String get game_helper_bundle_missing =>
-      'El helper de hook de galgame no está incluido en esta compilación. Actualice Fushi para obtenerlo.';
-  @override
-  String game_upscaling_pick_title({required Object name}) =>
-      'Escalado de ventana para ${name}';
-  @override
-  String get game_upscaling_pick_body =>
-      'Escala esta ventana de juego con Magpie mientras una sesión de captura está activa. Configurado por juego — solo ayuda para juegos cuya resolución nativa es menor que su pantalla. Usa su GPU.';
-  @override
-  String get game_upscaling_hint_not_installed =>
-      'Magpie no está listo. Establezca el escalado de ventana en Auto para usar la copia incluida con Fushi; si aún no se inicia, actualice o reinstale Fushi.';
-  @override
-  String media_source_count_manga({required Object n}) => '${n} volúmenes';
-  @override
-  String get library_view_shelf => 'Estante';
-  @override
-  String get library_view_browse => 'Descubrir';
-  @override
-  String get library_view_media => 'Biblioteca';
-  @override
-  String get scrape_failure_detail_show => 'Mostrar detalles';
-  @override
-  String get scrape_failure_detail_hide => 'Ocultar detalles';
-  @override
-  String get media_tracking_retry_mapping => 'Reintentar emparejamiento';
-  @override
-  String get media_tracking_retry_matched =>
-      'Emparejado y progreso actual en cola';
-  @override
-  String get media_tracking_retry_no_match =>
-      'No se encontró coincidencia. Intente vincular manualmente.';
-  @override
-  String get game_statistics => 'Estadísticas de juegos';
-  @override
-  String get game_stat_by_game => 'Por juego';
-  @override
-  String get stat_clear_all_game_message =>
-      '¿Borrar todo el tiempo de juego y conteos de sesiones? Su biblioteca de juegos y línea de actividad se conservan. Esto no se puede deshacer.';
-  @override
-  String batch_selection_stale_skipped({
-    required Object m,
-    required Object n,
-  }) => 'Se omitieron ${m} de ${n} elementos seleccionados que ya no existen';
-  @override
-  String get game_text_thread_unset =>
-      'Sin hilo seleccionado — elija uno para comenzar a capturar';
-  @override
-  String get media_tracking_watched_show => 'Ver todos los anime vistos';
-  @override
-  String get media_tracking_watched_title => 'Vistos en Bangumi';
-  @override
-  String get media_tracking_watched_empty =>
-      'No hay anime marcado como visto en esta cuenta de Bangumi.';
-  @override
-  String media_tracking_watched_load_failed({required Object error}) =>
-      'No se pudieron cargar los anime vistos: ${error}';
-  @override
-  String media_tracking_watched_progress({required Object n}) =>
-      'Vistos ${n} episodios';
-  @override
-  String get media_tracking_manual_required => 'Necesita vínculo manual';
-  @override
-  String media_tracking_manual_required_count({required Object n}) =>
-      '${n} elementos necesitan vínculos manuales';
-  @override
-  String get media_tracking_manual_required_hint =>
-      'Estos elementos locales ya tienen progreso pero no están vinculados a Bangumi.';
-  @override
-  String get media_tracking_no_local_history =>
-      'Ningún progreso local de visualización, lectura o juego necesita vinculación.';
-  @override
-  String media_tracking_more_manual_required({required Object n}) =>
-      '${n} elementos más necesitan vínculos manuales';
-  @override
-  String get manga_import_hint =>
-      'Elija una carpeta de manga, un archivo .cbz/.zip de páginas, un .pdf o un archivo .mokuro.';
-  @override
-  String get manga_import_pick_file => 'Elegir archivo de manga';
-  @override
-  String get manga_import_pick_folder => 'Elegir carpeta de manga';
-  @override
-  String get manga_import_missing_input =>
-      'Elija un archivo o carpeta de manga primero.';
-  @override
-  String get manga_import_detected_title => 'Esto parece ser manga';
-  @override
-  String get manga_import_detected_confirm => 'Importar como manga';
-  @override
-  String manga_import_detected_message({required Object name}) =>
-      '"${name}" es un archivo de manga, por lo que se procesará con el importador de manga en lugar del importador de libros.';
-  @override
-  String get video_jimaku_source_loading =>
-      'Verificando disponibilidad de subtítulos...';
-  @override
-  String get video_jimaku_source_failed =>
-      'No se pudo verificar la disponibilidad de subtítulos. Intente buscar de nuevo.';
-  @override
-  String get video_jimaku_language_unknown => 'Idioma no etiquetado';
-  @override
-  String video_jimaku_source_summary({
-    required Object files,
-    required Object episodes,
-    required Object languages,
-  }) =>
-      '${files} archivos de subtítulos · ${episodes} episodios · ${languages}';
-  @override
-  String video_jimaku_episode_unlabeled({
-    required Object episode,
-    required Object count,
-  }) =>
-      'Sin subtítulo etiquetado para episodio ${episode}; ${count} archivos sin etiquetar pueden coincidir';
-  @override
-  String video_jimaku_episode_unavailable({required Object episode}) =>
-      'No se encontró subtítulo para episodio ${episode}';
-  @override
-  String video_jimaku_episode_available({
-    required Object count,
-    required Object languages,
-  }) => '${count} subtítulos disponibles · ${languages}';
-  @override
-  String get manga_online_source_disabled =>
-      'Esta fuente de internet está desactivada. Actívela en Fuentes para explorar el catálogo.';
-  @override
-  String get selection_web_search => 'Buscar en la web';
-  @override
-  String get selection_web_search_unavailable =>
-      'Ninguna app puede buscar en la web.';
-  @override
-  String get selection_share_failed => 'No se pudo abrir la hoja de compartir.';
-  @override
-  String video_subtitle_youtube_auto_generated({required Object lang}) =>
-      '${lang} (generado automáticamente)';
-  @override
-  String get anki_dedup_progress_title => 'Deduplicando medios';
-  @override
-  String anki_dedup_progress_scanning({required Object count}) =>
-      'Escaneando carpeta de medios… (${count} archivos encontrados)';
-  @override
-  String anki_dedup_progress_hashing({
-    required Object done,
-    required Object total,
-  }) => 'Comparando archivos del mismo tamaño… (${done} / ${total})';
-  @override
-  String anki_dedup_progress_resolving({
-    required Object done,
-    required Object total,
-  }) => 'Procesando duplicados… (${done} / ${total})';
-  @override
-  String anki_dedup_progress_freed({required Object size}) =>
-      '${size} liberado hasta ahora';
-  @override
-  String get anki_dedup_cancelling => 'Cancelando…';
-  @override
-  String get anki_dedup_cancelled =>
-      'Deduplicación cancelada; los cambios completados se conservan.';
-  @override
-  String get anki_dedup_report_cancelled_note =>
-      'Cancelado anticipadamente — los números de abajo solo cubren lo completado.';
-  @override
-  String get anki_dedup_plan_busy_note =>
-      'Anki puede no responder mientras se ejecuta; evite usar Anki hasta que termine.';
-  @override
-  String get video_setting_subtitle_position_secondary =>
-      'Posición del subtítulo secundario';
-  @override
-  String get dict_download_learning_language => 'Idioma de aprendizaje';
-  @override
-  String get dict_category_bilingual => 'Bilingüe';
-  @override
-  String get dict_category_monolingual => 'Monolingüe';
-  @override
-  String get shortcut_action_video_hold_speed =>
-      'Mantener para velocidad temporal';
-  @override
-  String get handlebar_phonetic_transcriptions => 'Transcripciones fonéticas';
-  @override
-  String get sync_progress_preparing => 'Preparando sincronización';
-  @override
-  String get sync_progress_collections => 'Sincronizando colecciones';
-  @override
-  String get sync_progress_book => 'Sincronizando libro';
-  @override
-  String sync_progress_book_titled({required Object title}) =>
-      'Sincronizando ${title}';
-  @override
-  String sync_last_completed({required Object count}) =>
-      'Última sincronización: completada (${count} canales)';
-  @override
-  String get sync_last_no_channels =>
-      'Última sincronización: nada sincronizado — sin canal de sincronización conectado';
-  @override
-  String get sync_last_nothing => 'Última sincronización: nada que sincronizar';
-  @override
-  String get sync_last_auto_disabled =>
-      'Última sincronización: omitida — sincronización automática desactivada';
-  @override
-  String get sync_last_cooled_down =>
-      'Última sincronización: omitida — sincronizado recientemente';
-  @override
-  String get sync_last_failed => 'Última sincronización: falló';
-  @override
-  String anime_download_no_results_detail({
-    required Object query,
-    required Object filters,
-  }) =>
-      'El servicio respondió exitosamente pero devolvió 0 elementos. Consulta: ${query}; filtros: ${filters}. Intente otro título o relaje los filtros.';
-  @override
-  String get anime_download_streaming_ready =>
-      'En biblioteca · descarga continúa';
-  @override
-  String get anime_download_unfiltered => 'Sin filtro de confianza';
-  @override
-  String get interconnect_enable_footer =>
-      'Cómo usar: en el dispositivo que tiene su biblioteca, active el interruptor del servidor de sincronización abajo; en su otro dispositivo, agregue la dirección de ese servidor para emparejarse. Un dispositivo solo puede actuar como un rol a la vez — servidor o cliente.';
-  @override
-  String get interconnect_peer_list_title => 'Pares añadidos';
-  @override
-  String get interconnect_peer_list_empty =>
-      'Aún no hay pares añadidos. Elija un dispositivo descubierto de la lista de dispositivos LAN abajo para emparejar automáticamente, o agregue una dirección de par manualmente.';
-  @override
-  String get anki_lapis_visual_editor => 'Editor visual';
-  @override
-  String get anki_lapis_visual_editor_hint =>
-      'Previsualice la tarjeta Lapis, luego cambie el estilo, posición y mapeo de campos de cada área sin escribir CSS.';
-  @override
-  String get anki_lapis_visual_front => 'Frente';
-  @override
-  String get anki_lapis_visual_back => 'Reverso';
-  @override
-  String get anki_lapis_visual_preview => 'Vista previa de tarjeta Lapis';
-  @override
-  String get anki_lapis_visual_select_field => 'Elija qué editar';
-  @override
-  String get anki_lapis_visual_reset_field => 'Restablecer campo';
-  @override
-  String anki_lapis_visual_font_size({required Object percent}) =>
-      'Tamaño de fuente: ${percent}%';
-  @override
-  String get anki_lapis_visual_bold => 'Negrita';
-  @override
-  String get anki_lapis_visual_alignment => 'Alineación';
-  @override
-  String get anki_lapis_visual_color => 'Color de texto';
-  @override
-  String get anki_lapis_visual_default => 'Predeterminado';
-  @override
-  String get anki_lapis_visual_advanced_css => 'CSS avanzado';
-  @override
-  String get anki_lapis_visual_field_expression => 'Palabra';
-  @override
-  String get anki_lapis_visual_field_reading => 'Lectura';
-  @override
-  String get anki_lapis_visual_field_sentence => 'Oración';
-  @override
-  String get anki_lapis_visual_field_primary_definition =>
-      'Definición principal';
-  @override
-  String get anki_lapis_visual_field_glossaries => 'Otras definiciones';
-  @override
-  String get anki_lapis_visual_target_card_content => 'Contenido de la tarjeta';
-  @override
-  String get anki_lapis_visual_target_definition => 'Definición';
-  @override
-  String get anki_lapis_visual_target_inside_definition =>
-      'Dentro de la definición';
-  @override
-  String get anki_lapis_visual_field_definition_info =>
-      'Indicador de definición';
-  @override
-  String get anki_lapis_visual_field_definition_box => 'Caja de definición';
-  @override
-  String get anki_lapis_visual_field_definition_content =>
-      'Definición completa';
-  @override
-  String get anki_lapis_visual_field_selected_definition =>
-      'Definición seleccionada';
-  @override
-  String get anki_lapis_visual_field_dictionary_entry =>
-      'Entrada de diccionario';
-  @override
-  String get anki_lapis_visual_field_dictionary_name =>
-      'Nombre del diccionario';
-  @override
-  String get anki_lapis_visual_field_definition_example =>
-      'Ejemplo de definición';
-  @override
-  String get anki_lapis_visual_line_height => 'Altura de línea';
-  @override
-  String get anki_lapis_visual_background_color => 'Resaltado de fondo';
-  @override
-  String get anki_lapis_visual_box_layout => 'Apariencia de caja';
-  @override
-  String get anki_lapis_visual_border_width => 'Borde';
-  @override
-  String get anki_lapis_visual_border_color => 'Color del borde';
-  @override
-  String get anki_lapis_visual_corner_radius => 'Radio de esquinas';
-  @override
-  String get anki_lapis_visual_padding => 'Espaciado interior';
-  @override
-  String get anki_lapis_visual_margin => 'Espaciado exterior';
-  @override
-  String get anki_lapis_visual_field_definition_info_note =>
-      'Solo visible en tarjetas que conservan más de un bloque de definición; las tarjetas con una sola definición lo ocultan.';
-  @override
-  String get anki_lapis_visual_field_dictionary_name_note =>
-      'En las tarjetas de Fushi esta etiqueta también lleva las etiquetas de categoría gramatical, por lo que no se pueden estilizar por separado.';
-  @override
-  String get game_upscaling_error_bundle_missing =>
-      'La instalación de Fushi está incompleta: el componente Magpie incluido falta. Reinstale o actualice Fushi.';
-  @override
-  String get game_upscaling_error_bundle_invalid =>
-      'El componente Magpie incluido está corrupto o no pasó la verificación. Reinstale o actualice Fushi.';
-  @override
-  String download_test_connection_failed_reason({required Object message}) =>
-      'La conexión falló: ${message}';
-  @override
-  String get delete_disclosure_will_delete_label => 'Se eliminará';
-  @override
-  String get delete_disclosure_will_keep_label => 'Se conservará';
-  @override
-  String get delete_disclosure_book_records =>
-      'Progreso de lectura, marcadores, etiquetas y datos de subtítulos';
-  @override
-  String get delete_disclosure_book_extracted =>
-      'Los archivos del libro que Fushi extrajo en su almacenamiento';
-  @override
-  String get delete_disclosure_book_audiobook =>
-      'El audio y subtítulos alineados del audiolibro adjunto, si existe';
-  @override
-  String get delete_disclosure_source_kept =>
-      'Los archivos originales que importó (libro, subtítulos, audio)';
-  @override
-  String get delete_disclosure_stats_kept => 'Estadísticas de lectura';
-  @override
-  String get delete_disclosure_audiobook_files =>
-      'El audio y subtítulos alineados que Fushi copió en su almacenamiento';
-  @override
-  String get delete_disclosure_audiobook_book_kept =>
-      'El libro mismo y su progreso de lectura';
-  @override
-  String get delete_disclosure_audiobook_source_kept =>
-      'Los archivos de audio originales que importó';
-  @override
-  String get audiobook_delete => 'Eliminar audiolibro';
-  @override
-  String get audiobook_delete_confirm =>
-      '¿Eliminar el audiolibro adjunto? Sus archivos de audio se eliminan de este dispositivo.';
-  @override
-  String get delete_collection_confirm =>
-      'Solo se elimina la agrupación. Los elementos que contiene se conservan.';
-  @override
-  String get shortcut_action_video_enter_caret =>
-      'Entrar al cursor de búsqueda de subtítulos';
-  @override
-  String get audiobook_export_clip_too_long =>
-      'El audio de la selección es demasiado largo para exportar (límite: 5 minutos)';
-  @override
-  String get sync_err_forbidden =>
-      'El servidor rechazó esta solicitud. Su inicio de sesión está bien — verifique los ajustes del servidor.';
-  @override
-  String sync_err_forbidden_detail({required Object reason}) =>
-      'El servidor rechazó esta solicitud: ${reason} (su inicio de sesión está bien)';
-  @override
-  String get collection_group_extras => 'Extras y PV';
-  @override
-  String collection_group_season({required Object n}) => 'Temporada ${n}';
-  @override
-  String get collection_sort_by_season => 'Ordenar por temporada';
-  @override
-  String get mining_animated_format_avif => 'AVIF (más pequeño)';
-  @override
-  String get mining_animated_format_webp => 'WebP (soporte más amplio)';
-  @override
-  String get mining_animated_format_gif => 'GIF (más compatible)';
-  @override
-  String get video_mining_animated_format =>
-      'Formato de animación de tarjeta de vídeo';
-  @override
-  String get video_mining_animated_format_hint =>
-      'AVIF es mucho más pequeño que GIF a la misma calidad, y su nivel de calidad máxima permite mayor resolución y tasa de fotogramas que GIF o WebP. Recurre a GIF automáticamente cuando el codificador incluido no puede producirlo.';
-  @override
-  String get gal_mining_animated_format =>
-      'Formato de animación de tarjeta de juego';
-  @override
-  String get gal_mining_animated_format_hint =>
-      'Mismos formatos que las tarjetas de vídeo, almacenados por separado: un fotograma de galgame apenas se mueve dentro de una línea, por lo que la compensación difiere.';
-  @override
-  String get scrape_all => 'Obtener todo';
-  @override
-  String scrape_all_title({required Object kind}) =>
-      'Obtener todos los ${kind}';
-  @override
-  String scrape_all_running({required Object current, required Object total}) =>
-      'Obteniendo ${current} / ${total}';
-  @override
-  String scrape_all_item({required Object title}) => 'Procesando: ${title}';
-  @override
-  String scrape_all_done({
-    required Object applied,
-    required Object review,
-    required Object skipped,
-    required Object failed,
-  }) =>
-      'Listo: ${applied} aplicados, ${review} necesitan revisión, ${skipped} omitidos, ${failed} fallidos';
-  @override
-  String get scrape_all_empty =>
-      'No hay elementos para obtener en esta biblioteca.';
-  @override
-  String get scrape_all_start => 'Iniciar';
-  @override
-  String collection_hero_total_episodes({required Object count}) =>
-      '${count} episodios';
-  @override
-  String get video_scrape_collection_rename_title =>
-      '¿Renombrar esta colección?';
-  @override
-  String get video_scrape_collection_rename_body =>
-      'La entrada coincidente tiene un nombre diferente. Renombrar es opcional: la portada y detalles se guardan de todos modos, y un renombramiento también reemplaza el nombre antiguo en sus otros dispositivos sincronizados.';
-  @override
-  String video_scrape_collection_rename_from({required Object name}) =>
-      'Nombre actual: ${name}';
-  @override
-  String video_scrape_collection_rename_to({required Object name}) =>
-      'Nuevo nombre: ${name}';
-  @override
-  String get video_scrape_collection_rename_keep => 'Mantener nombre actual';
-  @override
-  String get download_task_toggle_failed => 'Pausa/reanudación falló';
-  @override
-  String get download_task_eta => 'ETA';
-  @override
-  String get download_task_ratio => 'Ratio';
-  @override
-  String get download_task_status_downloading => 'Descargando';
-  @override
-  String get download_task_status_seeding => 'Sembrando';
-  @override
-  String get download_task_status_completed => 'Completado';
-  @override
-  String get download_task_status_paused => 'Pausado';
-  @override
-  String get download_task_status_queued => 'En cola';
-  @override
-  String get download_task_status_stalled => 'Atascado';
-  @override
-  String get download_task_status_checking => 'Verificando';
-  @override
-  String get download_task_status_metadata => 'Obteniendo metadatos';
-  @override
-  String get download_task_status_moving => 'Moviendo';
-  @override
-  String get download_task_status_error => 'Error';
-  @override
-  String get download_task_pause => 'Pausar';
-  @override
-  String get download_task_resume => 'Reanudar';
-  @override
-  String get download_airing_calendar_title => 'Calendario de emisión';
-  @override
-  String get download_airing_calendar_show_all =>
-      'Mostrar todo de esta temporada';
-  @override
-  String get download_airing_calendar_empty_guidance =>
-      'Nada que mostrar aún: vincule una colección a AniList o agregue una suscripción de descarga, y sus horarios de emisión aparecerán aquí.';
-  @override
-  String get download_airing_calendar_error =>
-      'No se pudo cargar el calendario de emisión';
-  @override
-  String get download_airing_calendar_in_library => 'En biblioteca';
-  @override
-  String get download_airing_calendar_subscribed => 'Suscrito';
-  @override
-  String download_airing_calendar_episode_label({required Object episode}) =>
-      'Ep ${episode}';
-  @override
-  String get download_airing_calendar_week_prev => 'Semana anterior';
-  @override
-  String get download_airing_calendar_week_next => 'Semana siguiente';
-  @override
-  String get download_airing_calendar_week_empty => 'Nada se emite esta semana';
-  @override
-  String get video_jimaku_format => 'Formato';
-  @override
-  String get video_jimaku_format_all => 'Todos';
-  @override
-  String get video_setting_tmdb_key => 'Clave API de TMDB personalizada';
-  @override
-  String get video_setting_tmdb_key_hint =>
-      'Opcional. Deje vacío para usar la clave integrada. Complete con la suya solo si la obtención de metadatos deja de funcionar o desea usar su propia cuota.';
-  @override
-  String get about_tmdb_attribution =>
-      'Esta aplicación utiliza TMDB y las APIs de TMDB pero no está respaldada, certificada ni aprobada por TMDB.';
-  @override
-  String get anki_lapis_visual_layout => 'Disposición';
-  @override
-  String get anki_lapis_visual_layout_hint =>
-      'Usa los interruptores de disposición propios de Lapis, por lo que Anki de escritorio y móvil lo siguen.';
-  @override
-  String get anki_lapis_visual_layout_sentence => 'Posición de la oración';
-  @override
-  String get anki_lapis_visual_layout_sentence_above =>
-      'Arriba de las definiciones';
-  @override
-  String get anki_lapis_visual_layout_sentence_below =>
-      'Debajo de las definiciones';
-  @override
-  String get anki_lapis_visual_layout_picture => 'Posición de la imagen';
-  @override
-  String get anki_lapis_visual_layout_picture_right => 'Derecha de la palabra';
-  @override
-  String get anki_lapis_visual_layout_picture_left => 'Izquierda de la palabra';
-  @override
-  String get anki_lapis_visual_layout_picture_alt => 'Dentro de la oración';
-  @override
-  String get anki_lapis_visual_layout_audio => 'Botones de audio';
-  @override
-  String get anki_lapis_visual_layout_audio_header => 'Junto a la lectura';
-  @override
-  String get anki_lapis_visual_layout_audio_fixed => 'Fijados abajo';
-  @override
-  String get anki_lapis_visual_layout_audio_alt => 'Dentro de la oración';
-  @override
-  String get anki_lapis_visual_mapping_hint =>
-      'Campos de Anki que llenan el área seleccionada. Los cambios se guardan junto con el estilo.';
-  @override
-  String get anki_lapis_visual_mapping_none =>
-      'Esta área es dibujada por la plantilla misma y no tiene campo propio.';
-  @override
-  String get anki_lapis_visual_color_custom => 'Personalizado';
-  @override
-  String get anki_lapis_visual_color_picker_title => 'Elegir un color';
-  @override
-  String get video_scrape_tmdb_key_hint => 'Introduzca la clave API de TMDB';
-  @override
-  String get video_scrape_tmdb_key_required => 'TMDB requiere una clave API';
-  @override
-  String get video_scrape_tmdb_key_save => 'Guardar';
-  @override
-  String get video_scrape_tmdb_key_empty =>
-      'Guarde una clave API de TMDB, luego presione Buscar. Los resultados de otras fuentes no se muestran aquí.';
-  @override
-  String get download_detail_tab_overview => 'Resumen';
-  @override
-  String get download_detail_tab_files => 'Archivos';
-  @override
-  String get download_detail_tab_peers => 'Pares';
-  @override
-  String get download_detail_tab_trackers => 'Trackers';
-  @override
-  String get download_detail_backend_unsupported =>
-      'No soportado por el backend de descarga actual';
-  @override
-  String get download_detail_task_gone => 'Tarea no encontrada en el backend';
-  @override
-  String get download_detail_task_missing =>
-      'El backend de descarga original está en línea, pero este torrent ya no está presente. Los pares y trackers en vivo no pueden recuperarse; se muestra la información persistida.';
-  @override
-  String get download_detail_section_transfer => 'Transferencia';
-  @override
-  String get download_detail_section_network => 'Red';
-  @override
-  String get download_detail_section_task => 'Tarea';
-  @override
-  String get download_detail_seeds_label => 'Seeds';
-  @override
-  String get download_detail_leechers_label => 'Leechers';
-  @override
-  String get download_detail_connections_label => 'Conexiones';
-  @override
-  String get download_detail_content_path_label => 'Ruta del contenido';
-  @override
-  String get download_detail_time_active => 'Tiempo activo';
-  @override
-  String get download_detail_time_seeding => 'Tiempo de seeding';
-  @override
-  String get download_detail_total_size_label => 'Tamaño total';
-  @override
-  String get download_detail_listen_port => 'Puerto de escucha';
-  @override
-  String get download_detail_dht_nodes => 'Nodos DHT';
-  @override
-  String get download_detail_hash_label => 'Hash de información';
-  @override
-  String get download_detail_port_mapping => 'Mapeo de puertos';
-  @override
-  String get download_detail_session_rates => 'Tasas de sesión';
-  @override
-  String get download_detail_pieces_label => 'Piezas';
-  @override
-  String get download_detail_priority_skip => 'No descargar';
-  @override
-  String get download_detail_raw_state_label => 'Estado del backend';
-  @override
-  String get download_detail_remaining_label => 'Restante';
-  @override
-  String get download_detail_save_path_label => 'Ruta de guardado';
-  @override
-  String get download_detail_priority_normal => 'Normal';
-  @override
-  String get download_detail_priority_high => 'Alta';
-  @override
-  String get download_detail_tracker_working => 'Funcionando';
-  @override
-  String get download_detail_tracker_updating => 'Actualizando';
-  @override
-  String get download_detail_tracker_not_contacted => 'Aún sin contactar';
-  @override
-  String get download_detail_tracker_not_working => 'Sin funcionar';
-  @override
-  String get download_detail_tracker_disabled => 'Desactivado';
-  @override
-  String get download_detail_no_peers => 'Sin pares conectados';
-  @override
-  String get download_detail_no_trackers => 'Sin trackers';
-  @override
-  String get video_filter_year => 'Año';
-  @override
-  String get video_filter_year_unknown => 'Año desconocido';
-  @override
-  String get video_filter_watch_status => 'Estado de visualización';
-  @override
-  String get video_filter_watch_status_unwatched => 'Sin ver';
-  @override
-  String get video_filter_watch_status_watching => 'Viendo';
-  @override
-  String get video_filter_watch_status_completed => 'Completado';
-  @override
-  String get video_hero_detail_view => 'Detalles';
-  @override
-  String video_hero_episodes_watched({required Object n}) => '${n} eps vistos';
-  @override
-  String get video_recently_added_badge => 'NUEVO';
-  @override
-  String get video_air_season_winter => 'Invierno';
-  @override
-  String get video_air_season_spring => 'Primavera';
-  @override
-  String get video_air_season_summer => 'Verano';
-  @override
-  String get video_air_season_autumn => 'Otoño';
-  @override
-  String get delete_scope_no_channel =>
-      'Sin sincronización configurada — esta eliminación solo afecta este dispositivo';
-  @override
-  String get mihon_sources_title => 'Fuentes de manga';
-  @override
-  String get mihon_extensions_title => 'Extensiones de manga';
-  @override
-  String get mihon_store_add => 'Añadir tienda de extensiones';
-  @override
-  String get mihon_store_url => 'URL de tienda de extensiones';
-  @override
-  String get mihon_store_empty =>
-      'Aún no hay tiendas de extensiones. Agregue una tienda compatible de Mihon o importe un APK local.';
-  @override
-  String get mihon_extension_import => 'Importar APK local';
-  @override
-  String get mihon_extension_warning =>
-      'Las extensiones de terceros ejecutan código con los permisos de Fushi. Solo instale extensiones y firmantes de confianza.';
-  @override
-  String get mihon_extension_install => 'Instalar';
-  @override
-  String get mihon_extension_update => 'Actualizar';
-  @override
-  String get mihon_extension_uninstall => 'Desinstalar';
-  @override
-  String get mihon_extension_installed => 'Instalado';
-  @override
-  String get mihon_extension_disabled => 'Desactivado';
-  @override
-  String get mihon_source_empty =>
-      'Sin fuentes de manga activas. Instale y active una extensión primero.';
-  @override
-  String get mihon_source_popular => 'Popular';
-  @override
-  String get mihon_source_latest => 'Último';
-  @override
-  String get mihon_source_search => 'Buscar manga';
-  @override
-  String get mihon_source_preferences => 'Preferencias de fuente';
-  @override
-  String get mihon_source_clear_data => 'Borrar datos de fuente';
-  @override
-  String get mihon_source_clear_data_hint =>
-      'Borra las preferencias y cookies de esta fuente. Las extensiones instaladas se conservan.';
-  @override
-  String get mihon_signer_trust_title =>
-      '¿Confiar en el firmante de la extensión?';
-  @override
-  String get mihon_signer_fingerprint => 'SHA-256 del firmante';
-  @override
-  String get mihon_runtime_unavailable =>
-      'Las extensiones de Mihon no están disponibles en esta plataforma.';
-  @override
-  String get mihon_extension_incompatible => 'Extensión incompatible';
-  @override
-  String get mihon_store_refresh => 'Actualizar tiendas';
-  @override
-  String get mihon_source_browse_mokuro => 'Catálogo Mokuro integrado';
-  @override
-  String get mihon_source_no_results => 'No se encontró manga.';
-  @override
-  String get mihon_chapters_title => 'Capítulos';
-  @override
-  String get mihon_extension_language_filter => 'Idioma';
-  @override
-  String get mihon_extension_language_all => 'Todos los idiomas';
-  @override
-  String get mihon_filter_ignore => 'Ignorar';
-  @override
-  String get mihon_filter_include => 'Incluir';
-  @override
-  String get mihon_filter_exclude => 'Excluir';
-  @override
-  String get mihon_filter_ascending => 'Ascendente';
-  @override
-  String get mihon_filter_descending => 'Descendente';
-  @override
-  String get mihon_add_to_bookshelf => 'Añadir al estante de manga';
-  @override
-  String get mihon_in_bookshelf => 'En el estante de manga';
-  @override
-  String scrape_all_confirm({required Object n}) =>
-      'Emparejar todos los ${n} elementos de la biblioteca por título. Solo las coincidencias de alta confianza se aplican automáticamente — los vídeos se puntúan por título junto con año, tipo y otras señales, mientras que los libros y juegos requieren un título exacto único. Las portadas que eligió usted nunca se sobrescriben (imágenes locales que estableció, entradas que eligió en el diálogo de emparejamiento, y archivos de póster colocados en la carpeta), y los resultados ambiguos quedan pendientes para revisión manual.';
-  @override
-  String get collection_related_title => 'Obras relacionadas';
-  @override
-  String get collection_relation_prequel => 'Precuela';
-  @override
-  String get collection_relation_sequel => 'Secuela';
-  @override
-  String get collection_relation_side_story => 'Historia secundaria';
-  @override
-  String get collection_relation_movie => 'Película';
-  @override
-  String get collection_relation_spin_off => 'Spin-off';
-  @override
-  String get collection_relation_other => 'Relacionado';
-  @override
-  String get collection_relation_download => 'Descargar';
-  @override
-  String get collection_relation_bind => 'Vincular a colección existente';
-  @override
-  String get collection_episode_rename => 'Renombrar episodios desde metadatos';
-  @override
-  String get collection_episode_rename_title => 'Renombrar episodios';
-  @override
-  String get collection_episode_rename_empty => 'Nada que renombrar';
-  @override
-  String get collection_episode_download => 'Descargar este episodio';
-  @override
-  String get collection_episode_fill_missing => 'Completar episodios faltantes';
-  @override
-  String get collection_episode_no_missing => 'Sin episodios faltantes';
-  @override
-  String get collection_split_by_season => 'Dividir por temporada';
-  @override
-  String get collection_split_keep_original =>
-      'Conservar la colección original';
-  @override
-  String get collection_split_confirm => 'Dividir';
-  @override
-  String collection_relation_bound({required Object name}) =>
-      'Vinculado a ${name}';
-  @override
-  String collection_episode_rename_apply({required Object n}) =>
-      'Renombrar ${n} episodios';
-  @override
-  String collection_split_done({required Object n}) =>
-      'Dividido en ${n} colecciones';
-  @override
-  String collection_episode_watched_at({required Object position}) =>
-      'Visto hasta ${position}';
-  @override
-  String collection_episode_rename_partial({
-    required Object n,
-    required Object m,
-  }) => 'Se renombraron ${n} episodios, ${m} fallaron';
-  @override
-  String get sync_err_browser_timeout =>
-      'El navegador nunca devolvió la autorización. Reintente y asegúrese de que su proxy deje pasar 127.0.0.1.';
-  @override
-  String get manga_rescan_running => 'Reconociendo el recuadro seleccionado...';
-  @override
-  String get manga_rescan_empty => 'No se reconoció texto en este recuadro.';
-  @override
-  String get stat_hourly_band_epub => 'Libros de texto';
-  @override
-  String get stat_hourly_band_pdf => 'PDF';
-  @override
-  String get stat_hourly_band_manga => 'Manga';
-  @override
-  String get stat_hourly_band_unattributed => 'Historial sin dividir';
-  @override
-  String get stat_hourly_unattributed_note =>
-      'Las horas registradas antes de que existiera el seguimiento por formato no tienen tipo almacenado, por lo que no se pueden dividir. Se muestran como un total combinado y no se asignan a ningún tipo.';
-  @override
-  String get book_convert_to_manga_action => 'Convertir a manga';
-  @override
-  String get book_convert_to_book_action => 'Convertir de vuelta a libro';
-  @override
-  String get book_convert_running => 'Convirtiendo…';
-  @override
-  String get book_convert_done => 'Conversión terminada';
-  @override
-  String get book_convert_failed => 'La conversión falló';
-  @override
-  String get book_convert_blocked_already =>
-      'Este libro ya está en ese formato.';
-  @override
-  String get book_convert_blocked_text_only =>
-      'Este es un libro de texto sin imágenes de página. Solo los libros de imágenes escaneadas pueden convertirse en manga.';
-  @override
-  String get book_convert_blocked_no_original =>
-      'Este manga fue importado desde imágenes, por lo que no hay libro original al que convertir.';
-  @override
-  String get book_convert_blocked_source_missing =>
-      'Los archivos fuente ya no están en disco.';
-  @override
-  String manga_online_retry_waiting({
-    required Object attempt,
-    required Object total,
-  }) => 'Reintentando automáticamente (${attempt}/${total})';
-  @override
-  String get manga_ocr_wizard_already_ocred =>
-      'Este volumen ya tiene datos de OCR en cada página. Ejecutar OCR de nuevo los sobrescribiría.';
-  @override
-  String get shortcut_scope_universal => 'Atrás / Salir';
-  @override
-  String get game_attach_and_capture => 'Vincular y capturar';
-  @override
-  String get remote_delete_failed =>
-      'No se pudo eliminar en el dispositivo emparejado';
-  @override
-  String get remote_delete_unsupported =>
-      'El dispositivo emparejado es demasiado antiguo para soportar eliminación remota. Actualice Fushi allí primero.';
-  @override
-  String get anki_lapis_visual_blocks => 'Áreas personalizadas';
-  @override
-  String get anki_lapis_visual_blocks_hint =>
-      'Mostrar campos existentes en otra parte de la tarjeta. Solo visualización: no se añade ni elimina ningún campo de Anki.';
-  @override
-  String get anki_lapis_visual_block_add => 'Añadir área';
-  @override
-  String get anki_lapis_visual_block_delete => 'Eliminar área';
-  @override
-  String anki_lapis_visual_block_name({required Object index}) =>
-      'Área ${index}';
-  @override
-  String get anki_lapis_visual_block_anchor => 'Posición en la tarjeta';
-  @override
-  String get anki_lapis_visual_block_anchor_top => 'Arriba de la tarjeta';
-  @override
-  String get anki_lapis_visual_block_anchor_above_sentence =>
-      'Debajo de la palabra';
-  @override
-  String get anki_lapis_visual_block_anchor_above_definition =>
-      'Debajo de la oración';
-  @override
-  String get anki_lapis_visual_block_anchor_below_definition =>
-      'Debajo de las definiciones';
-  @override
-  String get anki_lapis_visual_block_anchor_bottom => 'Abajo de la tarjeta';
-  @override
-  String get anki_lapis_visual_block_fields => 'Campos mostrados aquí';
-  @override
-  String get anki_lapis_visual_block_no_fields =>
-      'Aún no se han seleccionado campos';
-  @override
-  String get anki_lapis_visual_block_needs_note_type =>
-      'Elija un tipo de nota primero para elegir campos.';
-  @override
-  String get anki_lapis_restore_factory => 'Restaurar Lapis de fábrica';
-  @override
-  String get anki_lapis_restore_factory_hint =>
-      'Sobrescribe el tipo de nota Lapis en Anki con la versión incluida en Fushi y borra todas las personalizaciones.';
-  @override
-  String get anki_lapis_restore_factory_confirm =>
-      'Esto sobrescribe el estilo y plantillas de tarjetas Lapis en Anki con la versión incluida de Fushi, y restablece tamaño de fuente, CSS personalizado y áreas personalizadas. Se guarda una copia de seguridad del estado actual primero. Los datos de las tarjetas no se tocan.';
-  @override
-  String get anki_lapis_restore_factory_done =>
-      'Lapis restaurado a valores de fábrica';
-  @override
-  String anki_lapis_restore_factory_failed({required Object error}) =>
-      'La restauración falló: ${error}';
-  @override
-  String get anki_lapis_visual_select_field_hint =>
-      'Haga clic en cualquier parte de la vista previa, o elija uno abajo. Lo que elija es lo que los controles de abajo editarán.';
-  @override
-  String get anki_lapis_visual_editing_now => 'Editando';
-  @override
-  String get mihon_extension_preview => 'Vista previa';
-  @override
-  String get mihon_extension_preview_warning =>
-      'La vista previa ejecuta el código de esta extensión antes de instalarla. Nada se añade a su biblioteca hasta que elija instalar.';
-  @override
-  String get mihon_extension_preview_discard => 'Descartar';
-  @override
-  String get mihon_extension_preview_source_select =>
-      'Elija una fuente para previsualizar';
-  @override
-  String get mihon_extension_sources_included => 'Fuentes incluidas';
-  @override
-  String get mihon_extension_preview_read_only =>
-      'La vista previa es de solo lectura. Instale la extensión para abrir y leer.';
-  @override
-  String get selection_copy_empty => 'No hay texto seleccionado.';
-  @override
-  String get video_library_empty_source_hint =>
-      'Añada una carpeta de vídeo desde Fuentes para construir su biblioteca';
-  @override
-  String get video_source_scrape_action => 'Obtener metadatos de esta fuente';
-  @override
-  String get video_source_scrape_settings =>
-      'Ajustes de obtención de metadatos de fuente';
-  @override
-  String get video_source_scrape_auto_after_scan =>
-      'Obtener metadatos después del escaneo';
-  @override
-  String get video_source_scrape_auto_after_scan_hint =>
-      'Ejecutar obtención de metadatos automáticamente después de escanear esta fuente';
-  @override
-  String get video_source_scrape_write_nfo => 'Escribir archivos NFO';
-  @override
-  String get video_source_scrape_write_images => 'Escribir archivos de imagen';
-  @override
-  String video_source_scrape_progress({
-    required Object phase,
-    required Object current,
-    required Object total,
-  }) => '${phase} · ${current}/${total}';
-  @override
-  String video_source_scrape_last_summary({
-    required Object status,
-    required Object succeeded,
-    required Object pending,
-    required Object failed,
-  }) =>
-      'Última obtención (${status}): ${succeeded} exitosos, ${pending} pendientes, ${failed} fallidos';
-  @override
-  String get video_source_scrape_phase_planning => 'Planificando';
-  @override
-  String get video_source_scrape_phase_recognizing => 'Emparejando';
-  @override
-  String get video_source_scrape_phase_fetching => 'Obteniendo metadatos';
-  @override
-  String get video_source_scrape_phase_applying => 'Guardando metadatos';
-  @override
-  String get video_source_scrape_phase_writing_sidecars =>
-      'Escribiendo archivos complementarios';
-  @override
-  String get video_source_scrape_status_interrupted => 'Interrumpido';
-  @override
-  String get video_source_scrape_locale => 'Idioma de metadatos';
-  @override
-  String get video_source_scrape_locale_hint =>
-      'Idioma preferido para títulos, resúmenes e imágenes';
-  @override
-  String get video_source_scrape_confirmation_title =>
-      'Confirmar coincidencia de metadatos';
-  @override
-  String get video_source_scrape_confirmation_hint =>
-      'Se encontraron múltiples coincidencias exactas. Elija la obra correcta para guardar su vínculo con el proveedor.';
-  @override
-  String get video_source_scrape_confirmation_skip => 'Omitir esta obra';
-  @override
-  String get video_source_scrape_nfo_policy => 'Política de escritura NFO';
-  @override
-  String get video_source_scrape_image_policy =>
-      'Política de escritura de imágenes';
-  @override
-  String get video_source_scrape_policy_skip => 'No escribir';
-  @override
-  String get video_source_scrape_policy_missing_only => 'Solo cuando faltan';
-  @override
-  String get video_source_scrape_policy_overwrite =>
-      'Actualizar archivos de Fushi';
-  @override
-  String get video_source_scrape_external_overwrite =>
-      'Permitir sobrescritura de archivos protegidos';
-  @override
-  String get video_source_scrape_external_overwrite_hint =>
-      'Los archivos de terceros o modificados por el usuario permanecen protegidos hasta que confirme cada lote de obtención manual de nuevo.';
-  @override
-  String get video_source_scrape_external_overwrite_confirm_title =>
-      '¿Sobrescribir archivos protegidos?';
-  @override
-  String get video_source_scrape_external_overwrite_confirm_body =>
-      'Este lote puede reemplazar NFO/imágenes de terceros o archivos de Fushi que editó. Los archivos de medios no se cambian. ¿Continuar?';
-  @override
-  String get video_source_scrape_tasks_open => 'Tareas en segundo plano';
-  @override
-  String get video_source_scrape_background_started =>
-      'La obtención de metadatos se ejecuta en segundo plano';
-  @override
-  String get video_source_scrape_tasks_current => 'Tarea actual';
-  @override
-  String get video_source_scrape_tasks_history => 'Tareas recientes';
-  @override
-  String get video_source_scrape_tasks_empty =>
-      'Aún no hay tareas de obtención';
-  @override
-  String get video_source_scrape_waiting_confirmation =>
-      'Esperando su confirmación';
-  @override
-  String get video_source_scrape_phase_scanning => 'Escaneando fuente';
-  @override
-  String get video_library_all_videos => 'Todos los vídeos';
-  @override
-  String get video_work_voice_roles => 'Elenco de voz y personajes';
-  @override
-  String get video_work_cast_crew => 'Elenco y equipo';
-  @override
-  String get video_work_trailers => 'Tráilers';
-  @override
-  String get video_work_extras => 'Extras';
-  @override
-  String get video_work_details => 'Detalles';
-  @override
-  String get video_work_external_ids => 'IDs externos';
-  @override
-  String get video_work_metadata_pending =>
-      'Los metadatos detallados aún no se han obtenido. Reintente esta fuente desde Fuentes, luego vuelva a abrir la obra.';
-  @override
-  String get video_work_genres => 'Géneros';
-  @override
-  String get video_work_keywords => 'Palabras clave';
-  @override
-  String get video_work_studios => 'Estudios';
-  @override
-  String get video_work_countries => 'Países';
-  @override
-  String get video_work_content_rating => 'Clasificación de contenido';
-  @override
-  String get video_all_videos_list_view => 'Vista de lista';
-  @override
-  String get video_all_videos_grid_view => 'Vista de cuadrícula';
-  @override
-  String video_home_continue_episode_number({required Object n}) =>
-      'Reproduciendo episodio ${n}';
-  @override
-  String video_home_next_episode_number({required Object n}) =>
-      'Siguiente · Episodio ${n}';
-  @override
-  String video_home_recent_episode_number({required Object n}) =>
-      'Añadido recientemente · Episodio ${n}';
-  @override
-  String video_home_remaining_minutes({required Object minutes}) =>
-      '${minutes} min restantes';
-  @override
-  String get video_subtitle_replay => 'Repetir esta línea';
-  @override
-  String get manga_ocr_done => 'OCR completado';
-  @override
-  String get settings_destination_manga_summary =>
-      'Lector, OCR y catálogo en línea';
-  @override
-  String get manga_page_animation => 'Animación de paso de página';
-  @override
-  String get manga_page_animation_none => 'Ninguna';
-  @override
-  String get manga_page_animation_slide => 'Deslizar';
-  @override
-  String get manga_page_animation_fade => 'Desvanecer';
-  @override
-  String get manga_default_zoom => 'Zoom predeterminado';
-  @override
-  String get manga_zoom_sensitivity => 'Sensibilidad del zoom';
-  @override
-  String get manga_volume_key_paging => 'Teclas de volumen pasan páginas';
-  @override
-  String get manga_volume_key_paging_subtitle =>
-      'Use subir y bajar volumen para pasar páginas en el lector de manga';
-  @override
-  String get manga_tap_zone_paging => 'Tocar bordes para pasar páginas';
-  @override
-  String get manga_tap_zone_paging_subtitle =>
-      'Toque el borde izquierdo o derecho de la página para pasar';
-  @override
-  String get manga_section_viewing => 'Visualización y paso de página';
-  @override
-  String get game_capture_setup_title => 'Completar configuración de captura';
-  @override
-  String get game_capture_setup_hint =>
-      'Elija el hilo de diálogo primero. Fushi solo puede emparejar audio con líneas del hilo seleccionado.';
-  @override
-  String get game_audio_requires_thread =>
-      'La fuente de captura de audio puede estar lista, pero el audio de oraciones no existe hasta que se seleccione un hilo y se reciba una línea.';
-  @override
-  String get game_session_waiting_thread => 'Esperando un hilo de diálogo';
-  @override
-  String get anki_connect_use_on_mobile => 'Use AnkiConnect on Android';
-  @override
-  String get anki_connect_use_on_mobile_hint =>
-      'Use solo en una red de confianza. AnkiConnect usa HTTP sin cifrar; configure una clave API que coincida, luego actualice mazos y tipos de nota después de cambiar.';
-  @override
-  String get anki_connect_api_key_hint =>
-      'Requerido para AnkiConnect remoto; debe coincidir con la clave configurada en el complemento';
-  @override
-  String get anki_connect_mobile_api_key_required =>
-      'Configure a matching AnkiConnect API key before enabling the Android backend.';
-  @override
-  String anki_connect_backend_switch_failed({required Object error}) =>
-      'No se pudo cambiar el backend de Anki: ${error}';
-  @override
-  String get migration_settings_entry => 'Migrar a Fushi';
-  @override
-  String get migration_settings_entry_subtitle =>
-      'Mover todos los datos a la nueva app Fushi';
-  @override
-  String get migration_intro =>
-      'Fushi es el nuevo nombre de esta app. La migración exporta todos sus datos en lotes a una carpeta de transferencia, luego Fushi los importa y verifica. Sus datos aquí permanecen intactos hasta que desinstale esta app.';
-  @override
-  String get migration_target_missing =>
-      'Fushi aún no está instalado. Instale Fushi primero, luego regrese aquí.';
-  @override
-  String get migration_download_fushi => 'Obtener Fushi';
-  @override
-  String get migration_start => 'Iniciar migración';
-  @override
-  String get migration_open_fushi => 'Abrir Fushi';
-  @override
-  String get migration_include_local_audio =>
-      'También exportar audio de pronunciación local (puede ser grande)';
-  @override
-  String migration_batch_running({required Object batch}) =>
-      'Exportando ${batch}…';
-  @override
-  String migration_batch_done({required Object batch}) => '${batch} exportado';
-  @override
-  String get migration_export_done =>
-      'Exportación completa. Abra Fushi para importar y verificar.';
-  @override
-  String migration_export_failed({required Object error}) =>
-      'La exportación falló: ${error}';
-  @override
-  String get migration_readonly_note =>
-      'Sus datos han sido exportados a Fushi. Esta app ahora es de solo lectura: use Fushi para leer y crear tarjetas. Puede re-exportar en cualquier momento si Fushi reporta datos faltantes.';
-  @override
-  String get migration_reexport => 'Re-exportar';
-  @override
-  String get migration_batch_core_label => 'Ajustes, progreso y estadísticas';
-  @override
-  String get migration_import_entry => 'Importar desde Hibiki';
-  @override
-  String get migration_import_entry_subtitle =>
-      'Importar datos exportados por la antigua app Hibiki';
-  @override
-  String get migration_import_detected =>
-      'Datos de migración de Hibiki detectados. ¿Importarlos ahora?';
-  @override
-  String get migration_import_start => 'Iniciar importación';
-  @override
-  String migration_import_running({required Object batch}) =>
-      'Importando ${batch}…';
-  @override
-  String migration_import_verify_failed({
-    required Object batch,
-    required Object detail,
-  }) =>
-      '${batch} falló la verificación y se conservó para re-exportar: ${detail}';
-  @override
-  String migration_import_counts_failed({required Object detail}) =>
-      'Los datos importados están incompletos: ${detail}. Re-exporte las partes faltantes desde Hibiki, luego importe de nuevo.';
-  @override
-  String get migration_import_success => 'Importación completa y verificada.';
-  @override
-  String get migration_import_nothing =>
-      'No se encontraron datos de migración en la carpeta de transferencia.';
-  @override
-  String get migration_uninstall_prompt =>
-      'Migración finalizada. ¿Desinstalar la antigua app Hibiki?';
-  @override
-  String get migration_uninstall_button => 'Desinstalar Hibiki';
-  @override
-  String get migration_uninstall_still_installed =>
-      'Hibiki aún está instalado. Puede desinstalarlo en cualquier momento.';
-  @override
-  String get migration_import_permission_title =>
-      'Se requiere permiso de almacenamiento';
-  @override
-  String get migration_import_permission_body =>
-      'La carpeta de transferencia fue creada por la app antigua. Sin el acceso "Todos los archivos", Fushi no puede leerla — los datos están intactos, simplemente no se pueden abrir.';
-  @override
-  String get migration_import_permission_grant => 'Conceder permiso';
-  @override
-  String migration_import_verifying({
-    required Object batch,
-    required Object done,
-    required Object total,
-  }) => 'Verificando ${batch} (${done}/${total})';
-  @override
-  String get migration_import_verifying_hint =>
-      'Verificando los archivos. Las bibliotecas grandes pueden tardar varios minutos.';
-  @override
-  String get game_line_copy_tooltip => 'Copiar oración';
-  @override
-  String get game_japanese_locale_auto => 'Auto';
-  @override
-  String get game_japanese_locale_on => 'Siempre activo';
-  @override
-  String get game_japanese_locale_off => 'Apagado';
-  @override
-  String get game_japanese_locale => 'Configuración regional japonesa';
-  @override
-  String get game_japanese_locale_hint =>
-      'Las compilaciones parcheadas en chino/inglés deben desactivar esto, o el juego se cierra al iniciar';
-  @override
-  String get video_scrape_diagnostic_export =>
-      'Exportar diagnóstico de metadatos';
-  @override
-  String get video_scrape_diagnostic_confirm_title =>
-      '¿Exportar diagnóstico de metadatos?';
-  @override
-  String get video_scrape_diagnostic_saved => 'Paquete de diagnóstico guardado';
-  @override
-  String video_scrape_diagnostic_failed({required Object reason}) =>
-      'No se pudo exportar el paquete de diagnóstico: ${reason}';
-  @override
-  String get video_scrape_diagnostic_share_subject =>
-      'Diagnóstico de metadatos de vídeo de Fushi';
-  @override
-  String get video_scrape_diagnostic_confirm_body =>
-      'El paquete incluye nombres relativos de archivos y carpetas, resúmenes de metadatos y contenido NFO original. No añade vídeos, subtítulos, imágenes, rutas absolutas, configuración de la app ni credenciales. Los archivos NFO originales se conservan sin cambios y pueden contener información personal o secretos; revise el paquete antes de compartirlo públicamente.';
-  @override
-  String get video_discovery_search_hint => 'Buscar películas, series, anime';
-  @override
-  String get video_discovery_hot => 'Popular ahora';
-  @override
-  String get video_discovery_seasonal_anime => 'Anime de temporada';
-  @override
-  String get video_discovery_all_works => 'Todos los títulos';
-  @override
-  String get video_discovery_search_results => 'Resultados de búsqueda';
-  @override
-  String get video_discovery_provider_warning =>
-      'Algunos proveedores no están disponibles. Mostrando resultados disponibles.';
-  @override
-  String get video_discovery_load_failed =>
-      'No se pudieron cargar los resultados de descubrimiento.';
-  @override
-  String get video_discovery_empty => 'Sin títulos coincidentes.';
-  @override
-  String get video_discovery_resource_search => 'Buscar recursos';
-  @override
-  String get video_discovery_subtitle_search => 'Buscar subtítulos';
-  @override
-  String get video_discovery_subscribe => 'Suscribirse';
-  @override
-  String get video_discovery_subscription_manage => 'Administrar suscripción';
-  @override
-  String get video_discovery_pipeline_idle =>
-      'Sin descargar → Descargar → Organizar → Subtítulos → Metadatos → Biblioteca';
-  @override
-  String get video_discovery_details_load_failed =>
-      'No se pudieron cargar los detalles del título.';
-  @override
-  String get video_discovery_sort_popularity => 'Popularidad';
-  @override
-  String get video_discovery_sort_rating => 'Puntuación';
-  @override
-  String get video_discovery_sort_release => 'Fecha de lanzamiento';
-  @override
-  String get video_discovery_in_library => 'En biblioteca';
-  @override
-  String get video_discovery_play => 'Reproducir';
-  @override
-  String get download_resources_tab => 'Recursos';
-  @override
-  String get video_external_settings_section =>
-      'Proveedores externos de recursos y subtítulos';
-  @override
-  String get video_torznab_settings_title => 'Indexadores Torznab';
-  @override
-  String get video_torznab_add => 'Añadir indexador';
-  @override
-  String get video_torznab_name => 'Nombre';
-  @override
-  String get video_torznab_endpoint => 'Endpoint';
-  @override
-  String get video_torznab_endpoint_hint =>
-      'Se requiere HTTPS excepto para direcciones de loopback.';
-  @override
-  String get video_torznab_api_key => 'Clave API';
-  @override
-  String get video_torznab_priority => 'Prioridad';
-  @override
-  String get video_torznab_categories => 'Categorías';
-  @override
-  String get video_torznab_categories_hint =>
-      'IDs de categoría numéricos separados por coma';
-  @override
-  String get video_external_enabled => 'Activado';
-  @override
-  String get video_external_insecure_http => 'Permitir HTTP inseguro';
-  @override
-  String get video_external_insecure_http_hint =>
-      'Use solo para un endpoint de red local de confianza.';
-  @override
-  String get video_external_endpoint_invalid =>
-      'Introduzca un endpoint válido sin credenciales, parámetros de consulta ni fragmentos.';
-  @override
-  String get video_opensubtitles_settings_title => 'OpenSubtitles';
-  @override
-  String get video_opensubtitles_user_agent => 'User-Agent';
-  @override
-  String get video_opensubtitles_languages_hint =>
-      'Códigos de idioma separados por coma, por ejemplo zh-CN,en,ja';
-  @override
-  String get video_download_path_mappings_title =>
-      'Mapeos de rutas de qBittorrent';
-  @override
-  String get video_download_path_mappings_hint =>
-      'Mapee cada raíz remota de qBittorrent a una carpeta accesible localmente.';
-  @override
-  String get video_download_path_mapping_add => 'Añadir mapeo de ruta';
-  @override
-  String get video_download_backend_profile_id => 'ID de perfil del backend';
-  @override
-  String get video_download_remote_root => 'Raíz remota';
-  @override
-  String get video_download_local_root => 'Raíz local';
-  @override
-  String get video_download_target_source_title =>
-      'Fuente de vídeo gestionada predeterminada';
-  @override
-  String get video_download_target_source_hint =>
-      'Las nuevas descargas se organizan en esta fuente de vídeo local.';
-  @override
-  String get video_download_target_source_none =>
-      'Elegir una fuente de vídeo local';
-  @override
-  String get video_external_remove => 'Eliminar';
-  @override
-  String get video_external_username_optional => 'Usuario (opcional)';
-  @override
-  String get video_external_password_optional => 'Contraseña (opcional)';
-  @override
-  String get video_external_api_key => 'Clave API';
-  @override
-  String get video_external_save_error =>
-      'No se pudo guardar la configuración. Verifique los campos resaltados.';
-  @override
-  String get video_external_categories_invalid =>
-      'Las categorías deben ser IDs numéricos separados por coma.';
-  @override
-  String get video_download_path_mapping_invalid =>
-      'Introduzca un ID de perfil, raíz remota y raíz local absoluta.';
-  @override
-  String get video_opensubtitles_endpoint => 'Endpoint de API';
-  @override
-  String get video_download_target_source_empty =>
-      'No hay fuente de vídeo local accesible disponible. Añada una en la pestaña Fuentes primero.';
-  @override
-  String get video_setting_drag_seek_sensitivity =>
-      'Sensibilidad de arrastre para buscar';
-  @override
-  String get video_setting_drag_seek_sensitivity_hint =>
-      'Cuánto busca un deslizamiento completo del ancho de pantalla en pantalla táctil: Baja unos 45s, Media unos 90s, Alta unos 180s. Independiente de la duración total del vídeo. Solo arrastre táctil; la búsqueda con ratón y teclado no se afecta.';
-  @override
-  String get video_setting_drag_seek_sensitivity_low => 'Baja';
-  @override
-  String get video_setting_drag_seek_sensitivity_medium => 'Media';
-  @override
-  String get video_setting_drag_seek_sensitivity_high => 'Alta';
-  @override
-  String video_subtitle_read_failed({required Object label}) =>
-      'No se pudo leer este archivo de subtítulos (dañado o vacío): ${label}';
-  @override
-  String dict_downloading_size({
-    required Object name,
-    required Object done,
-    required Object total,
-  }) => 'Descargando ${name} (${done} / ${total})';
-  @override
-  String get video_subtitle_attach_book_missing =>
-      'Este vídeo no está en su biblioteca, por lo que el subtítulo no se adjuntó';
-  @override
-  String get dict_download_hide => 'Ejecutar en segundo plano';
-  @override
-  String get dict_download_progress_show => 'Ver progreso';
-  @override
-  String get dict_download_cancelled => 'Descarga cancelada.';
-  @override
-  String get dict_download_import_uncancellable =>
-      'La importación no se puede interrumpir';
-  @override
-  String get dict_download_busy =>
-      'Ya se está ejecutando una descarga de diccionario.';
-  @override
-  String get gal_hook_ingame_lookup =>
-      'Búsqueda de diccionario dentro del juego';
-  @override
-  String get gal_hook_ingame_lookup_hint =>
-      'Mostrar la tarjeta de diccionario dentro de la ventana del juego (motor KiriKiri, solo Windows)';
-  @override
-  String download_subscription_start_episode({required Object episode}) =>
-      '从第 ${episode} 集开始';
-  @override
-  String get drag_drop_failed =>
-      'No se pudieron manejar los archivos soltados. Inténtelo de nuevo.';
-  @override
-  String get tag_add_failed =>
-      'No se pudo añadir la etiqueta. Inténtelo de nuevo.';
-  @override
-  String get tag_reorder_failed =>
-      'No se pudo guardar el nuevo orden de etiquetas. Inténtelo de nuevo.';
-  @override
-  String get download_task_error_summary_source_missing =>
-      'La fuente de vídeo gestionada falta o es inaccesible';
-  @override
-  String get download_task_error_summary_backend_unconfirmed =>
-      'El torrent no pudo confirmarse por hash, título y categoría';
-  @override
-  String get download_task_error_summary_subtitle =>
-      'Los subtítulos no están disponibles o no pudieron instalarse';
-  @override
-  String get download_task_error_summary_backend_unavailable =>
-      'El backend de descarga no está disponible o ya no coincide';
-  @override
-  String get download_task_error_summary_legacy =>
-      'La importación heredada necesita atención manual';
-  @override
-  String get download_task_error_summary_torrent_info =>
-      'La identidad del torrent falta o no se puede verificar';
-  @override
-  String get download_task_error_summary_generic =>
-      'La tarea encontró un error';
-  @override
-  String get download_task_error_view_detail => 'Ver detalles';
-  @override
-  String get download_task_error_detail_title => 'Detalles del error';
-  @override
-  String get download_task_error_copied => 'Detalles del error copiados';
-  @override
-  String get download_task_lifecycle_active => 'En progreso';
-  @override
-  String get download_task_lifecycle_needs_attention => 'Necesita atención';
-  @override
-  String get download_task_location_missing =>
-      'La ubicación del archivo de la tarea no está disponible.';
-  @override
-  String get download_task_location_open_failed =>
-      'No se pudo abrir la ubicación del archivo.';
-  @override
-  String get download_task_open_location => 'Mostrar en carpeta';
-  @override
-  String get download_task_lifecycle_completed => 'Completado';
-  @override
-  String get download_task_lifecycle_failed => 'Falló';
-  @override
-  String get download_task_lifecycle_cancelled => 'Cancelado';
-  @override
-  String get download_task_stage_enqueue => 'En cola';
-  @override
-  String get download_task_stage_download => 'Descargar';
-  @override
-  String get download_task_stage_organize => 'Organizar';
-  @override
-  String get download_task_stage_subtitle => 'Subtítulos';
-  @override
-  String get download_task_stage_import => 'Importar';
-  @override
-  String get download_task_stage_scrape => 'Metadatos';
-  @override
-  String get video_discovery_manual_identity_hint =>
-      'Introduzca el título, ID externo y año arriba para habilitar la búsqueda';
-  @override
-  String get collection_split_move_to => 'Mover a';
-  @override
-  String get collection_split_new_group => 'Nuevo grupo';
-  @override
-  String collection_split_selected({required Object n}) => '${n} seleccionados';
-  @override
-  String get sync_pair_rate_limited =>
-      'Demasiados intentos. Espere unos minutos e inténtelo de nuevo.';
-  @override
-  String get sync_pair_tls_failed =>
-      'La verificación de certificado falló. El certificado del par no coincide con el fijado.';
-  @override
-  String get sync_pair_timeout => 'El par no respondió a tiempo.';
-  @override
-  String get sync_pair_expired =>
-      'El emparejamiento expiró. Inicie el emparejamiento de nuevo desde este dispositivo.';
-  @override
-  String get sync_pair_upgrade_required =>
-      'El otro dispositivo tiene una versión más antigua que no puede emparejarse de forma segura desde esta red. Actualícelo, luego empareje de nuevo.';
-  @override
-  String get sync_pair_fingerprint_changed_title => 'Certificado cambiado';
-  @override
-  String get sync_pair_fingerprint_stored_label => 'Fijado antes';
-  @override
-  String get sync_pair_fingerprint_new_label => 'Visto ahora';
-  @override
-  String get sync_pair_fingerprint_retrust => 'Limpiar y confiar de nuevo';
-  @override
-  String get sync_pair_fingerprint_changed_body =>
-      'Esta dirección estaba fijada a un certificado diferente antes. Continúe solo si sabe que el par se reinstaló o lo reinició — de lo contrario alguien podría estar interceptando la conexión.';
-  @override
-  String get interconnect_upload_section_footer =>
-      'Elija qué sube este dispositivo al par conectado. Independiente de los interruptores de respaldo en la nube y apagado por defecto. Estos interruptores solo se aplican mientras Activar Interconnect esté encendido: apagar Interconnect detiene cada subida aquí.';
-  @override
-  String get remote_delete_audiobook_partial =>
-      'Libro eliminado, pero su audiolibro no pudo eliminarse en el dispositivo emparejado';
-  @override
-  String get download_detail_task_queued =>
-      'En cola: esperando que otras descargas liberen un espacio. Esta tarea aún no se ha entregado al descargador, por lo que no hay datos de pares o trackers en vivo.';
-  @override
-  String video_subscription_group_release_count({required Object count}) =>
-      '${count} lanzamientos';
-  @override
-  String get download_task_priority => 'Prioridad en cola';
-  @override
-  String get download_task_priority_high => 'Alta';
-  @override
-  String get download_task_priority_normal => 'Normal';
-  @override
-  String get download_task_priority_low => 'Baja';
-  @override
-  String get library_view_import => 'Importar';
-  @override
-  String get quick_import_title => 'Importación rápida';
-  @override
-  String get media_source_section_title => 'Fuentes de la biblioteca';
-  @override
-  String get media_import_folder => 'Importar carpeta';
-  @override
-  String get media_import_folder_as_source =>
-      'Añadir como fuente de biblioteca';
-  @override
-  String get book_import_folder_as_source_hint =>
-      'Seguir escaneando esta carpeta en busca de nuevos libros';
-  @override
-  String get media_import_folder_once => 'Importar solo una vez';
-  @override
-  String get library_empty_go_import => 'Ir a importar';
-  @override
-  String get game_import_drop_hint =>
-      'También puede arrastrar archivos .exe a la biblioteca de juegos';
-  @override
-  String get library_view_sources => 'Fuentes';
-  @override
-  String get video_setting_secondary_av_delay =>
-      'Sincronización de subtítulo secundario';
-  @override
-  String get video_setting_secondary_av_delay_hint =>
-      'Ajuste el desfase del subtítulo secundario independientemente. Sigue el desfase principal hasta que se establezca aquí.';
-  @override
-  String get video_setting_secondary_delay_follow => 'Seguir al principal';
-  @override
-  String video_subtitle_secondary_delay_osd({required Object ms}) =>
-      'Sincronización de subtítulo secundario: ${ms} ms';
-  @override
-  String get video_subtitle_secondary_delay_follow_osd =>
-      'Sincronización de subtítulo secundario: seguir al principal';
-  @override
-  String get video_setting_subtitle_anchor => 'Ancla del subtítulo principal';
-  @override
-  String get video_subtitle_anchor_bottom => 'Abajo';
-  @override
-  String get video_subtitle_anchor_top => 'Arriba';
-  @override
-  String get video_setting_subtitle_drag_adjust =>
-      'Arrastrar para ajustar posición';
-  @override
-  String get video_subtitle_drag_adjust_hint =>
-      'Arrastre un subtítulo arriba o abajo para reposicionarlo';
-  @override
-  String get anki_connect_mobile_disabled_key_cleared =>
-      'AnkiConnect necesita una clave API en móvil, por lo que al borrarla se desactivó el interruptor. Ahora Anki usa el backend integrado de nuevo.';
-  @override
-  String manga_import_batch_hint({required Object n}) =>
-      'Esta carpeta contiene ${n} archivos de volumen; cada uno se importa como su propio libro, nombrado según su archivo.';
-  @override
-  String manga_import_batch_done({
-    required Object imported,
-    required Object skipped,
-    required Object failed,
-  }) => 'Importados ${imported}, omitidos ${skipped}, fallidos ${failed}.';
-  @override
-  String get srt_book_reimport => 'Reimportar';
-  @override
-  String get srt_book_reimport_subtitle_hint =>
-      'Reemplazar el subtítulo reconstruye el texto del libro desde las nuevas señales.';
-  @override
-  String get srt_book_reimport_no_cues =>
-      'No se encontraron líneas de subtítulo en ese archivo';
-  @override
-  String get srt_book_reimport_body_rebuilt =>
-      'Texto del libro reconstruido — vuelva a abrir el libro para leerlo';
-  @override
-  String get video_setting_torrent_backend_embedded => 'Motor integrado';
-  @override
-  String get download_backend_unsupported_note =>
-      'El motor integrado no está disponible en esta plataforma. Las descargas usan qBittorrent externo.';
-  @override
-  String get aidoku_runtime_unavailable =>
-      'Las extensiones de Aidoku solo están disponibles en macOS actualmente.';
-  @override
-  String get aidoku_extensions_title => 'Extensiones de Aidoku';
-  @override
-  String get aidoku_extension_empty => 'Sin extensiones de Aidoku instaladas.';
-  @override
-  String get aidoku_extension_remove => 'Eliminar extensión de Aidoku';
-  @override
-  String get aidoku_extension_warning =>
-      'Las extensiones de Aidoku ejecutan código WebAssembly de terceros con acceso a la red. Solo continúe con fuentes de confianza.';
-  @override
-  String get aidoku_webview_unsupported =>
-      'Esta fuente requiere APIs de WebView de Aidoku que aún no están soportadas.';
-  @override
-  String get aidoku_extension_imported => 'Extensión de Aidoku importada';
-  @override
-  String get aidoku_extension_import => 'Importar extensión de Aidoku (.aix)';
-  @override
-  String get aidoku_extension_confirm_title => '¿Instalar extensión de Aidoku?';
-  @override
-  String get aidoku_extension_version => 'Versión';
-  @override
-  String get aidoku_repository_url => 'URL del repositorio';
-  @override
-  String get aidoku_repository_sources => 'Fuentes del repositorio';
-  @override
-  String get aidoku_repository_identity_mismatch =>
-      'El paquete descargado no coincide con el índice del repositorio.';
-  @override
-  String get aidoku_repository_installed => 'Instalado';
-  @override
-  String get aidoku_repository_search => 'Buscar fuentes del repositorio';
-  @override
-  String get aidoku_repository_install => 'Instalar';
-  @override
-  String get aidoku_repository_update => 'Actualizar';
-  @override
-  String get aidoku_repository_add => 'Añadir repositorio de Aidoku';
-  @override
-  String get aidoku_repository_added => 'Repositorio de Aidoku añadido';
-  @override
-  String get aidoku_repository_browse => 'Explorar repositorio';
-  @override
-  String get aidoku_repository_hint =>
-      'Pegue una URL de página principal o index.min.json de repositorio de Aidoku. El repositorio de la comunidad se rellena por defecto.';
-  @override
-  String get aidoku_repository_remove => 'Eliminar repositorio';
-  @override
-  String get aidoku_repository_empty => 'Sin repositorios de Aidoku añadidos.';
-  @override
-  String get dict_language_tooltip => 'Idioma del contenido';
-  @override
-  String get dict_language_title => 'Idioma del contenido del diccionario';
-  @override
-  String get dict_language_description =>
-      'Decide qué fuente renderiza el texto de este diccionario. Automático usa el idioma que el diccionario declara.';
-  @override
-  String get dict_language_auto => 'Automático';
-  @override
-  String get book_language_action => 'Idioma del contenido';
-  @override
-  String get book_language_description =>
-      'Decide qué fuente renderiza el texto de este libro. Automático usa el idioma declarado en el EPUB.';
-  @override
-  String get local_audio_reference_unavailable =>
-      'No se puede referenciar el archivo original sin acceso a todos los archivos; se importó una copia en su lugar.';
-  @override
-  String get video_collection_scrape => 'Obtener info y portada';
-  @override
-  String get update_testflight_open => 'Abrir TestFlight';
-  @override
-  String get update_app_store_open => 'Abrir App Store';
-  @override
-  String get update_release_page_open => 'Página de versiones';
-  @override
-  String update_install_gal_hook_holder({
-    required Object pid,
-    required Object path,
-  }) =>
-      'Componente de captura de galgame en uso: PID ${pid} — ${path} (este es el juego que está jugando, o su host de captura). Cierre el juego, luego actualice de nuevo.';
-  @override
-  String get game_hook_reason_protocol_mismatch =>
-      'El componente de captura no coincide con esta compilación de Fushi. Se incluye dentro de Fushi, por lo que no hay nada que instalar por separado. Primero, cierre completamente el juego y láncelo de nuevo: el proceso del juego puede aún tener el componente inyectado por una sesión anterior. Si sigue sin coincidir, los archivos del componente en disco son más antiguos que Fushi, porque la última actualización de Fushi no pudo reemplazarlos mientras un juego estaba en ejecución. Cierre todos los juegos, luego ejecute el instalador de Fushi de nuevo.';
-  @override
-  String get video_mining_still_format =>
-      'Formato de captura de tarjeta de vídeo';
-  @override
-  String get video_mining_still_format_hint =>
-      'Codificación usada cuando la imagen de la tarjeta es una captura estática. JPG es mucho más pequeño; PNG es sin pérdida pero varias veces más grande. Las portadas animadas no se afectan — siguen la configuración de formato de animación.';
-  @override
-  String get mining_still_format_jpg => 'JPG (más pequeño)';
-  @override
-  String get mining_still_format_png => 'PNG (sin pérdida)';
-  @override
-  String get gal_mining_still_format =>
-      'Formato de captura de tarjeta de juego';
-  @override
-  String get gal_mining_still_format_hint =>
-      'Mismos formatos que las tarjetas de vídeo, almacenados por separado. Las capturas de ventana de juego llegan como PNG: mantener PNG es sin pérdida pero varias veces más grande, mientras que JPG coincide con cómo se comprimían estas capturas antes.';
-  @override
-  String get manga_source_cloudflare_blocked =>
-      'Esta fuente está protegida por Cloudflare y aún no puede ser accedida por el lector integrado.';
-  @override
-  String get manga_global_search_title => 'Buscar en todas las fuentes';
-  @override
-  String get manga_global_search_hint => 'Buscar en todas las fuentes activas';
-  @override
-  String get manga_global_search_prompt =>
-      'Escriba un título para buscar en todas las fuentes de manga activas a la vez.';
-  @override
-  String get anki_connect_addon_install => 'Instalar AnkiConnect';
-  @override
-  String get anki_connect_addon_install_hint =>
-      'Descarga AnkiConnect de AnkiWeb y lo entrega a Anki en ejecución. Anki le pedirá que confirme, luego aconsejará reiniciar.';
-  @override
-  String get anki_connect_addon_handed =>
-      'AnkiConnect entregado a Anki. Confirme el diálogo en Anki, luego reinicie Anki como aconseja.';
-  @override
-  String get anki_connect_addon_anki_not_running =>
-      'No se encontró Anki en ejecución. Inicie Anki de escritorio primero, luego inténtelo de nuevo.';
-  @override
-  String anki_connect_addon_download_failed({required Object error}) =>
-      'No se pudo descargar AnkiConnect de AnkiWeb: ${error}';
-  @override
-  String get anki_connect_addon_invalid =>
-      'AnkiWeb devolvió algo que no es un paquete de complemento utilizable.';
-  @override
-  String anki_connect_addon_launch_failed({required Object error}) =>
-      'No se pudo entregar el complemento a Anki: ${error}';
-  @override
-  String get settings_content_language_title =>
-      'Idioma de contenido predeterminado';
-  @override
-  String get settings_content_language_unset => 'No establecido';
-  @override
-  String get settings_content_language_description =>
-      'Idioma de respaldo para contenido que no declara uno. Los ajustes por libro, por vídeo, por juego y por diccionario tienen prioridad.';
-  @override
-  String get manga_ocr_lens_language_label => 'Idioma de reconocimiento';
-  @override
-  String get sync_err_peer_unreachable =>
-      'No se puede alcanzar el dispositivo emparejado — puede estar desconectado o sin Fushi en ejecución.';
-  @override
-  String get remote_book_list_failed =>
-      'No se pudo obtener la biblioteca remota del dispositivo emparejado.';
-  @override
-  String get video_torznab_settings_hint =>
-      'Configure uno o más endpoints Jackett, Prowlarr o compatibles con Torznab. Los secretos nunca se exportan en copias de seguridad; pueden sincronizarse a dispositivos emparejados vía Interconnect (se puede desactivar en ajustes de Interconnect).';
-  @override
-  String get video_opensubtitles_settings_hint =>
-      'Las credenciales de API nunca se exportan en copias de seguridad; pueden sincronizarse a dispositivos emparejados vía Interconnect (se puede desactivar en ajustes de Interconnect).';
-  @override
-  String get sync_interconnect_service_config_toggle =>
-      'Sincronizar configuración de servicio desde el host';
-  @override
-  String get sync_interconnect_service_config_toggle_desc =>
-      'Recibir ajustes de servicios externos y claves API (Jimaku, TMDB, Torznab, OpenSubtitles, seguimiento) del host emparejado a través del canal cifrado de Interconnect. Requiere TLS.';
-  @override
-  String get video_setting_subtitle_backfill =>
-      'Obtener subtítulos automáticamente después de metadatos';
-  @override
-  String get video_setting_subtitle_backfill_hint =>
-      'Cuando la obtención de metadatos termina, los vídeos que aún no tienen subtítulo obtienen uno de sus fuentes en línea configuradas. Nunca reemplaza un subtítulo existente.';
-  @override
-  String get video_setting_subtitle_sources_section =>
-      'Fuentes de subtítulos en línea';
-  @override
-  String get video_subtitle_no_source_configured =>
-      'Sin subtítulo encontrado · configure una fuente de subtítulos en línea';
-  @override
-  String get anime_download_subs_retrying =>
-      'Subtítulos: aún no disponibles — reintentando automáticamente';
-  @override
-  String get video_jimaku_language_follow_video => 'Seguir idioma del vídeo';
-  @override
-  String get video_setting_jimaku_default_language_hint =>
-      'Por defecto usa el idioma propio del vídeo (pista de audio / metadatos obtenidos). Elija uno para siempre preferir ese idioma.';
-  @override
-  String get onboarding_title => 'Primeros pasos';
-  @override
-  String get onboarding_welcome_headline => '¡Bienvenido!';
-  @override
-  String get onboarding_feature_anki => 'Tarjetas de Anki';
-  @override
-  String get onboarding_feature_anki_hint =>
-      'Conecte AnkiConnect o AnkiDroid para crear tarjetas de estudio';
-  @override
-  String get onboarding_feature_backup => 'Respaldo y sincronización';
-  @override
-  String get onboarding_feature_backup_hint =>
-      'Respalde sus datos en Google Drive, WebDAV y otros backends';
-  @override
-  String get onboarding_feature_interconnect => 'Interconexión de dispositivos';
-  @override
-  String get onboarding_feature_interconnect_hint =>
-      'Empareje dispositivos en su LAN para compartir bibliotecas y progreso';
-  @override
-  String get onboarding_step_dictionary_action =>
-      'Abrir administrador de diccionarios';
-  @override
-  String get onboarding_step_anki_title => 'Configurar Anki';
-  @override
-  String get onboarding_step_anki_action =>
-      'Abrir ajustes de creación de tarjetas';
-  @override
-  String get onboarding_step_backup_title => 'Configurar respaldo';
-  @override
-  String get onboarding_step_backup_body =>
-      'Elija un backend de respaldo e inicie sesión, o exporte un archivo de respaldo local.';
-  @override
-  String get onboarding_step_backup_action => 'Abrir ajustes de respaldo';
-  @override
-  String get onboarding_step_interconnect_title => 'Configurar Interconnect';
-  @override
-  String get onboarding_step_interconnect_body =>
-      'Active Interconnect y empareje con otros dispositivos en su LAN para compartir bibliotecas, progreso y búsquedas.';
-  @override
-  String get onboarding_step_interconnect_action =>
-      'Abrir ajustes de Interconnect';
-  @override
-  String get onboarding_finish_title => 'Todo listo';
-  @override
-  String get onboarding_finish_body =>
-      'Puede volver a visitar esta guía en cualquier momento desde Ajustes → Sistema.';
-  @override
-  String get onboarding_action_next => 'Siguiente';
-  @override
-  String get onboarding_action_finish => 'Finalizar';
-  @override
-  String get onboarding_action_skip => 'Omitir por ahora';
-  @override
-  String get onboarding_reopen => 'Guía de primeros pasos';
-  @override
-  String get onboarding_welcome_body =>
-      'Establezca su idioma de interfaz y tema primero — los siguientes pasos le guiarán con el resto.';
-  @override
-  String get onboarding_features_title => 'Elija qué usa';
-  @override
-  String get onboarding_features_modules_label =>
-      'Pestañas de biblioteca (las desmarcadas se ocultan de la barra de navegación; cámbielo en cualquier momento en Ajustes)';
-  @override
-  String get onboarding_features_setup_label => 'Qué configurar a continuación';
-  @override
-  String get onboarding_feature_manga => 'Biblioteca de manga';
-  @override
-  String get onboarding_feature_manga_hint => 'Lea manga con búsqueda por OCR';
-  @override
-  String get onboarding_feature_video => 'Biblioteca de vídeo';
-  @override
-  String get onboarding_feature_video_hint =>
-      'Vea vídeos con búsqueda de subtítulos y creación de tarjetas';
-  @override
-  String get onboarding_feature_games => 'Biblioteca de galgame';
-  @override
-  String get onboarding_feature_games_hint =>
-      'Inicie galgames con búsqueda por hook de texto (solo Windows)';
-  @override
-  String get onboarding_feature_pack =>
-      'Pack recomendado (diccionarios + audio)';
-  @override
-  String get onboarding_feature_pack_hint =>
-      'Una descarga configura diccionarios japoneses más audio de pronunciación JA/EN';
-  @override
-  String get onboarding_step_pack_title => 'Instalar el pack recomendado';
-  @override
-  String get onboarding_step_pack_body =>
-      'El pack recomendado incluye diccionarios japoneses de palabras, acento tonal y frecuencia, más bases de datos de pronunciación japonés/inglés. Descárguelo e impórtelo aquí; la importación reemplaza datos locales, así que ejecútelo en una instalación nueva. ¿Aprendiendo otro idioma? Use el administrador de diccionarios para importar sus propios diccionarios.';
-  @override
-  String get onboarding_step_pack_download_action => 'Descargar e importar';
-  @override
-  String get onboarding_step_pack_import_existing_action =>
-      'Importar pack descargado';
-  @override
-  String get onboarding_step_pack_pick_action => 'Elegir archivo de pack local';
-  @override
-  String get onboarding_pack_downloading =>
-      'Descargando… cancele en cualquier momento, se reanuda la próxima vez';
-  @override
-  String onboarding_pack_download_failed({required Object message}) =>
-      'La descarga falló: ${message}';
-  @override
-  String get onboarding_step_extension_title => 'Extensión del navegador';
-  @override
-  String get onboarding_step_extension_body =>
-      'Instale la extensión complementaria del navegador para buscar palabras en cualquier página web.';
-  @override
-  String get onboarding_step_extension_action => 'Abrir guía de extensión';
-  @override
-  String get onboarding_step_fonts_title => 'Fuentes de lectura';
-  @override
-  String get onboarding_step_fonts_body =>
-      'Importe fuentes personalizadas y elija cuáles usan la interfaz, el texto del libro y el diccionario.';
-  @override
-  String get settings_section_modules => 'Módulos de funciones';
-  @override
-  String get module_toggle_hint =>
-      'Mostrar esta pestaña de biblioteca en la barra de navegación; desactive para ocultarla';
-  @override
-  String get video_setting_youtube_quality => 'Calidad de YouTube';
-  @override
-  String get video_setting_youtube_quality_hint =>
-      'Inicia streams en el nivel más alto hasta este objetivo; Auto prefiere reproducción fluida (códec amigable con hardware, hasta 1080p)';
-  @override
-  String get library_view_discover => 'Descubrir';
-  @override
-  String get manga_discovery_section_trending => 'Tendencia';
-  @override
-  String get manga_discovery_section_popular => 'Popular';
-  @override
-  String get manga_discovery_section_top_rated => 'Mejor puntuados';
-  @override
-  String get manga_discovery_section_latest_finished =>
-      'Completados recientemente';
-  @override
-  String get manga_discovery_load_failed =>
-      'No se pudo cargar el feed de descubrimiento.';
-  @override
-  String get manga_discovery_match_section => 'Leer desde una fuente';
-  @override
-  String get manga_discovery_match_running =>
-      'Buscando en sus fuentes activas...';
-  @override
-  String get manga_discovery_match_none =>
-      'No se encontró coincidencia en las fuentes activas.';
-  @override
-  String get manga_discovery_status_releasing => 'En emisión';
-  @override
-  String get manga_discovery_status_finished => 'Completado';
-  @override
-  String get manga_discovery_status_hiatus => 'En pausa';
-  @override
-  String get manga_discovery_status_cancelled => 'Cancelado';
-  @override
-  String get manga_discovery_status_not_yet_released => 'Aún no publicado';
-  @override
-  String manga_discovery_source_popular({required Object source}) =>
-      'Popular en ${source}';
-  @override
-  String get mihon_extension_error => 'Error de extensión';
-  @override
-  String get discovery_all_sources => 'Todas las fuentes';
-  @override
-  String get discovery_search_hint => 'Buscar recursos en línea';
-  @override
-  String get discovery_enter_query_hint =>
-      'Introduzca una palabra clave para buscar';
-  @override
-  String get discovery_empty => 'Sin resultados';
-  @override
-  String get discovery_partial_failure =>
-      'Algunas fuentes no están disponibles';
-  @override
-  String get discovery_load_more => 'Cargar más';
-  @override
-  String get discovery_download_queued => 'Añadido a descargas';
-  @override
-  String get discovery_torrent_pushed => 'Tarea de torrent añadida';
-  @override
-  String get discovery_torrent_failed =>
-      'No se pudo añadir la tarea de torrent';
-  @override
-  String get discovery_kind_novel => 'Novelas';
-  @override
-  String get discovery_kind_audiobook => 'Audiolibros';
-  @override
-  String get discovery_source_pick_hint =>
-      'Elija una fuente para explorar, o escriba una palabra clave para buscar en todas las fuentes';
-  @override
-  String get discovery_source_query_required =>
-      'Esta fuente solo admite búsqueda por palabra clave';
-  @override
-  String get manga_discovery_sources_browse => 'Explorar una fuente';
-  @override
-  String get discovery_kind_manga => 'Manga';
-  @override
-  String get game_capture_workbench_tab => 'Espacio de captura';
-  @override
-  String get video_builtin_sources_title => 'Fuentes integradas';
-  @override
-  String get video_resource_no_provider_title =>
-      'Sin indexador de recursos configurado';
-  @override
-  String get video_subtitle_no_provider_title =>
-      'Sin proveedor de subtítulos configurado';
-  @override
-  String get video_subtitle_no_provider_hint =>
-      'Introduzca una clave API de Jimaku o active OpenSubtitles en Ajustes, Descargas, Proveedores externos de recursos y subtítulos.';
-  @override
-  String get anime_download_require_subs => 'Subtítulos requeridos';
-  @override
-  String get video_jimaku_scope_hint =>
-      'Subtítulos japoneses para anime y títulos japoneses de acción real. Se requiere una clave API gratuita.';
-  @override
-  String get video_builtin_apibay_hint =>
-      'Películas y series de TV. Índice público, sin cuenta necesaria.';
-  @override
-  String get video_builtin_knaben_hint =>
-      'Películas y series de TV. Agrega varios indexadores públicos.';
-  @override
-  String get video_jimaku_enabled_hint =>
-      'Apagado significa que Jimaku se omite incluso cuando se ha guardado una clave API.';
-  @override
-  String get discovery_sources_settings_title => 'Fuentes de descubrimiento';
-  @override
-  String get discovery_sources_settings_hint =>
-      'Qué fuentes integradas participan en la búsqueda de Todas las fuentes de la página Descubrir. Elegir una sola fuente en el menú desplegable siempre funciona, incluso cuando está desactivada aquí.';
-  @override
-  String get video_builtin_sources_hint =>
-      'Incluidas con la app: sin cuenta, sin clave API. Desactive una para mantenerla fuera de las búsquedas de recursos.';
-  @override
-  String get video_builtin_nyaa_hint =>
-      'Solo anime. Películas y series de TV están cubiertas por los dos indexadores públicos de abajo.';
-  @override
-  String get video_resource_no_provider_hint =>
-      'Esta búsqueda no tuvo proveedor para consultar. Reactive una fuente integrada, o añada un indexador Torznab, en Ajustes, Descargas, Proveedores externos de recursos y subtítulos.';
-  @override
-  String discovery_source_kinds_label({required Object kinds}) =>
-      'Cubre: ${kinds}';
-  @override
-  String get video_source_scrape_rescrape_source =>
-      'Volver a obtener metadatos de esta fuente';
-  @override
-  String get video_source_scrape_run_detail_title => 'Resultado de obtención';
-  @override
-  String get video_source_scrape_run_no_issues =>
-      'No se registraron advertencias ni errores.';
-  @override
-  String get video_source_scrape_manual_search_title =>
-      'Especificar la obra manualmente';
-  @override
-  String get video_source_scrape_manual_search_hint =>
-      'Busque en el proveedor de metadatos por título, luego elija la obra correcta.';
-  @override
-  String get video_source_scrape_manual_search_action => 'Buscar';
-  @override
-  String get video_source_scrape_manual_search_empty => 'Sin resultados';
-  @override
-  String get profile_media_manga => 'Manga';
-  @override
-  String get profile_media_game => 'Juego';
-  @override
-  String get profile_media_browser => 'Navegador';
-  @override
-  String get mihon_store_remove => 'Eliminar tienda de extensiones';
-  @override
-  String get video_import_folder_as_source_hint =>
-      'Seguir escaneando esta carpeta en busca de nuevos vídeos';
-  @override
-  String get manga_import_folder_as_source_hint =>
-      'Seguir escaneando esta carpeta en busca de nuevo manga';
-  @override
-  String get download_no_managed_video_source =>
-      'Aún no hay fuente de vídeo gestionada. Las descargas necesitan una carpeta de vídeo local donde aterrizar.';
-  @override
-  String get download_add_video_source => 'Añadir fuente de vídeo';
-  @override
-  String get video_subtitle_prev_cue_align => 'Alinear línea anterior al ahora';
-  @override
-  String get video_subtitle_next_cue_align =>
-      'Alinear siguiente línea al ahora';
-  @override
-  String video_control_custom_action({required Object index}) =>
-      'Atajo ${index}';
-  @override
-  String get video_control_custom_action_none => 'Sin asignar';
-  @override
-  String get settings_destination_storage => 'Almacenamiento';
-  @override
-  String get settings_destination_storage_summary =>
-      'Ubicación de datos y uso de disco';
-  @override
-  String get storage_overview_section => 'Uso de disco';
-  @override
-  String get storage_overview_total => 'Total';
-  @override
-  String get storage_overview_refresh => 'Re-escanear';
-  @override
-  String get storage_overview_scanning => 'Escaneando…';
-  @override
-  String get storage_category_books => 'Libros y audiolibros';
-  @override
-  String get storage_category_dictionaries => 'Diccionarios';
-  @override
-  String get storage_category_video_downloads => 'Descargas de vídeo';
-  @override
-  String get storage_category_covers => 'Portadas y miniaturas';
-  @override
-  String get storage_category_subtitles => 'Subtítulos';
-  @override
-  String get storage_category_shaders => 'Shaders de vídeo';
-  @override
-  String get storage_category_custom_fonts => 'Fuentes personalizadas';
-  @override
-  String get storage_category_web => 'Archivo web y datos del navegador';
-  @override
-  String get storage_category_exports => 'Exportaciones';
-  @override
-  String get storage_category_database => 'Base de datos y datos internos';
-  @override
-  String get storage_category_ocr_models => 'Modelos de OCR de manga';
-  @override
-  String storage_entry_more_rest({required Object n, required Object size}) =>
-      '${n} elementos más, ${size} en total';
-  @override
-  String storage_entry_delete_confirm_title({required Object name}) =>
-      '¿Eliminar ${name}?';
-  @override
-  String get storage_entry_delete_book_confirm_body =>
-      'Esto elimina el libro, su progreso de lectura y copias de audio emparejadas de este dispositivo.';
-  @override
-  String get storage_entry_delete_dictionary_confirm_body =>
-      'Esto elimina el diccionario y sus datos importados.';
-  @override
-  String get storage_entry_delete_done => 'Eliminado';
-  @override
-  String storage_entry_delete_failed({required Object reason}) =>
-      'La eliminación falló: ${reason}';
-  @override
-  String get storage_modules_anime4k_title => 'Shaders Anime4K';
-  @override
-  String get storage_modules_anime4k_hint =>
-      'Se pueden descargar de nuevo en cualquier momento en ajustes de vídeo';
-  @override
-  String storage_modules_anime4k_delete_done({required Object n}) =>
-      'Se eliminaron ${n} archivos de shader';
-  @override
-  String get storage_bundled_section => 'Componentes incluidos';
-  @override
-  String get storage_bundled_hint =>
-      'Incluidos con el instalador; los archivos eliminados regresan en la próxima actualización, listados solo como referencia.';
-  @override
-  String get storage_dictionary_delete_incomplete =>
-      'Diccionario aún presente después de la eliminación, ver registro de errores';
-  @override
-  String get module_extension_label => 'Extensión del navegador';
-  @override
-  String get onboarding_feature_books => 'Biblioteca de novelas';
-  @override
-  String get onboarding_feature_books_hint =>
-      'Lea novelas EPUB con búsqueda de diccionario y sincronización de audiolibro';
-  @override
-  String get onboarding_feature_extension_hint =>
-      'Busque palabras en cualquier página web (solo escritorio)';
-  @override
-  String get video_setting_tap_toggles_playback =>
-      'Tocar vídeo para reproducir/pausar';
-  @override
-  String get video_setting_tap_toggles_playback_hint =>
-      'Desactive para que tocar el vídeo solo revele los controles';
-  @override
-  String get manga_ocr_engine_auto_desc =>
-      'Prefiere un motor offline que ya configuró; nunca sube a Lens por su cuenta.';
-  @override
-  String get manga_ocr_engine_local_onnx_desc =>
-      'Completamente offline, mejor calidad. Necesita una descarga de modelo única y es lento en hardware antiguo.';
-  @override
-  String get manga_ocr_engine_google_lens_desc =>
-      'Necesita internet y sube imágenes de página a Google. Rápido sin descarga, pero la calidad está por debajo del modelo local.';
-  @override
-  String get manga_ocr_engine_external_desc =>
-      'Llama a una línea de comandos de mokuro que instaló usted. Solo escritorio.';
-  @override
-  String get manga_ocr_engine_paired_host_desc =>
-      'Delega el trabajo a un dispositivo emparejado en su red. Nada se descarga aquí.';
-  @override
-  String manga_ocr_model_disk_usage({required Object size}) =>
-      'Usando ${size} en disco';
-  @override
-  String manga_ocr_model_download_size({required Object size}) =>
-      'Necesita ${size}';
-  @override
-  String manga_ocr_delete_done_freed({required Object size}) =>
-      'Modelos eliminados, ${size} liberado';
-  @override
-  String get manga_ocr_model_unused_by_engine =>
-      'El motor actual no usa estos archivos de modelo local.';
-  @override
-  String manga_ocr_download_total_progress({
-    required Object done,
-    required Object total,
-  }) => '${done} de ${total}';
-  @override
-  String get media_source_network_subtitle_video =>
-      'Biblioteca remota WebDAV (reproduce en el lugar)';
-  @override
-  String get jellyfin_settings_title => 'Servidor de medios (Jellyfin / Emby)';
-  @override
-  String get jellyfin_server_url => 'URL del servidor';
-  @override
-  String get jellyfin_sign_in => 'Iniciar sesión';
-  @override
-  String get jellyfin_sign_out => 'Cerrar sesión';
-  @override
-  String get jellyfin_sign_in_failed => 'El inicio de sesión falló';
-  @override
-  String get jellyfin_settings_hint =>
-      'Los vídeos del servidor aparecen en la biblioteca de vídeos y se transmiten directamente.';
-  @override
-  String get video_setting_mpv_lua_scripts => 'Cargar scripts Lua';
-  @override
-  String get video_setting_mpv_lua_scripts_hint =>
-      'Carga todos los archivos .lua en la carpeta mpv_scripts en el reproductor. Desactivar toma efecto la próxima vez que se abra un vídeo.';
-  @override
-  String get video_setting_mpv_lua_scripts_import => 'Importar scripts Lua';
-  @override
-  String get video_setting_mpv_lua_scripts_imported => 'Scripts importados';
-  @override
-  String get video_setting_mpv_lua_scripts_dir_copy =>
-      'Copiar ruta de carpeta de scripts';
-  @override
-  String get video_setting_mpv_lua_scripts_dir_copied =>
-      'Ruta de carpeta copiada';
-  @override
-  String get interconnect_share_statistics => 'Compartir estadísticas';
-  @override
-  String get interconnect_share_statistics_hint =>
-      'Tiempo de lectura y visualización, conteos de caracteres, contadores de búsquedas y creación de tarjetas';
-  @override
-  String get interconnect_share_favorites => 'Compartir favoritos';
-  @override
-  String get interconnect_share_favorites_hint =>
-      'Palabras y oraciones favoritas, incluyendo des-favoritear';
-  @override
-  String get interconnect_share_section =>
-      'Compartir con dispositivos emparejados';
-  @override
-  String get interconnect_share_section_footer =>
-      'Estos se fusionan en ambas direcciones con el dispositivo emparejado y están activados por defecto. Desactivar uno detiene tanto el envío como la recepción.';
-  @override
-  String get game_hook_mining_no_session_lines =>
-      'Aún no hay líneas capturadas, por lo que no hay nada a lo que adjuntar esta tarjeta. Elija un hilo de texto diferente en el espacio de trabajo.';
-  @override
-  String get shortcut_action_manga_pan_up => 'Mover arriba';
-  @override
-  String get shortcut_action_manga_pan_down => 'Mover abajo';
-  @override
-  String get shortcut_action_manga_pan_left => 'Mover izquierda';
-  @override
-  String get shortcut_action_manga_pan_right => 'Mover derecha';
-  @override
-  String get drag_drop_folder_source_added =>
-      'Carpeta añadida como fuente de biblioteca y escaneada.';
-  @override
-  String get drag_drop_folder_source_exists =>
-      'Esa carpeta ya es una fuente de biblioteca.';
-  @override
-  String get sync_pair_invalid_url => 'Formato de dirección no válido';
-  @override
-  String get sync_pair_peer_requires_https =>
-      'Este dispositivo solo acepta HTTPS. Use una dirección https://.';
-  @override
-  String get sync_pair_peer_not_https =>
-      'El par no está usando HTTPS en este puerto. Use una dirección http://.';
-  @override
-  String get sync_pair_not_fushi_discovered =>
-      'No se encontró dispositivo Fushi en esta dirección.';
-  @override
-  String get shortcut_action_popup_play_audio =>
-      'Reproducir audio de la palabra';
-  @override
-  String get sync_progress_asset_transfer => 'Preparando transferencia';
-  @override
-  String get sync_asset_dictionary_upload => 'Subir diccionarios';
-  @override
-  String get sync_asset_dictionary_download => 'Descargar diccionarios';
-  @override
-  String get sync_asset_local_audio_upload =>
-      'Subir bases de datos de audio local';
-  @override
-  String get sync_asset_local_audio_download =>
-      'Descargar bases de datos de audio local';
-  @override
-  String get sync_asset_upload_hint =>
-      'Envía lo que este dispositivo tiene y el remoto no. Los paquetes pueden ser grandes.';
-  @override
-  String get sync_asset_upload_action => 'Subir';
-  @override
-  String get sync_asset_download_action => 'Descargar';
-  @override
-  String get sync_asset_download_hint =>
-      'Obtiene lo que el remoto tiene y este dispositivo no — incluyendo entradas que eliminó localmente.';
-  @override
-  String get sync_asset_legacy_notice_title =>
-      'La sincronización de diccionarios y audio ahora es manual';
-  @override
-  String get sync_asset_legacy_notice_body =>
-      'Este dispositivo tenía la sincronización automática activada para diccionarios y bases de datos de audio local. Ese interruptor ya no existe — use las acciones Subir / Descargar de abajo cuando quiera transferirlos. Nada fue eliminado, pero los nuevos diccionarios ya no se respaldan automáticamente.';
-  @override
-  String get sync_asset_legacy_notice_dismiss => 'Entendido';
-  @override
-  String get download_task_add => 'Añadir tarea';
-  @override
-  String get download_task_add_pick_torrent => 'Elegir archivo torrent';
-  @override
-  String get download_task_add_title_label => 'Título';
-  @override
-  String get download_task_add_content_kind => 'Tipo de contenido';
-  @override
-  String get download_task_add_invalid =>
-      'Enlace magnet o archivo torrent no reconocido';
-  @override
-  String get download_task_add_submitted => 'Tarea añadida';
-  @override
-  String get download_task_search_hint => 'Buscar tareas';
-  @override
-  String get download_task_sort_created => 'Fecha de adición';
-  @override
-  String get download_task_sort_progress => 'Progreso';
-  @override
-  String get download_task_sort_status => 'Estado';
-  @override
-  String get download_task_no_match => 'Sin tareas coincidentes';
-  @override
-  String subtitle_version_episode_count({required Object n}) =>
-      '${n} episodios';
-  @override
-  String subtitle_version_unnumbered_count({required Object n}) =>
-      '${n} sin numerar';
-  @override
-  String get subtitle_version_ai_translated => 'Traducido por IA';
-  @override
-  String get subtitle_version_content_language => 'Contenido';
-  @override
-  String get subtitle_version_show_files => 'Mostrar archivos';
-  @override
-  String get subtitle_version_view_files => 'Lista de archivos';
-  @override
-  String get resource_version_batch => 'Lote';
-  @override
-  String get resource_version_view_flat => 'Todos los lanzamientos';
-  @override
-  String get subscription_mode_one_shot => 'Una vez';
-  @override
-  String get subscription_mode_ongoing => 'Continuo';
-  @override
-  String get subscription_legacy_badge => 'Heredado';
-  @override
-  String get subscription_legacy_hint =>
-      'Importado del sistema heredado; las verificaciones automáticas no se aplican.';
-  @override
-  String subscription_next_check({required Object time}) =>
-      'Próxima verificación: ${time}';
-  @override
-  String subscription_last_matched({required Object time}) =>
-      'Última coincidencia: ${time}';
-  @override
-  String get subscription_item_status_discovered => 'Pendiente';
-  @override
-  String get subscription_item_status_queued => 'En cola';
-  @override
-  String get subscription_item_status_processed => 'Importado';
-  @override
-  String get subscription_item_status_skipped => 'Omitido';
-  @override
-  String get subscription_item_status_failed => 'Falló';
-  @override
-  String get subscription_items_empty => 'Aún no hay lanzamientos rastreados';
-  @override
-  String get subscription_edit_title => 'Editar suscripción';
-  @override
-  String get subscription_edit_rule_hint =>
-      'Las reglas de identidad y versión no se pueden cambiar aquí. Re-suscríbase para cambiar versiones — el historial se conserva.';
-  @override
-  String get subscription_search_hint => 'Buscar suscripciones';
-  @override
-  String get subscription_sort_last_checked => 'Última verificación';
-  @override
-  String get subscription_sort_last_matched => 'Última coincidencia';
-  @override
-  String get subscription_show_items => 'Historial de episodios';
-  @override
-  String get subscription_sort_created => 'Fecha de adición';
-  @override
-  String get subscription_no_match => 'Sin suscripciones coincidentes';
-  @override
-  String get download_subscription_start_episode_invalid =>
-      'Introduzca un número entero (0 o mayor), o deje vacío';
-  @override
-  String get download_subscription_source_unavailable =>
-      'Objetivo actual (no disponible)';
-  @override
-  String resource_version_episode_count({required Object n}) =>
-      '${n} episodios';
-  @override
-  String get resource_version_show_files => 'Mostrar archivos';
-  @override
-  String get manga_online_detail_load_failed => 'No se pudo cargar este manga.';
-  @override
-  String get manga_online_error_view_detail => 'Ver detalles';
-  @override
-  String get discovery_sources_unavailable =>
-      'Todas las fuentes no están disponibles';
-  @override
-  String get font_target_game_lookup =>
-      'Fuente de ventana de búsqueda del juego';
-  @override
-  String get gal_hook_text_font => 'Fuente de ventana de búsqueda del juego';
-  @override
-  String get gal_hook_text_font_hint =>
-      'Elija fuentes de la biblioteca de fuentes administrada. Se usa la primera fuente activa.';
-  @override
-  String get gal_hook_text_letter_spacing => 'Espaciado de letras';
-  @override
-  String get gal_hook_text_letter_spacing_hint =>
-      'Ajuste el espaciado entre caracteres sin cambiar la detección de búsqueda.';
-  @override
-  String get gal_hook_text_line_height => 'Altura de línea';
-  @override
-  String get gal_hook_text_line_height_hint =>
-      'Ajuste el espaciado vertical de las líneas envueltas.';
-  @override
-  String get gal_hook_text_bold => 'Texto en negrita';
-  @override
-  String get gal_hook_text_bold_hint =>
-      'Use texto seminegrita para mejor legibilidad sobre los gráficos del juego.';
-  @override
-  String get gal_hook_text_alignment => 'Alineación del texto';
-  @override
-  String get gal_hook_text_alignment_center => 'Centro';
-  @override
-  String get gal_hook_text_alignment_left => 'Izquierda';
-  @override
-  String get gal_hook_text_color => 'Color del texto';
-  @override
-  String get gal_hook_overlay_legibility_section => 'Ventana y legibilidad';
-  @override
-  String get gal_hook_text_background_color => 'Color de fondo de ventana';
-  @override
-  String get gal_hook_text_background_opacity =>
-      'Opacidad del fondo de ventana';
-  @override
-  String get gal_hook_text_background_opacity_hint =>
-      'Establezca en 0% para un estilo de ventana transparente tipo letras de escritorio.';
-  @override
-  String get gal_hook_text_outline_color => 'Color del contorno';
-  @override
-  String get gal_hook_text_outline_width => 'Ancho del contorno';
-  @override
-  String get gal_hook_text_outline_width_hint =>
-      'Establezca en 0 para desactivar el contorno; la sombra sutil permanece.';
-  @override
-  String get gal_hook_text_padding => 'Relleno horizontal del texto';
-  @override
-  String get gal_hook_text_padding_hint =>
-      'Mantenga el texto alejado de los bordes de la ventana y el control de redimensión.';
-  @override
-  String get gal_hook_text_corner_radius => 'Radio de esquinas de ventana';
-  @override
-  String get gal_hook_text_corner_radius_hint =>
-      'Ajuste el radio de esquinas del fondo.';
-  @override
-  String get storage_shaders_delete_anime4k => 'Eliminar shaders Anime4K';
-  @override
-  String get video_jimaku_series_lookup_degraded =>
-      'No se pudo confirmar la serie en AniList esta vez, por lo que estos resultados provienen de una búsqueda por título simple y pueden mezclar otras temporadas de la misma serie.';
-  @override
-  String get dict_style_tab_visual => 'Visual';
-  @override
-  String get dict_style_tab_code => 'CSS';
-  @override
-  String get dict_style_scope_all => 'Todos los diccionarios';
-  @override
-  String get dict_style_part_entry_card => 'Tarjeta de entrada';
-  @override
-  String get dict_style_part_expression => 'Palabra clave';
-  @override
-  String get dict_style_part_ruby => 'Furigana';
-  @override
-  String get dict_style_part_deinflection_tag => 'Cadena de desinflexión';
-  @override
-  String get dict_style_part_frequency => 'Frecuencia';
-  @override
-  String get dict_style_part_pitch => 'Acento tonal';
-  @override
-  String get dict_style_part_dictionary_label => 'Nombre del diccionario';
-  @override
-  String get dict_style_part_glossary_content => 'Definición';
-  @override
-  String get dict_style_part_glossary_tag => 'Etiquetas de definición';
-  @override
-  String get dict_style_prop_text_color => 'Color de texto';
-  @override
-  String get dict_style_prop_background => 'Resaltado';
-  @override
-  String get dict_style_prop_bold => 'Negrita';
-  @override
-  String get dict_style_prop_italic => 'Cursiva';
-  @override
-  String get dict_style_prop_underline => 'Subrayado';
-  @override
-  String get dict_style_prop_font_scale => 'Tamaño de fuente';
-  @override
-  String get dict_style_prop_corner_radius => 'Radio de esquinas';
-  @override
-  String get dict_style_part_reset => 'Restablecer parte';
-  @override
-  String get dict_style_reset_all => 'Restablecer todo';
-  @override
-  String get dict_style_global_only =>
-      'Solo ajustable para todos los diccionarios';
-  @override
-  String get dict_style_preview_title => 'Vista previa';
-  @override
-  String get dict_style_pick_hint =>
-      'Toque una parte en la vista previa para ir a ella';
-  @override
-  String get dict_style_prop_default => 'Predeterminado';
-  @override
-  String get dict_style_part_expression_tag => 'Etiquetas de expresión';
-  @override
-  String get dict_style_prop_on => 'Sí';
-  @override
-  String get dict_style_prop_off => 'No';
-  @override
-  String get dict_style_title => 'Estilo del diccionario';
-  @override
-  String get video_source_scrape_anidb_client => 'Nombre de cliente AniDB';
-  @override
-  String get video_source_scrape_anidb_client_hint =>
-      'Nombre de cliente registrado de la API HTTP de AniDB; deje en blanco para usar solo el catálogo de títulos en caché';
-  @override
-  String get video_source_scrape_anidb_client_version =>
-      'Versión de cliente AniDB';
-  @override
-  String get video_source_scrape_anidb_client_version_hint =>
-      'Versión positiva registrada en AniDB; la API HTTP se mantiene desactivada hasta que ambos campos sean válidos';
-  @override
-  String get video_scrape_view_source => 'Ver detalles de fuente';
-  @override
-  String get video_setting_auto_scrape_hint =>
-      'Identificar y obtener metadatos de vídeo automáticamente después de escaneos de biblioteca';
-  @override
-  String get video_resource_identity_provider =>
-      'Fuente de identidad de recurso';
-  @override
-  String get video_source_scrape_clear_all =>
-      'Borrar todos los registros de metadatos';
-  @override
-  String get video_source_scrape_clear_all_hint =>
-      'Eliminar todos los metadatos de vídeo y portadas y archivos NFO generados por Fushi.';
-  @override
-  String get video_source_scrape_clear_all_confirm_title =>
-      '¿Borrar todos los registros de metadatos de vídeo?';
-  @override
-  String get video_source_scrape_clear_all_confirm_body =>
-      'Esto elimina todos los metadatos obtenidos y vínculos de fuente, limpia los resultados de Series, y elimina portadas y archivos NFO no modificados generados por Fushi. Los archivos de vídeo, entradas de biblioteca, grupos, progreso de visualización, subtítulos, etiquetas, portadas seleccionadas manualmente y archivos complementarios modificados por el usuario se conservan. Esto no se puede deshacer.';
-  @override
-  String get video_source_scrape_clear_all_confirm_action => 'Borrar';
-  @override
-  String get video_source_scrape_clear_all_completed =>
-      'Todos los registros de metadatos de vídeo han sido borrados.';
-  @override
-  String get video_source_scrape_clear_all_completed_protected =>
-      'Los registros de metadatos fueron borrados. Los archivos complementarios modificados o no verificables se conservaron.';
-  @override
-  String get video_source_scrape_clear_all_busy =>
-      'Un escaneo o obtención de metadatos de vídeo aún está en ejecución. Inténtelo de nuevo después de que termine.';
-  @override
-  String get video_source_scrape_clear_all_failed =>
-      'No se pudieron borrar todos los registros de metadatos. No se eliminaron archivos de usuario no verificados.';
-  @override
-  String get video_source_scrape_clear_all_in_progress =>
-      'Ya hay una limpieza de registros de metadatos en progreso.';
-  @override
-  String get game_session_japanese_locale => 'Configuración regional japonesa';
-  @override
-  String get game_session_japanese_locale_hint =>
-      'El juego se inició con configuración regional japonesa (CP932). Si el texto se ve ilegible o aparece un error de script, establezca la configuración regional japonesa de este juego en Nunca.';
-  @override
-  String get onboarding_anki_intro_body =>
-      'Anki es una app gratuita de tarjetas de repetición espaciada: las palabras nuevas se convierten en tarjetas, y las revisiones se programan según la curva de olvido. Después de una búsqueda, Fushi puede convertir la palabra en una tarjeta de Anki con un toque, con significado, oración, audio y captura de pantalla.';
-  @override
-  String get onboarding_anki_setup_desktop_hint =>
-      'Instale la app de escritorio de Anki, luego agregue el complemento AnkiConnect: en Anki, abra Herramientas - Complementos - Obtener complementos e introduzca el código 2055492159. Mantenga Anki ejecutándose mientras crea tarjetas.';
-  @override
-  String get onboarding_anki_setup_ios_hint =>
-      'Con AnkiMobile instalado, añadir tarjetas funciona de inmediato. Para el conjunto completo de funciones, conéctese a Anki ejecutándose en una computadora en la misma red vía AnkiConnect.';
-  @override
-  String get onboarding_anki_backend_label => 'Conexión';
-  @override
-  String get onboarding_anki_test_action => 'Probar conexión';
-  @override
-  String onboarding_anki_test_success({required Object count}) =>
-      'Conectado: se encontraron ${count} mazos';
-  @override
-  String get onboarding_anki_get_anki_action => 'Obtener Anki (escritorio)';
-  @override
-  String get onboarding_anki_get_ankidroid_action => 'Obtener AnkiDroid';
-  @override
-  String get onboarding_anki_mobile_ankiconnect_title =>
-      'Avanzado: usar AnkiConnect en este dispositivo';
-  @override
-  String get onboarding_anki_mobile_ankiconnect_hint =>
-      'Este dispositivo también puede crear tarjetas en Anki ejecutándose en una computadora en la misma red: active AnkiConnect en ajustes de creación de tarjetas e introduzca la dirección de la computadora.';
-  @override
-  String get onboarding_anki_fsrs_title => 'Cambiar Anki a FSRS';
-  @override
-  String get onboarding_anki_fsrs_body =>
-      'Anki viene con FSRS, un programador mucho mejor que el SM-2 predeterminado de hace 30 años: mejor retención con menos revisiones. En Anki, abra opciones de mazo y active FSRS (un interruptor cubre toda la colección). Esto debe hacerse dentro de Anki.';
-  @override
-  String get onboarding_step_pack_browser_action => 'Descargar en navegador';
-  @override
-  String get onboarding_anki_setup_android_hint =>
-      'Instale AnkiDroid y ábralo una vez para completar su configuración inicial. De vuelta en Fushi, toque Permitir en el diálogo de permisos que aparece con su primera tarjeta — no hay ajustes de AnkiDroid que cambiar.';
-  @override
-  String get onboarding_anki_install_addon_action =>
-      'Instalar complemento AnkiConnect';
-  @override
-  String get onboarding_anki_addon_installed =>
-      'AnkiConnect está instalado. Inicie (o reinicie) Anki, luego toque Probar conexión.';
-  @override
-  String get onboarding_anki_addon_no_anki =>
-      'No se encontró la carpeta de datos de Anki. Instale Anki y ábralo una vez, luego inténtelo de nuevo.';
-  @override
-  String onboarding_anki_addon_failed({required Object message}) =>
-      'La instalación falló: ${message}';
-  @override
-  String get game_hook_reason_capability_probe_failed =>
-      'El componente de captura no respondió a la verificación de capacidades. Se encontró en disco pero no pudo ejecutarse o no respondió a tiempo — el antivirus puede estar bloqueándolo, Fushi puede no tener permisos para lanzarlo, o un proceso helper residual puede estar atascado. Cierre todos los juegos, revise la cuarentena del antivirus, luego inténtelo de nuevo.';
-  @override
-  String get download_backend_setup_title =>
-      'Configurar el backend de descargas';
-  @override
-  String get download_backend_setup_intro =>
-      'Elige qué motor ejecuta tus descargas. Puedes cambiarlo en cualquier momento en los ajustes de descargas.';
-  @override
-  String get download_backend_embedded_hint =>
-      'Recomendado. Las descargas se ejecutan dentro de Fushi: no hay que instalar nada más.';
-  @override
-  String get download_backend_qb_hint =>
-      'Conecta Fushi a una WebUI de qBittorrent que ya tengas en marcha.';
-  @override
-  String get download_backend_setup_start => 'Configurar ahora';
-  @override
-  String get download_backend_embedded_unavailable =>
-      'A esta instalación le falta el entorno de ejecución del motor integrado. Reinstala el paquete completo o usa qBittorrent externo.';
-  @override
-  String get download_backend_qb_url_invalid =>
-      'Introduce una dirección completa, p. ej. http://127.0.0.1:8080';
-  @override
-  String get mihon_store_zero_extensions =>
-      'Este repositorio devolvió 0 extensiones. Puede que su dirección apunte a un índice obsoleto.';
-  @override
-  String get mihon_store_edit => 'Editar URL del repositorio';
-  @override
-  String get manga_ocr_download_resume => 'Reanudar descarga';
-  @override
-  String get manga_ocr_import => 'Importar modelo local';
-  @override
-  String get manga_ocr_import_title => 'Importar un modelo descargado';
-  @override
-  String get manga_ocr_import_intro =>
-      'Si la descarga desde la app no funciona, descarga tú mismo estos archivos e impórtalos aquí. También sirve un zip que los contenga.';
-  @override
-  String get manga_ocr_import_copy_urls => 'Copiar enlaces de descarga';
-  @override
-  String get manga_ocr_import_urls_copied => 'Enlaces de descarga copiados';
-  @override
-  String get manga_ocr_import_pick_folder => 'Elegir carpeta';
-  @override
-  String get manga_ocr_import_pick_files => 'Elegir archivos';
-  @override
-  String get manga_ocr_import_running => 'Importando…';
-  @override
-  String manga_ocr_import_done({required Object count}) =>
-      '${count} archivo(s) importado(s)';
-  @override
-  String get manga_ocr_import_matched_nothing =>
-      'No se reconoció ningún archivo de modelo utilizable';
-  @override
-  String manga_ocr_import_size_mismatch({
-    required Object file,
-    required Object expected,
-    required Object actual,
-  }) =>
-      '${file} tiene un tamaño incorrecto: se esperaba ${expected}, se obtuvo ${actual}';
-  @override
-  String manga_ocr_import_still_missing({required Object count}) =>
-      'Todavía faltan ${count} archivo(s)';
-  @override
-  String get manga_ocr_import_failed => 'Error al importar el modelo';
-  @override
-  String get manga_tap_ocr_notice_title => 'Toca para reconocer';
-  @override
-  String get manga_tap_ocr_notice_body =>
-      'Esta página aún no tiene datos de texto. Fushi la reconocerá con el motor de OCR que elegiste en los ajustes y luego podrás tocar las palabras para buscarlas. Puedes cambiar el motor o desactivar esto en Configuración › OCR de manga.';
-  @override
-  String get manga_tap_ocr_notice_confirm => 'Reconocer ahora';
-  @override
-  String get manga_tap_ocr_running => 'Reconociendo esta página…';
-  @override
-  String get manga_tap_to_ocr => 'Toca para reconocer';
-  @override
-  String get manga_tap_to_ocr_desc =>
-      'Toca un globo de diálogo sin reconocer para reconocer la página y buscar palabras al instante.';
-  @override
-  String get manga_ocr_engine_system => 'OCR del dispositivo';
-  @override
-  String get manga_ocr_engine_system_desc =>
-      'Usa el reconocimiento de texto integrado en tu dispositivo. Sin descargas, totalmente sin conexión y sin subir nada — pero con los globos de diálogo verticales y la escritura a mano es claramente peor que el modelo local.';
-  @override
-  String get manga_ocr_engine_system_unavailable =>
-      'Este dispositivo no tiene reconocimiento de texto integrado disponible';
-  @override
-  String get manga_tap_ocr_online_lens_only =>
-      'Los capítulos en línea no se guardan localmente, así que solo Google Lens puede leerlos — la imagen de la página se sube a Google.';
-  @override
-  String get settings_destination_services => 'Servicios en línea';
-  @override
-  String get settings_destination_services_summary =>
-      'API de terceros, indexadores y servidores multimedia';
-  @override
-  String get section_services_subtitles => 'Fuentes de subtítulos';
-  @override
-  String get section_services_resources => 'Indexadores de recursos';
-  @override
-  String get section_services_metadata => 'Extracción de metadatos';
-  @override
-  String get settings_services_link_subtitle =>
-      'Jimaku, OpenSubtitles, Torznab, Jellyfin, AniDB y TMDB se configuran todos aquí';
-  @override
-  String get game_hook_btn_replay => 'Reproducir de nuevo la voz de esta línea';
-  @override
-  String get game_hook_btn_recapture => 'Volver a capturar la voz';
-  @override
-  String get game_hook_btn_follow => 'Seguir las líneas nuevas';
-  @override
-  String get game_hook_btn_passthrough => 'Dejar pasar los clics al juego';
-  @override
-  String get game_hook_btn_transparency => 'Alternar el fondo';
-  @override
-  String get game_hook_btn_lock => 'Bloquear la posición';
-  @override
-  String get game_hook_btn_workbench => 'Abrir el banco de trabajo de captura';
-  @override
-  String get game_hook_btn_topmost => 'Mantener encima';
-  @override
-  String get game_hook_btn_close => 'Cerrar la ventana flotante';
-  @override
-  String get video_jimaku_search_failed => 'Error al buscar subtítulos';
-  @override
-  String video_subtitle_error_with_code({
-    required Object msg,
-    required Object code,
-  }) => '${msg} (HTTP ${code})';
-  @override
-  String get manga_rescan_run => 'Volver a reconocer el área seleccionada';
-  @override
-  String get manga_rescan_failed =>
-      'Falló el reconocimiento del área seleccionada';
-  @override
-  String get manga_rescan_region_updated =>
-      'Área seleccionada reconocida de nuevo y guardada en la página';
-  @override
-  String get manga_ocr_mobile_note =>
-      'En móvil, estos modelos alimentan el motor local para el OCR de volumen completo, por toque y de área seleccionada en el lector de manga.';
-  @override
-  String get manga_rescan_hint =>
-      'Arrastra un recuadro sobre el texto que quieras volver a reconocer. El resultado reemplaza la capa de texto existente dentro del recuadro.';
-  @override
-  String get manga_rescan_undone =>
-      'Se restauró la capa de texto anterior al nuevo reconocimiento';
-  @override
-  String get manga_rescan_undo_failed =>
-      'No se pudo restaurar la capa de texto anterior';
-  @override
-  String get module_tool_toggle_hint =>
-      'Mostrar esta pestaña en la barra de navegación; desactívalo para ocultarla';
-  @override
-  String get module_downloads_hidden_hint =>
-      'La pestaña Descargas está oculta en Configuración → Apariencia → Módulos de funciones; vuelve a activarla para gestionar las suscripciones.';
-  @override
-  String get book_file_location_open => 'Abrir ubicación del archivo';
-  @override
-  String get book_file_location_failed =>
-      'No se pudo abrir la ubicación del archivo de este libro.';
-  @override
-  String storage_entry_database_snapshots_label({required Object n}) =>
-      'Instantáneas de copia de seguridad de la base de datos (${n} archivos)';
-  @override
-  String get storage_entry_delete_database_snapshots_confirm_body =>
-      'Esto elimina todas las instantáneas de copia de seguridad de la base de datos que hayan quedado (corrupt-bak / pre-restore / copias de migraciones antiguas). La base de datos en uso y sus archivos -wal/-shm no se tocan.';
-  @override
-  String get manga_global_search_no_sources =>
-      'Aún no hay fuentes de manga habilitadas. Añade una en la pestaña Importar.';
-  @override
-  String get manga_global_search_open_sources => 'Ir a Importar';
-  @override
-  String get settings_downloads_open_page_hint =>
-      'Abrir la página de descargas (tareas, recursos, suscripciones)';
-  @override
-  String get download_video_source_required =>
-      'Se requiere una fuente de vídeo';
-  @override
-  String get game_hook_reason_stale_session =>
-      'Una sesión de captura anterior aún no se ha liberado; Fushi lo está reintentando solo, no hace falta que hagas nada.';
-  @override
-  String get video_subtitle_delete => 'Eliminar archivo de subtítulos';
-  @override
-  String video_subtitle_delete_confirm({required Object path}) =>
-      '¿Eliminar este archivo de subtítulos del disco? Esta acción no se puede deshacer.\n${path}';
-  @override
-  String video_subtitle_deleted({required Object label}) =>
-      'Archivo de subtítulos eliminado: ${label}';
-  @override
-  String video_subtitle_delete_failed({required Object label}) =>
-      'Error al eliminar el archivo de subtítulos: ${label}';
-  @override
-  String get shortcut_action_manga_toggle_chrome =>
-      'Alternar interfaz de manga';
-  @override
-  String get manga_interface_hide => 'Ocultar interfaz';
-  @override
-  String get manga_interface_show => 'Mostrar interfaz';
-  @override
-  String get gal_hook_text_vertical_alignment => 'Alineación vertical';
-  @override
-  String get gal_hook_text_vertical_alignment_center => 'Centro';
-  @override
-  String get gal_hook_text_vertical_alignment_top => 'Arriba';
-  @override
-  String get storage_entry_external_audio_hint =>
-      'El audio hace referencia a los archivos originales y no ocupa espacio de la app';
-  @override
-  String get jellyfin_auto_list_title => 'Listar elementos al entrar en Vídeo';
-  @override
-  String get jellyfin_auto_list_hint =>
-      'Desactivado: entrar en la página de vídeo no envía ninguna petición al servidor de medios; desliza para actualizar en la videoteca para listar manualmente. Recomendado en servidores muy grandes, donde la enumeración automática parece scraping y puede activar la detección de abuso.';
-  @override
-  String get jellyfin_libraries_title => 'Bibliotecas a listar';
-  @override
-  String get jellyfin_libraries_hint =>
-      'No seleccionar nada lista todas las bibliotecas de vídeo. Limitarlo a las bibliotecas que realmente ves evita que los servidores enormes se enumeren por completo.';
-  @override
-  String get jellyfin_libraries_load_failed =>
-      'No se pudo cargar la lista de bibliotecas';
-  @override
-  String get video_filter_series => 'Series';
-  @override
-  String get video_filter_series_in => 'En una serie';
-  @override
-  String get video_filter_series_standalone => 'Sin serie';
-  @override
-  String get manga_source_cloudflare_verify_title => 'Verificación del sitio';
-  @override
-  String get manga_source_cloudflare_verify_hint =>
-      'Completa la verificación de Cloudflare a continuación. La carga se reanudará automáticamente al superarla.';
-  @override
-  String get db_cannot_open_title => 'Ubicación de datos no disponible';
-  @override
-  String get db_cannot_open_message =>
-      'Fushi no pudo abrir ni crear su base de datos en la ubicación de datos configurada. Nada está dañado: puede que la carpeta no exista, sea de solo lectura o esté en una unidad desconectada. Revise la ubicación de datos en Configuración, o reinicie para usar la ubicación predeterminada.';
-  @override
-  String get anki_error_field_mapping_mismatch =>
-      'Ninguno de sus mapeos de campos coincide con el tipo de nota seleccionado, por lo que Anki rechazó la tarjeta. Abra Configuración de Anki para volver a mapear los campos, o use \'Crear mazo Lapis\'.';
-  @override
-  String get anki_error_first_field_empty =>
-      'El primer campo del tipo de nota seleccionado está vacío y Anki no acepta una nota así. Mapee un campo a él en Configuración de Anki.';
-  @override
-  String get storage_category_cache => 'Cachés y archivos temporales';
-  @override
-  String get storage_category_other => 'Otros sin clasificar';
-  @override
-  String get collection_export_pick_source => 'Seleccionar una fuente';
-  @override
-  String get collection_export_all_sources => 'Todas las fuentes';
-  @override
-  String get video_subtitle_list_search => 'Buscar subtítulos';
-  @override
-  String get video_subtitle_list_search_hint => 'Escriba para filtrar líneas';
-  @override
-  String get video_subtitle_list_search_empty => 'Ninguna línea coincide';
-  @override
-  String get video_subtitle_list_export_favorites =>
-      'Exportar líneas favoritas';
-  @override
-  String get shortcut_action_video_search_subtitle_list =>
-      'Buscar en la lista de subtítulos';
-  @override
-  String get game_hook_code_paste_title => 'Pegar un código de hook';
-  @override
-  String get game_hook_code_paste_hint =>
-      'Pegue el código sin procesar, p. ej. /HQN4@4CE90:game.exe';
-  @override
-  String get game_hook_code_paste_body =>
-      'El código queda vinculado al ejecutable del juego en ejecución, para que Fushi pueda reutilizarlo la próxima vez.';
-  @override
-  String get game_hook_code_paste_saved =>
-      'Código de hook guardado para este juego';
-  @override
-  String get game_hook_code_paste_invalid => 'Esto no parece un código de hook';
-  @override
-  String get game_hook_code_label => 'Etiqueta (opcional)';
-  @override
-  String get discovery_game_type_all => 'Todos';
-  @override
-  String get discovery_game_type_raw => 'Sin traducir';
-  @override
-  String get discovery_game_type_translated => 'Traducidos';
-  @override
-  String get discovery_game_type_mobile => 'Móvil';
-  @override
-  String get discovery_game_type_unlabelled => 'Sin etiquetar';
-  @override
-  String get game_library_downloading => 'Descargando';
-  @override
-  String get game_library_download_queued => 'En cola';
-  @override
-  String get game_library_download_retrying => 'Reintentando';
-  @override
-  String get delete_disclosure_audio_source_files =>
-      'Los archivos de audio originales que importó';
-  @override
-  String get delete_local_files => 'Eliminar también los archivos locales';
-  @override
-  String get delete_local_files_video_desc =>
-      'El archivo de vídeo se elimina de este dispositivo y su tarea de descarga también. Esto no se puede deshacer.';
-  @override
-  String get delete_local_files_audio_desc =>
-      'Los archivos de audio originales se eliminan de este dispositivo; los archivos originales del libro y los subtítulos se conservan. Esto no se puede deshacer.';
-  @override
-  String get delete_disclosure_book_source_kept =>
-      'Los archivos originales del libro y los subtítulos que importaste';
-  @override
-  String get download_task_delete_files_failed =>
-      'No se pudieron eliminar los datos descargados; el motor de descargas no lo confirmó';
-  @override
-  String delete_local_files_failed({required Object n}) =>
-      'No se pudieron eliminar ${n} archivo(s) local(es); puede que sigan en uso';
-  @override
-  String batch_hidden_by_filter_note({required Object n}) =>
-      'Otros ${n} elementos seleccionados están ocultos por el filtro actual y no se procesarán.';
-  @override
-  String get custom_fonts_default => 'Default (Yu Gothic UI)';
-  @override
-  String get custom_fonts_default_hint =>
-      'Use the built-in Yu Gothic UI rendering for the Galgame Hook overlay.';
-  @override
-  String get gal_hook_text_font_family => 'Galgame caption font';
-  @override
-  String get gal_mining_screenshot_size => 'Galgame screenshot size';
-  @override
-  String get gal_mining_screenshot_size_full_hd =>
-      'Up to 1920 × 1080 (recommended)';
-  @override
-  String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
-  @override
-  String get gal_mining_screenshot_size_hint =>
-      'Applies to still screenshots and animated-capture fallbacks. Keeps the aspect ratio, never enlarges, and saves as JPEG at quality 90.';
-  @override
-  String get gal_mining_screenshot_size_original => 'Original size (JPEG)';
-  @override
-  String get game_attach_mode_last_used => 'Last used';
-  @override
-  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
-  @override
-  String get game_attach_mode_luna_safe_hint =>
-      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
-  @override
-  String get game_attach_mode_native => 'Fushi native attachment';
-  @override
-  String get game_attach_mode_native_hint =>
-      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
-  @override
-  String get game_attach_mode_title => 'Choose attachment mode';
-  @override
-  String get game_line_bulk_text_hint =>
-      'Bulk text detected. Character lookup is paused.';
-  @override
-  String get game_luna_audio_lead_in => 'Complete sentence start';
-  @override
-  String get game_luna_audio_lead_in_hint =>
-      'If the beginning of this sentence is cut off, increase this value.';
-  @override
-  String get game_luna_audio_per_game_hint =>
-      'Saved separately for each attached game.';
-  @override
-  String get game_luna_audio_tail_trim => 'Remove next-line audio';
-  @override
-  String get game_luna_audio_tail_trim_hint =>
-      'If the end of this sentence includes the next line, increase this value.';
-  @override
-  String get game_luna_audio_timing => 'Audio alignment';
-  @override
-  String get game_text_source_luna => 'LunaTranslator (external original text)';
-  @override
-  String get game_text_source_luna_connected =>
-      'Connected. Fushi will use the original text selected in LunaTranslator.';
-  @override
-  String get game_text_source_luna_waiting =>
-      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
-  @override
-  String get game_text_thread_recommended => 'Recommended';
-  @override
-  String get game_text_threads_dormant_hide => 'Hide threads without text';
-  @override
-  String game_text_threads_dormant_show({required Object count}) =>
-      'Show threads without text (${count})';
-  @override
-  String get video_setting_subtitle_language_filter => 'Subtitle language';
-  @override
-  String get video_setting_subtitle_language_filter_all => 'All';
-  @override
-  String get video_setting_subtitle_language_filter_chinese => 'Chinese';
-  @override
-  String get video_setting_subtitle_language_filter_hint =>
-      'Filter Chinese and Japanese content inside the selected subtitle track.';
-  @override
-  String get video_setting_subtitle_language_filter_japanese => 'Japanese';
-  @override
-  String get download_direct_queue_section => 'Direct downloads';
-  @override
-  String get download_task_kind_all => 'All types';
-  @override
-  String get download_task_kind_filter => 'Filter by type';
-  @override
-  String get manga_online_series_empty => 'Esta serie no tiene volúmenes.';
-  @override
-  String sync_peer_book_delete_confirm({required Object name}) =>
-      '¿Eliminar «${name}» del dispositivo emparejado? Sus archivos y el progreso de lectura allí se borrarán definitivamente, y este dispositivo no tiene ninguna copia. Esta acción no se puede deshacer.';
-  @override
-  String sync_peer_video_delete_confirm({required Object name}) =>
-      '¿Quitar «${name}» de la biblioteca del dispositivo emparejado? El archivo de vídeo que el propio dispositivo importó se conserva. Esta acción no se puede deshacer.';
-  @override
-  String get storage_entry_delete_files_confirm_body =>
-      'Se eliminará del disco de inmediato. Nada de tu biblioteca hace referencia a esto: son datos en caché, exportados o que se pueden volver a descargar.';
-  @override
-  String get manga_series_refresh => 'Actualizar capítulos';
-  @override
-  String get manga_series_refresh_failed =>
-      'No se pudo actualizar desde la fuente';
-  @override
-  String get manga_series_source_disabled =>
-      'Esta fuente no está instalada o está desactivada';
-  @override
-  String get manga_series_platform_unsupported =>
-      'Esta fuente no está disponible en esta plataforma';
-  @override
-  String get manga_series_offline_hint =>
-      'Se muestran los capítulos guardados en este dispositivo';
-  @override
-  String get manga_series_no_chapters => 'Todavía no hay capítulos';
-  @override
-  String get manga_series_all_read => 'Se han leído todos los capítulos';
-  @override
-  String get manga_series_sort_newest => 'Más recientes primero';
-  @override
-  String get manga_series_sort_oldest => 'Más antiguos primero';
-  @override
-  String get manga_series_unread_only => 'Solo no leídos';
-  @override
-  String get manga_series_mark_read => 'Marcar como leído';
-  @override
-  String get manga_series_mark_unread => 'Marcar como no leído';
-  @override
-  String get manga_series_mark_previous_read =>
-      'Marcar este y los anteriores como leídos';
-  @override
-  String get manga_series_local_volume => 'Volumen local';
-  @override
-  String get manga_series_volume_info => 'Volumen';
-  @override
-  String get manga_series_page_count => 'Páginas';
-  @override
-  String get manga_series_chapters_action => 'Capítulos';
-  @override
-  String get manga_series_next_chapter => 'Capítulo siguiente';
-  @override
-  String get manga_series_previous_chapter => 'Capítulo anterior';
-  @override
-  String get manga_series_last_chapter_reached =>
-      'Este es el capítulo más reciente';
-  @override
-  String get manga_series_first_chapter_reached => 'Este es el primer capítulo';
-  @override
-  String get manga_series_open_series => 'Página de la obra';
-  @override
-  String manga_series_read_progress({
-    required Object page,
-    required Object total,
-  }) => 'Leído hasta la página ${page} de ${total}';
-  @override
-  String manga_series_read_progress_partial({required Object page}) =>
-      'Leído hasta la página ${page}';
-  @override
-  String mihon_store_extension_count({required Object count}) =>
-      '${count} extensiones';
-  @override
-  String mihon_extension_sources_more({required Object count}) =>
-      'Mostrar las ${count} fuentes';
-  @override
-  String get mihon_extension_sources_less => 'Mostrar menos fuentes';
-  @override
-  String get options_website => 'Visitar el sitio web oficial';
-  @override
-  String get video_setting_mpv_group_hdr => 'HDR';
-  @override
-  String get video_setting_hdr_tone_mapping => 'Mapeo de tonos HDR';
-  @override
-  String get video_setting_hdr_tone_mapping_hint =>
-      'Curva que se usa al comprimir una fuente HDR en una pantalla SDR. «Automático» deja que mpv elija según la fuente.';
-  @override
-  String get video_setting_hdr_compute_peak => 'Detección dinámica de picos';
-  @override
-  String get video_setting_hdr_compute_peak_hint =>
-      'Mide el brillo máximo real de cada fotograma en vez de fiarse de los metadatos de la fuente. Mejores luces altas, a costa de algo de GPU.';
-  @override
-  String get video_setting_hdr_auto => 'Automático';
-  @override
-  String get video_setting_hdr_on => 'Activado';
-  @override
-  String get video_setting_hdr_off => 'Desactivado';
-  @override
-  String get video_discovery_cancel_downloads_title =>
-      '¿Cancelar las descargas?';
-  @override
-  String video_discovery_cancel_downloads_body({required Object n}) =>
-      'Se detendrán ${n} tarea(s) de descarga de este título. Las partes ya descargadas se conservan en el disco; podrás reanudar la descarga más adelante.';
-  @override
-  String get video_discovery_cancel_downloads_failed =>
-      'No se pudo cancelar la descarga. Puede que la tarea ya haya terminado o que el backend de descargas no esté disponible.';
-  @override
-  String get gal_hook_click_lookup => 'Toca una palabra para buscarla';
-  @override
-  String get gal_hook_click_lookup_hint =>
-      'Desactivado significa que los clics sobre el texto nunca activan una búsqueda: útil con el clic pasante activado, cuando prefieres no darle a una palabra sin querer.';
-  @override
-  String get gal_hook_lookup_trigger => 'Disparador de búsqueda';
-  @override
-  String get gal_hook_lookup_trigger_hint =>
-      'Qué botón del ratón busca la palabra bajo el puntero. Es independiente del interruptor de arriba: puedes desactivar la búsqueda por toque y seguir buscando con un botón lateral.';
-  @override
-  String get gal_hook_lookup_trigger_left => 'Left click';
-  @override
-  String get gal_hook_lookup_trigger_middle => 'Middle click';
-  @override
-  String get gal_hook_lookup_trigger_side => 'Side button';
-  @override
-  String get gal_hook_toolbar_auto_hide => 'Ocultar la barra automáticamente';
-  @override
-  String get gal_hook_toolbar_auto_hide_hint =>
-      'Oculta la barra hasta que el puntero llega al cuadro de texto, al estilo de LunaHook. Oculta significa oculta de verdad: esos píxeles vuelven al juego.';
-  @override
-  String get gal_hook_passthrough_blocks_mouse =>
-      'El texto sigue recibiendo clics con el clic pasante';
-  @override
-  String get gal_hook_passthrough_blocks_mouse_hint =>
-      'Activado: las líneas de texto siguen recibiendo clics, así puedes tocar una palabra. Desactivado: toda la superposición es transparente al ratón; puedes hacer clic en lo que haya debajo, pero tocar palabras deja de funcionar.';
-  @override
-  String get floating_lyric_passthrough =>
-      'Dejar pasar los clics a lo que hay debajo';
-  @override
-  String get floating_lyric_transparency => 'Alternar el fondo';
-  @override
-  String get floating_lyric_topmost => 'Mantener al frente';
-  @override
-  String get gal_hook_fold_progressive_lines =>
-      'Unir líneas de diálogo divididas';
-  @override
-  String get gal_hook_fold_progressive_lines_hint =>
-      'Algunos motores redibujan la línea entera en cada clic, así que una misma línea se captura varias veces. Pliega esas instantáneas en una sola línea.';
-  @override
-  String get gal_hook_ingame_lookup_engine_unsupported =>
-      'Este motor de juego aún no admite la búsqueda dentro del juego';
-  @override
-  String get gal_hook_ingame_lookup_version_unsupported =>
-      'Esta versión del juego aún no está en la lista de compatibles';
-  @override
-  String get gal_hook_ingame_lookup_exe_hash_copy =>
-      'Copiar el SHA-256 del ejecutable del juego';
-  @override
-  String get gal_hook_ingame_lookup_exe_hash_unavailable =>
-      'No se pudo leer el ejecutable del juego';
-  @override
-  String get gal_hook_ingame_lookup_exe_hash_copied =>
-      'SHA-256 del ejecutable copiado';
+	@override late final _StringsEs _root = this; // ignore: unused_field
+
+	// Translations
+	@override String get action_exit => 'Salir';
+	@override String get action_favorite => 'Favorito';
+	@override String activity_days_ago({required Object n}) => 'hace ${n} d';
+	@override String activity_hours_ago({required Object n}) => 'hace ${n} h';
+	@override String get activity_just_now => 'Ahora mismo';
+	@override String activity_minutes_ago({required Object n}) => 'hace ${n} min';
+	@override String get add_to_collection => 'Añadir a colección';
+	@override String get anime_download_back => 'Atrás';
+	@override String get anime_download_batch => 'Lote';
+	@override String get anime_download_category_all => 'Todos';
+	@override String get anime_download_category_english => 'Traducido al inglés';
+	@override String get anime_download_category_non_english => 'No inglés';
+	@override String get anime_download_category_raw => 'Sin traducir';
+	@override String get anime_download_delete => 'Eliminar';
+	@override String anime_download_episode_count({required Object count}) => 'EP ${count}';
+	@override String get anime_download_generic_download => 'Descargar';
+	@override String get anime_download_generic_hint => 'Enlace magnet';
+	@override String get anime_download_generic_title => 'Pegar un enlace (libros, vídeos, cualquier cosa)';
+	@override String get anime_download_include_subs => 'Incluir subtítulos';
+	@override String get anime_download_kind_auto => 'Auto';
+	@override String get anime_download_kind_book => 'Libro';
+	@override String get anime_download_kind_video => 'Vídeo';
+	@override String get anime_download_magnet_invalid => 'Enlace magnet no válido';
+	@override String get anime_download_no_results => 'Sin resultados';
+	@override String get anime_download_no_subs => 'Sin subtítulos';
+	@override String get anime_download_no_tasks => 'Aún no hay tareas de descarga';
+	@override String get anime_download_nyaa_query => 'Términos de búsqueda en Nyaa';
+	@override String get anime_download_play_now => 'Reproducir mientras descarga';
+	@override String get anime_download_play_now_fail => 'Aún no está listo (metadatos pendientes o conexión fallida) — inténtelo más tarde';
+	@override String get anime_download_play_now_ok => 'Importado — ábralo desde la biblioteca de vídeos para reproducir mientras descarga';
+	@override String get anime_download_push => 'Enviar descarga';
+	@override String get anime_download_push_failed => 'No se pudo enviar a qBittorrent';
+	@override String get anime_download_pushed => 'Enviado — se importará automáticamente al finalizar';
+	@override String get anime_download_refresh => 'Actualizar';
+	@override String get anime_download_relocate => 'Renombrar / mover';
+	@override String anime_download_relocate_engine_failed({required Object reason}) => 'Falló, nada cambió: ${reason}';
+	@override String get anime_download_relocate_hint => 'Fushi renombra/mueve a través del motor de descarga, por lo que la siembra no se interrumpe. Renombrar en el Explorador no se puede recuperar.';
+	@override String anime_download_relocate_library_failed({required Object reason}) => 'Archivos movidos, pero la biblioteca sigue apuntando a la ruta anterior: ${reason}';
+	@override String get anime_download_relocate_move_title => 'Mover a carpeta';
+	@override String get anime_download_relocate_no_files => 'Esta tarea aún no tiene archivos para renombrar (metadatos no listos)';
+	@override String anime_download_relocate_ok({required Object rows}) => 'Renombrado / movido; ${rows} entradas de biblioteca actualizadas';
+	@override String get anime_download_relocate_pick_folder => 'Elegir carpeta de destino';
+	@override String get anime_download_relocate_rename_title => 'Renombrar archivo';
+	@override String get anime_download_retry => 'Reintentar';
+	@override String get anime_download_search => 'Buscar';
+	@override String get anime_download_search_error_proxy_hint => 'Si no puede acceder al sitio directamente, configure un proxy de red en los ajustes de descarga.';
+	@override String get anime_download_search_failed => 'La búsqueda falló o se agotó el tiempo. Toque reintentar.';
+	@override String get anime_download_search_hint => 'Título del anime';
+	@override String get anime_download_search_start_hint => 'Busque un título arriba — los torrents y subtítulos se emparejan automáticamente. Las descargas no se limitan a vídeo: libros, manga, audiolibros y juegos también se importan.';
+	@override String get anime_download_sort_date => 'Publicado';
+	@override String get anime_download_sort_seeders => 'Seeders';
+	@override String get anime_download_sort_size => 'Tamaño';
+	@override String get anime_download_store_unavailable => 'El almacenamiento del plan de descarga no está disponible';
+	@override String get anime_download_subs_badge => 'Subs';
+	@override String get anime_download_subs_failed => 'La búsqueda de subtítulos falló. Toque reintentar.';
+	@override String get anime_download_subs_need_key => 'Introduzca una clave API de Jimaku arriba para buscar subtítulos.';
+	@override String get anime_download_tasks => 'Tareas de descarga';
+	@override String get anime_download_title => 'Descarga de anime';
+	@override String get anime_download_trusted => 'De confianza';
+	@override String get anime_download_trusted_only => 'Solo de confianza';
+	@override String get anki_allow_duplicates => 'Permitir duplicados';
+	@override String get anki_allow_duplicates_hint => 'Omitir la comprobación de duplicados al añadir tarjetas';
+	@override String get anki_card_action_failed => 'La acción de la tarjeta falló. Inténtelo de nuevo.';
+	@override String get anki_compact_glossaries => 'Glosarios compactos';
+	@override String get anki_compact_glossaries_hint => 'Usar formato compacto para las entradas del glosario';
+	@override String get anki_connect_api_key => 'Clave de API';
+	@override String get anki_connect_host => 'Servidor';
+	@override String get anki_connect_port => 'Puerto';
+	@override String get anki_create_lapis => 'Crear mazo Lapis';
+	@override String get anki_create_lapis_exists => 'El tipo de nota y el mazo Lapis ya existen: se han seleccionado.';
+	@override String anki_create_lapis_failed({required Object error}) => 'No se pudo crear el mazo Lapis: ${error}';
+	@override String get anki_create_lapis_hint => 'Añade el tipo de nota Lapis y un mazo Lapis a Anki y los selecciona.';
+	@override String get anki_create_lapis_success => 'Tipo de nota y mazo Lapis creados.';
+	@override String get anki_deck => 'Mazo';
+	@override String get anki_duplicate_scope => 'Ámbito de verificación de duplicados';
+	@override String get anki_duplicate_scope_collection => 'Colección completa';
+	@override String get anki_duplicate_scope_deck => 'Mazo seleccionado (y sus submazos)';
+	@override String get anki_duplicate_scope_deck_root => 'Mazo raíz (todos los submazos)';
+	@override String get anki_duplicate_scope_hint => 'Qué mazos se buscan al verificar si una tarjeta ya existe. Solo AnkiConnect; AnkiDroid siempre busca en toda la colección.';
+	@override String get anki_error_collection_unavailable => 'La colección de AnkiDroid no está disponible ahora mismo. Abre AnkiDroid al menos una vez, asegúrate de que no está sincronizando y de que la API está activada, y vuelve a intentarlo.';
+	@override String get anki_error_connection_refused => 'No se pudo conectar con Anki: conexión rechazada. Asegúrate de que Anki Desktop esté abierto y el complemento AnkiConnect instalado.';
+	@override String get anki_error_connection_timeout => 'No se pudo conectar con Anki: se agotó el tiempo de espera. Revisa el servidor, el puerto y el cortafuegos.';
+	@override String get anki_error_connection_unknown => 'No se pudo exportar a Anki: error de conexión inesperado. Consulta el registro de errores.';
+	@override String get anki_error_http => 'No se pudo exportar a Anki: ocurrió un error HTTP al contactar con AnkiConnect.';
+	@override String get anki_error_permission_denied => 'AnkiDroid no ha concedido permiso de acceso a tarjetas. Apruebe el diálogo de permisos que acaba de aparecer, luego toque el botón de nuevo para exportar.';
+	@override String get anki_fetch => 'Actualizar mazos y tipos de nota';
+	@override String get anki_fetching => 'Obteniendo...';
+	@override String get anki_field_mappings => 'Mapeo de campos';
+	@override String get anki_field_not_mapped => 'Sin mapear';
+	@override String get anki_mine_to_server => 'Enviar al dispositivo emparejado';
+	@override String get anki_mine_to_server_hint => 'Envía las tarjetas creadas al Anki del dispositivo emparejado (sus mazos y ajustes) en lugar de este dispositivo. Requiere emparejamiento por Interconnect.';
+	@override String get anki_mined_action_add_duplicate => 'Añadir como tarjeta nueva';
+	@override String get anki_mined_action_overwrite => 'Sobrescribir esta tarjeta';
+	@override String get anki_mined_action_view => 'Ver / abrir en Anki';
+	@override String get anki_mined_card_subtitle => 'Elija qué hacer con la tarjeta coincidente.';
+	@override String get anki_mined_card_title => 'Tarjeta ya existente en Anki';
+	@override String anki_mined_multiple_matches({required Object count}) => '${count} tarjetas coincidentes';
+	@override String get anki_not_configured => 'Toca Actualizar para cargar tus mazos y tipos de nota de Anki.';
+	@override String get anki_note_open_failed => 'No se pudo abrir la tarjeta en Anki.';
+	@override String get anki_note_type => 'Tipo de nota';
+	@override String get anki_note_viewer_empty => 'Esta tarjeta no tiene campos legibles.';
+	@override String get anki_note_viewer_open_in_anki => 'Abrir en Anki';
+	@override String get anki_note_viewer_title => 'Tarjeta existente';
+	@override String get anki_open_no_card => 'No se encontró tarjeta para esta palabra en Anki.';
+	@override String get anki_overwrite_scope => 'Alcance de sobrescritura';
+	@override String get anki_overwrite_scope_all => 'Todas las tarjetas coincidentes';
+	@override String get anki_overwrite_scope_hint => 'Qué tarjetas ya creadas puede sobrescribir el ✓ verde';
+	@override String get anki_overwrite_scope_latest => 'Solo la última tarjeta';
+	@override String get anki_refresh_hint => 'Después de crear o renombrar un mazo o tipo de nota en Anki, toca aquí para actualizar.';
+	@override String anki_select_handlebar({required Object field}) => 'Seleccionar valor para ${field}';
+	@override String get anki_settings_label => 'Configuración de Anki';
+	@override String get anki_tag_default_section => 'Etiquetas predeterminadas';
+	@override String get anki_tag_include_category => 'Añadir etiqueta de categoría de origen';
+	@override String get anki_tag_include_category_hint => 'Los libros llevan «book», los vídeos «video» y los juegos «game»';
+	@override String get anki_tag_include_fushi => 'Añadir la etiqueta «fushi»';
+	@override String get anki_tag_include_fushi_hint => 'Marca todas las tarjetas creadas por Fushi';
+	@override String get anki_tags => 'Etiquetas';
+	@override String get anki_tags_hint => 'Etiquetas separadas por espacios añadidas a cada tarjeta';
+	@override String get app_icon_label => 'Icono de la app';
+	@override String get app_icon_presets => 'Presets';
+	@override String get app_ui_scale => 'Tamaño de la interfaz';
+	@override String get app_ui_scale_hint => 'Scales app text and spacing. Lower it on large screens if controls feel oversized.';
+	@override String get app_version => 'Versión de la app';
+	@override String get apply_theme => 'Aplicar tema';
+	@override String get audio_clip_failed => 'No se pudo extraer el fragmento de audio: la fuente de audio puede faltar o no poder leerse';
+	@override String get audio_import => 'Importar audio';
+	@override String get audio_panel_add_audio => 'Añadir audio';
+	@override String get audio_panel_auto => 'Automático';
+	@override String get audio_panel_pick_new_subtitle => 'Elegir nuevo archivo de subtítulos';
+	@override String get audio_source_added => 'Fuente de audio añadida';
+	@override String audio_source_dns_error({required Object host}) => 'Error de conexión de fuente de audio: no se puede resolver "${host}" — verifica tu red o elimina esta fuente en ajustes';
+	@override String get audio_source_edit_target_gone => 'Esa fuente de audio ya no existe — edición descartada';
+	@override String get audio_source_edit_url => 'Editar enlace de fuente de audio';
+	@override String audio_source_error({required Object detail}) => 'Error de fuente de audio: ${detail}';
+	@override String get audio_source_fushi_interconnect => 'Fushi Interconnect';
+	@override String get audio_source_loopback_warning => 'Apunta a este dispositivo — redirija después de cambiar de máquina';
+	@override String audio_source_request_error({required Object detail}) => 'Error en solicitud de fuente de audio: ${detail}';
+	@override String audio_source_timeout({required Object host}) => 'Tiempo de espera de fuente de audio: "${host}" — servidor no responde, inténtalo más tarde o cambia la fuente';
+	@override String get audio_source_updated => 'Fuente de audio actualizada';
+	@override String get audio_source_url_invalid => 'El enlace debe ser http(s) y contener un marcador de término o lectura';
+	@override String get audio_unavailable => 'No se encontró audio.';
+	@override String get audio_volume => 'Volumen';
+	@override String get audiobook_attached => 'Audiolibro adjunto';
+	@override String get audiobook_audio_missing => 'Archivo de audio faltante';
+	@override String get audiobook_background_play => 'Seguir tras salir';
+	@override String get audiobook_background_play_hint => 'Si está desactivado, el audiolibro se detiene al salir del lector. Actívalo para seguir en segundo plano.';
+	@override String get audiobook_export_clip => 'Exportar clip de vídeo';
+	@override String get audiobook_export_clip_failed => 'La exportación del clip falló';
+	@override String get audiobook_export_clip_in_progress => 'Exportando clip…';
+	@override String get audiobook_export_clip_no_selection => 'Seleccione texto primero para exportar un clip';
+	@override String get audiobook_export_clip_no_text => 'Esta selección no tiene texto para renderizar';
+	@override String get audiobook_export_clip_saved => 'Clip guardado';
+	@override String get audiobook_export_clip_unsupported_range => 'Esta selección no se puede exportar (cruza capítulo o archivo de audio)';
+	@override String get audiobook_import => 'Importar audiolibro';
+	@override String get audiobook_import_error => 'Error en la importación';
+	@override String audiobook_import_error_copy_failed({required Object name}) => 'Error al copiar el archivo: ${name}';
+	@override String audiobook_import_error_disk_full({required Object size}) => 'Espacio en disco insuficiente. Requerido: ${size}';
+	@override String get audiobook_import_success => 'Audiolibro importado';
+	@override String get audiobook_load_error => 'Error al cargar el audiolibro.';
+	@override String get audiobook_pick_alignment => 'Elegir archivo de alineación';
+	@override String get audiobook_reference_original => 'Referenciar archivos originales';
+	@override String get audiobook_reference_original_desc => 'Mantener el audio donde está y reproducir desde su ruta original; el libro se rompe si el archivo se mueve o elimina.';
+	@override String get audiobook_relocate => 'Reubicar archivo';
+	@override String get audiobook_relocate_done => 'Audio reubicado';
+	@override String get auto_add_book_name_to_tags => 'Añadir título del libro a las etiquetas automáticamente';
+	@override String auto_chapter({required Object n}) => 'Capítulo ${n}';
+	@override String get auto_read_on_lookup => 'Leer palabra automáticamente al buscar';
+	@override String get auto_search => 'Búsqueda automática';
+	@override String get auto_search_debounce_delay => 'Retardo de búsqueda automática';
+	@override String get auto_select_search_window => 'Selección automática de ventana de búsqueda';
+	@override String get auto_select_search_window_hint => 'Probar múltiples tamaños de ventana al importar, elegir el que tenga la mejor tasa de acierto';
+	@override String get av_sync => 'Sincronización A/V';
+	@override String get av_sync_reset => 'Restablecer';
+	@override String get back => 'Atrás';
+	@override String get background_color => 'Color de fondo';
+	@override String get background_color_desc => 'Fondo de la página del lector';
+	@override String get backup_category_audiobooks => 'Audio de audiolibros';
+	@override String get backup_category_audiobooks_desc => 'Audio y alineación de audiolibros';
+	@override String get backup_category_books => 'Libros';
+	@override String get backup_category_books_desc => 'Archivos de libros (EPUB y contenido extraído)';
+	@override String get backup_category_dictionary => 'Diccionarios';
+	@override String get backup_category_dictionary_desc => 'Diccionarios importados y sus archivos';
+	@override String get backup_category_fonts => 'Fuentes personalizadas';
+	@override String get backup_category_fonts_desc => 'Archivos de fuentes personalizadas importados';
+	@override String get backup_category_local_audio => 'Bases de datos de audio local';
+	@override String get backup_category_local_audio_desc => 'Bases de datos de audio de pronunciación local';
+	@override String get backup_category_profiles => 'Perfiles';
+	@override String get backup_category_profiles_desc => 'Perfiles de configuración';
+	@override String get backup_category_progress => 'Progreso de lectura';
+	@override String get backup_category_progress_desc => 'Posiciones de lectura y marcadores';
+	@override String get backup_category_settings => 'Ajustes';
+	@override String get backup_category_settings_desc => 'Ajustes de la app y del lector';
+	@override String get backup_category_statistics => 'Estadísticas';
+	@override String get backup_category_statistics_desc => 'Estadísticas de lectura, vídeo y creación de tarjetas';
+	@override String get backup_category_videos => 'Vídeos';
+	@override String get backup_category_videos_desc => 'Archivos de vídeo locales';
+	@override String get backup_export => 'Exportar copia de seguridad';
+	@override String get backup_export_books_all => 'Todos los libros';
+	@override String backup_export_books_selected({required Object count}) => '${count} libros seleccionados';
+	@override String get backup_export_categories_hint => 'Marque qué incluir en la copia de seguridad. Desmarcar Libros los elimina por completo — su contenido y registros desaparecen con ellos.';
+	@override String get backup_export_categories_title => 'Elige qué exportar';
+	@override String get backup_export_choose_books => 'Elegir libros';
+	@override String get backup_export_choose_videos => 'Elegir vídeos';
+	@override String backup_export_failed({required Object message}) => 'Error al exportar la copia de seguridad: ${message}';
+	@override String get backup_export_hint => 'Elige qué incluir; la base de datos (libros, progreso, estadísticas) siempre se incluye. Desmarca elementos grandes (audio local, vídeos) para reducir el tamaño de la copia.';
+	@override String get backup_export_no_books => 'No hay libros para elegir';
+	@override String get backup_export_no_videos => 'No hay vídeos para elegir';
+	@override String get backup_export_select_all => 'Seleccionar todos';
+	@override String get backup_export_select_none => 'No seleccionar ninguno';
+	@override String get backup_export_success => 'Copia de seguridad exportada correctamente';
+	@override String get backup_export_videos_all => 'Todos los vídeos';
+	@override String backup_export_videos_selected({required Object count}) => '${count} vídeos seleccionados';
+	@override String get backup_exporting => 'Creando copia de seguridad…';
+	@override String get backup_import => 'Importar copia de seguridad';
+	@override String backup_import_confirm({required Object date, required Object bookCount, required Object statsCount}) => 'Esto reemplazará todos los datos actuales con la copia de seguridad del ${date}.\n\n${bookCount} libros, ${statsCount} registros de estadísticas.\n\nLa app se reiniciará tras la restauración.';
+	@override String get backup_import_confirm_title => '¿Restaurar copia de seguridad?';
+	@override String get backup_import_contents_hint => 'Desmarque un elemento para omitirlo.';
+	@override String get backup_import_contents_title => 'Esta copia de seguridad contiene';
+	@override String backup_import_failed({required Object message}) => 'Error al importar la copia de seguridad: ${message}';
+	@override String get backup_import_hint => 'Restaura desde un archivo de copia de seguridad. La app se reiniciará.';
+	@override String get backup_import_invalid => 'Archivo de copia de seguridad no válido';
+	@override String backup_import_merge_preview({required Object bookCount, required Object progressCount}) => 'La fusión añadirá ${bookCount} libros y actualizará ${progressCount} posiciones de lectura.';
+	@override String get backup_import_mode_label => 'Modo de importación';
+	@override String get backup_import_mode_merge => 'Fusionar con la biblioteca actual';
+	@override String get backup_import_mode_overwrite => 'Sobrescribir toda la biblioteca';
+	@override String get backup_import_overlay_title => 'Importando copia de seguridad';
+	@override String get backup_import_overlay_warning => 'Restaurando sus datos. No cierre la aplicación.';
+	@override String get backup_import_preserve_sync_note => 'Se conservarán los ajustes de sincronización de este dispositivo (cuenta y credenciales).';
+	@override String get backup_import_restart_button => 'Reiniciar ahora';
+	@override String get backup_import_settings_off_hint => 'Conserva las fuentes/apariencia/perfiles de este dispositivo; restaura solo los libros y los datos de lectura.';
+	@override String get backup_import_settings_on_hint => 'Restauración completa: las fuentes, la apariencia y los perfiles provienen de la copia de seguridad.';
+	@override String get backup_import_settings_toggle => 'Importar ajustes y perfiles';
+	@override String get backup_import_success => 'Copia restaurada. Reiniciando…';
+	@override String get backup_import_validating_hint => 'Verificando y previsualizando el archivo de copia de seguridad. Esto puede tardar un momento.';
+	@override String get backup_import_validating_title => 'Leyendo copia de seguridad…';
+	@override String backup_schema_newer({required Object version}) => 'Esta copia de seguridad requiere una versión más reciente de la app (esquema ${version}). Actualiza primero.';
+	@override String batch_add_to_collection_success({required Object n}) => 'Se añadieron ${n} elemento(s) a la colección.';
+	@override String batch_delete_confirm({required Object n}) => '¿Eliminar ${n} libro(s)? Esta acción no se puede deshacer.';
+	@override String batch_delete_confirm_video({required Object n}) => '¿Eliminar ${n} vídeo(s)? Esto no se puede deshacer.';
+	@override String batch_delete_mixed_confirm({required Object n, required Object m}) => '¿Eliminar ${n} medios y disolver ${m} colección(es)? Esto no se puede deshacer.';
+	@override String batch_delete_mixed_success({required Object n, required Object m}) => 'Se eliminaron ${n} medios, se disolvieron ${m} colección(es).';
+	@override String batch_delete_success({required Object n}) => '${n} libro(s) eliminado(s).';
+	@override String batch_delete_success_video({required Object n}) => 'Se eliminaron ${n} vídeo(s).';
+	@override String batch_dissolve_confirm({required Object m}) => '¿Disolver ${m} colección(es)? La agrupación se elimina; los medios se conservan.';
+	@override String batch_dissolve_success({required Object m}) => 'Se disolvieron ${m} colección(es).';
+	@override String get batch_invert_selection => 'Invertir';
+	@override String get batch_select => 'Seleccionar';
+	@override String get batch_select_all => 'Todos';
+	@override String batch_selected_count({required Object n}) => '${n} seleccionado(s)';
+	@override String get batch_tag_add => 'Añadir';
+	@override String batch_tag_added({required Object name, required Object n}) => 'Etiqueta "${name}" añadida a ${n} libro(s).';
+	@override String batch_tag_added_video({required Object name, required Object n}) => 'Se añadió la etiqueta "${name}" a ${n} vídeo(s).';
+	@override String get batch_tag_apply => 'Aplicar';
+	@override String get batch_tag_keep => 'Mantener';
+	@override String get batch_tag_remove => 'Eliminar';
+	@override String batch_tag_removed({required Object name, required Object n}) => 'Etiqueta "${name}" eliminada de ${n} libro(s).';
+	@override String batch_tag_removed_video({required Object name, required Object n}) => 'Se eliminó la etiqueta "${name}" de ${n} vídeo(s).';
+	@override String get batch_tag_title => 'Gestionar etiquetas';
+	@override String get book_continue_reading => 'Continue Reading';
+	@override String get book_css_editor_cancel => 'Cancelar';
+	@override String get book_css_editor_confirm_reset => '¿Restablecer el CSS de este archivo al predeterminado?';
+	@override String get book_css_editor_confirm_reset_all => '¿Restablecer el CSS de TODOS los archivos al predeterminado?';
+	@override String get book_css_editor_discard => 'Descartar';
+	@override String get book_css_editor_edit_css => 'Editar CSS del libro';
+	@override String get book_css_editor_no_css_files => 'No se encontraron archivos CSS en este libro.';
+	@override String get book_css_editor_no_extract_dir => 'Directorio del libro no encontrado. Reimporte el libro para editar el CSS.';
+	@override String get book_css_editor_reset_all => 'Restablecer todo';
+	@override String get book_css_editor_reset_current => 'Restablecer actual';
+	@override String get book_css_editor_reset_done => 'CSS restablecido.';
+	@override String get book_css_editor_save => 'Guardar';
+	@override String get book_css_editor_saved => 'CSS guardado.';
+	@override String get book_css_editor_title => 'Editor CSS del libro';
+	@override String get book_css_editor_unsaved_changes => 'Cambios sin guardar';
+	@override String get book_css_editor_unsaved_changes_message => 'Tiene cambios sin guardar. ¿Descartarlos?';
+	@override String get book_directory_not_found => 'Directorio del libro no encontrado.';
+	@override String get book_edit_author => 'Autor';
+	@override String get book_file_not_found => 'Archivo del libro no encontrado';
+	@override String get book_import_duplicate_cancel => 'No, cancelar';
+	@override String get book_import_duplicate_cancelled => 'Importación cancelada';
+	@override String get book_import_duplicate_keep => 'Sí, añadir sufijo';
+	@override String book_import_duplicate_message({required Object name}) => 'Ya existe un libro llamado "${name}". ¿Importarlo igualmente? "Sí" lo importa con un sufijo numerado; "No" cancela.';
+	@override String get book_import_duplicate_title => 'Libro duplicado';
+	@override String get book_mark_completed_action => 'Marcar como completado';
+	@override String get book_mark_uncompleted_action => 'Marcar como no completado';
+	@override String get book_marked_completed => 'Marcado como completado';
+	@override String get book_marked_uncompleted => 'Marcado como no completado';
+	@override String get book_mode => 'Modo de libro';
+	@override String book_read_progress({required Object percent}) => 'Leído ${percent}%';
+	@override String get book_scrape_cover => 'Buscar portada en línea';
+	@override String get book_scrape_empty => 'Sin portadas coincidentes';
+	@override String get book_scrape_failed => 'No se pudo obtener la portada';
+	@override String get book_scrape_hint => 'Título del libro / autor';
+	@override String get book_scrape_search => 'Buscar';
+	@override String get book_scrape_search_failed => 'La búsqueda falló. Toque Buscar para reintentar.';
+	@override String get book_scrape_title => 'Buscar portada en línea';
+	@override String get book_scrape_use => 'Usar';
+	@override String get book_search => 'Buscar en el libro';
+	@override String get book_search_hint => 'Ingrese texto de búsqueda…';
+	@override String get book_search_no_results => 'Sin resultados';
+	@override String book_search_results({required Object n}) => '${n} resultado(s)';
+	@override String get books => 'Libros';
+	@override String get browser_extension_enable_server_first => 'Consejo: active primero el "servidor API Yomitan" y establezca una clave API arriba, para que la extensión se configure automáticamente con una conexión funcional.';
+	@override String get browser_extension_mobile_unsupported => 'Los navegadores móviles no pueden cargar esta extensión. Usa la búsqueda dentro de la app en el lector o el reproductor de vídeo.';
+	@override String get browser_extension_page_intro => 'En escritorio, busque palabras, analice subtítulos y cree tarjetas directamente en Chrome o Edge. Prepare la extensión abajo, luego cárguela en su navegador.';
+	@override String get browser_extension_prepare_button => 'Preparar archivos de extensión';
+	@override String get browser_extension_prepare_hint => 'Inicia el servidor de búsqueda y desempaqueta la extensión localmente; la ruta de la carpeta se copia al portapapeles.';
+	@override String get browser_extension_reinstall_button => 'Volver a preparar / actualizar archivos';
+	@override String get browser_extension_server_off => 'Servidor de búsqueda apagado';
+	@override String get browser_extension_server_on => 'Servidor de búsqueda encendido';
+	@override String get browser_extension_status_connected => 'Extensión conectada';
+	@override String get browser_extension_status_never => 'Extensión aún no detectada';
+	@override String get browser_extension_step_dev_mode => 'Active el "Modo desarrollador" (interruptor en la esquina superior derecha).';
+	@override String get browser_extension_step_done_auto => 'Listo. La extensión ya está configurada para conectarse a Fushi para búsquedas — no necesita rellenar nada a mano.';
+	@override String get browser_extension_step_load_unpacked => 'Haga clic en "Cargar descomprimida".';
+	@override String get browser_extension_step_open_page => 'Abra la página de extensiones del navegador:';
+	@override String get browser_extension_step_pick_folder => 'Seleccione la carpeta de extensión abajo (la ruta ya se copió a su portapapeles).';
+	@override String get browser_extension_step_verify => 'Verifique que la extensión esté cargada y conectada';
+	@override String get browser_extension_verify_button => 'Verificar conexión';
+	@override String get browser_extension_verify_checking => 'Verificando…';
+	@override String get browser_extension_verify_connected => 'Extensión detectada y conectada.';
+	@override String get browser_extension_verify_not_detected => 'Extensión aún no detectada. Asegúrese de que esté cargada y habilitada en su navegador, luego verifique de nuevo.';
+	@override String get browser_extension_version_app => 'Incluida en la app';
+	@override String get browser_extension_version_browser => 'Cargada en navegador';
+	@override String get browser_extension_version_label => 'Versión de extensión';
+	@override String get browser_extension_version_mismatch => 'La extensión cargada en su navegador está desactualizada. Prepare la extensión de nuevo si es necesario, luego recárguela desde la página de extensiones del navegador (chrome://extensions).';
+	@override String browser_extension_yomitan_port_conflict({required Object port}) => 'El puerto ${port} está en uso por otro proceso (generalmente el componente yomitan-api — un proceso Python lanzado por su navegador). Finalice ese proceso, o desactive la API de Yomitan en la configuración avanzada de Yomitan, luego active de nuevo el servidor API Yomitan en Fushi.';
+	@override String get cancel => 'Cancelar';
+	@override String card_cover_degraded_to_static({required Object reason}) => 'La portada de la tarjeta recurrió a un fotograma estático (clip animado no disponible): ${reason}';
+	@override String get card_duplicate => 'Tarjeta duplicada — no exportada.';
+	@override String get card_export_failed => 'Error al exportar la tarjeta.';
+	@override String card_export_failed_detail({required Object reason}) => 'Error al exportar la tarjeta: ${reason}';
+	@override String get card_export_not_configured => 'Anki no configurado. Abre la configuración de Anki y toca Obtener.';
+	@override String card_exported({required Object deck}) => 'Tarjeta exportada a 『${deck}』.';
+	@override String card_exported_audio_failed({required Object reason}) => 'Tarjeta exportada, pero falló la descarga del audio (${reason}).';
+	@override String get card_mined_no_sentence_captured => 'Tarjeta creada, pero no se capturó oración (vuelva a seleccionar la palabra, o este texto no tiene oración reconocible).';
+	@override String get card_mined_unmapped_sentence_audio_field => 'Tarjeta creada con audio de oración, pero su tipo de nota de Anki no tiene campo mapeado para ello. Mapee un campo a {sentence-audio}.';
+	@override String get card_mined_unmapped_sentence_field => 'Tarjeta creada, pero su tipo de nota de Anki no tiene campo mapeado a la oración. Use Ajustes -> \'Crear mazo Lapis\' o mapee un campo a {sentence}.';
+	@override String get card_mined_without_sentence_audio => 'Tarjeta creada sin audio de frase (no se encontró para esta selección).';
+	@override String get card_mining_pending => 'Añadiendo tarjeta…';
+	@override String card_overwritten({required Object deck}) => 'Tarjeta sobrescrita en 『${deck}』.';
+	@override String get change_source => 'Cambiar fuente';
+	@override String get changelog_empty => 'No se encontró registro de cambios. Verifique su red o ajustes de proxy.';
+	@override String get changelog_open_releases => 'Abrir página de versiones';
+	@override String get changelog_prerelease => 'Prelanzamiento';
+	@override String chapter_progress({required Object idx, required Object total, required Object suffix, required Object pct}) => 'Capítulo ${idx} / ${total}${suffix} · ${pct}%';
+	@override String get clear => 'Limpiar';
+	@override String get clear_dictionary_description => 'Esto eliminará todos los resultados del diccionario del historial. ?Estás seguro?';
+	@override String get clear_dictionary_title => 'Borrar historial de resultados del diccionario';
+	@override String get lookup_block_capture => 'Bloquear captura de pantalla';
+	@override String get lookup_block_capture_hint => 'Excluye las ventanas emergentes de búsqueda y portapapeles de capturas de pantalla, grabación de pantalla y transmisión en vivo (Windows). Desactive esto para permitir que las capturas, grabación y transmisión capturen la ventana emergente de búsqueda.';
+	@override String get collapse_dictionaries => 'Contraer diccionarios';
+	@override String get collection_bookmark => 'Marcador';
+	@override String get collection_clear_confirm => '¿Eliminar permanentemente las colecciones seleccionadas? Esto no se puede deshacer.';
+	@override String get collection_clear_scope => 'Ámbito de limpieza';
+	@override String get collection_collapse => 'Contraer';
+	@override String collection_continue_progress({required Object n}) => 'Continuar · EP ${n}';
+	@override String get collection_empty => 'La colección está vacía';
+	@override String get collection_expand => 'Expandir';
+	@override String get collection_export_all_books => 'Todos los libros';
+	@override String get collection_export_all_mined => 'Todas las oraciones creadas';
+	@override String get collection_export_all_words => 'Todas las palabras favoritas';
+	@override String get collection_export_dedupe => 'Deduplicar por oración';
+	@override String get collection_export_failed => 'La exportación falló';
+	@override String get collection_export_favorites_scope => 'Oraciones favoritas';
+	@override String get collection_export_format => 'Formato';
+	@override String get collection_export_mined_title => 'Mined Sentences';
+	@override String get collection_export_no_items => 'Nada que exportar';
+	@override String get collection_export_pick_book => 'Elegir un libro';
+	@override String get collection_export_save => 'Save Export';
+	@override String get collection_export_saved => 'Exportación guardada';
+	@override String get collection_export_scope => 'Ámbito de exportación';
+	@override String get collection_export_sentences_title => 'Favorite Sentences';
+	@override String get collection_export_words_title => 'Favorite Words';
+	@override String get collection_loading_hint => 'Cargando colecciones y emparejando archivos de audio…';
+	@override String get collection_member_removed => 'Eliminado de la colección';
+	@override String get collection_merge_title => 'Fusionar colecciones';
+	@override String get collection_merged => 'Colecciones fusionadas.';
+	@override String get collection_mined => 'Creadas';
+	@override String get collection_open => 'Abrir';
+	@override String get collection_play => 'Reproducir';
+	@override String get collection_remove_member => 'Quitar de la colección';
+	@override String get collection_remove_member_confirm => '¿Quitar este elemento de la colección? El elemento se conserva.';
+	@override String get collection_sentence => 'Oración';
+	@override String get collection_sort_by_imported => 'Ordenar por fecha de importación';
+	@override String get collection_sort_by_title => 'Ordenar por nombre';
+	@override String get collection_view_all => 'Ver todo';
+	@override String collection_watched_progress({required Object done, required Object total}) => 'Visto ${done}/${total}';
+	@override String get collection_word => 'Palabra';
+	@override String get collections => 'Colecciones';
+	@override String get color_container => 'Contenedor';
+	@override String get color_container_desc => 'Fondo de pistas y barra de reproducción';
+	@override String get color_link => 'Color de enlace';
+	@override String get color_link_desc => 'Color de los hipervínculos del lector';
+	@override String get color_primary => 'Primario';
+	@override String get color_primary_desc => 'Resaltado de audio, botones, interruptores';
+	@override String get color_sentence_audio_highlight => 'Resaltado de audio';
+	@override String get color_sentence_audio_highlight_desc => 'Resaltado de sincronización de subtítulos del audiolibro';
+	@override String get color_secondary => 'Secundario';
+	@override String get color_secondary_desc => 'Entradas del diccionario, insignias de la estantería';
+	@override String get color_tertiary => 'Terciario';
+	@override String get color_tertiary_desc => 'Colecciones, estadísticas de lectura';
+	@override String get columns_per_page => 'Columnas por página';
+	@override String get combine_into_series => 'Combinar en serie';
+	@override String get copied => 'Copiado';
+	@override String get copied_to_clipboard => 'Copiado al portapapeles.';
+	@override String get copy => 'Copiar';
+	@override String get copy_error => 'Copiar error';
+	@override String get crash_dump_empty => 'No hay volcados de fallo';
+	@override String crash_dump_label({required Object n}) => 'Volcados de fallo (${n})';
+	@override String get crash_dump_open_folder => 'Abrir carpeta de volcados';
+	@override String get crash_dump_privacy_notice => 'Los volcados de fallo (.dmp) contienen una instantánea de la memoria del proceso y pueden incluir texto que estabas leyendo, palabras que consultaste u otros datos de la app. Compártelos solo con desarrolladores de tu confianza.';
+	@override String get crash_dump_share => 'Compartir volcado';
+	@override String get crash_dump_share_subject => 'Volcado de fallo de Fushi';
+	@override String get create_series => 'Crear serie';
+	@override String get creator_action_add_to_stash => 'Agregar a reserva';
+	@override String get creator_action_copy_to_clipboard => 'Copiar al portapapeles';
+	@override String get creator_action_play_audio => 'Reproducir audio';
+	@override String get creator_action_share => 'Compartir';
+	@override String get creator_enhancement_audio_recorder => 'Grabadora';
+	@override String get creator_enhancement_camera => 'Cámara';
+	@override String get creator_enhancement_clear_field => 'Limpiar campo';
+	@override String get creator_enhancement_crop_image => 'Recortar imagen';
+	@override String get creator_enhancement_local_audio => 'Audio local';
+	@override String get creator_enhancement_open_stash => 'Abrir reserva';
+	@override String get creator_enhancement_pick_audio => 'Elegir audio';
+	@override String get creator_enhancement_pick_image => 'Elegir imagen';
+	@override String get creator_enhancement_pop_from_stash => 'Sacar de reserva';
+	@override String get creator_enhancement_save_tags => 'Guardar etiquetas';
+	@override String get creator_enhancement_search_dictionary => 'Buscar diccionario';
+	@override String get creator_enhancement_sentence_picker => 'Elegir oración';
+	@override String get creator_enhancement_text_segmentation => 'Segmentación de texto';
+	@override String get creator_export_card => 'Crear tarjeta';
+	@override String get creator_field_audio => 'Audio del término';
+	@override String get creator_field_audio_sentence => 'Audio de la oración';
+	@override String get creator_field_cloze_after => 'Después del espacio';
+	@override String get creator_field_cloze_before => 'Antes del espacio';
+	@override String get creator_field_cloze_inside => 'Contenido del espacio';
+	@override String get creator_field_collapsed_meaning => 'Significado contraído';
+	@override String get creator_field_context => 'Contexto';
+	@override String get creator_field_cue_sentence => 'Oración de subtítulo';
+	@override String get creator_field_expanded_meaning => 'Significado expandido';
+	@override String get creator_field_frequency => 'Frecuencia';
+	@override String get creator_field_furigana => 'Furigana';
+	@override String get creator_field_hidden_meaning => 'Significado oculto';
+	@override String get creator_field_image => 'Imagen';
+	@override String get creator_field_meaning => 'Significado';
+	@override String get creator_field_notes => 'Notas';
+	@override String get creator_field_pitch_accent => 'Acento tonal';
+	@override String get creator_field_reading => 'Lectura';
+	@override String get creator_field_sentence => 'Oración';
+	@override String get creator_field_tags => 'Etiquetas';
+	@override String get creator_field_term => 'Término';
+	@override String get custom_dict_css => 'CSS personalizado';
+	@override String get custom_dict_css_global => 'Global (todos los diccionarios)';
+	@override String get custom_fonts => 'Fuentes personalizadas';
+	@override String get custom_fonts_add_system => 'Añadir fuente del sistema';
+	@override String get custom_fonts_archive_error => 'Error al extraer el archivo';
+	@override String get custom_fonts_catalog_title => 'Biblioteca de fuentes';
+	@override String get custom_fonts_download_failed => 'Error en la descarga';
+	@override String get custom_fonts_downloading => 'Descargando...';
+	@override String get custom_fonts_drag_hint => 'Arrastra para reordenar la prioridad de fuentes';
+	@override String get custom_fonts_empty => 'No se han añadido fuentes personalizadas';
+	@override String get custom_fonts_font_roles => 'Roles de fuente';
+	@override String get custom_fonts_import_file => 'Importar archivo de fuente';
+	@override String get custom_fonts_import_url => 'Importar desde URL';
+	@override String custom_fonts_imported_count({required Object count}) => '${count} fuente(s) importada(s)';
+	@override String get custom_fonts_manage => 'Gestionar fuentes';
+	@override String get custom_fonts_no_fonts_in_archive => 'No se encontraron fuentes en el archivo';
+	@override String get custom_fonts_recommended => 'Fuentes recomendadas';
+	@override String get custom_fonts_removed => 'Fuente eliminada';
+	@override String get custom_fonts_search_hint => 'Buscar fuentes';
+	@override String get custom_theme => 'Tema personalizado';
+	@override String custom_theme_default_name({required Object n}) => 'Personalizado ${n}';
+	@override String get custom_theme_long_press_hint => 'Toque para cambiar · mantenga presionado para editar';
+	@override String get custom_theme_name => 'Nombre';
+	@override String get dark_mode => 'Modo oscuro';
+	@override String get dark_mode_dark => 'Oscuro';
+	@override String get dark_mode_light => 'Claro';
+	@override String get dark_mode_system => 'Sistema';
+	@override String data_root_unavailable_message({required Object path}) => 'Su ubicación de datos configurada ${path} no responde temporalmente (la unidad puede estar dormida, ocupada o desconectada). Sus datos están seguros e intactos allí — nada se ha perdido. Toque Reintentar una vez que la unidad esté lista para cargar sus datos, o inicie con la ubicación predeterminada por ahora (sus datos existentes NO serán modificados).';
+	@override String get data_root_unavailable_title => 'La ubicación de datos no responde';
+	@override String get data_root_use_default_button => 'Iniciar con ubicación predeterminada';
+	@override String get data_storage_change_button => 'Cambiar ubicación';
+	@override String get data_storage_change_confirm_body => 'Fushi moverá todos sus datos a la nueva carpeta y luego se reiniciará. No cierre la aplicación durante la mudanza.';
+	@override String get data_storage_change_confirm_title => '¿Cambiar la ubicación de almacenamiento?';
+	@override String get data_storage_location_default => 'Ubicación predeterminada';
+	@override String get data_storage_location_hint => 'Donde Fushi guarda su biblioteca, audiolibros y base de datos. Solo escritorio.';
+	@override String get data_storage_location_title => 'Ubicación de almacenamiento de datos';
+	@override String data_storage_migrate_failed({required Object message}) => 'No se pudieron mover los datos: ${message}';
+	@override String get data_storage_migrate_failed_restart => 'Reiniciar';
+	@override String get data_storage_migrate_failed_suggestions => 'Inténtelo de nuevo con una carpeta diferente y vacía. No elija la carpeta de instalación de la app, y asegúrese de que ningún archivo en esa ubicación esté en uso.';
+	@override String get data_storage_migrate_failed_title => 'La migración de datos falló';
+	@override String data_storage_migrate_overlay_progress({required Object copied, required Object total}) => 'Copiando archivos: ${copied} / ${total}';
+	@override String get data_storage_migrate_overlay_title => 'Moviendo sus datos';
+	@override String get data_storage_migrate_overlay_warning => 'Mantenga la aplicación abierta. No cierre ni apague su computadora hasta que termine.';
+	@override String get data_storage_migrate_success => 'Datos movidos. Reiniciando…';
+	@override String get data_storage_migrating => 'Moviendo datos…';
+	@override String get data_storage_reject_install_dir => 'Esa carpeta es la ubicación de instalación de la app y no puede almacenar sus datos. Elija una carpeta diferente y vacía.';
+	@override String get data_storage_restart_failed => 'Datos movidos, pero el reinicio automático falló. Vuelva a abrir Fushi manualmente.';
+	@override String db_downgrade_message({required Object dbVersion, required Object appVersion}) => 'Esta base de datos la creó una versión más reciente de Fushi (esquema v${dbVersion}). Tu app actual es demasiado antigua (v${appVersion}). Se bloqueó la apertura para proteger tus datos. Actualiza la app e inténtalo de nuevo.';
+	@override String get db_downgrade_title => 'Actualiza Fushi';
+	@override String get db_unrecoverable_message => 'La base de datos no pudo abrirse ni después de la reparación automática. Probablemente está corrupta. Puede restaurar una copia de seguridad en Ajustes, o borrar los datos de la app para empezar de nuevo.';
+	@override String get db_unrecoverable_title => 'Base de datos dañada';
+	@override String get debug_log_share_subject => 'Registro de depuración de Fushi';
+	@override String debug_log_title({required Object count}) => 'Registro de depuración (${count})';
+	@override String get debug_log_toggle => 'Activar registro de depuración';
+	@override String get decrease => 'Disminuir';
+	@override String get deduplicate_pitch_accents => 'Deduplicar acentos tonales';
+	@override String get delete_collection => 'Eliminar colección';
+	@override String get delete_collection_also_books => 'También eliminar los libros que contiene';
+	@override String get delete_collection_also_videos => 'También eliminar los vídeos (conserva sus archivos de vídeo originales)';
+	@override String get delete_custom_theme => 'Eliminar tema';
+	@override String get delete_custom_theme_confirm => '¿Eliminar este tema personalizado? Esto no se puede deshacer.';
+	@override String get delete_in_progress => 'Eliminación en progreso';
+	@override String get delete_prompt_delete_selected => 'Eliminar seleccionados';
+	@override String get delete_prompt_message => 'Estos elementos fueron eliminados en otro dispositivo. ¿Eliminarlos aquí también?';
+	@override String get delete_prompt_select_all => 'Seleccionar todos';
+	@override String get delete_prompt_title => 'Eliminados en otro dispositivo';
+	@override String get delete_scope_keep_local_desc => 'Otros dispositivos conservan su copia';
+	@override String get delete_scope_sync_everywhere => 'Eliminar de todos los dispositivos';
+	@override String get delete_scope_sync_everywhere_desc => 'Otros dispositivos confirman la eliminación en la próxima sincronización';
+	@override String get design_system_auto => 'Automático';
+	@override String get design_system_hint => 'Controla el estilo visual de la app';
+	@override String get design_system_label => 'Sistema de diseño';
+	@override String get dialog_add => 'AÑADIR';
+	@override String get dialog_append => 'AÑADIR';
+	@override String get dialog_cancel => 'CANCELAR';
+	@override String get dialog_clear => 'LIMPIAR';
+	@override String get dialog_clear_all_dictionaries => 'Eliminar todos los diccionarios';
+	@override String get dialog_close => 'CERRAR';
+	@override String get dialog_connect => 'CONECTAR';
+	@override String get dialog_content_dictionary_clear => 'Borrar la base de datos de diccionarios también eliminará todos los resultados de búsqueda del historial.';
+	@override String get dialog_content_dictionary_delete => 'Eliminar un solo diccionario puede tardar más que borrar toda la base de datos. Esto también eliminará todos los resultados de búsqueda del historial.';
+	@override String get dialog_create => 'CREAR';
+	@override String get dialog_crop => 'RECORTAR';
+	@override String get dialog_delete => 'ELIMINAR';
+	@override String get dialog_done => 'HECHO';
+	@override String get dialog_edit => 'EDITAR';
+	@override String get dialog_edit_info => 'Editar info';
+	@override String get dialog_exit => 'SALIR';
+	@override String get dialog_export => 'EXPORTAR';
+	@override String get dialog_import => 'IMPORTAR';
+	@override String get dialog_import_dictionary => 'Importar diccionario';
+	@override String get dialog_import_folder => 'Importar diccionario de carpeta';
+	@override String get dialog_importing => 'IMPORTANDO…';
+	@override String get dialog_launch_ankidroid => 'ABRIR ANKIDROID';
+	@override String get dialog_ok => 'Aceptar';
+	@override String get dialog_play => 'REPRODUCIR';
+	@override String get dialog_read => 'LEER';
+	@override String get dialog_record => 'GRABAR';
+	@override String get dialog_replace => 'Reemplazar';
+	@override String get dialog_save => 'GUARDAR';
+	@override String get dialog_search => 'BUSCAR';
+	@override String get dialog_select => 'SELECCIONAR';
+	@override String get dialog_share => 'COMPARTIR';
+	@override String get dialog_stash => 'GUARDAR';
+	@override String get dialog_stop => 'DETENER';
+	@override String get dialog_title_dictionary_clear => '?Eliminar todos los diccionarios?';
+	@override String dialog_title_dictionary_delete({required Object name}) => '?Eliminar 『${name}』?';
+	@override String get dict_auto_update => 'Actualizar automáticamente';
+	@override String get dict_auto_update_hint => 'Buscar actualizaciones de diccionarios al iniciar';
+	@override String dict_auto_update_last({required Object time}) => 'Última comprobación correcta: ${time}';
+	@override String get dict_auto_update_never => 'Nunca';
+	@override String get dict_category_frequency => 'Frecuencia';
+	@override String get dict_category_grammar => 'Gramática';
+	@override String get dict_category_ja_en => 'Japonés–Inglés';
+	@override String get dict_category_ja_ja => 'Japonés–Japonés';
+	@override String get dict_category_ja_other => 'Otro japonés';
+	@override String get dict_category_kanji => 'Kanji';
+	@override String get dict_category_names => 'Nombres';
+	@override String get dict_category_supplementary => 'Suplementario';
+	@override String get dict_download_browse => 'Descargar diccionarios';
+	@override String dict_download_button({required Object count}) => 'Descargar (${count})';
+	@override String get dict_download_complete => 'Descarga completada.';
+	@override String dict_download_failed({required Object error}) => 'Descarga fallida: ${error}';
+	@override String get dict_download_installed => 'Instalado';
+	@override String get dict_download_language => 'Tu idioma';
+	@override String dict_download_partial({required Object success, required Object total, required Object error}) => '${success} / ${total} correctos. Fallidos: ${error}';
+	@override String get dict_download_select_title => 'Seleccionar diccionarios';
+	@override String dict_downloading({required Object name}) => 'Descargando ${name}…';
+	@override String dict_import_failed_summary({required Object n}) => 'No se pudieron importar ${n} diccionario(s)';
+	@override String get dict_import_started => 'Importando diccionarios en segundo plano...';
+	@override String dict_import_success_summary({required Object n}) => 'Se importaron ${n} diccionario(s)';
+	@override String get dict_update_check => 'Buscar actualizaciones';
+	@override String get dict_update_checking => 'Buscando actualizaciones…';
+	@override String dict_update_done({required Object name}) => '${name} actualizado.';
+	@override String dict_update_failed({required Object error}) => 'Error al actualizar: ${error}';
+	@override String get dict_update_interval_daily => 'Diariamente';
+	@override String get dict_update_interval_monthly => 'Mensualmente';
+	@override String get dict_update_interval_weekly => 'Semanalmente';
+	@override String get dict_update_latest => 'Ya está actualizado.';
+	@override String dict_update_name_mismatch_body({required Object incoming, required Object existing}) => 'El archivo seleccionado es «${incoming}», pero estás actualizando «${existing}». ¿Reemplazar de todos modos?';
+	@override String get dict_update_name_mismatch_title => 'Los nombres no coinciden';
+	@override String get dict_update_none => 'Todos los diccionarios están actualizados.';
+	@override String dict_update_summary({required Object updated, required Object current, required Object failed}) => '${updated} actualizados, ${current} al día, ${failed} fallaron.';
+	@override String get dict_update_tooltip => 'Actualizar diccionario';
+	@override String dict_update_updating({required Object name}) => 'Actualizando ${name}…';
+	@override String get dictionaries => 'Diccionarios';
+	@override String get dictionaries_delete_failed => 'No se pudieron eliminar los diccionarios';
+	@override String get dictionaries_deleting_data => 'Eliminando datos del diccionario...';
+	@override String get dictionaries_menu_empty => 'Importa un diccionario para usar';
+	@override String get dictionary_delete_failed => 'No se pudo eliminar el diccionario';
+	@override String get dictionary_font_size => 'Tamaño de fuente del diccionario';
+	@override String get dictionary_font_size_zoom_hint => 'Ctrl + rueda del ratón amplía el contenido emergente';
+	@override String get dictionary_section_frequency => 'Diccionarios de frecuencia';
+	@override String get dictionary_section_kanji => 'Diccionarios de kanji';
+	@override String get dictionary_section_pitch => 'Diccionarios de tono';
+	@override String get dictionary_section_term => 'Diccionarios de términos';
+	@override String get dictionary_settings => 'Configuración del diccionario';
+	@override String get dictionary_type_frequency => 'Frecuencia';
+	@override String get dictionary_type_pitch => 'Tono';
+	@override String get dictionary_type_term => 'Término';
+	@override String get dictionary_unrecognized_format => 'Formato de diccionario no reconocido';
+	@override String get dismiss_swipe_sensitivity => 'Sensibilidad de deslizar para cerrar';
+	@override String get display_settings => 'Configuración de pantalla';
+	@override String get download_backend_not_configured => 'El motor de descarga aún no está configurado.';
+	@override String get download_clear_finished => 'Limpiar finalizados';
+	@override String get download_detail_backend_offline => 'El motor de descarga original está desconectado. Se muestra la información persistida de la tarea; los parámetros en tiempo real no están disponibles.';
+	@override String get download_open_settings => 'Abrir ajustes';
+	@override String get download_save_root_change => 'Cambiar carpeta';
+	@override String get download_save_root_create_failed => 'No se puede crear esa carpeta. Verifique la unidad y los permisos.';
+	@override String get download_save_root_fallback_warning => 'La carpeta de descarga configurada no está disponible, se está usando la carpeta predeterminada.';
+	@override String get download_save_root_hint => 'Las nuevas descargas se guardan aquí. Las tareas existentes conservan su carpeta original.';
+	@override String get download_save_root_not_absolute => 'Elija una ruta de carpeta absoluta.';
+	@override String get download_save_root_not_writable => 'Esa carpeta no tiene permisos de escritura.';
+	@override String get download_save_root_reset => 'Restaurar predeterminado';
+	@override String get download_save_root_title => 'Carpeta de descarga';
+	@override String get download_settings => 'Ajustes de descarga';
+	@override String get download_status_cancelled => 'Cancelado';
+	@override String get download_status_queued => 'En cola';
+	@override String download_subscription_after_episode({required Object episode}) => 'Después del episodio ${episode}';
+	@override String get download_subscription_check_all => 'Verificar todos';
+	@override String get download_subscription_check_now => 'Verificar ahora';
+	@override String download_subscription_choice_hint({required Object group, required Object resolution}) => 'Seguir ${group} · ${resolution}. Los nuevos episodios individuales se pondrán en cola.';
+	@override String get download_subscription_created => 'Descarga en cola y suscripción creada';
+	@override String get download_subscription_delete => 'Eliminar suscripción';
+	@override String download_subscription_delete_confirm({required Object title}) => '¿Eliminar la suscripción de ${title}? Las tareas descargadas se conservan.';
+	@override String get download_subscription_download_and_create => 'Descargar y suscribirse';
+	@override String get download_subscription_empty_body => 'En Descubrir, elija un episodio individual y use Descargar y suscribirse.';
+	@override String get download_subscription_empty_title => 'Aún no hay suscripciones';
+	@override String download_subscription_last_checked({required Object time}) => 'Última verificación: ${time}';
+	@override String download_subscription_latest_episode({required Object episode}) => 'Último en cola: episodio ${episode}';
+	@override String get download_subscription_never_checked => 'Nunca verificado';
+	@override String get download_subscription_running_hint => 'Fushi verifica las suscripciones activas cada 15 minutos mientras la app está abierta.';
+	@override String get download_subscription_unavailable_hint => 'Elija un episodio individual con un grupo de lanzamiento reconocible para suscribirse.';
+	@override String get download_subscriptions_tab => 'Suscripciones';
+	@override String download_task_action_failed({required Object error}) => 'La acción de la tarea falló: ${error}';
+	@override String get download_task_delete => 'Eliminar tarea';
+	@override String download_task_delete_confirm({required Object title}) => '¿Eliminar la tarea de descarga de ${title}?';
+	@override String get download_task_delete_files => 'También eliminar archivos descargados';
+	@override String get download_task_details => 'Ver detalles';
+	@override String get download_tasks_tab => 'Tareas';
+	@override String get download_test_connection => 'Probar conexión';
+	@override String get download_test_connection_failed => 'La conexión falló. Verifique la dirección y las credenciales.';
+	@override String download_test_connection_ok({required Object version}) => 'Conectado (versión: ${version})';
+	@override String get drag_drop_need_card_target => 'Suelta subtítulos o audio sobre un libro o un vídeo';
+	@override String get drag_drop_unsupported_on_books => 'Suelta archivos de libros aquí. Cambia a Vídeo o Diccionarios para esos archivos.';
+	@override String get drag_drop_unsupported_on_dictionary => 'Suelta aquí archivos de diccionario .zip, .dsl o .mdx. Los archivos CSS solo funcionan junto con un paquete de diccionario.';
+	@override String get drag_drop_unsupported_on_video => 'Suelta vídeos, listas de reproducción o subtítulos aquí. Cambia a Libros o Diccionarios para esos archivos.';
+	@override String get edit_custom_theme => 'Editar tema personalizado';
+	@override String get eink_mode => 'Modo e-ink';
+	@override String get eink_mode_hint => 'Tema en blanco y negro puro sin animaciones y con resaltados de línea, para pantallas de tinta electrónica';
+	@override String get enable_swipe_to_close => 'Deslizar para cerrar la ventana';
+	@override String get epub_delete_error => 'Error al eliminar el libro';
+	@override String get epub_delete_title => 'Eliminar libro';
+	@override String get epub_parse_fallback => 'Metadatos del libro reparados desde la base de datos';
+	@override String get error_ankidroid_api => 'Error de AnkiDroid';
+	@override String get error_ankidroid_api_content => 'Hubo un problema al comunicarse con AnkiDroid.\n\nAsegúrate de que el servicio en segundo plano de AnkiDroid esté activo y de que se hayan concedido todos los permisos necesarios.';
+	@override String get error_copied => 'Error copiado al portapapeles';
+	@override String get error_load_failed => 'Algo salió mal al cargar';
+	@override String get error_log_diagnostics_section => 'Diagnóstico / forense (no son errores de la app)';
+	@override String get error_log_empty => 'Sin registros de errores';
+	@override String error_log_label({required Object n}) => 'Registro de errores (${n})';
+	@override String get error_log_previous_run => 'Registros anteriores (antes de la última ejecución)';
+	@override String get error_log_share_subject => 'Registro de errores de Fushi';
+	@override String get extension_popup_independent_size => 'Tamaño separado para extensión del navegador';
+	@override String get extension_popup_independent_size_hint => 'Dale a la ventana emergente de la extensión del navegador su propio tamaño máximo en lugar de seguir la ventana emergente de la app';
+	@override String get extension_popup_max_height => 'Altura máxima de extensión';
+	@override String get extension_popup_max_width => 'Ancho máximo de extensión';
+	@override String get external_window_capture_failed => 'La captura de ventana falló';
+	@override String get external_window_current_game => 'Juego actual';
+	@override String get external_window_mining => 'Creación desde ventana externa';
+	@override String get external_window_no_windows => 'No se encontraron ventanas capturables';
+	@override String get external_window_none => 'Sin ventana vinculada (toque para seleccionar)';
+	@override String get external_window_refresh => 'Actualizar lista de ventanas';
+	@override String get external_window_select => 'Seleccionar ventana objetivo';
+	@override String get external_window_unbind => 'Desvincular ventana';
+	@override String get external_window_unsupported => 'La creación desde ventana externa solo está disponible en Windows';
+	@override String get failed_online_service => 'Error al comunicarse con el servicio en línea';
+	@override String get favorite_added => 'Oración guardada en favoritos';
+	@override String get favorite_removed => 'Frase eliminada de favoritos';
+	@override String favorites({required Object n}) => 'Favoritos (${n})';
+	@override String field_fallback_used({required Object field, required Object secondField}) => 'El campo ${field} usó ${secondField} como término de búsqueda alternativo.';
+	@override String file_count({required Object count}) => '${count} archivos';
+	@override String get floating_dict_close => 'Cerrar';
+	@override String get floating_dict_title => 'Diccionario';
+	@override String get floating_lyric_bg_opacity => 'Opacidad del fondo del subtítulo flotante';
+	@override String get floating_lyric_button_bg_opacity => 'Opacidad del fondo de los botones del subtítulo flotante';
+	@override String get floating_lyric_click_lookup => 'Tocar el subtítulo flotante para consultar';
+	@override String get floating_lyric_click_lookup_hint => 'Mantén esto activado con el bloqueo de posición si aún quieres consultar palabras.';
+	@override String get floating_lyric_close => 'Cerrar';
+	@override String get floating_lyric_context_lines => 'Líneas de contexto del subtítulo flotante';
+	@override String get floating_lyric_context_lines_hint => '0 muestra solo la línea actual (una sola línea, sin cambios); establezca 1-3 para mostrar esas líneas antes y después';
+	@override String get floating_lyric_corner_radius => 'Radio de esquinas del subtítulo flotante';
+	@override String get floating_lyric_corner_radius_hint => '0 mantiene las esquinas predeterminadas de cada plataforma; aumente para redondear más la barra y los botones';
+	@override String get floating_lyric_font_size => 'Tamaño de fuente del subtítulo flotante';
+	@override String get floating_lyric_hint => 'Mostrar la oración actual sobre otras apps.';
+	@override String get floating_lyric_lock => 'Bloquear';
+	@override String get floating_lyric_next => 'Siguiente';
+	@override String get floating_lyric_no_audio => 'Este libro no tiene audio para escuchar';
+	@override String get floating_lyric_permission_hint => 'Se requiere permiso de superposición para mostrar subtítulos flotantes.';
+	@override String get floating_lyric_permission_hint_coloros => 'Si el sistema sigue rechazando el permiso de superposición: reinstale el APK de esta app una vez con un administrador de archivos, o desactive la monitorización de permisos en las opciones de desarrollador, luego inténtelo de nuevo.';
+	@override String get floating_lyric_play_pause => 'Reproducir';
+	@override String get floating_lyric_previous => 'Anterior';
+	@override String get floating_lyric_text_opacity => 'Opacidad del texto del subtítulo flotante';
+	@override String get floating_lyric_toggle_action => 'Subtítulo flotante';
+	@override String get floating_lyric_unavailable_hint => 'No se pudo mostrar la ventana de subtítulo flotante.';
+	@override String get floating_lyric_unlock => 'Desbloquear';
+	@override String get floating_lyric_width => 'Ancho del subtítulo flotante';
+	@override String get floating_lyric_width_hint => '0 usa el ancho predeterminado de la plataforma; establezca un valor para que la barra tenga un ancho fijo';
+	@override String get focus_navigation_enabled => 'Navegación por foco con teclado y mando';
+	@override String get focus_navigation_enabled_hint => 'Mueve el foco con las flechas o un mando y muestra un anillo de foco.';
+	@override String get folder_picker_permission_required => 'Se necesita permiso de almacenamiento para explorar carpetas';
+	@override String get follow_audio_off_tooltip => 'Seguir audio: DESACTIVADO';
+	@override String get follow_audio_on_tooltip => 'Seguir audio: ACTIVADO';
+	@override String get font_color => 'Color de fuente';
+	@override String get font_color_desc => 'Color del texto del lector';
+	@override String get font_desc_hina_mincho => 'Mincho decorativo suave · Combina bien con Noto Sans JP';
+	@override String get font_desc_klee_one => 'Estilo manuscrito · Clara y legible · Combina bien con Noto Sans JP';
+	@override String get font_desc_mplus_rounded_1c => 'Estilo redondeado lindo · Ideal para novelas ligeras · Combina bien con Noto Sans JP';
+	@override String get font_desc_noto_sans_jp => 'Google/Adobe Gothic · Prioridad glifos japoneses · Peso variable';
+	@override String get font_desc_noto_sans_sc => 'Google/Adobe Gothic · Prioridad chino simplificado · Usar como fuente alternativa';
+	@override String get font_desc_noto_sans_tc => 'Google/Adobe Gothic · Prioridad chino tradicional';
+	@override String get font_desc_noto_serif_jp => 'Google/Adobe Serif · Prioridad glifos japoneses · Ideal para lectura vertical';
+	@override String get font_desc_noto_serif_sc => 'Google/Adobe Serif · Prioridad chino simplificado · Usar como fuente alternativa';
+	@override String get font_desc_noto_serif_tc => 'Google/Adobe Serif · Prioridad de glifos chinos tradicionales · Ideal para lectura vertical';
+	@override String get font_desc_shippori_mincho => 'Mincho elegante · Ideal para literatura · Combina bien con Noto Sans JP';
+	@override String get font_desc_zen_kaku_gothic_new => 'Kaku Gothic moderno · Lectura general · Combina bien con Noto Sans JP';
+	@override String get font_desc_zen_maru_gothic => 'Gothic redondeado suave · Combina bien con Noto Sans JP';
+	@override String get font_desc_zen_old_mincho => 'Mincho vintage · Estilo literario clásico · Combina bien con Noto Sans JP';
+	@override String get font_source_file => 'Archivo';
+	@override String get font_source_system => 'Sistema';
+	@override String get font_target_app_ui => 'Fuente de la interfaz';
+	@override String get font_target_body => 'Fuente del texto de la novela';
+	@override String get font_target_dictionary => 'Fuente del diccionario';
+	@override String get font_target_video_subtitle => 'Video Subtitle Font';
+	@override String get gal_hook_text_font_size => 'Tamaño de fuente del subtítulo de galgame';
+	@override String get gal_hook_text_font_size_hint => 'Arrastre la esquina de la superposición para redimensionar la ventana; el tamaño del subtítulo se establece aquí.';
+	@override String get game_add => 'Añadir juego';
+	@override String get game_already_added => 'Este juego ya está en la biblioteca';
+	@override String get game_audio_backend_engine => 'PCM del motor';
+	@override String get game_audio_backend_loopback => 'Loopback del sistema (mezclado)';
+	@override String get game_audio_backend_none => 'Sin fuente de audio';
+	@override String get game_audio_backend_resource => 'Audio de recursos del juego';
+	@override String get game_audio_duration => 'Duración del audio';
+	@override String get game_audio_fallback_disabled_missing => '未找到与该句匹配的游戏资源音频；已关闭降级，未制卡';
+	@override String get game_audio_resource_id => '音频资源 ID';
+	@override String get game_audio_tracks => 'Pistas de audio activas';
+	@override String get game_auto_cover => 'Obtener portada automáticamente';
+	@override String get game_back_to_capture => 'Volver al espacio de captura';
+	@override String get game_back_to_library => 'Volver a biblioteca de juegos';
+	@override String get game_capture_active => 'La captura está activa';
+	@override String get game_capture_degraded_loopback => 'El juego está en ejecución, pero la inyección al motor falló; se usa audio del sistema, que puede mezclar BGM y efectos.';
+	@override String get game_capture_description => 'Inicie o vincule un juego, luego monitoree texto, voz, capturas de pantalla y salida a Anki.';
+	@override String get game_capture_empty_body => 'Inicie o vincule un juego; el estado de texto y audio de oraciones aparecerá aquí.';
+	@override String get game_capture_empty_title => 'Aún no se han recibido líneas';
+	@override String get game_capture_launch_failed => 'El inicio o la captura del juego falló';
+	@override String get game_capture_launching => 'Iniciando juego y comenzando captura...';
+	@override String get game_capture_running => 'La sesión de captura está en ejecución';
+	@override String get game_capture_window_missing => 'El proceso del juego se inició pero su ventana nunca apareció, por lo que el juego puede no haberse iniciado. Intente iniciarlo de nuevo.';
+	@override String get game_capture_workbench => 'Espacio de captura';
+	@override String get game_captured_lines => 'Líneas capturadas';
+	@override String get game_card_mapping_missing => 'Los mapeos de campos de Anki no tienen tokens de tarjeta de juego';
+	@override String get game_card_sentence_audio_missing => 'La tarjeta fue creada sin audio de oración; no se sustituyó audio de otra línea.';
+	@override String get game_clear_events => 'Limpiar eventos';
+	@override String get game_cover_not_found => 'No se encontró portada utilizable en la carpeta o ejecutable del juego';
+	@override String get game_cover_searching => 'Buscando portada...';
+	@override String get game_cover_updated => 'Portada actualizada';
+	@override String get game_dashboard => 'Inicio';
+	@override String get game_detail_missing => 'Este juego ya no está en la biblioteca';
+	@override String get game_detail_tab_edit => 'Editar';
+	@override String get game_detail_tab_stats => 'Estadísticas';
+	@override String get game_detail_tab_summary => 'Resumen';
+	@override String get game_diagnostics => 'Diagnóstico de compatibilidad';
+	@override String get game_diagnostics_subtitle => 'Etapas de sesión, puntos finales, pistas de audio y eventos estructurados';
+	@override String game_drop_imported({required Object count}) => 'Se añadieron ${count} juego(s)';
+	@override String get game_drop_no_exe => 'No se encontró ningún .exe de juego nuevo entre los archivos soltados';
+	@override String get game_edit_developer => 'Desarrollador';
+	@override String get game_edit_display_name => 'Nombre para mostrar';
+	@override String get game_edit_exe_path => 'Ruta del ejecutable';
+	@override String get game_edit_invalid_date => 'La fecha de lanzamiento debe ser AAAA-MM-DD';
+	@override String get game_edit_launch_args => 'Argumentos de inicio';
+	@override String get game_edit_launch_args_hint => 'Se pasan al juego al iniciar, ej. -windowed';
+	@override String get game_edit_nsfw => 'Título para adultos';
+	@override String get game_edit_release_date => 'Fecha de lanzamiento (AAAA-MM-DD)';
+	@override String get game_edit_save => 'Guardar';
+	@override String get game_edit_saved => 'Guardado';
+	@override String get game_edit_summary => 'Descripción';
+	@override String get game_edit_tags => 'Etiquetas (separadas por coma)';
+	@override String get game_edit_user_rating => 'Mi puntuación (0-10)';
+	@override String get game_edit_user_review => 'Mi reseña';
+	@override String get game_edit_workdir => 'Directorio de trabajo';
+	@override String get game_empty => 'Aún no se han añadido juegos';
+	@override String get game_endpoint_phase_connected => 'Conectado';
+	@override String get game_endpoint_phase_connecting => 'Conectando';
+	@override String get game_endpoint_phase_retrying => 'Reintentando';
+	@override String get game_endpoint_phase_stopped => 'Detenido';
+	@override String get game_endpoints_engine_active => 'El texto es proporcionado por el hook del motor; estos endpoints son opcionales';
+	@override String get game_endpoints_hint => 'Puertos para herramientas de texto externas (Textractor / LunaTranslator etc.); ignórelos si no los usa';
+	@override String get game_event_all => 'Todos los eventos';
+	@override String get game_event_warnings => 'Advertencias y errores';
+	@override String get game_exe_missing => 'Ejecutable del juego no encontrado';
+	@override String get game_filter => 'Filtrar';
+	@override String get game_filter_all => 'Todos';
+	@override String get game_filter_favorited => 'Favoritos';
+	@override String get game_filter_hide_nsfw => 'Ocultar títulos para adultos';
+	@override String get game_filter_local_only => 'Con archivo local';
+	@override String get game_filter_metadata_only => 'Solo metadatos';
+	@override String get game_filter_mined => 'Con tarjetas';
+	@override String get game_filter_reset => 'Limpiar filtros';
+	@override String get game_filter_source => 'Disponibilidad';
+	@override String get game_filter_status => 'Estado de juego';
+	@override String get game_filter_tags => 'Etiquetas';
+	@override String get game_filter_with_audio => 'Con audio';
+	@override String get game_focus_continue => 'Continuar';
+	@override String get game_follow_live => 'Seguir en vivo';
+	@override String get game_health => 'Estado de salud';
+	@override String get game_health_anki => 'Salida a Anki';
+	@override String get game_health_audio => 'Fuente de audio';
+	@override String get game_health_helper => 'Helper de hook';
+	@override String get game_health_process => 'Proceso del juego';
+	@override String get game_health_text => 'Fuente de texto';
+	@override String get game_health_upscaling => 'Escalado de ventana';
+	@override String get game_health_window => 'Ventana del juego';
+	@override String get game_helper_download => 'Descargar';
+	@override String game_helper_download_failed({required Object error}) => 'La descarga del componente del motor falló: ${error}';
+	@override String get game_helper_downloading => 'Descargando componente del motor…';
+	@override String get game_helper_install_incomplete => 'Instalación del componente del motor incompleta, inténtelo de nuevo';
+	@override String game_helper_needed_body({required Object size}) => 'Iniciar un galgame necesita el componente inyector del motor del hook (aproximadamente ${size}). Contiene código de inyección de procesos y se distribuye por separado de la app para evitar falsos positivos del antivirus. ¿Descargar ahora?';
+	@override String get game_helper_needed_title => 'Se necesita componente del motor de galgame';
+	@override String get game_helper_size_unknown => 'tamaño desconocido';
+	@override String get game_helper_verification_failed => 'Componente del motor bloqueado: no se pudo verificar su checksum (el archivo .sha256 de GitHub es inaccesible, falta, o no coincide). Fushi rechaza instalar código inyector sin verificar.';
+	@override String get game_home_subtitle => 'Biblioteca de juegos y monitoreo de captura';
+	@override String get game_hook_fallback_all_audio_sources_failed => 'Ni el hook de voz del motor ni el loopback del sistema pudieron iniciarse; no se puede capturar audio.';
+	@override String get game_hook_fallback_engine_attach_failed => 'Falló al vincular el hook de voz del motor al juego en ejecución; se usa mezcla del sistema en su lugar.';
+	@override String get game_hook_fallback_engine_pcm_unavailable => 'El hook de voz del motor está instalado, pero el juego aún no ha reproducido ninguna voz. Se usa mezcla del sistema por ahora y cambiará automáticamente cuando llegue la primera voz.';
+	@override String get game_hook_fallback_launch_injection_failed => 'El juego está en ejecución, pero la inyección temprana al motor falló; se usa mezcla del sistema en su lugar.';
+	@override String get game_hook_fallback_window_not_found => 'La captura de audio está en ejecución, pero la ventana del juego aún no ha aparecido, por lo que las capturas de pantalla no están disponibles. Se vinculará automáticamente cuando la ventana aparezca.';
+	@override String get game_hook_line_unavailable => 'Esta línea capturada ya no está disponible.';
+	@override String get game_hook_reason_access_denied => 'El juego se ejecuta con mayores privilegios; inicie Fushi como administrador e inténtelo de nuevo.';
+	@override String get game_hook_reason_bitness_mismatch => 'La arquitectura del helper no coincide con el juego (32-bit vs 64-bit); reinstale el helper.';
+	@override String get game_hook_reason_create_process_failed => 'El juego no pudo iniciarse desde Fushi; verifique la ruta del ejecutable.';
+	@override String get game_hook_reason_elevation_required => 'Este juego requiere derechos de administrador; inicie Fushi como administrador y láncelo de nuevo.';
+	@override String get game_hook_reason_game_exe_missing => 'El ejecutable del juego ya no existe en la ruta guardada.';
+	@override String get game_hook_reason_guarded_hook_failed => 'Un hook protegido por perfil no pudo instalarse a tiempo; reintentando automáticamente.';
+	@override String get game_hook_reason_handshake_timeout => 'Se enganchó al juego pero no produjo texto ni audio a tiempo; este motor puede no ser compatible aún.';
+	@override String get game_hook_reason_helper_missing => 'El helper de hook de voz no está instalado para la arquitectura de este juego; instálelo e inténtelo de nuevo.';
+	@override String get game_hook_reason_hook_dll_missing => 'El paquete del helper está incompleto (falta biblioteca de hook); reinstálelo.';
+	@override String get game_hook_reason_injection_failed => 'La inyección al juego fue bloqueada; añada Fushi y el juego a las exclusiones del antivirus.';
+	@override String get game_hook_reason_ready_timeout => 'La biblioteca de hook no terminó de cargarse a tiempo; el escaneo del antivirus puede causar esto.';
+	@override String get game_hook_reason_resume_failed => 'El juego iniciado no pudo reanudarse y fue detenido; láncelo de nuevo.';
+	@override String get game_hook_reason_shared_memory_unavailable => 'El canal de captura no pudo abrirse; reinicie Fushi.';
+	@override String get game_hook_reason_spawn_failed => 'El helper no pudo iniciarse; verifique que el antivirus no lo haya eliminado o bloqueado.';
+	@override String get game_hook_reason_resident_hook_mismatch => 'Una sesión de captura anterior aún está cargada en el juego; reinicie el juego una vez.';
+	@override String get game_hook_reason_steam_timeout => 'Steam aceptó la solicitud de inicio pero el proceso del juego nunca apareció.';
+	@override String get game_hook_reason_target_missing => 'No se seleccionó proceso o ejecutable del juego para capturar.';
+	@override String get game_hook_recapture_empty => 'No se capturó audio en la ventana de recaptura';
+	@override String get game_hook_recapture_saved => 'Voz recapturada guardada en esta línea';
+	@override String get game_hook_recapture_started => 'Grabando — reproduzca esta línea en el juego';
+	@override String get game_hook_recapture_unavailable => 'La recaptura de voz necesita audio loopback del sistema';
+	@override String get game_kpi_total_games => 'Juegos';
+	@override String get game_kpi_week => 'Esta semana';
+	@override String get game_latest_line => 'Última línea';
+	@override String get game_launch => 'Iniciar';
+	@override String get game_launch_and_capture => 'Iniciar y capturar';
+	@override String get game_launch_unsupported => 'Iniciar juegos solo está soportado en Windows';
+	@override String get game_library => 'Biblioteca de juegos';
+	@override String get game_line_audio_encoded => 'Audio extraído';
+	@override String get game_line_audio_fallback => 'Respaldo';
+	@override String get game_line_audio_matched => 'Audio listo';
+	@override String get game_line_audio_missing => 'Sin audio';
+	@override String get game_line_audio_pending => 'Emparejando';
+	@override String get game_line_audio_unavailable => 'Solo texto';
+	@override String get game_line_favorite_tooltip => 'Marcar esta línea como favorita';
+	@override String get game_line_mined => 'Tarjeta creada';
+	@override String get game_line_preview_failed => 'No hay audio reproducible para esta línea';
+	@override String get game_line_preview_tooltip => 'Reproducir audio de esta línea';
+	@override String get game_line_track_applied => 'Pista de voz aplicada a esta línea';
+	@override String get game_line_track_dialog_title => 'Pista de voz para esta línea';
+	@override String get game_line_track_failed => 'Esa pista no tiene audio cerca de esta línea';
+	@override String get game_line_track_tooltip => 'Elegir la pista de voz para esta línea';
+	@override String get game_line_unfavorite_tooltip => 'Quitar de favoritos';
+	@override String get game_live_lines => 'Líneas en vivo';
+	@override String get game_manage_tracks => 'Administrar pistas de audio';
+	@override String get game_meta_added => 'Añadido';
+	@override String get game_meta_ranking => 'Clasificación';
+	@override String get game_meta_source => 'Fuente de datos';
+	@override String get game_never_played => 'Nunca jugado';
+	@override String get game_no_active_line => 'Seleccione una línea para inspeccionar el estado de su audio.';
+	@override String get game_no_events => 'Aún no hay eventos de sesión';
+	@override String get game_no_match => 'Ningún juego coincide con los filtros actuales';
+	@override String get game_no_tracks => 'Aún no hay datos de pistas de audio';
+	@override String get game_open_capture_workspace => 'Abrir espacio de captura';
+	@override String get game_phase_attaching => 'Vinculando';
+	@override String get game_phase_degraded => 'Degradado';
+	@override String get game_phase_error => 'Error';
+	@override String get game_phase_idle => 'Inactivo';
+	@override String get game_phase_injecting => 'Inyectando';
+	@override String get game_phase_launching => 'Iniciando';
+	@override String get game_phase_resolving => 'Resolviendo';
+	@override String get game_phase_running => 'En ejecución';
+	@override String get game_phase_stopping => 'Deteniendo';
+	@override String get game_phase_waiting_signals => 'Esperando señales';
+	@override String get game_pipeline => 'Pipeline de sesión';
+	@override String get game_play_status => 'Estado de juego';
+	@override String get game_random_reroll => 'Aleatorio';
+	@override String get game_random_title => 'Elegir por mí';
+	@override String get game_recently_played => 'Jugado recientemente';
+	@override String get game_refresh_tracks => 'Actualizar pistas';
+	@override String get game_remove => 'Eliminar';
+	@override String get game_rename => 'Renombrar';
+	@override String get game_rename_label => 'Nombre del juego';
+	@override String get game_scrape => 'Obtener metadatos';
+	@override String get game_scrape_applied => 'Metadatos actualizados';
+	@override String get game_scrape_failed => 'La obtención de metadatos falló';
+	@override String get game_scrape_no_result => 'No se encontró entrada coincidente';
+	@override String get game_scrape_query => 'Título o ID de fuente';
+	@override String get game_search => 'Buscar juegos';
+	@override String get game_session_events => 'Eventos de sesión';
+	@override String get game_session_idle => 'La captura no ha comenzado';
+	@override String get game_session_listening => 'Escuchando';
+	@override String get game_set_cover => 'Establecer portada';
+	@override String get game_show_hook_text_window => 'Mostrar ventana de texto del hook';
+	@override String get game_site_score => 'Puntuación del sitio';
+	@override String get game_sort => 'Ordenar';
+	@override String get game_sort_added => 'Fecha de adición';
+	@override String get game_sort_last_played => 'Último jugado';
+	@override String get game_sort_name => 'Nombre';
+	@override String get game_sort_release => 'Fecha de lanzamiento';
+	@override String get game_sort_site_score => 'Puntuación del sitio';
+	@override String get game_sort_user_rating => 'Mi puntuación';
+	@override String get game_stat_daily => 'Tiempo de juego diario';
+	@override String get game_stat_delete_session => 'Eliminar esta sesión';
+	@override String get game_stat_last_played => 'Último jugado';
+	@override String get game_stat_no_sessions => 'Aún no se han registrado sesiones de juego';
+	@override String get game_stat_session_list => 'Historial de sesiones';
+	@override String get game_stat_sessions => 'Sesiones';
+	@override String get game_stat_today => 'Tiempo de juego hoy';
+	@override String get game_stat_total_time => 'Tiempo total de juego';
+	@override String get game_status_dropped => 'Abandonado';
+	@override String get game_status_not_configured => 'No verificado';
+	@override String get game_status_on_hold => 'En pausa';
+	@override String get game_status_played => 'Jugado';
+	@override String get game_status_playing => 'Jugando';
+	@override String get game_status_ready => 'Listo';
+	@override String get game_status_unset => 'Sin definir';
+	@override String get game_status_waiting => 'En espera';
+	@override String get game_status_want_to_play => 'Quiero jugar';
+	@override String get game_stop_listening => 'Detener escucha';
+	@override String get game_summary_aliases => 'Alias';
+	@override String get game_summary_all_titles => 'Todos los títulos';
+	@override String get game_summary_average_hours => 'Tiempo promedio de juego';
+	@override String get game_summary_none => 'Sin descripción aún. Obtenga metadatos para completarla.';
+	@override String get game_summary_release_date => 'Fecha de lanzamiento';
+	@override String get game_tags_clear => 'Limpiar selección';
+	@override String get game_tags_title => 'Etiquetas del juego';
+	@override String get game_text_endpoints => 'Endpoints de texto';
+	@override String get game_text_gaps => 'Brechas de secuencia';
+	@override String get game_text_gaps_hint => 'Brechas de secuencia = conteo de líneas perdidas en el anillo de texto del hook; 0 es normal';
+	@override String get game_text_source_engine => 'Hook del motor';
+	@override String get game_text_source_unknown => 'Fuente desconocida';
+	@override String get game_text_source_websocket => 'WebSocket';
+	@override String get game_text_thread => 'Hilo de texto';
+	@override String game_text_thread_audio_count({required Object count}) => '${count} con audio';
+	@override String get game_text_thread_hint => 'Elija el hilo de diálogo limpio, como Luna Translator';
+	@override String get game_track_auto => 'Selección automática';
+	@override String get game_track_clips => 'Clips';
+	@override String get game_track_energy => 'Energía';
+	@override String get game_track_exclude_bgm => 'Marcar como BGM';
+	@override String get game_track_exclusion_hint => 'Marque una pista de BGM/ambiente como excluida para que la selección automática nunca la trate como voz — las líneas sin habla ya no capturarán BGM.';
+	@override String get game_track_exclusion_title => 'Excluir pistas de audio';
+	@override String get game_track_preview => 'Previsualizar esta pista';
+	@override String get game_track_preview_failed => 'No se pudo capturar audio reciente de esta pista';
+	@override String get game_track_preview_stop => 'Detener vista previa';
+	@override String get game_track_restore => 'Restaurar pista';
+	@override String get game_track_select_as_voice => 'Usar como pista de voz';
+	@override String get game_track_select_requires_engine => 'La selección de pista requiere una sesión activa del hook del motor';
+	@override String get game_track_voice => 'Voz';
+	@override String get game_tracks_loopback_hint => 'El loopback del sistema captura la salida mezclada completa del sistema como un solo flujo; la enumeración por pista no está disponible.';
+	@override String get game_tracks_pcm_only_hint => 'La selección por pista solo afecta la captura mientras PCM del motor es el backend de audio activo. La lista de abajo es de solo lectura con el backend actual.';
+	@override String get game_tracks_resource_mode_hint => 'En el modo de audio por recursos del juego, cada línea de voz se extrae directamente de los archivos del juego, por lo que no existe lista de pistas PCM aquí. La selección automática o manual de pistas solo se aplica a la captura PCM del motor.';
+	@override String get game_unread_lines => 'Sin leer';
+	@override String get game_upscaling => 'Escalado de ventana del juego';
+	@override String get game_upscaling_auto => 'Auto';
+	@override String get game_upscaling_hint_external => 'Ya se estaba ejecutando una copia de Magpie, así que Fushi la dejó como está. Presione Win+Shift+A para escalar la ventana del juego.';
+	@override String get game_upscaling_hint_first_run => 'Magpie tuvo que configurarse esta vez. Presione Win+Shift+A para escalar ahora — la próxima vez que inicie el juego se hará automáticamente.';
+	@override String get game_upscaling_hint_manual => 'Presione Win+Shift+A para escalar la ventana del juego.';
+	@override String get game_upscaling_installed_only => 'Solo si está instalado';
+	@override String get game_upscaling_off => 'Apagado';
+	@override String get game_upscaling_status_active => 'El escalado de ventana está activo';
+	@override String get game_upscaling_status_failed => 'El escalado de ventana no pudo iniciarse';
+	@override String get game_upscaling_status_manual => 'El escalado de ventana está listo, pero no se inició solo';
+	@override String get game_upscaling_status_unavailable => 'El escalado de ventana no está disponible';
+	@override String get game_user_rating => 'Mi puntuación';
+	@override String get game_view_detail => 'Ver detalles';
+	@override String get game_waiting_for_text => 'Esperando texto';
+	@override String game_waveform_range_label({required Object start, required Object end, required Object duration, required Object total}) => '${start} - ${end} (seleccionado ${duration} / total ${total})';
+	@override String get game_waveform_select_title => 'Seleccionar rango de audio';
+	@override String get game_window_bound => 'Vinculado';
+	@override String get game_window_missing => 'No vinculado';
+	@override String get games => 'Juegos';
+	@override String get global_context_capture => 'Capturar contexto de selección';
+	@override String get global_context_capture_hint => 'Lee texto circundante de la app en primer plano para mostrar la oración actual (solo Windows)';
+	@override String go_to_chapter({required Object n}) => 'Capítulo ${n}';
+	@override String get handlebar_audio => 'Audio';
+	@override String get handlebar_book_cover => 'Portada del libro';
+	@override String get handlebar_card_image => 'Card Image (Cover / GIF)';
+	@override String get handlebar_cue_sentence => 'Oración de subtítulo';
+	@override String handlebar_deprecated_label({required Object label}) => '${label} (obsoleto)';
+	@override String get handlebar_document_title => 'Título del documento';
+	@override String get handlebar_expression => 'Expresión';
+	@override String get handlebar_frequencies => 'Frecuencias (HTML)';
+	@override String get handlebar_frequency_harmonic_rank => 'Frecuencia (Rango)';
+	@override String get handlebar_furigana_plain => 'Furigana';
+	@override String get handlebar_glossary => 'Glosario';
+	@override String get handlebar_glossary_first => 'Glosario (Primero)';
+	@override String get handlebar_pitch_accent_categories => 'Categorías de acento';
+	@override String get handlebar_pitch_accent_positions => 'Posiciones de acento';
+	@override String get handlebar_popup_selection_text => 'Texto de selección del popup';
+	@override String get handlebar_reading => 'Lectura';
+	@override String get handlebar_selected_glossary => 'Glosario seleccionado';
+	@override String get handlebar_sentence => 'Oración';
+	@override String get handlebar_sentence_audio => 'Sentence Audio';
+	@override String get handlebar_video_clip => 'Video Clip (GIF)';
+	@override String get harmonic_frequency => 'Agregar frecuencias de palabras';
+	@override String health_match_summary({required Object pct}) => 'Coincidencia ${pct}%';
+	@override String get highlight_on_tap => 'Resaltar texto al tocar';
+	@override String get home_activity => 'Actividad';
+	@override String get home_activity_empty => 'Aún no hay actividad';
+	@override String get home_continue => 'Continuar';
+	@override String get home_filter_added => 'Añadido';
+	@override String get home_filter_all => 'Todo';
+	@override String get home_filter_game => 'Juego';
+	@override String get home_filter_read => 'Leer';
+	@override String get home_filter_watch => 'Ver';
+	@override String get home_recently_added => 'Añadido recientemente';
+	@override String get home_remote_source => 'Remoto';
+	@override String home_session_count({required Object n}) => '${n} sesiones';
+	@override String get home_today => 'Hoy';
+	@override String get home_yesterday => 'Ayer';
+	@override String get hover_auto_lookup => 'Buscar al pasar el cursor';
+	@override String get hover_auto_lookup_hint => 'Busca automáticamente al pasar el ratón sobre un carácter; sin hacer clic ni mantener Mayús. Muestra como máximo una capa de ventana emergente. Solo en escritorio.';
+	@override String get icon_custom => 'Personalizado';
+	@override String get icon_custom_confirm_body => 'Esto creará un acceso directo en la pantalla de inicio con la imagen elegida. ¿Continuar?';
+	@override String get icon_custom_confirm_title => 'Icono personalizado';
+	@override String get icon_custom_hint => 'Toca un icono para cambiar, o elige una imagen personalizada abajo.';
+	@override String get icon_default => 'Predeterminado';
+	@override String get icon_full => 'Completo';
+	@override String get icon_shortcut_created => 'Acceso directo creado en la pantalla de inicio.';
+	@override String get icon_shortcut_unsupported => 'Los accesos directos no son compatibles con este dispositivo.';
+	@override String get icon_switch_success => 'Icono de la app cambiado correctamente.';
+	@override String get icon_transparent => 'Transparente';
+	@override String image_page_counter({required Object current, required Object total}) => '${current} / ${total}';
+	@override String get image_pause => 'Pausar en imagen';
+	@override String get image_pause_hint => 'Pausar automáticamente cuando aparece una imagen durante la reproducción.';
+	@override String get image_pause_off => 'Desactivado';
+	@override String get image_search_label_after => 'encontradas para';
+	@override String get image_search_label_before => 'Seleccionando imagen ';
+	@override String get image_search_label_middle => 'de ';
+	@override String get image_search_label_none_before => 'Seleccionando ';
+	@override String get image_search_label_none_middle => 'ninguna imagen ';
+	@override String get import_complete => 'Importación del diccionario completada.';
+	@override String import_duplicate({required Object name}) => 'Ya existe un diccionario importado con el nombre 『${name}』.';
+	@override String get import_extract => 'Extrayendo archivos...';
+	@override String get import_failed => 'Error al importar el diccionario.';
+	@override String get import_in_progress => 'Importación en progreso';
+	@override String import_name({required Object name}) => 'Importando 『${name}』...';
+	@override String import_sidecar_audio({required Object count}) => 'Se adjuntaron automáticamente ${count} archivo(s) de audio';
+	@override String import_sidecar_subtitle({required Object name}) => 'Subtítulo adjuntado automáticamente: ${name}';
+	@override String get import_start => 'Preparando la importación...';
+	@override String get import_step_building_epub => 'Generando EPUB…';
+	@override String get import_step_converting_epub => 'Convirtiendo a EPUB…';
+	@override String import_step_copying_file({required Object name}) => 'Copiando ${name}…';
+	@override String get import_step_done => 'Hecho';
+	@override String get import_step_importing_epub => 'Importando EPUB…';
+	@override String get import_step_matching => 'Alineación de audio…';
+	@override String get import_step_parsing => 'Analizando subtítulos…';
+	@override String get import_step_persisting => 'Guardando archivos…';
+	@override String get import_step_reading => 'Leyendo archivo…';
+	@override String get import_step_reading_idb => 'Leyendo información del libro…';
+	@override String get import_step_saving => 'Guardando registros…';
+	@override String get import_theme => 'Importar tema';
+	@override String get import_theme_hint => 'Pegar código de tema';
+	@override String get import_theme_invalid => 'Código de tema no válido';
+	@override String get import_theme_success => 'Tema importado';
+	@override String import_unsupported_file_format({required Object ext}) => 'Formato de archivo no compatible: ${ext}';
+	@override String get increase => 'Aumentar';
+	@override String get info_empty_home_tab => 'El historial está vacío';
+	@override String init_error_message({required Object error}) => 'Error de inicialización: ${error}';
+	@override String get initialization_failed => 'Error de inicialización';
+	@override String get interconnect_backup_backend => 'Usar Interconnect como backend de copia de seguridad';
+	@override String get interconnect_backup_backend_active => 'Las copias de seguridad ya se envían al dispositivo emparejado. Elija otro backend en Sincronización y respaldo para cambiarlo.';
+	@override String get interconnect_backup_backend_apply => 'Establecer como backend de respaldo';
+	@override String interconnect_backup_backend_current({required Object backend}) => 'Backend de respaldo actual: ${backend}';
+	@override String get interconnect_backup_backend_hint => 'Respalda y sincroniza con el dispositivo emparejado en lugar de una nube. Todo lo que los interruptores de arriba permiten subir al dispositivo emparejado es lo que se escribirá allí.';
+	@override String get interconnect_backup_backend_needs_pairing => 'Primero conéctese a un dispositivo arriba.';
+	@override String get interconnect_enable => 'Activar Interconnect';
+	@override String get interconnect_enable_hint => 'Conéctese a sus otros dispositivos por LAN. Funciona junto con un backend de respaldo en la nube — no entran en conflicto.';
+	@override String get interconnect_moved_note => 'Los ajustes de conexión y servidor están en la categoría Fushi Interconnect';
+	@override String get interconnect_section_client => 'Conectar a otros dispositivos';
+	@override String get interconnect_section_delegate => 'Delegar al dispositivo emparejado';
+	@override String get interconnect_section_related => 'Contenido y búsqueda remotos';
+	@override String get interconnect_summary => 'Sincronización directa entre dispositivos y alojamiento como servidor';
+	@override String get interconnect_upload_audiobook_files => 'Subir archivos de audiolibros';
+	@override String get interconnect_upload_audiobook_files_hint => 'Sincroniza los audios y paquetes de subtítulos de audiolibros de este dispositivo al par de Interconnect (archivos grandes).';
+	@override String get interconnect_upload_content => 'Subir archivos de libros';
+	@override String get interconnect_upload_content_hint => 'Sincroniza los libros y contenido de lectura de este dispositivo al par de Interconnect.';
+	@override String get interconnect_upload_dictionary => 'Subir diccionarios';
+	@override String get interconnect_upload_dictionary_hint => 'Sincroniza los diccionarios de este dispositivo al par de Interconnect.';
+	@override String get interconnect_upload_section => 'Subir al par de Interconnect';
+	@override String get interconnect_upload_video_files => 'Subir archivos de vídeo';
+	@override String get interconnect_upload_video_files_hint => 'Sincroniza los archivos de vídeo locales de este dispositivo al par de Interconnect (archivos grandes).';
+	@override String get invert_audiobook_skip_direction => 'Invertir botones de avance de la barra inferior';
+	@override String get invert_swipe_direction => 'Invertir dirección de deslizamiento para pasar páginas';
+	@override String get invert_volume_buttons => 'Invertir botones de volumen';
+	@override String get jump_to_char => 'Ir al carácter';
+	@override String jump_to_char_current({required Object current, required Object total}) => 'Actual: ${current} / ${total}';
+	@override String get jump_to_char_hint => 'Introduce la posición del carácter…';
+	@override String get keep_screen_awake => 'Mantener pantalla encendida';
+	@override String get library_search => 'Buscar biblioteca';
+	@override String get loading_illustrations => 'Cargando ilustraciones…';
+	@override String get loading_slow_message => 'Si su ubicación de almacenamiento de datos está en una unidad de red o extraíble que está desconectada, el inicio puede detenerse. Toque Reintentar para iniciar usando la ubicación de almacenamiento predeterminada para esta sesión; sus datos permanecen donde están.';
+	@override String get loading_slow_message_mobile => 'El inicio está tardando más de lo usual — Fushi puede estar cargando una biblioteca grande o diccionarios. Espere un momento, o toque Reintentar para recargar. Sus datos están seguros y no se perderán.';
+	@override String get loading_slow_title => 'El inicio está tardando más de lo usual';
+	@override String get local_audio => 'Audio local';
+	@override String get local_audio_add_db => 'Agregar base de datos de audio local';
+	@override String get local_audio_edit_sources => 'Editar fuentes';
+	@override String local_audio_import_failed_detail({required Object reason}) => 'Falló la importación de la base de datos de audio: ${reason}';
+	@override String get local_audio_imported => 'Base de datos de audio añadida';
+	@override String get local_audio_invalid_db => 'Este archivo no es una base de datos de audio utilizable (no es una base de datos de Local Audio Server, o no tiene audio).';
+	@override String get local_audio_no_sources => 'No se encontraron fuentes en esta base de datos';
+	@override String get local_audio_reference_original => 'Referenciar archivo original (no copiar)';
+	@override String get local_audio_reference_original_desc => 'Mantener la base de datos donde está y leer desde su ruta original; la fuente se rompe si el archivo se mueve o elimina.';
+	@override String get local_audio_source_order_title => 'Prioridad de las fuentes';
+	@override String get log_copy_all => 'Copiar todo';
+	@override String get log_export_failed => 'Error al exportar';
+	@override String get log_export_file => 'Exportar a archivo';
+	@override String get log_export_saved => 'Registro guardado';
+	@override String get log_upload_action => 'Subir al servidor';
+	@override String get log_upload_consent_agree => 'Aceptar y subir';
+	@override String get log_upload_consent_body => 'El texto del registro (que puede incluir mensajes de error, rutas de archivos y títulos de libros), junto con la versión de la app, la plataforma y el modelo del dispositivo, se subirá al servidor del desarrollador para ayudar a diagnosticar problemas. Esto solo ocurre cuando tocas subir; no se envía nada de forma automática.';
+	@override String get log_upload_consent_title => '¿Subir el registro al servidor?';
+	@override String get log_upload_failed => 'Error al subir';
+	@override String get log_upload_in_progress => 'Subiendo registro…';
+	@override String get log_upload_success => 'Registro subido';
+	@override String get log_upload_too_large => 'El registro es demasiado grande para subirlo';
+	@override String get login => 'Iniciar sesión';
+	@override String get lookup_audio_volume => 'Volumen del audio de consulta';
+	@override String get low_memory_mode => 'Modo de poca memoria';
+	@override String get low_memory_mode_hint => 'Reduce el uso de caché y memoria para dispositivos de gama baja. Algunos cambios requieren reinicio.';
+	@override String get low_memory_mode_suggestion => 'Intente activar el modo de poca memoria en Ajustes → Varios.';
+	@override String get lyrics_artist => 'Artista';
+	@override String get lyrics_blur => 'Difuminar letras';
+	@override String get lyrics_blur_hint => 'Difumina la línea actual para inmersión auditiva; pase el cursor o toque para revelar';
+	@override String get lyrics_font_size => 'Tamaño de fuente de letras';
+	@override String get lyrics_font_size_hint => 'El tamaño de fuente de las letras es independiente del modo libro';
+	@override String get lyrics_mode => 'Modo de letra';
+	@override String get lyrics_mode_hint_body => 'El modo de letras tiene su propia configuración de tamaño de fuente. Puedes ajustarlo en ⚙ Ajustes → Tipografía.';
+	@override String get lyrics_mode_hint_title => 'Modo de letras';
+	@override String get lyrics_text_color => 'Color del texto de las letras';
+	@override String get lyrics_text_color_hint => 'Usa un color personalizado para el texto de las letras en lugar de seguir el tema';
+	@override String get lyrics_title => 'Título';
+	@override String get lyrics_vertical_writing => 'Letras verticales';
+	@override String get lyrics_vertical_writing_hint => 'Leer letras de arriba a abajo, de derecha a izquierda (independiente del modo del libro)';
+	@override String get manage_audio_sources => 'Gestionar fuentes de audio';
+	@override String get manager => 'Gestor';
+	@override String get manga_mode_toggle => 'Reading Mode';
+	@override String get manga_ocr_delete => 'Eliminar modelos';
+	@override String get manga_ocr_delete_confirm_message => 'Esto libera espacio en disco. Puede descargarlos de nuevo más tarde.';
+	@override String get manga_ocr_delete_confirm_title => '¿Eliminar modelos de OCR?';
+	@override String get manga_ocr_delete_done => 'Modelos eliminados';
+	@override String get manga_ocr_download => 'Descargar modelos';
+	@override String get manga_ocr_download_done => 'Modelos descargados';
+	@override String get manga_ocr_download_failed => 'La descarga de modelos falló';
+	@override String manga_ocr_downloading_file({required Object file}) => 'Descargando ${file}…';
+	@override String get manga_ocr_engine_builtin => 'Integrado';
+	@override String get manga_ocr_engine_external => 'mokuro externo';
+	@override String get manga_ocr_engine_none => 'No hay motor de OCR disponible. Descargue los modelos integrados o establezca la ruta del CLI de mokuro en los ajustes.';
+	@override String get manga_ocr_external_cli_hint => 'Deje vacío para auto-detectar (FUSHI_MOKURO / PATH)';
+	@override String get manga_ocr_external_cli_label => 'Ruta del CLI de mokuro externo';
+	@override String get manga_ocr_external_detect => 'Detectar';
+	@override String manga_ocr_external_detected({required Object version}) => 'Detectado: ${version}';
+	@override String get manga_ocr_external_not_found => 'mokuro no encontrado';
+	@override String get manga_ocr_model_status_missing => 'Modelos de OCR no descargados';
+	@override String get manga_ocr_model_status_ready => 'Modelos de OCR listos';
+	@override String get manga_ocr_section => 'OCR de manga';
+	@override String get manga_ocr_section_summary => 'Modelos de OCR integrados y CLI de mokuro externo';
+	@override String get manga_ocr_unsupported => 'El OCR de manga integrado aún no está disponible en esta plataforma.';
+	@override String get manga_ocr_wizard_done => 'Manga importado';
+	@override String get manga_ocr_wizard_failed => 'El OCR falló';
+	@override String get manga_ocr_wizard_has_mokuro => 'Esta carpeta ya tiene un archivo .mokuro — use la importación normal en su lugar.';
+	@override String get manga_ocr_wizard_importing => 'Importando…';
+	@override String get manga_ocr_wizard_no_images => 'No se encontraron imágenes en esta carpeta.';
+	@override String manga_ocr_wizard_page_progress({required Object done, required Object total}) => 'Página ${done} / ${total}';
+	@override String get manga_ocr_wizard_pick_folder => 'Elegir carpeta de imágenes';
+	@override String get manga_ocr_wizard_run => 'Ejecutar OCR';
+	@override String get manga_ocr_wizard_running => 'Ejecutando OCR…';
+	@override String get manga_ocr_wizard_title => 'Importar manga con OCR';
+	@override String get manga_ocr_wizard_title_label => 'Título (opcional)';
+	@override String get manga_online_base_url_label => 'URL del catálogo en línea';
+	@override String get manga_online_catalog_title => 'Catálogo en línea';
+	@override String get manga_online_download_selected => 'Descargar seleccionados';
+	@override String get manga_online_downloaded => 'Importado';
+	@override String get manga_online_failed => 'La descarga falló';
+	@override String get manga_online_load_failed => 'No se pudo cargar el catálogo';
+	@override String get manga_online_queue_added => 'Añadido a la cola de descarga';
+	@override String manga_online_queue_progress({required Object done, required Object total}) => 'Volumen ${done} / ${total}';
+	@override String get manga_online_queue_section => 'Descargas del catálogo de manga';
+	@override String get manga_online_search_hint => 'Buscar series';
+	@override String get manga_online_stage_cbz => 'Descargando volumen…';
+	@override String get manga_online_stage_extract => 'Extrayendo…';
+	@override String get manga_online_stage_mokuro => 'Descargando datos de OCR…';
+	@override String get manga_reading_mode_spread => 'Doble página';
+	@override String get manga_reading_mode_webtoon => 'Webtoon';
+	@override String get manga_remote_ocr_cancelled => 'El OCR remoto fue cancelado en el host.';
+	@override String get manga_remote_ocr_engine => 'Host emparejado';
+	@override String get manga_remote_ocr_failed => 'El OCR remoto falló';
+	@override String get manga_remote_ocr_no_host => 'No hay host emparejado con OCR de manga accesible.';
+	@override String get manga_remote_ocr_not_ready => 'Los modelos de OCR del host emparejado no están descargados. Descárguelos en el host primero.';
+	@override String get manga_remote_ocr_running => 'El host emparejado está ejecutando OCR…';
+	@override String get manga_remote_ocr_unsupported => 'El host emparejado no soporta OCR de manga.';
+	@override String manga_remote_ocr_uploading({required Object done, required Object total}) => 'Subiendo páginas ${done} / ${total}…';
+	@override String get margin_bottom => 'Margen inferior';
+	@override String get margin_left => 'Margen izquierdo';
+	@override String get margin_right => 'Margen derecho';
+	@override String get margin_top => 'Margen superior';
+	@override String get maximum_terms => 'Máximo de entradas en el resultado del diccionario';
+	@override String get media_source_add => 'Add Source';
+	@override String get media_source_add_local_folder => 'Local Folder';
+	@override String get media_source_add_network => 'Red';
+	@override String media_source_count_book({required Object n}) => '${n} libros';
+	@override String media_source_count_video({required Object n}) => '${n} vídeos';
+	@override String media_source_last_scan({required Object time}) => 'Último escaneo ${time}';
+	@override String get media_source_manage_title => 'Manage Sources';
+	@override String get media_source_network_label_optional => 'Nombre para mostrar (opcional)';
+	@override String get media_source_network_missing_fields => 'Introduzca host, usuario, ruta remota y una contraseña o clave';
+	@override String get media_source_network_remote_path => 'Ruta remota';
+	@override String get media_source_network_subtitle => 'Biblioteca remota SFTP / FTP / WebDAV';
+	@override String get media_source_no_sources => 'Aún no hay fuentes';
+	@override String get media_source_open_folder => 'Open Folder';
+	@override String get media_source_remove => 'Remove Source';
+	@override String get media_source_remove_keeps_media => 'Eliminar una fuente no borra los medios importados.';
+	@override String get media_source_rescan => 'Re-escanear';
+	@override String get media_source_scan_error => 'El escaneo falló';
+	@override String get media_tracking_access_token => 'Token de acceso';
+	@override String get media_tracking_access_token_hint => 'Cree un token de acceso personal con permiso de escritura';
+	@override String get media_tracking_account => 'Cuenta de Bangumi';
+	@override String get media_tracking_add_mapping => 'Añadir mapeo';
+	@override String get media_tracking_anime => 'Anime';
+	@override String get media_tracking_chapter => 'Capítulo';
+	@override String get media_tracking_connect => 'Conectar y verificar';
+	@override String get media_tracking_connected_as => 'Cuenta conectada';
+	@override String get media_tracking_delete_mapping => 'Eliminar mapeo';
+	@override String get media_tracking_episode => 'Episodio';
+	@override String get media_tracking_kind => 'Categoría';
+	@override String get media_tracking_local_item => 'Elemento local';
+	@override String get media_tracking_manga => 'Manga';
+	@override String get media_tracking_mappings => 'Mapeos de elementos';
+	@override String get media_tracking_no_mappings => 'Aún no hay mapeos manuales. Fushi empareja automáticamente en el primer episodio completado o progreso de lectura; añada elementos ambiguos aquí.';
+	@override String get media_tracking_novel => 'Novela';
+	@override String get media_tracking_pending => 'Actualizaciones pendientes';
+	@override String get media_tracking_progress_mode => 'Unidad de progreso';
+	@override String get media_tracking_progress_offset => 'Número inicial';
+	@override String get media_tracking_saved => 'Mapeo guardado';
+	@override String get media_tracking_search => 'Buscar en Bangumi';
+	@override String get media_tracking_search_results => 'Resultados de Bangumi';
+	@override String get media_tracking_summary => 'Registra automáticamente el progreso de anime, novelas y manga en Bangumi';
+	@override String get media_tracking_sync_failed => 'La sincronización falló. La actualización permanece en cola.';
+	@override String get media_tracking_sync_now => 'Sincronizar ahora';
+	@override String get media_tracking_sync_success => 'Sincronización completada';
+	@override String get media_tracking_token_required => 'Primero introduzca y verifique un token de acceso';
+	@override String get media_tracking_volume => 'Volumen';
+	@override String get microphone_permission_denied => 'Se requiere permiso de micrófono para grabar.';
+	@override String get mining_audio_quality => 'Calidad de audio';
+	@override String get mining_audio_quality_high => 'Alta';
+	@override String get mining_audio_quality_hint => 'Mayor tasa de bits es más clara pero crea tarjetas más grandes.';
+	@override String get mining_audio_quality_max => 'Máxima';
+	@override String get mining_audio_quality_standard => 'Estándar';
+	@override String get mining_image_quality => 'Calidad de imagen / GIF';
+	@override String get mining_image_quality_hd => 'HD';
+	@override String get mining_image_quality_hint => 'Mayor calidad es más nítida pero crea tarjetas más grandes. Máxima mantiene las capturas a la resolución original; los GIF animados se limitan para que las tarjetas sigan siendo usables.';
+	@override String get mining_image_quality_max => 'Máxima';
+	@override String get mining_image_quality_standard => 'Estándar';
+	@override String get mining_image_quality_thrift => 'Ahorro de datos';
+	@override String get move_down => 'Mover abajo';
+	@override String get move_up => 'Mover arriba';
+	@override String get name => 'Nombre';
+	@override String get nav_browser_extension => 'Extensión';
+	@override String get nav_downloads => 'Descargas';
+	@override String get nav_game => 'Juego';
+	@override String get nav_home => 'Inicio';
+	@override String get nav_lookup => 'Consultar';
+	@override String get nav_video => 'Vídeo';
+	@override String get next_sentence => 'Oración siguiente';
+	@override String get no_audio_file => 'No hay archivo de audio para guardar.';
+	@override String get no_collections => 'No hay marcadores ni oraciones guardadas';
+	@override String get no_debug_logs => 'Sin registros de depuración.';
+	@override String get no_illustrations_found => 'No se encontraron ilustraciones';
+	@override String get no_results_found => 'No se encontraron resultados.';
+	@override String get no_search_results => 'No se encontraron resultados.';
+	@override String get no_sentence_selected => 'No se ha seleccionado ninguna frase';
+	@override String get no_sentences_found => 'No se encontraron oraciones';
+	@override String get no_text => 'Sin texto.';
+	@override String get no_text_to_search => 'No hay texto para buscar.';
+	@override String get now_listening_label => 'Escuchando ahora';
+	@override String get on_screen_keyboard => 'Teclado en pantalla';
+	@override String get options_collapse => 'Contraer en búsqueda';
+	@override String get options_delete => 'Eliminar';
+	@override String get options_edit => 'Editar';
+	@override String get options_expand => 'Expandir en búsqueda';
+	@override String get options_github => 'Ver repositorio en GitHub';
+	@override String get options_hide => 'Ocultar en búsqueda';
+	@override String get options_language => 'Configuración de idioma';
+	@override String get options_show => 'Mostrar en búsqueda';
+	@override String get overlay_lookup_independent_size => 'Tamaño separado para búsqueda emergente';
+	@override String get overlay_lookup_independent_size_hint => 'Dale a la ventana de búsqueda emergente externa su propio tamaño máximo en lugar de seguir la ventana emergente de la app';
+	@override String get overlay_lookup_max_height => 'Altura máxima de búsqueda emergente';
+	@override String get overlay_lookup_max_width => 'Ancho máximo de búsqueda emergente';
+	@override String page_progress({required Object current, required Object total}) => 'Página ${current} / ${total}';
+	@override String get paste => 'Pegar';
+	@override String get pause => 'Pausar';
+	@override String get pause_on_lookup => 'Pausar al buscar';
+	@override String get pdf_bookmark_added => 'Marcador añadido';
+	@override String get pdf_bookmarks => 'Marcadores';
+	@override String get pdf_bookmarks_empty => 'Aún no hay marcadores.';
+	@override String get pdf_no_text_layer => 'Este PDF no tiene capa de texto (imagen escaneada), por lo que la búsqueda no está disponible.';
+	@override String get pdf_outline => 'Contenidos';
+	@override String get pdf_outline_empty => 'Este PDF no tiene tabla de contenidos.';
+	@override String get pick_image => 'Elegir imagen';
+	@override String get play => 'Reproducir';
+	@override String get play_from_cue => 'Reproducir desde la oración';
+	@override String get playback_auto_pause => 'Modo de pausa en subtítulos';
+	@override String get playback_speed => 'Velocidad';
+	@override String get popup_append_sentence_tooltip => 'Añadir esta frase a la tarjeta';
+	@override String get popup_auto_expand_dictionaries => 'Auto-expandir filas';
+	@override String get popup_auto_expand_dictionaries_hint => 'Mantener las primeras N filas de bloques de diccionario expandidas incluso cuando \'Contraer diccionarios\' está activado. El conteo expandido sigue la configuración de columnas: filas x columnas (0 = contraer todo)';
+	@override String get popup_bottom_docked => 'Ventana acoplada abajo';
+	@override String get popup_bottom_docked_hint => 'Fija la ventana de consulta como un panel de ancho completo en la parte inferior de la pantalla, en lugar de seguir a la palabra consultada.';
+	@override String get popup_clear_sentence_draft_tooltip => 'Borrar las frases añadidas';
+	@override String get popup_ctx_adjust_button => 'Ajustar contexto';
+	@override String get popup_ctx_box_current => 'Current';
+	@override String get popup_ctx_box_empty => '(ninguno)';
+	@override String get popup_ctx_box_next => 'After';
+	@override String get popup_ctx_box_prev => 'Before';
+	@override String get popup_ctx_cancel => 'Cancelar';
+	@override String get popup_ctx_confirm => 'Confirm';
+	@override String get popup_ctx_modal_count => 'Selected %d';
+	@override String get popup_ctx_modal_eyebrow => 'Before mining';
+	@override String get popup_ctx_modal_title => 'Seleccionar contexto de oración';
+	@override String get popup_ctx_next_minus => 'Remove after';
+	@override String get popup_ctx_next_plus => 'Add after';
+	@override String get popup_ctx_prev_minus => 'Remove before';
+	@override String get popup_ctx_prev_plus => 'Add before';
+	@override String get popup_dictionary_max_columns => 'Máximo de columnas de diccionario (auto-fill)';
+	@override String get popup_dictionary_max_columns_hint => 'Llena automáticamente hasta este número de columnas de diccionario por fila; pantallas más angostas usan menos';
+	@override String get popup_font_size_decrease => 'Texto de diccionario más pequeño';
+	@override String get popup_font_size_increase => 'Texto de diccionario más grande';
+	@override String get popup_instant_scroll => 'Desplazamiento instantáneo de la ventana';
+	@override String get popup_instant_scroll_hint => 'Mueve la ventana de consulta a distancias fijas sin animación de desplazamiento, para pantallas de tinta electrónica.';
+	@override String get popup_max_height => 'Altura máxima de la ventana';
+	@override String get popup_max_width => 'Ancho máximo del popup';
+	@override String get popup_no_audio_available => 'No hay audio disponible';
+	@override String get popup_sentence_context_next_label => 'Después';
+	@override String get popup_sentence_context_prev_label => 'Antes';
+	@override String get popup_wheel_speed => 'Velocidad de desplazamiento del popup';
+	@override String get popup_wheel_speed_hint => 'Velocidad de desplazamiento con rueda del ratón para la ventana emergente del diccionario (también se aplica a la extensión del navegador).';
+	@override String get prev_sentence => 'Oración anterior';
+	@override String get preview => 'Vista previa';
+	@override String get preview_badge => 'Insignia';
+	@override String get preview_switch => 'Interruptor';
+	@override String get processing_in_progress => 'Procesando imágenes';
+	@override String get profile_book_profile => 'Asignar perfil';
+	@override String profile_confirm_delete({required Object name}) => '¿Eliminar perfil "${name}"?';
+	@override String get profile_copy => 'Copiar';
+	@override String get profile_copy_suffix => '(Copia)';
+	@override String get profile_create => 'Crear perfil';
+	@override String get profile_delete => 'Eliminar';
+	@override String get profile_export => 'Exportar';
+	@override String get profile_export_failed => 'La exportación falló';
+	@override String profile_follow_default_current({required Object name}) => 'Siguiendo el predeterminado (${name})';
+	@override String get profile_import => 'Importar';
+	@override String get profile_import_failed => 'La importación falló';
+	@override String get profile_import_invalid => 'Archivo de perfil no válido';
+	@override String get profile_import_success => 'Perfil importado';
+	@override String get profile_label => 'Perfil';
+	@override String get profile_management => 'Gestión de perfiles';
+	@override String get profile_media_audiobook => 'Audiolibro';
+	@override String get profile_media_epub => 'Libro';
+	@override String get profile_media_lyrics => 'Modo letras';
+	@override String get profile_media_none => 'Ninguno';
+	@override String get profile_media_srtbook => 'Libro de subtítulos';
+	@override String get profile_media_type_bindings => 'Asociaciones de tipo de medio';
+	@override String get profile_media_video => 'Vídeo';
+	@override String get profile_name_hint => 'Nombre del perfil';
+	@override String get profile_rename => 'Renombrar';
+	@override String get reader_auto_hide_chrome_duration => 'Ocultar controles flotantes después de';
+	@override String get reader_content_timeout => 'Se agotó el tiempo al cargar el contenido. Reabre si la visualización es anómala';
+	@override String get reader_copy_image => 'Copiar imagen';
+	@override String get reader_gallery => 'Galería';
+	@override String get reader_gallery_current => 'Leyendo aquí';
+	@override String get reader_gallery_empty => 'No hay ilustraciones en este libro';
+	@override String get reader_gallery_jump => 'Ir a esta ilustración';
+	@override String get reader_gallery_tooltip => 'Explorar ilustraciones';
+	@override String reader_image_copy_failed({required Object error}) => 'Error al copiar la imagen: ${error}';
+	@override String get reader_image_file_unavailable => 'El archivo de imagen no está disponible.';
+	@override String reader_image_share_failed({required Object error}) => 'Error al compartir la imagen: ${error}';
+	@override String get reader_open_failed => 'No se pudo abrir el libro';
+	@override String get reader_settings_section => 'Configuración del lector';
+	@override String get reader_theme_black => 'Negro';
+	@override String get reader_theme_dark => 'Oscuro';
+	@override String get reader_theme_ecru => 'Crudo';
+	@override String get reader_theme_eyecare => 'Eye Care';
+	@override String get reader_theme_gray => 'Gris';
+	@override String get reader_theme_light => 'Blanco';
+	@override String get reader_theme_water => 'Azul agua';
+	@override String get reader_top_progress_floating => 'Progreso de lectura flotante';
+	@override String get reader_unsupported_platform => 'El lector aún no está disponible en esta plataforma.';
+	@override String get reading_activity => 'Actividad de estudio';
+	@override String get reading_progress => 'Progreso de lectura';
+	@override String get reading_section_mode => 'Modo y orientación';
+	@override String get reading_statistics => 'Estadísticas de lectura';
+	@override String get record => 'Grabar';
+	@override String get refresh => 'Actualizar';
+	@override String get rematch_adjust_window => 'Ajustar ventana de búsqueda y re-emparejar';
+	@override String get rematch_run => 'Ejecutar re-emparejamiento';
+	@override String get remote_audio_source => 'Audio remoto';
+	@override String get remote_book_audiobook_download_failed => 'No se pudo descargar el audiolibro de este libro';
+	@override String get remote_book_download => 'Descargar a este dispositivo';
+	@override String get remote_book_download_failed => 'No se pudo descargar el libro remoto';
+	@override String get remote_book_downloaded => 'Libro remoto descargado';
+	@override String get remote_book_downloading => 'Descargando…';
+	@override String get remote_book_info => 'Información';
+	@override String get remote_book_info_has_audiobook => 'Incluye audiolibro';
+	@override String get remote_book_unavailable => 'Dispositivo emparejado no disponible';
+	@override String get remote_dict_lookup => 'Búsqueda en diccionario remoto';
+	@override String get remote_dict_lookup_hint => 'Cuando los diccionarios locales no encuentran resultados, consulta el servidor Fushi configurado';
+	@override String get remote_video_download => 'Descargar a este dispositivo';
+	@override String get remote_video_download_failed => 'No se pudo descargar el vídeo remoto';
+	@override String get remote_video_downloaded => 'Vídeo remoto descargado';
+	@override String get remote_video_downloading => 'Descargando…';
+	@override String get remote_video_info => 'Información';
+	@override String get remote_video_info_has_subtitle => 'Incluye subtítulos';
+	@override String get remote_video_info_no_subtitle => 'Sin subtítulos';
+	@override String remote_video_info_size({required Object size}) => 'Tamaño: ${size}';
+	@override String get remote_video_list_failed => 'No se pudieron cargar los vídeos remotos. Asegúrese de que el otro dispositivo esté en línea y en la misma red, luego inténtelo de nuevo.';
+	@override String get remote_video_unavailable => 'Dispositivo emparejado no disponible';
+	@override String get rename_collection => 'Renombrar colección';
+	@override String get render_restart_required => 'Se aplica después de reiniciar la app';
+	@override String get repeat_cue => 'Repetir oración';
+	@override String get reset => 'Restablecer';
+	@override String get retry => 'Reintentar';
+	@override String get reverse_arrow_page_turn => 'Invertir la dirección de pasar página con las flechas izquierda/derecha';
+	@override String get reverse_navigation_bar => 'Invertir barra de navegación';
+	@override String get reverse_reader_bottom_bar => 'Invertir barra inferior del lector';
+	@override String get audiobook_rematch_all_zero => 'Todas las ventanas obtuvieron 0%, ajusta manualmente';
+	@override String audiobook_rematch_auto_failed({required Object error}) => 'Emparejamiento automático fallido: ${error}';
+	@override String get audiobook_rematch_auto_match => 'Emparejamiento automático';
+	@override String audiobook_rematch_auto_picked({required Object window, required Object pct}) => 'Selección automática ${window} (acierto ${pct}%)';
+	@override String audiobook_rematch_default_value({required Object n}) => 'Predeterminado ${n}';
+	@override String audiobook_rematch_health_label({required Object pct, required Object detail}) => '${pct} coincidencia — ${detail}';
+	@override String get audiobook_rematch_matching => 'Emparejando...';
+	@override String get audiobook_rematch_no_chapters => 'EPUB no tiene texto de capítulos';
+	@override String get audiobook_rematch_no_cues_to_match => 'No hay marcas para emparejar';
+	@override String get audiobook_rematch_no_sections => 'No se encontró texto de capítulo, no se puede emparejar automáticamente';
+	@override String get audiobook_rematch_no_stored_cues => 'No hay marcas almacenadas, no se puede re-ejecutar';
+	@override String audiobook_rematch_failed({required Object error}) => 'Re-emparejamiento fallido: ${error}';
+	@override String audiobook_rematch_result({required Object pct, required Object window}) => 'Reemparejado: ${pct}% (ventana: ${window})';
+	@override String get audiobook_rematch_search_window => 'Ventana de búsqueda';
+	@override String get audiobook_rematch_similarity_threshold => 'Umbral de similitud';
+	@override String get audiobook_rematch_threshold_hint => 'Similitud mínima para emparejamiento difuso (coeficiente de Dice). Reduce para tolerar más diferencias de texto, pero un valor demasiado bajo causa coincidencias falsas.';
+	@override String get audiobook_rematch_window_hint => 'Número de caracteres a buscar hacia adelante por marca en el texto. Ajusta si la tasa de aciertos es baja; demasiado grande puede desviar el cursor con marcas cortas y ruidosas.';
+	@override String get saved_tags => 'Etiquetas guardadas.';
+	@override String get scan_non_japanese_text => 'Escanear texto no japonés';
+	@override String get scan_non_japanese_text_hint => 'Cuando está apagado, la selección se detiene en caracteres no japoneses';
+	@override String get search => 'Buscar';
+	@override String get search_ellipsis => 'Buscar...';
+	@override String get searching_in_progress => 'Buscando ';
+	@override String get section_advanced_colors => 'Avanzado';
+	@override String get section_advanced_typography => 'Avanzado';
+	@override String get section_audiobook => 'Audiolibro';
+	@override String get section_audiobook_lyrics => 'Audiolibro y letras';
+	@override String get section_epub => 'Biblioteca EPUB';
+	@override String get section_floating_lyric => 'Subtítulo flotante';
+	@override String get section_interface => 'Interfaz';
+	@override String get section_layout => 'Diseño y visualización';
+	@override String get section_navigation => 'Navegación';
+	@override String get section_page_turn_direction => 'Dirección de paso de página';
+	@override String get section_reader_colors => 'Colores del lector';
+	@override String get section_system_theme => 'Color del tema del sistema';
+	@override String get section_typography => 'Tipografía';
+	@override String get section_update => 'Configuración de actualizaciones';
+	@override String get section_video_danmaku => 'Danmaku';
+	@override String get section_video_library => 'Biblioteca';
+	@override String get section_video_playback => 'Reproducción';
+	@override String get section_video_subtitles => 'Subtítulos';
+	@override String get seed_color => 'Color base';
+	@override String get seed_color_desc => 'Genera todos los colores predeterminados a continuación';
+	@override String get selection_color => 'Color de selección';
+	@override String get selection_color_desc => 'Resaltado de selección de texto del lector';
+	@override String get send => 'Enviar';
+	@override String get series => 'Series';
+	@override String get series_created => 'Serie creada';
+	@override String get series_default_name => 'Nueva serie';
+	@override String series_item_count({required Object n}) => '${n} elementos';
+	@override String get series_name_hint => 'Nombre de la serie';
+	@override String get server_address => 'Dirección del servidor';
+	@override String get settings => 'Configuración';
+	@override String get settings_check_update_now => 'Buscar actualizaciones';
+	@override String get settings_destination_appearance => 'Apariencia';
+	@override String get settings_destination_card_creation => 'Creación de tarjetas';
+	@override String get settings_destination_diagnostics => 'Diagnóstico';
+	@override String get settings_destination_interconnect => 'Fushi Interconnect';
+	@override String get settings_destination_listening => 'Escucha';
+	@override String get settings_destination_lookup => 'Búsqueda';
+	@override String get settings_destination_profiles => 'Esquemas de configuración';
+	@override String get settings_destination_reading => 'Lectura';
+	@override String get settings_destination_reading_controls => 'Controles de lectura';
+	@override String get settings_destination_sync_backup => 'Sincronización y copia de seguridad';
+	@override String get settings_destination_system => 'Sistema';
+	@override String get settings_destination_system_summary => 'General, actualizaciones y diagnóstico';
+	@override String get settings_destination_tracking => 'Seguimiento de medios';
+	@override String get settings_destination_video => 'Vídeo';
+	@override String get settings_search_hint => 'Buscar ajustes';
+	@override String get settings_search_no_results => 'Sin ajustes coincidentes';
+	@override String get settings_secret_hide => 'Ocultar valor';
+	@override String get settings_secret_show => 'Mostrar valor';
+	@override String get settings_section_app_shell => 'Aplicación';
+	@override String get settings_section_data_storage => 'Ubicación de almacenamiento de datos';
+	@override String get settings_section_gal_hook_overlay => 'Superposición de subtítulos de galgame';
+	@override String get settings_section_general => 'General';
+	@override String get settings_section_lookup_audio => 'Pronunciación y retroalimentación';
+	@override String get settings_section_lookup_content => 'Contenido de la entrada';
+	@override String get settings_section_lookup_integrations => 'Integraciones externas';
+	@override String get settings_section_lookup_popup_window => 'Ventana emergente';
+	@override String get settings_section_lookup_trigger => 'Activación de búsqueda';
+	@override String get settings_section_page_turn_input => 'Paso de página e interacción';
+	@override String get settings_section_reader_chrome => 'Interfaz del lector';
+	@override String get settings_section_update_channel => 'Canal de actualización';
+	@override String get settings_view_changelog => 'Ver registro de cambios';
+	@override String get share => 'Compartir';
+	@override String get share_theme => 'Compartir tema';
+	@override String get shortcut_action_audiobook_next_sentence => 'Frase siguiente';
+	@override String get shortcut_action_audiobook_play_pause => 'Reproducir / Pausar';
+	@override String get shortcut_action_audiobook_prev_sentence => 'Frase anterior';
+	@override String get shortcut_action_audiobook_seek_clicked => 'Saltar el audio a la frase pulsada';
+	@override String get shortcut_action_dpad_down => 'Cruceta Abajo';
+	@override String get shortcut_action_dpad_left => 'Cruceta Izquierda';
+	@override String get shortcut_action_dpad_right => 'Cruceta Derecha';
+	@override String get shortcut_action_dpad_up => 'Cruceta Arriba';
+	@override String get shortcut_action_global_back => 'Volver';
+	@override String get shortcut_action_global_external_lookup => 'App-external lookup hotkey';
+	@override String get shortcut_action_global_scroll_page_down => 'Desplazar una pantalla hacia abajo';
+	@override String get shortcut_action_global_scroll_page_up => 'Desplazar una pantalla hacia arriba';
+	@override String get shortcut_action_global_toggle_fullscreen => 'Alternar pantalla completa';
+	@override String get shortcut_action_home_focus_search => 'Enfocar búsqueda';
+	@override String get shortcut_action_home_tab_books => 'Pestaña de libros';
+	@override String get shortcut_action_home_tab_dict => 'Pestaña de diccionario';
+	@override String get shortcut_action_home_tab_next => 'Pestaña siguiente';
+	@override String get shortcut_action_home_tab_prev => 'Pestaña anterior';
+	@override String get shortcut_action_home_tab_settings => 'Pestaña de ajustes';
+	@override String get shortcut_action_popup_next_entry => 'Siguiente entrada de palabra';
+	@override String get shortcut_action_popup_prev_entry => 'Entrada de palabra anterior';
+	@override String get shortcut_action_reader_create_card_from_popup => 'Crear tarjeta desde la ventana';
+	@override String get shortcut_action_reader_dismiss_dict => 'Cerrar diccionario';
+	@override String get shortcut_action_reader_enter_caret => 'Activar cursor de búsqueda';
+	@override String get shortcut_action_reader_lookup_at_cursor => 'Consultar / activar cursor';
+	@override String get shortcut_action_reader_open_menu => 'Open Settings Menu';
+	@override String get shortcut_action_reader_open_navigation => 'Open Navigation';
+	@override String get shortcut_action_reader_page_backward => 'Página anterior';
+	@override String get shortcut_action_reader_page_forward => 'Página siguiente';
+	@override String get shortcut_action_reader_shift_lookup => 'Consulta con Shift';
+	@override String get shortcut_action_reader_toggle_chrome => 'Mostrar/ocultar controles';
+	@override String get shortcut_action_reader_toggle_furigana => 'Mostrar/ocultar furigana';
+	@override String get shortcut_action_video_align_subtitle_to_next => 'Alinear siguiente subtítulo al ahora';
+	@override String get shortcut_action_video_align_subtitle_to_prev => 'Alinear subtítulo anterior al ahora';
+	@override String get shortcut_action_video_cycle_secondary_subtitle_obscure => 'Cycle Secondary Subtitle Obscure';
+	@override String get shortcut_action_video_cycle_subtitle_obscure => 'Cycle Subtitle Obscure Mode';
+	@override String get shortcut_action_video_next_chapter => 'Capítulo siguiente';
+	@override String get shortcut_action_video_next_frame => 'Fotograma siguiente';
+	@override String get shortcut_action_video_next_subtitle => 'Subtítulo siguiente';
+	@override String get shortcut_action_video_open_subtitle_align => 'Abrir alineación de subtítulos con onda';
+	@override String get shortcut_action_video_pause => 'Pausar';
+	@override String get shortcut_action_video_play => 'Reproducir';
+	@override String get shortcut_action_video_previous_chapter => 'Capítulo anterior';
+	@override String get shortcut_action_video_previous_frame => 'Fotograma anterior';
+	@override String get shortcut_action_video_previous_subtitle => 'Subtítulo anterior';
+	@override String get shortcut_action_video_replay_current_subtitle => 'Repetir el subtítulo actual';
+	@override String get shortcut_action_video_replay_previous_subtitle => 'Repetir el subtítulo anterior';
+	@override String get shortcut_action_video_reset_speed => 'Restablecer velocidad';
+	@override String get shortcut_action_video_screenshot => 'Captura de pantalla';
+	@override String get shortcut_action_video_seek_backward => 'Retroceder';
+	@override String get shortcut_action_video_seek_forward => 'Avanzar';
+	@override String get shortcut_action_video_speed_down => 'Reducir velocidad';
+	@override String get shortcut_action_video_speed_up => 'Acelerar';
+	@override String get shortcut_action_video_subtitle_delay_decrease => 'Retraso de subtítulos −';
+	@override String get shortcut_action_video_subtitle_delay_increase => 'Retraso de subtítulos +';
+	@override String get shortcut_action_video_toggle_favorite_sentence => 'Añadir la frase actual a favoritos';
+	@override String get shortcut_action_video_toggle_fullscreen => 'Alternar pantalla completa';
+	@override String get shortcut_action_video_toggle_immersive_lock => 'Alternar bloqueo inmersivo';
+	@override String get shortcut_action_video_toggle_mute => 'Alternar silencio';
+	@override String get shortcut_action_video_toggle_play_pause => 'Reproducir / Pausar';
+	@override String get shortcut_action_video_toggle_secondary_subtitle_hide => 'Toggle Hide Secondary Subtitle';
+	@override String get shortcut_action_video_toggle_shader_compare => 'Alternar comparación de shaders';
+	@override String get shortcut_action_video_toggle_subtitle_blur => 'Alternar difuminado de subtítulos';
+	@override String get shortcut_action_video_toggle_subtitle_hide => 'Toggle Hide Subtitles';
+	@override String get shortcut_action_video_toggle_subtitle_list => 'Alternar lista de subtítulos';
+	@override String get shortcut_action_video_volume_down => 'Bajar volumen';
+	@override String get shortcut_action_video_volume_up => 'Subir volumen';
+	@override String get shortcut_assign_pick_action => 'Asignar a acción…';
+	@override String get shortcut_clear => 'Borrar';
+	@override String shortcut_conflict({required Object s}) => 'Ya usado por: ${s}';
+	@override String shortcut_conflict_replace_confirm({required Object s}) => 'Este atajo ya lo usa ${s}. ¿Moverlo a esta acción?';
+	@override String get shortcut_gamepad => 'Mando';
+	@override String get shortcut_gamepad_brand_label => 'Estilo de botones del gamepad';
+	@override String get shortcut_gamepad_brand_playstation => 'PlayStation';
+	@override String get shortcut_gamepad_brand_switch => 'Nintendo Switch';
+	@override String get shortcut_gamepad_brand_xbox => 'Xbox';
+	@override String get shortcut_gamepad_pick_list => 'Elegir de la lista';
+	@override String get shortcut_gamepad_unavailable_hint => 'Componente GameInput no detectado — el soporte de gamepad no está disponible. Instale los Windows Gaming Services para habilitar soporte de controles.';
+	@override String get shortcut_keyboard => 'Teclado';
+	@override String get shortcut_mouse_back => 'Botón atrás';
+	@override String get shortcut_mouse_button => 'Botón del ratón';
+	@override String get shortcut_mouse_forward => 'Botón adelante';
+	@override String get shortcut_mouse_left => 'Clic izquierdo';
+	@override String get shortcut_mouse_middle => 'Clic central';
+	@override String get shortcut_mouse_right => 'Clic derecho';
+	@override String get shortcut_press_gamepad => 'Presione un botón del gamepad...';
+	@override String get shortcut_press_key => 'Pulsa una combinación de teclas...';
+	@override String get shortcut_press_mouse_button => 'Presione un botón del ratón...';
+	@override String get shortcut_press_wheel => 'Mantenga una tecla modificadora y desplace aquí';
+	@override String get shortcut_reset_confirm => '¿Restablecer todos los atajos de esta sección a los valores predeterminados?';
+	@override String get shortcut_reset_defaults => 'Restablecer valores predeterminados';
+	@override String get shortcut_scope_audiobook => 'Audiolibro';
+	@override String get shortcut_scope_dictionary_popup => 'Popup del diccionario';
+	@override String get shortcut_scope_dictionary_popup_note => 'Funciona cuando el cursor está sobre un popup del diccionario';
+	@override String get shortcut_scope_gamepad => 'Mando';
+	@override String get shortcut_scope_global => 'Global';
+	@override String get shortcut_scope_global_external => 'Global (fuera de la app)';
+	@override String get shortcut_scope_global_external_mobile_note => 'Triggered by the system (text selection menu, share, floating ball); the OS does not allow apps to remap this hotkey.';
+	@override String get shortcut_scope_home => 'Inicio';
+	@override String get shortcut_scope_reader => 'Lector';
+	@override String get shortcut_scope_video => 'Vídeo';
+	@override String get shortcut_settings_title => 'Atajos de teclado';
+	@override String get shortcut_stop_capture => 'Detener';
+	@override String get shortcut_tap_to_assign => 'Sin asignar · toque para asignar';
+	@override String get shortcut_view_list => 'Vista de lista';
+	@override String get shortcut_view_visual => 'Disposición del control';
+	@override String get shortcut_wheel => 'Rueda del ratón';
+	@override String get shortcut_wheel_down => 'Rueda abajo';
+	@override String get shortcut_wheel_needs_modifier => 'La rueda sola desplaza el popup — mantenga Alt / Ctrl / Shift mientras desplaza';
+	@override String get shortcut_wheel_up => 'Rueda arriba';
+	@override String get show_bottom_bar_cue => 'Mostrar oración actual';
+	@override String get show_expression_tags => 'Mostrar etiquetas de expresión';
+	@override String get show_floating_lyric => 'Letra flotante superpuesta';
+	@override String get show_media_notification => 'Mostrar notificación multimedia';
+	@override String get show_options => 'Mostrar opciones';
+	@override String get show_top_progress_bar => 'Indicador de progreso';
+	@override String get skip_action => 'Acción de salto';
+	@override String skip_action_seconds({required Object n}) => '${n} segundos';
+	@override String get skip_action_sentence => '1 frase';
+	@override String get sort_by => 'Ordenar';
+	@override String get sort_imported => 'Fecha de importación';
+	@override String get sort_recent_read => 'Leído recientemente';
+	@override String get sort_recent_watched => 'Visto recientemente';
+	@override String get sort_title => 'Nombre';
+	@override String get source_description_epub => 'Lectura de EPUB y búsqueda en diccionario';
+	@override String get source_name_bookshelf => 'Estantería';
+	@override String get spread_auto => 'Automático';
+	@override String get spread_direction => 'Dirección de extensión';
+	@override String get spread_direction_ltr => 'De izquierda a derecha';
+	@override String get spread_direction_rtl => 'De derecha a izquierda';
+	@override String get spread_mode => 'Modo de extensión';
+	@override String get spread_off => 'Desactivado';
+	@override String get spread_on => 'Activado';
+	@override String get srt_audio_unresolved => 'Archivo de audio no encontrado — por favor vuelve a adjuntarlo';
+	@override String get srt_books_section => 'Audiolibros con subtítulos';
+	@override String srt_delete_confirm({required Object title}) => '?Eliminar 『${title}』? Esta acción no se puede deshacer.';
+	@override String get srt_delete_title => 'Eliminar libro de subtítulos';
+	@override String get srt_epub_not_ready => 'Libro no preparado — por favor reimporta';
+	@override String get srt_import => 'Importar libro';
+	@override String get srt_import_audio_needs_subtitle => 'El audio debe emparejarse con subtítulos. Para adjuntar audio a un EPUB existente, mantén pulsado el libro en la estantería.';
+	@override String get srt_import_author_hint => 'Autor (opcional)';
+	@override String get srt_import_error => 'Error en la importación';
+	@override String srt_import_files_selected({required Object n}) => '${n} archivos seleccionados';
+	@override String get srt_import_hint_epub_or_srt => 'Elige un archivo EPUB o de subtítulos para importar.';
+	@override String get srt_import_missing_input => 'Selecciona al menos un EPUB o un archivo de subtítulos';
+	@override String get srt_import_missing_title => 'Introduce un título para el libro';
+	@override String get srt_import_pick_audio_dir => 'Elegir directorio de audio';
+	@override String get srt_import_pick_audio_files => 'Elegir archivos de audio';
+	@override String get srt_import_pick_cover => 'Elegir imagen de portada';
+	@override String get srt_import_pick_epub => 'Elegir EPUB';
+	@override String get srt_import_pick_subtitle_files => 'Elegir archivos de subtítulos';
+	@override String get srt_import_success => 'Libro importado';
+	@override String get srt_import_title_hint => 'Título del libro';
+	@override String get startup_default_dictionary_tab => 'Abrir la consulta al iniciar';
+	@override String get startup_default_dictionary_tab_hint => 'Inicia la pantalla principal en la pestaña de consulta en lugar del valor predeterminado actual.';
+	@override String get stash => 'Guardado rápido';
+	@override String get stash_added_multiple => 'Se han añadido varios elementos al Guardado rápido.';
+	@override String stash_added_single({required Object term}) => '『${term}』se ha añadido al Guardado rápido.';
+	@override String get stash_clear_description => 'Se eliminará todo el contenido. ?Estás seguro?';
+	@override String stash_clear_single({required Object term}) => '『${term}』 se ha eliminado del Guardado rápido.';
+	@override String get stash_clear_title => 'Vaciar Guardado rápido';
+	@override String get stash_nothing_to_pop => 'No hay elementos para sacar del Guardado rápido.';
+	@override String get stash_placeholder => 'No hay elementos en el Guardado rápido';
+	@override String get stat_all_time => 'Todo el tiempo';
+	@override String get stat_bookshelf_compare => 'Estantería';
+	@override String get stat_clear_all => 'Borrar estadísticas';
+	@override String get stat_clear_all_confirm => 'Borrar';
+	@override String get stat_clear_all_reading_message => '¿Borrar todo el tiempo de lectura, conteos de caracteres y conteos de búsquedas/tarjetas? Sus palabras guardadas, oraciones y tarjetas creadas se conservan. Esto no se puede deshacer.';
+	@override String get stat_clear_all_title => 'Borrar todas las estadísticas';
+	@override String get stat_clear_all_video_message => '¿Borrar todo el tiempo de visualización, conteos de caracteres de subtítulos y conteos de búsquedas/tarjetas? Sus palabras guardadas, oraciones y tarjetas creadas se conservan. Esto no se puede deshacer.';
+	@override String get stat_daily_average => 'Promedio diario';
+	@override String get stat_delete_message => '¿Eliminar el tiempo, conteo de caracteres y estadísticas de búsquedas/tarjetas de este elemento? Sus palabras y oraciones guardadas no se verán afectadas.';
+	@override String get stat_delete_title => 'Eliminar estadísticas';
+	@override String get stat_fastest_day => 'Fastest Day';
+	@override String get stat_favorited => 'Favoritos';
+	@override String get stat_favorited_sentence => 'Frases favoritas';
+	@override String stat_format_chars({required Object n}) => '${n} caracteres';
+	@override String stat_format_chars_wan({required Object n}) => '${n}万 caracteres';
+	@override String stat_format_days({required Object n}) => '${n} días';
+	@override String stat_format_hours_minutes({required Object h, required Object m}) => '${h} h ${m} min';
+	@override String stat_format_minutes({required Object n}) => '${n} min';
+	@override String get stat_goal => 'Daily Goal';
+	@override String get stat_goal_daily => 'Daily Goal';
+	@override String get stat_goal_presets => 'Presets';
+	@override String stat_goal_progress({required Object read, required Object goal}) => '${read} / ${goal} caracteres';
+	@override String get stat_goal_reached => 'Meta alcanzada';
+	@override String stat_goal_recent_average({required Object n}) => 'Últimos 7 días: ${n} caracteres/día en promedio';
+	@override String get stat_goal_set => 'Set Goal';
+	@override String get stat_goal_unit_chars => 'caracteres';
+	@override String get stat_goal_weekly => 'Weekly Goal';
+	@override String get stat_last_30_days => 'últimos 30 días';
+	@override String get stat_lookup => 'Búsquedas';
+	@override String get stat_metric_chars => 'Caracteres';
+	@override String get stat_metric_speed => 'Velocidad';
+	@override String get stat_metric_time => 'Tiempo';
+	@override String get stat_mined => 'Tarjetas creadas';
+	@override String get stat_no_data => 'Aún no hay datos de lectura';
+	@override String get stat_range_and_trend => 'Range & Trend';
+	@override String get stat_recent_active => 'Días activos (7d)';
+	@override String get stat_refresh => 'Actualizar';
+	@override String get stat_slowest_day => 'Slowest Day';
+	@override String get stat_sort_by_chars => 'Por caracteres';
+	@override String get stat_sort_by_speed => 'Por velocidad';
+	@override String get stat_sort_by_time => 'Por tiempo';
+	@override String get stat_speed_anomaly => 'Anomalía';
+	@override String get stat_speed_avg => 'Media móvil';
+	@override String stat_speed_cph({required Object n}) => '${n} caracteres/h';
+	@override String get stat_speed_summary => 'Speed Summary';
+	@override String get stat_streak => 'Racha';
+	@override String get stat_this_month => 'Este mes';
+	@override String get stat_this_week => 'Esta semana';
+	@override String get stat_today => 'Hoy';
+	@override String get stat_today_hourly => 'Hoy por hora';
+	@override String get stat_trend_daily => 'Diaria';
+	@override String get stat_trend_monthly => 'Mensual';
+	@override String get stat_trend_weekly => 'Semanal';
+	@override String get stat_typical_day => 'Typical Day';
+	@override String get stat_vs_prev => 'vs 14d ant.';
+	@override String get stat_weighted_avg_speed => 'Weighted Avg';
+	@override String get stop => 'Detener';
+	@override String get storage_permissions => 'Por favor concede los siguientes permisos para exportar a AnkiDroid.';
+	@override String get stream => 'Transmisión';
+	@override String get swipe_page_turn_sensitivity => 'Sensibilidad de pasar página al deslizar';
+	@override String get sync_account => 'Cuenta';
+	@override String get sync_audiobook => 'Sincronizar posición del audiolibro';
+	@override String get sync_audiobook_files => 'Sincronizar archivos de audiolibros';
+	@override String get sync_audiobook_files_warning => 'El audio y los subtítulos pueden ser grandes.';
+	@override String sync_auth_error({required Object message}) => 'Error de autenticación: ${message}';
+	@override String get sync_auto_sync => 'Sincronización automática';
+	@override String get sync_backend => 'Backend de almacenamiento';
+	@override String get sync_backend_dropbox => 'Dropbox';
+	@override String get sync_backend_ftp => 'FTP';
+	@override String get sync_backend_google_drive => 'Google Drive';
+	@override String get sync_backend_fushi_server => 'Fushi Interconnect';
+	@override String get sync_backend_onedrive => 'OneDrive';
+	@override String get sync_backend_sftp => 'SFTP';
+	@override String get sync_backend_webdav => 'WebDAV';
+	@override String get sync_checking_account => 'Verificando cuenta…';
+	@override String get sync_client_connected => 'Conectado';
+	@override String get sync_client_token => 'Token de acceso del par';
+	@override String get sync_client_token_manual => 'Introducir token manualmente';
+	@override String get sync_compare => 'Comparar datos';
+	@override String get sync_compare_all_books => 'Todos los libros';
+	@override String get sync_compare_all_local => 'Todo → Local';
+	@override String get sync_compare_all_remote => 'Todo → Remoto';
+	@override String get sync_compare_all_skip => 'Todo → Omitir';
+	@override String sync_compare_applied({required Object count}) => 'Se aplicaron ${count} cambios';
+	@override String sync_compare_apply({required Object count}) => 'Sincronizar ahora (${count})';
+	@override String get sync_compare_close => 'Cerrar';
+	@override String get sync_compare_conflicts => 'Conflictos';
+	@override String get sync_compare_days => 'días';
+	@override String get sync_compare_delete_audiobook => 'Eliminar audiolibro en el remoto';
+	@override String get sync_compare_delete_book => 'Eliminar libro en el remoto';
+	@override String sync_compare_delete_confirm({required Object name}) => '¿Eliminar "${name}" del remoto? Los datos locales se conservan. Esto no se puede deshacer.';
+	@override String get sync_compare_delete_dict => 'Eliminar diccionario en el remoto';
+	@override String get sync_compare_deleted => 'Eliminado del remoto';
+	@override String get sync_compare_dictionaries => 'Diccionarios';
+	@override String get sync_compare_download => 'Descargar';
+	@override String get sync_compare_empty => 'No se encontraron libros';
+	@override String get sync_compare_local => 'Local';
+	@override String get sync_compare_no_content => 'Solo datos en la nube: no hay libro para descargar';
+	@override String get sync_compare_no_data => 'Sin datos';
+	@override String get sync_compare_remote => 'Remoto';
+	@override String get sync_compare_select_all => 'Seleccionar todo';
+	@override String get sync_compare_skip => 'Omitir';
+	@override String get sync_compare_title => 'Local vs. remoto';
+	@override String get sync_compare_unavailable => 'Set up sync first';
+	@override String get sync_compare_use_local => 'Local';
+	@override String get sync_compare_use_remote => 'Remoto';
+	@override String get sync_connection_failed => 'Error de conexión';
+	@override String get sync_connection_success => 'Conexión correcta';
+	@override String get sync_content => 'Sincronizar archivos de libros';
+	@override String get sync_content_warning => 'Los archivos grandes consumirán almacenamiento y datos';
+	@override String get sync_err_auth_expired => 'La sesión ha caducado: inicia sesión de nuevo.';
+	@override String get sync_err_invalid_client => 'Las credenciales del cliente no son válidas para esta versión: actualiza la app.';
+	@override String get sync_err_network => 'No se puede conectar con el servidor: revisa tu red o los ajustes de proxy.';
+	@override String get sync_err_not_configured => 'Las credenciales de sincronización de Google no están configuradas en esta versión.';
+	@override String get sync_err_quota => 'El almacenamiento en la nube está lleno (cuota alcanzada).';
+	@override String get sync_err_scope_upgrade => 'Los permisos de sincronización cambiaron — inicie sesión en Google de nuevo para continuar sincronizando.';
+	@override String get sync_err_timeout => 'Se agotó el tiempo de conexión: el servidor no respondió a tiempo.';
+	@override String sync_error({required Object message}) => 'Error de sincronización: ${message}';
+	@override String get sync_exit_warning => 'La sincronización aún está en curso. Salir ahora puede provocar pérdida de datos.';
+	@override String get sync_exit_warning_title => 'Sincronización en curso';
+	@override String get sync_host => 'Servidor';
+	@override String get sync_lan_discovery => 'Dispositivos en la red local';
+	@override String get sync_lan_no_devices => 'No se encontraron dispositivos';
+	@override String get sync_lan_scan_failed => 'Error al buscar: revisa los permisos de red o el firewall.';
+	@override String get sync_not_signed_in => 'No conectado';
+	@override String get sync_now => 'Sincronizar ahora';
+	@override String sync_now_audio_in({required Object count}) => '↓${count} audiolibros';
+	@override String sync_now_audio_out({required Object count}) => '↑${count} audiolibros';
+	@override String sync_now_books_in({required Object count}) => '↓${count} libros';
+	@override String get sync_now_busy => 'Ya hay una sincronización en curso';
+	@override String sync_now_dicts_in({required Object count}) => '↓${count} diccionarios';
+	@override String sync_now_dicts_out({required Object count}) => '↑${count} diccionarios';
+	@override String sync_now_done({required Object detail}) => 'Sincronizado · ${detail}';
+	@override String sync_now_failed_suffix({required Object count}) => ' · ${count} fallidos';
+	@override String get sync_now_hint => 'Ejecutar ahora una sincronización bidireccional completa con la nube';
+	@override String sync_now_local_audio_in({required Object count}) => '↓${count} fuentes de audio';
+	@override String sync_now_local_audio_out({required Object count}) => '↑${count} fuentes de audio';
+	@override String get sync_now_no_changes => 'sin cambios';
+	@override String get sync_pair_allow => 'Permitir';
+	@override String sync_pair_confirm_identity_body({required Object device}) => 'Se está emparejando con ${device}. Confirme que es el dispositivo que espera antes de continuar.';
+	@override String get sync_pair_confirm_identity_title => 'Confirmar dispositivo';
+	@override String get sync_pair_continue => 'Continuar';
+	@override String get sync_pair_denied => 'El otro dispositivo rechazó el emparejamiento';
+	@override String get sync_pair_deny => 'Denegar';
+	@override String get sync_pair_enter_pin_body => 'Introduzca el PIN de 6 dígitos que se muestra en el otro dispositivo.';
+	@override String get sync_pair_enter_pin_title => 'Introducir PIN';
+	@override String get sync_pair_failed => 'Error de emparejamiento';
+	@override String get sync_pair_fingerprint_changed => 'Certificado cambiado — emparejamiento abortado por seguridad (posible intercepción).';
+	@override String get sync_pair_fingerprint_label => 'Huella del certificado';
+	@override String get sync_pair_not_fushi => 'No se encontró dispositivo Fushi en esta dirección. La dirección fue guardada.';
+	@override String get sync_pair_pairing => 'Emparejando…';
+	@override String get sync_pair_pin_label => 'Introduzca este PIN en el otro dispositivo';
+	@override String get sync_pair_pin_waiting => 'Esperando que el otro dispositivo introduzca este PIN…';
+	@override String get sync_pair_pin_wrong => 'PIN incorrecto — inténtelo de nuevo';
+	@override String get sync_pair_repair => 'Emparejar de nuevo';
+	@override String get sync_pair_request_body => 'Un dispositivo solicita emparejarse. ¿Permitir que se sincronice con este dispositivo?';
+	@override String get sync_pair_request_title => 'Solicitud de emparejamiento';
+	@override String get sync_pair_success => 'Emparejado: token rellenado';
+	@override String get sync_pair_unavailable => 'El otro dispositivo no está listo o tiene una versión anterior. Actualízalo y activa la sincronización, luego inténtalo de nuevo.';
+	@override String get sync_pair_unknown_device => 'Dispositivo desconocido';
+	@override String get sync_paired_peer_remove => 'Eliminar';
+	@override String get sync_paired_peer_removed => 'Dispositivo emparejado eliminado';
+	@override String get sync_paired_peer_unknown => 'Dispositivo desconocido';
+	@override String get sync_paired_peers_empty => 'Aún no hay dispositivos emparejados';
+	@override String get sync_paired_peers_title => 'Dispositivos emparejados';
+	@override String get sync_password => 'Contraseña';
+	@override String get sync_port => 'Puerto';
+	@override String get sync_private_key => 'Clave privada';
+	@override String get sync_progress_audiobooks => 'Sincronizando audiolibros';
+	@override String get sync_progress_books => 'Importando libros';
+	@override String get sync_progress_dictionaries => 'Sincronizando diccionarios';
+	@override String get sync_progress_local_audio => 'Sincronizando audio local';
+	@override String get sync_progress_reading => 'Sincronizando datos de lectura';
+	@override String get sync_progress_videos => 'Sincronizando vídeos';
+	@override String get sync_role_locked_by_client => 'Ya conectado a otro dispositivo. Quita la conexión antes de actuar como servidor.';
+	@override String get sync_role_locked_by_server => 'Este dispositivo actúa como servidor. Apaga el servidor antes de conectarte a otros dispositivos.';
+	@override String get sync_section_actions => 'Acciones de sincronización';
+	@override String get sync_section_backup => 'Copia de seguridad local';
+	@override String get sync_section_content => 'Qué sincronizar';
+	@override String get sync_section_host_server => 'Este dispositivo como servidor de sincronización';
+	@override String get sync_section_host_server_footer => 'Permite que otros dispositivos sincronicen desde este dispositivo. Independiente del backend de sincronización anterior.';
+	@override String get sync_section_method => 'Método de sincronización';
+	@override String get sync_server_copy_token => 'Copiar token';
+	@override String get sync_server_enable => 'Activar servidor de sincronización';
+	@override String get sync_server_mode_active => 'Este dispositivo es un servidor de sincronización';
+	@override String get sync_server_mode_clients_drive => 'Los clientes conectados inician la sincronización: aquí no hace falta sincronizar manualmente.';
+	@override String get sync_server_port => 'Puerto del servidor';
+	@override String sync_server_port_in_use({required Object port}) => 'El puerto ${port} ya está en uso: elige otro puerto.';
+	@override String get sync_server_regenerate_token => 'Regenerar token';
+	@override String get sync_server_running => 'Servidor en ejecución';
+	@override String get sync_server_stopped => 'Servidor detenido';
+	@override String get sync_server_tls_enable => 'Cifrado de Interconnect (HTTPS/TLS)';
+	@override String get sync_server_tls_repair_hint => 'Cambiar esto requiere que los dispositivos emparejados se emparejen de nuevo';
+	@override String get sync_server_token => 'Token de acceso';
+	@override String get sync_show_remote_entries => 'Mostrar entradas remotas';
+	@override String get sync_show_remote_entries_warning => 'Muestra libros y vídeos que existen en dispositivos emparejados o la nube como tarjetas de marcador que puede descargar o transmitir.';
+	@override String get sync_sign_in => 'Iniciar sesión';
+	@override String get sync_sign_out => 'Cerrar sesión';
+	@override String get sync_signed_in => 'Conectado';
+	@override String get sync_statistics => 'Sincronizar estadísticas';
+	@override String get sync_summary => 'Nube, P2P por red local y copia de seguridad local';
+	@override String get sync_test_connection => 'Probar conexión';
+	@override String get sync_use_tls => 'Usar TLS';
+	@override String get sync_username => 'Usuario';
+	@override String get sync_video_files => 'Subir archivos de vídeo';
+	@override String get sync_video_files_warning => 'Los archivos de vídeo pueden ser muy grandes.';
+	@override String get sync_webdav_missing_fields => 'Faltan campos';
+	@override String sync_webdav_test_failed({required Object message}) => 'Error de conexión: ${message}';
+	@override String get sync_webdav_url => 'URL del servidor';
+	@override String tag_added_to_book({required Object name}) => 'Etiqueta "${name}" añadida al libro.';
+	@override String tag_added_to_collection({required Object name}) => 'Etiqueta ${name} añadida a la colección.';
+	@override String tag_added_to_video({required Object name}) => 'Etiqueta ${name} añadida al vídeo.';
+	@override String tag_already_on_book({required Object name}) => 'La etiqueta "${name}" ya está en este libro.';
+	@override String tag_already_on_collection({required Object name}) => 'La etiqueta ${name} ya está en esta colección.';
+	@override String tag_book_count({required Object count}) => '${count} libro(s)';
+	@override String get tag_clear_filter => 'Borrar filtro';
+	@override String get tag_color => 'Color';
+	@override String tag_delete_confirm({required Object name}) => '¿Eliminar etiqueta "${name}"?';
+	@override String get tag_filter_title => 'Filtrar por etiqueta';
+	@override String get tag_label => 'Etiquetas';
+	@override String get tag_manage => 'Gestionar etiquetas';
+	@override String get tag_manage_title => 'Gestionar etiquetas';
+	@override String get tag_name_duplicate => 'Ya existe una etiqueta con este nombre.';
+	@override String get tag_name_empty => 'El nombre de la etiqueta no puede estar vacío.';
+	@override String get tag_name_hint => 'Nombre de la etiqueta';
+	@override String get tag_new => 'Nueva etiqueta';
+	@override String get tag_no_books_for_filter => 'Ningún libro coincide con las etiquetas seleccionadas.';
+	@override String get tag_no_tags_hint => 'Aún no hay etiquetas. Crea una para empezar.';
+	@override String get tag_seed_stars => 'Añadir etiquetas de calificación por estrellas';
+	@override String get tag_seed_stars_added => 'Etiquetas de calificación por estrellas añadidas';
+	@override String get tag_seed_stars_exists => 'Las etiquetas de calificación por estrellas ya existen';
+	@override String get tap_empty_hide_chrome => 'Barra de control flotante';
+	@override String get text_segmentation => 'Segmentación de texto';
+	@override String get texthooker => 'Texthooker';
+	@override String get texthooker_enabled => 'Texthooker (recibir texto)';
+	@override String get texthooker_enabled_hint => 'Conéctate a Textractor/mpv/agente y consulta el texto entrante';
+	@override String get theme_black => 'Negro puro';
+	@override String get theme_code_copied => 'Código de tema copiado al portapapeles';
+	@override String get theme_dark => 'Oscuro profundo';
+	@override String get theme_ecru => 'Crudo';
+	@override String get theme_eyecare => 'Eye Care';
+	@override String get theme_gray => 'Gris oscuro';
+	@override String get theme_light => 'Blanco';
+	@override String get theme_seed_preview_hint => 'Las muestras de abajo previsualizan los colores generados a partir de tu color semilla. Para fijar un color concreto como acento principal, activa el interruptor Principal y elígelo de forma explícita.';
+	@override String get theme_water => 'Azul agua';
+	@override String toc_section({required Object n}) => 'índice (${n})';
+	@override String get top_progress_pos_center => 'Centro';
+	@override String get top_progress_pos_left => 'Arriba-izquierda';
+	@override String get top_progress_pos_right => 'Arriba-derecha';
+	@override String get top_progress_position => 'Posición del progreso';
+	@override String get torrent_upload_intro_body => 'La subida (seeding) está desactivada por defecto. Actívela para compartir contenido descargado de vuelta al enjambre — esto usa su ancho de banda de subida. Puede cambiar esto en cualquier momento en Ajustes.';
+	@override String get torrent_upload_intro_confirm => 'Guardar';
+	@override String get torrent_upload_intro_enable => 'Activar subida / seeding';
+	@override String get torrent_upload_intro_keep_off => 'Mantener apagado';
+	@override String get torrent_upload_intro_title => 'Subida / seeding';
+	@override String get reader_blur_images => 'Difuminar imágenes (protección de spoilers)';
+	@override String get reader_font_size => 'Tamaño de fuente';
+	@override String get reader_font_vpal => 'VPAL (alt. vertical)';
+	@override String get reader_furigana_hide => 'Ocultar';
+	@override String get reader_furigana_mode => 'Furigana';
+	@override String get reader_furigana_mode_hint => '';
+	@override String get reader_furigana_partial => 'Parcial';
+	@override String get reader_furigana_show => 'Mostrar';
+	@override String get reader_furigana_toggle => 'Alternar';
+	@override String get reader_horizontal => 'Horizontal';
+	@override String get reader_line_height => 'Altura de línea';
+	@override String get reader_merge_image_pages => 'Integrar páginas de ilustración en el texto';
+	@override String get reader_merge_image_pages_subtitle => 'Los capítulos independientes de una sola imagen se renderizan en línea en el capítulo de texto adyacente en lugar de en su propia página';
+	@override String get reader_no_books_added => 'No hay libros en la biblioteca';
+	@override String get reader_not_bound_cannot_rematch => 'El audiolibro no está vinculado a un libro, no se puede re-emparejar';
+	@override String get reader_orient_mixed => 'Mixto';
+	@override String get reader_orient_upright => 'Vertical';
+	@override String get reader_page_columns_auto => 'Automático';
+	@override String get reader_paginated => 'Paginado';
+	@override String get reader_paragraph_spacing => 'Espaciado de párrafos';
+	@override String get reader_reader_styles => 'Priorizar estilos del libro';
+	@override String get reader_scroll => 'Desplazamiento';
+	@override String get reader_text_indentation => 'Sangría de párrafo';
+	@override String get reader_text_justify => 'Justificación de texto';
+	@override String get reader_theme => 'Tema';
+	@override String get reader_vert_kerning => 'Interletraje (vertical)';
+	@override String get reader_vert_text_orient => 'Orientación del texto';
+	@override String get reader_vertical => 'Vertical';
+	@override String get reader_view_mode_label => 'Páginas / Desplazamiento';
+	@override String get reader_vn => 'Visual Novel';
+	@override String get reader_writing_direction => 'Dirección de escritura';
+	@override String get undo => 'Deshacer';
+	@override String get unit_milliseconds => 'ms';
+	@override String get unit_pixels => 'px';
+	@override String untitled_book({required Object id}) => 'Libro ${id}';
+	@override String get untitled_chapter => '(Sin título)';
+	@override String get update_already_latest => 'Ya tiene la última versión';
+	@override String get update_auto_install => 'Instalar actualizaciones automáticamente';
+	@override String get update_available => 'Actualización disponible';
+	@override String update_cached_newer({required Object version}) => 'Actualización ${version} disponible (verificando…)';
+	@override String update_cached_up_to_date({required Object version}) => 'En la última versión conocida ${version} (verificando…)';
+	@override String get update_cancel => 'Cancelar';
+	@override String get update_cancelled => 'Descarga cancelada';
+	@override String get update_cancelling => 'Cancelando…';
+	@override String get update_channel_beta => 'Beta';
+	@override String get update_channel_debug => 'Depuración';
+	@override String get update_channel_stable => 'Estable';
+	@override String get update_check_failed => 'Error al buscar actualizaciones';
+	@override String get update_checking_now => 'Buscando actualizaciones…';
+	@override String get update_connecting => 'Conectando…';
+	@override String get update_debug_channel => 'Canal de actualización de depuración';
+	@override String get update_debug_channel_warning => 'Las compilaciones del canal de depuración pueden ser inestables. Úselas bajo su propio riesgo.';
+	@override String get update_download => 'Descargar';
+	@override String get update_download_failed => 'Error al descargar';
+	@override String get update_download_restarted_from_zero => 'reiniciada desde cero';
+	@override String update_download_resume_status({required Object status}) => 'Reanudación: ${status}';
+	@override String get update_download_resumed => 'reanudada';
+	@override String update_download_size({required Object received, required Object total}) => 'Descargado: ${received} / ${total}';
+	@override String update_download_source({required Object source}) => 'Fuente: ${source}';
+	@override String update_download_speed({required Object speed}) => 'Velocidad: ${speed}';
+	@override String get update_downloading => 'Descargando actualización…';
+	@override String get update_hide => 'Ocultar';
+	@override String update_install_current_executable({required Object path}) => 'Ejecutable en uso: ${path}';
+	@override String update_install_deletefile_failure({required Object path, required Object code}) => 'El instalador no pudo reemplazar ${path} (código ${code})';
+	@override String update_install_detected_location({required Object source, required Object path}) => 'Ubicación de instalación detectada (${source}): ${path}';
+	@override String update_install_failure_summary({required Object summary}) => 'Motivo: ${summary}';
+	@override String get update_install_incomplete_message => 'El instalador se inició, pero Fushi sigue en la versión anterior. Revisa el registro del instalador más abajo.';
+	@override String get update_install_incomplete_title => 'La actualización no terminó';
+	@override String update_install_installer_pid({required Object pid}) => 'PID del instalador: ${pid}';
+	@override String update_install_launch_failed_message({required Object version}) => 'Fushi no pudo iniciar el instalador de la versión ${version}. Revisa la ruta del registro más abajo.';
+	@override String get update_install_launch_failed_title => 'El instalador de la actualización no se inició';
+	@override String update_install_launcher_pid({required Object pid}) => 'PID del lanzador de actualización: ${pid}';
+	@override String update_install_libmpv_holder({required Object pid, required Object path}) => 'Proceso que retiene libmpv: PID ${pid} - ${path}';
+	@override String get update_install_log_not_observed => 'El registro del instalador no se creó durante la comprobación posterior al inicio.';
+	@override String get update_install_log_observed => 'El registro del instalador se creó durante la comprobación posterior al inicio.';
+	@override String update_install_log_path({required Object path}) => 'Registro del instalador: ${path}';
+	@override String get update_install_manual_close_retry => 'Cierra Fushi según el PID/ruta indicados y vuelve a intentar la actualización o ejecuta el instalador de nuevo.';
+	@override String get update_install_parent_exit_not_observed => 'El lanzador de la actualización no comprobó que Fushi se cerrara antes de iniciar el instalador.';
+	@override String get update_install_parent_exit_observed => 'Fushi se cerró antes de iniciar el instalador.';
+	@override String update_install_path_mismatch({required Object warning}) => 'Directorio de instalación no coincidente: ${warning}';
+	@override String get update_install_permission_cancel => 'Cancelar';
+	@override String get update_install_permission_message => 'Permita que Fushi instale apps en los ajustes del sistema, luego reintente.';
+	@override String get update_install_permission_retry => 'Reintentar instalación';
+	@override String get update_install_permission_title => 'Permitir instalar actualizaciones';
+	@override String get update_install_restart_windows_hint => 'Si los procesos indicados están cerrados pero libmpv-2.dll sigue bloqueado, reinicia Windows e instala de nuevo.';
+	@override String update_install_running_process({required Object pid, required Object path}) => 'Proceso de Fushi en ejecución: PID ${pid} - ${path}';
+	@override String update_install_success_message({required Object version}) => 'Fushi se actualizó a la versión ${version}.';
+	@override String get update_install_success_title => 'Actualización instalada';
+	@override String update_install_target_dir({required Object path}) => 'Destino de instalación: ${path}';
+	@override String get update_installing => 'Instalando…';
+	@override String get update_mac_install_incomplete_message => 'La actualización no pudo aplicarse, por lo que Fushi sigue en la versión anterior. Puede reintentar la actualización, o descargar la última versión manualmente.';
+	@override String update_message({required Object version}) => 'La versión ${version} está disponible.';
+	@override String update_network_failure({required Object host, required Object reason}) => 'No se pudo conectar con ${host}: ${reason}';
+	@override String get update_never_remind => 'No recordar de nuevo';
+	@override String get update_skip => 'Omitir';
+	@override String get url => 'URL';
+	@override String get video_audio_track => 'Pista de audio';
+	@override String get video_audio_track_empty => 'Sin pistas de audio intercambiables';
+	@override String video_audio_track_switched({required Object label}) => 'Pista de audio: ${label}';
+	@override String get video_auto_play_next_cancel => 'Cancelar';
+	@override String video_auto_play_next_countdown({required Object seconds}) => 'Siguiente episodio en ${seconds} s';
+	@override String get video_black_flash_notice_action => 'Ver sugerencias';
+	@override String get video_black_flash_notice_dont_show_again => 'No mostrar de nuevo';
+	@override String get video_bottom_next_cue => 'Subtítulo siguiente (avanza un poco si no hay)';
+	@override String get video_bottom_play_pause => 'Reproducir / Pausar';
+	@override String get video_bottom_prev_cue => 'Subtítulo anterior (retrocede un poco si no hay)';
+	@override String get video_bottom_seek_back => 'Atrás 10 s';
+	@override String get video_bottom_seek_back_label => '−10s';
+	@override String get video_bottom_seek_forward => 'Adelante 10 s';
+	@override String get video_bottom_seek_forward_label => '+10s';
+	@override String video_chapter_n({required Object n}) => 'Capítulo ${n}';
+	@override String get video_chapters => 'Capítulos';
+	@override String get video_chapters_empty => 'Sin capítulos';
+	@override String get video_clip_export => 'Exportar fragmento';
+	@override String get video_clip_export_cancelled => 'Exportación de clip cancelada';
+	@override String video_clip_export_failed({required Object reason}) => 'Error al exportar el fragmento: ${reason}';
+	@override String get video_clip_export_ffmpeg_failed => 'ffmpeg falló';
+	@override String get video_clip_export_ffmpeg_unavailable => 'ffmpeg no está disponible';
+	@override String get video_clip_export_input_missing => 'El vídeo de origen no está disponible';
+	@override String get video_clip_export_invalid_range => 'No hay un rango de fragmento válido';
+	@override String get video_clip_export_output_missing => 'No se creó ningún archivo de salida';
+	@override String get video_clip_export_remote_download_required => 'Descarga el vídeo remoto a este dispositivo antes de exportar un fragmento';
+	@override String get video_clip_export_source_changed => 'Cambió la fuente de vídeo; se canceló la exportación del fragmento';
+	@override String get video_clip_export_start => 'Iniciar exportación de fragmento';
+	@override String get video_clip_export_stop => 'Detener y exportar fragmento';
+	@override String video_clip_exported({required Object path}) => 'Fragmento exportado: ${path}';
+	@override String video_clip_exported_with_subtitles({required Object path}) => 'Clip exportado con subtítulos: ${path}';
+	@override String get video_clip_exporting => 'Exportando fragmento…';
+	@override String get video_continue_watching => 'Continue Watching';
+	@override String get video_control_audio_track => 'Pista de audio';
+	@override String get video_control_customize_hint => 'Elige dónde se coloca cada botón en el reproductor, o quítalo.';
+	@override String get video_control_episode_list => 'Lista de episodios';
+	@override String get video_control_favorite_sentence => 'Añadir la frase actual a favoritos';
+	@override String get video_control_fullscreen => 'Pantalla completa';
+	@override String get video_control_next_cue => 'Subtítulo siguiente';
+	@override String get video_control_palette_hint => 'Arrastra un botón a una posición para añadirlo; un botón puede estar en varias posiciones.';
+	@override String get video_control_palette_title => 'Todos los botones';
+	@override String get video_control_play_pause => 'Reproducir/Pausar';
+	@override String get video_control_previous_cue => 'Subtítulo anterior';
+	@override String get video_control_reject_required => 'Los controles obligatorios deben permanecer en el reproductor.';
+	@override String get video_control_reject_unavailable => 'Este control no se puede colocar ahí.';
+	@override String get video_control_reject_volume_bottom => 'El volumen solo puede ir en la barra inferior.';
+	@override String get video_control_remove_from_slot => 'Quitar';
+	@override String get video_control_reset_layout => 'Restablecer la disposición de los botones del reproductor';
+	@override String get video_control_screenshot => 'Captura de pantalla';
+	@override String get video_control_seek_backward => 'Atrás 10 s';
+	@override String get video_control_seek_forward => 'Adelante 10 s';
+	@override String get video_control_settings => 'Ajustes del reproductor';
+	@override String get video_control_slot_bottom_center => 'Barra inferior (centro)';
+	@override String get video_control_slot_bottom_left => 'Barra inferior (izquierda)';
+	@override String get video_control_slot_bottom_right => 'Barra inferior (derecha)';
+	@override String get video_control_slot_drop_hint => 'Arrastra un botón aquí';
+	@override String get video_control_slot_hidden => 'Quitado del reproductor';
+	@override String get video_control_slot_screen_left => 'Lado izquierdo de la pantalla';
+	@override String get video_control_slot_screen_right => 'Lado derecho de la pantalla';
+	@override String get video_control_slot_top_center => 'Barra superior (centro)';
+	@override String get video_control_slot_top_left => 'Barra superior (izquierda)';
+	@override String get video_control_slot_top_right => 'Barra superior (derecha)';
+	@override String get video_control_speed => 'Velocidad';
+	@override String get video_control_subtitle_list => 'Lista de subtítulos';
+	@override String get video_control_subtitle_track => 'Pista de subtítulos';
+	@override String get video_control_title => 'Nombre del vídeo';
+	@override String get video_control_volume => 'Volumen';
+	@override String get video_danmaku_manual_bind_empty => 'Aún no hay danmaku para este episodio.';
+	@override String get video_danmaku_manual_bind_failed => 'No se pudo cargar danmaku para este episodio. Inténtelo más tarde.';
+	@override String get video_danmaku_manual_bind_server_error => 'El servidor de danmaku rechazó la solicitud. Inténtelo más tarde.';
+	@override String get video_danmaku_manual_match_title => 'Emparejar danmaku';
+	@override String get video_danmaku_manual_network_error => 'Error de red. Verifique su conexión e inténtelo de nuevo.';
+	@override String get video_danmaku_manual_no_result => 'No se encontró anime coincidente.';
+	@override String get video_danmaku_manual_search_action => 'Buscar';
+	@override String get video_danmaku_manual_search_hint => 'Título del anime';
+	@override String get video_danmaku_manual_search_prompt => 'Busque en Dandanplay por título de anime, luego elija un episodio.';
+	@override String get video_danmaku_manual_server_error => 'La búsqueda falló. Inténtelo más tarde.';
+	@override String video_delete_confirm({required Object title}) => '¿Eliminar 『${title}』? Esta acción no se puede deshacer.';
+	@override String get video_delete_title => 'Eliminar vídeo';
+	@override String get video_double_tap_next_cue => 'Línea siguiente';
+	@override String get video_double_tap_prev_cue => 'Línea anterior';
+	@override String get video_drop_audio_unsupported => 'Suelta archivos de subtítulos sobre el vídeo actual. Aquí no se pueden adjuntar archivos de audio.';
+	@override String get video_drop_subtitle_only => 'Suelta archivos de subtítulos sobre el vídeo actual.';
+	@override String get video_episode_list => 'Episodios';
+	@override String get video_episode_list_empty => 'Sin episodios';
+	@override String video_favorite_count({required Object count}) => '${count} favoritos';
+	@override String get video_file_error_content => 'No se pudo cargar el archivo de vídeo. Asegúrate de que el archivo existe y está en un directorio accesible por la aplicación.';
+	@override String get video_file_not_found => 'Archivo de vídeo no encontrado';
+	@override String get video_immersive_locked => 'Modo inmersivo activado';
+	@override String get video_immersive_mode_full => 'Todos los controles';
+	@override String get video_immersive_mode_lookup_only => 'Solo consulta';
+	@override String get video_immersive_mode_seek_lookup => 'Atajo + consulta';
+	@override String get video_immersive_mode_unlock_only => 'Solo desbloquear';
+	@override String get video_immersive_unlock => 'Desbloquear';
+	@override String get video_immersive_unlocked => 'Modo inmersivo desactivado';
+	@override String get video_import_action => 'Importar vídeo';
+	@override String get video_import_confirm => 'Importar';
+	@override String get video_import_pick_subtitle => 'Elegir subtítulo';
+	@override String get video_import_pick_video => 'Elegir archivo de vídeo';
+	@override String get video_import_stream_advanced => 'Avanzado (cabeceras anti-leeching)';
+	@override String get video_import_stream_referer => 'Referer (opcional)';
+	@override String get video_import_stream_subtitle_url_field => 'URL de subtítulos externos (opcional)';
+	@override String get video_import_stream_url_field => 'URL del flujo de vídeo';
+	@override String get video_import_stream_url_hint => 'Reproduce URL de flujo HLS/m3u8/mp4 (con URL de subtítulos externos y Referer/User-Agent anti-leeching opcionales)';
+	@override String get video_import_stream_user_agent => 'User-Agent (opcional)';
+	@override String get video_import_subtitle_optional => 'Subtítulo externo opcional (puedes cambiar entre subtítulos incrustados/externos en cualquier momento durante la reproducción)';
+	@override String get video_import_title => 'Importar vídeo';
+	@override String get video_jimaku_anime_match => 'Emparejamiento de anime';
+	@override String get video_jimaku_api_key => 'Clave API de Jimaku';
+	@override String get video_jimaku_api_key_hint => 'Consigue una API key gratuita en jimaku.cc/account';
+	@override String get video_jimaku_api_key_set => 'API key configurada';
+	@override String video_jimaku_batch_done({required Object done, required Object total}) => 'Subtítulos obtenidos: ${done}/${total}';
+	@override String get video_jimaku_batch_download => 'Descargar todos';
+	@override String get video_jimaku_batch_title => 'Obtener subtítulos para colección';
+	@override String get video_jimaku_download_failed => 'Error al descargar';
+	@override String get video_jimaku_downloaded => 'Subtítulo descargado y aplicado';
+	@override String get video_jimaku_episode => 'Episodio (opcional)';
+	@override String get video_jimaku_episode_hint => 'Deje vacío para listar todos';
+	@override String get video_jimaku_fetch => 'Obtener subtítulos (Jimaku)';
+	@override String get video_jimaku_filter => 'Filtrar resultados (p. ej. WEBRip, BD)';
+	@override String get video_jimaku_find_sources => 'Buscar subtítulos';
+	@override String get video_jimaku_language => 'Idioma';
+	@override String get video_jimaku_language_all => 'Todos';
+	@override String get video_jimaku_no_key => 'Introduce primero tu API key de Jimaku';
+	@override String get video_jimaku_no_results => 'No se encontraron subtítulos';
+	@override String get video_jimaku_query => 'Nombre de la serie';
+	@override String get video_jimaku_search => 'Buscar';
+	@override String get video_jimaku_series => 'Serie';
+	@override String get video_jimaku_show_all_episodes => 'Mostrar todos los episodios';
+	@override String get video_jimaku_source => 'Fuente de subtítulos';
+	@override String get video_jimaku_source_hint => 'Elija una entrada de Jimaku. Los packs de temporada se emparejan por episodio automáticamente.';
+	@override String video_last_watched({required Object date}) => 'Último visto ${date}';
+	@override String get video_library_empty => 'Aún no se ha importado ningún vídeo';
+	@override String get video_load_failed_back => 'Atrás';
+	@override String get video_load_failed_generic => 'No se pudo cargar este vídeo.';
+	@override String get video_load_failed_network => 'Error de red — verifique su conexión e inténtelo de nuevo.';
+	@override String get video_load_failed_not_found => 'Este elemento no se encontró en su biblioteca.';
+	@override String get video_load_failed_retry => 'Reintentar';
+	@override String get video_load_failed_timeout => 'La conexión agotó el tiempo — la red está lenta o la fuente limita la velocidad. Inténtelo de nuevo.';
+	@override String get video_load_failed_title => 'El vídeo no pudo cargarse';
+	@override String get video_load_failed_unavailable => 'No se pudo obtener el flujo de vídeo — puede no estar disponible, tener restricción regional o de edad, o la fuente cambió.';
+	@override String get video_loading_buffering => 'Cargando búfer…';
+	@override String get video_loading_connecting => 'Conectando al flujo…';
+	@override String get video_loading_preparing => 'Preparando…';
+	@override String get video_loading_subtitle => 'Descargando subtítulos…';
+	@override String get video_menu_fullscreen => 'Alternar pantalla completa';
+	@override String get video_menu_lock => 'Modo inmersivo / bloqueo';
+	@override String get video_menu_play_pause => 'Reproducir / Pausar';
+	@override String get video_menu_subtitle_track => 'Pista de subtítulos';
+	@override String get video_mining_image_mode => 'Imagen de tarjeta de vídeo';
+	@override String get video_mining_image_mode_current_frame => 'Captura al momento de crear';
+	@override String get video_mining_image_mode_gif => 'GIF animado (clip de subtítulo)';
+	@override String get video_mining_image_mode_hint => 'Si la portada de la tarjeta de vídeo es una animación del clip de subtítulo o un fotograma estático — y cuál fotograma';
+	@override String get video_mining_image_mode_subtitle_start => 'Captura al inicio del subtítulo';
+	@override String get video_next_episode => 'Episodio siguiente';
+	@override String video_playlist_episodes({required Object count}) => '${count} ep.';
+	@override String get video_prev_episode => 'Episodio anterior';
+	@override String get video_quality => 'Calidad';
+	@override String get video_quality_auto => 'Auto';
+	@override String get video_quality_empty => 'No hay calidad intercambiable para este vídeo';
+	@override String get video_quality_enhancement_hint => 'Actívalo para nitidez de imagen con el escalado de alta calidad integrado en mpv. Funciona tanto en anime como en series y películas de acción real. Para ir más allá con shaders como Anime4K, abre Mejora de imagen mientras se reproduce un vídeo y elige un nivel allí.';
+	@override String get video_quality_load_failed => 'No se pudieron cargar las calidades para este vídeo.';
+	@override String get video_quality_loading => 'Cargando calidades disponibles…';
+	@override String video_quality_switched({required Object label}) => 'Calidad: ${label}';
+	@override String get video_rename => 'Cambiar nombre';
+	@override String get video_rename_hint => 'Título';
+	@override String get video_render_skia_fix_confirm_action => 'Reiniciar';
+	@override String get video_render_skia_fix_confirm_body => 'Esto desactiva el renderizador Impeller y reinicia la app para aplicar.';
+	@override String get video_render_skia_fix_confirm_title => '¿Cambiar a Skia y reiniciar?';
+	@override String get video_render_skia_fix_hint => 'Use si el audio se reproduce pero el vídeo permanece negro. Desactiva Impeller; reinicia para aplicar.';
+	@override String get video_render_skia_fix_title => '¿Pantalla negra? Cambiar renderizador (Skia)';
+	@override String video_resource_missing_message({required Object title}) => 'No se pudo encontrar el archivo de 『${title}』. Su ubicación puede haber cambiado, o la unidad puede no estar conectada. Puede reimportarlo o eliminar esta entrada.';
+	@override String get video_resource_missing_reimport => 'Reimportar';
+	@override String get video_resource_missing_title => 'Vídeo no disponible';
+	@override String get video_resource_relink_success => 'Vídeo revinculado';
+	@override String get video_scrape_episodes => 'Episodios';
+	@override String get video_scrape_info => 'Información de la serie';
+	@override String video_scrape_rating_votes({required Object count}) => '${count} calificaciones';
+	@override String get video_screenshot => 'Captura de pantalla';
+	@override String video_screenshot_failed_reason({required Object reason}) => 'Error al capturar la pantalla: ${reason}';
+	@override String video_screenshot_ready({required Object file}) => 'Captura lista: ${file}';
+	@override String video_screenshot_saved_to({required Object path}) => 'Captura guardada: ${path}';
+	@override String get video_secondary_subtitle_hint => 'Renderizado por el reproductor (no se puede buscar)';
+	@override String get video_secondary_subtitle_sources => 'Subtítulo secundario';
+	@override String get video_setting_auto_play_next => 'Reproducir automáticamente el siguiente episodio';
+	@override String get video_setting_auto_scrape => 'Obtener info de la serie automáticamente';
+	@override String get video_setting_av_delay => 'Sincronía de subtítulos';
+	@override String get video_setting_av_delay_hint => 'Positivo = subtítulo más tarde (las líneas se retrasan); negativo = subtítulo antes. Usa el control deslizante, los botones +/- o escribe un valor.';
+	@override String get video_setting_danmaku_area => 'Área de visualización';
+	@override String get video_setting_danmaku_area_hint => 'Fracción de la altura de pantalla que el danmaku puede ocupar, desde arriba.';
+	@override String get video_setting_danmaku_block_rules => 'Bloquear palabras / regex';
+	@override String get video_setting_danmaku_block_rules_hint => 'Una regla por línea. Envuelva una línea en barras como /patrón/ para una expresión regular; de lo contrario coincide como texto sin distinción de mayúsculas.';
+	@override String get video_setting_danmaku_block_rules_placeholder => 'ej. spoiler o /patrón/';
+	@override String get video_setting_danmaku_enabled => 'Mostrar danmaku';
+	@override String get video_setting_danmaku_enabled_hint => 'Muestra danmaku local o coincidente sobre el vídeo sin bloquear los controles.';
+	@override String get video_setting_danmaku_font_scale => 'Tamaño de fuente';
+	@override String get video_setting_danmaku_font_scale_hint => 'Escala el tamaño del texto del danmaku.';
+	@override String get video_setting_danmaku_manual_match => 'Emparejamiento manual';
+	@override String get video_setting_danmaku_manual_match_hint => 'Busque en Dandanplay por título y elija el episodio cuando el emparejamiento automático falle o sea incorrecto.';
+	@override String get video_setting_danmaku_max_active => 'Límite de danmaku activos';
+	@override String get video_setting_danmaku_max_active_hint => 'Limita los comentarios renderizados por fotograma para que los archivos grandes sigan respondiendo.';
+	@override String get video_setting_danmaku_online => 'Coincidencia en línea con Dandanplay';
+	@override String get video_setting_danmaku_online_hint => 'Cuando no hay un sidecar local utilizable, busca coincidencias del vídeo abierto con Dandanplay y obtiene los comentarios relacionados.';
+	@override String get video_setting_danmaku_opacity => 'Opacidad';
+	@override String get video_setting_danmaku_opacity_hint => 'Transparencia general del danmaku.';
+	@override String get video_setting_danmaku_server_url => 'URL del servidor de danmaku';
+	@override String get video_setting_danmaku_speed => 'Velocidad';
+	@override String get video_setting_danmaku_speed_hint => 'Mayor es más rápido; el danmaku desplazable cruza la pantalla antes.';
+	@override String get video_setting_double_tap => 'Doble toque para saltar';
+	@override String get video_setting_double_tap_hint => 'Toca dos veces a la izquierda o a la derecha del vídeo para avanzar o retroceder';
+	@override String get video_setting_double_tap_off => 'Desactivado';
+	@override String get video_setting_double_tap_subtitle => 'Subtítulo';
+	@override String get video_setting_immersive_mode => 'Modo inmersivo';
+	@override String get video_setting_immersive_mode_hint => 'Controla qué sigue disponible tras pulsar el botón de bloqueo lateral';
+	@override String get video_setting_lock_window_aspect => 'Bloquear la ventana a la proporción del vídeo';
+	@override String get video_setting_long_press_speed => 'Velocidad al mantener pulsado';
+	@override String get video_setting_long_press_speed_hint => 'Usa temporalmente esta velocidad mientras mantienes pulsado el vídeo.';
+	@override String get video_setting_mpv_aspect => 'Relación de aspecto';
+	@override String get video_setting_mpv_aspect_auto => 'Original';
+	@override String get video_setting_mpv_brightness => 'Brillo';
+	@override String get video_setting_mpv_channels => 'Canales';
+	@override String get video_setting_mpv_channels_auto => 'Automático';
+	@override String get video_setting_mpv_channels_mono => 'Mono';
+	@override String get video_setting_mpv_channels_stereo => 'Estéreo (mezcla)';
+	@override String get video_setting_mpv_contrast => 'Contraste';
+	@override String get video_setting_mpv_correct_downscale => 'Reducción lineal';
+	@override String get video_setting_mpv_deband => 'Reducción de bandas';
+	@override String get video_setting_mpv_deinterlace => 'Desentrelazado';
+	@override String get video_setting_mpv_dither => 'Tramado';
+	@override String get video_setting_mpv_gamma => 'Gamma';
+	@override String get video_setting_mpv_group_advanced => 'Avanzado';
+	@override String get video_setting_mpv_group_audio => 'Audio';
+	@override String get video_setting_mpv_group_color => 'Color';
+	@override String get video_setting_mpv_group_decode => 'Decodificación';
+	@override String get video_setting_mpv_group_geometry => 'Geometría';
+	@override String get video_setting_mpv_group_playback => 'Reproducción';
+	@override String get video_setting_mpv_group_quality => 'Calidad de imagen';
+	@override String get video_setting_mpv_hue => 'Tono';
+	@override String get video_setting_mpv_hwdec => 'Decodificación por hardware';
+	@override String get video_setting_mpv_hwdec_auto => 'Automática (segura)';
+	@override String get video_setting_mpv_hwdec_copy => 'Automática (copia)';
+	@override String get video_setting_mpv_hwdec_off => 'Desactivada';
+	@override String get video_setting_mpv_interpolation => 'Interpolación de movimiento';
+	@override String get video_setting_mpv_loop => 'Repetir archivo';
+	@override String get video_setting_mpv_normalize => 'Normalizar el volumen de la mezcla';
+	@override String get video_setting_mpv_panscan => 'Pan & scan (recortar bordes)';
+	@override String get video_setting_mpv_pitch => 'Mantener el tono al cambiar la velocidad';
+	@override String get video_setting_mpv_raw => 'Opciones adicionales de mpv (una por línea, clave=valor)';
+	@override String get video_setting_mpv_raw_hint => 'Solo en escritorio; las opciones que no se pueden aplicar en tiempo de ejecución (p. ej. vo, profile) se ignoran. SVP/RIFE requieren herramientas externas y no son compatibles.';
+	@override String get video_setting_mpv_reset => 'Restablecer todo';
+	@override String get video_setting_mpv_rotate => 'Rotación';
+	@override String get video_setting_mpv_saturation => 'Saturación';
+	@override String get video_setting_mpv_sigmoid => 'Escalado sigmoidal';
+	@override String get video_setting_mpv_sigmoid_hint => 'El escalado con curva sigmoide reduce el ringing pero consume GPU. Apagado por defecto por rendimiento; actívelo si quiere escalado más nítido.';
+	@override String get video_setting_mpv_zoom => 'Zoom';
+	@override String get video_setting_picture_fit => 'Escalado de imagen';
+	@override String get video_setting_picture_fit_contain => 'Ajustar manteniendo proporción y añadir bandas negras';
+	@override String get video_setting_picture_fit_cover => 'Rellenar manteniendo proporción y recortar bordes';
+	@override String get video_setting_picture_fit_fill => 'Estirar para rellenar';
+	@override String get video_setting_picture_fit_hint => 'Cómo llena la imagen el área del reproductor';
+	@override String get video_setting_qb_category => 'Categoría de qBittorrent';
+	@override String get video_setting_qb_category_hint => 'Las descargas enviadas por Fushi obtienen esta categoría; el seguimiento de completado solo la monitorea.';
+	@override String get video_setting_qb_password => 'Contraseña de WebUI';
+	@override String get video_setting_qb_url => 'URL de WebUI de qBittorrent';
+	@override String get video_setting_qb_url_hint => 'ej. http://127.0.0.1:8080. Deje vacío para desactivar la descarga de anime.';
+	@override String get video_setting_qb_username => 'Usuario de WebUI';
+	@override String get video_setting_secondary_subtitle_obscure => 'Ocultar subtítulo secundario';
+	@override String get video_setting_secondary_subtitle_obscure_hint => 'Difumina u oculta el subtítulo secundario (traducción)';
+	@override String get video_setting_seek_seconds => 'Segundos de salto';
+	@override String get video_setting_speed => 'Velocidad de reproducción';
+	@override String get video_setting_speed_step => 'Paso de velocidad';
+	@override String get video_setting_subtitle_appearance => 'Aspecto de los subtítulos';
+	@override String get video_setting_subtitle_bg_color => 'Color de fondo';
+	@override String get video_setting_subtitle_bg_opacity => 'Opacidad del fondo';
+	@override String get video_setting_subtitle_font_size => 'Tamaño de fuente';
+	@override String get video_setting_subtitle_font_weight => 'Grosor de fuente';
+	@override String get video_setting_subtitle_no_background => 'Sin fondo';
+	@override String get video_setting_subtitle_no_background_hint => 'Hace transparente el fondo del subtítulo.';
+	@override String get video_setting_subtitle_obscure => 'Ocultar subtítulos';
+	@override String get video_setting_subtitle_obscure_blur => 'Difuminar';
+	@override String get video_setting_subtitle_obscure_hide => 'Ocultar';
+	@override String get video_setting_subtitle_obscure_hint => 'Elija cómo se ocultan los subtítulos para práctica de escucha: apagado, difuminado (pase el cursor o toque para revelar), u oculto.';
+	@override String get video_setting_subtitle_obscure_none => 'Apagado';
+	@override String get video_setting_subtitle_position => 'Posición vertical';
+	@override String get video_setting_subtitle_reset => 'Restablecer valores por defecto';
+	@override String get video_setting_subtitle_respect_ass => 'Respetar el estilo propio del subtítulo';
+	@override String get video_setting_subtitle_respect_ass_hint => 'Usa la fuente, color y contorno integrados en los subtítulos .ass cuando están disponibles; desactívelo para forzar sus ajustes de apariencia.';
+	@override String get video_setting_subtitle_shadow => 'Sombra';
+	@override String get video_setting_subtitle_sync_input => 'Desfase (ms)';
+	@override String get video_setting_subtitle_text_color => 'Color de texto';
+	@override String get video_setting_theme => 'Tema';
+	@override String get video_setting_torrent_active_downloads => 'Descargas activas máximas';
+	@override String get video_setting_torrent_active_seeds => 'Seeds activos máximos';
+	@override String get video_setting_torrent_anonymous => 'Modo anónimo';
+	@override String get video_setting_torrent_antileech => 'Activar anti-leech';
+	@override String get video_setting_torrent_backend_qb => 'qBittorrent externo';
+	@override String get video_setting_torrent_ban_progress_cheat => 'Banear trampa de progreso';
+	@override String get video_setting_torrent_ban_relative_cheat => 'Banear trampa de progreso relativo';
+	@override String get video_setting_torrent_ban_time => 'Duración del baneo (min)';
+	@override String get video_setting_torrent_ban_time_hint => '0 = permanente';
+	@override String get video_setting_torrent_connections_hint => '0 = predeterminado del motor';
+	@override String get video_setting_torrent_dht => 'DHT';
+	@override String get video_setting_torrent_download_limit => 'Límite de descarga (KB/s)';
+	@override String get video_setting_torrent_encryption_disabled => 'Desactivado';
+	@override String get video_setting_torrent_encryption_forced => 'Forzar';
+	@override String get video_setting_torrent_encryption_prefer => 'Preferir';
+	@override String get video_setting_torrent_limit_hint => '0 = sin límite';
+	@override String get video_setting_torrent_listen_port => 'Puerto de escucha';
+	@override String get video_setting_torrent_listen_port_hint => '0 = predeterminado (6881)';
+	@override String get video_setting_torrent_lsd => 'Descubrimiento local de pares (LSD)';
+	@override String get video_setting_torrent_max_connections => 'Conexiones máximas';
+	@override String get video_setting_torrent_max_ip_ports => 'Puertos máximos por IP';
+	@override String get video_setting_torrent_memory_hint => 'Limitar memoria del motor. 0 = auto (basado en RAM del dispositivo).';
+	@override String get video_setting_torrent_memory_limit => 'Límite de memoria (MB)';
+	@override String get video_setting_torrent_natpmp => 'Mapeo de puertos NAT-PMP';
+	@override String get video_setting_torrent_section_antileech => 'Anti-leech';
+	@override String get video_setting_torrent_section_session => 'Sesión';
+	@override String get video_setting_torrent_seed_ratio_hint => 'Dejar de subir cuando subido/descargado alcance esto. 0 = sin límite.';
+	@override String get video_setting_torrent_seed_ratio_limit => 'Límite de ratio de seeding';
+	@override String get video_setting_torrent_seed_time_hint => 'Dejar de subir después de hacer seed este tiempo. 0 = sin límite.';
+	@override String get video_setting_torrent_seed_time_limit => 'Límite de tiempo de seeding (minutos)';
+	@override String get video_setting_torrent_upload_enabled => 'Activar subida / seeding';
+	@override String get video_setting_torrent_upload_enabled_hint => 'Apagado por defecto. Comparta de vuelta al enjambre después de descargar.';
+	@override String get video_setting_torrent_upload_limit => 'Límite de subida (KB/s)';
+	@override String get video_setting_torrent_upload_slots => 'Slots de subida máximos';
+	@override String get video_setting_torrent_upnp => 'Mapeo de puertos UPnP';
+	@override String get video_setting_torrent_zero_default => '0 = predeterminado';
+	@override String get video_setting_torrent_zero_off => '0 = apagado';
+	@override String get video_settings_cat_audio => 'Audio';
+	@override String get video_settings_cat_controls => 'Controles';
+	@override String get video_settings_cat_danmaku => 'Danmaku';
+	@override String get video_settings_cat_mpv => 'mpv';
+	@override String get video_settings_cat_playback => 'Reproducción';
+	@override String get video_settings_cat_shaders => 'Mejora de imagen';
+	@override String get video_settings_cat_subtitle => 'Subtítulos';
+	@override String get video_settings_title => 'Ajustes de vídeo';
+	@override String get video_shader_anime4k_hint => 'Elige un preset para descargar. Tras descargarlo, márcalo en la lista para activarlo. Solo en escritorio.';
+	@override String get video_shader_anime4k_title => 'Shaders recomendados de Anime4K';
+	@override String get video_shader_download_anime4k => 'Descargar presets de Anime4K';
+	@override String video_shader_download_done({required Object count}) => 'Se descargaron ${count} shader(s)';
+	@override String get video_shader_download_failed => 'Error al descargar el shader';
+	@override String video_shader_download_partial({required Object ok, required Object failed}) => 'Se descargaron ${ok} shader(s), ${failed} fallaron';
+	@override String get video_shader_download_url => 'Descargar desde enlace';
+	@override String get video_shader_downloaded_label => 'Descargado';
+	@override String get video_shader_downloading => 'Descargando shaders…';
+	@override String get video_shader_first_use_body => '想让动画画面更清晰，可以进入“画质增强”并点击“下载 Anime4K 推荐着色器”。下载后在已安装列表里勾选即可启用。';
+	@override String get video_shader_first_use_download => 'Descargar y activar';
+	@override String get video_shader_first_use_title => '试试 Anime4K 画质增强';
+	@override String get video_shader_import => 'Importar shader (.glsl)';
+	@override String video_shader_import_done({required Object count}) => 'Se importaron ${count} shader(s)';
+	@override String get video_shader_import_from_mpv => 'Importar desde mpv local';
+	@override String get video_shader_import_from_mpv_hint => '自动搜索本机 mpv；未找到时可手动选择 mpv 目录。';
+	@override String get video_shader_mobile_perf_hint => 'En teléfonos, los shaders solo se aplican en la ruta de renderizado de GPU estándar y su eficacia varía según la GPU del dispositivo; los niveles más altos pueden provocar caídas de fotogramas o calentamiento. Prueba primero Baja/Media y comprueba el resultado en tu dispositivo.';
+	@override String video_shader_mpv_dir_current({required Object path}) => 'Carpeta de mpv: ${path}';
+	@override String get video_shader_mpv_dir_empty => 'No se encontraron shaders en esa carpeta';
+	@override String get video_shader_mpv_not_found => 'No se encontraron shaders de mpv locales';
+	@override String get video_shader_mpv_pick_title => 'Importar shaders desde mpv';
+	@override String get video_shader_pick_mpv_dir => 'Specify mpv folder';
+	@override String get video_shader_preset_mode_a_fast => 'Para la mayoría del anime en 1080p. Menor carga de GPU.';
+	@override String get video_shader_preset_mode_a_hq => 'Máxima calidad para anime en 1080p. Necesita una GPU potente.';
+	@override String get video_shader_preset_mode_b_fast => 'Para anime antiguo en 720p con artefactos de remuestreo.';
+	@override String get video_shader_preset_mode_b_hq => 'Alta calidad para anime antiguo en 720p con artefactos de remuestreo. Necesita una GPU potente.';
+	@override String get video_shader_preset_mode_c_fast => 'Para anime SD antiguo (480p) con manchas de compresión.';
+	@override String get video_shader_preset_mode_c_hq => 'Alta calidad para anime SD antiguo (480p) con manchas de compresión. Necesita una GPU potente.';
+	@override String get video_shader_quality_tier => 'Mejora de calidad';
+	@override String get video_shader_section_advanced => 'Avanzado (shaders manuales)';
+	@override String get video_shader_section_installed => 'Shaders instalados';
+	@override String get video_shader_showing_original => 'Shaders desactivados (original)';
+	@override String get video_shader_showing_shaded => 'Shaders activados';
+	@override String get video_shader_tier_custom_hint => 'Selección de shaders personalizada. Elige un nivel arriba para volver a un preset.';
+	@override String get video_shader_tier_high => 'Alta';
+	@override String get video_shader_tier_high_hint => 'Anime4K HQ. Más nítido; lo mejor para animación, también utilizable en acción real (mejora menor). Necesita una GPU de gama media-alta (NVIDIA RTX 4060 / RTX 3070, AMD RX 6700 XT / RX 7700 XT).';
+	@override String get video_shader_tier_low => 'Baja';
+	@override String get video_shader_tier_low_hint => 'Nitidez integrada de mpv (ewa_lanczossharp). Funciona en cualquier vídeo (animación y acción real). Sin descargas, mínima carga de GPU. Elige esta opción en gráficas integradas o antiguas (NVIDIA GTX 1050, AMD RX 560, iGPU de Intel).';
+	@override String get video_shader_tier_medium => 'Media';
+	@override String get video_shader_tier_medium_hint => 'Anime4K Fast. Lo mejor para animación, pero también sirve para películas/series de acción real (mejora menor). Funciona en GPU de gama media (NVIDIA GTX 1660 / RTX 3050, AMD RX 6600).';
+	@override String get video_shader_tier_off => 'Ninguna';
+	@override String get video_shader_tier_off_hint => 'Sin mejora. Reproduce el vídeo original tal cual.';
+	@override String get video_shader_tier_ultra => 'Ultra';
+	@override String get video_shader_tier_ultra_hint => 'Anime4K Mode A (UL, red ultra grande). La reconstrucción Anime4K más potente; también utilizable en acción real (mejora menor). Necesita una GPU tope de gama (NVIDIA RTX 4080 / RTX 5090, AMD RX 7900 XTX). Elige un nivel inferior si tu GPU es más débil.';
+	@override String get video_shader_url_hint => 'Pega un enlace .glsl de shader (p. ej. GitHub)';
+	@override String get video_shaders_empty => 'Aún no se ha importado ningún shader';
+	@override String get video_stat_by_video => 'Por vídeo';
+	@override String get video_stat_completed => 'Completado';
+	@override String get video_stat_no_data => 'Aún no hay estadísticas de vídeo';
+	@override String get video_statistics => 'Estadísticas de vídeo';
+	@override String get video_subtitle_attach_playlist_hint => 'Abre la lista de reproducción para adjuntar un subtítulo por episodio';
+	@override String video_subtitle_attached_to_video({required Object title, required Object count}) => 'Subtítulo adjuntado a ${title} (${count} líneas)';
+	@override String get video_subtitle_auto_align => 'Alinear subtítulos';
+	@override String video_subtitle_auto_align_done({required Object ms}) => 'Subtítulos alineados ${ms} ms';
+	@override String get video_subtitle_auto_align_low_confidence => 'No se pudo alinear con fiabilidad (sin coincidencia de voz clara)';
+	@override String get video_subtitle_auto_align_running => 'Alineando subtítulos…';
+	@override String get video_subtitle_color_note => 'Los colores de los subtítulos se ajustan dentro del reproductor de vídeo.';
+	@override String video_subtitle_delay_osd({required Object ms}) => 'Sincronía de subtítulos: ${ms} ms';
+	@override String get video_subtitle_filter_all => 'Todos';
+	@override String get video_subtitle_filter_favorites => 'Favoritos';
+	@override String get video_subtitle_filter_favorites_empty => 'Aún no hay líneas favoritas';
+	@override String get video_subtitle_graphic_hint => 'Subtítulo gráfico · se muestra en el vídeo · sin consulta de palabras';
+	@override String video_subtitle_graphic_shown({required Object label}) => 'Subtítulo gráfico mostrado en el vídeo (sin consulta de palabras): ${label}';
+	@override String get video_subtitle_import_failed => 'Error al importar el subtítulo';
+	@override String get video_subtitle_import_file => 'Importar archivo de subtítulos…';
+	@override String get video_subtitle_import_unsupported => 'Formato de subtítulos no compatible';
+	@override String get video_subtitle_list => 'Lista de subtítulos';
+	@override String get video_subtitle_list_auto_scroll => 'Desplazamiento automático';
+	@override String get video_subtitle_list_empty => 'No hay subtítulos cargados';
+	@override String get video_subtitle_list_font_larger => 'Texto más grande';
+	@override String get video_subtitle_list_font_smaller => 'Texto más pequeño';
+	@override String get video_subtitle_list_jump => 'Saltar a esta línea';
+	@override String get video_subtitle_list_loading => 'Cargando subtítulos...';
+	@override String video_subtitle_load_failed({required Object label}) => 'No se pudo cargar este subtítulo (pista gráfica o no compatible): ${label}';
+	@override String get video_subtitle_off => 'Desactivar subtítulos';
+	@override String get video_subtitle_remote_host => 'Subtítulo del dispositivo emparejado';
+	@override String video_subtitle_switched({required Object label}) => 'Subtítulo: ${label}';
+	@override String get video_subtitle_waveform_cue_list => 'Lista de subtítulos';
+	@override String get video_subtitle_waveform_jump_playhead => 'Ir al cabezal';
+	@override String get video_subtitle_waveform_legend_cue => 'Señal de subtítulo';
+	@override String get video_subtitle_waveform_legend_energy => 'Volumen';
+	@override String get video_subtitle_waveform_legend_playhead => 'Cabezal';
+	@override String get video_subtitle_waveform_open => 'Alineación de forma de onda';
+	@override String get video_subtitle_waveform_open_hint => 'Toque para ampliar y alinear';
+	@override String get video_subtitle_waveform_scroll_hint => 'Arrastre para recorrer la línea de tiempo; use los controles de abajo para alinear';
+	@override String get video_subtitle_waveform_unavailable => 'Forma de onda no disponible en este dispositivo';
+	@override String get video_subtitle_waveform_zoom_in => 'Ampliar';
+	@override String get video_subtitle_waveform_zoom_out => 'Reducir';
+	@override String get video_subtitle_youtube_empty => 'Esta pista de subtítulos no tiene texto';
+	@override String video_subtitle_youtube_translated({required Object lang}) => '${lang} (traducido)';
+	@override String video_watched_up_to({required Object time}) => 'Visto hasta ${time}';
+	@override String get video_windows_black_flash_notice_body => 'En Windows, el vídeo puede parpadear en negro bajo carga pesada de GPU. Para reducir la carga, intente desactivar Mejora de calidad, Escalado Sigmoide y Debanding arriba, o cambie la decodificación por hardware a Copia.';
+	@override String get video_windows_black_flash_notice_title => '¿Parpadeo negro en Windows?';
+	@override String get view_illustrations => 'Ilustraciones';
+	@override String get volume_button_page_turning => 'Pasar página con botones de volumen';
+	@override String get volume_key_sentence_nav => 'Navegación de oraciones con teclas de volumen';
+	@override String get wheel_page_turn_interval => 'Intervalo de pasar página con la rueda';
+	@override String get word_favorite_added => 'Palabra guardada en favoritos';
+	@override String get word_favorite_removed => 'Palabra eliminada de favoritos';
+	@override String get yomitan_api_key => 'API key de Yomitan (opcional)';
+	@override String get yomitan_api_server => 'Servidor API de Yomitan';
+	@override String get yomitan_api_server_hint => 'Permite que los clientes de yomitan-api consulten los diccionarios de Fushi (puerto 19633)';
+	@override String get yomitan_api_server_started => 'Servidor API Yomitan iniciado';
+	@override String get yomitan_port_kill_action => 'Finalizar proceso y reintentar';
+	@override String get yomitan_port_kill_confirm => 'Finalizar proceso';
+	@override String yomitan_port_kill_confirm_message({required Object process}) => 'El puerto está actualmente en uso por: ${process}';
+	@override String yomitan_port_kill_confirm_title({required Object port}) => '¿Finalizar el proceso usando el puerto ${port}?';
+	@override String yomitan_port_kill_failed({required Object process}) => 'No se pudo finalizar ${process}. Finalícelo manualmente, luego reintente.';
+	@override String yomitan_port_kill_protected({required Object process}) => '${process} es un proceso crítico del sistema — Fushi no lo finalizará. Cambie el puerto en su lugar.';
+	@override String get yomitan_port_kill_self_instance => 'Este proceso es otra instancia en ejecución de esta app.';
+	@override String get game_track_bgm => 'BGM / excluido';
+	@override String get game_line_audio_no_voice => 'Sin voz';
+	@override String get game_line_audio_overlong => 'Clip demasiado largo';
+	@override String get game_line_audio_overlong_hint => 'Mucho más largo que una sola línea; puede contener BGM u otro audio mezclado';
+	@override String get game_line_audio_loopback_hint => 'Respaldo de mezcla del sistema; puede contener BGM';
+	@override String get game_line_recapture => 'Recapturar voz';
+	@override String get game_line_recapture_stop => 'Finalizar recaptura';
+	@override String get game_line_tracks => 'Pistas para esta línea';
+	@override String get game_line_tracks_hint => 'Previsualice cada pista en el momento de esta línea, luego excluya las de BGM';
+	@override String get game_line_track_use => 'Usar para esta línea';
+	@override String get game_user_tags_title => 'Mis etiquetas';
+	@override String get anki_lapis_section => 'Estilo de tarjeta Lapis';
+	@override String get anki_lapis_font_scale => 'Escala de fuente de tarjeta';
+	@override String get anki_lapis_font_scale_hint => 'Escala cada tamaño de fuente de Lapis; se aplica vía "Aplicar estilo a Anki".';
+	@override String get anki_lapis_custom_css => 'CSS personalizado';
+	@override String get anki_lapis_custom_css_hint => 'Se añade a la hoja de estilos de Lapis en una sección de usuario protegida.';
+	@override String get anki_lapis_apply => 'Aplicar estilo a Anki';
+	@override String get anki_lapis_apply_done => 'Estilo Lapis aplicado. Se guardó una copia de seguridad primero.';
+	@override String anki_lapis_apply_failed({required Object error}) => 'No se pudo aplicar el estilo: ${error}';
+	@override String get anki_lapis_up_to_date => 'El estilo Lapis ya está actualizado.';
+	@override String get anki_lapis_foreign_edit_title => 'Plantilla cambiada en Anki';
+	@override String get anki_lapis_foreign_edit_body => 'La plantilla Lapis en Anki difiere de lo que Fushi aplicó por última vez — puede haber sido editada a mano. Al aplicar se sobrescribirá; se guarda una copia de seguridad primero. ¿Continuar?';
+	@override String get anki_lapis_backup => 'Respaldar plantilla Lapis';
+	@override String anki_lapis_backup_done({required Object path}) => 'Plantilla respaldada: ${path}';
+	@override String anki_lapis_backup_failed({required Object error}) => 'El respaldo falló: ${error}';
+	@override String get anki_lapis_not_found => 'Tipo de nota Lapis no encontrado en Anki.';
+	@override String get anki_lapis_restore => 'Restaurar desde respaldo';
+	@override String get anki_lapis_restore_empty => 'Aún no hay respaldos.';
+	@override String get anki_lapis_restore_confirm => '¿Sobrescribir la plantilla Lapis en Anki con este respaldo? El estado actual se respalda primero.';
+	@override String get anki_lapis_restore_done => 'Plantilla restaurada.';
+	@override String anki_lapis_restore_failed({required Object error}) => 'La restauración falló: ${error}';
+	@override String get anki_dedup_section => 'Optimización de almacenamiento de medios de Anki';
+	@override String get anki_dedup_scan => 'Escanear duplicados (sin cambios)';
+	@override String get anki_dedup_run => 'Deduplicar ahora';
+	@override String get anki_dedup_report_title => 'Reporte de deduplicación de medios';
+	@override String anki_dedup_report_body({required Object groups, required Object removed, required Object size, required Object notes, required Object models, required Object skipped}) => '${groups} grupos duplicados; ${removed} copias extra (${size}); ${notes} notas y ${models} tipos de nota reescritos; ${skipped} omitidos.';
+	@override String get anki_dedup_report_dry_note => 'Solo escaneo — nada fue cambiado.';
+	@override String get anki_dedup_report_clean => 'No se encontraron duplicados idénticos por bytes.';
+	@override String anki_dedup_failed({required Object error}) => 'La deduplicación falló: ${error}';
+	@override String get anki_dedup_unavailable => 'Requiere Anki ejecutándose en esta máquina (AnkiConnect).';
+	@override String get anki_dedup_run_hint => 'Escanea primero y lista exactamente qué se eliminaría; nada se elimina hasta que confirme.';
+	@override String get anki_dedup_plan_title => 'Archivos a eliminar';
+	@override String anki_dedup_plan_intro({required Object count, required Object size}) => '${count} copias extra, ${size} recuperable. Se conserva una copia de cada archivo y cada referencia se redirige primero; nada se re-codifica.';
+	@override String anki_dedup_plan_entry({required Object file, required Object size, required Object canonical}) => 'Eliminar ${file} (${size}) — conservando ${canonical}';
+	@override String get anki_dedup_plan_delete => 'Eliminar estos archivos';
+	@override String get anki_dedup_plan_journal => 'Un registro de cada reescritura y eliminación se escribe en la carpeta de respaldo primero.';
+	@override String get manga_ocr_default_engine => 'Motor de OCR predeterminado';
+	@override String get manga_ocr_engine_auto => 'Automático (nunca sube a Lens)';
+	@override String get manga_ocr_engine_local_onnx => 'ONNX local';
+	@override String get manga_ocr_engine_google_lens => 'Google Lens';
+	@override String get manga_google_lens_disclosure_title => '¿Enviar páginas de manga a Google Lens?';
+	@override String get manga_google_lens_disclosure_body => 'Reconocer este manga envía una copia JPEG reducida de cada página sin texto OCR a Google. Los resultados se almacenan en caché en este dispositivo. El endpoint es no oficial y puede dejar de funcionar. Nada se sube a menos que acepte.';
+	@override String get manga_google_lens_disclosure_accept => 'Aceptar e iniciar OCR';
+	@override String get manga_google_lens_disclosure_decline => 'Cancelar';
+	@override String get manga_reading_direction => 'Dirección de lectura';
+	@override String get manga_direction_rtl => 'Derecha a izquierda';
+	@override String get manga_direction_ltr => 'Izquierda a derecha';
+	@override String get manga_zoom => 'Zoom';
+	@override String get manga_jump_to_page => 'Ir a página';
+	@override String get manga_previous_page => 'Página anterior';
+	@override String get manga_next_page => 'Página siguiente';
+	@override String manga_page_number_hint({required Object total}) => 'Número de página (1-${total})';
+	@override String get manga_import_direct => 'Importar sin OCR';
+	@override String get manga_library => 'Manga';
+	@override String get manga_import_action => 'Importar manga';
+	@override String get game_scrape_search => 'Buscar';
+	@override String get game_scrape_use => 'Usar';
+	@override String get game_scrape_search_failed => 'La búsqueda falló. Verifique su red e inténtelo de nuevo.';
+	@override String get game_remove_confirm => '¿Eliminar este juego de la biblioteca? Los archivos del juego en disco no se eliminarán.';
+	@override String manga_ocr_acceleration_status({required Object engine}) => 'Aceleración de OCR: ${engine}';
+	@override String manga_ocr_acceleration_degraded({required Object engine, required Object reason}) => 'Aceleración por GPU no disponible, ejecutando OCR en ${engine}: ${reason}';
+	@override String get media_tracking_status => 'Estado de colección';
+	@override String get media_tracking_signup => 'Crear cuenta de Bangumi';
+	@override String get media_tracking_game => 'Juego';
+	@override String get download_rate_limit_lan_exempt => 'No se aplica en su red local; las transferencias LAN siempre se ejecutan a máxima velocidad.';
+	@override String get scrape_reason_network => 'No se pudo obtener una respuesta válida de la fuente de portadas. Verifique su red y reintente.';
+	@override String get scrape_reason_server => 'La fuente de portadas devolvió un error. Inténtelo más tarde o elija otro candidato.';
+	@override String get common_more_actions => 'Más acciones';
+	@override String get collection_already_has_item => 'Este elemento ya está en la colección.';
+	@override String get drag_drop_manga_archive_unsupported => 'No se pueden importar archivos .cbr/.rar de cómic — reempaquete como .cbz o una carpeta de imágenes.';
+	@override String get collection_add_failed => 'No se pudo añadir el elemento a la colección. Inténtelo de nuevo.';
+	@override String get anki_dedup_auto => 'Procesamiento automático';
+	@override String get anki_dedup_auto_hint => 'Apagado por defecto. Cuando está activo, Fushi escanea al inicio (máximo una vez por semana) y le muestra la lista primero — nada se elimina hasta que confirme.';
+	@override String get anki_dedup_auto_delete => 'Eliminar automáticamente sin preguntar';
+	@override String get anki_dedup_auto_delete_hint => 'Omite el diálogo de confirmación. Solo se eliminan copias extra idénticas por bytes y nada se re-codifica, pero la eliminación no se puede deshacer.';
+	@override String anki_dedup_auto_found({required Object count, required Object size}) => 'Se encontraron ${count} archivos de medios duplicados en Anki (${size} recuperable)';
+	@override String get anki_dedup_auto_review => 'Revisar';
+	@override String anki_dedup_auto_done({required Object count, required Object size}) => 'Se eliminaron ${count} archivos de medios duplicados de Anki, ${size} recuperado';
+	@override String anki_lapis_backup_done_pruned({required Object path, required Object count}) => 'Respaldado en ${path} (${count} respaldos antiguos eliminados por la política de 90 días / mantener 10)';
+	@override String get game_audio_fallback_policy => 'Respaldo de audio';
+	@override String get game_audio_fallback_full => 'Permitir audio mezclado';
+	@override String get game_audio_fallback_clean => 'Solo fuentes limpias';
+	@override String get game_audio_fallback_resource => 'Solo recursos originales';
+	@override String get game_track_silent_at_cue => 'Sin sonido en esta línea';
+	@override String get game_audio_fallback_full_hint => 'Recurre a la mezcla del sistema cuando no se captura voz limpia; el clip puede contener BGM y efectos.';
+	@override String get game_audio_fallback_clean_hint => 'Usa solo audio de recursos del juego y PCM del motor. Las líneas sin voz se crean sin audio en lugar de capturar BGM.';
+	@override String get game_audio_fallback_resource_hint => 'Requiere el archivo de voz original incluido con el juego; la creación de tarjeta se rechaza cuando falta.';
+	@override String get game_line_audio_suppressed => 'Mezcla omitida';
+	@override String get game_line_audio_suppressed_hint => 'Ninguna fuente de audio limpia produjo audio para esta línea, y la mezcla del sistema fue omitida por su política de respaldo de audio. Esto no significa que la línea no tenga voz.';
+	@override String get video_setting_torrent_limit_lan => 'Aplicar límites a pares LAN';
+	@override String get video_setting_torrent_limit_lan_hint => 'Apagado por defecto: las transferencias con pares en su red local ignoran los límites de arriba.';
+	@override String get download_rate_limit_lan_included => 'También se aplica en su red local.';
+	@override String get video_collection_no_local_member => 'No hay vídeo local en esta colección';
+	@override String get gal_mining_image_mode => 'Imagen de tarjeta de galgame';
+	@override String get gal_mining_image_mode_screenshot => 'Captura de pantalla';
+	@override String get gal_mining_image_mode_hint => 'Las escenas de galgame apenas se mueven dentro de una línea, por lo que una captura estática suele ser más pequeña y igual de útil.';
+	@override String get shortcut_scope_manga => 'Manga';
+	@override String get shortcut_action_manga_page_forward => 'Página siguiente';
+	@override String get shortcut_action_manga_page_backward => 'Página anterior';
+	@override String get shortcut_action_manga_dismiss_dict => 'Cerrar diccionario';
+	@override String get video_setting_jimaku_default_language => 'Idioma de subtítulos predeterminado';
+	@override String get video_jimaku_api_key_settings_hint => 'También editable en Ajustes → Vídeo → Subtítulos';
+	@override String get anime_download_subs_episodes_unverified => 'Los números de episodio no están verificados para este pack — los subtítulos pueden ser de otra temporada.';
+	@override String get anime_download_subs_deferred => 'Los subtítulos se emparejan después de la descarga, desde los archivos reales del pack';
+	@override String get anime_download_subs_pending => 'Subtítulos: pendientes hasta que la descarga se complete';
+	@override String get anime_download_subs_unmatched => 'Subtítulos: sin coincidencia para este pack';
+	@override String get stat_source_breakdown => 'Por fuente';
+	@override String stat_format_pages({required Object n}) => '${n} páginas';
+	@override String anime_download_subs_season_mismatch({required Object season}) => 'Ninguna entrada de subtítulos coincide con la temporada ${season} de este pack — no seleccionado automáticamente. Elija uno manualmente si lo desea.';
+	@override String get media_tracking_card_title => 'Sincronización con Bangumi';
+	@override String get media_tracking_not_connected => 'No conectado. El progreso se queda local y nada llega a Bangumi.';
+	@override String get media_tracking_last_sync => 'Última sincronización';
+	@override String get media_tracking_never_synced => 'Nunca sincronizado';
+	@override String media_tracking_linked_count({required Object n}) => '${n} vinculados';
+	@override String media_tracking_pending_count({required Object n}) => '${n} esperando envío';
+	@override String get media_tracking_all_synced => 'Todo enviado';
+	@override String get media_tracking_unauthorized => 'Bangumi rechazó el token de acceso. Reconéctelo en ajustes.';
+	@override String get media_tracking_open_subject => 'Abrir en Bangumi';
+	@override String get media_tracking_manage_links => 'Administrar vínculos';
+	@override String get media_tracking_last_error => 'Último error';
+	@override String get shortcut_action_popup_mine_entry => 'Crear tarjeta (mine)';
+	@override String get game_upscaling_auto_hint => 'Usa Magpie si ya está en ejecución; de lo contrario usa la versión incluida con Fushi. No se necesita descarga.';
+	@override String get game_upscaling_installed_only_hint => 'Solo usa Magpie si ya está instalado o en ejecución. No desempaqueta la versión incluida de Fushi.';
+	@override String get game_upscaling_off_hint => 'Nunca escalar la ventana del juego.';
+	@override String get game_helper_bundle_missing => 'El helper de hook de galgame no está incluido en esta compilación. Actualice Fushi para obtenerlo.';
+	@override String game_upscaling_pick_title({required Object name}) => 'Escalado de ventana para ${name}';
+	@override String get game_upscaling_pick_body => 'Escala esta ventana de juego con Magpie mientras una sesión de captura está activa. Configurado por juego — solo ayuda para juegos cuya resolución nativa es menor que su pantalla. Usa su GPU.';
+	@override String get game_upscaling_hint_not_installed => 'Magpie no está listo. Establezca el escalado de ventana en Auto para usar la copia incluida con Fushi; si aún no se inicia, actualice o reinstale Fushi.';
+	@override String media_source_count_manga({required Object n}) => '${n} volúmenes';
+	@override String get library_view_shelf => 'Estante';
+	@override String get library_view_browse => 'Descubrir';
+	@override String get library_view_media => 'Biblioteca';
+	@override String get scrape_failure_detail_show => 'Mostrar detalles';
+	@override String get scrape_failure_detail_hide => 'Ocultar detalles';
+	@override String get media_tracking_retry_mapping => 'Reintentar emparejamiento';
+	@override String get media_tracking_retry_matched => 'Emparejado y progreso actual en cola';
+	@override String get media_tracking_retry_no_match => 'No se encontró coincidencia. Intente vincular manualmente.';
+	@override String get game_statistics => 'Estadísticas de juegos';
+	@override String get game_stat_by_game => 'Por juego';
+	@override String get stat_clear_all_game_message => '¿Borrar todo el tiempo de juego y conteos de sesiones? Su biblioteca de juegos y línea de actividad se conservan. Esto no se puede deshacer.';
+	@override String batch_selection_stale_skipped({required Object m, required Object n}) => 'Se omitieron ${m} de ${n} elementos seleccionados que ya no existen';
+	@override String get game_text_thread_unset => 'Sin hilo seleccionado — elija uno para comenzar a capturar';
+	@override String get media_tracking_watched_show => 'Ver todos los anime vistos';
+	@override String get media_tracking_watched_title => 'Vistos en Bangumi';
+	@override String get media_tracking_watched_empty => 'No hay anime marcado como visto en esta cuenta de Bangumi.';
+	@override String media_tracking_watched_load_failed({required Object error}) => 'No se pudieron cargar los anime vistos: ${error}';
+	@override String media_tracking_watched_progress({required Object n}) => 'Vistos ${n} episodios';
+	@override String get media_tracking_manual_required => 'Necesita vínculo manual';
+	@override String media_tracking_manual_required_count({required Object n}) => '${n} elementos necesitan vínculos manuales';
+	@override String get media_tracking_manual_required_hint => 'Estos elementos locales ya tienen progreso pero no están vinculados a Bangumi.';
+	@override String get media_tracking_no_local_history => 'Ningún progreso local de visualización, lectura o juego necesita vinculación.';
+	@override String media_tracking_more_manual_required({required Object n}) => '${n} elementos más necesitan vínculos manuales';
+	@override String get manga_import_hint => 'Elija una carpeta de manga, un archivo .cbz/.zip de páginas, un .pdf o un archivo .mokuro.';
+	@override String get manga_import_pick_file => 'Elegir archivo de manga';
+	@override String get manga_import_pick_folder => 'Elegir carpeta de manga';
+	@override String get manga_import_missing_input => 'Elija un archivo o carpeta de manga primero.';
+	@override String get manga_import_detected_title => 'Esto parece ser manga';
+	@override String get manga_import_detected_confirm => 'Importar como manga';
+	@override String manga_import_detected_message({required Object name}) => '"${name}" es un archivo de manga, por lo que se procesará con el importador de manga en lugar del importador de libros.';
+	@override String get video_jimaku_source_loading => 'Verificando disponibilidad de subtítulos...';
+	@override String get video_jimaku_source_failed => 'No se pudo verificar la disponibilidad de subtítulos. Intente buscar de nuevo.';
+	@override String get video_jimaku_language_unknown => 'Idioma no etiquetado';
+	@override String video_jimaku_source_summary({required Object files, required Object episodes, required Object languages}) => '${files} archivos de subtítulos · ${episodes} episodios · ${languages}';
+	@override String video_jimaku_episode_unlabeled({required Object episode, required Object count}) => 'Sin subtítulo etiquetado para episodio ${episode}; ${count} archivos sin etiquetar pueden coincidir';
+	@override String video_jimaku_episode_unavailable({required Object episode}) => 'No se encontró subtítulo para episodio ${episode}';
+	@override String video_jimaku_episode_available({required Object count, required Object languages}) => '${count} subtítulos disponibles · ${languages}';
+	@override String get manga_online_source_disabled => 'Esta fuente de internet está desactivada. Actívela en Fuentes para explorar el catálogo.';
+	@override String get selection_web_search => 'Buscar en la web';
+	@override String get selection_web_search_unavailable => 'Ninguna app puede buscar en la web.';
+	@override String get selection_share_failed => 'No se pudo abrir la hoja de compartir.';
+	@override String video_subtitle_youtube_auto_generated({required Object lang}) => '${lang} (generado automáticamente)';
+	@override String get anki_dedup_progress_title => 'Deduplicando medios';
+	@override String anki_dedup_progress_scanning({required Object count}) => 'Escaneando carpeta de medios… (${count} archivos encontrados)';
+	@override String anki_dedup_progress_hashing({required Object done, required Object total}) => 'Comparando archivos del mismo tamaño… (${done} / ${total})';
+	@override String anki_dedup_progress_resolving({required Object done, required Object total}) => 'Procesando duplicados… (${done} / ${total})';
+	@override String anki_dedup_progress_freed({required Object size}) => '${size} liberado hasta ahora';
+	@override String get anki_dedup_cancelling => 'Cancelando…';
+	@override String get anki_dedup_cancelled => 'Deduplicación cancelada; los cambios completados se conservan.';
+	@override String get anki_dedup_report_cancelled_note => 'Cancelado anticipadamente — los números de abajo solo cubren lo completado.';
+	@override String get anki_dedup_plan_busy_note => 'Anki puede no responder mientras se ejecuta; evite usar Anki hasta que termine.';
+	@override String get video_setting_subtitle_position_secondary => 'Posición del subtítulo secundario';
+	@override String get dict_download_learning_language => 'Idioma de aprendizaje';
+	@override String get dict_category_bilingual => 'Bilingüe';
+	@override String get dict_category_monolingual => 'Monolingüe';
+	@override String get shortcut_action_video_hold_speed => 'Mantener para velocidad temporal';
+	@override String get handlebar_phonetic_transcriptions => 'Transcripciones fonéticas';
+	@override String get sync_progress_preparing => 'Preparando sincronización';
+	@override String get sync_progress_collections => 'Sincronizando colecciones';
+	@override String get sync_progress_book => 'Sincronizando libro';
+	@override String sync_progress_book_titled({required Object title}) => 'Sincronizando ${title}';
+	@override String sync_last_completed({required Object count}) => 'Última sincronización: completada (${count} canales)';
+	@override String get sync_last_no_channels => 'Última sincronización: nada sincronizado — sin canal de sincronización conectado';
+	@override String get sync_last_nothing => 'Última sincronización: nada que sincronizar';
+	@override String get sync_last_auto_disabled => 'Última sincronización: omitida — sincronización automática desactivada';
+	@override String get sync_last_cooled_down => 'Última sincronización: omitida — sincronizado recientemente';
+	@override String get sync_last_failed => 'Última sincronización: falló';
+	@override String anime_download_no_results_detail({required Object query, required Object filters}) => 'El servicio respondió exitosamente pero devolvió 0 elementos. Consulta: ${query}; filtros: ${filters}. Intente otro título o relaje los filtros.';
+	@override String get anime_download_streaming_ready => 'En biblioteca · descarga continúa';
+	@override String get anime_download_unfiltered => 'Sin filtro de confianza';
+	@override String get interconnect_enable_footer => 'Cómo usar: en el dispositivo que tiene su biblioteca, active el interruptor del servidor de sincronización abajo; en su otro dispositivo, agregue la dirección de ese servidor para emparejarse. Un dispositivo solo puede actuar como un rol a la vez — servidor o cliente.';
+	@override String get interconnect_peer_list_title => 'Pares añadidos';
+	@override String get interconnect_peer_list_empty => 'Aún no hay pares añadidos. Elija un dispositivo descubierto de la lista de dispositivos LAN abajo para emparejar automáticamente, o agregue una dirección de par manualmente.';
+	@override String get anki_lapis_visual_editor => 'Editor visual';
+	@override String get anki_lapis_visual_editor_hint => 'Previsualice la tarjeta Lapis, luego cambie el estilo, posición y mapeo de campos de cada área sin escribir CSS.';
+	@override String get anki_lapis_visual_front => 'Frente';
+	@override String get anki_lapis_visual_back => 'Reverso';
+	@override String get anki_lapis_visual_preview => 'Vista previa de tarjeta Lapis';
+	@override String get anki_lapis_visual_select_field => 'Elija qué editar';
+	@override String get anki_lapis_visual_reset_field => 'Restablecer campo';
+	@override String anki_lapis_visual_font_size({required Object percent}) => 'Tamaño de fuente: ${percent}%';
+	@override String get anki_lapis_visual_bold => 'Negrita';
+	@override String get anki_lapis_visual_alignment => 'Alineación';
+	@override String get anki_lapis_visual_color => 'Color de texto';
+	@override String get anki_lapis_visual_default => 'Predeterminado';
+	@override String get anki_lapis_visual_advanced_css => 'CSS avanzado';
+	@override String get anki_lapis_visual_field_expression => 'Palabra';
+	@override String get anki_lapis_visual_field_reading => 'Lectura';
+	@override String get anki_lapis_visual_field_sentence => 'Oración';
+	@override String get anki_lapis_visual_field_primary_definition => 'Definición principal';
+	@override String get anki_lapis_visual_field_glossaries => 'Otras definiciones';
+	@override String get anki_lapis_visual_target_card_content => 'Contenido de la tarjeta';
+	@override String get anki_lapis_visual_target_definition => 'Definición';
+	@override String get anki_lapis_visual_target_inside_definition => 'Dentro de la definición';
+	@override String get anki_lapis_visual_field_definition_info => 'Indicador de definición';
+	@override String get anki_lapis_visual_field_definition_box => 'Caja de definición';
+	@override String get anki_lapis_visual_field_definition_content => 'Definición completa';
+	@override String get anki_lapis_visual_field_selected_definition => 'Definición seleccionada';
+	@override String get anki_lapis_visual_field_dictionary_entry => 'Entrada de diccionario';
+	@override String get anki_lapis_visual_field_dictionary_name => 'Nombre del diccionario';
+	@override String get anki_lapis_visual_field_definition_example => 'Ejemplo de definición';
+	@override String get anki_lapis_visual_line_height => 'Altura de línea';
+	@override String get anki_lapis_visual_background_color => 'Resaltado de fondo';
+	@override String get anki_lapis_visual_box_layout => 'Apariencia de caja';
+	@override String get anki_lapis_visual_border_width => 'Borde';
+	@override String get anki_lapis_visual_border_color => 'Color del borde';
+	@override String get anki_lapis_visual_corner_radius => 'Radio de esquinas';
+	@override String get anki_lapis_visual_padding => 'Espaciado interior';
+	@override String get anki_lapis_visual_margin => 'Espaciado exterior';
+	@override String get anki_lapis_visual_field_definition_info_note => 'Solo visible en tarjetas que conservan más de un bloque de definición; las tarjetas con una sola definición lo ocultan.';
+	@override String get anki_lapis_visual_field_dictionary_name_note => 'En las tarjetas de Fushi esta etiqueta también lleva las etiquetas de categoría gramatical, por lo que no se pueden estilizar por separado.';
+	@override String get game_upscaling_error_bundle_missing => 'La instalación de Fushi está incompleta: el componente Magpie incluido falta. Reinstale o actualice Fushi.';
+	@override String get game_upscaling_error_bundle_invalid => 'El componente Magpie incluido está corrupto o no pasó la verificación. Reinstale o actualice Fushi.';
+	@override String download_test_connection_failed_reason({required Object message}) => 'La conexión falló: ${message}';
+	@override String get delete_disclosure_will_delete_label => 'Se eliminará';
+	@override String get delete_disclosure_will_keep_label => 'Se conservará';
+	@override String get delete_disclosure_book_records => 'Progreso de lectura, marcadores, etiquetas y datos de subtítulos';
+	@override String get delete_disclosure_book_extracted => 'Los archivos del libro que Fushi extrajo en su almacenamiento';
+	@override String get delete_disclosure_book_audiobook => 'El audio y subtítulos alineados del audiolibro adjunto, si existe';
+	@override String get delete_disclosure_source_kept => 'Los archivos originales que importó (libro, subtítulos, audio)';
+	@override String get delete_disclosure_stats_kept => 'Estadísticas de lectura';
+	@override String get delete_disclosure_audiobook_files => 'El audio y subtítulos alineados que Fushi copió en su almacenamiento';
+	@override String get delete_disclosure_audiobook_book_kept => 'El libro mismo y su progreso de lectura';
+	@override String get delete_disclosure_audiobook_source_kept => 'Los archivos de audio originales que importó';
+	@override String get audiobook_delete => 'Eliminar audiolibro';
+	@override String get audiobook_delete_confirm => '¿Eliminar el audiolibro adjunto? Sus archivos de audio se eliminan de este dispositivo.';
+	@override String get delete_collection_confirm => 'Solo se elimina la agrupación. Los elementos que contiene se conservan.';
+	@override String get shortcut_action_video_enter_caret => 'Entrar al cursor de búsqueda de subtítulos';
+	@override String get audiobook_export_clip_too_long => 'El audio de la selección es demasiado largo para exportar (límite: 5 minutos)';
+	@override String get sync_err_forbidden => 'El servidor rechazó esta solicitud. Su inicio de sesión está bien — verifique los ajustes del servidor.';
+	@override String sync_err_forbidden_detail({required Object reason}) => 'El servidor rechazó esta solicitud: ${reason} (su inicio de sesión está bien)';
+	@override String get collection_group_extras => 'Extras y PV';
+	@override String collection_group_season({required Object n}) => 'Temporada ${n}';
+	@override String get collection_sort_by_season => 'Ordenar por temporada';
+	@override String get mining_animated_format_avif => 'AVIF (más pequeño)';
+	@override String get mining_animated_format_webp => 'WebP (soporte más amplio)';
+	@override String get mining_animated_format_gif => 'GIF (más compatible)';
+	@override String get video_mining_animated_format => 'Formato de animación de tarjeta de vídeo';
+	@override String get video_mining_animated_format_hint => 'AVIF es mucho más pequeño que GIF a la misma calidad, y su nivel de calidad máxima permite mayor resolución y tasa de fotogramas que GIF o WebP. Recurre a GIF automáticamente cuando el codificador incluido no puede producirlo.';
+	@override String get gal_mining_animated_format => 'Formato de animación de tarjeta de juego';
+	@override String get gal_mining_animated_format_hint => 'Mismos formatos que las tarjetas de vídeo, almacenados por separado: un fotograma de galgame apenas se mueve dentro de una línea, por lo que la compensación difiere.';
+	@override String get scrape_all => 'Obtener todo';
+	@override String scrape_all_title({required Object kind}) => 'Obtener todos los ${kind}';
+	@override String scrape_all_running({required Object current, required Object total}) => 'Obteniendo ${current} / ${total}';
+	@override String scrape_all_item({required Object title}) => 'Procesando: ${title}';
+	@override String scrape_all_done({required Object applied, required Object review, required Object skipped, required Object failed}) => 'Listo: ${applied} aplicados, ${review} necesitan revisión, ${skipped} omitidos, ${failed} fallidos';
+	@override String get scrape_all_empty => 'No hay elementos para obtener en esta biblioteca.';
+	@override String get scrape_all_start => 'Iniciar';
+	@override String collection_hero_total_episodes({required Object count}) => '${count} episodios';
+	@override String get video_scrape_collection_rename_title => '¿Renombrar esta colección?';
+	@override String get video_scrape_collection_rename_body => 'La entrada coincidente tiene un nombre diferente. Renombrar es opcional: la portada y detalles se guardan de todos modos, y un renombramiento también reemplaza el nombre antiguo en sus otros dispositivos sincronizados.';
+	@override String video_scrape_collection_rename_from({required Object name}) => 'Nombre actual: ${name}';
+	@override String video_scrape_collection_rename_to({required Object name}) => 'Nuevo nombre: ${name}';
+	@override String get video_scrape_collection_rename_keep => 'Mantener nombre actual';
+	@override String get download_task_toggle_failed => 'Pausa/reanudación falló';
+	@override String get download_task_eta => 'ETA';
+	@override String get download_task_ratio => 'Ratio';
+	@override String get download_task_status_downloading => 'Descargando';
+	@override String get download_task_status_seeding => 'Sembrando';
+	@override String get download_task_status_completed => 'Completado';
+	@override String get download_task_status_paused => 'Pausado';
+	@override String get download_task_status_queued => 'En cola';
+	@override String get download_task_status_stalled => 'Atascado';
+	@override String get download_task_status_checking => 'Verificando';
+	@override String get download_task_status_metadata => 'Obteniendo metadatos';
+	@override String get download_task_status_moving => 'Moviendo';
+	@override String get download_task_status_error => 'Error';
+	@override String get download_task_pause => 'Pausar';
+	@override String get download_task_resume => 'Reanudar';
+	@override String get download_airing_calendar_title => 'Calendario de emisión';
+	@override String get download_airing_calendar_show_all => 'Mostrar todo de esta temporada';
+	@override String get download_airing_calendar_empty_guidance => 'Nada que mostrar aún: vincule una colección a AniList o agregue una suscripción de descarga, y sus horarios de emisión aparecerán aquí.';
+	@override String get download_airing_calendar_error => 'No se pudo cargar el calendario de emisión';
+	@override String get download_airing_calendar_in_library => 'En biblioteca';
+	@override String get download_airing_calendar_subscribed => 'Suscrito';
+	@override String download_airing_calendar_episode_label({required Object episode}) => 'Ep ${episode}';
+	@override String get download_airing_calendar_week_prev => 'Semana anterior';
+	@override String get download_airing_calendar_week_next => 'Semana siguiente';
+	@override String get download_airing_calendar_week_empty => 'Nada se emite esta semana';
+	@override String get video_jimaku_format => 'Formato';
+	@override String get video_jimaku_format_all => 'Todos';
+	@override String get video_setting_tmdb_key => 'Clave API de TMDB personalizada';
+	@override String get video_setting_tmdb_key_hint => 'Opcional. Deje vacío para usar la clave integrada. Complete con la suya solo si la obtención de metadatos deja de funcionar o desea usar su propia cuota.';
+	@override String get about_tmdb_attribution => 'Esta aplicación utiliza TMDB y las APIs de TMDB pero no está respaldada, certificada ni aprobada por TMDB.';
+	@override String get anki_lapis_visual_layout => 'Disposición';
+	@override String get anki_lapis_visual_layout_hint => 'Usa los interruptores de disposición propios de Lapis, por lo que Anki de escritorio y móvil lo siguen.';
+	@override String get anki_lapis_visual_layout_sentence => 'Posición de la oración';
+	@override String get anki_lapis_visual_layout_sentence_above => 'Arriba de las definiciones';
+	@override String get anki_lapis_visual_layout_sentence_below => 'Debajo de las definiciones';
+	@override String get anki_lapis_visual_layout_picture => 'Posición de la imagen';
+	@override String get anki_lapis_visual_layout_picture_right => 'Derecha de la palabra';
+	@override String get anki_lapis_visual_layout_picture_left => 'Izquierda de la palabra';
+	@override String get anki_lapis_visual_layout_picture_alt => 'Dentro de la oración';
+	@override String get anki_lapis_visual_layout_audio => 'Botones de audio';
+	@override String get anki_lapis_visual_layout_audio_header => 'Junto a la lectura';
+	@override String get anki_lapis_visual_layout_audio_fixed => 'Fijados abajo';
+	@override String get anki_lapis_visual_layout_audio_alt => 'Dentro de la oración';
+	@override String get anki_lapis_visual_mapping_hint => 'Campos de Anki que llenan el área seleccionada. Los cambios se guardan junto con el estilo.';
+	@override String get anki_lapis_visual_mapping_none => 'Esta área es dibujada por la plantilla misma y no tiene campo propio.';
+	@override String get anki_lapis_visual_color_custom => 'Personalizado';
+	@override String get anki_lapis_visual_color_picker_title => 'Elegir un color';
+	@override String get video_scrape_tmdb_key_hint => 'Introduzca la clave API de TMDB';
+	@override String get video_scrape_tmdb_key_required => 'TMDB requiere una clave API';
+	@override String get video_scrape_tmdb_key_save => 'Guardar';
+	@override String get video_scrape_tmdb_key_empty => 'Guarde una clave API de TMDB, luego presione Buscar. Los resultados de otras fuentes no se muestran aquí.';
+	@override String get download_detail_tab_overview => 'Resumen';
+	@override String get download_detail_tab_files => 'Archivos';
+	@override String get download_detail_tab_peers => 'Pares';
+	@override String get download_detail_tab_trackers => 'Trackers';
+	@override String get download_detail_backend_unsupported => 'No soportado por el backend de descarga actual';
+	@override String get download_detail_task_gone => 'Tarea no encontrada en el backend';
+	@override String get download_detail_task_missing => 'El backend de descarga original está en línea, pero este torrent ya no está presente. Los pares y trackers en vivo no pueden recuperarse; se muestra la información persistida.';
+	@override String get download_detail_section_transfer => 'Transferencia';
+	@override String get download_detail_section_network => 'Red';
+	@override String get download_detail_section_task => 'Tarea';
+	@override String get download_detail_seeds_label => 'Seeds';
+	@override String get download_detail_leechers_label => 'Leechers';
+	@override String get download_detail_connections_label => 'Conexiones';
+	@override String get download_detail_content_path_label => 'Ruta del contenido';
+	@override String get download_detail_time_active => 'Tiempo activo';
+	@override String get download_detail_time_seeding => 'Tiempo de seeding';
+	@override String get download_detail_total_size_label => 'Tamaño total';
+	@override String get download_detail_listen_port => 'Puerto de escucha';
+	@override String get download_detail_dht_nodes => 'Nodos DHT';
+	@override String get download_detail_hash_label => 'Hash de información';
+	@override String get download_detail_port_mapping => 'Mapeo de puertos';
+	@override String get download_detail_session_rates => 'Tasas de sesión';
+	@override String get download_detail_pieces_label => 'Piezas';
+	@override String get download_detail_priority_skip => 'No descargar';
+	@override String get download_detail_raw_state_label => 'Estado del backend';
+	@override String get download_detail_remaining_label => 'Restante';
+	@override String get download_detail_save_path_label => 'Ruta de guardado';
+	@override String get download_detail_priority_normal => 'Normal';
+	@override String get download_detail_priority_high => 'Alta';
+	@override String get download_detail_tracker_working => 'Funcionando';
+	@override String get download_detail_tracker_updating => 'Actualizando';
+	@override String get download_detail_tracker_not_contacted => 'Aún sin contactar';
+	@override String get download_detail_tracker_not_working => 'Sin funcionar';
+	@override String get download_detail_tracker_disabled => 'Desactivado';
+	@override String get download_detail_no_peers => 'Sin pares conectados';
+	@override String get download_detail_no_trackers => 'Sin trackers';
+	@override String get video_filter_year => 'Año';
+	@override String get video_filter_year_unknown => 'Año desconocido';
+	@override String get video_filter_watch_status => 'Estado de visualización';
+	@override String get video_filter_watch_status_unwatched => 'Sin ver';
+	@override String get video_filter_watch_status_watching => 'Viendo';
+	@override String get video_filter_watch_status_completed => 'Completado';
+	@override String get video_hero_detail_view => 'Detalles';
+	@override String video_hero_episodes_watched({required Object n}) => '${n} eps vistos';
+	@override String get video_recently_added_badge => 'NUEVO';
+	@override String get video_air_season_winter => 'Invierno';
+	@override String get video_air_season_spring => 'Primavera';
+	@override String get video_air_season_summer => 'Verano';
+	@override String get video_air_season_autumn => 'Otoño';
+	@override String get delete_scope_no_channel => 'Sin sincronización configurada — esta eliminación solo afecta este dispositivo';
+	@override String get mihon_sources_title => 'Fuentes de manga';
+	@override String get mihon_extensions_title => 'Extensiones de manga';
+	@override String get mihon_store_add => 'Añadir tienda de extensiones';
+	@override String get mihon_store_url => 'URL de tienda de extensiones';
+	@override String get mihon_store_empty => 'Aún no hay tiendas de extensiones. Agregue una tienda compatible de Mihon o importe un APK local.';
+	@override String get mihon_extension_import => 'Importar APK local';
+	@override String get mihon_extension_warning => 'Las extensiones de terceros ejecutan código con los permisos de Fushi. Solo instale extensiones y firmantes de confianza.';
+	@override String get mihon_extension_install => 'Instalar';
+	@override String get mihon_extension_update => 'Actualizar';
+	@override String get mihon_extension_uninstall => 'Desinstalar';
+	@override String get mihon_extension_installed => 'Instalado';
+	@override String get mihon_extension_disabled => 'Desactivado';
+	@override String get mihon_source_empty => 'Sin fuentes de manga activas. Instale y active una extensión primero.';
+	@override String get mihon_source_popular => 'Popular';
+	@override String get mihon_source_latest => 'Último';
+	@override String get mihon_source_search => 'Buscar manga';
+	@override String get mihon_source_preferences => 'Preferencias de fuente';
+	@override String get mihon_source_clear_data => 'Borrar datos de fuente';
+	@override String get mihon_source_clear_data_hint => 'Borra las preferencias y cookies de esta fuente. Las extensiones instaladas se conservan.';
+	@override String get mihon_signer_trust_title => '¿Confiar en el firmante de la extensión?';
+	@override String get mihon_signer_fingerprint => 'SHA-256 del firmante';
+	@override String get mihon_runtime_unavailable => 'Las extensiones de Mihon no están disponibles en esta plataforma.';
+	@override String get mihon_extension_incompatible => 'Extensión incompatible';
+	@override String get mihon_store_refresh => 'Actualizar tiendas';
+	@override String get mihon_source_browse_mokuro => 'Catálogo Mokuro integrado';
+	@override String get mihon_source_no_results => 'No se encontró manga.';
+	@override String get mihon_chapters_title => 'Capítulos';
+	@override String get mihon_extension_language_filter => 'Idioma';
+	@override String get mihon_extension_language_all => 'Todos los idiomas';
+	@override String get mihon_filter_ignore => 'Ignorar';
+	@override String get mihon_filter_include => 'Incluir';
+	@override String get mihon_filter_exclude => 'Excluir';
+	@override String get mihon_filter_ascending => 'Ascendente';
+	@override String get mihon_filter_descending => 'Descendente';
+	@override String get mihon_add_to_bookshelf => 'Añadir al estante de manga';
+	@override String get mihon_in_bookshelf => 'En el estante de manga';
+	@override String scrape_all_confirm({required Object n}) => 'Emparejar todos los ${n} elementos de la biblioteca por título. Solo las coincidencias de alta confianza se aplican automáticamente — los vídeos se puntúan por título junto con año, tipo y otras señales, mientras que los libros y juegos requieren un título exacto único. Las portadas que eligió usted nunca se sobrescriben (imágenes locales que estableció, entradas que eligió en el diálogo de emparejamiento, y archivos de póster colocados en la carpeta), y los resultados ambiguos quedan pendientes para revisión manual.';
+	@override String get collection_related_title => 'Obras relacionadas';
+	@override String get collection_relation_prequel => 'Precuela';
+	@override String get collection_relation_sequel => 'Secuela';
+	@override String get collection_relation_side_story => 'Historia secundaria';
+	@override String get collection_relation_movie => 'Película';
+	@override String get collection_relation_spin_off => 'Spin-off';
+	@override String get collection_relation_other => 'Relacionado';
+	@override String get collection_relation_download => 'Descargar';
+	@override String get collection_relation_bind => 'Vincular a colección existente';
+	@override String get collection_episode_rename => 'Renombrar episodios desde metadatos';
+	@override String get collection_episode_rename_title => 'Renombrar episodios';
+	@override String get collection_episode_rename_empty => 'Nada que renombrar';
+	@override String get collection_episode_download => 'Descargar este episodio';
+	@override String get collection_episode_fill_missing => 'Completar episodios faltantes';
+	@override String get collection_episode_no_missing => 'Sin episodios faltantes';
+	@override String get collection_split_by_season => 'Dividir por temporada';
+	@override String get collection_split_keep_original => 'Conservar la colección original';
+	@override String get collection_split_confirm => 'Dividir';
+	@override String collection_relation_bound({required Object name}) => 'Vinculado a ${name}';
+	@override String collection_episode_rename_apply({required Object n}) => 'Renombrar ${n} episodios';
+	@override String collection_split_done({required Object n}) => 'Dividido en ${n} colecciones';
+	@override String collection_episode_watched_at({required Object position}) => 'Visto hasta ${position}';
+	@override String collection_episode_rename_partial({required Object n, required Object m}) => 'Se renombraron ${n} episodios, ${m} fallaron';
+	@override String get sync_err_browser_timeout => 'El navegador nunca devolvió la autorización. Reintente y asegúrese de que su proxy deje pasar 127.0.0.1.';
+	@override String get manga_rescan_running => 'Reconociendo el recuadro seleccionado...';
+	@override String get manga_rescan_empty => 'No se reconoció texto en este recuadro.';
+	@override String get stat_hourly_band_epub => 'Libros de texto';
+	@override String get stat_hourly_band_pdf => 'PDF';
+	@override String get stat_hourly_band_manga => 'Manga';
+	@override String get stat_hourly_band_unattributed => 'Historial sin dividir';
+	@override String get stat_hourly_unattributed_note => 'Las horas registradas antes de que existiera el seguimiento por formato no tienen tipo almacenado, por lo que no se pueden dividir. Se muestran como un total combinado y no se asignan a ningún tipo.';
+	@override String get book_convert_to_manga_action => 'Convertir a manga';
+	@override String get book_convert_to_book_action => 'Convertir de vuelta a libro';
+	@override String get book_convert_running => 'Convirtiendo…';
+	@override String get book_convert_done => 'Conversión terminada';
+	@override String get book_convert_failed => 'La conversión falló';
+	@override String get book_convert_blocked_already => 'Este libro ya está en ese formato.';
+	@override String get book_convert_blocked_text_only => 'Este es un libro de texto sin imágenes de página. Solo los libros de imágenes escaneadas pueden convertirse en manga.';
+	@override String get book_convert_blocked_no_original => 'Este manga fue importado desde imágenes, por lo que no hay libro original al que convertir.';
+	@override String get book_convert_blocked_source_missing => 'Los archivos fuente ya no están en disco.';
+	@override String manga_online_retry_waiting({required Object attempt, required Object total}) => 'Reintentando automáticamente (${attempt}/${total})';
+	@override String get manga_ocr_wizard_already_ocred => 'Este volumen ya tiene datos de OCR en cada página. Ejecutar OCR de nuevo los sobrescribiría.';
+	@override String get shortcut_scope_universal => 'Atrás / Salir';
+	@override String get game_attach_and_capture => 'Vincular y capturar';
+	@override String get remote_delete_failed => 'No se pudo eliminar en el dispositivo emparejado';
+	@override String get remote_delete_unsupported => 'El dispositivo emparejado es demasiado antiguo para soportar eliminación remota. Actualice Fushi allí primero.';
+	@override String get anki_lapis_visual_blocks => 'Áreas personalizadas';
+	@override String get anki_lapis_visual_blocks_hint => 'Mostrar campos existentes en otra parte de la tarjeta. Solo visualización: no se añade ni elimina ningún campo de Anki.';
+	@override String get anki_lapis_visual_block_add => 'Añadir área';
+	@override String get anki_lapis_visual_block_delete => 'Eliminar área';
+	@override String anki_lapis_visual_block_name({required Object index}) => 'Área ${index}';
+	@override String get anki_lapis_visual_block_anchor => 'Posición en la tarjeta';
+	@override String get anki_lapis_visual_block_anchor_top => 'Arriba de la tarjeta';
+	@override String get anki_lapis_visual_block_anchor_above_sentence => 'Debajo de la palabra';
+	@override String get anki_lapis_visual_block_anchor_above_definition => 'Debajo de la oración';
+	@override String get anki_lapis_visual_block_anchor_below_definition => 'Debajo de las definiciones';
+	@override String get anki_lapis_visual_block_anchor_bottom => 'Abajo de la tarjeta';
+	@override String get anki_lapis_visual_block_fields => 'Campos mostrados aquí';
+	@override String get anki_lapis_visual_block_no_fields => 'Aún no se han seleccionado campos';
+	@override String get anki_lapis_visual_block_needs_note_type => 'Elija un tipo de nota primero para elegir campos.';
+	@override String get anki_lapis_restore_factory => 'Restaurar Lapis de fábrica';
+	@override String get anki_lapis_restore_factory_hint => 'Sobrescribe el tipo de nota Lapis en Anki con la versión incluida en Fushi y borra todas las personalizaciones.';
+	@override String get anki_lapis_restore_factory_confirm => 'Esto sobrescribe el estilo y plantillas de tarjetas Lapis en Anki con la versión incluida de Fushi, y restablece tamaño de fuente, CSS personalizado y áreas personalizadas. Se guarda una copia de seguridad del estado actual primero. Los datos de las tarjetas no se tocan.';
+	@override String get anki_lapis_restore_factory_done => 'Lapis restaurado a valores de fábrica';
+	@override String anki_lapis_restore_factory_failed({required Object error}) => 'La restauración falló: ${error}';
+	@override String get anki_lapis_visual_select_field_hint => 'Haga clic en cualquier parte de la vista previa, o elija uno abajo. Lo que elija es lo que los controles de abajo editarán.';
+	@override String get anki_lapis_visual_editing_now => 'Editando';
+	@override String get mihon_extension_preview => 'Vista previa';
+	@override String get mihon_extension_preview_warning => 'La vista previa ejecuta el código de esta extensión antes de instalarla. Nada se añade a su biblioteca hasta que elija instalar.';
+	@override String get mihon_extension_preview_discard => 'Descartar';
+	@override String get mihon_extension_preview_source_select => 'Elija una fuente para previsualizar';
+	@override String get mihon_extension_sources_included => 'Fuentes incluidas';
+	@override String get mihon_extension_preview_read_only => 'La vista previa es de solo lectura. Instale la extensión para abrir y leer.';
+	@override String get selection_copy_empty => 'No hay texto seleccionado.';
+	@override String get video_library_empty_source_hint => 'Añada una carpeta de vídeo desde Fuentes para construir su biblioteca';
+	@override String get video_source_scrape_action => 'Obtener metadatos de esta fuente';
+	@override String get video_source_scrape_settings => 'Ajustes de obtención de metadatos de fuente';
+	@override String get video_source_scrape_auto_after_scan => 'Obtener metadatos después del escaneo';
+	@override String get video_source_scrape_auto_after_scan_hint => 'Ejecutar obtención de metadatos automáticamente después de escanear esta fuente';
+	@override String get video_source_scrape_write_nfo => 'Escribir archivos NFO';
+	@override String get video_source_scrape_write_images => 'Escribir archivos de imagen';
+	@override String video_source_scrape_progress({required Object phase, required Object current, required Object total}) => '${phase} · ${current}/${total}';
+	@override String video_source_scrape_last_summary({required Object status, required Object succeeded, required Object pending, required Object failed}) => 'Última obtención (${status}): ${succeeded} exitosos, ${pending} pendientes, ${failed} fallidos';
+	@override String get video_source_scrape_phase_planning => 'Planificando';
+	@override String get video_source_scrape_phase_recognizing => 'Emparejando';
+	@override String get video_source_scrape_phase_fetching => 'Obteniendo metadatos';
+	@override String get video_source_scrape_phase_applying => 'Guardando metadatos';
+	@override String get video_source_scrape_phase_writing_sidecars => 'Escribiendo archivos complementarios';
+	@override String get video_source_scrape_status_interrupted => 'Interrumpido';
+	@override String get video_source_scrape_locale => 'Idioma de metadatos';
+	@override String get video_source_scrape_locale_hint => 'Idioma preferido para títulos, resúmenes e imágenes';
+	@override String get video_source_scrape_confirmation_title => 'Confirmar coincidencia de metadatos';
+	@override String get video_source_scrape_confirmation_hint => 'Se encontraron múltiples coincidencias exactas. Elija la obra correcta para guardar su vínculo con el proveedor.';
+	@override String get video_source_scrape_confirmation_skip => 'Omitir esta obra';
+	@override String get video_source_scrape_nfo_policy => 'Política de escritura NFO';
+	@override String get video_source_scrape_image_policy => 'Política de escritura de imágenes';
+	@override String get video_source_scrape_policy_skip => 'No escribir';
+	@override String get video_source_scrape_policy_missing_only => 'Solo cuando faltan';
+	@override String get video_source_scrape_policy_overwrite => 'Actualizar archivos de Fushi';
+	@override String get video_source_scrape_external_overwrite => 'Permitir sobrescritura de archivos protegidos';
+	@override String get video_source_scrape_external_overwrite_hint => 'Los archivos de terceros o modificados por el usuario permanecen protegidos hasta que confirme cada lote de obtención manual de nuevo.';
+	@override String get video_source_scrape_external_overwrite_confirm_title => '¿Sobrescribir archivos protegidos?';
+	@override String get video_source_scrape_external_overwrite_confirm_body => 'Este lote puede reemplazar NFO/imágenes de terceros o archivos de Fushi que editó. Los archivos de medios no se cambian. ¿Continuar?';
+	@override String get video_source_scrape_tasks_open => 'Tareas en segundo plano';
+	@override String get video_source_scrape_background_started => 'La obtención de metadatos se ejecuta en segundo plano';
+	@override String get video_source_scrape_tasks_current => 'Tarea actual';
+	@override String get video_source_scrape_tasks_history => 'Tareas recientes';
+	@override String get video_source_scrape_tasks_empty => 'Aún no hay tareas de obtención';
+	@override String get video_source_scrape_waiting_confirmation => 'Esperando su confirmación';
+	@override String get video_source_scrape_phase_scanning => 'Escaneando fuente';
+	@override String get video_library_all_videos => 'Todos los vídeos';
+	@override String get video_work_voice_roles => 'Elenco de voz y personajes';
+	@override String get video_work_cast_crew => 'Elenco y equipo';
+	@override String get video_work_trailers => 'Tráilers';
+	@override String get video_work_extras => 'Extras';
+	@override String get video_work_details => 'Detalles';
+	@override String get video_work_external_ids => 'IDs externos';
+	@override String get video_work_metadata_pending => 'Los metadatos detallados aún no se han obtenido. Reintente esta fuente desde Fuentes, luego vuelva a abrir la obra.';
+	@override String get video_work_genres => 'Géneros';
+	@override String get video_work_keywords => 'Palabras clave';
+	@override String get video_work_studios => 'Estudios';
+	@override String get video_work_countries => 'Países';
+	@override String get video_work_content_rating => 'Clasificación de contenido';
+	@override String get video_all_videos_list_view => 'Vista de lista';
+	@override String get video_all_videos_grid_view => 'Vista de cuadrícula';
+	@override String video_home_continue_episode_number({required Object n}) => 'Reproduciendo episodio ${n}';
+	@override String video_home_next_episode_number({required Object n}) => 'Siguiente · Episodio ${n}';
+	@override String video_home_recent_episode_number({required Object n}) => 'Añadido recientemente · Episodio ${n}';
+	@override String video_home_remaining_minutes({required Object minutes}) => '${minutes} min restantes';
+	@override String get video_subtitle_replay => 'Repetir esta línea';
+	@override String get manga_ocr_done => 'OCR completado';
+	@override String get settings_destination_manga_summary => 'Lector, OCR y catálogo en línea';
+	@override String get manga_page_animation => 'Animación de paso de página';
+	@override String get manga_page_animation_none => 'Ninguna';
+	@override String get manga_page_animation_slide => 'Deslizar';
+	@override String get manga_page_animation_fade => 'Desvanecer';
+	@override String get manga_default_zoom => 'Zoom predeterminado';
+	@override String get manga_zoom_sensitivity => 'Sensibilidad del zoom';
+	@override String get manga_volume_key_paging => 'Teclas de volumen pasan páginas';
+	@override String get manga_volume_key_paging_subtitle => 'Use subir y bajar volumen para pasar páginas en el lector de manga';
+	@override String get manga_tap_zone_paging => 'Tocar bordes para pasar páginas';
+	@override String get manga_tap_zone_paging_subtitle => 'Toque el borde izquierdo o derecho de la página para pasar';
+	@override String get manga_section_viewing => 'Visualización y paso de página';
+	@override String get game_capture_setup_title => 'Completar configuración de captura';
+	@override String get game_capture_setup_hint => 'Elija el hilo de diálogo primero. Fushi solo puede emparejar audio con líneas del hilo seleccionado.';
+	@override String get game_audio_requires_thread => 'La fuente de captura de audio puede estar lista, pero el audio de oraciones no existe hasta que se seleccione un hilo y se reciba una línea.';
+	@override String get game_session_waiting_thread => 'Esperando un hilo de diálogo';
+	@override String get anki_connect_use_on_mobile => 'Use AnkiConnect on Android';
+	@override String get anki_connect_use_on_mobile_hint => 'Use solo en una red de confianza. AnkiConnect usa HTTP sin cifrar; configure una clave API que coincida, luego actualice mazos y tipos de nota después de cambiar.';
+	@override String get anki_connect_api_key_hint => 'Requerido para AnkiConnect remoto; debe coincidir con la clave configurada en el complemento';
+	@override String get anki_connect_mobile_api_key_required => 'Configure a matching AnkiConnect API key before enabling the Android backend.';
+	@override String anki_connect_backend_switch_failed({required Object error}) => 'No se pudo cambiar el backend de Anki: ${error}';
+	@override String get migration_settings_entry => 'Migrar a Fushi';
+	@override String get migration_settings_entry_subtitle => 'Mover todos los datos a la nueva app Fushi';
+	@override String get migration_intro => 'Fushi es el nuevo nombre de esta app. La migración exporta todos sus datos en lotes a una carpeta de transferencia, luego Fushi los importa y verifica. Sus datos aquí permanecen intactos hasta que desinstale esta app.';
+	@override String get migration_target_missing => 'Fushi aún no está instalado. Instale Fushi primero, luego regrese aquí.';
+	@override String get migration_download_fushi => 'Obtener Fushi';
+	@override String get migration_start => 'Iniciar migración';
+	@override String get migration_open_fushi => 'Abrir Fushi';
+	@override String get migration_include_local_audio => 'También exportar audio de pronunciación local (puede ser grande)';
+	@override String migration_batch_running({required Object batch}) => 'Exportando ${batch}…';
+	@override String migration_batch_done({required Object batch}) => '${batch} exportado';
+	@override String get migration_export_done => 'Exportación completa. Abra Fushi para importar y verificar.';
+	@override String migration_export_failed({required Object error}) => 'La exportación falló: ${error}';
+	@override String get migration_readonly_note => 'Sus datos han sido exportados a Fushi. Esta app ahora es de solo lectura: use Fushi para leer y crear tarjetas. Puede re-exportar en cualquier momento si Fushi reporta datos faltantes.';
+	@override String get migration_reexport => 'Re-exportar';
+	@override String get migration_batch_core_label => 'Ajustes, progreso y estadísticas';
+	@override String get migration_import_entry => 'Importar desde Hibiki';
+	@override String get migration_import_entry_subtitle => 'Importar datos exportados por la antigua app Hibiki';
+	@override String get migration_import_detected => 'Datos de migración de Hibiki detectados. ¿Importarlos ahora?';
+	@override String get migration_import_start => 'Iniciar importación';
+	@override String migration_import_running({required Object batch}) => 'Importando ${batch}…';
+	@override String migration_import_verify_failed({required Object batch, required Object detail}) => '${batch} falló la verificación y se conservó para re-exportar: ${detail}';
+	@override String migration_import_counts_failed({required Object detail}) => 'Los datos importados están incompletos: ${detail}. Re-exporte las partes faltantes desde Hibiki, luego importe de nuevo.';
+	@override String get migration_import_success => 'Importación completa y verificada.';
+	@override String get migration_import_nothing => 'No se encontraron datos de migración en la carpeta de transferencia.';
+	@override String get migration_uninstall_prompt => 'Migración finalizada. ¿Desinstalar la antigua app Hibiki?';
+	@override String get migration_uninstall_button => 'Desinstalar Hibiki';
+	@override String get migration_uninstall_still_installed => 'Hibiki aún está instalado. Puede desinstalarlo en cualquier momento.';
+	@override String get migration_import_permission_title => 'Se requiere permiso de almacenamiento';
+	@override String get migration_import_permission_body => 'La carpeta de transferencia fue creada por la app antigua. Sin el acceso "Todos los archivos", Fushi no puede leerla — los datos están intactos, simplemente no se pueden abrir.';
+	@override String get migration_import_permission_grant => 'Conceder permiso';
+	@override String migration_import_verifying({required Object batch, required Object done, required Object total}) => 'Verificando ${batch} (${done}/${total})';
+	@override String get migration_import_verifying_hint => 'Verificando los archivos. Las bibliotecas grandes pueden tardar varios minutos.';
+	@override String get game_line_copy_tooltip => 'Copiar oración';
+	@override String get game_japanese_locale_auto => 'Auto';
+	@override String get game_japanese_locale_on => 'Siempre activo';
+	@override String get game_japanese_locale_off => 'Apagado';
+	@override String get game_japanese_locale => 'Configuración regional japonesa';
+	@override String get game_japanese_locale_hint => 'Las compilaciones parcheadas en chino/inglés deben desactivar esto, o el juego se cierra al iniciar';
+	@override String get video_scrape_diagnostic_export => 'Exportar diagnóstico de metadatos';
+	@override String get video_scrape_diagnostic_confirm_title => '¿Exportar diagnóstico de metadatos?';
+	@override String get video_scrape_diagnostic_saved => 'Paquete de diagnóstico guardado';
+	@override String video_scrape_diagnostic_failed({required Object reason}) => 'No se pudo exportar el paquete de diagnóstico: ${reason}';
+	@override String get video_scrape_diagnostic_share_subject => 'Diagnóstico de metadatos de vídeo de Fushi';
+	@override String get video_scrape_diagnostic_confirm_body => 'El paquete incluye nombres relativos de archivos y carpetas, resúmenes de metadatos y contenido NFO original. No añade vídeos, subtítulos, imágenes, rutas absolutas, configuración de la app ni credenciales. Los archivos NFO originales se conservan sin cambios y pueden contener información personal o secretos; revise el paquete antes de compartirlo públicamente.';
+	@override String get video_discovery_search_hint => 'Buscar películas, series, anime';
+	@override String get video_discovery_hot => 'Popular ahora';
+	@override String get video_discovery_seasonal_anime => 'Anime de temporada';
+	@override String get video_discovery_all_works => 'Todos los títulos';
+	@override String get video_discovery_search_results => 'Resultados de búsqueda';
+	@override String get video_discovery_provider_warning => 'Algunos proveedores no están disponibles. Mostrando resultados disponibles.';
+	@override String get video_discovery_load_failed => 'No se pudieron cargar los resultados de descubrimiento.';
+	@override String get video_discovery_empty => 'Sin títulos coincidentes.';
+	@override String get video_discovery_resource_search => 'Buscar recursos';
+	@override String get video_discovery_subtitle_search => 'Buscar subtítulos';
+	@override String get video_discovery_subscribe => 'Suscribirse';
+	@override String get video_discovery_subscription_manage => 'Administrar suscripción';
+	@override String get video_discovery_pipeline_idle => 'Sin descargar → Descargar → Organizar → Subtítulos → Metadatos → Biblioteca';
+	@override String get video_discovery_details_load_failed => 'No se pudieron cargar los detalles del título.';
+	@override String get video_discovery_sort_popularity => 'Popularidad';
+	@override String get video_discovery_sort_rating => 'Puntuación';
+	@override String get video_discovery_sort_release => 'Fecha de lanzamiento';
+	@override String get video_discovery_in_library => 'En biblioteca';
+	@override String get video_discovery_play => 'Reproducir';
+	@override String get download_resources_tab => 'Recursos';
+	@override String get video_external_settings_section => 'Proveedores externos de recursos y subtítulos';
+	@override String get video_torznab_settings_title => 'Indexadores Torznab';
+	@override String get video_torznab_add => 'Añadir indexador';
+	@override String get video_torznab_name => 'Nombre';
+	@override String get video_torznab_endpoint => 'Endpoint';
+	@override String get video_torznab_endpoint_hint => 'Se requiere HTTPS excepto para direcciones de loopback.';
+	@override String get video_torznab_api_key => 'Clave API';
+	@override String get video_torznab_priority => 'Prioridad';
+	@override String get video_torznab_categories => 'Categorías';
+	@override String get video_torznab_categories_hint => 'IDs de categoría numéricos separados por coma';
+	@override String get video_external_enabled => 'Activado';
+	@override String get video_external_insecure_http => 'Permitir HTTP inseguro';
+	@override String get video_external_insecure_http_hint => 'Use solo para un endpoint de red local de confianza.';
+	@override String get video_external_endpoint_invalid => 'Introduzca un endpoint válido sin credenciales, parámetros de consulta ni fragmentos.';
+	@override String get video_opensubtitles_settings_title => 'OpenSubtitles';
+	@override String get video_opensubtitles_user_agent => 'User-Agent';
+	@override String get video_opensubtitles_languages_hint => 'Códigos de idioma separados por coma, por ejemplo zh-CN,en,ja';
+	@override String get video_download_path_mappings_title => 'Mapeos de rutas de qBittorrent';
+	@override String get video_download_path_mappings_hint => 'Mapee cada raíz remota de qBittorrent a una carpeta accesible localmente.';
+	@override String get video_download_path_mapping_add => 'Añadir mapeo de ruta';
+	@override String get video_download_backend_profile_id => 'ID de perfil del backend';
+	@override String get video_download_remote_root => 'Raíz remota';
+	@override String get video_download_local_root => 'Raíz local';
+	@override String get video_download_target_source_title => 'Fuente de vídeo gestionada predeterminada';
+	@override String get video_download_target_source_hint => 'Las nuevas descargas se organizan en esta fuente de vídeo local.';
+	@override String get video_download_target_source_none => 'Elegir una fuente de vídeo local';
+	@override String get video_external_remove => 'Eliminar';
+	@override String get video_external_username_optional => 'Usuario (opcional)';
+	@override String get video_external_password_optional => 'Contraseña (opcional)';
+	@override String get video_external_api_key => 'Clave API';
+	@override String get video_external_save_error => 'No se pudo guardar la configuración. Verifique los campos resaltados.';
+	@override String get video_external_categories_invalid => 'Las categorías deben ser IDs numéricos separados por coma.';
+	@override String get video_download_path_mapping_invalid => 'Introduzca un ID de perfil, raíz remota y raíz local absoluta.';
+	@override String get video_opensubtitles_endpoint => 'Endpoint de API';
+	@override String get video_download_target_source_empty => 'No hay fuente de vídeo local accesible disponible. Añada una en la pestaña Fuentes primero.';
+	@override String get video_setting_drag_seek_sensitivity => 'Sensibilidad de arrastre para buscar';
+	@override String get video_setting_drag_seek_sensitivity_hint => 'Cuánto busca un deslizamiento completo del ancho de pantalla en pantalla táctil: Baja unos 45s, Media unos 90s, Alta unos 180s. Independiente de la duración total del vídeo. Solo arrastre táctil; la búsqueda con ratón y teclado no se afecta.';
+	@override String get video_setting_drag_seek_sensitivity_low => 'Baja';
+	@override String get video_setting_drag_seek_sensitivity_medium => 'Media';
+	@override String get video_setting_drag_seek_sensitivity_high => 'Alta';
+	@override String video_subtitle_read_failed({required Object label}) => 'No se pudo leer este archivo de subtítulos (dañado o vacío): ${label}';
+	@override String dict_downloading_size({required Object name, required Object done, required Object total}) => 'Descargando ${name} (${done} / ${total})';
+	@override String get video_subtitle_attach_book_missing => 'Este vídeo no está en su biblioteca, por lo que el subtítulo no se adjuntó';
+	@override String get dict_download_hide => 'Ejecutar en segundo plano';
+	@override String get dict_download_progress_show => 'Ver progreso';
+	@override String get dict_download_cancelled => 'Descarga cancelada.';
+	@override String get dict_download_import_uncancellable => 'La importación no se puede interrumpir';
+	@override String get dict_download_busy => 'Ya se está ejecutando una descarga de diccionario.';
+	@override String get gal_hook_ingame_lookup => 'Búsqueda de diccionario dentro del juego';
+	@override String get gal_hook_ingame_lookup_hint => 'Mostrar la tarjeta de diccionario dentro de la ventana del juego (motor KiriKiri, solo Windows)';
+	@override String download_subscription_start_episode({required Object episode}) => '从第 ${episode} 集开始';
+	@override String get drag_drop_failed => 'No se pudieron manejar los archivos soltados. Inténtelo de nuevo.';
+	@override String get tag_add_failed => 'No se pudo añadir la etiqueta. Inténtelo de nuevo.';
+	@override String get tag_reorder_failed => 'No se pudo guardar el nuevo orden de etiquetas. Inténtelo de nuevo.';
+	@override String get download_task_error_summary_source_missing => 'La fuente de vídeo gestionada falta o es inaccesible';
+	@override String get download_task_error_summary_backend_unconfirmed => 'El torrent no pudo confirmarse por hash, título y categoría';
+	@override String get download_task_error_summary_subtitle => 'Los subtítulos no están disponibles o no pudieron instalarse';
+	@override String get download_task_error_summary_backend_unavailable => 'El backend de descarga no está disponible o ya no coincide';
+	@override String get download_task_error_summary_legacy => 'La importación heredada necesita atención manual';
+	@override String get download_task_error_summary_torrent_info => 'La identidad del torrent falta o no se puede verificar';
+	@override String get download_task_error_summary_generic => 'La tarea encontró un error';
+	@override String get download_task_error_view_detail => 'Ver detalles';
+	@override String get download_task_error_detail_title => 'Detalles del error';
+	@override String get download_task_error_copied => 'Detalles del error copiados';
+	@override String get download_task_lifecycle_active => 'En progreso';
+	@override String get download_task_lifecycle_needs_attention => 'Necesita atención';
+	@override String get download_task_location_missing => 'La ubicación del archivo de la tarea no está disponible.';
+	@override String get download_task_location_open_failed => 'No se pudo abrir la ubicación del archivo.';
+	@override String get download_task_open_location => 'Mostrar en carpeta';
+	@override String get download_task_lifecycle_completed => 'Completado';
+	@override String get download_task_lifecycle_failed => 'Falló';
+	@override String get download_task_lifecycle_cancelled => 'Cancelado';
+	@override String get download_task_stage_enqueue => 'En cola';
+	@override String get download_task_stage_download => 'Descargar';
+	@override String get download_task_stage_organize => 'Organizar';
+	@override String get download_task_stage_subtitle => 'Subtítulos';
+	@override String get download_task_stage_import => 'Importar';
+	@override String get download_task_stage_scrape => 'Metadatos';
+	@override String get video_discovery_manual_identity_hint => 'Introduzca el título, ID externo y año arriba para habilitar la búsqueda';
+	@override String get collection_split_move_to => 'Mover a';
+	@override String get collection_split_new_group => 'Nuevo grupo';
+	@override String collection_split_selected({required Object n}) => '${n} seleccionados';
+	@override String get sync_pair_rate_limited => 'Demasiados intentos. Espere unos minutos e inténtelo de nuevo.';
+	@override String get sync_pair_tls_failed => 'La verificación de certificado falló. El certificado del par no coincide con el fijado.';
+	@override String get sync_pair_timeout => 'El par no respondió a tiempo.';
+	@override String get sync_pair_expired => 'El emparejamiento expiró. Inicie el emparejamiento de nuevo desde este dispositivo.';
+	@override String get sync_pair_upgrade_required => 'El otro dispositivo tiene una versión más antigua que no puede emparejarse de forma segura desde esta red. Actualícelo, luego empareje de nuevo.';
+	@override String get sync_pair_fingerprint_changed_title => 'Certificado cambiado';
+	@override String get sync_pair_fingerprint_stored_label => 'Fijado antes';
+	@override String get sync_pair_fingerprint_new_label => 'Visto ahora';
+	@override String get sync_pair_fingerprint_retrust => 'Limpiar y confiar de nuevo';
+	@override String get sync_pair_fingerprint_changed_body => 'Esta dirección estaba fijada a un certificado diferente antes. Continúe solo si sabe que el par se reinstaló o lo reinició — de lo contrario alguien podría estar interceptando la conexión.';
+	@override String get interconnect_upload_section_footer => 'Elija qué sube este dispositivo al par conectado. Independiente de los interruptores de respaldo en la nube y apagado por defecto. Estos interruptores solo se aplican mientras Activar Interconnect esté encendido: apagar Interconnect detiene cada subida aquí.';
+	@override String get remote_delete_audiobook_partial => 'Libro eliminado, pero su audiolibro no pudo eliminarse en el dispositivo emparejado';
+	@override String get download_detail_task_queued => 'En cola: esperando que otras descargas liberen un espacio. Esta tarea aún no se ha entregado al descargador, por lo que no hay datos de pares o trackers en vivo.';
+	@override String video_subscription_group_release_count({required Object count}) => '${count} lanzamientos';
+	@override String get download_task_priority => 'Prioridad en cola';
+	@override String get download_task_priority_high => 'Alta';
+	@override String get download_task_priority_normal => 'Normal';
+	@override String get download_task_priority_low => 'Baja';
+	@override String get library_view_import => 'Importar';
+	@override String get quick_import_title => 'Importación rápida';
+	@override String get media_source_section_title => 'Fuentes de la biblioteca';
+	@override String get media_import_folder => 'Importar carpeta';
+	@override String get media_import_folder_as_source => 'Añadir como fuente de biblioteca';
+	@override String get book_import_folder_as_source_hint => 'Seguir escaneando esta carpeta en busca de nuevos libros';
+	@override String get media_import_folder_once => 'Importar solo una vez';
+	@override String get library_empty_go_import => 'Ir a importar';
+	@override String get game_import_drop_hint => 'También puede arrastrar archivos .exe a la biblioteca de juegos';
+	@override String get library_view_sources => 'Fuentes';
+	@override String get video_setting_secondary_av_delay => 'Sincronización de subtítulo secundario';
+	@override String get video_setting_secondary_av_delay_hint => 'Ajuste el desfase del subtítulo secundario independientemente. Sigue el desfase principal hasta que se establezca aquí.';
+	@override String get video_setting_secondary_delay_follow => 'Seguir al principal';
+	@override String video_subtitle_secondary_delay_osd({required Object ms}) => 'Sincronización de subtítulo secundario: ${ms} ms';
+	@override String get video_subtitle_secondary_delay_follow_osd => 'Sincronización de subtítulo secundario: seguir al principal';
+	@override String get video_setting_subtitle_anchor => 'Ancla del subtítulo principal';
+	@override String get video_subtitle_anchor_bottom => 'Abajo';
+	@override String get video_subtitle_anchor_top => 'Arriba';
+	@override String get video_setting_subtitle_drag_adjust => 'Arrastrar para ajustar posición';
+	@override String get video_subtitle_drag_adjust_hint => 'Arrastre un subtítulo arriba o abajo para reposicionarlo';
+	@override String get anki_connect_mobile_disabled_key_cleared => 'AnkiConnect necesita una clave API en móvil, por lo que al borrarla se desactivó el interruptor. Ahora Anki usa el backend integrado de nuevo.';
+	@override String manga_import_batch_hint({required Object n}) => 'Esta carpeta contiene ${n} archivos de volumen; cada uno se importa como su propio libro, nombrado según su archivo.';
+	@override String manga_import_batch_done({required Object imported, required Object skipped, required Object failed}) => 'Importados ${imported}, omitidos ${skipped}, fallidos ${failed}.';
+	@override String get srt_book_reimport => 'Reimportar';
+	@override String get srt_book_reimport_subtitle_hint => 'Reemplazar el subtítulo reconstruye el texto del libro desde las nuevas señales.';
+	@override String get srt_book_reimport_no_cues => 'No se encontraron líneas de subtítulo en ese archivo';
+	@override String get srt_book_reimport_body_rebuilt => 'Texto del libro reconstruido — vuelva a abrir el libro para leerlo';
+	@override String get video_setting_torrent_backend_embedded => 'Motor integrado';
+	@override String get download_backend_unsupported_note => 'El motor integrado no está disponible en esta plataforma. Las descargas usan qBittorrent externo.';
+	@override String get aidoku_runtime_unavailable => 'Las extensiones de Aidoku solo están disponibles en macOS actualmente.';
+	@override String get aidoku_extensions_title => 'Extensiones de Aidoku';
+	@override String get aidoku_extension_empty => 'Sin extensiones de Aidoku instaladas.';
+	@override String get aidoku_extension_remove => 'Eliminar extensión de Aidoku';
+	@override String get aidoku_extension_warning => 'Las extensiones de Aidoku ejecutan código WebAssembly de terceros con acceso a la red. Solo continúe con fuentes de confianza.';
+	@override String get aidoku_webview_unsupported => 'Esta fuente requiere APIs de WebView de Aidoku que aún no están soportadas.';
+	@override String get aidoku_extension_imported => 'Extensión de Aidoku importada';
+	@override String get aidoku_extension_import => 'Importar extensión de Aidoku (.aix)';
+	@override String get aidoku_extension_confirm_title => '¿Instalar extensión de Aidoku?';
+	@override String get aidoku_extension_version => 'Versión';
+	@override String get aidoku_repository_url => 'URL del repositorio';
+	@override String get aidoku_repository_sources => 'Fuentes del repositorio';
+	@override String get aidoku_repository_identity_mismatch => 'El paquete descargado no coincide con el índice del repositorio.';
+	@override String get aidoku_repository_installed => 'Instalado';
+	@override String get aidoku_repository_search => 'Buscar fuentes del repositorio';
+	@override String get aidoku_repository_install => 'Instalar';
+	@override String get aidoku_repository_update => 'Actualizar';
+	@override String get aidoku_repository_add => 'Añadir repositorio de Aidoku';
+	@override String get aidoku_repository_added => 'Repositorio de Aidoku añadido';
+	@override String get aidoku_repository_browse => 'Explorar repositorio';
+	@override String get aidoku_repository_hint => 'Pegue una URL de página principal o index.min.json de repositorio de Aidoku. El repositorio de la comunidad se rellena por defecto.';
+	@override String get aidoku_repository_remove => 'Eliminar repositorio';
+	@override String get aidoku_repository_empty => 'Sin repositorios de Aidoku añadidos.';
+	@override String get dict_language_tooltip => 'Idioma del contenido';
+	@override String get dict_language_title => 'Idioma del contenido del diccionario';
+	@override String get dict_language_description => 'Decide qué fuente renderiza el texto de este diccionario. Automático usa el idioma que el diccionario declara.';
+	@override String get dict_language_auto => 'Automático';
+	@override String get book_language_action => 'Idioma del contenido';
+	@override String get book_language_description => 'Decide qué fuente renderiza el texto de este libro. Automático usa el idioma declarado en el EPUB.';
+	@override String get local_audio_reference_unavailable => 'No se puede referenciar el archivo original sin acceso a todos los archivos; se importó una copia en su lugar.';
+	@override String get video_collection_scrape => 'Obtener info y portada';
+	@override String get update_testflight_open => 'Abrir TestFlight';
+	@override String get update_app_store_open => 'Abrir App Store';
+	@override String get update_release_page_open => 'Página de versiones';
+	@override String update_install_gal_hook_holder({required Object pid, required Object path}) => 'Componente de captura de galgame en uso: PID ${pid} — ${path} (este es el juego que está jugando, o su host de captura). Cierre el juego, luego actualice de nuevo.';
+	@override String get game_hook_reason_protocol_mismatch => 'El componente de captura no coincide con esta compilación de Fushi. Se incluye dentro de Fushi, por lo que no hay nada que instalar por separado. Primero, cierre completamente el juego y láncelo de nuevo: el proceso del juego puede aún tener el componente inyectado por una sesión anterior. Si sigue sin coincidir, los archivos del componente en disco son más antiguos que Fushi, porque la última actualización de Fushi no pudo reemplazarlos mientras un juego estaba en ejecución. Cierre todos los juegos, luego ejecute el instalador de Fushi de nuevo.';
+	@override String get video_mining_still_format => 'Formato de captura de tarjeta de vídeo';
+	@override String get video_mining_still_format_hint => 'Codificación usada cuando la imagen de la tarjeta es una captura estática. JPG es mucho más pequeño; PNG es sin pérdida pero varias veces más grande. Las portadas animadas no se afectan — siguen la configuración de formato de animación.';
+	@override String get mining_still_format_jpg => 'JPG (más pequeño)';
+	@override String get mining_still_format_png => 'PNG (sin pérdida)';
+	@override String get gal_mining_still_format => 'Formato de captura de tarjeta de juego';
+	@override String get gal_mining_still_format_hint => 'Mismos formatos que las tarjetas de vídeo, almacenados por separado. Las capturas de ventana de juego llegan como PNG: mantener PNG es sin pérdida pero varias veces más grande, mientras que JPG coincide con cómo se comprimían estas capturas antes.';
+	@override String get manga_source_cloudflare_blocked => 'Esta fuente está protegida por Cloudflare y aún no puede ser accedida por el lector integrado.';
+	@override String get manga_global_search_title => 'Buscar en todas las fuentes';
+	@override String get manga_global_search_hint => 'Buscar en todas las fuentes activas';
+	@override String get manga_global_search_prompt => 'Escriba un título para buscar en todas las fuentes de manga activas a la vez.';
+	@override String get anki_connect_addon_install => 'Instalar AnkiConnect';
+	@override String get anki_connect_addon_install_hint => 'Descarga AnkiConnect de AnkiWeb y lo entrega a Anki en ejecución. Anki le pedirá que confirme, luego aconsejará reiniciar.';
+	@override String get anki_connect_addon_handed => 'AnkiConnect entregado a Anki. Confirme el diálogo en Anki, luego reinicie Anki como aconseja.';
+	@override String get anki_connect_addon_anki_not_running => 'No se encontró Anki en ejecución. Inicie Anki de escritorio primero, luego inténtelo de nuevo.';
+	@override String anki_connect_addon_download_failed({required Object error}) => 'No se pudo descargar AnkiConnect de AnkiWeb: ${error}';
+	@override String get anki_connect_addon_invalid => 'AnkiWeb devolvió algo que no es un paquete de complemento utilizable.';
+	@override String anki_connect_addon_launch_failed({required Object error}) => 'No se pudo entregar el complemento a Anki: ${error}';
+	@override String get settings_content_language_title => 'Idioma de contenido predeterminado';
+	@override String get settings_content_language_unset => 'No establecido';
+	@override String get settings_content_language_description => 'Idioma de respaldo para contenido que no declara uno. Los ajustes por libro, por vídeo, por juego y por diccionario tienen prioridad.';
+	@override String get manga_ocr_lens_language_label => 'Idioma de reconocimiento';
+	@override String get sync_err_peer_unreachable => 'No se puede alcanzar el dispositivo emparejado — puede estar desconectado o sin Fushi en ejecución.';
+	@override String get remote_book_list_failed => 'No se pudo obtener la biblioteca remota del dispositivo emparejado.';
+	@override String get video_torznab_settings_hint => 'Configure uno o más endpoints Jackett, Prowlarr o compatibles con Torznab. Los secretos nunca se exportan en copias de seguridad; pueden sincronizarse a dispositivos emparejados vía Interconnect (se puede desactivar en ajustes de Interconnect).';
+	@override String get video_opensubtitles_settings_hint => 'Las credenciales de API nunca se exportan en copias de seguridad; pueden sincronizarse a dispositivos emparejados vía Interconnect (se puede desactivar en ajustes de Interconnect).';
+	@override String get sync_interconnect_service_config_toggle => 'Sincronizar configuración de servicio desde el host';
+	@override String get sync_interconnect_service_config_toggle_desc => 'Recibir ajustes de servicios externos y claves API (Jimaku, TMDB, Torznab, OpenSubtitles, seguimiento) del host emparejado a través del canal cifrado de Interconnect. Requiere TLS.';
+	@override String get video_setting_subtitle_backfill => 'Obtener subtítulos automáticamente después de metadatos';
+	@override String get video_setting_subtitle_backfill_hint => 'Cuando la obtención de metadatos termina, los vídeos que aún no tienen subtítulo obtienen uno de sus fuentes en línea configuradas. Nunca reemplaza un subtítulo existente.';
+	@override String get video_setting_subtitle_sources_section => 'Fuentes de subtítulos en línea';
+	@override String get video_subtitle_no_source_configured => 'Sin subtítulo encontrado · configure una fuente de subtítulos en línea';
+	@override String get anime_download_subs_retrying => 'Subtítulos: aún no disponibles — reintentando automáticamente';
+	@override String get video_jimaku_language_follow_video => 'Seguir idioma del vídeo';
+	@override String get video_setting_jimaku_default_language_hint => 'Por defecto usa el idioma propio del vídeo (pista de audio / metadatos obtenidos). Elija uno para siempre preferir ese idioma.';
+	@override String get onboarding_title => 'Primeros pasos';
+	@override String get onboarding_welcome_headline => '¡Bienvenido!';
+	@override String get onboarding_feature_anki => 'Tarjetas de Anki';
+	@override String get onboarding_feature_anki_hint => 'Conecte AnkiConnect o AnkiDroid para crear tarjetas de estudio';
+	@override String get onboarding_feature_backup => 'Respaldo y sincronización';
+	@override String get onboarding_feature_backup_hint => 'Respalde sus datos en Google Drive, WebDAV y otros backends';
+	@override String get onboarding_feature_interconnect => 'Interconexión de dispositivos';
+	@override String get onboarding_feature_interconnect_hint => 'Empareje dispositivos en su LAN para compartir bibliotecas y progreso';
+	@override String get onboarding_step_dictionary_action => 'Abrir administrador de diccionarios';
+	@override String get onboarding_step_anki_title => 'Configurar Anki';
+	@override String get onboarding_step_anki_action => 'Abrir ajustes de creación de tarjetas';
+	@override String get onboarding_step_backup_title => 'Configurar respaldo';
+	@override String get onboarding_step_backup_body => 'Elija un backend de respaldo e inicie sesión, o exporte un archivo de respaldo local.';
+	@override String get onboarding_step_backup_action => 'Abrir ajustes de respaldo';
+	@override String get onboarding_step_interconnect_title => 'Configurar Interconnect';
+	@override String get onboarding_step_interconnect_body => 'Active Interconnect y empareje con otros dispositivos en su LAN para compartir bibliotecas, progreso y búsquedas.';
+	@override String get onboarding_step_interconnect_action => 'Abrir ajustes de Interconnect';
+	@override String get onboarding_finish_title => 'Todo listo';
+	@override String get onboarding_finish_body => 'Puede volver a visitar esta guía en cualquier momento desde Ajustes → Sistema.';
+	@override String get onboarding_action_next => 'Siguiente';
+	@override String get onboarding_action_finish => 'Finalizar';
+	@override String get onboarding_action_skip => 'Omitir por ahora';
+	@override String get onboarding_reopen => 'Guía de primeros pasos';
+	@override String get onboarding_welcome_body => 'Establezca su idioma de interfaz y tema primero — los siguientes pasos le guiarán con el resto.';
+	@override String get onboarding_features_title => 'Elija qué usa';
+	@override String get onboarding_features_modules_label => 'Pestañas de biblioteca (las desmarcadas se ocultan de la barra de navegación; cámbielo en cualquier momento en Ajustes)';
+	@override String get onboarding_features_setup_label => 'Qué configurar a continuación';
+	@override String get onboarding_feature_manga => 'Biblioteca de manga';
+	@override String get onboarding_feature_manga_hint => 'Lea manga con búsqueda por OCR';
+	@override String get onboarding_feature_video => 'Biblioteca de vídeo';
+	@override String get onboarding_feature_video_hint => 'Vea vídeos con búsqueda de subtítulos y creación de tarjetas';
+	@override String get onboarding_feature_games => 'Biblioteca de galgame';
+	@override String get onboarding_feature_games_hint => 'Inicie galgames con búsqueda por hook de texto (solo Windows)';
+	@override String get onboarding_feature_pack => 'Pack recomendado (diccionarios + audio)';
+	@override String get onboarding_feature_pack_hint => 'Una descarga configura diccionarios japoneses más audio de pronunciación JA/EN';
+	@override String get onboarding_step_pack_title => 'Instalar el pack recomendado';
+	@override String get onboarding_step_pack_body => 'El pack recomendado incluye diccionarios japoneses de palabras, acento tonal y frecuencia, más bases de datos de pronunciación japonés/inglés. Descárguelo e impórtelo aquí; la importación reemplaza datos locales, así que ejecútelo en una instalación nueva. ¿Aprendiendo otro idioma? Use el administrador de diccionarios para importar sus propios diccionarios.';
+	@override String get onboarding_step_pack_download_action => 'Descargar e importar';
+	@override String get onboarding_step_pack_import_existing_action => 'Importar pack descargado';
+	@override String get onboarding_step_pack_pick_action => 'Elegir archivo de pack local';
+	@override String get onboarding_pack_downloading => 'Descargando… cancele en cualquier momento, se reanuda la próxima vez';
+	@override String onboarding_pack_download_failed({required Object message}) => 'La descarga falló: ${message}';
+	@override String get onboarding_step_extension_title => 'Extensión del navegador';
+	@override String get onboarding_step_extension_body => 'Instale la extensión complementaria del navegador para buscar palabras en cualquier página web.';
+	@override String get onboarding_step_extension_action => 'Abrir guía de extensión';
+	@override String get onboarding_step_fonts_title => 'Fuentes de lectura';
+	@override String get onboarding_step_fonts_body => 'Importe fuentes personalizadas y elija cuáles usan la interfaz, el texto del libro y el diccionario.';
+	@override String get settings_section_modules => 'Módulos de funciones';
+	@override String get module_toggle_hint => 'Mostrar esta pestaña de biblioteca en la barra de navegación; desactive para ocultarla';
+	@override String get video_setting_youtube_quality => 'Calidad de YouTube';
+	@override String get video_setting_youtube_quality_hint => 'Inicia streams en el nivel más alto hasta este objetivo; Auto prefiere reproducción fluida (códec amigable con hardware, hasta 1080p)';
+	@override String get library_view_discover => 'Descubrir';
+	@override String get manga_discovery_section_trending => 'Tendencia';
+	@override String get manga_discovery_section_popular => 'Popular';
+	@override String get manga_discovery_section_top_rated => 'Mejor puntuados';
+	@override String get manga_discovery_section_latest_finished => 'Completados recientemente';
+	@override String get manga_discovery_load_failed => 'No se pudo cargar el feed de descubrimiento.';
+	@override String get manga_discovery_match_section => 'Leer desde una fuente';
+	@override String get manga_discovery_match_running => 'Buscando en sus fuentes activas...';
+	@override String get manga_discovery_match_none => 'No se encontró coincidencia en las fuentes activas.';
+	@override String get manga_discovery_status_releasing => 'En emisión';
+	@override String get manga_discovery_status_finished => 'Completado';
+	@override String get manga_discovery_status_hiatus => 'En pausa';
+	@override String get manga_discovery_status_cancelled => 'Cancelado';
+	@override String get manga_discovery_status_not_yet_released => 'Aún no publicado';
+	@override String manga_discovery_source_popular({required Object source}) => 'Popular en ${source}';
+	@override String get mihon_extension_error => 'Error de extensión';
+	@override String get discovery_all_sources => 'Todas las fuentes';
+	@override String get discovery_search_hint => 'Buscar recursos en línea';
+	@override String get discovery_enter_query_hint => 'Introduzca una palabra clave para buscar';
+	@override String get discovery_empty => 'Sin resultados';
+	@override String get discovery_partial_failure => 'Algunas fuentes no están disponibles';
+	@override String get discovery_load_more => 'Cargar más';
+	@override String get discovery_download_queued => 'Añadido a descargas';
+	@override String get discovery_torrent_pushed => 'Tarea de torrent añadida';
+	@override String get discovery_torrent_failed => 'No se pudo añadir la tarea de torrent';
+	@override String get discovery_kind_novel => 'Novelas';
+	@override String get discovery_kind_audiobook => 'Audiolibros';
+	@override String get discovery_source_pick_hint => 'Elija una fuente para explorar, o escriba una palabra clave para buscar en todas las fuentes';
+	@override String get discovery_source_query_required => 'Esta fuente solo admite búsqueda por palabra clave';
+	@override String get manga_discovery_sources_browse => 'Explorar una fuente';
+	@override String get discovery_kind_manga => 'Manga';
+	@override String get game_capture_workbench_tab => 'Espacio de captura';
+	@override String get video_builtin_sources_title => 'Fuentes integradas';
+	@override String get video_resource_no_provider_title => 'Sin indexador de recursos configurado';
+	@override String get video_subtitle_no_provider_title => 'Sin proveedor de subtítulos configurado';
+	@override String get video_subtitle_no_provider_hint => 'Introduzca una clave API de Jimaku o active OpenSubtitles en Ajustes, Descargas, Proveedores externos de recursos y subtítulos.';
+	@override String get anime_download_require_subs => 'Subtítulos requeridos';
+	@override String get video_jimaku_scope_hint => 'Subtítulos japoneses para anime y títulos japoneses de acción real. Se requiere una clave API gratuita.';
+	@override String get video_builtin_apibay_hint => 'Películas y series de TV. Índice público, sin cuenta necesaria.';
+	@override String get video_builtin_knaben_hint => 'Películas y series de TV. Agrega varios indexadores públicos.';
+	@override String get video_jimaku_enabled_hint => 'Apagado significa que Jimaku se omite incluso cuando se ha guardado una clave API.';
+	@override String get discovery_sources_settings_title => 'Fuentes de descubrimiento';
+	@override String get discovery_sources_settings_hint => 'Qué fuentes integradas participan en la búsqueda de Todas las fuentes de la página Descubrir. Elegir una sola fuente en el menú desplegable siempre funciona, incluso cuando está desactivada aquí.';
+	@override String get video_builtin_sources_hint => 'Incluidas con la app: sin cuenta, sin clave API. Desactive una para mantenerla fuera de las búsquedas de recursos.';
+	@override String get video_builtin_nyaa_hint => 'Solo anime. Películas y series de TV están cubiertas por los dos indexadores públicos de abajo.';
+	@override String get video_resource_no_provider_hint => 'Esta búsqueda no tuvo proveedor para consultar. Reactive una fuente integrada, o añada un indexador Torznab, en Ajustes, Descargas, Proveedores externos de recursos y subtítulos.';
+	@override String discovery_source_kinds_label({required Object kinds}) => 'Cubre: ${kinds}';
+	@override String get video_source_scrape_rescrape_source => 'Volver a obtener metadatos de esta fuente';
+	@override String get video_source_scrape_run_detail_title => 'Resultado de obtención';
+	@override String get video_source_scrape_run_no_issues => 'No se registraron advertencias ni errores.';
+	@override String get video_source_scrape_manual_search_title => 'Especificar la obra manualmente';
+	@override String get video_source_scrape_manual_search_hint => 'Busque en el proveedor de metadatos por título, luego elija la obra correcta.';
+	@override String get video_source_scrape_manual_search_action => 'Buscar';
+	@override String get video_source_scrape_manual_search_empty => 'Sin resultados';
+	@override String get profile_media_manga => 'Manga';
+	@override String get profile_media_game => 'Juego';
+	@override String get profile_media_browser => 'Navegador';
+	@override String get mihon_store_remove => 'Eliminar tienda de extensiones';
+	@override String get video_import_folder_as_source_hint => 'Seguir escaneando esta carpeta en busca de nuevos vídeos';
+	@override String get manga_import_folder_as_source_hint => 'Seguir escaneando esta carpeta en busca de nuevo manga';
+	@override String get download_no_managed_video_source => 'Aún no hay fuente de vídeo gestionada. Las descargas necesitan una carpeta de vídeo local donde aterrizar.';
+	@override String get download_add_video_source => 'Añadir fuente de vídeo';
+	@override String get video_subtitle_prev_cue_align => 'Alinear línea anterior al ahora';
+	@override String get video_subtitle_next_cue_align => 'Alinear siguiente línea al ahora';
+	@override String video_control_custom_action({required Object index}) => 'Atajo ${index}';
+	@override String get video_control_custom_action_none => 'Sin asignar';
+	@override String get settings_destination_storage => 'Almacenamiento';
+	@override String get settings_destination_storage_summary => 'Ubicación de datos y uso de disco';
+	@override String get storage_overview_section => 'Uso de disco';
+	@override String get storage_overview_total => 'Total';
+	@override String get storage_overview_refresh => 'Re-escanear';
+	@override String get storage_overview_scanning => 'Escaneando…';
+	@override String get storage_category_books => 'Libros y audiolibros';
+	@override String get storage_category_dictionaries => 'Diccionarios';
+	@override String get storage_category_video_downloads => 'Descargas de vídeo';
+	@override String get storage_category_covers => 'Portadas y miniaturas';
+	@override String get storage_category_subtitles => 'Subtítulos';
+	@override String get storage_category_shaders => 'Shaders de vídeo';
+	@override String get storage_category_custom_fonts => 'Fuentes personalizadas';
+	@override String get storage_category_web => 'Archivo web y datos del navegador';
+	@override String get storage_category_exports => 'Exportaciones';
+	@override String get storage_category_database => 'Base de datos y datos internos';
+	@override String get storage_category_ocr_models => 'Modelos de OCR de manga';
+	@override String storage_entry_more_rest({required Object n, required Object size}) => '${n} elementos más, ${size} en total';
+	@override String storage_entry_delete_confirm_title({required Object name}) => '¿Eliminar ${name}?';
+	@override String get storage_entry_delete_book_confirm_body => 'Esto elimina el libro, su progreso de lectura y copias de audio emparejadas de este dispositivo.';
+	@override String get storage_entry_delete_dictionary_confirm_body => 'Esto elimina el diccionario y sus datos importados.';
+	@override String get storage_entry_delete_done => 'Eliminado';
+	@override String storage_entry_delete_failed({required Object reason}) => 'La eliminación falló: ${reason}';
+	@override String get storage_modules_anime4k_title => 'Shaders Anime4K';
+	@override String get storage_modules_anime4k_hint => 'Se pueden descargar de nuevo en cualquier momento en ajustes de vídeo';
+	@override String storage_modules_anime4k_delete_done({required Object n}) => 'Se eliminaron ${n} archivos de shader';
+	@override String get storage_bundled_section => 'Componentes incluidos';
+	@override String get storage_bundled_hint => 'Incluidos con el instalador; los archivos eliminados regresan en la próxima actualización, listados solo como referencia.';
+	@override String get storage_dictionary_delete_incomplete => 'Diccionario aún presente después de la eliminación, ver registro de errores';
+	@override String get module_extension_label => 'Extensión del navegador';
+	@override String get onboarding_feature_books => 'Biblioteca de novelas';
+	@override String get onboarding_feature_books_hint => 'Lea novelas EPUB con búsqueda de diccionario y sincronización de audiolibro';
+	@override String get onboarding_feature_extension_hint => 'Busque palabras en cualquier página web (solo escritorio)';
+	@override String get video_setting_tap_toggles_playback => 'Tocar vídeo para reproducir/pausar';
+	@override String get video_setting_tap_toggles_playback_hint => 'Desactive para que tocar el vídeo solo revele los controles';
+	@override String get manga_ocr_engine_auto_desc => 'Prefiere un motor offline que ya configuró; nunca sube a Lens por su cuenta.';
+	@override String get manga_ocr_engine_local_onnx_desc => 'Completamente offline, mejor calidad. Necesita una descarga de modelo única y es lento en hardware antiguo.';
+	@override String get manga_ocr_engine_google_lens_desc => 'Necesita internet y sube imágenes de página a Google. Rápido sin descarga, pero la calidad está por debajo del modelo local.';
+	@override String get manga_ocr_engine_external_desc => 'Llama a una línea de comandos de mokuro que instaló usted. Solo escritorio.';
+	@override String get manga_ocr_engine_paired_host_desc => 'Delega el trabajo a un dispositivo emparejado en su red. Nada se descarga aquí.';
+	@override String manga_ocr_model_disk_usage({required Object size}) => 'Usando ${size} en disco';
+	@override String manga_ocr_model_download_size({required Object size}) => 'Necesita ${size}';
+	@override String manga_ocr_delete_done_freed({required Object size}) => 'Modelos eliminados, ${size} liberado';
+	@override String get manga_ocr_model_unused_by_engine => 'El motor actual no usa estos archivos de modelo local.';
+	@override String manga_ocr_download_total_progress({required Object done, required Object total}) => '${done} de ${total}';
+	@override String get media_source_network_subtitle_video => 'Biblioteca remota WebDAV (reproduce en el lugar)';
+	@override String get jellyfin_settings_title => 'Servidor de medios (Jellyfin / Emby)';
+	@override String get jellyfin_server_url => 'URL del servidor';
+	@override String get jellyfin_sign_in => 'Iniciar sesión';
+	@override String get jellyfin_sign_out => 'Cerrar sesión';
+	@override String get jellyfin_sign_in_failed => 'El inicio de sesión falló';
+	@override String get jellyfin_settings_hint => 'Los vídeos del servidor aparecen en la biblioteca de vídeos y se transmiten directamente.';
+	@override String get video_setting_mpv_lua_scripts => 'Cargar scripts Lua';
+	@override String get video_setting_mpv_lua_scripts_hint => 'Carga todos los archivos .lua en la carpeta mpv_scripts en el reproductor. Desactivar toma efecto la próxima vez que se abra un vídeo.';
+	@override String get video_setting_mpv_lua_scripts_import => 'Importar scripts Lua';
+	@override String get video_setting_mpv_lua_scripts_imported => 'Scripts importados';
+	@override String get video_setting_mpv_lua_scripts_dir_copy => 'Copiar ruta de carpeta de scripts';
+	@override String get video_setting_mpv_lua_scripts_dir_copied => 'Ruta de carpeta copiada';
+	@override String get interconnect_share_statistics => 'Compartir estadísticas';
+	@override String get interconnect_share_statistics_hint => 'Tiempo de lectura y visualización, conteos de caracteres, contadores de búsquedas y creación de tarjetas';
+	@override String get interconnect_share_favorites => 'Compartir favoritos';
+	@override String get interconnect_share_favorites_hint => 'Palabras y oraciones favoritas, incluyendo des-favoritear';
+	@override String get interconnect_share_section => 'Compartir con dispositivos emparejados';
+	@override String get interconnect_share_section_footer => 'Estos se fusionan en ambas direcciones con el dispositivo emparejado y están activados por defecto. Desactivar uno detiene tanto el envío como la recepción.';
+	@override String get game_hook_mining_no_session_lines => 'Aún no hay líneas capturadas, por lo que no hay nada a lo que adjuntar esta tarjeta. Elija un hilo de texto diferente en el espacio de trabajo.';
+	@override String get shortcut_action_manga_pan_up => 'Mover arriba';
+	@override String get shortcut_action_manga_pan_down => 'Mover abajo';
+	@override String get shortcut_action_manga_pan_left => 'Mover izquierda';
+	@override String get shortcut_action_manga_pan_right => 'Mover derecha';
+	@override String get drag_drop_folder_source_added => 'Carpeta añadida como fuente de biblioteca y escaneada.';
+	@override String get drag_drop_folder_source_exists => 'Esa carpeta ya es una fuente de biblioteca.';
+	@override String get sync_pair_invalid_url => 'Formato de dirección no válido';
+	@override String get sync_pair_peer_requires_https => 'Este dispositivo solo acepta HTTPS. Use una dirección https://.';
+	@override String get sync_pair_peer_not_https => 'El par no está usando HTTPS en este puerto. Use una dirección http://.';
+	@override String get sync_pair_not_fushi_discovered => 'No se encontró dispositivo Fushi en esta dirección.';
+	@override String get shortcut_action_popup_play_audio => 'Reproducir audio de la palabra';
+	@override String get sync_progress_asset_transfer => 'Preparando transferencia';
+	@override String get sync_asset_dictionary_upload => 'Subir diccionarios';
+	@override String get sync_asset_dictionary_download => 'Descargar diccionarios';
+	@override String get sync_asset_local_audio_upload => 'Subir bases de datos de audio local';
+	@override String get sync_asset_local_audio_download => 'Descargar bases de datos de audio local';
+	@override String get sync_asset_upload_hint => 'Envía lo que este dispositivo tiene y el remoto no. Los paquetes pueden ser grandes.';
+	@override String get sync_asset_upload_action => 'Subir';
+	@override String get sync_asset_download_action => 'Descargar';
+	@override String get sync_asset_download_hint => 'Obtiene lo que el remoto tiene y este dispositivo no — incluyendo entradas que eliminó localmente.';
+	@override String get sync_asset_legacy_notice_title => 'La sincronización de diccionarios y audio ahora es manual';
+	@override String get sync_asset_legacy_notice_body => 'Este dispositivo tenía la sincronización automática activada para diccionarios y bases de datos de audio local. Ese interruptor ya no existe — use las acciones Subir / Descargar de abajo cuando quiera transferirlos. Nada fue eliminado, pero los nuevos diccionarios ya no se respaldan automáticamente.';
+	@override String get sync_asset_legacy_notice_dismiss => 'Entendido';
+	@override String get download_task_add => 'Añadir tarea';
+	@override String get download_task_add_pick_torrent => 'Elegir archivo torrent';
+	@override String get download_task_add_title_label => 'Título';
+	@override String get download_task_add_content_kind => 'Tipo de contenido';
+	@override String get download_task_add_invalid => 'Enlace magnet o archivo torrent no reconocido';
+	@override String get download_task_add_submitted => 'Tarea añadida';
+	@override String get download_task_search_hint => 'Buscar tareas';
+	@override String get download_task_sort_created => 'Fecha de adición';
+	@override String get download_task_sort_progress => 'Progreso';
+	@override String get download_task_sort_status => 'Estado';
+	@override String get download_task_no_match => 'Sin tareas coincidentes';
+	@override String subtitle_version_episode_count({required Object n}) => '${n} episodios';
+	@override String subtitle_version_unnumbered_count({required Object n}) => '${n} sin numerar';
+	@override String get subtitle_version_ai_translated => 'Traducido por IA';
+	@override String get subtitle_version_content_language => 'Contenido';
+	@override String get subtitle_version_show_files => 'Mostrar archivos';
+	@override String get subtitle_version_view_files => 'Lista de archivos';
+	@override String get resource_version_batch => 'Lote';
+	@override String get resource_version_view_flat => 'Todos los lanzamientos';
+	@override String get subscription_mode_one_shot => 'Una vez';
+	@override String get subscription_mode_ongoing => 'Continuo';
+	@override String get subscription_legacy_badge => 'Heredado';
+	@override String get subscription_legacy_hint => 'Importado del sistema heredado; las verificaciones automáticas no se aplican.';
+	@override String subscription_next_check({required Object time}) => 'Próxima verificación: ${time}';
+	@override String subscription_last_matched({required Object time}) => 'Última coincidencia: ${time}';
+	@override String get subscription_item_status_discovered => 'Pendiente';
+	@override String get subscription_item_status_queued => 'En cola';
+	@override String get subscription_item_status_processed => 'Importado';
+	@override String get subscription_item_status_skipped => 'Omitido';
+	@override String get subscription_item_status_failed => 'Falló';
+	@override String get subscription_items_empty => 'Aún no hay lanzamientos rastreados';
+	@override String get subscription_edit_title => 'Editar suscripción';
+	@override String get subscription_edit_rule_hint => 'Las reglas de identidad y versión no se pueden cambiar aquí. Re-suscríbase para cambiar versiones — el historial se conserva.';
+	@override String get subscription_search_hint => 'Buscar suscripciones';
+	@override String get subscription_sort_last_checked => 'Última verificación';
+	@override String get subscription_sort_last_matched => 'Última coincidencia';
+	@override String get subscription_show_items => 'Historial de episodios';
+	@override String get subscription_sort_created => 'Fecha de adición';
+	@override String get subscription_no_match => 'Sin suscripciones coincidentes';
+	@override String get download_subscription_start_episode_invalid => 'Introduzca un número entero (0 o mayor), o deje vacío';
+	@override String get download_subscription_source_unavailable => 'Objetivo actual (no disponible)';
+	@override String resource_version_episode_count({required Object n}) => '${n} episodios';
+	@override String get resource_version_show_files => 'Mostrar archivos';
+	@override String get manga_online_detail_load_failed => 'No se pudo cargar este manga.';
+	@override String get manga_online_error_view_detail => 'Ver detalles';
+	@override String get discovery_sources_unavailable => 'Todas las fuentes no están disponibles';
+	@override String get font_target_game_lookup => 'Fuente de ventana de búsqueda del juego';
+	@override String get gal_hook_text_font => 'Fuente de ventana de búsqueda del juego';
+	@override String get gal_hook_text_font_hint => 'Elija fuentes de la biblioteca de fuentes administrada. Se usa la primera fuente activa.';
+	@override String get gal_hook_text_letter_spacing => 'Espaciado de letras';
+	@override String get gal_hook_text_letter_spacing_hint => 'Ajuste el espaciado entre caracteres sin cambiar la detección de búsqueda.';
+	@override String get gal_hook_text_line_height => 'Altura de línea';
+	@override String get gal_hook_text_line_height_hint => 'Ajuste el espaciado vertical de las líneas envueltas.';
+	@override String get gal_hook_text_bold => 'Texto en negrita';
+	@override String get gal_hook_text_bold_hint => 'Use texto seminegrita para mejor legibilidad sobre los gráficos del juego.';
+	@override String get gal_hook_text_alignment => 'Alineación del texto';
+	@override String get gal_hook_text_alignment_center => 'Centro';
+	@override String get gal_hook_text_alignment_left => 'Izquierda';
+	@override String get gal_hook_text_color => 'Color del texto';
+	@override String get gal_hook_overlay_legibility_section => 'Ventana y legibilidad';
+	@override String get gal_hook_text_background_color => 'Color de fondo de ventana';
+	@override String get gal_hook_text_background_opacity => 'Opacidad del fondo de ventana';
+	@override String get gal_hook_text_background_opacity_hint => 'Establezca en 0% para un estilo de ventana transparente tipo letras de escritorio.';
+	@override String get gal_hook_text_outline_color => 'Color del contorno';
+	@override String get gal_hook_text_outline_width => 'Ancho del contorno';
+	@override String get gal_hook_text_outline_width_hint => 'Establezca en 0 para desactivar el contorno; la sombra sutil permanece.';
+	@override String get gal_hook_text_padding => 'Relleno horizontal del texto';
+	@override String get gal_hook_text_padding_hint => 'Mantenga el texto alejado de los bordes de la ventana y el control de redimensión.';
+	@override String get gal_hook_text_corner_radius => 'Radio de esquinas de ventana';
+	@override String get gal_hook_text_corner_radius_hint => 'Ajuste el radio de esquinas del fondo.';
+	@override String get storage_shaders_delete_anime4k => 'Eliminar shaders Anime4K';
+	@override String get video_jimaku_series_lookup_degraded => 'No se pudo confirmar la serie en AniList esta vez, por lo que estos resultados provienen de una búsqueda por título simple y pueden mezclar otras temporadas de la misma serie.';
+	@override String get dict_style_tab_visual => 'Visual';
+	@override String get dict_style_tab_code => 'CSS';
+	@override String get dict_style_scope_all => 'Todos los diccionarios';
+	@override String get dict_style_part_entry_card => 'Tarjeta de entrada';
+	@override String get dict_style_part_expression => 'Palabra clave';
+	@override String get dict_style_part_ruby => 'Furigana';
+	@override String get dict_style_part_deinflection_tag => 'Cadena de desinflexión';
+	@override String get dict_style_part_frequency => 'Frecuencia';
+	@override String get dict_style_part_pitch => 'Acento tonal';
+	@override String get dict_style_part_dictionary_label => 'Nombre del diccionario';
+	@override String get dict_style_part_glossary_content => 'Definición';
+	@override String get dict_style_part_glossary_tag => 'Etiquetas de definición';
+	@override String get dict_style_prop_text_color => 'Color de texto';
+	@override String get dict_style_prop_background => 'Resaltado';
+	@override String get dict_style_prop_bold => 'Negrita';
+	@override String get dict_style_prop_italic => 'Cursiva';
+	@override String get dict_style_prop_underline => 'Subrayado';
+	@override String get dict_style_prop_font_scale => 'Tamaño de fuente';
+	@override String get dict_style_prop_corner_radius => 'Radio de esquinas';
+	@override String get dict_style_part_reset => 'Restablecer parte';
+	@override String get dict_style_reset_all => 'Restablecer todo';
+	@override String get dict_style_global_only => 'Solo ajustable para todos los diccionarios';
+	@override String get dict_style_preview_title => 'Vista previa';
+	@override String get dict_style_pick_hint => 'Toque una parte en la vista previa para ir a ella';
+	@override String get dict_style_prop_default => 'Predeterminado';
+	@override String get dict_style_part_expression_tag => 'Etiquetas de expresión';
+	@override String get dict_style_prop_on => 'Sí';
+	@override String get dict_style_prop_off => 'No';
+	@override String get dict_style_title => 'Estilo del diccionario';
+	@override String get video_source_scrape_anidb_client => 'Nombre de cliente AniDB';
+	@override String get video_source_scrape_anidb_client_hint => 'Nombre de cliente registrado de la API HTTP de AniDB; deje en blanco para usar solo el catálogo de títulos en caché';
+	@override String get video_source_scrape_anidb_client_version => 'Versión de cliente AniDB';
+	@override String get video_source_scrape_anidb_client_version_hint => 'Versión positiva registrada en AniDB; la API HTTP se mantiene desactivada hasta que ambos campos sean válidos';
+	@override String get video_scrape_view_source => 'Ver detalles de fuente';
+	@override String get video_setting_auto_scrape_hint => 'Identificar y obtener metadatos de vídeo automáticamente después de escaneos de biblioteca';
+	@override String get video_resource_identity_provider => 'Fuente de identidad de recurso';
+	@override String get video_source_scrape_clear_all => 'Borrar todos los registros de metadatos';
+	@override String get video_source_scrape_clear_all_hint => 'Eliminar todos los metadatos de vídeo y portadas y archivos NFO generados por Fushi.';
+	@override String get video_source_scrape_clear_all_confirm_title => '¿Borrar todos los registros de metadatos de vídeo?';
+	@override String get video_source_scrape_clear_all_confirm_body => 'Esto elimina todos los metadatos obtenidos y vínculos de fuente, limpia los resultados de Series, y elimina portadas y archivos NFO no modificados generados por Fushi. Los archivos de vídeo, entradas de biblioteca, grupos, progreso de visualización, subtítulos, etiquetas, portadas seleccionadas manualmente y archivos complementarios modificados por el usuario se conservan. Esto no se puede deshacer.';
+	@override String get video_source_scrape_clear_all_confirm_action => 'Borrar';
+	@override String get video_source_scrape_clear_all_completed => 'Todos los registros de metadatos de vídeo han sido borrados.';
+	@override String get video_source_scrape_clear_all_completed_protected => 'Los registros de metadatos fueron borrados. Los archivos complementarios modificados o no verificables se conservaron.';
+	@override String get video_source_scrape_clear_all_busy => 'Un escaneo o obtención de metadatos de vídeo aún está en ejecución. Inténtelo de nuevo después de que termine.';
+	@override String get video_source_scrape_clear_all_failed => 'No se pudieron borrar todos los registros de metadatos. No se eliminaron archivos de usuario no verificados.';
+	@override String get video_source_scrape_clear_all_in_progress => 'Ya hay una limpieza de registros de metadatos en progreso.';
+	@override String get game_session_japanese_locale => 'Configuración regional japonesa';
+	@override String get game_session_japanese_locale_hint => 'El juego se inició con configuración regional japonesa (CP932). Si el texto se ve ilegible o aparece un error de script, establezca la configuración regional japonesa de este juego en Nunca.';
+	@override String get onboarding_anki_intro_body => 'Anki es una app gratuita de tarjetas de repetición espaciada: las palabras nuevas se convierten en tarjetas, y las revisiones se programan según la curva de olvido. Después de una búsqueda, Fushi puede convertir la palabra en una tarjeta de Anki con un toque, con significado, oración, audio y captura de pantalla.';
+	@override String get onboarding_anki_setup_desktop_hint => 'Instale la app de escritorio de Anki, luego agregue el complemento AnkiConnect: en Anki, abra Herramientas - Complementos - Obtener complementos e introduzca el código 2055492159. Mantenga Anki ejecutándose mientras crea tarjetas.';
+	@override String get onboarding_anki_setup_ios_hint => 'Con AnkiMobile instalado, añadir tarjetas funciona de inmediato. Para el conjunto completo de funciones, conéctese a Anki ejecutándose en una computadora en la misma red vía AnkiConnect.';
+	@override String get onboarding_anki_backend_label => 'Conexión';
+	@override String get onboarding_anki_test_action => 'Probar conexión';
+	@override String onboarding_anki_test_success({required Object count}) => 'Conectado: se encontraron ${count} mazos';
+	@override String get onboarding_anki_get_anki_action => 'Obtener Anki (escritorio)';
+	@override String get onboarding_anki_get_ankidroid_action => 'Obtener AnkiDroid';
+	@override String get onboarding_anki_mobile_ankiconnect_title => 'Avanzado: usar AnkiConnect en este dispositivo';
+	@override String get onboarding_anki_mobile_ankiconnect_hint => 'Este dispositivo también puede crear tarjetas en Anki ejecutándose en una computadora en la misma red: active AnkiConnect en ajustes de creación de tarjetas e introduzca la dirección de la computadora.';
+	@override String get onboarding_anki_setup_android_hint => 'Instale AnkiDroid y ábralo una vez para completar su configuración inicial. De vuelta en Fushi, toque Permitir en el diálogo de permisos que aparece con su primera tarjeta — no hay ajustes de AnkiDroid que cambiar.';
+	@override String get onboarding_anki_install_addon_action => 'Instalar complemento AnkiConnect';
+	@override String get onboarding_anki_addon_installed => 'AnkiConnect está instalado. Inicie (o reinicie) Anki, luego toque Probar conexión.';
+	@override String get onboarding_anki_addon_no_anki => 'No se encontró la carpeta de datos de Anki. Instale Anki y ábralo una vez, luego inténtelo de nuevo.';
+	@override String onboarding_anki_addon_failed({required Object message}) => 'La instalación falló: ${message}';
+	@override String get game_hook_reason_capability_probe_failed => 'El componente de captura no respondió a la verificación de capacidades. Se encontró en disco pero no pudo ejecutarse o no respondió a tiempo — el antivirus puede estar bloqueándolo, Fushi puede no tener permisos para lanzarlo, o un proceso helper residual puede estar atascado. Cierre todos los juegos, revise la cuarentena del antivirus, luego inténtelo de nuevo.';
+	@override String get download_backend_setup_title => 'Configurar el backend de descargas';
+	@override String get download_backend_setup_intro => 'Elige qué motor ejecuta tus descargas. Puedes cambiarlo en cualquier momento en los ajustes de descargas.';
+	@override String get download_backend_embedded_hint => 'Recomendado. Las descargas se ejecutan dentro de Fushi: no hay que instalar nada más.';
+	@override String get download_backend_qb_hint => 'Conecta Fushi a una WebUI de qBittorrent que ya tengas en marcha.';
+	@override String get download_backend_setup_start => 'Configurar ahora';
+	@override String get download_backend_embedded_unavailable => 'A esta instalación le falta el entorno de ejecución del motor integrado. Reinstala el paquete completo o usa qBittorrent externo.';
+	@override String get download_backend_qb_url_invalid => 'Introduce una dirección completa, p. ej. http://127.0.0.1:8080';
+	@override String get mihon_store_zero_extensions => 'Este repositorio devolvió 0 extensiones. Puede que su dirección apunte a un índice obsoleto.';
+	@override String get mihon_store_edit => 'Editar URL del repositorio';
+	@override String get manga_ocr_download_resume => 'Reanudar descarga';
+	@override String get manga_ocr_import => 'Importar modelo local';
+	@override String get manga_ocr_import_title => 'Importar un modelo descargado';
+	@override String get manga_ocr_import_intro => 'Si la descarga desde la app no funciona, descarga tú mismo estos archivos e impórtalos aquí. También sirve un zip que los contenga.';
+	@override String get manga_ocr_import_copy_urls => 'Copiar enlaces de descarga';
+	@override String get manga_ocr_import_urls_copied => 'Enlaces de descarga copiados';
+	@override String get manga_ocr_import_pick_folder => 'Elegir carpeta';
+	@override String get manga_ocr_import_pick_files => 'Elegir archivos';
+	@override String get manga_ocr_import_running => 'Importando…';
+	@override String manga_ocr_import_done({required Object count}) => '${count} archivo(s) importado(s)';
+	@override String get manga_ocr_import_matched_nothing => 'No se reconoció ningún archivo de modelo utilizable';
+	@override String manga_ocr_import_size_mismatch({required Object file, required Object expected, required Object actual}) => '${file} tiene un tamaño incorrecto: se esperaba ${expected}, se obtuvo ${actual}';
+	@override String manga_ocr_import_still_missing({required Object count}) => 'Todavía faltan ${count} archivo(s)';
+	@override String get manga_ocr_import_failed => 'Error al importar el modelo';
+	@override String get manga_tap_ocr_notice_title => 'Toca para reconocer';
+	@override String get manga_tap_ocr_notice_body => 'Esta página aún no tiene datos de texto. Fushi la reconocerá con el motor de OCR que elegiste en los ajustes y luego podrás tocar las palabras para buscarlas. Puedes cambiar el motor o desactivar esto en Configuración › OCR de manga.';
+	@override String get manga_tap_ocr_notice_confirm => 'Reconocer ahora';
+	@override String get manga_tap_ocr_running => 'Reconociendo esta página…';
+	@override String get manga_tap_to_ocr => 'Toca para reconocer';
+	@override String get manga_tap_to_ocr_desc => 'Toca un globo de diálogo sin reconocer para reconocer la página y buscar palabras al instante.';
+	@override String get manga_ocr_engine_system => 'OCR del dispositivo';
+	@override String get manga_ocr_engine_system_desc => 'Usa el reconocimiento de texto integrado en tu dispositivo. Sin descargas, totalmente sin conexión y sin subir nada — pero con los globos de diálogo verticales y la escritura a mano es claramente peor que el modelo local.';
+	@override String get manga_ocr_engine_system_unavailable => 'Este dispositivo no tiene reconocimiento de texto integrado disponible';
+	@override String get manga_tap_ocr_online_lens_only => 'Los capítulos en línea no se guardan localmente, así que solo Google Lens puede leerlos — la imagen de la página se sube a Google.';
+	@override String get settings_destination_services => 'Servicios en línea';
+	@override String get settings_destination_services_summary => 'API de terceros, indexadores y servidores multimedia';
+	@override String get section_services_subtitles => 'Fuentes de subtítulos';
+	@override String get section_services_resources => 'Indexadores de recursos';
+	@override String get section_services_metadata => 'Extracción de metadatos';
+	@override String get settings_services_link_subtitle => 'Jimaku, OpenSubtitles, Torznab, Jellyfin, AniDB y TMDB se configuran todos aquí';
+	@override String get game_hook_btn_replay => 'Reproducir de nuevo la voz de esta línea';
+	@override String get game_hook_btn_recapture => 'Volver a capturar la voz';
+	@override String get game_hook_btn_follow => 'Seguir las líneas nuevas';
+	@override String get game_hook_btn_passthrough => 'Dejar pasar los clics al juego';
+	@override String get game_hook_btn_transparency => 'Alternar el fondo';
+	@override String get game_hook_btn_lock => 'Bloquear la posición';
+	@override String get game_hook_btn_workbench => 'Abrir el banco de trabajo de captura';
+	@override String get game_hook_btn_topmost => 'Mantener encima';
+	@override String get game_hook_btn_close => 'Cerrar la ventana flotante';
+	@override String get video_jimaku_search_failed => 'Error al buscar subtítulos';
+	@override String video_subtitle_error_with_code({required Object msg, required Object code}) => '${msg} (HTTP ${code})';
+	@override String get manga_rescan_run => 'Volver a reconocer el área seleccionada';
+	@override String get manga_rescan_failed => 'Falló el reconocimiento del área seleccionada';
+	@override String get manga_rescan_region_updated => 'Área seleccionada reconocida de nuevo y guardada en la página';
+	@override String get manga_ocr_mobile_note => 'En móvil, estos modelos alimentan el motor local para el OCR de volumen completo, por toque y de área seleccionada en el lector de manga.';
+	@override String get manga_rescan_hint => 'Arrastra un recuadro sobre el texto que quieras volver a reconocer. El resultado reemplaza la capa de texto existente dentro del recuadro.';
+	@override String get manga_rescan_undone => 'Se restauró la capa de texto anterior al nuevo reconocimiento';
+	@override String get manga_rescan_undo_failed => 'No se pudo restaurar la capa de texto anterior';
+	@override String get module_tool_toggle_hint => 'Mostrar esta pestaña en la barra de navegación; desactívalo para ocultarla';
+	@override String get module_downloads_hidden_hint => 'La pestaña Descargas está oculta en Configuración → Apariencia → Módulos de funciones; vuelve a activarla para gestionar las suscripciones.';
+	@override String get book_file_location_open => 'Abrir ubicación del archivo';
+	@override String get book_file_location_failed => 'No se pudo abrir la ubicación del archivo de este libro.';
+	@override String storage_entry_database_snapshots_label({required Object n}) => 'Instantáneas de copia de seguridad de la base de datos (${n} archivos)';
+	@override String get storage_entry_delete_database_snapshots_confirm_body => 'Esto elimina todas las instantáneas de copia de seguridad de la base de datos que hayan quedado (corrupt-bak / pre-restore / copias de migraciones antiguas). La base de datos en uso y sus archivos -wal/-shm no se tocan.';
+	@override String get manga_global_search_no_sources => 'Aún no hay fuentes de manga habilitadas. Añade una en la pestaña Importar.';
+	@override String get manga_global_search_open_sources => 'Ir a Importar';
+	@override String get settings_downloads_open_page_hint => 'Abrir la página de descargas (tareas, recursos, suscripciones)';
+	@override String get download_video_source_required => 'Se requiere una fuente de vídeo';
+	@override String get game_hook_reason_stale_session => 'Una sesión de captura anterior aún no se ha liberado; Fushi lo está reintentando solo, no hace falta que hagas nada.';
+	@override String get video_subtitle_delete => 'Eliminar archivo de subtítulos';
+	@override String video_subtitle_delete_confirm({required Object path}) => '¿Eliminar este archivo de subtítulos del disco? Esta acción no se puede deshacer.\n${path}';
+	@override String video_subtitle_deleted({required Object label}) => 'Archivo de subtítulos eliminado: ${label}';
+	@override String video_subtitle_delete_failed({required Object label}) => 'Error al eliminar el archivo de subtítulos: ${label}';
+	@override String get shortcut_action_manga_toggle_chrome => 'Alternar interfaz de manga';
+	@override String get manga_interface_hide => 'Ocultar interfaz';
+	@override String get manga_interface_show => 'Mostrar interfaz';
+	@override String get gal_hook_text_vertical_alignment => 'Alineación vertical';
+	@override String get gal_hook_text_vertical_alignment_center => 'Centro';
+	@override String get gal_hook_text_vertical_alignment_top => 'Arriba';
+	@override String get storage_entry_external_audio_hint => 'El audio hace referencia a los archivos originales y no ocupa espacio de la app';
+	@override String get jellyfin_auto_list_title => 'Listar elementos al entrar en Vídeo';
+	@override String get jellyfin_auto_list_hint => 'Desactivado: entrar en la página de vídeo no envía ninguna petición al servidor de medios; desliza para actualizar en la videoteca para listar manualmente. Recomendado en servidores muy grandes, donde la enumeración automática parece scraping y puede activar la detección de abuso.';
+	@override String get jellyfin_libraries_title => 'Bibliotecas a listar';
+	@override String get jellyfin_libraries_hint => 'No seleccionar nada lista todas las bibliotecas de vídeo. Limitarlo a las bibliotecas que realmente ves evita que los servidores enormes se enumeren por completo.';
+	@override String get jellyfin_libraries_load_failed => 'No se pudo cargar la lista de bibliotecas';
+	@override String get video_filter_series => 'Series';
+	@override String get video_filter_series_in => 'En una serie';
+	@override String get video_filter_series_standalone => 'Sin serie';
+	@override String get manga_source_cloudflare_verify_title => 'Verificación del sitio';
+	@override String get manga_source_cloudflare_verify_hint => 'Completa la verificación de Cloudflare a continuación. La carga se reanudará automáticamente al superarla.';
+	@override String get db_cannot_open_title => 'Ubicación de datos no disponible';
+	@override String get db_cannot_open_message => 'Fushi no pudo abrir ni crear su base de datos en la ubicación de datos configurada. Nada está dañado: puede que la carpeta no exista, sea de solo lectura o esté en una unidad desconectada. Revise la ubicación de datos en Configuración, o reinicie para usar la ubicación predeterminada.';
+	@override String get anki_error_field_mapping_mismatch => 'Ninguno de sus mapeos de campos coincide con el tipo de nota seleccionado, por lo que Anki rechazó la tarjeta. Abra Configuración de Anki para volver a mapear los campos, o use \'Crear mazo Lapis\'.';
+	@override String get anki_error_first_field_empty => 'El primer campo del tipo de nota seleccionado está vacío y Anki no acepta una nota así. Mapee un campo a él en Configuración de Anki.';
+	@override String get storage_category_cache => 'Cachés y archivos temporales';
+	@override String get storage_category_other => 'Otros sin clasificar';
+	@override String get collection_export_pick_source => 'Seleccionar una fuente';
+	@override String get collection_export_all_sources => 'Todas las fuentes';
+	@override String get video_subtitle_list_search => 'Buscar subtítulos';
+	@override String get video_subtitle_list_search_hint => 'Escriba para filtrar líneas';
+	@override String get video_subtitle_list_search_empty => 'Ninguna línea coincide';
+	@override String get video_subtitle_list_export_favorites => 'Exportar líneas favoritas';
+	@override String get shortcut_action_video_search_subtitle_list => 'Buscar en la lista de subtítulos';
+	@override String get game_hook_code_paste_title => 'Pegar un código de hook';
+	@override String get game_hook_code_paste_hint => 'Pegue el código sin procesar, p. ej. /HQN4@4CE90:game.exe';
+	@override String get game_hook_code_paste_body => 'El código queda vinculado al ejecutable del juego en ejecución, para que Fushi pueda reutilizarlo la próxima vez.';
+	@override String get game_hook_code_paste_saved => 'Código de hook guardado para este juego';
+	@override String get game_hook_code_paste_invalid => 'Esto no parece un código de hook';
+	@override String get game_hook_code_label => 'Etiqueta (opcional)';
+	@override String get discovery_game_type_all => 'Todos';
+	@override String get discovery_game_type_raw => 'Sin traducir';
+	@override String get discovery_game_type_translated => 'Traducidos';
+	@override String get discovery_game_type_mobile => 'Móvil';
+	@override String get discovery_game_type_unlabelled => 'Sin etiquetar';
+	@override String get game_library_downloading => 'Descargando';
+	@override String get game_library_download_queued => 'En cola';
+	@override String get game_library_download_retrying => 'Reintentando';
+	@override String get delete_disclosure_audio_source_files => 'Los archivos de audio originales que importó';
+	@override String get delete_local_files => 'Eliminar también los archivos locales';
+	@override String get delete_local_files_video_desc => 'El archivo de vídeo se elimina de este dispositivo y su tarea de descarga también. Esto no se puede deshacer.';
+	@override String get delete_local_files_audio_desc => 'Los archivos de audio originales se eliminan de este dispositivo; los archivos originales del libro y los subtítulos se conservan. Esto no se puede deshacer.';
+	@override String get delete_disclosure_book_source_kept => 'Los archivos originales del libro y los subtítulos que importaste';
+	@override String get download_task_delete_files_failed => 'No se pudieron eliminar los datos descargados; el motor de descargas no lo confirmó';
+	@override String delete_local_files_failed({required Object n}) => 'No se pudieron eliminar ${n} archivo(s) local(es); puede que sigan en uso';
+	@override String batch_hidden_by_filter_note({required Object n}) => 'Otros ${n} elementos seleccionados están ocultos por el filtro actual y no se procesarán.';
+	@override String get custom_fonts_default => 'Default (Yu Gothic UI)';
+	@override String get custom_fonts_default_hint => 'Use the built-in Yu Gothic UI rendering for the Galgame Hook overlay.';
+	@override String get gal_hook_text_font_family => 'Galgame caption font';
+	@override String get gal_mining_screenshot_size => 'Galgame screenshot size';
+	@override String get gal_mining_screenshot_size_full_hd => 'Up to 1920 × 1080 (recommended)';
+	@override String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+	@override String get gal_mining_screenshot_size_hint => 'Applies to still screenshots and animated-capture fallbacks. Keeps the aspect ratio, never enlarges, and saves as JPEG at quality 90.';
+	@override String get gal_mining_screenshot_size_original => 'Original size (JPEG)';
+	@override String get game_attach_mode_last_used => 'Last used';
+	@override String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+	@override String get game_attach_mode_luna_safe_hint => 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+	@override String get game_attach_mode_native => 'Fushi native attachment';
+	@override String get game_attach_mode_native_hint => 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+	@override String get game_attach_mode_title => 'Choose attachment mode';
+	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
+	@override String get game_luna_audio_lead_in => 'Complete sentence start';
+	@override String get game_luna_audio_lead_in_hint => 'If the beginning of this sentence is cut off, increase this value.';
+	@override String get game_luna_audio_per_game_hint => 'Saved separately for each attached game.';
+	@override String get game_luna_audio_tail_trim => 'Remove next-line audio';
+	@override String get game_luna_audio_tail_trim_hint => 'If the end of this sentence includes the next line, increase this value.';
+	@override String get game_luna_audio_timing => 'Audio alignment';
+	@override String get game_text_source_luna => 'LunaTranslator (external original text)';
+	@override String get game_text_source_luna_connected => 'Connected. Fushi will use the original text selected in LunaTranslator.';
+	@override String get game_text_source_luna_waiting => 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+	@override String get game_text_thread_recommended => 'Recommended';
+	@override String get game_text_threads_dormant_hide => 'Hide threads without text';
+	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
+	@override String get video_setting_subtitle_language_filter => 'Subtitle language';
+	@override String get video_setting_subtitle_language_filter_all => 'All';
+	@override String get video_setting_subtitle_language_filter_chinese => 'Chinese';
+	@override String get video_setting_subtitle_language_filter_hint => 'Filter Chinese and Japanese content inside the selected subtitle track.';
+	@override String get video_setting_subtitle_language_filter_japanese => 'Japanese';
+	@override String get download_direct_queue_section => 'Direct downloads';
+	@override String get download_task_kind_all => 'All types';
+	@override String get download_task_kind_filter => 'Filter by type';
+	@override String get manga_online_series_empty => 'Esta serie no tiene volúmenes.';
+	@override String sync_peer_book_delete_confirm({required Object name}) => '¿Eliminar «${name}» del dispositivo emparejado? Sus archivos y el progreso de lectura allí se borrarán definitivamente, y este dispositivo no tiene ninguna copia. Esta acción no se puede deshacer.';
+	@override String sync_peer_video_delete_confirm({required Object name}) => '¿Quitar «${name}» de la biblioteca del dispositivo emparejado? El archivo de vídeo que el propio dispositivo importó se conserva. Esta acción no se puede deshacer.';
+	@override String get storage_entry_delete_files_confirm_body => 'Se eliminará del disco de inmediato. Nada de tu biblioteca hace referencia a esto: son datos en caché, exportados o que se pueden volver a descargar.';
+	@override String get manga_series_refresh => 'Actualizar capítulos';
+	@override String get manga_series_refresh_failed => 'No se pudo actualizar desde la fuente';
+	@override String get manga_series_source_disabled => 'Esta fuente no está instalada o está desactivada';
+	@override String get manga_series_platform_unsupported => 'Esta fuente no está disponible en esta plataforma';
+	@override String get manga_series_offline_hint => 'Se muestran los capítulos guardados en este dispositivo';
+	@override String get manga_series_no_chapters => 'Todavía no hay capítulos';
+	@override String get manga_series_all_read => 'Se han leído todos los capítulos';
+	@override String get manga_series_sort_newest => 'Más recientes primero';
+	@override String get manga_series_sort_oldest => 'Más antiguos primero';
+	@override String get manga_series_unread_only => 'Solo no leídos';
+	@override String get manga_series_mark_read => 'Marcar como leído';
+	@override String get manga_series_mark_unread => 'Marcar como no leído';
+	@override String get manga_series_mark_previous_read => 'Marcar este y los anteriores como leídos';
+	@override String get manga_series_local_volume => 'Volumen local';
+	@override String get manga_series_volume_info => 'Volumen';
+	@override String get manga_series_page_count => 'Páginas';
+	@override String get manga_series_chapters_action => 'Capítulos';
+	@override String get manga_series_next_chapter => 'Capítulo siguiente';
+	@override String get manga_series_previous_chapter => 'Capítulo anterior';
+	@override String get manga_series_last_chapter_reached => 'Este es el capítulo más reciente';
+	@override String get manga_series_first_chapter_reached => 'Este es el primer capítulo';
+	@override String get manga_series_open_series => 'Página de la obra';
+	@override String manga_series_read_progress({required Object page, required Object total}) => 'Leído hasta la página ${page} de ${total}';
+	@override String manga_series_read_progress_partial({required Object page}) => 'Leído hasta la página ${page}';
+	@override String mihon_store_extension_count({required Object count}) => '${count} extensiones';
+	@override String mihon_extension_sources_more({required Object count}) => 'Mostrar las ${count} fuentes';
+	@override String get mihon_extension_sources_less => 'Mostrar menos fuentes';
+	@override String get options_website => 'Visitar el sitio web oficial';
+	@override String get video_setting_mpv_group_hdr => 'HDR';
+	@override String get video_setting_hdr_tone_mapping => 'Mapeo de tonos HDR';
+	@override String get video_setting_hdr_tone_mapping_hint => 'Curva que se usa al comprimir una fuente HDR en una pantalla SDR. «Automático» deja que mpv elija según la fuente.';
+	@override String get video_setting_hdr_compute_peak => 'Detección dinámica de picos';
+	@override String get video_setting_hdr_compute_peak_hint => 'Mide el brillo máximo real de cada fotograma en vez de fiarse de los metadatos de la fuente. Mejores luces altas, a costa de algo de GPU.';
+	@override String get video_setting_hdr_auto => 'Automático';
+	@override String get video_setting_hdr_on => 'Activado';
+	@override String get video_setting_hdr_off => 'Desactivado';
+	@override String get video_discovery_cancel_downloads_title => '¿Cancelar las descargas?';
+	@override String video_discovery_cancel_downloads_body({required Object n}) => 'Se detendrán ${n} tarea(s) de descarga de este título. Las partes ya descargadas se conservan en el disco; podrás reanudar la descarga más adelante.';
+	@override String get video_discovery_cancel_downloads_failed => 'No se pudo cancelar la descarga. Puede que la tarea ya haya terminado o que el backend de descargas no esté disponible.';
+	@override String get gal_hook_click_lookup => 'Toca una palabra para buscarla';
+	@override String get gal_hook_click_lookup_hint => 'Desactivado significa que los clics sobre el texto nunca activan una búsqueda: útil con el clic pasante activado, cuando prefieres no darle a una palabra sin querer.';
+	@override String get gal_hook_lookup_trigger => 'Disparador de búsqueda';
+	@override String get gal_hook_lookup_trigger_hint => 'Qué botón del ratón busca la palabra bajo el puntero. Es independiente del interruptor de arriba: puedes desactivar la búsqueda por toque y seguir buscando con un botón lateral.';
+	@override String get gal_hook_lookup_trigger_left => 'Left click';
+	@override String get gal_hook_lookup_trigger_middle => 'Middle click';
+	@override String get gal_hook_lookup_trigger_side => 'Side button';
+	@override String get gal_hook_toolbar_auto_hide => 'Ocultar la barra automáticamente';
+	@override String get gal_hook_toolbar_auto_hide_hint => 'Oculta la barra hasta que el puntero llega al cuadro de texto, al estilo de LunaHook. Oculta significa oculta de verdad: esos píxeles vuelven al juego.';
+	@override String get gal_hook_passthrough_blocks_mouse => 'El texto sigue recibiendo clics con el clic pasante';
+	@override String get gal_hook_passthrough_blocks_mouse_hint => 'Activado: las líneas de texto siguen recibiendo clics, así puedes tocar una palabra. Desactivado: toda la superposición es transparente al ratón; puedes hacer clic en lo que haya debajo, pero tocar palabras deja de funcionar.';
+	@override String get floating_lyric_topmost => 'Mantener al frente';
+	@override String get gal_hook_fold_progressive_lines => 'Unir líneas de diálogo divididas';
+	@override String get gal_hook_fold_progressive_lines_hint => 'Algunos motores redibujan la línea entera en cada clic, así que una misma línea se captura varias veces. Pliega esas instantáneas en una sola línea.';
+	@override String get gal_hook_ingame_lookup_engine_unsupported => 'Este motor de juego aún no admite la búsqueda dentro del juego';
+	@override String get gal_hook_ingame_lookup_version_unsupported => 'Esta versión del juego aún no está en la lista de compatibles';
+	@override String get gal_hook_ingame_lookup_exe_hash_copy => 'Copiar el SHA-256 del ejecutable del juego';
+	@override String get gal_hook_ingame_lookup_exe_hash_unavailable => 'No se pudo leer el ejecutable del juego';
+	@override String get gal_hook_ingame_lookup_exe_hash_copied => 'SHA-256 del ejecutable copiado';
+	@override String get download_tracker_section => 'Suscripción de trackers';
+	@override String get download_tracker_auto_add => 'Añadir automáticamente los trackers suscritos a las descargas nuevas';
+	@override String get download_tracker_auto_add_hint => 'La lista se almacena en caché 6 horas. Si la suscripción falla, la descarga no se bloquea.';
+	@override String get download_tracker_url => 'URL de suscripción';
+	@override String get download_tracker_refresh => 'Obtener trackers';
+	@override String get download_tracker_preview_empty => 'Obtén la suscripción para ver los trackers HTTP, HTTPS y UDP compatibles.';
+	@override String download_tracker_preview_count({required Object count}) => '${count} trackers obtenidos';
+	@override String download_tracker_fetch_failed({required Object message}) => 'No se pudieron obtener los trackers: ${message}';
+	@override String get anki_connect_port_auto_fix => 'Cambiar a un puerto libre';
+	@override String get anki_connect_port_auto_fix_hint => 'Elige un puerto libre y lo escribe tanto en Hibiki como en la configuración del complemento AnkiConnect. Reinicia Anki para aplicarlo.';
+	@override String anki_connect_port_auto_fix_done({required Object port}) => 'AnkiConnect ahora usa el puerto ${port}. Reinicia Anki y vuelve a intentarlo.';
+	@override String anki_connect_port_auto_fix_manual({required Object port}) => 'Hibiki ahora usa el puerto ${port}, pero no se encontró la configuración del complemento AnkiConnect. Pon webBindPort en ${port} dentro de Anki (Herramientas → Complementos → AnkiConnect → Configuración) y reinicia Anki.';
+	@override String get anki_connect_port_auto_fix_none => 'No se encontró ningún puerto libre en este equipo.';
+	@override String get onboarding_action_badge_required => 'Obligatorio';
+	@override String get onboarding_action_badge_recommended => 'Recomendado';
+	@override String get onboarding_action_badge_optional => 'Opcional';
+	@override String get onboarding_pack_action_download_desc => 'Descarga todo el paquete en segundo plano y luego lo importa. Puedes cancelar cuando quieras; la próxima vez continúa desde donde se detuvo.';
+	@override String get onboarding_pack_action_import_existing_desc => 'El paquete ya está descargado; esto lo importa. Elige «Combinar» en el diálogo de confirmación y tus datos actuales quedarán intactos.';
+	@override String get onboarding_pack_action_pick_desc => '¿Ya conseguiste el zip del paquete por otro lado? Impórtalo desde el disco y sáltate la descarga por completo.';
+	@override String get onboarding_pack_action_website => 'Abrir la página de descarga del sitio';
+	@override String get onboarding_pack_action_website_desc => 'Abre el sitio oficial en tu navegador. Su sección de paquete lista enlaces por fragmentos que puedes pasar a un gestor de descargas; vuelve después aquí y usa «Elegir un archivo de paquete local» para importar lo que obtuviste.';
+	@override String get onboarding_pack_action_dictionary_desc => '¿Aprendes un idioma distinto del japonés? Sáltate el paquete e importa aquí diccionarios de tu propio idioma.';
+	@override String get onboarding_pack_action_audio_desc => 'De dónde sale el audio de pronunciación. El paquete ya cubre japonés e inglés; añade aquí fuentes en línea para otros idiomas.';
+	@override String get onboarding_anki_action_test_desc => 'Comprueba que Fushi puede conectarse con Anki y carga tus mazos y tipos de nota. Todavía no se crea nada.';
+	@override String get onboarding_anki_action_refresh_desc => 'Vuelve a cargar mazos y tipos de nota desde Anki. Úsalo después de crear un mazo nuevo dentro de Anki.';
+	@override String get onboarding_anki_action_get_ankidroid_desc => 'Abre la página de la tienda de AnkiDroid. Fushi escribe ahí sus tarjetas, así que hay que instalarlo primero.';
+	@override String get onboarding_anki_action_get_anki_desc => 'Abre la página de descarga de Anki. Instala Anki y déjalo abierto mientras creas tarjetas.';
+	@override String get onboarding_anki_action_install_addon_desc => 'Descomprime por ti el complemento AnkiConnect incluido dentro de Anki, que es lo que permite a Fushi comunicarse con él. Reinicia Anki después.';
+	@override String get onboarding_step_anki_action_desc => 'Plantilla de tarjeta, asignación de campos, capturas y audio: los detalles de qué aspecto tiene una tarjeta creada. Con el mazo y el tipo de nota de arriba ya puedes empezar, así que abre esto solo si quieres cambiar cómo se construyen las tarjetas.';
+	@override String get onboarding_step_backup_action_desc => 'Elige un servicio de copia de seguridad e inicia sesión, para que tu biblioteca sobreviva a la pérdida o el cambio de dispositivo.';
+	@override String get onboarding_step_interconnect_action_desc => 'Empareja este dispositivo con tus otros dispositivos para compartir una misma biblioteca y mantener el progreso sincronizado.';
+	@override String get onboarding_step_extension_action_desc => 'Muestra cómo instalar la extensión de navegador y conectarla con Fushi, para poder buscar palabras también en páginas web.';
+	@override String get onboarding_step_fonts_action_desc => 'Añade tus propios archivos de fuente y elige cuál usa cada idioma.';
+	@override String get onboarding_pack_sources_hint => 'Se descarga en fragmentos paralelos desde GitHub, el sitio oficial y un espejo de respaldo a la vez, con suma de verificación en cada fragmento. Fushi mide las fuentes sobre la marcha y da más fragmentos a la que sea más rápida en ese momento, así que aquí no hay nada que elegir.';
+	@override String get video_setting_hdr_output => 'Salida HDR / 10 bits';
+	@override String get video_setting_hdr_output_hint => 'Solo en Windows. «Automático» entrega las fuentes HDR directamente a una pantalla HDR mediante una ventana de vídeo nativa; «Siempre» usa esa ventana para todos los vídeos (salida de 10 bits); «Desactivado» mantiene el renderizador estándar.';
+	@override String get video_setting_hdr_output_auto => 'Automático';
+	@override String get video_setting_hdr_output_always => 'Siempre';
+	@override String get video_setting_hdr_output_off => 'Desactivado';
+	@override String get network_proxy_auto_hint => 'Se aplica a todas las solicitudes de Internet de la aplicación: actualizaciones, sincronización en la nube, diccionarios, descargas, subtítulos y metadatos. Déjelo en blanco para automático: variables de entorno y, después, el proxy del sistema habilitado. Las transferencias P2P (torrent) se conectan directamente de forma predeterminada; puede activarlas por separado abajo.';
+	@override String get network_proxy_hint => 'host:puerto, ej. 127.0.0.1:7890 (solo IPv4/host)';
+	@override String get network_proxy_invalid => 'Proxy no válido. Use host:puerto';
+	@override String get network_proxy_label => 'Proxy de red';
+	@override String get section_network => 'Red';
+	@override String get network_proxy_p2p_label => 'Enrutar el tráfico P2P (torrent) por el proxy';
+	@override String get network_proxy_p2p_warning => 'Desactivado de forma predeterminada: P2P se conecta directamente. Pasar por el proxy puede reducir la velocidad y muchos proveedores de proxy prohíben el tráfico BitTorrent: su cuenta de proxy podría ser limitada, advertida o cancelada. Solo se aplica al motor integrado; un qBittorrent externo usa su propia configuración de proxy.';
+	@override String get video_ajatt_settings_hint => 'Archivo gratuito de subtítulos en japonés (réplica de kitsunekko). No requiere cuenta; los archivos se descargan desde GitHub.';
+	@override String get video_ajatt_enabled_hint => 'Desactivado significa que el archivo AJATT se omite al buscar subtítulos.';
+	@override String get video_subtitle_workbench_title => 'Subtítulos';
+	@override String get video_subtitle_scope_episode => 'Este episodio';
+	@override String get video_subtitle_scope_collection => 'Toda la colección';
+	@override String get video_subtitle_search_open => 'Buscar subtítulos en línea';
+	@override String get video_subtitle_collection_settings => 'Ajustes de subtítulos de la colección';
+	@override String get video_subtitle_collection_language => 'Idioma de subtítulos predeterminado';
+	@override String get video_subtitle_collection_language_hint => 'Se aplica a todos los episodios de esta colección. Vacío = seguir el idioma del vídeo.';
+	@override String get video_subtitle_collection_release_group => 'Versión preferida';
+	@override String get video_subtitle_collection_release_group_hint => 'Las descargas en lote eligen primero esta versión para que toda la temporada comparta la misma sincronización.';
+	@override String get video_subtitle_collection_release_group_any => 'Cualquier versión';
+	@override String get video_subtitle_source_label => 'Fuente';
+	@override String get video_subtitle_collection_members_hint => 'Los episodios se emparejan por el número del nombre de archivo; los packs de temporada se dividen automáticamente.';
+	@override String get video_subtitle_adjust_title => 'Ajustes de subtítulos';
+	@override String get video_subtitle_adjust_collapse => 'Contraer';
+	@override String get video_subtitle_adjust_expand => 'Expandir';
+	@override String get settings_section_reading_stats => 'Estadísticas de lectura';
+	@override String get reading_stats_idle_timeout => 'Tiempo de inactividad';
+	@override String get reading_stats_idle_timeout_hint => 'Dejar de contar el tiempo de lectura tras estos minutos sin pasar página, desplazarse o buscar una palabra. Solo para novelas, PDF y manga; el vídeo cuenta mientras se reproduce.';
+	@override String get web_video_track_menu => 'Pista de subtítulos';
+	@override String get web_video_track_live => 'Subtítulos en vivo (capturados de la página)';
+	@override String get web_video_no_tracks => 'Aún no se han capturado subtítulos';
+	@override String get web_video_hide_native_subtitles => 'Ocultar subtítulos del sitio';
+	@override String get web_video_import_hint => 'Esto es una página web (no una transmisión directa). Se abrirá en el reproductor web integrado.';
+	@override String get web_video_platform_unsupported => 'El reproductor web integrado solo está disponible en Windows por ahora.';
+	@override String get web_video_mine_queue_run => 'Crear las tarjetas en cola';
+	@override String get web_video_mine_queue_stop => 'Detener la creación de tarjetas';
+	@override String get web_video_mine_queue_empty => 'No hay tarjetas en cola';
+	@override String web_video_mine_queued({required Object count}) => 'En cola para crear tarjetas (${count} pendientes)';
+	@override String web_video_mine_queue_running({required Object done, required Object total}) => 'Creando tarjetas ${done}/${total}…';
+	@override String web_video_mine_queue_finished({required Object ok, required Object failed}) => 'Tarjetas creadas: ${ok}, fallidas: ${failed}';
+	@override String get web_video_hosting_menu => 'Modo de reproducción';
+	@override String get web_video_hosting_builtin => 'Integrado (1080p; superresolución, capturas y tarjetas disponibles)';
+	@override String get web_video_hosting_windowed => 'Ventana nativa (4K, DRM por hardware; las tarjetas se ponen en cola)';
+	@override String web_video_mine_switch_builtin({required Object count}) => 'Cambiar al modo integrado para crear ${count} tarjetas en cola';
+	@override String get onboarding_step_click_lookup_title => 'Toque para buscar palabras';
+	@override String get onboarding_click_lookup_tap_title => 'Toque el texto';
+	@override String get onboarding_click_lookup_nested_title => 'Siga explorando en la ventana emergente';
+	@override String get onboarding_click_lookup_nested_body => 'Toque otra palabra dentro de una definición para abrir una búsqueda más profunda. Vuelva atrás o toque fuera para cerrar un nivel.';
+	@override String get onboarding_click_lookup_mine_title => 'Convierta el resultado en una tarjeta';
+	@override String get onboarding_click_lookup_mine_body => 'Cuando la definición sea la correcta, toque + para enviar la palabra, la frase, el audio y la imagen al creador de tarjetas.';
+	@override String get onboarding_step_global_lookup_title => 'Buscar texto fuera de Fushi';
+	@override String get onboarding_global_lookup_windows_body => 'En Windows, seleccione texto en otra aplicación y abra el diccionario sin volver a Fushi.';
+	@override String get onboarding_global_lookup_windows_select_title => 'Seleccione texto en cualquier aplicación';
+	@override String get onboarding_global_lookup_windows_shortcut_title => 'Pulse Ctrl+Alt+D';
+	@override String get onboarding_global_lookup_windows_shortcut_body => 'Es el atajo global predeterminado. Fushi captura la selección actual y abre una tarjeta de búsqueda junto al puntero.';
+	@override String get onboarding_global_lookup_windows_customize_title => 'Cambie el atajo si lo necesita';
+	@override String get onboarding_global_lookup_windows_customize_body => 'Abra Ajustes → Atajos → Global (fuera de la aplicación) para asignar otra combinación de teclas.';
+	@override String get onboarding_global_lookup_windows_action => 'Abrir ajustes de atajos';
+	@override String get onboarding_global_lookup_windows_action_desc => 'Permite cambiar el atajo de búsqueda fuera de la aplicación. El predeterminado Ctrl+Alt+D ya funciona, así que es opcional.';
+	@override String get onboarding_global_lookup_android_body => 'En Android, el sistema pasa el texto seleccionado a Fushi mediante el menú de texto o el panel Compartir. No hay una tecla rápida global reasignable.';
+	@override String get onboarding_global_lookup_android_select_title => 'Seleccione texto en otra aplicación';
+	@override String get onboarding_global_lookup_android_open_title => 'Elija Fushi';
+	@override String get onboarding_global_lookup_android_open_body => 'Toque Fushi en el menú de selección de texto. Si no aparece, toque Compartir y elija Fushi en el panel de compartir.';
+	@override String get onboarding_global_lookup_android_continue_title => 'Use la ventana independiente';
+	@override String get onboarding_global_lookup_android_continue_body => 'La búsqueda se abre aparte de la aplicación de origen. Dentro puede tocar más palabras y, al cerrarla, vuelve donde estaba.';
+	@override String get onboarding_feature_manual_resources => 'Importar diccionarios y audio manualmente';
+	@override String get onboarding_feature_manual_resources_hint => 'Supplement the recommended pack, or import your own dictionaries, audiobooks, and pronunciation sources';
+	@override String get onboarding_step_manual_resources_title => 'Prepare diccionarios y audio manualmente';
+	@override String get onboarding_step_manual_resources_body => 'Use this alongside the recommended pack or on its own. Import at least one dictionary before the lookup tutorial; audiobook and pronunciation audio are optional supplements.';
+	@override String get onboarding_manual_dictionary_action => 'Importar un diccionario';
+	@override String get onboarding_manual_dictionary_action_desc => 'Abra la gestión de diccionarios e importe al menos un archivo o paquete de diccionario compatible. Los tutoriales de búsqueda solo sirven cuando una consulta devuelve una definición.';
+	@override String get onboarding_manual_audiobook_action => 'Importar un libro con audio de audiolibro';
+	@override String get onboarding_manual_audiobook_action_desc => 'Abra la importación de libros y elija el libro o el texto, los subtítulos alineados y uno o varios archivos de audio. El audio necesita subtítulos para que Fushi lo alinee con las frases.';
+	@override String get onboarding_manual_pronunciation_action => 'Configurar el audio de pronunciación de palabras';
+	@override String get onboarding_manual_pronunciation_action_desc => 'Añada fuentes de pronunciación locales o en línea para las entradas del diccionario. Es independiente del audio de audiolibro asociado a un libro.';
+	@override String get onboarding_lookup_verify_action => 'Compruebe una palabra en su diccionario';
+	@override String get onboarding_lookup_verify_action_desc => 'Abra la búsqueda, escriba cualquier palabra que esté aprendiendo y continúe solo cuando el diccionario instalado devuelva una definición. El tutorial no fija ninguna palabra de ejemplo.';
+	@override String get onboarding_step_first_anki_card_title => 'Cree su primera tarjeta de Anki';
+	@override String get onboarding_step_first_anki_card_body => 'Este paso solo aparece cuando esta guía ya se ha conectado a Anki y se ha elegido un mazo y un tipo de nota utilizables.';
+	@override String get onboarding_first_anki_lookup_title => 'Empiece por un resultado real del diccionario';
+	@override String get onboarding_first_anki_lookup_body => 'Busque una palabra que su diccionario instalado defina de verdad. No hay una palabra de ejemplo fija que pudiera faltar en su diccionario.';
+	@override String get onboarding_first_anki_plus_title => 'Toque el botón más de la entrada';
+	@override String get onboarding_first_anki_plus_body => 'El botón más abre el creador de tarjetas con la palabra actual, su lectura, su significado, la frase, el audio y la imagen disponible.';
+	@override String get onboarding_first_anki_save_title => 'Revise y guarde';
+	@override String get onboarding_first_anki_save_body => 'Confirme el mazo de destino, el tipo de nota y la vista previa de los campos, y guarde. Abra Anki para comprobar que la primera tarjeta ha llegado.';
+	@override String get onboarding_first_anki_action => 'Abrir la búsqueda y crear una tarjeta';
+	@override String get onboarding_first_anki_action_desc => 'Use una palabra con definición visible, toque su botón más, revise los campos y guárdela en el mazo de Anki conectado.';
+	@override String get onboarding_step_click_lookup_body => 'Primero compruebe una palabra que su diccionario instalado defina de verdad. Luego use esa misma palabra para practicar la búsqueda directa en libros, en el texto OCR del manga y en los subtítulos de vídeo.';
+	@override String get onboarding_click_lookup_tap_body => 'En el móvil, toque un carácter de la palabra comprobada; en el ordenador, haga clic izquierdo sobre él. Fushi empieza ahí y busca la palabra más larga que encaje.';
+	@override String get onboarding_global_lookup_windows_select_body => 'Seleccione la misma palabra de la que ya comprobó que hay definición en el diccionario y mantenga la selección activa.';
+	@override String get onboarding_global_lookup_android_select_body => 'Mantenga pulsada esa misma palabra comprobada y ajuste los controles de selección para cubrirla entera.';
+	@override String get game_lookup_attached_title => 'In-game lookup';
+	@override String get game_lookup_attached_no_ocr => 'No OCR · horizontal body text only';
+	@override String get game_lookup_attached_mode => 'Mode';
+	@override String get game_lookup_attached_mode_auto => 'Auto';
+	@override String get game_lookup_attached_mode_native_only => 'Native only';
+	@override String get game_lookup_attached_mode_attached_only => 'Calibrated layer only';
+	@override String get game_lookup_attached_mode_off => 'Off';
+	@override String get game_lookup_attached_status => 'State';
+	@override String get game_lookup_attached_native_status => 'Native';
+	@override String get game_lookup_attached_provider => 'Provider';
+	@override String get game_lookup_attached_provider_unknown => 'Not reported';
+	@override String get game_lookup_attached_profile => 'Profile';
+	@override String get game_lookup_attached_profile_ready => 'Calibrated';
+	@override String get game_lookup_attached_profile_missing => 'Not calibrated';
+	@override String get game_lookup_attached_shield => 'Input shield';
+	@override String get game_lookup_attached_shield_verified => 'Verified';
+	@override String get game_lookup_attached_shield_unknown => 'Unknown';
+	@override String get game_lookup_attached_shield_partial => 'Partial';
+	@override String get game_lookup_attached_shield_known_uncovered => 'Known uncovered';
+	@override String get game_lookup_attached_shield_faulted => 'Faulted';
+	@override String get game_lookup_attached_risk => 'Click risk';
+	@override String get game_lookup_attached_risk_safe => 'Not authorized';
+	@override String get game_lookup_attached_risk_pending => 'Confirmation required';
+	@override String get game_lookup_attached_risk_active => 'Risk accepted · may double-trigger';
+	@override String get game_lookup_attached_calibrate => 'Calibrate';
+	@override String get game_lookup_attached_risk_accept => 'Accept click risk';
+	@override String get game_lookup_attached_profile_clear => 'Clear profile';
+	@override String get game_lookup_attached_thread_required => 'Select one body-text thread before calibration.';
+	@override String get game_lookup_attached_risk_title => 'Confirm raw-click risk';
+	@override String get game_lookup_attached_risk_body => 'The input shield is not verified for this executable. Clicking a glyph may also advance dialogue or trigger a choice. This authorization is stored only for the current executable hash and is revoked after an update.';
+	@override String get game_lookup_attached_calibration_title => 'Calibrate body text';
+	@override String get game_lookup_attached_preview => 'Current body text preview';
+	@override String get game_lookup_attached_body_rect => 'Body rectangle';
+	@override String get game_lookup_attached_left => 'Left';
+	@override String get game_lookup_attached_top => 'Top';
+	@override String get game_lookup_attached_width => 'Width';
+	@override String get game_lookup_attached_height => 'Height';
+	@override String get game_lookup_attached_font_family => 'Font family';
+	@override String get game_lookup_attached_font_size => 'Font size / client height';
+	@override String get game_lookup_attached_letter_spacing => 'Letter spacing / client height';
+	@override String get game_lookup_attached_line_height => 'Line height';
+	@override String get game_lookup_attached_text_align => 'Horizontal alignment';
+	@override String get game_lookup_attached_vertical_align => 'Vertical alignment';
+	@override String get game_lookup_attached_align_left => 'Left';
+	@override String get game_lookup_attached_align_center => 'Center';
+	@override String get game_lookup_attached_align_right => 'Right';
+	@override String get game_lookup_attached_align_top => 'Top';
+	@override String get game_lookup_attached_align_bottom => 'Bottom';
+	@override String get game_lookup_attached_probes_hint => 'Click the first, middle, and last highlighted glyphs in the game, then confirm each character below.';
+	@override String get game_lookup_attached_probe_start => 'First glyph';
+	@override String get game_lookup_attached_probe_middle => 'Middle glyph';
+	@override String get game_lookup_attached_probe_end => 'Last glyph';
+	@override String get game_lookup_attached_calibration_commit => 'Save calibration';
+	@override String get game_lookup_attached_calibration_failed => 'Calibration was not applied. Check the body text, target window, and all three probes.';
+	@override String get game_lookup_attached_calibration_short_text => 'At least three characters are required for calibration probes.';
+	@override String get game_lookup_attached_profile_clear_title => 'Clear lookup profile?';
+	@override String get game_lookup_attached_profile_clear_body => 'The saved rectangle, text layout, and executable-specific click authorization will be removed.';
+	@override String get game_lookup_attached_probe_waiting => 'Waiting for matching in-game click';
+	@override String get delete_choices_remember => 'Recordar estas opciones';
 }

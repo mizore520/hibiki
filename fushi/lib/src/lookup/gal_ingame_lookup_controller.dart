@@ -106,6 +106,16 @@ class GalIngameLookupController {
   /// galgame 会话是否在跑（由台词浮窗控制器的会话同步喂进来，不另起第二个监听）。
   bool _sessionActive = false;
 
+  /// 当前 host 仲裁是否允许 native geometry provider 把命中送进查词链。
+  ///
+  /// 这与 [_sessionActive] / 用户总开关刻意分离：`attachedOnly` 仍需保持 IPC v19
+  /// mapping 与通用输入盾运行，但 native provider 的命中、卡片输入和旧 route 必须
+  /// 被拒绝。`auto` 在 attached 校准层取得 glyph surface 时也会暂时关掉这道门。
+  bool _providerAdmission = true;
+
+  GalLookupGeometryAdmissionMode _geometryAdmissionMode =
+      GalLookupGeometryAdmissionMode.disabled;
+  bool _geometryAttachedReady = false;
   /// 本局游戏的**查词准入**（v19）。真值在注入侧的 adapter registry，经共享内存
   /// → runner → `onGalLookupAdmission` 推上来，本控制器只存不解释。
   ///
@@ -219,6 +229,16 @@ class GalIngameLookupController {
   bool get debugPushedEnabled => _pushedEnabled;
 
   @visibleForTesting
+  bool get debugProviderAdmission => _providerAdmission;
+
+  @visibleForTesting
+  GalLookupGeometryAdmissionMode get debugGeometryAdmissionMode =>
+      _geometryAdmissionMode;
+
+  @visibleForTesting
+  bool get debugGeometryAttachedReady => _geometryAttachedReady;
+
+  @visibleForTesting
   GalLookupHit? get debugActiveHit => _activeHit;
 
   /// 接线。幂等；非 Windows 上直接空转（不是崩）。
@@ -264,6 +284,7 @@ class GalIngameLookupController {
         hasVisiblePopup: () =>
             _started &&
             _enabledNow &&
+            _providerAdmission &&
             _activeRoute != null &&
             !DesktopForegroundGuard.isForegroundOwnedByCurrentProcess(),
         entryMove: (bool forward) =>
@@ -296,6 +317,9 @@ class GalIngameLookupController {
     final Future<void>? lookupDrain = _drainCompleter?.future;
     if (lookupDrain != null) await lookupDrain;
     _started = false;
+    _providerAdmission = true;
+    _geometryAdmissionMode = GalLookupGeometryAdmissionMode.disabled;
+    _geometryAttachedReady = false;
     GlobalLookupController.instance.onRoutedDirty = null;
     // 若此刻正有 enable 在 channel 里，不能直接作废 drain：它可能
     // 在 stop 后才成功把 native 打开。留一个 pending，让同一串行 drain
@@ -343,6 +367,44 @@ class GalIngameLookupController {
     await _syncEnabled();
   }
 
+  /// Applies the central provider arbitration result without disabling the IPC
+  /// runtime needed by the attached surface's input shield.
+  ///
+  /// Closing admission is a lifecycle edge, not merely an event filter: any
+  /// card and queued lookup owned by the previous native provider are retired
+  /// before the attached provider may publish its next transaction.
+  Future<void> setProviderAdmission(bool admitted) async {
+    if (_providerAdmission == admitted) return;
+    _providerAdmission = admitted;
+    if (!admitted) await _terminateCurrentLookup();
+  }
+
+  /// Drives the injected registry owner independently from lookup_enabled.
+  /// Callers must close [setProviderAdmission] before excluding native so an
+  /// old card/queued lookup cannot outlive the provider handoff. A successful
+  /// request may still be pending in the hook until down/up/tail is neutral;
+  /// the attached runner gates publication on the registry's active identity.
+  Future<GalLookupCallResult> setGeometryAdmission(
+    GalLookupGeometryAdmissionMode mode, {
+    required bool attachedReady,
+  }) async {
+    final GalLookupCallResult result =
+        await GalHookTextOverlayChannel.galLookupSetGeometryAdmission(
+          mode: mode,
+          attachedReady: attachedReady,
+        );
+    if (result.ok) {
+      _geometryAdmissionMode = mode;
+      _geometryAttachedReady = attachedReady;
+    }
+    glog(
+      'gal-ingame: geometryAdmission=${mode.name} '
+      'attachedReady=$attachedReady request=${result.requestSeq} '
+      'applied=${result.appliedSeq} -> ${result.error ?? "ok"}',
+    );
+    return result;
+  }
+
   /// 设置页改完开关后调用，与 `applyHoverAutoLookupFromPreferences` 同款纪律：
   /// 漏掉这一步，开关只落了盘，本局游戏里不生效。
   Future<void> applyEnabledFromPreferences() async {
@@ -384,7 +446,7 @@ class GalIngameLookupController {
   /// 「悬停要不要自动查词」由 hook 侧决定并体现在 submit 上，Dart 不再解释一遍——
   /// 两处各判一次必然漂。
   Future<void> handleHit(GalLookupHit hit) async {
-    if (!_started || !_enabledNow) return;
+    if (!_started || !_enabledNow || !_providerAdmission) return;
     if (!hit.submit) {
       // hover 高亮已在游戏线程的 fushiLookupReport 中同步绘制；再投一张 host→hook
       // highlight 帧不仅重复，还会和查词卡争双缓冲的最新发布序。
@@ -434,6 +496,7 @@ class GalIngameLookupController {
 
   /// hook 转发的卡片内输入：严格按上报顺序丢回 runner 的既有 popup 输入注入口。
   Future<void> handleInput(GalLookupInput input) {
+    if (!_providerAdmission) return Future<void>.value();
     if (input.kind == GalLookupInput.dismissOutsideKind) {
       final Completer<void> done = Completer<void>();
       _inputTail = _inputTail.then<void>(
@@ -1063,6 +1126,7 @@ class GalIngameLookupController {
   bool _isCurrentLookup(int generation, GlobalLookupRoute route) =>
       _started &&
       _enabledNow &&
+      _providerAdmission &&
       generation == _lookupGeneration &&
       _acceptsRoute(route);
 

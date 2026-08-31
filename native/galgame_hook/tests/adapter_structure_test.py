@@ -56,8 +56,9 @@ class AdapterStructureTest(unittest.TestCase):
         source = (ROOT / "hook" / "dll_main.cpp").read_text(encoding="utf-8")
         # 行数预算防的是「引擎逻辑重新爬回 dll_main」——真正的判据是下面那三条
         # （必须经 registry、不得出现 TryHook）。系统头 include 与其解释注释不属于
-        # 它要挡的东西，但也算行；上界随之从 700 抬到 720，判据本身不变。
-        self.assertLess(source.count("\n"), 720)
+        # 它要挡的东西，但也算行；v19 的通用输入盾生命周期把作者版本推到 721
+        # 行，预算收紧到 730，下面三条结构判据本身不变。
+        self.assertLess(source.count("\n"), 730)
         self.assertIn("AdapterRegistry registry;", source)
         self.assertIn("registry.InstallStartupAdapters();", source)
         self.assertIn("registry.Poll();", source)
@@ -80,20 +81,70 @@ class AdapterStructureTest(unittest.TestCase):
             self.assertIn(marker, path.read_text(encoding="utf-8"))
             self.assertIn(f'#include "adapters/{filename}"', source)
 
+    def test_v19_geometry_publishers_use_registry_lifecycle(self) -> None:
+        adapter_root = ROOT / "hook" / "adapters"
+        publishers = []
+        for path in sorted(adapter_root.rglob("*")):
+            if not path.is_file() or path.suffix.lower() not in {
+                ".c",
+                ".cc",
+                ".cpp",
+                ".cxx",
+                ".h",
+                ".hpp",
+                ".inc",
+            }:
+                continue
+            source = path.read_text(encoding="utf-8")
+            if "g_geometry_provider_registry.PublishHit" not in source:
+                continue
+            publishers.append(path.relative_to(adapter_root).as_posix())
+            self.assertIn("g_geometry_provider_registry.OfferReady", source)
+            self.assertIn("g_geometry_provider_registry.Retire", source)
+
+        self.assertEqual(5, len(publishers), publishers)
+        self.assertNotIn("hunex_gge_adapter.inc", publishers)
+
+        leaf = (ROOT / "hook" / "adapters" / "leaf_aquaplus_adapter.inc").read_text(
+            encoding="utf-8"
+        )
+        leaf_publication = self._function_body(leaf, "bool PublishLeafLookupHit(")
+        self.assertIn(
+            "publication.geometry_generation = payload.geometry_generation;",
+            leaf_publication,
+        )
+        self.assertNotIn(
+            "publication.geometry_generation = payload.sentence_epoch;",
+            leaf_publication,
+        )
+
     def test_sgre_lookup_uses_game_parsed_draw_state(self) -> None:
         source = (
             ROOT / "hook" / "adapters" / "sgre_lookup.inc"
         ).read_text(encoding="utf-8")
-        header = (
-            ROOT / "hook" / "adapters" / "sgre_lookup.h"
+        anchors = (
+            ROOT / "hook" / "adapters" / "sgre_anchors.h"
         ).read_text(encoding="utf-8")
         detour = source.split("void __fastcall SgreTextDrawDetour", 1)[1]
         detour = detour.split("bool InstallSgreLookupSensor", 1)[0]
         snapshot = detour.index("CaptureSgreLookupDrawState(text_surface)")
         original = detour.index("g_sgre_text_draw_original(text_surface)")
         self.assertLess(snapshot, original)
-        self.assertIn("kSgreTextDrawRva", header)
-        self.assertIn("kSgreScenarioTextVtableRva", header)
+        # The measured draw boundary lives in the known-build table; the hook
+        # site itself reads the resolved anchor set and never a raw constant.
+        self.assertIn("kSgreTextDrawRva", anchors)
+        self.assertIn("kSgreScenarioTextVtableRva", anchors)
+        self.assertIn("kSgreKnownBuilds", anchors)
+        install = source.split("bool InstallSgreLookupSensor", 1)[1]
+        install = install.split("bool ReadLatestSgreLookupCapture", 1)[0]
+        self.assertNotIn("kSgreTextDrawRva", install)
+        self.assertNotIn("kSgreScenarioTextVtableRva", install)
+        self.assertIn("g_sgre_anchors.text_draw.rva", install)
+        self.assertIn("g_sgre_anchors.scenario_text_vtable.rva", install)
+        self.assertLess(
+            install.index("!g_sgre_anchors.lookup_sensor_available()"),
+            install.index("g_sgre_anchors.text_draw.rva"),
+        )
         self.assertIn("kSgreDrawVisibleGlyphsOffset", source)
         self.assertIn("kSgreGlyphCharacterOffset", source)
         self.assertIn("kSgreGlyphDrawXOffset", source)
@@ -102,6 +153,139 @@ class AdapterStructureTest(unittest.TestCase):
         self.assertNotIn("g_sgre_text_layout_original", source)
         self.assertNotIn("LunaNormalizeMagesControls", source)
         self.assertNotIn("kLookupDiagLunaKnownHookReady", source)
+
+    def test_exact_lookup_clicks_revalidate_logical_generation(self) -> None:
+        sgre = (
+            ROOT / "hook" / "adapters" / "sgre_lookup.inc"
+        ).read_text(encoding="utf-8")
+        siglus = (
+            ROOT / "hook" / "adapters" / "siglus_lookup.inc"
+        ).read_text(encoding="utf-8")
+
+        sgre_up = self._function_body(sgre, "SgreGetDeviceStateDetour(")
+        self.assertIn("SgreLookupPayloadMatchesPublishedTarget", sgre_up)
+        sgre_worker = self._function_body(sgre, "void ProcessSgreLookupTick()")
+        self.assertLess(
+            sgre_worker.index("ReadLatestSgreLookupCapture"),
+            sgre_worker.index("ReadLatestSgreLookupClickSubmit"),
+        )
+        sgre_publish = self._function_body(
+            sgre, "bool PublishSgreLookupClickPayload("
+        )
+        self.assertIn("IsSgreLookupPayloadCurrent(payload)", sgre_publish)
+        self.assertIn("payload.logical_generation", sgre_publish)
+        self.assertNotIn("payload.capture_seq", sgre_publish)
+
+        siglus_up = self._function_body(siglus, "Detour_SiglusGetKeyState(")
+        self.assertIn("SiglusLookupPayloadMatchesPublishedTarget", siglus_up)
+        siglus_publish = self._function_body(
+            siglus, "bool PublishSiglusLookupPayload("
+        )
+        self.assertIn("IsSiglusLookupPayloadCurrent(payload)", siglus_publish)
+        siglus_capture = self._function_body(
+            siglus, "void ConsumeSiglusLookupCaptures()"
+        )
+        self.assertIn("SameSiglusLookupGeometry", siglus_capture)
+        self.assertIn("NextSiglusLookupLogicalGeneration", siglus_capture)
+        self.assertIn(
+            "matched_end == g_siglus_lookup_glyph_captures.count",
+            siglus_capture,
+        )
+
+    def test_exact_engine_signatures_are_portable_unique_and_fail_closed(
+        self,
+    ) -> None:
+        adapter_root = ROOT / "hook" / "adapters"
+        common = (adapter_root / "exact_lookup_signature.h").read_text(
+            encoding="utf-8"
+        )
+        sgre = (adapter_root / "sgre_lookup.inc").read_text(encoding="utf-8")
+        leaf = (adapter_root / "leaf_aquaplus_adapter.inc").read_text(
+            encoding="utf-8"
+        )
+        leaf_profile = (adapter_root / "leaf_aquaplus_profile.h").read_text(
+            encoding="utf-8"
+        )
+        siglus = (adapter_root / "siglus_lookup.inc").read_text(
+            encoding="utf-8"
+        )
+        siglus_header = (adapter_root / "siglus_lookup.h").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("FindUniquePatternInExecutableSections", common)
+        self.assertIn("FindUniqueRipRelativePatternInExecutableSections", common)
+        self.assertIn("FindUniqueAbsolute32PatternInExecutableSections", common)
+        self.assertIn("return {nullptr, 2u};", common)
+
+        sgre_gate = self._function_body(
+            sgre, "bool IsSgreExactBinaryStructureMatched()"
+        )
+        for required in (
+            "FindUniquePatternInExecutableSections",
+            "FindUniqueRipRelativePatternInExecutableSections",
+            "PointerTableTargetsExecutableSections",
+            "RtlLookupFunctionEntry",
+        ):
+            self.assertIn(required, sgre_gate)
+
+        leaf_gate = self._function_body(
+            leaf, "bool IsLeafAquaplusProfileMatched()"
+        )
+        for required in (
+            "FindUniqueAbsolute32PatternInExecutableSections",
+            "FindUniquePatternInExecutableSections",
+            "MatchesRel32CallEndingAt",
+            "MatchesAbsoluteIndirectCallEndingAt",
+            "kEmbedHookOffsetFromAnchor",
+        ):
+            self.assertIn(required, leaf_gate)
+        self.assertIn("kTextTraversalEntryMask", leaf_profile)
+        self.assertIn("kTextTraversalCookieOperandOffset", leaf_profile)
+        self.assertNotIn("0x30, 0x16, 0x4d, 0x00", leaf_profile.lower())
+
+        siglus_gate = self._function_body(
+            siglus, "bool IsSiglusExactBinaryStructureMatched("
+        )
+        for required in (
+            "FindUniquePatternInExecutableSections",
+            "MatchesRel32CallEndingAt",
+            "MatchesExecutableCallEndingAt",
+            "glyph.count == 1u",
+            "input.count == 1u",
+        ):
+            self.assertIn(required, siglus_gate)
+        self.assertIn("kGlyphLayoutEntryPattern", siglus_header)
+        self.assertIn("kAnemoiInputMessageEntryPattern", siglus_header)
+        self.assertIn("kSprbInputMessageEntryPattern", siglus_header)
+
+        for source in (common, sgre, leaf, leaf_profile, siglus, siglus_header):
+            self.assertNotIn("D:\\", source)
+            self.assertNotIn("C:\\", source)
+
+    def test_hunex_lookup_trace_remains_observation_only(self) -> None:
+        source = (
+            ROOT / "hook" / "adapters" / "hunex_gge_adapter.inc"
+        ).read_text(encoding="utf-8")
+        scanner = self._function_body(source, "bool ScanHunexGgeRuntimeAnchors()")
+        for required in (
+            "IMAGE_SCN_MEM_EXECUTE",
+            "draw_count != 1u",
+            "glyph_count != 1u",
+            "key_poller_count != 1u",
+            "input_pump_count != 1u",
+            "raw_glyph_calls == 2u",
+            "raw_poller_calls == 1u",
+            "imported_async_key_state != exported_async_key_state",
+        ):
+            self.assertIn(required, scanner)
+        self.assertNotIn("g_geometry_provider_registry.OfferReady", source)
+        self.assertNotIn("g_geometry_provider_registry.PublishHit", source)
+        self.assertNotIn("kLookupGeometryProviderIdHunex", source)
+        self.assertIn(
+            "return fushi_voice_hook::AdapterCapability::kResourceAudio;",
+            source,
+        )
 
     def test_native_loopback_is_policy_gated_and_generation_owned(self) -> None:
         registry = (ROOT / "hook" / "adapter_registry.inc").read_text(
@@ -683,6 +867,36 @@ class AdapterStructureTest(unittest.TestCase):
         )
         self.assertIn("kLookupAdmissionIdentityRejected", siglus_admission)
 
+    def test_sgre_admission_reports_identity_rejected_with_digest(self) -> None:
+        """SGRE 与 Leaf 相反：IdentityRejected 是活路径，且必须带 exe 摘要。
+
+        Leaf 的 `probe()` 就是它的 hash 门，身份不符时 registry 根本不问它，
+        所以那条分支写了也走不到（见上一条）。SGRE 改成家族探测之后
+        （`MatchesSgreFamily`：exe 旁边有没有 voice_body.bin），精确 hash 只用来
+        挑量好的锚点——「是这个游戏、但这个 build 的查词锚点连签名扫描都没解出来」
+        因此成了可达且**终局**的状态：传感器永远装不上。
+
+        协议规定这一档「lookup_executable_sha256 必须已填」，所以摘要格式化也一并钉住：
+        报成 IdentityAccepted 会让用户一直等一个不会到来的门，摘要留空则让他连版本
+        都报不出来。
+        """
+        adapter = (
+            ROOT / "hook" / "adapters" / "sgre_adapter.inc"
+        ).read_text(encoding="utf-8")
+        admission = self._strip_comments(
+            self._member_body(
+                adapter,
+                "fushi_voice_hook::LookupAdmissionReport lookupAdmission() const override",
+            )
+        )
+        self.assertIn("kLookupAdmissionIdentityRejected", admission)
+        self.assertIn("FormatSha256Hex", admission)
+        self.assertIn("g_sgre_executable_sha256", admission)
+        # 终局判据必须是「锚点已解析且传感器锚点没解出来」，不能退化成
+        # 「传感器还没装上」——后者在 install() 之前恒真，会把等门期误报成拒绝。
+        self.assertIn("g_sgre_anchors_resolved", admission)
+        self.assertIn("lookup_sensor_available()", admission)
+
     def test_unity_text_adapter_supports_legacy_ui_text(self) -> None:
         source = (
             ROOT / "hook" / "adapters" / "unity_adapter.inc"
@@ -984,10 +1198,18 @@ class AdapterStructureTest(unittest.TestCase):
         generic = (
             ROOT / "hook" / "adapters" / "windows_audio_adapter.inc"
         ).read_text(encoding="utf-8")
-        self.assertIn("MatchesSgreProfile", adapter)
+        # Family membership (voice_body.bin next to the executable) is the
+        # probe; the executable hash only selects measured anchors.
+        self.assertIn("MatchesSgreFamily", adapter)
+        self.assertNotIn("MatchesSgreProfile", adapter)
         self.assertIn("RegisterXAudioCompressedResourceHandler", adapter)
         self.assertIn("FindSgreVoiceArchiveResourceParts", adapter)
-        self.assertIn("kSgreExecutableSha256", profile)
+        self.assertIn("FindSgreKnownBuild", profile)
+        self.assertIn("ResolveSgreRuntimeAnchors", profile)
+        anchors = (ROOT / "hook" / "adapters" / "sgre_anchors.h").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("kSgreExecutableSha256", anchors)
         self.assertIn("HasXAudioCompressedResourceHandler", generic)
         self.assertFalse((ROOT / "hook" / "xaudio_pcm_capture_xapo.h").exists())
         self.assertNotIn("700", generic)
@@ -1017,14 +1239,22 @@ class AdapterStructureTest(unittest.TestCase):
         for forbidden in ("Sgre", "sgre", "voice_body"):
             self.assertNotIn(forbidden, adapter, forbidden)
         self.assertIn("RegisterXAudioCompressedResourceHandler", sgre)
-        # Identity is the executable hash, i.e. the same anchor the Luna text
-        # profile keys on, so text and audio identity cannot drift apart.
-        # An executable *file name* would be a distribution property, not an
-        # engine identity, and CLAUDE.md forbids enabling shared middleware on
-        # that kind of match.
-        self.assertIn("kSgreExecutableSha256", profile)
+        # Family identity is the wind3d11 voice archive next to the executable
+        # -- the very data contract the audio proof checks membership against.
+        # Build-specific addresses come from the measured hash table or a
+        # unique signature hit, never from an executable *file name*: that is
+        # a distribution property, not an engine identity, and CLAUDE.md
+        # forbids enabling shared middleware on that kind of match.
+        self.assertIn("voice_body.bin", profile)
         self.assertNotIn("sgre_steam.exe", profile)
         self.assertNotIn("sgre_steam.exe", adapter)
+        anchors = (ROOT / "hook" / "adapters" / "sgre_anchors.h").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("kSgreExecutableSha256", anchors)
+        self.assertIn("kSgreKnownBuilds", anchors)
+        self.assertNotIn("sgre_steam.exe", anchors)
+        self.assertNotIn("executable_names", anchors)
 
     def test_unclaimed_xwma_submissions_are_published_not_dropped(self) -> None:
         adapter = (
@@ -1098,6 +1328,95 @@ class AdapterStructureTest(unittest.TestCase):
                 if depth == 0:
                     return source[open_at : i + 1]
         raise AssertionError(f"unbalanced braces after {signature}")
+
+    def test_hunex_hfa_reuses_shared_file_broker_and_parses_only_on_worker(
+        self,
+    ) -> None:
+        broker = (
+            ROOT / "hook" / "adapters" / "siglus_adapter.inc"
+        ).read_text(encoding="utf-8")
+        adapter = (
+            ROOT / "hook" / "adapters" / "hunex_gge_adapter.inc"
+        ).read_text(encoding="utf-8")
+        # The x64 exact-layout/input trace above the resource section is an
+        # observation-only renderer probe and legitimately owns its own exact
+        # hooks.  This guard is about the HFA file broker: that lower section
+        # must continue reusing Siglus' CreateFile/ReadFile detours.
+        resource_adapter = adapter[adapter.index("struct HunexVoiceFileIdentity") :]
+        registry = (ROOT / "hook" / "adapter_registry.inc").read_text(
+            encoding="utf-8"
+        )
+
+        for callback in (
+            "RememberHunexVoiceHfa(result, file_name)",
+            "RememberHunexVoiceHfa(result, wide)",
+            "ObserveHunexVoiceHfaRead(file, buffer, done, overlapped)",
+            "ForgetHunexVoiceHfa(handle)",
+        ):
+            self.assertIn(callback, broker)
+        close = self._function_body(broker, "BOOL WINAPI Detour_CloseHandle(")
+        self.assertLess(
+            close.index("ForgetHunexVoiceHfa(handle)"),
+            close.index("g_orig_CloseHandle(handle)"),
+        )
+        for engine_detail in ("HUNEXGGEFA10", '"hw  "', "ParseHunex", "data04000"):
+            self.assertNotIn(engine_detail, broker)
+        for forbidden in (
+            "Detour_CreateFileW",
+            "Detour_CreateFileA",
+            "Detour_ReadFile",
+            "Detour_CloseHandle",
+            "HookFn(",
+        ):
+            self.assertNotIn(forbidden, resource_adapter)
+
+        observer = self._function_body(
+            adapter, "void ObserveHunexVoiceHfaRead("
+        )
+        self.assertIn("QueueHunexVoice(archive_index, start, done, prefix,", observer)
+        for forbidden in (
+            "ParseHunexHfaIndex",
+            "ParseHunexHwOgg",
+            "g_hunex_voice_archive.ranges",
+            "malloc",
+            "WriteVoiceOggAt",
+            "CreateFile",
+            "ReadFile",
+            "WaitForSingleObject",
+            "Sleep(",
+        ):
+            self.assertNotIn(forbidden, observer)
+
+        loader = self._function_body(adapter, "bool LoadHunexVoiceArchive(")
+        worker = self._function_body(adapter, "void ProcessHunexVoiceTask(")
+        self.assertIn("ParseHunexHfaIndex", loader)
+        self.assertIn("ParseHunexHwOgg", worker)
+        self.assertIn("WriteVoiceOggAt", worker)
+        self.assertLess(
+            worker.index("WriteVoiceOggAt"),
+            worker.index("kXAudioDiagGameResourcePublished"),
+        )
+        self.assertIn("g_orig_CreateFileW", loader)
+        self.assertIn("g_orig_ReadFile", adapter)
+        self.assertIn("g_orig_CloseHandle", loader)
+
+        stop = self._function_body(adapter, "void StopHunexGgeResourceAudio(")
+        self.assertLess(
+            stop.index("InterlockedExchange(&g_hunex_voice_archive_count, 0)"),
+            stop.index("free(ranges)"),
+        )
+        self.assertLess(
+            registry.index("hunex_gge_.install();"),
+            registry.index(
+                "g_header->hook_diagnostics |= kDiagStartupAudioHooksReady"
+            ),
+        )
+        self.assertIn("hunex_gge_.ProcessPendingEvents();", registry)
+        for seam in ("includes", "startup", "module", "shutdown", "fields"):
+            generated = (
+                ROOT / "hook" / "generated" / f"adapter_{seam}.inc"
+            ).read_text(encoding="utf-8")
+            self.assertIn("hunex_gge", generated)
 
     def test_leaf_voice_archive_ranges_are_owned_by_the_worker(self) -> None:
         """游戏线程绝不解引用 ranges，Stop 必须先撤发布再释放。

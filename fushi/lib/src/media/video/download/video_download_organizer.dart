@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:fushi/src/media/torrent/torrent_backend.dart';
 import 'package:fushi/src/media/video/download/video_download_path_mapping.dart';
+import 'package:fushi/src/media/video/metadata/video_local_extra_classifier.dart';
 import 'package:fushi/src/media/video/video_filename_parser.dart';
 import 'package:fushi/src/utils/misc/safe_file_name.dart';
 import 'package:path/path.dart' as p;
@@ -121,7 +122,7 @@ class VideoDownloadOrganizer {
       displayRoot: displayRoot,
       sharedRoot: sharedRoot,
       mainMovie: mainMovie,
-      classifyExtraDirectories: true,
+      classifyExtras: true,
     );
     if (request.kind == VideoOrganizationKind.episodic &&
         pass.recognizedEpisodes == 0) {
@@ -131,7 +132,7 @@ class VideoDownloadOrganizer {
         displayRoot: displayRoot,
         sharedRoot: sharedRoot,
         mainMovie: mainMovie,
-        classifyExtraDirectories: false,
+        classifyExtras: false,
       );
     }
     // 两种口径都一集认不出，才是真的与「剧集」判定不符（比如误标 kind）：全
@@ -150,15 +151,15 @@ class VideoDownloadOrganizer {
 
   /// 单趟排布：把每个视频文件映射到目标相对路径，并记账认出了多少集正片。
   ///
-  /// [classifyExtraDirectories] 为 false 时不看目录，退回「只按文件名解集号」的
-  /// 旧口径——只有第一趟一集都没认出（纯特典种子）时才会用到。
+  /// [classifyExtras] 为 false 时不判显式附件，退回「只按文件名解集号」的旧
+  /// 口径——只有第一趟一集都没认出（纯特典种子）时才会用到。
   _OrganizationPass _planFiles(
     VideoOrganizationRequest request,
     List<TorrentFileEntry> videoFiles, {
     required String displayRoot,
     required String? sharedRoot,
     required TorrentFileEntry? mainMovie,
-    required bool classifyExtraDirectories,
+    required bool classifyExtras,
   }) {
     final Map<String, String> claimedTargets = <String, String>{};
     final List<VideoOrganizationFilePlan> planned =
@@ -179,8 +180,8 @@ class VideoDownloadOrganizer {
       // 先按目录判正片/特典、再解析集号；顺序反过来就只能靠撞号事后发现，
       // 而**没撞上的那些会被静默改名成正片**——后者才是更贵的一半。
       if (request.kind == VideoOrganizationKind.episodic &&
-          !(classifyExtraDirectories &&
-              _isInExtraDirectory(file.name, sharedRoot: sharedRoot))) {
+          !(classifyExtras &&
+              _isExplicitExtra(file.name, sharedRoot: sharedRoot))) {
         final VideoNameInfo parsed = parseVideoFilename(
           _segments(file.name).last,
         );
@@ -409,7 +410,7 @@ class VideoDownloadOrganizer {
 
   /// 发布组显式划为「非正片」的目录名（归一化后比较，见 [_normalizedSegment]）。
   ///
-  /// 只用来判**目录段**，绝不拿去扫文件名：正片文件名天然带 `S3` `BD Rip`
+  /// 只用来判**目录段**，绝不拿这张宽词表去扫文件名：正片文件名天然带 `S3` `BD Rip`
   /// `FLACx3` 这类词，同一张表扫文件名迟早误伤真番剧标题（`Extra Olympia
   /// Kyklos`、`Special A`）。目录是发布组自己划的边界，语义确定得多；表里没有
   /// 的目录名只会退回旧口径（按集号判），不会把正片错判成特典。
@@ -468,6 +469,18 @@ class VideoDownloadOrganizer {
       }
     }
     return false;
+  }
+
+  /// 是否为发布组明确标出的非正片附件。
+  ///
+  /// 目录继续走整理器的宽词表；文件名只复用元数据链路的严格附件分类器，它按
+  /// token 边界识别 `NCOP` / `NCED` / `creditless OP|ED` / `PV`，不会把普通
+  /// 标题里的 `Extra` / `Special` 等宽泛词直接当附件（BUG-1969）。
+  static bool _isExplicitExtra(String name, {String? sharedRoot}) {
+    if (_isInExtraDirectory(name, sharedRoot: sharedRoot)) return true;
+    final List<String> segments = _segments(name);
+    return segments.isNotEmpty &&
+        classifyLocalVideoExtra(segments.last) != null;
   }
 
   /// 目录名归一化：转小写并去掉分隔符与标点，`SPs` → `sps`、`[SP]` → `sp`、

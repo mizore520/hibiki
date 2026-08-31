@@ -37,6 +37,13 @@ import '../helpers/test_platform_services.dart';
 const Map<String, String> kCoveredElsewhere = <String, String>{
   'video/Subtitle language':
       'test/media/video/video_subtitle_language_filter_test.dart + test/pages/video_quick_settings_sheet_test.dart',
+  // v92 阅读空闲门（分钟）：写 prefsRepo（changed=true），生效点是阅读器建
+  // StudyClock 时读一次 appModel.readingIdleTimeout——harness 里没有阅读器。
+  // 空闲门行为由 study_clock_test「阅读空闲门」用例咬住，接线由
+  // statistics_write_convergence_guard_test ⑤ 咬住。
+  'reading/Idle timeout':
+      'test/media/audiobook/study_clock_test.dart（空闲门）+ '
+      'test/tools/statistics_write_convergence_guard_test.dart',
   // 「功能模块」七开关（五库页 + 下载/查词两个工具 tab）。写 prefsRepo
   // （changed=true），生效点是 HomePage/macOS 侧栏的可见 tab 列表——harness 里没有
   // 挂 HomePage 外壳，探不到底栏。行为由 homeActiveTabs 纯函数用例咬住：各开关
@@ -350,6 +357,11 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   'lookup/Capture selection context':
       'test/lookup/sentence_extraction_test.dart',
   'system/Enable debug log': 'test/utils/misc/debug_log_service_test.dart',
+  // P2P 走代理开关：写 prefsRepo（changed=true），生效点是 libtorrent session 的
+  // proxy 设置，harness 里没有原生引擎可探。开关语义（默认直连 / 开了才跟全局
+  // 出口）由 resolveP2pProxyHostPort 纯函数用例 + C ABI 桥源码守卫咬住。
+  'system/Route P2P (torrent) traffic through the proxy':
+      'test/torrent/download_http_client_proxy_test.dart',
   'syncBackup/Auto sync': 'test/sync/sync_gating_test.dart',
   'syncBackup/Sync statistics': 'test/sync/sync_gating_test.dart',
   'syncBackup/Upload book files': 'test/sync/sync_gating_test.dart',
@@ -488,6 +500,12 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // harness 里可达——全部登记（含反吸血二级开关，超集登记无害）。
   'downloads/Enable upload / seeding':
       'test/media/torrent/torrent_upload_policy_test.dart',
+  // 「自动为新任务添加订阅 tracker」：生效点是 addTorrent 之后**多打一次**
+  // `/api/v2/torrents/addTrackers`（qB 后端）／把 tracker 追加进 magnet（内置引擎），
+  // 都在 widget 树之外。torrent_backend_test 咬住的是真行为而不只是编解码：开关为真时
+  // 断言请求序列是 add → addTrackers 且 urls 正是订阅拉回来的那两条。
+  'downloads/Automatically add subscription trackers to new downloads':
+      'test/torrent/torrent_backend_test.dart',
   // 「限速也作用于局域网」：生效点在 native（ht_apply_limits_ex 把上限写进
   // libtorrent 的 local peer class），widget 测不到；由编解码 + 下发透传测试覆盖。
   'downloads/Apply limits to LAN peers':
