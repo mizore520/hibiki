@@ -21,6 +21,10 @@ import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
 import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
 import 'package:fushi/src/mining/galgame_library.dart';
 import 'package:fushi/src/mining/gal_mining_screenshot_size.dart';
+// 迁移判据要用「这个存量代理地址归一得出来吗」，与 applyAppProxy 同一份实现，
+// 不在这里重写一遍（重写就会漂移，而漂移的后果是存量用户升级即断网）。
+import 'package:fushi/src/utils/net/app_proxy.dart'
+    show normalizeUserProxyHostPort;
 import 'package:fushi/src/mining/immersion_mining_request.dart'
     show MiningAnimatedFormat, MiningStillFormat, VideoMiningImageMode;
 import 'package:fushi/src/models/audio_source_config.dart';
@@ -1249,9 +1253,12 @@ class PreferencesRepository extends ChangeNotifier {
 
   /// Windows HDR 直通 / 10-bit 输出模式（默认 auto：显示器 HDR 开着且片源 HDR 时直通）。
   VideoHdrOutputMode get videoHdrOutputMode => VideoHdrOutputMode.fromStorage(
-        getPref(kVideoHdrOutputPref,
-            defaultValue: VideoHdrOutputMode.auto.storageValue) as String,
-      );
+    getPref(
+          kVideoHdrOutputPref,
+          defaultValue: VideoHdrOutputMode.auto.storageValue,
+        )
+        as String,
+  );
 
   Future<void> setVideoHdrOutputMode(VideoHdrOutputMode mode) async {
     await setPref(kVideoHdrOutputPref, mode.storageValue);
@@ -2481,6 +2488,47 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 全局公网出口模式：auto = 环境/系统代理自动探测；direct = 强制直连；
+  /// manual = 使用 [updateCustomProxy]。旧安装没有本键时，已有手填地址自动沿用
+  /// manual，否则沿用历史 auto 语义。
+  String get networkProxyMode {
+    final String? stored =
+        getPref('network_proxy_mode', defaultValue: null) as String?;
+    if (stored == 'auto' || stored == 'direct' || stored == 'manual') {
+      return stored!;
+    }
+    // 迁移判据是「这个存量地址归一得出来吗」，不是「非空吗」。设置页对非法地址只
+    // 弹 SnackBar 但仍存原串，非空判据会把这类值推成 manual，而 manual 归一失败
+    // 时硬走 DIRECT —— 存量用户升级即断网。只有「显式选了 manual」才该 fail-closed。
+    return normalizeUserProxyHostPort(updateCustomProxy) == null
+        ? 'auto'
+        : 'manual';
+  }
+
+  Future<void> setNetworkProxyMode(String value) async {
+    final String normalized = value == 'direct' || value == 'manual'
+        ? value
+        : 'auto';
+    await setPref('network_proxy_mode', normalized);
+    notifyListeners();
+  }
+
+  String get networkProxyUsername =>
+      getPref('network_proxy_username', defaultValue: '') as String;
+
+  Future<void> setNetworkProxyUsername(String value) async {
+    await setPref('network_proxy_username', value);
+    notifyListeners();
+  }
+
+  String get networkProxyPassword =>
+      getPref('network_proxy_password', defaultValue: '') as String;
+
+  Future<void> setNetworkProxyPassword(String value) async {
+    await setPref('network_proxy_password', value);
+    notifyListeners();
+  }
+
   bool get updateNeverRemind =>
       getPref('update_never_remind', defaultValue: false) as bool;
 
@@ -2521,6 +2569,16 @@ class PreferencesRepository extends ChangeNotifier {
 
   Future<void> setUpdateCustomProxy(String value) async {
     await setPref('update_custom_proxy', value);
+    notifyListeners();
+  }
+
+  /// 更新资产首选下载源。auto = 既有智能顺序；r2 / github / proxy:<prefix>
+  /// 只改变首选顺序，失败时仍保留完整回退链。
+  String get updateDownloadSource =>
+      getPref('update_download_source', defaultValue: 'auto') as String;
+
+  Future<void> setUpdateDownloadSource(String value) async {
+    await setPref('update_download_source', value);
     notifyListeners();
   }
 
@@ -2802,9 +2860,13 @@ class PreferencesRepository extends ChangeNotifier {
   static const int readingIdleTimeoutMinutesMin = 1;
   static const int readingIdleTimeoutMinutesMax = 120;
 
-  int get readingIdleTimeoutMinutes => (getPref(kStudyIdleTimeoutPrefKey,
-          defaultValue: kDefaultReadingIdleTimeout.inMinutes) as int)
-      .clamp(readingIdleTimeoutMinutesMin, readingIdleTimeoutMinutesMax);
+  int get readingIdleTimeoutMinutes =>
+      (getPref(
+                kStudyIdleTimeoutPrefKey,
+                defaultValue: kDefaultReadingIdleTimeout.inMinutes,
+              )
+              as int)
+          .clamp(readingIdleTimeoutMinutesMin, readingIdleTimeoutMinutesMax);
 
   Future<void> setReadingIdleTimeoutMinutes(int value) async {
     await setPref(

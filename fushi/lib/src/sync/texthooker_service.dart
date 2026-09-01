@@ -853,9 +853,18 @@ class TexthookerService extends ChangeNotifier {
             tail.textThreadKey != textThreadKey) {
           break;
         }
-        if (!isProgressiveTextUpdate(tail.text, mergedText)) break;
-        if (normalizeForFold(tail.text).length >
-            normalizeForFold(mergedText).length) {
+        final bool layoutRefresh = isWhitespaceOnlyLayoutRefresh(
+          tail.text,
+          mergedText,
+        );
+        if (!layoutRefresh && !isProgressiveTextUpdate(tail.text, mergedText)) {
+          break;
+        }
+        // 纯换行/空白刷新时，字符信息量相等但**后到快照**才是当前游戏排版；不要
+        // 因为长度相等又退回旧文本。真正的前/后缀折叠仍保留信息量更大的那份。
+        if (!layoutRefresh &&
+            normalizeForFold(tail.text).length >
+                normalizeForFold(mergedText).length) {
           mergedText = tail.text;
           mergedSpans = tail.rubySpans;
         }

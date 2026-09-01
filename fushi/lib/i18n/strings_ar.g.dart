@@ -2,4130 +2,9648 @@ part of 'strings.g.dart';
 
 // Path: <root>
 class _StringsAr extends _StringsEn {
+  /// You can call this constructor and build your own translation instance of this locale.
+  /// Constructing via the enum [AppLocale.build] is preferred.
+  _StringsAr.build({
+    Map<String, Node>? overrides,
+    PluralResolver? cardinalResolver,
+    PluralResolver? ordinalResolver,
+  }) : assert(
+         overrides == null,
+         'Set "translation_overrides: true" in order to enable this feature.',
+       ),
+       $meta = TranslationMetadata(
+         locale: AppLocale.ar,
+         overrides: overrides ?? {},
+         cardinalResolver: cardinalResolver,
+         ordinalResolver: ordinalResolver,
+       ),
+       super.build(
+         cardinalResolver: cardinalResolver,
+         ordinalResolver: ordinalResolver,
+       );
 
-	/// You can call this constructor and build your own translation instance of this locale.
-	/// Constructing via the enum [AppLocale.build] is preferred.
-	_StringsAr.build({Map<String, Node>? overrides, PluralResolver? cardinalResolver, PluralResolver? ordinalResolver})
-		: assert(overrides == null, 'Set "translation_overrides: true" in order to enable this feature.'),
-		  $meta = TranslationMetadata(
-		    locale: AppLocale.ar,
-		    overrides: overrides ?? {},
-		    cardinalResolver: cardinalResolver,
-		    ordinalResolver: ordinalResolver,
-		  ),
-		  super.build(cardinalResolver: cardinalResolver, ordinalResolver: ordinalResolver);
+  /// Metadata for the translations of <ar>.
+  @override
+  final TranslationMetadata<AppLocale, _StringsEn> $meta;
 
-	/// Metadata for the translations of <ar>.
-	@override final TranslationMetadata<AppLocale, _StringsEn> $meta;
+  @override
+  late final _StringsAr _root = this; // ignore: unused_field
 
-	@override late final _StringsAr _root = this; // ignore: unused_field
-
-	// Translations
-	@override String get action_exit => 'خروج';
-	@override String get action_favorite => 'مفضّلة';
-	@override String activity_days_ago({required Object n}) => 'منذ ${n} ي';
-	@override String activity_hours_ago({required Object n}) => 'منذ ${n} س';
-	@override String get activity_just_now => 'الآن';
-	@override String activity_minutes_ago({required Object n}) => 'منذ ${n} د';
-	@override String get add_to_collection => 'إضافة إلى مجموعة';
-	@override String get anime_download_back => 'رجوع';
-	@override String get anime_download_batch => 'دفعة';
-	@override String get anime_download_category_all => 'الكل';
-	@override String get anime_download_category_english => 'مترجم للإنجليزية';
-	@override String get anime_download_category_non_english => 'غير إنجليزي';
-	@override String get anime_download_category_raw => 'بدون ترجمة';
-	@override String get anime_download_delete => 'حذف';
-	@override String anime_download_episode_count({required Object count}) => 'حلقة ${count}';
-	@override String get anime_download_generic_download => 'تحميل';
-	@override String get anime_download_generic_hint => 'رابط مغناطيسي';
-	@override String get anime_download_generic_title => 'لصق رابط (كتب، فيديوهات، أي شيء)';
-	@override String get anime_download_include_subs => 'تضمين الترجمات';
-	@override String get anime_download_kind_auto => 'تلقائي';
-	@override String get anime_download_kind_book => 'كتاب';
-	@override String get anime_download_kind_video => 'فيديو';
-	@override String get anime_download_magnet_invalid => 'رابط مغناطيسي غير صالح';
-	@override String get anime_download_no_results => 'لا توجد نتائج';
-	@override String get anime_download_no_subs => 'بدون ترجمات';
-	@override String get anime_download_no_tasks => 'لا توجد مهام تحميل بعد';
-	@override String get anime_download_nyaa_query => 'عبارات بحث Nyaa';
-	@override String get anime_download_play_now => 'تشغيل أثناء التحميل';
-	@override String get anime_download_play_now_fail => 'غير جاهز بعد (بيانات معلقة أو فشل الاتصال) — حاول لاحقاً';
-	@override String get anime_download_play_now_ok => 'تم الاستيراد — افتحه من مكتبة الفيديو للتشغيل أثناء التحميل';
-	@override String get anime_download_push => 'إرسال التحميل';
-	@override String get anime_download_push_failed => 'فشل الإرسال إلى qBittorrent';
-	@override String get anime_download_pushed => 'تم الإرسال — سيتم استيراده تلقائياً عند الانتهاء';
-	@override String get anime_download_refresh => 'تحديث';
-	@override String get anime_download_relocate => 'إعادة تسمية / نقل';
-	@override String anime_download_relocate_engine_failed({required Object reason}) => 'فشل، لم يتغير شيء: ${reason}';
-	@override String get anime_download_relocate_hint => 'Fushi يعيد التسمية/النقل عبر محرك التحميل، لذا لا ينقطع البذر. إعادة التسمية في المستكشف لا يمكن استعادتها.';
-	@override String anime_download_relocate_library_failed({required Object reason}) => 'تم نقل الملفات، لكن المكتبة لا تزال تشير إلى المسار القديم: ${reason}';
-	@override String get anime_download_relocate_move_title => 'نقل إلى مجلد';
-	@override String get anime_download_relocate_no_files => 'هذه المهمة ليس لديها ملفات لإعادة تسميتها بعد (البيانات غير جاهزة)';
-	@override String anime_download_relocate_ok({required Object rows}) => 'تمت إعادة التسمية / النقل؛ تم تحديث ${rows} عنصر في المكتبة';
-	@override String get anime_download_relocate_pick_folder => 'اختر مجلد الوجهة';
-	@override String get anime_download_relocate_rename_title => 'إعادة تسمية الملف';
-	@override String get anime_download_retry => 'إعادة المحاولة';
-	@override String get anime_download_search => 'بحث';
-	@override String get anime_download_search_error_proxy_hint => 'إذا تعذر الوصول إلى الموقع مباشرة، قم بتكوين وكيل شبكة في إعدادات التحميل.';
-	@override String get anime_download_search_failed => 'فشل البحث أو انتهت مهلته. اضغط إعادة المحاولة.';
-	@override String get anime_download_search_hint => 'عنوان الأنمي';
-	@override String get anime_download_search_start_hint => 'ابحث عن عنوان أعلاه - يتم مطابقة التورنت والترجمات تلقائياً. التحميلات لا تقتصر على الفيديو: الكتب والمانغا والكتب الصوتية والألعاب يتم استيرادها أيضاً.';
-	@override String get anime_download_sort_date => 'تاريخ النشر';
-	@override String get anime_download_sort_seeders => 'الرافعون';
-	@override String get anime_download_sort_size => 'الحجم';
-	@override String get anime_download_store_unavailable => 'مخزن خطة التحميل غير متاح';
-	@override String get anime_download_subs_badge => 'ترجمات';
-	@override String get anime_download_subs_failed => 'فشل البحث عن الترجمات. اضغط إعادة المحاولة.';
-	@override String get anime_download_subs_need_key => 'أدخل مفتاح API لـ Jimaku أعلاه للبحث عن الترجمات.';
-	@override String get anime_download_tasks => 'مهام التحميل';
-	@override String get anime_download_title => 'تحميل الأنمي';
-	@override String get anime_download_trusted => 'موثوق';
-	@override String get anime_download_trusted_only => 'الموثوقون فقط';
-	@override String get anki_allow_duplicates => 'السماح بالتكرارات';
-	@override String get anki_allow_duplicates_hint => 'تخطي فحص التكرارات عند إضافة البطاقات';
-	@override String get anki_card_action_failed => 'فشل إجراء البطاقة. يرجى المحاولة مرة أخرى.';
-	@override String get anki_compact_glossaries => 'معاني مختصرة';
-	@override String get anki_compact_glossaries_hint => 'استخدام تنسيق مختصر لإدخالات المعاني';
-	@override String get anki_connect_api_key => 'مفتاح API';
-	@override String get anki_connect_host => 'المضيف';
-	@override String get anki_connect_port => 'المنفذ';
-	@override String get anki_create_lapis => 'إنشاء مجموعة Lapis';
-	@override String get anki_create_lapis_exists => 'نوع ملاحظة Lapis والمجموعة موجودان بالفعل — تم تحديدهما.';
-	@override String anki_create_lapis_failed({required Object error}) => 'تعذّر إنشاء مجموعة Lapis: ${error}';
-	@override String get anki_create_lapis_hint => 'يضيف نوع ملاحظة Lapis ومجموعة Lapis إلى Anki ثم يحددهما.';
-	@override String get anki_create_lapis_success => 'تم إنشاء نوع ملاحظة Lapis والمجموعة.';
-	@override String get anki_deck => 'المجموعة';
-	@override String get anki_duplicate_scope => 'نطاق فحص التكرار';
-	@override String get anki_duplicate_scope_collection => 'المجموعة بأكملها';
-	@override String get anki_duplicate_scope_deck => 'الرزمة المحددة (ورزمها الفرعية)';
-	@override String get anki_duplicate_scope_deck_root => 'الرزمة الجذرية (جميع الفرعية)';
-	@override String get anki_duplicate_scope_hint => 'أي الرزم يتم البحث فيها عند التحقق من وجود بطاقة مسبقاً. لـ AnkiConnect فقط؛ AnkiDroid يبحث دائماً في المجموعة بأكملها.';
-	@override String get anki_error_collection_unavailable => 'مجموعة AnkiDroid غير متاحة حاليًا. افتح AnkiDroid مرة واحدة على الأقل، وتأكد من أنه لا يتزامن وأن واجهة API مفعّلة، ثم أعد المحاولة.';
-	@override String get anki_error_connection_refused => 'تعذّر الاتصال بـ Anki: تم رفض الاتصال. تأكد من تشغيل Anki Desktop وتثبيت الإضافة AnkiConnect.';
-	@override String get anki_error_connection_timeout => 'تعذّر الاتصال بـ Anki: انتهت مهلة الاتصال. تحقق من المضيف والمنفذ وإعدادات الجدار الناري.';
-	@override String get anki_error_connection_unknown => 'تعذّر التصدير إلى Anki: حدث خطأ اتصال غير متوقع. راجع سجل الأخطاء لمزيد من التفاصيل.';
-	@override String get anki_error_http => 'تعذّر التصدير إلى Anki: حدث خطأ HTTP أثناء الاتصال بـ AnkiConnect.';
-	@override String get anki_error_permission_denied => 'لم يمنح AnkiDroid إذن الوصول إلى البطاقات. وافق على مربع إذن النظام الذي ظهر للتو، ثم اضغط الزر مرة أخرى للتصدير.';
-	@override String get anki_fetch => 'تحديث المجموعات وأنواع الملاحظات';
-	@override String get anki_fetching => 'جارٍ الجلب…';
-	@override String get anki_field_mappings => 'تعيين الحقول';
-	@override String get anki_field_not_mapped => 'غير معيّن';
-	@override String get anki_mine_to_server => 'إرسال إلى الجهاز المقترن';
-	@override String get anki_mine_to_server_hint => 'أرسل البطاقات المستخرجة إلى Anki على الجهاز المضيف المقترن (رزمه وإعداداته) بدلاً من هذا الجهاز. يتطلب اقتراناً عبر الربط.';
-	@override String get anki_mined_action_add_duplicate => 'إضافة كبطاقة جديدة';
-	@override String get anki_mined_action_overwrite => 'الكتابة فوق هذه البطاقة';
-	@override String get anki_mined_action_view => 'عرض / فتح في Anki';
-	@override String get anki_mined_card_subtitle => 'اختر ما تريد فعله بالبطاقة المطابقة.';
-	@override String get anki_mined_card_title => 'البطاقة موجودة في Anki';
-	@override String anki_mined_multiple_matches({required Object count}) => '${count} بطاقة مطابقة';
-	@override String get anki_not_configured => 'انقر «تحديث» لتحميل مجموعات Anki وأنواع الملاحظات.';
-	@override String get anki_note_open_failed => 'تعذر فتح البطاقة في Anki.';
-	@override String get anki_note_type => 'نوع الملاحظة';
-	@override String get anki_note_viewer_empty => 'هذه البطاقة لا تحتوي على حقول قابلة للقراءة.';
-	@override String get anki_note_viewer_open_in_anki => 'فتح في Anki';
-	@override String get anki_note_viewer_title => 'بطاقة موجودة';
-	@override String get anki_open_no_card => 'لم يتم العثور على بطاقة لهذه الكلمة في Anki.';
-	@override String get anki_overwrite_scope => 'نطاق الكتابة فوق';
-	@override String get anki_overwrite_scope_all => 'جميع البطاقات المطابقة';
-	@override String get anki_overwrite_scope_hint => 'أي البطاقات المُنشأة مسبقًا يمكن للعلامة ✓ الخضراء الكتابة فوقها';
-	@override String get anki_overwrite_scope_latest => 'أحدث بطاقة فقط';
-	@override String get anki_refresh_hint => 'بعد إنشاء أو إعادة تسمية مجموعة أو نوع ملاحظة في Anki، انقر هنا للتحديث.';
-	@override String anki_select_handlebar({required Object field}) => 'اختر قيمة لـ ${field}';
-	@override String get anki_settings_label => 'إعدادات Anki';
-	@override String get anki_tag_default_section => 'الوسوم الافتراضية';
-	@override String get anki_tag_include_category => 'إضافة وسم فئة المصدر';
-	@override String get anki_tag_include_category_hint => 'تحصل الكتب على "book" والفيديوهات على "video" والألعاب على "game"';
-	@override String get anki_tag_include_fushi => 'إضافة وسم "fushi"';
-	@override String get anki_tag_include_fushi_hint => 'وسم كل بطاقة أنشأها Fushi';
-	@override String get anki_tags => 'الوسوم';
-	@override String get anki_tags_hint => 'وسوم مفصولة بمسافات تُضاف لكل بطاقة';
-	@override String get app_icon_label => 'أيقونة التطبيق';
-	@override String get app_icon_presets => 'قوالب مسبقة';
-	@override String get app_ui_scale => 'حجم الواجهة';
-	@override String get app_ui_scale_hint => 'Scales app text and spacing. Lower it on large screens if controls feel oversized.';
-	@override String get app_version => 'إصدار التطبيق';
-	@override String get apply_theme => 'تطبيق المظهر';
-	@override String get audio_clip_failed => 'تعذّر استخراج المقطع الصوتي — قد يكون المصدر الصوتي مفقودًا أو غير قابل للقراءة';
-	@override String get audio_import => 'استيراد صوت';
-	@override String get audio_panel_add_audio => 'إضافة صوت';
-	@override String get audio_panel_auto => 'تلقائي';
-	@override String get audio_panel_pick_new_subtitle => 'اختيار ملف ترجمة جديد';
-	@override String get audio_source_added => 'تمت إضافة مصدر الصوت';
-	@override String audio_source_dns_error({required Object host}) => 'فشل اتصال مصدر الصوت: تعذر حل "${host}" — تحقق من الشبكة أو أزل هذا المصدر في الإعدادات';
-	@override String get audio_source_edit_target_gone => 'مصدر الصوت لم يعد موجوداً — تم تجاهل التعديل';
-	@override String get audio_source_edit_url => 'تعديل رابط مصدر الصوت';
-	@override String audio_source_error({required Object detail}) => 'خطأ في مصدر الصوت: ${detail}';
-	@override String get audio_source_fushi_interconnect => 'Fushi Interconnect';
-	@override String get audio_source_loopback_warning => 'يشير إلى هذا الجهاز — أعد التوجيه بعد تبديل الأجهزة';
-	@override String audio_source_request_error({required Object detail}) => 'فشل طلب مصدر الصوت: ${detail}';
-	@override String audio_source_timeout({required Object host}) => 'انتهت مهلة مصدر الصوت: "${host}" — الخادم لا يستجيب، حاول لاحقاً أو غيّر المصدر';
-	@override String get audio_source_updated => 'تم تحديث مصدر الصوت';
-	@override String get audio_source_url_invalid => 'يجب أن يكون الرابط http(s) ويحتوي على عنصر نائب للمصطلح أو القراءة';
-	@override String get audio_unavailable => 'لم يتم العثور على صوت.';
-	@override String get audio_volume => 'مستوى الصوت';
-	@override String get audiobook_attached => 'تم إرفاق الكتاب المسموع';
-	@override String get audiobook_audio_missing => 'ملف الصوت مفقود';
-	@override String get audiobook_background_play => 'متابعة التشغيل بعد الخروج';
-	@override String get audiobook_background_play_hint => 'عند الإيقاف، يتوقف تشغيل الكتاب الصوتي عند مغادرة القارئ. فعّله لمتابعة التشغيل في الخلفية.';
-	@override String get audiobook_export_clip => 'تصدير مقطع فيديو';
-	@override String get audiobook_export_clip_failed => 'فشل تصدير المقطع';
-	@override String get audiobook_export_clip_in_progress => 'جارٍ تصدير المقطع…';
-	@override String get audiobook_export_clip_no_selection => 'حدد نصاً أولاً لتصدير مقطع';
-	@override String get audiobook_export_clip_no_text => 'هذا التحديد لا يحتوي على نص لعرضه';
-	@override String get audiobook_export_clip_saved => 'تم حفظ المقطع';
-	@override String get audiobook_export_clip_unsupported_range => 'لا يمكن تصدير هذا التحديد (يتجاوز حدود الفصل أو ملف الصوت)';
-	@override String get audiobook_import => 'استيراد كتاب مسموع';
-	@override String get audiobook_import_error => 'فشل الاستيراد';
-	@override String audiobook_import_error_copy_failed({required Object name}) => 'فشل نسخ الملف: ${name}';
-	@override String audiobook_import_error_disk_full({required Object size}) => 'مساحة القرص غير كافية. المطلوب: ${size}';
-	@override String get audiobook_import_success => 'تم استيراد الكتاب المسموع';
-	@override String get audiobook_load_error => 'فشل تحميل الكتاب المسموع.';
-	@override String get audiobook_pick_alignment => 'اختيار ملف المحاذاة';
-	@override String get audiobook_reference_original => 'الإشارة إلى الملفات الأصلية';
-	@override String get audiobook_reference_original_desc => 'أبقِ الصوت في مكانه وشغّله من مساره الأصلي؛ سيتعطل الكتاب إذا تم نقل الملف أو حذفه.';
-	@override String get audiobook_relocate => 'نقل الملف';
-	@override String get audiobook_relocate_done => 'تم نقل الصوت';
-	@override String get auto_add_book_name_to_tags => 'إضافة عنوان الكتاب تلقائياً إلى الوسوم';
-	@override String auto_chapter({required Object n}) => 'الفصل ${n}';
-	@override String get auto_read_on_lookup => 'القراءة التلقائية عند البحث';
-	@override String get auto_search => 'بحث تلقائي';
-	@override String get auto_search_debounce_delay => 'تأخير البحث التلقائي';
-	@override String get auto_select_search_window => 'اختيار تلقائي لنافذة البحث';
-	@override String get auto_select_search_window_hint => 'اختبار أحجام نوافذ متعددة عند الاستيراد واختيار الأفضل';
-	@override String get av_sync => 'مزامنة الصوت/الصورة';
-	@override String get av_sync_reset => 'إعادة تعيين';
-	@override String get back => 'رجوع';
-	@override String get background_color => 'لون الخلفية';
-	@override String get background_color_desc => 'خلفية صفحة القارئ';
-	@override String get backup_category_audiobooks => 'صوت الكتب الصوتية';
-	@override String get backup_category_audiobooks_desc => 'صوت الكتب الصوتية والمحاذاة';
-	@override String get backup_category_books => 'الكتب';
-	@override String get backup_category_books_desc => 'ملفات الكتب (EPUB والمحتوى المستخرج)';
-	@override String get backup_category_dictionary => 'القواميس';
-	@override String get backup_category_dictionary_desc => 'القواميس المستوردة وملفاتها';
-	@override String get backup_category_fonts => 'الخطوط المخصصة';
-	@override String get backup_category_fonts_desc => 'ملفات الخطوط المخصصة المستوردة';
-	@override String get backup_category_local_audio => 'قواعد بيانات الصوت المحلية';
-	@override String get backup_category_local_audio_desc => 'قواعد بيانات صوت النطق المحلية';
-	@override String get backup_category_profiles => 'الملفات الشخصية';
-	@override String get backup_category_profiles_desc => 'ملفات تعريف الإعدادات';
-	@override String get backup_category_progress => 'تقدم القراءة';
-	@override String get backup_category_progress_desc => 'مواضع القراءة والإشارات المرجعية';
-	@override String get backup_category_settings => 'الإعدادات';
-	@override String get backup_category_settings_desc => 'إعدادات التطبيق والقارئ';
-	@override String get backup_category_statistics => 'الإحصائيات';
-	@override String get backup_category_statistics_desc => 'إحصائيات القراءة والفيديو والاستخراج';
-	@override String get backup_category_videos => 'الفيديوهات';
-	@override String get backup_category_videos_desc => 'ملفات الفيديو المحلية';
-	@override String get backup_export => 'تصدير النسخة الاحتياطية';
-	@override String get backup_export_books_all => 'جميع الكتب';
-	@override String backup_export_books_selected({required Object count}) => 'تم تحديد ${count} كتاب';
-	@override String get backup_export_categories_hint => 'حدد ما تريد تضمينه في النسخة الاحتياطية. إلغاء تحديد الكتب يزيلها بالكامل — محتواها وسجلاتها تذهب معها.';
-	@override String get backup_export_categories_title => 'اختر ما تريد تصديره';
-	@override String get backup_export_choose_books => 'اختر الكتب';
-	@override String get backup_export_choose_videos => 'اختر الفيديوهات';
-	@override String backup_export_failed({required Object message}) => 'فشل تصدير النسخة الاحتياطية: ${message}';
-	@override String get backup_export_hint => 'اختر ما تريد تضمينه؛ قاعدة البيانات (الكتب والتقدّم والإحصاءات) مُضمَّنة دائمًا. أزِل تحديد العناصر الكبيرة (الصوت المحلي والفيديو) لتصغير حجم النسخة الاحتياطية.';
-	@override String get backup_export_no_books => 'لا توجد كتب للاختيار';
-	@override String get backup_export_no_videos => 'لا توجد فيديوهات للاختيار';
-	@override String get backup_export_select_all => 'تحديد الكل';
-	@override String get backup_export_select_none => 'إلغاء تحديد الكل';
-	@override String get backup_export_success => 'تم تصدير النسخة الاحتياطية بنجاح';
-	@override String get backup_export_videos_all => 'جميع الفيديوهات';
-	@override String backup_export_videos_selected({required Object count}) => 'تم تحديد ${count} فيديو';
-	@override String get backup_exporting => 'جارٍ إنشاء النسخة الاحتياطية…';
-	@override String get backup_import => 'استيراد نسخة احتياطية';
-	@override String backup_import_confirm({required Object date, required Object bookCount, required Object statsCount}) => 'سيؤدي هذا إلى استبدال كل البيانات الحالية بالنسخة الاحتياطية من ${date}.\n\n${bookCount} كتاب، ${statsCount} سجل إحصائي.\n\nسيُعاد تشغيل التطبيق بعد الاستعادة.';
-	@override String get backup_import_confirm_title => 'استعادة النسخة الاحتياطية؟';
-	@override String get backup_import_contents_hint => 'ألغِ تحديد عنصر لتخطيه.';
-	@override String get backup_import_contents_title => 'تحتوي هذه النسخة الاحتياطية على';
-	@override String backup_import_failed({required Object message}) => 'فشل استيراد النسخة الاحتياطية: ${message}';
-	@override String get backup_import_hint => 'استعادة من ملف نسخة احتياطية. سيُعاد تشغيل التطبيق.';
-	@override String get backup_import_invalid => 'ملف نسخة احتياطية غير صالح';
-	@override String backup_import_merge_preview({required Object bookCount, required Object progressCount}) => 'سيضيف الدمج ${bookCount} كتاب ويحدّث ${progressCount} موضع قراءة.';
-	@override String get backup_import_mode_label => 'وضع الاستيراد';
-	@override String get backup_import_mode_merge => 'دمج مع المكتبة الحالية';
-	@override String get backup_import_mode_overwrite => 'استبدال المكتبة بالكامل';
-	@override String get backup_import_overlay_title => 'جارٍ استيراد النسخة الاحتياطية';
-	@override String get backup_import_overlay_warning => 'جارٍ استعادة بياناتك. يرجى عدم إغلاق التطبيق.';
-	@override String get backup_import_preserve_sync_note => 'ستُحفظ إعدادات المزامنة على هذا الجهاز (الحساب وبيانات الاعتماد).';
-	@override String get backup_import_restart_button => 'إعادة التشغيل الآن';
-	@override String get backup_import_settings_off_hint => 'احتفظ بخطوط/مظهر/ملفات هذا الجهاز؛ استعد الكتب وبيانات القراءة فقط.';
-	@override String get backup_import_settings_on_hint => 'استعادة كاملة: الخطوط والمظهر والملفات الشخصية تأتي من النسخة الاحتياطية.';
-	@override String get backup_import_settings_toggle => 'استيراد الإعدادات والملفات الشخصية';
-	@override String get backup_import_success => 'تمت استعادة النسخة الاحتياطية. جارٍ إعادة التشغيل…';
-	@override String get backup_import_validating_hint => 'جارٍ فحص ومعاينة ملف النسخة الاحتياطية. قد يستغرق هذا لحظة.';
-	@override String get backup_import_validating_title => 'قراءة النسخة الاحتياطية…';
-	@override String backup_schema_newer({required Object version}) => 'تتطلب هذه النسخة الاحتياطية إصدارًا أحدث من التطبيق (المخطط ${version}). يرجى التحديث أولًا.';
-	@override String batch_add_to_collection_success({required Object n}) => 'تمت إضافة ${n} عنصر إلى المجموعة.';
-	@override String batch_delete_confirm({required Object n}) => 'حذف ${n} كتاب/كتب؟ لا يمكن التراجع عن هذا الإجراء.';
-	@override String batch_delete_confirm_video({required Object n}) => 'حذف ${n} فيديو؟ لا يمكن التراجع عن هذا.';
-	@override String batch_delete_mixed_confirm({required Object n, required Object m}) => 'حذف ${n} وسائط وحل ${m} مجموعة؟ لا يمكن التراجع عن هذا.';
-	@override String batch_delete_mixed_success({required Object n, required Object m}) => 'تم حذف ${n} وسائط وحل ${m} مجموعة.';
-	@override String batch_delete_success({required Object n}) => 'تم حذف ${n} كتاب/كتب.';
-	@override String batch_delete_success_video({required Object n}) => 'تم حذف ${n} فيديو.';
-	@override String batch_dissolve_confirm({required Object m}) => 'حل ${m} مجموعة؟ يتم إزالة التجميع؛ يتم الاحتفاظ بالوسائط.';
-	@override String batch_dissolve_success({required Object m}) => 'تم حل ${m} مجموعة.';
-	@override String get batch_invert_selection => 'عكس';
-	@override String get batch_select => 'تحديد';
-	@override String get batch_select_all => 'الكل';
-	@override String batch_selected_count({required Object n}) => 'تم تحديد ${n}';
-	@override String get batch_tag_add => 'إضافة';
-	@override String batch_tag_added({required Object name, required Object n}) => 'تمت إضافة العلامة "${name}" إلى ${n} كتاب/كتب.';
-	@override String batch_tag_added_video({required Object name, required Object n}) => 'تمت إضافة وسم "${name}" إلى ${n} فيديو.';
-	@override String get batch_tag_apply => 'تطبيق';
-	@override String get batch_tag_keep => 'إبقاء';
-	@override String get batch_tag_remove => 'إزالة';
-	@override String batch_tag_removed({required Object name, required Object n}) => 'تمت إزالة العلامة "${name}" من ${n} كتاب/كتب.';
-	@override String batch_tag_removed_video({required Object name, required Object n}) => 'تمت إزالة وسم "${name}" من ${n} فيديو.';
-	@override String get batch_tag_title => 'إدارة العلامات';
-	@override String get book_continue_reading => 'Continue Reading';
-	@override String get book_css_editor_cancel => 'إلغاء';
-	@override String get book_css_editor_confirm_reset => 'إعادة تعيين CSS لهذا الملف إلى الافتراضي؟';
-	@override String get book_css_editor_confirm_reset_all => 'إعادة تعيين CSS لجميع الملفات إلى الافتراضي؟';
-	@override String get book_css_editor_discard => 'تجاهل';
-	@override String get book_css_editor_edit_css => 'تعديل CSS الكتاب';
-	@override String get book_css_editor_no_css_files => 'لم يتم العثور على ملفات CSS في هذا الكتاب.';
-	@override String get book_css_editor_no_extract_dir => 'دليل الكتاب غير موجود. أعد استيراد الكتاب لتعديل CSS.';
-	@override String get book_css_editor_reset_all => 'إعادة تعيين الكل';
-	@override String get book_css_editor_reset_current => 'إعادة تعيين الحالي';
-	@override String get book_css_editor_reset_done => 'تمت إعادة تعيين CSS.';
-	@override String get book_css_editor_save => 'حفظ';
-	@override String get book_css_editor_saved => 'تم حفظ CSS.';
-	@override String get book_css_editor_title => 'محرر CSS الكتاب';
-	@override String get book_css_editor_unsaved_changes => 'تغييرات غير محفوظة';
-	@override String get book_css_editor_unsaved_changes_message => 'لديك تغييرات غير محفوظة. هل تريد تجاهلها؟';
-	@override String get book_directory_not_found => 'دليل الكتاب غير موجود.';
-	@override String get book_edit_author => 'المؤلف';
-	@override String get book_file_not_found => 'لم يُعثر على ملف الكتاب';
-	@override String get book_import_duplicate_cancel => 'لا، إلغاء';
-	@override String get book_import_duplicate_cancelled => 'تم إلغاء الاستيراد';
-	@override String get book_import_duplicate_keep => 'نعم، أضف لاحقة';
-	@override String book_import_duplicate_message({required Object name}) => 'يوجد بالفعل كتاب باسم "${name}". استيراده على أي حال؟ "نعم" يستورده بلاحقة رقمية؛ "لا" يلغي.';
-	@override String get book_import_duplicate_title => 'كتاب مكرر';
-	@override String get book_mark_completed_action => 'تحديد كمكتمل';
-	@override String get book_mark_uncompleted_action => 'تحديد كغير مكتمل';
-	@override String get book_marked_completed => 'تم التحديد كمكتمل';
-	@override String get book_marked_uncompleted => 'تم التحديد كغير مكتمل';
-	@override String get book_mode => 'وضع الكتاب';
-	@override String book_read_progress({required Object percent}) => 'قُرئ ${percent}%';
-	@override String get book_scrape_cover => 'البحث عن غلاف عبر الإنترنت';
-	@override String get book_scrape_empty => 'لا توجد أغلفة مطابقة';
-	@override String get book_scrape_failed => 'فشل جلب الغلاف';
-	@override String get book_scrape_hint => 'عنوان الكتاب / المؤلف';
-	@override String get book_scrape_search => 'بحث';
-	@override String get book_scrape_search_failed => 'فشل البحث. اضغط بحث للمحاولة مجدداً.';
-	@override String get book_scrape_title => 'مطابقة غلاف عبر الإنترنت';
-	@override String get book_scrape_use => 'استخدام';
-	@override String get book_search => 'بحث في الكتاب';
-	@override String get book_search_hint => 'أدخل نص البحث…';
-	@override String get book_search_no_results => 'لم يتم العثور على نتائج';
-	@override String book_search_results({required Object n}) => '${n} نتيجة';
-	@override String get books => 'الكتب';
-	@override String get browser_extension_enable_server_first => 'نصيحة: فعّل "خادم Yomitan API" وعيّن مفتاح API أعلاه أولاً، حتى يتم تكوين الإضافة تلقائياً باتصال يعمل.';
-	@override String get browser_extension_mobile_unsupported => 'لا يمكن لمتصفحات الأجهزة المحمولة تحميل هذا الامتداد. استخدم البحث داخل التطبيق في القارئ أو مشغّل الفيديو بدلاً من ذلك.';
-	@override String get browser_extension_page_intro => 'على سطح المكتب، ابحث عن الكلمات وحلل الترجمات واستخرج البطاقات مباشرة في Chrome أو Edge. جهّز الإضافة أدناه، ثم حمّلها في متصفحك.';
-	@override String get browser_extension_prepare_button => 'تجهيز ملفات الإضافة';
-	@override String get browser_extension_prepare_hint => 'يبدأ خادم البحث ويفك ضغط الإضافة محلياً؛ يتم نسخ مسار المجلد إلى الحافظة.';
-	@override String get browser_extension_reinstall_button => 'إعادة التجهيز / تحديث الملفات';
-	@override String get browser_extension_server_off => 'خادم البحث متوقف';
-	@override String get browser_extension_server_on => 'خادم البحث يعمل';
-	@override String get browser_extension_status_connected => 'الإضافة متصلة';
-	@override String get browser_extension_status_never => 'لم يتم اكتشاف الإضافة بعد';
-	@override String get browser_extension_step_dev_mode => 'فعّل "وضع المطور" (المفتاح في الزاوية العلوية اليمنى).';
-	@override String get browser_extension_step_done_auto => 'تم. الإضافة مُعدّة مسبقاً للاتصال بـ Fushi للبحث — لا حاجة لإدخال أي شيء يدوياً.';
-	@override String get browser_extension_step_load_unpacked => 'انقر "تحميل غير مضغوط".';
-	@override String get browser_extension_step_open_page => 'افتح صفحة إضافات المتصفح:';
-	@override String get browser_extension_step_pick_folder => 'حدد مجلد الإضافة أدناه (مساره منسوخ بالفعل إلى الحافظة).';
-	@override String get browser_extension_step_verify => 'تحقق من تحميل الإضافة واتصالها';
-	@override String get browser_extension_verify_button => 'فحص الاتصال';
-	@override String get browser_extension_verify_checking => 'جارٍ الفحص…';
-	@override String get browser_extension_verify_connected => 'تم اكتشاف الإضافة وهي متصلة.';
-	@override String get browser_extension_verify_not_detected => 'لم يتم اكتشاف إضافة بعد. تأكد من تحميلها وتفعيلها في متصفحك، ثم تحقق مجدداً.';
-	@override String get browser_extension_version_app => 'مُضمّن في التطبيق';
-	@override String get browser_extension_version_browser => 'محمّل في المتصفح';
-	@override String get browser_extension_version_label => 'إصدار الإضافة';
-	@override String get browser_extension_version_mismatch => 'الإضافة المحمّلة في متصفحك قديمة. أعد تجهيز الإضافة إذا لزم الأمر، ثم أعد تحميلها من صفحة إضافات متصفحك (chrome://extensions).';
-	@override String browser_extension_yomitan_port_conflict({required Object port}) => 'المنفذ ${port} مستخدم بواسطة عملية أخرى (عادةً مكون yomitan-api — عملية Python أطلقها متصفحك). أنهِ تلك العملية، أو عطّل Yomitan API في الإعدادات المتقدمة لـ Yomitan، ثم فعّل خادم Yomitan API في Fushi مجدداً.';
-	@override String get cancel => 'إلغاء';
-	@override String card_cover_degraded_to_static({required Object reason}) => 'تراجع غلاف البطاقة إلى صورة ثابتة (المقطع المتحرك غير متاح): ${reason}';
-	@override String get card_duplicate => 'بطاقة مكررة — لم يتم تصديرها.';
-	@override String get card_export_failed => 'فشل تصدير البطاقة.';
-	@override String card_export_failed_detail({required Object reason}) => 'فشل تصدير البطاقة: ${reason}';
-	@override String get card_export_not_configured => 'لم يتم إعداد Anki. افتح إعدادات Anki واضغط جلب.';
-	@override String card_exported({required Object deck}) => 'تم تصدير البطاقة إلى『${deck}』.';
-	@override String card_exported_audio_failed({required Object reason}) => 'تم تصدير البطاقة، لكن فشل تنزيل الصوت (${reason}).';
-	@override String get card_mined_no_sentence_captured => 'تم إنشاء البطاقة، لكن لم يتم التقاط أي جملة (أعد تحديد الكلمة، أو هذا النص لا يحتوي على جملة يمكن التعرف عليها).';
-	@override String get card_mined_unmapped_sentence_audio_field => 'تم إنشاء البطاقة مع صوت الجملة، لكن نوع ملاحظة Anki لا يحتوي على حقل مُعيّن له. عيّن حقلاً لـ {sentence-audio}.';
-	@override String get card_mined_unmapped_sentence_field => 'تم إنشاء البطاقة، لكن نوع ملاحظة Anki لا يحتوي على حقل مُعيّن للجملة. استخدم الإعدادات -> \'إنشاء رزمة Lapis\' أو عيّن حقلاً لـ {sentence}.';
-	@override String get card_mined_without_sentence_audio => 'تم إنشاء البطاقة بدون صوت الجملة (لم يُعثر على صوت لهذا التحديد).';
-	@override String get card_mining_pending => 'جارٍ إضافة البطاقة…';
-	@override String card_overwritten({required Object deck}) => 'تمت الكتابة فوق البطاقة في『${deck}』.';
-	@override String get change_source => 'تغيير المصدر';
-	@override String get changelog_empty => 'لم يتم العثور على سجل التغييرات. تحقق من إعدادات الشبكة أو الوكيل.';
-	@override String get changelog_open_releases => 'فتح صفحة الإصدارات';
-	@override String get changelog_prerelease => 'إصدار تجريبي';
-	@override String chapter_progress({required Object idx, required Object total, required Object suffix, required Object pct}) => 'الفصل ${idx} / ${total}${suffix} · ${pct}%';
-	@override String get clear => 'مسح';
-	@override String get clear_dictionary_description => 'سيتم مسح جميع نتائج البحث من السجل. هل أنت متأكد؟';
-	@override String get clear_dictionary_title => 'مسح سجل بحث القاموس';
-	@override String get lookup_block_capture => 'حظر التقاط الشاشة';
-	@override String get lookup_block_capture_hint => 'يستثني نوافذ البحث والحافظة المنبثقة من لقطات الشاشة وتسجيل الشاشة والبث المباشر (Windows). أوقف هذا للسماح بالتقاط النافذة المنبثقة.';
-	@override String get collapse_dictionaries => 'طي القواميس';
-	@override String get collection_bookmark => 'علامة مرجعية';
-	@override String get collection_clear_confirm => 'حذف المجموعات المحددة نهائياً؟ لا يمكن التراجع عن هذا.';
-	@override String get collection_clear_scope => 'نطاق المسح';
-	@override String get collection_collapse => 'طي';
-	@override String collection_continue_progress({required Object n}) => 'متابعة · حلقة ${n}';
-	@override String get collection_empty => 'المجموعة فارغة';
-	@override String get collection_expand => 'توسيع';
-	@override String get collection_export_all_books => 'جميع الكتب';
-	@override String get collection_export_all_mined => 'جميع الجمل المستخرجة';
-	@override String get collection_export_all_words => 'جميع الكلمات المفضلة';
-	@override String get collection_export_dedupe => 'إزالة التكرار حسب الجملة';
-	@override String get collection_export_failed => 'فشل التصدير';
-	@override String get collection_export_favorites_scope => 'الجمل المفضلة';
-	@override String get collection_export_format => 'الصيغة';
-	@override String get collection_export_mined_title => 'Mined Sentences';
-	@override String get collection_export_no_items => 'لا يوجد شيء للتصدير';
-	@override String get collection_export_pick_book => 'اختر كتاباً';
-	@override String get collection_export_save => 'Save Export';
-	@override String get collection_export_saved => 'تم حفظ التصدير';
-	@override String get collection_export_scope => 'نطاق التصدير';
-	@override String get collection_export_sentences_title => 'Favorite Sentences';
-	@override String get collection_export_words_title => 'Favorite Words';
-	@override String get collection_loading_hint => 'جارٍ تحميل المجموعات ومطابقة ملفات الصوت…';
-	@override String get collection_member_removed => 'تمت الإزالة من المجموعة';
-	@override String get collection_merge_title => 'دمج المجموعات';
-	@override String get collection_merged => 'تم دمج المجموعات.';
-	@override String get collection_mined => 'المُنشأة';
-	@override String get collection_open => 'فتح';
-	@override String get collection_play => 'تشغيل';
-	@override String get collection_remove_member => 'إزالة من المجموعة';
-	@override String get collection_remove_member_confirm => 'إزالة هذا العنصر من المجموعة؟ يتم الاحتفاظ بالعنصر نفسه.';
-	@override String get collection_sentence => 'جملة';
-	@override String get collection_sort_by_imported => 'ترتيب حسب تاريخ الاستيراد';
-	@override String get collection_sort_by_title => 'ترتيب حسب الاسم';
-	@override String get collection_view_all => 'عرض الكل';
-	@override String collection_watched_progress({required Object done, required Object total}) => 'تمت مشاهدة ${done}/${total}';
-	@override String get collection_word => 'كلمة';
-	@override String get collections => 'المجموعات';
-	@override String get color_container => 'حاوية';
-	@override String get color_container_desc => 'خلفية تبديل المسارات وشريط التشغيل';
-	@override String get color_link => 'لون الرابط';
-	@override String get color_link_desc => 'لون الروابط في القارئ';
-	@override String get color_primary => 'أساسي';
-	@override String get color_primary_desc => 'تمييز الصوت، الأزرار، المفاتيح';
-	@override String get color_sentence_audio_highlight => 'تمييز الصوت';
-	@override String get color_sentence_audio_highlight_desc => 'تمييز مزامنة ترجمة الكتاب المسموع';
-	@override String get color_secondary => 'ثانوي';
-	@override String get color_secondary_desc => 'إدخالات القاموس، شارات رف الكتب';
-	@override String get color_tertiary => 'ثالثي';
-	@override String get color_tertiary_desc => 'المجموعات، إحصائيات القراءة';
-	@override String get columns_per_page => 'أعمدة لكل صفحة';
-	@override String get combine_into_series => 'دمج في سلسلة';
-	@override String get copied => 'تم النسخ';
-	@override String get copied_to_clipboard => 'تم النسخ إلى الحافظة.';
-	@override String get copy => 'نسخ';
-	@override String get copy_error => 'نسخ الخطأ';
-	@override String get crash_dump_empty => 'لا توجد تفريغات أعطال';
-	@override String crash_dump_label({required Object n}) => 'تفريغات الأعطال (${n})';
-	@override String get crash_dump_open_folder => 'فتح مجلد التفريغ';
-	@override String get crash_dump_privacy_notice => 'تحتوي تفريغات الأعطال (.dmp) على لقطة من ذاكرة العملية وقد تتضمن نصًا كنت تقرؤه أو كلمات بحثت عنها أو بيانات أخرى داخل التطبيق. شاركها فقط مع مطوّرين تثق بهم.';
-	@override String get crash_dump_share => 'مشاركة التفريغ';
-	@override String get crash_dump_share_subject => 'تفريغ عطل Fushi';
-	@override String get create_series => 'إنشاء سلسلة';
-	@override String get creator_action_add_to_stash => 'إضافة إلى المخزن';
-	@override String get creator_action_copy_to_clipboard => 'نسخ إلى الحافظة';
-	@override String get creator_action_play_audio => 'تشغيل الصوت';
-	@override String get creator_action_share => 'مشاركة';
-	@override String get creator_enhancement_audio_recorder => 'تسجيل صوتي';
-	@override String get creator_enhancement_camera => 'كاميرا';
-	@override String get creator_enhancement_clear_field => 'مسح الحقل';
-	@override String get creator_enhancement_crop_image => 'اقتصاص الصورة';
-	@override String get creator_enhancement_local_audio => 'صوت محلي';
-	@override String get creator_enhancement_open_stash => 'فتح المخزن';
-	@override String get creator_enhancement_pick_audio => 'اختيار صوت';
-	@override String get creator_enhancement_pick_image => 'اختيار صورة';
-	@override String get creator_enhancement_pop_from_stash => 'سحب من المخزن';
-	@override String get creator_enhancement_save_tags => 'حفظ الوسوم';
-	@override String get creator_enhancement_search_dictionary => 'بحث في القاموس';
-	@override String get creator_enhancement_sentence_picker => 'اختيار جملة';
-	@override String get creator_enhancement_text_segmentation => 'تقطيع النص';
-	@override String get creator_export_card => 'إنشاء بطاقة';
-	@override String get creator_field_audio => 'صوت الكلمة';
-	@override String get creator_field_audio_sentence => 'صوت الجملة';
-	@override String get creator_field_cloze_after => 'بعد الفراغ';
-	@override String get creator_field_cloze_before => 'قبل الفراغ';
-	@override String get creator_field_cloze_inside => 'محتوى الفراغ';
-	@override String get creator_field_collapsed_meaning => 'معنى مطوي';
-	@override String get creator_field_context => 'سياق';
-	@override String get creator_field_cue_sentence => 'جملة الترجمة';
-	@override String get creator_field_expanded_meaning => 'معنى موسع';
-	@override String get creator_field_frequency => 'التكرار';
-	@override String get creator_field_furigana => 'فوريغانا';
-	@override String get creator_field_hidden_meaning => 'معنى مخفي';
-	@override String get creator_field_image => 'صورة';
-	@override String get creator_field_meaning => 'المعنى';
-	@override String get creator_field_notes => 'ملاحظات';
-	@override String get creator_field_pitch_accent => 'النبرة';
-	@override String get creator_field_reading => 'القراءة';
-	@override String get creator_field_sentence => 'جملة';
-	@override String get creator_field_tags => 'وسوم';
-	@override String get creator_field_term => 'مصطلح';
-	@override String get custom_dict_css => 'CSS مخصص';
-	@override String get custom_dict_css_global => 'عام (جميع القواميس)';
-	@override String get custom_fonts => 'خطوط مخصصة';
-	@override String get custom_fonts_add_system => 'إضافة خط نظام';
-	@override String get custom_fonts_archive_error => 'فشل استخراج الأرشيف';
-	@override String get custom_fonts_catalog_title => 'مكتبة الخطوط';
-	@override String get custom_fonts_download_failed => 'فشل التنزيل';
-	@override String get custom_fonts_downloading => 'جارٍ التنزيل...';
-	@override String get custom_fonts_drag_hint => 'اسحب لإعادة ترتيب أولوية الخطوط';
-	@override String get custom_fonts_empty => 'لم تتم إضافة خطوط مخصصة';
-	@override String get custom_fonts_font_roles => 'أدوار الخطوط';
-	@override String get custom_fonts_import_file => 'استيراد ملف خط';
-	@override String get custom_fonts_import_url => 'استيراد من URL';
-	@override String custom_fonts_imported_count({required Object count}) => 'تم استيراد ${count} خط';
-	@override String get custom_fonts_manage => 'إدارة الخطوط';
-	@override String get custom_fonts_no_fonts_in_archive => 'لم يتم العثور على ملفات خطوط في الأرشيف';
-	@override String get custom_fonts_recommended => 'خطوط موصى بها';
-	@override String get custom_fonts_removed => 'تمت إزالة الخط';
-	@override String get custom_fonts_search_hint => 'بحث في الخطوط';
-	@override String get custom_theme => 'مظهر مخصص';
-	@override String custom_theme_default_name({required Object n}) => 'مخصص ${n}';
-	@override String get custom_theme_long_press_hint => 'اضغط للتبديل · اضغط مطولاً للتعديل';
-	@override String get custom_theme_name => 'الاسم';
-	@override String get dark_mode => 'الوضع الداكن';
-	@override String get dark_mode_dark => 'داكن';
-	@override String get dark_mode_light => 'فاتح';
-	@override String get dark_mode_system => 'النظام';
-	@override String data_root_unavailable_message({required Object path}) => 'موقع البيانات المُعدّ ${path} غير قابل للوصول مؤقتاً (قد يكون القرص نائماً أو مشغولاً أو مفصولاً). بياناتك آمنة ولم تُمس — لم يُفقد شيء. اضغط إعادة المحاولة عندما يكون القرص جاهزاً لتحميل بياناتك، أو ابدأ بالموقع الافتراضي الآن (بياناتك الحالية لن تُعدّل).';
-	@override String get data_root_unavailable_title => 'موقع البيانات لا يستجيب';
-	@override String get data_root_use_default_button => 'البدء بالموقع الافتراضي';
-	@override String get data_storage_change_button => 'تغيير الموقع';
-	@override String get data_storage_change_confirm_body => 'سينقل Fushi جميع بياناتك إلى المجلد الجديد ثم يُعيد التشغيل. لا تغلق التطبيق أثناء النقل.';
-	@override String get data_storage_change_confirm_title => 'تغيير موقع تخزين البيانات؟';
-	@override String get data_storage_location_default => 'الموقع الافتراضي';
-	@override String get data_storage_location_hint => 'أين يحفظ Fushi مكتبتك والكتب الصوتية وقاعدة البيانات. لسطح المكتب فقط.';
-	@override String get data_storage_location_title => 'موقع تخزين البيانات';
-	@override String data_storage_migrate_failed({required Object message}) => 'تعذر نقل البيانات: ${message}';
-	@override String get data_storage_migrate_failed_restart => 'إعادة التشغيل';
-	@override String get data_storage_migrate_failed_suggestions => 'يرجى المحاولة مجدداً باختيار مجلد فارغ مختلف. لا تختر مجلد تثبيت التطبيق، وتأكد من عدم استخدام أي ملفات في ذلك الموقع.';
-	@override String get data_storage_migrate_failed_title => 'فشل نقل البيانات';
-	@override String data_storage_migrate_overlay_progress({required Object copied, required Object total}) => 'نسخ الملفات: ${copied} / ${total}';
-	@override String get data_storage_migrate_overlay_title => 'جارٍ نقل بياناتك';
-	@override String get data_storage_migrate_overlay_warning => 'يرجى إبقاء التطبيق مفتوحاً. لا تغلق أو توقف جهازك حتى ينتهي.';
-	@override String get data_storage_migrate_success => 'تم نقل البيانات. جارٍ إعادة التشغيل…';
-	@override String get data_storage_migrating => 'جارٍ نقل البيانات…';
-	@override String get data_storage_reject_install_dir => 'هذا المجلد هو موقع تثبيت التطبيق ولا يمكنه تخزين بياناتك. يرجى اختيار مجلد فارغ مختلف.';
-	@override String get data_storage_restart_failed => 'تم نقل البيانات، لكن إعادة التشغيل التلقائية فشلت. يرجى إعادة فتح Fushi يدوياً.';
-	@override String db_downgrade_message({required Object dbVersion, required Object appVersion}) => 'أُنشئت قاعدة البيانات هذه بإصدار أحدث من Fushi (المخطط v${dbVersion}). تطبيقك الحالي قديم جدًا (v${appVersion}). تم حظر الفتح لحماية بياناتك. يُرجى تحديث التطبيق والمحاولة مجددًا.';
-	@override String get db_downgrade_title => 'حدّث Fushi';
-	@override String get db_unrecoverable_message => 'تعذر فتح قاعدة البيانات حتى بعد الإصلاح التلقائي. من المحتمل أنها تالفة. يمكنك استعادة نسخة احتياطية من الإعدادات، أو مسح بيانات التطبيق للبدء من جديد.';
-	@override String get db_unrecoverable_title => 'قاعدة البيانات تالفة';
-	@override String get debug_log_share_subject => 'سجل تصحيح Fushi';
-	@override String debug_log_title({required Object count}) => 'سجل التصحيح (${count})';
-	@override String get debug_log_toggle => 'تفعيل سجل التصحيح';
-	@override String get decrease => 'تقليل';
-	@override String get deduplicate_pitch_accents => 'إزالة تكرار النبرات';
-	@override String get delete_collection => 'حذف المجموعة';
-	@override String get delete_collection_also_books => 'حذف الكتب الموجودة فيها أيضاً';
-	@override String get delete_collection_also_videos => 'حذف الفيديوهات أيضاً (يحتفظ بملفات الفيديو الأصلية)';
-	@override String get delete_custom_theme => 'حذف السمة';
-	@override String get delete_custom_theme_confirm => 'حذف هذه السمة المخصصة؟ لا يمكن التراجع عن هذا.';
-	@override String get delete_in_progress => 'جارٍ الحذف';
-	@override String get delete_prompt_delete_selected => 'حذف المحدد';
-	@override String get delete_prompt_message => 'تم حذف هذه العناصر على جهاز آخر. هل تريد حذفها هنا أيضاً؟';
-	@override String get delete_prompt_select_all => 'تحديد الكل';
-	@override String get delete_prompt_title => 'محذوف على جهاز آخر';
-	@override String get delete_scope_keep_local_desc => 'الأجهزة الأخرى تحتفظ بنسختها';
-	@override String get delete_scope_sync_everywhere => 'حذف من جميع الأجهزة';
-	@override String get delete_scope_sync_everywhere_desc => 'الأجهزة الأخرى تؤكد الحذف عند المزامنة التالية';
-	@override String get design_system_auto => 'تلقائي';
-	@override String get design_system_hint => 'يتحكم في النمط المرئي للتطبيق';
-	@override String get design_system_label => 'نظام التصميم';
-	@override String get dialog_add => 'إضافة';
-	@override String get dialog_append => 'إلحاق';
-	@override String get dialog_cancel => 'إلغاء';
-	@override String get dialog_clear => 'مسح';
-	@override String get dialog_clear_all_dictionaries => 'حذف جميع القواميس';
-	@override String get dialog_close => 'إغلاق';
-	@override String get dialog_connect => 'اتصال';
-	@override String get dialog_content_dictionary_clear => 'مسح قاعدة بيانات القواميس سيؤدي أيضاً إلى مسح جميع نتائج البحث من السجل.';
-	@override String get dialog_content_dictionary_delete => 'حذف قاموس واحد قد يستغرق وقتاً أطول من مسح قاعدة البيانات بالكامل. سيتم أيضاً مسح جميع نتائج البحث من السجل.';
-	@override String get dialog_create => 'إنشاء';
-	@override String get dialog_crop => 'اقتصاص';
-	@override String get dialog_delete => 'حذف';
-	@override String get dialog_done => 'تم';
-	@override String get dialog_edit => 'تعديل';
-	@override String get dialog_edit_info => 'تعديل المعلومات';
-	@override String get dialog_exit => 'خروج';
-	@override String get dialog_export => 'تصدير';
-	@override String get dialog_import => 'استيراد';
-	@override String get dialog_import_dictionary => 'استيراد قاموس';
-	@override String get dialog_import_folder => 'استيراد قاموس من مجلد';
-	@override String get dialog_importing => 'جارٍ الاستيراد…';
-	@override String get dialog_launch_ankidroid => 'فتح ANKIDROID';
-	@override String get dialog_ok => 'موافق';
-	@override String get dialog_play => 'تشغيل';
-	@override String get dialog_read => 'قراءة';
-	@override String get dialog_record => 'تسجيل';
-	@override String get dialog_replace => 'استبدال';
-	@override String get dialog_save => 'حفظ';
-	@override String get dialog_search => 'بحث';
-	@override String get dialog_select => 'اختيار';
-	@override String get dialog_share => 'مشاركة';
-	@override String get dialog_stash => 'تخزين';
-	@override String get dialog_stop => 'إيقاف';
-	@override String get dialog_title_dictionary_clear => 'مسح جميع القواميس؟';
-	@override String dialog_title_dictionary_delete({required Object name}) => 'حذف『${name}』؟';
-	@override String get dict_auto_update => 'التحديث تلقائيًا';
-	@override String get dict_auto_update_hint => 'التحقق من تحديثات القواميس عند بدء التشغيل';
-	@override String dict_auto_update_last({required Object time}) => 'آخر تحقق ناجح: ${time}';
-	@override String get dict_auto_update_never => 'أبدًا';
-	@override String get dict_category_frequency => 'التكرار';
-	@override String get dict_category_grammar => 'القواعد';
-	@override String get dict_category_ja_en => 'ياباني–إنجليزي';
-	@override String get dict_category_ja_ja => 'ياباني–ياباني';
-	@override String get dict_category_ja_other => 'يابانية أخرى';
-	@override String get dict_category_kanji => 'كانجي';
-	@override String get dict_category_names => 'أسماء';
-	@override String get dict_category_supplementary => 'تكميلي';
-	@override String get dict_download_browse => 'تنزيل القواميس';
-	@override String dict_download_button({required Object count}) => 'تنزيل (${count})';
-	@override String get dict_download_complete => 'اكتمل التنزيل.';
-	@override String dict_download_failed({required Object error}) => 'فشل التنزيل: ${error}';
-	@override String get dict_download_installed => 'مثبّت';
-	@override String get dict_download_language => 'لغتك';
-	@override String dict_download_partial({required Object success, required Object total, required Object error}) => '${success} / ${total} ناجح. فشل: ${error}';
-	@override String get dict_download_select_title => 'اختيار القواميس';
-	@override String dict_downloading({required Object name}) => 'جارٍ تنزيل ${name}…';
-	@override String dict_import_failed_summary({required Object n}) => 'فشل استيراد ${n} قاموس';
-	@override String get dict_import_started => 'جارٍ استيراد القواميس في الخلفية...';
-	@override String dict_import_success_summary({required Object n}) => 'تم استيراد ${n} قاموس';
-	@override String get dict_update_check => 'التحقق من التحديثات';
-	@override String get dict_update_checking => 'جارٍ التحقق من التحديثات…';
-	@override String dict_update_done({required Object name}) => 'تم تحديث ${name}.';
-	@override String dict_update_failed({required Object error}) => 'فشل التحديث: ${error}';
-	@override String get dict_update_interval_daily => 'يوميًا';
-	@override String get dict_update_interval_monthly => 'شهريًا';
-	@override String get dict_update_interval_weekly => 'أسبوعيًا';
-	@override String get dict_update_latest => 'محدّث بالفعل.';
-	@override String dict_update_name_mismatch_body({required Object incoming, required Object existing}) => 'الملف المحدد هو "${incoming}"، لكنك تُحدّث "${existing}". هل تريد الاستبدال على أي حال؟';
-	@override String get dict_update_name_mismatch_title => 'الأسماء غير متطابقة';
-	@override String get dict_update_none => 'جميع القواميس محدّثة.';
-	@override String dict_update_summary({required Object updated, required Object current, required Object failed}) => '${updated} محدّث، ${current} محدّث بالفعل، ${failed} فشل.';
-	@override String get dict_update_tooltip => 'تحديث القاموس';
-	@override String dict_update_updating({required Object name}) => 'جارٍ تحديث ${name}…';
-	@override String get dictionaries => 'القواميس';
-	@override String get dictionaries_delete_failed => 'فشل حذف القواميس';
-	@override String get dictionaries_deleting_data => 'جارٍ حذف بيانات القاموس...';
-	@override String get dictionaries_menu_empty => 'استورد قاموساً للاستخدام';
-	@override String get dictionary_delete_failed => 'فشل حذف القاموس';
-	@override String get dictionary_font_size => 'حجم خط القاموس';
-	@override String get dictionary_font_size_zoom_hint => 'Ctrl + عجلة التمرير لتكبير محتوى النافذة المنبثقة';
-	@override String get dictionary_section_frequency => 'قواميس التكرار';
-	@override String get dictionary_section_kanji => 'قواميس الكانجي';
-	@override String get dictionary_section_pitch => 'قواميس النبرة';
-	@override String get dictionary_section_term => 'قواميس المعاني';
-	@override String get dictionary_settings => 'إعدادات القاموس';
-	@override String get dictionary_type_frequency => 'تكرار';
-	@override String get dictionary_type_pitch => 'نبرة';
-	@override String get dictionary_type_term => 'معاني';
-	@override String get dictionary_unrecognized_format => 'صيغة قاموس غير معروفة';
-	@override String get dismiss_swipe_sensitivity => 'حساسية السحب للإغلاق';
-	@override String get display_settings => 'إعدادات الطباعة';
-	@override String get download_backend_not_configured => 'لم يتم تكوين خلفية التحميل بعد.';
-	@override String get download_clear_finished => 'مسح المنتهية';
-	@override String get download_detail_backend_offline => 'خلفية التحميل الأصلية غير متصلة. يتم عرض معلومات المهمة المحفوظة؛ المعلمات المباشرة غير متاحة.';
-	@override String get download_open_settings => 'فتح الإعدادات';
-	@override String get download_save_root_change => 'تغيير المجلد';
-	@override String get download_save_root_create_failed => 'تعذر إنشاء هذا المجلد. تحقق من القرص والأذونات.';
-	@override String get download_save_root_fallback_warning => 'مجلد التحميل المُعدّ غير متاح، لذا يتم استخدام المجلد الافتراضي.';
-	@override String get download_save_root_hint => 'يتم حفظ التحميلات الجديدة هنا. المهام الحالية تحتفظ بمجلدها الأصلي.';
-	@override String get download_save_root_not_absolute => 'يرجى اختيار مسار مجلد مطلق.';
-	@override String get download_save_root_not_writable => 'هذا المجلد غير قابل للكتابة.';
-	@override String get download_save_root_reset => 'استعادة الافتراضي';
-	@override String get download_save_root_title => 'مجلد التحميل';
-	@override String get download_settings => 'إعدادات التحميل';
-	@override String get download_status_cancelled => 'ملغى';
-	@override String get download_status_queued => 'في قائمة الانتظار';
-	@override String download_subscription_after_episode({required Object episode}) => 'بعد الحلقة ${episode}';
-	@override String get download_subscription_check_all => 'فحص الكل';
-	@override String get download_subscription_check_now => 'فحص الآن';
-	@override String download_subscription_choice_hint({required Object group, required Object resolution}) => 'متابعة ${group} · ${resolution}. سيتم وضع الإصدارات الجديدة أحادية الحلقة في قائمة الانتظار.';
-	@override String get download_subscription_created => 'تم وضع التحميل في قائمة الانتظار وإنشاء الاشتراك';
-	@override String get download_subscription_delete => 'حذف الاشتراك';
-	@override String download_subscription_delete_confirm({required Object title}) => 'حذف اشتراك ${title}؟ مهام التحميل يتم الاحتفاظ بها.';
-	@override String get download_subscription_download_and_create => 'تحميل واشتراك';
-	@override String get download_subscription_empty_body => 'في الاكتشاف، اختر إصداراً أحادي الحلقة واستخدم تحميل واشتراك.';
-	@override String get download_subscription_empty_title => 'لا توجد اشتراكات بعد';
-	@override String download_subscription_last_checked({required Object time}) => 'آخر فحص: ${time}';
-	@override String download_subscription_latest_episode({required Object episode}) => 'آخر حلقة في القائمة: الحلقة ${episode}';
-	@override String get download_subscription_never_checked => 'لم يتم الفحص مطلقاً';
-	@override String get download_subscription_running_hint => 'يفحص Fushi الاشتراكات المُفعّلة كل 15 دقيقة أثناء تشغيل التطبيق.';
-	@override String get download_subscription_unavailable_hint => 'اختر إصداراً أحادي الحلقة مع مجموعة إصدار يمكن التعرف عليها للاشتراك.';
-	@override String get download_subscriptions_tab => 'الاشتراكات';
-	@override String download_task_action_failed({required Object error}) => 'فشل إجراء المهمة: ${error}';
-	@override String get download_task_delete => 'حذف المهمة';
-	@override String download_task_delete_confirm({required Object title}) => 'حذف مهمة تحميل ${title}؟';
-	@override String get download_task_delete_files => 'حذف الملفات المحمّلة أيضاً';
-	@override String get download_task_details => 'عرض التفاصيل';
-	@override String get download_tasks_tab => 'المهام';
-	@override String get download_test_connection => 'اختبار الاتصال';
-	@override String get download_test_connection_failed => 'فشل الاتصال. تحقق من العنوان وبيانات الاعتماد.';
-	@override String download_test_connection_ok({required Object version}) => 'متصل (الإصدار: ${version})';
-	@override String get drag_drop_need_card_target => 'أفلت الترجمات أو الصوت على كتاب أو فيديو';
-	@override String get drag_drop_unsupported_on_books => 'أفلت ملفات الكتب هنا. بدّل إلى الفيديو أو القواميس لتلك الملفات.';
-	@override String get drag_drop_unsupported_on_dictionary => 'أفلت ملفات قواميس .zip أو .dsl أو .mdx هنا. تعمل ملفات CSS فقط مع حزمة قاموس.';
-	@override String get drag_drop_unsupported_on_video => 'أفلت الفيديوهات أو قوائم التشغيل أو الترجمات هنا. بدّل إلى الكتب أو القواميس لتلك الملفات.';
-	@override String get edit_custom_theme => 'تعديل السمة المخصصة';
-	@override String get eink_mode => 'وضع الحبر الإلكتروني';
-	@override String get eink_mode_hint => 'سمة بالأبيض والأسود بدون رسوم متحركة وتمييز خطي، لشاشات الحبر الإلكتروني';
-	@override String get enable_swipe_to_close => 'السحب لإغلاق النافذة المنبثقة';
-	@override String get epub_delete_error => 'فشل حذف الكتاب';
-	@override String get epub_delete_title => 'حذف الكتاب';
-	@override String get epub_parse_fallback => 'تم إصلاح بيانات الكتاب من قاعدة البيانات';
-	@override String get error_ankidroid_api => 'خطأ في AnkiDroid';
-	@override String get error_ankidroid_api_content => 'حدث خطأ في التواصل مع AnkiDroid.\n\nتأكد من أن خدمة AnkiDroid الخلفية نشطة وتم منح جميع الأذونات المطلوبة.';
-	@override String get error_copied => 'تم نسخ الخطأ إلى الحافظة';
-	@override String get error_load_failed => 'حدث خطأ أثناء التحميل';
-	@override String get error_log_diagnostics_section => 'التشخيصات / التحقيقات (ليست أخطاء تطبيق)';
-	@override String get error_log_empty => 'لا توجد سجلات أخطاء';
-	@override String error_log_label({required Object n}) => 'سجل الأخطاء (${n})';
-	@override String get error_log_previous_run => 'سجلات سابقة (قبل التشغيل الأخير)';
-	@override String get error_log_share_subject => 'سجل أخطاء Fushi';
-	@override String get extension_popup_independent_size => 'حجم منفصل لإضافة المتصفح';
-	@override String get extension_popup_independent_size_hint => 'أعطِ النافذة المنبثقة لبحث إضافة المتصفح حجمها الأقصى الخاص بدلاً من اتباع النافذة المنبثقة داخل التطبيق';
-	@override String get extension_popup_max_height => 'الارتفاع الأقصى لنافذة الإضافة';
-	@override String get extension_popup_max_width => 'العرض الأقصى لنافذة الإضافة';
-	@override String get external_window_capture_failed => 'فشل التقاط النافذة';
-	@override String get external_window_current_game => 'اللعبة الحالية';
-	@override String get external_window_mining => 'استخراج من نافذة خارجية';
-	@override String get external_window_no_windows => 'لم يتم العثور على نوافذ قابلة للالتقاط';
-	@override String get external_window_none => 'لا توجد نافذة مرتبطة (اضغط للاختيار)';
-	@override String get external_window_refresh => 'تحديث قائمة النوافذ';
-	@override String get external_window_select => 'اختر النافذة المستهدفة';
-	@override String get external_window_unbind => 'إلغاء ربط النافذة';
-	@override String get external_window_unsupported => 'استخراج النافذة الخارجية متاح على Windows فقط';
-	@override String get failed_online_service => 'فشل التواصل مع الخدمة عبر الإنترنت';
-	@override String get favorite_added => 'تم حفظ الجملة في المفضّلات';
-	@override String get favorite_removed => 'تمت إزالة الجملة من المفضلة';
-	@override String favorites({required Object n}) => 'المفضّلات (${n})';
-	@override String field_fallback_used({required Object field, required Object secondField}) => 'استخدم حقل ${field} حقل ${secondField} كمصطلح بحث بديل.';
-	@override String file_count({required Object count}) => '${count} ملفات';
-	@override String get floating_dict_close => 'إغلاق';
-	@override String get floating_dict_title => 'القاموس';
-	@override String get floating_lyric_bg_opacity => 'تعتيم خلفية الترجمة العائمة';
-	@override String get floating_lyric_button_bg_opacity => 'تعتيم خلفية زر الترجمة العائمة';
-	@override String get floating_lyric_click_lookup => 'انقر الترجمة العائمة للبحث';
-	@override String get floating_lyric_click_lookup_hint => 'أبقِ هذا مفعّلًا مع قفل الموضع إن كنت لا تزال تريد البحث عن الكلمات.';
-	@override String get floating_lyric_close => 'إغلاق';
-	@override String get floating_lyric_context_lines => 'أسطر سياق الترجمة العائمة';
-	@override String get floating_lyric_context_lines_hint => '0 يعرض السطر الحالي فقط (سطر واحد، بدون تغيير)؛ عيّن 1-3 لعرض هذا العدد من الأسطر قبله وبعده';
-	@override String get floating_lyric_corner_radius => 'نصف قطر زوايا الترجمة العائمة';
-	@override String get floating_lyric_corner_radius_hint => '0 يحتفظ بالزوايا الافتراضية لكل منصة؛ ارفعه لتدوير الشريط والأزرار أكثر';
-	@override String get floating_lyric_font_size => 'حجم خط الترجمة العائمة';
-	@override String get floating_lyric_hint => 'عرض الجملة الحالية فوق التطبيقات الأخرى.';
-	@override String get floating_lyric_lock => 'قفل';
-	@override String get floating_lyric_next => 'التالي';
-	@override String get floating_lyric_no_audio => 'هذا الكتاب لا يحتوي على صوت للاستماع';
-	@override String get floating_lyric_permission_hint => 'يلزم إذن العرض فوق التطبيقات لعرض الترجمة العائمة.';
-	@override String get floating_lyric_permission_hint_coloros => 'إذا استمر النظام في رفض إذن التراكب: أعد تثبيت ملف APK هذا التطبيق مرة واحدة عبر مدير الملفات، أو أوقف مراقبة الأذونات في خيارات المطور، ثم حاول مجدداً.';
-	@override String get floating_lyric_play_pause => 'تشغيل';
-	@override String get floating_lyric_previous => 'السابق';
-	@override String get floating_lyric_text_opacity => 'تعتيم نص الترجمة العائمة';
-	@override String get floating_lyric_toggle_action => 'ترجمة عائمة';
-	@override String get floating_lyric_unavailable_hint => 'تعذّر عرض نافذة الترجمة العائمة.';
-	@override String get floating_lyric_unlock => 'فتح القفل';
-	@override String get floating_lyric_width => 'عرض الترجمة العائمة';
-	@override String get floating_lyric_width_hint => '0 يستخدم العرض الافتراضي للمنصة؛ عيّن قيمة لجعل الشريط بعرض ثابت';
-	@override String get focus_navigation_enabled => 'تنقّل التركيز بلوحة المفاتيح ووحدة التحكم';
-	@override String get focus_navigation_enabled_hint => 'حرّك التركيز بمفاتيح الأسهم أو وحدة التحكم واعرض حلقة تركيز.';
-	@override String get folder_picker_permission_required => 'يلزم إذن التخزين لتصفح المجلدات';
-	@override String get follow_audio_off_tooltip => 'تتبع الصوت: معطّل';
-	@override String get follow_audio_on_tooltip => 'تتبع الصوت: مفعّل';
-	@override String get font_color => 'لون الخط';
-	@override String get font_color_desc => 'لون نص القارئ';
-	@override String get font_desc_hina_mincho => 'مينتشو زخرفي ناعم · يُنصح مع Noto Sans JP';
-	@override String get font_desc_klee_one => 'خط يدوي · واضح وسهل القراءة · يُنصح باستخدامه مع Noto Sans JP';
-	@override String get font_desc_mplus_rounded_1c => 'أسلوب مستدير لطيف · مثالي للروايات الخفيفة · يُنصح مع Noto Sans JP';
-	@override String get font_desc_noto_sans_jp => 'Google/Adobe Gothic · أولوية الحروف اليابانية · وزن متغير';
-	@override String get font_desc_noto_sans_sc => 'Google/Adobe Gothic · أولوية الصينية المبسطة · للاستخدام كبديل';
-	@override String get font_desc_noto_sans_tc => 'Google/Adobe Gothic · أولوية الصينية التقليدية';
-	@override String get font_desc_noto_serif_jp => 'Google/Adobe Serif · أولوية الحروف اليابانية · مثالي للقراءة العمودية';
-	@override String get font_desc_noto_serif_sc => 'Google/Adobe Serif · أولوية الصينية المبسطة · للاستخدام كبديل';
-	@override String get font_desc_noto_serif_tc => 'خط مع سيريف من Google/Adobe · أولوية للحروف الصينية التقليدية · مثالي للقراءة العمودية';
-	@override String get font_desc_shippori_mincho => 'خط مينتشو أنيق · مناسب للأدب · يُنصح مع Noto Sans JP';
-	@override String get font_desc_zen_kaku_gothic_new => 'Kaku Gothic حديث · قراءة عامة · يُنصح مع Noto Sans JP';
-	@override String get font_desc_zen_maru_gothic => 'Gothic مستدير ناعم · يُنصح مع Noto Sans JP';
-	@override String get font_desc_zen_old_mincho => 'خط مينتشو كلاسيكي · أسلوب أدبي تقليدي · يُنصح مع Noto Sans JP';
-	@override String get font_source_file => 'ملف';
-	@override String get font_source_system => 'نظام';
-	@override String get font_target_app_ui => 'خط واجهة النظام';
-	@override String get font_target_body => 'خط نص الرواية';
-	@override String get font_target_dictionary => 'خط القاموس';
-	@override String get font_target_video_subtitle => 'Video Subtitle Font';
-	@override String get gal_hook_text_font_size => 'حجم خط نص Galgame';
-	@override String get gal_hook_text_font_size_hint => 'اسحب زاوية النافذة العائمة لتغيير حجمها؛ يُضبط حجم النص هنا.';
-	@override String get game_add => 'إضافة لعبة';
-	@override String get game_already_added => 'هذه اللعبة موجودة بالفعل في المكتبة';
-	@override String get game_audio_backend_engine => 'PCM المحرك';
-	@override String get game_audio_backend_loopback => 'استرجاع صوت النظام (مدمج)';
-	@override String get game_audio_backend_none => 'لا يوجد مصدر صوتي';
-	@override String get game_audio_backend_resource => 'صوت موارد اللعبة';
-	@override String get game_audio_duration => 'مدة الصوت';
-	@override String get game_audio_fallback_disabled_missing => '未找到与该句匹配的游戏资源音频；已关闭降级，未制卡';
-	@override String get game_audio_resource_id => '音频资源 ID';
-	@override String get game_audio_tracks => 'المسارات الصوتية النشطة';
-	@override String get game_auto_cover => 'جلب الغلاف تلقائيًا';
-	@override String get game_back_to_capture => 'العودة إلى مساحة الالتقاط';
-	@override String get game_back_to_library => 'العودة إلى مكتبة الألعاب';
-	@override String get game_capture_active => 'الالتقاط نشط';
-	@override String get game_capture_degraded_loopback => 'اللعبة تعمل، لكن حقن المحرك فشل؛ تم التراجع إلى صوت النظام، الذي قد يخلط الموسيقى والمؤثرات.';
-	@override String get game_capture_description => 'شغّل لعبة أو اربطها، ثم راقب النص والصوت ولقطات الشاشة ومخرجات Anki.';
-	@override String get game_capture_empty_body => 'شغّل لعبة أو اربطها؛ ستظهر حالة النص والصوت هنا.';
-	@override String get game_capture_empty_title => 'لم يتم استلام أي سطر بعد';
-	@override String get game_capture_launch_failed => 'فشل تشغيل اللعبة أو الالتقاط';
-	@override String get game_capture_launching => 'جارٍ تشغيل اللعبة وبدء الالتقاط...';
-	@override String get game_capture_running => 'جلسة الالتقاط قيد التشغيل';
-	@override String get game_capture_window_missing => 'بدأت عملية اللعبة لكن نافذتها لم تظهر، قد تكون اللعبة لم تُشغَّل. حاول مرة أخرى.';
-	@override String get game_capture_workbench => 'مساحة الالتقاط';
-	@override String get game_captured_lines => 'الأسطر الملتقطة';
-	@override String get game_card_mapping_missing => 'تعيينات حقول Anki تفتقر إلى رموز بطاقة اللعبة';
-	@override String get game_card_sentence_audio_missing => 'تم إنشاء البطاقة بدون صوت الجملة؛ لم يتم استبدال صوت سطر آخر.';
-	@override String get game_clear_events => 'مسح الأحداث';
-	@override String get game_cover_not_found => 'لم يُعثر على غلاف قابل للاستخدام في مجلد اللعبة أو ملفها التنفيذي';
-	@override String get game_cover_searching => 'جارٍ البحث عن غلاف...';
-	@override String get game_cover_updated => 'تم تحديث الغلاف';
-	@override String get game_dashboard => 'الرئيسية';
-	@override String get game_detail_missing => 'هذه اللعبة لم تعد في المكتبة';
-	@override String get game_detail_tab_edit => 'تعديل';
-	@override String get game_detail_tab_stats => 'إحصائيات';
-	@override String get game_detail_tab_summary => 'نظرة عامة';
-	@override String get game_diagnostics => 'تشخيص التوافق';
-	@override String get game_diagnostics_subtitle => 'مراحل الجلسة ونقاط الاتصال والمسارات الصوتية والأحداث المنظمة';
-	@override String game_drop_imported({required Object count}) => 'تمت إضافة ${count} لعبة(ألعاب)';
-	@override String get game_drop_no_exe => 'لا يوجد ملف .exe جديد للعبة بين الملفات المسقطة';
-	@override String get game_edit_developer => 'المطور';
-	@override String get game_edit_display_name => 'اسم العرض';
-	@override String get game_edit_exe_path => 'مسار الملف التنفيذي';
-	@override String get game_edit_invalid_date => 'يجب أن يكون تاريخ الإصدار بصيغة YYYY-MM-DD';
-	@override String get game_edit_launch_args => 'وسائط التشغيل';
-	@override String get game_edit_launch_args_hint => 'تُمرر إلى اللعبة عند التشغيل، مثل -windowed';
-	@override String get game_edit_nsfw => 'محتوى للبالغين';
-	@override String get game_edit_release_date => 'تاريخ الإصدار (YYYY-MM-DD)';
-	@override String get game_edit_save => 'حفظ';
-	@override String get game_edit_saved => 'تم الحفظ';
-	@override String get game_edit_summary => 'الوصف';
-	@override String get game_edit_tags => 'الوسوم (مفصولة بفواصل)';
-	@override String get game_edit_user_rating => 'تقييمي (0-10)';
-	@override String get game_edit_user_review => 'مراجعتي';
-	@override String get game_edit_workdir => 'مجلد العمل';
-	@override String get game_empty => 'لم تُضَف أي ألعاب بعد';
-	@override String get game_endpoint_phase_connected => 'متصل';
-	@override String get game_endpoint_phase_connecting => 'جارٍ الاتصال';
-	@override String get game_endpoint_phase_retrying => 'جارٍ إعادة المحاولة';
-	@override String get game_endpoint_phase_stopped => 'متوقف';
-	@override String get game_endpoints_engine_active => 'يتم توفير النص من خطاف المحرك؛ نقاط الاتصال هذه اختيارية';
-	@override String get game_endpoints_hint => 'منافذ لأدوات النص الخارجية (Textractor / LunaTranslator إلخ)؛ تجاهلها إن لم تستخدمها';
-	@override String get game_event_all => 'جميع الأحداث';
-	@override String get game_event_warnings => 'التحذيرات والأخطاء';
-	@override String get game_exe_missing => 'لم يُعثر على الملف التنفيذي للعبة';
-	@override String get game_filter => 'تصفية';
-	@override String get game_filter_all => 'الكل';
-	@override String get game_filter_favorited => 'المفضلة';
-	@override String get game_filter_hide_nsfw => 'إخفاء محتوى البالغين';
-	@override String get game_filter_local_only => 'يوجد ملف محلي';
-	@override String get game_filter_metadata_only => 'بيانات وصفية فقط';
-	@override String get game_filter_mined => 'تم التنقيب';
-	@override String get game_filter_reset => 'مسح التصفيات';
-	@override String get game_filter_source => 'التوفر';
-	@override String get game_filter_status => 'حالة اللعب';
-	@override String get game_filter_tags => 'الوسوم';
-	@override String get game_filter_with_audio => 'مع صوت';
-	@override String get game_focus_continue => 'متابعة';
-	@override String get game_follow_live => 'متابعة مباشرة';
-	@override String get game_health => 'حالة الصحة';
-	@override String get game_health_anki => 'مخرجات Anki';
-	@override String get game_health_audio => 'مصدر الصوت';
-	@override String get game_health_helper => 'مساعد الخطاف';
-	@override String get game_health_process => 'عملية اللعبة';
-	@override String get game_health_text => 'مصدر النص';
-	@override String get game_health_upscaling => 'تحسين دقة النافذة';
-	@override String get game_health_window => 'نافذة اللعبة';
-	@override String get game_helper_download => 'تحميل';
-	@override String game_helper_download_failed({required Object error}) => 'فشل تحميل مكون المحرك: ${error}';
-	@override String get game_helper_downloading => 'جارٍ تحميل مكون المحرك…';
-	@override String get game_helper_install_incomplete => 'اكتمال تثبيت مكون المحرك غير كامل، يرجى إعادة المحاولة';
-	@override String game_helper_needed_body({required Object size}) => 'يتطلب تشغيل Galgame مكون حاقن خطاف المحرك (حوالي ${size}). يحتوي على كود حقن العمليات ويُوزع بشكل منفصل عن التطبيق لتجنب إنذارات مضاد الفيروسات الكاذبة. هل تريد تحميله الآن؟';
-	@override String get game_helper_needed_title => 'مكون محرك Galgame مطلوب';
-	@override String get game_helper_size_unknown => 'حجم غير معروف';
-	@override String get game_helper_verification_failed => 'تم حظر مكون المحرك: لا يمكن التحقق من المجموع الاختباري (ملف .sha256 من GitHub غير قابل للوصول أو مفقود أو غير مطابق). يرفض Fushi تثبيت كود حاقن غير موثق.';
-	@override String get game_home_subtitle => 'مكتبة الألعاب ومراقبة الالتقاط';
-	@override String get game_hook_fallback_all_audio_sources_failed => 'لم يتمكن خطاف صوت المحرك ولا استرجاع صوت النظام من البدء؛ لا يمكن التقاط أي صوت.';
-	@override String get game_hook_fallback_engine_attach_failed => 'فشل ربط خطاف صوت المحرك باللعبة قيد التشغيل؛ يتم استخدام مزيج النظام بدلاً من ذلك.';
-	@override String get game_hook_fallback_engine_pcm_unavailable => 'خطاف صوت المحرك مثبت، لكن اللعبة لم تشغل أي صوت بعد. يتم استخدام مزيج النظام حاليًا وسيعود تلقائيًا عند وصول أول صوت.';
-	@override String get game_hook_fallback_launch_injection_failed => 'اللعبة تعمل، لكن حقن المحرك المبكر فشل؛ يتم استخدام مزيج النظام بدلاً من ذلك.';
-	@override String get game_hook_fallback_window_not_found => 'التقاط الصوت يعمل، لكن نافذة اللعبة لم تظهر بعد، لذا لقطات الشاشة غير متاحة. سيتم الربط تلقائيًا عند ظهور النافذة.';
-	@override String get game_hook_line_unavailable => 'هذا السطر الملتقط لم يعد متاحًا.';
-	@override String get game_hook_reason_access_denied => 'اللعبة تعمل بصلاحيات أعلى؛ شغّل Fushi كمسؤول وحاول مرة أخرى.';
-	@override String get game_hook_reason_bitness_mismatch => 'بنية المساعد لا تتطابق مع اللعبة (32 بت مقابل 64 بت)؛ أعد تثبيت المساعد.';
-	@override String get game_hook_reason_create_process_failed => 'لم يتمكن من تشغيل اللعبة من Fushi؛ تحقق من مسار الملف التنفيذي.';
-	@override String get game_hook_reason_elevation_required => 'هذه اللعبة تتطلب صلاحيات المسؤول؛ شغّل Fushi كمسؤول وأعد تشغيلها.';
-	@override String get game_hook_reason_game_exe_missing => 'الملف التنفيذي للعبة لم يعد موجودًا في المسار المحفوظ.';
-	@override String get game_hook_reason_guarded_hook_failed => 'لم يتمكن خطاف محمي بالملف الشخصي من التثبيت في الوقت المحدد؛ جارٍ إعادة المحاولة تلقائيًا.';
-	@override String get game_hook_reason_handshake_timeout => 'تم ربط اللعبة لكنها لم تنتج نصًا أو صوتًا في الوقت المحدد؛ قد لا يكون هذا المحرك مدعومًا بعد.';
-	@override String get game_hook_reason_helper_missing => 'مساعد خطاف الصوت غير مثبت لبنية هذه اللعبة؛ ثبّته وحاول مرة أخرى.';
-	@override String get game_hook_reason_hook_dll_missing => 'حزمة المساعد غير مكتملة (مكتبة الخطاف مفقودة)؛ أعد تثبيتها.';
-	@override String get game_hook_reason_injection_failed => 'تم حظر الحقن في اللعبة؛ أضف Fushi واللعبة إلى استثناءات مضاد الفيروسات.';
-	@override String get game_hook_reason_ready_timeout => 'لم تنتهِ مكتبة الخطاف من التحميل في الوقت المحدد؛ قد يتسبب فحص مضاد الفيروسات في ذلك.';
-	@override String get game_hook_reason_resume_failed => 'لم يتمكن من استئناف اللعبة المشغلة وتم إيقافها؛ أعد تشغيلها.';
-	@override String get game_hook_reason_shared_memory_unavailable => 'لم يتمكن من فتح قناة الالتقاط؛ أعد تشغيل Fushi.';
-	@override String get game_hook_reason_spawn_failed => 'لم يتمكن من تشغيل المساعد؛ تحقق من أن مضاد الفيروسات لم يحذفه أو يحظره.';
-	@override String get game_hook_reason_resident_hook_mismatch => 'جلسة التقاط سابقة لا تزال محملة في اللعبة؛ أعد تشغيل اللعبة مرة واحدة.';
-	@override String get game_hook_reason_steam_timeout => 'قبلت Steam طلب التشغيل لكن عملية اللعبة لم تظهر.';
-	@override String get game_hook_reason_target_missing => 'لم يتم تحديد عملية لعبة أو ملف تنفيذي للالتقاط.';
-	@override String get game_hook_recapture_empty => 'لم يتم التقاط أي صوت في نافذة إعادة الالتقاط';
-	@override String get game_hook_recapture_saved => 'تم حفظ الصوت المعاد التقاطه لهذا السطر';
-	@override String get game_hook_recapture_started => 'جارٍ التسجيل — أعد تشغيل هذا السطر في اللعبة';
-	@override String get game_hook_recapture_unavailable => 'إعادة التقاط الصوت تحتاج إلى استرجاع صوت النظام';
-	@override String get game_kpi_total_games => 'ألعاب';
-	@override String get game_kpi_week => 'هذا الأسبوع';
-	@override String get game_latest_line => 'آخر سطر';
-	@override String get game_launch => 'تشغيل';
-	@override String get game_launch_and_capture => 'تشغيل والتقاط';
-	@override String get game_launch_unsupported => 'تشغيل الألعاب مدعوم فقط على Windows';
-	@override String get game_library => 'مكتبة الألعاب';
-	@override String get game_line_audio_encoded => 'تم استخراج الصوت';
-	@override String get game_line_audio_fallback => 'بديل';
-	@override String get game_line_audio_matched => 'الصوت جاهز';
-	@override String get game_line_audio_missing => 'لا يوجد صوت';
-	@override String get game_line_audio_pending => 'جارٍ المطابقة';
-	@override String get game_line_audio_unavailable => 'نص فقط';
-	@override String get game_line_favorite_tooltip => 'إضافة هذا السطر للمفضلة';
-	@override String get game_line_mined => 'تم التنقيب';
-	@override String get game_line_preview_failed => 'لا يوجد صوت قابل للتشغيل لهذا السطر';
-	@override String get game_line_preview_tooltip => 'تشغيل صوت هذا السطر';
-	@override String get game_line_track_applied => 'تم تطبيق مسار الصوت على هذا السطر';
-	@override String get game_line_track_dialog_title => 'مسار الصوت لهذا السطر';
-	@override String get game_line_track_failed => 'هذا المسار لا يحتوي على صوت حول هذا السطر';
-	@override String get game_line_track_tooltip => 'اختر مسار الصوت لهذا السطر';
-	@override String get game_line_unfavorite_tooltip => 'إزالة من المفضلة';
-	@override String get game_live_lines => 'الأسطر المباشرة';
-	@override String get game_manage_tracks => 'إدارة المسارات الصوتية';
-	@override String get game_meta_added => 'تمت الإضافة';
-	@override String get game_meta_ranking => 'التصنيف';
-	@override String get game_meta_source => 'مصدر البيانات';
-	@override String get game_never_played => 'لم تُلعب أبدًا';
-	@override String get game_no_active_line => 'اختر سطرًا لفحص حالة صوت الجملة.';
-	@override String get game_no_events => 'لا توجد أحداث جلسة بعد';
-	@override String get game_no_match => 'لا توجد ألعاب تطابق التصفيات الحالية';
-	@override String get game_no_tracks => 'لا توجد بيانات مسارات صوتية بعد';
-	@override String get game_open_capture_workspace => 'فتح مساحة الالتقاط';
-	@override String get game_phase_attaching => 'جارٍ الربط';
-	@override String get game_phase_degraded => 'متدهور';
-	@override String get game_phase_error => 'خطأ';
-	@override String get game_phase_idle => 'خامل';
-	@override String get game_phase_injecting => 'جارٍ الحقن';
-	@override String get game_phase_launching => 'جارٍ التشغيل';
-	@override String get game_phase_resolving => 'جارٍ التحليل';
-	@override String get game_phase_running => 'قيد التشغيل';
-	@override String get game_phase_stopping => 'جارٍ الإيقاف';
-	@override String get game_phase_waiting_signals => 'في انتظار الإشارات';
-	@override String get game_pipeline => 'مسار الجلسة';
-	@override String get game_play_status => 'حالة اللعب';
-	@override String get game_random_reroll => 'خلط';
-	@override String get game_random_title => 'اختر لي';
-	@override String get game_recently_played => 'لُعبت مؤخرًا';
-	@override String get game_refresh_tracks => 'تحديث المسارات';
-	@override String get game_remove => 'إزالة';
-	@override String get game_rename => 'إعادة تسمية';
-	@override String get game_rename_label => 'اسم اللعبة';
-	@override String get game_scrape => 'جلب البيانات الوصفية';
-	@override String get game_scrape_applied => 'تم تحديث البيانات الوصفية';
-	@override String get game_scrape_failed => 'فشل جلب البيانات الوصفية';
-	@override String get game_scrape_no_result => 'لم يُعثر على نتيجة مطابقة';
-	@override String get game_scrape_query => 'العنوان أو معرف المصدر';
-	@override String get game_search => 'بحث في الألعاب';
-	@override String get game_session_events => 'أحداث الجلسة';
-	@override String get game_session_idle => 'لم يبدأ الالتقاط';
-	@override String get game_session_listening => 'جارٍ الاستماع';
-	@override String get game_set_cover => 'تعيين الغلاف';
-	@override String get game_show_hook_text_window => 'إظهار نافذة نص الخطاف';
-	@override String get game_site_score => 'تقييم الموقع';
-	@override String get game_sort => 'ترتيب';
-	@override String get game_sort_added => 'تاريخ الإضافة';
-	@override String get game_sort_last_played => 'آخر مرة لُعبت';
-	@override String get game_sort_name => 'الاسم';
-	@override String get game_sort_release => 'تاريخ الإصدار';
-	@override String get game_sort_site_score => 'تقييم الموقع';
-	@override String get game_sort_user_rating => 'تقييمي';
-	@override String get game_stat_daily => 'وقت اللعب اليومي';
-	@override String get game_stat_delete_session => 'حذف هذه الجلسة';
-	@override String get game_stat_last_played => 'آخر مرة لُعبت';
-	@override String get game_stat_no_sessions => 'لم تُسجل أي جلسات لعب بعد';
-	@override String get game_stat_session_list => 'سجل الجلسات';
-	@override String get game_stat_sessions => 'الجلسات';
-	@override String get game_stat_today => 'وقت اللعب اليوم';
-	@override String get game_stat_total_time => 'إجمالي وقت اللعب';
-	@override String get game_status_dropped => 'متروكة';
-	@override String get game_status_not_configured => 'غير موثقة';
-	@override String get game_status_on_hold => 'مؤجلة';
-	@override String get game_status_played => 'تم اللعب';
-	@override String get game_status_playing => 'قيد اللعب';
-	@override String get game_status_ready => 'جاهزة';
-	@override String get game_status_unset => 'غير محدد';
-	@override String get game_status_waiting => 'في الانتظار';
-	@override String get game_status_want_to_play => 'أريد لعبها';
-	@override String get game_stop_listening => 'إيقاف المستمعين';
-	@override String get game_summary_aliases => 'الأسماء البديلة';
-	@override String get game_summary_all_titles => 'جميع العناوين';
-	@override String get game_summary_average_hours => 'متوسط وقت اللعب';
-	@override String get game_summary_none => 'لا يوجد وصف بعد. اجلب البيانات الوصفية لملئه.';
-	@override String get game_summary_release_date => 'تاريخ الإصدار';
-	@override String get game_tags_clear => 'مسح الاختيار';
-	@override String get game_tags_title => 'وسوم اللعبة';
-	@override String get game_text_endpoints => 'نقاط اتصال النص';
-	@override String get game_text_gaps => 'فجوات التسلسل';
-	@override String get game_text_gaps_hint => 'فجوات التسلسل = عدد الأسطر المفقودة في حلقة نص الخطاف؛ 0 طبيعي';
-	@override String get game_text_source_engine => 'خطاف المحرك';
-	@override String get game_text_source_unknown => 'مصدر غير معروف';
-	@override String get game_text_source_websocket => 'WebSocket';
-	@override String get game_text_thread => 'خيط النص';
-	@override String game_text_thread_audio_count({required Object count}) => '${count} مع صوت';
-	@override String get game_text_thread_hint => 'اختر خيط الحوار النظيف، مثل Luna Translator';
-	@override String get game_track_auto => 'اختيار تلقائي';
-	@override String get game_track_clips => 'مقاطع';
-	@override String get game_track_energy => 'الطاقة';
-	@override String get game_track_exclude_bgm => 'وضع علامة كموسيقى خلفية';
-	@override String get game_track_exclusion_hint => 'ضع علامة على مسار الموسيقى الخلفية/الأجواء كمستبعد حتى لا يعامله الاختيار التلقائي كصوت — الأسطر بدون كلام لن تلتقط الموسيقى الخلفية.';
-	@override String get game_track_exclusion_title => 'استبعاد المسارات الصوتية';
-	@override String get game_track_preview => 'معاينة هذا المسار';
-	@override String get game_track_preview_failed => 'لم يتمكن من التقاط صوت حديث من هذا المسار';
-	@override String get game_track_preview_stop => 'إيقاف المعاينة';
-	@override String get game_track_restore => 'استعادة المسار';
-	@override String get game_track_select_as_voice => 'استخدام كمسار صوتي';
-	@override String get game_track_select_requires_engine => 'اختيار المسار يتطلب جلسة خطاف محرك نشطة';
-	@override String get game_track_voice => 'صوت';
-	@override String get game_tracks_loopback_hint => 'استرجاع صوت النظام يلتقط المخرجات المدمجة لكل النظام كتدفق واحد؛ التعداد لكل مسار غير متاح.';
-	@override String get game_tracks_pcm_only_hint => 'اختيار المسار يؤثر فقط على الالتقاط عندما يكون PCM المحرك هو الواجهة الصوتية النشطة. القائمة أدناه للقراءة فقط مع الواجهة الحالية.';
-	@override String get game_tracks_resource_mode_hint => 'في وضع صوت موارد اللعبة، يتم استخراج كل سطر صوتي مباشرة من ملفات اللعبة، لذا لا توجد قائمة مسارات PCM هنا. الاختيار التلقائي أو اليدوي للمسار ينطبق فقط على التقاط PCM المحرك.';
-	@override String get game_unread_lines => 'غير مقروء';
-	@override String get game_upscaling => 'تحسين دقة نافذة اللعبة';
-	@override String get game_upscaling_auto => 'تلقائي';
-	@override String get game_upscaling_hint_external => 'كانت نسخة من Magpie تعمل بالفعل، لذا تركها Fushi. اضغط Win+Shift+A لتحسين دقة نافذة اللعبة.';
-	@override String get game_upscaling_hint_first_run => 'كان على Magpie إعداد نفسه هذه المرة. اضغط Win+Shift+A للتحسين الآن — في المرة القادمة سيحدث تلقائيًا.';
-	@override String get game_upscaling_hint_manual => 'اضغط Win+Shift+A لتحسين دقة نافذة اللعبة.';
-	@override String get game_upscaling_installed_only => 'المثبت فقط';
-	@override String get game_upscaling_off => 'إيقاف';
-	@override String get game_upscaling_status_active => 'تحسين دقة النافذة مفعل';
-	@override String get game_upscaling_status_failed => 'لم يتمكن تحسين دقة النافذة من البدء';
-	@override String get game_upscaling_status_manual => 'تحسين دقة النافذة جاهز، لكنه لم يبدأ تلقائيًا';
-	@override String get game_upscaling_status_unavailable => 'تحسين دقة النافذة غير متاح';
-	@override String get game_user_rating => 'تقييمي';
-	@override String get game_view_detail => 'عرض التفاصيل';
-	@override String get game_waiting_for_text => 'في انتظار النص';
-	@override String game_waveform_range_label({required Object start, required Object end, required Object duration, required Object total}) => '${start} - ${end} (محدد ${duration} / إجمالي ${total})';
-	@override String get game_waveform_select_title => 'اختر نطاق الصوت';
-	@override String get game_window_bound => 'مرتبط';
-	@override String get game_window_missing => 'غير مرتبط';
-	@override String get games => 'ألعاب';
-	@override String get global_context_capture => 'التقاط سياق التحديد';
-	@override String get global_context_capture_hint => 'قراءة النص المحيط من التطبيق الأمامي لعرض الجملة الحالية (Windows فقط)';
-	@override String go_to_chapter({required Object n}) => 'الفصل ${n}';
-	@override String get handlebar_audio => 'صوت';
-	@override String get handlebar_book_cover => 'غلاف الكتاب';
-	@override String get handlebar_card_image => 'Card Image (Cover / GIF)';
-	@override String get handlebar_cue_sentence => 'جملة الترجمة';
-	@override String handlebar_deprecated_label({required Object label}) => '${label} (مهمل)';
-	@override String get handlebar_document_title => 'عنوان المستند';
-	@override String get handlebar_expression => 'التعبير';
-	@override String get handlebar_frequencies => 'التكرارات (HTML)';
-	@override String get handlebar_frequency_harmonic_rank => 'التكرار (الترتيب)';
-	@override String get handlebar_furigana_plain => 'فوريغانا';
-	@override String get handlebar_glossary => 'المعنى';
-	@override String get handlebar_glossary_first => 'المعنى (الأول)';
-	@override String get handlebar_pitch_accent_categories => 'فئات النبرة';
-	@override String get handlebar_pitch_accent_positions => 'مواضع النبرة';
-	@override String get handlebar_popup_selection_text => 'نص التحديد المنبثق';
-	@override String get handlebar_reading => 'القراءة';
-	@override String get handlebar_selected_glossary => 'المعنى المحدد';
-	@override String get handlebar_sentence => 'الجملة';
-	@override String get handlebar_sentence_audio => 'Sentence Audio';
-	@override String get handlebar_video_clip => 'Video Clip (GIF)';
-	@override String get harmonic_frequency => 'تجميع تكرارات الكلمات';
-	@override String health_match_summary({required Object pct}) => 'تطابق ${pct}%';
-	@override String get highlight_on_tap => 'تمييز النص عند النقر';
-	@override String get home_activity => 'النشاط';
-	@override String get home_activity_empty => 'لا يوجد نشاط بعد';
-	@override String get home_continue => 'متابعة';
-	@override String get home_filter_added => 'مضافة';
-	@override String get home_filter_all => 'الكل';
-	@override String get home_filter_game => 'لعبة';
-	@override String get home_filter_read => 'قراءة';
-	@override String get home_filter_watch => 'مشاهدة';
-	@override String get home_recently_added => 'أُضيفت مؤخرًا';
-	@override String get home_remote_source => 'عن بعد';
-	@override String home_session_count({required Object n}) => '${n} جلسات';
-	@override String get home_today => 'اليوم';
-	@override String get home_yesterday => 'أمس';
-	@override String get hover_auto_lookup => 'البحث عند التمرير';
-	@override String get hover_auto_lookup_hint => 'البحث تلقائيًا عند تمرير مؤشر الماوس فوق حرف؛ دون الحاجة إلى النقر أو الضغط على Shift. يُظهر طبقة منبثقة واحدة كحد أقصى. لأجهزة سطح المكتب فقط.';
-	@override String get icon_custom => 'مخصص';
-	@override String get icon_custom_confirm_body => 'سيتم إنشاء اختصار على الشاشة الرئيسية بالصورة المختارة. هل تريد المتابعة؟';
-	@override String get icon_custom_confirm_title => 'أيقونة مخصصة';
-	@override String get icon_custom_hint => 'انقر على أيقونة للتبديل، أو اختر صورة مخصصة أدناه.';
-	@override String get icon_default => 'افتراضي';
-	@override String get icon_full => 'كامل';
-	@override String get icon_shortcut_created => 'تم إنشاء اختصار على الشاشة الرئيسية.';
-	@override String get icon_shortcut_unsupported => 'الاختصارات غير مدعومة على هذا الجهاز.';
-	@override String get icon_switch_success => 'تم تغيير أيقونة التطبيق بنجاح.';
-	@override String get icon_transparent => 'شفاف';
-	@override String image_page_counter({required Object current, required Object total}) => '${current} / ${total}';
-	@override String get image_pause => 'إيقاف عند الصورة';
-	@override String get image_pause_hint => 'إيقاف مؤقت تلقائي عند ظهور صورة أثناء التشغيل.';
-	@override String get image_pause_off => 'إيقاف';
-	@override String get image_search_label_after => 'عُثر عليها لـ';
-	@override String get image_search_label_before => 'اختيار صورة ';
-	@override String get image_search_label_middle => 'من ';
-	@override String get image_search_label_none_before => 'اختيار ';
-	@override String get image_search_label_none_middle => 'لا توجد صورة ';
-	@override String get import_complete => 'اكتمل استيراد القاموس.';
-	@override String import_duplicate({required Object name}) => 'قاموس باسم『${name}』مستورد بالفعل.';
-	@override String get import_extract => 'جارٍ استخراج الملفات...';
-	@override String get import_failed => 'فشل استيراد القاموس.';
-	@override String get import_in_progress => 'جارٍ الاستيراد';
-	@override String import_name({required Object name}) => 'جارٍ استيراد『${name}』...';
-	@override String import_sidecar_audio({required Object count}) => 'تم إرفاق ${count} ملف صوتي تلقائيًا';
-	@override String import_sidecar_subtitle({required Object name}) => 'ترجمة مرفقة تلقائيًا: ${name}';
-	@override String get import_start => 'جارٍ التحضير للاستيراد...';
-	@override String get import_step_building_epub => 'إنشاء EPUB…';
-	@override String get import_step_converting_epub => 'تحويل إلى EPUB…';
-	@override String import_step_copying_file({required Object name}) => 'جارٍ نسخ ${name}…';
-	@override String get import_step_done => 'تم';
-	@override String get import_step_importing_epub => 'استيراد EPUB…';
-	@override String get import_step_matching => 'محاذاة الصوت…';
-	@override String get import_step_parsing => 'تحليل الترجمات…';
-	@override String get import_step_persisting => 'حفظ الملفات…';
-	@override String get import_step_reading => 'قراءة الملف…';
-	@override String get import_step_reading_idb => 'قراءة معلومات الكتاب…';
-	@override String get import_step_saving => 'حفظ السجلات…';
-	@override String get import_theme => 'استيراد مظهر';
-	@override String get import_theme_hint => 'الصق رمز المظهر';
-	@override String get import_theme_invalid => 'رمز مظهر غير صالح';
-	@override String get import_theme_success => 'تم استيراد المظهر';
-	@override String import_unsupported_file_format({required Object ext}) => 'صيغة ملف غير مدعومة: ${ext}';
-	@override String get increase => 'زيادة';
-	@override String get info_empty_home_tab => 'السجل فارغ';
-	@override String init_error_message({required Object error}) => 'فشلت التهيئة: ${error}';
-	@override String get initialization_failed => 'فشل التهيئة';
-	@override String get interconnect_backup_backend => 'استخدام الترابط كواجهة النسخ الاحتياطي';
-	@override String get interconnect_backup_backend_active => 'النسخ الاحتياطية تذهب بالفعل إلى الجهاز المقترن. اختر واجهة أخرى في المزامنة والنسخ الاحتياطي للتبديل.';
-	@override String get interconnect_backup_backend_apply => 'تعيين كواجهة النسخ الاحتياطي';
-	@override String interconnect_backup_backend_current({required Object backend}) => 'واجهة النسخ الاحتياطي الحالية: ${backend}';
-	@override String get interconnect_backup_backend_hint => 'النسخ الاحتياطي والمزامنة إلى الجهاز المقترن بدلاً من التخزين السحابي. كل ما تسمح به خيارات الرفع للجهاز المقترن أعلاه هو ما يُكتب هناك.';
-	@override String get interconnect_backup_backend_needs_pairing => 'اتصل بجهاز أعلاه أولاً.';
-	@override String get interconnect_enable => 'تفعيل الترابط';
-	@override String get interconnect_enable_hint => 'الاتصال بأجهزتك الأخرى عبر الشبكة المحلية. يعمل جنبًا إلى جنب مع واجهة النسخ الاحتياطي السحابي — لا يتعارضان.';
-	@override String get interconnect_moved_note => 'إعدادات الاتصال والخادم موجودة في فئة ترابط Fushi';
-	@override String get interconnect_section_client => 'الاتصال بأجهزة أخرى';
-	@override String get interconnect_section_delegate => 'التفويض إلى الجهاز المقترن';
-	@override String get interconnect_section_related => 'المحتوى عن بعد والبحث';
-	@override String get interconnect_summary => 'مزامنة مباشرة بين الأجهزة واستضافة هذا الجهاز كخادم';
-	@override String get interconnect_upload_audiobook_files => 'رفع ملفات الكتب الصوتية';
-	@override String get interconnect_upload_audiobook_files_hint => 'مزامنة ملفات الصوت وحزم الترجمة للكتب الصوتية على هذا الجهاز إلى نظير الترابط (كبير).';
-	@override String get interconnect_upload_content => 'رفع ملفات الكتب';
-	@override String get interconnect_upload_content_hint => 'مزامنة كتب ومحتوى القراءة على هذا الجهاز إلى نظير الترابط.';
-	@override String get interconnect_upload_dictionary => 'رفع القواميس';
-	@override String get interconnect_upload_dictionary_hint => 'مزامنة قواميس هذا الجهاز إلى نظير الترابط.';
-	@override String get interconnect_upload_section => 'الرفع إلى نظير الترابط';
-	@override String get interconnect_upload_video_files => 'رفع ملفات الفيديو';
-	@override String get interconnect_upload_video_files_hint => 'مزامنة ملفات الفيديو المحلية على هذا الجهاز إلى نظير الترابط (كبير).';
-	@override String get invert_audiobook_skip_direction => 'عكس أزرار التخطي في الشريط السفلي';
-	@override String get invert_swipe_direction => 'عكس اتجاه التمرير لقلب الصفحات';
-	@override String get invert_volume_buttons => 'عكس أزرار الصوت';
-	@override String get jump_to_char => 'الانتقال إلى حرف';
-	@override String jump_to_char_current({required Object current, required Object total}) => 'الحالي: ${current} / ${total}';
-	@override String get jump_to_char_hint => 'أدخل موضع الحرف…';
-	@override String get keep_screen_awake => 'إبقاء الشاشة مستيقظة';
-	@override String get library_search => 'بحث في المكتبة';
-	@override String get loading_illustrations => 'جارٍ تحميل الرسوم التوضيحية…';
-	@override String get loading_slow_message => 'إذا كان موقع تخزين بياناتك على محرك أقراص شبكي أو قابل للإزالة غير متصل حاليًا، فقد يتوقف بدء التشغيل. انقر إعادة المحاولة للبدء باستخدام موقع التخزين الافتراضي لهذه الجلسة؛ بياناتك تبقى في مكانها.';
-	@override String get loading_slow_message_mobile => 'بدء التشغيل يستغرق وقتًا أطول من المعتاد — قد يكون Fushi يحمل مكتبة كبيرة أو قواميس. انتظر لحظة، أو انقر إعادة المحاولة لإعادة التحميل. بياناتك آمنة ولن تُفقد.';
-	@override String get loading_slow_title => 'بدء التشغيل يستغرق وقتًا أطول من المعتاد';
-	@override String get local_audio => 'صوت محلي';
-	@override String get local_audio_add_db => 'إضافة قاعدة بيانات صوت محلي';
-	@override String get local_audio_edit_sources => 'تعديل المصادر';
-	@override String local_audio_import_failed_detail({required Object reason}) => 'فشل استيراد قاعدة بيانات الصوت: ${reason}';
-	@override String get local_audio_imported => 'تمت إضافة قاعدة بيانات الصوت';
-	@override String get local_audio_invalid_db => 'هذا الملف ليس قاعدة بيانات صوتية قابلة للاستخدام (ليس قاعدة بيانات Local Audio Server، أو لا يحتوي على صوت).';
-	@override String get local_audio_no_sources => 'لم يُعثر على مصادر في قاعدة البيانات هذه';
-	@override String get local_audio_reference_original => 'الإشارة إلى الملف الأصلي (بدون نسخ)';
-	@override String get local_audio_reference_original_desc => 'إبقاء قاعدة البيانات في مكانها والقراءة من مسارها الأصلي؛ سيتعطل المصدر إذا تم نقل الملف أو حذفه.';
-	@override String get local_audio_source_order_title => 'أولوية المصدر';
-	@override String get log_copy_all => 'نسخ الكل';
-	@override String get log_export_failed => 'فشل التصدير';
-	@override String get log_export_file => 'تصدير إلى ملف';
-	@override String get log_export_saved => 'تم حفظ السجل';
-	@override String get log_upload_action => 'الرفع إلى الخادم';
-	@override String get log_upload_consent_agree => 'الموافقة والرفع';
-	@override String get log_upload_consent_body => 'سيُرفع نص السجل (الذي قد يتضمن رسائل أخطاء ومسارات ملفات وعناوين كتب) إضافةً إلى إصدار التطبيق ونظام التشغيل وطراز الجهاز إلى خادم المطوّر للمساعدة في تشخيص المشكلات. يحدث هذا فقط عند نقرك على الرفع — لا يُرسل شيء تلقائيًا.';
-	@override String get log_upload_consent_title => 'رفع السجل إلى الخادم؟';
-	@override String get log_upload_failed => 'فشل الرفع';
-	@override String get log_upload_in_progress => 'جارٍ رفع السجل…';
-	@override String get log_upload_success => 'تم رفع السجل';
-	@override String get log_upload_too_large => 'السجل كبير جدًا على الرفع';
-	@override String get login => 'تسجيل الدخول';
-	@override String get lookup_audio_volume => 'مستوى صوت البحث';
-	@override String get low_memory_mode => 'وضع الذاكرة المنخفضة';
-	@override String get low_memory_mode_hint => 'تقليل استخدام الذاكرة والتخزين المؤقت للأجهزة منخفضة المواصفات. بعض التغييرات تتطلب إعادة التشغيل.';
-	@override String get low_memory_mode_suggestion => 'جرب تفعيل وضع الذاكرة المنخفضة في الإعدادات ← إعدادات متنوعة.';
-	@override String get lyrics_artist => 'الفنان';
-	@override String get lyrics_blur => 'تمويه كلمات الأغاني';
-	@override String get lyrics_blur_hint => 'تمويه السطر الحالي للانغماس في الاستماع؛ مرر المؤشر أو انقر للكشف';
-	@override String get lyrics_font_size => 'حجم خط كلمات الأغاني';
-	@override String get lyrics_font_size_hint => 'حجم خط كلمات الأغاني مستقل عن وضع الكتاب';
-	@override String get lyrics_mode => 'وضع الكلمات';
-	@override String get lyrics_mode_hint_body => 'وضع كلمات الأغاني له إعداد حجم خط خاص به. يمكنك ضبطه في ⚙ الإعدادات ← الطباعة.';
-	@override String get lyrics_mode_hint_title => 'وضع كلمات الأغاني';
-	@override String get lyrics_text_color => 'لون نص الكلمات';
-	@override String get lyrics_text_color_hint => 'استخدم لونًا مخصصًا لنص الكلمات بدلًا من اتباع السمة';
-	@override String get lyrics_title => 'العنوان';
-	@override String get lyrics_vertical_writing => 'كلمات عمودية';
-	@override String get lyrics_vertical_writing_hint => 'قراءة الكلمات من الأعلى للأسفل، من اليمين لليسار (مستقل عن وضع الكتاب)';
-	@override String get manage_audio_sources => 'إدارة مصادر الصوت';
-	@override String get manager => 'المدير';
-	@override String get manga_mode_toggle => 'Reading Mode';
-	@override String get manga_ocr_delete => 'حذف النماذج';
-	@override String get manga_ocr_delete_confirm_message => 'هذا يحرر مساحة القرص. يمكنك تحميلها مرة أخرى لاحقًا.';
-	@override String get manga_ocr_delete_confirm_title => 'حذف نماذج OCR؟';
-	@override String get manga_ocr_delete_done => 'تم حذف النماذج';
-	@override String get manga_ocr_download => 'تحميل النماذج';
-	@override String get manga_ocr_download_done => 'تم تحميل النماذج';
-	@override String get manga_ocr_download_failed => 'فشل تحميل النموذج';
-	@override String manga_ocr_downloading_file({required Object file}) => 'جارٍ تحميل ${file}…';
-	@override String get manga_ocr_engine_builtin => 'مدمج';
-	@override String get manga_ocr_engine_external => 'Mokuro خارجي';
-	@override String get manga_ocr_engine_none => 'لا يوجد محرك OCR متاح. حمّل النماذج المدمجة أو عيّن مسار Mokuro CLI في الإعدادات.';
-	@override String get manga_ocr_external_cli_hint => 'اتركه فارغًا للكشف التلقائي (FUSHI_MOKURO / PATH)';
-	@override String get manga_ocr_external_cli_label => 'مسار Mokuro CLI الخارجي';
-	@override String get manga_ocr_external_detect => 'كشف';
-	@override String manga_ocr_external_detected({required Object version}) => 'تم الكشف: ${version}';
-	@override String get manga_ocr_external_not_found => 'لم يُعثر على Mokuro';
-	@override String get manga_ocr_model_status_missing => 'لم يتم تحميل نماذج OCR';
-	@override String get manga_ocr_model_status_ready => 'نماذج OCR جاهزة';
-	@override String get manga_ocr_section => 'OCR المانغا';
-	@override String get manga_ocr_section_summary => 'نماذج OCR المدمجة و Mokuro CLI الخارجي';
-	@override String get manga_ocr_unsupported => 'OCR المانغا المدمج غير متاح على هذه المنصة بعد.';
-	@override String get manga_ocr_wizard_done => 'تم استيراد المانغا';
-	@override String get manga_ocr_wizard_failed => 'فشل OCR';
-	@override String get manga_ocr_wizard_has_mokuro => 'هذا المجلد يحتوي بالفعل على ملف .mokuro — استخدم الاستيراد العادي بدلاً من ذلك.';
-	@override String get manga_ocr_wizard_importing => 'جارٍ الاستيراد…';
-	@override String get manga_ocr_wizard_no_images => 'لم يُعثر على صور في هذا المجلد.';
-	@override String manga_ocr_wizard_page_progress({required Object done, required Object total}) => 'صفحة ${done} / ${total}';
-	@override String get manga_ocr_wizard_pick_folder => 'اختر مجلد الصور';
-	@override String get manga_ocr_wizard_run => 'تشغيل OCR';
-	@override String get manga_ocr_wizard_running => 'جارٍ تشغيل OCR…';
-	@override String get manga_ocr_wizard_title => 'استيراد مانغا بـ OCR';
-	@override String get manga_ocr_wizard_title_label => 'العنوان (اختياري)';
-	@override String get manga_online_base_url_label => 'رابط الكتالوج عبر الإنترنت';
-	@override String get manga_online_catalog_title => 'كتالوج عبر الإنترنت';
-	@override String get manga_online_download_selected => 'تحميل المحدد';
-	@override String get manga_online_downloaded => 'تم الاستيراد';
-	@override String get manga_online_failed => 'فشل التحميل';
-	@override String get manga_online_load_failed => 'فشل تحميل الكتالوج';
-	@override String get manga_online_queue_added => 'أُضيف إلى قائمة التحميل';
-	@override String manga_online_queue_progress({required Object done, required Object total}) => 'المجلد ${done} / ${total}';
-	@override String get manga_online_queue_section => 'تحميلات كتالوج المانغا';
-	@override String get manga_online_search_hint => 'البحث في السلاسل';
-	@override String get manga_online_stage_cbz => 'جارٍ تحميل المجلد…';
-	@override String get manga_online_stage_extract => 'جارٍ الاستخراج…';
-	@override String get manga_online_stage_mokuro => 'جارٍ تحميل بيانات OCR…';
-	@override String get manga_reading_mode_spread => 'صفحتان';
-	@override String get manga_reading_mode_webtoon => 'Webtoon';
-	@override String get manga_remote_ocr_cancelled => 'تم إلغاء OCR عن بُعد على المضيف.';
-	@override String get manga_remote_ocr_engine => 'المضيف المقترن';
-	@override String get manga_remote_ocr_failed => 'فشل OCR عن بُعد';
-	@override String get manga_remote_ocr_no_host => 'لا يوجد مضيف مقترن يدعم OCR للمانغا.';
-	@override String get manga_remote_ocr_not_ready => 'نماذج OCR على المضيف المقترن لم تُحمَّل بعد. حمِّلها على المضيف أولاً.';
-	@override String get manga_remote_ocr_running => 'المضيف المقترن يُجري OCR…';
-	@override String get manga_remote_ocr_unsupported => 'المضيف المقترن لا يدعم OCR للمانغا.';
-	@override String manga_remote_ocr_uploading({required Object done, required Object total}) => 'جارٍ رفع الصفحات ${done} / ${total}…';
-	@override String get margin_bottom => 'الهامش السفلي';
-	@override String get margin_left => 'الهامش الأيسر';
-	@override String get margin_right => 'الهامش الأيمن';
-	@override String get margin_top => 'الهامش العلوي';
-	@override String get maximum_terms => 'الحد الأقصى لعدد الكلمات الرئيسية في النتائج';
-	@override String get media_source_add => 'Add Source';
-	@override String get media_source_add_local_folder => 'Local Folder';
-	@override String get media_source_add_network => 'شبكة';
-	@override String media_source_count_book({required Object n}) => '${n} كتب';
-	@override String media_source_count_video({required Object n}) => '${n} فيديوهات';
-	@override String media_source_last_scan({required Object time}) => 'آخر فحص ${time}';
-	@override String get media_source_manage_title => 'Manage Sources';
-	@override String get media_source_network_label_optional => 'اسم العرض (اختياري)';
-	@override String get media_source_network_missing_fields => 'أدخل المضيف واسم المستخدم والمسار البعيد وكلمة المرور أو المفتاح';
-	@override String get media_source_network_remote_path => 'المسار البعيد';
-	@override String get media_source_network_subtitle => 'مكتبة بعيدة عبر SFTP / FTP / WebDAV';
-	@override String get media_source_no_sources => 'لا توجد مصادر بعد';
-	@override String get media_source_open_folder => 'Open Folder';
-	@override String get media_source_remove => 'Remove Source';
-	@override String get media_source_remove_keeps_media => 'إزالة المصدر لا تحذف الوسائط المستوردة.';
-	@override String get media_source_rescan => 'إعادة الفحص';
-	@override String get media_source_scan_error => 'فشل الفحص';
-	@override String get media_tracking_access_token => 'رمز الوصول';
-	@override String get media_tracking_access_token_hint => 'أنشئ رمز وصول شخصي بصلاحية الكتابة';
-	@override String get media_tracking_account => 'حساب Bangumi';
-	@override String get media_tracking_add_mapping => 'إضافة ربط';
-	@override String get media_tracking_anime => 'أنمي';
-	@override String get media_tracking_chapter => 'فصل';
-	@override String get media_tracking_connect => 'الاتصال والتحقق';
-	@override String get media_tracking_connected_as => 'الحساب المتصل';
-	@override String get media_tracking_delete_mapping => 'إزالة الربط';
-	@override String get media_tracking_episode => 'حلقة';
-	@override String get media_tracking_kind => 'الفئة';
-	@override String get media_tracking_local_item => 'عنصر محلي';
-	@override String get media_tracking_manga => 'مانغا';
-	@override String get media_tracking_mappings => 'ربط العناصر';
-	@override String get media_tracking_no_mappings => 'لا توجد عمليات ربط يدوية بعد. يقوم Fushi بالمطابقة تلقائياً عند أول حلقة مكتملة أو تقدم في القراءة؛ أضف العناصر الغامضة هنا.';
-	@override String get media_tracking_novel => 'رواية';
-	@override String get media_tracking_pending => 'تحديثات معلقة';
-	@override String get media_tracking_progress_mode => 'وحدة التقدم';
-	@override String get media_tracking_progress_offset => 'رقم البداية';
-	@override String get media_tracking_saved => 'تم حفظ الربط';
-	@override String get media_tracking_search => 'بحث في Bangumi';
-	@override String get media_tracking_search_results => 'نتائج Bangumi';
-	@override String get media_tracking_summary => 'تسجيل تقدم الأنمي والروايات والمانغا تلقائياً في Bangumi';
-	@override String get media_tracking_sync_failed => 'فشلت المزامنة. التحديث لا يزال في قائمة الانتظار.';
-	@override String get media_tracking_sync_now => 'مزامنة الآن';
-	@override String get media_tracking_sync_success => 'اكتملت المزامنة';
-	@override String get media_tracking_token_required => 'أدخل رمز الوصول وتحقق منه أولاً';
-	@override String get media_tracking_volume => 'مجلد';
-	@override String get microphone_permission_denied => 'يلزم إذن الميكروفون للتسجيل.';
-	@override String get mining_audio_quality => 'جودة الصوت';
-	@override String get mining_audio_quality_high => 'عالية';
-	@override String get mining_audio_quality_hint => 'معدل البت الأعلى أوضح لكنه يُنتج بطاقات أكبر.';
-	@override String get mining_audio_quality_max => 'الحد الأقصى';
-	@override String get mining_audio_quality_standard => 'قياسية';
-	@override String get mining_image_quality => 'جودة الصورة / GIF';
-	@override String get mining_image_quality_hd => 'عالية الدقة';
-	@override String get mining_image_quality_hint => 'الجودة الأعلى أوضح لكنها تُنتج بطاقات أكبر. الحد الأقصى يحتفظ بلقطات الشاشة بدقة المصدر؛ صور GIF المتحركة تبقى محدودة الحجم لتظل البطاقات قابلة للاستخدام.';
-	@override String get mining_image_quality_max => 'الحد الأقصى';
-	@override String get mining_image_quality_standard => 'قياسية';
-	@override String get mining_image_quality_thrift => 'موفر البيانات';
-	@override String get move_down => 'تحريك لأسفل';
-	@override String get move_up => 'تحريك لأعلى';
-	@override String get name => 'الاسم';
-	@override String get nav_browser_extension => 'الإضافة';
-	@override String get nav_downloads => 'التحميلات';
-	@override String get nav_game => 'لعبة';
-	@override String get nav_home => 'الرئيسية';
-	@override String get nav_lookup => 'بحث';
-	@override String get nav_video => 'فيديو';
-	@override String get next_sentence => 'الجملة التالية';
-	@override String get no_audio_file => 'لا يوجد ملف صوت للحفظ.';
-	@override String get no_collections => 'لا توجد علامات مرجعية أو جمل محفوظة';
-	@override String get no_debug_logs => 'لا توجد سجلات تصحيح.';
-	@override String get no_illustrations_found => 'لم يتم العثور على رسوم توضيحية';
-	@override String get no_results_found => 'لم يتم العثور على نتائج.';
-	@override String get no_search_results => 'لم يتم العثور على نتائج.';
-	@override String get no_sentence_selected => 'لم يتم اختيار جملة';
-	@override String get no_sentences_found => 'لم يتم العثور على جمل';
-	@override String get no_text => 'لا يوجد نص.';
-	@override String get no_text_to_search => 'لا يوجد نص للبحث.';
-	@override String get now_listening_label => 'يُستمع الآن';
-	@override String get on_screen_keyboard => 'لوحة مفاتيح على الشاشة';
-	@override String get options_collapse => 'طي عند البحث';
-	@override String get options_delete => 'حذف';
-	@override String get options_edit => 'تعديل';
-	@override String get options_expand => 'توسيع عند البحث';
-	@override String get options_github => 'عرض المستودع على GitHub';
-	@override String get options_hide => 'إخفاء عند البحث';
-	@override String get options_language => 'إعدادات اللغة';
-	@override String get options_show => 'عرض عند البحث';
-	@override String get overlay_lookup_independent_size => 'حجم منفصل لنافذة البحث المنبثقة';
-	@override String get overlay_lookup_independent_size_hint => 'إعطاء نافذة البحث المنبثقة الخارجية حجمها الأقصى الخاص بدلاً من اتباع النافذة المنبثقة داخل التطبيق';
-	@override String get overlay_lookup_max_height => 'الارتفاع الأقصى للنافذة المنبثقة';
-	@override String get overlay_lookup_max_width => 'العرض الأقصى للنافذة المنبثقة';
-	@override String page_progress({required Object current, required Object total}) => 'صفحة ${current} / ${total}';
-	@override String get paste => 'لصق';
-	@override String get pause => 'إيقاف مؤقت';
-	@override String get pause_on_lookup => 'إيقاف مؤقت عند البحث';
-	@override String get pdf_bookmark_added => 'تمت إضافة إشارة مرجعية';
-	@override String get pdf_bookmarks => 'الإشارات المرجعية';
-	@override String get pdf_bookmarks_empty => 'لا توجد إشارات مرجعية بعد.';
-	@override String get pdf_no_text_layer => 'هذا الملف PDF لا يحتوي على طبقة نصية (صورة ممسوحة)، لذا البحث غير متاح.';
-	@override String get pdf_outline => 'المحتويات';
-	@override String get pdf_outline_empty => 'هذا الملف PDF لا يحتوي على محتويات.';
-	@override String get pick_image => 'اختيار صورة';
-	@override String get play => 'تشغيل';
-	@override String get play_from_cue => 'تشغيل من الجملة';
-	@override String get playback_auto_pause => 'وضع الإيقاف عند الترجمة';
-	@override String get playback_speed => 'السرعة';
-	@override String get popup_append_sentence_tooltip => 'أضف هذه الجملة إلى البطاقة';
-	@override String get popup_auto_expand_dictionaries => 'توسيع الصفوف تلقائياً';
-	@override String get popup_auto_expand_dictionaries_hint => 'إبقاء أول N صفوف من أقسام القاموس موسعة حتى عند تفعيل \'طي القواميس\'. عدد الصفوف الموسعة يتبع إعداد الأعمدة: صفوف × أعمدة (0 = طي الكل)';
-	@override String get popup_bottom_docked => 'نافذة بحث مرسّاة بالأسفل';
-	@override String get popup_bottom_docked_hint => 'ثبّت نافذة البحث كلوحة بعرض كامل في أسفل الشاشة بدلًا من اتباع الكلمة المبحوث عنها.';
-	@override String get popup_clear_sentence_draft_tooltip => 'مسح الجمل المضافة';
-	@override String get popup_ctx_adjust_button => 'تعديل السياق';
-	@override String get popup_ctx_box_current => 'Current';
-	@override String get popup_ctx_box_empty => '(لا شيء)';
-	@override String get popup_ctx_box_next => 'After';
-	@override String get popup_ctx_box_prev => 'Before';
-	@override String get popup_ctx_cancel => 'إلغاء';
-	@override String get popup_ctx_confirm => 'Confirm';
-	@override String get popup_ctx_modal_count => 'Selected %d';
-	@override String get popup_ctx_modal_eyebrow => 'Before mining';
-	@override String get popup_ctx_modal_title => 'اختيار سياق الجملة';
-	@override String get popup_ctx_next_minus => 'Remove after';
-	@override String get popup_ctx_next_plus => 'Add after';
-	@override String get popup_ctx_prev_minus => 'Remove before';
-	@override String get popup_ctx_prev_plus => 'Add before';
-	@override String get popup_dictionary_max_columns => 'الحد الأقصى لأعمدة القاموس (ملء تلقائي)';
-	@override String get popup_dictionary_max_columns_hint => 'ملء تلقائي لهذا العدد من أعمدة القاموس لكل صف؛ الشاشات الأضيق تستخدم عدداً أقل';
-	@override String get popup_font_size_decrease => 'تصغير نص القاموس';
-	@override String get popup_font_size_increase => 'تكبير نص القاموس';
-	@override String get popup_instant_scroll => 'تمرير فوري للنافذة المنبثقة';
-	@override String get popup_instant_scroll_hint => 'نقل نافذة البحث المنبثقة بمسافات ثابتة دون تمرير متحرك، لشاشات الحبر الإلكتروني.';
-	@override String get popup_max_height => 'أقصى ارتفاع للنافذة المنبثقة';
-	@override String get popup_max_width => 'أقصى عرض للنافذة المنبثقة';
-	@override String get popup_no_audio_available => 'لا يوجد صوت متاح';
-	@override String get popup_sentence_context_next_label => 'بعد';
-	@override String get popup_sentence_context_prev_label => 'قبل';
-	@override String get popup_wheel_speed => 'سرعة التمرير في النافذة المنبثقة';
-	@override String get popup_wheel_speed_hint => 'سرعة تمرير عجلة الماوس في نافذة القاموس المنبثقة (ينطبق أيضاً على إضافة المتصفح).';
-	@override String get prev_sentence => 'الجملة السابقة';
-	@override String get preview => 'معاينة';
-	@override String get preview_badge => 'شارة';
-	@override String get preview_switch => 'مفتاح';
-	@override String get processing_in_progress => 'جارٍ تحضير الصور';
-	@override String get profile_book_profile => 'تعيين ملف التعريف';
-	@override String profile_confirm_delete({required Object name}) => 'حذف الملف الشخصي "${name}"؟';
-	@override String get profile_copy => 'نسخ';
-	@override String get profile_copy_suffix => '(نسخة)';
-	@override String get profile_create => 'إنشاء ملف شخصي';
-	@override String get profile_delete => 'حذف';
-	@override String get profile_export => 'تصدير';
-	@override String get profile_export_failed => 'فشل التصدير';
-	@override String profile_follow_default_current({required Object name}) => 'يتبع الافتراضي (${name})';
-	@override String get profile_import => 'استيراد';
-	@override String get profile_import_failed => 'فشل الاستيراد';
-	@override String get profile_import_invalid => 'ملف الملف الشخصي غير صالح';
-	@override String get profile_import_success => 'تم استيراد الملف الشخصي';
-	@override String get profile_label => 'الملف الشخصي';
-	@override String get profile_management => 'إدارة الملفات الشخصية';
-	@override String get profile_media_audiobook => 'كتاب مسموع';
-	@override String get profile_media_epub => 'كتاب';
-	@override String get profile_media_lyrics => 'وضع الكلمات';
-	@override String get profile_media_none => 'لا شيء';
-	@override String get profile_media_srtbook => 'كتاب الترجمة';
-	@override String get profile_media_type_bindings => 'ربط أنواع الوسائط';
-	@override String get profile_media_video => 'فيديو';
-	@override String get profile_name_hint => 'اسم الملف الشخصي';
-	@override String get profile_rename => 'إعادة تسمية';
-	@override String get reader_auto_hide_chrome_duration => 'إخفاء أدوات التحكم العائمة تلقائياً بعد';
-	@override String get reader_content_timeout => 'انتهت مهلة تحميل المحتوى. أعد الفتح إذا كان العرض غير طبيعي';
-	@override String get reader_copy_image => 'نسخ الصورة';
-	@override String get reader_gallery => 'المعرض';
-	@override String get reader_gallery_current => 'تقرأ هنا';
-	@override String get reader_gallery_empty => 'لا توجد رسوم توضيحية في هذا الكتاب';
-	@override String get reader_gallery_jump => 'الانتقال إلى هذا الرسم';
-	@override String get reader_gallery_tooltip => 'تصفح الرسوم التوضيحية';
-	@override String reader_image_copy_failed({required Object error}) => 'فشل نسخ الصورة: ${error}';
-	@override String get reader_image_file_unavailable => 'ملف الصورة غير متاح.';
-	@override String reader_image_share_failed({required Object error}) => 'فشل مشاركة الصورة: ${error}';
-	@override String get reader_open_failed => 'فشل فتح الكتاب';
-	@override String get reader_settings_section => 'إعدادات القارئ';
-	@override String get reader_theme_black => 'أسود';
-	@override String get reader_theme_dark => 'داكن';
-	@override String get reader_theme_ecru => 'بيج';
-	@override String get reader_theme_eyecare => 'Eye Care';
-	@override String get reader_theme_gray => 'رمادي';
-	@override String get reader_theme_light => 'أبيض';
-	@override String get reader_theme_water => 'أزرق مائي';
-	@override String get reader_top_progress_floating => 'شريط تقدم القراءة العائم';
-	@override String get reader_unsupported_platform => 'القارئ غير متوفر بعد على هذه المنصة.';
-	@override String get reading_activity => 'نشاط الدراسة';
-	@override String get reading_progress => 'تقدّم القراءة';
-	@override String get reading_section_mode => 'الوضع والاتجاه';
-	@override String get reading_statistics => 'إحصائيات القراءة';
-	@override String get record => 'تسجيل';
-	@override String get refresh => 'تحديث';
-	@override String get rematch_adjust_window => 'ضبط نافذة البحث وإعادة المطابقة';
-	@override String get rematch_run => 'إعادة تشغيل المطابقة';
-	@override String get remote_audio_source => 'صوت بعيد';
-	@override String get remote_book_audiobook_download_failed => 'تعذّر تنزيل الكتاب الصوتي لهذا الكتاب';
-	@override String get remote_book_download => 'التنزيل إلى هذا الجهاز';
-	@override String get remote_book_download_failed => 'تعذّر تنزيل الكتاب البعيد';
-	@override String get remote_book_downloaded => 'تم تنزيل الكتاب البعيد';
-	@override String get remote_book_downloading => 'جارٍ التنزيل…';
-	@override String get remote_book_info => 'معلومات';
-	@override String get remote_book_info_has_audiobook => 'يتضمّن كتابًا صوتيًا';
-	@override String get remote_book_unavailable => 'الجهاز المقترن غير متاح';
-	@override String get remote_dict_lookup => 'بحث في القاموس البعيد';
-	@override String get remote_dict_lookup_hint => 'عند عدم وجود نتائج في القواميس المحلية، استعلم من خادم Fushi المُهيّأ';
-	@override String get remote_video_download => 'التنزيل إلى هذا الجهاز';
-	@override String get remote_video_download_failed => 'تعذّر تنزيل الفيديو البعيد';
-	@override String get remote_video_downloaded => 'تم تنزيل الفيديو البعيد';
-	@override String get remote_video_downloading => 'جارٍ التنزيل…';
-	@override String get remote_video_info => 'معلومات';
-	@override String get remote_video_info_has_subtitle => 'يتضمّن ترجمات';
-	@override String get remote_video_info_no_subtitle => 'لا توجد ترجمات';
-	@override String remote_video_info_size({required Object size}) => 'الحجم: ${size}';
-	@override String get remote_video_list_failed => 'تعذر تحميل الفيديوهات البعيدة. تأكد أن الجهاز الآخر متصل وعلى نفس الشبكة، ثم حاول مرة أخرى.';
-	@override String get remote_video_unavailable => 'الجهاز المقترن غير متاح';
-	@override String get rename_collection => 'إعادة تسمية المجموعة';
-	@override String get render_restart_required => 'يسري المفعول بعد إعادة تشغيل التطبيق';
-	@override String get repeat_cue => 'إعادة الجملة';
-	@override String get reset => 'إعادة تعيين';
-	@override String get retry => 'إعادة المحاولة';
-	@override String get reverse_arrow_page_turn => 'عكس اتجاه قلب الصفحة بمفتاحَي اليسار/اليمين في لوحة المفاتيح';
-	@override String get reverse_navigation_bar => 'عكس شريط التنقّل';
-	@override String get reverse_reader_bottom_bar => 'عكس الشريط السفلي للقارئ';
-	@override String get audiobook_rematch_all_zero => 'جميع النوافذ سجّلت 0%، يرجى الضبط يدوياً';
-	@override String audiobook_rematch_auto_failed({required Object error}) => 'فشلت المطابقة التلقائية: ${error}';
-	@override String get audiobook_rematch_auto_match => 'مطابقة تلقائية';
-	@override String audiobook_rematch_auto_picked({required Object window, required Object pct}) => 'تم اختيار ${window} تلقائياً (نسبة ${pct}%)';
-	@override String audiobook_rematch_default_value({required Object n}) => 'افتراضي ${n}';
-	@override String audiobook_rematch_health_label({required Object pct, required Object detail}) => '${pct} مطابق — ${detail}';
-	@override String get audiobook_rematch_matching => 'جارٍ المطابقة...';
-	@override String get audiobook_rematch_no_chapters => 'EPUB لا يحتوي على نص فصول';
-	@override String get audiobook_rematch_no_cues_to_match => 'لا توجد ترجمات للمطابقة';
-	@override String get audiobook_rematch_no_sections => 'لم يتم العثور على نص فصل، لا يمكن المطابقة التلقائية';
-	@override String get audiobook_rematch_no_stored_cues => 'لا توجد ترجمات مخزّنة، لا يمكن إعادة التشغيل';
-	@override String audiobook_rematch_failed({required Object error}) => 'فشلت إعادة المطابقة: ${error}';
-	@override String audiobook_rematch_result({required Object pct, required Object window}) => 'أُعيدت المطابقة: ${pct}% (نافذة: ${window})';
-	@override String get audiobook_rematch_search_window => 'نافذة البحث';
-	@override String get audiobook_rematch_similarity_threshold => 'عتبة التشابه';
-	@override String get audiobook_rematch_threshold_hint => 'الحد الأدنى للتشابه في المطابقة الضبابية (معامل Dice). خفّض لتحمّل مزيد من الاختلافات، لكن قيمة منخفضة جداً تسبب مطابقات خاطئة.';
-	@override String get audiobook_rematch_window_hint => 'عدد الأحرف للبحث للأمام لكل ترجمة في النص. اضبط إذا كانت نسبة الإصابة منخفضة؛ قيمة كبيرة جداً قد تُنحرف المؤشر مع الترجمات القصيرة.';
-	@override String get saved_tags => 'تم حفظ الوسوم.';
-	@override String get scan_non_japanese_text => 'مسح النص غير الياباني';
-	@override String get scan_non_japanese_text_hint => 'عند الإيقاف، يتوقف التحديد عند الأحرف غير اليابانية';
-	@override String get search => 'بحث';
-	@override String get search_ellipsis => 'بحث...';
-	@override String get searching_in_progress => 'جارٍ البحث عن ';
-	@override String get section_advanced_colors => 'متقدم';
-	@override String get section_advanced_typography => 'متقدم';
-	@override String get section_audiobook => 'كتاب مسموع';
-	@override String get section_audiobook_lyrics => 'الكتب الصوتية والكلمات';
-	@override String get section_epub => 'مكتبة EPUB';
-	@override String get section_floating_lyric => 'كلمات عائمة';
-	@override String get section_interface => 'الواجهة';
-	@override String get section_layout => 'التخطيط والعرض';
-	@override String get section_navigation => 'التنقل';
-	@override String get section_page_turn_direction => 'اتجاه قلب الصفحة';
-	@override String get section_reader_colors => 'ألوان القارئ';
-	@override String get section_system_theme => 'لون سمة النظام';
-	@override String get section_typography => 'الطباعة';
-	@override String get section_update => 'إعدادات التحديث';
-	@override String get section_video_danmaku => 'دانماكو';
-	@override String get section_video_library => 'المكتبة';
-	@override String get section_video_playback => 'التشغيل';
-	@override String get section_video_subtitles => 'الترجمات';
-	@override String get seed_color => 'اللون الأساسي';
-	@override String get seed_color_desc => 'يولّد جميع الألوان الافتراضية أدناه';
-	@override String get selection_color => 'لون التحديد';
-	@override String get selection_color_desc => 'تمييز تحديد نص القارئ';
-	@override String get send => 'إرسال';
-	@override String get series => 'سلسلة';
-	@override String get series_created => 'تم إنشاء السلسلة';
-	@override String get series_default_name => 'سلسلة جديدة';
-	@override String series_item_count({required Object n}) => '${n} عناصر';
-	@override String get series_name_hint => 'اسم السلسلة';
-	@override String get server_address => 'عنوان الخادم';
-	@override String get settings => 'الإعدادات';
-	@override String get settings_check_update_now => 'التحقق من التحديثات';
-	@override String get settings_destination_appearance => 'المظهر';
-	@override String get settings_destination_card_creation => 'إنشاء البطاقات';
-	@override String get settings_destination_diagnostics => 'التشخيص';
-	@override String get settings_destination_interconnect => 'Fushi Interconnect';
-	@override String get settings_destination_listening => 'الاستماع';
-	@override String get settings_destination_lookup => 'البحث';
-	@override String get settings_destination_profiles => 'مخططات التكوين';
-	@override String get settings_destination_reading => 'القراءة';
-	@override String get settings_destination_reading_controls => 'أدوات التحكم بالقراءة';
-	@override String get settings_destination_sync_backup => 'المزامنة والنسخ الاحتياطي';
-	@override String get settings_destination_system => 'النظام';
-	@override String get settings_destination_system_summary => 'عام، تحديثات وتشخيصات';
-	@override String get settings_destination_tracking => 'تتبع الوسائط';
-	@override String get settings_destination_video => 'فيديو';
-	@override String get settings_search_hint => 'البحث في الإعدادات';
-	@override String get settings_search_no_results => 'لا توجد إعدادات مطابقة';
-	@override String get settings_secret_hide => 'إخفاء القيمة';
-	@override String get settings_secret_show => 'إظهار القيمة';
-	@override String get settings_section_app_shell => 'التطبيق';
-	@override String get settings_section_data_storage => 'موقع تخزين البيانات';
-	@override String get settings_section_gal_hook_overlay => 'نافذة نصوص الغالغيم';
-	@override String get settings_section_general => 'عام';
-	@override String get settings_section_lookup_audio => 'النطق والاستجابة';
-	@override String get settings_section_lookup_content => 'محتوى المدخل';
-	@override String get settings_section_lookup_integrations => 'التكاملات الخارجية';
-	@override String get settings_section_lookup_popup_window => 'النافذة المنبثقة';
-	@override String get settings_section_lookup_trigger => 'مشغّل البحث';
-	@override String get settings_section_page_turn_input => 'تقليب الصفحات والتفاعل';
-	@override String get settings_section_reader_chrome => 'واجهة القارئ';
-	@override String get settings_section_update_channel => 'قناة التحديث';
-	@override String get settings_view_changelog => 'عرض سجل التغييرات';
-	@override String get share => 'مشاركة';
-	@override String get share_theme => 'مشاركة المظهر';
-	@override String get shortcut_action_audiobook_next_sentence => 'الجملة التالية';
-	@override String get shortcut_action_audiobook_play_pause => 'تشغيل / إيقاف مؤقت';
-	@override String get shortcut_action_audiobook_prev_sentence => 'الجملة السابقة';
-	@override String get shortcut_action_audiobook_seek_clicked => 'نقل الصوت إلى الجملة المنقورة';
-	@override String get shortcut_action_dpad_down => 'أزرار الاتجاهات للأسفل';
-	@override String get shortcut_action_dpad_left => 'أزرار الاتجاهات لليسار';
-	@override String get shortcut_action_dpad_right => 'أزرار الاتجاهات لليمين';
-	@override String get shortcut_action_dpad_up => 'أزرار الاتجاهات للأعلى';
-	@override String get shortcut_action_global_back => 'رجوع';
-	@override String get shortcut_action_global_external_lookup => 'App-external lookup hotkey';
-	@override String get shortcut_action_global_scroll_page_down => 'تمرير لأسفل بمقدار شاشة';
-	@override String get shortcut_action_global_scroll_page_up => 'تمرير لأعلى بمقدار شاشة';
-	@override String get shortcut_action_global_toggle_fullscreen => 'تبديل ملء الشاشة';
-	@override String get shortcut_action_home_focus_search => 'التركيز على البحث';
-	@override String get shortcut_action_home_tab_books => 'تبويب الكتب';
-	@override String get shortcut_action_home_tab_dict => 'تبويب القاموس';
-	@override String get shortcut_action_home_tab_next => 'التبويب التالي';
-	@override String get shortcut_action_home_tab_prev => 'التبويب السابق';
-	@override String get shortcut_action_home_tab_settings => 'تبويب الإعدادات';
-	@override String get shortcut_action_popup_next_entry => 'المدخل التالي';
-	@override String get shortcut_action_popup_prev_entry => 'المدخل السابق';
-	@override String get shortcut_action_reader_create_card_from_popup => 'إنشاء بطاقة من النافذة المنبثقة';
-	@override String get shortcut_action_reader_dismiss_dict => 'إغلاق القاموس';
-	@override String get shortcut_action_reader_enter_caret => 'الدخول إلى مؤشر البحث';
-	@override String get shortcut_action_reader_lookup_at_cursor => 'بحث / تفعيل المؤشر';
-	@override String get shortcut_action_reader_open_menu => 'Open Settings Menu';
-	@override String get shortcut_action_reader_open_navigation => 'Open Navigation';
-	@override String get shortcut_action_reader_page_backward => 'الصفحة السابقة';
-	@override String get shortcut_action_reader_page_forward => 'الصفحة التالية';
-	@override String get shortcut_action_reader_shift_lookup => 'بحث بمفتاح Shift';
-	@override String get shortcut_action_reader_toggle_chrome => 'إظهار/إخفاء الأدوات';
-	@override String get shortcut_action_reader_toggle_furigana => 'تبديل الفوريغانا';
-	@override String get shortcut_action_video_align_subtitle_to_next => 'محاذاة الترجمة التالية إلى الآن';
-	@override String get shortcut_action_video_align_subtitle_to_prev => 'محاذاة الترجمة السابقة إلى الآن';
-	@override String get shortcut_action_video_cycle_secondary_subtitle_obscure => 'Cycle Secondary Subtitle Obscure';
-	@override String get shortcut_action_video_cycle_subtitle_obscure => 'Cycle Subtitle Obscure Mode';
-	@override String get shortcut_action_video_next_chapter => 'الفصل التالي';
-	@override String get shortcut_action_video_next_frame => 'الإطار التالي';
-	@override String get shortcut_action_video_next_subtitle => 'الترجمة التالية';
-	@override String get shortcut_action_video_open_subtitle_align => 'فتح محاذاة موجة الترجمة';
-	@override String get shortcut_action_video_pause => 'إيقاف مؤقت';
-	@override String get shortcut_action_video_play => 'تشغيل';
-	@override String get shortcut_action_video_previous_chapter => 'الفصل السابق';
-	@override String get shortcut_action_video_previous_frame => 'الإطار السابق';
-	@override String get shortcut_action_video_previous_subtitle => 'الترجمة السابقة';
-	@override String get shortcut_action_video_replay_current_subtitle => 'إعادة تشغيل الجملة الحالية';
-	@override String get shortcut_action_video_replay_previous_subtitle => 'إعادة تشغيل الترجمة السابقة';
-	@override String get shortcut_action_video_reset_speed => 'إعادة تعيين السرعة';
-	@override String get shortcut_action_video_screenshot => 'لقطة شاشة';
-	@override String get shortcut_action_video_seek_backward => 'ترجيع';
-	@override String get shortcut_action_video_seek_forward => 'تقديم';
-	@override String get shortcut_action_video_speed_down => 'إبطاء';
-	@override String get shortcut_action_video_speed_up => 'تسريع';
-	@override String get shortcut_action_video_subtitle_delay_decrease => 'تأخير الترجمة −';
-	@override String get shortcut_action_video_subtitle_delay_increase => 'تأخير الترجمة +';
-	@override String get shortcut_action_video_toggle_favorite_sentence => 'تفضيل الجملة الحالية';
-	@override String get shortcut_action_video_toggle_fullscreen => 'تبديل ملء الشاشة';
-	@override String get shortcut_action_video_toggle_immersive_lock => 'تبديل قفل الانغماس';
-	@override String get shortcut_action_video_toggle_mute => 'تبديل كتم الصوت';
-	@override String get shortcut_action_video_toggle_play_pause => 'تشغيل / إيقاف مؤقت';
-	@override String get shortcut_action_video_toggle_secondary_subtitle_hide => 'Toggle Hide Secondary Subtitle';
-	@override String get shortcut_action_video_toggle_shader_compare => 'تبديل مقارنة المظلِّل';
-	@override String get shortcut_action_video_toggle_subtitle_blur => 'تبديل تمويه الترجمة';
-	@override String get shortcut_action_video_toggle_subtitle_hide => 'Toggle Hide Subtitles';
-	@override String get shortcut_action_video_toggle_subtitle_list => 'تبديل قائمة الترجمة';
-	@override String get shortcut_action_video_volume_down => 'خفض الصوت';
-	@override String get shortcut_action_video_volume_up => 'رفع الصوت';
-	@override String get shortcut_assign_pick_action => 'تعيين لإجراء…';
-	@override String get shortcut_clear => 'مسح';
-	@override String shortcut_conflict({required Object s}) => 'مستخدم بالفعل بواسطة: ${s}';
-	@override String shortcut_conflict_replace_confirm({required Object s}) => 'هذا الاختصار مستخدَم بالفعل بواسطة ${s}. هل تريد نقله إلى هذا الإجراء؟';
-	@override String get shortcut_gamepad => 'يد التحكّم';
-	@override String get shortcut_gamepad_brand_label => 'نمط أزرار ذراع التحكم';
-	@override String get shortcut_gamepad_brand_playstation => 'PlayStation';
-	@override String get shortcut_gamepad_brand_switch => 'Nintendo Switch';
-	@override String get shortcut_gamepad_brand_xbox => 'Xbox';
-	@override String get shortcut_gamepad_pick_list => 'اختيار من القائمة';
-	@override String get shortcut_gamepad_unavailable_hint => 'لم يُكتشف مكون GameInput — دعم ذراع التحكم غير متاح. ثبّت خدمات ألعاب Windows لتفعيل دعم وحدة التحكم.';
-	@override String get shortcut_keyboard => 'لوحة المفاتيح';
-	@override String get shortcut_mouse_back => 'زر الرجوع';
-	@override String get shortcut_mouse_button => 'زر الماوس';
-	@override String get shortcut_mouse_forward => 'زر التقدم';
-	@override String get shortcut_mouse_left => 'النقر الأيسر';
-	@override String get shortcut_mouse_middle => 'النقر الأوسط';
-	@override String get shortcut_mouse_right => 'النقر الأيمن';
-	@override String get shortcut_press_gamepad => 'اضغط زراً على ذراع التحكم...';
-	@override String get shortcut_press_key => 'اضغط مجموعة مفاتيح...';
-	@override String get shortcut_press_mouse_button => 'اضغط زر الماوس...';
-	@override String get shortcut_press_wheel => 'اضغط مفتاح تعديل ومرر هنا';
-	@override String get shortcut_reset_confirm => 'إعادة تعيين كل الاختصارات في هذا القسم إلى الافتراضي؟';
-	@override String get shortcut_reset_defaults => 'إعادة التعيين للافتراضي';
-	@override String get shortcut_scope_audiobook => 'الكتاب الصوتي';
-	@override String get shortcut_scope_dictionary_popup => 'نافذة القاموس المنبثقة';
-	@override String get shortcut_scope_dictionary_popup_note => 'يعمل عندما يكون المؤشر فوق نافذة القاموس المنبثقة';
-	@override String get shortcut_scope_gamepad => 'لوحة الألعاب';
-	@override String get shortcut_scope_global => 'عام';
-	@override String get shortcut_scope_global_external => 'شامل (خارج التطبيق)';
-	@override String get shortcut_scope_global_external_mobile_note => 'Triggered by the system (text selection menu, share, floating ball); the OS does not allow apps to remap this hotkey.';
-	@override String get shortcut_scope_home => 'الرئيسية';
-	@override String get shortcut_scope_reader => 'القارئ';
-	@override String get shortcut_scope_video => 'فيديو';
-	@override String get shortcut_settings_title => 'اختصارات لوحة المفاتيح';
-	@override String get shortcut_stop_capture => 'إيقاف';
-	@override String get shortcut_tap_to_assign => 'غير معيّن · انقر للتعيين';
-	@override String get shortcut_view_list => 'عرض قائمة';
-	@override String get shortcut_view_visual => 'تخطيط وحدة التحكم';
-	@override String get shortcut_wheel => 'عجلة الماوس';
-	@override String get shortcut_wheel_down => 'تمرير للأسفل';
-	@override String get shortcut_wheel_needs_modifier => 'العجلة العادية تمرر النافذة المنبثقة — اضغط Alt / Ctrl / Shift أثناء التمرير';
-	@override String get shortcut_wheel_up => 'تمرير للأعلى';
-	@override String get show_bottom_bar_cue => 'عرض الجملة الحالية';
-	@override String get show_expression_tags => 'عرض علامات التعبير';
-	@override String get show_floating_lyric => 'ترجمة عائمة';
-	@override String get show_media_notification => 'عرض إشعار الوسائط';
-	@override String get show_options => 'عرض الخيارات';
-	@override String get show_top_progress_bar => 'مؤشر تقدّم القراءة';
-	@override String get skip_action => 'تخطّي الإجراء';
-	@override String skip_action_seconds({required Object n}) => '${n} ثانية';
-	@override String get skip_action_sentence => 'جملة واحدة';
-	@override String get sort_by => 'الترتيب';
-	@override String get sort_imported => 'تاريخ الاستيراد';
-	@override String get sort_recent_read => 'آخر قراءة';
-	@override String get sort_recent_watched => 'آخر مشاهدة';
-	@override String get sort_title => 'الاسم';
-	@override String get source_description_epub => 'قراءة EPUB والبحث في القاموس';
-	@override String get source_name_bookshelf => 'رف الكتب';
-	@override String get spread_auto => 'تلقائي';
-	@override String get spread_direction => 'اتجاه الانتشار';
-	@override String get spread_direction_ltr => 'من اليسار إلى اليمين';
-	@override String get spread_direction_rtl => 'من اليمين إلى اليسار';
-	@override String get spread_mode => 'وضع الانتشار';
-	@override String get spread_off => 'إيقاف';
-	@override String get spread_on => 'تشغيل';
-	@override String get srt_audio_unresolved => 'لم يتم العثور على ملف الصوت — يرجى إعادة الإرفاق';
-	@override String get srt_books_section => 'كتب الترجمات المسموعة';
-	@override String srt_delete_confirm({required Object title}) => 'حذف『${title}』؟ لا يمكن التراجع عن هذا.';
-	@override String get srt_delete_title => 'حذف كتاب الترجمات';
-	@override String get srt_epub_not_ready => 'الكتاب غير جاهز — يرجى إعادة الاستيراد';
-	@override String get srt_import => 'استيراد كتاب';
-	@override String get srt_import_audio_needs_subtitle => 'يجب إقران الصوت مع الترجمات. لإرفاق صوت بكتاب EPUB موجود، اضغط مطولاً على الكتاب في الرف.';
-	@override String get srt_import_author_hint => 'المؤلف (اختياري)';
-	@override String get srt_import_error => 'فشل الاستيراد';
-	@override String srt_import_files_selected({required Object n}) => 'تم تحديد ${n} ملف';
-	@override String get srt_import_hint_epub_or_srt => 'اختر ملف EPUB أو ملف ترجمة للاستيراد.';
-	@override String get srt_import_missing_input => 'يرجى اختيار EPUB أو ملف ترجمة على الأقل';
-	@override String get srt_import_missing_title => 'يرجى إدخال عنوان الكتاب';
-	@override String get srt_import_pick_audio_dir => 'اختيار دليل الصوت';
-	@override String get srt_import_pick_audio_files => 'اختيار ملفات صوت';
-	@override String get srt_import_pick_cover => 'اختيار صورة الغلاف';
-	@override String get srt_import_pick_epub => 'اختيار EPUB';
-	@override String get srt_import_pick_subtitle_files => 'اختيار ملفات ترجمة';
-	@override String get srt_import_success => 'تم الاستيراد بنجاح';
-	@override String get srt_import_title_hint => 'عنوان الكتاب';
-	@override String get startup_default_dictionary_tab => 'فتح البحث عند البدء';
-	@override String get startup_default_dictionary_tab_hint => 'ابدأ الشاشة الرئيسية على تبويب البحث بدلًا من الافتراضي الحالي.';
-	@override String get stash => 'المخزّن';
-	@override String get stash_added_multiple => 'تمت إضافة عناصر متعددة إلى المخزّن.';
-	@override String stash_added_single({required Object term}) => 'تمت إضافة『${term}』إلى المخزّن.';
-	@override String get stash_clear_description => 'سيتم مسح جميع المحتويات. هل أنت متأكد؟';
-	@override String stash_clear_single({required Object term}) => 'تمت إزالة『${term}』من المخزّن.';
-	@override String get stash_clear_title => 'مسح المخزّن';
-	@override String get stash_nothing_to_pop => 'لا توجد عناصر لإخراجها من المخزّن.';
-	@override String get stash_placeholder => 'لا توجد عناصر في المخزّن';
-	@override String get stat_all_time => 'الكل';
-	@override String get stat_bookshelf_compare => 'رف الكتب';
-	@override String get stat_clear_all => 'مسح الإحصائيات';
-	@override String get stat_clear_all_confirm => 'مسح';
-	@override String get stat_clear_all_reading_message => 'مسح جميع أوقات القراءة وأعداد الأحرف وأعداد البحث/التعدين؟ الكلمات والجمل والبطاقات المحفوظة ستبقى. لا يمكن التراجع عن هذا.';
-	@override String get stat_clear_all_title => 'مسح جميع الإحصائيات';
-	@override String get stat_clear_all_video_message => 'مسح جميع أوقات المشاهدة وأعداد أحرف الترجمة وأعداد البحث/التعدين؟ الكلمات والجمل والبطاقات المحفوظة ستبقى. لا يمكن التراجع عن هذا.';
-	@override String get stat_daily_average => 'المعدل اليومي';
-	@override String get stat_delete_message => 'حذف وقت هذا العنصر وعدد الأحرف وإحصائيات البحث/التعدين؟ الكلمات والجمل المحفوظة لن تتأثر.';
-	@override String get stat_delete_title => 'حذف الإحصائيات';
-	@override String get stat_fastest_day => 'Fastest Day';
-	@override String get stat_favorited => 'المفضلة';
-	@override String get stat_favorited_sentence => 'الجمل المفضلة';
-	@override String stat_format_chars({required Object n}) => '${n} حرف';
-	@override String stat_format_chars_wan({required Object n}) => '${n}万 حرف';
-	@override String stat_format_days({required Object n}) => '${n} أيام';
-	@override String stat_format_hours_minutes({required Object h, required Object m}) => '${h} س ${m} د';
-	@override String stat_format_minutes({required Object n}) => '${n} د';
-	@override String get stat_goal => 'Daily Goal';
-	@override String get stat_goal_daily => 'Daily Goal';
-	@override String get stat_goal_presets => 'إعدادات مسبقة';
-	@override String stat_goal_progress({required Object read, required Object goal}) => '${read} / ${goal} حرف';
-	@override String get stat_goal_reached => 'تم بلوغ الهدف';
-	@override String stat_goal_recent_average({required Object n}) => 'آخر 7 أيام: ${n} حرف/يوم في المتوسط';
-	@override String get stat_goal_set => 'Set Goal';
-	@override String get stat_goal_unit_chars => 'أحرف';
-	@override String get stat_goal_weekly => 'Weekly Goal';
-	@override String get stat_last_30_days => 'آخر 30 يوماً';
-	@override String get stat_lookup => 'عمليات البحث';
-	@override String get stat_metric_chars => 'الأحرف';
-	@override String get stat_metric_speed => 'السرعة';
-	@override String get stat_metric_time => 'الوقت';
-	@override String get stat_mined => 'البطاقات المُنشأة';
-	@override String get stat_no_data => 'لا توجد بيانات قراءة بعد';
-	@override String get stat_range_and_trend => 'Range & Trend';
-	@override String get stat_recent_active => 'أيام النشاط (7 أيام)';
-	@override String get stat_refresh => 'تحديث';
-	@override String get stat_slowest_day => 'Slowest Day';
-	@override String get stat_sort_by_chars => 'حسب الأحرف';
-	@override String get stat_sort_by_speed => 'حسب السرعة';
-	@override String get stat_sort_by_time => 'حسب الوقت';
-	@override String get stat_speed_anomaly => 'يوم شاذ';
-	@override String get stat_speed_avg => 'المتوسط المتحرك';
-	@override String stat_speed_cph({required Object n}) => '${n} حرف/ساعة';
-	@override String get stat_speed_summary => 'Speed Summary';
-	@override String get stat_streak => 'السلسلة';
-	@override String get stat_this_month => 'هذا الشهر';
-	@override String get stat_this_week => 'هذا الأسبوع';
-	@override String get stat_today => 'اليوم';
-	@override String get stat_today_hourly => 'اليوم حسب الساعة';
-	@override String get stat_trend_daily => 'يومي';
-	@override String get stat_trend_monthly => 'شهري';
-	@override String get stat_trend_weekly => 'أسبوعي';
-	@override String get stat_typical_day => 'Typical Day';
-	@override String get stat_vs_prev => 'مقارنة بـ 14 يوماً السابقة';
-	@override String get stat_weighted_avg_speed => 'Weighted Avg';
-	@override String get stop => 'إيقاف';
-	@override String get storage_permissions => 'يرجى منح الأذونات التالية للتصدير إلى AnkiDroid.';
-	@override String get stream => 'بث';
-	@override String get swipe_page_turn_sensitivity => 'حساسية قلب الصفحة بالسحب';
-	@override String get sync_account => 'الحساب';
-	@override String get sync_audiobook => 'مزامنة موضع الكتاب الصوتي';
-	@override String get sync_audiobook_files => 'مزامنة ملفات الكتب الصوتية';
-	@override String get sync_audiobook_files_warning => 'قد تكون ملفات الصوت والترجمات كبيرة.';
-	@override String sync_auth_error({required Object message}) => 'فشلت المصادقة: ${message}';
-	@override String get sync_auto_sync => 'مزامنة تلقائية';
-	@override String get sync_backend => 'خادم التخزين';
-	@override String get sync_backend_dropbox => 'Dropbox';
-	@override String get sync_backend_ftp => 'FTP';
-	@override String get sync_backend_google_drive => 'Google Drive';
-	@override String get sync_backend_fushi_server => 'Fushi Interconnect';
-	@override String get sync_backend_onedrive => 'OneDrive';
-	@override String get sync_backend_sftp => 'SFTP';
-	@override String get sync_backend_webdav => 'WebDAV';
-	@override String get sync_checking_account => 'جارٍ التحقق من الحساب…';
-	@override String get sync_client_connected => 'متصل';
-	@override String get sync_client_token => 'رمز وصول النظير';
-	@override String get sync_client_token_manual => 'إدخال الرمز يدوياً';
-	@override String get sync_compare => 'مقارنة البيانات';
-	@override String get sync_compare_all_books => 'كل الكتب';
-	@override String get sync_compare_all_local => 'الكل → محلي';
-	@override String get sync_compare_all_remote => 'الكل → بعيد';
-	@override String get sync_compare_all_skip => 'الكل → تخطٍّ';
-	@override String sync_compare_applied({required Object count}) => 'تم تطبيق ${count} تغيير';
-	@override String sync_compare_apply({required Object count}) => 'المزامنة الآن (${count})';
-	@override String get sync_compare_close => 'إغلاق';
-	@override String get sync_compare_conflicts => 'التعارضات';
-	@override String get sync_compare_days => 'أيام';
-	@override String get sync_compare_delete_audiobook => 'حذف الكتاب الصوتي من البعيد';
-	@override String get sync_compare_delete_book => 'حذف الكتاب من البعيد';
-	@override String sync_compare_delete_confirm({required Object name}) => 'حذف "${name}" من البعيد؟ تُحفظ البيانات المحلية. لا يمكن التراجع عن هذا.';
-	@override String get sync_compare_delete_dict => 'حذف القاموس من البعيد';
-	@override String get sync_compare_deleted => 'تم الحذف من البعيد';
-	@override String get sync_compare_dictionaries => 'القواميس';
-	@override String get sync_compare_download => 'تنزيل';
-	@override String get sync_compare_empty => 'لم يُعثر على كتب';
-	@override String get sync_compare_local => 'محلي';
-	@override String get sync_compare_no_content => 'بيانات سحابية فقط — لا يوجد كتاب للتنزيل';
-	@override String get sync_compare_no_data => 'لا توجد بيانات';
-	@override String get sync_compare_remote => 'بعيد';
-	@override String get sync_compare_select_all => 'تحديد الكل';
-	@override String get sync_compare_skip => 'تخطٍّ';
-	@override String get sync_compare_title => 'محلي مقابل بعيد';
-	@override String get sync_compare_unavailable => 'Set up sync first';
-	@override String get sync_compare_use_local => 'محلي';
-	@override String get sync_compare_use_remote => 'بعيد';
-	@override String get sync_connection_failed => 'فشل الاتصال';
-	@override String get sync_connection_success => 'نجح الاتصال';
-	@override String get sync_content => 'مزامنة ملفات الكتب';
-	@override String get sync_content_warning => 'الملفات الكبيرة ستستهلك مساحة التخزين وحزمة البيانات';
-	@override String get sync_err_auth_expired => 'انتهت صلاحية تسجيل الدخول — يرجى تسجيل الدخول مجددًا.';
-	@override String get sync_err_invalid_client => 'بيانات اعتماد العميل غير صالحة لهذه النسخة — يُرجى تحديث التطبيق.';
-	@override String get sync_err_network => 'تعذّر الوصول إلى الخادم — تحقّق من شبكتك أو إعدادات الوكيل.';
-	@override String get sync_err_not_configured => 'لم تُهيَّأ بيانات اعتماد مزامنة Google في هذه النسخة.';
-	@override String get sync_err_quota => 'التخزين السحابي ممتلئ (تم بلوغ الحصة).';
-	@override String get sync_err_scope_upgrade => 'تغيرت صلاحيات المزامنة — يرجى تسجيل الدخول إلى Google مرة أخرى لمتابعة المزامنة.';
-	@override String get sync_err_timeout => 'انتهت مهلة الاتصال — لم يستجب الخادم في الوقت المحدد.';
-	@override String sync_error({required Object message}) => 'خطأ في المزامنة: ${message}';
-	@override String get sync_exit_warning => 'المزامنة لا تزال قيد التنفيذ. قد يؤدي الخروج الآن إلى فقدان البيانات.';
-	@override String get sync_exit_warning_title => 'المزامنة قيد التنفيذ';
-	@override String get sync_host => 'المضيف';
-	@override String get sync_lan_discovery => 'أجهزة الشبكة المحلية';
-	@override String get sync_lan_no_devices => 'لم يُعثر على أجهزة';
-	@override String get sync_lan_scan_failed => 'فشل الفحص — تحقّق من أذونات الشبكة أو الجدار الناري.';
-	@override String get sync_not_signed_in => 'لم يتم تسجيل الدخول';
-	@override String get sync_now => 'زامن الآن';
-	@override String sync_now_audio_in({required Object count}) => '↓${count} كتاب صوتي';
-	@override String sync_now_audio_out({required Object count}) => '↑${count} كتاب صوتي';
-	@override String sync_now_books_in({required Object count}) => '↓${count} كتاب';
-	@override String get sync_now_busy => 'هناك مزامنة قيد التنفيذ بالفعل';
-	@override String sync_now_dicts_in({required Object count}) => '↓${count} قاموس';
-	@override String sync_now_dicts_out({required Object count}) => '↑${count} قاموس';
-	@override String sync_now_done({required Object detail}) => 'تمت المزامنة · ${detail}';
-	@override String sync_now_failed_suffix({required Object count}) => ' · ${count} فشل';
-	@override String get sync_now_hint => 'نفّذ مزامنة ثنائية الاتجاه كاملة مع السحابة الآن';
-	@override String sync_now_local_audio_in({required Object count}) => '↓${count} مصدر صوتي';
-	@override String sync_now_local_audio_out({required Object count}) => '↑${count} مصدر صوتي';
-	@override String get sync_now_no_changes => 'لا تغييرات';
-	@override String get sync_pair_allow => 'سماح';
-	@override String sync_pair_confirm_identity_body({required Object device}) => 'أنت تقترن بـ ${device}. تأكد أن هذا هو الجهاز المتوقع قبل المتابعة.';
-	@override String get sync_pair_confirm_identity_title => 'تأكيد الجهاز';
-	@override String get sync_pair_continue => 'متابعة';
-	@override String get sync_pair_denied => 'رفض الجهاز الآخر الاقتران';
-	@override String get sync_pair_deny => 'رفض';
-	@override String get sync_pair_enter_pin_body => 'أدخل رمز PIN المكون من 6 أرقام المعروض على الجهاز الآخر.';
-	@override String get sync_pair_enter_pin_title => 'إدخال رمز PIN';
-	@override String get sync_pair_failed => 'فشل الاقتران';
-	@override String get sync_pair_fingerprint_changed => 'تغيرت الشهادة — تم إلغاء الاقتران للأمان (احتمال اعتراض).';
-	@override String get sync_pair_fingerprint_label => 'بصمة الشهادة';
-	@override String get sync_pair_not_fushi => 'لم يُعثر على جهاز Fushi على هذا العنوان. تم حفظ العنوان.';
-	@override String get sync_pair_pairing => 'جارٍ الاقتران…';
-	@override String get sync_pair_pin_label => 'أدخل رمز PIN هذا على الجهاز الآخر';
-	@override String get sync_pair_pin_waiting => 'في انتظار الجهاز الآخر لإدخال رمز PIN…';
-	@override String get sync_pair_pin_wrong => 'رمز PIN خاطئ — حاول مرة أخرى';
-	@override String get sync_pair_repair => 'إعادة الاقتران';
-	@override String get sync_pair_request_body => 'يطلب جهاز الاقتران. هل تسمح له بالمزامنة مع هذا الجهاز؟';
-	@override String get sync_pair_request_title => 'طلب اقتران';
-	@override String get sync_pair_success => 'تم الاقتران — تم ملء الرمز';
-	@override String get sync_pair_unavailable => 'الجهاز الآخر غير جاهز أو يعمل بإصدار أقدم. حدّثه وفعّل المزامنة ثم حاول مجددًا.';
-	@override String get sync_pair_unknown_device => 'جهاز غير معروف';
-	@override String get sync_paired_peer_remove => 'إزالة';
-	@override String get sync_paired_peer_removed => 'تمت إزالة الجهاز المقترن';
-	@override String get sync_paired_peer_unknown => 'جهاز غير معروف';
-	@override String get sync_paired_peers_empty => 'لا توجد أجهزة مقترنة بعد';
-	@override String get sync_paired_peers_title => 'الأجهزة المقترنة';
-	@override String get sync_password => 'كلمة المرور';
-	@override String get sync_port => 'المنفذ';
-	@override String get sync_private_key => 'المفتاح الخاص';
-	@override String get sync_progress_audiobooks => 'مزامنة الكتب الصوتية';
-	@override String get sync_progress_books => 'جارٍ استيراد الكتب';
-	@override String get sync_progress_dictionaries => 'مزامنة القواميس';
-	@override String get sync_progress_local_audio => 'مزامنة الصوت المحلي';
-	@override String get sync_progress_reading => 'مزامنة بيانات القراءة';
-	@override String get sync_progress_videos => 'جارٍ مزامنة الفيديوهات';
-	@override String get sync_role_locked_by_client => 'متصل بالفعل بجهاز آخر. أزل الاتصال قبل التشغيل كخادم مضيف.';
-	@override String get sync_role_locked_by_server => 'هذا الجهاز يعمل كخادم مضيف. أوقف الخادم قبل الاتصال بأجهزة أخرى.';
-	@override String get sync_section_actions => 'إجراءات المزامنة';
-	@override String get sync_section_backup => 'نسخة احتياطية محلية';
-	@override String get sync_section_content => 'ما الذي تتم مزامنته';
-	@override String get sync_section_host_server => 'هذا الجهاز كخادم مزامنة';
-	@override String get sync_section_host_server_footer => 'اسمح للأجهزة الأخرى بالمزامنة من هذا الجهاز. مستقل عن خادم التخزين أعلاه.';
-	@override String get sync_section_method => 'طريقة المزامنة';
-	@override String get sync_server_copy_token => 'نسخ الرمز';
-	@override String get sync_server_enable => 'تفعيل خادم المزامنة';
-	@override String get sync_server_mode_active => 'هذا الجهاز خادم مزامنة';
-	@override String get sync_server_mode_clients_drive => 'تبدأ المزامنة من العملاء المتصلين — لا حاجة للمزامنة اليدوية هنا.';
-	@override String get sync_server_port => 'منفذ الخادم';
-	@override String sync_server_port_in_use({required Object port}) => 'المنفذ ${port} مستخدم بالفعل — اختر منفذًا آخر.';
-	@override String get sync_server_regenerate_token => 'إعادة توليد الرمز';
-	@override String get sync_server_running => 'الخادم قيد التشغيل';
-	@override String get sync_server_stopped => 'الخادم متوقف';
-	@override String get sync_server_tls_enable => 'تشفير الاتصال (HTTPS/TLS)';
-	@override String get sync_server_tls_repair_hint => 'تغيير هذا يتطلب إعادة اقتران الأجهزة';
-	@override String get sync_server_token => 'رمز الوصول';
-	@override String get sync_show_remote_entries => 'عرض العناصر البعيدة';
-	@override String get sync_show_remote_entries_warning => 'عرض الكتب والفيديوهات الموجودة على الأجهزة المقترنة أو السحابة كبطاقات يمكنك تحميلها أو بثها.';
-	@override String get sync_sign_in => 'تسجيل الدخول';
-	@override String get sync_sign_out => 'تسجيل الخروج';
-	@override String get sync_signed_in => 'تم تسجيل الدخول';
-	@override String get sync_statistics => 'مزامنة الإحصائيات';
-	@override String get sync_summary => 'سحابة، Fushi Interconnect عبر الشبكة المحلية ونسخ احتياطي محلي';
-	@override String get sync_test_connection => 'اختبار الاتصال';
-	@override String get sync_use_tls => 'استخدام TLS';
-	@override String get sync_username => 'اسم المستخدم';
-	@override String get sync_video_files => 'رفع ملفات الفيديو';
-	@override String get sync_video_files_warning => 'ملفات الفيديو قد تكون كبيرة جداً.';
-	@override String get sync_webdav_missing_fields => 'حقول ناقصة';
-	@override String sync_webdav_test_failed({required Object message}) => 'فشل الاتصال: ${message}';
-	@override String get sync_webdav_url => 'عنوان الخادم';
-	@override String tag_added_to_book({required Object name}) => 'تمت إضافة الوسم "${name}" إلى الكتاب.';
-	@override String tag_added_to_collection({required Object name}) => 'تمت إضافة الوسم ${name} إلى المجموعة.';
-	@override String tag_added_to_video({required Object name}) => 'أُضيف الوسم «${name}» إلى الفيديو.';
-	@override String tag_already_on_book({required Object name}) => 'الوسم "${name}" موجود بالفعل في هذا الكتاب.';
-	@override String tag_already_on_collection({required Object name}) => 'الوسم ${name} موجود بالفعل في هذه المجموعة.';
-	@override String tag_book_count({required Object count}) => '${count} كتاب';
-	@override String get tag_clear_filter => 'مسح التصفية';
-	@override String get tag_color => 'اللون';
-	@override String tag_delete_confirm({required Object name}) => 'حذف الوسم "${name}"؟';
-	@override String get tag_filter_title => 'تصفية حسب الوسم';
-	@override String get tag_label => 'الوسوم';
-	@override String get tag_manage => 'إدارة الوسوم';
-	@override String get tag_manage_title => 'إدارة الوسوم';
-	@override String get tag_name_duplicate => 'يوجد وسم بهذا الاسم بالفعل.';
-	@override String get tag_name_empty => 'لا يمكن أن يكون اسم الوسم فارغاً.';
-	@override String get tag_name_hint => 'اسم الوسم';
-	@override String get tag_new => 'وسم جديد';
-	@override String get tag_no_books_for_filter => 'لا توجد كتب تطابق الوسوم المحددة.';
-	@override String get tag_no_tags_hint => 'لا توجد وسوم بعد. أنشئ واحداً للبدء.';
-	@override String get tag_seed_stars => 'إضافة وسوم تقييم بالنجوم';
-	@override String get tag_seed_stars_added => 'تمت إضافة وسوم التقييم بالنجوم';
-	@override String get tag_seed_stars_exists => 'وسوم التقييم بالنجوم موجودة بالفعل';
-	@override String get tap_empty_hide_chrome => 'شريط التحكم العائم';
-	@override String get text_segmentation => 'تقطيع النص';
-	@override String get texthooker => 'Texthooker';
-	@override String get texthooker_enabled => 'Texthooker (استقبال النص)';
-	@override String get texthooker_enabled_hint => 'الاتصال بـ Textractor/mpv/agent والبحث عن النص الوارد';
-	@override String get theme_black => 'أسود صرف';
-	@override String get theme_code_copied => 'تم نسخ رمز المظهر إلى الحافظة';
-	@override String get theme_dark => 'داكن عميق';
-	@override String get theme_ecru => 'بيج';
-	@override String get theme_eyecare => 'Eye Care';
-	@override String get theme_gray => 'رمادي داكن';
-	@override String get theme_light => 'أبيض';
-	@override String get theme_seed_preview_hint => 'تعرض العينات أدناه الألوان المُولَّدة فعليًا من لون البذرة. لفرض لون محدد كلون التمييز الأساسي، فعّل مفتاح «الأساسي» وحدّده صراحةً.';
-	@override String get theme_water => 'أزرق مائي';
-	@override String toc_section({required Object n}) => 'جدول المحتويات (${n})';
-	@override String get top_progress_pos_center => 'الوسط';
-	@override String get top_progress_pos_left => 'أعلى اليسار';
-	@override String get top_progress_pos_right => 'أعلى اليمين';
-	@override String get top_progress_position => 'موضع شريط التقدم';
-	@override String get torrent_upload_intro_body => 'الرفع (البذر) معطل افتراضياً. فعّله لمشاركة المحتوى المحمّل مع السرب — هذا يستخدم سرعة الرفع لديك. يمكنك تغيير هذا في أي وقت من الإعدادات.';
-	@override String get torrent_upload_intro_confirm => 'حفظ';
-	@override String get torrent_upload_intro_enable => 'تفعيل الرفع / البذر';
-	@override String get torrent_upload_intro_keep_off => 'الإبقاء معطلاً';
-	@override String get torrent_upload_intro_title => 'الرفع / البذر';
-	@override String get reader_blur_images => 'تمويه الصور (حماية المحتوى)';
-	@override String get reader_font_size => 'حجم الخط';
-	@override String get reader_font_vpal => 'VPAL (بديل عمودي)';
-	@override String get reader_furigana_hide => 'إخفاء';
-	@override String get reader_furigana_mode => 'فوريغانا';
-	@override String get reader_furigana_mode_hint => '';
-	@override String get reader_furigana_partial => 'جزئي';
-	@override String get reader_furigana_show => 'عرض';
-	@override String get reader_furigana_toggle => 'تبديل';
-	@override String get reader_horizontal => 'أفقي';
-	@override String get reader_line_height => 'ارتفاع السطر';
-	@override String get reader_merge_image_pages => 'دمج صفحات الرسوم في النص';
-	@override String get reader_merge_image_pages_subtitle => 'الفصول المكونة من صورة واحدة تُعرض ضمن الفصل النصي المجاور بدلاً من صفحة منفصلة';
-	@override String get reader_no_books_added => 'لا توجد كتب في المكتبة';
-	@override String get reader_not_bound_cannot_rematch => 'الكتاب الصوتي غير مرتبط بكتاب، لا يمكن إعادة المطابقة';
-	@override String get reader_orient_mixed => 'مختلط';
-	@override String get reader_orient_upright => 'قائم';
-	@override String get reader_page_columns_auto => 'تلقائي';
-	@override String get reader_paginated => 'صفحات';
-	@override String get reader_paragraph_spacing => 'المسافة بين الفقرات';
-	@override String get reader_reader_styles => 'أولوية أنماط الكتاب';
-	@override String get reader_scroll => 'تمرير';
-	@override String get reader_text_indentation => 'مسافة بادئة الفقرة';
-	@override String get reader_text_justify => 'ضبط النص';
-	@override String get reader_theme => 'المظهر';
-	@override String get reader_vert_kerning => 'تقنين الحروف (عمودي)';
-	@override String get reader_vert_text_orient => 'اتجاه النص';
-	@override String get reader_vertical => 'عمودي';
-	@override String get reader_view_mode_label => 'صفحات / تمرير';
-	@override String get reader_vn => 'Visual Novel';
-	@override String get reader_writing_direction => 'اتجاه الكتابة';
-	@override String get undo => 'تراجع';
-	@override String get unit_milliseconds => 'مللي ثانية';
-	@override String get unit_pixels => 'بكسل';
-	@override String untitled_book({required Object id}) => 'كتاب ${id}';
-	@override String get untitled_chapter => '(بدون عنوان)';
-	@override String get update_already_latest => 'أنت على أحدث إصدار';
-	@override String get update_auto_install => 'تثبيت التحديثات تلقائياً';
-	@override String get update_available => 'تحديث متاح';
-	@override String update_cached_newer({required Object version}) => 'التحديث ${version} متاح (جارٍ التحقق…)';
-	@override String update_cached_up_to_date({required Object version}) => 'على أحدث إصدار معروف ${version} (جارٍ التحقق…)';
-	@override String get update_cancel => 'إلغاء';
-	@override String get update_cancelled => 'تم إلغاء التنزيل';
-	@override String get update_cancelling => 'جارٍ الإلغاء…';
-	@override String get update_channel_beta => 'تجريبي';
-	@override String get update_channel_debug => 'تصحيح';
-	@override String get update_channel_stable => 'مستقر';
-	@override String get update_check_failed => 'فشل التحقق من التحديثات';
-	@override String get update_checking_now => 'جارٍ التحقق من التحديثات…';
-	@override String get update_connecting => 'جارٍ الاتصال…';
-	@override String get update_debug_channel => 'قناة تحديث التصحيح';
-	@override String get update_debug_channel_warning => 'إصدارات قناة التصحيح قد تكون غير مستقرة. استخدمها على مسؤوليتك.';
-	@override String get update_download => 'تنزيل';
-	@override String get update_download_failed => 'فشل التنزيل';
-	@override String get update_download_restarted_from_zero => 'أُعيد التنزيل من الصفر';
-	@override String update_download_resume_status({required Object status}) => 'الاستئناف: ${status}';
-	@override String get update_download_resumed => 'تم الاستئناف';
-	@override String update_download_size({required Object received, required Object total}) => 'تم التنزيل: ${received} / ${total}';
-	@override String update_download_source({required Object source}) => 'المصدر: ${source}';
-	@override String update_download_speed({required Object speed}) => 'السرعة: ${speed}';
-	@override String get update_downloading => 'جارٍ تنزيل التحديث…';
-	@override String get update_hide => 'إخفاء';
-	@override String update_install_current_executable({required Object path}) => 'البرنامج قيد التشغيل: ${path}';
-	@override String update_install_deletefile_failure({required Object path, required Object code}) => 'فشل المثبّت في استبدال ${path} (الرمز ${code})';
-	@override String update_install_detected_location({required Object source, required Object path}) => 'موقع التثبيت المكتشف (${source}): ${path}';
-	@override String update_install_failure_summary({required Object summary}) => 'السبب: ${summary}';
-	@override String get update_install_incomplete_message => 'بدأ المثبّت، لكن Fushi لا يزال على الإصدار السابق. تحقق من سجل المثبّت أدناه.';
-	@override String get update_install_incomplete_title => 'لم يكتمل التحديث';
-	@override String update_install_installer_pid({required Object pid}) => 'معرّف عملية المثبّت: ${pid}';
-	@override String update_install_launch_failed_message({required Object version}) => 'تعذّر على Fushi بدء مثبّت الإصدار ${version}. تحقق من مسار السجل أدناه.';
-	@override String get update_install_launch_failed_title => 'لم يبدأ مثبّت التحديث';
-	@override String update_install_launcher_pid({required Object pid}) => 'معرّف عملية مشغّل التحديث: ${pid}';
-	@override String update_install_libmpv_holder({required Object pid, required Object path}) => 'حامل libmpv: PID ${pid} - ${path}';
-	@override String get update_install_log_not_observed => 'لم يُنشأ سجل المثبّت أثناء الفحص بعد البدء.';
-	@override String get update_install_log_observed => 'أُنشئ سجل المثبّت أثناء الفحص بعد البدء.';
-	@override String update_install_log_path({required Object path}) => 'سجل المثبّت: ${path}';
-	@override String get update_install_manual_close_retry => 'أغلق Fushi من PID/المسار المدرج، ثم أعد محاولة التحديث أو شغّل المثبّت مجددًا.';
-	@override String get update_install_parent_exit_not_observed => 'لم يلاحظ مشغّل التحديث خروج Fushi قبل بدء المثبّت.';
-	@override String get update_install_parent_exit_observed => 'خرج Fushi قبل بدء المثبّت.';
-	@override String update_install_path_mismatch({required Object warning}) => 'عدم تطابق دليل التثبيت: ${warning}';
-	@override String get update_install_permission_cancel => 'إلغاء';
-	@override String get update_install_permission_message => 'يرجى السماح لـ Fushi بتثبيت التطبيقات في إعدادات النظام، ثم أعد المحاولة.';
-	@override String get update_install_permission_retry => 'إعادة محاولة التثبيت';
-	@override String get update_install_permission_title => 'السماح بتثبيت التحديثات';
-	@override String get update_install_restart_windows_hint => 'إذا أُغلقت العمليات المدرجة لكن libmpv-2.dll لا يزال مقفلًا، أعد تشغيل Windows وثبّت مجددًا.';
-	@override String update_install_running_process({required Object pid, required Object path}) => 'عملية Fushi قيد التشغيل: PID ${pid} - ${path}';
-	@override String update_install_success_message({required Object version}) => 'تم تحديث Fushi إلى الإصدار ${version}.';
-	@override String get update_install_success_title => 'تم تثبيت التحديث';
-	@override String update_install_target_dir({required Object path}) => 'هدف التثبيت: ${path}';
-	@override String get update_installing => 'جارٍ التثبيت…';
-	@override String get update_mac_install_incomplete_message => 'تعذر تطبيق التحديث، لذا Fushi لا يزال على الإصدار السابق. يمكنك إعادة محاولة التحديث، أو تحميل أحدث إصدار يدوياً.';
-	@override String update_message({required Object version}) => 'الإصدار ${version} متاح.';
-	@override String update_network_failure({required Object host, required Object reason}) => 'تعذّر الوصول إلى ${host}: ${reason}';
-	@override String get update_never_remind => 'عدم التذكير بالتحديثات';
-	@override String get update_skip => 'تخطّي';
-	@override String get url => 'الرابط';
-	@override String get video_audio_track => 'المسار الصوتي';
-	@override String get video_audio_track_empty => 'لا توجد مسارات صوتية قابلة للتبديل';
-	@override String video_audio_track_switched({required Object label}) => 'المسار الصوتي: ${label}';
-	@override String get video_auto_play_next_cancel => 'إلغاء';
-	@override String video_auto_play_next_countdown({required Object seconds}) => 'الحلقة التالية بعد ${seconds} ث';
-	@override String get video_black_flash_notice_action => 'عرض الاقتراحات';
-	@override String get video_black_flash_notice_dont_show_again => 'عدم الإظهار مرة أخرى';
-	@override String get video_bottom_next_cue => 'الترجمة التالية (تقديم قليلًا إن لم توجد)';
-	@override String get video_bottom_play_pause => 'تشغيل / إيقاف مؤقت';
-	@override String get video_bottom_prev_cue => 'الترجمة السابقة (ترجيع قليلًا إن لم توجد)';
-	@override String get video_bottom_seek_back => 'ترجيع 10 ثوانٍ';
-	@override String get video_bottom_seek_back_label => '−10 ث';
-	@override String get video_bottom_seek_forward => 'تقديم 10 ثوانٍ';
-	@override String get video_bottom_seek_forward_label => '+10 ث';
-	@override String video_chapter_n({required Object n}) => 'الفصل ${n}';
-	@override String get video_chapters => 'الفصول';
-	@override String get video_chapters_empty => 'لا توجد فصول';
-	@override String get video_clip_export => 'تصدير المقطع';
-	@override String get video_clip_export_cancelled => 'تم إلغاء تصدير المقطع';
-	@override String video_clip_export_failed({required Object reason}) => 'فشل تصدير المقطع: ${reason}';
-	@override String get video_clip_export_ffmpeg_failed => 'فشل ffmpeg';
-	@override String get video_clip_export_ffmpeg_unavailable => 'ffmpeg غير متاح';
-	@override String get video_clip_export_input_missing => 'الفيديو المصدر غير متاح';
-	@override String get video_clip_export_invalid_range => 'لا يوجد نطاق مقطع صالح';
-	@override String get video_clip_export_output_missing => 'لم يُنشأ أي ملف إخراج';
-	@override String get video_clip_export_remote_download_required => 'نزّل الفيديو البعيد إلى هذا الجهاز قبل تصدير مقطع';
-	@override String get video_clip_export_source_changed => 'تغيّر مصدر الفيديو؛ أُلغي تصدير المقطع';
-	@override String get video_clip_export_start => 'بدء تصدير المقطع';
-	@override String get video_clip_export_stop => 'إيقاف وتصدير المقطع';
-	@override String video_clip_exported({required Object path}) => 'تم تصدير المقطع: ${path}';
-	@override String video_clip_exported_with_subtitles({required Object path}) => 'تم تصدير المقطع مع الترجمات: ${path}';
-	@override String get video_clip_exporting => 'جارٍ تصدير المقطع…';
-	@override String get video_continue_watching => 'Continue Watching';
-	@override String get video_control_audio_track => 'المسار الصوتي';
-	@override String get video_control_customize_hint => 'اختر موضع كل زر على المشغّل، أو انقله خارجه.';
-	@override String get video_control_episode_list => 'قائمة الحلقات';
-	@override String get video_control_favorite_sentence => 'تفضيل الجملة الحالية';
-	@override String get video_control_fullscreen => 'ملء الشاشة';
-	@override String get video_control_next_cue => 'الترجمة التالية';
-	@override String get video_control_palette_hint => 'اسحب زرًا إلى موضع لإضافته؛ يمكن أن يكون الزر في عدة مواضع.';
-	@override String get video_control_palette_title => 'كل الأزرار';
-	@override String get video_control_play_pause => 'تشغيل/إيقاف مؤقت';
-	@override String get video_control_previous_cue => 'الترجمة السابقة';
-	@override String get video_control_reject_required => 'يجب أن تبقى عناصر التحكم المطلوبة على المشغّل.';
-	@override String get video_control_reject_unavailable => 'لا يمكن وضع هذا العنصر هناك.';
-	@override String get video_control_reject_volume_bottom => 'لا يمكن وضع الصوت إلا في الشريط السفلي.';
-	@override String get video_control_remove_from_slot => 'نقل للخارج';
-	@override String get video_control_reset_layout => 'إعادة تعيين تخطيط أزرار المشغّل';
-	@override String get video_control_screenshot => 'لقطة شاشة';
-	@override String get video_control_seek_backward => 'ترجيع 10 ثوانٍ';
-	@override String get video_control_seek_forward => 'تقديم 10 ثوانٍ';
-	@override String get video_control_settings => 'إعدادات المشغّل';
-	@override String get video_control_slot_bottom_center => 'الشريط السفلي (الوسط)';
-	@override String get video_control_slot_bottom_left => 'الشريط السفلي (يسار)';
-	@override String get video_control_slot_bottom_right => 'الشريط السفلي (يمين)';
-	@override String get video_control_slot_drop_hint => 'اسحب زرًا إلى هنا';
-	@override String get video_control_slot_hidden => 'أُزيل من المشغّل';
-	@override String get video_control_slot_screen_left => 'يسار الشاشة';
-	@override String get video_control_slot_screen_right => 'يمين الشاشة';
-	@override String get video_control_slot_top_center => 'الشريط العلوي (الوسط)';
-	@override String get video_control_slot_top_left => 'الشريط العلوي (يسار)';
-	@override String get video_control_slot_top_right => 'الشريط العلوي (يمين)';
-	@override String get video_control_speed => 'السرعة';
-	@override String get video_control_subtitle_list => 'قائمة الترجمة';
-	@override String get video_control_subtitle_track => 'مسار الترجمة';
-	@override String get video_control_title => 'عنوان الفيديو';
-	@override String get video_control_volume => 'الصوت';
-	@override String get video_danmaku_manual_bind_empty => 'لا توجد دانماكو لهذه الحلقة بعد.';
-	@override String get video_danmaku_manual_bind_failed => 'تعذر تحميل الدانماكو لهذه الحلقة. حاول مرة أخرى لاحقاً.';
-	@override String get video_danmaku_manual_bind_server_error => 'رفض خادم الدانماكو الطلب. حاول مرة أخرى لاحقاً.';
-	@override String get video_danmaku_manual_match_title => 'مطابقة الدانماكو';
-	@override String get video_danmaku_manual_network_error => 'خطأ في الشبكة. تحقق من اتصالك وحاول مرة أخرى.';
-	@override String get video_danmaku_manual_no_result => 'لم يُعثر على أنمي مطابق.';
-	@override String get video_danmaku_manual_search_action => 'بحث';
-	@override String get video_danmaku_manual_search_hint => 'عنوان الأنمي';
-	@override String get video_danmaku_manual_search_prompt => 'ابحث في Dandanplay بعنوان الأنمي، ثم اختر حلقة.';
-	@override String get video_danmaku_manual_server_error => 'فشل البحث. حاول مرة أخرى لاحقاً.';
-	@override String video_delete_confirm({required Object title}) => 'حذف『${title}』؟ لا يمكن التراجع عن ذلك.';
-	@override String get video_delete_title => 'حذف الفيديو';
-	@override String get video_double_tap_next_cue => 'السطر التالي';
-	@override String get video_double_tap_prev_cue => 'السطر السابق';
-	@override String get video_drop_audio_unsupported => 'أفلت ملفات الترجمة على الفيديو الحالي. لا يمكن إرفاق ملفات الصوت هنا.';
-	@override String get video_drop_subtitle_only => 'أفلت ملفات الترجمة على الفيديو الحالي.';
-	@override String get video_episode_list => 'الحلقات';
-	@override String get video_episode_list_empty => 'لا توجد حلقات';
-	@override String video_favorite_count({required Object count}) => '${count} مفضّلة';
-	@override String get video_file_error_content => 'تعذّر تحميل ملف الفيديو. تأكد من وجود الملف في دليل يمكن للتطبيق الوصول إليه.';
-	@override String get video_file_not_found => 'ملف الفيديو غير موجود';
-	@override String get video_immersive_locked => 'وضع الانغماس مفعّل';
-	@override String get video_immersive_mode_full => 'كامل عناصر التحكم';
-	@override String get video_immersive_mode_lookup_only => 'البحث فقط';
-	@override String get video_immersive_mode_seek_lookup => 'اختصار + بحث';
-	@override String get video_immersive_mode_unlock_only => 'إلغاء القفل فقط';
-	@override String get video_immersive_unlock => 'إلغاء القفل';
-	@override String get video_immersive_unlocked => 'وضع الانغماس متوقف';
-	@override String get video_import_action => 'استيراد فيديو';
-	@override String get video_import_confirm => 'استيراد';
-	@override String get video_import_pick_subtitle => 'اختيار ترجمة';
-	@override String get video_import_pick_video => 'اختيار ملف فيديو';
-	@override String get video_import_stream_advanced => 'متقدم (ترويسات مضادة للسرقة)';
-	@override String get video_import_stream_referer => 'Referer (اختياري)';
-	@override String get video_import_stream_subtitle_url_field => 'رابط ترجمة خارجية (اختياري)';
-	@override String get video_import_stream_url_field => 'رابط بث الفيديو';
-	@override String get video_import_stream_url_hint => 'تشغيل بث HLS/m3u8/mp4 (مع رابط ترجمة خارجية اختياري و Referer/User-Agent مضاد للسرقة)';
-	@override String get video_import_stream_user_agent => 'User-Agent (اختياري)';
-	@override String get video_import_subtitle_optional => 'ترجمة خارجية اختيارية (يمكنك التبديل بين الترجمات المدمجة والخارجية في أي وقت أثناء التشغيل)';
-	@override String get video_import_title => 'استيراد فيديو';
-	@override String get video_jimaku_anime_match => 'مطابقة الأنمي';
-	@override String get video_jimaku_api_key => 'مفتاح Jimaku API';
-	@override String get video_jimaku_api_key_hint => 'احصل على مفتاح API مجاني من jimaku.cc/account';
-	@override String get video_jimaku_api_key_set => 'تم ضبط مفتاح API';
-	@override String video_jimaku_batch_done({required Object done, required Object total}) => 'تم جلب الترجمات: ${done}/${total}';
-	@override String get video_jimaku_batch_download => 'تحميل الكل';
-	@override String get video_jimaku_batch_title => 'جلب ترجمات المجموعة';
-	@override String get video_jimaku_download_failed => 'فشل التنزيل';
-	@override String get video_jimaku_downloaded => 'تم تنزيل الترجمة وتطبيقها';
-	@override String get video_jimaku_episode => 'الحلقة (اختياري)';
-	@override String get video_jimaku_episode_hint => 'اتركه فارغاً لعرض الكل';
-	@override String get video_jimaku_fetch => 'جلب الترجمات (Jimaku)';
-	@override String get video_jimaku_filter => 'تصفية النتائج (مثل WEBRip وBD)';
-	@override String get video_jimaku_find_sources => 'البحث عن ترجمات';
-	@override String get video_jimaku_language => 'اللغة';
-	@override String get video_jimaku_language_all => 'الكل';
-	@override String get video_jimaku_no_key => 'أدخل مفتاح Jimaku API أولًا';
-	@override String get video_jimaku_no_results => 'لم يُعثر على ترجمات';
-	@override String get video_jimaku_query => 'اسم السلسلة';
-	@override String get video_jimaku_search => 'بحث';
-	@override String get video_jimaku_series => 'السلسلة';
-	@override String get video_jimaku_show_all_episodes => 'عرض جميع الحلقات';
-	@override String get video_jimaku_source => 'مصدر الترجمة';
-	@override String get video_jimaku_source_hint => 'اختر مدخل Jimaku واحداً. حزم المواسم تُطابق بالحلقة تلقائياً.';
-	@override String video_last_watched({required Object date}) => 'آخر مشاهدة ${date}';
-	@override String get video_library_empty => 'لم تُستورد أي فيديوهات بعد';
-	@override String get video_load_failed_back => 'رجوع';
-	@override String get video_load_failed_generic => 'تعذر تحميل هذا الفيديو.';
-	@override String get video_load_failed_network => 'خطأ في الشبكة - تحقق من اتصالك وحاول مرة أخرى.';
-	@override String get video_load_failed_not_found => 'لم يُعثر على هذا العنصر في مكتبتك.';
-	@override String get video_load_failed_retry => 'إعادة المحاولة';
-	@override String get video_load_failed_timeout => 'انتهت مهلة الاتصال - الشبكة بطيئة أو المصدر يحدّ من الطلبات. يرجى المحاولة مرة أخرى.';
-	@override String get video_load_failed_title => 'فشل تحميل الفيديو';
-	@override String get video_load_failed_unavailable => 'تعذر الحصول على بث الفيديو - قد يكون غير متاح أو مقيداً بالمنطقة أو العمر أو تغيّر المصدر.';
-	@override String get video_loading_buffering => 'جارٍ التخزين المؤقت…';
-	@override String get video_loading_connecting => 'جارٍ الاتصال بالبث…';
-	@override String get video_loading_preparing => 'جارٍ التحضير…';
-	@override String get video_loading_subtitle => 'جارٍ تحميل الترجمات…';
-	@override String get video_menu_fullscreen => 'تبديل ملء الشاشة';
-	@override String get video_menu_lock => 'وضع الانغماس / القفل';
-	@override String get video_menu_play_pause => 'تشغيل / إيقاف مؤقت';
-	@override String get video_menu_subtitle_track => 'مسار الترجمة';
-	@override String get video_mining_image_mode => 'صورة بطاقة الفيديو';
-	@override String get video_mining_image_mode_current_frame => 'لقطة شاشة عند التعدين';
-	@override String get video_mining_image_mode_gif => 'GIF متحرك (مقطع الترجمة)';
-	@override String get video_mining_image_mode_hint => 'هل غلاف بطاقة الفيديو رسوم متحركة لمقطع الترجمة أم إطار ثابت — وأي إطار';
-	@override String get video_mining_image_mode_subtitle_start => 'لقطة شاشة عند بداية الترجمة';
-	@override String get video_next_episode => 'الحلقة التالية';
-	@override String video_playlist_episodes({required Object count}) => '${count} حلقة';
-	@override String get video_prev_episode => 'الحلقة السابقة';
-	@override String get video_quality => 'الجودة';
-	@override String get video_quality_auto => 'تلقائي';
-	@override String get video_quality_empty => 'لا توجد جودات قابلة للتبديل لهذا الفيديو';
-	@override String get video_quality_enhancement_hint => 'فعّل هذا لزيادة حدّة الصورة باستخدام التحجيم عالي الجودة المدمج في mpv. يعمل مع الأنمي وكذلك المسلسلات والأفلام الحية. للمزيد عبر مظلِّلات مثل Anime4K، افتح «تحسين الصورة» أثناء تشغيل فيديو واختر المستوى هناك.';
-	@override String get video_quality_load_failed => 'تعذر تحميل الجودات المتاحة لهذا الفيديو.';
-	@override String get video_quality_loading => 'جارٍ تحميل الجودات المتاحة…';
-	@override String video_quality_switched({required Object label}) => 'الجودة: ${label}';
-	@override String get video_rename => 'إعادة تسمية';
-	@override String get video_rename_hint => 'العنوان';
-	@override String get video_render_skia_fix_confirm_action => 'إعادة التشغيل';
-	@override String get video_render_skia_fix_confirm_body => 'يؤدي هذا إلى تعطيل محرك Impeller وإعادة تشغيل التطبيق للتطبيق.';
-	@override String get video_render_skia_fix_confirm_title => 'التبديل إلى Skia وإعادة التشغيل؟';
-	@override String get video_render_skia_fix_hint => 'استخدمه إذا كان الصوت يعمل لكن الفيديو يبقى أسود. يعطل Impeller؛ يتطلب إعادة التشغيل.';
-	@override String get video_render_skia_fix_title => 'شاشة سوداء؟ بدّل المُصيّر (Skia)';
-	@override String video_resource_missing_message({required Object title}) => 'تعذر العثور على ملف 『${title}』. ربما تغيّر موقعه أو أن محرك الأقراص غير متصل. يمكنك إعادة استيراده أو إزالة هذا العنصر.';
-	@override String get video_resource_missing_reimport => 'إعادة استيراد';
-	@override String get video_resource_missing_title => 'الفيديو غير متوفر';
-	@override String get video_resource_relink_success => 'تم إعادة ربط الفيديو';
-	@override String get video_scrape_episodes => 'الحلقات';
-	@override String get video_scrape_info => 'معلومات المسلسل';
-	@override String video_scrape_rating_votes({required Object count}) => '${count} تقييم';
-	@override String get video_screenshot => 'لقطة شاشة';
-	@override String video_screenshot_failed_reason({required Object reason}) => 'فشلت لقطة الشاشة: ${reason}';
-	@override String video_screenshot_ready({required Object file}) => 'لقطة الشاشة جاهزة: ${file}';
-	@override String video_screenshot_saved_to({required Object path}) => 'تم حفظ لقطة الشاشة: ${path}';
-	@override String get video_secondary_subtitle_hint => 'يُعرض بواسطة المشغّل (لا يمكن البحث فيه)';
-	@override String get video_secondary_subtitle_sources => 'ترجمة ثانوية';
-	@override String get video_setting_auto_play_next => 'التشغيل التلقائي للحلقة التالية';
-	@override String get video_setting_auto_scrape => 'جلب معلومات المسلسل تلقائياً';
-	@override String get video_setting_av_delay => 'مزامنة الترجمة';
-	@override String get video_setting_av_delay_hint => 'موجب = تأخير الترجمة (تُؤخَّر الأسطر)؛ سالب = تقديم الترجمة. استخدم شريط التمرير أو أزرار +/- أو أدخل قيمة.';
-	@override String get video_setting_danmaku_area => 'منطقة العرض';
-	@override String get video_setting_danmaku_area_hint => 'نسبة ارتفاع الشاشة التي يمكن أن تشغلها الدانماكو من الأعلى.';
-	@override String get video_setting_danmaku_block_rules => 'كلمات محظورة / تعبيرات نمطية';
-	@override String get video_setting_danmaku_block_rules_hint => 'قاعدة واحدة لكل سطر. ضع السطر بين خطوط مائلة مثل /نمط/ لاستخدام تعبير نمطي؛ وإلا يُطابق كنص بدون تمييز حالة الأحرف.';
-	@override String get video_setting_danmaku_block_rules_placeholder => 'مثال: حرق أحداث أو /نمط/';
-	@override String get video_setting_danmaku_enabled => 'إظهار Danmaku';
-	@override String get video_setting_danmaku_enabled_hint => 'عرض تعليقات Danmaku المحلية أو المطابَقة فوق الفيديو دون حجب عناصر التحكم.';
-	@override String get video_setting_danmaku_font_scale => 'حجم الخط';
-	@override String get video_setting_danmaku_font_scale_hint => 'تكبير/تصغير حجم نص الدانماكو.';
-	@override String get video_setting_danmaku_manual_match => 'مطابقة يدوية';
-	@override String get video_setting_danmaku_manual_match_hint => 'ابحث في Dandanplay بالعنوان واختر الحلقة عند فشل المطابقة التلقائية أو خطئها.';
-	@override String get video_setting_danmaku_max_active => 'حد Danmaku النشطة';
-	@override String get video_setting_danmaku_max_active_hint => 'يحدّ عدد التعليقات المعروضة لكل إطار للحفاظ على استجابة الملفات الكبيرة.';
-	@override String get video_setting_danmaku_online => 'مطابقة Dandanplay عبر الإنترنت';
-	@override String get video_setting_danmaku_online_hint => 'عند عدم وجود ملف محلي مرفق صالح، طابِق الفيديو المفتوح مع Dandanplay واجلب التعليقات ذات الصلة.';
-	@override String get video_setting_danmaku_opacity => 'الشفافية';
-	@override String get video_setting_danmaku_opacity_hint => 'شفافية الدانماكو الإجمالية.';
-	@override String get video_setting_danmaku_server_url => 'عنوان خادم Danmaku';
-	@override String get video_setting_danmaku_speed => 'السرعة';
-	@override String get video_setting_danmaku_speed_hint => 'كلما زادت القيمة زادت السرعة؛ تعبر الدانماكو المتحركة الشاشة أسرع.';
-	@override String get video_setting_double_tap => 'النقر المزدوج للانتقال';
-	@override String get video_setting_double_tap_hint => 'انقر نقرًا مزدوجًا على يسار الفيديو أو يمينه للانتقال';
-	@override String get video_setting_double_tap_off => 'إيقاف';
-	@override String get video_setting_double_tap_subtitle => 'الترجمة';
-	@override String get video_setting_immersive_mode => 'وضع الانغماس';
-	@override String get video_setting_immersive_mode_hint => 'يتحكم في ما يبقى متاحًا بعد الضغط على زر القفل الجانبي';
-	@override String get video_setting_lock_window_aspect => 'قفل النافذة على نسبة الفيديو';
-	@override String get video_setting_long_press_speed => 'سرعة الضغط المطوّل';
-	@override String get video_setting_long_press_speed_hint => 'استخدم هذه السرعة مؤقتًا أثناء الضغط على الفيديو.';
-	@override String get video_setting_mpv_aspect => 'نسبة العرض إلى الارتفاع';
-	@override String get video_setting_mpv_aspect_auto => 'الأصلية';
-	@override String get video_setting_mpv_brightness => 'السطوع';
-	@override String get video_setting_mpv_channels => 'القنوات';
-	@override String get video_setting_mpv_channels_auto => 'تلقائي';
-	@override String get video_setting_mpv_channels_mono => 'أحادي';
-	@override String get video_setting_mpv_channels_stereo => 'ستيريو (دمج)';
-	@override String get video_setting_mpv_contrast => 'التباين';
-	@override String get video_setting_mpv_correct_downscale => 'تصغير خطي';
-	@override String get video_setting_mpv_deband => 'إزالة التشريط اللوني';
-	@override String get video_setting_mpv_deinterlace => 'إزالة التشابك';
-	@override String get video_setting_mpv_dither => 'التذبذب اللوني';
-	@override String get video_setting_mpv_gamma => 'غاما';
-	@override String get video_setting_mpv_group_advanced => 'متقدم';
-	@override String get video_setting_mpv_group_audio => 'الصوت';
-	@override String get video_setting_mpv_group_color => 'الألوان';
-	@override String get video_setting_mpv_group_decode => 'فك الترميز';
-	@override String get video_setting_mpv_group_geometry => 'الأبعاد';
-	@override String get video_setting_mpv_group_playback => 'التشغيل';
-	@override String get video_setting_mpv_group_quality => 'جودة الصورة';
-	@override String get video_setting_mpv_hue => 'تدرج اللون';
-	@override String get video_setting_mpv_hwdec => 'فك الترميز بالعتاد';
-	@override String get video_setting_mpv_hwdec_auto => 'تلقائي (آمن)';
-	@override String get video_setting_mpv_hwdec_copy => 'تلقائي (نسخ)';
-	@override String get video_setting_mpv_hwdec_off => 'إيقاف';
-	@override String get video_setting_mpv_interpolation => 'استيفاء الحركة';
-	@override String get video_setting_mpv_loop => 'تكرار الملف';
-	@override String get video_setting_mpv_normalize => 'تسوية جهارة الدمج';
-	@override String get video_setting_mpv_panscan => 'التحريك والقص (قص الحواف)';
-	@override String get video_setting_mpv_pitch => 'الحفاظ على طبقة الصوت عند تغيير السرعة';
-	@override String get video_setting_mpv_raw => 'خيارات mpv إضافية (واحد في كل سطر، key=value)';
-	@override String get video_setting_mpv_raw_hint => 'على سطح المكتب فقط؛ تُتجاهل الخيارات التي لا يمكن تطبيقها أثناء التشغيل (مثل vo وprofile). يحتاج SVP/RIFE أدوات خارجية وهي غير مدعومة.';
-	@override String get video_setting_mpv_reset => 'إعادة تعيين الكل';
-	@override String get video_setting_mpv_rotate => 'التدوير';
-	@override String get video_setting_mpv_saturation => 'التشبع';
-	@override String get video_setting_mpv_sigmoid => 'تكبير سيجمويدي';
-	@override String get video_setting_mpv_sigmoid_hint => 'تقليل التموجات عند تكبير الصورة بمنحنى سيغمويد يستهلك GPU. معطّل افتراضياً للأداء؛ فعّله لتكبير أوضح.';
-	@override String get video_setting_mpv_zoom => 'التكبير/التصغير';
-	@override String get video_setting_picture_fit => 'تحجيم الصورة';
-	@override String get video_setting_picture_fit_contain => 'ملاءمة مع الحفاظ على النسبة وإضافة شرائط سوداء';
-	@override String get video_setting_picture_fit_cover => 'ملء مع الحفاظ على النسبة وقص الحواف';
-	@override String get video_setting_picture_fit_fill => 'تمديد للملء';
-	@override String get video_setting_picture_fit_hint => 'كيفية ملء الصورة لمنطقة المشغّل';
-	@override String get video_setting_qb_category => 'فئة qBittorrent';
-	@override String get video_setting_qb_category_hint => 'التنزيلات المرسلة من Fushi تحصل على هذه الفئة؛ تتبّع الاكتمال يراقبها فقط.';
-	@override String get video_setting_qb_password => 'كلمة مرور واجهة الويب';
-	@override String get video_setting_qb_url => 'رابط واجهة ويب qBittorrent';
-	@override String get video_setting_qb_url_hint => 'مثال: http://127.0.0.1:8080. اتركه فارغاً لتعطيل تحميل الأنمي.';
-	@override String get video_setting_qb_username => 'اسم مستخدم واجهة الويب';
-	@override String get video_setting_secondary_subtitle_obscure => 'إخفاء الترجمة الثانوية';
-	@override String get video_setting_secondary_subtitle_obscure_hint => 'تمويه أو إخفاء الترجمة الثانوية (المترجمة)';
-	@override String get video_setting_seek_seconds => 'ثوانٍ الانتقال';
-	@override String get video_setting_speed => 'سرعة التشغيل';
-	@override String get video_setting_speed_step => 'خطوة السرعة';
-	@override String get video_setting_subtitle_appearance => 'مظهر الترجمة';
-	@override String get video_setting_subtitle_bg_color => 'لون الخلفية';
-	@override String get video_setting_subtitle_bg_opacity => 'تعتيم الخلفية';
-	@override String get video_setting_subtitle_font_size => 'حجم الخط';
-	@override String get video_setting_subtitle_font_weight => 'ثقل الخط';
-	@override String get video_setting_subtitle_no_background => 'بلا خلفية';
-	@override String get video_setting_subtitle_no_background_hint => 'اجعل خلفية الترجمة شفافة.';
-	@override String get video_setting_subtitle_obscure => 'إخفاء الترجمات';
-	@override String get video_setting_subtitle_obscure_blur => 'تمويه';
-	@override String get video_setting_subtitle_obscure_hide => 'إخفاء';
-	@override String get video_setting_subtitle_obscure_hint => 'اختر كيفية إخفاء الترجمات لتمرين الاستماع: إيقاف، تمويه (مرر أو انقر للكشف)، أو إخفاء.';
-	@override String get video_setting_subtitle_obscure_none => 'إيقاف';
-	@override String get video_setting_subtitle_position => 'الموضع الرأسي';
-	@override String get video_setting_subtitle_reset => 'إعادة التعيين إلى الافتراضي';
-	@override String get video_setting_subtitle_respect_ass => 'احترام تنسيق الترجمة الأصلي';
-	@override String get video_setting_subtitle_respect_ass_hint => 'استخدم الخط واللون والحدود المضمّنة في ترجمات .ass عند توفرها؛ أوقفه لفرض إعدادات المظهر الخاصة بك.';
-	@override String get video_setting_subtitle_shadow => 'الظل';
-	@override String get video_setting_subtitle_sync_input => 'الإزاحة (ms)';
-	@override String get video_setting_subtitle_text_color => 'لون النص';
-	@override String get video_setting_theme => 'السمة';
-	@override String get video_setting_torrent_active_downloads => 'الحد الأقصى للتنزيلات النشطة';
-	@override String get video_setting_torrent_active_seeds => 'الحد الأقصى للبذور النشطة';
-	@override String get video_setting_torrent_anonymous => 'الوضع المجهول';
-	@override String get video_setting_torrent_antileech => 'تفعيل مكافحة الاستغلال';
-	@override String get video_setting_torrent_backend_qb => 'qBittorrent خارجي';
-	@override String get video_setting_torrent_ban_progress_cheat => 'حظر غش التقدم';
-	@override String get video_setting_torrent_ban_relative_cheat => 'حظر غش التقدم النسبي';
-	@override String get video_setting_torrent_ban_time => 'مدة الحظر (دقيقة)';
-	@override String get video_setting_torrent_ban_time_hint => '0 = دائم';
-	@override String get video_setting_torrent_connections_hint => '0 = القيمة الافتراضية للمحرك';
-	@override String get video_setting_torrent_dht => 'DHT';
-	@override String get video_setting_torrent_download_limit => 'حد التحميل (كيلوبايت/ث)';
-	@override String get video_setting_torrent_encryption_disabled => 'معطّل';
-	@override String get video_setting_torrent_encryption_forced => 'إجباري';
-	@override String get video_setting_torrent_encryption_prefer => 'مفضّل';
-	@override String get video_setting_torrent_limit_hint => '0 = بلا حدود';
-	@override String get video_setting_torrent_listen_port => 'منفذ الاستماع';
-	@override String get video_setting_torrent_listen_port_hint => '0 = الافتراضي (6881)';
-	@override String get video_setting_torrent_lsd => 'اكتشاف الأقران المحلي (LSD)';
-	@override String get video_setting_torrent_max_connections => 'الحد الأقصى للاتصالات';
-	@override String get video_setting_torrent_max_ip_ports => 'الحد الأقصى للمنافذ لكل IP';
-	@override String get video_setting_torrent_memory_hint => 'تحديد ذاكرة المحرك. 0 = تلقائي (حسب ذاكرة الجهاز).';
-	@override String get video_setting_torrent_memory_limit => 'حد الذاكرة (ميغابايت)';
-	@override String get video_setting_torrent_natpmp => 'تعيين منفذ NAT-PMP';
-	@override String get video_setting_torrent_section_antileech => 'مكافحة الاستغلال';
-	@override String get video_setting_torrent_section_session => 'الجلسة';
-	@override String get video_setting_torrent_seed_ratio_hint => 'إيقاف الرفع عندما تصل نسبة المرفوع/المحمّل إلى هذه القيمة. 0 = بلا حدود.';
-	@override String get video_setting_torrent_seed_ratio_limit => 'حد نسبة البذر';
-	@override String get video_setting_torrent_seed_time_hint => 'إيقاف الرفع بعد البذر لهذه المدة. 0 = بلا حدود.';
-	@override String get video_setting_torrent_seed_time_limit => 'حد وقت البذر (دقائق)';
-	@override String get video_setting_torrent_upload_enabled => 'تفعيل الرفع / البذر';
-	@override String get video_setting_torrent_upload_enabled_hint => 'معطّل افتراضياً. شارك الملفات مع السرب بعد التحميل.';
-	@override String get video_setting_torrent_upload_limit => 'حد الرفع (كيلوبايت/ث)';
-	@override String get video_setting_torrent_upload_slots => 'الحد الأقصى لفتحات الرفع';
-	@override String get video_setting_torrent_upnp => 'تعيين منفذ UPnP';
-	@override String get video_setting_torrent_zero_default => '0 = الافتراضي';
-	@override String get video_setting_torrent_zero_off => '0 = إيقاف';
-	@override String get video_settings_cat_audio => 'الصوت';
-	@override String get video_settings_cat_controls => 'عناصر التحكم';
-	@override String get video_settings_cat_danmaku => 'دانماكو';
-	@override String get video_settings_cat_mpv => 'mpv';
-	@override String get video_settings_cat_playback => 'التشغيل';
-	@override String get video_settings_cat_shaders => 'تحسين الصورة';
-	@override String get video_settings_cat_subtitle => 'الترجمات';
-	@override String get video_settings_title => 'إعدادات الفيديو';
-	@override String get video_shader_anime4k_hint => 'اختر إعدادًا مسبقًا لتنزيله. بعد التنزيل، حدّده في القائمة لتفعيله. على سطح المكتب فقط.';
-	@override String get video_shader_anime4k_title => 'مظلِّلات Anime4K الموصى بها';
-	@override String get video_shader_download_anime4k => 'تنزيل إعدادات Anime4K المسبقة';
-	@override String video_shader_download_done({required Object count}) => 'تم تنزيل ${count} مظلِّل';
-	@override String get video_shader_download_failed => 'فشل تنزيل المظلِّل';
-	@override String video_shader_download_partial({required Object ok, required Object failed}) => 'تم تنزيل ${ok} مظلِّل، وفشل ${failed}';
-	@override String get video_shader_download_url => 'التنزيل من رابط';
-	@override String get video_shader_downloaded_label => 'تم التنزيل';
-	@override String get video_shader_downloading => 'جارٍ تنزيل المظلِّلات…';
-	@override String get video_shader_first_use_body => '想让动画画面更清晰，可以进入“画质增强”并点击“下载 Anime4K 推荐着色器”。下载后在已安装列表里勾选即可启用。';
-	@override String get video_shader_first_use_download => 'التنزيل والتفعيل';
-	@override String get video_shader_first_use_title => '试试 Anime4K 画质增强';
-	@override String get video_shader_import => 'استيراد مظلِّل (.glsl)';
-	@override String video_shader_import_done({required Object count}) => 'تم استيراد ${count} مظلِّل';
-	@override String get video_shader_import_from_mpv => 'استيراد من mpv المحلي';
-	@override String get video_shader_import_from_mpv_hint => '自动搜索本机 mpv；未找到时可手动选择 mpv 目录。';
-	@override String get video_shader_mobile_perf_hint => 'على الهواتف، تُطبَّق المظلِّلات فقط على مسار العرض الرسومي القياسي وتختلف الفعالية بحسب معالج الجهاز الرسومي؛ قد تسبب المستويات الأعلى تساقط الإطارات أو ارتفاع الحرارة. جرّب منخفض/متوسط أولًا وتحقق من النتيجة على جهازك.';
-	@override String video_shader_mpv_dir_current({required Object path}) => 'مجلد mpv: ${path}';
-	@override String get video_shader_mpv_dir_empty => 'لم يُعثر على مظلِّلات في ذلك المجلد';
-	@override String get video_shader_mpv_not_found => 'لم يُعثر على مظلِّلات mpv محلية';
-	@override String get video_shader_mpv_pick_title => 'استيراد المظلِّلات من mpv';
-	@override String get video_shader_pick_mpv_dir => 'Specify mpv folder';
-	@override String get video_shader_preset_mode_a_fast => 'لمعظم الأنمي بدقة 1080p. حمل أقل على المعالج الرسومي.';
-	@override String get video_shader_preset_mode_a_hq => 'أعلى جودة للأنمي بدقة 1080p. يحتاج معالجًا رسوميًا قويًا.';
-	@override String get video_shader_preset_mode_b_fast => 'للأنمي القديم بدقة 720p ذي عيوب إعادة المعاينة.';
-	@override String get video_shader_preset_mode_b_hq => 'جودة عالية للأنمي القديم بدقة 720p ذي عيوب إعادة المعاينة. يحتاج معالجًا رسوميًا قويًا.';
-	@override String get video_shader_preset_mode_c_fast => 'للأنمي القديم بدقة SD (480p) ذي تشويش الضغط.';
-	@override String get video_shader_preset_mode_c_hq => 'جودة عالية للأنمي القديم بدقة SD (480p) ذي تشويش الضغط. يحتاج معالجًا رسوميًا قويًا.';
-	@override String get video_shader_quality_tier => 'تحسين الجودة';
-	@override String get video_shader_section_advanced => 'متقدم (مظلِّلات يدوية)';
-	@override String get video_shader_section_installed => 'المظلِّلات المثبّتة';
-	@override String get video_shader_showing_original => 'المظلِّلات متوقفة (الأصل)';
-	@override String get video_shader_showing_shaded => 'المظلِّلات مفعّلة';
-	@override String get video_shader_tier_custom_hint => 'اختيار مظلِّل مخصص. اختر مستوى أعلى للتبديل إلى إعداد مسبق.';
-	@override String get video_shader_tier_high => 'عالٍ';
-	@override String get video_shader_tier_high_hint => 'Anime4K HQ. أكثر حدة؛ الأفضل للأنمي، وقابل للاستخدام أيضًا مع المحتوى الحي (تحسّن أقل). يحتاج معالجًا رسوميًا متوسطًا عاليًا (NVIDIA RTX 4060 / RTX 3070 وAMD RX 6700 XT / RX 7700 XT).';
-	@override String get video_shader_tier_low => 'منخفض';
-	@override String get video_shader_tier_low_hint => 'زيادة الحدة المدمجة في mpv (ewa_lanczossharp). يعمل مع أي فيديو (الأنمي والمحتوى الحي). دون تنزيل، وأقل حمل على المعالج الرسومي. اخترها على البطاقات المدمجة أو القديمة (NVIDIA GTX 1050 وAMD RX 560 وكرت Intel المدمج).';
-	@override String get video_shader_tier_medium => 'متوسط';
-	@override String get video_shader_tier_medium_hint => 'Anime4K Fast. الأفضل للأنمي، لكنه يعمل أيضًا مع الأفلام/المسلسلات الحية (تحسّن أقل). يعمل على المعالجات الرسومية المتوسطة (NVIDIA GTX 1660 / RTX 3050 وAMD RX 6600).';
-	@override String get video_shader_tier_off => 'بدون';
-	@override String get video_shader_tier_off_hint => 'بلا تحسين. يشغّل الفيديو الأصلي كما هو.';
-	@override String get video_shader_tier_ultra => 'فائق';
-	@override String get video_shader_tier_ultra_hint => 'Anime4K Mode A (UL، شبكة فائقة الكبر). أقوى إعادة بناء من Anime4K؛ وقابل للاستخدام أيضًا مع المحتوى الحي (تحسّن أقل). يحتاج معالجًا رسوميًا رائدًا (NVIDIA RTX 4080 / RTX 5090 وAMD RX 7900 XTX). اختر مستوى أدنى إن كان معالجك الرسومي أضعف.';
-	@override String get video_shader_url_hint => 'الصق رابط مظلِّل .glsl (مثل GitHub)';
-	@override String get video_shaders_empty => 'لم تُستورد أي مظلِّلات بعد';
-	@override String get video_stat_by_video => 'حسب الفيديو';
-	@override String get video_stat_completed => 'مكتمل';
-	@override String get video_stat_no_data => 'لا توجد إحصاءات فيديو بعد';
-	@override String get video_statistics => 'إحصاءات الفيديو';
-	@override String get video_subtitle_attach_playlist_hint => 'افتح قائمة التشغيل لإرفاق ترجمة لكل حلقة';
-	@override String video_subtitle_attached_to_video({required Object title, required Object count}) => 'أُرفقت الترجمة بـ ${title} (${count} سطرًا)';
-	@override String get video_subtitle_auto_align => 'محاذاة الترجمة تلقائيًا';
-	@override String video_subtitle_auto_align_done({required Object ms}) => 'تمت محاذاة الترجمة تلقائيًا بمقدار ${ms} مللي ثانية';
-	@override String get video_subtitle_auto_align_low_confidence => 'تعذّرت المحاذاة التلقائية بثقة (لا يوجد تطابق صوتي واضح)';
-	@override String get video_subtitle_auto_align_running => 'جارٍ محاذاة الترجمة تلقائيًا…';
-	@override String get video_subtitle_color_note => 'تُضبط ألوان ترجمة الفيديو داخل مشغّل الفيديو.';
-	@override String video_subtitle_delay_osd({required Object ms}) => 'مزامنة الترجمة: ${ms} ms';
-	@override String get video_subtitle_filter_all => 'الكل';
-	@override String get video_subtitle_filter_favorites => 'المفضلة';
-	@override String get video_subtitle_filter_favorites_empty => 'لا توجد سطور مفضلة بعد';
-	@override String get video_subtitle_graphic_hint => 'ترجمة رسومية · تُعرض على الفيديو · لا بحث للكلمات';
-	@override String video_subtitle_graphic_shown({required Object label}) => 'تُعرض ترجمة رسومية على الفيديو (لا بحث للكلمات): ${label}';
-	@override String get video_subtitle_import_failed => 'فشل استيراد الترجمة';
-	@override String get video_subtitle_import_file => 'استيراد ملف ترجمة…';
-	@override String get video_subtitle_import_unsupported => 'تنسيق ترجمة غير مدعوم';
-	@override String get video_subtitle_list => 'قائمة الترجمة';
-	@override String get video_subtitle_list_auto_scroll => 'تمرير تلقائي';
-	@override String get video_subtitle_list_empty => 'لم تُحمَّل أي ترجمة';
-	@override String get video_subtitle_list_font_larger => 'نص أكبر';
-	@override String get video_subtitle_list_font_smaller => 'نص أصغر';
-	@override String get video_subtitle_list_jump => 'الانتقال إلى هذا السطر';
-	@override String get video_subtitle_list_loading => 'جارٍ تحميل الترجمات...';
-	@override String video_subtitle_load_failed({required Object label}) => 'تعذّر تحميل هذه الترجمة (مسار رسومي أو غير مدعوم): ${label}';
-	@override String get video_subtitle_off => 'إيقاف الترجمة';
-	@override String get video_subtitle_remote_host => 'ترجمة الجهاز المقترن';
-	@override String video_subtitle_switched({required Object label}) => 'الترجمة: ${label}';
-	@override String get video_subtitle_waveform_cue_list => 'قائمة الترجمات';
-	@override String get video_subtitle_waveform_jump_playhead => 'الانتقال إلى موضع التشغيل';
-	@override String get video_subtitle_waveform_legend_cue => 'إشارة الترجمة';
-	@override String get video_subtitle_waveform_legend_energy => 'مستوى الصوت';
-	@override String get video_subtitle_waveform_legend_playhead => 'موضع التشغيل';
-	@override String get video_subtitle_waveform_open => 'محاذاة الموجة الصوتية';
-	@override String get video_subtitle_waveform_open_hint => 'انقر للتكبير والمحاذاة';
-	@override String get video_subtitle_waveform_scroll_hint => 'اسحب لتصفح الخط الزمني؛ استخدم أدوات التحكم أدناه للمحاذاة';
-	@override String get video_subtitle_waveform_unavailable => 'الموجة الصوتية غير متوفرة على هذا الجهاز';
-	@override String get video_subtitle_waveform_zoom_in => 'تكبير';
-	@override String get video_subtitle_waveform_zoom_out => 'تصغير';
-	@override String get video_subtitle_youtube_empty => 'مسار الترجمة هذا لا يحتوي على نص';
-	@override String video_subtitle_youtube_translated({required Object lang}) => '${lang} (مترجم)';
-	@override String video_watched_up_to({required Object time}) => 'شوهد حتى ${time}';
-	@override String get video_windows_black_flash_notice_body => 'على Windows، قد يومض الفيديو باللون الأسود تحت حمل GPU الثقيل. لتقليل الحمل، جرّب إيقاف تحسين الجودة وتكبير سيغمويد وإزالة التدرج أعلاه، أو بدّل فك تشفير الأجهزة إلى نسخ.';
-	@override String get video_windows_black_flash_notice_title => 'وميض أسود على Windows؟';
-	@override String get view_illustrations => 'الرسوم التوضيحية';
-	@override String get volume_button_page_turning => 'تقليب الصفحات بأزرار الصوت';
-	@override String get volume_key_sentence_nav => 'التنقل بين الجمل بأزرار الصوت';
-	@override String get wheel_page_turn_interval => 'فترة قلب الصفحة بعجلة الفأرة';
-	@override String get word_favorite_added => 'تمت إضافة الكلمة إلى المفضلة';
-	@override String get word_favorite_removed => 'تمت إزالة الكلمة من المفضلة';
-	@override String get yomitan_api_key => 'مفتاح Yomitan API (اختياري)';
-	@override String get yomitan_api_server => 'خادم Yomitan API';
-	@override String get yomitan_api_server_hint => 'السماح لعملاء yomitan-api بالبحث في قواميس Fushi (المنفذ 19633)';
-	@override String get yomitan_api_server_started => 'تم تشغيل خادم Yomitan API';
-	@override String get yomitan_port_kill_action => 'إنهاء العملية وإعادة المحاولة';
-	@override String get yomitan_port_kill_confirm => 'إنهاء العملية';
-	@override String yomitan_port_kill_confirm_message({required Object process}) => 'المنفذ مستخدم حالياً بواسطة: ${process}';
-	@override String yomitan_port_kill_confirm_title({required Object port}) => 'إنهاء العملية التي تستخدم المنفذ ${port}؟';
-	@override String yomitan_port_kill_failed({required Object process}) => 'تعذر إنهاء ${process}. يرجى إنهاؤها يدوياً ثم إعادة المحاولة.';
-	@override String yomitan_port_kill_protected({required Object process}) => '${process} هي عملية نظام حرجة — لن يقوم Fushi بإنهائها. غيّر المنفذ بدلاً من ذلك.';
-	@override String get yomitan_port_kill_self_instance => 'هذه العملية هي نسخة أخرى قيد التشغيل من هذا التطبيق.';
-	@override String get game_track_bgm => 'موسيقى خلفية / مستبعد';
-	@override String get game_line_audio_no_voice => 'لا يوجد صوت';
-	@override String get game_line_audio_overlong => 'مقطع طويل جداً';
-	@override String get game_line_audio_overlong_hint => 'أطول بكثير من سطر واحد؛ قد يحتوي على موسيقى خلفية أو صوت مختلط آخر';
-	@override String get game_line_audio_loopback_hint => 'مزيج صوت النظام كبديل؛ قد يحتوي على موسيقى خلفية';
-	@override String get game_line_recapture => 'إعادة التقاط الصوت';
-	@override String get game_line_recapture_stop => 'إنهاء إعادة الالتقاط';
-	@override String get game_line_tracks => 'المسارات لهذا السطر';
-	@override String get game_line_tracks_hint => 'استمع لكل مسار عند لحظة هذا السطر، ثم استبعد مسارات الموسيقى الخلفية';
-	@override String get game_line_track_use => 'استخدام لهذا السطر';
-	@override String get game_user_tags_title => 'وسومي';
-	@override String get anki_lapis_section => 'نمط بطاقة Lapis';
-	@override String get anki_lapis_font_scale => 'مقياس خط البطاقة';
-	@override String get anki_lapis_font_scale_hint => 'يُكبّر/يُصغّر جميع أحجام خطوط Lapis؛ يسري عبر "تطبيق النمط على Anki".';
-	@override String get anki_lapis_custom_css => 'CSS مخصص';
-	@override String get anki_lapis_custom_css_hint => 'يُلحق بورقة أنماط Lapis في قسم المستخدم المحمي.';
-	@override String get anki_lapis_apply => 'تطبيق النمط على Anki';
-	@override String get anki_lapis_apply_done => 'تم تطبيق نمط Lapis. تم حفظ نسخة احتياطية أولاً.';
-	@override String anki_lapis_apply_failed({required Object error}) => 'تعذر تطبيق النمط: ${error}';
-	@override String get anki_lapis_up_to_date => 'نمط Lapis محدّث بالفعل.';
-	@override String get anki_lapis_foreign_edit_title => 'تم تغيير القالب في Anki';
-	@override String get anki_lapis_foreign_edit_body => 'قالب Lapis في Anki يختلف عما طبّقه Fushi آخر مرة - ربما تم تعديله يدوياً. سيؤدي التطبيق إلى الكتابة فوقه؛ يتم حفظ نسخة احتياطية أولاً. متابعة؟';
-	@override String get anki_lapis_backup => 'نسخ قالب Lapis احتياطياً';
-	@override String anki_lapis_backup_done({required Object path}) => 'تم النسخ الاحتياطي للقالب: ${path}';
-	@override String anki_lapis_backup_failed({required Object error}) => 'فشل النسخ الاحتياطي: ${error}';
-	@override String get anki_lapis_not_found => 'لم يُعثر على نوع ملاحظة Lapis في Anki.';
-	@override String get anki_lapis_restore => 'استعادة من نسخة احتياطية';
-	@override String get anki_lapis_restore_empty => 'لا توجد نسخ احتياطية بعد.';
-	@override String get anki_lapis_restore_confirm => 'الكتابة فوق قالب Lapis في Anki بهذه النسخة الاحتياطية؟ يتم نسخ الحالة الحالية احتياطياً أولاً.';
-	@override String get anki_lapis_restore_done => 'تمت استعادة القالب.';
-	@override String anki_lapis_restore_failed({required Object error}) => 'فشلت الاستعادة: ${error}';
-	@override String get anki_dedup_section => 'تحسين تخزين وسائط Anki';
-	@override String get anki_dedup_scan => 'فحص التكرارات (بدون تغييرات)';
-	@override String get anki_dedup_run => 'إزالة التكرارات الآن';
-	@override String get anki_dedup_report_title => 'تقرير إزالة تكرار الوسائط';
-	@override String anki_dedup_report_body({required Object groups, required Object removed, required Object size, required Object notes, required Object models, required Object skipped}) => '${groups} مجموعة مكررة؛ ${removed} نسخة إضافية (${size})؛ ${notes} ملاحظة و${models} نوع ملاحظة أُعيدت كتابتها؛ ${skipped} تم تخطيها.';
-	@override String get anki_dedup_report_dry_note => 'فحص فقط - لم يتم تغيير شيء.';
-	@override String get anki_dedup_report_clean => 'لم يُعثر على تكرارات متطابقة بالبايت.';
-	@override String anki_dedup_failed({required Object error}) => 'فشلت إزالة التكرارات: ${error}';
-	@override String get anki_dedup_unavailable => 'يتطلب تشغيل Anki على هذا الجهاز (AnkiConnect).';
-	@override String get anki_dedup_run_hint => 'يفحص أولاً ويعرض ما سيتم حذفه بالضبط؛ لا يُحذف شيء حتى تؤكد.';
-	@override String get anki_dedup_plan_title => 'الملفات المراد حذفها';
-	@override String anki_dedup_plan_intro({required Object count, required Object size}) => '${count} نسخة إضافية، ${size} قابلة للاسترداد. يتم الاحتفاظ بنسخة واحدة من كل ملف وإعادة توجيه كل مرجع إليها أولاً؛ لا يتم إعادة ترميز أي شيء.';
-	@override String anki_dedup_plan_entry({required Object file, required Object size, required Object canonical}) => 'حذف ${file} (${size}) - الاحتفاظ بـ ${canonical}';
-	@override String get anki_dedup_plan_delete => 'حذف هذه الملفات';
-	@override String get anki_dedup_plan_journal => 'يتم كتابة سجل بكل إعادة كتابة وحذف إلى مجلد النسخ الاحتياطي أولاً.';
-	@override String get manga_ocr_default_engine => 'محرك OCR الافتراضي';
-	@override String get manga_ocr_engine_auto => 'تلقائي (لا يُرفع إلى Lens أبداً)';
-	@override String get manga_ocr_engine_local_onnx => 'ONNX محلي';
-	@override String get manga_ocr_engine_google_lens => 'Google Lens';
-	@override String get manga_google_lens_disclosure_title => 'إرسال صفحات المانغا إلى Google Lens؟';
-	@override String get manga_google_lens_disclosure_body => 'التعرف على هذه المانغا يُرسل نسخة JPEG مصغّرة من كل صفحة بدون نص OCR إلى Google. يتم تخزين النتائج مؤقتاً على هذا الجهاز. نقطة النهاية غير رسمية وقد تتوقف عن العمل. لا يُرفع شيء دون موافقتك.';
-	@override String get manga_google_lens_disclosure_accept => 'موافقة وبدء OCR';
-	@override String get manga_google_lens_disclosure_decline => 'إلغاء';
-	@override String get manga_reading_direction => 'اتجاه القراءة';
-	@override String get manga_direction_rtl => 'من اليمين إلى اليسار';
-	@override String get manga_direction_ltr => 'من اليسار إلى اليمين';
-	@override String get manga_zoom => 'تكبير';
-	@override String get manga_jump_to_page => 'الانتقال إلى صفحة';
-	@override String get manga_previous_page => 'الصفحة السابقة';
-	@override String get manga_next_page => 'الصفحة التالية';
-	@override String manga_page_number_hint({required Object total}) => 'رقم الصفحة (1-${total})';
-	@override String get manga_import_direct => 'استيراد بدون OCR';
-	@override String get manga_library => 'مانغا';
-	@override String get manga_import_action => 'استيراد مانغا';
-	@override String get game_scrape_search => 'بحث';
-	@override String get game_scrape_use => 'استخدام';
-	@override String get game_scrape_search_failed => 'فشل البحث. تحقق من اتصالك بالشبكة وحاول مجدداً.';
-	@override String get game_remove_confirm => 'إزالة هذه اللعبة من المكتبة؟ لن تُحذف ملفات اللعبة من القرص.';
-	@override String manga_ocr_acceleration_status({required Object engine}) => 'تسريع OCR: ${engine}';
-	@override String manga_ocr_acceleration_degraded({required Object engine, required Object reason}) => 'تسريع GPU غير متوفر، يعمل OCR على ${engine}: ${reason}';
-	@override String get media_tracking_status => 'حالة المجموعة';
-	@override String get media_tracking_signup => 'إنشاء حساب Bangumi';
-	@override String get media_tracking_game => 'لعبة';
-	@override String get download_rate_limit_lan_exempt => 'لا ينطبق داخل شبكتك المحلية؛ عمليات النقل عبر الشبكة المحلية تعمل بأقصى سرعة دائماً.';
-	@override String get scrape_reason_network => 'تعذر الحصول على استجابة صالحة من مصدر الغلاف. تحقق من اتصالك بالشبكة وأعد المحاولة.';
-	@override String get scrape_reason_server => 'أرجع مصدر الغلاف خطأً. حاول لاحقاً أو اختر مرشحاً آخر.';
-	@override String get common_more_actions => 'إجراءات أخرى';
-	@override String get collection_already_has_item => 'هذا العنصر موجود بالفعل في المجموعة.';
-	@override String get drag_drop_manga_archive_unsupported => 'لا يمكن استيراد أرشيفات .cbr/.rar — أعد تعبئتها كـ .cbz أو مجلد صور.';
-	@override String get collection_add_failed => 'تعذر إضافة العنصر إلى المجموعة. يرجى المحاولة مجدداً.';
-	@override String get anki_dedup_auto => 'معالجة تلقائية';
-	@override String get anki_dedup_auto_hint => 'معطّل افتراضياً. عند التفعيل، يفحص Fushi عند بدء التشغيل (مرة أسبوعياً كحد أقصى) ويعرض القائمة أولاً — لا يُحذف شيء حتى تؤكد.';
-	@override String get anki_dedup_auto_delete => 'حذف تلقائياً بدون سؤال';
-	@override String get anki_dedup_auto_delete_hint => 'يتخطى مربع التأكيد. تُزال فقط النسخ الإضافية المتطابقة بالبايت ولا يُعاد ترميز شيء، لكن الحذف لا يمكن التراجع عنه.';
-	@override String anki_dedup_auto_found({required Object count, required Object size}) => 'تم العثور على ${count} ملف وسائط مكرر في Anki (${size} قابلة للاسترداد)';
-	@override String get anki_dedup_auto_review => 'مراجعة';
-	@override String anki_dedup_auto_done({required Object count, required Object size}) => 'تمت إزالة ${count} ملف وسائط مكرر في Anki، تم استرداد ${size}';
-	@override String anki_lapis_backup_done_pruned({required Object path, required Object count}) => 'تم النسخ الاحتياطي إلى ${path} (تم تنظيف ${count} نسخة احتياطية قديمة وفق سياسة 90 يوماً / الاحتفاظ بـ 10)';
-	@override String get game_audio_fallback_policy => 'بديل الصوت';
-	@override String get game_audio_fallback_full => 'السماح بالصوت المختلط';
-	@override String get game_audio_fallback_clean => 'المصادر النظيفة فقط';
-	@override String get game_audio_fallback_resource => 'الموارد الأصلية فقط';
-	@override String get game_track_silent_at_cue => 'لا يوجد صوت عند هذا السطر';
-	@override String get game_audio_fallback_full_hint => 'يعود إلى مزيج النظام عند عدم التقاط صوت نظيف؛ قد يحتوي المقطع على موسيقى خلفية ومؤثرات.';
-	@override String get game_audio_fallback_clean_hint => 'يستخدم صوت موارد اللعبة وPCM المحرك فقط. الأسطر بدون صوت تُنشأ بدون صوت بدلاً من التقاط الموسيقى الخلفية.';
-	@override String get game_audio_fallback_resource_hint => 'يتطلب ملف الصوت الأصلي المرفق مع اللعبة؛ يُرفض الإنشاء عند عدم وجوده.';
-	@override String get game_line_audio_suppressed => 'تم تخطي المزيج';
-	@override String get game_line_audio_suppressed_hint => 'لم يُنتج أي مصدر صوت نظيف صوتاً لهذا السطر، وتم تخطي مزيج النظام وفق سياسة بديل الصوت. هذا لا يعني أن السطر بدون صوت.';
-	@override String get video_setting_torrent_limit_lan => 'تطبيق الحدود على أقران الشبكة المحلية';
-	@override String get video_setting_torrent_limit_lan_hint => 'معطّل افتراضياً: عمليات النقل مع الأقران على شبكتك المحلية تتجاهل الحدود أعلاه.';
-	@override String get download_rate_limit_lan_included => 'ينطبق أيضاً داخل شبكتك المحلية.';
-	@override String get video_collection_no_local_member => 'لا يوجد فيديو محلي في هذه المجموعة';
-	@override String get gal_mining_image_mode => 'صورة بطاقة اللعبة البصرية';
-	@override String get gal_mining_image_mode_screenshot => 'لقطة شاشة';
-	@override String get gal_mining_image_mode_hint => 'مشاهد اللعب البصري بالكاد تتحرك خلال سطر واحد، لذا لقطة الشاشة الثابتة عادةً أصغر حجماً وبنفس الفائدة.';
-	@override String get shortcut_scope_manga => 'مانغا';
-	@override String get shortcut_action_manga_page_forward => 'الصفحة التالية';
-	@override String get shortcut_action_manga_page_backward => 'الصفحة السابقة';
-	@override String get shortcut_action_manga_dismiss_dict => 'إغلاق القاموس';
-	@override String get video_setting_jimaku_default_language => 'لغة الترجمة الافتراضية';
-	@override String get video_jimaku_api_key_settings_hint => 'يمكن تعديله أيضاً في الإعدادات ← فيديو ← الترجمات';
-	@override String get anime_download_subs_episodes_unverified => 'أرقام الحلقات غير مؤكدة لهذه الحزمة - قد تكون الترجمات من موسم آخر.';
-	@override String get anime_download_subs_deferred => 'تُطابق الترجمات بعد التحميل من الملفات الفعلية للحزمة';
-	@override String get anime_download_subs_pending => 'الترجمات: في الانتظار حتى اكتمال التحميل';
-	@override String get anime_download_subs_unmatched => 'الترجمات: لا تطابق لهذه الحزمة';
-	@override String get stat_source_breakdown => 'حسب المصدر';
-	@override String stat_format_pages({required Object n}) => '${n} صفحة';
-	@override String anime_download_subs_season_mismatch({required Object season}) => 'لا يوجد إدخال ترجمة يطابق الموسم ${season} لهذه الحزمة - لم يتم اختيارها تلقائياً. اختر واحدة يدوياً إن أردت.';
-	@override String get media_tracking_card_title => 'مزامنة Bangumi';
-	@override String get media_tracking_not_connected => 'غير متصل. يبقى التقدم محلياً ولا يصل شيء إلى Bangumi.';
-	@override String get media_tracking_last_sync => 'آخر مزامنة';
-	@override String get media_tracking_never_synced => 'لم تتم المزامنة أبداً';
-	@override String media_tracking_linked_count({required Object n}) => '${n} مرتبط';
-	@override String media_tracking_pending_count({required Object n}) => '${n} في انتظار الإرسال';
-	@override String get media_tracking_all_synced => 'تم إرسال الكل';
-	@override String get media_tracking_unauthorized => 'رفض Bangumi رمز الوصول. أعد الاتصال في الإعدادات.';
-	@override String get media_tracking_open_subject => 'فتح على Bangumi';
-	@override String get media_tracking_manage_links => 'إدارة الروابط';
-	@override String get media_tracking_last_error => 'آخر خطأ';
-	@override String get shortcut_action_popup_mine_entry => 'إنشاء بطاقة (استخراج)';
-	@override String get game_upscaling_auto_hint => 'استخدم Magpie إذا كان يعمل بالفعل؛ وإلا استخدم النسخة المدمجة مع Fushi. لا حاجة للتحميل.';
-	@override String get game_upscaling_installed_only_hint => 'استخدم Magpie فقط إذا كان مثبتاً أو يعمل بالفعل. لا تفك نسخة Fushi المدمجة.';
-	@override String get game_upscaling_off_hint => 'لا تُكبّر نافذة اللعبة أبداً.';
-	@override String get game_helper_bundle_missing => 'مساعد ربط اللعبة البصرية غير مضمّن في هذا الإصدار. حدّث Fushi للحصول عليه.';
-	@override String game_upscaling_pick_title({required Object name}) => 'تكبير نافذة ${name}';
-	@override String get game_upscaling_pick_body => 'يُكبّر نافذة هذه اللعبة بواسطة Magpie أثناء جلسة الالتقاط. يُضبط لكل لعبة - يفيد فقط للألعاب التي دقتها الأصلية أقل من شاشتك. يستخدم GPU الخاص بك.';
-	@override String get game_upscaling_hint_not_installed => 'Magpie غير جاهز. اضبط تكبير النافذة على تلقائي لاستخدام النسخة المدمجة مع Fushi؛ إن لم يبدأ، حدّث أو أعد تثبيت Fushi.';
-	@override String media_source_count_manga({required Object n}) => '${n} مجلد';
-	@override String get library_view_shelf => 'الرف';
-	@override String get library_view_browse => 'استكشاف';
-	@override String get library_view_media => 'المكتبة';
-	@override String get scrape_failure_detail_show => 'عرض التفاصيل';
-	@override String get scrape_failure_detail_hide => 'إخفاء التفاصيل';
-	@override String get media_tracking_retry_mapping => 'إعادة المطابقة';
-	@override String get media_tracking_retry_matched => 'تمت المطابقة وأُضيف التقدم الحالي للقائمة';
-	@override String get media_tracking_retry_no_match => 'لم يُعثر على تطابق. جرّب الربط اليدوي.';
-	@override String get game_statistics => 'إحصائيات اللعبة';
-	@override String get game_stat_by_game => 'حسب اللعبة';
-	@override String get stat_clear_all_game_message => 'مسح جميع أوقات اللعب وعدد الجلسات؟ تُحفظ مكتبة الألعاب والجدول الزمني للنشاط. لا يمكن التراجع عن هذا.';
-	@override String batch_selection_stale_skipped({required Object m, required Object n}) => 'تم تخطي ${m} من ${n} عنصر محدد لم يعد موجوداً';
-	@override String get game_text_thread_unset => 'لم يتم اختيار مسار — اختر واحداً لبدء الالتقاط';
-	@override String get media_tracking_watched_show => 'عرض جميع الأنمي المشاهد';
-	@override String get media_tracking_watched_title => 'المشاهد على Bangumi';
-	@override String get media_tracking_watched_empty => 'لا يوجد أنمي مُعلّم كمشاهد على حساب Bangumi هذا.';
-	@override String media_tracking_watched_load_failed({required Object error}) => 'تعذر تحميل الأنمي المشاهد: ${error}';
-	@override String media_tracking_watched_progress({required Object n}) => 'شوهد ${n} حلقة';
-	@override String get media_tracking_manual_required => 'يحتاج ربطاً يدوياً';
-	@override String media_tracking_manual_required_count({required Object n}) => '${n} عنصر يحتاج ربطاً يدوياً';
-	@override String get media_tracking_manual_required_hint => 'هذه العناصر المحلية لديها تقدم بالفعل لكنها غير مرتبطة بـ Bangumi.';
-	@override String get media_tracking_no_local_history => 'لا يوجد تقدم مشاهدة أو قراءة أو لعب محلي يحتاج ربطاً.';
-	@override String media_tracking_more_manual_required({required Object n}) => '${n} عنصر إضافي يحتاج ربطاً يدوياً';
-	@override String get manga_import_hint => 'اختر مجلد مانغا، أرشيف صفحات .cbz/.zip، ملف .pdf، أو ملف .mokuro.';
-	@override String get manga_import_pick_file => 'اختيار ملف مانغا';
-	@override String get manga_import_pick_folder => 'اختيار مجلد مانغا';
-	@override String get manga_import_missing_input => 'اختر ملف أو مجلد مانغا أولاً.';
-	@override String get manga_import_detected_title => 'يبدو أن هذا مانغا';
-	@override String get manga_import_detected_confirm => 'استيراد كمانغا';
-	@override String manga_import_detected_message({required Object name}) => '"${name}" هو ملف مانغا، لذا سيمر عبر مستورد المانغا بدلاً من مستورد الكتب.';
-	@override String get video_jimaku_source_loading => 'جارٍ التحقق من توفر الترجمات...';
-	@override String get video_jimaku_source_failed => 'تعذر التحقق من توفر الترجمات. حاول البحث مجدداً.';
-	@override String get video_jimaku_language_unknown => 'اللغة غير محددة';
-	@override String video_jimaku_source_summary({required Object files, required Object episodes, required Object languages}) => '${files} ملف ترجمة · ${episodes} حلقة · ${languages}';
-	@override String video_jimaku_episode_unlabeled({required Object episode, required Object count}) => 'لا توجد ترجمة بعلامة الحلقة ${episode}؛ ${count} ملف بدون علامة قد يطابق';
-	@override String video_jimaku_episode_unavailable({required Object episode}) => 'لم يُعثر على ترجمة للحلقة ${episode}';
-	@override String video_jimaku_episode_available({required Object count, required Object languages}) => '${count} ترجمة متوفرة · ${languages}';
-	@override String get manga_online_source_disabled => 'مصدر الإنترنت هذا معطّل. فعّله في المصادر لتصفح الكتالوج.';
-	@override String get selection_web_search => 'البحث في الويب';
-	@override String get selection_web_search_unavailable => 'لا يوجد تطبيق يمكنه البحث في الويب.';
-	@override String get selection_share_failed => 'تعذر فتح لوحة المشاركة.';
-	@override String video_subtitle_youtube_auto_generated({required Object lang}) => '${lang} (مُنشأ تلقائياً)';
-	@override String get anki_dedup_progress_title => 'جارٍ إزالة تكرار الوسائط';
-	@override String anki_dedup_progress_scanning({required Object count}) => 'جارٍ فحص مجلد الوسائط… (تم العثور على ${count} ملف)';
-	@override String anki_dedup_progress_hashing({required Object done, required Object total}) => 'جارٍ مقارنة الملفات بنفس الحجم… (${done} / ${total})';
-	@override String anki_dedup_progress_resolving({required Object done, required Object total}) => 'جارٍ معالجة التكرارات… (${done} / ${total})';
-	@override String anki_dedup_progress_freed({required Object size}) => 'تم تحرير ${size} حتى الآن';
-	@override String get anki_dedup_cancelling => 'جارٍ الإلغاء…';
-	@override String get anki_dedup_cancelled => 'تم إلغاء إزالة التكرارات؛ التغييرات المكتملة محفوظة.';
-	@override String get anki_dedup_report_cancelled_note => 'تم الإلغاء مبكراً — الأرقام أدناه تغطي فقط ما اكتمل.';
-	@override String get anki_dedup_plan_busy_note => 'قد لا يستجيب Anki أثناء التشغيل؛ تجنب استخدام Anki حتى ينتهي.';
-	@override String get video_setting_subtitle_position_secondary => 'موضع الترجمة الثانوية';
-	@override String get dict_download_learning_language => 'لغة التعلم';
-	@override String get dict_category_bilingual => 'ثنائي اللغة';
-	@override String get dict_category_monolingual => 'أحادي اللغة';
-	@override String get shortcut_action_video_hold_speed => 'اضغط مع الاستمرار لسرعة مؤقتة';
-	@override String get handlebar_phonetic_transcriptions => 'النسخ الصوتي';
-	@override String get sync_progress_preparing => 'جارٍ التحضير للمزامنة';
-	@override String get sync_progress_collections => 'جارٍ مزامنة المجموعات';
-	@override String get sync_progress_book => 'جارٍ مزامنة الكتاب';
-	@override String sync_progress_book_titled({required Object title}) => 'جارٍ مزامنة ${title}';
-	@override String sync_last_completed({required Object count}) => 'آخر مزامنة: اكتملت (${count} قناة)';
-	@override String get sync_last_no_channels => 'آخر مزامنة: لم تتم المزامنة - لا توجد قناة مزامنة متصلة';
-	@override String get sync_last_nothing => 'آخر مزامنة: لا شيء لمزامنته';
-	@override String get sync_last_auto_disabled => 'آخر مزامنة: تم التخطي - المزامنة التلقائية معطّلة';
-	@override String get sync_last_cooled_down => 'آخر مزامنة: تم التخطي - تمت المزامنة مؤخراً';
-	@override String get sync_last_failed => 'آخر مزامنة: فشلت';
-	@override String anime_download_no_results_detail({required Object query, required Object filters}) => 'استجابت الخدمة بنجاح لكن أعادت 0 عناصر. الاستعلام: ${query}؛ المرشحات: ${filters}. جرّب عنواناً آخر أو خفف المرشحات.';
-	@override String get anime_download_streaming_ready => 'في المكتبة · التحميل مستمر';
-	@override String get anime_download_unfiltered => 'بدون مرشح الموثوق';
-	@override String get interconnect_enable_footer => 'طريقة الاستخدام: على الجهاز الذي يحتوي مكتبتك، فعّل مفتاح خادم المزامنة أدناه؛ على جهازك الآخر، أضف عنوان ذلك الخادم للاقتران به. يمكن للجهاز أن يعمل بدور واحد فقط في كل مرة — خادم أو عميل.';
-	@override String get interconnect_peer_list_title => 'الأقران المضافون';
-	@override String get interconnect_peer_list_empty => 'لم تُضف أقران بعد. اختر جهازاً مكتشفاً من قائمة أجهزة الشبكة المحلية أدناه للاقتران تلقائياً، أو أضف عنوان قرين يدوياً.';
-	@override String get anki_lapis_visual_editor => 'المحرر المرئي';
-	@override String get anki_lapis_visual_editor_hint => 'معاينة بطاقة Lapis، ثم تغيير نمط وموضع وتعيين حقول كل منطقة بدون كتابة CSS.';
-	@override String get anki_lapis_visual_front => 'الأمام';
-	@override String get anki_lapis_visual_back => 'الخلف';
-	@override String get anki_lapis_visual_preview => 'معاينة بطاقة Lapis';
-	@override String get anki_lapis_visual_select_field => 'اختر ما تريد تعديله';
-	@override String get anki_lapis_visual_reset_field => 'إعادة تعيين الحقل';
-	@override String anki_lapis_visual_font_size({required Object percent}) => 'حجم الخط: ${percent}%';
-	@override String get anki_lapis_visual_bold => 'عريض';
-	@override String get anki_lapis_visual_alignment => 'المحاذاة';
-	@override String get anki_lapis_visual_color => 'لون النص';
-	@override String get anki_lapis_visual_default => 'الافتراضي';
-	@override String get anki_lapis_visual_advanced_css => 'CSS متقدم';
-	@override String get anki_lapis_visual_field_expression => 'الكلمة';
-	@override String get anki_lapis_visual_field_reading => 'القراءة';
-	@override String get anki_lapis_visual_field_sentence => 'الجملة';
-	@override String get anki_lapis_visual_field_primary_definition => 'التعريف الرئيسي';
-	@override String get anki_lapis_visual_field_glossaries => 'تعريفات أخرى';
-	@override String get anki_lapis_visual_target_card_content => 'محتوى البطاقة';
-	@override String get anki_lapis_visual_target_definition => 'التعريف';
-	@override String get anki_lapis_visual_target_inside_definition => 'داخل التعريف';
-	@override String get anki_lapis_visual_field_definition_info => 'مؤشر التعريف';
-	@override String get anki_lapis_visual_field_definition_box => 'صندوق التعريف';
-	@override String get anki_lapis_visual_field_definition_content => 'التعريف بالكامل';
-	@override String get anki_lapis_visual_field_selected_definition => 'التعريف المحدد';
-	@override String get anki_lapis_visual_field_dictionary_entry => 'إدخال القاموس';
-	@override String get anki_lapis_visual_field_dictionary_name => 'اسم القاموس';
-	@override String get anki_lapis_visual_field_definition_example => 'مثال على التعريف';
-	@override String get anki_lapis_visual_line_height => 'ارتفاع السطر';
-	@override String get anki_lapis_visual_background_color => 'تمييز الخلفية';
-	@override String get anki_lapis_visual_box_layout => 'مظهر الصندوق';
-	@override String get anki_lapis_visual_border_width => 'الحدود';
-	@override String get anki_lapis_visual_border_color => 'لون الحدود';
-	@override String get anki_lapis_visual_corner_radius => 'نصف قطر الزاوية';
-	@override String get anki_lapis_visual_padding => 'التباعد الداخلي';
-	@override String get anki_lapis_visual_margin => 'التباعد الخارجي';
-	@override String get anki_lapis_visual_field_definition_info_note => 'يظهر فقط في البطاقات التي تحتوي على أكثر من كتلة تعريف واحدة؛ بطاقات التعريف الواحد تخفيه.';
-	@override String get anki_lapis_visual_field_dictionary_name_note => 'في بطاقات Fushi يحمل هذا التسمية أيضًا وسوم أقسام الكلام، لذا لا يمكن تنسيقهما بشكل منفصل.';
-	@override String get game_upscaling_error_bundle_missing => 'تثبيت Fushi غير مكتمل: مكون Magpie المرفق مفقود. أعد تثبيت أو حدّث Fushi.';
-	@override String get game_upscaling_error_bundle_invalid => 'مكون Magpie المرفق تالف أو لم يجتز التحقق. أعد تثبيت أو حدّث Fushi.';
-	@override String download_test_connection_failed_reason({required Object message}) => 'فشل الاتصال: ${message}';
-	@override String get delete_disclosure_will_delete_label => 'سيتم حذفه';
-	@override String get delete_disclosure_will_keep_label => 'سيتم الاحتفاظ به';
-	@override String get delete_disclosure_book_records => 'تقدم القراءة والإشارات المرجعية والوسوم وبيانات الترجمة';
-	@override String get delete_disclosure_book_extracted => 'ملفات الكتاب التي استخرجها Fushi إلى مخزنه الخاص';
-	@override String get delete_disclosure_book_audiobook => 'ملفات الصوت والترجمات المحاذاة للكتاب الصوتي المرفق، إن وُجد';
-	@override String get delete_disclosure_source_kept => 'الملفات الأصلية التي استوردتها (كتاب، ترجمات، صوت)';
-	@override String get delete_disclosure_stats_kept => 'إحصائيات القراءة';
-	@override String get delete_disclosure_audiobook_files => 'ملفات الصوت والترجمات المحاذاة التي نسخها Fushi إلى مخزنه الخاص';
-	@override String get delete_disclosure_audiobook_book_kept => 'الكتاب نفسه وتقدم القراءة فيه';
-	@override String get delete_disclosure_audiobook_source_kept => 'ملفات الصوت الأصلية التي استوردتها';
-	@override String get audiobook_delete => 'حذف الكتاب الصوتي';
-	@override String get audiobook_delete_confirm => 'حذف الكتاب الصوتي المرفق؟ سيتم إزالة ملفات الصوت من هذا الجهاز.';
-	@override String get delete_collection_confirm => 'سيتم إزالة التجميع فقط. العناصر الموجودة فيه ستبقى.';
-	@override String get shortcut_action_video_enter_caret => 'الدخول إلى مؤشر البحث في الترجمة';
-	@override String get audiobook_export_clip_too_long => 'المقطع الصوتي المحدد طويل جدًا للتصدير (الحد: 5 دقائق)';
-	@override String get sync_err_forbidden => 'رفض الخادم هذا الطلب. تسجيل دخولك صحيح - تحقق من إعدادات الخادم.';
-	@override String sync_err_forbidden_detail({required Object reason}) => 'رفض الخادم هذا الطلب: ${reason} (تسجيل دخولك صحيح)';
-	@override String get collection_group_extras => 'إضافات و PV';
-	@override String collection_group_season({required Object n}) => 'الموسم ${n}';
-	@override String get collection_sort_by_season => 'ترتيب حسب الموسم';
-	@override String get mining_animated_format_avif => 'AVIF (الأصغر حجمًا)';
-	@override String get mining_animated_format_webp => 'WebP (دعم أوسع)';
-	@override String get mining_animated_format_gif => 'GIF (الأكثر توافقًا)';
-	@override String get video_mining_animated_format => 'صيغة الرسوم المتحركة لبطاقة الفيديو';
-	@override String get video_mining_animated_format_hint => 'AVIF أصغر بكثير من GIF بنفس الجودة، ومستوى جودته الأعلى يسمح بدقة ومعدل إطارات أعلى من GIF أو WebP. يعود تلقائيًا إلى GIF عندما لا يستطيع المشفّر المرفق إنتاجه.';
-	@override String get gal_mining_animated_format => 'صيغة الرسوم المتحركة لبطاقة اللعبة';
-	@override String get gal_mining_animated_format_hint => 'نفس صيغ بطاقات الفيديو، مخزنة بشكل منفصل: إطار الرواية المرئية بالكاد يتحرك خلال سطر واحد، لذا المفاضلة مختلفة.';
-	@override String get scrape_all => 'جلب الكل';
-	@override String scrape_all_title({required Object kind}) => 'جلب جميع ${kind}';
-	@override String scrape_all_running({required Object current, required Object total}) => 'جارٍ الجلب ${current} / ${total}';
-	@override String scrape_all_item({required Object title}) => 'قيد المعالجة: ${title}';
-	@override String scrape_all_done({required Object applied, required Object review, required Object skipped, required Object failed}) => 'تم: ${applied} مُطبَّق، ${review} بحاجة مراجعة، ${skipped} تم تخطيه، ${failed} فشل';
-	@override String get scrape_all_empty => 'لا توجد عناصر لجلبها في هذه المكتبة.';
-	@override String get scrape_all_start => 'بدء';
-	@override String collection_hero_total_episodes({required Object count}) => '${count} حلقة';
-	@override String get video_scrape_collection_rename_title => 'إعادة تسمية هذه المجموعة؟';
-	@override String get video_scrape_collection_rename_body => 'الإدخال المطابق يحمل اسمًا مختلفًا. إعادة التسمية اختيارية: سيتم حفظ الغلاف والتفاصيل في كلتا الحالتين، وإعادة التسمية ستستبدل الاسم القديم على أجهزتك المتزامنة الأخرى أيضًا.';
-	@override String video_scrape_collection_rename_from({required Object name}) => 'الاسم الحالي: ${name}';
-	@override String video_scrape_collection_rename_to({required Object name}) => 'الاسم الجديد: ${name}';
-	@override String get video_scrape_collection_rename_keep => 'الاحتفاظ بالاسم الحالي';
-	@override String get download_task_toggle_failed => 'فشل الإيقاف المؤقت/الاستئناف';
-	@override String get download_task_eta => 'الوقت المتبقي';
-	@override String get download_task_ratio => 'النسبة';
-	@override String get download_task_status_downloading => 'جارٍ التحميل';
-	@override String get download_task_status_seeding => 'جارٍ الرفع';
-	@override String get download_task_status_completed => 'مكتمل';
-	@override String get download_task_status_paused => 'متوقف مؤقتًا';
-	@override String get download_task_status_queued => 'في قائمة الانتظار';
-	@override String get download_task_status_stalled => 'متوقف';
-	@override String get download_task_status_checking => 'جارٍ التحقق';
-	@override String get download_task_status_metadata => 'جارٍ جلب البيانات الوصفية';
-	@override String get download_task_status_moving => 'جارٍ النقل';
-	@override String get download_task_status_error => 'خطأ';
-	@override String get download_task_pause => 'إيقاف مؤقت';
-	@override String get download_task_resume => 'استئناف';
-	@override String get download_airing_calendar_title => 'جدول البث';
-	@override String get download_airing_calendar_show_all => 'عرض كل هذا الموسم';
-	@override String get download_airing_calendar_empty_guidance => 'لا شيء لعرضه بعد: اربط مجموعة بـ AniList أو أضف اشتراك تحميل، وستظهر مواعيد بثها هنا.';
-	@override String get download_airing_calendar_error => 'فشل تحميل جدول البث';
-	@override String get download_airing_calendar_in_library => 'في المكتبة';
-	@override String get download_airing_calendar_subscribed => 'مشترك';
-	@override String download_airing_calendar_episode_label({required Object episode}) => 'الحلقة ${episode}';
-	@override String get download_airing_calendar_week_prev => 'الأسبوع السابق';
-	@override String get download_airing_calendar_week_next => 'الأسبوع التالي';
-	@override String get download_airing_calendar_week_empty => 'لا يوجد بث هذا الأسبوع';
-	@override String get video_jimaku_format => 'الصيغة';
-	@override String get video_jimaku_format_all => 'الكل';
-	@override String get video_setting_tmdb_key => 'مفتاح TMDB API مخصص';
-	@override String get video_setting_tmdb_key_hint => 'اختياري. اتركه فارغًا لاستخدام المفتاح المدمج. أدخل مفتاحك فقط إذا توقف الجلب عن العمل أو أردت استخدام حصتك الخاصة.';
-	@override String get about_tmdb_attribution => 'يستخدم هذا التطبيق TMDB وواجهات TMDB البرمجية لكنه غير معتمد أو مُصدّق أو موافق عليه من TMDB.';
-	@override String get anki_lapis_visual_layout => 'التخطيط';
-	@override String get anki_lapis_visual_layout_hint => 'يستخدم مفاتيح التخطيط الخاصة بـ Lapis، لذا يتبعها Anki على كل من سطح المكتب والهاتف.';
-	@override String get anki_lapis_visual_layout_sentence => 'موضع الجملة';
-	@override String get anki_lapis_visual_layout_sentence_above => 'فوق التعريفات';
-	@override String get anki_lapis_visual_layout_sentence_below => 'أسفل التعريفات';
-	@override String get anki_lapis_visual_layout_picture => 'موضع الصورة';
-	@override String get anki_lapis_visual_layout_picture_right => 'يمين الكلمة';
-	@override String get anki_lapis_visual_layout_picture_left => 'يسار الكلمة';
-	@override String get anki_lapis_visual_layout_picture_alt => 'داخل الجملة';
-	@override String get anki_lapis_visual_layout_audio => 'أزرار الصوت';
-	@override String get anki_lapis_visual_layout_audio_header => 'بجانب القراءة';
-	@override String get anki_lapis_visual_layout_audio_fixed => 'مثبتة في الأسفل';
-	@override String get anki_lapis_visual_layout_audio_alt => 'داخل الجملة';
-	@override String get anki_lapis_visual_mapping_hint => 'حقول Anki التي تملأ المنطقة المحددة. التغييرات تُحفظ مع النمط.';
-	@override String get anki_lapis_visual_mapping_none => 'هذه المنطقة يرسمها القالب نفسه وليس لها حقل خاص.';
-	@override String get anki_lapis_visual_color_custom => 'مخصص';
-	@override String get anki_lapis_visual_color_picker_title => 'اختر لونًا';
-	@override String get video_scrape_tmdb_key_hint => 'أدخل مفتاح TMDB API';
-	@override String get video_scrape_tmdb_key_required => 'TMDB يتطلب مفتاح API';
-	@override String get video_scrape_tmdb_key_save => 'حفظ';
-	@override String get video_scrape_tmdb_key_empty => 'احفظ مفتاح TMDB API، ثم اضغط بحث. نتائج المصادر الأخرى لا تظهر هنا.';
-	@override String get download_detail_tab_overview => 'نظرة عامة';
-	@override String get download_detail_tab_files => 'الملفات';
-	@override String get download_detail_tab_peers => 'الأقران';
-	@override String get download_detail_tab_trackers => 'المتعقبات';
-	@override String get download_detail_backend_unsupported => 'غير مدعوم من خلفية التحميل الحالية';
-	@override String get download_detail_task_gone => 'المهمة غير موجودة في الخلفية';
-	@override String get download_detail_task_missing => 'خلفية التحميل الأصلية متصلة، لكن هذا التورنت لم يعد موجودًا. لا يمكن استرداد الأقران والمتعقبات المباشرة؛ يتم عرض معلومات المهمة المحفوظة.';
-	@override String get download_detail_section_transfer => 'النقل';
-	@override String get download_detail_section_network => 'الشبكة';
-	@override String get download_detail_section_task => 'المهمة';
-	@override String get download_detail_seeds_label => 'البذور';
-	@override String get download_detail_leechers_label => 'المحمّلون';
-	@override String get download_detail_connections_label => 'الاتصالات';
-	@override String get download_detail_content_path_label => 'مسار المحتوى';
-	@override String get download_detail_time_active => 'وقت النشاط';
-	@override String get download_detail_time_seeding => 'وقت الرفع';
-	@override String get download_detail_total_size_label => 'الحجم الكلي';
-	@override String get download_detail_listen_port => 'منفذ الاستماع';
-	@override String get download_detail_dht_nodes => 'عُقد DHT';
-	@override String get download_detail_hash_label => 'هاش المعلومات';
-	@override String get download_detail_port_mapping => 'تعيين المنافذ';
-	@override String get download_detail_session_rates => 'معدلات الجلسة';
-	@override String get download_detail_pieces_label => 'القطع';
-	@override String get download_detail_priority_skip => 'عدم التحميل';
-	@override String get download_detail_raw_state_label => 'حالة الخلفية';
-	@override String get download_detail_remaining_label => 'المتبقي';
-	@override String get download_detail_save_path_label => 'مسار الحفظ';
-	@override String get download_detail_priority_normal => 'عادي';
-	@override String get download_detail_priority_high => 'عالي';
-	@override String get download_detail_tracker_working => 'يعمل';
-	@override String get download_detail_tracker_updating => 'جارٍ التحديث';
-	@override String get download_detail_tracker_not_contacted => 'لم يتم الاتصال بعد';
-	@override String get download_detail_tracker_not_working => 'لا يعمل';
-	@override String get download_detail_tracker_disabled => 'معطّل';
-	@override String get download_detail_no_peers => 'لا يوجد أقران متصلون';
-	@override String get download_detail_no_trackers => 'لا توجد متعقبات';
-	@override String get video_filter_year => 'السنة';
-	@override String get video_filter_year_unknown => 'سنة غير معروفة';
-	@override String get video_filter_watch_status => 'حالة المشاهدة';
-	@override String get video_filter_watch_status_unwatched => 'لم يُشاهَد';
-	@override String get video_filter_watch_status_watching => 'قيد المشاهدة';
-	@override String get video_filter_watch_status_completed => 'مكتمل';
-	@override String get video_hero_detail_view => 'التفاصيل';
-	@override String video_hero_episodes_watched({required Object n}) => '${n} حلقة تمت مشاهدتها';
-	@override String get video_recently_added_badge => 'جديد';
-	@override String get video_air_season_winter => 'شتاء';
-	@override String get video_air_season_spring => 'ربيع';
-	@override String get video_air_season_summer => 'صيف';
-	@override String get video_air_season_autumn => 'خريف';
-	@override String get delete_scope_no_channel => 'لا توجد مزامنة مكوّنة - هذا الحذف يؤثر على هذا الجهاز فقط';
-	@override String get mihon_sources_title => 'مصادر المانغا';
-	@override String get mihon_extensions_title => 'إضافات المانغا';
-	@override String get mihon_store_add => 'إضافة متجر إضافات';
-	@override String get mihon_store_url => 'رابط متجر الإضافات';
-	@override String get mihon_store_empty => 'لا توجد متاجر إضافات بعد. أضف متجر Mihon متوافق أو استورد ملف APK محلي.';
-	@override String get mihon_extension_import => 'استيراد APK محلي';
-	@override String get mihon_extension_warning => 'إضافات الطرف الثالث تنفذ أكوادًا بصلاحيات Fushi. قم بتثبيت الإضافات والموقّعين الموثوقين فقط.';
-	@override String get mihon_extension_install => 'تثبيت';
-	@override String get mihon_extension_update => 'تحديث';
-	@override String get mihon_extension_uninstall => 'إلغاء التثبيت';
-	@override String get mihon_extension_installed => 'مثبّت';
-	@override String get mihon_extension_disabled => 'معطّل';
-	@override String get mihon_source_empty => 'لا توجد مصادر مانغا مفعّلة. قم بتثبيت وتفعيل إضافة أولًا.';
-	@override String get mihon_source_popular => 'الأكثر شعبية';
-	@override String get mihon_source_latest => 'الأحدث';
-	@override String get mihon_source_search => 'بحث عن مانغا';
-	@override String get mihon_source_preferences => 'تفضيلات المصدر';
-	@override String get mihon_source_clear_data => 'مسح بيانات المصدر';
-	@override String get mihon_source_clear_data_hint => 'يمسح تفضيلات وملفات تعريف الارتباط لهذا المصدر. الإضافات المثبتة تبقى.';
-	@override String get mihon_signer_trust_title => 'الوثوق بموقّع الإضافة؟';
-	@override String get mihon_signer_fingerprint => 'بصمة SHA-256 للموقّع';
-	@override String get mihon_runtime_unavailable => 'إضافات Mihon غير متوفرة على هذه المنصة.';
-	@override String get mihon_extension_incompatible => 'إضافة غير متوافقة';
-	@override String get mihon_store_refresh => 'تحديث المتاجر';
-	@override String get mihon_source_browse_mokuro => 'كتالوج Mokuro المدمج';
-	@override String get mihon_source_no_results => 'لم يتم العثور على مانغا.';
-	@override String get mihon_chapters_title => 'الفصول';
-	@override String get mihon_extension_language_filter => 'اللغة';
-	@override String get mihon_extension_language_all => 'جميع اللغات';
-	@override String get mihon_filter_ignore => 'تجاهل';
-	@override String get mihon_filter_include => 'تضمين';
-	@override String get mihon_filter_exclude => 'استبعاد';
-	@override String get mihon_filter_ascending => 'تصاعدي';
-	@override String get mihon_filter_descending => 'تنازلي';
-	@override String get mihon_add_to_bookshelf => 'إضافة إلى رف المانغا';
-	@override String get mihon_in_bookshelf => 'في رف المانغا';
-	@override String scrape_all_confirm({required Object n}) => 'مطابقة جميع عناصر المكتبة البالغ عددها ${n} حسب العنوان. فقط المطابقات ذات الثقة العالية تُطبّق تلقائيًا — يتم تقييم الفيديوهات بناءً على العنوان مع السنة والنوع وإشارات أخرى، بينما تتطلب الكتب والألعاب عنوانًا فريدًا مطابقًا تمامًا. الأغلفة التي اخترتها بنفسك لا تُستبدل أبدًا (الصور المحلية التي عيّنتها، والإدخالات التي اخترتها في نافذة المطابقة، وملفات الملصقات الموضوعة في المجلد)، والنتائج الغامضة تبقى معلقة للمراجعة اليدوية.';
-	@override String get collection_related_title => 'أعمال ذات صلة';
-	@override String get collection_relation_prequel => 'جزء سابق';
-	@override String get collection_relation_sequel => 'جزء لاحق';
-	@override String get collection_relation_side_story => 'قصة جانبية';
-	@override String get collection_relation_movie => 'فيلم';
-	@override String get collection_relation_spin_off => 'عمل مشتق';
-	@override String get collection_relation_other => 'ذو صلة';
-	@override String get collection_relation_download => 'تحميل';
-	@override String get collection_relation_bind => 'ربط بمجموعة موجودة';
-	@override String get collection_episode_rename => 'إعادة تسمية الحلقات من الجلب';
-	@override String get collection_episode_rename_title => 'إعادة تسمية الحلقات';
-	@override String get collection_episode_rename_empty => 'لا شيء لإعادة تسميته';
-	@override String get collection_episode_download => 'تحميل هذه الحلقة';
-	@override String get collection_episode_fill_missing => 'ملء الحلقات المفقودة';
-	@override String get collection_episode_no_missing => 'لا توجد حلقات مفقودة';
-	@override String get collection_split_by_season => 'تقسيم حسب الموسم';
-	@override String get collection_split_keep_original => 'الاحتفاظ بالمجموعة الأصلية';
-	@override String get collection_split_confirm => 'تقسيم';
-	@override String collection_relation_bound({required Object name}) => 'مرتبط بـ ${name}';
-	@override String collection_episode_rename_apply({required Object n}) => 'إعادة تسمية ${n} حلقة';
-	@override String collection_split_done({required Object n}) => 'تم التقسيم إلى ${n} مجموعة';
-	@override String collection_episode_watched_at({required Object position}) => 'شوهد حتى ${position}';
-	@override String collection_episode_rename_partial({required Object n, required Object m}) => 'تمت إعادة تسمية ${n} حلقة، فشل ${m}';
-	@override String get sync_err_browser_timeout => 'لم يُعِد المتصفح التفويض. حاول مجددًا، وتأكد من أن الوكيل يسمح بالمرور عبر 127.0.0.1.';
-	@override String get manga_rescan_running => 'جارٍ التعرف على المربع المحدد...';
-	@override String get manga_rescan_empty => 'لم يتم التعرف على أي نص في هذا المربع.';
-	@override String get stat_hourly_band_epub => 'كتب نصية';
-	@override String get stat_hourly_band_pdf => 'PDF';
-	@override String get stat_hourly_band_manga => 'مانغا';
-	@override String get stat_hourly_band_unattributed => 'سجل غير مقسّم';
-	@override String get stat_hourly_unattributed_note => 'الساعات المسجلة قبل وجود التتبع حسب الصيغة ليس لها نوع مخزّن، لذا لا يمكن تقسيمها. تُعرض كإجمالي مجمّع ولا تُنسب لأي نوع.';
-	@override String get book_convert_to_manga_action => 'تحويل إلى مانغا';
-	@override String get book_convert_to_book_action => 'تحويل مرة أخرى إلى كتاب';
-	@override String get book_convert_running => 'جارٍ التحويل…';
-	@override String get book_convert_done => 'اكتمل التحويل';
-	@override String get book_convert_failed => 'فشل التحويل';
-	@override String get book_convert_blocked_already => 'هذا الكتاب بالفعل بهذه الصيغة.';
-	@override String get book_convert_blocked_text_only => 'هذا كتاب نصي بدون صور صفحات. فقط الكتب المصورة الممسوحة ضوئيًا يمكن تحويلها إلى مانغا.';
-	@override String get book_convert_blocked_no_original => 'تم استيراد هذه المانغا من صور، لذا لا يوجد كتاب أصلي للتحويل إليه.';
-	@override String get book_convert_blocked_source_missing => 'الملفات المصدرية لم تعد موجودة على القرص.';
-	@override String manga_online_retry_waiting({required Object attempt, required Object total}) => 'إعادة المحاولة تلقائيًا (${attempt}/${total})';
-	@override String get manga_ocr_wizard_already_ocred => 'هذا المجلد يحتوي بالفعل على بيانات التعرف الضوئي في كل صفحة. تشغيل التعرف الضوئي مجددًا سيستبدلها.';
-	@override String get shortcut_scope_universal => 'رجوع / خروج';
-	@override String get game_attach_and_capture => 'إرفاق والتقاط';
-	@override String get remote_delete_failed => 'تعذر الحذف على الجهاز المقترن';
-	@override String get remote_delete_unsupported => 'الجهاز المقترن قديم جدًا لدعم الحذف عن بُعد. حدّث Fushi هناك أولًا.';
-	@override String get anki_lapis_visual_blocks => 'مناطق مخصصة';
-	@override String get anki_lapis_visual_blocks_hint => 'عرض الحقول الموجودة في مكان آخر على البطاقة. للعرض فقط: لا يتم إضافة أو حذف أي حقل Anki.';
-	@override String get anki_lapis_visual_block_add => 'إضافة منطقة';
-	@override String get anki_lapis_visual_block_delete => 'حذف منطقة';
-	@override String anki_lapis_visual_block_name({required Object index}) => 'المنطقة ${index}';
-	@override String get anki_lapis_visual_block_anchor => 'الموضع على البطاقة';
-	@override String get anki_lapis_visual_block_anchor_top => 'أعلى البطاقة';
-	@override String get anki_lapis_visual_block_anchor_above_sentence => 'أسفل الكلمة';
-	@override String get anki_lapis_visual_block_anchor_above_definition => 'أسفل الجملة';
-	@override String get anki_lapis_visual_block_anchor_below_definition => 'أسفل التعريفات';
-	@override String get anki_lapis_visual_block_anchor_bottom => 'أسفل البطاقة';
-	@override String get anki_lapis_visual_block_fields => 'الحقول المعروضة هنا';
-	@override String get anki_lapis_visual_block_no_fields => 'لم يتم اختيار حقول بعد';
-	@override String get anki_lapis_visual_block_needs_note_type => 'اختر نوع الملاحظة أولًا لاختيار الحقول.';
-	@override String get anki_lapis_restore_factory => 'استعادة Lapis الافتراضي';
-	@override String get anki_lapis_restore_factory_hint => 'استبدال نوع ملاحظة Lapis في Anki بالنسخة المرفقة في Fushi ومسح جميع التخصيصات هنا.';
-	@override String get anki_lapis_restore_factory_confirm => 'سيتم استبدال تنسيق Lapis وقوالب البطاقات في Anki بالنسخة المرفقة في Fushi، وإعادة تعيين حجم الخط وCSS المخصص والمناطق المخصصة. سيتم حفظ نسخة احتياطية من الحالة الحالية أولًا. بيانات البطاقات لن تتأثر.';
-	@override String get anki_lapis_restore_factory_done => 'تمت استعادة Lapis إلى الإعدادات الافتراضية';
-	@override String anki_lapis_restore_factory_failed({required Object error}) => 'فشلت الاستعادة: ${error}';
-	@override String get anki_lapis_visual_select_field_hint => 'انقر على أي جزء من المعاينة، أو اختر من الأسفل. ما تختاره هو ما ستعدّله عناصر التحكم أدناه.';
-	@override String get anki_lapis_visual_editing_now => 'قيد التعديل';
-	@override String get mihon_extension_preview => 'معاينة';
-	@override String get mihon_extension_preview_warning => 'المعاينة تشغّل كود هذه الإضافة قبل تثبيتها. لن يُضاف شيء إلى مكتبتك حتى تختار التثبيت.';
-	@override String get mihon_extension_preview_discard => 'تجاهل';
-	@override String get mihon_extension_preview_source_select => 'اختر مصدرًا للمعاينة';
-	@override String get mihon_extension_sources_included => 'المصادر المضمّنة';
-	@override String get mihon_extension_preview_read_only => 'المعاينة للقراءة فقط. قم بتثبيت الإضافة للفتح والقراءة.';
-	@override String get selection_copy_empty => 'لم يتم تحديد نص.';
-	@override String get video_library_empty_source_hint => 'أضف مجلد فيديو من المصادر لبناء مكتبتك';
-	@override String get video_source_scrape_action => 'جلب بيانات هذا المصدر';
-	@override String get video_source_scrape_settings => 'إعدادات جلب المصدر';
-	@override String get video_source_scrape_auto_after_scan => 'الجلب بعد الفحص';
-	@override String get video_source_scrape_auto_after_scan_hint => 'تشغيل جلب البيانات الوصفية تلقائيًا بعد فحص هذا المصدر';
-	@override String get video_source_scrape_write_nfo => 'كتابة ملفات NFO';
-	@override String get video_source_scrape_write_images => 'كتابة ملفات الصور';
-	@override String video_source_scrape_progress({required Object phase, required Object current, required Object total}) => '${phase} · ${current}/${total}';
-	@override String video_source_scrape_last_summary({required Object status, required Object succeeded, required Object pending, required Object failed}) => 'آخر جلب (${status}): ${succeeded} نجح، ${pending} معلّق، ${failed} فشل';
-	@override String get video_source_scrape_phase_planning => 'التخطيط';
-	@override String get video_source_scrape_phase_recognizing => 'المطابقة';
-	@override String get video_source_scrape_phase_fetching => 'جلب البيانات الوصفية';
-	@override String get video_source_scrape_phase_applying => 'حفظ البيانات الوصفية';
-	@override String get video_source_scrape_phase_writing_sidecars => 'كتابة الملفات المرافقة';
-	@override String get video_source_scrape_status_interrupted => 'تم المقاطعة';
-	@override String get video_source_scrape_locale => 'لغة البيانات الوصفية';
-	@override String get video_source_scrape_locale_hint => 'اللغة المفضلة للعناوين والملخصات والصور';
-	@override String get video_source_scrape_confirmation_title => 'تأكيد مطابقة البيانات الوصفية';
-	@override String get video_source_scrape_confirmation_hint => 'تم العثور على عدة مطابقات دقيقة. اختر العمل الصحيح لحفظ ربط المزوّد.';
-	@override String get video_source_scrape_confirmation_skip => 'تخطي هذا العمل';
-	@override String get video_source_scrape_nfo_policy => 'سياسة كتابة NFO';
-	@override String get video_source_scrape_image_policy => 'سياسة كتابة الصور';
-	@override String get video_source_scrape_policy_skip => 'عدم الكتابة';
-	@override String get video_source_scrape_policy_missing_only => 'فقط عند الغياب';
-	@override String get video_source_scrape_policy_overwrite => 'تحديث ملفات Fushi';
-	@override String get video_source_scrape_external_overwrite => 'السماح بالكتابة فوق الملفات المحمية';
-	@override String get video_source_scrape_external_overwrite_hint => 'ملفات الطرف الثالث أو المعدّلة من المستخدم تبقى محمية حتى تؤكد كل دفعة جلب يدوي مجددًا.';
-	@override String get video_source_scrape_external_overwrite_confirm_title => 'الكتابة فوق الملفات المحمية؟';
-	@override String get video_source_scrape_external_overwrite_confirm_body => 'قد تستبدل هذه الدفعة ملفات NFO/صور من طرف ثالث أو ملفات Fushi التي عدّلتها. ملفات الوسائط لن تتغير. متابعة؟';
-	@override String get video_source_scrape_tasks_open => 'المهام الخلفية';
-	@override String get video_source_scrape_background_started => 'الجلب يعمل في الخلفية';
-	@override String get video_source_scrape_tasks_current => 'المهمة الحالية';
-	@override String get video_source_scrape_tasks_history => 'المهام الأخيرة';
-	@override String get video_source_scrape_tasks_empty => 'لا توجد مهام جلب بعد';
-	@override String get video_source_scrape_waiting_confirmation => 'في انتظار تأكيدك';
-	@override String get video_source_scrape_phase_scanning => 'فحص المصدر';
-	@override String get video_library_all_videos => 'جميع الفيديوهات';
-	@override String get video_work_voice_roles => 'الأداء الصوتي والشخصيات';
-	@override String get video_work_cast_crew => 'طاقم التمثيل والإنتاج';
-	@override String get video_work_trailers => 'الإعلانات الترويجية';
-	@override String get video_work_extras => 'إضافات';
-	@override String get video_work_details => 'التفاصيل';
-	@override String get video_work_external_ids => 'معرّفات خارجية';
-	@override String get video_work_metadata_pending => 'لم يتم جلب البيانات الوصفية المفصلة بعد. أعد جلب هذا المصدر من المصادر، ثم أعد فتح العمل.';
-	@override String get video_work_genres => 'التصنيفات';
-	@override String get video_work_keywords => 'الكلمات المفتاحية';
-	@override String get video_work_studios => 'الاستوديوهات';
-	@override String get video_work_countries => 'الدول';
-	@override String get video_work_content_rating => 'تصنيف المحتوى';
-	@override String get video_all_videos_list_view => 'عرض القائمة';
-	@override String get video_all_videos_grid_view => 'عرض الشبكة';
-	@override String video_home_continue_episode_number({required Object n}) => 'جارٍ تشغيل الحلقة ${n}';
-	@override String video_home_next_episode_number({required Object n}) => 'التالي · الحلقة ${n}';
-	@override String video_home_recent_episode_number({required Object n}) => 'أُضيف مؤخرًا · الحلقة ${n}';
-	@override String video_home_remaining_minutes({required Object minutes}) => '${minutes} دقيقة متبقية';
-	@override String get video_subtitle_replay => 'إعادة تشغيل هذا السطر';
-	@override String get manga_ocr_done => 'اكتمل التعرف الضوئي';
-	@override String get settings_destination_manga_summary => 'القارئ والتعرف الضوئي والكتالوج عبر الإنترنت';
-	@override String get manga_page_animation => 'حركة تقليب الصفحة';
-	@override String get manga_page_animation_none => 'بدون';
-	@override String get manga_page_animation_slide => 'انزلاق';
-	@override String get manga_page_animation_fade => 'تلاشي';
-	@override String get manga_default_zoom => 'التكبير الافتراضي';
-	@override String get manga_zoom_sensitivity => 'حساسية التكبير';
-	@override String get manga_volume_key_paging => 'أزرار الصوت لتقليب الصفحات';
-	@override String get manga_volume_key_paging_subtitle => 'استخدم زري رفع وخفض الصوت لتقليب الصفحات في قارئ المانغا';
-	@override String get manga_tap_zone_paging => 'النقر على الحواف لتقليب الصفحات';
-	@override String get manga_tap_zone_paging_subtitle => 'انقر على الحافة اليسرى أو اليمنى للصفحة للتقليب';
-	@override String get manga_section_viewing => 'العرض وتقليب الصفحات';
-	@override String get game_capture_setup_title => 'إكمال إعداد الالتقاط';
-	@override String get game_capture_setup_hint => 'اختر خيط الحوار أولًا. لا يستطيع Fushi مطابقة الصوت إلا مع أسطر الخيط المحدد.';
-	@override String get game_audio_requires_thread => 'قد يكون مصدر التقاط الصوت جاهزًا، لكن صوت الجملة لا يوجد حتى يتم اختيار خيط واستقبال سطر.';
-	@override String get game_session_waiting_thread => 'في انتظار خيط الحوار';
-	@override String get anki_connect_use_on_mobile => 'Use AnkiConnect on Android';
-	@override String get anki_connect_use_on_mobile_hint => 'استخدم فقط على شبكة موثوقة. AnkiConnect يستخدم HTTP غير مشفر؛ قم بتكوين مفتاح API مطابق، ثم حدّث المجموعات وأنواع الملاحظات بعد التبديل.';
-	@override String get anki_connect_api_key_hint => 'مطلوب لـ AnkiConnect عن بُعد؛ يجب أن يتطابق مع المفتاح المُعدّ في الإضافة';
-	@override String get anki_connect_mobile_api_key_required => 'Configure a matching AnkiConnect API key before enabling the Android backend.';
-	@override String anki_connect_backend_switch_failed({required Object error}) => 'تعذّر تبديل واجهة Anki الخلفية: ${error}';
-	@override String get migration_settings_entry => 'الترحيل إلى Fushi';
-	@override String get migration_settings_entry_subtitle => 'نقل جميع البيانات إلى تطبيق Fushi الجديد';
-	@override String get migration_intro => 'Fushi هو الاسم الجديد لهذا التطبيق. يقوم الترحيل بتصدير جميع بياناتك على دفعات إلى مجلد نقل، ثم يستوردها Fushi ويتحقق منها. تبقى بياناتك هنا دون تغيير حتى تحذف هذا التطبيق.';
-	@override String get migration_target_missing => 'Fushi غير مُثبّت بعد. ثبّت Fushi أولاً، ثم عد إلى هنا.';
-	@override String get migration_download_fushi => 'تحميل Fushi';
-	@override String get migration_start => 'بدء الترحيل';
-	@override String get migration_open_fushi => 'فتح Fushi';
-	@override String get migration_include_local_audio => 'تصدير الصوت المحلي للنطق أيضاً (قد يكون كبير الحجم)';
-	@override String migration_batch_running({required Object batch}) => 'جارٍ تصدير ${batch}…';
-	@override String migration_batch_done({required Object batch}) => 'تم تصدير ${batch}';
-	@override String get migration_export_done => 'اكتمل التصدير. افتح Fushi للاستيراد والتحقق.';
-	@override String migration_export_failed({required Object error}) => 'فشل التصدير: ${error}';
-	@override String get migration_readonly_note => 'تم تصدير بياناتك إلى Fushi. هذا التطبيق الآن للقراءة فقط: استخدم Fushi للقراءة والتعدين. يمكنك إعادة التصدير في أي وقت إذا أبلغ Fushi عن بيانات مفقودة.';
-	@override String get migration_reexport => 'إعادة التصدير';
-	@override String get migration_batch_core_label => 'الإعدادات والتقدم والإحصائيات';
-	@override String get migration_import_entry => 'استيراد من Hibiki';
-	@override String get migration_import_entry_subtitle => 'استيراد البيانات المُصدَّرة من تطبيق Hibiki القديم';
-	@override String get migration_import_detected => 'تم اكتشاف بيانات ترحيل Hibiki. هل تريد استيرادها الآن؟';
-	@override String get migration_import_start => 'بدء الاستيراد';
-	@override String migration_import_running({required Object batch}) => 'جارٍ استيراد ${batch}…';
-	@override String migration_import_verify_failed({required Object batch, required Object detail}) => 'فشل التحقق من ${batch} وتم الاحتفاظ بها لإعادة التصدير: ${detail}';
-	@override String migration_import_counts_failed({required Object detail}) => 'البيانات المستوردة غير مكتملة: ${detail}. أعد تصدير الأجزاء المفقودة من Hibiki، ثم استورد مجدداً.';
-	@override String get migration_import_success => 'اكتمل الاستيراد والتحقق.';
-	@override String get migration_import_nothing => 'لم يتم العثور على بيانات ترحيل في مجلد النقل.';
-	@override String get migration_uninstall_prompt => 'اكتمل الترحيل. هل تريد حذف تطبيق Hibiki القديم؟';
-	@override String get migration_uninstall_button => 'حذف Hibiki';
-	@override String get migration_uninstall_still_installed => 'Hibiki لا يزال مُثبّتاً. يمكنك حذفه في أي وقت.';
-	@override String get migration_import_permission_title => 'مطلوب إذن التخزين';
-	@override String get migration_import_permission_body => 'تم إنشاء مجلد النقل بواسطة التطبيق القديم. بدون إذن "الوصول لجميع الملفات"، لا يستطيع Fushi قراءته — البيانات سليمة، لكن لا يمكن فتحها.';
-	@override String get migration_import_permission_grant => 'منح الإذن';
-	@override String migration_import_verifying({required Object batch, required Object done, required Object total}) => 'جارٍ التحقق من ${batch} (${done}/${total})';
-	@override String get migration_import_verifying_hint => 'جارٍ حساب المجاميع الاختبارية للأرشيفات. قد تستغرق المكتبات الكبيرة عدة دقائق.';
-	@override String get game_line_copy_tooltip => 'نسخ الجملة';
-	@override String get game_japanese_locale_auto => 'تلقائي';
-	@override String get game_japanese_locale_on => 'مُفعّل دائماً';
-	@override String get game_japanese_locale_off => 'مُعطّل';
-	@override String get game_japanese_locale => 'اللغة اليابانية للنظام';
-	@override String get game_japanese_locale_hint => 'يجب تعطيل هذا للإصدارات المُعرّبة بالصينية/الإنجليزية، وإلا ستتعطل اللعبة عند التشغيل';
-	@override String get video_scrape_diagnostic_export => 'تصدير تشخيصات الكشط';
-	@override String get video_scrape_diagnostic_confirm_title => 'تصدير تشخيصات الكشط؟';
-	@override String get video_scrape_diagnostic_saved => 'تم حفظ حزمة التشخيص';
-	@override String video_scrape_diagnostic_failed({required Object reason}) => 'تعذّر تصدير حزمة التشخيص: ${reason}';
-	@override String get video_scrape_diagnostic_share_subject => 'تشخيصات كشط الفيديو في Fushi';
-	@override String get video_scrape_diagnostic_confirm_body => 'تتضمن الحزمة أسماء الملفات والمجلدات النسبية، وملخصات الكشط، ومحتويات NFO الأصلية. لا تتضمن مقاطع فيديو أو ترجمات أو صور أو مسارات مطلقة أو إعدادات التطبيق أو بيانات الاعتماد. تُحفظ ملفات NFO الأصلية دون تغيير وقد تحتوي على معلومات شخصية أو أسرار؛ راجع الحزمة قبل المشاركة علناً.';
-	@override String get video_discovery_search_hint => 'بحث عن أفلام، مسلسلات، أنمي';
-	@override String get video_discovery_hot => 'رائج الآن';
-	@override String get video_discovery_seasonal_anime => 'أنمي الموسم';
-	@override String get video_discovery_all_works => 'جميع العناوين';
-	@override String get video_discovery_search_results => 'نتائج البحث';
-	@override String get video_discovery_provider_warning => 'بعض المصادر غير متاحة. يتم عرض النتائج المتوفرة.';
-	@override String get video_discovery_load_failed => 'تعذّر تحميل نتائج الاكتشاف.';
-	@override String get video_discovery_empty => 'لا توجد عناوين مطابقة.';
-	@override String get video_discovery_resource_search => 'بحث عن الموارد';
-	@override String get video_discovery_subtitle_search => 'بحث عن الترجمات';
-	@override String get video_discovery_subscribe => 'اشتراك';
-	@override String get video_discovery_subscription_manage => 'إدارة الاشتراك';
-	@override String get video_discovery_pipeline_idle => 'غير مُحمَّل → تحميل → تنظيم → ترجمات → كشط → المكتبة';
-	@override String get video_discovery_details_load_failed => 'تعذّر تحميل تفاصيل العنوان.';
-	@override String get video_discovery_sort_popularity => 'الشعبية';
-	@override String get video_discovery_sort_rating => 'التقييم';
-	@override String get video_discovery_sort_release => 'تاريخ الإصدار';
-	@override String get video_discovery_in_library => 'في المكتبة';
-	@override String get video_discovery_play => 'تشغيل';
-	@override String get download_resources_tab => 'الموارد';
-	@override String get video_external_settings_section => 'مزوّدو الموارد والترجمات الخارجية';
-	@override String get video_torznab_settings_title => 'مفهرسات Torznab';
-	@override String get video_torznab_add => 'إضافة مفهرس';
-	@override String get video_torznab_name => 'الاسم';
-	@override String get video_torznab_endpoint => 'نقطة النهاية';
-	@override String get video_torznab_endpoint_hint => 'HTTPS مطلوب باستثناء عناوين الاسترجاع المحلية.';
-	@override String get video_torznab_api_key => 'مفتاح API';
-	@override String get video_torznab_priority => 'الأولوية';
-	@override String get video_torznab_categories => 'الفئات';
-	@override String get video_torznab_categories_hint => 'معرّفات فئات رقمية مفصولة بفواصل';
-	@override String get video_external_enabled => 'مُفعّل';
-	@override String get video_external_insecure_http => 'السماح بـ HTTP غير الآمن';
-	@override String get video_external_insecure_http_hint => 'استخدم فقط لنقطة نهاية على شبكة محلية موثوقة.';
-	@override String get video_external_endpoint_invalid => 'أدخل نقطة نهاية صالحة بدون بيانات اعتماد أو معلمات استعلام أو أجزاء.';
-	@override String get video_opensubtitles_settings_title => 'OpenSubtitles';
-	@override String get video_opensubtitles_user_agent => 'وكيل المستخدم';
-	@override String get video_opensubtitles_languages_hint => 'رموز لغات مفصولة بفواصل، مثلاً zh-CN,en,ja';
-	@override String get video_download_path_mappings_title => 'تعيينات مسارات qBittorrent';
-	@override String get video_download_path_mappings_hint => 'عيّن كل جذر بعيد لـ qBittorrent إلى مجلد محلي يمكن الوصول إليه.';
-	@override String get video_download_path_mapping_add => 'إضافة تعيين مسار';
-	@override String get video_download_backend_profile_id => 'معرّف ملف الواجهة الخلفية';
-	@override String get video_download_remote_root => 'الجذر البعيد';
-	@override String get video_download_local_root => 'الجذر المحلي';
-	@override String get video_download_target_source_title => 'مصدر الفيديو المُدار الافتراضي';
-	@override String get video_download_target_source_hint => 'يتم تنظيم التحميلات الجديدة في مصدر الفيديو المحلي هذا.';
-	@override String get video_download_target_source_none => 'اختر مصدر فيديو محلي';
-	@override String get video_external_remove => 'إزالة';
-	@override String get video_external_username_optional => 'اسم المستخدم (اختياري)';
-	@override String get video_external_password_optional => 'كلمة المرور (اختياري)';
-	@override String get video_external_api_key => 'مفتاح API';
-	@override String get video_external_save_error => 'تعذّر حفظ الإعدادات. تحقق من الحقول المُميّزة.';
-	@override String get video_external_categories_invalid => 'يجب أن تكون الفئات معرّفات رقمية مفصولة بفواصل.';
-	@override String get video_download_path_mapping_invalid => 'أدخل معرّف ملف تعريف وجذراً بعيداً وجذراً محلياً مطلقاً.';
-	@override String get video_opensubtitles_endpoint => 'نقطة نهاية API';
-	@override String get video_download_target_source_empty => 'لا يوجد مصدر فيديو محلي متاح. أضف واحداً في تبويب المصادر أولاً.';
-	@override String get video_setting_drag_seek_sensitivity => 'حساسية السحب للتقديم';
-	@override String get video_setting_drag_seek_sensitivity_hint => 'المدة التي يقفزها سحب بعرض الشاشة الكامل على شاشة اللمس: منخفضة حوالي 45 ثانية، متوسطة حوالي 90 ثانية، عالية حوالي 180 ثانية. مستقل عن طول الفيديو. للسحب باللمس فقط؛ لا يتأثر التنقل بالفأرة ولوحة المفاتيح.';
-	@override String get video_setting_drag_seek_sensitivity_low => 'منخفضة';
-	@override String get video_setting_drag_seek_sensitivity_medium => 'متوسطة';
-	@override String get video_setting_drag_seek_sensitivity_high => 'عالية';
-	@override String video_subtitle_read_failed({required Object label}) => 'تعذّرت قراءة ملف الترجمة هذا (تالف أو فارغ): ${label}';
-	@override String dict_downloading_size({required Object name, required Object done, required Object total}) => 'جارٍ تحميل ${name} (${done} / ${total})';
-	@override String get video_subtitle_attach_book_missing => 'هذا الفيديو ليس في مكتبتك، لذا لم يتم إرفاق الترجمة';
-	@override String get dict_download_hide => 'تشغيل في الخلفية';
-	@override String get dict_download_progress_show => 'عرض التقدم';
-	@override String get dict_download_cancelled => 'تم إلغاء التحميل.';
-	@override String get dict_download_import_uncancellable => 'لا يمكن مقاطعة الاستيراد';
-	@override String get dict_download_busy => 'هناك تحميل قاموس قيد التشغيل بالفعل.';
-	@override String get gal_hook_ingame_lookup => 'البحث في القاموس داخل اللعبة';
-	@override String get gal_hook_ingame_lookup_hint => 'عرض بطاقة القاموس داخل نافذة اللعبة نفسها (محرك KiriKiri، Windows فقط)';
-	@override String download_subscription_start_episode({required Object episode}) => '从第 ${episode} 集开始';
-	@override String get drag_drop_failed => 'تعذّرت معالجة الملفات المسقطة. يرجى المحاولة مرة أخرى.';
-	@override String get tag_add_failed => 'تعذّرت إضافة الوسم. يرجى المحاولة مرة أخرى.';
-	@override String get tag_reorder_failed => 'تعذّر حفظ ترتيب الوسوم الجديد. يرجى المحاولة مرة أخرى.';
-	@override String get download_task_error_summary_source_missing => 'مصدر الفيديو المُدار مفقود أو غير قابل للوصول';
-	@override String get download_task_error_summary_backend_unconfirmed => 'تعذّر تأكيد التورنت بالتجزئة والعنوان والفئة';
-	@override String get download_task_error_summary_subtitle => 'الترجمات غير متاحة أو تعذّر تثبيتها';
-	@override String get download_task_error_summary_backend_unavailable => 'الواجهة الخلفية للتحميل غير متاحة أو لم تعد متطابقة';
-	@override String get download_task_error_summary_legacy => 'الاستيراد القديم يحتاج انتباهاً يدوياً';
-	@override String get download_task_error_summary_torrent_info => 'هوية التورنت مفقودة أو غير قابلة للتحقق';
-	@override String get download_task_error_summary_generic => 'واجهت المهمة خطأً';
-	@override String get download_task_error_view_detail => 'عرض التفاصيل';
-	@override String get download_task_error_detail_title => 'تفاصيل الخطأ';
-	@override String get download_task_error_copied => 'تم نسخ تفاصيل الخطأ';
-	@override String get download_task_lifecycle_active => 'قيد التنفيذ';
-	@override String get download_task_lifecycle_needs_attention => 'يحتاج انتباهاً';
-	@override String get download_task_location_missing => 'موقع ملف المهمة غير متاح.';
-	@override String get download_task_location_open_failed => 'تعذّر فتح موقع الملف.';
-	@override String get download_task_open_location => 'عرض في المجلد';
-	@override String get download_task_lifecycle_completed => 'مكتمل';
-	@override String get download_task_lifecycle_failed => 'فشل';
-	@override String get download_task_lifecycle_cancelled => 'مُلغى';
-	@override String get download_task_stage_enqueue => 'إدراج في القائمة';
-	@override String get download_task_stage_download => 'تحميل';
-	@override String get download_task_stage_organize => 'تنظيم';
-	@override String get download_task_stage_subtitle => 'ترجمات';
-	@override String get download_task_stage_import => 'استيراد';
-	@override String get download_task_stage_scrape => 'كشط';
-	@override String get video_discovery_manual_identity_hint => 'أدخل العنوان والمعرّف الخارجي والسنة أعلاه لتفعيل البحث';
-	@override String get collection_split_move_to => 'نقل إلى';
-	@override String get collection_split_new_group => 'مجموعة جديدة';
-	@override String collection_split_selected({required Object n}) => 'تم تحديد ${n}';
-	@override String get sync_pair_rate_limited => 'محاولات كثيرة جداً. انتظر بضع دقائق وحاول مجدداً.';
-	@override String get sync_pair_tls_failed => 'فشل التحقق من الشهادة. شهادة الجهاز الآخر لا تتطابق مع الشهادة المثبّتة.';
-	@override String get sync_pair_timeout => 'لم يستجب الجهاز الآخر في الوقت المحدد.';
-	@override String get sync_pair_expired => 'انتهت مهلة الاقتران. ابدأ الاقتران مجدداً من هذا الجهاز.';
-	@override String get sync_pair_upgrade_required => 'الجهاز الآخر يعمل بإصدار أقدم لا يمكنه الاقتران بأمان من هذه الشبكة. حدّثه، ثم أعد الاقتران.';
-	@override String get sync_pair_fingerprint_changed_title => 'تغيّرت الشهادة';
-	@override String get sync_pair_fingerprint_stored_label => 'مثبّتة سابقاً';
-	@override String get sync_pair_fingerprint_new_label => 'مرئية الآن';
-	@override String get sync_pair_fingerprint_retrust => 'مسح وإعادة الوثوق';
-	@override String get sync_pair_fingerprint_changed_body => 'كان هذا العنوان مثبّتاً بشهادة مختلفة سابقاً. تابع فقط إذا كنت تعلم أن الجهاز الآخر أعاد التثبيت أو إعادة الضبط — وإلا قد يكون شخص ما يعترض الاتصال.';
-	@override String get interconnect_upload_section_footer => 'اختر ما يرفعه هذا الجهاز إلى الجهاز المقترن. مستقل عن مفاتيح النسخ الاحتياطي السحابي ومُعطّل افتراضياً. تنطبق هذه المفاتيح فقط عندما يكون الربط البيني مُفعّلاً: تعطيله يوقف جميع عمليات الرفع هنا.';
-	@override String get remote_delete_audiobook_partial => 'تم حذف الكتاب، لكن تعذّرت إزالة الكتاب الصوتي على الجهاز المقترن';
-	@override String get download_detail_task_queued => 'في قائمة الانتظار: بانتظار تحرّر مكان من التحميلات الأخرى. لم يتم تسليم هذه المهمة للمُحمِّل بعد، لذا لا توجد بيانات أقران أو متتبعات مباشرة.';
-	@override String video_subscription_group_release_count({required Object count}) => '${count} إصدار';
-	@override String get download_task_priority => 'أولوية القائمة';
-	@override String get download_task_priority_high => 'عالية';
-	@override String get download_task_priority_normal => 'عادية';
-	@override String get download_task_priority_low => 'منخفضة';
-	@override String get library_view_import => 'استيراد';
-	@override String get quick_import_title => 'استيراد سريع';
-	@override String get media_source_section_title => 'مصادر المكتبة';
-	@override String get media_import_folder => 'مجلد الاستيراد';
-	@override String get media_import_folder_as_source => 'إضافة كمصدر مكتبة';
-	@override String get book_import_folder_as_source_hint => 'الاستمرار في فحص هذا المجلد بحثاً عن كتب جديدة';
-	@override String get media_import_folder_once => 'استيراد مرة واحدة فقط';
-	@override String get library_empty_go_import => 'الذهاب إلى الاستيراد';
-	@override String get game_import_drop_hint => 'يمكنك أيضاً سحب ملفات .exe إلى مكتبة الألعاب';
-	@override String get library_view_sources => 'المصادر';
-	@override String get video_setting_secondary_av_delay => 'مزامنة الترجمة الثانوية';
-	@override String get video_setting_secondary_av_delay_hint => 'ضبط إزاحة الترجمة الثانوية بشكل مستقل. تتبع الإزاحة الأساسية حتى يتم ضبطها هنا.';
-	@override String get video_setting_secondary_delay_follow => 'تتبع الأساسية';
-	@override String video_subtitle_secondary_delay_osd({required Object ms}) => 'مزامنة الترجمة الثانوية: ${ms} مللي ثانية';
-	@override String get video_subtitle_secondary_delay_follow_osd => 'مزامنة الترجمة الثانوية: تتبع الأساسية';
-	@override String get video_setting_subtitle_anchor => 'مرساة الترجمة الرئيسية';
-	@override String get video_subtitle_anchor_bottom => 'أسفل';
-	@override String get video_subtitle_anchor_top => 'أعلى';
-	@override String get video_setting_subtitle_drag_adjust => 'اسحب لضبط الموضع';
-	@override String get video_subtitle_drag_adjust_hint => 'اسحب الترجمة للأعلى أو للأسفل لتغيير موضعها';
-	@override String get anki_connect_mobile_disabled_key_cleared => 'يحتاج AnkiConnect إلى مفتاح API على الهاتف، لذا أدى مسحه إلى إيقاف المفتاح مجدداً. يعمل Anki الآن عبر الواجهة الخلفية المدمجة مرة أخرى.';
-	@override String manga_import_batch_hint({required Object n}) => 'يحتوي هذا المجلد على ${n} ملف مجلّد؛ يتم استيراد كل منها ككتاب مستقل باسم ملفه.';
-	@override String manga_import_batch_done({required Object imported, required Object skipped, required Object failed}) => 'تم استيراد ${imported}، تخطّي ${skipped}، فشل ${failed}.';
-	@override String get srt_book_reimport => 'إعادة الاستيراد';
-	@override String get srt_book_reimport_subtitle_hint => 'استبدال الترجمة يعيد بناء نص الكتاب من الإشارات الجديدة.';
-	@override String get srt_book_reimport_no_cues => 'لم يتم العثور على سطور ترجمة في هذا الملف';
-	@override String get srt_book_reimport_body_rebuilt => 'تم إعادة بناء نص الكتاب — أعد فتح الكتاب لقراءته';
-	@override String get video_setting_torrent_backend_embedded => 'المحرك المدمج';
-	@override String get download_backend_unsupported_note => 'المحرك المدمج غير متاح على هذه المنصة. تستخدم التحميلات qBittorrent خارجي.';
-	@override String get aidoku_runtime_unavailable => 'إضافات Aidoku متاحة حالياً على macOS فقط.';
-	@override String get aidoku_extensions_title => 'إضافات Aidoku';
-	@override String get aidoku_extension_empty => 'لا توجد إضافات Aidoku مُثبّتة.';
-	@override String get aidoku_extension_remove => 'إزالة إضافة Aidoku';
-	@override String get aidoku_extension_warning => 'تقوم إضافات Aidoku بتشغيل كود WebAssembly من طرف ثالث مع إمكانية الوصول للشبكة. تابع فقط مع مصادر تثق بها.';
-	@override String get aidoku_webview_unsupported => 'يتطلب هذا المصدر واجهات Aidoku WebView غير المدعومة بعد.';
-	@override String get aidoku_extension_imported => 'تم استيراد إضافة Aidoku';
-	@override String get aidoku_extension_import => 'استيراد إضافة Aidoku (.aix)';
-	@override String get aidoku_extension_confirm_title => 'تثبيت إضافة Aidoku؟';
-	@override String get aidoku_extension_version => 'الإصدار';
-	@override String get aidoku_repository_url => 'رابط المستودع';
-	@override String get aidoku_repository_sources => 'مصادر المستودع';
-	@override String get aidoku_repository_identity_mismatch => 'الحزمة المُحمَّلة لا تتطابق مع فهرس المستودع.';
-	@override String get aidoku_repository_installed => 'مُثبّت';
-	@override String get aidoku_repository_search => 'بحث في مصادر المستودع';
-	@override String get aidoku_repository_install => 'تثبيت';
-	@override String get aidoku_repository_update => 'تحديث';
-	@override String get aidoku_repository_add => 'إضافة مستودع Aidoku';
-	@override String get aidoku_repository_added => 'تمت إضافة مستودع Aidoku';
-	@override String get aidoku_repository_browse => 'تصفح المستودع';
-	@override String get aidoku_repository_hint => 'الصق رابط صفحة مستودع Aidoku الرئيسية أو رابط index.min.json. يتم ملء مستودع المجتمع افتراضياً.';
-	@override String get aidoku_repository_remove => 'إزالة المستودع';
-	@override String get aidoku_repository_empty => 'لم تتم إضافة مستودعات Aidoku.';
-	@override String get dict_language_tooltip => 'لغة المحتوى';
-	@override String get dict_language_title => 'لغة محتوى القاموس';
-	@override String get dict_language_description => 'تحدد الخط المستخدم لعرض نص هذا القاموس. التلقائي يستخدم اللغة التي يعلنها القاموس.';
-	@override String get dict_language_auto => 'تلقائي';
-	@override String get book_language_action => 'لغة المحتوى';
-	@override String get book_language_description => 'تحدد الخط المستخدم لعرض نص هذا الكتاب. التلقائي يستخدم اللغة المُعلنة في EPUB.';
-	@override String get local_audio_reference_unavailable => 'لا يمكن الإشارة إلى الملف الأصلي بدون إذن الوصول لجميع الملفات؛ تم استيراد نسخة بدلاً من ذلك.';
-	@override String get video_collection_scrape => 'كشط المعلومات والغلاف';
-	@override String get update_testflight_open => 'فتح TestFlight';
-	@override String get update_app_store_open => 'فتح App Store';
-	@override String get update_release_page_open => 'صفحة الإصدار';
-	@override String update_install_gal_hook_holder({required Object pid, required Object path}) => 'مكون التقاط Galgame قيد الاستخدام: PID ${pid} - ${path} (هذه هي اللعبة التي تلعبها، أو مضيف الالتقاط). أغلق اللعبة، ثم حدّث مرة أخرى.';
-	@override String get game_hook_reason_protocol_mismatch => 'مكون الالتقاط لا يتطابق مع إصدار Fushi هذا. يأتي مضمّناً داخل Fushi، لذا لا حاجة لتثبيت شيء منفصل. أولاً، أغلق اللعبة بالكامل وأعد تشغيلها: قد تكون عملية اللعبة لا تزال تحتفظ بالمكون المحقون من جلسة سابقة. إذا استمر عدم التطابق، فإن ملفات المكون على القرص أقدم من Fushi، لأن آخر تحديث لـ Fushi لم يتمكن من استبدالها أثناء تشغيل لعبة. أغلق جميع الألعاب، ثم شغّل مثبّت Fushi مرة أخرى.';
-	@override String get video_mining_still_format => 'صيغة لقطة بطاقة الفيديو';
-	@override String get video_mining_still_format_hint => 'الترميز المستخدم عندما تكون صورة البطاقة لقطة ثابتة. JPG أصغر بكثير؛ PNG بدون فقدان لكنها أكبر بعدة مرات. الأغلفة المتحركة لا تتأثر — تتبع إعداد صيغة الحركة.';
-	@override String get mining_still_format_jpg => 'JPG (أصغر)';
-	@override String get mining_still_format_png => 'PNG (بدون فقدان)';
-	@override String get gal_mining_still_format => 'صيغة لقطة بطاقة اللعبة';
-	@override String get gal_mining_still_format_hint => 'نفس صيغ بطاقات الفيديو، تُخزّن بشكل منفصل. لقطات نافذة اللعبة تأتي بصيغة PNG: الاحتفاظ بـ PNG بدون فقدان لكنه أكبر بعدة مرات، بينما JPG يطابق طريقة ضغط هذه اللقطات سابقاً.';
-	@override String get manga_source_cloudflare_blocked => 'هذا المصدر محمي بـ Cloudflare ولا يمكن الوصول إليه من القارئ المدمج بعد.';
-	@override String get manga_global_search_title => 'بحث في جميع المصادر';
-	@override String get manga_global_search_hint => 'بحث في كل مصدر مُفعّل';
-	@override String get manga_global_search_prompt => 'اكتب عنواناً للبحث في جميع مصادر المانغا المُفعّلة دفعة واحدة.';
-	@override String get anki_connect_addon_install => 'تثبيت AnkiConnect';
-	@override String get anki_connect_addon_install_hint => 'يحمّل AnkiConnect من AnkiWeb ويسلّمه إلى Anki قيد التشغيل. سيطلب منك Anki التأكيد، ثم ينصح بإعادة التشغيل.';
-	@override String get anki_connect_addon_handed => 'تم تسليم AnkiConnect إلى Anki. أكّد الطلب في Anki، ثم أعد تشغيل Anki كما ينصح.';
-	@override String get anki_connect_addon_anki_not_running => 'لم يتم العثور على Anki قيد التشغيل. شغّل Anki أولاً، ثم حاول مجدداً.';
-	@override String anki_connect_addon_download_failed({required Object error}) => 'تعذّر تحميل AnkiConnect من AnkiWeb: ${error}';
-	@override String get anki_connect_addon_invalid => 'أعاد AnkiWeb شيئاً ليس حزمة إضافة صالحة.';
-	@override String anki_connect_addon_launch_failed({required Object error}) => 'تعذّر تسليم الإضافة إلى Anki: ${error}';
-	@override String get settings_content_language_title => 'لغة المحتوى الافتراضية';
-	@override String get settings_content_language_unset => 'غير مُعيّنة';
-	@override String get settings_content_language_description => 'لغة احتياطية للمحتوى الذي لا يعلن عن لغته. إعدادات كل كتاب وفيديو ولعبة وقاموس تتجاوز هذا.';
-	@override String get manga_ocr_lens_language_label => 'لغة التعرّف';
-	@override String get sync_err_peer_unreachable => 'لا يمكن الوصول إلى الجهاز المقترن - قد يكون غير متصل أو لا يعمل عليه Fushi.';
-	@override String get remote_book_list_failed => 'تعذّر جلب المكتبة البعيدة من الجهاز المقترن.';
-	@override String get video_torznab_settings_hint => 'أعدّ نقطة نهاية Jackett أو Prowlarr أو أي نقطة نهاية Torznab متوافقة. لا يتم تصدير الأسرار في النسخ الاحتياطية؛ قد تتم مزامنتها إلى الأجهزة المقترنة عبر الربط البيني (يمكن إيقافها في إعدادات الربط البيني).';
-	@override String get video_opensubtitles_settings_hint => 'لا يتم تصدير بيانات اعتماد API في النسخ الاحتياطية؛ قد تتم مزامنتها إلى الأجهزة المقترنة عبر الربط البيني (يمكن إيقافها في إعدادات الربط البيني).';
-	@override String get sync_interconnect_service_config_toggle => 'مزامنة إعدادات الخدمة من المضيف';
-	@override String get sync_interconnect_service_config_toggle_desc => 'استقبال إعدادات الخدمات الخارجية ومفاتيح API (Jimaku، TMDB، Torznab، OpenSubtitles، التتبع) من المضيف المقترن عبر قناة الربط البيني المشفّرة. يتطلب TLS.';
-	@override String get video_setting_subtitle_backfill => 'جلب الترجمات تلقائياً بعد الكشط';
-	@override String get video_setting_subtitle_backfill_hint => 'عند اكتمال الكشط، تحصل مقاطع الفيديو التي لا تزال بدون ترجمة على واحدة من مصادرك المُعدّة عبر الإنترنت. لا يستبدل ترجمة موجودة أبداً.';
-	@override String get video_setting_subtitle_sources_section => 'مصادر الترجمة عبر الإنترنت';
-	@override String get video_subtitle_no_source_configured => 'لم يتم العثور على ترجمة · أعدّ مصدر ترجمة عبر الإنترنت';
-	@override String get anime_download_subs_retrying => 'الترجمات: غير متاحة بعد — ستتم إعادة المحاولة تلقائياً';
-	@override String get video_jimaku_language_follow_video => 'تتبع لغة الفيديو';
-	@override String get video_setting_jimaku_default_language_hint => 'يتبع لغة الفيديو افتراضياً (مسار الصوت / البيانات الوصفية المكشوطة). اختر لغة لتفضيلها دائماً بدلاً من ذلك.';
-	@override String get onboarding_title => 'دليل البدء';
-	@override String get onboarding_welcome_headline => 'مرحباً!';
-	@override String get onboarding_feature_anki => 'بطاقات Anki التعليمية';
-	@override String get onboarding_feature_anki_hint => 'اربط AnkiConnect أو AnkiDroid لإنشاء البطاقات التعليمية';
-	@override String get onboarding_feature_backup => 'نسخ احتياطي ومزامنة';
-	@override String get onboarding_feature_backup_hint => 'انسخ بياناتك احتياطياً إلى Google Drive وWebDAV وغيرها';
-	@override String get onboarding_feature_interconnect => 'ربط بيني للأجهزة';
-	@override String get onboarding_feature_interconnect_hint => 'اقترن بالأجهزة على شبكتك المحلية لمشاركة المكتبات والتقدم';
-	@override String get onboarding_step_dictionary_action => 'فتح مدير القواميس';
-	@override String get onboarding_step_anki_title => 'إعداد Anki';
-	@override String get onboarding_step_anki_action => 'فتح إعدادات إنشاء البطاقات';
-	@override String get onboarding_step_backup_title => 'إعداد النسخ الاحتياطي';
-	@override String get onboarding_step_backup_body => 'اختر واجهة نسخ احتياطي وسجّل الدخول، أو صدّر ملف نسخة احتياطية محلية.';
-	@override String get onboarding_step_backup_action => 'فتح إعدادات النسخ الاحتياطي';
-	@override String get onboarding_step_interconnect_title => 'إعداد الربط البيني';
-	@override String get onboarding_step_interconnect_body => 'فعّل الربط البيني واقترن بأجهزة أخرى على شبكتك المحلية لمشاركة المكتبات والتقدم وعمليات البحث.';
-	@override String get onboarding_step_interconnect_action => 'فتح إعدادات الربط البيني';
-	@override String get onboarding_finish_title => 'كل شيء جاهز';
-	@override String get onboarding_finish_body => 'يمكنك العودة إلى هذا الدليل في أي وقت من الإعدادات → النظام.';
-	@override String get onboarding_action_next => 'التالي';
-	@override String get onboarding_action_finish => 'إنهاء';
-	@override String get onboarding_action_skip => 'تخطّي الآن';
-	@override String get onboarding_reopen => 'دليل البدء';
-	@override String get onboarding_welcome_body => 'اضبط لغة الواجهة والسمة أولاً — الخطوات التالية ستوجّهك لبقية الإعدادات.';
-	@override String get onboarding_features_title => 'اختر ما تستخدمه';
-	@override String get onboarding_features_modules_label => 'تبويبات المكتبة (غير المحددة تُخفى من شريط التنقل؛ يمكن التغيير في أي وقت من الإعدادات)';
-	@override String get onboarding_features_setup_label => 'ما يجب إعداده لاحقاً';
-	@override String get onboarding_feature_manga => 'مكتبة المانغا';
-	@override String get onboarding_feature_manga_hint => 'اقرأ المانغا مع البحث بالتعرف البصري';
-	@override String get onboarding_feature_video => 'مكتبة الفيديو';
-	@override String get onboarding_feature_video_hint => 'شاهد الفيديو مع البحث في الترجمات والتعدين';
-	@override String get onboarding_feature_games => 'مكتبة Galgame';
-	@override String get onboarding_feature_games_hint => 'شغّل ألعاب Galgame مع البحث بربط النصوص (Windows فقط)';
-	@override String get onboarding_feature_pack => 'الحزمة الموصى بها (قواميس + صوت)';
-	@override String get onboarding_feature_pack_hint => 'تحميل واحد يُعدّ القواميس اليابانية بالإضافة إلى صوت النطق يا/إن';
-	@override String get onboarding_step_pack_title => 'تثبيت الحزمة الموصى بها';
-	@override String get onboarding_step_pack_body => 'تجمع الحزمة الموصى بها قواميس الكلمات اليابانية ونبرة الصوت والتردد بالإضافة إلى قواعد بيانات صوت النطق الياباني/الإنجليزي. حمّلها واستوردها هنا؛ الاستيراد يستبدل البيانات المحلية، لذا شغّلها على تثبيت جديد. تتعلم لغة أخرى؟ استخدم مدير القواميس لاستيراد قواميسك الخاصة بدلاً من ذلك.';
-	@override String get onboarding_step_pack_download_action => 'تحميل واستيراد';
-	@override String get onboarding_step_pack_import_existing_action => 'استيراد حزمة محمّلة';
-	@override String get onboarding_step_pack_pick_action => 'اختيار ملف حزمة محلي';
-	@override String get onboarding_pack_downloading => 'جارٍ التحميل… يمكن الإلغاء في أي وقت، يُستأنف في المرة القادمة';
-	@override String onboarding_pack_download_failed({required Object message}) => 'فشل التحميل: ${message}';
-	@override String get onboarding_step_extension_title => 'إضافة المتصفح';
-	@override String get onboarding_step_extension_body => 'ثبّت إضافة المتصفح المرافقة للبحث عن الكلمات في أي صفحة ويب.';
-	@override String get onboarding_step_extension_action => 'فتح دليل الإضافة';
-	@override String get onboarding_step_fonts_title => 'خطوط القراءة';
-	@override String get onboarding_step_fonts_body => 'استورد خطوطاً مخصصة واختر أيها يُستخدم للواجهة ونص الكتاب والقاموس.';
-	@override String get settings_section_modules => 'وحدات الميزات';
-	@override String get module_toggle_hint => 'إظهار تبويب المكتبة هذا في شريط التنقل؛ أوقفه لإخفائه';
-	@override String get video_setting_youtube_quality => 'جودة YouTube';
-	@override String get video_setting_youtube_quality_hint => 'بدء البث بأعلى مستوى حتى هذا الهدف؛ التلقائي يفضّل التشغيل السلس (ترميز متوافق مع العتاد، حتى 1080p)';
-	@override String get library_view_discover => 'اكتشاف';
-	@override String get manga_discovery_section_trending => 'رائج';
-	@override String get manga_discovery_section_popular => 'شائع';
-	@override String get manga_discovery_section_top_rated => 'الأعلى تقييماً';
-	@override String get manga_discovery_section_latest_finished => 'مكتمل مؤخراً';
-	@override String get manga_discovery_load_failed => 'تعذّر تحميل موجز الاكتشاف.';
-	@override String get manga_discovery_match_section => 'اقرأ من مصدر';
-	@override String get manga_discovery_match_running => 'جارٍ المطابقة في مصادرك المُفعّلة...';
-	@override String get manga_discovery_match_none => 'لم يتم العثور على تطابق في المصادر المُفعّلة.';
-	@override String get manga_discovery_status_releasing => 'مستمر';
-	@override String get manga_discovery_status_finished => 'مكتمل';
-	@override String get manga_discovery_status_hiatus => 'متوقف مؤقتاً';
-	@override String get manga_discovery_status_cancelled => 'مُلغى';
-	@override String get manga_discovery_status_not_yet_released => 'لم يصدر بعد';
-	@override String manga_discovery_source_popular({required Object source}) => 'شائع على ${source}';
-	@override String get mihon_extension_error => 'خطأ في الإضافة';
-	@override String get discovery_all_sources => 'جميع المصادر';
-	@override String get discovery_search_hint => 'بحث في الموارد عبر الإنترنت';
-	@override String get discovery_enter_query_hint => 'أدخل كلمة مفتاحية للبحث';
-	@override String get discovery_empty => 'لا توجد نتائج';
-	@override String get discovery_partial_failure => 'بعض المصادر غير متاحة';
-	@override String get discovery_load_more => 'تحميل المزيد';
-	@override String get discovery_download_queued => 'تمت الإضافة إلى التحميلات';
-	@override String get discovery_torrent_pushed => 'تمت إضافة مهمة تورنت';
-	@override String get discovery_torrent_failed => 'فشل إضافة مهمة تورنت';
-	@override String get discovery_kind_novel => 'روايات';
-	@override String get discovery_kind_audiobook => 'كتب صوتية';
-	@override String get discovery_source_pick_hint => 'اختر مصدراً للتصفح، أو اكتب كلمة مفتاحية للبحث في كل مصدر';
-	@override String get discovery_source_query_required => 'هذا المصدر يدعم البحث بالكلمات المفتاحية فقط';
-	@override String get manga_discovery_sources_browse => 'تصفح مصدر';
-	@override String get discovery_kind_manga => 'مانغا';
-	@override String get game_capture_workbench_tab => 'مساحة عمل الالتقاط';
-	@override String get video_builtin_sources_title => 'المصادر المدمجة';
-	@override String get video_resource_no_provider_title => 'لم يتم تكوين مُفهرس موارد';
-	@override String get video_subtitle_no_provider_title => 'لم يتم تكوين مزوّد ترجمات';
-	@override String get video_subtitle_no_provider_hint => 'أدخل مفتاح API لـ Jimaku أو فعّل OpenSubtitles من الإعدادات، التحميلات، مزوّدو الموارد والترجمات الخارجية.';
-	@override String get anime_download_require_subs => 'الترجمات مطلوبة';
-	@override String get video_jimaku_scope_hint => 'ترجمات يابانية للأنمي والمسلسلات اليابانية الحية. يتطلب مفتاح API مجاني.';
-	@override String get video_builtin_apibay_hint => 'أفلام ومسلسلات تلفزيونية. فهرس عام، لا يحتاج حساب.';
-	@override String get video_builtin_knaben_hint => 'أفلام ومسلسلات تلفزيونية. يجمع عدة مُفهرسات عامة.';
-	@override String get video_jimaku_enabled_hint => 'الإيقاف يعني تجاوز Jimaku حتى لو كان مفتاح API محفوظاً.';
-	@override String get discovery_sources_settings_title => 'مصادر الاستكشاف';
-	@override String get discovery_sources_settings_hint => 'المصادر المدمجة التي تشارك في بحث "جميع المصادر" في صفحة الاستكشاف. اختيار مصدر واحد من القائمة المنسدلة يعمل دائماً حتى لو كان مُوقفاً هنا.';
-	@override String get video_builtin_sources_hint => 'مضمّنة مع التطبيق: لا حساب ولا مفتاح API. أوقف أحدها لاستبعاده من بحث الموارد.';
-	@override String get video_builtin_nyaa_hint => 'أنمي فقط. الأفلام والمسلسلات يغطيها المُفهرسان العامان أدناه.';
-	@override String get video_resource_no_provider_hint => 'لم يكن لهذا البحث مزوّد للاستعلام. أعد تفعيل مصدر مدمج أو أضف مُفهرس Torznab من الإعدادات، التحميلات، مزوّدو الموارد والترجمات الخارجية.';
-	@override String discovery_source_kinds_label({required Object kinds}) => 'يغطي: ${kinds}';
-	@override String get video_source_scrape_rescrape_source => 'إعادة كشط هذا المصدر';
-	@override String get video_source_scrape_run_detail_title => 'نتيجة الكشط';
-	@override String get video_source_scrape_run_no_issues => 'لم تُسجّل أي تحذيرات أو أخطاء.';
-	@override String get video_source_scrape_manual_search_title => 'تحديد العمل يدوياً';
-	@override String get video_source_scrape_manual_search_hint => 'ابحث في مزوّد البيانات الوصفية بالعنوان، ثم اختر العمل الصحيح.';
-	@override String get video_source_scrape_manual_search_action => 'بحث';
-	@override String get video_source_scrape_manual_search_empty => 'لا نتائج';
-	@override String get profile_media_manga => 'مانغا';
-	@override String get profile_media_game => 'لعبة';
-	@override String get profile_media_browser => 'المتصفح';
-	@override String get mihon_store_remove => 'إزالة متجر الإضافات';
-	@override String get video_import_folder_as_source_hint => 'الاستمرار بفحص هذا المجلد بحثاً عن فيديوهات جديدة';
-	@override String get manga_import_folder_as_source_hint => 'الاستمرار بفحص هذا المجلد بحثاً عن مانغا جديدة';
-	@override String get download_no_managed_video_source => 'لا يوجد مصدر فيديو مُدار بعد. التحميلات تحتاج مجلد فيديو محلي للحفظ فيه.';
-	@override String get download_add_video_source => 'إضافة مصدر فيديو';
-	@override String get video_subtitle_prev_cue_align => 'محاذاة السطر السابق إلى الآن';
-	@override String get video_subtitle_next_cue_align => 'محاذاة السطر التالي إلى الآن';
-	@override String video_control_custom_action({required Object index}) => 'اختصار ${index}';
-	@override String get video_control_custom_action_none => 'غير مُعيّن';
-	@override String get settings_destination_storage => 'التخزين';
-	@override String get settings_destination_storage_summary => 'موقع البيانات واستخدام القرص';
-	@override String get storage_overview_section => 'استخدام القرص';
-	@override String get storage_overview_total => 'الإجمالي';
-	@override String get storage_overview_refresh => 'إعادة فحص';
-	@override String get storage_overview_scanning => 'جارٍ الفحص…';
-	@override String get storage_category_books => 'كتب وكتب صوتية';
-	@override String get storage_category_dictionaries => 'قواميس';
-	@override String get storage_category_video_downloads => 'تحميلات الفيديو';
-	@override String get storage_category_covers => 'أغلفة وصور مصغّرة';
-	@override String get storage_category_subtitles => 'ترجمات';
-	@override String get storage_category_shaders => 'شيدرات الفيديو';
-	@override String get storage_category_custom_fonts => 'خطوط مخصصة';
-	@override String get storage_category_web => 'أرشيف الويب وبيانات المتصفح';
-	@override String get storage_category_exports => 'الصادرات';
-	@override String get storage_category_database => 'قاعدة البيانات والبيانات الداخلية';
-	@override String get storage_category_ocr_models => 'نماذج OCR للمانغا';
-	@override String storage_entry_more_rest({required Object n, required Object size}) => '${n} عنصر إضافي، ${size} إجمالاً';
-	@override String storage_entry_delete_confirm_title({required Object name}) => 'حذف ${name}؟';
-	@override String get storage_entry_delete_book_confirm_body => 'سيؤدي هذا إلى إزالة الكتاب وتقدم القراءة ونسخ الصوت المقترنة من هذا الجهاز.';
-	@override String get storage_entry_delete_dictionary_confirm_body => 'سيؤدي هذا إلى إزالة القاموس وبياناته المستوردة.';
-	@override String get storage_entry_delete_done => 'تم الحذف';
-	@override String storage_entry_delete_failed({required Object reason}) => 'فشل الحذف: ${reason}';
-	@override String get storage_modules_anime4k_title => 'شيدرات Anime4K';
-	@override String get storage_modules_anime4k_hint => 'يمكن تحميلها مرة أخرى في أي وقت من إعدادات الفيديو';
-	@override String storage_modules_anime4k_delete_done({required Object n}) => 'تم حذف ${n} ملف شيدر';
-	@override String get storage_bundled_section => 'المكونات المضمّنة';
-	@override String get storage_bundled_hint => 'مُرفقة مع المُثبّت؛ الملفات المحذوفة تعود مع التحديث التالي، مدرجة للعلم فقط.';
-	@override String get storage_dictionary_delete_incomplete => 'القاموس لا يزال موجوداً بعد الحذف، راجع سجل الأخطاء';
-	@override String get module_extension_label => 'إضافة المتصفح';
-	@override String get onboarding_feature_books => 'مكتبة الروايات';
-	@override String get onboarding_feature_books_hint => 'اقرأ روايات EPUB مع البحث في القاموس ومزامنة الكتب الصوتية';
-	@override String get onboarding_feature_extension_hint => 'ابحث عن الكلمات في أي صفحة ويب (سطح المكتب فقط)';
-	@override String get video_setting_tap_toggles_playback => 'انقر على الفيديو للتشغيل/الإيقاف';
-	@override String get video_setting_tap_toggles_playback_hint => 'أوقفه حتى يؤدي النقر على الفيديو فقط إلى إظهار أدوات التحكم';
-	@override String get manga_ocr_engine_auto_desc => 'يفضّل محرك غير متصل أعددته مسبقاً؛ لا يرفع إلى Lens من تلقاء نفسه.';
-	@override String get manga_ocr_engine_local_onnx_desc => 'غير متصل بالكامل، أفضل جودة. يحتاج تحميل نموذج لمرة واحدة وبطيء على الأجهزة القديمة.';
-	@override String get manga_ocr_engine_google_lens_desc => 'يحتاج اتصال بالإنترنت ويرفع صور الصفحات إلى Google. سريع بدون تحميل، لكن الجودة أقل من النموذج المحلي.';
-	@override String get manga_ocr_engine_external_desc => 'يستدعي أمر Mokuro الذي ثبّته بنفسك. سطح المكتب فقط.';
-	@override String get manga_ocr_engine_paired_host_desc => 'يُسند العمل إلى جهاز مقترن على شبكتك. لا يتم تحميل شيء هنا.';
-	@override String manga_ocr_model_disk_usage({required Object size}) => 'يستخدم ${size} على القرص';
-	@override String manga_ocr_model_download_size({required Object size}) => 'يحتاج ${size}';
-	@override String manga_ocr_delete_done_freed({required Object size}) => 'تم حذف النماذج، تم تحرير ${size}';
-	@override String get manga_ocr_model_unused_by_engine => 'المحرك الحالي لا يستخدم ملفات النموذج المحلية هذه.';
-	@override String manga_ocr_download_total_progress({required Object done, required Object total}) => '${done} من ${total}';
-	@override String get media_source_network_subtitle_video => 'مكتبة WebDAV عن بُعد (بث مباشر)';
-	@override String get jellyfin_settings_title => 'خادم الوسائط (Jellyfin / Emby)';
-	@override String get jellyfin_server_url => 'عنوان الخادم';
-	@override String get jellyfin_sign_in => 'تسجيل الدخول';
-	@override String get jellyfin_sign_out => 'تسجيل الخروج';
-	@override String get jellyfin_sign_in_failed => 'فشل تسجيل الدخول';
-	@override String get jellyfin_settings_hint => 'تظهر الفيديوهات على الخادم في مكتبة الفيديو ويتم بثها مباشرة.';
-	@override String get video_setting_mpv_lua_scripts => 'تحميل سكربتات Lua';
-	@override String get video_setting_mpv_lua_scripts_hint => 'تحميل جميع ملفات .lua في مجلد mpv_scripts إلى المشغّل. الإيقاف يسري عند فتح فيديو جديد.';
-	@override String get video_setting_mpv_lua_scripts_import => 'استيراد سكربتات Lua';
-	@override String get video_setting_mpv_lua_scripts_imported => 'تم استيراد السكربتات';
-	@override String get video_setting_mpv_lua_scripts_dir_copy => 'نسخ مسار مجلد السكربتات';
-	@override String get video_setting_mpv_lua_scripts_dir_copied => 'تم نسخ مسار المجلد';
-	@override String get interconnect_share_statistics => 'مشاركة الإحصائيات';
-	@override String get interconnect_share_statistics_hint => 'وقت القراءة والمشاهدة، عدد الأحرف، عدّادات البحث والتنقيب';
-	@override String get interconnect_share_favorites => 'مشاركة المفضلة';
-	@override String get interconnect_share_favorites_hint => 'الكلمات والجمل المفضلة، بما في ذلك إلغاء التفضيل';
-	@override String get interconnect_share_section => 'المشاركة مع الأجهزة المقترنة';
-	@override String get interconnect_share_section_footer => 'يتم دمجها في الاتجاهين مع الجهاز المقترن وهي مفعّلة افتراضياً. إيقاف أحدها يوقف الإرسال والاستقبال معاً.';
-	@override String get game_hook_mining_no_session_lines => 'لا توجد أسطر ملتقطة بعد، لذا لا يوجد شيء لإرفاق هذه البطاقة به. اختر مسار نص مختلف في ورشة العمل.';
-	@override String get shortcut_action_manga_pan_up => 'تمرير لأعلى';
-	@override String get shortcut_action_manga_pan_down => 'تمرير لأسفل';
-	@override String get shortcut_action_manga_pan_left => 'تمرير لليسار';
-	@override String get shortcut_action_manga_pan_right => 'تمرير لليمين';
-	@override String get drag_drop_folder_source_added => 'تمت إضافة المجلد كمصدر مكتبة وتم فحصه.';
-	@override String get drag_drop_folder_source_exists => 'هذا المجلد موجود بالفعل كمصدر مكتبة.';
-	@override String get sync_pair_invalid_url => 'صيغة عنوان غير صالحة';
-	@override String get sync_pair_peer_requires_https => 'هذا الجهاز يقبل HTTPS فقط. استخدم عنوان https://.';
-	@override String get sync_pair_peer_not_https => 'الجهاز المقترن لا يستخدم HTTPS على هذا المنفذ. استخدم عنوان http://.';
-	@override String get sync_pair_not_fushi_discovered => 'لم يُعثر على جهاز Fushi في هذا العنوان.';
-	@override String get shortcut_action_popup_play_audio => 'تشغيل صوت الكلمة';
-	@override String get sync_progress_asset_transfer => 'جارٍ تحضير النقل';
-	@override String get sync_asset_dictionary_upload => 'رفع القواميس';
-	@override String get sync_asset_dictionary_download => 'تحميل القواميس';
-	@override String get sync_asset_local_audio_upload => 'رفع قواعد بيانات الصوت المحلية';
-	@override String get sync_asset_local_audio_download => 'تحميل قواعد بيانات الصوت المحلية';
-	@override String get sync_asset_upload_hint => 'يرسل ما يملكه هذا الجهاز ولا يملكه الجهاز البعيد. قد تكون الحزم كبيرة.';
-	@override String get sync_asset_upload_action => 'رفع';
-	@override String get sync_asset_download_action => 'تحميل';
-	@override String get sync_asset_download_hint => 'يجلب ما يملكه الجهاز البعيد ولا يملكه هذا الجهاز - بما في ذلك العناصر التي حذفتها محلياً.';
-	@override String get sync_asset_legacy_notice_title => 'مزامنة القواميس والصوت أصبحت يدوية';
-	@override String get sync_asset_legacy_notice_body => 'كان هذا الجهاز يستخدم المزامنة التلقائية للقواميس وقواعد بيانات الصوت المحلية. تمت إزالة هذا الخيار - استخدم إجراءات الرفع / التحميل أدناه عند الحاجة. لم يُحذف شيء، لكن القواميس الجديدة لم تعد تُنسخ احتياطياً تلقائياً.';
-	@override String get sync_asset_legacy_notice_dismiss => 'فهمت';
-	@override String get download_task_add => 'إضافة مهمة';
-	@override String get download_task_add_pick_torrent => 'اختيار ملف torrent';
-	@override String get download_task_add_title_label => 'العنوان';
-	@override String get download_task_add_content_kind => 'نوع المحتوى';
-	@override String get download_task_add_invalid => 'رابط magnet أو ملف torrent غير معروف';
-	@override String get download_task_add_submitted => 'تمت إضافة المهمة';
-	@override String get download_task_search_hint => 'بحث في المهام';
-	@override String get download_task_sort_created => 'تاريخ الإضافة';
-	@override String get download_task_sort_progress => 'التقدم';
-	@override String get download_task_sort_status => 'الحالة';
-	@override String get download_task_no_match => 'لا توجد مهام مطابقة';
-	@override String subtitle_version_episode_count({required Object n}) => '${n} حلقة';
-	@override String subtitle_version_unnumbered_count({required Object n}) => '${n} غير مرقّمة';
-	@override String get subtitle_version_ai_translated => 'ترجمة بالذكاء الاصطناعي';
-	@override String get subtitle_version_content_language => 'المحتوى';
-	@override String get subtitle_version_show_files => 'عرض الملفات';
-	@override String get subtitle_version_view_files => 'قائمة الملفات';
-	@override String get resource_version_batch => 'دفعة';
-	@override String get resource_version_view_flat => 'جميع الإصدارات';
-	@override String get subscription_mode_one_shot => 'مرة واحدة';
-	@override String get subscription_mode_ongoing => 'مستمر';
-	@override String get subscription_legacy_badge => 'قديم';
-	@override String get subscription_legacy_hint => 'مستورد من النظام القديم؛ الفحص التلقائي لا ينطبق.';
-	@override String subscription_next_check({required Object time}) => 'الفحص التالي: ${time}';
-	@override String subscription_last_matched({required Object time}) => 'آخر تطابق: ${time}';
-	@override String get subscription_item_status_discovered => 'قيد الانتظار';
-	@override String get subscription_item_status_queued => 'في قائمة الانتظار';
-	@override String get subscription_item_status_processed => 'تم الاستيراد';
-	@override String get subscription_item_status_skipped => 'تم التخطي';
-	@override String get subscription_item_status_failed => 'فشل';
-	@override String get subscription_items_empty => 'لا توجد إصدارات متتبّعة بعد';
-	@override String get subscription_edit_title => 'تعديل الاشتراك';
-	@override String get subscription_edit_rule_hint => 'لا يمكن تغيير قواعد الهوية والإصدار هنا. أعد الاشتراك لتبديل الإصدارات - يُحفظ السجل.';
-	@override String get subscription_search_hint => 'بحث في الاشتراكات';
-	@override String get subscription_sort_last_checked => 'آخر فحص';
-	@override String get subscription_sort_last_matched => 'آخر تطابق';
-	@override String get subscription_show_items => 'سجل الحلقات';
-	@override String get subscription_sort_created => 'تاريخ الإضافة';
-	@override String get subscription_no_match => 'لا توجد اشتراكات مطابقة';
-	@override String get download_subscription_start_episode_invalid => 'أدخل عدداً صحيحاً (0 أو أكبر)، أو اتركه فارغاً';
-	@override String get download_subscription_source_unavailable => 'الهدف الحالي (غير متاح)';
-	@override String resource_version_episode_count({required Object n}) => '${n} حلقة';
-	@override String get resource_version_show_files => 'عرض الملفات';
-	@override String get manga_online_detail_load_failed => 'تعذّر تحميل هذه المانغا.';
-	@override String get manga_online_error_view_detail => 'عرض التفاصيل';
-	@override String get discovery_sources_unavailable => 'جميع المصادر غير متاحة';
-	@override String get font_target_game_lookup => 'خط نافذة البحث في اللعبة';
-	@override String get gal_hook_text_font => 'خط نافذة البحث في اللعبة';
-	@override String get gal_hook_text_font_hint => 'اختر خطوطاً من مكتبة الخطوط المُدارة. يُستخدم أول خط مفعّل.';
-	@override String get gal_hook_text_letter_spacing => 'تباعد الأحرف';
-	@override String get gal_hook_text_letter_spacing_hint => 'اضبط التباعد بين الأحرف دون التأثير على اختبار نقر البحث.';
-	@override String get gal_hook_text_line_height => 'ارتفاع السطر';
-	@override String get gal_hook_text_line_height_hint => 'اضبط التباعد العمودي للأسطر الملتفة.';
-	@override String get gal_hook_text_bold => 'نص عريض';
-	@override String get gal_hook_text_bold_hint => 'استخدم نصاً شبه عريض لقراءة أفضل فوق رسومات اللعبة.';
-	@override String get gal_hook_text_alignment => 'محاذاة النص';
-	@override String get gal_hook_text_alignment_center => 'وسط';
-	@override String get gal_hook_text_alignment_left => 'يسار';
-	@override String get gal_hook_text_color => 'لون النص';
-	@override String get gal_hook_overlay_legibility_section => 'النافذة وسهولة القراءة';
-	@override String get gal_hook_text_background_color => 'لون خلفية النافذة';
-	@override String get gal_hook_text_background_opacity => 'شفافية خلفية النافذة';
-	@override String get gal_hook_text_background_opacity_hint => 'اضبطها على 0% للحصول على نافذة شفافة بأسلوب كلمات الأغاني.';
-	@override String get gal_hook_text_outline_color => 'لون الحدود';
-	@override String get gal_hook_text_outline_width => 'عرض الحدود';
-	@override String get gal_hook_text_outline_width_hint => 'اضبطه على 0 لإلغاء الحدود؛ يبقى الظل الخفيف.';
-	@override String get gal_hook_text_padding => 'حشوة النص الأفقية';
-	@override String get gal_hook_text_padding_hint => 'أبعد النص عن حواف النافذة ومقبض تغيير الحجم.';
-	@override String get gal_hook_text_corner_radius => 'نصف قطر زوايا النافذة';
-	@override String get gal_hook_text_corner_radius_hint => 'اضبط نصف قطر زوايا الخلفية.';
-	@override String get storage_shaders_delete_anime4k => 'حذف شيدرات Anime4K';
-	@override String get video_jimaku_series_lookup_degraded => 'تعذّر التأكد من المسلسل على AniList هذه المرة، لذا هذه النتائج من بحث بالعنوان العادي وقد تتضمن مواسم أخرى من نفس المسلسل.';
-	@override String get dict_style_tab_visual => 'مرئي';
-	@override String get dict_style_tab_code => 'CSS';
-	@override String get dict_style_scope_all => 'جميع القواميس';
-	@override String get dict_style_part_entry_card => 'بطاقة المدخل';
-	@override String get dict_style_part_expression => 'الكلمة الرئيسية';
-	@override String get dict_style_part_ruby => 'فوريغانا';
-	@override String get dict_style_part_deinflection_tag => 'سلسلة التصريف العكسي';
-	@override String get dict_style_part_frequency => 'التكرار';
-	@override String get dict_style_part_pitch => 'نبرة النطق';
-	@override String get dict_style_part_dictionary_label => 'اسم القاموس';
-	@override String get dict_style_part_glossary_content => 'التعريف';
-	@override String get dict_style_part_glossary_tag => 'وسوم التعريف';
-	@override String get dict_style_prop_text_color => 'لون النص';
-	@override String get dict_style_prop_background => 'التمييز';
-	@override String get dict_style_prop_bold => 'عريض';
-	@override String get dict_style_prop_italic => 'مائل';
-	@override String get dict_style_prop_underline => 'تسطير';
-	@override String get dict_style_prop_font_scale => 'حجم الخط';
-	@override String get dict_style_prop_corner_radius => 'نصف قطر الزوايا';
-	@override String get dict_style_part_reset => 'إعادة تعيين الجزء';
-	@override String get dict_style_reset_all => 'إعادة تعيين الكل';
-	@override String get dict_style_global_only => 'قابل للتعديل لجميع القواميس فقط';
-	@override String get dict_style_preview_title => 'معاينة';
-	@override String get dict_style_pick_hint => 'انقر على جزء في المعاينة للانتقال إليه';
-	@override String get dict_style_prop_default => 'افتراضي';
-	@override String get dict_style_part_expression_tag => 'وسوم التعبير';
-	@override String get dict_style_prop_on => 'مفعّل';
-	@override String get dict_style_prop_off => 'مُوقف';
-	@override String get dict_style_title => 'تنسيق القاموس';
-	@override String get video_source_scrape_anidb_client => 'اسم عميل AniDB';
-	@override String get video_source_scrape_anidb_client_hint => 'اسم عميل AniDB HTTP API المسجّل؛ اتركه فارغاً لاستخدام كتالوج العناوين المخزّن فقط';
-	@override String get video_source_scrape_anidb_client_version => 'إصدار عميل AniDB';
-	@override String get video_source_scrape_anidb_client_version_hint => 'إصدار موجب مسجّل لدى AniDB؛ تبقى HTTP API معطّلة حتى يكون كلا الحقلين صالحين';
-	@override String get video_scrape_view_source => 'عرض تفاصيل المصدر';
-	@override String get video_setting_auto_scrape_hint => 'تحديد وجلب بيانات الفيديو الوصفية تلقائياً بعد فحص المكتبة';
-	@override String get video_resource_identity_provider => 'مصدر هوية الموارد';
-	@override String get video_source_scrape_clear_all => 'مسح جميع سجلات الكشط';
-	@override String get video_source_scrape_clear_all_hint => 'إزالة جميع بيانات كشط الفيديو والأغلفة وملفات NFO المُنشأة بواسطة Fushi.';
-	@override String get video_source_scrape_clear_all_confirm_title => 'مسح جميع سجلات كشط الفيديو؟';
-	@override String get video_source_scrape_clear_all_confirm_body => 'سيؤدي هذا إلى إزالة جميع البيانات الوصفية المكشوطة وربط المصادر، ومسح نتائج المسلسلات، وحذف الأغلفة وملفات NFO غير المعدّلة المُنشأة بواسطة Fushi. يتم الاحتفاظ بملفات الفيديو ومدخلات المكتبة والمجموعات وتقدم المشاهدة والترجمات والوسوم والأغلفة المختارة يدوياً والملفات الجانبية المعدّلة من المستخدم. لا يمكن التراجع عن هذا.';
-	@override String get video_source_scrape_clear_all_confirm_action => 'مسح';
-	@override String get video_source_scrape_clear_all_completed => 'تم مسح جميع سجلات كشط الفيديو.';
-	@override String get video_source_scrape_clear_all_completed_protected => 'تم مسح سجلات الكشط. تم الاحتفاظ بالملفات الجانبية المعدّلة أو غير القابلة للتحقق.';
-	@override String get video_source_scrape_clear_all_busy => 'لا يزال فحص أو كشط فيديو قيد التشغيل. حاول مرة أخرى بعد انتهائه.';
-	@override String get video_source_scrape_clear_all_failed => 'تعذّر مسح جميع سجلات الكشط. لم تُحذف أي ملفات مستخدم غير متحقق منها.';
-	@override String get video_source_scrape_clear_all_in_progress => 'عملية تنظيف سجلات الكشط قيد التنفيذ بالفعل.';
-	@override String get game_session_japanese_locale => 'الإعدادات المحلية اليابانية';
-	@override String get game_session_japanese_locale_hint => 'تم تشغيل اللعبة تحت الإعدادات المحلية اليابانية (CP932). إذا ظهر النص مشوّهاً أو ظهر خطأ في السكربت، اضبط الإعدادات المحلية اليابانية لهذه اللعبة على "أبداً".';
-	@override String get onboarding_anki_intro_body => 'Anki هو تطبيق بطاقات تعليمية مجاني يعتمد على التكرار المتباعد: الكلمات الجديدة تصبح بطاقات، ويُجدوَل المراجعة وفق منحنى النسيان. بعد البحث، يمكن لـ Fushi تحويل الكلمة إلى بطاقة Anki بنقرة واحدة، مع المعنى والجملة والصوت ولقطة الشاشة.';
-	@override String get onboarding_anki_setup_desktop_hint => 'ثبّت تطبيق Anki لسطح المكتب، ثم أضف إضافة AnkiConnect: في Anki، افتح أدوات - الإضافات - الحصول على إضافات وأدخل الرمز 2055492159. أبقِ Anki قيد التشغيل أثناء إنشاء البطاقات.';
-	@override String get onboarding_anki_setup_ios_hint => 'مع تثبيت AnkiMobile، تعمل إضافة البطاقات مباشرة. للحصول على جميع الميزات، اتصل بـ Anki على جهاز كمبيوتر في نفس الشبكة عبر AnkiConnect.';
-	@override String get onboarding_anki_backend_label => 'الاتصال';
-	@override String get onboarding_anki_test_action => 'اختبار الاتصال';
-	@override String onboarding_anki_test_success({required Object count}) => 'متصل: تم العثور على ${count} مجموعة';
-	@override String get onboarding_anki_get_anki_action => 'الحصول على Anki (سطح المكتب)';
-	@override String get onboarding_anki_get_ankidroid_action => 'الحصول على AnkiDroid';
-	@override String get onboarding_anki_mobile_ankiconnect_title => 'متقدم: استخدام AnkiConnect على هذا الجهاز';
-	@override String get onboarding_anki_mobile_ankiconnect_hint => 'يمكن لهذا الجهاز أيضاً إنشاء بطاقات في Anki على جهاز كمبيوتر في نفس الشبكة: فعّل AnkiConnect في إعدادات إنشاء البطاقات وأدخل عنوان الكمبيوتر.';
-	@override String get onboarding_anki_setup_android_hint => 'ثبّت AnkiDroid وافتحه مرة واحدة لإكمال الإعداد الأولي. عُد إلى Fushi واضغط على السماح في نافذة الإذن التي تظهر مع أول بطاقة - لا حاجة لتغيير إعدادات AnkiDroid.';
-	@override String get onboarding_anki_install_addon_action => 'تثبيت إضافة AnkiConnect';
-	@override String get onboarding_anki_addon_installed => 'تم تثبيت AnkiConnect. شغّل (أو أعد تشغيل) Anki، ثم اضغط اختبار الاتصال.';
-	@override String get onboarding_anki_addon_no_anki => 'لم يُعثر على مجلد بيانات Anki. ثبّت Anki وافتحه مرة واحدة، ثم حاول مجدداً.';
-	@override String onboarding_anki_addon_failed({required Object message}) => 'فشل التثبيت: ${message}';
-	@override String get game_hook_reason_capability_probe_failed => 'لم يستجب مكوّن الالتقاط لفحص القدرات. تم العثور عليه على القرص لكنه لم يتمكن من التشغيل أو لم يستجب في الوقت المحدد - قد يكون مضاد الفيروسات يحظره، أو قد يفتقر Fushi إلى إذن تشغيله، أو قد تكون عملية مساعدة قديمة عالقة. أغلق جميع الألعاب، وتحقق من عزل مضاد الفيروسات، ثم حاول مجدداً.';
-	@override String get download_backend_setup_title => 'إعداد خلفية التحميل';
-	@override String get download_backend_setup_intro => 'اختر المحرك الذي ينفّذ تحميلاتك. يمكنك تغييره في أي وقت من إعدادات التحميل.';
-	@override String get download_backend_embedded_hint => 'موصى به. تجري التحميلات داخل Fushi — لا حاجة لتثبيت أي شيء آخر.';
-	@override String get download_backend_qb_hint => 'اربط Fushi بواجهة qBittorrent WebUI التي تشغّلها بالفعل.';
-	@override String get download_backend_setup_start => 'إعداد الآن';
-	@override String get download_backend_embedded_unavailable => 'بيئة تشغيل المحرك المدمج غير موجودة في هذا التثبيت. أعد تثبيت الحزمة الكاملة، أو استخدم qBittorrent خارجيًا بدلًا منها.';
-	@override String get download_backend_qb_url_invalid => 'أدخل عنوانًا كاملًا، مثل http://127.0.0.1:8080';
-	@override String get mihon_store_zero_extensions => 'أعاد هذا المستودع 0 امتداد. قد يشير عنوانه إلى فهرس قديم.';
-	@override String get mihon_store_edit => 'تعديل عنوان المستودع';
-	@override String get manga_ocr_download_resume => 'استئناف التحميل';
-	@override String get manga_ocr_import => 'استيراد نموذج محلي';
-	@override String get manga_ocr_import_title => 'استيراد نموذج مُنزَّل';
-	@override String get manga_ocr_import_intro => 'إذا لم ينجح التحميل داخل التطبيق، حمّل هذه الملفات بنفسك واستوردها هنا. يصلح أيضًا ملف zip يحتويها.';
-	@override String get manga_ocr_import_copy_urls => 'نسخ روابط التحميل';
-	@override String get manga_ocr_import_urls_copied => 'تم نسخ روابط التحميل';
-	@override String get manga_ocr_import_pick_folder => 'اختيار مجلد';
-	@override String get manga_ocr_import_pick_files => 'اختيار ملفات';
-	@override String get manga_ocr_import_running => 'جارٍ الاستيراد…';
-	@override String manga_ocr_import_done({required Object count}) => 'تم استيراد ${count} ملف';
-	@override String get manga_ocr_import_matched_nothing => 'لم يتم التعرف على أي ملفات نموذج صالحة';
-	@override String manga_ocr_import_size_mismatch({required Object file, required Object expected, required Object actual}) => 'حجم ${file} غير صحيح: المتوقع ${expected}، والفعلي ${actual}';
-	@override String manga_ocr_import_still_missing({required Object count}) => 'لا يزال ينقص ${count} ملف';
-	@override String get manga_ocr_import_failed => 'فشل استيراد النموذج';
-	@override String get manga_tap_ocr_notice_title => 'انقر للتعرف';
-	@override String get manga_tap_ocr_notice_body => 'لا تحتوي هذه الصفحة على بيانات نصية بعد. سيتعرف عليها Fushi بمحرك OCR الذي اخترته في الإعدادات، ثم يمكنك النقر على الكلمات للبحث عنها. يمكنك تغيير المحرك أو إيقاف هذا من الإعدادات › OCR المانغا.';
-	@override String get manga_tap_ocr_notice_confirm => 'تعرّف الآن';
-	@override String get manga_tap_ocr_running => 'جارٍ التعرف على هذه الصفحة…';
-	@override String get manga_tap_to_ocr => 'انقر للتعرف';
-	@override String get manga_tap_to_ocr_desc => 'انقر على فقاعة حوار لم يتم التعرف عليها لتتعرف على الصفحة وتبحث عن الكلمات فورًا.';
-	@override String get manga_ocr_engine_system => 'OCR الجهاز';
-	@override String get manga_ocr_engine_system_desc => 'يستخدم التعرف على النص المدمج في جهازك. بلا تنزيل، ويعمل دون اتصال تمامًا، ولا يُرفع أي شيء — لكنه أضعف بوضوح من النموذج المحلي مع الفقاعات الرأسية والخط اليدوي.';
-	@override String get manga_ocr_engine_system_unavailable => 'لا يتوفر في هذا الجهاز تعرف مدمج على النص';
-	@override String get manga_tap_ocr_online_lens_only => 'الفصول عبر الإنترنت غير مخزّنة محليًا، لذا لا يمكن قراءتها إلا بواسطة Google Lens — تُرفع صورة الصفحة إلى Google.';
-	@override String get settings_destination_services => 'الخدمات عبر الإنترنت';
-	@override String get settings_destination_services_summary => 'واجهات API خارجية ومفهرسات وخوادم وسائط';
-	@override String get section_services_subtitles => 'مصادر الترجمة';
-	@override String get section_services_resources => 'مفهرسات الموارد';
-	@override String get section_services_metadata => 'جمع البيانات الوصفية';
-	@override String get settings_services_link_subtitle => 'تُضبط Jimaku وOpenSubtitles وTorznab وJellyfin وAniDB وTMDB معًا هنا';
-	@override String get game_hook_btn_replay => 'إعادة تشغيل صوت هذه الجملة';
-	@override String get game_hook_btn_recapture => 'إعادة التقاط الصوت';
-	@override String get game_hook_btn_follow => 'متابعة الجمل الجديدة';
-	@override String get game_hook_btn_passthrough => 'تمرير النقر إلى اللعبة';
-	@override String get game_hook_btn_transparency => 'تبديل الخلفية';
-	@override String get game_hook_btn_lock => 'تثبيت الموضع';
-	@override String get game_hook_btn_workbench => 'فتح طاولة عمل الالتقاط';
-	@override String get game_hook_btn_topmost => 'إبقاء في المقدمة';
-	@override String get game_hook_btn_close => 'إغلاق النافذة العائمة';
-	@override String get video_jimaku_search_failed => 'فشل البحث عن الترجمة';
-	@override String video_subtitle_error_with_code({required Object msg, required Object code}) => '${msg} (HTTP ${code})';
-	@override String get manga_rescan_run => 'إعادة التعرف على المنطقة المحددة';
-	@override String get manga_rescan_failed => 'فشلت إعادة التعرف على المنطقة المحددة';
-	@override String get manga_rescan_region_updated => 'تم التعرف على المنطقة المحددة من جديد وحُفظت في الصفحة';
-	@override String get manga_ocr_mobile_note => 'على الأجهزة المحمولة، تشغّل هذه النماذج المحرك المحلي للتعرف على المجلد كاملًا وبالنقر وعلى المنطقة المحددة في قارئ المانغا.';
-	@override String get manga_rescan_hint => 'اسحب مربعًا فوق النص الذي تريد إعادة التعرف عليه. تحل النتيجة محل طبقة النص الموجودة داخل المربع.';
-	@override String get manga_rescan_undone => 'تمت استعادة طبقة النص التي كانت قبل إعادة المسح';
-	@override String get manga_rescan_undo_failed => 'تعذّرت استعادة طبقة النص السابقة';
-	@override String get module_tool_toggle_hint => 'إظهار هذا التبويب في شريط التنقل؛ أوقفه لإخفائه';
-	@override String get module_downloads_hidden_hint => 'تبويب التحميلات مخفي في الإعدادات → المظهر → وحدات الميزات؛ أعد تشغيله لإدارة الاشتراكات.';
-	@override String get book_file_location_open => 'فتح موقع الملف';
-	@override String get book_file_location_failed => 'تعذّر فتح موقع ملف هذا الكتاب.';
-	@override String storage_entry_database_snapshots_label({required Object n}) => 'لقطات النسخ الاحتياطي لقاعدة البيانات (${n} ملف)';
-	@override String get storage_entry_delete_database_snapshots_confirm_body => 'يؤدي هذا إلى حذف كل لقطات النسخ الاحتياطي المتبقية لقاعدة البيانات (corrupt-bak / pre-restore / نسخ الترحيل القديمة). لا تُمس قاعدة البيانات العاملة ولا ملفا -wal/-shm التابعان لها.';
-	@override String get manga_global_search_no_sources => 'لا توجد مصادر مانغا مفعّلة بعد. أضف واحدًا من تبويب الاستيراد.';
-	@override String get manga_global_search_open_sources => 'الذهاب إلى الاستيراد';
-	@override String get settings_downloads_open_page_hint => 'فتح صفحة التحميلات (المهام، الموارد، الاشتراكات)';
-	@override String get download_video_source_required => 'مطلوب مصدر فيديو';
-	@override String get game_hook_reason_stale_session => 'لم تُحرَّر جلسة الالتقاط السابقة بعد؛ يعيد Fushi المحاولة تلقائيًا، ولا حاجة لأي إجراء.';
-	@override String get video_subtitle_delete => 'حذف ملف الترجمة';
-	@override String video_subtitle_delete_confirm({required Object path}) => 'هل تريد حذف ملف الترجمة هذا من القرص؟ لا يمكن التراجع عن ذلك.\n${path}';
-	@override String video_subtitle_deleted({required Object label}) => 'تم حذف ملف الترجمة: ${label}';
-	@override String video_subtitle_delete_failed({required Object label}) => 'فشل حذف ملف الترجمة: ${label}';
-	@override String get shortcut_action_manga_toggle_chrome => 'تبديل واجهة المانغا';
-	@override String get manga_interface_hide => 'إخفاء الواجهة';
-	@override String get manga_interface_show => 'إظهار الواجهة';
-	@override String get gal_hook_text_vertical_alignment => 'المحاذاة الرأسية';
-	@override String get gal_hook_text_vertical_alignment_center => 'توسيط';
-	@override String get gal_hook_text_vertical_alignment_top => 'أعلى';
-	@override String get storage_entry_external_audio_hint => 'يشير الصوت إلى الملفات الأصلية ولا يستهلك مساحة التطبيق';
-	@override String get jellyfin_auto_list_title => 'سرد العناصر تلقائيًا عند فتح الفيديو';
-	@override String get jellyfin_auto_list_hint => 'عند الإيقاف: لا يُرسل فتح صفحة الفيديو أي طلب إلى خادم الوسائط؛ اسحب للتحديث في مكتبة الفيديو لسرد العناصر يدويًا. يُنصح به للخوادم الكبيرة جدًا، حيث يبدو السرد التلقائي كأنه كشط وقد يُفعّل كشف إساءة الاستخدام.';
-	@override String get jellyfin_libraries_title => 'المكتبات المراد سردها';
-	@override String get jellyfin_libraries_hint => 'عدم اختيار أي شيء يسرد كل مكتبات الفيديو. حصر الأمر في المكتبات التي تشاهدها فعلًا يمنع سرد الخوادم الضخمة بالكامل.';
-	@override String get jellyfin_libraries_load_failed => 'تعذّر تحميل قائمة المكتبات';
-	@override String get video_filter_series => 'المسلسلات';
-	@override String get video_filter_series_in => 'ضمن مسلسل';
-	@override String get video_filter_series_standalone => 'غير ضمن مسلسل';
-	@override String get manga_source_cloudflare_verify_title => 'التحقق من الموقع';
-	@override String get manga_source_cloudflare_verify_hint => 'أكمل فحص Cloudflare أدناه. سيستأنف التحميل تلقائيًا بعد اجتيازه.';
-	@override String get db_cannot_open_title => 'موقع البيانات غير متاح';
-	@override String get db_cannot_open_message => 'تعذّر على Fushi فتح أو إنشاء قاعدة بياناته في موقع البيانات المُعدّ. لا يوجد أي تلف — قد يكون المجلد مفقوداً أو للقراءة فقط أو على قرص غير متصل. تحقّق من موقع البيانات في الإعدادات، أو أعد التشغيل لاستخدام الموقع الافتراضي.';
-	@override String get anki_error_field_mapping_mismatch => 'لا يطابق أي من تعيينات الحقول لديك نوع الملاحظة المحدد، لذلك رفض Anki البطاقة. افتح إعدادات Anki لإعادة تعيين الحقول، أو استخدم \'إنشاء مجموعة Lapis\'.';
-	@override String get anki_error_first_field_empty => 'الحقل الأول من نوع الملاحظة المحدد فارغ، وAnki يرفض ملاحظة كهذه. عيّن له حقلاً في إعدادات Anki.';
-	@override String get storage_category_cache => 'ذاكرة التخزين المؤقت والملفات المؤقتة';
-	@override String get storage_category_other => 'أخرى غير مصنّفة';
-	@override String get collection_export_pick_source => 'اختر مصدراً';
-	@override String get collection_export_all_sources => 'جميع المصادر';
-	@override String get video_subtitle_list_search => 'البحث في الترجمات';
-	@override String get video_subtitle_list_search_hint => 'اكتب لتصفية السطور';
-	@override String get video_subtitle_list_search_empty => 'لا يوجد سطر مطابق';
-	@override String get video_subtitle_list_export_favorites => 'تصدير السطور المفضلة';
-	@override String get shortcut_action_video_search_subtitle_list => 'البحث في قائمة الترجمة';
-	@override String get game_hook_code_paste_title => 'لصق رمز hook';
-	@override String get game_hook_code_paste_hint => 'الصق الرمز الخام، مثل /HQN4@4CE90:game.exe';
-	@override String get game_hook_code_paste_body => 'يُربط الرمز بالملف التنفيذي للعبة قيد التشغيل حالياً، ليتمكن Fushi من إعادة استخدامه في المرة القادمة.';
-	@override String get game_hook_code_paste_saved => 'تم حفظ رمز hook لهذه اللعبة';
-	@override String get game_hook_code_paste_invalid => 'هذا لا يبدو رمز hook';
-	@override String get game_hook_code_label => 'تسمية (اختياري)';
-	@override String get discovery_game_type_all => 'الكل';
-	@override String get discovery_game_type_raw => 'غير مترجمة';
-	@override String get discovery_game_type_translated => 'مترجمة';
-	@override String get discovery_game_type_mobile => 'جوّال';
-	@override String get discovery_game_type_unlabelled => 'غير مصنّفة';
-	@override String get game_library_downloading => 'جارٍ التحميل';
-	@override String get game_library_download_queued => 'في قائمة الانتظار';
-	@override String get game_library_download_retrying => 'جارٍ إعادة المحاولة';
-	@override String get delete_disclosure_audio_source_files => 'ملفات الصوت الأصلية التي استوردتها';
-	@override String get delete_local_files => 'حذف الملفات المحلية أيضًا';
-	@override String get delete_local_files_video_desc => 'سيُحذف ملف الفيديو من هذا الجهاز، وستُزال مهمة التنزيل المقابلة أيضًا. لا يمكن التراجع عن ذلك.';
-	@override String get delete_local_files_audio_desc => 'ستُحذف ملفات الصوت الأصلية من هذا الجهاز، بينما تبقى ملفات الكتاب والترجمة الأصلية. لا يمكن التراجع عن ذلك.';
-	@override String get delete_disclosure_book_source_kept => 'ملفات الكتاب والترجمة الأصلية التي استوردتها';
-	@override String get download_task_delete_files_failed => 'تعذّر حذف البيانات المنزّلة؛ لم يؤكّد محرّك التنزيل ذلك';
-	@override String delete_local_files_failed({required Object n}) => 'تعذّر حذف ${n} من الملفات المحلية؛ قد تكون قيد الاستخدام';
-	@override String batch_hidden_by_filter_note({required Object n}) => 'هناك ${n} عنصر محدد مخفي بواسطة عامل التصفية الحالي ولن تتم معالجته.';
-	@override String get custom_fonts_default => 'Default (Yu Gothic UI)';
-	@override String get custom_fonts_default_hint => 'Use the built-in Yu Gothic UI rendering for the Galgame Hook overlay.';
-	@override String get gal_hook_text_font_family => 'Galgame caption font';
-	@override String get gal_mining_screenshot_size => 'Galgame screenshot size';
-	@override String get gal_mining_screenshot_size_full_hd => 'Up to 1920 × 1080 (recommended)';
-	@override String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
-	@override String get gal_mining_screenshot_size_hint => 'Applies to still screenshots and animated-capture fallbacks. Keeps the aspect ratio, never enlarges, and saves as JPEG at quality 90.';
-	@override String get gal_mining_screenshot_size_original => 'Original size (JPEG)';
-	@override String get game_attach_mode_last_used => 'Last used';
-	@override String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
-	@override String get game_attach_mode_luna_safe_hint => 'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
-	@override String get game_attach_mode_native => 'Fushi native attachment';
-	@override String get game_attach_mode_native_hint => 'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
-	@override String get game_attach_mode_title => 'Choose attachment mode';
-	@override String get game_line_bulk_text_hint => 'Bulk text detected. Character lookup is paused.';
-	@override String get game_luna_audio_lead_in => 'Complete sentence start';
-	@override String get game_luna_audio_lead_in_hint => 'If the beginning of this sentence is cut off, increase this value.';
-	@override String get game_luna_audio_per_game_hint => 'Saved separately for each attached game.';
-	@override String get game_luna_audio_tail_trim => 'Remove next-line audio';
-	@override String get game_luna_audio_tail_trim_hint => 'If the end of this sentence includes the next line, increase this value.';
-	@override String get game_luna_audio_timing => 'Audio alignment';
-	@override String get game_text_source_luna => 'LunaTranslator (external original text)';
-	@override String get game_text_source_luna_connected => 'Connected. Fushi will use the original text selected in LunaTranslator.';
-	@override String get game_text_source_luna_waiting => 'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
-	@override String get game_text_thread_recommended => 'Recommended';
-	@override String get game_text_threads_dormant_hide => 'Hide threads without text';
-	@override String game_text_threads_dormant_show({required Object count}) => 'Show threads without text (${count})';
-	@override String get video_setting_subtitle_language_filter => 'Subtitle language';
-	@override String get video_setting_subtitle_language_filter_all => 'All';
-	@override String get video_setting_subtitle_language_filter_chinese => 'Chinese';
-	@override String get video_setting_subtitle_language_filter_hint => 'Filter Chinese and Japanese content inside the selected subtitle track.';
-	@override String get video_setting_subtitle_language_filter_japanese => 'Japanese';
-	@override String get download_direct_queue_section => 'Direct downloads';
-	@override String get download_task_kind_all => 'All types';
-	@override String get download_task_kind_filter => 'Filter by type';
-	@override String get manga_online_series_empty => 'لا توجد مجلدات في هذه السلسلة.';
-	@override String sync_peer_book_delete_confirm({required Object name}) => 'هل تريد حذف "${name}" من الجهاز النظير؟ ستُحذف ملفاته وتقدّم القراءة هناك نهائيًا، ولا توجد نسخة على هذا الجهاز. لا يمكن التراجع عن هذا الإجراء.';
-	@override String sync_peer_video_delete_confirm({required Object name}) => 'هل تريد إزالة "${name}" من مكتبة الجهاز النظير؟ سيبقى ملف الفيديو الذي استورده النظير بنفسه. لا يمكن التراجع عن هذا الإجراء.';
-	@override String get storage_entry_delete_files_confirm_body => 'سيُحذف من القرص فورًا. لا يشير إليه أي عنصر في مكتبتك — فهذه بيانات مؤقتة أو مُصدَّرة أو يمكن تنزيلها من جديد.';
-	@override String get manga_series_refresh => 'تحديث الفصول';
-	@override String get manga_series_refresh_failed => 'تعذّر التحديث من المصدر';
-	@override String get manga_series_source_disabled => 'هذا المصدر غير مثبَّت أو معطَّل';
-	@override String get manga_series_platform_unsupported => 'هذا المصدر غير متاح على هذه المنصة';
-	@override String get manga_series_offline_hint => 'يتم عرض الفصول المحفوظة على هذا الجهاز';
-	@override String get manga_series_no_chapters => 'لا توجد فصول بعد';
-	@override String get manga_series_all_read => 'تمت قراءة جميع الفصول';
-	@override String get manga_series_sort_newest => 'الأحدث أولاً';
-	@override String get manga_series_sort_oldest => 'الأقدم أولاً';
-	@override String get manga_series_unread_only => 'غير المقروءة فقط';
-	@override String get manga_series_mark_read => 'تعليم كمقروء';
-	@override String get manga_series_mark_unread => 'تعليم كغير مقروء';
-	@override String get manga_series_mark_previous_read => 'تعليم هذا الفصل وما قبله كمقروء';
-	@override String get manga_series_local_volume => 'مجلد محلي';
-	@override String get manga_series_volume_info => 'المجلد';
-	@override String get manga_series_page_count => 'الصفحات';
-	@override String get manga_series_chapters_action => 'الفصول';
-	@override String get manga_series_next_chapter => 'الفصل التالي';
-	@override String get manga_series_previous_chapter => 'الفصل السابق';
-	@override String get manga_series_last_chapter_reached => 'هذا هو أحدث فصل';
-	@override String get manga_series_first_chapter_reached => 'هذا هو الفصل الأول';
-	@override String get manga_series_open_series => 'صفحة العمل';
-	@override String manga_series_read_progress({required Object page, required Object total}) => 'تمت القراءة حتى الصفحة ${page} من ${total}';
-	@override String manga_series_read_progress_partial({required Object page}) => 'تمت القراءة حتى الصفحة ${page}';
-	@override String mihon_store_extension_count({required Object count}) => '${count} إضافة';
-	@override String mihon_extension_sources_more({required Object count}) => 'إظهار كل المصادر (${count})';
-	@override String get mihon_extension_sources_less => 'إظهار مصادر أقل';
-	@override String get options_website => 'زيارة الموقع الرسمي';
-	@override String get video_setting_mpv_group_hdr => 'HDR';
-	@override String get video_setting_hdr_tone_mapping => 'تعيين ألوان HDR';
-	@override String get video_setting_hdr_tone_mapping_hint => 'المنحنى المستخدم عند ضغط مصدر HDR على شاشة SDR. «تلقائي» يترك الاختيار لـ mpv حسب كل مصدر.';
-	@override String get video_setting_hdr_compute_peak => 'كشف الذروة الديناميكي';
-	@override String get video_setting_hdr_compute_peak_hint => 'قياس ذروة السطوع الحقيقية لكل إطار بدلاً من الوثوق ببيانات المصدر. إبرازات أدق مقابل بعض استهلاك المعالج الرسومي.';
-	@override String get video_setting_hdr_auto => 'تلقائي';
-	@override String get video_setting_hdr_on => 'تشغيل';
-	@override String get video_setting_hdr_off => 'إيقاف';
-	@override String get video_discovery_cancel_downloads_title => 'إلغاء التنزيلات؟';
-	@override String video_discovery_cancel_downloads_body({required Object n}) => 'سيتم إيقاف ${n} مهمة تنزيل لهذا العمل. تبقى الأجزاء المنزَّلة على القرص، ويمكنك بدء التنزيل مرة أخرى لاحقًا.';
-	@override String get video_discovery_cancel_downloads_failed => 'تعذّر إلغاء التنزيل. قد تكون المهمة قد انتهت بالفعل، أو أن خلفية التنزيل غير متاحة.';
-	@override String get gal_hook_click_lookup => 'اضغط على كلمة للبحث عنها';
-	@override String get gal_hook_click_lookup_hint => 'الإيقاف يعني ألا يؤدي النقر على النص إلى بحث — مفيد مع تفعيل النقر النافذ عندما لا تريد إصابة كلمة بالخطأ.';
-	@override String get gal_hook_lookup_trigger => 'زر البحث';
-	@override String get gal_hook_lookup_trigger_hint => 'أي زر فأرة يبحث عن الكلمة تحت المؤشر. مستقل عن المفتاح أعلاه: يمكنك إيقاف البحث بالنقر والبحث بزر جانبي.';
-	@override String get gal_hook_lookup_trigger_left => 'Left click';
-	@override String get gal_hook_lookup_trigger_middle => 'Middle click';
-	@override String get gal_hook_lookup_trigger_side => 'Side button';
-	@override String get gal_hook_toolbar_auto_hide => 'إخفاء شريط الأدوات تلقائيًا';
-	@override String get gal_hook_toolbar_auto_hide_hint => 'يخفي شريط الأدوات حتى يصل المؤشر إلى صندوق النص، بأسلوب LunaHook. مخفي يعني مخفي فعلًا — تعود تلك البكسلات إلى اللعبة.';
-	@override String get gal_hook_passthrough_blocks_mouse => 'النص يستقبل النقرات أثناء النقر النافذ';
-	@override String get gal_hook_passthrough_blocks_mouse_hint => 'تشغيل: تبقى أسطر النص تستقبل النقرات فتستطيع الضغط على كلمة. إيقاف: تصبح الطبقة كلها شفافة للفأرة — تنقر ما تحتها، لكن الضغط على الكلمات لا يعمل.';
-	@override String get floating_lyric_topmost => 'الإبقاء في المقدمة';
-	@override String get gal_hook_fold_progressive_lines => 'دمج أسطر الحوار المقسّمة';
-	@override String get gal_hook_fold_progressive_lines_hint => 'بعض المحرّكات تعيد رسم السطر كاملًا مع كل نقرة، فيُلتقط السطر الواحد عدة مرات. اطوِ تلك اللقطات في سطر واحد.';
-	@override String get gal_hook_ingame_lookup_engine_unsupported => 'محرك اللعبة هذا لا يدعم البحث داخل اللعبة بعد';
-	@override String get gal_hook_ingame_lookup_version_unsupported => 'إصدار اللعبة هذا ليس ضمن القائمة المدعومة بعد';
-	@override String get gal_hook_ingame_lookup_exe_hash_copy => 'نسخ SHA-256 لملف اللعبة التنفيذي';
-	@override String get gal_hook_ingame_lookup_exe_hash_unavailable => 'تعذّرت قراءة ملف اللعبة التنفيذي';
-	@override String get gal_hook_ingame_lookup_exe_hash_copied => 'تم نسخ SHA-256 لملف اللعبة التنفيذي';
-	@override String get download_tracker_section => 'اشتراك المتعقّبات';
-	@override String get download_tracker_auto_add => 'إضافة متعقّبات الاشتراك تلقائيًا إلى التنزيلات الجديدة';
-	@override String get download_tracker_auto_add_hint => 'تُخزَّن القائمة مؤقتًا لست ساعات. فشل الاشتراك لا يمنع التنزيل.';
-	@override String get download_tracker_url => 'رابط الاشتراك';
-	@override String get download_tracker_refresh => 'جلب المتعقّبات';
-	@override String get download_tracker_preview_empty => 'اجلب الاشتراك لمعاينة متعقّبات HTTP وHTTPS وUDP المدعومة.';
-	@override String download_tracker_preview_count({required Object count}) => 'تم جلب ${count} متعقّبًا';
-	@override String download_tracker_fetch_failed({required Object message}) => 'تعذّر جلب المتعقّبات: ${message}';
-	@override String get anki_connect_port_auto_fix => 'التبديل إلى منفذ حر';
-	@override String get anki_connect_port_auto_fix_hint => 'يختار منفذًا حرًا ويكتبه في Hibiki وفي إعدادات إضافة AnkiConnect معًا. أعد تشغيل Anki لتطبيق التغيير.';
-	@override String anki_connect_port_auto_fix_done({required Object port}) => 'تم تغيير منفذ AnkiConnect إلى ${port}. أعد تشغيل Anki ثم حاول مجددًا.';
-	@override String anki_connect_port_auto_fix_manual({required Object port}) => 'يستخدم Hibiki الآن المنفذ ${port}، لكن لم يُعثر على إعدادات إضافة AnkiConnect. اضبط webBindPort على ${port} في Anki (أدوات ← الإضافات ← AnkiConnect ← إعداد) ثم أعد تشغيل Anki.';
-	@override String get anki_connect_port_auto_fix_none => 'لم يُعثر على أي منفذ حر على هذا الجهاز.';
-	@override String get onboarding_action_badge_required => 'مطلوب';
-	@override String get onboarding_action_badge_recommended => 'موصى به';
-	@override String get onboarding_action_badge_optional => 'اختياري';
-	@override String get onboarding_pack_action_download_desc => 'ينزّل الحزمة كاملة في الخلفية ثم يستوردها. يمكنك الإلغاء في أي وقت، وسيُستأنف التنزيل من حيث توقّف.';
-	@override String get onboarding_pack_action_import_existing_desc => 'الحزمة منزَّلة بالفعل، وهذا يستوردها. اختر «دمج» في نافذة التأكيد لتبقى بياناتك الحالية كما هي.';
-	@override String get onboarding_pack_action_pick_desc => 'حصلت على ملف zip للحزمة من مكان آخر؟ استوردها من القرص وتخطَّ التنزيل بالكامل.';
-	@override String get onboarding_pack_action_website => 'فتح صفحة التنزيل في الموقع';
-	@override String get onboarding_pack_action_website_desc => 'يفتح الموقع الرسمي في متصفحك. يوفّر قسم الحزمة روابط أجزاء يمكن تمريرها إلى مدير تنزيل، ثم عد إلى هنا واستخدم «اختيار ملف حزمة محلي» لاستيراد ما حصلت عليه.';
-	@override String get onboarding_pack_action_dictionary_desc => 'تتعلّم لغة غير اليابانية؟ تخطَّ الحزمة واستورد هنا قواميس لغتك.';
-	@override String get onboarding_pack_action_audio_desc => 'مصدر مقاطع النطق الصوتية. الحزمة تغطّي اليابانية والإنجليزية بالفعل؛ أضف هنا مصادر عبر الإنترنت للغات الأخرى.';
-	@override String get onboarding_anki_action_test_desc => 'يتحقّق من قدرة Fushi على الاتصال بـ Anki ويحمّل مجموعاتك وأنواع الملاحظات. لا يُنشأ أي شيء بعد.';
-	@override String get onboarding_anki_action_refresh_desc => 'يعيد تحميل المجموعات وأنواع الملاحظات من Anki. استخدمه بعد إنشاء مجموعة جديدة داخل Anki.';
-	@override String get onboarding_anki_action_get_ankidroid_desc => 'يفتح صفحة AnkiDroid في المتجر. يكتب Fushi بطاقاته داخله، لذا يجب تثبيته أولاً.';
-	@override String get onboarding_anki_action_get_anki_desc => 'يفتح صفحة تنزيل Anki. ثبّت Anki وأبقِه مفتوحًا أثناء إنشاء البطاقات.';
-	@override String get onboarding_anki_action_install_addon_desc => 'يفكّ ضغط إضافة AnkiConnect المرفقة داخل Anki، وهي ما يتيح لـ Fushi التخاطب معه. أعد تشغيل Anki بعد ذلك.';
-	@override String get onboarding_step_anki_action_desc => 'قالب البطاقة وربط الحقول ولقطات الشاشة والصوت: أي تفاصيل شكل البطاقة الناتجة. تكفي المجموعة ونوع الملاحظة أعلاه للبدء، فلا تفتح هذا إلا إذا أردت تغيير طريقة بناء البطاقات.';
-	@override String get onboarding_step_backup_action_desc => 'اختر خدمة نسخ احتياطي وسجّل الدخول، لتبقى مكتبتك سليمة عند فقدان الجهاز أو استبداله.';
-	@override String get onboarding_step_interconnect_action_desc => 'يقرن هذا الجهاز بأجهزتك الأخرى لمشاركة مكتبة واحدة وإبقاء التقدّم متزامنًا.';
-	@override String get onboarding_step_extension_action_desc => 'يوضّح كيفية تثبيت إضافة المتصفح وربطها بـ Fushi، لتتمكّن من البحث عن الكلمات في صفحات الويب أيضًا.';
-	@override String get onboarding_step_fonts_action_desc => 'أضف ملفات خطوطك الخاصة واختر الخط الذي تستخدمه كل لغة.';
-	@override String get onboarding_pack_sources_hint => 'يُنزَّل على أجزاء متوازية من GitHub والموقع الرسمي ومرآة احتياطية في آنٍ واحد، مع التحقّق من كل جزء. يقيس Fushi سرعة المصادر أثناء العمل ويمنح الأسرع في تلك اللحظة عددًا أكبر من الأجزاء، فلا شيء تختاره هنا.';
-	@override String get video_setting_hdr_output => 'إخراج HDR / ‏10 بت';
-	@override String get video_setting_hdr_output_hint => 'على Windows فقط. يمرّر «تلقائي» مصادر HDR مباشرةً إلى شاشة HDR عبر نافذة فيديو أصلية، ويستخدم «دائمًا» تلك النافذة لكل مقطع (إخراج 10 بت)، بينما يُبقي «إيقاف» على العارض القياسي.';
-	@override String get video_setting_hdr_output_auto => 'تلقائي';
-	@override String get video_setting_hdr_output_always => 'دائمًا';
-	@override String get video_setting_hdr_output_off => 'إيقاف';
-	@override String get network_proxy_auto_hint => 'يُطبَّق على جميع طلبات الإنترنت في التطبيق: التحديثات، والمزامنة السحابية، والقواميس، والتنزيلات، والترجمات، والبيانات الوصفية. اتركه فارغًا للوضع التلقائي: متغيرات البيئة، ثم وكيل النظام المفعّل. تتصل عمليات نقل P2P (torrent) مباشرة افتراضيًا؛ يمكنك تفعيلها بشكل منفصل أدناه.';
-	@override String get network_proxy_hint => 'المضيف:المنفذ، مثال 127.0.0.1:7890 (IPv4/اسم مضيف فقط)';
-	@override String get network_proxy_invalid => 'وكيل غير صالح. استخدم المضيف:المنفذ';
-	@override String get network_proxy_label => 'وكيل الشبكة';
-	@override String get section_network => 'الشبكة';
-	@override String get network_proxy_p2p_label => 'تمرير حركة P2P (torrent) عبر الوكيل';
-	@override String get network_proxy_p2p_warning => 'معطّل افتراضيًا؛ يتصل P2P مباشرة. قد يؤدي التمرير عبر الوكيل إلى خفض السرعة، وكثير من مزودي الوكلاء يحظرون حركة BitTorrent: قد يتم تقييد حساب الوكيل أو تحذيره أو إنهاؤه. ينطبق على المحرك المدمج فقط؛ يستخدم qBittorrent الخارجي إعدادات الوكيل الخاصة به.';
-	@override String get video_ajatt_settings_hint => 'أرشيف مجاني للترجمات اليابانية (مرآة kitsunekko). لا يتطلب حسابًا؛ تُنزَّل ملفات الترجمة من GitHub.';
-	@override String get video_ajatt_enabled_hint => 'عند الإيقاف يتم تخطي أرشيف AJATT عند البحث عن الترجمات.';
-	@override String get video_subtitle_workbench_title => 'الترجمات';
-	@override String get video_subtitle_scope_episode => 'هذه الحلقة';
-	@override String get video_subtitle_scope_collection => 'المجموعة كاملة';
-	@override String get video_subtitle_search_open => 'البحث عن ترجمات عبر الإنترنت';
-	@override String get video_subtitle_collection_settings => 'إعدادات ترجمة المجموعة';
-	@override String get video_subtitle_collection_language => 'لغة الترجمة الافتراضية';
-	@override String get video_subtitle_collection_language_hint => 'تنطبق على كل حلقة في هذه المجموعة. فارغ = اتباع لغة الفيديو نفسه.';
-	@override String get video_subtitle_collection_release_group => 'الإصدار المفضل';
-	@override String get video_subtitle_collection_release_group_hint => 'يختار التنزيل الجماعي هذا الإصدار أولًا ليشترك الموسم كله في توقيت واحد.';
-	@override String get video_subtitle_collection_release_group_any => 'أي إصدار';
-	@override String get video_subtitle_source_label => 'المصدر';
-	@override String get video_subtitle_collection_members_hint => 'تُطابَق الحلقات بالرقم في اسم الملف؛ وتُقسَّم حزم المواسم تلقائيًا.';
-	@override String get video_subtitle_adjust_title => 'ضبط الترجمة';
-	@override String get video_subtitle_adjust_collapse => 'طيّ';
-	@override String get video_subtitle_adjust_expand => 'توسيع';
-	@override String get settings_section_reading_stats => 'إحصائيات القراءة';
-	@override String get reading_stats_idle_timeout => 'مهلة الخمول';
-	@override String get reading_stats_idle_timeout_hint => 'إيقاف احتساب وقت القراءة بعد هذا العدد من الدقائق دون تقليب صفحة أو تمرير أو بحث عن كلمة. ينطبق على الروايات وملفات PDF والمانغا فقط؛ يُحتسب الفيديو أثناء التشغيل.';
-	@override String get web_video_track_menu => 'مسار الترجمة';
-	@override String get web_video_track_live => 'ترجمة مباشرة (مأخوذة من الصفحة)';
-	@override String get web_video_no_tracks => 'لم يتم التقاط أي ترجمة بعد';
-	@override String get web_video_hide_native_subtitles => 'إخفاء ترجمة الموقع';
-	@override String get web_video_import_hint => 'هذه صفحة ويب (وليست بثًا مباشرًا). ستُفتح في مشغّل الويب المدمج.';
-	@override String get web_video_platform_unsupported => 'مشغّل الويب المدمج متاح حاليًا على Windows فقط.';
-	@override String get web_video_mine_queue_run => 'إنشاء البطاقات المنتظرة';
-	@override String get web_video_mine_queue_stop => 'إيقاف إنشاء البطاقات';
-	@override String get web_video_mine_queue_empty => 'لا توجد بطاقات في قائمة الانتظار';
-	@override String web_video_mine_queued({required Object count}) => 'أُضيف إلى قائمة انتظار إنشاء البطاقات (${count} معلّقة)';
-	@override String web_video_mine_queue_running({required Object done, required Object total}) => 'جارٍ إنشاء البطاقات ${done}/${total}…';
-	@override String web_video_mine_queue_finished({required Object ok, required Object failed}) => 'البطاقات المُنشأة: ${ok}، الفاشلة: ${failed}';
-	@override String get web_video_hosting_menu => 'وضع التشغيل';
-	@override String get web_video_hosting_builtin => 'مدمج (1080p؛ يتوفر تحسين الدقة ولقطات الشاشة والبطاقات)';
-	@override String get web_video_hosting_windowed => 'نافذة أصلية (4K، DRM عتادي؛ تُوضع البطاقات في قائمة الانتظار)';
-	@override String web_video_mine_switch_builtin({required Object count}) => 'التبديل إلى الوضع المدمج لإنشاء ${count} بطاقة منتظرة';
-	@override String get onboarding_step_click_lookup_title => 'انقر لتبحث عن الكلمات';
-	@override String get onboarding_click_lookup_tap_title => 'انقر على النص';
-	@override String get onboarding_click_lookup_nested_title => 'تابع البحث داخل النافذة المنبثقة';
-	@override String get onboarding_click_lookup_nested_body => 'انقر على كلمة أخرى داخل التعريف لفتح مستوى بحث أعمق. ارجع إلى الخلف أو انقر خارج النافذة لإغلاق مستوى واحد.';
-	@override String get onboarding_click_lookup_mine_title => 'حوّل النتيجة إلى بطاقة';
-	@override String get onboarding_click_lookup_mine_body => 'عندما يكون المعنى صحيحًا، انقر على + لإرسال الكلمة والجملة والصوت والصورة إلى منشئ البطاقات.';
-	@override String get onboarding_step_global_lookup_title => 'البحث عن نص خارج Fushi';
-	@override String get onboarding_global_lookup_windows_body => 'على Windows، حدّد نصًا في تطبيق آخر واستدعِ القاموس دون العودة إلى Fushi.';
-	@override String get onboarding_global_lookup_windows_select_title => 'حدّد نصًا في أي تطبيق';
-	@override String get onboarding_global_lookup_windows_shortcut_title => 'اضغط Ctrl+Alt+D';
-	@override String get onboarding_global_lookup_windows_shortcut_body => 'هذا هو الاختصار العام الافتراضي. يلتقط Fushi التحديد الحالي ويفتح بطاقة بحث بجوار مؤشر الفأرة.';
-	@override String get onboarding_global_lookup_windows_customize_title => 'غيّر الاختصار إذا لزم الأمر';
-	@override String get onboarding_global_lookup_windows_customize_body => 'افتح الإعدادات → الاختصارات → عام (خارج التطبيق) لتعيين تركيبة مفاتيح أخرى.';
-	@override String get onboarding_global_lookup_windows_action => 'فتح إعدادات الاختصارات';
-	@override String get onboarding_global_lookup_windows_action_desc => 'يتيح لك تغيير اختصار البحث خارج التطبيق. الاختصار الافتراضي Ctrl+Alt+D يعمل بالفعل، لذا هذه الخطوة اختيارية.';
-	@override String get onboarding_global_lookup_android_body => 'على Android، يمرّر النظام النص المحدد إلى Fushi عبر قائمة النص أو لوحة المشاركة. ولا يوجد اختصار عام قابل لإعادة التعيين.';
-	@override String get onboarding_global_lookup_android_select_title => 'حدّد نصًا في تطبيق آخر';
-	@override String get onboarding_global_lookup_android_open_title => 'اختر Fushi';
-	@override String get onboarding_global_lookup_android_open_body => 'انقر على Fushi في قائمة تحديد النص. وإذا لم يظهر، فانقر على مشاركة ثم اختر Fushi من لوحة المشاركة.';
-	@override String get onboarding_global_lookup_android_continue_title => 'استخدم النافذة المنبثقة المستقلة';
-	@override String get onboarding_global_lookup_android_continue_body => 'يفتح البحث بمعزل عن التطبيق الأصلي. يمكنك النقر على كلمات أخرى داخله، وعند إغلاقه تعود إلى حيث كنت.';
-	@override String get onboarding_feature_manual_resources => 'استيراد القواميس والصوت يدويًا';
-	@override String get onboarding_feature_manual_resources_hint => 'Supplement the recommended pack, or import your own dictionaries, audiobooks, and pronunciation sources';
-	@override String get onboarding_step_manual_resources_title => 'جهّز القواميس والصوت يدويًا';
-	@override String get onboarding_step_manual_resources_body => 'Use this alongside the recommended pack or on its own. Import at least one dictionary before the lookup tutorial; audiobook and pronunciation audio are optional supplements.';
-	@override String get onboarding_manual_dictionary_action => 'استيراد قاموس';
-	@override String get onboarding_manual_dictionary_action_desc => 'افتح مدير القواميس واستورد ملف قاموس أو أرشيفًا مدعومًا واحدًا على الأقل. فدروس البحث لا تفيد إلا بعد أن يعيد البحث تعريفًا فعليًا.';
-	@override String get onboarding_manual_audiobook_action => 'استيراد كتاب مع صوت الكتاب الصوتي';
-	@override String get onboarding_manual_audiobook_action_desc => 'افتح استيراد الكتب واختر الكتاب أو النص، والترجمة المتوافقة، وملفًا صوتيًا واحدًا أو أكثر. يحتاج الصوت إلى ترجمة كي يستطيع Fushi مطابقته مع الجمل.';
-	@override String get onboarding_manual_pronunciation_action => 'إعداد صوت نطق الكلمات';
-	@override String get onboarding_manual_pronunciation_action_desc => 'أضف مصادر النطق المحلية أو عبر الإنترنت التي تستخدمها مداخل القاموس. وهذا منفصل عن صوت الكتاب الصوتي المرفق بكتاب.';
-	@override String get onboarding_lookup_verify_action => 'تأكد من وجود الكلمة في قاموسك';
-	@override String get onboarding_lookup_verify_action_desc => 'افتح البحث، واكتب أي كلمة تتعلمها، ولا تتابع إلا بعد أن يعيد القاموس المثبَّت تعريفًا لها. ولا يفرض الدرس كلمة مثال ثابتة.';
-	@override String get onboarding_step_first_anki_card_title => 'أنشئ أول بطاقة Anki';
-	@override String get onboarding_step_first_anki_card_body => 'لا تظهر هذه الخطوة إلا بعد أن يتصل هذا الإعداد بـ Anki ويُختار مجموعة ونوع ملاحظة صالحان للاستخدام.';
-	@override String get onboarding_first_anki_lookup_title => 'ابدأ من نتيجة قاموس حقيقية';
-	@override String get onboarding_first_anki_lookup_body => 'ابحث عن كلمة يعرّفها قاموسك المثبَّت فعلًا. فلا توجد كلمة تدريب ثابتة قد لا تكون موجودة في قاموسك.';
-	@override String get onboarding_first_anki_plus_title => 'انقر على زر الجمع في المدخل';
-	@override String get onboarding_first_anki_plus_body => 'يفتح زر الجمع منشئ البطاقات ومعه الكلمة الحالية ونطقها ومعناها والجملة والصوت والصورة المتاحة.';
-	@override String get onboarding_first_anki_save_title => 'راجِع ثم احفظ';
-	@override String get onboarding_first_anki_save_body => 'أكّد المجموعة الهدف ونوع الملاحظة ومعاينة الحقول ثم احفظ. وافتح Anki للتأكد من وصول البطاقة الأولى.';
-	@override String get onboarding_first_anki_action => 'فتح البحث وإنشاء بطاقة';
-	@override String get onboarding_first_anki_action_desc => 'اختر كلمة يظهر تعريفها، وانقر على زر الجمع الخاص بها، وراجع الحقول، ثم احفظها في مجموعة Anki المتصلة.';
-	@override String get onboarding_step_click_lookup_body => 'تأكد أولًا من كلمة يعرّفها قاموسك المثبَّت فعلًا. ثم استخدم الكلمة نفسها للتدرب على البحث المباشر في الكتب، وفي نص OCR للمانغا، وفي ترجمات الفيديو.';
-	@override String get onboarding_click_lookup_tap_body => 'على الهاتف، انقر على حرف من الكلمة التي تحققت منها؛ وعلى الحاسوب، انقر عليها بالزر الأيسر. يبدأ Fushi من هناك ويطابق أطول كلمة ممكنة.';
-	@override String get onboarding_global_lookup_windows_select_body => 'ظلّل الكلمة نفسها التي تأكدت من وجود تعريف لها في القاموس، واترك التحديد قائمًا.';
-	@override String get onboarding_global_lookup_android_select_body => 'اضغط مطولًا على الكلمة نفسها التي تحققت منها، ثم اسحب مقابض التحديد لتغطيها بالكامل.';
-	@override String get game_lookup_attached_title => 'In-game lookup';
-	@override String get game_lookup_attached_no_ocr => 'No OCR · horizontal body text only';
-	@override String get game_lookup_attached_mode => 'Mode';
-	@override String get game_lookup_attached_mode_auto => 'Auto';
-	@override String get game_lookup_attached_mode_native_only => 'Native only';
-	@override String get game_lookup_attached_mode_attached_only => 'Calibrated layer only';
-	@override String get game_lookup_attached_mode_off => 'Off';
-	@override String get game_lookup_attached_status => 'State';
-	@override String get game_lookup_attached_native_status => 'Native';
-	@override String get game_lookup_attached_provider => 'Provider';
-	@override String get game_lookup_attached_provider_unknown => 'Not reported';
-	@override String get game_lookup_attached_profile => 'Profile';
-	@override String get game_lookup_attached_profile_ready => 'Calibrated';
-	@override String get game_lookup_attached_profile_missing => 'Not calibrated';
-	@override String get game_lookup_attached_shield => 'Input shield';
-	@override String get game_lookup_attached_shield_verified => 'Verified';
-	@override String get game_lookup_attached_shield_unknown => 'Unknown';
-	@override String get game_lookup_attached_shield_partial => 'Partial';
-	@override String get game_lookup_attached_shield_known_uncovered => 'Known uncovered';
-	@override String get game_lookup_attached_shield_faulted => 'Faulted';
-	@override String get game_lookup_attached_risk => 'Click risk';
-	@override String get game_lookup_attached_risk_safe => 'Not authorized';
-	@override String get game_lookup_attached_risk_pending => 'Confirmation required';
-	@override String get game_lookup_attached_risk_active => 'Risk accepted · may double-trigger';
-	@override String get game_lookup_attached_calibrate => 'Calibrate';
-	@override String get game_lookup_attached_risk_accept => 'Accept click risk';
-	@override String get game_lookup_attached_profile_clear => 'Clear profile';
-	@override String get game_lookup_attached_thread_required => 'Select one body-text thread before calibration.';
-	@override String get game_lookup_attached_risk_title => 'Confirm raw-click risk';
-	@override String get game_lookup_attached_risk_body => 'The input shield is not verified for this executable. Clicking a glyph may also advance dialogue or trigger a choice. This authorization is stored only for the current executable hash and is revoked after an update.';
-	@override String get game_lookup_attached_calibration_title => 'Calibrate body text';
-	@override String get game_lookup_attached_preview => 'Current body text preview';
-	@override String get game_lookup_attached_body_rect => 'Body rectangle';
-	@override String get game_lookup_attached_left => 'Left';
-	@override String get game_lookup_attached_top => 'Top';
-	@override String get game_lookup_attached_width => 'Width';
-	@override String get game_lookup_attached_height => 'Height';
-	@override String get game_lookup_attached_font_family => 'Font family';
-	@override String get game_lookup_attached_font_size => 'Font size / client height';
-	@override String get game_lookup_attached_letter_spacing => 'Letter spacing / client height';
-	@override String get game_lookup_attached_line_height => 'Line height';
-	@override String get game_lookup_attached_text_align => 'Horizontal alignment';
-	@override String get game_lookup_attached_vertical_align => 'Vertical alignment';
-	@override String get game_lookup_attached_align_left => 'Left';
-	@override String get game_lookup_attached_align_center => 'Center';
-	@override String get game_lookup_attached_align_right => 'Right';
-	@override String get game_lookup_attached_align_top => 'Top';
-	@override String get game_lookup_attached_align_bottom => 'Bottom';
-	@override String get game_lookup_attached_probes_hint => 'Click the first, middle, and last highlighted glyphs in the game, then confirm each character below.';
-	@override String get game_lookup_attached_probe_start => 'First glyph';
-	@override String get game_lookup_attached_probe_middle => 'Middle glyph';
-	@override String get game_lookup_attached_probe_end => 'Last glyph';
-	@override String get game_lookup_attached_calibration_commit => 'Save calibration';
-	@override String get game_lookup_attached_calibration_failed => 'Calibration was not applied. Check the body text, target window, and all three probes.';
-	@override String get game_lookup_attached_calibration_short_text => 'At least three characters are required for calibration probes.';
-	@override String get game_lookup_attached_profile_clear_title => 'Clear lookup profile?';
-	@override String get game_lookup_attached_profile_clear_body => 'The saved rectangle, text layout, and executable-specific click authorization will be removed.';
-	@override String get game_lookup_attached_probe_waiting => 'Waiting for matching in-game click';
-	@override String get delete_choices_remember => 'تذكّر هذه الخيارات';
+  // Translations
+  @override
+  String get action_exit => 'خروج';
+  @override
+  String get action_favorite => 'مفضّلة';
+  @override
+  String activity_days_ago({required Object n}) => 'منذ ${n} ي';
+  @override
+  String activity_hours_ago({required Object n}) => 'منذ ${n} س';
+  @override
+  String get activity_just_now => 'الآن';
+  @override
+  String activity_minutes_ago({required Object n}) => 'منذ ${n} د';
+  @override
+  String get add_to_collection => 'إضافة إلى مجموعة';
+  @override
+  String get anime_download_back => 'رجوع';
+  @override
+  String get anime_download_batch => 'دفعة';
+  @override
+  String get anime_download_category_all => 'الكل';
+  @override
+  String get anime_download_category_english => 'مترجم للإنجليزية';
+  @override
+  String get anime_download_category_non_english => 'غير إنجليزي';
+  @override
+  String get anime_download_category_raw => 'بدون ترجمة';
+  @override
+  String get anime_download_delete => 'حذف';
+  @override
+  String anime_download_episode_count({required Object count}) =>
+      'حلقة ${count}';
+  @override
+  String get anime_download_generic_download => 'تحميل';
+  @override
+  String get anime_download_generic_hint => 'رابط مغناطيسي';
+  @override
+  String get anime_download_generic_title => 'لصق رابط (كتب، فيديوهات، أي شيء)';
+  @override
+  String get anime_download_include_subs => 'تضمين الترجمات';
+  @override
+  String get anime_download_kind_auto => 'تلقائي';
+  @override
+  String get anime_download_kind_book => 'كتاب';
+  @override
+  String get anime_download_kind_video => 'فيديو';
+  @override
+  String get anime_download_magnet_invalid => 'رابط مغناطيسي غير صالح';
+  @override
+  String get anime_download_no_results => 'لا توجد نتائج';
+  @override
+  String get anime_download_no_subs => 'بدون ترجمات';
+  @override
+  String get anime_download_no_tasks => 'لا توجد مهام تحميل بعد';
+  @override
+  String get anime_download_nyaa_query => 'عبارات بحث Nyaa';
+  @override
+  String get anime_download_play_now => 'تشغيل أثناء التحميل';
+  @override
+  String get anime_download_play_now_fail =>
+      'غير جاهز بعد (بيانات معلقة أو فشل الاتصال) — حاول لاحقاً';
+  @override
+  String get anime_download_play_now_ok =>
+      'تم الاستيراد — افتحه من مكتبة الفيديو للتشغيل أثناء التحميل';
+  @override
+  String get anime_download_push => 'إرسال التحميل';
+  @override
+  String get anime_download_push_failed => 'فشل الإرسال إلى qBittorrent';
+  @override
+  String get anime_download_pushed =>
+      'تم الإرسال — سيتم استيراده تلقائياً عند الانتهاء';
+  @override
+  String get anime_download_refresh => 'تحديث';
+  @override
+  String get anime_download_relocate => 'إعادة تسمية / نقل';
+  @override
+  String anime_download_relocate_engine_failed({required Object reason}) =>
+      'فشل، لم يتغير شيء: ${reason}';
+  @override
+  String get anime_download_relocate_hint =>
+      'Fushi يعيد التسمية/النقل عبر محرك التحميل، لذا لا ينقطع البذر. إعادة التسمية في المستكشف لا يمكن استعادتها.';
+  @override
+  String anime_download_relocate_library_failed({required Object reason}) =>
+      'تم نقل الملفات، لكن المكتبة لا تزال تشير إلى المسار القديم: ${reason}';
+  @override
+  String get anime_download_relocate_move_title => 'نقل إلى مجلد';
+  @override
+  String get anime_download_relocate_no_files =>
+      'هذه المهمة ليس لديها ملفات لإعادة تسميتها بعد (البيانات غير جاهزة)';
+  @override
+  String anime_download_relocate_ok({required Object rows}) =>
+      'تمت إعادة التسمية / النقل؛ تم تحديث ${rows} عنصر في المكتبة';
+  @override
+  String get anime_download_relocate_pick_folder => 'اختر مجلد الوجهة';
+  @override
+  String get anime_download_relocate_rename_title => 'إعادة تسمية الملف';
+  @override
+  String get anime_download_retry => 'إعادة المحاولة';
+  @override
+  String get anime_download_search => 'بحث';
+  @override
+  String get anime_download_search_error_proxy_hint =>
+      'إذا تعذر الوصول إلى الموقع مباشرة، قم بتكوين وكيل شبكة في إعدادات التحميل.';
+  @override
+  String get anime_download_search_failed =>
+      'فشل البحث أو انتهت مهلته. اضغط إعادة المحاولة.';
+  @override
+  String get anime_download_search_hint => 'عنوان الأنمي';
+  @override
+  String get anime_download_search_start_hint =>
+      'ابحث عن عنوان أعلاه - يتم مطابقة التورنت والترجمات تلقائياً. التحميلات لا تقتصر على الفيديو: الكتب والمانغا والكتب الصوتية والألعاب يتم استيرادها أيضاً.';
+  @override
+  String get anime_download_sort_date => 'تاريخ النشر';
+  @override
+  String get anime_download_sort_seeders => 'الرافعون';
+  @override
+  String get anime_download_sort_size => 'الحجم';
+  @override
+  String get anime_download_store_unavailable => 'مخزن خطة التحميل غير متاح';
+  @override
+  String get anime_download_subs_badge => 'ترجمات';
+  @override
+  String get anime_download_subs_failed =>
+      'فشل البحث عن الترجمات. اضغط إعادة المحاولة.';
+  @override
+  String get anime_download_subs_need_key =>
+      'أدخل مفتاح API لـ Jimaku أعلاه للبحث عن الترجمات.';
+  @override
+  String get anime_download_tasks => 'مهام التحميل';
+  @override
+  String get anime_download_title => 'تحميل الأنمي';
+  @override
+  String get anime_download_trusted => 'موثوق';
+  @override
+  String get anime_download_trusted_only => 'الموثوقون فقط';
+  @override
+  String get anki_allow_duplicates => 'السماح بالتكرارات';
+  @override
+  String get anki_allow_duplicates_hint =>
+      'تخطي فحص التكرارات عند إضافة البطاقات';
+  @override
+  String get anki_card_action_failed =>
+      'فشل إجراء البطاقة. يرجى المحاولة مرة أخرى.';
+  @override
+  String get anki_compact_glossaries => 'معاني مختصرة';
+  @override
+  String get anki_compact_glossaries_hint =>
+      'استخدام تنسيق مختصر لإدخالات المعاني';
+  @override
+  String get anki_connect_api_key => 'مفتاح API';
+  @override
+  String get anki_connect_host => 'المضيف';
+  @override
+  String get anki_connect_port => 'المنفذ';
+  @override
+  String get anki_create_lapis => 'إنشاء مجموعة Lapis';
+  @override
+  String get anki_create_lapis_exists =>
+      'نوع ملاحظة Lapis والمجموعة موجودان بالفعل — تم تحديدهما.';
+  @override
+  String anki_create_lapis_failed({required Object error}) =>
+      'تعذّر إنشاء مجموعة Lapis: ${error}';
+  @override
+  String get anki_create_lapis_hint =>
+      'يضيف نوع ملاحظة Lapis ومجموعة Lapis إلى Anki ثم يحددهما.';
+  @override
+  String get anki_create_lapis_success =>
+      'تم إنشاء نوع ملاحظة Lapis والمجموعة.';
+  @override
+  String get anki_deck => 'المجموعة';
+  @override
+  String get anki_duplicate_scope => 'نطاق فحص التكرار';
+  @override
+  String get anki_duplicate_scope_collection => 'المجموعة بأكملها';
+  @override
+  String get anki_duplicate_scope_deck => 'الرزمة المحددة (ورزمها الفرعية)';
+  @override
+  String get anki_duplicate_scope_deck_root => 'الرزمة الجذرية (جميع الفرعية)';
+  @override
+  String get anki_duplicate_scope_hint =>
+      'أي الرزم يتم البحث فيها عند التحقق من وجود بطاقة مسبقاً. لـ AnkiConnect فقط؛ AnkiDroid يبحث دائماً في المجموعة بأكملها.';
+  @override
+  String get anki_error_collection_unavailable =>
+      'مجموعة AnkiDroid غير متاحة حاليًا. افتح AnkiDroid مرة واحدة على الأقل، وتأكد من أنه لا يتزامن وأن واجهة API مفعّلة، ثم أعد المحاولة.';
+  @override
+  String get anki_error_connection_refused =>
+      'تعذّر الاتصال بـ Anki: تم رفض الاتصال. تأكد من تشغيل Anki Desktop وتثبيت الإضافة AnkiConnect.';
+  @override
+  String get anki_error_connection_timeout =>
+      'تعذّر الاتصال بـ Anki: انتهت مهلة الاتصال. تحقق من المضيف والمنفذ وإعدادات الجدار الناري.';
+  @override
+  String get anki_error_connection_unknown =>
+      'تعذّر التصدير إلى Anki: حدث خطأ اتصال غير متوقع. راجع سجل الأخطاء لمزيد من التفاصيل.';
+  @override
+  String get anki_error_http =>
+      'تعذّر التصدير إلى Anki: حدث خطأ HTTP أثناء الاتصال بـ AnkiConnect.';
+  @override
+  String get anki_error_permission_denied =>
+      'لم يمنح AnkiDroid إذن الوصول إلى البطاقات. وافق على مربع إذن النظام الذي ظهر للتو، ثم اضغط الزر مرة أخرى للتصدير.';
+  @override
+  String get anki_fetch => 'تحديث المجموعات وأنواع الملاحظات';
+  @override
+  String get anki_fetching => 'جارٍ الجلب…';
+  @override
+  String get anki_field_mappings => 'تعيين الحقول';
+  @override
+  String get anki_field_not_mapped => 'غير معيّن';
+  @override
+  String get anki_mine_to_server => 'إرسال إلى الجهاز المقترن';
+  @override
+  String get anki_mine_to_server_hint =>
+      'أرسل البطاقات المستخرجة إلى Anki على الجهاز المضيف المقترن (رزمه وإعداداته) بدلاً من هذا الجهاز. يتطلب اقتراناً عبر الربط.';
+  @override
+  String get anki_mined_action_add_duplicate => 'إضافة كبطاقة جديدة';
+  @override
+  String get anki_mined_action_overwrite => 'الكتابة فوق هذه البطاقة';
+  @override
+  String get anki_mined_action_view => 'عرض / فتح في Anki';
+  @override
+  String get anki_mined_card_subtitle => 'اختر ما تريد فعله بالبطاقة المطابقة.';
+  @override
+  String get anki_mined_card_title => 'البطاقة موجودة في Anki';
+  @override
+  String anki_mined_multiple_matches({required Object count}) =>
+      '${count} بطاقة مطابقة';
+  @override
+  String get anki_not_configured =>
+      'انقر «تحديث» لتحميل مجموعات Anki وأنواع الملاحظات.';
+  @override
+  String get anki_note_open_failed => 'تعذر فتح البطاقة في Anki.';
+  @override
+  String get anki_note_type => 'نوع الملاحظة';
+  @override
+  String get anki_note_viewer_empty =>
+      'هذه البطاقة لا تحتوي على حقول قابلة للقراءة.';
+  @override
+  String get anki_note_viewer_open_in_anki => 'فتح في Anki';
+  @override
+  String get anki_note_viewer_title => 'بطاقة موجودة';
+  @override
+  String get anki_open_no_card =>
+      'لم يتم العثور على بطاقة لهذه الكلمة في Anki.';
+  @override
+  String get anki_overwrite_scope => 'نطاق الكتابة فوق';
+  @override
+  String get anki_overwrite_scope_all => 'جميع البطاقات المطابقة';
+  @override
+  String get anki_overwrite_scope_hint =>
+      'أي البطاقات المُنشأة مسبقًا يمكن للعلامة ✓ الخضراء الكتابة فوقها';
+  @override
+  String get anki_overwrite_scope_latest => 'أحدث بطاقة فقط';
+  @override
+  String get anki_refresh_hint =>
+      'بعد إنشاء أو إعادة تسمية مجموعة أو نوع ملاحظة في Anki، انقر هنا للتحديث.';
+  @override
+  String anki_select_handlebar({required Object field}) =>
+      'اختر قيمة لـ ${field}';
+  @override
+  String get anki_settings_label => 'إعدادات Anki';
+  @override
+  String get anki_tag_default_section => 'الوسوم الافتراضية';
+  @override
+  String get anki_tag_include_category => 'إضافة وسم فئة المصدر';
+  @override
+  String get anki_tag_include_category_hint =>
+      'تحصل الكتب على "book" والفيديوهات على "video" والألعاب على "game"';
+  @override
+  String get anki_tag_include_fushi => 'إضافة وسم "fushi"';
+  @override
+  String get anki_tag_include_fushi_hint => 'وسم كل بطاقة أنشأها Fushi';
+  @override
+  String get anki_tags => 'الوسوم';
+  @override
+  String get anki_tags_hint => 'وسوم مفصولة بمسافات تُضاف لكل بطاقة';
+  @override
+  String get app_icon_label => 'أيقونة التطبيق';
+  @override
+  String get app_icon_presets => 'قوالب مسبقة';
+  @override
+  String get app_ui_scale => 'حجم الواجهة';
+  @override
+  String get app_ui_scale_hint =>
+      'Scales app text and spacing. Lower it on large screens if controls feel oversized.';
+  @override
+  String get app_version => 'إصدار التطبيق';
+  @override
+  String get apply_theme => 'تطبيق المظهر';
+  @override
+  String get audio_clip_failed =>
+      'تعذّر استخراج المقطع الصوتي — قد يكون المصدر الصوتي مفقودًا أو غير قابل للقراءة';
+  @override
+  String get audio_import => 'استيراد صوت';
+  @override
+  String get audio_panel_add_audio => 'إضافة صوت';
+  @override
+  String get audio_panel_auto => 'تلقائي';
+  @override
+  String get audio_panel_pick_new_subtitle => 'اختيار ملف ترجمة جديد';
+  @override
+  String get audio_source_added => 'تمت إضافة مصدر الصوت';
+  @override
+  String audio_source_dns_error({required Object host}) =>
+      'فشل اتصال مصدر الصوت: تعذر حل "${host}" — تحقق من الشبكة أو أزل هذا المصدر في الإعدادات';
+  @override
+  String get audio_source_edit_target_gone =>
+      'مصدر الصوت لم يعد موجوداً — تم تجاهل التعديل';
+  @override
+  String get audio_source_edit_url => 'تعديل رابط مصدر الصوت';
+  @override
+  String audio_source_error({required Object detail}) =>
+      'خطأ في مصدر الصوت: ${detail}';
+  @override
+  String get audio_source_fushi_interconnect => 'Fushi Interconnect';
+  @override
+  String get audio_source_loopback_warning =>
+      'يشير إلى هذا الجهاز — أعد التوجيه بعد تبديل الأجهزة';
+  @override
+  String audio_source_request_error({required Object detail}) =>
+      'فشل طلب مصدر الصوت: ${detail}';
+  @override
+  String audio_source_timeout({required Object host}) =>
+      'انتهت مهلة مصدر الصوت: "${host}" — الخادم لا يستجيب، حاول لاحقاً أو غيّر المصدر';
+  @override
+  String get audio_source_updated => 'تم تحديث مصدر الصوت';
+  @override
+  String get audio_source_url_invalid =>
+      'يجب أن يكون الرابط http(s) ويحتوي على عنصر نائب للمصطلح أو القراءة';
+  @override
+  String get audio_unavailable => 'لم يتم العثور على صوت.';
+  @override
+  String get audio_volume => 'مستوى الصوت';
+  @override
+  String get audiobook_attached => 'تم إرفاق الكتاب المسموع';
+  @override
+  String get audiobook_audio_missing => 'ملف الصوت مفقود';
+  @override
+  String get audiobook_background_play => 'متابعة التشغيل بعد الخروج';
+  @override
+  String get audiobook_background_play_hint =>
+      'عند الإيقاف، يتوقف تشغيل الكتاب الصوتي عند مغادرة القارئ. فعّله لمتابعة التشغيل في الخلفية.';
+  @override
+  String get audiobook_export_clip => 'تصدير مقطع فيديو';
+  @override
+  String get audiobook_export_clip_failed => 'فشل تصدير المقطع';
+  @override
+  String get audiobook_export_clip_in_progress => 'جارٍ تصدير المقطع…';
+  @override
+  String get audiobook_export_clip_no_selection => 'حدد نصاً أولاً لتصدير مقطع';
+  @override
+  String get audiobook_export_clip_no_text =>
+      'هذا التحديد لا يحتوي على نص لعرضه';
+  @override
+  String get audiobook_export_clip_saved => 'تم حفظ المقطع';
+  @override
+  String get audiobook_export_clip_unsupported_range =>
+      'لا يمكن تصدير هذا التحديد (يتجاوز حدود الفصل أو ملف الصوت)';
+  @override
+  String get audiobook_import => 'استيراد كتاب مسموع';
+  @override
+  String get audiobook_import_error => 'فشل الاستيراد';
+  @override
+  String audiobook_import_error_copy_failed({required Object name}) =>
+      'فشل نسخ الملف: ${name}';
+  @override
+  String audiobook_import_error_disk_full({required Object size}) =>
+      'مساحة القرص غير كافية. المطلوب: ${size}';
+  @override
+  String get audiobook_import_success => 'تم استيراد الكتاب المسموع';
+  @override
+  String get audiobook_load_error => 'فشل تحميل الكتاب المسموع.';
+  @override
+  String get audiobook_pick_alignment => 'اختيار ملف المحاذاة';
+  @override
+  String get audiobook_reference_original => 'الإشارة إلى الملفات الأصلية';
+  @override
+  String get audiobook_reference_original_desc =>
+      'أبقِ الصوت في مكانه وشغّله من مساره الأصلي؛ سيتعطل الكتاب إذا تم نقل الملف أو حذفه.';
+  @override
+  String get audiobook_relocate => 'نقل الملف';
+  @override
+  String get audiobook_relocate_done => 'تم نقل الصوت';
+  @override
+  String get auto_add_book_name_to_tags =>
+      'إضافة عنوان الكتاب تلقائياً إلى الوسوم';
+  @override
+  String auto_chapter({required Object n}) => 'الفصل ${n}';
+  @override
+  String get auto_read_on_lookup => 'القراءة التلقائية عند البحث';
+  @override
+  String get auto_search => 'بحث تلقائي';
+  @override
+  String get auto_search_debounce_delay => 'تأخير البحث التلقائي';
+  @override
+  String get auto_select_search_window => 'اختيار تلقائي لنافذة البحث';
+  @override
+  String get auto_select_search_window_hint =>
+      'اختبار أحجام نوافذ متعددة عند الاستيراد واختيار الأفضل';
+  @override
+  String get av_sync => 'مزامنة الصوت/الصورة';
+  @override
+  String get av_sync_reset => 'إعادة تعيين';
+  @override
+  String get back => 'رجوع';
+  @override
+  String get background_color => 'لون الخلفية';
+  @override
+  String get background_color_desc => 'خلفية صفحة القارئ';
+  @override
+  String get backup_category_audiobooks => 'صوت الكتب الصوتية';
+  @override
+  String get backup_category_audiobooks_desc => 'صوت الكتب الصوتية والمحاذاة';
+  @override
+  String get backup_category_books => 'الكتب';
+  @override
+  String get backup_category_books_desc =>
+      'ملفات الكتب (EPUB والمحتوى المستخرج)';
+  @override
+  String get backup_category_dictionary => 'القواميس';
+  @override
+  String get backup_category_dictionary_desc => 'القواميس المستوردة وملفاتها';
+  @override
+  String get backup_category_fonts => 'الخطوط المخصصة';
+  @override
+  String get backup_category_fonts_desc => 'ملفات الخطوط المخصصة المستوردة';
+  @override
+  String get backup_category_local_audio => 'قواعد بيانات الصوت المحلية';
+  @override
+  String get backup_category_local_audio_desc =>
+      'قواعد بيانات صوت النطق المحلية';
+  @override
+  String get backup_category_profiles => 'الملفات الشخصية';
+  @override
+  String get backup_category_profiles_desc => 'ملفات تعريف الإعدادات';
+  @override
+  String get backup_category_progress => 'تقدم القراءة';
+  @override
+  String get backup_category_progress_desc =>
+      'مواضع القراءة والإشارات المرجعية';
+  @override
+  String get backup_category_settings => 'الإعدادات';
+  @override
+  String get backup_category_settings_desc => 'إعدادات التطبيق والقارئ';
+  @override
+  String get backup_category_statistics => 'الإحصائيات';
+  @override
+  String get backup_category_statistics_desc =>
+      'إحصائيات القراءة والفيديو والاستخراج';
+  @override
+  String get backup_category_videos => 'الفيديوهات';
+  @override
+  String get backup_category_videos_desc => 'ملفات الفيديو المحلية';
+  @override
+  String get backup_export => 'تصدير النسخة الاحتياطية';
+  @override
+  String get backup_export_books_all => 'جميع الكتب';
+  @override
+  String backup_export_books_selected({required Object count}) =>
+      'تم تحديد ${count} كتاب';
+  @override
+  String get backup_export_categories_hint =>
+      'حدد ما تريد تضمينه في النسخة الاحتياطية. إلغاء تحديد الكتب يزيلها بالكامل — محتواها وسجلاتها تذهب معها.';
+  @override
+  String get backup_export_categories_title => 'اختر ما تريد تصديره';
+  @override
+  String get backup_export_choose_books => 'اختر الكتب';
+  @override
+  String get backup_export_choose_videos => 'اختر الفيديوهات';
+  @override
+  String backup_export_failed({required Object message}) =>
+      'فشل تصدير النسخة الاحتياطية: ${message}';
+  @override
+  String get backup_export_hint =>
+      'اختر ما تريد تضمينه؛ قاعدة البيانات (الكتب والتقدّم والإحصاءات) مُضمَّنة دائمًا. أزِل تحديد العناصر الكبيرة (الصوت المحلي والفيديو) لتصغير حجم النسخة الاحتياطية.';
+  @override
+  String get backup_export_no_books => 'لا توجد كتب للاختيار';
+  @override
+  String get backup_export_no_videos => 'لا توجد فيديوهات للاختيار';
+  @override
+  String get backup_export_select_all => 'تحديد الكل';
+  @override
+  String get backup_export_select_none => 'إلغاء تحديد الكل';
+  @override
+  String get backup_export_success => 'تم تصدير النسخة الاحتياطية بنجاح';
+  @override
+  String get backup_export_videos_all => 'جميع الفيديوهات';
+  @override
+  String backup_export_videos_selected({required Object count}) =>
+      'تم تحديد ${count} فيديو';
+  @override
+  String get backup_exporting => 'جارٍ إنشاء النسخة الاحتياطية…';
+  @override
+  String get backup_import => 'استيراد نسخة احتياطية';
+  @override
+  String backup_import_confirm({
+    required Object date,
+    required Object bookCount,
+    required Object statsCount,
+  }) =>
+      'سيؤدي هذا إلى استبدال كل البيانات الحالية بالنسخة الاحتياطية من ${date}.\n\n${bookCount} كتاب، ${statsCount} سجل إحصائي.\n\nسيُعاد تشغيل التطبيق بعد الاستعادة.';
+  @override
+  String get backup_import_confirm_title => 'استعادة النسخة الاحتياطية؟';
+  @override
+  String get backup_import_contents_hint => 'ألغِ تحديد عنصر لتخطيه.';
+  @override
+  String get backup_import_contents_title => 'تحتوي هذه النسخة الاحتياطية على';
+  @override
+  String backup_import_failed({required Object message}) =>
+      'فشل استيراد النسخة الاحتياطية: ${message}';
+  @override
+  String get backup_import_hint =>
+      'استعادة من ملف نسخة احتياطية. سيُعاد تشغيل التطبيق.';
+  @override
+  String get backup_import_invalid => 'ملف نسخة احتياطية غير صالح';
+  @override
+  String backup_import_merge_preview({
+    required Object bookCount,
+    required Object progressCount,
+  }) => 'سيضيف الدمج ${bookCount} كتاب ويحدّث ${progressCount} موضع قراءة.';
+  @override
+  String get backup_import_mode_label => 'وضع الاستيراد';
+  @override
+  String get backup_import_mode_merge => 'دمج مع المكتبة الحالية';
+  @override
+  String get backup_import_mode_overwrite => 'استبدال المكتبة بالكامل';
+  @override
+  String get backup_import_overlay_title => 'جارٍ استيراد النسخة الاحتياطية';
+  @override
+  String get backup_import_overlay_warning =>
+      'جارٍ استعادة بياناتك. يرجى عدم إغلاق التطبيق.';
+  @override
+  String get backup_import_preserve_sync_note =>
+      'ستُحفظ إعدادات المزامنة على هذا الجهاز (الحساب وبيانات الاعتماد).';
+  @override
+  String get backup_import_restart_button => 'إعادة التشغيل الآن';
+  @override
+  String get backup_import_settings_off_hint =>
+      'احتفظ بخطوط/مظهر/ملفات هذا الجهاز؛ استعد الكتب وبيانات القراءة فقط.';
+  @override
+  String get backup_import_settings_on_hint =>
+      'استعادة كاملة: الخطوط والمظهر والملفات الشخصية تأتي من النسخة الاحتياطية.';
+  @override
+  String get backup_import_settings_toggle =>
+      'استيراد الإعدادات والملفات الشخصية';
+  @override
+  String get backup_import_success =>
+      'تمت استعادة النسخة الاحتياطية. جارٍ إعادة التشغيل…';
+  @override
+  String get backup_import_validating_hint =>
+      'جارٍ فحص ومعاينة ملف النسخة الاحتياطية. قد يستغرق هذا لحظة.';
+  @override
+  String get backup_import_validating_title => 'قراءة النسخة الاحتياطية…';
+  @override
+  String backup_schema_newer({required Object version}) =>
+      'تتطلب هذه النسخة الاحتياطية إصدارًا أحدث من التطبيق (المخطط ${version}). يرجى التحديث أولًا.';
+  @override
+  String batch_add_to_collection_success({required Object n}) =>
+      'تمت إضافة ${n} عنصر إلى المجموعة.';
+  @override
+  String batch_delete_confirm({required Object n}) =>
+      'حذف ${n} كتاب/كتب؟ لا يمكن التراجع عن هذا الإجراء.';
+  @override
+  String batch_delete_confirm_video({required Object n}) =>
+      'حذف ${n} فيديو؟ لا يمكن التراجع عن هذا.';
+  @override
+  String batch_delete_mixed_confirm({required Object n, required Object m}) =>
+      'حذف ${n} وسائط وحل ${m} مجموعة؟ لا يمكن التراجع عن هذا.';
+  @override
+  String batch_delete_mixed_success({required Object n, required Object m}) =>
+      'تم حذف ${n} وسائط وحل ${m} مجموعة.';
+  @override
+  String batch_delete_success({required Object n}) => 'تم حذف ${n} كتاب/كتب.';
+  @override
+  String batch_delete_success_video({required Object n}) =>
+      'تم حذف ${n} فيديو.';
+  @override
+  String batch_dissolve_confirm({required Object m}) =>
+      'حل ${m} مجموعة؟ يتم إزالة التجميع؛ يتم الاحتفاظ بالوسائط.';
+  @override
+  String batch_dissolve_success({required Object m}) => 'تم حل ${m} مجموعة.';
+  @override
+  String get batch_invert_selection => 'عكس';
+  @override
+  String get batch_select => 'تحديد';
+  @override
+  String get batch_select_all => 'الكل';
+  @override
+  String batch_selected_count({required Object n}) => 'تم تحديد ${n}';
+  @override
+  String get batch_tag_add => 'إضافة';
+  @override
+  String batch_tag_added({required Object name, required Object n}) =>
+      'تمت إضافة العلامة "${name}" إلى ${n} كتاب/كتب.';
+  @override
+  String batch_tag_added_video({required Object name, required Object n}) =>
+      'تمت إضافة وسم "${name}" إلى ${n} فيديو.';
+  @override
+  String get batch_tag_apply => 'تطبيق';
+  @override
+  String get batch_tag_keep => 'إبقاء';
+  @override
+  String get batch_tag_remove => 'إزالة';
+  @override
+  String batch_tag_removed({required Object name, required Object n}) =>
+      'تمت إزالة العلامة "${name}" من ${n} كتاب/كتب.';
+  @override
+  String batch_tag_removed_video({required Object name, required Object n}) =>
+      'تمت إزالة وسم "${name}" من ${n} فيديو.';
+  @override
+  String get batch_tag_title => 'إدارة العلامات';
+  @override
+  String get book_continue_reading => 'Continue Reading';
+  @override
+  String get book_css_editor_cancel => 'إلغاء';
+  @override
+  String get book_css_editor_confirm_reset =>
+      'إعادة تعيين CSS لهذا الملف إلى الافتراضي؟';
+  @override
+  String get book_css_editor_confirm_reset_all =>
+      'إعادة تعيين CSS لجميع الملفات إلى الافتراضي؟';
+  @override
+  String get book_css_editor_discard => 'تجاهل';
+  @override
+  String get book_css_editor_edit_css => 'تعديل CSS الكتاب';
+  @override
+  String get book_css_editor_no_css_files =>
+      'لم يتم العثور على ملفات CSS في هذا الكتاب.';
+  @override
+  String get book_css_editor_no_extract_dir =>
+      'دليل الكتاب غير موجود. أعد استيراد الكتاب لتعديل CSS.';
+  @override
+  String get book_css_editor_reset_all => 'إعادة تعيين الكل';
+  @override
+  String get book_css_editor_reset_current => 'إعادة تعيين الحالي';
+  @override
+  String get book_css_editor_reset_done => 'تمت إعادة تعيين CSS.';
+  @override
+  String get book_css_editor_save => 'حفظ';
+  @override
+  String get book_css_editor_saved => 'تم حفظ CSS.';
+  @override
+  String get book_css_editor_title => 'محرر CSS الكتاب';
+  @override
+  String get book_css_editor_unsaved_changes => 'تغييرات غير محفوظة';
+  @override
+  String get book_css_editor_unsaved_changes_message =>
+      'لديك تغييرات غير محفوظة. هل تريد تجاهلها؟';
+  @override
+  String get book_directory_not_found => 'دليل الكتاب غير موجود.';
+  @override
+  String get book_edit_author => 'المؤلف';
+  @override
+  String get book_file_not_found => 'لم يُعثر على ملف الكتاب';
+  @override
+  String get book_import_duplicate_cancel => 'لا، إلغاء';
+  @override
+  String get book_import_duplicate_cancelled => 'تم إلغاء الاستيراد';
+  @override
+  String get book_import_duplicate_keep => 'نعم، أضف لاحقة';
+  @override
+  String book_import_duplicate_message({required Object name}) =>
+      'يوجد بالفعل كتاب باسم "${name}". استيراده على أي حال؟ "نعم" يستورده بلاحقة رقمية؛ "لا" يلغي.';
+  @override
+  String get book_import_duplicate_title => 'كتاب مكرر';
+  @override
+  String get book_mark_completed_action => 'تحديد كمكتمل';
+  @override
+  String get book_mark_uncompleted_action => 'تحديد كغير مكتمل';
+  @override
+  String get book_marked_completed => 'تم التحديد كمكتمل';
+  @override
+  String get book_marked_uncompleted => 'تم التحديد كغير مكتمل';
+  @override
+  String get book_mode => 'وضع الكتاب';
+  @override
+  String book_read_progress({required Object percent}) => 'قُرئ ${percent}%';
+  @override
+  String get book_scrape_cover => 'البحث عن غلاف عبر الإنترنت';
+  @override
+  String get book_scrape_empty => 'لا توجد أغلفة مطابقة';
+  @override
+  String get book_scrape_failed => 'فشل جلب الغلاف';
+  @override
+  String get book_scrape_hint => 'عنوان الكتاب / المؤلف';
+  @override
+  String get book_scrape_search => 'بحث';
+  @override
+  String get book_scrape_search_failed =>
+      'فشل البحث. اضغط بحث للمحاولة مجدداً.';
+  @override
+  String get book_scrape_title => 'مطابقة غلاف عبر الإنترنت';
+  @override
+  String get book_scrape_use => 'استخدام';
+  @override
+  String get book_search => 'بحث في الكتاب';
+  @override
+  String get book_search_hint => 'أدخل نص البحث…';
+  @override
+  String get book_search_no_results => 'لم يتم العثور على نتائج';
+  @override
+  String book_search_results({required Object n}) => '${n} نتيجة';
+  @override
+  String get books => 'الكتب';
+  @override
+  String get browser_extension_enable_server_first =>
+      'نصيحة: فعّل "خادم Yomitan API" وعيّن مفتاح API أعلاه أولاً، حتى يتم تكوين الإضافة تلقائياً باتصال يعمل.';
+  @override
+  String get browser_extension_mobile_unsupported =>
+      'لا يمكن لمتصفحات الأجهزة المحمولة تحميل هذا الامتداد. استخدم البحث داخل التطبيق في القارئ أو مشغّل الفيديو بدلاً من ذلك.';
+  @override
+  String get browser_extension_page_intro =>
+      'على سطح المكتب، ابحث عن الكلمات وحلل الترجمات واستخرج البطاقات مباشرة في Chrome أو Edge. جهّز الإضافة أدناه، ثم حمّلها في متصفحك.';
+  @override
+  String get browser_extension_prepare_button => 'تجهيز ملفات الإضافة';
+  @override
+  String get browser_extension_prepare_hint =>
+      'يبدأ خادم البحث ويفك ضغط الإضافة محلياً؛ يتم نسخ مسار المجلد إلى الحافظة.';
+  @override
+  String get browser_extension_reinstall_button =>
+      'إعادة التجهيز / تحديث الملفات';
+  @override
+  String get browser_extension_server_off => 'خادم البحث متوقف';
+  @override
+  String get browser_extension_server_on => 'خادم البحث يعمل';
+  @override
+  String get browser_extension_status_connected => 'الإضافة متصلة';
+  @override
+  String get browser_extension_status_never => 'لم يتم اكتشاف الإضافة بعد';
+  @override
+  String get browser_extension_step_dev_mode =>
+      'فعّل "وضع المطور" (المفتاح في الزاوية العلوية اليمنى).';
+  @override
+  String get browser_extension_step_done_auto =>
+      'تم. الإضافة مُعدّة مسبقاً للاتصال بـ Fushi للبحث — لا حاجة لإدخال أي شيء يدوياً.';
+  @override
+  String get browser_extension_step_load_unpacked => 'انقر "تحميل غير مضغوط".';
+  @override
+  String get browser_extension_step_open_page => 'افتح صفحة إضافات المتصفح:';
+  @override
+  String get browser_extension_step_pick_folder =>
+      'حدد مجلد الإضافة أدناه (مساره منسوخ بالفعل إلى الحافظة).';
+  @override
+  String get browser_extension_step_verify => 'تحقق من تحميل الإضافة واتصالها';
+  @override
+  String get browser_extension_verify_button => 'فحص الاتصال';
+  @override
+  String get browser_extension_verify_checking => 'جارٍ الفحص…';
+  @override
+  String get browser_extension_verify_connected =>
+      'تم اكتشاف الإضافة وهي متصلة.';
+  @override
+  String get browser_extension_verify_not_detected =>
+      'لم يتم اكتشاف إضافة بعد. تأكد من تحميلها وتفعيلها في متصفحك، ثم تحقق مجدداً.';
+  @override
+  String get browser_extension_version_app => 'مُضمّن في التطبيق';
+  @override
+  String get browser_extension_version_browser => 'محمّل في المتصفح';
+  @override
+  String get browser_extension_version_label => 'إصدار الإضافة';
+  @override
+  String get browser_extension_version_mismatch =>
+      'الإضافة المحمّلة في متصفحك قديمة. أعد تجهيز الإضافة إذا لزم الأمر، ثم أعد تحميلها من صفحة إضافات متصفحك (chrome://extensions).';
+  @override
+  String browser_extension_yomitan_port_conflict({required Object port}) =>
+      'المنفذ ${port} مستخدم بواسطة عملية أخرى (عادةً مكون yomitan-api — عملية Python أطلقها متصفحك). أنهِ تلك العملية، أو عطّل Yomitan API في الإعدادات المتقدمة لـ Yomitan، ثم فعّل خادم Yomitan API في Fushi مجدداً.';
+  @override
+  String get cancel => 'إلغاء';
+  @override
+  String card_cover_degraded_to_static({required Object reason}) =>
+      'تراجع غلاف البطاقة إلى صورة ثابتة (المقطع المتحرك غير متاح): ${reason}';
+  @override
+  String get card_duplicate => 'بطاقة مكررة — لم يتم تصديرها.';
+  @override
+  String get card_export_failed => 'فشل تصدير البطاقة.';
+  @override
+  String card_export_failed_detail({required Object reason}) =>
+      'فشل تصدير البطاقة: ${reason}';
+  @override
+  String get card_export_not_configured =>
+      'لم يتم إعداد Anki. افتح إعدادات Anki واضغط جلب.';
+  @override
+  String card_exported({required Object deck}) =>
+      'تم تصدير البطاقة إلى『${deck}』.';
+  @override
+  String card_exported_audio_failed({required Object reason}) =>
+      'تم تصدير البطاقة، لكن فشل تنزيل الصوت (${reason}).';
+  @override
+  String get card_mined_no_sentence_captured =>
+      'تم إنشاء البطاقة، لكن لم يتم التقاط أي جملة (أعد تحديد الكلمة، أو هذا النص لا يحتوي على جملة يمكن التعرف عليها).';
+  @override
+  String get card_mined_unmapped_sentence_audio_field =>
+      'تم إنشاء البطاقة مع صوت الجملة، لكن نوع ملاحظة Anki لا يحتوي على حقل مُعيّن له. عيّن حقلاً لـ {sentence-audio}.';
+  @override
+  String get card_mined_unmapped_sentence_field =>
+      'تم إنشاء البطاقة، لكن نوع ملاحظة Anki لا يحتوي على حقل مُعيّن للجملة. استخدم الإعدادات -> \'إنشاء رزمة Lapis\' أو عيّن حقلاً لـ {sentence}.';
+  @override
+  String get card_mined_without_sentence_audio =>
+      'تم إنشاء البطاقة بدون صوت الجملة (لم يُعثر على صوت لهذا التحديد).';
+  @override
+  String get card_mining_pending => 'جارٍ إضافة البطاقة…';
+  @override
+  String card_overwritten({required Object deck}) =>
+      'تمت الكتابة فوق البطاقة في『${deck}』.';
+  @override
+  String get change_source => 'تغيير المصدر';
+  @override
+  String get changelog_empty =>
+      'لم يتم العثور على سجل التغييرات. تحقق من إعدادات الشبكة أو الوكيل.';
+  @override
+  String get changelog_open_releases => 'فتح صفحة الإصدارات';
+  @override
+  String get changelog_prerelease => 'إصدار تجريبي';
+  @override
+  String chapter_progress({
+    required Object idx,
+    required Object total,
+    required Object suffix,
+    required Object pct,
+  }) => 'الفصل ${idx} / ${total}${suffix} · ${pct}%';
+  @override
+  String get clear => 'مسح';
+  @override
+  String get clear_dictionary_description =>
+      'سيتم مسح جميع نتائج البحث من السجل. هل أنت متأكد؟';
+  @override
+  String get clear_dictionary_title => 'مسح سجل بحث القاموس';
+  @override
+  String get lookup_block_capture => 'حظر التقاط الشاشة';
+  @override
+  String get lookup_block_capture_hint =>
+      'يستثني نوافذ البحث والحافظة المنبثقة من لقطات الشاشة وتسجيل الشاشة والبث المباشر (Windows). أوقف هذا للسماح بالتقاط النافذة المنبثقة.';
+  @override
+  String get collapse_dictionaries => 'طي القواميس';
+  @override
+  String get collection_bookmark => 'علامة مرجعية';
+  @override
+  String get collection_clear_confirm =>
+      'حذف المجموعات المحددة نهائياً؟ لا يمكن التراجع عن هذا.';
+  @override
+  String get collection_clear_scope => 'نطاق المسح';
+  @override
+  String get collection_collapse => 'طي';
+  @override
+  String collection_continue_progress({required Object n}) =>
+      'متابعة · حلقة ${n}';
+  @override
+  String get collection_empty => 'المجموعة فارغة';
+  @override
+  String get collection_expand => 'توسيع';
+  @override
+  String get collection_export_all_books => 'جميع الكتب';
+  @override
+  String get collection_export_all_mined => 'جميع الجمل المستخرجة';
+  @override
+  String get collection_export_all_words => 'جميع الكلمات المفضلة';
+  @override
+  String get collection_export_dedupe => 'إزالة التكرار حسب الجملة';
+  @override
+  String get collection_export_failed => 'فشل التصدير';
+  @override
+  String get collection_export_favorites_scope => 'الجمل المفضلة';
+  @override
+  String get collection_export_format => 'الصيغة';
+  @override
+  String get collection_export_mined_title => 'Mined Sentences';
+  @override
+  String get collection_export_no_items => 'لا يوجد شيء للتصدير';
+  @override
+  String get collection_export_pick_book => 'اختر كتاباً';
+  @override
+  String get collection_export_save => 'Save Export';
+  @override
+  String get collection_export_saved => 'تم حفظ التصدير';
+  @override
+  String get collection_export_scope => 'نطاق التصدير';
+  @override
+  String get collection_export_sentences_title => 'Favorite Sentences';
+  @override
+  String get collection_export_words_title => 'Favorite Words';
+  @override
+  String get collection_loading_hint =>
+      'جارٍ تحميل المجموعات ومطابقة ملفات الصوت…';
+  @override
+  String get collection_member_removed => 'تمت الإزالة من المجموعة';
+  @override
+  String get collection_merge_title => 'دمج المجموعات';
+  @override
+  String get collection_merged => 'تم دمج المجموعات.';
+  @override
+  String get collection_mined => 'المُنشأة';
+  @override
+  String get collection_open => 'فتح';
+  @override
+  String get collection_play => 'تشغيل';
+  @override
+  String get collection_remove_member => 'إزالة من المجموعة';
+  @override
+  String get collection_remove_member_confirm =>
+      'إزالة هذا العنصر من المجموعة؟ يتم الاحتفاظ بالعنصر نفسه.';
+  @override
+  String get collection_sentence => 'جملة';
+  @override
+  String get collection_sort_by_imported => 'ترتيب حسب تاريخ الاستيراد';
+  @override
+  String get collection_sort_by_title => 'ترتيب حسب الاسم';
+  @override
+  String get collection_view_all => 'عرض الكل';
+  @override
+  String collection_watched_progress({
+    required Object done,
+    required Object total,
+  }) => 'تمت مشاهدة ${done}/${total}';
+  @override
+  String get collection_word => 'كلمة';
+  @override
+  String get collections => 'المجموعات';
+  @override
+  String get color_container => 'حاوية';
+  @override
+  String get color_container_desc => 'خلفية تبديل المسارات وشريط التشغيل';
+  @override
+  String get color_link => 'لون الرابط';
+  @override
+  String get color_link_desc => 'لون الروابط في القارئ';
+  @override
+  String get color_primary => 'أساسي';
+  @override
+  String get color_primary_desc => 'تمييز الصوت، الأزرار، المفاتيح';
+  @override
+  String get color_sentence_audio_highlight => 'تمييز الصوت';
+  @override
+  String get color_sentence_audio_highlight_desc =>
+      'تمييز مزامنة ترجمة الكتاب المسموع';
+  @override
+  String get color_secondary => 'ثانوي';
+  @override
+  String get color_secondary_desc => 'إدخالات القاموس، شارات رف الكتب';
+  @override
+  String get color_tertiary => 'ثالثي';
+  @override
+  String get color_tertiary_desc => 'المجموعات، إحصائيات القراءة';
+  @override
+  String get columns_per_page => 'أعمدة لكل صفحة';
+  @override
+  String get combine_into_series => 'دمج في سلسلة';
+  @override
+  String get copied => 'تم النسخ';
+  @override
+  String get copied_to_clipboard => 'تم النسخ إلى الحافظة.';
+  @override
+  String get copy => 'نسخ';
+  @override
+  String get copy_error => 'نسخ الخطأ';
+  @override
+  String get crash_dump_empty => 'لا توجد تفريغات أعطال';
+  @override
+  String crash_dump_label({required Object n}) => 'تفريغات الأعطال (${n})';
+  @override
+  String get crash_dump_open_folder => 'فتح مجلد التفريغ';
+  @override
+  String get crash_dump_privacy_notice =>
+      'تحتوي تفريغات الأعطال (.dmp) على لقطة من ذاكرة العملية وقد تتضمن نصًا كنت تقرؤه أو كلمات بحثت عنها أو بيانات أخرى داخل التطبيق. شاركها فقط مع مطوّرين تثق بهم.';
+  @override
+  String get crash_dump_share => 'مشاركة التفريغ';
+  @override
+  String get crash_dump_share_subject => 'تفريغ عطل Fushi';
+  @override
+  String get create_series => 'إنشاء سلسلة';
+  @override
+  String get creator_action_add_to_stash => 'إضافة إلى المخزن';
+  @override
+  String get creator_action_copy_to_clipboard => 'نسخ إلى الحافظة';
+  @override
+  String get creator_action_play_audio => 'تشغيل الصوت';
+  @override
+  String get creator_action_share => 'مشاركة';
+  @override
+  String get creator_enhancement_audio_recorder => 'تسجيل صوتي';
+  @override
+  String get creator_enhancement_camera => 'كاميرا';
+  @override
+  String get creator_enhancement_clear_field => 'مسح الحقل';
+  @override
+  String get creator_enhancement_crop_image => 'اقتصاص الصورة';
+  @override
+  String get creator_enhancement_local_audio => 'صوت محلي';
+  @override
+  String get creator_enhancement_open_stash => 'فتح المخزن';
+  @override
+  String get creator_enhancement_pick_audio => 'اختيار صوت';
+  @override
+  String get creator_enhancement_pick_image => 'اختيار صورة';
+  @override
+  String get creator_enhancement_pop_from_stash => 'سحب من المخزن';
+  @override
+  String get creator_enhancement_save_tags => 'حفظ الوسوم';
+  @override
+  String get creator_enhancement_search_dictionary => 'بحث في القاموس';
+  @override
+  String get creator_enhancement_sentence_picker => 'اختيار جملة';
+  @override
+  String get creator_enhancement_text_segmentation => 'تقطيع النص';
+  @override
+  String get creator_export_card => 'إنشاء بطاقة';
+  @override
+  String get creator_field_audio => 'صوت الكلمة';
+  @override
+  String get creator_field_audio_sentence => 'صوت الجملة';
+  @override
+  String get creator_field_cloze_after => 'بعد الفراغ';
+  @override
+  String get creator_field_cloze_before => 'قبل الفراغ';
+  @override
+  String get creator_field_cloze_inside => 'محتوى الفراغ';
+  @override
+  String get creator_field_collapsed_meaning => 'معنى مطوي';
+  @override
+  String get creator_field_context => 'سياق';
+  @override
+  String get creator_field_cue_sentence => 'جملة الترجمة';
+  @override
+  String get creator_field_expanded_meaning => 'معنى موسع';
+  @override
+  String get creator_field_frequency => 'التكرار';
+  @override
+  String get creator_field_furigana => 'فوريغانا';
+  @override
+  String get creator_field_hidden_meaning => 'معنى مخفي';
+  @override
+  String get creator_field_image => 'صورة';
+  @override
+  String get creator_field_meaning => 'المعنى';
+  @override
+  String get creator_field_notes => 'ملاحظات';
+  @override
+  String get creator_field_pitch_accent => 'النبرة';
+  @override
+  String get creator_field_reading => 'القراءة';
+  @override
+  String get creator_field_sentence => 'جملة';
+  @override
+  String get creator_field_tags => 'وسوم';
+  @override
+  String get creator_field_term => 'مصطلح';
+  @override
+  String get custom_dict_css => 'CSS مخصص';
+  @override
+  String get custom_dict_css_global => 'عام (جميع القواميس)';
+  @override
+  String get custom_fonts => 'خطوط مخصصة';
+  @override
+  String get custom_fonts_add_system => 'إضافة خط نظام';
+  @override
+  String get custom_fonts_archive_error => 'فشل استخراج الأرشيف';
+  @override
+  String get custom_fonts_catalog_title => 'مكتبة الخطوط';
+  @override
+  String get custom_fonts_download_failed => 'فشل التنزيل';
+  @override
+  String get custom_fonts_downloading => 'جارٍ التنزيل...';
+  @override
+  String get custom_fonts_drag_hint => 'اسحب لإعادة ترتيب أولوية الخطوط';
+  @override
+  String get custom_fonts_empty => 'لم تتم إضافة خطوط مخصصة';
+  @override
+  String get custom_fonts_font_roles => 'أدوار الخطوط';
+  @override
+  String get custom_fonts_import_file => 'استيراد ملف خط';
+  @override
+  String get custom_fonts_import_url => 'استيراد من URL';
+  @override
+  String custom_fonts_imported_count({required Object count}) =>
+      'تم استيراد ${count} خط';
+  @override
+  String get custom_fonts_manage => 'إدارة الخطوط';
+  @override
+  String get custom_fonts_no_fonts_in_archive =>
+      'لم يتم العثور على ملفات خطوط في الأرشيف';
+  @override
+  String get custom_fonts_recommended => 'خطوط موصى بها';
+  @override
+  String get custom_fonts_removed => 'تمت إزالة الخط';
+  @override
+  String get custom_fonts_search_hint => 'بحث في الخطوط';
+  @override
+  String get custom_theme => 'مظهر مخصص';
+  @override
+  String custom_theme_default_name({required Object n}) => 'مخصص ${n}';
+  @override
+  String get custom_theme_long_press_hint =>
+      'اضغط للتبديل · اضغط مطولاً للتعديل';
+  @override
+  String get custom_theme_name => 'الاسم';
+  @override
+  String get dark_mode => 'الوضع الداكن';
+  @override
+  String get dark_mode_dark => 'داكن';
+  @override
+  String get dark_mode_light => 'فاتح';
+  @override
+  String get dark_mode_system => 'النظام';
+  @override
+  String data_root_unavailable_message({required Object path}) =>
+      'موقع البيانات المُعدّ ${path} غير قابل للوصول مؤقتاً (قد يكون القرص نائماً أو مشغولاً أو مفصولاً). بياناتك آمنة ولم تُمس — لم يُفقد شيء. اضغط إعادة المحاولة عندما يكون القرص جاهزاً لتحميل بياناتك، أو ابدأ بالموقع الافتراضي الآن (بياناتك الحالية لن تُعدّل).';
+  @override
+  String get data_root_unavailable_title => 'موقع البيانات لا يستجيب';
+  @override
+  String get data_root_use_default_button => 'البدء بالموقع الافتراضي';
+  @override
+  String get data_storage_change_button => 'تغيير الموقع';
+  @override
+  String get data_storage_change_confirm_body =>
+      'سينقل Fushi جميع بياناتك إلى المجلد الجديد ثم يُعيد التشغيل. لا تغلق التطبيق أثناء النقل.';
+  @override
+  String get data_storage_change_confirm_title => 'تغيير موقع تخزين البيانات؟';
+  @override
+  String get data_storage_location_default => 'الموقع الافتراضي';
+  @override
+  String get data_storage_location_hint =>
+      'أين يحفظ Fushi مكتبتك والكتب الصوتية وقاعدة البيانات. لسطح المكتب فقط.';
+  @override
+  String get data_storage_location_title => 'موقع تخزين البيانات';
+  @override
+  String data_storage_migrate_failed({required Object message}) =>
+      'تعذر نقل البيانات: ${message}';
+  @override
+  String get data_storage_migrate_failed_restart => 'إعادة التشغيل';
+  @override
+  String get data_storage_migrate_failed_suggestions =>
+      'يرجى المحاولة مجدداً باختيار مجلد فارغ مختلف. لا تختر مجلد تثبيت التطبيق، وتأكد من عدم استخدام أي ملفات في ذلك الموقع.';
+  @override
+  String get data_storage_migrate_failed_title => 'فشل نقل البيانات';
+  @override
+  String data_storage_migrate_overlay_progress({
+    required Object copied,
+    required Object total,
+  }) => 'نسخ الملفات: ${copied} / ${total}';
+  @override
+  String get data_storage_migrate_overlay_title => 'جارٍ نقل بياناتك';
+  @override
+  String get data_storage_migrate_overlay_warning =>
+      'يرجى إبقاء التطبيق مفتوحاً. لا تغلق أو توقف جهازك حتى ينتهي.';
+  @override
+  String get data_storage_migrate_success =>
+      'تم نقل البيانات. جارٍ إعادة التشغيل…';
+  @override
+  String get data_storage_migrating => 'جارٍ نقل البيانات…';
+  @override
+  String get data_storage_reject_install_dir =>
+      'هذا المجلد هو موقع تثبيت التطبيق ولا يمكنه تخزين بياناتك. يرجى اختيار مجلد فارغ مختلف.';
+  @override
+  String get data_storage_restart_failed =>
+      'تم نقل البيانات، لكن إعادة التشغيل التلقائية فشلت. يرجى إعادة فتح Fushi يدوياً.';
+  @override
+  String db_downgrade_message({
+    required Object dbVersion,
+    required Object appVersion,
+  }) =>
+      'أُنشئت قاعدة البيانات هذه بإصدار أحدث من Fushi (المخطط v${dbVersion}). تطبيقك الحالي قديم جدًا (v${appVersion}). تم حظر الفتح لحماية بياناتك. يُرجى تحديث التطبيق والمحاولة مجددًا.';
+  @override
+  String get db_downgrade_title => 'حدّث Fushi';
+  @override
+  String get db_unrecoverable_message =>
+      'تعذر فتح قاعدة البيانات حتى بعد الإصلاح التلقائي. من المحتمل أنها تالفة. يمكنك استعادة نسخة احتياطية من الإعدادات، أو مسح بيانات التطبيق للبدء من جديد.';
+  @override
+  String get db_unrecoverable_title => 'قاعدة البيانات تالفة';
+  @override
+  String get debug_log_share_subject => 'سجل تصحيح Fushi';
+  @override
+  String debug_log_title({required Object count}) => 'سجل التصحيح (${count})';
+  @override
+  String get debug_log_toggle => 'تفعيل سجل التصحيح';
+  @override
+  String get decrease => 'تقليل';
+  @override
+  String get deduplicate_pitch_accents => 'إزالة تكرار النبرات';
+  @override
+  String get delete_collection => 'حذف المجموعة';
+  @override
+  String get delete_collection_also_books => 'حذف الكتب الموجودة فيها أيضاً';
+  @override
+  String get delete_collection_also_videos =>
+      'حذف الفيديوهات أيضاً (يحتفظ بملفات الفيديو الأصلية)';
+  @override
+  String get delete_custom_theme => 'حذف السمة';
+  @override
+  String get delete_custom_theme_confirm =>
+      'حذف هذه السمة المخصصة؟ لا يمكن التراجع عن هذا.';
+  @override
+  String get delete_in_progress => 'جارٍ الحذف';
+  @override
+  String get delete_prompt_delete_selected => 'حذف المحدد';
+  @override
+  String get delete_prompt_message =>
+      'تم حذف هذه العناصر على جهاز آخر. هل تريد حذفها هنا أيضاً؟';
+  @override
+  String get delete_prompt_select_all => 'تحديد الكل';
+  @override
+  String get delete_prompt_title => 'محذوف على جهاز آخر';
+  @override
+  String get delete_scope_keep_local_desc => 'الأجهزة الأخرى تحتفظ بنسختها';
+  @override
+  String get delete_scope_sync_everywhere => 'حذف من جميع الأجهزة';
+  @override
+  String get delete_scope_sync_everywhere_desc =>
+      'الأجهزة الأخرى تؤكد الحذف عند المزامنة التالية';
+  @override
+  String get design_system_auto => 'تلقائي';
+  @override
+  String get design_system_hint => 'يتحكم في النمط المرئي للتطبيق';
+  @override
+  String get design_system_label => 'نظام التصميم';
+  @override
+  String get dialog_add => 'إضافة';
+  @override
+  String get dialog_append => 'إلحاق';
+  @override
+  String get dialog_cancel => 'إلغاء';
+  @override
+  String get dialog_clear => 'مسح';
+  @override
+  String get dialog_clear_all_dictionaries => 'حذف جميع القواميس';
+  @override
+  String get dialog_close => 'إغلاق';
+  @override
+  String get dialog_connect => 'اتصال';
+  @override
+  String get dialog_content_dictionary_clear =>
+      'مسح قاعدة بيانات القواميس سيؤدي أيضاً إلى مسح جميع نتائج البحث من السجل.';
+  @override
+  String get dialog_content_dictionary_delete =>
+      'حذف قاموس واحد قد يستغرق وقتاً أطول من مسح قاعدة البيانات بالكامل. سيتم أيضاً مسح جميع نتائج البحث من السجل.';
+  @override
+  String get dialog_create => 'إنشاء';
+  @override
+  String get dialog_crop => 'اقتصاص';
+  @override
+  String get dialog_delete => 'حذف';
+  @override
+  String get dialog_done => 'تم';
+  @override
+  String get dialog_edit => 'تعديل';
+  @override
+  String get dialog_edit_info => 'تعديل المعلومات';
+  @override
+  String get dialog_exit => 'خروج';
+  @override
+  String get dialog_export => 'تصدير';
+  @override
+  String get dialog_import => 'استيراد';
+  @override
+  String get dialog_import_dictionary => 'استيراد قاموس';
+  @override
+  String get dialog_import_folder => 'استيراد قاموس من مجلد';
+  @override
+  String get dialog_importing => 'جارٍ الاستيراد…';
+  @override
+  String get dialog_launch_ankidroid => 'فتح ANKIDROID';
+  @override
+  String get dialog_ok => 'موافق';
+  @override
+  String get dialog_play => 'تشغيل';
+  @override
+  String get dialog_read => 'قراءة';
+  @override
+  String get dialog_record => 'تسجيل';
+  @override
+  String get dialog_replace => 'استبدال';
+  @override
+  String get dialog_save => 'حفظ';
+  @override
+  String get dialog_search => 'بحث';
+  @override
+  String get dialog_select => 'اختيار';
+  @override
+  String get dialog_share => 'مشاركة';
+  @override
+  String get dialog_stash => 'تخزين';
+  @override
+  String get dialog_stop => 'إيقاف';
+  @override
+  String get dialog_title_dictionary_clear => 'مسح جميع القواميس؟';
+  @override
+  String dialog_title_dictionary_delete({required Object name}) =>
+      'حذف『${name}』؟';
+  @override
+  String get dict_auto_update => 'التحديث تلقائيًا';
+  @override
+  String get dict_auto_update_hint =>
+      'التحقق من تحديثات القواميس عند بدء التشغيل';
+  @override
+  String dict_auto_update_last({required Object time}) =>
+      'آخر تحقق ناجح: ${time}';
+  @override
+  String get dict_auto_update_never => 'أبدًا';
+  @override
+  String get dict_category_frequency => 'التكرار';
+  @override
+  String get dict_category_grammar => 'القواعد';
+  @override
+  String get dict_category_ja_en => 'ياباني–إنجليزي';
+  @override
+  String get dict_category_ja_ja => 'ياباني–ياباني';
+  @override
+  String get dict_category_ja_other => 'يابانية أخرى';
+  @override
+  String get dict_category_kanji => 'كانجي';
+  @override
+  String get dict_category_names => 'أسماء';
+  @override
+  String get dict_category_supplementary => 'تكميلي';
+  @override
+  String get dict_download_browse => 'تنزيل القواميس';
+  @override
+  String dict_download_button({required Object count}) => 'تنزيل (${count})';
+  @override
+  String get dict_download_complete => 'اكتمل التنزيل.';
+  @override
+  String dict_download_failed({required Object error}) =>
+      'فشل التنزيل: ${error}';
+  @override
+  String get dict_download_installed => 'مثبّت';
+  @override
+  String get dict_download_language => 'لغتك';
+  @override
+  String dict_download_partial({
+    required Object success,
+    required Object total,
+    required Object error,
+  }) => '${success} / ${total} ناجح. فشل: ${error}';
+  @override
+  String get dict_download_select_title => 'اختيار القواميس';
+  @override
+  String dict_downloading({required Object name}) => 'جارٍ تنزيل ${name}…';
+  @override
+  String dict_import_failed_summary({required Object n}) =>
+      'فشل استيراد ${n} قاموس';
+  @override
+  String get dict_import_started => 'جارٍ استيراد القواميس في الخلفية...';
+  @override
+  String dict_import_success_summary({required Object n}) =>
+      'تم استيراد ${n} قاموس';
+  @override
+  String get dict_update_check => 'التحقق من التحديثات';
+  @override
+  String get dict_update_checking => 'جارٍ التحقق من التحديثات…';
+  @override
+  String dict_update_done({required Object name}) => 'تم تحديث ${name}.';
+  @override
+  String dict_update_failed({required Object error}) => 'فشل التحديث: ${error}';
+  @override
+  String get dict_update_interval_daily => 'يوميًا';
+  @override
+  String get dict_update_interval_monthly => 'شهريًا';
+  @override
+  String get dict_update_interval_weekly => 'أسبوعيًا';
+  @override
+  String get dict_update_latest => 'محدّث بالفعل.';
+  @override
+  String dict_update_name_mismatch_body({
+    required Object incoming,
+    required Object existing,
+  }) =>
+      'الملف المحدد هو "${incoming}"، لكنك تُحدّث "${existing}". هل تريد الاستبدال على أي حال؟';
+  @override
+  String get dict_update_name_mismatch_title => 'الأسماء غير متطابقة';
+  @override
+  String get dict_update_none => 'جميع القواميس محدّثة.';
+  @override
+  String dict_update_summary({
+    required Object updated,
+    required Object current,
+    required Object failed,
+  }) => '${updated} محدّث، ${current} محدّث بالفعل، ${failed} فشل.';
+  @override
+  String get dict_update_tooltip => 'تحديث القاموس';
+  @override
+  String dict_update_updating({required Object name}) => 'جارٍ تحديث ${name}…';
+  @override
+  String get dictionaries => 'القواميس';
+  @override
+  String get dictionaries_delete_failed => 'فشل حذف القواميس';
+  @override
+  String get dictionaries_deleting_data => 'جارٍ حذف بيانات القاموس...';
+  @override
+  String get dictionaries_menu_empty => 'استورد قاموساً للاستخدام';
+  @override
+  String get dictionary_delete_failed => 'فشل حذف القاموس';
+  @override
+  String get dictionary_font_size => 'حجم خط القاموس';
+  @override
+  String get dictionary_font_size_zoom_hint =>
+      'Ctrl + عجلة التمرير لتكبير محتوى النافذة المنبثقة';
+  @override
+  String get dictionary_section_frequency => 'قواميس التكرار';
+  @override
+  String get dictionary_section_kanji => 'قواميس الكانجي';
+  @override
+  String get dictionary_section_pitch => 'قواميس النبرة';
+  @override
+  String get dictionary_section_term => 'قواميس المعاني';
+  @override
+  String get dictionary_settings => 'إعدادات القاموس';
+  @override
+  String get dictionary_type_frequency => 'تكرار';
+  @override
+  String get dictionary_type_pitch => 'نبرة';
+  @override
+  String get dictionary_type_term => 'معاني';
+  @override
+  String get dictionary_unrecognized_format => 'صيغة قاموس غير معروفة';
+  @override
+  String get dismiss_swipe_sensitivity => 'حساسية السحب للإغلاق';
+  @override
+  String get display_settings => 'إعدادات الطباعة';
+  @override
+  String get download_backend_not_configured =>
+      'لم يتم تكوين خلفية التحميل بعد.';
+  @override
+  String get download_clear_finished => 'مسح المنتهية';
+  @override
+  String get download_detail_backend_offline =>
+      'خلفية التحميل الأصلية غير متصلة. يتم عرض معلومات المهمة المحفوظة؛ المعلمات المباشرة غير متاحة.';
+  @override
+  String get download_open_settings => 'فتح الإعدادات';
+  @override
+  String get download_save_root_change => 'تغيير المجلد';
+  @override
+  String get download_save_root_create_failed =>
+      'تعذر إنشاء هذا المجلد. تحقق من القرص والأذونات.';
+  @override
+  String get download_save_root_fallback_warning =>
+      'مجلد التحميل المُعدّ غير متاح، لذا يتم استخدام المجلد الافتراضي.';
+  @override
+  String get download_save_root_hint =>
+      'يتم حفظ التحميلات الجديدة هنا. المهام الحالية تحتفظ بمجلدها الأصلي.';
+  @override
+  String get download_save_root_not_absolute => 'يرجى اختيار مسار مجلد مطلق.';
+  @override
+  String get download_save_root_not_writable => 'هذا المجلد غير قابل للكتابة.';
+  @override
+  String get download_save_root_reset => 'استعادة الافتراضي';
+  @override
+  String get download_save_root_title => 'مجلد التحميل';
+  @override
+  String get download_settings => 'إعدادات التحميل';
+  @override
+  String get download_status_cancelled => 'ملغى';
+  @override
+  String get download_status_queued => 'في قائمة الانتظار';
+  @override
+  String download_subscription_after_episode({required Object episode}) =>
+      'بعد الحلقة ${episode}';
+  @override
+  String get download_subscription_check_all => 'فحص الكل';
+  @override
+  String get download_subscription_check_now => 'فحص الآن';
+  @override
+  String download_subscription_choice_hint({
+    required Object group,
+    required Object resolution,
+  }) =>
+      'متابعة ${group} · ${resolution}. سيتم وضع الإصدارات الجديدة أحادية الحلقة في قائمة الانتظار.';
+  @override
+  String get download_subscription_created =>
+      'تم وضع التحميل في قائمة الانتظار وإنشاء الاشتراك';
+  @override
+  String get download_subscription_delete => 'حذف الاشتراك';
+  @override
+  String download_subscription_delete_confirm({required Object title}) =>
+      'حذف اشتراك ${title}؟ مهام التحميل يتم الاحتفاظ بها.';
+  @override
+  String get download_subscription_download_and_create => 'تحميل واشتراك';
+  @override
+  String get download_subscription_empty_body =>
+      'في الاكتشاف، اختر إصداراً أحادي الحلقة واستخدم تحميل واشتراك.';
+  @override
+  String get download_subscription_empty_title => 'لا توجد اشتراكات بعد';
+  @override
+  String download_subscription_last_checked({required Object time}) =>
+      'آخر فحص: ${time}';
+  @override
+  String download_subscription_latest_episode({required Object episode}) =>
+      'آخر حلقة في القائمة: الحلقة ${episode}';
+  @override
+  String get download_subscription_never_checked => 'لم يتم الفحص مطلقاً';
+  @override
+  String get download_subscription_running_hint =>
+      'يفحص Fushi الاشتراكات المُفعّلة كل 15 دقيقة أثناء تشغيل التطبيق.';
+  @override
+  String get download_subscription_unavailable_hint =>
+      'اختر إصداراً أحادي الحلقة مع مجموعة إصدار يمكن التعرف عليها للاشتراك.';
+  @override
+  String get download_subscriptions_tab => 'الاشتراكات';
+  @override
+  String download_task_action_failed({required Object error}) =>
+      'فشل إجراء المهمة: ${error}';
+  @override
+  String get download_task_delete => 'حذف المهمة';
+  @override
+  String download_task_delete_confirm({required Object title}) =>
+      'حذف مهمة تحميل ${title}؟';
+  @override
+  String get download_task_delete_files => 'حذف الملفات المحمّلة أيضاً';
+  @override
+  String get download_task_details => 'عرض التفاصيل';
+  @override
+  String get download_tasks_tab => 'المهام';
+  @override
+  String get download_test_connection => 'اختبار الاتصال';
+  @override
+  String get download_test_connection_failed =>
+      'فشل الاتصال. تحقق من العنوان وبيانات الاعتماد.';
+  @override
+  String download_test_connection_ok({required Object version}) =>
+      'متصل (الإصدار: ${version})';
+  @override
+  String get drag_drop_need_card_target =>
+      'أفلت الترجمات أو الصوت على كتاب أو فيديو';
+  @override
+  String get drag_drop_unsupported_on_books =>
+      'أفلت ملفات الكتب هنا. بدّل إلى الفيديو أو القواميس لتلك الملفات.';
+  @override
+  String get drag_drop_unsupported_on_dictionary =>
+      'أفلت ملفات قواميس .zip أو .dsl أو .mdx هنا. تعمل ملفات CSS فقط مع حزمة قاموس.';
+  @override
+  String get drag_drop_unsupported_on_video =>
+      'أفلت الفيديوهات أو قوائم التشغيل أو الترجمات هنا. بدّل إلى الكتب أو القواميس لتلك الملفات.';
+  @override
+  String get edit_custom_theme => 'تعديل السمة المخصصة';
+  @override
+  String get eink_mode => 'وضع الحبر الإلكتروني';
+  @override
+  String get eink_mode_hint =>
+      'سمة بالأبيض والأسود بدون رسوم متحركة وتمييز خطي، لشاشات الحبر الإلكتروني';
+  @override
+  String get enable_swipe_to_close => 'السحب لإغلاق النافذة المنبثقة';
+  @override
+  String get epub_delete_error => 'فشل حذف الكتاب';
+  @override
+  String get epub_delete_title => 'حذف الكتاب';
+  @override
+  String get epub_parse_fallback => 'تم إصلاح بيانات الكتاب من قاعدة البيانات';
+  @override
+  String get error_ankidroid_api => 'خطأ في AnkiDroid';
+  @override
+  String get error_ankidroid_api_content =>
+      'حدث خطأ في التواصل مع AnkiDroid.\n\nتأكد من أن خدمة AnkiDroid الخلفية نشطة وتم منح جميع الأذونات المطلوبة.';
+  @override
+  String get error_copied => 'تم نسخ الخطأ إلى الحافظة';
+  @override
+  String get error_load_failed => 'حدث خطأ أثناء التحميل';
+  @override
+  String get error_log_diagnostics_section =>
+      'التشخيصات / التحقيقات (ليست أخطاء تطبيق)';
+  @override
+  String get error_log_empty => 'لا توجد سجلات أخطاء';
+  @override
+  String error_log_label({required Object n}) => 'سجل الأخطاء (${n})';
+  @override
+  String get error_log_previous_run => 'سجلات سابقة (قبل التشغيل الأخير)';
+  @override
+  String get error_log_share_subject => 'سجل أخطاء Fushi';
+  @override
+  String get extension_popup_independent_size => 'حجم منفصل لإضافة المتصفح';
+  @override
+  String get extension_popup_independent_size_hint =>
+      'أعطِ النافذة المنبثقة لبحث إضافة المتصفح حجمها الأقصى الخاص بدلاً من اتباع النافذة المنبثقة داخل التطبيق';
+  @override
+  String get extension_popup_max_height => 'الارتفاع الأقصى لنافذة الإضافة';
+  @override
+  String get extension_popup_max_width => 'العرض الأقصى لنافذة الإضافة';
+  @override
+  String get external_window_capture_failed => 'فشل التقاط النافذة';
+  @override
+  String get external_window_current_game => 'اللعبة الحالية';
+  @override
+  String get external_window_mining => 'استخراج من نافذة خارجية';
+  @override
+  String get external_window_no_windows =>
+      'لم يتم العثور على نوافذ قابلة للالتقاط';
+  @override
+  String get external_window_none => 'لا توجد نافذة مرتبطة (اضغط للاختيار)';
+  @override
+  String get external_window_refresh => 'تحديث قائمة النوافذ';
+  @override
+  String get external_window_select => 'اختر النافذة المستهدفة';
+  @override
+  String get external_window_unbind => 'إلغاء ربط النافذة';
+  @override
+  String get external_window_unsupported =>
+      'استخراج النافذة الخارجية متاح على Windows فقط';
+  @override
+  String get failed_online_service => 'فشل التواصل مع الخدمة عبر الإنترنت';
+  @override
+  String get favorite_added => 'تم حفظ الجملة في المفضّلات';
+  @override
+  String get favorite_removed => 'تمت إزالة الجملة من المفضلة';
+  @override
+  String favorites({required Object n}) => 'المفضّلات (${n})';
+  @override
+  String field_fallback_used({
+    required Object field,
+    required Object secondField,
+  }) => 'استخدم حقل ${field} حقل ${secondField} كمصطلح بحث بديل.';
+  @override
+  String file_count({required Object count}) => '${count} ملفات';
+  @override
+  String get floating_dict_close => 'إغلاق';
+  @override
+  String get floating_dict_title => 'القاموس';
+  @override
+  String get floating_lyric_bg_opacity => 'تعتيم خلفية الترجمة العائمة';
+  @override
+  String get floating_lyric_button_bg_opacity =>
+      'تعتيم خلفية زر الترجمة العائمة';
+  @override
+  String get floating_lyric_click_lookup => 'انقر الترجمة العائمة للبحث';
+  @override
+  String get floating_lyric_click_lookup_hint =>
+      'أبقِ هذا مفعّلًا مع قفل الموضع إن كنت لا تزال تريد البحث عن الكلمات.';
+  @override
+  String get floating_lyric_close => 'إغلاق';
+  @override
+  String get floating_lyric_context_lines => 'أسطر سياق الترجمة العائمة';
+  @override
+  String get floating_lyric_context_lines_hint =>
+      '0 يعرض السطر الحالي فقط (سطر واحد، بدون تغيير)؛ عيّن 1-3 لعرض هذا العدد من الأسطر قبله وبعده';
+  @override
+  String get floating_lyric_corner_radius => 'نصف قطر زوايا الترجمة العائمة';
+  @override
+  String get floating_lyric_corner_radius_hint =>
+      '0 يحتفظ بالزوايا الافتراضية لكل منصة؛ ارفعه لتدوير الشريط والأزرار أكثر';
+  @override
+  String get floating_lyric_font_size => 'حجم خط الترجمة العائمة';
+  @override
+  String get floating_lyric_hint => 'عرض الجملة الحالية فوق التطبيقات الأخرى.';
+  @override
+  String get floating_lyric_lock => 'قفل';
+  @override
+  String get floating_lyric_next => 'التالي';
+  @override
+  String get floating_lyric_no_audio => 'هذا الكتاب لا يحتوي على صوت للاستماع';
+  @override
+  String get floating_lyric_permission_hint =>
+      'يلزم إذن العرض فوق التطبيقات لعرض الترجمة العائمة.';
+  @override
+  String get floating_lyric_permission_hint_coloros =>
+      'إذا استمر النظام في رفض إذن التراكب: أعد تثبيت ملف APK هذا التطبيق مرة واحدة عبر مدير الملفات، أو أوقف مراقبة الأذونات في خيارات المطور، ثم حاول مجدداً.';
+  @override
+  String get floating_lyric_play_pause => 'تشغيل';
+  @override
+  String get floating_lyric_previous => 'السابق';
+  @override
+  String get floating_lyric_text_opacity => 'تعتيم نص الترجمة العائمة';
+  @override
+  String get floating_lyric_toggle_action => 'ترجمة عائمة';
+  @override
+  String get floating_lyric_unavailable_hint =>
+      'تعذّر عرض نافذة الترجمة العائمة.';
+  @override
+  String get floating_lyric_unlock => 'فتح القفل';
+  @override
+  String get floating_lyric_width => 'عرض الترجمة العائمة';
+  @override
+  String get floating_lyric_width_hint =>
+      '0 يستخدم العرض الافتراضي للمنصة؛ عيّن قيمة لجعل الشريط بعرض ثابت';
+  @override
+  String get focus_navigation_enabled =>
+      'تنقّل التركيز بلوحة المفاتيح ووحدة التحكم';
+  @override
+  String get focus_navigation_enabled_hint =>
+      'حرّك التركيز بمفاتيح الأسهم أو وحدة التحكم واعرض حلقة تركيز.';
+  @override
+  String get folder_picker_permission_required =>
+      'يلزم إذن التخزين لتصفح المجلدات';
+  @override
+  String get follow_audio_off_tooltip => 'تتبع الصوت: معطّل';
+  @override
+  String get follow_audio_on_tooltip => 'تتبع الصوت: مفعّل';
+  @override
+  String get font_color => 'لون الخط';
+  @override
+  String get font_color_desc => 'لون نص القارئ';
+  @override
+  String get font_desc_hina_mincho =>
+      'مينتشو زخرفي ناعم · يُنصح مع Noto Sans JP';
+  @override
+  String get font_desc_klee_one =>
+      'خط يدوي · واضح وسهل القراءة · يُنصح باستخدامه مع Noto Sans JP';
+  @override
+  String get font_desc_mplus_rounded_1c =>
+      'أسلوب مستدير لطيف · مثالي للروايات الخفيفة · يُنصح مع Noto Sans JP';
+  @override
+  String get font_desc_noto_sans_jp =>
+      'Google/Adobe Gothic · أولوية الحروف اليابانية · وزن متغير';
+  @override
+  String get font_desc_noto_sans_sc =>
+      'Google/Adobe Gothic · أولوية الصينية المبسطة · للاستخدام كبديل';
+  @override
+  String get font_desc_noto_sans_tc =>
+      'Google/Adobe Gothic · أولوية الصينية التقليدية';
+  @override
+  String get font_desc_noto_serif_jp =>
+      'Google/Adobe Serif · أولوية الحروف اليابانية · مثالي للقراءة العمودية';
+  @override
+  String get font_desc_noto_serif_sc =>
+      'Google/Adobe Serif · أولوية الصينية المبسطة · للاستخدام كبديل';
+  @override
+  String get font_desc_noto_serif_tc =>
+      'خط مع سيريف من Google/Adobe · أولوية للحروف الصينية التقليدية · مثالي للقراءة العمودية';
+  @override
+  String get font_desc_shippori_mincho =>
+      'خط مينتشو أنيق · مناسب للأدب · يُنصح مع Noto Sans JP';
+  @override
+  String get font_desc_zen_kaku_gothic_new =>
+      'Kaku Gothic حديث · قراءة عامة · يُنصح مع Noto Sans JP';
+  @override
+  String get font_desc_zen_maru_gothic =>
+      'Gothic مستدير ناعم · يُنصح مع Noto Sans JP';
+  @override
+  String get font_desc_zen_old_mincho =>
+      'خط مينتشو كلاسيكي · أسلوب أدبي تقليدي · يُنصح مع Noto Sans JP';
+  @override
+  String get font_source_file => 'ملف';
+  @override
+  String get font_source_system => 'نظام';
+  @override
+  String get font_target_app_ui => 'خط واجهة النظام';
+  @override
+  String get font_target_body => 'خط نص الرواية';
+  @override
+  String get font_target_dictionary => 'خط القاموس';
+  @override
+  String get font_target_video_subtitle => 'Video Subtitle Font';
+  @override
+  String get gal_hook_text_font_size => 'حجم خط نص Galgame';
+  @override
+  String get gal_hook_text_font_size_hint =>
+      'اسحب زاوية النافذة العائمة لتغيير حجمها؛ يُضبط حجم النص هنا.';
+  @override
+  String get game_add => 'إضافة لعبة';
+  @override
+  String get game_already_added => 'هذه اللعبة موجودة بالفعل في المكتبة';
+  @override
+  String get game_audio_backend_engine => 'PCM المحرك';
+  @override
+  String get game_audio_backend_loopback => 'استرجاع صوت النظام (مدمج)';
+  @override
+  String get game_audio_backend_none => 'لا يوجد مصدر صوتي';
+  @override
+  String get game_audio_backend_resource => 'صوت موارد اللعبة';
+  @override
+  String get game_audio_duration => 'مدة الصوت';
+  @override
+  String get game_audio_fallback_disabled_missing =>
+      '未找到与该句匹配的游戏资源音频；已关闭降级，未制卡';
+  @override
+  String get game_audio_resource_id => '音频资源 ID';
+  @override
+  String get game_audio_tracks => 'المسارات الصوتية النشطة';
+  @override
+  String get game_auto_cover => 'جلب الغلاف تلقائيًا';
+  @override
+  String get game_back_to_capture => 'العودة إلى مساحة الالتقاط';
+  @override
+  String get game_back_to_library => 'العودة إلى مكتبة الألعاب';
+  @override
+  String get game_capture_active => 'الالتقاط نشط';
+  @override
+  String get game_capture_degraded_loopback =>
+      'اللعبة تعمل، لكن حقن المحرك فشل؛ تم التراجع إلى صوت النظام، الذي قد يخلط الموسيقى والمؤثرات.';
+  @override
+  String get game_capture_description =>
+      'شغّل لعبة أو اربطها، ثم راقب النص والصوت ولقطات الشاشة ومخرجات Anki.';
+  @override
+  String get game_capture_empty_body =>
+      'شغّل لعبة أو اربطها؛ ستظهر حالة النص والصوت هنا.';
+  @override
+  String get game_capture_empty_title => 'لم يتم استلام أي سطر بعد';
+  @override
+  String get game_capture_launch_failed => 'فشل تشغيل اللعبة أو الالتقاط';
+  @override
+  String get game_capture_launching => 'جارٍ تشغيل اللعبة وبدء الالتقاط...';
+  @override
+  String get game_capture_running => 'جلسة الالتقاط قيد التشغيل';
+  @override
+  String get game_capture_window_missing =>
+      'بدأت عملية اللعبة لكن نافذتها لم تظهر، قد تكون اللعبة لم تُشغَّل. حاول مرة أخرى.';
+  @override
+  String get game_capture_workbench => 'مساحة الالتقاط';
+  @override
+  String get game_captured_lines => 'الأسطر الملتقطة';
+  @override
+  String get game_card_mapping_missing =>
+      'تعيينات حقول Anki تفتقر إلى رموز بطاقة اللعبة';
+  @override
+  String get game_card_sentence_audio_missing =>
+      'تم إنشاء البطاقة بدون صوت الجملة؛ لم يتم استبدال صوت سطر آخر.';
+  @override
+  String get game_clear_events => 'مسح الأحداث';
+  @override
+  String get game_cover_not_found =>
+      'لم يُعثر على غلاف قابل للاستخدام في مجلد اللعبة أو ملفها التنفيذي';
+  @override
+  String get game_cover_searching => 'جارٍ البحث عن غلاف...';
+  @override
+  String get game_cover_updated => 'تم تحديث الغلاف';
+  @override
+  String get game_dashboard => 'الرئيسية';
+  @override
+  String get game_detail_missing => 'هذه اللعبة لم تعد في المكتبة';
+  @override
+  String get game_detail_tab_edit => 'تعديل';
+  @override
+  String get game_detail_tab_stats => 'إحصائيات';
+  @override
+  String get game_detail_tab_summary => 'نظرة عامة';
+  @override
+  String get game_diagnostics => 'تشخيص التوافق';
+  @override
+  String get game_diagnostics_subtitle =>
+      'مراحل الجلسة ونقاط الاتصال والمسارات الصوتية والأحداث المنظمة';
+  @override
+  String game_drop_imported({required Object count}) =>
+      'تمت إضافة ${count} لعبة(ألعاب)';
+  @override
+  String get game_drop_no_exe =>
+      'لا يوجد ملف .exe جديد للعبة بين الملفات المسقطة';
+  @override
+  String get game_edit_developer => 'المطور';
+  @override
+  String get game_edit_display_name => 'اسم العرض';
+  @override
+  String get game_edit_exe_path => 'مسار الملف التنفيذي';
+  @override
+  String get game_edit_invalid_date =>
+      'يجب أن يكون تاريخ الإصدار بصيغة YYYY-MM-DD';
+  @override
+  String get game_edit_launch_args => 'وسائط التشغيل';
+  @override
+  String get game_edit_launch_args_hint =>
+      'تُمرر إلى اللعبة عند التشغيل، مثل -windowed';
+  @override
+  String get game_edit_nsfw => 'محتوى للبالغين';
+  @override
+  String get game_edit_release_date => 'تاريخ الإصدار (YYYY-MM-DD)';
+  @override
+  String get game_edit_save => 'حفظ';
+  @override
+  String get game_edit_saved => 'تم الحفظ';
+  @override
+  String get game_edit_summary => 'الوصف';
+  @override
+  String get game_edit_tags => 'الوسوم (مفصولة بفواصل)';
+  @override
+  String get game_edit_user_rating => 'تقييمي (0-10)';
+  @override
+  String get game_edit_user_review => 'مراجعتي';
+  @override
+  String get game_edit_workdir => 'مجلد العمل';
+  @override
+  String get game_empty => 'لم تُضَف أي ألعاب بعد';
+  @override
+  String get game_endpoint_phase_connected => 'متصل';
+  @override
+  String get game_endpoint_phase_connecting => 'جارٍ الاتصال';
+  @override
+  String get game_endpoint_phase_retrying => 'جارٍ إعادة المحاولة';
+  @override
+  String get game_endpoint_phase_stopped => 'متوقف';
+  @override
+  String get game_endpoints_engine_active =>
+      'يتم توفير النص من خطاف المحرك؛ نقاط الاتصال هذه اختيارية';
+  @override
+  String get game_endpoints_hint =>
+      'منافذ لأدوات النص الخارجية (Textractor / LunaTranslator إلخ)؛ تجاهلها إن لم تستخدمها';
+  @override
+  String get game_event_all => 'جميع الأحداث';
+  @override
+  String get game_event_warnings => 'التحذيرات والأخطاء';
+  @override
+  String get game_exe_missing => 'لم يُعثر على الملف التنفيذي للعبة';
+  @override
+  String get game_filter => 'تصفية';
+  @override
+  String get game_filter_all => 'الكل';
+  @override
+  String get game_filter_favorited => 'المفضلة';
+  @override
+  String get game_filter_hide_nsfw => 'إخفاء محتوى البالغين';
+  @override
+  String get game_filter_local_only => 'يوجد ملف محلي';
+  @override
+  String get game_filter_metadata_only => 'بيانات وصفية فقط';
+  @override
+  String get game_filter_mined => 'تم التنقيب';
+  @override
+  String get game_filter_reset => 'مسح التصفيات';
+  @override
+  String get game_filter_source => 'التوفر';
+  @override
+  String get game_filter_status => 'حالة اللعب';
+  @override
+  String get game_filter_tags => 'الوسوم';
+  @override
+  String get game_filter_with_audio => 'مع صوت';
+  @override
+  String get game_focus_continue => 'متابعة';
+  @override
+  String get game_follow_live => 'متابعة مباشرة';
+  @override
+  String get game_health => 'حالة الصحة';
+  @override
+  String get game_health_anki => 'مخرجات Anki';
+  @override
+  String get game_health_audio => 'مصدر الصوت';
+  @override
+  String get game_health_helper => 'مساعد الخطاف';
+  @override
+  String get game_health_process => 'عملية اللعبة';
+  @override
+  String get game_health_text => 'مصدر النص';
+  @override
+  String get game_health_upscaling => 'تحسين دقة النافذة';
+  @override
+  String get game_health_window => 'نافذة اللعبة';
+  @override
+  String get game_helper_download => 'تحميل';
+  @override
+  String game_helper_download_failed({required Object error}) =>
+      'فشل تحميل مكون المحرك: ${error}';
+  @override
+  String get game_helper_downloading => 'جارٍ تحميل مكون المحرك…';
+  @override
+  String get game_helper_install_incomplete =>
+      'اكتمال تثبيت مكون المحرك غير كامل، يرجى إعادة المحاولة';
+  @override
+  String game_helper_needed_body({required Object size}) =>
+      'يتطلب تشغيل Galgame مكون حاقن خطاف المحرك (حوالي ${size}). يحتوي على كود حقن العمليات ويُوزع بشكل منفصل عن التطبيق لتجنب إنذارات مضاد الفيروسات الكاذبة. هل تريد تحميله الآن؟';
+  @override
+  String get game_helper_needed_title => 'مكون محرك Galgame مطلوب';
+  @override
+  String get game_helper_size_unknown => 'حجم غير معروف';
+  @override
+  String get game_helper_verification_failed =>
+      'تم حظر مكون المحرك: لا يمكن التحقق من المجموع الاختباري (ملف .sha256 من GitHub غير قابل للوصول أو مفقود أو غير مطابق). يرفض Fushi تثبيت كود حاقن غير موثق.';
+  @override
+  String get game_home_subtitle => 'مكتبة الألعاب ومراقبة الالتقاط';
+  @override
+  String get game_hook_fallback_all_audio_sources_failed =>
+      'لم يتمكن خطاف صوت المحرك ولا استرجاع صوت النظام من البدء؛ لا يمكن التقاط أي صوت.';
+  @override
+  String get game_hook_fallback_engine_attach_failed =>
+      'فشل ربط خطاف صوت المحرك باللعبة قيد التشغيل؛ يتم استخدام مزيج النظام بدلاً من ذلك.';
+  @override
+  String get game_hook_fallback_engine_pcm_unavailable =>
+      'خطاف صوت المحرك مثبت، لكن اللعبة لم تشغل أي صوت بعد. يتم استخدام مزيج النظام حاليًا وسيعود تلقائيًا عند وصول أول صوت.';
+  @override
+  String get game_hook_fallback_launch_injection_failed =>
+      'اللعبة تعمل، لكن حقن المحرك المبكر فشل؛ يتم استخدام مزيج النظام بدلاً من ذلك.';
+  @override
+  String get game_hook_fallback_window_not_found =>
+      'التقاط الصوت يعمل، لكن نافذة اللعبة لم تظهر بعد، لذا لقطات الشاشة غير متاحة. سيتم الربط تلقائيًا عند ظهور النافذة.';
+  @override
+  String get game_hook_line_unavailable => 'هذا السطر الملتقط لم يعد متاحًا.';
+  @override
+  String get game_hook_reason_access_denied =>
+      'اللعبة تعمل بصلاحيات أعلى؛ شغّل Fushi كمسؤول وحاول مرة أخرى.';
+  @override
+  String get game_hook_reason_bitness_mismatch =>
+      'بنية المساعد لا تتطابق مع اللعبة (32 بت مقابل 64 بت)؛ أعد تثبيت المساعد.';
+  @override
+  String get game_hook_reason_create_process_failed =>
+      'لم يتمكن من تشغيل اللعبة من Fushi؛ تحقق من مسار الملف التنفيذي.';
+  @override
+  String get game_hook_reason_elevation_required =>
+      'هذه اللعبة تتطلب صلاحيات المسؤول؛ شغّل Fushi كمسؤول وأعد تشغيلها.';
+  @override
+  String get game_hook_reason_game_exe_missing =>
+      'الملف التنفيذي للعبة لم يعد موجودًا في المسار المحفوظ.';
+  @override
+  String get game_hook_reason_guarded_hook_failed =>
+      'لم يتمكن خطاف محمي بالملف الشخصي من التثبيت في الوقت المحدد؛ جارٍ إعادة المحاولة تلقائيًا.';
+  @override
+  String get game_hook_reason_handshake_timeout =>
+      'تم ربط اللعبة لكنها لم تنتج نصًا أو صوتًا في الوقت المحدد؛ قد لا يكون هذا المحرك مدعومًا بعد.';
+  @override
+  String get game_hook_reason_helper_missing =>
+      'مساعد خطاف الصوت غير مثبت لبنية هذه اللعبة؛ ثبّته وحاول مرة أخرى.';
+  @override
+  String get game_hook_reason_hook_dll_missing =>
+      'حزمة المساعد غير مكتملة (مكتبة الخطاف مفقودة)؛ أعد تثبيتها.';
+  @override
+  String get game_hook_reason_injection_failed =>
+      'تم حظر الحقن في اللعبة؛ أضف Fushi واللعبة إلى استثناءات مضاد الفيروسات.';
+  @override
+  String get game_hook_reason_ready_timeout =>
+      'لم تنتهِ مكتبة الخطاف من التحميل في الوقت المحدد؛ قد يتسبب فحص مضاد الفيروسات في ذلك.';
+  @override
+  String get game_hook_reason_resume_failed =>
+      'لم يتمكن من استئناف اللعبة المشغلة وتم إيقافها؛ أعد تشغيلها.';
+  @override
+  String get game_hook_reason_shared_memory_unavailable =>
+      'لم يتمكن من فتح قناة الالتقاط؛ أعد تشغيل Fushi.';
+  @override
+  String get game_hook_reason_spawn_failed =>
+      'لم يتمكن من تشغيل المساعد؛ تحقق من أن مضاد الفيروسات لم يحذفه أو يحظره.';
+  @override
+  String get game_hook_reason_resident_hook_mismatch =>
+      'جلسة التقاط سابقة لا تزال محملة في اللعبة؛ أعد تشغيل اللعبة مرة واحدة.';
+  @override
+  String get game_hook_reason_steam_timeout =>
+      'قبلت Steam طلب التشغيل لكن عملية اللعبة لم تظهر.';
+  @override
+  String get game_hook_reason_target_missing =>
+      'لم يتم تحديد عملية لعبة أو ملف تنفيذي للالتقاط.';
+  @override
+  String get game_hook_recapture_empty =>
+      'لم يتم التقاط أي صوت في نافذة إعادة الالتقاط';
+  @override
+  String get game_hook_recapture_saved =>
+      'تم حفظ الصوت المعاد التقاطه لهذا السطر';
+  @override
+  String get game_hook_recapture_started =>
+      'جارٍ التسجيل — أعد تشغيل هذا السطر في اللعبة';
+  @override
+  String get game_hook_recapture_unavailable =>
+      'إعادة التقاط الصوت تحتاج إلى استرجاع صوت النظام';
+  @override
+  String get game_kpi_total_games => 'ألعاب';
+  @override
+  String get game_kpi_week => 'هذا الأسبوع';
+  @override
+  String get game_latest_line => 'آخر سطر';
+  @override
+  String get game_launch => 'تشغيل';
+  @override
+  String get game_launch_and_capture => 'تشغيل والتقاط';
+  @override
+  String get game_launch_unsupported => 'تشغيل الألعاب مدعوم فقط على Windows';
+  @override
+  String get game_library => 'مكتبة الألعاب';
+  @override
+  String get game_line_audio_encoded => 'تم استخراج الصوت';
+  @override
+  String get game_line_audio_fallback => 'بديل';
+  @override
+  String get game_line_audio_matched => 'الصوت جاهز';
+  @override
+  String get game_line_audio_missing => 'لا يوجد صوت';
+  @override
+  String get game_line_audio_pending => 'جارٍ المطابقة';
+  @override
+  String get game_line_audio_unavailable => 'نص فقط';
+  @override
+  String get game_line_favorite_tooltip => 'إضافة هذا السطر للمفضلة';
+  @override
+  String get game_line_mined => 'تم التنقيب';
+  @override
+  String get game_line_preview_failed => 'لا يوجد صوت قابل للتشغيل لهذا السطر';
+  @override
+  String get game_line_preview_tooltip => 'تشغيل صوت هذا السطر';
+  @override
+  String get game_line_track_applied => 'تم تطبيق مسار الصوت على هذا السطر';
+  @override
+  String get game_line_track_dialog_title => 'مسار الصوت لهذا السطر';
+  @override
+  String get game_line_track_failed =>
+      'هذا المسار لا يحتوي على صوت حول هذا السطر';
+  @override
+  String get game_line_track_tooltip => 'اختر مسار الصوت لهذا السطر';
+  @override
+  String get game_line_unfavorite_tooltip => 'إزالة من المفضلة';
+  @override
+  String get game_live_lines => 'الأسطر المباشرة';
+  @override
+  String get game_manage_tracks => 'إدارة المسارات الصوتية';
+  @override
+  String get game_meta_added => 'تمت الإضافة';
+  @override
+  String get game_meta_ranking => 'التصنيف';
+  @override
+  String get game_meta_source => 'مصدر البيانات';
+  @override
+  String get game_never_played => 'لم تُلعب أبدًا';
+  @override
+  String get game_no_active_line => 'اختر سطرًا لفحص حالة صوت الجملة.';
+  @override
+  String get game_no_events => 'لا توجد أحداث جلسة بعد';
+  @override
+  String get game_no_match => 'لا توجد ألعاب تطابق التصفيات الحالية';
+  @override
+  String get game_no_tracks => 'لا توجد بيانات مسارات صوتية بعد';
+  @override
+  String get game_open_capture_workspace => 'فتح مساحة الالتقاط';
+  @override
+  String get game_phase_attaching => 'جارٍ الربط';
+  @override
+  String get game_phase_degraded => 'متدهور';
+  @override
+  String get game_phase_error => 'خطأ';
+  @override
+  String get game_phase_idle => 'خامل';
+  @override
+  String get game_phase_injecting => 'جارٍ الحقن';
+  @override
+  String get game_phase_launching => 'جارٍ التشغيل';
+  @override
+  String get game_phase_resolving => 'جارٍ التحليل';
+  @override
+  String get game_phase_running => 'قيد التشغيل';
+  @override
+  String get game_phase_stopping => 'جارٍ الإيقاف';
+  @override
+  String get game_phase_waiting_signals => 'في انتظار الإشارات';
+  @override
+  String get game_pipeline => 'مسار الجلسة';
+  @override
+  String get game_play_status => 'حالة اللعب';
+  @override
+  String get game_random_reroll => 'خلط';
+  @override
+  String get game_random_title => 'اختر لي';
+  @override
+  String get game_recently_played => 'لُعبت مؤخرًا';
+  @override
+  String get game_refresh_tracks => 'تحديث المسارات';
+  @override
+  String get game_remove => 'إزالة';
+  @override
+  String get game_rename => 'إعادة تسمية';
+  @override
+  String get game_rename_label => 'اسم اللعبة';
+  @override
+  String get game_scrape => 'جلب البيانات الوصفية';
+  @override
+  String get game_scrape_applied => 'تم تحديث البيانات الوصفية';
+  @override
+  String get game_scrape_failed => 'فشل جلب البيانات الوصفية';
+  @override
+  String get game_scrape_no_result => 'لم يُعثر على نتيجة مطابقة';
+  @override
+  String get game_scrape_query => 'العنوان أو معرف المصدر';
+  @override
+  String get game_search => 'بحث في الألعاب';
+  @override
+  String get game_session_events => 'أحداث الجلسة';
+  @override
+  String get game_session_idle => 'لم يبدأ الالتقاط';
+  @override
+  String get game_session_listening => 'جارٍ الاستماع';
+  @override
+  String get game_set_cover => 'تعيين الغلاف';
+  @override
+  String get game_show_hook_text_window => 'إظهار نافذة نص الخطاف';
+  @override
+  String get game_site_score => 'تقييم الموقع';
+  @override
+  String get game_sort => 'ترتيب';
+  @override
+  String get game_sort_added => 'تاريخ الإضافة';
+  @override
+  String get game_sort_last_played => 'آخر مرة لُعبت';
+  @override
+  String get game_sort_name => 'الاسم';
+  @override
+  String get game_sort_release => 'تاريخ الإصدار';
+  @override
+  String get game_sort_site_score => 'تقييم الموقع';
+  @override
+  String get game_sort_user_rating => 'تقييمي';
+  @override
+  String get game_stat_daily => 'وقت اللعب اليومي';
+  @override
+  String get game_stat_delete_session => 'حذف هذه الجلسة';
+  @override
+  String get game_stat_last_played => 'آخر مرة لُعبت';
+  @override
+  String get game_stat_no_sessions => 'لم تُسجل أي جلسات لعب بعد';
+  @override
+  String get game_stat_session_list => 'سجل الجلسات';
+  @override
+  String get game_stat_sessions => 'الجلسات';
+  @override
+  String get game_stat_today => 'وقت اللعب اليوم';
+  @override
+  String get game_stat_total_time => 'إجمالي وقت اللعب';
+  @override
+  String get game_status_dropped => 'متروكة';
+  @override
+  String get game_status_not_configured => 'غير موثقة';
+  @override
+  String get game_status_on_hold => 'مؤجلة';
+  @override
+  String get game_status_played => 'تم اللعب';
+  @override
+  String get game_status_playing => 'قيد اللعب';
+  @override
+  String get game_status_ready => 'جاهزة';
+  @override
+  String get game_status_unset => 'غير محدد';
+  @override
+  String get game_status_waiting => 'في الانتظار';
+  @override
+  String get game_status_want_to_play => 'أريد لعبها';
+  @override
+  String get game_stop_listening => 'إيقاف المستمعين';
+  @override
+  String get game_summary_aliases => 'الأسماء البديلة';
+  @override
+  String get game_summary_all_titles => 'جميع العناوين';
+  @override
+  String get game_summary_average_hours => 'متوسط وقت اللعب';
+  @override
+  String get game_summary_none =>
+      'لا يوجد وصف بعد. اجلب البيانات الوصفية لملئه.';
+  @override
+  String get game_summary_release_date => 'تاريخ الإصدار';
+  @override
+  String get game_tags_clear => 'مسح الاختيار';
+  @override
+  String get game_tags_title => 'وسوم اللعبة';
+  @override
+  String get game_text_endpoints => 'نقاط اتصال النص';
+  @override
+  String get game_text_gaps => 'فجوات التسلسل';
+  @override
+  String get game_text_gaps_hint =>
+      'فجوات التسلسل = عدد الأسطر المفقودة في حلقة نص الخطاف؛ 0 طبيعي';
+  @override
+  String get game_text_source_engine => 'خطاف المحرك';
+  @override
+  String get game_text_source_unknown => 'مصدر غير معروف';
+  @override
+  String get game_text_source_websocket => 'WebSocket';
+  @override
+  String get game_text_thread => 'خيط النص';
+  @override
+  String game_text_thread_audio_count({required Object count}) =>
+      '${count} مع صوت';
+  @override
+  String get game_text_thread_hint =>
+      'اختر خيط الحوار النظيف، مثل Luna Translator';
+  @override
+  String get game_track_auto => 'اختيار تلقائي';
+  @override
+  String get game_track_clips => 'مقاطع';
+  @override
+  String get game_track_energy => 'الطاقة';
+  @override
+  String get game_track_exclude_bgm => 'وضع علامة كموسيقى خلفية';
+  @override
+  String get game_track_exclusion_hint =>
+      'ضع علامة على مسار الموسيقى الخلفية/الأجواء كمستبعد حتى لا يعامله الاختيار التلقائي كصوت — الأسطر بدون كلام لن تلتقط الموسيقى الخلفية.';
+  @override
+  String get game_track_exclusion_title => 'استبعاد المسارات الصوتية';
+  @override
+  String get game_track_preview => 'معاينة هذا المسار';
+  @override
+  String get game_track_preview_failed =>
+      'لم يتمكن من التقاط صوت حديث من هذا المسار';
+  @override
+  String get game_track_preview_stop => 'إيقاف المعاينة';
+  @override
+  String get game_track_restore => 'استعادة المسار';
+  @override
+  String get game_track_select_as_voice => 'استخدام كمسار صوتي';
+  @override
+  String get game_track_select_requires_engine =>
+      'اختيار المسار يتطلب جلسة خطاف محرك نشطة';
+  @override
+  String get game_track_voice => 'صوت';
+  @override
+  String get game_tracks_loopback_hint =>
+      'استرجاع صوت النظام يلتقط المخرجات المدمجة لكل النظام كتدفق واحد؛ التعداد لكل مسار غير متاح.';
+  @override
+  String get game_tracks_pcm_only_hint =>
+      'اختيار المسار يؤثر فقط على الالتقاط عندما يكون PCM المحرك هو الواجهة الصوتية النشطة. القائمة أدناه للقراءة فقط مع الواجهة الحالية.';
+  @override
+  String get game_tracks_resource_mode_hint =>
+      'في وضع صوت موارد اللعبة، يتم استخراج كل سطر صوتي مباشرة من ملفات اللعبة، لذا لا توجد قائمة مسارات PCM هنا. الاختيار التلقائي أو اليدوي للمسار ينطبق فقط على التقاط PCM المحرك.';
+  @override
+  String get game_unread_lines => 'غير مقروء';
+  @override
+  String get game_upscaling => 'تحسين دقة نافذة اللعبة';
+  @override
+  String get game_upscaling_auto => 'تلقائي';
+  @override
+  String get game_upscaling_hint_external =>
+      'كانت نسخة من Magpie تعمل بالفعل، لذا تركها Fushi. اضغط Win+Shift+A لتحسين دقة نافذة اللعبة.';
+  @override
+  String get game_upscaling_hint_first_run =>
+      'كان على Magpie إعداد نفسه هذه المرة. اضغط Win+Shift+A للتحسين الآن — في المرة القادمة سيحدث تلقائيًا.';
+  @override
+  String get game_upscaling_hint_manual =>
+      'اضغط Win+Shift+A لتحسين دقة نافذة اللعبة.';
+  @override
+  String get game_upscaling_installed_only => 'المثبت فقط';
+  @override
+  String get game_upscaling_off => 'إيقاف';
+  @override
+  String get game_upscaling_status_active => 'تحسين دقة النافذة مفعل';
+  @override
+  String get game_upscaling_status_failed =>
+      'لم يتمكن تحسين دقة النافذة من البدء';
+  @override
+  String get game_upscaling_status_manual =>
+      'تحسين دقة النافذة جاهز، لكنه لم يبدأ تلقائيًا';
+  @override
+  String get game_upscaling_status_unavailable => 'تحسين دقة النافذة غير متاح';
+  @override
+  String get game_user_rating => 'تقييمي';
+  @override
+  String get game_view_detail => 'عرض التفاصيل';
+  @override
+  String get game_waiting_for_text => 'في انتظار النص';
+  @override
+  String game_waveform_range_label({
+    required Object start,
+    required Object end,
+    required Object duration,
+    required Object total,
+  }) => '${start} - ${end} (محدد ${duration} / إجمالي ${total})';
+  @override
+  String get game_waveform_select_title => 'اختر نطاق الصوت';
+  @override
+  String get game_window_bound => 'مرتبط';
+  @override
+  String get game_window_missing => 'غير مرتبط';
+  @override
+  String get games => 'ألعاب';
+  @override
+  String get global_context_capture => 'التقاط سياق التحديد';
+  @override
+  String get global_context_capture_hint =>
+      'قراءة النص المحيط من التطبيق الأمامي لعرض الجملة الحالية (Windows فقط)';
+  @override
+  String go_to_chapter({required Object n}) => 'الفصل ${n}';
+  @override
+  String get handlebar_audio => 'صوت';
+  @override
+  String get handlebar_book_cover => 'غلاف الكتاب';
+  @override
+  String get handlebar_card_image => 'Card Image (Cover / GIF)';
+  @override
+  String get handlebar_cue_sentence => 'جملة الترجمة';
+  @override
+  String handlebar_deprecated_label({required Object label}) =>
+      '${label} (مهمل)';
+  @override
+  String get handlebar_document_title => 'عنوان المستند';
+  @override
+  String get handlebar_expression => 'التعبير';
+  @override
+  String get handlebar_frequencies => 'التكرارات (HTML)';
+  @override
+  String get handlebar_frequency_harmonic_rank => 'التكرار (الترتيب)';
+  @override
+  String get handlebar_furigana_plain => 'فوريغانا';
+  @override
+  String get handlebar_glossary => 'المعنى';
+  @override
+  String get handlebar_glossary_first => 'المعنى (الأول)';
+  @override
+  String get handlebar_pitch_accent_categories => 'فئات النبرة';
+  @override
+  String get handlebar_pitch_accent_positions => 'مواضع النبرة';
+  @override
+  String get handlebar_popup_selection_text => 'نص التحديد المنبثق';
+  @override
+  String get handlebar_reading => 'القراءة';
+  @override
+  String get handlebar_selected_glossary => 'المعنى المحدد';
+  @override
+  String get handlebar_sentence => 'الجملة';
+  @override
+  String get handlebar_sentence_audio => 'Sentence Audio';
+  @override
+  String get handlebar_video_clip => 'Video Clip (GIF)';
+  @override
+  String get harmonic_frequency => 'تجميع تكرارات الكلمات';
+  @override
+  String health_match_summary({required Object pct}) => 'تطابق ${pct}%';
+  @override
+  String get highlight_on_tap => 'تمييز النص عند النقر';
+  @override
+  String get home_activity => 'النشاط';
+  @override
+  String get home_activity_empty => 'لا يوجد نشاط بعد';
+  @override
+  String get home_continue => 'متابعة';
+  @override
+  String get home_filter_added => 'مضافة';
+  @override
+  String get home_filter_all => 'الكل';
+  @override
+  String get home_filter_game => 'لعبة';
+  @override
+  String get home_filter_read => 'قراءة';
+  @override
+  String get home_filter_watch => 'مشاهدة';
+  @override
+  String get home_recently_added => 'أُضيفت مؤخرًا';
+  @override
+  String get home_remote_source => 'عن بعد';
+  @override
+  String home_session_count({required Object n}) => '${n} جلسات';
+  @override
+  String get home_today => 'اليوم';
+  @override
+  String get home_yesterday => 'أمس';
+  @override
+  String get hover_auto_lookup => 'البحث عند التمرير';
+  @override
+  String get hover_auto_lookup_hint =>
+      'البحث تلقائيًا عند تمرير مؤشر الماوس فوق حرف؛ دون الحاجة إلى النقر أو الضغط على Shift. يُظهر طبقة منبثقة واحدة كحد أقصى. لأجهزة سطح المكتب فقط.';
+  @override
+  String get icon_custom => 'مخصص';
+  @override
+  String get icon_custom_confirm_body =>
+      'سيتم إنشاء اختصار على الشاشة الرئيسية بالصورة المختارة. هل تريد المتابعة؟';
+  @override
+  String get icon_custom_confirm_title => 'أيقونة مخصصة';
+  @override
+  String get icon_custom_hint =>
+      'انقر على أيقونة للتبديل، أو اختر صورة مخصصة أدناه.';
+  @override
+  String get icon_default => 'افتراضي';
+  @override
+  String get icon_full => 'كامل';
+  @override
+  String get icon_shortcut_created => 'تم إنشاء اختصار على الشاشة الرئيسية.';
+  @override
+  String get icon_shortcut_unsupported =>
+      'الاختصارات غير مدعومة على هذا الجهاز.';
+  @override
+  String get icon_switch_success => 'تم تغيير أيقونة التطبيق بنجاح.';
+  @override
+  String get icon_transparent => 'شفاف';
+  @override
+  String image_page_counter({required Object current, required Object total}) =>
+      '${current} / ${total}';
+  @override
+  String get image_pause => 'إيقاف عند الصورة';
+  @override
+  String get image_pause_hint =>
+      'إيقاف مؤقت تلقائي عند ظهور صورة أثناء التشغيل.';
+  @override
+  String get image_pause_off => 'إيقاف';
+  @override
+  String get image_search_label_after => 'عُثر عليها لـ';
+  @override
+  String get image_search_label_before => 'اختيار صورة ';
+  @override
+  String get image_search_label_middle => 'من ';
+  @override
+  String get image_search_label_none_before => 'اختيار ';
+  @override
+  String get image_search_label_none_middle => 'لا توجد صورة ';
+  @override
+  String get import_complete => 'اكتمل استيراد القاموس.';
+  @override
+  String import_duplicate({required Object name}) =>
+      'قاموس باسم『${name}』مستورد بالفعل.';
+  @override
+  String get import_extract => 'جارٍ استخراج الملفات...';
+  @override
+  String get import_failed => 'فشل استيراد القاموس.';
+  @override
+  String get import_in_progress => 'جارٍ الاستيراد';
+  @override
+  String import_name({required Object name}) => 'جارٍ استيراد『${name}』...';
+  @override
+  String import_sidecar_audio({required Object count}) =>
+      'تم إرفاق ${count} ملف صوتي تلقائيًا';
+  @override
+  String import_sidecar_subtitle({required Object name}) =>
+      'ترجمة مرفقة تلقائيًا: ${name}';
+  @override
+  String get import_start => 'جارٍ التحضير للاستيراد...';
+  @override
+  String get import_step_building_epub => 'إنشاء EPUB…';
+  @override
+  String get import_step_converting_epub => 'تحويل إلى EPUB…';
+  @override
+  String import_step_copying_file({required Object name}) =>
+      'جارٍ نسخ ${name}…';
+  @override
+  String get import_step_done => 'تم';
+  @override
+  String get import_step_importing_epub => 'استيراد EPUB…';
+  @override
+  String get import_step_matching => 'محاذاة الصوت…';
+  @override
+  String get import_step_parsing => 'تحليل الترجمات…';
+  @override
+  String get import_step_persisting => 'حفظ الملفات…';
+  @override
+  String get import_step_reading => 'قراءة الملف…';
+  @override
+  String get import_step_reading_idb => 'قراءة معلومات الكتاب…';
+  @override
+  String get import_step_saving => 'حفظ السجلات…';
+  @override
+  String get import_theme => 'استيراد مظهر';
+  @override
+  String get import_theme_hint => 'الصق رمز المظهر';
+  @override
+  String get import_theme_invalid => 'رمز مظهر غير صالح';
+  @override
+  String get import_theme_success => 'تم استيراد المظهر';
+  @override
+  String import_unsupported_file_format({required Object ext}) =>
+      'صيغة ملف غير مدعومة: ${ext}';
+  @override
+  String get increase => 'زيادة';
+  @override
+  String get info_empty_home_tab => 'السجل فارغ';
+  @override
+  String init_error_message({required Object error}) =>
+      'فشلت التهيئة: ${error}';
+  @override
+  String get initialization_failed => 'فشل التهيئة';
+  @override
+  String get interconnect_backup_backend =>
+      'استخدام الترابط كواجهة النسخ الاحتياطي';
+  @override
+  String get interconnect_backup_backend_active =>
+      'النسخ الاحتياطية تذهب بالفعل إلى الجهاز المقترن. اختر واجهة أخرى في المزامنة والنسخ الاحتياطي للتبديل.';
+  @override
+  String get interconnect_backup_backend_apply =>
+      'تعيين كواجهة النسخ الاحتياطي';
+  @override
+  String interconnect_backup_backend_current({required Object backend}) =>
+      'واجهة النسخ الاحتياطي الحالية: ${backend}';
+  @override
+  String get interconnect_backup_backend_hint =>
+      'النسخ الاحتياطي والمزامنة إلى الجهاز المقترن بدلاً من التخزين السحابي. كل ما تسمح به خيارات الرفع للجهاز المقترن أعلاه هو ما يُكتب هناك.';
+  @override
+  String get interconnect_backup_backend_needs_pairing =>
+      'اتصل بجهاز أعلاه أولاً.';
+  @override
+  String get interconnect_enable => 'تفعيل الترابط';
+  @override
+  String get interconnect_enable_hint =>
+      'الاتصال بأجهزتك الأخرى عبر الشبكة المحلية. يعمل جنبًا إلى جنب مع واجهة النسخ الاحتياطي السحابي — لا يتعارضان.';
+  @override
+  String get interconnect_moved_note =>
+      'إعدادات الاتصال والخادم موجودة في فئة ترابط Fushi';
+  @override
+  String get interconnect_section_client => 'الاتصال بأجهزة أخرى';
+  @override
+  String get interconnect_section_delegate => 'التفويض إلى الجهاز المقترن';
+  @override
+  String get interconnect_section_related => 'المحتوى عن بعد والبحث';
+  @override
+  String get interconnect_summary =>
+      'مزامنة مباشرة بين الأجهزة واستضافة هذا الجهاز كخادم';
+  @override
+  String get interconnect_upload_audiobook_files => 'رفع ملفات الكتب الصوتية';
+  @override
+  String get interconnect_upload_audiobook_files_hint =>
+      'مزامنة ملفات الصوت وحزم الترجمة للكتب الصوتية على هذا الجهاز إلى نظير الترابط (كبير).';
+  @override
+  String get interconnect_upload_content => 'رفع ملفات الكتب';
+  @override
+  String get interconnect_upload_content_hint =>
+      'مزامنة كتب ومحتوى القراءة على هذا الجهاز إلى نظير الترابط.';
+  @override
+  String get interconnect_upload_dictionary => 'رفع القواميس';
+  @override
+  String get interconnect_upload_dictionary_hint =>
+      'مزامنة قواميس هذا الجهاز إلى نظير الترابط.';
+  @override
+  String get interconnect_upload_section => 'الرفع إلى نظير الترابط';
+  @override
+  String get interconnect_upload_video_files => 'رفع ملفات الفيديو';
+  @override
+  String get interconnect_upload_video_files_hint =>
+      'مزامنة ملفات الفيديو المحلية على هذا الجهاز إلى نظير الترابط (كبير).';
+  @override
+  String get invert_audiobook_skip_direction =>
+      'عكس أزرار التخطي في الشريط السفلي';
+  @override
+  String get invert_swipe_direction => 'عكس اتجاه التمرير لقلب الصفحات';
+  @override
+  String get invert_volume_buttons => 'عكس أزرار الصوت';
+  @override
+  String get jump_to_char => 'الانتقال إلى حرف';
+  @override
+  String jump_to_char_current({
+    required Object current,
+    required Object total,
+  }) => 'الحالي: ${current} / ${total}';
+  @override
+  String get jump_to_char_hint => 'أدخل موضع الحرف…';
+  @override
+  String get keep_screen_awake => 'إبقاء الشاشة مستيقظة';
+  @override
+  String get library_search => 'بحث في المكتبة';
+  @override
+  String get loading_illustrations => 'جارٍ تحميل الرسوم التوضيحية…';
+  @override
+  String get loading_slow_message =>
+      'إذا كان موقع تخزين بياناتك على محرك أقراص شبكي أو قابل للإزالة غير متصل حاليًا، فقد يتوقف بدء التشغيل. انقر إعادة المحاولة للبدء باستخدام موقع التخزين الافتراضي لهذه الجلسة؛ بياناتك تبقى في مكانها.';
+  @override
+  String get loading_slow_message_mobile =>
+      'بدء التشغيل يستغرق وقتًا أطول من المعتاد — قد يكون Fushi يحمل مكتبة كبيرة أو قواميس. انتظر لحظة، أو انقر إعادة المحاولة لإعادة التحميل. بياناتك آمنة ولن تُفقد.';
+  @override
+  String get loading_slow_title => 'بدء التشغيل يستغرق وقتًا أطول من المعتاد';
+  @override
+  String get local_audio => 'صوت محلي';
+  @override
+  String get local_audio_add_db => 'إضافة قاعدة بيانات صوت محلي';
+  @override
+  String get local_audio_edit_sources => 'تعديل المصادر';
+  @override
+  String local_audio_import_failed_detail({required Object reason}) =>
+      'فشل استيراد قاعدة بيانات الصوت: ${reason}';
+  @override
+  String get local_audio_imported => 'تمت إضافة قاعدة بيانات الصوت';
+  @override
+  String get local_audio_invalid_db =>
+      'هذا الملف ليس قاعدة بيانات صوتية قابلة للاستخدام (ليس قاعدة بيانات Local Audio Server، أو لا يحتوي على صوت).';
+  @override
+  String get local_audio_no_sources =>
+      'لم يُعثر على مصادر في قاعدة البيانات هذه';
+  @override
+  String get local_audio_reference_original =>
+      'الإشارة إلى الملف الأصلي (بدون نسخ)';
+  @override
+  String get local_audio_reference_original_desc =>
+      'إبقاء قاعدة البيانات في مكانها والقراءة من مسارها الأصلي؛ سيتعطل المصدر إذا تم نقل الملف أو حذفه.';
+  @override
+  String get local_audio_source_order_title => 'أولوية المصدر';
+  @override
+  String get log_copy_all => 'نسخ الكل';
+  @override
+  String get log_export_failed => 'فشل التصدير';
+  @override
+  String get log_export_file => 'تصدير إلى ملف';
+  @override
+  String get log_export_saved => 'تم حفظ السجل';
+  @override
+  String get log_upload_action => 'الرفع إلى الخادم';
+  @override
+  String get log_upload_consent_agree => 'الموافقة والرفع';
+  @override
+  String get log_upload_consent_body =>
+      'سيُرفع نص السجل (الذي قد يتضمن رسائل أخطاء ومسارات ملفات وعناوين كتب) إضافةً إلى إصدار التطبيق ونظام التشغيل وطراز الجهاز إلى خادم المطوّر للمساعدة في تشخيص المشكلات. يحدث هذا فقط عند نقرك على الرفع — لا يُرسل شيء تلقائيًا.';
+  @override
+  String get log_upload_consent_title => 'رفع السجل إلى الخادم؟';
+  @override
+  String get log_upload_failed => 'فشل الرفع';
+  @override
+  String get log_upload_in_progress => 'جارٍ رفع السجل…';
+  @override
+  String get log_upload_success => 'تم رفع السجل';
+  @override
+  String get log_upload_too_large => 'السجل كبير جدًا على الرفع';
+  @override
+  String get login => 'تسجيل الدخول';
+  @override
+  String get lookup_audio_volume => 'مستوى صوت البحث';
+  @override
+  String get low_memory_mode => 'وضع الذاكرة المنخفضة';
+  @override
+  String get low_memory_mode_hint =>
+      'تقليل استخدام الذاكرة والتخزين المؤقت للأجهزة منخفضة المواصفات. بعض التغييرات تتطلب إعادة التشغيل.';
+  @override
+  String get low_memory_mode_suggestion =>
+      'جرب تفعيل وضع الذاكرة المنخفضة في الإعدادات ← إعدادات متنوعة.';
+  @override
+  String get lyrics_artist => 'الفنان';
+  @override
+  String get lyrics_blur => 'تمويه كلمات الأغاني';
+  @override
+  String get lyrics_blur_hint =>
+      'تمويه السطر الحالي للانغماس في الاستماع؛ مرر المؤشر أو انقر للكشف';
+  @override
+  String get lyrics_font_size => 'حجم خط كلمات الأغاني';
+  @override
+  String get lyrics_font_size_hint =>
+      'حجم خط كلمات الأغاني مستقل عن وضع الكتاب';
+  @override
+  String get lyrics_mode => 'وضع الكلمات';
+  @override
+  String get lyrics_mode_hint_body =>
+      'وضع كلمات الأغاني له إعداد حجم خط خاص به. يمكنك ضبطه في ⚙ الإعدادات ← الطباعة.';
+  @override
+  String get lyrics_mode_hint_title => 'وضع كلمات الأغاني';
+  @override
+  String get lyrics_text_color => 'لون نص الكلمات';
+  @override
+  String get lyrics_text_color_hint =>
+      'استخدم لونًا مخصصًا لنص الكلمات بدلًا من اتباع السمة';
+  @override
+  String get lyrics_title => 'العنوان';
+  @override
+  String get lyrics_vertical_writing => 'كلمات عمودية';
+  @override
+  String get lyrics_vertical_writing_hint =>
+      'قراءة الكلمات من الأعلى للأسفل، من اليمين لليسار (مستقل عن وضع الكتاب)';
+  @override
+  String get manage_audio_sources => 'إدارة مصادر الصوت';
+  @override
+  String get manager => 'المدير';
+  @override
+  String get manga_mode_toggle => 'Reading Mode';
+  @override
+  String get manga_ocr_delete => 'حذف النماذج';
+  @override
+  String get manga_ocr_delete_confirm_message =>
+      'هذا يحرر مساحة القرص. يمكنك تحميلها مرة أخرى لاحقًا.';
+  @override
+  String get manga_ocr_delete_confirm_title => 'حذف نماذج OCR؟';
+  @override
+  String get manga_ocr_delete_done => 'تم حذف النماذج';
+  @override
+  String get manga_ocr_download => 'تحميل النماذج';
+  @override
+  String get manga_ocr_download_done => 'تم تحميل النماذج';
+  @override
+  String get manga_ocr_download_failed => 'فشل تحميل النموذج';
+  @override
+  String manga_ocr_downloading_file({required Object file}) =>
+      'جارٍ تحميل ${file}…';
+  @override
+  String get manga_ocr_engine_builtin => 'مدمج';
+  @override
+  String get manga_ocr_engine_external => 'Mokuro خارجي';
+  @override
+  String get manga_ocr_engine_none =>
+      'لا يوجد محرك OCR متاح. حمّل النماذج المدمجة أو عيّن مسار Mokuro CLI في الإعدادات.';
+  @override
+  String get manga_ocr_external_cli_hint =>
+      'اتركه فارغًا للكشف التلقائي (FUSHI_MOKURO / PATH)';
+  @override
+  String get manga_ocr_external_cli_label => 'مسار Mokuro CLI الخارجي';
+  @override
+  String get manga_ocr_external_detect => 'كشف';
+  @override
+  String manga_ocr_external_detected({required Object version}) =>
+      'تم الكشف: ${version}';
+  @override
+  String get manga_ocr_external_not_found => 'لم يُعثر على Mokuro';
+  @override
+  String get manga_ocr_model_status_missing => 'لم يتم تحميل نماذج OCR';
+  @override
+  String get manga_ocr_model_status_ready => 'نماذج OCR جاهزة';
+  @override
+  String get manga_ocr_section => 'OCR المانغا';
+  @override
+  String get manga_ocr_section_summary =>
+      'نماذج OCR المدمجة و Mokuro CLI الخارجي';
+  @override
+  String get manga_ocr_unsupported =>
+      'OCR المانغا المدمج غير متاح على هذه المنصة بعد.';
+  @override
+  String get manga_ocr_wizard_done => 'تم استيراد المانغا';
+  @override
+  String get manga_ocr_wizard_failed => 'فشل OCR';
+  @override
+  String get manga_ocr_wizard_has_mokuro =>
+      'هذا المجلد يحتوي بالفعل على ملف .mokuro — استخدم الاستيراد العادي بدلاً من ذلك.';
+  @override
+  String get manga_ocr_wizard_importing => 'جارٍ الاستيراد…';
+  @override
+  String get manga_ocr_wizard_no_images => 'لم يُعثر على صور في هذا المجلد.';
+  @override
+  String manga_ocr_wizard_page_progress({
+    required Object done,
+    required Object total,
+  }) => 'صفحة ${done} / ${total}';
+  @override
+  String get manga_ocr_wizard_pick_folder => 'اختر مجلد الصور';
+  @override
+  String get manga_ocr_wizard_run => 'تشغيل OCR';
+  @override
+  String get manga_ocr_wizard_running => 'جارٍ تشغيل OCR…';
+  @override
+  String get manga_ocr_wizard_title => 'استيراد مانغا بـ OCR';
+  @override
+  String get manga_ocr_wizard_title_label => 'العنوان (اختياري)';
+  @override
+  String get manga_online_base_url_label => 'رابط الكتالوج عبر الإنترنت';
+  @override
+  String get manga_online_catalog_title => 'كتالوج عبر الإنترنت';
+  @override
+  String get manga_online_download_selected => 'تحميل المحدد';
+  @override
+  String get manga_online_downloaded => 'تم الاستيراد';
+  @override
+  String get manga_online_failed => 'فشل التحميل';
+  @override
+  String get manga_online_load_failed => 'فشل تحميل الكتالوج';
+  @override
+  String get manga_online_queue_added => 'أُضيف إلى قائمة التحميل';
+  @override
+  String manga_online_queue_progress({
+    required Object done,
+    required Object total,
+  }) => 'المجلد ${done} / ${total}';
+  @override
+  String get manga_online_queue_section => 'تحميلات كتالوج المانغا';
+  @override
+  String get manga_online_search_hint => 'البحث في السلاسل';
+  @override
+  String get manga_online_stage_cbz => 'جارٍ تحميل المجلد…';
+  @override
+  String get manga_online_stage_extract => 'جارٍ الاستخراج…';
+  @override
+  String get manga_online_stage_mokuro => 'جارٍ تحميل بيانات OCR…';
+  @override
+  String get manga_reading_mode_spread => 'صفحتان';
+  @override
+  String get manga_reading_mode_webtoon => 'Webtoon';
+  @override
+  String get manga_remote_ocr_cancelled => 'تم إلغاء OCR عن بُعد على المضيف.';
+  @override
+  String get manga_remote_ocr_engine => 'المضيف المقترن';
+  @override
+  String get manga_remote_ocr_failed => 'فشل OCR عن بُعد';
+  @override
+  String get manga_remote_ocr_no_host => 'لا يوجد مضيف مقترن يدعم OCR للمانغا.';
+  @override
+  String get manga_remote_ocr_not_ready =>
+      'نماذج OCR على المضيف المقترن لم تُحمَّل بعد. حمِّلها على المضيف أولاً.';
+  @override
+  String get manga_remote_ocr_running => 'المضيف المقترن يُجري OCR…';
+  @override
+  String get manga_remote_ocr_unsupported =>
+      'المضيف المقترن لا يدعم OCR للمانغا.';
+  @override
+  String manga_remote_ocr_uploading({
+    required Object done,
+    required Object total,
+  }) => 'جارٍ رفع الصفحات ${done} / ${total}…';
+  @override
+  String get margin_bottom => 'الهامش السفلي';
+  @override
+  String get margin_left => 'الهامش الأيسر';
+  @override
+  String get margin_right => 'الهامش الأيمن';
+  @override
+  String get margin_top => 'الهامش العلوي';
+  @override
+  String get maximum_terms => 'الحد الأقصى لعدد الكلمات الرئيسية في النتائج';
+  @override
+  String get media_source_add => 'Add Source';
+  @override
+  String get media_source_add_local_folder => 'Local Folder';
+  @override
+  String get media_source_add_network => 'شبكة';
+  @override
+  String media_source_count_book({required Object n}) => '${n} كتب';
+  @override
+  String media_source_count_video({required Object n}) => '${n} فيديوهات';
+  @override
+  String media_source_last_scan({required Object time}) => 'آخر فحص ${time}';
+  @override
+  String get media_source_manage_title => 'Manage Sources';
+  @override
+  String get media_source_network_label_optional => 'اسم العرض (اختياري)';
+  @override
+  String get media_source_network_missing_fields =>
+      'أدخل المضيف واسم المستخدم والمسار البعيد وكلمة المرور أو المفتاح';
+  @override
+  String get media_source_network_remote_path => 'المسار البعيد';
+  @override
+  String get media_source_network_subtitle =>
+      'مكتبة بعيدة عبر SFTP / FTP / WebDAV';
+  @override
+  String get media_source_no_sources => 'لا توجد مصادر بعد';
+  @override
+  String get media_source_open_folder => 'Open Folder';
+  @override
+  String get media_source_remove => 'Remove Source';
+  @override
+  String get media_source_remove_keeps_media =>
+      'إزالة المصدر لا تحذف الوسائط المستوردة.';
+  @override
+  String get media_source_rescan => 'إعادة الفحص';
+  @override
+  String get media_source_scan_error => 'فشل الفحص';
+  @override
+  String get media_tracking_access_token => 'رمز الوصول';
+  @override
+  String get media_tracking_access_token_hint =>
+      'أنشئ رمز وصول شخصي بصلاحية الكتابة';
+  @override
+  String get media_tracking_account => 'حساب Bangumi';
+  @override
+  String get media_tracking_add_mapping => 'إضافة ربط';
+  @override
+  String get media_tracking_anime => 'أنمي';
+  @override
+  String get media_tracking_chapter => 'فصل';
+  @override
+  String get media_tracking_connect => 'الاتصال والتحقق';
+  @override
+  String get media_tracking_connected_as => 'الحساب المتصل';
+  @override
+  String get media_tracking_delete_mapping => 'إزالة الربط';
+  @override
+  String get media_tracking_episode => 'حلقة';
+  @override
+  String get media_tracking_kind => 'الفئة';
+  @override
+  String get media_tracking_local_item => 'عنصر محلي';
+  @override
+  String get media_tracking_manga => 'مانغا';
+  @override
+  String get media_tracking_mappings => 'ربط العناصر';
+  @override
+  String get media_tracking_no_mappings =>
+      'لا توجد عمليات ربط يدوية بعد. يقوم Fushi بالمطابقة تلقائياً عند أول حلقة مكتملة أو تقدم في القراءة؛ أضف العناصر الغامضة هنا.';
+  @override
+  String get media_tracking_novel => 'رواية';
+  @override
+  String get media_tracking_pending => 'تحديثات معلقة';
+  @override
+  String get media_tracking_progress_mode => 'وحدة التقدم';
+  @override
+  String get media_tracking_progress_offset => 'رقم البداية';
+  @override
+  String get media_tracking_saved => 'تم حفظ الربط';
+  @override
+  String get media_tracking_search => 'بحث في Bangumi';
+  @override
+  String get media_tracking_search_results => 'نتائج Bangumi';
+  @override
+  String get media_tracking_summary =>
+      'تسجيل تقدم الأنمي والروايات والمانغا تلقائياً في Bangumi';
+  @override
+  String get media_tracking_sync_failed =>
+      'فشلت المزامنة. التحديث لا يزال في قائمة الانتظار.';
+  @override
+  String get media_tracking_sync_now => 'مزامنة الآن';
+  @override
+  String get media_tracking_sync_success => 'اكتملت المزامنة';
+  @override
+  String get media_tracking_token_required => 'أدخل رمز الوصول وتحقق منه أولاً';
+  @override
+  String get media_tracking_volume => 'مجلد';
+  @override
+  String get microphone_permission_denied => 'يلزم إذن الميكروفون للتسجيل.';
+  @override
+  String get mining_audio_quality => 'جودة الصوت';
+  @override
+  String get mining_audio_quality_high => 'عالية';
+  @override
+  String get mining_audio_quality_hint =>
+      'معدل البت الأعلى أوضح لكنه يُنتج بطاقات أكبر.';
+  @override
+  String get mining_audio_quality_max => 'الحد الأقصى';
+  @override
+  String get mining_audio_quality_standard => 'قياسية';
+  @override
+  String get mining_image_quality => 'جودة الصورة / GIF';
+  @override
+  String get mining_image_quality_hd => 'عالية الدقة';
+  @override
+  String get mining_image_quality_hint =>
+      'الجودة الأعلى أوضح لكنها تُنتج بطاقات أكبر. الحد الأقصى يحتفظ بلقطات الشاشة بدقة المصدر؛ صور GIF المتحركة تبقى محدودة الحجم لتظل البطاقات قابلة للاستخدام.';
+  @override
+  String get mining_image_quality_max => 'الحد الأقصى';
+  @override
+  String get mining_image_quality_standard => 'قياسية';
+  @override
+  String get mining_image_quality_thrift => 'موفر البيانات';
+  @override
+  String get move_down => 'تحريك لأسفل';
+  @override
+  String get move_up => 'تحريك لأعلى';
+  @override
+  String get name => 'الاسم';
+  @override
+  String get nav_browser_extension => 'الإضافة';
+  @override
+  String get nav_downloads => 'التحميلات';
+  @override
+  String get nav_game => 'لعبة';
+  @override
+  String get nav_home => 'الرئيسية';
+  @override
+  String get nav_lookup => 'بحث';
+  @override
+  String get nav_video => 'فيديو';
+  @override
+  String get next_sentence => 'الجملة التالية';
+  @override
+  String get no_audio_file => 'لا يوجد ملف صوت للحفظ.';
+  @override
+  String get no_collections => 'لا توجد علامات مرجعية أو جمل محفوظة';
+  @override
+  String get no_debug_logs => 'لا توجد سجلات تصحيح.';
+  @override
+  String get no_illustrations_found => 'لم يتم العثور على رسوم توضيحية';
+  @override
+  String get no_results_found => 'لم يتم العثور على نتائج.';
+  @override
+  String get no_search_results => 'لم يتم العثور على نتائج.';
+  @override
+  String get no_sentence_selected => 'لم يتم اختيار جملة';
+  @override
+  String get no_sentences_found => 'لم يتم العثور على جمل';
+  @override
+  String get no_text => 'لا يوجد نص.';
+  @override
+  String get no_text_to_search => 'لا يوجد نص للبحث.';
+  @override
+  String get now_listening_label => 'يُستمع الآن';
+  @override
+  String get on_screen_keyboard => 'لوحة مفاتيح على الشاشة';
+  @override
+  String get options_collapse => 'طي عند البحث';
+  @override
+  String get options_delete => 'حذف';
+  @override
+  String get options_edit => 'تعديل';
+  @override
+  String get options_expand => 'توسيع عند البحث';
+  @override
+  String get options_github => 'عرض المستودع على GitHub';
+  @override
+  String get options_hide => 'إخفاء عند البحث';
+  @override
+  String get options_language => 'إعدادات اللغة';
+  @override
+  String get options_show => 'عرض عند البحث';
+  @override
+  String get overlay_lookup_independent_size =>
+      'حجم منفصل لنافذة البحث المنبثقة';
+  @override
+  String get overlay_lookup_independent_size_hint =>
+      'إعطاء نافذة البحث المنبثقة الخارجية حجمها الأقصى الخاص بدلاً من اتباع النافذة المنبثقة داخل التطبيق';
+  @override
+  String get overlay_lookup_max_height => 'الارتفاع الأقصى للنافذة المنبثقة';
+  @override
+  String get overlay_lookup_max_width => 'العرض الأقصى للنافذة المنبثقة';
+  @override
+  String page_progress({required Object current, required Object total}) =>
+      'صفحة ${current} / ${total}';
+  @override
+  String get paste => 'لصق';
+  @override
+  String get pause => 'إيقاف مؤقت';
+  @override
+  String get pause_on_lookup => 'إيقاف مؤقت عند البحث';
+  @override
+  String get pdf_bookmark_added => 'تمت إضافة إشارة مرجعية';
+  @override
+  String get pdf_bookmarks => 'الإشارات المرجعية';
+  @override
+  String get pdf_bookmarks_empty => 'لا توجد إشارات مرجعية بعد.';
+  @override
+  String get pdf_no_text_layer =>
+      'هذا الملف PDF لا يحتوي على طبقة نصية (صورة ممسوحة)، لذا البحث غير متاح.';
+  @override
+  String get pdf_outline => 'المحتويات';
+  @override
+  String get pdf_outline_empty => 'هذا الملف PDF لا يحتوي على محتويات.';
+  @override
+  String get pick_image => 'اختيار صورة';
+  @override
+  String get play => 'تشغيل';
+  @override
+  String get play_from_cue => 'تشغيل من الجملة';
+  @override
+  String get playback_auto_pause => 'وضع الإيقاف عند الترجمة';
+  @override
+  String get playback_speed => 'السرعة';
+  @override
+  String get popup_append_sentence_tooltip => 'أضف هذه الجملة إلى البطاقة';
+  @override
+  String get popup_auto_expand_dictionaries => 'توسيع الصفوف تلقائياً';
+  @override
+  String get popup_auto_expand_dictionaries_hint =>
+      'إبقاء أول N صفوف من أقسام القاموس موسعة حتى عند تفعيل \'طي القواميس\'. عدد الصفوف الموسعة يتبع إعداد الأعمدة: صفوف × أعمدة (0 = طي الكل)';
+  @override
+  String get popup_bottom_docked => 'نافذة بحث مرسّاة بالأسفل';
+  @override
+  String get popup_bottom_docked_hint =>
+      'ثبّت نافذة البحث كلوحة بعرض كامل في أسفل الشاشة بدلًا من اتباع الكلمة المبحوث عنها.';
+  @override
+  String get popup_clear_sentence_draft_tooltip => 'مسح الجمل المضافة';
+  @override
+  String get popup_ctx_adjust_button => 'تعديل السياق';
+  @override
+  String get popup_ctx_box_current => 'Current';
+  @override
+  String get popup_ctx_box_empty => '(لا شيء)';
+  @override
+  String get popup_ctx_box_next => 'After';
+  @override
+  String get popup_ctx_box_prev => 'Before';
+  @override
+  String get popup_ctx_cancel => 'إلغاء';
+  @override
+  String get popup_ctx_confirm => 'Confirm';
+  @override
+  String get popup_ctx_modal_count => 'Selected %d';
+  @override
+  String get popup_ctx_modal_eyebrow => 'Before mining';
+  @override
+  String get popup_ctx_modal_title => 'اختيار سياق الجملة';
+  @override
+  String get popup_ctx_next_minus => 'Remove after';
+  @override
+  String get popup_ctx_next_plus => 'Add after';
+  @override
+  String get popup_ctx_prev_minus => 'Remove before';
+  @override
+  String get popup_ctx_prev_plus => 'Add before';
+  @override
+  String get popup_dictionary_max_columns =>
+      'الحد الأقصى لأعمدة القاموس (ملء تلقائي)';
+  @override
+  String get popup_dictionary_max_columns_hint =>
+      'ملء تلقائي لهذا العدد من أعمدة القاموس لكل صف؛ الشاشات الأضيق تستخدم عدداً أقل';
+  @override
+  String get popup_font_size_decrease => 'تصغير نص القاموس';
+  @override
+  String get popup_font_size_increase => 'تكبير نص القاموس';
+  @override
+  String get popup_instant_scroll => 'تمرير فوري للنافذة المنبثقة';
+  @override
+  String get popup_instant_scroll_hint =>
+      'نقل نافذة البحث المنبثقة بمسافات ثابتة دون تمرير متحرك، لشاشات الحبر الإلكتروني.';
+  @override
+  String get popup_max_height => 'أقصى ارتفاع للنافذة المنبثقة';
+  @override
+  String get popup_max_width => 'أقصى عرض للنافذة المنبثقة';
+  @override
+  String get popup_no_audio_available => 'لا يوجد صوت متاح';
+  @override
+  String get popup_sentence_context_next_label => 'بعد';
+  @override
+  String get popup_sentence_context_prev_label => 'قبل';
+  @override
+  String get popup_wheel_speed => 'سرعة التمرير في النافذة المنبثقة';
+  @override
+  String get popup_wheel_speed_hint =>
+      'سرعة تمرير عجلة الماوس في نافذة القاموس المنبثقة (ينطبق أيضاً على إضافة المتصفح).';
+  @override
+  String get prev_sentence => 'الجملة السابقة';
+  @override
+  String get preview => 'معاينة';
+  @override
+  String get preview_badge => 'شارة';
+  @override
+  String get preview_switch => 'مفتاح';
+  @override
+  String get processing_in_progress => 'جارٍ تحضير الصور';
+  @override
+  String get profile_book_profile => 'تعيين ملف التعريف';
+  @override
+  String profile_confirm_delete({required Object name}) =>
+      'حذف الملف الشخصي "${name}"؟';
+  @override
+  String get profile_copy => 'نسخ';
+  @override
+  String get profile_copy_suffix => '(نسخة)';
+  @override
+  String get profile_create => 'إنشاء ملف شخصي';
+  @override
+  String get profile_delete => 'حذف';
+  @override
+  String get profile_export => 'تصدير';
+  @override
+  String get profile_export_failed => 'فشل التصدير';
+  @override
+  String profile_follow_default_current({required Object name}) =>
+      'يتبع الافتراضي (${name})';
+  @override
+  String get profile_import => 'استيراد';
+  @override
+  String get profile_import_failed => 'فشل الاستيراد';
+  @override
+  String get profile_import_invalid => 'ملف الملف الشخصي غير صالح';
+  @override
+  String get profile_import_success => 'تم استيراد الملف الشخصي';
+  @override
+  String get profile_label => 'الملف الشخصي';
+  @override
+  String get profile_management => 'إدارة الملفات الشخصية';
+  @override
+  String get profile_media_audiobook => 'كتاب مسموع';
+  @override
+  String get profile_media_epub => 'كتاب';
+  @override
+  String get profile_media_lyrics => 'وضع الكلمات';
+  @override
+  String get profile_media_none => 'لا شيء';
+  @override
+  String get profile_media_srtbook => 'كتاب الترجمة';
+  @override
+  String get profile_media_type_bindings => 'ربط أنواع الوسائط';
+  @override
+  String get profile_media_video => 'فيديو';
+  @override
+  String get profile_name_hint => 'اسم الملف الشخصي';
+  @override
+  String get profile_rename => 'إعادة تسمية';
+  @override
+  String get reader_auto_hide_chrome_duration =>
+      'إخفاء أدوات التحكم العائمة تلقائياً بعد';
+  @override
+  String get reader_content_timeout =>
+      'انتهت مهلة تحميل المحتوى. أعد الفتح إذا كان العرض غير طبيعي';
+  @override
+  String get reader_copy_image => 'نسخ الصورة';
+  @override
+  String get reader_gallery => 'المعرض';
+  @override
+  String get reader_gallery_current => 'تقرأ هنا';
+  @override
+  String get reader_gallery_empty => 'لا توجد رسوم توضيحية في هذا الكتاب';
+  @override
+  String get reader_gallery_jump => 'الانتقال إلى هذا الرسم';
+  @override
+  String get reader_gallery_tooltip => 'تصفح الرسوم التوضيحية';
+  @override
+  String reader_image_copy_failed({required Object error}) =>
+      'فشل نسخ الصورة: ${error}';
+  @override
+  String get reader_image_file_unavailable => 'ملف الصورة غير متاح.';
+  @override
+  String reader_image_share_failed({required Object error}) =>
+      'فشل مشاركة الصورة: ${error}';
+  @override
+  String get reader_open_failed => 'فشل فتح الكتاب';
+  @override
+  String get reader_settings_section => 'إعدادات القارئ';
+  @override
+  String get reader_theme_black => 'أسود';
+  @override
+  String get reader_theme_dark => 'داكن';
+  @override
+  String get reader_theme_ecru => 'بيج';
+  @override
+  String get reader_theme_eyecare => 'Eye Care';
+  @override
+  String get reader_theme_gray => 'رمادي';
+  @override
+  String get reader_theme_light => 'أبيض';
+  @override
+  String get reader_theme_water => 'أزرق مائي';
+  @override
+  String get reader_top_progress_floating => 'شريط تقدم القراءة العائم';
+  @override
+  String get reader_unsupported_platform =>
+      'القارئ غير متوفر بعد على هذه المنصة.';
+  @override
+  String get reading_activity => 'نشاط الدراسة';
+  @override
+  String get reading_progress => 'تقدّم القراءة';
+  @override
+  String get reading_section_mode => 'الوضع والاتجاه';
+  @override
+  String get reading_statistics => 'إحصائيات القراءة';
+  @override
+  String get record => 'تسجيل';
+  @override
+  String get refresh => 'تحديث';
+  @override
+  String get rematch_adjust_window => 'ضبط نافذة البحث وإعادة المطابقة';
+  @override
+  String get rematch_run => 'إعادة تشغيل المطابقة';
+  @override
+  String get remote_audio_source => 'صوت بعيد';
+  @override
+  String get remote_book_audiobook_download_failed =>
+      'تعذّر تنزيل الكتاب الصوتي لهذا الكتاب';
+  @override
+  String get remote_book_download => 'التنزيل إلى هذا الجهاز';
+  @override
+  String get remote_book_download_failed => 'تعذّر تنزيل الكتاب البعيد';
+  @override
+  String get remote_book_downloaded => 'تم تنزيل الكتاب البعيد';
+  @override
+  String get remote_book_downloading => 'جارٍ التنزيل…';
+  @override
+  String get remote_book_info => 'معلومات';
+  @override
+  String get remote_book_info_has_audiobook => 'يتضمّن كتابًا صوتيًا';
+  @override
+  String get remote_book_unavailable => 'الجهاز المقترن غير متاح';
+  @override
+  String get remote_dict_lookup => 'بحث في القاموس البعيد';
+  @override
+  String get remote_dict_lookup_hint =>
+      'عند عدم وجود نتائج في القواميس المحلية، استعلم من خادم Fushi المُهيّأ';
+  @override
+  String get remote_video_download => 'التنزيل إلى هذا الجهاز';
+  @override
+  String get remote_video_download_failed => 'تعذّر تنزيل الفيديو البعيد';
+  @override
+  String get remote_video_downloaded => 'تم تنزيل الفيديو البعيد';
+  @override
+  String get remote_video_downloading => 'جارٍ التنزيل…';
+  @override
+  String get remote_video_info => 'معلومات';
+  @override
+  String get remote_video_info_has_subtitle => 'يتضمّن ترجمات';
+  @override
+  String get remote_video_info_no_subtitle => 'لا توجد ترجمات';
+  @override
+  String remote_video_info_size({required Object size}) => 'الحجم: ${size}';
+  @override
+  String get remote_video_list_failed =>
+      'تعذر تحميل الفيديوهات البعيدة. تأكد أن الجهاز الآخر متصل وعلى نفس الشبكة، ثم حاول مرة أخرى.';
+  @override
+  String get remote_video_unavailable => 'الجهاز المقترن غير متاح';
+  @override
+  String get rename_collection => 'إعادة تسمية المجموعة';
+  @override
+  String get render_restart_required => 'يسري المفعول بعد إعادة تشغيل التطبيق';
+  @override
+  String get repeat_cue => 'إعادة الجملة';
+  @override
+  String get reset => 'إعادة تعيين';
+  @override
+  String get retry => 'إعادة المحاولة';
+  @override
+  String get reverse_arrow_page_turn =>
+      'عكس اتجاه قلب الصفحة بمفتاحَي اليسار/اليمين في لوحة المفاتيح';
+  @override
+  String get reverse_navigation_bar => 'عكس شريط التنقّل';
+  @override
+  String get reverse_reader_bottom_bar => 'عكس الشريط السفلي للقارئ';
+  @override
+  String get audiobook_rematch_all_zero =>
+      'جميع النوافذ سجّلت 0%، يرجى الضبط يدوياً';
+  @override
+  String audiobook_rematch_auto_failed({required Object error}) =>
+      'فشلت المطابقة التلقائية: ${error}';
+  @override
+  String get audiobook_rematch_auto_match => 'مطابقة تلقائية';
+  @override
+  String audiobook_rematch_auto_picked({
+    required Object window,
+    required Object pct,
+  }) => 'تم اختيار ${window} تلقائياً (نسبة ${pct}%)';
+  @override
+  String audiobook_rematch_default_value({required Object n}) => 'افتراضي ${n}';
+  @override
+  String audiobook_rematch_health_label({
+    required Object pct,
+    required Object detail,
+  }) => '${pct} مطابق — ${detail}';
+  @override
+  String get audiobook_rematch_matching => 'جارٍ المطابقة...';
+  @override
+  String get audiobook_rematch_no_chapters => 'EPUB لا يحتوي على نص فصول';
+  @override
+  String get audiobook_rematch_no_cues_to_match => 'لا توجد ترجمات للمطابقة';
+  @override
+  String get audiobook_rematch_no_sections =>
+      'لم يتم العثور على نص فصل، لا يمكن المطابقة التلقائية';
+  @override
+  String get audiobook_rematch_no_stored_cues =>
+      'لا توجد ترجمات مخزّنة، لا يمكن إعادة التشغيل';
+  @override
+  String audiobook_rematch_failed({required Object error}) =>
+      'فشلت إعادة المطابقة: ${error}';
+  @override
+  String audiobook_rematch_result({
+    required Object pct,
+    required Object window,
+  }) => 'أُعيدت المطابقة: ${pct}% (نافذة: ${window})';
+  @override
+  String get audiobook_rematch_search_window => 'نافذة البحث';
+  @override
+  String get audiobook_rematch_similarity_threshold => 'عتبة التشابه';
+  @override
+  String get audiobook_rematch_threshold_hint =>
+      'الحد الأدنى للتشابه في المطابقة الضبابية (معامل Dice). خفّض لتحمّل مزيد من الاختلافات، لكن قيمة منخفضة جداً تسبب مطابقات خاطئة.';
+  @override
+  String get audiobook_rematch_window_hint =>
+      'عدد الأحرف للبحث للأمام لكل ترجمة في النص. اضبط إذا كانت نسبة الإصابة منخفضة؛ قيمة كبيرة جداً قد تُنحرف المؤشر مع الترجمات القصيرة.';
+  @override
+  String get saved_tags => 'تم حفظ الوسوم.';
+  @override
+  String get scan_non_japanese_text => 'مسح النص غير الياباني';
+  @override
+  String get scan_non_japanese_text_hint =>
+      'عند الإيقاف، يتوقف التحديد عند الأحرف غير اليابانية';
+  @override
+  String get search => 'بحث';
+  @override
+  String get search_ellipsis => 'بحث...';
+  @override
+  String get searching_in_progress => 'جارٍ البحث عن ';
+  @override
+  String get section_advanced_colors => 'متقدم';
+  @override
+  String get section_advanced_typography => 'متقدم';
+  @override
+  String get section_audiobook => 'كتاب مسموع';
+  @override
+  String get section_audiobook_lyrics => 'الكتب الصوتية والكلمات';
+  @override
+  String get section_epub => 'مكتبة EPUB';
+  @override
+  String get section_floating_lyric => 'كلمات عائمة';
+  @override
+  String get section_interface => 'الواجهة';
+  @override
+  String get section_layout => 'التخطيط والعرض';
+  @override
+  String get section_navigation => 'التنقل';
+  @override
+  String get section_page_turn_direction => 'اتجاه قلب الصفحة';
+  @override
+  String get section_reader_colors => 'ألوان القارئ';
+  @override
+  String get section_system_theme => 'لون سمة النظام';
+  @override
+  String get section_typography => 'الطباعة';
+  @override
+  String get section_update => 'إعدادات التحديث';
+  @override
+  String get section_video_danmaku => 'دانماكو';
+  @override
+  String get section_video_library => 'المكتبة';
+  @override
+  String get section_video_playback => 'التشغيل';
+  @override
+  String get section_video_subtitles => 'الترجمات';
+  @override
+  String get seed_color => 'اللون الأساسي';
+  @override
+  String get seed_color_desc => 'يولّد جميع الألوان الافتراضية أدناه';
+  @override
+  String get selection_color => 'لون التحديد';
+  @override
+  String get selection_color_desc => 'تمييز تحديد نص القارئ';
+  @override
+  String get send => 'إرسال';
+  @override
+  String get series => 'سلسلة';
+  @override
+  String get series_created => 'تم إنشاء السلسلة';
+  @override
+  String get series_default_name => 'سلسلة جديدة';
+  @override
+  String series_item_count({required Object n}) => '${n} عناصر';
+  @override
+  String get series_name_hint => 'اسم السلسلة';
+  @override
+  String get server_address => 'عنوان الخادم';
+  @override
+  String get settings => 'الإعدادات';
+  @override
+  String get settings_check_update_now => 'التحقق من التحديثات';
+  @override
+  String get settings_destination_appearance => 'المظهر';
+  @override
+  String get settings_destination_card_creation => 'إنشاء البطاقات';
+  @override
+  String get settings_destination_diagnostics => 'التشخيص';
+  @override
+  String get settings_destination_interconnect => 'Fushi Interconnect';
+  @override
+  String get settings_destination_listening => 'الاستماع';
+  @override
+  String get settings_destination_lookup => 'البحث';
+  @override
+  String get settings_destination_profiles => 'مخططات التكوين';
+  @override
+  String get settings_destination_reading => 'القراءة';
+  @override
+  String get settings_destination_reading_controls => 'أدوات التحكم بالقراءة';
+  @override
+  String get settings_destination_sync_backup => 'المزامنة والنسخ الاحتياطي';
+  @override
+  String get settings_destination_system => 'النظام';
+  @override
+  String get settings_destination_system_summary => 'عام، تحديثات وتشخيصات';
+  @override
+  String get settings_destination_tracking => 'تتبع الوسائط';
+  @override
+  String get settings_destination_video => 'فيديو';
+  @override
+  String get settings_search_hint => 'البحث في الإعدادات';
+  @override
+  String get settings_search_no_results => 'لا توجد إعدادات مطابقة';
+  @override
+  String get settings_secret_hide => 'إخفاء القيمة';
+  @override
+  String get settings_secret_show => 'إظهار القيمة';
+  @override
+  String get settings_section_app_shell => 'التطبيق';
+  @override
+  String get settings_section_data_storage => 'موقع تخزين البيانات';
+  @override
+  String get settings_section_gal_hook_overlay => 'نافذة نصوص الغالغيم';
+  @override
+  String get settings_section_general => 'عام';
+  @override
+  String get settings_section_lookup_audio => 'النطق والاستجابة';
+  @override
+  String get settings_section_lookup_content => 'محتوى المدخل';
+  @override
+  String get settings_section_lookup_integrations => 'التكاملات الخارجية';
+  @override
+  String get settings_section_lookup_popup_window => 'النافذة المنبثقة';
+  @override
+  String get settings_section_lookup_trigger => 'مشغّل البحث';
+  @override
+  String get settings_section_page_turn_input => 'تقليب الصفحات والتفاعل';
+  @override
+  String get settings_section_reader_chrome => 'واجهة القارئ';
+  @override
+  String get settings_section_update_channel => 'قناة التحديث';
+  @override
+  String get settings_view_changelog => 'عرض سجل التغييرات';
+  @override
+  String get share => 'مشاركة';
+  @override
+  String get share_theme => 'مشاركة المظهر';
+  @override
+  String get shortcut_action_audiobook_next_sentence => 'الجملة التالية';
+  @override
+  String get shortcut_action_audiobook_play_pause => 'تشغيل / إيقاف مؤقت';
+  @override
+  String get shortcut_action_audiobook_prev_sentence => 'الجملة السابقة';
+  @override
+  String get shortcut_action_audiobook_seek_clicked =>
+      'نقل الصوت إلى الجملة المنقورة';
+  @override
+  String get shortcut_action_dpad_down => 'أزرار الاتجاهات للأسفل';
+  @override
+  String get shortcut_action_dpad_left => 'أزرار الاتجاهات لليسار';
+  @override
+  String get shortcut_action_dpad_right => 'أزرار الاتجاهات لليمين';
+  @override
+  String get shortcut_action_dpad_up => 'أزرار الاتجاهات للأعلى';
+  @override
+  String get shortcut_action_global_back => 'رجوع';
+  @override
+  String get shortcut_action_global_external_lookup =>
+      'App-external lookup hotkey';
+  @override
+  String get shortcut_action_global_scroll_page_down =>
+      'تمرير لأسفل بمقدار شاشة';
+  @override
+  String get shortcut_action_global_scroll_page_up => 'تمرير لأعلى بمقدار شاشة';
+  @override
+  String get shortcut_action_global_toggle_fullscreen => 'تبديل ملء الشاشة';
+  @override
+  String get shortcut_action_home_focus_search => 'التركيز على البحث';
+  @override
+  String get shortcut_action_home_tab_books => 'تبويب الكتب';
+  @override
+  String get shortcut_action_home_tab_dict => 'تبويب القاموس';
+  @override
+  String get shortcut_action_home_tab_next => 'التبويب التالي';
+  @override
+  String get shortcut_action_home_tab_prev => 'التبويب السابق';
+  @override
+  String get shortcut_action_home_tab_settings => 'تبويب الإعدادات';
+  @override
+  String get shortcut_action_popup_next_entry => 'المدخل التالي';
+  @override
+  String get shortcut_action_popup_prev_entry => 'المدخل السابق';
+  @override
+  String get shortcut_action_reader_create_card_from_popup =>
+      'إنشاء بطاقة من النافذة المنبثقة';
+  @override
+  String get shortcut_action_reader_dismiss_dict => 'إغلاق القاموس';
+  @override
+  String get shortcut_action_reader_enter_caret => 'الدخول إلى مؤشر البحث';
+  @override
+  String get shortcut_action_reader_lookup_at_cursor => 'بحث / تفعيل المؤشر';
+  @override
+  String get shortcut_action_reader_open_menu => 'Open Settings Menu';
+  @override
+  String get shortcut_action_reader_open_navigation => 'Open Navigation';
+  @override
+  String get shortcut_action_reader_page_backward => 'الصفحة السابقة';
+  @override
+  String get shortcut_action_reader_page_forward => 'الصفحة التالية';
+  @override
+  String get shortcut_action_reader_shift_lookup => 'بحث بمفتاح Shift';
+  @override
+  String get shortcut_action_reader_toggle_chrome => 'إظهار/إخفاء الأدوات';
+  @override
+  String get shortcut_action_reader_toggle_furigana => 'تبديل الفوريغانا';
+  @override
+  String get shortcut_action_video_align_subtitle_to_next =>
+      'محاذاة الترجمة التالية إلى الآن';
+  @override
+  String get shortcut_action_video_align_subtitle_to_prev =>
+      'محاذاة الترجمة السابقة إلى الآن';
+  @override
+  String get shortcut_action_video_cycle_secondary_subtitle_obscure =>
+      'Cycle Secondary Subtitle Obscure';
+  @override
+  String get shortcut_action_video_cycle_subtitle_obscure =>
+      'Cycle Subtitle Obscure Mode';
+  @override
+  String get shortcut_action_video_next_chapter => 'الفصل التالي';
+  @override
+  String get shortcut_action_video_next_frame => 'الإطار التالي';
+  @override
+  String get shortcut_action_video_next_subtitle => 'الترجمة التالية';
+  @override
+  String get shortcut_action_video_open_subtitle_align =>
+      'فتح محاذاة موجة الترجمة';
+  @override
+  String get shortcut_action_video_pause => 'إيقاف مؤقت';
+  @override
+  String get shortcut_action_video_play => 'تشغيل';
+  @override
+  String get shortcut_action_video_previous_chapter => 'الفصل السابق';
+  @override
+  String get shortcut_action_video_previous_frame => 'الإطار السابق';
+  @override
+  String get shortcut_action_video_previous_subtitle => 'الترجمة السابقة';
+  @override
+  String get shortcut_action_video_replay_current_subtitle =>
+      'إعادة تشغيل الجملة الحالية';
+  @override
+  String get shortcut_action_video_replay_previous_subtitle =>
+      'إعادة تشغيل الترجمة السابقة';
+  @override
+  String get shortcut_action_video_reset_speed => 'إعادة تعيين السرعة';
+  @override
+  String get shortcut_action_video_screenshot => 'لقطة شاشة';
+  @override
+  String get shortcut_action_video_seek_backward => 'ترجيع';
+  @override
+  String get shortcut_action_video_seek_forward => 'تقديم';
+  @override
+  String get shortcut_action_video_speed_down => 'إبطاء';
+  @override
+  String get shortcut_action_video_speed_up => 'تسريع';
+  @override
+  String get shortcut_action_video_subtitle_delay_decrease => 'تأخير الترجمة −';
+  @override
+  String get shortcut_action_video_subtitle_delay_increase => 'تأخير الترجمة +';
+  @override
+  String get shortcut_action_video_toggle_favorite_sentence =>
+      'تفضيل الجملة الحالية';
+  @override
+  String get shortcut_action_video_toggle_fullscreen => 'تبديل ملء الشاشة';
+  @override
+  String get shortcut_action_video_toggle_immersive_lock =>
+      'تبديل قفل الانغماس';
+  @override
+  String get shortcut_action_video_toggle_mute => 'تبديل كتم الصوت';
+  @override
+  String get shortcut_action_video_toggle_play_pause => 'تشغيل / إيقاف مؤقت';
+  @override
+  String get shortcut_action_video_toggle_secondary_subtitle_hide =>
+      'Toggle Hide Secondary Subtitle';
+  @override
+  String get shortcut_action_video_toggle_shader_compare =>
+      'تبديل مقارنة المظلِّل';
+  @override
+  String get shortcut_action_video_toggle_subtitle_blur =>
+      'تبديل تمويه الترجمة';
+  @override
+  String get shortcut_action_video_toggle_subtitle_hide =>
+      'Toggle Hide Subtitles';
+  @override
+  String get shortcut_action_video_toggle_subtitle_list =>
+      'تبديل قائمة الترجمة';
+  @override
+  String get shortcut_action_video_volume_down => 'خفض الصوت';
+  @override
+  String get shortcut_action_video_volume_up => 'رفع الصوت';
+  @override
+  String get shortcut_assign_pick_action => 'تعيين لإجراء…';
+  @override
+  String get shortcut_clear => 'مسح';
+  @override
+  String shortcut_conflict({required Object s}) => 'مستخدم بالفعل بواسطة: ${s}';
+  @override
+  String shortcut_conflict_replace_confirm({required Object s}) =>
+      'هذا الاختصار مستخدَم بالفعل بواسطة ${s}. هل تريد نقله إلى هذا الإجراء؟';
+  @override
+  String get shortcut_gamepad => 'يد التحكّم';
+  @override
+  String get shortcut_gamepad_brand_label => 'نمط أزرار ذراع التحكم';
+  @override
+  String get shortcut_gamepad_brand_playstation => 'PlayStation';
+  @override
+  String get shortcut_gamepad_brand_switch => 'Nintendo Switch';
+  @override
+  String get shortcut_gamepad_brand_xbox => 'Xbox';
+  @override
+  String get shortcut_gamepad_pick_list => 'اختيار من القائمة';
+  @override
+  String get shortcut_gamepad_unavailable_hint =>
+      'لم يُكتشف مكون GameInput — دعم ذراع التحكم غير متاح. ثبّت خدمات ألعاب Windows لتفعيل دعم وحدة التحكم.';
+  @override
+  String get shortcut_keyboard => 'لوحة المفاتيح';
+  @override
+  String get shortcut_mouse_back => 'زر الرجوع';
+  @override
+  String get shortcut_mouse_button => 'زر الماوس';
+  @override
+  String get shortcut_mouse_forward => 'زر التقدم';
+  @override
+  String get shortcut_mouse_left => 'النقر الأيسر';
+  @override
+  String get shortcut_mouse_middle => 'النقر الأوسط';
+  @override
+  String get shortcut_mouse_right => 'النقر الأيمن';
+  @override
+  String get shortcut_press_gamepad => 'اضغط زراً على ذراع التحكم...';
+  @override
+  String get shortcut_press_key => 'اضغط مجموعة مفاتيح...';
+  @override
+  String get shortcut_press_mouse_button => 'اضغط زر الماوس...';
+  @override
+  String get shortcut_press_wheel => 'اضغط مفتاح تعديل ومرر هنا';
+  @override
+  String get shortcut_reset_confirm =>
+      'إعادة تعيين كل الاختصارات في هذا القسم إلى الافتراضي؟';
+  @override
+  String get shortcut_reset_defaults => 'إعادة التعيين للافتراضي';
+  @override
+  String get shortcut_scope_audiobook => 'الكتاب الصوتي';
+  @override
+  String get shortcut_scope_dictionary_popup => 'نافذة القاموس المنبثقة';
+  @override
+  String get shortcut_scope_dictionary_popup_note =>
+      'يعمل عندما يكون المؤشر فوق نافذة القاموس المنبثقة';
+  @override
+  String get shortcut_scope_gamepad => 'لوحة الألعاب';
+  @override
+  String get shortcut_scope_global => 'عام';
+  @override
+  String get shortcut_scope_global_external => 'شامل (خارج التطبيق)';
+  @override
+  String get shortcut_scope_global_external_mobile_note =>
+      'Triggered by the system (text selection menu, share, floating ball); the OS does not allow apps to remap this hotkey.';
+  @override
+  String get shortcut_scope_home => 'الرئيسية';
+  @override
+  String get shortcut_scope_reader => 'القارئ';
+  @override
+  String get shortcut_scope_video => 'فيديو';
+  @override
+  String get shortcut_settings_title => 'اختصارات لوحة المفاتيح';
+  @override
+  String get shortcut_stop_capture => 'إيقاف';
+  @override
+  String get shortcut_tap_to_assign => 'غير معيّن · انقر للتعيين';
+  @override
+  String get shortcut_view_list => 'عرض قائمة';
+  @override
+  String get shortcut_view_visual => 'تخطيط وحدة التحكم';
+  @override
+  String get shortcut_wheel => 'عجلة الماوس';
+  @override
+  String get shortcut_wheel_down => 'تمرير للأسفل';
+  @override
+  String get shortcut_wheel_needs_modifier =>
+      'العجلة العادية تمرر النافذة المنبثقة — اضغط Alt / Ctrl / Shift أثناء التمرير';
+  @override
+  String get shortcut_wheel_up => 'تمرير للأعلى';
+  @override
+  String get show_bottom_bar_cue => 'عرض الجملة الحالية';
+  @override
+  String get show_expression_tags => 'عرض علامات التعبير';
+  @override
+  String get show_floating_lyric => 'ترجمة عائمة';
+  @override
+  String get show_media_notification => 'عرض إشعار الوسائط';
+  @override
+  String get show_options => 'عرض الخيارات';
+  @override
+  String get show_top_progress_bar => 'مؤشر تقدّم القراءة';
+  @override
+  String get skip_action => 'تخطّي الإجراء';
+  @override
+  String skip_action_seconds({required Object n}) => '${n} ثانية';
+  @override
+  String get skip_action_sentence => 'جملة واحدة';
+  @override
+  String get sort_by => 'الترتيب';
+  @override
+  String get sort_imported => 'تاريخ الاستيراد';
+  @override
+  String get sort_recent_read => 'آخر قراءة';
+  @override
+  String get sort_recent_watched => 'آخر مشاهدة';
+  @override
+  String get sort_title => 'الاسم';
+  @override
+  String get source_description_epub => 'قراءة EPUB والبحث في القاموس';
+  @override
+  String get source_name_bookshelf => 'رف الكتب';
+  @override
+  String get spread_auto => 'تلقائي';
+  @override
+  String get spread_direction => 'اتجاه الانتشار';
+  @override
+  String get spread_direction_ltr => 'من اليسار إلى اليمين';
+  @override
+  String get spread_direction_rtl => 'من اليمين إلى اليسار';
+  @override
+  String get spread_mode => 'وضع الانتشار';
+  @override
+  String get spread_off => 'إيقاف';
+  @override
+  String get spread_on => 'تشغيل';
+  @override
+  String get srt_audio_unresolved =>
+      'لم يتم العثور على ملف الصوت — يرجى إعادة الإرفاق';
+  @override
+  String get srt_books_section => 'كتب الترجمات المسموعة';
+  @override
+  String srt_delete_confirm({required Object title}) =>
+      'حذف『${title}』؟ لا يمكن التراجع عن هذا.';
+  @override
+  String get srt_delete_title => 'حذف كتاب الترجمات';
+  @override
+  String get srt_epub_not_ready => 'الكتاب غير جاهز — يرجى إعادة الاستيراد';
+  @override
+  String get srt_import => 'استيراد كتاب';
+  @override
+  String get srt_import_audio_needs_subtitle =>
+      'يجب إقران الصوت مع الترجمات. لإرفاق صوت بكتاب EPUB موجود، اضغط مطولاً على الكتاب في الرف.';
+  @override
+  String get srt_import_author_hint => 'المؤلف (اختياري)';
+  @override
+  String get srt_import_error => 'فشل الاستيراد';
+  @override
+  String srt_import_files_selected({required Object n}) => 'تم تحديد ${n} ملف';
+  @override
+  String get srt_import_hint_epub_or_srt =>
+      'اختر ملف EPUB أو ملف ترجمة للاستيراد.';
+  @override
+  String get srt_import_missing_input =>
+      'يرجى اختيار EPUB أو ملف ترجمة على الأقل';
+  @override
+  String get srt_import_missing_title => 'يرجى إدخال عنوان الكتاب';
+  @override
+  String get srt_import_pick_audio_dir => 'اختيار دليل الصوت';
+  @override
+  String get srt_import_pick_audio_files => 'اختيار ملفات صوت';
+  @override
+  String get srt_import_pick_cover => 'اختيار صورة الغلاف';
+  @override
+  String get srt_import_pick_epub => 'اختيار EPUB';
+  @override
+  String get srt_import_pick_subtitle_files => 'اختيار ملفات ترجمة';
+  @override
+  String get srt_import_success => 'تم الاستيراد بنجاح';
+  @override
+  String get srt_import_title_hint => 'عنوان الكتاب';
+  @override
+  String get startup_default_dictionary_tab => 'فتح البحث عند البدء';
+  @override
+  String get startup_default_dictionary_tab_hint =>
+      'ابدأ الشاشة الرئيسية على تبويب البحث بدلًا من الافتراضي الحالي.';
+  @override
+  String get stash => 'المخزّن';
+  @override
+  String get stash_added_multiple => 'تمت إضافة عناصر متعددة إلى المخزّن.';
+  @override
+  String stash_added_single({required Object term}) =>
+      'تمت إضافة『${term}』إلى المخزّن.';
+  @override
+  String get stash_clear_description =>
+      'سيتم مسح جميع المحتويات. هل أنت متأكد؟';
+  @override
+  String stash_clear_single({required Object term}) =>
+      'تمت إزالة『${term}』من المخزّن.';
+  @override
+  String get stash_clear_title => 'مسح المخزّن';
+  @override
+  String get stash_nothing_to_pop => 'لا توجد عناصر لإخراجها من المخزّن.';
+  @override
+  String get stash_placeholder => 'لا توجد عناصر في المخزّن';
+  @override
+  String get stat_all_time => 'الكل';
+  @override
+  String get stat_bookshelf_compare => 'رف الكتب';
+  @override
+  String get stat_clear_all => 'مسح الإحصائيات';
+  @override
+  String get stat_clear_all_confirm => 'مسح';
+  @override
+  String get stat_clear_all_reading_message =>
+      'مسح جميع أوقات القراءة وأعداد الأحرف وأعداد البحث/التعدين؟ الكلمات والجمل والبطاقات المحفوظة ستبقى. لا يمكن التراجع عن هذا.';
+  @override
+  String get stat_clear_all_title => 'مسح جميع الإحصائيات';
+  @override
+  String get stat_clear_all_video_message =>
+      'مسح جميع أوقات المشاهدة وأعداد أحرف الترجمة وأعداد البحث/التعدين؟ الكلمات والجمل والبطاقات المحفوظة ستبقى. لا يمكن التراجع عن هذا.';
+  @override
+  String get stat_daily_average => 'المعدل اليومي';
+  @override
+  String get stat_delete_message =>
+      'حذف وقت هذا العنصر وعدد الأحرف وإحصائيات البحث/التعدين؟ الكلمات والجمل المحفوظة لن تتأثر.';
+  @override
+  String get stat_delete_title => 'حذف الإحصائيات';
+  @override
+  String get stat_fastest_day => 'Fastest Day';
+  @override
+  String get stat_favorited => 'المفضلة';
+  @override
+  String get stat_favorited_sentence => 'الجمل المفضلة';
+  @override
+  String stat_format_chars({required Object n}) => '${n} حرف';
+  @override
+  String stat_format_chars_wan({required Object n}) => '${n}万 حرف';
+  @override
+  String stat_format_days({required Object n}) => '${n} أيام';
+  @override
+  String stat_format_hours_minutes({required Object h, required Object m}) =>
+      '${h} س ${m} د';
+  @override
+  String stat_format_minutes({required Object n}) => '${n} د';
+  @override
+  String get stat_goal => 'Daily Goal';
+  @override
+  String get stat_goal_daily => 'Daily Goal';
+  @override
+  String get stat_goal_presets => 'إعدادات مسبقة';
+  @override
+  String stat_goal_progress({required Object read, required Object goal}) =>
+      '${read} / ${goal} حرف';
+  @override
+  String get stat_goal_reached => 'تم بلوغ الهدف';
+  @override
+  String stat_goal_recent_average({required Object n}) =>
+      'آخر 7 أيام: ${n} حرف/يوم في المتوسط';
+  @override
+  String get stat_goal_set => 'Set Goal';
+  @override
+  String get stat_goal_unit_chars => 'أحرف';
+  @override
+  String get stat_goal_weekly => 'Weekly Goal';
+  @override
+  String get stat_last_30_days => 'آخر 30 يوماً';
+  @override
+  String get stat_lookup => 'عمليات البحث';
+  @override
+  String get stat_metric_chars => 'الأحرف';
+  @override
+  String get stat_metric_speed => 'السرعة';
+  @override
+  String get stat_metric_time => 'الوقت';
+  @override
+  String get stat_mined => 'البطاقات المُنشأة';
+  @override
+  String get stat_no_data => 'لا توجد بيانات قراءة بعد';
+  @override
+  String get stat_range_and_trend => 'Range & Trend';
+  @override
+  String get stat_recent_active => 'أيام النشاط (7 أيام)';
+  @override
+  String get stat_refresh => 'تحديث';
+  @override
+  String get stat_slowest_day => 'Slowest Day';
+  @override
+  String get stat_sort_by_chars => 'حسب الأحرف';
+  @override
+  String get stat_sort_by_speed => 'حسب السرعة';
+  @override
+  String get stat_sort_by_time => 'حسب الوقت';
+  @override
+  String get stat_speed_anomaly => 'يوم شاذ';
+  @override
+  String get stat_speed_avg => 'المتوسط المتحرك';
+  @override
+  String stat_speed_cph({required Object n}) => '${n} حرف/ساعة';
+  @override
+  String get stat_speed_summary => 'Speed Summary';
+  @override
+  String get stat_streak => 'السلسلة';
+  @override
+  String get stat_this_month => 'هذا الشهر';
+  @override
+  String get stat_this_week => 'هذا الأسبوع';
+  @override
+  String get stat_today => 'اليوم';
+  @override
+  String get stat_today_hourly => 'اليوم حسب الساعة';
+  @override
+  String get stat_trend_daily => 'يومي';
+  @override
+  String get stat_trend_monthly => 'شهري';
+  @override
+  String get stat_trend_weekly => 'أسبوعي';
+  @override
+  String get stat_typical_day => 'Typical Day';
+  @override
+  String get stat_vs_prev => 'مقارنة بـ 14 يوماً السابقة';
+  @override
+  String get stat_weighted_avg_speed => 'Weighted Avg';
+  @override
+  String get stop => 'إيقاف';
+  @override
+  String get storage_permissions =>
+      'يرجى منح الأذونات التالية للتصدير إلى AnkiDroid.';
+  @override
+  String get stream => 'بث';
+  @override
+  String get swipe_page_turn_sensitivity => 'حساسية قلب الصفحة بالسحب';
+  @override
+  String get sync_account => 'الحساب';
+  @override
+  String get sync_audiobook => 'مزامنة موضع الكتاب الصوتي';
+  @override
+  String get sync_audiobook_files => 'مزامنة ملفات الكتب الصوتية';
+  @override
+  String get sync_audiobook_files_warning =>
+      'قد تكون ملفات الصوت والترجمات كبيرة.';
+  @override
+  String sync_auth_error({required Object message}) =>
+      'فشلت المصادقة: ${message}';
+  @override
+  String get sync_auto_sync => 'مزامنة تلقائية';
+  @override
+  String get sync_backend => 'خادم التخزين';
+  @override
+  String get sync_backend_dropbox => 'Dropbox';
+  @override
+  String get sync_backend_ftp => 'FTP';
+  @override
+  String get sync_backend_google_drive => 'Google Drive';
+  @override
+  String get sync_backend_fushi_server => 'Fushi Interconnect';
+  @override
+  String get sync_backend_onedrive => 'OneDrive';
+  @override
+  String get sync_backend_sftp => 'SFTP';
+  @override
+  String get sync_backend_webdav => 'WebDAV';
+  @override
+  String get sync_checking_account => 'جارٍ التحقق من الحساب…';
+  @override
+  String get sync_client_connected => 'متصل';
+  @override
+  String get sync_client_token => 'رمز وصول النظير';
+  @override
+  String get sync_client_token_manual => 'إدخال الرمز يدوياً';
+  @override
+  String get sync_compare => 'مقارنة البيانات';
+  @override
+  String get sync_compare_all_books => 'كل الكتب';
+  @override
+  String get sync_compare_all_local => 'الكل → محلي';
+  @override
+  String get sync_compare_all_remote => 'الكل → بعيد';
+  @override
+  String get sync_compare_all_skip => 'الكل → تخطٍّ';
+  @override
+  String sync_compare_applied({required Object count}) =>
+      'تم تطبيق ${count} تغيير';
+  @override
+  String sync_compare_apply({required Object count}) =>
+      'المزامنة الآن (${count})';
+  @override
+  String get sync_compare_close => 'إغلاق';
+  @override
+  String get sync_compare_conflicts => 'التعارضات';
+  @override
+  String get sync_compare_days => 'أيام';
+  @override
+  String get sync_compare_delete_audiobook => 'حذف الكتاب الصوتي من البعيد';
+  @override
+  String get sync_compare_delete_book => 'حذف الكتاب من البعيد';
+  @override
+  String sync_compare_delete_confirm({required Object name}) =>
+      'حذف "${name}" من البعيد؟ تُحفظ البيانات المحلية. لا يمكن التراجع عن هذا.';
+  @override
+  String get sync_compare_delete_dict => 'حذف القاموس من البعيد';
+  @override
+  String get sync_compare_deleted => 'تم الحذف من البعيد';
+  @override
+  String get sync_compare_dictionaries => 'القواميس';
+  @override
+  String get sync_compare_download => 'تنزيل';
+  @override
+  String get sync_compare_empty => 'لم يُعثر على كتب';
+  @override
+  String get sync_compare_local => 'محلي';
+  @override
+  String get sync_compare_no_content =>
+      'بيانات سحابية فقط — لا يوجد كتاب للتنزيل';
+  @override
+  String get sync_compare_no_data => 'لا توجد بيانات';
+  @override
+  String get sync_compare_remote => 'بعيد';
+  @override
+  String get sync_compare_select_all => 'تحديد الكل';
+  @override
+  String get sync_compare_skip => 'تخطٍّ';
+  @override
+  String get sync_compare_title => 'محلي مقابل بعيد';
+  @override
+  String get sync_compare_unavailable => 'Set up sync first';
+  @override
+  String get sync_compare_use_local => 'محلي';
+  @override
+  String get sync_compare_use_remote => 'بعيد';
+  @override
+  String get sync_connection_failed => 'فشل الاتصال';
+  @override
+  String get sync_connection_success => 'نجح الاتصال';
+  @override
+  String get sync_content => 'مزامنة ملفات الكتب';
+  @override
+  String get sync_content_warning =>
+      'الملفات الكبيرة ستستهلك مساحة التخزين وحزمة البيانات';
+  @override
+  String get sync_err_auth_expired =>
+      'انتهت صلاحية تسجيل الدخول — يرجى تسجيل الدخول مجددًا.';
+  @override
+  String get sync_err_invalid_client =>
+      'بيانات اعتماد العميل غير صالحة لهذه النسخة — يُرجى تحديث التطبيق.';
+  @override
+  String get sync_err_network =>
+      'تعذّر الوصول إلى الخادم — تحقّق من شبكتك أو إعدادات الوكيل.';
+  @override
+  String get sync_err_not_configured =>
+      'لم تُهيَّأ بيانات اعتماد مزامنة Google في هذه النسخة.';
+  @override
+  String get sync_err_quota => 'التخزين السحابي ممتلئ (تم بلوغ الحصة).';
+  @override
+  String get sync_err_scope_upgrade =>
+      'تغيرت صلاحيات المزامنة — يرجى تسجيل الدخول إلى Google مرة أخرى لمتابعة المزامنة.';
+  @override
+  String get sync_err_timeout =>
+      'انتهت مهلة الاتصال — لم يستجب الخادم في الوقت المحدد.';
+  @override
+  String sync_error({required Object message}) => 'خطأ في المزامنة: ${message}';
+  @override
+  String get sync_exit_warning =>
+      'المزامنة لا تزال قيد التنفيذ. قد يؤدي الخروج الآن إلى فقدان البيانات.';
+  @override
+  String get sync_exit_warning_title => 'المزامنة قيد التنفيذ';
+  @override
+  String get sync_host => 'المضيف';
+  @override
+  String get sync_lan_discovery => 'أجهزة الشبكة المحلية';
+  @override
+  String get sync_lan_no_devices => 'لم يُعثر على أجهزة';
+  @override
+  String get sync_lan_scan_failed =>
+      'فشل الفحص — تحقّق من أذونات الشبكة أو الجدار الناري.';
+  @override
+  String get sync_not_signed_in => 'لم يتم تسجيل الدخول';
+  @override
+  String get sync_now => 'زامن الآن';
+  @override
+  String sync_now_audio_in({required Object count}) => '↓${count} كتاب صوتي';
+  @override
+  String sync_now_audio_out({required Object count}) => '↑${count} كتاب صوتي';
+  @override
+  String sync_now_books_in({required Object count}) => '↓${count} كتاب';
+  @override
+  String get sync_now_busy => 'هناك مزامنة قيد التنفيذ بالفعل';
+  @override
+  String sync_now_dicts_in({required Object count}) => '↓${count} قاموس';
+  @override
+  String sync_now_dicts_out({required Object count}) => '↑${count} قاموس';
+  @override
+  String sync_now_done({required Object detail}) => 'تمت المزامنة · ${detail}';
+  @override
+  String sync_now_failed_suffix({required Object count}) => ' · ${count} فشل';
+  @override
+  String get sync_now_hint =>
+      'نفّذ مزامنة ثنائية الاتجاه كاملة مع السحابة الآن';
+  @override
+  String sync_now_local_audio_in({required Object count}) =>
+      '↓${count} مصدر صوتي';
+  @override
+  String sync_now_local_audio_out({required Object count}) =>
+      '↑${count} مصدر صوتي';
+  @override
+  String get sync_now_no_changes => 'لا تغييرات';
+  @override
+  String get sync_pair_allow => 'سماح';
+  @override
+  String sync_pair_confirm_identity_body({required Object device}) =>
+      'أنت تقترن بـ ${device}. تأكد أن هذا هو الجهاز المتوقع قبل المتابعة.';
+  @override
+  String get sync_pair_confirm_identity_title => 'تأكيد الجهاز';
+  @override
+  String get sync_pair_continue => 'متابعة';
+  @override
+  String get sync_pair_denied => 'رفض الجهاز الآخر الاقتران';
+  @override
+  String get sync_pair_deny => 'رفض';
+  @override
+  String get sync_pair_enter_pin_body =>
+      'أدخل رمز PIN المكون من 6 أرقام المعروض على الجهاز الآخر.';
+  @override
+  String get sync_pair_enter_pin_title => 'إدخال رمز PIN';
+  @override
+  String get sync_pair_failed => 'فشل الاقتران';
+  @override
+  String get sync_pair_fingerprint_changed =>
+      'تغيرت الشهادة — تم إلغاء الاقتران للأمان (احتمال اعتراض).';
+  @override
+  String get sync_pair_fingerprint_label => 'بصمة الشهادة';
+  @override
+  String get sync_pair_not_fushi =>
+      'لم يُعثر على جهاز Fushi على هذا العنوان. تم حفظ العنوان.';
+  @override
+  String get sync_pair_pairing => 'جارٍ الاقتران…';
+  @override
+  String get sync_pair_pin_label => 'أدخل رمز PIN هذا على الجهاز الآخر';
+  @override
+  String get sync_pair_pin_waiting => 'في انتظار الجهاز الآخر لإدخال رمز PIN…';
+  @override
+  String get sync_pair_pin_wrong => 'رمز PIN خاطئ — حاول مرة أخرى';
+  @override
+  String get sync_pair_repair => 'إعادة الاقتران';
+  @override
+  String get sync_pair_request_body =>
+      'يطلب جهاز الاقتران. هل تسمح له بالمزامنة مع هذا الجهاز؟';
+  @override
+  String get sync_pair_request_title => 'طلب اقتران';
+  @override
+  String get sync_pair_success => 'تم الاقتران — تم ملء الرمز';
+  @override
+  String get sync_pair_unavailable =>
+      'الجهاز الآخر غير جاهز أو يعمل بإصدار أقدم. حدّثه وفعّل المزامنة ثم حاول مجددًا.';
+  @override
+  String get sync_pair_unknown_device => 'جهاز غير معروف';
+  @override
+  String get sync_paired_peer_remove => 'إزالة';
+  @override
+  String get sync_paired_peer_removed => 'تمت إزالة الجهاز المقترن';
+  @override
+  String get sync_paired_peer_unknown => 'جهاز غير معروف';
+  @override
+  String get sync_paired_peers_empty => 'لا توجد أجهزة مقترنة بعد';
+  @override
+  String get sync_paired_peers_title => 'الأجهزة المقترنة';
+  @override
+  String get sync_password => 'كلمة المرور';
+  @override
+  String get sync_port => 'المنفذ';
+  @override
+  String get sync_private_key => 'المفتاح الخاص';
+  @override
+  String get sync_progress_audiobooks => 'مزامنة الكتب الصوتية';
+  @override
+  String get sync_progress_books => 'جارٍ استيراد الكتب';
+  @override
+  String get sync_progress_dictionaries => 'مزامنة القواميس';
+  @override
+  String get sync_progress_local_audio => 'مزامنة الصوت المحلي';
+  @override
+  String get sync_progress_reading => 'مزامنة بيانات القراءة';
+  @override
+  String get sync_progress_videos => 'جارٍ مزامنة الفيديوهات';
+  @override
+  String get sync_role_locked_by_client =>
+      'متصل بالفعل بجهاز آخر. أزل الاتصال قبل التشغيل كخادم مضيف.';
+  @override
+  String get sync_role_locked_by_server =>
+      'هذا الجهاز يعمل كخادم مضيف. أوقف الخادم قبل الاتصال بأجهزة أخرى.';
+  @override
+  String get sync_section_actions => 'إجراءات المزامنة';
+  @override
+  String get sync_section_backup => 'نسخة احتياطية محلية';
+  @override
+  String get sync_section_content => 'ما الذي تتم مزامنته';
+  @override
+  String get sync_section_host_server => 'هذا الجهاز كخادم مزامنة';
+  @override
+  String get sync_section_host_server_footer =>
+      'اسمح للأجهزة الأخرى بالمزامنة من هذا الجهاز. مستقل عن خادم التخزين أعلاه.';
+  @override
+  String get sync_section_method => 'طريقة المزامنة';
+  @override
+  String get sync_server_copy_token => 'نسخ الرمز';
+  @override
+  String get sync_server_enable => 'تفعيل خادم المزامنة';
+  @override
+  String get sync_server_mode_active => 'هذا الجهاز خادم مزامنة';
+  @override
+  String get sync_server_mode_clients_drive =>
+      'تبدأ المزامنة من العملاء المتصلين — لا حاجة للمزامنة اليدوية هنا.';
+  @override
+  String get sync_server_port => 'منفذ الخادم';
+  @override
+  String sync_server_port_in_use({required Object port}) =>
+      'المنفذ ${port} مستخدم بالفعل — اختر منفذًا آخر.';
+  @override
+  String get sync_server_regenerate_token => 'إعادة توليد الرمز';
+  @override
+  String get sync_server_running => 'الخادم قيد التشغيل';
+  @override
+  String get sync_server_stopped => 'الخادم متوقف';
+  @override
+  String get sync_server_tls_enable => 'تشفير الاتصال (HTTPS/TLS)';
+  @override
+  String get sync_server_tls_repair_hint =>
+      'تغيير هذا يتطلب إعادة اقتران الأجهزة';
+  @override
+  String get sync_server_token => 'رمز الوصول';
+  @override
+  String get sync_show_remote_entries => 'عرض العناصر البعيدة';
+  @override
+  String get sync_show_remote_entries_warning =>
+      'عرض الكتب والفيديوهات الموجودة على الأجهزة المقترنة أو السحابة كبطاقات يمكنك تحميلها أو بثها.';
+  @override
+  String get sync_sign_in => 'تسجيل الدخول';
+  @override
+  String get sync_sign_out => 'تسجيل الخروج';
+  @override
+  String get sync_signed_in => 'تم تسجيل الدخول';
+  @override
+  String get sync_statistics => 'مزامنة الإحصائيات';
+  @override
+  String get sync_summary =>
+      'سحابة، Fushi Interconnect عبر الشبكة المحلية ونسخ احتياطي محلي';
+  @override
+  String get sync_test_connection => 'اختبار الاتصال';
+  @override
+  String get sync_use_tls => 'استخدام TLS';
+  @override
+  String get sync_username => 'اسم المستخدم';
+  @override
+  String get sync_video_files => 'رفع ملفات الفيديو';
+  @override
+  String get sync_video_files_warning => 'ملفات الفيديو قد تكون كبيرة جداً.';
+  @override
+  String get sync_webdav_missing_fields => 'حقول ناقصة';
+  @override
+  String sync_webdav_test_failed({required Object message}) =>
+      'فشل الاتصال: ${message}';
+  @override
+  String get sync_webdav_url => 'عنوان الخادم';
+  @override
+  String tag_added_to_book({required Object name}) =>
+      'تمت إضافة الوسم "${name}" إلى الكتاب.';
+  @override
+  String tag_added_to_collection({required Object name}) =>
+      'تمت إضافة الوسم ${name} إلى المجموعة.';
+  @override
+  String tag_added_to_video({required Object name}) =>
+      'أُضيف الوسم «${name}» إلى الفيديو.';
+  @override
+  String tag_already_on_book({required Object name}) =>
+      'الوسم "${name}" موجود بالفعل في هذا الكتاب.';
+  @override
+  String tag_already_on_collection({required Object name}) =>
+      'الوسم ${name} موجود بالفعل في هذه المجموعة.';
+  @override
+  String tag_book_count({required Object count}) => '${count} كتاب';
+  @override
+  String get tag_clear_filter => 'مسح التصفية';
+  @override
+  String get tag_color => 'اللون';
+  @override
+  String tag_delete_confirm({required Object name}) => 'حذف الوسم "${name}"؟';
+  @override
+  String get tag_filter_title => 'تصفية حسب الوسم';
+  @override
+  String get tag_label => 'الوسوم';
+  @override
+  String get tag_manage => 'إدارة الوسوم';
+  @override
+  String get tag_manage_title => 'إدارة الوسوم';
+  @override
+  String get tag_name_duplicate => 'يوجد وسم بهذا الاسم بالفعل.';
+  @override
+  String get tag_name_empty => 'لا يمكن أن يكون اسم الوسم فارغاً.';
+  @override
+  String get tag_name_hint => 'اسم الوسم';
+  @override
+  String get tag_new => 'وسم جديد';
+  @override
+  String get tag_no_books_for_filter => 'لا توجد كتب تطابق الوسوم المحددة.';
+  @override
+  String get tag_no_tags_hint => 'لا توجد وسوم بعد. أنشئ واحداً للبدء.';
+  @override
+  String get tag_seed_stars => 'إضافة وسوم تقييم بالنجوم';
+  @override
+  String get tag_seed_stars_added => 'تمت إضافة وسوم التقييم بالنجوم';
+  @override
+  String get tag_seed_stars_exists => 'وسوم التقييم بالنجوم موجودة بالفعل';
+  @override
+  String get tap_empty_hide_chrome => 'شريط التحكم العائم';
+  @override
+  String get text_segmentation => 'تقطيع النص';
+  @override
+  String get texthooker => 'Texthooker';
+  @override
+  String get texthooker_enabled => 'Texthooker (استقبال النص)';
+  @override
+  String get texthooker_enabled_hint =>
+      'الاتصال بـ Textractor/mpv/agent والبحث عن النص الوارد';
+  @override
+  String get theme_black => 'أسود صرف';
+  @override
+  String get theme_code_copied => 'تم نسخ رمز المظهر إلى الحافظة';
+  @override
+  String get theme_dark => 'داكن عميق';
+  @override
+  String get theme_ecru => 'بيج';
+  @override
+  String get theme_eyecare => 'Eye Care';
+  @override
+  String get theme_gray => 'رمادي داكن';
+  @override
+  String get theme_light => 'أبيض';
+  @override
+  String get theme_seed_preview_hint =>
+      'تعرض العينات أدناه الألوان المُولَّدة فعليًا من لون البذرة. لفرض لون محدد كلون التمييز الأساسي، فعّل مفتاح «الأساسي» وحدّده صراحةً.';
+  @override
+  String get theme_water => 'أزرق مائي';
+  @override
+  String toc_section({required Object n}) => 'جدول المحتويات (${n})';
+  @override
+  String get top_progress_pos_center => 'الوسط';
+  @override
+  String get top_progress_pos_left => 'أعلى اليسار';
+  @override
+  String get top_progress_pos_right => 'أعلى اليمين';
+  @override
+  String get top_progress_position => 'موضع شريط التقدم';
+  @override
+  String get torrent_upload_intro_body =>
+      'الرفع (البذر) معطل افتراضياً. فعّله لمشاركة المحتوى المحمّل مع السرب — هذا يستخدم سرعة الرفع لديك. يمكنك تغيير هذا في أي وقت من الإعدادات.';
+  @override
+  String get torrent_upload_intro_confirm => 'حفظ';
+  @override
+  String get torrent_upload_intro_enable => 'تفعيل الرفع / البذر';
+  @override
+  String get torrent_upload_intro_keep_off => 'الإبقاء معطلاً';
+  @override
+  String get torrent_upload_intro_title => 'الرفع / البذر';
+  @override
+  String get reader_blur_images => 'تمويه الصور (حماية المحتوى)';
+  @override
+  String get reader_font_size => 'حجم الخط';
+  @override
+  String get reader_font_vpal => 'VPAL (بديل عمودي)';
+  @override
+  String get reader_furigana_hide => 'إخفاء';
+  @override
+  String get reader_furigana_mode => 'فوريغانا';
+  @override
+  String get reader_furigana_mode_hint => '';
+  @override
+  String get reader_furigana_partial => 'جزئي';
+  @override
+  String get reader_furigana_show => 'عرض';
+  @override
+  String get reader_furigana_toggle => 'تبديل';
+  @override
+  String get reader_horizontal => 'أفقي';
+  @override
+  String get reader_line_height => 'ارتفاع السطر';
+  @override
+  String get reader_merge_image_pages => 'دمج صفحات الرسوم في النص';
+  @override
+  String get reader_merge_image_pages_subtitle =>
+      'الفصول المكونة من صورة واحدة تُعرض ضمن الفصل النصي المجاور بدلاً من صفحة منفصلة';
+  @override
+  String get reader_no_books_added => 'لا توجد كتب في المكتبة';
+  @override
+  String get reader_not_bound_cannot_rematch =>
+      'الكتاب الصوتي غير مرتبط بكتاب، لا يمكن إعادة المطابقة';
+  @override
+  String get reader_orient_mixed => 'مختلط';
+  @override
+  String get reader_orient_upright => 'قائم';
+  @override
+  String get reader_page_columns_auto => 'تلقائي';
+  @override
+  String get reader_paginated => 'صفحات';
+  @override
+  String get reader_paragraph_spacing => 'المسافة بين الفقرات';
+  @override
+  String get reader_reader_styles => 'أولوية أنماط الكتاب';
+  @override
+  String get reader_scroll => 'تمرير';
+  @override
+  String get reader_text_indentation => 'مسافة بادئة الفقرة';
+  @override
+  String get reader_text_justify => 'ضبط النص';
+  @override
+  String get reader_theme => 'المظهر';
+  @override
+  String get reader_vert_kerning => 'تقنين الحروف (عمودي)';
+  @override
+  String get reader_vert_text_orient => 'اتجاه النص';
+  @override
+  String get reader_vertical => 'عمودي';
+  @override
+  String get reader_view_mode_label => 'صفحات / تمرير';
+  @override
+  String get reader_vn => 'Visual Novel';
+  @override
+  String get reader_writing_direction => 'اتجاه الكتابة';
+  @override
+  String get undo => 'تراجع';
+  @override
+  String get unit_milliseconds => 'مللي ثانية';
+  @override
+  String get unit_pixels => 'بكسل';
+  @override
+  String untitled_book({required Object id}) => 'كتاب ${id}';
+  @override
+  String get untitled_chapter => '(بدون عنوان)';
+  @override
+  String get update_already_latest => 'أنت على أحدث إصدار';
+  @override
+  String get update_auto_install => 'تثبيت التحديثات تلقائياً';
+  @override
+  String get update_available => 'تحديث متاح';
+  @override
+  String update_cached_newer({required Object version}) =>
+      'التحديث ${version} متاح (جارٍ التحقق…)';
+  @override
+  String update_cached_up_to_date({required Object version}) =>
+      'على أحدث إصدار معروف ${version} (جارٍ التحقق…)';
+  @override
+  String get update_cancel => 'إلغاء';
+  @override
+  String get update_cancelled => 'تم إلغاء التنزيل';
+  @override
+  String get update_cancelling => 'جارٍ الإلغاء…';
+  @override
+  String get update_channel_beta => 'تجريبي';
+  @override
+  String get update_channel_debug => 'تصحيح';
+  @override
+  String get update_channel_stable => 'مستقر';
+  @override
+  String get update_check_failed => 'فشل التحقق من التحديثات';
+  @override
+  String get update_checking_now => 'جارٍ التحقق من التحديثات…';
+  @override
+  String get update_connecting => 'جارٍ الاتصال…';
+  @override
+  String get update_debug_channel => 'قناة تحديث التصحيح';
+  @override
+  String get update_debug_channel_warning =>
+      'إصدارات قناة التصحيح قد تكون غير مستقرة. استخدمها على مسؤوليتك.';
+  @override
+  String get update_download => 'تنزيل';
+  @override
+  String get update_download_failed => 'فشل التنزيل';
+  @override
+  String get update_download_restarted_from_zero => 'أُعيد التنزيل من الصفر';
+  @override
+  String update_download_resume_status({required Object status}) =>
+      'الاستئناف: ${status}';
+  @override
+  String get update_download_resumed => 'تم الاستئناف';
+  @override
+  String update_download_size({
+    required Object received,
+    required Object total,
+  }) => 'تم التنزيل: ${received} / ${total}';
+  @override
+  String update_download_source({required Object source}) =>
+      'المصدر: ${source}';
+  @override
+  String update_download_speed({required Object speed}) => 'السرعة: ${speed}';
+  @override
+  String get update_downloading => 'جارٍ تنزيل التحديث…';
+  @override
+  String get update_hide => 'إخفاء';
+  @override
+  String update_install_current_executable({required Object path}) =>
+      'البرنامج قيد التشغيل: ${path}';
+  @override
+  String update_install_deletefile_failure({
+    required Object path,
+    required Object code,
+  }) => 'فشل المثبّت في استبدال ${path} (الرمز ${code})';
+  @override
+  String update_install_detected_location({
+    required Object source,
+    required Object path,
+  }) => 'موقع التثبيت المكتشف (${source}): ${path}';
+  @override
+  String update_install_failure_summary({required Object summary}) =>
+      'السبب: ${summary}';
+  @override
+  String get update_install_incomplete_message =>
+      'بدأ المثبّت، لكن Fushi لا يزال على الإصدار السابق. تحقق من سجل المثبّت أدناه.';
+  @override
+  String get update_install_incomplete_title => 'لم يكتمل التحديث';
+  @override
+  String update_install_installer_pid({required Object pid}) =>
+      'معرّف عملية المثبّت: ${pid}';
+  @override
+  String update_install_launch_failed_message({required Object version}) =>
+      'تعذّر على Fushi بدء مثبّت الإصدار ${version}. تحقق من مسار السجل أدناه.';
+  @override
+  String get update_install_launch_failed_title => 'لم يبدأ مثبّت التحديث';
+  @override
+  String update_install_launcher_pid({required Object pid}) =>
+      'معرّف عملية مشغّل التحديث: ${pid}';
+  @override
+  String update_install_libmpv_holder({
+    required Object pid,
+    required Object path,
+  }) => 'حامل libmpv: PID ${pid} - ${path}';
+  @override
+  String get update_install_log_not_observed =>
+      'لم يُنشأ سجل المثبّت أثناء الفحص بعد البدء.';
+  @override
+  String get update_install_log_observed =>
+      'أُنشئ سجل المثبّت أثناء الفحص بعد البدء.';
+  @override
+  String update_install_log_path({required Object path}) =>
+      'سجل المثبّت: ${path}';
+  @override
+  String get update_install_manual_close_retry =>
+      'أغلق Fushi من PID/المسار المدرج، ثم أعد محاولة التحديث أو شغّل المثبّت مجددًا.';
+  @override
+  String get update_install_parent_exit_not_observed =>
+      'لم يلاحظ مشغّل التحديث خروج Fushi قبل بدء المثبّت.';
+  @override
+  String get update_install_parent_exit_observed =>
+      'خرج Fushi قبل بدء المثبّت.';
+  @override
+  String update_install_path_mismatch({required Object warning}) =>
+      'عدم تطابق دليل التثبيت: ${warning}';
+  @override
+  String get update_install_permission_cancel => 'إلغاء';
+  @override
+  String get update_install_permission_message =>
+      'يرجى السماح لـ Fushi بتثبيت التطبيقات في إعدادات النظام، ثم أعد المحاولة.';
+  @override
+  String get update_install_permission_retry => 'إعادة محاولة التثبيت';
+  @override
+  String get update_install_permission_title => 'السماح بتثبيت التحديثات';
+  @override
+  String get update_install_restart_windows_hint =>
+      'إذا أُغلقت العمليات المدرجة لكن libmpv-2.dll لا يزال مقفلًا، أعد تشغيل Windows وثبّت مجددًا.';
+  @override
+  String update_install_running_process({
+    required Object pid,
+    required Object path,
+  }) => 'عملية Fushi قيد التشغيل: PID ${pid} - ${path}';
+  @override
+  String update_install_success_message({required Object version}) =>
+      'تم تحديث Fushi إلى الإصدار ${version}.';
+  @override
+  String get update_install_success_title => 'تم تثبيت التحديث';
+  @override
+  String update_install_target_dir({required Object path}) =>
+      'هدف التثبيت: ${path}';
+  @override
+  String get update_installing => 'جارٍ التثبيت…';
+  @override
+  String get update_mac_install_incomplete_message =>
+      'تعذر تطبيق التحديث، لذا Fushi لا يزال على الإصدار السابق. يمكنك إعادة محاولة التحديث، أو تحميل أحدث إصدار يدوياً.';
+  @override
+  String update_message({required Object version}) =>
+      'الإصدار ${version} متاح.';
+  @override
+  String update_network_failure({
+    required Object host,
+    required Object reason,
+  }) => 'تعذّر الوصول إلى ${host}: ${reason}';
+  @override
+  String get update_never_remind => 'عدم التذكير بالتحديثات';
+  @override
+  String get update_skip => 'تخطّي';
+  @override
+  String get url => 'الرابط';
+  @override
+  String get video_audio_track => 'المسار الصوتي';
+  @override
+  String get video_audio_track_empty => 'لا توجد مسارات صوتية قابلة للتبديل';
+  @override
+  String video_audio_track_switched({required Object label}) =>
+      'المسار الصوتي: ${label}';
+  @override
+  String get video_auto_play_next_cancel => 'إلغاء';
+  @override
+  String video_auto_play_next_countdown({required Object seconds}) =>
+      'الحلقة التالية بعد ${seconds} ث';
+  @override
+  String get video_black_flash_notice_action => 'عرض الاقتراحات';
+  @override
+  String get video_black_flash_notice_dont_show_again => 'عدم الإظهار مرة أخرى';
+  @override
+  String get video_bottom_next_cue =>
+      'الترجمة التالية (تقديم قليلًا إن لم توجد)';
+  @override
+  String get video_bottom_play_pause => 'تشغيل / إيقاف مؤقت';
+  @override
+  String get video_bottom_prev_cue =>
+      'الترجمة السابقة (ترجيع قليلًا إن لم توجد)';
+  @override
+  String get video_bottom_seek_back => 'ترجيع 10 ثوانٍ';
+  @override
+  String get video_bottom_seek_back_label => '−10 ث';
+  @override
+  String get video_bottom_seek_forward => 'تقديم 10 ثوانٍ';
+  @override
+  String get video_bottom_seek_forward_label => '+10 ث';
+  @override
+  String video_chapter_n({required Object n}) => 'الفصل ${n}';
+  @override
+  String get video_chapters => 'الفصول';
+  @override
+  String get video_chapters_empty => 'لا توجد فصول';
+  @override
+  String get video_clip_export => 'تصدير المقطع';
+  @override
+  String get video_clip_export_cancelled => 'تم إلغاء تصدير المقطع';
+  @override
+  String video_clip_export_failed({required Object reason}) =>
+      'فشل تصدير المقطع: ${reason}';
+  @override
+  String get video_clip_export_ffmpeg_failed => 'فشل ffmpeg';
+  @override
+  String get video_clip_export_ffmpeg_unavailable => 'ffmpeg غير متاح';
+  @override
+  String get video_clip_export_input_missing => 'الفيديو المصدر غير متاح';
+  @override
+  String get video_clip_export_invalid_range => 'لا يوجد نطاق مقطع صالح';
+  @override
+  String get video_clip_export_output_missing => 'لم يُنشأ أي ملف إخراج';
+  @override
+  String get video_clip_export_remote_download_required =>
+      'نزّل الفيديو البعيد إلى هذا الجهاز قبل تصدير مقطع';
+  @override
+  String get video_clip_export_source_changed =>
+      'تغيّر مصدر الفيديو؛ أُلغي تصدير المقطع';
+  @override
+  String get video_clip_export_start => 'بدء تصدير المقطع';
+  @override
+  String get video_clip_export_stop => 'إيقاف وتصدير المقطع';
+  @override
+  String video_clip_exported({required Object path}) =>
+      'تم تصدير المقطع: ${path}';
+  @override
+  String video_clip_exported_with_subtitles({required Object path}) =>
+      'تم تصدير المقطع مع الترجمات: ${path}';
+  @override
+  String get video_clip_exporting => 'جارٍ تصدير المقطع…';
+  @override
+  String get video_continue_watching => 'Continue Watching';
+  @override
+  String get video_control_audio_track => 'المسار الصوتي';
+  @override
+  String get video_control_customize_hint =>
+      'اختر موضع كل زر على المشغّل، أو انقله خارجه.';
+  @override
+  String get video_control_episode_list => 'قائمة الحلقات';
+  @override
+  String get video_control_favorite_sentence => 'تفضيل الجملة الحالية';
+  @override
+  String get video_control_fullscreen => 'ملء الشاشة';
+  @override
+  String get video_control_next_cue => 'الترجمة التالية';
+  @override
+  String get video_control_palette_hint =>
+      'اسحب زرًا إلى موضع لإضافته؛ يمكن أن يكون الزر في عدة مواضع.';
+  @override
+  String get video_control_palette_title => 'كل الأزرار';
+  @override
+  String get video_control_play_pause => 'تشغيل/إيقاف مؤقت';
+  @override
+  String get video_control_previous_cue => 'الترجمة السابقة';
+  @override
+  String get video_control_reject_required =>
+      'يجب أن تبقى عناصر التحكم المطلوبة على المشغّل.';
+  @override
+  String get video_control_reject_unavailable => 'لا يمكن وضع هذا العنصر هناك.';
+  @override
+  String get video_control_reject_volume_bottom =>
+      'لا يمكن وضع الصوت إلا في الشريط السفلي.';
+  @override
+  String get video_control_remove_from_slot => 'نقل للخارج';
+  @override
+  String get video_control_reset_layout => 'إعادة تعيين تخطيط أزرار المشغّل';
+  @override
+  String get video_control_screenshot => 'لقطة شاشة';
+  @override
+  String get video_control_seek_backward => 'ترجيع 10 ثوانٍ';
+  @override
+  String get video_control_seek_forward => 'تقديم 10 ثوانٍ';
+  @override
+  String get video_control_settings => 'إعدادات المشغّل';
+  @override
+  String get video_control_slot_bottom_center => 'الشريط السفلي (الوسط)';
+  @override
+  String get video_control_slot_bottom_left => 'الشريط السفلي (يسار)';
+  @override
+  String get video_control_slot_bottom_right => 'الشريط السفلي (يمين)';
+  @override
+  String get video_control_slot_drop_hint => 'اسحب زرًا إلى هنا';
+  @override
+  String get video_control_slot_hidden => 'أُزيل من المشغّل';
+  @override
+  String get video_control_slot_screen_left => 'يسار الشاشة';
+  @override
+  String get video_control_slot_screen_right => 'يمين الشاشة';
+  @override
+  String get video_control_slot_top_center => 'الشريط العلوي (الوسط)';
+  @override
+  String get video_control_slot_top_left => 'الشريط العلوي (يسار)';
+  @override
+  String get video_control_slot_top_right => 'الشريط العلوي (يمين)';
+  @override
+  String get video_control_speed => 'السرعة';
+  @override
+  String get video_control_subtitle_list => 'قائمة الترجمة';
+  @override
+  String get video_control_subtitle_track => 'مسار الترجمة';
+  @override
+  String get video_control_title => 'عنوان الفيديو';
+  @override
+  String get video_control_volume => 'الصوت';
+  @override
+  String get video_danmaku_manual_bind_empty =>
+      'لا توجد دانماكو لهذه الحلقة بعد.';
+  @override
+  String get video_danmaku_manual_bind_failed =>
+      'تعذر تحميل الدانماكو لهذه الحلقة. حاول مرة أخرى لاحقاً.';
+  @override
+  String get video_danmaku_manual_bind_server_error =>
+      'رفض خادم الدانماكو الطلب. حاول مرة أخرى لاحقاً.';
+  @override
+  String get video_danmaku_manual_match_title => 'مطابقة الدانماكو';
+  @override
+  String get video_danmaku_manual_network_error =>
+      'خطأ في الشبكة. تحقق من اتصالك وحاول مرة أخرى.';
+  @override
+  String get video_danmaku_manual_no_result => 'لم يُعثر على أنمي مطابق.';
+  @override
+  String get video_danmaku_manual_search_action => 'بحث';
+  @override
+  String get video_danmaku_manual_search_hint => 'عنوان الأنمي';
+  @override
+  String get video_danmaku_manual_search_prompt =>
+      'ابحث في Dandanplay بعنوان الأنمي، ثم اختر حلقة.';
+  @override
+  String get video_danmaku_manual_server_error =>
+      'فشل البحث. حاول مرة أخرى لاحقاً.';
+  @override
+  String video_delete_confirm({required Object title}) =>
+      'حذف『${title}』؟ لا يمكن التراجع عن ذلك.';
+  @override
+  String get video_delete_title => 'حذف الفيديو';
+  @override
+  String get video_double_tap_next_cue => 'السطر التالي';
+  @override
+  String get video_double_tap_prev_cue => 'السطر السابق';
+  @override
+  String get video_drop_audio_unsupported =>
+      'أفلت ملفات الترجمة على الفيديو الحالي. لا يمكن إرفاق ملفات الصوت هنا.';
+  @override
+  String get video_drop_subtitle_only =>
+      'أفلت ملفات الترجمة على الفيديو الحالي.';
+  @override
+  String get video_episode_list => 'الحلقات';
+  @override
+  String get video_episode_list_empty => 'لا توجد حلقات';
+  @override
+  String video_favorite_count({required Object count}) => '${count} مفضّلة';
+  @override
+  String get video_file_error_content =>
+      'تعذّر تحميل ملف الفيديو. تأكد من وجود الملف في دليل يمكن للتطبيق الوصول إليه.';
+  @override
+  String get video_file_not_found => 'ملف الفيديو غير موجود';
+  @override
+  String get video_immersive_locked => 'وضع الانغماس مفعّل';
+  @override
+  String get video_immersive_mode_full => 'كامل عناصر التحكم';
+  @override
+  String get video_immersive_mode_lookup_only => 'البحث فقط';
+  @override
+  String get video_immersive_mode_seek_lookup => 'اختصار + بحث';
+  @override
+  String get video_immersive_mode_unlock_only => 'إلغاء القفل فقط';
+  @override
+  String get video_immersive_unlock => 'إلغاء القفل';
+  @override
+  String get video_immersive_unlocked => 'وضع الانغماس متوقف';
+  @override
+  String get video_import_action => 'استيراد فيديو';
+  @override
+  String get video_import_confirm => 'استيراد';
+  @override
+  String get video_import_pick_subtitle => 'اختيار ترجمة';
+  @override
+  String get video_import_pick_video => 'اختيار ملف فيديو';
+  @override
+  String get video_import_stream_advanced => 'متقدم (ترويسات مضادة للسرقة)';
+  @override
+  String get video_import_stream_referer => 'Referer (اختياري)';
+  @override
+  String get video_import_stream_subtitle_url_field =>
+      'رابط ترجمة خارجية (اختياري)';
+  @override
+  String get video_import_stream_url_field => 'رابط بث الفيديو';
+  @override
+  String get video_import_stream_url_hint =>
+      'تشغيل بث HLS/m3u8/mp4 (مع رابط ترجمة خارجية اختياري و Referer/User-Agent مضاد للسرقة)';
+  @override
+  String get video_import_stream_user_agent => 'User-Agent (اختياري)';
+  @override
+  String get video_import_subtitle_optional =>
+      'ترجمة خارجية اختيارية (يمكنك التبديل بين الترجمات المدمجة والخارجية في أي وقت أثناء التشغيل)';
+  @override
+  String get video_import_title => 'استيراد فيديو';
+  @override
+  String get video_jimaku_anime_match => 'مطابقة الأنمي';
+  @override
+  String get video_jimaku_api_key => 'مفتاح Jimaku API';
+  @override
+  String get video_jimaku_api_key_hint =>
+      'احصل على مفتاح API مجاني من jimaku.cc/account';
+  @override
+  String get video_jimaku_api_key_set => 'تم ضبط مفتاح API';
+  @override
+  String video_jimaku_batch_done({
+    required Object done,
+    required Object total,
+  }) => 'تم جلب الترجمات: ${done}/${total}';
+  @override
+  String get video_jimaku_batch_download => 'تحميل الكل';
+  @override
+  String get video_jimaku_batch_title => 'جلب ترجمات المجموعة';
+  @override
+  String get video_jimaku_download_failed => 'فشل التنزيل';
+  @override
+  String get video_jimaku_downloaded => 'تم تنزيل الترجمة وتطبيقها';
+  @override
+  String get video_jimaku_episode => 'الحلقة (اختياري)';
+  @override
+  String get video_jimaku_episode_hint => 'اتركه فارغاً لعرض الكل';
+  @override
+  String get video_jimaku_fetch => 'جلب الترجمات (Jimaku)';
+  @override
+  String get video_jimaku_filter => 'تصفية النتائج (مثل WEBRip وBD)';
+  @override
+  String get video_jimaku_find_sources => 'البحث عن ترجمات';
+  @override
+  String get video_jimaku_language => 'اللغة';
+  @override
+  String get video_jimaku_language_all => 'الكل';
+  @override
+  String get video_jimaku_no_key => 'أدخل مفتاح Jimaku API أولًا';
+  @override
+  String get video_jimaku_no_results => 'لم يُعثر على ترجمات';
+  @override
+  String get video_jimaku_query => 'اسم السلسلة';
+  @override
+  String get video_jimaku_search => 'بحث';
+  @override
+  String get video_jimaku_series => 'السلسلة';
+  @override
+  String get video_jimaku_show_all_episodes => 'عرض جميع الحلقات';
+  @override
+  String get video_jimaku_source => 'مصدر الترجمة';
+  @override
+  String get video_jimaku_source_hint =>
+      'اختر مدخل Jimaku واحداً. حزم المواسم تُطابق بالحلقة تلقائياً.';
+  @override
+  String video_last_watched({required Object date}) => 'آخر مشاهدة ${date}';
+  @override
+  String get video_library_empty => 'لم تُستورد أي فيديوهات بعد';
+  @override
+  String get video_load_failed_back => 'رجوع';
+  @override
+  String get video_load_failed_generic => 'تعذر تحميل هذا الفيديو.';
+  @override
+  String get video_load_failed_network =>
+      'خطأ في الشبكة - تحقق من اتصالك وحاول مرة أخرى.';
+  @override
+  String get video_load_failed_not_found =>
+      'لم يُعثر على هذا العنصر في مكتبتك.';
+  @override
+  String get video_load_failed_retry => 'إعادة المحاولة';
+  @override
+  String get video_load_failed_timeout =>
+      'انتهت مهلة الاتصال - الشبكة بطيئة أو المصدر يحدّ من الطلبات. يرجى المحاولة مرة أخرى.';
+  @override
+  String get video_load_failed_title => 'فشل تحميل الفيديو';
+  @override
+  String get video_load_failed_unavailable =>
+      'تعذر الحصول على بث الفيديو - قد يكون غير متاح أو مقيداً بالمنطقة أو العمر أو تغيّر المصدر.';
+  @override
+  String get video_loading_buffering => 'جارٍ التخزين المؤقت…';
+  @override
+  String get video_loading_connecting => 'جارٍ الاتصال بالبث…';
+  @override
+  String get video_loading_preparing => 'جارٍ التحضير…';
+  @override
+  String get video_loading_subtitle => 'جارٍ تحميل الترجمات…';
+  @override
+  String get video_menu_fullscreen => 'تبديل ملء الشاشة';
+  @override
+  String get video_menu_lock => 'وضع الانغماس / القفل';
+  @override
+  String get video_menu_play_pause => 'تشغيل / إيقاف مؤقت';
+  @override
+  String get video_menu_subtitle_track => 'مسار الترجمة';
+  @override
+  String get video_mining_image_mode => 'صورة بطاقة الفيديو';
+  @override
+  String get video_mining_image_mode_current_frame => 'لقطة شاشة عند التعدين';
+  @override
+  String get video_mining_image_mode_gif => 'GIF متحرك (مقطع الترجمة)';
+  @override
+  String get video_mining_image_mode_hint =>
+      'هل غلاف بطاقة الفيديو رسوم متحركة لمقطع الترجمة أم إطار ثابت — وأي إطار';
+  @override
+  String get video_mining_image_mode_subtitle_start =>
+      'لقطة شاشة عند بداية الترجمة';
+  @override
+  String get video_next_episode => 'الحلقة التالية';
+  @override
+  String video_playlist_episodes({required Object count}) => '${count} حلقة';
+  @override
+  String get video_prev_episode => 'الحلقة السابقة';
+  @override
+  String get video_quality => 'الجودة';
+  @override
+  String get video_quality_auto => 'تلقائي';
+  @override
+  String get video_quality_empty => 'لا توجد جودات قابلة للتبديل لهذا الفيديو';
+  @override
+  String get video_quality_enhancement_hint =>
+      'فعّل هذا لزيادة حدّة الصورة باستخدام التحجيم عالي الجودة المدمج في mpv. يعمل مع الأنمي وكذلك المسلسلات والأفلام الحية. للمزيد عبر مظلِّلات مثل Anime4K، افتح «تحسين الصورة» أثناء تشغيل فيديو واختر المستوى هناك.';
+  @override
+  String get video_quality_load_failed =>
+      'تعذر تحميل الجودات المتاحة لهذا الفيديو.';
+  @override
+  String get video_quality_loading => 'جارٍ تحميل الجودات المتاحة…';
+  @override
+  String video_quality_switched({required Object label}) => 'الجودة: ${label}';
+  @override
+  String get video_rename => 'إعادة تسمية';
+  @override
+  String get video_rename_hint => 'العنوان';
+  @override
+  String get video_render_skia_fix_confirm_action => 'إعادة التشغيل';
+  @override
+  String get video_render_skia_fix_confirm_body =>
+      'يؤدي هذا إلى تعطيل محرك Impeller وإعادة تشغيل التطبيق للتطبيق.';
+  @override
+  String get video_render_skia_fix_confirm_title =>
+      'التبديل إلى Skia وإعادة التشغيل؟';
+  @override
+  String get video_render_skia_fix_hint =>
+      'استخدمه إذا كان الصوت يعمل لكن الفيديو يبقى أسود. يعطل Impeller؛ يتطلب إعادة التشغيل.';
+  @override
+  String get video_render_skia_fix_title => 'شاشة سوداء؟ بدّل المُصيّر (Skia)';
+  @override
+  String video_resource_missing_message({required Object title}) =>
+      'تعذر العثور على ملف 『${title}』. ربما تغيّر موقعه أو أن محرك الأقراص غير متصل. يمكنك إعادة استيراده أو إزالة هذا العنصر.';
+  @override
+  String get video_resource_missing_reimport => 'إعادة استيراد';
+  @override
+  String get video_resource_missing_title => 'الفيديو غير متوفر';
+  @override
+  String get video_resource_relink_success => 'تم إعادة ربط الفيديو';
+  @override
+  String get video_scrape_episodes => 'الحلقات';
+  @override
+  String get video_scrape_info => 'معلومات المسلسل';
+  @override
+  String video_scrape_rating_votes({required Object count}) => '${count} تقييم';
+  @override
+  String get video_screenshot => 'لقطة شاشة';
+  @override
+  String video_screenshot_failed_reason({required Object reason}) =>
+      'فشلت لقطة الشاشة: ${reason}';
+  @override
+  String video_screenshot_ready({required Object file}) =>
+      'لقطة الشاشة جاهزة: ${file}';
+  @override
+  String video_screenshot_saved_to({required Object path}) =>
+      'تم حفظ لقطة الشاشة: ${path}';
+  @override
+  String get video_secondary_subtitle_hint =>
+      'يُعرض بواسطة المشغّل (لا يمكن البحث فيه)';
+  @override
+  String get video_secondary_subtitle_sources => 'ترجمة ثانوية';
+  @override
+  String get video_setting_auto_play_next => 'التشغيل التلقائي للحلقة التالية';
+  @override
+  String get video_setting_auto_scrape => 'جلب معلومات المسلسل تلقائياً';
+  @override
+  String get video_setting_av_delay => 'مزامنة الترجمة';
+  @override
+  String get video_setting_av_delay_hint =>
+      'موجب = تأخير الترجمة (تُؤخَّر الأسطر)؛ سالب = تقديم الترجمة. استخدم شريط التمرير أو أزرار +/- أو أدخل قيمة.';
+  @override
+  String get video_setting_danmaku_area => 'منطقة العرض';
+  @override
+  String get video_setting_danmaku_area_hint =>
+      'نسبة ارتفاع الشاشة التي يمكن أن تشغلها الدانماكو من الأعلى.';
+  @override
+  String get video_setting_danmaku_block_rules =>
+      'كلمات محظورة / تعبيرات نمطية';
+  @override
+  String get video_setting_danmaku_block_rules_hint =>
+      'قاعدة واحدة لكل سطر. ضع السطر بين خطوط مائلة مثل /نمط/ لاستخدام تعبير نمطي؛ وإلا يُطابق كنص بدون تمييز حالة الأحرف.';
+  @override
+  String get video_setting_danmaku_block_rules_placeholder =>
+      'مثال: حرق أحداث أو /نمط/';
+  @override
+  String get video_setting_danmaku_enabled => 'إظهار Danmaku';
+  @override
+  String get video_setting_danmaku_enabled_hint =>
+      'عرض تعليقات Danmaku المحلية أو المطابَقة فوق الفيديو دون حجب عناصر التحكم.';
+  @override
+  String get video_setting_danmaku_font_scale => 'حجم الخط';
+  @override
+  String get video_setting_danmaku_font_scale_hint =>
+      'تكبير/تصغير حجم نص الدانماكو.';
+  @override
+  String get video_setting_danmaku_manual_match => 'مطابقة يدوية';
+  @override
+  String get video_setting_danmaku_manual_match_hint =>
+      'ابحث في Dandanplay بالعنوان واختر الحلقة عند فشل المطابقة التلقائية أو خطئها.';
+  @override
+  String get video_setting_danmaku_max_active => 'حد Danmaku النشطة';
+  @override
+  String get video_setting_danmaku_max_active_hint =>
+      'يحدّ عدد التعليقات المعروضة لكل إطار للحفاظ على استجابة الملفات الكبيرة.';
+  @override
+  String get video_setting_danmaku_online => 'مطابقة Dandanplay عبر الإنترنت';
+  @override
+  String get video_setting_danmaku_online_hint =>
+      'عند عدم وجود ملف محلي مرفق صالح، طابِق الفيديو المفتوح مع Dandanplay واجلب التعليقات ذات الصلة.';
+  @override
+  String get video_setting_danmaku_opacity => 'الشفافية';
+  @override
+  String get video_setting_danmaku_opacity_hint =>
+      'شفافية الدانماكو الإجمالية.';
+  @override
+  String get video_setting_danmaku_server_url => 'عنوان خادم Danmaku';
+  @override
+  String get video_setting_danmaku_speed => 'السرعة';
+  @override
+  String get video_setting_danmaku_speed_hint =>
+      'كلما زادت القيمة زادت السرعة؛ تعبر الدانماكو المتحركة الشاشة أسرع.';
+  @override
+  String get video_setting_double_tap => 'النقر المزدوج للانتقال';
+  @override
+  String get video_setting_double_tap_hint =>
+      'انقر نقرًا مزدوجًا على يسار الفيديو أو يمينه للانتقال';
+  @override
+  String get video_setting_double_tap_off => 'إيقاف';
+  @override
+  String get video_setting_double_tap_subtitle => 'الترجمة';
+  @override
+  String get video_setting_immersive_mode => 'وضع الانغماس';
+  @override
+  String get video_setting_immersive_mode_hint =>
+      'يتحكم في ما يبقى متاحًا بعد الضغط على زر القفل الجانبي';
+  @override
+  String get video_setting_lock_window_aspect => 'قفل النافذة على نسبة الفيديو';
+  @override
+  String get video_setting_long_press_speed => 'سرعة الضغط المطوّل';
+  @override
+  String get video_setting_long_press_speed_hint =>
+      'استخدم هذه السرعة مؤقتًا أثناء الضغط على الفيديو.';
+  @override
+  String get video_setting_mpv_aspect => 'نسبة العرض إلى الارتفاع';
+  @override
+  String get video_setting_mpv_aspect_auto => 'الأصلية';
+  @override
+  String get video_setting_mpv_brightness => 'السطوع';
+  @override
+  String get video_setting_mpv_channels => 'القنوات';
+  @override
+  String get video_setting_mpv_channels_auto => 'تلقائي';
+  @override
+  String get video_setting_mpv_channels_mono => 'أحادي';
+  @override
+  String get video_setting_mpv_channels_stereo => 'ستيريو (دمج)';
+  @override
+  String get video_setting_mpv_contrast => 'التباين';
+  @override
+  String get video_setting_mpv_correct_downscale => 'تصغير خطي';
+  @override
+  String get video_setting_mpv_deband => 'إزالة التشريط اللوني';
+  @override
+  String get video_setting_mpv_deinterlace => 'إزالة التشابك';
+  @override
+  String get video_setting_mpv_dither => 'التذبذب اللوني';
+  @override
+  String get video_setting_mpv_gamma => 'غاما';
+  @override
+  String get video_setting_mpv_group_advanced => 'متقدم';
+  @override
+  String get video_setting_mpv_group_audio => 'الصوت';
+  @override
+  String get video_setting_mpv_group_color => 'الألوان';
+  @override
+  String get video_setting_mpv_group_decode => 'فك الترميز';
+  @override
+  String get video_setting_mpv_group_geometry => 'الأبعاد';
+  @override
+  String get video_setting_mpv_group_playback => 'التشغيل';
+  @override
+  String get video_setting_mpv_group_quality => 'جودة الصورة';
+  @override
+  String get video_setting_mpv_hue => 'تدرج اللون';
+  @override
+  String get video_setting_mpv_hwdec => 'فك الترميز بالعتاد';
+  @override
+  String get video_setting_mpv_hwdec_auto => 'تلقائي (آمن)';
+  @override
+  String get video_setting_mpv_hwdec_copy => 'تلقائي (نسخ)';
+  @override
+  String get video_setting_mpv_hwdec_off => 'إيقاف';
+  @override
+  String get video_setting_mpv_interpolation => 'استيفاء الحركة';
+  @override
+  String get video_setting_mpv_loop => 'تكرار الملف';
+  @override
+  String get video_setting_mpv_normalize => 'تسوية جهارة الدمج';
+  @override
+  String get video_setting_mpv_panscan => 'التحريك والقص (قص الحواف)';
+  @override
+  String get video_setting_mpv_pitch =>
+      'الحفاظ على طبقة الصوت عند تغيير السرعة';
+  @override
+  String get video_setting_mpv_raw =>
+      'خيارات mpv إضافية (واحد في كل سطر، key=value)';
+  @override
+  String get video_setting_mpv_raw_hint =>
+      'على سطح المكتب فقط؛ تُتجاهل الخيارات التي لا يمكن تطبيقها أثناء التشغيل (مثل vo وprofile). يحتاج SVP/RIFE أدوات خارجية وهي غير مدعومة.';
+  @override
+  String get video_setting_mpv_reset => 'إعادة تعيين الكل';
+  @override
+  String get video_setting_mpv_rotate => 'التدوير';
+  @override
+  String get video_setting_mpv_saturation => 'التشبع';
+  @override
+  String get video_setting_mpv_sigmoid => 'تكبير سيجمويدي';
+  @override
+  String get video_setting_mpv_sigmoid_hint =>
+      'تقليل التموجات عند تكبير الصورة بمنحنى سيغمويد يستهلك GPU. معطّل افتراضياً للأداء؛ فعّله لتكبير أوضح.';
+  @override
+  String get video_setting_mpv_zoom => 'التكبير/التصغير';
+  @override
+  String get video_setting_picture_fit => 'تحجيم الصورة';
+  @override
+  String get video_setting_picture_fit_contain =>
+      'ملاءمة مع الحفاظ على النسبة وإضافة شرائط سوداء';
+  @override
+  String get video_setting_picture_fit_cover =>
+      'ملء مع الحفاظ على النسبة وقص الحواف';
+  @override
+  String get video_setting_picture_fit_fill => 'تمديد للملء';
+  @override
+  String get video_setting_picture_fit_hint =>
+      'كيفية ملء الصورة لمنطقة المشغّل';
+  @override
+  String get video_setting_qb_category => 'فئة qBittorrent';
+  @override
+  String get video_setting_qb_category_hint =>
+      'التنزيلات المرسلة من Fushi تحصل على هذه الفئة؛ تتبّع الاكتمال يراقبها فقط.';
+  @override
+  String get video_setting_qb_password => 'كلمة مرور واجهة الويب';
+  @override
+  String get video_setting_qb_url => 'رابط واجهة ويب qBittorrent';
+  @override
+  String get video_setting_qb_url_hint =>
+      'مثال: http://127.0.0.1:8080. اتركه فارغاً لتعطيل تحميل الأنمي.';
+  @override
+  String get video_setting_qb_username => 'اسم مستخدم واجهة الويب';
+  @override
+  String get video_setting_secondary_subtitle_obscure =>
+      'إخفاء الترجمة الثانوية';
+  @override
+  String get video_setting_secondary_subtitle_obscure_hint =>
+      'تمويه أو إخفاء الترجمة الثانوية (المترجمة)';
+  @override
+  String get video_setting_seek_seconds => 'ثوانٍ الانتقال';
+  @override
+  String get video_setting_speed => 'سرعة التشغيل';
+  @override
+  String get video_setting_speed_step => 'خطوة السرعة';
+  @override
+  String get video_setting_subtitle_appearance => 'مظهر الترجمة';
+  @override
+  String get video_setting_subtitle_bg_color => 'لون الخلفية';
+  @override
+  String get video_setting_subtitle_bg_opacity => 'تعتيم الخلفية';
+  @override
+  String get video_setting_subtitle_font_size => 'حجم الخط';
+  @override
+  String get video_setting_subtitle_font_weight => 'ثقل الخط';
+  @override
+  String get video_setting_subtitle_no_background => 'بلا خلفية';
+  @override
+  String get video_setting_subtitle_no_background_hint =>
+      'اجعل خلفية الترجمة شفافة.';
+  @override
+  String get video_setting_subtitle_obscure => 'إخفاء الترجمات';
+  @override
+  String get video_setting_subtitle_obscure_blur => 'تمويه';
+  @override
+  String get video_setting_subtitle_obscure_hide => 'إخفاء';
+  @override
+  String get video_setting_subtitle_obscure_hint =>
+      'اختر كيفية إخفاء الترجمات لتمرين الاستماع: إيقاف، تمويه (مرر أو انقر للكشف)، أو إخفاء.';
+  @override
+  String get video_setting_subtitle_obscure_none => 'إيقاف';
+  @override
+  String get video_setting_subtitle_position => 'الموضع الرأسي';
+  @override
+  String get video_setting_subtitle_reset => 'إعادة التعيين إلى الافتراضي';
+  @override
+  String get video_setting_subtitle_respect_ass =>
+      'احترام تنسيق الترجمة الأصلي';
+  @override
+  String get video_setting_subtitle_respect_ass_hint =>
+      'استخدم الخط واللون والحدود المضمّنة في ترجمات .ass عند توفرها؛ أوقفه لفرض إعدادات المظهر الخاصة بك.';
+  @override
+  String get video_setting_subtitle_shadow => 'الظل';
+  @override
+  String get video_setting_subtitle_sync_input => 'الإزاحة (ms)';
+  @override
+  String get video_setting_subtitle_text_color => 'لون النص';
+  @override
+  String get video_setting_theme => 'السمة';
+  @override
+  String get video_setting_torrent_active_downloads =>
+      'الحد الأقصى للتنزيلات النشطة';
+  @override
+  String get video_setting_torrent_active_seeds => 'الحد الأقصى للبذور النشطة';
+  @override
+  String get video_setting_torrent_anonymous => 'الوضع المجهول';
+  @override
+  String get video_setting_torrent_antileech => 'تفعيل مكافحة الاستغلال';
+  @override
+  String get video_setting_torrent_backend_qb => 'qBittorrent خارجي';
+  @override
+  String get video_setting_torrent_ban_progress_cheat => 'حظر غش التقدم';
+  @override
+  String get video_setting_torrent_ban_relative_cheat => 'حظر غش التقدم النسبي';
+  @override
+  String get video_setting_torrent_ban_time => 'مدة الحظر (دقيقة)';
+  @override
+  String get video_setting_torrent_ban_time_hint => '0 = دائم';
+  @override
+  String get video_setting_torrent_connections_hint =>
+      '0 = القيمة الافتراضية للمحرك';
+  @override
+  String get video_setting_torrent_dht => 'DHT';
+  @override
+  String get video_setting_torrent_download_limit => 'حد التحميل (كيلوبايت/ث)';
+  @override
+  String get video_setting_torrent_encryption_disabled => 'معطّل';
+  @override
+  String get video_setting_torrent_encryption_forced => 'إجباري';
+  @override
+  String get video_setting_torrent_encryption_prefer => 'مفضّل';
+  @override
+  String get video_setting_torrent_limit_hint => '0 = بلا حدود';
+  @override
+  String get video_setting_torrent_listen_port => 'منفذ الاستماع';
+  @override
+  String get video_setting_torrent_listen_port_hint => '0 = الافتراضي (6881)';
+  @override
+  String get video_setting_torrent_lsd => 'اكتشاف الأقران المحلي (LSD)';
+  @override
+  String get video_setting_torrent_max_connections => 'الحد الأقصى للاتصالات';
+  @override
+  String get video_setting_torrent_max_ip_ports => 'الحد الأقصى للمنافذ لكل IP';
+  @override
+  String get video_setting_torrent_memory_hint =>
+      'تحديد ذاكرة المحرك. 0 = تلقائي (حسب ذاكرة الجهاز).';
+  @override
+  String get video_setting_torrent_memory_limit => 'حد الذاكرة (ميغابايت)';
+  @override
+  String get video_setting_torrent_natpmp => 'تعيين منفذ NAT-PMP';
+  @override
+  String get video_setting_torrent_section_antileech => 'مكافحة الاستغلال';
+  @override
+  String get video_setting_torrent_section_session => 'الجلسة';
+  @override
+  String get video_setting_torrent_seed_ratio_hint =>
+      'إيقاف الرفع عندما تصل نسبة المرفوع/المحمّل إلى هذه القيمة. 0 = بلا حدود.';
+  @override
+  String get video_setting_torrent_seed_ratio_limit => 'حد نسبة البذر';
+  @override
+  String get video_setting_torrent_seed_time_hint =>
+      'إيقاف الرفع بعد البذر لهذه المدة. 0 = بلا حدود.';
+  @override
+  String get video_setting_torrent_seed_time_limit => 'حد وقت البذر (دقائق)';
+  @override
+  String get video_setting_torrent_upload_enabled => 'تفعيل الرفع / البذر';
+  @override
+  String get video_setting_torrent_upload_enabled_hint =>
+      'معطّل افتراضياً. شارك الملفات مع السرب بعد التحميل.';
+  @override
+  String get video_setting_torrent_upload_limit => 'حد الرفع (كيلوبايت/ث)';
+  @override
+  String get video_setting_torrent_upload_slots => 'الحد الأقصى لفتحات الرفع';
+  @override
+  String get video_setting_torrent_upnp => 'تعيين منفذ UPnP';
+  @override
+  String get video_setting_torrent_zero_default => '0 = الافتراضي';
+  @override
+  String get video_setting_torrent_zero_off => '0 = إيقاف';
+  @override
+  String get video_settings_cat_audio => 'الصوت';
+  @override
+  String get video_settings_cat_controls => 'عناصر التحكم';
+  @override
+  String get video_settings_cat_danmaku => 'دانماكو';
+  @override
+  String get video_settings_cat_mpv => 'mpv';
+  @override
+  String get video_settings_cat_playback => 'التشغيل';
+  @override
+  String get video_settings_cat_shaders => 'تحسين الصورة';
+  @override
+  String get video_settings_cat_subtitle => 'الترجمات';
+  @override
+  String get video_settings_title => 'إعدادات الفيديو';
+  @override
+  String get video_shader_anime4k_hint =>
+      'اختر إعدادًا مسبقًا لتنزيله. بعد التنزيل، حدّده في القائمة لتفعيله. على سطح المكتب فقط.';
+  @override
+  String get video_shader_anime4k_title => 'مظلِّلات Anime4K الموصى بها';
+  @override
+  String get video_shader_download_anime4k => 'تنزيل إعدادات Anime4K المسبقة';
+  @override
+  String video_shader_download_done({required Object count}) =>
+      'تم تنزيل ${count} مظلِّل';
+  @override
+  String get video_shader_download_failed => 'فشل تنزيل المظلِّل';
+  @override
+  String video_shader_download_partial({
+    required Object ok,
+    required Object failed,
+  }) => 'تم تنزيل ${ok} مظلِّل، وفشل ${failed}';
+  @override
+  String get video_shader_download_url => 'التنزيل من رابط';
+  @override
+  String get video_shader_downloaded_label => 'تم التنزيل';
+  @override
+  String get video_shader_downloading => 'جارٍ تنزيل المظلِّلات…';
+  @override
+  String get video_shader_first_use_body =>
+      '想让动画画面更清晰，可以进入“画质增强”并点击“下载 Anime4K 推荐着色器”。下载后在已安装列表里勾选即可启用。';
+  @override
+  String get video_shader_first_use_download => 'التنزيل والتفعيل';
+  @override
+  String get video_shader_first_use_title => '试试 Anime4K 画质增强';
+  @override
+  String get video_shader_import => 'استيراد مظلِّل (.glsl)';
+  @override
+  String video_shader_import_done({required Object count}) =>
+      'تم استيراد ${count} مظلِّل';
+  @override
+  String get video_shader_import_from_mpv => 'استيراد من mpv المحلي';
+  @override
+  String get video_shader_import_from_mpv_hint =>
+      '自动搜索本机 mpv；未找到时可手动选择 mpv 目录。';
+  @override
+  String get video_shader_mobile_perf_hint =>
+      'على الهواتف، تُطبَّق المظلِّلات فقط على مسار العرض الرسومي القياسي وتختلف الفعالية بحسب معالج الجهاز الرسومي؛ قد تسبب المستويات الأعلى تساقط الإطارات أو ارتفاع الحرارة. جرّب منخفض/متوسط أولًا وتحقق من النتيجة على جهازك.';
+  @override
+  String video_shader_mpv_dir_current({required Object path}) =>
+      'مجلد mpv: ${path}';
+  @override
+  String get video_shader_mpv_dir_empty =>
+      'لم يُعثر على مظلِّلات في ذلك المجلد';
+  @override
+  String get video_shader_mpv_not_found => 'لم يُعثر على مظلِّلات mpv محلية';
+  @override
+  String get video_shader_mpv_pick_title => 'استيراد المظلِّلات من mpv';
+  @override
+  String get video_shader_pick_mpv_dir => 'Specify mpv folder';
+  @override
+  String get video_shader_preset_mode_a_fast =>
+      'لمعظم الأنمي بدقة 1080p. حمل أقل على المعالج الرسومي.';
+  @override
+  String get video_shader_preset_mode_a_hq =>
+      'أعلى جودة للأنمي بدقة 1080p. يحتاج معالجًا رسوميًا قويًا.';
+  @override
+  String get video_shader_preset_mode_b_fast =>
+      'للأنمي القديم بدقة 720p ذي عيوب إعادة المعاينة.';
+  @override
+  String get video_shader_preset_mode_b_hq =>
+      'جودة عالية للأنمي القديم بدقة 720p ذي عيوب إعادة المعاينة. يحتاج معالجًا رسوميًا قويًا.';
+  @override
+  String get video_shader_preset_mode_c_fast =>
+      'للأنمي القديم بدقة SD (480p) ذي تشويش الضغط.';
+  @override
+  String get video_shader_preset_mode_c_hq =>
+      'جودة عالية للأنمي القديم بدقة SD (480p) ذي تشويش الضغط. يحتاج معالجًا رسوميًا قويًا.';
+  @override
+  String get video_shader_quality_tier => 'تحسين الجودة';
+  @override
+  String get video_shader_section_advanced => 'متقدم (مظلِّلات يدوية)';
+  @override
+  String get video_shader_section_installed => 'المظلِّلات المثبّتة';
+  @override
+  String get video_shader_showing_original => 'المظلِّلات متوقفة (الأصل)';
+  @override
+  String get video_shader_showing_shaded => 'المظلِّلات مفعّلة';
+  @override
+  String get video_shader_tier_custom_hint =>
+      'اختيار مظلِّل مخصص. اختر مستوى أعلى للتبديل إلى إعداد مسبق.';
+  @override
+  String get video_shader_tier_high => 'عالٍ';
+  @override
+  String get video_shader_tier_high_hint =>
+      'Anime4K HQ. أكثر حدة؛ الأفضل للأنمي، وقابل للاستخدام أيضًا مع المحتوى الحي (تحسّن أقل). يحتاج معالجًا رسوميًا متوسطًا عاليًا (NVIDIA RTX 4060 / RTX 3070 وAMD RX 6700 XT / RX 7700 XT).';
+  @override
+  String get video_shader_tier_low => 'منخفض';
+  @override
+  String get video_shader_tier_low_hint =>
+      'زيادة الحدة المدمجة في mpv (ewa_lanczossharp). يعمل مع أي فيديو (الأنمي والمحتوى الحي). دون تنزيل، وأقل حمل على المعالج الرسومي. اخترها على البطاقات المدمجة أو القديمة (NVIDIA GTX 1050 وAMD RX 560 وكرت Intel المدمج).';
+  @override
+  String get video_shader_tier_medium => 'متوسط';
+  @override
+  String get video_shader_tier_medium_hint =>
+      'Anime4K Fast. الأفضل للأنمي، لكنه يعمل أيضًا مع الأفلام/المسلسلات الحية (تحسّن أقل). يعمل على المعالجات الرسومية المتوسطة (NVIDIA GTX 1660 / RTX 3050 وAMD RX 6600).';
+  @override
+  String get video_shader_tier_off => 'بدون';
+  @override
+  String get video_shader_tier_off_hint =>
+      'بلا تحسين. يشغّل الفيديو الأصلي كما هو.';
+  @override
+  String get video_shader_tier_ultra => 'فائق';
+  @override
+  String get video_shader_tier_ultra_hint =>
+      'Anime4K Mode A (UL، شبكة فائقة الكبر). أقوى إعادة بناء من Anime4K؛ وقابل للاستخدام أيضًا مع المحتوى الحي (تحسّن أقل). يحتاج معالجًا رسوميًا رائدًا (NVIDIA RTX 4080 / RTX 5090 وAMD RX 7900 XTX). اختر مستوى أدنى إن كان معالجك الرسومي أضعف.';
+  @override
+  String get video_shader_url_hint => 'الصق رابط مظلِّل .glsl (مثل GitHub)';
+  @override
+  String get video_shaders_empty => 'لم تُستورد أي مظلِّلات بعد';
+  @override
+  String get video_stat_by_video => 'حسب الفيديو';
+  @override
+  String get video_stat_completed => 'مكتمل';
+  @override
+  String get video_stat_no_data => 'لا توجد إحصاءات فيديو بعد';
+  @override
+  String get video_statistics => 'إحصاءات الفيديو';
+  @override
+  String get video_subtitle_attach_playlist_hint =>
+      'افتح قائمة التشغيل لإرفاق ترجمة لكل حلقة';
+  @override
+  String video_subtitle_attached_to_video({
+    required Object title,
+    required Object count,
+  }) => 'أُرفقت الترجمة بـ ${title} (${count} سطرًا)';
+  @override
+  String get video_subtitle_auto_align => 'محاذاة الترجمة تلقائيًا';
+  @override
+  String video_subtitle_auto_align_done({required Object ms}) =>
+      'تمت محاذاة الترجمة تلقائيًا بمقدار ${ms} مللي ثانية';
+  @override
+  String get video_subtitle_auto_align_low_confidence =>
+      'تعذّرت المحاذاة التلقائية بثقة (لا يوجد تطابق صوتي واضح)';
+  @override
+  String get video_subtitle_auto_align_running =>
+      'جارٍ محاذاة الترجمة تلقائيًا…';
+  @override
+  String get video_subtitle_color_note =>
+      'تُضبط ألوان ترجمة الفيديو داخل مشغّل الفيديو.';
+  @override
+  String video_subtitle_delay_osd({required Object ms}) =>
+      'مزامنة الترجمة: ${ms} ms';
+  @override
+  String get video_subtitle_filter_all => 'الكل';
+  @override
+  String get video_subtitle_filter_favorites => 'المفضلة';
+  @override
+  String get video_subtitle_filter_favorites_empty => 'لا توجد سطور مفضلة بعد';
+  @override
+  String get video_subtitle_graphic_hint =>
+      'ترجمة رسومية · تُعرض على الفيديو · لا بحث للكلمات';
+  @override
+  String video_subtitle_graphic_shown({required Object label}) =>
+      'تُعرض ترجمة رسومية على الفيديو (لا بحث للكلمات): ${label}';
+  @override
+  String get video_subtitle_import_failed => 'فشل استيراد الترجمة';
+  @override
+  String get video_subtitle_import_file => 'استيراد ملف ترجمة…';
+  @override
+  String get video_subtitle_import_unsupported => 'تنسيق ترجمة غير مدعوم';
+  @override
+  String get video_subtitle_list => 'قائمة الترجمة';
+  @override
+  String get video_subtitle_list_auto_scroll => 'تمرير تلقائي';
+  @override
+  String get video_subtitle_list_empty => 'لم تُحمَّل أي ترجمة';
+  @override
+  String get video_subtitle_list_font_larger => 'نص أكبر';
+  @override
+  String get video_subtitle_list_font_smaller => 'نص أصغر';
+  @override
+  String get video_subtitle_list_jump => 'الانتقال إلى هذا السطر';
+  @override
+  String get video_subtitle_list_loading => 'جارٍ تحميل الترجمات...';
+  @override
+  String video_subtitle_load_failed({required Object label}) =>
+      'تعذّر تحميل هذه الترجمة (مسار رسومي أو غير مدعوم): ${label}';
+  @override
+  String get video_subtitle_off => 'إيقاف الترجمة';
+  @override
+  String get video_subtitle_remote_host => 'ترجمة الجهاز المقترن';
+  @override
+  String video_subtitle_switched({required Object label}) =>
+      'الترجمة: ${label}';
+  @override
+  String get video_subtitle_waveform_cue_list => 'قائمة الترجمات';
+  @override
+  String get video_subtitle_waveform_jump_playhead =>
+      'الانتقال إلى موضع التشغيل';
+  @override
+  String get video_subtitle_waveform_legend_cue => 'إشارة الترجمة';
+  @override
+  String get video_subtitle_waveform_legend_energy => 'مستوى الصوت';
+  @override
+  String get video_subtitle_waveform_legend_playhead => 'موضع التشغيل';
+  @override
+  String get video_subtitle_waveform_open => 'محاذاة الموجة الصوتية';
+  @override
+  String get video_subtitle_waveform_open_hint => 'انقر للتكبير والمحاذاة';
+  @override
+  String get video_subtitle_waveform_scroll_hint =>
+      'اسحب لتصفح الخط الزمني؛ استخدم أدوات التحكم أدناه للمحاذاة';
+  @override
+  String get video_subtitle_waveform_unavailable =>
+      'الموجة الصوتية غير متوفرة على هذا الجهاز';
+  @override
+  String get video_subtitle_waveform_zoom_in => 'تكبير';
+  @override
+  String get video_subtitle_waveform_zoom_out => 'تصغير';
+  @override
+  String get video_subtitle_youtube_empty => 'مسار الترجمة هذا لا يحتوي على نص';
+  @override
+  String video_subtitle_youtube_translated({required Object lang}) =>
+      '${lang} (مترجم)';
+  @override
+  String video_watched_up_to({required Object time}) => 'شوهد حتى ${time}';
+  @override
+  String get video_windows_black_flash_notice_body =>
+      'على Windows، قد يومض الفيديو باللون الأسود تحت حمل GPU الثقيل. لتقليل الحمل، جرّب إيقاف تحسين الجودة وتكبير سيغمويد وإزالة التدرج أعلاه، أو بدّل فك تشفير الأجهزة إلى نسخ.';
+  @override
+  String get video_windows_black_flash_notice_title => 'وميض أسود على Windows؟';
+  @override
+  String get view_illustrations => 'الرسوم التوضيحية';
+  @override
+  String get volume_button_page_turning => 'تقليب الصفحات بأزرار الصوت';
+  @override
+  String get volume_key_sentence_nav => 'التنقل بين الجمل بأزرار الصوت';
+  @override
+  String get wheel_page_turn_interval => 'فترة قلب الصفحة بعجلة الفأرة';
+  @override
+  String get word_favorite_added => 'تمت إضافة الكلمة إلى المفضلة';
+  @override
+  String get word_favorite_removed => 'تمت إزالة الكلمة من المفضلة';
+  @override
+  String get yomitan_api_key => 'مفتاح Yomitan API (اختياري)';
+  @override
+  String get yomitan_api_server => 'خادم Yomitan API';
+  @override
+  String get yomitan_api_server_hint =>
+      'السماح لعملاء yomitan-api بالبحث في قواميس Fushi (المنفذ 19633)';
+  @override
+  String get yomitan_api_server_started => 'تم تشغيل خادم Yomitan API';
+  @override
+  String get yomitan_port_kill_action => 'إنهاء العملية وإعادة المحاولة';
+  @override
+  String get yomitan_port_kill_confirm => 'إنهاء العملية';
+  @override
+  String yomitan_port_kill_confirm_message({required Object process}) =>
+      'المنفذ مستخدم حالياً بواسطة: ${process}';
+  @override
+  String yomitan_port_kill_confirm_title({required Object port}) =>
+      'إنهاء العملية التي تستخدم المنفذ ${port}؟';
+  @override
+  String yomitan_port_kill_failed({required Object process}) =>
+      'تعذر إنهاء ${process}. يرجى إنهاؤها يدوياً ثم إعادة المحاولة.';
+  @override
+  String yomitan_port_kill_protected({required Object process}) =>
+      '${process} هي عملية نظام حرجة — لن يقوم Fushi بإنهائها. غيّر المنفذ بدلاً من ذلك.';
+  @override
+  String get yomitan_port_kill_self_instance =>
+      'هذه العملية هي نسخة أخرى قيد التشغيل من هذا التطبيق.';
+  @override
+  String get game_track_bgm => 'موسيقى خلفية / مستبعد';
+  @override
+  String get game_line_audio_no_voice => 'لا يوجد صوت';
+  @override
+  String get game_line_audio_overlong => 'مقطع طويل جداً';
+  @override
+  String get game_line_audio_overlong_hint =>
+      'أطول بكثير من سطر واحد؛ قد يحتوي على موسيقى خلفية أو صوت مختلط آخر';
+  @override
+  String get game_line_audio_loopback_hint =>
+      'مزيج صوت النظام كبديل؛ قد يحتوي على موسيقى خلفية';
+  @override
+  String get game_line_recapture => 'إعادة التقاط الصوت';
+  @override
+  String get game_line_recapture_stop => 'إنهاء إعادة الالتقاط';
+  @override
+  String get game_line_tracks => 'المسارات لهذا السطر';
+  @override
+  String get game_line_tracks_hint =>
+      'استمع لكل مسار عند لحظة هذا السطر، ثم استبعد مسارات الموسيقى الخلفية';
+  @override
+  String get game_line_track_use => 'استخدام لهذا السطر';
+  @override
+  String get game_user_tags_title => 'وسومي';
+  @override
+  String get anki_lapis_section => 'نمط بطاقة Lapis';
+  @override
+  String get anki_lapis_font_scale => 'مقياس خط البطاقة';
+  @override
+  String get anki_lapis_font_scale_hint =>
+      'يُكبّر/يُصغّر جميع أحجام خطوط Lapis؛ يسري عبر "تطبيق النمط على Anki".';
+  @override
+  String get anki_lapis_custom_css => 'CSS مخصص';
+  @override
+  String get anki_lapis_custom_css_hint =>
+      'يُلحق بورقة أنماط Lapis في قسم المستخدم المحمي.';
+  @override
+  String get anki_lapis_apply => 'تطبيق النمط على Anki';
+  @override
+  String get anki_lapis_apply_done =>
+      'تم تطبيق نمط Lapis. تم حفظ نسخة احتياطية أولاً.';
+  @override
+  String anki_lapis_apply_failed({required Object error}) =>
+      'تعذر تطبيق النمط: ${error}';
+  @override
+  String get anki_lapis_up_to_date => 'نمط Lapis محدّث بالفعل.';
+  @override
+  String get anki_lapis_foreign_edit_title => 'تم تغيير القالب في Anki';
+  @override
+  String get anki_lapis_foreign_edit_body =>
+      'قالب Lapis في Anki يختلف عما طبّقه Fushi آخر مرة - ربما تم تعديله يدوياً. سيؤدي التطبيق إلى الكتابة فوقه؛ يتم حفظ نسخة احتياطية أولاً. متابعة؟';
+  @override
+  String get anki_lapis_backup => 'نسخ قالب Lapis احتياطياً';
+  @override
+  String anki_lapis_backup_done({required Object path}) =>
+      'تم النسخ الاحتياطي للقالب: ${path}';
+  @override
+  String anki_lapis_backup_failed({required Object error}) =>
+      'فشل النسخ الاحتياطي: ${error}';
+  @override
+  String get anki_lapis_not_found => 'لم يُعثر على نوع ملاحظة Lapis في Anki.';
+  @override
+  String get anki_lapis_restore => 'استعادة من نسخة احتياطية';
+  @override
+  String get anki_lapis_restore_empty => 'لا توجد نسخ احتياطية بعد.';
+  @override
+  String get anki_lapis_restore_confirm =>
+      'الكتابة فوق قالب Lapis في Anki بهذه النسخة الاحتياطية؟ يتم نسخ الحالة الحالية احتياطياً أولاً.';
+  @override
+  String get anki_lapis_restore_done => 'تمت استعادة القالب.';
+  @override
+  String anki_lapis_restore_failed({required Object error}) =>
+      'فشلت الاستعادة: ${error}';
+  @override
+  String get anki_dedup_section => 'تحسين تخزين وسائط Anki';
+  @override
+  String get anki_dedup_scan => 'فحص التكرارات (بدون تغييرات)';
+  @override
+  String get anki_dedup_run => 'إزالة التكرارات الآن';
+  @override
+  String get anki_dedup_report_title => 'تقرير إزالة تكرار الوسائط';
+  @override
+  String anki_dedup_report_body({
+    required Object groups,
+    required Object removed,
+    required Object size,
+    required Object notes,
+    required Object models,
+    required Object skipped,
+  }) =>
+      '${groups} مجموعة مكررة؛ ${removed} نسخة إضافية (${size})؛ ${notes} ملاحظة و${models} نوع ملاحظة أُعيدت كتابتها؛ ${skipped} تم تخطيها.';
+  @override
+  String get anki_dedup_report_dry_note => 'فحص فقط - لم يتم تغيير شيء.';
+  @override
+  String get anki_dedup_report_clean => 'لم يُعثر على تكرارات متطابقة بالبايت.';
+  @override
+  String anki_dedup_failed({required Object error}) =>
+      'فشلت إزالة التكرارات: ${error}';
+  @override
+  String get anki_dedup_unavailable =>
+      'يتطلب تشغيل Anki على هذا الجهاز (AnkiConnect).';
+  @override
+  String get anki_dedup_run_hint =>
+      'يفحص أولاً ويعرض ما سيتم حذفه بالضبط؛ لا يُحذف شيء حتى تؤكد.';
+  @override
+  String get anki_dedup_plan_title => 'الملفات المراد حذفها';
+  @override
+  String anki_dedup_plan_intro({required Object count, required Object size}) =>
+      '${count} نسخة إضافية، ${size} قابلة للاسترداد. يتم الاحتفاظ بنسخة واحدة من كل ملف وإعادة توجيه كل مرجع إليها أولاً؛ لا يتم إعادة ترميز أي شيء.';
+  @override
+  String anki_dedup_plan_entry({
+    required Object file,
+    required Object size,
+    required Object canonical,
+  }) => 'حذف ${file} (${size}) - الاحتفاظ بـ ${canonical}';
+  @override
+  String get anki_dedup_plan_delete => 'حذف هذه الملفات';
+  @override
+  String get anki_dedup_plan_journal =>
+      'يتم كتابة سجل بكل إعادة كتابة وحذف إلى مجلد النسخ الاحتياطي أولاً.';
+  @override
+  String get manga_ocr_default_engine => 'محرك OCR الافتراضي';
+  @override
+  String get manga_ocr_engine_auto => 'تلقائي (لا يُرفع إلى Lens أبداً)';
+  @override
+  String get manga_ocr_engine_local_onnx => 'ONNX محلي';
+  @override
+  String get manga_ocr_engine_google_lens => 'Google Lens';
+  @override
+  String get manga_google_lens_disclosure_title =>
+      'إرسال صفحات المانغا إلى Google Lens؟';
+  @override
+  String get manga_google_lens_disclosure_body =>
+      'التعرف على هذه المانغا يُرسل نسخة JPEG مصغّرة من كل صفحة بدون نص OCR إلى Google. يتم تخزين النتائج مؤقتاً على هذا الجهاز. نقطة النهاية غير رسمية وقد تتوقف عن العمل. لا يُرفع شيء دون موافقتك.';
+  @override
+  String get manga_google_lens_disclosure_accept => 'موافقة وبدء OCR';
+  @override
+  String get manga_google_lens_disclosure_decline => 'إلغاء';
+  @override
+  String get manga_reading_direction => 'اتجاه القراءة';
+  @override
+  String get manga_direction_rtl => 'من اليمين إلى اليسار';
+  @override
+  String get manga_direction_ltr => 'من اليسار إلى اليمين';
+  @override
+  String get manga_zoom => 'تكبير';
+  @override
+  String get manga_jump_to_page => 'الانتقال إلى صفحة';
+  @override
+  String get manga_previous_page => 'الصفحة السابقة';
+  @override
+  String get manga_next_page => 'الصفحة التالية';
+  @override
+  String manga_page_number_hint({required Object total}) =>
+      'رقم الصفحة (1-${total})';
+  @override
+  String get manga_import_direct => 'استيراد بدون OCR';
+  @override
+  String get manga_library => 'مانغا';
+  @override
+  String get manga_import_action => 'استيراد مانغا';
+  @override
+  String get game_scrape_search => 'بحث';
+  @override
+  String get game_scrape_use => 'استخدام';
+  @override
+  String get game_scrape_search_failed =>
+      'فشل البحث. تحقق من اتصالك بالشبكة وحاول مجدداً.';
+  @override
+  String get game_remove_confirm =>
+      'إزالة هذه اللعبة من المكتبة؟ لن تُحذف ملفات اللعبة من القرص.';
+  @override
+  String manga_ocr_acceleration_status({required Object engine}) =>
+      'تسريع OCR: ${engine}';
+  @override
+  String manga_ocr_acceleration_degraded({
+    required Object engine,
+    required Object reason,
+  }) => 'تسريع GPU غير متوفر، يعمل OCR على ${engine}: ${reason}';
+  @override
+  String get media_tracking_status => 'حالة المجموعة';
+  @override
+  String get media_tracking_signup => 'إنشاء حساب Bangumi';
+  @override
+  String get media_tracking_game => 'لعبة';
+  @override
+  String get download_rate_limit_lan_exempt =>
+      'لا ينطبق داخل شبكتك المحلية؛ عمليات النقل عبر الشبكة المحلية تعمل بأقصى سرعة دائماً.';
+  @override
+  String get scrape_reason_network =>
+      'تعذر الحصول على استجابة صالحة من مصدر الغلاف. تحقق من اتصالك بالشبكة وأعد المحاولة.';
+  @override
+  String get scrape_reason_server =>
+      'أرجع مصدر الغلاف خطأً. حاول لاحقاً أو اختر مرشحاً آخر.';
+  @override
+  String get common_more_actions => 'إجراءات أخرى';
+  @override
+  String get collection_already_has_item =>
+      'هذا العنصر موجود بالفعل في المجموعة.';
+  @override
+  String get drag_drop_manga_archive_unsupported =>
+      'لا يمكن استيراد أرشيفات .cbr/.rar — أعد تعبئتها كـ .cbz أو مجلد صور.';
+  @override
+  String get collection_add_failed =>
+      'تعذر إضافة العنصر إلى المجموعة. يرجى المحاولة مجدداً.';
+  @override
+  String get anki_dedup_auto => 'معالجة تلقائية';
+  @override
+  String get anki_dedup_auto_hint =>
+      'معطّل افتراضياً. عند التفعيل، يفحص Fushi عند بدء التشغيل (مرة أسبوعياً كحد أقصى) ويعرض القائمة أولاً — لا يُحذف شيء حتى تؤكد.';
+  @override
+  String get anki_dedup_auto_delete => 'حذف تلقائياً بدون سؤال';
+  @override
+  String get anki_dedup_auto_delete_hint =>
+      'يتخطى مربع التأكيد. تُزال فقط النسخ الإضافية المتطابقة بالبايت ولا يُعاد ترميز شيء، لكن الحذف لا يمكن التراجع عنه.';
+  @override
+  String anki_dedup_auto_found({required Object count, required Object size}) =>
+      'تم العثور على ${count} ملف وسائط مكرر في Anki (${size} قابلة للاسترداد)';
+  @override
+  String get anki_dedup_auto_review => 'مراجعة';
+  @override
+  String anki_dedup_auto_done({required Object count, required Object size}) =>
+      'تمت إزالة ${count} ملف وسائط مكرر في Anki، تم استرداد ${size}';
+  @override
+  String anki_lapis_backup_done_pruned({
+    required Object path,
+    required Object count,
+  }) =>
+      'تم النسخ الاحتياطي إلى ${path} (تم تنظيف ${count} نسخة احتياطية قديمة وفق سياسة 90 يوماً / الاحتفاظ بـ 10)';
+  @override
+  String get game_audio_fallback_policy => 'بديل الصوت';
+  @override
+  String get game_audio_fallback_full => 'السماح بالصوت المختلط';
+  @override
+  String get game_audio_fallback_clean => 'المصادر النظيفة فقط';
+  @override
+  String get game_audio_fallback_resource => 'الموارد الأصلية فقط';
+  @override
+  String get game_track_silent_at_cue => 'لا يوجد صوت عند هذا السطر';
+  @override
+  String get game_audio_fallback_full_hint =>
+      'يعود إلى مزيج النظام عند عدم التقاط صوت نظيف؛ قد يحتوي المقطع على موسيقى خلفية ومؤثرات.';
+  @override
+  String get game_audio_fallback_clean_hint =>
+      'يستخدم صوت موارد اللعبة وPCM المحرك فقط. الأسطر بدون صوت تُنشأ بدون صوت بدلاً من التقاط الموسيقى الخلفية.';
+  @override
+  String get game_audio_fallback_resource_hint =>
+      'يتطلب ملف الصوت الأصلي المرفق مع اللعبة؛ يُرفض الإنشاء عند عدم وجوده.';
+  @override
+  String get game_line_audio_suppressed => 'تم تخطي المزيج';
+  @override
+  String get game_line_audio_suppressed_hint =>
+      'لم يُنتج أي مصدر صوت نظيف صوتاً لهذا السطر، وتم تخطي مزيج النظام وفق سياسة بديل الصوت. هذا لا يعني أن السطر بدون صوت.';
+  @override
+  String get video_setting_torrent_limit_lan =>
+      'تطبيق الحدود على أقران الشبكة المحلية';
+  @override
+  String get video_setting_torrent_limit_lan_hint =>
+      'معطّل افتراضياً: عمليات النقل مع الأقران على شبكتك المحلية تتجاهل الحدود أعلاه.';
+  @override
+  String get download_rate_limit_lan_included =>
+      'ينطبق أيضاً داخل شبكتك المحلية.';
+  @override
+  String get video_collection_no_local_member =>
+      'لا يوجد فيديو محلي في هذه المجموعة';
+  @override
+  String get gal_mining_image_mode => 'صورة بطاقة اللعبة البصرية';
+  @override
+  String get gal_mining_image_mode_screenshot => 'لقطة شاشة';
+  @override
+  String get gal_mining_image_mode_hint =>
+      'مشاهد اللعب البصري بالكاد تتحرك خلال سطر واحد، لذا لقطة الشاشة الثابتة عادةً أصغر حجماً وبنفس الفائدة.';
+  @override
+  String get shortcut_scope_manga => 'مانغا';
+  @override
+  String get shortcut_action_manga_page_forward => 'الصفحة التالية';
+  @override
+  String get shortcut_action_manga_page_backward => 'الصفحة السابقة';
+  @override
+  String get shortcut_action_manga_dismiss_dict => 'إغلاق القاموس';
+  @override
+  String get video_setting_jimaku_default_language => 'لغة الترجمة الافتراضية';
+  @override
+  String get video_jimaku_api_key_settings_hint =>
+      'يمكن تعديله أيضاً في الإعدادات ← فيديو ← الترجمات';
+  @override
+  String get anime_download_subs_episodes_unverified =>
+      'أرقام الحلقات غير مؤكدة لهذه الحزمة - قد تكون الترجمات من موسم آخر.';
+  @override
+  String get anime_download_subs_deferred =>
+      'تُطابق الترجمات بعد التحميل من الملفات الفعلية للحزمة';
+  @override
+  String get anime_download_subs_pending =>
+      'الترجمات: في الانتظار حتى اكتمال التحميل';
+  @override
+  String get anime_download_subs_unmatched => 'الترجمات: لا تطابق لهذه الحزمة';
+  @override
+  String get stat_source_breakdown => 'حسب المصدر';
+  @override
+  String stat_format_pages({required Object n}) => '${n} صفحة';
+  @override
+  String anime_download_subs_season_mismatch({required Object season}) =>
+      'لا يوجد إدخال ترجمة يطابق الموسم ${season} لهذه الحزمة - لم يتم اختيارها تلقائياً. اختر واحدة يدوياً إن أردت.';
+  @override
+  String get media_tracking_card_title => 'مزامنة Bangumi';
+  @override
+  String get media_tracking_not_connected =>
+      'غير متصل. يبقى التقدم محلياً ولا يصل شيء إلى Bangumi.';
+  @override
+  String get media_tracking_last_sync => 'آخر مزامنة';
+  @override
+  String get media_tracking_never_synced => 'لم تتم المزامنة أبداً';
+  @override
+  String media_tracking_linked_count({required Object n}) => '${n} مرتبط';
+  @override
+  String media_tracking_pending_count({required Object n}) =>
+      '${n} في انتظار الإرسال';
+  @override
+  String get media_tracking_all_synced => 'تم إرسال الكل';
+  @override
+  String get media_tracking_unauthorized =>
+      'رفض Bangumi رمز الوصول. أعد الاتصال في الإعدادات.';
+  @override
+  String get media_tracking_open_subject => 'فتح على Bangumi';
+  @override
+  String get media_tracking_manage_links => 'إدارة الروابط';
+  @override
+  String get media_tracking_last_error => 'آخر خطأ';
+  @override
+  String get shortcut_action_popup_mine_entry => 'إنشاء بطاقة (استخراج)';
+  @override
+  String get game_upscaling_auto_hint =>
+      'استخدم Magpie إذا كان يعمل بالفعل؛ وإلا استخدم النسخة المدمجة مع Fushi. لا حاجة للتحميل.';
+  @override
+  String get game_upscaling_installed_only_hint =>
+      'استخدم Magpie فقط إذا كان مثبتاً أو يعمل بالفعل. لا تفك نسخة Fushi المدمجة.';
+  @override
+  String get game_upscaling_off_hint => 'لا تُكبّر نافذة اللعبة أبداً.';
+  @override
+  String get game_helper_bundle_missing =>
+      'مساعد ربط اللعبة البصرية غير مضمّن في هذا الإصدار. حدّث Fushi للحصول عليه.';
+  @override
+  String game_upscaling_pick_title({required Object name}) =>
+      'تكبير نافذة ${name}';
+  @override
+  String get game_upscaling_pick_body =>
+      'يُكبّر نافذة هذه اللعبة بواسطة Magpie أثناء جلسة الالتقاط. يُضبط لكل لعبة - يفيد فقط للألعاب التي دقتها الأصلية أقل من شاشتك. يستخدم GPU الخاص بك.';
+  @override
+  String get game_upscaling_hint_not_installed =>
+      'Magpie غير جاهز. اضبط تكبير النافذة على تلقائي لاستخدام النسخة المدمجة مع Fushi؛ إن لم يبدأ، حدّث أو أعد تثبيت Fushi.';
+  @override
+  String media_source_count_manga({required Object n}) => '${n} مجلد';
+  @override
+  String get library_view_shelf => 'الرف';
+  @override
+  String get library_view_browse => 'استكشاف';
+  @override
+  String get library_view_media => 'المكتبة';
+  @override
+  String get scrape_failure_detail_show => 'عرض التفاصيل';
+  @override
+  String get scrape_failure_detail_hide => 'إخفاء التفاصيل';
+  @override
+  String get media_tracking_retry_mapping => 'إعادة المطابقة';
+  @override
+  String get media_tracking_retry_matched =>
+      'تمت المطابقة وأُضيف التقدم الحالي للقائمة';
+  @override
+  String get media_tracking_retry_no_match =>
+      'لم يُعثر على تطابق. جرّب الربط اليدوي.';
+  @override
+  String get game_statistics => 'إحصائيات اللعبة';
+  @override
+  String get game_stat_by_game => 'حسب اللعبة';
+  @override
+  String get stat_clear_all_game_message =>
+      'مسح جميع أوقات اللعب وعدد الجلسات؟ تُحفظ مكتبة الألعاب والجدول الزمني للنشاط. لا يمكن التراجع عن هذا.';
+  @override
+  String batch_selection_stale_skipped({
+    required Object m,
+    required Object n,
+  }) => 'تم تخطي ${m} من ${n} عنصر محدد لم يعد موجوداً';
+  @override
+  String get game_text_thread_unset =>
+      'لم يتم اختيار مسار — اختر واحداً لبدء الالتقاط';
+  @override
+  String get media_tracking_watched_show => 'عرض جميع الأنمي المشاهد';
+  @override
+  String get media_tracking_watched_title => 'المشاهد على Bangumi';
+  @override
+  String get media_tracking_watched_empty =>
+      'لا يوجد أنمي مُعلّم كمشاهد على حساب Bangumi هذا.';
+  @override
+  String media_tracking_watched_load_failed({required Object error}) =>
+      'تعذر تحميل الأنمي المشاهد: ${error}';
+  @override
+  String media_tracking_watched_progress({required Object n}) =>
+      'شوهد ${n} حلقة';
+  @override
+  String get media_tracking_manual_required => 'يحتاج ربطاً يدوياً';
+  @override
+  String media_tracking_manual_required_count({required Object n}) =>
+      '${n} عنصر يحتاج ربطاً يدوياً';
+  @override
+  String get media_tracking_manual_required_hint =>
+      'هذه العناصر المحلية لديها تقدم بالفعل لكنها غير مرتبطة بـ Bangumi.';
+  @override
+  String get media_tracking_no_local_history =>
+      'لا يوجد تقدم مشاهدة أو قراءة أو لعب محلي يحتاج ربطاً.';
+  @override
+  String media_tracking_more_manual_required({required Object n}) =>
+      '${n} عنصر إضافي يحتاج ربطاً يدوياً';
+  @override
+  String get manga_import_hint =>
+      'اختر مجلد مانغا، أرشيف صفحات .cbz/.zip، ملف .pdf، أو ملف .mokuro.';
+  @override
+  String get manga_import_pick_file => 'اختيار ملف مانغا';
+  @override
+  String get manga_import_pick_folder => 'اختيار مجلد مانغا';
+  @override
+  String get manga_import_missing_input => 'اختر ملف أو مجلد مانغا أولاً.';
+  @override
+  String get manga_import_detected_title => 'يبدو أن هذا مانغا';
+  @override
+  String get manga_import_detected_confirm => 'استيراد كمانغا';
+  @override
+  String manga_import_detected_message({required Object name}) =>
+      '"${name}" هو ملف مانغا، لذا سيمر عبر مستورد المانغا بدلاً من مستورد الكتب.';
+  @override
+  String get video_jimaku_source_loading => 'جارٍ التحقق من توفر الترجمات...';
+  @override
+  String get video_jimaku_source_failed =>
+      'تعذر التحقق من توفر الترجمات. حاول البحث مجدداً.';
+  @override
+  String get video_jimaku_language_unknown => 'اللغة غير محددة';
+  @override
+  String video_jimaku_source_summary({
+    required Object files,
+    required Object episodes,
+    required Object languages,
+  }) => '${files} ملف ترجمة · ${episodes} حلقة · ${languages}';
+  @override
+  String video_jimaku_episode_unlabeled({
+    required Object episode,
+    required Object count,
+  }) =>
+      'لا توجد ترجمة بعلامة الحلقة ${episode}؛ ${count} ملف بدون علامة قد يطابق';
+  @override
+  String video_jimaku_episode_unavailable({required Object episode}) =>
+      'لم يُعثر على ترجمة للحلقة ${episode}';
+  @override
+  String video_jimaku_episode_available({
+    required Object count,
+    required Object languages,
+  }) => '${count} ترجمة متوفرة · ${languages}';
+  @override
+  String get manga_online_source_disabled =>
+      'مصدر الإنترنت هذا معطّل. فعّله في المصادر لتصفح الكتالوج.';
+  @override
+  String get selection_web_search => 'البحث في الويب';
+  @override
+  String get selection_web_search_unavailable =>
+      'لا يوجد تطبيق يمكنه البحث في الويب.';
+  @override
+  String get selection_share_failed => 'تعذر فتح لوحة المشاركة.';
+  @override
+  String video_subtitle_youtube_auto_generated({required Object lang}) =>
+      '${lang} (مُنشأ تلقائياً)';
+  @override
+  String get anki_dedup_progress_title => 'جارٍ إزالة تكرار الوسائط';
+  @override
+  String anki_dedup_progress_scanning({required Object count}) =>
+      'جارٍ فحص مجلد الوسائط… (تم العثور على ${count} ملف)';
+  @override
+  String anki_dedup_progress_hashing({
+    required Object done,
+    required Object total,
+  }) => 'جارٍ مقارنة الملفات بنفس الحجم… (${done} / ${total})';
+  @override
+  String anki_dedup_progress_resolving({
+    required Object done,
+    required Object total,
+  }) => 'جارٍ معالجة التكرارات… (${done} / ${total})';
+  @override
+  String anki_dedup_progress_freed({required Object size}) =>
+      'تم تحرير ${size} حتى الآن';
+  @override
+  String get anki_dedup_cancelling => 'جارٍ الإلغاء…';
+  @override
+  String get anki_dedup_cancelled =>
+      'تم إلغاء إزالة التكرارات؛ التغييرات المكتملة محفوظة.';
+  @override
+  String get anki_dedup_report_cancelled_note =>
+      'تم الإلغاء مبكراً — الأرقام أدناه تغطي فقط ما اكتمل.';
+  @override
+  String get anki_dedup_plan_busy_note =>
+      'قد لا يستجيب Anki أثناء التشغيل؛ تجنب استخدام Anki حتى ينتهي.';
+  @override
+  String get video_setting_subtitle_position_secondary =>
+      'موضع الترجمة الثانوية';
+  @override
+  String get dict_download_learning_language => 'لغة التعلم';
+  @override
+  String get dict_category_bilingual => 'ثنائي اللغة';
+  @override
+  String get dict_category_monolingual => 'أحادي اللغة';
+  @override
+  String get shortcut_action_video_hold_speed =>
+      'اضغط مع الاستمرار لسرعة مؤقتة';
+  @override
+  String get handlebar_phonetic_transcriptions => 'النسخ الصوتي';
+  @override
+  String get sync_progress_preparing => 'جارٍ التحضير للمزامنة';
+  @override
+  String get sync_progress_collections => 'جارٍ مزامنة المجموعات';
+  @override
+  String get sync_progress_book => 'جارٍ مزامنة الكتاب';
+  @override
+  String sync_progress_book_titled({required Object title}) =>
+      'جارٍ مزامنة ${title}';
+  @override
+  String sync_last_completed({required Object count}) =>
+      'آخر مزامنة: اكتملت (${count} قناة)';
+  @override
+  String get sync_last_no_channels =>
+      'آخر مزامنة: لم تتم المزامنة - لا توجد قناة مزامنة متصلة';
+  @override
+  String get sync_last_nothing => 'آخر مزامنة: لا شيء لمزامنته';
+  @override
+  String get sync_last_auto_disabled =>
+      'آخر مزامنة: تم التخطي - المزامنة التلقائية معطّلة';
+  @override
+  String get sync_last_cooled_down =>
+      'آخر مزامنة: تم التخطي - تمت المزامنة مؤخراً';
+  @override
+  String get sync_last_failed => 'آخر مزامنة: فشلت';
+  @override
+  String anime_download_no_results_detail({
+    required Object query,
+    required Object filters,
+  }) =>
+      'استجابت الخدمة بنجاح لكن أعادت 0 عناصر. الاستعلام: ${query}؛ المرشحات: ${filters}. جرّب عنواناً آخر أو خفف المرشحات.';
+  @override
+  String get anime_download_streaming_ready => 'في المكتبة · التحميل مستمر';
+  @override
+  String get anime_download_unfiltered => 'بدون مرشح الموثوق';
+  @override
+  String get interconnect_enable_footer =>
+      'طريقة الاستخدام: على الجهاز الذي يحتوي مكتبتك، فعّل مفتاح خادم المزامنة أدناه؛ على جهازك الآخر، أضف عنوان ذلك الخادم للاقتران به. يمكن للجهاز أن يعمل بدور واحد فقط في كل مرة — خادم أو عميل.';
+  @override
+  String get interconnect_peer_list_title => 'الأقران المضافون';
+  @override
+  String get interconnect_peer_list_empty =>
+      'لم تُضف أقران بعد. اختر جهازاً مكتشفاً من قائمة أجهزة الشبكة المحلية أدناه للاقتران تلقائياً، أو أضف عنوان قرين يدوياً.';
+  @override
+  String get anki_lapis_visual_editor => 'المحرر المرئي';
+  @override
+  String get anki_lapis_visual_editor_hint =>
+      'معاينة بطاقة Lapis، ثم تغيير نمط وموضع وتعيين حقول كل منطقة بدون كتابة CSS.';
+  @override
+  String get anki_lapis_visual_front => 'الأمام';
+  @override
+  String get anki_lapis_visual_back => 'الخلف';
+  @override
+  String get anki_lapis_visual_preview => 'معاينة بطاقة Lapis';
+  @override
+  String get anki_lapis_visual_select_field => 'اختر ما تريد تعديله';
+  @override
+  String get anki_lapis_visual_reset_field => 'إعادة تعيين الحقل';
+  @override
+  String anki_lapis_visual_font_size({required Object percent}) =>
+      'حجم الخط: ${percent}%';
+  @override
+  String get anki_lapis_visual_bold => 'عريض';
+  @override
+  String get anki_lapis_visual_alignment => 'المحاذاة';
+  @override
+  String get anki_lapis_visual_color => 'لون النص';
+  @override
+  String get anki_lapis_visual_default => 'الافتراضي';
+  @override
+  String get anki_lapis_visual_advanced_css => 'CSS متقدم';
+  @override
+  String get anki_lapis_visual_field_expression => 'الكلمة';
+  @override
+  String get anki_lapis_visual_field_reading => 'القراءة';
+  @override
+  String get anki_lapis_visual_field_sentence => 'الجملة';
+  @override
+  String get anki_lapis_visual_field_primary_definition => 'التعريف الرئيسي';
+  @override
+  String get anki_lapis_visual_field_glossaries => 'تعريفات أخرى';
+  @override
+  String get anki_lapis_visual_target_card_content => 'محتوى البطاقة';
+  @override
+  String get anki_lapis_visual_target_definition => 'التعريف';
+  @override
+  String get anki_lapis_visual_target_inside_definition => 'داخل التعريف';
+  @override
+  String get anki_lapis_visual_field_definition_info => 'مؤشر التعريف';
+  @override
+  String get anki_lapis_visual_field_definition_box => 'صندوق التعريف';
+  @override
+  String get anki_lapis_visual_field_definition_content => 'التعريف بالكامل';
+  @override
+  String get anki_lapis_visual_field_selected_definition => 'التعريف المحدد';
+  @override
+  String get anki_lapis_visual_field_dictionary_entry => 'إدخال القاموس';
+  @override
+  String get anki_lapis_visual_field_dictionary_name => 'اسم القاموس';
+  @override
+  String get anki_lapis_visual_field_definition_example => 'مثال على التعريف';
+  @override
+  String get anki_lapis_visual_line_height => 'ارتفاع السطر';
+  @override
+  String get anki_lapis_visual_background_color => 'تمييز الخلفية';
+  @override
+  String get anki_lapis_visual_box_layout => 'مظهر الصندوق';
+  @override
+  String get anki_lapis_visual_border_width => 'الحدود';
+  @override
+  String get anki_lapis_visual_border_color => 'لون الحدود';
+  @override
+  String get anki_lapis_visual_corner_radius => 'نصف قطر الزاوية';
+  @override
+  String get anki_lapis_visual_padding => 'التباعد الداخلي';
+  @override
+  String get anki_lapis_visual_margin => 'التباعد الخارجي';
+  @override
+  String get anki_lapis_visual_field_definition_info_note =>
+      'يظهر فقط في البطاقات التي تحتوي على أكثر من كتلة تعريف واحدة؛ بطاقات التعريف الواحد تخفيه.';
+  @override
+  String get anki_lapis_visual_field_dictionary_name_note =>
+      'في بطاقات Fushi يحمل هذا التسمية أيضًا وسوم أقسام الكلام، لذا لا يمكن تنسيقهما بشكل منفصل.';
+  @override
+  String get game_upscaling_error_bundle_missing =>
+      'تثبيت Fushi غير مكتمل: مكون Magpie المرفق مفقود. أعد تثبيت أو حدّث Fushi.';
+  @override
+  String get game_upscaling_error_bundle_invalid =>
+      'مكون Magpie المرفق تالف أو لم يجتز التحقق. أعد تثبيت أو حدّث Fushi.';
+  @override
+  String download_test_connection_failed_reason({required Object message}) =>
+      'فشل الاتصال: ${message}';
+  @override
+  String get delete_disclosure_will_delete_label => 'سيتم حذفه';
+  @override
+  String get delete_disclosure_will_keep_label => 'سيتم الاحتفاظ به';
+  @override
+  String get delete_disclosure_book_records =>
+      'تقدم القراءة والإشارات المرجعية والوسوم وبيانات الترجمة';
+  @override
+  String get delete_disclosure_book_extracted =>
+      'ملفات الكتاب التي استخرجها Fushi إلى مخزنه الخاص';
+  @override
+  String get delete_disclosure_book_audiobook =>
+      'ملفات الصوت والترجمات المحاذاة للكتاب الصوتي المرفق، إن وُجد';
+  @override
+  String get delete_disclosure_source_kept =>
+      'الملفات الأصلية التي استوردتها (كتاب، ترجمات، صوت)';
+  @override
+  String get delete_disclosure_stats_kept => 'إحصائيات القراءة';
+  @override
+  String get delete_disclosure_audiobook_files =>
+      'ملفات الصوت والترجمات المحاذاة التي نسخها Fushi إلى مخزنه الخاص';
+  @override
+  String get delete_disclosure_audiobook_book_kept =>
+      'الكتاب نفسه وتقدم القراءة فيه';
+  @override
+  String get delete_disclosure_audiobook_source_kept =>
+      'ملفات الصوت الأصلية التي استوردتها';
+  @override
+  String get audiobook_delete => 'حذف الكتاب الصوتي';
+  @override
+  String get audiobook_delete_confirm =>
+      'حذف الكتاب الصوتي المرفق؟ سيتم إزالة ملفات الصوت من هذا الجهاز.';
+  @override
+  String get delete_collection_confirm =>
+      'سيتم إزالة التجميع فقط. العناصر الموجودة فيه ستبقى.';
+  @override
+  String get shortcut_action_video_enter_caret =>
+      'الدخول إلى مؤشر البحث في الترجمة';
+  @override
+  String get audiobook_export_clip_too_long =>
+      'المقطع الصوتي المحدد طويل جدًا للتصدير (الحد: 5 دقائق)';
+  @override
+  String get sync_err_forbidden =>
+      'رفض الخادم هذا الطلب. تسجيل دخولك صحيح - تحقق من إعدادات الخادم.';
+  @override
+  String sync_err_forbidden_detail({required Object reason}) =>
+      'رفض الخادم هذا الطلب: ${reason} (تسجيل دخولك صحيح)';
+  @override
+  String get collection_group_extras => 'إضافات و PV';
+  @override
+  String collection_group_season({required Object n}) => 'الموسم ${n}';
+  @override
+  String get collection_sort_by_season => 'ترتيب حسب الموسم';
+  @override
+  String get mining_animated_format_avif => 'AVIF (الأصغر حجمًا)';
+  @override
+  String get mining_animated_format_webp => 'WebP (دعم أوسع)';
+  @override
+  String get mining_animated_format_gif => 'GIF (الأكثر توافقًا)';
+  @override
+  String get video_mining_animated_format =>
+      'صيغة الرسوم المتحركة لبطاقة الفيديو';
+  @override
+  String get video_mining_animated_format_hint =>
+      'AVIF أصغر بكثير من GIF بنفس الجودة، ومستوى جودته الأعلى يسمح بدقة ومعدل إطارات أعلى من GIF أو WebP. يعود تلقائيًا إلى GIF عندما لا يستطيع المشفّر المرفق إنتاجه.';
+  @override
+  String get gal_mining_animated_format => 'صيغة الرسوم المتحركة لبطاقة اللعبة';
+  @override
+  String get gal_mining_animated_format_hint =>
+      'نفس صيغ بطاقات الفيديو، مخزنة بشكل منفصل: إطار الرواية المرئية بالكاد يتحرك خلال سطر واحد، لذا المفاضلة مختلفة.';
+  @override
+  String get scrape_all => 'جلب الكل';
+  @override
+  String scrape_all_title({required Object kind}) => 'جلب جميع ${kind}';
+  @override
+  String scrape_all_running({required Object current, required Object total}) =>
+      'جارٍ الجلب ${current} / ${total}';
+  @override
+  String scrape_all_item({required Object title}) => 'قيد المعالجة: ${title}';
+  @override
+  String scrape_all_done({
+    required Object applied,
+    required Object review,
+    required Object skipped,
+    required Object failed,
+  }) =>
+      'تم: ${applied} مُطبَّق، ${review} بحاجة مراجعة، ${skipped} تم تخطيه، ${failed} فشل';
+  @override
+  String get scrape_all_empty => 'لا توجد عناصر لجلبها في هذه المكتبة.';
+  @override
+  String get scrape_all_start => 'بدء';
+  @override
+  String collection_hero_total_episodes({required Object count}) =>
+      '${count} حلقة';
+  @override
+  String get video_scrape_collection_rename_title =>
+      'إعادة تسمية هذه المجموعة؟';
+  @override
+  String get video_scrape_collection_rename_body =>
+      'الإدخال المطابق يحمل اسمًا مختلفًا. إعادة التسمية اختيارية: سيتم حفظ الغلاف والتفاصيل في كلتا الحالتين، وإعادة التسمية ستستبدل الاسم القديم على أجهزتك المتزامنة الأخرى أيضًا.';
+  @override
+  String video_scrape_collection_rename_from({required Object name}) =>
+      'الاسم الحالي: ${name}';
+  @override
+  String video_scrape_collection_rename_to({required Object name}) =>
+      'الاسم الجديد: ${name}';
+  @override
+  String get video_scrape_collection_rename_keep => 'الاحتفاظ بالاسم الحالي';
+  @override
+  String get download_task_toggle_failed => 'فشل الإيقاف المؤقت/الاستئناف';
+  @override
+  String get download_task_eta => 'الوقت المتبقي';
+  @override
+  String get download_task_ratio => 'النسبة';
+  @override
+  String get download_task_status_downloading => 'جارٍ التحميل';
+  @override
+  String get download_task_status_seeding => 'جارٍ الرفع';
+  @override
+  String get download_task_status_completed => 'مكتمل';
+  @override
+  String get download_task_status_paused => 'متوقف مؤقتًا';
+  @override
+  String get download_task_status_queued => 'في قائمة الانتظار';
+  @override
+  String get download_task_status_stalled => 'متوقف';
+  @override
+  String get download_task_status_checking => 'جارٍ التحقق';
+  @override
+  String get download_task_status_metadata => 'جارٍ جلب البيانات الوصفية';
+  @override
+  String get download_task_status_moving => 'جارٍ النقل';
+  @override
+  String get download_task_status_error => 'خطأ';
+  @override
+  String get download_task_pause => 'إيقاف مؤقت';
+  @override
+  String get download_task_resume => 'استئناف';
+  @override
+  String get download_airing_calendar_title => 'جدول البث';
+  @override
+  String get download_airing_calendar_show_all => 'عرض كل هذا الموسم';
+  @override
+  String get download_airing_calendar_empty_guidance =>
+      'لا شيء لعرضه بعد: اربط مجموعة بـ AniList أو أضف اشتراك تحميل، وستظهر مواعيد بثها هنا.';
+  @override
+  String get download_airing_calendar_error => 'فشل تحميل جدول البث';
+  @override
+  String get download_airing_calendar_in_library => 'في المكتبة';
+  @override
+  String get download_airing_calendar_subscribed => 'مشترك';
+  @override
+  String download_airing_calendar_episode_label({required Object episode}) =>
+      'الحلقة ${episode}';
+  @override
+  String get download_airing_calendar_week_prev => 'الأسبوع السابق';
+  @override
+  String get download_airing_calendar_week_next => 'الأسبوع التالي';
+  @override
+  String get download_airing_calendar_week_empty => 'لا يوجد بث هذا الأسبوع';
+  @override
+  String get video_jimaku_format => 'الصيغة';
+  @override
+  String get video_jimaku_format_all => 'الكل';
+  @override
+  String get video_setting_tmdb_key => 'مفتاح TMDB API مخصص';
+  @override
+  String get video_setting_tmdb_key_hint =>
+      'اختياري. اتركه فارغًا لاستخدام المفتاح المدمج. أدخل مفتاحك فقط إذا توقف الجلب عن العمل أو أردت استخدام حصتك الخاصة.';
+  @override
+  String get about_tmdb_attribution =>
+      'يستخدم هذا التطبيق TMDB وواجهات TMDB البرمجية لكنه غير معتمد أو مُصدّق أو موافق عليه من TMDB.';
+  @override
+  String get anki_lapis_visual_layout => 'التخطيط';
+  @override
+  String get anki_lapis_visual_layout_hint =>
+      'يستخدم مفاتيح التخطيط الخاصة بـ Lapis، لذا يتبعها Anki على كل من سطح المكتب والهاتف.';
+  @override
+  String get anki_lapis_visual_layout_sentence => 'موضع الجملة';
+  @override
+  String get anki_lapis_visual_layout_sentence_above => 'فوق التعريفات';
+  @override
+  String get anki_lapis_visual_layout_sentence_below => 'أسفل التعريفات';
+  @override
+  String get anki_lapis_visual_layout_picture => 'موضع الصورة';
+  @override
+  String get anki_lapis_visual_layout_picture_right => 'يمين الكلمة';
+  @override
+  String get anki_lapis_visual_layout_picture_left => 'يسار الكلمة';
+  @override
+  String get anki_lapis_visual_layout_picture_alt => 'داخل الجملة';
+  @override
+  String get anki_lapis_visual_layout_audio => 'أزرار الصوت';
+  @override
+  String get anki_lapis_visual_layout_audio_header => 'بجانب القراءة';
+  @override
+  String get anki_lapis_visual_layout_audio_fixed => 'مثبتة في الأسفل';
+  @override
+  String get anki_lapis_visual_layout_audio_alt => 'داخل الجملة';
+  @override
+  String get anki_lapis_visual_mapping_hint =>
+      'حقول Anki التي تملأ المنطقة المحددة. التغييرات تُحفظ مع النمط.';
+  @override
+  String get anki_lapis_visual_mapping_none =>
+      'هذه المنطقة يرسمها القالب نفسه وليس لها حقل خاص.';
+  @override
+  String get anki_lapis_visual_color_custom => 'مخصص';
+  @override
+  String get anki_lapis_visual_color_picker_title => 'اختر لونًا';
+  @override
+  String get video_scrape_tmdb_key_hint => 'أدخل مفتاح TMDB API';
+  @override
+  String get video_scrape_tmdb_key_required => 'TMDB يتطلب مفتاح API';
+  @override
+  String get video_scrape_tmdb_key_save => 'حفظ';
+  @override
+  String get video_scrape_tmdb_key_empty =>
+      'احفظ مفتاح TMDB API، ثم اضغط بحث. نتائج المصادر الأخرى لا تظهر هنا.';
+  @override
+  String get download_detail_tab_overview => 'نظرة عامة';
+  @override
+  String get download_detail_tab_files => 'الملفات';
+  @override
+  String get download_detail_tab_peers => 'الأقران';
+  @override
+  String get download_detail_tab_trackers => 'المتعقبات';
+  @override
+  String get download_detail_backend_unsupported =>
+      'غير مدعوم من خلفية التحميل الحالية';
+  @override
+  String get download_detail_task_gone => 'المهمة غير موجودة في الخلفية';
+  @override
+  String get download_detail_task_missing =>
+      'خلفية التحميل الأصلية متصلة، لكن هذا التورنت لم يعد موجودًا. لا يمكن استرداد الأقران والمتعقبات المباشرة؛ يتم عرض معلومات المهمة المحفوظة.';
+  @override
+  String get download_detail_section_transfer => 'النقل';
+  @override
+  String get download_detail_section_network => 'الشبكة';
+  @override
+  String get download_detail_section_task => 'المهمة';
+  @override
+  String get download_detail_seeds_label => 'البذور';
+  @override
+  String get download_detail_leechers_label => 'المحمّلون';
+  @override
+  String get download_detail_connections_label => 'الاتصالات';
+  @override
+  String get download_detail_content_path_label => 'مسار المحتوى';
+  @override
+  String get download_detail_time_active => 'وقت النشاط';
+  @override
+  String get download_detail_time_seeding => 'وقت الرفع';
+  @override
+  String get download_detail_total_size_label => 'الحجم الكلي';
+  @override
+  String get download_detail_listen_port => 'منفذ الاستماع';
+  @override
+  String get download_detail_dht_nodes => 'عُقد DHT';
+  @override
+  String get download_detail_hash_label => 'هاش المعلومات';
+  @override
+  String get download_detail_port_mapping => 'تعيين المنافذ';
+  @override
+  String get download_detail_session_rates => 'معدلات الجلسة';
+  @override
+  String get download_detail_pieces_label => 'القطع';
+  @override
+  String get download_detail_priority_skip => 'عدم التحميل';
+  @override
+  String get download_detail_raw_state_label => 'حالة الخلفية';
+  @override
+  String get download_detail_remaining_label => 'المتبقي';
+  @override
+  String get download_detail_save_path_label => 'مسار الحفظ';
+  @override
+  String get download_detail_priority_normal => 'عادي';
+  @override
+  String get download_detail_priority_high => 'عالي';
+  @override
+  String get download_detail_tracker_working => 'يعمل';
+  @override
+  String get download_detail_tracker_updating => 'جارٍ التحديث';
+  @override
+  String get download_detail_tracker_not_contacted => 'لم يتم الاتصال بعد';
+  @override
+  String get download_detail_tracker_not_working => 'لا يعمل';
+  @override
+  String get download_detail_tracker_disabled => 'معطّل';
+  @override
+  String get download_detail_no_peers => 'لا يوجد أقران متصلون';
+  @override
+  String get download_detail_no_trackers => 'لا توجد متعقبات';
+  @override
+  String get video_filter_year => 'السنة';
+  @override
+  String get video_filter_year_unknown => 'سنة غير معروفة';
+  @override
+  String get video_filter_watch_status => 'حالة المشاهدة';
+  @override
+  String get video_filter_watch_status_unwatched => 'لم يُشاهَد';
+  @override
+  String get video_filter_watch_status_watching => 'قيد المشاهدة';
+  @override
+  String get video_filter_watch_status_completed => 'مكتمل';
+  @override
+  String get video_hero_detail_view => 'التفاصيل';
+  @override
+  String video_hero_episodes_watched({required Object n}) =>
+      '${n} حلقة تمت مشاهدتها';
+  @override
+  String get video_recently_added_badge => 'جديد';
+  @override
+  String get video_air_season_winter => 'شتاء';
+  @override
+  String get video_air_season_spring => 'ربيع';
+  @override
+  String get video_air_season_summer => 'صيف';
+  @override
+  String get video_air_season_autumn => 'خريف';
+  @override
+  String get delete_scope_no_channel =>
+      'لا توجد مزامنة مكوّنة - هذا الحذف يؤثر على هذا الجهاز فقط';
+  @override
+  String get mihon_sources_title => 'مصادر المانغا';
+  @override
+  String get mihon_extensions_title => 'إضافات المانغا';
+  @override
+  String get mihon_store_add => 'إضافة متجر إضافات';
+  @override
+  String get mihon_store_url => 'رابط متجر الإضافات';
+  @override
+  String get mihon_store_empty =>
+      'لا توجد متاجر إضافات بعد. أضف متجر Mihon متوافق أو استورد ملف APK محلي.';
+  @override
+  String get mihon_extension_import => 'استيراد APK محلي';
+  @override
+  String get mihon_extension_warning =>
+      'إضافات الطرف الثالث تنفذ أكوادًا بصلاحيات Fushi. قم بتثبيت الإضافات والموقّعين الموثوقين فقط.';
+  @override
+  String get mihon_extension_install => 'تثبيت';
+  @override
+  String get mihon_extension_update => 'تحديث';
+  @override
+  String get mihon_extension_uninstall => 'إلغاء التثبيت';
+  @override
+  String get mihon_extension_installed => 'مثبّت';
+  @override
+  String get mihon_extension_disabled => 'معطّل';
+  @override
+  String get mihon_source_empty =>
+      'لا توجد مصادر مانغا مفعّلة. قم بتثبيت وتفعيل إضافة أولًا.';
+  @override
+  String get mihon_source_popular => 'الأكثر شعبية';
+  @override
+  String get mihon_source_latest => 'الأحدث';
+  @override
+  String get mihon_source_search => 'بحث عن مانغا';
+  @override
+  String get mihon_source_preferences => 'تفضيلات المصدر';
+  @override
+  String get mihon_source_clear_data => 'مسح بيانات المصدر';
+  @override
+  String get mihon_source_clear_data_hint =>
+      'يمسح تفضيلات وملفات تعريف الارتباط لهذا المصدر. الإضافات المثبتة تبقى.';
+  @override
+  String get mihon_signer_trust_title => 'الوثوق بموقّع الإضافة؟';
+  @override
+  String get mihon_signer_fingerprint => 'بصمة SHA-256 للموقّع';
+  @override
+  String get mihon_runtime_unavailable =>
+      'إضافات Mihon غير متوفرة على هذه المنصة.';
+  @override
+  String get mihon_extension_incompatible => 'إضافة غير متوافقة';
+  @override
+  String get mihon_store_refresh => 'تحديث المتاجر';
+  @override
+  String get mihon_source_browse_mokuro => 'كتالوج Mokuro المدمج';
+  @override
+  String get mihon_source_no_results => 'لم يتم العثور على مانغا.';
+  @override
+  String get mihon_chapters_title => 'الفصول';
+  @override
+  String get mihon_extension_language_filter => 'اللغة';
+  @override
+  String get mihon_extension_language_all => 'جميع اللغات';
+  @override
+  String get mihon_filter_ignore => 'تجاهل';
+  @override
+  String get mihon_filter_include => 'تضمين';
+  @override
+  String get mihon_filter_exclude => 'استبعاد';
+  @override
+  String get mihon_filter_ascending => 'تصاعدي';
+  @override
+  String get mihon_filter_descending => 'تنازلي';
+  @override
+  String get mihon_add_to_bookshelf => 'إضافة إلى رف المانغا';
+  @override
+  String get mihon_in_bookshelf => 'في رف المانغا';
+  @override
+  String scrape_all_confirm({required Object n}) =>
+      'مطابقة جميع عناصر المكتبة البالغ عددها ${n} حسب العنوان. فقط المطابقات ذات الثقة العالية تُطبّق تلقائيًا — يتم تقييم الفيديوهات بناءً على العنوان مع السنة والنوع وإشارات أخرى، بينما تتطلب الكتب والألعاب عنوانًا فريدًا مطابقًا تمامًا. الأغلفة التي اخترتها بنفسك لا تُستبدل أبدًا (الصور المحلية التي عيّنتها، والإدخالات التي اخترتها في نافذة المطابقة، وملفات الملصقات الموضوعة في المجلد)، والنتائج الغامضة تبقى معلقة للمراجعة اليدوية.';
+  @override
+  String get collection_related_title => 'أعمال ذات صلة';
+  @override
+  String get collection_relation_prequel => 'جزء سابق';
+  @override
+  String get collection_relation_sequel => 'جزء لاحق';
+  @override
+  String get collection_relation_side_story => 'قصة جانبية';
+  @override
+  String get collection_relation_movie => 'فيلم';
+  @override
+  String get collection_relation_spin_off => 'عمل مشتق';
+  @override
+  String get collection_relation_other => 'ذو صلة';
+  @override
+  String get collection_relation_download => 'تحميل';
+  @override
+  String get collection_relation_bind => 'ربط بمجموعة موجودة';
+  @override
+  String get collection_episode_rename => 'إعادة تسمية الحلقات من الجلب';
+  @override
+  String get collection_episode_rename_title => 'إعادة تسمية الحلقات';
+  @override
+  String get collection_episode_rename_empty => 'لا شيء لإعادة تسميته';
+  @override
+  String get collection_episode_download => 'تحميل هذه الحلقة';
+  @override
+  String get collection_episode_fill_missing => 'ملء الحلقات المفقودة';
+  @override
+  String get collection_episode_no_missing => 'لا توجد حلقات مفقودة';
+  @override
+  String get collection_split_by_season => 'تقسيم حسب الموسم';
+  @override
+  String get collection_split_keep_original => 'الاحتفاظ بالمجموعة الأصلية';
+  @override
+  String get collection_split_confirm => 'تقسيم';
+  @override
+  String collection_relation_bound({required Object name}) =>
+      'مرتبط بـ ${name}';
+  @override
+  String collection_episode_rename_apply({required Object n}) =>
+      'إعادة تسمية ${n} حلقة';
+  @override
+  String collection_split_done({required Object n}) =>
+      'تم التقسيم إلى ${n} مجموعة';
+  @override
+  String collection_episode_watched_at({required Object position}) =>
+      'شوهد حتى ${position}';
+  @override
+  String collection_episode_rename_partial({
+    required Object n,
+    required Object m,
+  }) => 'تمت إعادة تسمية ${n} حلقة، فشل ${m}';
+  @override
+  String get sync_err_browser_timeout =>
+      'لم يُعِد المتصفح التفويض. حاول مجددًا، وتأكد من أن الوكيل يسمح بالمرور عبر 127.0.0.1.';
+  @override
+  String get manga_rescan_running => 'جارٍ التعرف على المربع المحدد...';
+  @override
+  String get manga_rescan_empty => 'لم يتم التعرف على أي نص في هذا المربع.';
+  @override
+  String get stat_hourly_band_epub => 'كتب نصية';
+  @override
+  String get stat_hourly_band_pdf => 'PDF';
+  @override
+  String get stat_hourly_band_manga => 'مانغا';
+  @override
+  String get stat_hourly_band_unattributed => 'سجل غير مقسّم';
+  @override
+  String get stat_hourly_unattributed_note =>
+      'الساعات المسجلة قبل وجود التتبع حسب الصيغة ليس لها نوع مخزّن، لذا لا يمكن تقسيمها. تُعرض كإجمالي مجمّع ولا تُنسب لأي نوع.';
+  @override
+  String get book_convert_to_manga_action => 'تحويل إلى مانغا';
+  @override
+  String get book_convert_to_book_action => 'تحويل مرة أخرى إلى كتاب';
+  @override
+  String get book_convert_running => 'جارٍ التحويل…';
+  @override
+  String get book_convert_done => 'اكتمل التحويل';
+  @override
+  String get book_convert_failed => 'فشل التحويل';
+  @override
+  String get book_convert_blocked_already => 'هذا الكتاب بالفعل بهذه الصيغة.';
+  @override
+  String get book_convert_blocked_text_only =>
+      'هذا كتاب نصي بدون صور صفحات. فقط الكتب المصورة الممسوحة ضوئيًا يمكن تحويلها إلى مانغا.';
+  @override
+  String get book_convert_blocked_no_original =>
+      'تم استيراد هذه المانغا من صور، لذا لا يوجد كتاب أصلي للتحويل إليه.';
+  @override
+  String get book_convert_blocked_source_missing =>
+      'الملفات المصدرية لم تعد موجودة على القرص.';
+  @override
+  String manga_online_retry_waiting({
+    required Object attempt,
+    required Object total,
+  }) => 'إعادة المحاولة تلقائيًا (${attempt}/${total})';
+  @override
+  String get manga_ocr_wizard_already_ocred =>
+      'هذا المجلد يحتوي بالفعل على بيانات التعرف الضوئي في كل صفحة. تشغيل التعرف الضوئي مجددًا سيستبدلها.';
+  @override
+  String get shortcut_scope_universal => 'رجوع / خروج';
+  @override
+  String get game_attach_and_capture => 'إرفاق والتقاط';
+  @override
+  String get remote_delete_failed => 'تعذر الحذف على الجهاز المقترن';
+  @override
+  String get remote_delete_unsupported =>
+      'الجهاز المقترن قديم جدًا لدعم الحذف عن بُعد. حدّث Fushi هناك أولًا.';
+  @override
+  String get anki_lapis_visual_blocks => 'مناطق مخصصة';
+  @override
+  String get anki_lapis_visual_blocks_hint =>
+      'عرض الحقول الموجودة في مكان آخر على البطاقة. للعرض فقط: لا يتم إضافة أو حذف أي حقل Anki.';
+  @override
+  String get anki_lapis_visual_block_add => 'إضافة منطقة';
+  @override
+  String get anki_lapis_visual_block_delete => 'حذف منطقة';
+  @override
+  String anki_lapis_visual_block_name({required Object index}) =>
+      'المنطقة ${index}';
+  @override
+  String get anki_lapis_visual_block_anchor => 'الموضع على البطاقة';
+  @override
+  String get anki_lapis_visual_block_anchor_top => 'أعلى البطاقة';
+  @override
+  String get anki_lapis_visual_block_anchor_above_sentence => 'أسفل الكلمة';
+  @override
+  String get anki_lapis_visual_block_anchor_above_definition => 'أسفل الجملة';
+  @override
+  String get anki_lapis_visual_block_anchor_below_definition =>
+      'أسفل التعريفات';
+  @override
+  String get anki_lapis_visual_block_anchor_bottom => 'أسفل البطاقة';
+  @override
+  String get anki_lapis_visual_block_fields => 'الحقول المعروضة هنا';
+  @override
+  String get anki_lapis_visual_block_no_fields => 'لم يتم اختيار حقول بعد';
+  @override
+  String get anki_lapis_visual_block_needs_note_type =>
+      'اختر نوع الملاحظة أولًا لاختيار الحقول.';
+  @override
+  String get anki_lapis_restore_factory => 'استعادة Lapis الافتراضي';
+  @override
+  String get anki_lapis_restore_factory_hint =>
+      'استبدال نوع ملاحظة Lapis في Anki بالنسخة المرفقة في Fushi ومسح جميع التخصيصات هنا.';
+  @override
+  String get anki_lapis_restore_factory_confirm =>
+      'سيتم استبدال تنسيق Lapis وقوالب البطاقات في Anki بالنسخة المرفقة في Fushi، وإعادة تعيين حجم الخط وCSS المخصص والمناطق المخصصة. سيتم حفظ نسخة احتياطية من الحالة الحالية أولًا. بيانات البطاقات لن تتأثر.';
+  @override
+  String get anki_lapis_restore_factory_done =>
+      'تمت استعادة Lapis إلى الإعدادات الافتراضية';
+  @override
+  String anki_lapis_restore_factory_failed({required Object error}) =>
+      'فشلت الاستعادة: ${error}';
+  @override
+  String get anki_lapis_visual_select_field_hint =>
+      'انقر على أي جزء من المعاينة، أو اختر من الأسفل. ما تختاره هو ما ستعدّله عناصر التحكم أدناه.';
+  @override
+  String get anki_lapis_visual_editing_now => 'قيد التعديل';
+  @override
+  String get mihon_extension_preview => 'معاينة';
+  @override
+  String get mihon_extension_preview_warning =>
+      'المعاينة تشغّل كود هذه الإضافة قبل تثبيتها. لن يُضاف شيء إلى مكتبتك حتى تختار التثبيت.';
+  @override
+  String get mihon_extension_preview_discard => 'تجاهل';
+  @override
+  String get mihon_extension_preview_source_select => 'اختر مصدرًا للمعاينة';
+  @override
+  String get mihon_extension_sources_included => 'المصادر المضمّنة';
+  @override
+  String get mihon_extension_preview_read_only =>
+      'المعاينة للقراءة فقط. قم بتثبيت الإضافة للفتح والقراءة.';
+  @override
+  String get selection_copy_empty => 'لم يتم تحديد نص.';
+  @override
+  String get video_library_empty_source_hint =>
+      'أضف مجلد فيديو من المصادر لبناء مكتبتك';
+  @override
+  String get video_source_scrape_action => 'جلب بيانات هذا المصدر';
+  @override
+  String get video_source_scrape_settings => 'إعدادات جلب المصدر';
+  @override
+  String get video_source_scrape_auto_after_scan => 'الجلب بعد الفحص';
+  @override
+  String get video_source_scrape_auto_after_scan_hint =>
+      'تشغيل جلب البيانات الوصفية تلقائيًا بعد فحص هذا المصدر';
+  @override
+  String get video_source_scrape_write_nfo => 'كتابة ملفات NFO';
+  @override
+  String get video_source_scrape_write_images => 'كتابة ملفات الصور';
+  @override
+  String video_source_scrape_progress({
+    required Object phase,
+    required Object current,
+    required Object total,
+  }) => '${phase} · ${current}/${total}';
+  @override
+  String video_source_scrape_last_summary({
+    required Object status,
+    required Object succeeded,
+    required Object pending,
+    required Object failed,
+  }) =>
+      'آخر جلب (${status}): ${succeeded} نجح، ${pending} معلّق، ${failed} فشل';
+  @override
+  String get video_source_scrape_phase_planning => 'التخطيط';
+  @override
+  String get video_source_scrape_phase_recognizing => 'المطابقة';
+  @override
+  String get video_source_scrape_phase_fetching => 'جلب البيانات الوصفية';
+  @override
+  String get video_source_scrape_phase_applying => 'حفظ البيانات الوصفية';
+  @override
+  String get video_source_scrape_phase_writing_sidecars =>
+      'كتابة الملفات المرافقة';
+  @override
+  String get video_source_scrape_status_interrupted => 'تم المقاطعة';
+  @override
+  String get video_source_scrape_locale => 'لغة البيانات الوصفية';
+  @override
+  String get video_source_scrape_locale_hint =>
+      'اللغة المفضلة للعناوين والملخصات والصور';
+  @override
+  String get video_source_scrape_confirmation_title =>
+      'تأكيد مطابقة البيانات الوصفية';
+  @override
+  String get video_source_scrape_confirmation_hint =>
+      'تم العثور على عدة مطابقات دقيقة. اختر العمل الصحيح لحفظ ربط المزوّد.';
+  @override
+  String get video_source_scrape_confirmation_skip => 'تخطي هذا العمل';
+  @override
+  String get video_source_scrape_nfo_policy => 'سياسة كتابة NFO';
+  @override
+  String get video_source_scrape_image_policy => 'سياسة كتابة الصور';
+  @override
+  String get video_source_scrape_policy_skip => 'عدم الكتابة';
+  @override
+  String get video_source_scrape_policy_missing_only => 'فقط عند الغياب';
+  @override
+  String get video_source_scrape_policy_overwrite => 'تحديث ملفات Fushi';
+  @override
+  String get video_source_scrape_external_overwrite =>
+      'السماح بالكتابة فوق الملفات المحمية';
+  @override
+  String get video_source_scrape_external_overwrite_hint =>
+      'ملفات الطرف الثالث أو المعدّلة من المستخدم تبقى محمية حتى تؤكد كل دفعة جلب يدوي مجددًا.';
+  @override
+  String get video_source_scrape_external_overwrite_confirm_title =>
+      'الكتابة فوق الملفات المحمية؟';
+  @override
+  String get video_source_scrape_external_overwrite_confirm_body =>
+      'قد تستبدل هذه الدفعة ملفات NFO/صور من طرف ثالث أو ملفات Fushi التي عدّلتها. ملفات الوسائط لن تتغير. متابعة؟';
+  @override
+  String get video_source_scrape_tasks_open => 'المهام الخلفية';
+  @override
+  String get video_source_scrape_background_started => 'الجلب يعمل في الخلفية';
+  @override
+  String get video_source_scrape_tasks_current => 'المهمة الحالية';
+  @override
+  String get video_source_scrape_tasks_history => 'المهام الأخيرة';
+  @override
+  String get video_source_scrape_tasks_empty => 'لا توجد مهام جلب بعد';
+  @override
+  String get video_source_scrape_waiting_confirmation => 'في انتظار تأكيدك';
+  @override
+  String get video_source_scrape_phase_scanning => 'فحص المصدر';
+  @override
+  String get video_library_all_videos => 'جميع الفيديوهات';
+  @override
+  String get video_work_voice_roles => 'الأداء الصوتي والشخصيات';
+  @override
+  String get video_work_cast_crew => 'طاقم التمثيل والإنتاج';
+  @override
+  String get video_work_trailers => 'الإعلانات الترويجية';
+  @override
+  String get video_work_extras => 'إضافات';
+  @override
+  String get video_work_details => 'التفاصيل';
+  @override
+  String get video_work_external_ids => 'معرّفات خارجية';
+  @override
+  String get video_work_metadata_pending =>
+      'لم يتم جلب البيانات الوصفية المفصلة بعد. أعد جلب هذا المصدر من المصادر، ثم أعد فتح العمل.';
+  @override
+  String get video_work_genres => 'التصنيفات';
+  @override
+  String get video_work_keywords => 'الكلمات المفتاحية';
+  @override
+  String get video_work_studios => 'الاستوديوهات';
+  @override
+  String get video_work_countries => 'الدول';
+  @override
+  String get video_work_content_rating => 'تصنيف المحتوى';
+  @override
+  String get video_all_videos_list_view => 'عرض القائمة';
+  @override
+  String get video_all_videos_grid_view => 'عرض الشبكة';
+  @override
+  String video_home_continue_episode_number({required Object n}) =>
+      'جارٍ تشغيل الحلقة ${n}';
+  @override
+  String video_home_next_episode_number({required Object n}) =>
+      'التالي · الحلقة ${n}';
+  @override
+  String video_home_recent_episode_number({required Object n}) =>
+      'أُضيف مؤخرًا · الحلقة ${n}';
+  @override
+  String video_home_remaining_minutes({required Object minutes}) =>
+      '${minutes} دقيقة متبقية';
+  @override
+  String get video_subtitle_replay => 'إعادة تشغيل هذا السطر';
+  @override
+  String get manga_ocr_done => 'اكتمل التعرف الضوئي';
+  @override
+  String get settings_destination_manga_summary =>
+      'القارئ والتعرف الضوئي والكتالوج عبر الإنترنت';
+  @override
+  String get manga_page_animation => 'حركة تقليب الصفحة';
+  @override
+  String get manga_page_animation_none => 'بدون';
+  @override
+  String get manga_page_animation_slide => 'انزلاق';
+  @override
+  String get manga_page_animation_fade => 'تلاشي';
+  @override
+  String get manga_default_zoom => 'التكبير الافتراضي';
+  @override
+  String get manga_zoom_sensitivity => 'حساسية التكبير';
+  @override
+  String get manga_volume_key_paging => 'أزرار الصوت لتقليب الصفحات';
+  @override
+  String get manga_volume_key_paging_subtitle =>
+      'استخدم زري رفع وخفض الصوت لتقليب الصفحات في قارئ المانغا';
+  @override
+  String get manga_tap_zone_paging => 'النقر على الحواف لتقليب الصفحات';
+  @override
+  String get manga_tap_zone_paging_subtitle =>
+      'انقر على الحافة اليسرى أو اليمنى للصفحة للتقليب';
+  @override
+  String get manga_section_viewing => 'العرض وتقليب الصفحات';
+  @override
+  String get game_capture_setup_title => 'إكمال إعداد الالتقاط';
+  @override
+  String get game_capture_setup_hint =>
+      'اختر خيط الحوار أولًا. لا يستطيع Fushi مطابقة الصوت إلا مع أسطر الخيط المحدد.';
+  @override
+  String get game_audio_requires_thread =>
+      'قد يكون مصدر التقاط الصوت جاهزًا، لكن صوت الجملة لا يوجد حتى يتم اختيار خيط واستقبال سطر.';
+  @override
+  String get game_session_waiting_thread => 'في انتظار خيط الحوار';
+  @override
+  String get anki_connect_use_on_mobile => 'Use AnkiConnect on Android';
+  @override
+  String get anki_connect_use_on_mobile_hint =>
+      'استخدم فقط على شبكة موثوقة. AnkiConnect يستخدم HTTP غير مشفر؛ قم بتكوين مفتاح API مطابق، ثم حدّث المجموعات وأنواع الملاحظات بعد التبديل.';
+  @override
+  String get anki_connect_api_key_hint =>
+      'مطلوب لـ AnkiConnect عن بُعد؛ يجب أن يتطابق مع المفتاح المُعدّ في الإضافة';
+  @override
+  String get anki_connect_mobile_api_key_required =>
+      'Configure a matching AnkiConnect API key before enabling the Android backend.';
+  @override
+  String anki_connect_backend_switch_failed({required Object error}) =>
+      'تعذّر تبديل واجهة Anki الخلفية: ${error}';
+  @override
+  String get migration_settings_entry => 'الترحيل إلى Fushi';
+  @override
+  String get migration_settings_entry_subtitle =>
+      'نقل جميع البيانات إلى تطبيق Fushi الجديد';
+  @override
+  String get migration_intro =>
+      'Fushi هو الاسم الجديد لهذا التطبيق. يقوم الترحيل بتصدير جميع بياناتك على دفعات إلى مجلد نقل، ثم يستوردها Fushi ويتحقق منها. تبقى بياناتك هنا دون تغيير حتى تحذف هذا التطبيق.';
+  @override
+  String get migration_target_missing =>
+      'Fushi غير مُثبّت بعد. ثبّت Fushi أولاً، ثم عد إلى هنا.';
+  @override
+  String get migration_download_fushi => 'تحميل Fushi';
+  @override
+  String get migration_start => 'بدء الترحيل';
+  @override
+  String get migration_open_fushi => 'فتح Fushi';
+  @override
+  String get migration_include_local_audio =>
+      'تصدير الصوت المحلي للنطق أيضاً (قد يكون كبير الحجم)';
+  @override
+  String migration_batch_running({required Object batch}) =>
+      'جارٍ تصدير ${batch}…';
+  @override
+  String migration_batch_done({required Object batch}) => 'تم تصدير ${batch}';
+  @override
+  String get migration_export_done =>
+      'اكتمل التصدير. افتح Fushi للاستيراد والتحقق.';
+  @override
+  String migration_export_failed({required Object error}) =>
+      'فشل التصدير: ${error}';
+  @override
+  String get migration_readonly_note =>
+      'تم تصدير بياناتك إلى Fushi. هذا التطبيق الآن للقراءة فقط: استخدم Fushi للقراءة والتعدين. يمكنك إعادة التصدير في أي وقت إذا أبلغ Fushi عن بيانات مفقودة.';
+  @override
+  String get migration_reexport => 'إعادة التصدير';
+  @override
+  String get migration_batch_core_label => 'الإعدادات والتقدم والإحصائيات';
+  @override
+  String get migration_import_entry => 'استيراد من Hibiki';
+  @override
+  String get migration_import_entry_subtitle =>
+      'استيراد البيانات المُصدَّرة من تطبيق Hibiki القديم';
+  @override
+  String get migration_import_detected =>
+      'تم اكتشاف بيانات ترحيل Hibiki. هل تريد استيرادها الآن؟';
+  @override
+  String get migration_import_start => 'بدء الاستيراد';
+  @override
+  String migration_import_running({required Object batch}) =>
+      'جارٍ استيراد ${batch}…';
+  @override
+  String migration_import_verify_failed({
+    required Object batch,
+    required Object detail,
+  }) => 'فشل التحقق من ${batch} وتم الاحتفاظ بها لإعادة التصدير: ${detail}';
+  @override
+  String migration_import_counts_failed({required Object detail}) =>
+      'البيانات المستوردة غير مكتملة: ${detail}. أعد تصدير الأجزاء المفقودة من Hibiki، ثم استورد مجدداً.';
+  @override
+  String get migration_import_success => 'اكتمل الاستيراد والتحقق.';
+  @override
+  String get migration_import_nothing =>
+      'لم يتم العثور على بيانات ترحيل في مجلد النقل.';
+  @override
+  String get migration_uninstall_prompt =>
+      'اكتمل الترحيل. هل تريد حذف تطبيق Hibiki القديم؟';
+  @override
+  String get migration_uninstall_button => 'حذف Hibiki';
+  @override
+  String get migration_uninstall_still_installed =>
+      'Hibiki لا يزال مُثبّتاً. يمكنك حذفه في أي وقت.';
+  @override
+  String get migration_import_permission_title => 'مطلوب إذن التخزين';
+  @override
+  String get migration_import_permission_body =>
+      'تم إنشاء مجلد النقل بواسطة التطبيق القديم. بدون إذن "الوصول لجميع الملفات"، لا يستطيع Fushi قراءته — البيانات سليمة، لكن لا يمكن فتحها.';
+  @override
+  String get migration_import_permission_grant => 'منح الإذن';
+  @override
+  String migration_import_verifying({
+    required Object batch,
+    required Object done,
+    required Object total,
+  }) => 'جارٍ التحقق من ${batch} (${done}/${total})';
+  @override
+  String get migration_import_verifying_hint =>
+      'جارٍ حساب المجاميع الاختبارية للأرشيفات. قد تستغرق المكتبات الكبيرة عدة دقائق.';
+  @override
+  String get game_line_copy_tooltip => 'نسخ الجملة';
+  @override
+  String get game_japanese_locale_auto => 'تلقائي';
+  @override
+  String get game_japanese_locale_on => 'مُفعّل دائماً';
+  @override
+  String get game_japanese_locale_off => 'مُعطّل';
+  @override
+  String get game_japanese_locale => 'اللغة اليابانية للنظام';
+  @override
+  String get game_japanese_locale_hint =>
+      'يجب تعطيل هذا للإصدارات المُعرّبة بالصينية/الإنجليزية، وإلا ستتعطل اللعبة عند التشغيل';
+  @override
+  String get video_scrape_diagnostic_export => 'تصدير تشخيصات الكشط';
+  @override
+  String get video_scrape_diagnostic_confirm_title => 'تصدير تشخيصات الكشط؟';
+  @override
+  String get video_scrape_diagnostic_saved => 'تم حفظ حزمة التشخيص';
+  @override
+  String video_scrape_diagnostic_failed({required Object reason}) =>
+      'تعذّر تصدير حزمة التشخيص: ${reason}';
+  @override
+  String get video_scrape_diagnostic_share_subject =>
+      'تشخيصات كشط الفيديو في Fushi';
+  @override
+  String get video_scrape_diagnostic_confirm_body =>
+      'تتضمن الحزمة أسماء الملفات والمجلدات النسبية، وملخصات الكشط، ومحتويات NFO الأصلية. لا تتضمن مقاطع فيديو أو ترجمات أو صور أو مسارات مطلقة أو إعدادات التطبيق أو بيانات الاعتماد. تُحفظ ملفات NFO الأصلية دون تغيير وقد تحتوي على معلومات شخصية أو أسرار؛ راجع الحزمة قبل المشاركة علناً.';
+  @override
+  String get video_discovery_search_hint => 'بحث عن أفلام، مسلسلات، أنمي';
+  @override
+  String get video_discovery_hot => 'رائج الآن';
+  @override
+  String get video_discovery_seasonal_anime => 'أنمي الموسم';
+  @override
+  String get video_discovery_all_works => 'جميع العناوين';
+  @override
+  String get video_discovery_search_results => 'نتائج البحث';
+  @override
+  String get video_discovery_provider_warning =>
+      'بعض المصادر غير متاحة. يتم عرض النتائج المتوفرة.';
+  @override
+  String get video_discovery_load_failed => 'تعذّر تحميل نتائج الاكتشاف.';
+  @override
+  String get video_discovery_empty => 'لا توجد عناوين مطابقة.';
+  @override
+  String get video_discovery_resource_search => 'بحث عن الموارد';
+  @override
+  String get video_discovery_subtitle_search => 'بحث عن الترجمات';
+  @override
+  String get video_discovery_subscribe => 'اشتراك';
+  @override
+  String get video_discovery_subscription_manage => 'إدارة الاشتراك';
+  @override
+  String get video_discovery_pipeline_idle =>
+      'غير مُحمَّل → تحميل → تنظيم → ترجمات → كشط → المكتبة';
+  @override
+  String get video_discovery_details_load_failed =>
+      'تعذّر تحميل تفاصيل العنوان.';
+  @override
+  String get video_discovery_sort_popularity => 'الشعبية';
+  @override
+  String get video_discovery_sort_rating => 'التقييم';
+  @override
+  String get video_discovery_sort_release => 'تاريخ الإصدار';
+  @override
+  String get video_discovery_in_library => 'في المكتبة';
+  @override
+  String get video_discovery_play => 'تشغيل';
+  @override
+  String get download_resources_tab => 'الموارد';
+  @override
+  String get video_external_settings_section =>
+      'مزوّدو الموارد والترجمات الخارجية';
+  @override
+  String get video_torznab_settings_title => 'مفهرسات Torznab';
+  @override
+  String get video_torznab_add => 'إضافة مفهرس';
+  @override
+  String get video_torznab_name => 'الاسم';
+  @override
+  String get video_torznab_endpoint => 'نقطة النهاية';
+  @override
+  String get video_torznab_endpoint_hint =>
+      'HTTPS مطلوب باستثناء عناوين الاسترجاع المحلية.';
+  @override
+  String get video_torznab_api_key => 'مفتاح API';
+  @override
+  String get video_torznab_priority => 'الأولوية';
+  @override
+  String get video_torznab_categories => 'الفئات';
+  @override
+  String get video_torznab_categories_hint =>
+      'معرّفات فئات رقمية مفصولة بفواصل';
+  @override
+  String get video_external_enabled => 'مُفعّل';
+  @override
+  String get video_external_insecure_http => 'السماح بـ HTTP غير الآمن';
+  @override
+  String get video_external_insecure_http_hint =>
+      'استخدم فقط لنقطة نهاية على شبكة محلية موثوقة.';
+  @override
+  String get video_external_endpoint_invalid =>
+      'أدخل نقطة نهاية صالحة بدون بيانات اعتماد أو معلمات استعلام أو أجزاء.';
+  @override
+  String get video_opensubtitles_settings_title => 'OpenSubtitles';
+  @override
+  String get video_opensubtitles_user_agent => 'وكيل المستخدم';
+  @override
+  String get video_opensubtitles_languages_hint =>
+      'رموز لغات مفصولة بفواصل، مثلاً zh-CN,en,ja';
+  @override
+  String get video_download_path_mappings_title => 'تعيينات مسارات qBittorrent';
+  @override
+  String get video_download_path_mappings_hint =>
+      'عيّن كل جذر بعيد لـ qBittorrent إلى مجلد محلي يمكن الوصول إليه.';
+  @override
+  String get video_download_path_mapping_add => 'إضافة تعيين مسار';
+  @override
+  String get video_download_backend_profile_id => 'معرّف ملف الواجهة الخلفية';
+  @override
+  String get video_download_remote_root => 'الجذر البعيد';
+  @override
+  String get video_download_local_root => 'الجذر المحلي';
+  @override
+  String get video_download_target_source_title =>
+      'مصدر الفيديو المُدار الافتراضي';
+  @override
+  String get video_download_target_source_hint =>
+      'يتم تنظيم التحميلات الجديدة في مصدر الفيديو المحلي هذا.';
+  @override
+  String get video_download_target_source_none => 'اختر مصدر فيديو محلي';
+  @override
+  String get video_external_remove => 'إزالة';
+  @override
+  String get video_external_username_optional => 'اسم المستخدم (اختياري)';
+  @override
+  String get video_external_password_optional => 'كلمة المرور (اختياري)';
+  @override
+  String get video_external_api_key => 'مفتاح API';
+  @override
+  String get video_external_save_error =>
+      'تعذّر حفظ الإعدادات. تحقق من الحقول المُميّزة.';
+  @override
+  String get video_external_categories_invalid =>
+      'يجب أن تكون الفئات معرّفات رقمية مفصولة بفواصل.';
+  @override
+  String get video_download_path_mapping_invalid =>
+      'أدخل معرّف ملف تعريف وجذراً بعيداً وجذراً محلياً مطلقاً.';
+  @override
+  String get video_opensubtitles_endpoint => 'نقطة نهاية API';
+  @override
+  String get video_download_target_source_empty =>
+      'لا يوجد مصدر فيديو محلي متاح. أضف واحداً في تبويب المصادر أولاً.';
+  @override
+  String get video_setting_drag_seek_sensitivity => 'حساسية السحب للتقديم';
+  @override
+  String get video_setting_drag_seek_sensitivity_hint =>
+      'المدة التي يقفزها سحب بعرض الشاشة الكامل على شاشة اللمس: منخفضة حوالي 45 ثانية، متوسطة حوالي 90 ثانية، عالية حوالي 180 ثانية. مستقل عن طول الفيديو. للسحب باللمس فقط؛ لا يتأثر التنقل بالفأرة ولوحة المفاتيح.';
+  @override
+  String get video_setting_drag_seek_sensitivity_low => 'منخفضة';
+  @override
+  String get video_setting_drag_seek_sensitivity_medium => 'متوسطة';
+  @override
+  String get video_setting_drag_seek_sensitivity_high => 'عالية';
+  @override
+  String video_subtitle_read_failed({required Object label}) =>
+      'تعذّرت قراءة ملف الترجمة هذا (تالف أو فارغ): ${label}';
+  @override
+  String dict_downloading_size({
+    required Object name,
+    required Object done,
+    required Object total,
+  }) => 'جارٍ تحميل ${name} (${done} / ${total})';
+  @override
+  String get video_subtitle_attach_book_missing =>
+      'هذا الفيديو ليس في مكتبتك، لذا لم يتم إرفاق الترجمة';
+  @override
+  String get dict_download_hide => 'تشغيل في الخلفية';
+  @override
+  String get dict_download_progress_show => 'عرض التقدم';
+  @override
+  String get dict_download_cancelled => 'تم إلغاء التحميل.';
+  @override
+  String get dict_download_import_uncancellable => 'لا يمكن مقاطعة الاستيراد';
+  @override
+  String get dict_download_busy => 'هناك تحميل قاموس قيد التشغيل بالفعل.';
+  @override
+  String get gal_hook_ingame_lookup => 'البحث في القاموس داخل اللعبة';
+  @override
+  String get gal_hook_ingame_lookup_hint =>
+      'عرض بطاقة القاموس داخل نافذة اللعبة نفسها (محرك KiriKiri، Windows فقط)';
+  @override
+  String download_subscription_start_episode({required Object episode}) =>
+      '从第 ${episode} 集开始';
+  @override
+  String get drag_drop_failed =>
+      'تعذّرت معالجة الملفات المسقطة. يرجى المحاولة مرة أخرى.';
+  @override
+  String get tag_add_failed => 'تعذّرت إضافة الوسم. يرجى المحاولة مرة أخرى.';
+  @override
+  String get tag_reorder_failed =>
+      'تعذّر حفظ ترتيب الوسوم الجديد. يرجى المحاولة مرة أخرى.';
+  @override
+  String get download_task_error_summary_source_missing =>
+      'مصدر الفيديو المُدار مفقود أو غير قابل للوصول';
+  @override
+  String get download_task_error_summary_backend_unconfirmed =>
+      'تعذّر تأكيد التورنت بالتجزئة والعنوان والفئة';
+  @override
+  String get download_task_error_summary_subtitle =>
+      'الترجمات غير متاحة أو تعذّر تثبيتها';
+  @override
+  String get download_task_error_summary_backend_unavailable =>
+      'الواجهة الخلفية للتحميل غير متاحة أو لم تعد متطابقة';
+  @override
+  String get download_task_error_summary_legacy =>
+      'الاستيراد القديم يحتاج انتباهاً يدوياً';
+  @override
+  String get download_task_error_summary_torrent_info =>
+      'هوية التورنت مفقودة أو غير قابلة للتحقق';
+  @override
+  String get download_task_error_summary_generic => 'واجهت المهمة خطأً';
+  @override
+  String get download_task_error_view_detail => 'عرض التفاصيل';
+  @override
+  String get download_task_error_detail_title => 'تفاصيل الخطأ';
+  @override
+  String get download_task_error_copied => 'تم نسخ تفاصيل الخطأ';
+  @override
+  String get download_task_lifecycle_active => 'قيد التنفيذ';
+  @override
+  String get download_task_lifecycle_needs_attention => 'يحتاج انتباهاً';
+  @override
+  String get download_task_location_missing => 'موقع ملف المهمة غير متاح.';
+  @override
+  String get download_task_location_open_failed => 'تعذّر فتح موقع الملف.';
+  @override
+  String get download_task_open_location => 'عرض في المجلد';
+  @override
+  String get download_task_lifecycle_completed => 'مكتمل';
+  @override
+  String get download_task_lifecycle_failed => 'فشل';
+  @override
+  String get download_task_lifecycle_cancelled => 'مُلغى';
+  @override
+  String get download_task_stage_enqueue => 'إدراج في القائمة';
+  @override
+  String get download_task_stage_download => 'تحميل';
+  @override
+  String get download_task_stage_organize => 'تنظيم';
+  @override
+  String get download_task_stage_subtitle => 'ترجمات';
+  @override
+  String get download_task_stage_import => 'استيراد';
+  @override
+  String get download_task_stage_scrape => 'كشط';
+  @override
+  String get video_discovery_manual_identity_hint =>
+      'أدخل العنوان والمعرّف الخارجي والسنة أعلاه لتفعيل البحث';
+  @override
+  String get collection_split_move_to => 'نقل إلى';
+  @override
+  String get collection_split_new_group => 'مجموعة جديدة';
+  @override
+  String collection_split_selected({required Object n}) => 'تم تحديد ${n}';
+  @override
+  String get sync_pair_rate_limited =>
+      'محاولات كثيرة جداً. انتظر بضع دقائق وحاول مجدداً.';
+  @override
+  String get sync_pair_tls_failed =>
+      'فشل التحقق من الشهادة. شهادة الجهاز الآخر لا تتطابق مع الشهادة المثبّتة.';
+  @override
+  String get sync_pair_timeout => 'لم يستجب الجهاز الآخر في الوقت المحدد.';
+  @override
+  String get sync_pair_expired =>
+      'انتهت مهلة الاقتران. ابدأ الاقتران مجدداً من هذا الجهاز.';
+  @override
+  String get sync_pair_upgrade_required =>
+      'الجهاز الآخر يعمل بإصدار أقدم لا يمكنه الاقتران بأمان من هذه الشبكة. حدّثه، ثم أعد الاقتران.';
+  @override
+  String get sync_pair_fingerprint_changed_title => 'تغيّرت الشهادة';
+  @override
+  String get sync_pair_fingerprint_stored_label => 'مثبّتة سابقاً';
+  @override
+  String get sync_pair_fingerprint_new_label => 'مرئية الآن';
+  @override
+  String get sync_pair_fingerprint_retrust => 'مسح وإعادة الوثوق';
+  @override
+  String get sync_pair_fingerprint_changed_body =>
+      'كان هذا العنوان مثبّتاً بشهادة مختلفة سابقاً. تابع فقط إذا كنت تعلم أن الجهاز الآخر أعاد التثبيت أو إعادة الضبط — وإلا قد يكون شخص ما يعترض الاتصال.';
+  @override
+  String get interconnect_upload_section_footer =>
+      'اختر ما يرفعه هذا الجهاز إلى الجهاز المقترن. مستقل عن مفاتيح النسخ الاحتياطي السحابي ومُعطّل افتراضياً. تنطبق هذه المفاتيح فقط عندما يكون الربط البيني مُفعّلاً: تعطيله يوقف جميع عمليات الرفع هنا.';
+  @override
+  String get remote_delete_audiobook_partial =>
+      'تم حذف الكتاب، لكن تعذّرت إزالة الكتاب الصوتي على الجهاز المقترن';
+  @override
+  String get download_detail_task_queued =>
+      'في قائمة الانتظار: بانتظار تحرّر مكان من التحميلات الأخرى. لم يتم تسليم هذه المهمة للمُحمِّل بعد، لذا لا توجد بيانات أقران أو متتبعات مباشرة.';
+  @override
+  String video_subscription_group_release_count({required Object count}) =>
+      '${count} إصدار';
+  @override
+  String get download_task_priority => 'أولوية القائمة';
+  @override
+  String get download_task_priority_high => 'عالية';
+  @override
+  String get download_task_priority_normal => 'عادية';
+  @override
+  String get download_task_priority_low => 'منخفضة';
+  @override
+  String get library_view_import => 'استيراد';
+  @override
+  String get quick_import_title => 'استيراد سريع';
+  @override
+  String get media_source_section_title => 'مصادر المكتبة';
+  @override
+  String get media_import_folder => 'مجلد الاستيراد';
+  @override
+  String get media_import_folder_as_source => 'إضافة كمصدر مكتبة';
+  @override
+  String get book_import_folder_as_source_hint =>
+      'الاستمرار في فحص هذا المجلد بحثاً عن كتب جديدة';
+  @override
+  String get media_import_folder_once => 'استيراد مرة واحدة فقط';
+  @override
+  String get library_empty_go_import => 'الذهاب إلى الاستيراد';
+  @override
+  String get game_import_drop_hint =>
+      'يمكنك أيضاً سحب ملفات .exe إلى مكتبة الألعاب';
+  @override
+  String get library_view_sources => 'المصادر';
+  @override
+  String get video_setting_secondary_av_delay => 'مزامنة الترجمة الثانوية';
+  @override
+  String get video_setting_secondary_av_delay_hint =>
+      'ضبط إزاحة الترجمة الثانوية بشكل مستقل. تتبع الإزاحة الأساسية حتى يتم ضبطها هنا.';
+  @override
+  String get video_setting_secondary_delay_follow => 'تتبع الأساسية';
+  @override
+  String video_subtitle_secondary_delay_osd({required Object ms}) =>
+      'مزامنة الترجمة الثانوية: ${ms} مللي ثانية';
+  @override
+  String get video_subtitle_secondary_delay_follow_osd =>
+      'مزامنة الترجمة الثانوية: تتبع الأساسية';
+  @override
+  String get video_setting_subtitle_anchor => 'مرساة الترجمة الرئيسية';
+  @override
+  String get video_subtitle_anchor_bottom => 'أسفل';
+  @override
+  String get video_subtitle_anchor_top => 'أعلى';
+  @override
+  String get video_setting_subtitle_drag_adjust => 'اسحب لضبط الموضع';
+  @override
+  String get video_subtitle_drag_adjust_hint =>
+      'اسحب الترجمة للأعلى أو للأسفل لتغيير موضعها';
+  @override
+  String get anki_connect_mobile_disabled_key_cleared =>
+      'يحتاج AnkiConnect إلى مفتاح API على الهاتف، لذا أدى مسحه إلى إيقاف المفتاح مجدداً. يعمل Anki الآن عبر الواجهة الخلفية المدمجة مرة أخرى.';
+  @override
+  String manga_import_batch_hint({required Object n}) =>
+      'يحتوي هذا المجلد على ${n} ملف مجلّد؛ يتم استيراد كل منها ككتاب مستقل باسم ملفه.';
+  @override
+  String manga_import_batch_done({
+    required Object imported,
+    required Object skipped,
+    required Object failed,
+  }) => 'تم استيراد ${imported}، تخطّي ${skipped}، فشل ${failed}.';
+  @override
+  String get srt_book_reimport => 'إعادة الاستيراد';
+  @override
+  String get srt_book_reimport_subtitle_hint =>
+      'استبدال الترجمة يعيد بناء نص الكتاب من الإشارات الجديدة.';
+  @override
+  String get srt_book_reimport_no_cues =>
+      'لم يتم العثور على سطور ترجمة في هذا الملف';
+  @override
+  String get srt_book_reimport_body_rebuilt =>
+      'تم إعادة بناء نص الكتاب — أعد فتح الكتاب لقراءته';
+  @override
+  String get video_setting_torrent_backend_embedded => 'المحرك المدمج';
+  @override
+  String get download_backend_unsupported_note =>
+      'المحرك المدمج غير متاح على هذه المنصة. تستخدم التحميلات qBittorrent خارجي.';
+  @override
+  String get aidoku_runtime_unavailable =>
+      'إضافات Aidoku متاحة حالياً على macOS فقط.';
+  @override
+  String get aidoku_extensions_title => 'إضافات Aidoku';
+  @override
+  String get aidoku_extension_empty => 'لا توجد إضافات Aidoku مُثبّتة.';
+  @override
+  String get aidoku_extension_remove => 'إزالة إضافة Aidoku';
+  @override
+  String get aidoku_extension_warning =>
+      'تقوم إضافات Aidoku بتشغيل كود WebAssembly من طرف ثالث مع إمكانية الوصول للشبكة. تابع فقط مع مصادر تثق بها.';
+  @override
+  String get aidoku_webview_unsupported =>
+      'يتطلب هذا المصدر واجهات Aidoku WebView غير المدعومة بعد.';
+  @override
+  String get aidoku_extension_imported => 'تم استيراد إضافة Aidoku';
+  @override
+  String get aidoku_extension_import => 'استيراد إضافة Aidoku (.aix)';
+  @override
+  String get aidoku_extension_confirm_title => 'تثبيت إضافة Aidoku؟';
+  @override
+  String get aidoku_extension_version => 'الإصدار';
+  @override
+  String get aidoku_repository_url => 'رابط المستودع';
+  @override
+  String get aidoku_repository_sources => 'مصادر المستودع';
+  @override
+  String get aidoku_repository_identity_mismatch =>
+      'الحزمة المُحمَّلة لا تتطابق مع فهرس المستودع.';
+  @override
+  String get aidoku_repository_installed => 'مُثبّت';
+  @override
+  String get aidoku_repository_search => 'بحث في مصادر المستودع';
+  @override
+  String get aidoku_repository_install => 'تثبيت';
+  @override
+  String get aidoku_repository_update => 'تحديث';
+  @override
+  String get aidoku_repository_add => 'إضافة مستودع Aidoku';
+  @override
+  String get aidoku_repository_added => 'تمت إضافة مستودع Aidoku';
+  @override
+  String get aidoku_repository_browse => 'تصفح المستودع';
+  @override
+  String get aidoku_repository_hint =>
+      'الصق رابط صفحة مستودع Aidoku الرئيسية أو رابط index.min.json. يتم ملء مستودع المجتمع افتراضياً.';
+  @override
+  String get aidoku_repository_remove => 'إزالة المستودع';
+  @override
+  String get aidoku_repository_empty => 'لم تتم إضافة مستودعات Aidoku.';
+  @override
+  String get dict_language_tooltip => 'لغة المحتوى';
+  @override
+  String get dict_language_title => 'لغة محتوى القاموس';
+  @override
+  String get dict_language_description =>
+      'تحدد الخط المستخدم لعرض نص هذا القاموس. التلقائي يستخدم اللغة التي يعلنها القاموس.';
+  @override
+  String get dict_language_auto => 'تلقائي';
+  @override
+  String get book_language_action => 'لغة المحتوى';
+  @override
+  String get book_language_description =>
+      'تحدد الخط المستخدم لعرض نص هذا الكتاب. التلقائي يستخدم اللغة المُعلنة في EPUB.';
+  @override
+  String get local_audio_reference_unavailable =>
+      'لا يمكن الإشارة إلى الملف الأصلي بدون إذن الوصول لجميع الملفات؛ تم استيراد نسخة بدلاً من ذلك.';
+  @override
+  String get video_collection_scrape => 'كشط المعلومات والغلاف';
+  @override
+  String get update_testflight_open => 'فتح TestFlight';
+  @override
+  String get update_app_store_open => 'فتح App Store';
+  @override
+  String get update_release_page_open => 'صفحة الإصدار';
+  @override
+  String update_install_gal_hook_holder({
+    required Object pid,
+    required Object path,
+  }) =>
+      'مكون التقاط Galgame قيد الاستخدام: PID ${pid} - ${path} (هذه هي اللعبة التي تلعبها، أو مضيف الالتقاط). أغلق اللعبة، ثم حدّث مرة أخرى.';
+  @override
+  String get game_hook_reason_protocol_mismatch =>
+      'مكون الالتقاط لا يتطابق مع إصدار Fushi هذا. يأتي مضمّناً داخل Fushi، لذا لا حاجة لتثبيت شيء منفصل. أولاً، أغلق اللعبة بالكامل وأعد تشغيلها: قد تكون عملية اللعبة لا تزال تحتفظ بالمكون المحقون من جلسة سابقة. إذا استمر عدم التطابق، فإن ملفات المكون على القرص أقدم من Fushi، لأن آخر تحديث لـ Fushi لم يتمكن من استبدالها أثناء تشغيل لعبة. أغلق جميع الألعاب، ثم شغّل مثبّت Fushi مرة أخرى.';
+  @override
+  String get video_mining_still_format => 'صيغة لقطة بطاقة الفيديو';
+  @override
+  String get video_mining_still_format_hint =>
+      'الترميز المستخدم عندما تكون صورة البطاقة لقطة ثابتة. JPG أصغر بكثير؛ PNG بدون فقدان لكنها أكبر بعدة مرات. الأغلفة المتحركة لا تتأثر — تتبع إعداد صيغة الحركة.';
+  @override
+  String get mining_still_format_jpg => 'JPG (أصغر)';
+  @override
+  String get mining_still_format_png => 'PNG (بدون فقدان)';
+  @override
+  String get gal_mining_still_format => 'صيغة لقطة بطاقة اللعبة';
+  @override
+  String get gal_mining_still_format_hint =>
+      'نفس صيغ بطاقات الفيديو، تُخزّن بشكل منفصل. لقطات نافذة اللعبة تأتي بصيغة PNG: الاحتفاظ بـ PNG بدون فقدان لكنه أكبر بعدة مرات، بينما JPG يطابق طريقة ضغط هذه اللقطات سابقاً.';
+  @override
+  String get manga_source_cloudflare_blocked =>
+      'هذا المصدر محمي بـ Cloudflare ولا يمكن الوصول إليه من القارئ المدمج بعد.';
+  @override
+  String get manga_global_search_title => 'بحث في جميع المصادر';
+  @override
+  String get manga_global_search_hint => 'بحث في كل مصدر مُفعّل';
+  @override
+  String get manga_global_search_prompt =>
+      'اكتب عنواناً للبحث في جميع مصادر المانغا المُفعّلة دفعة واحدة.';
+  @override
+  String get anki_connect_addon_install => 'تثبيت AnkiConnect';
+  @override
+  String get anki_connect_addon_install_hint =>
+      'يحمّل AnkiConnect من AnkiWeb ويسلّمه إلى Anki قيد التشغيل. سيطلب منك Anki التأكيد، ثم ينصح بإعادة التشغيل.';
+  @override
+  String get anki_connect_addon_handed =>
+      'تم تسليم AnkiConnect إلى Anki. أكّد الطلب في Anki، ثم أعد تشغيل Anki كما ينصح.';
+  @override
+  String get anki_connect_addon_anki_not_running =>
+      'لم يتم العثور على Anki قيد التشغيل. شغّل Anki أولاً، ثم حاول مجدداً.';
+  @override
+  String anki_connect_addon_download_failed({required Object error}) =>
+      'تعذّر تحميل AnkiConnect من AnkiWeb: ${error}';
+  @override
+  String get anki_connect_addon_invalid =>
+      'أعاد AnkiWeb شيئاً ليس حزمة إضافة صالحة.';
+  @override
+  String anki_connect_addon_launch_failed({required Object error}) =>
+      'تعذّر تسليم الإضافة إلى Anki: ${error}';
+  @override
+  String get settings_content_language_title => 'لغة المحتوى الافتراضية';
+  @override
+  String get settings_content_language_unset => 'غير مُعيّنة';
+  @override
+  String get settings_content_language_description =>
+      'لغة احتياطية للمحتوى الذي لا يعلن عن لغته. إعدادات كل كتاب وفيديو ولعبة وقاموس تتجاوز هذا.';
+  @override
+  String get manga_ocr_lens_language_label => 'لغة التعرّف';
+  @override
+  String get sync_err_peer_unreachable =>
+      'لا يمكن الوصول إلى الجهاز المقترن - قد يكون غير متصل أو لا يعمل عليه Fushi.';
+  @override
+  String get remote_book_list_failed =>
+      'تعذّر جلب المكتبة البعيدة من الجهاز المقترن.';
+  @override
+  String get video_torznab_settings_hint =>
+      'أعدّ نقطة نهاية Jackett أو Prowlarr أو أي نقطة نهاية Torznab متوافقة. لا يتم تصدير الأسرار في النسخ الاحتياطية؛ قد تتم مزامنتها إلى الأجهزة المقترنة عبر الربط البيني (يمكن إيقافها في إعدادات الربط البيني).';
+  @override
+  String get video_opensubtitles_settings_hint =>
+      'لا يتم تصدير بيانات اعتماد API في النسخ الاحتياطية؛ قد تتم مزامنتها إلى الأجهزة المقترنة عبر الربط البيني (يمكن إيقافها في إعدادات الربط البيني).';
+  @override
+  String get sync_interconnect_service_config_toggle =>
+      'مزامنة إعدادات الخدمة من المضيف';
+  @override
+  String get sync_interconnect_service_config_toggle_desc =>
+      'استقبال إعدادات الخدمات الخارجية ومفاتيح API (Jimaku، TMDB، Torznab، OpenSubtitles، التتبع) من المضيف المقترن عبر قناة الربط البيني المشفّرة. يتطلب TLS.';
+  @override
+  String get video_setting_subtitle_backfill =>
+      'جلب الترجمات تلقائياً بعد الكشط';
+  @override
+  String get video_setting_subtitle_backfill_hint =>
+      'عند اكتمال الكشط، تحصل مقاطع الفيديو التي لا تزال بدون ترجمة على واحدة من مصادرك المُعدّة عبر الإنترنت. لا يستبدل ترجمة موجودة أبداً.';
+  @override
+  String get video_setting_subtitle_sources_section =>
+      'مصادر الترجمة عبر الإنترنت';
+  @override
+  String get video_subtitle_no_source_configured =>
+      'لم يتم العثور على ترجمة · أعدّ مصدر ترجمة عبر الإنترنت';
+  @override
+  String get anime_download_subs_retrying =>
+      'الترجمات: غير متاحة بعد — ستتم إعادة المحاولة تلقائياً';
+  @override
+  String get video_jimaku_language_follow_video => 'تتبع لغة الفيديو';
+  @override
+  String get video_setting_jimaku_default_language_hint =>
+      'يتبع لغة الفيديو افتراضياً (مسار الصوت / البيانات الوصفية المكشوطة). اختر لغة لتفضيلها دائماً بدلاً من ذلك.';
+  @override
+  String get onboarding_title => 'دليل البدء';
+  @override
+  String get onboarding_welcome_headline => 'مرحباً!';
+  @override
+  String get onboarding_feature_anki => 'بطاقات Anki التعليمية';
+  @override
+  String get onboarding_feature_anki_hint =>
+      'اربط AnkiConnect أو AnkiDroid لإنشاء البطاقات التعليمية';
+  @override
+  String get onboarding_feature_backup => 'نسخ احتياطي ومزامنة';
+  @override
+  String get onboarding_feature_backup_hint =>
+      'انسخ بياناتك احتياطياً إلى Google Drive وWebDAV وغيرها';
+  @override
+  String get onboarding_feature_interconnect => 'ربط بيني للأجهزة';
+  @override
+  String get onboarding_feature_interconnect_hint =>
+      'اقترن بالأجهزة على شبكتك المحلية لمشاركة المكتبات والتقدم';
+  @override
+  String get onboarding_step_dictionary_action => 'فتح مدير القواميس';
+  @override
+  String get onboarding_step_anki_title => 'إعداد Anki';
+  @override
+  String get onboarding_step_anki_action => 'فتح إعدادات إنشاء البطاقات';
+  @override
+  String get onboarding_step_backup_title => 'إعداد النسخ الاحتياطي';
+  @override
+  String get onboarding_step_backup_body =>
+      'اختر واجهة نسخ احتياطي وسجّل الدخول، أو صدّر ملف نسخة احتياطية محلية.';
+  @override
+  String get onboarding_step_backup_action => 'فتح إعدادات النسخ الاحتياطي';
+  @override
+  String get onboarding_step_interconnect_title => 'إعداد الربط البيني';
+  @override
+  String get onboarding_step_interconnect_body =>
+      'فعّل الربط البيني واقترن بأجهزة أخرى على شبكتك المحلية لمشاركة المكتبات والتقدم وعمليات البحث.';
+  @override
+  String get onboarding_step_interconnect_action => 'فتح إعدادات الربط البيني';
+  @override
+  String get onboarding_finish_title => 'كل شيء جاهز';
+  @override
+  String get onboarding_finish_body =>
+      'يمكنك العودة إلى هذا الدليل في أي وقت من الإعدادات → النظام.';
+  @override
+  String get onboarding_action_next => 'التالي';
+  @override
+  String get onboarding_action_finish => 'إنهاء';
+  @override
+  String get onboarding_action_skip => 'تخطّي الآن';
+  @override
+  String get onboarding_reopen => 'دليل البدء';
+  @override
+  String get onboarding_welcome_body =>
+      'اضبط لغة الواجهة والسمة أولاً — الخطوات التالية ستوجّهك لبقية الإعدادات.';
+  @override
+  String get onboarding_features_title => 'اختر ما تستخدمه';
+  @override
+  String get onboarding_features_modules_label =>
+      'تبويبات المكتبة (غير المحددة تُخفى من شريط التنقل؛ يمكن التغيير في أي وقت من الإعدادات)';
+  @override
+  String get onboarding_features_setup_label => 'ما يجب إعداده لاحقاً';
+  @override
+  String get onboarding_feature_manga => 'مكتبة المانغا';
+  @override
+  String get onboarding_feature_manga_hint =>
+      'اقرأ المانغا مع البحث بالتعرف البصري';
+  @override
+  String get onboarding_feature_video => 'مكتبة الفيديو';
+  @override
+  String get onboarding_feature_video_hint =>
+      'شاهد الفيديو مع البحث في الترجمات والتعدين';
+  @override
+  String get onboarding_feature_games => 'مكتبة Galgame';
+  @override
+  String get onboarding_feature_games_hint =>
+      'شغّل ألعاب Galgame مع البحث بربط النصوص (Windows فقط)';
+  @override
+  String get onboarding_feature_pack => 'الحزمة الموصى بها (قواميس + صوت)';
+  @override
+  String get onboarding_feature_pack_hint =>
+      'تحميل واحد يُعدّ القواميس اليابانية بالإضافة إلى صوت النطق يا/إن';
+  @override
+  String get onboarding_step_pack_title => 'تثبيت الحزمة الموصى بها';
+  @override
+  String get onboarding_step_pack_body =>
+      'تجمع الحزمة الموصى بها قواميس الكلمات اليابانية ونبرة الصوت والتردد بالإضافة إلى قواعد بيانات صوت النطق الياباني/الإنجليزي. حمّلها واستوردها هنا؛ الاستيراد يستبدل البيانات المحلية، لذا شغّلها على تثبيت جديد. تتعلم لغة أخرى؟ استخدم مدير القواميس لاستيراد قواميسك الخاصة بدلاً من ذلك.';
+  @override
+  String get onboarding_step_pack_download_action => 'تحميل واستيراد';
+  @override
+  String get onboarding_step_pack_import_existing_action =>
+      'استيراد حزمة محمّلة';
+  @override
+  String get onboarding_step_pack_pick_action => 'اختيار ملف حزمة محلي';
+  @override
+  String get onboarding_pack_downloading =>
+      'جارٍ التحميل… يمكن الإلغاء في أي وقت، يُستأنف في المرة القادمة';
+  @override
+  String onboarding_pack_download_failed({required Object message}) =>
+      'فشل التحميل: ${message}';
+  @override
+  String get onboarding_step_extension_title => 'إضافة المتصفح';
+  @override
+  String get onboarding_step_extension_body =>
+      'ثبّت إضافة المتصفح المرافقة للبحث عن الكلمات في أي صفحة ويب.';
+  @override
+  String get onboarding_step_extension_action => 'فتح دليل الإضافة';
+  @override
+  String get onboarding_step_fonts_title => 'خطوط القراءة';
+  @override
+  String get onboarding_step_fonts_body =>
+      'استورد خطوطاً مخصصة واختر أيها يُستخدم للواجهة ونص الكتاب والقاموس.';
+  @override
+  String get settings_section_modules => 'وحدات الميزات';
+  @override
+  String get module_toggle_hint =>
+      'إظهار تبويب المكتبة هذا في شريط التنقل؛ أوقفه لإخفائه';
+  @override
+  String get video_setting_youtube_quality => 'جودة YouTube';
+  @override
+  String get video_setting_youtube_quality_hint =>
+      'بدء البث بأعلى مستوى حتى هذا الهدف؛ التلقائي يفضّل التشغيل السلس (ترميز متوافق مع العتاد، حتى 1080p)';
+  @override
+  String get library_view_discover => 'اكتشاف';
+  @override
+  String get manga_discovery_section_trending => 'رائج';
+  @override
+  String get manga_discovery_section_popular => 'شائع';
+  @override
+  String get manga_discovery_section_top_rated => 'الأعلى تقييماً';
+  @override
+  String get manga_discovery_section_latest_finished => 'مكتمل مؤخراً';
+  @override
+  String get manga_discovery_load_failed => 'تعذّر تحميل موجز الاكتشاف.';
+  @override
+  String get manga_discovery_match_section => 'اقرأ من مصدر';
+  @override
+  String get manga_discovery_match_running =>
+      'جارٍ المطابقة في مصادرك المُفعّلة...';
+  @override
+  String get manga_discovery_match_none =>
+      'لم يتم العثور على تطابق في المصادر المُفعّلة.';
+  @override
+  String get manga_discovery_status_releasing => 'مستمر';
+  @override
+  String get manga_discovery_status_finished => 'مكتمل';
+  @override
+  String get manga_discovery_status_hiatus => 'متوقف مؤقتاً';
+  @override
+  String get manga_discovery_status_cancelled => 'مُلغى';
+  @override
+  String get manga_discovery_status_not_yet_released => 'لم يصدر بعد';
+  @override
+  String manga_discovery_source_popular({required Object source}) =>
+      'شائع على ${source}';
+  @override
+  String get mihon_extension_error => 'خطأ في الإضافة';
+  @override
+  String get discovery_all_sources => 'جميع المصادر';
+  @override
+  String get discovery_search_hint => 'بحث في الموارد عبر الإنترنت';
+  @override
+  String get discovery_enter_query_hint => 'أدخل كلمة مفتاحية للبحث';
+  @override
+  String get discovery_empty => 'لا توجد نتائج';
+  @override
+  String get discovery_partial_failure => 'بعض المصادر غير متاحة';
+  @override
+  String get discovery_load_more => 'تحميل المزيد';
+  @override
+  String get discovery_download_queued => 'تمت الإضافة إلى التحميلات';
+  @override
+  String get discovery_torrent_pushed => 'تمت إضافة مهمة تورنت';
+  @override
+  String get discovery_torrent_failed => 'فشل إضافة مهمة تورنت';
+  @override
+  String get discovery_kind_novel => 'روايات';
+  @override
+  String get discovery_kind_audiobook => 'كتب صوتية';
+  @override
+  String get discovery_source_pick_hint =>
+      'اختر مصدراً للتصفح، أو اكتب كلمة مفتاحية للبحث في كل مصدر';
+  @override
+  String get discovery_source_query_required =>
+      'هذا المصدر يدعم البحث بالكلمات المفتاحية فقط';
+  @override
+  String get manga_discovery_sources_browse => 'تصفح مصدر';
+  @override
+  String get discovery_kind_manga => 'مانغا';
+  @override
+  String get game_capture_workbench_tab => 'مساحة عمل الالتقاط';
+  @override
+  String get video_builtin_sources_title => 'المصادر المدمجة';
+  @override
+  String get video_resource_no_provider_title => 'لم يتم تكوين مُفهرس موارد';
+  @override
+  String get video_subtitle_no_provider_title => 'لم يتم تكوين مزوّد ترجمات';
+  @override
+  String get video_subtitle_no_provider_hint =>
+      'أدخل مفتاح API لـ Jimaku أو فعّل OpenSubtitles من الإعدادات، التحميلات، مزوّدو الموارد والترجمات الخارجية.';
+  @override
+  String get anime_download_require_subs => 'الترجمات مطلوبة';
+  @override
+  String get video_jimaku_scope_hint =>
+      'ترجمات يابانية للأنمي والمسلسلات اليابانية الحية. يتطلب مفتاح API مجاني.';
+  @override
+  String get video_builtin_apibay_hint =>
+      'أفلام ومسلسلات تلفزيونية. فهرس عام، لا يحتاج حساب.';
+  @override
+  String get video_builtin_knaben_hint =>
+      'أفلام ومسلسلات تلفزيونية. يجمع عدة مُفهرسات عامة.';
+  @override
+  String get video_jimaku_enabled_hint =>
+      'الإيقاف يعني تجاوز Jimaku حتى لو كان مفتاح API محفوظاً.';
+  @override
+  String get discovery_sources_settings_title => 'مصادر الاستكشاف';
+  @override
+  String get discovery_sources_settings_hint =>
+      'المصادر المدمجة التي تشارك في بحث "جميع المصادر" في صفحة الاستكشاف. اختيار مصدر واحد من القائمة المنسدلة يعمل دائماً حتى لو كان مُوقفاً هنا.';
+  @override
+  String get video_builtin_sources_hint =>
+      'مضمّنة مع التطبيق: لا حساب ولا مفتاح API. أوقف أحدها لاستبعاده من بحث الموارد.';
+  @override
+  String get video_builtin_nyaa_hint =>
+      'أنمي فقط. الأفلام والمسلسلات يغطيها المُفهرسان العامان أدناه.';
+  @override
+  String get video_resource_no_provider_hint =>
+      'لم يكن لهذا البحث مزوّد للاستعلام. أعد تفعيل مصدر مدمج أو أضف مُفهرس Torznab من الإعدادات، التحميلات، مزوّدو الموارد والترجمات الخارجية.';
+  @override
+  String discovery_source_kinds_label({required Object kinds}) =>
+      'يغطي: ${kinds}';
+  @override
+  String get video_source_scrape_rescrape_source => 'إعادة كشط هذا المصدر';
+  @override
+  String get video_source_scrape_run_detail_title => 'نتيجة الكشط';
+  @override
+  String get video_source_scrape_run_no_issues =>
+      'لم تُسجّل أي تحذيرات أو أخطاء.';
+  @override
+  String get video_source_scrape_manual_search_title => 'تحديد العمل يدوياً';
+  @override
+  String get video_source_scrape_manual_search_hint =>
+      'ابحث في مزوّد البيانات الوصفية بالعنوان، ثم اختر العمل الصحيح.';
+  @override
+  String get video_source_scrape_manual_search_action => 'بحث';
+  @override
+  String get video_source_scrape_manual_search_empty => 'لا نتائج';
+  @override
+  String get profile_media_manga => 'مانغا';
+  @override
+  String get profile_media_game => 'لعبة';
+  @override
+  String get profile_media_browser => 'المتصفح';
+  @override
+  String get mihon_store_remove => 'إزالة متجر الإضافات';
+  @override
+  String get video_import_folder_as_source_hint =>
+      'الاستمرار بفحص هذا المجلد بحثاً عن فيديوهات جديدة';
+  @override
+  String get manga_import_folder_as_source_hint =>
+      'الاستمرار بفحص هذا المجلد بحثاً عن مانغا جديدة';
+  @override
+  String get download_no_managed_video_source =>
+      'لا يوجد مصدر فيديو مُدار بعد. التحميلات تحتاج مجلد فيديو محلي للحفظ فيه.';
+  @override
+  String get download_add_video_source => 'إضافة مصدر فيديو';
+  @override
+  String get video_subtitle_prev_cue_align => 'محاذاة السطر السابق إلى الآن';
+  @override
+  String get video_subtitle_next_cue_align => 'محاذاة السطر التالي إلى الآن';
+  @override
+  String video_control_custom_action({required Object index}) =>
+      'اختصار ${index}';
+  @override
+  String get video_control_custom_action_none => 'غير مُعيّن';
+  @override
+  String get settings_destination_storage => 'التخزين';
+  @override
+  String get settings_destination_storage_summary =>
+      'موقع البيانات واستخدام القرص';
+  @override
+  String get storage_overview_section => 'استخدام القرص';
+  @override
+  String get storage_overview_total => 'الإجمالي';
+  @override
+  String get storage_overview_refresh => 'إعادة فحص';
+  @override
+  String get storage_overview_scanning => 'جارٍ الفحص…';
+  @override
+  String get storage_category_books => 'كتب وكتب صوتية';
+  @override
+  String get storage_category_dictionaries => 'قواميس';
+  @override
+  String get storage_category_video_downloads => 'تحميلات الفيديو';
+  @override
+  String get storage_category_covers => 'أغلفة وصور مصغّرة';
+  @override
+  String get storage_category_subtitles => 'ترجمات';
+  @override
+  String get storage_category_shaders => 'شيدرات الفيديو';
+  @override
+  String get storage_category_custom_fonts => 'خطوط مخصصة';
+  @override
+  String get storage_category_web => 'أرشيف الويب وبيانات المتصفح';
+  @override
+  String get storage_category_exports => 'الصادرات';
+  @override
+  String get storage_category_database => 'قاعدة البيانات والبيانات الداخلية';
+  @override
+  String get storage_category_ocr_models => 'نماذج OCR للمانغا';
+  @override
+  String storage_entry_more_rest({required Object n, required Object size}) =>
+      '${n} عنصر إضافي، ${size} إجمالاً';
+  @override
+  String storage_entry_delete_confirm_title({required Object name}) =>
+      'حذف ${name}؟';
+  @override
+  String get storage_entry_delete_book_confirm_body =>
+      'سيؤدي هذا إلى إزالة الكتاب وتقدم القراءة ونسخ الصوت المقترنة من هذا الجهاز.';
+  @override
+  String get storage_entry_delete_dictionary_confirm_body =>
+      'سيؤدي هذا إلى إزالة القاموس وبياناته المستوردة.';
+  @override
+  String get storage_entry_delete_done => 'تم الحذف';
+  @override
+  String storage_entry_delete_failed({required Object reason}) =>
+      'فشل الحذف: ${reason}';
+  @override
+  String get storage_modules_anime4k_title => 'شيدرات Anime4K';
+  @override
+  String get storage_modules_anime4k_hint =>
+      'يمكن تحميلها مرة أخرى في أي وقت من إعدادات الفيديو';
+  @override
+  String storage_modules_anime4k_delete_done({required Object n}) =>
+      'تم حذف ${n} ملف شيدر';
+  @override
+  String get storage_bundled_section => 'المكونات المضمّنة';
+  @override
+  String get storage_bundled_hint =>
+      'مُرفقة مع المُثبّت؛ الملفات المحذوفة تعود مع التحديث التالي، مدرجة للعلم فقط.';
+  @override
+  String get storage_dictionary_delete_incomplete =>
+      'القاموس لا يزال موجوداً بعد الحذف، راجع سجل الأخطاء';
+  @override
+  String get module_extension_label => 'إضافة المتصفح';
+  @override
+  String get onboarding_feature_books => 'مكتبة الروايات';
+  @override
+  String get onboarding_feature_books_hint =>
+      'اقرأ روايات EPUB مع البحث في القاموس ومزامنة الكتب الصوتية';
+  @override
+  String get onboarding_feature_extension_hint =>
+      'ابحث عن الكلمات في أي صفحة ويب (سطح المكتب فقط)';
+  @override
+  String get video_setting_tap_toggles_playback =>
+      'انقر على الفيديو للتشغيل/الإيقاف';
+  @override
+  String get video_setting_tap_toggles_playback_hint =>
+      'أوقفه حتى يؤدي النقر على الفيديو فقط إلى إظهار أدوات التحكم';
+  @override
+  String get manga_ocr_engine_auto_desc =>
+      'يفضّل محرك غير متصل أعددته مسبقاً؛ لا يرفع إلى Lens من تلقاء نفسه.';
+  @override
+  String get manga_ocr_engine_local_onnx_desc =>
+      'غير متصل بالكامل، أفضل جودة. يحتاج تحميل نموذج لمرة واحدة وبطيء على الأجهزة القديمة.';
+  @override
+  String get manga_ocr_engine_google_lens_desc =>
+      'يحتاج اتصال بالإنترنت ويرفع صور الصفحات إلى Google. سريع بدون تحميل، لكن الجودة أقل من النموذج المحلي.';
+  @override
+  String get manga_ocr_engine_external_desc =>
+      'يستدعي أمر Mokuro الذي ثبّته بنفسك. سطح المكتب فقط.';
+  @override
+  String get manga_ocr_engine_paired_host_desc =>
+      'يُسند العمل إلى جهاز مقترن على شبكتك. لا يتم تحميل شيء هنا.';
+  @override
+  String manga_ocr_model_disk_usage({required Object size}) =>
+      'يستخدم ${size} على القرص';
+  @override
+  String manga_ocr_model_download_size({required Object size}) =>
+      'يحتاج ${size}';
+  @override
+  String manga_ocr_delete_done_freed({required Object size}) =>
+      'تم حذف النماذج، تم تحرير ${size}';
+  @override
+  String get manga_ocr_model_unused_by_engine =>
+      'المحرك الحالي لا يستخدم ملفات النموذج المحلية هذه.';
+  @override
+  String manga_ocr_download_total_progress({
+    required Object done,
+    required Object total,
+  }) => '${done} من ${total}';
+  @override
+  String get media_source_network_subtitle_video =>
+      'مكتبة WebDAV عن بُعد (بث مباشر)';
+  @override
+  String get jellyfin_settings_title => 'خادم الوسائط (Jellyfin / Emby)';
+  @override
+  String get jellyfin_server_url => 'عنوان الخادم';
+  @override
+  String get jellyfin_sign_in => 'تسجيل الدخول';
+  @override
+  String get jellyfin_sign_out => 'تسجيل الخروج';
+  @override
+  String get jellyfin_sign_in_failed => 'فشل تسجيل الدخول';
+  @override
+  String get jellyfin_settings_hint =>
+      'تظهر الفيديوهات على الخادم في مكتبة الفيديو ويتم بثها مباشرة.';
+  @override
+  String get video_setting_mpv_lua_scripts => 'تحميل سكربتات Lua';
+  @override
+  String get video_setting_mpv_lua_scripts_hint =>
+      'تحميل جميع ملفات .lua في مجلد mpv_scripts إلى المشغّل. الإيقاف يسري عند فتح فيديو جديد.';
+  @override
+  String get video_setting_mpv_lua_scripts_import => 'استيراد سكربتات Lua';
+  @override
+  String get video_setting_mpv_lua_scripts_imported => 'تم استيراد السكربتات';
+  @override
+  String get video_setting_mpv_lua_scripts_dir_copy =>
+      'نسخ مسار مجلد السكربتات';
+  @override
+  String get video_setting_mpv_lua_scripts_dir_copied => 'تم نسخ مسار المجلد';
+  @override
+  String get interconnect_share_statistics => 'مشاركة الإحصائيات';
+  @override
+  String get interconnect_share_statistics_hint =>
+      'وقت القراءة والمشاهدة، عدد الأحرف، عدّادات البحث والتنقيب';
+  @override
+  String get interconnect_share_favorites => 'مشاركة المفضلة';
+  @override
+  String get interconnect_share_favorites_hint =>
+      'الكلمات والجمل المفضلة، بما في ذلك إلغاء التفضيل';
+  @override
+  String get interconnect_share_section => 'المشاركة مع الأجهزة المقترنة';
+  @override
+  String get interconnect_share_section_footer =>
+      'يتم دمجها في الاتجاهين مع الجهاز المقترن وهي مفعّلة افتراضياً. إيقاف أحدها يوقف الإرسال والاستقبال معاً.';
+  @override
+  String get game_hook_mining_no_session_lines =>
+      'لا توجد أسطر ملتقطة بعد، لذا لا يوجد شيء لإرفاق هذه البطاقة به. اختر مسار نص مختلف في ورشة العمل.';
+  @override
+  String get shortcut_action_manga_pan_up => 'تمرير لأعلى';
+  @override
+  String get shortcut_action_manga_pan_down => 'تمرير لأسفل';
+  @override
+  String get shortcut_action_manga_pan_left => 'تمرير لليسار';
+  @override
+  String get shortcut_action_manga_pan_right => 'تمرير لليمين';
+  @override
+  String get drag_drop_folder_source_added =>
+      'تمت إضافة المجلد كمصدر مكتبة وتم فحصه.';
+  @override
+  String get drag_drop_folder_source_exists =>
+      'هذا المجلد موجود بالفعل كمصدر مكتبة.';
+  @override
+  String get sync_pair_invalid_url => 'صيغة عنوان غير صالحة';
+  @override
+  String get sync_pair_peer_requires_https =>
+      'هذا الجهاز يقبل HTTPS فقط. استخدم عنوان https://.';
+  @override
+  String get sync_pair_peer_not_https =>
+      'الجهاز المقترن لا يستخدم HTTPS على هذا المنفذ. استخدم عنوان http://.';
+  @override
+  String get sync_pair_not_fushi_discovered =>
+      'لم يُعثر على جهاز Fushi في هذا العنوان.';
+  @override
+  String get shortcut_action_popup_play_audio => 'تشغيل صوت الكلمة';
+  @override
+  String get sync_progress_asset_transfer => 'جارٍ تحضير النقل';
+  @override
+  String get sync_asset_dictionary_upload => 'رفع القواميس';
+  @override
+  String get sync_asset_dictionary_download => 'تحميل القواميس';
+  @override
+  String get sync_asset_local_audio_upload => 'رفع قواعد بيانات الصوت المحلية';
+  @override
+  String get sync_asset_local_audio_download =>
+      'تحميل قواعد بيانات الصوت المحلية';
+  @override
+  String get sync_asset_upload_hint =>
+      'يرسل ما يملكه هذا الجهاز ولا يملكه الجهاز البعيد. قد تكون الحزم كبيرة.';
+  @override
+  String get sync_asset_upload_action => 'رفع';
+  @override
+  String get sync_asset_download_action => 'تحميل';
+  @override
+  String get sync_asset_download_hint =>
+      'يجلب ما يملكه الجهاز البعيد ولا يملكه هذا الجهاز - بما في ذلك العناصر التي حذفتها محلياً.';
+  @override
+  String get sync_asset_legacy_notice_title =>
+      'مزامنة القواميس والصوت أصبحت يدوية';
+  @override
+  String get sync_asset_legacy_notice_body =>
+      'كان هذا الجهاز يستخدم المزامنة التلقائية للقواميس وقواعد بيانات الصوت المحلية. تمت إزالة هذا الخيار - استخدم إجراءات الرفع / التحميل أدناه عند الحاجة. لم يُحذف شيء، لكن القواميس الجديدة لم تعد تُنسخ احتياطياً تلقائياً.';
+  @override
+  String get sync_asset_legacy_notice_dismiss => 'فهمت';
+  @override
+  String get download_task_add => 'إضافة مهمة';
+  @override
+  String get download_task_add_pick_torrent => 'اختيار ملف torrent';
+  @override
+  String get download_task_add_title_label => 'العنوان';
+  @override
+  String get download_task_add_content_kind => 'نوع المحتوى';
+  @override
+  String get download_task_add_invalid =>
+      'رابط magnet أو ملف torrent غير معروف';
+  @override
+  String get download_task_add_submitted => 'تمت إضافة المهمة';
+  @override
+  String get download_task_search_hint => 'بحث في المهام';
+  @override
+  String get download_task_sort_created => 'تاريخ الإضافة';
+  @override
+  String get download_task_sort_progress => 'التقدم';
+  @override
+  String get download_task_sort_status => 'الحالة';
+  @override
+  String get download_task_no_match => 'لا توجد مهام مطابقة';
+  @override
+  String subtitle_version_episode_count({required Object n}) => '${n} حلقة';
+  @override
+  String subtitle_version_unnumbered_count({required Object n}) =>
+      '${n} غير مرقّمة';
+  @override
+  String get subtitle_version_ai_translated => 'ترجمة بالذكاء الاصطناعي';
+  @override
+  String get subtitle_version_content_language => 'المحتوى';
+  @override
+  String get subtitle_version_show_files => 'عرض الملفات';
+  @override
+  String get subtitle_version_view_files => 'قائمة الملفات';
+  @override
+  String get resource_version_batch => 'دفعة';
+  @override
+  String get resource_version_view_flat => 'جميع الإصدارات';
+  @override
+  String get subscription_mode_one_shot => 'مرة واحدة';
+  @override
+  String get subscription_mode_ongoing => 'مستمر';
+  @override
+  String get subscription_legacy_badge => 'قديم';
+  @override
+  String get subscription_legacy_hint =>
+      'مستورد من النظام القديم؛ الفحص التلقائي لا ينطبق.';
+  @override
+  String subscription_next_check({required Object time}) =>
+      'الفحص التالي: ${time}';
+  @override
+  String subscription_last_matched({required Object time}) =>
+      'آخر تطابق: ${time}';
+  @override
+  String get subscription_item_status_discovered => 'قيد الانتظار';
+  @override
+  String get subscription_item_status_queued => 'في قائمة الانتظار';
+  @override
+  String get subscription_item_status_processed => 'تم الاستيراد';
+  @override
+  String get subscription_item_status_skipped => 'تم التخطي';
+  @override
+  String get subscription_item_status_failed => 'فشل';
+  @override
+  String get subscription_items_empty => 'لا توجد إصدارات متتبّعة بعد';
+  @override
+  String get subscription_edit_title => 'تعديل الاشتراك';
+  @override
+  String get subscription_edit_rule_hint =>
+      'لا يمكن تغيير قواعد الهوية والإصدار هنا. أعد الاشتراك لتبديل الإصدارات - يُحفظ السجل.';
+  @override
+  String get subscription_search_hint => 'بحث في الاشتراكات';
+  @override
+  String get subscription_sort_last_checked => 'آخر فحص';
+  @override
+  String get subscription_sort_last_matched => 'آخر تطابق';
+  @override
+  String get subscription_show_items => 'سجل الحلقات';
+  @override
+  String get subscription_sort_created => 'تاريخ الإضافة';
+  @override
+  String get subscription_no_match => 'لا توجد اشتراكات مطابقة';
+  @override
+  String get download_subscription_start_episode_invalid =>
+      'أدخل عدداً صحيحاً (0 أو أكبر)، أو اتركه فارغاً';
+  @override
+  String get download_subscription_source_unavailable =>
+      'الهدف الحالي (غير متاح)';
+  @override
+  String resource_version_episode_count({required Object n}) => '${n} حلقة';
+  @override
+  String get resource_version_show_files => 'عرض الملفات';
+  @override
+  String get manga_online_detail_load_failed => 'تعذّر تحميل هذه المانغا.';
+  @override
+  String get manga_online_error_view_detail => 'عرض التفاصيل';
+  @override
+  String get discovery_sources_unavailable => 'جميع المصادر غير متاحة';
+  @override
+  String get font_target_game_lookup => 'خط نافذة البحث في اللعبة';
+  @override
+  String get gal_hook_text_font => 'خط نافذة البحث في اللعبة';
+  @override
+  String get gal_hook_text_font_hint =>
+      'اختر خطوطاً من مكتبة الخطوط المُدارة. يُستخدم أول خط مفعّل.';
+  @override
+  String get gal_hook_text_letter_spacing => 'تباعد الأحرف';
+  @override
+  String get gal_hook_text_letter_spacing_hint =>
+      'اضبط التباعد بين الأحرف دون التأثير على اختبار نقر البحث.';
+  @override
+  String get gal_hook_text_line_height => 'ارتفاع السطر';
+  @override
+  String get gal_hook_text_line_height_hint =>
+      'اضبط التباعد العمودي للأسطر الملتفة.';
+  @override
+  String get gal_hook_text_bold => 'نص عريض';
+  @override
+  String get gal_hook_text_bold_hint =>
+      'استخدم نصاً شبه عريض لقراءة أفضل فوق رسومات اللعبة.';
+  @override
+  String get gal_hook_text_alignment => 'محاذاة النص';
+  @override
+  String get gal_hook_text_alignment_center => 'وسط';
+  @override
+  String get gal_hook_text_alignment_left => 'يسار';
+  @override
+  String get gal_hook_text_color => 'لون النص';
+  @override
+  String get gal_hook_overlay_legibility_section => 'النافذة وسهولة القراءة';
+  @override
+  String get gal_hook_text_background_color => 'لون خلفية النافذة';
+  @override
+  String get gal_hook_text_background_opacity => 'شفافية خلفية النافذة';
+  @override
+  String get gal_hook_text_background_opacity_hint =>
+      'اضبطها على 0% للحصول على نافذة شفافة بأسلوب كلمات الأغاني.';
+  @override
+  String get gal_hook_text_outline_color => 'لون الحدود';
+  @override
+  String get gal_hook_text_outline_width => 'عرض الحدود';
+  @override
+  String get gal_hook_text_outline_width_hint =>
+      'اضبطه على 0 لإلغاء الحدود؛ يبقى الظل الخفيف.';
+  @override
+  String get gal_hook_text_padding => 'حشوة النص الأفقية';
+  @override
+  String get gal_hook_text_padding_hint =>
+      'أبعد النص عن حواف النافذة ومقبض تغيير الحجم.';
+  @override
+  String get gal_hook_text_corner_radius => 'نصف قطر زوايا النافذة';
+  @override
+  String get gal_hook_text_corner_radius_hint => 'اضبط نصف قطر زوايا الخلفية.';
+  @override
+  String get storage_shaders_delete_anime4k => 'حذف شيدرات Anime4K';
+  @override
+  String get video_jimaku_series_lookup_degraded =>
+      'تعذّر التأكد من المسلسل على AniList هذه المرة، لذا هذه النتائج من بحث بالعنوان العادي وقد تتضمن مواسم أخرى من نفس المسلسل.';
+  @override
+  String get dict_style_tab_visual => 'مرئي';
+  @override
+  String get dict_style_tab_code => 'CSS';
+  @override
+  String get dict_style_scope_all => 'جميع القواميس';
+  @override
+  String get dict_style_part_entry_card => 'بطاقة المدخل';
+  @override
+  String get dict_style_part_expression => 'الكلمة الرئيسية';
+  @override
+  String get dict_style_part_ruby => 'فوريغانا';
+  @override
+  String get dict_style_part_deinflection_tag => 'سلسلة التصريف العكسي';
+  @override
+  String get dict_style_part_frequency => 'التكرار';
+  @override
+  String get dict_style_part_pitch => 'نبرة النطق';
+  @override
+  String get dict_style_part_dictionary_label => 'اسم القاموس';
+  @override
+  String get dict_style_part_glossary_content => 'التعريف';
+  @override
+  String get dict_style_part_glossary_tag => 'وسوم التعريف';
+  @override
+  String get dict_style_prop_text_color => 'لون النص';
+  @override
+  String get dict_style_prop_background => 'التمييز';
+  @override
+  String get dict_style_prop_bold => 'عريض';
+  @override
+  String get dict_style_prop_italic => 'مائل';
+  @override
+  String get dict_style_prop_underline => 'تسطير';
+  @override
+  String get dict_style_prop_font_scale => 'حجم الخط';
+  @override
+  String get dict_style_prop_corner_radius => 'نصف قطر الزوايا';
+  @override
+  String get dict_style_part_reset => 'إعادة تعيين الجزء';
+  @override
+  String get dict_style_reset_all => 'إعادة تعيين الكل';
+  @override
+  String get dict_style_global_only => 'قابل للتعديل لجميع القواميس فقط';
+  @override
+  String get dict_style_preview_title => 'معاينة';
+  @override
+  String get dict_style_pick_hint => 'انقر على جزء في المعاينة للانتقال إليه';
+  @override
+  String get dict_style_prop_default => 'افتراضي';
+  @override
+  String get dict_style_part_expression_tag => 'وسوم التعبير';
+  @override
+  String get dict_style_prop_on => 'مفعّل';
+  @override
+  String get dict_style_prop_off => 'مُوقف';
+  @override
+  String get dict_style_title => 'تنسيق القاموس';
+  @override
+  String get video_source_scrape_anidb_client => 'اسم عميل AniDB';
+  @override
+  String get video_source_scrape_anidb_client_hint =>
+      'اسم عميل AniDB HTTP API المسجّل؛ اتركه فارغاً لاستخدام كتالوج العناوين المخزّن فقط';
+  @override
+  String get video_source_scrape_anidb_client_version => 'إصدار عميل AniDB';
+  @override
+  String get video_source_scrape_anidb_client_version_hint =>
+      'إصدار موجب مسجّل لدى AniDB؛ تبقى HTTP API معطّلة حتى يكون كلا الحقلين صالحين';
+  @override
+  String get video_scrape_view_source => 'عرض تفاصيل المصدر';
+  @override
+  String get video_setting_auto_scrape_hint =>
+      'تحديد وجلب بيانات الفيديو الوصفية تلقائياً بعد فحص المكتبة';
+  @override
+  String get video_resource_identity_provider => 'مصدر هوية الموارد';
+  @override
+  String get video_source_scrape_clear_all => 'مسح جميع سجلات الكشط';
+  @override
+  String get video_source_scrape_clear_all_hint =>
+      'إزالة جميع بيانات كشط الفيديو والأغلفة وملفات NFO المُنشأة بواسطة Fushi.';
+  @override
+  String get video_source_scrape_clear_all_confirm_title =>
+      'مسح جميع سجلات كشط الفيديو؟';
+  @override
+  String get video_source_scrape_clear_all_confirm_body =>
+      'سيؤدي هذا إلى إزالة جميع البيانات الوصفية المكشوطة وربط المصادر، ومسح نتائج المسلسلات، وحذف الأغلفة وملفات NFO غير المعدّلة المُنشأة بواسطة Fushi. يتم الاحتفاظ بملفات الفيديو ومدخلات المكتبة والمجموعات وتقدم المشاهدة والترجمات والوسوم والأغلفة المختارة يدوياً والملفات الجانبية المعدّلة من المستخدم. لا يمكن التراجع عن هذا.';
+  @override
+  String get video_source_scrape_clear_all_confirm_action => 'مسح';
+  @override
+  String get video_source_scrape_clear_all_completed =>
+      'تم مسح جميع سجلات كشط الفيديو.';
+  @override
+  String get video_source_scrape_clear_all_completed_protected =>
+      'تم مسح سجلات الكشط. تم الاحتفاظ بالملفات الجانبية المعدّلة أو غير القابلة للتحقق.';
+  @override
+  String get video_source_scrape_clear_all_busy =>
+      'لا يزال فحص أو كشط فيديو قيد التشغيل. حاول مرة أخرى بعد انتهائه.';
+  @override
+  String get video_source_scrape_clear_all_failed =>
+      'تعذّر مسح جميع سجلات الكشط. لم تُحذف أي ملفات مستخدم غير متحقق منها.';
+  @override
+  String get video_source_scrape_clear_all_in_progress =>
+      'عملية تنظيف سجلات الكشط قيد التنفيذ بالفعل.';
+  @override
+  String get game_session_japanese_locale => 'الإعدادات المحلية اليابانية';
+  @override
+  String get game_session_japanese_locale_hint =>
+      'تم تشغيل اللعبة تحت الإعدادات المحلية اليابانية (CP932). إذا ظهر النص مشوّهاً أو ظهر خطأ في السكربت، اضبط الإعدادات المحلية اليابانية لهذه اللعبة على "أبداً".';
+  @override
+  String get onboarding_anki_intro_body =>
+      'Anki هو تطبيق بطاقات تعليمية مجاني يعتمد على التكرار المتباعد: الكلمات الجديدة تصبح بطاقات، ويُجدوَل المراجعة وفق منحنى النسيان. بعد البحث، يمكن لـ Fushi تحويل الكلمة إلى بطاقة Anki بنقرة واحدة، مع المعنى والجملة والصوت ولقطة الشاشة.';
+  @override
+  String get onboarding_anki_setup_desktop_hint =>
+      'ثبّت تطبيق Anki لسطح المكتب، ثم أضف إضافة AnkiConnect: في Anki، افتح أدوات - الإضافات - الحصول على إضافات وأدخل الرمز 2055492159. أبقِ Anki قيد التشغيل أثناء إنشاء البطاقات.';
+  @override
+  String get onboarding_anki_setup_ios_hint =>
+      'مع تثبيت AnkiMobile، تعمل إضافة البطاقات مباشرة. للحصول على جميع الميزات، اتصل بـ Anki على جهاز كمبيوتر في نفس الشبكة عبر AnkiConnect.';
+  @override
+  String get onboarding_anki_backend_label => 'الاتصال';
+  @override
+  String get onboarding_anki_test_action => 'اختبار الاتصال';
+  @override
+  String onboarding_anki_test_success({required Object count}) =>
+      'متصل: تم العثور على ${count} مجموعة';
+  @override
+  String get onboarding_anki_get_anki_action => 'الحصول على Anki (سطح المكتب)';
+  @override
+  String get onboarding_anki_get_ankidroid_action => 'الحصول على AnkiDroid';
+  @override
+  String get onboarding_anki_mobile_ankiconnect_title =>
+      'متقدم: استخدام AnkiConnect على هذا الجهاز';
+  @override
+  String get onboarding_anki_mobile_ankiconnect_hint =>
+      'يمكن لهذا الجهاز أيضاً إنشاء بطاقات في Anki على جهاز كمبيوتر في نفس الشبكة: فعّل AnkiConnect في إعدادات إنشاء البطاقات وأدخل عنوان الكمبيوتر.';
+  @override
+  String get onboarding_anki_setup_android_hint =>
+      'ثبّت AnkiDroid وافتحه مرة واحدة لإكمال الإعداد الأولي. عُد إلى Fushi واضغط على السماح في نافذة الإذن التي تظهر مع أول بطاقة - لا حاجة لتغيير إعدادات AnkiDroid.';
+  @override
+  String get onboarding_anki_install_addon_action => 'تثبيت إضافة AnkiConnect';
+  @override
+  String get onboarding_anki_addon_installed =>
+      'تم تثبيت AnkiConnect. شغّل (أو أعد تشغيل) Anki، ثم اضغط اختبار الاتصال.';
+  @override
+  String get onboarding_anki_addon_no_anki =>
+      'لم يُعثر على مجلد بيانات Anki. ثبّت Anki وافتحه مرة واحدة، ثم حاول مجدداً.';
+  @override
+  String onboarding_anki_addon_failed({required Object message}) =>
+      'فشل التثبيت: ${message}';
+  @override
+  String get game_hook_reason_capability_probe_failed =>
+      'لم يستجب مكوّن الالتقاط لفحص القدرات. تم العثور عليه على القرص لكنه لم يتمكن من التشغيل أو لم يستجب في الوقت المحدد - قد يكون مضاد الفيروسات يحظره، أو قد يفتقر Fushi إلى إذن تشغيله، أو قد تكون عملية مساعدة قديمة عالقة. أغلق جميع الألعاب، وتحقق من عزل مضاد الفيروسات، ثم حاول مجدداً.';
+  @override
+  String get download_backend_setup_title => 'إعداد خلفية التحميل';
+  @override
+  String get download_backend_setup_intro =>
+      'اختر المحرك الذي ينفّذ تحميلاتك. يمكنك تغييره في أي وقت من إعدادات التحميل.';
+  @override
+  String get download_backend_embedded_hint =>
+      'موصى به. تجري التحميلات داخل Fushi — لا حاجة لتثبيت أي شيء آخر.';
+  @override
+  String get download_backend_qb_hint =>
+      'اربط Fushi بواجهة qBittorrent WebUI التي تشغّلها بالفعل.';
+  @override
+  String get download_backend_setup_start => 'إعداد الآن';
+  @override
+  String get download_backend_embedded_unavailable =>
+      'بيئة تشغيل المحرك المدمج غير موجودة في هذا التثبيت. أعد تثبيت الحزمة الكاملة، أو استخدم qBittorrent خارجيًا بدلًا منها.';
+  @override
+  String get download_backend_qb_url_invalid =>
+      'أدخل عنوانًا كاملًا، مثل http://127.0.0.1:8080';
+  @override
+  String get mihon_store_zero_extensions =>
+      'أعاد هذا المستودع 0 امتداد. قد يشير عنوانه إلى فهرس قديم.';
+  @override
+  String get mihon_store_edit => 'تعديل عنوان المستودع';
+  @override
+  String get manga_ocr_download_resume => 'استئناف التحميل';
+  @override
+  String get manga_ocr_import => 'استيراد نموذج محلي';
+  @override
+  String get manga_ocr_import_title => 'استيراد نموذج مُنزَّل';
+  @override
+  String get manga_ocr_import_intro =>
+      'إذا لم ينجح التحميل داخل التطبيق، حمّل هذه الملفات بنفسك واستوردها هنا. يصلح أيضًا ملف zip يحتويها.';
+  @override
+  String get manga_ocr_import_copy_urls => 'نسخ روابط التحميل';
+  @override
+  String get manga_ocr_import_urls_copied => 'تم نسخ روابط التحميل';
+  @override
+  String get manga_ocr_import_pick_folder => 'اختيار مجلد';
+  @override
+  String get manga_ocr_import_pick_files => 'اختيار ملفات';
+  @override
+  String get manga_ocr_import_running => 'جارٍ الاستيراد…';
+  @override
+  String manga_ocr_import_done({required Object count}) =>
+      'تم استيراد ${count} ملف';
+  @override
+  String get manga_ocr_import_matched_nothing =>
+      'لم يتم التعرف على أي ملفات نموذج صالحة';
+  @override
+  String manga_ocr_import_size_mismatch({
+    required Object file,
+    required Object expected,
+    required Object actual,
+  }) => 'حجم ${file} غير صحيح: المتوقع ${expected}، والفعلي ${actual}';
+  @override
+  String manga_ocr_import_still_missing({required Object count}) =>
+      'لا يزال ينقص ${count} ملف';
+  @override
+  String get manga_ocr_import_failed => 'فشل استيراد النموذج';
+  @override
+  String get manga_tap_ocr_notice_title => 'انقر للتعرف';
+  @override
+  String get manga_tap_ocr_notice_body =>
+      'لا تحتوي هذه الصفحة على بيانات نصية بعد. سيتعرف عليها Fushi بمحرك OCR الذي اخترته في الإعدادات، ثم يمكنك النقر على الكلمات للبحث عنها. يمكنك تغيير المحرك أو إيقاف هذا من الإعدادات › OCR المانغا.';
+  @override
+  String get manga_tap_ocr_notice_confirm => 'تعرّف الآن';
+  @override
+  String get manga_tap_ocr_running => 'جارٍ التعرف على هذه الصفحة…';
+  @override
+  String get manga_tap_to_ocr => 'انقر للتعرف';
+  @override
+  String get manga_tap_to_ocr_desc =>
+      'انقر على فقاعة حوار لم يتم التعرف عليها لتتعرف على الصفحة وتبحث عن الكلمات فورًا.';
+  @override
+  String get manga_ocr_engine_system => 'OCR الجهاز';
+  @override
+  String get manga_ocr_engine_system_desc =>
+      'يستخدم التعرف على النص المدمج في جهازك. بلا تنزيل، ويعمل دون اتصال تمامًا، ولا يُرفع أي شيء — لكنه أضعف بوضوح من النموذج المحلي مع الفقاعات الرأسية والخط اليدوي.';
+  @override
+  String get manga_ocr_engine_system_unavailable =>
+      'لا يتوفر في هذا الجهاز تعرف مدمج على النص';
+  @override
+  String get manga_tap_ocr_online_lens_only =>
+      'الفصول عبر الإنترنت غير مخزّنة محليًا، لذا لا يمكن قراءتها إلا بواسطة Google Lens — تُرفع صورة الصفحة إلى Google.';
+  @override
+  String get settings_destination_services => 'الخدمات عبر الإنترنت';
+  @override
+  String get settings_destination_services_summary =>
+      'واجهات API خارجية ومفهرسات وخوادم وسائط';
+  @override
+  String get section_services_subtitles => 'مصادر الترجمة';
+  @override
+  String get section_services_resources => 'مفهرسات الموارد';
+  @override
+  String get section_services_metadata => 'جمع البيانات الوصفية';
+  @override
+  String get settings_services_link_subtitle =>
+      'تُضبط Jimaku وOpenSubtitles وTorznab وJellyfin وAniDB وTMDB معًا هنا';
+  @override
+  String get game_hook_btn_replay => 'إعادة تشغيل صوت هذه الجملة';
+  @override
+  String get game_hook_btn_recapture => 'إعادة التقاط الصوت';
+  @override
+  String get game_hook_btn_follow => 'متابعة الجمل الجديدة';
+  @override
+  String get game_hook_btn_passthrough => 'تمرير النقر إلى اللعبة';
+  @override
+  String get game_hook_btn_transparency => 'تبديل الخلفية';
+  @override
+  String get game_hook_btn_lock => 'تثبيت الموضع';
+  @override
+  String get game_hook_btn_workbench => 'فتح طاولة عمل الالتقاط';
+  @override
+  String get game_hook_btn_topmost => 'إبقاء في المقدمة';
+  @override
+  String get game_hook_btn_close => 'إغلاق النافذة العائمة';
+  @override
+  String get video_jimaku_search_failed => 'فشل البحث عن الترجمة';
+  @override
+  String video_subtitle_error_with_code({
+    required Object msg,
+    required Object code,
+  }) => '${msg} (HTTP ${code})';
+  @override
+  String get manga_rescan_run => 'إعادة التعرف على المنطقة المحددة';
+  @override
+  String get manga_rescan_failed => 'فشلت إعادة التعرف على المنطقة المحددة';
+  @override
+  String get manga_rescan_region_updated =>
+      'تم التعرف على المنطقة المحددة من جديد وحُفظت في الصفحة';
+  @override
+  String get manga_ocr_mobile_note =>
+      'على الأجهزة المحمولة، تشغّل هذه النماذج المحرك المحلي للتعرف على المجلد كاملًا وبالنقر وعلى المنطقة المحددة في قارئ المانغا.';
+  @override
+  String get manga_rescan_hint =>
+      'اسحب مربعًا فوق النص الذي تريد إعادة التعرف عليه. تحل النتيجة محل طبقة النص الموجودة داخل المربع.';
+  @override
+  String get manga_rescan_undone =>
+      'تمت استعادة طبقة النص التي كانت قبل إعادة المسح';
+  @override
+  String get manga_rescan_undo_failed => 'تعذّرت استعادة طبقة النص السابقة';
+  @override
+  String get module_tool_toggle_hint =>
+      'إظهار هذا التبويب في شريط التنقل؛ أوقفه لإخفائه';
+  @override
+  String get module_downloads_hidden_hint =>
+      'تبويب التحميلات مخفي في الإعدادات → المظهر → وحدات الميزات؛ أعد تشغيله لإدارة الاشتراكات.';
+  @override
+  String get book_file_location_open => 'فتح موقع الملف';
+  @override
+  String get book_file_location_failed => 'تعذّر فتح موقع ملف هذا الكتاب.';
+  @override
+  String storage_entry_database_snapshots_label({required Object n}) =>
+      'لقطات النسخ الاحتياطي لقاعدة البيانات (${n} ملف)';
+  @override
+  String get storage_entry_delete_database_snapshots_confirm_body =>
+      'يؤدي هذا إلى حذف كل لقطات النسخ الاحتياطي المتبقية لقاعدة البيانات (corrupt-bak / pre-restore / نسخ الترحيل القديمة). لا تُمس قاعدة البيانات العاملة ولا ملفا -wal/-shm التابعان لها.';
+  @override
+  String get manga_global_search_no_sources =>
+      'لا توجد مصادر مانغا مفعّلة بعد. أضف واحدًا من تبويب الاستيراد.';
+  @override
+  String get manga_global_search_open_sources => 'الذهاب إلى الاستيراد';
+  @override
+  String get settings_downloads_open_page_hint =>
+      'فتح صفحة التحميلات (المهام، الموارد، الاشتراكات)';
+  @override
+  String get download_video_source_required => 'مطلوب مصدر فيديو';
+  @override
+  String get game_hook_reason_stale_session =>
+      'لم تُحرَّر جلسة الالتقاط السابقة بعد؛ يعيد Fushi المحاولة تلقائيًا، ولا حاجة لأي إجراء.';
+  @override
+  String get video_subtitle_delete => 'حذف ملف الترجمة';
+  @override
+  String video_subtitle_delete_confirm({required Object path}) =>
+      'هل تريد حذف ملف الترجمة هذا من القرص؟ لا يمكن التراجع عن ذلك.\n${path}';
+  @override
+  String video_subtitle_deleted({required Object label}) =>
+      'تم حذف ملف الترجمة: ${label}';
+  @override
+  String video_subtitle_delete_failed({required Object label}) =>
+      'فشل حذف ملف الترجمة: ${label}';
+  @override
+  String get shortcut_action_manga_toggle_chrome => 'تبديل واجهة المانغا';
+  @override
+  String get manga_interface_hide => 'إخفاء الواجهة';
+  @override
+  String get manga_interface_show => 'إظهار الواجهة';
+  @override
+  String get gal_hook_text_vertical_alignment => 'المحاذاة الرأسية';
+  @override
+  String get gal_hook_text_vertical_alignment_center => 'توسيط';
+  @override
+  String get gal_hook_text_vertical_alignment_top => 'أعلى';
+  @override
+  String get storage_entry_external_audio_hint =>
+      'يشير الصوت إلى الملفات الأصلية ولا يستهلك مساحة التطبيق';
+  @override
+  String get jellyfin_auto_list_title => 'سرد العناصر تلقائيًا عند فتح الفيديو';
+  @override
+  String get jellyfin_auto_list_hint =>
+      'عند الإيقاف: لا يُرسل فتح صفحة الفيديو أي طلب إلى خادم الوسائط؛ اسحب للتحديث في مكتبة الفيديو لسرد العناصر يدويًا. يُنصح به للخوادم الكبيرة جدًا، حيث يبدو السرد التلقائي كأنه كشط وقد يُفعّل كشف إساءة الاستخدام.';
+  @override
+  String get jellyfin_libraries_title => 'المكتبات المراد سردها';
+  @override
+  String get jellyfin_libraries_hint =>
+      'عدم اختيار أي شيء يسرد كل مكتبات الفيديو. حصر الأمر في المكتبات التي تشاهدها فعلًا يمنع سرد الخوادم الضخمة بالكامل.';
+  @override
+  String get jellyfin_libraries_load_failed => 'تعذّر تحميل قائمة المكتبات';
+  @override
+  String get video_filter_series => 'المسلسلات';
+  @override
+  String get video_filter_series_in => 'ضمن مسلسل';
+  @override
+  String get video_filter_series_standalone => 'غير ضمن مسلسل';
+  @override
+  String get manga_source_cloudflare_verify_title => 'التحقق من الموقع';
+  @override
+  String get manga_source_cloudflare_verify_hint =>
+      'أكمل فحص Cloudflare أدناه. سيستأنف التحميل تلقائيًا بعد اجتيازه.';
+  @override
+  String get db_cannot_open_title => 'موقع البيانات غير متاح';
+  @override
+  String get db_cannot_open_message =>
+      'تعذّر على Fushi فتح أو إنشاء قاعدة بياناته في موقع البيانات المُعدّ. لا يوجد أي تلف — قد يكون المجلد مفقوداً أو للقراءة فقط أو على قرص غير متصل. تحقّق من موقع البيانات في الإعدادات، أو أعد التشغيل لاستخدام الموقع الافتراضي.';
+  @override
+  String get anki_error_field_mapping_mismatch =>
+      'لا يطابق أي من تعيينات الحقول لديك نوع الملاحظة المحدد، لذلك رفض Anki البطاقة. افتح إعدادات Anki لإعادة تعيين الحقول، أو استخدم \'إنشاء مجموعة Lapis\'.';
+  @override
+  String get anki_error_first_field_empty =>
+      'الحقل الأول من نوع الملاحظة المحدد فارغ، وAnki يرفض ملاحظة كهذه. عيّن له حقلاً في إعدادات Anki.';
+  @override
+  String get storage_category_cache => 'ذاكرة التخزين المؤقت والملفات المؤقتة';
+  @override
+  String get storage_category_other => 'أخرى غير مصنّفة';
+  @override
+  String get collection_export_pick_source => 'اختر مصدراً';
+  @override
+  String get collection_export_all_sources => 'جميع المصادر';
+  @override
+  String get video_subtitle_list_search => 'البحث في الترجمات';
+  @override
+  String get video_subtitle_list_search_hint => 'اكتب لتصفية السطور';
+  @override
+  String get video_subtitle_list_search_empty => 'لا يوجد سطر مطابق';
+  @override
+  String get video_subtitle_list_export_favorites => 'تصدير السطور المفضلة';
+  @override
+  String get shortcut_action_video_search_subtitle_list =>
+      'البحث في قائمة الترجمة';
+  @override
+  String get game_hook_code_paste_title => 'لصق رمز hook';
+  @override
+  String get game_hook_code_paste_hint =>
+      'الصق الرمز الخام، مثل /HQN4@4CE90:game.exe';
+  @override
+  String get game_hook_code_paste_body =>
+      'يُربط الرمز بالملف التنفيذي للعبة قيد التشغيل حالياً، ليتمكن Fushi من إعادة استخدامه في المرة القادمة.';
+  @override
+  String get game_hook_code_paste_saved => 'تم حفظ رمز hook لهذه اللعبة';
+  @override
+  String get game_hook_code_paste_invalid => 'هذا لا يبدو رمز hook';
+  @override
+  String get game_hook_code_label => 'تسمية (اختياري)';
+  @override
+  String get discovery_game_type_all => 'الكل';
+  @override
+  String get discovery_game_type_raw => 'غير مترجمة';
+  @override
+  String get discovery_game_type_translated => 'مترجمة';
+  @override
+  String get discovery_game_type_mobile => 'جوّال';
+  @override
+  String get discovery_game_type_unlabelled => 'غير مصنّفة';
+  @override
+  String get game_library_downloading => 'جارٍ التحميل';
+  @override
+  String get game_library_download_queued => 'في قائمة الانتظار';
+  @override
+  String get game_library_download_retrying => 'جارٍ إعادة المحاولة';
+  @override
+  String get delete_disclosure_audio_source_files =>
+      'ملفات الصوت الأصلية التي استوردتها';
+  @override
+  String get delete_local_files => 'حذف الملفات المحلية أيضًا';
+  @override
+  String get delete_local_files_video_desc =>
+      'سيُحذف ملف الفيديو من هذا الجهاز، وستُزال مهمة التنزيل المقابلة أيضًا. لا يمكن التراجع عن ذلك.';
+  @override
+  String get delete_local_files_audio_desc =>
+      'ستُحذف ملفات الصوت الأصلية من هذا الجهاز، بينما تبقى ملفات الكتاب والترجمة الأصلية. لا يمكن التراجع عن ذلك.';
+  @override
+  String get delete_disclosure_book_source_kept =>
+      'ملفات الكتاب والترجمة الأصلية التي استوردتها';
+  @override
+  String get download_task_delete_files_failed =>
+      'تعذّر حذف البيانات المنزّلة؛ لم يؤكّد محرّك التنزيل ذلك';
+  @override
+  String delete_local_files_failed({required Object n}) =>
+      'تعذّر حذف ${n} من الملفات المحلية؛ قد تكون قيد الاستخدام';
+  @override
+  String batch_hidden_by_filter_note({required Object n}) =>
+      'هناك ${n} عنصر محدد مخفي بواسطة عامل التصفية الحالي ولن تتم معالجته.';
+  @override
+  String get custom_fonts_default => 'Default (Yu Gothic UI)';
+  @override
+  String get custom_fonts_default_hint =>
+      'Use the built-in Yu Gothic UI rendering for the Galgame Hook overlay.';
+  @override
+  String get gal_hook_text_font_family => 'Galgame caption font';
+  @override
+  String get gal_mining_screenshot_size => 'Galgame screenshot size';
+  @override
+  String get gal_mining_screenshot_size_full_hd =>
+      'Up to 1920 × 1080 (recommended)';
+  @override
+  String get gal_mining_screenshot_size_hd => 'Up to 1280 × 720';
+  @override
+  String get gal_mining_screenshot_size_hint =>
+      'Applies to still screenshots and animated-capture fallbacks. Keeps the aspect ratio, never enlarges, and saves as JPEG at quality 90.';
+  @override
+  String get gal_mining_screenshot_size_original => 'Original size (JPEG)';
+  @override
+  String get game_attach_mode_last_used => 'Last used';
+  @override
+  String get game_attach_mode_luna_safe => 'Luna safe attachment (recommended)';
+  @override
+  String get game_attach_mode_luna_safe_hint =>
+      'Do not inject into the game. Use Luna original text and system loopback audio to avoid double-hook conflicts.';
+  @override
+  String get game_attach_mode_native => 'Fushi native attachment';
+  @override
+  String get game_attach_mode_native_hint =>
+      'Inject Fushi into the game to capture native text and clean audio. Do not use it together with LunaTranslator.';
+  @override
+  String get game_attach_mode_title => 'Choose attachment mode';
+  @override
+  String get game_line_bulk_text_hint =>
+      'Bulk text detected. Character lookup is paused.';
+  @override
+  String get game_luna_audio_lead_in => 'Complete sentence start';
+  @override
+  String get game_luna_audio_lead_in_hint =>
+      'If the beginning of this sentence is cut off, increase this value.';
+  @override
+  String get game_luna_audio_per_game_hint =>
+      'Saved separately for each attached game.';
+  @override
+  String get game_luna_audio_tail_trim => 'Remove next-line audio';
+  @override
+  String get game_luna_audio_tail_trim_hint =>
+      'If the end of this sentence includes the next line, increase this value.';
+  @override
+  String get game_luna_audio_timing => 'Audio alignment';
+  @override
+  String get game_text_source_luna => 'LunaTranslator (external original text)';
+  @override
+  String get game_text_source_luna_connected =>
+      'Connected. Fushi will use the original text selected in LunaTranslator.';
+  @override
+  String get game_text_source_luna_waiting =>
+      'Start LunaTranslator and enable Network Service. Fushi will reconnect automatically.';
+  @override
+  String get game_text_thread_recommended => 'Recommended';
+  @override
+  String get game_text_threads_dormant_hide => 'Hide threads without text';
+  @override
+  String game_text_threads_dormant_show({required Object count}) =>
+      'Show threads without text (${count})';
+  @override
+  String get video_setting_subtitle_language_filter => 'Subtitle language';
+  @override
+  String get video_setting_subtitle_language_filter_all => 'All';
+  @override
+  String get video_setting_subtitle_language_filter_chinese => 'Chinese';
+  @override
+  String get video_setting_subtitle_language_filter_hint =>
+      'Filter Chinese and Japanese content inside the selected subtitle track.';
+  @override
+  String get video_setting_subtitle_language_filter_japanese => 'Japanese';
+  @override
+  String get download_direct_queue_section => 'Direct downloads';
+  @override
+  String get download_task_kind_all => 'All types';
+  @override
+  String get download_task_kind_filter => 'Filter by type';
+  @override
+  String get manga_online_series_empty => 'لا توجد مجلدات في هذه السلسلة.';
+  @override
+  String sync_peer_book_delete_confirm({required Object name}) =>
+      'هل تريد حذف "${name}" من الجهاز النظير؟ ستُحذف ملفاته وتقدّم القراءة هناك نهائيًا، ولا توجد نسخة على هذا الجهاز. لا يمكن التراجع عن هذا الإجراء.';
+  @override
+  String sync_peer_video_delete_confirm({required Object name}) =>
+      'هل تريد إزالة "${name}" من مكتبة الجهاز النظير؟ سيبقى ملف الفيديو الذي استورده النظير بنفسه. لا يمكن التراجع عن هذا الإجراء.';
+  @override
+  String get storage_entry_delete_files_confirm_body =>
+      'سيُحذف من القرص فورًا. لا يشير إليه أي عنصر في مكتبتك — فهذه بيانات مؤقتة أو مُصدَّرة أو يمكن تنزيلها من جديد.';
+  @override
+  String get manga_series_refresh => 'تحديث الفصول';
+  @override
+  String get manga_series_refresh_failed => 'تعذّر التحديث من المصدر';
+  @override
+  String get manga_series_source_disabled => 'هذا المصدر غير مثبَّت أو معطَّل';
+  @override
+  String get manga_series_platform_unsupported =>
+      'هذا المصدر غير متاح على هذه المنصة';
+  @override
+  String get manga_series_offline_hint =>
+      'يتم عرض الفصول المحفوظة على هذا الجهاز';
+  @override
+  String get manga_series_no_chapters => 'لا توجد فصول بعد';
+  @override
+  String get manga_series_all_read => 'تمت قراءة جميع الفصول';
+  @override
+  String get manga_series_sort_newest => 'الأحدث أولاً';
+  @override
+  String get manga_series_sort_oldest => 'الأقدم أولاً';
+  @override
+  String get manga_series_unread_only => 'غير المقروءة فقط';
+  @override
+  String get manga_series_mark_read => 'تعليم كمقروء';
+  @override
+  String get manga_series_mark_unread => 'تعليم كغير مقروء';
+  @override
+  String get manga_series_mark_previous_read =>
+      'تعليم هذا الفصل وما قبله كمقروء';
+  @override
+  String get manga_series_local_volume => 'مجلد محلي';
+  @override
+  String get manga_series_volume_info => 'المجلد';
+  @override
+  String get manga_series_page_count => 'الصفحات';
+  @override
+  String get manga_series_chapters_action => 'الفصول';
+  @override
+  String get manga_series_next_chapter => 'الفصل التالي';
+  @override
+  String get manga_series_previous_chapter => 'الفصل السابق';
+  @override
+  String get manga_series_last_chapter_reached => 'هذا هو أحدث فصل';
+  @override
+  String get manga_series_first_chapter_reached => 'هذا هو الفصل الأول';
+  @override
+  String get manga_series_open_series => 'صفحة العمل';
+  @override
+  String manga_series_read_progress({
+    required Object page,
+    required Object total,
+  }) => 'تمت القراءة حتى الصفحة ${page} من ${total}';
+  @override
+  String manga_series_read_progress_partial({required Object page}) =>
+      'تمت القراءة حتى الصفحة ${page}';
+  @override
+  String mihon_store_extension_count({required Object count}) =>
+      '${count} إضافة';
+  @override
+  String mihon_extension_sources_more({required Object count}) =>
+      'إظهار كل المصادر (${count})';
+  @override
+  String get mihon_extension_sources_less => 'إظهار مصادر أقل';
+  @override
+  String get options_website => 'زيارة الموقع الرسمي';
+  @override
+  String get video_setting_mpv_group_hdr => 'HDR';
+  @override
+  String get video_setting_hdr_tone_mapping => 'تعيين ألوان HDR';
+  @override
+  String get video_setting_hdr_tone_mapping_hint =>
+      'المنحنى المستخدم عند ضغط مصدر HDR على شاشة SDR. «تلقائي» يترك الاختيار لـ mpv حسب كل مصدر.';
+  @override
+  String get video_setting_hdr_compute_peak => 'كشف الذروة الديناميكي';
+  @override
+  String get video_setting_hdr_compute_peak_hint =>
+      'قياس ذروة السطوع الحقيقية لكل إطار بدلاً من الوثوق ببيانات المصدر. إبرازات أدق مقابل بعض استهلاك المعالج الرسومي.';
+  @override
+  String get video_setting_hdr_auto => 'تلقائي';
+  @override
+  String get video_setting_hdr_on => 'تشغيل';
+  @override
+  String get video_setting_hdr_off => 'إيقاف';
+  @override
+  String get video_discovery_cancel_downloads_title => 'إلغاء التنزيلات؟';
+  @override
+  String video_discovery_cancel_downloads_body({required Object n}) =>
+      'سيتم إيقاف ${n} مهمة تنزيل لهذا العمل. تبقى الأجزاء المنزَّلة على القرص، ويمكنك بدء التنزيل مرة أخرى لاحقًا.';
+  @override
+  String get video_discovery_cancel_downloads_failed =>
+      'تعذّر إلغاء التنزيل. قد تكون المهمة قد انتهت بالفعل، أو أن خلفية التنزيل غير متاحة.';
+  @override
+  String get gal_hook_click_lookup => 'اضغط على كلمة للبحث عنها';
+  @override
+  String get gal_hook_click_lookup_hint =>
+      'الإيقاف يعني ألا يؤدي النقر على النص إلى بحث — مفيد مع تفعيل النقر النافذ عندما لا تريد إصابة كلمة بالخطأ.';
+  @override
+  String get gal_hook_lookup_trigger => 'زر البحث';
+  @override
+  String get gal_hook_lookup_trigger_hint =>
+      'أي زر فأرة يبحث عن الكلمة تحت المؤشر. مستقل عن المفتاح أعلاه: يمكنك إيقاف البحث بالنقر والبحث بزر جانبي.';
+  @override
+  String get gal_hook_lookup_trigger_left => 'Left click';
+  @override
+  String get gal_hook_lookup_trigger_middle => 'Middle click';
+  @override
+  String get gal_hook_lookup_trigger_side => 'Side button';
+  @override
+  String get gal_hook_toolbar_auto_hide => 'إخفاء شريط الأدوات تلقائيًا';
+  @override
+  String get gal_hook_toolbar_auto_hide_hint =>
+      'يخفي شريط الأدوات حتى يصل المؤشر إلى صندوق النص، بأسلوب LunaHook. مخفي يعني مخفي فعلًا — تعود تلك البكسلات إلى اللعبة.';
+  @override
+  String get gal_hook_passthrough_blocks_mouse =>
+      'النص يستقبل النقرات أثناء النقر النافذ';
+  @override
+  String get gal_hook_passthrough_blocks_mouse_hint =>
+      'تشغيل: تبقى أسطر النص تستقبل النقرات فتستطيع الضغط على كلمة. إيقاف: تصبح الطبقة كلها شفافة للفأرة — تنقر ما تحتها، لكن الضغط على الكلمات لا يعمل.';
+  @override
+  String get floating_lyric_topmost => 'الإبقاء في المقدمة';
+  @override
+  String get gal_hook_fold_progressive_lines => 'دمج أسطر الحوار المقسّمة';
+  @override
+  String get gal_hook_fold_progressive_lines_hint =>
+      'بعض المحرّكات تعيد رسم السطر كاملًا مع كل نقرة، فيُلتقط السطر الواحد عدة مرات. اطوِ تلك اللقطات في سطر واحد.';
+  @override
+  String get gal_hook_ingame_lookup_engine_unsupported =>
+      'محرك اللعبة هذا لا يدعم البحث داخل اللعبة بعد';
+  @override
+  String get gal_hook_ingame_lookup_version_unsupported =>
+      'إصدار اللعبة هذا ليس ضمن القائمة المدعومة بعد';
+  @override
+  String get gal_hook_ingame_lookup_exe_hash_copy =>
+      'نسخ SHA-256 لملف اللعبة التنفيذي';
+  @override
+  String get gal_hook_ingame_lookup_exe_hash_unavailable =>
+      'تعذّرت قراءة ملف اللعبة التنفيذي';
+  @override
+  String get gal_hook_ingame_lookup_exe_hash_copied =>
+      'تم نسخ SHA-256 لملف اللعبة التنفيذي';
+  @override
+  String get download_tracker_section => 'اشتراك المتعقّبات';
+  @override
+  String get download_tracker_auto_add =>
+      'إضافة متعقّبات الاشتراك تلقائيًا إلى التنزيلات الجديدة';
+  @override
+  String get download_tracker_auto_add_hint =>
+      'تُخزَّن القائمة مؤقتًا لست ساعات. فشل الاشتراك لا يمنع التنزيل.';
+  @override
+  String get download_tracker_url => 'رابط الاشتراك';
+  @override
+  String get download_tracker_refresh => 'جلب المتعقّبات';
+  @override
+  String get download_tracker_preview_empty =>
+      'اجلب الاشتراك لمعاينة متعقّبات HTTP وHTTPS وUDP المدعومة.';
+  @override
+  String download_tracker_preview_count({required Object count}) =>
+      'تم جلب ${count} متعقّبًا';
+  @override
+  String download_tracker_fetch_failed({required Object message}) =>
+      'تعذّر جلب المتعقّبات: ${message}';
+  @override
+  String get anki_connect_port_auto_fix => 'التبديل إلى منفذ حر';
+  @override
+  String get anki_connect_port_auto_fix_hint =>
+      'يختار منفذًا حرًا ويكتبه في Hibiki وفي إعدادات إضافة AnkiConnect معًا. أعد تشغيل Anki لتطبيق التغيير.';
+  @override
+  String anki_connect_port_auto_fix_done({required Object port}) =>
+      'تم تغيير منفذ AnkiConnect إلى ${port}. أعد تشغيل Anki ثم حاول مجددًا.';
+  @override
+  String anki_connect_port_auto_fix_manual({required Object port}) =>
+      'يستخدم Hibiki الآن المنفذ ${port}، لكن لم يُعثر على إعدادات إضافة AnkiConnect. اضبط webBindPort على ${port} في Anki (أدوات ← الإضافات ← AnkiConnect ← إعداد) ثم أعد تشغيل Anki.';
+  @override
+  String get anki_connect_port_auto_fix_none =>
+      'لم يُعثر على أي منفذ حر على هذا الجهاز.';
+  @override
+  String get onboarding_action_badge_required => 'مطلوب';
+  @override
+  String get onboarding_action_badge_recommended => 'موصى به';
+  @override
+  String get onboarding_action_badge_optional => 'اختياري';
+  @override
+  String get onboarding_pack_action_download_desc =>
+      'ينزّل الحزمة كاملة في الخلفية ثم يستوردها. يمكنك الإلغاء في أي وقت، وسيُستأنف التنزيل من حيث توقّف.';
+  @override
+  String get onboarding_pack_action_import_existing_desc =>
+      'الحزمة منزَّلة بالفعل، وهذا يستوردها. اختر «دمج» في نافذة التأكيد لتبقى بياناتك الحالية كما هي.';
+  @override
+  String get onboarding_pack_action_pick_desc =>
+      'حصلت على ملف zip للحزمة من مكان آخر؟ استوردها من القرص وتخطَّ التنزيل بالكامل.';
+  @override
+  String get onboarding_pack_action_website => 'فتح صفحة التنزيل في الموقع';
+  @override
+  String get onboarding_pack_action_website_desc =>
+      'يفتح الموقع الرسمي في متصفحك. يوفّر قسم الحزمة روابط أجزاء يمكن تمريرها إلى مدير تنزيل، ثم عد إلى هنا واستخدم «اختيار ملف حزمة محلي» لاستيراد ما حصلت عليه.';
+  @override
+  String get onboarding_pack_action_dictionary_desc =>
+      'تتعلّم لغة غير اليابانية؟ تخطَّ الحزمة واستورد هنا قواميس لغتك.';
+  @override
+  String get onboarding_pack_action_audio_desc =>
+      'مصدر مقاطع النطق الصوتية. الحزمة تغطّي اليابانية والإنجليزية بالفعل؛ أضف هنا مصادر عبر الإنترنت للغات الأخرى.';
+  @override
+  String get onboarding_anki_action_test_desc =>
+      'يتحقّق من قدرة Fushi على الاتصال بـ Anki ويحمّل مجموعاتك وأنواع الملاحظات. لا يُنشأ أي شيء بعد.';
+  @override
+  String get onboarding_anki_action_refresh_desc =>
+      'يعيد تحميل المجموعات وأنواع الملاحظات من Anki. استخدمه بعد إنشاء مجموعة جديدة داخل Anki.';
+  @override
+  String get onboarding_anki_action_get_ankidroid_desc =>
+      'يفتح صفحة AnkiDroid في المتجر. يكتب Fushi بطاقاته داخله، لذا يجب تثبيته أولاً.';
+  @override
+  String get onboarding_anki_action_get_anki_desc =>
+      'يفتح صفحة تنزيل Anki. ثبّت Anki وأبقِه مفتوحًا أثناء إنشاء البطاقات.';
+  @override
+  String get onboarding_anki_action_install_addon_desc =>
+      'يفكّ ضغط إضافة AnkiConnect المرفقة داخل Anki، وهي ما يتيح لـ Fushi التخاطب معه. أعد تشغيل Anki بعد ذلك.';
+  @override
+  String get onboarding_step_anki_action_desc =>
+      'قالب البطاقة وربط الحقول ولقطات الشاشة والصوت: أي تفاصيل شكل البطاقة الناتجة. تكفي المجموعة ونوع الملاحظة أعلاه للبدء، فلا تفتح هذا إلا إذا أردت تغيير طريقة بناء البطاقات.';
+  @override
+  String get onboarding_step_backup_action_desc =>
+      'اختر خدمة نسخ احتياطي وسجّل الدخول، لتبقى مكتبتك سليمة عند فقدان الجهاز أو استبداله.';
+  @override
+  String get onboarding_step_interconnect_action_desc =>
+      'يقرن هذا الجهاز بأجهزتك الأخرى لمشاركة مكتبة واحدة وإبقاء التقدّم متزامنًا.';
+  @override
+  String get onboarding_step_extension_action_desc =>
+      'يوضّح كيفية تثبيت إضافة المتصفح وربطها بـ Fushi، لتتمكّن من البحث عن الكلمات في صفحات الويب أيضًا.';
+  @override
+  String get onboarding_step_fonts_action_desc =>
+      'أضف ملفات خطوطك الخاصة واختر الخط الذي تستخدمه كل لغة.';
+  @override
+  String get onboarding_pack_sources_hint =>
+      'يُنزَّل على أجزاء متوازية من GitHub والموقع الرسمي ومرآة احتياطية في آنٍ واحد، مع التحقّق من كل جزء. يقيس Fushi سرعة المصادر أثناء العمل ويمنح الأسرع في تلك اللحظة عددًا أكبر من الأجزاء، فلا شيء تختاره هنا.';
+  @override
+  String get video_setting_hdr_output => 'إخراج HDR / ‏10 بت';
+  @override
+  String get video_setting_hdr_output_hint =>
+      'على Windows فقط. يمرّر «تلقائي» مصادر HDR مباشرةً إلى شاشة HDR عبر نافذة فيديو أصلية، ويستخدم «دائمًا» تلك النافذة لكل مقطع (إخراج 10 بت)، بينما يُبقي «إيقاف» على العارض القياسي.';
+  @override
+  String get video_setting_hdr_output_auto => 'تلقائي';
+  @override
+  String get video_setting_hdr_output_always => 'دائمًا';
+  @override
+  String get video_setting_hdr_output_off => 'إيقاف';
+  @override
+  String get network_proxy_auto_hint =>
+      'يُطبَّق على جميع طلبات الإنترنت في التطبيق: التحديثات، والمزامنة السحابية، والقواميس، والتنزيلات، والترجمات، والبيانات الوصفية. اتركه فارغًا للوضع التلقائي: متغيرات البيئة، ثم وكيل النظام المفعّل. تتصل عمليات نقل P2P (torrent) مباشرة افتراضيًا؛ يمكنك تفعيلها بشكل منفصل أدناه.';
+  @override
+  String get network_proxy_hint =>
+      'المضيف:المنفذ، مثال 127.0.0.1:7890 (IPv4/اسم مضيف فقط)';
+  @override
+  String get network_proxy_invalid => 'وكيل غير صالح. استخدم المضيف:المنفذ';
+  @override
+  String get network_proxy_label => 'وكيل الشبكة';
+  @override
+  String get section_network => 'الشبكة';
+  @override
+  String get network_proxy_p2p_label => 'تمرير حركة P2P (torrent) عبر الوكيل';
+  @override
+  String get network_proxy_p2p_warning =>
+      'معطّل افتراضيًا؛ يتصل P2P مباشرة. قد يؤدي التمرير عبر الوكيل إلى خفض السرعة، وكثير من مزودي الوكلاء يحظرون حركة BitTorrent: قد يتم تقييد حساب الوكيل أو تحذيره أو إنهاؤه. ينطبق على المحرك المدمج فقط؛ يستخدم qBittorrent الخارجي إعدادات الوكيل الخاصة به.';
+  @override
+  String get video_ajatt_settings_hint =>
+      'أرشيف مجاني للترجمات اليابانية (مرآة kitsunekko). لا يتطلب حسابًا؛ تُنزَّل ملفات الترجمة من GitHub.';
+  @override
+  String get video_ajatt_enabled_hint =>
+      'عند الإيقاف يتم تخطي أرشيف AJATT عند البحث عن الترجمات.';
+  @override
+  String get video_subtitle_workbench_title => 'الترجمات';
+  @override
+  String get video_subtitle_scope_episode => 'هذه الحلقة';
+  @override
+  String get video_subtitle_scope_collection => 'المجموعة كاملة';
+  @override
+  String get video_subtitle_search_open => 'البحث عن ترجمات عبر الإنترنت';
+  @override
+  String get video_subtitle_collection_settings => 'إعدادات ترجمة المجموعة';
+  @override
+  String get video_subtitle_collection_language => 'لغة الترجمة الافتراضية';
+  @override
+  String get video_subtitle_collection_language_hint =>
+      'تنطبق على كل حلقة في هذه المجموعة. فارغ = اتباع لغة الفيديو نفسه.';
+  @override
+  String get video_subtitle_collection_release_group => 'الإصدار المفضل';
+  @override
+  String get video_subtitle_collection_release_group_hint =>
+      'يختار التنزيل الجماعي هذا الإصدار أولًا ليشترك الموسم كله في توقيت واحد.';
+  @override
+  String get video_subtitle_collection_release_group_any => 'أي إصدار';
+  @override
+  String get video_subtitle_source_label => 'المصدر';
+  @override
+  String get video_subtitle_collection_members_hint =>
+      'تُطابَق الحلقات بالرقم في اسم الملف؛ وتُقسَّم حزم المواسم تلقائيًا.';
+  @override
+  String get video_subtitle_adjust_title => 'ضبط الترجمة';
+  @override
+  String get video_subtitle_adjust_collapse => 'طيّ';
+  @override
+  String get video_subtitle_adjust_expand => 'توسيع';
+  @override
+  String get settings_section_reading_stats => 'إحصائيات القراءة';
+  @override
+  String get reading_stats_idle_timeout => 'مهلة الخمول';
+  @override
+  String get reading_stats_idle_timeout_hint =>
+      'إيقاف احتساب وقت القراءة بعد هذا العدد من الدقائق دون تقليب صفحة أو تمرير أو بحث عن كلمة. ينطبق على الروايات وملفات PDF والمانغا فقط؛ يُحتسب الفيديو أثناء التشغيل.';
+  @override
+  String get web_video_track_menu => 'مسار الترجمة';
+  @override
+  String get web_video_track_live => 'ترجمة مباشرة (مأخوذة من الصفحة)';
+  @override
+  String get web_video_no_tracks => 'لم يتم التقاط أي ترجمة بعد';
+  @override
+  String get web_video_hide_native_subtitles => 'إخفاء ترجمة الموقع';
+  @override
+  String get web_video_import_hint =>
+      'هذه صفحة ويب (وليست بثًا مباشرًا). ستُفتح في مشغّل الويب المدمج.';
+  @override
+  String get web_video_platform_unsupported =>
+      'مشغّل الويب المدمج متاح حاليًا على Windows فقط.';
+  @override
+  String get web_video_mine_queue_run => 'إنشاء البطاقات المنتظرة';
+  @override
+  String get web_video_mine_queue_stop => 'إيقاف إنشاء البطاقات';
+  @override
+  String get web_video_mine_queue_empty => 'لا توجد بطاقات في قائمة الانتظار';
+  @override
+  String web_video_mine_queued({required Object count}) =>
+      'أُضيف إلى قائمة انتظار إنشاء البطاقات (${count} معلّقة)';
+  @override
+  String web_video_mine_queue_running({
+    required Object done,
+    required Object total,
+  }) => 'جارٍ إنشاء البطاقات ${done}/${total}…';
+  @override
+  String web_video_mine_queue_finished({
+    required Object ok,
+    required Object failed,
+  }) => 'البطاقات المُنشأة: ${ok}، الفاشلة: ${failed}';
+  @override
+  String get web_video_hosting_menu => 'وضع التشغيل';
+  @override
+  String get web_video_hosting_builtin =>
+      'مدمج (1080p؛ يتوفر تحسين الدقة ولقطات الشاشة والبطاقات)';
+  @override
+  String get web_video_hosting_windowed =>
+      'نافذة أصلية (4K، DRM عتادي؛ تُوضع البطاقات في قائمة الانتظار)';
+  @override
+  String web_video_mine_switch_builtin({required Object count}) =>
+      'التبديل إلى الوضع المدمج لإنشاء ${count} بطاقة منتظرة';
+  @override
+  String get onboarding_step_click_lookup_title => 'انقر لتبحث عن الكلمات';
+  @override
+  String get onboarding_click_lookup_tap_title => 'انقر على النص';
+  @override
+  String get onboarding_click_lookup_nested_title =>
+      'تابع البحث داخل النافذة المنبثقة';
+  @override
+  String get onboarding_click_lookup_nested_body =>
+      'انقر على كلمة أخرى داخل التعريف لفتح مستوى بحث أعمق. ارجع إلى الخلف أو انقر خارج النافذة لإغلاق مستوى واحد.';
+  @override
+  String get onboarding_click_lookup_mine_title => 'حوّل النتيجة إلى بطاقة';
+  @override
+  String get onboarding_click_lookup_mine_body =>
+      'عندما يكون المعنى صحيحًا، انقر على + لإرسال الكلمة والجملة والصوت والصورة إلى منشئ البطاقات.';
+  @override
+  String get onboarding_step_global_lookup_title => 'البحث عن نص خارج Fushi';
+  @override
+  String get onboarding_global_lookup_windows_body =>
+      'على Windows، حدّد نصًا في تطبيق آخر واستدعِ القاموس دون العودة إلى Fushi.';
+  @override
+  String get onboarding_global_lookup_windows_select_title =>
+      'حدّد نصًا في أي تطبيق';
+  @override
+  String get onboarding_global_lookup_windows_shortcut_title =>
+      'اضغط Ctrl+Alt+D';
+  @override
+  String get onboarding_global_lookup_windows_shortcut_body =>
+      'هذا هو الاختصار العام الافتراضي. يلتقط Fushi التحديد الحالي ويفتح بطاقة بحث بجوار مؤشر الفأرة.';
+  @override
+  String get onboarding_global_lookup_windows_customize_title =>
+      'غيّر الاختصار إذا لزم الأمر';
+  @override
+  String get onboarding_global_lookup_windows_customize_body =>
+      'افتح الإعدادات → الاختصارات → عام (خارج التطبيق) لتعيين تركيبة مفاتيح أخرى.';
+  @override
+  String get onboarding_global_lookup_windows_action =>
+      'فتح إعدادات الاختصارات';
+  @override
+  String get onboarding_global_lookup_windows_action_desc =>
+      'يتيح لك تغيير اختصار البحث خارج التطبيق. الاختصار الافتراضي Ctrl+Alt+D يعمل بالفعل، لذا هذه الخطوة اختيارية.';
+  @override
+  String get onboarding_global_lookup_android_body =>
+      'على Android، يمرّر النظام النص المحدد إلى Fushi عبر قائمة النص أو لوحة المشاركة. ولا يوجد اختصار عام قابل لإعادة التعيين.';
+  @override
+  String get onboarding_global_lookup_android_select_title =>
+      'حدّد نصًا في تطبيق آخر';
+  @override
+  String get onboarding_global_lookup_android_open_title => 'اختر Fushi';
+  @override
+  String get onboarding_global_lookup_android_open_body =>
+      'انقر على Fushi في قائمة تحديد النص. وإذا لم يظهر، فانقر على مشاركة ثم اختر Fushi من لوحة المشاركة.';
+  @override
+  String get onboarding_global_lookup_android_continue_title =>
+      'استخدم النافذة المنبثقة المستقلة';
+  @override
+  String get onboarding_global_lookup_android_continue_body =>
+      'يفتح البحث بمعزل عن التطبيق الأصلي. يمكنك النقر على كلمات أخرى داخله، وعند إغلاقه تعود إلى حيث كنت.';
+  @override
+  String get onboarding_feature_manual_resources =>
+      'استيراد القواميس والصوت يدويًا';
+  @override
+  String get onboarding_feature_manual_resources_hint =>
+      'Supplement the recommended pack, or import your own dictionaries, audiobooks, and pronunciation sources';
+  @override
+  String get onboarding_step_manual_resources_title =>
+      'جهّز القواميس والصوت يدويًا';
+  @override
+  String get onboarding_step_manual_resources_body =>
+      'Use this alongside the recommended pack or on its own. Import at least one dictionary before the lookup tutorial; audiobook and pronunciation audio are optional supplements.';
+  @override
+  String get onboarding_manual_dictionary_action => 'استيراد قاموس';
+  @override
+  String get onboarding_manual_dictionary_action_desc =>
+      'افتح مدير القواميس واستورد ملف قاموس أو أرشيفًا مدعومًا واحدًا على الأقل. فدروس البحث لا تفيد إلا بعد أن يعيد البحث تعريفًا فعليًا.';
+  @override
+  String get onboarding_manual_audiobook_action =>
+      'استيراد كتاب مع صوت الكتاب الصوتي';
+  @override
+  String get onboarding_manual_audiobook_action_desc =>
+      'افتح استيراد الكتب واختر الكتاب أو النص، والترجمة المتوافقة، وملفًا صوتيًا واحدًا أو أكثر. يحتاج الصوت إلى ترجمة كي يستطيع Fushi مطابقته مع الجمل.';
+  @override
+  String get onboarding_manual_pronunciation_action => 'إعداد صوت نطق الكلمات';
+  @override
+  String get onboarding_manual_pronunciation_action_desc =>
+      'أضف مصادر النطق المحلية أو عبر الإنترنت التي تستخدمها مداخل القاموس. وهذا منفصل عن صوت الكتاب الصوتي المرفق بكتاب.';
+  @override
+  String get onboarding_lookup_verify_action => 'تأكد من وجود الكلمة في قاموسك';
+  @override
+  String get onboarding_lookup_verify_action_desc =>
+      'افتح البحث، واكتب أي كلمة تتعلمها، ولا تتابع إلا بعد أن يعيد القاموس المثبَّت تعريفًا لها. ولا يفرض الدرس كلمة مثال ثابتة.';
+  @override
+  String get onboarding_step_first_anki_card_title => 'أنشئ أول بطاقة Anki';
+  @override
+  String get onboarding_step_first_anki_card_body =>
+      'لا تظهر هذه الخطوة إلا بعد أن يتصل هذا الإعداد بـ Anki ويُختار مجموعة ونوع ملاحظة صالحان للاستخدام.';
+  @override
+  String get onboarding_first_anki_lookup_title => 'ابدأ من نتيجة قاموس حقيقية';
+  @override
+  String get onboarding_first_anki_lookup_body =>
+      'ابحث عن كلمة يعرّفها قاموسك المثبَّت فعلًا. فلا توجد كلمة تدريب ثابتة قد لا تكون موجودة في قاموسك.';
+  @override
+  String get onboarding_first_anki_plus_title => 'انقر على زر الجمع في المدخل';
+  @override
+  String get onboarding_first_anki_plus_body =>
+      'يفتح زر الجمع منشئ البطاقات ومعه الكلمة الحالية ونطقها ومعناها والجملة والصوت والصورة المتاحة.';
+  @override
+  String get onboarding_first_anki_save_title => 'راجِع ثم احفظ';
+  @override
+  String get onboarding_first_anki_save_body =>
+      'أكّد المجموعة الهدف ونوع الملاحظة ومعاينة الحقول ثم احفظ. وافتح Anki للتأكد من وصول البطاقة الأولى.';
+  @override
+  String get onboarding_first_anki_action => 'فتح البحث وإنشاء بطاقة';
+  @override
+  String get onboarding_first_anki_action_desc =>
+      'اختر كلمة يظهر تعريفها، وانقر على زر الجمع الخاص بها، وراجع الحقول، ثم احفظها في مجموعة Anki المتصلة.';
+  @override
+  String get onboarding_step_click_lookup_body =>
+      'تأكد أولًا من كلمة يعرّفها قاموسك المثبَّت فعلًا. ثم استخدم الكلمة نفسها للتدرب على البحث المباشر في الكتب، وفي نص OCR للمانغا، وفي ترجمات الفيديو.';
+  @override
+  String get onboarding_click_lookup_tap_body =>
+      'على الهاتف، انقر على حرف من الكلمة التي تحققت منها؛ وعلى الحاسوب، انقر عليها بالزر الأيسر. يبدأ Fushi من هناك ويطابق أطول كلمة ممكنة.';
+  @override
+  String get onboarding_global_lookup_windows_select_body =>
+      'ظلّل الكلمة نفسها التي تأكدت من وجود تعريف لها في القاموس، واترك التحديد قائمًا.';
+  @override
+  String get onboarding_global_lookup_android_select_body =>
+      'اضغط مطولًا على الكلمة نفسها التي تحققت منها، ثم اسحب مقابض التحديد لتغطيها بالكامل.';
+  @override
+  String get game_lookup_attached_title => 'In-game lookup';
+  @override
+  String get game_lookup_attached_no_ocr =>
+      'No OCR · horizontal body text only';
+  @override
+  String get game_lookup_attached_mode => 'Mode';
+  @override
+  String get game_lookup_attached_mode_auto => 'Auto';
+  @override
+  String get game_lookup_attached_mode_native_only => 'Native only';
+  @override
+  String get game_lookup_attached_mode_attached_only => 'Calibrated layer only';
+  @override
+  String get game_lookup_attached_mode_off => 'Off';
+  @override
+  String get game_lookup_attached_status => 'State';
+  @override
+  String get game_lookup_attached_native_status => 'Native';
+  @override
+  String get game_lookup_attached_provider => 'Provider';
+  @override
+  String get game_lookup_attached_provider_unknown => 'Not reported';
+  @override
+  String get game_lookup_attached_profile => 'Profile';
+  @override
+  String get game_lookup_attached_profile_ready => 'Calibrated';
+  @override
+  String get game_lookup_attached_profile_missing => 'Not calibrated';
+  @override
+  String get game_lookup_attached_shield => 'Input shield';
+  @override
+  String get game_lookup_attached_shield_verified => 'Verified';
+  @override
+  String get game_lookup_attached_shield_unknown => 'Unknown';
+  @override
+  String get game_lookup_attached_shield_partial => 'Partial';
+  @override
+  String get game_lookup_attached_shield_known_uncovered => 'Known uncovered';
+  @override
+  String get game_lookup_attached_shield_faulted => 'Faulted';
+  @override
+  String get game_lookup_attached_risk => 'Click risk';
+  @override
+  String get game_lookup_attached_risk_safe => 'Not authorized';
+  @override
+  String get game_lookup_attached_risk_pending => 'Confirmation required';
+  @override
+  String get game_lookup_attached_risk_active =>
+      'Risk accepted · may double-trigger';
+  @override
+  String get game_lookup_attached_calibrate => 'Calibrate';
+  @override
+  String get game_lookup_attached_risk_accept => 'Accept click risk';
+  @override
+  String get game_lookup_attached_profile_clear => 'Clear profile';
+  @override
+  String get game_lookup_attached_thread_required =>
+      'Select one body-text thread before calibration.';
+  @override
+  String get game_lookup_attached_risk_title => 'Confirm raw-click risk';
+  @override
+  String get game_lookup_attached_risk_body =>
+      'The input shield is not verified for this executable. Clicking a glyph may also advance dialogue or trigger a choice. This authorization is stored only for the current executable hash and is revoked after an update.';
+  @override
+  String get game_lookup_attached_calibration_title => 'Calibrate body text';
+  @override
+  String get game_lookup_attached_preview => 'Current body text preview';
+  @override
+  String get game_lookup_attached_body_rect => 'Body rectangle';
+  @override
+  String get game_lookup_attached_left => 'Left';
+  @override
+  String get game_lookup_attached_top => 'Top';
+  @override
+  String get game_lookup_attached_width => 'Width';
+  @override
+  String get game_lookup_attached_height => 'Height';
+  @override
+  String get game_lookup_attached_font_family => 'Font family';
+  @override
+  String get game_lookup_attached_font_size => 'Font size / client height';
+  @override
+  String get game_lookup_attached_letter_spacing =>
+      'Letter spacing / client height';
+  @override
+  String get game_lookup_attached_line_height => 'Line height';
+  @override
+  String get game_lookup_attached_text_align => 'Horizontal alignment';
+  @override
+  String get game_lookup_attached_vertical_align => 'Vertical alignment';
+  @override
+  String get game_lookup_attached_align_left => 'Left';
+  @override
+  String get game_lookup_attached_align_center => 'Center';
+  @override
+  String get game_lookup_attached_align_right => 'Right';
+  @override
+  String get game_lookup_attached_align_top => 'Top';
+  @override
+  String get game_lookup_attached_align_bottom => 'Bottom';
+  @override
+  String get game_lookup_attached_probes_hint =>
+      'Click the first, middle, and last highlighted glyphs in the game, then confirm each character below.';
+  @override
+  String get game_lookup_attached_probe_start => 'First glyph';
+  @override
+  String get game_lookup_attached_probe_middle => 'Middle glyph';
+  @override
+  String get game_lookup_attached_probe_end => 'Last glyph';
+  @override
+  String get game_lookup_attached_calibration_commit => 'Save calibration';
+  @override
+  String get game_lookup_attached_calibration_failed =>
+      'Calibration was not applied. Check the body text, target window, and all three probes.';
+  @override
+  String get game_lookup_attached_calibration_short_text =>
+      'At least three characters are required for calibration probes.';
+  @override
+  String get game_lookup_attached_profile_clear_title =>
+      'Clear lookup profile?';
+  @override
+  String get game_lookup_attached_profile_clear_body =>
+      'The saved rectangle, text layout, and executable-specific click authorization will be removed.';
+  @override
+  String get game_lookup_attached_probe_waiting =>
+      'Waiting for matching in-game click';
+  @override
+  String get delete_choices_remember => 'تذكّر هذه الخيارات';
+  @override
+  String get network_proxy_mode_label => 'Proxy mode';
+  @override
+  String get network_proxy_mode_auto => 'Automatic';
+  @override
+  String get network_proxy_mode_auto_hint =>
+      'Use environment variables, then the enabled system proxy';
+  @override
+  String get network_proxy_mode_direct => 'Direct';
+  @override
+  String get network_proxy_mode_direct_hint => 'Disable proxy use for the app';
+  @override
+  String get network_proxy_mode_manual => 'Manual';
+  @override
+  String get network_proxy_mode_manual_hint =>
+      'Use the server and optional credentials below';
+  @override
+  String get network_proxy_manual_hint =>
+      'HTTP proxy server used by all public internet requests';
+  @override
+  String get network_proxy_username => 'Proxy username (optional)';
+  @override
+  String get network_proxy_password => 'Proxy password (optional)';
+  @override
+  String get storage_category_backups => 'Local backups';
+  @override
+  String storage_entry_backups_label({required Object n}) =>
+      '${n} backup archive(s)';
+  @override
+  String get storage_entry_delete_backups_confirm_body =>
+      'Delete these temporary local backup archives? Make sure you have saved or shared any copy you still need.';
+  @override
+  String get update_download_source_preference => 'Preferred download source';
+  @override
+  String get update_download_source_preference_hint =>
+      'The selected source is tried first; unavailable sources still fall back automatically.';
+  @override
+  String get update_download_source_auto => 'Automatic (recommended)';
+  @override
+  String get update_download_source_cloudflare => 'Cloudflare mirror';
+  @override
+  String get update_download_source_github => 'GitHub direct';
+  @override
+  String update_download_source_proxy({required Object host}) =>
+      'Proxy: ${host}';
 }

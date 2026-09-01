@@ -7,6 +7,7 @@ import 'package:fushi/src/media/video/video_subtitle_overlay.dart';
 import 'package:fushi/src/shortcuts/input_binding.dart';
 import 'package:fushi/src/shortcuts/shortcut_action.dart';
 import 'package:fushi/src/shortcuts/shortcut_defaults.dart';
+import 'package:fushi/src/shortcuts/shortcut_registry.dart';
 import 'package:fushi_audio/fushi_audio.dart';
 
 import '../../pages/video_fushi_page_source_corpus.dart';
@@ -18,8 +19,8 @@ import '../../pages/video_fushi_page_source_corpus.dart';
 ///  ① 纯移动函数 [moveSubtitleCaretEntry]（几何行移/跳行/跳过模糊/边界原地）；
 ///  ② overlay 真行为——caretEntryIndex 画光标环、模糊字符不画、caret 视图绑定
 ///     （entryCount / hitAt / anchorEntry 主字幕优先）；
-///  ③ 键盘接管纯函数 [guardVideoShortcutsWithSubtitleCaret]（激活期无修饰方向键
-///     改走光标、Ctrl 组合键放行、未激活零变化）；
+///  ③ 页级 press-time 键盘通道（激活期无修饰方向键改走光标、Ctrl 组合键仍走
+///     视频动作、未激活零变化）；
 ///  ④ 默认键位——videoEnterCaret 桌面默认 Enter + 手柄 Select；
 ///  ⑤ [SubtitleCaretPauseTracker]「暂停→再播放」迁移（外部恢复播放自动退光标）。
 /// 截取 [source] 中 [start] 标记到 [end] 标记之间的源码片段（含 [start]、不含 [end]）。
@@ -103,24 +104,28 @@ void main() {
       }
       c.debugUpdateCueForPosition(1000);
       final VideoSubtitleHitTester hitTester = VideoSubtitleHitTester();
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: VideoSubtitleOverlay(
-            controller: c,
-            hitTester: hitTester,
-            caretEntryIndex: caretEntryIndex,
-            blurEnabled: blurEnabled,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: VideoSubtitleOverlay(
+              controller: c,
+              hitTester: hitTester,
+              caretEntryIndex: caretEntryIndex,
+              blurEnabled: blurEnabled,
+            ),
           ),
         ),
-      ));
+      );
       await tester.pump();
       return hitTester;
     }
 
-    Finder caretRing() => find.byWidgetPredicate((Widget w) =>
-        w is Container &&
-        w.foregroundDecoration is BoxDecoration &&
-        (w.foregroundDecoration as BoxDecoration?)?.border != null);
+    Finder caretRing() => find.byWidgetPredicate(
+      (Widget w) =>
+          w is Container &&
+          w.foregroundDecoration is BoxDecoration &&
+          (w.foregroundDecoration as BoxDecoration?)?.border != null,
+    );
 
     testWidgets('caretEntryIndex 命中字符画光标环；null 不画', (tester) async {
       await pumpWithCaret(tester, caretEntryIndex: 1);
@@ -135,8 +140,9 @@ void main() {
       expect(caretRing(), findsNothing);
     });
 
-    testWidgets('caret 视图：entryCount / hitAt / anchorEntry 与登记表同源',
-        (tester) async {
+    testWidgets('caret 视图：entryCount / hitAt / anchorEntry 与登记表同源', (
+      tester,
+    ) async {
       final VideoSubtitleHitTester t2 = await pumpWithCaret(tester);
       expect(t2.caretEntryCount(), 3, reason: '「あいう」逐 grapheme 登记 3 条');
       final SubtitleCharHit? hit = t2.caretHitAt(1);
@@ -149,8 +155,10 @@ void main() {
     });
 
     testWidgets('主+副字幕同时在屏：锚点优先主字幕层（副层是翻译参考）', (tester) async {
-      final VideoSubtitleHitTester t2 =
-          await pumpWithCaret(tester, withSecondary: true);
+      final VideoSubtitleHitTester t2 = await pumpWithCaret(
+        tester,
+        withSecondary: true,
+      );
       expect(t2.caretEntryCount(), 5, reason: '主 3 + 副 2');
       final int anchor = t2.caretAnchorEntry();
       final SubtitleCharHit? hit = t2.caretHitAt(anchor);
@@ -162,8 +170,10 @@ void main() {
     testWidgets('听力沉浸模糊开着但已暂停：字幕显形（BUG-199），锚点可用', (tester) async {
       // 进入选词光标前必暂停，而模糊只在播放中生效——暂停即显形，故听力沉浸
       // 模式下选词光标天然可用，不需要额外「先显形再选词」的特例分支。
-      final VideoSubtitleHitTester t2 =
-          await pumpWithCaret(tester, blurEnabled: true);
+      final VideoSubtitleHitTester t2 = await pumpWithCaret(
+        tester,
+        blurEnabled: true,
+      );
       expect(t2.caretAnchorEntry(), 0);
     });
 
@@ -171,68 +181,116 @@ void main() {
       final VideoPlayerController c = VideoPlayerController();
       addTearDown(c.dispose);
       final VideoSubtitleHitTester hitTester = VideoSubtitleHitTester();
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: VideoSubtitleOverlay(controller: c, hitTester: hitTester),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: VideoSubtitleOverlay(controller: c, hitTester: hitTester),
+          ),
         ),
-      ));
+      );
       await tester.pump();
       expect(hitTester.caretEntryCount(), 0);
       expect(hitTester.caretAnchorEntry(), -1);
     });
   });
 
-  group('③ guardVideoShortcutsWithSubtitleCaret 键盘接管', () {
-    Map<ShortcutActivator, VoidCallback> base(List<String> log) =>
-        <ShortcutActivator, VoidCallback>{
-          const SingleActivator(LogicalKeyboardKey.arrowLeft,
-              includeRepeats: true): () => log.add('seekBack'),
-          const SingleActivator(LogicalKeyboardKey.arrowLeft,
-              control: true, includeRepeats: true): () => log.add('prevCue'),
-        };
+  /// 光标激活期的键盘接管（方案 D 之后住在两个纯函数里）：
+  ///
+  /// · [videoCaretKeyboardTakesPrecedence] 决定「这次按键该不该抢在注册表解析之前」；
+  /// · [resolveVideoKeyboardShortcut] 决定「没被光标抢走的键解析成哪个视频动作」。
+  ///
+  /// 两条合起来就是原来那条不变式：**裸方向键在光标激活期改走光标，Ctrl 组合键放行**。
+  /// 少了硬修饰豁免，光标一开 Ctrl+← 就从「上一句字幕」变成「光标左移一字」。
+  group('③ 光标激活期的键盘接管', () {
+    KeyDownEvent down(LogicalKeyboardKey key, PhysicalKeyboardKey physical) =>
+        KeyDownEvent(
+          logicalKey: key,
+          physicalKey: physical,
+          timeStamp: Duration.zero,
+        );
 
-    void runActivator(
-      Map<ShortcutActivator, VoidCallback> map, {
-      required bool ctrl,
-    }) {
-      for (final MapEntry<ShortcutActivator, VoidCallback> e in map.entries) {
-        final SingleActivator a = e.key as SingleActivator;
-        if (a.control == ctrl) e.value();
-      }
-    }
+    final KeyDownEvent arrowLeft = down(
+      LogicalKeyboardKey.arrowLeft,
+      PhysicalKeyboardKey.arrowLeft,
+    );
 
-    test('激活期：无修饰方向键改走光标，Ctrl 组合键放行', () {
-      final List<String> log = <String>[];
-      final List<LogicalKeyboardKey> caretKeys = <LogicalKeyboardKey>[];
-      final Map<ShortcutActivator, VoidCallback> guarded =
-          guardVideoShortcutsWithSubtitleCaret(
-        base(log),
-        isCaretActive: () => true,
-        runCaretKey: (LogicalKeyboardKey key, {required bool shift}) {
-          caretKeys.add(key);
-          return true;
-        },
+    test('激活期：裸方向键归光标，Ctrl 组合键放行给注册表', () {
+      expect(
+        videoCaretKeyboardTakesPrecedence(
+          event: arrowLeft,
+          modifiers: const <ModifierKey>{},
+          caretActive: true,
+          hasEditableFocus: false,
+        ),
+        isTrue,
+        reason: '裸 ← 在光标激活期不得 seek，必须先被光标路由接走',
       );
-      runActivator(guarded, ctrl: false);
-      expect(log, isEmpty, reason: '裸 ← 在光标激活期不得 seek');
-      expect(caretKeys, <LogicalKeyboardKey>[LogicalKeyboardKey.arrowLeft]);
-
-      runActivator(guarded, ctrl: true);
-      expect(log, <String>['prevCue'], reason: 'Ctrl+← 上一句照常放行');
+      expect(
+        videoCaretKeyboardTakesPrecedence(
+          event: arrowLeft,
+          modifiers: const <ModifierKey>{ModifierKey.ctrl},
+          caretActive: true,
+          hasEditableFocus: false,
+        ),
+        isFalse,
+        reason: 'Ctrl+← 是「上一句字幕」，不是光标键，必须放行',
+      );
     });
 
-    test('未激活：零行为变化', () {
-      final List<String> log = <String>[];
-      final Map<ShortcutActivator, VoidCallback> guarded =
-          guardVideoShortcutsWithSubtitleCaret(
-        base(log),
-        isCaretActive: () => false,
-        runCaretKey: (LogicalKeyboardKey key, {required bool shift}) {
-          fail('未激活不得进光标路由');
-        },
+    test('Shift 不算硬修饰：Shift+Tab 仍归光标（后退一字，与阅读器一致）', () {
+      expect(
+        videoCaretKeyboardTakesPrecedence(
+          event: down(LogicalKeyboardKey.tab, PhysicalKeyboardKey.tab),
+          modifiers: const <ModifierKey>{ModifierKey.shift},
+          caretActive: true,
+          hasEditableFocus: false,
+        ),
+        isTrue,
       );
-      runActivator(guarded, ctrl: false);
-      expect(log, <String>['seekBack']);
+    });
+
+    test('未激活 / 文本框持焦：零接管', () {
+      expect(
+        videoCaretKeyboardTakesPrecedence(
+          event: arrowLeft,
+          modifiers: const <ModifierKey>{},
+          caretActive: false,
+          hasEditableFocus: false,
+        ),
+        isFalse,
+        reason: '未激活不得进光标路由',
+      );
+      expect(
+        videoCaretKeyboardTakesPrecedence(
+          event: arrowLeft,
+          modifiers: const <ModifierKey>{},
+          caretActive: true,
+          hasEditableFocus: true,
+        ),
+        isFalse,
+        reason: '文本框持焦时键盘整条通道让给输入',
+      );
+    });
+
+    test('被放行的 Ctrl+← 在主通道里确实解析成「上一句字幕」（闭合另一半）', () {
+      final FushiShortcutRegistry registry = FushiShortcutRegistry()
+        ..loadDefaults(TargetPlatform.windows);
+      expect(
+        resolveVideoKeyboardShortcut(
+          registry,
+          arrowLeft,
+          modifiers: const <ModifierKey>{ModifierKey.ctrl},
+          hasEditableFocus: false,
+          hasVisiblePopup: false,
+          videoSurfaceHoldsFocus: true,
+          panelHoldsFocusNavigation: false,
+        ),
+        const VideoKeyboardResolution(
+          VideoKeyboardDispatch.run,
+          ShortcutAction.videoPreviousSubtitle,
+        ),
+        reason: '光标豁免只有在主通道真的把 Ctrl+← 解析成上一句时才有意义',
+      );
     });
   });
 
@@ -243,8 +301,9 @@ void main() {
   /// 续播后光标还活着、方向键继续被吞）。
   group('⑤ SubtitleCaretPauseTracker 暂停→再播放迁移', () {
     test('播放中进光标：pause 未落地那几个 tick 不得自退，落地后再播放才退', () {
-      final SubtitleCaretPauseTracker t =
-          SubtitleCaretPauseTracker(playingAtEntry: true);
+      final SubtitleCaretPauseTracker t = SubtitleCaretPauseTracker(
+        playingAtEntry: true,
+      );
       expect(t.sawPaused, isFalse);
       // fire-and-forget pause 还没落地：仍是 playing，不能当场自退。
       expect(t.onTick(playing: true), isFalse);
@@ -256,8 +315,9 @@ void main() {
     });
 
     test('本来就暂停时进光标：外部恢复播放**必须**退光标（C1 主诉）', () {
-      final SubtitleCaretPauseTracker t =
-          SubtitleCaretPauseTracker(playingAtEntry: false);
+      final SubtitleCaretPauseTracker t = SubtitleCaretPauseTracker(
+        playingAtEntry: false,
+      );
       expect(t.sawPaused, isTrue, reason: '进入时已暂停 = 暂停已生效，不能等一个永远不会来的暂停通知');
       // 暂停下的 tick（跳句 / seek 重锚）不退。
       expect(t.onTick(playing: false), isFalse);
@@ -266,13 +326,18 @@ void main() {
     });
 
     test('退出后再进入是全新会话（旧标记不串场）', () {
-      final SubtitleCaretPauseTracker first =
-          SubtitleCaretPauseTracker(playingAtEntry: false);
+      final SubtitleCaretPauseTracker first = SubtitleCaretPauseTracker(
+        playingAtEntry: false,
+      );
       expect(first.onTick(playing: true), isTrue);
-      final SubtitleCaretPauseTracker second =
-          SubtitleCaretPauseTracker(playingAtEntry: true);
-      expect(second.onTick(playing: true), isFalse,
-          reason: '新会话在播放中进入，pause 未落地前不得自退');
+      final SubtitleCaretPauseTracker second = SubtitleCaretPauseTracker(
+        playingAtEntry: true,
+      );
+      expect(
+        second.onTick(playing: true),
+        isFalse,
+        reason: '新会话在播放中进入，pause 未落地前不得自退',
+      );
     });
   });
 
@@ -288,8 +353,11 @@ void main() {
         'void _exitSubtitleCaret({required bool resume}) {',
         '/// 光标会话收尾的**唯一出口**',
       );
-      expect(exit, contains('_finishSubtitleCaretSession(resume: resume)'),
-          reason: '退出必须走唯一收尾出口，不得各写一份');
+      expect(
+        exit,
+        contains('_finishSubtitleCaretSession(resume: resume)'),
+        reason: '退出必须走唯一收尾出口，不得各写一份',
+      );
 
       final String finish = _sliceSource(
         src,
@@ -297,12 +365,21 @@ void main() {
         '/// 光标会话期间监听播放器',
       );
       // 收尾三件事必须绑在一起，少做任何一件就是僵尸态。
-      expect(finish, contains('removeListener(_onCaretControllerTick)'),
-          reason: '不摘监听器 → 下次进光标重复注册');
-      expect(finish, contains('_caretPauseTracker = null'),
-          reason: '不清追踪器 → 旧会话的暂停迁移状态串进下一次会话');
-      expect(finish, contains('_subtitleCaretEntry = null'),
-          reason: '不清锚点 → 字幕上留一圈光标环');
+      expect(
+        finish,
+        contains('removeListener(_onCaretControllerTick)'),
+        reason: '不摘监听器 → 下次进光标重复注册',
+      );
+      expect(
+        finish,
+        contains('_caretPauseTracker = null'),
+        reason: '不清追踪器 → 旧会话的暂停迁移状态串进下一次会话',
+      );
+      expect(
+        finish,
+        contains('_subtitleCaretEntry = null'),
+        reason: '不清锚点 → 字幕上留一圈光标环',
+      );
 
       final String popup = _sliceSource(
         src,
@@ -313,7 +390,8 @@ void main() {
       expect(
         popup,
         contains('if (!_videoCaretActive) _finishSubtitleCaretSession('),
-        reason: 'resumePopupCaretForHardwareNav 在弹窗已消失时把 surface 直接清成'
+        reason:
+            'resumePopupCaretForHardwareNav 在弹窗已消失时把 surface 直接清成'
             ' none 且不经 caretSetState；不在此补收尾就会留下光标环 + 未摘监听器 +'
             ' 未复位暂停的僵尸态',
       );
@@ -329,20 +407,19 @@ void main() {
         gp,
         contains('final CaretAction? caretAction = shoulderOnSubtitleSurface'),
       );
-      expect(
-        gp,
-        contains('? null'),
-      );
+      expect(gp, contains('? null'));
       expect(
         gp,
         contains(': ReaderCaretRouter.decideGamepad(button);'),
-        reason: '主面无词典段语义：LT/RT 走 decideGamepad 会被映射成 jumpDict* 并'
+        reason:
+            '主面无词典段语义：LT/RT 走 decideGamepad 会被映射成 jumpDict* 并'
             '静默 return（用户按 RT 全屏 / LT 重听毫无反应）',
       );
       expect(
         gp,
         contains('(shoulderOnSubtitleSurface ||'),
-        reason: '主面的放行白名单必须把这两个扳机算进去，否则末尾的 return true'
+        reason:
+            '主面的放行白名单必须把这两个扳机算进去，否则末尾的 return true'
             '仍会把它们吞掉',
       );
     });

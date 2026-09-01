@@ -60,6 +60,13 @@ class ProfileKeys {
     // network, not a reading profile — never per-profile snapshot.
     'update_custom_proxy',
     'network_proxy_p2p_enabled',
+    // BUG-1980 同族：出口模式（自动/直连/手动）描述的是这台设备的网络，地址已经是
+    // 设备本地的，模式却跟着 Profile 走 = 切一次 Profile 就把全局网络出口翻掉，
+    // 事后极难归因。
+    'network_proxy_mode',
+    // 更新下载源与 update_beta_channel / update_debug_channel / update_auto_install
+    // 同族（HBK-AUDIT-045：所有更新通道/策略键保持 app-global）。
+    'update_download_source',
     // TODO-1961: the download folder (and the history of folders we still have
     // to recognise) describes this device's disks, not a reading profile.
     // Snapshotting it would make a profile switch redirect downloads onto a
@@ -142,23 +149,23 @@ class ProfileKeys {
   }
 
   static Map<String, String> ankiSettingsToMap(AnkiSettings s) => {
-        'selectedDeckId': s.selectedDeckId?.toString() ?? '',
-        'selectedDeckName': s.selectedDeckName ?? '',
-        'selectedNoteTypeId': s.selectedNoteTypeId?.toString() ?? '',
-        'selectedNoteTypeName': s.selectedNoteTypeName ?? '',
-        'fieldMappings': jsonEncode(s.fieldMappings),
-        'tags': s.tags,
-        'tagIncludeHibiki': s.tagIncludeHibiki.toString(),
-        'tagIncludeCategory': s.tagIncludeCategory.toString(),
-        'allowDupes': s.allowDupes.toString(),
-        'compactGlossaries': s.compactGlossaries.toString(),
-        'embedMedia': s.embedMedia.toString(),
-        // 两个范围单选必须进快照：[mapToAnkiSettings] 重建的是一个全新
-        // AnkiSettings，不在这里的字段会在切 Profile 时静默回默认值
-        // （overwriteScope 原本就漏了，顺手一并补上）。
-        'overwriteScope': s.overwriteScope.name,
-        'duplicateScope': s.duplicateScope.name,
-      };
+    'selectedDeckId': s.selectedDeckId?.toString() ?? '',
+    'selectedDeckName': s.selectedDeckName ?? '',
+    'selectedNoteTypeId': s.selectedNoteTypeId?.toString() ?? '',
+    'selectedNoteTypeName': s.selectedNoteTypeName ?? '',
+    'fieldMappings': jsonEncode(s.fieldMappings),
+    'tags': s.tags,
+    'tagIncludeHibiki': s.tagIncludeHibiki.toString(),
+    'tagIncludeCategory': s.tagIncludeCategory.toString(),
+    'allowDupes': s.allowDupes.toString(),
+    'compactGlossaries': s.compactGlossaries.toString(),
+    'embedMedia': s.embedMedia.toString(),
+    // 两个范围单选必须进快照：[mapToAnkiSettings] 重建的是一个全新
+    // AnkiSettings，不在这里的字段会在切 Profile 时静默回默认值
+    // （overwriteScope 原本就漏了，顺手一并补上）。
+    'overwriteScope': s.overwriteScope.name,
+    'duplicateScope': s.duplicateScope.name,
+  };
 
   static AnkiSettings mapToAnkiSettings(
     Map<String, String> m,
@@ -177,8 +184,10 @@ class ProfileKeys {
           : null,
       availableDecks: current.availableDecks,
       availableNoteTypes: current.availableNoteTypes,
-      fieldMappings:
-          _parseFieldMappings(m['fieldMappings'], current.fieldMappings),
+      fieldMappings: _parseFieldMappings(
+        m['fieldMappings'],
+        current.fieldMappings,
+      ),
       tags: m['tags'] ?? '',
       tagIncludeHibiki: m.containsKey('tagIncludeHibiki')
           ? m['tagIncludeHibiki'] == 'true'
@@ -188,8 +197,9 @@ class ProfileKeys {
           : true,
       allowDupes: m['allowDupes'] == 'true',
       compactGlossaries: m['compactGlossaries'] == 'true',
-      embedMedia:
-          m.containsKey('embedMedia') ? m['embedMedia'] == 'true' : true,
+      embedMedia: m.containsKey('embedMedia')
+          ? m['embedMedia'] == 'true'
+          : true,
       // 旧快照没有这两个键 → 保留当前值（而不是回默认），否则一次切
       // Profile 就把用户已选的范围抹掉。
       overwriteScope: m.containsKey('overwriteScope')
@@ -222,7 +232,8 @@ class ProfileKeys {
       final dynamic decoded = jsonDecode(raw);
       if (decoded is Map) {
         return decoded.map(
-            (dynamic k, dynamic v) => MapEntry(k.toString(), v.toString()));
+          (dynamic k, dynamic v) => MapEntry(k.toString(), v.toString()),
+        );
       }
     } catch (_) {
       // Fall through to the fallback below.

@@ -47,6 +47,11 @@ void main() {
     test('比较前去空白：引擎在段间插的换行不该让同一句判成两句', () {
       expect(isProgressiveTextUpdate('あのね、', 'あのね、\n  きょうはいいてんきですね'), isTrue);
     });
+
+    test('字符相同但换行变化是排版刷新，完全相同文本仍不是', () {
+      expect(isWhitespaceOnlyLayoutRefresh('前半後半', '前半\n後半'), isTrue);
+      expect(isWhitespaceOnlyLayoutRefresh('前半後半', '前半後半'), isFalse);
+    });
   });
 
   group('TexthookerService 折叠行为', () {
@@ -179,6 +184,16 @@ void main() {
             '只折紧邻上一条的话 ① 会留下，第一句照样出现两次。',
       );
       expect(service.entries.single.text, kZatoFullLine);
+    });
+
+    test('同句仅更新换行时原地采用最新排版，不新增重复行', () {
+      final TexthookerLineEntry? first = append('大丈夫、話してみた感じ、後半', seq: 1);
+      final TexthookerLineEntry? refreshed = append('大丈夫、話してみた感じ、\n後半', seq: 2);
+
+      expect(service.entries, hasLength(1));
+      expect(refreshed!.id, first!.id, reason: '排版刷新不能换掉制卡/查词使用的行身份');
+      expect(service.entries.single.text, '大丈夫、話してみた感じ、\n後半');
+      expect(service.lastAppendedDelta, isEmpty, reason: '仅换行不应重复计入学习字数');
     });
 
     test('折叠后 lineId 保持最早那条（浮窗/游戏内卡片的身份不跳）', () {
