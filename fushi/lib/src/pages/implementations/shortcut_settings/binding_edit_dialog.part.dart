@@ -6,10 +6,10 @@
 // moved here with their sole call sites.
 part of '../shortcut_settings_page.dart';
 
-/// TODO-1088: whether the running platform has a mouse whose non-primary buttons
-/// can be bound. Desktop (Windows/Linux/macOS) yes; mobile (Android/iOS) has no
-/// mouse, so the capture entry is hidden there and the mouse section stays a
-/// read-only display of any inherited bindings.
+/// TODO-1088: whether the running platform has a mouse whose buttons can be
+/// bound. Desktop (Windows/Linux/macOS) yes; mobile (Android/iOS) has no mouse,
+/// so the capture entry is hidden there and the mouse section stays a read-only
+/// display of any inherited bindings.
 bool _mouseBindingSupported(TargetPlatform platform) {
   switch (platform) {
     case TargetPlatform.windows:
@@ -89,7 +89,7 @@ class _ShortcutBindingEditDialogState extends State<ShortcutBindingEditDialog> {
   String? _conflictWarning;
   bool _capturing = false;
   // TODO-1088: distinct capture phase for mouse buttons — a bordered region that
-  // records the next non-primary mouse press. Kept separate from [_capturing]
+  // records the next mouse press. Kept separate from [_capturing]
   // (keyboard) so pressing a key while mouse-capturing doesn't record a key, and
   // vice-versa.
   bool _mouseCapturing = false;
@@ -203,26 +203,21 @@ class _ShortcutBindingEditDialogState extends State<ShortcutBindingEditDialog> {
   }
 
   /// 滚轮捕获区里的一次滚动。修饰键读 [HardwareKeyboard]（PointerScrollEvent 不带
-  /// 修饰键位）；**裸滚轮不可绑定**——弹窗里裸滚轮永远是滚动内容，绑了也永不触发，
-  /// 故此时保持捕获态并给出提示，而不是记录一条死绑定。
+  /// 修饰键位）。裸滚轮也允许显式绑定；运行时只有在注册表中确实存在空修饰键绑定时
+  /// 才会消费它，未绑定时仍保持普通滚动。
   void _onWheelCapturePointerSignal(PointerSignalEvent event) {
     if (event is! PointerScrollEvent) return;
-    final double dy = event.scrollDelta.dy;
-    if (dy == 0) return;
     final Set<ModifierKey> modifiers = <ModifierKey>{};
     final HardwareKeyboard hw = HardwareKeyboard.instance;
     if (hw.isControlPressed) modifiers.add(ModifierKey.ctrl);
     if (hw.isShiftPressed) modifiers.add(ModifierKey.shift);
     if (hw.isAltPressed) modifiers.add(ModifierKey.alt);
     if (hw.isMetaPressed) modifiers.add(ModifierKey.meta);
-    if (modifiers.isEmpty) {
-      setState(() => _conflictWarning = t.shortcut_wheel_needs_modifier);
-      return;
-    }
-    unawaited(_addWheel(WheelBinding(
-      dy > 0 ? WheelDirection.down : WheelDirection.up,
-      modifiers: modifiers,
-    )));
+    final WheelDirection? direction = wheelDirectionFromScrollDelta(
+      event.scrollDelta,
+    );
+    if (direction == null) return;
+    unawaited(_addWheel(WheelBinding(direction, modifiers: modifiers)));
   }
 
   /// 与 [_addMouse] 同形的三段式：草稿内重复 → 同组冲突 → 确认后重分配。
@@ -280,10 +275,11 @@ class _ShortcutBindingEditDialogState extends State<ShortcutBindingEditDialog> {
   }
 
   /// TODO-1088: handle a raw pointer-down inside the mouse-capture region. Maps
-  /// the pressed button to its DOM number; the excluded primary button and
-  /// unknown bitmasks are ignored (capture stays armed). Delegates to [_addMouse]
-  /// which runs the same duplicate/conflict/reassignment flow as gamepad adds.
+  /// the pressed button to its DOM number; unknown bitmasks are ignored (capture
+  /// stays armed). Delegates to [_addMouse] which runs the same
+  /// duplicate/conflict/reassignment flow as gamepad adds.
   void _onMouseCapturePointerDown(PointerDownEvent event) {
+    if (event.kind != PointerDeviceKind.mouse) return;
     final int? button = _domButtonFromPointerButtons(event.buttons);
     if (button == null) return;
     unawaited(_addMouse(button));
@@ -440,9 +436,7 @@ class _ShortcutBindingEditDialogState extends State<ShortcutBindingEditDialog> {
     });
   }
 
-  Future<bool> _showConflictReassignmentDialog(
-    ShortcutAction conflict,
-  ) async {
+  Future<bool> _showConflictReassignmentDialog(ShortcutAction conflict) async {
     final bool? confirmed = await showAppDialog<bool>(
       context: context,
       builder: (BuildContext ctx) {
@@ -467,11 +461,7 @@ class _ShortcutBindingEditDialogState extends State<ShortcutBindingEditDialog> {
               tokens.spacing.card,
               tokens.spacing.card,
             ),
-            body: Text(
-              t.shortcut_conflict_replace_confirm(
-                s: conflict.label,
-              ),
-            ),
+            body: Text(t.shortcut_conflict_replace_confirm(s: conflict.label)),
             footer: Wrap(
               alignment: WrapAlignment.end,
               spacing: tokens.spacing.gap,
@@ -594,7 +584,8 @@ class _ShortcutBindingEditDialogState extends State<ShortcutBindingEditDialog> {
     final bool canAddKeyboard = channels.contains(ShortcutChannel.keyboard);
     final bool canAddGamepad = channels.contains(ShortcutChannel.gamepad);
     // 鼠标额外要求平台真有非主键鼠标（移动端只读不加，TODO-1088 既有契约）。
-    final bool canAddMouse = channels.contains(ShortcutChannel.mouse) &&
+    final bool canAddMouse =
+        channels.contains(ShortcutChannel.mouse) &&
         _mouseBindingSupported(defaultTargetPlatform);
     final bool canAddWheel = channels.contains(ShortcutChannel.wheel);
 
@@ -624,10 +615,7 @@ class _ShortcutBindingEditDialogState extends State<ShortcutBindingEditDialog> {
           children: <Widget>[
             // Keyboard section
             if (showKeyboard) ...<Widget>[
-              Text(
-                t.shortcut_keyboard,
-                style: themeData.textTheme.labelLarge,
-              ),
+              Text(t.shortcut_keyboard, style: themeData.textTheme.labelLarge),
               SizedBox(height: tokens.spacing.gap / 2),
               Wrap(
                 spacing: tokens.spacing.gap / 2,
@@ -658,8 +646,9 @@ class _ShortcutBindingEditDialogState extends State<ShortcutBindingEditDialog> {
                           horizontal: tokens.spacing.gap,
                         ),
                         decoration: BoxDecoration(
-                          border:
-                              Border.all(color: themeData.colorScheme.primary),
+                          border: Border.all(
+                            color: themeData.colorScheme.primary,
+                          ),
                           borderRadius: tokens.radii.controlRadius,
                         ),
                         child: Text(
@@ -692,10 +681,7 @@ class _ShortcutBindingEditDialogState extends State<ShortcutBindingEditDialog> {
             // Gamepad section
             if (showGamepad) ...<Widget>[
               if (showKeyboard) const Divider(height: 24),
-              Text(
-                t.shortcut_gamepad,
-                style: themeData.textTheme.labelLarge,
-              ),
+              Text(t.shortcut_gamepad, style: themeData.textTheme.labelLarge),
               SizedBox(height: tokens.spacing.gap / 2),
               Wrap(
                 spacing: tokens.spacing.gap / 2,
@@ -722,11 +708,11 @@ class _ShortcutBindingEditDialogState extends State<ShortcutBindingEditDialog> {
                       actions: <Type, Action<Intent>>{
                         GamepadButtonIntent:
                             CallbackAction<GamepadButtonIntent>(
-                          onInvoke: (GamepadButtonIntent intent) {
-                            _recordCapturedGamepadButton(intent.button);
-                            return true;
-                          },
-                        ),
+                              onInvoke: (GamepadButtonIntent intent) {
+                                _recordCapturedGamepadButton(intent.button);
+                                return true;
+                              },
+                            ),
                       },
                       child: Focus(
                         focusNode: _gamepadCaptureFocusNode,
@@ -818,7 +804,7 @@ class _ShortcutBindingEditDialogState extends State<ShortcutBindingEditDialog> {
 
             // Mouse section (TODO-1088): editable. Existing bindings render as
             // deletable chips; on desktop a capture region records the next
-            // non-primary mouse press into a binding, reusing the same
+            // mouse press into a binding, reusing the same
             // duplicate/conflict/reassignment path as the keyboard/gamepad
             // channels. On mobile there is no mouse, so the capture entry is
             // hidden and only inherited bindings (if any) show read-only — Never
@@ -903,10 +889,7 @@ class _ShortcutBindingEditDialogState extends State<ShortcutBindingEditDialog> {
                   _mouse.isNotEmpty ||
                   channels.contains(ShortcutChannel.mouse))
                 const Divider(height: 24),
-              Text(
-                t.shortcut_wheel,
-                style: themeData.textTheme.labelLarge,
-              ),
+              Text(t.shortcut_wheel, style: themeData.textTheme.labelLarge),
               SizedBox(height: tokens.spacing.gap / 2),
               Wrap(
                 spacing: tokens.spacing.gap / 2,
@@ -987,10 +970,7 @@ class _ShortcutBindingEditDialogState extends State<ShortcutBindingEditDialog> {
           spacing: tokens.spacing.gap,
           runSpacing: tokens.spacing.gap,
           children: <Widget>[
-            TextButton(
-              onPressed: _clearAll,
-              child: Text(t.shortcut_clear),
-            ),
+            TextButton(onPressed: _clearAll, child: Text(t.shortcut_clear)),
             adaptiveDialogAction(
               context: context,
               onPressed: () => Navigator.pop(context),
@@ -1003,21 +983,27 @@ class _ShortcutBindingEditDialogState extends State<ShortcutBindingEditDialog> {
                 context,
                 ShortcutBindingEditResult(
                   bindings: ShortcutBindingSet(
-                    keyboardBindings:
-                        List<InputBinding>.unmodifiable(_keyboard),
-                    gamepadBindings:
-                        List<GamepadBinding>.unmodifiable(_gamepad),
+                    keyboardBindings: List<InputBinding>.unmodifiable(
+                      _keyboard,
+                    ),
+                    gamepadBindings: List<GamepadBinding>.unmodifiable(
+                      _gamepad,
+                    ),
                     mouseBindings: List<MouseBinding>.unmodifiable(_mouse),
                     wheelBindings: List<WheelBinding>.unmodifiable(_wheel),
                   ),
-                  keyboardReassignments:
-                      List<InputBinding>.unmodifiable(_keyboardReassignments),
-                  gamepadReassignments:
-                      List<GamepadBinding>.unmodifiable(_gamepadReassignments),
-                  mouseReassignments:
-                      List<MouseBinding>.unmodifiable(_mouseReassignments),
-                  wheelReassignments:
-                      List<WheelBinding>.unmodifiable(_wheelReassignments),
+                  keyboardReassignments: List<InputBinding>.unmodifiable(
+                    _keyboardReassignments,
+                  ),
+                  gamepadReassignments: List<GamepadBinding>.unmodifiable(
+                    _gamepadReassignments,
+                  ),
+                  mouseReassignments: List<MouseBinding>.unmodifiable(
+                    _mouseReassignments,
+                  ),
+                  wheelReassignments: List<WheelBinding>.unmodifiable(
+                    _wheelReassignments,
+                  ),
                 ),
               ),
               child: Text(MaterialLocalizations.of(context).okButtonLabel),

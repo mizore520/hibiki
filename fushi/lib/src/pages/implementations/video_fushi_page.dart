@@ -110,9 +110,8 @@ import 'package:fushi/src/shortcuts/input_binding.dart'
         GamepadButton,
         InputBinding,
         activeModifierKeys,
-        domMouseButtonFromPointerButtons;
-import 'package:fushi/src/shortcuts/shortcut_registry.dart'
-    show FushiShortcutRegistry;
+        domMouseButtonFromPointerButtons,
+        wheelDirectionFromScrollDelta;
 import 'package:fushi/src/shortcuts/reader_caret_router.dart'
     show CaretAction, ReaderCaretRouter;
 import 'package:fushi/src/shortcuts/window_fullscreen_hosts.dart'
@@ -1415,6 +1414,7 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       VideoGamepadSecondaryTapDeduper();
   DateTime? _lastVideoPointerUpAt;
   Offset? _lastVideoPointerUpPosition;
+  bool _suppressNextSecondaryTap = false;
   bool _videoFullscreenTransitioning = false;
 
   /// 全屏路由当前是否在栈上：进全屏置位、全屏路由 future 完成（任意退出路径：
@@ -5070,6 +5070,48 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     return true;
   }
 
+  /// 视频页鼠标快捷键入口。与键盘/手柄共用 [videoActionCallbacks]，所以设置页里
+  /// 绑定到鼠标左键、右键或侧键后，执行体和沉浸锁/弹窗门控保持一致。Listener 不
+  /// 吞掉 PointerDownEvent：左键仍会继续交给播放器和控件，右键若命中自定义绑定则
+  /// 额外抑制后续上下文菜单，避免一次按键触发两个动作。
+  bool _handleVideoMouseButton(int buttons) {
+    final int? button = domMouseButtonFromPointerButtons(buttons);
+    if (button == null) return false;
+    // A custom right-button action may not produce a secondary-tap callback
+    // (for example when it closes an overlay). Clear the previous marker on
+    // every new right press so it cannot suppress a later, unrelated context
+    // menu; set it again only after a binding is actually executed.
+    if (button == 2) _suppressNextSecondaryTap = false;
+    final VideoPlayerController? controller = _controller;
+    if (controller == null) return false;
+    final ShortcutAction? action =
+        appModel.shortcutRegistry.resolveMouse(
+          button,
+          scope: ShortcutScope.video,
+        ) ??
+        appModel.shortcutRegistry.resolveMouse(
+          button,
+          scope: ShortcutScope.universal,
+        );
+    if (action == null) return false;
+    if (button == 2) _suppressNextSecondaryTap = true;
+    // 对齐视频键盘/手柄：词典浮层在前台时，已绑定的视频键先只关闭最上层浮层，
+    // 不穿透到后台播放器执行原动作。
+    if (_hasVisiblePopup) {
+      _dismissTopVisiblePopup();
+      return true;
+    }
+    // 「只关词典」在浮层不可见时故意不执行播放器动作；它是给视频页鼠标侧键
+    // 预留的无副作用绑定落点。保留显式分支也让 action wiring 守卫能看到执行体。
+    if (action == ShortcutAction.videoDismissDict) return true;
+    final VoidCallback? callback = videoActionCallbacks(
+      _buildVideoShortcutActions(controller),
+    )[action];
+    if (callback == null) return false;
+    callback();
+    return true;
+  }
+
   /// TODO-1342：Android/原生手柄按键入口。控制器按键在移动端以 [KeyEvent] 到达，冒泡
   /// 到本页最外层的 [Focus]（[canRequestFocus] 为 false、不参与遍历、不夺焦，只旁观
   /// 冒泡）；仅当事件确实来自控制器类设备（[GamepadButton.fromKeyEvent] 非空）才接管，
@@ -5215,22 +5257,8 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
   /// （[dictionaryPopupForwardedActions] → [onDictionaryPopupInputToken]）。那条路读的是
   /// `bindingsFor` / `resolveMouse`，与本入口共用同一份绑定，但不经过这里。
   void _handleVideoPointerDown(PointerDownEvent event) {
-    final int? button = domMouseButtonFromPointerButtons(event.buttons);
-    if (button == null) return;
-    final FushiShortcutRegistry registry = appModel.shortcutRegistry;
-    // scope 未命中时回落 universal（「返回上一级」），与页面其它通道同口径。
-    final ShortcutAction? action =
-        registry.resolveMouse(button, scope: ShortcutScope.video) ??
-        registry.resolveMouse(button, scope: ShortcutScope.universal);
-    if (action == null) return;
-    // 「只关词典」在浮层不可见时按下 = 无事发生，这正是它存在的意义（给侧键一个
-    // 没有副作用的落点）。
-    if (action == ShortcutAction.videoDismissDict) return;
-    final VideoPlayerController? controller = _controller;
-    if (controller == null) return;
-    videoActionCallbacks(
-      _buildVideoShortcutActions(controller),
-    )[action]?.call();
+    if (event.kind != PointerDeviceKind.mouse) return;
+    _handleVideoMouseButton(event.buttons);
   }
 
   /// 视频页键盘通道的**唯一**派发点（方案 D）：每次按键当场问注册表，与手柄
@@ -7700,6 +7728,27 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
   /// 暂停正交，互不干扰。
   void _handleVideoWheelSignal(PointerSignalEvent event) {
     if (event is! PointerScrollEvent) return;
+    final direction = wheelDirectionFromScrollDelta(event.scrollDelta);
+    if (direction != null) {
+      final ShortcutAction? action = appModel.shortcutRegistry.resolveWheel(
+        direction,
+        modifiers: activeModifierKeys(),
+        scope: ShortcutScope.video,
+      );
+      if (action != null) {
+        final VideoPlayerController? controller = _controller;
+        if (controller == null) return;
+        if (_hasVisiblePopup) {
+          _dismissTopVisiblePopup();
+          return;
+        }
+        final VoidCallback? callback = videoActionCallbacks(
+          _buildVideoShortcutActions(controller),
+        )[action];
+        if (callback != null) callback();
+        return;
+      }
+    }
     if (!_isDesktopVideoControls) return;
     if (!_immersiveAllowsFullControls) return;
     if (_videoSidePanel.value != null) return;
@@ -7801,6 +7850,10 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
   /// render transform 链自动吸收，对任意 scale（含自动模式）都自洽、无残差；缩放=1 时
   /// `ancestor` 变换为单位阵，与原行为逐像素等价（向后兼容）。
   void _handleSecondaryTap(Offset globalPosition) {
+    if (_suppressNextSecondaryTap) {
+      _suppressNextSecondaryTap = false;
+      return;
+    }
     if (!_isDesktopVideoControls) return;
     if (!_immersiveAllowsFullControls) return;
     // BUG-1453：桌面手柄映射器可能先投递 synthetic right-click，GameInput 轮询再在

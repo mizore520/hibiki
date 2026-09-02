@@ -38,7 +38,8 @@ void main() {
     // （唯一开放本通道的 scope）在 popup_settings_injection.dart 里把绑定表
     // 序列化成 JSON 注入 WebView，由 JS 侧自己比对。列一个指向不存在方法的
     // token 只会让后来人以为该方法存在，故删除。
-    ShortcutChannel.wheel: <String>['.wheelBindings'],
+    // 页面级滚轮已接到 registry.resolveWheel；弹窗仍以 `.wheelBindings` 序列化到 JS。
+    ShortcutChannel.wheel: <String>['.wheelBindings', 'resolveWheel('],
   };
 
   /// 定义/展示层：这些文件按定义列举所有 scope 与通道，不构成任何「消费」证据。
@@ -57,12 +58,8 @@ void main() {
   ///
   /// **现在是空的**——本守卫落地时登记的 7 条已全部销账，全部走「摘掉通道」而非
   /// 「接上解析入口」，因为它们无一例外是按构造不可接：
-  ///   · `home/global.mouse`：mouse 通道在本 app 原本的唯一运行时输入源是 WebView
-  ///     的 DOM `mousedown`，这两个页面都是纯 Flutter 表面，Flutter 侧不存在
-  ///     PointerDownEvent → MouseBinding → 派发的管线；
-  ///     （`video.mouse` 曾与它们同列，BUG-1995 已按「接上解析入口」那一侧销账：
-  ///     `video_fushi_page.dart` 的页面根 Listener 现在真的收 onPointerDown 并
-  ///     `resolveMouse(scope: video)` 派发，所以它不再出现在本清单里。）
+  ///   · `global.mouse/wheel`：全局返回/全屏暂不接鼠标，避免和页面 scope 的 Pointer
+  ///     Listener 产生双重动作；
   ///   · `gamepad.keyboard/mouse`：dpad 四向只由 `GamepadService._dispatchButton` 按
   ///     `GamepadButton` 解析，键盘/鼠标绑定没有也不可能有读取方；
   ///   · `globalExternal.gamepad/mouse`：OS 级热键走 win32 `RegisterHotKey`，
@@ -214,18 +211,20 @@ void main() {
     );
   });
 
-  test('漫画 scope 开放键盘+手柄，翻页动作双通道默认齐全', () {
+  test('漫画 scope 开放键盘+手柄+鼠标+滚轮，翻页动作双通道默认齐全', () {
     // 历史教训（原「只开放键盘」回归钉的反转）：这批 action 曾带着 RB/LB/dpad/B
     // 默认绑定发出去而页面没有任何手柄解析入口——「设置里能配、按了没反应」。
     // 现在漫画页有真实入口（`_handleGamepadButton` → resolveGamepad manga →
     // universal，见 manga_fushi_page.dart），通道随之打开；本测试钉住新不变式：
-    //   · 通道恰为 keyboard+gamepad（鼠标依旧没有解析入口，不得开）；
+    //   · 通道包含 keyboard+gamepad+mouse+wheel（页面 Listener/HTML 手势机均有入口）；
     //   · 翻页动作必须键盘+手柄默认双全（RB/dpad右=前进、LB/dpad左=后退）；
     //   · **不得**有任何 manga 动作默认绑手柄 B——退出/关弹窗归 universal
     //     globalBack 的 B，两级阶梯不许被 manga scope 遮蔽（universal_back_test）。
     expect(ShortcutScope.manga.channels, <ShortcutChannel>{
       ShortcutChannel.keyboard,
       ShortcutChannel.gamepad,
+      ShortcutChannel.mouse,
+      ShortcutChannel.wheel,
     });
     for (final TargetPlatform platform in <TargetPlatform>[
       TargetPlatform.windows,

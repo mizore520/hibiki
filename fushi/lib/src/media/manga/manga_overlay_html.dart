@@ -46,36 +46,36 @@ String mangaOcrBoxesHtml(MokuroImage page) {
     // （3cqi≈正常正文字号档），保证框始终可命中。
     final double rawCqi = (block.fontSize / pageWidth) * 100;
     final double fontCqi = rawCqi > 0 ? rawCqi : 3.0;
-    final String writingMode =
-        block.isVertical ? 'writing-mode:vertical-rl;' : '';
+    final String writingMode = block.isVertical
+        ? 'writing-mode:vertical-rl;'
+        : '';
     final String orientation = block.isVertical ? 'vertical' : 'horizontal';
     final List<MangaOcrTextRegion> regions = mangaEffectiveTextRegions(block);
     final bool hasRegions = regions.isNotEmpty;
     final String inner = hasRegions
-        ? _mangaCharacterRegionsHtml(
-            block: block,
-            regions: regions,
-          )
+        ? _mangaCharacterRegionsHtml(block: block, regions: regions)
         : block.lines.map(_escapeHtml).join('<br>');
-    buffer.write('<p class="ocr-box" '
-        'data-ocr-orientation="$orientation" '
-        'data-manga-sentence="'
-        '${_escapeAttr(sentenceAssignments[blockIndex].sentence)}" '
-        'data-manga-sentence-group="'
-        '${sentenceAssignments[blockIndex].group}" '
-        'style="'
-        'position:absolute;'
-        'left:${_pct(leftPct)};'
-        'top:${_pct(topPct)};'
-        'width:${_pct(widthPct)};'
-        'height:${_pct(heightPct)};'
-        'font-size:${_num(fontCqi)}cqi;'
-        '$writingMode'
-        'color:transparent;'
-        'margin:0;'
-        'padding:0;'
-        'pointer-events:${hasRegions ? 'none' : 'auto'};'
-        '">$inner</p>');
+    buffer.write(
+      '<p class="ocr-box" '
+      'data-ocr-orientation="$orientation" '
+      'data-manga-sentence="'
+      '${_escapeAttr(sentenceAssignments[blockIndex].sentence)}" '
+      'data-manga-sentence-group="'
+      '${sentenceAssignments[blockIndex].group}" '
+      'style="'
+      'position:absolute;'
+      'left:${_pct(leftPct)};'
+      'top:${_pct(topPct)};'
+      'width:${_pct(widthPct)};'
+      'height:${_pct(heightPct)};'
+      'font-size:${_num(fontCqi)}cqi;'
+      '$writingMode'
+      'color:transparent;'
+      'margin:0;'
+      'padding:0;'
+      'pointer-events:${hasRegions ? 'none' : 'auto'};'
+      '">$inner</p>',
+    );
   }
   return buffer.toString();
 }
@@ -132,9 +132,11 @@ List<({int group, String sentence})> _mangaBlockSentenceAssignments(
   }
 
   final Set<int> rubyBlocks = <int>{};
-  for (int candidateIndex = 0;
-      candidateIndex < blocks.length;
-      candidateIndex++) {
+  for (
+    int candidateIndex = 0;
+    candidateIndex < blocks.length;
+    candidateIndex++
+  ) {
     final MokuroBlock candidate = blocks[candidateIndex];
     if (!_mangaKanaOnly(_mangaBlockText(candidate))) {
       continue;
@@ -185,7 +187,8 @@ List<({int group, String sentence})> _mangaBlockSentenceAssignments(
   int groupIndex = 0;
   for (final List<int> indices in groups.values) {
     indices.sort(
-        (int a, int b) => _compareMangaBlockReadingOrder(blocks[a], blocks[b]));
+      (int a, int b) => _compareMangaBlockReadingOrder(blocks[a], blocks[b]),
+    );
     final String sentence = indices
         .where((int index) => !rubyBlocks.contains(index))
         .map((int index) => _mangaBlockText(blocks[index]))
@@ -237,10 +240,14 @@ double? _mangaRubyGap(MokuroBlock candidate, MokuroBlock base) {
     return null;
   }
   final bool vertical = candidate.isVertical;
-  final double candidateThickness =
-      _mangaCrossThickness(candidate.rectangle, vertical: vertical);
-  final double baseThickness =
-      _mangaCrossThickness(base.rectangle, vertical: vertical);
+  final double candidateThickness = _mangaCrossThickness(
+    candidate.rectangle,
+    vertical: vertical,
+  );
+  final double baseThickness = _mangaCrossThickness(
+    base.rectangle,
+    vertical: vertical,
+  );
   if (candidateThickness <= 0 ||
       baseThickness <= 0 ||
       candidateThickness > baseThickness * 0.68) {
@@ -254,19 +261,29 @@ double? _mangaRubyGap(MokuroBlock candidate, MokuroBlock base) {
   if (!annotationSide) {
     return null;
   }
-  final double candidateLength =
-      _mangaAxisLength(candidate.rectangle, vertical: vertical);
-  final double baseLength =
-      _mangaAxisLength(base.rectangle, vertical: vertical);
-  final double overlap = _mangaAxisOverlap(candidate.rectangle, base.rectangle,
-      vertical: vertical);
+  final double candidateLength = _mangaAxisLength(
+    candidate.rectangle,
+    vertical: vertical,
+  );
+  final double baseLength = _mangaAxisLength(
+    base.rectangle,
+    vertical: vertical,
+  );
+  final double overlap = _mangaAxisOverlap(
+    candidate.rectangle,
+    base.rectangle,
+    vertical: vertical,
+  );
   if (candidateLength <= 0 ||
       baseLength <= 0 ||
       overlap / math.min(candidateLength, baseLength) < 0.45) {
     return null;
   }
-  final double gap =
-      _mangaCrossGap(candidate.rectangle, base.rectangle, vertical: vertical);
+  final double gap = _mangaCrossGap(
+    candidate.rectangle,
+    base.rectangle,
+    vertical: vertical,
+  );
   final double maximumGap = math.max(6.0, base.fontSize * 0.45);
   return gap <= maximumGap ? gap : null;
 }
@@ -281,15 +298,23 @@ bool _mangaBlocksAreAdjacent(MokuroBlock a, MokuroBlock b) {
   if (aLength <= 0 || bLength <= 0) {
     return false;
   }
-  final double overlap =
-      _mangaAxisOverlap(a.rectangle, b.rectangle, vertical: vertical);
+  final double overlap = _mangaAxisOverlap(
+    a.rectangle,
+    b.rectangle,
+    vertical: vertical,
+  );
   if (overlap / math.min(aLength, bLength) < 0.30) {
     return false;
   }
-  final double gap =
-      _mangaCrossGap(a.rectangle, b.rectangle, vertical: vertical);
-  final double maximumGap =
-      math.max(8.0, math.max(a.fontSize, b.fontSize) * 0.90);
+  final double gap = _mangaCrossGap(
+    a.rectangle,
+    b.rectangle,
+    vertical: vertical,
+  );
+  final double maximumGap = math.max(
+    8.0,
+    math.max(a.fontSize, b.fontSize) * 0.90,
+  );
   return gap <= maximumGap;
 }
 
@@ -308,9 +333,8 @@ int _compareMangaBlockReadingOrder(MokuroBlock a, MokuroBlock b) {
   return a.rectangle.left.compareTo(b.rectangle.left);
 }
 
-bool _mangaEndsSentence(String text) => RegExp(
-      r'[。！？.!?‼⁉][」』）)\]】〉》〕｝}］”’]*$',
-    ).hasMatch(text);
+bool _mangaEndsSentence(String text) =>
+    RegExp(r'[。！？.!?‼⁉][」』）)\]】〉》〕｝}］”’]*$').hasMatch(text);
 
 /// Returns character-level hit regions for every OCR producer.
 ///
@@ -358,11 +382,13 @@ List<MangaOcrTextRegion> mangaEffectiveTextRegions(MokuroBlock block) {
                 lineRect.width / characters.length,
                 lineRect.height,
               );
-        result.add(MangaOcrTextRegion(
-          rectangle: characterRect,
-          utf16Start: characters[index].start,
-          utf16End: characters[index].end,
-        ));
+        result.add(
+          MangaOcrTextRegion(
+            rectangle: characterRect,
+            utf16Start: characters[index].start,
+            utf16End: characters[index].end,
+          ),
+        );
       }
     }
     utf16Base += line.length;
@@ -418,12 +444,7 @@ List<Rect> _mangaLineRects(MokuroBlock block) {
   final double height = rect.height / count;
   return <Rect>[
     for (int index = 0; index < count; index++)
-      Rect.fromLTWH(
-        rect.left,
-        rect.top + index * height,
-        rect.width,
-        height,
-      ),
+      Rect.fromLTWH(rect.left, rect.top + index * height, rect.width, height),
   ];
 }
 
@@ -448,14 +469,16 @@ String _mangaCharacterRegionsHtml({
     final double widthPct = (r.width / parentWidth) * 100;
     final double heightPct = (r.height / parentHeight) * 100;
     final String text = sentence.substring(region.utf16Start, region.utf16End);
-    buffer.write('<span class="ocr-char" '
-        'data-utf16-start="${region.utf16Start}" '
-        'data-ocr-orientation="${block.isVertical ? 'vertical' : 'horizontal'}" '
-        'style="left:${_pct(leftPct)};'
-        'top:${_pct(topPct)};'
-        'width:${_pct(widthPct)};'
-        'height:${_pct(heightPct)};">'
-        '${_escapeHtml(text)}</span>');
+    buffer.write(
+      '<span class="ocr-char" '
+      'data-utf16-start="${region.utf16Start}" '
+      'data-ocr-orientation="${block.isVertical ? 'vertical' : 'horizontal'}" '
+      'style="left:${_pct(leftPct)};'
+      'top:${_pct(topPct)};'
+      'width:${_pct(widthPct)};'
+      'height:${_pct(heightPct)};">'
+      '${_escapeHtml(text)}</span>',
+    );
   }
   return buffer.toString();
 }
@@ -480,13 +503,16 @@ String _mangaCharacterRegionsHtml({
 /// 像素尺寸（`data-pw` / `data-ph`）供补扫模式把视口矩形换算回**页图像素坐标**：
 /// div 的 aspect-ratio 与页图一致 + `object-fit:contain`，图恒铺满 div（无信箱
 /// 留白），故 div getBoundingClientRect 与页图像素是纯线性映射。
-String mangaPageDivHtml(MokuroImage page, String imgSrc,
-    {int spreadIndex = 0,
-    int pagesInSpread = 1,
-    int pageIndex = 0,
-    bool isWebtoon = false,
-    bool eager = false,
-    bool ocrLoaded = true}) {
+String mangaPageDivHtml(
+  MokuroImage page,
+  String imgSrc, {
+  int spreadIndex = 0,
+  int pagesInSpread = 1,
+  int pageIndex = 0,
+  bool isWebtoon = false,
+  bool eager = false,
+  bool ocrLoaded = true,
+}) {
   // div 内联声明：
   // - position:relative —— OCR 框绝对定位的包含块。
   // - container-type:inline-size —— cqi 参照宽（自包含，不依赖外部 style 块）。
@@ -505,7 +531,7 @@ String mangaPageDivHtml(MokuroImage page, String imgSrc,
   final String sizingCss = isWebtoon
       ? ''
       : 'width:min(${_num(slotVw)}vw,${_num(100 * w / h)}vh);'
-          'height:min(100vh,${_num(slotVw * h / w)}vw);';
+            'height:min(100vh,${_num(slotVw * h / w)}vw);';
   final String loading = eager && !isWebtoon ? 'eager' : 'lazy';
   final String fetchPriority = eager && !isWebtoon ? 'high' : 'auto';
   return '<div class="manga-page" data-spread="$spreadIndex" '
@@ -566,6 +592,12 @@ String mangaWindowDocument(
   int zoomSensitivity = kMangaZoomSensitivityDefault,
   MangaPageAnimation pageAnimation = MangaPageAnimation.slide,
   bool tapZonePaging = true,
+
+  /// JSON object keyed by `up` / `down`, with entries containing an action key
+  /// and an exact modifier list. The page injects this snapshot so a custom
+  /// wheel binding can prevent the WebView's native scrolling before it reaches
+  /// the existing manga wheel gesture handlers.
+  String shortcutWheelBindingsJson = '{}',
 }) {
   final bool isWebtoon = mode == MangaReadingMode.webtoon;
   // spread 容器本身始终按 LTR 的几何顺序排列，保证 offsetLeft 是稳定的
@@ -577,23 +609,25 @@ String mangaWindowDocument(
 
   final StringBuffer pagesHtml = StringBuffer();
   final Map<int, StringBuffer> spreadPages = <int, StringBuffer>{};
-  final int count =
-      pages.length < imgSrcs.length ? pages.length : imgSrcs.length;
+  final int count = pages.length < imgSrcs.length
+      ? pages.length
+      : imgSrcs.length;
   for (int i = 0; i < count; i++) {
     final int spreadIndex =
         (pageSpreadIndices != null && i < pageSpreadIndices.length)
-            ? pageSpreadIndices[i]
-            : 0;
+        ? pageSpreadIndices[i]
+        : 0;
     // 本页所在跨页的页数（CRITICAL-1：决定 spread 槽宽 50vw/100vw）。缺省/webtoon
     // 视为单页。
     final int slotPages =
         (!isWebtoon && pagesPerSpread != null && i < pagesPerSpread.length)
-            ? pagesPerSpread[i]
-            : 1;
+        ? pagesPerSpread[i]
+        : 1;
     // 真实页码（窗口化文档里数组序 != 整卷页码）；缺省退回数组序（webtoon 全量
     // 渲染时两者一致）。
-    final int pageNumber =
-        (pageNumbers != null && i < pageNumbers.length) ? pageNumbers[i] : i;
+    final int pageNumber = (pageNumbers != null && i < pageNumbers.length)
+        ? pageNumbers[i]
+        : i;
     final bool includeOcr =
         ocrPageIndices == null || ocrPageIndices.contains(pageNumber);
     final MokuroImage renderedPage = includeOcr
@@ -640,8 +674,10 @@ String mangaWindowDocument(
       spreadOrder = spreadOrder.reversed.toList();
     }
     for (final int spreadIndex in spreadOrder) {
-      pagesHtml.write('<div class="manga-spread" '
-          'data-spread="$spreadIndex">${spreadPages[spreadIndex]}</div>');
+      pagesHtml.write(
+        '<div class="manga-spread" '
+        'data-spread="$spreadIndex">${spreadPages[spreadIndex]}</div>',
+      );
     }
   }
 
@@ -656,22 +692,22 @@ String mangaWindowDocument(
   // 为 0。
   final String rootSizing = isWebtoon
       ? '#manga-root{display:flex;flex-direction:column;direction:ltr;'
-          'width:100vw;align-items:flex-start;}'
-          '.manga-page{width:100vw;}'
+            'width:100vw;align-items:flex-start;}'
+            '.manga-page{width:100vw;}'
       : '#manga-viewport{overflow:hidden;width:100vw;height:100vh;}'
-          '#manga-root{display:flex;flex-direction:row;direction:ltr;'
-          'height:100vh;align-items:center;'
-          '${_rootTransitionCss(pageAnimation)}}'
-          '.manga-spread{display:flex;flex:0 0 100vw;'
-          'width:100vw;height:100vh;align-items:center;'
-          'justify-content:center;$pageDirectionCss}';
+            '#manga-root{display:flex;flex-direction:row;direction:ltr;'
+            'height:100vh;align-items:center;'
+            '${_rootTransitionCss(pageAnimation)}}'
+            '.manga-spread{display:flex;flex:0 0 100vw;'
+            'width:100vw;height:100vh;align-items:center;'
+            'justify-content:center;$pageDirectionCss}';
 
   // spread 时 strip 包进 overflow:hidden 视口；webtoon 时 root 直接在 body。
   final String content = isWebtoon
       ? '<div id="manga-root">${pagesHtml.toString()}</div>'
       : '<div id="manga-viewport">'
-          '<div id="manga-root">${pagesHtml.toString()}</div>'
-          '</div>';
+            '<div id="manga-root">${pagesHtml.toString()}</div>'
+            '</div>';
   final String body = '<div id="manga-canvas">$content</div>';
 
   return '<!DOCTYPE html>'
@@ -716,18 +752,7 @@ String mangaWindowDocument(
       '<script>$inlineSelectionJs</script>'
       '<script>'
       'window.__mangaDocumentGeneration=$documentGeneration;'
-      '${_mangaGestureJs(
-    isWebtoon: isWebtoon,
-    rtl: rtl,
-    currentSpread: currentSpread,
-    restoreFraction: restoreFraction,
-    zoomPercent: zoomPercent,
-    zoomMinPercent: zoomMinPercent,
-    zoomMaxPercent: zoomMaxPercent,
-    zoomSensitivity: zoomSensitivity,
-    pageAnimation: pageAnimation,
-    tapZonePaging: tapZonePaging,
-  )}'
+      '${_mangaGestureJs(isWebtoon: isWebtoon, rtl: rtl, currentSpread: currentSpread, restoreFraction: restoreFraction, zoomPercent: zoomPercent, zoomMinPercent: zoomMinPercent, zoomMaxPercent: zoomMaxPercent, zoomSensitivity: zoomSensitivity, pageAnimation: pageAnimation, tapZonePaging: tapZonePaging, shortcutWheelBindingsJson: shortcutWheelBindingsJson)}'
       '</script>'
       '</body></html>';
 }
@@ -771,12 +796,57 @@ String _mangaGestureJs({
   required int zoomSensitivity,
   required MangaPageAnimation pageAnimation,
   required bool tapZonePaging,
+  required String shortcutWheelBindingsJson,
 }) {
   // RTL：strip 视觉镜像，但 DOM offsetLeft 仍是几何坐标；translateX 统一把目标跨页
   // 首页 offsetLeft 平移到视口左边缘（width=100vw 的视口里目标跨页正好填满）。
   return '''
 (function(){
   function _bridge(){ return window.flutter_inappwebview; }
+  // Mouse shortcuts are reported from the WebView as well as the Flutter
+  // Listener around it. Platform views can keep pointer events on the native
+  // side, so the bridge is the reliable path for middle/right/side buttons;
+  // the Dart executor de-duplicates it when both paths see the same click.
+  document.addEventListener('mousedown', function(e){
+    if (e && e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) return;
+    var bridge = _bridge();
+    if (bridge) bridge.callHandler('onMangaMouseShortcut', e.button);
+    if (e.button !== 0) e.preventDefault();
+  }, {passive:false});
+  // Custom wheel shortcuts are injected as a small immutable snapshot for this
+  // WebView document. Matching is exact (direction + modifier set), so an
+  // unbound wheel keeps the existing native scroll/page-turn behaviour.
+  var FUSHI_MANGA_WHEEL_BINDINGS = $shortcutWheelBindingsJson;
+  function _mangaWheelDirection(e){
+    var dx = Number(e.deltaX) || 0;
+    var dy = Number(e.deltaY) || 0;
+    var dominant = Math.abs(dy) >= Math.abs(dx) ? dy : dx;
+    if (Math.abs(dominant) < 2) return null;
+    return dominant > 0 ? 'down' : 'up';
+  }
+  function _mangaShortcutWheelAction(e){
+    var dir = _mangaWheelDirection(e);
+    if (!dir) return null;
+    var pressed = [];
+    if (e.ctrlKey) pressed.push('ctrl');
+    if (e.shiftKey) pressed.push('shift');
+    if (e.altKey) pressed.push('alt');
+    if (e.metaKey) pressed.push('meta');
+    var list = FUSHI_MANGA_WHEEL_BINDINGS[dir];
+    if (!Array.isArray(list)) return null;
+    for (var i = 0; i < list.length; i++) {
+      var item = list[i];
+      if (!item || !Array.isArray(item.mods) || item.mods.length !== pressed.length) {
+        continue;
+      }
+      var same = true;
+      for (var j = 0; j < item.mods.length; j++) {
+        if (pressed.indexOf(item.mods[j]) < 0) { same = false; break; }
+      }
+      if (same && typeof item.action === 'string' && item.action) return item.action;
+    }
+    return null;
+  }
   // ── canvas zoom/pan ──
   var ZOOM_MIN = ${zoomMinPercent / 100.0};
   var ZOOM_MAX = ${zoomMaxPercent / 100.0};
@@ -1421,7 +1491,7 @@ String _mangaGestureJs({
       if (drag && !drag.moved) {
         var b = _bridge();
         if (b) b.callHandler('onMangaContextMenu', JSON.stringify({
-          x:e.clientX, y:e.clientY
+          button:e.button, x:e.clientX, y:e.clientY
         }));
       }
       return;
@@ -1478,6 +1548,16 @@ String _mangaGestureJs({
   }
   document.addEventListener('wheel', function(e){
     if (RESCAN) return;
+    var shortcutAction = _mangaShortcutWheelAction(e);
+    if (shortcutAction) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      var shortcutBridge = _bridge();
+      if (shortcutBridge) {
+        shortcutBridge.callHandler('onMangaWheelShortcut', shortcutAction);
+      }
+      return;
+    }
     if (!(e.ctrlKey || e.metaKey)) return;
     e.preventDefault();
     e.stopImmediatePropagation();

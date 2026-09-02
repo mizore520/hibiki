@@ -80,13 +80,14 @@ void main() {
                 onPressed: () async {
                   final ShortcutBindingEditResult? result =
                       await showAppDialog<ShortcutBindingEditResult>(
-                    context: context,
-                    builder: (BuildContext ctx) => ShortcutBindingEditDialog(
-                      action: action,
-                      registry: registry,
-                      initial: initial,
-                    ),
-                  );
+                        context: context,
+                        builder: (BuildContext ctx) =>
+                            ShortcutBindingEditDialog(
+                              action: action,
+                              registry: registry,
+                              initial: initial,
+                            ),
+                      );
                   if (result == null) return;
                   registry.updateBindingWithReassignments(
                     action,
@@ -121,44 +122,46 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  // 捕获用例统一挂在 readerDismissDict 上：mouse 通道现在只对 reader / audiobook
-  // 开放（它们是 WebView 宿主，`resolveMouse` 真有解析入口），而 readerDismissDict
-  // 正是 reader 侧那个真消费者（webview.part.dart 的 onPointerSeek）。曾用的
-  // homeFocusSearch 所在的 home scope 已不再开放 mouse 通道（无任何 Flutter 侧
-  // 鼠标派发管线），捕获入口不再渲染。
+  // 捕获用例统一挂在 readerDismissDict 上：reader 的 WebView mousedown 会经
+  // `onPointerSeek` 解析 `resolveMouse`。首页、视频页和漫画页也有对应的 Flutter /
+  // WebView 指针入口，因此它们的鼠标通道会在设置页真实开放。
   //
   // 按键选右键(2)/后退键(3)：reader 与 audiobook 同属一个 co-active 组，而
   // audiobookSeekToClickedSentence 默认占着中键(1)，中键会走冲突改绑流程而非直接
   // 落 chip。
   testWidgets(
-      'desktop: capturing the right button records a MouseBinding(2) chip',
-      (WidgetTester tester) async {
+    'desktop: capturing the right button records a MouseBinding(2) chip',
+    (WidgetTester tester) async {
+      usePlatform(TargetPlatform.windows);
+      final FushiShortcutRegistry registry = buildRegistry(
+        TargetPlatform.windows,
+      );
+      await pumpDialog(
+        tester,
+        registry,
+        action: ShortcutAction.readerDismissDict,
+      );
+
+      await tester.tap(find.byKey(const Key('shortcut_add_mouse')));
+      await tester.pumpAndSettle();
+      expect(find.text(t.shortcut_press_mouse_button), findsOneWidget);
+
+      await pressMouseButton(tester, kSecondaryMouseButton);
+
+      expect(find.text(t.shortcut_mouse_right), findsOneWidget);
+      expect(find.text(t.shortcut_press_mouse_button), findsNothing);
+
+      resetPlatform();
+    },
+  );
+
+  testWidgets('desktop: the primary (left) button records a MouseBinding(0)', (
+    WidgetTester tester,
+  ) async {
     usePlatform(TargetPlatform.windows);
-    final FushiShortcutRegistry registry =
-        buildRegistry(TargetPlatform.windows);
-    await pumpDialog(
-      tester,
-      registry,
-      action: ShortcutAction.readerDismissDict,
+    final FushiShortcutRegistry registry = buildRegistry(
+      TargetPlatform.windows,
     );
-
-    await tester.tap(find.byKey(const Key('shortcut_add_mouse')));
-    await tester.pumpAndSettle();
-    expect(find.text(t.shortcut_press_mouse_button), findsOneWidget);
-
-    await pressMouseButton(tester, kSecondaryMouseButton);
-
-    expect(find.text(t.shortcut_mouse_right), findsOneWidget);
-    expect(find.text(t.shortcut_press_mouse_button), findsNothing);
-
-    resetPlatform();
-  });
-
-  testWidgets('desktop: the primary (left) button is not bindable',
-      (WidgetTester tester) async {
-    usePlatform(TargetPlatform.windows);
-    final FushiShortcutRegistry registry =
-        buildRegistry(TargetPlatform.windows);
     await pumpDialog(
       tester,
       registry,
@@ -170,46 +173,50 @@ void main() {
 
     await pressMouseButton(tester, kPrimaryMouseButton);
 
-    expect(find.text(t.shortcut_press_mouse_button), findsOneWidget);
-    expect(find.text(t.shortcut_mouse_left), findsNothing);
+    expect(find.text(t.shortcut_mouse_left), findsOneWidget);
+    expect(find.text(t.shortcut_press_mouse_button), findsNothing);
 
     resetPlatform();
   });
 
-  testWidgets('desktop: captured mouse binding is written through the registry',
-      (WidgetTester tester) async {
+  testWidgets(
+    'desktop: captured mouse binding is written through the registry',
+    (WidgetTester tester) async {
+      usePlatform(TargetPlatform.windows);
+      final FushiShortcutRegistry registry = buildRegistry(
+        TargetPlatform.windows,
+      );
+      await pumpDialogHost(
+        tester,
+        registry,
+        action: ShortcutAction.readerDismissDict,
+      );
+
+      await tester.tap(find.byKey(const Key('shortcut_add_mouse')));
+      await tester.pumpAndSettle();
+      await pressMouseButton(tester, kBackMouseButton); // DOM button 3 = back
+
+      await tester.tap(find.text('OK').last);
+      await tester.pumpAndSettle();
+
+      expect(
+        registry.bindingsFor(ShortcutAction.readerDismissDict).mouseBindings,
+        contains(const MouseBinding(3)),
+      );
+
+      resetPlatform();
+    },
+  );
+
+  // 首页现在有真实的 Flutter Listener 消费 mouse 通道，历史绑定继续显示，同时允许
+  // 用户直接补录其它鼠标按钮。
+  testWidgets('desktop: home scope 显示历史鼠标绑定并保留捕获入口', (
+    WidgetTester tester,
+  ) async {
     usePlatform(TargetPlatform.windows);
-    final FushiShortcutRegistry registry =
-        buildRegistry(TargetPlatform.windows);
-    await pumpDialogHost(
-      tester,
-      registry,
-      action: ShortcutAction.readerDismissDict,
+    final FushiShortcutRegistry registry = buildRegistry(
+      TargetPlatform.windows,
     );
-
-    await tester.tap(find.byKey(const Key('shortcut_add_mouse')));
-    await tester.pumpAndSettle();
-    await pressMouseButton(tester, kBackMouseButton); // DOM button 3 = back
-
-    await tester.tap(find.text('OK').last);
-    await tester.pumpAndSettle();
-
-    expect(
-      registry.bindingsFor(ShortcutAction.readerDismissDict).mouseBindings,
-      contains(const MouseBinding(3)),
-    );
-
-    resetPlatform();
-  });
-
-  // 通道被摘掉的 scope 上，历史快照里的鼠标绑定**不隐身、仍可删**（Never break
-  // userspace）。home 现在不开放 mouse 通道，故捕获入口消失，但老用户当年配下的
-  // 绑定仍要能看见并删掉——否则那条永不触发的死绑定就永远删不掉了。
-  testWidgets('desktop: 通道已摘的 scope 仍显示并可删除历史鼠标绑定（但没有捕获入口）',
-      (WidgetTester tester) async {
-    usePlatform(TargetPlatform.windows);
-    final FushiShortcutRegistry registry =
-        buildRegistry(TargetPlatform.windows);
     await pumpDialogHost(
       tester,
       registry,
@@ -220,7 +227,7 @@ void main() {
     );
 
     expect(find.text(t.shortcut_mouse_right), findsOneWidget);
-    expect(find.byKey(const Key('shortcut_add_mouse')), findsNothing);
+    expect(find.byKey(const Key('shortcut_add_mouse')), findsOneWidget);
     await tester.tap(find.byIcon(Icons.close).first);
     await tester.pumpAndSettle();
 
@@ -236,25 +243,29 @@ void main() {
   });
 
   testWidgets(
-      'mobile: no mouse capture entry and inherited bindings still render',
-      (WidgetTester tester) async {
-    usePlatform(TargetPlatform.android);
-    final FushiShortcutRegistry registry =
-        buildRegistry(TargetPlatform.android);
-    await pumpDialog(
-      tester,
-      registry,
-      action: ShortcutAction.audiobookSeekToClickedSentence,
-      initial: const ShortcutBindingSet(
-        mouseBindings: <MouseBinding>[MouseBinding(1)],
-      ),
-    );
+    'mobile: no mouse capture entry and inherited bindings still render',
+    (WidgetTester tester) async {
+      usePlatform(TargetPlatform.android);
+      final FushiShortcutRegistry registry = buildRegistry(
+        TargetPlatform.android,
+      );
+      await pumpDialog(
+        tester,
+        registry,
+        action: ShortcutAction.audiobookSeekToClickedSentence,
+        initial: const ShortcutBindingSet(
+          mouseBindings: <MouseBinding>[MouseBinding(1)],
+        ),
+      );
 
-    expect(find.text(t.shortcut_mouse_middle), findsOneWidget);
-    expect(find.byKey(const Key('shortcut_add_mouse')), findsNothing);
-    expect(
-        find.byKey(const Key('shortcut_mouse_capture_region')), findsNothing);
+      expect(find.text(t.shortcut_mouse_middle), findsOneWidget);
+      expect(find.byKey(const Key('shortcut_add_mouse')), findsNothing);
+      expect(
+        find.byKey(const Key('shortcut_mouse_capture_region')),
+        findsNothing,
+      );
 
-    resetPlatform();
-  });
+      resetPlatform();
+    },
+  );
 }

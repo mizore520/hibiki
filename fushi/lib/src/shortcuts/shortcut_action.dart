@@ -113,10 +113,10 @@ enum ShortcutScope {
   /// 每个 scope 只列**真的存在解析入口**的通道，没有「多数 scope 三通道全通」这种
   /// 省事写法——那正是 7 条死通道的来源（见各 case 注释）。
   ///
-  /// 尤其注意 **mouse 通道在本 app 的唯一运行时输入源是 WebView 的 DOM `mousedown`**
-  /// （阅读器 `onPointerSeek` / 歌词 `onLyricsPointerSeek` → `resolveMouse`）。Flutter
-  /// 侧至今没有任何「PointerDownEvent → MouseBinding → 派发」的管线，故非 WebView
-  /// 宿主的 scope 一律不开 mouse。
+  /// mouse / wheel 通道既可以来自 WebView 的 DOM `mousedown` / `wheel`，也可以来自
+  /// Windows 桌面页面外层的 Flutter `Listener`（PointerDownEvent / PointerScrollEvent）。
+  /// 页面必须在自己的 scope 里真正调用 `resolveMouse` / `resolveWheel` 后，才能打开对应
+  /// 通道；这样设置页不会出现「录得了、按了没反应」的死项。
   Set<ShortcutChannel> get channels {
     switch (this) {
       // 阅读器与有声书是 WebView 宿主：键盘/手柄走页面派发，鼠标侧键经 WebView 的
@@ -128,42 +128,30 @@ enum ShortcutScope {
           ShortcutChannel.gamepad,
           ShortcutChannel.mouse,
         };
-      // 首页 / 全局：键盘与手柄都有解析入口（home_page 的 resolveKeyboard、
-      // global_navigation、各页 GamepadButtonIntent），但**鼠标没有**——这两个页面
-      // 是纯 Flutter 表面，没有 WebView 接管 mousedown，也没有任何 Flutter 侧鼠标
-      // 绑定派发管线。曾经开着 mouse 通道纯属与 reader/audiobook 共用一个 case
-      // 分支的连带产物：设置页给出「添加鼠标按键」入口，绑上去永不触发。要重开必须
-      // 先真的建一条 PointerDownEvent → MouseBinding → 派发的链路并验证。
+      // 首页与视频页：键盘/手柄入口之外，页面根部的 Flutter Listener 会把鼠标按键和
+      // 滚轮映射到各自 scope 的 `resolveMouse` / `resolveWheel`。左键执行采用非阻塞
+      // 策略，普通点击/选字仍会继续交给下层控件。
       case home:
-      case global:
-        return const <ShortcutChannel>{
-          ShortcutChannel.keyboard,
-          ShortcutChannel.gamepad,
-        };
-      // 视频页：BUG-1995。用户报「关闭词典快捷键小说鼠标侧键可以，视频不行」——根因是
-      // 这里没开 mouse 通道，导致**设置页不给「添加鼠标按键」入口，用户压根绑不上**。
-      //
-      // ⚠️ 注意通道开关的真实作用域：它只管**设置页的录入入口**。已经存在的鼠标绑定
-      // 一直是可派发的——词典弹窗表面那条路（`dictionaryPopupInputSpecFor` →
-      // `resolveDictionaryPopupInputToken`）读 `bindingsFor` / `resolveMouse`，
-      // **不查本 getter**。所以「通道关着」≠「该 scope 的鼠标绑定不生效」，别再据此
-      // 推出「这些绑定是死的、可以清掉」（那条 v10→v11 迁移正是这么错的，已撤销）。
-      //
-      // 配套建出的 Flutter 侧派发管线（`video_fushi_page.dart` 的
-      // `_handleVideoPointerDown`）只覆盖**浮层不可见**的表面：浮层可见时根 Overlay 的
-      // barrier 会吃掉指针事件，那半边由弹窗表面自己回传，见该方法的文档。
       case video:
         return const <ShortcutChannel>{
           ShortcutChannel.keyboard,
           ShortcutChannel.gamepad,
           ShortcutChannel.mouse,
+          ShortcutChannel.wheel,
+        };
+      // globalBack / globalToggleFullscreen 等全局动作仍由键盘/手柄的最外层 Focus
+      // 解析。鼠标事件由各页面先消费自己的 scope，暂不开全局 mouse/wheel，避免同一
+      // 次点击同时触发页面动作和全局动作。
+      case global:
+        return const <ShortcutChannel>{
+          ShortcutChannel.keyboard,
+          ShortcutChannel.gamepad,
         };
       // universal（「返回上一级」）：键盘与手柄都有解析入口——每个表面在自身 scope
       // 未命中后按 `resolveKeyboard/resolveGamepad(scope: universal)` 兜底
       // （reader caret.part / manga page / video page / global_navigation 四处）。
-      // 鼠标不开：Flutter 侧至今没有 PointerDownEvent → MouseBinding 的派发管线，
-      // 而弹窗桥那条鼠标路只在**词典弹窗表面**成立、不是全表面能力（开了就是
-      // 「设置里能配、在正文上按了没反应」）。
+      // 鼠标暂不开：页面 Listener 只解析各自 scope，避免同一侧键同时触发页面动作与
+      // 全局返回；若以后要开放，应先设计明确的页面优先级与吞事件规则。
       case universal:
         return const <ShortcutChannel>{
           ShortcutChannel.keyboard,
@@ -184,14 +172,15 @@ enum ShortcutScope {
       case globalExternal:
         return const <ShortcutChannel>{ShortcutChannel.keyboard};
       // 漫画页：键盘走 `_resolveMangaKeyAction`（resolveKeyboard），手柄走
-      // `_handleGamepadButton`（resolveGamepad manga → universal，桌面轮询的
-      // GamepadButtonIntent 与 Android gameButton* 键事件汇合到同一入口，与
-      // reader 同构）。滚轮翻页是硬编码的 `wheelInputAction`（不查注册表），
-      // 鼠标依旧没有解析入口，不开。
+      // `_handleGamepadButton`（resolveGamepad manga → universal）；页面 Listener
+      // 另外把鼠标按键/滚轮送进 manga scope 的 `resolveMouse` / `resolveWheel`，
+      // 未绑定时保留原生拖动、缩放和滚动行为。
       case manga:
         return const <ShortcutChannel>{
           ShortcutChannel.keyboard,
           ShortcutChannel.gamepad,
+          ShortcutChannel.mouse,
+          ShortcutChannel.wheel,
         };
       // 查词弹窗：滚轮（上/下一个词条）+ 键盘（制卡）+ 手柄。滚轮/键盘不经
       // resolveKeyboard —— 绑定由 popup_settings_injection 序列化后注入给 popup.js，

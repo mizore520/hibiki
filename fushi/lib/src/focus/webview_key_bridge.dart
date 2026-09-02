@@ -22,8 +22,10 @@ library;
 ///   逐字同名（`_knownKeys` 的标签就是按 DOM `code` 取的），所以注册表里的绑定可以
 ///   **原样**当 token 用，不需要中间映射表。修饰键前缀顺序固定 Ctrl→Shift→Alt→Meta，
 ///   与 [ModifierKey] 的 `index` 序、[InputBinding.serialize] 完全一致。
-/// - [mouseButtons]：要拦截的 `MouseEvent.button`（1=中键 / 2=右键 / 3=后退 /
-///   4=前进）。命中回传 `'Mouse<n>'`，与 `MouseBinding.deserialize` 直接对接。
+/// - [mouseButtons]：要拦截的 `MouseEvent.button`（0=左键 / 1=中键 / 2=右键 /
+///   3=后退 / 4=前进）。命中回传 `'Mouse<n>'`，与 `MouseBinding.deserialize` 直接
+///   对接。默认仍忽略左键；需要把左键作为非阻塞快捷键上报的宿主可打开
+///   [allowPrimaryMouse]。
 ///
 /// 行为（对所有宿主一致，勿在调用侧另写一份）：
 /// * 裸键与组合键统一按 token 匹配——表里只有裸 token 时，带修饰键的按下天然算不
@@ -63,6 +65,10 @@ library;
 /// 注意它与 [mouseButtons] 是否为空**无关**——弹窗要在「用户当前没绑鼠标键、之后
 /// 才绑上」时也能生效，listener 必须恒装、只让表变。
 ///
+/// [allowPrimaryMouse] 为 true 时，已绑定的左键也会回传，但不会
+/// `preventDefault`，这样快捷键动作与页面自己的点击/选字并行。默认 false 保留旧的
+/// 弹窗语义：左键始终交给内容。
+///
 /// [deferToPopupModal] 为 true 时，`window.__fushiPopupModalDepth > 0`（popup.js 里
 /// 有模态面板开着，如「已制卡动作」面板）期间整座桥让位。**查词弹窗必须打开它**：
 /// 桥是 capture 阶段且在 `onLoadStop` 就注册，比模态自己的 capture 监听早得多，不
@@ -74,6 +80,7 @@ String webViewKeyBridgeScript({
   List<String> keys = const <String>[],
   List<int> mouseButtons = const <int>[],
   bool installMouseListeners = false,
+  bool allowPrimaryMouse = false,
   bool deferToPopupModal = false,
   bool forwardRepeats = true,
   bool stopPropagation = false,
@@ -89,32 +96,50 @@ String webViewKeyBridgeScript({
   );
   final String keyList = keys.map(_jsStringLiteral).join(', ');
   final String buttonList = mouseButtons.join(', ');
-  final String installFlag =
-      _jsStringLiteral('__fushiKeyBridgeInstalled_$handlerName');
+  final String installFlag = _jsStringLiteral(
+    '__fushiKeyBridgeInstalled_$handlerName',
+  );
   final String keysVar = _jsStringLiteral('__fushiKeyBridgeKeys_$handlerName');
-  final String buttonsVar =
-      _jsStringLiteral('__fushiKeyBridgeButtons_$handlerName');
-  final String repeatGuard =
-      forwardRepeats ? '' : '\n    if (e.repeat) return;';
+  final String buttonsVar = _jsStringLiteral(
+    '__fushiKeyBridgeButtons_$handlerName',
+  );
+  final String repeatGuard = forwardRepeats
+      ? ''
+      : '\n    if (e.repeat) return;';
   // 模态让位对键盘与鼠标同时成立：面板开着时点它上面的按钮，侧键也不该把整个查词窗
   // 关掉。故各监听体内统一先判这一条。
   const String modalGuard =
       '\n    if ((window.__fushiPopupModalDepth || 0) > 0) return;';
   final String popupModalGuard = deferToPopupModal ? modalGuard : '';
-  final String propagationGuard =
-      stopPropagation ? '\n    e.stopImmediatePropagation();' : '';
+  final String propagationGuard = stopPropagation
+      ? '\n    e.stopImmediatePropagation();'
+      : '';
+  final String primaryGuard = allowPrimaryMouse ? 'false' : 'true';
   final String mouseListeners = installMouseListeners
       ? '''
   document.addEventListener('mousedown', function(e) {
-    if (!e || e.button === 0) return;$popupModalGuard
+    if (!e || (e.button === 0 && $primaryGuard)) return;$popupModalGuard
+    // Chromium may synthesize a compatibility mousedown after a touch. Mouse
+    // shortcuts are desktop-device bindings; leave that touch gesture to the
+    // page's normal pointer/tap handlers.
+    if (e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) return;
     if ((window[$buttonsVar] || []).indexOf(e.button) === -1) return;
-    e.preventDefault();$propagationGuard
+    // A primary-button binding is deliberately non-blocking: report it, but
+    // let the page keep its normal click/selection path. Auxiliary buttons are
+    // the ones that need default-action suppression and exclusive propagation.
+    if (e.button !== 0) {
+      e.preventDefault();$propagationGuard
+    }
     if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
       window.flutter_inappwebview.callHandler('$handlerName', 'Mouse' + e.button);
     }
   }, {capture: true});
   document.addEventListener('auxclick', function(e) {
     if (!e) return;$popupModalGuard
+    // `auxclick` is normally auxiliary-only, but some embedders synthesize a
+    // primary-button variant. Never turn a left-button binding into a blocked
+    // click through that compatibility event.
+    if (e.button === 0) return;
     if ((window[$buttonsVar] || []).indexOf(e.button) === -1) return;
     e.preventDefault();$propagationGuard
   }, {capture: true});

@@ -231,8 +231,8 @@ extension WheelBindingLabel on WheelBinding {
 
 /// TODO-1050b: 鼠标绑定的本地化显示名与小图标。
 extension MouseBindingLabel on MouseBinding {
-  /// DOM MouseEvent.button：1=中键/滚轮、2=右键、3=后退侧键、4=前进侧键
-  /// （与 [MouseBinding] 的已知按钮表对齐）；0=左键与其它未知值兜底。
+  /// DOM MouseEvent.button：0=左键、1=中键/滚轮、2=右键、3=后退侧键、4=前进侧键
+  /// （与 [MouseBinding] 的已知按钮表对齐）；其它未知值兜底。
   String get label {
     switch (button) {
       case 0:

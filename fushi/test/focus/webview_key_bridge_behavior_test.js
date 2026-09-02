@@ -107,6 +107,29 @@ function key(over) {
     '按住关词典键不该逐帧关掉弹窗栈的每一层');
 }
 
+// ---- 2a. 视频页左键可绑定但不阻塞普通点击 -------------------------------
+{
+  const env = makeEnv();
+  run(env, scripts.videoMouse);
+
+  const primary = dispatch(env, 'mousedown', { button: 0 });
+  assert.deepStrictEqual(env.calls, [['videoInputToken', 'Mouse0']],
+    '视频页绑定左键时必须回传 Mouse0');
+  assert.ok(!primary.defaultPrevented,
+    '左键快捷键是非阻塞的，播放器仍应收到普通点击');
+  assert.ok(!primary.propagationStopped,
+    '左键快捷键不能以 stopImmediatePropagation 截断播放器点击链路');
+
+  env.calls.length = 0;
+  const secondary = dispatch(env, 'mousedown', { button: 2 });
+  assert.deepStrictEqual(env.calls, [['videoInputToken', 'Mouse2']],
+    '视频页绑定右键时必须回传 Mouse2');
+  assert.ok(secondary.defaultPrevented,
+    '右键快捷键必须压掉原生上下文菜单');
+  assert.ok(secondary.propagationStopped,
+    '右键快捷键应独占事件，避免站点播放器同时响应');
+}
+
 // ---- 3. 裸 token 表不吞组合键（旧版靠独立分支放行，新版是不命中的自然结果）--
 {
   const env = makeEnv();

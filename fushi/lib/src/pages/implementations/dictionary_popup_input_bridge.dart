@@ -33,7 +33,8 @@ class DictionaryPopupInputSpec {
   /// 键盘 token（[InputBinding.serialize] 原样），如 `Escape` / `Ctrl+KeyD`。
   final List<String> keyTokens;
 
-  /// `MouseEvent.button`（1=中键 / 2=右键 / 3=后退 / 4=前进）。
+  /// 弹窗可交给宿主的辅助 `MouseEvent.button`（1=中键 / 2=右键 / 3=后退 /
+  /// 4=前进）；0=左键始终留给弹窗正文交互。
   final List<int> mouseButtons;
 
   /// 空 spec = 宿主不要求弹窗交回任何输入（基类默认）。仍会注入脚本以**清空**
@@ -79,8 +80,9 @@ DictionaryPopupInputSpec dictionaryPopupInputSpecFor({
 
   final Set<String> reservedKeys = <String>{};
   final Set<int> reservedButtons = <int>{};
-  for (final ShortcutAction action
-      in ShortcutAction.actionsForScope(ShortcutScope.dictionaryPopup)) {
+  for (final ShortcutAction action in ShortcutAction.actionsForScope(
+    ShortcutScope.dictionaryPopup,
+  )) {
     final ShortcutBindingSet bindings = registry.bindingsFor(action);
     reservedKeys.addAll(bindings.keyboardBindings.map((b) => b.serialize()));
     reservedButtons.addAll(bindings.mouseBindings.map((b) => b.button));
@@ -96,6 +98,8 @@ DictionaryPopupInputSpec dictionaryPopupInputSpecFor({
       if (!keys.contains(token)) keys.add(token);
     }
     for (final MouseBinding mb in bindings.mouseBindings) {
+      // 左键属于弹窗正文的点击/选词/链接交互，不能由宿主快捷键桥抢走。
+      if (mb.button == 0) continue;
       if (reservedButtons.contains(mb.button)) continue;
       if (!buttons.contains(mb.button)) buttons.add(mb.button);
     }
@@ -194,8 +198,12 @@ String? dictionaryPopupKeyToken({
   return spec.keyTokens.contains(token) ? token : null;
 }
 
-/// 指针落在弹窗表面时，把命中 [spec] 的鼠标按下折成与 JS 桥**完全同形**的 token
+/// 指针落在弹窗表面时，把命中 [spec] 的**辅助**鼠标按下折成与 JS 桥同形的 token
 /// （`Mouse1`/`Mouse2`/`Mouse3`/`Mouse4`），未命中返回 null。
+///
+/// 左键永远留给弹窗正文的点击、选词和链接交互；页面正文/视频/漫画自己的 Listener
+/// 可以绑定左键，但查词弹窗这一层不能抢它。JS 桥的默认 `allowPrimaryMouse: false`
+/// 与这里保持同一条边界。
 ///
 /// 复用同一套 token 而不是另开一条「宿主鼠标」通道，是为了让两条路径最终汇进同一个
 /// [resolveDictionaryPopupInputToken] → 同一个宿主落地入口：改键、scope 减法、动作
@@ -206,6 +214,7 @@ String? dictionaryPopupPointerToken({
 }) {
   final int? domButton = domMouseButtonFromPointerButtons(buttons);
   if (domButton == null) return null;
+  if (domButton == 0) return null;
   if (!spec.mouseButtons.contains(domButton)) return null;
   return 'Mouse$domButton';
 }

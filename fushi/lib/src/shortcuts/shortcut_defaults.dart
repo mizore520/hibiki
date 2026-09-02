@@ -442,9 +442,10 @@ class ShortcutDefaults {
       _key(LogicalKeyboardKey.keyD, {ModifierKey.ctrl, ModifierKey.alt}),
     ]),
     // 查词弹窗「上/下一个词条」：默认 Alt+滚轮（Yomitan 的 Next/Previous entry 同款
-    // 手感）。裸滚轮永远滚动弹窗内容，故必须带修饰键；Alt 在 WebView 里没有默认滚轮
-    // 语义（Ctrl+滚轮是缩放、Shift+滚轮是横向滚动，都不能占）。dictionaryPopup 是独立
-    // co-active 组，与任何页面键位不冲突。
+    // 手感）。默认仍把裸滚轮留给弹窗内容；用户若明确在设置页选择空修饰键，才会
+    // 覆盖这条默认滚动语义。Alt 在 WebView 里没有默认滚轮语义（Ctrl+滚轮是缩放、
+    // Shift+滚轮是横向滚动，都不能占）。dictionaryPopup 是独立 co-active 组，与任何
+    // 页面键位不冲突。
     // 手柄默认（P2）：dpad 下/上 = 下/上一个词条。执行链有两条，缺一不可：
     //   * GamepadService 的弹窗兜底（页面 Actions 未消费 → resolveGamepad
     //     (dictionaryPopup) → 钩子调 JS），管的是页面**没绑**这个键的场合；

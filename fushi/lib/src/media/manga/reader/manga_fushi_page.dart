@@ -61,7 +61,9 @@ import 'package:fushi/src/shortcuts/input_binding.dart'
         InputBinding,
         ModifierKey,
         MouseBinding,
-        activeModifierKeys;
+        activeModifierKeys,
+        domMouseButtonFromPointerButtons,
+        wheelDirectionFromScrollDelta;
 import 'package:fushi/src/shortcuts/manga_arrow_override.dart';
 import 'package:fushi/src/shortcuts/shortcut_action.dart';
 import 'package:fushi/src/shortcuts/shortcut_registry.dart';
@@ -2038,6 +2040,25 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       // 真实整卷页码（data-page，补扫模式回传的 pageIndex 语义）。
       pageNumbers.add(page);
     }
+    // WebView 里的 wheel 手势机需要在浏览器默认滚动之前知道当前 manga scope
+    // 的绑定；把这一小份配置随文档注入，命中后由 JS preventDefault 并回传 action key，
+    // Dart 仍通过同一注册表解析/执行。没有绑定时保持原有滚动和翻页逻辑。
+    final Map<String, List<Map<String, dynamic>>> wheelBindings =
+        <String, List<Map<String, dynamic>>>{
+          'up': <Map<String, dynamic>>[],
+          'down': <Map<String, dynamic>>[],
+        };
+    for (final ShortcutAction action in ShortcutAction.actionsForScope(
+      ShortcutScope.manga,
+    )) {
+      for (final binding
+          in appModel.shortcutRegistry.bindingsFor(action).wheelBindings) {
+        wheelBindings[binding.direction.name]!.add(<String, dynamic>{
+          'action': action.key,
+          'mods': binding.modifiers.map((ModifierKey m) => m.name).toList(),
+        });
+      }
+    }
     return mangaWindowDocument(
       pages,
       imgSrcs,
@@ -2055,6 +2076,7 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       zoomSensitivity: _zoomSensitivity,
       pageAnimation: _pageAnimation,
       tapZonePaging: _tapZonePaging,
+      shortcutWheelBindingsJson: jsonEncode(wheelBindings),
     );
   }
 
@@ -2620,6 +2642,64 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     return true;
   }
 
+  /// 把 DOM `MouseEvent.button` 解析到漫画页动作。页面专属绑定优先；保留
+  /// universal/global 的读取兼容性，便于旧快照里曾手工写入的返回/全屏鼠标绑定继续
+  /// 工作。左键不会在这里阻止 WebView 的普通点击，动作与查词/拖动等原生手势并行。
+  MangaReaderInputAction? _resolveMangaMouseButton(int button) {
+    final FushiShortcutRegistry registry = appModel.shortcutRegistry;
+    final ShortcutAction? bound =
+        registry.resolveMouse(button, scope: ShortcutScope.manga) ??
+        registry.resolveMouse(button, scope: ShortcutScope.universal) ??
+        registry.resolveMouse(button, scope: ShortcutScope.global);
+    return MangaFushiPage.inputActionForShortcut(
+      action: bound,
+      crossPageStep: true,
+      dictionaryShown: isDictionaryShown,
+      mode: _mode,
+    );
+  }
+
+  MangaReaderInputAction? _resolveMangaMouseAction(int buttons) {
+    final int? button = domMouseButtonFromPointerButtons(buttons);
+    return button == null ? null : _resolveMangaMouseButton(button);
+  }
+
+  bool _handleMangaMouseButton(int buttons) {
+    final MangaReaderInputAction? action = _resolveMangaMouseAction(buttons);
+    if (action == null) return false;
+    _executeReaderInputAction(action, source: _MangaReaderInputSource.flutter);
+    return true;
+  }
+
+  void _handleMangaDomMouseButton(int button) {
+    final MangaReaderInputAction? action = _resolveMangaMouseButton(button);
+    if (action == null) return;
+    _executeReaderInputAction(
+      action,
+      source: _MangaReaderInputSource.nativeWebView,
+    );
+  }
+
+  /// 解析弹窗外由 Dart barrier 收到的滚轮事件。WebView 正文的滚轮由注入的
+  /// `_mangaShortcutWheelAction` 在浏览器层先拦截，命中后回传 action key；这条
+  /// resolver 供弹窗 barrier（以及未来不经 JS 的桌面平台）读取同一注册表。
+  MangaReaderInputAction? _resolveMangaWheelAction(Offset delta) {
+    final direction = wheelDirectionFromScrollDelta(delta);
+    if (direction == null) return null;
+    final FushiShortcutRegistry registry = appModel.shortcutRegistry;
+    final ShortcutAction? bound = registry.resolveWheel(
+      direction,
+      modifiers: activeModifierKeys(),
+      scope: ShortcutScope.manga,
+    );
+    return MangaFushiPage.inputActionForShortcut(
+      action: bound,
+      crossPageStep: true,
+      dictionaryShown: isDictionaryShown,
+      mode: _mode,
+    );
+  }
+
   void _handleNativeNavigationKey(String key) {
     // token 按 [InputBinding.serialize] 解析：正文 WebView 的桥发裸 `event.key`
     // （`ArrowLeft`），弹窗桥发注册表 token（可能是任意键名、可能带修饰键前缀），
@@ -2645,6 +2725,16 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
   @override
   void onDismissBarrierPointerSignal(PointerSignalEvent event) {
     if (event is! PointerScrollEvent) return;
+    final MangaReaderInputAction? custom = _resolveMangaWheelAction(
+      event.scrollDelta,
+    );
+    if (custom != null) {
+      _executeReaderInputAction(
+        custom,
+        source: _MangaReaderInputSource.flutter,
+      );
+      return;
+    }
     final MangaReaderInputAction? action = MangaFushiPage.wheelInputAction(
       event.scrollDelta,
     );
@@ -3901,6 +3991,11 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       return;
     }
     if (decoded is! Map || !mounted) return;
+    final int? button = (decoded['button'] as num?)?.toInt();
+    // A right-button shortcut is dispatched on mousedown. The existing
+    // context-menu bridge fires on mouseup, so suppress the native menu when
+    // the current registry still maps that button to an executable action.
+    if (button != null && _resolveMangaMouseButton(button) != null) return;
     final double x = (decoded['x'] as num?)?.toDouble() ?? 0;
     final double y = (decoded['y'] as num?)?.toDouble() ?? 0;
     // BUG-1438（与 BUG-129/261/381/781 同族）：JS 报的 clientX/clientY 是 **真实屏幕
@@ -4034,61 +4129,72 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
             focusNode: _focusNode,
             autofocus: true,
             onKeyEvent: _handleReaderKey,
-            child: Stack(
-              fit: StackFit.expand,
-              children: <Widget>[
-                Positioned.fill(child: _buildBody()),
-                // 查词弹窗层：必须在同一个键盘 Focus 子树里，否则原生词典
-                // WebView 持焦后会吞掉翻页键。
-                Positioned.fill(
-                  key: const ValueKey<String>('manga_dictionary_host'),
-                  child: buildDictionary(),
-                ),
-                if (_bookRow != null && !_loadFailed && _chromeVisible)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    child: SafeArea(
-                      child: IconButton(
-                        key: const ValueKey<String>('manga_reader_back_button'),
-                        tooltip: MaterialLocalizations.of(
-                          context,
-                        ).backButtonTooltip,
-                        color: Colors.white,
-                        icon: const Icon(Icons.arrow_back_ios_new),
-                        onPressed: () => Navigator.of(context).maybePop(),
-                      ),
-                    ),
+            child: Listener(
+              behavior: HitTestBehavior.translucent,
+              onPointerDown: (PointerDownEvent event) {
+                if (event.kind != PointerDeviceKind.mouse) return;
+                _handleMangaMouseButton(event.buttons);
+              },
+              // 正文 WebView 的滚轮由 HTML 手势机先判定绑定并在命中时
+              // preventDefault；这里不再重复执行，避免一次滚轮触发两次动作。
+              child: Stack(
+                fit: StackFit.expand,
+                children: <Widget>[
+                  Positioned.fill(child: _buildBody()),
+                  // 查词弹窗层：必须在同一个键盘 Focus 子树里，否则原生词典
+                  // WebView 持焦后会吞掉翻页键。
+                  Positioned.fill(
+                    key: const ValueKey<String>('manga_dictionary_host'),
+                    child: buildDictionary(),
                   ),
-                // 顶部 chrome：页码指示 + 阅读模式切换。
-                if (_bookRow != null && !_loadFailed && _chromeVisible)
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: SafeArea(child: _buildTopChrome()),
-                  ),
-                // BUG-1888：隐藏态唯一的唤回入口（理由见 [_chromeVisible]）。
-                if (_bookRow != null && !_loadFailed && !_chromeVisible)
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: SafeArea(
-                      child: Opacity(
-                        opacity: 0.35,
+                  if (_bookRow != null && !_loadFailed && _chromeVisible)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      child: SafeArea(
                         child: IconButton(
                           key: const ValueKey<String>(
-                            'manga_chrome_show_button',
+                            'manga_reader_back_button',
                           ),
-                          tooltip: t.manga_interface_show,
-                          iconSize: 20,
+                          tooltip: MaterialLocalizations.of(
+                            context,
+                          ).backButtonTooltip,
                           color: Colors.white,
-                          icon: const Icon(Icons.visibility_outlined),
-                          onPressed: _toggleMangaChrome,
+                          icon: const Icon(Icons.arrow_back_ios_new),
+                          onPressed: () => Navigator.of(context).maybePop(),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                  // 顶部 chrome：页码指示 + 阅读模式切换。
+                  if (_bookRow != null && !_loadFailed && _chromeVisible)
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: SafeArea(child: _buildTopChrome()),
+                    ),
+                  // BUG-1888：隐藏态唯一的唤回入口（理由见 [_chromeVisible]）。
+                  if (_bookRow != null && !_loadFailed && !_chromeVisible)
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: SafeArea(
+                        child: Opacity(
+                          opacity: 0.35,
+                          child: IconButton(
+                            key: const ValueKey<String>(
+                              'manga_chrome_show_button',
+                            ),
+                            tooltip: t.manga_interface_show,
+                            iconSize: 20,
+                            color: Colors.white,
+                            icon: const Icon(Icons.visibility_outlined),
+                            onPressed: _toggleMangaChrome,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -4435,6 +4541,29 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
             unawaited(_onMangaTurn(args[0] as String));
           },
         );
+        // 自定义滚轮快捷键由文档内的 wheel 监听在浏览器默认滚动前拦截，
+        // 这里只按 action key 走和键盘/手柄相同的输入映射与执行体。
+        controller.addJavaScriptHandler(
+          handlerName: 'onMangaWheelShortcut',
+          callback: (List<dynamic> args) {
+            if (args.isEmpty || args[0] is! String) return;
+            final ShortcutAction? bound = ShortcutAction.fromKey(
+              args[0] as String,
+            );
+            final MangaReaderInputAction? action =
+                MangaFushiPage.inputActionForShortcut(
+                  action: bound,
+                  crossPageStep: true,
+                  dictionaryShown: isDictionaryShown,
+                  mode: _mode,
+                );
+            if (action == null) return;
+            _executeReaderInputAction(
+              action,
+              source: _MangaReaderInputSource.nativeWebView,
+            );
+          },
+        );
         controller.addJavaScriptHandler(
           handlerName: 'onMangaNavigationKey',
           callback: (List<dynamic> args) {
@@ -4449,6 +4578,19 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
           callback: (List<dynamic> args) {
             if (args.isEmpty || args[0] is! String) return;
             _handleNativeNavigationKey(args[0] as String);
+          },
+        );
+        controller.addJavaScriptHandler(
+          handlerName: 'onMangaMouseShortcut',
+          callback: (List<dynamic> args) {
+            if (args.isEmpty) return;
+            final int? button = switch (args[0]) {
+              final num value => value.toInt(),
+              final String value => int.tryParse(value),
+              _ => null,
+            };
+            if (button == null || button < 0) return;
+            _handleMangaDomMouseButton(button);
           },
         );
         controller.addJavaScriptHandler(

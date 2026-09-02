@@ -5262,7 +5262,8 @@ const FUSHI_ENTRY_WHEEL_DEFAULT_BINDINGS = {
 };
 // 本次 wheel 事件命中哪个词条导航动作：'next' / 'prev' / null。
 // 判据：deltaY 的符号给方向，当前按下的修饰键集合必须与某条绑定**全等**（故
-// Alt+滚轮绝不会被 Ctrl+Alt+滚轮误触）。裸滚轮永远留给内容滚动，绝不劫持。
+// Alt+滚轮绝不会被 Ctrl+Alt+滚轮误触）。默认配置没有裸滚轮，因此它仍留给内容滚动；
+// 只有用户在快捷键设置中明确保存 mods: [] 时，才会把裸滚轮用于动作。
 function popupEntryWheelAction(e) {
     const raw = window.__fushiEntryWheelBindings;
     const cfg = (raw && typeof raw === 'object')
@@ -5275,7 +5276,6 @@ function popupEntryWheelAction(e) {
     if (e.ctrlKey) pressed.push('ctrl');
     if (e.shiftKey) pressed.push('shift');
     if (e.metaKey) pressed.push('meta');
-    if (pressed.length === 0) return null;
     const matches = (list) => Array.isArray(list) && list.some((b) => b &&
         b.dir === dir && Array.isArray(b.mods) &&
         b.mods.length === pressed.length &&

@@ -90,8 +90,8 @@ class LookupDismissBarrier extends StatefulWidget {
   /// `resolveDictionaryPopupInputToken` 解析，两个表面才不会各判各的。
   ///
   /// 不接（null）＝非主键在 barrier 上无任何效果，与本参数出现之前逐字一致。
-  /// 主键与触摸永远不进这里（[domMouseButtonFromPointerButtons] 对它们返回 null），
-  /// 故点击关窗 / 横拖关一层的既有语义零变化。
+  /// 回调入口同时检查鼠标设备类型并排除 DOM button 0，故主键/触摸不会进入这条通道，
+  /// 点击关窗 / 横拖关一层的既有语义零变化。
   final void Function(int buttons)? onNonPrimaryButtonDown;
 
   @override
@@ -111,9 +111,13 @@ class _LookupDismissBarrierState extends State<LookupDismissBarrier> {
   void _onPointerDown(PointerDownEvent event) {
     // BUG-1995：非主键先交给宿主按绑定分发。**纯附加**——不 return、不改下面任何一
     // 行滑关状态机，所以没接 [LookupDismissBarrier.onNonPrimaryButtonDown] 的表面
-    // 行为逐字不变。主键/触摸在此恒为 null，进不来。
+    // 行为逐字不变。主键/触摸会被上面的设备类型与 button 0 门控排除。
+    final int? domButton = event.kind == PointerDeviceKind.mouse
+        ? domMouseButtonFromPointerButtons(event.buttons)
+        : null;
     if (widget.onNonPrimaryButtonDown != null &&
-        domMouseButtonFromPointerButtons(event.buttons) != null) {
+        domButton != null &&
+        domButton != 0) {
       widget.onNonPrimaryButtonDown!(event.buttons);
     }
     if (!_swipeActive) return;

@@ -93,14 +93,12 @@ void main() {
     );
   });
 
-  // 同一件事的另一面：通道**关着**的 scope，其鼠标绑定照样解析得出来。
-  // 这条钉住「channels 只是设置页的录入门，不是派发门」这个契约本身——只要有人再想
-  // 拿「通道没开」推出「绑定是死的」，这里就会红。
-  test('BUG-1995: channels 不含 mouse 的 scope，已有鼠标绑定仍可解析', () {
+  // 首页的 Flutter Listener 已接通 mouse 通道；绑定仍按 scope 精确解析。
+  test('home scope opens mouse channel and resolves a custom binding', () {
     expect(
       ShortcutScope.home.channels.contains(ShortcutChannel.mouse),
-      isFalse,
-      reason: '前提：home 至今没有开鼠标通道（开了就换一个仍关着的 scope）',
+      isTrue,
+      reason: '首页已有 PointerDownEvent → MouseBinding → 派发管线',
     );
 
     final FushiShortcutRegistry reg = FushiShortcutRegistry()
@@ -113,7 +111,40 @@ void main() {
     expect(
       reg.resolveMouse(4, scope: ShortcutScope.home),
       ShortcutAction.homeTabNext,
-      reason: 'resolveMouse 不查 channels —— 通道开关管不着已存在的绑定能否派发',
+    );
+  });
+
+  test('resolveWheel matches direction and the exact modifier set', () {
+    final reg = FushiShortcutRegistry()..loadDefaults(TargetPlatform.windows);
+    expect(
+      reg.resolveWheel(
+        WheelDirection.down,
+        modifiers: const <ModifierKey>{ModifierKey.alt},
+        scope: ShortcutScope.dictionaryPopup,
+      ),
+      ShortcutAction.popupNextEntry,
+    );
+    expect(
+      reg.resolveWheel(
+        WheelDirection.down,
+        modifiers: const <ModifierKey>{},
+        scope: ShortcutScope.dictionaryPopup,
+      ),
+      isNull,
+    );
+    reg.updateBinding(
+      ShortcutAction.homeFocusSearch,
+      const ShortcutBindingSet(
+        wheelBindings: <WheelBinding>[WheelBinding(WheelDirection.up)],
+      ),
+    );
+    expect(
+      reg.resolveWheel(
+        WheelDirection.up,
+        modifiers: const <ModifierKey>{},
+        scope: ShortcutScope.home,
+      ),
+      ShortcutAction.homeFocusSearch,
     );
   });
 }

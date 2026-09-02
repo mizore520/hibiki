@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart'
+    show Clipboard, ClipboardData, rootBundle;
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fushi_audio/fushi_audio.dart';
@@ -71,6 +73,9 @@ const String kWebVideoJsHandler = 'fushiWebVideo';
 
 /// WebView2 持焦时截获视频快捷键交回 Dart 的桥 handler 名。
 const String kWebVideoKeyBridgeHandler = 'fushiWebVideoKeys';
+
+/// 网页视频页滚轮快捷键交回 Dart 的桥 handler 名。
+const String kWebVideoWheelBridgeHandler = 'fushiWebVideoWheel';
 
 /// 流媒体书断点写库的最小位置（与视频页远端分支 `_persistRemotePosition` 的 BUG-996 阈值
 /// 同口径）：播放头不足 5 秒不算「看过」，不覆盖已有进度。
@@ -403,6 +408,7 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
     super.initState();
     attachLookupCounter(_popup);
     _controller.addListener(_onControllerChanged);
+    _appModel.shortcutRegistry.addListener(_onShortcutRegistryChanged);
     assert(() {
       WebVideoFushiPage.debugSnapshot = () => (
         hasVideo: _state?.hasVideo ?? false,
@@ -483,6 +489,7 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
       FushiWindowsTitleBar.setContentFullscreen(owner: this, enabled: false);
     }
     _controller.removeListener(_onControllerChanged);
+    _appModel.shortcutRegistry.removeListener(_onShortcutRegistryChanged);
     _controller.dispose();
     _popup.dispose();
     _searchRequests.dispose();
@@ -554,9 +561,26 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
     WidgetsBinding.instance.addPostFrameCallback((_) => _seedWarmPopup());
   }
 
-  /// WebView2 持焦期间截获视频作用域全部键盘绑定（token 直接取注册表序列化形式，
-  /// 用户改绑后重开本页即生效），交回 [_onKeyToken] 走同一份动作表。
+  /// WebView2 持焦期间截获视频作用域全部键盘/鼠标绑定（token 直接取注册表序列化
+  /// 形式），交回 [_onKeyToken] 走同一份动作表。滚轮使用旁边的专用 bridge，因为
+  /// WebViewKeyBridge 的通道是离散按键/按钮，不能表达 wheel 的方向与修饰键组合。
   String _keyBridgeScript() {
+    final String keyBridge = webViewKeyBridgeScript(
+      handlerName: kWebVideoKeyBridgeHandler,
+      keys: _videoKeyboardTokens(),
+      mouseButtons: _videoMouseButtons(),
+      installMouseListeners: true,
+      // 左键快捷键是非阻塞的：动作执行后仍让站点播放器收到普通点击。
+      allowPrimaryMouse: true,
+      forwardRepeats: false,
+      stopPropagation: true,
+    );
+    return '$keyBridge\n${_webVideoWheelBridgeScript()}';
+  }
+
+  /// 当前 video + universal scope 的键盘 token。键盘桥和设置页共用同一注册表，
+  /// 这样用户改绑后热更新槽与首次 document-start 注入使用完全相同的集合。
+  List<String> _videoKeyboardTokens() {
     final Set<String> tokens = <String>{};
     for (final ShortcutAction action in <ShortcutAction>{
       ...ShortcutAction.actionsForScope(ShortcutScope.video),
@@ -567,12 +591,144 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
         tokens.add(b.serialize());
       }
     }
-    return webViewKeyBridgeScript(
-      handlerName: kWebVideoKeyBridgeHandler,
-      keys: tokens.toList(growable: false),
-      forwardRepeats: false,
-      stopPropagation: true,
-    );
+    final List<String> result = tokens.toList()..sort();
+    return result;
+  }
+
+  /// 当前 video scope 中已绑定的 DOM 鼠标按钮。WebView 的 generic bridge 用这张表
+  /// 决定哪些按钮需要回传；空表也必须下发，才能在用户删掉最后一个绑定后清掉旧槽。
+  List<int> _videoMouseButtons() {
+    final Set<int> buttons = <int>{};
+    for (final ShortcutAction action in ShortcutAction.actionsForScope(
+      ShortcutScope.video,
+    )) {
+      for (final MouseBinding binding
+          in _appModel.shortcutRegistry.bindingsFor(action).mouseBindings) {
+        if (binding.button >= 0 && binding.button <= 4) {
+          buttons.add(binding.button);
+        }
+      }
+    }
+    final List<int> result = buttons.toList()..sort();
+    return result;
+  }
+
+  /// 把 video scope 的滚轮绑定序列化成 document-start 脚本可直接消费的对象。
+  /// 每个方向的条目都带完整修饰键集合，JS 侧按「方向 + 修饰键全等」匹配，避免
+  /// Alt+滚轮误触裸滚轮或 Ctrl+Alt+滚轮误触 Alt+滚轮。
+  String _videoWheelBindingsJson() {
+    final Map<String, List<Map<String, dynamic>>> bindings =
+        <String, List<Map<String, dynamic>>>{
+          for (final WheelDirection direction in WheelDirection.values)
+            direction.name: <Map<String, dynamic>>[],
+        };
+    for (final ShortcutAction action in ShortcutAction.actionsForScope(
+      ShortcutScope.video,
+    )) {
+      for (final WheelBinding binding
+          in _appModel.shortcutRegistry.bindingsFor(action).wheelBindings) {
+        final List<ModifierKey> modifiers = binding.modifiers.toList()
+          ..sort((ModifierKey a, ModifierKey b) => a.index.compareTo(b.index));
+        bindings[binding.direction.name]!.add(<String, dynamic>{
+          'action': action.key,
+          'mods': modifiers
+              .map((ModifierKey modifier) => modifier.name)
+              .toList(),
+        });
+      }
+    }
+    return jsonEncode(bindings);
+  }
+
+  /// WebView2 内的滚轮快捷键桥。命中后先阻止网页滚动/播放器默认动作，再把动作
+  /// key、方向和修饰键一并交回 Dart；Dart 会再次用当前 registry 精确解析，防止
+  /// 用户在事件排队期间改键时误执行旧绑定。
+  String _webVideoWheelBridgeScript() {
+    final String bindingsJson = _videoWheelBindingsJson();
+    return '''
+;(function(){
+  window.__fushiWebVideoWheelBindings = $bindingsJson;
+  if (window.__fushiWebVideoWheelInstalled) return;
+  window.__fushiWebVideoWheelInstalled = true;
+  function _bridge(){ return window.flutter_inappwebview; }
+  function _direction(e){
+    var dx = Number(e.deltaX) || 0;
+    var dy = Number(e.deltaY) || 0;
+    var dominant = Math.abs(dy) >= Math.abs(dx) ? dy : dx;
+    if (Math.abs(dominant) < 2) return null;
+    return dominant > 0 ? 'down' : 'up';
+  }
+  function _action(e, direction){
+    var pressed = [];
+    if (e.ctrlKey) pressed.push('ctrl');
+    if (e.shiftKey) pressed.push('shift');
+    if (e.altKey) pressed.push('alt');
+    if (e.metaKey) pressed.push('meta');
+    var list = (window.__fushiWebVideoWheelBindings || {})[direction];
+    if (!Array.isArray(list)) return null;
+    for (var i = 0; i < list.length; i++) {
+      var item = list[i];
+      if (!item || !Array.isArray(item.mods) || item.mods.length !== pressed.length) {
+        continue;
+      }
+      var same = true;
+      for (var j = 0; j < item.mods.length; j++) {
+        if (pressed.indexOf(item.mods[j]) < 0) { same = false; break; }
+      }
+      if (same && typeof item.action === 'string' && item.action) return item.action;
+    }
+    return null;
+  }
+  document.addEventListener('wheel', function(e){
+    if (!e) return;
+    var direction = _direction(e);
+    if (!direction) return;
+    var action = _action(e, direction);
+    if (!action) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    var bridge = _bridge();
+    if (bridge) {
+      var mods = [];
+      if (e.ctrlKey) mods.push('ctrl');
+      if (e.shiftKey) mods.push('shift');
+      if (e.altKey) mods.push('alt');
+      if (e.metaKey) mods.push('meta');
+      bridge.callHandler('$kWebVideoWheelBridgeHandler', action, direction, mods);
+    }
+  }, {capture: true, passive: false});
+})();''';
+  }
+
+  /// 设置页改绑后立即刷新 WebView 中的热槽；不要求用户退出并重新打开网页视频。
+  /// onLoadStop 也会调用一次，覆盖「改绑发生在 document-start listener 尚未安装」的
+  /// 初始化竞态。
+  void _onShortcutRegistryChanged() {
+    if (!mounted || _web == null) return;
+    unawaited(_refreshWebVideoShortcutBindings());
+  }
+
+  Future<void> _refreshWebVideoShortcutBindings() async {
+    final InAppWebViewController? web = _web;
+    if (!mounted || web == null) return;
+    final String mouseButtons = jsonEncode(_videoMouseButtons());
+    final String keyboardTokens = jsonEncode(_videoKeyboardTokens());
+    final String wheelBindings = _videoWheelBindingsJson();
+    try {
+      await web.evaluateJavascript(
+        source:
+            '''(function(){
+          window['__fushiKeyBridgeKeys_$kWebVideoKeyBridgeHandler'] = $keyboardTokens;
+          window['__fushiKeyBridgeButtons_$kWebVideoKeyBridgeHandler'] = $mouseButtons;
+          window.__fushiWebVideoWheelBindings = $wheelBindings;
+        })();''',
+      );
+    } catch (e) {
+      ErrorLogService.instance.log(
+        'web_video',
+        'refresh shortcut bindings failed: $e',
+      );
+    }
   }
 
   void _seedWarmPopup() {
@@ -670,6 +826,45 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
       scope: ShortcutScope.video,
     );
     if (action == null) return;
+    if (_popup.hasVisiblePopup) {
+      _popNestedPopupAt(_popup.lastVisibleIndex);
+      return;
+    }
+    videoActionCallbacks(_shortcutActions())[action]?.call();
+  }
+
+  /// 处理 document-start 滚轮桥回传，并以当前注册表重新核验方向/修饰键/动作三者。
+  void _onWebVideoWheelToken(List<dynamic> args) {
+    if (args.length < 3) return;
+    final String actionKey = args[0].toString();
+    final String directionName = args[1].toString();
+    WheelDirection? direction;
+    for (final WheelDirection candidate in WheelDirection.values) {
+      if (candidate.name == directionName) {
+        direction = candidate;
+        break;
+      }
+    }
+    if (direction == null) return;
+    final Set<ModifierKey> modifiers = <ModifierKey>{};
+    final dynamic rawModifiers = args[2];
+    if (rawModifiers is List) {
+      for (final dynamic raw in rawModifiers) {
+        final String name = raw.toString();
+        for (final ModifierKey modifier in ModifierKey.values) {
+          if (modifier.name == name) {
+            modifiers.add(modifier);
+            break;
+          }
+        }
+      }
+    }
+    final ShortcutAction? action = _appModel.shortcutRegistry.resolveWheel(
+      direction,
+      modifiers: modifiers,
+      scope: ShortcutScope.video,
+    );
+    if (action == null || action.key != actionKey) return;
     if (_popup.hasVisiblePopup) {
       _popNestedPopupAt(_popup.lastVisibleIndex);
       return;
@@ -1784,8 +1979,16 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
             return null;
           },
         );
+        controller.addJavaScriptHandler(
+          handlerName: kWebVideoWheelBridgeHandler,
+          callback: (List<dynamic> args) {
+            _onWebVideoWheelToken(args);
+            return null;
+          },
+        );
       },
       onLoadStop: (InAppWebViewController controller, WebUri? url) {
+        unawaited(_refreshWebVideoShortcutBindings());
         unawaited(_setNativeSubtitlesHidden(_hideNativeSubtitles));
         unawaited(_js('window.__fushiWebVideo.replayCues()'));
         unawaited(_syncDomSubtitles());

@@ -1383,15 +1383,16 @@ install: function(C) {
     _fushiReaderPointerNoSelect(false);
     hasStart = false;
   }, {passive: true});
-  // 非左键（中键/侧键）：上报 Dart，由 resolveMouse 判定是否绑定「seek 到点击句」。
-  // mousedown 一定触发，preventDefault 压掉中键自动滚动。触屏合成事件 button 恒 0，
-  // 被首行排除，不干扰触摸手势。
+  // 鼠标按钮统一上报 Dart，由 resolveMouse 判定绑定的阅读器/有声书动作。左键也
+  // 上报，但不 preventDefault，避免绑定左键后失去正文选字、点击和拖动；中键/右键/
+  // 侧键仍阻止浏览器默认动作（自动滚动/上下文菜单）。触屏合成事件 button 恒 0，
+  // 会沿现有触摸手势继续处理。
   document.addEventListener('mousedown', function(e) {
-    if (e.button === 0) return;
+    if (e && e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) return;
     if (e.button === 2 && _fushiBlockImageUrl(e.target || document.elementFromPoint(e.clientX, e.clientY))) {
       return;
     }
-    e.preventDefault();
+    if (e.button !== 0) e.preventDefault();
     window.flutter_inappwebview.callHandler('onPointerSeek', e.button, e.clientX, e.clientY);
   }, {passive: false});
   document.addEventListener('selectstart', function(e) {
@@ -2500,6 +2501,20 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
                     ShortcutAction.readerDismissDict) {
               clearDictionaryResult();
               return;
+            }
+            // 鼠标按钮也可以触发阅读器/有声书的普通快捷动作（翻页、播放、开菜单、
+            // 关闭界面等）。seek-to-clicked-sentence 是位置型特例，保留下面的坐标路径；
+            // 其余动作交给与键盘/手柄共用的执行体。reader scope 优先于 audiobook，
+            // 与键盘解析阶梯一致。
+            final ShortcutAction? mouseAction =
+                registry.resolveMouse(button, scope: ShortcutScope.reader) ??
+                registry.resolveMouse(button, scope: ShortcutScope.audiobook);
+            if (mouseAction != null &&
+                mouseAction != ShortcutAction.audiobookSeekToClickedSentence) {
+              if (_executeShortcutAction(mouseAction) ==
+                  KeyEventResult.handled) {
+                return;
+              }
             }
             // seek-to-clicked-sentence 仅有声书表面有意义，故仍需 controller。
             if (_audiobookController == null) return;

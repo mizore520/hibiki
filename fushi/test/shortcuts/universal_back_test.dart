@@ -459,10 +459,11 @@ void main() {
       );
       expect(
         'scope: ShortcutScope.universal'.allMatches(code).length,
-        2,
+        3,
         reason:
-            '键盘 (_resolveMangaKeyAction) 与手柄 (_resolveMangaGamepadAction) '
-            '各一处兜底解析 universal；少一处就有一条通道退不出漫画'
+            '键盘、手柄与鼠标 (_resolveMangaKeyAction / '
+            '_resolveMangaGamepadAction / _resolveMangaMouseButton) '
+            '各有一处兜底解析 universal；少一处就有一条通道退不出漫画'
             '（手柄那条缺席时 B 会走全局 maybePop 兜底，弹窗开着直接退页）',
       );
       final int idx = code.indexOf('if (action == ShortcutAction.globalBack)');

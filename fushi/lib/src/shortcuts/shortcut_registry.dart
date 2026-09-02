@@ -595,6 +595,27 @@ class FushiShortcutRegistry extends ChangeNotifier {
     return null;
   }
 
+  /// 解析滚轮方向与当前修饰键到 scope 内绑定的动作。
+  ///
+  /// 滚轮绑定与鼠标按键不同，方向和修饰键共同组成唯一输入。调用方应传入
+  /// [activeModifierKeys] 的当前快照；空集合表示用户显式绑定了裸滚轮。
+  ShortcutAction? resolveWheel(
+    WheelDirection direction, {
+    required Set<ModifierKey> modifiers,
+    required ShortcutScope scope,
+  }) {
+    for (final action in ShortcutAction.actionsForScope(scope)) {
+      final bindings = _bindings[action];
+      if (bindings == null) continue;
+      for (final wb in bindings.wheelBindings) {
+        if (wb.direction == direction && setEquals(wb.modifiers, modifiers)) {
+          return action;
+        }
+      }
+    }
+    return null;
+  }
+
   ShortcutAction? hasKeyboardConflict(
     ShortcutScope scope,
     InputBinding binding, {

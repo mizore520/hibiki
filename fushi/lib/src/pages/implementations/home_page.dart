@@ -2,6 +2,7 @@ import 'package:fushi_dictionary/fushi_dictionary.dart';
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:macos_ui/macos_ui.dart'
     show
@@ -73,7 +74,12 @@ import 'package:fushi/utils.dart';
 import 'package:fushi/src/focus/fushi_focus_controller.dart'
     show FushiFocusController, FushiFocusRoot;
 import 'package:fushi/src/shortcuts/input_binding.dart'
-    show GamepadButton, ModifierKey;
+    show
+        GamepadButton,
+        ModifierKey,
+        activeModifierKeys,
+        domMouseButtonFromPointerButtons,
+        wheelDirectionFromScrollDelta;
 import 'package:fushi/src/shortcuts/gamepad_service.dart'
     show
         GamepadButtonIntent,
@@ -1023,6 +1029,34 @@ class _HomePageState extends BasePageState<HomePage>
     return _executeShortcutAction(action) == KeyEventResult.handled;
   }
 
+  /// 首页桌面 Listener 的鼠标按键入口。左键绑定也在这里解析，但只在注册表确实
+  /// 命中时执行动作；Listener 本身不阻止下层 GestureDetector / 控件继续收到左键，
+  /// 因而普通点击、选择和拖动行为保持不变。
+  bool _handleMouseButton(int buttons) {
+    final int? button = domMouseButtonFromPointerButtons(buttons);
+    if (button == null) return false;
+    final ShortcutAction? action = appModel.shortcutRegistry.resolveMouse(
+      button,
+      scope: ShortcutScope.home,
+    );
+    if (action == null) return false;
+    return _executeShortcutAction(action) == KeyEventResult.handled;
+  }
+
+  /// 首页滚轮快捷键入口。未命中注册表时不处理 PointerSignal，让 Flutter 的原生
+  /// 滚动链路继续工作；空修饰键只有在用户明确保存裸滚轮绑定后才会命中。
+  void _handleHomePointerSignal(PointerSignalEvent event) {
+    if (event is! PointerScrollEvent) return;
+    final direction = wheelDirectionFromScrollDelta(event.scrollDelta);
+    if (direction == null) return;
+    final ShortcutAction? action = appModel.shortcutRegistry.resolveWheel(
+      direction,
+      modifiers: activeModifierKeys(),
+      scope: ShortcutScope.home,
+    );
+    if (action != null) _executeShortcutAction(action);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!appModel.isDatabaseOpen) {
@@ -1079,40 +1113,48 @@ class _HomePageState extends BasePageState<HomePage>
           skipTraversal: true,
           focusNode: _keyboardFocusNode,
           onKeyEvent: _handleKeyEvent,
-          child: GestureDetector(
-            onTap: () {
-              final FocusNode? current = FocusManager.instance.primaryFocus;
-              if (current != null && current != _keyboardFocusNode) {
-                current.unfocus();
-              }
+          child: Listener(
+            behavior: HitTestBehavior.translucent,
+            onPointerDown: (PointerDownEvent event) {
+              if (event.kind != PointerDeviceKind.mouse) return;
+              _handleMouseButton(event.buttons);
             },
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                // BUG-401: classify on the real physical width
-                // (logical × appUiScale). This LayoutBuilder sits INSIDE
-                // FushiAppUiScale, so `constraints.maxWidth` is the
-                // inflated logical canvas width; reading it directly kept
-                // desktop locked to the nav-rail layout and the phone
-                // (bottom-bar) layout was unreachable however narrow the
-                // real window got dragged.
-                // macOS-native shell: a real root MacosWindow + Sidebar
-                // (built in main.dart, Approach B) replaces the self-drawn
-                // rail/bottom-bar. MacosWindow manages its own breakpoints, so
-                // HomePage only renders the tab body here — checked before the
-                // size-class switch.
-                if (isMacosPlatform(context)) {
-                  return _buildMacosLayout();
+            onPointerSignal: _handleHomePointerSignal,
+            child: GestureDetector(
+              onTap: () {
+                final FocusNode? current = FocusManager.instance.primaryFocus;
+                if (current != null && current != _keyboardFocusNode) {
+                  current.unfocus();
                 }
-                final sizeClass = windowSizeClassReal(
-                  constraints.maxWidth,
-                  FushiAppUiScale.of(context),
-                );
-                // compact(<600) → 底栏；medium/expanded(≥600，含竖屏平板) → 侧边布局。
-                if (sizeClass == WindowSizeClass.compact) {
-                  return _buildMobileLayout();
-                }
-                return _buildDesktopLayout(sizeClass);
               },
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // BUG-401: classify on the real physical width
+                  // (logical × appUiScale). This LayoutBuilder sits INSIDE
+                  // FushiAppUiScale, so `constraints.maxWidth` is the
+                  // inflated logical canvas width; reading it directly kept
+                  // desktop locked to the nav-rail layout and the phone
+                  // (bottom-bar) layout was unreachable however narrow the
+                  // real window got dragged.
+                  // macOS-native shell: a real root MacosWindow + Sidebar
+                  // (built in main.dart, Approach B) replaces the self-drawn
+                  // rail/bottom-bar. MacosWindow manages its own breakpoints, so
+                  // HomePage only renders the tab body here — checked before the
+                  // size-class switch.
+                  if (isMacosPlatform(context)) {
+                    return _buildMacosLayout();
+                  }
+                  final sizeClass = windowSizeClassReal(
+                    constraints.maxWidth,
+                    FushiAppUiScale.of(context),
+                  );
+                  // compact(<600) → 底栏；medium/expanded(≥600，含竖屏平板) → 侧边布局。
+                  if (sizeClass == WindowSizeClass.compact) {
+                    return _buildMobileLayout();
+                  }
+                  return _buildDesktopLayout(sizeClass);
+                },
+              ),
             ),
           ),
         ),

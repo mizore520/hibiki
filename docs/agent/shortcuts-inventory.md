@@ -22,9 +22,11 @@
 >
 > 快捷键分两类来源：
 > 1. **可配置注册表**（`ShortcutAction` + `ShortcutDefaults` + `FushiShortcutRegistry`，
->    用户可在「快捷键设置」页改键）—— reader / home / global / audiobook 四个 scope。
-> 2. **硬编码**（视频播放器、全局 Esc/方向键焦点、有声书 Space 覆写、阅读方向翻页覆写）
->    —— 不进注册表，用户改不了。
+>    用户可在「快捷键设置」页改键）—— reader / home / global / universal / audiobook /
+>    video / manga / dictionaryPopup 等 scope。reader、home、video、manga 的页面入口
+>    支持鼠标按键与滚轮；WebView 页面分别由 Flutter Listener 或 DOM bridge 接收。
+> 2. **仍有硬编码的上下文输入**（全局焦点/方向键补救、有声书 Space 覆写、阅读方向翻页
+>    覆写、漫画内部手势等）——这些不代表对应 scope 的普通快捷键，用户不能直接改。
 
 ---
 
@@ -78,35 +80,36 @@
 > 里只会触发一个，后面的 scope 会被静默遮蔽——所以默认值刻意给被遮蔽位置留空（注释
 > 已说明，如 audiobookNextSentence 不绑 RB/LB、globalBack 不绑手柄）。
 
+### video scope（视频页与内置网页视频页）
+
+视频动作（播放、跳句、音量、倍速、字幕、全屏等）已进入 `ShortcutAction` 注册表，
+键盘和手柄沿用原有动作表；鼠标按钮与滚轮也可以在设置页为这些动作添加绑定。普通视频
+页的 Flutter `Listener` 负责解析，`WebVideoFushiPage` 的 InAppWebView 则使用共享
+WebView 鼠标 bridge 与方向/修饰键全等的滚轮 bridge。视频鼠标/滚轮默认均为空，因此
+不改变原有点击、拖动、滚动和站点播放器行为；只有用户明确绑定后才会消费对应事件。
+
+### manga scope（漫画阅读器）
+
+漫画页支持键盘、手柄、鼠标按钮和滚轮绑定。未命中自定义动作时保留原有拖动、缩放、
+滚动和翻页手势；绑定左键采用非阻塞策略，绑定右键/侧键或滚轮才会抑制相应浏览器默认
+行为。
+
 ---
 
-## 2. 硬编码快捷键（不进注册表，用户改不了）
+## 2. 仍有硬编码的上下文输入（不进普通动作注册表）
 
-### 2a. 视频播放器（`video_player_shortcuts.dart` `buildVideoPlayerShortcuts`）
+### 2a. 视频播放器仍保留的上下文输入
 
-> **这一节属 TODO-048b（视频组）的优化对象，本任务只统计不改。** 当前是 asbplayer 风格
-> 硬编码键，CallbackShortcuts 安装在 video 页（`video_fushi_page.dart:1697`）。
+> 视频动作本身已迁入上面的 `video scope`；本节只列不能由普通动作注册表表达的上下文/兼容
+> 输入。它们仍由 `video_player_shortcuts.dart`、页面 Focus 或播放器手势层处理，不应与
+> 可配置动作表混为一谈。
 
-| 键 | 功能 |
+| 输入 | 功能 |
 |---|---|
-| Space / P / MediaPlayPause | 播放暂停切换 |
-| MediaPlay / MediaPause | 播放 / 暂停 |
-| ← / A / J | 时间后退（seekBackward） |
-| → / D / I | 时间前进（seekForward） |
-| Ctrl+← / Ctrl+→ | 上一句 / 下一句字幕 |
-| Shift+F | seekForward（**与 F=全屏冲突，见待优化**） |
-| C | 切换着色器对比 |
-| ↑ / 0 | 音量+ |
-| ↓ / 9 | 音量- |
-| M | 静音切换 |
-| [ / - | 减速 |
-| ] / = | 加速 |
-| Backspace | 速度复位 |
-| , / . | 上一帧 / 下一帧 |
-| S | 截图 |
-| F | 切换全屏 |
-| Esc | 退出（逐级：控件编辑→字幕列表→剧集列表→侧栏→沉浸锁→全屏→浮层→退页）。**现由 universal 的 globalBack 驱动**，不再是 video 组的 videoEscape |
-| B | 切换字幕模糊（`video_fushi_page.dart:3305`，内层 CallbackShortcuts，asbplayer 同款） |
+| videoEnterCaret 激活期间的方向键 / Enter / Esc | 选词光标移动、确认与退出，优先于普通 video scope |
+| videoHoldSpeed 的 keydown / keyup 边沿 | 按住临时倍速，松开恢复原速；普通 activator 无法表达 keyup |
+| 有声书 Space 覆写 | 有声书激活时把无修饰 Space 从翻页改为 audiobookPlayPause |
+| 阅读方向翻页覆写 | 竖排 RTL 下左右方向按页序语义校正 |
 
 ### 2b. 全局焦点/导航（`global_navigation.dart`，仅实验性焦点导航开启时）
 
@@ -158,16 +161,16 @@ readerDismissDict 关栈顶弹窗 / 全局 Navigator pop / 手柄 B）。
 | `popup_next_entry` | Alt+滚轮下 | 多词条结果里跳到下一个词条并滚进视口（Yomitan Next entry） |
 | `popup_prev_entry` | Alt+滚轮上 | 上一个词条 |
 
-约束：裸滚轮永远留给内容滚动（不可绑定）；修饰键必须**全等**匹配，故 Ctrl+Alt+滚轮
-不会误触 Alt+滚轮；到首/末条时返回 `blocked`，该帧照常滚动内容。设置页对这个 scope
-只渲染滚轮章节（`ShortcutScope.channels`），不给键盘/手柄入口——那些通道在这里绑了
-也永不触发。
+约束：默认裸滚轮留给内容滚动；用户在设置页明确选择空修饰键后，才会覆盖该默认语义。
+修饰键必须**全等**匹配，故 Ctrl+Alt+滚轮不会误触 Alt+滚轮；到首/末条时返回
+`blocked`，该帧照常滚动内容。设置页对这个 scope 只渲染滚轮章节
+（`ShortcutScope.channels`），不给键盘/手柄/鼠标入口——那些通道在这里绑了也永不触发。
 
 ---
 
 ## 3. 待优化（发现的冲突/重复/缺失，报 PM，不擅自改）
 
-### 冲突（需 048b 视频组确认后改）
+### 冲突（视频默认值；需用户确认后再调整）
 
 - **视频 `F` 双绑**：`F` = 切换全屏（line 88），`Shift+F` = seekForward（line 69-71）。
   Shift+F 与裸 F 不是同一 activator 故不会硬撞，但 `F`/`Shift+F` 语义割裂（一个全屏一个
@@ -186,7 +189,8 @@ readerDismissDict 关栈顶弹窗 / 全局 Navigator pop / 手柄 B）。
   绑了也会被遮蔽，注释已说明）。这是正确的「不绑被遮蔽位」，非缺陷。
 - globalBack 无手柄默认（reader B 已是 readerDismissDict）。同上。
 
-### 注册表外无统一入口
+### 注册表外仍无统一入口的上下文输入
 
-- 视频播放器快捷键（2a）整套硬编码，**不进「快捷键设置」页**，用户无法自定义。把视频
-  键纳入可配置注册表是 048b 的潜在工作（本任务不做）。
+- 视频选词光标激活期方向键、按住倍速的 keyup 边沿，以及有声书/阅读方向的覆写仍由
+  上下文路由处理，不属于普通动作绑定。若要调整这些输入，必须先确认不会破坏上下文
+  消费顺序，不能简单再接一套硬编码表。
