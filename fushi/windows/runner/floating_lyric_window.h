@@ -62,6 +62,10 @@ class FloatingLyricWindow {
   using BoundsCallback =
       std::function<void(int left, int top, int width, int height)>;
   using SizeCallback = std::function<void(int width, int height)>;
+  // HWND 生命周期终点（WM_NCDESTROY）。Dart 侧的可见性镜像靠这条事件**被动**
+  // 复位；没有它，消费端只能每行台词往 native 打一次 IsShowing() 轮询问「窗口
+  // 还在吗」——那是拿往返去模拟一个 native 本来就知道的事实。
+  using DestroyedCallback = std::function<void()>;
 
   // 一段振假名（ruby）：|ruby| 画在 text 的 [start, start + length) 上方。
   //
@@ -142,6 +146,9 @@ class FloatingLyricWindow {
   }
   void SetSizeCallback(SizeCallback callback) {
     on_size_ = std::move(callback);
+  }
+  void SetDestroyedCallback(DestroyedCallback callback) {
+    on_destroyed_ = std::move(callback);
   }
 
   // Creates (if needed) and shows the strip. Returns false if the OS window
@@ -243,7 +250,12 @@ class FloatingLyricWindow {
  private:
   static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam,
                                   LPARAM lparam) noexcept;
-  LRESULT HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) noexcept;
+  // |hwnd| 是**这条消息自己的**窗口句柄，由 WndProc 透传。不要在实现里改回
+  // 读成员 hwnd_：旧窗口的 WM_NCDESTROY 完全可能晚于新窗口创建，那时成员已
+  // 经指向新窗口，拿它去 SetWindowLongPtr(GWLP_USERDATA, 0) 就是把活着的新
+  // 窗口的 back-pointer 抹掉、再把 hwnd_ 清成 null（BUG-1981 家族）。
+  LRESULT HandleMessage(HWND hwnd, UINT message, WPARAM wparam,
+                        LPARAM lparam) noexcept;
 
   void EnsureWindowClass();
   bool OwnsLiveWindow() const;
@@ -584,6 +596,7 @@ class FloatingLyricWindow {
   PassThroughCallback on_pass_through_;
   BoundsCallback on_bounds_;
   SizeCallback on_size_;
+  DestroyedCallback on_destroyed_;
 };
 
 #endif  // RUNNER_FLOATING_LYRIC_WINDOW_H_

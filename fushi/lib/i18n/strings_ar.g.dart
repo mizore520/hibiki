@@ -8052,7 +8052,7 @@ class _StringsAr extends _StringsEn {
       'الاستمرار بفحص هذا المجلد بحثاً عن مانغا جديدة';
   @override
   String get download_no_managed_video_source =>
-      'لا يوجد مصدر فيديو مُدار بعد. التحميلات تحتاج مجلد فيديو محلي للحفظ فيه.';
+      'لا يوجد مصدر فيديو مُدار بعد. أضف مجلدًا محليًا لحفظ الملفات التي يتم تنزيلها كي تدخل مقاطع الفيديو المكتملة إلى المكتبة.';
   @override
   String get download_add_video_source => 'إضافة مصدر فيديو';
   @override
@@ -9250,10 +9250,10 @@ class _StringsAr extends _StringsEn {
   @override
   String get section_network => 'الشبكة';
   @override
-  String get network_proxy_p2p_label => 'تمرير حركة P2P (torrent) عبر الوكيل';
+  String get network_proxy_p2p_label => 'P2P (torrent) proxy';
   @override
   String get network_proxy_p2p_warning =>
-      'معطّل افتراضيًا؛ يتصل P2P مباشرة. قد يؤدي التمرير عبر الوكيل إلى خفض السرعة، وكثير من مزودي الوكلاء يحظرون حركة BitTorrent: قد يتم تقييد حساب الوكيل أو تحذيره أو إنهاؤه. ينطبق على المحرك المدمج فقط؛ يستخدم qBittorrent الخارجي إعدادات الوكيل الخاصة به.';
+      'Direct by default. Via proxy: all P2P traffic goes through the global proxy — speed may drop, and many proxy providers forbid BitTorrent traffic (throttling, warnings, or account termination). Mixed: tracker requests go through the proxy while DHT and peer connections stay direct — widest peer discovery, but your real IP is visible to trackers, DHT and peers (connectivity only, not privacy). Built-in engine only; external qBittorrent uses its own proxy settings.';
   @override
   String get video_ajatt_settings_hint =>
       'أرشيف مجاني للترجمات اليابانية (مرآة kitsunekko). لا يتطلب حسابًا؛ تُنزَّل ملفات الترجمة من GitHub.';
@@ -9602,48 +9602,103 @@ class _StringsAr extends _StringsEn {
   @override
   String get delete_choices_remember => 'تذكّر هذه الخيارات';
   @override
-  String get network_proxy_mode_label => 'Proxy mode';
+  String get network_proxy_mode_label => 'وضع الوكيل';
   @override
-  String get network_proxy_mode_auto => 'Automatic';
+  String get network_proxy_mode_auto => 'تلقائي';
   @override
   String get network_proxy_mode_auto_hint =>
-      'Use environment variables, then the enabled system proxy';
+      'استخدام متغيرات البيئة ثم وكيل النظام المفعّل';
   @override
-  String get network_proxy_mode_direct => 'Direct';
+  String get network_proxy_mode_direct => 'اتصال مباشر';
   @override
-  String get network_proxy_mode_direct_hint => 'Disable proxy use for the app';
+  String get network_proxy_mode_direct_hint => 'تعطيل استخدام الوكيل للتطبيق';
   @override
-  String get network_proxy_mode_manual => 'Manual';
+  String get network_proxy_mode_manual => 'يدوي';
   @override
   String get network_proxy_mode_manual_hint =>
-      'Use the server and optional credentials below';
+      'استخدام الخادم وبيانات الاعتماد الاختيارية أدناه';
   @override
-  String get network_proxy_manual_hint =>
-      'HTTP proxy server used by all public internet requests';
+  String get network_proxy_address_hint =>
+      'خادم وكيل HTTP تستخدمه كل طلبات الإنترنت العامة';
   @override
-  String get network_proxy_username => 'Proxy username (optional)';
+  String get network_proxy_username => 'اسم مستخدم الوكيل (اختياري)';
   @override
-  String get network_proxy_password => 'Proxy password (optional)';
-  @override
-  String get storage_category_backups => 'Local backups';
-  @override
-  String storage_entry_backups_label({required Object n}) =>
-      '${n} backup archive(s)';
+  String get network_proxy_password => 'كلمة مرور الوكيل (اختياري)';
   @override
   String get storage_entry_delete_backups_confirm_body =>
-      'Delete these temporary local backup archives? Make sure you have saved or shared any copy you still need.';
+      'هل تريد حذف أرشيفات النسخ الاحتياطي المحلية المؤقتة هذه؟ تأكد من حفظ أو مشاركة أي نسخة ما زلت بحاجة إليها.';
   @override
-  String get update_download_source_preference => 'Preferred download source';
+  String get update_download_source_preference => 'مصدر التنزيل المفضل';
   @override
   String get update_download_source_preference_hint =>
-      'The selected source is tried first; unavailable sources still fall back automatically.';
+      'تتم تجربة المصدر المحدد أولاً، والمصادر غير المتاحة تتراجع تلقائيًا كما كان.';
   @override
-  String get update_download_source_auto => 'Automatic (recommended)';
+  String get update_download_source_auto => 'تلقائي (موصى به)';
   @override
-  String get update_download_source_cloudflare => 'Cloudflare mirror';
+  String get update_download_source_cloudflare => 'مرآة Cloudflare';
   @override
-  String get update_download_source_github => 'GitHub direct';
+  String get update_download_source_github => 'GitHub مباشرة';
   @override
   String update_download_source_proxy({required Object host}) =>
-      'Proxy: ${host}';
+      'وكيل: ${host}';
+  @override
+  String get storage_category_backups => 'أرشيفات نسخ احتياطي متبقية';
+  @override
+  String storage_entry_backups_label({required Object n}) =>
+      '${n} أرشيف متبقٍ من آخر عملية تصدير';
+  @override
+  String update_download_source_unavailable({required Object source}) =>
+      '${source} غير متاح لهذا الملف، وتمت العودة إلى الترتيب التلقائي';
+  @override
+  String get network_proxy_credentials_scope_hint =>
+      'بيانات الاعتماد تُستخدم لطلبات HTTP فقط، ومحرك التورنت المدمج لا يمكنه استخدامها';
+  @override
+  String get anki_error_paired_device_unreachable =>
+      'Couldn\'t create the card because no paired device could be reached. Make sure Fushi is running on the paired device, or turn off Mine to paired device in Anki settings to create cards locally.';
+  @override
+  String get video_source_scrape_enabled_toggle_hint =>
+      'When off, manual, post-scan, post-download and background scraping all skip this source.';
+  @override
+  String get video_source_scrape_work_missing =>
+      'This work is no longer in the current source plan (its files may have been renamed, moved or deleted). Rescrape the source to refresh the pending list.';
+  @override
+  String get video_source_scrape_pending_works =>
+      'Works awaiting identification';
+  @override
+  String get video_source_scrape_pending_works_hint =>
+      'These entries have no confirmed identity yet. Search and pick the right work to scrape them.';
+  @override
+  String get video_source_scrape_enabled_toggle =>
+      'Enable scraping for this source';
+  @override
+  String get video_library_scrape_auto_backfill =>
+      'Auto-fill missing series info';
+  @override
+  String get video_library_scrape_auto_backfill_hint =>
+      'Entering the video library scrapes entries that still have no confirmed identity. Turn off to stop all background metadata downloads.';
+  @override
+  String get stat_detail_ungrouped => 'Ungrouped';
+  @override
+  String get stat_detail_empty => 'No activity in this period';
+  @override
+  String get stat_center_title => 'Statistics center';
+  @override
+  String get stat_center_tab_overview => 'Overview';
+  @override
+  String get shortcut_action_video_dismiss_dict => 'Dismiss dictionary';
+  @override
+  String get video_discovery_anidb_identity_confirm_title =>
+      'Confirm the work identity';
+  @override
+  String get video_discovery_anidb_identity_confirm_hint =>
+      'AniDB has more than one possible match. Pick the right work and the imported download will scrape with that identity directly; skip and you can assign it later from the pending list.';
+  @override
+  String get video_discovery_anidb_identity_not_found =>
+      'Could not identify this work on AniDB. It will download normally and wait in the pending list for manual identification.';
+  @override
+  String get network_proxy_p2p_mode_direct => 'Direct';
+  @override
+  String get network_proxy_p2p_mode_proxy => 'Via proxy';
+  @override
+  String get network_proxy_p2p_mode_mixed => 'Mixed';
 }

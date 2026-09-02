@@ -90,10 +90,17 @@ void main() {
           isTrue,
           reason: 'globalBack default must bind Escape',
         );
+        // 执行体抽成了具名方法（整张表里唯一不碰 controller 的动作，加载态要能单独
+        // 调到），接线点仍必须在 VideoPlayerShortcutActions.escape 上。
         expect(
-          page.contains('escape: () {'),
+          page.contains('escape: _handleVideoEscapeAction,'),
           isTrue,
           reason: 'page must wire the Escape action to real exit logic',
+        );
+        expect(
+          page.contains('void _handleVideoEscapeAction() {'),
+          isTrue,
+          reason: 'the named exit-ladder method must exist',
         );
         expect(
           page.contains('isFullscreen('),
@@ -120,7 +127,10 @@ void main() {
         // `topVideoForegroundLayer`（纯函数）单点后，escape 回调只剩「先关一层，关不动
         // 才退全屏 / 退页」。断言的行为没变：编辑态必须在任何退出动作之前被吃掉，只是
         // 门从 escape 回调里挪到了那张共用层级表上（[PopScope] / 手柄 B 因此也照吃）。
-        final String escapeBody = region(page, 'escape: () {', '},\n      ),');
+        final String escapeBody = methodBody(
+          page,
+          'void _handleVideoEscapeAction() {',
+        );
         final int dismissGate = escapeBody.indexOf(
           '_dismissTopForegroundLayer()',
         );
@@ -662,9 +672,11 @@ void main() {
       final String b = body!.group(1)!;
       // BUG-910：barrier 关闭判定用 exactOnly:true（跳过查词裙边容差），点字幕行周围空白
       // halo 不误判成切词重查。查词/悬停仍用宽容差（不在本方法体）。
-      final int hitAt = b.indexOf(
-        '_subtitleHitTester.hitTest(globalPos, exactOnly: true)',
-      );
+      final int hitAt =
+          RegExp(
+            r'_subtitleHitTester\.hitTest\(\s*globalPos,\s*exactOnly:\s*true\s*,?\s*\)',
+          ).firstMatch(b)?.start ??
+          -1;
       final int handlerAt = b.indexOf('_handleSubtitleLookupTap(');
       final int popAt = b.indexOf('_popNestedPopupAt(0)');
       expect(

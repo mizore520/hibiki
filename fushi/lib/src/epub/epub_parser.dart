@@ -45,10 +45,12 @@ class EpubParser {
     final File? containerFile = _findContainerXml(extractDir);
     if (containerFile == null) {
       throw const FormatException(
-          'Invalid EPUB: missing META-INF/container.xml');
+        'Invalid EPUB: missing META-INF/container.xml',
+      );
     }
-    final XmlDocument containerXml =
-        XmlDocument.parse(_readText(containerFile));
+    final XmlDocument containerXml = XmlDocument.parse(
+      _readText(containerFile),
+    );
     final String? rootfilePath = _findRootfilePath(containerXml);
     if (rootfilePath == null) {
       throw const FormatException('Invalid EPUB: no rootfile in container.xml');
@@ -61,22 +63,38 @@ class EpubParser {
     final String opfDir = p.dirname(opfFile.path);
     final XmlDocument opfXml = XmlDocument.parse(_readText(opfFile));
 
-    final Map<String, _ManifestItem> manifest =
-        _parseManifest(opfXml, opfDir, extractDir);
-    final List<EpubChapter> chapters =
-        _parseSpine(opfXml, manifest, opfDir, extractDir);
+    final Map<String, _ManifestItem> manifest = _parseManifest(
+      opfXml,
+      opfDir,
+      extractDir,
+    );
+    final List<EpubChapter> chapters = _parseSpine(
+      opfXml,
+      manifest,
+      opfDir,
+      extractDir,
+    );
     if (chapters.isEmpty) {
       throw const FormatException('EPUB spine contains no readable chapters');
     }
 
-    final String title = _parseMetadata(opfXml, 'title') ??
+    final String title =
+        _parseMetadata(opfXml, 'title') ??
         p.basenameWithoutExtension(extractDir);
     final String? author = _parseMetadata(opfXml, 'creator');
     final String? language = _parseMetadata(opfXml, 'language');
-    final String? coverHref =
-        _parseCoverHref(opfXml, manifest, opfDir, extractDir);
-    final List<EpubTocItem> toc =
-        _parseToc(opfXml, manifest, opfDir, extractDir);
+    final String? coverHref = _parseCoverHref(
+      opfXml,
+      manifest,
+      opfDir,
+      extractDir,
+    );
+    final List<EpubTocItem> toc = _parseToc(
+      opfXml,
+      manifest,
+      opfDir,
+      extractDir,
+    );
     final String? renditionSpread = _parseRenditionSpread(opfXml);
 
     final Map<String, EpubResource> resources = <String, EpubResource>{};
@@ -84,8 +102,11 @@ class EpubParser {
       // BUG-1218：键与 filePath 都保留真实大小写，见 [_resolveWithinExtract]。
       // 大小写敏感平台上 filePath 折成小写就读不到；键折成小写则拦截器（BUG-1203）
       // 按真实 href 回查 OPF media-type 时查不中，静默退回扩展名兜底。
-      final String? absPath =
-          _resolveWithinExtract(opfDir, item.href, extractDir);
+      final String? absPath = _resolveWithinExtract(
+        opfDir,
+        item.href,
+        extractDir,
+      );
       if (absPath == null) {
         continue;
       }
@@ -129,8 +150,9 @@ class EpubParser {
       if (containerFile == null) {
         return const <String>[];
       }
-      final XmlDocument containerXml =
-          XmlDocument.parse(_readText(containerFile));
+      final XmlDocument containerXml = XmlDocument.parse(
+        _readText(containerFile),
+      );
       final String? rootfilePath = _findRootfilePath(containerXml);
       if (rootfilePath == null) {
         return const <String>[];
@@ -141,8 +163,11 @@ class EpubParser {
       }
       final String opfDir = p.dirname(opfFile.path);
       final XmlDocument opfXml = XmlDocument.parse(_readText(opfFile));
-      final Map<String, _ManifestItem> manifest =
-          _parseManifest(opfXml, opfDir, extractDir);
+      final Map<String, _ManifestItem> manifest = _parseManifest(
+        opfXml,
+        opfDir,
+        extractDir,
+      );
 
       final String canonExtract = p.canonicalize(extractDir);
       final List<String> cssPaths = <String>[];
@@ -161,14 +186,18 @@ class EpubParser {
         if (!File(absNormalized).existsSync()) {
           continue;
         }
-        final String relPath =
-            p.relative(absNormalized, from: extractDir).replaceAll('\\', '/');
+        final String relPath = p
+            .relative(absNormalized, from: extractDir)
+            .replaceAll('\\', '/');
         cssPaths.add(relPath);
       }
       return cssPaths;
     } catch (e, stack) {
-      ErrorLogService.instance
-          .log('EpubParser.discoverCssRelativePaths', e, stack);
+      ErrorLogService.instance.log(
+        'EpubParser.discoverCssRelativePaths',
+        e,
+        stack,
+      );
       return const <String>[];
     }
   }
@@ -182,11 +211,17 @@ class EpubParser {
     }
 
     final String canonicalBase = p.canonicalize(extractDir);
-    final Set<String> archiveDirectories =
-        _archiveDirectoryPaths(archive, extractDir, canonicalBase);
+    final Set<String> archiveDirectories = _archiveDirectoryPaths(
+      archive,
+      extractDir,
+      canonicalBase,
+    );
     for (final ArchiveFile file in archive) {
-      final String? filePath =
-          _safeArchivePath(extractDir, canonicalBase, file.name);
+      final String? filePath = _safeArchivePath(
+        extractDir,
+        canonicalBase,
+        file.name,
+      );
       if (filePath == null) {
         continue;
       }
@@ -222,8 +257,11 @@ class EpubParser {
   ) {
     final Set<String> directories = <String>{};
     for (final ArchiveFile file in archive) {
-      final String? filePath =
-          _safeArchivePath(extractDir, canonicalBase, file.name);
+      final String? filePath = _safeArchivePath(
+        extractDir,
+        canonicalBase,
+        file.name,
+      );
       if (filePath == null) {
         continue;
       }
@@ -360,8 +398,33 @@ class EpubParser {
     return caseInsensitiveHit;
   }
 
+  // ── XML lookup primitives ──────────────────────────────────────────────────
+
+  /// EPUB 允许用任意前缀绑定 OPF / OCF / NCX 命名空间：Calibre 4.x 导出的包文档
+  /// 就写成 `<opf:package><opf:manifest><opf:item/>`。而 package:xml 的
+  /// [XmlNode.findAllElements] 在不传 `namespace` 时按 **qualified name** 匹配，
+  /// `'item'` 匹配不到 `<opf:item>` —— 于是 manifest 解析成空 map、spine 里每个
+  /// itemref 都查不到条目被逐条静默跳过，最后整本书 0 章，
+  /// [parseSyncFromPath] 抛 `EPUB spine contains no readable chapters`，
+  /// 表现为「这本 EPUB 导入不了」。
+  ///
+  /// 修法不是逐个调用点补 `namespace: '*'`（那样下次新增查找还会漏第 12 处），
+  /// 而是让按 local-name 匹配成为本文件里**唯一**的查找方式：所有按标签名的
+  /// 查找一律走这三个原语。守卫见 `test/epub/epub_parser_namespace_test.dart`。
+  static Iterable<XmlElement> _elements(XmlNode node, String localName) =>
+      node.findAllElements(localName, namespace: '*');
+
+  /// 直接子元素版的 [_elements]。
+  static XmlElement? _childElement(XmlElement parent, String localName) =>
+      parent.getElement(localName, namespace: '*');
+
+  /// 属性版的 [_elements]：`epub:type` / `opf:role` 这类带前缀的属性同样按
+  /// qualified name 匹配，裸 `getAttribute('type')` 取不到 `epub:type`。
+  static String? _attribute(XmlElement el, String localName) =>
+      el.getAttribute(localName) ?? el.getAttribute(localName, namespace: '*');
+
   static String? _findRootfilePath(XmlDocument container) {
-    for (final XmlElement el in container.findAllElements('rootfile')) {
+    for (final XmlElement el in _elements(container, 'rootfile')) {
       final String? fullPath = el.getAttribute('full-path');
       if (fullPath != null && fullPath.isNotEmpty) {
         // Percent-decode to match the decoded manifest/chapter hrefs
@@ -380,7 +443,7 @@ class EpubParser {
     String extractDir,
   ) {
     final Map<String, _ManifestItem> result = <String, _ManifestItem>{};
-    for (final XmlElement item in opf.findAllElements('item')) {
+    for (final XmlElement item in _elements(opf, 'item')) {
       final String? id = item.getAttribute('id');
       final String? href = item.getAttribute('href');
       final String? mediaType = item.getAttribute('media-type');
@@ -412,8 +475,10 @@ class EpubParser {
     // which skip branch a malformed/non-HTML entry takes — the previous code
     // incremented `index` on only some `continue` paths, producing
     // inconsistent stored values.
-    final List<XmlElement> itemrefs =
-        opf.findAllElements('itemref').toList(growable: false);
+    final List<XmlElement> itemrefs = _elements(
+      opf,
+      'itemref',
+    ).toList(growable: false);
     for (int index = 0; index < itemrefs.length; index++) {
       final XmlElement itemref = itemrefs[index];
       final String? idref = itemref.getAttribute('idref');
@@ -431,8 +496,11 @@ class EpubParser {
 
       // BUG-1218：真实路径必须保留大小写，否则 Android/Linux 上 existsSync 全 false
       // → 整个 spine 被逐条静默跳过。见 [_resolveWithinExtract]。
-      final String? absPath =
-          _resolveWithinExtract(opfDir, item.href, extractDir);
+      final String? absPath = _resolveWithinExtract(
+        opfDir,
+        item.href,
+        extractDir,
+      );
       if (absPath == null) {
         continue;
       }
@@ -470,16 +538,18 @@ class EpubParser {
       // TODO-296: defer the chapter XHTML read. _parseSpine still verifies the
       // file exists above, but the bytes are read + decoded lazily on first
       // [EpubChapter.html] access — open-book no longer slurps the whole book.
-      chapters.add(EpubChapter.lazy(
-        id: item.id,
-        href: _relHref(absPath, extractDir),
-        mediaType: item.mediaType,
-        filePath: absPath,
-        spineIndex: index,
-        linear: linear != 'no',
-        spreadProperty: spreadProperty,
-        isNav: isNavDoc,
-      ));
+      chapters.add(
+        EpubChapter.lazy(
+          id: item.id,
+          href: _relHref(absPath, extractDir),
+          mediaType: item.mediaType,
+          filePath: absPath,
+          spineIndex: index,
+          linear: linear != 'no',
+          spreadProperty: spreadProperty,
+          isNav: isNavDoc,
+        ),
+      );
     }
     return chapters;
   }
@@ -487,9 +557,8 @@ class EpubParser {
   // ── Metadata ───────────────────────────────────────────────────────────────
 
   static String? _parseMetadata(XmlDocument opf, String localName) {
-    // dc:title, dc:creator etc. — namespace: '*' matches any prefix
-    for (final XmlElement el
-        in opf.findAllElements(localName, namespace: '*')) {
+    // dc:title, dc:creator etc. — [_elements] matches any prefix
+    for (final XmlElement el in _elements(opf, localName)) {
       final String text = el.innerText.trim();
       if (text.isNotEmpty) {
         return text;
@@ -513,7 +582,7 @@ class EpubParser {
       }
     }
     // EPUB 2: <meta name="cover" content="cover-id"/>
-    for (final XmlElement meta in opf.findAllElements('meta')) {
+    for (final XmlElement meta in _elements(opf, 'meta')) {
       if (meta.getAttribute('name')?.toLowerCase() == 'cover') {
         final String? coverId = meta.getAttribute('content');
         if (coverId != null && manifest.containsKey(coverId)) {
@@ -536,8 +605,11 @@ class EpubParser {
     String extractDir,
   ) {
     // BUG-1218：封面 href 同样保留真实大小写，否则大小写敏感平台上取不到封面文件。
-    final String? absPath =
-        _resolveWithinExtract(opfDir, item.href, extractDir);
+    final String? absPath = _resolveWithinExtract(
+      opfDir,
+      item.href,
+      extractDir,
+    );
     if (absPath == null) {
       return null;
     }
@@ -556,8 +628,11 @@ class EpubParser {
     for (final _ManifestItem item in manifest.values) {
       if (item.properties != null && item.properties!.contains('nav')) {
         // BUG-1218：大小写保留，否则大小写敏感平台上找不到 nav 文档 → TOC 空。
-        final String? navPath =
-            _resolveWithinExtract(opfDir, item.href, extractDir);
+        final String? navPath = _resolveWithinExtract(
+          opfDir,
+          item.href,
+          extractDir,
+        );
         if (navPath == null) {
           continue;
         }
@@ -575,13 +650,16 @@ class EpubParser {
       }
     }
     // EPUB 2: NCX
-    for (final XmlElement spine in opf.findAllElements('spine')) {
+    for (final XmlElement spine in _elements(opf, 'spine')) {
       final String? tocId = spine.getAttribute('toc');
       if (tocId != null && manifest.containsKey(tocId)) {
         final _ManifestItem ncxItem = manifest[tocId]!;
         // BUG-1218：同上，NCX 路径保留大小写。
-        final String? ncxPath =
-            _resolveWithinExtract(opfDir, ncxItem.href, extractDir);
+        final String? ncxPath = _resolveWithinExtract(
+          opfDir,
+          ncxItem.href,
+          extractDir,
+        );
         if (ncxPath == null) {
           return <EpubTocItem>[];
         }
@@ -606,11 +684,10 @@ class EpubParser {
   ) {
     try {
       final XmlDocument doc = XmlDocument.parse(navHtml);
-      for (final XmlElement nav in doc.findAllElements('nav')) {
-        final String? epubType =
-            nav.getAttribute('type') ?? nav.getAttribute('epub:type');
+      for (final XmlElement nav in _elements(doc, 'nav')) {
+        final String? epubType = _attribute(nav, 'type');
         if (epubType == 'toc') {
-          final XmlElement? ol = nav.getElement('ol');
+          final XmlElement? ol = _childElement(nav, 'ol');
           if (ol != null) {
             return _parseNavOl(ol, navDir, extractDir);
           }
@@ -652,11 +729,7 @@ class EpubParser {
       }
 
       if (label != null && label.isNotEmpty) {
-        items.add(EpubTocItem(
-          label: label,
-          href: href,
-          children: children,
-        ));
+        items.add(EpubTocItem(label: label, href: href, children: children));
       }
     }
     return items;
@@ -670,7 +743,7 @@ class EpubParser {
   ) {
     try {
       final XmlDocument doc = XmlDocument.parse(ncxContent);
-      final Iterable<XmlElement> navMaps = doc.findAllElements('navMap');
+      final Iterable<XmlElement> navMaps = _elements(doc, 'navMap');
       if (navMaps.isEmpty) {
         return <EpubTocItem>[];
       }
@@ -696,7 +769,7 @@ class EpubParser {
       String? href;
       for (final XmlElement child in navPoint.childElements) {
         if (child.name.local == 'navLabel') {
-          final XmlElement? text = child.getElement('text');
+          final XmlElement? text = _childElement(child, 'text');
           if (text != null) {
             label = text.innerText.trim();
           }
@@ -708,15 +781,14 @@ class EpubParser {
         }
       }
 
-      final List<EpubTocItem> children =
-          _parseNavPoints(navPoint, ncxDir, extractDir);
+      final List<EpubTocItem> children = _parseNavPoints(
+        navPoint,
+        ncxDir,
+        extractDir,
+      );
 
       if (label.isNotEmpty) {
-        items.add(EpubTocItem(
-          label: label,
-          href: href,
-          children: children,
-        ));
+        items.add(EpubTocItem(label: label, href: href, children: children));
       }
     }
     return items;
@@ -759,8 +831,8 @@ class EpubParser {
   /// 的相对路径回查 OPF 声明的 media-type，两侧必须一致。
   static String _relHref(String absPath, String extractDir) {
     return normalizeHref(
-        p.relative(absPath, from: p.normalize(extractDir))
-            .replaceAll('\\', '/'));
+      p.relative(absPath, from: p.normalize(extractDir)).replaceAll('\\', '/'),
+    );
   }
 
   static String? _resolveTocHref(
@@ -768,14 +840,17 @@ class EpubParser {
     String baseDir,
     String extractDir,
   ) {
-    final String cleaned =
-        rawHref.trim().replaceAll('\\', '/').replaceFirst(RegExp('^/'), '');
+    final String cleaned = rawHref
+        .trim()
+        .replaceAll('\\', '/')
+        .replaceFirst(RegExp('^/'), '');
     if (cleaned.isEmpty) {
       return null;
     }
 
-    final String fragment =
-        cleaned.contains('#') ? cleaned.substring(cleaned.indexOf('#')) : '';
+    final String fragment = cleaned.contains('#')
+        ? cleaned.substring(cleaned.indexOf('#'))
+        : '';
     final String base = cleaned.split('#').first.split('?').first;
     if (base.isEmpty) {
       return fragment.isEmpty ? null : fragment;
@@ -785,14 +860,15 @@ class EpubParser {
     // src/href were not — a TOC pointing at %E7%AC%AC1.xhtml then never matched
     // the decoded chapter key. Decode the path part here too (HBK-AUDIT-010).
     final String absPath = p.join(baseDir, _decodeHrefPath(base));
-    final String relPath =
-        p.relative(absPath, from: extractDir).replaceAll('\\', '/');
+    final String relPath = p
+        .relative(absPath, from: extractDir)
+        .replaceAll('\\', '/');
     final String normalized = normalizeHref(relPath);
     return fragment.isEmpty ? normalized : '$normalized$fragment';
   }
 
   static String? _parseRenditionSpread(XmlDocument opf) {
-    for (final XmlElement meta in opf.findAllElements('meta')) {
+    for (final XmlElement meta in _elements(opf, 'meta')) {
       final String? property = meta.getAttribute('property');
       if (property == 'rendition:spread') {
         final String value = meta.innerText.trim().toLowerCase();

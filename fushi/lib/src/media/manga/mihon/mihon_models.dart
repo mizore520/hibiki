@@ -14,9 +14,9 @@ class MihonCapabilities {
 
   factory MihonCapabilities.fromJson(Map<String, Object?> json) =>
       MihonCapabilities(
-        bridgeVersion: (json['fushiMihonBridge'] ??
-            json['mangatanMihonBridge'] ??
-            0) as int,
+        bridgeVersion:
+            (json['fushiMihonBridge'] ?? json['mangatanMihonBridge'] ?? 0)
+                as int,
         sourceFactory: json['sourceFactory'] == true,
         preferenceCallbacks: json['preferenceCallbacks'] == true,
         imageProxy: json['imageProxy'] == true,
@@ -42,7 +42,7 @@ class MihonExtensionInspection {
   const MihonExtensionInspection({
     required this.packageName,
     required this.name,
-    required this.versionCode,
+    required this.apkVersionCode,
     required this.versionName,
     required this.libVersion,
     required this.signerSha256,
@@ -53,7 +53,7 @@ class MihonExtensionInspection {
       MihonExtensionInspection(
         packageName: json['packageName']! as String,
         name: json['name']! as String,
-        versionCode: (json['versionCode']! as num).toInt(),
+        apkVersionCode: (json['versionCode']! as num).toInt(),
         versionName: json['versionName']! as String,
         libVersion: json['libVersion']! as String,
         signerSha256: json['signerSha256']! as String,
@@ -64,7 +64,19 @@ class MihonExtensionInspection {
 
   final String packageName;
   final String name;
-  final int versionCode;
+
+  /// APK manifest 的 `android:versionCode`。名字只标**出处**（来自 APK），不标尺度。
+  ///
+  /// 与仓库索引的 [MihonAvailableExtension.extensionVersionCode] **是同一个量**，
+  /// 可直接比较。BUG-1996 一度写成「两侧不同尺度、索引是裸的 69、APK 是 104069」，
+  /// 那是错的：keiyoushi 两侧都由 gradle 的同一个 `androidVersionCodeProvider`
+  /// 产出（`ExtensionPlugin.kt` 同时喂给 APK output 与索引元数据），实测
+  /// `repo/index.pb` 的 field 5 与 APK 的 `android:versionCode` 逐字相同：
+  /// SamuraiScan 两侧都是 104069、Manga Mura 两侧都是 104005。
+  ///
+  /// DB 里 `manga_extensions.versionCode` 存的也是它（列名冻结），所以身份门、
+  /// 降级门 `DOWNGRADE_REJECTED`、「有更新」角标三处两侧同量、自洽。
+  final int apkVersionCode;
   final String versionName;
   final String libVersion;
   final String signerSha256;
@@ -73,10 +85,7 @@ class MihonExtensionInspection {
 
 @immutable
 class MihonExtensionRef {
-  const MihonExtensionRef({
-    required this.packageName,
-    required this.apkPath,
-  });
+  const MihonExtensionRef({required this.packageName, required this.apkPath});
 
   final String packageName;
   final String apkPath;
@@ -95,14 +104,13 @@ class MihonSource {
   factory MihonSource.fromJson(
     String extensionPackage,
     Map<String, Object?> json,
-  ) =>
-      MihonSource(
-        extensionPackage: extensionPackage,
-        id: json['id'].toString(),
-        name: json['name']?.toString() ?? '',
-        language: (json['lang'] ?? json['language'])?.toString() ?? '',
-        baseUrl: (json['baseUrl'] ?? json['homeUrl'])?.toString() ?? '',
-      );
+  ) => MihonSource(
+    extensionPackage: extensionPackage,
+    id: json['id'].toString(),
+    name: json['name']?.toString() ?? '',
+    language: (json['lang'] ?? json['language'])?.toString() ?? '',
+    baseUrl: (json['baseUrl'] ?? json['homeUrl'])?.toString() ?? '',
+  );
 
   final String extensionPackage;
   final String id;
@@ -126,16 +134,16 @@ class MihonManga {
   });
 
   factory MihonManga.fromJson(Map<String, Object?> json) => MihonManga(
-        url: json['url']?.toString() ?? '',
-        title: json['title']?.toString() ?? '',
-        coverUrl: (json['thumbnail_url'] ?? json['coverUrl'])?.toString(),
-        artist: json['artist']?.toString(),
-        author: json['author']?.toString(),
-        description: json['description']?.toString(),
-        genre: json['genre']?.toString(),
-        status: (json['status'] as num?)?.toInt() ?? 0,
-        initialized: json['initialized'] == true,
-      );
+    url: json['url']?.toString() ?? '',
+    title: json['title']?.toString() ?? '',
+    coverUrl: (json['thumbnail_url'] ?? json['coverUrl'])?.toString(),
+    artist: json['artist']?.toString(),
+    author: json['author']?.toString(),
+    description: json['description']?.toString(),
+    genre: json['genre']?.toString(),
+    status: (json['status'] as num?)?.toInt() ?? 0,
+    initialized: json['initialized'] == true,
+  );
 
   final String url;
   final String title;
@@ -156,45 +164,44 @@ class MihonManga {
   ///
   /// 所以身份统一在这里收敛：新值只能覆盖元数据，覆盖不了 `url`。
   MihonManga mergedWithDetails(MihonManga update) => MihonManga(
-        url: url,
-        title: update.title.isNotEmpty ? update.title : title,
-        coverUrl: update.coverUrl ?? coverUrl,
-        artist: update.artist ?? artist,
-        author: update.author ?? author,
-        description: update.description ?? description,
-        genre: update.genre ?? genre,
-        status: update.status != 0 ? update.status : status,
-        initialized: update.initialized || initialized,
-      );
+    url: url,
+    title: update.title.isNotEmpty ? update.title : title,
+    coverUrl: update.coverUrl ?? coverUrl,
+    artist: update.artist ?? artist,
+    author: update.author ?? author,
+    description: update.description ?? description,
+    genre: update.genre ?? genre,
+    status: update.status != 0 ? update.status : status,
+    initialized: update.initialized || initialized,
+  );
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'url': url,
-        'title': title,
-        'thumbnail_url': coverUrl,
-        'artist': artist,
-        'author': author,
-        'description': description,
-        'genre': genre,
-        'status': status,
-        'initialized': initialized,
-      };
+    'url': url,
+    'title': title,
+    'thumbnail_url': coverUrl,
+    'artist': artist,
+    'author': author,
+    'description': description,
+    'genre': genre,
+    'status': status,
+    'initialized': initialized,
+  };
 }
 
 @immutable
 class MihonMangaPage {
-  const MihonMangaPage({
-    required this.items,
-    required this.hasNextPage,
-  });
+  const MihonMangaPage({required this.items, required this.hasNextPage});
 
   factory MihonMangaPage.fromJson(Map<String, Object?> json) => MihonMangaPage(
-        items: (json['mangas'] as List<Object?>? ?? const <Object?>[])
-            .cast<Map<Object?, Object?>>()
-            .map((Map<Object?, Object?> value) =>
-                MihonManga.fromJson(value.cast<String, Object?>()))
-            .toList(growable: false),
-        hasNextPage: json['hasNextPage'] == true,
-      );
+    items: (json['mangas'] as List<Object?>? ?? const <Object?>[])
+        .cast<Map<Object?, Object?>>()
+        .map(
+          (Map<Object?, Object?> value) =>
+              MihonManga.fromJson(value.cast<String, Object?>()),
+        )
+        .toList(growable: false),
+    hasNextPage: json['hasNextPage'] == true,
+  );
 
   final List<MihonManga> items;
   final bool hasNextPage;
@@ -211,12 +218,12 @@ class MihonChapter {
   });
 
   factory MihonChapter.fromJson(Map<String, Object?> json) => MihonChapter(
-        url: json['url']?.toString() ?? '',
-        name: json['name']?.toString() ?? '',
-        uploadedAt: (json['date_upload'] as num?)?.toInt() ?? 0,
-        number: (json['chapter_number'] as num?)?.toDouble() ?? 0,
-        scanlator: json['scanlator']?.toString(),
-      );
+    url: json['url']?.toString() ?? '',
+    name: json['name']?.toString() ?? '',
+    uploadedAt: (json['date_upload'] as num?)?.toInt() ?? 0,
+    number: (json['chapter_number'] as num?)?.toDouble() ?? 0,
+    scanlator: json['scanlator']?.toString(),
+  );
 
   final String url;
   final String name;
@@ -225,27 +232,23 @@ class MihonChapter {
   final String? scanlator;
 
   Map<String, Object?> toJson() => <String, Object?>{
-        'url': url,
-        'name': name,
-        'date_upload': uploadedAt,
-        'chapter_number': number,
-        'scanlator': scanlator,
-      };
+    'url': url,
+    'name': name,
+    'date_upload': uploadedAt,
+    'chapter_number': number,
+    'scanlator': scanlator,
+  };
 }
 
 @immutable
 class MihonPage {
-  const MihonPage({
-    required this.index,
-    required this.url,
-    this.imageUrl,
-  });
+  const MihonPage({required this.index, required this.url, this.imageUrl});
 
   factory MihonPage.fromJson(Map<String, Object?> json) => MihonPage(
-        index: (json['index'] as num?)?.toInt() ?? 0,
-        url: json['url']?.toString() ?? '',
-        imageUrl: json['imageUrl']?.toString(),
-      );
+    index: (json['index'] as num?)?.toInt() ?? 0,
+    url: json['url']?.toString() ?? '',
+    imageUrl: json['imageUrl']?.toString(),
+  );
 
   final int index;
   final String url;
@@ -283,8 +286,9 @@ class MihonFilter {
   final List<MihonFilter> children;
 
   Map<String, Object?> toBridgeJson() {
-    final Map<Object?, Object?>? sortState =
-        state is Map<Object?, Object?> ? state as Map<Object?, Object?> : null;
+    final Map<Object?, Object?>? sortState = state is Map<Object?, Object?>
+        ? state as Map<Object?, Object?>
+        : null;
     return <String, Object?>{
       'name': name,
       'type': kind.name,
@@ -339,12 +343,12 @@ class MihonPreference {
   factory MihonPreference.fromBridgeJson(Map<String, Object?> json) {
     const Map<String, MihonPreferenceKind> kinds =
         <String, MihonPreferenceKind>{
-      'checkBoxPreference': MihonPreferenceKind.checkBox,
-      'switchPreferenceCompat': MihonPreferenceKind.switchControl,
-      'editTextPreference': MihonPreferenceKind.text,
-      'listPreference': MihonPreferenceKind.list,
-      'multiSelectListPreference': MihonPreferenceKind.multiSelect,
-    };
+          'checkBoxPreference': MihonPreferenceKind.checkBox,
+          'switchPreferenceCompat': MihonPreferenceKind.switchControl,
+          'editTextPreference': MihonPreferenceKind.text,
+          'listPreference': MihonPreferenceKind.list,
+          'multiSelectListPreference': MihonPreferenceKind.multiSelect,
+        };
     final String payloadKey = kinds.keys.firstWhere(
       json.containsKey,
       orElse: () => '',
@@ -365,14 +369,13 @@ class MihonPreference {
             .toList(growable: false);
     final MihonPreferenceKind kind =
         (decodedKind == MihonPreferenceKind.list && entries.isEmpty) ||
-                (decodedKind == MihonPreferenceKind.multiSelect &&
-                    (entries.isEmpty || entryValues.length != entries.length))
-            ? MihonPreferenceKind.unsupported
-            : decodedKind;
+            (decodedKind == MihonPreferenceKind.multiSelect &&
+                (entries.isEmpty || entryValues.length != entries.length))
+        ? MihonPreferenceKind.unsupported
+        : decodedKind;
     final Object? value = switch (kind) {
       MihonPreferenceKind.checkBox ||
-      MihonPreferenceKind.switchControl =>
-        props['value'] ?? false,
+      MihonPreferenceKind.switchControl => props['value'] ?? false,
       MihonPreferenceKind.text => props['value'] ?? '',
       MihonPreferenceKind.list => props['valueIndex'] ?? 0,
       MihonPreferenceKind.multiSelect =>

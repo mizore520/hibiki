@@ -7714,7 +7714,7 @@ class _StringsJa extends _StringsEn {
   String get manga_import_folder_as_source_hint => 'このフォルダを継続スキャンして新しいマンガを検出';
   @override
   String get download_no_managed_video_source =>
-      '管理対象の動画ソースがまだありません。ダウンロードにはローカル動画フォルダが必要です。';
+      '管理対象の動画ソースがまだありません。ダウンロードしたファイルを保存するローカルフォルダを追加すると、完了した動画がライブラリに入ります。';
   @override
   String get download_add_video_source => '動画ソースを追加';
   @override
@@ -8870,10 +8870,10 @@ class _StringsJa extends _StringsEn {
   @override
   String get section_network => 'ネットワーク';
   @override
-  String get network_proxy_p2p_label => 'P2P（torrent）通信をプロキシ経由にする';
+  String get network_proxy_p2p_label => 'P2P (torrent) proxy';
   @override
   String get network_proxy_p2p_warning =>
-      '既定ではオフで、P2P は直接接続します。プロキシ経由にすると速度が低下する場合があり、多くのプロキシ事業者は BitTorrent 通信を禁止しているため、プロキシアカウントが帯域制限・警告・停止される恐れがあります。内蔵エンジンにのみ適用され、外部 qBittorrent は自身のプロキシ設定を使用します。';
+      'Direct by default. Via proxy: all P2P traffic goes through the global proxy — speed may drop, and many proxy providers forbid BitTorrent traffic (throttling, warnings, or account termination). Mixed: tracker requests go through the proxy while DHT and peer connections stay direct — widest peer discovery, but your real IP is visible to trackers, DHT and peers (connectivity only, not privacy). Built-in engine only; external qBittorrent uses its own proxy settings.';
   @override
   String get video_ajatt_settings_hint =>
       '無料の日本語字幕アーカイブ（kitsunekko ミラー）。アカウント不要。字幕ファイルは GitHub からダウンロードされます。';
@@ -9212,48 +9212,100 @@ class _StringsJa extends _StringsEn {
   @override
   String get delete_choices_remember => 'この選択を記憶する';
   @override
-  String get network_proxy_mode_label => 'Proxy mode';
+  String get network_proxy_mode_label => 'プロキシモード';
   @override
-  String get network_proxy_mode_auto => 'Automatic';
+  String get network_proxy_mode_auto => '自動';
   @override
-  String get network_proxy_mode_auto_hint =>
-      'Use environment variables, then the enabled system proxy';
+  String get network_proxy_mode_auto_hint => '環境変数、次に有効なシステムプロキシを使用';
   @override
-  String get network_proxy_mode_direct => 'Direct';
+  String get network_proxy_mode_direct => '直接接続';
   @override
-  String get network_proxy_mode_direct_hint => 'Disable proxy use for the app';
+  String get network_proxy_mode_direct_hint => 'アプリでのプロキシ使用を無効にする';
   @override
-  String get network_proxy_mode_manual => 'Manual';
+  String get network_proxy_mode_manual => '手動';
   @override
-  String get network_proxy_mode_manual_hint =>
-      'Use the server and optional credentials below';
+  String get network_proxy_mode_manual_hint => '下のサーバーと任意の認証情報を使用';
   @override
-  String get network_proxy_manual_hint =>
-      'HTTP proxy server used by all public internet requests';
+  String get network_proxy_address_hint => 'すべての公開インターネット通信で使う HTTP プロキシサーバー';
   @override
-  String get network_proxy_username => 'Proxy username (optional)';
+  String get network_proxy_username => 'プロキシのユーザー名（任意）';
   @override
-  String get network_proxy_password => 'Proxy password (optional)';
-  @override
-  String get storage_category_backups => 'Local backups';
-  @override
-  String storage_entry_backups_label({required Object n}) =>
-      '${n} backup archive(s)';
+  String get network_proxy_password => 'プロキシのパスワード（任意）';
   @override
   String get storage_entry_delete_backups_confirm_body =>
-      'Delete these temporary local backup archives? Make sure you have saved or shared any copy you still need.';
+      'これらの一時的なローカルバックアップ書庫を削除しますか？まだ必要な控えは保存または共有済みか確認してください。';
   @override
-  String get update_download_source_preference => 'Preferred download source';
+  String get update_download_source_preference => '優先ダウンロード元';
   @override
   String get update_download_source_preference_hint =>
-      'The selected source is tried first; unavailable sources still fall back automatically.';
+      '選んだ配布元を最初に試します。利用できない場合も自動で他の配布元にフォールバックします。';
   @override
-  String get update_download_source_auto => 'Automatic (recommended)';
+  String get update_download_source_auto => '自動（推奨）';
   @override
-  String get update_download_source_cloudflare => 'Cloudflare mirror';
+  String get update_download_source_cloudflare => 'Cloudflare ミラー';
   @override
-  String get update_download_source_github => 'GitHub direct';
+  String get update_download_source_github => 'GitHub 直接';
   @override
   String update_download_source_proxy({required Object host}) =>
-      'Proxy: ${host}';
+      'プロキシ: ${host}';
+  @override
+  String get storage_category_backups => '残っているバックアップ書庫';
+  @override
+  String storage_entry_backups_label({required Object n}) =>
+      '前回のエクスポートで残った ${n} 個の書庫';
+  @override
+  String update_download_source_unavailable({required Object source}) =>
+      '${source} はこのファイルでは利用できないため、自動順に戻しました';
+  @override
+  String get network_proxy_credentials_scope_hint =>
+      '認証情報は HTTP 通信にのみ適用されます。内蔵 torrent エンジンでは使用できません';
+  @override
+  String get anki_error_paired_device_unreachable =>
+      'Couldn\'t create the card because no paired device could be reached. Make sure Fushi is running on the paired device, or turn off Mine to paired device in Anki settings to create cards locally.';
+  @override
+  String get video_source_scrape_enabled_toggle_hint =>
+      'When off, manual, post-scan, post-download and background scraping all skip this source.';
+  @override
+  String get video_source_scrape_work_missing =>
+      'This work is no longer in the current source plan (its files may have been renamed, moved or deleted). Rescrape the source to refresh the pending list.';
+  @override
+  String get video_source_scrape_pending_works =>
+      'Works awaiting identification';
+  @override
+  String get video_source_scrape_pending_works_hint =>
+      'These entries have no confirmed identity yet. Search and pick the right work to scrape them.';
+  @override
+  String get video_source_scrape_enabled_toggle =>
+      'Enable scraping for this source';
+  @override
+  String get video_library_scrape_auto_backfill =>
+      'Auto-fill missing series info';
+  @override
+  String get video_library_scrape_auto_backfill_hint =>
+      'Entering the video library scrapes entries that still have no confirmed identity. Turn off to stop all background metadata downloads.';
+  @override
+  String get stat_detail_ungrouped => 'Ungrouped';
+  @override
+  String get stat_detail_empty => 'No activity in this period';
+  @override
+  String get stat_center_title => 'Statistics center';
+  @override
+  String get stat_center_tab_overview => 'Overview';
+  @override
+  String get shortcut_action_video_dismiss_dict => 'Dismiss dictionary';
+  @override
+  String get video_discovery_anidb_identity_confirm_title =>
+      'Confirm the work identity';
+  @override
+  String get video_discovery_anidb_identity_confirm_hint =>
+      'AniDB has more than one possible match. Pick the right work and the imported download will scrape with that identity directly; skip and you can assign it later from the pending list.';
+  @override
+  String get video_discovery_anidb_identity_not_found =>
+      'Could not identify this work on AniDB. It will download normally and wait in the pending list for manual identification.';
+  @override
+  String get network_proxy_p2p_mode_direct => 'Direct';
+  @override
+  String get network_proxy_p2p_mode_proxy => 'Via proxy';
+  @override
+  String get network_proxy_p2p_mode_mixed => 'Mixed';
 }

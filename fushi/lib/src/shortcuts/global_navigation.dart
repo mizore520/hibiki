@@ -11,6 +11,7 @@ import 'package:fushi/src/utils/window_caption_channel.dart';
 import 'package:fushi/src/shortcuts/input_binding.dart';
 import 'package:fushi/src/shortcuts/shortcut_action.dart';
 import 'package:fushi/src/shortcuts/shortcut_registry.dart';
+import 'package:fushi/src/shortcuts/window_fullscreen_hosts.dart';
 import 'package:fushi/src/utils/components/fushi_windows_title_bar.dart';
 import 'package:fushi/src/shortcuts/gamepad_service.dart'
     show
@@ -149,7 +150,8 @@ KeyEventResult _moveFocusForArrow(
   // Mirror the gamepad service's dispatch context: the focused widget's context
   // when one exists, else the navigator, so directional resolution starts from
   // the right scope inside whichever route is on top.
-  final BuildContext? context = FocusManager.instance.primaryFocus?.context ??
+  final BuildContext? context =
+      FocusManager.instance.primaryFocus?.context ??
       navigatorKey.currentContext;
   if (context == null) return KeyEventResult.ignored;
   gamepadMoveFocusInDirection(context, dir);
@@ -371,10 +373,41 @@ KeyEventResult _neutralizeBareSpace(KeyEvent event) {
 /// 任何 platform-channel 失败都以 debug 日志吞掉，杂散按键永不崩应用。
 Future<void> _toggleWindowFullscreen() async {
   try {
+    // 用户裁定：全屏是**内容模块**（小说 / 漫画 / 视频）的能力，首页 / 书架 / 设置页
+    // 按全屏键不该把整个窗口变成无边框全屏。判据不写成「路由名 == …」的 if 阶梯
+    // （那是把页面清单硬编码进快捷键层，新增内容页必漏改），而是问一个由内容页自己
+    // 声明的布尔量——见 [WindowFullscreenHosts]。
+    //
+    // 门是**非对称**的，这不是疏漏而是必须：只门住「进入」，「退出」永远放行。若两边
+    // 都门住，用户在内容页进全屏、退回首页之后，就再没有任何键能退出全屏——桌面全屏
+    // 是 runner 自绘的保边框巨窗（BUG-1933），系统并不提供第二个出口，那等于把人锁死
+    // 在全屏里。宿主可见时布尔量直接短路，不会多花一次 platform channel 往返；只有
+    // 「非宿主页面按了全屏键」这一种情况才需要读一次真值来判断是不是退出。
+    if (!WindowFullscreenHosts.hasVisibleHost &&
+        (await readDesktopWindowFullscreen()) != true) {
+      return;
+    }
     await toggleDesktopWindowFullscreen();
   } catch (e) {
     debugPrint('[Fushi] window fullscreen toggle skipped: $e');
   }
+}
+
+/// 当前若处于窗口全屏就退出它，并返回「确实退了」。
+///
+/// 两个调用场景共用这一个原语：
+///   · 内容页「返回上一级」阶梯里的**先退全屏**那一级（用户裁定：Esc 也能退全屏）。
+///     返回 true 表示这次返回已被全屏消费，调用方**不该**再退页。
+///   · 最后一个 [WindowFullscreenHost] 离场时的归还（见该类文档）。
+///
+/// 判据只认 native 真值，不认「这次全屏是不是我进的」：用户按 F11 进的全屏和按页面
+/// 全屏按钮进的全屏，在他眼里是同一个全屏，Esc 都该先把它退掉。先读后写而不是无条件
+/// 写 false，是为了不在「本来就不是全屏」的常态路径上白打一次 platform channel。
+Future<bool> exitWindowFullscreenIfActive() async {
+  if (!desktopWindowFullscreenSupported) return false;
+  if ((await readDesktopWindowFullscreen()) != true) return false;
+  await setDesktopWindowFullscreen(false);
+  return true;
 }
 
 /// Reads the desktop window fullscreen state from its single native owner.
@@ -536,8 +569,9 @@ Widget wrapWithGlobalNavigation({
       // 关闭，此前把整块手柄逻辑一起关掉，导致默认安装上「注册表 globalBack」根本
       // 不参与解析——Android 上按 B 之所以还能返回，靠的是系统兜底（见下），于是
       // 用户把「返回」改绑到 RB 后 B 依旧退出页面。
-      final KeyEventResult gamepadResult =
-          dispatchNativeGamepadButtonIntent(event);
+      final KeyEventResult gamepadResult = dispatchNativeGamepadButtonIntent(
+        event,
+      );
       if (gamepadResult == KeyEventResult.handled) return gamepadResult;
       // 手柄重设计 P2（Android 键事件链）：页面 Actions 没消费的手柄按钮，弹窗
       // 可见时按 dictionaryPopup scope 解析（词条导航/制卡/发音）——与桌面轮询
@@ -550,24 +584,31 @@ Widget wrapWithGlobalNavigation({
         }
       }
       if (focusNavigationEnabled) {
-        final KeyEventResult arrowResult =
-            _handleGlobalArrowFocus(navigatorKey, event);
+        final KeyEventResult arrowResult = _handleGlobalArrowFocus(
+          navigatorKey,
+          event,
+        );
         if (arrowResult == KeyEventResult.handled) return arrowResult;
       }
       // TODO-700 T1：注册表驱动的全局返回回退（Esc / Alt+← / B，或用户改键后的
       // 「返回」键）。仅对未自解析 globalBack 的页面（设置/对话框）生效；
       // home/reader/manga/video 已在更近的处理器消费。
       if (registry != null) {
-        final KeyEventResult backResult =
-            _handleGlobalBack(navigatorKey, registry, event);
+        final KeyEventResult backResult = _handleGlobalBack(
+          navigatorKey,
+          registry,
+          event,
+        );
         if (backResult == KeyEventResult.handled) return backResult;
         // TODO-1093 / BUG-1886：注册表驱动的窗口级全屏切换（默认 F11）。放在 globalBack
         // 之后、Escape 之前；仅桌面有窗口时真正 toggle，移动端 no-op（见下）。
         // **不受 [focusNavigationEnabled] 门控**——理由同 globalBack 与手柄分发
         // （BUG-1266）：全屏改键是正式功能（快捷键设置里有完整 UI 与默认绑定 F11），把它
         // 挂在一个默认关闭的实验开关上，等于在默认安装上「配了 F11 却永不解析」。
-        final KeyEventResult fullscreenResult =
-            _handleGlobalToggleFullscreen(registry, event);
+        final KeyEventResult fullscreenResult = _handleGlobalToggleFullscreen(
+          registry,
+          event,
+        );
         if (fullscreenResult == KeyEventResult.handled) {
           return fullscreenResult;
         }
@@ -583,9 +624,6 @@ Widget wrapWithGlobalNavigation({
       }
       return KeyEventResult.ignored;
     },
-    child: Shortcuts(
-      shortcuts: shortcuts,
-      child: child,
-    ),
+    child: Shortcuts(shortcuts: shortcuts, child: child),
   );
 }

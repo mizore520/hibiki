@@ -8233,7 +8233,7 @@ class _StringsPtBr extends _StringsEn {
       'Continuar varrendo esta pasta para novos mangás';
   @override
   String get download_no_managed_video_source =>
-      'Nenhuma fonte de vídeo gerenciada ainda. Downloads precisam de uma pasta de vídeo local para salvar.';
+      'Nenhuma fonte de vídeo gerenciada ainda. Adicione uma pasta local para guardar os arquivos baixados, para que os vídeos concluídos entrem na biblioteca.';
   @override
   String get download_add_video_source => 'Adicionar fonte de vídeo';
   @override
@@ -9460,11 +9460,10 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get section_network => 'Rede';
   @override
-  String get network_proxy_p2p_label =>
-      'Rotear o tráfego P2P (torrent) pelo proxy';
+  String get network_proxy_p2p_label => 'P2P (torrent) proxy';
   @override
   String get network_proxy_p2p_warning =>
-      'Desativado por padrão: o P2P se conecta diretamente. Passar pelo proxy pode reduzir a velocidade, e muitos provedores de proxy proíbem tráfego BitTorrent: sua conta de proxy pode ser limitada, advertida ou encerrada. Aplica-se apenas ao mecanismo integrado; um qBittorrent externo usa suas próprias configurações de proxy.';
+      'Direct by default. Via proxy: all P2P traffic goes through the global proxy — speed may drop, and many proxy providers forbid BitTorrent traffic (throttling, warnings, or account termination). Mixed: tracker requests go through the proxy while DHT and peer connections stay direct — widest peer discovery, but your real IP is visible to trackers, DHT and peers (connectivity only, not privacy). Built-in engine only; external qBittorrent uses its own proxy settings.';
   @override
   String get video_ajatt_settings_hint =>
       'Arquivo gratuito de legendas em japonês (espelho do kitsunekko). Não precisa de conta; os arquivos são baixados do GitHub.';
@@ -9823,48 +9822,104 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get delete_choices_remember => 'Lembrar estas escolhas';
   @override
-  String get network_proxy_mode_label => 'Proxy mode';
+  String get network_proxy_mode_label => 'Modo de proxy';
   @override
-  String get network_proxy_mode_auto => 'Automatic';
+  String get network_proxy_mode_auto => 'Automático';
   @override
   String get network_proxy_mode_auto_hint =>
-      'Use environment variables, then the enabled system proxy';
+      'Usar variáveis de ambiente e depois o proxy do sistema ativado';
   @override
-  String get network_proxy_mode_direct => 'Direct';
+  String get network_proxy_mode_direct => 'Direto';
   @override
-  String get network_proxy_mode_direct_hint => 'Disable proxy use for the app';
+  String get network_proxy_mode_direct_hint =>
+      'Desativar o uso de proxy pelo aplicativo';
   @override
   String get network_proxy_mode_manual => 'Manual';
   @override
   String get network_proxy_mode_manual_hint =>
-      'Use the server and optional credentials below';
+      'Usar o servidor e as credenciais opcionais abaixo';
   @override
-  String get network_proxy_manual_hint =>
-      'HTTP proxy server used by all public internet requests';
+  String get network_proxy_address_hint =>
+      'Servidor proxy HTTP usado por todas as requisições à internet pública';
   @override
-  String get network_proxy_username => 'Proxy username (optional)';
+  String get network_proxy_username => 'Usuário do proxy (opcional)';
   @override
-  String get network_proxy_password => 'Proxy password (optional)';
-  @override
-  String get storage_category_backups => 'Local backups';
-  @override
-  String storage_entry_backups_label({required Object n}) =>
-      '${n} backup archive(s)';
+  String get network_proxy_password => 'Senha do proxy (opcional)';
   @override
   String get storage_entry_delete_backups_confirm_body =>
-      'Delete these temporary local backup archives? Make sure you have saved or shared any copy you still need.';
+      'Excluir estes arquivos de backup locais temporários? Confirme que você salvou ou compartilhou qualquer cópia que ainda precise.';
   @override
-  String get update_download_source_preference => 'Preferred download source';
+  String get update_download_source_preference => 'Fonte de download preferida';
   @override
   String get update_download_source_preference_hint =>
-      'The selected source is tried first; unavailable sources still fall back automatically.';
+      'A fonte selecionada é tentada primeiro; fontes indisponíveis continuam recorrendo automaticamente a outras.';
   @override
-  String get update_download_source_auto => 'Automatic (recommended)';
+  String get update_download_source_auto => 'Automático (recomendado)';
   @override
-  String get update_download_source_cloudflare => 'Cloudflare mirror';
+  String get update_download_source_cloudflare => 'Espelho Cloudflare';
   @override
-  String get update_download_source_github => 'GitHub direct';
+  String get update_download_source_github => 'GitHub direto';
   @override
   String update_download_source_proxy({required Object host}) =>
       'Proxy: ${host}';
+  @override
+  String get storage_category_backups => 'Arquivos de backup restantes';
+  @override
+  String storage_entry_backups_label({required Object n}) =>
+      '${n} arquivo(s) deixado(s) pela última exportação';
+  @override
+  String update_download_source_unavailable({required Object source}) =>
+      '${source} não está disponível para este arquivo; voltando à ordem automática';
+  @override
+  String get network_proxy_credentials_scope_hint =>
+      'As credenciais valem apenas para requisições HTTP; o motor de torrent integrado não consegue usá-las';
+  @override
+  String get anki_error_paired_device_unreachable =>
+      'Couldn\'t create the card because no paired device could be reached. Make sure Fushi is running on the paired device, or turn off Mine to paired device in Anki settings to create cards locally.';
+  @override
+  String get video_source_scrape_enabled_toggle_hint =>
+      'When off, manual, post-scan, post-download and background scraping all skip this source.';
+  @override
+  String get video_source_scrape_work_missing =>
+      'This work is no longer in the current source plan (its files may have been renamed, moved or deleted). Rescrape the source to refresh the pending list.';
+  @override
+  String get video_source_scrape_pending_works =>
+      'Works awaiting identification';
+  @override
+  String get video_source_scrape_pending_works_hint =>
+      'These entries have no confirmed identity yet. Search and pick the right work to scrape them.';
+  @override
+  String get video_source_scrape_enabled_toggle =>
+      'Enable scraping for this source';
+  @override
+  String get video_library_scrape_auto_backfill =>
+      'Auto-fill missing series info';
+  @override
+  String get video_library_scrape_auto_backfill_hint =>
+      'Entering the video library scrapes entries that still have no confirmed identity. Turn off to stop all background metadata downloads.';
+  @override
+  String get stat_detail_ungrouped => 'Ungrouped';
+  @override
+  String get stat_detail_empty => 'No activity in this period';
+  @override
+  String get stat_center_title => 'Statistics center';
+  @override
+  String get stat_center_tab_overview => 'Overview';
+  @override
+  String get shortcut_action_video_dismiss_dict => 'Dismiss dictionary';
+  @override
+  String get video_discovery_anidb_identity_confirm_title =>
+      'Confirm the work identity';
+  @override
+  String get video_discovery_anidb_identity_confirm_hint =>
+      'AniDB has more than one possible match. Pick the right work and the imported download will scrape with that identity directly; skip and you can assign it later from the pending list.';
+  @override
+  String get video_discovery_anidb_identity_not_found =>
+      'Could not identify this work on AniDB. It will download normally and wait in the pending list for manual identification.';
+  @override
+  String get network_proxy_p2p_mode_direct => 'Direct';
+  @override
+  String get network_proxy_p2p_mode_proxy => 'Via proxy';
+  @override
+  String get network_proxy_p2p_mode_mixed => 'Mixed';
 }

@@ -46,7 +46,8 @@ bool mangaImportCanImport(List<String> paths) {
       if (entity is Directory) {
         try {
           final bool hasImage = entity.listSync().any(
-              (FileSystemEntity e) => e is File && _isMangaImageFile(e.path));
+            (FileSystemEntity e) => e is File && _isMangaImageFile(e.path),
+          );
           if (hasImage) return true;
         } catch (_) {
           // 无权限/瞬时 IO：跳过该子目录，继续探测其它来源。
@@ -84,6 +85,7 @@ class MangaImporter {
     String? title,
     DuplicatePolicy policy = const DuplicatePolicy.suffix(),
     void Function(int done, int total)? onProgress,
+    int? sourceId,
   }) async {
     final Directory root = Directory(imageDirPath);
     final MokuroPayload payload = await payloadFromImageFolder(root);
@@ -97,6 +99,7 @@ class MangaImporter {
       proposedTitle: proposedTitle,
       policy: policy,
       onProgress: onProgress,
+      sourceId: sourceId,
     );
   }
 
@@ -152,7 +155,7 @@ class MangaImporter {
       // sanitizeRelSegments 对含 `..` 的 img_path 抛 MangaImportException（防穿越红线）。
       final List<String> segments = MangaStorage.sanitizeRelSegments(page.url);
       destRels.add(MangaStorage.uniqueDestRel(segments, usedDestRels));
-      final File src = _sourceFile(srcDir.path, page.url);
+      final File src = mokuroPageFile(srcDir.path, page.url);
       if (!src.existsSync()) {
         throw MangaImportException('Missing manga page image: ${page.url}');
       }
@@ -179,7 +182,7 @@ class MangaImporter {
     for (int i = 0; i < total; i++) {
       final MokuroImage page = payload.images[i];
       final String destRel = destRels[i];
-      final File src = _sourceFile(srcDir.path, page.url);
+      final File src = mokuroPageFile(srcDir.path, page.url);
       final File dest = MangaStorage.destFile(bookDir, destRel);
       dest.parent.createSync(recursive: true);
       await src.copy(dest.path);
@@ -190,10 +193,12 @@ class MangaImporter {
     }
 
     // 写序列化页/框结构（url 已改写为 destRel；mangaPayloadToJson 保留 lines_coords）。
-    final Map<String, Object?> serialized =
-        mangaPayloadToJson(MokuroPayload(images: rewritten, ocr: payload.ocr));
-    await File(p.join(bookDir, MangaStorage.kMangaJsonFileName))
-        .writeAsString(jsonEncode(serialized), flush: true);
+    final Map<String, Object?> serialized = mangaPayloadToJson(
+      MokuroPayload(images: rewritten, ocr: payload.ocr),
+    );
+    await File(
+      p.join(bookDir, MangaStorage.kMangaJsonFileName),
+    ).writeAsString(jsonEncode(serialized), flush: true);
 
     return (pageCount: total, coverRel: destRels.first);
   }
@@ -226,8 +231,9 @@ class MangaImporter {
     // 顶层标题/卷元数据（parseMokuro 不带这些进模型，故从原始 JSON 顶层读）。顶层若不是对象
     // （罕见的 top-level array/标量）降级为空 root，标题退化文件名，避免 as Map 硬崩。
     final Object? rawRoot = jsonDecode(jsonStr);
-    final Map<String, Object?> root =
-        rawRoot is Map ? rawRoot.cast<String, Object?>() : <String, Object?>{};
+    final Map<String, Object?> root = rawRoot is Map
+        ? rawRoot.cast<String, Object?>()
+        : <String, Object?>{};
 
     // 页图根**解析**出来，不硬编码成 `.mokuro` 同级（BUG-1830 的根因）：mokuro 的
     // `img_path` 有两种并存惯例，卷子目录布局下裸文件名相对同级解析必然落空。判据与
@@ -237,14 +243,17 @@ class MangaImporter {
     final List<String>? pageRoot = resolveMokuroPageRoot(
       payload: payload,
       volumeName: volumeName,
-      pageExists: (String rel) => _sourceFile(mokuroDir.path, rel).existsSync(),
+      pageExists: (String rel) =>
+          mokuroPageFile(mokuroDir.path, rel).existsSync(),
     );
     if (pageRoot == null) {
       // 两种惯例都不成立：把搜过的目录逐条报出来。这条文案是用户唯一能拿到的线索，
       // 只说「缺图」而不说「在哪找的」正是当初排查要靠逐帧截图的原因。
       final String searched = mokuroPageRootCandidates(volumeName: volumeName)
-          .map((List<String> candidate) =>
-              p.joinAll(<String>[mokuroDir.path, ...candidate]))
+          .map(
+            (List<String> candidate) =>
+                p.joinAll(<String>[mokuroDir.path, ...candidate]),
+          )
           .join(', ');
       throw MangaImportException(
         'Missing manga page image: ${payload.images.first.url} '
@@ -304,13 +313,14 @@ class MangaImporter {
       throw const MangaImportException('Manga JSON has no pages');
     }
 
-    final Directory srcDir =
-        imageRootPath != null ? Directory(imageRootPath) : jsonFile.parent;
+    final Directory srcDir = imageRootPath != null
+        ? Directory(imageRootPath)
+        : jsonFile.parent;
     final String proposedTitle = (title != null && title.trim().isNotEmpty)
         ? title.trim()
         : (p.basename(srcDir.path).isNotEmpty
-            ? p.basename(srcDir.path)
-            : 'manga');
+              ? p.basename(srcDir.path)
+              : 'manga');
 
     return _copyAndInsert(
       db: db,
@@ -340,8 +350,10 @@ class MangaImporter {
   }) async {
     // 第一遍：规划每页 destRel（sanitize + 保留子目录 + 去重）并校验源图存在 + 防路径穿越。
     // 全部在任何落盘/落库之前完成——校验失败零副作用，无需回滚。
-    final List<String> destRels =
-        planMangaDestRels(srcDir: srcDir, payload: payload);
+    final List<String> destRels = planMangaDestRels(
+      srcDir: srcDir,
+      payload: payload,
+    );
 
     final List<EpubBookRow> existingBooks = await db.getAllEpubBooks();
     final String storedTitle = await resolveDuplicateTitle(
@@ -358,12 +370,12 @@ class MangaImporter {
       // `p.join(extractDir, coverPath)`）。
       final ({int pageCount, String coverRel}) artifacts =
           await copyMangaArtifacts(
-        srcDir: srcDir,
-        payload: payload,
-        destRels: destRels,
-        bookDir: bookDir,
-        onProgress: onProgress,
-      );
+            srcDir: srcDir,
+            payload: payload,
+            destRels: destRels,
+            bookDir: bookDir,
+            onProgress: onProgress,
+          );
       final int total = artifacts.pageCount;
       final String coverRel = artifacts.coverRel;
 
@@ -397,8 +409,11 @@ class MangaImporter {
           timestampMs: importedAtMs,
         );
       } catch (e) {
-        ErrorLogService.instance
-            .log('MangaImporter.addActivityEvent', e, StackTrace.current);
+        ErrorLogService.instance.log(
+          'MangaImporter.addActivityEvent',
+          e,
+          StackTrace.current,
+        );
       }
 
       return insertedKey;
@@ -408,23 +423,35 @@ class MangaImporter {
         try {
           await db.deleteEpubBook(insertedKey);
         } catch (rollbackError, stack) {
-          ErrorLogService.instance
-              .log('MangaImporter.rollbackDelete', rollbackError, stack);
+          ErrorLogService.instance.log(
+            'MangaImporter.rollbackDelete',
+            rollbackError,
+            stack,
+          );
         }
       }
       try {
         final Directory dir = Directory(bookDir);
         if (dir.existsSync()) dir.deleteSync(recursive: true);
       } catch (cleanupError, stack) {
-        ErrorLogService.instance
-            .log('MangaImporter.rollbackDir', cleanupError, stack);
+        ErrorLogService.instance.log(
+          'MangaImporter.rollbackDir',
+          cleanupError,
+          stack,
+        );
       }
       rethrow;
     }
   }
 
   /// 把相对 [rawUrl]（正斜杠或反斜杠）解析成 [srcDirPath] 下的源图 [File]。
-  static File _sourceFile(String srcDirPath, String rawUrl) =>
+  ///
+  /// 公开是因为「造出一个 mokuro 卷目录」与「读一个 mokuro 卷目录」必须是同一套
+  /// 口径：[MangaArchiveImporter] 把压缩包里的页图铺进临时目录时，如果另用一套
+  /// 路径派生（例如 `MangaStorage.sanitizeRelSegments`——它会剥掉前导 `images/`
+  /// 段、还会改写 Windows 非法字符），铺出来的文件名在读取侧永远找不到，整卷导入
+  /// 必报 `Missing manga page image`。写入方与读取方共用本函数即消除该错位。
+  static File mokuroPageFile(String srcDirPath, String rawUrl) =>
       File(p.joinAll(<String>[srcDirPath, ...rawUrl.split(RegExp(r'[\\/]+'))]));
 
   /// 从 mokuro 顶层 `title` + `volume` 派生显示标题（进而派生 bookKey）。组合 `title volume`
@@ -435,7 +462,9 @@ class MangaImporter {
   /// 派生标题、命中已入库即跳过整卷下载）：预检必须与导入器同一套身份派生，
   /// 不允许出现第二套判重规则。
   static String deriveMokuroTitle(
-      Map<String, Object?> root, String mokuroPath) {
+    Map<String, Object?> root,
+    String mokuroPath,
+  ) {
     final String title = (root['title'] as String?)?.trim() ?? '';
     final String volume = (root['volume'] as String?)?.trim() ?? '';
     final String base = p.basenameWithoutExtension(mokuroPath);

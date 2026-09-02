@@ -31,6 +31,7 @@ class ReaderEngineConfig {
     required this.debugLogging,
     required this.swipeDistThreshold,
     required this.swipeFastDistThreshold,
+    required this.wheelGestureQuietMs,
     required this.furiganaMode,
     required this.caretColor,
     required this.caretInsetTop,
@@ -74,6 +75,7 @@ class ReaderEngineConfig {
   final bool debugLogging;
   final int swipeDistThreshold;
   final int swipeFastDistThreshold;
+  final int wheelGestureQuietMs;
 
   /// `off` / `partial` / `toggle`（`ReaderSettings.furiganaMode` 的值域）。
   final String furiganaMode;
@@ -119,43 +121,43 @@ class ReaderEngineConfig {
 
   /// 除 [sasayakiCuesJson] 外的全部字段（它是已编码的 JSON 片段，见 [toJsLiteral]）。
   Map<String, Object?> toJson() => <String, Object?>{
-        'navigationGeneration': navigationGeneration,
-        'continuousMode': continuousMode,
-        'vnMode': vnMode,
-        'vnClickAdvance': vnClickAdvance,
-        'scanNonJapaneseText': scanNonJapaneseText,
-        'hoverAutoLookup': hoverAutoLookup,
-        'highlightOnTap': highlightOnTap,
-        'showChrome': showChrome,
-        'debugLogging': debugLogging,
-        'swipeDistThreshold': swipeDistThreshold,
-        'swipeFastDistThreshold': swipeFastDistThreshold,
-        'furiganaMode': furiganaMode,
-        'caretColor': caretColor,
-        'caretInsetTop': caretInsetTop,
-        'caretInsetBottom': caretInsetBottom,
-        'initialProgress': initialProgress,
-        'initialCharOffset': initialCharOffset,
-        'initialCharOffsetEnd': initialCharOffsetEnd,
-        'initialFragment': initialFragment,
-        'chromeTopInset': chromeTopInset,
-        'chromeBottomInset': chromeBottomInset,
-        'dartPageWidth': dartPageWidth?.round(),
-        'dartPageHeight': dartPageHeight?.round(),
-        'marginTop': marginTop,
-        'marginBottom': marginBottom,
-        'marginLeft': marginLeft,
-        'marginRight': marginRight,
-        'blurImages': blurImages,
-        'revealedKeys': revealedKeys,
-        'perfTraceEnabled': perfTraceEnabled,
-        'vnRevealSpeed': vnRevealSpeed,
-        'vnScreenMode': vnScreenMode,
-        'vnSentencesPerScreen': vnSentencesPerScreen,
-        'vnPreserveDialogue': vnPreserveDialogue,
-        'vnMergeCrossScreenSentenceAudioCues':
-            vnMergeCrossScreenSentenceAudioCues,
-      };
+    'navigationGeneration': navigationGeneration,
+    'continuousMode': continuousMode,
+    'vnMode': vnMode,
+    'vnClickAdvance': vnClickAdvance,
+    'scanNonJapaneseText': scanNonJapaneseText,
+    'hoverAutoLookup': hoverAutoLookup,
+    'highlightOnTap': highlightOnTap,
+    'showChrome': showChrome,
+    'debugLogging': debugLogging,
+    'swipeDistThreshold': swipeDistThreshold,
+    'swipeFastDistThreshold': swipeFastDistThreshold,
+    'wheelGestureQuietMs': wheelGestureQuietMs,
+    'furiganaMode': furiganaMode,
+    'caretColor': caretColor,
+    'caretInsetTop': caretInsetTop,
+    'caretInsetBottom': caretInsetBottom,
+    'initialProgress': initialProgress,
+    'initialCharOffset': initialCharOffset,
+    'initialCharOffsetEnd': initialCharOffsetEnd,
+    'initialFragment': initialFragment,
+    'chromeTopInset': chromeTopInset,
+    'chromeBottomInset': chromeBottomInset,
+    'dartPageWidth': dartPageWidth?.round(),
+    'dartPageHeight': dartPageHeight?.round(),
+    'marginTop': marginTop,
+    'marginBottom': marginBottom,
+    'marginLeft': marginLeft,
+    'marginRight': marginRight,
+    'blurImages': blurImages,
+    'revealedKeys': revealedKeys,
+    'perfTraceEnabled': perfTraceEnabled,
+    'vnRevealSpeed': vnRevealSpeed,
+    'vnScreenMode': vnScreenMode,
+    'vnSentencesPerScreen': vnSentencesPerScreen,
+    'vnPreserveDialogue': vnPreserveDialogue,
+    'vnMergeCrossScreenSentenceAudioCues': vnMergeCrossScreenSentenceAudioCues,
+  };
 
   /// 可直接嵌进 JS 的对象字面量。
   ///

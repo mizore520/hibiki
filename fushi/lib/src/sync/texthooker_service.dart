@@ -860,11 +860,11 @@ class TexthookerService extends ChangeNotifier {
         if (!layoutRefresh && !isProgressiveTextUpdate(tail.text, mergedText)) {
           break;
         }
-        // 纯换行/空白刷新时，字符信息量相等但**后到快照**才是当前游戏排版；不要
-        // 因为长度相等又退回旧文本。真正的前/后缀折叠仍保留信息量更大的那份。
-        if (!layoutRefresh &&
-            normalizeForFold(tail.text).length >
-                normalizeForFold(mergedText).length) {
+        // 前/后缀折叠保留信息量更大的那一份。排版刷新不需要在这里额外分支：
+        // 它的两侧去空白后逐字符相同、长度必然相等，`>` 是严格比较，天然不会
+        // 回退，**后到的那份排版**因此自动胜出。
+        if (normalizeForFold(tail.text).length >
+            normalizeForFold(mergedText).length) {
           mergedText = tail.text;
           mergedSpans = tail.rubySpans;
         }

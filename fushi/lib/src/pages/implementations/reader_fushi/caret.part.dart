@@ -63,8 +63,9 @@ extension _ReaderCaret on _ReaderFushiPageState {
     // content, so Up/B/Escape and the BUG-204 bare-Space audiobook override are
     // all handled below by the normal content path (see [resolveReaderSpaceOverride]).
 
-    final KeyEventResult? gamepadAResult =
-        _focusNavEnabled ? _handleGamepadAKeyEvent(event) : null;
+    final KeyEventResult? gamepadAResult = _focusNavEnabled
+        ? _handleGamepadAKeyEvent(event)
+        : null;
     if (gamepadAResult != null) return gamepadAResult;
 
     // Holding an arrow (or Tab) while the char cursor is active steps the cursor
@@ -104,13 +105,13 @@ extension _ReaderCaret on _ReaderFushiPageState {
       final Set<ModifierKey> repeatModifiers = _activeModifiers();
       final PhysicalKeyboardKey? repeatImePhysicalKey =
           focusedEditableText() == null ? event.physicalKey : null;
-      final ShortcutAction? repeatDirectReaderAction =
-          appModel.shortcutRegistry.resolveKeyboard(
-        event.logicalKey,
-        modifiers: repeatModifiers,
-        scope: ShortcutScope.reader,
-        physicalKey: repeatImePhysicalKey,
-      );
+      final ShortcutAction? repeatDirectReaderAction = appModel.shortcutRegistry
+          .resolveKeyboard(
+            event.logicalKey,
+            modifiers: repeatModifiers,
+            scope: ShortcutScope.reader,
+            physicalKey: repeatImePhysicalKey,
+          );
       final ShortcutAction? repeatAction = _resolveReaderKeyboardShortcut(
         event,
         modifiers: repeatModifiers,
@@ -153,8 +154,9 @@ extension _ReaderCaret on _ReaderFushiPageState {
     // Android/native controller events can surface as KeyEvents. D-pad arrows
     // share logical keys with keyboard arrows, so controller-like sources must
     // enter the gamepad registry before keyboard arrow reversal runs.
-    final GamepadButton? nativeGamepadButton =
-        GamepadButton.fromKeyEvent(event);
+    final GamepadButton? nativeGamepadButton = GamepadButton.fromKeyEvent(
+      event,
+    );
     if (nativeGamepadButton != null) {
       return _handleGamepadButton(nativeGamepadButton)
           ? KeyEventResult.handled
@@ -166,13 +168,13 @@ extension _ReaderCaret on _ReaderFushiPageState {
     // 回退，避免 IME 打字误触快捷键。
     final PhysicalKeyboardKey? imeFallbackPhysicalKey =
         focusedEditableText() == null ? event.physicalKey : null;
-    final ShortcutAction? directReaderAction =
-        appModel.shortcutRegistry.resolveKeyboard(
-      event.logicalKey,
-      modifiers: modifiers,
-      scope: ShortcutScope.reader,
-      physicalKey: imeFallbackPhysicalKey,
-    );
+    final ShortcutAction? directReaderAction = appModel.shortcutRegistry
+        .resolveKeyboard(
+          event.logicalKey,
+          modifiers: modifiers,
+          scope: ShortcutScope.reader,
+          physicalKey: imeFallbackPhysicalKey,
+        );
 
     // Char-level reading cursor (book has focus; chrome already returned above).
     // While active, the cursor owns Tab / arrows / A(Enter) / B(Esc) before the
@@ -211,10 +213,7 @@ extension _ReaderCaret on _ReaderFushiPageState {
       imeFallbackPhysicalKey: imeFallbackPhysicalKey,
     );
     if (action == null) return KeyEventResult.ignored;
-    return _executeShortcutAction(
-      action,
-      keyboardTriggerKey: event.logicalKey,
-    );
+    return _executeShortcutAction(action, keyboardTriggerKey: event.logicalKey);
   }
 
   /// 把键盘 [event] 解析成它触发的阅读器/有声书 [ShortcutAction]，套用有声书裸
@@ -241,17 +240,17 @@ extension _ReaderCaret on _ReaderFushiPageState {
     );
     final ShortcutAction? bareArrowBinding =
         appModel.shortcutRegistry.resolveKeyboard(
-              event.logicalKey,
-              modifiers: modifiers,
-              scope: ShortcutScope.reader,
-              physicalKey: imeFallbackPhysicalKey,
-            ) ??
-            appModel.shortcutRegistry.resolveKeyboard(
-              event.logicalKey,
-              modifiers: modifiers,
-              scope: ShortcutScope.audiobook,
-              physicalKey: imeFallbackPhysicalKey,
-            );
+          event.logicalKey,
+          modifiers: modifiers,
+          scope: ShortcutScope.reader,
+          physicalKey: imeFallbackPhysicalKey,
+        ) ??
+        appModel.shortcutRegistry.resolveKeyboard(
+          event.logicalKey,
+          modifiers: modifiers,
+          scope: ShortcutScope.audiobook,
+          physicalKey: imeFallbackPhysicalKey,
+        );
     final ShortcutAction? arrowOverride = resolveReaderArrowPageTurn(
       key: event.logicalKey,
       modifiers: modifiers,
@@ -319,11 +318,8 @@ extension _ReaderCaret on _ReaderFushiPageState {
 
   KeyEventResult? _handleGamepadAKeyEvent(KeyEvent event) {
     if (event.logicalKey != LogicalKeyboardKey.gameButtonA) return null;
-    final ShortcutAction? resolvedAction =
-        appModel.shortcutRegistry.resolveGamepad(
-      GamepadButton.a,
-      scope: ShortcutScope.reader,
-    );
+    final ShortcutAction? resolvedAction = appModel.shortcutRegistry
+        .resolveGamepad(GamepadButton.a, scope: ShortcutScope.reader);
     if (resolvedAction != ShortcutAction.readerLookupAtCursor) return null;
     if (event is KeyDownEvent) {
       if (_gamepadAHoldTimer != null) return KeyEventResult.handled;
@@ -363,8 +359,9 @@ extension _ReaderCaret on _ReaderFushiPageState {
     } catch (_) {
       return;
     }
-    final String text =
-        ReaderSelectionScripts.nativeSelectionTextFromResult(raw);
+    final String text = ReaderSelectionScripts.nativeSelectionTextFromResult(
+      raw,
+    );
     if (text.isEmpty) return;
     await Clipboard.setData(ClipboardData(text: text));
   }
@@ -447,7 +444,8 @@ extension _ReaderCaret on _ReaderFushiPageState {
     // TODO-700 T8: the bottom bar is excluded from focus traversal, so D-pad
     // Down no longer routes focus into the chrome. It falls through to normal
     // gamepad shortcut resolution below; the bar is operated by touch/mouse.
-    final ShortcutAction? action = appModel.shortcutRegistry.resolveGamepad(
+    final ShortcutAction? action =
+        appModel.shortcutRegistry.resolveGamepad(
           button,
           scope: ShortcutScope.reader,
         ) ??
@@ -463,10 +461,7 @@ extension _ReaderCaret on _ReaderFushiPageState {
           scope: ShortcutScope.universal,
         );
     if (action == null) return false;
-    return _executeShortcutAction(
-          action,
-          gamepadTriggerButton: button,
-        ) ==
+    return _executeShortcutAction(action, gamepadTriggerButton: button) ==
         KeyEventResult.handled;
   }
 
@@ -555,7 +550,10 @@ extension _ReaderCaret on _ReaderFushiPageState {
           clearDictionaryResult();
           return KeyEventResult.handled;
         }
-        unawaited(Navigator.of(context).maybePop());
+        // ③ 窗口全屏中 → 先退全屏、留在书里；不在全屏才真的退书。用户裁定「Esc 也可以
+        //    退出全屏」，次序见 [_exitWindowFullscreenOrPopReader]。非全屏时它只多读一次
+        //    窗口状态就落回原来的 maybePop，退书路径本身没变。
+        unawaited(_exitWindowFullscreenOrPopReader());
         return KeyEventResult.handled;
       case ShortcutAction.readerToggleChrome:
         if (isDictionaryShown) {
@@ -613,8 +611,8 @@ extension _ReaderCaret on _ReaderFushiPageState {
         }
         return KeyEventResult.handled;
       case ShortcutAction.readerCreateCardFromPopup:
-        final Future<void>? mining =
-            _caretTopPopupState?.mineFirstVisibleEntry();
+        final Future<void>? mining = _caretTopPopupState
+            ?.mineFirstVisibleEntry();
         if (mining != null) {
           unawaited(mining);
         }
@@ -650,16 +648,18 @@ extension _ReaderCaret on _ReaderFushiPageState {
     _caretBusy = true;
     try {
       final Object? raw = await _controller!.evaluateJavascript(
-          source: _lyricsMode
-              ? ReaderLyricsCaretScripts.enterInvocation()
-              : ReaderCaretScripts.enterInvocation());
+        source: _lyricsMode
+            ? ReaderLyricsCaretScripts.enterInvocation()
+            : ReaderCaretScripts.enterInvocation(),
+      );
       if (!mounted) return;
       // enter() returns {ok:false} on an empty page (no visible character).
       if (ReaderCaretScripts.moveStatus(raw) != 'moved') return;
       if (_lyricsMode) {
         // 激活后暂停播放跟随滚动：setCue 只换高亮，不抢滚动。
-        await _controller!
-            .evaluateJavascript(source: 'window.__lyricsCaretActive = true;');
+        await _controller!.evaluateJavascript(
+          source: 'window.__lyricsCaretActive = true;',
+        );
         _rebuild(() => _caretSurface = CaretSurface.lyrics);
       } else {
         _rebuild(() => _caretSurface = CaretSurface.reader);
@@ -676,16 +676,20 @@ extension _ReaderCaret on _ReaderFushiPageState {
         return;
       case CaretSurface.reader:
         _controller?.evaluateJavascript(
-            source: ReaderCaretScripts.exitInvocation());
+          source: ReaderCaretScripts.exitInvocation(),
+        );
         break;
       case CaretSurface.lyrics:
         _controller?.evaluateJavascript(
-            source: ReaderLyricsCaretScripts.exitInvocation());
+          source: ReaderLyricsCaretScripts.exitInvocation(),
+        );
         // 退出焦点：恢复播放跟随并立即把当前播放行重新居中。
         _controller?.evaluateJavascript(
-            source: 'window.__lyricsCaretActive = false;'
-                'if(window.__lyricsScrollToCue&&window.__lyricsGetCurrentIndex)'
-                'window.__lyricsScrollToCue(window.__lyricsGetCurrentIndex());');
+          source:
+              'window.__lyricsCaretActive = false;'
+              'if(window.__lyricsScrollToCue&&window.__lyricsGetCurrentIndex)'
+              'window.__lyricsScrollToCue(window.__lyricsGetCurrentIndex());',
+        );
         break;
       case CaretSurface.popup:
         _caretTopPopupState?.caretExit();
@@ -828,8 +832,9 @@ extension _ReaderCaret on _ReaderFushiPageState {
   void _returnToPopupContent() {
     if (!mounted || _caretSurface != CaretSurface.popup) return;
     _focusNode.requestFocus(); // take Flutter focus off the header buttons
-    unawaited(_caretTopPopupState
-        ?.caretEnter()); // re-show + re-place the popup caret
+    unawaited(
+      _caretTopPopupState?.caretEnter(),
+    ); // re-show + re-place the popup caret
   }
 
   /// Drive one cursor move on the active surface. On the reader, a paged
@@ -852,9 +857,10 @@ extension _ReaderCaret on _ReaderFushiPageState {
     }
     if (_controller == null) return;
     final Object? raw = await _controller!.evaluateJavascript(
-        source: _caretOnLyrics
-            ? ReaderLyricsCaretScripts.moveInvocation(physicalDir)
-            : ReaderCaretScripts.moveInvocation(physicalDir));
+      source: _caretOnLyrics
+          ? ReaderLyricsCaretScripts.moveInvocation(physicalDir)
+          : ReaderCaretScripts.moveInvocation(physicalDir),
+    );
     if (!mounted || _controller == null) return;
     // lyrics caret 只返回 moved/blocked，永不 pageForward/Backward，故下面分支天然跳过。
     final String status = ReaderCaretScripts.moveStatus(raw);
@@ -885,9 +891,10 @@ extension _ReaderCaret on _ReaderFushiPageState {
       }
       if (_controller == null) return;
       final Object? raw = await _controller!.evaluateJavascript(
-          source: _caretOnLyrics
-              ? ReaderLyricsCaretScripts.scrollPageInvocation(forward)
-              : ReaderCaretScripts.scrollPageInvocation(forward));
+        source: _caretOnLyrics
+            ? ReaderLyricsCaretScripts.scrollPageInvocation(forward)
+            : ReaderCaretScripts.scrollPageInvocation(forward),
+      );
       if (!mounted || _controller == null) return;
       final String status = ReaderCaretScripts.moveStatus(raw);
       if (status == 'pageForward') {
@@ -910,9 +917,10 @@ extension _ReaderCaret on _ReaderFushiPageState {
     }
     if (_controller == null) return;
     await _controller!.evaluateJavascript(
-        source: _caretOnLyrics
-            ? ReaderLyricsCaretScripts.lookupInvocation()
-            : ReaderCaretScripts.lookupInvocation());
+      source: _caretOnLyrics
+          ? ReaderLyricsCaretScripts.lookupInvocation()
+          : ReaderCaretScripts.lookupInvocation(),
+    );
   }
 
   /// A / Enter "context click" at the cursor: follow a hyperlink, click an
@@ -927,9 +935,10 @@ extension _ReaderCaret on _ReaderFushiPageState {
     }
     if (_controller == null) return;
     await _controller!.evaluateJavascript(
-        source: _caretOnLyrics
-            ? ReaderLyricsCaretScripts.activateInvocation()
-            : ReaderCaretScripts.activateInvocation());
+      source: _caretOnLyrics
+          ? ReaderLyricsCaretScripts.activateInvocation()
+          : ReaderCaretScripts.activateInvocation(),
+    );
   }
 
   Future<void> _caretLongPress() async {
@@ -939,9 +948,10 @@ extension _ReaderCaret on _ReaderFushiPageState {
     }
     if (_controller == null) return;
     await _controller!.evaluateJavascript(
-        source: _caretOnLyrics
-            ? ReaderLyricsCaretScripts.longPressInvocation()
-            : ReaderCaretScripts.longPressInvocation());
+      source: _caretOnLyrics
+          ? ReaderLyricsCaretScripts.longPressInvocation()
+          : ReaderCaretScripts.longPressInvocation(),
+    );
   }
 
   /// Jump the cursor to the next/previous dictionary section header in a
@@ -969,10 +979,12 @@ extension _ReaderCaret on _ReaderFushiPageState {
   /// Reader-only — the popup never paginates.
   Future<void> _caretReanchor(ReaderNavigationDirection direction) async {
     if (!_caretOnReader || _controller == null) return;
-    final String edge =
-        direction == ReaderNavigationDirection.forward ? 'forward' : 'backward';
+    final String edge = direction == ReaderNavigationDirection.forward
+        ? 'forward'
+        : 'backward';
     await _controller!.evaluateJavascript(
-        source: ReaderCaretScripts.reanchorInvocation(edge));
+      source: ReaderCaretScripts.reanchorInvocation(edge),
+    );
   }
 
   /// Re-measure the reader ring after a relayout (chrome toggle, font/size). If
@@ -981,8 +993,9 @@ extension _ReaderCaret on _ReaderFushiPageState {
   Future<void> _caretRefresh() async {
     if (_controller == null || (!_caretOnReader && !_caretOnLyrics)) return;
     await _controller!.evaluateJavascript(
-        source: _caretOnLyrics
-            ? ReaderLyricsCaretScripts.refreshInvocation()
-            : ReaderCaretScripts.refreshInvocation());
+      source: _caretOnLyrics
+          ? ReaderLyricsCaretScripts.refreshInvocation()
+          : ReaderCaretScripts.refreshInvocation(),
+    );
   }
 }

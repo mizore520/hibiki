@@ -283,7 +283,7 @@ void main() {
           hasEditableFocus: false,
           hasVisiblePopup: false,
           videoSurfaceHoldsFocus: true,
-          panelHoldsFocusNavigation: false,
+          videoNavigablePanelOpen: false,
         ),
         const VideoKeyboardResolution(
           VideoKeyboardDispatch.run,

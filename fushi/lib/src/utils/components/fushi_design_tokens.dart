@@ -3,6 +3,22 @@ import 'package:flutter/material.dart';
 /// 预留文字块高度时统一加的余量（行高取整、字体 metrics 与理论值的零头）。
 const double kTextBlockSlack = 4.0;
 
+/// 滚动条 thumb 的粗细（全局主题 + 9 处 [RawScrollbar] 的唯一真相源）。
+///
+/// BUG-1997：主题此前只给亮色钉了这个值、深色留 `null`，于是深色退回 Material 的
+/// 默认 `_kScrollbarThickness = 8`。桌面端 `MaterialScrollBehavior` 给**每个**垂直
+/// Scrollable 无条件包一层 `Scrollbar`，加上全局 `thumbVisibility: true`，结果是
+/// 深色下每个列表右侧常驻一条 8+2(crossAxisMargin) = 10px 的覆盖式滚动条——它不占
+/// 布局，直接盖在内容上，而且默认 `interactive`，**连点击一起吞掉**（字幕面板最右
+/// 那颗星就是这么被压住并点不动的）。
+const double kFushiScrollbarThickness = 3.0;
+
+/// 滚动条实际占据的横向宽度 = thumb 粗细 + Material 的 `crossAxisMargin`(2)。
+///
+/// 需要给滚动条让出独立通道（gutter）的列表按这个值内缩内容，别写死数字——它必须
+/// 跟着 [kFushiScrollbarThickness] 走，否则下次调粗细又会压回内容上。
+const double kFushiScrollbarGutter = kFushiScrollbarThickness + 2.0;
+
 /// 一行 [style] 文字在当前文字缩放下占的实际高度。
 ///
 /// BUG-1184：有一类布局必须**先给出**「能放下 N 行文字」的固定高度——网格的
@@ -120,22 +136,30 @@ class FushiRadii {
 /// of these preserves const-ness at the call site (routing through
 /// `FushiDesignTokens.of(context)` would not). Values come from [FushiRadii].
 abstract final class FushiBorderRadius {
-  static const BorderRadius group =
-      BorderRadius.all(Radius.circular(FushiRadii.groupValue));
-  static const BorderRadius card =
-      BorderRadius.all(Radius.circular(FushiRadii.cardValue));
-  static const BorderRadius poster =
-      BorderRadius.all(Radius.circular(FushiRadii.posterValue));
-  static const BorderRadius control =
-      BorderRadius.all(Radius.circular(FushiRadii.controlValue));
-  static const BorderRadius chip =
-      BorderRadius.all(Radius.circular(FushiRadii.chipValue));
-  static const BorderRadius menu =
-      BorderRadius.all(Radius.circular(FushiRadii.menuValue));
-  static const BorderRadius dialog =
-      BorderRadius.all(Radius.circular(FushiRadii.dialogValue));
-  static const BorderRadius sheet =
-      BorderRadius.vertical(top: Radius.circular(FushiRadii.sheetValue));
+  static const BorderRadius group = BorderRadius.all(
+    Radius.circular(FushiRadii.groupValue),
+  );
+  static const BorderRadius card = BorderRadius.all(
+    Radius.circular(FushiRadii.cardValue),
+  );
+  static const BorderRadius poster = BorderRadius.all(
+    Radius.circular(FushiRadii.posterValue),
+  );
+  static const BorderRadius control = BorderRadius.all(
+    Radius.circular(FushiRadii.controlValue),
+  );
+  static const BorderRadius chip = BorderRadius.all(
+    Radius.circular(FushiRadii.chipValue),
+  );
+  static const BorderRadius menu = BorderRadius.all(
+    Radius.circular(FushiRadii.menuValue),
+  );
+  static const BorderRadius dialog = BorderRadius.all(
+    Radius.circular(FushiRadii.dialogValue),
+  );
+  static const BorderRadius sheet = BorderRadius.vertical(
+    top: Radius.circular(FushiRadii.sheetValue),
+  );
   static const Radius chipCorner = Radius.circular(FushiRadii.chipValue);
 }
 
@@ -278,11 +302,11 @@ class FushiTypeSpec {
   final double? letterSpacing;
 
   TextStyle applyTo(TextStyle base) => base.copyWith(
-        fontSize: size,
-        fontWeight: weight,
-        height: height,
-        letterSpacing: letterSpacing,
-      );
+    fontSize: size,
+    fontWeight: weight,
+    height: height,
+    letterSpacing: letterSpacing,
+  );
 }
 
 /// The app's type scale — the single source for the 15 Material text roles.
@@ -293,55 +317,101 @@ class FushiTypeSpec {
 /// most roles because the UI locale is often CJK (positive tracking spaces out
 /// ideographs badly); only the single largest display size gets mild tightening.
 abstract final class FushiTypeScale {
-  static const FushiTypeSpec displayLarge =
-      FushiTypeSpec(40, FontWeight.w400, 1.15, -0.25);
-  static const FushiTypeSpec displayMedium =
-      FushiTypeSpec(33, FontWeight.w400, 1.16);
-  static const FushiTypeSpec displaySmall =
-      FushiTypeSpec(28, FontWeight.w400, 1.18);
-  static const FushiTypeSpec headlineLarge =
-      FushiTypeSpec(24, FontWeight.w600, 1.25);
-  static const FushiTypeSpec headlineMedium =
-      FushiTypeSpec(22, FontWeight.w600, 1.27);
-  static const FushiTypeSpec headlineSmall =
-      FushiTypeSpec(20, FontWeight.w600, 1.3);
-  static const FushiTypeSpec titleLarge =
-      FushiTypeSpec(18, FontWeight.w600, 1.33);
-  static const FushiTypeSpec titleMedium =
-      FushiTypeSpec(16, FontWeight.w600, 1.4);
-  static const FushiTypeSpec titleSmall =
-      FushiTypeSpec(15, FontWeight.w600, 1.4);
-  static const FushiTypeSpec bodyLarge =
-      FushiTypeSpec(17, FontWeight.w400, 1.5);
-  static const FushiTypeSpec bodyMedium =
-      FushiTypeSpec(15, FontWeight.w400, 1.5);
-  static const FushiTypeSpec bodySmall =
-      FushiTypeSpec(13, FontWeight.w400, 1.45);
-  static const FushiTypeSpec labelLarge =
-      FushiTypeSpec(13, FontWeight.w500, 1.4);
-  static const FushiTypeSpec labelMedium =
-      FushiTypeSpec(12, FontWeight.w500, 1.35);
-  static const FushiTypeSpec labelSmall =
-      FushiTypeSpec(11, FontWeight.w500, 1.45);
+  static const FushiTypeSpec displayLarge = FushiTypeSpec(
+    40,
+    FontWeight.w400,
+    1.15,
+    -0.25,
+  );
+  static const FushiTypeSpec displayMedium = FushiTypeSpec(
+    33,
+    FontWeight.w400,
+    1.16,
+  );
+  static const FushiTypeSpec displaySmall = FushiTypeSpec(
+    28,
+    FontWeight.w400,
+    1.18,
+  );
+  static const FushiTypeSpec headlineLarge = FushiTypeSpec(
+    24,
+    FontWeight.w600,
+    1.25,
+  );
+  static const FushiTypeSpec headlineMedium = FushiTypeSpec(
+    22,
+    FontWeight.w600,
+    1.27,
+  );
+  static const FushiTypeSpec headlineSmall = FushiTypeSpec(
+    20,
+    FontWeight.w600,
+    1.3,
+  );
+  static const FushiTypeSpec titleLarge = FushiTypeSpec(
+    18,
+    FontWeight.w600,
+    1.33,
+  );
+  static const FushiTypeSpec titleMedium = FushiTypeSpec(
+    16,
+    FontWeight.w600,
+    1.4,
+  );
+  static const FushiTypeSpec titleSmall = FushiTypeSpec(
+    15,
+    FontWeight.w600,
+    1.4,
+  );
+  static const FushiTypeSpec bodyLarge = FushiTypeSpec(
+    17,
+    FontWeight.w400,
+    1.5,
+  );
+  static const FushiTypeSpec bodyMedium = FushiTypeSpec(
+    15,
+    FontWeight.w400,
+    1.5,
+  );
+  static const FushiTypeSpec bodySmall = FushiTypeSpec(
+    13,
+    FontWeight.w400,
+    1.45,
+  );
+  static const FushiTypeSpec labelLarge = FushiTypeSpec(
+    13,
+    FontWeight.w500,
+    1.4,
+  );
+  static const FushiTypeSpec labelMedium = FushiTypeSpec(
+    12,
+    FontWeight.w500,
+    1.35,
+  );
+  static const FushiTypeSpec labelSmall = FushiTypeSpec(
+    11,
+    FontWeight.w500,
+    1.45,
+  );
 
   /// Build the full 15-slot [TextTheme] by applying the scale onto [base]
   /// (the locale-aware app text style). Explicit sizes survive the geometry
   /// application `MaterialApp` performs (verified), so these values win.
   static TextTheme buildTextTheme(TextStyle base) => TextTheme(
-        displayLarge: displayLarge.applyTo(base),
-        displayMedium: displayMedium.applyTo(base),
-        displaySmall: displaySmall.applyTo(base),
-        headlineLarge: headlineLarge.applyTo(base),
-        headlineMedium: headlineMedium.applyTo(base),
-        headlineSmall: headlineSmall.applyTo(base),
-        titleLarge: titleLarge.applyTo(base),
-        titleMedium: titleMedium.applyTo(base),
-        titleSmall: titleSmall.applyTo(base),
-        bodyLarge: bodyLarge.applyTo(base),
-        bodyMedium: bodyMedium.applyTo(base),
-        bodySmall: bodySmall.applyTo(base),
-        labelLarge: labelLarge.applyTo(base),
-        labelMedium: labelMedium.applyTo(base),
-        labelSmall: labelSmall.applyTo(base),
-      );
+    displayLarge: displayLarge.applyTo(base),
+    displayMedium: displayMedium.applyTo(base),
+    displaySmall: displaySmall.applyTo(base),
+    headlineLarge: headlineLarge.applyTo(base),
+    headlineMedium: headlineMedium.applyTo(base),
+    headlineSmall: headlineSmall.applyTo(base),
+    titleLarge: titleLarge.applyTo(base),
+    titleMedium: titleMedium.applyTo(base),
+    titleSmall: titleSmall.applyTo(base),
+    bodyLarge: bodyLarge.applyTo(base),
+    bodyMedium: bodyMedium.applyTo(base),
+    bodySmall: bodySmall.applyTo(base),
+    labelLarge: labelLarge.applyTo(base),
+    labelMedium: labelMedium.applyTo(base),
+    labelSmall: labelSmall.applyTo(base),
+  );
 }

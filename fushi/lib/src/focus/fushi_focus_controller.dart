@@ -72,10 +72,10 @@ class FushiFocusTargetEntry {
 
 class FushiFocusController extends ChangeNotifier {
   FushiFocusController()
-      : fallbackNode = FocusNode(
-          debugLabel: 'hibiki-focus-fallback',
-          skipTraversal: true,
-        );
+    : fallbackNode = FocusNode(
+        debugLabel: 'hibiki-focus-fallback',
+        skipTraversal: true,
+      );
 
   final FocusNode fallbackNode;
   final LinkedHashMap<FushiFocusId, FushiFocusTargetEntry> _entries =
@@ -109,6 +109,37 @@ class FushiFocusController extends ChangeNotifier {
     final FushiFocusTargetEntry? active = _currentEntry();
     if (active != null && active.context.mounted) return active.context;
     return fallbackNode.context ?? _rootContext;
+  }
+
+  /// The visual geometry context for [focusNode].
+  ///
+  /// Managed composite controls register a render anchor around their whole
+  /// interactive surface. Flutter's [FocusNode.context], however, belongs to
+  /// the framework's internal [Focus] widget and can describe only an inset
+  /// editable child (for example, [SearchBar]) or another implementation detail.
+  /// Consumers that draw or reveal focus must use this registered anchor so the
+  /// ring, directional geometry, and scroll target share one boundary.
+  /// Unmanaged focus nodes keep their native context as the fallback.
+  /// 几何**刻意不看** `canFocus`：这里回答的是「该画在哪个矩形上」，被 disable
+  /// 的控件矩形依然有效。其余 4 处按节点身份找 entry 的地方（
+  /// [primaryFocusIsManagedTarget] / `_currentEntry` / `_isUsablePrimary` /
+  /// `_handleFocusChange`）问的是「还能不能聚焦」，所以走 `_entryCanFocus`。
+  /// 两个问题不同，判据不同是有意的，别顺手"统一"过来。
+  BuildContext? geometryContextFor(FocusNode? focusNode) {
+    if (focusNode == null) return null;
+    for (final FushiFocusTargetEntry entry in _entries.values) {
+      if (!identical(entry.focusNode, focusNode)) continue;
+      // 一旦按节点身份认出这是受管控件，锚点不可用就**不画**（返回 null），
+      // 而不是 continue 落到下面的 native context 回退——那等于「锚点暂时不可用
+      // 就悄悄退回已知错位的内框」，画一个确定错的框比不画更糟。
+      // `_isCurrentRoute` 第一行已经查过 `context.mounted`，这里不再重复。
+      return _isCurrentRoute(entry.context) ? entry.context : null;
+    }
+    // 未受管：原样交回 Flutter 的 context。mounted 由消费侧各自把关
+    // （`globalRectOfContext` 与 `FushiFocusScroll.ensureVisibleIfHidden` 都查），
+    // 在这里再查一遍是空转：两个调用点都写着 `?? primaryFocus?.context`，
+    // 返回 null 会被 `??` 把同一个 unmounted context 立刻递回去。
+    return focusNode.context;
   }
 
   FushiFocusId? get activeId => _activeId;
@@ -173,8 +204,9 @@ class FushiFocusController extends ChangeNotifier {
   void detach() {
     if (_attached) {
       FocusManager.instance.removeListener(_handleFocusChange);
-      mainWindowForegroundNotifier
-          .removeListener(_onMainWindowForegroundChanged);
+      mainWindowForegroundNotifier.removeListener(
+        _onMainWindowForegroundChanged,
+      );
       _attached = false;
     }
     _entries.clear();
@@ -289,11 +321,16 @@ class FushiFocusController extends ChangeNotifier {
     if (active != null) {
       // Explicit directional anchor wins over geometry (see _directionalAnchors).
       // requestById reveals the target if it scrolled off-screen.
-      final FushiFocusTargetEntry? anchored =
-          _anchoredTarget(active.id, direction);
+      final FushiFocusTargetEntry? anchored = _anchoredTarget(
+        active.id,
+        direction,
+      );
       if (anchored != null) return requestById(anchored.id);
-      final _GeometricMoveResult geometric =
-          _geometricTarget(active, targets, direction);
+      final _GeometricMoveResult geometric = _geometricTarget(
+        active,
+        targets,
+        direction,
+      );
       if (!geometric.hasGeometry) {
         return _moveByReadingOrder(
           currentIndex: currentIndex,
@@ -500,8 +537,9 @@ class FushiFocusController extends ChangeNotifier {
     // 面板（Down/Up 不会从内容/chrome 误入 rail）。同一 group 内再用非空
     // Scrollable 细分：宽屏设置主从布局里导航栏与详情各是独立 ListView，没有这条
     // 细分，详情里「设计系统」段控按 Down 会被纵向更近的左侧导航项「阅读」抢走。
-    final ScrollableState? activeScrollable =
-        Scrollable.maybeOf(active.context);
+    final ScrollableState? activeScrollable = Scrollable.maybeOf(
+      active.context,
+    );
     final Element? activeGroup = _nearestTraversalGroup(active.context);
     final Offset activeCenter = activeRect.center;
     FushiFocusTargetEntry? best;
@@ -543,32 +581,48 @@ class FushiFocusController extends ChangeNotifier {
           ahead = dy < -epsilon;
           along = -dy;
           cross = dx.abs();
-          beam = _overlap(activeRect.left, activeRect.right, targetRect.left,
-              targetRect.right);
+          beam = _overlap(
+            activeRect.left,
+            activeRect.right,
+            targetRect.left,
+            targetRect.right,
+          );
           clears = targetRect.bottom <= activeRect.top + epsilon;
           break;
         case FushiFocusDirection.down:
           ahead = dy > epsilon;
           along = dy;
           cross = dx.abs();
-          beam = _overlap(activeRect.left, activeRect.right, targetRect.left,
-              targetRect.right);
+          beam = _overlap(
+            activeRect.left,
+            activeRect.right,
+            targetRect.left,
+            targetRect.right,
+          );
           clears = targetRect.top >= activeRect.bottom - epsilon;
           break;
         case FushiFocusDirection.left:
           ahead = dx < -epsilon;
           along = -dx;
           cross = dy.abs();
-          beam = _overlap(activeRect.top, activeRect.bottom, targetRect.top,
-              targetRect.bottom);
+          beam = _overlap(
+            activeRect.top,
+            activeRect.bottom,
+            targetRect.top,
+            targetRect.bottom,
+          );
           clears = targetRect.right <= activeRect.left + epsilon;
           break;
         case FushiFocusDirection.right:
           ahead = dx > epsilon;
           along = dx;
           cross = dy.abs();
-          beam = _overlap(activeRect.top, activeRect.bottom, targetRect.top,
-              targetRect.bottom);
+          beam = _overlap(
+            activeRect.top,
+            activeRect.bottom,
+            targetRect.top,
+            targetRect.bottom,
+          );
           clears = targetRect.left >= activeRect.right - epsilon;
           break;
       }
@@ -598,7 +652,8 @@ class FushiFocusController extends ChangeNotifier {
       //  2. `along` — the immediately-next row/column wins even if cross-offset.
       //  3. `beam` — perpendicular overlap breaks an `along` tie.
       //  4. `cross` — centre offset breaks any remaining tie.
-      final bool better = best == null ||
+      final bool better =
+          best == null ||
           clearsScore > bestClears ||
           (clearsScore == bestClears &&
               (samePaneScore > bestSamePane ||
@@ -734,14 +789,9 @@ class _AnchorKey {
 
 @immutable
 class _GeometricMoveResult {
-  const _GeometricMoveResult({
-    required this.target,
-    required this.hasGeometry,
-  });
+  const _GeometricMoveResult({required this.target, required this.hasGeometry});
 
-  const _GeometricMoveResult.noGeometry()
-      : target = null,
-        hasGeometry = false;
+  const _GeometricMoveResult.noGeometry() : target = null, hasGeometry = false;
 
   final FushiFocusTargetEntry? target;
   final bool hasGeometry;
@@ -759,8 +809,8 @@ class FushiFocusRoot extends StatefulWidget {
   final bool enabled;
 
   static FushiFocusController controllerOf(BuildContext context) {
-    final _FushiFocusScope? scope =
-        context.dependOnInheritedWidgetOfExactType<_FushiFocusScope>();
+    final _FushiFocusScope? scope = context
+        .dependOnInheritedWidgetOfExactType<_FushiFocusScope>();
     assert(scope?.controller != null, 'No FushiFocusRoot found in context');
     return scope!.controller!;
   }
@@ -815,10 +865,8 @@ class _FushiFocusRootState extends State<FushiFocusRoot> {
 }
 
 class _FushiFocusScope extends InheritedNotifier<FushiFocusController> {
-  const _FushiFocusScope({
-    required this.controller,
-    required super.child,
-  }) : super(notifier: controller);
+  const _FushiFocusScope({required this.controller, required super.child})
+    : super(notifier: controller);
 
   /// null = 焦点导航禁用（FushiFocusRoot.enabled == false）。
   final FushiFocusController? controller;

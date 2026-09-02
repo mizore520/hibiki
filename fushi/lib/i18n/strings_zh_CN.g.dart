@@ -7479,7 +7479,7 @@ class _StringsZhCn extends _StringsEn {
   String get manga_import_folder_as_source_hint => '以后自动扫描此文件夹里的新漫画';
   @override
   String get download_no_managed_video_source =>
-      '还没有受管视频来源。下载完成的视频需要一个本地视频文件夹才能入库。';
+      '还没有受管视频来源。请添加一个存放下载文件的本地文件夹，下载完成的视频才能入库。';
   @override
   String get download_add_video_source => '添加视频来源';
   @override
@@ -8583,10 +8583,10 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get section_network => '网络';
   @override
-  String get network_proxy_p2p_label => 'P2P（torrent）传输走代理';
+  String get network_proxy_p2p_label => 'P2P（torrent）代理';
   @override
   String get network_proxy_p2p_warning =>
-      '默认关闭，P2P 直连。走代理可能降低速度；且不少代理服务商禁止 BT 流量，可能导致代理账号被限速、警告甚至封禁。仅对内置引擎生效，外接 qBittorrent 请在其自身设置中配置。';
+      '默认直连。走代理：全部 P2P 流量经全局代理——可能降速，且不少代理服务商禁止 BT 流量（限速、警告甚至封号）。混合：tracker 请求经代理、DHT 与 peer 直连——节点获取范围最大，但真实 IP 会暴露给 tracker/DHT/peer（只解决连通性，无隐私作用）。仅对内置引擎生效，外接 qBittorrent 请在其自身设置中配置。';
   @override
   String get video_ajatt_settings_hint =>
       '免费日语字幕库（kitsunekko 镜像）。无需账号；字幕文件从 GitHub 下载。';
@@ -8927,15 +8927,11 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get network_proxy_mode_manual_hint => '使用下方服务器与可选认证信息';
   @override
-  String get network_proxy_manual_hint => '供应用全部公网请求使用的 HTTP 代理服务器';
+  String get network_proxy_address_hint => '供应用全部公网请求使用的 HTTP 代理服务器';
   @override
   String get network_proxy_username => '代理用户名（可选）';
   @override
   String get network_proxy_password => '代理密码（可选）';
-  @override
-  String get storage_category_backups => '本地备份';
-  @override
-  String storage_entry_backups_label({required Object n}) => '${n} 个备份归档';
   @override
   String get storage_entry_delete_backups_confirm_body =>
       '确定清除这些临时本地备份吗？请先确认需要保留的副本已经保存或分享出去。';
@@ -8952,4 +8948,60 @@ class _StringsZhCn extends _StringsEn {
   String get update_download_source_github => 'GitHub 直连';
   @override
   String update_download_source_proxy({required Object host}) => '代理站：${host}';
+  @override
+  String get storage_category_backups => '遗留的备份包';
+  @override
+  String storage_entry_backups_label({required Object n}) =>
+      '上次导出遗留的 ${n} 个备份包';
+  @override
+  String update_download_source_unavailable({required Object source}) =>
+      '${source} 不适用于该文件，已回退到自动顺序';
+  @override
+  String get network_proxy_credentials_scope_hint =>
+      '凭据仅用于 HTTP 请求；内置 torrent 引擎无法使用';
+  @override
+  String get anki_error_paired_device_unreachable =>
+      '无法制卡：当前没有可连接的已配对设备。请确认配对设备上的 Fushi 正在运行；如果要在本机制卡，请关闭「制卡到已配对设备」。';
+  @override
+  String get video_source_scrape_enabled_toggle_hint =>
+      '关闭后：手动、扫描后、下载导入后与后台自动补刮都会跳过此来源。';
+  @override
+  String get video_source_scrape_work_missing =>
+      '该作品已不在当前来源计划中（文件可能已改名、移动或删除）。请重新刮削此来源刷新待确认列表。';
+  @override
+  String get video_source_scrape_pending_works => '待确认作品';
+  @override
+  String get video_source_scrape_pending_works_hint =>
+      '这些条目还没有确认的作品身份。搜索并选中正确的作品即可完成刮削。';
+  @override
+  String get video_source_scrape_enabled_toggle => '启用此来源的刮削';
+  @override
+  String get video_library_scrape_auto_backfill => '自动补齐缺失的作品资料';
+  @override
+  String get video_library_scrape_auto_backfill_hint =>
+      '进入视频库时，自动刮削仍未确认身份的条目。关闭后不再有任何后台元数据下载。';
+  @override
+  String get stat_detail_ungrouped => '未分组';
+  @override
+  String get stat_detail_empty => '此时段暂无记录';
+  @override
+  String get stat_center_title => '统计中心';
+  @override
+  String get stat_center_tab_overview => '总览';
+  @override
+  String get shortcut_action_video_dismiss_dict => '关闭词典';
+  @override
+  String get video_discovery_anidb_identity_confirm_title => '确认作品身份';
+  @override
+  String get video_discovery_anidb_identity_confirm_hint =>
+      'AniDB 上有多个可能的匹配。选中正确的作品后，下载导入将直接按该身份刮削；跳过则可稍后在待确认列表手动指定。';
+  @override
+  String get video_discovery_anidb_identity_not_found =>
+      '未能在 AniDB 识别该作品：仍会正常下载，导入后在待确认列表等待手动指定身份。';
+  @override
+  String get network_proxy_p2p_mode_direct => '直连';
+  @override
+  String get network_proxy_p2p_mode_proxy => '走代理';
+  @override
+  String get network_proxy_p2p_mode_mixed => '混合';
 }

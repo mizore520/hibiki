@@ -128,19 +128,35 @@ enum ShortcutScope {
           ShortcutChannel.gamepad,
           ShortcutChannel.mouse,
         };
-      // 首页 / 全局 / 视频页：键盘与手柄都有解析入口（home_page 的 resolveKeyboard、
-      // global_navigation、video_player_shortcuts 的 keyboardBindings、各页
-      // GamepadButtonIntent），但**鼠标没有**——这三个页面都是纯 Flutter 表面，没有
-      // WebView 接管 mousedown，也没有任何 Flutter 侧鼠标绑定派发管线。曾经开着
-      // mouse 通道纯属与 reader/audiobook 共用一个 case 分支的连带产物：设置页给出
-      // 「添加鼠标按键」入口，绑上去永不触发。要重开必须先真的建一条
-      // PointerDownEvent → MouseBinding → 派发的链路并验证。
+      // 首页 / 全局：键盘与手柄都有解析入口（home_page 的 resolveKeyboard、
+      // global_navigation、各页 GamepadButtonIntent），但**鼠标没有**——这两个页面
+      // 是纯 Flutter 表面，没有 WebView 接管 mousedown，也没有任何 Flutter 侧鼠标
+      // 绑定派发管线。曾经开着 mouse 通道纯属与 reader/audiobook 共用一个 case
+      // 分支的连带产物：设置页给出「添加鼠标按键」入口，绑上去永不触发。要重开必须
+      // 先真的建一条 PointerDownEvent → MouseBinding → 派发的链路并验证。
       case home:
       case global:
+        return const <ShortcutChannel>{
+          ShortcutChannel.keyboard,
+          ShortcutChannel.gamepad,
+        };
+      // 视频页：BUG-1995。用户报「关闭词典快捷键小说鼠标侧键可以，视频不行」——根因是
+      // 这里没开 mouse 通道，导致**设置页不给「添加鼠标按键」入口，用户压根绑不上**。
+      //
+      // ⚠️ 注意通道开关的真实作用域：它只管**设置页的录入入口**。已经存在的鼠标绑定
+      // 一直是可派发的——词典弹窗表面那条路（`dictionaryPopupInputSpecFor` →
+      // `resolveDictionaryPopupInputToken`）读 `bindingsFor` / `resolveMouse`，
+      // **不查本 getter**。所以「通道关着」≠「该 scope 的鼠标绑定不生效」，别再据此
+      // 推出「这些绑定是死的、可以清掉」（那条 v10→v11 迁移正是这么错的，已撤销）。
+      //
+      // 配套建出的 Flutter 侧派发管线（`video_fushi_page.dart` 的
+      // `_handleVideoPointerDown`）只覆盖**浮层不可见**的表面：浮层可见时根 Overlay 的
+      // barrier 会吃掉指针事件，那半边由弹窗表面自己回传，见该方法的文档。
       case video:
         return const <ShortcutChannel>{
           ShortcutChannel.keyboard,
           ShortcutChannel.gamepad,
+          ShortcutChannel.mouse,
         };
       // universal（「返回上一级」）：键盘与手柄都有解析入口——每个表面在自身 scope
       // 未命中后按 `resolveKeyboard/resolveGamepad(scope: universal)` 兜底
@@ -221,7 +237,9 @@ enum ShortcutAction {
   readerLookupAtCursor(ShortcutScope.reader, 'reader_lookup_at_cursor'),
   readerShiftLookup(ShortcutScope.reader, 'reader_shift_lookup'),
   readerCreateCardFromPopup(
-      ShortcutScope.reader, 'reader_create_card_from_popup'),
+    ShortcutScope.reader,
+    'reader_create_card_from_popup',
+  ),
   // TODO-700 T7：「进入选字查词光标」可改键（默认手柄 A + 键盘 Enter）。这是
   // enter-trigger 的绑定真相源：reader 写死判 A/Enter 进光标的分支改读它的绑定
   // （见 reader_caret_router.isEnterTrigger*）。默认与旧硬编码一致，行为不变，只
@@ -287,7 +305,9 @@ enum ShortcutAction {
   // 鼠标中键点句 → 跳到该句并播放。位置型动作，运行时不走
   // _executeShortcutAction，而是 onPointerSeek 经 resolveMouse 判定后定位执行。
   audiobookSeekToClickedSentence(
-      ShortcutScope.audiobook, 'audiobook_seek_clicked_sentence'),
+    ShortcutScope.audiobook,
+    'audiobook_seek_clicked_sentence',
+  ),
 
   // Video player (TODO-134): migrated out of the hard-coded
   // buildVideoPlayerShortcuts map so they live in the remappable registry and
@@ -299,6 +319,13 @@ enum ShortcutAction {
   // 播放控制 → 字幕/章节跳转 → 字幕显示 → 字幕对轴 → 音量 → 画面/杂项
   // 分簇排列，重要动作靠前；重排只影响展示，持久化走字符串 key、与声明序无关。
   // 「逐级退出」不在本组——它是全 app 共用的 [globalBack]（universal scope）。
+
+  // 「只关词典、绝不做别的」的可选专用动作（**默认无绑定**，与 [readerDismissDict] /
+  // [mangaDismissDict] 同形）。BUG-1995：没有它的话，想用鼠标侧键关词典就只能把侧键
+  // 绑到某个**真实**的视频动作（「下一句」之类），浮层不可见时那个动作会照常执行——
+  // reader 之所以干净，正是因为它有这个专用空绑定动作。
+  // 退出视频仍走 universal 的 [globalBack] 阶梯（浮层可见先关浮层，否则退出）。
+  videoDismissDict(ShortcutScope.video, 'video_dismiss_dict'),
 
   // 播放控制
   videoTogglePlayPause(ShortcutScope.video, 'video_toggle_play_pause'),
@@ -323,12 +350,16 @@ enum ShortcutAction {
   videoPreviousSubtitle(ShortcutScope.video, 'video_previous_subtitle'),
   videoNextSubtitle(ShortcutScope.video, 'video_next_subtitle'),
   videoReplayCurrentSubtitle(
-      ShortcutScope.video, 'video_replay_current_subtitle'),
+    ShortcutScope.video,
+    'video_replay_current_subtitle',
+  ),
   // 重播上一句（TODO-378，BUG-287）：纯句子跳转到上一条 cue 起点并播放，**不**退化成
   // 回退几秒。与 videoPreviousSubtitle（Ctrl+←，gap 太远时退化时间 seek，BUG-185/TODO-085）
   // 语义不同，是两个独立功能；TODO-328 误当重复删掉，此处恢复。
   videoReplayPreviousSubtitle(
-      ShortcutScope.video, 'video_replay_previous_subtitle'),
+    ShortcutScope.video,
+    'video_replay_previous_subtitle',
+  ),
   // 内封章节上/下一章（TODO-424，默认 PageUp / PageDown）：seek 到相邻章起点，无章节
   // 时 no-op。与「上/下一句字幕」(Ctrl+←/→) 正交——后者按字幕 cue，这里按容器章节。
   videoPreviousChapter(ShortcutScope.video, 'video_previous_chapter'),
@@ -344,15 +375,21 @@ enum ShortcutAction {
   // 主字幕」。与历史的 videoToggleSubtitleBlur（B，开/关模糊）正交并存——后者保留
   // 不破坏旧绑定（Never break userspace）。三者执行体都在 video_player_shortcuts。
   videoCycleSubtitleObscure(
-      ShortcutScope.video, 'video_cycle_subtitle_obscure'),
+    ShortcutScope.video,
+    'video_cycle_subtitle_obscure',
+  ),
   videoToggleSubtitleHide(ShortcutScope.video, 'video_toggle_subtitle_hide'),
   // TODO-1382：**副字幕**遮蔽三态（镜像主字幕，独立开关）。videoCycleSecondarySubtitleObscure
   // 循环 不遮蔽→模糊→隐藏（默认 Shift+G）；videoToggleSecondarySubtitleHide 直接开/关
   // 「隐藏副字幕」（默认 Shift+H）。执行体在 video_player_shortcuts。
   videoCycleSecondarySubtitleObscure(
-      ShortcutScope.video, 'video_cycle_secondary_subtitle_obscure'),
+    ShortcutScope.video,
+    'video_cycle_secondary_subtitle_obscure',
+  ),
   videoToggleSecondarySubtitleHide(
-      ShortcutScope.video, 'video_toggle_secondary_subtitle_hide'),
+    ShortcutScope.video,
+    'video_toggle_secondary_subtitle_hide',
+  ),
   // 手柄/键盘字级选词查词（对齐阅读器 readerEnterCaret）：进入后光标停在当前字幕
   // 首个可见字符，D-pad/方向键逐字移动、A/Enter 对光标字符查词（浮层内继续用手柄
   // 翻词条/跳词典/制卡）、B/Esc 退出。激活期的方向/确认/退出键在页面侧**先于**注册
@@ -366,9 +403,13 @@ enum ShortcutAction {
   // 在 video 独立 co-active 组内，默认键与既有视频键无冲突。
   videoOpenSubtitleAlign(ShortcutScope.video, 'video_open_subtitle_align'),
   videoSubtitleDelayIncrease(
-      ShortcutScope.video, 'video_subtitle_delay_increase'),
+    ShortcutScope.video,
+    'video_subtitle_delay_increase',
+  ),
   videoSubtitleDelayDecrease(
-      ShortcutScope.video, 'video_subtitle_delay_decrease'),
+    ShortcutScope.video,
+    'video_subtitle_delay_decrease',
+  ),
   // asbplayer 式「字幕偏移对齐」（用户请求，默认 Ctrl+Shift+←/→）：把上一句 / 下一句
   // 字幕的起点整体平移到当前播放时间点（按目标 cue 求**绝对**偏移，一键粗对齐整轨；与
   // z/x 的固定步进平移互补）。执行体走同一 _setDelayMs 写穿路径（clamp + 落盘 + OSD），
@@ -388,7 +429,9 @@ enum ShortcutAction {
   videoScreenshot(ShortcutScope.video, 'video_screenshot'),
   videoToggleShaderCompare(ShortcutScope.video, 'video_toggle_shader_compare'),
   videoToggleFavoriteSentence(
-      ShortcutScope.video, 'video_toggle_favorite_sentence'),
+    ShortcutScope.video,
+    'video_toggle_favorite_sentence',
+  ),
 
   // 漫画：翻页存的是**页序语义**（forward=下一页），左右方向键再按跨页方向
   // （日漫默认 rtl）校正——与 reader 的 resolveReaderArrowPageTurn 同构，见

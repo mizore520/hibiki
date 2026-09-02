@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:fushi/src/media/source_library/source_library_row.dart';
+import 'package:fushi/src/media/video/metadata/video_library_scrape_sweep.dart';
 import 'package:fushi/src/media/video/metadata/video_source_scrape_candidate_tile.dart';
 import 'package:fushi/src/media/video/metadata/video_source_scrape_run_detail_dialog.dart';
 import 'package:fushi/src/media/video/metadata/video_source_scrape_task.dart';
@@ -16,16 +17,17 @@ Future<void> showVideoSourceScrapeTaskPanel({
   required Future<List<VideoSourceScrapeRunRow>> Function() loadRuns,
   Future<void> Function(VideoSourceScrapeRunRow run)? onRetry,
   Future<SourceLibraryRow?> Function(int sourceId)? loadSource,
-}) =>
-    showAppDialog<void>(
-      context: context,
-      builder: (BuildContext context) => _VideoSourceScrapeTaskPanel(
-        controller: controller,
-        loadRuns: loadRuns,
-        onRetry: onRetry,
-        loadSource: loadSource,
-      ),
-    );
+  Future<List<VideoPendingScrapeWork>> Function()? loadPendingWorks,
+}) => showAppDialog<void>(
+  context: context,
+  builder: (BuildContext context) => _VideoSourceScrapeTaskPanel(
+    controller: controller,
+    loadRuns: loadRuns,
+    onRetry: onRetry,
+    loadSource: loadSource,
+    loadPendingWorks: loadPendingWorks,
+  ),
+);
 
 class _VideoSourceScrapeTaskPanel extends StatefulWidget {
   const _VideoSourceScrapeTaskPanel({
@@ -33,12 +35,16 @@ class _VideoSourceScrapeTaskPanel extends StatefulWidget {
     required this.loadRuns,
     this.onRetry,
     this.loadSource,
+    this.loadPendingWorks,
   });
 
   final VideoSourceScrapeTaskController controller;
   final Future<List<VideoSourceScrapeRunRow>> Function() loadRuns;
   final Future<void> Function(VideoSourceScrapeRunRow run)? onRetry;
   final Future<SourceLibraryRow?> Function(int sourceId)? loadSource;
+
+  /// 待确认队列数据源：当前计划里「从未刮出规范身份」的作品。null = 不展示。
+  final Future<List<VideoPendingScrapeWork>> Function()? loadPendingWorks;
 
   @override
   State<_VideoSourceScrapeTaskPanel> createState() =>
@@ -52,6 +58,9 @@ class _VideoSourceScrapeTaskPanelState
   bool _loadingHistory = true;
   VideoSourceScrapePhase _lastPhase = VideoSourceScrapePhase.idle;
   final Set<int> _retrying = <int>{};
+  List<VideoPendingScrapeWork> _pendingWorks = const <VideoPendingScrapeWork>[];
+  String? _bindingStableKey;
+  String? _bindError;
 
   @override
   void initState() {
@@ -59,6 +68,7 @@ class _VideoSourceScrapeTaskPanelState
     widget.controller.addListener(_changed);
     _lastPhase = widget.controller.progress.phase;
     unawaited(_reloadHistory());
+    unawaited(_reloadPendingWorks());
   }
 
   @override
@@ -69,12 +79,30 @@ class _VideoSourceScrapeTaskPanelState
 
   void _changed() {
     final VideoSourceScrapePhase next = widget.controller.progress.phase;
-    final bool becameTerminal = next != _lastPhase &&
+    final bool becameTerminal =
+        next != _lastPhase &&
         !widget.controller.progress.isRunning &&
         next != VideoSourceScrapePhase.idle;
     _lastPhase = next;
     if (mounted) setState(() {});
-    if (becameTerminal) unawaited(_reloadHistory());
+    if (becameTerminal) {
+      unawaited(_reloadHistory());
+      // 批次可能刚认领了一批待确认作品，队列跟着刷新。
+      unawaited(_reloadPendingWorks());
+    }
+  }
+
+  Future<void> _reloadPendingWorks() async {
+    final Future<List<VideoPendingScrapeWork>> Function()? load =
+        widget.loadPendingWorks;
+    if (load == null) return;
+    try {
+      final List<VideoPendingScrapeWork> pending = await load();
+      if (!mounted) return;
+      setState(() => _pendingWorks = pending);
+    } catch (_) {
+      // 队列是辅助视图：加载失败保持现状，不用错误打断面板。
+    }
   }
 
   Future<void> _reloadHistory() async {
@@ -130,11 +158,26 @@ class _VideoSourceScrapeTaskPanelState
                     child: widget.controller.isScanning
                         ? Text(t.video_source_scrape_phase_scanning)
                         : confirmation != null
-                            ? _buildConfirmation(confirmation)
-                            : report != null
-                                ? _buildReport(report)
-                                : _buildProgress(progress),
+                        ? _buildConfirmation(confirmation)
+                        : report != null
+                        ? _buildReport(report)
+                        : _buildProgress(progress),
                   ),
+                  const SizedBox(height: 18),
+                ],
+                if (_pendingWorks.isNotEmpty) ...<Widget>[
+                  Text(
+                    t.video_source_scrape_pending_works,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(t.video_source_scrape_pending_works_hint),
+                  const SizedBox(height: 8),
+                  _buildPendingWorks(),
+                  if (_bindError case final String error) ...<Widget>[
+                    const SizedBox(height: 6),
+                    SelectableText(error),
+                  ],
                   const SizedBox(height: 18),
                 ],
                 Text(
@@ -178,11 +221,13 @@ class _VideoSourceScrapeTaskPanelState
       children: <Widget>[
         if (progress.isRunning) LinearProgressIndicator(value: value),
         if (progress.isRunning) const SizedBox(height: 12),
-        Text(t.video_source_scrape_progress(
-          phase: phase,
-          current: progress.current,
-          total: total,
-        )),
+        Text(
+          t.video_source_scrape_progress(
+            phase: phase,
+            current: progress.current,
+            total: total,
+          ),
+        ),
         if (progress.sourceLabel case final String label) ...<Widget>[
           const SizedBox(height: 6),
           Text(label),
@@ -201,6 +246,73 @@ class _VideoSourceScrapeTaskPanelState
         ],
       ],
     );
+  }
+
+  /// 待确认队列：条目来自当前计划（不是历史 run 快照），手动指定按 stableKey
+  /// 对应的真实作品执行——绑定入口永远不会指向已消失的作品。
+  Widget _buildPendingWorks() {
+    final bool controllerBusy = widget.controller.isBusy;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        for (final VideoPendingScrapeWork entry in _pendingWorks)
+          FushiListItem(
+            key: ValueKey<String>(
+              'video-source-pending-work-${entry.work.stableKey}',
+            ),
+            density: FushiListDensity.compact,
+            padding: EdgeInsets.zero,
+            leading: const Icon(Icons.rule_folder_outlined),
+            title: Text(entry.work.title),
+            subtitle: Text(entry.source.label),
+            trailing: _bindingStableKey == entry.work.stableKey
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : IconButton(
+                    tooltip: t.video_source_scrape_manual_search_title,
+                    onPressed: controllerBusy || _bindingStableKey != null
+                        ? null
+                        : () => unawaited(_bindPendingWork(entry)),
+                    icon: const Icon(Icons.search),
+                  ),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _bindPendingWork(VideoPendingScrapeWork entry) async {
+    final VideoSourceScrapeConfirmationCandidate? candidate =
+        await showVideoSourceScrapeManualBindingDialog(
+          context: context,
+          controller: widget.controller,
+          source: entry.source,
+          workTitle: entry.work.title,
+        );
+    if (candidate == null || !mounted) return;
+    setState(() {
+      _bindingStableKey = entry.work.stableKey;
+      _bindError = null;
+    });
+    try {
+      await widget.controller.rescrapeWorkWithLookup(
+        source: entry.source,
+        workTitle: entry.work.title,
+        lookup: candidate.lookup,
+      );
+      await _reloadHistory();
+      await _reloadPendingWorks();
+    } on VideoSourceScrapeWorkNotFound {
+      if (!mounted) return;
+      setState(() => _bindError = t.video_source_scrape_work_missing);
+      unawaited(_reloadPendingWorks());
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _bindError = error.toString());
+    } finally {
+      if (mounted) setState(() => _bindingStableKey = null);
+    }
   }
 
   Widget _buildHistory() {
@@ -227,7 +339,8 @@ class _VideoSourceScrapeTaskPanelState
             subtitle: Text(_runSubtitle(run)),
             subtitleMaxLines: 3,
             onTap: () => unawaited(_openRunDetail(run)),
-            trailing: widget.onRetry != null &&
+            trailing:
+                widget.onRetry != null &&
                     run.sourceId != null &&
                     scrapeRunHasUnresolvedWorks(run)
                 ? IconButton(
@@ -302,28 +415,28 @@ class _VideoSourceScrapeTaskPanelState
   }
 
   String _phaseLabel(VideoSourceScrapePhase phase) => switch (phase) {
-        VideoSourceScrapePhase.planning => t.video_source_scrape_phase_planning,
-        VideoSourceScrapePhase.recognizing =>
-          t.video_source_scrape_phase_recognizing,
-        VideoSourceScrapePhase.fetching => t.video_source_scrape_phase_fetching,
-        VideoSourceScrapePhase.applying => t.video_source_scrape_phase_applying,
-        VideoSourceScrapePhase.writingSidecars =>
-          t.video_source_scrape_phase_writing_sidecars,
-        VideoSourceScrapePhase.completed => t.download_task_status_completed,
-        VideoSourceScrapePhase.cancelled => t.download_status_cancelled,
-        VideoSourceScrapePhase.interrupted =>
-          t.video_source_scrape_status_interrupted,
-        VideoSourceScrapePhase.failed => t.download_task_status_error,
-        VideoSourceScrapePhase.idle => t.video_source_scrape_tasks_empty,
-      };
+    VideoSourceScrapePhase.planning => t.video_source_scrape_phase_planning,
+    VideoSourceScrapePhase.recognizing =>
+      t.video_source_scrape_phase_recognizing,
+    VideoSourceScrapePhase.fetching => t.video_source_scrape_phase_fetching,
+    VideoSourceScrapePhase.applying => t.video_source_scrape_phase_applying,
+    VideoSourceScrapePhase.writingSidecars =>
+      t.video_source_scrape_phase_writing_sidecars,
+    VideoSourceScrapePhase.completed => t.download_task_status_completed,
+    VideoSourceScrapePhase.cancelled => t.download_status_cancelled,
+    VideoSourceScrapePhase.interrupted =>
+      t.video_source_scrape_status_interrupted,
+    VideoSourceScrapePhase.failed => t.download_task_status_error,
+    VideoSourceScrapePhase.idle => t.video_source_scrape_tasks_empty,
+  };
 
   IconData _runIcon(String status) => switch (status) {
-        'completed' => Icons.check_circle_outline,
-        'failed' => Icons.error_outline,
-        'cancelled' => Icons.cancel_outlined,
-        'interrupted' => Icons.pause_circle_outline,
-        _ => Icons.sync,
-      };
+    'completed' => Icons.check_circle_outline,
+    'failed' => Icons.error_outline,
+    'cancelled' => Icons.cancel_outlined,
+    'interrupted' => Icons.pause_circle_outline,
+    _ => Icons.sync,
+  };
 
   Widget _buildConfirmation(VideoSourceScrapeConfirmation confirmation) {
     return Column(
@@ -347,9 +460,9 @@ class _VideoSourceScrapeTaskPanelState
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (BuildContext context, int index) =>
                 VideoSourceScrapeCandidateTile(
-              candidate: confirmation.candidates[index],
-              onSelected: widget.controller.confirmPending,
-            ),
+                  candidate: confirmation.candidates[index],
+                  onSelected: widget.controller.confirmPending,
+                ),
           ),
         ),
       ],
@@ -365,12 +478,14 @@ class _VideoSourceScrapeTaskPanelState
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Text(t.scrape_all_done(
-          applied: report.succeededWorks,
-          review: report.pendingConfirmations,
-          skipped: report.protectedArtifacts,
-          failed: report.failedWorks,
-        )),
+        Text(
+          t.scrape_all_done(
+            applied: report.succeededWorks,
+            review: report.pendingConfirmations,
+            skipped: report.protectedArtifacts,
+            failed: report.failedWorks,
+          ),
+        ),
         if (issues.isNotEmpty) ...<Widget>[
           const SizedBox(height: 12),
           ConstrainedBox(

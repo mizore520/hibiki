@@ -71,10 +71,7 @@ int clipExportFps({
 
 /// 选区 → 整句 cue 区间的判定结果（M1，纯数据）。
 class AudiobookClipBoundaryResult {
-  const AudiobookClipBoundaryResult({
-    required this.kind,
-    this.range,
-  });
+  const AudiobookClipBoundaryResult({required this.kind, this.range});
 
   final AudiobookClipBoundaryKind kind;
 
@@ -156,7 +153,8 @@ AudiobookClipSelectionSpan resolveAudiobookClipSelectionSpan({
   required int? fallbackOffset,
   required int? fallbackLength,
 }) {
-  final bool hasNativeSelection = selectedText != null &&
+  final bool hasNativeSelection =
+      selectedText != null &&
       selectedOffset != null &&
       selectedLength != null &&
       selectedLength > 0;
@@ -184,10 +182,7 @@ List<AudiobookClipShareAttachment> audiobookClipMobileShareAttachments({
   // BUG-1322：移动端产物从 MJPEG/.mov 换 MPEG-4/.mp4 后，两端容器统一为 mp4，
   // mime 不再按编码器分叉。
   return <AudiobookClipShareAttachment>[
-    AudiobookClipShareAttachment(
-      path: videoPath,
-      mimeType: 'video/mp4',
-    ),
+    AudiobookClipShareAttachment(path: videoPath, mimeType: 'video/mp4'),
   ];
 }
 
@@ -223,15 +218,17 @@ List<AudiobookClipCueSpan> clipCueSpansWithDelay({
   required List<AudioCue> span,
   required int delayMs,
 }) {
-  return span.map((AudioCue c) {
-    final int startMs = (c.startMs + delayMs).clamp(0, 1 << 30);
-    final int endMs = (c.endMs + delayMs).clamp(startMs + 1, 1 << 30);
-    return AudiobookClipCueSpan(
-      text: c.text,
-      startMs: startMs,
-      endMs: endMs,
-    );
-  }).toList(growable: false);
+  return span
+      .map((AudioCue c) {
+        final int startMs = (c.startMs + delayMs).clamp(0, 1 << 30);
+        final int endMs = (c.endMs + delayMs).clamp(startMs + 1, 1 << 30);
+        return AudiobookClipCueSpan(
+          text: c.text,
+          startMs: startMs,
+          endMs: endMs,
+        );
+      })
+      .toList(growable: false);
 }
 
 /// Dynamic cards render cue text segment by segment. Only use that path when
@@ -284,10 +281,12 @@ List<List<Uint8List>> assignClipImagesToCues({
   );
   if (cueCount == 0) return assigned;
   final List<({int normOffset, Uint8List bytes})> sorted =
-      List<({int normOffset, Uint8List bytes})>.of(images)
-        ..sort((({int normOffset, Uint8List bytes}) a,
-                ({int normOffset, Uint8List bytes}) b) =>
-            a.normOffset.compareTo(b.normOffset));
+      List<({int normOffset, Uint8List bytes})>.of(images)..sort(
+        (
+          ({int normOffset, Uint8List bytes}) a,
+          ({int normOffset, Uint8List bytes}) b,
+        ) => a.normOffset.compareTo(b.normOffset),
+      );
   for (final ({int normOffset, Uint8List bytes}) image in sorted) {
     int target = 0; // 兜底：图在所有 cue 之前 / 无可用锚点 → 挂最前一段，绝不丢。
     for (int i = 0; i < cueCount; i++) {
@@ -447,7 +446,7 @@ class AudiobookClipSynthResult {
   });
 
   const AudiobookClipSynthResult.success(String outputPath)
-      : this._(outputPath: outputPath, failure: null);
+    : this._(outputPath: outputPath, failure: null);
 
   const AudiobookClipSynthResult.failure(
     AudiobookClipSynthFailure failure, {
@@ -494,7 +493,8 @@ List<String> buildFfmpegImageAudioToVideoArgs({
   int fps = 12,
 }) {
   // pad 居中黑边：scale 先按比例缩进框内，再 pad 到精确 WxH（偶数维度安全）。
-  final String filter = 'scale=$width:$height:'
+  final String filter =
+      'scale=$width:$height:'
       'force_original_aspect_ratio=decrease,'
       'pad=$width:$height:(ow-iw)/2:(oh-ih)/2:color=black';
   return <String>[
@@ -512,6 +512,16 @@ List<String> buildFfmpegImageAudioToVideoArgs({
     '0:v:0',
     '-map',
     '1:a:0',
+    // BUG-2011：输出是 mp4，而 ffmpeg 默认等价 `-map_chapters 0` —— 一旦某个输入带
+    // 章节，mp4 muxer 就会建一条与最后一个章节等长的 chapter text track，把
+    // `mvhd.duration` 拉满（几秒的片段显示成整本的进度条）。
+    //
+    // 今天两路输入都不带章节（图片/帧序列 + 已由 extractAudioSegmentViaFfmpeg 裁好
+    // 的裸 ADTS `.aac`），所以现在是安全的 —— 但那是个**隐式契约**，靠调用方永远传
+    // 中间产物而不是原始 m4b/视频来维持。就地钉死，比指望远处的约定不被改动可靠；
+    // 代价为零（没有章节可丢时这两个参数是空操作）。
+    '-map_chapters',
+    '-1',
     ..._clipVideoCodecArgs,
     '-r',
     '$fps',
@@ -570,10 +580,7 @@ const List<String> _clipVideoCodecArgs = <String>[
 ///
 /// [pngBytes] 解码失败（损坏/空）返回 null，调用方据此回退（记日志 + toast）。
 /// [quality] 为 JPEG 质量（1-100），静态文本卡片用高质量避免文字边缘锯齿。
-Uint8List? encodeClipTextFrameAsJpg(
-  Uint8List pngBytes, {
-  int quality = 98,
-}) {
+Uint8List? encodeClipTextFrameAsJpg(Uint8List pngBytes, {int quality = 98}) {
   final img.Image? decoded = img.decodeImage(pngBytes);
   if (decoded == null) return null;
   return img.encodeJpg(decoded, quality: quality);
@@ -635,15 +642,16 @@ List<String> buildFfmpegImageSeqAudioToVideoArgs({
   int height = 1920,
   int fps = 12,
 }) {
-  final String filter = 'scale=$width:$height:'
+  final String filter =
+      'scale=$width:$height:'
       'force_original_aspect_ratio=decrease,'
       'pad=$width:$height:(ow-iw)/2:(oh-ih)/2:color=black';
   // 用正斜杠拼输入模式：ffmpeg 在所有平台都接受 `/`；Windows 反斜杠会被 image2
   // demuxer 的 `%d` 解析规则误伤。
   final String inputPattern =
       framesDir.endsWith('/') || framesDir.endsWith('\\')
-          ? '$framesDir$framePattern'
-          : '$framesDir/$framePattern';
+      ? '$framesDir$framePattern'
+      : '$framesDir/$framePattern';
   return <String>[
     '-hide_banner',
     '-y',
@@ -657,6 +665,16 @@ List<String> buildFfmpegImageSeqAudioToVideoArgs({
     '0:v:0',
     '-map',
     '1:a:0',
+    // BUG-2011：输出是 mp4，而 ffmpeg 默认等价 `-map_chapters 0` —— 一旦某个输入带
+    // 章节，mp4 muxer 就会建一条与最后一个章节等长的 chapter text track，把
+    // `mvhd.duration` 拉满（几秒的片段显示成整本的进度条）。
+    //
+    // 今天两路输入都不带章节（图片/帧序列 + 已由 extractAudioSegmentViaFfmpeg 裁好
+    // 的裸 ADTS `.aac`），所以现在是安全的 —— 但那是个**隐式契约**，靠调用方永远传
+    // 中间产物而不是原始 m4b/视频来维持。就地钉死，比指望远处的约定不被改动可靠；
+    // 代价为零（没有章节可丢时这两个参数是空操作）。
+    '-map_chapters',
+    '-1',
     // TODO-2357：全平台 H.264（帧间压缩把逐句高亮的大量重复帧压到近零）。
     ..._clipVideoCodecArgs,
     '-vf',
@@ -693,18 +711,18 @@ Future<AudiobookClipSynthResult> synthAudiobookClipVideoViaFfmpeg({
 
   try {
     output.parent.createSync(recursive: true);
-    final FfmpegRunResult result =
-        await (backend ?? resolveFfmpegBackend()).run(
-      buildFfmpegImageAudioToVideoArgs(
-        imagePath: imagePath,
-        audioPath: audioPath,
-        outputPath: outputPath,
-        width: width,
-        height: height,
-        fps: fps,
-      ),
-      timeout,
-    );
+    final FfmpegRunResult result = await (backend ?? resolveFfmpegBackend())
+        .run(
+          buildFfmpegImageAudioToVideoArgs(
+            imagePath: imagePath,
+            audioPath: audioPath,
+            outputPath: outputPath,
+            width: width,
+            height: height,
+            fps: fps,
+          ),
+          timeout,
+        );
     if (result.isSuccess && output.existsSync() && output.lengthSync() > 0) {
       return AudiobookClipSynthResult.success(outputPath);
     }
@@ -766,19 +784,19 @@ Future<AudiobookClipSynthResult> synthAudiobookClipFrameSeqVideoViaFfmpeg({
 
   try {
     output.parent.createSync(recursive: true);
-    final FfmpegRunResult result =
-        await (backend ?? resolveFfmpegBackend()).run(
-      buildFfmpegImageSeqAudioToVideoArgs(
-        framesDir: framesDir,
-        audioPath: audioPath,
-        outputPath: outputPath,
-        framePattern: framePattern,
-        width: width,
-        height: height,
-        fps: fps,
-      ),
-      timeout,
-    );
+    final FfmpegRunResult result = await (backend ?? resolveFfmpegBackend())
+        .run(
+          buildFfmpegImageSeqAudioToVideoArgs(
+            framesDir: framesDir,
+            audioPath: audioPath,
+            outputPath: outputPath,
+            framePattern: framePattern,
+            width: width,
+            height: height,
+            fps: fps,
+          ),
+          timeout,
+        );
     if (result.isSuccess && output.existsSync() && output.lengthSync() > 0) {
       return AudiobookClipSynthResult.success(outputPath);
     }
@@ -788,8 +806,10 @@ Future<AudiobookClipSynthResult> synthAudiobookClipFrameSeqVideoViaFfmpeg({
         AudiobookClipSynthFailure.outputMissing,
       );
     }
-    ErrorLogService.instance
-        .log('AudiobookClipSeqSynth', result.failureSummary);
+    ErrorLogService.instance.log(
+      'AudiobookClipSeqSynth',
+      result.failureSummary,
+    );
     final String reason = extractFfmpegFailureReason(result.output);
     return AudiobookClipSynthResult.failure(
       AudiobookClipSynthFailure.ffmpegFailed,

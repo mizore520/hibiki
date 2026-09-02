@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:fushi/pages.dart';
 import 'package:fushi/src/media/video/video_book_repository.dart';
 import 'package:fushi/src/pages/implementations/stat_activity.dart';
 import 'package:fushi/src/pages/implementations/stat_delete_confirm_dialog.dart';
+import 'package:fushi/src/pages/implementations/stat_period_detail_sheet.dart';
 import 'package:fushi/src/pages/implementations/stat_shared.dart';
 import 'package:fushi/src/pages/implementations/video_stat_aggregates.dart';
 import 'package:fushi/src/stats/stat_facts.dart';
+import 'package:fushi/src/stats/stat_window.dart';
 import 'package:fushi/utils.dart';
 import 'package:fushi_audio/fushi_audio.dart';
 import 'package:fushi_core/fushi_core.dart';
@@ -14,7 +18,10 @@ import 'package:fushi_core/fushi_core.dart';
 /// 完全隔离（视频专用表）。展示观看时长 + 完成视频数 + 制卡/收藏计数（不再展示
 /// 字幕字数：字数仍在 DB 里采集，只是统计页不再呈现）。
 class VideoStatisticsPage extends BasePage {
-  const VideoStatisticsPage({super.key});
+  const VideoStatisticsPage({super.key, this.embedded = false});
+
+  /// true = 作为统计中心的一个 tab 嵌入（不套 FushiPageScaffold，动作行内联）。
+  final bool embedded;
 
   @override
   BasePageState<VideoStatisticsPage> createState() =>
@@ -27,6 +34,10 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
 
   VideoStatsAggregate _agg = VideoStatsAggregate();
   bool _hasData = false;
+
+  /// 观看域日面事实行（loadStatFacts 的 dailyVideos 切片）：时段明细 sheet 的
+  /// 数据源（阶段 1——此前这份数据聚合完即丢，时段明细要 per-video × per-day）。
+  List<StatFact> _videoFacts = <StatFact>[];
 
   /// 合集归属映射（书架同源）：按视频 tile 显示所属合集名用。
   /// - [_collectionNamesById]：collectionId → 合集名。
@@ -54,7 +65,12 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _syncAndLoad());
   }
 
+  /// 统计中心把三页塞进 TabBarView（无 keepAlive，离屏即 unmount），
+  /// 「点开 tab → DB 还在查 → 切走」是一秒可复现的常规操作：首帧 postFrameCallback
+  /// 与多次 await 之后的两处 setState 都必须过 mounted 门，否则 debug 断言
+  /// `setState() called after dispose()`、release 打在已置空的 _element 上。
   Future<void> _syncAndLoad() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -73,6 +89,7 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
       // activityLimit 0：统计页不需要活动流行。
       final StatFacts facts = await loadStatFacts(db, activityLimit: 0);
       final List<StatFact> stats = facts.dailyVideos.toList();
+      _videoFacts = stats;
       final List<VideoBookRow> books = await VideoBookRepository(db).listAll();
       final List<DateTime> completed = books
           .map((VideoBookRow b) => b.completedAt)
@@ -93,13 +110,14 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
       };
       _primaryCollectionByEntry = await db.getPrimaryCollectionIdByEntry();
       final DateTime now = DateTime.now();
-      final List<FavoriteWordRow> favs =
-          await db.getFavoriteWordsBySource(kStatSourceVideo);
-      final List<MiningStatisticRow> mined =
-          await db.getMiningStatisticsBySource(kStatSourceVideo);
+      final List<FavoriteWordRow> favs = await db.getFavoriteWordsBySource(
+        kStatSourceVideo,
+      );
+      final List<MiningStatisticRow> mined = await db
+          .getMiningStatisticsBySource(kStatSourceVideo);
       // TODO-1204：查词/制卡 per-video 计数（新表）。
-      final List<LookupMiningCounterRow> counters =
-          await db.getLookupMiningCountersBySource(kStatSourceVideo);
+      final List<LookupMiningCounterRow> counters = await db
+          .getLookupMiningCountersBySource(kStatSourceVideo);
       // v76：观看 / 计数 / 收藏三个行宇宙进同一次身份分组，tile 自带全部数字
       // （吸收判据全局一致，绝不各分各的再拼——那是计数在同名 tile 间游走的根因）。
       // 库表级同名判定（≥2 个 uid 共享一个 title）喂给吸收否决：与迁移回填的
@@ -135,8 +153,10 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
       final List<FavoriteSentence> favSentences =
           await FavoriteSentenceRepository(db).getAll();
       final List<FavoriteSentence> videoFavSentences = favSentences
-          .where((FavoriteSentence s) =>
-              s.source == kFavoriteSentenceSourceVideo && s.dateKey != null)
+          .where(
+            (FavoriteSentence s) =>
+                s.source == kFavoriteSentenceSourceVideo && s.dateKey != null,
+          )
           .toList();
       _favoritedSentences = bucketActivityByDateKey(
         videoFavSentences.map((FavoriteSentence s) => (s.dateKey!, 1)),
@@ -144,7 +164,8 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
       );
       // counters 也算有数据（review4-6）：只在视频域查过词（无观看/收藏/制卡）
       // 时，查词分桶明明有数却显示空状态。
-      _hasData = stats.isNotEmpty ||
+      _hasData =
+          stats.isNotEmpty ||
           completed.isNotEmpty ||
           favs.isNotEmpty ||
           mined.isNotEmpty ||
@@ -155,7 +176,7 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
       ErrorLogService.instance.log('VideoStatisticsPage.load', e, stack);
       _error = e.toString();
     }
-    setState(() => _loading = false);
+    if (mounted) setState(() => _loading = false);
   }
 
   /// 今日按小时观看时长：从事实面的小时面取 video 行**累加**。v92 起同一小时
@@ -174,32 +195,35 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> actions = <Widget>[
+      FushiIconButton(
+        icon: Icons.refresh,
+        tooltip: t.stat_refresh,
+        enabled: !_loading,
+        onTap: _syncAndLoad,
+      ),
+      FushiIconButton(
+        icon: Icons.delete_sweep_outlined,
+        tooltip: t.stat_clear_all,
+        enabled: !_loading,
+        onTap: _confirmAndClearAll,
+      ),
+    ];
+    final Widget body = buildStatPageBody(
+      loading: _loading,
+      error: _error,
+      isEmpty: !_hasData,
+      loadingBuilder: () =>
+          buildLoading(size: 25, color: theme.colorScheme.primary),
+      errorBuilder: (String error) => buildError(error: error),
+      emptyMessage: t.video_stat_no_data,
+      contentBuilder: _buildContent,
+    );
+    if (widget.embedded) return buildEmbeddedStatTab(context, actions, body);
     return FushiPageScaffold(
       title: t.video_statistics,
-      actions: <Widget>[
-        FushiIconButton(
-          icon: Icons.refresh,
-          tooltip: t.stat_refresh,
-          enabled: !_loading,
-          onTap: _syncAndLoad,
-        ),
-        FushiIconButton(
-          icon: Icons.delete_sweep_outlined,
-          tooltip: t.stat_clear_all,
-          enabled: !_loading,
-          onTap: _confirmAndClearAll,
-        ),
-      ],
-      body: buildStatPageBody(
-        loading: _loading,
-        error: _error,
-        isEmpty: !_hasData,
-        loadingBuilder: () =>
-            buildLoading(size: 25, color: theme.colorScheme.primary),
-        errorBuilder: (String error) => buildError(error: error),
-        emptyMessage: t.video_stat_no_data,
-        contentBuilder: _buildContent,
-      ),
+      actions: actions,
+      body: body,
     );
   }
 
@@ -210,7 +234,8 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
       slivers: [
         SliverToBoxAdapter(child: _buildSummaryCards()),
         SliverToBoxAdapter(
-            child: buildStatHourlyChartSection(context, _hourlyMs)),
+          child: buildStatHourlyChartSection(context, _hourlyMs),
+        ),
         SliverToBoxAdapter(
           child: buildStatDailyDurationChartSection(context, _agg.daily),
         ),
@@ -222,8 +247,10 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
               tokens.spacing.card,
               tokens.spacing.gap,
             ),
-            child: Text(t.video_stat_by_video,
-                style: Theme.of(context).textTheme.titleMedium),
+            child: Text(
+              t.video_stat_by_video,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
           ),
         ),
         SliverList(
@@ -233,43 +260,57 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
           ),
         ),
         SliverPadding(
-            padding: EdgeInsets.only(bottom: tokens.spacing.card * 2)),
+          padding: EdgeInsets.only(bottom: tokens.spacing.card * 2),
+        ),
       ],
     );
   }
 
   Widget _buildSummaryCards() {
-    return buildStatPeriodSummaryGrid(
-      context,
-      <StatPeriodSummary>[
-        _periodSummary(
-            t.stat_today,
-            _agg.todayMs,
-            _agg.todayCompleted,
-            _lookup.today,
-            _mined.today,
-            _favorited.today,
-            _favoritedSentences.today),
-        _periodSummary(
-            t.stat_this_week,
-            _agg.weekMs,
-            _agg.weekCompleted,
-            _lookup.week,
-            _mined.week,
-            _favorited.week,
-            _favoritedSentences.week),
-        _periodSummary(
-            t.stat_this_month,
-            _agg.monthMs,
-            _agg.monthCompleted,
-            _lookup.month,
-            _mined.month,
-            _favorited.month,
-            _favoritedSentences.month),
-        _periodSummary(t.stat_all_time, _agg.allMs, _agg.allCompleted,
-            _lookup.all, _mined.all, _favorited.all, _favoritedSentences.all),
-      ],
-    );
+    // 时段谓词在点击时现算（跨日后点卡按点击时刻的窗口取数）。
+    final StatWindow w = StatWindow(DateTime.now());
+    return buildStatPeriodSummaryGrid(context, <StatPeriodSummary>[
+      _periodSummary(
+        t.stat_today,
+        _agg.todayMs,
+        _agg.todayCompleted,
+        _lookup.today,
+        _mined.today,
+        _favorited.today,
+        _favoritedSentences.today,
+        contains: w.isToday,
+      ),
+      _periodSummary(
+        t.stat_this_week,
+        _agg.weekMs,
+        _agg.weekCompleted,
+        _lookup.week,
+        _mined.week,
+        _favorited.week,
+        _favoritedSentences.week,
+        contains: w.inWeek,
+      ),
+      _periodSummary(
+        t.stat_this_month,
+        _agg.monthMs,
+        _agg.monthCompleted,
+        _lookup.month,
+        _mined.month,
+        _favorited.month,
+        _favoritedSentences.month,
+        contains: w.inMonth,
+      ),
+      _periodSummary(
+        t.stat_all_time,
+        _agg.allMs,
+        _agg.allCompleted,
+        _lookup.all,
+        _mined.all,
+        _favorited.all,
+        _favoritedSentences.all,
+        contains: (String _) => true,
+      ),
+    ]);
   }
 
   StatPeriodSummary _periodSummary(
@@ -279,16 +320,15 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
     int lookup,
     int mined,
     int favorited,
-    int favoritedSentences,
-  ) {
+    int favoritedSentences, {
+    required bool Function(String dateKey) contains,
+  }) {
     return StatPeriodSummary(
       label: label,
       primaryValue: formatStatTime(ms),
+      onTap: () => _showPeriodDetail(label, contains),
       lines: <StatSummaryLine>[
-        StatSummaryLine(
-          label: t.video_stat_completed,
-          value: '$completed',
-        ),
+        StatSummaryLine(label: t.video_stat_completed, value: '$completed'),
         StatSummaryLine(label: t.stat_lookup, value: '$lookup'),
         StatSummaryLine(label: t.stat_mined, value: '$mined'),
         StatSummaryLine(label: t.stat_favorited, value: '$favorited'),
@@ -297,6 +337,46 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
           value: '$favoritedSentences',
         ),
       ],
+    );
+  }
+
+  /// 时段卡 → 时段明细 sheet（阶段 1 统一组件；本页是视频统计，明细只吃观看域
+  /// 切片 [_videoFacts]）。条目点击直达播放（合集成员带 playlistCollectionId，
+  /// 与首页续播同口径）。
+  void _showPeriodDetail(String label, bool Function(String dateKey) contains) {
+    // 身份在库集合：明细行可能是已删视频的历史统计，点它不该假装能播。
+    final Set<String> libraryUids = <String>{
+      for (final Set<String> uids in _libraryUidsByTitle.values) ...uids,
+    };
+    unawaited(
+      showStatPeriodDetailSheet(
+        context,
+        periodLabel: label,
+        contains: contains,
+        facts: _videoFacts,
+        resolvers: StatPeriodDetailResolvers(
+          titleOf: (StatFact f) => f.title,
+          collectionOf: (StatFact f) => f.mediaKey.isEmpty
+              ? null
+              : statCollectionName(
+                  MediaKind.video.compositeKey(f.mediaKey),
+                  _primaryCollectionByEntry,
+                  _collectionNamesById,
+                ),
+          onEntryTap: (String mediaKind, String mediaKey) async {
+            if (mediaKey.isEmpty || !libraryUids.contains(mediaKey)) return;
+            await openLocalVideoBook(
+              context: context,
+              repo: VideoBookRepository(appModelNoUpdate.database),
+              bookUid: mediaKey,
+              playlistCollectionId:
+                  _primaryCollectionByEntry[MediaKind.video.compositeKey(
+                    mediaKey,
+                  )],
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -352,8 +432,9 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
     final int favorites = video.favorites;
     final String? collectionName = _collectionNameForVideo(video);
     // 按观看时长排行（byVideo 已按 ms 降序），进度条与排行同维度。
-    final maxMs =
-        _agg.byVideo.isEmpty ? 1 : _agg.byVideo.first.ms.clamp(1, 1 << 50);
+    final maxMs = _agg.byVideo.isEmpty
+        ? 1
+        : _agg.byVideo.first.ms.clamp(1, 1 << 50);
     final fraction = video.ms / maxMs;
     final colorScheme = Theme.of(context).colorScheme;
     final tokens = FushiDesignTokens.of(context);
@@ -400,8 +481,8 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
                   Text(
                     formatStatTime(video.ms),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -409,8 +490,8 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
               Text(
                 '${t.stat_lookup}: ${video.lookups} · ${t.stat_mined}: ${video.mines} · ${t.stat_favorited}: $favorites',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
               SizedBox(height: tokens.spacing.gap / 2),
             ],

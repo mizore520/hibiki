@@ -8041,7 +8041,7 @@ class _StringsTh extends _StringsEn {
       'สแกนโฟลเดอร์นี้ต่อเนื่องเพื่อหามังงะใหม่';
   @override
   String get download_no_managed_video_source =>
-      'ยังไม่มีแหล่งวิดีโอที่จัดการ การดาวน์โหลดต้องมีโฟลเดอร์วิดีโอในเครื่องเพื่อจัดเก็บ';
+      'ยังไม่มีแหล่งวิดีโอที่จัดการ เพิ่มโฟลเดอร์ในเครื่องสำหรับเก็บไฟล์ที่ดาวน์โหลด เพื่อให้วิดีโอที่เสร็จแล้วเข้าคลัง';
   @override
   String get download_add_video_source => 'เพิ่มแหล่งวิดีโอ';
   @override
@@ -9244,11 +9244,10 @@ class _StringsTh extends _StringsEn {
   @override
   String get section_network => 'เครือข่าย';
   @override
-  String get network_proxy_p2p_label =>
-      'ส่งการรับส่งข้อมูล P2P (torrent) ผ่านพร็อกซี';
+  String get network_proxy_p2p_label => 'P2P (torrent) proxy';
   @override
   String get network_proxy_p2p_warning =>
-      'ปิดตามค่าเริ่มต้น P2P จะเชื่อมต่อโดยตรง การส่งผ่านพร็อกซีอาจทำให้ความเร็วลดลง และผู้ให้บริการพร็อกซีจำนวนมากห้ามการรับส่งข้อมูล BitTorrent บัญชีพร็อกซีของคุณอาจถูกจำกัดความเร็ว เตือน หรือยกเลิก มีผลเฉพาะเอนจินในตัวเท่านั้น qBittorrent ภายนอกใช้การตั้งค่าพร็อกซีของตัวเอง';
+      'Direct by default. Via proxy: all P2P traffic goes through the global proxy — speed may drop, and many proxy providers forbid BitTorrent traffic (throttling, warnings, or account termination). Mixed: tracker requests go through the proxy while DHT and peer connections stay direct — widest peer discovery, but your real IP is visible to trackers, DHT and peers (connectivity only, not privacy). Built-in engine only; external qBittorrent uses its own proxy settings.';
   @override
   String get video_ajatt_settings_hint =>
       'คลังซับไตเติลภาษาญี่ปุ่นฟรี (มิเรอร์ kitsunekko) ไม่ต้องใช้บัญชี ไฟล์ซับไตเติลดาวน์โหลดจาก GitHub';
@@ -9598,48 +9597,103 @@ class _StringsTh extends _StringsEn {
   @override
   String get delete_choices_remember => 'จดจำตัวเลือกเหล่านี้';
   @override
-  String get network_proxy_mode_label => 'Proxy mode';
+  String get network_proxy_mode_label => 'โหมดพร็อกซี';
   @override
-  String get network_proxy_mode_auto => 'Automatic';
+  String get network_proxy_mode_auto => 'อัตโนมัติ';
   @override
   String get network_proxy_mode_auto_hint =>
-      'Use environment variables, then the enabled system proxy';
+      'ใช้ตัวแปรสภาพแวดล้อม แล้วจึงใช้พร็อกซีของระบบที่เปิดอยู่';
   @override
-  String get network_proxy_mode_direct => 'Direct';
+  String get network_proxy_mode_direct => 'เชื่อมต่อโดยตรง';
   @override
-  String get network_proxy_mode_direct_hint => 'Disable proxy use for the app';
+  String get network_proxy_mode_direct_hint => 'ปิดการใช้พร็อกซีสำหรับแอป';
   @override
-  String get network_proxy_mode_manual => 'Manual';
+  String get network_proxy_mode_manual => 'กำหนดเอง';
   @override
   String get network_proxy_mode_manual_hint =>
-      'Use the server and optional credentials below';
+      'ใช้เซิร์ฟเวอร์และข้อมูลรับรอง (ถ้ามี) ด้านล่าง';
   @override
-  String get network_proxy_manual_hint =>
-      'HTTP proxy server used by all public internet requests';
+  String get network_proxy_address_hint =>
+      'เซิร์ฟเวอร์พร็อกซี HTTP ที่ใช้กับคำขออินเทอร์เน็ตสาธารณะทั้งหมด';
   @override
-  String get network_proxy_username => 'Proxy username (optional)';
+  String get network_proxy_username => 'ชื่อผู้ใช้พร็อกซี (ไม่บังคับ)';
   @override
-  String get network_proxy_password => 'Proxy password (optional)';
-  @override
-  String get storage_category_backups => 'Local backups';
-  @override
-  String storage_entry_backups_label({required Object n}) =>
-      '${n} backup archive(s)';
+  String get network_proxy_password => 'รหัสผ่านพร็อกซี (ไม่บังคับ)';
   @override
   String get storage_entry_delete_backups_confirm_body =>
-      'Delete these temporary local backup archives? Make sure you have saved or shared any copy you still need.';
+      'ลบไฟล์สำรองข้อมูลชั่วคราวในเครื่องเหล่านี้หรือไม่ โปรดตรวจสอบว่าคุณได้บันทึกหรือแชร์สำเนาที่ยังต้องใช้แล้ว';
   @override
-  String get update_download_source_preference => 'Preferred download source';
+  String get update_download_source_preference => 'แหล่งดาวน์โหลดที่ต้องการ';
   @override
   String get update_download_source_preference_hint =>
-      'The selected source is tried first; unavailable sources still fall back automatically.';
+      'ระบบจะลองแหล่งที่เลือกก่อน หากแหล่งนั้นใช้ไม่ได้จะสำรองไปแหล่งอื่นโดยอัตโนมัติ';
   @override
-  String get update_download_source_auto => 'Automatic (recommended)';
+  String get update_download_source_auto => 'อัตโนมัติ (แนะนำ)';
   @override
-  String get update_download_source_cloudflare => 'Cloudflare mirror';
+  String get update_download_source_cloudflare => 'มิเรอร์ Cloudflare';
   @override
-  String get update_download_source_github => 'GitHub direct';
+  String get update_download_source_github => 'GitHub โดยตรง';
   @override
   String update_download_source_proxy({required Object host}) =>
-      'Proxy: ${host}';
+      'พร็อกซี: ${host}';
+  @override
+  String get storage_category_backups => 'ไฟล์สำรองข้อมูลที่ตกค้าง';
+  @override
+  String storage_entry_backups_label({required Object n}) =>
+      'ไฟล์เก็บถาวร ${n} รายการที่ตกค้างจากการส่งออกครั้งล่าสุด';
+  @override
+  String update_download_source_unavailable({required Object source}) =>
+      '${source} ใช้กับไฟล์นี้ไม่ได้ จึงกลับไปใช้ลำดับอัตโนมัติ';
+  @override
+  String get network_proxy_credentials_scope_hint =>
+      'ข้อมูลรับรองใช้ได้กับคำขอ HTTP เท่านั้น เอนจิน torrent ในตัวไม่สามารถใช้ได้';
+  @override
+  String get anki_error_paired_device_unreachable =>
+      'Couldn\'t create the card because no paired device could be reached. Make sure Fushi is running on the paired device, or turn off Mine to paired device in Anki settings to create cards locally.';
+  @override
+  String get video_source_scrape_enabled_toggle_hint =>
+      'When off, manual, post-scan, post-download and background scraping all skip this source.';
+  @override
+  String get video_source_scrape_work_missing =>
+      'This work is no longer in the current source plan (its files may have been renamed, moved or deleted). Rescrape the source to refresh the pending list.';
+  @override
+  String get video_source_scrape_pending_works =>
+      'Works awaiting identification';
+  @override
+  String get video_source_scrape_pending_works_hint =>
+      'These entries have no confirmed identity yet. Search and pick the right work to scrape them.';
+  @override
+  String get video_source_scrape_enabled_toggle =>
+      'Enable scraping for this source';
+  @override
+  String get video_library_scrape_auto_backfill =>
+      'Auto-fill missing series info';
+  @override
+  String get video_library_scrape_auto_backfill_hint =>
+      'Entering the video library scrapes entries that still have no confirmed identity. Turn off to stop all background metadata downloads.';
+  @override
+  String get stat_detail_ungrouped => 'Ungrouped';
+  @override
+  String get stat_detail_empty => 'No activity in this period';
+  @override
+  String get stat_center_title => 'Statistics center';
+  @override
+  String get stat_center_tab_overview => 'Overview';
+  @override
+  String get shortcut_action_video_dismiss_dict => 'Dismiss dictionary';
+  @override
+  String get video_discovery_anidb_identity_confirm_title =>
+      'Confirm the work identity';
+  @override
+  String get video_discovery_anidb_identity_confirm_hint =>
+      'AniDB has more than one possible match. Pick the right work and the imported download will scrape with that identity directly; skip and you can assign it later from the pending list.';
+  @override
+  String get video_discovery_anidb_identity_not_found =>
+      'Could not identify this work on AniDB. It will download normally and wait in the pending list for manual identification.';
+  @override
+  String get network_proxy_p2p_mode_direct => 'Direct';
+  @override
+  String get network_proxy_p2p_mode_proxy => 'Via proxy';
+  @override
+  String get network_proxy_p2p_mode_mixed => 'Mixed';
 }

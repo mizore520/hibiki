@@ -917,6 +917,7 @@ class GalAttachedCallResult {
 class GalLookupCallResult {
   const GalLookupCallResult({
     this.error,
+    this.explicitOk = false,
     this.width = 0,
     this.height = 0,
     this.clamped = false,
@@ -932,6 +933,12 @@ class GalLookupCallResult {
 
   /// runner 给的错误 token；null = 成功。
   final String? error;
+
+  /// True only when the runner explicitly returned `{ok: true}`. [ok] stays
+  /// backward-compatible for payload-bearing replies, while lifecycle gates
+  /// use this bit (or an explicit sequence) so an empty/malformed reply cannot
+  /// silently advance a provider handoff.
+  final bool explicitOk;
 
   /// 实际写进共享内存的帧尺寸（仅 present 有值）。
   final int width;
@@ -959,6 +966,7 @@ class GalLookupCallResult {
     final Object? error = map['error'];
     return GalLookupCallResult(
       error: error is String && error.isNotEmpty ? error : null,
+      explicitOk: map['ok'] == true,
       width: _finiteWireInt(map['width']) ?? 0,
       height: _finiteWireInt(map['height']) ?? 0,
       clamped: map['clamped'] == true,
@@ -969,7 +977,7 @@ class GalLookupCallResult {
   }
 }
 
-/// v19 host→hook geometry ownership policy. This is intentionally separate
+/// v20+ host→hook geometry ownership policy. This is intentionally separate
 /// from the lookup runtime switch because attached lookup still depends on
 /// the injected generic input shield.
 enum GalLookupGeometryAdmissionMode {
@@ -1023,6 +1031,9 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
   static GalHookTextEventHandler? _onToggleTransparency;
   static GalHookTextEventHandler? _onOpenWorkbench;
   static GalHookTextEventHandler? _onClose;
+  // native 的 HWND 生命周期终点（WM_NCDESTROY）。消费端的可见性镜像靠它被动
+  // 复位，而不是每行台词打一次 isShowing() 往返去轮询同一件事。
+  static GalHookTextEventHandler? _onOverlayDestroyed;
   static GalHookTextEventHandler? _onReplayVoice;
   static GalHookTextEventHandler? _onRecaptureVoice;
   static GalHookTextLockHandler? _onLockChanged;
@@ -1044,6 +1055,7 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
     GalHookTextEventHandler? onToggleTransparency,
     GalHookTextEventHandler? onOpenWorkbench,
     GalHookTextEventHandler? onClose,
+    GalHookTextEventHandler? onOverlayDestroyed,
     GalHookTextEventHandler? onReplayVoice,
     GalHookTextEventHandler? onRecaptureVoice,
     GalHookTextLockHandler? onLockChanged,
@@ -1063,6 +1075,7 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
     _onToggleTransparency = onToggleTransparency;
     _onOpenWorkbench = onOpenWorkbench;
     _onClose = onClose;
+    _onOverlayDestroyed = onOverlayDestroyed;
     _onReplayVoice = onReplayVoice;
     _onRecaptureVoice = onRecaptureVoice;
     _onLockChanged = onLockChanged;
@@ -1085,6 +1098,7 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
     _onToggleTransparency = null;
     _onOpenWorkbench = null;
     _onClose = null;
+    _onOverlayDestroyed = null;
     _onReplayVoice = null;
     _onRecaptureVoice = null;
     _onLockChanged = null;
@@ -1141,6 +1155,12 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
         break;
       case 'close':
         await _onClose?.call();
+        break;
+      // 用户按关闭 ('close') 与窗口句柄消失 ('overlayDestroyed') 是两件事：
+      // 前者表达意图（本会话别再自动弹），后者只是陈述事实（窗口没了，镜像该
+      // 复位）。合成一条就会让「窗口被外部销毁」被当成用户不想要它。
+      case 'overlayDestroyed':
+        await _onOverlayDestroyed?.call();
         break;
       case 'lockChanged':
         await _onLockChanged?.call(args['locked'] == true);
@@ -1594,10 +1614,18 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
 
   /// Updates the injected GeometryProviderRegistry admission without stopping
   /// the lookup runtime or generic shield. [attachedReady] is the host-owned
-  /// calibrated fallback offer; it never authorizes a shared-memory hit writer.
+  /// calibrated fallback offer. [nativeInputAllowed] is a separate, risk-gated
+  /// permission for the active native owner to consume a game click; it does
+  /// not control provider discovery.
+  ///
+  /// 这是发布 admission 字的**唯一**通道。曾经并存的
+  /// `galLookupSetNativeInputAllowed` 已删除：同一个 flags 字有两个发布入口就有
+  /// 两份台账，谁后写谁赢。允许位现在由 GalIngameLookupController 单独拥有，
+  /// 随 mode/attachedReady 一起在这里发布。
   static Future<GalLookupCallResult> galLookupSetGeometryAdmission({
     required GalLookupGeometryAdmissionMode mode,
     required bool attachedReady,
+    required bool nativeInputAllowed,
   }) async {
     if (!_instance.isSupported) return GalLookupCallResult.unsupported;
     return GalLookupCallResult.fromReply(
@@ -1606,6 +1634,7 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
         <String, Object?>{
           'mode': mode.wireValue,
           'attachedReady': attachedReady,
+          'nativeInputAllowed': nativeInputAllowed,
         },
       ),
     );

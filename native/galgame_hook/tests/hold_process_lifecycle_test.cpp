@@ -1,3 +1,7 @@
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+
 #include <cassert>
 
 #include "hold_process_lifecycle.h"

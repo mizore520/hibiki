@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import '../helpers/source_guard.dart';
 import '../pages/reader_fushi_page_source_corpus.dart';
 
 /// TODO-627 / BUG-349 源码守卫：PC 阅读遇插画滚轮翻不了下一页的三处根因修复
@@ -20,8 +21,9 @@ void main() {
   late String pageSource;
 
   setUpAll(() {
-    scriptsSource = File('lib/src/reader/reader_pagination_scripts.dart')
-        .readAsStringSync();
+    scriptsSource = File(
+      'lib/src/reader/reader_pagination_scripts.dart',
+    ).readAsStringSync();
     // TODO-589 batch8: 连续模式 wheel onBoundarySwipe 在 setup 脚本里，已搬到
     // reader_fushi/webview.part.dart，改读「主壳 + 全部 part」合并语料。
     pageSource = readReaderPageSource();
@@ -39,7 +41,8 @@ void main() {
       expect(
         matches.length,
         2,
-        reason: '分页与连续两处图片 load 回调都必须在 buildNodeOffsets 后失效 '
+        reason:
+            '分页与连续两处图片 load 回调都必须在 buildNodeOffsets 后失效 '
             'paginationMetrics（图片晚 load 致 metrics.maxScroll 低估的根因修复）',
       );
     });
@@ -58,29 +61,49 @@ void main() {
   group('B: continuous wheel crosses chapter at content-axis boundary', () {
     test('continuous wheel branch calls onBoundarySwipe', () {
       // 连续模式 wheel 监听器到底必须回传 onBoundarySwipe（复用边界跨章通道）。
+      //
+      // BUG-2015：这条回传现在带第三个实参（pointerKind）且被 dart format 折了行，
+      // 原来的裸 `contains("callHandler('onBoundarySwipe', wheelDir)")` 只是被**排版**
+      // 打掉，语义并没有变。判据改成「掩掉 Dart/JS 注释后再折叠空白」的形状匹配：
+      // 既跨得过换行与新增实参，又不会被注释里的同名文字骗绿（compactCode 走的是
+      // maskComments，这里额外先剥三引号内的 JS 注释）。
+      final String compactWheelJs = maskCommentsAndScriptLines(
+        pageSource,
+      ).replaceAll(RegExp(r'\s+'), '');
       expect(
-        pageSource.contains("callHandler('onBoundarySwipe', wheelDir)"),
+        compactWheelJs.contains("callHandler('onBoundarySwipe',wheelDir"),
         isTrue,
         reason: '连续模式滚轮到内容轴尽头必须跨章，否则插画/章末滚轮无反应',
       );
     });
 
-    test('boundary uses real try-scroll (scrollBy + measured moved) (TODO-656)',
-        () {
-      // TODO-656：跨章「到边界」判据改为「真试滚」——真的 scrollBy 一步、读实际位移 moved；
-      // 滚动了不跨章，真滚不动才跨章。权威、同步，不靠 scrollWidth/相邻拍推算。
-      expect(pageSource.contains('window.scrollBy({left: 0, top: wheelDelta'),
+    test(
+      'boundary uses real try-scroll (scrollBy + measured moved) (TODO-656)',
+      () {
+        // TODO-656：跨章「到边界」判据改为「真试滚」——真的 scrollBy 一步、读实际位移 moved；
+        // 滚动了不跨章，真滚不动才跨章。权威、同步，不靠 scrollWidth/相邻拍推算。
+        expect(
+          pageSource.contains('window.scrollBy({left: 0, top: wheelDelta'),
           isTrue,
-          reason: '横排滚轮真试滚：window.scrollBy 纵向后读实际位移');
-      expect(pageSource.contains('window.scrollBy({left: wheelDelta * sign'),
+          reason: '横排滚轮真试滚：window.scrollBy 纵向后读实际位移',
+        );
+        expect(
+          pageSource.contains('window.scrollBy({left: wheelDelta * sign'),
           isTrue,
-          reason: '竖排滚轮真试滚：deltaY 投影到横向 window.scrollBy 后读实际位移');
-      expect(pageSource.contains('var moved = Math.abs(after - before) > 1'),
+          reason: '竖排滚轮真试滚：deltaY 投影到横向 window.scrollBy 后读实际位移',
+        );
+        expect(
+          pageSource.contains('var moved = Math.abs(after - before) > 1'),
           isTrue,
-          reason: '靠实际位移 moved 判到没到边界');
-      expect(pageSource.contains('boundaryDir = (wheelDir && stuck)'), isFalse,
-          reason: '不得再用 stuck 推算判边界（横排误翻 / 竖排滚不动根因）');
-    });
+          reason: '靠实际位移 moved 判到没到边界',
+        );
+        expect(
+          pageSource.contains('boundaryDir = (wheelDir && stuck)'),
+          isFalse,
+          reason: '不得再用 stuck 推算判边界（横排误翻 / 竖排滚不动根因）',
+        );
+      },
+    );
 
     test('Dart shadow continuousWheelBoundaryDirection exists', () {
       expect(

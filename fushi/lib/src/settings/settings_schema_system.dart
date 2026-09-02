@@ -166,19 +166,19 @@ SettingsDestination buildSystemDestination() {
             icon: Icons.dns_outlined,
             options: <SettingsSegmentOption<String>>[
               SettingsSegmentOption<String>(
-                value: 'auto',
+                value: kProxyModeAuto,
                 label: t.network_proxy_mode_auto,
                 icon: Icons.sync_outlined,
                 tooltip: t.network_proxy_mode_auto_hint,
               ),
               SettingsSegmentOption<String>(
-                value: 'direct',
+                value: kProxyModeDirect,
                 label: t.network_proxy_mode_direct,
                 icon: Icons.link_off_outlined,
                 tooltip: t.network_proxy_mode_direct_hint,
               ),
               SettingsSegmentOption<String>(
-                value: 'manual',
+                value: kProxyModeManual,
                 label: t.network_proxy_mode_manual,
                 icon: Icons.tune_outlined,
                 tooltip: t.network_proxy_mode_manual_hint,
@@ -194,12 +194,12 @@ SettingsDestination buildSystemDestination() {
           SettingsTextItem(
             id: 'system.network_proxy',
             title: t.network_proxy_label,
-            subtitle: t.network_proxy_manual_hint,
+            subtitle: t.network_proxy_address_hint,
             icon: Icons.dns_outlined,
             placeholder: t.network_proxy_hint,
             keyboardType: TextInputType.url,
             visible: (SettingsContext c) =>
-                c.appModel.networkProxyMode == 'manual',
+                c.appModel.networkProxyMode == kProxyModeManual,
             value: (SettingsContext settingsContext) =>
                 settingsContext.appModel.updateCustomProxy,
             onChanged: (SettingsContext settingsContext, String value) async {
@@ -223,9 +223,15 @@ SettingsDestination buildSystemDestination() {
           SettingsTextItem(
             id: 'system.network_proxy_username',
             title: t.network_proxy_username,
+            // 认证的作用面必须说清：凭据是 dart:io `HttpClient.authenticateProxy`
+            // 的 407 应答，只覆盖 app 自己发的 HTTP 出站。内置 torrent 引擎的 C ABI
+            // （`ht_apply_proxy`）只接 type/host/port，libtorrent 的
+            // `settings_pack::proxy_username/password` 根本没被导出，凭据到不了
+            // P2P 那一侧；不写出来用户会以为「开了 P2P 走代理」就连上了。
+            subtitle: t.network_proxy_credentials_scope_hint,
             icon: Icons.person_outline,
             visible: (SettingsContext c) =>
-                c.appModel.networkProxyMode == 'manual',
+                c.appModel.networkProxyMode == kProxyModeManual,
             value: (SettingsContext c) => c.appModel.networkProxyUsername,
             onChanged: (SettingsContext c, String value) async {
               await c.appModel.setNetworkProxyUsername(value.trim());
@@ -238,26 +244,46 @@ SettingsDestination buildSystemDestination() {
             icon: Icons.password_outlined,
             secret: true,
             visible: (SettingsContext c) =>
-                c.appModel.networkProxyMode == 'manual',
+                c.appModel.networkProxyMode == kProxyModeManual,
             value: (SettingsContext c) => c.appModel.networkProxyPassword,
             onChanged: (SettingsContext c, String value) async {
               await c.appModel.setNetworkProxyPassword(value);
               resetSyncHttpClient();
             },
           ),
-          // P2P（torrent）传输单独列出：**默认直连**，用户明确开了才跟上面的
-          // 全局出口。副标题就是警告——走代理可能降速，且不少代理服务商禁止
-          // BT 流量（限速/警告/封号）。只对内置引擎生效；外接 qBittorrent 的
-          // 代理在它自己的 WebUI 里配，这里不越权改用户的 qB 设置。
-          SettingsSwitchItem(
+          // P2P（torrent）传输单独列出：**默认直连**，用户明确改档才跟上面的
+          // 全局出口。三档：direct 直连；proxy 全代理（可能降速，且不少代理
+          // 服务商禁止 BT 流量：限速/警告/封号）；mixed 混合——tracker 经代理、
+          // DHT 与 peer 直连，节点获取范围最大，但真实 IP 暴露给 DHT/peer/
+          // tracker（连通性工具，非隐私工具）。副标题就是警告。只对内置引擎
+          // 生效；外接 qBittorrent 的代理在它自己的 WebUI 里配，这里不越权改
+          // 用户的 qB 设置。
+          SettingsSegmentedItem<String>(
             id: 'system.network_proxy_p2p',
             title: t.network_proxy_p2p_label,
             subtitle: t.network_proxy_p2p_warning,
             icon: Icons.swap_vert_outlined,
-            value: (SettingsContext settingsContext) =>
-                settingsContext.appModel.p2pProxyEnabled,
-            onChanged: (SettingsContext settingsContext, bool value) async {
-              await settingsContext.appModel.setP2pProxyEnabled(value);
+            options: <SettingsSegmentOption<String>>[
+              SettingsSegmentOption<String>(
+                value: 'direct',
+                label: t.network_proxy_p2p_mode_direct,
+                icon: Icons.link_off_outlined,
+              ),
+              SettingsSegmentOption<String>(
+                value: 'proxy',
+                label: t.network_proxy_p2p_mode_proxy,
+                icon: Icons.dns_outlined,
+              ),
+              SettingsSegmentOption<String>(
+                value: 'mixed',
+                label: t.network_proxy_p2p_mode_mixed,
+                icon: Icons.alt_route_outlined,
+              ),
+            ],
+            selected: (SettingsContext settingsContext) =>
+                settingsContext.appModel.p2pProxyMode,
+            onChanged: (SettingsContext settingsContext, String value) async {
+              await settingsContext.appModel.setP2pProxyMode(value);
               settingsContext.refresh();
             },
           ),
@@ -304,29 +330,20 @@ SettingsDestination buildSystemDestination() {
             subtitle: t.update_download_source_preference_hint,
             icon: Icons.cloud_download_outlined,
             dropdown: true,
+            // 标签走 updateDownloadSourceLabel 这一份真相源：下载遮罩的「本次没用上
+            // 所选来源」通告要说出同一个名字，两处各写一套迟早对不上。
             options: <SettingsSegmentOption<String>>[
-              SettingsSegmentOption<String>(
-                value: updateDownloadSourceAutomatic,
-                label: t.update_download_source_auto,
-                tooltip: t.update_download_source_auto,
-              ),
-              SettingsSegmentOption<String>(
-                value: updateDownloadSourceCloudflare,
-                label: t.update_download_source_cloudflare,
-                tooltip: t.update_download_source_cloudflare,
-              ),
-              SettingsSegmentOption<String>(
-                value: updateDownloadSourceGitHub,
-                label: t.update_download_source_github,
-                tooltip: t.update_download_source_github,
-              ),
-              for (final String prefix in updateCheckProxyPrefixes)
+              for (final String value in <String>[
+                updateDownloadSourceAutomatic,
+                updateDownloadSourceCloudflare,
+                updateDownloadSourceGitHub,
+                for (final String prefix in updateCheckProxyPrefixes)
+                  updateDownloadSourceForProxy(prefix),
+              ])
                 SettingsSegmentOption<String>(
-                  value: updateDownloadSourceForProxy(prefix),
-                  label: t.update_download_source_proxy(
-                    host: Uri.parse(prefix).host,
-                  ),
-                  tooltip: Uri.parse(prefix).host,
+                  value: value,
+                  label: updateDownloadSourceLabel(value),
+                  tooltip: updateDownloadSourceLabel(value),
                 ),
             ],
             selected: (SettingsContext c) => c.appModel.updateDownloadSource,

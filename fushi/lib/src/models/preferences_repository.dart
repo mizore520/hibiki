@@ -24,7 +24,15 @@ import 'package:fushi/src/mining/gal_mining_screenshot_size.dart';
 // 迁移判据要用「这个存量代理地址归一得出来吗」，与 applyAppProxy 同一份实现，
 // 不在这里重写一遍（重写就会漂移，而漂移的后果是存量用户升级即断网）。
 import 'package:fushi/src/utils/net/app_proxy.dart'
-    show normalizeUserProxyHostPort;
+    show
+        appUserProxyModeReader,
+        appUserProxyPasswordReader,
+        appUserProxyReader,
+        appUserProxyUsernameReader,
+        kProxyModeAuto,
+        kProxyModeDirect,
+        kProxyModeManual,
+        normalizeUserProxyHostPort;
 import 'package:fushi/src/mining/immersion_mining_request.dart'
     show MiningAnimatedFormat, MiningStillFormat, VideoMiningImageMode;
 import 'package:fushi/src/models/audio_source_config.dart';
@@ -102,6 +110,22 @@ class PreferencesRepository extends ChangeNotifier {
     DandanplayConfig.current = DandanplayConfig.decode(
       getPref('video_danmaku_config', defaultValue: '') as String,
     );
+    _installAppProxyReaders();
+  }
+
+  /// 把进程级代理读取器接到本仓库上。**绑定点必须是「偏好变得可读的那一刻」**，不是
+  /// 某一个调用点：以前只有 `AppModel.initialise()` 绑，而弹窗词典进程
+  /// （`AppModel.initialiseForDictionaryPopup`）同样建了本仓库、同样读了偏好，却没绑，
+  /// 于是那个进程整段生命周期都落在 [kProxyModeUnresolved] 兜底上——选了「直连」的用户
+  /// 在弹窗里照样走系统代理（哨兵表达不了 direct）。绑在这里，任何读得到偏好的入口都
+  /// 自动拿到用户的真实选择，不必各自记得补一行。
+  ///
+  /// 读取器是闭包而非快照：设置页改完立刻生效，`findProxy` 请求时才求值。
+  void _installAppProxyReaders() {
+    appUserProxyReader = () => updateCustomProxy;
+    appUserProxyModeReader = () => networkProxyMode;
+    appUserProxyUsernameReader = () => networkProxyUsername;
+    appUserProxyPasswordReader = () => networkProxyPassword;
   }
 
   Map<String, String> get prefsSnapshot =>
@@ -991,6 +1015,20 @@ class PreferencesRepository extends ChangeNotifier {
 
   Future<void> setVideoAutoScrape(bool value) async {
     await setPref('video_auto_scrape', value);
+    notifyListeners();
+  }
+
+  /// 库内自动补刮总闸（默认开）。
+  ///
+  /// 与上面的 [videoAutoScrape] **不是**一件事，也不能复用它：那个键的契约明写
+  /// 「不会发起元数据网络请求」，且早已从设置页撤下、用户无从更改。库内自动补刮
+  /// 会下载 AniDB 每日标题包、并在配了客户端身份时打 AniDB/TMDB，是一项会联网的
+  /// 后台行为，必须有自己的、用户可见可关的开关。
+  bool get videoLibraryAutoBackfillScrape =>
+      getPref('video_library_auto_backfill_scrape', defaultValue: true) as bool;
+
+  Future<void> setVideoLibraryAutoBackfillScrape(bool value) async {
+    await setPref('video_library_auto_backfill_scrape', value);
     notifyListeners();
   }
 
@@ -2477,14 +2515,28 @@ class PreferencesRepository extends ChangeNotifier {
 
   // ── update preferences ───────────────────────────────────────────────
 
-  /// P2P（torrent）传输是否也走全局代理。**默认 false = 直连**：走代理可能
-  /// 降速，且不少代理服务商禁止 BT 流量（限速/警告/封号），只有用户明确
-  /// 开了才下发给内置引擎（外接 qBittorrent 自管）。
-  bool get p2pProxyEnabled =>
-      getPref('network_proxy_p2p_enabled', defaultValue: false) as bool;
+  /// P2P（torrent）传输的代理档位：`direct`（**默认**，直连）/ `proxy`
+  /// （peer/tracker/DNS 全代理，可能降速，且不少代理服务商禁止 BT 流量：
+  /// 限速/警告/封号）/ `mixed`（tracker 经代理、DHT 与 peer 直连——节点获取
+  /// 范围最大，但真实 IP 暴露给 DHT/peer/tracker，只是连通性工具）。
+  /// 只对内置引擎生效（外接 qBittorrent 自管）。
+  ///
+  /// 三态键未写过时沿用旧布尔开关 `network_proxy_p2p_enabled`（冻结，
+  /// PR#1051 引入）的语义：true → 全代理。
+  String get p2pProxyMode {
+    final String raw =
+        getPref('network_proxy_p2p_mode', defaultValue: '') as String;
+    if (raw == 'direct' || raw == 'proxy' || raw == 'mixed') return raw;
+    final bool legacyEnabled =
+        getPref('network_proxy_p2p_enabled', defaultValue: false) as bool;
+    return legacyEnabled ? 'proxy' : 'direct';
+  }
 
-  Future<void> setP2pProxyEnabled(bool value) async {
-    await setPref('network_proxy_p2p_enabled', value);
+  Future<void> setP2pProxyMode(String mode) async {
+    assert(mode == 'direct' || mode == 'proxy' || mode == 'mixed');
+    await setPref('network_proxy_p2p_mode', mode);
+    // 写穿旧布尔键：降级回老版本后语义一致（mixed 按「开」处理）。
+    await setPref('network_proxy_p2p_enabled', mode != 'direct');
     notifyListeners();
   }
 
@@ -2494,21 +2546,24 @@ class PreferencesRepository extends ChangeNotifier {
   String get networkProxyMode {
     final String? stored =
         getPref('network_proxy_mode', defaultValue: null) as String?;
-    if (stored == 'auto' || stored == 'direct' || stored == 'manual') {
+    if (stored == kProxyModeAuto ||
+        stored == kProxyModeDirect ||
+        stored == kProxyModeManual) {
       return stored!;
     }
     // 迁移判据是「这个存量地址归一得出来吗」，不是「非空吗」。设置页对非法地址只
     // 弹 SnackBar 但仍存原串，非空判据会把这类值推成 manual，而 manual 归一失败
     // 时硬走 DIRECT —— 存量用户升级即断网。只有「显式选了 manual」才该 fail-closed。
     return normalizeUserProxyHostPort(updateCustomProxy) == null
-        ? 'auto'
-        : 'manual';
+        ? kProxyModeAuto
+        : kProxyModeManual;
   }
 
   Future<void> setNetworkProxyMode(String value) async {
-    final String normalized = value == 'direct' || value == 'manual'
+    final String normalized =
+        value == kProxyModeDirect || value == kProxyModeManual
         ? value
-        : 'auto';
+        : kProxyModeAuto;
     await setPref('network_proxy_mode', normalized);
     notifyListeners();
   }

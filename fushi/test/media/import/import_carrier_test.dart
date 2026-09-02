@@ -17,14 +17,13 @@ ImportCarrier classify(
   Set<String> imageArchives = const <String>{},
   Set<String> pageImageDirs = const <String>{},
   Map<String, int> carrierFileDirs = const <String, int>{},
-}) =>
-    classifyImportCarrier(
-      path,
-      isDirectory: directories.contains,
-      isImageArchive: imageArchives.contains,
-      directoryHasPageImages: pageImageDirs.contains,
-      directoryCarrierFileCount: (String p) => carrierFileDirs[p] ?? 0,
-    );
+}) => classifyImportCarrier(
+  path,
+  isDirectory: directories.contains,
+  isImageArchive: imageArchives.contains,
+  directoryHasPageImages: pageImageDirs.contains,
+  directoryCarrierFileCount: (String p) => carrierFileDirs[p] ?? 0,
+);
 
 void main() {
   group('漫画载体', () {
@@ -54,6 +53,12 @@ void main() {
 
     test('.cbz → mangaArchive，无需读包', () {
       expect(classify('/m/vol1.cbz'), ImportCarrier.mangaArchive);
+    });
+
+    test('.cbr / .rar / .cb7 → mangaArchive，无需读包', () {
+      expect(classify('/m/vol1.cbr'), ImportCarrier.mangaArchive);
+      expect(classify('/m/vol1.rar'), ImportCarrier.mangaArchive);
+      expect(classify('/m/vol1.cb7'), ImportCarrier.mangaArchive);
     });
 
     test('图片型 .zip → mangaArchive', () {
@@ -156,10 +161,13 @@ void main() {
   });
 
   group('读包判据只在真正二义时才被调用', () {
-    test('.cbz / .mokuro / .pdf / .txt 都不触发读包', () {
+    test('.cbz / .cbr / .rar / .cb7 / .mokuro / .pdf / .txt 都不触发读包', () {
       final List<String> probed = <String>[];
       for (final String path in <String>[
         '/x/a.cbz',
+        '/x/a.cbr',
+        '/x/a.rar',
+        '/x/a.cb7',
         '/x/a.mokuro',
         '/x/a.pdf',
         '/x/a.txt',
@@ -214,6 +222,8 @@ void main() {
   group('大小写与路径分隔符', () {
     test('扩展名大小写不敏感', () {
       expect(classify('/m/VOL1.CBZ'), ImportCarrier.mangaArchive);
+      expect(classify('/m/VOL1.RAR'), ImportCarrier.mangaArchive);
+      expect(classify('/m/VOL1.CBR'), ImportCarrier.mangaArchive);
       expect(classify('/m/VOL1.MOKURO'), ImportCarrier.mangaMokuro);
       expect(classify('/b/DOC.PDF'), ImportCarrier.pdf);
     });
@@ -269,9 +279,11 @@ void main() {
       expect(r.resolver.resolve('/b/novel.epub'), ImportCarrier.epub);
       expect(r.resolver.resolve('/m/scan.zip'), ImportCarrier.mangaArchive);
       expect(r.resolver.resolve('/b/novel.epub'), ImportCarrier.epub);
-      expect(
-          r.probes, <String>['/b/novel.epub', '/m/scan.zip', '/b/novel.epub'],
-          reason: '换路径就得重算，记忆只对「同一个路径连续问」生效');
+      expect(r.probes, <String>[
+        '/b/novel.epub',
+        '/m/scan.zip',
+        '/b/novel.epub',
+      ], reason: '换路径就得重算，记忆只对「同一个路径连续问」生效');
     });
 
     test('invalidate() 后重新开包（文件可能在对话框开着时被换掉）', () {
@@ -287,8 +299,11 @@ void main() {
       // 词典包一票否决给出的答案）。记忆层不得把它变成漫画。
       final r = makeResolver(imageArchives: <String>{'/m/scan.zip'});
       for (int i = 0; i < 3; i++) {
-        expect(r.resolver.resolve('/d/dict.zip'), ImportCarrier.epub,
-            reason: '缓存只省重复提问，绝不改答案');
+        expect(
+          r.resolver.resolve('/d/dict.zip'),
+          ImportCarrier.epub,
+          reason: '缓存只省重复提问，绝不改答案',
+        );
       }
       expect(r.probes.length, 1);
     });
@@ -297,8 +312,7 @@ void main() {
   group('PDF 能进漫画库，但不因此变成「漫画载体」', () {
     test('.pdf 的载体身份仍是 pdf（书籍框据此走 PdfImporter）', () {
       expect(classify('/b/scan.pdf'), ImportCarrier.pdf);
-      expect(classify('/b/SCAN.PDF'), ImportCarrier.pdf,
-          reason: '扩展名判定大小写不敏感');
+      expect(classify('/b/SCAN.PDF'), ImportCarrier.pdf, reason: '扩展名判定大小写不敏感');
     });
 
     test('pdf.isManga 恒 false：书籍框绝不把 PDF 转交漫画流程', () {
@@ -316,8 +330,7 @@ void main() {
       expect(ImportCarrier.text.isMangaCapable, isFalse);
       for (final ImportCarrier c in ImportCarrier.values) {
         if (c.isManga) {
-          expect(c.isMangaCapable, isTrue,
-              reason: '四种漫画载体必须全部仍被漫画框收下：$c');
+          expect(c.isMangaCapable, isTrue, reason: '四种漫画载体必须全部仍被漫画框收下：$c');
         }
       }
     });

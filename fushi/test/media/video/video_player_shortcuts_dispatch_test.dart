@@ -235,7 +235,7 @@ Future<void> _pumpEnterCaretHarness(
                 hasEditableFocus: false,
                 hasVisiblePopup: false,
                 videoSurfaceHoldsFocus: videoNode.hasPrimaryFocus,
-                panelHoldsFocusNavigation: false,
+                videoNavigablePanelOpen: false,
               );
           switch (resolution.dispatch) {
             case VideoKeyboardDispatch.swallowRepeat:

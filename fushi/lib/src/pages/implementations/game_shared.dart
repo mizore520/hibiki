@@ -53,18 +53,19 @@ bool shouldPromptGalCaptureSetup({
   required String? selectedTextThreadKey,
   required int textThreadCount,
   required bool sessionAlreadyPrompted,
+  required bool lookupRiskAcceptancePending,
 }) =>
     state.sessionStartedAt != null &&
     switch (state.phase) {
       GalHookSessionPhase.waitingSignals ||
       GalHookSessionPhase.running ||
-      GalHookSessionPhase.degraded =>
-        true,
+      GalHookSessionPhase.degraded => true,
       _ => false,
     } &&
     hasEngineSource &&
     selectedTextThreadKey == null &&
     textThreadCount > 0 &&
+    !lookupRiskAcceptancePending &&
     !sessionAlreadyPrompted;
 
 /// Hook 会话音频后端的用户可读标签。
@@ -78,17 +79,17 @@ String galHookAudioBackendLabel(GalHookAudioBackend backend) =>
 
 /// Hook 会话阶段的用户可读标签（替代 `phase.name` 直接上屏）。
 String galHookSessionPhaseLabel(GalHookSessionPhase phase) => switch (phase) {
-      GalHookSessionPhase.idle => t.game_phase_idle,
-      GalHookSessionPhase.resolving => t.game_phase_resolving,
-      GalHookSessionPhase.launching => t.game_phase_launching,
-      GalHookSessionPhase.attaching => t.game_phase_attaching,
-      GalHookSessionPhase.injecting => t.game_phase_injecting,
-      GalHookSessionPhase.waitingSignals => t.game_phase_waiting_signals,
-      GalHookSessionPhase.running => t.game_phase_running,
-      GalHookSessionPhase.degraded => t.game_phase_degraded,
-      GalHookSessionPhase.stopping => t.game_phase_stopping,
-      GalHookSessionPhase.error => t.game_phase_error,
-    };
+  GalHookSessionPhase.idle => t.game_phase_idle,
+  GalHookSessionPhase.resolving => t.game_phase_resolving,
+  GalHookSessionPhase.launching => t.game_phase_launching,
+  GalHookSessionPhase.attaching => t.game_phase_attaching,
+  GalHookSessionPhase.injecting => t.game_phase_injecting,
+  GalHookSessionPhase.waitingSignals => t.game_phase_waiting_signals,
+  GalHookSessionPhase.running => t.game_phase_running,
+  GalHookSessionPhase.degraded => t.game_phase_degraded,
+  GalHookSessionPhase.stopping => t.game_phase_stopping,
+  GalHookSessionPhase.error => t.game_phase_error,
+};
 
 /// texthooker WebSocket 端点阶段的用户可读标签。
 String texthookerEndpointPhaseLabel(TexthookerEndpointPhase phase) =>
@@ -124,6 +125,21 @@ String formatGameClockTime(DateTime value) {
   return '${two(value.hour)}:${two(value.minute)}:${two(value.second)}';
 }
 
+/// 游戏页签的**视觉序**（[GameSectionTabs] 与 [HomeGamePage] 的横滑切区共用同
+/// 一份真相；枚举序只管 IndexedStack 索引，显示顺序在这里）：
+/// * 「发现」与书 / 漫画 / 视频库页的发现视图同名同位（同概念一词）；
+/// * 「导入」紧挨「设置」之前——与书 / 漫画 / 视频库页的分段顺序一致
+///   （三者的「导入」视图都在「设置」前一位），肌肉记忆全 app 同构；
+/// * 诊断不设页签（从「设置」进入），所以不在此序里。
+const List<GameSection> kGameSectionTabOrder = <GameSection>[
+  GameSection.dashboard,
+  GameSection.library,
+  GameSection.discover,
+  GameSection.monitor,
+  GameSection.importGames,
+  GameSection.settings,
+];
+
 /// 游戏模块共用的胶囊分段导航（首页 / 库 / 捕获工作台 / 设置）。
 ///
 /// 兼容性诊断仍可从「设置」进入，但不再占据高频顶部页签；诊断详情打开时顶部
@@ -157,10 +173,25 @@ class GameSectionTabs extends StatelessWidget {
   final VoidCallback onSelectMonitor;
   final VoidCallback? onSelectSettings;
 
+  /// 页签的用户可读标签（顺序真相在 [kGameSectionTabOrder]）。
+  static String _labelFor(GameSection section) => switch (section) {
+    GameSection.dashboard => t.game_dashboard,
+    GameSection.library => t.game_library,
+    // 与书 / 漫画 / 视频库页的发现视图同名同 key（同概念一词）。
+    GameSection.discover => t.library_view_browse,
+    // 页签用短标签「工作台」（中文顶栏标签 ≤4 字，TODO-2937 拍板）；
+    // 页标题 / 设置导航项仍用全称 [game_capture_workbench]「捕获工作台」。
+    GameSection.monitor => t.game_capture_workbench_tab,
+    // 「导入」段与书 / 漫画 / 视频库页的「导入」视图同名同位（2026-08-13
+    // 入库入口统一定案）：游戏的单件入口（选 exe）收敛在这里，不再用 FAB。
+    GameSection.importGames => t.library_view_import,
+    GameSection.settings => t.settings,
+    // 不设页签（从「设置」进入）；防御性给全称，正常不会上屏。
+    GameSection.diagnostics => t.settings,
+  };
+
   @override
   Widget build(BuildContext context) {
-    // 「导入」紧挨「设置」之前——与书 / 漫画 / 视频库页的分段顺序一致
-    // （三者的「导入」视图都在「设置」前一位），肌肉记忆全 app 同构。
     void select(GameSection section) {
       switch (section) {
         case GameSection.dashboard:
@@ -191,35 +222,11 @@ class GameSectionTabs extends StatelessWidget {
 
     return LibrarySectionTabs<GameSection>(
       tabs: <LibrarySectionTab<GameSection>>[
-        LibrarySectionTab<GameSection>(
-          value: GameSection.dashboard,
-          label: t.game_dashboard,
-        ),
-        LibrarySectionTab<GameSection>(
-          value: GameSection.library,
-          label: t.game_library,
-        ),
-        // 「发现」与书 / 漫画 / 视频库页的发现视图同名同 key（同概念一词）。
-        LibrarySectionTab<GameSection>(
-          value: GameSection.discover,
-          label: t.library_view_browse,
-        ),
-        // 页签用短标签「工作台」（中文顶栏标签 ≤4 字，TODO-2937 拍板）；
-        // 页标题 / 设置导航项仍用全称 [game_capture_workbench]「捕获工作台」。
-        LibrarySectionTab<GameSection>(
-          value: GameSection.monitor,
-          label: t.game_capture_workbench_tab,
-        ),
-        // 「导入」段与书 / 漫画 / 视频库页的「导入」视图同名同位（2026-08-13
-        // 入库入口统一定案）：游戏的单件入口（选 exe）收敛在这里，不再用 FAB。
-        LibrarySectionTab<GameSection>(
-          value: GameSection.importGames,
-          label: t.library_view_import,
-        ),
-        LibrarySectionTab<GameSection>(
-          value: GameSection.settings,
-          label: t.settings,
-        ),
+        for (final GameSection section in kGameSectionTabOrder)
+          LibrarySectionTab<GameSection>(
+            value: section,
+            label: _labelFor(section),
+          ),
       ],
       selected: selected,
       onChanged: select,

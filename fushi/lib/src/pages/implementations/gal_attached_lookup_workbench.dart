@@ -35,8 +35,9 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
             profile?.mode ?? GalLookupSurfaceMode.auto;
         final bool riskModeActive = controller.isUnsafeInputActive;
         final FushiDesignTokens tokens = FushiDesignTokens.of(context);
-        final bool riskPending =
-            controller.status == GalAttachedTextStatus.needsRiskAcceptance;
+        final GalAttachedUnsafeRiskAcceptanceRequest? riskRequest =
+            controller.unsafeRiskAcceptanceRequest;
+        final bool riskPending = controller.needsUnsafeRiskAcceptance;
         final bool canOpenCalibration =
             hasSelectedBodyThread && controller.canCalibrate;
 
@@ -57,6 +58,17 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
                   t.game_lookup_attached_title,
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
+                if (riskRequest != null) ...<Widget>[
+                  const SizedBox(width: 6),
+                  TextButton.icon(
+                    key: const ValueKey<String>(
+                      'game-attached-lookup-accept-risk',
+                    ),
+                    onPressed: () => _acceptRisk(context, riskRequest),
+                    icon: const Icon(Icons.warning_amber_rounded, size: 18),
+                    label: Text(t.game_lookup_attached_risk_accept),
+                  ),
+                ],
                 const SizedBox(width: 8),
                 Expanded(
                   child: HorizontalDragScrollable(
@@ -162,8 +174,6 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
                                 value.wireName == action.substring(5),
                           );
                       unawaited(controller.setMode(selected));
-                    } else if (action == 'risk') {
-                      unawaited(_acceptRisk(context));
                     } else if (action == 'clear') {
                       unawaited(_clearProfile(context));
                     }
@@ -181,14 +191,6 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
                             checked: value == mode,
                             enabled: controller.target != null,
                             child: Text(_modeLabel(value)),
-                          ),
-                        if (riskPending && controller.target != null)
-                          PopupMenuItem<String>(
-                            key: const ValueKey<String>(
-                              'game-attached-lookup-accept-risk',
-                            ),
-                            value: 'risk',
-                            child: Text(t.game_lookup_attached_risk_accept),
                           ),
                         if (profile != null)
                           PopupMenuItem<String>(
@@ -237,9 +239,12 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
     return accepted == true;
   }
 
-  Future<void> _acceptRisk(BuildContext context) async {
+  Future<void> _acceptRisk(
+    BuildContext context,
+    GalAttachedUnsafeRiskAcceptanceRequest request,
+  ) async {
     if (!await _confirmRisk(context) || !context.mounted) return;
-    await controller.acceptUnsafeRiskAndRetry();
+    await controller.acceptUnsafeRiskAndRetry(request);
   }
 
   Future<void> _openCalibration(BuildContext context) async {
@@ -858,9 +863,7 @@ class _GalAttachedCalibrationDialogState
                   'game-attached-calibration-probe-start',
                 ),
                 density: FushiListDensity.compact,
-                padding: EdgeInsets.symmetric(
-                  vertical: tokens.spacing.gap / 2,
-                ),
+                padding: EdgeInsets.symmetric(vertical: tokens.spacing.gap / 2),
                 leading: Checkbox(
                   value: _startConfirmed,
                   onChanged: _startObserved ? _setStartConfirmed : null,
@@ -879,9 +882,7 @@ class _GalAttachedCalibrationDialogState
                   'game-attached-calibration-probe-middle',
                 ),
                 density: FushiListDensity.compact,
-                padding: EdgeInsets.symmetric(
-                  vertical: tokens.spacing.gap / 2,
-                ),
+                padding: EdgeInsets.symmetric(vertical: tokens.spacing.gap / 2),
                 leading: Checkbox(
                   value: _middleConfirmed,
                   onChanged: _middleObserved ? _setMiddleConfirmed : null,
@@ -900,9 +901,7 @@ class _GalAttachedCalibrationDialogState
                   'game-attached-calibration-probe-end',
                 ),
                 density: FushiListDensity.compact,
-                padding: EdgeInsets.symmetric(
-                  vertical: tokens.spacing.gap / 2,
-                ),
+                padding: EdgeInsets.symmetric(vertical: tokens.spacing.gap / 2),
                 leading: Checkbox(
                   value: _endConfirmed,
                   onChanged: _endObserved ? _setEndConfirmed : null,

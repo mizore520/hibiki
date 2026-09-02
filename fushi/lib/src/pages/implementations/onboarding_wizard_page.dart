@@ -88,9 +88,9 @@ class _OnboardingWizardPageState extends BasePageState<OnboardingWizardPage>
   /// 直链，单流下载。没有清单就没有分片表，混源无从谈起，只能退到这一条。
   late final RecommendedPackDownloader _fallbackDownloader =
       RecommendedPackDownloader(
-    packDir: _packDir,
-    url: kRecommendedPackGoogleDriveDirectUrl,
-  );
+        packDir: _packDir,
+        url: kRecommendedPackGoogleDriveDirectUrl,
+      );
 
   RecommendedPackDownloader get _activeDownloader =>
       _manifestDownloader ?? _fallbackDownloader;
@@ -117,17 +117,18 @@ class _OnboardingWizardPageState extends BasePageState<OnboardingWizardPage>
       selectedDeckId: anki.settings.selectedDeckId,
       selectedNoteTypeId: anki.settings.selectedNoteTypeId,
       availableDeckIds: anki.availableDecks.map((AnkiDeck deck) => deck.id),
-      availableNoteTypeIds:
-          anki.availableNoteTypes.map((AnkiNoteType noteType) => noteType.id),
+      availableNoteTypeIds: anki.availableNoteTypes.map(
+        (AnkiNoteType noteType) => noteType.id,
+      ),
     );
   }
 
   List<OnboardingStepId> get _steps => onboardingStepSequence(
-        selected: _selected,
-        browserExtensionAvailable: _browserExtensionAvailable,
-        globalLookupAvailable: _globalLookupAvailable,
-        ankiReady: _ankiReadyForFirstCard,
-      );
+    selected: _selected,
+    browserExtensionAvailable: _browserExtensionAvailable,
+    globalLookupAvailable: _globalLookupAvailable,
+    ankiReady: _ankiReadyForFirstCard,
+  );
 
   @override
   void initState() {
@@ -244,9 +245,7 @@ class _OnboardingWizardPageState extends BasePageState<OnboardingWizardPage>
     unawaited(
       _pushPage(
         (_) => Scaffold(
-          body: SafeArea(
-            child: HomeDictionaryPage(showBackButton: true),
-          ),
+          body: SafeArea(child: HomeDictionaryPage(showBackButton: true)),
         ),
       ),
     );
@@ -347,11 +346,11 @@ class _OnboardingWizardPageState extends BasePageState<OnboardingWizardPage>
       final ByteData data = await rootBundle.load(kAnkiConnectAddonAsset);
       final AnkiConnectAddonInstallResult result =
           await installAnkiConnectAddon(
-        addonZipBytes: data.buffer.asUint8List(
-          data.offsetInBytes,
-          data.lengthInBytes,
-        ),
-      );
+            addonZipBytes: data.buffer.asUint8List(
+              data.offsetInBytes,
+              data.lengthInBytes,
+            ),
+          );
       if (!mounted) return;
       setState(() {
         _ankiAddonNotice = switch (result.status) {
@@ -380,7 +379,8 @@ class _OnboardingWizardPageState extends BasePageState<OnboardingWizardPage>
     if (!mounted) return;
     final AnkiUiState anki = ref.read(ankiViewModelProvider);
     setState(() {
-      _ankiConnectionVerified = !anki.isFetching &&
+      _ankiConnectionVerified =
+          !anki.isFetching &&
           anki.errorMessage == null &&
           anki.availableDecks.isNotEmpty &&
           anki.availableNoteTypes.isNotEmpty;
@@ -454,8 +454,9 @@ class _OnboardingWizardPageState extends BasePageState<OnboardingWizardPage>
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : null,
-        onPressed:
-            anki.isFetching ? null : () => unawaited(_testAnkiConnection()),
+        onPressed: anki.isFetching
+            ? null
+            : () => unawaited(_testAnkiConnection()),
       ),
       // 还没连上：给「先把 Anki 装起来」的出口（连上即收起；iOS 的 AnkiMobile 是
       // 付费 App，说明文字带过，不放商店外链）。
@@ -508,7 +509,8 @@ class _OnboardingWizardPageState extends BasePageState<OnboardingWizardPage>
     final FushiDesignTokens tokens = FushiDesignTokens.of(context);
     final AnkiUiState anki = ref.watch(ankiViewModelProvider);
     final bool mobile = Platform.isAndroid || Platform.isIOS;
-    final bool connected = _ankiTestAttempted &&
+    final bool connected =
+        _ankiTestAttempted &&
         !anki.isFetching &&
         anki.errorMessage == null &&
         anki.availableDecks.isNotEmpty;
@@ -530,8 +532,8 @@ class _OnboardingWizardPageState extends BasePageState<OnboardingWizardPage>
           Platform.isAndroid
               ? t.onboarding_anki_setup_android_hint
               : Platform.isIOS
-                  ? t.onboarding_anki_setup_ios_hint
-                  : t.onboarding_anki_setup_desktop_hint,
+              ? t.onboarding_anki_setup_ios_hint
+              : t.onboarding_anki_setup_desktop_hint,
           style: textTheme.bodyMedium,
         ),
         SizedBox(height: tokens.spacing.card),
@@ -648,14 +650,11 @@ class _OnboardingWizardPageState extends BasePageState<OnboardingWizardPage>
 
     // 单行页头：返回按钮和标题同一行。
     //
-    // `showAppBar: true`（默认）会先排一条 title 为空、只有返回按钮的 AppBar，再在
-    // 它下面排一行大标题——两行，返回按钮和「新手引导」四个字对不上，向导这种
-    // 「一屏一步」的页面还白白吃掉一整行高度。`showAppBar: false` 时 [leading] 交给
-    // 页头自己那一行渲染（与 aidoku 源浏览页同一写法），脚手架的
-    // PrimaryScrollController / PageScrollRegistry（手柄 LB/RB 翻页）也照旧保留——
-    // 换成 FushiToolScaffold 就会把这两样一起丢掉。
+    // 手动返回按钮与标题共用 [FushiPageHeader]；关闭自动推导，避免将来本页在可返回
+    // route 中嵌套时重复插入第二个返回按钮。脚手架的 PrimaryScrollController /
+    // PageScrollRegistry（手柄 LB/RB 翻页）照旧保留。
     return FushiPageScaffold(
-      showAppBar: false,
+      automaticallyImplyLeading: false,
       headerCompact: true,
       leading: BackButton(
         key: const ValueKey<String>('onboarding_back'),
@@ -1036,7 +1035,7 @@ class _OnboardingWizardPageState extends BasePageState<OnboardingWizardPage>
         label: hasDownloaded
             ? t.onboarding_step_pack_import_existing_action
             : '${t.onboarding_step_pack_download_action}'
-                ' ($kRecommendedPackSizeLabel)',
+                  ' ($kRecommendedPackSizeLabel)',
         description: hasDownloaded
             ? t.onboarding_pack_action_import_existing_desc
             : t.onboarding_pack_action_download_desc,

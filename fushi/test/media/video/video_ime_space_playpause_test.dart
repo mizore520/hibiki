@@ -35,9 +35,10 @@ import '../../pages/video_fushi_page_source_corpus.dart';
 /// BUG-853 回归守卫：日语输入法（Windows 微软 IME）激活时，视频页按空格无法暂停。
 ///
 /// 根因：IME 激活时裸 Space 的 `logicalKey` 被引擎改写成 [LogicalKeyboardKey.process]，
-/// 视频页两条空格「播放/暂停」路径（media_kit controls 的 `keyboardShortcuts` 与页级
-/// `_withPageSpaceOverride`）都用 `SingleActivator(LogicalKeyboardKey.space)` 匹配
-/// `logicalKey`，故 IME 下按空格既不被内层消费、也不被页级兜底消费 → 按了没反应。
+/// 视频页当时的两条空格「播放/暂停」路径（media_kit controls 的 `keyboardShortcuts` 与
+/// 页级 `_withPageSpaceOverride`，两者均已删除，见下）都用
+/// `SingleActivator(LogicalKeyboardKey.space)` 匹配 `logicalKey`，故 IME 下按空格既不被
+/// 内层消费、也不被页级兜底消费 → 按了没反应。
 /// 修复与阅读器 TODO-847（[resolveReaderSpaceOverride]）同范式：在最外层 Focus 的
 /// onKeyEvent 里按**物理键**还原 Space 语义（[isVideoImeSpacePlayPause]）。
 ///
@@ -133,23 +134,43 @@ void main() {
 
     // 回退 helper 存在，且经沉浸锁门控触发与页级覆盖同语义的 playOrPause。
     final int start = src.indexOf('bool _handleVideoImeSpacePlayPause(');
-    expect(start, greaterThanOrEqualTo(0),
-        reason: '_handleVideoImeSpacePlayPause 回退 helper 必须存在');
+    expect(
+      start,
+      greaterThanOrEqualTo(0),
+      reason: '_handleVideoImeSpacePlayPause 回退 helper 必须存在',
+    );
     final int end = src.indexOf('\n  }', start);
     expect(end, greaterThan(start));
     final String body = src.substring(start, end);
-    expect(body, contains('isVideoImeSpacePlayPause'),
-        reason: '必须复用可单测的纯谓词识别 IME 空格');
-    expect(body, contains('focusedEditableText()'),
-        reason: '必须在文本框 composing 时关闭回退');
-    expect(body, contains('_runWhenImmersiveAllowsShortcuts'),
-        reason: '必须经沉浸锁快捷键门控（与页级 _withPageSpaceOverride 同语义）');
-    expect(body, contains('controller.playOrPause()'),
-        reason: 'IME 空格应触发播放/暂停');
+    expect(
+      body,
+      contains('isVideoImeSpacePlayPause'),
+      reason: '必须复用可单测的纯谓词识别 IME 空格',
+    );
+    expect(
+      body,
+      contains('focusedEditableText()'),
+      reason: '必须在文本框 composing 时关闭回退',
+    );
+    expect(
+      body,
+      contains('_runWhenImmersiveAllowsShortcuts'),
+      reason:
+          '必须经沉浸锁快捷键门控（与主通道 _handleVideoKeyboardShortcut 走的 '
+          'videoActionCallbacks 执行体同语义）',
+    );
+    expect(
+      body,
+      contains('controller.playOrPause()'),
+      reason: 'IME 空格应触发播放/暂停',
+    );
 
     // 真正接入最外层手柄 Focus 的 onKeyEvent（否则 helper 是死代码，IME 空格到不了它）。
-    expect(src, contains('_handleVideoImeSpacePlayPause(event)'),
-        reason: '_wrapVideoGamepadControls 的 Focus.onKeyEvent 必须先调 IME 空格回退');
+    expect(
+      src,
+      contains('_handleVideoImeSpacePlayPause(event)'),
+      reason: '_wrapVideoGamepadControls 的 Focus.onKeyEvent 必须先调 IME 空格回退',
+    );
   });
 
   test('BUG-1239 native IME Space channel 只派发约定方法并按 owner 清理', () async {
@@ -200,10 +221,7 @@ void main() {
     }
 
     test('当前视频、无编辑焦点且允许快捷键 → 只触发播放暂停', () {
-      expect(
-        resolve(),
-        WindowsImeSpaceDispatchAction.togglePlayPause,
-      );
+      expect(resolve(), WindowsImeSpaceDispatchAction.togglePlayPause);
     });
 
     test('IME composing / 输入框 / 字幕搜索编辑焦点 → 放行', () {
@@ -245,10 +263,7 @@ void main() {
         'WindowsImeSpaceChannel.setHandler(this, _handleWindowsImeSpaceDown)',
       ),
     );
-    expect(
-      src,
-      contains('WindowsImeSpaceChannel.clearHandler(this)'),
-    );
+    expect(src, contains('WindowsImeSpaceChannel.clearHandler(this)'));
 
     final int start = src.indexOf('void _handleWindowsImeSpaceDown()');
     final int end = src.indexOf('\n  }', start);

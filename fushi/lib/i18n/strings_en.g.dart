@@ -4587,7 +4587,7 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get manga_import_folder_as_source_hint =>
       'Keep scanning this folder for new manga';
   String get download_no_managed_video_source =>
-      'No managed video source yet. Downloads need a local video folder to land in.';
+      'No managed video source yet. Add a local folder to store downloaded files so finished videos can land in your library.';
   String get download_add_video_source => 'Add video source';
   String get video_subtitle_prev_cue_align => 'Align previous line to now';
   String get video_subtitle_next_cue_align => 'Align next line to now';
@@ -5296,10 +5296,9 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get network_proxy_invalid => 'Invalid proxy. Use host:port';
   String get network_proxy_label => 'Network proxy';
   String get section_network => 'Network';
-  String get network_proxy_p2p_label =>
-      'Route P2P (torrent) traffic through the proxy';
+  String get network_proxy_p2p_label => 'P2P (torrent) proxy';
   String get network_proxy_p2p_warning =>
-      'Off by default: P2P connects directly. Routing it through the proxy can reduce speed, and many proxy providers forbid BitTorrent traffic, so your proxy account may be throttled, warned or terminated. Applies to the built-in engine; an external qBittorrent uses its own proxy settings.';
+      'Direct by default. Via proxy: all P2P traffic goes through the global proxy — speed may drop, and many proxy providers forbid BitTorrent traffic (throttling, warnings, or account termination). Mixed: tracker requests go through the proxy while DHT and peer connections stay direct — widest peer discovery, but your real IP is visible to trackers, DHT and peers (connectivity only, not privacy). Built-in engine only; external qBittorrent uses its own proxy settings.';
   String get video_ajatt_settings_hint =>
       'Free Japanese subtitle archive (kitsunekko mirror). No account needed; subtitle files download from GitHub.';
   String get video_ajatt_enabled_hint =>
@@ -5522,13 +5521,10 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get network_proxy_mode_manual => 'Manual';
   String get network_proxy_mode_manual_hint =>
       'Use the server and optional credentials below';
-  String get network_proxy_manual_hint =>
+  String get network_proxy_address_hint =>
       'HTTP proxy server used by all public internet requests';
   String get network_proxy_username => 'Proxy username (optional)';
   String get network_proxy_password => 'Proxy password (optional)';
-  String get storage_category_backups => 'Local backups';
-  String storage_entry_backups_label({required Object n}) =>
-      '${n} backup archive(s)';
   String get storage_entry_delete_backups_confirm_body =>
       'Delete these temporary local backup archives? Make sure you have saved or shared any copy you still need.';
   String get update_download_source_preference => 'Preferred download source';
@@ -5539,4 +5535,41 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get update_download_source_github => 'GitHub direct';
   String update_download_source_proxy({required Object host}) =>
       'Proxy: ${host}';
+  String get storage_category_backups => 'Leftover backup archives';
+  String storage_entry_backups_label({required Object n}) =>
+      '${n} archive(s) left by the last export';
+  String update_download_source_unavailable({required Object source}) =>
+      '${source} is not available for this file; falling back to the automatic order';
+  String get network_proxy_credentials_scope_hint =>
+      'Credentials apply to HTTP requests only; the built-in torrent engine cannot use them';
+  String get anki_error_paired_device_unreachable =>
+      'Couldn\'t create the card because no paired device could be reached. Make sure Fushi is running on the paired device, or turn off Mine to paired device in Anki settings to create cards locally.';
+  String get video_source_scrape_enabled_toggle_hint =>
+      'When off, manual, post-scan, post-download and background scraping all skip this source.';
+  String get video_source_scrape_work_missing =>
+      'This work is no longer in the current source plan (its files may have been renamed, moved or deleted). Rescrape the source to refresh the pending list.';
+  String get video_source_scrape_pending_works =>
+      'Works awaiting identification';
+  String get video_source_scrape_pending_works_hint =>
+      'These entries have no confirmed identity yet. Search and pick the right work to scrape them.';
+  String get video_source_scrape_enabled_toggle =>
+      'Enable scraping for this source';
+  String get video_library_scrape_auto_backfill =>
+      'Auto-fill missing series info';
+  String get video_library_scrape_auto_backfill_hint =>
+      'Entering the video library scrapes entries that still have no confirmed identity. Turn off to stop all background metadata downloads.';
+  String get stat_detail_ungrouped => 'Ungrouped';
+  String get stat_detail_empty => 'No activity in this period';
+  String get stat_center_title => 'Statistics center';
+  String get stat_center_tab_overview => 'Overview';
+  String get shortcut_action_video_dismiss_dict => 'Dismiss dictionary';
+  String get video_discovery_anidb_identity_confirm_title =>
+      'Confirm the work identity';
+  String get video_discovery_anidb_identity_confirm_hint =>
+      'AniDB has more than one possible match. Pick the right work and the imported download will scrape with that identity directly; skip and you can assign it later from the pending list.';
+  String get video_discovery_anidb_identity_not_found =>
+      'Could not identify this work on AniDB. It will download normally and wait in the pending list for manual identification.';
+  String get network_proxy_p2p_mode_direct => 'Direct';
+  String get network_proxy_p2p_mode_proxy => 'Via proxy';
+  String get network_proxy_p2p_mode_mixed => 'Mixed';
 }

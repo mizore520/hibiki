@@ -1,7 +1,7 @@
 /// 发现页下载物的解压原语。
 ///
 /// 优先用 7-Zip 命令行（zip/7z/rar 全吃、正确处理 cp932 文件名；Windows 随包
-/// 分发 `7za.exe`，定位顺序见 [findSevenZip]）；找不到 7-Zip 时 zip 退回
+/// 分发完整 `7z.exe + 7z.dll`，定位顺序见 [findSevenZip]）；找不到 7-Zip 时 zip 退回
 /// `package:archive` 内置解码，7z/rar 无替代 → [DiscoveryImportBlocker.archiveToolMissing]。
 ///
 /// zip 内置解码带 zip-slip 防护：条目路径出现 `..`/绝对路径一律拒绝——下载物
@@ -15,17 +15,15 @@ import 'package:archive/archive_io.dart';
 import 'package:fushi/src/media/discovery/import/discovery_import_plan.dart';
 
 /// 测试注入口：替换真实子进程执行。
-typedef DiscoveryProcessRunner = Future<ProcessResult> Function(
-  String executable,
-  List<String> arguments,
-);
+typedef DiscoveryProcessRunner =
+    Future<ProcessResult> Function(String executable, List<String> arguments);
 
 class DiscoveryArchiveExtractor {
   DiscoveryArchiveExtractor({
     DiscoveryProcessRunner? runProcess,
     String? sevenZipOverride,
-  })  : _runProcess = runProcess ?? Process.run,
-        _sevenZipOverride = sevenZipOverride;
+  }) : _runProcess = runProcess ?? Process.run,
+       _sevenZipOverride = sevenZipOverride;
 
   final DiscoveryProcessRunner _runProcess;
   final String? _sevenZipOverride;
@@ -34,7 +32,8 @@ class DiscoveryArchiveExtractor {
   String? _sevenZipCache;
 
   /// 定位 7-Zip 命令行：构造注入 > `FUSHI_7ZA` 环境变量 > 主程序旁
-  /// `7za/7za.exe`（构建期随包，仿 voice_hook 落位）> PATH 上的 `7za`/`7z`。
+  /// `7za/7z.exe`（构建期随包，仿 voice_hook 落位）> 旧版随包 `7za.exe`
+  /// > PATH 上的 `7z`/`7za`。
   Future<String?> findSevenZip() async {
     final String? override = _sevenZipOverride;
     if (override != null) return override.isEmpty ? null : override;
@@ -46,20 +45,25 @@ class DiscoveryArchiveExtractor {
       if (env != null && env.isNotEmpty && File(env).existsSync()) return env;
       final String exeDir = File(Platform.resolvedExecutable).parent.path;
       for (final String candidate in <String>[
+        '$exeDir${Platform.pathSeparator}7za${Platform.pathSeparator}7z.exe',
         '$exeDir${Platform.pathSeparator}7za${Platform.pathSeparator}7za.exe',
+        '$exeDir${Platform.pathSeparator}7z.exe',
         '$exeDir${Platform.pathSeparator}7za.exe',
       ]) {
         if (File(candidate).existsSync()) return candidate;
       }
-      for (final String name in <String>['7za', '7z']) {
+      for (final String name in <String>['7z', '7za']) {
         try {
           final ProcessResult result = await _runProcess(
             Platform.isWindows ? 'where' : 'which',
             <String>[name],
           );
           if (result.exitCode == 0) {
-            final String path =
-                (result.stdout as String).trim().split('\n').first.trim();
+            final String path = (result.stdout as String)
+                .trim()
+                .split('\n')
+                .first
+                .trim();
             if (path.isNotEmpty) return path;
           }
         } catch (_) {
@@ -75,8 +79,10 @@ class DiscoveryArchiveExtractor {
   }
 
   /// 解压 [archivePath] 到 [intoDir]（不存在会创建）。成功返回解出的目录。
-  Future<Directory> extract(String archivePath,
-      {required String intoDir}) async {
+  Future<Directory> extract(
+    String archivePath, {
+    required String intoDir,
+  }) async {
     final Directory target = Directory(intoDir);
     await target.create(recursive: true);
 

@@ -16,6 +16,14 @@ import 'package:fushi/src/media/video/metadata/video_metadata_transport.dart';
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart';
 
+/// AniDB 明确下发的封禁（HTTP 200 + `<error>banned</error>`）。
+///
+/// 与普通网络故障分开的理由：普通故障重试是对的，封禁期间的每一次请求都在延长
+/// 封禁。调用方靠类型分流，而不是靠解析 message。
+class AniDbBannedException extends VideoMetadataNetworkException {
+  const AniDbBannedException(super.message);
+}
+
 typedef AniDbProviderNow = DateTime Function();
 typedef AniDbProviderSleep = Future<void> Function(Duration duration);
 
@@ -33,31 +41,29 @@ class AniDbVideoMetadataProvider implements VideoMetadataProvider {
     AniDbProviderSleep? sleep,
     Duration apiRequestInterval = const Duration(seconds: 3),
     bool? shareRequestGate,
-  })  : assert(client == null || transport == null),
-        _clientName = clientName.trim().toLowerCase(),
-        _clientVersion = clientVersion,
-        // AniDB forbids rapid retries. Every real retry must re-enter this
-        // provider's 2s+ queue instead of happening inside the transport.
-        _transport = transport ??
-            VideoMetadataHttpClient(client: client, maxAttempts: 1),
-        _ownsTransport = transport == null,
-        _titleCatalog = titleCatalog ?? _sharedTitleCatalog,
-        _now = now ?? DateTime.now,
-        _sleep = sleep ?? Future<void>.delayed,
-        _requestGate = (shareRequestGate ??
-                (client == null &&
-                    transport == null &&
-                    titleCatalog == null &&
-                    now == null &&
-                    sleep == null))
-            ? _sharedRequestGates.putIfAbsent(
-                apiUrl,
-                _AniDbRequestGate.new,
-              )
-            : _AniDbRequestGate(),
-        apiRequestInterval = apiRequestInterval < _minimumRequestInterval
-            ? _minimumRequestInterval
-            : apiRequestInterval;
+  }) : assert(client == null || transport == null),
+       _clientName = clientName.trim().toLowerCase(),
+       _clientVersion = clientVersion,
+       // AniDB forbids rapid retries. Every real retry must re-enter this
+       // provider's 2s+ queue instead of happening inside the transport.
+       _transport =
+           transport ?? VideoMetadataHttpClient(client: client, maxAttempts: 1),
+       _ownsTransport = transport == null,
+       _titleCatalog = titleCatalog ?? _sharedTitleCatalog,
+       _now = now ?? DateTime.now,
+       _sleep = sleep ?? Future<void>.delayed,
+       _requestGate =
+           (shareRequestGate ??
+               (client == null &&
+                   transport == null &&
+                   titleCatalog == null &&
+                   now == null &&
+                   sleep == null))
+           ? _sharedRequestGates.putIfAbsent(apiUrl, _AniDbRequestGate.new)
+           : _AniDbRequestGate(),
+       apiRequestInterval = apiRequestInterval < _minimumRequestInterval
+           ? _minimumRequestInterval
+           : apiRequestInterval;
 
   static const Set<String> _reservedShokoClientNames = <String>{
     'animeplugin',
@@ -65,6 +71,9 @@ class AniDbVideoMetadataProvider implements VideoMetadataProvider {
   };
   static const int _maxAnimeXmlLength = 24 * 1024 * 1024;
   static const Duration _minimumRequestInterval = Duration(seconds: 2);
+
+  /// AniDB 文档里的封禁时长。到点自动解闩，长驻的桌面进程不必重启才能恢复。
+  static const Duration _banCooldown = Duration(hours: 24);
   static const Duration _animeCacheTtl = Duration(hours: 24);
   static const String catalogOnlyPayloadKey = 'anidbCatalogOnly';
   static final AniDbTitleCatalog _sharedTitleCatalog = AniDbTitleCatalog();
@@ -103,8 +112,19 @@ class AniDbVideoMetadataProvider implements VideoMetadataProvider {
         _clientName.isNotEmpty &&
         version != null &&
         version > 0 &&
-        !_reservedShokoClientNames.contains(_clientName.toLowerCase());
+        !_reservedShokoClientNames.contains(_clientName.toLowerCase()) &&
+        !isBanned;
   }
+
+  /// AniDB 是否正处在它自己下发的封禁窗口内。
+  ///
+  /// 闩住的是 endpoint（与限流队列共用同一个 [_AniDbRequestGate]），不是本实例：
+  /// 配置指纹一变协调器就换一个 provider 实例，实例级的闩一换就没了，而封禁是按
+  /// 客户端 IP 记在服务端的。批量调用方据此整批停手，而不是逐条撞墙。
+  bool get isBanned => _requestGate.isBannedAt(_now());
+
+  /// 距封禁窗口结束还有多久；未封禁为 null。
+  Duration? get banRemaining => _requestGate.banRemainingAt(_now());
 
   @override
   Future<List<VideoMetadataWork>> search(
@@ -188,6 +208,12 @@ class AniDbVideoMetadataProvider implements VideoMetadataProvider {
     final int animeId = _validateLookup(lookup);
     if (lookup.mediaKind == VideoMetadataMediaKind.movie || seasonNumber != 1) {
       return const <VideoMetadataEpisode>[];
+    }
+    if (isBanned) {
+      throw const AniDbBannedException(
+        'AniDB has temporarily banned this client; episode hydration is '
+        'suspended until the ban expires',
+      );
     }
     if (!isHttpApiAvailable) {
       throw const VideoMetadataNetworkException(
@@ -300,7 +326,16 @@ class AniDbVideoMetadataProvider implements VideoMetadataProvider {
     final XmlElement root = document.rootElement;
     if (root.name.local == 'error') {
       final String message = root.innerText.trim();
-      if (message.toLowerCase().contains('not found')) return null;
+      final String normalized = message.toLowerCase();
+      if (normalized.contains('not found')) return null;
+      // 封禁是 HTTP 200 + `<error>banned</error>`，传输层看不出异常。不闩住它，批量刮削
+      // 会按 3s 一条把整个库打完，而每一条都在延长封禁。
+      if (normalized.contains('banned')) {
+        _requestGate.latchBan(_now().add(_banCooldown));
+        throw AniDbBannedException(
+          message.isEmpty ? 'AniDB has banned this client' : message,
+        );
+      }
       throw VideoMetadataNetworkException(
         message.isEmpty
             ? 'AniDB anime request returned an error'
@@ -348,8 +383,9 @@ class AniDbVideoMetadataProvider implements VideoMetadataProvider {
               const <XmlElement>[])
         if (_text(tag.getElement('name')) case final String name) name,
     ];
-    final String restricted =
-        (root.getAttribute('restricted') ?? '').trim().toLowerCase();
+    final String restricted = (root.getAttribute('restricted') ?? '')
+        .trim()
+        .toLowerCase();
     return _AniDbAnime(
       animeId: animeId,
       animeType: type.trim(),
@@ -405,8 +441,8 @@ class AniDbVideoMetadataProvider implements VideoMetadataProvider {
       ratingVotes: anime.ratingVotes,
       runtimeMinutes:
           kind == VideoMetadataMediaKind.movie && anime.episodes.isNotEmpty
-              ? anime.episodes.first.runtimeMinutes
-              : null,
+          ? anime.episodes.first.runtimeMinutes
+          : null,
       contentRating: anime.restricted ? 'R18+' : null,
       originalLanguage: 'ja',
       homepage: anime.homepage ?? 'https://anidb.net/anime/${anime.animeId}',
@@ -501,18 +537,19 @@ class AniDbVideoMetadataProvider implements VideoMetadataProvider {
     bool allowMissingType = false,
   }) =>
       <AniDbTitle>[
-        for (final XmlElement element
-            in parent?.findElements('title') ?? const <XmlElement>[])
-          if (_text(element) case final String value)
-            AniDbTitle(
-              value: value,
-              type: (element.getAttribute('type') ??
-                      (allowMissingType ? 'none' : ''))
-                  .trim()
-                  .toLowerCase(),
-              language: _xmlLanguage(element),
-            ),
-      ]
+            for (final XmlElement element
+                in parent?.findElements('title') ?? const <XmlElement>[])
+              if (_text(element) case final String value)
+                AniDbTitle(
+                  value: value,
+                  type:
+                      (element.getAttribute('type') ??
+                              (allowMissingType ? 'none' : ''))
+                          .trim()
+                          .toLowerCase(),
+                  language: _xmlLanguage(element),
+                ),
+          ]
           .where(
             (AniDbTitle title) =>
                 title.type.isNotEmpty && title.language.isNotEmpty,
@@ -541,10 +578,7 @@ class AniDbVideoMetadataProvider implements VideoMetadataProvider {
       // compatibility fallback for cached/test fixtures.
       final List<AniDbTitle> titles = directTitles.isNotEmpty
           ? directTitles
-          : _parseTitles(
-              element.getElement('titles'),
-              allowMissingType: true,
-            );
+          : _parseTitles(element.getElement('titles'), allowMissingType: true);
       final AniDbTitleRecord record = AniDbTitleRecord(
         animeId: episodeId ?? episodeNumber,
         titles: titles.isEmpty
@@ -592,15 +626,15 @@ class AniDbVideoMetadataProvider implements VideoMetadataProvider {
   }
 
   List<_AniDbCreator> _parseCreators(XmlElement? parent) => <_AniDbCreator>[
-        for (final XmlElement element
-            in parent?.findElements('name') ?? const <XmlElement>[])
-          if (_text(element) case final String name)
-            _AniDbCreator(
-              id: int.tryParse(element.getAttribute('id') ?? ''),
-              name: name,
-              type: (element.getAttribute('type') ?? '').trim(),
-            ),
-      ];
+    for (final XmlElement element
+        in parent?.findElements('name') ?? const <XmlElement>[])
+      if (_text(element) case final String name)
+        _AniDbCreator(
+          id: int.tryParse(element.getAttribute('id') ?? ''),
+          name: name,
+          type: (element.getAttribute('type') ?? '').trim(),
+        ),
+  ];
 
   List<VideoMetadataCredit> _mapStaffCredits(List<_AniDbCreator> creators) {
     final List<VideoMetadataCredit> credits = <VideoMetadataCredit>[];
@@ -725,11 +759,13 @@ class AniDbVideoMetadataProvider implements VideoMetadataProvider {
       throw StateError('AniDB title record contains no usable titles');
     }
     final String title = selected.value;
-    final AniDbTitle? japanese = _findTitle(record.titles, 'ja', 'main') ??
+    final AniDbTitle? japanese =
+        _findTitle(record.titles, 'ja', 'main') ??
         _findTitle(record.titles, 'ja', 'official') ??
         _findTitle(record.titles, 'ja', null);
-    final String? originalTitle =
-        japanese == null || japanese.value == title ? null : japanese.value;
+    final String? originalTitle = japanese == null || japanese.value == title
+        ? null
+        : japanese.value;
     return _SelectedTitles(
       title: title,
       originalTitle: originalTitle,
@@ -832,6 +868,25 @@ class AniDbVideoMetadataProvider implements VideoMetadataProvider {
 class _AniDbRequestGate {
   Future<void> _queue = Future<void>.value();
   DateTime? _lastStartedAt;
+  DateTime? _bannedUntil;
+
+  void latchBan(DateTime until) {
+    final DateTime? current = _bannedUntil;
+    if (current == null || until.isAfter(current)) _bannedUntil = until;
+  }
+
+  bool isBannedAt(DateTime now) => banRemainingAt(now) != null;
+
+  Duration? banRemainingAt(DateTime now) {
+    final DateTime? until = _bannedUntil;
+    if (until == null) return null;
+    final Duration remaining = until.difference(now);
+    if (remaining <= Duration.zero) {
+      _bannedUntil = null;
+      return null;
+    }
+    return remaining;
+  }
 
   Future<T> run<T>(
     Future<T> Function() request, {
@@ -869,13 +924,14 @@ String? _text(XmlElement? element) {
   return value.isEmpty ? null : value;
 }
 
-String _xmlLanguage(XmlElement element) => (element.getAttribute('xml:lang') ??
-        element.getAttribute(
-          'lang',
-          namespace: 'http://www.w3.org/XML/1998/namespace',
-        ) ??
-        '')
-    .trim();
+String _xmlLanguage(XmlElement element) =>
+    (element.getAttribute('xml:lang') ??
+            element.getAttribute(
+              'lang',
+              namespace: 'http://www.w3.org/XML/1998/namespace',
+            ) ??
+            '')
+        .trim();
 
 String? _date(String? value) {
   final String text = value?.trim() ?? '';

@@ -24,8 +24,9 @@ void main() {
       TargetPlatform.macOS,
       TargetPlatform.android,
     ]) {
-      final Map<ShortcutAction, dynamic> map =
-          ShortcutDefaults.forPlatform(platform);
+      final Map<ShortcutAction, dynamic> map = ShortcutDefaults.forPlatform(
+        platform,
+      );
       for (final ShortcutAction action in ShortcutAction.values) {
         expect(
           map.containsKey(action),
@@ -44,6 +45,12 @@ void main() {
       'lib/src/pages/implementations/reader_fushi/caret.part.dart',
       'lib/src/pages/implementations/home_page.dart',
       'lib/src/media/video/video_player_shortcuts.dart',
+      // BUG-1995：视频页的**鼠标绑定通道**执行体（`_handleVideoPointerDown`）。
+      // 它不在 video_player_shortcuts.dart 里——那份是键盘/手柄的纯函数判决表，
+      // 而鼠标是位置型输入，收在页面根 Listener 上（与 reader 把鼠标收在
+      // webview.part.dart 而非 caret.part.dart 同因）。videoDismissDict 的唯一
+      // 派发点就在这里。
+      'lib/src/pages/implementations/video_fushi_page.dart',
       'lib/src/media/audiobook/pointer_seek.dart',
       'lib/src/shortcuts/gamepad_service.dart',
       'lib/src/shortcuts/reader_space_override.dart',
@@ -85,7 +92,8 @@ void main() {
     expect(
       dead,
       isEmpty,
-      reason: '以下 action 在所有执行体文件里都没有派发引用（死项，配了不执行）：'
+      reason:
+          '以下 action 在所有执行体文件里都没有派发引用（死项，配了不执行）：'
           '${dead.map((ShortcutAction a) => a.key).join(', ')}',
     );
   });

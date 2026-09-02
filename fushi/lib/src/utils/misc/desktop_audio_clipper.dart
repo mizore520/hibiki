@@ -52,8 +52,10 @@ bool debugIsRemoteFfmpegInput(String inputPath) =>
 /// 该选项 ffmpeg ≥4.3 即有，捆绑的 n7.1.5 已带；网络支持早在 ffmpeg-min recipe 编入
 /// （`--enable-network` + http/https/tcp/tls），**无需重编二进制**。remote-only、对本地
 /// 输入零影响。
-List<String> buildFfmpegRemoteInputArgs(String inputPath,
-    {String? tlsPinSha256}) {
+List<String> buildFfmpegRemoteInputArgs(
+  String inputPath, {
+  String? tlsPinSha256,
+}) {
   if (!_isRemoteFfmpegInput(inputPath)) return const <String>[];
   final String? pin = tlsPinSha256?.trim();
   return <String>[
@@ -264,7 +266,7 @@ class MiningMediaCompression {
   /// 给出真实可用的封顶值（仍显著高于高清档：960px·12fps ≈ 高清档 1.8 倍像素，实测同一
   /// 4 秒区间 6 秒 / 7.7 MB），截图侧的原图直通语义完全不动。
   static const List<({int gifFps, int gifWidth, int maxLongEdge, int quality})>
-      imageTiers = [
+  imageTiers = [
     (gifFps: 6, gifWidth: 360, maxLongEdge: 720, quality: 80), // 0 省流
     (gifFps: 8, gifWidth: 480, maxLongEdge: 1000, quality: 90), // 1 标准（默认=旧压缩档）
     (gifFps: 12, gifWidth: 720, maxLongEdge: 2000, quality: 95), // 2 高清（=旧高保真档）
@@ -272,7 +274,7 @@ class MiningMediaCompression {
       gifFps: 0,
       gifWidth: 0,
       maxLongEdge: 0,
-      quality: 100
+      quality: 100,
     ), // 3 最高（截图原图直通；动图参数由格式声明，见下）
   ];
 
@@ -380,8 +382,12 @@ class MiningMediaCompression {
 /// 两者共用同一条通道：走 [ErrorLogService.logDiagnostic]，**不计入错误计数、不落盘**，
 /// 转入日志页的「诊断/取证」分节，随复制/分享/上传一并带走（降严重性，不删证据）。
 /// 否则走 [ErrorLogService.log] 进用户可见错误列表。默认 false = 既有行为逐字等价。
-void _logFfmpegSummary(String source, String summary, StackTrace stack,
-    {required bool diagnosticOnly}) {
+void _logFfmpegSummary(
+  String source,
+  String summary,
+  StackTrace stack, {
+  required bool diagnosticOnly,
+}) {
   if (diagnosticOnly) {
     ErrorLogService.instance.logDiagnostic(source, summary);
   } else {
@@ -397,8 +403,12 @@ void _reportFfmpegFailure(
 }) {
   final String summary = result.failureSummary;
   onFailure?.call(summary);
-  _logFfmpegSummary(source, summary, StackTrace.current,
-      diagnosticOnly: diagnosticOnly);
+  _logFfmpegSummary(
+    source,
+    summary,
+    StackTrace.current,
+    diagnosticOnly: diagnosticOnly,
+  );
 }
 
 void _reportFfmpegProcessException(
@@ -489,6 +499,17 @@ List<String> buildFfmpegClipArgs({
     '-i',
     inputPath,
     '-vn',
+    // BUG-2011：源整集/整本的章节表绝不能跟进句子音频。ffmpeg 默认等价
+    // `-map_chapters 0`，mp4 系容器的 muxer 会为此建一条与最后一个章节等长的
+    // chapter text track，把 `mvhd.duration` 拉满 —— 一段 3 秒的句子音频，容器头
+    // 会写着整集的 21 分钟，播放器据此画进度条。
+    //
+    // 桌面/Android 的输出是 `.aac`（裸 ADTS，无容器，本就不受影响），但 **iOS 走
+    // `.m4a`**（[immersionMiningAudioExtensionFor]），那条链路是真中招的。这里无
+    // 条件给而不按扩展名分支：实测 `.aac` 加与不加产出的字节数完全一致，多一个
+    // 分支只会多一处能写错的地方。
+    '-map_chapters',
+    '-1',
     if (explicitAudio != null) ...<String>[
       '-map',
       // 尾随 '?'：越界音轨映射降级回退默认轨而非硬失败（BUG-345）。
@@ -768,8 +789,12 @@ Future<String?> extractVideoFrameViaFfmpeg({
         output.deleteSync();
       } catch (_) {}
     }
-    _reportFfmpegFailure('extractVideoFrameViaFfmpeg', result, onFailure,
-        diagnosticOnly: diagnosticOnly);
+    _reportFfmpegFailure(
+      'extractVideoFrameViaFfmpeg',
+      result,
+      onFailure,
+      diagnosticOnly: diagnosticOnly,
+    );
     return null;
   } on ProcessException catch (e, stack) {
     _reportFfmpegProcessException(
@@ -812,18 +837,17 @@ List<String> buildFfmpegClipGifArgs({
   int maxDurationMs = 10000,
   // BUG-891：远端自签主机的 TLS 证书 SHA-256 钉扎指纹（透传给 ffmpeg），非远端/公网源为 null。
   String? tlsPinSha256,
-}) =>
-    buildFfmpegClipAnimatedArgs(
-      format: MiningAnimatedFormat.gif,
-      inputPath: inputPath,
-      startMs: startMs,
-      endMs: endMs,
-      outputPath: outputPath,
-      fps: fps,
-      width: width,
-      maxDurationMs: maxDurationMs,
-      tlsPinSha256: tlsPinSha256,
-    );
+}) => buildFfmpegClipAnimatedArgs(
+  format: MiningAnimatedFormat.gif,
+  inputPath: inputPath,
+  startMs: startMs,
+  endMs: endMs,
+  outputPath: outputPath,
+  fps: fps,
+  width: width,
+  maxDurationMs: maxDurationMs,
+  tlsPinSha256: tlsPinSha256,
+);
 
 /// 纯函数：构建「cue 时间窗 → 循环动图」的 ffmpeg 参数表，按 [format] 分派编码器。
 /// [buildFfmpegClipGifArgs] 是本函数 `format: gif` 的薄委托（旧调用点/测试逐字等价）。
@@ -860,8 +884,9 @@ List<String> buildFfmpegClipAnimatedArgs({
 }) {
   final double startSeconds = (startMs < 0 ? 0 : startMs) / 1000.0;
   final int rawDur = endMs - startMs;
-  final int clampedDur =
-      rawDur > maxDurationMs ? maxDurationMs : (rawDur < 1 ? 1 : rawDur);
+  final int clampedDur = rawDur > maxDurationMs
+      ? maxDurationMs
+      : (rawDur < 1 ? 1 : rawDur);
   final double durationSeconds = clampedDur / 1000.0;
   // [fps]<=0 / [width]<=0 表示「源帧率 / 源分辨率」。[MiningMediaCompression.resolve]
   // 已不产出 0（三种格式的顶格档都是有限上限，见 MiningAnimatedFormat 与 BUG-1039），
@@ -1003,8 +1028,12 @@ Future<String?> extractClipGifViaFfmpeg({
         output.deleteSync();
       } catch (_) {}
     }
-    _reportFfmpegFailure('extractClipGifViaFfmpeg', result, onFailure,
-        diagnosticOnly: diagnosticOnly);
+    _reportFfmpegFailure(
+      'extractClipGifViaFfmpeg',
+      result,
+      onFailure,
+      diagnosticOnly: diagnosticOnly,
+    );
     return null;
   } on ProcessException catch (e, stack) {
     // 移动端无 CLI ffmpeg：优雅回退（调用方改用单帧截图）。
@@ -1228,8 +1257,9 @@ Future<Map<int, String>> extractEmbeddedSubtitlesViaFfmpeg({
         final int? rc = single.returnCode;
         if (rc != null && rc != 0) {
           try {
-            File('${entry.value}$kUnsupportedEmbeddedSubtitleSentinelSuffix')
-                .writeAsStringSync('');
+            File(
+              '${entry.value}$kUnsupportedEmbeddedSubtitleSentinelSuffix',
+            ).writeAsStringSync('');
           } catch (_) {}
         }
       }
@@ -1238,11 +1268,7 @@ Future<Map<int, String>> extractEmbeddedSubtitlesViaFfmpeg({
     // Only a genuinely empty result (every track un-extractable) is worth an
     // error log; a partial batch rescued by the per-track fallback is a success.
     if (written.isEmpty) {
-      _reportFfmpegFailure(
-        'extractEmbeddedSubtitlesViaFfmpeg',
-        result,
-        null,
-      );
+      _reportFfmpegFailure('extractEmbeddedSubtitlesViaFfmpeg', result, null);
     }
     return written;
   } on ProcessException catch (e, stack) {
@@ -1260,8 +1286,10 @@ Future<Map<int, String>> extractEmbeddedSubtitlesViaFfmpeg({
 /// [KitFfmpegBackend] (self-built ffmpeg-kit) slots in transparently. Throws
 /// [ProcessException] when ffmpeg is unavailable — callers handle that.
 Future<FfmpegRunResult> _runFfmpeg(List<String> args, Duration timeout) async {
-  final FfmpegRunResult result =
-      await resolveFfmpegBackend().run(args, timeout);
+  final FfmpegRunResult result = await resolveFfmpegBackend().run(
+    args,
+    timeout,
+  );
   return result;
 }
 

@@ -33,6 +33,26 @@ enum GalAttachedTextStatus {
   fallback,
 }
 
+/// Immutable identity for one visible unsafe-input consent request.
+///
+/// The dialog must return this exact request when committing. Otherwise a
+/// dialog opened for one executable could authorize a different target that
+/// became current while the dialog was open.
+@immutable
+class GalAttachedUnsafeRiskAcceptanceRequest {
+  const GalAttachedUnsafeRiskAcceptanceRequest({
+    required this.token,
+    required this.target,
+    required this.exePath,
+    required this.exeSha256,
+  });
+
+  final int token;
+  final GalAttachedSurfaceTarget target;
+  final String exePath;
+  final String exeSha256;
+}
+
 abstract interface class GalAttachedTextSurfacePort {
   Future<GalAttachedCallResult> inspectTarget(
     GalAttachedSurfaceTarget target, {
@@ -277,8 +297,16 @@ class GalAttachedTextController extends ChangeNotifier {
   bool _textPushStagesProviderPending = false;
   int _textPushOperation = 0;
   int _operationGeneration = 0;
+  bool _activationDeferred = false;
   bool _attachedProviderClaimed = false;
   bool _forceAttachedProvider = false;
+  int _nextUnsafeRiskAcceptanceRequestToken = 0;
+  int? _unsafeRiskAcceptanceRequestToken;
+  int? _unsafeRiskAcceptanceCommitToken;
+  int _unsafeRiskAcceptanceLifecycleRevision = 0;
+  Future<void> _preferenceWriteTail = Future<void>.value();
+  int _nextPreferenceWriteSequence = 0;
+  final Map<String, int> _latestPreferenceWriteSequence = <String, int>{};
   final Set<int> _retiredTargetHwnds = <int>{};
   GalLookupNormalizedRectV1? _draftBodyRect;
   GalLookupTextLayoutV1? _draftLayout;
@@ -320,8 +348,42 @@ class GalAttachedTextController extends ChangeNotifier {
   bool get isUnsafeInputActive =>
       (_status == GalAttachedTextStatus.activeAttached ||
           _status == GalAttachedTextStatus.activeNative) &&
+      (_profile?.mode ?? GalLookupSurfaceMode.auto) !=
+          GalLookupSurfaceMode.off &&
       _shieldStatus.conclusion != GalAttachedShieldConclusion.verified &&
       (_profile?.unsafeLeftClickAccepted ?? false);
+  bool get needsUnsafeRiskAcceptance =>
+      _unsafeRiskAcceptanceRequestToken != null &&
+      (_status == GalAttachedTextStatus.needsRiskAcceptance ||
+          _status == GalAttachedTextStatus.suspended) &&
+      _target != null &&
+      _exePath != null &&
+      _exeSha256 != null &&
+      (_profile?.mode ?? GalLookupSurfaceMode.auto) !=
+          GalLookupSurfaceMode.off &&
+      !(_profile?.unsafeLeftClickAccepted ?? false) &&
+      _shieldStatus.conclusion != GalAttachedShieldConclusion.verified &&
+      _shieldStatus.conclusion != GalAttachedShieldConclusion.faulted;
+  GalAttachedUnsafeRiskAcceptanceRequest? get unsafeRiskAcceptanceRequest {
+    final int? token = _unsafeRiskAcceptanceRequestToken;
+    final GalAttachedSurfaceTarget? target = _target;
+    final String? exePath = _exePath;
+    final String? exeSha256 = _exeSha256;
+    if (_unsafeRiskAcceptanceCommitToken != null ||
+        !needsUnsafeRiskAcceptance ||
+        token == null ||
+        target == null ||
+        exePath == null ||
+        exeSha256 == null) {
+      return null;
+    }
+    return GalAttachedUnsafeRiskAcceptanceRequest(
+      token: token,
+      target: target,
+      exePath: exePath,
+      exeSha256: exeSha256,
+    );
+  }
 
   Future<void> syncSession({
     required bool active,
@@ -330,7 +392,10 @@ class GalAttachedTextController extends ChangeNotifier {
     required int targetHwnd,
     String? sourceText,
     String? launchExePath,
+    bool inspectOnly = false,
+    bool Function()? stillCurrent,
   }) async {
+    if (stillCurrent != null && !stillCurrent()) return;
     final bool hasTarget =
         active &&
         sessionEpoch != null &&
@@ -361,13 +426,33 @@ class GalAttachedTextController extends ChangeNotifier {
         targetHwnd: targetHwnd,
         sourceText: nextText,
         launchExePath: nextLaunchExePath,
+        inspectOnly: inspectOnly,
+        stillCurrent: stillCurrent,
       );
       return;
     }
     final bool bodyArrived = _latestSourceText.isEmpty && nextText.isNotEmpty;
     _latestSourceText = nextText;
+    if (_activationDeferred) {
+      if (inspectOnly) return;
+      _activationDeferred = false;
+      await _evaluateAndActivate(
+        ++_operationGeneration,
+        current,
+        stillCurrent: stillCurrent,
+      );
+      return;
+    }
     if (bodyArrived && _status == GalAttachedTextStatus.waitingForBodyThread) {
-      await _evaluateAndActivate(++_operationGeneration, current);
+      if (inspectOnly) {
+        _activationDeferred = true;
+        return;
+      }
+      await _evaluateAndActivate(
+        ++_operationGeneration,
+        current,
+        stillCurrent: stillCurrent,
+      );
       return;
     }
     if (nextText.isEmpty && _status == GalAttachedTextStatus.activeAttached) {
@@ -384,8 +469,11 @@ class GalAttachedTextController extends ChangeNotifier {
     required int targetHwnd,
     required String sourceText,
     required String? launchExePath,
+    required bool inspectOnly,
+    bool Function()? stillCurrent,
   }) async {
     await detach();
+    if (stillCurrent != null && !stillCurrent()) return;
     _latestSourceText = sourceText;
     _launchExePath = launchExePath;
     final int operation = ++_operationGeneration;
@@ -401,7 +489,10 @@ class GalAttachedTextController extends ChangeNotifier {
       target,
       launchExePath: launchExePath,
     );
-    if (!_isCurrent(operation, target)) return;
+    if (!_isCurrent(operation, target) ||
+        (stillCurrent != null && !stillCurrent())) {
+      return;
+    }
     _adoptNativeMetadata(inspection);
     final String exePath = inspection.exePath ?? '';
     final String exeSha256 = inspection.exeSha256 ?? '';
@@ -417,7 +508,11 @@ class GalAttachedTextController extends ChangeNotifier {
     _exeSha256 = GalLookupSurfaceProfileV1.normalizeSha256(exeSha256);
     _currentClient = client;
     _loadProfile();
-    await _evaluateAndActivate(operation, target);
+    if (inspectOnly) {
+      _activationDeferred = true;
+      return;
+    }
+    await _evaluateAndActivate(operation, target, stillCurrent: stillCurrent);
   }
 
   void _loadProfile() {
@@ -455,8 +550,10 @@ class GalAttachedTextController extends ChangeNotifier {
 
   Future<void> _evaluateAndActivate(
     int operation,
-    GalAttachedSurfaceTarget target,
-  ) async {
+    GalAttachedSurfaceTarget target, {
+    bool Function()? stillCurrent,
+  }) async {
+    if (stillCurrent != null && !stillCurrent()) return;
     final GalAttachedSurfaceTarget? callTarget = _target;
     if (callTarget == null || !_sameLogicalSurface(callTarget, target)) return;
     final GalLookupSurfaceProfileV1? profile = _profile;
@@ -479,7 +576,6 @@ class GalAttachedTextController extends ChangeNotifier {
     }
     if (_nativeProviderReady(
       mode: mode,
-      status: _nativeStatus,
       providerKind: _providerKind,
       providerId: _providerId,
       providerStatus: _providerStatus,
@@ -536,6 +632,7 @@ class GalAttachedTextController extends ChangeNotifier {
       operation,
       callTarget,
       profileMode: mode,
+      stillCurrent: stillCurrent,
     )) {
       return;
     }
@@ -545,7 +642,10 @@ class GalAttachedTextController extends ChangeNotifier {
       mode: mode,
       riskAccepted: riskAccepted,
     );
-    if (!_isCurrent(operation, callTarget)) return;
+    if (!_isCurrent(operation, callTarget) ||
+        (stillCurrent != null && !stillCurrent())) {
+      return;
+    }
     _adoptNativeMetadata(result);
     if (result.shield.conclusion == GalAttachedShieldConclusion.faulted) {
       _activationFailure('input_shield_faulted');
@@ -561,7 +661,6 @@ class GalAttachedTextController extends ChangeNotifier {
     }
     if (_nativeProviderReady(
       mode: mode,
-      status: result.status,
       providerKind: result.providerKind,
       providerId: result.providerId,
       providerStatus: result.providerStatus,
@@ -664,6 +763,11 @@ class GalAttachedTextController extends ChangeNotifier {
         initialBodyRect ?? seed?.bodyRect ?? defaultBodyRect;
     final GalLookupTextLayoutV1 layout = seed?.layout ?? _layoutBuilder(client);
     if (!rect.isValid || !layout.isValid) return false;
+    final int calibrationOperation = ++_operationGeneration;
+    ++_unsafeRiskAcceptanceLifecycleRevision;
+    _unsafeRiskAcceptanceRequestToken = null;
+    _unsafeRiskAcceptanceCommitToken = null;
+    _setStatus(GalAttachedTextStatus.calibrating);
     _draftBodyRect = rect;
     _draftLayout = layout;
     _calibrationProbeMask = 0;
@@ -671,14 +775,13 @@ class GalAttachedTextController extends ChangeNotifier {
     _probeMiddleObservedIndex = null;
     _probeEndObservedIndex = null;
     if (!await _claimAttachedProvider(
-      _operationGeneration,
+      calibrationOperation,
       target,
       profileMode: _profile?.mode ?? GalLookupSurfaceMode.auto,
       forceAttached: true,
     )) {
       return false;
     }
-    _setStatus(GalAttachedTextStatus.calibrating);
     final GalAttachedCallResult result = await _surfacePort.calibrationStart(
       target: target,
       bodyRect: rect,
@@ -686,7 +789,7 @@ class GalAttachedTextController extends ChangeNotifier {
       layout: layout,
       riskAccepted: true,
     );
-    if (!_isCurrentSurface(target)) return false;
+    if (!_isCurrent(calibrationOperation, target)) return false;
     _adoptNativeMetadata(result);
     if (!result.ok) {
       _activationFailure(result.reason ?? result.error);
@@ -695,7 +798,7 @@ class GalAttachedTextController extends ChangeNotifier {
     if (_sentSourceText != _latestSourceText) {
       await _pushText(_latestSourceText);
     }
-    return _isCurrentSurface(target) &&
+    return _isCurrent(calibrationOperation, target) &&
         _status == GalAttachedTextStatus.calibrating;
   }
 
@@ -887,7 +990,6 @@ class GalAttachedTextController extends ChangeNotifier {
     }
     if (_nativeProviderReady(
       mode: mode,
-      status: event.status,
       providerKind: event.providerKind,
       providerId: event.providerId,
       providerStatus: event.providerStatus,
@@ -1041,11 +1143,17 @@ class GalAttachedTextController extends ChangeNotifier {
     await _onLookup?.call(hit);
   }
 
-  Future<void> acceptUnsafeRiskAndRetry() async {
+  Future<bool> acceptUnsafeRiskAndRetry(
+    GalAttachedUnsafeRiskAcceptanceRequest request,
+  ) async {
+    if (_unsafeRiskAcceptanceCommitToken != null ||
+        !_matchesUnsafeRiskAcceptanceRequest(request)) {
+      return false;
+    }
     final GalAttachedSurfaceTarget? target = _target;
     final String? exePath = _exePath;
     final String? exeSha256 = _exeSha256;
-    if (target == null || exePath == null || exeSha256 == null) return;
+    if (target == null || exePath == null || exeSha256 == null) return false;
     final GalLookupSurfaceProfileV1 profile =
         _profile ??
         GalLookupSurfaceProfileV1(
@@ -1059,9 +1167,60 @@ class GalAttachedTextController extends ChangeNotifier {
       exeSha256: exeSha256,
       unsafeLeftClickAccepted: true,
     );
+    final String preferenceKey =
+        GalLookupSurfaceProfileV1.preferenceKeyForExePath(exePath);
+    final Object? previousPreferenceValue = _preferenceReader(preferenceKey);
+    _unsafeRiskAcceptanceCommitToken = request.token;
+    final int acceptanceRevision = ++_unsafeRiskAcceptanceLifecycleRevision;
+    notifyListeners();
+    final Future<void> persistence = _persistProfile(accepted);
+    final int acceptanceWriteSequence =
+        _latestPreferenceWriteSequence[preferenceKey]!;
+    try {
+      await persistence;
+    } catch (_) {
+      if (_latestPreferenceWriteSequence[preferenceKey] ==
+          acceptanceWriteSequence) {
+        try {
+          // PreferencesRepository updates its cache before awaiting the DB.
+          // Restore the previous value even when that compensating DB write
+          // also fails, so a same-process reattach cannot observe consent
+          // that never became durable.
+          await _writePreference(preferenceKey, previousPreferenceValue ?? '');
+        } catch (_) {}
+      }
+      if (_unsafeRiskAcceptanceCommitToken == request.token) {
+        _unsafeRiskAcceptanceCommitToken = null;
+        ++_unsafeRiskAcceptanceLifecycleRevision;
+        notifyListeners();
+      }
+      return false;
+    }
+    if (_unsafeRiskAcceptanceCommitToken != request.token ||
+        _unsafeRiskAcceptanceLifecycleRevision != acceptanceRevision ||
+        _latestPreferenceWriteSequence[preferenceKey] !=
+            acceptanceWriteSequence ||
+        !_matchesUnsafeRiskAcceptanceRequest(request)) {
+      if (_unsafeRiskAcceptanceCommitToken == request.token) {
+        _unsafeRiskAcceptanceCommitToken = null;
+        ++_unsafeRiskAcceptanceLifecycleRevision;
+        notifyListeners();
+      }
+      return true;
+    }
     _profile = accepted;
-    await _persistProfile(accepted);
-    await _evaluateAndActivate(++_operationGeneration, target);
+    _unsafeRiskAcceptanceRequestToken = null;
+    _unsafeRiskAcceptanceCommitToken = null;
+    ++_unsafeRiskAcceptanceLifecycleRevision;
+    notifyListeners();
+    final GalAttachedSurfaceTarget? currentTarget = _target;
+    if (currentTarget != null &&
+        _sameLogicalSurface(currentTarget, target) &&
+        _exePath == exePath &&
+        _exeSha256 == exeSha256) {
+      await _evaluateAndActivate(++_operationGeneration, currentTarget);
+    }
+    return true;
   }
 
   Future<void> setMode(GalLookupSurfaceMode mode) async {
@@ -1079,35 +1238,59 @@ class GalAttachedTextController extends ChangeNotifier {
         variants: const <GalLookupSurfaceVariantV1>[],
       );
     }
+    final int modeRevision = ++_unsafeRiskAcceptanceLifecycleRevision;
+    final int modeOperation = ++_operationGeneration;
     final GalLookupSurfaceProfileV1 updated = profile.copyWith(mode: mode);
     _profile = updated;
+    if (mode == GalLookupSurfaceMode.off) {
+      _unsafeRiskAcceptanceRequestToken = null;
+      _unsafeRiskAcceptanceCommitToken = null;
+      _surfaceVisible = false;
+      _setAttachedProviderClaim(false);
+      _setStatus(GalAttachedTextStatus.disabled);
+    }
     notifyListeners();
-    await _persistProfile(updated);
-    if (target != null) {
-      if (mode == GalLookupSurfaceMode.off ||
-          mode == GalLookupSurfaceMode.nativeOnly) {
-        _setAttachedProviderClaim(false);
-        await _surfacePort.detach(target);
-        _surfaceVisible = false;
+    final Future<void> persistence = _persistProfile(updated);
+    try {
+      if (target != null) {
+        if (mode == GalLookupSurfaceMode.off ||
+            mode == GalLookupSurfaceMode.nativeOnly) {
+          _setAttachedProviderClaim(false);
+          await _surfacePort.detach(target);
+          _surfaceVisible = false;
+        }
+        if (_unsafeRiskAcceptanceLifecycleRevision == modeRevision &&
+            _isCurrent(modeOperation, target)) {
+          await _evaluateAndActivate(modeOperation, target);
+        }
       }
-      await _evaluateAndActivate(++_operationGeneration, target);
+    } finally {
+      await persistence;
     }
   }
 
   Future<void> clearProfile() async {
     final String? exePath = _exePath;
     if (exePath == null) return;
-    await _preferenceWriter(
-      GalLookupSurfaceProfileV1.preferenceKeyForExePath(exePath),
-      '',
-    );
+    final GalAttachedSurfaceTarget? target = _target;
+    ++_operationGeneration;
+    ++_unsafeRiskAcceptanceLifecycleRevision;
+    _unsafeRiskAcceptanceRequestToken = null;
+    _unsafeRiskAcceptanceCommitToken = null;
     _profile = null;
     _activeVariant = null;
     _setAttachedProviderClaim(false);
-    final GalAttachedSurfaceTarget? target = _target;
-    if (target != null) await _surfacePort.detach(target);
     _surfaceVisible = false;
     _setStatus(GalAttachedTextStatus.needsCalibration);
+    final Future<void> persistence = _writePreference(
+      GalLookupSurfaceProfileV1.preferenceKeyForExePath(exePath),
+      '',
+    );
+    try {
+      if (target != null) await _surfacePort.detach(target);
+    } finally {
+      await persistence;
+    }
   }
 
   Future<void> updateActiveStyle(GalLookupTextLayoutV1 layout) async {
@@ -1407,10 +1590,23 @@ class GalAttachedTextController extends ChangeNotifier {
   }
 
   Future<void> _persistProfile(GalLookupSurfaceProfileV1 profile) =>
-      _preferenceWriter(
+      _writePreference(
         GalLookupSurfaceProfileV1.preferenceKeyForExePath(profile.exePath),
         jsonEncode(profile.toJson()),
       );
+
+  Future<void> _writePreference(String key, Object? value) {
+    // Every mutation writes the complete profile object. Preserve invocation
+    // order so a slower stale consent write cannot resurrect authorization
+    // after a later mode change or clear.
+    final int sequence = ++_nextPreferenceWriteSequence;
+    _latestPreferenceWriteSequence[key] = sequence;
+    final Future<void> operation = _preferenceWriteTail.then(
+      (_) => _preferenceWriter(key, value),
+    );
+    _preferenceWriteTail = operation.catchError((Object _, StackTrace __) {});
+    return operation;
+  }
 
   Future<void> _pushLatestTextIfActive() async {
     if ((_status != GalAttachedTextStatus.activeAttached &&
@@ -1500,6 +1696,13 @@ class GalAttachedTextController extends ChangeNotifier {
   }
 
   Future<void> detach() async {
+    ++_unsafeRiskAcceptanceLifecycleRevision;
+    final bool riskRequestRetired =
+        _unsafeRiskAcceptanceRequestToken != null ||
+        _unsafeRiskAcceptanceCommitToken != null;
+    _unsafeRiskAcceptanceRequestToken = null;
+    _unsafeRiskAcceptanceCommitToken = null;
+    if (riskRequestRetired) notifyListeners();
     final GalAttachedSurfaceTarget? target = _target;
     if (target == null) {
       if (_status != GalAttachedTextStatus.disabled) {
@@ -1542,6 +1745,7 @@ class GalAttachedTextController extends ChangeNotifier {
     _textPushSource = null;
     _textPushStagesProviderPending = false;
     _retiredTargetHwnds.clear();
+    _activationDeferred = false;
     _clearDraft();
     _surfaceVisible = false;
     _nativeStatus = null;
@@ -1551,6 +1755,8 @@ class GalAttachedTextController extends ChangeNotifier {
     _providerStatus = null;
     _attachedProviderClaimed = false;
     _forceAttachedProvider = false;
+    _unsafeRiskAcceptanceRequestToken = null;
+    _unsafeRiskAcceptanceCommitToken = null;
     _probeStartObservedIndex = null;
     _probeMiddleObservedIndex = null;
     _probeEndObservedIndex = null;
@@ -1563,7 +1769,9 @@ class GalAttachedTextController extends ChangeNotifier {
     GalAttachedSurfaceTarget target, {
     required GalLookupSurfaceMode profileMode,
     bool forceAttached = false,
+    bool Function()? stillCurrent,
   }) async {
+    if (stillCurrent != null && !stillCurrent()) return false;
     _setAttachedProviderClaim(true, forceAttached: forceAttached);
     final GalAttachedBeforeActivationCallback? callback =
         _onBeforeAttachedActivation;
@@ -1577,6 +1785,10 @@ class GalAttachedTextController extends ChangeNotifier {
         }
         return false;
       }
+    }
+    if (stillCurrent != null && !stillCurrent()) {
+      _setAttachedProviderClaim(false);
+      return false;
     }
     return _isCurrent(operation, target);
   }
@@ -1603,6 +1815,16 @@ class GalAttachedTextController extends ChangeNotifier {
   bool _isCurrentSurface(GalAttachedSurfaceTarget target) =>
       _target != null && _sameLogicalSurface(_target!, target);
 
+  bool _matchesUnsafeRiskAcceptanceRequest(
+    GalAttachedUnsafeRiskAcceptanceRequest request,
+  ) =>
+      needsUnsafeRiskAcceptance &&
+      _unsafeRiskAcceptanceRequestToken == request.token &&
+      _target != null &&
+      _sameLogicalSurface(_target!, request.target) &&
+      _exePath == request.exePath &&
+      _exeSha256 == request.exeSha256;
+
   bool _adoptLifecycleTarget(GalAttachedSurfaceTarget incoming) {
     final GalAttachedSurfaceTarget? current = _target;
     if (current == null || !_sameLogicalSurface(current, incoming)) {
@@ -1624,10 +1846,26 @@ class GalAttachedTextController extends ChangeNotifier {
       left.targetPid == right.targetPid;
 
   void _setStatus(GalAttachedTextStatus value, {String? reason}) {
-    final bool changed = _status != value || _statusReason != reason;
+    final int? previousRiskRequestToken = _unsafeRiskAcceptanceRequestToken;
+    final int? previousRiskCommitToken = _unsafeRiskAcceptanceCommitToken;
+    if (value == GalAttachedTextStatus.needsRiskAcceptance) {
+      _unsafeRiskAcceptanceRequestToken ??=
+          ++_nextUnsafeRiskAcceptanceRequestToken;
+    } else if (value != GalAttachedTextStatus.suspended) {
+      _unsafeRiskAcceptanceRequestToken = null;
+      _unsafeRiskAcceptanceCommitToken = null;
+    }
+    final bool riskRequestChanged =
+        previousRiskRequestToken != _unsafeRiskAcceptanceRequestToken ||
+        previousRiskCommitToken != _unsafeRiskAcceptanceCommitToken;
+    final bool changed =
+        _status != value || _statusReason != reason || riskRequestChanged;
     _status = value;
     _statusReason = reason;
-    if (changed) notifyListeners();
+    if (changed) {
+      if (riskRequestChanged) ++_unsafeRiskAcceptanceLifecycleRevision;
+      notifyListeners();
+    }
   }
 
   void _adoptNativeMetadata(GalAttachedCallResult result) {
@@ -1706,7 +1944,6 @@ class GalAttachedTextController extends ChangeNotifier {
 
   static bool _nativeProviderReady({
     required GalLookupSurfaceMode mode,
-    required String? status,
     required int? providerKind,
     required int? providerId,
     required int? providerStatus,
@@ -1720,15 +1957,16 @@ class GalAttachedTextController extends ChangeNotifier {
         providerId != null &&
         isGalLookupProductionProviderPair(providerKind, providerId);
     final bool readyOrActive = providerStatus == 1 || providerStatus == 2;
-    final bool nativeState =
-        status == 'activeNative' ||
-        status == 'nativeProviderReady' ||
-        // InspectTarget reports its own surface lifecycle as `ready`; the
-        // provider identity/status fields are the authoritative native
-        // lifecycle. Requiring both preserves the pair whitelist while letting
-        // a fresh Ready(generation=0) provider win auto before configuration.
-        status == 'ready';
-    return productionPair && readyOrActive && nativeState;
+    // `status` belongs to the optional desktop attached surface, not to the
+    // in-process geometry provider. In particular, switching to nativeOnly
+    // deliberately detaches that surface while SGRE/Siglus/Leaf remains the
+    // registry's Ready/Active owner. Requiring an attached-surface token here
+    // leaves a coherent native provider permanently suspended after that
+    // handoff. The production kind/id pair and provider lifecycle are the
+    // authoritative native readiness proof. Callers still pass the shield
+    // fault gate and [_activateNativeOrRequestRisk], so this does not weaken
+    // per-executable risk acceptance.
+    return productionPair && readyOrActive;
   }
 }
 
