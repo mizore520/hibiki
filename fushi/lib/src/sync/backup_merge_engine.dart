@@ -929,29 +929,35 @@ class BackupMergeEngine {
   ///
   /// 语义与在线同步 [AggregateMergeService.mergeStudySegments] /
   /// [AggregateMergeService.arbitrateStudySegments] 完全一致，只是写成 SQL：
-  ///  ① 墓碑并集取 max deletedAt；
+  ///  ① 墓碑并集取 max deletedAt（碑戳只增不减，永不退场）；
   ///  ② 段按 uid：目标没有 → 插；两边都有且 src.updated_at 严格更新 → 整行覆盖
   ///     （LWW，同值重放 no-op）；
-  ///  ③ 删掉目标里被（合并后）墓碑压制的段（updated_at < deleted_at）；
-  ///  ④ 删掉被任一段（updated_at >= deleted_at）复活的墓碑。
+  ///  ③ 删掉目标里被（合并后）墓碑压制的段（`start_at < deleted_at`，
+  ///     BUG-2214 / BUG-2220：删除之前开始的段出局，之后开始的存活）。
+  /// 游戏段 / 碑（BUG-2221）不从备份搬入——与 galgame_sessions 同律，src 的
+  /// game_id 在目标库没有宿主。
   /// 旧备份（v92 前）没有这两张表：ATTACH 前已迁到当前 schema，两侧必有表。
   Future<void> _mergeStudySegments() async {
     await _db.customStatement(
       'INSERT INTO study_segment_tombstones (media_kind, media_key, deleted_at) '
       'SELECT media_kind, media_key, deleted_at '
       'FROM $_srcAlias.study_segment_tombstones AS s '
-      'WHERE NOT EXISTS (SELECT 1 FROM study_segment_tombstones AS t '
+      'WHERE s.media_kind <> ? '
+      'AND NOT EXISTS (SELECT 1 FROM study_segment_tombstones AS t '
       'WHERE t.media_kind = s.media_kind AND t.media_key = s.media_key)',
+      <Object>[kActivityMediaGame],
     );
     await _db.customStatement(
       'UPDATE study_segment_tombstones SET deleted_at = ('
       'SELECT s.deleted_at FROM $_srcAlias.study_segment_tombstones AS s '
       'WHERE s.media_kind = study_segment_tombstones.media_kind '
       'AND s.media_key = study_segment_tombstones.media_key) '
-      'WHERE EXISTS (SELECT 1 FROM $_srcAlias.study_segment_tombstones AS s '
+      'WHERE study_segment_tombstones.media_kind <> ? '
+      'AND EXISTS (SELECT 1 FROM $_srcAlias.study_segment_tombstones AS s '
       'WHERE s.media_kind = study_segment_tombstones.media_kind '
       'AND s.media_key = study_segment_tombstones.media_key '
       'AND s.deleted_at > study_segment_tombstones.deleted_at)',
+      <Object>[kActivityMediaGame],
     );
     final List<String> cols = <String>[
       'uid',
@@ -973,7 +979,9 @@ class BackupMergeEngine {
     await _db.customStatement(
       'INSERT INTO study_segments ($colList) '
       'SELECT $colList FROM $_srcAlias.study_segments AS s '
-      'WHERE NOT EXISTS (SELECT 1 FROM study_segments AS t WHERE t.uid = s.uid)',
+      'WHERE s.media_kind <> ? '
+      'AND NOT EXISTS (SELECT 1 FROM study_segments AS t WHERE t.uid = s.uid)',
+      <Object>[kActivityMediaGame],
     );
     final String setClause = cols
         .where((String c) => c != 'uid')
@@ -983,23 +991,18 @@ class BackupMergeEngine {
         .join(', ');
     await _db.customStatement(
       'UPDATE study_segments SET $setClause '
-      'WHERE EXISTS (SELECT 1 FROM $_srcAlias.study_segments AS s '
+      'WHERE study_segments.media_kind <> ? '
+      'AND EXISTS (SELECT 1 FROM $_srcAlias.study_segments AS s '
       'WHERE s.uid = study_segments.uid '
       'AND s.updated_at > study_segments.updated_at)',
+      <Object>[kActivityMediaGame],
     );
     await _db.customStatement(
       'DELETE FROM study_segments WHERE EXISTS ('
       'SELECT 1 FROM study_segment_tombstones AS t '
       'WHERE t.media_kind = study_segments.media_kind '
       'AND t.media_key = study_segments.media_key '
-      'AND t.deleted_at > study_segments.updated_at)',
-    );
-    await _db.customStatement(
-      'DELETE FROM study_segment_tombstones WHERE EXISTS ('
-      'SELECT 1 FROM study_segments AS s '
-      'WHERE s.media_kind = study_segment_tombstones.media_kind '
-      'AND s.media_key = study_segment_tombstones.media_key '
-      'AND s.updated_at >= study_segment_tombstones.deleted_at)',
+      'AND t.deleted_at > study_segments.start_at)',
     );
   }
 
@@ -1319,7 +1322,7 @@ class BackupMergeEngine {
   ///
   /// 平局（`>` 不成立）保留本机。旧备份的行经 merge 前的 schema 迁移拿到
   /// `updated_at = 0`（备份库先被开一次升到当前 schema，见
-  /// `BackupService.mergeRestoreBackup` 的第 2 步），于是与本机存量行平局 →
+  /// `BackupRestoreService.mergeRestoreBackup` 的第 2 步），于是与本机存量行平局 →
   /// 行为逐字等于本轮之前的 insert-if-absent，零回归；而任一侧真正改过一次名
   /// （戳 > 0）之后立刻胜出，母设备的第二次改名终于能并进来。
   Future<void> _mergeOverrideTitlePrefs() async {
@@ -1345,7 +1348,7 @@ class BackupMergeEngine {
 
   /// The audio-source registry prefs are CONTENT config, not device settings:
   /// the local-audio `.db` files they reference DO travel in the backup (packed
-  /// under `localAudio/` and copied by [BackupService.mergeRestoreBackup]),
+  /// under `localAudio/` and copied by [BackupRestoreService.mergeRestoreBackup]),
   /// so their config must travel too — otherwise the restored files are orphaned
   /// and "音频来源" is silently lost on a merge (the pref-non-merge default
   /// dropped them). Adopt the backup's value when the device has none/an empty
@@ -1421,6 +1424,9 @@ List<String> mergeSkippedDeviceLocalTableNames() =>
       'video_download_subscriptions',
       'video_download_subscription_items',
       'web_mine_queue',
+      // v95：ffprobe 规格探测缓存。键是本机绝对路径、内容是本机文件的实测结果，
+      // 换台设备既命不中也可能与对端的同名文件规格不同——必须现探，不能合并进来。
+      'video_file_specs',
     ]);
 
 /// Read-only summary of what a backup MERGE import would change on this device

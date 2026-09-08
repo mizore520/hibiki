@@ -2,11 +2,9 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'
-    show Clipboard, ClipboardData, rootBundle;
+import 'package:flutter/services.dart' hide ModifierKey;
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fushi_audio/fushi_audio.dart';
@@ -393,14 +391,15 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
   };
 
   @override
-  void onDictionaryPopupInputToken(String token) {
+  bool onDictionaryPopupInputToken(String token) {
     final ShortcutAction? action = resolveDictionaryPopupInputToken(
       registry: _appModel.shortcutRegistry,
       token: token,
       scope: ShortcutScope.video,
     );
-    if (action == null) return;
+    if (action == null) return false;
     _popNestedPopupAt(_popup.lastVisibleIndex);
+    return true;
   }
 
   @override
@@ -452,7 +451,29 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
       WebVideoFushiPage.debugSelectShaderTier = _selectShaderTier;
       return true;
     }());
-    unawaited(_init());
+    // BUG-2230：`_init` 的异常必须有归宿。它是 fire-and-forget，内部又有几处**真会抛**
+    // 的 await（`rootBundle.loadString` 资源缺失、`WebViewEnvironment.create` 在 WebView2
+    // Runtime 缺失 / 用户数据目录被占用时直接抛、`_copyLoginCookiesFromBuiltin` 的 IO）。
+    // 从前抛出后 `_failReason` 恒 null、`_row` 恒 null ⇒ 页面永久停在**无 AppBar 的转圈**
+    // 分支上，桌面端没有系统返回键 ⇒ 用户进来就出不去（与 BUG-2229 同构）。
+    unawaited(_initGuarded());
+  }
+
+  /// [_init] 的异常边界：任何未预期失败都落进已有的**带 AppBar** 失败态，
+  /// 而不是把用户锁在无出口的加载态里。
+  Future<void> _initGuarded() async {
+    try {
+      await _init();
+    } catch (e, st) {
+      // release 版 Windows 上 stdout 无人接收，debugPrint 等于丢弃——而 BUG-2230
+      // 的立论就是「异常无归宿」。给了用户归宿（失败终态）就不能把诊断也扔了：
+      // WebViewEnvironment.create 失败 / 资源缺失 / cookie 拷贝 IO 错这三类根因
+      // 只有落进 error_log 才区分得出来。
+      ErrorLogService.instance.log('web_video', 'init failed: $e', st);
+      debugPrint('WebVideoFushiPage init failed: $e\n$st');
+      if (!mounted) return;
+      setState(() => _failReason = t.video_load_failed_generic);
+    }
   }
 
   @override
@@ -561,16 +582,13 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
     WidgetsBinding.instance.addPostFrameCallback((_) => _seedWarmPopup());
   }
 
-  /// WebView2 持焦期间截获视频作用域全部键盘/鼠标绑定（token 直接取注册表序列化
-  /// 形式），交回 [_onKeyToken] 走同一份动作表。滚轮使用旁边的专用 bridge，因为
-  /// WebViewKeyBridge 的通道是离散按键/按钮，不能表达 wheel 的方向与修饰键组合。
+  /// WebView2 持焦期间截获 video scope 的键盘/鼠标绑定；滚轮走专用桥。
   String _keyBridgeScript() {
     final String keyBridge = webViewKeyBridgeScript(
       handlerName: kWebVideoKeyBridgeHandler,
       keys: _videoKeyboardTokens(),
       mouseButtons: _videoMouseButtons(),
       installMouseListeners: true,
-      // 左键快捷键是非阻塞的：动作执行后仍让站点播放器收到普通点击。
       allowPrimaryMouse: true,
       forwardRepeats: false,
       stopPropagation: true,
@@ -578,25 +596,21 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
     return '$keyBridge\n${_webVideoWheelBridgeScript()}';
   }
 
-  /// 当前 video + universal scope 的键盘 token。键盘桥和设置页共用同一注册表，
-  /// 这样用户改绑后热更新槽与首次 document-start 注入使用完全相同的集合。
   List<String> _videoKeyboardTokens() {
     final Set<String> tokens = <String>{};
     for (final ShortcutAction action in <ShortcutAction>{
       ...ShortcutAction.actionsForScope(ShortcutScope.video),
       ShortcutAction.globalBack,
     }) {
-      for (final InputBinding b
+      for (final InputBinding binding
           in _appModel.shortcutRegistry.bindingsFor(action).keyboardBindings) {
-        tokens.add(b.serialize());
+        tokens.add(binding.serialize());
       }
     }
     final List<String> result = tokens.toList()..sort();
     return result;
   }
 
-  /// 当前 video scope 中已绑定的 DOM 鼠标按钮。WebView 的 generic bridge 用这张表
-  /// 决定哪些按钮需要回传；空表也必须下发，才能在用户删掉最后一个绑定后清掉旧槽。
   List<int> _videoMouseButtons() {
     final Set<int> buttons = <int>{};
     for (final ShortcutAction action in ShortcutAction.actionsForScope(
@@ -613,9 +627,6 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
     return result;
   }
 
-  /// 把 video scope 的滚轮绑定序列化成 document-start 脚本可直接消费的对象。
-  /// 每个方向的条目都带完整修饰键集合，JS 侧按「方向 + 修饰键全等」匹配，避免
-  /// Alt+滚轮误触裸滚轮或 Ctrl+Alt+滚轮误触 Alt+滚轮。
   String _videoWheelBindingsJson() {
     final Map<String, List<Map<String, dynamic>>> bindings =
         <String, List<Map<String, dynamic>>>{
@@ -631,18 +642,13 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
           ..sort((ModifierKey a, ModifierKey b) => a.index.compareTo(b.index));
         bindings[binding.direction.name]!.add(<String, dynamic>{
           'action': action.key,
-          'mods': modifiers
-              .map((ModifierKey modifier) => modifier.name)
-              .toList(),
+          'mods': modifiers.map((ModifierKey m) => m.name).toList(),
         });
       }
     }
     return jsonEncode(bindings);
   }
 
-  /// WebView2 内的滚轮快捷键桥。命中后先阻止网页滚动/播放器默认动作，再把动作
-  /// key、方向和修饰键一并交回 Dart；Dart 会再次用当前 registry 精确解析，防止
-  /// 用户在事件排队期间改键时误执行旧绑定。
   String _webVideoWheelBridgeScript() {
     final String bindingsJson = _videoWheelBindingsJson();
     return '''
@@ -650,7 +656,6 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
   window.__fushiWebVideoWheelBindings = $bindingsJson;
   if (window.__fushiWebVideoWheelInstalled) return;
   window.__fushiWebVideoWheelInstalled = true;
-  function _bridge(){ return window.flutter_inappwebview; }
   function _direction(e){
     var dx = Number(e.deltaX) || 0;
     var dy = Number(e.deltaY) || 0;
@@ -668,9 +673,7 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
     if (!Array.isArray(list)) return null;
     for (var i = 0; i < list.length; i++) {
       var item = list[i];
-      if (!item || !Array.isArray(item.mods) || item.mods.length !== pressed.length) {
-        continue;
-      }
+      if (!item || !Array.isArray(item.mods) || item.mods.length !== pressed.length) continue;
       var same = true;
       for (var j = 0; j < item.mods.length; j++) {
         if (pressed.indexOf(item.mods[j]) < 0) { same = false; break; }
@@ -687,8 +690,8 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
     if (!action) return;
     e.preventDefault();
     e.stopImmediatePropagation();
-    var bridge = _bridge();
-    if (bridge) {
+    var bridge = window.flutter_inappwebview;
+    if (bridge && bridge.callHandler) {
       var mods = [];
       if (e.ctrlKey) mods.push('ctrl');
       if (e.shiftKey) mods.push('shift');
@@ -700,9 +703,6 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
 })();''';
   }
 
-  /// 设置页改绑后立即刷新 WebView 中的热槽；不要求用户退出并重新打开网页视频。
-  /// onLoadStop 也会调用一次，覆盖「改绑发生在 document-start listener 尚未安装」的
-  /// 初始化竞态。
   void _onShortcutRegistryChanged() {
     if (!mounted || _web == null) return;
     unawaited(_refreshWebVideoShortcutBindings());
@@ -833,7 +833,6 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
     videoActionCallbacks(_shortcutActions())[action]?.call();
   }
 
-  /// 处理 document-start 滚轮桥回传，并以当前注册表重新核验方向/修饰键/动作三者。
   void _onWebVideoWheelToken(List<dynamic> args) {
     if (args.length < 3) return;
     final String actionKey = args[0].toString();
@@ -972,9 +971,14 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
           mediaKind: kActivityMediaVideo,
           mediaKey: widget.bookUid,
           title: row.title,
+          accrual: StudyAccrual.explicit,
           onWriteError: (Object e, StackTrace st) => ErrorLogService.instance
               .log('StudyClock.write(web-video)', e, st),
         ),
+        loadCoverage: () =>
+            db.getPref(videoWatchCoveragePrefKey(widget.bookUid)),
+        saveCoverage: (String json) =>
+            db.setPref(videoWatchCoveragePrefKey(widget.bookUid), json),
         markCompleted: (String uid) =>
             db.markVideoCompleted(uid, DateTime.now()),
       )..attach(_controller);
@@ -1273,10 +1277,16 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
     await _toggleFavoriteCue(cue);
   }
 
-  void _copyCue(AudioCue cue) {
+  /// 字幕列表行内复制。走 [AppModel.copyToClipboard]：写剪贴板 + 按平台决定要不要
+  /// 弹「已复制」toast（Android 13+ 系统自带提示，不重复）。网页视频页没有视频页那套
+  /// OSD，此前这里复制完毫无反馈。
+  /// 返回是否真的写了剪贴板（[VideoSubtitleJumpPanel.onCopyCue] 的契约）：空句不算
+  /// 成功，面板据此决定要不要把行内按钮切成 ✓。
+  bool _copyCue(AudioCue cue) {
     final String text = cue.text.trim();
-    if (text.isEmpty) return;
-    Clipboard.setData(ClipboardData(text: text));
+    if (text.isEmpty) return false;
+    _appModel.copyToClipboard(text);
+    return true;
   }
 
   // ── 查词（与视频页 `_lookupAt` 同步骤）──────────────────────────────────
@@ -1595,6 +1605,9 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
                           ReaderFushiSource.instance.enableSwipeToClose,
                       sensitivity:
                           ReaderFushiSource.instance.dismissSwipeSensitivity,
+                      // 弹窗可见时 barrier 吃掉全部指针，页面根收不到——「浮窗矩形
+                      // 之外」按鼠标非主键这半边只能在这里接（见钩子文档）。
+                      onNonPrimaryButtonDown: onDismissBarrierNonPrimaryButton,
                     ),
                   ),
                 if (_popup.isSearchingUi && _popup.pendingRect != null)
@@ -1615,6 +1628,7 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
                     ),
                     onPop: _popNestedPopupAt,
                   ),
+                ...buildParkedRealmLayers(screen: screen, controller: _popup),
               ],
             );
           },
@@ -1756,7 +1770,14 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
     final VideoBookRow? row = _row;
     final UnmodifiableListView<UserScript>? scripts = _userScripts;
     if (row == null || scripts == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      // BUG-2230：加载态也必须带 AppBar（= 返回键）。出口不是内容的一部分、不随内容
+      // 存亡（漫画页 manga_fushi_page 早已是这个口径）：本页的正常退出入口在
+      // [_buildAppBar]，而那只挂在下面的**就绪**分支上；WebView2 环境创建 / 资源加载
+      // 慢或悬挂时，桌面端没有系统返回键，用户就被钉在这个转圈上。
+      return Scaffold(
+        appBar: AppBar(),
+        body: const Center(child: CircularProgressIndicator()),
+      );
     }
     // 网页流媒体页属于视频模块，同样是**窗口全屏的合法宿主**（见
     // [WindowFullscreenHosts]）。上面两条早退分支（加载失败 / 尚未就绪）故意不声明：

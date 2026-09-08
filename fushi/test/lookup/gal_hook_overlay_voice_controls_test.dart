@@ -29,20 +29,20 @@ void main() {
     nativeCalls = <MethodCall>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (MethodCall call) async {
-          nativeCalls.add(call);
-          if (call.method == 'show' || call.method == 'isShowing') return true;
-          if (call.method.startsWith('galLookup')) {
-            // 真 runner 对每条查词控制面调用都给显式 ack（ok + 单调递增的
-            // requestSeq）。会话换代时 GalHookTextOverlayController 要拿到这份 ack 才
-            // 算旧路线已退役；假 runner 不答就把台词浮窗一并连坐掉了。
-            return <String, Object?>{
-              'ok': true,
-              'requestSeq': ++lookupRequestSeq,
-              'appliedSeq': lookupRequestSeq,
-            };
-          }
-          return null;
-        });
+      nativeCalls.add(call);
+      if (call.method == 'show' || call.method == 'isShowing') return true;
+      if (call.method.startsWith('galLookup')) {
+        // 真 runner 对每条查词控制面调用都给显式 ack（ok + 单调递增的
+        // requestSeq）。会话换代时 GalHookTextOverlayController 要拿到这份 ack 才
+        // 算旧路线已退役；假 runner 不答就把台词浮窗一并连坐掉了。
+        return <String, Object?>{
+          'ok': true,
+          'requestSeq': ++lookupRequestSeq,
+          'appliedSeq': lookupRequestSeq,
+        };
+      }
+      return null;
+    });
     GalHookTextOverlayChannel.platformOverride = true;
     textService = TexthookerService.test();
     session = GalHookSessionController(
@@ -50,18 +50,19 @@ void main() {
       isWindows: true,
       targetWow64Probe: (_) async => false,
       injectorResolver: ({required bool is32Bit}) async => 'fake.exe',
-      engineSourceFactory:
-          ({
-            required int targetPid,
-            required String? launchExe,
-            required String injectorPath,
-            required bool lunaPcHooks,
-            int? lunaCodepage,
-            List<String> launchArguments = const <String>[],
-            String launchWorkdir = '',
-            GalJapaneseLocaleMode japaneseLocaleMode =
-                kGalDefaultJapaneseLocaleMode,
-          }) => _VoiceTestEngine(),
+      engineSourceFactory: ({
+        required int targetPid,
+        required String? launchExe,
+        required String injectorPath,
+        required bool lunaPcHooks,
+        int? lunaCodepage,
+        List<String> launchArguments = const <String>[],
+        String launchWorkdir = '',
+        GalJapaneseLocaleMode japaneseLocaleMode =
+            kGalDefaultJapaneseLocaleMode,
+        String? contentLanguage,
+      }) =>
+          _VoiceTestEngine(),
       loopbackSourceFactory: _VoiceTestLoopback.new,
       endpointStatusLoader: () => const [],
     );
@@ -84,10 +85,10 @@ void main() {
   Future<void> invokeNative(String method) async {
     await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .handlePlatformMessage(
-          channel.name,
-          const StandardMethodCodec().encodeMethodCall(MethodCall(method)),
-          (_) {},
-        );
+      channel.name,
+      const StandardMethodCodec().encodeMethodCall(MethodCall(method)),
+      (_) {},
+    );
   }
 
   Future<void> waitUntil(bool Function() done) async {
@@ -120,7 +121,10 @@ void main() {
     final MethodCall pushed = nativeCalls.lastWhere(
       (MethodCall call) => call.method == 'setVoiceState',
     );
-    expect((pushed.arguments as Map<Object?, Object?>)['recapturing'], isTrue);
+    expect(
+      (pushed.arguments as Map<Object?, Object?>)['recapturing'],
+      isTrue,
+    );
 
     // 再点一次 = 立即收束；状态必须回推成静止态。
     await invokeNative('recaptureVoice');
@@ -154,7 +158,7 @@ void main() {
 
 class _VoiceTestEngine extends EngineHookGalAudioSource {
   _VoiceTestEngine()
-    : super(targetPid: 0, launchExe: null, injectorPath: 'fake.exe');
+      : super(targetPid: 0, launchExe: null, injectorPath: 'fake.exe');
 
   @override
   bool get textHookReady => true;
@@ -179,7 +183,8 @@ class _VoiceTestEngine extends EngineHookGalAudioSource {
     int? textEventId,
     String? resourceId,
     bool allowLatestSessionFallback = true,
-  }) async => null;
+  }) async =>
+      null;
 
   @override
   Future<void> stop() async {}
@@ -188,11 +193,11 @@ class _VoiceTestEngine extends EngineHookGalAudioSource {
 class _VoiceTestLoopback extends LoopbackGalAudioSource {
   @override
   Future<PcmFormat?> start() async => const PcmFormat(
-    sampleRate: 44100,
-    channels: 2,
-    bitsPerSample: 16,
-    isFloat: false,
-  );
+        sampleRate: 44100,
+        channels: 2,
+        bitsPerSample: 16,
+        isFloat: false,
+      );
 
   @override
   Future<void> stop() async {}

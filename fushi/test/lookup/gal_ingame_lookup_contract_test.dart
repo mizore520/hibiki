@@ -11,8 +11,12 @@
 //   4. runner 的失败是编码在应答里的 error token，不是异常——不许被吞成"成功"。
 //
 // 坐标域纪律（错了就是卡片乱跑）：glyph/view/anchor 要么全在 client physical px，
-// 要么全在 primaryLayer px。runner 对前者强制 view/client 1:1 并 ClientToScreen，后者
-// 走 in-process presenter；design/layout-local 没唯一 transform 时必须丢弃。
+// 要么全在 primaryLayer px。runner 的直连覆盖窗对两者用**同一套**映射——把 view 等比
+// 缩放并居中到游戏客户区，再 ClientToScreen；前者 view 即客户区，scale 恒为 1、信箱边
+// 为 0，映射退化成恒等变换，后者（目前只有 KiriKiri）才真正发生缩放。卡片本身**不随
+// 画布缩放**：它保持自身物理像素，贴附以字形矩形为基准在屏幕空间重排。
+// design/layout-local 没唯一 transform 时必须丢弃；新增该域的适配器会被
+// native/galgame_hook/tests/adapter_structure_test.py 的坐标域守卫拦下。
 
 import 'dart:io';
 
@@ -295,9 +299,11 @@ void main() {
     test('production provider whitelist matches native kind/id pairs', () {
       expect(isGalLookupProductionProviderPair(1, 1), isTrue);
       expect(isGalLookupProductionProviderPair(2, 14), isTrue);
+      expect(isGalLookupProductionProviderPair(2, 15), isTrue);
       expect(isGalLookupProductionProviderPair(3, 10), isTrue);
       expect(isGalLookupProductionProviderPair(1, 3), isFalse);
       expect(isGalLookupProductionProviderPair(2, 1), isFalse);
+      expect(isGalLookupProductionProviderPair(1, 15), isFalse);
       expect(isGalLookupProductionProviderPair(3, 11), isFalse);
     });
 
@@ -567,6 +573,89 @@ void main() {
     });
   });
 
+  group('BUG-2082 根卡以贴字形的那条边为不动点，不按 cap 上限高度算左上角', () {
+    GalRootPlacement resolvePlacement(GalLookupHit hit, int capW, int capH) =>
+        GalIngameLookupController.instance.debugResolveRootPlacement(
+          hit,
+          capW,
+          capH,
+        );
+
+    // SGRE 4K 全屏实测：字形 (640,1660) 80×80，视口 3840×2160，8 MB 预算把 cap
+    // 收到 1933×1087；实际渲染出来的根卡只有 773 高。
+    final GalLookupHit hit4k = _hit(
+      glyphX: 640,
+      glyphY: 1660,
+      glyphW: 80,
+      glyphH: 80,
+      viewW: 3840,
+      viewH: 2160,
+    );
+
+    test('字幕贴底：cap 卡翻到上方，不动点是 cap 卡底边 = 字形顶 - 间距', () {
+      final GalRootPlacement placement = resolvePlacement(hit4k, 1933, 1087);
+      expect(placement.above, isTrue);
+      expect(placement.edgeY, hit4k.glyphY - _kCardGap);
+      expect(placement.x, 640);
+    });
+
+    test('翻到上方时底边贴台词：实际卡比 cap 矮 314 px 也不留空隙（修前顶边停在 569）', () {
+      final GalRootPlacement placement = resolvePlacement(hit4k, 1933, 1087);
+      final ({int x, int y}) rendered =
+          resolveGalRootTopLeft(placement, 773, hit4k.viewH);
+      expect(rendered.y + 773, placement.edgeY, reason: '底边必须贴在字形顶上方');
+      expect(rendered.y, 1656 - 773);
+      // cap 高度本身回到旧实现的落点：布局原点与修前逐字节一致。
+      expect(resolveGalRootTopLeft(placement, 1087, hit4k.viewH).y, 569);
+    });
+
+    test('字幕在上半部：cap 卡放下方，不动点是顶边，卡片变高不动顶边', () {
+      final GalLookupHit hit = _hit(glyphX: 600, glyphY: 200, viewH: 720);
+      final GalRootPlacement placement = resolvePlacement(hit, 480, 320);
+      expect(placement.above, isFalse);
+      expect(placement.edgeY, hit.glyphY + hit.glyphH + _kCardGap);
+      expect(resolveGalRootTopLeft(placement, 120, 720).y, placement.edgeY);
+      expect(resolveGalRootTopLeft(placement, 320, 720).y, placement.edgeY);
+    });
+
+    test('根卡比上方空间还高时钉在 0，绝不给负坐标', () {
+      const GalRootPlacement placement = (x: 10, edgeY: 300, above: true);
+      expect(resolveGalRootTopLeft(placement, 500, 720), (x: 10, y: 0));
+    });
+
+    test('放下方而根卡长过视口底时贴底边', () {
+      const GalRootPlacement placement = (x: 10, edgeY: 600, above: false);
+      expect(resolveGalRootTopLeft(placement, 300, 720), (x: 10, y: 420));
+    });
+
+    // 审查探针的镜像象限：字形在屏幕中部（不是贴底台词），cap 高度远超锚侧空间。
+    // computeFrameRect 选的是**下方**（spaceBelow 376 >= 收缩后的 height 370，
+    // top = 344 正贴字形底），但 `[0, viewH - capH] = [0, 160]` 这道夹子会把它拽到
+    // 160。侧别若从这个被夹过的 y 反推（`y < glyphY` → above），edgeY 就变成视口
+    // 底边 720、与字形完全脱钩：根卡高 200 时落到 520，离字形底边 340 空出 180 px
+    // ——正是 BUG-2082 那段空隙的镜像。SGRE 台词贴底所以真机撞不到，中屏字形
+    //（UI 文本查词 / 台词不贴底的引擎）必撞。
+    test('中屏字形 + cap 远大于锚侧空间：侧别取 computeFrameRect 自己的判据，不从被夹过的 y 反推', () {
+      final GalLookupHit hit = _hit(
+        glyphX: 300,
+        glyphY: 300,
+        glyphW: 40,
+        glyphH: 40,
+        viewW: 1280,
+        viewH: 720,
+      );
+      final GalRootPlacement placement = resolvePlacement(hit, 600, 560);
+      expect(placement.above, isFalse, reason: 'computeFrameRect 选的是下方');
+      expect(placement.edgeY, hit.glyphY + hit.glyphH + _kCardGap);
+      expect(placement.x, 300);
+      // 反推实现在这里会给 (above: true, edgeY: 720) → 根卡 200 高时落到 520。
+      final ({int x, int y}) rendered =
+          resolveGalRootTopLeft(placement, 200, hit.viewH);
+      expect(rendered.y, 344);
+      expect(rendered.y, hit.glyphY + hit.glyphH + _kCardGap);
+    });
+  });
+
   group('Dart → runner：开关 / 投帧 / 消场', () {
     late List<MethodCall> calls;
 
@@ -647,6 +736,10 @@ void main() {
             cardHeight: 320,
             viewWidth: hit.viewW,
             viewHeight: hit.viewH,
+            glyphX: hit.glyphX,
+            glyphY: hit.glyphY,
+            glyphW: hit.glyphW,
+            glyphH: hit.glyphH,
           );
       expect(calls.single.method, 'galLookupPresent');
       expect(calls.single.arguments, <String, Object?>{
@@ -659,12 +752,125 @@ void main() {
         'cardHeight': 320,
         'viewWidth': 1280,
         'viewHeight': 720,
+        // 字形矩形必须原样过线：直连覆盖窗要靠它在屏幕空间贴附卡片，丢了就退回按
+        // 画布尺寸排的 anchor，放大运行时卡片会飘离命中的字。
+        'glyphX': hit.glyphX,
+        'glyphY': hit.glyphY,
+        'glyphW': hit.glyphW,
+        'glyphH': hit.glyphH,
       });
       expect(result.ok, isTrue);
       expect(result.width, 480);
       expect(result.height, 320);
       expect(result.clamped, isFalse);
       expect(result.directSurface, isTrue);
+    });
+
+    test('galLookupPresentHighlight 只带序号/锚点/高亮区间（BUG-2087 直连路径追加帧）', () async {
+      mockRunner((_) => <String, Object?>{});
+      final GalLookupCallResult result =
+          await GalHookTextOverlayChannel.galLookupPresentHighlight(
+            seq: 9,
+            anchorX: 640,
+            anchorY: 570,
+            highlightStart: 10,
+            highlightLen: 4,
+          );
+      expect(calls.single.method, 'galLookupPresentHighlight');
+      expect(calls.single.arguments, <String, Object?>{
+        'seq': 9,
+        'anchorX': 640,
+        'anchorY': 570,
+        'highlightStart': 10,
+        'highlightLen': 4,
+      });
+      expect(result.ok, isTrue);
+    });
+
+    // 接线层：纯函数（_resolveRootPlacement / resolveGalRootTopLeft）单测再漂亮，
+    // 也证明不了「reveal 报的根卡高度真的走到了 present 的 anchor 上」。下面三条
+    // 咬的就是那几行接线：host 上报的 rootHeight 被采信、_drainRecapture 走 placement
+    // 而不是按卡片union 重解 anchor、直连 present 后追发 highlight-only 帧。
+    test('reveal 报的根卡高度驱动 present anchor（union 高度与 rootHeight 不同）', () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(globalLookupChannel, (_) async => null);
+      late GlobalLookupRoute activeRoute;
+      mockRunner((MethodCall call) {
+        if (call.method == 'galLookupPresent') {
+          return <String, Object?>{'directSurface': true};
+        }
+        return <String, Object?>{};
+      });
+      final GalIngameLookupController controller =
+          GalIngameLookupController.test(
+            preferenceReader: (String key, {required Object? defaultValue}) =>
+                key == GalIngameLookupController.enabledPreferenceKey
+                ? true
+                : defaultValue,
+            lookupRunner: (String query, GalLookupHit hit) async {
+              activeRoute = GlobalLookupChannel.currentRoute;
+              return true;
+            },
+          );
+      try {
+        await controller.start(appModel: AppModel(testPlatformServices()));
+        // route token 的失效高水位是**进程级** static，按 `galCard:<sessionEpoch>`
+        // 分族。同族里作废过 lookupEpoch 1 之后，别的测试用同一 sessionEpoch 起的
+        // 第一次查词就恒被判为过期路由。本组里 epoch 1 归换句生命周期那条、epoch 2
+        // 归 provider 仲裁那条，所以这里推到 3。
+        await controller.setSessionActive(true);
+        await controller.setSessionActive(false);
+        await controller.setSessionActive(true);
+        await controller.setSessionActive(false);
+        await controller.setSessionActive(true);
+        await controller.setProviderAdmission(true);
+        // 台词贴底 → cap 卡翻到字形上方，不动点 = 字形顶 - 4 = 636。
+        final GalLookupHit hit = _hit(seq: 88, glyphX: 400, glyphY: 640);
+        await controller.handleHit(hit);
+        calls.clear();
+
+        // union 600x400（子卡把并集撑高），但根卡只有 200 高。
+        GlobalLookupController.instance.onRoutedRevealed!(
+          activeRoute,
+          600,
+          400,
+          0,
+          0,
+          200,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        final MethodCall present = calls.firstWhere(
+          (MethodCall call) => call.method == 'galLookupPresent',
+        );
+        final Map<Object?, Object?> args =
+            present.arguments as Map<Object?, Object?>;
+        // 636 - 200：根卡底边贴字形。取 union 高度 400（M2：忽略 host 的 rootHeight）
+        // 或整段退回 _resolveAnchor(hit, 600, 400)（M3）都会给 236。
+        expect(args['anchorY'], 436);
+        expect(args['anchorX'], 400);
+        expect(args['cardWidth'], 600);
+        expect(args['cardHeight'], 400);
+
+        // BUG-2087：直连 present 成功且高亮区间非空 → 追一张 highlight-only 帧。
+        final MethodCall highlight = calls.firstWhere(
+          (MethodCall call) => call.method == 'galLookupPresentHighlight',
+        );
+        expect(highlight.arguments, <String, Object?>{
+          'seq': 88,
+          'anchorX': 400,
+          'anchorY': 436,
+          'highlightStart': hit.charIndex,
+          'highlightLen': 1,
+        });
+        expect(
+          calls.indexOf(present) < calls.indexOf(highlight),
+          isTrue,
+          reason: 'highlight-only 帧必须跟在 present 之后，不能顶掉卡片那一帧',
+        );
+      } finally {
+        await controller.stopForTesting();
+      }
     });
 
     test('galLookupDismiss 带上要撤掉的那次命中序号', () async {
@@ -687,6 +893,10 @@ void main() {
             cardHeight: 320,
             viewWidth: 1280,
             viewHeight: 720,
+            glyphX: 0,
+            glyphY: 0,
+            glyphW: 24,
+            glyphH: 24,
           );
       expect(result.ok, isFalse);
       expect(result.error, 'lookup_region_missing');
@@ -1116,6 +1326,10 @@ void main() {
           cardHeight: 320,
           viewWidth: 1280,
           viewHeight: 720,
+          glyphX: 0,
+          glyphY: 0,
+          glyphW: 24,
+          glyphH: 24,
         )).error,
         'unsupported_platform',
       );

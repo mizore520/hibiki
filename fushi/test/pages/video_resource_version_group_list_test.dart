@@ -154,6 +154,7 @@ void main() {
               ]),
               sources: const <MediaSourceRow>[
                 MediaSourceRow(
+                  videoGroupingMode: 'series',
                   id: 1,
                   label: 'videos',
                   mediaKind: 'video',

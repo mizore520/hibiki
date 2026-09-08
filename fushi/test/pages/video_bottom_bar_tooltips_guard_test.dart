@@ -113,18 +113,19 @@ void main() {
   });
 
   test('desktop and mobile bottom bars both delegate to the shared helper', () {
-    // TODO-590 batch11：两套 controls 主题的底栏委托串已搬到 controls_theme.part.dart，
-    // 改读合并语料；CRLF 已在 readVideoFushiSource 内归一为 LF，行内字面量按 LF 写。
+    // TODO-590 batch11：两套 controls 主题的底栏委托串已搬到 controls_theme.part.dart。
+    // dart format 会在一行/多行之间重排 Expanded，去空白后只钉结构。
+    final String compact = corpus.replaceAll(RegExp(r'\s+'), '');
     expect(
-      'Expanded(\n          child: _centeredBottomControlBar(controller, desktop: true)'
-          .allMatches(corpus)
+      'Expanded(child:_centeredBottomControlBar(controller,desktop:true))'
+          .allMatches(compact)
           .length,
       1,
       reason: 'desktop bottom bar should use the shared helper',
     );
     expect(
-      'Expanded(\n          child: _centeredBottomControlBar(controller, desktop: false)'
-          .allMatches(corpus)
+      'Expanded(child:_centeredBottomControlBar(controller,desktop:false))'
+          .allMatches(compact)
           .length,
       1,
       reason: 'mobile bottom bar should use the shared helper',

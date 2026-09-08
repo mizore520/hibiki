@@ -96,6 +96,29 @@ String buildGoogleVideoRangeUrl(String baseUrl, int start, int end) {
   return uri.replace(queryParameters: q).toString();
 }
 
+/// 这个分离音轨**是否需要**先整段物化才能裁——判据是「谁在限速」，不是「有没有分离音轨」。
+///
+/// 上面那套 `range=` 查询参数分片是 **googlevideo 专属**的绕行：注释里三条都只对它成立
+/// （SABR 限速、认查询参数 range 那一路才不限速、UA 要与 YouTube 铸流一致）。可它的触发
+/// 判据一直写成形状——「[ImmersionMiningRequest.audioSource] 非空且是远端 http」。任何
+/// **别的**站点的分离音轨一旦走进来就会踩空：`range=` 是它不认识的查询参数，被忽略后每
+/// 一片都返回整个文件，于是把同一个流反复下满 `maxBytes` 才罢休，比直接 seek 慢几十倍。
+///
+/// 实测（bilibili DASH audio-only m4s，`mp4a.40.2`）：ffmpeg 直接 `-ss/-t` 对 URL 裁 3 秒
+/// 片段稳定成功、耗时约 1 秒，根本不需要物化——它没有 googlevideo 那种限速。所以这里把
+/// 判据收回到原因上：只有 googlevideo 的流才走物化，其余分离音轨直接对 URL 裁。
+///
+/// 纯函数。非 http(s)、URL 畸形、host 不是 googlevideo 一律 false。
+bool audioSourceNeedsRangeMaterialization(String? audioUrl) {
+  if (audioUrl == null || audioUrl.isEmpty) return false;
+  final Uri? uri = Uri.tryParse(audioUrl);
+  if (uri == null) return false;
+  if (uri.scheme != 'http' && uri.scheme != 'https') return false;
+  final String host = uri.host.toLowerCase();
+  // `*.googlevideo.com`（rrN---sn-xxxx.googlevideo.com 等一大票子域）。
+  return host == 'googlevideo.com' || host.endsWith('.googlevideo.com');
+}
+
 /// TODO-1314（B5）：把远端 **audio-only DASH** 流（googlevideo 分离音频轨）用 yt-dlp 式
 /// `range=` 分片顺序下载**整段物化到本地临时文件** [outputPath]，返回本地路径（成功）或
 /// null（失败 / 空流 / 非 http 输入）。**best-effort**，绝不抛。
@@ -714,8 +737,15 @@ List<String> buildFfmpegFrameArgs({
   // 缩略图只显示几百像素宽，让 ffmpeg 在编码前就缩好，省掉全尺寸 JPEG 的编码、
   // 落盘、读回、解码四段开销。null / <=0 表示不缩放（封面等既有调用方的行为不变）。
   int? scaleWidth,
+  // BUG-2192：网飞录屏片段裁掉播放器黑边——crop 段排在 scale 之前（先裁后缩，缩放
+  // 目标宽度指的是裁后画面）。null / 空 = 不裁。
+  String? cropFilter,
 }) {
   final double seek = atSeconds < 0 ? 0.0 : atSeconds;
+  final String vfChain = <String>[
+    if (cropFilter != null && cropFilter.isNotEmpty) cropFilter,
+    if (scaleWidth != null && scaleWidth > 0) 'scale=$scaleWidth:-2',
+  ].join(',');
   return <String>[
     '-y',
     ...buildFfmpegRemoteInputArgs(inputPath, tlsPinSha256: tlsPinSha256),
@@ -724,10 +754,7 @@ List<String> buildFfmpegFrameArgs({
     inputPath,
     if (decodeFromStart) ...<String>['-ss', seek.toStringAsFixed(3)],
     '-an',
-    if (scaleWidth != null && scaleWidth > 0) ...<String>[
-      '-vf',
-      'scale=$scaleWidth:-2',
-    ],
+    if (vfChain.isNotEmpty) ...<String>['-vf', vfChain],
     '-frames:v',
     '1',
     '-update',
@@ -762,6 +789,8 @@ Future<String?> extractVideoFrameViaFfmpeg({
   bool diagnosticOnly = false,
   // TODO-1082：缩略图消费方按目标宽度出图（见 [buildFfmpegFrameArgs]）；null 保持原尺寸。
   int? scaleWidth,
+  // BUG-2192：先裁再缩的 crop 滤镜段（`crop=…`），null = 不裁（既有调用方逐字不变）。
+  String? cropFilter,
 }) async {
   if (!_isRemoteFfmpegInput(inputPath) && !File(inputPath).existsSync()) {
     return null;
@@ -777,6 +806,7 @@ Future<String?> extractVideoFrameViaFfmpeg({
         decodeFromStart: decodeFromStart,
         tlsPinSha256: tlsPinSha256,
         scaleWidth: scaleWidth,
+        cropFilter: cropFilter,
       ),
       const Duration(seconds: 30),
     );
@@ -881,6 +911,8 @@ List<String> buildFfmpegClipAnimatedArgs({
   int width = 320,
   int maxDurationMs = 10000,
   String? tlsPinSha256,
+  // BUG-2192：crop 段排在 fps/scale 之前（先裁后缩）。null / 空 = 不裁。
+  String? cropFilter,
 }) {
   final double startSeconds = (startMs < 0 ? 0 : startMs) / 1000.0;
   final int rawDur = endMs - startMs;
@@ -892,6 +924,7 @@ List<String> buildFfmpegClipAnimatedArgs({
   // 已不产出 0（三种格式的顶格档都是有限上限，见 MiningAnimatedFormat 与 BUG-1039），
   // 这条分支只服务直接调用方；命中时对应滤镜段整段省略。
   final StringBuffer pre = StringBuffer();
+  if (cropFilter != null && cropFilter.isNotEmpty) pre.write('$cropFilter,');
   if (fps > 0) pre.write('fps=$fps,');
   if (width > 0) pre.write('scale=$width:-2:flags=lanczos,');
 
@@ -997,6 +1030,8 @@ Future<String?> extractClipGifViaFfmpeg({
   bool diagnosticOnly = false,
   // BUG-891：远端自签主机的 TLS 证书 SHA-256 钉扎指纹（透传给 ffmpeg），非远端/公网源为 null。
   String? tlsPinSha256,
+  // BUG-2192：先裁再缩的 crop 滤镜段，null = 不裁。
+  String? cropFilter,
 }) async {
   if (endMs <= startMs) return null;
   if (!_isRemoteFfmpegInput(inputPath) && !File(inputPath).existsSync()) {
@@ -1016,6 +1051,7 @@ Future<String?> extractClipGifViaFfmpeg({
         fps: fps,
         width: width,
         tlsPinSha256: tlsPinSha256,
+        cropFilter: cropFilter,
       ),
       const Duration(seconds: 120),
     );

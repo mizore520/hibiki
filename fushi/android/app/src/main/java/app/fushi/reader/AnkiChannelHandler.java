@@ -5,18 +5,18 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 
 import com.ichi2.anki.FlashCardsContract;
-import com.ichi2.anki.api.AddContentApi;
-import com.ichi2.anki.api.NoteInfo;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -35,6 +35,21 @@ public class AnkiChannelHandler {
     private static final String CHANNEL = ChannelNames.ANKI;
     private static final int AD_PERM_REQUEST = 0;
 
+    // BUG-2098：`requestAnkidroidPermissions` 的返回值。此前恒 success(true)——发起
+    // 系统权限请求后**不等用户答复**就返回，Dart 侧紧接着查 provider，于是权限对话框
+    // 还在屏幕上时错误已经报完了；而当系统压根不弹框（用户永久拒绝 / AnkiDroid 没装
+    // 导致这个自定义 dangerous 权限在系统里根本没被任何包定义）时，用户在设置页里
+    // 没有任何路径能把权限授出来。现在返回真实终态，Dart 据此短路并给可操作提示。
+    static final String PERM_GRANTED = "granted";
+    /** 用户拒绝了本次请求，但还能再问（下次仍会弹框）。 */
+    static final String PERM_DENIED = "denied";
+    /** 系统不再弹框（「不再询问」/永久拒绝）——只能去应用设置页手动授予。 */
+    static final String PERM_PERMANENTLY_DENIED = "permanently_denied";
+    /** 副 engine（无 Activity）未授权：弹不了框，须回主 app 授予（BUG-865）。 */
+    static final String PERM_NO_ACTIVITY = "no_activity";
+    /** AnkiDroid 没装（或其 API 被禁）——该权限在系统里不存在，授权无从谈起。 */
+    static final String PERM_UNAVAILABLE = "unavailable";
+
     // BUG-865：AnkiDroid ContentProvider 访问是「进程 + 权限」作用域，只需 Context
     // （AnkiDroidHelper 内部已 getApplicationContext()、AddContentApi/FileProvider/
     // grantUriPermission/getContentResolver/startActivity(NEW_TASK) 均 Context 即可）。
@@ -45,6 +60,14 @@ public class AnkiChannelHandler {
     @Nullable
     private final Activity activity;
     private final AnkiDroidHelper ankiDroid;
+
+    /**
+     * BUG-2098：在途的权限请求——{@code requestAnkidroidPermissions} 把 Dart 侧的
+     * {@link MethodChannel.Result} 挂在这里，直到 {@link #onRequestPermissionsResult}
+     * 拿到系统回调才 resolve。只在主线程读写（channel 回调与权限回调同为主线程）。
+     */
+    @Nullable
+    private MethodChannel.Result pendingPermissionResult;
 
     /** 主 engine（MainActivity）用：Activity 既作 Context 又能弹权限。 */
     public AnkiChannelHandler(Activity activity) {
@@ -78,7 +101,7 @@ public class AnkiChannelHandler {
                 final String filename = call.argument("filename");
                 final String preferredName = call.argument("preferredName");
                 final String mimeType = call.argument("mimeType");
-                final AddContentApi api = new AddContentApi(context);
+                final AnkiProvider api = AnkiProviders.forContext(context);
                 final ArrayList<String> noteTypeFields = call.argument("noteTypeFields");
                 final String noteTypeName = call.argument("noteTypeName");
                 final String cardName = call.argument("cardName");
@@ -169,7 +192,7 @@ public class AnkiChannelHandler {
                         // TODO-1007/1008：按内容（第一字段 = key，可选 reading 过滤）反查
                         // 所有同词卡的 note id + 一行预览，使 AnkiDroid 与桌面 AnkiConnect
                         // 一样能发现「别处/上次会话建的卡」。经 ContentProvider
-                        // findDuplicateNotes(mid, key) -> NoteInfo.getId()，不依赖 bool-only
+                        // findDuplicateNotes(mid, key) -> AnkiNote.getId()，不依赖 bool-only
                         // 的 checkForDuplicates。
                         if (models == null || key == null) {
                             result.error("MISSING_ARG",
@@ -236,7 +259,7 @@ public class AnkiChannelHandler {
                     case "getModelList":
                         if (requirePermission(result)) {
                             try {
-                                result.success(api.getModelList());
+                                result.success(api.getModelList(0));
                             } catch (Exception e) {
                                 result.error(providerErrorCode(e),
                                     e.getMessage(), null);
@@ -344,12 +367,12 @@ public class AnkiChannelHandler {
                         }
                         break;
                     case "requestAnkidroidPermissions":
-                        // BUG-865：副 engine（activity==null）无法弹系统权限框，静默跳过；
-                        // 权限须在主 app 授予。仍回 success(true) 保持契约不变。
-                        if (activity != null && ankiDroid.shouldRequestPermission()) {
-                            ankiDroid.requestPermission(activity, AD_PERM_REQUEST);
-                        }
-                        result.success(true);
+                        requestAnkidroidPermissions(result);
+                        break;
+                    case "openAnkiPermissionSettings":
+                        // BUG-2098：永久拒绝后系统不再弹框，唯一出路是应用详情页里的
+                        // 权限项；把跳转做成显式能力，Dart 侧才能给「去设置」按钮。
+                        result.success(openAppPermissionSettings());
                         break;
                     case "addFileToMedia":
                         if (filename == null || preferredName == null) {
@@ -373,7 +396,16 @@ public class AnkiChannelHandler {
                         // 制卡断裂。
                         Uri fileUri = FileProvider.getUriForFile(
                             context, BuildConfig.APPLICATION_ID + ".provider", file);
-                        context.grantUriPermission("com.ichi2.anki", fileUri,
+                        // BUG-2195：授给实际安装的那个包。写死主包时，并行版拿不到
+                        // 这个 URI 的读权限，媒体插入必失败。
+                        final AnkiDroidTarget mediaTarget =
+                            AnkiDroidTarget.resolve(context);
+                        if (mediaTarget == null) {
+                            result.error("ANKI_NOT_INSTALLED",
+                                "AnkiDroid is not installed", null);
+                            return;
+                        }
+                        context.grantUriPermission(mediaTarget.packageName, fileUri,
                             Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         ContentValues contentValues = new ContentValues();
                         contentValues.put(FlashCardsContract.AnkiMedia.FILE_URI,
@@ -382,7 +414,9 @@ public class AnkiChannelHandler {
                             preferredName);
                         ContentResolver contentResolver = context.getContentResolver();
                         Uri returnUri = contentResolver.insert(
-                            FlashCardsContract.AnkiMedia.CONTENT_URI, contentValues);
+                            mediaTarget.rebase(
+                                FlashCardsContract.AnkiMedia.CONTENT_URI),
+                            contentValues);
                         if (returnUri == null || returnUri.getPath() == null) {
                             result.error("MEDIA_INSERT_FAILED",
                                 "AnkiDroid media insert returned null", null);
@@ -398,7 +432,7 @@ public class AnkiChannelHandler {
     }
 
     /**
-     * TODO-292: classify an exception thrown by AnkiDroid's {@link AddContentApi}
+     * TODO-292: classify an exception thrown by AnkiDroid's {@link AnkiProvider}
      * ContentProvider client. When the collection database cannot be opened
      * (collection in use / mid-sync / corrupt, AnkiDroid never opened once, API
      * disabled, background process killed) AnkiDroid throws with the literal
@@ -416,13 +450,100 @@ public class AnkiChannelHandler {
         return "ANKI_PROVIDER_ERROR";
     }
 
+    /**
+     * BUG-2098：发起 AnkiDroid 运行时权限请求，并**等到用户答复**再 resolve。
+     *
+     * <p>此前这里是「发起请求 + 立刻 success(true)」，Dart 侧 await 完马上就去查
+     * provider，系统权限对话框还没被点，错误就已经弹给用户了；对话框根本没弹的两种
+     * 情况（永久拒绝 / AnkiDroid 未安装）更是让用户在这个页面上无路可走。
+     *
+     * <p>五种终态见 {@code PERM_*} 常量。注意先判「是否已授权」再判 activity：副
+     * engine 无 Activity 但权限早在主 app 授予过时，仍须回 {@code granted}（BUG-865）。
+     */
+    private void requestAnkidroidPermissions(MethodChannel.Result result) {
+        if (!ankiDroid.shouldRequestPermission()) {
+            result.success(PERM_GRANTED);
+            return;
+        }
+        if (!AnkiDroidHelper.isApiAvailable(context)) {
+            // AnkiDroid 没装/API 被禁：READ_WRITE_DATABASE 由 AnkiDroid 定义，没有任
+            // 何包定义它时 requestPermissions 会立即静默判拒且不弹框——报「去设置授权」
+            // 是误导，那个权限项在设置里根本不存在。
+            result.success(PERM_UNAVAILABLE);
+            return;
+        }
+        if (activity == null) {
+            result.success(PERM_NO_ACTIVITY);
+            return;
+        }
+        if (pendingPermissionResult != null) {
+            // 已有一次请求在途（系统对话框正开着）。不排队、不覆盖：覆盖会让前一个
+            // Dart Future 永远挂着。当作本次被拒，调用方重试即可。
+            result.success(PERM_DENIED);
+            return;
+        }
+        pendingPermissionResult = result;
+        ankiDroid.requestPermission(activity, AD_PERM_REQUEST);
+    }
+
+    /**
+     * BUG-2098：系统权限回调入口，由 {@code MainActivity.onRequestPermissionsResult}
+     * 转发。返回 {@code true} 表示本次回调属于 AnkiDroid 权限请求。
+     *
+     * <p>拒绝后区分「还能再问」与「不再询问」：请求刚被拒且
+     * {@code shouldShowRequestPermissionRationale} 仍为 false，说明系统已不再弹框，
+     * 只能去应用设置页授予。
+     */
+    public boolean onRequestPermissionsResult(int requestCode, @NonNull int[] grantResults) {
+        if (requestCode != AD_PERM_REQUEST) {
+            return false;
+        }
+        final MethodChannel.Result pending = pendingPermissionResult;
+        pendingPermissionResult = null;
+        if (pending == null) {
+            return true;
+        }
+        final boolean granted = grantResults.length > 0
+            && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+        if (granted) {
+            pending.success(PERM_GRANTED);
+        } else if (activity != null && ankiDroid.canAskPermissionAgain(activity)) {
+            pending.success(PERM_DENIED);
+        } else {
+            pending.success(PERM_PERMANENTLY_DENIED);
+        }
+        return true;
+    }
+
+    /** BUG-2098：打开本应用的系统详情页（权限项所在处）。成功返回 true。 */
+    private boolean openAppPermissionSettings() {
+        try {
+            final Intent intent = new Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", context.getPackageName(), null));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+            return true;
+        } catch (Exception e) {
+            android.util.Log.w("fushi-anki", "cannot open app settings", e);
+            return false;
+        }
+    }
+
+    /**
+     * provider 访问前的权限守卫。BUG-824 起每个碰 provider 的分支都过它。
+     *
+     * <p>BUG-2098：这里不再自己发起权限请求——发起与等待是
+     * {@link #requestAnkidroidPermissions} 的单一职责（本方法发起的那次请求无人
+     * 等待，会被静默丢弃）。此处只做「没权限就干净失败」的兜底。
+     *
+     * <p>因此 Dart 侧**每个碰 provider 的用户主动入口**都必须先走
+     * {@code _ensurePermission()}（AnkiRepository 里那条），否则该入口再也弹
+     * 不出权限框，只剩 PERMISSION_DENIED。守卫见
+     * {@code packages/fushi_anki/test/ankidroid_permission_flow_test.dart}。
+     */
     private boolean requirePermission(MethodChannel.Result result) {
         if (ankiDroid.shouldRequestPermission()) {
-            // BUG-865：副 engine（activity==null）不能弹系统权限框，只回错误让 Dart
-            // 层提示「去主 app 授予 AnkiDroid 权限」，避免 ActivityCompat 对 null NPE。
-            if (activity != null) {
-                ankiDroid.requestPermission(activity, AD_PERM_REQUEST);
-            }
             result.error("PERMISSION_DENIED",
                 "AnkiDroid permission not granted. Please grant and retry.",
                 null);
@@ -432,7 +553,7 @@ public class AnkiChannelHandler {
     }
 
     /**
-     * Adds a note via {@link AddContentApi#addNote} and returns the new note id.
+     * Adds a note via {@link AnkiProvider#addNote} and returns the new note id.
      *
      * <p>TODO-270 B: AnkiDroid addNote returns the {@code Long} id of the newly
      * created note (or {@code null} if it refused to create one - e.g. a
@@ -444,7 +565,7 @@ public class AnkiChannelHandler {
      */
     private Long addNote(String model, String deck,
                          ArrayList<String> fields, ArrayList<String> tags) {
-        final AddContentApi api = new AddContentApi(context);
+        final AnkiProvider api = AnkiProviders.forContext(context);
 
         long deckId;
         Long existingDeck = ankiDroid.findDeckIdByName(deck);
@@ -476,17 +597,17 @@ public class AnkiChannelHandler {
      * TODO-270 C2: reads an existing note's fields as a {@code name -> value}
      * map (symmetric with the AnkiConnect notesInfo contract).
      *
-     * <p>AnkiDroid is positional: {@link NoteInfo#getFields()} is an array in the
+     * <p>AnkiDroid is positional: {@link AnkiNote#getFields()} is an array in the
      * note's model field order, with no field names attached. We resolve the
      * note's model id (via the {@code Note.MID} column) and zip its field-name
-     * list ({@link AddContentApi#getFieldList}) with the positional values.
+     * list ({@link AnkiProvider#getFieldList}) with the positional values.
      *
      * @return {@code name -> value} (insertion-ordered by field order), or
      *         {@code null} if the note no longer exists / its model is gone.
      */
     private Map<String, String> notesInfo(long noteId) {
-        final AddContentApi api = new AddContentApi(context);
-        NoteInfo note = api.getNote(noteId);
+        final AnkiProvider api = AnkiProviders.forContext(context);
+        AnkiNote note = api.getNote(noteId);
         if (note == null) {
             return null;
         }
@@ -507,7 +628,7 @@ public class AnkiChannelHandler {
      * preserving every field the caller did not name (symmetric with the
      * AnkiConnect updateNoteFields contract).
      *
-     * <p>{@link AddContentApi#updateNoteFields} takes a positional
+     * <p>{@link AnkiProvider#updateNoteFields} takes a positional
      * {@code String[]} keyed by the model's field order. We start from the note's
      * current values and overwrite only the named ones, so unspecified fields are
      * not cleared.
@@ -516,8 +637,8 @@ public class AnkiChannelHandler {
      *         note / its model cannot be found or AnkiDroid refused the update.
      */
     private String updateNoteFields(long noteId, Map<String, String> fieldValues) {
-        final AddContentApi api = new AddContentApi(context);
-        NoteInfo note = api.getNote(noteId);
+        final AnkiProvider api = AnkiProviders.forContext(context);
+        AnkiNote note = api.getNote(noteId);
         if (note == null) {
             return "Note not found: " + noteId;
         }
@@ -545,14 +666,14 @@ public class AnkiChannelHandler {
 
     /**
      * Resolves the field-name list (in field order) for the model that owns
-     * noteId. {@link NoteInfo} carries no model id, so we read the note's
+     * noteId. {@link AnkiNote} carries no model id, so we read the note's
      * {@code Note.MID} column from the ContentProvider, then ask
-     * {@link AddContentApi#getFieldList} for that model's field names.
+     * {@link AnkiProvider#getFieldList} for that model's field names.
      *
      * @return the field names in order, or {@code null} if the note / model is
      *         not resolvable.
      */
-    private String[] fieldNamesForNote(AddContentApi api, long noteId) {
+    private String[] fieldNamesForNote(AnkiProvider api, long noteId) {
         Long modelId = modelIdForNote(noteId);
         if (modelId == null) {
             return null;
@@ -587,18 +708,18 @@ public class AnkiChannelHandler {
     private boolean checkForDuplicates(ArrayList<String> models, String key,
                                        String reading,
                                        ArrayList<Integer> readingFieldIndices) {
-        final AddContentApi api = new AddContentApi(context);
+        final AnkiProvider api = AnkiProviders.forContext(context);
         for (int i = 0; i < models.size(); i++) {
             String model = models.get(i);
             Long mid = ankiDroid.findModelIdByName(model, 1);
             if (mid == null) continue;
-            List<NoteInfo> notes = api.findDuplicateNotes(mid, key);
+            List<AnkiNote> notes = api.findDuplicateNotes(mid, key);
             if (notes.isEmpty()) continue;
             if (reading == null || reading.isEmpty()) return true;
             int readingIdx = (readingFieldIndices != null && i < readingFieldIndices.size())
                     ? readingFieldIndices.get(i) : -1;
             if (readingIdx < 0) return true;
-            for (NoteInfo note : notes) {
+            for (AnkiNote note : notes) {
                 String[] noteFields = note.getFields();
                 if (readingIdx < noteFields.length && reading.equals(noteFields[readingIdx])) {
                     return true;
@@ -616,9 +737,9 @@ public class AnkiChannelHandler {
      *
      * <p>This is the AnkiDroid analogue of the AnkiConnect findNotes + notesInfo
      * path: it discovers cards created anywhere (other apps, previous sessions),
-     * not just the current popup session. {@link AddContentApi#findDuplicateNotes}
-     * gives the matching {@link NoteInfo}s; {@link NoteInfo#getId()} is the note
-     * id and {@link NoteInfo#getFields()}[0] (HTML-stripped on the Dart side) is
+     * not just the current popup session. {@link AnkiProvider#findDuplicateNotes}
+     * gives the matching {@link AnkiNote}s; {@link AnkiNote#getId()} is the note
+     * id and {@link AnkiNote#getFields()}[0] (HTML-stripped on the Dart side) is
      * the preview.
      *
      * @return a list of {@code LinkedHashMap{noteId:Long, preview:String}},
@@ -627,7 +748,7 @@ public class AnkiChannelHandler {
     private List<Map<String, Object>> findNotesByContent(
             ArrayList<String> models, String key, String reading,
             ArrayList<Integer> readingFieldIndices) {
-        final AddContentApi api = new AddContentApi(context);
+        final AnkiProvider api = AnkiProviders.forContext(context);
         // De-dup by note id across models (a card matches at most one model, but
         // guard anyway), then sort newest-first.
         final LinkedHashMap<Long, String> byId = new LinkedHashMap<>();
@@ -635,11 +756,11 @@ public class AnkiChannelHandler {
             String model = models.get(i);
             Long mid = ankiDroid.findModelIdByName(model, 1);
             if (mid == null) continue;
-            List<NoteInfo> notes = api.findDuplicateNotes(mid, key);
+            List<AnkiNote> notes = api.findDuplicateNotes(mid, key);
             if (notes == null || notes.isEmpty()) continue;
             int readingIdx = (readingFieldIndices != null && i < readingFieldIndices.size())
                     ? readingFieldIndices.get(i) : -1;
-            for (NoteInfo note : notes) {
+            for (AnkiNote note : notes) {
                 String[] noteFields = note.getFields();
                 // When a reading is supplied and the model has a reading field,
                 // keep only notes whose reading also matches (mirrors the dupe
@@ -701,7 +822,7 @@ public class AnkiChannelHandler {
     private void createNoteType(String name, ArrayList<String> fields,
                                 String cardName, String front, String back,
                                 String css) {
-        final AddContentApi api = new AddContentApi(context);
+        final AnkiProvider api = AnkiProviders.forContext(context);
         // Idempotent: a model with this name + field count already exists.
         if (ankiDroid.findModelIdByName(name, fields.size()) != null) return;
         api.addNewCustomModel(

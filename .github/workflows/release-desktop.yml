@@ -10,6 +10,22 @@ on:
   # Fushi 改名过渡期曾暂停 push 自动发布（2026-08-07 用户指示），
   # 2026-08-13 用户指示恢复。
   push:
+    # 2026-09-05：`branches: ['main']` 改回 `['main', 'develop']`。
+    #
+    # 摘掉 develop 的那次改动依据是「合进 develop 后再出一份桌面/Apple 产物是纯冗余」——
+    # 这句话是**事实错误**：release.yml 只有 `build`(Android APK) 与 `tests` 两个 job，
+    # 从来不产桌面/Apple 产物。所以摘掉的不是重复，而是 develop 上桌面 debug 包的
+    # **唯一来源**。后果实测：09-03 改完之后 fushi-debug-rolling 里 Android APK 一路跟到
+    # 13529，而 windows-setup.exe / macos.zip / ios.ipa 全部停在 13384——桌面用户的更新器
+    # 诚实地报「已是最新」，因为确实再没有更新的桌面包被发布过。这与「没人推代码」同形，
+    # 没有任何守卫会红（路径守卫只校验路径存在，不看分支）。
+    #
+    # 抢 runner 那半是真的，但它是代价不是正确性问题：两条 workflow 共用**按 sha 分组**的
+    # `fushi-release-${sha}` + `cancel-in-progress: false`，同一个 sha 上天然串行、互不取消；
+    # 不同 sha 分属不同组，不会互相饿死。桌面/Apple 包晚出几十分钟，好过根本不出。
+    #
+    # 不变式守卫：fushi/test/build/release_workflow_push_branches_guard_test.dart
+    # ——两条发布 workflow 产出的平台集合不相交，所以它们的 push 分支清单必须一致。
     branches: ['main', 'develop']
     paths:
       - 'fushi/**'
@@ -51,6 +67,14 @@ on:
         required: false
         default: true
         type: boolean
+      # 与 release.yml 的同名输入成对，语义必须一致：两条 workflow 同 tag 共用一个
+      # concurrency 组、产出同一个 release 的不同平台资产，一边发一边不发会造出
+      # 「只有一半平台的正式版」。改一边就要改另一边（守卫测试钉住这条对偶）。
+      build_only:
+        description: 'Build the channel artifacts but publish nothing: no GitHub Release, no update manifest, no TestFlight upload. Artifacts stay downloadable from the run page. Use to hand a release candidate out for testing before committing to the publish.'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: fushi-release-${{ github.event.release.tag_name || github.event.inputs.tag_name || github.sha }}
@@ -77,10 +101,12 @@ jobs:
         shell: bash
         env:
           INPUT_CHANNEL: ${{ github.event.inputs.channel }}
+          INPUT_BUILD_ONLY: ${{ github.event.inputs.build_only }}
           INPUT_TAG_NAME: ${{ github.event.inputs.tag_name }}
           INPUT_RELEASE_NAME: ${{ github.event.inputs.release_name }}
           RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
           RELEASE_IS_PRERELEASE: ${{ github.event.release.prerelease }}
+          RELEASE_BODY: ${{ github.event.release.body }}
         run: |
           set -euo pipefail
           VERSION=$(grep '^version:' fushi/pubspec.yaml | sed 's/version: *//;s/+.*//')
@@ -94,6 +120,14 @@ jobs:
           CHANNEL="${INPUT_CHANNEL:-}"
           TAG="${INPUT_TAG_NAME:-}"
           NAME="${INPUT_RELEASE_NAME:-}"
+          # BUG-2088：正式版/测试版**真实更新公告**的来源。此前 BODY 只有一行模板，
+          # 而 NOTES 就是它——实测 v2.1.1 的 latest-stable.json 里 notes 是
+          # 「Manual formal release from bridge/auto-migrate-download @ 4d1c8f4.」，
+          # 而 GitHub 上那份正文有 3613 字：**应用内更新弹窗给用户看的一直是占位符**。
+          # 约定：公告写在 docs/release-notes/<语义版本>.md，正式/测试通道自动取用；
+          # 手动发 GitHub Release 时优先用 Release 正文（那才是当场写的那份）。
+          # debug 通道不取——滚动开发构建挂完整 changelog 会误导。
+          NOTES_FILE="docs/release-notes/${VERSION}.md"
           BODY=""
           PRERELEASE=true
           MAKE_LATEST=false
@@ -123,11 +157,13 @@ jobs:
                   TAG="${TAG:-v${VERSION}-beta.${RELEASE_SEQUENCE}}"
                   NAME="${NAME:-Fushi ${VERSION} beta ${RELEASE_SEQUENCE}}"
                   BODY="Manual desktop beta/test build from ${GITHUB_REF_NAME} @ ${SHORT_SHA}. Beta/test releases are prerelease and never Latest."
+                  if [ -f "$NOTES_FILE" ]; then BODY="$(cat "$NOTES_FILE")"; fi
                   ;;
                 formal)
                   TAG="${TAG:-v${VERSION}}"
                   NAME="${NAME:-Fushi ${VERSION}}"
                   BODY="Manual desktop formal release from ${GITHUB_REF_NAME} @ ${SHORT_SHA}."
+                  if [ -f "$NOTES_FILE" ]; then BODY="$(cat "$NOTES_FILE")"; fi
                   PRERELEASE=false
                   MAKE_LATEST=true
                   ;;
@@ -140,6 +176,10 @@ jobs:
               ;;
             release)
               CHANNEL=github-release
+              # 手动发 GitHub Release：正文就是当场写的公告，优先用它；留空（先建空
+              # Release 再补正文）时回落到仓库里的公告文件。
+              BODY="${RELEASE_BODY:-}"
+              if [ -z "$BODY" ] && [ -f "$NOTES_FILE" ]; then BODY="$(cat "$NOTES_FILE")"; fi
               TAG="${RELEASE_TAG_NAME:-${GITHUB_REF_NAME}}"
               # BUG-869: a manually-published NON-prerelease Release IS the formal
               # stable release → emit latest-stable.json (with releaseSequence) for
@@ -160,6 +200,19 @@ jobs:
           # CHANNEL and manifest publishes whenever the managed release does.
           if [ -z "$MANIFEST_CHANNEL" ]; then MANIFEST_CHANNEL="$CHANNEL"; fi
           if [ "$PUBLISH_MANAGED_RELEASE" = true ]; then PUBLISH_MANIFEST=true; fi
+
+          # build_only：出候选包给人测，但**什么都不发布**。与 release.yml 的同名
+          # 开关成对，语义必须一致——两条 workflow 同 tag 共用一个 concurrency 组、
+          # 产出的是同一个 release 的不同平台资产，一边发一边不发会造出「只有一半
+          # 平台的正式版」，比两边都不发更糟。
+          #
+          # 本文件有四份独立的 channel 解析（每个 job 一份），四份都要摁；漏一份就是
+          # 「那个平台照发」。守卫测试逐个 occurrence 校验，不是只看第一份。
+          if [ "$INPUT_BUILD_ONLY" = "true" ]; then
+            PUBLISH_MANAGED_RELEASE=false
+            PUBLISH_MANIFEST=false
+            echo "::notice title=Build-only run::Channel '$CHANNEL' artifacts will be built and uploaded to this workflow run, but no GitHub Release and no update manifest will be published."
+          fi
 
           BUILD_VERSION_NAME="$VERSION"
           case "$CHANNEL" in
@@ -252,6 +305,7 @@ jobs:
           dandanplay-app-id: ${{ secrets.DANDANPLAY_APP_ID }}
           dandanplay-app-secret: ${{ secrets.DANDANPLAY_APP_SECRET }}
           tmdb-api-key: ${{ secrets.TMDB_API_KEY }}
+          opensubtitles-api-key: ${{ secrets.OPENSUBTITLES_API_KEY }}
       # TODO-1208: cache media_kit's pre-built libmpv + ANGLE .7z archives it
       # downloads from GitHub into the CMake binary dir (fushi/build/windows/x64).
       # media_kit's download_and_verify skips the download when the archive exists
@@ -826,10 +880,12 @@ jobs:
         shell: bash
         env:
           INPUT_CHANNEL: ${{ github.event.inputs.channel }}
+          INPUT_BUILD_ONLY: ${{ github.event.inputs.build_only }}
           INPUT_TAG_NAME: ${{ github.event.inputs.tag_name }}
           INPUT_RELEASE_NAME: ${{ github.event.inputs.release_name }}
           RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
           RELEASE_IS_PRERELEASE: ${{ github.event.release.prerelease }}
+          RELEASE_BODY: ${{ github.event.release.body }}
         run: |
           set -euo pipefail
           VERSION=$(grep '^version:' fushi/pubspec.yaml | sed 's/version: *//;s/+.*//')
@@ -843,6 +899,14 @@ jobs:
           CHANNEL="${INPUT_CHANNEL:-}"
           TAG="${INPUT_TAG_NAME:-}"
           NAME="${INPUT_RELEASE_NAME:-}"
+          # BUG-2088：正式版/测试版**真实更新公告**的来源。此前 BODY 只有一行模板，
+          # 而 NOTES 就是它——实测 v2.1.1 的 latest-stable.json 里 notes 是
+          # 「Manual formal release from bridge/auto-migrate-download @ 4d1c8f4.」，
+          # 而 GitHub 上那份正文有 3613 字：**应用内更新弹窗给用户看的一直是占位符**。
+          # 约定：公告写在 docs/release-notes/<语义版本>.md，正式/测试通道自动取用；
+          # 手动发 GitHub Release 时优先用 Release 正文（那才是当场写的那份）。
+          # debug 通道不取——滚动开发构建挂完整 changelog 会误导。
+          NOTES_FILE="docs/release-notes/${VERSION}.md"
           BODY=""
           PRERELEASE=true
           MAKE_LATEST=false
@@ -872,11 +936,13 @@ jobs:
                   TAG="${TAG:-v${VERSION}-beta.${RELEASE_SEQUENCE}}"
                   NAME="${NAME:-Fushi ${VERSION} beta ${RELEASE_SEQUENCE}}"
                   BODY="Manual desktop beta/test build from ${GITHUB_REF_NAME} @ ${SHORT_SHA}. Beta/test releases are prerelease and never Latest."
+                  if [ -f "$NOTES_FILE" ]; then BODY="$(cat "$NOTES_FILE")"; fi
                   ;;
                 formal)
                   TAG="${TAG:-v${VERSION}}"
                   NAME="${NAME:-Fushi ${VERSION}}"
                   BODY="Manual desktop formal release from ${GITHUB_REF_NAME} @ ${SHORT_SHA}."
+                  if [ -f "$NOTES_FILE" ]; then BODY="$(cat "$NOTES_FILE")"; fi
                   PRERELEASE=false
                   MAKE_LATEST=true
                   ;;
@@ -889,6 +955,10 @@ jobs:
               ;;
             release)
               CHANNEL=github-release
+              # 手动发 GitHub Release：正文就是当场写的公告，优先用它；留空（先建空
+              # Release 再补正文）时回落到仓库里的公告文件。
+              BODY="${RELEASE_BODY:-}"
+              if [ -z "$BODY" ] && [ -f "$NOTES_FILE" ]; then BODY="$(cat "$NOTES_FILE")"; fi
               TAG="${RELEASE_TAG_NAME:-${GITHUB_REF_NAME}}"
               # BUG-869: a manually-published NON-prerelease Release IS the formal
               # stable release → emit latest-stable.json (with releaseSequence) for
@@ -909,6 +979,19 @@ jobs:
           # CHANNEL and manifest publishes whenever the managed release does.
           if [ -z "$MANIFEST_CHANNEL" ]; then MANIFEST_CHANNEL="$CHANNEL"; fi
           if [ "$PUBLISH_MANAGED_RELEASE" = true ]; then PUBLISH_MANIFEST=true; fi
+
+          # build_only：出候选包给人测，但**什么都不发布**。与 release.yml 的同名
+          # 开关成对，语义必须一致——两条 workflow 同 tag 共用一个 concurrency 组、
+          # 产出的是同一个 release 的不同平台资产，一边发一边不发会造出「只有一半
+          # 平台的正式版」，比两边都不发更糟。
+          #
+          # 本文件有四份独立的 channel 解析（每个 job 一份），四份都要摁；漏一份就是
+          # 「那个平台照发」。守卫测试逐个 occurrence 校验，不是只看第一份。
+          if [ "$INPUT_BUILD_ONLY" = "true" ]; then
+            PUBLISH_MANAGED_RELEASE=false
+            PUBLISH_MANIFEST=false
+            echo "::notice title=Build-only run::Channel '$CHANNEL' artifacts will be built and uploaded to this workflow run, but no GitHub Release and no update manifest will be published."
+          fi
 
           BUILD_VERSION_NAME="$VERSION"
           case "$CHANNEL" in
@@ -992,6 +1075,7 @@ jobs:
           dandanplay-app-id: ${{ secrets.DANDANPLAY_APP_ID }}
           dandanplay-app-secret: ${{ secrets.DANDANPLAY_APP_SECRET }}
           tmdb-api-key: ${{ secrets.TMDB_API_KEY }}
+          opensubtitles-api-key: ${{ secrets.OPENSUBTITLES_API_KEY }}
       # TODO-1208: cache CocoaPods spec repos + downloaded pod source and the
       # generated Pods dirs. Keyed on the Podfile.lock/pubspec.lock so a pod bump
       # invalidates it; CocoaPods re-installs on a mismatch, and a miss just
@@ -1365,10 +1449,12 @@ jobs:
         shell: bash
         env:
           INPUT_CHANNEL: ${{ github.event.inputs.channel }}
+          INPUT_BUILD_ONLY: ${{ github.event.inputs.build_only }}
           INPUT_TAG_NAME: ${{ github.event.inputs.tag_name }}
           INPUT_RELEASE_NAME: ${{ github.event.inputs.release_name }}
           RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
           RELEASE_IS_PRERELEASE: ${{ github.event.release.prerelease }}
+          RELEASE_BODY: ${{ github.event.release.body }}
         run: |
           set -euo pipefail
           VERSION=$(grep '^version:' fushi/pubspec.yaml | sed 's/version: *//;s/+.*//')
@@ -1382,6 +1468,14 @@ jobs:
           CHANNEL="${INPUT_CHANNEL:-}"
           TAG="${INPUT_TAG_NAME:-}"
           NAME="${INPUT_RELEASE_NAME:-}"
+          # BUG-2088：正式版/测试版**真实更新公告**的来源。此前 BODY 只有一行模板，
+          # 而 NOTES 就是它——实测 v2.1.1 的 latest-stable.json 里 notes 是
+          # 「Manual formal release from bridge/auto-migrate-download @ 4d1c8f4.」，
+          # 而 GitHub 上那份正文有 3613 字：**应用内更新弹窗给用户看的一直是占位符**。
+          # 约定：公告写在 docs/release-notes/<语义版本>.md，正式/测试通道自动取用；
+          # 手动发 GitHub Release 时优先用 Release 正文（那才是当场写的那份）。
+          # debug 通道不取——滚动开发构建挂完整 changelog 会误导。
+          NOTES_FILE="docs/release-notes/${VERSION}.md"
           BODY=""
           PRERELEASE=true
           MAKE_LATEST=false
@@ -1411,11 +1505,13 @@ jobs:
                   TAG="${TAG:-v${VERSION}-beta.${RELEASE_SEQUENCE}}"
                   NAME="${NAME:-Fushi ${VERSION} beta ${RELEASE_SEQUENCE}}"
                   BODY="Manual desktop beta/test build from ${GITHUB_REF_NAME} @ ${SHORT_SHA}. Beta/test releases are prerelease and never Latest."
+                  if [ -f "$NOTES_FILE" ]; then BODY="$(cat "$NOTES_FILE")"; fi
                   ;;
                 formal)
                   TAG="${TAG:-v${VERSION}}"
                   NAME="${NAME:-Fushi ${VERSION}}"
                   BODY="Manual desktop formal release from ${GITHUB_REF_NAME} @ ${SHORT_SHA}."
+                  if [ -f "$NOTES_FILE" ]; then BODY="$(cat "$NOTES_FILE")"; fi
                   PRERELEASE=false
                   MAKE_LATEST=true
                   ;;
@@ -1428,6 +1524,10 @@ jobs:
               ;;
             release)
               CHANNEL=github-release
+              # 手动发 GitHub Release：正文就是当场写的公告，优先用它；留空（先建空
+              # Release 再补正文）时回落到仓库里的公告文件。
+              BODY="${RELEASE_BODY:-}"
+              if [ -z "$BODY" ] && [ -f "$NOTES_FILE" ]; then BODY="$(cat "$NOTES_FILE")"; fi
               TAG="${RELEASE_TAG_NAME:-${GITHUB_REF_NAME}}"
               # BUG-869: a manually-published NON-prerelease Release IS the formal
               # stable release → emit latest-stable.json (with releaseSequence) for
@@ -1448,6 +1548,19 @@ jobs:
           # CHANNEL and manifest publishes whenever the managed release does.
           if [ -z "$MANIFEST_CHANNEL" ]; then MANIFEST_CHANNEL="$CHANNEL"; fi
           if [ "$PUBLISH_MANAGED_RELEASE" = true ]; then PUBLISH_MANIFEST=true; fi
+
+          # build_only：出候选包给人测，但**什么都不发布**。与 release.yml 的同名
+          # 开关成对，语义必须一致——两条 workflow 同 tag 共用一个 concurrency 组、
+          # 产出的是同一个 release 的不同平台资产，一边发一边不发会造出「只有一半
+          # 平台的正式版」，比两边都不发更糟。
+          #
+          # 本文件有四份独立的 channel 解析（每个 job 一份），四份都要摁；漏一份就是
+          # 「那个平台照发」。守卫测试逐个 occurrence 校验，不是只看第一份。
+          if [ "$INPUT_BUILD_ONLY" = "true" ]; then
+            PUBLISH_MANAGED_RELEASE=false
+            PUBLISH_MANIFEST=false
+            echo "::notice title=Build-only run::Channel '$CHANNEL' artifacts will be built and uploaded to this workflow run, but no GitHub Release and no update manifest will be published."
+          fi
 
           BUILD_VERSION_NAME="$VERSION"
           case "$CHANNEL" in
@@ -1531,6 +1644,7 @@ jobs:
           dandanplay-app-id: ${{ secrets.DANDANPLAY_APP_ID }}
           dandanplay-app-secret: ${{ secrets.DANDANPLAY_APP_SECRET }}
           tmdb-api-key: ${{ secrets.TMDB_API_KEY }}
+          opensubtitles-api-key: ${{ secrets.OPENSUBTITLES_API_KEY }}
       # TODO-1208: cache CocoaPods spec repos + downloaded pod source and the
       # generated Pods dirs. Keyed on the Podfile.lock/pubspec.lock so a pod bump
       # invalidates it; CocoaPods re-installs on a mismatch, and a miss just
@@ -1622,6 +1736,7 @@ jobs:
           APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
           RELEASE_CHANNEL: ${{ steps.channel.outputs.channel }}
           INPUT_UPLOAD_TESTFLIGHT: ${{ github.event.inputs.upload_testflight }}
+          INPUT_BUILD_ONLY: ${{ github.event.inputs.build_only }}
         run: |
           set -euo pipefail
           CREDS=false
@@ -1633,9 +1748,13 @@ jobs:
           # 只在手动 beta/formal 发布时上传。push 触发的 debug 通道每次提交都会跑，
           # 传 TestFlight 只会白烧 App Store Connect 的处理配额并把构建号推高，
           # 而构建号在同一个 CFBundleShortVersionString 下必须单调，浪费不可回收。
+          # build_only 也必须挡住这条：TestFlight 上传是**不可回收**的外发——
+          # 同一个 CFBundleShortVersionString 下构建号必须单调，传上去就再也拿不
+          # 回来，而 build_only 的语义是「先出包给人测、还没决定要不要发」。
           TESTFLIGHT=false
           if [ "$CREDS" = true ] && [ "$GITHUB_EVENT_NAME" = workflow_dispatch ] \
              && { [ "$RELEASE_CHANNEL" = beta ] || [ "$RELEASE_CHANNEL" = formal ]; } \
+             && [ "${INPUT_BUILD_ONLY:-}" != true ] \
              && [ "${INPUT_UPLOAD_TESTFLIGHT:-true}" != false ]; then
             TESTFLIGHT=true
           fi
@@ -1808,6 +1927,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # publish_update_manifest.sh 推完正式版清单要 `gh workflow run` 唤醒 R2 镜像；
+      # job 级 permissions 会把没列出的 scope 置 none，缺 actions: write 则 dispatch 403。
+      actions: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -1820,10 +1942,12 @@ jobs:
         shell: bash
         env:
           INPUT_CHANNEL: ${{ github.event.inputs.channel }}
+          INPUT_BUILD_ONLY: ${{ github.event.inputs.build_only }}
           INPUT_TAG_NAME: ${{ github.event.inputs.tag_name }}
           INPUT_RELEASE_NAME: ${{ github.event.inputs.release_name }}
           RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
           RELEASE_IS_PRERELEASE: ${{ github.event.release.prerelease }}
+          RELEASE_BODY: ${{ github.event.release.body }}
         run: |
           set -euo pipefail
           VERSION=$(grep '^version:' fushi/pubspec.yaml | sed 's/version: *//;s/+.*//')
@@ -1837,6 +1961,14 @@ jobs:
           CHANNEL="${INPUT_CHANNEL:-}"
           TAG="${INPUT_TAG_NAME:-}"
           NAME="${INPUT_RELEASE_NAME:-}"
+          # BUG-2088：正式版/测试版**真实更新公告**的来源。此前 BODY 只有一行模板，
+          # 而 NOTES 就是它——实测 v2.1.1 的 latest-stable.json 里 notes 是
+          # 「Manual formal release from bridge/auto-migrate-download @ 4d1c8f4.」，
+          # 而 GitHub 上那份正文有 3613 字：**应用内更新弹窗给用户看的一直是占位符**。
+          # 约定：公告写在 docs/release-notes/<语义版本>.md，正式/测试通道自动取用；
+          # 手动发 GitHub Release 时优先用 Release 正文（那才是当场写的那份）。
+          # debug 通道不取——滚动开发构建挂完整 changelog 会误导。
+          NOTES_FILE="docs/release-notes/${VERSION}.md"
           BODY=""
           PRERELEASE=true
           MAKE_LATEST=false
@@ -1866,11 +1998,13 @@ jobs:
                   TAG="${TAG:-v${VERSION}-beta.${RELEASE_SEQUENCE}}"
                   NAME="${NAME:-Fushi ${VERSION} beta ${RELEASE_SEQUENCE}}"
                   BODY="Manual desktop beta/test build from ${GITHUB_REF_NAME} @ ${SHORT_SHA}. Beta/test releases are prerelease and never Latest."
+                  if [ -f "$NOTES_FILE" ]; then BODY="$(cat "$NOTES_FILE")"; fi
                   ;;
                 formal)
                   TAG="${TAG:-v${VERSION}}"
                   NAME="${NAME:-Fushi ${VERSION}}"
                   BODY="Manual desktop formal release from ${GITHUB_REF_NAME} @ ${SHORT_SHA}."
+                  if [ -f "$NOTES_FILE" ]; then BODY="$(cat "$NOTES_FILE")"; fi
                   PRERELEASE=false
                   MAKE_LATEST=true
                   ;;
@@ -1883,6 +2017,10 @@ jobs:
               ;;
             release)
               CHANNEL=github-release
+              # 手动发 GitHub Release：正文就是当场写的公告，优先用它；留空（先建空
+              # Release 再补正文）时回落到仓库里的公告文件。
+              BODY="${RELEASE_BODY:-}"
+              if [ -z "$BODY" ] && [ -f "$NOTES_FILE" ]; then BODY="$(cat "$NOTES_FILE")"; fi
               TAG="${RELEASE_TAG_NAME:-${GITHUB_REF_NAME}}"
               # BUG-869: a manually-published NON-prerelease Release IS the formal
               # stable release → emit latest-stable.json (with releaseSequence) for
@@ -1903,6 +2041,19 @@ jobs:
           # CHANNEL and manifest publishes whenever the managed release does.
           if [ -z "$MANIFEST_CHANNEL" ]; then MANIFEST_CHANNEL="$CHANNEL"; fi
           if [ "$PUBLISH_MANAGED_RELEASE" = true ]; then PUBLISH_MANIFEST=true; fi
+
+          # build_only：出候选包给人测，但**什么都不发布**。与 release.yml 的同名
+          # 开关成对，语义必须一致——两条 workflow 同 tag 共用一个 concurrency 组、
+          # 产出的是同一个 release 的不同平台资产，一边发一边不发会造出「只有一半
+          # 平台的正式版」，比两边都不发更糟。
+          #
+          # 本文件有四份独立的 channel 解析（每个 job 一份），四份都要摁；漏一份就是
+          # 「那个平台照发」。守卫测试逐个 occurrence 校验，不是只看第一份。
+          if [ "$INPUT_BUILD_ONLY" = "true" ]; then
+            PUBLISH_MANAGED_RELEASE=false
+            PUBLISH_MANIFEST=false
+            echo "::notice title=Build-only run::Channel '$CHANNEL' artifacts will be built and uploaded to this workflow run, but no GitHub Release and no update manifest will be published."
+          fi
 
           BUILD_VERSION_NAME="$VERSION"
           case "$CHANNEL" in

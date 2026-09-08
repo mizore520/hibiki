@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fushi/src/utils/misc/download_plan.dart';
+import 'package:fushi/src/utils/misc/error_log_service.dart';
 import 'package:fushi/src/utils/misc/resumable_downloader.dart';
 import 'package:fushi/src/utils/misc/segmented_downloader.dart';
 import 'package:fushi/src/utils/net/app_http.dart';
@@ -162,18 +163,20 @@ class RecommendedPackManifest {
     final List<DownloadPart> planParts = <DownloadPart>[];
     for (int i = 0; i < parts.length; i++) {
       final RecommendedPackPart part = parts[i];
-      planParts.add(DownloadPart(
-        index: i,
-        offset: part.offset,
-        length: part.length,
-        sha256: part.sha256,
-        sources: <DownloadSource>[
-          for (final String base in partBaseUrls)
-            DownloadSource(url: _joinUrl(base, part.name)),
-          for (final String whole in wholeFileUrls)
-            DownloadSource(url: whole, remoteOffset: part.offset),
-        ],
-      ));
+      planParts.add(
+        DownloadPart(
+          index: i,
+          offset: part.offset,
+          length: part.length,
+          sha256: part.sha256,
+          sources: <DownloadSource>[
+            for (final String base in partBaseUrls)
+              DownloadSource(url: _joinUrl(base, part.name)),
+            for (final String whole in wholeFileUrls)
+              DownloadSource(url: whole, remoteOffset: part.offset),
+          ],
+        ),
+      );
     }
     try {
       return DownloadPlan(
@@ -257,12 +260,14 @@ List<RecommendedPackPart> _parseParts(Object? raw) {
       // 一条坏记录就整表作废：半张切片表比没有更危险。
       return const <RecommendedPackPart>[];
     }
-    parsed.add(RecommendedPackPart(
-      name: name,
-      offset: offset,
-      length: length,
-      sha256: _parseSha256(item['sha256']),
-    ));
+    parsed.add(
+      RecommendedPackPart(
+        name: name,
+        offset: offset,
+        length: length,
+        sha256: _parseSha256(item['sha256']),
+      ),
+    );
   }
   return parsed;
 }
@@ -282,8 +287,9 @@ Future<RecommendedPackManifest?> fetchRecommendedPackManifest() async {
         final Response<String> response = await dio.get<String>(url);
         final String? body = response.data;
         if (body == null) continue;
-        final RecommendedPackManifest? parsed =
-            parseRecommendedPackManifest(body);
+        final RecommendedPackManifest? parsed = parseRecommendedPackManifest(
+          body,
+        );
         if (parsed != null) return parsed;
         // 拿到了却解析不出来（半截响应 / 被网关塞了门户页）：换下一个候选，
         // 而不是当成「没有清单」直接退回整包直链。
@@ -305,9 +311,14 @@ Future<RecommendedPackManifest?> fetchRecommendedPackManifest() async {
 /// 不因为新增并发而丢掉任何一种能下成的场景。
 ///
 /// 导入推荐包会走备份导入流程并**重启进程**，没有机会在导入成功后删包——所以
-/// [markImportStarted] 在启动导入前落一个 flag 文件，重启回来后由
-/// [cleanupIfImported]（新手引导页 initState 调）把整个包目录删掉，不让 9.5 GB
-/// 的 zip 静默常驻磁盘。
+/// [markImportSucceeded] 在导入成功后落一个 flag 文件，重启回来后由
+/// [cleanupIfImported]（**AppModel 初始化调**，即启动必经路径）把整个包目录删掉，
+/// 不让 9.5 GB 的 zip 静默常驻磁盘。
+///
+/// BUG-2109：这个收尾一度挂在新手引导页的 initState 上，而导入恰恰会把
+/// `preferences` 表整层换成备份里的那份、`onboarding_completed` 变 true，重启后
+/// 首页不再自动弹引导页——清理入口结构上永远等不到执行。判据（flag）没错，错的
+/// 是把它挂在了一个「导入成功就不会再出现」的页面上。
 class RecommendedPackDownloader {
   RecommendedPackDownloader({
     required Directory packDir,
@@ -322,14 +333,13 @@ class RecommendedPackDownloader {
     required Directory packDir,
     required RecommendedPackManifest manifest,
     int concurrency = SegmentedDownloader.kDefaultDownloadConcurrency,
-  }) =>
-      RecommendedPackDownloader(
-        packDir: packDir,
-        url: manifest.url,
-        sha256Hex: manifest.sha256,
-        manifest: manifest,
-        concurrency: concurrency,
-      );
+  }) => RecommendedPackDownloader(
+    packDir: packDir,
+    url: manifest.url,
+    sha256Hex: manifest.sha256,
+    manifest: manifest,
+    concurrency: concurrency,
+  );
 
   final Directory _packDir;
 
@@ -373,15 +383,20 @@ class RecommendedPackDownloader {
   File get packFile => packFileIn(_packDir);
 
   /// 单流续传的半截文件。
-  File get _partFile => File(p.join(_packDir.path, '$_fileName.part'));
+  static File _partFileIn(Directory packDir) =>
+      File(p.join(packDir.path, '$_fileName.part'));
+
+  File get _partFile => _partFileIn(_packDir);
 
   /// 分片下载的半截文件（预分配到完整大小）。与单流的 `.part` **分开命名**：两条
   /// 路的半截文件语义不同（一个是「已下这么多字节」，一个是「预分配好、按片填」），
   /// 共用一个名字会让另一条路把对方的半截当成自己的断点。
   File get _multiPartFile => File(p.join(_packDir.path, '$_fileName.mpart'));
 
-  File get _multiPartProgressFile =>
-      File(p.join(_packDir.path, '$_fileName.mpart.json'));
+  static File _multiPartProgressFileIn(Directory packDir) =>
+      File(p.join(packDir.path, '$_fileName.mpart.json'));
+
+  File get _multiPartProgressFile => _multiPartProgressFileIn(_packDir);
 
   static File _importedFlagFileIn(Directory packDir) =>
       File(p.join(packDir.path, 'imported.flag'));
@@ -417,21 +432,47 @@ class RecommendedPackDownloader {
 
   /// 已下字节（两条路合一）。分片路的 `.mpart` 是**预分配**的完整大小，长度不代表
   /// 进度，必须读进度文件——否则 UI 一进来就显示「已下 9.5 GB」。
-  int get partialBytes {
+  ///
+  /// **目录级**（与 [packFileIn] / [hasCompletedFileIn] 同纪律）：「盘上躺着多少
+  /// 半截」是磁盘事实，与走哪条线路无关。UI 要判「有没有可续的半截」时不该、也
+  /// 不需要先挑出一个线路实例来问——挑实例要先解析清单，而清单要联网。
+  static int partialBytesIn(Directory packDir) {
     try {
-      if (_multiPartProgressFile.existsSync()) {
-        return _receivedFromProgressFile();
+      final File progressFile = _multiPartProgressFileIn(packDir);
+      if (progressFile.existsSync()) {
+        return _receivedFromProgressFile(progressFile);
       }
-      return _partFile.existsSync() ? _partFile.lengthSync() : 0;
+      final File partFile = _partFileIn(packDir);
+      return partFile.existsSync() ? partFile.lengthSync() : 0;
     } on FileSystemException {
       return 0;
     }
   }
 
-  int _receivedFromProgressFile() {
+  /// 文件存在性与已收字节分开：预分配 .mpart 的长度不是下载进度，
+  /// 删除失败留下的孤儿文件或元数据仍必须提供清理入口。
+  static bool hasArtifactsIn(Directory packDir) {
+    for (final String name in <String>[_fileName, 'download']) {
+      for (final String suffix in <String>[
+        '',
+        '.part',
+        '.part.etag',
+        '.mpart',
+        '.mpart.json',
+      ]) {
+        if (File(p.join(packDir.path, '$name$suffix')).existsSync()) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  int get partialBytes => partialBytesIn(_packDir);
+
+  static int _receivedFromProgressFile(File progressFile) {
     try {
-      final Object? decoded =
-          json.decode(_multiPartProgressFile.readAsStringSync());
+      final Object? decoded = json.decode(progressFile.readAsStringSync());
       if (decoded is! Map<String, dynamic>) return 0;
       final Object? parts = decoded['parts'];
       if (parts is! Map<String, dynamic>) return 0;
@@ -445,22 +486,48 @@ class RecommendedPackDownloader {
     }
   }
 
-  /// 启动备份导入前打标；导入完成后进程重启，由 [cleanupIfImported] 收尾删包。
+  /// 备份导入成功后打标；进程重启后由 [cleanupIfImported] 收尾删包。
   ///
   /// 目录级（和 [cleanupIfImported] 一样）：打标写的是 `<包目录>/imported.flag`，
   /// 与包是从哪条线路下来的无关。
-  static Future<void> markImportStarted(Directory packDir) async {
+  static Future<void> markImportSucceeded(Directory packDir) async {
     packDir.createSync(recursive: true);
-    await _importedFlagFileIn(packDir).writeAsString('1');
+    await _importedFlagFileIn(packDir).writeAsString('completed', flush: true);
   }
 
-  /// 若曾进入导入（flag 在），删除整个包目录（best-effort）。
+  /// 仅成功标记 completed 允许删包；旧值 1 只证明启动过导入，必须保留。
+  /// 一律走**异步** FS 调用：`packDir` 派生自数据根，而数据根可能是掉线的外置
+  /// 盘 / 网络盘。同步 `existsSync()` 会把 isolate 整个阻住，调用方叠的超时护栏
+  /// （TODO-1260）连触发的机会都没有 —— 那正是这条护栏要防的 hang。
   static Future<void> cleanupIfImported(Directory packDir) async {
-    if (!_importedFlagFileIn(packDir).existsSync()) return;
+    final File marker = _importedFlagFileIn(packDir);
     try {
-      if (packDir.existsSync()) await packDir.delete(recursive: true);
+      if (await marker.readAsString() != 'completed') return;
     } on FileSystemException {
-      // 占用/权限问题不阻断引导；下次进入再试。
+      // 不存在或无法确认成功时保留包，避免导入失败后失去重试源。
+      return;
+    }
+    await deletePackDirectory(packDir, reason: 'cleanupIfImported');
+  }
+
+  /// 删除整个包目录（best-effort）。「导入完的残包」与「用户放弃的半截包」删的是
+  /// 同一批文件、担的是同一种失败，所以是同一条路：判据（要不要删）留给调用方，
+  /// 这里只负责删干净并留痕。
+  ///
+  /// 返回是否删成功（目录本来就不在也算成功）。放弃下载那条路要靠它决定阶段能不能
+  /// 落回 idle —— 谎报成功会让 UI 说「已放弃」而磁盘上那几 GB 纹丝不动。
+  static Future<bool> deletePackDirectory(
+    Directory packDir, {
+    required String reason,
+  }) async {
+    try {
+      if (await packDir.exists()) await packDir.delete(recursive: true);
+      return true;
+    } on FileSystemException catch (e, s) {
+      // 占用/权限问题不阻断启动；下次启动再试。但**要留痕**：删不掉的
+      // 9.5 GB 是用户直接感知的（存储页数字不降），静默吞掉等于没修。
+      ErrorLogService.instance.log('RecommendedPackDownloader.$reason', e, s);
+      return false;
     }
   }
 
@@ -614,8 +681,9 @@ class RecommendedPackDownloader {
       if (response.statusCode != 206) return null;
       final String? contentRange = response.headers.value('content-range');
       if (contentRange == null) return null;
-      final RegExpMatch? match =
-          RegExp(r'^bytes\s+\d+-\d+/(\d+)$').firstMatch(contentRange.trim());
+      final RegExpMatch? match = RegExp(
+        r'^bytes\s+\d+-\d+/(\d+)$',
+      ).firstMatch(contentRange.trim());
       if (match == null) return null;
       return int.tryParse(match.group(1)!);
     } catch (_) {
@@ -677,8 +745,9 @@ class RecommendedPackDownloader {
     // 续传必须带 If-Range：这条路会在「探针因网络抖动失败」时接手一台其实支持
     // Range 的服务器，没有校验子就会把旧断点续到**换过的新包**上，只能靠末尾
     // sha256 事后打回——代价是白下一整个 9.5 GB。
-    final String? validator =
-        existing > 0 ? _readSingleStreamValidator() : null;
+    final String? validator = existing > 0
+        ? _readSingleStreamValidator()
+        : null;
     final Response<ResponseBody> response = await dio.get<ResponseBody>(
       url,
       cancelToken: cancelToken,
@@ -696,7 +765,8 @@ class RecommendedPackDownloader {
     final String contentType = response.headers.value('content-type') ?? '';
     if (contentType.contains('text/html')) {
       throw Exception(
-          'server returned an HTML page instead of the pack file ($url)');
+        'server returned an HTML page instead of the pack file ($url)',
+      );
     }
     if (existing > 0 && response.statusCode == 200) {
       // 服务器忽略 Range 或校验子过期（服务端换包）：append 会拼出坏包，只能丢
@@ -707,8 +777,9 @@ class RecommendedPackDownloader {
     _writeSingleStreamValidator(
       response.headers.value('etag') ?? response.headers.value('last-modified'),
     );
-    final int? remaining =
-        int.tryParse(response.headers.value('content-length') ?? '');
+    final int? remaining = int.tryParse(
+      response.headers.value('content-length') ?? '',
+    );
     final int? total = remaining == null ? null : existing + remaining;
 
     final IOSink sink = _partFile.openWrite(
@@ -729,8 +800,10 @@ class RecommendedPackDownloader {
       await sink.close();
     }
     if (total != null && received != total) {
-      throw Exception('recommended pack download truncated: '
-          '$received / $total bytes');
+      throw Exception(
+        'recommended pack download truncated: '
+        '$received / $total bytes',
+      );
     }
     if (sha256Hex != null) {
       final Digest digest = await sha256.bind(_partFile.openRead()).first;
@@ -738,8 +811,10 @@ class RecommendedPackDownloader {
         // 坏包不留：删掉半截，下次从头下（续传一个已知坏的文件没有意义）。
         _partFile.deleteSync();
         _writeSingleStreamValidator(null);
-        throw Exception('recommended pack sha256 mismatch: '
-            'got $digest, expected $sha256Hex');
+        throw Exception(
+          'recommended pack sha256 mismatch: '
+          'got $digest, expected $sha256Hex',
+        );
       }
     }
     _partFile.renameSync(packFile.path);

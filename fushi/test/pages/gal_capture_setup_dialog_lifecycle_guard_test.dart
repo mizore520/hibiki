@@ -11,14 +11,13 @@ void main() {
   final String page = File(
     'lib/src/pages/implementations/texthooker_page.dart',
   ).readAsStringSync();
-  final String texthookerSource = page;
 
   test('捕获设置弹窗的所有关闭路径收口到一次性 dismiss', () {
     final String code = maskComments(source);
     expect(
-      RegExp(
-        r'Navigator\.of\(context\)\.(?:maybePop|pop)\s*\(',
-      ).allMatches(code).length,
+      RegExp(r'Navigator\.of\(context\)\.(?:maybePop|pop)\s*\(')
+          .allMatches(code)
+          .length,
       1,
       reason: '选择成功、状态监听和关闭按钮不能各自 pop，否则会弹掉底层页面',
     );
@@ -46,12 +45,11 @@ void main() {
       isTrue,
     );
     expect(
-      RegExp(
-        r'_dismissOnce\(yieldingToRiskConsent:\s*false\)',
-      ).allMatches(code).length,
+      RegExp(r'_dismissOnce\(yieldingToRiskConsent:\s*false\)')
+          .allMatches(code)
+          .length,
       2,
-      reason:
-          '用户主动的两条出口（选中线程、关闭按钮）必须显式声明不是让位，'
+      reason: '用户主动的两条出口（选中线程、关闭按钮）必须显式声明不是让位，'
           '否则会把「已提示过」标记一起回滚，弹窗每来一行台词就弹回来',
     );
   });
@@ -66,27 +64,30 @@ void main() {
       isTrue,
       reason: '锚点必须是 GalCaptureSetupDialog 的 build，不是同文件另一个 build',
     );
+    // BUG-2154 把逐 exe 的裸左击风险门整个去掉之后（风险恒定接受），
+    // `needsUnsafeRiskAcceptance` 恒 false，弹窗里那条「给风险确认让位」的腿恒不
+    // 可达。守卫因此反过来钉：**不许**再引用它——否则读代码的人会以为弹窗还会
+    // 因为风险确认自动关，而那个答案永远不成立（守卫还在、被守的行为没了）。
     expect(
       containsIdentifier(build, 'needsUnsafeRiskAcceptance'),
-      isTrue,
-      reason: '捕获设置弹窗必须监听逐 exe 查词风险门，不能继续挡住工作台确认入口',
+      isFalse,
+      reason: '风险门已恒定接受，弹窗不该再有一条永不成立的自动关闭理由',
     );
     // 原来这里只断言 build 里出现过 `_scheduleAutoClose(`——改动之前就已经为真，
     // 零检出能力。真正要钉的是「让位」与「用户选中线程」用两个不同实参：前者要
     // 回滚「本会话已提示过」，后者不能回滚。
     expect(
-      RegExp(
-        r'_scheduleAutoClose\(yieldingToRiskConsent:\s*true\)',
-      ).allMatches(maskComments(build)).length,
-      1,
-      reason:
-          '风险让位必须声明自己是让位，调用方据此回滚「已提示过」标记，'
-          '否则确认完风险后本会话再也拿不到捕获设置弹窗',
+      RegExp(r'_scheduleAutoClose\(yieldingToRiskConsent:\s*true\)')
+          .allMatches(maskComments(build))
+          .length,
+      0,
+      reason: '让位出口的唯一触发者（风险门）已经去掉，build 里不该还留着它；'
+          '`yieldingToRiskConsent` 参数本身保留，门若按引擎重开只是接回一个 else-if',
     );
     expect(
-      RegExp(
-        r'_scheduleAutoClose\(yieldingToRiskConsent:\s*false\)',
-      ).allMatches(maskComments(build)).length,
+      RegExp(r'_scheduleAutoClose\(yieldingToRiskConsent:\s*false\)')
+          .allMatches(maskComments(build))
+          .length,
       1,
       reason: '用户选中线程是用户自己的动作，不得被当成让位回滚标记',
     );
@@ -104,9 +105,9 @@ void main() {
     // 不靠它）。所以回滚必须**恰好**被让位出口门控。
     final String code = maskComments(page);
     expect(
-      RegExp(
-        r'_captureSetupShownForSession = sessionStartedAt;',
-      ).allMatches(code).length,
+      RegExp(r'_captureSetupShownForSession = sessionStartedAt;')
+          .allMatches(code)
+          .length,
       1,
     );
     expect(
@@ -130,85 +131,11 @@ void main() {
     expect(containsIdentifier(request, '_previewQueue'), isTrue);
     expect(containsIdentifierCall(request, '_togglePreview'), isTrue);
     expect(
-      RegExp(
-        r'generation\s*!=\s*_previewGeneration',
-      ).allMatches(maskCommentsAndStrings(toggle)).length,
+      RegExp(r'generation\s*!=\s*_previewGeneration')
+          .allMatches(maskCommentsAndStrings(toggle))
+          .length,
       greaterThanOrEqualTo(2),
       reason: '导出前后都必须拒绝过期请求，异步逆序返回不能覆盖最后一次点击',
     );
-  });
-
-  test('Luna 音频调整按症状拆成两项，并在松手后提交当前游戏设置', () {
-    final String code = maskComments(source);
-    expect(code, contains('t.game_luna_audio_lead_in'));
-    expect(code, contains('t.game_luna_audio_tail_trim'));
-    expect(code, contains('t.game_luna_audio_per_game_hint'));
-    expect(code, contains('setLunaLoopbackPreRollMs'));
-    expect(code, contains('setLunaLoopbackTailTrimMs'));
-    expect(
-      RegExp(
-        r'onChangeEnd:[\s\S]*?onLunaTimingCommitted\(\)',
-      ).allMatches(code).length,
-      2,
-      reason: '两个滑块都只能在松手时提交，拖动过程不能连续写偏好表',
-    );
-    expect(code, contains('setLunaLoopbackPreRollMs(value.round())'));
-    expect(code, contains('setLunaLoopbackTailTrimMs(value.round())'));
-    expect(
-      texthookerSource,
-      contains('_session.setLunaLoopbackPreRollMs(value.round())'),
-    );
-    expect(
-      texthookerSource,
-      contains('_session.setLunaLoopbackTailTrimMs(value.round())'),
-    );
-  });
-
-  test('两个 Luna 页面上的两个 Slider 都锁定为 50 ms 步进', () {
-    void expectSliderStep(
-      String code, {
-      required String valueExpression,
-      required int max,
-      required int divisions,
-      required String page,
-    }) {
-      final RegExp slider = RegExp(
-        r'Slider\(\s*value:\s*' +
-            RegExp.escape(valueExpression) +
-            r'\.toDouble\(\),\s*min:\s*0,\s*max:\s*' +
-            max.toString() +
-            r',\s*divisions:\s*(\d+),',
-      );
-      final List<RegExpMatch> matches = slider.allMatches(code).toList();
-      expect(matches, hasLength(1), reason: '$page 缺少唯一的 Luna Slider');
-      final int actualDivisions = int.parse(matches.single.group(1)!);
-      expect(actualDivisions, divisions, reason: '$page 的 divisions 已改变');
-      expect(
-        actualDivisions * 50,
-        max,
-        reason: '$page 的 Slider 不再以 50 ms 为一个吸附步长',
-      );
-    }
-
-    for (final (String page, String code, String prefix)
-        in <(String, String, String)>[
-          ('Gal 捕获设置弹窗', source, 'widget.session'),
-          ('Hook 工具栏设置', texthookerSource, '_session'),
-        ]) {
-      expectSliderStep(
-        code,
-        valueExpression: '$prefix.lunaLoopbackPreRollMs',
-        max: 1000,
-        divisions: 20,
-        page: '$page·补全本句开头',
-      );
-      expectSliderStep(
-        code,
-        valueExpression: '$prefix.lunaLoopbackTailTrimMs',
-        max: 1000,
-        divisions: 20,
-        page: '$page·去掉下句声音',
-      );
-    }
   });
 }

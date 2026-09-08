@@ -29,8 +29,8 @@ void Check(bool condition, const char* message) {
 
 void TestV16AndV17TailAbiAndDefaultDeny() {
   SharedHeader header{};
-  Check(fushi_voice_hook::kSharedVersion == 21,
-        "shared ABI must be v21（NativeInputAllowed 赋予 v20 flags 新语义，与 geometry discovery 分离）");
+  Check(fushi_voice_hook::kSharedVersion == 23,
+        "shared ABI must be v23（BUG-2149 adapter 运行期读数在层原点块后纯追加，尺寸变了必须升版）");
   Check(offsetof(SharedHeader, native_loopback_request_seq) ==
             offsetof(SharedHeader, native_loopback_requested) + 4,
         "request_seq must follow requested");
@@ -57,11 +57,24 @@ void TestV16AndV17TailAbiAndDefaultDeny() {
             offsetof(SharedHeader, hook_module_sha256) +
                 fushi_voice_hook::kHookModuleDigestChars,
         "v19 admission must be appended after the v17 digest, never inserted");
+  // v22 在 v19 摘要之后追加了层原点块，v23 又在其后追加了 adapter 读数块，所以
+  // 尾部不再是摘要、也不再是层原点块。守卫要防的始终是**把字段插进既有布局**，
+  // 不是禁止继续尾追加——于是逐块锁：每一块紧接上一块，最后一块就是精确尾部。
+  Check(offsetof(SharedHeader, lookup_layer_line_seq) ==
+            (offsetof(SharedHeader, lookup_executable_sha256) +
+             fushi_voice_hook::kHookModuleDigestChars + 3u) /
+                4u * 4u,
+        "v22 layer-origin block must append right after the v19 digest");
+  // v23 在层原点块之后又追加了 adapter 读数块，尾部因此再次后移。守的仍是同一条：
+  // 新块只能**尾追加**，不得插进既有布局；且当前尾部就是新块的最后一个字段。
+  Check(offsetof(SharedHeader, adapter_reports) >=
+            offsetof(SharedHeader, lookup_layer_reserved) + sizeof(uint32_t),
+        "v23 adapter report block must append after the v22 layer-origin block");
   Check(sizeof(SharedHeader) ==
-            ((offsetof(SharedHeader, lookup_executable_sha256) +
-              fushi_voice_hook::kHookModuleDigestChars + 7u) /
+            ((offsetof(SharedHeader, adapter_report_seq) +
+              sizeof(uint32_t) + 7u) /
              8u) * 8u,
-        "v19 admission digest must be the exact SharedHeader tail (only 8-align padding)");
+        "v23 adapter report block must be the exact SharedHeader tail (only 8-align padding)");
   Check(fushi_voice_hook::AtomicLoadShared32(
             &header.native_loopback_requested) ==
             fushi_voice_hook::kNativeLoopbackDeny,

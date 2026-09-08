@@ -92,13 +92,11 @@ Future<List<(String, String, String)>> _profileRows(FushiDatabase db) async {
       )
       .get();
   return rows
-      .map(
-        (QueryRow row) => (
-          row.read<String>('category'),
-          row.read<String>('key'),
-          row.read<String>('value'),
-        ),
-      )
+      .map((QueryRow row) => (
+            row.read<String>('category'),
+            row.read<String>('key'),
+            row.read<String>('value'),
+          ))
       .toList();
 }
 
@@ -129,11 +127,10 @@ void main() {
       globalProxy: '',
     );
 
-    final QueryRow version = await db
-        .customSelect('PRAGMA user_version')
-        .getSingle();
-    expect(version.read<int>('user_version'), 94);
-    expect(db.schemaVersion, 94);
+    final QueryRow version =
+        await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.read<int>('user_version'), 98);
+    expect(db.schemaVersion, 98);
 
     expect(await _prefs(db), <String, String>{
       'theme': 's:dark',

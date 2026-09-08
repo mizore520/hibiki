@@ -90,10 +90,11 @@ void main() {
   });
 
   test('② onOpenSubscriptions 端口同样按下载可达性接线', () {
+    final String compact = source.replaceAll(RegExp(r'\s+'), '');
     expect(
-      source.contains(
-        'onOpenSubscriptions:\n'
-        '          downloadsReachable ? _openVideoDiscoverySubscriptionsPanel : null,',
+      compact.contains(
+        'onOpenSubscriptions:downloadsReachable?'
+        '_openVideoDiscoverySubscriptionsPanel:null,',
       ),
       isTrue,
       reason: '下载页不可达时「管理订阅」端口必须不接线，消费端按 null 不渲染该按钮。',

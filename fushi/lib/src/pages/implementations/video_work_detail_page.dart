@@ -8,6 +8,8 @@ import 'package:fushi/src/media/media_cover_source.dart';
 import 'package:fushi/src/media/video/cover_ui/landscape_cover_image.dart';
 import 'package:fushi/src/media/video/cover_ui/portrait_cover_image.dart';
 import 'package:fushi/src/media/video/metadata/video_metadata_credit_repository.dart';
+import 'package:fushi/src/media/video/cover_ui/video_specs_panel.dart';
+import 'package:fushi/src/media/video/video_specs_service.dart';
 import 'package:fushi/src/media/video/stream_video_launch.dart';
 import 'package:fushi/src/media/video/video_book_repository.dart';
 import 'package:fushi/src/pages/implementations/media_collection_detail_page.dart';
@@ -30,6 +32,7 @@ class VideoWorkRef {
 class VideoWorkDetailPage extends StatelessWidget {
   const VideoWorkDetailPage({
     required this.database,
+    this.videoSpecs,
     required this.repository,
     required this.workRef,
     required this.onChanged,
@@ -39,6 +42,10 @@ class VideoWorkDetailPage extends StatelessWidget {
   });
 
   final FushiDatabase database;
+
+  /// 视频规格服务（v95）；构造注入，理由同 [MediaCollectionDetailPage.videoSpecs]。
+  /// null = 不显示规格。
+  final VideoSpecsService? videoSpecs;
   final VideoBookRepository repository;
   final VideoWorkRef workRef;
   final VoidCallback onChanged;
@@ -59,7 +66,10 @@ class VideoWorkDetailPage extends StatelessWidget {
             AsyncSnapshot<MediaCollectionRow?> snapshot) {
           final MediaCollectionRow? collection = snapshot.data;
           if (snapshot.connectionState != ConnectionState.done) {
+            // BUG-2230：同上 —— 加载态与它下面的 `collection == null` 终态口径一致，
+            // 都带 AppBar。future 悬挂时这里就是用户能看到的全部界面。
             return Scaffold(
+              appBar: AppBar(),
               body: Center(child: adaptiveIndicator(context: context)),
             );
           }
@@ -73,6 +83,7 @@ class VideoWorkDetailPage extends StatelessWidget {
           }
           return MediaCollectionDetailPage(
             database: database,
+            videoSpecs: videoSpecs,
             collection: collection,
             // 成员解析走共享的 [loadCollectionEpisodeSlots]：合集清单是跨端 union，
             // 「本机没有这一行」不等于「这一集不存在」（BUG-1704）。
@@ -103,6 +114,7 @@ class VideoWorkDetailPage extends StatelessWidget {
     }
     return _StandaloneVideoWorkDetail(
       database: database,
+      videoSpecs: videoSpecs,
       repository: repository,
       bookUid: workRef.bookUid!,
       onChanged: onChanged,
@@ -113,12 +125,14 @@ class VideoWorkDetailPage extends StatelessWidget {
 class _StandaloneVideoWorkDetail extends StatefulWidget {
   const _StandaloneVideoWorkDetail({
     required this.database,
+    required this.videoSpecs,
     required this.repository,
     required this.bookUid,
     required this.onChanged,
   });
 
   final FushiDatabase database;
+  final VideoSpecsService? videoSpecs;
   final VideoBookRepository repository;
   final String bookUid;
   final VoidCallback onChanged;
@@ -141,7 +155,23 @@ class _StandaloneVideoWorkDetailState
   @override
   void initState() {
     super.initState();
-    unawaited(_load());
+    // BUG-2230：`_load` 是 fire-and-forget 的，异常必须有归宿 —— 它连着 6 次 DB 读，
+    // 任意一次抛出（并发下 sqlite BUSY 等）从前都会让 `_loading` 永远为 true，
+    // 页面卡在转圈上。现在落到 `book == null` 的终态（带 AppBar，可退出）。
+    unawaited(_loadGuarded());
+  }
+
+  /// [_load] 的异常边界：失败时收敛到「未找到」终态，而不是永久加载态。
+  Future<void> _loadGuarded() async {
+    try {
+      await _load();
+    } catch (e, st) {
+      // 同 web_video：给了用户归宿就不能把诊断扔了（release 版 debugPrint 落空）。
+      ErrorLogService.instance.log('video_work_detail', 'load failed: $e', st);
+      debugPrint('VideoWorkDetailPage load failed: $e\n$st');
+      if (!mounted) return;
+      setState(() => _loading = false);
+    }
   }
 
   Future<void> _load() async {
@@ -188,7 +218,11 @@ class _StandaloneVideoWorkDetailState
   @override
   Widget build(BuildContext context) {
     if (_loading) {
+      // BUG-2230：加载态与它的兄弟终态（下面 `book == null` 分支）口径必须一致 ——
+      // 都带 AppBar（= 返回键）。桌面端没有系统返回键，`_load` 若久久不返回，
+      // 无顶栏的转圈就是一个没有出口的页面。
       return Scaffold(
+        appBar: AppBar(),
         body: Center(child: adaptiveIndicator(context: context)),
       );
     }
@@ -320,6 +354,15 @@ class _StandaloneVideoWorkDetailState
                     ),
               ),
             ),
+          // v95：技术规格。这一页是「一个文件 = 一部作品」，规格无歧义，摊开显示。
+          // 探不到时整块不占位（VideoSpecsPanel 内部返回 shrink）。
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: tokens.spacing.page),
+            child: VideoSpecsPanel(
+              service: widget.videoSpecs,
+              filePath: book.videoPath,
+            ),
+          ),
           _buildTerms(tokens),
           _buildCredits(tokens),
           _buildExtras(tokens),

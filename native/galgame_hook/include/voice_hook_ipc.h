@@ -117,7 +117,25 @@ constexpr uint32_t kSharedMagic = 0x31485648;  // 'H''V''H''1'
 //     fail-closed 门控。同布局、异语义仍必须升版（与 v18 的
 //     LookupInputSlot::keys 完全同理），否则旧 helper 会被版本门误判兼容，
 //     host 以为已撤销输入而驻留 DLL 仍继续消费。
-constexpr uint32_t kSharedVersion = 21;
+//  v22 — BUG-2136 引擎层原点双向面。SharedHeader 尾部在 v19 摘要之后**纯追加**了
+//     12 个 32 位字（hook→host 的行包围盒 + 设计分辨率 + 字形数，host→hook 的
+//     解出原点 + seq）。**布局变了就必须升版**：`hook/dll_main.cpp` 与
+//     `injector/injector_main.cpp` 都用 `sizeof(SharedHeader)` 现算 ring / region
+//     基址，新旧混装会整体差 48 字节，而版本门本会放行——症状是跨进程读到完全
+//     错位的数据，不报错。
+//  v23 — adapter 运行期读数（BUG-2149）。SharedHeader 尾部**纯追加**一张
+//     `AdapterReportSlot adapter_reports[kAdapterReportSlots]` + count + seq。
+//     动机：`AdapterDiagnostics`（id/applicable/installed/flags）每个 adapter 都实现了，
+//     但全仓只有 `tests/adapter_contract_test.cpp` 在读——运行期没有任何消费方，于是
+//     **任何引擎**都答不出「我的 adapter 到底有没有被选中并安装」。CMVS 台账里那条
+//     Next gate「探针 cmvs probe=1 installed=1」读不出来，不是探针失败，是这个只写
+//     接口的表现。
+//     槽里带**自己的 id 字符串**而不是按注册顺序编号：顺序编号在有人往
+//     `hook/generated/adapter_*.inc` 中间插一行时会整体错位，而且**不报错**——
+//     读数看着正常，说的却是另一个 adapter。
+//     与 v22 同理，布局变了就必须升版（两侧都用 `sizeof(SharedHeader)` 现算 ring /
+//     region 基址，新旧混装会整体错位而版本门本会放行）。
+constexpr uint32_t kSharedVersion = 23;
 constexpr uint32_t kStableIpcVersion = 1;
 
 // BUG-1882 — SGRE 的鼠标输入走 DirectInput immediate state，不经过普通
@@ -195,6 +213,22 @@ inline constexpr wchar_t kHunexGgeSampledInputShieldTailAckProperty[] =
     L"Fushi.HunexGge.SampledInputShield.TailAck";
 inline constexpr uintptr_t kHunexGgeSampledInputShieldReadyValue = 1u;
 inline constexpr uintptr_t kHunexGgeSampledInputShieldRequiredValue = 1u;
+
+// smash/fzmedia (TYPE-MOON smash framework, GLFW30 window) consumes clicks in
+// a GWLP_WNDPROC subclass of the game window rather than in a sampled-state
+// detour, but it declares the same Required/Ready/Window contract so the host
+// keeps one publication lifetime: Required = the runtime is installed and
+// expects the host to wait for Ready; Ready = the subclass is live and
+// swallowing client-area left down/up while a card is published in Window.
+// No tail handshake: message consumption has no sampled low bit to drain.
+inline constexpr wchar_t kSmashFzmediaSampledInputShieldReadyProperty[] =
+    L"Fushi.SmashFzmedia.SampledInputShield.Ready";
+inline constexpr wchar_t kSmashFzmediaSampledInputShieldRequiredProperty[] =
+    L"Fushi.SmashFzmedia.SampledInputShield.Required";
+inline constexpr wchar_t kSmashFzmediaSampledInputShieldWindowProperty[] =
+    L"Fushi.SmashFzmedia.SampledInputShield.Window";
+inline constexpr uintptr_t kSmashFzmediaSampledInputShieldReadyValue = 1u;
+inline constexpr uintptr_t kSmashFzmediaSampledInputShieldRequiredValue = 1u;
 inline constexpr uint32_t kLeafAquaplusSampledInputLeftButton = 0x1u;
 inline constexpr uint32_t kLeafAquaplusSampledInputRightButton = 0x2u;
 inline constexpr uint32_t kLeafAquaplusSampledInputMiddleButton = 0x4u;
@@ -240,6 +274,10 @@ constexpr uint32_t kLoopbackDiagInitializeAttempted = 0x00000020u;
 constexpr uint32_t kLoopbackDiagUnknownFormat = 0x00000040u;
 constexpr uint32_t kLoopbackDiagFailed = 0x00000080u;
 constexpr uint32_t kLoopbackDiagPolicyStopObserved = 0x00000100u;
+// allow 请求的策略确认没在注入预算内到达：injector 已按「能力未就绪」降级继续
+// （文本 hook 照常安装），worker 仍可能稍后自行 ack 成 running。置位只说明
+// 「这次注入没等到确认」，不代表 loopback 永远起不来（BUG-2131）。
+constexpr uint32_t kLoopbackDiagPolicyAckTimeout = 0x00000200u;
 
 // 环形缓冲保留时长（秒）。C 阶段语音轨常见 48k 立体声 float32；60s 上界 ≈ 23MB。
 // 32 位游戏地址空间有限，共享内存映射进游戏进程也吃它的地址空间——故设硬上界。
@@ -265,6 +303,9 @@ constexpr uint32_t kTextSourceLuna = 2;
 constexpr uint32_t kTextSourceUnityTmp = 3;
 constexpr uint32_t kTextSourceSiglus = 4;
 constexpr uint32_t kTextSourceSgre = 5;
+// smash/fzmedia (TYPE-MOON "smash" framework: Fate/stay night REMASTERED family)
+// exact text published by the native KAG text-layer layout hook.
+constexpr uint32_t kTextSourceSmashFzmedia = 6;
 constexpr uint32_t kTextEventLine = 0;
 constexpr uint32_t kTextEventThreadDiscovered = 1;
 // Some Luna engine hooks expose scenario text and system controls from the
@@ -423,12 +464,99 @@ constexpr uint32_t kXAudioDiag2SgreFamilyMatched = 0x00000001u;
 constexpr uint32_t kXAudioDiag2SgreAnchorsResolved = 0x00000002u;   // all three
 constexpr uint32_t kXAudioDiag2SgreAnchorsUnresolved = 0x00000004u; // any missing
 
+// Leaf/AQUAPLUS（WHITE ALBUM2）资源音频三段门的**分型**位。
+//
+// TryHookLeafAquaplusResourceAudio 的三个前置（exact profile 匹配 / 共享文件 hook /
+// VOICE.PAK 归档加载）此前任一失败都只是静默 `return false`，诊断上完全同形：真机上
+// 只看得到「音频降级成系统 Loopback」，分不出是身份没匹配、hook 没装上，还是归档没读到，
+// 而这三者的处置完全不同。这三位只记录事实，不参与任何判定。
+//
+// kDiagSiglusOvkHooksReady 不能拿来替代：它只在 siglus 家族为真时才置位，Leaf 复用同一套
+// 共享文件 hook 却永远不会点亮它，据此推断会得到相反的结论。
+constexpr uint32_t kXAudioDiag2LeafProfileUnmatched = 0x00000008u;
+constexpr uint32_t kXAudioDiag2LeafFileHooksUnavailable = 0x00000010u;
+constexpr uint32_t kXAudioDiag2LeafVoiceArchivesMissing = 0x00000020u;
+
+// Leaf/AQUAPLUS 身份门（IsLeafAquaplusProfileMatched）的**分型**位。
+//
+// 上面三位挂在 TryHookLeafAquaplusResourceAudio 里，而那个函数只有在 adapter 已经
+// claim 本进程之后才会被调用；adapter 的 probe() 就是身份门本身。真机上观察到
+// lookup_admission=EngineUnsupported（Leaf 的 lookupAdmission 只可能返回
+// SensorInstalled / IdentityAccepted，绝不会返回 EngineUnsupported）意味着根本没有
+// adapter claim，也就是身份门没过——此时上面三位必然全灭，无法分型。
+//
+// 身份门是两层：先按 exe SHA-256 + machine 选中 profile，再做二进制结构校验（唯一
+// 掩码模式扫描 + 重定位操作数复核 + section 角色复核）。哈希逐字节相同却仍不匹配时，
+// 失败一定在第二层，而那是一条约 25 项的 && 链，不分型就只能逐项猜。
+//
+// kXAudioDiag2LeafIdentityHashMatched 在哈希 + machine 匹配后立刻置位（结构门之前），
+// 其余各位只在结构校验失败时按组记录事实。全部只记录，不参与任何判定；判定链一字未改。
+constexpr uint32_t kXAudioDiag2LeafIdentityHashMatched = 0x00000040u;
+constexpr uint32_t kXAudioDiag2LeafStructureRejected = 0x00000080u;
+constexpr uint32_t kXAudioDiag2LeafImageUnopened = 0x00000100u;
+constexpr uint32_t kXAudioDiag2LeafSectionRolesRejected = 0x00000200u;
+constexpr uint32_t kXAudioDiag2LeafTraversalAnchorMissed = 0x00000400u;
+constexpr uint32_t kXAudioDiag2LeafRasterAnchorMissed = 0x00000800u;
+constexpr uint32_t kXAudioDiag2LeafInputAnchorMissed = 0x00001000u;
+constexpr uint32_t kXAudioDiag2LeafEmbedAnchorMissed = 0x00002000u;
+constexpr uint32_t kXAudioDiag2LeafDeviceAnchorMissed = 0x00004000u;
+constexpr uint32_t kXAudioDiag2LeafReturnSitesRejected = 0x00008000u;
+
+// 「exe 摘要量不到」与「摘要量到了但不是这个发行版」必须分开：前者是瞬时条件
+// （首次 probe 可能落在注入窗口内，BCrypt / 文件映射在 loader lock 或 hook 安装
+// 中途失败），后者是确定结论。旧实现两者共用一条永久 -1 缓存路径，于是一次瞬时
+// 失败就让本会话的 Leaf adapter 永久出局，表现为整场音频降级到系统 Loopback。
+constexpr uint32_t kXAudioDiag2LeafExecutableUnmeasurable = 0x00010000u;
+
+// KiriKiri 查词传感器**安装路径**的分型位（BUG-2121，Fate/stay night[Realta Nua] KiriKiri2
+// 2.31/BCB 真机）。lookup_diag 只在传感器装上之后才开始有位，装不上时整局零位——而安装路径
+// 上有 9 个静默 return（主窗解析不到 / 接缝挂不上 / 线程身份 / 导出表查不到 / 表达式查不到 /
+// bootstrap 分配失败…），没有这组位就分不出「这个引擎没做」和「装到第 N 步死了」。粘滞位
+// 语义（曾经到过哪一步）正合适：安装是单向推进的，读侧按位序就能看出卡在哪。
+// 放这个字而不是 reserved_luna / lookup_diag：那两个 32 位都已满（见各自注释）。
+constexpr uint32_t kXAudioDiag2KirikiriLookupMainWindowMissing = 0x00020000u;  // 安装已请求但 FindGameMainWindow()==null
+constexpr uint32_t kXAudioDiag2KirikiriLookupSeamArmed = 0x00040000u;          // WH_GETMESSAGE 主线程接缝已挂
+constexpr uint32_t kXAudioDiag2KirikiriLookupSeamHookFailed = 0x00080000u;     // SetWindowsHookEx 失败
+constexpr uint32_t kXAudioDiag2KirikiriLookupSeamFired = 0x00100000u;          // 接缝在主线程上跑过安装
+constexpr uint32_t kXAudioDiag2KirikiriLookupExportQueryFailed = 0x00200000u;  // 5 个核心导出名查不到
+constexpr uint32_t kXAudioDiag2KirikiriLookupExpressionQueryFailed = 0x00400000u;  // TVPExecuteExpression 查不到
+constexpr uint32_t kXAudioDiag2KirikiriLookupBootstrapStarted = 0x00800000u;   // bootstrap 脚本已登记进连续事件
+// 「登记进连续事件」与「引擎真的回调进来并把脚本跑完」是两件事：前者只证明
+// TVPAddContinuousEventHook 接受了我们的回调对象，后者才证明引擎事件循环在跑我们的 TJS。
+// 中间还隔着一次 TVPExecuteScript——在 BCB 上它抛的是 Borland 异常，只有 SEH 拦得住，
+// 拦下来之后脚本就是"静默没执行"，与"回调压根没来"同形（BUG-2121 第三段）。
+constexpr uint32_t kXAudioDiag2KirikiriLookupBootstrapFired = 0x01000000u;     // 连续事件回调真的进来了
+constexpr uint32_t kXAudioDiag2KirikiriLookupBootstrapFaulted = 0x02000000u;   // TVPExecuteScript 抛了（SEH 拦下）
+// bootstrap 脚本跑完之后，TJS 侧那个 System.addContinuousHandler 回调每帧都在前置条件
+// `typeof global.kag == "Object" && typeof global.kag.addHook == "Object"` 上静默 return，
+// 症状与「脚本没跑」完全同形（都是 fushiLookupNotify 不存在、控制台无 [HibikiLookup] 行）。
+// 这三位把前置条件拆开量：脚本活着吗 / kag 出来了吗 / 这个 KAG 分支有 addHook 吗。
+constexpr uint32_t kXAudioDiag2KirikiriLookupTjsBootstrapFnAlive = 0x04000000u;  // global.fushiLookupBootstrap 仍在
+constexpr uint32_t kXAudioDiag2KirikiriLookupKagObjectReady = 0x08000000u;       // global.kag 是对象
+constexpr uint32_t kXAudioDiag2KirikiriLookupKagAddHookReady = 0x10000000u;      // global.kag.addHook 存在
+
+// 第三条 exporter 路径（BUG-2145）：exe 无导出表 + 插件早于我们 link 时，从已 link 插件
+// 的可写节反查 exporter 单例。三态互斥可判：扫描是否跑过 / 有没有过形状门的候选 /
+// 真调用校验后是否采用。
+// ⚠️ 本字至此 32 位用尽；下一族诊断位必须另立新字（照 reserved_luna→xaudio_diagnostics2
+// 的先例），不要拓宽本字或挤占已有位。
+constexpr uint32_t kXAudioDiag2KirikiriExporterScanRan = 0x20000000u;          // 前两条路径都空，扫描已跑
+constexpr uint32_t kXAudioDiag2KirikiriExporterScanNoCandidate = 0x40000000u;  // 交集/形状门后无候选
+constexpr uint32_t kXAudioDiag2KirikiriExporterScanAdopted = 0x80000000u;      // 候选过真调用校验并被采用
+
 // reserved_luna 的资源音频诊断位。KiriKiriZ 的 TVPCreateStream hook 直接导出当前播放的
 // 已解密 Ogg；Siglus 从 OVK 索引导出逐句 Ogg。它们只代表“资源捕获链已安装”，不要求 PCM
 // 环已有格式，因此 host 应优先按时间戳配对资源文件，并把系统回环保留为逐句 fallback。
 constexpr uint32_t kDiagKirikiriVoiceStreamHookReady = 0x00020000u;
 constexpr uint32_t kDiagKirikiriVoiceStreamDumped = 0x00080000u;
 constexpr uint32_t kDiagSiglusOvkHooksReady = 0x10000000u;
+
+// reserved_luna 里 KiriKiri 经典 KAG3 的采集自证位。TJS 侧的 fushiLookupClassicSource
+// 位 3 = 「至少给一个消息层实例挂上过 classic 采集包装」。它与位 0（classic 分支跑到了）
+// 必须分开读：分支跑到但一个层都没挂上，说明 kag.fore.messages 不是标准 KAG3 结构——
+// 这两种失败在真机上完全同形，而 lookup_diag 与 xaudiodiag2 两个 32 位字都已用满，
+// 所以这一位落在 reserved_luna（KiriKiri 的 exporter 溯源位本来就住这儿）。
+constexpr uint32_t kDiagKirikiriClassicLayerPatched = 0x00000040u;
 
 inline constexpr bool HasReadyGameResourceAudio(uint32_t reserved_luna,
                                                 uint32_t hook_diagnostics,
@@ -698,6 +826,8 @@ constexpr uint32_t kLookupGeometryProviderIdTypewriterDiffExperimental = 13u;
 // runtime trace remains observation-only; assigning a stable wire id does not
 // promote it to a production publisher or change engine-support evidence.
 constexpr uint32_t kLookupGeometryProviderIdHunexGge = 14u;
+// smash/fzmedia KAG text-layer exact layout provider (append-only id).
+constexpr uint32_t kLookupGeometryProviderIdSmashFzmedia = 15u;
 
 constexpr uint32_t kLookupGeometryStatusUnavailable = 0u;
 constexpr uint32_t kLookupGeometryStatusReady = 1u;
@@ -981,6 +1111,22 @@ constexpr uint32_t kLookupInputVirtualKeyXButton2 = 0x0040u;
 // 内存布局：[SharedHeader][音频环形 ring_capacity][文本区 TextRegionBytes()]
 //           [clip 索引 kClipCount*sizeof(VoiceClip)]，各区偏移由 injector 填进 header。
 // 文本区自 v13 起是 [TextLane 表][按道分块的槽区]，寻址一律走 TextLaneSlotAt。
+// ── v23 adapter 运行期读数 ─────────────────────────────────────────────────
+// 每个 adapter 一槽。id 是**槽自带的**，不靠下标对齐：往 generated 清单中间插一行
+// 就会让下标制的读数整体错位且不报错（读到的是别人的 probe/installed）。
+constexpr size_t kAdapterReportSlots = 32u;      // 当前 21 个 adapter，留一倍余量
+constexpr size_t kAdapterReportIdChars = 32u;    // 最长 id "xaudio2_directsound" 19 + NUL
+
+struct AdapterReportSlot {
+  char id[kAdapterReportIdChars];  // NUL 结尾；空串 = 该槽未使用
+  uint8_t applicable;              // adapter->probe()
+  uint8_t installed;               // adapter->installed
+  uint16_t slot_reserved;
+  uint32_t flags;                  // adapter 自报的 flags（各家含义不同，只作透传）
+};
+static_assert(sizeof(AdapterReportSlot) == kAdapterReportIdChars + 8u,
+              "AdapterReportSlot must stay tightly packed");
+
 struct SharedHeader {
   uint32_t magic;           // = kSharedMagic
   uint32_t version;         // = kSharedVersion
@@ -1136,8 +1282,48 @@ struct SharedHeader {
   // 时保证有值：那是唯一需要用户把自己的版本身份报回来的情形（hash-pinned 白名单不中）。
   // 有界读——上界就是 kHookModuleDigestChars，绝不假设写侧给了 NUL。
   char lookup_executable_sha256[kHookModuleDigestChars];
+  // ── BUG-2136 引擎层原点（双向；纯追加）────────────────────────────────────
+  // 背景：HUNEX/GGE 的正文字形位置是**文本层局部坐标**（1920x1080 逻辑单位），
+  // client = (render + origin) * client/(design_w, design_h) 已在两种窗口尺寸 × 三条行
+  // 上实测成立。origin 是每作一个常量，但**游戏内存里读不到现成的**——item 前 0x70 字节、
+  // render_item 另三个参数、body_submit 调用帧 0x000..0x180、viewport/scale 全局邻域
+  // 四处都排除过。所以由**宿主**抓一帧画面自动解出来，再回传给注入侧。
+  //
+  // hook→host：当前行在层空间的包围盒 + 设计分辨率。宿主据此预测「墨迹应该在哪」，
+  // 与实拍的墨迹框做二维平移求解。line_seq 单调，0=尚无。
+  volatile uint32_t lookup_layer_line_seq;
+  volatile uint32_t lookup_layer_design_w;
+  volatile uint32_t lookup_layer_design_h;
+  volatile uint32_t lookup_layer_glyph_count;
+  volatile int32_t lookup_layer_line_left;
+  volatile int32_t lookup_layer_line_top;
+  volatile int32_t lookup_layer_line_right;
+  volatile int32_t lookup_layer_line_bottom;
+  // host→hook：解出来的层原点。origin_seq 最后写；0=宿主尚未给出，注入侧此时**不得**
+  // 假装几何可用（fail-closed，照常退回贴合层）。
+  volatile int32_t lookup_layer_origin_x;
+  volatile int32_t lookup_layer_origin_y;
+  volatile uint32_t lookup_layer_origin_seq;
+  uint32_t lookup_layer_reserved;
+  // ── v23 adapter 运行期读数（纯追加；hook→host）──────────────────────────
+  // 写者唯一：AdapterRegistry::Poll 每轮把每个 adapter 的 diagnostics() 抄进来，
+  // 与 lookup_admission 同一处、同一套纪律（内容先写，seq 最后发布）。
+  // 各 adapter 自己不碰这块——多写者会让"谁在第几槽"取决于调用顺序。
+  AdapterReportSlot adapter_reports[kAdapterReportSlots];
+  volatile uint32_t adapter_report_count;  // 实际使用的槽数，<= kAdapterReportSlots
+  volatile uint32_t adapter_report_seq;    // 单调；0 = 从未上报过（≠"没有 adapter"）
 };
 #pragma pack(pop)
+
+// ── BUG-2136 层原点：两侧读写器 ─────────────────────────────────────────────
+struct LookupLayerLineSnapshot {
+  uint32_t seq = 0;
+  uint32_t design_w = 0;
+  uint32_t design_h = 0;
+  uint32_t glyph_count = 0;
+  int32_t left = 0, top = 0, right = 0, bottom = 0;
+  bool valid = false;
+};
 
 struct LookupGeometryAdmissionSnapshot {
   uint32_t seq = 0;
@@ -1501,6 +1687,128 @@ inline bool PublishLookupShieldStatus(
 //
 // 只在**内容真的变了**时推进 seq：registry 每 16~200ms 就 Poll 一次，稳态下无脑推 seq
 // 会让 host 每轮都当成新事件去刷 UI。返回值告诉调用方这轮有没有发生变化。
+// hook 侧发布：payload 先写，seq 最后写。内容没变就不推进 seq——宿主每轮都在轮询，
+// 无脑推序号会让它把同一行当成新行反复重解原点。
+inline bool PublishLookupLayerLine(SharedHeader* header, uint32_t design_w,
+                                   uint32_t design_h, uint32_t glyph_count,
+                                   int32_t left, int32_t top, int32_t right,
+                                   int32_t bottom) {
+  if (header == nullptr || design_w == 0u || design_h == 0u ||
+      glyph_count == 0u || right <= left || bottom <= top) {
+    return false;
+  }
+  const bool same =
+      AtomicLoadShared32(&header->lookup_layer_design_w) == design_w &&
+      AtomicLoadShared32(&header->lookup_layer_design_h) == design_h &&
+      AtomicLoadShared32(&header->lookup_layer_glyph_count) == glyph_count &&
+      static_cast<int32_t>(AtomicLoadShared32(
+          reinterpret_cast<volatile uint32_t*>(
+              &header->lookup_layer_line_left))) == left &&
+      static_cast<int32_t>(AtomicLoadShared32(
+          reinterpret_cast<volatile uint32_t*>(
+              &header->lookup_layer_line_top))) == top &&
+      static_cast<int32_t>(AtomicLoadShared32(
+          reinterpret_cast<volatile uint32_t*>(
+              &header->lookup_layer_line_right))) == right &&
+      static_cast<int32_t>(AtomicLoadShared32(
+          reinterpret_cast<volatile uint32_t*>(
+              &header->lookup_layer_line_bottom))) == bottom;
+  if (same && AtomicLoadShared32(&header->lookup_layer_line_seq) != 0u) {
+    return false;
+  }
+  AtomicStoreShared32(&header->lookup_layer_design_w, design_w);
+  AtomicStoreShared32(&header->lookup_layer_design_h, design_h);
+  AtomicStoreShared32(&header->lookup_layer_glyph_count, glyph_count);
+  AtomicStoreShared32(
+      reinterpret_cast<volatile uint32_t*>(&header->lookup_layer_line_left),
+      static_cast<uint32_t>(left));
+  AtomicStoreShared32(
+      reinterpret_cast<volatile uint32_t*>(&header->lookup_layer_line_top),
+      static_cast<uint32_t>(top));
+  AtomicStoreShared32(
+      reinterpret_cast<volatile uint32_t*>(&header->lookup_layer_line_right),
+      static_cast<uint32_t>(right));
+  AtomicStoreShared32(
+      reinterpret_cast<volatile uint32_t*>(&header->lookup_layer_line_bottom),
+      static_cast<uint32_t>(bottom));
+  AtomicStoreShared32(&header->lookup_layer_line_seq,
+                      AtomicLoadShared32(&header->lookup_layer_line_seq) + 1u);
+  return true;
+}
+
+// host 侧读取。seq==0 表示注入侧还没发布过任何一行，宿主此时无从求解。
+inline LookupLayerLineSnapshot ReadLookupLayerLine(const SharedHeader* header) {
+  LookupLayerLineSnapshot out;
+  if (header == nullptr) return out;
+  auto* mutable_header = const_cast<SharedHeader*>(header);
+  const uint32_t seq =
+      AtomicLoadShared32(&mutable_header->lookup_layer_line_seq);
+  if (seq == 0u) return out;
+  out.seq = seq;
+  out.design_w = AtomicLoadShared32(&mutable_header->lookup_layer_design_w);
+  out.design_h = AtomicLoadShared32(&mutable_header->lookup_layer_design_h);
+  out.glyph_count =
+      AtomicLoadShared32(&mutable_header->lookup_layer_glyph_count);
+  out.left = static_cast<int32_t>(AtomicLoadShared32(
+      reinterpret_cast<volatile uint32_t*>(
+          &mutable_header->lookup_layer_line_left)));
+  out.top = static_cast<int32_t>(AtomicLoadShared32(
+      reinterpret_cast<volatile uint32_t*>(
+          &mutable_header->lookup_layer_line_top)));
+  out.right = static_cast<int32_t>(AtomicLoadShared32(
+      reinterpret_cast<volatile uint32_t*>(
+          &mutable_header->lookup_layer_line_right)));
+  out.bottom = static_cast<int32_t>(AtomicLoadShared32(
+      reinterpret_cast<volatile uint32_t*>(
+          &mutable_header->lookup_layer_line_bottom)));
+  // 再读一次 seq：中途被改过就当这份快照没读到（与其它槽同一套纪律）。
+  if (AtomicLoadShared32(&mutable_header->lookup_layer_line_seq) != seq) {
+    return LookupLayerLineSnapshot{};
+  }
+  out.valid = out.design_w != 0u && out.design_h != 0u &&
+              out.glyph_count != 0u && out.right > out.left &&
+              out.bottom > out.top;
+  return out;
+}
+
+// host 侧发布原点：payload 先写，seq 最后写。
+inline bool PublishLookupLayerOrigin(SharedHeader* header, int32_t origin_x,
+                                     int32_t origin_y) {
+  if (header == nullptr) return false;
+  AtomicStoreShared32(
+      reinterpret_cast<volatile uint32_t*>(&header->lookup_layer_origin_x),
+      static_cast<uint32_t>(origin_x));
+  AtomicStoreShared32(
+      reinterpret_cast<volatile uint32_t*>(&header->lookup_layer_origin_y),
+      static_cast<uint32_t>(origin_y));
+  AtomicStoreShared32(
+      &header->lookup_layer_origin_seq,
+      AtomicLoadShared32(&header->lookup_layer_origin_seq) + 1u);
+  return true;
+}
+
+// hook 侧读取原点。返回 false = 宿主还没给，注入侧必须 fail-closed。
+inline bool ReadLookupLayerOrigin(const SharedHeader* header, int32_t* out_x,
+                                  int32_t* out_y) {
+  if (header == nullptr || out_x == nullptr || out_y == nullptr) return false;
+  auto* mutable_header = const_cast<SharedHeader*>(header);
+  const uint32_t seq =
+      AtomicLoadShared32(&mutable_header->lookup_layer_origin_seq);
+  if (seq == 0u) return false;
+  const int32_t x = static_cast<int32_t>(AtomicLoadShared32(
+      reinterpret_cast<volatile uint32_t*>(
+          &mutable_header->lookup_layer_origin_x)));
+  const int32_t y = static_cast<int32_t>(AtomicLoadShared32(
+      reinterpret_cast<volatile uint32_t*>(
+          &mutable_header->lookup_layer_origin_y)));
+  if (AtomicLoadShared32(&mutable_header->lookup_layer_origin_seq) != seq) {
+    return false;
+  }
+  *out_x = x;
+  *out_y = y;
+  return true;
+}
+
 inline bool PublishLookupAdmission(SharedHeader* header,
                                    const LookupAdmissionReport& report) {
   if (header == nullptr) return false;
@@ -1548,6 +1856,71 @@ inline LookupAdmissionReport ReadLookupAdmission(const SharedHeader* header,
   return report;
 }
 
+// ── v23 adapter 运行期读数：两侧读写器 ────────────────────────────────────
+//
+// 为什么要有这条面：`AdapterDiagnostics` 以前只被契约测试读，运行期没有消费方。
+// 于是「这局到底哪个 adapter 认领了、装上没有」在真机上是**看不见的**——每加一个
+// 引擎就多一个答不出的问题，而 engine-support 的证据门恰恰要求逐门可判。
+//
+// 写侧只有 AdapterRegistry::Poll 一处。内容先写、seq 最后发布；读侧 seq→读→复核 seq，
+// 与 LookupHitSlot / VoiceClip 同一套。
+inline uint32_t PublishAdapterReports(SharedHeader* header,
+                                      const AdapterReportSlot* slots,
+                                      size_t count) {
+  if (header == nullptr || slots == nullptr) return 0u;
+  const size_t writable =
+      count < kAdapterReportSlots ? count : kAdapterReportSlots;
+  for (size_t i = 0; i < writable; ++i) {
+    AdapterReportSlot& dst = header->adapter_reports[i];
+    // 有界拷贝 + 强制 NUL：写侧可能是别的构建，读侧不许假设对面给了结尾。
+    std::memcpy(dst.id, slots[i].id, kAdapterReportIdChars);
+    dst.id[kAdapterReportIdChars - 1] = '\0';
+    dst.applicable = slots[i].applicable;
+    dst.installed = slots[i].installed;
+    dst.slot_reserved = 0u;
+    dst.flags = slots[i].flags;
+  }
+  // 尾部残留必须清掉：adapter 数变少时（换构建），旧槽会以陈旧读数继续存在。
+  for (size_t i = writable; i < kAdapterReportSlots; ++i) {
+    header->adapter_reports[i].id[0] = '\0';
+    header->adapter_reports[i].applicable = 0u;
+    header->adapter_reports[i].installed = 0u;
+    header->adapter_reports[i].slot_reserved = 0u;
+    header->adapter_reports[i].flags = 0u;
+  }
+  AtomicStoreShared32(&header->adapter_report_count,
+                      static_cast<uint32_t>(writable));
+  AtomicStoreShared32(&header->adapter_report_seq,
+                      AtomicLoadShared32(&header->adapter_report_seq) + 1u);
+  return static_cast<uint32_t>(writable);
+}
+
+// 读侧。seq==0 表示 hook 从未上报过（helper 还没起来 / 是旧版本），此时返回 0 槽——
+// 那是"还不知道"，**不是**"一个 adapter 都没认领"。两者混在一起会让诊断在启动头
+// 几百毫秒里稳定误报。
+inline uint32_t ReadAdapterReports(const SharedHeader* header,
+                                   AdapterReportSlot* out, size_t capacity,
+                                   uint32_t* out_seq = nullptr) {
+  if (out_seq != nullptr) *out_seq = 0u;
+  if (header == nullptr || out == nullptr || capacity == 0u) return 0u;
+  auto* mutable_header = const_cast<SharedHeader*>(header);
+  for (int attempt = 0; attempt < 8; ++attempt) {
+    const uint32_t seq = AtomicLoadShared32(&mutable_header->adapter_report_seq);
+    if (seq == 0u) return 0u;
+    uint32_t count = AtomicLoadShared32(&mutable_header->adapter_report_count);
+    if (count > kAdapterReportSlots) count = kAdapterReportSlots;
+    const size_t take = count < capacity ? count : capacity;
+    for (size_t i = 0; i < take; ++i) out[i] = mutable_header->adapter_reports[i];
+    if (AtomicLoadShared32(&mutable_header->adapter_report_seq) != seq) continue;
+    for (size_t i = 0; i < take; ++i) {
+      out[i].id[kAdapterReportIdChars - 1] = '\0';  // 有界：不信写侧给了 NUL
+    }
+    if (out_seq != nullptr) *out_seq = seq;
+    return static_cast<uint32_t>(take);
+  }
+  return 0u;
+}
+
 inline NativeLoopbackRequestSnapshot ReadNativeLoopbackRequest(
     const SharedHeader* header) {
   NativeLoopbackRequestSnapshot result;
@@ -1572,6 +1945,21 @@ inline NativeLoopbackRequestSnapshot ReadNativeLoopbackRequest(
     }
   }
   return result;
+}
+
+// 当前发布的 native loopback 请求是否已被 hook 侧确认（applied_seq 追平 request seq）。
+//
+// 供 hook 侧在重量级引擎探测**之前**有界追平 ack 用（见 dll_main 的追平循环）：
+// allow 的 applied/running 只能在 worker 起流后的下一轮 PollPolicy 发布，若把那一轮
+// 留到引擎探测之后，早注入 5s 的确认预算基本必然超时（BUG-2131）。
+// injector 侧另有带 requested 值校验的版本，那里要区分 deny/allow 的语义边界。
+inline bool NativeLoopbackRequestAcknowledged(const SharedHeader* header) {
+  if (header == nullptr) return false;
+  const NativeLoopbackRequestSnapshot request =
+      ReadNativeLoopbackRequest(header);
+  if (!request.valid) return false;
+  return AtomicLoadShared32(&header->native_loopback_applied_seq) ==
+         request.seq;
 }
 
 inline bool NativeLoopbackRequestMatches(

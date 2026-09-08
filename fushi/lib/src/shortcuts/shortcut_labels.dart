@@ -43,6 +43,12 @@ extension ShortcutActionLabel on ShortcutAction {
         return t.shortcut_action_reader_open_menu;
       case ShortcutAction.readerOpenNavigation:
         return t.shortcut_action_reader_open_navigation;
+      case ShortcutAction.readerOpenGallery:
+        return t.shortcut_action_reader_open_gallery;
+      case ShortcutAction.readerOpenStatistics:
+        return t.shortcut_action_reader_open_statistics;
+      case ShortcutAction.readerOpenAudiobook:
+        return t.shortcut_action_reader_open_audiobook;
       case ShortcutAction.readerDismissDict:
         return t.shortcut_action_reader_dismiss_dict;
       case ShortcutAction.readerToggleFurigana:
@@ -75,6 +81,8 @@ extension ShortcutActionLabel on ShortcutAction {
         return t.shortcut_action_global_scroll_page_up;
       case ShortcutAction.globalToggleFullscreen:
         return t.shortcut_action_global_toggle_fullscreen;
+      case ShortcutAction.globalContextMenu:
+        return t.shortcut_action_global_context_menu;
       case ShortcutAction.audiobookPlayPause:
         return t.shortcut_action_audiobook_play_pause;
       case ShortcutAction.audiobookNextSentence:
@@ -372,6 +380,10 @@ extension ShortcutActionIcon on ShortcutAction {
       // 全 app 共用「返回上一级」：视频页把它解释成逐级退出阶梯。
       case ShortcutAction.globalBack:
         return Icons.arrow_back;
+
+      // 右键菜单（按钮归属声明，执行体在各卡片 / 各媒体表面自己的 showMenu）。
+      case ShortcutAction.globalContextMenu:
+        return Icons.menu_open;
 
       // ignore: no_default_cases
       default:

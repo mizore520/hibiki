@@ -15,7 +15,7 @@ void main() {
     expect(
       File('lib/i18n/strings_map.g.dart').existsSync(),
       isFalse,
-      reason: '动态映射未被运行时代码使用，且会让 Windows gen_snapshot 栈溢出（BUG-1879）',
+      reason: '动态映射未被运行时代码使用，且会让 Windows gen_snapshot 栈溢出（BUG-2268）',
     );
   });
 

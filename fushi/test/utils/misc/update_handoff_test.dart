@@ -593,11 +593,15 @@ void main() {
                 '${dir.path}${Platform.pathSeparator}hibiki.exe',
             currentInstallDir: dir.path,
             targetInstallDir: dir.path,
-            libmpvModuleHolders: <WindowsProcessInfo>[
+            // BUG-2055 —— 占用者的镜像必须在**安装目录之外**，这条用例才名副其实：
+            // `fushi.iss` 的 `PrepareToInstall` 第一步就是
+            // `KillProcessesUnderDir({app})`，按镜像路径清掉安装目录树内的任何进程。
+            // 把「外部程序」摆进安装目录里，断言的其实是一个安装器自己就能解决的情形。
+            libmpvModuleHolders: const <WindowsProcessInfo>[
               WindowsProcessInfo(
                 pid: 9001,
                 name: 'someplayer.exe',
-                path: '${dir.path}${Platform.pathSeparator}someplayer.exe',
+                path: r'D:\Media\Player\someplayer.exe',
               ),
             ],
           ),
@@ -616,8 +620,7 @@ void main() {
       expect(record?.installerLaunchSucceeded, isFalse);
       expect(record?.libmpvModuleHolders.single.pid, 9001);
       expect(record?.launchError, contains('non-Fushi process'));
-      expect(
-          record?.launchError, contains('Close the listed process manually'));
+      expect(record?.launchError, contains('Close them manually'));
     });
 
     test(
@@ -669,10 +672,115 @@ void main() {
       expect(record?.installerLaunchSucceeded, isFalse);
       expect(record?.galHookModuleHolders.single.pid, 7777);
       expect(record?.galHookModuleHolders.single.name, 'SiglusEngine.exe');
-      expect(record?.launchError, contains('non-Fushi process'));
+      // BUG-2055 —— 报错必须说清成因：占用者不是「某个非 Fushi 程序」，而是被 Fushi
+      // 自己的语音捕获组件注入的程序。旧文案把所有占用者统称 non-Fushi process，
+      // 等于把用户指向一个与 Fushi 无关的第三方，照着这句话永远找不到占用者。
+      expect(
+        record?.launchError,
+        contains("Fushi's voice capture component is injected"),
+      );
+      expect(
+        record?.launchError,
+        contains('Save your progress and close them'),
+      );
+      expect(record?.launchError, isNot(contains('non-Fushi process')));
       // 报错不得把占用者说成 libmpv：这次占用的是 helper 组件，指名错组件会把
       // 用户引到完全无关的排查方向。
       expect(record?.launchError, isNot(contains('libmpv')));
+    });
+
+    test(
+        'BUG-2055 镜像在安装目录树内的自有子进程交给安装器，不再硬中止'
+        '（KillProcessesUnderDir 按镜像路径清扫，Dart 侧不该比它更严）', () async {
+      final File marker = await _markerFile();
+      final Directory dir = marker.parent;
+      final File installer = File(
+          '${dir.path}${Platform.pathSeparator}fushi-1.2.3-windows-setup.exe');
+      await installer.writeAsBytes(<int>[0x4D, 0x5A, 0x90, 0x00]);
+
+      var startCalled = false;
+      await WindowsInstaller.runAndExit(
+        installer.path,
+        targetVersion: '1.2.3',
+        handoffMarkerFile: marker,
+        collectDiagnostics: () async => WindowsInstallerDiagnostics(
+          currentExecutablePath:
+              '${dir.path}${Platform.pathSeparator}fushi.exe',
+          currentInstallDir: dir.path,
+          targetInstallDir: dir.path,
+          // 以 `--hold` 常驻的自有 injector：镜像在安装目录树内，安装器
+          // `KillProcessesUnderDir` 一步就清得掉。旧判据只认三个 image 名，把它
+          // 当成「安装器杀不掉的外部锁」硬中止，用户这次更新就永远做不下去，而
+          // 关掉它根本不需要用户插手。
+          galHookModuleHolders: <WindowsProcessInfo>[
+            WindowsProcessInfo(
+              pid: 4321,
+              name: 'fushi_voice_injector.exe',
+              path: '${dir.path}${Platform.pathSeparator}voice_hook'
+                  '${Platform.pathSeparator}x86'
+                  '${Platform.pathSeparator}fushi_voice_injector.exe',
+            ),
+          ],
+        ),
+        startProcess: (String executable, List<String> args) async {
+          startCalled = true;
+          return const WindowsInstallerStartedProcess(pid: 4242);
+        },
+        exitProcess: (_) {},
+      );
+
+      expect(startCalled, isTrue,
+          reason: '镜像在安装目录树内的进程由安装器清掉，Dart 不该抢先中止更新');
+      final WindowsUpdateHandoffRecord? record =
+          await WindowsUpdateHandoff.read(marker);
+      expect(record?.galHookModuleHolders.single.pid, 4321);
+      expect(record?.launchError, isNull);
+    });
+
+    test(
+        'BUG-2055 同前缀的兄弟目录不算「安装目录树内」，仍按外部锁硬中止', () async {
+      final File marker = await _markerFile();
+      final Directory dir = marker.parent;
+      final File installer = File(
+          '${dir.path}${Platform.pathSeparator}fushi-1.2.3-windows-setup.exe');
+      await installer.writeAsBytes(<int>[0x4D, 0x5A, 0x90, 0x00]);
+
+      var startCalled = false;
+      await expectLater(
+        WindowsInstaller.runAndExit(
+          installer.path,
+          targetVersion: '1.2.3',
+          handoffMarkerFile: marker,
+          collectDiagnostics: () async => WindowsInstallerDiagnostics(
+            currentExecutablePath:
+                '${dir.path}${Platform.pathSeparator}fushi.exe',
+            currentInstallDir: dir.path,
+            targetInstallDir: dir.path,
+            // 目录名以安装目录为前缀、但**不是**它的子目录。裸 startsWith 会把它
+            // 误判成安装器清得掉，于是照常交接、随后在复制阶段静默失败
+            // （BUG-1675 的失败形状）。判据必须比到路径分隔符。
+            libmpvModuleHolders: <WindowsProcessInfo>[
+              WindowsProcessInfo(
+                pid: 9100,
+                name: 'someplayer.exe',
+                path: '${dir.path}-sibling'
+                    '${Platform.pathSeparator}someplayer.exe',
+              ),
+            ],
+          ),
+          startProcess: (String executable, List<String> args) async {
+            startCalled = true;
+            return const WindowsInstallerStartedProcess(pid: 4242);
+          },
+          exitProcess: (_) {},
+        ),
+        throwsA(isA<UpdateInstallerException>()),
+      );
+
+      expect(startCalled, isFalse);
+      final WindowsUpdateHandoffRecord? record =
+          await WindowsUpdateHandoff.read(marker);
+      expect(record?.launchError, contains('non-Fushi process'));
     });
 
     test('BUG-1675 galHookModuleHolders 计入锁证据，且 wire 键可往返', () async {
@@ -1180,6 +1288,206 @@ void main() {
       expect(record!.lastPromptedAppVersion, isNull);
       expect(record.lastPromptedFailureFingerprint, isNull);
       expect(record.lastPromptedAt, isNull);
+    });
+  });
+
+  group('BUG-2203 安装器停在启动段 / 诊断只认观测不认子串', () {
+    // 用户机上的**真实**日志（2026-09-06，fushi-2.2.4-debug.13582，逐行照抄，
+    // 只把路径与 /SL5 参数做了脱敏）。现场：09:35:03.752 launcher 启动安装器，
+    // 09:35:04.039 日志戛然而止 —— 安装器在 InitializeSetup 里被自己的
+    // `taskkill /IM fushi.exe /T` 连同所在的祖先进程树（fushi.exe →
+    // fushi_update_launcher.exe → setup.exe）一起杀掉，所以没有任何
+    // abort / exception / Deinitializing 行。
+    const String killedAtStartupLog =
+        r'''2026-09-06 09:35:03.972   Log opened. (Time zone: UTC+08:00)
+2026-09-06 09:35:03.972   Setup version: Inno Setup version 6.7.1
+2026-09-06 09:35:03.972   Original Setup EXE: C:\updates\fushi-setup.exe
+2026-09-06 09:35:03.973   Setup command line: /SL5="x,1,2,C:\setup.exe" /VERYSILENT /SP- /SUPPRESSMSGBOXES /NORESTART /DIR=D:\APP\Hibiki
+2026-09-06 09:35:03.973   Windows version: 10.0.26200
+2026-09-06 09:35:03.973   Windows architecture: x64 (64-bit)
+2026-09-06 09:35:03.973   Machine types supported by system: x86 x64
+2026-09-06 09:35:03.973   User privileges: None
+2026-09-06 09:35:04.037   Administrative install mode: No
+2026-09-06 09:35:04.037   Install mode root key: HKEY_CURRENT_USER
+2026-09-06 09:35:04.037   64-bit install mode: No
+2026-09-06 09:35:04.037   RedirectionGuard status for current process: Enabled in enforcing mode
+2026-09-06 09:35:04.038   Created temporary directory: C:\Temp\is-D5OX8W7L61.tmp
+2026-09-06 09:35:04.039   -- DLL function import --
+2026-09-06 09:35:04.039   Function and DLL name: OpenMutexW@kernel32.dll
+2026-09-06 09:35:04.039   Importing the DLL function. Dest DLL name: kernel32.dll
+2026-09-06 09:35:04.039   Successfully imported the DLL function. Delay loaded? No
+2026-09-06 09:35:04.039   -- DLL function import --
+2026-09-06 09:35:04.039   Function and DLL name: CloseHandle@kernel32.dll
+2026-09-06 09:35:04.039   Importing the DLL function. Dest DLL name: kernel32.dll
+2026-09-06 09:35:04.039   Successfully imported the DLL function. Delay loaded? No
+2026-09-06 09:35:04.039   -- DLL function import --
+2026-09-06 09:35:04.039   Function and DLL name: CreateFileW@kernel32.dll
+2026-09-06 09:35:04.039   Importing the DLL function. Dest DLL name: kernel32.dll
+2026-09-06 09:35:04.039   Successfully imported the DLL function. Delay loaded? No''';
+
+    WindowsUpdateHandoffRecord recordWith({bool? launcherMutexReleased}) {
+      return WindowsUpdateHandoffRecord(
+        targetVersion: '2.2.4-debug.13582',
+        installerPath: r'C:\tmp\setup.exe',
+        innoLogPath: r'C:\tmp\setup.install.log',
+        startedAt: DateTime.utc(2026, 9, 6, 1, 32, 53),
+        innoLogExists: true,
+        launcherMutexReleased: launcherMutexReleased,
+      );
+    }
+
+    test('真实现场日志判成「停在启动段」，不再误报 app_mutex_running', () {
+      final WindowsInstallerFailureSummary summary =
+          summarizeWindowsInstallerFailure(
+        record: recordWith(),
+        innoLogContents: killedAtStartupLog,
+      );
+
+      // 旧实现对这份日志**恒定**给出 app_mutex_running：它把下面这行
+      // `[Code]` 段外部函数导入当成了「Fushi 仍在运行」的证据，而这一行在
+      // 每一份 Inno 日志里都有。这条用例就是那次误诊的回归闸。
+      expect(killedAtStartupLog, contains('OpenMutexW@kernel32.dll'));
+      expect(summary.type, 'installer_stopped_at_startup');
+    });
+
+    test('只剩 OpenMutexW 导入行时，不构成「Fushi 仍在运行」的证据', () {
+      // 把日志拉出启动段（多一行复制阶段），结构判据不再成立；此时与 mutex
+      // 有关的仍只有那行 import —— 不得据此判 app_mutex_running。
+      final WindowsInstallerFailureSummary summary =
+          summarizeWindowsInstallerFailure(
+        record: recordWith(),
+        innoLogContents: '$killedAtStartupLog\n'
+            r'2026-09-06 09:35:05.000   Starting the installation process.',
+      );
+
+      expect(summary.type, 'installer_incomplete');
+    });
+
+    test('launcher 实测互斥量未释放，才判 app_mutex_running', () {
+      final WindowsInstallerFailureSummary summary =
+          summarizeWindowsInstallerFailure(
+        record: recordWith(launcherMutexReleased: false),
+        innoLogContents: '$killedAtStartupLog\n'
+            r'2026-09-06 09:35:05.000   Starting the installation process.',
+      );
+
+      expect(summary.type, 'app_mutex_running');
+    });
+
+    test('停在启动段 + 互斥量未释放：两条事实都要出现在消息里', () {
+      final WindowsInstallerFailureSummary summary =
+          summarizeWindowsInstallerFailure(
+        record: recordWith(launcherMutexReleased: false),
+        innoLogContents: killedAtStartupLog,
+      );
+
+      expect(summary.type, 'installer_stopped_at_startup');
+      expect(summary.message, contains('FushiSingleInstanceMutex'));
+    });
+
+    test('走出启动段的日志不算「停在启动段」，空日志不下结论', () {
+      expect(windowsInnoLogStoppedDuringStartup(killedAtStartupLog), isTrue);
+      expect(
+        windowsInnoLogStoppedDuringStartup(
+          '$killedAtStartupLog\n'
+          r'2026-09-06 09:35:05.000   -- File entry --',
+        ),
+        isFalse,
+      );
+      expect(windowsInnoLogStoppedDuringStartup(''), isFalse);
+    });
+
+    test('launcher 写进 marker 的未知键，经 Dart 读写一轮后仍在', () {
+      // C++ launcher（`update_launcher.cpp` 的 `AppendMarkerFields`）写下的观测。
+      // 旧实现在 fromJson → toJson 这一轮把它们全部静默丢掉，事后连「是
+      // OpenProcess 失败还是真的等超时」都分不出来。
+      final Map<String, dynamic> onDisk = <String, dynamic>{
+        'targetVersion': '2.2.4-debug.13582',
+        'installerPath': r'C:\tmp\setup.exe',
+        'innoLogPath': r'C:\tmp\setup.install.log',
+        'startedAt': '2026-09-06T01:32:53.434671Z',
+        'parentExitObserved': false,
+        'parentExitTimedOut': true,
+        'parentExitTimedOutAt': '2026-09-06T01:34:53.517Z',
+        'launcherMutexReleased': false,
+        'launcherMutexCheckedAt': '2026-09-06T01:35:03.752Z',
+        'appAliveAfterInstaller': false,
+        'appRelaunchedByLauncher': true,
+        'appRelaunchPath': r'D:\APP\Hibiki\fushi.exe',
+      };
+
+      final Map<String, dynamic> roundTripped =
+          WindowsUpdateHandoffRecord.fromJson(onDisk).toJson();
+
+      for (final String key in onDisk.keys) {
+        expect(roundTripped.containsKey(key), isTrue,
+            reason: 'marker 键 $key 在 Dart 读写一轮后丢失了');
+      }
+      expect(roundTripped['parentExitTimedOut'], isTrue);
+      expect(roundTripped['launcherMutexReleased'], isFalse);
+      expect(roundTripped['appRelaunchedByLauncher'], isTrue);
+    });
+
+    test('模型写出的每个键都被自己认识（extraFields 与已知键不重叠）', () {
+      // 新增 model 字段却忘了登记进 `_knownJsonKeys`，会让该键在下一轮读回时落进
+      // extraFields，随后被 toJson 重复写出。这条用例是那个疏漏的闸门。
+      final WindowsUpdateHandoffRecord full = WindowsUpdateHandoffRecord(
+        targetVersion: '1.2.3',
+        installerPath: r'C:\tmp\setup.exe',
+        innoLogPath: r'C:\tmp\setup.log',
+        startedAt: DateTime.utc(2026, 9, 6),
+        currentExecutablePath: r'D:\APP\Hibiki\fushi.exe',
+        currentInstallDir: r'D:\APP\Hibiki',
+        targetInstallDir: r'D:\APP\Hibiki',
+        detectedInstallLocations: const <WindowsDetectedInstallLocation>[
+          WindowsDetectedInstallLocation(
+            source: 'current',
+            path: r'D:\APP\Hibiki',
+          ),
+        ],
+        runningFushiProcesses: const <WindowsProcessInfo>[
+          WindowsProcessInfo(pid: 1, name: 'fushi.exe'),
+        ],
+        libmpvModuleHolders: const <WindowsProcessInfo>[
+          WindowsProcessInfo(pid: 2, name: 'mpv.exe'),
+        ],
+        galHookModuleHolders: const <WindowsProcessInfo>[
+          WindowsProcessInfo(pid: 3, name: 'game.exe'),
+        ],
+        innoLogDeleteFileFailures: const <WindowsInnoDeleteFileFailure>[
+          WindowsInnoDeleteFileFailure(path: r'D:\a.dll', code: 5),
+        ],
+        pathMismatchWarning: 'warn',
+        launcherStartedAt: DateTime.utc(2026, 9, 6, 0, 1),
+        launcherPid: 7028,
+        parentProcessId: 97348,
+        parentExitObserved: false,
+        parentExitObservedAt: DateTime.utc(2026, 9, 6, 0, 2),
+        launcherMutexReleased: false,
+        installerLaunchSucceeded: true,
+        installerLaunchedAt: DateTime.utc(2026, 9, 6, 0, 3),
+        installerPid: 12024,
+        innoLogExists: true,
+        innoLogSizeBytes: 2185,
+        innoLogModifiedAt: DateTime.utc(2026, 9, 6, 0, 4),
+        installerFailureType: 'installer_stopped_at_startup',
+        installerFailureSummary: 'summary',
+        installerLaunchFailedAt: DateTime.utc(2026, 9, 6, 0, 5),
+        launchError: 'err',
+        failureFingerprint: 'fp',
+        lastPromptedAppVersion: '1.2.2',
+        lastPromptedFailureFingerprint: 'fp2',
+        lastPromptedAt: DateTime.utc(2026, 9, 6, 0, 6),
+      );
+
+      final WindowsUpdateHandoffRecord reread =
+          WindowsUpdateHandoffRecord.fromJson(full.toJson());
+      expect(
+        reread.extraFields,
+        isEmpty,
+        reason: '这些键是模型自己写出去的，读回来必须被自己认识：'
+            '${reread.extraFields.keys.join(", ")}',
+      );
     });
   });
 }

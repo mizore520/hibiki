@@ -8,7 +8,6 @@ import 'package:fushi/src/mining/gal_hook_session_controller.dart';
 import 'package:fushi/src/mining/galgame_audio_source.dart';
 import 'package:fushi/src/pages/implementations/game_shared.dart';
 import 'package:fushi/src/sync/texthooker_service.dart';
-import 'package:fushi/src/sync/texthooker_ws_client.dart';
 import 'package:fushi/src/utils/misc/desktop_audio_playback.dart';
 import 'package:fushi/utils.dart';
 
@@ -168,14 +167,17 @@ class _GalCaptureSetupDialogState extends State<GalCaptureSetupDialog> {
             widget.attachedText,
           ]),
           builder: (BuildContext context, Widget? child) {
-            // The game HWND can cover this dialog while its modal barrier still
-            // blocks the workbench. Yield as soon as per-exe consent is needed.
-            // 选中线程是用户自己的动作，标记该留；风险让位不是，标记必须回滚。
-            // 两者同时成立时以用户动作为准。
+            // 选中线程是用户自己的动作，弹窗该让位并且**不**回滚「本会话已提示
+            // 过」的标记。
+            //
+            // 这里原本还有第二条腿：`needsUnsafeRiskAcceptance` 为真时也自动关，
+            // 好让游戏窗盖住本弹窗时用户仍能够到工具条上的「确认点击风险」。
+            // BUG-2154 把那道门整个去掉之后（风险恒定接受），它恒为假、这条腿
+            // 恒不可达 —— 留着只会让「弹窗会不会自己关」多一个永远不成立的答案。
+            // `yieldingToRiskConsent` 参数本身保留：它是 _scheduleAutoClose 的
+            // 回滚语义，门若哪天按引擎重开，接回来只是一个 else-if。
             if (widget.session.selectedTextThreadKey != null) {
               _scheduleAutoClose(yieldingToRiskConsent: false);
-            } else if (widget.attachedText.needsUnsafeRiskAcceptance) {
-              _scheduleAutoClose(yieldingToRiskConsent: true);
             }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -227,10 +229,6 @@ class _GalCaptureSetupDialogState extends State<GalCaptureSetupDialog> {
   Widget _buildThreadPane(BuildContext context) {
     final List<TexthookerTextThread> threads = widget.session.textThreads;
     final Map<String, String> labels = assignThreadDisplayLabels(threads);
-    final bool hasLuna = threads.any(
-      (TexthookerTextThread thread) =>
-          thread.key == GalHookSessionController.lunaExternalTextThreadKey,
-    );
     return FushiCard(
       padding: EdgeInsets.zero,
       child: Column(
@@ -252,17 +250,6 @@ class _GalCaptureSetupDialogState extends State<GalCaptureSetupDialog> {
                     itemCount: threads.length,
                     itemBuilder: (BuildContext context, int index) {
                       final TexthookerTextThread thread = threads[index];
-                      final bool isLuna =
-                          thread.key ==
-                          GalHookSessionController.lunaExternalTextThreadKey;
-                      final bool lunaConnected =
-                          isLuna &&
-                          widget.session.endpointStatuses.any(
-                            (TexthookerEndpointStatus status) =>
-                                isLunaTranslatorOriginEndpoint(status.url) &&
-                                status.phase ==
-                                    TexthookerEndpointPhase.connected,
-                          );
                       final bool selecting = _selectingThreadKey == thread.key;
                       return FushiListItem(
                         leading: const Icon(Icons.forum_outlined),
@@ -271,28 +258,25 @@ class _GalCaptureSetupDialogState extends State<GalCaptureSetupDialog> {
                         // 按 BUG-1184 的规矩逐调用点放宽是安全的。
                         titleMaxLines: 2,
                         title: Text(
-                          isLuna
-                              ? t.game_text_source_luna
-                              : '${labels[thread.key] ?? thread.label} · '
-                                    '${thread.observedLineCount}',
+                          '${labels[thread.key] ?? thread.label} · '
+                          '${thread.observedLineCount}',
                         ),
                         subtitle: Text(
-                          isLuna
-                              ? (lunaConnected
-                                    ? t.game_text_source_luna_connected
-                                    : t.game_text_source_luna_waiting)
-                              : texthookerThreadSubtitle(
-                                      audioLineCount: thread.audioLineCount,
-                                      latestText: thread.displayPreviewText,
-                                      // BUG-1474：一句话（常是「……」或人名）分辨不出
-                                      // 这条是不是正文流；给最近 3 句。
-                                      recentTexts: thread.recentPreviewTexts,
-                                      audioLabel: t
-                                          .game_text_thread_audio_count(
-                                            count: thread.audioLineCount,
-                                          ),
-                                    ) ??
-                                    t.game_waiting_for_text,
+                          texthookerThreadSubtitle(
+                                audioLineCount: thread.audioLineCount,
+                                latestText: thread.displayPreviewText,
+                                // BUG-1474：一句话（常是「……」或人名）分辨不出
+                                // 这条是不是正文流；给最近 3 句。
+                                recentTexts: thread.recentPreviewTexts,
+                                audioLabel: t.game_text_thread_audio_count(
+                                  count: thread.audioLineCount,
+                                ),
+                                // BUG-2112：伪影线程折叠后像干净整句，必须明示。
+                                artifactLabel: thread.isArtifactDominated
+                                    ? t.game_text_thread_artifact_hint
+                                    : null,
+                              ) ??
+                              t.game_waiting_for_text,
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -311,81 +295,6 @@ class _GalCaptureSetupDialogState extends State<GalCaptureSetupDialog> {
                     },
                   ),
           ),
-          if (hasLuna) ...<Widget>[
-            const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    t.game_luna_audio_per_game_hint,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          t.game_luna_audio_lead_in,
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
-                      ),
-                      Text('${widget.session.lunaLoopbackPreRollMs} ms'),
-                    ],
-                  ),
-                  Text(
-                    t.game_luna_audio_lead_in_hint,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  Slider(
-                    value: widget.session.lunaLoopbackPreRollMs.toDouble(),
-                    min: 0,
-                    max: 1000,
-                    divisions: 20,
-                    label: '${widget.session.lunaLoopbackPreRollMs} ms',
-                    onChanged: (double value) =>
-                        widget.session.setLunaLoopbackPreRollMs(value.round()),
-                    onChangeEnd: (double value) =>
-                        widget.onLunaTimingCommitted(),
-                  ),
-                  const Divider(height: 24),
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          t.game_luna_audio_tail_trim,
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
-                      ),
-                      Text('${widget.session.lunaLoopbackTailTrimMs} ms'),
-                    ],
-                  ),
-                  Text(
-                    t.game_luna_audio_tail_trim_hint,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  Slider(
-                    value: widget.session.lunaLoopbackTailTrimMs.toDouble(),
-                    min: 0,
-                    max: 1000,
-                    divisions: 20,
-                    label: '${widget.session.lunaLoopbackTailTrimMs} ms',
-                    onChanged: (double value) =>
-                        widget.session.setLunaLoopbackTailTrimMs(value.round()),
-                    onChangeEnd: (double value) =>
-                        widget.onLunaTimingCommitted(),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -419,6 +328,48 @@ class _GalCaptureSetupDialogState extends State<GalCaptureSetupDialog> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   _AudioSourceSummary(source: source, format: format),
+                  if (widget.session.usesLunaExternalText) ...<Widget>[
+                    const SizedBox(height: 12),
+                    Text(t.game_luna_audio_per_game_hint),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: <Widget>[
+                        Expanded(child: Text(t.game_luna_audio_lead_in)),
+                        Text('${widget.session.lunaLoopbackPreRollMs} ms'),
+                      ],
+                    ),
+                    Text(t.game_luna_audio_lead_in_hint),
+                    Slider(
+                      value: widget.session.lunaLoopbackPreRollMs.toDouble(),
+                      min: 0,
+                      max: 1000,
+                      divisions: 20,
+                      label: '${widget.session.lunaLoopbackPreRollMs} ms',
+                      onChanged: (double value) => widget.session
+                          .setLunaLoopbackPreRollMs(value.round()),
+                      onChangeEnd: (double value) =>
+                          widget.onLunaTimingCommitted(),
+                    ),
+                    Row(
+                      children: <Widget>[
+                        Expanded(child: Text(t.game_luna_audio_tail_trim)),
+                        Text('${widget.session.lunaLoopbackTailTrimMs} ms'),
+                      ],
+                    ),
+                    Text(t.game_luna_audio_tail_trim_hint),
+                    Slider(
+                      value: widget.session.lunaLoopbackTailTrimMs.toDouble(),
+                      min: 0,
+                      max: 1000,
+                      divisions: 20,
+                      label: '${widget.session.lunaLoopbackTailTrimMs} ms',
+                      onChanged: (double value) => widget.session
+                          .setLunaLoopbackTailTrimMs(value.round()),
+                      onChangeEnd: (double value) =>
+                          widget.onLunaTimingCommitted(),
+                    ),
+                    const Divider(height: 24),
+                  ],
                   const SizedBox(height: 12),
                   Text(
                     t.game_audio_requires_thread,

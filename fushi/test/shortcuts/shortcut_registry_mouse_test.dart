@@ -93,58 +93,35 @@ void main() {
     );
   });
 
-  // 首页的 Flutter Listener 已接通 mouse 通道；绑定仍按 scope 精确解析。
-  test('home scope opens mouse channel and resolves a custom binding', () {
+  // 同一件事的另一面：通道**关着**的 scope，其鼠标绑定照样解析得出来。
+  // 这条钉住「channels 只是设置页的录入门，不是派发门」这个契约本身——只要有人再想
+  // 拿「通道没开」推出「绑定是死的」，这里就会红。
+  test('BUG-1995: channels 不含 mouse 的 scope，已有鼠标绑定仍可解析', () {
+    // 锚点几经辗转：home → globalExternal → gamepad。前两个都是因为**后来真的接上了
+    // 鼠标解析入口**而被迫让位（home 是 BUG-1995 那轮，globalExternal 是 TODO-1066
+    // 那轮——app 外查词的鼠标侧键触发走 native RawInput，通道随之打开）。
+    //
+    // `gamepad` scope（dpad 四向）是目前唯一**按构造**开不了鼠标的那个：它的唯一
+    // 消费者是 `GamepadService._dispatchButton` 按 `GamepadButton` 解析，键盘/鼠标
+    // 绑定在那里没有也不可能有读取方（见 ShortcutScope.channels 的 gamepad case）。
+    // 所以它能长期留在关着的一侧，适合当这条契约的锚点。
     expect(
-      ShortcutScope.home.channels.contains(ShortcutChannel.mouse),
-      isTrue,
-      reason: '首页已有 PointerDownEvent → MouseBinding → 派发管线',
+      ShortcutScope.gamepad.channels.contains(ShortcutChannel.mouse),
+      isFalse,
+      reason: '前提：gamepad scope 没有开鼠标通道（开了就换一个仍关着的 scope）',
     );
 
     final FushiShortcutRegistry reg = FushiShortcutRegistry()
       ..loadDefaults(TargetPlatform.windows);
     reg.updateBinding(
-      ShortcutAction.homeTabNext,
+      ShortcutAction.dpadUp,
       const ShortcutBindingSet(mouseBindings: <MouseBinding>[MouseBinding(4)]),
     );
 
     expect(
-      reg.resolveMouse(4, scope: ShortcutScope.home),
-      ShortcutAction.homeTabNext,
-    );
-  });
-
-  test('resolveWheel matches direction and the exact modifier set', () {
-    final reg = FushiShortcutRegistry()..loadDefaults(TargetPlatform.windows);
-    expect(
-      reg.resolveWheel(
-        WheelDirection.down,
-        modifiers: const <ModifierKey>{ModifierKey.alt},
-        scope: ShortcutScope.dictionaryPopup,
-      ),
-      ShortcutAction.popupNextEntry,
-    );
-    expect(
-      reg.resolveWheel(
-        WheelDirection.down,
-        modifiers: const <ModifierKey>{},
-        scope: ShortcutScope.dictionaryPopup,
-      ),
-      isNull,
-    );
-    reg.updateBinding(
-      ShortcutAction.homeFocusSearch,
-      const ShortcutBindingSet(
-        wheelBindings: <WheelBinding>[WheelBinding(WheelDirection.up)],
-      ),
-    );
-    expect(
-      reg.resolveWheel(
-        WheelDirection.up,
-        modifiers: const <ModifierKey>{},
-        scope: ShortcutScope.home,
-      ),
-      ShortcutAction.homeFocusSearch,
+      reg.resolveMouse(4, scope: ShortcutScope.gamepad),
+      ShortcutAction.dpadUp,
+      reason: 'resolveMouse 不查 channels —— 通道开关管不着已存在的绑定能否派发',
     );
   });
 }

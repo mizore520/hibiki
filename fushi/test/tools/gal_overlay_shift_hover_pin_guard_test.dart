@@ -250,17 +250,17 @@ void main() {
         isTrue,
         reason: 'States 必须带上 topmost，独立工具条窗才画得出高亮',
       );
-      // 图钉保留 Segoe UI Symbol 可回退的 U+1F4CC，工具栏不得跟随台词
-      // 字体。把矢量兜底一起钉住，避免系统字形不可用时出现空按钮。
+      // 作者版已把整条工具栏统一到打包的 Material Symbols Rounded 子集；
+      // 置顶槽使用 push_pin U+F10D，缺字时仍有逐槽矢量兜底。
       expect(
-        toolbar.contains(r'return L"\U0001F4CC";'),
+        toolbar.contains(r'return L"\uF10D";'),
         isTrue,
-        reason: '置顶槽必须保留独立于台词字体的图钉字形',
+        reason: '置顶槽必须有 push_pin 字形（Material Symbols U+F10D）',
       );
       expect(
-        toolbar.contains('L"Segoe UI Symbol"'),
+        toolbar.contains('L"Material Symbols Rounded"'),
         isTrue,
-        reason: '工具栏图标字体必须继续独立使用 Segoe UI Symbol',
+        reason: '工具栏图标字体必须与作者版统一使用打包的 Material Symbols 子集',
       );
       expect(
         toolbar.contains('void DrawSlotIcon('),

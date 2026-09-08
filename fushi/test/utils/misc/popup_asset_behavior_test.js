@@ -800,6 +800,96 @@ function buildEntryCardDom(context) {
   return {entry, glossary, cardGap};
 }
 
+function testExtensionPopupHandlesNestedLookupBeforeHostPageBubbling() {
+  const context = loadPopup((value) => {
+    value.chrome = { runtime: { id: 'extension-test' } };
+  });
+  assert.equal(context.__listeners.click, undefined,
+    'extension lookup must not wait for document bubbling behind player listeners');
+  const root = new FakeElement('shadow-root');
+  root.host = new FakeElement('div');
+  context.window.__fushiRoot = root;
+  context.window.__fushiBindPopupInteractions(root);
+  context.window.__fushiBindPopupInteractions(root);
+  assert.equal(root.listeners.click.length, 1, 'rebinding must not duplicate lookups');
+  const {glossary} = buildEntryCardDom(context);
+  root.appendChild(glossary);
+  const selected = [];
+  const bridgeCalls = [];
+  context.window.fushiSelection = { selectText: (...args) => selected.push(args) };
+  context.window.flutter_inappwebview.callHandler = (...args) => {
+    bridgeCalls.push(args);
+    return Promise.resolve(null);
+  };
+  let hostPlayerClicks = 0;
+  context.document.addEventListener('click', () => { hostPlayerClicks++; });
+  function bubble(type, target, extra = {}) {
+    const event = {
+      target, clientX: 50, clientY: 50, ...extra,
+      composedPath: () => [target, glossary, root, root.host, context.document],
+      stopPropagation() { this.stopped = true; },
+      preventDefault() { this.prevented = true; },
+    };
+    for (const handler of root.listeners[type]) handler(event);
+    if (!event.stopped) {
+      for (const handler of context.__listeners[type] || []) handler(event);
+    }
+    return event;
+  }
+  bubble('mousedown', glossary);
+  bubble('click', glossary);
+  assert.deepEqual(selected, [[50, 50, 20]], 'definition click still selects a nested word');
+  bubble('mousemove', glossary, { shiftKey: true });
+  assert.equal(selected.length, 2, 'Shift lookup must also remain inside the popup');
+  const anchor = new FakeElement('a');
+  anchor.setAttribute('href', 'entry://計画');
+  anchor.textContent = '計画';
+  anchor.closest = function(selector) {
+    if (selector === 'a[href]') return this;
+    return FakeElement.prototype.closest.call(this, selector);
+  };
+  glossary.appendChild(anchor);
+  const linkEvent = bubble('click', anchor);
+  assert.ok(linkEvent.prevented, 'dictionary reference must not navigate the page');
+  assert.equal(bridgeCalls[0][0], 'onLinkClick');
+  assert.equal(bridgeCalls[0][1], '計画');
+  assert.equal(hostPlayerClicks, 0, 'nested lookup must not resume the host player');
+  assert.ok(!bridgeCalls.some(([name]) => name === 'tapOutside'),
+    'nested text and cross-reference clicks must not dismiss the popup');
+  const reopened = new FakeElement('shadow-root');
+  reopened.host = new FakeElement('div');
+  context.window.__fushiRoot = reopened;
+  context.window.__fushiBindPopupInteractions(reopened);
+  assert.equal(reopened.listeners.click.length, 1,
+    'a recreated popup root must receive fresh delegated handlers');
+  let stopped = false;
+  reopened.listeners.click[0]({
+    target: glossary, clientX: 50, clientY: 50,
+    composedPath: () => [glossary, reopened, reopened.host, context.document],
+    stopPropagation() { stopped = true; },
+  });
+  assert.ok(stopped);
+  assert.equal(selected.length, 3, 'nested selection still works after reopening');
+}
+
+testExtensionPopupHandlesNestedLookupBeforeHostPageBubbling();
+
+function testExtensionBindsRootCreatedBeforePopupScript() {
+  const root = new FakeElement('shadow-root');
+  root.host = new FakeElement('div');
+  const context = loadPopup((value) => {
+    value.chrome = { runtime: { id: 'extension-test' } };
+    value.window.__fushiRoot = root;
+  });
+  assert.equal(root.listeners.click.length, 1,
+    'side panel creates its root before loading the shared popup script');
+  assert.equal(context.__listeners.click, undefined);
+  context.window.__fushiBindPopupInteractions(root);
+  assert.equal(root.listeners.click.length, 1);
+}
+
+testExtensionBindsRootCreatedBeforePopupScript();
+
 // (1) Tapping the definition TEXT body still routes to word selection.
 function testTapOnGlossaryTextSelectsWord() {
   const context = loadPopup();
@@ -2196,48 +2286,51 @@ function testRenderPopupNoKanjiNoEntriesShowsNoResults() {
 function testConjugationDescriptionUsesPopupCardAndClosesOnNextLookup() {
   const context = loadPopup();
   const container = new FakeElement('div');
-  const overlay = new FakeElement('div');
-  overlay.classList.add('overlay');
+
+  // 说明面从静态 `.overlay` 改成 popup.js 现建的 `.grammar-tooltip`
+  // （`-title` / `-body` 两个子节点，收起入口统一成 hideGrammarTooltip）。
+  // 这里预置好节点：ensureGrammarTooltip 走 querySelector 命中就直接返回，
+  // 不需要假 DOM 支持 el()/iconSvg()/getBoundingClientRect()。
+  //
+  // 本用例只钉「下一轮查词必须把上一轮的说明面退掉」这一条——它是
+  // grammar-tooltip-single-surface.test.js 那 17 条**没有**覆盖的一半
+  // （那边测 hover/钉住/收起/zoom，不驱动 renderPopup）。
+  const tooltip = new FakeElement('div');
+  tooltip.classList.add('grammar-tooltip');
+  tooltip.classList.add('is-pinned');
+  tooltip.style.display = 'block';
   const title = new FakeElement('div');
-  title.classList.add('overlay-title');
-  const content = new FakeElement('div');
-  content.classList.add('overlay-content');
-  overlay.append(title, content);
-  context.document.body.append(overlay);
-
-  const tag = new FakeElement('span');
-  tag.textContent = '-ている';
-  tag.setAttribute('data-description', 'Indicates an action in progress.');
-  context.showDescription(tag);
-
-  assert.equal(overlay.style.display, 'block',
-    'clicking a conjugation tag opens its detail card');
-  assert.equal(title.textContent, '-ている',
-    'the detail card uses the conjugation as its popup title');
-  assert.equal(content.textContent, 'Indicates an action in progress.',
-    'the grammar description is rendered in the popup body');
+  title.classList.add('grammar-tooltip-title');
+  title.textContent = '-ている';
+  const body = new FakeElement('div');
+  body.classList.add('grammar-tooltip-body');
+  body.textContent = 'Indicates an action in progress.';
+  tooltip.append(title, body);
+  context.document.body.append(tooltip);
 
   stubRenderPopupRuntime(context, container);
   context.window.lookupEntries = [];
   context.window.kanjiResults = [];
   context.window.renderPopup();
 
-  assert.equal(overlay.style.display, 'none',
-    'a new lookup closes the previous conjugation detail card');
+  assert.equal(tooltip.style.display, 'none',
+    'a new lookup closes the previous conjugation detail surface');
+  assert.equal(tooltip.classList.contains('is-pinned'), false,
+    'a new lookup also drops the pinned state, not just visibility');
   assert.equal(title.textContent, '',
-    'a closed detail card cannot retain the previous conjugation title');
-  assert.equal(content.textContent, '',
-    'a closed detail card cannot retain the previous grammar text');
+    'a closed detail surface cannot retain the previous conjugation title');
+  assert.equal(body.textContent, '',
+    'a closed detail surface cannot retain the previous grammar text');
 
   const css = fs.readFileSync(popupCssPath, 'utf8');
-  const rule = css.match(/\.overlay\s*\{([^}]*)\}/);
-  assert.ok(rule, '.overlay popup-card rule must exist');
-  assert.ok(/inset\s*:\s*8px\s*;/.test(rule[1]),
-    'conjugation detail is an inset popup card, not a full-width bottom sheet');
-  assert.ok(/background\s*:\s*var\(--background-color\)\s*;/.test(rule[1]),
-    'conjugation detail uses the normal opaque lookup surface');
-  assert.ok(/border-radius\s*:\s*10px\s*;/.test(rule[1]),
-    'conjugation detail matches the normal lookup popup radius');
+  const rule = css.match(/\.grammar-tooltip\s*\{([^}]*)\}/);
+  assert.ok(rule, '.grammar-tooltip rule must exist');
+  assert.ok(/background\s*:\s*var\(--surface-container-high\)\s*;/.test(rule[1]),
+    'conjugation detail uses an opaque themed surface (BUG-2037)');
+  assert.ok(/border-radius\s*:\s*8px\s*;/.test(rule[1]),
+    'conjugation detail keeps the shared popup radius');
+  assert.ok(!/width\s*:\s*100%\s*;/.test(rule[1]),
+    'conjugation detail is an anchored tooltip, not a full-width bottom sheet');
 }
 
 testEmSizedWideImagesUseHorizontalScrollWrapper();
@@ -2425,14 +2518,14 @@ function findPanelButton(context, label) {
   return button;
 }
 
-function stubAppExternalHost(context, {matches, calls}) {
+function stubAppExternalHost(context, {matches, calls, openOutcome = 'opened'}) {
   context.window.flutter_inappwebview.callHandler = (name, payload) => {
     if (name === 'duplicateCheck') return Promise.resolve(true);
-    // The app-external native layer resolves this one with an immediate null
-    // too — the ↗ half of the same root cause (BUG-1064).
+    // BUG-2051：↗ 现在在 app 内外走同一根桥（原生侧已把它列入 DEFERRED），宿主回
+    // 三态结局名；null 专指「这个宿主根本没接这根桥」（浏览器扩展的 shim）。
     if (name === 'openInAnki') {
       calls.openInAnki.push(payload);
-      return Promise.resolve(null);
+      return Promise.resolve(openOutcome);
     }
     if (name === 'overwriteTargetNoteId') return Promise.resolve(null);
     // The app-external native layer resolves this one with an immediate null —
@@ -2587,10 +2680,12 @@ testAppExternalMinedClickReminesWhenCardIsGone().catch((error) => {
   process.exitCode = 1;
 });
 
-// BUG-1064 ↗「在 Anki 中打开卡片」——同一根因的第二个入口。宿主 handler `openInAnki`
-// 同样没有被 app 外裸窗 DEFER（它同样要弹 Flutter 的多卡选择框 / toast），同样被立刻
-// 解析成 null，于是按钮点了什么都不发生。以下三条钉死页内车道的三分支语义
-// （与 app 内 openMinedCardInAnki 一致：无命中提示 / 单卡直开 / 多卡弹选择）。
+// BUG-2051 ↗「在 Anki 中打开卡片」——app 内外**同一根桥、同一条判据**。
+//
+// 旧实现按宿主能力分两条：app 内交给 openInAnki，app 外自己先 findMinedMatches 反查
+// note id 再 openMinedNote 打开。那条反查按第一字段**名**查，而画 ✓ 的查重是 Anki 内建
+// 的第一字段 checksum（跨全部笔记类型）——同一个卡组混装两种笔记类型时两者答案相反：
+// ✓ 说已制卡、↗ 说「没有找到已制的卡片」。页内那条整条删掉，判据只留一条。
 
 function buildOpenAnkiButton(context) {
   const entry = {
@@ -2618,119 +2713,101 @@ function buildOpenAnkiButton(context) {
   return button;
 }
 
-async function testAppExternalOpenInAnkiSingleMatchOpensDirectly() {
-  const context = loadPopup();
-  const calls = newCalls();
-  stubAppExternalHost(context, {
-    matches: [{ noteId: 7001, preview: '刀' }],
-    calls,
-  });
-
+async function clickOpenAnki(context, calls, openOutcome) {
+  stubAppExternalHost(context, { matches: [{ noteId: 7001, preview: '刀' }], calls, openOutcome });
   const button = buildOpenAnkiButton(context);
   await flush();
   await button.onclick();
   await flush();
+  return button;
+}
 
-  assert.equal(calls.openInAnki.length, 0,
-    'an app-external host must NOT be handed openInAnki (it only ever replies null)');
-  assert.equal(calls.openMinedNote.length, 1, 'a single match opens straight away');
-  assert.equal(calls.openMinedNote[0].noteId, 7001, 'the matched note is the one opened');
+// app 外表面（裸 WebView2 / galgame 浮窗）：不得再自己反查，必须交给宿主。
+async function testAppExternalOpenInAnkiGoesToTheHostBridge() {
+  const context = loadPopup();
+  const calls = newCalls();
+  const button = await clickOpenAnki(context, calls, 'opened');
+
+  assert.equal(calls.openInAnki.length, 1,
+    'the app-external ↗ must go through the host bridge, not an in-page lookup');
+  assert.equal(calls.openInAnki[0].expression, '刀', 'the bridge is handed the word');
+  assert.equal(calls.findMinedMatches.length, 0,
+    'the by-field-name lookup is gone — it could not see a cross-note-type duplicate');
+  assert.equal(calls.openMinedNote.length, 0, 'no note id is resolved any more');
   assert.equal(context.document.querySelector('.mined-action-panel'), null,
-    'no panel for a single match');
+    'multiple cards are listed by Anki browser itself, not by an in-page panel');
+  assert.equal(context.document.querySelector('.inline-hint'), null,
+    'a successful open says nothing');
   assert.equal(button.disabled, false, 'the button is never left disabled');
 }
 
-async function testAppExternalOpenInAnkiMultipleMatchesShowsOpenOnlyPanel() {
+// 「Anki 可达、但这个词现在一张卡都没有」必须与「打不开 Anki」说不同的话。
+async function testOpenInAnkiNoMatchHintsInsteadOfSilence() {
   const context = loadPopup();
   const calls = newCalls();
-  stubAppExternalHost(context, {
-    matches: [
-      { noteId: 7002, preview: '刀 — A' },
-      { noteId: 7003, preview: '刀 — B' },
-    ],
-    calls,
-  });
+  await clickOpenAnki(context, calls, 'noMatch');
 
-  const button = buildOpenAnkiButton(context);
-  await flush();
-  const click = button.onclick();
-  await flush();
-
-  const panel = context.document.querySelector('.mined-action-panel');
-  assert.ok(panel, 'multiple matches must offer a choice, not silently pick one');
-  // openOnly 形态：只列卡片 + 打开，不得混入覆写 / 新增重复卡（那是 ✓ 的职责）。
-  const labels = [];
-  const collect = (node) => {
-    if (node.tagName === 'BUTTON') labels.push(node.textContent);
-    for (const child of node.children ?? []) collect(child);
-  };
-  collect(panel);
-  assert.ok(!labels.includes('新增为重复卡'),
-    'the open-only panel must not offer add-duplicate');
-  assert.ok(!labels.includes('覆写这张卡'),
-    'the open-only panel must not offer overwrite');
-  assert.equal(labels.filter((l) => l === '查看 / 在 Anki 中打开').length, 2,
-    'every matching card is openable');
-
-  findPanelButton(context, '取消').onclick();
-  await click;
-  await flush();
-  assert.equal(calls.openMinedNote.length, 0, 'cancelling opens nothing');
-}
-
-async function testAppExternalOpenInAnkiNoMatchHintsInsteadOfSilence() {
-  const context = loadPopup();
-  const calls = newCalls();
-  stubAppExternalHost(context, { matches: [], calls });
-
-  const button = buildOpenAnkiButton(context);
-  await flush();
-  await button.onclick();
-  await flush();
-
-  assert.equal(calls.openMinedNote.length, 0, 'nothing to open');
   const hint = context.document.querySelector('.inline-hint');
   assert.ok(hint, 'a vanished card must say so, never fail silently');
-  assert.ok((hint.textContent || '').length > 0, 'the hint carries a message');
+  assert.equal(hint.textContent, '没有找到已制的卡片。');
 }
 
-// app 内宿主（自带原生对话框 / toast）必须仍然把 ↗ 原样交给 openInAnki。
-async function testInAppOpenInAnkiStillGoesToHost() {
+async function testOpenInAnkiFailureSaysSo() {
+  const context = loadPopup();
+  const calls = newCalls();
+  await clickOpenAnki(context, calls, 'failed');
+
+  const hint = context.document.querySelector('.inline-hint');
+  assert.ok(hint, 'an unreachable Anki must say so');
+  assert.equal(hint.textContent, '无法在 Anki 中打开这张卡片。');
+}
+
+// null = 这个宿主没接这根桥（浏览器扩展的 bridge-shim 默认分支）。仍要提示，
+// 绝不能退回「点了没反应」——那正是 BUG-1064 的原始症状。
+async function testOpenInAnkiUnwiredHostStillHints() {
+  const context = loadPopup();
+  const calls = newCalls();
+  await clickOpenAnki(context, calls, null);
+
+  const hint = context.document.querySelector('.inline-hint');
+  assert.ok(hint, 'an unwired host must not degrade to a dead button');
+  assert.equal(hint.textContent, '无法在 Anki 中打开这张卡片。');
+}
+
+// app 内宿主走的是同一条路——没有第二条车道可以漂移。
+async function testInAppOpenInAnkiUsesTheSameLane() {
   const context = loadPopup();
   context.window.__fushiMinedCardActionNative = true;
   const calls = newCalls();
-  stubAppExternalHost(context, {
-    matches: [{ noteId: 7004, preview: '刀' }],
-    calls,
-  });
-
-  const button = buildOpenAnkiButton(context);
-  await flush();
-  await button.onclick();
-  await flush();
+  await clickOpenAnki(context, calls, 'opened');
 
   assert.equal(calls.openInAnki.length, 1,
-    'the in-app host keeps handling ↗ itself (Flutter picker / toast)');
+    'the in-app host is handed the same bridge call');
   assert.equal(calls.findMinedMatches.length, 0,
-    'the in-app lane must not run the in-page orchestration');
+    'neither lane runs an in-page orchestration any more');
 }
 
-testAppExternalOpenInAnkiSingleMatchOpensDirectly().catch((error) => {
+testAppExternalOpenInAnkiGoesToTheHostBridge().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
 
-testAppExternalOpenInAnkiMultipleMatchesShowsOpenOnlyPanel().catch((error) => {
+testOpenInAnkiNoMatchHintsInsteadOfSilence().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
 
-testAppExternalOpenInAnkiNoMatchHintsInsteadOfSilence().catch((error) => {
+testOpenInAnkiFailureSaysSo().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
 
-testInAppOpenInAnkiStillGoesToHost().catch((error) => {
+testOpenInAnkiUnwiredHostStillHints().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
+
+testInAppOpenInAnkiUsesTheSameLane().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
@@ -2903,3 +2980,60 @@ testBridgeRejectionIsNeverSilent().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
+async function testQueuedMineStateTracksQueueWithoutAnkiRefresh() {
+  const context = loadPopup();
+  let queued = false;
+  let mines = 0;
+  let duplicates = 0;
+  context.window.fushiIsEntryQueued = () => queued;
+  context.window.flutter_inappwebview.callHandler = (name) => {
+    if (name === 'duplicateCheck') { duplicates++; return Promise.resolve(false); }
+    if (name === 'mineEntry') {
+      mines++;
+      queued = true;
+      return Promise.resolve({ queued: true, ankiConnect: false });
+    }
+    return Promise.resolve(null);
+  };
+  const button = buildMineHeaderFor(context, '猫');
+  await flush();
+  const before = duplicates;
+  await button.onclick();
+  await flush();
+  assert.equal(button.dataset.queued, '1');
+  assert.equal(button.textContent, '✓');
+  assert.ok(button.classList.contains('duplicate'), 'queued mark must hide the CSS plus');
+  assert.notEqual(button.dataset.mined, '1', 'queued is not an Anki card');
+  assert.equal(button.title, '已加入制卡队列');
+  assert.equal(duplicates, before, 'queue success must not probe Anki');
+  await button.onclick();
+  assert.equal(mines, 1, 'repeated click must not enqueue again');
+  const reopened = buildMineHeaderFor(context, '猫');
+  await flush();
+  assert.equal(reopened.dataset.queued, '1', 'reopened popup reads the real queue');
+  queued = false;
+  await button.onclick();
+  assert.equal(mines, 2, 'removing the item permits a new enqueue');
+}
+
+async function testQueueFailureKeepsPlusAndAllowsRetry() {
+  const context = loadPopup();
+  let calls = 0;
+  context.window.flutter_inappwebview.callHandler = (name) => {
+    if (name === 'mineEntry') { calls++; return Promise.resolve({ queued: false, ankiConnect: false }); }
+    return Promise.resolve(false);
+  };
+  const button = buildMineHeaderFor(context, '猫');
+  await flush();
+  await button.onclick();
+  assert.equal(button.textContent, '+');
+  assert.notEqual(button.dataset.queued, '1');
+  await button.onclick();
+  assert.equal(calls, 2);
+}
+
+Promise.all([
+  testQueuedMineStateTracksQueueWithoutAnkiRefresh(),
+  testQueueFailureKeepsPlusAndAllowsRetry(),
+]).catch((error) => { console.error(error); process.exitCode = 1; });

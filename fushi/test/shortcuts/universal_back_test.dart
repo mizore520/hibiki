@@ -459,12 +459,19 @@ void main() {
       );
       expect(
         'scope: ShortcutScope.universal'.allMatches(code).length,
-        3,
+        2,
+        reason: '键盘与手柄各自显式兜底解析 universal',
+      );
+      expect(
+        RegExp(
+          r'_kMangaMouseLadder\s*=\s*<ShortcutScope>\[[\s\S]*?'
+          r'ShortcutScope\.manga,[\s\S]*?ShortcutScope\.universal,'
+          r'[\s\S]*?ShortcutScope\.global,?[\s\S]*?\];',
+        ).hasMatch(code),
+        isTrue,
         reason:
-            '键盘、手柄与鼠标 (_resolveMangaKeyAction / '
-            '_resolveMangaGamepadAction / _resolveMangaMouseButton) '
-            '各有一处兜底解析 universal；少一处就有一条通道退不出漫画'
-            '（手柄那条缺席时 B 会走全局 maybePop 兜底，弹窗开着直接退页）',
+            '鼠标改为共用 _kMangaMouseLadder 后，阶梯仍必须包含 '
+            'manga → universal → global；否则侧键 globalBack 少一级。',
       );
       final int idx = code.indexOf('if (action == ShortcutAction.globalBack)');
       expect(idx, greaterThanOrEqualTo(0));

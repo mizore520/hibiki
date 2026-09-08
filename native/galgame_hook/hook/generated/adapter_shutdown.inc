@@ -9,3 +9,8 @@
     sgre_.shutdown();
     leaf_aquaplus_.shutdown();
     hunex_gge_.shutdown();
+    cmvs_.shutdown();
+    unreal_iostore_.shutdown();
+    aos_sfa_.shutdown();
+    unity_mono_.shutdown();
+    smash_fzmedia_.shutdown();

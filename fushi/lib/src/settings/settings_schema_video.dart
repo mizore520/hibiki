@@ -19,6 +19,7 @@ import 'package:fushi/src/settings/settings_context.dart';
 import 'package:fushi/src/settings/settings_destination.dart';
 import 'package:fushi/src/settings/settings_schema_services.dart';
 import 'package:fushi/utils.dart';
+import 'package:fushi/src/media/import/real_path_directory_picker.dart';
 
 /// 视频设置唯一真相源（阶段 B）：每个条目声明一次，同时服务两个宿主——
 /// 全局设置页（本 destination 的 sections 直接渲染；无 host 时读写纯 pref、下次
@@ -337,11 +338,11 @@ SettingsDestination buildVideoDestination() {
       SettingsSection(
         title: t.section_video_library,
         items: <SettingsItem>[
-          // AniDB 客户端身份 / TMDB key 已迁到「在线服务」分区（第三方凭据一个家，
+          // AniDB 文件识别凭据 / TMDB key 已迁到「在线服务」分区（第三方凭据一个家，
           // 见 settings_schema_services.dart）；这里只留刮削行为本身的偏好。
           //
-          // 库内自动补刮的总闸。这项会联网（AniDB 每日标题包，配了客户端身份时还
-          // 会打 httpapi/TMDB），所以必须有一个用户看得见、关得掉的开关：早先它挂
+          // 库内自动补刮的总闸。这项会联网请求 MAL / TMDB，所以必须有一个
+          // 用户看得见、关得掉的开关：早先它挂
           // 在 video_auto_scrape 上，而那个键的契约明写「不发元数据网络请求」且已
           // 从设置页撤下——等于给一项后台联网行为配了个不存在的开关。
           SettingsSwitchItem(
@@ -962,6 +963,23 @@ SettingsDestination buildVideoDestination() {
                   );
                 },
           ),
+          // 从遮蔽模式里拆出来的独立开关（默认开 = 历史行为）：遮蔽模式管「遮什么」
+          // （模糊 / 隐藏），本开关管「能不能临时看一眼」。关掉后遮蔽在整句期间恒定
+          // 生效，不被路过的鼠标或误触揭开。主 / 副字幕共用一个开关（是「显形这个
+          // 行为」的总闸，不是逐层设置）。
+          SettingsSwitchItem(
+            id: 'video.subtitle.obscure_reveal',
+            title: t.video_setting_subtitle_obscure_reveal,
+            subtitle: t.video_setting_subtitle_obscure_reveal_hint,
+            icon: Icons.visibility_outlined,
+            video: VideoPlacement(group: VideoGroup.subtitle, order: 55),
+            value: (SettingsContext settingsContext) =>
+                settingsContext.appModel.videoSubtitleObscureReveal,
+            onChanged: (SettingsContext settingsContext, bool value) async {
+              await setVideoSubtitleObscureRevealDual(settingsContext, value);
+              settingsContext.refresh();
+            },
+          ),
           // TODO-1105：尊重 .ass 自带样式开关。开时字幕优先用 .ass 的字体/主色/描边/
           // 阴影，缺失回退统一外观；关时全走统一外观。默认开。
           SettingsSwitchItem(
@@ -1491,10 +1509,19 @@ SettingsDestination buildVideoDestination() {
           // mpv Lua 脚本：`<documents>/mpv_scripts` 整目录装载（对齐 mpv `scripts/`
           // 目录语义，删文件即禁用）。host 在场开启即时装载（幂等）；mpv 无
           // unload-script，关闭一律下次进入视频页生效（见 video_lua_script_manager.dart）。
+          // BUG-2032：随包 libmpv 没编 Lua 的平台（Android 实测 `-Dlua=disabled`）
+          // 只在副标题如实说明，不禁用开关——开关表达意图，能力是另一回事
+          // （settings_schema_widgets.dart `_switch` 的既定约定）。
           SettingsSwitchItem(
             id: 'video.player.mpv_lua_scripts',
             title: t.video_setting_mpv_lua_scripts,
             subtitle: t.video_setting_mpv_lua_scripts_hint,
+            subtitleBuilder: (SettingsContext settingsContext) =>
+                settingsContext.appModel.videoMpvLuaCapability ==
+                    MpvLuaCapability.unavailable
+                ? '${t.video_setting_mpv_lua_scripts_unavailable}\n'
+                      '${t.video_setting_mpv_lua_scripts_hint}'
+                : t.video_setting_mpv_lua_scripts_hint,
             icon: Icons.data_object_outlined,
             video: VideoPlacement(
               group: VideoGroup.mpv,
@@ -1503,19 +1530,7 @@ SettingsDestination buildVideoDestination() {
             ),
             value: (SettingsContext settingsContext) =>
                 settingsContext.appModel.videoMpvLuaScriptsEnabled,
-            onChanged: (SettingsContext settingsContext, bool value) async {
-              final Future<void> Function(bool)? live =
-                  videoQuickSettingsHostOf(
-                    settingsContext,
-                  )?.onLuaScriptsEnabledChanged;
-              if (live != null) {
-                await live(value);
-              } else {
-                await settingsContext.appModel.setVideoMpvLuaScriptsEnabled(
-                  value,
-                );
-              }
-            },
+            onChanged: _setVideoLuaScriptsEnabled,
           ),
           SettingsActionItem(
             id: 'video.player.mpv_lua_scripts_import',
@@ -1527,12 +1542,11 @@ SettingsDestination buildVideoDestination() {
               section: t.video_setting_mpv_group_advanced,
             ),
             onTap: (SettingsContext settingsContext) async {
-              final FilePickerResult? result = await FilePicker.platform
-                  .pickFiles(
-                    type: FileType.custom,
-                    allowedExtensions: const <String>['lua'],
-                    allowMultiple: true,
-                  );
+              final FilePickerResult? result = await pickFilesByExtensions(
+                context: settingsContext.context,
+                allowedExtensions: const <String>['lua'],
+                allowMultiple: true,
+              );
               if (result == null) return;
               bool imported = false;
               for (final PlatformFile f in result.files) {
@@ -1542,11 +1556,27 @@ SettingsDestination buildVideoDestination() {
                 imported = true;
               }
               if (!imported) return;
+              // BUG-2032：导入即启用。导入动作本身就是「我要跑这些脚本」，此前
+              // 导入完开关还是关的、提示只说"已导入"，用户播视频什么都不发生。
+              // 与开关走同一条写穿：host 在场把目录（含刚导入的）即时装进活播放器。
+              await _setVideoLuaScriptsEnabled(settingsContext, true);
               _showVideoSettingsSnackBar(
                 settingsContext,
                 t.video_setting_mpv_lua_scripts_imported,
               );
+              settingsContext.refresh();
             },
+          ),
+          // BUG-2032：脚本清单 + 每脚本运行态（播放中：已装载 / 报错原文；无播放器
+          // 只列文件名）+ 输入边界说明。"貌似用不了"在这里变成"哪个脚本报了什么"。
+          SettingsCustomItem(
+            id: 'video.player.mpv_lua_scripts_list',
+            video: VideoPlacement(
+              group: VideoGroup.mpv,
+              order: 215,
+              section: t.video_setting_mpv_group_advanced,
+            ),
+            builder: buildVideoLuaScriptList,
           ),
           // 复制目录路径（全平台一致，不做平台分支的文件管理器跳转）：用户拿路径
           // 自行增删/编辑脚本文件。
@@ -1688,6 +1718,23 @@ void _showVideoSettingsSnackBar(
   ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(message)));
 }
 
+/// BUG-2032：Lua 脚本开关的**唯一**写穿点（开关行 / 导入按钮共用）。host 在场走
+/// 页面回调（落 pref + 开启时把脚本目录即时装载进活播放器，幂等），否则直接落 pref
+/// 下次进入视频页生效。两条入口各写一份就会再次分叉成"导入了但没启用"。
+Future<void> _setVideoLuaScriptsEnabled(
+  SettingsContext settingsContext,
+  bool value,
+) async {
+  final Future<void> Function(bool)? live = videoQuickSettingsHostOf(
+    settingsContext,
+  )?.onLuaScriptsEnabledChanged;
+  if (live != null) {
+    await live(value);
+  } else {
+    await settingsContext.appModel.setVideoMpvLuaScriptsEnabled(value);
+  }
+}
+
 /// mpv 布尔开关的声明模板：读写同一 [AppModel.videoMpvConfig]，无 host 落 pref
 /// 下次生效，host 在场即改即生效（commitVideoMpvConfig 双路写穿）。
 SettingsSwitchItem _videoMpvSwitchItem({
@@ -1825,17 +1872,6 @@ String _videoImmersiveModeLabel(VideoImmersiveMode mode) {
 
 /// 字幕遮蔽模式三态的本地化标签（TODO-840 Part B）。穷举枚举无 default，新增态
 /// 编译期强制补齐。
-String _videoSubtitleObscureModeLabel(VideoSubtitleObscureMode mode) {
-  switch (mode) {
-    case VideoSubtitleObscureMode.none:
-      return t.video_setting_subtitle_obscure_none;
-    case VideoSubtitleObscureMode.blur:
-      return t.video_setting_subtitle_obscure_blur;
-    case VideoSubtitleObscureMode.hide:
-      return t.video_setting_subtitle_obscure_hide;
-  }
-}
-
 String _videoSubtitleLanguageFilterLabel(VideoSubtitleLanguageFilter filter) {
   switch (filter) {
     case VideoSubtitleLanguageFilter.all:
@@ -1844,6 +1880,17 @@ String _videoSubtitleLanguageFilterLabel(VideoSubtitleLanguageFilter filter) {
       return t.video_setting_subtitle_language_filter_japanese;
     case VideoSubtitleLanguageFilter.chinese:
       return t.video_setting_subtitle_language_filter_chinese;
+  }
+}
+
+String _videoSubtitleObscureModeLabel(VideoSubtitleObscureMode mode) {
+  switch (mode) {
+    case VideoSubtitleObscureMode.none:
+      return t.video_setting_subtitle_obscure_none;
+    case VideoSubtitleObscureMode.blur:
+      return t.video_setting_subtitle_obscure_blur;
+    case VideoSubtitleObscureMode.hide:
+      return t.video_setting_subtitle_obscure_hide;
   }
 }
 

@@ -1,8 +1,15 @@
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:asr_core/asr_core.dart';
+import 'package:fushi/src/asr_host/asr_host.dart';
+import 'package:fushi/src/media/audiobook/asr_transcribe_sheet.dart';
 import 'package:fushi/src/media/audiobook/audiobook_alignment_service.dart'
-    show epubSectionsFromExtractDir, parseCuesForFormat;
+    show
+        attachAsrCueTokenTiming,
+        loadEpubSectionsInBackground,
+        parseCuesForFormat,
+        resegmentCuesBySentence;
 import 'package:fushi/src/media/import/audiobook_health_summary.dart';
 import 'package:fushi/src/media/import/epub_backed_srt_book.dart';
 import 'package:fushi/src/media/import/import_dialog_frame.dart';
@@ -458,7 +465,7 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
           ? null
           : _alignmentName ?? p.basename(_alignmentPath!),
       icon: Icons.align_horizontal_left,
-      onTap: _pickAlignment,
+      onTap: _onAlignmentRowTap,
       actions: [
         FushiIconButton(
           icon: Icons.align_horizontal_left,
@@ -466,8 +473,69 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
           isWideTapArea: true,
           onTap: _pickAlignment,
         ),
+        if (isAsrSupported)
+          FushiIconButton(
+            icon: Icons.record_voice_over_outlined,
+            tooltip: t.audiobook_transcribe_action,
+            isWideTapArea: true,
+            onTap: importing ? null : _transcribeAlignmentFromAudio,
+          ),
       ],
     );
+  }
+
+  /// 点对齐文件行：本机能转录且已选音频时先问来源（选文件 / 转录），否则直进选择器。
+  Future<void> _onAlignmentRowTap() async {
+    if (importing) return;
+    if (!shouldOfferSubtitleSourceChooser(
+      asrSupported: isAsrSupported,
+      hasAudio: _audioPaths?.isNotEmpty ?? false,
+    )) {
+      await _pickAlignment();
+      return;
+    }
+    final SubtitleSourceChoice? choice = await showSubtitleSourceChooser(
+      context: context,
+    );
+    if (choice == null || !mounted) return;
+    switch (choice) {
+      case SubtitleSourceChoice.pickFile:
+        await _pickAlignment();
+      case SubtitleSourceChoice.transcribe:
+        await _transcribeAlignmentFromAudio();
+    }
+  }
+
+  /// 没有对齐文件时用设备端语音模型从已选音频生成一份 SRT 回填；后续导入路径
+  /// 与用户自带 SRT 相同（持久化 → 解析 → 匹配 → 落库）。
+  Future<void> _transcribeAlignmentFromAudio() async {
+    final List<String>? audio = _audioPaths;
+    if (audio == null || audio.isEmpty) {
+      FushiToast.show(
+        msg: t.audiobook_transcribe_needs_audio,
+        severity: ToastSeverity.warning,
+      );
+      return;
+    }
+    // 语言初值跟随书本身的语言（导入时从 OPF 回填的 `epub_books.language`）；
+    // 认不出（如中文书、没写语言）再退回上次选择。
+    final EpubBookRow? book =
+        await widget.repo.database.getEpubBook(widget.bookKey);
+    if (!mounted) return;
+    final String? srtPath = await showAsrTranscribeSheet(
+      context: context,
+      audioPaths: List<String>.of(audio),
+      languageHint: asrLanguageHintFromBookLanguage(book?.language),
+    );
+    if (srtPath == null || !mounted) return;
+    setState(() {
+      _alignmentPath = srtPath;
+      _alignmentName = t.audiobook_transcribe_result_name;
+      _probedCues = null;
+      _probedCuesSourcePath = null;
+      // ASR 文本有听写差，匹配阈值按实测放宽（用户仍可在滑条上改）。
+      _similarityThreshold = kAsrSuggestedSimilarityThreshold;
+    });
   }
 
   // ── 文件/目录选择 ────────────────────────────────────────────────────────────
@@ -566,7 +634,7 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
       return const <EpubSection>[];
     }
     try {
-      return epubSectionsFromExtractDir(widget.extractDir!);
+      return await loadEpubSectionsInBackground(widget.extractDir!);
     } catch (e, stack) {
       ErrorLogService.instance.log('AudiobookImport.loadSections', e, stack);
       debugPrint('[fushi-audiobook] probe loadSections failed: $e');
@@ -722,7 +790,7 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
             .writeHealth(bookKey: widget.bookKey, health: parsed.health);
       }
       // TODO-1288：EPUB-backed 有声书导入必须补写一条配对 srt_books 行，否则互联
-      // host 的 hasAudiobook 判据（app_model_library_host_service
+      // host 的 hasAudiobook 判据（local_library_host_service
       // ._srtBackedAudiobookKeys 要求 audiobooks + srt_books 两表齐备）认不出这本
       // 书 → 对端下载后显示成普通书、且 exportAudiobook 抛 StateError → 音频永不
       // 同步。book_import_dialog / audiobook_alignment_service / v29 backfill 三处
@@ -871,8 +939,13 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
     }
     try {
       reportProgress(0.2, t.import_step_reading_idb);
-      final List<EpubSection> sections =
-          epubSectionsFromExtractDir(widget.extractDir!);
+      // 自动匹配探测已经解析出章节的话直接复用，否则后台 isolate 解析。探测
+      // 失败时记忆的是空列表（`_loadSectionsForProbe` 吞异常回空），不能拿它
+      // 短路导入——那会把一次瞬时读失败变成「EPUB has 0 chapters」。
+      final List<EpubSection>? probed = _probedSections;
+      final List<EpubSection> sections = probed != null && probed.isNotEmpty
+          ? probed
+          : await loadEpubSectionsInBackground(widget.extractDir!);
       if (sections.isEmpty) {
         return AudiobookHealth.failed(
           reason: 'EPUB has 0 chapters',
@@ -880,12 +953,38 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
       }
       reportProgress(0.3, t.import_step_matching);
       // 匹配器放 isolate 跑，主线程不能被大书的 bigram 扫描挤出 ANR。
-      final MatchResult result = await EpubCueMatcher.matchInIsolate(
+      final String? alignment = _alignmentPath;
+      final bool hasTokenTiming = alignment != null &&
+          await attachAsrCueTokenTiming(cues, alignment);
+      MatchResult result = await EpubCueMatcher.matchInIsolate(
         sections: sections,
         cues: cues,
         searchWindow: _searchWindow,
         similarityThreshold: _similarityThreshold,
       );
+      if (hasTokenTiming) {
+        // 与 alignAndPersistAudiobook 同一规则：命中 cue 按正文句界重切，
+        // 就地换掉调用方持有的列表内容。
+        final CueResegmentResult resegmented = resegmentCuesBySentence(
+          sections: sections,
+          cues: cues,
+          result: result,
+        );
+        cues
+          ..clear()
+          ..addAll(resegmented.cues);
+        result = resegmented.result;
+      }
+      if (alignment != null &&
+          AsrTranscriptionService.isAsrGeneratedSubtitlePath(alignment)) {
+        // 设备端转录产物：命中 cue 的听写文本换成正文（与 alignAndPersistAudiobook
+        // 同一规则），阅读器 DOM 重定位才精确。
+        replaceMatchedCueTextWithBookText(
+          sections: sections,
+          cues: cues,
+          result: result,
+        );
+      }
       SubtitleRematchCodec.applyToCues(cues: cues, result: result);
       final int pct = (result.matchRate * 100).round();
       return AudiobookHealth.fromRatePct(
@@ -1017,7 +1116,8 @@ class _AudiobookImportDialogState extends State<AudiobookImportDialog>
         target: DeletionDisclosureTarget.attachedAudiobook,
       ),
       db: widget.repo.database,
-      localFilesSubtitle: hasLocalFiles ? t.delete_local_files_audio_desc : null,
+      localFilesSubtitle:
+          hasLocalFiles ? t.delete_local_files_audio_desc : null,
     );
     debugPrint('AudiobookImportDialog: decision=$decision');
     if (decision == null) return;

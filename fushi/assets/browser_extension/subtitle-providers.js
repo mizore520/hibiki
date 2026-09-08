@@ -11,6 +11,9 @@ function fushiSite() {
   const h = location.hostname;
   if (h.endsWith('netflix.com')) return 'netflix';
   if (h.endsWith('youtube.com') || h === 'youtu.be') return 'youtube';
+  // bilibili.com（大陆站）。注意与 bilibili.tv（国际站，走 stream-bridge 抓字幕）不同域，
+  // 两者的接口与字幕来源都不一样，别合成一个判定。
+  if (h === 'bilibili.com' || h.endsWith('.bilibili.com')) return 'bilibili';
   return 'other';
 }
 function fushiYoutubeId() {
@@ -23,6 +26,80 @@ function fushiYoutubeId() {
 function fushiNetflixId() {
   const m = location.pathname.match(/\/watch\/(\d+)/);
   return m ? m[1] : null;
+}
+// 制卡裁切窗的边距（毫秒）：句首/句尾各外扩这么多。
+//
+// 两条制卡路裁的是**同一句话**，边距必须同源：
+//   · 入队批量剪辑（`content.js` 的 `fushiEnqueue`）——过去写死 `startV - 200 / endV + 200`；
+//   · 立即出卡（`bridge-shim.js` 的 mine 消息）——过去发的是**裸 cue 窗**，一点边距都没有。
+// 于是同一个用户在 B 站点一下出的卡，句子音频开头容易被切掉一点，而 YouTube 批量那条不会。
+//
+// 200ms 的来源是**字幕采样粒度**：当前字幕行是轮询 DOM 发现的，`startV` 最坏比真句首晚一个
+// 采样周期；再叠上音频编码器的起始帧对齐，不外扩就会吃掉句子开头的辅音。
+//
+// 注意 `cueStartMs`（静态帧「字幕开头」档要的时刻）必须仍是**真句首**，不带这个边距——
+// 边距是给「裁音频/动图」用的，不是给「定位那一帧」用的。
+const FUSHI_CLIP_WINDOW_MARGIN_MS = 200;
+
+// 纯函数：把 cue 的 [startV, endV] 外扩成制卡裁切窗。start 夹到 >= 0（句首在 0 附近时不越界）。
+// 入参非有限数 → null，调用方据此判「这一句没有可用的时间窗」。
+function fushiClipWindowWithMargin(startV, endV, marginMs) {
+  const s = Number(startV);
+  const e = Number(endV);
+  if (!isFinite(s) || !isFinite(e)) return null;
+  // `m` 是唯一会被重新赋值的（非法/负边距回落默认值），所以只有它是 let。
+  let m = Number(marginMs);
+  if (!isFinite(m) || m < 0) m = FUSHI_CLIP_WINDOW_MARGIN_MS;
+  return { startMs: Math.max(0, s - m), endMs: e + m };
+}
+
+// 「本页的原始媒体能不能被服务端按时间窗裁出句子音频/动图」——制卡该走批量剪辑队列、还是
+// 立即出卡，判据是**它**，不是站点名枚举。
+//
+// 起因：`bridge-shim.js` 过去写的是 `site !== 'youtube' && site !== 'netflix'`，把三件互相
+// 正交的能力绑死在一个枚举上：① 有没有可裁的原始流 ② 有没有当前字幕行 ③ 能不能取当前解码帧。
+// 于是 bilibili.com（②③ 俱全、只缺①）整个落进「普通网页」分支，制卡既没有例句也没有封面。
+// 每加一个站点就得改一处 if，正是那种应该被数据结构消掉的特殊情况。
+//
+// `mode` 区分两种可裁法，**不是**画质差别而是交互差别：
+//   'queue'     — 必须先回放/逐条解析才能拿到媒体，只适合「看完一集统一生成」。Netflix 是
+//                 DRM 只能录制回放；YouTube 是既有批量行为，保持原样不动。
+//   'immediate' — 服务端拿 {id, 时间窗} 就能直接从原始流裁，点一下即出卡，不必攒队列。
+// 返回 null = 本页没有可裁的原始流；此时仍然出卡，只是媒体只有「当前解码帧」那一张图。
+//
+// 加新站点 = 这里加一行 + 服务端加一个对应的 clip miner，别处不用改。
+function fushiClipSource() {
+  const site = fushiSite();
+  if (site === 'youtube') {
+    const id = fushiYoutubeId();
+    return id ? { kind: 'youtube', id: id, mode: 'queue' } : null;
+  }
+  if (site === 'netflix') {
+    const id = fushiNetflixId();
+    return id ? { kind: 'netflix', id: id, mode: 'queue' } : null;
+  }
+  if (site === 'bilibili') {
+    const b = fushiBilibiliRef();
+    // 非 DRM，服务端拿 {bvid, 分P, 时间窗} 就能从原始 DASH 音轨直接裁 → 点一下即出卡。
+    return b ? { kind: 'bilibili', id: b.bvid, part: b.page, mode: 'immediate' } : null;
+  }
+  return null;
+}
+// bilibili.com 稿件页的 `BVxxxxxxxxxx` 与分 P 号。纯 URL 解析，不读页面内部变量
+// （`__INITIAL_STATE__` 那类全局在隔离世界里本来也读不到，且随站点改版就会碎）。
+// cid 由服务端用 bvid 现查（`x/web-interface/view`），扩展不必知道它。
+//
+// 只认 `/video/BV...` 稿件页：番剧 `/bangumi/play/ep|ss` 走的是另一套 pgc 接口（epid→cid），
+// 服务端还没有对应解析器，这里就不谎报能裁——返回 null，制卡照常出「解码帧 + 例句」的卡。
+function fushiBilibiliRef() {
+  const m = location.pathname.match(/\/video\/(BV[0-9A-Za-z]{10})/);
+  if (!m) return null;
+  let page = 1;
+  try {
+    const p = parseInt(new URL(location.href).searchParams.get('p') || '1', 10);
+    if (Number.isFinite(p) && p >= 1) page = p;
+  } catch (_) { /* 畸形 URL：按第 1 P */ }
+  return { bvid: m[1], page: page };
 }
 function fushiVideoTimeMs(video) {
   const v = video || document.querySelector('video');
@@ -390,14 +467,37 @@ function fushiHasFullEpisodeTrack(videoKey) {
  * @returns {{text:string,startV:number,endV:number}|null}
  */
 function fushiFullTrackWindowAt() {
+  const hit = fushiFullTrackCueAt();
+  if (!hit) return null;
+  const cue = hit.cues[hit.idx];
+  return { text: cue.text || '', startV: cue.startMs, endV: cue.endMs };
+}
+/**
+ * 当前播放时刻命中的整轨 cue：整轨 + 下标。多句合一制卡要的就是 cues[idx±n]，此前
+ * fushiFullTrackWindowAt 算过 idx 却只回一条窗、把整轨和下标丢了。
+ * @returns {{cues:Array<{startMs:number,endMs:number,text:string}>, idx:number}|null}
+ */
+function fushiFullTrackCueAt() {
   const cues = fushiActiveFullTrackCues();
   if (!cues) return null;
   const nowV = fushiVideoTimeMs();
   if (nowV === null) return null;
   const idx = findCueIndexAt(cues, nowV);
   if (idx < 0) return null;
-  const cue = cues[idx];
-  return { text: cue.text || '', startV: cue.startMs, endV: cue.endMs };
+  return { cues: cues, idx: idx };
+}
+/**
+ * 面板行查词带来的精确窗（{startMs,endMs}）在整轨里的位置——按起止时间精确匹配。
+ * 找不到（该行来自 live 伪轨/别的轨）→ null，上下文功能对这一句不可用。
+ * @returns {{cues:Array, idx:number}|null}
+ */
+function fushiFullTrackCueMatching(startMs, endMs) {
+  const cues = fushiActiveFullTrackCues();
+  if (!cues) return null;
+  for (let i = 0; i < cues.length; i++) {
+    if (cues[i].startMs === startMs && cues[i].endMs === endMs) return { cues: cues, idx: i };
+  }
+  return null;
 }
 function fushiOnFullEpisodeCues(msg) {
   try {
@@ -448,12 +548,51 @@ function fushiOnStreamCues(msg) {
     const lang = String(msg.lang || 'und').replace(/\|/g, '_');
     const key = vidKey + '|' + lang;
     fushiEpisodeCues[key] = cues;
+    delete fushiLazyTracks[key]; // 占位轨拿到真 cue 就不再是「待加载」
     fushiNotifyPanel(key);
   } catch (_) {}
 }
+// BUG-2194：按需加载的**占位轨**。主世界桥（youtube-bridge.js）先发整份轨清单
+// {__fushiStream:'tracks'}，这里按 key 登记成空 cue 的占位（面板据 fushiLazyTracks 把它列
+// 出来标「未加载」），用户选中时 fushiRequestLazyTrack 发 {__fushiStream:'fetchTrack'} 让桥
+// 真取。pickPrimaryCueTrack / fushiHasFullEpisodeTrack 都跳过空轨，占位永远不会当主路径。
+const fushiLazyTracks = Object.create(null); // key → true
+window.fushiLazyTracks = fushiLazyTracks;
+function fushiOnStreamTracks(msg) {
+  try {
+    if (!Array.isArray(msg.tracks)) return;
+    const vidKey = String(msg.videoKey ||
+      (location.hostname + (msg.path || location.pathname))).replace(/\|/g, '_');
+    for (const t of msg.tracks) {
+      const lang = String((t && t.lang) || '').replace(/\|/g, '_');
+      if (!lang) continue;
+      const key = vidKey + '|' + lang;
+      if (fushiEpisodeCues[key] && fushiEpisodeCues[key].length) continue; // 已有真 cue
+      if (fushiLazyTracks[key]) continue; // 已登记
+      fushiEpisodeCues[key] = [];
+      fushiLazyTracks[key] = true;
+      fushiNotifyPanel(key);
+    }
+  } catch (_) {}
+}
+/**
+ * 请求桥真取一条占位轨。非占位（已有 cue / 未登记）→ false。
+ * @param {string} key `${videoKey}|${lang}`
+ * @returns {boolean}
+ */
+window.fushiRequestLazyTrack = function (key) {
+  if (!fushiLazyTracks[key]) return false;
+  const sep = key.indexOf('|');
+  if (sep < 0) return false;
+  try {
+    window.postMessage({ __fushiStream: 'fetchTrack', videoKey: key.slice(0, sep), lang: key.slice(sep + 1) }, '/');
+  } catch (_) { return false; }
+  return true;
+};
 window.addEventListener('message', (e) => {
-  if (e.source !== window || !e.data || e.data.__fushiStream !== 'cues') return;
-  fushiOnStreamCues(e.data);
+  if (e.source !== window || !e.data) return;
+  if (e.data.__fushiStream === 'cues') fushiOnStreamCues(e.data);
+  else if (e.data.__fushiStream === 'tracks') fushiOnStreamTracks(e.data);
 });
 try { window.postMessage({ __fushiStream: 'replayCues' }, '/'); } catch (_) {}
 // ── TODO-1363：通用字幕轨 provider（所有站点） ──

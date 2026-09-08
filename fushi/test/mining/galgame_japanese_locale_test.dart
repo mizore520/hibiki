@@ -75,13 +75,14 @@ void main() {
         );
       });
 
-      test('32 位 + 非日文系统 ⇒ 转区（保住 BUG-1038 的既有行为）', () {
+      test('判为需要 + 32 位 + 非日文系统 ⇒ 转区（BUG-1038 的日文原版样本走这格）', () {
         expect(
           resolveJapaneseLocale(
             mode: GalJapaneseLocaleMode.auto,
             launchMode: true,
             is32Bit: true,
             systemAnsiCodePage: 936,
+            need: GalJapaneseLocaleNeed.needed,
           ),
           isTrue,
         );
@@ -93,10 +94,200 @@ void main() {
             mode: GalJapaneseLocaleMode.auto,
             launchMode: true,
             is32Bit: true,
+            need: GalJapaneseLocaleNeed.needed,
           ),
           isTrue,
         );
       });
+
+      // BUG-2047：语义门在工程门之前。以前「32 位 + 非日文系统」就转，把工程限制当成
+      // 了「日文原版」的代理，中文系统上每一个 32 位游戏都被转区。
+      test('证据不足（unknown，也是缺省）⇒ 不转区：自动判断不等于全转', () {
+        expect(
+          resolveJapaneseLocale(
+            mode: GalJapaneseLocaleMode.auto,
+            launchMode: true,
+            is32Bit: true,
+            systemAnsiCodePage: 936,
+          ),
+          isFalse,
+          reason: '缺省形参必须是 unknown ⇒ 不转，老调用点不会静默变成「全转区」',
+        );
+        expect(
+          resolveJapaneseLocale(
+            mode: GalJapaneseLocaleMode.auto,
+            launchMode: true,
+            is32Bit: true,
+            systemAnsiCodePage: 936,
+            need: GalJapaneseLocaleNeed.unknown,
+          ),
+          isFalse,
+        );
+      });
+
+      test('判为不需要（汉化 / 多语言 / Unicode 引擎）⇒ 不转区', () {
+        expect(
+          resolveJapaneseLocale(
+            mode: GalJapaneseLocaleMode.auto,
+            launchMode: true,
+            is32Bit: true,
+            systemAnsiCodePage: 936,
+            need: GalJapaneseLocaleNeed.notNeeded,
+          ),
+          isFalse,
+        );
+      });
+
+      test('判为需要也过不了工程门：64 位 / ACP=932 仍不转', () {
+        expect(
+          resolveJapaneseLocale(
+            mode: GalJapaneseLocaleMode.auto,
+            launchMode: true,
+            is32Bit: false,
+            systemAnsiCodePage: 936,
+            need: GalJapaneseLocaleNeed.needed,
+          ),
+          isFalse,
+        );
+        expect(
+          resolveJapaneseLocale(
+            mode: GalJapaneseLocaleMode.auto,
+            launchMode: true,
+            is32Bit: true,
+            systemAnsiCodePage: 932,
+            need: GalJapaneseLocaleNeed.needed,
+          ),
+          isFalse,
+        );
+      });
+    });
+
+    test('on / off 不看 need：用户档位是绝对的', () {
+      for (final GalJapaneseLocaleNeed need in GalJapaneseLocaleNeed.values) {
+        expect(
+          resolveJapaneseLocale(
+            mode: GalJapaneseLocaleMode.on,
+            launchMode: true,
+            is32Bit: true,
+            systemAnsiCodePage: 936,
+            need: need,
+          ),
+          isTrue,
+          reason: 'on + $need',
+        );
+        expect(
+          resolveJapaneseLocale(
+            mode: GalJapaneseLocaleMode.off,
+            launchMode: true,
+            is32Bit: true,
+            systemAnsiCodePage: 936,
+            need: need,
+          ),
+          isFalse,
+          reason: 'off + $need',
+        );
+      }
+    });
+  });
+
+  group('resolveJapaneseLocaleSkipReason：没转区的原因与 auto 分支逐条对应', () {
+    test('语义门：不需要 / 证据不足', () {
+      expect(
+        resolveJapaneseLocaleSkipReason(
+          need: GalJapaneseLocaleNeed.notNeeded,
+          is32Bit: true,
+          systemAnsiCodePage: 936,
+        ),
+        GalJapaneseLocaleSkipReason.notNeeded,
+      );
+      expect(
+        resolveJapaneseLocaleSkipReason(
+          need: GalJapaneseLocaleNeed.unknown,
+          is32Bit: true,
+          systemAnsiCodePage: 936,
+        ),
+        GalJapaneseLocaleSkipReason.unknown,
+      );
+    });
+
+    test('工程门：判为需要但系统已是 932 / 目标 64 位（改档位也没用，得直说）', () {
+      expect(
+        resolveJapaneseLocaleSkipReason(
+          need: GalJapaneseLocaleNeed.needed,
+          is32Bit: true,
+          systemAnsiCodePage: 932,
+        ),
+        GalJapaneseLocaleSkipReason.systemAlreadyJapanese,
+      );
+      expect(
+        resolveJapaneseLocaleSkipReason(
+          need: GalJapaneseLocaleNeed.needed,
+          is32Bit: false,
+          systemAnsiCodePage: 936,
+        ),
+        GalJapaneseLocaleSkipReason.targetNot32Bit,
+      );
+    });
+
+    test('判为需要且过了工程门 ⇒ null（其实转了），与 resolveJapaneseLocale 互为补集', () {
+      for (final GalJapaneseLocaleNeed need in GalJapaneseLocaleNeed.values) {
+        for (final bool is32Bit in <bool>[true, false]) {
+          for (final int? acp in <int?>[932, 936, null]) {
+            final bool applied = resolveJapaneseLocale(
+              mode: GalJapaneseLocaleMode.auto,
+              launchMode: true,
+              is32Bit: is32Bit,
+              systemAnsiCodePage: acp,
+              need: need,
+            );
+            final GalJapaneseLocaleSkipReason? reason =
+                resolveJapaneseLocaleSkipReason(
+              need: need,
+              is32Bit: is32Bit,
+              systemAnsiCodePage: acp,
+            );
+            expect(reason == null, applied, reason: '$need $is32Bit $acp');
+          }
+        }
+      }
+    });
+
+    test('reason key 是稳定字面量', () {
+      expect(
+        GalJapaneseLocaleSkipReason.values
+            .map(galJapaneseLocaleSkipReasonToKey)
+            .toList(),
+        <String>['not_needed', 'unknown', 'acp_932', 'not_32bit'],
+      );
+    });
+  });
+
+  group('need / evidence key 编码', () {
+    test('是稳定字面量，不是 enum.name/index', () {
+      expect(
+          galJapaneseLocaleNeedToKey(GalJapaneseLocaleNeed.needed), 'needed');
+      expect(
+        galJapaneseLocaleNeedToKey(GalJapaneseLocaleNeed.notNeeded),
+        'not_needed',
+      );
+      expect(
+        galJapaneseLocaleNeedToKey(GalJapaneseLocaleNeed.unknown),
+        'unknown',
+      );
+      expect(
+        galJapaneseLocaleEvidenceToKey(
+          GalJapaneseLocaleEvidence.dirFileNameChinesePatch,
+        ),
+        'dir_file_name_chinese_patch',
+      );
+      // 11 条证据 key 互不相同，且都是 snake_case（i18n 键尾巴直接用它）。
+      final Set<String> keys = GalJapaneseLocaleEvidence.values
+          .map(galJapaneseLocaleEvidenceToKey)
+          .toSet();
+      expect(keys, hasLength(GalJapaneseLocaleEvidence.values.length));
+      for (final String key in keys) {
+        expect(key, matches(RegExp(r'^[a-z0-9]+(_[a-z0-9]+)*$')));
+      }
     });
   });
 
@@ -117,16 +308,65 @@ void main() {
       expect(galJapaneseLocaleModeToKey(GalJapaneseLocaleMode.off), 'off');
     });
 
-    test('空串/null/脏值一律回落 auto，不是 off', () {
-      // 老行（v75 迁移回填的空串）必须映射成「和以前一样自动」。回落到 off
-      // 等于把一个用户一直在用的功能（BUG-1038）静默关掉 = 破坏用户空间。
-      expect(galJapaneseLocaleModeFromKey(''), GalJapaneseLocaleMode.auto);
-      expect(galJapaneseLocaleModeFromKey(null), GalJapaneseLocaleMode.auto);
+    test('空串/null/脏值一律回落 off，不是 auto', () {
+      // 空串的语义是「用户从没为这个游戏选过」。回落 off = 没选过就不转区；
+      // 转区会用 Locale Emulator 以 CP932 重新拉起用户的游戏进程，那是替用户
+      // 改变游戏的启动方式，不能在他没选过的时候自己发生。
+      //
+      // 判错的代价不对称：该转没转只是乱码（用户看得见、去右键菜单改即可），
+      // 不该转却转了会让汉化版字表越界**直接闪退**，用户还不知道是 Fushi 干的。
+      expect(galJapaneseLocaleModeFromKey(''), GalJapaneseLocaleMode.off);
+      expect(galJapaneseLocaleModeFromKey(null), GalJapaneseLocaleMode.off);
       expect(
         galJapaneseLocaleModeFromKey('未来新档位'),
-        GalJapaneseLocaleMode.auto,
+        GalJapaneseLocaleMode.off,
       );
-      expect(kGalDefaultJapaneseLocaleMode, GalJapaneseLocaleMode.auto);
+      expect(kGalDefaultJapaneseLocaleMode, GalJapaneseLocaleMode.off);
+    });
+
+    test('主动选过 auto 的游戏不受影响，仍然自动判定', () {
+      // 本次改动只改「没选过」的兜底。主动选了自动的行落的是字面量 'auto'，
+      // 必须原样解析回 auto——否则等于把用户显式选过的设置也一起关掉。
+      expect(galJapaneseLocaleModeFromKey('auto'), GalJapaneseLocaleMode.auto);
+      expect(
+        resolveJapaneseLocale(
+          mode: GalJapaneseLocaleMode.auto,
+          launchMode: true,
+          is32Bit: true,
+          systemAnsiCodePage: 936,
+          need: GalJapaneseLocaleNeed.needed,
+        ),
+        isTrue,
+        reason: '显式选了 auto 且证据齐全时照旧转区',
+      );
+    });
+
+    test('没选过的游戏：证据再齐也不转区', () {
+      // 这是本次改动的核心不变式。改回 auto 兜底会让这条立刻红。
+      // 用「32 位 + 系统非日文区 + 证据判定 needed」这组**最容易触发转区**的
+      // 输入，确认默认档下依然不转。
+      expect(
+        resolveJapaneseLocale(
+          mode: kGalDefaultJapaneseLocaleMode,
+          launchMode: true,
+          is32Bit: true,
+          systemAnsiCodePage: 936,
+          need: GalJapaneseLocaleNeed.needed,
+        ),
+        isFalse,
+        reason: '用户没选过就不能替他把游戏用 CP932 拉起来',
+      );
+      expect(
+        resolveJapaneseLocale(
+          mode: galJapaneseLocaleModeFromKey(''),
+          launchMode: true,
+          is32Bit: true,
+          systemAnsiCodePage: 936,
+          need: GalJapaneseLocaleNeed.needed,
+        ),
+        isFalse,
+        reason: 'DB 空串（没选过）走的是同一条路',
+      );
     });
   });
 }

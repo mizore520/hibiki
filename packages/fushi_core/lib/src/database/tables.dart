@@ -314,6 +314,26 @@ class DictionaryMetadata extends Table {
   TextColumn get collapsedLanguagesJson =>
       text().withDefault(const Constant('[]'))();
 
+  /// v96：用户**显式展开**这本词典的语言列表（BCP-47，与 [collapsedLanguagesJson]
+  /// 同形）。BUG-2158。
+  ///
+  /// 为什么必须是独立的第二列而不是把 collapsed 当布尔用：折叠有**三**个态，
+  /// 一个列表只装得下两个。
+  ///   * 在 collapsed 名单里 → 显式折叠；
+  ///   * 在本名单里 → 显式展开；
+  ///   * 两个名单都不在 → **继承**（自动展开窗口 + 全局 `collapse_dictionaries`）。
+  /// 修复前只有 collapsed 一个名单，「不在名单里」被 UI 当成「展开」呈现（那个
+  /// unfold_more / unfold_less 双态按钮），实际却是「继承」——而全局默认是折叠，
+  /// 于是用户给自动展开窗口之外的词典点「展开」，视觉上毫无反应。UI 在撒谎。
+  ///
+  /// 两个名单**互斥**，由唯一写入点 `DictionaryRepository.setDictionaryCollapseState`
+  /// 维持；读取侧（[Dictionary.isCollapsed]）仍把「显式展开」排在「显式折叠」之前，
+  /// 所以即使外部写入弄出重叠，行为也是确定的而不是未定义。
+  ///
+  /// 存量数据零迁移：旧库升级后本列为 `[]` = 全部继承 = 逐字节保持 v96 前的行为。
+  TextColumn get expandedLanguagesJson =>
+      text().withDefault(const Constant('[]'))();
+
   /// v87：用户**手动指定**的词典内容语言（BCP-47，如 `ja` / `zh-Hant`）。
   ///
   /// null = 未指定，按自动来源推断（yomitan `index.json` 的 `sourceLanguage`，
@@ -577,6 +597,10 @@ class SyncBaselines extends Table {
 // ── video_books ─────────────────────────────────────────────────────
 @DataClassName('VideoBookRow')
 class VideoBooks extends Table {
+  /// 最近一次导入的分组选择（schema v98）；来源删除后仍保留目录/作品模式。
+  /// NULL 是旧视频，按作品模式处理；存在来源时以来源当前设置为准。
+  TextColumn get videoGroupingMode => text().nullable()();
+
   // Primary key is book_uid (content-derived), aligned with the name-PK model
   // (EpubBooks keys on bookKey). No autoincrement id: a video book's identity
   // is its book_uid so it stays stable across devices/reimports.
@@ -843,6 +867,11 @@ class MediaSources extends Table {
   /// 是否递归扫描子目录。
   BoolColumn get recursive => boolean().withDefault(const Constant(true))();
 
+  /// 视频分组方式（schema v98）：'series' 按作品识别，'folder' 按导入目录合集。
+  /// 与网络连接参数独立；旧来源保持作品识别行为。
+  TextColumn get videoGroupingMode =>
+      text().withDefault(const Constant('series'))();
+
   /// 列表排序权重（同 [BookTags].sortOrder 范式）。
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
 
@@ -914,6 +943,10 @@ class ShelfEntries extends Table {
 @DataClassName('MediaCollectionRow')
 class MediaCollections extends Table {
   IntColumn get id => integer().autoIncrement()();
+
+  /// 目录自动合集的本机目录身份（schema v98）；NULL 表示非目录自动合集。
+  /// 与来源根一样属于用户外部路径，不跨端同步，不据合集名称推断归属。
+  TextColumn get sourceFolderPath => text().nullable()();
 
   /// 合集名（必填）。
   TextColumn get name => text()();
@@ -2511,8 +2544,11 @@ class Galgames extends Table {
 
   /// 该游戏的「日语区域（转区）」档位：`'auto'` / `'on'` / `'off'`（BUG-1477）。
   ///
-  /// 空串 = 用户没设过，解析层回落 `auto`（**不是** off —— 转区是用户明确要过的
-  /// 功能，老行/老用户不能因为加了这一列就被莫名关掉）。
+  /// 空串 = 用户没设过，解析层回落 `off`（见 `galgame_japanese_locale.dart` 的
+  /// `kGalDefaultJapaneseLocaleMode`）。**注意这与 v75 落地时的语义相反**：当时
+  /// 空串回落 `auto`，2026-09-07 按用户要求改为 `off`——不能在用户没选过的时候
+  /// 就替他用 CP932 重新拉起游戏进程。主动选过自动的行落的是字面量 `'auto'`，
+  /// 不受影响。
   ///
   /// 与 [upscalingMode] / [launchArgs] 同类，都是「用户为该游戏设的启动期配置」。
   /// 为什么必须每游戏一档而不是全局开关：同一个库里日文原版和汉化版并存，
@@ -2685,9 +2721,12 @@ class StudySegments extends Table {
 /// v92：按**媒体身份**的统计删除墓碑，取代按 (title, sourceType) 的
 /// [StatisticsTombstones]（那张只为 legacy 表的 title 粒度 wire 服务，冻结）。
 ///
-/// 删某媒体统计 = 删其全部 [StudySegments] + 立本碑。仲裁：段 `updatedAt > deletedAt`
-/// → 段胜（用户又读了 = 自然复活，不用显式清碑）；否则墓碑胜（同步 / 备份里的旧段不
-/// 复活）。
+/// 删某媒体统计 = 删其全部 [StudySegments] + 立本碑。仲裁（BUG-2214 / BUG-2220）：
+/// 段 `startAt < deletedAt` → 被压制（同步 / 备份里的旧段不复活）；`startAt >= deletedAt`
+/// 的段（删后又读）照常存活。**碑永不退场**、时间戳只增不减——旧口径「段
+/// `updatedAt > deletedAt` 则段胜」已废：同步回写会刷新 `updatedAt`，让删掉的旧段
+/// 借道复活。真实实现见 `database_statistics.part.dart` 的 `_isStudySegmentTombstoned`
+/// 与 `aggregate_merge_service.dart`。
 @DataClassName('StudySegmentTombstoneRow')
 class StudySegmentTombstones extends Table {
   TextColumn get mediaKind => text()();
@@ -2843,4 +2882,84 @@ class MangaChapterStates extends Table {
 
   @override
   Set<Column> get primaryKey => {bookUid, chapterKey};
+}
+
+// ── video_file_specs ──────────────────────────────────────────────────
+/// 本地视频文件的技术规格探测缓存（schema v95）。
+///
+/// 库页卡片与作品详情页要标注清晰度 / HDR / 编码 / 音轨，而这些事实此前**在库里一个
+/// 字节都没有**——`VideoBooks` 连 duration 列都没有，规格只在播放时活在 mpv 的内存里
+/// （`video_hdr_output.dart` 的 HDR 判据），播完即丢。列表要显示就必须能在**不播放**的
+/// 前提下拿到，于是有了这张表。
+///
+/// **身份键是文件路径，不是 bookUid**，这是本表唯一重要的设计决定：一个 `VideoBooks`
+/// 行可能是多集播放列表（`playlist_json` 里若干条路径），各集的分辨率/音轨完全可以不同。
+/// 把规格挂到 book 上，多集就只剩一份规格，必然是错的；挂到文件上，单文件与多集走同一
+/// 条路径，不需要为「这本书是不是播放列表」写任何分支。
+///
+/// **纯缓存，可随时重建**：所有列都能由 ffprobe 从文件本身重新探出来。因此
+/// - 探测失败不写行（宁可下次重试，不缓存一个空壳）；
+/// - 文件大小或修改时刻变了就重探（用户换了个片源、补了音轨）；
+/// - [probeVersion] 变了也重探（探测器扩了字段集，旧行的新字段是空的）。
+///
+/// 设备本地：路径与探测结果都只对本机有意义，不进备份/同步（与 `video_download_jobs`
+/// 同列于 backup 的 device-local 清单）。
+@DataClassName('VideoFileSpecRow')
+class VideoFileSpecs extends Table {
+  /// 视频文件绝对路径 = 身份。与 `VideoBooks.videoPath` 同语义（数据根内副本 / 用户
+  /// 原位外部文件两态；流 URL 不入本表——探的是本地文件）。
+  TextColumn get filePath => text()();
+
+  /// 探测当时的文件大小（字节）。失效判据之一。
+  IntColumn get fileSizeBytes => integer()();
+
+  /// 探测当时的文件修改时刻（毫秒）。失效判据之一。
+  IntColumn get fileModifiedAt => integer()();
+
+  /// 本行写入时刻（毫秒）。
+  IntColumn get probedAt => integer()();
+
+  /// 探测器字段集版本（`kVideoProbeFieldSetVersion`）。失效判据之一。
+  IntColumn get probeVersion => integer()();
+
+  /// 容器时长（毫秒）。探不到为 NULL。
+  IntColumn get durationMs => integer().nullable()();
+
+  /// 容器平均码率（bit/s）。展示码率通常只能用它——mkv 不给流级码率。
+  IntColumn get containerBitrate => integer().nullable()();
+
+  /// ffprobe `codec_name`，如 `h264` / `hevc` / `av1`。
+  TextColumn get videoCodec => text().nullable()();
+
+  IntColumn get width => integer().nullable()();
+  IntColumn get height => integer().nullable()();
+
+  /// 如 `yuv420p10le`。色深主要由它推出（10-bit HEVC 不给 bits_per_raw_sample）。
+  TextColumn get pixelFormat => text().nullable()();
+
+  /// 每分量位深（8 / 10 / 12）。
+  IntColumn get bitDepth => integer().nullable()();
+
+  /// 帧率 ×1000（23.976fps → 23976）。整数存储避免浮点比较误差。
+  IntColumn get frameRateMilli => integer().nullable()();
+
+  /// 视频流码率（bit/s）。mkv 通常没有，见 [containerBitrate]。
+  IntColumn get videoBitrate => integer().nullable()();
+
+  /// ffprobe 原样的色彩标签。**不存归一后的「是不是 HDR」**：那是派生值，
+  /// 判据收口在 `video_dynamic_range.dart`，存派生值等于把同一事实放两处，
+  /// 判据一改这里就成了过期副本。
+  TextColumn get colorPrimaries => text().nullable()();
+  TextColumn get colorTransfer => text().nullable()();
+  TextColumn get colorSpace => text().nullable()();
+
+  /// 音轨数组 JSON（编码/声道/语言/标题/default·forced·comment 标志）。
+  TextColumn get audioTracksJson => text().withDefault(const Constant('[]'))();
+
+  /// 内封字幕轨数组 JSON。
+  TextColumn get subtitleTracksJson =>
+      text().withDefault(const Constant('[]'))();
+
+  @override
+  Set<Column> get primaryKey => {filePath};
 }

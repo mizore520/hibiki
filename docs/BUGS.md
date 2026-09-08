@@ -29,11 +29,236 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 1903 条。点号进各自文件。
+> 共 2134 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-2270](bugs/BUG-2270-windows-close-black-screen.md) | ✅ | ✅ | Windows关闭时主窗口黑屏延迟 |
+| [BUG-2269](bugs/BUG-2269-candidate-windows-runtime-gate.md) | ✅ | ✅ | Windows 候选包可绕过完整运行组件组装与验证 |
+| [BUG-2268](bugs/BUG-2268-windows-aot-stack-overflow-on-slang-flat-map.md) | ✅ | ✅ | Windows AOT 编译 Slang 巨型动态映射时栈溢出 |
+| [BUG-2267](bugs/BUG-2267-windows-runtime-lock-preflight.md) | ✅ | ✅ | Windows 完整打包未提前检查运行组件占用 |
+| [BUG-2266](bugs/BUG-2266-injector-attach-target-exit.md) | ✅ | ✅ | 附着模式游戏退出后 injector 不结束 |
+| [BUG-2265](bugs/BUG-2265-gal-overlay-loses-topmost.md) | ✅ | ✅ | Galgame文字悬浮窗切换窗口或 Magpie 输出后丢失置顶 |
+| [BUG-2264](bugs/BUG-2264-anki-duplicate-check-findnotes-serial.md) | ✅ | ✅ | 词条逐个 findNotes 查重导致已制卡标记延迟 |
+| [BUG-2263](bugs/BUG-2263-anki-localhost-prefers-ipv6.md) | ✅ | ✅ | AnkiConnect 使用 localhost 时优先连接 IPv6，导致本机请求延迟或失败 |
+| [BUG-2262](bugs/BUG-2262-luna-safe-attach-double-hook-crash.md) | ✅ | ✅ | Luna 与 Fushi 双 Hook 导致游戏闪退 |
+| [BUG-2261](bugs/BUG-2261-luna-mine-before-audio-boundary.md) | ✅ | ✅ | Luna 当前句制卡提前截断录音导致卡片无音频 |
+| [BUG-2260](bugs/BUG-2260-local-windows-build-misses-gal-helper.md) | ✅ | ✅ | 本地 Windows 构建成功但未打包 galgame helper |
+| [BUG-2259](bugs/BUG-2259-windows-build-bundle-prefix.md) | ✅ | ✅ | Windows 构建 bundle 安装目标误指向 Program Files |
+| [BUG-2258](bugs/BUG-2258-alt-wheel-entry-scroll.md) | ✅ | ✅ | 查词窗口 Alt+滚轮词条定位与顶部回退 |
+| [BUG-2257](bugs/BUG-2257-gal-workbench-selection-stall.md) | ✅ | ✅ | Gal 捕获工作台句子选择被旧音轨请求阻塞 |
+| [BUG-2256](bugs/BUG-2256-subtitle-pause-reveal-ignores-gate.md) | ✅ | ✅ | 关掉「悬停或点击显形」后，暂停仍会揭开被隐藏的字幕 |
+| [BUG-2255](bugs/BUG-2255-reader-sentence-seek-dom-identity.md) | ✅ | ✅ | 正文从本句播放误取上一条字幕 |
+| [BUG-2254](bugs/BUG-2254-jellyfin-fnos-x-emby-auth.md) | ✅ | ✅ | 飞牛影视 Jellyfin 兼容层要求 X-Emby-Authorization 认证头 |
+| [BUG-2253](bugs/BUG-2253-gal-japanese-locale-auto-by-default.md) | ✅ | ✅ | 游戏日文转区默认自动，没选过就替用户改了启动方式 |
+| [BUG-2252](bugs/BUG-2252-opensubtitles-key-stub-double-quotes.md) | ✅ | ✅ | CI 注入 OpenSubtitles key 生成双引号字面量，analyze 门必红 |
+| [BUG-2251](bugs/BUG-2251-video-tracker-dispose-unawaited-write.md) | 🚧 | 🚧 | VideoWatchTracker.dispose 在 dispose 里发起无人 await 的 DB 写 |
+| [BUG-2250](bugs/BUG-2250-reader-brightness-selector.md) | ✅ | ✅ | 阅读器主题卡遗漏日间跟随系统夜间选择器 |
+| [BUG-2249](bugs/BUG-2249-reader-gallery-blur.md) | ✅ | ✅ | 插图画廊未同步正文图片模糊设置 |
+| [BUG-2248](bugs/BUG-2248-audiobook-narrow-transport.md) | ✅ | ✅ | 有声书窄屏封面挤压播放按钮导致越界 |
+| [BUG-2247](bugs/BUG-2247-audiobook-tab-scroll.md) | ✅ | ✅ | 有声书切换设置标签沿用章节滚动位置 |
+| [BUG-2246](bugs/BUG-2246-discovery-anime-resource-category.md) | ✅ | ✅ | 发现资源搜索把TMDB动画当普通剧集且不能手动切换类型 |
+| [BUG-2245](bugs/BUG-2245-browser-nested-popup-stack.md) | ✅ | ✅ | 浏览器嵌套查词没有按App保留父子弹窗层级 |
+| [BUG-2244](bugs/BUG-2244-browser-nested-lookup-dismissal.md) | ✅ | ✅ | 浏览器嵌套查词点击泄漏给播放器导致查词窗关闭 |
+| [BUG-2243](bugs/BUG-2243-browser-subtitle-open-position.md) | ✅ | ✅ | 浏览器字幕列表打开落在顶部而非当前时间附近 |
+| [BUG-2242](bugs/BUG-2242-browser-queued-mine-state.md) | ✅ | ✅ | 浏览器制卡入队后加号恢复且缺少队列状态 |
+| [BUG-2241](bugs/BUG-2241-browser-sentence-context-dismissal.md) | ✅ | ✅ | 浏览器调整上下文误关查词框并恢复播放 |
+| [BUG-2240](bugs/BUG-2240-grammar-label-locale.md) | ✅ | ✅ | 词形变化标签未本地化且部分日语标签缺少说明 |
+| [BUG-2239](bugs/BUG-2239-pack-failed-import-cleanup.md) | ✅ | ✅ | 推荐包导入失败后仍被启动清理删除 |
+| [BUG-2238](bugs/BUG-2238-pack-delete-orphan-hidden.md) | ✅ | ✅ | 推荐包部分删除失败后残包入口消失 |
+| [BUG-2237](bugs/BUG-2237-pack-delete-download-race.md) | ✅ | ✅ | 推荐包清理与续传缺少互斥 |
+| [BUG-2236](bugs/BUG-2236-video-folder-organization.md) | ✅ | ✅ | 视频文件夹导入按文件名拆散难度合集 |
+| [BUG-2235](bugs/BUG-2235-subtitle-hide-lookup-replay-reobscures.md) | ✅ | ✅ | 隐藏字幕在查词浮层重播时又被遮回去 |
+| [BUG-2234](bugs/BUG-2234-download-task-unified-list.md) | ✅ | ✅ | 下载任务按来源分裂导致筛选排序遗漏且不能按合集折叠 |
+| [BUG-2233](bugs/BUG-2233-video-manual-scrape-queue.md) | ✅ | ✅ | 手动重刮遇后台任务时全屏禁用且无法查看或撤回排队作品 |
+| [BUG-2232](bugs/BUG-2232-nyaa-explicit-query.md) | ✅ | ✅ | Nyaa资源搜索会用隐藏别名替换或扩展明确查询词 |
+| [BUG-2231](bugs/BUG-2231-anilist-api-disabled-mistaken-for-network-failure.md) | ✅ | ✅ | AniList 官方停用公开 API 时被显示成「连不上」并诱导用户去配代理 |
+| [BUG-2230](bugs/BUG-2230-video-web-and-work-detail-loading-no-exit.md) | ✅ | ✅ | 网页流媒体页与作品详情页的加载态没有返回入口，且 init 异常无归宿 |
+| [BUG-2229](bugs/BUG-2229-video-missing-resource-no-back.md) | ✅ | ✅ | 视频资源缺失态没有返回入口，进入后无法退出 |
+| [BUG-2228](bugs/BUG-2228-reader-ledger-audiobook-reveal-turn-uncounted.md) | 🚧 | 🚧 | 听书自动翻页未计入读过字数（未复现） |
+| [BUG-2227](bugs/BUG-2227-reader-ledger-close-settles-stale-unit.md) | ✅ | ✅ | 关书结算的是上次采样单元而非此刻可见页 |
+| [BUG-2226](bugs/BUG-2226-reader-ledger-fail-navigation-discards-read-page.md) | ✅ | ✅ | 导航失败/兜底超时 discard 丢掉用户真读过的上一页 |
+| [BUG-2225](bugs/BUG-2225-reader-ledger-same-chapter-jump-rebase.md) | ✅ | ✅ | 同章跳转被误判原位恢复，跳走前那页不结算 |
+| [BUG-2224](bugs/BUG-2224-stat-summary-ratio-unbounded.md) | ✅ | ✅ | 统计环比无上限显示 ↑9999900% |
+| [BUG-2223](bugs/BUG-2223-stat-heatmap-absolute-levels.md) | ✅ | ✅ | 热力图档位按窗口最大值线性分级，单日爆量后其余全落最浅档 |
+| [BUG-2222](bugs/BUG-2222-pdf-reader-never-add-pages.md) | ✅ | ✅ | PDF 阅读器从不 addPages，页数统计恒 0 |
+| [BUG-2221](bugs/BUG-2221-aggregate-sync-leaks-game-segments.md) | ✅ | ✅ | 聚合同步/备份不按 mediaKind 过滤，游戏段跨端外流 |
+| [BUG-2220](bugs/BUG-2220-study-tombstone-clock-skew.md) | ✅ | ✅ | 统计墓碑用本机墙钟直比对端 updatedAt 且本机碑只进不出 |
+| [BUG-2219](bugs/BUG-2219-stat-pages-stale-window-across-midnight.md) | ✅ | ✅ | 统计页跨午夜后聚合窗口与卡片谓词不一致 |
+| [BUG-2218](bugs/BUG-2218-reader-stats-dialog-cph-threshold.md) | ✅ | ✅ | 阅读器统计浮层今日/累计速度不套最小样本门槛 |
+| [BUG-2217](bugs/BUG-2217-study-clock-cross-hour-addchars-zero-segment.md) | ✅ | ✅ | 跨小时瞬间 addChars 产出 0 时长字数段 |
+| [BUG-2216](bugs/BUG-2216-reading-stats-book-identity-split.md) | ✅ | ✅ | 删书/同名书时按书统计分裂成两条同名条目 |
+| [BUG-2215](bugs/BUG-2215-clear-study-segments-no-tombstone.md) | ✅ | ✅ | 清空全部统计不立墓碑，多端同步整批复活 |
+| [BUG-2214](bugs/BUG-2214-study-segment-upsert-ignores-tombstone.md) | ✅ | ✅ | 删该媒体统计时仍在跑的时钟回写段使整块墓碑出局 |
+| [BUG-2213](bugs/BUG-2213-reader-idle-timeout-snapshot.md) | ✅ | ✅ | 阅读空闲门分钟数在建时钟时快照，阅读中改设置不生效 |
+| [BUG-2212](bugs/BUG-2212-reader-lyrics-mode-no-touch.md) | ✅ | ✅ | 歌词模式听书播放态不喂空闲门，听一小时只计 10 分钟 |
+| [BUG-2211](bugs/BUG-2211-study-clock-start-stale-idle.md) | ✅ | ✅ | StudyClock.start 不重置空闲基准，回前台后首页阅读被空闲门拒绝 |
+| [BUG-2210](bugs/BUG-2210-reader-paused-clock-still-counts-chars.md) | ✅ | ✅ | 手动暂停计时期间翻页仍 addChars 产出 0 时长字数段 |
+| [BUG-2209](bugs/BUG-2209-reader-ensure-clock-restarts-after-lifecycle-stop.md) | ✅ | ✅ | 后台听书跟随经 _ensureStudyClock 重启已停表时钟 |
+| [BUG-2208](bugs/BUG-2208-reader-modal-open-keeps-clock.md) | ✅ | ✅ | 阅读器外观/目录/搜索等面板打开期间阅读时钟照跑 |
+| [BUG-2207](bugs/BUG-2207-reader-reload-poll-unguarded.md) | ✅ | ✅ | 重载在飞时 10s 进度轮询不门控，瞬态 atEnd 可把本章剩余计入 |
+| [BUG-2206](bugs/BUG-2206-reader-restore-clears-read-credit.md) | ✅ | ✅ | 重排/宽变/模式切换恢复完成无条件清零令牌桶额度致漏计 |
+| [BUG-2205](bugs/BUG-2205-reader-paged-style-reanchor-page-drift.md) | ✅ | ✅ | 分页模式缩字号/减边距后 ±1 页 hint 保原页，位置前漂一页并被计入字数 |
+| [BUG-2204](bugs/BUG-2204-srt-cue-tail-overlap-jumps-to-later-sentence.md) | ✅ | ✅ | 听书 ASR 字幕前句多吃下一句首字，后句跳到远处同前缀句、中间十几句全未匹配 |
+| [BUG-2203](bugs/BUG-2203-update-installer-self-kill-taskkill-tree.md) | ✅ | ✅ | 应用内更新静默失败：安装器被自己的 taskkill /T 连同祖先树一起杀掉，且被误诊为 app_mutex_running |
+| [BUG-2202](bugs/BUG-2202-clip-export-tx3g-unplayable-in-im.md) | ✅ | ✅ | 内封 tx3g 字幕轨让导出的片段在 QQ 等 IM 里整个不可播 |
+| [BUG-2201](bugs/BUG-2201-video-pending-scrape-has-no-visible-surface.md) | ✅ | ✅ | 待确认身份的作品在视频页零提示用户无从知道要去确认 |
+| [BUG-2200](bugs/BUG-2200-clip-export-moov-at-tail-qq-cannot-play.md) | ✅ | ✅ | 导出的视频片段 moov 在文件末尾，QQ 等 IM 判无法播放 |
+| [BUG-2199](bugs/BUG-2199-scrape-sweep-process-once-misses-new-imports.md) | ✅ | ✅ | 自动补刮以进程为幂等键致本会话新入库作品永不补刮 |
+| [BUG-2198](bugs/BUG-2198-subtitle-hide-pause-reveal.md) | ✅ | ✅ | 隐藏字幕在暂停/查词时不恢复显示 |
+| [BUG-2197](bugs/BUG-2197-asr-isolate-android-ffmpeg-kit-event-channel.md) | ✅ | ✅ | Android 上 ASR 后台 isolate 因 ffmpeg_kit 订阅 EventChannel 崩溃 |
+| [BUG-2196](bugs/BUG-2196-reader-newline-splits-sentence.md) | ✅ | ✅ | 阅读器把源码换行当句子分隔符，制卡拿到半截句、音频漏词 |
+| [BUG-2195](bugs/BUG-2195-ankidroid-parallel-build-invisible.md) | ✅ | ✅ | AnkiDroid 并行版（com.ichi2.anki.A）不被识别、权限框从不弹出 |
+| [BUG-2194](bugs/BUG-2194-youtube-caption-track-cap-drops-original.md) | ✅ | ✅ | 扩展 YouTube 轨枚举被 12 条上限截掉原语言英语轨 |
+| [BUG-2193](bugs/BUG-2193-backup-export-drops-all-dicts-on-one-ghost-row.md) | ✅ | ✅ | 本地备份导出：一条幽灵词典元数据行让全部词典静默不打包 |
+| [BUG-2192](bugs/BUG-2192-netflix-clip-black-border.md) | ✅ | ✅ | 网飞录屏制卡的动图/静帧四周带播放器黑边 |
+| [BUG-2191](bugs/BUG-2191-netflix-ttml-ruby-reading-leaks-into-cue.md) | ✅ | ✅ | 网飞 TTML 振假名读音混进字幕正文与制卡句子 |
+| [BUG-2190](bugs/BUG-2190-anki-gaiji-alt-text-overlap.md) | ✅ | ✅ | 制卡释义外字退化 alt 文本沿用图片盒几何与正文重叠 |
+| [BUG-2189](bugs/BUG-2189-netflix-batch-mine-word-audio-token-expired.md) | ✅ | ✅ | 网飞批量制卡单词音频落空：入队冻结的短命 token URL 生成时已过期 |
+| [BUG-2188](bugs/BUG-2188-dict-download-failure-reason-swallowed.md) | ✅ | ✅ | 词典下载失败原因被吞：单行标题截断 + 摘要措辞错成导入失败 + 无镜像回退 |
+| [BUG-2187](bugs/BUG-2187-custom-theme-reader-colors-dead.md) | ✅ | ✅ | 自定义主题的正文/背景/选区/链接色在阅读器里永远不生效（key 严格等值 + 读已停写的旧扁平偏好） |
+| [BUG-2170](bugs/BUG-2170-netflix-batch-intro-overlay.md) | ✅ | ✅ | Netflix 批量自动制卡切集后把片头年龄分级 overlay 录进卡片 |
+| [BUG-2169](bugs/BUG-2169-sync-non-drive-transient-no-retry.md) | 🚧 | 🚧 | 非 Google Drive 云后端瞬时网络错误零重试 |
+| [BUG-2168](bugs/BUG-2168-cf-download-redirects-to-github.md) | ✅ | ✅ | 下载页选 Cloudflare 镜像却被 302 到 GitHub |
+| [BUG-2167](bugs/BUG-2167-windows-exit-abort-gamepads-static-thread.md) | ✅ | ✅ | Windows 每次退出 fail-fast 崩溃 0xc0000409：gamepads 全局对象析构 joinable std::thread |
+| [BUG-2166](bugs/BUG-2166-lookup-popup-border-hidden-by-webview.md) | ✅ | ✅ | 查词浮层四边描边被 WebView 盖住（只剩顶栏和圆角弧可见） |
+| [BUG-2165](bugs/BUG-2165-pack-download-no-visible-progress.md) | ✅ | ✅ | 推荐包后台下载没有任何看得见的地方，半截包重启后既看不见也续不上 |
+| [BUG-2164](bugs/BUG-2164-asr-pcm-mov-chapter-track-noise.md) | ✅ | ✅ | ASR PCM 抽取 mov 容器混入章节 text 轨，奇数字节标题的整章解成白噪声 |
+| [BUG-2163](bugs/BUG-2163-asr-match-start-anchor-colophon.md) | ✅ | ✅ | ASR 字幕匹配起点被片头出版社名钉到书尾版权页，整本匹配率 0% |
+| [BUG-2162](bugs/BUG-2162-schema-drift-v95-missing-columns.md) | ✅ | ✅ | 用户库 user_version=95 却缺 v52/v57/v87/v88 台阶产物，导入书撞 epub_books 无 language 列 |
+| [BUG-2161](bugs/BUG-2161-mdx-loose-asset-scan-and-size-limits.md) | 🚧 | 🚧 | MDX 松散资源两条上限缺口：img src 只扫前 50 条词条、zip 全取无总量上限 |
+| [BUG-2160](bugs/BUG-2160-mdx-import-oom-ios.md) | ✅ | ✅ | iOS 导入大 MDX 词典闪退：整本词典在内存里物化，jetsam 直接杀进程 |
+| [BUG-2159](bugs/BUG-2159-netflix-ext-mine-audible-playback.md) | ✅ | ✅ | 网飞扩展批量制卡期间扬声器出声 |
+| [BUG-2158](bugs/BUG-2158-dict-collapse-missing-explicit-expand-state.md) | ✅ | ✅ | 词典折叠只有两个态：点「展开」对自动展开窗口外的词典毫无反应 |
+| [BUG-2157](bugs/BUG-2157-plain-mode-inline-fs-overrides-user-font-size.md) | ✅ | ✅ | 关闭尊重字幕自带样式后行内 fs 仍覆盖用户字号，字号滑块整条失效 |
+| [BUG-2156](bugs/BUG-2156-video-subtitle-list-font-cap-too-low.md) | ✅ | ✅ | 字幕列表字号上限还是不够（BUG-878 抬到 2.0× 后的第二次反馈） |
+| [BUG-2155](bugs/BUG-2155-anki-pitch-tags-overflow-card-header.md) | ✅ | ✅ | 音标标签框撑爆卡头：60dvw 视口上限 + 单行不换行，窄卡上把封面顶出视口 |
+| [BUG-2154](bugs/BUG-2154-gal-lookup-verified-unreachable.md) | ✅ | ✅ | 内嵌查词对每个游戏都恒需手动「确认点击风险」：shield 的 Verified 状态在 hook 里无任何生产者、结构上不可达 |
+| [BUG-2153](bugs/BUG-2153-gal-exe-level-identity-gates.md) | ✅ | ✅ | galgame 引擎身份判据绑死单个 exe（文件名/SHA-256/硬编码 RVA），改名或换版本即整个 adapter 不被认领 |
+| [BUG-2152](bugs/BUG-2152-anki-mined-ipa-duplicated.md) | ✅ | ✅ | 英语制卡音标重复两遍 —— 同一 PitchEntry 的 transcriptions 数组内没有去重 |
+| [BUG-2151](bugs/BUG-2151-anki-pitch-tags-ol-markup.md) | ✅ | ✅ | Anki 卡片音标黑框巨大且无分隔符 —— popup.js 产出 `<ol>`，Lapis `#pitch-tags` 样式契约是 `ul` |
+| [BUG-2150](bugs/BUG-2150-ios-ankimobile-pasteboard-read-inactive.md) | ✅ | ✅ | iOS AnkiMobile 配置回传读不到剪贴板：URL 回调跑在 .inactive 阶段 |
+| [BUG-2149](bugs/BUG-2149-gal-adapter-diagnostics-write-only.md) | ✅ | ✅ | AdapterDiagnostics 是只写接口：运行期没有消费方，任何引擎都读不出 adapter 是否命中并安装 |
+| [BUG-2148](bugs/BUG-2148-korean-deinflection-never-fires.md) | ✅ | ✅ | 韩语词形还原一条都点不着火：ko.json 用兼容字母而引擎不拆谚文，划词只剩 1 个音节 |
+| [BUG-2147](bugs/BUG-2147-mdx-loose-sibling-assets-dropped.md) | ✅ | ✅ | MDX 松散兄弟资源（sound.png / 图标字体）从不进 media store，发音按钮渲染成 0x0 破图 |
+| [BUG-2146](bugs/BUG-2146-episode-in-season-block.md) | ✅ | ✅ | 括号块内「季 - 集」形态解不出集数，下载任务报 unable to determine episode number |
+| [BUG-2145](bugs/BUG-2145-gal-kirikiri2-no-export-table-and-late-loadlibrary-hook.md) | ✅ | ✅ | KiriKiri2 无导出表 + 插件早于 LoadLibrary hook link：两条 exporter 路径同时静默落空，游戏内查词整条不装 |
+| [BUG-2144](bugs/BUG-2144-gal-kirikiri2-bcb-exception-escapes-msvc-catch.md) | ✅ | ✅ | KiriKiri2/BCB 上 TJS 抛的 Borland 异常穿透 MSVC catch(...)，注入的每帧求值把游戏打成致命错误框并强制写快速存档 |
+| [BUG-2143](bugs/BUG-2143-attached-status-without-reason-undiagnosable.md) | ✅ | 🚧 | attached 状态机十二处 `needsRiskAcceptance` / `needsCalibration` / `waitingForBodyThread` 不带 reason，真机上无法定位是哪条分支 |
+| [BUG-2142](bugs/BUG-2142-attached-provider-claim-livelock.md) | ✅ | ✅ | 被抢占的旧轮次撤回 attached provider 认领，与注入侧 registry 形成活锁 |
+| [BUG-2141](bugs/BUG-2141-attached-risk-accepted-but-status-traps.md) | ✅ | 🚧 | profile 里风险已接受时 `needsRiskAcceptance` 变成死局：不生成 request、按钮不渲染、也没有恢复触发点 |
+| [BUG-2140](bugs/BUG-2140-attached-first-lookup-disarms-shield-click-passes-through.md) | — | ✅ | 第一次查词后 attached 表面再也武装不起来，之后每次点击都穿透并推进剧情 |
+| [BUG-2139](bugs/BUG-2139-attached-body-thread-recovery-edge-only.md) | ✅ | ✅ | attached 从 `waitingForBodyThread` 的恢复只挂在「正文从无到有」这一次性边沿上 |
+| [BUG-2138](bugs/BUG-2138-attached-dwrite-baseline-breaks-japanese-clusters.md) | ✅ | 🚧 | attached 子面 DirectWrite 基线硬编码 0.8em，日文正文必然上溢版面框，字形簇永远建不出来 |
+| [BUG-2137](bugs/BUG-2137-attached-noglyphclusters-withdraws-claim.md) | ✅ | ✅ | attached 子面回 `noGlyphClusters` 时撤回了跨轮次共享的 provider 认领，与 BUG-2142 是同一个活锁的另一道门 |
+| [BUG-2136](bugs/BUG-2136-hunex-body-glyph-coords-are-logical-layer-local.md) | ✅ | ✅ | WoH 正文字形 render x/y 是「1920×1080 逻辑空间的文本层局部坐标」，客户区映射已实测成立，只差层原点 |
+| [BUG-2135](bugs/BUG-2135-hunex-body-render-has-no-compose-layer.md) | ✅ | 🚧 | WoH 正文渲染没有合成层，HUNEX 几何模型的三级 compose 假设不成立 |
+| [BUG-2134](bugs/BUG-2134-hunex-compose-wrapper-anchor-never-called.md) | ✅ | ✅ | HUNEX 投影链的 compose wrapper 锚点在 WoH 上从未被调用，整条几何证据无从产生 |
+| [BUG-2133](bugs/BUG-2133-hunex-deferred-selected-read-masks-failure.md) | ✅ | ✅ | HUNEX 延迟选中文本读的空窗口覆盖掉第一次读的真实失败码，且候选计数被丢弃无法分型 |
+| [BUG-2132](bugs/BUG-2132-hunex-projection-chain-diagnostic-blind-spots.md) | ✅ | ✅ | HUNEX 投影链段 3/段 4 的拒绝路径无诊断，真机读不出断在哪一环 |
+| [BUG-2131](bugs/BUG-2131-hunex-loopback-ack-timeout-kills-text-hook.md) | ✅ | ✅ | native loopback allow 的确认超时中止注入，导致 LunaHook 文本 hook 永不安装 |
+| [BUG-2130](bugs/BUG-2130-gal-resource-late-pending-loopback-freeze-wait.md) | ✅ | ✅ | game_resource 行先 pending 后被资源匹配，制卡仍白等一个被丢弃的 loopback 冻结窗 |
+| [BUG-2129](bugs/BUG-2129-woh-hunex-realmachine-lookup-boundary.md) | 🚧 | 🚧 | 真机 WoH(HUNEX)合并构建:拉起/hook/音频/文本/风险确认均通过,原生几何 fail-closed 退到 attached 需标定 |
+| [BUG-2128](bugs/BUG-2128-kirikiri-ingame-click-advances-no-card.md) | 🚧 | 🚧 | 真机:KiriKiri(Limelight)游戏内单击文字推进对白而非弹查词卡,悬停高亮正常 |
+| [BUG-2127](bugs/BUG-2127-gal-mining-audio-before-utterance-settles.md) | ✅ | ✅ | 台词一出就制卡只拿到句子音频的开头（引擎 PCM 收敛 / loopback 冻结未收口） |
+| [BUG-2126](bugs/BUG-2126-galgame-locale-launch-early-injection-kills-kirikiri.md) | ✅ | ✅ | 转区（Locale Emulator）拉起 + 早注入让 x86 KiriKiri 游戏进程随即死亡，退回附着才可用 |
+| [BUG-2125](bugs/BUG-2125-gal-attached-popup-outside-click-passthrough.md) | ✅ | ✅ | attached 校准表面弹出的桌面查词卡点外关闭时点击透传给游戏推进台词 |
+| [BUG-2124](bugs/BUG-2124-video-wall-hover-lift-lags-scroll.md) | ✅ | ✅ | 视频墙格滚动时放大态残留在已滚走的卡上 |
+| [BUG-2123](bugs/BUG-2123-global-lookup-first-frame-topleft-flash.md) | ✅ | ✅ | app 外全局查词弹窗首帧先闪在屏幕左上角再飞到光标 |
+| [BUG-2122](bugs/BUG-2122-pitch-duplicate-rows.md) | ✅ | ✅ | 音调区同一音调型被多本词典重复渲染成多行 |
+| [BUG-2121](bugs/BUG-2121-gal-main-window-owned-by-hidden-vcl-owner.md) | ✅ | ✅ | FindGameMainWindow 排除所有有 owner 的窗口：BCB VCL 窗体被隐藏 TApplication own，KiriKiri2 查词安装 / exe 直取门 / overlay owner 整局静默失败 |
+| [BUG-2120](bugs/BUG-2120-desktop-oauth-no-manual-link.md) | ✅ | ✅ | 桌面云盘 OAuth 登录无「复制链接/重开/取消」兜底，浏览器页失败只能等 5 分钟超时 |
+| [BUG-2119](bugs/BUG-2119-sqlite-busy-statement-poisons-connection-exit-trap.md) | ✅ | ✅ | 视频页 Esc/返回退不出去：写语句 SQLITE_BUSY 后未 reset 毒化整条连接，退出被落库绑架 |
+| [BUG-2118](bugs/BUG-2118-gal-kirikiri2-exporter-called-before-static-init.md) | ✅ | ✅ | 启动期过早调用 TVPGetFunctionExporter 抢在引擎静态构造之前，导出表随后被构造函数重置致插件链接全失败 |
+| [BUG-2117](bugs/BUG-2117-shortcut-scope-order.md) | ✅ | ✅ | 快捷键设置页 scope 卡片顺序是枚举累加顺序而非通用→页面→设备 |
+| [BUG-2116](bugs/BUG-2116-gal-classic-kag3-class-patch-invisible-to-instances.md) | ✅ | ✅ | 经典 KAG3 游戏内查词传感器给 TJS 类对象打补丁对实例永远不可见 |
+| [BUG-2115](bugs/BUG-2115-kirikiri-voice-stream-filter-captures-se-bgm.md) | ✅ | ✅ | KiriKiri 资源流语音过滤按裸 .ogg/.opus 后缀把 SE/BGM/脚本当语音并配给旁白 |
+| [BUG-2114](bugs/BUG-2114-kirikiri-direct-route-term-highlight-missing.md) | ✅ | ✅ | KiriKiri 直连路由下被查整词不高亮，只亮点击的单字 |
+| [BUG-2113](bugs/BUG-2113-kirikiri-ingame-card-mining-text-generation-mismatch.md) | ✅ | ✅ | KiriKiri 点击载荷 text_generation 填成 TJS 提交序号，游戏内「+」制卡恒失败 |
+| [BUG-2112](bugs/BUG-2112-gal-thread-picker-artifact-thread-looks-clean.md) | ✅ | ✅ | 游戏文本线程选择器把全伪影线程当干净线程展示，选中后永远 0 行且无提示 |
+| [BUG-2111](bugs/BUG-2111-context-menu-hardwired-secondary-button.md) | ✅ | ✅ | 右键菜单硬绑鼠标次按钮，把动作绑到右键会双触发 |
+| [BUG-2110](bugs/BUG-2110-dict-mass-import-startup-crash.md) | ✅ | ✅ | 一次性导入大量词典后启动转圈中途闪退 |
+| [BUG-2109](bugs/BUG-2109-recommended-pack-never-deleted.md) | ✅ | ✅ | 推荐包 9.5GB zip 导入后永不删除（清理钩子挂在不再执行的引导页 initState） |
+| [BUG-2108](bugs/BUG-2108-video-rewatch-counted.md) | ✅ | ✅ | 视频回放/重看被重复计入观看时长 |
+| [BUG-2107](bugs/BUG-2107-onboarding-pack-pick-bare-filepicker.md) | ✅ | ✅ | 引导选本地包走裸 pickFiles：安卓整份复制进 cache，失败静默无提示 |
+| [BUG-2106](bugs/BUG-2106-backup-validating-overlay-destroys-caller-route.md) | ✅ | ✅ | 备份 validating 遮罩换根摧毁调用方路由：引导选包后引导蒸发且无提示 |
+| [BUG-2105](bugs/BUG-2105-fullscreen-episode-switch-mobile-orientation.md) | ✅ | ✅ | 移动端换集后掉出全屏：旧页 dispose 无条件放开横屏锁并清空系统栏回调 |
+| [BUG-2104](bugs/BUG-2104-release-event-ships-debug-apk-on-formal.md) | ✅ | ✅ | 手动发 GitHub Release 会把 debug APK 捎带上正式版 |
+| [BUG-2103](bugs/BUG-2103-video-editable-slots-dead-truth-source.md) | ✅ | ✅ | 视频控制条可编辑槽真相源零消费且与真实能力矛盾 |
+| [BUG-2102](bugs/BUG-2102-video-volume-slot-order-ignored.md) | ✅ | ✅ | 视频底栏音量按钮的槽内顺序被渲染端丢弃：拖动无效 |
+| [BUG-2101](bugs/BUG-2101-manga-reader-no-exit-on-load-failure.md) | ✅ | ✅ | 漫画阅读器加载失败时返回键一起消失：iOS 上无系统返回键 = 只能杀进程 |
+| [BUG-2100](bugs/BUG-2100-ios-container-path-drift.md) | ✅ | ✅ | iOS 每次更新后全库绝对路径失效：书架全部「找不到书籍文件」 |
+| [BUG-2099](bugs/BUG-2099-android-saf-mdx-greyed.md) | ✅ | ✅ | 安卓文件选择器把 .mdx/.dsl/.ifo/.ass 置灰选不中 |
+| [BUG-2098](bugs/BUG-2098-ankidroid-permission-not-awaited.md) | ✅ | ✅ | AnkiDroid 权限申请不等结果 + 错误码域不通导致英文原文外泄 |
+| [BUG-2097](bugs/BUG-2097-onboarding-pack-download-cancelled-on-leave.md) | ✅ | ✅ | 新手引导推荐包下载在离开向导时被静默取消，且没有任何看进度的地方 |
+| [BUG-2096](bugs/BUG-2096-storage-category-detail-gap.md) | ✅ | ✅ | 存储页词典/书籍类目明细不覆盖总量 10.7GB 不可见 |
+| [BUG-2095](bugs/BUG-2095-video-subtitle-hidden-no-hover-reveal.md) | ✅ | ✅ | 字幕隐藏后鼠标悬停/点击无法临时显形 |
+| [BUG-2094](bugs/BUG-2094-secondary-subtitle-import-not-listed.md) | ✅ | ✅ | 导入的副字幕在字幕列表里消失，但画面仍在渲染它 |
+| [BUG-2093](bugs/BUG-2093-subtitle-row-copy-check-vanishes.md) | ✅ | ✅ | 字幕列表行复制的 ✓ 反馈在播放头离开该行时提前消失 |
+| [BUG-2092](bugs/BUG-2092-video-lookup-popup-title-bar-offset.md) | ✅ | ✅ | 视频页查词弹窗在 Windows 窗口模式整栈下移一个标题栏高压住被查词 |
+| [BUG-2091](bugs/BUG-2091-video-subtitle-lookup-highlight.md) | ✅ | ✅ | 视频字幕查词后被查词在字幕上无高亮 |
+| [BUG-2090](bugs/BUG-2090-overlay-hover-highlight-brush-leak.md) | ✅ | ✅ | overlay 悬浮高亮窗口类每次重建都漏一个 GDI brush |
+| [BUG-2089](bugs/BUG-2089-inapp-mining-payload-bool-cast-crash.md) | ✅ | ✅ | 应用内制卡全部失败：「导出卡片失败: Invalid card data (payload parse failed): type 'String' is not a subtype of type 'bool?' in type cast」 |
+| [BUG-2088](bugs/BUG-2088-release-notes-never-reach-update-dialog.md) | ✅ | ✅ | 正式版更新公告进不了应用内更新弹窗，用户看到的是一行占位符 |
+| [BUG-2087](bugs/BUG-2087-sgre-looked-up-term-not-highlighted.md) | ✅ | ✅ | SGRE 游戏内查词点击后被查的词在台词里没有高亮：直连路径不把高亮区间发给 hook |
+| [BUG-2086](bugs/BUG-2086-sgre-hover-glyph-highlight-missing.md) | ✅ | 🚧 | SGRE 游戏内查词鼠标悬浮在字上没有高亮反馈：只有 KiriKiri 在引擎图层画高亮 |
+| [BUG-2085](bugs/BUG-2085-sgre-ingame-card-mining-text-generation-mismatch.md) | ✅ | ✅ | SGRE 游戏内卡片制卡恒失败：点击载荷 text_generation 填的是查词捕获代数而非文本行序号 |
+| [BUG-2084](bugs/BUG-2084-gal-workbench-fold-breaks-on-interleaved-threads.md) | ✅ | ✅ | 工作台渐进折叠只看缓冲区尾巴，同句两次重绘之间被其它线程插队就断链 |
+| [BUG-2083](bugs/BUG-2083-sgre-lookup-metrics-gate-pinned-to-4k.md) | ✅ | ✅ | SGRE 精确文本与查词几何只在 4K 全屏出现：台词面判据把行高钉死为 80，窗口模式 1080p 全断 |
+| [BUG-2082](bugs/BUG-2082-gal-ingame-card-anchored-by-cap-height.md) | ✅ | ✅ | galgame 游戏内查词卡片翻到台词上方时按上限高度定位，实际卡片与台词之间留空隙 |
+| [BUG-2081](bugs/BUG-2081-mihon-unit-reply-crash.md) | ✅ | ✅ | Mihon Android 通道 void 方法回 kotlin.Unit 触发 StandardMessageCodec 崩溃，Discover/Import 打开即崩 |
+| [BUG-2080](bugs/BUG-2080-netflix-ext-mining-clip-timestamp-hardcoded-zero.md) | ✅ | ✅ | 浏览器扩展 Netflix 制卡的片段时间窗恒为 0，卡上永远显示不出时间 |
+| [BUG-2079](bugs/BUG-2079-nyaa-search-missing-timeout.md) | ✅ | ✅ | NyaaClient.search 无超时，订阅检查可被单个慢响应挂住 |
+| [BUG-2078](bugs/BUG-2078-texthooker-fastforward-fold-merges-sentences.md) | 🚧 | 🚧 | Ctrl 快进时渐进折叠把多句连同选项文本折成一条超长台词 |
+| [BUG-2077](bugs/BUG-2077-web-video-mining-no-sentence.md) | ✅ | ✅ | 网页视频制卡：卡里没有例句、没有封面 |
+| [BUG-2076](bugs/BUG-2076-leaf-structure-gate-reads-hooked-memory.md) | ✅ | ✅ | 白2 身份结构门扫的是被 LunaHook 改写过的进程内存，导致点击穿透+语音降级 |
+| [BUG-2075](bugs/BUG-2075-macos-data-root-channel-unregistered.md) | ✅ | ✅ | macOS 更改数据位置失败：data_root_access 通道未注册 |
+| [BUG-2074](bugs/BUG-2074-leaf-identity-latched-unmeasured-exe.md) | ✅ | ✅ | 白2 一次瞬时的 exe 摘要测量失败被钉成永久身份拒绝，整场语音降级 Loopback |
+| [BUG-2073](bugs/BUG-2073-macos-icloud-data-root-rename-timeout.md) | ✅ | ✅ | macOS iCloud Documents 迁移到本地目录时 rename 超时并回滚 |
+| [BUG-2072](bugs/BUG-2072-data-root-rollback-misses-inflight-plan.md) | 🚧 | 🚧 | 数据根迁移回滚：搬移途中抛错的 plan 从未进 done，已 rename 的顶层项随新根被删 |
+| [BUG-2071](bugs/BUG-2071-data-root-rollback-skips-mixed-deferred-plan.md) | 🚧 | 🚧 | 数据根迁移回滚：混合 rename+copy 的选择性 plan 被整条跳过，已 rename 的顶层项随新根被删 |
+| [BUG-2070](bugs/BUG-2070-kirikiri-wuopus-voice-degrades-to-loopback.md) | 🚧 | 🚧 | KiriKiri Z + wuopus 语音（ATRI）整句音频恒降级为系统混音 |
+| [BUG-2069](bugs/BUG-2069-gal-mining-animation-shorter-than-sentence.md) | ✅ | ✅ | galgame 制卡动图固定 1.25 秒不覆盖整句语音 |
+| [BUG-2068](bugs/BUG-2068-gal-engine-exact-thread-manual-select.md) | ✅ | ✅ | 引擎精确文本线程首次启动需手动选择 |
+| [BUG-2067](bugs/BUG-2067-gal-workbench-folded-line-stale-words.md) | ✅ | ✅ | 工作台实时台词折叠后仍显示中间态前缀 |
+| [BUG-2066](bugs/BUG-2066-gal-card-size-not-independent.md) | ✅ | ✅ | 游戏内查词卡尺寸不可独立配置，且上界用画布像素夹屏幕像素被系统性压小 |
+| [BUG-2065](bugs/BUG-2065-gal-ingame-card-canvas-upscale.md) | ✅ | ✅ | 游戏内查词卡在放大运行的游戏里模糊且过大：直连覆盖窗被 1:1 闸门挡掉，回退成画布内位图合成 |
+| [BUG-2064](bugs/BUG-2064-ios-share-position-origin.md) | ✅ | ✅ | iOS 截图分享缺 sharePositionOrigin 锚点导致 PlatformException |
+| [BUG-2063](bugs/BUG-2063-dict-bundled-scripts-never-run.md) | ✅ | ✅ | 词典自带的 JS 从不执行 |
+| [BUG-2062](bugs/BUG-2062-subtitle-workbench-scope-extra-row.md) | ✅ | ✅ | 字幕工作台作用域开关独占一行：挂在 AppBar.bottom 上，标题行右半边全空 |
+| [BUG-2061](bugs/BUG-2061-subtitle-collection-download-all-not-pinned.md) | ✅ | ✅ | 合集字幕面板「下载全部」不贴底：两个 Flexible 分份额，用不满的部分落成死白 |
+| [BUG-2060](bugs/BUG-2060-subtitle-collection-no-source-picker.md) | ✅ | ✅ | 「整个合集」字幕面板无法选取字幕：未绑 AniList 的合集不发首搜，来源选择区整块隐藏 |
+| [BUG-2059](bugs/BUG-2059-mdd-empty-encoding-media-lost.md) | ✅ | ✅ | mdd 的 Encoding 为空时整个媒体库丢失 |
+| [BUG-2058](bugs/BUG-2058-non-latin-script-chars-zero.md) | ✅ | ✅ | 非拉丁非CJK文字字数恒0：统计为0且章内进度退化成章号 |
+| [BUG-2057](bugs/BUG-2057-subtitle-list-row-min-extent.md) | ✅ | ✅ | 字幕列表行高被历史固定行高 56×字号档钉死，单行（尤其英文译文）上下留白特别大 |
+| [BUG-2056](bugs/BUG-2056-en-apostrophe-word-scan.md) | ✅ | ✅ | 英文缩合形/所有格查不到词：撇号被当扫描终点 + 撇号写法不归一 |
+| [BUG-2055](bugs/BUG-2055-update-blocked-by-own-voice-hook.md) | ✅ | ✅ | 应用内更新被 Fushi 自己注入游戏的 voice hook 挡住，报错却称占用者为「非 Fushi 程序」 |
+| [BUG-2054](bugs/BUG-2054-nested-lookup-anchor-multiline.md) | ✅ | ✅ | 嵌套查词弹窗锚在选区首行下方遮住跨行选区的第二行 |
+| [BUG-2053](bugs/BUG-2053-yomitan-zip-wrapper-directory.md) | ✅ | ✅ | 带顶层文件夹的 Yomitan zip 导入失败 |
+| [BUG-2052](bugs/BUG-2052-mdx-linked-css-name-mismatch.md) | ✅ | ✅ | MDX 附属 CSS 与 mdx 不同名时样式完全不生效 |
+| [BUG-2051](bugs/BUG-2051-anki-open-in-anki-not-same-source.md) | ✅ | ✅ | 点已制卡 ↗ 在 Anki 中打开：反查判据与查重判据不同源，跨笔记类型的卡查不到 |
+| [BUG-2050](bugs/BUG-2050-ocr-directml-availability-never-probed.md) | ✅ | ✅ | Windows OCR 从不探测 DirectML 可用性，每次任务白付一次注定失败的建会话 |
+| [BUG-2049](bugs/BUG-2049-popup-disclosure-toggle-shifts-header.md) | ✅ | ✅ | 查词弹窗词典分组展开/收起时卡头位移且卡片凭空增高 |
 | [BUG-2048](bugs/BUG-2048-galgame-hunex-native-structural-complexity.md) | 🚧 | 🚧 | HUNEX 原生适配层 9 处结构性复杂度待清（认知复杂度 55/44/43/40/35、24 字段类、13/12/8 参函数） |
+| [BUG-2047](bugs/BUG-2047-gal-locale-auto-need.md) | ✅ | ✅ | 转区 auto 档把工程限制当判据：中文系统上 32 位游戏全转区，需要按证据判定是否需要 |
+| [BUG-2046](bugs/BUG-2046-gal-luna-startup-deadlock.md) | ✅ | ✅ | 9/2 构建 fushi_voice_hook 与 LunaHook 装 hook 时同一临界区死锁：游戏启动无窗口（用户报「转区后 DLL 注入失败」） |
+| [BUG-2045](bugs/BUG-2045-mihon-desktop-host-abi-drift.md) | ✅ | ✅ | 桌面 Mihon sidecar 用漫画源搜在线漫画报错（500） |
+| [BUG-2044](bugs/BUG-2044-deletion-prompt-readd-arbitration.md) | ✅ | ✅ | 删除墓碑确认弹窗把本机删后重加的收藏句当成其他设备已删除 |
+| [BUG-2043](bugs/BUG-2043-fullscreen-episode-switch-native-bounce.md) | ✅ | ✅ | 全屏换集先退再进原生全屏抖动、字幕列表丢失 |
+| [BUG-2042](bugs/BUG-2042-grammar-tooltip-zoom-double-scaled.md) | ✅ | ✅ | 语法说明浮层定位未按内容 zoom 折算，zoom!=1 时双重缩放偏移 |
+| [BUG-2041](bugs/BUG-2041-grammar-description-two-surfaces.md) | ✅ | ✅ | 语法说明有 hover 浮层和点击全屏卡片两套呈现，交互不统一 |
+| [BUG-2040](bugs/BUG-2040-video-subtitle-list-steals-shortcuts.md) | ✅ | ✅ | 字幕列表打开后方向键等视频快捷键失效 |
+| [BUG-2039](bugs/BUG-2039-popup-render-tail-jitter.md) | ✅ | ✅ | 查词弹窗渲染尾巴逐帧掉块、卡片跳位、高度反复变 |
+| [BUG-2038](bugs/BUG-2038-grammar-description-not-localized.md) | ✅ | ✅ | 词形变化语法说明只有英文，未随界面语言本地化 |
+| [BUG-2037](bugs/BUG-2037-grammar-tooltip-transparent.md) | ✅ | ✅ | 查词弹窗语法说明浮层背景半透明，透出下方词典正文 |
+| [BUG-2036](bugs/BUG-2036-epub-guard-follows-plugin-symlink-loop.md) | ✅ | ✅ | 目录枚举守卫跟随 .plugin_symlinks 自指链，worktree 全量测试必崩两条 |
+| [BUG-2035](bugs/BUG-2035-video-download-lease-tests-wallclock-flaky.md) | 🚧 | 🚧 | 下载租约续期测试对宿主调度抖动零容差，本机并发下必红 |
+| [BUG-2034](bugs/BUG-2034-ocr-directml-fallback-utf8.md) | ✅ | ✅ | 本地漫画 OCR 因 DirectML 初始化失败 + native 错误串非 UTF-8 而整卷失败 |
+| [BUG-2033](bugs/BUG-2033-header-leading-align.md) | ✅ | ✅ | 页头返回箭头与标题垂直未对齐 |
+| [BUG-2032](bugs/BUG-2032-lua-scripts-unusable.md) | ✅ | ✅ | mpv Lua 脚本导入后不生效：Android libmpv 未编 Lua、导入不启用、脚本报错零诊断、osd-level=0 吞掉 osd_message |
+| [BUG-2031](bugs/BUG-2031-mouse-binding-all-scopes.md) | ✅ | ✅ | 鼠标绑定只有部分动作/页面支持 |
+| [BUG-2030](bugs/BUG-2030-video-keyboard-cue-skip-wakes-osc.md) | ✅ | ✅ | 键盘上/下一句字幕会把隐藏的控制条(OSC)整个弹出来 |
+| [BUG-2029](bugs/BUG-2029-audiobook-download-only-audio.md) | ✅ | ✅ | 下载有声书只落孤立音频:成不了书且原因谎报 |
 | [BUG-2028](bugs/BUG-2028-krkr-risk-acceptance-entry-focus-loss.md) | ✅ | ✅ | KRKR 风险确认入口在切回 Fushi 后消失 |
 | [BUG-2027](bugs/BUG-2027-gal-native-input-admission-transaction.md) | 🚧 | 🚧 | Gal 原生查词风险未授权时仍吞输入，事务瞬态会拆半 |
 | [BUG-2026](bugs/BUG-2026-hunex-capture-bridge-test-dead-and-racy.md) | ✅ | ✅ | hunex_gge_capture_bridge_test 的 79 条 assert 在 Release 下空跑，唤醒后 TestWorkerNeverReadsATornSnapshot 50% 概率红 |
@@ -434,6 +659,12 @@
 | [BUG-1605](bugs/BUG-1605-gal-multi-voice-resources-single-pick.md) | ✅ | ✅ | gal 制卡：同句多个语音资源只取一个（多角色同时说话丢声） |
 | [BUG-1604](bugs/BUG-1604-sync-channel-isolation-remaining-loops.md) | ✅ | ✅ | 合集同步与退出书同步的通道循环仍无逐通道隔离：云通道抛异常，互联通道整轮不跑 |
 | [BUG-1603](bugs/BUG-1603-srt-subtitle-shadow-directional-offset.md) | ✅ | ✅ | SRT 字幕柔和投影方向性偏下，真机上观感为阴影错位 |
+| [BUG-1602](bugs/BUG-1602-windows-sqlite-cmake-ignores-local-cache.md) | ✅ | ✅ | Windows SQLite CMake 忽略本地缓存并卡在 sqlite.org |
+| [BUG-1601](bugs/BUG-1601-windows-cache-hash-cmdlet-missing.md) | ✅ | ✅ | Windows 缓存校验依赖 Get-FileHash 导致启动构建失败 |
+| [BUG-1600](bugs/BUG-1600-windows-sqlite-native-asset-cache.md) | ✅ | ✅ | Windows SQLite 原生资产缓存目录不稳定导致重复下载失败 |
+| [BUG-1599](bugs/BUG-1599-helper-runtime-downgrade.md) | ✅ | ✅ | Windows 本地构建旧归档将新版捕获组件降级 |
+| [BUG-1598](bugs/BUG-1598-windows-onnx-runtime-cache.md) | ✅ | ✅ | Windows 一键构建 ONNX Runtime 下载失败且 clean 重复下载 |
+| [BUG-1597](bugs/BUG-1597-gal-workbench-pathological-long-line.md) | ✅ | ✅ | 工作台单条超长文本导致卡顿 |
 | [BUG-1596](bugs/BUG-1596-release-sequence-workdir.md) | ✅ | ✅ | release.yml 序号脚本在 working-directory: fushi 下解析成不存在路径，恢复自动发布首跑 exit 127 |
 | [BUG-1595](bugs/BUG-1595-dict-update-not-replacing.md) | ✅ | ✅ | 词典更新入口遇新包标题变化仍判新增两版并存 |
 | [BUG-1594](bugs/BUG-1594-ring-probe-readonly-map-crash.md) | ✅ | ✅ | ring_probe 只读映射下枚举文本槽必崩（Interlocked 写只读页） |

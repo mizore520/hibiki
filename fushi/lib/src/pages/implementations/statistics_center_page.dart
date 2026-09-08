@@ -91,6 +91,7 @@ class _StatsOverviewTabState extends ConsumerState<_StatsOverviewTab> {
   String? _error;
   List<StatFact> _daily = <StatFact>[];
   Map<String, String> _bookKeyByTitle = <String, String>{};
+  Set<String> _ambiguousBookTitles = <String>{};
   Map<String, String> _epubUidByBookKey = <String, String>{};
   Map<String, int> _primaryCollectionByEntry = <String, int>{};
   Map<int, String> _collectionNamesById = <int, String>{};
@@ -108,11 +109,11 @@ class _StatsOverviewTabState extends ConsumerState<_StatsOverviewTab> {
       final FushiDatabase db = appModel.database;
       final StatFacts facts = await loadStatFacts(db, activityLimit: 0);
       _daily = facts.daily;
-      _bookKeyByTitle = <String, String>{
-        for (final EpubBookRow r in facts.epubRows) r.title: r.bookKey,
-      };
+      // BUG-2216：同名 ≥2 本的 title 不进反查表（贴给任意一本都是错贴）。
+      _bookKeyByTitle = uniqueBookKeyByTitle(facts.epubRows);
+      _ambiguousBookTitles = ambiguousBookTitles(facts.epubRows);
       _epubUidByBookKey = <String, String>{
-        for (final EpubBookRow r in facts.epubRows)
+        for (final EpubBookMeta r in facts.epubRows)
           if (r.uid.isNotEmpty) r.bookKey: r.uid,
       };
       _collectionNamesById = <int, String>{
@@ -215,21 +216,33 @@ class _StatsOverviewTabState extends ConsumerState<_StatsOverviewTab> {
     return StatPeriodSummary(
       label: label,
       primaryValue: formatStatTime(ms),
-      onTap: () => unawaited(
-        showStatPeriodDetailSheet(
-          context,
-          periodLabel: label,
-          contains: contains,
-          facts: _daily,
-          resolvers: StatPeriodDetailResolvers(
-            titleOf: _entryTitle,
-            collectionOf: _entryCollection,
-            onEntryTap: _openEntry,
-          ),
-        ),
-      ),
+      onTap: () => unawaited(_showPeriodDetail(label, contains)),
       lines: <StatSummaryLine>[StatSummaryLine(value: formatStatChars(chars))],
     );
+  }
+
+  Future<void> _showPeriodDetail(
+    String label,
+    bool Function(String dateKey) contains,
+  ) async {
+    final FushiDatabase db = ref.read(appProvider).database;
+    final bool deleted = await showStatPeriodDetailSheet(
+      context,
+      periodLabel: label,
+      contains: contains,
+      facts: _daily,
+      resolvers: StatPeriodDetailResolvers(
+        titleOf: _entryTitle,
+        collectionOf: _entryCollection,
+        onEntryTap: _openEntry,
+        onEntryDelete: (StatPeriodEntryTarget t) =>
+            deleteStatPeriodEntry(db, t),
+        ambiguousTitlesOf: (String kind) => kind == kActivityMediaBook
+            ? _ambiguousBookTitles
+            : const <String>{},
+      ),
+    );
+    if (deleted && mounted) await _load();
   }
 
   /// 事实行 → 展示标题（合集名走 sheet 组头；与首页 dashboard 同判据）。

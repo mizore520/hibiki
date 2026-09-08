@@ -74,7 +74,16 @@ enum DiscoveryDownloadStatus {
 
 /// 队列中的一个下载任务（可变快照；变更经队列 notifyListeners 广播）。
 class DiscoveryDownloadTask {
-  DiscoveryDownloadTask._({required this.item, required this.destinationDir});
+  DiscoveryDownloadTask._({required this.item, required this.destinationDir})
+      : createdAt = DateTime.now().millisecondsSinceEpoch;
+
+  static int _nextTaskId = 0;
+
+  /// Unique queue entry identity, including repeated downloads of one resource.
+  final int taskId = _nextTaskId++;
+
+  /// Initial enqueue time; retries keep the same task and timestamp.
+  final int createdAt;
 
   /// BUG-1911：测试种子。队列的真实任务只能由 [DiscoveryDownloadQueue.enqueue] 造出来
   /// （它会立刻开始跑网络），而游戏库页的「下载中占位」只关心任务的**快照形状**
@@ -86,6 +95,7 @@ class DiscoveryDownloadTask {
     DiscoveryDownloadStatus status = DiscoveryDownloadStatus.queued,
     int receivedBytes = 0,
     int? totalBytes,
+    String? filePath,
   }) {
     return DiscoveryDownloadTask._(
       item: item,
@@ -93,7 +103,8 @@ class DiscoveryDownloadTask {
     )
       ..status = status
       ..receivedBytes = receivedBytes
-      ..totalBytes = totalBytes;
+      ..totalBytes = totalBytes
+      ..filePath = filePath;
   }
 
   final DiscoveryResourceItem item;
@@ -229,6 +240,23 @@ class DiscoveryDownloadQueue extends ChangeNotifier {
       return;
     }
     _tasks.remove(task);
+    notifyListeners();
+  }
+
+  /// 从队列里彻底移除一条任务（下载页行内「删除任务」）。
+  ///
+  /// 与 [cancel] 的差别只在终态：cancel 是「中止这次下载」，对已结束任务 no-op
+  /// （终态行留给「清除已完成」批量清）；remove 是「这行消失」，任何状态都受理。
+  /// 执行中的任务先掐断连接再摘行，`.part` 与已落盘文件都不动（与 cancel 同口径
+  /// ——重新入队即续传，已入库的文件更不该被一个列表操作删掉）；收尾 `_finish`
+  /// 仍以 `_running` 身份认领这次执行并放行下一个任务。
+  void remove(DiscoveryDownloadTask task) {
+    _retryTimers.remove(task)?.cancel();
+    if (identical(task, _running)) {
+      task._cancelRequested = true;
+      task._client?.close(force: true);
+    }
+    if (!_tasks.remove(task)) return;
     notifyListeners();
   }
 
@@ -380,6 +408,17 @@ class DiscoveryDownloadQueue extends ChangeNotifier {
     }
   }
 
+  /// 发起下载请求；重定向交给 `HttpClient` 自动跟随。
+  ///
+  /// **凭据的 origin 边界由平台保证，不需要在这里手写。** 实测（见
+  /// `test/media/discovery/discovery_download_redirect_credentials_test.dart`）
+  /// Dart 的自动跟随在**跨 origin** 时会剥掉 `Authorization`/`Cookie`、在
+  /// **同 origin** 时保留，而 `Referer` 这类防盗链头恒转发——正好是私有媒体
+  /// 服务器需要的语义：自建服务端常把 `/opds/download/1` 302 到同机的真实文件
+  /// 路径（剥了就 401 下不动），而重定向到第三方对象存储时不能把用户密码带过去。
+  ///
+  /// 那份测试是**契约测试**而非实现测试：它锁的是「凭据不跨 origin」这个结果。
+  /// 若将来把这条链路换成 `package:http` / dio（两者都会原样转发 header），它会红。
   static Future<ResumableDownloadResponse> _openViaHttpClient(
     HttpClient client,
     Map<String, String> payloadHeaders,

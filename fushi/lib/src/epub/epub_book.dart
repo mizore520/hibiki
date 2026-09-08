@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fushi/src/media/sources/reader_fushi_source.dart';
+import 'package:fushi/src/stats/study_char_count.dart';
 import 'package:fushi_core/fushi_core.dart' show mimeTypeForFilePath;
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as html_dom;
@@ -93,6 +94,22 @@ class EpubBook {
     return _chapterPlainTextFromBody(doc.body);
   }
 
+  /// [chapterPlainText] 的同一份纯文本，外加每处 ruby 的基底区间与读音
+  /// （有声书匹配的「读音轨」：听写かな对正文漢字零重叠，出版社标好的振假名是
+  /// 唯一零推断误差的读音来源）。
+  ///
+  /// `text` 与 [chapterPlainText] **逐码元相同**（同一 DOM、同一空白折叠、同一
+  /// trim；守卫测试 `test/epub/epub_ruby_plain_text_test.dart`）——`fushi-cue://`
+  /// 偏移、阅读位置、统计水位全部建立在这份文本上，读音只能作旁路。
+  EpubPlainTextWithRuby chapterPlainTextWithRuby(int index) {
+    if (index < 0 || index >= chapters.length) {
+      return const EpubPlainTextWithRuby(
+          text: '', rubies: <EpubRubyAnnotation>[]);
+    }
+    final html_dom.Document doc = parseChapterHtml(chapters[index].html);
+    return _RubyPlainTextWalker.walk(doc.body);
+  }
+
   /// BUG-2017：章节 XHTML 的**唯一** DOM 解析入口。
   ///
   /// EPUB 章节是 XML（`application/xhtml+xml`），WebView 按该 MIME 走 XML 解析，
@@ -112,26 +129,30 @@ class EpubBook {
   /// TODO-1192: chapter [index] 的「实义字符数」——只数假名 / 汉字 / 叠字符 /
   /// 字母数字，剔除所有标点、括号（「」『』（）等）、全角/半角空白与全角符号，
   /// 与 hoshi/ttu `getCharacterCount`（`isNotJapaneseRegex`）口径一致（见
-  /// [japaneseCharCount]）。基于 [chapterPlainText]（振假名 `<rt>/<rp>/<rtc>` 已
+  /// [countStudyChars]）。基于 [chapterPlainText]（振假名 `<rt>/<rp>/<rtc>` 已
   /// 剥离故不计入），再过滤非实义字符。用于导入时落库的每章字数与阅读统计，让
   /// 「书的总字数 / 统计字数 / 阅读速度」贴近 hoshi，而不是含标点/括号/空白高约
   /// 10~20%。**不改** [chapterPlainText]（查词 / 对齐 / 搜索仍需完整文本）。
   int chapterCharacterCount(int index) {
-    return japaneseCharCount(chapterPlainText(index));
+    return countStudyChars(chapterPlainText(index));
   }
 
   /// Whitespace-collapsed plain text of an already-parsed [body], with ruby
   /// annotations (`<rt>`/`<rp>`/`<rtc>`) stripped. Mutates [body] by removing the
   /// ruby nodes, so callers must pass a throwaway parsed document's body.
+  static final RegExp _whitespaceRun = RegExp(r'\s+');
+
   static String _chapterPlainTextFromBody(html_dom.Element? body) {
     _removeRubyAnnotations(body);
     final String raw = body?.text ?? '';
-    return raw.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return raw.replaceAll(_whitespaceRun, ' ').trim();
   }
 
   static void _removeRubyAnnotations(html_dom.Element? root) {
     if (root == null) return;
-    root.querySelectorAll('rt, rp, rtc').forEach((el) => el.remove());
+    root.querySelectorAll('rt, rp, rtc').forEach(
+          (el) => el.remove(),
+        );
   }
 
   /// TODO-1174: the largest whitespace-stripped plain-text length a chapter may
@@ -172,8 +193,7 @@ class EpubBook {
       return _imageOnlyChapterMemo[index] = false;
     }
     final html_dom.Document doc = parseChapterHtml(chapters[index].html);
-    final bool value =
-        _chapterImageRefs(doc).isNotEmpty &&
+    final bool value = _chapterImageRefs(doc).isNotEmpty &&
         _chapterPlainTextFromBody(doc.body).length <= _imageChapterMaxTextChars;
     return _imageOnlyChapterMemo[index] = value;
   }
@@ -211,7 +231,7 @@ class EpubBook {
       if (ref.isNotEmpty) refs.add(ref);
     }
     for (final html_dom.Element image in doc.querySelectorAll('image')) {
-      final String? ref = _svgImageHref(image);
+      final String? ref = svgImageHref(image);
       if (ref != null && ref.isNotEmpty) refs.add(ref);
     }
     final StringBuffer css = StringBuffer();
@@ -221,9 +241,8 @@ class EpubBook {
     for (final html_dom.Element styleEl in doc.querySelectorAll('style')) {
       css.writeln(styleEl.text);
     }
-    for (final Match match in _backgroundImageUrlPattern.allMatches(
-      css.toString(),
-    )) {
+    for (final Match match
+        in backgroundImageUrlPattern.allMatches(css.toString())) {
       final String ref = (match.group(1) ?? '').trim();
       if (ref.isNotEmpty) refs.add(ref);
     }
@@ -232,17 +251,20 @@ class EpubBook {
 
   /// Matches a CSS `background-image: url(...)` (or `background:` shorthand),
   /// capturing the reference with surrounding quotes/whitespace stripped.
-  static final RegExp _backgroundImageUrlPattern = RegExp(
+  /// Public because [IllustrationProgressIndex] classifies the same
+  /// references element by element — one pattern, not two drifting copies.
+  static final RegExp backgroundImageUrlPattern = RegExp(
     r'''background(?:-image)?\s*:[^;}]*url\(\s*['"]?([^'")]+?)['"]?\s*\)''',
     caseSensitive: false,
   );
 
-  /// Reads an SVG `<image>` reference. package:html stores a namespaced
+  /// Reads an SVG `<image>` reference (shared with
+  /// [IllustrationProgressIndex]). package:html stores a namespaced
   /// `xlink:href` under an `AttributeName` key (not the plain String
   /// `'xlink:href'`), so match on the attribute's *local* name `href` — this
   /// covers both `xlink:href` (legacy, still the norm in Japanese fixed-layout
   /// EPUB) and the un-prefixed SVG2 `href`.
-  static String? _svgImageHref(html_dom.Element image) {
+  static String? svgImageHref(html_dom.Element image) {
     for (final MapEntry<Object, String> attr in image.attributes.entries) {
       final String name = attr.key.toString();
       if (name == 'href' || name == 'xlink:href' || name.endsWith(':href')) {
@@ -273,13 +295,11 @@ class EpubBook {
       for (final html_dom.Element img in doc.querySelectorAll('img')) {
         final String? src = img.attributes['src'];
         if (src == null || src.trim().isEmpty) continue;
-        built.add(
-          EpubImageRef(
-            chapterIndex: i,
-            orderInBook: order++,
-            src: resolveImageHref(chapterHref, src),
-          ),
-        );
+        built.add(EpubImageRef(
+          chapterIndex: i,
+          orderInBook: order++,
+          src: resolveImageHref(chapterHref, src),
+        ));
       }
     }
     final List<EpubImageRef> result = List<EpubImageRef>.unmodifiable(built);
@@ -294,8 +314,7 @@ class EpubBook {
     if (!uri.path.startsWith('/epub/')) return null;
 
     final String epubPath = _canonicalEpubPath(
-      _decodeHrefPath(uri.path.substring('/epub/'.length)),
-    );
+        _decodeHrefPath(uri.path.substring('/epub/'.length)));
     final String? fragment = uri.fragment.isNotEmpty ? uri.fragment : null;
 
     for (int i = 0; i < chapters.length; i++) {
@@ -416,6 +435,136 @@ class EpubImageRef {
   final String src;
 }
 
+/// [EpubBook.chapterPlainTextWithRuby] 的产物。
+class EpubPlainTextWithRuby {
+  const EpubPlainTextWithRuby({required this.text, required this.rubies});
+
+  /// 与 [EpubBook.chapterPlainText] 逐码元相同的纯文本。
+  final String text;
+
+  /// 按出现顺序、互不重叠的 ruby 基底区间（[text] 的 UTF-16 码元）与读音。
+  final List<EpubRubyAnnotation> rubies;
+}
+
+/// 一处 ruby：基底在纯文本里的区间 `[start, end)` 与 `<rt>` 读音（多段 `<rt>`
+/// 拼接；mono-ruby `<ruby>漢<rt>かん</rt>字<rt>じ</rt></ruby>` 记成一处
+/// `漢字`/`かんじ`——匹配只需整词读音）。
+class EpubRubyAnnotation {
+  const EpubRubyAnnotation({
+    required this.start,
+    required this.end,
+    required this.reading,
+  });
+
+  final int start;
+  final int end;
+  final String reading;
+}
+
+/// 与 [EpubBook._chapterPlainTextFromBody] 等价的一次 DOM 遍历，顺手记下 ruby。
+///
+/// 等价性怎么保证：`Element.text` 就是按文档序拼接全部后代文本节点；这里同样按
+/// 文档序拼接、跳过 `rt`/`rp`/`rtc` 子树（对应 `_removeRubyAnnotations`），再做
+/// `\s+` → 一个空格的折叠——折叠用同一个 `RegExp(r'\s')` 逐码元判定——最后
+/// [String.trim]（与原实现同一调用），trim 掉的前导码元数从各区间里减掉。
+class _RubyPlainTextWalker {
+  _RubyPlainTextWalker._();
+
+  static final RegExp _whitespace = RegExp(r'\s');
+
+  final StringBuffer _out = StringBuffer();
+  final List<EpubRubyAnnotation> _rubies = <EpubRubyAnnotation>[];
+  bool _pendingSpace = false;
+
+  /// 当前所在 ruby 的基底起点（还没输出任何基底字符时为 -1）；不嵌套。
+  int _rubyStart = -2;
+  StringBuffer? _reading;
+
+  static EpubPlainTextWithRuby walk(html_dom.Element? body) {
+    final _RubyPlainTextWalker w = _RubyPlainTextWalker._();
+    if (body != null) w._visit(body);
+    final String raw = w._out.toString();
+    final String text = raw.trim();
+    final int shift = raw.length - raw.trimLeft().length;
+    final List<EpubRubyAnnotation> rubies = <EpubRubyAnnotation>[
+      for (final EpubRubyAnnotation r in w._rubies)
+        if (r.end - shift <= text.length && r.start - shift >= 0)
+          EpubRubyAnnotation(
+            start: r.start - shift,
+            end: r.end - shift,
+            reading: r.reading,
+          ),
+    ];
+    return EpubPlainTextWithRuby(text: text, rubies: rubies);
+  }
+
+  void _visit(html_dom.Node node) {
+    if (node is html_dom.Text) {
+      _append(node.data);
+      return;
+    }
+    if (node is! html_dom.Element) {
+      for (final html_dom.Node child in node.nodes) {
+        _visit(child);
+      }
+      return;
+    }
+    final String tag = node.localName ?? '';
+    if (tag == 'rt' || tag == 'rp' || tag == 'rtc') {
+      // `<rtc>` 是读音容器（里面还是 `<rt>`），三者内容都不进正文。
+      if (_reading != null && tag != 'rp') {
+        for (final html_dom.Element rt in tag == 'rt'
+            ? <html_dom.Element>[node]
+            : node.querySelectorAll('rt')) {
+          _reading!.write(rt.text);
+        }
+      }
+      return;
+    }
+    final bool isRuby = tag == 'ruby' && _rubyStart == -2;
+    if (isRuby) {
+      _rubyStart = -1;
+      _reading = StringBuffer();
+    }
+    for (final html_dom.Node child in node.nodes) {
+      _visit(child);
+    }
+    if (isRuby) {
+      final String reading =
+          _reading!.toString().replaceAll(_whitespaceRun, '').trim();
+      if (_rubyStart >= 0 && reading.isNotEmpty) {
+        _rubies.add(
+          EpubRubyAnnotation(
+            start: _rubyStart,
+            end: _out.length,
+            reading: reading,
+          ),
+        );
+      }
+      _rubyStart = -2;
+      _reading = null;
+    }
+  }
+
+  static final RegExp _whitespaceRun = RegExp(r'\s+');
+
+  void _append(String data) {
+    for (int i = 0; i < data.length; i++) {
+      final String ch = data[i];
+      if (_whitespace.hasMatch(ch)) {
+        _pendingSpace = true;
+        continue;
+      }
+      if (_pendingSpace) {
+        if (_out.isNotEmpty) _out.write(' ');
+        _pendingSpace = false;
+      }
+      if (_rubyStart == -1) _rubyStart = _out.length;
+      _out.write(ch);
+    }
+  }
+}
+
 class EpubChapter {
   /// Eager constructor — [html] is already in memory. Used by DB-metadata /
   /// legacy fallbacks, audiobook import dialogs, and tests.
@@ -428,8 +577,8 @@ class EpubChapter {
     this.linear = true,
     this.spreadProperty,
     this.isNav = false,
-  }) : _eagerHtml = html,
-       _filePath = null;
+  })  : _eagerHtml = html,
+        _filePath = null;
 
   /// TODO-296: lazy constructor — chapter XHTML is read + decoded from
   /// [filePath] on first [html] access and cached, instead of slurping every
@@ -447,8 +596,8 @@ class EpubChapter {
     this.linear = true,
     this.spreadProperty,
     this.isNav = false,
-  }) : _eagerHtml = null,
-       _filePath = filePath;
+  })  : _eagerHtml = null,
+        _filePath = filePath;
 
   final String id;
   final String href;
@@ -638,112 +787,28 @@ String _expandSelfClosingRawTextTag(String tag) {
 }
 
 /// TODO-1192: 存进 [EpubBooks.chaptersJson] 每章 `characters` 字段用的计数口径版本。
-/// v1（无 `charCaliber` 标记）= 旧的 `chapterPlainText().length`（含标点/括号/空白，
-/// 比 hoshi 高约 10~20%）；v2 = 第一版 [japaneseCharCount]，但 whitelist 与 ttu
-/// `isNotJapaneseRegex` 有残差（多数了 ヽヾヿ / ﾞﾟ / 整块 CJK 兼容汉字，少数了全角
-/// 字母数字与 CJK 部首），同一本书仍比 hoshi 高上百字；v3 = whitelist 逐区间对齐
-/// ttu 的正则（见 [_isCountedJapaneseRune]）。**改动 whitelist 必须同步 +1 本版本
-/// 号**，否则已按旧 whitelist 重算成 v2 的缓存永不再重算、继续偏高。开书发现缓存
-/// 不是当前口径 → 后台按当前 whitelist 重算并回写。
-const int kChapterCharCountCaliber = 3;
-
-/// TODO-1192: 统计一段文本里的「实义字符数」，与 ttu/hoshi `getCharacterCount`
-/// 使用的正则逐区间对齐：
 ///
-/// ```
-/// isNotJapaneseRegex =
-///   /[^0-9A-Z○◯々-〇〻ぁ-ゖゝ-ゞァ-ヺー０-９Ａ-Ｚｦ-ﾝ\p{Radical}\p{Unified_Ideograph}]+/gimu
-/// ```
+/// - v1（无 `charCaliber` 标记）= 旧的 `chapterPlainText().length`（含标点/括号/空白，
+///   比 hoshi 高约 10~20%）；
+/// - v2 = 第一版 `japaneseCharCount`，whitelist 与 ttu `isNotJapaneseRegex` 有残差；
+/// - v3 = whitelist 逐区间对齐 ttu 的正则；
+/// - v4 = 收敛到全仓唯一口径 [countStudyChars]（`package:fushi/src/stats/study_char_count.dart`）。
 ///
-/// ttu 用 `replace(isNotJapaneseRegex, '')` 剔掉所有「非日文」再数剩下的码点；本
-/// 函数等价地对 whitelist 逐码点计数（`[^…]` 取反 = 只计入 `[…]` 内的码点）。`i`
-/// flag 使 `A-Z`/`Ａ-Ｚ` 同时含小写，`u` flag 使 BMP 外扩展汉字按码点计。计入：
-///   - 半角字母数字 0-9 / A-Z / a-z；
-///   - 全角字母数字 ０-９ / Ａ-Ｚ / ａ-ｚ；
-///   - 圈号 ○◯；叠字/重复符号 々〆〇〻 与 ゝゞ；
-///   - 平假名 ぁ-ゖ、片假名 ァ-ヺ、长音符 ー（**只** U+30FC，不含 ヽヾヿ）；
-///   - 半角片假名 ｦ-ﾝ（U+FF66-FF9D，**不含** 半角浊点/半浊点 ﾞﾟ）；
-///   - CJK 部首（部首补充 + 康熙部首，对应 `\p{Radical}`）；
-///   - 统一表意文字 `\p{Unified_Ideograph}`：扩展A / 统一 / 12 个被归为统一的兼容
-///     汉字 / 扩展B~I（**不含** 其余 CJK 兼容汉字块与兼容补充块）。
-/// 其余一律不计：所有标点、括号（「」『』（）【】等）、全/半角空白、全角标点、
-/// 半角浊点、片假名叠字 ヽヾ 等。用 [String.runes] 遍历，正确处理代理对（每个码点
-/// 算一字，不因 UTF-16 拆成两半重复计）。纯函数，供单测锁定口径（撤销修复即转红）。
-int japaneseCharCount(String text) {
-  int count = 0;
-  for (final int rune in text.runes) {
-    if (_isCountedJapaneseRune(rune)) count++;
-  }
-  return count;
-}
-
-/// 单个码点是否计入 [japaneseCharCount]（whitelist；其余全部剔除）。逐区间对齐
-/// ttu `isNotJapaneseRegex` 的 `[…]` 白名单，见 [japaneseCharCount] 文档。
-bool _isCountedJapaneseRune(int c) {
-  // 半角字母数字：0-9 / A-Z（`i` flag → 含 a-z）。
-  if (c >= 0x30 && c <= 0x39) return true; // 0-9
-  if (c >= 0x41 && c <= 0x5A) return true; // A-Z
-  if (c >= 0x61 && c <= 0x7A) return true; // a-z
-  // 圈号 ○(25CB) ◯(25EF)。
-  if (c == 0x25CB || c == 0x25EF) return true;
-  // CJK 部首（`\p{Radical}`）：部首补充 2E80-2EF3（2E9A 未分配）+ 康熙部首 2F00-2FD5。
-  if (c >= 0x2E80 && c <= 0x2E99) return true;
-  if (c >= 0x2E9B && c <= 0x2EF3) return true;
-  if (c >= 0x2F00 && c <= 0x2FD5) return true;
-  // 叠字/重复符号：々(3005) 〆(3006) 〇(3007)、〻(303B)、ゝゞ(309D-309E)。
-  if (c >= 0x3005 && c <= 0x3007) return true;
-  if (c == 0x303B) return true;
-  if (c >= 0x309D && c <= 0x309E) return true;
-  // 平假名 ぁ-ゖ。
-  if (c >= 0x3041 && c <= 0x3096) return true;
-  // 片假名 ァ-ヺ 与长音符 ー(30FC)。ttu 白名单到 `ー` 为止，**不含** ヽヾヿ(30FD-30FF)。
-  if (c >= 0x30A1 && c <= 0x30FA) return true;
-  if (c == 0x30FC) return true;
-  // 全角字母数字：０-９(FF10-FF19) / Ａ-Ｚ(FF21-FF3A)（`i` flag → ａ-ｚ FF41-FF5A）。
-  if (c >= 0xFF10 && c <= 0xFF19) return true;
-  if (c >= 0xFF21 && c <= 0xFF3A) return true;
-  if (c >= 0xFF41 && c <= 0xFF5A) return true;
-  // 半角片假名 ｦ-ﾝ(FF66-FF9D)。**不含** 半角浊点 ﾞ(FF9E) / 半浊点 ﾟ(FF9F)。
-  if (c >= 0xFF66 && c <= 0xFF9D) return true;
-  // 统一表意文字 `\p{Unified_Ideograph}`：
-  //   扩展A(3400-4DBF)、统一表意(4E00-9FFF)。
-  if (c >= 0x3400 && c <= 0x4DBF) return true;
-  if (c >= 0x4E00 && c <= 0x9FFF) return true;
-  //   CJK 兼容汉字块里 12 个被 Unicode 归为统一表意的码点（其余兼容汉字**不计**）。
-  if (_isUnifiedCompatIdeograph(c)) return true;
-  //   BMP 外扩展 B/C/D/E/F/I/G/H（各扩展块，**不含** 兼容表意补充块 2F800-2FA1D）。
-  if (c >= 0x20000 && c <= 0x2A6DF) return true; // 扩展 B
-  if (c >= 0x2A700 && c <= 0x2B739) return true; // 扩展 C
-  if (c >= 0x2B740 && c <= 0x2B81D) return true; // 扩展 D
-  if (c >= 0x2B820 && c <= 0x2CEA1) return true; // 扩展 E
-  if (c >= 0x2CEB0 && c <= 0x2EBE0) return true; // 扩展 F
-  if (c >= 0x2EBF0 && c <= 0x2EE5D) return true; // 扩展 I
-  if (c >= 0x30000 && c <= 0x3134A) return true; // 扩展 G
-  if (c >= 0x31350 && c <= 0x323AF) return true; // 扩展 H
-  return false;
-}
-
-/// CJK 兼容汉字块（F900-FAFF）里被 Unicode `Unified_Ideograph=Yes` 归为统一表意
-/// 的 12 个码点（其余是纯兼容字形，`\p{Unified_Ideograph}` 不含，故不计）。
-bool _isUnifiedCompatIdeograph(int c) {
-  switch (c) {
-    case 0xFA0E:
-    case 0xFA0F:
-    case 0xFA11:
-    case 0xFA13:
-    case 0xFA14:
-    case 0xFA1F:
-    case 0xFA21:
-    case 0xFA23:
-    case 0xFA24:
-    case 0xFA27:
-    case 0xFA28:
-    case 0xFA29:
-      return true;
-    default:
-      return false;
-  }
-}
+/// v3→v4 换掉的是**口径本身**，不只是残差：ttu 白名单只收 ASCII 字母数字 + 假名 +
+/// 汉字 + 全角字母数字 + 半角片假名，于是英语按字母计（虚高约 5 倍）、`café` 的 é
+/// 漏计、俄 / 韩 / 希腊 / 阿拉伯 / 希伯来 / 泰 / 天城文**整个脚本记 0**——后者连带
+/// 让 `computeBookProgress` 的分母为 0、章内进度退化成「章号 / 章数」。v4 按文字
+/// 自身的分词方式计「学习单位」：无空格文字按码点、空格分词文字按连续串。日文正文
+/// 的数字实测变化 <0.1%（只在夹杂西文串处），中文同理。
+///
+/// **改动计数口径必须同步 +1 本版本号**，否则已按旧口径算好的缓存永不再重算。开书
+/// 发现缓存不是当前口径 → 后台按当前口径重算并回写。
+///
+/// 阅读器 WebView 侧有一份等价的 JS 实现（`reader_pagination_scripts.dart` 的
+/// `countChars`），两份必须同口径——JS 算出的 `charOffset` 会写进 DB 的 `char_offset`
+/// 列，并在 `absoluteCharOffsetOf` / `computeBookProgress` 里与本文件算出的每章
+/// `characters` **直接相加**。对拍守卫见 `fushi/test/stats/study_char_count_parity_test.dart`。
+const int kChapterCharCountCaliber = 4;
 
 String normalizeHref(String href) => href
     .trim()

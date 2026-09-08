@@ -9,14 +9,17 @@ import 'package:fushi/src/media/metadata/credential_redaction.dart';
 import 'package:fushi/src/media/torrent/video_resource_provider.dart';
 import 'package:fushi/src/media/video/discovery/video_discovery_provider.dart';
 import 'package:fushi/src/media/video/download/video_download_backend_identity.dart';
+import 'package:fushi/src/media/video/download/subscription_check_schedule.dart';
 import 'package:fushi/src/media/video/download/video_download_pipeline_service.dart';
 import 'package:fushi/src/media/video/download/video_media_reference_codec.dart';
 import 'package:fushi/src/media/video/download/video_resource_registry.dart';
 import 'package:fushi/src/media/video/metadata/video_metadata_models.dart';
 import 'package:fushi/src/media/video/video_filename_parser.dart';
+import 'package:fushi/src/utils/misc/error_log_service.dart';
 
-typedef VideoDownloadSubscriptionEnqueue =
-    Future<String> Function(VideoDownloadEnqueueRequest request);
+typedef VideoDownloadSubscriptionEnqueue = Future<String> Function(
+  VideoDownloadEnqueueRequest request,
+);
 
 // Nyaa's upstream RESULTS_PER_PAGE default is 75. Keeping the subscription
 // window aligned lets a 75-item first page continue instead of being mistaken
@@ -104,22 +107,60 @@ class VideoDownloadSubscriptionService {
     required this.resourceRegistry,
     required VideoDownloadSubscriptionEnqueue enqueue,
     String? workerId,
-    this.checkInterval = const Duration(minutes: 15),
+    Duration checkInterval = const Duration(minutes: 15),
     this.leaseDuration = const Duration(minutes: 2),
     this.autoRetryBudget = kVideoDownloadSubscriptionAutoRetryBudget,
+    SubscriptionCheckCadence? cadence,
     DateTime Function()? now,
-  }) : _enqueue = enqueue,
-       workerId =
-           workerId ?? 'video-sub-${generateVideoDownloadInstallationId()}',
-       _now = now ?? DateTime.now {
-    if (checkInterval <= Duration.zero) {
-      throw ArgumentError.value(checkInterval, 'checkInterval');
-    }
+  })  : cadence = cadence ??
+            SubscriptionCheckCadence(
+              baseInterval: checkInterval,
+            ),
+        _enqueue = enqueue,
+        workerId =
+            workerId ?? 'video-sub-${generateVideoDownloadInstallationId()}',
+        _now = now ?? DateTime.now {
+    // `cadence` 一旦给了，`checkInterval` 就被**静默忽略**（它只用来兜底造一个默认
+    // cadence）。两个都传 = 调用方以为自己设了基准间隔、实际一点没生效 —— 正是
+    // 「同一个数字两层两语义」那种运行期谜题。构造时就拒绝，别留到线上去猜。
+    assert(
+      cadence == null || checkInterval == const Duration(minutes: 15),
+      'checkInterval 与 cadence 同传时前者被忽略；把基准间隔写进 '
+      'SubscriptionCheckCadence(baseInterval: ...)。',
+    );
     if (leaseDuration <= Duration.zero) {
       throw ArgumentError.value(leaseDuration, 'leaseDuration');
     }
     if (autoRetryBudget <= 0) {
       throw ArgumentError.value(autoRetryBudget, 'autoRetryBudget');
+    }
+    // cadence 与上面三个参数同等对待。漏掉它的代价不是崩溃而是**静默失效**：
+    // 例如 maxSamples = 0 会让每次取样都抛 ArgumentError，被 _successDelay 的
+    // 降级吞掉，整个节奏特性退回均匀间隔且外部完全不可观测。
+    _validateCadence(this.cadence);
+  }
+
+  static void _validateCadence(SubscriptionCheckCadence cadence) {
+    void positive(Duration value, String name) {
+      if (value <= Duration.zero) throw ArgumentError.value(value, name);
+    }
+
+    positive(cadence.baseInterval, 'cadence.baseInterval');
+    positive(cadence.hotInterval, 'cadence.hotInterval');
+    positive(cadence.coldInterval, 'cadence.coldInterval');
+    positive(cadence.minInterval, 'cadence.minInterval');
+    if (cadence.minSamples <= 0) {
+      throw ArgumentError.value(cadence.minSamples, 'cadence.minSamples');
+    }
+    if (cadence.maxSamples < cadence.minSamples) {
+      throw ArgumentError.value(cadence.maxSamples, 'cadence.maxSamples');
+    }
+    if (cadence.coldInterval < cadence.hotInterval) {
+      throw ArgumentError.value(
+        cadence.coldInterval,
+        'cadence.coldInterval',
+        'cold window must not be denser than the hot window',
+      );
     }
   }
 
@@ -127,20 +168,47 @@ class VideoDownloadSubscriptionService {
   final VideoResourceRegistry resourceRegistry;
   final VideoDownloadSubscriptionEnqueue _enqueue;
   final String workerId;
-  final Duration checkInterval;
   final Duration leaseDuration;
+
+  /// 检查节奏参数，**均匀间隔与各窗口取值的唯一真相源**。
+  final SubscriptionCheckCadence cadence;
+
+  /// 均匀间隔。同名构造参数只是建默认 [cadence] 的快捷方式；这里刻意是 getter
+  /// 而不是独立字段——两份可以各自分叉的「均匀间隔」就是同一个数字两层两语义，
+  /// 而且默认路径下两者恰好相等，测试也照不出分叉。
+  Duration get checkInterval => cadence.baseInterval;
   final int autoRetryBudget;
   final DateTime Function() _now;
 
   Timer? _timer;
   Future<void>? _activeCheck;
   bool _disposed = false;
+  bool _stopped = false;
+
+  /// 重排代次。每次 [_scheduleNextWake] 进入时自增，写 `_timer` 前比对。
+  ///
+  /// 两次重排可以并发在途（`checkNow` 在 whenComplete 里先清 `_activeCheck`
+  /// 再发起重排，于是下一轮检查能在上一轮的重排还挂在 await 上时起跑）。没有
+  /// 这个令牌，胜负就是「谁最后完成谁赢」而不是「谁读到的 DB 状态最新谁赢」，
+  /// 一次陈旧的读会把新排好的定时器覆盖掉。
+  ///
+  /// 它防的是**唤醒变晚**，不是停摆：即使陈旧的一次赢了，`dueAt == null` 分支的
+  /// 兜底重排也保证最多迟一个 [SubscriptionCheckCadence.coldInterval] 就会重新
+  /// 探到。正因如此，去掉这个令牌不会让任何测试变红——要确定性地构造「陈旧的读
+  /// 晚于新的读完成」，得能控制两次 DB 查询各自的完成时机，而 [FushiDatabase]
+  /// 是具体类，注入不进去。这里如实记下：令牌是零成本的正确性防御，覆盖它的
+  /// 不是单测而是上面这段推理。
+  int _wakeGeneration = 0;
   VideoDownloadLeaseGuard? _activeLease;
 
-  /// 启动时立刻领取所有当前到期订阅，之后固定每 15 分钟（或注入间隔）检查。
+  /// 启动时立刻领取所有当前到期订阅，之后睡到「下一条订阅真正到期」再醒。
+  ///
+  /// 这里刻意不是 [Timer.periodic]：固定脉冲既是加密的硬下限（把 nextCheckAt
+  /// 设到 3 分钟后也得等下一拍），也是冷窗的固定开销（一条订阅都不到期照样
+  /// 每 15 分钟醒一次）。改成按到期时刻重排的单次定时器后两头一起解决。
   void start() {
     if (_disposed || _timer != null) return;
-    _timer = Timer.periodic(checkInterval, (_) => unawaited(checkNow()));
+    _stopped = false;
     unawaited(checkNow());
   }
 
@@ -151,12 +219,54 @@ class VideoDownloadSubscriptionService {
     late final Future<void> run;
     run = _drain().whenComplete(() {
       if (identical(_activeCheck, run)) _activeCheck = null;
+      // 所有入口（启动、定时器、面板里的手动检查与新建订阅）都汇到这里重排，
+      // 新订阅不会卡在上一轮排好的长睡眠里。
+      unawaited(_scheduleNextWake());
     });
     _activeCheck = run;
     return run;
   }
 
+  /// 按 DB 里最早的到期时刻重排唤醒。
+  Future<void> _scheduleNextWake() async {
+    if (_disposed || _stopped) return;
+    final int generation = ++_wakeGeneration;
+    Duration delay;
+    try {
+      final int? dueAt = await database.nextVideoDownloadSubscriptionDueAt();
+      final int nowAt = _now().millisecondsSinceEpoch;
+      // 没有启用中的订阅时**照样排一次兜底唤醒**。不排的话，「调度器还活着」
+      // 就押在「每个新建 / 启用 / 导入 / 恢复订阅的入口都记得调 checkNow」这个
+      // 分散在多个调用点的口头约定上——漏一个就是永久停摆，而且静默。旧的
+      // Timer.periodic 对此免疫，兜底重排把这条保证换个形式留住。
+      delay = dueAt == null
+          ? cadence.coldInterval
+          : Duration(milliseconds: dueAt - nowAt);
+    } on Object catch (error, stack) {
+      // 降级不等于静默：查不出下一次到期就退回均匀间隔，但必须留痕，否则 DB
+      // 持续故障时整个节奏特性会无声无息地变成 no-op。
+      ErrorLogService.instance.log(
+        'VideoDownloadSubscriptionService.scheduleNextWake',
+        error,
+        stack,
+      );
+      delay = cadence.baseInterval;
+    }
+    // await 期间服务可能已经停掉，或已有更晚的一次重排读到了更新的 DB 状态。
+    if (_disposed || _stopped || generation != _wakeGeneration) return;
+    // 唤醒下限刻意用 hotInterval 而不是 minInterval：后者的语义是「同一条订阅
+    // 两次检查的最小间隔」，小到 1 分钟是为了让冷窗尾巴精确停在热窗起点上。
+    // 把它当成调度器的唤醒下限会让「已到期但领不走」的行触发每分钟空转。
+    if (delay < cadence.hotInterval) delay = cadence.hotInterval;
+    if (delay > cadence.coldInterval) delay = cadence.coldInterval;
+    _timer?.cancel();
+    _timer = Timer(delay, () => unawaited(checkNow()));
+  }
+
   Future<void> stop() async {
+    // 必须先立标志：whenComplete 里的重排是 unawaited 的，它会在 _activeCheck
+    // 完成之后才从 await 恢复——晚于本函数返回。只取消定时器停不住服务。
+    _stopped = true;
     _timer?.cancel();
     _timer = null;
     await _activeCheck;
@@ -170,12 +280,12 @@ class VideoDownloadSubscriptionService {
   Future<void> _drain() async {
     for (int processed = 0; processed < 64 && !_disposed; processed++) {
       final int nowAt = _now().millisecondsSinceEpoch;
-      final VideoDownloadSubscriptionRow? subscription = await database
-          .claimNextVideoDownloadSubscription(
-            workerId: workerId,
-            nowAt: nowAt,
-            leaseDurationMs: leaseDuration.inMilliseconds,
-          );
+      final VideoDownloadSubscriptionRow? subscription =
+          await database.claimNextVideoDownloadSubscription(
+        workerId: workerId,
+        nowAt: nowAt,
+        leaseDurationMs: leaseDuration.inMilliseconds,
+      );
       if (subscription == null) return;
       await _process(subscription);
     }
@@ -210,12 +320,13 @@ class VideoDownloadSubscriptionService {
     try {
       final _SubscriptionCheckOutcome outcome = await _check(subscription);
       final int checkedAt = _now().millisecondsSinceEpoch;
+      final Duration nextDelay = await _successDelay(subscription, checkedAt);
       await _releaseLeaseWith(
         () => database.completeVideoDownloadSubscriptionCheck(
           subscriptionId: subscription.subscriptionId,
           workerId: workerId,
           checkedAt: checkedAt,
-          nextCheckAt: checkedAt + checkInterval.inMilliseconds,
+          nextCheckAt: checkedAt + nextDelay.inMilliseconds,
           matchedAt: outcome.matched ? checkedAt : null,
           fulfillOneShot:
               subscription.mode == 'oneShot' && outcome.hasPersistentJob,
@@ -242,8 +353,10 @@ class VideoDownloadSubscriptionService {
   ) async {
     _ensureLeaseHeld();
     _validateSubscription(subscription);
-    final List<VideoDownloadSubscriptionItemRow> existingItems = await database
-        .getVideoDownloadSubscriptionItems(subscription.subscriptionId);
+    final List<VideoDownloadSubscriptionItemRow> existingItems =
+        await database.getVideoDownloadSubscriptionItems(
+      subscription.subscriptionId,
+    );
     if (subscription.mode == 'oneShot' &&
         existingItems.any(
           (VideoDownloadSubscriptionItemRow item) => item.jobId != null,
@@ -270,24 +383,25 @@ class VideoDownloadSubscriptionService {
     final VideoMediaReference media = _mediaReference(subscription);
     final List<VideoResourceCandidate> providerCandidates =
         await _searchSubscriptionCandidates(
-          media: media,
-          query: subscription.searchQuery,
-          season: subscription.season,
-          selectedProvider: selectedProvider,
-          providerBase: providerBase,
-        );
+      media: media,
+      query: subscription.searchQuery,
+      season: subscription.season,
+      selectedProvider: selectedProvider,
+      providerBase: providerBase,
+    );
 
     final Map<String, List<_SubscriptionRelease>> releasesByItem =
         <String, List<_SubscriptionRelease>>{};
     for (final VideoResourceCandidate candidate in providerCandidates) {
       if (!filter.matches(candidate)) continue;
-      final _SubscriptionLogicalItem? logicalItem = _logicalItem(
-        subscription,
-        candidate.title,
-      );
+      final _SubscriptionLogicalItem? logicalItem =
+          _logicalItem(subscription, candidate.title);
       if (logicalItem == null) continue;
       releasesByItem
-          .putIfAbsent(logicalItem.key, () => <_SubscriptionRelease>[])
+          .putIfAbsent(
+            logicalItem.key,
+            () => <_SubscriptionRelease>[],
+          )
           .add(_SubscriptionRelease(candidate, logicalItem));
     }
     if (releasesByItem.isEmpty) {
@@ -299,12 +413,11 @@ class VideoDownloadSubscriptionService {
 
     final Map<String, VideoDownloadSubscriptionItemRow> existingByKey =
         <String, VideoDownloadSubscriptionItemRow>{
-          for (final VideoDownloadSubscriptionItemRow item in existingItems)
-            item.logicalItemKey: item,
-        };
-    final Set<String> managedEpisodeKeys = await _managedEpisodeKeys(
-      subscription,
-    );
+      for (final VideoDownloadSubscriptionItemRow item in existingItems)
+        item.logicalItemKey: item,
+    };
+    final Set<String> managedEpisodeKeys =
+        await _managedEpisodeKeys(subscription);
     // BUG-1746：判「这一集还用不用管」必须看任务的真实下场，不能只看 jobId 在不在。
     final Map<String, String> lifecycleByJobId = <String, String>{
       for (final VideoDownloadJobRow job
@@ -345,7 +458,7 @@ class VideoDownloadSubscriptionService {
         }
         hasPersistentJob =
             await _enqueueItem(subscription, media, release.candidate, item) ||
-            hasPersistentJob;
+                hasPersistentJob;
       } on VideoDownloadLeaseLost {
         rethrow;
       } on Object catch (error) {
@@ -387,7 +500,7 @@ class VideoDownloadSubscriptionService {
       // 依赖这里的任务扫描。
       final bool jobOwnsEpisodeFiles =
           job.lifecycle == VideoDownloadJobLifecycle.active ||
-          job.lifecycle == VideoDownloadJobLifecycle.completed;
+              job.lifecycle == VideoDownloadJobLifecycle.completed;
       if (!sameIdentity(job) || !jobOwnsEpisodeFiles) continue;
       for (final VideoDownloadJobFileRow file
           in await database.getVideoDownloadJobFiles(job.jobId)) {
@@ -402,20 +515,18 @@ class VideoDownloadSubscriptionService {
       }
     }
 
-    final VideoMetadataWorkRow? work = await database
-        .getVideoMetadataWorkByProviderIdentity(
-          provider: provider,
-          externalId: externalId,
-        );
+    final VideoMetadataWorkRow? work =
+        await database.getVideoMetadataWorkByProviderIdentity(
+      provider: provider,
+      externalId: externalId,
+    );
     final int? collectionId = work?.collectionId;
     if (collectionId == null) return result;
-    for (final MediaCollectionItemRow item in await database.getCollectionItems(
-      collectionId,
-    )) {
+    for (final MediaCollectionItemRow item
+        in await database.getCollectionItems(collectionId)) {
       if (item.mediaType != MediaKind.video.dbValue) continue;
-      final VideoBookRow? book = await database.getVideoBookByBookUid(
-        item.entryKey,
-      );
+      final VideoBookRow? book =
+          await database.getVideoBookByBookUid(item.entryKey);
       if (book == null) continue;
       final VideoNameInfo parsed = parseVideoFilename(book.videoPath);
       final int? episode = parsed.episode;
@@ -449,20 +560,22 @@ class VideoDownloadSubscriptionService {
       );
       final List<ProviderBatchResult<VideoResourceCandidate>> batches =
           await Future.wait(
-            providers.map((VideoResourceProvider provider) async {
-              try {
-                return await provider.search(request);
-              } on Object catch (error) {
-                return ProviderBatchResult<VideoResourceCandidate>.failure(
-                  ExternalProviderFailure.fromException(
-                    providerId: provider.id,
-                    operation: 'subscription-search',
-                    error: error,
-                  ),
-                );
-              }
-            }),
-          );
+        providers.map(
+          (VideoResourceProvider provider) async {
+            try {
+              return await provider.search(request);
+            } on Object catch (error) {
+              return ProviderBatchResult<VideoResourceCandidate>.failure(
+                ExternalProviderFailure.fromException(
+                  providerId: provider.id,
+                  operation: 'subscription-search',
+                  error: error,
+                ),
+              );
+            }
+          },
+        ),
+      );
       _ensureLeaseHeld();
       final ProviderBatchResult<VideoResourceCandidate> result =
           ProviderBatchResult.merge<VideoResourceCandidate>(batches);
@@ -526,8 +639,10 @@ class VideoDownloadSubscriptionService {
       ),
     );
     _ensureLeaseHeld();
-    final List<VideoDownloadSubscriptionItemRow> items = await database
-        .getVideoDownloadSubscriptionItems(subscription.subscriptionId);
+    final List<VideoDownloadSubscriptionItemRow> items =
+        await database.getVideoDownloadSubscriptionItems(
+      subscription.subscriptionId,
+    );
     return items.firstWhere(
       (VideoDownloadSubscriptionItemRow item) =>
           item.logicalItemKey == release.logicalItem.key,
@@ -545,8 +660,8 @@ class VideoDownloadSubscriptionService {
     // 这里**不再**重复写一遍 `item.jobId != null` —— 那份副本正是 BUG-1746 的
     // 第二道锁：放开上面的判定后它会照旧把重试挡在门外。判据只留一处。
     final String providerId = persistedVideoResourceProviderId(candidate);
-    final List<VideoDownloadJobRow> jobs = await database
-        .getVideoDownloadJobs();
+    final List<VideoDownloadJobRow> jobs =
+        await database.getVideoDownloadJobs();
     _ensureLeaseHeld();
     for (final VideoDownloadJobRow job in jobs) {
       if (job.fingerprint != subscription.fingerprint ||
@@ -646,7 +761,9 @@ class VideoDownloadSubscriptionService {
       itemId,
       VideoDownloadSubscriptionItemsCompanion(
         jobId: Value<String?>(jobId),
-        status: const Value<String>(VideoDownloadSubscriptionItemStatus.queued),
+        status: const Value<String>(
+          VideoDownloadSubscriptionItemStatus.queued,
+        ),
         error: const Value<String?>(null),
         updatedAt: Value<int>(_now().millisecondsSinceEpoch),
       ),
@@ -712,6 +829,44 @@ class VideoDownloadSubscriptionService {
     _mediaKind(subscription.mediaKind);
     _discoveryCategory(subscription);
     _subtitlePolicy(subscription.subtitlePolicy);
+  }
+
+  /// 一次成功检查之后隔多久再查。
+  ///
+  /// 连载订阅按自己的历史发布时刻学出每周更新点，热窗加密、冷窗拉长；样本不足
+  /// 或没有稳定周期时退回均匀间隔，与改动前行为一致。样本必须在 `_check` **之后**
+  /// 重新读：本轮新命中的那一集刚刚写进 items，而它恰恰是最有价值的一个样本。
+  Future<Duration> _successDelay(
+    VideoDownloadSubscriptionRow subscription,
+    int checkedAt,
+  ) async {
+    // oneShot 没有周期语义，学不出也不该学。这个判断只编码在这里一处：它作为
+    // weekly 传进纯函数，由后者统一决定退化取值，避免同一策略两处各写一遍、
+    // 各自返回不同变量。
+    final bool weekly = subscription.mode != 'oneShot';
+    try {
+      final List<int> publishedAt = weekly
+          ? await database.getVideoDownloadSubscriptionPublishedAt(
+              subscription.subscriptionId,
+              limit: cadence.maxSamples,
+            )
+          : const <int>[];
+      return nextSubscriptionCheckDelay(
+        recentPublishedAtMs: publishedAt,
+        nowMs: checkedAt,
+        weekly: weekly,
+        cadence: cadence,
+      );
+    } on Object catch (error, stack) {
+      // 读不出历史不影响这一轮的检查结果，退回均匀间隔即可——但要留痕，否则
+      // 取样恒失败时节奏特性会静默退化成改动前的行为，没有任何人知道。
+      ErrorLogService.instance.log(
+        'VideoDownloadSubscriptionService.successDelay',
+        error,
+        stack,
+      );
+      return cadence.baseInterval;
+    }
   }
 
   Duration _retryDelay(
@@ -795,7 +950,10 @@ class _SubscriptionFilter {
         'The subscription version filter must remain strict',
       );
     }
-    final List<String> releaseGroups = _filterValues(decoded, 'releaseGroup');
+    final List<String> releaseGroups = _filterValues(
+      decoded,
+      'releaseGroup',
+    );
     final List<String> resolutions = _filterValues(decoded, 'resolution');
     final List<String> qualities = _filterValues(decoded, 'quality');
     final List<String> sources = _filterValues(decoded, 'source');
@@ -858,17 +1016,17 @@ class _SubscriptionFilter {
       return false;
     }
     if (resolutions.isNotEmpty &&
-        !_matchesVersionEvidence(resolutions, <String?>[
-          candidate.resolution,
-          candidate.title,
-        ])) {
+        !_matchesVersionEvidence(
+          resolutions,
+          <String?>[candidate.resolution, candidate.title],
+        )) {
       return false;
     }
     if (qualities.isNotEmpty &&
-        !_matchesVersionEvidence(qualities, <String?>[
-          candidate.resolution,
-          candidate.title,
-        ])) {
+        !_matchesVersionEvidence(
+          qualities,
+          <String?>[candidate.resolution, candidate.title],
+        )) {
       return false;
     }
     if (sources.isNotEmpty &&
@@ -893,13 +1051,14 @@ class _SubscriptionFilter {
   }
 }
 
-VideoMediaReference _mediaReference(VideoDownloadSubscriptionRow subscription) {
-  // v94（BUG-2003）：优先入队快照——订阅轮询从此拿得到日文原名与罗马字别名，
-  // nyaa 的多名字搜索兜底不再退化成「只有 searchQuery 这一个词」。订阅列
+VideoMediaReference _mediaReference(
+  VideoDownloadSubscriptionRow subscription,
+) {
+  // v94（BUG-2003）：优先入队快照，保留日文原名、罗马字别名和外部身份。
+  // Nyaa 轮询使用持久化的 searchQuery，别名仅供未指定查询时选默认词。订阅列
   // （title/year/season/kind）仍是流程真值。旧行（NULL 快照）走修前重建。
-  final VideoMediaReference? stored = decodeVideoMediaReference(
-    subscription.identityJson,
-  );
+  final VideoMediaReference? stored =
+      decodeVideoMediaReference(subscription.identityJson);
   if (stored != null) {
     return VideoMediaReference(
       providerId: stored.providerId,
@@ -922,8 +1081,8 @@ VideoMediaReference _mediaReference(VideoDownloadSubscriptionRow subscription) {
   }
   final String provider =
       subscription.metadataProvider?.trim().isNotEmpty == true
-      ? subscription.metadataProvider!.trim()
-      : 'subscription';
+          ? subscription.metadataProvider!.trim()
+          : 'subscription';
   final String mediaId = subscription.externalId?.trim().isNotEmpty == true
       ? subscription.externalId!.trim()
       : subscription.subscriptionId;
@@ -1031,23 +1190,22 @@ bool _looksLikeBatch(String title) {
 
 _SubscriptionRelease? _bestRelease(List<_SubscriptionRelease> releases) {
   if (releases.isEmpty) return null;
-  final List<_SubscriptionRelease> sorted =
-      List<_SubscriptionRelease>.of(releases)
-        ..sort((_SubscriptionRelease a, _SubscriptionRelease b) {
-          final VideoResourceCandidate left = a.candidate;
-          final VideoResourceCandidate right = b.candidate;
-          if (left.trusted != right.trusted) return left.trusted ? -1 : 1;
-          final int bySeeders = right.seeders.compareTo(left.seeders);
-          if (bySeeders != 0) return bySeeders;
-          final int byDate = (right.publishedAt?.millisecondsSinceEpoch ?? 0)
-              .compareTo(left.publishedAt?.millisecondsSinceEpoch ?? 0);
-          if (byDate != 0) return byDate;
-          final int byPriority = left.providerPriority.compareTo(
-            right.providerPriority,
-          );
-          if (byPriority != 0) return byPriority;
-          return left.remoteId.compareTo(right.remoteId);
-        });
+  final List<_SubscriptionRelease> sorted = List<_SubscriptionRelease>.of(
+    releases,
+  )..sort((_SubscriptionRelease a, _SubscriptionRelease b) {
+      final VideoResourceCandidate left = a.candidate;
+      final VideoResourceCandidate right = b.candidate;
+      if (left.trusted != right.trusted) return left.trusted ? -1 : 1;
+      final int bySeeders = right.seeders.compareTo(left.seeders);
+      if (bySeeders != 0) return bySeeders;
+      final int byDate = (right.publishedAt?.millisecondsSinceEpoch ?? 0)
+          .compareTo(left.publishedAt?.millisecondsSinceEpoch ?? 0);
+      if (byDate != 0) return byDate;
+      final int byPriority =
+          left.providerPriority.compareTo(right.providerPriority);
+      if (byPriority != 0) return byPriority;
+      return left.remoteId.compareTo(right.remoteId);
+    });
   return sorted.first;
 }
 
@@ -1079,9 +1237,8 @@ bool _candidateBelongsToProvider(
   String selectedProvider,
 ) {
   final String selected = selectedProvider.trim().toLowerCase();
-  final String persisted = persistedVideoResourceProviderId(
-    candidate,
-  ).toLowerCase();
+  final String persisted =
+      persistedVideoResourceProviderId(candidate).toLowerCase();
   return selected.contains(':')
       ? selected == persisted
       : selected == candidate.providerId.toLowerCase();
@@ -1104,10 +1261,10 @@ List<String> _filterValues(Map<String, dynamic> raw, String key) {
   final Iterable<Object?> values = value is List<Object?>
       ? value
       : value is String
-      ? <Object?>[value]
-      : throw const VideoDownloadSubscriptionConfigurationError(
-          'The subscription version filter is invalid',
-        );
+          ? <Object?>[value]
+          : throw const VideoDownloadSubscriptionConfigurationError(
+              'The subscription version filter is invalid',
+            );
   final List<String> result = <String>[];
   for (final Object? item in values) {
     if (item is! String || item.trim().isEmpty) {
@@ -1138,7 +1295,10 @@ bool _matchesExact(List<String> expected, String? actual) {
 String _foldExact(String value) =>
     value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 
-bool _matchesVersionEvidence(List<String> expected, List<String?> evidence) {
+bool _matchesVersionEvidence(
+  List<String> expected,
+  List<String?> evidence,
+) {
   for (final String value in expected) {
     final String needle = _canonicalVersionText(value);
     for (final String? source in evidence) {
@@ -1160,9 +1320,18 @@ String _canonicalVersionText(String value) {
     RegExp(r'\b(?:h[ ._-]?264|x264|avc)\b'),
     ' avc ',
   );
-  normalized = normalized.replaceAll(RegExp(r'\bweb[ ._-]?dl\b'), ' webdl ');
-  normalized = normalized.replaceAll(RegExp(r'\bweb[ ._-]?rip\b'), ' webrip ');
-  normalized = normalized.replaceAll(RegExp(r'\bblu[ ._-]?ray\b'), ' bluray ');
+  normalized = normalized.replaceAll(
+    RegExp(r'\bweb[ ._-]?dl\b'),
+    ' webdl ',
+  );
+  normalized = normalized.replaceAll(
+    RegExp(r'\bweb[ ._-]?rip\b'),
+    ' webrip ',
+  );
+  normalized = normalized.replaceAll(
+    RegExp(r'\bblu[ ._-]?ray\b'),
+    ' bluray ',
+  );
   normalized = normalized.replaceAll(
     RegExp(r'\bdual[ ._-]?audio\b'),
     ' dualaudio ',

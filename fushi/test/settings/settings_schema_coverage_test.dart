@@ -36,8 +36,6 @@ import '../helpers/test_platform_services.dart';
 /// 让覆盖测试不对「别处已覆盖」的项裸喊 UNVERIFIED/FAIL，且强制每个 changed
 /// 但未 effect-verified 的设置都必须有去处（no silent caps）。
 const Map<String, String> kCoveredElsewhere = <String, String>{
-  'video/Subtitle language':
-      'test/media/video/video_subtitle_language_filter_test.dart + test/pages/video_quick_settings_sheet_test.dart',
   // v92 阅读空闲门（分钟）：写 prefsRepo（changed=true），生效点是阅读器建
   // StudyClock 时读一次 appModel.readingIdleTimeout——harness 里没有阅读器。
   // 空闲门行为由 study_clock_test「阅读空闲门」用例咬住，接线由
@@ -45,6 +43,15 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   'reading/Idle timeout':
       'test/media/audiobook/study_clock_test.dart（空闲门）+ '
       'test/tools/statistics_write_convergence_guard_test.dart',
+  // 「今日」重置时刻（整点）：写 prefsRepo（changed=true），生效点是
+  // AppModel._applyStatDayResetHour 镜像到 FushiDatabase.statDayResetHour——之后
+  // 每次 statDateKeyOf 派生 dateKey 才会前移，harness 的渲染输入观测不到。行为由
+  // stat_date_key_test（dateKey 前移 / 边界时长）+ stat_window_test / stat_summary_test /
+  // 热力图用例（读取面 key 算术）咬住。
+  'reading/Day starts at':
+      'test/stats/stat_date_key_test.dart + test/stats/stat_window_test.dart + '
+      'test/pages/stat_summary_test.dart + '
+      'test/widgets/stat_contribution_heatmap_test.dart',
   // 「功能模块」七开关（五库页 + 下载/查词两个工具 tab）。写 prefsRepo
   // （changed=true），生效点是 HomePage/macOS 侧栏的可见 tab 列表——harness 里没有
   // 挂 HomePage 外壳，探不到底栏。行为由 homeActiveTabs 纯函数用例咬住：各开关
@@ -55,6 +62,14 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 底栏真值 homeNavItemFor 的 label（Novels→Books、Galgame→Game、
   // Browser extension→Extension）。键是 `$destId/${row.title}`，两处任一变了本表
   // 就得跟着变。
+  // 互联「允许已配对设备读写本机配置」（host 侧许可，默认关）。写 prefsRepo
+  // （changed=true），生效点在 **HTTP 端点**里：host 收到 GET/PUT
+  // /api/interconnect/profile 时先查这个开关，关着回 403。harness 里没有起 server、
+  // 也没有 TLS 会话与已配对 peer，探不到。由专项测试逐条咬住：开关默认关、开启后
+  // 可用、依赖未接线时即使开着也不可用、以及端点三道门（TLS → peer token → 能力
+  // → 本开关）的顺序守卫。
+  'interconnect/Allow paired devices to read/write configuration':
+      'test/sync/interconnect_profile_transfer_test.dart',
   'appearance/Books': 'test/pages/home_page_tabs_test.dart',
   'appearance/Manga': 'test/pages/home_page_tabs_test.dart',
   'appearance/Video': 'test/pages/home_page_tabs_test.dart',
@@ -128,6 +143,16 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
       'native/galgame_hook/tests/lookup_ipc_contract_test.cpp + '
       'native/galgame_hook/tests/lookup_session_replay_test.cpp + '
       'native/galgame_hook/tests/kirikiri_lookup_source_guard_test.py',
+  // BUG-2066：游戏内查词卡独立尺寸开关。写 prefsRepo（changed=true），生效点在
+  // runner 的直连覆盖窗（真实 HWND + WebView2），本进程内没有可探的渲染输入。
+  // 由 test/lookup/gal_card_size_cap_test.dart 咬住这个开关唯一的行为后果：
+  // galCard route 读 gal 那组键、桌面 route 继续读 overlay 那组，两组值不互串；
+  // 关掉开关时跟随 app 内共享值。
+  // 归属：与 #938 同一条理由，本项已从 settings_schema_lookup.dart 移进
+  // settings_schema_game.dart 的双重 Platform.isWindows 门后，故 destId 是 game。
+  // 兄弟两项（最大宽/高滑杆）带 visible 门、不进覆盖清单，不需要登记。
+  'game/Independent in-game card size':
+      'test/lookup/gal_card_size_cap_test.dart',
   // BUG-1095：galgame Hook 台词浮窗字号。写 prefsRepo（changed=true），生效点在
   // runner 自有的 Win32 分层浮窗（Direct2D/DirectWrite 直绘，不是 Flutter widget
   // 树），本进程内没有任何可探的渲染输入，故无适用探针；由三层专项测试咬住：
@@ -188,6 +213,28 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   'game/Window corner radius':
       'test/build/gal_overlay_appearance_guard_test.dart + '
       'DEVICE: native hook overlay corner radius',
+  // AniDB ED2K 文件哈希识别总闸（commit 9e7c1e322d「MAL 主源 + TMDB 兜底 + AniDB
+  // ED2K」新增，落在新的 services destination·「元数据刮削」分区）。写 prefsRepo
+  // kVideoAniDbHashEnabledPref（changed=true），生效点是
+  // VideoSourceScrapeGlobalConfig.hashEnabled → AnidbHashIdentityService.identifyFile
+  // 开头的进场门（关=不算 ED2K、不发一个 AniDB UDP 包），既不在 reader CSS 也不在
+  // 主题树，harness 里没有待识别文件也没有 UDP 对端，无适用探针。由两层专项测试咬住：
+  // ① 偏好 → runtime 快照（含默认 false、密码字节不被 trim）；② 服务层负向守卫
+  // 「disabled and unconfigured skip file hashing」——关着时直接回 disabled、不哈希。
+  'services/Identify files with AniDB ED2K':
+      'test/media/video/metadata/anidb_hash_config_test.dart + '
+      'test/media/video/metadata/anidb_app_client_test.dart（默认关）+ '
+      'test/media/video/anidb_hash_identity_service_test.dart'
+      '（disabled 直接 skip file hashing）',
+  // 字幕遮蔽的「暂停 / 悬停时显形」开关（BUG-2256「暂停 / 查词的自动显形并入
+  // 显形总闸」新增）。写 prefsRepo（changed=true），生效点在
+  // VideoSubtitleOverlay 的显形门：关掉之后**所有**显形来源都不再揭开被遮蔽的
+  // 字幕——悬停（MouseRegion 的 onEnter/onExit）、点击、以及暂停 / 查词浮层触发的
+  // 自动显形。harness 里没有真播放器、没有指针悬停、也没有查词浮层，无适用探针；
+  // 由专项 widget 测试咬住四条显形来源与总闸的关系。
+  'video/Reveal when paused or hovered':
+      'test/media/video/video_subtitle_hide_hover_reveal_test.dart'
+      '（悬停 / 点击 / 暂停 / 查词四条显形来源同属一个总闸）',
   // 视频条目自动刮削总闸。写 prefsRepo（changed=true），生效点在
   // VideoScrapeAutoService.sweep 的进场门（关=零网络请求、零资料落库），不是
   // reader CSS / 主题树，无适用探针；由专项服务测试咬住（关=不发请求、关→开
@@ -214,6 +261,10 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 真按它预选语言 chip）。
   'video/Default subtitle language':
       'test/pages/jimaku_default_language_test.dart',
+  // 视频播放页「字幕语言」是运行时过滤器：快捷设置选择器把 all/japanese/other
+  // 直接下发给 live host；harness 只验证偏好写穿，不挂真实播放器 overlay。
+  'video/Subtitle language':
+      'test/pages/video_quick_settings_sheet_test.dart（subtitle language selector）',
   // mpv Lua 脚本装载开关。写 prefsRepo（changed=true），生效点在视频播放器创建后
   // 经 libmpv `load-script` 命令装载脚本目录（widget harness 无 libmpv Player，
   // 无可探渲染输入）；由专项测试咬住目录枚举（仅顶层 .lua、排序）、load-script
@@ -413,6 +464,14 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
       'test/media/video/video_subtitle_obscure_mode_test.dart + test/media/video/video_subtitle_overlay_test.dart + test/shortcuts/video_shortcut_registry_test.dart',
   'video/Obscure secondary subtitle':
       'test/media/video/video_secondary_subtitle_obscure_test.dart + test/media/video/video_subtitle_overlay_test.dart',
+  // 遮蔽态「悬停 / 点击显形」总闸（默认开）：写 prefsRepo（changed=true），生效点在
+  // [VideoSubtitleOverlay] 的显形状态机——门控落在 MouseRegion 的 onEnter/onExit 与
+  // 遮蔽态热区的 onTap 上，harness 里既没有播放器也没有字幕层，没有可探的渲染输入。
+  // 由专项测试第 ⑩ 组咬住：关掉后悬停 / 点击对模糊与隐藏都不再揭开、开着时两者照常
+  // 显形（两条防恒真基准）、关掉后热区仍拦住盒面上的字符点击、播放中关掉立刻收回
+  // 已有的显形态。
+  'video/Reveal on hover or tap':
+      'test/media/video/video_subtitle_hide_hover_reveal_test.dart',
   // TODO-286: pref-only video settings surfaced in home settings for parity with
   // the in-player sheet. Schema coverage here proves focus/change/persist/restore
   // through the DB; the runtime effect of each underlying config is guarded by the
@@ -713,11 +772,10 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
       'test/mining/mining_still_format_test.dart',
   'cardCreation/Galgame card image':
       'test/mining/gal_hook_mining_coordinator_test.dart',
-  // Galgame 静态截图尺寸是独立于视频/动漫清晰度的制卡偏好；widget harness 只能
-  // 证明焦点驱动与 preferences 写穿，实际窗口抓图的降采样尺寸由专项测试覆盖。
+  // Galgame 截图尺寸是独立偏好，两个制卡入口都必须透传给 coordinator；专项守卫
+  // 同时钉 wire 值稳定性与默认 1080p。
   'cardCreation/Galgame screenshot size':
-      'test/mining/gal_mining_screenshot_size_test.dart + '
-      'test/settings/mining_media_quality_guard_test.dart',
+      'test/mining/gal_mining_screenshot_size_test.dart',
   'cardCreation/Game card animation format':
       'test/mining/mining_animated_format_test.dart',
   'cardCreation/Game card screenshot format':
@@ -945,7 +1003,12 @@ void main() {
                   readerSource: ReaderFushiSource.instance,
                   refresh: () {},
                 );
-                final List<SettingsDestination> all = buildSettingsSchema(sctx);
+                // 子 schema 页（SettingsNavigationItem.child）里的行也要进遍历：
+                // 顶层枚举不到它们，覆盖会静默缩水。展平走 [_withSubPages]（带深度
+                // 上限——child 是闭包、每次返回新实例，基于 identical 的环检测无效）。
+                final List<SettingsDestination> all = _withSubPages(
+                  buildSettingsSchema(sctx),
+                );
                 destinations = all;
                 return ValueListenableBuilder<SettingsDestination?>(
                   valueListenable: destNotifier,
@@ -1379,4 +1442,38 @@ class _CoverageAppModel extends AppModel {
 
   @override
   PackageInfo get packageInfo => _packageInfo;
+}
+
+/// 顶层 destination + 它们经 [SettingsNavigationItem.child] 挂出来的**子 schema 页**。
+///
+/// C0 引入子页之后，本 harness 如果只枚举 `buildSettingsSchema()` 的顶层结果，
+/// 那么 C1/C2 把同步/互联的行搬进子页的那一刻，这些行就**静默退出**了覆盖面——
+/// 测试照样绿，只是少测了 N 行。而本文件头部写的契约恰恰是「no silent caps：
+/// 每个 changed 但未 effect-verified 的设置都必须有去处」，静默缩小枚举面正是
+/// 它要防的事。
+///
+/// 子页复用 [SettingsDetailPage] 同一套详情壳，所以在这里把它们展平成同级
+/// destination 喂给同一个渲染 + Tab 遍历循环即可（子页共用父分类的 id，
+/// `probeFor(dest.id)` 因此继续命中父分类的探针）。
+///
+/// 深度上限 3：`child` 是闭包，每次调用返回新实例，基于 identical 的环检测无效，
+/// A→B→A 这种写法会直接栈溢出。
+List<SettingsDestination> _withSubPages(List<SettingsDestination> tops) {
+  final List<SettingsDestination> out = <SettingsDestination>[];
+  void visit(SettingsDestination destination, int depth) {
+    out.add(destination);
+    if (depth >= 3) return;
+    for (final SettingsSection section in destination.sections) {
+      for (final SettingsItem item in section.items) {
+        if (item is SettingsNavigationItem && item.child != null) {
+          visit(item.child!(), depth + 1);
+        }
+      }
+    }
+  }
+
+  for (final SettingsDestination destination in tops) {
+    visit(destination, 0);
+  }
+  return out;
 }

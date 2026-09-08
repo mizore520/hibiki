@@ -45,6 +45,11 @@ on:
         required: false
         default: true
         type: boolean
+      build_only:
+        description: 'Build the channel artifacts but publish nothing: no GitHub Release, no update manifest. Artifacts stay downloadable from the run page. Use to hand a release candidate out for testing before committing to the publish.'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: fushi-release-${{ github.event.release.tag_name || github.event.inputs.tag_name || github.sha }}
@@ -56,6 +61,9 @@ jobs:
     timeout-minutes: 90
     permissions:
       contents: write
+      # publish_update_manifest.sh 推完正式版清单要 `gh workflow run` 唤醒 R2 镜像；
+      # job 级 permissions 会把没列出的 scope 置 none，缺 actions: write 则 dispatch 403。
+      actions: write
 
     steps:
     - uses: actions/checkout@v6
@@ -84,10 +92,12 @@ jobs:
       shell: bash
       env:
         INPUT_CHANNEL: ${{ github.event.inputs.channel }}
+        INPUT_BUILD_ONLY: ${{ github.event.inputs.build_only }}
         INPUT_TAG_NAME: ${{ github.event.inputs.tag_name }}
         INPUT_RELEASE_NAME: ${{ github.event.inputs.release_name }}
         RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
         RELEASE_IS_PRERELEASE: ${{ github.event.release.prerelease }}
+        RELEASE_BODY: ${{ github.event.release.body }}
       run: |
         set -euo pipefail
         PUBSPEC_VERSION=$(grep '^version:' fushi/pubspec.yaml | sed 's/version: *//')
@@ -119,6 +129,14 @@ jobs:
         CHANNEL="${INPUT_CHANNEL:-}"
         TAG="${INPUT_TAG_NAME:-}"
         NAME="${INPUT_RELEASE_NAME:-}"
+        # BUG-2088：正式版/测试版**真实更新公告**的来源。此前 BODY 只有一行模板，
+        # 而 NOTES 就是它——实测 v2.1.1 的 latest-stable.json 里 notes 是
+        # 「Manual formal release from bridge/auto-migrate-download @ 4d1c8f4.」，
+        # 而 GitHub 上那份正文有 3613 字：**应用内更新弹窗给用户看的一直是占位符**。
+        # 约定：公告写在 docs/release-notes/<语义版本>.md，正式/测试通道自动取用；
+        # 手动发 GitHub Release 时优先用 Release 正文（那才是当场写的那份）。
+        # debug 通道不取——滚动开发构建挂完整 changelog 会误导。
+        NOTES_FILE="docs/release-notes/${VERSION}.md"
         BODY=""
         PRERELEASE=true
         MAKE_LATEST=false
@@ -162,6 +180,7 @@ jobs:
                 TAG="${TAG:-v${VERSION}-beta.${RELEASE_SEQUENCE}}"
                 NAME="${NAME:-Fushi ${VERSION} beta ${RELEASE_SEQUENCE}}"
                 BODY="Manual beta/test build from ${GITHUB_REF_NAME} @ ${SHORT_SHA}. Beta/test releases are prerelease and never Latest."
+                if [ -f "$NOTES_FILE" ]; then BODY="$(cat "$NOTES_FILE")"; fi
                 FILES="fushi/build/release-artifacts/fushi-*.apk"
                 BUILD_DEBUG_APK=false
                 BUILD_SPLIT_RELEASE_APK=true
@@ -171,6 +190,7 @@ jobs:
                 TAG="${TAG:-v${VERSION}}"
                 NAME="${NAME:-Fushi ${VERSION}}"
                 BODY="Manual formal release from ${GITHUB_REF_NAME} @ ${SHORT_SHA}."
+                if [ -f "$NOTES_FILE" ]; then BODY="$(cat "$NOTES_FILE")"; fi
                 PRERELEASE=false
                 MAKE_LATEST=true
                 FILES="fushi/build/release-artifacts/fushi-*.apk"
@@ -187,6 +207,21 @@ jobs:
             ;;
           release)
             CHANNEL=github-release
+            # BUG-2104：本分支曾是**唯一**没显式关掉 debug APK 的分支。
+            # `BUILD_DEBUG_APK` 的初值是 true（见本步骤开头），push / dispatch 的
+            # debug|beta|formal 四条分支各自设了 false，只有这里漏了 ⇒ 留在默认 true；
+            # 而下面的上传 glob 是 `fushi-*.apk`，顺手把 `fushi-<ver>-<sha>-debug.apk`
+            # 扫进正式 release 的资产表和已发布的 latest-stable-fushi.json。
+            # 后果不致命（两批已出货客户端都按名字把 `-debug.apk` 排除在 stable/beta 之外，
+            # 见 fushi/test/utils/misc/formal_asset_naming_legacy_contract_test.dart 与
+            # platform_updater.dart 的 _isDebugApkAsset），但正式版页面上多一个 debug 构建
+            # 可供手动下载、白烧一次构建、清单里多一条无用条目。
+            # **手动发 GitHub Release 正是本仓文档里正式版的一等路径**，所以这条必然复发。
+            BUILD_DEBUG_APK=false
+            # 手动发 GitHub Release：正文就是当场写的公告，优先用它；留空（先建空
+            # Release 再补正文）时回落到仓库里的公告文件。
+            BODY="${RELEASE_BODY:-}"
+            if [ -z "$BODY" ] && [ -f "$NOTES_FILE" ]; then BODY="$(cat "$NOTES_FILE")"; fi
             TAG="${RELEASE_TAG_NAME:-${GITHUB_REF_NAME}}"
             FILES="fushi/build/release-artifacts/fushi-*.apk"
             BUILD_SPLIT_RELEASE_APK=true
@@ -214,6 +249,21 @@ jobs:
         # managed release does. Only the `release` event opts in above independently.
         if [ -z "$MANIFEST_CHANNEL" ]; then MANIFEST_CHANNEL="$CHANNEL"; fi
         if [ "$PUBLISH_MANAGED_RELEASE" = true ]; then PUBLISH_MANIFEST=true; fi
+
+        # build_only：出候选包给人测，但**什么都不发布**。
+        #
+        # 刻意放在所有 channel 分支解析完之后：版本串、资产名、签名、构建开关全部
+        # 照该 channel 的真实规则算（所以 formal 的 build_only 产物就是正式版产物，
+        # 不是「像正式版的东西」），只把最后两个发布开关摁掉。
+        #
+        # 只认 workflow_dispatch：`release` 事件（手动发 GitHub Release）本身就是
+        # 发布意图，push 的滚动 debug 也必须照常出包，两者都不该被这个开关影响——
+        # 它们的 github.event.inputs.build_only 恒为空，下面的等值判断自然不成立。
+        if [ "$INPUT_BUILD_ONLY" = "true" ]; then
+          PUBLISH_MANAGED_RELEASE=false
+          PUBLISH_MANIFEST=false
+          echo "::notice title=Build-only run::Channel '$CHANNEL' artifacts will be built and uploaded to this workflow run, but no GitHub Release and no update manifest will be published."
+        fi
 
         BUILD_VERSION_NAME="${TAG#v}"
         BUILD_VERSION_NAME="${BUILD_VERSION_NAME%%+*}"
@@ -324,6 +374,7 @@ jobs:
         dandanplay-app-id: ${{ secrets.DANDANPLAY_APP_ID }}
         dandanplay-app-secret: ${{ secrets.DANDANPLAY_APP_SECRET }}
         tmdb-api-key: ${{ secrets.TMDB_API_KEY }}
+        opensubtitles-api-key: ${{ secrets.OPENSUBTITLES_API_KEY }}
     # TODO-2721: 只缓存 Gradle 的下载物（modules-2 / wrapper dists），不缓存
     # <ver>/transforms 这类可从 modules-2 重算的派生产物。三个 workflow
     # （main / release / build-multiplatform）的 path + key 必须逐字相同，且此步
@@ -559,47 +610,6 @@ jobs:
         path: fushi/build/release-artifacts/*.apk
         if-no-files-found: ignore
         retention-days: 14
-
-    # 正式版发布的数据安全硬门：该 tag 上必须已经挂好迁移桥包。
-    #
-    # 已出货的 Hibiki v1.2.0 挑包不认产品族，只看「.apk 结尾 + 名字含设备
-    # SUPPORTED_ABIS 任一项」，且 GitHub API 按文件名升序返回资产。桥包用 `bridge-`
-    # 前缀（字母序 < `fushi-`）就能把 ABI 命中全部接走；桥包缺席时它会退化成
-    # `fallback ??= asset` 直接装本体 —— 跨包名装成并存的第二个空 app，用户卸掉
-    # Hibiki 即永久丢数据。所以顺序是「先发桥包、再发本体」，这一步把顺序钉成硬约束：
-    # 桥包不在就**在上传本体资产之前**失败，绝不留下一个只有 fushi-* 的正式 release。
-    #
-    # 位置很重要：本体 APK 有**两条**上传路径——手动发 GitHub Release 走下面紧邻的
-    # `Upload APKs to GitHub Release event`（`release` 事件，托管发布那步是跳过的），
-    # workflow_dispatch 走后面的 `Publish Android channel release`。这道门必须排在
-    # **两条之前**；只挡住后者等于放过手动发布这条路，而正式版按发布通道硬规则恰恰
-    # 常走手动 Release。守卫断言了它与两条上传路径的先后。
-    # 不变式与反向用例见
-    # fushi/test/utils/misc/formal_asset_naming_legacy_contract_test.dart。
-    - name: Require migration bridge assets on the formal tag
-      if: steps.channel.outputs.manifest_channel == 'formal'
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        REPO: ${{ github.repository }}
-        PUBLISH_TAG: ${{ steps.channel.outputs.publish_tag }}
-      shell: bash
-      run: |
-        set -euo pipefail
-        if ! ASSETS="$(gh release view "$PUBLISH_TAG" --repo "$REPO" --json assets --jq '.assets[].name')"; then
-          echo "::error title=Missing formal release::$PUBLISH_TAG does not exist yet. Publish the migration bridge release first."
-          exit 1
-        fi
-        MISSING=()
-        for abi in arm64-v8a armeabi-v7a x86_64; do
-          if ! grep -qE "^bridge-.*-${abi}\.apk$" <<< "$ASSETS"; then
-            MISSING+=("bridge-<version>-${abi}.apk")
-          fi
-        done
-        if [ "${#MISSING[@]}" -ne 0 ]; then
-          echo "::error title=Migration bridge missing::$PUBLISH_TAG is missing ${MISSING[*]}. Old Hibiki v1.2.0 clients would install the Fushi APK as a second, empty app and lose all their data when they uninstall Hibiki. Publish the bridge assets first."
-          exit 1
-        fi
-        echo "Migration bridge assets present on $PUBLISH_TAG."
 
     - name: Upload APKs to GitHub Release event
       if: github.event_name == 'release'
@@ -855,6 +865,7 @@ jobs:
         dandanplay-app-id: ${{ secrets.DANDANPLAY_APP_ID }}
         dandanplay-app-secret: ${{ secrets.DANDANPLAY_APP_SECRET }}
         tmdb-api-key: ${{ secrets.TMDB_API_KEY }}
+        opensubtitles-api-key: ${{ secrets.OPENSUBTITLES_API_KEY }}
     - name: Flutter pub get
       working-directory: fushi
       run: flutter pub get

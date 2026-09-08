@@ -32,11 +32,6 @@ constexpr float kDragThresholdPx = 6.0f;
 constexpr float kRestOpacity = 0.42f;
 constexpr float kHoverOpacity = 1.0f;
 
-UINT32 GlyphLength(const wchar_t* glyph) {
-  if (glyph == nullptr) return 0;
-  return static_cast<UINT32>(std::char_traits<wchar_t>::length(glyph));
-}
-
 std::wstring MaterialSymbolsRoundedFontPath() {
   std::wstring module_path(32768, L'\0');
   const DWORD length = GetModuleFileNameW(
@@ -118,31 +113,29 @@ bool SlotActive(Profile profile, int slot, const States& states) {
 
 const wchar_t* SlotGlyph(Profile profile, int slot, const States& states) {
   const char* action = SlotAction(profile, slot);
-  // The personal Windows build deliberately keeps toolbar controls on
-  // Segoe UI Symbol. These are controls rather than lyric text, so changing
-  // the selected lyric family must never change their appearance.
-  if (std::strcmp(action, "replayVoice") == 0) return L"↻";  // replay
-  if (std::strcmp(action, "recaptureVoice") == 0) return L"🎙";  // mic
+  if (std::strcmp(action, "replayVoice") == 0) return L"\uE042";  // replay
+  if (std::strcmp(action, "recaptureVoice") == 0) return L"\uE31D";  // mic
   if (std::strcmp(action, "toggleFollow") == 0) {
-    return states.playing ? L"⏸" : L"▶";  // pause / play
+    return states.playing ? L"\uE034" : L"\uE037";  // pause / play_arrow
   }
   if (std::strcmp(action, "playPause") == 0) {
-    return states.playing ? L"⏸" : L"▶";  // pause / play
+    return states.playing ? L"\uE034" : L"\uE037";  // pause / play_arrow
   }
-  if (std::strcmp(action, "togglePassThrough") == 0) return L"🖱";  // mouse
+  if (std::strcmp(action, "togglePassThrough") == 0) return L"\uE323";  // mouse
   if (std::strcmp(action, "toggleTransparency") == 0) {
-    return L"◐";  // opacity
+    return L"\uE91C";  // opacity
   }
   if (std::strcmp(action, "lock") == 0) {
-    return states.locked ? L"\U0001F512" : L"\U0001F513";  // lock
+    return states.locked ? L"\uE899" : L"\uE898";  // lock / lock_open
   }
   if (std::strcmp(action, "openWorkbench") == 0) {
-    return L"▣";  // workbench
+    return L"\uE99B";  // dashboard_customize
   }
-  if (std::strcmp(action, "topmost") == 0) return L"\U0001F4CC";  // pin
-  if (std::strcmp(action, "close") == 0) return L"✕";          // close
-  // previousCue / nextCue use the vector fallback: there is no dependable
-  // Segoe UI Symbol glyph with the exact skip-previous / skip-next shape.
+  if (std::strcmp(action, "topmost") == 0) return L"\uF10D";   // push_pin
+  if (std::strcmp(action, "close") == 0) return L"\uE5CD";     // close
+  // previousCue / nextCue 显式声明「没有字体字形」：打包的字体是 11 个码位的极小
+  // 子集（skip_previous U+E045 / skip_next U+E044 不在其中），用字体画出来是豆腐
+  // 块。空串 = 告诉调用方「这颗没字形」，由它逐槽回退到 DrawSlotIcon 的矢量画法。
   //
   // 为什么要显式写出来、而不是让它们落到末尾那个 return：末尾的 return 同时也是
   // 「这个 action 我不认识」的出口。两件事共用一个出口，拼错的 action 就会静默
@@ -995,16 +988,16 @@ void HookToolbarWindow::Render() {
 
   const float btn = layout_.button_px;
   Microsoft::WRL::ComPtr<IDWriteTextFormat> icon_format;
-  // Toolbar glyphs deliberately stay on the platform symbol font. They are
-  // controls, not lyric text, and must not follow the user's selected lyric
-  // family (or depend on a packaged Material Symbols asset).
-  dwrite_factory_->CreateTextFormat(
-      L"Segoe UI Symbol", nullptr, DWRITE_FONT_WEIGHT_NORMAL,
-      DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-      std::max(1.0f, btn * 0.5f), L"", icon_format.GetAddressOf());
-  if (icon_format != nullptr) {
-    icon_format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-    icon_format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+  if (icon_font_collection_ != nullptr) {
+    dwrite_factory_->CreateTextFormat(
+        L"Material Symbols Rounded", icon_font_collection_.Get(),
+        DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, btn * 0.68f, L"",
+        icon_format.GetAddressOf());
+    if (icon_format != nullptr) {
+      icon_format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+      icon_format->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+    }
   }
   for (int slot = 0; slot < hook_toolbar::SlotCount(profile_); ++slot) {
     const float bx = layout_.margin_px + slot * (btn + layout_.gap_px);

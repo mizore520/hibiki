@@ -82,8 +82,10 @@ window.__fushiShells.vn = function(C) {
     return readerRegex.test(char || '');
   }
 
+  // 学习单位口径，与分页 shell / Dart countStudyChars 同源（window.fushiStudyUnits
+  // 由 ReaderPaginationScripts.engineShell 在任何 shell 安装之前注入）。
   function countChars(text) {
-    return Array.from(normalizeText(text)).length;
+    return window.fushiStudyUnits.count(text);
   }
 
   function countRawChars(text) {
@@ -476,7 +478,9 @@ window.__fushiShells.vn = function(C) {
         while (offset < text.length) {
           var char = String.fromCodePoint(text.codePointAt(offset));
           var next = offset + char.length;
-          var matchable = isMatchableChar(char);
+          // chapterCharStart/End 是**进度偏移**坐标（entry.startChar 同源），所以
+          // 用学习单位判据；有声书 cue 的 collectMatchableSegments 仍走 isMatchableChar。
+          var matchable = window.fushiStudyUnits.isUnitEnd(text, offset);
           items.push({
             node: entry.node,
             order: entry.order,
@@ -3090,6 +3094,14 @@ $sharedInitViewport
     vn.getFirstVisibleCharOffset = function() {
       var screen = this.screens && this.screens[this.currentScreenIndex];
       return screen ? this.screenStartCharCount(screen) : -1;
+    };
+  }
+  // 当前屏可见字符区间终点（半开 end）。VN 的 progress 口径本就是屏尾，start / end 都
+  // 直接取屏表（screenStartCharCount / screenEndCharCount），不做几何探测。
+  if (typeof vn.getLastVisibleCharOffset !== 'function') {
+    vn.getLastVisibleCharOffset = function() {
+      var screen = this.screens && this.screens[this.currentScreenIndex];
+      return screen ? this.screenEndCharCount(screen) : -1;
     };
   }
   if (typeof vn.setChromeInsets !== 'function') {

@@ -44,11 +44,11 @@ const readerPath = path.resolve(
 const source = fs.readFileSync(readerPath, 'utf8');
 
 // Extract the self-contained handler slice: from the continuous-mode flag down
-// to (but excluding) the non-left mouse seek listener. Every function the
+// to (but excluding) the mouse-button seek listener. Every function the
 // handlers call is declared inside this slice, so it runs standalone.
 const sliceStart = source.indexOf('var fushiContinuousMode = C.continuousMode;');
 assert.ok(sliceStart >= 0, 'missing handler slice start marker');
-const sliceEndMarker = '// 非左键';
+const sliceEndMarker = '// 鼠标按钮统一上报 Dart';
 const sliceEnd = source.indexOf(sliceEndMarker, sliceStart);
 assert.ok(sliceEnd > sliceStart, 'missing handler slice end marker');
 const rawSlice = source.substring(sliceStart, sliceEnd);

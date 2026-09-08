@@ -803,16 +803,6 @@ String _mangaGestureJs({
   return '''
 (function(){
   function _bridge(){ return window.flutter_inappwebview; }
-  // Mouse shortcuts are reported from the WebView as well as the Flutter
-  // Listener around it. Platform views can keep pointer events on the native
-  // side, so the bridge is the reliable path for middle/right/side buttons;
-  // the Dart executor de-duplicates it when both paths see the same click.
-  document.addEventListener('mousedown', function(e){
-    if (e && e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) return;
-    var bridge = _bridge();
-    if (bridge) bridge.callHandler('onMangaMouseShortcut', e.button);
-    if (e.button !== 0) e.preventDefault();
-  }, {passive:false});
   // Custom wheel shortcuts are injected as a small immutable snapshot for this
   // WebView document. Matching is exact (direction + modifier set), so an
   // unbound wheel keeps the existing native scroll/page-turn behaviour.

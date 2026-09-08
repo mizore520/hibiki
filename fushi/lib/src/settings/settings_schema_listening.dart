@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:fushi/src/asr_host/asr_host.dart';
+import 'package:fushi/src/media/audiobook/asr_models_settings_section.dart';
+import 'package:fushi/src/media/audiobook/audiobook_material_library_dialog.dart';
 import 'package:fushi/src/settings/settings_actions.dart';
 import 'package:fushi/src/settings/settings_context.dart';
 import 'package:fushi/src/settings/settings_destination.dart';
@@ -31,6 +34,23 @@ SettingsDestination buildListeningDestination() {
               settingsContext.refresh();
             },
           ),
+          // 有声书素材库：按作品身份命名的字幕/正文目录。下载完成后据此配齐
+          // 「正文 + 字幕 + 音频」，配不齐时由用户在导入框里手动补。
+          SettingsActionItem(
+            id: 'listening.audiobook_material_library',
+            title: t.audiobook_material_library,
+            subtitle: t.audiobook_material_library_hint,
+            icon: Icons.library_books_outlined,
+            onTap: (SettingsContext settingsContext) async {
+              await showAppDialog<void>(
+                context: settingsContext.context,
+                builder: (_) => AudiobookMaterialLibraryDialog(
+                  appModel: settingsContext.appModel,
+                ),
+              );
+              settingsContext.refresh();
+            },
+          ),
           SettingsSwitchItem(
             id: 'listening.media_notification',
             title: t.show_media_notification,
@@ -58,6 +78,22 @@ SettingsDestination buildListeningDestination() {
               settingsContext.readerSource.toggleVolumeKeySentenceNavEnabled();
               notifyReaderSettingsChanged(settingsContext);
             },
+          ),
+        ],
+      ),
+      // 有声书设备端转录的语言模型包：让用户预先只下自己要的语言、也能删掉
+      // 腾磁盘。仅本机随包了 ONNX Runtime 的平台才有这一组（与转录入口同门控）。
+      SettingsSection(
+        title: t.asr_models_section,
+        footer: t.asr_models_section_summary,
+        collapsedByDefault: true,
+        visible: (_) => isAsrSupported,
+        items: <SettingsItem>[
+          SettingsCustomItem(
+            id: 'listening.asr_models',
+            searchTitle: t.asr_models_section,
+            builder: (SettingsContext _) =>
+                AsrModelsSettingsSection(service: createAsrTranscriptionService()),
           ),
         ],
       ),

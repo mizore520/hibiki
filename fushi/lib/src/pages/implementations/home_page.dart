@@ -17,6 +17,9 @@ import 'package:macos_ui/macos_ui.dart'
 import 'package:flutter/services.dart' hide ModifierKey;
 import 'package:fushi_anki/fushi_anki.dart' show AnkiMediaDedupReport;
 import 'package:fushi/src/anki/anki_media_dedup_dialogs.dart';
+import 'package:fushi/src/onboarding/recommended_pack_download_mini_bar.dart';
+import 'package:fushi/src/onboarding/recommended_pack_tutorial_prompt.dart';
+import 'package:fushi/src/onboarding/recommended_pack_tutorial_state.dart';
 import 'package:fushi/src/utils/components/fushi_windows_title_bar.dart';
 import 'package:fushi/src/utils/components/nav_rail_brand_button.dart';
 import 'package:fushi/src/utils/misc/build_version.dart';
@@ -36,13 +39,9 @@ import 'package:drift/drift.dart' show Value;
 import 'package:fushi/src/media/collections/collection_continue.dart';
 import 'package:fushi/src/media/torrent/nyaa_resource_provider.dart';
 import 'package:fushi/src/media/torrent/video_resource_provider.dart';
-import 'package:fushi/src/media/video/discovery/discovery_anidb_identity.dart';
 import 'package:fushi/src/media/video/discovery/video_discovery_provider.dart';
 import 'package:fushi/src/media/video/discovery/video_discovery_service.dart';
 import 'package:fushi/src/media/video/download/video_media_reference_codec.dart';
-import 'package:fushi/src/media/video/metadata/anidb_video_metadata_provider.dart';
-import 'package:fushi/src/media/video/metadata/video_metadata_provider.dart';
-import 'package:fushi/src/media/video/metadata/video_metadata_resolver.dart';
 import 'package:fushi/src/media/video/download/video_download_backend_identity.dart';
 import 'package:fushi/src/media/drag_drop/drop_surface_scope.dart';
 import 'package:fushi/src/media/video/download/video_download_pipeline_service.dart';
@@ -78,7 +77,6 @@ import 'package:fushi/src/shortcuts/input_binding.dart'
         GamepadButton,
         ModifierKey,
         activeModifierKeys,
-        domMouseButtonFromPointerButtons,
         wheelDirectionFromScrollDelta;
 import 'package:fushi/src/shortcuts/gamepad_service.dart'
     show
@@ -88,6 +86,8 @@ import 'package:fushi/src/shortcuts/gamepad_service.dart'
         dispatchNativeGamepadButtonIntent,
         focusedEditableText,
         gamepadMoveFocusInDirection;
+import 'package:fushi/src/shortcuts/mouse_binding_dispatch.dart'
+    show dispatchClaimedMouseAction, resolveMouseBindingAction;
 import 'package:fushi/src/shortcuts/shortcut_action.dart';
 import 'package:fushi_core/fushi_core.dart'
     show
@@ -436,12 +436,33 @@ class _HomePageState extends BasePageState<HomePage>
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // 启动即落在视频 tab（用户配置的初始 tab）时也要触发一次自动补刮，
-      // 与 _selectTab 的进页触发同一入口、同样幂等。
-      if (mounted && _currentTab == HomeTab.video) {
-        unawaited(_videoLibraryScrapeSweep.sweepOnce());
+      if (!mounted) return;
+      final RecommendedPackTutorialState tutorialState =
+          RecommendedPackTutorialState(appModelNoUpdate.appDirectory);
+      if (await tutorialState.shouldPrompt) {
+        // Persist before the prompt can consume its receipt or open a tutorial.
+        // Killing the app in the tutorial must not replay the setup wizard.
+        appModelNoUpdate.setFirstTimeSetupFlag();
+        await appModelNoUpdate.setOnboardingCompleted(value: true);
       }
-      if (appModel.isFirstTimeSetup) {
+      if (!mounted) return;
+      // Serialize follow-up with ordinary onboarding and update dialogs.
+      final bool tutorialOffered = await showRecommendedPackTutorialPrompt(
+        context: context,
+        state: tutorialState,
+        onStart: () async {
+          await Navigator.of(context).push(
+            adaptivePageRoute<void>(
+              context: context,
+              builder: (_) => const OnboardingWizardPage(tutorialOnly: true),
+              fullscreenDialog: true,
+            ),
+          );
+        },
+      );
+      if (!mounted) return;
+
+      if (!tutorialOffered && appModel.isFirstTimeSetup) {
         appModel.setLastSelectedDictionaryFormat(
           JapaneseLanguage.instance.standardFormat,
         );
@@ -454,7 +475,7 @@ class _HomePageState extends BasePageState<HomePage>
 
       // 新手引导在更新弹窗之前弹（避免两个模态抢同一帧）；向导关闭（完成/
       // 跳过/返回）后统一标记完成，之后可从「设置 → 系统」随时重新打开。
-      if (mounted && !appModel.onboardingCompleted) {
+      if (mounted && !tutorialOffered && !appModel.onboardingCompleted) {
         await Navigator.of(context).push(
           adaptivePageRoute<void>(
             context: context,
@@ -947,12 +968,6 @@ class _HomePageState extends BasePageState<HomePage>
       }
       _currentTab = tab;
     });
-    // 进视频页触发一次库内自动补刮（每进程一次；sweepOnce 自身幂等且受
-    // videoLibraryAutoBackfillScrape 总闸与刮削互斥门约束，见
-    // VideoLibraryScrapeSweep）。
-    if (tab == HomeTab.video) {
-      unawaited(_videoLibraryScrapeSweep.sweepOnce());
-    }
     // Reflect the selection into the shared notifier so the macOS root sidebar
     // (built outside HomePage) stays in sync. Guarded by value-equality inside
     // ValueNotifier, so this never re-enters _onShellTabRequested pointlessly.
@@ -976,6 +991,56 @@ class _HomePageState extends BasePageState<HomePage>
     final int current = tabs.indexOf(_visibleTab);
     final int next = (current + delta) % tabs.length;
     _selectTab(tabs[(next + tabs.length) % tabs.length]);
+  }
+
+  /// 首页鼠标通道的解析阶梯：**只有 home 自己的 scope**。
+  ///
+  /// 键盘在页内解析 home → global → universal，但 global / universal 那两段的执行体
+  /// 其实并不在本页——`_executeShortcutAction` 对它们（除 globalBack 外）返回 ignored，
+  /// 让事件冒泡到 [wrapWithGlobalNavigation] 去执行。鼠标没有冒泡，那一层改由 app 根的
+  /// `onPointerDown` 兜底（互斥见 [MouseBindingDispatch]），**执行体仍只有那一份**。
+  /// BUG-2031：阶梯必须与本页**键盘阶梯逐字相同**。第一版只放了本页 scope，于是
+  /// `globalBack`（universal）在页内解析不到，只能落到 app 根那份平铺的
+  /// `Navigator.maybePop()`——而键盘 / 手柄的 `globalBack` 走的是本页的**逐级退出**
+  /// （先关面板 / 退全屏，最后才退页）。同一个动作两条通道两种行为，正是要禁的形态。
+  static const List<ShortcutScope> _kHomeMouseLadder = <ShortcutScope>[
+    ShortcutScope.home,
+    ShortcutScope.global,
+    ShortcutScope.universal,
+  ];
+
+  /// 首页的**鼠标绑定通道**：与 [_handleKeyEvent] 挂在同一层、同一份注册表、同一个
+  /// 执行体 [_executeShortcutAction]，只是触发器换成了鼠标非主键。
+  ///
+  /// ⚠️ 与视频页同一条几何限制：查词浮层可见时，根 Overlay 的 `LookupDismissBarrier`
+  /// （`Positioned.fill` + 叶子 `ColoredBox`，命中行为 opaque）会吃光指针，本入口收不到
+  /// 任何按下。那半边由 barrier 自己的 `onNonPrimaryButtonDown` 承接。
+  void _handleHomePointerDown(PointerDownEvent event) {
+    final ShortcutAction? action = resolveMouseBindingAction(
+      registry: appModel.shortcutRegistry,
+      buttons: event.buttons,
+      ladder: _kHomeMouseLadder,
+    );
+    if (action == null) return;
+    // 执行体返回 ignored 说明本页没接（等价于键盘的 ignored 冒泡），此时**不认领**，
+    // 让 app 根兜底照常有机会解析同一个按钮上的 universal / global 绑定。
+    dispatchClaimedMouseAction(
+      event,
+      () => _executeShortcutAction(action) == KeyEventResult.handled,
+    );
+  }
+
+  /// 首页滚轮快捷键入口。只有显式命中的绑定会执行；未命中保持原生滚动。
+  void _handleHomePointerSignal(PointerSignalEvent event) {
+    if (event is! PointerScrollEvent) return;
+    final direction = wheelDirectionFromScrollDelta(event.scrollDelta);
+    if (direction == null) return;
+    final ShortcutAction? action = appModel.shortcutRegistry.resolveWheel(
+      direction,
+      modifiers: activeModifierKeys(),
+      scope: ShortcutScope.home,
+    );
+    if (action != null) _executeShortcutAction(action);
   }
 
   KeyEventResult _executeShortcutAction(ShortcutAction action) {
@@ -1027,34 +1092,6 @@ class _HomePageState extends BasePageState<HomePage>
         );
     if (action == null) return false;
     return _executeShortcutAction(action) == KeyEventResult.handled;
-  }
-
-  /// 首页桌面 Listener 的鼠标按键入口。左键绑定也在这里解析，但只在注册表确实
-  /// 命中时执行动作；Listener 本身不阻止下层 GestureDetector / 控件继续收到左键，
-  /// 因而普通点击、选择和拖动行为保持不变。
-  bool _handleMouseButton(int buttons) {
-    final int? button = domMouseButtonFromPointerButtons(buttons);
-    if (button == null) return false;
-    final ShortcutAction? action = appModel.shortcutRegistry.resolveMouse(
-      button,
-      scope: ShortcutScope.home,
-    );
-    if (action == null) return false;
-    return _executeShortcutAction(action) == KeyEventResult.handled;
-  }
-
-  /// 首页滚轮快捷键入口。未命中注册表时不处理 PointerSignal，让 Flutter 的原生
-  /// 滚动链路继续工作；空修饰键只有在用户明确保存裸滚轮绑定后才会命中。
-  void _handleHomePointerSignal(PointerSignalEvent event) {
-    if (event is! PointerScrollEvent) return;
-    final direction = wheelDirectionFromScrollDelta(event.scrollDelta);
-    if (direction == null) return;
-    final ShortcutAction? action = appModel.shortcutRegistry.resolveWheel(
-      direction,
-      modifiers: activeModifierKeys(),
-      scope: ShortcutScope.home,
-    );
-    if (action != null) _executeShortcutAction(action);
   }
 
   @override
@@ -1113,12 +1150,16 @@ class _HomePageState extends BasePageState<HomePage>
           skipTraversal: true,
           focusNode: _keyboardFocusNode,
           onKeyEvent: _handleKeyEvent,
+          // 鼠标通道与键盘挂在同一层：作用域（整页）与解析阶梯都必须与
+          // [_handleKeyEvent] 对齐，挂低了就会重演 BUG-1864 那种「注册表声明整页、
+          // 挂载点只在子树，焦点一进面板整张表就够不着」。
+          //
+          // `translucent`：本层不画东西，默认 deferToChild 会让空白区收不到按下。
+          // [Listener] 不进手势竞技场、不消费事件，下面那个 GestureDetector 的
+          // onTap（只认主键）与所有子控件照常工作。
           child: Listener(
             behavior: HitTestBehavior.translucent,
-            onPointerDown: (PointerDownEvent event) {
-              if (event.kind != PointerDeviceKind.mouse) return;
-              _handleMouseButton(event.buttons);
-            },
+            onPointerDown: _handleHomePointerDown,
             onPointerSignal: _handleHomePointerSignal,
             child: GestureDetector(
               onTap: () {
@@ -1305,11 +1346,19 @@ class _HomePageState extends BasePageState<HomePage>
     );
   }
 
-  /// 内容主体 + 底部「正在听书」迷你条（TODO-291 阶段2，无活动会话时收起）。
+  /// 内容主体 + 底部迷你条：推荐包下载（BUG-2165）在上、「正在听书」（TODO-291
+  /// 阶段2）在下，各自无任务时收起（[SizedBox.shrink]，不占布局）。
+  ///
+  /// 这里是三套布局（移动底栏 / 桌面 rail / macOS）**唯一**的共用点，也是 app 里
+  /// 唯一一处「跨全部 home tab 常驻」的挂载位。推荐包那条 9.5 GB 的下载在
+  /// BUG-2097 之后确实活过了向导，但可见入口只剩设置 → 系统里那一行 —— 新用户
+  /// 走完引导正好落在首页，屏幕上一个像素都不说明它还在下。挂在这里它才真的
+  /// 「有个地方看进度」。
   Widget _bodyWithMiniBar() {
     return Column(
       children: <Widget>[
         Expanded(child: buildBody()),
+        const RecommendedPackDownloadMiniBar(),
         const NowListeningMiniBar(),
       ],
     );
@@ -1405,6 +1454,9 @@ class _HomePageState extends BasePageState<HomePage>
       config.tmdbApiKey,
       config.anidbClientName,
       config.anidbClientVersion ?? 0,
+      config.hashEnabled,
+      config.anidbUsername,
+      config.anidbPassword,
       config.locale,
     ].join('\u0000');
     final VideoDiscoveryController? existing = _videoDiscoveryController;
@@ -1632,45 +1684,6 @@ class _HomePageState extends BasePageState<HomePage>
     return retried;
   }
 
-  /// 下载/订阅确认时的 AniDB 身份就地解析（刮削重设计 P1）。provider 一次性
-  /// 构建、用完即关；AniDB 搜索走本地标题目录，无网络代价。永不阻断确认流程。
-  Future<VideoMediaReference> _confirmDiscoveryAniDbIdentity(
-    BuildContext context,
-    VideoMediaReference reference,
-  ) async {
-    final String configuredTmdbKey =
-        appModelNoUpdate.prefsRepo.getPref(
-              kVideoScraperTmdbApiKeyPref,
-              defaultValue: '',
-            )
-            as String;
-    final VideoSourceScrapeGlobalConfig config =
-        VideoSourceScrapeGlobalConfig.fromPreferences(
-          appModelNoUpdate.prefsRepo,
-          resolvedTmdbApiKey: resolveTmdbApiKey(configuredTmdbKey),
-        );
-    final VideoMetadataProviderRegistry registry =
-        VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-          AniDbVideoMetadataProvider(
-            clientName: config.anidbClientName,
-            clientVersion: config.anidbClientVersion,
-            language: config.locale,
-          ),
-        ]);
-    try {
-      return await confirmAniDbDiscoveryIdentity(
-        context: context,
-        reference: reference,
-        registry: registry,
-      );
-    } catch (_) {
-      // 身份解析是下载的增值，不是前置条件：任何失败都放行原 reference。
-      return reference;
-    } finally {
-      registry.close();
-    }
-  }
-
   Future<void> _openVideoDiscoveryResourceSearch(
     BuildContext context,
     VideoDiscoveryItem item,
@@ -1705,12 +1718,8 @@ class _HomePageState extends BasePageState<HomePage>
           onSubmit: (VideoDiscoveryDownloadSelection selection) async {
             final VideoDownloadBackendTarget target = await appModelNoUpdate
                 .currentVideoDownloadBackendTarget();
-            // 刮削重设计 P1：确认下载的这一刻就地解析 AniDB 规范身份——
-            // 唯一命中静默补上、歧义当场弹一次候选、查无明示后照常下载。
-            // 之后管线不再有任何模糊匹配。
-            final VideoMediaReference media = context.mounted
-                ? await _confirmDiscoveryAniDbIdentity(context, selection.media)
-                : selection.media;
+            // 保留发现来源提供的 MAL / TMDB 精确身份，导入时优先 MAL。
+            final VideoMediaReference media = selection.media;
             await pipeline.enqueue(
               VideoDownloadEnqueueRequest(
                 media: media,
@@ -1781,11 +1790,8 @@ class _HomePageState extends BasePageState<HomePage>
                   subscriptionId,
                 );
             final VideoResourceCandidate resource = selection.download.resource;
-            // 刮削重设计 P1：建订阅的这一刻就地解析 AniDB 规范身份，之后每一集
-            // 派生任务都直接携带确认身份，导入后零模糊匹配。
-            final VideoMediaReference reference = context.mounted
-                ? await _confirmDiscoveryAniDbIdentity(context, item.reference)
-                : item.reference;
+            // 订阅快照保留交叉 ID，每集下载可沿用同一个 MAL / TMDB 身份。
+            final VideoMediaReference reference = item.reference;
             await appModelNoUpdate.database.upsertVideoDownloadSubscription(
               VideoDownloadSubscriptionsCompanion.insert(
                 subscriptionId: subscriptionId,
@@ -1806,7 +1812,7 @@ class _HomePageState extends BasePageState<HomePage>
                 searchQuery: _videoResourceSearchQuery(reference),
                 filterJson: Value<String>(selection.filter.json),
                 mode: Value<String>(
-                  reference.mediaKind == VideoMetadataMediaKind.movie
+                  item.reference.mediaKind == VideoMetadataMediaKind.movie
                       ? 'oneShot'
                       : 'ongoing',
                 ),
@@ -2557,6 +2563,11 @@ class _HomePageState extends BasePageState<HomePage>
         onVideoScanCompleted: _onVideoSourceScanCompleted,
         onOpenScrapeTasks: () => unawaited(_openVideoSourceScrapeTasks()),
         onLibraryChanged: _notifyVideoLibraryChanged,
+        // 补刮的触发点收口在视频页：首次进入 / 切回 / 库里多出条目时各调一次
+        // （BUG-2199）。旧实现把它挂在 HomePage 的进 tab 时机上并以进程为幂等
+        // 键，于是本次会话下载入库的作品永远赶不上那唯一一轮。
+        loadPendingScrapeWorks: () =>
+            _videoLibraryScrapeSweep.sweepAndListPending(),
         discoveryController: _productionVideoDiscoveryController,
         discoveryActions: _productionVideoDiscoveryActions,
       ),

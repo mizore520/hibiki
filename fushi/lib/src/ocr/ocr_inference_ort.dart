@@ -1,17 +1,23 @@
-/// [OcrSession] 的真实实现：`flutter_onnxruntime` 薄封装。
+/// OCR 侧的 `flutter_onnxruntime` 薄封装。
 ///
-/// 只做三件事：EP 枚举映射、OcrTensor <-> OrtValue 转换、资源释放。
+/// 真实现——EP 枚举映射、OnnxTensor <-> OrtValue 转换、provider 回退、资源释放
+/// ——如今**唯一**住在 `lib/src/onnx/onnx_inference_ort.dart`（OCR / ASR 共用）。
+/// 本文件只剩 OCR 特有的两样东西：`hibiki.ocr` 日志通道，以及 manga-ocr 下载源
+/// 不同导出版本的输入名对齐（[resolveOcrSessionInputs]，经共享工厂的
+/// `resolveInputs` 钩子注入）。`createOcrSessionWithProviderFallback` /
+/// `isLocalOnnxRuntimeAvailable` 保留为转发入口，OCR 调用方与测试零改动。
+///
 /// 算法层不 import 本文件（依赖 `ocr_inference.dart` 的抽象）。
 library;
 
-import 'dart:developer' as developer;
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:flutter_onnxruntime/flutter_onnxruntime.dart';
-import 'package:flutter/services.dart';
 
 import 'package:fushi/src/ocr/ocr_inference.dart';
+import 'package:fushi/src/onnx/onnx_inference_ort.dart';
+// 本地推理可不可用的那道闸门随共享 ONNX 抽象一起搬进了 asr_core；本层保留同名
+// getter 转发，OCR 调用方与测试零改动。
+import 'package:asr_core/asr_core.dart' as onnx
+    show isLocalOnnxRuntimeAvailable;
 
 /// 本子系统统一的 `dart:developer` 日志通道名。
 ///
@@ -22,110 +28,26 @@ const String kOcrLogName = 'hibiki.ocr';
 
 /// 本平台是否内置 ONNX Runtime native 库（本地 OCR 推理是否可用）。
 ///
-/// **当前 Fushi 出包的五端全部为真**。曾经排除 Apple，是因为 vendored fork 把
-/// `ios`/`macos` 从 `flutter.plugin.platforms` 删了——那不是 ORT 不支持 Apple，
-/// 而是上游随 podspec 附带的 `Package.swift` 会经 SwiftPM 拉进
-/// `onnxruntime-swift-package-manager`（清单写死 `.macOS(.v14)`），把整个 app 拖到
-/// macOS 14。fork 改成删掉那两个 `Package.swift` 走 CocoaPods 后，真实下限只剩
-/// `onnxruntime-objc` 1.23.0 自己的 iOS 15.1 / macOS 13.4，项目部署目标已对齐
-/// （见 `third_party/flutter_onnxruntime/PATCHES.md`）。
-///
-/// 保留这个具名闸门而不是直接写 `true`：它是「本地推理可不可用」的唯一判定点，
-/// 将来任一端的 native 再被摘掉（换 ORT 版本、平台下限回退），只改这里，
-/// 调用方（`MangaOcrServiceImpl` 的整卷 / 点击 / 框选区域三个入口——框选区域自 PR
-/// #1000 起复用同一条引擎链，不再有独立的单框 OCR 服务）无须改动。
-bool get isLocalOnnxRuntimeAvailable =>
-    Platform.isWindows ||
-    Platform.isLinux ||
-    Platform.isAndroid ||
-    Platform.isMacOS ||
-    Platform.isIOS;
+/// 真相源是共享层的同名 getter（`onnx_inference_ort.dart`，五端全真的理由与
+/// 「保留具名闸门」的理由都写在那里）；这里只转发，让 `MangaOcrServiceImpl` 的
+/// 闸门与既有测试继续从 OCR 层拿到它。
+bool get isLocalOnnxRuntimeAvailable => onnx.isLocalOnnxRuntimeAvailable;
 
-OrtProvider _toOrtProvider(OcrExecutionProvider provider) {
-  switch (provider) {
-    case OcrExecutionProvider.cuda:
-      return OrtProvider.CUDA;
-    case OcrExecutionProvider.directml:
-      return OrtProvider.DIRECT_ML;
-    case OcrExecutionProvider.coreml:
-      return OrtProvider.CORE_ML;
-    case OcrExecutionProvider.cpu:
-      return OrtProvider.CPU;
-  }
-}
-
-/// 用配置的加速 EP 创建会话；vendored `flutter_onnxruntime` 拒绝尚未实现的
-/// provider 时，按 [providers] 中已有的 CPU 后备重试一次。
+/// 用配置的加速 EP 创建会话；首选 EP 建不起来时退 CPU 重试一次。
 ///
-/// Windows 的 ONNX Runtime 会报告 `DmlExecutionProvider`，但当前插件的 Windows
-/// MethodChannel 只实现 CPU/CUDA 映射，传 `DIRECT_ML` 会在真正创建 ORT session
-/// 之前抛 `PlatformException(INVALID_PROVIDER, ...)`。调用层已经把 CPU 放在 EP
-/// 列表尾部，因此这里把插件边界的“拒绝整个列表”还原成 ORT 预期的逐级后备语义。
-/// 只捕获明确的 `INVALID_PROVIDER`；模型损坏、shape 错误和推理异常仍原样上抛。
-///
-/// [onResolved] 在会话建成后**必定**被调用一次，回报本次真正生效的 provider
-/// 与降级原因（BUG-1163）：降级不允许静默发生，调用层据此写日志并把状态送到
-/// UI。回调本身抛出的异常不影响会话创建结果，只落日志。
+/// 转发到共享的 [createOnnxSessionWithProviderFallback]（判据、异常语义、
+/// `onResolved` 必回报一次——全部见那里的注释），只把日志通道钉成 [kOcrLogName]。
 Future<T> createOcrSessionWithProviderFallback<T>({
   required List<OcrExecutionProvider> providers,
   required Future<T> Function(List<OcrExecutionProvider> providers) create,
   void Function(OcrProviderResolution resolution)? onResolved,
-}) async {
-  final OcrExecutionProvider preferred =
-      providers.isEmpty ? OcrExecutionProvider.cpu : providers.first;
-  try {
-    final T session = await create(providers);
-    _notifyResolved(
-      onResolved,
-      OcrProviderResolution(requested: providers, effective: preferred),
-    );
-    return session;
-  } on PlatformException catch (error) {
-    final bool canFallbackToCpu = error.code == 'INVALID_PROVIDER' &&
-        providers.length > 1 &&
-        providers.contains(OcrExecutionProvider.cpu);
-    if (!canFallbackToCpu) rethrow;
-    final T session =
-        await create(const <OcrExecutionProvider>[OcrExecutionProvider.cpu]);
-    _notifyResolved(
-      onResolved,
-      OcrProviderResolution(
-        requested: providers,
-        effective: OcrExecutionProvider.cpu,
-        fallbackReason:
-            '${error.code}: ${error.message ?? 'provider rejected by plugin'}',
-      ),
-    );
-    return session;
-  }
-}
-
-void _notifyResolved(
-  void Function(OcrProviderResolution resolution)? onResolved,
-  OcrProviderResolution resolution,
-) {
-  if (resolution.didFallBack) {
-    developer.log(
-      'OCR execution provider fell back: $resolution',
-      name: kOcrLogName,
-    );
-  } else {
-    developer.log(
-      'OCR execution provider resolved: $resolution',
-      name: kOcrLogName,
-    );
-  }
-  if (onResolved == null) return;
-  try {
-    onResolved(resolution);
-  } catch (error, stack) {
-    developer.log(
-      'OCR provider resolution callback threw',
-      name: kOcrLogName,
-      error: error,
-      stackTrace: stack,
-    );
-  }
+}) {
+  return createOnnxSessionWithProviderFallback<T>(
+    providers: providers,
+    create: create,
+    onResolved: onResolved,
+    logName: kOcrLogName,
+  );
 }
 
 /// 把算法层的语义输入名对齐到当前 ONNX 文件声明的真实输入名。
@@ -165,97 +87,27 @@ Map<String, OcrTensor> resolveOcrSessionInputs({
   return inputs;
 }
 
-/// flutter_onnxruntime 会话工厂。
-class OrtOcrSessionFactory implements OcrSessionFactory {
-  OrtOcrSessionFactory({OnnxRuntime? runtime})
-      : _runtime = runtime ?? OnnxRuntime();
-
-  final OnnxRuntime _runtime;
-
-  /// 探测本机可用 EP（用于决定 `cudaAvailable` 再喂给
-  /// [selectOcrExecutionProviders]）。
-  ///
-  /// 探测本身失败是一条真实的降级路径（有 N 卡也会退到 DirectML/CPU），
-  /// 不允许调用方 `catch (_)` 静默吞掉——所以这里不吞异常，由调用方捕获后
-  /// 记进可观测的降级说明（BUG-1163）。
-  Future<bool> isCudaAvailable() async {
-    final List<OrtProvider> providers = await _runtime.getAvailableProviders();
-    return providers.contains(OrtProvider.CUDA);
-  }
-
-  @override
-  Future<OcrSession> createSession(
-    String modelPath, {
-    required List<OcrExecutionProvider> providers,
-    void Function(OcrProviderResolution resolution)? onProviderResolved,
-  }) async {
-    final OrtSession session =
-        await createOcrSessionWithProviderFallback<OrtSession>(
-      providers: providers,
-      onResolved: onProviderResolved,
-      create: (List<OcrExecutionProvider> effectiveProviders) =>
-          _runtime.createSession(
-        modelPath,
-        options: OrtSessionOptions(
-          providers: effectiveProviders.map(_toOrtProvider).toList(),
-        ),
-      ),
-    );
-    return _OrtOcrSession(session);
-  }
+/// [resolveOcrSessionInputs] 适配到共享工厂钩子的位置参数形态。
+Map<String, OcrTensor> _resolveOcrInputs(
+  Map<String, OcrTensor> inputs,
+  List<String> sessionInputNames,
+) {
+  return resolveOcrSessionInputs(
+    inputs: inputs,
+    sessionInputNames: sessionInputNames,
+  );
 }
 
-class _OrtOcrSession implements OcrSession {
-  _OrtOcrSession(this._session);
-
-  final OrtSession _session;
-
-  @override
-  Future<Map<String, OcrTensor>> run(Map<String, OcrTensor> inputs) async {
-    final Map<String, OrtValue> ortInputs = <String, OrtValue>{};
-    try {
-      final Map<String, OcrTensor> resolvedInputs = resolveOcrSessionInputs(
-        inputs: inputs,
-        sessionInputNames: _session.inputNames,
-      );
-      for (final MapEntry<String, OcrTensor> entry in resolvedInputs.entries) {
-        final OcrTensor tensor = entry.value;
-        switch (tensor.type) {
-          case OcrTensorType.float32:
-            ortInputs[entry.key] =
-                await OrtValue.fromList(tensor.floatData!, tensor.shape);
-          case OcrTensorType.int64:
-            ortInputs[entry.key] =
-                await OrtValue.fromList(tensor.intData!, tensor.shape);
-        }
-      }
-
-      final Map<String, OrtValue> ortOutputs = await _session.run(ortInputs);
-      try {
-        final Map<String, OcrTensor> outputs = <String, OcrTensor>{};
-        for (final MapEntry<String, OrtValue> entry in ortOutputs.entries) {
-          final List<dynamic> flat = await entry.value.asFlattenedList();
-          // 本子系统的模型输出全部是 float（logits / boxes / hidden states）。
-          final Float32List data = Float32List(flat.length);
-          for (int i = 0; i < flat.length; i++) {
-            data[i] = (flat[i] as num).toDouble();
-          }
-          outputs[entry.key] =
-              OcrTensor.float32(data, List<int>.from(entry.value.shape));
-        }
-        return outputs;
-      } finally {
-        for (final OrtValue value in ortOutputs.values) {
-          await value.dispose();
-        }
-      }
-    } finally {
-      for (final OrtValue value in ortInputs.values) {
-        await value.dispose();
-      }
-    }
-  }
-
-  @override
-  Future<void> close() => _session.close();
+/// OCR 用的 flutter_onnxruntime 会话工厂：共享 [OrtOnnxSessionFactory] +
+/// manga-ocr 输入名对齐钩子 + `hibiki.ocr` 日志通道。
+///
+/// `availableAcceleratedProviders()`（BUG-2050 的探测语义边界）与带
+/// `onProviderResolved` 的 `createSession` 均由父类提供，注释见那里。
+class OrtOcrSessionFactory extends OrtOnnxSessionFactory {
+  OrtOcrSessionFactory({OnnxRuntime? runtime})
+      : super(
+          runtime: runtime,
+          resolveInputs: _resolveOcrInputs,
+          logName: kOcrLogName,
+        );
 }

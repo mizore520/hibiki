@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' show BoxHeightStyle;
 
 import 'package:flutter/foundation.dart' show ValueListenable;
@@ -50,8 +51,7 @@ String formatCueTimestamp(int startMs) =>
 /// 合成 cue 是**真 [AudioCue] 对象**而非显示层字符串，故列表的查词、收藏、制卡、搜索
 /// 全部自动作用于整句——收藏判据是 `(text, startMs)` 值语义，不依赖对象身份。
 ({Map<int, AudioCue> byRep, Map<int, int> repByRaw}) mergePerCharacterCueGroups(
-  List<AudioCue> cues,
-) {
+    List<AudioCue> cues) {
   const double kSameRowEps = 0.001;
   final Map<int, AudioCue> merged = <int, AudioCue>{};
   final Map<int, int> repByRaw = <int, int>{};
@@ -97,10 +97,8 @@ String formatCueTimestamp(int startMs) =>
 
     if (group.length >= 2) {
       final List<AudioCue> ordered = List<AudioCue>.of(group)
-        ..sort(
-          (AudioCue a, AudioCue b) => a.markup!.posFraction!.xFraction
-              .compareTo(b.markup!.posFraction!.xFraction),
-        );
+        ..sort((AudioCue a, AudioCue b) => a.markup!.posFraction!.xFraction
+            .compareTo(b.markup!.posFraction!.xFraction));
       for (int k = i; k < j; k++) {
         repByRaw[k] = i;
       }
@@ -240,8 +238,7 @@ double subtitleRowTextWidth({
   required double effectiveFontSize,
   required double timestampColumnWidth,
 }) {
-  final double width =
-      rowWidth -
+  final double width = rowWidth -
       kSubtitleRowPaddingLeft -
       kSubtitleRowPaddingRight -
       kSubtitleRowScrollbarGutter -
@@ -296,9 +293,19 @@ int resolveSubtitleListGraphemeHit(
   return bestIndex;
 }
 
-/// 字幕列表行字号缩放档位（BUG-878）。原上限只到 1.3×，用户反馈「字号拉到最大才够用、
-/// 上限不够」，向上扩到 2.0×（1.5 / 1.75 / 2.0 三档）。默认档 [_kDefaultFontScaleIndex]=1
-/// （1.0×）。数组扩容后旧持久化下标仍安全（seed / [_stepFont] 都 clamp 到数组范围）。
+/// 字幕列表行字号缩放档位。默认档 [_kDefaultFontScaleIndex]=1（1.0×）。
+///
+/// 两轮反馈都是同一句「拉到最大还是不够」：BUG-878 把上限从 1.3× 抬到 2.0×，
+/// BUG-2156 再抬到 3.0×。**只在数组尾部追加**——下标即持久化值
+/// （`video_subtitle_list_font_scale_index`），改动既有元素会让所有存量用户的字号
+/// 静默漂移。追加则旧下标恒指向同一倍率，零迁移。
+/// 两处 clamp（seed 在 [_VideoSubtitleJumpPanelState.initState]、步进在 [_stepFont]）
+/// 都写的是 `_kFontScaleSteps.length - 1`，自动跟随数组长度，不用改。
+///
+/// 注意收益在窄面板上会递减：时间戳列宽（[subtitleTimestampColumnWidth]）与动作列宽
+/// （[subtitleRowActionsWidth]）都随字号线性放大，而面板宽下界是 240px，
+/// 正文列还有 48px 硬下界。最窄面板 + 带小时的时间戳时，2.0× 附近正文列就已经触底，
+/// 再往上主要是时间戳和按钮变大。宽面板（≥420px）下高档位才真正有用。
 const List<double> _kFontScaleSteps = <double>[
   0.85,
   1.0,
@@ -307,6 +314,10 @@ const List<double> _kFontScaleSteps = <double>[
   1.5,
   1.75,
   2.0,
+  2.25,
+  2.5,
+  2.75,
+  3.0,
 ];
 
 /// 默认字号档位（1.0×）。持久化 key 从未写过时的初值，与 `preferences_repository.dart`
@@ -335,8 +346,8 @@ class VideoSubtitleListHitTester {
 
   /// [VideoSubtitleJumpPanel] build 时绑定当前可见行的命中实现。
   void bindHitTest(
-    SubtitleListHit? Function(Offset globalPos, {bool exactOnly}) impl,
-  ) => _impl = impl;
+          SubtitleListHit? Function(Offset globalPos, {bool exactOnly}) impl) =>
+      _impl = impl;
 
   /// 面板卸载（侧栏隐藏）时解绑，避免 barrier 调到已失效的实现。
   void unbind() => _impl = null;
@@ -417,10 +428,8 @@ SubtitleListCharHit? subtitleListCharHitFromParagraph(
         ),
       ),
   ];
-  final int graphemeIndex = resolveSubtitleListGraphemeHit(
-    rects,
-    localPosition,
-  );
+  final int graphemeIndex =
+      resolveSubtitleListGraphemeHit(rects, localPosition);
   if (graphemeIndex < 0) return null;
   Rect localRect = rects[graphemeIndex];
   if (!localRect.contains(localPosition)) {
@@ -441,7 +450,10 @@ SubtitleListCharHit? subtitleListCharHitFromParagraph(
   );
 }
 
-enum VideoSubtitleListFilter { all, favorites }
+enum VideoSubtitleListFilter {
+  all,
+  favorites,
+}
 
 class VideoSubtitleJumpPanel extends StatefulWidget {
   const VideoSubtitleJumpPanel({
@@ -473,7 +485,11 @@ class VideoSubtitleJumpPanel extends StatefulWidget {
 
   final VideoPlayerController controller;
   final void Function(AudioCue cue) onTapCue;
-  final void Function(AudioCue cue) onCopyCue;
+
+  /// 行内复制。**返回是否真的写了剪贴板**——面板据此决定要不要把该行按钮切成 ✓
+  /// （[_VideoSubtitleJumpPanelState._markCueCopied]）。判据归实现方（只有它知道自己
+  /// 复制了什么），面板不再自己重算 `cue.text.trim().isNotEmpty`。
+  final bool Function(AudioCue cue) onCopyCue;
   final Future<void> Function(AudioCue cue) onFavoriteCue;
   final bool Function(AudioCue cue) isCueFavorited;
   final VoidCallback onClose;
@@ -484,7 +500,7 @@ class VideoSubtitleJumpPanel extends StatefulWidget {
   /// 浮层定位用）。null 时文本不可查词、行点击仅 seek（向后兼容：部分调用方 / 测试不
   /// 接查词）。
   final void Function(AudioCue cue, int graphemeIndex, Rect charRect)?
-  onLookupCue;
+      onLookupCue;
 
   /// 可选：按全局坐标反查列表字符命中的句柄（BUG-874）。非 null 时面板每帧把当前可见行的
   /// 命中实现绑进去，供查词浮层 dismiss barrier「点列表下一个词切换查词、保持浮层」。null
@@ -599,10 +615,8 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
   late bool _autoScroll = widget.initialAutoScroll;
   bool _scrollPostFrameScheduled = false;
   // BUG-878：字号档位以持久化初值为种子（clamp 防越界），不再每次重开都回默认档。
-  late int _fontScaleIndex = widget.initialFontScaleIndex.clamp(
-    0,
-    _kFontScaleSteps.length - 1,
-  );
+  late int _fontScaleIndex =
+      widget.initialFontScaleIndex.clamp(0, _kFontScaleSteps.length - 1);
   VideoSubtitleListFilter _filter = VideoSubtitleListFilter.all;
 
   /// BUG-878：Ctrl / ⌘ 是否按住。按住时列表滚动物理改为 [NeverScrollableScrollPhysics]，
@@ -621,6 +635,17 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
   /// 列表行 Shift-悬停查词的移动节流阈值（像素平方，与 overlay `_kShiftHoverThresholdPx`=8
   /// 同构）。
   static const double _kRowHoverThresholdPx = 8;
+
+  /// 行内复制刚成功的那一行（raw 下标），[kCopyFeedbackDuration] 后回落 null。
+  ///
+  /// BUG-2093：状态**必须归面板**，不能归行内的 [StatefulWidget]。行的 Element 身份由
+  /// 列表控制——[trackKey]（`selected || rawIndex == _scrollTargetRawIndex`）会随播放头
+  /// 移动在 [GlobalKey] 与 [ValueKey] 之间翻转，key 一翻 Element 就重建、行内 State 连同
+  /// 「已复制」瞬态一起清零。于是「复制正在播的那句」——最常用的那条路径——上，✓ 会在
+  /// 播放头离开该行的那一帧提前消失（短台词几百毫秒即走）。面板知道 rawIndex，是这份
+  /// 状态的真正拥有者；顺带白送「同一时刻只有一行是 ✓」（点 B 时 A 立刻复位）。
+  int? _copiedRawIndex;
+  Timer? _copyFeedbackTimer;
 
   /// 只给当前/待滚动目标行保留 [GlobalKey]，供自适应行高下精确
   /// [FushiFocusScroll.ensureVisible]。普通可见行走 [ValueKey]，避免长列表滚动后
@@ -658,10 +683,6 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
   /// 非逐字行不在表内，[_rowCue] 回落原 cue（既有行为逐像素不变）。
   Map<int, AudioCue> _cachedMergedByRep = const <int, AudioCue>{};
 
-  /// 行高保底下界（TODO-340 的历史视觉密度）：内容比它矮的行仍占这么高，内容更高的行
-  /// 按 [_measureRowExtent] 的真实测量值走。
-  double get _minRowExtent => 56 * _fontScaleSteps;
-
   /// 行高测量缓存（BUG-1034），key = `加粗位 + 文本`。宽度 / 字号 / textScaler 变化时整体
   /// 作废，见 [_rowExtentForCue]。
   final Map<String, double> _rowExtentCache = <String, double>{};
@@ -698,10 +719,10 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
 
   /// 行内字幕文本列的可用宽度（与 [_buildRow] 的实际布局同源，见 [subtitleRowTextWidth]）。
   double _rowTextWidth(double rowWidth) => subtitleRowTextWidth(
-    rowWidth: rowWidth,
-    effectiveFontSize: _effectiveFontSize,
-    timestampColumnWidth: _timestampColumnWidth,
-  );
+        rowWidth: rowWidth,
+        effectiveFontSize: _effectiveFontSize,
+        timestampColumnWidth: _timestampColumnWidth,
+      );
 
   /// 行内字幕文本的样式。测量（[_measureRowExtent]）与渲染（[_buildRowText]）共用，
   /// 保证 `itemExtentBuilder` 给出的行高与真实换行结果一致（BUG-1034）。
@@ -709,12 +730,12 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
   /// 换行结果跟着变，而 `itemExtentBuilder` 是硬约束——两者不同源会把长句裁掉
   /// （BUG-1034 的原始故障形态）。
   TextStyle _rowTextStyle({required bool bold, Color? color}) => TextStyle(
-    color: color,
-    fontSize: _effectiveFontSize,
-    fontWeight: bold ? FontWeight.w600 : null,
-    fontFamily: widget.fontFamily,
-    height: 1.25,
-  );
+        color: color,
+        fontSize: _effectiveFontSize,
+        fontWeight: bold ? FontWeight.w600 : null,
+        fontFamily: widget.fontFamily,
+        height: 1.25,
+      );
 
   /// 一行**真实**高度（BUG-1034）。
   ///
@@ -764,9 +785,13 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
     if (content < timestampHeight) content = timestampHeight;
     final double actionHeight = _effectiveFontSize + 6;
     if (content < actionHeight) content = actionHeight;
-    final double extent = kSubtitleRowPaddingVertical + content;
-    // 保底最小行高（历史视觉密度，TODO-340）：只抬高内容矮于它的行，绝不压低内容。
-    return extent < _minRowExtent ? _minRowExtent : extent;
+    // BUG-2057：行高**只由内容决定**，不再另设保底下界。行内可点内容（时间戳单行、
+    // 3 个动作图标）已经进了上面的取最大值，保底那一档纯粹是 asbplayer 版列表
+    // `static const double _itemExtent = 56` 的遗留：改自适应行高时把它留成了
+    // `56 * 字号档` 的下界，于是默认字号下 1 行（16+17.5=33.5）和 2 行（16+35=51）
+    // 双双被抬到 56——两种行一样高，单行行里 65% 是空白。英文译文最常只占 1 行，
+    // 用户看到的就是「英语的上下间距特别高」。
+    return kSubtitleRowPaddingVertical + content;
   }
 
   double _measureTextHeight({
@@ -804,7 +829,11 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
     for (int i = 0; i < visibleIndex; i++) {
       final int rawIndex = visibleIndexes[i];
       final AudioCue cue = _rowCue(cues, rawIndex);
-      offset += _rowExtentForCue(cue, rowWidth, bold: _isRowBold(rawIndex));
+      offset += _rowExtentForCue(
+        cue,
+        rowWidth,
+        bold: _isRowBold(rawIndex),
+      );
     }
     return offset;
   }
@@ -813,12 +842,12 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
   /// 关闭时保持历史「无当前句就不定位」。高亮**不走这里**（gap 里画面没字幕，列表也不该
   /// 有高亮行），它仍读裸 `controller.currentCueIndex`。
   int _followCueIndex() => resolveFollowCueIndex(
-    cues: widget.controller.cues,
-    currentCueIndex: widget.controller.currentCueIndex,
-    // 音画延迟校正后的位置：与 controller 求 cue 命中同一根时间轴。
-    positionMs: widget.controller.effectivePositionMs,
-    follow: _autoScroll,
-  );
+        cues: widget.controller.cues,
+        currentCueIndex: widget.controller.currentCueIndex,
+        // 音画延迟校正后的位置：与 controller 求 cue 命中同一根时间轴。
+        positionMs: widget.controller.effectivePositionMs,
+        follow: _autoScroll,
+      );
 
   @override
   void initState() {
@@ -828,9 +857,8 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
     // BUG-841：当前句可能落在被折叠的重复项上——追踪其**代表行** raw（列表渲染的唯一行），
     // 否则高亮 / 滚动定位不到（rowKey 按代表行 raw 挂）。
     final int initialRawIndex = _representativeRaw(_lastControllerCueIndex);
-    _scrollTargetRawIndex = _isCurrentCueVisible(initialRawIndex)
-        ? initialRawIndex
-        : null;
+    _scrollTargetRawIndex =
+        _isCurrentCueVisible(initialRawIndex) ? initialRawIndex : null;
     _retainRowKeyFor(_scrollTargetRawIndex);
     _scrollController = ScrollController(
       initialScrollOffset: _initialScrollOffsetForCurrentCue(),
@@ -852,8 +880,7 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
   /// 或播放器键盘操作）。修饰键变化时 setState 让 [build] 切换 ListView 的滚动物理，使
   /// Ctrl+滚轮期间列表不滚动、只缩字号。
   bool _handleHardwareKey(KeyEvent event) {
-    final bool held =
-        HardwareKeyboard.instance.isControlPressed ||
+    final bool held = HardwareKeyboard.instance.isControlPressed ||
         HardwareKeyboard.instance.isMetaPressed;
     if (held != _zoomModifierHeld && mounted) {
       setState(() => _zoomModifierHeld = held);
@@ -895,8 +922,7 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
     if (hit == null) return;
     final double dx = event.position.dx - _lastRowHoverPos.dx;
     final double dy = event.position.dy - _lastRowHoverPos.dy;
-    final bool sameChar =
-        identical(_lastRowHoverCueKey, hit.cue) &&
+    final bool sameChar = identical(_lastRowHoverCueKey, hit.cue) &&
         hit.graphemeIndex == _lastRowHoverGrapheme;
     if (sameChar &&
         dx * dx + dy * dy < _kRowHoverThresholdPx * _kRowHoverThresholdPx) {
@@ -918,9 +944,8 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
       _lastSubtitleCuesLoading = widget.controller.isSubtitleCuesLoading;
       _lastScrolledIndex = -1;
       final int currentRep = _representativeRaw(_lastControllerCueIndex);
-      _scrollTargetRawIndex = _isCurrentCueVisible(currentRep)
-          ? currentRep
-          : null;
+      _scrollTargetRawIndex =
+          _isCurrentCueVisible(currentRep) ? currentRep : null;
       _rowKeys.clear();
       _retainRowKeyFor(_scrollTargetRawIndex);
       _scheduleScrollToCurrentCue();
@@ -939,6 +964,8 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
   void dispose() {
     // BUG-874：面板卸载（侧栏隐藏）时解绑命中句柄，避免 barrier 调到已失效的实现。
     widget.hitTester?.unbind();
+    // BUG-2093：回落定时器随面板一起死，否则到点 setState 打到已 dispose 的 State。
+    _copyFeedbackTimer?.cancel();
     HardwareKeyboard.instance.removeHandler(_handleHardwareKey);
     widget.controller.removeListener(_onControllerChanged);
     widget.searchRequests?.removeListener(_onSearchRequested);
@@ -946,6 +973,19 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  /// 记下「第 [rawIndex] 行刚复制成功」，[kCopyFeedbackDuration] 后自动回落。维持期内
+  /// 再复制（同行或换行）重新计时。BUG-2093：见 [_copiedRawIndex]。
+  void _markCueCopied(int rawIndex) {
+    _copyFeedbackTimer?.cancel();
+    _copyFeedbackTimer = Timer(
+      kCopyFeedbackDuration,
+      () => setState(() => _copiedRawIndex = null),
+    );
+    if (_copiedRawIndex != rawIndex) {
+      setState(() => _copiedRawIndex = rawIndex);
+    }
   }
 
   /// BUG-874：按全局坐标反查当前可见行里命中的字符，返回 `(cue, grapheme, charRect)`。
@@ -989,9 +1029,8 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
     _lastSubtitleCuesLoading = cuesLoading;
     setState(() {
       // BUG-841：追踪代表行 raw（当前句可能是被折叠的重复项）。
-      _scrollTargetRawIndex = currentIndex >= 0
-          ? _representativeRaw(currentIndex)
-          : null;
+      _scrollTargetRawIndex =
+          currentIndex >= 0 ? _representativeRaw(currentIndex) : null;
       _retainRowKeyFor(_scrollTargetRawIndex);
     });
     if (cueChanged) _scheduleScrollToCurrentCue();
@@ -1015,10 +1054,8 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
     final List<int> visibleIndexes = _visibleCueIndexes(cues);
     // BUG-841：当前句若是被折叠的重复项，定位到其代表行（列表渲染的唯一行、rowKey 所在）。
     final int currentIndex = _representativeRaw(rawIndex);
-    final int visibleIndex = _visibleIndexForRawIndex(
-      currentIndex,
-      visibleIndexes,
-    );
+    final int visibleIndex =
+        _visibleIndexForRawIndex(currentIndex, visibleIndexes);
     if (visibleIndex < 0 || visibleIndex == _lastScrolledIndex) return;
     if (!_scrollController.hasClients) return;
     _lastScrolledIndex = visibleIndex;
@@ -1051,10 +1088,8 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
       bold: _isRowBold(currentIndex),
     );
     final double target = rowOffset - (viewport / 2) + (rowExtent / 2);
-    final double clamped = target.clamp(
-      0.0,
-      _scrollController.position.maxScrollExtent,
-    );
+    final double clamped =
+        target.clamp(0.0, _scrollController.position.maxScrollExtent);
     final double distance = (clamped - _scrollController.position.pixels).abs();
     final bool farAway = distance > viewport * 3;
     if (farAway) {
@@ -1085,10 +1120,8 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
   }
 
   void _stepFont(int delta) {
-    final int next = (_fontScaleIndex + delta).clamp(
-      0,
-      _kFontScaleSteps.length - 1,
-    );
+    final int next =
+        (_fontScaleIndex + delta).clamp(0, _kFontScaleSteps.length - 1);
     if (next == _fontScaleIndex) return;
     setState(() {
       _fontScaleIndex = next;
@@ -1142,9 +1175,9 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
   /// 口径**刻意**是「收藏档在去重后实际渲染的那批行」（与「收藏 N 句」计数同源），
   /// 而不是当前可见行——搜索着导出只导搜索结果会是个陷阱。
   List<AudioCue> _favoriteCuesForExport(List<AudioCue> cues) => <AudioCue>[
-    for (final int i in _dedupedRawIndexes(cues))
-      if (widget.isCueFavorited(_rowCue(cues, i))) _rowCue(cues, i),
-  ];
+        for (final int i in _dedupedRawIndexes(cues))
+          if (widget.isCueFavorited(_rowCue(cues, i))) _rowCue(cues, i),
+      ];
 
   /// BUG-1907：页面层（整表快捷键）请求打开搜索。
   void _onSearchRequested() => _syncSearchRequests();
@@ -1321,8 +1354,7 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
     // 每次重算（收藏档条目通常不多，成本可接受）。`all` 仍按结构键缓存（纯结构）。
     // BUG-1907：搜索词与收藏档同理**不缓存**——缓存键是 `(cues 身份, 长度, filter)`，
     // 边打字边过滤时这三者都不变，命中缓存就等于搜索不生效。
-    final bool cacheable =
-        _filter != VideoSubtitleListFilter.favorites &&
+    final bool cacheable = _filter != VideoSubtitleListFilter.favorites &&
         _searchQuery.trim().isEmpty;
     if (cacheable &&
         identical(_cachedCues, cues) &&
@@ -1381,14 +1413,11 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
     final List<AudioCue> cues = widget.controller.cues;
     if (currentIndex < 0 || currentIndex >= cues.length) return 0;
     final List<int> visibleIndexes = _visibleCueIndexes(cues);
-    final int visibleIndex = _visibleIndexForRawIndex(
-      currentIndex,
-      visibleIndexes,
-    );
+    final int visibleIndex =
+        _visibleIndexForRawIndex(currentIndex, visibleIndexes);
     if (visibleIndex < 0) return 0;
-    final int contextIndex = (visibleIndex - 3)
-        .clamp(0, visibleIndexes.length - 1)
-        .toInt();
+    final int contextIndex =
+        (visibleIndex - 3).clamp(0, visibleIndexes.length - 1).toInt();
     return _estimatedScrollOffsetForVisibleIndex(
       contextIndex,
       visibleIndexes,
@@ -1439,9 +1468,8 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
     final List<int> visibleIndexes = _visibleCueIndexes(cues);
     // BUG-841：当前句可能是被折叠的重复项——映射到其代表行 raw（列表渲染的唯一行）供高亮
     // 与 rowKey 保留，否则当前句落在重复拷贝时整行都不高亮。
-    final int currentIndex = _representativeRaw(
-      widget.controller.currentCueIndex,
-    );
+    final int currentIndex =
+        _representativeRaw(widget.controller.currentCueIndex);
     _retainRowKeyFor(currentIndex >= 0 ? currentIndex : _scrollTargetRawIndex);
     final bool showLoading =
         cues.isEmpty && widget.controller.isSubtitleCuesLoading;
@@ -1480,19 +1508,19 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
                 child: showLoading
                     ? _buildLoading(cs)
                     : cues.isEmpty || visibleIndexes.isEmpty
-                    ? _buildEmpty(cs, cuesLoaded: cues.isNotEmpty)
-                    // 行高按真实文本布局测量（[_rowExtentForCue]，BUG-1034），与
-                    // itemExtentBuilder 的硬约束一致，长句换行不会被裁掉末行。每行包
-                    // 一个 GlobalKey（存 _rowKeys，按 rawIndex）供 ensureVisible 自动滚动。
-                    : ListView.builder(
-                        controller: _scrollController,
-                        // BUG-878：Ctrl / ⌘ 按住时禁列表滚动，让 Ctrl+滚轮只缩字号
-                        // （[_handleZoomWheel]）；松开恢复默认滚动物理。
-                        physics: _zoomModifierHeld
-                            ? const NeverScrollableScrollPhysics()
-                            : null,
-                        itemExtentBuilder:
-                            (int i, SliverLayoutDimensions dimensions) {
+                        ? _buildEmpty(cs, cuesLoaded: cues.isNotEmpty)
+                        // 行高按真实文本布局测量（[_rowExtentForCue]，BUG-1034），与
+                        // itemExtentBuilder 的硬约束一致，长句换行不会被裁掉末行。每行包
+                        // 一个 GlobalKey（存 _rowKeys，按 rawIndex）供 ensureVisible 自动滚动。
+                        : ListView.builder(
+                            controller: _scrollController,
+                            // BUG-878：Ctrl / ⌘ 按住时禁列表滚动，让 Ctrl+滚轮只缩字号
+                            // （[_handleZoomWheel]）；松开恢复默认滚动物理。
+                            physics: _zoomModifierHeld
+                                ? const NeverScrollableScrollPhysics()
+                                : null,
+                            itemExtentBuilder:
+                                (int i, SliverLayoutDimensions dimensions) {
                               if (i < 0 || i >= visibleIndexes.length) {
                                 return null;
                               }
@@ -1504,22 +1532,29 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
                                 bold: _isRowBold(rawIndex),
                               );
                             },
-                        itemCount: visibleIndexes.length,
-                        itemBuilder: (BuildContext _, int i) {
-                          final int rawIndex = visibleIndexes[i];
-                          final AudioCue cue = _rowCue(cues, rawIndex);
-                          final bool selected = rawIndex == currentIndex;
-                          final bool trackKey =
-                              selected || rawIndex == _scrollTargetRawIndex;
-                          final Key rowKey = trackKey
-                              ? _rowKeys.putIfAbsent(rawIndex, GlobalKey.new)
-                              : ValueKey<int>(rawIndex);
-                          return KeyedSubtree(
-                            key: rowKey,
-                            child: _buildRow(cs, cue, i, selected),
-                          );
-                        },
-                      ),
+                            itemCount: visibleIndexes.length,
+                            itemBuilder: (BuildContext _, int i) {
+                              final int rawIndex = visibleIndexes[i];
+                              final AudioCue cue = _rowCue(cues, rawIndex);
+                              final bool selected = rawIndex == currentIndex;
+                              final bool trackKey =
+                                  selected || rawIndex == _scrollTargetRawIndex;
+                              final Key rowKey = trackKey
+                                  ? _rowKeys.putIfAbsent(
+                                      rawIndex, GlobalKey.new)
+                                  : ValueKey<int>(rawIndex);
+                              return KeyedSubtree(
+                                key: rowKey,
+                                child: _buildRow(
+                                  cs,
+                                  cue,
+                                  i,
+                                  rawIndex,
+                                  selected,
+                                ),
+                              );
+                            },
+                          ),
               ),
             ),
           ],
@@ -1625,9 +1660,9 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
                           .map(
                             (VideoSubtitleListFilter filter) =>
                                 ButtonSegment<VideoSubtitleListFilter>(
-                                  value: filter,
-                                  label: Text(_filterLabel(filter)),
-                                ),
+                              value: filter,
+                              label: Text(_filterLabel(filter)),
+                            ),
                           )
                           .toList(growable: false),
                       selected: <VideoSubtitleListFilter>{_filter},
@@ -1656,8 +1691,8 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
                   onPressed: _favoriteCueCount(cues) == 0
                       ? null
                       : () => widget.onExportFavorites!(
-                          _favoriteCuesForExport(widget.controller.cues),
-                        ),
+                            _favoriteCuesForExport(widget.controller.cues),
+                          ),
                 ),
               // TODO-631：收藏档收藏数。删了独立「本集收藏」面板后，其顶部「收藏 N」计数
               // 并入字幕列表收藏档——只在 favorites 档显示，让用户切到收藏档时一眼看到本
@@ -1701,9 +1736,8 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
                   suffixIcon: _searchQuery.isEmpty
                       ? null
                       : IconButton(
-                          tooltip: MaterialLocalizations.of(
-                            context,
-                          ).cancelButtonLabel,
+                          tooltip: MaterialLocalizations.of(context)
+                              .cancelButtonLabel,
                           icon: Icon(Icons.close, size: widget.fontSize + 2),
                           visualDensity: VisualDensity.compact,
                           onPressed: () {
@@ -1712,10 +1746,8 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
                           },
                         ),
                   border: const OutlineInputBorder(),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 8,
-                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 ),
               ),
             ),
@@ -1785,7 +1817,13 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
     );
   }
 
-  Widget _buildRow(ColorScheme cs, AudioCue cue, int index, bool selected) {
+  Widget _buildRow(
+    ColorScheme cs,
+    AudioCue cue,
+    int index,
+    int rawIndex,
+    bool selected,
+  ) {
     // BUG-874：可查词时给本行文本一个稳定 [GlobalKey]（按 builder 下标）并登记所属 cue，供
     // [_hitTestRows] 反查。不可查词（onLookupCue==null）时不登记，行为与历史一致。
     final GlobalKey? textKey = widget.onLookupCue == null
@@ -1800,11 +1838,12 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
     final Color bg = selected
         ? cs.primaryContainer
         : favorited
-        ? cs.tertiaryContainer.withValues(alpha: 0.32)
-        : (hovered ? cs.onSurface.withValues(alpha: 0.06) : Colors.transparent);
-    final Color tsColor = selected
-        ? cs.onPrimaryContainer
-        : cs.onSurfaceVariant;
+            ? cs.tertiaryContainer.withValues(alpha: 0.32)
+            : (hovered
+                ? cs.onSurface.withValues(alpha: 0.06)
+                : Colors.transparent);
+    final Color tsColor =
+        selected ? cs.onPrimaryContainer : cs.onSurfaceVariant;
     final Color textColor = selected ? cs.onPrimaryContainer : cs.onSurface;
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredIndex = index),
@@ -1870,7 +1909,7 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
               Expanded(child: _buildRowText(cue, textColor, selected, textKey)),
               // 操作按钮（跳转 / 复制 / 收藏）常驻，不再仅 hover / 选中可见（BUG-265）：
               // 长文本由上面单行省略让出空间，按钮不会挤坏布局。
-              _buildRowActions(cs, cue, selected, favorited),
+              _buildRowActions(cs, cue, rawIndex, selected, favorited),
             ],
           ),
         ),
@@ -1889,7 +1928,10 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
     GlobalKey? textKey,
   ) {
     // BUG-1034：与行高测量（[_measureRowExtent]）共用同一样式，断行结果一致，末行不被裁。
-    final TextStyle textStyle = _rowTextStyle(bold: selected, color: textColor);
+    final TextStyle textStyle = _rowTextStyle(
+      bold: selected,
+      color: textColor,
+    );
     final void Function(AudioCue, int, Rect)? onLookup = widget.onLookupCue;
     if (onLookup == null) {
       // 无查词能力：整段文本（换行），不叠 tap 层，外层 InkWell 行点击仍 seek。
@@ -1933,10 +1975,8 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
                   ),
                 ),
             ];
-            final int graphemeIndex = resolveSubtitleListGraphemeHit(
-              rects,
-              localPosition,
-            );
+            final int graphemeIndex =
+                resolveSubtitleListGraphemeHit(rects, localPosition);
             if (graphemeIndex < 0) return null;
             Rect localRect = rects[graphemeIndex];
             if (!localRect.contains(localPosition)) {
@@ -1996,13 +2036,14 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
   Widget _buildRowActions(
     ColorScheme cs,
     AudioCue cue,
+    int rawIndex,
     bool selected,
     bool favorited,
   ) {
-    final Color iconColor = selected
-        ? cs.onPrimaryContainer
-        : cs.onSurfaceVariant;
+    final Color iconColor =
+        selected ? cs.onPrimaryContainer : cs.onSurfaceVariant;
     final double iconSize = _effectiveFontSize + 2;
+    final bool copied = rawIndex == _copiedRawIndex;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
@@ -2013,12 +2054,16 @@ class _VideoSubtitleJumpPanelState extends State<VideoSubtitleJumpPanel> {
           size: iconSize,
           onPressed: () => widget.onTapCue(cue),
         ),
+        // 复制后按钮就地切成 ✓ / 「已复制」（OSD 在视频区，视线之外）。成功与否由
+        // [VideoSubtitleJumpPanel.onCopyCue] 的返回值说了算，面板不重算判据。
         _RowActionButton(
-          icon: Icons.content_copy_outlined,
-          tooltip: t.copy,
-          color: iconColor,
+          icon: copied ? Icons.check : Icons.content_copy_outlined,
+          tooltip: copied ? t.copied : t.copy,
+          color: copied ? cs.primary : iconColor,
           size: iconSize,
-          onPressed: () => widget.onCopyCue(cue),
+          onPressed: () {
+            if (widget.onCopyCue(cue)) _markCueCopied(rawIndex);
+          },
         ),
         _RowActionButton(
           icon: favorited ? Icons.star : Icons.star_border,

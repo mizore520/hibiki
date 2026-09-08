@@ -4,6 +4,7 @@ import 'package:fushi_audio/fushi_audio.dart'
     show kDefaultReadingIdleTimeout, kStudyIdleTimeoutPrefKey;
 import 'package:fushi_core/fushi_core.dart';
 import 'package:fushi/src/dictionary/dict_style_rules.dart';
+import 'package:fushi/src/media/discovery/opds_server_config.dart';
 import 'package:fushi/src/media/manga/ocr/manga_ocr_engine.dart';
 import 'package:fushi/src/media/torrent/anime_download_config.dart';
 import 'package:fushi/src/media/torrent/torznab_client.dart';
@@ -17,6 +18,7 @@ import 'package:fushi/src/media/video/video_hdr_output.dart'
 import 'package:fushi/src/media/video/video_control_customization.dart';
 import 'package:fushi/src/media/video/video_custom_action_bindings.dart';
 import 'package:fushi/src/media/video/video_immersive_mode.dart';
+import 'package:fushi/src/media/video/video_lua_capability.dart';
 import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
 import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
 import 'package:fushi/src/mining/galgame_library.dart';
@@ -82,6 +84,17 @@ BoxFit videoFitModeToBoxFit(VideoFitMode mode) {
 
 class PreferencesRepository extends ChangeNotifier {
   PreferencesRepository(this._db);
+
+  static const String videoOnlineServicesSetupDismissedKey =
+      'video_online_services_setup_dismissed';
+
+  bool get videoOnlineServicesSetupDismissed =>
+      getPref(videoOnlineServicesSetupDismissedKey, defaultValue: false) as bool;
+
+  Future<void> dismissVideoOnlineServicesSetup() async {
+    await setPref(videoOnlineServicesSetupDismissedKey, true);
+    notifyListeners();
+  }
 
   static const String videoAnime4kPromptShownKey = 'video_anime4k_prompt_shown';
 
@@ -613,6 +626,37 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  // 游戏内查词卡（galgame hook 直接贴进游戏画面的那张）是**第三个形态**。它与 app 外
+  // 覆盖窗曾共用 overlay 那组键，于是「游戏里合适」和「桌面上合适」只能二选一——真机上
+  // 表现为一个过小、另一个过大。合适尺寸本就不同：覆盖窗浮在整块桌面上，游戏内卡片要
+  // 挤在游戏客户区里且不能遮住正文，所以给它自己的键。默认同样 independent=false，
+  // 跟随 app 内共享值，解锁后才用自己的宽高（解锁瞬间不跳尺寸）。
+  bool get galCardLookupIndependentSize =>
+      getPref('gal_card_lookup_independent_size', defaultValue: false) as bool;
+
+  Future<void> setGalCardLookupIndependentSize(bool value) async {
+    await setPref('gal_card_lookup_independent_size', value);
+    notifyListeners();
+  }
+
+  double get galCardLookupMaxWidth =>
+      getPref('gal_card_lookup_max_width', defaultValue: defaultPopupMaxWidth)
+          as double;
+
+  void setGalCardLookupMaxWidth(double width) async {
+    await setPref('gal_card_lookup_max_width', width);
+    notifyListeners();
+  }
+
+  double get galCardLookupMaxHeight =>
+      getPref('gal_card_lookup_max_height', defaultValue: defaultPopupMaxHeight)
+          as double;
+
+  void setGalCardLookupMaxHeight(double height) async {
+    await setPref('gal_card_lookup_max_height', height);
+    notifyListeners();
+  }
+
   bool get extensionPopupIndependentSize =>
       getPref('extension_popup_independent_size', defaultValue: false) as bool;
 
@@ -872,6 +916,19 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// BUG-2032：随包 libmpv 是否编入 Lua（视频页建 Player 后读 `mpv-configuration`
+  /// 探到的结果缓存，存 [MpvLuaCapability.name]）。全局设置页没有播放器，靠这份
+  /// 缓存如实说明脚本开关在本平台是否可用。默认 unknown = 从未播过视频。
+  MpvLuaCapability get videoMpvLuaCapability => MpvLuaCapability.fromName(
+        getPref('video_mpv_lua_capability', defaultValue: 'unknown') as String,
+      );
+
+  Future<void> setVideoMpvLuaCapability(MpvLuaCapability value) async {
+    if (videoMpvLuaCapability == value) return;
+    await setPref('video_mpv_lua_capability', value.name);
+    notifyListeners();
+  }
+
   /// 用户手动指定的本机 mpv 配置/着色器目录（「从本机 mpv 导入」自动找不到时指定后
   /// 记住，下次优先扫它）。空串=未指定，走自动候选目录。
   String get videoMpvShaderDir =>
@@ -958,6 +1015,22 @@ class PreferencesRepository extends ChangeNotifier {
       'video_secondary_subtitle_blur': mode.blurFlag,
       'video_secondary_subtitle_obscure_hide': mode.hideFlag,
     });
+  }
+
+  /// 遮蔽态「悬停 / 点击临时显形」总闸；**默认 true**（历史行为：显形是遮蔽的内建
+  /// 行为、关不掉）。关掉后模糊 / 隐藏在整句期间恒定生效——听力沉浸时鼠标恰好停在
+  /// 字幕上或手指扫过盒面不再破功。主 / 副字幕共用一个开关（用户诉求是「显形这个
+  /// 行为」的总闸，不是逐层设置）。
+  ///
+  /// 与遮蔽模式两个 setter 不同，本 setter **照常广播**：它是设置页 / 面板里的低频
+  /// 开关（没有快捷键路径），一次全局重建换来所有读取方（overlay、面板回显）无条件
+  /// 同步，不必各自补刷新。
+  bool get videoSubtitleObscureReveal =>
+      getPref('video_subtitle_obscure_reveal', defaultValue: true) as bool;
+
+  Future<void> setVideoSubtitleObscureReveal(bool value) async {
+    await setPref('video_subtitle_obscure_reveal', value);
+    notifyListeners();
   }
 
   /// 视频字幕列表「自动滚动到当前播放句」开关（TODO-613）：默认开启，与
@@ -1134,6 +1207,33 @@ class PreferencesRepository extends ChangeNotifier {
       'video_resource_torznab_config',
       jsonEncode(encodeTorznabIndexerConfigs(configs)),
     );
+    notifyListeners();
+  }
+
+  /// 用户自配的 OPDS 书目服务器清单（设备本地；含 base64 密码）。
+  ///
+  /// 逐条容错在 [decodeOpdsServerConfigs] 里：一条记录坏掉只丢那一条，不让
+  /// 整份服务器列表消失（否则用户会看到「我的书库全没了」）。
+  List<OpdsServerConfig> get discoveryOpdsServers {
+    final String raw =
+        getPref('discovery_opds_servers', defaultValue: '') as String;
+    if (raw.trim().isEmpty) return const <OpdsServerConfig>[];
+    try {
+      return decodeOpdsServerConfigs(raw);
+    } on Object catch (error, stack) {
+      ErrorLogService.instance.log(
+        'PreferencesRepository.discoveryOpdsServers.decode',
+        error,
+        stack,
+      );
+      return const <OpdsServerConfig>[];
+    }
+  }
+
+  Future<void> setDiscoveryOpdsServers(
+    Iterable<OpdsServerConfig> servers,
+  ) async {
+    await setPref('discovery_opds_servers', encodeOpdsServerConfigs(servers));
     notifyListeners();
   }
 
@@ -2679,6 +2779,16 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 有声书设备端转录上次选的语音语言（`AsrLanguage.tag`：`ja` / `en`）。
+  /// 只是转录弹层的记忆值；不认识的标签由弹层自己回退日语。
+  String get asrTranscribeLanguage =>
+      getPref('asr_transcribe_language', defaultValue: 'ja') as String;
+
+  Future<void> setAsrTranscribeLanguage(String value) async {
+    await setPref('asr_transcribe_language', value);
+    notifyListeners();
+  }
+
   /// 漫画阅读器「点一下没识别的对话框就地开跑 OCR」。
   ///
   /// 默认开：这条路径存在的全部意义就是让用户不必先去点识别模式。关掉它等于
@@ -2859,6 +2969,17 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 有声书素材库目录（JSON 字符串数组）。库里放按作品身份命名的字幕/正文，
+  /// 下载完成后据此自动配齐「正文 + 字幕 + 音频」；解码见
+  /// `decodeAudiobookMaterialDirs`。
+  String get audiobookMaterialDirs =>
+      getPref('audiobook_material_dirs', defaultValue: '') as String;
+
+  Future<void> setAudiobookMaterialDirs(String value) async {
+    await setPref('audiobook_material_dirs', value);
+    notifyListeners();
+  }
+
   /// TODO-1961：用过的历史下载根（JSON 字符串数组，新的在前，见
   /// `encodeSaveRootHistory`）。**只**用于让改目录之前的旧任务在下载页仍被认出，
   /// 永不作为写入目标。旧任务不迁移是刻意的：迁移=移动几十 GB 且掐断做种。
@@ -2927,6 +3048,27 @@ class PreferencesRepository extends ChangeNotifier {
     await setPref(
       kStudyIdleTimeoutPrefKey,
       value.clamp(readingIdleTimeoutMinutesMin, readingIdleTimeoutMinutesMax),
+    );
+    notifyListeners();
+  }
+
+  /// 统计「今日」重置时刻（整点 0..23，默认 0 = 本地午夜）：写入时把 dateKey 前移
+  /// 该小时数（凌晨 2 点读的书在重置 = 4 时记到「昨日」）。全局唯一入口是
+  /// [FushiDatabase.statDayResetHour]，AppModel 在偏好加载后与变更时镜像过去；
+  /// 历史段不重分桶（用户改设置只影响之后写入）。
+  static const int statDayResetHourMin = 0;
+  static const int statDayResetHourMax = 23;
+
+  int get statDayResetHour =>
+      (getPref(kStatDayResetHourPrefKey, defaultValue: 0) as int).clamp(
+        statDayResetHourMin,
+        statDayResetHourMax,
+      );
+
+  Future<void> setStatDayResetHour(int value) async {
+    await setPref(
+      kStatDayResetHourPrefKey,
+      value.clamp(statDayResetHourMin, statDayResetHourMax),
     );
     notifyListeners();
   }

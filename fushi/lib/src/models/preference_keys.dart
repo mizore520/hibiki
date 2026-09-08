@@ -22,9 +22,14 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'active_profile_id',
   'app_locale',
   'app_ui_scale',
+  'asr_transcribe_language',
   'audio_source_configs',
   'audio_sources',
   'audiobook_background_play',
+  // String（JSON 数组）：有声书素材库目录（绝对路径）。库里放按作品身份命名的
+  // 字幕/正文文件，下载完成后据此自动配齐「正文 + 字幕 + 音频」。见
+  // media/audiobook/audiobook_material_library.dart。
+  'audiobook_material_dirs',
   'auto_add_book_name_to_tags',
   'auto_search',
   'auto_search_debounce_delay',
@@ -46,6 +51,12 @@ const Set<String> kKnownPreferenceKeys = <String>{
   // 发现页「全部源」聚合默认排除的源 id（逗号分隔；默认 sukebei——18+ 源
   // 只在用户显式单选时使用）。String，读写见 PreferencesRepository。
   'discovery_disabled_sources',
+  // 用户自配的 OPDS 书目服务器清单（JSON 数组：id/name/url/username/
+  // passwordB64/enabled/allowInsecureHttp）。String，读写见
+  // PreferencesRepository。与 discovery_disabled_sources 的分界同 Torznab：
+  // 自配服务器各自带 enabled 字段，不进那份停用清单。
+  // 含凭据 → 同时登记在 kCredentialPreferenceKeys 与 deviceLocalPrefKeys。
+  'discovery_opds_servers',
   'download_save_root',
   'download_save_root_history',
   'experimental_focus_navigation_enabled',
@@ -61,6 +72,9 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'floating_lyric_font_size',
   'floating_lyric_text_opacity',
   'floating_lyric_width',
+  'gal_card_lookup_independent_size',
+  'gal_card_lookup_max_height',
+  'gal_card_lookup_max_width',
   'gal_hook_click_lookup',
   'gal_hook_fold_progressive_lines',
   'gal_hook_ingame_lookup_enabled',
@@ -162,6 +176,10 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'remote_lookup_enabled',
   'reverse_navigation_bar',
   'reverse_reader_bottom_bar',
+  // BUG-2100 沙箱重定位台账：上次启动时的两个数据根。根变了（iOS 每次更新都会换
+  // app 容器 UUID）就据此把全库绝对路径重基过去，见 storage/sandbox_relocation.dart。
+  'sandbox_last_documents_root',
+  'sandbox_last_support_root',
   'saved_tags',
   'scan_non_japanese_text',
   'shelf_sort_mode',
@@ -204,6 +222,11 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'video_mining_image_mode',
   'video_mining_still_format',
   'video_mpv_config',
+  // String（[MpvLuaCapability] 的 name）：随包 libmpv 有没有编入 Lua 解释器，
+  // 视频页建 Player 后读 `mpv-configuration` 探到并缓存。全局设置页没有播放器，
+  // 靠这份缓存如实说明脚本开关在本平台是否可用。默认 unknown = 从未播过视频。
+  // 见 media/video/video_lua_capability.dart（BUG-2032）。
+  'video_mpv_lua_capability',
   'video_mpv_lua_scripts_enabled',
   'video_mpv_shader_dir',
   'video_remote_subtitle',
@@ -227,6 +250,9 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'video_subtitle_list_font_scale_index',
   'video_subtitle_list_width',
   'video_subtitle_obscure_hide',
+  // bool（默认 true）：遮蔽（模糊 / 隐藏）态是否允许悬停 / 点击临时显形。关掉后
+  // 遮蔽在整句期间恒定生效，不被误触破功。
+  'video_subtitle_obscure_reveal',
   'video_subtitle_opensubtitles_config',
   'video_subtitle_style',
   'video_youtube_quality_height',
@@ -278,6 +304,8 @@ const List<String> kKnownPreferenceKeyPrefixes = <String>[
 /// 🔴 凭据键：值为 base64 敏感凭据，不进日志 / 不进明文导出。
 /// （`media_source_secret_<id>` 前缀族见 [kKnownPreferenceKeyPrefixes]。）
 const Set<String> kCredentialPreferenceKeys = <String>{
+  // 每条 OPDS 服务器记录里带 base64 的 passwordB64。
+  'discovery_opds_servers',
   'jimaku_api_key',
   'network_proxy_password',
   'network_proxy_username',

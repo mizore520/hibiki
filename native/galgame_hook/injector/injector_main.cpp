@@ -29,6 +29,7 @@
 #include "kirikiri_launch_profile.h"
 #include "launcher_layout.h"
 #include "siglus_launch.h"
+#include "unreal_launch.h"
 #include "steam_launch.h"
 #include "luna_bridge.h"
 #include "luna_hook_config.h"
@@ -144,6 +145,29 @@ std::wstring DefaultDllPath() {
          (legacy_hibiki ? L"hibiki_voice_hook.dll" : L"fushi_voice_hook.dll");
 }
 
+// 目标进程里某个模块的加载基址；找不到（含模块尚未映射）返回 nullptr。
+// InjectDll 依赖「同 arch/同会话下 kernel32 跨进程同基址」这条假设，它一旦不成立，
+// 远程线程会以目标进程里的野地址为入口执行 —— 必须能把它证伪而不是假定成立。
+HMODULE FindRemoteModuleBase(DWORD pid, const wchar_t* module_name) {
+  if (pid == 0) return nullptr;
+  HANDLE snap =
+      CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
+  if (snap == INVALID_HANDLE_VALUE) return nullptr;
+  MODULEENTRY32W entry = {};
+  entry.dwSize = sizeof(entry);
+  HMODULE base = nullptr;
+  if (Module32FirstW(snap, &entry)) {
+    do {
+      if (_wcsicmp(entry.szModule, module_name) == 0) {
+        base = entry.hModule;
+        break;
+      }
+    } while (Module32NextW(snap, &entry));
+  }
+  CloseHandle(snap);
+  return base;
+}
+
 // 经 CreateRemoteThread(LoadLibraryW) 把 [dll_path] 注入 [target]。成功返回 true。
 // CREATE_SUSPENDED 的进程主线程虽挂起，但此处 CreateRemoteThread 建的新线程照跑（kernel32/
 // ntdll 已映射，LoadLibraryW 可用）——标准早注入手法。
@@ -158,19 +182,35 @@ bool InjectDll(HANDLE target, const std::wstring& dll_path) {
   bool ok = false;
   if (WriteProcessMemory(target, remote, dll_path.c_str(), bytes, nullptr)) {
     // LoadLibraryW 在 kernel32 里，同 arch/同会话跨进程地址一致（ASLR 每次开机固定）。
+    HMODULE local_k32 = GetModuleHandleW(L"kernel32.dll");
+    const DWORD target_pid = GetProcessId(target);
+    HMODULE remote_k32 = FindRemoteModuleBase(target_pid, L"kernel32.dll");
+    fprintf(stderr, "[inject] kernel32 pid=%lu local=%p target=%p\n", target_pid,
+            static_cast<void*>(local_k32), static_cast<void*>(remote_k32));
     const auto load =
         reinterpret_cast<LPTHREAD_START_ROUTINE>(reinterpret_cast<void*>(
-            GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "LoadLibraryW")));
+            GetProcAddress(local_k32, "LoadLibraryW")));
     if (load != nullptr) {
       HANDLE thread = CreateRemoteThread(target, nullptr, 0, load, remote, 0,
                                          nullptr);
       if (thread != nullptr) {
-        WaitForSingleObject(thread, 10000);
+        const DWORD wait_result = WaitForSingleObject(thread, 10000);
         DWORD exit_code = 0;
         GetExitCodeThread(thread, &exit_code);
         CloseHandle(thread);
         // 64 位下 exit_code 截断 HMODULE，不足以判成败——真正的成功信号是 hook DLL
         // SetEvent 的就绪事件（见 RunInjection）。这里只要远程线程跑起来即算注入动作完成。
+        //
+        // 但「远程线程跑起来」与「DLL 真的装进去了」是两件事，旧实现把 wait 结果和
+        // exit code 一起丢弃，于是超时、LoadLibraryW 返回 NULL、真成功三种结局在
+        // stderr 上完全同形。Locale Emulator 路径下正是卡在这里：注入器报「注入完成」，
+        // 目标进程却从未执行 DllMain。这一行只记录事实，不改判定，供分型用。
+        const size_t slash = dll_path.find_last_of(L"\\/");
+        const wchar_t* dll_name = slash == std::wstring::npos
+                                      ? dll_path.c_str()
+                                      : dll_path.c_str() + slash + 1;
+        fprintf(stderr, "[inject] remote LoadLibraryW %ls wait=%lu exit=0x%08lX\n",
+                dll_name, wait_result, exit_code);
         ok = true;
       } else {
         fprintf(stderr, "CreateRemoteThread failed: %lu\n", GetLastError());
@@ -256,7 +296,6 @@ struct LunaCtx {
   PFN_Luna_RemoveHook remove_hook = nullptr;
   bool use_pc_hooks = false;       // 连接后是否补装通用 PC hooks（默认否，避免与 GDI 重复）
   bool normalize_mages_controls = false;
-  bool retain_context_in_face = false;
   std::vector<std::wstring> hook_codes;
   std::vector<std::wstring> blocked_hook_codes;
   std::vector<std::wstring> blocked_hook_names;
@@ -697,10 +736,9 @@ uint64_t LunaTextThreadId(const wchar_t* hookcode, const char* hookname,
 // ctx 是调用点（返回地址），同一 hook 面换剧情分支就变；ctx2 是 split H 码声明的
 // 语义分类（角色名/正文），必须保留。判据实现在 luna_text_selector.h，与单测共用。
 uint64_t LunaTextFaceId(const wchar_t* hookcode, const char* hookname,
-                        const LunaThreadParam& tp, bool retain_context) {
-  return fushi_voice_hook::LunaTextFaceIdForProfile(
-      tp.processId, tp.addr, tp.ctx, tp.ctx2, hookcode, hookname,
-      retain_context);
+                        const LunaThreadParam& tp) {
+  return fushi_voice_hook::LunaTextFaceIdFrom(tp.processId, tp.addr, tp.ctx2,
+                                               hookcode, hookname);
 }
 
 // Luna 侧写者状态。**必须定义在所有写路径之前**：v13 起写文本道也要在这把锁下认领，
@@ -914,8 +952,7 @@ void LunaOutput(const wchar_t* hookcode, const char* hookname,
       const bool artifact =
           fushi_voice_hook::LunaTextIsArtifact(normalized_text, normalized_len);
       const uint64_t thread_id = LunaTextThreadId(hookcode, hookname, tp);
-      const uint64_t face_id =
-          LunaTextFaceId(hookcode, hookname, tp, g_luna.retain_context_in_face);
+      const uint64_t face_id = LunaTextFaceId(hookcode, hookname, tp);
       // v12：预览必须写在门控**之前**且无条件（含伪影行）。预览区的全部意义就是让用户
       // 看见未被发布的线程；放到门控之后就只剩已选中的那条，等于没做。
       WriteThreadPreview(g_luna.header, thread_id, artifact, normalized_text,
@@ -987,7 +1024,7 @@ void LunaThreadCreate(const wchar_t* hookcode, const char* hookname,
            : 0u);
   WriteLunaTextEvent(
       g_luna.header, hookcode, hookname, tp, thread_id,
-      LunaTextFaceId(hookcode, hookname, tp, g_luna.retain_context_in_face),
+      LunaTextFaceId(hookcode, hookname, tp),
       fushi_voice_hook::kTextEventThreadDiscovered, event_flags, nullptr, 0);
 }
 // 移除事件不透传到线程目录，且不清 selected_text_thread_id / face map：同 ThreadParam 短暂
@@ -1085,7 +1122,6 @@ void LunaEmbed(const wchar_t* text, LunaThreadParam tp) {
 // target 是目标进程句柄（复用 InjectDll 把 LunaHook<arch>.dll 注入游戏）。成功接线返回 true。
 bool InitLunaHook(SharedHeader* header, HANDLE target, DWORD pid, int codepage,
                   bool use_pc_hooks, bool normalize_mages_controls,
-                  bool retain_context_in_face,
                   const std::vector<std::wstring>& hook_codes,
                   const std::vector<std::wstring>& blocked_hook_codes,
                   const std::vector<std::wstring>& blocked_hook_names,
@@ -1116,7 +1152,6 @@ bool InitLunaHook(SharedHeader* header, HANDLE target, DWORD pid, int codepage,
   g_luna.remove_hook = bridge.remove_hook;
   g_luna.use_pc_hooks = use_pc_hooks && (bridge.insert_pc != nullptr);
   g_luna.normalize_mages_controls = normalize_mages_controls;
-  g_luna.retain_context_in_face = retain_context_in_face;
   g_luna.hook_codes = hook_codes;
   g_luna.blocked_hook_codes = blocked_hook_codes;
   g_luna.blocked_hook_names = blocked_hook_names;
@@ -1193,7 +1228,6 @@ void ShutdownLunaHook() {
     g_luna.confirmed_blocked_hook_names.clear();
     g_luna.preferred_hook_codes.clear();
     g_luna.normalize_mages_controls = false;
-    g_luna.retain_context_in_face = false;
     InterlockedExchange(&g_luna.blocked_hook_remove_requests, 0);
     InterlockedExchange(&g_luna.blocked_hook_remove_confirmations, 0);
     g_luna.pid = 0;
@@ -1206,7 +1240,6 @@ struct LunaOptions {
   int codepage = 932;     // --luna-codepage（日文默认 SHIFT_JIS）
   bool pc_hooks = false;  // --luna-pchooks 补装通用 PC hooks
   bool normalize_mages_controls = false;
-  bool retain_context_in_face = false;
   uint32_t defer_until_running_ms = 0;
   std::vector<std::wstring> hook_codes;  // 版本专用、已验证的 H-code
   std::vector<std::wstring> blocked_hook_codes;  // SHA-256 精确匹配的危险自动 hook
@@ -1231,9 +1264,6 @@ void ApplyLunaProfiles(const std::wstring& executable, DWORD pid,
     if (match.enable_pc_hooks) options->pc_hooks = true;
     if (match.normalize_mages_controls) {
       options->normalize_mages_controls = true;
-    }
-    if (match.retain_context_in_face) {
-      options->retain_context_in_face = true;
     }
     if (match.defer_until_running_ms > options->defer_until_running_ms) {
       options->defer_until_running_ms = match.defer_until_running_ms;
@@ -1857,11 +1887,25 @@ int RunInjection(HANDLE target, DWORD pid, const std::wstring& dll_path,
                 &header->native_loopback_state),
             fushi_voice_hook::AtomicLoadShared32(
                 &header->native_loopback_applied_seq));
-    revoke_loopback_before_failure();
-    CloseHandle(ready);
-    UnmapViewOfFile(header);
-    CloseHandle(mapping);
-    return FailWith(reason_out, LaunchFailureReason::kReadyTimeout, 2);
+    // deny 是隐私边界，拿不到 stopped 的确认必须判失败；allow 只是一项能力，
+    // 超时不得连带把「注入器负责安装的 LunaHook 文本 hook」一起毙掉——那个安装点
+    // 就在下面几十行，旧实现在这里 return 等于让这一局永远没有台词（BUG-2131）。
+    if (fushi_voice_hook::NativeLoopbackAckTimeoutAbortsInjection(
+            native_loopback_requested == kNativeLoopbackAllow)) {
+      revoke_loopback_before_failure();
+      CloseHandle(ready);
+      UnmapViewOfFile(header);
+      CloseHandle(mapping);
+      return FailWith(reason_out,
+                      LaunchFailureReason::kNativeLoopbackAckTimeout, 2);
+    }
+    fushi_voice_hook::AtomicOrShared32(
+        &header->loopback_diag,
+        fushi_voice_hook::kLoopbackDiagPolicyAckTimeout);
+    fprintf(stderr,
+            "[loopback] allow 的策略确认未在 %lums 内到达；按「能力未就绪」降级"
+            "继续，文本 hook 照常安装（worker 可稍后自行 ack 成 running）\n",
+            loopback_wait_ms);
   }
 
   // CREATE_SUSPENDED launch 必须等游戏内 DLL 完成首次 XAudio2/DirectSound 导出 hook，
@@ -1877,7 +1921,6 @@ int RunInjection(HANDLE target, DWORD pid, const std::wstring& dll_path,
     luna_initialized =
         InitLunaHook(header, target, pid, luna.codepage, luna.pc_hooks,
                      luna.normalize_mages_controls,
-                     luna.retain_context_in_face,
                      luna.hook_codes, luna.blocked_hook_codes,
                      luna.blocked_hook_names, luna.preferred_hook_codes);
     if (!luna_initialized) return false;
@@ -2022,7 +2065,6 @@ int RunInjection(HANDLE target, DWORD pid, const std::wstring& dll_path,
   if (hold && luna.enabled && !luna_initialized) {
     InitLunaHook(header, target, pid, luna.codepage, luna.pc_hooks,
                  luna.normalize_mages_controls,
-                 luna.retain_context_in_face,
                  luna.hook_codes, luna.blocked_hook_codes,
                  luna.blocked_hook_names,
                  luna.preferred_hook_codes);
@@ -2194,13 +2236,16 @@ bool LooksLikeRenpyRuntime(const std::wstring& exe) {
          FileExists(JoinPath(dir, L"pythonw.exe"));
 }
 
-// 目录是否带引擎数据签名。目前只有 Siglus 一家有可靠的纯目录签名（Gameexe.dat +
-// Scene.pck）；再加引擎时在这里多写一个 || 即可，判据本身不用动。
+// 目录是否带引擎数据签名。Siglus（Gameexe.dat + Scene.pck）与 UE IoStore
+// （Content\Paks\*.utoc 的 16 字节 TOC 魔数）各出一条；再加引擎时在这里多写一个 ||
+// 即可，判据本身不用动。两条都要求数据文件真实存在/魔数成立，不认裸目录名。
 bool DirectoryHasEngineSignature(const std::wstring& dir) {
   return fushi_voice_hook::DirectoryLooksLikeSiglus(
-      dir, [](const std::wstring& d, const wchar_t* name) {
-        return FileExists(JoinPath(d, name));
-      });
+             dir,
+             [](const std::wstring& d, const wchar_t* name) {
+               return FileExists(JoinPath(d, name));
+             }) ||
+         fushi_voice_hook::DirectoryLooksLikeUnrealIostore(dir);
 }
 
 // 直接子目录全路径。不跟 reparse point：符号链接/联接点能把搜索绕成环。
@@ -2444,6 +2489,17 @@ bool LooksLikeUnityRuntime(const std::wstring& exe) {
   return il2cpp || mono;
 }
 
+// Unreal（IoStore 打包形态）：判据本体在 include/unreal_launch.h，与 hook 侧的引擎身份
+// 共用同一份。UE 是 C++ 引擎，台词在进程内、没有 Mono/TJS 那样的脚本宿主可挂，只能靠
+// LunaHook 的通用 PC hooks 取文本——与 Unity 同理，所以这里也自动开。
+// 真机对照（昨日魔女今日的梦 1.0 汉化版，同一份 helper、同一段标题画面）：不开 PC hooks
+// 的一局 text_events 停在 11，开了的一局 29。
+bool LooksLikeUnrealRuntime(const std::wstring& exe) {
+  const std::wstring dir = ExecutableDirectory(exe);
+  if (dir.empty()) return false;
+  return fushi_voice_hook::MatchesUnrealIostoreLayout(dir);
+}
+
 // Siglus 游戏（含改名 exe）：exe 名严格匹配，或 exe 同目录具备 Siglus 文件夹签名。用于把 launch
 // 的早注入改为延迟附着，绕过 Enigma 保护壳拒绝挂起态注入导致的 launch_or_inject_failed。
 bool LooksLikeSiglusRuntime(const std::wstring& exe) {
@@ -2464,7 +2520,8 @@ bool ShouldAutoUseLunaPcHooks(const std::wstring& exe) {
       _wcsicmp(base.c_str(), L"SiglusEngine.exe") == 0) {
     return true;
   }
-  return LooksLikeUnityRuntime(exe) || LooksLikeSiglusRuntime(exe);
+  return LooksLikeUnityRuntime(exe) || LooksLikeSiglusRuntime(exe) ||
+         LooksLikeUnrealRuntime(exe);
 }
 
 struct ReadyWindowSearch {
@@ -2711,7 +2768,8 @@ int RunLaunch(const std::wstring& exe, const std::wstring& workdir_in,
   if (!effective_luna.pc_hooks && ShouldAutoUseLunaPcHooks(exe)) {
     effective_luna.pc_hooks = true;
     fprintf(stderr,
-            "[luna] auto-enabled PC hooks for Unity/Mono-style target: %ls\n",
+            "[luna] auto-enabled PC hooks for scripted-host-less target "
+            "(Unity/Mono/Unreal): %ls\n",
             ExecutableBaseName(exe).c_str());
   }
 
@@ -2909,6 +2967,17 @@ int RunLaunch(const std::wstring& exe, const std::wstring& workdir_in,
     }
   }
 
+  // 跟随子进程后目标换人了：自动 PC hooks 的判据必须按**真实游戏镜像**重算。启动器那层
+  // 没有引擎布局，只在 exe 上判一次等于对启动器型游戏永不开启——UE 样本的原始启动入口
+  // 正是外层 stub，判据锚在 `<Game>\Binaries\Win64` 上，在 stub 那层恒为假。
+  if (!effective_luna.pc_hooks && !target_exe.empty() && target_exe != exe &&
+      ShouldAutoUseLunaPcHooks(target_exe)) {
+    effective_luna.pc_hooks = true;
+    fprintf(stderr,
+            "[luna] auto-enabled PC hooks after following game child: %ls\n",
+            ExecutableBaseName(target_exe).c_str());
+  }
+
   ApplyLunaProfiles(target_exe, target_pid, effective_luna.profile_path,
                     &effective_luna);
 
@@ -2962,9 +3031,15 @@ int RunLaunch(const std::wstring& exe, const std::wstring& workdir_in,
         disposition =
             fushi_voice_hook::LaunchedProcessDisposition::kTerminate;
       } else {
+        // 别再说「without hooks」：注入编排失败时 hook DLL 往往**已经在进程里**且
+        // 游戏内自装的音频 hook 已经就绪（真机 WoH 上 26 条音轨、game_resource 全好），
+        // 真正缺的通常只是注入器负责安装的 LunaHook 文本 hook。旧文案把「编排中止」
+        // 说成「一个 hook 都没装」，直接误导了整轮排障（BUG-2131）。
         fprintf(stderr,
-                "[launch] hook failed; game resumed without hooks so it still "
-                "starts\n");
+                "[launch] injection orchestration aborted (reason=%s); game "
+                "resumed. Hooks already installed in-process stay active; "
+                "anything the injector had not installed yet is missing\n",
+                fushi_voice_hook::LaunchFailureToken(reason));
       }
     }
     if (disposition ==

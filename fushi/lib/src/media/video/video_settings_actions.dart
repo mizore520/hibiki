@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:path/path.dart' as p;
 
 import 'package:fushi/src/media/video/video_asbplayer_config.dart';
 import 'package:fushi/src/media/video/video_control_customization.dart';
@@ -10,6 +12,7 @@ import 'package:fushi/src/media/video/video_control_layout_editor.dart';
 import 'package:fushi/src/media/video/video_danmaku_model.dart';
 import 'package:fushi/src/media/video/video_immersive_mode.dart';
 import 'package:fushi/src/media/video/video_hdr_output.dart';
+import 'package:fushi/src/media/video/video_lua_script_manager.dart';
 import 'package:fushi/src/media/video/video_mpv_config.dart';
 import 'package:fushi/src/media/video/video_quick_settings_host.dart';
 import 'package:fushi/src/media/video/video_shader_manager.dart';
@@ -43,9 +46,13 @@ bool videoHostVisible(SettingsContext context) =>
 Future<void> commitVideoMetadataRuntimePreference(
   SettingsContext settingsContext,
   String key,
-  String value,
-) async {
-  await settingsContext.appModel.prefsRepo.setPref(key, value.trim());
+  String value, {
+  bool trimValue = true,
+}) async {
+  await settingsContext.appModel.prefsRepo.setPref(
+    key,
+    trimValue ? value.trim() : value,
+  );
   await settingsContext.appModel.reloadVideoDownloadPipelineRuntime();
 }
 
@@ -162,8 +169,9 @@ Future<void> commitVideoDanmakuStyle(
   SettingsContext context,
   VideoDanmakuStyle Function(VideoDanmakuStyle style) mutate,
 ) async {
-  final VideoDanmakuStyle next =
-      mutate(currentVideoDanmakuStyle(context)).normalized();
+  final VideoDanmakuStyle next = mutate(
+    currentVideoDanmakuStyle(context),
+  ).normalized();
   final VideoQuickSettingsHost? host = videoQuickSettingsHostOf(context);
   if (host?.onDanmakuStyleCommit != null) {
     await host!.onDanmakuStyleCommit!(next);
@@ -217,6 +225,18 @@ Future<void> setVideoDanmakuMaxActiveDual(
 /// 广播会重建整个 app）。host 在场 = 视频页自己 setState 刷新，够了；host 缺席 = 从
 /// **全局设置页**改的（视频页可能仍在路由栈下方挂着），这条低频路径显式补一次全局广播，
 /// 保持「改完返回视频页字幕即新模式」的既有行为不回归。
+Future<void> setVideoSubtitleLanguageFilterDual(
+  SettingsContext context,
+  VideoSubtitleLanguageFilter filter,
+) async {
+  final VideoQuickSettingsHost? host = videoQuickSettingsHostOf(context);
+  if (host != null) {
+    await host.onSetSubtitleLanguageFilter(filter);
+  } else {
+    await context.appModel.setVideoSubtitleLanguageFilter(filter);
+  }
+}
+
 Future<void> setVideoSubtitleObscureModeDual(
   SettingsContext context,
   VideoSubtitleObscureMode mode,
@@ -244,15 +264,18 @@ Future<void> setVideoSecondarySubtitleObscureModeDual(
   }
 }
 
-Future<void> setVideoSubtitleLanguageFilterDual(
+/// 遮蔽态「悬停 / 点击临时显形」总闸的双通道写入（同构于
+/// [setVideoRespectAssStyleDual]）：播放中经 host 落盘 + 重建 overlay，全局设置页
+/// 直接写 [AppModel]（其 setter 照常广播，无需显式补 notify）。
+Future<void> setVideoSubtitleObscureRevealDual(
   SettingsContext context,
-  VideoSubtitleLanguageFilter filter,
+  bool value,
 ) async {
   final VideoQuickSettingsHost? host = videoQuickSettingsHostOf(context);
-  if (host != null) {
-    await host.onSetSubtitleLanguageFilter(filter);
+  if (host?.onSubtitleObscureRevealChanged != null) {
+    await host!.onSubtitleObscureRevealChanged!(value);
   } else {
-    await context.appModel.setVideoSubtitleLanguageFilter(filter);
+    await context.appModel.setVideoSubtitleObscureReveal(value);
   }
 }
 
@@ -416,13 +439,15 @@ Widget _buildSubtitleColorRow(
       size: 24,
       borderColor: Theme.of(buildContext).dividerColor,
     ),
-    onTap: () => unawaited(_pickSubtitleColor(
-      buildContext,
-      title: title,
-      initial: current,
-      onPreview: onPreview,
-      onCommit: onCommit,
-    )),
+    onTap: () => unawaited(
+      _pickSubtitleColor(
+        buildContext,
+        title: title,
+        initial: current,
+        onPreview: onPreview,
+        onCommit: onCommit,
+      ),
+    ),
   );
 }
 
@@ -484,10 +509,12 @@ Widget buildVideoSubtitleTextColorRow(SettingsContext context) {
       context,
       (VideoSubtitleStyle s) => s.copyWith(textColor: c),
     ),
-    onCommit: (Color c) => unawaited(commitVideoSubtitleStyle(
-      context,
-      (VideoSubtitleStyle s) => s.copyWith(textColor: c),
-    )),
+    onCommit: (Color c) => unawaited(
+      commitVideoSubtitleStyle(
+        context,
+        (VideoSubtitleStyle s) => s.copyWith(textColor: c),
+      ),
+    ),
   );
 }
 
@@ -498,9 +525,9 @@ Widget buildVideoSubtitleTextColorRow(SettingsContext context) {
 Widget buildVideoSubtitleBgColorRow(SettingsContext context) {
   final VideoSubtitleStyle style = currentVideoSubtitleStyle(context);
   VideoSubtitleStyle applyColor(VideoSubtitleStyle s, Color c) => s.copyWith(
-        backgroundColor: c,
-        backgroundOpacity: s.backgroundOpacity <= 0 ? 0.6 : s.backgroundOpacity,
-      );
+    backgroundColor: c,
+    backgroundOpacity: s.backgroundOpacity <= 0 ? 0.6 : s.backgroundOpacity,
+  );
   return _buildSubtitleColorRow(
     context,
     title: t.video_setting_subtitle_bg_color,
@@ -510,10 +537,12 @@ Widget buildVideoSubtitleBgColorRow(SettingsContext context) {
       context,
       (VideoSubtitleStyle s) => applyColor(s, c),
     ),
-    onCommit: (Color c) => unawaited(commitVideoSubtitleStyle(
-      context,
-      (VideoSubtitleStyle s) => applyColor(s, c),
-    )),
+    onCommit: (Color c) => unawaited(
+      commitVideoSubtitleStyle(
+        context,
+        (VideoSubtitleStyle s) => applyColor(s, c),
+      ),
+    ),
   );
 }
 
@@ -525,22 +554,25 @@ Widget buildVideoShaderManager(SettingsContext context) {
   return VideoShaderManagerView(
     initialEnabled: decodeEnabledShaders(context.appModel.videoShadersEnabled),
     qualityEnhancementEnabled: currentVideoMpvConfig(context).highQuality,
-    onQualityEnhancementChanged: (bool value) => unawaited(commitVideoMpvConfig(
-      context,
-      (VideoMpvConfig c) => c.copyWith(highQuality: value),
-    )),
+    onQualityEnhancementChanged: (bool value) => unawaited(
+      commitVideoMpvConfig(
+        context,
+        (VideoMpvConfig c) => c.copyWith(highQuality: value),
+      ),
+    ),
     onApply: (List<String> names) async {
       await host.onApplyShaders(names);
       context.refresh();
     },
-    onSelectTier: (
-      VideoShaderTier tier,
-      bool highQuality,
-      List<String> enabledNames,
-    ) async {
-      await host.onSelectShaderTier(tier, highQuality, enabledNames);
-      context.refresh();
-    },
+    onSelectTier:
+        (
+          VideoShaderTier tier,
+          bool highQuality,
+          List<String> enabledNames,
+        ) async {
+          await host.onSelectShaderTier(tier, highQuality, enabledNames);
+          context.refresh();
+        },
     initialMpvDir: context.appModel.videoMpvShaderDir,
     embedded: true,
     onMpvDirChanged: (String dir) async {
@@ -548,6 +580,140 @@ Widget buildVideoShaderManager(SettingsContext context) {
       context.refresh();
     },
   );
+}
+
+/// BUG-2032：mpv Lua 脚本清单 + 每脚本运行态 + 输入边界说明。
+///
+/// 清单来自 `mpv_scripts` 目录（[listLuaScriptPaths]），每次 schema 刷新（导入后
+/// `settingsContext.refresh()`）重扫。状态来自 [VideoQuickSettingsHost.luaScriptStates]
+/// （controller 对 mpv 日志的归因）：不在表里 = 本次播放未装载；值 null = 已下发且
+/// 无报错；字符串 = 归因到该脚本的最近一条 error/fatal 日志原文。无播放器只列文件名。
+Widget buildVideoLuaScriptList(SettingsContext context) {
+  return _VideoLuaScriptList(settingsContext: context);
+}
+
+class _VideoLuaScriptList extends StatefulWidget {
+  const _VideoLuaScriptList({required this.settingsContext});
+
+  final SettingsContext settingsContext;
+
+  @override
+  State<_VideoLuaScriptList> createState() => _VideoLuaScriptListState();
+}
+
+class _VideoLuaScriptListState extends State<_VideoLuaScriptList> {
+  List<String>? _paths;
+
+  @override
+  void initState() {
+    super.initState();
+    _reload();
+  }
+
+  @override
+  void didUpdateWidget(covariant _VideoLuaScriptList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 每次 schema 刷新都拿到新的 SettingsContext 实例 → 重扫目录。旧清单先留着，
+    // 新结果到了再换，不闪空白。
+    if (!identical(oldWidget.settingsContext, widget.settingsContext)) {
+      _reload();
+    }
+  }
+
+  Future<void> _reload() async {
+    final List<String> paths = await listLuaScriptPaths();
+    if (!mounted) return;
+    setState(() => _paths = paths);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<String>? paths = _paths;
+    if (paths == null) return const SizedBox.shrink();
+    final ThemeData theme = Theme.of(context);
+    final TextStyle? noteStyle = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    final Widget note = Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Text(t.video_setting_mpv_lua_scripts_input_note, style: noteStyle),
+    );
+    if (paths.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Text(
+              t.video_setting_mpv_lua_scripts_empty,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          note,
+        ],
+      );
+    }
+    final ValueListenable<Map<String, String?>>? states =
+        videoQuickSettingsHostOf(widget.settingsContext)?.luaScriptStates;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        if (states == null)
+          for (final String path in paths) _row(context, path, null)
+        else
+          ValueListenableBuilder<Map<String, String?>>(
+            valueListenable: states,
+            builder: (BuildContext _, Map<String, String?> map, Widget? __) {
+              return Column(
+                children: <Widget>[
+                  for (final String path in paths) _row(context, path, map),
+                ],
+              );
+            },
+          ),
+        note,
+      ],
+    );
+  }
+
+  /// [states] null = 无播放器（只列名）；否则按三态给图标 + 副标题。
+  Widget _row(BuildContext context, String path, Map<String, String?>? states) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final bool live = states != null;
+    final bool loaded = states != null && states.containsKey(path);
+    final String? error = loaded ? states[path] : null;
+    final String? status = !live
+        ? null
+        : !loaded
+        ? t.video_setting_mpv_lua_scripts_status_not_loaded
+        : error == null
+        ? t.video_setting_mpv_lua_scripts_status_loaded
+        : '${t.video_setting_mpv_lua_scripts_status_error}: $error';
+    final IconData icon = error != null
+        ? Icons.error_outline
+        : loaded
+        ? Icons.check_circle_outline
+        : Icons.description_outlined;
+    final Color? tint = error != null
+        ? scheme.error
+        : loaded
+        ? scheme.primary
+        : null;
+    return FushiListItem(
+      density: FushiListDensity.compact,
+      leading: Icon(icon, color: tint),
+      title: Text(p.basename(path)),
+      subtitle: status == null
+          ? null
+          : Text(
+              status,
+              style: error != null ? TextStyle(color: scheme.error) : null,
+            ),
+      subtitleMaxLines: 3,
+    );
+  }
 }
 
 /// 原始 mpv.conf 多行逃生口（AdaptiveSettingsTextField 不支持多行故用原生
@@ -579,8 +745,9 @@ class _VideoMpvRawConfFieldState extends State<_VideoMpvRawConfField> {
     // 契约依赖：页面 onMpvConfigChanged 在其第一个 await 前同步落 pref 缓存
     // （currentVideoMpvConfig 立即读到刚键入的值）——否则键入后的 rebuild 会在
     // 这里读到旧值并回写输入框、打断光标。改动持久化时序前先看这里。
-    final String external =
-        currentVideoMpvConfig(widget.settingsContext).rawConf;
+    final String external = currentVideoMpvConfig(
+      widget.settingsContext,
+    ).rawConf;
     if (external != _controller.text) _controller.text = external;
   }
 
@@ -618,10 +785,12 @@ class _VideoMpvRawConfFieldState extends State<_VideoMpvRawConfField> {
               helperMaxLines: 4,
               border: const OutlineInputBorder(),
             ),
-            onChanged: (String v) => unawaited(commitVideoMpvConfig(
-              widget.settingsContext,
-              (VideoMpvConfig c) => c.copyWith(rawConf: v),
-            )),
+            onChanged: (String v) => unawaited(
+              commitVideoMpvConfig(
+                widget.settingsContext,
+                (VideoMpvConfig c) => c.copyWith(rawConf: v),
+              ),
+            ),
           ),
         ],
       ),
@@ -657,13 +826,15 @@ class _VideoDanmakuBlockRulesFieldState
   }
 
   Future<void> _commit(String value) async {
-    final VideoQuickSettingsHost? host =
-        videoQuickSettingsHostOf(widget.settingsContext);
+    final VideoQuickSettingsHost? host = videoQuickSettingsHostOf(
+      widget.settingsContext,
+    );
     if (host?.onDanmakuBlockRulesChanged != null) {
       await host!.onDanmakuBlockRulesChanged!(value);
     } else {
-      await widget.settingsContext.appModel
-          .setVideoDanmakuBlockRulesText(value);
+      await widget.settingsContext.appModel.setVideoDanmakuBlockRulesText(
+        value,
+      );
     }
   }
 
@@ -683,8 +854,8 @@ class _VideoDanmakuBlockRulesFieldState
           Text(
             t.video_setting_danmaku_block_rules_hint,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           SizedBox(height: tokens.spacing.gap / 2),
           TextField(

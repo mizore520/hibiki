@@ -19,14 +19,15 @@ import 'package:fushi/src/media/metadata/credential_redaction.dart';
 import 'package:fushi/src/media/torrent/anime_download_config.dart';
 import 'package:fushi/src/media/torrent/magnet_utils.dart';
 import 'package:fushi/src/media/torrent/nyaa_client.dart' show kNyaaTrackers;
-import 'package:fushi/src/media/torrent/public_video_index_client.dart'
-    show kPublicVideoIndexTrackers;
+import 'package:fushi/src/media/torrent/public_trackers.dart'
+    show kPublicTrackers;
 import 'package:fushi/src/media/torrent/public_video_index_provider.dart'
     show kApibayResourceProviderId, kKnabenResourceProviderId;
 import 'package:fushi/src/media/torrent/torrent_add_coordinator.dart';
 import 'package:fushi/src/media/torrent/torrent_backend.dart';
 import 'package:fushi/src/media/torrent/torrent_metainfo.dart';
 import 'package:fushi/src/media/torrent/video_resource_provider.dart';
+import 'package:fushi/src/media/video/discovery/discovery_metadata_identity.dart';
 import 'package:fushi/src/media/video/discovery/video_discovery_provider.dart';
 import 'package:fushi/src/media/video/download/video_download_backend_identity.dart';
 import 'package:fushi/src/media/video/download/video_download_organizer.dart';
@@ -762,7 +763,16 @@ class VideoDownloadLeaseGuard {
     bool renewed = false;
     try {
       renewed = await _renew();
-    } on Object {
+    } on Object catch (error, stack) {
+      // 语义不变：续期异常照旧按「租约丢失」处理。但必须记账——BUG-2119 里一条
+      // 续期 UPDATE 拿到 SQLITE_BUSY 后就是在这里被静默吞掉的，那条挂起的写语句
+      // 随后毒化了整条数据库连接（每次 COMMIT 都抛「SQL statements in progress」），
+      // 错误日志里却看不到第一现场。
+      ErrorLogService.instance.log(
+        'VideoDownloadLeaseGuard.renew',
+        error,
+        stack,
+      );
       renewed = false;
     }
     if (!renewed && !_released && !_stopped) markLost();
@@ -1994,7 +2004,7 @@ class VideoDownloadPipelineService {
     // apibay 联网走的也是同一份常量 tracker（`NyaaTorrent.magnet` /
     // `buildPublicVideoIndexMagnet`），完全等价；**Knaben 例外**——它的 API 直接
     // 给 `magnetUrl`，联网时原样透传，离线路径统一换成
-    // `kPublicVideoIndexTrackers`，可能丢掉 knaben 自带的少量 tracker。公共
+    // `kPublicTrackers`，可能丢掉 knaben 自带的少量 tracker。公共
     // tracker + DHT 足以补齐，用一条必然发生的 notFound 误报换它不划算。
     // 真正必须重搜的只剩私有 Torznab：它的 .torrent 走临时凭据 URL，不落库。
     final TorrentMagnetPayload? offline = _publicIndexerMagnetPayload(job);
@@ -2034,7 +2044,7 @@ class VideoDownloadPipelineService {
         ? kNyaaTrackers
         : isProvider(kApibayResourceProviderId) ||
               isProvider(kKnabenResourceProviderId)
-        ? kPublicVideoIndexTrackers
+        ? kPublicTrackers
         : null;
     if (trackers == null) return null;
     final String hash = (job.torrentHash ?? job.selectedResourceId)
@@ -2660,8 +2670,8 @@ class VideoDownloadPipelineService {
     // 字幕补齐链路（VideoSubtitleBackfillService）接手。
     final VideoDownloadJobFileRow? movieMain =
         job.mediaKind == VideoMetadataMediaKind.movie.name
-        ? _mainMovieRow(files)
-        : null;
+            ? _mainMovieRow(files)
+            : null;
     bool anyInstalled = false;
     for (final VideoDownloadJobFileRow file in files) {
       if (movieMain != null && file.id != movieMain.id) continue;
@@ -3432,13 +3442,8 @@ class VideoDownloadPipelineService {
       );
     }
     database.notifyVideoLibraryChanged();
-    // 刮削只认 AniDB 规范身份（BUG-2004）。修前的判据方向正好反了：带
-    // anilist/bangumi 等杂牌 id 的任务被强制进 scrape，解析层却整条丢弃这些
-    // lookup、退回拿显示名模糊搜 → 歧义 → needsAttention 卡死且管线内无法
-    // 交互确认；而没有任何 id 的任务反而直接完成。现在判据只有一条：入队
-    // 快照里有已确认的 AniDB id 才进 scrape；否则任务正常完成，作品留在
-    // 视频页的待确认队列（刮削重设计 P2）由用户补身份或由自动补刮认领。
-    if (legacy || _confirmedAniDbId(job) == null) {
+    // 已确认的 MAL/TMDB 身份直接刮削；无身份作品留给媒体库自动识别或人工确认。
+    if (legacy || _confirmedMetadataLookup(job) == null) {
       await _releaseLeaseWith(
         () => database.completeVideoDownloadJob(
           jobId: job.jobId,
@@ -3451,18 +3456,9 @@ class VideoDownloadPipelineService {
     await _advance(job, VideoDownloadJobStage.scrape, nowAt: now);
   }
 
-  /// 任务携带的已确认 AniDB 身份：优先 v94 identity_json 快照，回退旧行
-  /// （metadataProvider == 'anidb' 的 externalId）。null = 无规范身份。
-  int? _confirmedAniDbId(VideoDownloadJobRow job) {
-    final VideoMediaReference? stored = decodeVideoMediaReference(
-      job.identityJson,
-    );
-    if (stored?.anidbId != null) return stored!.anidbId;
-    if (job.metadataProvider == 'anidb') {
-      return int.tryParse(job.externalId ?? '');
-    }
-    return null;
-  }
+  /// 从持久化发现身份恢复 MAL/TMDB lookup，保留旧行读取兼容。
+  VideoMetadataLookup? _confirmedMetadataLookup(VideoDownloadJobRow job) =>
+      videoDiscoveryMetadataLookup(_mediaReference(job));
 
   /// 手动「按域入库」任务的 import：整包绝对路径交给 [discoveryImporter]
   /// （分类 → 需要时解压 → 各域既有导入原语），成功即完成任务。
@@ -3526,11 +3522,11 @@ class VideoDownloadPipelineService {
   Future<void> _scrapeMedia(VideoDownloadJobRow job) async {
     _ensureLeaseHeld();
     final MediaSourceRow source = await _managedSource(job);
-    final int? anidbId = _confirmedAniDbId(job);
-    final VideoMetadataMediaKind? mediaKind = VideoMetadataMediaKind.values
-        .asNameMap()[job.mediaKind];
-    if (anidbId == null || mediaKind == null) {
-      // 防御分支：import 阶段的闸已保证只有带 AniDB 身份的任务进到这里。
+    final VideoMetadataLookup? lookup = _confirmedMetadataLookup(job);
+    final VideoMetadataMediaKind? mediaKind =
+        VideoMetadataMediaKind.values.asNameMap()[job.mediaKind];
+    if (lookup == null || mediaKind == null) {
+      // 防御分支：import 阶段的闸已保证只有带 MAL/TMDB 身份的任务进到这里。
       // 万一（旧行重试/竞态）没有身份，按同一判据正常完成而不是卡死。
       await _releaseLeaseWith(
         () => database.completeVideoDownloadJob(
@@ -3609,15 +3605,9 @@ class VideoDownloadPipelineService {
         'Imported media could not be mapped exactly back to its managed source',
       );
     }
-    // AniDB 是唯一能直接确认主身份的 provider（解析层对其余 provider 的
-    // confirmedLookup 一律降级，见 VideoSourceScrapeCoordinator._resolveWork）。
     final report = await scrapeCoordinator.scrapeImportedWork(
       work,
-      lookup: VideoMetadataLookup(
-        provider: VideoMetadataProviderKind.anidb,
-        externalId: '$anidbId',
-        mediaKind: mediaKind,
-      ),
+      lookup: lookup,
     );
     _ensureLeaseHeld();
     database.notifyVideoLibraryChanged();
@@ -3852,9 +3842,8 @@ class VideoDownloadPipelineService {
     // v94（BUG-2003）：身份面（原名/别名/全部外部 id）从入队快照恢复——字幕
     // 搜索从此拿得到日文原名与罗马字别名。任务列（title/year/season/kind）仍是
     // 用户可见与流程真值。旧行（NULL 快照）走修前的单 id 重建。
-    final VideoMediaReference? stored = decodeVideoMediaReference(
-      job.identityJson,
-    );
+    final VideoMediaReference? stored =
+        decodeVideoMediaReference(job.identityJson);
     if (stored != null) {
       return VideoMediaReference(
         providerId: stored.providerId,
@@ -3939,8 +3928,7 @@ class VideoDownloadPipelineService {
     }
     return <int, String>{
       for (final int id in raw.keys)
-        id:
-            parsed[id]!.isEmpty ||
+        id: parsed[id]!.isEmpty ||
                 parsed[id] == mainTitle ||
                 hits[parsed[id]]! > 1
             ? raw[id]!

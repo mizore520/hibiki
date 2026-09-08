@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -1063,8 +1064,16 @@ void main() {
       expect(doc.contains("callHandler('onMangaContextMenu'"), isTrue);
       expect(
         doc.contains("callHandler('onMangaMouseShortcut'"),
+        isFalse,
+        reason: '作者原生 WebView 鼠标桥已接管按键，HTML 不应再重复转发旧 personal handler',
+      );
+      final String pageSource = File(
+        'lib/src/media/manga/reader/manga_fushi_page.dart',
+      ).readAsStringSync();
+      expect(
+        pageSource.contains("handlerName: 'onMangaMouseButton'"),
         isTrue,
-        reason: '鼠标按键必须从原生 WebView 回传到可配置快捷键解析器',
+        reason: '鼠标按键必须由作者原生 WebView 桥回传到可配置快捷键解析器',
       );
       expect(doc.contains("callHandler('onMangaZoomChanged'"), isTrue);
       expect(doc.contains('e.ctrlKey || e.metaKey'), isTrue);

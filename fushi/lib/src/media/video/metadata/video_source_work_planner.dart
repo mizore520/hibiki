@@ -52,22 +52,28 @@ class VideoSourceWorkPlanner {
   final FushiDatabase _database;
 
   Future<List<VideoSourceScrapeWork>> plan(SourceLibraryRow source) async {
-    if (source.mediaKind != 'video') return const <VideoSourceScrapeWork>[];
+    if (source.mediaKind != 'video' || source.videoGroupingMode == 'folder') {
+      return const <VideoSourceScrapeWork>[];
+    }
 
     final List<VideoBookRow> sourceBooks = (await _database.allVideoBooks())
         .where((VideoBookRow row) => row.sourceId == source.id)
         .toList();
     if (sourceBooks.isEmpty) return const <VideoSourceScrapeWork>[];
 
-    final List<MediaCollectionItemRow> allItems = await _database
-        .getAllCollectionItems();
-    final Map<String, int> primaryCollections =
-        multiMemberCollectionIdByVideoUid(allItems);
+    final List<MediaCollectionItemRow> allItems =
+        await _database.getAllCollectionItems();
     final Map<int, MediaCollectionRow> collections = <int, MediaCollectionRow>{
       for (final MediaCollectionRow row
           in await _database.getAllMediaCollections())
         row.id: row,
     };
+    // 目录合集是用户组织容器，切回作品模式后仍保留，但不能充当动画身份。
+    final Map<String, int> primaryCollections =
+        multiMemberCollectionIdByVideoUid(<MediaCollectionItemRow>[
+      for (final MediaCollectionItemRow item in allItems)
+        if (collections[item.collectionId]?.sourceFolderPath == null) item,
+    ]);
     final Map<int, List<VideoBookRow>> grouped = <int, List<VideoBookRow>>{};
     final List<VideoSourceScrapeWork> result = <VideoSourceScrapeWork>[];
 
@@ -76,19 +82,16 @@ class VideoSourceWorkPlanner {
       // 可独立识别的作品，不能让一次来源刮削多出四个必失败任务。
       if (classifyLocalVideoExtra(book.videoPath) != null) continue;
       final int? collectionId = primaryCollections[book.bookUid];
-      final VideoNameInfo parsed = parseVideoFilename(
-        p.basename(book.videoPath),
-      );
+      final VideoNameInfo parsed =
+          parseVideoFilename(p.basename(book.videoPath));
       if (collectionId == null ||
           collections[collectionId] == null ||
           parsed.episode == null) {
-        result.add(
-          VideoSourceScrapeWork(
-            source: source,
-            title: book.title,
-            members: <VideoBookRow>[book],
-          ),
-        );
+        result.add(VideoSourceScrapeWork(
+          source: source,
+          title: book.title,
+          members: <VideoBookRow>[book],
+        ));
         continue;
       }
       grouped.putIfAbsent(collectionId, () => <VideoBookRow>[]).add(book);
@@ -96,24 +99,19 @@ class VideoSourceWorkPlanner {
 
     for (final MapEntry<int, List<VideoBookRow>> entry in grouped.entries) {
       final MediaCollectionRow collection = collections[entry.key]!;
-      entry.value.sort(
-        (VideoBookRow a, VideoBookRow b) =>
-            a.videoPath.toLowerCase().compareTo(b.videoPath.toLowerCase()),
-      );
-      result.add(
-        VideoSourceScrapeWork(
-          source: source,
-          collection: collection,
-          title: collection.name,
-          members: List<VideoBookRow>.unmodifiable(entry.value),
-        ),
-      );
+      entry.value.sort((VideoBookRow a, VideoBookRow b) =>
+          a.videoPath.toLowerCase().compareTo(b.videoPath.toLowerCase()));
+      result.add(VideoSourceScrapeWork(
+        source: source,
+        collection: collection,
+        title: collection.name,
+        members: List<VideoBookRow>.unmodifiable(entry.value),
+      ));
     }
 
     result.sort((VideoSourceScrapeWork a, VideoSourceScrapeWork b) {
-      final int byTitle = a.title.toLowerCase().compareTo(
-        b.title.toLowerCase(),
-      );
+      final int byTitle =
+          a.title.toLowerCase().compareTo(b.title.toLowerCase());
       if (byTitle != 0) return byTitle;
       return a.stableKey.compareTo(b.stableKey);
     });

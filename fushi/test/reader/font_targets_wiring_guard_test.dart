@@ -107,13 +107,16 @@ void main() {
 
   test('reader body CSS still uses the legacy body customFonts list', () {
     final String src = read('lib/src/reader/reader_content_styles.dart');
-    expect(src.contains('settings.buildCustomFontCss()'), isTrue);
+    expect(
+      RegExp(r'settings\s*\.\s*buildCustomFontCss\(\)').hasMatch(src),
+      isTrue,
+    );
     final String settings = read('lib/src/reader/reader_settings.dart');
     // buildCustomFontCss must stay bound to the BODY target (legacy key).
     expect(
-      settings.contains(
-        'buildCustomFontCss() =>\n      customFontCssForEntries(customFonts)',
-      ),
+      RegExp(
+        r'buildCustomFontCss\(\)\s*=>\s*customFontCssForEntries\(customFonts\)',
+      ).hasMatch(settings),
       isTrue,
     );
   });

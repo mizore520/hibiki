@@ -6,10 +6,8 @@ part of '../sync_settings_schema.dart';
 
 @visibleForTesting
 Set<BackupCategory> defaultBackupExportCategories() => BackupCategory.values
-    .where(
-      (BackupCategory c) =>
-          c != BackupCategory.videos && c != BackupCategory.localAudio,
-    )
+    .where((BackupCategory c) =>
+        c != BackupCategory.videos && c != BackupCategory.localAudio)
     .toSet();
 
 /// Localised display name for a backup [category] (TODO-1358). Shared by the
@@ -68,9 +66,9 @@ String backupCategoryDescription(BackupCategory category) {
 
 /// Every content category the user can individually skip on import (TODO-1358).
 /// Both modes now honour the full set: overwrite strips the unticked category's
-/// rows/files from the swapped-in DB ([BackupService.restoreBackup]); merge
+/// rows/files from the swapped-in DB ([BackupRestoreService.restoreBackup]); merge
 /// skips its per-category engine steps + content-tree copy
-/// ([BackupService.mergeRestoreBackup]). settings / profiles stay governed
+/// ([BackupRestoreService.mergeRestoreBackup]). settings / profiles stay governed
 /// by the separate "import settings and profiles" toggle (overwrite) / kept
 /// local (merge), so they are not listed here.
 const Set<BackupCategory> importSelectableCategories = <BackupCategory>{
@@ -169,9 +167,8 @@ class _BackupExportWidgetState extends State<_BackupExportWidget> {
     if (!mounted) return;
     // Ask which sidecar trees to include (default all). Null = the user
     // cancelled the dialog -> abort the export entirely (TODO-106).
-    final Set<BackupCategory>? categories = await _pickExportCategories(
-      summary,
-    );
+    final Set<BackupCategory>? categories =
+        await _pickExportCategories(summary);
     if (categories == null || !mounted) return;
     // 交棒点：此后一律由 AppModel 驱动，不再看本 State 的 mounted / context。
     await runBackupExportFlow(
@@ -180,9 +177,8 @@ class _BackupExportWidgetState extends State<_BackupExportWidget> {
       categories: categories,
       // Per-book selection (TODO-1195 part A) only applies when the Books
       // category is packed; excluding Books strips every book regardless.
-      bookKeys: categories.contains(BackupCategory.books)
-          ? _selectedBookKeys
-          : null,
+      bookKeys:
+          categories.contains(BackupCategory.books) ? _selectedBookKeys : null,
       videoKeys: categories.contains(BackupCategory.videos)
           ? _selectedVideoKeys
           : null,
@@ -194,8 +190,7 @@ class _BackupExportWidgetState extends State<_BackupExportWidget> {
   /// so confirming without touching anything reproduces the legacy all-in
   /// export. Returns the chosen set, or null if the user cancelled.
   Future<Set<BackupCategory>?> _pickExportCategories(
-    BackupContentSummary summary,
-  ) async {
+      BackupContentSummary summary) async {
     final Set<BackupCategory> selected = defaultBackupExportCategories();
     assert(!selected.contains(BackupCategory.videos));
     assert(!selected.contains(BackupCategory.localAudio));
@@ -276,7 +271,7 @@ class _BackupExportWidgetState extends State<_BackupExportWidget> {
                       title: labelFor(c),
                       subtitle: summary.counts.containsKey(c)
                           ? '${backupCategoryDescription(c)} '
-                                '(${summary.countFor(c)})'
+                              '(${summary.countFor(c)})'
                           : backupCategoryDescription(c),
                       value: selected.contains(c),
                       onChanged: (bool v) => setLocal(() {
@@ -296,13 +291,11 @@ class _BackupExportWidgetState extends State<_BackupExportWidget> {
                         subtitle: chosenBooks == null
                             ? t.backup_export_books_all
                             : t.backup_export_books_selected(
-                                count: chosenBooks!.length.toString(),
-                              ),
+                                count: chosenBooks!.length.toString()),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () async {
-                          final Set<String>? picked = await _pickBooks(
-                            chosenBooks,
-                          );
+                          final Set<String>? picked =
+                              await _pickBooks(chosenBooks);
                           setLocal(() => chosenBooks = picked);
                         },
                       ),
@@ -315,13 +308,11 @@ class _BackupExportWidgetState extends State<_BackupExportWidget> {
                         subtitle: chosenVideos == null
                             ? t.backup_export_videos_all
                             : t.backup_export_videos_selected(
-                                count: chosenVideos!.length.toString(),
-                              ),
+                                count: chosenVideos!.length.toString()),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () async {
-                          final Set<String>? picked = await _pickVideos(
-                            chosenVideos,
-                          );
+                          final Set<String>? picked =
+                              await _pickVideos(chosenVideos);
                           setLocal(() => chosenVideos = picked);
                         },
                       ),
@@ -363,11 +354,8 @@ class _BackupExportWidgetState extends State<_BackupExportWidget> {
   /// (null = every book). Returns the chosen set, collapsing "all ticked" back
   /// to null (the legacy full-export path), or [current] unchanged on cancel.
   Future<Set<String>?> _pickBooks(Set<String>? current) async {
-    final List<EpubBookRow> books = await widget
-        .settingsContext
-        .appModel
-        .database
-        .getAllEpubBooks();
+    final List<EpubBookRow> books =
+        await widget.settingsContext.appModel.database.getAllEpubBooks();
     // State.context guarded by State.mounted (coherent for the lint): the
     // settings page may have unmounted while the library loaded.
     if (!mounted) return current;
@@ -375,9 +363,8 @@ class _BackupExportWidgetState extends State<_BackupExportWidget> {
       _showSnackBar(context, t.backup_export_no_books);
       return current;
     }
-    final List<String> keys = books
-        .map((EpubBookRow b) => b.bookKey)
-        .toList(growable: false);
+    final List<String> keys =
+        books.map((EpubBookRow b) => b.bookKey).toList(growable: false);
     // Seed: null (all) → every book ticked; otherwise the given subset.
     final Set<String> sel = current == null
         ? keys.toSet()
@@ -423,21 +410,17 @@ class _BackupExportWidgetState extends State<_BackupExportWidget> {
                     spacing: 8,
                     runSpacing: 4,
                     children: <Widget>[
-                      Text(
-                        '${sel.length} / ${keys.length}',
-                        style: Theme.of(ctx).textTheme.bodySmall,
-                      ),
+                      Text('${sel.length} / ${keys.length}',
+                          style: Theme.of(ctx).textTheme.bodySmall),
                       Wrap(
                         spacing: 4,
                         runSpacing: 4,
                         children: <Widget>[
                           adaptiveDialogAction(
                             context: ctx,
-                            onPressed: () => setLocal(
-                              () => sel
-                                ..clear()
-                                ..addAll(keys),
-                            ),
+                            onPressed: () => setLocal(() => sel
+                              ..clear()
+                              ..addAll(keys)),
                             child: Text(t.backup_export_select_all),
                           ),
                           adaptiveDialogAction(
@@ -498,11 +481,8 @@ class _BackupExportWidgetState extends State<_BackupExportWidget> {
   /// "all ticked" back to null (the legacy full-export path), or [current]
   /// unchanged on cancel.
   Future<Set<String>?> _pickVideos(Set<String>? current) async {
-    final List<VideoBookRow> videos = await widget
-        .settingsContext
-        .appModel
-        .database
-        .allVideoBooks();
+    final List<VideoBookRow> videos =
+        await widget.settingsContext.appModel.database.allVideoBooks();
     // State.context guarded by State.mounted (coherent for the lint): the
     // settings page may have unmounted while the library loaded.
     if (!mounted) return current;
@@ -510,9 +490,8 @@ class _BackupExportWidgetState extends State<_BackupExportWidget> {
       _showSnackBar(context, t.backup_export_no_videos);
       return current;
     }
-    final List<String> keys = videos
-        .map((VideoBookRow v) => v.bookUid)
-        .toList(growable: false);
+    final List<String> keys =
+        videos.map((VideoBookRow v) => v.bookUid).toList(growable: false);
     // Seed: null (all) → every video ticked; otherwise the given subset.
     final Set<String> sel = current == null
         ? keys.toSet()
@@ -558,21 +537,17 @@ class _BackupExportWidgetState extends State<_BackupExportWidget> {
                     spacing: 8,
                     runSpacing: 4,
                     children: <Widget>[
-                      Text(
-                        '${sel.length} / ${keys.length}',
-                        style: Theme.of(ctx).textTheme.bodySmall,
-                      ),
+                      Text('${sel.length} / ${keys.length}',
+                          style: Theme.of(ctx).textTheme.bodySmall),
                       Wrap(
                         spacing: 4,
                         runSpacing: 4,
                         children: <Widget>[
                           adaptiveDialogAction(
                             context: ctx,
-                            onPressed: () => setLocal(
-                              () => sel
-                                ..clear()
-                                ..addAll(keys),
-                            ),
+                            onPressed: () => setLocal(() => sel
+                              ..clear()
+                              ..addAll(keys)),
                             child: Text(t.backup_export_select_all),
                           ),
                           adaptiveDialogAction(
@@ -647,32 +622,33 @@ class _BackupExportWidgetState extends State<_BackupExportWidget> {
           trailing: exporting
               ? ValueListenableBuilder<double?>(
                   valueListenable: appModel.backupExportProgress,
-                  builder:
-                      (BuildContext context, double? progress, Widget? _) =>
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: adaptiveIndicator(
-                                  context: context,
-                                  strokeWidth: 2,
-                                  // null = 还在准备阶段（VACUUM INTO / 按分类裁剪 /
-                                  // 枚举待打包文件），没有可分的量，走不确定动画；
-                                  // 进了打包阶段就按已写字节走确定进度。
-                                  value: progress,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                progress == null
-                                    ? t.backup_exporting
-                                    : '${t.backup_exporting} '
-                                          '${(progress * 100).floor()}%',
-                              ),
-                            ],
-                          ),
+                  builder: (
+                    BuildContext context,
+                    double? progress,
+                    Widget? _,
+                  ) =>
+                      Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: adaptiveIndicator(
+                          context: context,
+                          strokeWidth: 2,
+                          // null = 还在准备阶段（VACUUM INTO / 按分类裁剪 /
+                          // 枚举待打包文件），没有可分的量，走不确定动画；
+                          // 进了打包阶段就按已写字节走确定进度。
+                          value: progress,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(progress == null
+                          ? t.backup_exporting
+                          : '${t.backup_exporting} '
+                              '${(progress * 100).floor()}%'),
+                    ],
+                  ),
                 )
               : FilledButton.tonal(
                   onPressed: _export,
@@ -706,9 +682,8 @@ class _BackupExportWidgetState extends State<_BackupExportWidget> {
 /// 周期一致——否则用户会以为那 200MB 是自己的存档，点一次导出却发现它没了。
 Future<void> _sweepStaleBackupArchives(Directory tmpDir) async {
   try {
-    await for (final FileSystemEntity entity in tmpDir.list(
-      followLinks: false,
-    )) {
+    await for (final FileSystemEntity entity
+        in tmpDir.list(followLinks: false)) {
       if (entity is! File) continue;
       if (!isBackupArchiveName(p.basename(entity.path))) continue;
       try {
@@ -741,6 +716,9 @@ Future<void> runBackupExportFlow({
   appModel.beginBackupExport();
   String? failure;
   bool cancelled = false;
+  // BUG-2193：打包时被跳过的词典（元数据在、磁盘资源缺失）。以前这种情况让**全部**
+  // 词典都不进包，而导出照样报「成功」——用户下次在新设备恢复才会发现词典全没了。
+  List<String> skippedDictionaries = const <String>[];
   try {
     final Directory tmpDir = await getTemporaryDirectory();
     await _sweepStaleBackupArchives(tmpDir);
@@ -753,11 +731,14 @@ Future<void> runBackupExportFlow({
       bookKeys: bookKeys,
       videoKeys: videoKeys,
       onProgress: appModel.reportBackupExportProgress,
+      onDictionariesSkipped: (List<String> names) =>
+          skippedDictionaries = names,
     );
     if (Platform.isAndroid || Platform.isIOS) {
-      await FushiShare.shareFiles(<XFile>[
-        XFile(tmpPath, mimeType: 'application/zip'),
-      ], subject: filename);
+      await FushiShare.shareFiles(
+        <XFile>[XFile(tmpPath, mimeType: 'application/zip')],
+        subject: filename,
+      );
     } else {
       final String? savePath = await FilePicker.platform.saveFile(
         dialogTitle: t.backup_export,
@@ -789,7 +770,12 @@ Future<void> runBackupExportFlow({
   _showSnackBar(
     rootCtx,
     failure == null
-        ? t.backup_export_success
+        ? (skippedDictionaries.isEmpty
+            ? t.backup_export_success
+            : t.backup_export_dictionaries_skipped(
+                n: skippedDictionaries.length,
+                names: skippedDictionaries.join('、'),
+              ))
         : t.backup_export_failed(message: failure),
   );
 }
@@ -814,7 +800,7 @@ class _BackupImportChoice {
 
   /// Categories to RESTORE on an overwrite import (TODO-1358): every
   /// always-restored category plus the selectable ones the user kept ticked.
-  /// Forwarded to [BackupService.restoreBackup]; ignored for merge.
+  /// Forwarded to [BackupRestoreService.restoreBackup]; ignored for merge.
   final Set<BackupCategory> categories;
 }
 
@@ -833,11 +819,11 @@ class _BackupImportWidgetState extends State<_BackupImportWidget> {
     // Re-entrant guard: the row's Activate (A/Enter) and the trailing button
     // both call this, so ignore a second trigger while an import is running.
     if (_isImporting) return;
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['zip'],
+    final String? path = await pickSystemFilePath(
+      context: context,
+      allowedExtensions: <String>{'zip'},
     );
-    if (result == null || result.files.single.path == null) return;
+    if (path == null) return;
     if (!mounted) return;
 
     setState(() => _isImporting = true);
@@ -846,7 +832,7 @@ class _BackupImportWidgetState extends State<_BackupImportWidget> {
       // 新手引导「导入推荐包」共用同一份实现（单一真相源）。
       await runBackupImportFlowForFile(
         appModel: widget.settingsContext.appModel,
-        filePath: result.files.single.path!,
+        filePath: path,
       );
     } finally {
       if (mounted) setState(() => _isImporting = false);
@@ -888,44 +874,51 @@ class _BackupImportWidgetState extends State<_BackupImportWidget> {
 /// 确认对话框（覆盖/合并 + 分类勾选）→ running 遮罩 → 导入 → 自动重启。设置页
 /// 「导入备份」与新手引导「导入推荐包」共用（单一真相源）。校验失败/用户取消时
 /// 正常返回（进程不重启）；导入成功或失败都会走 appModel 的遮罩收口并重启进程。
-/// [onImportConfirmed] 在用户于确认对话框点了确定、导入即将真正开始时回调（新手
-/// 引导用它给下载的推荐包落「已导入」flag，重启后收尾删包）；校验失败或用户取消
-/// 不会触发。
+/// [onImportSucceeded] 仅在恢复成功后、重启前回调。推荐包用它记录待办教程和
+/// 成功清理凭据；校验失败、取消或恢复失败均不会触发。
 Future<void> runBackupImportFlowForFile({
   required AppModel appModel,
   required String filePath,
-  Future<void> Function()? onImportConfirmed,
+  Future<void> Function()? onImportSucceeded,
 }) async {
-  // appModel 驱动全程遮罩：validating/running 遮罩都会切走调用方页面（tree swap），
-  // 此后不依赖任何页面 `mounted`/context；确认对话框由全局 [AppModel.navigatorKey]
-  // 宿主弹出（退出遮罩、切回正常 app 树后再弹）。
+  // appModel 驱动全程遮罩，此后不依赖任何页面 `mounted`/context；确认对话框由全局
+  // [AppModel.navigatorKey] 宿主弹出。
+  //
+  // BUG-2106：两个相位的遮罩宿主**不同**，别再当成同一件事：
+  //   * validating（本函数前半段）：DB 仍打开、可取消 → 遮罩是压在**调用方页面之上的
+  //     模态路由**（[_BackupValidatingOverlay]），调用方路由留在栈里。原先它也走换根，
+  //     整棵 Navigator 被卸载 → 引导向导整段蒸发、`await push` 的 future 永不完成、
+  //     失败提示无处可弹（= 用户报的「选完本地包强制退出引导且没有任何提醒」）。
+  //   * running/done/failed（后半段）：已 closeDatabase，页面再挂着就会查已关闭的库 →
+  //     必须换根独占（`main.dart` 的 [AppModel.backupImportOwnsAppRoot] 分支），随后重启。
   //
   // TODO-1151: 先上屏「正在读取备份…」全屏遮罩（validating 相位），再跑 validate + 合并
   // 预览——大 zip 这段要数十秒，旧版只有设置行 24px 小圈无明显反馈。beginBackupValidating
   // 返回本轮 token；用户点「取消」或新一轮校验会作废它，in-flight 后台 isolate 结果回来
   // 时用 isBackupValidatingCurrent 判断是否仍是最新，陈旧结果直接丢弃（干净 token 判定）。
   final int validatingToken = appModel.beginBackupValidating();
+  // BUG-2106：校验遮罩压成模态路由（不换根），调用方页面留在栈里。
+  final _BackupValidatingOverlay overlay = _BackupValidatingOverlay.show(
+    appModel,
+  );
   BackupMeta? meta;
   BackupMergePreview? mergePreview;
   BackupContentSummary? summary;
   try {
-    final service = BackupService(
-      db: appModel.database,
-      dbDirectory: appModel.databaseDirectory.path,
-      dictionaryResourceDirectory: appModel.dictionaryResourceDirectory.path,
-      appVersion: appModel.packageInfo.version,
-    );
-
-    final BackupMeta? validated = await service.validateBackup(filePath);
+    // 校验 / 读包摘要是恢复侧的静态操作（B1 分家）：不再为此构造一个导出用的
+    // BackupService 实例。
+    final BackupMeta? validated =
+        await BackupRestoreService.validateBackup(filePath);
     // 已取消/被新一轮校验取代 → 丢弃陈旧结果（遮罩已由 cancel 退出，无需再动）。
     if (!appModel.isBackupValidatingCurrent(validatingToken)) return;
     if (validated == null) {
-      await _endValidatingThenSnack(appModel, t.backup_import_invalid);
+      await _endValidatingThenSnack(appModel, overlay, t.backup_import_invalid);
       return;
     }
     if (validated.schemaVersion > appModel.database.schemaVersion) {
       await _endValidatingThenSnack(
         appModel,
+        overlay,
         t.backup_schema_newer(version: validated.schemaVersion.toString()),
       );
       return;
@@ -933,7 +926,8 @@ Future<void> runBackupImportFlowForFile({
 
     // TODO-1195 part B: best-effort merge preview for the confirm dialog.
     // Runs against the still-open live DB; null on any failure → generic UI.
-    final BackupMergePreview? preview = await BackupService.previewMergeRestore(
+    final BackupMergePreview? preview =
+        await BackupRestoreService.previewMergeRestore(
       liveDb: appModel.database,
       dbDirectory: appModel.databaseDirectory.path,
       zipPath: filePath,
@@ -942,8 +936,8 @@ Future<void> runBackupImportFlowForFile({
     // TODO-1358: read the archive "what is inside" manifest for the confirm
     // dialog (per-category counts + the restore toggles). Cheap central-dir
     // read; an empty summary just hides the manifest.
-    final BackupContentSummary contentSummary = await service
-        .summarizeBackupFile(filePath);
+    final BackupContentSummary contentSummary =
+        await BackupRestoreService.summarizeBackupFile(filePath);
     if (!appModel.isBackupValidatingCurrent(validatingToken)) return;
     meta = validated;
     mergePreview = preview;
@@ -954,36 +948,43 @@ Future<void> runBackupImportFlowForFile({
     if (appModel.isBackupValidatingCurrent(validatingToken)) {
       await _endValidatingThenSnack(
         appModel,
+        overlay,
         t.backup_import_failed(message: friendlySyncErrorDetail(e)),
       );
     }
     return;
+  } finally {
+    // BUG-2106：遮罩路由 `canPop:false`，任何一条退出路径（成功 / 无效 / 异常 /
+    // token 作废的早退）漏摘一次，app 就被永久挡在遮罩后面。幂等，重复调用无害。
+    overlay.dismiss();
   }
 
-  // 校验成功、合并预览就绪：退出 validating 遮罩，等根 widget 切回正常 app 树、全局
-  // navigator 重新挂载后，在其 context 上弹确认对话框（调用方页面此刻已卸载，不能用其
-  // context——遮罩是根 build 替换模型，宿主是 appModel.navigatorKey 的正常 MaterialApp）。
+  // 校验成功、合并预览就绪：摘掉校验遮罩路由，在全局 navigator 的 context 上弹确认
+  // 对话框（调用方页面仍在栈里，但对话框统一由全局 navigatorKey 宿主，和 running 相位
+  // 的换根模型保持同一个出口）。
   appModel.endBackupValidating();
   final BuildContext? rootCtx = await _rootContextAfterOverlay(appModel);
-  if (rootCtx == null || !rootCtx.mounted) return;
+  if (rootCtx == null || !rootCtx.mounted) {
+    // BUG-2106：这条曾是「点了本地包之后什么都没发生」的最后一道静默门。现在遮罩不再
+    // 换根、navigator 全程挂着，走到这里已属异常；至少留诊断，别再无声吞掉整个流程。
+    ErrorLogService.instance.log(
+      'runBackupImportFlowForFile',
+      'no root context after the validating overlay; import confirm dialog '
+          'could not be shown (file=$filePath)',
+    );
+    return;
+  }
 
   final _BackupImportChoice? choice = await _showBackupImportConfirmDialog(
-    rootCtx,
-    meta,
-    mergePreview,
-    summary,
-  );
+      rootCtx, meta, mergePreview, summary);
   if (choice == null) {
     // 用户取消确认 → 彻底退出遮罩态，回到调用方页面（validating 遮罩已退出）。
     return;
   }
-  await onImportConfirmed?.call();
 
   final String booksRoot = p.join(appModel.appDirectory.path, 'fushi_books');
-  final String audiobooksRoot = p.join(
-    appModel.appDirectory.path,
-    'audiobooks',
-  );
+  final String audiobooksRoot =
+      p.join(appModel.appDirectory.path, 'audiobooks');
   final String fontsRoot = p.join(appModel.appDirectory.path, 'custom_fonts');
   final String videosRoot = p.join(appModel.appDirectory.path, 'videos');
 
@@ -1004,7 +1005,7 @@ Future<void> runBackupImportFlowForFile({
       // TODO-888 merge: keep this device's library + settings, only ADD what
       // the backup carries (row-level upsert + copy-if-absent content trees).
       // Never overwrites/deletes existing data, so importSettings is moot.
-      await BackupService.mergeRestoreBackup(
+      await BackupRestoreService.mergeRestoreBackup(
         dbDirectory: appModel.databaseDirectory.path,
         zipPath: filePath,
         // Per-category merge selection (merge mode now honours the dialog's
@@ -1019,7 +1020,7 @@ Future<void> runBackupImportFlowForFile({
         onProgress: appModel.reportBackupImportProgress,
       );
     } else {
-      await BackupService.restoreBackup(
+      await BackupRestoreService.restoreBackup(
         dbDirectory: appModel.databaseDirectory.path,
         zipPath: filePath,
         importSettings: choice.importSettings,
@@ -1043,6 +1044,13 @@ Future<void> runBackupImportFlowForFile({
     // 自动重启，不再手动重开」）。与旧「500ms 后突然 exit」的关键区别：backupImportRestart
     // 走 restartApp 真拉新进程重启（app 会自己回来），不是纯退出「凭空消失」；延时让「导入
     // 成功」先可见一瞬，避免误判失败。「立即重启」按钮保留为手动兜底（可提前点，走同一函数）。
+    // Only successful restores may schedule source cleanup or onboarding.
+    // A receipt failure must not misreport an already restored database.
+    try {
+      await onImportSucceeded?.call();
+    } catch (e, s) {
+      ErrorLogService.instance.log('backupImport.successReceipt', e, s);
+    }
     appModel.completeBackupImport(t.backup_import_success);
     await Future<void>.delayed(const Duration(seconds: 1));
     // restartApp 成功会拉新进程并退出本进程；backupImportRestart 内部已吞掉重启失败并退回
@@ -1070,12 +1078,69 @@ Future<BuildContext?> _rootContextAfterOverlay(AppModel appModel) async {
   return null;
 }
 
-/// validate/preview 阶段的失败/无效出口：退出 validating 遮罩、切回调用方页面后用 root
-/// context 弹 snackbar（调用方页面此刻已卸载，用其 context 无效）。
-Future<void> _endValidatingThenSnack(AppModel appModel, String message) async {
+/// validate/preview 阶段的失败/无效出口：**先摘掉校验遮罩路由**再用 root context 弹
+/// snackbar —— 遮罩是 `opaque` 模态路由，不先摘就把提示压在遮罩底下（BUG-2106：这正是
+/// 「无效备份文件」之类提示从来没被用户看见的原因之一）。
+Future<void> _endValidatingThenSnack(
+  AppModel appModel,
+  _BackupValidatingOverlay overlay,
+  String message,
+) async {
+  overlay.dismiss();
   appModel.endBackupValidating();
   final BuildContext? rootCtx = await _rootContextAfterOverlay(appModel);
-  if (rootCtx != null && rootCtx.mounted) _showSnackBar(rootCtx, message);
+  if (rootCtx != null && rootCtx.mounted) {
+    _showSnackBar(rootCtx, message);
+    return;
+  }
+  // 提示是这条路径的**唯一**用户可见产物，丢了就等于「点了没反应」；至少留诊断。
+  ErrorLogService.instance.log(
+    'runBackupImportFlowForFile',
+    'validating failed but no root context to show the message: $message',
+  );
+}
+
+/// BUG-2106：validating 遮罩路由的句柄。
+///
+/// 遮罩宿主从「换根」改成「压在调用方页面之上的模态路由」（理由见
+/// [buildBackupValidatingOverlayRoute]）。摘除**必须** `removeRoute`：路由带
+/// `PopScope(canPop: false)`（挡系统返回把底下的调用方页面 pop 掉），`pop` 会被它拦下。
+///
+/// 拿不到全局 navigator（极早期 / 无 UI 宿主）时退化成「无遮罩但流程照跑」：校验本身不
+/// 依赖遮罩，宁可少一层视觉反馈，也不能因为没 navigator 就把导入整条流程掐掉。
+class _BackupValidatingOverlay {
+  _BackupValidatingOverlay._(this._navigator, this._route);
+
+  factory _BackupValidatingOverlay.show(AppModel appModel) {
+    final NavigatorState? navigator = appModel.navigatorKey.currentState;
+    if (navigator == null) return _BackupValidatingOverlay._(null, null);
+    late final _BackupValidatingOverlay handle;
+    final Route<void> route = buildBackupValidatingOverlayRoute(
+      onCancel: () {
+        // 用户点「取消」：先摘遮罩，再作废 in-flight 校验 token（回调用方页面）。
+        handle.dismiss();
+        appModel.cancelBackupValidating();
+      },
+    );
+    handle = _BackupValidatingOverlay._(navigator, route);
+    navigator.push<void>(route);
+    return handle;
+  }
+
+  final NavigatorState? _navigator;
+  final Route<void>? _route;
+  bool _dismissed = false;
+
+  /// 摘掉遮罩路由。幂等：每条退出路径都会调，重复调用无害。
+  void dismiss() {
+    if (_dismissed) return;
+    _dismissed = true;
+    final NavigatorState? navigator = _navigator;
+    final Route<void>? route = _route;
+    if (navigator == null || route == null) return;
+    if (!route.isActive) return;
+    navigator.removeRoute<void>(route);
+  }
 }
 
 /// Asks how to apply the backup (TODO-888): OVERWRITE the whole library
@@ -1103,12 +1168,10 @@ Future<_BackupImportChoice?> _showBackupImportConfirmDialog(
       BackupCategory.values
           .where((BackupCategory c) => selectable.contains(c) && summary.has(c))
           .toList();
-  final List<BackupCategory> overwriteSelectablePresent = presentFor(
-    importSelectableCategories,
-  );
-  final List<BackupCategory> mergeSelectablePresent = presentFor(
-    importMergeSelectableCategories,
-  );
+  final List<BackupCategory> overwriteSelectablePresent =
+      presentFor(importSelectableCategories);
+  final List<BackupCategory> mergeSelectablePresent =
+      presentFor(importMergeSelectableCategories);
   final Set<BackupCategory> selectedRestore = <BackupCategory>{
     ...overwriteSelectablePresent,
     ...mergeSelectablePresent,
@@ -1174,8 +1237,8 @@ Future<_BackupImportChoice?> _showBackupImportConfirmDialog(
                       : Text(
                           t.backup_import_merge_preview(
                             bookCount: preview.newBooks.toString(),
-                            progressCount: preview.updatedReaderPositions
-                                .toString(),
+                            progressCount:
+                                preview.updatedReaderPositions.toString(),
                           ),
                           style: Theme.of(ctx).textTheme.bodySmall,
                         ),
@@ -1206,8 +1269,7 @@ Future<_BackupImportChoice?> _showBackupImportConfirmDialog(
                             ? overwriteSelectablePresent
                             : mergeSelectablePresent)
                       AdaptiveSettingsSwitchRow(
-                        title:
-                            '${backupCategoryLabel(c)} '
+                        title: '${backupCategoryLabel(c)} '
                             '(${summary.countFor(c)})',
                         subtitle: backupCategoryDescription(c),
                         value: selectedRestore.contains(c),
@@ -1274,10 +1336,8 @@ Future<_BackupImportChoice?> _showBackupImportConfirmDialog(
       ? importSelectableCategories
       : importMergeSelectableCategories;
   final Set<BackupCategory> categories = BackupCategory.values
-      .where(
-        (BackupCategory c) =>
-            !modeSelectable.contains(c) || selectedRestore.contains(c),
-      )
+      .where((BackupCategory c) =>
+          !modeSelectable.contains(c) || selectedRestore.contains(c))
       .toSet();
   return _BackupImportChoice(
     mode: mode,

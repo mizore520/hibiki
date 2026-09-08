@@ -195,17 +195,29 @@ void main() {
     final String src = readReaderPageSource();
 
     test('reserve truth source: _readerTopOffset uses _topProgressReserve', () {
-      expect(
-        src.contains(
-            '_stableTopInset + _macosWindowTitlebarInset + _topProgressReserve'),
-        isTrue,
-        reason: '顶部预留必须经派生 getter（关进度回收空白），并避开 macOS 拖拽区',
+      // 按项断言而不是钉整行字面串：BUG-2166 批给桌面 ッツ 顶栏加了
+      // _desktopHeaderReserve，四项相加后 formatter 折了行，单行串就永远对不上。
+      // 顺手把新项也纳入守卫——否则谁把它从 _readerTopOffset 里删掉都没人管。
+      final String topOffset = _slice(
+        src,
+        '  double get _readerTopOffset =>',
+        '  double get _readerBottomReserve =>',
       );
+      for (final String term in <String>[
+        '_stableTopInset',
+        '_macosWindowTitlebarInset',
+        '_topProgressReserve',
+        '_desktopHeaderReserve',
+      ]) {
+        expect(topOffset.contains(term), isTrue,
+            reason: '顶部预留必须经派生 getter（关进度回收空白 / 桌面顶栏挤压），'
+                '并避开 macOS 拖拽区：缺 $term');
+      }
       expect(
-        src.contains(
-            '_readerBottomReserve => _bottomChromeReserve + _stableBottomInset'),
+        src.contains('_readerBottomReserve =>\n'
+            '      _bottomChromeReserve + _statusFooterReserve + _stableBottomInset'),
         isTrue,
-        reason: '底栏预留必须经派生 getter（悬浮归零），单一真相源',
+        reason: '底栏预留必须经派生 getter（悬浮归零 + 桌面状态行挤压预留），单一真相源',
       );
     });
 
@@ -284,8 +296,11 @@ void main() {
         reason: '拖 slider 每 tick 直跑「CSS 注入+重锚+整页 setState」会一次拖动上百趟 '
             'WebView 往返（BUG-969 根因），必须经合并执行器收敛',
       );
+      // 格式无关：tall style 会把 `CoalescedAsyncRunner(() async {` 折成
+      // `CoalescedAsyncRunner(` + 换行 + `() async {`，判据只钉
+      // 「runner 直接持有异步动作闭包」。
       expect(
-        src.contains('CoalescedAsyncRunner(() async {'),
+        RegExp(r'CoalescedAsyncRunner\(\s*\(\)\s*async\s*\{').hasMatch(src),
         isTrue,
         reason: '合并动作本体（错误处理/tap-gate/setState）必须收在 runner 内',
       );

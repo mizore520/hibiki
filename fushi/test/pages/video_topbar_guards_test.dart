@@ -242,11 +242,15 @@ void main() {
         isTrue,
         reason: 'editableSlots 应含 topRight（TODO-388）',
       );
-      // topCenter 仍是固定标题 chrome 区，不开放为可拖动槽。
+      // topCenter 也在集合里：两个编辑器一直把它画成可投放区域，`canMoveToSlot`
+      // 也一直允许标题进 topCenter——旧断言钉住的是一份与真实能力相反的清单。
+      // 「区域被暴露」与「这个按钮能不能放进去」是两个维度，后者仍由
+      // `canMoveToSlot` 单独把关（topCenter 依旧只收标题，见
+      // video_control_layout_test.dart 的「两个维度」用例）。
       expect(
         block.contains('VideoControlSlot.topCenter'),
-        isFalse,
-        reason: 'topCenter（标题固定 chrome）不应纳入可编辑槽',
+        isTrue,
+        reason: 'topCenter 是编辑器真实暴露的槽（标题能放），清单必须与之一致',
       );
     });
 
@@ -408,9 +412,29 @@ void main() {
     });
 
     test('i18n 顶部槽标签 key 完整（17 语言）', () {
-      final String g = read('lib/i18n/strings_en.g.dart');
-      expect(g.contains('video_control_slot_top_left'), isTrue);
-      expect(g.contains('video_control_slot_top_right'), isTrue);
+      final List<File> generated = Directory('lib/i18n')
+          .listSync()
+          .whereType<File>()
+          .where(
+            (File f) => RegExp(
+              r'strings_.+\.g\.dart$',
+            ).hasMatch(f.uri.pathSegments.last),
+          )
+          .toList();
+      expect(generated, hasLength(17));
+      for (final File file in generated) {
+        final String g = file.readAsStringSync();
+        expect(
+          g.contains('video_control_slot_top_left'),
+          isTrue,
+          reason: '${file.path} missing top-left slot label',
+        );
+        expect(
+          g.contains('video_control_slot_top_right'),
+          isTrue,
+          reason: '${file.path} missing top-right slot label',
+        );
+      }
     });
   });
 }

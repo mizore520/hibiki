@@ -12,19 +12,20 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fushi/src/media/source_library/source_library_row.dart';
 import 'package:fushi/src/media/video/metadata/video_source_scrape_candidate_tile.dart';
+import 'package:fushi/src/media/video/metadata/video_manual_identity_query.dart';
 import 'package:fushi/src/media/video/metadata/video_source_scrape_task.dart';
 import 'package:fushi/utils.dart';
 import 'package:fushi_core/fushi_core.dart';
 
 /// 与后台任务面板、来源摘要行共用的 run 状态文案。
 String videoSourceScrapeRunStatusLabel(String status) => switch (status) {
-  'completed' => t.download_task_status_completed,
-  'cancelled' => t.download_status_cancelled,
-  'interrupted' => t.video_source_scrape_status_interrupted,
-  'failed' => t.download_task_status_error,
-  'running' => t.video_source_scrape_action,
-  _ => status,
-};
+      'completed' => t.download_task_status_completed,
+      'cancelled' => t.download_status_cancelled,
+      'interrupted' => t.video_source_scrape_status_interrupted,
+      'failed' => t.download_task_status_error,
+      'running' => t.video_source_scrape_action,
+      _ => status,
+    };
 
 /// 返回 true 表示这次交互改动了库（重刮了来源或手动绑定了作品），调用方应刷新。
 Future<bool> showVideoSourceScrapeRunDetailDialog({
@@ -65,15 +66,31 @@ class _VideoSourceScrapeRunDetailDialog extends StatefulWidget {
 
 class _VideoSourceScrapeRunDetailDialogState
     extends State<_VideoSourceScrapeRunDetailDialog> {
-  late final SourceScrapeReport? _report = decodeSourceScrapeReport(
-    widget.run.summaryJson,
-  );
+  late final SourceScrapeReport? _report =
+      decodeSourceScrapeReport(widget.run.summaryJson);
 
   /// 已经手动绑定过、不必再出现在待办里的作品名。
   final Set<String> _resolved = <String>{};
-  String? _busyWorkTitle;
+  final Set<String> _busyWorkTitles = <String>{};
+  bool _rescrapingSource = false;
   String? _error;
   bool _changed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller?.addListener(_taskChanged);
+  }
+
+  void _taskChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.controller?.removeListener(_taskChanged);
+    super.dispose();
+  }
 
   bool get _canBindManually =>
       widget.source != null &&
@@ -107,20 +124,16 @@ class _VideoSourceScrapeRunDetailDialogState
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                Text(
-                  FushiTimeFormat.dateHourMinute(
-                    DateTime.fromMillisecondsSinceEpoch(run.startedAt),
-                  ),
-                ),
+                Text(FushiTimeFormat.dateHourMinute(
+                  DateTime.fromMillisecondsSinceEpoch(run.startedAt),
+                )),
                 const SizedBox(height: 6),
-                Text(
-                  t.video_source_scrape_last_summary(
-                    status: videoSourceScrapeRunStatusLabel(run.status),
-                    succeeded: run.succeededWorks,
-                    pending: run.pendingConfirmations,
-                    failed: run.failedWorks,
-                  ),
-                ),
+                Text(t.video_source_scrape_last_summary(
+                  status: videoSourceScrapeRunStatusLabel(run.status),
+                  succeeded: run.succeededWorks,
+                  pending: run.pendingConfirmations,
+                  failed: run.failedWorks,
+                )),
                 if (lastError != null && lastError.isNotEmpty) ...<Widget>[
                   const SizedBox(height: 6),
                   SelectableText(lastError),
@@ -148,9 +161,10 @@ class _VideoSourceScrapeRunDetailDialogState
         if (source != null && widget.onRescrapeSource != null)
           TextButton(
             key: const ValueKey<String>('video-source-run-rescrape'),
-            onPressed: _busyWorkTitle == null
-                ? () => unawaited(_rescrapeSource(source))
-                : null,
+            onPressed:
+                !_rescrapingSource && !(widget.controller?.isBusy ?? false)
+                    ? () => unawaited(_rescrapeSource(source))
+                    : null,
             child: Text(t.video_source_scrape_rescrape_source),
           ),
       ],
@@ -158,7 +172,13 @@ class _VideoSourceScrapeRunDetailDialogState
   }
 
   Widget _buildIssue(SourceScrapeIssue issue, bool isError) {
-    final bool busy = _busyWorkTitle == issue.workTitle;
+    final bool busy = _busyWorkTitles.contains(issue.workTitle) ||
+        (widget.source != null &&
+            (widget.controller?.isManualRequestPending(
+                  sourceId: widget.source!.id,
+                  workTitle: issue.workTitle,
+                ) ??
+                false));
     return FushiListItem(
       key: ValueKey<String>('video-source-run-issue-${issue.workTitle}'),
       density: FushiListDensity.compact,
@@ -177,27 +197,32 @@ class _VideoSourceScrapeRunDetailDialogState
       trailing: !_canBindManually
           ? null
           : busy
-          ? const SizedBox.square(
-              dimension: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : IconButton(
-              tooltip: t.video_source_scrape_manual_search_title,
-              onPressed: _busyWorkTitle != null
-                  ? null
-                  : () => unawaited(_bindManually(issue)),
-              icon: const Icon(Icons.search),
-            ),
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : IconButton(
+                  tooltip: t.video_source_scrape_manual_search_title,
+                  onPressed: () => unawaited(_bindManually(issue)),
+                  icon: const Icon(Icons.search),
+                ),
     );
   }
 
   Future<void> _rescrapeSource(SourceLibraryRow source) async {
     final Future<void> Function(SourceLibraryRow source)? rescrape =
         widget.onRescrapeSource;
-    if (rescrape == null) return;
-    await rescrape(source);
-    if (!mounted) return;
-    Navigator.of(context).pop(true);
+    if (rescrape == null || (widget.controller?.isBusy ?? false)) return;
+    setState(() => _rescrapingSource = true);
+    try {
+      await rescrape(source);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } on Object catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _rescrapingSource = false);
+    }
   }
 
   Future<void> _bindManually(SourceScrapeIssue issue) async {
@@ -206,14 +231,14 @@ class _VideoSourceScrapeRunDetailDialogState
     if (source == null || controller == null) return;
     final VideoSourceScrapeConfirmationCandidate? candidate =
         await showVideoSourceScrapeManualBindingDialog(
-          context: context,
-          controller: controller,
-          source: source,
-          workTitle: issue.workTitle,
-        );
+      context: context,
+      controller: controller,
+      source: source,
+      workTitle: issue.workTitle,
+    );
     if (candidate == null || !mounted) return;
     setState(() {
-      _busyWorkTitle = issue.workTitle;
+      _busyWorkTitles.add(issue.workTitle);
       _error = null;
     });
     try {
@@ -227,6 +252,11 @@ class _VideoSourceScrapeRunDetailDialogState
         _changed = true;
         _resolved.add(issue.workTitle);
       });
+    } on VideoSourceScrapeCancelled {
+      // 在任务面板撤回尚未执行的绑定，不应在详情页显示失败。
+    } on VideoSourceScrapeWorkAmbiguous {
+      if (!mounted) return;
+      setState(() => _error = t.video_source_scrape_manual_ambiguous);
     } on VideoSourceScrapeWorkNotFound {
       // 历史 run 记的是当时的作品标题；文件改名/移动/删除后它就不在当前计划
       // 里了。给用户能照着做的中文说明，而不是裸异常（BUG-1998）。
@@ -236,7 +266,7 @@ class _VideoSourceScrapeRunDetailDialogState
       if (!mounted) return;
       setState(() => _error = error.toString());
     } finally {
-      if (mounted) setState(() => _busyWorkTitle = null);
+      if (mounted) setState(() => _busyWorkTitles.remove(issue.workTitle));
     }
   }
 }
@@ -244,19 +274,22 @@ class _VideoSourceScrapeRunDetailDialogState
 /// 手动搜索资料源并挑一个作品（共享入口：run 详情与待确认队列都用它）。
 /// 返回选中的候选；取消返回 null。
 Future<VideoSourceScrapeConfirmationCandidate?>
-showVideoSourceScrapeManualBindingDialog({
+    showVideoSourceScrapeManualBindingDialog({
   required BuildContext context,
   required VideoSourceScrapeTaskController controller,
   required SourceLibraryRow source,
   required String workTitle,
-}) => showAppDialog<VideoSourceScrapeConfirmationCandidate>(
-  context: context,
-  builder: (BuildContext context) => _ManualBindingDialog(
-    controller: controller,
-    source: source,
-    workTitle: workTitle,
-  ),
-);
+  String? workStableKey,
+}) =>
+        showAppDialog<VideoSourceScrapeConfirmationCandidate>(
+          context: context,
+          builder: (BuildContext context) => _ManualBindingDialog(
+            controller: controller,
+            source: source,
+            workTitle: workTitle,
+            workStableKey: workStableKey,
+          ),
+        );
 
 /// 手动搜索资料源并挑一个作品。结果行与批次内确认是同一个
 /// [VideoSourceScrapeCandidateTile]，选中后返回同一种候选对象。
@@ -265,22 +298,25 @@ class _ManualBindingDialog extends StatefulWidget {
     required this.controller,
     required this.source,
     required this.workTitle,
+    this.workStableKey,
   });
 
   final VideoSourceScrapeTaskController controller;
   final SourceLibraryRow source;
   final String workTitle;
+  final String? workStableKey;
 
   @override
   State<_ManualBindingDialog> createState() => _ManualBindingDialogState();
 }
 
 class _ManualBindingDialogState extends State<_ManualBindingDialog> {
-  late final TextEditingController _query = TextEditingController(
-    text: widget.workTitle,
-  );
+  late final TextEditingController _query =
+      TextEditingController(text: widget.workTitle);
   List<VideoSourceScrapeConfirmationCandidate>? _results;
   bool _searching = false;
+  bool _byId = false;
+  VideoManualIdentitySource _idSource = VideoManualIdentitySource.mal;
   String? _error;
 
   @override
@@ -289,6 +325,10 @@ class _ManualBindingDialogState extends State<_ManualBindingDialog> {
     super.dispose();
   }
 
+  String _manualQuery() => _byId
+      ? videoManualIdentityQuery(_query.text, _idSource)
+      : _query.text.trim();
+
   Future<void> _search() async {
     if (_searching) return;
     setState(() {
@@ -296,22 +336,26 @@ class _ManualBindingDialogState extends State<_ManualBindingDialog> {
       _error = null;
     });
     try {
-      final List<VideoSourceScrapeConfirmationCandidate> results = await widget
-          .controller
-          .searchManualCandidates(
-            source: widget.source,
-            workTitle: widget.workTitle,
-            query: _query.text,
-          );
+      final List<VideoSourceScrapeConfirmationCandidate> results =
+          await widget.controller.searchManualCandidates(
+        source: widget.source,
+        workTitle: widget.workTitle,
+        workStableKey: widget.workStableKey,
+        query: _manualQuery(),
+      );
       if (!mounted) return;
       setState(() => _results = results);
     } on Object catch (error) {
       if (!mounted) return;
       setState(() {
         _results = const <VideoSourceScrapeConfirmationCandidate>[];
-        _error = error is VideoSourceScrapeWorkNotFound
-            ? t.video_source_scrape_work_missing
-            : error.toString();
+        _error = error is FormatException
+            ? t.video_source_scrape_manual_id_invalid
+            : error is VideoSourceScrapeWorkAmbiguous
+                ? t.video_source_scrape_manual_ambiguous
+                : error is VideoSourceScrapeWorkNotFound
+                    ? t.video_source_scrape_work_missing
+                    : error.toString();
       });
     } finally {
       if (mounted) setState(() => _searching = false);
@@ -332,16 +376,83 @@ class _ManualBindingDialogState extends State<_ManualBindingDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                Text(t.video_source_scrape_manual_search_hint),
+                FushiListItem(
+                  padding: EdgeInsets.zero,
+                  title: Text(widget.workTitle),
+                  subtitle: Text(t.video_source_scrape_manual_current_work),
+                ),
+                const SizedBox(height: 12),
+                SegmentedButton<bool>(
+                  segments: <ButtonSegment<bool>>[
+                    ButtonSegment<bool>(
+                        value: false,
+                        label: Text(t.video_source_scrape_manual_by_title)),
+                    ButtonSegment<bool>(
+                        value: true,
+                        label: Text(t.video_source_scrape_manual_by_id)),
+                  ],
+                  selected: <bool>{_byId},
+                  onSelectionChanged: _searching
+                      ? null
+                      : (Set<bool> selection) {
+                          setState(() {
+                            _byId = selection.single;
+                            _query.text = _byId ? '' : widget.workTitle;
+                            _results = null;
+                            _error = null;
+                          });
+                        },
+                ),
+                const SizedBox(height: 12),
+                if (_byId) ...<Widget>[
+                  DropdownButtonFormField<VideoManualIdentitySource>(
+                    key:
+                        const ValueKey<String>('video-source-manual-id-source'),
+                    initialValue: _idSource,
+                    items: <DropdownMenuItem<VideoManualIdentitySource>>[
+                      const DropdownMenuItem(
+                        value: VideoManualIdentitySource.mal,
+                        child: Text('MAL'),
+                      ),
+                      DropdownMenuItem(
+                        value: VideoManualIdentitySource.tmdbMovie,
+                        child: Text(t.video_source_scrape_manual_tmdb_movie),
+                      ),
+                      DropdownMenuItem(
+                        value: VideoManualIdentitySource.tmdbTv,
+                        child: Text(t.video_source_scrape_manual_tmdb_tv),
+                      ),
+                    ],
+                    onChanged: _searching
+                        ? null
+                        : (VideoManualIdentitySource? value) {
+                            if (value == null) return;
+                            setState(() {
+                              _idSource = value;
+                              _results = null;
+                              _error = null;
+                            });
+                          },
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                Text(t.video_source_scrape_manual_query_hint),
                 const SizedBox(height: 12),
                 TextField(
                   key: const ValueKey<String>('video-source-manual-query'),
                   controller: _query,
+                  enabled: !_searching,
+                  onChanged: (_) => setState(() {
+                    _results = null;
+                    _error = null;
+                  }),
                   autofocus: true,
                   textInputAction: TextInputAction.search,
                   onSubmitted: (_) => unawaited(_search()),
                   decoration: InputDecoration(
-                    labelText: t.video_source_scrape_manual_search_title,
+                    labelText: _byId
+                        ? t.video_source_scrape_manual_by_id
+                        : t.video_source_scrape_manual_by_title,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -354,9 +465,10 @@ class _ManualBindingDialogState extends State<_ManualBindingDialog> {
                       in results)
                     VideoSourceScrapeCandidateTile(
                       candidate: candidate,
-                      onSelected:
-                          (VideoSourceScrapeConfirmationCandidate selected) =>
-                              Navigator.of(context).pop(selected),
+                      onSelected: (
+                        VideoSourceScrapeConfirmationCandidate selected,
+                      ) =>
+                          Navigator.of(context).pop(selected),
                     ),
                 if (_error case final String error) ...<Widget>[
                   const SizedBox(height: 12),

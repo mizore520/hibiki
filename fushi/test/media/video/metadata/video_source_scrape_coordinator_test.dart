@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi/src/media/source_library/source_library_row.dart';
 import 'package:fushi/src/media/video/metadata/anidb_video_metadata_provider.dart';
 import 'package:fushi/src/media/video/metadata/video_metadata_models.dart';
+import 'package:fushi/src/media/video/metadata/video_metadata_database_store.dart';
 import 'package:fushi/src/media/video/metadata/video_metadata_asset_downloader.dart';
 import 'package:fushi/src/media/video/metadata/video_metadata_provider.dart';
 import 'package:fushi/src/media/video/metadata/video_metadata_resolver.dart';
@@ -32,6 +33,71 @@ void main() {
     if (await root.exists()) await root.delete(recursive: true);
   });
 
+  test('manual binding targets stable identity and rejects ambiguous titles',
+      () async {
+    final int sourceId =
+        await db.insertMediaSource(MediaSourcesCompanion.insert(
+      label: 'Same titles',
+      mediaKind: 'video',
+      rootPath: root.path,
+      createdAt: 1,
+    ));
+    for (final String uid in <String>['first', 'second']) {
+      final File video = File(p.join(root.path, '$uid.mkv'));
+      await video.writeAsBytes(const <int>[0]);
+      await db.upsertVideoBook(VideoBooksCompanion(
+        bookUid: Value<String>(uid),
+        title: const Value<String>('Same title'),
+        videoPath: Value<String>(video.path),
+        sourceId: Value<int?>(sourceId),
+      ));
+    }
+    final SourceLibraryRow source = (await db.getMediaSourceById(sourceId))!;
+    final VideoSourceScrapeCoordinator coordinator =
+        VideoSourceScrapeCoordinator(
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(
+          <VideoMetadataProvider>[_ExactMovieProvider()]),
+    );
+    const VideoMetadataLookup lookup = VideoMetadataLookup(
+      provider: VideoMetadataProviderKind.anidb,
+      externalId: '4242',
+      mediaKind: VideoMetadataMediaKind.movie,
+    );
+    await expectLater(
+        coordinator.rescrapeWorkWithLookup(
+          source: source,
+          workTitle: 'Same title',
+          lookup: lookup,
+          cancellationToken: VideoSourceScrapeCancellationToken(),
+          onProgress: (_) {},
+        ),
+        throwsA(isA<VideoSourceScrapeWorkNotFound>()));
+    final SourceScrapeReport report = await coordinator.rescrapeWorkWithLookup(
+      source: source,
+      workTitle: 'Old display title',
+      workStableKey: 'book:second',
+      lookup: lookup,
+      cancellationToken: VideoSourceScrapeCancellationToken(),
+      onProgress: (_) {},
+    );
+    expect(report.succeededWorks, 1);
+    expect(await File(p.join(root.path, 'second.nfo')).exists(), isTrue);
+    expect(await File(p.join(root.path, 'first.nfo')).exists(), isFalse);
+    await expectLater(
+        coordinator.rescrapeWorkWithLookup(
+          source: source,
+          workTitle: 'Same title',
+          workStableKey: 'book:missing',
+          lookup: lookup,
+          cancellationToken: VideoSourceScrapeCancellationToken(),
+          onProgress: (_) {},
+        ),
+        throwsA(isA<VideoSourceScrapeWorkNotFound>()));
+  });
+
   test('手动搜索：作品不在当前计划时不抛异常，双形态搜索按身份合并（BUG-1998）', () async {
     final int sourceId = await db.insertMediaSource(
       MediaSourcesCompanion.insert(
@@ -44,12 +110,12 @@ void main() {
     final _FakeAniDbProvider provider = _FakeAniDbProvider();
     final VideoSourceScrapeCoordinator coordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            provider,
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry:
+          VideoMetadataProviderRegistry(<VideoMetadataProvider>[provider]),
+    );
     final SourceLibraryRow source = (await db.getMediaSourceById(sourceId))!;
 
     // 旧行为：先按标题回查计划、查不到直接抛 VideoSourceScrapeWorkNotFound，
@@ -57,20 +123,68 @@ void main() {
     // (mediaKind, externalId) 去重。
     final List<VideoSourceScrapeConfirmationCandidate> candidates =
         await coordinator.searchManualCandidates(
-          source: source,
-          workTitle: '哆啦A梦：大雄的秘密道具博物馆',
-          query: 'ドラえもん',
-        );
+      source: source,
+      workTitle: '哆啦A梦：大雄的秘密道具博物馆',
+      query: 'ドラえもん',
+    );
 
     expect(candidates, hasLength(1));
     expect(candidates.single.lookup.externalId, '42');
     expect(provider.searchCount, 2, reason: '计划缺席时按 tv+movie 双形态各搜一次');
   });
 
-  test('按作品抓取一次并写规范表、兼容投影和安全 TV NFO', () async {
-    final Directory seasonDir = Directory(
-      p.join(root.path, 'Show', 'Season 01'),
+  test('manual explicit AniDB ID previews without title search', () async {
+    final int sourceId =
+        await db.insertMediaSource(MediaSourcesCompanion.insert(
+      label: 'Manual',
+      mediaKind: 'video',
+      rootPath: root.path,
+      createdAt: 1,
+    ));
+    final SourceLibraryRow source = (await db.getMediaSourceById(sourceId))!;
+    final _FakeAniDbProvider provider = _FakeAniDbProvider();
+    final VideoSourceScrapeCoordinator coordinator =
+        VideoSourceScrapeCoordinator(
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry:
+          VideoMetadataProviderRegistry(<VideoMetadataProvider>[provider]),
     );
+    for (final String query in <String>[
+      'anidb=42',
+      'https://anidb.net/anime/42'
+    ]) {
+      final List<VideoSourceScrapeConfirmationCandidate> results =
+          await coordinator.searchManualCandidates(
+        source: source,
+        workTitle: 'Local work',
+        query: query,
+      );
+      expect(results.single.lookup.externalId, '42');
+      expect(provider.searchCount, 0);
+    }
+    for (final String query in <String>[
+      'anidb=0',
+      'anidb=bad',
+      'tmdb=42',
+      'https://fakeanidb.net/anime/42'
+    ]) {
+      await expectLater(
+          coordinator.searchManualCandidates(
+              source: source, workTitle: 'Local work', query: query),
+          throwsFormatException,
+          reason: 'Invalid identity query: $query');
+    }
+    await coordinator.searchManualCandidates(
+        source: source, workTitle: '86', query: '86');
+    expect(provider.searchCount, 2,
+        reason: 'Numeric titles remain title searches');
+  });
+
+  test('按作品抓取一次并写规范表、兼容投影和安全 TV NFO', () async {
+    final Directory seasonDir =
+        Directory(p.join(root.path, 'Show', 'Season 01'));
     await seasonDir.create(recursive: true);
     final File episode1 = File(p.join(seasonDir.path, 'Show S01E01.mkv'));
     final File episode2 = File(p.join(seasonDir.path, 'Show S01E02.mkv'));
@@ -87,34 +201,26 @@ void main() {
         createdAt: 1,
       ),
     );
-    await db.upsertVideoBook(
-      VideoBooksCompanion(
-        bookUid: const Value<String>('e1'),
-        title: const Value<String>('Show S01E01'),
-        videoPath: Value<String>(episode1.path),
-        sourceId: Value<int?>(sourceId),
-      ),
-    );
-    await db.upsertVideoBook(
-      VideoBooksCompanion(
-        bookUid: const Value<String>('ncop'),
-        title: const Value<String>('Show NCOP'),
-        videoPath: Value<String>(ncop.path),
-        sourceId: Value<int?>(sourceId),
-      ),
-    );
-    await db.upsertVideoBook(
-      VideoBooksCompanion(
-        bookUid: const Value<String>('e2'),
-        title: const Value<String>('Show S01E02'),
-        videoPath: Value<String>(episode2.path),
-        sourceId: Value<int?>(sourceId),
-      ),
-    );
-    final int collectionId = await db.createMediaCollection(
-      'Show',
-      collectionType: 'playlist',
-    );
+    await db.upsertVideoBook(VideoBooksCompanion(
+      bookUid: const Value<String>('e1'),
+      title: const Value<String>('Show S01E01'),
+      videoPath: Value<String>(episode1.path),
+      sourceId: Value<int?>(sourceId),
+    ));
+    await db.upsertVideoBook(VideoBooksCompanion(
+      bookUid: const Value<String>('ncop'),
+      title: const Value<String>('Show NCOP'),
+      videoPath: Value<String>(ncop.path),
+      sourceId: Value<int?>(sourceId),
+    ));
+    await db.upsertVideoBook(VideoBooksCompanion(
+      bookUid: const Value<String>('e2'),
+      title: const Value<String>('Show S01E02'),
+      videoPath: Value<String>(episode2.path),
+      sourceId: Value<int?>(sourceId),
+    ));
+    final int collectionId =
+        await db.createMediaCollection('Show', collectionType: 'playlist');
     await db.addToCollection(collectionId, MediaKind.video, 'e1');
     await db.addToCollection(collectionId, MediaKind.video, 'e2');
     await db.upsertVideoSourceScrapeSettings(
@@ -129,12 +235,12 @@ void main() {
     final _FakeAniDbProvider provider = _FakeAniDbProvider();
     final VideoSourceScrapeCoordinator coordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            provider,
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry:
+          VideoMetadataProviderRegistry(<VideoMetadataProvider>[provider]),
+    );
     final SourceLibraryRow source = (await db.getMediaSourceById(sourceId))!;
     final SourceScrapeReport report = await coordinator.scrapeSource(
       source,
@@ -155,35 +261,29 @@ void main() {
     expect(report.nfoWritten, 4);
     expect(File(p.join(root.path, 'Show', 'tvshow.nfo')).existsSync(), isTrue);
     expect(File(p.join(seasonDir.path, 'season.nfo')).existsSync(), isTrue);
-    final String episodeXml = await File(
-      p.join(seasonDir.path, 'Show S01E01.nfo'),
-    ).readAsString();
+    final String episodeXml =
+        await File(p.join(seasonDir.path, 'Show S01E01.nfo')).readAsString();
     expect(episodeXml, contains('<episodedetails>'));
     expect(episodeXml, contains('<title>Episode One</title>'));
 
-    final VideoMetadataWorkRow? work = await db
-        .getVideoMetadataWorkByCollection(collectionId);
+    final VideoMetadataWorkRow? work =
+        await db.getVideoMetadataWorkByCollection(collectionId);
     expect(work?.title, 'Show');
-    final List<VideoMetadataSeasonRow> seasons = await db
-        .getVideoMetadataSeasons(work!.id);
+    final List<VideoMetadataSeasonRow> seasons =
+        await db.getVideoMetadataSeasons(work!.id);
     expect(seasons, hasLength(1));
-    final List<VideoMetadataEpisodeRow> episodes = await db
-        .getVideoMetadataEpisodes(seasons.single.id);
-    expect(
-      episodes.map((VideoMetadataEpisodeRow row) => row.bookUid),
-      <String?>['e1', 'e2'],
-    );
+    final List<VideoMetadataEpisodeRow> episodes =
+        await db.getVideoMetadataEpisodes(seasons.single.id);
+    expect(episodes.map((VideoMetadataEpisodeRow row) => row.bookUid),
+        <String?>['e1', 'e2']);
     expect(await db.getCollectionScrapeMeta(collectionId), isNotNull);
     expect((await db.getVideoScrapeMeta('e1'))?.title, 'Episode One');
-    expect(
-      (await db.getVideoBookByBookUid('e1'))?.title,
-      'Episode One',
-      reason: '只改应用内展示标题，不重命名磁盘视频文件',
-    );
+    expect((await db.getVideoBookByBookUid('e1'))?.title, 'Episode One',
+        reason: '只改应用内展示标题，不重命名磁盘视频文件');
     expect(episode1.path, endsWith('Show S01E01.mkv'));
     expect(await db.getVideoSidecarArtifacts(sourceId: sourceId), hasLength(4));
-    final List<VideoMetadataCreditRow> episodeCredits = await db
-        .getVideoMetadataCredits(episodeId: episodes.first.id);
+    final List<VideoMetadataCreditRow> episodeCredits =
+        await db.getVideoMetadataCredits(episodeId: episodes.first.id);
     expect(episodeCredits.single.creditKind, 'voice_actor');
   });
 
@@ -197,13 +297,14 @@ void main() {
     final _ThrowingTmdbProvider tmdb = _ThrowingTmdbProvider();
     final VideoSourceScrapeCoordinator coordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            primary,
-            tmdb,
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        primary,
+        tmdb,
+      ]),
+    );
 
     final SourceScrapeReport report = await coordinator.scrapeSource(
       source,
@@ -218,9 +319,8 @@ void main() {
       report.warnings.map((SourceScrapeIssue issue) => issue.message).join(),
       contains('TMDB 规范身份补充失败'),
     );
-    final VideoMetadataWorkRow? stored = await db.getVideoMetadataWorkByBook(
-      'movie-book',
-    );
+    final VideoMetadataWorkRow? stored =
+        await db.getVideoMetadataWorkByBook('movie-book');
     expect(stored?.title, '主源电影');
   });
 
@@ -233,12 +333,11 @@ void main() {
     final _TwoBackdropTmdbProvider tmdb = _TwoBackdropTmdbProvider();
     final VideoSourceScrapeCoordinator coordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            tmdb,
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[tmdb]),
+    );
 
     final SourceScrapeReport report = await coordinator.scrapeSource(
       source,
@@ -265,13 +364,14 @@ void main() {
     final _ThrowingTmdbProvider tmdb = _ThrowingTmdbProvider();
     final VideoSourceScrapeCoordinator coordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            anidb,
-            tmdb,
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        anidb,
+        tmdb,
+      ]),
+    );
 
     final SourceScrapeReport report = await coordinator.scrapeSource(
       fixture.source,
@@ -282,10 +382,10 @@ void main() {
     expect(report.succeededWorks, 1, reason: '${report.errors}');
     expect(tmdb.searchCount, 0);
     expect(tmdb.fetchCount, 0);
-    final VideoMetadataWorkRow stored = (await db
-        .getVideoMetadataWorkByCollection(fixture.collectionId))!;
-    final List<VideoMetadataProviderIdentityRow> identities = await db
-        .getVideoMetadataProviderIdentities(workId: stored.id);
+    final VideoMetadataWorkRow stored =
+        (await db.getVideoMetadataWorkByCollection(fixture.collectionId))!;
+    final List<VideoMetadataProviderIdentityRow> identities =
+        await db.getVideoMetadataProviderIdentities(workId: stored.id);
     expect(
       identities.map((VideoMetadataProviderIdentityRow row) => row.provider),
       isNot(contains('tmdb')),
@@ -304,13 +404,14 @@ void main() {
         _RecordingCrossrefTmdbProvider();
     final VideoSourceScrapeCoordinator firstCoordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            firstAniDb,
-            firstTmdb,
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        firstAniDb,
+        firstTmdb,
+      ]),
+    );
 
     final SourceScrapeReport first = await firstCoordinator.scrapeSource(
       source,
@@ -327,13 +428,14 @@ void main() {
         _RecordingCrossrefTmdbProvider();
     final VideoSourceScrapeCoordinator secondCoordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            secondAniDb,
-            secondTmdb,
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        secondAniDb,
+        secondTmdb,
+      ]),
+    );
 
     final SourceScrapeReport second = await secondCoordinator.scrapeSource(
       source,
@@ -353,6 +455,74 @@ void main() {
     expect(lookup.episodeGroupId, 'persisted-group');
   });
 
+  test('changing confirmed AniDB identity discards old TMDB binding', () async {
+    final SourceLibraryRow source = await _createMovieSource(db, root,
+        provider: VideoMetadataProviderKind.anidb);
+    final VideoSourceScrapeCoordinator first = VideoSourceScrapeCoordinator(
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        _PersistedCrossrefAniDbProvider(includeTmdbCrossref: true),
+        _RecordingCrossrefTmdbProvider(),
+      ]),
+    );
+    await first.scrapeSource(source,
+        cancellationToken: VideoSourceScrapeCancellationToken(),
+        onProgress: (_) {});
+    final File externalNfo = File(p.join(root.path, 'Movie (2024).nfo'));
+    const String externalText =
+        '<movie><title>Old external work</title><uniqueid type="anidb" default="true">17617</uniqueid><uniqueid type="tmdb">99</uniqueid></movie>';
+    await externalNfo.writeAsString(externalText);
+    final _RecordingCrossrefTmdbProvider tmdb =
+        _RecordingCrossrefTmdbProvider();
+    final VideoSourceScrapeCoordinator second = VideoSourceScrapeCoordinator(
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        _PersistedCrossrefAniDbProvider(includeTmdbCrossref: false),
+        tmdb,
+      ]),
+    );
+    final VideoSourceScrapeWork work =
+        (await VideoSourceWorkPlanner(db).plan(source)).single;
+    final SourceScrapeReport report = await second.rescrapeWorkWithLookup(
+      source: source,
+      workTitle: work.title,
+      lookup: const VideoMetadataLookup(
+          provider: VideoMetadataProviderKind.anidb,
+          externalId: '999',
+          mediaKind: VideoMetadataMediaKind.movie),
+      cancellationToken: VideoSourceScrapeCancellationToken(),
+      onProgress: (_) {},
+    );
+    expect(report.succeededWorks, 1, reason: '${report.errors}');
+    expect(await externalNfo.readAsString(), externalText);
+    expect(
+        report.warnings.any(
+            (SourceScrapeIssue warning) => warning.message.contains('NFO')),
+        isTrue);
+    expect(tmdb.searchTitles.toSet(), <String>{'AniDB Movie'});
+    expect(tmdb.fetchedLookups.map((VideoMetadataLookup id) => id.externalId),
+        <String>['unexpected-search'],
+        reason:
+            'Only the fresh search candidate is hydrated; old TMDB 99 is not reused');
+    final List<VideoMetadataLookup> saved =
+        await VideoMetadataDatabaseStore(db).lookupsForWork(work);
+    expect(
+        saved
+            .where((VideoMetadataLookup id) =>
+                id.provider == VideoMetadataProviderKind.anidb)
+            .single
+            .externalId,
+        '999');
+    expect(
+        saved.where((VideoMetadataLookup id) =>
+            id.provider == VideoMetadataProviderKind.tmdb),
+        isEmpty);
+  });
+
   test('二次 TMDB 直取失败仍保留持久 crossref 与 episode group', () async {
     final SourceLibraryRow source = await _createMovieSource(
       db,
@@ -361,13 +531,14 @@ void main() {
     );
     final VideoSourceScrapeCoordinator firstCoordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            _PersistedCrossrefAniDbProvider(includeTmdbCrossref: true),
-            _RecordingCrossrefTmdbProvider(),
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        _PersistedCrossrefAniDbProvider(includeTmdbCrossref: true),
+        _RecordingCrossrefTmdbProvider(),
+      ]),
+    );
     final SourceScrapeReport first = await firstCoordinator.scrapeSource(
       source,
       cancellationToken: VideoSourceScrapeCancellationToken(),
@@ -380,13 +551,14 @@ void main() {
     final _ThrowingTmdbProvider secondTmdb = _ThrowingTmdbProvider();
     final VideoSourceScrapeCoordinator secondCoordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            secondAniDb,
-            secondTmdb,
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        secondAniDb,
+        secondTmdb,
+      ]),
+    );
 
     final SourceScrapeReport second = await secondCoordinator.scrapeSource(
       source,
@@ -400,32 +572,33 @@ void main() {
     expect(secondAniDb.fetchCount, 1);
     expect(secondTmdb.searchCount, 0);
     expect(secondTmdb.fetchCount, 1);
-    final VideoMetadataWorkRow stored = (await db.getVideoMetadataWorkByBook(
-      'movie-book',
-    ))!;
+    final VideoMetadataWorkRow stored =
+        (await db.getVideoMetadataWorkByBook('movie-book'))!;
     expect(stored.episodeGroupId, 'persisted-group');
-    final List<VideoMetadataProviderIdentityRow> identities = await db
-        .getVideoMetadataProviderIdentities(workId: stored.id);
+    final List<VideoMetadataProviderIdentityRow> identities =
+        await db.getVideoMetadataProviderIdentities(workId: stored.id);
     expect(
       identities.map(
         (VideoMetadataProviderIdentityRow row) =>
             '${row.provider}:${row.externalId}:${row.isPrimary}',
       ),
-      unorderedEquals(<String>['anidb:17617:true', 'tmdb:99:false']),
+      unorderedEquals(<String>[
+        'anidb:17617:true',
+        'tmdb:99:false',
+      ]),
     );
   });
 
-  test(
-    'AniDB migration keeps retired provider ids as inert cross references',
-    () async {
-      final SourceLibraryRow source = await _createMovieSource(
-        db,
-        root,
-        provider: VideoMetadataProviderKind.anidb,
-      );
-      final VideoBookRow book = (await db.getVideoBookByBookUid('movie-book'))!;
-      final File nfo = File(p.setExtension(book.videoPath, '.nfo'));
-      await nfo.writeAsString('''
+  test('AniDB migration keeps retired provider ids as inert cross references',
+      () async {
+    final SourceLibraryRow source = await _createMovieSource(
+      db,
+      root,
+      provider: VideoMetadataProviderKind.anidb,
+    );
+    final VideoBookRow book = (await db.getVideoBookByBookUid('movie-book'))!;
+    final File nfo = File(p.setExtension(book.videoPath, '.nfo'));
+    await nfo.writeAsString('''
 <movie>
   <title>Movie</title>
   <uniqueid type="tmdb" default="true">100</uniqueid>
@@ -433,48 +606,45 @@ void main() {
   <uniqueid type="anilist" default="false">300</uniqueid>
 </movie>
 ''');
-      await VideoSourceMetadataIndexer(db).index(source);
-      await nfo.delete();
-      final _RecordingCrossrefTmdbProvider tmdb =
-          _RecordingCrossrefTmdbProvider();
-      final VideoSourceScrapeCoordinator coordinator =
-          VideoSourceScrapeCoordinator(
-            database: db,
-            config: const VideoSourceScrapeGlobalConfig(),
-            registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-              _PrimaryMovieProvider(),
-              tmdb,
-            ]),
-          );
+    await VideoSourceMetadataIndexer(db).index(source);
+    await nfo.delete();
+    final _RecordingCrossrefTmdbProvider tmdb =
+        _RecordingCrossrefTmdbProvider();
+    final VideoSourceScrapeCoordinator coordinator =
+        VideoSourceScrapeCoordinator(
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        _PrimaryMovieProvider(),
+        tmdb,
+      ]),
+    );
 
-      final SourceScrapeReport report = await coordinator.scrapeSource(
-        source,
-        cancellationToken: VideoSourceScrapeCancellationToken(),
-        onProgress: (_) {},
-      );
+    final SourceScrapeReport report = await coordinator.scrapeSource(
+      source,
+      cancellationToken: VideoSourceScrapeCancellationToken(),
+      onProgress: (_) {},
+    );
 
-      expect(report.succeededWorks, 1, reason: '${report.errors}');
-      expect(tmdb.fetchCount, 1);
-      expect(tmdb.fetchedLookups.single.externalId, '99');
-      final VideoMetadataWorkRow stored = (await db.getVideoMetadataWorkByBook(
-        'movie-book',
-      ))!;
-      expect(
-        (await db.getVideoMetadataProviderIdentities(workId: stored.id))
-            .map(
-              (VideoMetadataProviderIdentityRow row) =>
-                  '${row.provider}:${row.externalId}:${row.isPrimary}',
-            )
-            .toSet(),
-        <String>{
-          'anidb:1:true',
-          'tmdb:99:false',
-          'bangumi:200:false',
-          'anilist:300:false',
-        },
-      );
-    },
-  );
+    expect(report.succeededWorks, 1, reason: '${report.errors}');
+    expect(tmdb.fetchCount, 1);
+    expect(tmdb.fetchedLookups.single.externalId, '99');
+    final VideoMetadataWorkRow stored =
+        (await db.getVideoMetadataWorkByBook('movie-book'))!;
+    expect(
+      (await db.getVideoMetadataProviderIdentities(workId: stored.id))
+          .map((VideoMetadataProviderIdentityRow row) =>
+              '${row.provider}:${row.externalId}:${row.isPrimary}')
+          .toSet(),
+      <String>{
+        'anidb:1:true',
+        'tmdb:99:false',
+        'bangumi:200:false',
+        'anilist:300:false',
+      },
+    );
+  });
 
   test('AniDB 模糊目录候选只在人工确认后抓取选中项详情', () async {
     final SourceLibraryRow source = await _createMovieSource(
@@ -486,12 +656,13 @@ void main() {
         _CatalogConfirmationAniDbProvider();
     final VideoSourceScrapeCoordinator coordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            provider,
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        provider,
+      ]),
+    );
 
     final SourceScrapeReport report = await coordinator.scrapeSource(
       source,
@@ -519,13 +690,14 @@ void main() {
     final _PrimaryContinuationProvider primary = _PrimaryContinuationProvider();
     final VideoSourceScrapeCoordinator firstCoordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            primary,
-            _ContinuationTmdbProvider(),
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        primary,
+        _ContinuationTmdbProvider(),
+      ]),
+    );
     final SourceScrapeReport first = await firstCoordinator.scrapeSource(
       source,
       cancellationToken: VideoSourceScrapeCancellationToken(),
@@ -533,36 +705,35 @@ void main() {
     );
     expect(first.succeededWorks, 1, reason: '${first.errors}');
 
-    final VideoMetadataWorkRow stored = (await db
-        .getVideoMetadataWorkByCollection(collectionId))!;
-    List<VideoMetadataSeasonRow> seasons = await db.getVideoMetadataSeasons(
-      stored.id,
+    final VideoMetadataWorkRow stored =
+        (await db.getVideoMetadataWorkByCollection(collectionId))!;
+    List<VideoMetadataSeasonRow> seasons =
+        await db.getVideoMetadataSeasons(stored.id);
+    expect(
+      seasons.map((VideoMetadataSeasonRow row) => row.seasonNumber),
+      <int>[1, 2],
     );
-    expect(seasons.map((VideoMetadataSeasonRow row) => row.seasonNumber), <int>[
-      1,
-      2,
-    ]);
     expect(
       (await db.getVideoMetadataEpisodes(seasons.first.id)).single.title,
       'TMDB S01E01',
       reason: '续季主源 E01 不得覆盖 TMDB 的 S01E01',
     );
-    List<VideoMetadataEpisodeRow> season2 = await db.getVideoMetadataEpisodes(
-      seasons.last.id,
-    );
+    List<VideoMetadataEpisodeRow> season2 =
+        await db.getVideoMetadataEpisodes(seasons.last.id);
     expect(season2.first.title, '主源续季第一集');
     expect(season2.last.title, 'TMDB S02E02');
 
     final _ThrowingTmdbProvider failingTmdb = _ThrowingTmdbProvider();
     final VideoSourceScrapeCoordinator secondCoordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            primary,
-            failingTmdb,
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        primary,
+        failingTmdb,
+      ]),
+    );
     final SourceScrapeReport second = await secondCoordinator.scrapeSource(
       source,
       cancellationToken: VideoSourceScrapeCancellationToken(),
@@ -594,12 +765,13 @@ void main() {
     );
     final VideoSourceScrapeCoordinator firstCoordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            completeAniDb,
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        completeAniDb,
+      ]),
+    );
 
     final SourceScrapeReport first = await firstCoordinator.scrapeSource(
       source,
@@ -607,15 +779,13 @@ void main() {
       onProgress: (_) {},
     );
     expect(first.succeededWorks, 1, reason: '${first.errors}');
-    final VideoMetadataWorkRow stored = (await db
-        .getVideoMetadataWorkByCollection(collectionId))!;
-    VideoMetadataSeasonRow season = (await db.getVideoMetadataSeasons(
-      stored.id,
-    )).single;
+    final VideoMetadataWorkRow stored =
+        (await db.getVideoMetadataWorkByCollection(collectionId))!;
+    VideoMetadataSeasonRow season =
+        (await db.getVideoMetadataSeasons(stored.id)).single;
     expect(
-      (await db.getVideoMetadataEpisodes(
-        season.id,
-      )).map((VideoMetadataEpisodeRow row) => row.episodeNumber),
+      (await db.getVideoMetadataEpisodes(season.id))
+          .map((VideoMetadataEpisodeRow row) => row.episodeNumber),
       <int>[1, 2, 3],
     );
 
@@ -625,13 +795,14 @@ void main() {
     );
     final VideoSourceScrapeCoordinator secondCoordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            incompleteAniDb,
-            _ContinuationTmdbProvider(),
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        incompleteAniDb,
+        _ContinuationTmdbProvider(),
+      ]),
+    );
     final SourceScrapeReport second = await secondCoordinator.scrapeSource(
       source,
       cancellationToken: VideoSourceScrapeCancellationToken(),
@@ -643,22 +814,20 @@ void main() {
       second.warnings.map((SourceScrapeIssue issue) => issue.message).join(),
       contains('分集资料抓取失败'),
     );
-    season = (await db.getVideoMetadataSeasons(
-      stored.id,
-    )).firstWhere((VideoMetadataSeasonRow row) => row.seasonNumber == 2);
+    season = (await db.getVideoMetadataSeasons(stored.id)).firstWhere(
+      (VideoMetadataSeasonRow row) => row.seasonNumber == 2,
+    );
     expect(
-      (await db.getVideoMetadataEpisodes(
-        season.id,
-      )).map((VideoMetadataEpisodeRow row) => row.episodeNumber),
+      (await db.getVideoMetadataEpisodes(season.id))
+          .map((VideoMetadataEpisodeRow row) => row.episodeNumber),
       <int>[1, 2, 3],
       reason: 'TMDB 即使完整也只能补充，不能删除 AniDB 不完整响应遗漏的旧集',
     );
   });
 
   test('年份识别不读取父与祖父之外的绝对路径片段', () async {
-    final Directory movieDir = Directory(
-      p.join(root.path, '1999', 'Library', 'Movie Folder'),
-    );
+    final Directory movieDir =
+        Directory(p.join(root.path, '1999', 'Library', 'Movie Folder'));
     await movieDir.create(recursive: true);
     final File video = File(p.join(movieDir.path, 'Movie.mkv'));
     await video.writeAsBytes(const <int>[0]);
@@ -670,14 +839,12 @@ void main() {
         createdAt: 1,
       ),
     );
-    await db.upsertVideoBook(
-      VideoBooksCompanion(
-        bookUid: const Value<String>('year-boundary-movie'),
-        title: const Value<String>('Movie'),
-        videoPath: Value<String>(video.path),
-        sourceId: Value<int?>(sourceId),
-      ),
-    );
+    await db.upsertVideoBook(VideoBooksCompanion(
+      bookUid: const Value<String>('year-boundary-movie'),
+      title: const Value<String>('Movie'),
+      videoPath: Value<String>(video.path),
+      sourceId: Value<int?>(sourceId),
+    ));
     await db.upsertVideoSourceScrapeSettings(
       VideoSourceScrapeSettingsCompanion.insert(
         sourceId: Value<int>(sourceId),
@@ -691,12 +858,12 @@ void main() {
     final _YearCapturingAniDbProvider provider = _YearCapturingAniDbProvider();
     final VideoSourceScrapeCoordinator coordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            provider,
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry:
+          VideoMetadataProviderRegistry(<VideoMetadataProvider>[provider]),
+    );
 
     final SourceScrapeReport report = await coordinator.scrapeSource(
       (await db.getMediaSourceById(sourceId))!,
@@ -729,14 +896,12 @@ void main() {
     for (int index = 0; index < names.length; index++) {
       final File video = File(p.join(showDir.path, names[index]));
       await video.writeAsBytes(const <int>[0]);
-      await db.upsertVideoBook(
-        VideoBooksCompanion(
-          bookUid: Value<String>('himouto-${index + 8}'),
-          title: Value<String>(p.basenameWithoutExtension(names[index])),
-          videoPath: Value<String>(video.path),
-          sourceId: Value<int?>(sourceId),
-        ),
-      );
+      await db.upsertVideoBook(VideoBooksCompanion(
+        bookUid: Value<String>('himouto-${index + 8}'),
+        title: Value<String>(p.basenameWithoutExtension(names[index])),
+        videoPath: Value<String>(video.path),
+        sourceId: Value<int?>(sourceId),
+      ));
     }
     final int collectionId = await db.createMediaCollection(
       'Himouto! Umaru-chan',
@@ -757,12 +922,12 @@ void main() {
     final _HimoutoAniDbProvider provider = _HimoutoAniDbProvider();
     final VideoSourceScrapeCoordinator coordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            provider,
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry:
+          VideoMetadataProviderRegistry(<VideoMetadataProvider>[provider]),
+    );
 
     final SourceScrapeReport report = await coordinator.scrapeSource(
       (await db.getMediaSourceById(sourceId))!,
@@ -780,13 +945,11 @@ void main() {
   });
 
   test('re0 使用清洗后的父目录标题和第三季约束识别主剧', () async {
-    final Directory showDir = Directory(
-      p.join(
-        root.path,
-        '[DBD-Raws][Re：从零开始的异世界生活 第三季]'
-        '[01-16TV全集+SP][1080P][BDRip]',
-      ),
-    );
+    final Directory showDir = Directory(p.join(
+      root.path,
+      '[DBD-Raws][Re：从零开始的异世界生活 第三季]'
+      '[01-16TV全集+SP][1080P][BDRip]',
+    ));
     await showDir.create(recursive: true);
     final int sourceId = await db.insertMediaSource(
       MediaSourcesCompanion.insert(
@@ -798,46 +961,42 @@ void main() {
     );
     for (final int episode in <int>[1, 2]) {
       final String uid = 're0-main-$episode';
-      final File video = File(
-        p.join(
-          showDir.path,
-          '[DBD-Raws][Re Zero kara Hajimeru Isekai Seikatsu S3]'
-          '[${episode.toString().padLeft(2, '0')}][1080P][BDRip].mkv',
-        ),
-      );
+      final File video = File(p.join(
+        showDir.path,
+        '[DBD-Raws][Re Zero kara Hajimeru Isekai Seikatsu S3]'
+        '[${episode.toString().padLeft(2, '0')}][1080P][BDRip].mkv',
+      ));
       await video.writeAsBytes(const <int>[0]);
-      await db.upsertVideoBook(
-        VideoBooksCompanion(
-          bookUid: Value<String>(uid),
-          title: Value<String>(p.basenameWithoutExtension(video.path)),
-          videoPath: Value<String>(video.path),
-          sourceId: Value<int?>(sourceId),
-        ),
-      );
+      await db.upsertVideoBook(VideoBooksCompanion(
+        bookUid: Value<String>(uid),
+        title: Value<String>(p.basenameWithoutExtension(video.path)),
+        videoPath: Value<String>(video.path),
+        sourceId: Value<int?>(sourceId),
+      ));
     }
     final Directory pvDir = Directory(p.join(showDir.path, 'PV'));
     await pvDir.create(recursive: true);
-    final File pv = File(
-      p.join(
-        pvDir.path,
-        '[DBD-Raws][Re Zero kara Hajimeru Isekai Seikatsu S3]'
-        '[PV][01][1080P][BDRip].mkv',
-      ),
-    );
+    final File pv = File(p.join(
+      pvDir.path,
+      '[DBD-Raws][Re Zero kara Hajimeru Isekai Seikatsu S3]'
+      '[PV][01][1080P][BDRip].mkv',
+    ));
     await pv.writeAsBytes(const <int>[0]);
-    await db.upsertVideoBook(
-      VideoBooksCompanion(
-        bookUid: const Value<String>('re0-pv-1'),
-        title: Value<String>(p.basenameWithoutExtension(pv.path)),
-        videoPath: Value<String>(pv.path),
-        sourceId: Value<int?>(sourceId),
-      ),
-    );
+    await db.upsertVideoBook(VideoBooksCompanion(
+      bookUid: const Value<String>('re0-pv-1'),
+      title: Value<String>(p.basenameWithoutExtension(pv.path)),
+      videoPath: Value<String>(pv.path),
+      sourceId: Value<int?>(sourceId),
+    ));
     final int collectionId = await db.createMediaCollection(
       'Re Zero kara Hajimeru Isekai Seikatsu',
       collectionType: 'playlist',
     );
-    for (final String uid in <String>['re0-main-1', 're0-main-2', 're0-pv-1']) {
+    for (final String uid in <String>[
+      're0-main-1',
+      're0-main-2',
+      're0-pv-1',
+    ]) {
       await db.addToCollection(collectionId, MediaKind.video, uid);
     }
     await db.upsertVideoSourceScrapeSettings(
@@ -853,12 +1012,12 @@ void main() {
     final _ReZeroAniDbProvider provider = _ReZeroAniDbProvider();
     final VideoSourceScrapeCoordinator coordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            provider,
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry:
+          VideoMetadataProviderRegistry(<VideoMetadataProvider>[provider]),
+    );
 
     final SourceScrapeReport report = await coordinator.scrapeSource(
       (await db.getMediaSourceById(sourceId))!,
@@ -866,11 +1025,8 @@ void main() {
       onProgress: (_) {},
     );
 
-    expect(
-      report.totalWorks,
-      1,
-      reason: '${report.warnings}\n${report.errors}',
-    );
+    expect(report.totalWorks, 1,
+        reason: '${report.warnings}\n${report.errors}');
     expect(report.succeededWorks, 1, reason: '${report.errors}');
     expect(provider.searchTitles, contains('Re：从零开始的异世界生活'));
     expect(provider.searchSeasons, everyElement(3));
@@ -881,9 +1037,8 @@ void main() {
   });
 
   test('缺少真实分集资料时生成的 episode NFO 不伪造文件名标题', () async {
-    final Directory seasonDir = Directory(
-      p.join(root.path, 'Unknown Show', 'Season 01'),
-    );
+    final Directory seasonDir =
+        Directory(p.join(root.path, 'Unknown Show', 'Season 01'));
     await seasonDir.create(recursive: true);
     for (final String name in <String>[
       'Unknown Show S01E01.mkv',
@@ -903,16 +1058,13 @@ void main() {
       (1, 'unknown-e1'),
       (2, 'unknown-e2'),
     ]) {
-      await db.upsertVideoBook(
-        VideoBooksCompanion(
-          bookUid: Value<String>(uid),
-          title: Value<String>('Unknown Show E$number'),
-          videoPath: Value<String>(
-            p.join(seasonDir.path, 'Unknown Show S01E0$number.mkv'),
-          ),
-          sourceId: Value<int?>(sourceId),
-        ),
-      );
+      await db.upsertVideoBook(VideoBooksCompanion(
+        bookUid: Value<String>(uid),
+        title: Value<String>('Unknown Show E$number'),
+        videoPath: Value<String>(
+            p.join(seasonDir.path, 'Unknown Show S01E0$number.mkv')),
+        sourceId: Value<int?>(sourceId),
+      ));
     }
     final int collectionId = await db.createMediaCollection(
       'Unknown Show',
@@ -932,12 +1084,13 @@ void main() {
     );
     final VideoSourceScrapeCoordinator coordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            _NoEpisodeAniDbProvider(),
-          ]),
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        _NoEpisodeAniDbProvider(),
+      ]),
+    );
 
     final SourceScrapeReport report = await coordinator.scrapeSource(
       (await db.getMediaSourceById(sourceId))!,
@@ -964,12 +1117,11 @@ void main() {
     final _RefreshingAniDbProvider provider = _RefreshingAniDbProvider();
     final VideoSourceScrapeCoordinator coordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            provider,
-          ]),
-        );
+            primaryProvider: VideoMetadataProviderKind.anidb,
+            database: db,
+            config: const VideoSourceScrapeGlobalConfig(),
+            registry: VideoMetadataProviderRegistry(
+                <VideoMetadataProvider>[provider]));
 
     final SourceScrapeReport first = await coordinator.scrapeSource(
       source,
@@ -1015,14 +1167,15 @@ void main() {
     final _RecordingAssetDownloader downloader = _RecordingAssetDownloader();
     final VideoSourceScrapeCoordinator coordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            _ImageAniDbProvider(),
-            tmdb,
-          ]),
-          assetDownloader: downloader,
-        );
+      primaryProvider: VideoMetadataProviderKind.anidb,
+      database: db,
+      config: const VideoSourceScrapeGlobalConfig(),
+      registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
+        _ImageAniDbProvider(),
+        tmdb,
+      ]),
+      assetDownloader: downloader,
+    );
 
     final SourceScrapeReport report = await coordinator.scrapeSource(
       source,
@@ -1058,12 +1211,11 @@ void main() {
     final _ExactMovieProvider provider = _ExactMovieProvider();
     final VideoSourceScrapeCoordinator coordinator =
         VideoSourceScrapeCoordinator(
-          database: db,
-          config: const VideoSourceScrapeGlobalConfig(),
-          registry: VideoMetadataProviderRegistry(<VideoMetadataProvider>[
-            provider,
-          ]),
-        );
+            primaryProvider: VideoMetadataProviderKind.anidb,
+            database: db,
+            config: const VideoSourceScrapeGlobalConfig(),
+            registry: VideoMetadataProviderRegistry(
+                <VideoMetadataProvider>[provider]));
 
     final SourceScrapeReport report = await coordinator.scrapeImportedWork(
       work,
@@ -1081,19 +1233,20 @@ void main() {
       (await db.getVideoMetadataWorkByBook('movie-book'))?.title,
       'Exact Movie',
     );
-    final List<VideoSourceScrapeRunRow> runs = await db
-        .getVideoSourceScrapeRuns(sourceId: source.id);
+    final List<VideoSourceScrapeRunRow> runs =
+        await db.getVideoSourceScrapeRuns(sourceId: source.id);
     expect(runs.single.scope, 'work');
   });
 }
 
 Future<({int collectionId, SourceLibraryRow source})> _createContinuationSource(
-  FushiDatabase db,
-  Directory root,
-) async {
+    FushiDatabase db, Directory root) async {
   final Directory seasonDir = Directory(p.join(root.path, 'Show', 'Season 02'));
   await seasonDir.create(recursive: true);
-  for (final String name in <String>['Show S02E01.mkv', 'Show S02E02.mkv']) {
+  for (final String name in <String>[
+    'Show S02E01.mkv',
+    'Show S02E02.mkv',
+  ]) {
     await File(p.join(seasonDir.path, name)).writeAsBytes(const <int>[0]);
   }
   final int sourceId = await db.insertMediaSource(
@@ -1104,26 +1257,20 @@ Future<({int collectionId, SourceLibraryRow source})> _createContinuationSource(
       createdAt: 1,
     ),
   );
-  await db.upsertVideoBook(
-    VideoBooksCompanion(
-      bookUid: const Value<String>('s2e1'),
-      title: const Value<String>('Show S02E01'),
-      videoPath: Value<String>(p.join(seasonDir.path, 'Show S02E01.mkv')),
-      sourceId: Value<int?>(sourceId),
-    ),
-  );
-  await db.upsertVideoBook(
-    VideoBooksCompanion(
-      bookUid: const Value<String>('s2e2'),
-      title: const Value<String>('Show S02E02'),
-      videoPath: Value<String>(p.join(seasonDir.path, 'Show S02E02.mkv')),
-      sourceId: Value<int?>(sourceId),
-    ),
-  );
-  final int collectionId = await db.createMediaCollection(
-    'Show',
-    collectionType: 'playlist',
-  );
+  await db.upsertVideoBook(VideoBooksCompanion(
+    bookUid: const Value<String>('s2e1'),
+    title: const Value<String>('Show S02E01'),
+    videoPath: Value<String>(p.join(seasonDir.path, 'Show S02E01.mkv')),
+    sourceId: Value<int?>(sourceId),
+  ));
+  await db.upsertVideoBook(VideoBooksCompanion(
+    bookUid: const Value<String>('s2e2'),
+    title: const Value<String>('Show S02E02'),
+    videoPath: Value<String>(p.join(seasonDir.path, 'Show S02E02.mkv')),
+    sourceId: Value<int?>(sourceId),
+  ));
+  final int collectionId =
+      await db.createMediaCollection('Show', collectionType: 'playlist');
   await db.addToCollection(collectionId, MediaKind.video, 's2e1');
   await db.addToCollection(collectionId, MediaKind.video, 's2e2');
   await db.upsertVideoSourceScrapeSettings(
@@ -1157,14 +1304,12 @@ Future<SourceLibraryRow> _createMovieSource(
       createdAt: 1,
     ),
   );
-  await db.upsertVideoBook(
-    VideoBooksCompanion(
-      bookUid: const Value<String>('movie-book'),
-      title: const Value<String>('Movie'),
-      videoPath: Value<String>(video.path),
-      sourceId: Value<int?>(sourceId),
-    ),
-  );
+  await db.upsertVideoBook(VideoBooksCompanion(
+    bookUid: const Value<String>('movie-book'),
+    title: const Value<String>('Movie'),
+    videoPath: Value<String>(video.path),
+    sourceId: Value<int?>(sourceId),
+  ));
   await db.upsertVideoSourceScrapeSettings(
     VideoSourceScrapeSettingsCompanion.insert(
       sourceId: Value<int>(sourceId),
@@ -1188,17 +1333,21 @@ class _FakeAniDbProvider implements VideoMetadataProvider {
   bool get isAvailable => true;
 
   VideoMetadataWork get work => VideoMetadataWork(
-    provider: providerKind,
-    kind: VideoMetadataMediaKind.tv,
-    title: 'Show',
-    year: 2025,
-    ids: const <VideoMetadataId>[
-      VideoMetadataId(type: 'anidb', value: '42', isDefault: true),
-    ],
-    seasons: <VideoMetadataSeason>[
-      VideoMetadataSeason(seasonNumber: 1, title: 'Season 1', episodeCount: 2),
-    ],
-  );
+        provider: providerKind,
+        kind: VideoMetadataMediaKind.tv,
+        title: 'Show',
+        year: 2025,
+        ids: const <VideoMetadataId>[
+          VideoMetadataId(type: 'anidb', value: '42', isDefault: true),
+        ],
+        seasons: <VideoMetadataSeason>[
+          VideoMetadataSeason(
+            seasonNumber: 1,
+            title: 'Season 1',
+            episodeCount: 2,
+          ),
+        ],
+      );
 
   @override
   Future<List<VideoMetadataWork>> search(
@@ -1215,43 +1364,45 @@ class _FakeAniDbProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => work.seasons;
+  ) async =>
+      work.seasons;
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => <VideoMetadataEpisode>[
-    VideoMetadataEpisode(
-      seasonNumber: 1,
-      episodeNumber: 1,
-      title: 'Episode One',
-      ids: const <VideoMetadataId>[
-        VideoMetadataId(type: 'anidb', value: '4201'),
-      ],
-      credits: <VideoMetadataCredit>[
-        VideoMetadataCredit(
-          kind: VideoMetadataCreditKind.voiceActor,
-          person: VideoMetadataPerson(
-            id: '7',
-            name: 'Voice Actor',
-            ids: const <VideoMetadataId>[
-              VideoMetadataId(type: 'anidb', value: '7'),
-            ],
-          ),
-          character: VideoMetadataCharacter(name: 'Hero'),
+  }) async =>
+      <VideoMetadataEpisode>[
+        VideoMetadataEpisode(
+          seasonNumber: 1,
+          episodeNumber: 1,
+          title: 'Episode One',
+          ids: const <VideoMetadataId>[
+            VideoMetadataId(type: 'anidb', value: '4201'),
+          ],
+          credits: <VideoMetadataCredit>[
+            VideoMetadataCredit(
+              kind: VideoMetadataCreditKind.voiceActor,
+              person: VideoMetadataPerson(
+                id: '7',
+                name: 'Voice Actor',
+                ids: const <VideoMetadataId>[
+                  VideoMetadataId(type: 'anidb', value: '7'),
+                ],
+              ),
+              character: VideoMetadataCharacter(name: 'Hero'),
+            ),
+          ],
         ),
-      ],
-    ),
-    VideoMetadataEpisode(
-      seasonNumber: 1,
-      episodeNumber: 2,
-      title: 'Episode Two',
-      ids: const <VideoMetadataId>[
-        VideoMetadataId(type: 'anidb', value: '4202'),
-      ],
-    ),
-  ];
+        VideoMetadataEpisode(
+          seasonNumber: 1,
+          episodeNumber: 2,
+          title: 'Episode Two',
+          ids: const <VideoMetadataId>[
+            VideoMetadataId(type: 'anidb', value: '4202'),
+          ],
+        ),
+      ];
 
   @override
   void close() {}
@@ -1270,20 +1421,25 @@ class _CatalogConfirmationAniDbProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataWork>> search(
     VideoMetadataSearchRequest request,
-  ) async => <VideoMetadataWork>[
-    for (int id = 1; id <= 15; id++)
-      VideoMetadataWork(
-        provider: providerKind,
-        kind: VideoMetadataMediaKind.movie,
-        title: 'Fuzzy catalog result $id',
-        ids: <VideoMetadataId>[
-          VideoMetadataId(type: 'anidb', value: '$id', isDefault: true),
-        ],
-        rawPayload: const <String, Object?>{
-          AniDbVideoMetadataProvider.catalogOnlyPayloadKey: true,
-        },
-      ),
-  ];
+  ) async =>
+      <VideoMetadataWork>[
+        for (int id = 1; id <= 15; id++)
+          VideoMetadataWork(
+            provider: providerKind,
+            kind: VideoMetadataMediaKind.movie,
+            title: 'Fuzzy catalog result $id',
+            ids: <VideoMetadataId>[
+              VideoMetadataId(
+                type: 'anidb',
+                value: '$id',
+                isDefault: true,
+              ),
+            ],
+            rawPayload: const <String, Object?>{
+              AniDbVideoMetadataProvider.catalogOnlyPayloadKey: true,
+            },
+          ),
+      ];
 
   @override
   Future<VideoMetadataWork?> fetchWork(VideoMetadataLookup lookup) async {
@@ -1306,13 +1462,15 @@ class _CatalogConfirmationAniDbProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => const <VideoMetadataSeason>[];
+  ) async =>
+      const <VideoMetadataSeason>[];
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => const <VideoMetadataEpisode>[];
+  }) async =>
+      const <VideoMetadataEpisode>[];
 
   @override
   void close() {}
@@ -1353,13 +1511,15 @@ class _ExactMovieProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => const <VideoMetadataSeason>[];
+  ) async =>
+      const <VideoMetadataSeason>[];
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => const <VideoMetadataEpisode>[];
+  }) async =>
+      const <VideoMetadataEpisode>[];
 
   @override
   void close() {}
@@ -1373,22 +1533,23 @@ class _PrimaryContinuationProvider implements VideoMetadataProvider {
   bool get isAvailable => true;
 
   VideoMetadataWork get work => VideoMetadataWork(
-    provider: providerKind,
-    kind: VideoMetadataMediaKind.tv,
-    title: 'Show Season 2',
-    ids: const <VideoMetadataId>[
-      VideoMetadataId(type: 'anidb', value: '200'),
-      VideoMetadataId(type: 'tmdb', value: '100'),
-    ],
-    seasons: <VideoMetadataSeason>[
-      VideoMetadataSeason(seasonNumber: 1, title: '主源当前季'),
-    ],
-  );
+        provider: providerKind,
+        kind: VideoMetadataMediaKind.tv,
+        title: 'Show Season 2',
+        ids: const <VideoMetadataId>[
+          VideoMetadataId(type: 'anidb', value: '200'),
+          VideoMetadataId(type: 'tmdb', value: '100'),
+        ],
+        seasons: <VideoMetadataSeason>[
+          VideoMetadataSeason(seasonNumber: 1, title: '主源当前季'),
+        ],
+      );
 
   @override
   Future<List<VideoMetadataWork>> search(
     VideoMetadataSearchRequest request,
-  ) async => <VideoMetadataWork>[work];
+  ) async =>
+      <VideoMetadataWork>[work];
 
   @override
   Future<VideoMetadataWork?> fetchWork(VideoMetadataLookup lookup) async =>
@@ -1397,15 +1558,21 @@ class _PrimaryContinuationProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => work.seasons;
+  ) async =>
+      work.seasons;
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => <VideoMetadataEpisode>[
-    VideoMetadataEpisode(seasonNumber: 1, episodeNumber: 1, title: '主源续季第一集'),
-  ];
+  }) async =>
+      <VideoMetadataEpisode>[
+        VideoMetadataEpisode(
+          seasonNumber: 1,
+          episodeNumber: 1,
+          title: '主源续季第一集',
+        ),
+      ];
 
   @override
   void close() {}
@@ -1427,34 +1594,35 @@ class _AuthorityAniDbProvider implements VideoMetadataProvider {
   bool get isAvailable => true;
 
   VideoMetadataWork get work => VideoMetadataWork(
-    provider: providerKind,
-    kind: VideoMetadataMediaKind.tv,
-    title: 'Show Season 2',
-    ids: const <VideoMetadataId>[
-      VideoMetadataId(type: 'anidb', value: '300', isDefault: true),
-      VideoMetadataId(type: 'tmdb', value: '100'),
-    ],
-    seasons: <VideoMetadataSeason>[
-      VideoMetadataSeason(
-        seasonNumber: 1,
-        title: 'AniDB current season',
-        episodeCount: episodeNumbers.length,
-        episodes: <VideoMetadataEpisode>[
-          for (final int number in episodeNumbers)
-            VideoMetadataEpisode(
-              seasonNumber: 1,
-              episodeNumber: number,
-              title: 'AniDB episode $number',
-            ),
+        provider: providerKind,
+        kind: VideoMetadataMediaKind.tv,
+        title: 'Show Season 2',
+        ids: const <VideoMetadataId>[
+          VideoMetadataId(type: 'anidb', value: '300', isDefault: true),
+          VideoMetadataId(type: 'tmdb', value: '100'),
         ],
-      ),
-    ],
-  );
+        seasons: <VideoMetadataSeason>[
+          VideoMetadataSeason(
+            seasonNumber: 1,
+            title: 'AniDB current season',
+            episodeCount: episodeNumbers.length,
+            episodes: <VideoMetadataEpisode>[
+              for (final int number in episodeNumbers)
+                VideoMetadataEpisode(
+                  seasonNumber: 1,
+                  episodeNumber: number,
+                  title: 'AniDB episode $number',
+                ),
+            ],
+          ),
+        ],
+      );
 
   @override
   Future<List<VideoMetadataWork>> search(
     VideoMetadataSearchRequest request,
-  ) async => <VideoMetadataWork>[work];
+  ) async =>
+      <VideoMetadataWork>[work];
 
   @override
   Future<VideoMetadataWork?> fetchWork(VideoMetadataLookup lookup) async =>
@@ -1463,7 +1631,8 @@ class _AuthorityAniDbProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => work.seasons;
+  ) async =>
+      work.seasons;
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
@@ -1488,20 +1657,23 @@ class _ContinuationTmdbProvider implements VideoMetadataProvider {
   bool get isAvailable => true;
 
   VideoMetadataWork get work => VideoMetadataWork(
-    provider: providerKind,
-    kind: VideoMetadataMediaKind.tv,
-    title: 'Show',
-    ids: const <VideoMetadataId>[VideoMetadataId(type: 'tmdb', value: '100')],
-    seasons: <VideoMetadataSeason>[
-      VideoMetadataSeason(seasonNumber: 1, title: 'TMDB Season 1'),
-      VideoMetadataSeason(seasonNumber: 2, title: 'TMDB Season 2'),
-    ],
-  );
+        provider: providerKind,
+        kind: VideoMetadataMediaKind.tv,
+        title: 'Show',
+        ids: const <VideoMetadataId>[
+          VideoMetadataId(type: 'tmdb', value: '100'),
+        ],
+        seasons: <VideoMetadataSeason>[
+          VideoMetadataSeason(seasonNumber: 1, title: 'TMDB Season 1'),
+          VideoMetadataSeason(seasonNumber: 2, title: 'TMDB Season 2'),
+        ],
+      );
 
   @override
   Future<List<VideoMetadataWork>> search(
     VideoMetadataSearchRequest request,
-  ) async => <VideoMetadataWork>[work];
+  ) async =>
+      <VideoMetadataWork>[work];
 
   @override
   Future<VideoMetadataWork?> fetchWork(VideoMetadataLookup lookup) async =>
@@ -1510,32 +1682,34 @@ class _ContinuationTmdbProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => work.seasons;
+  ) async =>
+      work.seasons;
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => seasonNumber == 1
-      ? <VideoMetadataEpisode>[
-          VideoMetadataEpisode(
-            seasonNumber: 1,
-            episodeNumber: 1,
-            title: 'TMDB S01E01',
-          ),
-        ]
-      : <VideoMetadataEpisode>[
-          VideoMetadataEpisode(
-            seasonNumber: 2,
-            episodeNumber: 1,
-            title: 'TMDB S02E01',
-          ),
-          VideoMetadataEpisode(
-            seasonNumber: 2,
-            episodeNumber: 2,
-            title: 'TMDB S02E02',
-          ),
-        ];
+  }) async =>
+      seasonNumber == 1
+          ? <VideoMetadataEpisode>[
+              VideoMetadataEpisode(
+                seasonNumber: 1,
+                episodeNumber: 1,
+                title: 'TMDB S01E01',
+              ),
+            ]
+          : <VideoMetadataEpisode>[
+              VideoMetadataEpisode(
+                seasonNumber: 2,
+                episodeNumber: 1,
+                title: 'TMDB S02E01',
+              ),
+              VideoMetadataEpisode(
+                seasonNumber: 2,
+                episodeNumber: 2,
+                title: 'TMDB S02E02',
+              ),
+            ];
 
   @override
   void close() {}
@@ -1551,11 +1725,13 @@ class _YearCapturingAniDbProvider implements VideoMetadataProvider {
   bool get isAvailable => true;
 
   VideoMetadataWork get work => VideoMetadataWork(
-    provider: providerKind,
-    kind: VideoMetadataMediaKind.movie,
-    title: 'Movie',
-    ids: const <VideoMetadataId>[VideoMetadataId(type: 'anidb', value: '500')],
-  );
+        provider: providerKind,
+        kind: VideoMetadataMediaKind.movie,
+        title: 'Movie',
+        ids: const <VideoMetadataId>[
+          VideoMetadataId(type: 'anidb', value: '500'),
+        ],
+      );
 
   @override
   Future<List<VideoMetadataWork>> search(
@@ -1572,13 +1748,15 @@ class _YearCapturingAniDbProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => const <VideoMetadataSeason>[];
+  ) async =>
+      const <VideoMetadataSeason>[];
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => const <VideoMetadataEpisode>[];
+  }) async =>
+      const <VideoMetadataEpisode>[];
 
   @override
   void close() {}
@@ -1594,18 +1772,18 @@ class _HimoutoAniDbProvider implements VideoMetadataProvider {
   bool get isAvailable => true;
 
   VideoMetadataWork get work => VideoMetadataWork(
-    provider: providerKind,
-    kind: VideoMetadataMediaKind.tv,
-    title: 'Himouto! Umaru-chan',
-    originalTitle: '干物妹！うまるちゃん',
-    year: 2015,
-    ids: const <VideoMetadataId>[
-      VideoMetadataId(type: 'anidb', value: '67126'),
-    ],
-    seasons: <VideoMetadataSeason>[
-      VideoMetadataSeason(seasonNumber: 1, title: 'Season 1'),
-    ],
-  );
+        provider: providerKind,
+        kind: VideoMetadataMediaKind.tv,
+        title: 'Himouto! Umaru-chan',
+        originalTitle: '干物妹！うまるちゃん',
+        year: 2015,
+        ids: const <VideoMetadataId>[
+          VideoMetadataId(type: 'anidb', value: '67126'),
+        ],
+        seasons: <VideoMetadataSeason>[
+          VideoMetadataSeason(seasonNumber: 1, title: 'Season 1'),
+        ],
+      );
 
   @override
   Future<List<VideoMetadataWork>> search(
@@ -1622,20 +1800,22 @@ class _HimoutoAniDbProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => work.seasons;
+  ) async =>
+      work.seasons;
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => <VideoMetadataEpisode>[
-    for (final int number in <int>[8, 9])
-      VideoMetadataEpisode(
-        seasonNumber: 1,
-        episodeNumber: number,
-        title: 'Episode $number',
-      ),
-  ];
+  }) async =>
+      <VideoMetadataEpisode>[
+        for (final int number in <int>[8, 9])
+          VideoMetadataEpisode(
+            seasonNumber: 1,
+            episodeNumber: number,
+            title: 'Episode $number',
+          ),
+      ];
 
   @override
   void close() {}
@@ -1652,19 +1832,19 @@ class _ReZeroAniDbProvider implements VideoMetadataProvider {
   bool get isAvailable => true;
 
   VideoMetadataWork get work => VideoMetadataWork(
-    provider: providerKind,
-    kind: VideoMetadataMediaKind.tv,
-    title: 'Re：从零开始的异世界生活',
-    originalTitle: 'Re:ゼロから始める異世界生活',
-    aliases: const <String>['Re Zero Season 3'],
-    year: 2016,
-    ids: const <VideoMetadataId>[
-      VideoMetadataId(type: 'anidb', value: '65942'),
-    ],
-    seasons: <VideoMetadataSeason>[
-      VideoMetadataSeason(seasonNumber: 3, title: 'Season 3'),
-    ],
-  );
+        provider: providerKind,
+        kind: VideoMetadataMediaKind.tv,
+        title: 'Re：从零开始的异世界生活',
+        originalTitle: 'Re:ゼロから始める異世界生活',
+        aliases: const <String>['Re Zero Season 3'],
+        year: 2016,
+        ids: const <VideoMetadataId>[
+          VideoMetadataId(type: 'anidb', value: '65942'),
+        ],
+        seasons: <VideoMetadataSeason>[
+          VideoMetadataSeason(seasonNumber: 3, title: 'Season 3'),
+        ],
+      );
 
   @override
   Future<List<VideoMetadataWork>> search(
@@ -1684,20 +1864,22 @@ class _ReZeroAniDbProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => work.seasons;
+  ) async =>
+      work.seasons;
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => <VideoMetadataEpisode>[
-    for (final int number in <int>[1, 2])
-      VideoMetadataEpisode(
-        seasonNumber: 3,
-        episodeNumber: number,
-        title: 'Episode $number',
-      ),
-  ];
+  }) async =>
+      <VideoMetadataEpisode>[
+        for (final int number in <int>[1, 2])
+          VideoMetadataEpisode(
+            seasonNumber: 3,
+            episodeNumber: number,
+            title: 'Episode $number',
+          ),
+      ];
 
   @override
   void close() {}
@@ -1711,19 +1893,22 @@ class _NoEpisodeAniDbProvider implements VideoMetadataProvider {
   bool get isAvailable => true;
 
   VideoMetadataWork get work => VideoMetadataWork(
-    provider: providerKind,
-    kind: VideoMetadataMediaKind.tv,
-    title: 'Unknown Show',
-    ids: const <VideoMetadataId>[VideoMetadataId(type: 'anidb', value: '600')],
-    seasons: <VideoMetadataSeason>[
-      VideoMetadataSeason(seasonNumber: 1, title: 'Season 1'),
-    ],
-  );
+        provider: providerKind,
+        kind: VideoMetadataMediaKind.tv,
+        title: 'Unknown Show',
+        ids: const <VideoMetadataId>[
+          VideoMetadataId(type: 'anidb', value: '600'),
+        ],
+        seasons: <VideoMetadataSeason>[
+          VideoMetadataSeason(seasonNumber: 1, title: 'Season 1'),
+        ],
+      );
 
   @override
   Future<List<VideoMetadataWork>> search(
     VideoMetadataSearchRequest request,
-  ) async => <VideoMetadataWork>[work];
+  ) async =>
+      <VideoMetadataWork>[work];
 
   @override
   Future<VideoMetadataWork?> fetchWork(VideoMetadataLookup lookup) async =>
@@ -1732,13 +1917,15 @@ class _NoEpisodeAniDbProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => work.seasons;
+  ) async =>
+      work.seasons;
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => const <VideoMetadataEpisode>[];
+  }) async =>
+      const <VideoMetadataEpisode>[];
 
   @override
   void close() {}
@@ -1752,31 +1939,32 @@ class _PrimaryMovieProvider implements VideoMetadataProvider {
   bool get isAvailable => true;
 
   VideoMetadataWork get _searchWork => VideoMetadataWork(
-    provider: providerKind,
-    kind: VideoMetadataMediaKind.movie,
-    title: 'Movie',
-    year: 2024,
-    ids: const <VideoMetadataId>[
-      VideoMetadataId(type: 'anidb', value: '1', isDefault: true),
-    ],
-  );
+        provider: providerKind,
+        kind: VideoMetadataMediaKind.movie,
+        title: 'Movie',
+        year: 2024,
+        ids: const <VideoMetadataId>[
+          VideoMetadataId(type: 'anidb', value: '1', isDefault: true),
+        ],
+      );
 
   VideoMetadataWork get _details => VideoMetadataWork(
-    provider: providerKind,
-    kind: VideoMetadataMediaKind.movie,
-    title: '主源电影',
-    year: 2024,
-    plot: '主源简介',
-    ids: const <VideoMetadataId>[
-      VideoMetadataId(type: 'anidb', value: '1', isDefault: true),
-      VideoMetadataId(type: 'tmdb', value: '99'),
-    ],
-  );
+        provider: providerKind,
+        kind: VideoMetadataMediaKind.movie,
+        title: '主源电影',
+        year: 2024,
+        plot: '主源简介',
+        ids: const <VideoMetadataId>[
+          VideoMetadataId(type: 'anidb', value: '1', isDefault: true),
+          VideoMetadataId(type: 'tmdb', value: '99'),
+        ],
+      );
 
   @override
   Future<List<VideoMetadataWork>> search(
     VideoMetadataSearchRequest request,
-  ) async => <VideoMetadataWork>[_searchWork];
+  ) async =>
+      <VideoMetadataWork>[_searchWork];
 
   @override
   Future<VideoMetadataWork?> fetchWork(VideoMetadataLookup lookup) async =>
@@ -1785,13 +1973,15 @@ class _PrimaryMovieProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => const <VideoMetadataSeason>[];
+  ) async =>
+      const <VideoMetadataSeason>[];
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => const <VideoMetadataEpisode>[];
+  }) async =>
+      const <VideoMetadataEpisode>[];
 
   @override
   void close() {}
@@ -1824,13 +2014,15 @@ class _ThrowingTmdbProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => const <VideoMetadataSeason>[];
+  ) async =>
+      const <VideoMetadataSeason>[];
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => const <VideoMetadataEpisode>[];
+  }) async =>
+      const <VideoMetadataEpisode>[];
 
   @override
   void close() {}
@@ -1850,14 +2042,14 @@ class _PersistedCrossrefAniDbProvider implements VideoMetadataProvider {
   bool get isAvailable => true;
 
   VideoMetadataWork get _searchWork => VideoMetadataWork(
-    provider: providerKind,
-    kind: VideoMetadataMediaKind.movie,
-    title: 'Movie',
-    year: 2024,
-    ids: const <VideoMetadataId>[
-      VideoMetadataId(type: 'anidb', value: '17617', isDefault: true),
-    ],
-  );
+        provider: providerKind,
+        kind: VideoMetadataMediaKind.movie,
+        title: 'Movie',
+        year: 2024,
+        ids: const <VideoMetadataId>[
+          VideoMetadataId(type: 'anidb', value: '17617', isDefault: true),
+        ],
+      );
 
   @override
   Future<List<VideoMetadataWork>> search(
@@ -1877,7 +2069,11 @@ class _PersistedCrossrefAniDbProvider implements VideoMetadataProvider {
       year: 2024,
       episodeGroupId: includeTmdbCrossref ? 'persisted-group' : null,
       ids: <VideoMetadataId>[
-        const VideoMetadataId(type: 'anidb', value: '17617', isDefault: true),
+        VideoMetadataId(
+          type: 'anidb',
+          value: lookup.externalId,
+          isDefault: true,
+        ),
         if (includeTmdbCrossref)
           const VideoMetadataId(type: 'tmdb', value: '99'),
       ],
@@ -1887,13 +2083,15 @@ class _PersistedCrossrefAniDbProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => const <VideoMetadataSeason>[];
+  ) async =>
+      const <VideoMetadataSeason>[];
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => const <VideoMetadataEpisode>[];
+  }) async =>
+      const <VideoMetadataEpisode>[];
 
   @override
   void close() {}
@@ -1901,6 +2099,7 @@ class _PersistedCrossrefAniDbProvider implements VideoMetadataProvider {
 
 class _RecordingCrossrefTmdbProvider implements VideoMetadataProvider {
   int searchCount = 0;
+  final List<String> searchTitles = <String>[];
   int fetchCount = 0;
   final List<VideoMetadataLookup> fetchedLookups = <VideoMetadataLookup>[];
 
@@ -1915,6 +2114,7 @@ class _RecordingCrossrefTmdbProvider implements VideoMetadataProvider {
     VideoMetadataSearchRequest request,
   ) async {
     searchCount++;
+    searchTitles.add(request.title);
     return <VideoMetadataWork>[
       VideoMetadataWork(
         provider: providerKind,
@@ -1945,13 +2145,15 @@ class _RecordingCrossrefTmdbProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => const <VideoMetadataSeason>[];
+  ) async =>
+      const <VideoMetadataSeason>[];
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => const <VideoMetadataEpisode>[];
+  }) async =>
+      const <VideoMetadataEpisode>[];
 
   @override
   void close() {}
@@ -1967,19 +2169,20 @@ class _RefreshingAniDbProvider implements VideoMetadataProvider {
   bool get isAvailable => true;
 
   VideoMetadataWork _work(String title) => VideoMetadataWork(
-    provider: providerKind,
-    kind: VideoMetadataMediaKind.movie,
-    title: title,
-    year: 2024,
-    ids: const <VideoMetadataId>[
-      VideoMetadataId(type: 'anidb', value: '42', isDefault: true),
-    ],
-  );
+        provider: providerKind,
+        kind: VideoMetadataMediaKind.movie,
+        title: title,
+        year: 2024,
+        ids: const <VideoMetadataId>[
+          VideoMetadataId(type: 'anidb', value: '42', isDefault: true),
+        ],
+      );
 
   @override
   Future<List<VideoMetadataWork>> search(
     VideoMetadataSearchRequest request,
-  ) async => <VideoMetadataWork>[_work('Movie')];
+  ) async =>
+      <VideoMetadataWork>[_work('Movie')];
 
   @override
   Future<VideoMetadataWork?> fetchWork(VideoMetadataLookup lookup) async {
@@ -1990,13 +2193,15 @@ class _RefreshingAniDbProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => const <VideoMetadataSeason>[];
+  ) async =>
+      const <VideoMetadataSeason>[];
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => const <VideoMetadataEpisode>[];
+  }) async =>
+      const <VideoMetadataEpisode>[];
 
   @override
   void close() {}
@@ -2010,20 +2215,21 @@ class _ImageAniDbProvider implements VideoMetadataProvider {
   bool get isAvailable => true;
 
   VideoMetadataWork get work => VideoMetadataWork(
-    provider: providerKind,
-    kind: VideoMetadataMediaKind.movie,
-    title: 'Movie',
-    year: 2024,
-    ids: const <VideoMetadataId>[
-      VideoMetadataId(type: 'anidb', value: '70', isDefault: true),
-      VideoMetadataId(type: 'tmdb', value: '700'),
-    ],
-  );
+        provider: providerKind,
+        kind: VideoMetadataMediaKind.movie,
+        title: 'Movie',
+        year: 2024,
+        ids: const <VideoMetadataId>[
+          VideoMetadataId(type: 'anidb', value: '70', isDefault: true),
+          VideoMetadataId(type: 'tmdb', value: '700'),
+        ],
+      );
 
   @override
   Future<List<VideoMetadataWork>> search(
     VideoMetadataSearchRequest request,
-  ) async => <VideoMetadataWork>[work];
+  ) async =>
+      <VideoMetadataWork>[work];
 
   @override
   Future<VideoMetadataWork?> fetchWork(VideoMetadataLookup lookup) async =>
@@ -2032,13 +2238,15 @@ class _ImageAniDbProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => const <VideoMetadataSeason>[];
+  ) async =>
+      const <VideoMetadataSeason>[];
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => const <VideoMetadataEpisode>[];
+  }) async =>
+      const <VideoMetadataEpisode>[];
 
   @override
   void close() {}
@@ -2054,30 +2262,30 @@ class _TwoBackdropTmdbProvider implements VideoMetadataProvider {
   bool get isAvailable => true;
 
   VideoMetadataWork get work => VideoMetadataWork(
-    provider: providerKind,
-    kind: VideoMetadataMediaKind.movie,
-    title: 'Movie',
-    year: 2024,
-    ids: const <VideoMetadataId>[
-      VideoMetadataId(type: 'tmdb', value: '700', isDefault: true),
-    ],
-    images: const <VideoMetadataImage>[
-      VideoMetadataImage(
-        kind: VideoMetadataImageKind.backdrop,
-        url: 'https://images.test/best.jpg',
-        provider: VideoMetadataProviderKind.tmdb,
-        voteAverage: 9,
-        voteCount: 100,
-      ),
-      VideoMetadataImage(
-        kind: VideoMetadataImageKind.backdrop,
-        url: 'https://images.test/secondary.jpg',
-        provider: VideoMetadataProviderKind.tmdb,
-        voteAverage: 8,
-        voteCount: 200,
-      ),
-    ],
-  );
+        provider: providerKind,
+        kind: VideoMetadataMediaKind.movie,
+        title: 'Movie',
+        year: 2024,
+        ids: const <VideoMetadataId>[
+          VideoMetadataId(type: 'tmdb', value: '700', isDefault: true),
+        ],
+        images: const <VideoMetadataImage>[
+          VideoMetadataImage(
+            kind: VideoMetadataImageKind.backdrop,
+            url: 'https://images.test/best.jpg',
+            provider: VideoMetadataProviderKind.tmdb,
+            voteAverage: 9,
+            voteCount: 100,
+          ),
+          VideoMetadataImage(
+            kind: VideoMetadataImageKind.backdrop,
+            url: 'https://images.test/secondary.jpg',
+            provider: VideoMetadataProviderKind.tmdb,
+            voteAverage: 8,
+            voteCount: 200,
+          ),
+        ],
+      );
 
   @override
   Future<List<VideoMetadataWork>> search(
@@ -2096,13 +2304,15 @@ class _TwoBackdropTmdbProvider implements VideoMetadataProvider {
   @override
   Future<List<VideoMetadataSeason>> fetchSeasons(
     VideoMetadataLookup lookup,
-  ) async => const <VideoMetadataSeason>[];
+  ) async =>
+      const <VideoMetadataSeason>[];
 
   @override
   Future<List<VideoMetadataEpisode>> fetchEpisodes(
     VideoMetadataLookup lookup, {
     required int seasonNumber,
-  }) async => const <VideoMetadataEpisode>[];
+  }) async =>
+      const <VideoMetadataEpisode>[];
 
   @override
   void close() {}

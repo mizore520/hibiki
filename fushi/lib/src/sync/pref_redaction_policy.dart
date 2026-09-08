@@ -69,6 +69,8 @@ abstract final class PrefRedactionPolicy {
     'qb_connection_config',
     // 手动 HTTP 代理登录名；密码由 `password` 形状兜底命中，两者都不得随备份出境。
     'network_proxy_username',
+    'video_anidb_username',
+    'video_anidb_password',
     // 第三方服务 API key（都被 `api_key` 子串覆盖，显式列出以便审计时一眼看全）。
     'yomitan_api_key',
     'jimaku_api_key',
@@ -88,6 +90,9 @@ abstract final class PrefRedactionPolicy {
     // 必须显式点名。两者也在 deviceLocalPrefKeys 中，双重声明便于安全审计。
     'video_resource_torznab_config',
     'video_subtitle_opensubtitles_config',
+    // 同形：JSON 内含 base64 的 OPDS 服务器密码，键名本身没有 credential 形状。
+    // 也在 deviceLocalPrefKeys 中，双重声明便于安全审计。
+    'discovery_opds_servers',
   };
 
   /// key 是否属于「设备本地 / 凭据」，即备份、Profile 快照与 Profile 分享 JSON

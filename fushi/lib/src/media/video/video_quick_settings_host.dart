@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/widgets.dart';
 
 import 'package:fushi/src/media/video/video_asbplayer_config.dart';
@@ -56,10 +57,12 @@ class VideoQuickSettingsHost extends VideoSettingsHost {
     required this.onSubtitleStylePreview,
     required this.onSubtitleStyleCommit,
     this.onEnterSubtitleDragAdjust,
+    this.onSubtitleObscureRevealChanged,
     this.onRespectAssStyleChanged,
     required this.onAsbConfigChanged,
     required this.onMpvConfigChanged,
     this.onLuaScriptsEnabledChanged,
+    this.luaScriptStates,
     required this.onApplyShaders,
     required this.onSelectShaderTier,
     this.onMpvShaderDirChanged,
@@ -158,6 +161,10 @@ class VideoQuickSettingsHost extends VideoSettingsHost {
   /// 字幕 overlay 显示可拖指示、竖直拖动写回位置偏好。null = 面板不显示该入口
   /// （全局设置页 / 无播放器场景）。
   final VoidCallback? onEnterSubtitleDragAdjust;
+
+  /// 遮蔽态「悬停 / 点击临时显形」总闸的页面通道：写偏好 + 立刻重建 overlay。null =
+  /// 无播放器场景（全局设置页），由 schema 直接写 [AppModel]。
+  final Future<void> Function(bool value)? onSubtitleObscureRevealChanged;
   final Future<void> Function(bool value)? onRespectAssStyleChanged;
 
   // ── 手势/播放行为 JSON pref（页面持久化 + 即时生效）──────────────────────
@@ -170,6 +177,11 @@ class VideoQuickSettingsHost extends VideoSettingsHost {
   /// 无法卸载、下次进入视频页生效——见 video_lua_script_manager.dart）。
   /// null = 无播放器上下文，schema 行退化为直接写 pref。
   final Future<void> Function(bool enabled)? onLuaScriptsEnabledChanged;
+
+  /// BUG-2032：活播放器的每脚本运行态（路径 → null=已装载无报错 / 报错原文；不在
+  /// 表里=本次播放未装载），设置页脚本列表据此显示状态。null = 无播放器上下文，
+  /// 列表只列文件名。
+  final ValueListenable<Map<String, String?>>? luaScriptStates;
 
   // ── 着色器（下载/勾选/一键选档，仅播放中实时应用）────────────────────────
   final Future<void> Function(List<String> enabledNames) onApplyShaders;

@@ -58,6 +58,14 @@ add_fushi_test(text_processor_test text_processor_test.cpp
     "${FUSHI_ROOT}/fushidicts_external/utfcpp/source")
 # 弹窗 deinflectionTrace：纯内存，直接喂 LookupResult 给 build_popup_json。
 add_fushi_test(popup_json_deinflection_test popup_json_deinflection_test.cpp)
+# FFI 边界异常闸门覆盖守卫：扫 fushidicts_ffi.cpp 源码，确认每个导出都经过
+# ffi_guard*。漏掉闸门的后果是异常逃出 extern "C" → std::terminate → 进程静默
+# 消失（用户侧：「转圈转一半 app 自己退出，没有报错」），人工 review 兜不住。
+# 走统一的 add_fushi_test 注册（多链一个静态库换来「不会掉出清单守卫」）；
+# 源码路径用编译期宏传入，别依赖 ctest 的工作目录。
+add_fushi_test(ffi_guard_coverage_test ffi_guard_coverage_test.cpp)
+target_compile_definitions(ffi_guard_coverage_test PRIVATE
+    "FUSHI_FFI_SOURCE=\"${FUSHI_ROOT}/fushidicts_ffi.cpp\"")
 # zip64 includes "zip/zip.hpp" -> root at fushidicts_src/.
 add_fushi_test(zip64_central_dir_test zip64_central_dir_test.cpp
     "${FUSHI_SRC}")
@@ -68,6 +76,12 @@ add_fushi_test(zip64_central_dir_test zip64_central_dir_test.cpp
 add_fushi_test(kanji_import_query_test kanji_import_query_test.cpp)
 add_fushi_test(dict_name_uaf_e2e_test dict_name_uaf_e2e_test.cpp)
 add_fushi_test(media_import_query_test media_import_query_test.cpp)
+# Re-zipping an extracted dictionary wraps every entry in one directory; the
+# importer must address entries by their dictionary-relative name so such an
+# archive imports identically (media keys included), while an archive spanning
+# two top-level directories stays unrecognised. Also pins the macOS Finder
+# shapes (__MACOSX/ + .DS_Store), nested wrappers and directory-marker entries.
+add_fushi_test(zip_wrapper_directory_test zip_wrapper_directory_test.cpp)
 add_fushi_test(freq_pitch_import_query_test freq_pitch_import_query_test.cpp)
 add_fushi_test(freq_pitch_merge_query_test freq_pitch_merge_query_test.cpp)
 # BUG-1304: the two tests above drive DictionaryQuery::query(); this one drives
@@ -79,16 +93,41 @@ add_fushi_test(lookup_freq_pitch_enrichment_test lookup_freq_pitch_enrichment_te
 add_fushi_test(hash_truncated_table_guard_test hash_truncated_table_guard_test.cpp)
 set_tests_properties(hash_truncated_table_guard_test PROPERTIES TIMEOUT 60)
 add_fushi_test(ipa_import_query_test ipa_import_query_test.cpp)
+# BUG-2152: enrich_pitch flattens every meta record of one dict into ONE
+# PitchEntry, so a headword split across entries repeats the same notation.
+# Covers both accumulators (ipa transcriptions + pitch accents) and pins the
+# negative half (distinct notations all survive, in dictionary order).
+add_fushi_test(pitch_duplicate_notation_test pitch_duplicate_notation_test.cpp)
 # 上游同步批4：v2 格式阶梯（.fushidicts_2）——kanji stats 追加段读回、marker
 # 拒载语义、bloom 截断置空降级（d4183d4 size 校验）、zstd 训练字典往返。
 add_fushi_test(format_v2_upstream_sync_test format_v2_upstream_sync_test.cpp)
 # Simple dicts (MDX/StarDict/DSL) store rules="*" so filter_by_pos keeps them
 # for inflected-form lookups; pins pos_to_conditions("*")==~0 + the stored rule.
 add_fushi_test(simple_dict_deinflection_test simple_dict_deinflection_test.cpp)
+# BUG-2148: ko.json 整表用 Hangul 兼容字母书写，不拆字则韩语 450 条 transform 一条
+# 都点不着火（查 부드러운 只降级到 부）。拆字预处理 + 合字后处理互为逆变换，端到端
+# 钉住 부드러운 -> 부드럽다 且 matched 回报原始预合成串（字幕高亮长度吃它）。
+add_fushi_test(korean_hangul_lookup_test korean_hangul_lookup_test.cpp
+    "${FUSHI_SRC}/text_processor"
+    "${FUSHI_ROOT}/fushidicts_external/utfcpp/source")
 # BUG-1665: an MDX @@@LINK= redirect entry (definition bytes copied from its
 # lemma at import) must collapse into the lemma at lookup time, so the popup
 # header / mined Anki term is the dictionary form, not the inflected surface.
 add_fushi_test(mdx_redirect_lemma_lookup_test mdx_redirect_lemma_lookup_test.cpp)
+
+# BUG-2056: 英文缩合形/所有格的**闭环** e2e。扫描层把 don’t 整词送进来只是半条链；
+# en.json 的撇号规则与词典条目键都是 ASCII，U+2019 又没有 NFKC 兼容分解，所以还得
+# 靠 text_processor 的撇号归一才查得到。真 en.json 路径经 argv 传入（不依赖 cwd）。
+add_executable(en_apostrophe_lookup_test
+    "${CMAKE_CURRENT_SOURCE_DIR}/en_apostrophe_lookup_test.cpp")
+target_link_libraries(en_apostrophe_lookup_test PRIVATE fushidicts)
+target_include_directories(en_apostrophe_lookup_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+if(MSVC)
+  target_compile_options(en_apostrophe_lookup_test PRIVATE /utf-8 /Zc:__cplusplus /permissive-)
+endif()
+add_test(NAME en_apostrophe_lookup_test
+         COMMAND en_apostrophe_lookup_test
+                 "${FUSHI_ROOT}/../../fushi/assets/transforms/en.json")
 
 # --- TODO-892: malformed-DEFLATE / null-decompressor / breadcrumb guards ---
 # zip_malformed_deflate_test includes <libdeflate.h> (to forge a real deflate
@@ -115,9 +154,36 @@ add_fushi_test(mdx_encrypted_keyinfo_test mdx_encrypted_keyinfo_test.cpp
 # Builds a real on-disk MDX (mdx_fixture.hpp) + sibling .css and asserts it lands.
 add_fushi_test(simple_dict_css_test simple_dict_css_test.cpp
     "${FUSHI_ROOT}/fushidicts_external/libdeflate")
+# The stylesheet is named by the entries' own <link>, which need not match the
+# .mdx stem ("NLT（話し言葉）.mdx" + "NLT.css"); the stem-named sibling is only
+# the fallback, and a ../ href must not escape the dictionary directory.
+add_fushi_test(mdx_linked_css_name_test mdx_linked_css_name_test.cpp
+    "${FUSHI_ROOT}/fushidicts_external/libdeflate")
+# Scripts referenced by a bare <script src> sit next to the .mdx, not in the
+# .mdd; they must join the media store so assets have ONE fetch-by-name channel.
+add_fushi_test(mdx_sibling_script_media_test mdx_sibling_script_media_test.cpp
+    "${FUSHI_ROOT}/fushidicts_external/libdeflate")
+# BUG-2147: 同理的另外两路 —— 条目 <img src> 与样式表 url() 点名的松散兄弟文件
+# （剑桥发音词典的 sound.png / cdoicons.woff，该词典没有 .mdd）此前一个都不收，
+# 发音按钮渲染成 0×0 破图、点不着。
+add_fushi_test(mdx_loose_asset_media_test mdx_loose_asset_media_test.cpp
+    "${FUSHI_ROOT}/fushidicts_external/libdeflate")
 # Phase A: MDD (MDX media companion) parses byte-exact and auto-mounts into the
 # dict as media.bin/idx; get_media_file returns the bytes by normalized path.
 add_fushi_test(mdd_media_import_test mdd_media_import_test.cpp
+    "${FUSHI_SRC}/mdx"
+    "${FUSHI_ROOT}/fushidicts_external/libdeflate")
+# Real .mdd writers emit `<Library_Data … Encoding="">` with UTF-16LE keys;
+# defaulting that empty attribute to UTF-8 lost the entire media companion
+# (fonts/images/audio/scripts) while the import still reported success.
+add_fushi_test(mdd_empty_encoding_test mdd_empty_encoding_test.cpp
+    "${FUSHI_SRC}/mdx"
+    "${FUSHI_ROOT}/fushidicts_external/libdeflate")
+# MDX records are inflated one block at a time (streaming import), so a record
+# can straddle a block boundary and a @@@LINK= target can live in a different
+# block than the redirect. Every other fixture emits a single record block and
+# cannot reach those paths.
+add_fushi_test(mdx_streaming_blocks_test mdx_streaming_blocks_test.cpp
     "${FUSHI_SRC}/mdx"
     "${FUSHI_ROOT}/fushidicts_external/libdeflate")
 # import_breadcrumb_test includes "util/import_breadcrumb.hpp" rooted at

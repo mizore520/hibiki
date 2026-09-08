@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:fushi/src/shortcuts/context_menu_trigger.dart';
 import 'package:fushi/pages.dart';
 import 'package:fushi/src/media/video/video_book_repository.dart';
 import 'package:fushi/src/pages/implementations/stat_activity.dart';
@@ -35,6 +36,11 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
   VideoStatsAggregate _agg = VideoStatsAggregate();
   bool _hasData = false;
 
+  /// **本轮加载时**的统计窗口：聚合（[computeVideoStats]）与时段卡谓词同一个
+  /// （BUG-2219）；跨午夜由 [_midnightReload] 整页重聚合。
+  StatWindow _window = StatWindow(DateTime.now());
+  Timer? _midnightReload;
+
   /// 观看域日面事实行（loadStatFacts 的 dailyVideos 切片）：时段明细 sheet 的
   /// 数据源（阶段 1——此前这份数据聚合完即丢，时段明细要 per-video × per-day）。
   List<StatFact> _videoFacts = <StatFact>[];
@@ -63,6 +69,20 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _syncAndLoad());
+  }
+
+  @override
+  void dispose() {
+    _midnightReload?.cancel();
+    super.dispose();
+  }
+
+  /// 到下一个本地午夜整页重聚合（每次加载重新排一次；页面已卸载则不动）。
+  void _armMidnightReload(DateTime now) {
+    _midnightReload?.cancel();
+    _midnightReload = Timer(StatWindow.untilNextStatDayBoundary(now), () {
+      if (mounted) unawaited(_loadFromDatabase());
+    });
   }
 
   /// 统计中心把三页塞进 TabBarView（无 keepAlive，离屏即 unmount），
@@ -110,6 +130,8 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
       };
       _primaryCollectionByEntry = await db.getPrimaryCollectionIdByEntry();
       final DateTime now = DateTime.now();
+      _window = StatWindow(now);
+      _armMidnightReload(now);
       final List<FavoriteWordRow> favs = await db.getFavoriteWordsBySource(
         kStatSourceVideo,
       );
@@ -183,7 +205,7 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
   /// 会同时有 legacy 小时行与多条段，旧实现按行赋值（`=`）会让后来的行覆盖前面
   /// 的，只能用 `+=`。
   void _loadHourlyData(StatFacts facts) {
-    final String todayKey = statTodayKey();
+    final String todayKey = _window.todayKey;
     _hourlyMs = List.filled(24, 0);
     for (final StatFact f in facts.hourly) {
       if (!f.isVideo || f.dateKey != todayKey) continue;
@@ -267,8 +289,8 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
   }
 
   Widget _buildSummaryCards() {
-    // 时段谓词在点击时现算（跨日后点卡按点击时刻的窗口取数）。
-    final StatWindow w = StatWindow(DateTime.now());
+    // 时段谓词与聚合同一个窗口（BUG-2219），跨午夜靠 [_midnightReload] 重聚合。
+    final StatWindow w = _window;
     return buildStatPeriodSummaryGrid(context, <StatPeriodSummary>[
       _periodSummary(
         t.stat_today,
@@ -326,7 +348,7 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
     return StatPeriodSummary(
       label: label,
       primaryValue: formatStatTime(ms),
-      onTap: () => _showPeriodDetail(label, contains),
+      onTap: () => unawaited(_showPeriodDetail(label, contains)),
       lines: <StatSummaryLine>[
         StatSummaryLine(label: t.video_stat_completed, value: '$completed'),
         StatSummaryLine(label: t.stat_lookup, value: '$lookup'),
@@ -343,41 +365,47 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
   /// 时段卡 → 时段明细 sheet（阶段 1 统一组件；本页是视频统计，明细只吃观看域
   /// 切片 [_videoFacts]）。条目点击直达播放（合集成员带 playlistCollectionId，
   /// 与首页续播同口径）。
-  void _showPeriodDetail(String label, bool Function(String dateKey) contains) {
+  Future<void> _showPeriodDetail(
+    String label,
+    bool Function(String dateKey) contains,
+  ) async {
     // 身份在库集合：明细行可能是已删视频的历史统计，点它不该假装能播。
     final Set<String> libraryUids = <String>{
       for (final Set<String> uids in _libraryUidsByTitle.values) ...uids,
     };
-    unawaited(
-      showStatPeriodDetailSheet(
-        context,
-        periodLabel: label,
-        contains: contains,
-        facts: _videoFacts,
-        resolvers: StatPeriodDetailResolvers(
-          titleOf: (StatFact f) => f.title,
-          collectionOf: (StatFact f) => f.mediaKey.isEmpty
-              ? null
-              : statCollectionName(
-                  MediaKind.video.compositeKey(f.mediaKey),
-                  _primaryCollectionByEntry,
-                  _collectionNamesById,
-                ),
-          onEntryTap: (String mediaKind, String mediaKey) async {
-            if (mediaKey.isEmpty || !libraryUids.contains(mediaKey)) return;
-            await openLocalVideoBook(
-              context: context,
-              repo: VideoBookRepository(appModelNoUpdate.database),
-              bookUid: mediaKey,
-              playlistCollectionId:
-                  _primaryCollectionByEntry[MediaKind.video.compositeKey(
-                    mediaKey,
-                  )],
-            );
-          },
-        ),
+    final FushiDatabase db = appModelNoUpdate.database;
+    final bool deleted = await showStatPeriodDetailSheet(
+      context,
+      periodLabel: label,
+      contains: contains,
+      facts: _videoFacts,
+      resolvers: StatPeriodDetailResolvers(
+        titleOf: (StatFact f) => f.title,
+        collectionOf: (StatFact f) => f.mediaKey.isEmpty
+            ? null
+            : statCollectionName(
+                MediaKind.video.compositeKey(f.mediaKey),
+                _primaryCollectionByEntry,
+                _collectionNamesById,
+              ),
+        onEntryTap: (String mediaKind, String mediaKey) async {
+          if (mediaKey.isEmpty || !libraryUids.contains(mediaKey)) return;
+          await openLocalVideoBook(
+            context: context,
+            repo: VideoBookRepository(db),
+            bookUid: mediaKey,
+            playlistCollectionId:
+                _primaryCollectionByEntry[MediaKind.video.compositeKey(
+                  mediaKey,
+                )],
+          );
+        },
+        onEntryDelete: (StatPeriodEntryTarget t) =>
+            deleteStatPeriodEntry(db, t),
       ),
     );
+    // 删过就从 DB 重新聚合：页面上的时段卡 / 排行都得跟着变。
+    if (deleted && mounted) await _loadFromDatabase();
   }
 
   /// 长按 / 右键某个视频那一行 → 确认 → 删除该视频的纯统计并写 video 墓碑防复活，
@@ -439,62 +467,67 @@ class _VideoStatisticsPageState extends BasePageState<VideoStatisticsPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final tokens = FushiDesignTokens.of(context);
 
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        // 移动端长按、桌面端右键都弹删除确认（与阅读统计页同款交互）。
-        onLongPress: () => _confirmAndDeleteVideo(video),
-        onSecondaryTap: () => _confirmAndDeleteVideo(video),
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: tokens.spacing.card,
-            vertical: tokens.spacing.gap / 2,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                video.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              if (collectionName != null) ...[
-                SizedBox(height: tokens.spacing.gap / 4),
-                buildStatCollectionLabel(context, collectionName),
-              ],
-              SizedBox(height: tokens.spacing.gap / 2),
-              Row(
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: tokens.radii.chipRadius,
-                      child: LinearProgressIndicator(
-                        value: fraction,
-                        minHeight: 8,
-                        backgroundColor: colorScheme.surfaceContainerHighest,
-                        color: colorScheme.primary,
+    return ContextMenuTrigger(
+      // 右键菜单改由绑定表决定唤出键（默认仍是右键）；右键被别的动作占用时自动让位。
+      onInvoke: (Offset _) => _confirmAndDeleteVideo(video),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          // 移动端长按、桌面端右键都弹删除确认（与阅读统计页同款交互）。
+          onLongPress: () => _confirmAndDeleteVideo(video),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: tokens.spacing.card,
+              vertical: tokens.spacing.gap / 2,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  video.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                if (collectionName != null) ...[
+                  SizedBox(height: tokens.spacing.gap / 4),
+                  buildStatCollectionLabel(context, collectionName),
+                ],
+                SizedBox(height: tokens.spacing.gap / 2),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: tokens.radii.chipRadius,
+                        child: LinearProgressIndicator(
+                          value: fraction,
+                          minHeight: 8,
+                          backgroundColor: colorScheme.surfaceContainerHighest,
+                          color: colorScheme.primary,
+                        ),
                       ),
                     ),
-                  ),
-                  SizedBox(width: tokens.spacing.gap + tokens.spacing.gap / 2),
-                  Text(
-                    formatStatTime(video.ms),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+                    SizedBox(
+                      width: tokens.spacing.gap + tokens.spacing.gap / 2,
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: tokens.spacing.gap / 2),
-              Text(
-                '${t.stat_lookup}: ${video.lookups} · ${t.stat_mined}: ${video.mines} · ${t.stat_favorited}: $favorites',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+                    Text(
+                      formatStatTime(video.ms),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              SizedBox(height: tokens.spacing.gap / 2),
-            ],
+                SizedBox(height: tokens.spacing.gap / 2),
+                Text(
+                  '${t.stat_lookup}: ${video.lookups} · ${t.stat_mined}: ${video.mines} · ${t.stat_favorited}: $favorites',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                SizedBox(height: tokens.spacing.gap / 2),
+              ],
+            ),
           ),
         ),
       ),

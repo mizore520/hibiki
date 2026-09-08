@@ -128,9 +128,10 @@ class EpubImporter {
               ? p.basenameWithoutExtension(fileName)
               : book.title;
 
-      final List<EpubBookRow> existingBooks = await db.getAllEpubBooks();
+      // 瘦投影：重复检查只要 title（+ 下面的 extractDir），不拉整库章节 JSON。
+      final List<EpubBookMeta> existingBooks = await db.getEpubBookMetas();
       final String storedTitle = await resolveDuplicateTitle(
-        existingTitles: existingBooks.map((EpubBookRow b) => b.title).toList(),
+        existingTitles: existingBooks.map((EpubBookMeta b) => b.title).toList(),
         proposedTitle: resolvedTitle,
         policy: policy,
       );
@@ -159,7 +160,7 @@ class EpubImporter {
               srcDir: srcDir,
               targetDir: realDir,
               liveExtractDirs:
-                  existingBooks.map((EpubBookRow b) => b.extractDir),
+                  existingBooks.map((EpubBookMeta b) => b.extractDir),
             );
           } catch (e) {
             ErrorLogService.instance
@@ -251,7 +252,7 @@ class EpubImporter {
                 'mediaType': entry.value.mediaType,
                 'characters': characterCounts[entry.key],
                 // TODO-1192: 标记该 characters 计数的口径版本，供开书判定是否需
-                // 要按新口径（[japaneseCharCount]）后台重算并回写（见
+                // 要按新口径（`countStudyChars`）后台重算并回写（见
                 // [kChapterCharCountCaliber] / charCountsFromChaptersJson）。
                 'charCaliber': kChapterCharCountCaliber,
               })

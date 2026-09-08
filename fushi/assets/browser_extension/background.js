@@ -823,11 +823,31 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           ...(!r.ok ? { connection: await diagnoseConnection(true) } : {}),
         });
       } else if (msg.type === 'mine') {
-        // 纯文本挖词（非流媒体页 / 回落）：直接 POST {fields,sentence}，无媒体。
+        // 立即出卡（不进批量剪辑队列的一切页面：普通网页 + 有字幕轨/有视频但尚无流解析器的
+        // 站点，如 bilibili.com）。**媒体不再恒为空**：
+        //   · screenshotBase64 = 页面 `<video>` 的当前解码帧（`frame-capture.js`；原生分辨率、
+        //     无弹幕/无播放器 UI/无字幕层，取不到就不带，绝不退化成截屏）；
+        //   · cueStartMs / clipStartMs / clipEndMs / mineAtMs = 当前字幕行的视频时间窗，
+        //     服务端据此从原始流裁句子音频/动图（`immediate` 档站点）；
+        //   · clipSourceKind / clipSourceId = 可裁原始流的站点身份（有解析器时才发）；
+        //   · documentTitle = 页面标题 → Anki 视频名字段（不发则服务端回落字面 'Netflix'）。
+        // 全部为可选：一个都不带时行为与改动前逐字等价（纯文本挖词回落）。
         const r = await fetch(base + '/api/mine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: authHeader(token) },
-          body: JSON.stringify({ fields: msg.fields, sentence: msg.sentence || '' }),
+          body: JSON.stringify({
+            fields: msg.fields, sentence: msg.sentence || '',
+            ...(msg.screenshotBase64 ? { screenshotBase64: msg.screenshotBase64 } : {}),
+            ...(typeof msg.cueStartMs === 'number' ? { cueStartMs: msg.cueStartMs } : {}),
+            ...(typeof msg.clipStartMs === 'number' ? { clipStartMs: msg.clipStartMs } : {}),
+            ...(typeof msg.clipEndMs === 'number' ? { clipEndMs: msg.clipEndMs } : {}),
+            ...(typeof msg.mineAtMs === 'number' ? { mineAtMs: msg.mineAtMs } : {}),
+            ...(msg.clipSourceKind ? { clipSourceKind: msg.clipSourceKind } : {}),
+            ...(msg.clipSourceId ? { clipSourceId: msg.clipSourceId } : {}),
+            ...(typeof msg.clipSourcePart === 'number'
+              ? { clipSourcePart: msg.clipSourcePart } : {}),
+            ...(msg.documentTitle ? { documentTitle: msg.documentTitle } : {}),
+          }),
         });
         sendResponse({ ok: r.ok, status: r.status, data: r.ok ? await r.json() : null });
       } else if (msg.type === 'duplicate') {
@@ -862,6 +882,8 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           body: JSON.stringify({
             fields: msg.fields, sentence: msg.sentence || '',
             clipBase64: msg.clipBase64, clipDurationMs: msg.clipDurationMs,
+            // BUG-2192：可见画面比例矩形（{x,y,w,h} ∈ [0,1]），服务端抽帧前先 crop 掉黑边。
+            ...(msg.clipCrop && typeof msg.clipCrop === 'object' ? { clipCrop: msg.clipCrop } : {}),
             // BUG-1416：片段时间基锚点 + 句首 + 制卡那一刻（都是**视频时间**），服务端在静态帧
             // 模式下据此在片段里定位取帧。null（老队列项/采样失败）就不发 → 服务端退片段起点。
 
@@ -869,6 +891,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
             ...(typeof msg.clipAnchorUncertaintyMs === 'number'
               ? { clipAnchorUncertaintyMs: msg.clipAnchorUncertaintyMs } : {}),
             ...(typeof msg.cueStartMs === 'number' ? { cueStartMs: msg.cueStartMs } : {}),
+            // BUG-2080：卡面时间窗透传到 /api/mine（与 mineYoutube 分支同名同语义）。两端都得是
+            // 数字才发——只发一半会让服务端拿到半个窗，`end > start` 判据结果不可预期。
+            ...(typeof msg.clipStartMs === 'number' && typeof msg.clipEndMs === 'number'
+              ? { clipStartMs: msg.clipStartMs, clipEndMs: msg.clipEndMs } : {}),
             ...(typeof msg.mineAtMs === 'number' ? { mineAtMs: msg.mineAtMs } : {}),
             ...(msg.documentTitle ? { documentTitle: msg.documentTitle } : {}),
           }),

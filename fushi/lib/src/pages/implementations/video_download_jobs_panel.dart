@@ -1,3 +1,6 @@
+import 'package:fushi/src/media/downloads/download_task_entry.dart';
+import 'package:fushi/src/media/downloads/download_task_card.dart';
+import 'package:fushi/src/media/downloads/download_task_browser.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -16,6 +19,8 @@ import 'package:fushi/src/media/media_search_text.dart';
 import 'package:fushi/src/media/torrent/torrent_backend.dart';
 import 'package:fushi/src/media/torrent/torrent_task_display.dart';
 import 'package:fushi/src/media/video/download/video_download_error_presentation.dart';
+import 'package:fushi/src/media/video/download/video_download_pipeline_service.dart'
+    show downloadOnlyKindOfOrganizationPolicy;
 import 'package:fushi/src/utils/misc/reveal_in_file_manager.dart';
 import 'package:fushi/utils.dart';
 
@@ -243,6 +248,17 @@ enum VideoDownloadJobKindFilter {
 DiscoveryMediaKind? videoDownloadJobDiscoveryKind(VideoDownloadJobRow job) =>
     DiscoveryMediaKind.values.asNameMap()[job.mediaKind];
 
+/// 「下完了，但还成不了一本书」的有声书任务。
+///
+/// `download-only-audiobook` 策略落地的是**孤立音频**（CoreAudio/TMW 单卷 m4b
+/// 就是这个形状）。本仓的有声书是字幕对齐驱动的：光有音频进不了对齐导入器，
+/// 任务却是正常完成的——用户这时看不出还差什么，文件就烂在下载目录里。
+/// 面板据此给一个直达导入对话框的补救入口（音频预填，用户只需再给一个字幕）。
+bool videoDownloadJobNeedsAudiobookPairing(VideoDownloadJobRow job) =>
+    job.lifecycle == VideoDownloadJobLifecycle.completed &&
+    downloadOnlyKindOfOrganizationPolicy(job.organizationPolicy) ==
+        DiscoveryMediaKind.audiobook;
+
 /// 类型筛选（纯函数）。
 List<VideoDownloadJobRow> filterVideoDownloadJobsByKind(
   List<VideoDownloadJobRow> jobs,
@@ -281,6 +297,7 @@ class VideoDownloadJobsPanel extends StatefulWidget {
     this.onResume,
     this.onCancel,
     this.onOpenDetails,
+    this.onPairAudiobook,
     this.onSetPriority,
     this.locationLoader,
     this.onDelete,
@@ -289,6 +306,8 @@ class VideoDownloadJobsPanel extends StatefulWidget {
     this.selectedSizeLoader,
     this.lifecycleLabel,
     this.stageLabel,
+    this.unified = false,
+    this.additionalTasks = const <DownloadTaskEntry>[],
   });
 
   factory VideoDownloadJobsPanel.database({
@@ -298,6 +317,7 @@ class VideoDownloadJobsPanel extends StatefulWidget {
     VideoDownloadJobAction? onResume,
     VideoDownloadJobAction? onCancel,
     VideoDownloadJobAction? onOpenDetails,
+    VideoDownloadJobAction? onPairAudiobook,
     VideoDownloadJobPriorityAction? onSetPriority,
     VideoDownloadJobLocationLoader? locationLoader,
     VideoDownloadJobDeleteAction? onDelete,
@@ -306,6 +326,8 @@ class VideoDownloadJobsPanel extends StatefulWidget {
     VideoDownloadJobSelectedSizeLoader? selectedSizeLoader,
     String Function(String lifecycle)? lifecycleLabel,
     String Function(String stage)? stageLabel,
+    bool unified = false,
+    List<DownloadTaskEntry> additionalTasks = const <DownloadTaskEntry>[],
   }) =>
       VideoDownloadJobsPanel(
         key: key,
@@ -314,6 +336,7 @@ class VideoDownloadJobsPanel extends StatefulWidget {
         onResume: onResume,
         onCancel: onCancel,
         onOpenDetails: onOpenDetails,
+        onPairAudiobook: onPairAudiobook,
         onSetPriority: onSetPriority,
         locationLoader: locationLoader,
         onDelete: onDelete,
@@ -324,13 +347,21 @@ class VideoDownloadJobsPanel extends StatefulWidget {
                 _loadSelectedSizes(database, jobs),
         lifecycleLabel: lifecycleLabel,
         stageLabel: stageLabel,
+        unified: unified,
+        additionalTasks: additionalTasks,
       );
 
+  final bool unified;
+  final List<DownloadTaskEntry> additionalTasks;
   final VideoDownloadJobsPanelStore store;
   final VideoDownloadJobAction? onRetry;
   final VideoDownloadJobAction? onResume;
   final VideoDownloadJobAction? onCancel;
   final VideoDownloadJobAction? onOpenDetails;
+
+  /// 有声书任务下完只有孤立音频时的补救入口（见
+  /// [videoDownloadJobNeedsAudiobookPairing]）。传 null 表示宿主没接这个能力。
+  final VideoDownloadJobAction? onPairAudiobook;
   final VideoDownloadJobPriorityAction? onSetPriority;
   final VideoDownloadJobLocationLoader? locationLoader;
   final VideoDownloadJobDeleteAction? onDelete;
@@ -372,7 +403,11 @@ class _VideoDownloadJobsPanelState extends State<VideoDownloadJobsPanel> {
   @override
   void didUpdateWidget(VideoDownloadJobsPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!identical(oldWidget.store, widget.store)) {
+    final bool sameDatabase = oldWidget.store is DatabaseVideoDownloadJobsPanelStore &&
+      widget.store is DatabaseVideoDownloadJobsPanelStore &&
+      identical((oldWidget.store as DatabaseVideoDownloadJobsPanelStore).database,
+        (widget.store as DatabaseVideoDownloadJobsPanelStore).database);
+    if (!identical(oldWidget.store, widget.store) && !sameDatabase) {
       _jobs = widget.store.watchJobs();
     }
   }
@@ -444,6 +479,15 @@ class _VideoDownloadJobsPanelState extends State<VideoDownloadJobsPanel> {
           BuildContext context,
           AsyncSnapshot<List<VideoDownloadJobRow>> snapshot,
         ) {
+          if (widget.unified) {
+            return Column(children: <Widget>[
+              if (snapshot.hasError) Text(t.error_load_failed),
+              Expanded(
+                  key: const ValueKey<String>('unified-download-tasks'),
+                  child: _buildJobList(
+                      snapshot.data ?? const <VideoDownloadJobRow>[])),
+            ]);
+          }
           if (snapshot.hasError) {
             return _MessageState(
               icon: Icons.error_outline,
@@ -589,6 +633,8 @@ class _VideoDownloadJobsPanelState extends State<VideoDownloadJobsPanel> {
   Widget _buildJobList(List<VideoDownloadJobRow> jobs) {
     return _VideoDownloadJobList(
       jobs: jobs,
+      unified: widget.unified,
+      additionalTasks: widget.additionalTasks,
       metricsLoader: widget.metricsLoader,
       selectedSizeLoader: widget.selectedSizeLoader,
       itemBuilder: (
@@ -598,9 +644,8 @@ class _VideoDownloadJobsPanelState extends State<VideoDownloadJobsPanel> {
         int? selectedSizeBytes,
       ) =>
           _VideoDownloadJobCard(
-        key: ValueKey<String>(
-          'video-download-job-${job.jobId}',
-        ),
+        compact: widget.unified,
+        key: ValueKey<String>('video-download-job-${job.jobId}'),
         job: job,
         snapshot: snapshot,
         selectedSizeBytes: selectedSizeBytes,
@@ -617,6 +662,10 @@ class _VideoDownloadJobsPanelState extends State<VideoDownloadJobsPanel> {
         onOpenDetails: widget.onOpenDetails == null
             ? null
             : () => _runAction(job, widget.onOpenDetails!),
+        onPairAudiobook: widget.onPairAudiobook == null ||
+                !videoDownloadJobNeedsAudiobookPairing(job)
+            ? null
+            : () => _runAction(job, widget.onPairAudiobook!),
         onSetPriority: widget.onSetPriority == null
             ? null
             : (int priority) => _runAction(
@@ -670,8 +719,12 @@ class _VideoDownloadJobList extends StatefulWidget {
     required this.metricsLoader,
     required this.selectedSizeLoader,
     required this.itemBuilder,
+    required this.unified,
+    required this.additionalTasks,
   });
 
+  final bool unified;
+  final List<DownloadTaskEntry> additionalTasks;
   final List<VideoDownloadJobRow> jobs;
   final VideoDownloadJobMetricsLoader? metricsLoader;
   final VideoDownloadJobSelectedSizeLoader? selectedSizeLoader;
@@ -763,24 +816,80 @@ class _VideoDownloadJobListState extends State<_VideoDownloadJobList> {
   }
 
   @override
-  Widget build(BuildContext context) => ListView.separated(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-        itemCount: widget.jobs.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
-        itemBuilder: (BuildContext context, int index) {
-          final VideoDownloadJobRow job = widget.jobs[index];
-          return widget.itemBuilder(
+  Widget build(BuildContext context) {
+    if (widget.unified) {
+      final Map<String, DownloadTaskEntry> entries =
+          <String, DownloadTaskEntry>{
+        for (final DownloadTaskEntry task in widget.additionalTasks)
+          task.id: task,
+      };
+      for (final VideoDownloadJobRow job in widget.jobs) {
+        final TorrentSnapshot? snapshot = _snapshots[job.jobId];
+        final DownloadTaskKind kind =
+            DownloadTaskKind.values.asNameMap()[job.mediaKind] ??
+                DownloadTaskKind.video;
+        final DownloadTaskStatus status = switch (job.lifecycle) {
+          VideoDownloadJobLifecycle.completed => DownloadTaskStatus.completed,
+          VideoDownloadJobLifecycle.cancelled => DownloadTaskStatus.cancelled,
+          VideoDownloadJobLifecycle.failed ||
+          VideoDownloadJobLifecycle.needsAttention =>
+            DownloadTaskStatus.attention,
+          _ => switch (snapshot == null ? null : torrentDisplayStatusFor(snapshot.state)) {
+            TorrentDisplayStatus.paused => DownloadTaskStatus.paused,
+            TorrentDisplayStatus.queued => DownloadTaskStatus.queued,
+            TorrentDisplayStatus.error => DownloadTaskStatus.attention,
+            _ => DownloadTaskStatus.active,
+          },
+        };
+        final String? collectionKey = job.collectionId != null
+            ? 'collection:${job.collectionId}'
+            : job.metadataProvider != null && job.externalId != null
+                ? 'series:${job.metadataProvider}:${job.externalId}'
+                : null;
+        entries[job.jobId] = DownloadTaskEntry(
+          id: job.jobId,
+          title: job.title,
+          kind: kind,
+          status: status,
+          createdAt: job.createdAt,
+          progress:
+              snapshot?.progress ?? videoDownloadJobComparableProgress(job),
+          collectionKey: collectionKey,
+          collectionTitle: job.title,
+          searchTerms: <String>[
+            if (job.resourceTitle != null) job.resourceTitle!,
+            job.resourceProvider,
+          ],
+          builder: (BuildContext context) => widget.itemBuilder(
             context,
             job,
-            _snapshots[job.jobId],
+            snapshot,
             _selectedSizes[job.jobId],
-          );
-        },
-      );
+          ),
+        );
+      }
+      return DownloadTaskBrowser(tasks: entries.values.toList());
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+      itemCount: widget.jobs.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (BuildContext context, int index) {
+        final VideoDownloadJobRow job = widget.jobs[index];
+        return widget.itemBuilder(
+          context,
+          job,
+          _snapshots[job.jobId],
+          _selectedSizes[job.jobId],
+        );
+      },
+    );
+  }
 }
 
 class _VideoDownloadJobCard extends StatelessWidget {
   const _VideoDownloadJobCard({
+    this.compact = false,
     required this.job,
     required this.snapshot,
     required this.selectedSizeBytes,
@@ -789,6 +898,7 @@ class _VideoDownloadJobCard extends StatelessWidget {
     required this.onResume,
     required this.onCancel,
     required this.onOpenDetails,
+    required this.onPairAudiobook,
     required this.onSetPriority,
     required this.onOpenLocation,
     required this.onDelete,
@@ -797,6 +907,7 @@ class _VideoDownloadJobCard extends StatelessWidget {
     super.key,
   });
 
+  final bool compact;
   final VideoDownloadJobRow job;
   final TorrentSnapshot? snapshot;
   final int? selectedSizeBytes;
@@ -805,6 +916,9 @@ class _VideoDownloadJobCard extends StatelessWidget {
   final VoidCallback? onResume;
   final VoidCallback? onCancel;
   final VoidCallback? onOpenDetails;
+
+  /// 非 null 时该任务下完只有孤立音频，露出「补对齐文件」入口。
+  final VoidCallback? onPairAudiobook;
 
   /// 传 null 表示宿主没接这个能力（例如只读的历史面板）。
   final void Function(int priority)? onSetPriority;
@@ -847,252 +961,293 @@ class _VideoDownloadJobCard extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colors = theme.colorScheme;
     final Color statusColor = _statusColor(colors);
-    return FushiCard(
-      padding: const EdgeInsets.all(12),
-      onTap: busy ? null : onOpenDetails,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Icon(_statusIcon(), color: statusColor, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      job.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall,
-                    ),
-                    if (_details.isNotEmpty) ...<Widget>[
-                      const SizedBox(height: 2),
-                      Text(
-                        _details,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              if (onOpenDetails != null) ...<Widget>[
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right,
-                  color: colors.onSurfaceVariant,
-                  size: 20,
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: <Widget>[
-              FushiTagChip(
-                label: _torrentStatusLabel ??
-                    lifecycleLabel?.call(job.lifecycle) ??
-                    _defaultLifecycleLabel(job.lifecycle),
-                color: statusColor,
-                selected: true,
-                tone: FushiTagChipTone.surface,
-              ),
-              FushiTagChip(
-                label: stageLabel?.call(job.stage) ??
-                    _defaultStageLabel(job.stage),
-                tone: FushiTagChipTone.surface,
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _TaskMetrics(
-            snapshot: snapshot,
-            selectedSizeBytes: selectedSizeBytes,
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: LinearProgressIndicator(
-                  value: _progress,
-                  minHeight: 5,
-                  color: statusColor,
-                  semanticsValue: _progressLabel,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(_progressLabel, style: theme.textTheme.labelMedium),
-            ],
-          ),
-          if (job.lastError?.trim().isNotEmpty ?? false) ...<Widget>[
-            const SizedBox(height: 10),
-            // 摘要一行 + 点击出详情：原始引擎/后端英文诊断串不再整句铺进卡片
-            // （BUG-1540），只展示分类后的本地化摘要；完整原文进对话框可复制。
-            InkWell(
-              key: ValueKey<String>('video-download-job-error-${job.jobId}'),
-              borderRadius: FushiBorderRadius.chip,
-              onTap: () => _showErrorDetail(context),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  children: <Widget>[
-                    Icon(Icons.info_outline, size: 17, color: colors.error),
-                    const SizedBox(width: 7),
-                    Expanded(
-                      child: Text(
-                        videoDownloadErrorSummary(job.lastError!.trim()),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colors.error,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 7),
-                    Text(
-                      t.download_task_error_view_detail,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: colors.error,
-                      ),
-                    ),
-                    Icon(Icons.chevron_right, size: 16, color: colors.error),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          if ((_canRetry && onRetry != null) ||
-              (_canResume && onResume != null) ||
-              (_canCancel && onCancel != null) ||
-              onOpenDetails != null ||
-              onOpenLocation != null ||
-              onSetPriority != null ||
-              onDelete != null) ...<Widget>[
-            const SizedBox(height: 8),
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 6,
+    final Widget content = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Icon(_statusIcon(), color: statusColor, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  if (onOpenDetails != null)
-                    OutlinedButton.icon(
-                      key: ValueKey<String>(
-                        'video-download-job-details-${job.jobId}',
+                  Text(
+                    job.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  if (_details.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 2),
+                    Text(
+                      _details,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
                       ),
-                      onPressed: busy ? null : onOpenDetails,
-                      icon: const Icon(Icons.info_outline, size: 18),
-                      label: Text(t.download_task_details),
                     ),
-                  if (_canRetry && onRetry != null)
-                    FilledButton.tonalIcon(
-                      key: ValueKey<String>(
-                        'video-download-job-retry-${job.jobId}',
-                      ),
-                      onPressed: busy ? null : onRetry,
-                      icon: busy
-                          ? const SizedBox.square(
-                              dimension: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.refresh, size: 18),
-                      label: Text(t.retry),
-                    ),
-                  if (_canResume && onResume != null)
-                    FilledButton.tonalIcon(
-                      key: ValueKey<String>(
-                        'video-download-job-resume-${job.jobId}',
-                      ),
-                      onPressed: busy ? null : onResume,
-                      icon: busy
-                          ? const SizedBox.square(
-                              dimension: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.play_arrow, size: 18),
-                      label: Text(t.download_task_resume),
-                    ),
-                  if (_canCancel && onCancel != null)
-                    OutlinedButton.icon(
-                      key: ValueKey<String>(
-                        'video-download-job-cancel-${job.jobId}',
-                      ),
-                      onPressed: busy ? null : onCancel,
-                      icon: busy
-                          ? const SizedBox.square(
-                              dimension: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.close, size: 18),
-                      label: Text(t.cancel),
-                    ),
-                  // 优先级只对「还在排队/还没做完」的任务有意义：已完成或已取消
-                  // 的任务再调也不会被重新取走，给了只会让人以为能插队。
-                  if (onSetPriority != null && _canSetPriority)
-                    busy
-                        ? _priorityButtonFace()
-                        // 走共享 MD3 菜单原语（圆角/浮层色/焦点可进），不再裸用
-                        // PopupMenuButton（用户截图：裸菜单没走 MD3 样式）。
-                        : FushiOverflowMenu<int>(
-                            key: ValueKey<String>(
-                              'video-download-job-priority-${job.jobId}',
-                            ),
-                            tooltip: t.download_task_priority,
-                            onSelected: onSetPriority!,
-                            items: <PopupMenuEntry<int>>[
-                              FushiPopupMenuItem<int>(
-                                value: 1,
-                                label: t.download_task_priority_high,
-                                selected: job.priority > 0,
-                              ),
-                              FushiPopupMenuItem<int>(
-                                value: 0,
-                                label: t.download_task_priority_normal,
-                                selected: job.priority == 0,
-                              ),
-                              FushiPopupMenuItem<int>(
-                                value: -1,
-                                label: t.download_task_priority_low,
-                                selected: job.priority < 0,
-                              ),
-                            ],
-                            child: _priorityButtonFace(),
-                          ),
-                  if (onOpenLocation != null)
-                    OutlinedButton.icon(
-                      key: ValueKey<String>(
-                        'video-download-job-location-${job.jobId}',
-                      ),
-                      onPressed: busy ? null : onOpenLocation,
-                      icon: const Icon(Icons.folder_open_outlined, size: 18),
-                      label: Text(t.download_task_open_location),
-                    ),
-                  if (onDelete != null)
-                    TextButton.icon(
-                      key: ValueKey<String>(
-                        'video-download-job-delete-${job.jobId}',
-                      ),
-                      style: TextButton.styleFrom(
-                        foregroundColor: colors.error,
-                      ),
-                      onPressed: busy ? null : onDelete,
-                      icon: const Icon(Icons.delete_outline, size: 18),
-                      label: Text(t.download_task_delete),
-                    ),
+                  ],
                 ],
               ),
             ),
+            if (onOpenDetails != null) ...<Widget>[
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right,
+                color: colors.onSurfaceVariant,
+                size: 20,
+              ),
+            ],
           ],
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: <Widget>[
+            FushiTagChip(
+              label: _torrentStatusLabel ??
+                  lifecycleLabel?.call(job.lifecycle) ??
+                  _defaultLifecycleLabel(job.lifecycle),
+              color: statusColor,
+              selected: true,
+              tone: FushiTagChipTone.surface,
+            ),
+            FushiTagChip(
+              label:
+                  stageLabel?.call(job.stage) ?? _defaultStageLabel(job.stage),
+              tone: FushiTagChipTone.surface,
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        _TaskMetrics(snapshot: snapshot, selectedSizeBytes: selectedSizeBytes),
+        const SizedBox(height: 10),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: LinearProgressIndicator(
+                value: _progress,
+                minHeight: 5,
+                color: statusColor,
+                semanticsValue: _progressLabel,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(_progressLabel, style: theme.textTheme.labelMedium),
+          ],
+        ),
+        if (job.lastError?.trim().isNotEmpty ?? false) ...<Widget>[
+          const SizedBox(height: 10),
+          // 摘要一行 + 点击出详情：原始引擎/后端英文诊断串不再整句铺进卡片
+          // （BUG-1540），只展示分类后的本地化摘要；完整原文进对话框可复制。
+          InkWell(
+            key: ValueKey<String>('video-download-job-error-${job.jobId}'),
+            borderRadius: FushiBorderRadius.chip,
+            onTap: () => _showErrorDetail(context),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: <Widget>[
+                  Icon(Icons.info_outline, size: 17, color: colors.error),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Text(
+                      videoDownloadErrorSummary(job.lastError!.trim()),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.error,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  Text(
+                    t.download_task_error_view_detail,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colors.error,
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, size: 16, color: colors.error),
+                ],
+              ),
+            ),
+          ),
         ],
-      ),
+        if (onPairAudiobook != null) ...<Widget>[
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Icon(
+                Icons.playlist_add_check_circle_outlined,
+                size: 16,
+                color: colors.tertiary,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  t.download_task_audiobook_needs_alignment,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colors.tertiary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+        if ((_canRetry && onRetry != null) ||
+            (_canResume && onResume != null) ||
+            (_canCancel && onCancel != null) ||
+            onPairAudiobook != null ||
+            onOpenDetails != null ||
+            onOpenLocation != null ||
+            onSetPriority != null ||
+            onDelete != null) ...<Widget>[
+          const SizedBox(height: 8),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: <Widget>[
+                if (onPairAudiobook != null)
+                  FilledButton.tonalIcon(
+                    key: ValueKey<String>(
+                      'video-download-job-pair-audiobook-${job.jobId}',
+                    ),
+                    onPressed: busy ? null : onPairAudiobook,
+                    icon: const Icon(Icons.library_add_outlined, size: 18),
+                    label: Text(t.download_task_audiobook_pair),
+                  ),
+                if (onOpenDetails != null)
+                  OutlinedButton.icon(
+                    key: ValueKey<String>(
+                      'video-download-job-details-${job.jobId}',
+                    ),
+                    onPressed: busy ? null : onOpenDetails,
+                    icon: const Icon(Icons.info_outline, size: 18),
+                    label: Text(t.download_task_details),
+                  ),
+                if (_canRetry && onRetry != null)
+                  FilledButton.tonalIcon(
+                    key: ValueKey<String>(
+                      'video-download-job-retry-${job.jobId}',
+                    ),
+                    onPressed: busy ? null : onRetry,
+                    icon: busy
+                        ? const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh, size: 18),
+                    label: Text(t.retry),
+                  ),
+                if (_canResume && onResume != null)
+                  FilledButton.tonalIcon(
+                    key: ValueKey<String>(
+                      'video-download-job-resume-${job.jobId}',
+                    ),
+                    onPressed: busy ? null : onResume,
+                    icon: busy
+                        ? const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.play_arrow, size: 18),
+                    label: Text(t.download_task_resume),
+                  ),
+                if (_canCancel && onCancel != null)
+                  OutlinedButton.icon(
+                    key: ValueKey<String>(
+                      'video-download-job-cancel-${job.jobId}',
+                    ),
+                    onPressed: busy ? null : onCancel,
+                    icon: busy
+                        ? const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.close, size: 18),
+                    label: Text(t.cancel),
+                  ),
+                // 优先级只对「还在排队/还没做完」的任务有意义：已完成或已取消
+                // 的任务再调也不会被重新取走，给了只会让人以为能插队。
+                if (onSetPriority != null && _canSetPriority)
+                  busy
+                      ? _priorityButtonFace()
+                      // 走共享 MD3 菜单原语（圆角/浮层色/焦点可进），不再裸用
+                      // PopupMenuButton（用户截图：裸菜单没走 MD3 样式）。
+                      : FushiOverflowMenu<int>(
+                          key: ValueKey<String>(
+                            'video-download-job-priority-${job.jobId}',
+                          ),
+                          tooltip: t.download_task_priority,
+                          onSelected: onSetPriority!,
+                          items: <PopupMenuEntry<int>>[
+                            FushiPopupMenuItem<int>(
+                              value: 1,
+                              label: t.download_task_priority_high,
+                              selected: job.priority > 0,
+                            ),
+                            FushiPopupMenuItem<int>(
+                              value: 0,
+                              label: t.download_task_priority_normal,
+                              selected: job.priority == 0,
+                            ),
+                            FushiPopupMenuItem<int>(
+                              value: -1,
+                              label: t.download_task_priority_low,
+                              selected: job.priority < 0,
+                            ),
+                          ],
+                          child: _priorityButtonFace(),
+                        ),
+                if (onOpenLocation != null)
+                  OutlinedButton.icon(
+                    key: ValueKey<String>(
+                      'video-download-job-location-${job.jobId}',
+                    ),
+                    onPressed: busy ? null : onOpenLocation,
+                    icon: const Icon(Icons.folder_open_outlined, size: 18),
+                    label: Text(t.download_task_open_location),
+                  ),
+                if (onDelete != null)
+                  TextButton.icon(
+                    key: ValueKey<String>(
+                      'video-download-job-delete-${job.jobId}',
+                    ),
+                    style: TextButton.styleFrom(foregroundColor: colors.error),
+                    onPressed: busy ? null : onDelete,
+                    icon: const Icon(Icons.delete_outline, size: 18),
+                    label: Text(t.download_task_delete),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+    if (compact) {
+      return DownloadTaskCard(
+        taskId: job.jobId,
+        title: job.title,
+        status: _torrentStatusLabel ??
+            lifecycleLabel?.call(job.lifecycle) ??
+            _defaultLifecycleLabel(job.lifecycle),
+        subtitle: job.resourceTitle,
+        progress: _progress,
+        leading: Icon(_statusIcon(), color: statusColor, size: 20),
+        details: content,
+      );
+    }
+    return FushiCard(
+      padding: const EdgeInsets.all(12),
+      onTap: busy ? null : onOpenDetails,
+      child: content,
     );
   }
 

@@ -278,9 +278,9 @@ void main() {
     expect(autoBody.contains('runNow(dryRun: false)'), isFalse);
     expect(autoBody.contains('dryRun: false'), isFalse);
     expect(
-      source
-          .substring(reviewStart)
-          .contains('showAnkiMediaDedupPlanDialog(context, plan'),
+      RegExp(
+        r'showAnkiMediaDedupPlanDialog\(\s*context,\s*plan,?',
+      ).hasMatch(source.substring(reviewStart)),
       isTrue,
     );
   });

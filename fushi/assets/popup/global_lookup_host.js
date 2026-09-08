@@ -2548,22 +2548,15 @@
     // up/left child as already-covered (which would reveal it clipped). Mirrors the
     // Dart ratchet reset (_ratchetLeft/_ratchetTop = infinity) one layer up. The
     // real layer transform is re-applied by this lookup's first commitLayerShift.
-    layerOffsetLeft = 0;
-    layerOffsetTop = 0;
     // BUG-859 — reset the layer's DOM transform IN LOCK-STEP with the shadow
-    // offsets above. Resetting only the variables left the previous lookup's
+    // offsets. Resetting only the variables left the previous lookup's
     // translate (layer.style.left/top) applied while shellCoveredByOrigin /
     // frameIdAtPoint reasoned against the zeroed offsets: the reveal gate was
     // defeated (a stale-shifted card counted as covered) and any reveal that
     // bypasses commitLayerShift (legacy Reveal / ready-safety fallback) showed
-    // the fresh root displaced by the stale shift. The normal revealStack path
-    // re-applies the correct transform via commitLayerShift, so this is a no-op
-    // there (style already 0 for a fresh down-right cascade).
-    var layerEl = document.getElementById(LAYER_ID);
-    if (layerEl) {
-      layerEl.style.left = '0px';
-      layerEl.style.top = '0px';
-    }
+    // the fresh root displaced by the stale shift. This lookup's real transform
+    // is re-applied by its first measureAndReport / commitLayerShift.
+    applyLayerOffset(0, 0);
     // TODO-1345 (BUG-583 深层根因续) — drop the previous lookup's reserved cascade
     // floor so it can never leak into a fresh lookup (a new lookup re-computes its
     // own floor from the new cursor position and pushes it via the next renderStack).
@@ -2770,6 +2763,13 @@
     var maxBottom = -Infinity;
     var shellRects = [];
     var routedFrameCount = 0;
+    // BUG-2082 — the ROOT card's own measured height (CSS px), reported next to
+    // the union bbox. The gal in-game presenter anchors the root card by the
+    // edge that touches the clicked glyph (bottom edge when the card flips
+    // above the line); the union bbox alone cannot tell the root's height once
+    // nested children extend the union, so the host reports it explicitly.
+    var rootHeight = 0;
+    var firstShellHeight = 0;
     frames.forEach(function (record) {
       if (!sameRoute(record.route, route)) {
         return;
@@ -2804,6 +2804,12 @@
       // BUG-749 — collect every placed shell (same left/top/height the bbox
       // uses) for the native hit/paint region below.
       shellRects.push([left, top, width, height]);
+      if (firstShellHeight <= 0 && height > 0) {
+        firstShellHeight = height;
+      }
+      if (record.parentIndex < 0 && rootHeight <= 0 && height > 0) {
+        rootHeight = height;
+      }
       // MAX-corner (window size) + the bootstrap origin fallback see EVERY placed
       // shell, so the window pre-grows to cover a not-yet-ready child (no clip).
       if (left < minLeftAll) minLeftAll = left;
@@ -2861,7 +2867,26 @@
         !isFinite(maxRight) || !isFinite(maxBottom)) {
       return;
     }
-    // TODO-1231 P2 — do NOT shift the host layer (nor set layerOffset*) HERE. The
+    // BUG-2123 — 首帧例外，把补偿平移**提前**到 overlaySize 之前。
+    // 下面 TODO-1231 P2 的「窗口先动、内容后跟」次序只为保护**已经画在屏幕上**的
+    // 父卡；本次查词还没提交过任何几何（committedGeometryEpoch === 0）时窗口仍停在
+    // OffscreenX() 之外、对用户不可见，被保护的对象根本不存在，代价却照收：
+    // reserve-to-edge 地板（computeCascadeHeadroomSeed·BUG-670）让**每一次**查词的
+    // bbox 原点都被拉到工作区左上角，于是 RevealStack 的 SetWindowPos +
+    // SWP_SHOWWINDOW 先让窗口带着「平移量仍为 0」的图层可见 —— 根卡就画在窗口本地
+    // (0,0) = 工作区左上角，直到一帧后 ExecuteScript 的 commitLayerShift 才把它搬到
+    // 光标处。用户看到的正是「弹窗先在屏幕左上角闪一下再飞到光标」。
+    // 在 postToHost('overlaySize') 之前落位是安全的：窗口要等这条消息走完一整趟
+    // Dart 往返（overlaySize → _applyOverlayBox → revealStack → SetWindowPos）才第一
+    // 次可见，内容早已合成到位，首帧即正确；随后 C++ 那次 commitLayerShift 带着同样
+    // 的 (minLeft, minTop) 到达，DOM 写入是幂等 no-op，嵌套 / 后续 resize 路径逐字节
+    // 不变。galCard 的窗口永远在屏外（截图后贴进游戏画面），没有可闪的首帧，保持
+    // 原样以免动到 captureReady 的两帧握手。
+    if (route.source !== 'galCard' && committedGeometryEpoch === 0) {
+      applyLayerOffset(minLeft, minTop);
+    }
+    // TODO-1231 P2 — for every LATER transaction (the window is already visible)
+    // do NOT shift the host layer (nor set layerOffset*) HERE. The
     // layer translation (-minLeft,-minTop) that pins the ROOT card at the cursor
     // while the window covers the whole cascade bbox must be applied ONLY AFTER
     // C++ SetWindowPos has moved the window to the new bbox origin. When the host
@@ -2893,15 +2918,22 @@
     var rectsKey = routePrefix + rectsCsv;
     var dpr = (typeof window.devicePixelRatio === 'number' &&
                window.devicePixelRatio > 0) ? window.devicePixelRatio : 1;
+    if (rootHeight <= 0) {
+      rootHeight = firstShellHeight;
+    }
     var box = {
       left: minLeft,
       top: minTop,
       width: maxRight - minLeft,
       height: maxBottom - minTop,
+      rootHeight: rootHeight,
       dpr: dpr,
     };
+    // rootHeight is part of the de-dup key: a root that shrinks under a child
+    // still spanning the old bottom leaves the union unchanged, yet the in-game
+    // root placement must follow the new root edge.
     var key = routePrefix + box.left + ',' + box.top + ',' + box.width + ',' +
-        box.height + ',' + dpr;
+        box.height + ',' + box.rootHeight + ',' + dpr;
     var geometryKey = key + '|' + rectsCsv;
     var rectsChanged = rectsKey !== lastShellRectsKey;
     var bboxChanged = key !== lastBBoxKey;
@@ -3017,6 +3049,34 @@
   // negation and layerOffset* is kept in lock-step for the hit-test (TODO-1189).
   // CSS px only (no dpr; the dpr boundary is the C++ window). Bad args default to
   // 0 (no shift), matching a single popup / down-right cascade.
+  // 图层补偿平移的**唯一**写入口：DOM 平移与 layerOffset*（命中测试 /
+  // frameIdAtPoint 用的同一坐标域）必须锁步，分开写过一次就出过 BUG-859。
+  function applyLayerOffset(l, t) {
+    var layerEl = document.getElementById(LAYER_ID);
+    if (layerEl) {
+      layerEl.style.left = (-l) + 'px';
+      layerEl.style.top = (-t) + 'px';
+    }
+    layerOffsetLeft = l;
+    layerOffsetTop = t;
+  }
+
+  // legacy Reveal 专用的图层复位（BUG-2123）。
+  //
+  // 首帧预落位（见 measureAndReport 的 BUG-2123 分支）把图层推了 (-minLeft,-minTop)，
+  // 这只有在窗口随后被放到 **bbox 原点、bbox 尺寸** 时才对得上。而桌面还有两条 reveal
+  // 旁路**从不**调 commitLayerShift，并且把窗口放在 **光标处、单卡尺寸**：
+  // `_scheduleReadyDrivenSafety` 的 450ms 兜底与 `reveal(scalar)` 路径，两者都进 C++ 的
+  // legacy `GlobalLookupWindow::Reveal`。图层不复位，根卡就被推到 420px 宽的窗口之外
+  // ——用户看到一个**空白弹窗**（TODO-1079 那条「弹窗有时不出现」的老症状）。
+  //
+  // 复位的责任只能在 native：Dart 侧两个调用点都不知道自己最终会走哪条 C++ 路径，
+  // 而 `Reveal` 正是「窗口按光标+单卡尺寸摆好了」这个事实的唯一发生地。
+  function resetLayerOffsetForLegacyReveal() {
+    applyLayerOffset(0, 0);
+    return true;
+  }
+
   function commitLayerShift(
       bboxLeft, bboxTop, geometryEpoch, deferSuffixSwapFinalize) {
     var epoch = (typeof geometryEpoch === 'number' && isFinite(geometryEpoch) &&
@@ -3041,13 +3101,9 @@
     }
     var l = (typeof bboxLeft === 'number' && isFinite(bboxLeft)) ? bboxLeft : 0;
     var t = (typeof bboxTop === 'number' && isFinite(bboxTop)) ? bboxTop : 0;
-    var layerEl = document.getElementById(LAYER_ID);
-    if (layerEl) {
-      layerEl.style.left = (-l) + 'px';
-      layerEl.style.top = (-t) + 'px';
-    }
-    layerOffsetLeft = l;
-    layerOffsetTop = t;
+    // 首帧路径可能已经把同一组值提前落位（见 measureAndReport 的 BUG-2123 分支），
+    // 那时这次写入是幂等 no-op，本函数只剩「提交 bounds + 翻 reveal 门」的职责。
+    applyLayerOffset(l, t);
     // TODO-1231 v3 (BUG-583) — the window just settled at this origin, so any shell
     // held hidden because it fell OUTSIDE the previous (narrower) window is now
     // covered; flip its reveal-ready so it paints IN PLACE, coincident with the
@@ -3536,7 +3592,7 @@
   // window.fushiSelection.highlightSelection(count) inside its iframe realm (the
   // popup.js selection already spans the just-clicked word). No-op on a bad index
   // / count / missing frame so a failed highlight never breaks the lookup.
-  function highlightFrame(frameIndex, count) {
+  function highlightFrame(frameIndex, count, token) {
     if (typeof frameIndex !== 'number' || frameIndex < 0) {
       return false;
     }
@@ -3563,15 +3619,42 @@
     if (!win || typeof win.eval !== 'function') {
       return false;
     }
+    // BUG-2054 — everything that can throw stays INSIDE this try (the function's
+    // contract, stated above, is that a failed highlight never breaks the
+    // lookup): win.eval, the shell-geometry read inside anchorRectToScreen and
+    // postToHost alike. Dart AWAITS this report before it places the child card,
+    // so a throw here would also strand that wait until its timeout.
     try {
-      win.eval(
+      var bounds = win.eval(
           'window.fushiSelection && ' +
-          'window.fushiSelection.highlightSelection && ' +
-          'window.fushiSelection.highlightSelection(' + count + ');');
-      return true;
+          'window.fushiSelection.highlightSelection ? ' +
+          'window.fushiSelection.highlightSelection(' + count + ') : null;');
+      // highlightSelection also RETURNS the matched word's bbox in the parent
+      // iframe's own viewport: it unions every getClientRects() fragment, so on
+      // a WRAPPED selection its bottom is the LAST line. The child card would
+      // otherwise be anchored on selection.js's getSelectionRect() — the FIRST
+      // CHARACTER's rect (textSelected fires before the dictionary runs, so the
+      // matched length is unknown then) — which on a wrapped selection covers
+      // only the tapped line, leaving the child card on top of the second one.
+      // Reported through the SAME iframe-local -> window-local transform the
+      // original anchor took (in-app cards do it via reanchorNestedPopupToWord).
+      var anchor = anchorRectToScreen(target, bounds);
+      var usable = !!anchor && anchor.width > 0 && anchor.height > 0;
+      // Always answer a TOKENED request — Dart is waiting on it before placing
+      // the child card, and a silent drop would cost it the full timeout. An
+      // unusable bbox reports null: Dart then keeps the first-character anchor.
+      if (typeof token === 'number') {
+        postToHost('nestedWordAnchor', [frameIndex, usable ? anchor : null, token],
+            cloneRoute((target && target.route) || activeRoute));
+      }
     } catch (e) {
+      if (typeof token === 'number') {
+        postToHost('nestedWordAnchor', [frameIndex, null, token],
+            cloneRoute((target && target.route) || activeRoute));
+      }
       return false;
     }
+    return true;
   }
 
   // BUG-1127 — drive the overlay AUTO-READ through popup.js's own HTML5
@@ -3655,6 +3738,7 @@
     gamepadAction: gamepadAction,
     measureAndReport: measureAndReport,
     commitLayerShift: commitLayerShift,
+    resetLayerOffsetForLegacyReveal: resetLayerOffsetForLegacyReveal,
     commitLayerShiftAndArmCapture: commitLayerShiftAndArmCapture,
     frameGateState: frameGateState,
     dismissRootWithSlide: dismissRootWithSlide,

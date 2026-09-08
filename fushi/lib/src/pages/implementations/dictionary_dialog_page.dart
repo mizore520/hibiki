@@ -16,6 +16,8 @@ import 'package:fushi/src/models/dictionary_import_manager.dart';
 import 'package:fushi/src/models/dictionary_repository.dart';
 import 'package:fushi/src/utils/misc/channel_constants.dart';
 import 'package:fushi/utils.dart';
+import 'package:fushi/src/utils/misc/error_details_dialog.dart';
+import 'package:fushi/src/media/import/real_path_directory_picker.dart';
 
 // ── BUG-1493：下载/导入两阶段的可归因进度 ──────────────────────────────
 //
@@ -466,20 +468,13 @@ class _DictionaryDialogPageState extends BasePageState {
     if (Platform.isAndroid || Platform.isIOS) {
       await FilePicker.platform.clearTemporaryFiles();
     }
+    if (!mounted) return;
 
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['zip', 'dsl', 'mdx', 'ifo', 'css'],
-      allowMultiple: true,
+    final List<String> paths = await pickSystemFilePaths(
+      context: context,
+      allowedExtensions: const <String>{'zip', 'dsl', 'mdx', 'ifo', 'css'},
     );
-    if (result == null || result.files.isEmpty) {
-      return;
-    }
-
-    final List<String> paths = result.files
-        .map((PlatformFile f) => f.path)
-        .whereType<String>()
-        .toList();
+    if (paths.isEmpty) return;
     await _importDictionaryPaths(paths);
 
     if (Platform.isAndroid || Platform.isIOS) {
@@ -529,7 +524,7 @@ class _DictionaryDialogPageState extends BasePageState {
     );
 
     bool hadMemoryError = false;
-    final List<String> failedNames = [];
+    final List<DictionaryTaskFailure> failures = <DictionaryTaskFailure>[];
 
     totalNotifier.value = dictFiles.length;
     for (int i = 0; i < dictFiles.length; i++) {
@@ -555,7 +550,13 @@ class _DictionaryDialogPageState extends BasePageState {
         );
       } catch (e, stack) {
         ErrorLogService.instance.log('DictionaryDialog.fileImport', e, stack);
-        failedNames.add(path.basenameWithoutExtension(file.path));
+        failures.add(
+          DictionaryTaskFailure(
+            name: path.basenameWithoutExtension(file.path),
+            stage: DictionaryTaskStage.import,
+            error: e,
+          ),
+        );
       }
     }
 
@@ -563,17 +564,31 @@ class _DictionaryDialogPageState extends BasePageState {
       Navigator.pop(context);
     }
 
-    if (failedNames.isNotEmpty) {
-      FushiToast.show(
-        msg: DictionaryImportManager.formatImportFailureSummary(failedNames),
-        toastLength: Toast.LENGTH_LONG,
-        severity: ToastSeverity.error,
-      );
+    if (failures.isNotEmpty) {
+      // BUG-2188：文件导入失败同样带全文诊断——原生 toast 会把它截成两行且不可复制。
+      // 页面已经销毁（用户导入期间离开）时退回 toast，失败提示不能因此静默丢失。
+      final String summary =
+          DictionaryImportManager.formatImportFailureSummary(failures);
+      if (mounted) {
+        unawaited(
+          showErrorDetails(
+            context,
+            title: summary,
+            error: DictionaryImportManager.formatFailureDetails(failures),
+          ),
+        );
+      } else {
+        FushiToast.show(
+          msg: summary,
+          toastLength: Toast.LENGTH_LONG,
+          severity: ToastSeverity.error,
+        );
+      }
     }
 
     // TODO-082：成功导入的词典数 = 总数 - 失败数；> 0 就给一条明确的成功提示
     // （失败的另由上面的失败汇总文案告知，两者可同时出现：部分成功部分失败）。
-    final int successCount = dictFiles.length - failedNames.length;
+    final int successCount = dictFiles.length - failures.length;
     if (successCount > 0) {
       FushiToast.show(
         msg: t.dict_import_success_summary(n: successCount),
@@ -938,7 +953,7 @@ class _DictionaryDialogPageState extends BasePageState {
     // 与原因，循环后弹一条持久可见（LENGTH_LONG）的失败汇总，并把完整诊断（异常 +
     // 栈 + URL）写进 ErrorLogService（错误日志页可查、可回传），与「导入词典」按钮的
     // 文件导入路径（_importDictionaryPaths）同一套「记日志 + 汇总 toast」反馈。
-    final List<String> failedNames = <String>[];
+    final List<DictionaryTaskFailure> failures = <DictionaryTaskFailure>[];
 
     await _runWithDownloadProgressDialog(
       initialMessage: t.import_start,
@@ -946,7 +961,6 @@ class _DictionaryDialogPageState extends BasePageState {
         final ValueNotifier<String> progressNotifier = job.message;
         final ValueNotifier<double> downloadProgress = job.progress;
         int successCount = 0;
-        String? lastError;
         bool cancelled = false;
 
         try {
@@ -961,6 +975,9 @@ class _DictionaryDialogPageState extends BasePageState {
             progressNotifier.value = t.dict_downloading(name: rec.name);
             downloadProgress.value = 0;
 
+            // BUG-2188：区分「下载阶段失败」与「导入阶段失败」。以前两者共用一句
+            // 「导入失败」，用户于是先看到下载失败、再看到导入失败，误以为是两次错误。
+            bool zipDownloaded = false;
             try {
               final File zipFile = await DictionaryDownloader.download(
                 url: rec.url,
@@ -974,6 +991,7 @@ class _DictionaryDialogPageState extends BasePageState {
                   total: total,
                 ),
               );
+              zipDownloaded = true;
 
               // BUG-1493：与单本更新同一套阶段切换（归零进度条 → 不定态），否则导入
               // 期间进度条定格满格，看起来就是卡死。BUG-1499：同时把取消按钮禁掉。
@@ -1019,11 +1037,26 @@ class _DictionaryDialogPageState extends BasePageState {
                 '${e.runtimeType} 下载/导入「${rec.name}」失败（${rec.url}）：$e',
                 st,
               );
-              lastError = '${rec.name}: $e';
-              failedNames.add(rec.name);
+              // BUG-2188：异常本体一路带到渲染层。以前这里只留下名字，原因在这
+              // 一行就永久丢失了——后面无论怎么改 UI 都救不回来。
+              failures.add(
+                DictionaryTaskFailure(
+                  name: rec.name,
+                  stage: zipDownloaded
+                      ? DictionaryTaskStage.import
+                      : DictionaryTaskStage.download,
+                  error: e,
+                  url: rec.url,
+                ),
+              );
             }
           }
 
+          // BUG-2188：**标题保持短**（它渲染在 `maxLines: 1` 的单行标题里），失败
+          // 原因走 `job.detail`，在正文里多行显示。以前把整串 `DioError [connection ...`
+          // 塞进标题，用户能看到的恰好是它被截断的前半段。
+          final String lastReason =
+              failures.isEmpty ? '' : failures.last.reason;
           if (cancelled) {
             progressNotifier.value = t.dict_download_cancelled;
           } else if (successCount == toDownload.length) {
@@ -1032,11 +1065,12 @@ class _DictionaryDialogPageState extends BasePageState {
             progressNotifier.value = t.dict_download_partial(
               success: successCount,
               total: toDownload.length,
-              error: lastError ?? '',
+              error: '',
             );
+            job.detail.value = lastReason;
           } else {
-            progressNotifier.value =
-                t.dict_download_failed(error: lastError ?? '');
+            progressNotifier.value = t.dict_download_failed(error: '');
+            job.detail.value = lastReason;
           }
           await Future<void>.delayed(const Duration(seconds: 2));
         } finally {
@@ -1055,12 +1089,15 @@ class _DictionaryDialogPageState extends BasePageState {
             severity: ToastSeverity.info,
           );
         }
-        if (failedNames.isNotEmpty) {
+        if (failures.isNotEmpty) {
           return DictionaryDownloadOutcome(
             message:
-                DictionaryImportManager.formatImportFailureSummary(failedNames),
+                DictionaryImportManager.formatImportFailureSummary(failures),
             toastLength: Toast.LENGTH_LONG,
             severity: ToastSeverity.error,
+            // BUG-2188：全文诊断（含试过哪些地址、原始异常）交给「错误详情」框，
+            // 用户可以整段复制去反馈，而不是抄一段被截断的英文。
+            details: DictionaryImportManager.formatFailureDetails(failures),
           );
         }
         return null;
@@ -1113,6 +1150,7 @@ class _DictionaryDialogPageState extends BasePageState {
             builder: (_, bool cancellable, __) =>
                 DictionaryDownloadProgressDialog(
               message: msg,
+              detailListenable: controller.detail,
               progressListenable: controller.progress,
               // 导入阶段 cancellable 为 false → 按钮置灰 + 说明为什么停不下来，
               // 而不是给一个按了没反应的按钮（BUG-1499）。
@@ -1640,16 +1678,39 @@ class _DictionaryDialogPageState extends BasePageState {
   // 行最左）。折叠语义 = 查词弹窗里该词典释义默认折叠（见 dictionary_popup_webview
   // 注入 collapsedDictionaryNames）；持久化仍走既有 Dictionary.collapsedLanguages
   // （按阅读语言 JapaneseLanguage.instance 区分），不改后端逻辑。
+  // BUG-2158：这个按钮以前是双态的，而模型里只有一个 collapsedLanguages 名单 ——
+  // 于是「不在名单里」被当成「展开」画出来，实际语义却是「继承全局」。全局
+  // collapse_dictionaries 默认 true，用户对自动展开窗口之外的词典点「展开」，
+  // 视觉上毫无反应。现在是三态循环：继承 → 显式展开 → 显式折叠 → 继承。
+  //
+  // 图标表示**当前态**（20+ 本词典要能一眼扫出谁被显式设过），tooltip 说的是
+  // **点一下会变成什么**——两者故意不同，别再把它们合成一个。
   Widget _buildDictionaryCollapseButton(Dictionary dictionary) {
-    final bool collapsed = dictionary.isCollapsed(JapaneseLanguage.instance);
-    final String tooltip = collapsed ? t.options_expand : t.options_collapse;
+    final DictionaryCollapseState state =
+        dictionary.collapseStateFor(JapaneseLanguage.instance);
+    final (IconData icon, String tooltip) = switch (state) {
+      // 未表态：一条横杠，与两个「已表态」图标一眼可分。点下去 → 显式展开。
+      DictionaryCollapseState.inherit => (
+          Icons.horizontal_rule,
+          t.options_expand,
+        ),
+      // 显式展开：展开图标。点下去 → 显式折叠。
+      DictionaryCollapseState.expanded => (
+          Icons.unfold_more,
+          t.options_collapse,
+        ),
+      // 显式折叠：折叠图标。点下去 → 交还给全局。
+      DictionaryCollapseState.collapsed => (
+          Icons.unfold_less,
+          t.dictionary_collapse_follow_global,
+        ),
+    };
     return FushiIconButton(
-      // 已折叠 → 展开图标（点了会展开）；已展开 → 折叠图标（点了会折叠）。
-      icon: collapsed ? Icons.unfold_more : Icons.unfold_less,
+      icon: icon,
       size: 20,
       tooltip: tooltip,
       onTap: () {
-        appModel.toggleDictionaryCollapsed(dictionary);
+        appModel.cycleDictionaryCollapseState(dictionary);
         setState(() {});
       },
     );
@@ -1874,13 +1935,11 @@ class _DictionaryDialogPageState extends BasePageState {
     if (Platform.isAndroid || Platform.isIOS) {
       await FilePicker.platform.clearTemporaryFiles();
     }
-    final FilePickerResult? picked = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const <String>['zip', 'dsl', 'mdx', 'ifo'],
-      allowMultiple: false,
+    if (!mounted) return;
+    final String? pickedPath = await pickSystemFilePath(
+      context: context,
+      allowedExtensions: const <String>{'zip', 'dsl', 'mdx', 'ifo'},
     );
-    final String? pickedPath =
-        picked?.files.isNotEmpty == true ? picked!.files.single.path : null;
     if (pickedPath == null) {
       if (Platform.isAndroid || Platform.isIOS) {
         await FilePicker.platform.clearTemporaryFiles();
@@ -2163,6 +2222,7 @@ class DictionaryDownloadProgressDialog extends StatelessWidget {
   const DictionaryDownloadProgressDialog({
     required this.message,
     required this.progressListenable,
+    this.detailListenable,
     this.onCancel,
     this.onHide,
     this.cancelDisabledHint,
@@ -2171,6 +2231,11 @@ class DictionaryDownloadProgressDialog extends StatelessWidget {
 
   final String message;
   final ValueNotifier<double> progressListenable;
+
+  /// 附加说明（BUG-2188）。失败原因这类**必须完整读到**的文案走这里，渲染在正文里、
+  /// 可多行、可选中；标题 [message] 是 `maxLines: 1 + ellipsis` 的单行，塞长文案进去
+  /// 只会看到被截断的前半段（`DioError [connection ...`）。
+  final ValueListenable<String>? detailListenable;
 
   /// 取消回调。**null = 当前阶段停不下来**（导入中），按钮置灰并显示
   /// [cancelDisabledHint]。给一个按了没反应的按钮比没有按钮更坏（BUG-1499）。
@@ -2216,6 +2281,20 @@ class DictionaryDownloadProgressDialog extends StatelessWidget {
                 value: progress > 0 ? progress : null,
               ),
             ),
+            if (detailListenable != null)
+              ValueListenableBuilder<String>(
+                valueListenable: detailListenable!,
+                builder: (_, String detail, __) => detail.isEmpty
+                    ? const SizedBox.shrink()
+                    : Padding(
+                        padding: EdgeInsets.only(top: tokens.spacing.gap),
+                        child: SelectableText(
+                          detail,
+                          style: tokens.type.listSubtitle,
+                          maxLines: 6,
+                        ),
+                      ),
+              ),
             if (onCancel == null && cancelDisabledHint != null) ...<Widget>[
               SizedBox(height: tokens.spacing.gap),
               Text(

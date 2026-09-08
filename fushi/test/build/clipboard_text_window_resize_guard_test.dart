@@ -5,12 +5,18 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  final String cpp =
-      File('windows/runner/floating_lyric_window.cpp').readAsStringSync();
-  final String header =
-      File('windows/runner/floating_lyric_window.h').readAsStringSync();
-  final String flutterWindow =
-      File('windows/runner/flutter_window.cpp').readAsStringSync();
+  final String cpp = File(
+    'windows/runner/floating_lyric_window.cpp',
+  ).readAsStringSync();
+  final String header = File(
+    'windows/runner/floating_lyric_window.h',
+  ).readAsStringSync();
+  final String flutterWindow = File(
+    'windows/runner/flutter_window.cpp',
+  ).readAsStringSync();
+  final String floatingLyricChannel = File(
+    'lib/src/media/audiobook/floating_lyric_channel.dart',
+  ).readAsStringSync();
 
   test('透明文字窗使用现有右下角系统 resize 机制和尺寸边界', () {
     expect(cpp.contains('case WM_NCHITTEST'), isTrue);
@@ -23,19 +29,26 @@ void main() {
       isFalse,
       reason: 'text-only 模式不能再被旧的「无 resize grip」条件挡住',
     );
-    expect(header.contains('SetSizeCallback'), isTrue);
-    expect(cpp.contains('NotifySizeChanged'), isTrue);
+    expect(header.contains('SetBoundsCallback'), isTrue);
+    expect(cpp.contains('NotifyBoundsChanged'), isTrue);
   });
 
-  test('透明文字窗尺寸以逻辑宽高回传并接入 Dart 通道', () {
-    expect(header.contains('SizeCallback'), isTrue);
-    expect(cpp.contains('std::lround(strip_width_dip_)'), isTrue);
-    expect(cpp.contains('std::lround(strip_height_dip_)'), isTrue);
-    expect(flutterWindow.contains('clipboard_text_window_->SetSizeCallback'),
-        isTrue);
-    expect(flutterWindow.contains('"windowSizeChanged"'), isTrue);
+  test('透明文字窗尺寸随窗口矩形回传并接入 Dart 持久化通道', () {
+    expect(header.contains('BoundsCallback'), isTrue);
+    expect(cpp.contains('NotifyBoundsChanged'), isTrue);
+    expect(
+      flutterWindow.contains('floating_lyric_window_->SetBoundsCallback'),
+      isTrue,
+    );
+    expect(flutterWindow.contains('"windowRectChanged"'), isTrue);
+    expect(floatingLyricChannel.contains("case 'windowRectChanged':"), isTrue);
+    expect(
+      floatingLyricChannel.contains(
+        '_onBoundsChanged?.call(left, top, width, height);',
+      ),
+      isTrue,
+    );
   });
-
   test('透明文字窗 resize 不按窗口高度自动放大字号，并按宽度换行', () {
     expect(cpp.contains('(hook_text_mode_ || text_only_)'), isTrue);
     expect(

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi/src/mining/galgame_audio_encode.dart';
 import 'package:fushi/src/mining/galgame_audio_source.dart';
+import 'package:fushi/src/mining/galgame_japanese_locale.dart';
 
 /// 造一个最小 PE 文件字节：0x3c 处写 PE 头偏移，PE 头处 'PE\0\0' + COFF Machine。
 Uint8List _craftPe(int machine) {
@@ -624,6 +625,20 @@ void main() {
         injectorPath: injector.path,
         capabilitiesProbe: (String _) async =>
             GalHookCapabilityProbeResult.supported,
+        // BUG-2047：`auto` 只在证据判为「需要」时转区；本用例的合成 exe 没有任何证据，
+        // 显式注入结论，不让 `--japanese-locale` 取决于探测器与宿主机 ACP。
+        //
+        // 档位也必须显式给：缺省档已经是 off（没选过就不转区），靠缺省值走不到
+        // auto 分支，下面 processStarter 里断言的 `--japanese-locale` 就不会出现。
+        japaneseLocaleMode: GalJapaneseLocaleMode.auto,
+        systemAnsiCodePageProbe: () => 936,
+        japaneseLocaleNeedProbe: (String _, String? __) async =>
+            const GalJapaneseLocaleVerdict(
+          need: GalJapaneseLocaleNeed.needed,
+          evidence: <GalJapaneseLocaleEvidence>[
+            GalJapaneseLocaleEvidence.versionInfoJapanese,
+          ],
+        ),
         processStarter: (String executable, List<String> arguments) async {
           expect(executable, injector.path);
           expect(

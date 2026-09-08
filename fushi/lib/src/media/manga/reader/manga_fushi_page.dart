@@ -46,6 +46,8 @@ import 'package:fushi/src/media/manga/ocr/manga_region_rescan.dart';
 import 'package:fushi/src/media/manga/reader/manga_volume_key_paging_controller.dart';
 import 'package:fushi/src/media/manga/reader/manga_zoom_preference_debouncer.dart';
 import 'package:fushi/src/focus/page_focus_ownership.dart';
+import 'package:fushi/src/shortcuts/context_menu_trigger.dart'
+    show contextMenuButtonNumberMatches;
 import 'package:fushi/src/shortcuts/gamepad_service.dart'
     show GamepadButtonIntent;
 import 'package:fushi/src/shortcuts/global_navigation.dart'
@@ -61,9 +63,12 @@ import 'package:fushi/src/shortcuts/input_binding.dart'
         InputBinding,
         ModifierKey,
         MouseBinding,
+        WheelBinding,
         activeModifierKeys,
         domMouseButtonFromPointerButtons,
         wheelDirectionFromScrollDelta;
+import 'package:fushi/src/shortcuts/mouse_binding_dispatch.dart'
+    show dispatchClaimedMouseAction, resolveMouseBindingActionForButton;
 import 'package:fushi/src/shortcuts/manga_arrow_override.dart';
 import 'package:fushi/src/shortcuts/shortcut_action.dart';
 import 'package:fushi/src/shortcuts/shortcut_registry.dart';
@@ -74,6 +79,7 @@ import 'package:fushi/src/pages/implementations/dictionary_popup_webview.dart';
 import 'package:fushi/src/reader/reader_selection_data.dart';
 import 'package:fushi/src/reader/reader_selection_scripts.dart';
 import 'package:fushi/src/startup/exit_flush_registry.dart';
+import 'package:fushi/src/stats/read_unit_ledger.dart';
 import 'package:fushi/src/webview/webview_death_guard.dart';
 import 'package:fushi/utils.dart';
 
@@ -139,7 +145,30 @@ enum MangaReaderInputAction {
 /// 一次键盘平移移动的视口比例。按比例而非像素，1080p 与 4K 手感一致。
 const double kMangaPanStepFraction = 0.15;
 
-enum _MangaReaderInputSource { flutter, nativeWebView, volumeKey, gamepad }
+enum _MangaReaderInputSource {
+  flutter,
+  nativeWebView,
+  volumeKey,
+  gamepad,
+  mouse,
+}
+
+/// 漫画页 **Flutter 侧**鼠标通道的解析阶梯：只有 manga 自己的 scope。
+///
+/// `universal`（返回上一级）/ `global`（全屏、整页滚动）由 app 根的
+/// `_handleGlobalPointerDown` 统一兜底并执行——与键盘「页面没接就冒泡到最外层」同构。
+/// 页面再解析一遍就会与根兜底对同一次按下各派发一次（一键退两级）。
+/// BUG-2031 修正：Flutter 腿与 JS 腿**共用这一条**，且与键盘那条
+/// `_resolveMangaKeyAction` 逐段一致。第一版 Flutter 侧只放 `manga`，于是
+/// `globalBack` 在页内解析不到 —— 而 [MangaFushiPage.inputActionForShortcut] 早就
+/// 把它映成逐级的 [MangaReaderInputAction.backOrExit]（弹窗可见先关弹窗，没弹窗才
+/// 退出漫画）。够不着它的结果是侧键退出直接落到 app 根的平 `maybePop()`，比键盘
+/// Esc 少了一级。防双派发靠 [MouseBindingDispatch] 认领，不靠把阶梯修窄。
+const List<ShortcutScope> _kMangaMouseLadder = <ShortcutScope>[
+  ShortcutScope.manga,
+  ShortcutScope.universal,
+  ShortcutScope.global,
+];
 
 /// Serializes burst page-turn input across asynchronous WebView window loads.
 ///
@@ -313,8 +342,8 @@ Future<int?> showMangaPageJumpDialog(
 /// 页图 + 透明 OCR 覆盖层在 WebView 里渲染（文档由 [mangaWindowDocument] 生成），
 /// 汇入同一批共享设施：[BaseSourcePageState.searchDictionaryResult]（查词弹窗）、
 /// [ReaderPositionRepository]（阅读位置，sectionIndex=0-based 页码）、
-/// [StudyClock]（时长 / OCR 字数 / 页数统计，见
-/// [mangaAccumulateReadingStats]）、[AnkiMiningContext]（制卡，
+/// [StudyClock]（时长 / OCR 字数 / 页数统计，「读过」判据见 [ReadUnitLedger]、
+/// 换算见 [mangaStatsForPages]）、[AnkiMiningContext]（制卡，
 /// 卡图=当前页图文件路径）。
 ///
 /// 身份统一 `hoshi://book/<bookKey>`（无漫画专属 scheme 特例），关书自动同步天然工作。
@@ -472,6 +501,47 @@ class MangaFushiPage extends BaseSourcePage {
     forwardRepeats: true,
     stopPropagation: true,
   );
+
+  /// 第三座桥：**鼠标按钮**。
+  ///
+  /// 与前两座（键盘）分开的两个理由，都不是风格问题：
+  ///   · 按钮表必须**按当前绑定实时生成**——桥只回传列在表里的按钮号，硬编码就等于
+  ///     「改了绑定，WebView 持有指针时还按老按钮响应」；
+  ///   · 复用键盘那两座的 handlerName 会连带把它们的**键表覆盖成空**（脚本每次注入
+  ///     都重写 `window[keysVar]`），翻页键当场失效。
+  ///
+  /// 只在**指针归 WebView** 的平台安装（[hostOwnsWebViewPointerInput] 为 false）。
+  /// Windows 上指针先到 Flutter，页面根 [Listener] 已经接住，再装一份 JS 监听会让
+  /// 中键/右键各触发两次（翻页会翻两页）。
+  @visibleForTesting
+  static String mouseBridgeScript(List<int> buttons) => webViewKeyBridgeScript(
+    handlerName: 'onMangaMouseButton',
+    mouseButtons: buttons,
+    installMouseListeners: true,
+    stopPropagation: true,
+  );
+
+  /// 本页鼠标桥要拦截的按钮号：manga / universal / global 三段阶梯上**所有**已绑
+  /// 按钮的并集（与 [_kMangaMouseLadder] 同源）。
+  ///
+  /// 取并集而不是只取 manga：桥不做解析，它只决定「哪些按钮值得回传」，解析仍由
+  /// Dart 侧的 [_handleNativeNavigationKey] 按完整阶梯做。漏一个按钮号，那个绑定在
+  /// WebView 持有指针时就是死的。
+  @visibleForTesting
+  static List<int> mouseBridgeButtons(FushiShortcutRegistry registry) {
+    final List<int> buttons = <int>[];
+    for (final ShortcutScope scope in _kMangaMouseLadder) {
+      for (final ShortcutAction action in ShortcutAction.actionsForScope(
+        scope,
+      )) {
+        for (final MouseBinding binding
+            in registry.bindingsFor(action).mouseBindings) {
+          if (!buttons.contains(binding.button)) buttons.add(binding.button);
+        }
+      }
+    }
+    return buttons;
+  }
 
   /// 纯路径解析 + 穿越守卫。[relative] 在 [imagesRoot] 内解析到存在的文件时返回
   /// 规范绝对路径（**保留磁盘上的真实大小写**），否则 null（越界/缺文件都不 serve）。
@@ -859,57 +929,37 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
 
   /// v92：本页唯一的阅读时钟兼累计器（时长 / OCR 字数 / 页数同一段同一 uid），同
   /// EPUB / PDF 侧。页面不再持有任何会话时长 / 字数 / 页数字段。（守卫
-  /// manga_stats_dwell_guard_test 钉死旧的会话累计器形态不得回潮。）
+  /// manga_stats_dwell_guard_test 钉死旧的会话累计器 / 停留门形态不得回潮。）
   StudyClock? _studyClock;
 
-  /// 已记账过的页（同一页只计一次，来回翻页刷不出数；恢复存档时把恢复位置之前的
-  /// 页也预置进来，见 [_seedCountedPagesFromRestore]）。字数口径与 EPUB 同源，见
-  /// [mangaAccumulateReadingStats]。
-  final Set<int> _sessionCountedPages = <int>{};
-
-  /// BUG-1761 停留门：页面成为当前页并停留 ≥ [_kPageDwellThreshold] 才入账。
-  /// 「到达即计」会把快速翻过/扫过的页全部记成已读——来回翻一圈就是整卷虚增；
-  /// 停留是「真的在读」的最低判据。
-  Timer? _pageDwellTimer;
-  int _pageDwellKey = -1;
-
-  /// 取自跨域共享的 [kArrivalDwellMs]：与视频的 cue 停留门是同一条产品判据
-  /// （到达 ≠ 看过），只应有一个数。
-  static const Duration _kPageDwellThreshold = Duration(
-    milliseconds: kArrivalDwellMs,
+  /// 「读过」判据的唯一账本（2026-09-06 裁定，三域共用，见
+  /// `docs/plans/2026-09-06-read-unit-ledger.md`）：**翻走即计 + 会话覆盖并集**。
+  /// 单元 = 页号半开区间——webtoon `[page, page+1)`、spread 模式按当前 entry 覆盖的
+  /// 页（单页 `[p, p+1)`、双页 `[p, p+2)`）。离开单元那一刻把其中本会话未覆盖的页
+  /// 交给 [_creditPages]；没有停留门（BUG-1761 的 1.5s 到达停留裁定已推翻）、
+  /// 没有存档预置（重开这卷续读，存档页是当前单元，翻走时计一次）。
+  late final ReadUnitLedger _readLedger = ReadUnitLedger(
+    onCredit: _creditPages,
+    onRetract: _retractPages,
   );
 
-  /// 当前页（spread 模式按跨页、webtoon 按页）起一个 [_kPageDwellThreshold] 定时，
-  /// 到期才真正入账；到期前位置变了就换目标重计时（旧目标从未入账）。
-  /// webtoon 页内滚动会连续触发 [_recordProgress]：同一页**不重置**计时，否则
-  /// 慢速连续滚读永远攒不满停留门。
-  void _armPageDwellCount() {
-    // v92 阅读空闲门：翻页 / 页内滚动 = 用户输入。
+  /// 位置落定：喂空闲门（翻页 / 页内滚动 = 用户输入）并把当前可见页交给账本。
+  /// 与当前单元相同的重复落定（webtoon 页内滚动）在账本里是 no-op。
+  void _noteVisiblePages() {
     _studyClock?.touch();
-    final bool isWebtoon = _mode == MangaReadingMode.webtoon;
-    final int key = isWebtoon ? _currentPage : _currentSpread;
-    if (_pageDwellTimer != null && key == _pageDwellKey) return;
-    _pageDwellKey = key;
-    _pageDwellTimer?.cancel();
-    _pageDwellTimer = Timer(_kPageDwellThreshold, () {
-      _pageDwellTimer = null;
-      if (!mounted) return;
-      _countVisiblePages();
-    });
+    final (int start, int end) = _visiblePageRange();
+    _readLedger.arrive(start, end);
   }
 
-  /// BUG-1761：恢复存档时把 0..[restoredPage]（含）预置为「已计过」。
-  ///
-  /// [_sessionCountedPages] 只活在一次页面 State 里：每次重开这卷都是空集，恢复
-  /// 位置附近以及本次会话回翻经过的旧页全部重算一遍，而 DB 侧按 (title, dateKey)
-  /// 纯累加、没有上限——170 页的卷被记成读了 400 页。与 EPUB 的
-  /// `sessionWatermarkAfterRestore`（TODO-147/BUG-211）同款语义：续读只计新推进的
-  /// 页；全新打开（无存档）不预置，首页正常入账；故意从头重读不再计页/字——
-  /// 「每页只在第一次读到时计一次」正是页数统计的本意。
-  void _seedCountedPagesFromRestore(int restoredPage) {
-    for (int index = 0; index <= restoredPage; index++) {
-      _sessionCountedPages.add(index);
+  /// 当前可见页的页号半开区间：spread 模式取当前 entry 的页（升序、连续），
+  /// webtoon 只有真正成为「当前页」的那页。
+  (int, int) _visiblePageRange() {
+    final bool isWebtoon = _mode == MangaReadingMode.webtoon;
+    if (!isWebtoon && _currentSpread >= 0 && _currentSpread < _spreads.length) {
+      final List<int> pages = _spreads[_currentSpread].pageIndices;
+      return (pages.first, pages.last + 1);
     }
+    return (_currentPage, _currentPage + 1);
   }
 
   // 密集 OCR 命中层只保留当前 spread；图片页本身全部留在稳定的 lazy strip。
@@ -977,8 +1027,8 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     if (desktopWindowFullscreenSupported) {
       unawaited(_readInitialFullscreenState());
     }
-    // 进程退出兜底：把未落盘的页码 flush 掉（与 EPUB/PDF 阅读器同纪律）。
-    ExitFlushRegistry.instance.register(_flushPosition);
+    // 进程退出兜底：把未落盘的页码 + 学习段 flush 掉（与 EPUB/PDF 阅读器同纪律）。
+    ExitFlushRegistry.instance.register(_flushForExit);
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadBook());
     // TODO-2936：应用「漫画」媒体类型 / 本书 book 级的 Profile 绑定（与 EPUB/
     // 视频阅读器同范式：非致命、与开书链并行；漫画的 bookKey 就是 Profile 的
@@ -1004,13 +1054,12 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     }
     // 交还音量键所有权：必须早于其它拆栈，且无条件执行。
     _volumeKeyPagingController.dispose();
-    ExitFlushRegistry.instance.unregister(_flushPosition);
+    ExitFlushRegistry.instance.unregister(_flushForExit);
     WidgetsBinding.instance.removeObserver(this);
     // 加载中的窗口必须以明确状态收尾：否则 _loadInitialWindow 会挂满 10s 超时，
     // 再从 unawaited 调用点抛出未捕获异步异常（BUG-1171）。
     _windowGate.abandon();
     _progressDebounce?.cancel();
-    _pageDwellTimer?.cancel();
     _onlineGeometryPersistDebounce?.cancel();
     final MangaZoomPreferenceDebouncer? zoomDebouncer =
         _zoomPreferenceDebouncer;
@@ -1024,10 +1073,13 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     if (pageSession != null) {
       unawaited(_closePageSession(pageSession));
     }
-    // dispose 里只能 fire-and-forget；正常退出走 onSourcePagePop 的 await 路径，
-    // 这里是崩溃/异常拆栈时的兜底。
-    unawaited(_flushPosition());
-    _studyClock?.dispose();
+    // 崩溃 / 异常拆栈的兜底（正常退出走 onSourcePagePop 的 await 路径）：dispose
+    // 是同步的，这里**一笔 DB 写都不许发起**——无人 await 的事务与随后的
+    // `db.close()` 互等。账本结算（leave → 页数入账）由 detach 在停表前跑完，攒下
+    // 的写和最后的位置一起交给退出汇合点统一 await。
+    // 时钟为空 = 本页从没开始计时，账本结算没有消费者，整段跳过。
+    _studyClock?.detach(_readLedger.leave);
+    ExitFlushRegistry.instance.defer(_flushPosition);
     _pageNotifier.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -1141,6 +1193,8 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     if (_ownsWindowFullscreen) {
       await _setMangaFullscreen(false);
     }
+    // 离开当前页：账本结算最后一个单元（翻走即计），再落盘。
+    _readLedger.leave();
     // 返回书架的正常路径：await 落盘，保证书架 recency/进度立刻正确。
     await _flushPosition();
     await _studyClock?.stop();
@@ -1173,6 +1227,8 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       _currentSpread,
     );
     final List<MangaSpreadEntry> spreads = _buildSpreadsFor(payload, _mode);
+    // 同一页换单元边界（单页↔双页）不是翻页：下一次 arrive 只替换边界、不结算。
+    _readLedger.rebaseOnNextArrive();
     setState(() {
       _spreads = spreads;
       _currentSpread = MangaFushiPage.spreadIndexForPage(spreads, currentPage);
@@ -1301,10 +1357,6 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     }
 
     _ensureStudyClock(db);
-    // BUG-1761：续读不重复计——恢复位置之前（含恢复页）的页上个会话已入账。
-    if (saved != null) {
-      _seedCountedPagesFromRestore(restoredPage);
-    }
 
     final int restoredSpread = MangaFushiPage.restoreSpreadFromProgress(
       spreads,
@@ -1332,9 +1384,9 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       _lastSavedFraction = saved != null ? restoredFraction : -1;
     });
     _pageNotifier.value = _currentPage;
-    // 首屏页也要走停留门：开书直接停在恢复位置时不会再有 _recordProgress，但
-    // 停够 [_kPageDwellThreshold] 同样应入账（存档续读时该页已被预置，计 0）。
-    _armPageDwellCount();
+    // 首屏页成为当前单元：开书直接停在恢复位置时不会再有 _recordProgress，
+    // 翻走时才入账（存档页不预置，续读也计一次）。
+    _noteVisiblePages();
     // A cancelled/background task intentionally does not replace manga.json,
     // but every atomic page cache is already safe to use. Restore those pages
     // after the first paint so opening a large book stays fast and both local
@@ -1580,11 +1632,11 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     );
 
     _ensureStudyClock(appModel.database);
-    // BUG-1761：只有存档续读预置已计页；initialPage 显式跳页不预置（是否读过未知，
-    // 宁可少算——反正跳过去的页没有 1.5s 停留也不会入账）。
-    if (saved != null) {
-      _seedCountedPagesFromRestore(restoredPage);
-    }
+    // 同一 State 内换章 = 页号坐标系重用（新章页号从 0 起）：先结算离开的旧章
+    // 末页（翻走即计），再清并集；首次打开两步都是 no-op。
+    _readLedger
+      ..leave()
+      ..reset();
     final MangaReaderSession? previousSession = _pageSession;
     _pageSession = pageSession;
     _localPageIndices = <String, int>{
@@ -1612,7 +1664,7 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       _lastSavedFraction = saved != null ? restoredFraction : -1;
     });
     _pageNotifier.value = _currentPage;
-    _armPageDwellCount();
+    _noteVisiblePages();
     unawaited(_primeOnlinePages(restoredPage));
     unawaited(_recoverIncrementalOcrCache(directory.path, payload));
   }
@@ -2040,9 +2092,6 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       // 真实整卷页码（data-page，补扫模式回传的 pageIndex 语义）。
       pageNumbers.add(page);
     }
-    // WebView 里的 wheel 手势机需要在浏览器默认滚动之前知道当前 manga scope
-    // 的绑定；把这一小份配置随文档注入，命中后由 JS preventDefault 并回传 action key，
-    // Dart 仍通过同一注册表解析/执行。没有绑定时保持原有滚动和翻页逻辑。
     final Map<String, List<Map<String, dynamic>>> wheelBindings =
         <String, List<Map<String, dynamic>>>{
           'up': <Map<String, dynamic>>[],
@@ -2051,11 +2100,13 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     for (final ShortcutAction action in ShortcutAction.actionsForScope(
       ShortcutScope.manga,
     )) {
-      for (final binding
+      for (final WheelBinding binding
           in appModel.shortcutRegistry.bindingsFor(action).wheelBindings) {
+        final List<ModifierKey> modifiers = binding.modifiers.toList()
+          ..sort((ModifierKey a, ModifierKey b) => a.index.compareTo(b.index));
         wheelBindings[binding.direction.name]!.add(<String, dynamic>{
           'action': action.key,
-          'mods': binding.modifiers.map((ModifierKey m) => m.name).toList(),
+          'mods': modifiers.map((ModifierKey m) => m.name).toList(),
         });
       }
     }
@@ -2531,14 +2582,13 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       };
 
   @override
-  void onDictionaryPopupInputToken(String token) {
+  bool onDictionaryPopupInputToken(String token) {
     // 鼠标 token 不参与「跨页方向校正」（那是方向键专属语义），交回基类按注册表
     // 动作直接执行（关词典）。
     if (MouseBinding.deserialize(token) != null) {
-      super.onDictionaryPopupInputToken(token);
-      return;
+      return super.onDictionaryPopupInputToken(token);
     }
-    _handleNativeNavigationKey(token);
+    return _handleNativeNavigationKey(token);
   }
 
   /// 词典弹窗渲染完成（指针唤出路径）：把 Flutter 焦点收回正文。
@@ -2642,52 +2692,62 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     return true;
   }
 
-  /// 把 DOM `MouseEvent.button` 解析到漫画页动作。页面专属绑定优先；保留
-  /// universal/global 的读取兼容性，便于旧快照里曾手工写入的返回/全屏鼠标绑定继续
-  /// 工作。左键不会在这里阻止 WebView 的普通点击，动作与查词/拖动等原生手势并行。
-  MangaReaderInputAction? _resolveMangaMouseButton(int button) {
-    final FushiShortcutRegistry registry = appModel.shortcutRegistry;
-    final ShortcutAction? bound =
-        registry.resolveMouse(button, scope: ShortcutScope.manga) ??
-        registry.resolveMouse(button, scope: ShortcutScope.universal) ??
-        registry.resolveMouse(button, scope: ShortcutScope.global);
+  /// 鼠标按钮 → 本页动作。与 [_resolveMangaKeyAction] 共用同一个上下文门控
+  /// [MangaFushiPage.inputActionForShortcut]，所以「弹窗可见时让位 / webtoon 纵向让位
+  /// 原生滚动」两条既有语义对鼠标一并成立。
+  ///
+  /// `crossPageStep: false`：跨页步进语义是**方向键专属**（左右方向键要按 rtl 校正
+  /// 朝向），鼠标按钮没有方向可言，与空格/PageDown 这类前进键同类。
+  MangaReaderInputAction? _resolveMangaMouseAction(
+    int button,
+    List<ShortcutScope> ladder,
+  ) {
+    final ShortcutAction? bound = resolveMouseBindingActionForButton(
+      registry: appModel.shortcutRegistry,
+      button: button,
+      ladder: ladder,
+    );
     return MangaFushiPage.inputActionForShortcut(
       action: bound,
-      crossPageStep: true,
+      crossPageStep: false,
       dictionaryShown: isDictionaryShown,
       mode: _mode,
     );
   }
 
-  MangaReaderInputAction? _resolveMangaMouseAction(int buttons) {
-    final int? button = domMouseButtonFromPointerButtons(buttons);
-    return button == null ? null : _resolveMangaMouseButton(button);
-  }
-
-  bool _handleMangaMouseButton(int buttons) {
-    final MangaReaderInputAction? action = _resolveMangaMouseAction(buttons);
-    if (action == null) return false;
-    _executeReaderInputAction(action, source: _MangaReaderInputSource.flutter);
-    return true;
-  }
-
-  void _handleMangaDomMouseButton(int button) {
-    final MangaReaderInputAction? action = _resolveMangaMouseButton(button);
-    if (action == null) return;
-    _executeReaderInputAction(
-      action,
-      source: _MangaReaderInputSource.nativeWebView,
+  /// 漫画页 Flutter 侧的鼠标绑定入口（挂在 build 的页面根 [Listener] 上）。
+  void _handleMangaPointerDown(PointerDownEvent event) {
+    // BUG-2031 审查②：两条腿的互斥必须是**构造性**的，不能只门控一侧。
+    //
+    // 原先只有 JS 那条腿带 [hostOwnsWebViewPointerInput] 门控，本 Flutter 腿是**无条件
+    // 挂载**的，注释却写着「两条路按平台互斥」。那个判据是从查词弹窗那边提上来的——
+    // 弹窗在 Android 上是独立 Activity，确实在 Flutter 命中树之外；但本页正文的 WebView
+    // 是**树内 platform view**，祖先 [Listener] 照样收得到指针（同一条「opaque 只排除
+    // 兄弟、不排除祖先」的事实）。于是非 Windows 上同一次按下可能被 Flutter 腿与 JS 腿
+    // 各执行一次，而 JS 腿没有 pointer id、无法参与认领协议。
+    //
+    // 补上这道门后，任一平台恒只有一条腿活着。代价是非 Windows 上**页面外壳**（正文
+    // WebView 之外）的鼠标绑定不生效——那恰是本轮之前的行为（本页当时根本没有 Flutter
+    // 侧鼠标腿），故不是回归；正文区照常由 JS 腿覆盖完整阶梯。
+    if (!hostOwnsWebViewPointerInput) return;
+    final int? button = domMouseButtonFromPointerButtons(event.buttons);
+    if (button == null) return;
+    final MangaReaderInputAction? action = _resolveMangaMouseAction(
+      button,
+      _kMangaMouseLadder,
     );
+    if (action == null) return;
+    dispatchClaimedMouseAction(event, () {
+      _executeReaderInputAction(action, source: _MangaReaderInputSource.mouse);
+      return true;
+    });
   }
 
-  /// 解析弹窗外由 Dart barrier 收到的滚轮事件。WebView 正文的滚轮由注入的
-  /// `_mangaShortcutWheelAction` 在浏览器层先拦截，命中后回传 action key；这条
-  /// resolver 供弹窗 barrier（以及未来不经 JS 的桌面平台）读取同一注册表。
+  /// 解析 Flutter/barrier 收到的滚轮绑定；未命中时保留作者原生滚动/翻页。
   MangaReaderInputAction? _resolveMangaWheelAction(Offset delta) {
     final direction = wheelDirectionFromScrollDelta(delta);
     if (direction == null) return null;
-    final FushiShortcutRegistry registry = appModel.shortcutRegistry;
-    final ShortcutAction? bound = registry.resolveWheel(
+    final ShortcutAction? bound = appModel.shortcutRegistry.resolveWheel(
       direction,
       modifiers: activeModifierKeys(),
       scope: ShortcutScope.manga,
@@ -2700,7 +2760,26 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     );
   }
 
-  void _handleNativeNavigationKey(String key) {
+  /// 返回**本次是否真的执行了**动作。BUG-2031：查词弹窗 barrier 那条路要靠这个
+  /// 回答决定要不要向 `MouseBindingDispatch` 认领这次鼠标按下。
+  bool _handleNativeNavigationKey(String key) {
+    // 鼠标桥回传的是 `Mouse<n>`（与键盘 token 取值域天然不相交：
+    // `InputBinding.deserialize('Mouse3')` 与 `MouseBinding.deserialize('Escape')`
+    // 都是 null），故先试鼠标、再试键盘，不需要额外的类型标记位。与查词弹窗桥
+    // [resolveDictionaryPopupInputToken] 同一范式。
+    final MouseBinding? mouse = MouseBinding.deserialize(key);
+    if (mouse != null) {
+      final MangaReaderInputAction? mouseAction = _resolveMangaMouseAction(
+        mouse.button,
+        _kMangaMouseLadder,
+      );
+      if (mouseAction == null) return false;
+      _executeReaderInputAction(
+        mouseAction,
+        source: _MangaReaderInputSource.nativeWebView,
+      );
+      return true;
+    }
     // token 按 [InputBinding.serialize] 解析：正文 WebView 的桥发裸 `event.key`
     // （`ArrowLeft`），弹窗桥发注册表 token（可能是任意键名、可能带修饰键前缀），
     // 两者都能被同一个 deserialize 吃下——旧的三分支 switch 只认硬编码的方向键与
@@ -2709,17 +2788,17 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     final InputBinding? binding = key == 'Esc'
         ? const InputBinding(key: LogicalKeyboardKey.escape)
         : InputBinding.deserialize(key);
-    if (binding == null) return;
+    if (binding == null) return false;
     final MangaReaderInputAction? action = _resolveMangaKeyAction(
       binding.key,
       binding.modifiers,
     );
-    if (action != null) {
-      _executeReaderInputAction(
-        action,
-        source: _MangaReaderInputSource.nativeWebView,
-      );
-    }
+    if (action == null) return false;
+    _executeReaderInputAction(
+      action,
+      source: _MangaReaderInputSource.nativeWebView,
+    );
+    return true;
   }
 
   @override
@@ -3721,6 +3800,8 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     }
     if (!mounted) return;
     final List<MangaSpreadEntry> spreads = _buildSpreadsFor(payload, next);
+    // 同一页换单元边界（spread↔webtoon）不是翻页：只替换当前单元边界、不结算。
+    _readLedger.rebaseOnNextArrive();
     setState(() {
       _mode = next;
       _spreads = spreads;
@@ -3729,6 +3810,7 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       _currentFraction = 0;
     });
     _pageNotifier.value = _currentPage;
+    _noteVisiblePages();
     await _loadInitialWindow();
     // 布局变化会换掉当前 spread 背后的页（ERRATA C2）。
     _updateCurrentPageImagePath();
@@ -3755,7 +3837,7 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     );
     _currentPage = page;
     _pageNotifier.value = page;
-    _armPageDwellCount();
+    _noteVisiblePages();
     // 600ms debounce：连续翻页/滚动只落最后一次。
     _progressDebounce?.cancel();
     _progressDebounce = Timer(const Duration(milliseconds: 600), () {
@@ -3763,28 +3845,39 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     });
   }
 
-  /// 把当前可见页记进本会话的字数/页数账（每页只记一次）。
-  ///
-  /// 唯一调用方是 [_armPageDwellCount] 的停留定时器：页面停留 ≥
-  /// [_kPageDwellThreshold] 才走到这里，「到达即计」被停留门挡在外面（BUG-1761）。
-  /// spread 模式当前 entry 的两页都算看过；webtoon 整本单文档竖滚，只有真正成为
-  /// 「当前页」的那页算读过（快速滚过没停留的页不计，宁可少算不虚高）。
-  void _countVisiblePages() {
+  /// [_readLedger] 的结算回调：[fresh] 是刚离开的单元里本会话首次覆盖的页号子区间
+  /// （并集去重后），展开成页号按 OCR 文本计字数、按页计页数，记进时钟当前段。
+  void _creditPages(List<(int, int)> fresh) {
     final MokuroPayload? payload = _payload;
     if (payload == null) return;
-    final bool isWebtoon = _mode == MangaReadingMode.webtoon;
-    final List<int> pages =
-        !isWebtoon && _currentSpread >= 0 && _currentSpread < _spreads.length
-        ? _spreads[_currentSpread].pageIndices
-        : <int>[_currentPage];
-    final ({int chars, int pages}) added = mangaAccumulateReadingStats(
-      payload: payload,
-      pageIndices: pages,
-      counted: _sessionCountedPages,
+    final List<int> pageIndices = <int>[
+      for (final (int start, int end) in fresh)
+        for (int page = start; page < end; page++) page,
+    ];
+    final ({int chars, int pages}) added = mangaStatsForPages(
+      payload,
+      pageIndices,
     );
     // v92：字数 / 页数直接记进当前打开段（与时长同一 uid 同一行）。
     _studyClock?.addChars(added.chars);
     _studyClock?.addPages(added.pages);
+  }
+
+  /// [_readLedger] 的撤回回调（回翻）：[retracted] 是不再位于当前位置之前的页号
+  /// 子区间，按同一换算扣出时钟（会话级夹 0 由 `StudyClock` 保证）。
+  void _retractPages(List<(int, int)> retracted) {
+    final MokuroPayload? payload = _payload;
+    if (payload == null) return;
+    final List<int> pageIndices = <int>[
+      for (final (int start, int end) in retracted)
+        for (int page = start; page < end; page++) page,
+    ];
+    final ({int chars, int pages}) removed = mangaStatsForPages(
+      payload,
+      pageIndices,
+    );
+    _studyClock?.retractChars(removed.chars);
+    _studyClock?.retractPages(removed.pages);
   }
 
   /// v92：建好并启动本页唯一的阅读时钟（幂等）。空闲门 + 生命周期前台门只对
@@ -3799,6 +3892,7 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       idleTimeout: appModel.readingIdleTimeout,
       onWriteError: (Object e, StackTrace st) =>
           ErrorLogService.instance.log('StudyClock.write(manga)', e, st),
+      deferWrite: ExitFlushRegistry.instance.defer,
     );
     _studyClock!.start();
   }
@@ -3856,6 +3950,15 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     } catch (e, stack) {
       ErrorLogService.instance.log('MangaFushiPage.saveChapterState', e, stack);
     }
+  }
+
+  /// 进程退出 / 退后台的统一 flush（[ExitFlushRegistry]）：先把当前页结算进账本
+  /// （退出也是「翻走」；此前登记的是裸 `_flushPosition`，桌面点 X 时最后一页的
+  /// 字 / 页直接丢——账本从没被结算过），
+  /// 再落位置 + 学习段。用 [ReadUnitLedger.settle] 而非 `leave()`，理由见其文档。
+  Future<void> _flushForExit() async {
+    _readLedger.settle();
+    await _flushPosition();
   }
 
   Future<void> _flushPosition() async {
@@ -3991,11 +4094,6 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
       return;
     }
     if (decoded is! Map || !mounted) return;
-    final int? button = (decoded['button'] as num?)?.toInt();
-    // A right-button shortcut is dispatched on mousedown. The existing
-    // context-menu bridge fires on mouseup, so suppress the native menu when
-    // the current registry still maps that button to an executable action.
-    if (button != null && _resolveMangaMouseButton(button) != null) return;
     final double x = (decoded['x'] as num?)?.toDouble() ?? 0;
     final double y = (decoded['y'] as num?)?.toDouble() ?? 0;
     // BUG-1438（与 BUG-129/261/381/781 同族）：JS 报的 clientX/clientY 是 **真实屏幕
@@ -4129,14 +4227,17 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
             focusNode: _focusNode,
             autofocus: true,
             onKeyEvent: _handleReaderKey,
+            // 鼠标通道与键盘/手柄挂在同一层，作用域同样是「正文 WebView + chrome +
+            // 词典弹层」的共同祖先。`translucent` 让本层自己占住命中（默认
+            // deferToChild 在空白区收不到按下）；[Listener] 不进手势竞技场也不消费
+            // 事件，下层 WebView / 弹层照常收到同一次按下。
+            //
+            // ⚠️ 本 Listener 只覆盖**指针归 Flutter 的**那部分：原生 WebView（正文页图
+            // 与 OCR 文本层）在 Windows 之外会把指针整个吃掉，那片区域由页内 JS 的鼠标
+            // 桥回传（见注入处）。两条路按平台互斥，不会重复触发。
             child: Listener(
               behavior: HitTestBehavior.translucent,
-              onPointerDown: (PointerDownEvent event) {
-                if (event.kind != PointerDeviceKind.mouse) return;
-                _handleMangaMouseButton(event.buttons);
-              },
-              // 正文 WebView 的滚轮由 HTML 手势机先判定绑定并在命中时
-              // preventDefault；这里不再重复执行，避免一次滚轮触发两次动作。
+              onPointerDown: _handleMangaPointerDown,
               child: Stack(
                 fit: StackFit.expand,
                 children: <Widget>[
@@ -4147,7 +4248,16 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
                     key: const ValueKey<String>('manga_dictionary_host'),
                     child: buildDictionary(),
                   ),
-                  if (_bookRow != null && !_loadFailed && _chromeVisible)
+                  // 返回键是本页**唯一**的出口，它的可见性只能由用户意图
+                  // （[_chromeVisible]）决定，绝不能再挂内容状态门控。
+                  //
+                  // 旧条件是 `_bookRow != null && !_loadFailed && _chromeVisible`：
+                  // 加载失败或一直没就绪时，正文区只剩一行「找不到书籍文件」，而
+                  // 这颗按钮**跟着一起消失**。漫画正文是原生 WebView、空白点击已被
+                  // 翻页占用，页内没有第二条退出通道；iOS 又没有系统返回键，
+                  // `PopScope(canPop: false)` 还顺手关掉了侧滑返回——三者叠加的结果
+                  // 是用户只能杀进程。出口不是内容的一部分，不随内容存亡。
+                  if (_chromeVisible)
                     Positioned(
                       top: 0,
                       left: 0,
@@ -4173,7 +4283,9 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
                       child: SafeArea(child: _buildTopChrome()),
                     ),
                   // BUG-1888：隐藏态唯一的唤回入口（理由见 [_chromeVisible]）。
-                  if (_bookRow != null && !_loadFailed && !_chromeVisible)
+                  // 与返回键同理不挂内容门控——否则「隐藏界面后内容加载失败」会把
+                  // 唤回按钮一并抹掉，连带返回键再也叫不回来。
+                  if (!_chromeVisible)
                     Positioned(
                       top: 0,
                       right: 0,
@@ -4541,8 +4653,6 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
             unawaited(_onMangaTurn(args[0] as String));
           },
         );
-        // 自定义滚轮快捷键由文档内的 wheel 监听在浏览器默认滚动前拦截，
-        // 这里只按 action key 走和键盘/手柄相同的输入映射与执行体。
         controller.addJavaScriptHandler(
           handlerName: 'onMangaWheelShortcut',
           callback: (List<dynamic> args) {
@@ -4580,23 +4690,31 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
             _handleNativeNavigationKey(args[0] as String);
           },
         );
+        // 鼠标桥（第三座，只在指针归 WebView 的平台安装）。回调同样汇进
+        // [_handleNativeNavigationKey]——它按 token 先试 MouseBinding 再试
+        // InputBinding，动作由绑定决定而不是由桥决定。
         controller.addJavaScriptHandler(
-          handlerName: 'onMangaMouseShortcut',
+          handlerName: 'onMangaMouseButton',
           callback: (List<dynamic> args) {
-            if (args.isEmpty) return;
-            final int? button = switch (args[0]) {
-              final num value => value.toInt(),
-              final String value => int.tryParse(value),
-              _ => null,
-            };
-            if (button == null || button < 0) return;
-            _handleMangaDomMouseButton(button);
+            if (args.isEmpty || args[0] is! String) return;
+            _handleNativeNavigationKey(args[0] as String);
           },
         );
         controller.addJavaScriptHandler(
           handlerName: 'onMangaContextMenu',
           callback: (List<dynamic> args) {
             if (args.isEmpty || args[0] is! String) return;
+            // BUG-2111：页内 JS 那一路仍然硬判 `e.button === 2`，因为漫画的右键还兼着
+            // 「缩放态下按住拖拽平移」（rightDrag），换键会牵连那半边。所以归属判据补在
+            // 这里：右键若已经被别的漫画动作占用，菜单让位——否则一次右键既翻页又弹菜单，
+            // 正是本 bug 在漫画页的形态。判据与 Flutter 那二十余处入口是同一个函数。
+            if (!contextMenuButtonNumberMatches(
+              registry: appModel.shortcutRegistry,
+              button: 2,
+              ladder: _kMangaMouseLadder,
+            )) {
+              return;
+            }
             unawaited(_showReaderContextMenu(args[0] as String));
           },
         );
@@ -4715,6 +4833,19 @@ class _MangaFushiPageState extends BaseSourcePageState<MangaFushiPage>
     );
     if (!mounted || !_windowGate.owns(ticket)) {
       return;
+    }
+    // 鼠标桥：只在**指针归 WebView** 的平台装。Windows 上指针先到 Flutter，页面根
+    // [Listener]（[_handleMangaPointerDown]）已经接住，再装一份就会双触发。
+    // 按钮表按当前绑定实时生成，改绑后换窗即生效。
+    if (!hostOwnsWebViewPointerInput) {
+      await controller.evaluateJavascript(
+        source: MangaFushiPage.mouseBridgeScript(
+          MangaFushiPage.mouseBridgeButtons(appModel.shortcutRegistry),
+        ),
+      );
+      if (!mounted || !_windowGate.owns(ticket)) {
+        return;
+      }
     }
     if (_mode == MangaReadingMode.webtoon) {
       await controller.evaluateJavascript(

@@ -35,9 +35,21 @@ Widget buildSettingsDetailShell({
 }
 
 class SettingsDetailPage extends BasePage {
-  const SettingsDetailPage({required this.destination, super.key});
+  const SettingsDetailPage({
+    required SettingsDestination this.destination,
+    super.key,
+  }) : subPageBuilder = null;
 
-  final SettingsDestination destination;
+  /// 子 schema 页（[SettingsNavigationItem.child]）：与顶层分类同一套详情壳，但
+  /// 新鲜树来自 [subPageBuilder] 而不是按 id 到顶层 schema 里找——子页共用父分类的
+  /// id，按 id 找会把父页渲染出来。
+  const SettingsDetailPage.subPage(
+    SettingsDestination Function() this.subPageBuilder, {
+    super.key,
+  }) : destination = null;
+
+  final SettingsDestination? destination;
+  final SettingsDestination Function()? subPageBuilder;
 
   @override
   BasePageState<SettingsDetailPage> createState() => _SettingsDetailPageState();
@@ -53,6 +65,12 @@ class _SettingsDetailPageState extends BasePageState<SettingsDetailPage>
     // 游戏内查词准入是 hook **异步**报上来的：settingsContext.refresh 只由交互驱动，
     // 事件走不到它。不听这一条，用户开着设置页启动游戏时那一行永远停在旧状态。
     GalIngameLookupController.instance.admission.addListener(_onLogChanged);
+    // 推荐包下载同理（BUG-2097）：它跑在 app 级 controller 里，用户可能是在设置页
+    // 开着的时候点了下载、或者下载在后台跑完了——不听这一条，「推荐包」那一行的
+    // 显隐就停在进页面那一刻的旧状态。
+    appModelNoUpdate.recommendedPackDownloadController.stage.addListener(
+      _onLogChanged,
+    );
   }
 
   @override
@@ -60,6 +78,9 @@ class _SettingsDetailPageState extends BasePageState<SettingsDetailPage>
     ErrorLogService.instance.removeListener(_onLogChanged);
     DebugLogService.instance.removeListener(_onLogChanged);
     GalIngameLookupController.instance.admission.removeListener(_onLogChanged);
+    appModelNoUpdate.recommendedPackDownloadController.stage.removeListener(
+      _onLogChanged,
+    );
     super.dispose();
   }
 
@@ -69,10 +90,8 @@ class _SettingsDetailPageState extends BasePageState<SettingsDetailPage>
 
   @override
   Widget build(BuildContext context) {
-    final SettingsContext settingsContext = createSettingsContext(
-      appModel: appModel,
-      ref: ref,
-    );
+    final SettingsContext settingsContext =
+        createSettingsContext(appModel: appModel, ref: ref);
     final SettingsDestination destination = _freshDestination(settingsContext);
     if (isCupertinoPlatform(context)) {
       return const CupertinoSettingsRenderer().buildDetailPage(
@@ -87,11 +106,13 @@ class _SettingsDetailPageState extends BasePageState<SettingsDetailPage>
   }
 
   SettingsDestination _freshDestination(SettingsContext settingsContext) {
-    for (final SettingsDestination destination in buildSettingsSchema(
-      settingsContext,
-    )) {
-      if (destination.id == widget.destination.id) return destination;
+    final SettingsDestination Function()? subPage = widget.subPageBuilder;
+    if (subPage != null) return subPage();
+    final SettingsDestination top = widget.destination!;
+    for (final SettingsDestination destination
+        in buildSettingsSchema(settingsContext)) {
+      if (destination.id == top.id) return destination;
     }
-    return widget.destination;
+    return top;
   }
 }

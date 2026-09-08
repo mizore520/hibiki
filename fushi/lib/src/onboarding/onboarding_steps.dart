@@ -38,12 +38,26 @@ enum OnboardingFeature {
   /// Anki 制卡（AnkiConnect / AnkiDroid）。
   anki,
 
+  /// 在线服务账号与 API 配置总览；默认不选，仅展示配置教程。
+  onlineServices,
+
+  /// 自定义字体（界面/正文/词典）。默认勾选；不勾则向导不出现字体步骤。
+  fonts,
+
   /// 备份与同步（云端/自建后端 + 本地备份文件）。
   backup,
 
   /// 设备互联（局域网配对、共享书库/进度/查词）。
   interconnect,
 }
+
+/// 配置能力的默认教程选择；不控制服务启用，也不读取或修改已有账号。
+const Set<OnboardingFeature> kOnboardingDefaultCapabilities =
+    <OnboardingFeature>{
+  OnboardingFeature.recommendedPack,
+  OnboardingFeature.anki,
+  OnboardingFeature.fonts,
+};
 
 /// 库页模块集合（勾选写 tab 显隐偏好；除 browserExtension 外不产生引导步骤）。
 const Set<OnboardingFeature> kOnboardingModuleFeatures = <OnboardingFeature>{
@@ -90,13 +104,14 @@ enum OnboardingStepId {
   /// 手动导入词典、有声书与发音来源。
   manualResources,
   anki,
+  onlineServices,
   backup,
   interconnect,
 
   /// 浏览器扩展安装引导（仅桌面）。
   browserExtension,
 
-  /// 阅读字体配置。
+  /// 自定义字体配置（仅 [OnboardingFeature.fonts] 被勾选时）。
   fonts,
 
   /// 应用内点击文字查词的操作教程（全平台）。
@@ -113,9 +128,8 @@ enum OnboardingStepId {
 /// 给定勾选集合与平台能力，返回向导要走的步骤序列。
 ///
 /// 恒以 [OnboardingStepId.welcome]、[OnboardingStepId.features] 开头，
-/// [OnboardingStepId.fonts] 和 [OnboardingStepId.finish] 固定收尾；中间配置步骤按
-/// 固定顺序（资源准备 → Anki → 备份 → 互联 → 扩展）出现：能力步骤只保留被
-/// 勾选的，
+/// [OnboardingStepId.finish] 固定收尾；中间配置步骤按固定顺序（资源准备 → Anki →
+/// 备份 → 互联 → 扩展 → 字体）出现：能力步骤（含字体）只保留被勾选的，
 /// 浏览器扩展安装引导步骤 = [browserExtensionAvailable]（桌面平台）**且**扩展
 /// 模块被勾选。其余库页模块勾选不产生步骤。
 ///
@@ -139,13 +153,15 @@ List<OnboardingStepId> onboardingStepSequence({
     if (selected.contains(OnboardingFeature.manualResources))
       OnboardingStepId.manualResources,
     if (selected.contains(OnboardingFeature.anki)) OnboardingStepId.anki,
+    if (selected.contains(OnboardingFeature.onlineServices))
+      OnboardingStepId.onlineServices,
     if (selected.contains(OnboardingFeature.backup)) OnboardingStepId.backup,
     if (selected.contains(OnboardingFeature.interconnect))
       OnboardingStepId.interconnect,
     if (browserExtensionAvailable &&
         selected.contains(OnboardingFeature.browserExtension))
       OnboardingStepId.browserExtension,
-    OnboardingStepId.fonts,
+    if (selected.contains(OnboardingFeature.fonts)) OnboardingStepId.fonts,
     if (resourcesSelected) OnboardingStepId.clickLookup,
     if (resourcesSelected && globalLookupAvailable)
       OnboardingStepId.globalLookup,
@@ -155,4 +171,38 @@ List<OnboardingStepId> onboardingStepSequence({
       OnboardingStepId.firstAnkiCard,
     OnboardingStepId.finish,
   ];
+}
+
+/// Imported resources need only the operation tutorials, never setup preferences.
+List<OnboardingStepId> onboardingTutorialStepSequence({
+  required bool globalLookupAvailable,
+}) =>
+    <OnboardingStepId>[
+      OnboardingStepId.clickLookup,
+      if (globalLookupAvailable) OnboardingStepId.globalLookup,
+      OnboardingStepId.finish,
+    ];
+
+/// Records explicit Next actions, not merely visiting a page or leaving via Skip.
+class OnboardingTutorialProgress {
+  final Set<OnboardingStepId> _completed = <OnboardingStepId>{};
+
+  void completeStep(OnboardingStepId step) {
+    if (_isTutorial(step)) _completed.add(step);
+  }
+
+  bool shouldMarkCompleted({
+    required List<OnboardingStepId> steps,
+    required bool finished,
+  }) {
+    final List<OnboardingStepId> tutorials = steps.where(_isTutorial).toList();
+    return finished &&
+        tutorials.isNotEmpty &&
+        tutorials.every(_completed.contains);
+  }
+
+  static bool _isTutorial(OnboardingStepId step) =>
+      step == OnboardingStepId.clickLookup ||
+      step == OnboardingStepId.globalLookup ||
+      step == OnboardingStepId.firstAnkiCard;
 }

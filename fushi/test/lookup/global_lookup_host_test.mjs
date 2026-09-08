@@ -884,11 +884,16 @@ function commitLatestGeometry(host) {
 }
 
 // 11. D2 overlaySize: the host reports the UNION bounding box of all shells
-//     (window-local CSS px) + dpr. TODO-1231 P2: measureAndReport NO LONGER
-//     shifts the layer synchronously (that raced the window move across vsync ->
-//     geometry lurch); the shift is applied by commitLayerShift, which C++
-//     RevealStack calls AFTER SetWindowPos. So the layer stays un-shifted until
-//     commitLayerShift(box.left, box.top) runs.
+//     (window-local CSS px) + dpr. Layer-shift ordering is two-phase:
+//     * FIRST transaction of a lookup (BUG-2123): the native window is still
+//       parked off-screen, so measureAndReport applies the compensating shift
+//       RIGHT AWAY -- the window only becomes visible a full Dart round-trip
+//       later (overlaySize -> revealStack -> SetWindowPos) and must show settled
+//       content on its very first frame.
+//     * LATER transactions (test 11c): the window is already on screen, so
+//       TODO-1231 P2 holds -- the shift waits for commitLayerShift, which C++
+//       RevealStack calls AFTER SetWindowPos, so window and content move in a
+//       causal order instead of racing across vsync.
 {
   const { host, document, window } = freshHost();
   window.devicePixelRatio = 1.5;
@@ -907,16 +912,122 @@ function commitLatestGeometry(host) {
   assert.strictEqual(box.top, 0, 'bbox top = min shell top');
   assert.strictEqual(box.width, 140, 'bbox width = maxRight - minLeft');
   assert.strictEqual(box.height, 140, 'bbox height = maxBottom - minTop');
-  // TODO-1231 P2: measureAndReport must NOT have shifted the layer yet (it only
-  // reports the bbox; the shift is C++-ordered after SetWindowPos).
+  // BUG-2123: this is the lookup's FIRST transaction (the window has never been
+  // revealed), so the compensating translation is already applied when
+  // overlaySize is posted -- the window cannot become visible before Dart has
+  // round-tripped this very message.
   const layer = document.getElementById('global-lookup-host-layer');
-  assert.strictEqual(layer.style.left, '0', 'layer NOT shifted by measureAndReport');
-  assert.strictEqual(layer.style.top, '0', 'layer NOT shifted by measureAndReport');
-  // commitLayerShift (called by C++ RevealStack after the window moved) applies
-  // the compensating translation so the bbox origin maps to the window origin.
+  assert.strictEqual(layer.style.left, '40px',
+    'first transaction shifts the layer by -minLeft before overlaySize');
+  assert.strictEqual(layer.style.top, '0px',
+    'first transaction shifts the layer by -minTop before overlaySize');
+  // commitLayerShift (called by C++ RevealStack after the window moved) carries
+  // the same origin, so it is an idempotent no-op on the DOM.
   host.commitLayerShift(box.left, box.top, box.geometryEpoch);
-  assert.strictEqual(layer.style.left, '40px', 'commitLayerShift shifts by -minLeft');
-  assert.strictEqual(layer.style.top, '0px', 'commitLayerShift shifts by -minTop');
+  assert.strictEqual(layer.style.left, '40px', 'commitLayerShift keeps -minLeft');
+  assert.strictEqual(layer.style.top, '0px', 'commitLayerShift keeps -minTop');
+}
+
+// 11c. BUG-2123 -- "app 外查词的弹窗先在屏幕左上角闪一下再飞到光标".
+//      Root cause: the reserve-to-edge origin floor (computeCascadeHeadroomSeed,
+//      BUG-670) drags the FIRST bbox origin all the way out to the work-area
+//      corner on EVERY lookup, and C++ RevealStack made the window visible
+//      (SetWindowPos | SWP_SHOWWINDOW) at that origin while the compensating
+//      layer translate was still queued behind an ExecuteScript round-trip. For
+//      that one frame the root card painted at window-local (0,0) == the
+//      work-area top-left corner, then jumped to the cursor.
+//      Invariant locked here, in the SAME coordinate arithmetic the C++ window
+//      uses (screen = windowOrigin + layerOffset + shellLocal):
+//        A) first transaction  -> layer already compensates the floor, so the
+//           root card's window-local position is the reserved cursor offset,
+//           NOT (0,0);
+//        B) later transactions -> layer must NOT move until commitLayerShift
+//           (TODO-1231 P2 anti-lurch ordering is preserved for a visible window).
+{
+  const { host, document } = freshHost();
+  // Cursor 300x200 CSS px inside the work area -> Dart reserves that whole
+  // distance so any up/left cascade fits without moving the window origin.
+  host.renderStack({
+    originFloor: { left: -300, top: -200 },
+    popups: [
+      { id: 'frame-0', parentIndex: -1, frame: { left: 0, top: 0, width: 100, height: 80 }, settingsJs: '' },
+    ],
+  });
+  const first = latestGeometryBox();
+  assert.strictEqual(first.left, -300, 'precondition: the floor owns the bbox origin');
+  assert.strictEqual(first.top, -200, 'precondition: the floor owns the bbox origin');
+  const layer = document.getElementById('global-lookup-host-layer');
+  // (A) The window is placed at (cursor + bbox.left, cursor + bbox.top) == the
+  // work-area corner. The root shell is at layer-local (0,0), so its window-local
+  // position is layerOffset + 0. Un-shifted that is (0,0) -> the corner flash.
+  assert.strictEqual(layer.style.left, '300px',
+    'first reveal: layer compensates the reserved floor BEFORE the window shows');
+  assert.strictEqual(layer.style.top, '200px',
+    'first reveal: layer compensates the reserved floor BEFORE the window shows');
+  const rootShell = shellsOf(document)[0];
+  assert.strictEqual(
+    parseFloat(layer.style.left) + (parseFloat(rootShell.style.left) || 0), 300,
+    'root card lands at the cursor on the window\'s FIRST visible frame');
+  assert.strictEqual(
+    parseFloat(layer.style.top) + (parseFloat(rootShell.style.top) || 0), 200,
+    'root card lands at the cursor on the window\'s FIRST visible frame');
+  // Commit it the way C++ RevealStack does; the window is now visible.
+  commitLatestGeometry(host);
+
+  // (B) A nested child cascading further up/left produces a NEW transaction.
+  // The window is on screen now, so the layer must stay put until C++ has moved
+  // the window (otherwise the pinned parent lurches -- TODO-1231 P2).
+  hostPostLog = [];
+  host.renderStack({
+    originFloor: { left: -300, top: -200 },
+    popups: [
+      { id: 'frame-0', parentIndex: -1, frame: { left: 0, top: 0, width: 100, height: 80 }, settingsJs: '' },
+      { id: 'frame-1', parentIndex: 0, frame: { left: -420, top: -260, width: 100, height: 80 }, settingsJs: '' },
+    ],
+  });
+  const second = latestGeometryBox();
+  assert.strictEqual(second.left, -420, 'precondition: the child pushes the origin past the floor');
+  assert.strictEqual(layer.style.left, '300px',
+    'visible window: measureAndReport must NOT move the layer (anti-lurch)');
+  assert.strictEqual(layer.style.top, '200px',
+    'visible window: measureAndReport must NOT move the layer (anti-lurch)');
+  host.commitLayerShift(second.left, second.top, second.geometryEpoch);
+  assert.strictEqual(layer.style.left, '420px', 'commitLayerShift applies the new origin');
+  assert.strictEqual(layer.style.top, '260px', 'commitLayerShift applies the new origin');
+}
+
+// 11b. BUG-2082 — the overlaySize box also carries the ROOT card's own measured
+//      height. The union bbox alone cannot express it (a nested child extends
+//      the union past the root's bottom), and the in-game presenter anchors the
+//      root by the edge that touches the clicked glyph, so it needs the ROOT
+//      height, not the union's. rootHeight is also part of the de-dup key: a
+//      root that shrinks under a taller child leaves the union unchanged.
+{
+  const { host } = freshHost();
+  host.renderStack({
+    popups: [
+      { id: 'frame-0', parentIndex: -1, frame: { left: 0, top: 0, width: 100, height: 80 }, settingsJs: '' },
+      { id: 'frame-1', parentIndex: 0, frame: { left: -40, top: 60, width: 100, height: 80 }, settingsJs: '' },
+    ],
+  });
+  const box = hostPostLog.filter((m) => m.handler === 'overlaySize').pop().args[1];
+  assert.strictEqual(box.height, 140, 'precondition: the child extends the union bbox');
+  assert.strictEqual(box.rootHeight, 80,
+    'overlaySize reports the ROOT shell height, not the union height');
+
+  // Shrink the root only. The union bottom is still owned by the child, so the
+  // bbox is byte-identical -- yet the report must NOT be de-duped away.
+  hostPostLog = [];
+  host.renderStack({
+    popups: [
+      { id: 'frame-0', parentIndex: -1, frame: { left: 0, top: 0, width: 100, height: 50 }, settingsJs: '' },
+      { id: 'frame-1', parentIndex: 0, frame: { left: -40, top: 60, width: 100, height: 80 }, settingsJs: '' },
+    ],
+  });
+  const shrunk = hostPostLog.filter((m) => m.handler === 'overlaySize').pop();
+  assert.ok(shrunk, 'a root-only height change still reports overlaySize');
+  assert.strictEqual(shrunk.args[1].height, 140, 'union bbox unchanged');
+  assert.strictEqual(shrunk.args[1].rootHeight, 50, 'the new root height is reported');
 }
 
 // Flush all captured safety timers (simulate the timeout firing).
@@ -1762,6 +1873,90 @@ function flushTimers() {
     evalLog.length,
     0,
     'a no-op highlight injects nothing',
+  );
+}
+
+// 33b. BUG-2054 (wrapped-selection anchor): highlightSelection ALSO returns the
+//      matched word's bbox in the parent realm's own viewport (it unions every
+//      getClientRects() fragment, so on a WRAPPED selection its bottom is the
+//      LAST line). The child card was anchored on getSelectionRect() instead —
+//      the FIRST CHARACTER's rect (textSelected fires before the dictionary
+//      runs) — which on a wrapped selection covers only the tapped line, so the
+//      child sat under the first line and hid the second. highlightFrame must
+//      report that bbox back through the SAME iframe-local -> window-local
+//      transform the original anchor took, so Dart can re-anchor the child.
+{
+  const { host, document } = freshHost();
+  host.renderStack({
+    popups: [
+      { id: 'frame-0', parentIndex: -1,
+        frame: { left: 40, top: 12, width: 360, height: 480 },
+        settingsJs: '/* s0 */' },
+      { id: 'frame-1', parentIndex: 0,
+        frame: { left: 60, top: 300, width: 360, height: 480 },
+        settingsJs: '/* s1 */' },
+    ],
+  });
+  const parentShell = shellsOf(document)[0];
+  const parentIframe = parentShell.children.find((c) => c.tagName === 'IFRAME');
+  // The parent realm reports a word wrapping across two lines: y 20..56 in the
+  // iframe viewport (line 1 = 20..36, line 2 = 36..56).
+  parentIframe.contentWindow.eval = (code) => {
+    evalLog.push({ frameId: 'frame-0', code });
+    return { x: 10, y: 20, width: 120, height: 36 };
+  };
+  hostPostLog.length = 0;
+  assert.strictEqual(host.highlightFrame(0, 7, 42), true);
+  const anchorMsg = hostPostLog.find((m) => m.handler === 'nestedWordAnchor');
+  assert.ok(anchorMsg, 'host reports the highlighted word bbox for re-anchoring');
+  assert.strictEqual(anchorMsg.args[0], 0, 'reports the PARENT frame index');
+  assert.strictEqual(anchorMsg.args[2], 42,
+    'the report echoes the request token (Dart routes the waiter by it)');
+  const reported = anchorMsg.args[1];
+  assert.deepStrictEqual(
+    { x: reported.x, y: reported.y, width: reported.width, height: reported.height },
+    // shell origin (40,12) + FRAME_CONTENT_TOP(0) — the identical transform
+    // anchorRectToScreen applies to a textSelected/onLinkClick anchor.
+    { x: 50, y: 32, width: 120, height: 36 },
+    'iframe-local word bbox is mapped with the shell origin',
+  );
+  // The whole point: the reported bottom is the LAST line's bottom (68), well
+  // below where a first-character anchor (16px tall -> bottom 48) would put it.
+  assert.ok(
+    reported.y + reported.height > 32 + 16,
+    'reported bbox reaches past the FIRST line — otherwise the child card '
+      + 'would still cover the second line of the selection',
+  );
+  // A realm with nothing usable still ANSWERS (rect null): Dart is awaiting this
+  // report before it places the child card, so a silent drop would cost it the
+  // full timeout. Null means "keep the first-character anchor".
+  for (const bad of [null, undefined, { x: 1, y: 2, width: 0, height: 0 }]) {
+    parentIframe.contentWindow.eval = () => bad;
+    hostPostLog.length = 0;
+    assert.strictEqual(host.highlightFrame(0, 7, 43), true,
+      'highlight itself still succeeds without a usable bbox');
+    const nullMsg = hostPostLog.find((m) => m.handler === 'nestedWordAnchor');
+    assert.ok(nullMsg, 'a tokened request is always answered');
+    assert.strictEqual(nullMsg.args[1], null, 'unusable bbox reports null');
+    assert.strictEqual(nullMsg.args[2], 43, 'answer carries the token');
+  }
+  // A THROWING realm must not escape highlightFrame (its stated contract) and
+  // must still answer, otherwise the Dart wait rides out its timeout.
+  parentIframe.contentWindow.eval = () => { throw new Error('realm gone'); };
+  hostPostLog.length = 0;
+  assert.strictEqual(host.highlightFrame(0, 7, 44), false,
+    'a throwing realm reports failure instead of propagating');
+  const thrownMsg = hostPostLog.find((m) => m.handler === 'nestedWordAnchor');
+  assert.ok(thrownMsg, 'a throwing realm still answers the tokened request');
+  assert.strictEqual(thrownMsg.args[1], null);
+  assert.strictEqual(thrownMsg.args[2], 44);
+  // Un-tokened calls (the plain highlight-only path) post nothing.
+  parentIframe.contentWindow.eval = () => ({ x: 10, y: 20, width: 120, height: 36 });
+  hostPostLog.length = 0;
+  assert.strictEqual(host.highlightFrame(0, 7), true);
+  assert.ok(
+    !hostPostLog.some((m) => m.handler === 'nestedWordAnchor'),
+    'no token -> nobody is waiting -> no report',
   );
 }
 

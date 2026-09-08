@@ -24,9 +24,8 @@ Color _readableOnColor(Color color) {
 }
 
 Color _deriveContainer(Color role, Brightness brightness) {
-  final Color target = brightness == Brightness.dark
-      ? Colors.black
-      : Colors.white;
+  final Color target =
+      brightness == Brightness.dark ? Colors.black : Colors.white;
   return Color.lerp(role, target, brightness == Brightness.dark ? 0.7 : 0.85)!;
 }
 
@@ -69,11 +68,17 @@ typedef _FushiSchemeKey = (
   int? secondary,
   int? tertiary,
   int? primaryContainer,
+  int? surface,
+  bool neutralDerived,
 );
 final Map<_FushiSchemeKey, ColorScheme> _hibikiSchemeCache =
     <_FushiSchemeKey, ColorScheme>{};
 const int _hibikiSchemeCacheLimit = 64;
 
+/// [surface]：用户钉死的界面底色（页面 / 卡片 / 菜单）。给了就用
+/// [deriveSurfaceRolesFrom] 从它推出整套中性角色（容器梯度、文字、描边、反色），
+/// 不再从 seed 的中性调色板取——那套永远带主题色相（tonalSpot neutral chroma 6），
+/// 用户想要纯白 / 纯黑底色时没有别的路。
 ColorScheme buildFushiColorScheme({
   required Color seedColor,
   required Brightness brightness,
@@ -82,6 +87,8 @@ ColorScheme buildFushiColorScheme({
   Color? secondary,
   Color? tertiary,
   Color? primaryContainer,
+  Color? surface,
+  bool neutralDerived = false,
 }) {
   final _FushiSchemeKey key = (
     seedColor.toARGB32(),
@@ -91,30 +98,64 @@ ColorScheme buildFushiColorScheme({
     secondary?.toARGB32(),
     tertiary?.toARGB32(),
     primaryContainer?.toARGB32(),
+    surface?.toARGB32(),
+    neutralDerived,
   );
   final ColorScheme? cached = _hibikiSchemeCache[key];
   if (cached != null) return cached;
+  // 中性派生：标签 / 选中项 / 菜单 / 表面这些「派生色」一律灰阶，只留主题色本身
+  // 作强调（Windows 亮色主题那种观感）。两种情况走这条路：用户显式开了
+  // [neutralDerived]；或 seed 本身无彩度（白 / 灰 / 黑，HCT chroma 极小）——这种
+  // seed 在 HCT 里仍有一个随机色相（纯白 ≈ 209°，偏蓝），tonalSpot 又强制给中性色
+  // 6 的彩度，结果「选了白色，界面却发蓝」。无彩度的 seed 没有任何色相可言，派生
+  // 出带色相的界面只能算 bug。
+  final bool neutral = neutralDerived || isAchromaticSeed(seedColor);
   final ColorScheme base = ColorScheme.fromSeed(
     seedColor: seedColor,
     brightness: brightness,
-    dynamicSchemeVariant: variant,
+    dynamicSchemeVariant: neutral ? DynamicSchemeVariant.monochrome : variant,
   );
-  final Color? secContainer = secondary != null
-      ? _deriveContainer(secondary, brightness)
-      : null;
-  final Color? terContainer = tertiary != null
-      ? _deriveContainer(tertiary, brightness)
-      : null;
+  // 中性派生下主色相关角色仍要来自 seed 自己的色调板（monochrome 会把 primary
+  // 也压成灰）：没钉死主色时取 tonalSpot 的 primary / primaryContainer；钉死了主色
+  // 但没钉控件底色时，控件底色从钉死的主色推。
+  final ColorScheme? accentBase =
+      neutral && (primary == null || primaryContainer == null)
+          ? ColorScheme.fromSeed(
+              seedColor: seedColor,
+              brightness: brightness,
+              dynamicSchemeVariant: variant,
+            )
+          : null;
+  final Color? accent = neutral ? (primary ?? accentBase!.primary) : primary;
+  final Color? accentContainer = neutral
+      ? (primaryContainer ??
+          (primary != null
+              ? _deriveContainer(primary, brightness)
+              : accentBase!.primaryContainer))
+      : primaryContainer;
+  final Color? secContainer =
+      secondary != null ? _deriveContainer(secondary, brightness) : null;
+  final Color? terContainer =
+      tertiary != null ? _deriveContainer(tertiary, brightness) : null;
   if (_hibikiSchemeCache.length >= _hibikiSchemeCacheLimit) {
     _hibikiSchemeCache.remove(_hibikiSchemeCache.keys.first);
   }
-  return _hibikiSchemeCache[key] = base.copyWith(
-    primary: primary ?? base.primary,
-    onPrimary: primary != null ? _readableOnColor(primary) : base.onPrimary,
+  final SurfaceRoles? surfaceRoles =
+      surface != null ? deriveSurfaceRolesFrom(surface) : null;
+  final ColorScheme withRoles = base.copyWith(
+    primary: accent ?? base.primary,
+    onPrimary: accent != null ? _readableOnColor(accent) : base.onPrimary,
+    // 钉死主色后，从主色派生的两个角色也必须跟着走：inversePrimary 是视频播放器
+    // 浅色主题的控件强调色（video_chrome_colors.dart），surfaceTint 决定 M3 表面
+    // 上叠的主题色——否则用户改了主题色，播放器仍是 seed 派生的旧色。
+    inversePrimary: accent != null
+        ? _inversePrimaryFor(accent, brightness)
+        : base.inversePrimary,
+    // 中性派生下表面不再被主题色叠层染回。
+    surfaceTint: neutral ? Colors.transparent : (accent ?? base.surfaceTint),
     secondary: secondary ?? base.secondary,
-    onSecondary: secondary != null
-        ? _readableOnColor(secondary)
-        : base.onSecondary,
+    onSecondary:
+        secondary != null ? _readableOnColor(secondary) : base.onSecondary,
     secondaryContainer: secContainer ?? base.secondaryContainer,
     onSecondaryContainer: secContainer != null
         ? _readableOnColor(secContainer)
@@ -125,10 +166,85 @@ ColorScheme buildFushiColorScheme({
     onTertiaryContainer: terContainer != null
         ? _readableOnColor(terContainer)
         : base.onTertiaryContainer,
-    primaryContainer: primaryContainer ?? base.primaryContainer,
-    onPrimaryContainer: primaryContainer != null
-        ? _readableOnColor(primaryContainer)
+    primaryContainer: accentContainer ?? base.primaryContainer,
+    onPrimaryContainer: accentContainer != null
+        ? _readableOnColor(accentContainer)
         : base.onPrimaryContainer,
+  );
+  if (surfaceRoles == null) return _hibikiSchemeCache[key] = withRoles;
+  return _hibikiSchemeCache[key] = withRoles.copyWith(
+    surface: surfaceRoles.surface,
+    surfaceDim: surfaceRoles.surfaceDim,
+    surfaceBright: surfaceRoles.surfaceBright,
+    surfaceContainerLowest: surfaceRoles.surfaceContainerLowest,
+    surfaceContainerLow: surfaceRoles.surfaceContainerLow,
+    surfaceContainer: surfaceRoles.surfaceContainer,
+    surfaceContainerHigh: surfaceRoles.surfaceContainerHigh,
+    surfaceContainerHighest: surfaceRoles.surfaceContainerHighest,
+    onSurface: surfaceRoles.onSurface,
+    onSurfaceVariant: surfaceRoles.onSurfaceVariant,
+    outline: surfaceRoles.outline,
+    outlineVariant: surfaceRoles.outlineVariant,
+    inverseSurface: surfaceRoles.inverseSurface,
+    onInverseSurface: surfaceRoles.onInverseSurface,
+    // 用户钉了底色就不该再被 M3 的主题色叠层染回去。
+    surfaceTint: Colors.transparent,
+  );
+}
+
+/// seed 是否无彩度（白 / 灰 / 黑）：HCT chroma < 4。这种 seed 的「色相」只是浮点
+/// 噪声，派生界面必须走中性灰阶。
+bool isAchromaticSeed(Color seed) => Hct.fromInt(seed.toARGB32()).chroma < 4;
+
+/// 钉死主色的反色主色：同色相/彩度，色调换到另一明暗档（M3 primary 亮 40 / 暗 80）。
+Color _inversePrimaryFor(Color primary, Brightness brightness) {
+  final Hct hct = Hct.fromInt(primary.toARGB32());
+  final double tone = brightness == Brightness.dark ? 40 : 80;
+  return Color(Hct.from(hct.hue, hct.chroma, tone).toInt());
+}
+
+/// 从一个用户指定的底色推出的整套中性角色（界面背景可钉死）。
+typedef SurfaceRoles = ({
+  Color surface,
+  Color surfaceDim,
+  Color surfaceBright,
+  Color surfaceContainerLowest,
+  Color surfaceContainerLow,
+  Color surfaceContainer,
+  Color surfaceContainerHigh,
+  Color surfaceContainerHighest,
+  Color onSurface,
+  Color onSurfaceVariant,
+  Color outline,
+  Color outlineVariant,
+  Color inverseSurface,
+  Color onInverseSurface,
+});
+
+/// 以 [surface] 为页面底色，按 M3 容器层级向对比端（底色偏亮 → 黑，偏暗 → 白）
+/// 各混入少量灰推出分组 / 卡片 / 搜索框 / 菜单四级底色与文字、描边、反色。
+/// 层级比例参照 M3 亮色 tone 100/96/94/92/90 的间距；纯白底下卡片是极浅灰、
+/// 层次仍在。编辑页预览与词典弹窗都复用它，保证所见即所得。
+SurfaceRoles deriveSurfaceRolesFrom(Color surface) {
+  final bool dark =
+      ThemeData.estimateBrightnessForColor(surface) == Brightness.dark;
+  final Color contrast = dark ? Colors.white : Colors.black;
+  Color step(double t) => Color.lerp(surface, contrast, t)!;
+  return (
+    surface: surface,
+    surfaceDim: step(0.13),
+    surfaceBright: surface,
+    surfaceContainerLowest: surface,
+    surfaceContainerLow: step(0.03),
+    surfaceContainer: step(0.05),
+    surfaceContainerHigh: step(0.08),
+    surfaceContainerHighest: step(0.11),
+    onSurface: dark ? const Color(0xDEFFFFFF) : const Color(0xDE000000),
+    onSurfaceVariant: dark ? const Color(0x99FFFFFF) : const Color(0x99000000),
+    outline: step(0.5),
+    outlineVariant: step(0.2),
+    inverseSurface: step(0.85),
+    onInverseSurface: surface,
   );
 }
 
@@ -222,6 +338,9 @@ class CustomThemeEntry {
     this.containerColor,
     this.sentenceAudioHighlightColor,
     this.linkColor,
+    this.surfaceColor,
+    this.followSystemAccent = false,
+    this.neutralDerived = false,
   });
 
   final String id;
@@ -237,6 +356,17 @@ class CustomThemeEntry {
   final int? sentenceAudioHighlightColor;
   final int? linkColor;
 
+  /// 界面底色（页面 / 卡片 / 菜单），null = 由 seed 派生。见 [deriveSurfaceRolesFrom]。
+  final int? surfaceColor;
+
+  /// 主题色跟随系统取色（Android 壁纸 Material You / 桌面 OS 强调色）：为 true 时
+  /// seed 与钉死的主色都取 [ThemeNotifier.systemPrimaryColor]，[seed] /
+  /// [primaryColor] 只作系统不提供时的兜底。
+  final bool followSystemAccent;
+
+  /// 派生色中性灰：标签 / 选中项 / 菜单 / 表面不带主题色相，只留主题色作强调。
+  final bool neutralDerived;
+
   CustomThemeEntry copyWith({String? id, String? name, int? seed}) {
     return CustomThemeEntry(
       id: id ?? this.id,
@@ -251,26 +381,32 @@ class CustomThemeEntry {
       containerColor: containerColor,
       sentenceAudioHighlightColor: sentenceAudioHighlightColor,
       linkColor: linkColor,
+      surfaceColor: surfaceColor,
+      followSystemAccent: followSystemAccent,
+      neutralDerived: neutralDerived,
     );
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'id': id,
-    'name': name,
-    'seed': seed,
-    if (fontColor != null) 'fontColor': fontColor,
-    if (bgColor != null) 'bgColor': bgColor,
-    if (selectionColor != null) 'selectionColor': selectionColor,
-    if (primaryColor != null) 'primaryColor': primaryColor,
-    if (secondaryColor != null) 'secondaryColor': secondaryColor,
-    if (tertiaryColor != null) 'tertiaryColor': tertiaryColor,
-    if (containerColor != null) 'containerColor': containerColor,
-    // JSON 键与字段同名；历史键 'sasayakiColor'（custom_themes 旧行）已由
-    // v71 Drift 迁移一次性改写。分享码不含此键（用 'sk' 段），不受影响。
-    if (sentenceAudioHighlightColor != null)
-      'sentenceAudioHighlightColor': sentenceAudioHighlightColor,
-    if (linkColor != null) 'linkColor': linkColor,
-  };
+        'id': id,
+        'name': name,
+        'seed': seed,
+        if (fontColor != null) 'fontColor': fontColor,
+        if (bgColor != null) 'bgColor': bgColor,
+        if (selectionColor != null) 'selectionColor': selectionColor,
+        if (primaryColor != null) 'primaryColor': primaryColor,
+        if (secondaryColor != null) 'secondaryColor': secondaryColor,
+        if (tertiaryColor != null) 'tertiaryColor': tertiaryColor,
+        if (containerColor != null) 'containerColor': containerColor,
+        // JSON 键与字段同名；历史键 'sasayakiColor'（custom_themes 旧行）已由
+        // v71 Drift 迁移一次性改写。分享码不含此键（用 'sk' 段），不受影响。
+        if (sentenceAudioHighlightColor != null)
+          'sentenceAudioHighlightColor': sentenceAudioHighlightColor,
+        if (linkColor != null) 'linkColor': linkColor,
+        if (surfaceColor != null) 'surfaceColor': surfaceColor,
+        if (followSystemAccent) 'followSystemAccent': true,
+        if (neutralDerived) 'neutralDerived': true,
+      };
 
   factory CustomThemeEntry.fromJson(Map<String, dynamic> json) {
     int? asInt(Object? v) => v is int ? v : (v is num ? v.toInt() : null);
@@ -287,6 +423,9 @@ class CustomThemeEntry {
       containerColor: asInt(json['containerColor']),
       sentenceAudioHighlightColor: asInt(json['sentenceAudioHighlightColor']),
       linkColor: asInt(json['linkColor']),
+      surfaceColor: asInt(json['surfaceColor']),
+      followSystemAccent: json['followSystemAccent'] == true,
+      neutralDerived: json['neutralDerived'] == true,
     );
   }
 }
@@ -340,11 +479,8 @@ LegacyCustomThemeMigration migrateLegacyCustomTheme({
       try {
         final dynamic decoded = jsonDecode(s);
         if (decoded is Map) {
-          parsed.add(
-            CustomThemeEntry.fromJson(
-              decoded.map((k, v) => MapEntry(k.toString(), v)),
-            ),
-          );
+          parsed.add(CustomThemeEntry.fromJson(
+              decoded.map((k, v) => MapEntry(k.toString(), v))));
         }
       } catch (_) {
         // Skip malformed rows.
@@ -357,8 +493,7 @@ LegacyCustomThemeMigration migrateLegacyCustomTheme({
     );
   }
 
-  final bool configured =
-      legacySeed != kCustomThemeDefaultSeed ||
+  final bool configured = legacySeed != kCustomThemeDefaultSeed ||
       legacyFontColor != 0 ||
       legacyBgColor != 0 ||
       legacySelectionColor != 0 ||
@@ -410,7 +545,7 @@ class ThemeNotifier extends ChangeNotifier {
     this._textThemeBuilder, {
     String Function()? customThemeIdGenerator,
   }) : _customThemeIdGenerator =
-           customThemeIdGenerator ?? _defaultCustomThemeIdGenerator;
+            customThemeIdGenerator ?? _defaultCustomThemeIdGenerator;
 
   // Stable, testable id source. Defaults to epoch-millis + a monotonic counter
   // so two entries created in the same millisecond never collide. Tests can
@@ -478,7 +613,10 @@ class ThemeNotifier extends ChangeNotifier {
       // migration owns all of its async errors so this fire-and-forget boundary
       // can never surface an unhandled Future during app startup.
       unawaited(
-        _persistHiddenDesignSystemMigration(migration, notifyOnReload: true),
+        _persistHiddenDesignSystemMigration(
+          migration,
+          notifyOnReload: true,
+        ),
       );
     }
   }
@@ -584,11 +722,9 @@ class ThemeNotifier extends ChangeNotifier {
 
   // ── Theme presets ──────────────────────────────────────────────────
 
-  static const Map<
-    String,
-    ({Color seed, Brightness brightness, DynamicSchemeVariant variant})
-  >
-  themePresets = {
+  static const Map<String,
+          ({Color seed, Brightness brightness, DynamicSchemeVariant variant})>
+      themePresets = {
     'light-theme': (
       seed: Color(0xFF1F4959),
       brightness: Brightness.light,
@@ -770,8 +906,8 @@ class ThemeNotifier extends ChangeNotifier {
   }
 
   String get designSystem => normalizeDesignSystemPreference(
-    _get('design_system', defaultValue: 'auto'),
-  );
+        _get('design_system', defaultValue: 'auto'),
+      );
 
   Future<void> setDesignSystem(String value) async {
     await _set('design_system', normalizeDesignSystemPreference(value));
@@ -908,7 +1044,9 @@ class ThemeNotifier extends ChangeNotifier {
   Color get _seedColor {
     if (isCustomThemeKey(appThemeKey)) {
       final CustomThemeEntry? entry = activeCustomThemeEntry;
-      if (entry != null) return Color(entry.seed);
+      if (entry != null) {
+        return _followedSystemAccent(entry) ?? Color(entry.seed);
+      }
       // No list entry yet (pre-migration race): fall back to the legacy flat
       // pref so behavior is identical to before TODO-930.
       return customThemeSeed;
@@ -942,32 +1080,101 @@ class ThemeNotifier extends ChangeNotifier {
         fallbackSeed: _seedColor,
       );
     }
-    final bool useCustomRoles = isCustomThemeKey(appThemeKey);
-    // Prefer the selected entry's roles; fall back to the legacy flat getters
-    // when no entry is resolvable (pre-migration), keeping output identical.
-    final CustomThemeEntry? entry = activeCustomThemeEntry;
-    Color? roleColor(int? entryValue, Color? Function() legacy) {
-      if (!useCustomRoles) return null;
-      if (entry != null) return entryValue == null ? null : Color(entryValue);
-      return legacy();
-    }
-
     return buildFushiColorScheme(
       seedColor: _seedColor,
       brightness: brightness,
       variant: _variant,
-      primary: roleColor(entry?.primaryColor, () => customThemePrimaryColor),
-      secondary: roleColor(
-        entry?.secondaryColor,
+      primary: activeCustomThemePrimaryColor,
+      secondary: _activeCustomRole(
+        (CustomThemeEntry e) => e.secondaryColor,
         () => customThemeSecondaryColor,
       ),
-      tertiary: roleColor(entry?.tertiaryColor, () => customThemeTertiaryColor),
-      primaryContainer: roleColor(
-        entry?.containerColor,
+      tertiary: _activeCustomRole(
+        (CustomThemeEntry e) => e.tertiaryColor,
+        () => customThemeTertiaryColor,
+      ),
+      primaryContainer: _activeCustomRole(
+        (CustomThemeEntry e) => e.containerColor,
         () => customThemeContainerColor,
       ),
+      surface: activeCustomThemeSurfaceColor,
+      neutralDerived: activeCustomThemeNeutralDerived,
     );
   }
+
+  /// 当前生效自定义主题是否要求派生色中性灰。
+  bool get activeCustomThemeNeutralDerived {
+    if (!isCustomThemeKey(appThemeKey)) return false;
+    return activeCustomThemeEntry?.neutralDerived ?? false;
+  }
+
+  /// [entry] 开了「跟随系统取色」且系统真有色时返回系统色，否则 null。
+  Color? _followedSystemAccent(CustomThemeEntry entry) {
+    if (!entry.followSystemAccent) return null;
+    return systemPrimaryColor;
+  }
+
+  /// BUG-2187：「当前生效的自定义主题」里某个角色色的**唯一**解析链——
+  /// 非自定义 key → null；自定义 key 且能解析到条目 → 条目字段（null = 跟随主题）；
+  /// 自定义 key 但列表还没条目（迁移前竞态）→ 旧扁平偏好。
+  ///
+  /// 以前只有 [buildColorScheme] 走这条链，阅读器 chrome 直接读
+  /// `customThemeFontColor` 等旧扁平 getter 并用 `== 'custom-theme'` 严格比较 key：
+  /// TODO-930 之后编辑页写的是 `custom-theme:<id>`、且再也没人写扁平偏好，于是
+  /// 正文/背景/选区/链接四色在阅读器里永远不生效。现在所有消费者都走这一个函数。
+  Color? _activeCustomRole(
+    int? Function(CustomThemeEntry entry) pick,
+    Color? Function() legacy,
+  ) {
+    if (!isCustomThemeKey(appThemeKey)) return null;
+    final CustomThemeEntry? entry = activeCustomThemeEntry;
+    if (entry != null) {
+      final int? value = pick(entry);
+      return value == null ? null : Color(value);
+    }
+    return legacy();
+  }
+
+  /// 当前生效自定义主题钉死的主色（null = 由 seed 派生，即「按明暗自动调整色调」）。
+  /// 跟随系统取色时，钉死的值换成系统色；是否钉死仍由 `primaryColor != null` 决定。
+  Color? get activeCustomThemePrimaryColor {
+    final Color? pinned = _activeCustomRole(
+      (CustomThemeEntry e) => e.primaryColor,
+      () => customThemePrimaryColor,
+    );
+    if (pinned == null) return null;
+    final CustomThemeEntry? entry = activeCustomThemeEntry;
+    if (entry == null) return pinned;
+    return _followedSystemAccent(entry) ?? pinned;
+  }
+
+  /// 当前生效自定义主题钉死的界面底色（null = 由 seed 派生）。
+  Color? get activeCustomThemeSurfaceColor =>
+      _activeCustomRole((CustomThemeEntry e) => e.surfaceColor, () => null);
+
+  /// 当前生效自定义主题的阅读器正文字色（null = 跟随主题）。
+  Color? get activeCustomThemeFontColor => _activeCustomRole(
+        (CustomThemeEntry e) => e.fontColor,
+        () => customThemeFontColor,
+      );
+
+  /// 当前生效自定义主题的阅读器页面背景色（null = 跟随主题）。
+  Color? get activeCustomThemeBackgroundColor => _activeCustomRole(
+        (CustomThemeEntry e) => e.bgColor,
+        () => customThemeBackgroundColor,
+      );
+
+  /// 当前生效自定义主题的查词选区高亮色（null = 跟随主题）。
+  Color? get activeCustomThemeSelectionColor => _activeCustomRole(
+        (CustomThemeEntry e) => e.selectionColor,
+        () => customThemeSelectionColor,
+      );
+
+  /// 当前生效自定义主题的书内链接色（null = 跟随主题）。
+  Color? get activeCustomThemeLinkColor => _activeCustomRole(
+        (CustomThemeEntry e) => e.linkColor,
+        () => customThemeLinkColor,
+      );
 
   ThemeData _buildThemeData(Brightness brightness) {
     final cs = buildColorScheme(brightness);
@@ -1052,10 +1259,14 @@ class ThemeNotifier extends ChangeNotifier {
         labelTextStyle: WidgetStateProperty.all(tt.labelSmall),
       ),
       popupMenuTheme: PopupMenuThemeData(
-        shape: RoundedRectangleBorder(borderRadius: FushiBorderRadius.menu),
+        shape: RoundedRectangleBorder(
+          borderRadius: FushiBorderRadius.menu,
+        ),
       ),
       dialogTheme: DialogThemeData(
-        shape: RoundedRectangleBorder(borderRadius: FushiBorderRadius.dialog),
+        shape: RoundedRectangleBorder(
+          borderRadius: FushiBorderRadius.dialog,
+        ),
       ),
       listTileTheme: const ListTileThemeData(),
       inputDecorationTheme: InputDecorationTheme(
@@ -1087,7 +1298,9 @@ class ThemeNotifier extends ChangeNotifier {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: FushiBorderRadius.card),
+        shape: RoundedRectangleBorder(
+          borderRadius: FushiBorderRadius.card,
+        ),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
@@ -1101,7 +1314,9 @@ class ThemeNotifier extends ChangeNotifier {
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         showDragHandle: true,
-        shape: RoundedRectangleBorder(borderRadius: FushiBorderRadius.sheet),
+        shape: RoundedRectangleBorder(
+          borderRadius: FushiBorderRadius.sheet,
+        ),
         surfaceTintColor: Colors.transparent,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -1109,16 +1324,22 @@ class ThemeNotifier extends ChangeNotifier {
         highlightElevation: 0,
         backgroundColor: cs.primaryContainer,
         foregroundColor: cs.onPrimaryContainer,
-        shape: RoundedRectangleBorder(borderRadius: FushiBorderRadius.control),
+        shape: RoundedRectangleBorder(
+          borderRadius: FushiBorderRadius.control,
+        ),
       ),
       chipTheme: ChipThemeData(
-        shape: RoundedRectangleBorder(borderRadius: FushiBorderRadius.chip),
+        shape: RoundedRectangleBorder(
+          borderRadius: FushiBorderRadius.chip,
+        ),
         side: BorderSide(color: cs.outlineVariant),
         selectedColor: cs.secondaryContainer,
         showCheckmark: false,
       ),
       filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(shape: const StadiumBorder()),
+        style: FilledButton.styleFrom(
+          shape: const StadiumBorder(),
+        ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
@@ -1127,7 +1348,9 @@ class ThemeNotifier extends ChangeNotifier {
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(shape: const StadiumBorder()),
+        style: TextButton.styleFrom(
+          shape: const StadiumBorder(),
+        ),
       ),
       dividerTheme: DividerThemeData(
         color: cs.outlineVariant,
@@ -1239,10 +1462,8 @@ class ThemeNotifier extends ChangeNotifier {
   bool _legacyCustomThemeMigrated = false;
 
   List<String> _rawCustomThemes() {
-    final Object value = _get(
-      customThemesPrefKey,
-      defaultValue: const <String>[],
-    );
+    final Object value =
+        _get(customThemesPrefKey, defaultValue: const <String>[]);
     if (value is List) return value.map((dynamic e) => e.toString()).toList();
     return const <String>[];
   }
@@ -1255,11 +1476,8 @@ class ThemeNotifier extends ChangeNotifier {
         if (decoded is Map<String, dynamic>) {
           out.add(CustomThemeEntry.fromJson(decoded));
         } else if (decoded is Map) {
-          out.add(
-            CustomThemeEntry.fromJson(
-              decoded.map((k, v) => MapEntry(k.toString(), v)),
-            ),
-          );
+          out.add(CustomThemeEntry.fromJson(
+              decoded.map((k, v) => MapEntry(k.toString(), v))));
         }
       } catch (_) {
         // Skip a malformed row rather than aborting the whole read.
@@ -1303,9 +1521,8 @@ class ThemeNotifier extends ChangeNotifier {
 
   /// Insert a new entry (and select it) or replace an existing one by id.
   Future<void> upsertCustomTheme(CustomThemeEntry entry) async {
-    final List<CustomThemeEntry> list = List<CustomThemeEntry>.from(
-      customThemes,
-    );
+    final List<CustomThemeEntry> list =
+        List<CustomThemeEntry>.from(customThemes);
     final int idx = list.indexWhere((CustomThemeEntry e) => e.id == entry.id);
     if (idx >= 0) {
       list[idx] = entry;
@@ -1321,9 +1538,8 @@ class ThemeNotifier extends ChangeNotifier {
   /// Remove the entry with [id]. If it was selected, selection falls back to the
   /// first remaining entry (or clears when the list becomes empty).
   Future<void> deleteCustomTheme(String id) async {
-    final List<CustomThemeEntry> list = customThemes
-        .where((CustomThemeEntry e) => e.id != id)
-        .toList();
+    final List<CustomThemeEntry> list =
+        customThemes.where((CustomThemeEntry e) => e.id != id).toList();
     await _writeCustomThemes(list);
     if (selectedCustomThemeId == id) {
       await _writeSelectedCustomThemeId(list.isEmpty ? null : list.first.id);
@@ -1370,16 +1586,11 @@ class ThemeNotifier extends ChangeNotifier {
         .map((CustomThemeEntry e) => jsonEncode(e.toJson()))
         .toList();
     _prefs[customThemesPrefKey] = PrefCodec.encode(encoded);
-    _prefs[selectedCustomThemeIdPrefKey] = PrefCodec.encode(
-      result.selectedId ?? '',
-    );
+    _prefs[selectedCustomThemeIdPrefKey] =
+        PrefCodec.encode(result.selectedId ?? '');
     unawaited(_db.setPref(customThemesPrefKey, PrefCodec.encode(encoded)));
-    unawaited(
-      _db.setPref(
-        selectedCustomThemeIdPrefKey,
-        PrefCodec.encode(result.selectedId ?? ''),
-      ),
-    );
+    unawaited(_db.setPref(selectedCustomThemeIdPrefKey,
+        PrefCodec.encode(result.selectedId ?? '')));
   }
 
   // ── Setters ───────────────────────────────────────────────────────
@@ -1393,8 +1604,7 @@ class ThemeNotifier extends ChangeNotifier {
     final preset = themePresets[key];
     if (preset != null) {
       await setBrightnessMode(
-        preset.brightness == Brightness.dark ? 'dark' : 'light',
-      );
+          preset.brightness == Brightness.dark ? 'dark' : 'light');
       return;
     }
     notifyListeners();
@@ -1442,8 +1652,7 @@ class ThemeNotifier extends ChangeNotifier {
     await setCustomThemeTertiaryColor(tertiaryColor);
     await setCustomThemeContainerColor(containerColor);
     await setCustomThemeSentenceAudioHighlightColor(
-      sentenceAudioHighlightColor,
-    );
+        sentenceAudioHighlightColor);
     await setCustomThemeLinkColor(linkColor);
 
     int? argb(Color? c) => c?.toARGB32();
@@ -1477,14 +1686,12 @@ class ThemeNotifier extends ChangeNotifier {
     if (!Platform.isAndroid && !Platform.isIOS) return;
     final brightness = isDarkMode ? Brightness.dark : Brightness.light;
     final surface = buildColorScheme(brightness).surface;
-    _splashChannel
-        .invokeMethod('setSplashColor', {
-          'color': surface.toARGB32(),
-          'isDark': isDarkMode,
-        })
-        .catchError((Object e) {
-          debugPrint('[theme] setSplashColor failed: $e');
-        });
+    _splashChannel.invokeMethod('setSplashColor', {
+      'color': surface.toARGB32(),
+      'isDark': isDarkMode,
+    }).catchError((Object e) {
+      debugPrint('[theme] setSplashColor failed: $e');
+    });
   }
 }
 

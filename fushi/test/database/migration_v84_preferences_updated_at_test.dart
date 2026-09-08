@@ -33,20 +33,17 @@ CREATE TABLE preferences (
 }
 
 Future<int> _updatedAtOf(FushiDatabase db, String key) async {
-  final QueryRow row = await db
-      .customSelect(
-        'SELECT updated_at FROM preferences WHERE key = ?',
-        variables: <Variable<Object>>[Variable<String>(key)],
-      )
-      .getSingle();
+  final QueryRow row = await db.customSelect(
+    'SELECT updated_at FROM preferences WHERE key = ?',
+    variables: <Variable<Object>>[Variable<String>(key)],
+  ).getSingle();
   return row.read<int>('updated_at');
 }
 
 void main() {
   FushiDatabase openUpgraded() {
-    final FushiDatabase db = FushiDatabase.forTesting(
-      NativeDatabase.memory(setup: _seedV83),
-    );
+    final FushiDatabase db =
+        FushiDatabase.forTesting(NativeDatabase.memory(setup: _seedV83));
     addTearDown(db.close);
     return db;
   }
@@ -54,11 +51,10 @@ void main() {
   test('v83 -> v84：加列无损，存量偏好行一条不丢且戳 0（=时刻未知）', () async {
     final FushiDatabase db = openUpgraded();
 
-    final QueryRow version = await db
-        .customSelect('PRAGMA user_version')
-        .getSingle();
-    expect(version.read<int>('user_version'), 94);
-    expect(db.schemaVersion, 94);
+    final QueryRow version =
+        await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.read<int>('user_version'), 98);
+    expect(db.schemaVersion, 98);
 
     // 存量行零丢失——改名是用户数据，迁移丢一行就是丢一个书名。
     expect(await db.getPref(_overrideKey), 's:母设备改的名');
@@ -138,11 +134,8 @@ void main() {
     final FushiDatabase db = openUpgraded();
     // 场景：本机 v84 前就改过名（戳 0），母设备升级后又改了一次（戳 > 0）。
     expect(
-      await db.setPrefIfNewer(
-        _overrideKey,
-        's:母设备第二次改的名',
-        updatedAt: 1700000000000,
-      ),
+      await db.setPrefIfNewer(_overrideKey, 's:母设备第二次改的名',
+          updatedAt: 1700000000000),
       isTrue,
     );
     expect(await db.getPref(_overrideKey), 's:母设备第二次改的名');
@@ -158,10 +151,8 @@ void main() {
   test('setPrefIfNewer 真写入时 bump prefs 版本，被拒时不 bump', () async {
     final FushiDatabase db = openUpgraded();
     await db.setPrefIfNewer(_overrideKey, 's:本机', updatedAt: 1000);
-    final int afterWrite = await db.getPrefTyped<int>(
-      FushiDatabase.prefsVersionKey,
-      0,
-    );
+    final int afterWrite =
+        await db.getPrefTyped<int>(FushiDatabase.prefsVersionKey, 0);
 
     expect(
       await db.setPrefIfNewer(_overrideKey, 's:更旧', updatedAt: 500),

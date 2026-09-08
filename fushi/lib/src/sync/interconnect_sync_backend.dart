@@ -7,6 +7,7 @@ import 'package:fushi/src/sync/collection_manifest.dart';
 import 'package:fushi/src/sync/deletion_propagation.dart';
 import 'package:fushi/src/sync/fushi_library_host_service.dart';
 import 'package:fushi/src/sync/interconnect_service_config.dart';
+import 'package:fushi/src/sync/interconnect_profile_transfer.dart';
 import 'package:fushi/src/sync/remote_book_client.dart';
 import 'package:fushi/src/sync/remote_cover_fetcher.dart';
 import 'package:fushi/src/sync/remote_library_source.dart';
@@ -22,6 +23,7 @@ import 'package:fushi/src/sync/ttu_filename.dart';
 import 'package:fushi/src/sync/sync_file_ref.dart';
 import 'package:fushi/src/sync/ttu_models.dart';
 import 'package:fushi/src/sync/webdav_ops.dart';
+import 'package:fushi/src/sync/webdav_path_backend_mixin.dart';
 
 /// Probes whether a single Hibiki server URL is reachable with [token].
 /// Returns true if reachable, false on connectivity failure/timeout, and
@@ -135,7 +137,11 @@ Future<bool> _defaultFushiProbe(String url, String token) async {
 /// credentials in dedicated keys to avoid collision with the user's
 /// standalone WebDAV config.
 class InterconnectSyncBackend extends SyncBackend
-    with SyncFolderCache, SyncBackendFileTrioMixin, SyncAssetStoreDefaults
+    with
+        SyncFolderCache,
+        SyncBackendFileTrioMixin,
+        SyncAssetStoreDefaults,
+        WebDavPathBackendMixin
     implements
         RemoteBookClient,
         RemoteVideoClient,
@@ -451,66 +457,16 @@ class InterconnectSyncBackend extends SyncBackend
     return path;
   }
 
+  // listBooks / ensureBookFolder / listSyncFiles 三件套由 WebDavPathBackendMixin
+  // 提供（与 WebDAV 后端逐字共享）。这三处原本就不经 _ensureResolved（沿用原实现，
+  // 直接用 _ops!），mixin 里也不加——时序逐点保留。
   @override
-  Future<List<SyncFileRef>> listBooks(String rootFolderId) async {
-    final entries = await _ops!.propfindChildren(rootFolderId);
-    return entries
-        .where((e) => e.isCollection && e.href != rootFolderId)
-        .map((e) => SyncFileRef(id: e.href, name: e.displayName))
-        .toList();
-  }
+  WebDavOps get davOps => _ops!;
 
   @override
-  Future<String> ensureBookFolder({
-    required String bookTitle,
-    required String rootFolderId,
-    SyncCoverDataProvider? readCoverData,
-  }) async {
-    final sanitized = requireBookFolderName(bookTitle);
-
-    if (folderIdCache.containsKey(sanitized)) {
-      // Normalize a possibly slash-less cached href on return (BUG-845).
-      return ensureFolderIdTrailingSlash(folderIdCache[sanitized]!);
-    }
-
-    final path = '$rootFolderId${Uri.encodeComponent(sanitized)}/';
-    await _ops!.ensureCollection(path);
-    folderIdCache[sanitized] = path;
-
-    final Uint8List? coverData = await readCoverData?.call();
-    if (coverData != null) {
-      try {
-        final format = detectCoverFormat(coverData);
-        final coverPath = '${path}cover_1_6.${format.extension}';
-        final existing = await _ops!.headFile(coverPath);
-        if (!existing) {
-          await _ops!.putBytes(coverPath, coverData, format.mimeType);
-        }
-      } catch (e) {
-        debugPrint('[fushi-client] cover upload failed: $e');
-      }
-    }
-
-    return path;
-  }
+  String get davLogTag => '[fushi-client]';
 
   // ── Metadata sync ─────────────────────────────────────────────────
-
-  @override
-  Future<SyncFileTrio> listSyncFiles(String folderId) async {
-    final entries = await _ops!.propfindChildren(folderId);
-    final files = entries
-        .where((e) => !e.isCollection && e.href != folderId)
-        .map((e) => SyncFileRef(id: e.href, name: e.displayName))
-        .toList();
-
-    // HBK-AUDIT-085: route through the single canonical matcher in sync_utils.
-    return SyncFileTrio(
-      progress: findSyncFileByPrefix(files, 'progress_'),
-      statistics: findSyncFileByPrefix(files, 'statistics_'),
-      audioBook: findSyncFileByPrefix(files, 'audioBook_'),
-    );
-  }
 
   // get{Progress,Stats,AudioBook}File 三件套由 SyncBackendFileTrioMixin 提供；
   // 这里只给出 hibiki client 的下载原语（size-capped GET + jsonDecode，见
@@ -816,6 +772,71 @@ class InterconnectSyncBackend extends SyncBackend
     return InterconnectServiceConfigSnapshot.fromJson(
       decoded.cast<String, Object?>(),
     );
+  }
+
+  /// 拉取 host 当前激活 Profile 的分享 JSON（互联「下载配置」动作）。
+  ///
+  /// 与 [getRemoteServiceConfig] 同一条安全边界：整份配置只在 pinned HTTPS 会话上传
+  /// 输，明文会话上 host 必然 403，所以本地就短路返回 null（同 BUG-1311 的判断：答案
+  /// 本地已知，别拿一条注定被拒的请求把每轮同步挂上「N 项失败」）。
+  ///
+  /// 返回 null 的三种情形归一为「对端不提供此能力」：明文会话 / 老 host 404 /
+  /// host 未接线该能力 404。host **开关关着**是 403（不是 404）——那不是「不支持」，
+  /// 而是对端明确拒绝，必须如实报给用户，故走 checkStatus 抛出。
+  Future<String?> getRemoteProfileJson() async {
+    await _ensureResolved();
+    if (Uri.tryParse(_apiBase)?.scheme != 'https') return null;
+    final HttpClientRequest req = await _ops!.buildRequest(
+      'GET',
+      '$_apiBase$kInterconnectProfilePath',
+    );
+    final HttpClientResponse res = await _sendBounded(req);
+    if (res.statusCode == 404) {
+      await res.drain<void>();
+      return null;
+    }
+    if (res.statusCode >= 400) {
+      _ops!.checkStatus(
+        res.statusCode,
+        'GET $kInterconnectProfilePath',
+        serverReason: await readSyncErrorBody(res),
+      );
+    }
+    return _readBodyBounded(res);
+  }
+
+  /// 把本机的 Profile 分享 JSON 推给 host（互联「上传配置」动作）。
+  ///
+  /// 返回 host 上新建的 Profile 名；host 不提供该能力（老 host / 未接线）返回 null，
+  /// 由调用方翻成「对端不支持」。host 开关关着 / 明文会话 / 未配对一律经 checkStatus
+  /// 抛出，携带 host 给的拒绝原因。
+  Future<String?> putRemoteProfileJson(String json) async {
+    await _ensureResolved();
+    if (Uri.tryParse(_apiBase)?.scheme != 'https') return null;
+    final HttpClientRequest req = await _ops!.buildRequest(
+      'PUT',
+      '$_apiBase$kInterconnectProfilePath',
+    );
+    req.headers.contentType = ContentType('application', 'json', charset: 'utf-8');
+    req.add(utf8.encode(json));
+    final HttpClientResponse res = await _sendBounded(req);
+    if (res.statusCode == 404) {
+      await res.drain<void>();
+      return null;
+    }
+    if (res.statusCode >= 400) {
+      _ops!.checkStatus(
+        res.statusCode,
+        'PUT $kInterconnectProfilePath',
+        serverReason: await readSyncErrorBody(res),
+      );
+    }
+    final Object? decoded = jsonDecode(await _readBodyBounded(res));
+    if (decoded is! Map) {
+      throw const FormatException('Invalid profile upload response');
+    }
+    final Object? name = decoded['name'];
+    return name is String ? name : '';
   }
 
   /// TODO-1235（TODO-961 回归）：把对端封面拉成字节，复用互联其余流量同一条钉扎

@@ -68,19 +68,19 @@ class SourceScrapeReport {
   final bool cancelled;
 
   SourceScrapeReport merge(SourceScrapeReport other) => SourceScrapeReport(
-    sourceIds: <int>{...sourceIds, ...other.sourceIds}.toList()..sort(),
-    totalWorks: totalWorks + other.totalWorks,
-    succeededWorks: succeededWorks + other.succeededWorks,
-    failedWorks: failedWorks + other.failedWorks,
-    pendingConfirmations: pendingConfirmations + other.pendingConfirmations,
-    nfoWritten: nfoWritten + other.nfoWritten,
-    imagesWritten: imagesWritten + other.imagesWritten,
-    protectedArtifacts: protectedArtifacts + other.protectedArtifacts,
-    unchangedArtifacts: unchangedArtifacts + other.unchangedArtifacts,
-    warnings: <SourceScrapeIssue>[...warnings, ...other.warnings],
-    errors: <SourceScrapeIssue>[...errors, ...other.errors],
-    cancelled: cancelled || other.cancelled,
-  );
+        sourceIds: <int>{...sourceIds, ...other.sourceIds}.toList()..sort(),
+        totalWorks: totalWorks + other.totalWorks,
+        succeededWorks: succeededWorks + other.succeededWorks,
+        failedWorks: failedWorks + other.failedWorks,
+        pendingConfirmations: pendingConfirmations + other.pendingConfirmations,
+        nfoWritten: nfoWritten + other.nfoWritten,
+        imagesWritten: imagesWritten + other.imagesWritten,
+        protectedArtifacts: protectedArtifacts + other.protectedArtifacts,
+        unchangedArtifacts: unchangedArtifacts + other.unchangedArtifacts,
+        warnings: <SourceScrapeIssue>[...warnings, ...other.warnings],
+        errors: <SourceScrapeIssue>[...errors, ...other.errors],
+        cancelled: cancelled || other.cancelled,
+      );
 }
 
 /// `video_source_scrape_runs.summaryJson` 的唯一 wire 形状。
@@ -88,21 +88,22 @@ class SourceScrapeReport {
 /// 编解码放在一起：这份 JSON 是**跑完之后**唯一还留着的、逐条作品级事实
 /// （哪个作品待确认、哪个失败、失败原因是什么）。协调器写它、历史面板读它，
 /// 两侧共用同一份定义，避免字段名各写一次而悄悄漂开。
-String encodeSourceScrapeReport(SourceScrapeReport report) =>
-    jsonEncode(<String, Object?>{
-      'sourceIds': report.sourceIds,
-      'totalWorks': report.totalWorks,
-      'succeededWorks': report.succeededWorks,
-      'failedWorks': report.failedWorks,
-      'pendingConfirmations': report.pendingConfirmations,
-      'nfoWritten': report.nfoWritten,
-      'imagesWritten': report.imagesWritten,
-      'protectedArtifacts': report.protectedArtifacts,
-      'unchangedArtifacts': report.unchangedArtifacts,
-      'cancelled': report.cancelled,
-      'warnings': _encodeIssues(report.warnings),
-      'errors': _encodeIssues(report.errors),
-    });
+String encodeSourceScrapeReport(SourceScrapeReport report) => jsonEncode(
+      <String, Object?>{
+        'sourceIds': report.sourceIds,
+        'totalWorks': report.totalWorks,
+        'succeededWorks': report.succeededWorks,
+        'failedWorks': report.failedWorks,
+        'pendingConfirmations': report.pendingConfirmations,
+        'nfoWritten': report.nfoWritten,
+        'imagesWritten': report.imagesWritten,
+        'protectedArtifacts': report.protectedArtifacts,
+        'unchangedArtifacts': report.unchangedArtifacts,
+        'cancelled': report.cancelled,
+        'warnings': _encodeIssues(report.warnings),
+        'errors': _encodeIssues(report.errors),
+      },
+    );
 
 List<Map<String, Object?>> _encodeIssues(List<SourceScrapeIssue> issues) =>
     <Map<String, Object?>>[
@@ -152,15 +153,15 @@ SourceScrapeReport? decodeSourceScrapeReport(String? json) {
 }
 
 List<SourceScrapeIssue> _decodeIssues(Object? raw) => <SourceScrapeIssue>[
-  if (raw is List<Object?>)
-    for (final Object? entry in raw)
-      if (entry is Map<String, Object?>)
-        SourceScrapeIssue(
-          workTitle: entry['work'] as String? ?? '',
-          message: entry['message'] as String? ?? '',
-          path: entry['path'] as String?,
-        ),
-];
+      if (raw is List<Object?>)
+        for (final Object? entry in raw)
+          if (entry is Map<String, Object?>)
+            SourceScrapeIssue(
+              workTitle: entry['work'] as String? ?? '',
+              message: entry['message'] as String? ?? '',
+              path: entry['path'] as String?,
+            ),
+    ];
 
 /// 这次 run 是否还留着**没定下身份的作品**。
 ///
@@ -197,13 +198,14 @@ class VideoSourceScrapeProgress {
   final VideoSourceScrapeConfirmation? confirmation;
 
   bool get isRunning => switch (phase) {
-    VideoSourceScrapePhase.planning ||
-    VideoSourceScrapePhase.recognizing ||
-    VideoSourceScrapePhase.fetching ||
-    VideoSourceScrapePhase.applying ||
-    VideoSourceScrapePhase.writingSidecars => true,
-    _ => false,
-  };
+        VideoSourceScrapePhase.planning ||
+        VideoSourceScrapePhase.recognizing ||
+        VideoSourceScrapePhase.fetching ||
+        VideoSourceScrapePhase.applying ||
+        VideoSourceScrapePhase.writingSidecars =>
+          true,
+        _ => false,
+      };
 }
 
 /// 严格匹配仍有多个结果时展示给用户的候选。
@@ -225,8 +227,8 @@ class VideoSourceScrapeConfirmation {
     required this.localWorkTitle,
     required List<VideoSourceScrapeConfirmationCandidate> candidates,
   }) : candidates = List<VideoSourceScrapeConfirmationCandidate>.unmodifiable(
-         candidates,
-       );
+          candidates,
+        );
 
   final int sourceId;
   final String sourceLabel;
@@ -234,10 +236,10 @@ class VideoSourceScrapeConfirmation {
   final List<VideoSourceScrapeConfirmationCandidate> candidates;
 }
 
-typedef VideoSourceScrapeConfirmationCallback =
-    Future<VideoSourceScrapeConfirmationCandidate?> Function(
-      VideoSourceScrapeConfirmation confirmation,
-    );
+typedef VideoSourceScrapeConfirmationCallback
+    = Future<VideoSourceScrapeConfirmationCandidate?> Function(
+  VideoSourceScrapeConfirmation confirmation,
+);
 
 /// 一次“单来源/全部来源”用户批次内共享的作品解析结果。
 ///
@@ -253,7 +255,9 @@ class VideoSourceScrapeBatchContext {
 }
 
 class VideoSourceScrapeCancellationToken {
-  VideoSourceScrapeCancellationToken({this.allowProtectedOverwrite = false});
+  VideoSourceScrapeCancellationToken({
+    this.allowProtectedOverwrite = false,
+  });
 
   bool _cancelled = false;
 
@@ -273,8 +277,9 @@ class VideoSourceScrapeCancelled implements Exception {
   const VideoSourceScrapeCancelled();
 }
 
-typedef VideoSourceScrapeProgressCallback =
-    void Function(VideoSourceScrapeProgress progress);
+typedef VideoSourceScrapeProgressCallback = void Function(
+  VideoSourceScrapeProgress progress,
+);
 
 abstract interface class VideoSourceScrapeRunner {
   /// [plannedWorks] 非空时只处理这个子集（库内自动补刮传「未识别作品」），
@@ -304,6 +309,11 @@ class VideoSourceScrapeWorkNotFound implements Exception {
   String toString() => 'VideoSourceScrapeWorkNotFound($workTitle)';
 }
 
+/// 旧历史没有稳定键，同名记录不足以决定要修改哪一个真实条目。
+class VideoSourceScrapeWorkAmbiguous extends VideoSourceScrapeWorkNotFound {
+  const VideoSourceScrapeWorkAmbiguous(super.workTitle);
+}
+
 /// 为「跑完之后身份仍未定」的单个作品手动指定资料源作品。
 ///
 /// 批次内确认（[VideoSourceScrapeConfirmationCallback]）只在交互式 run 期间存在，
@@ -317,6 +327,7 @@ abstract interface class VideoSourceScrapeManualBinding {
   Future<List<VideoSourceScrapeConfirmationCandidate>> searchManualCandidates({
     required SourceLibraryRow source,
     required String workTitle,
+    String? workStableKey,
     required String query,
   });
 
@@ -325,10 +336,44 @@ abstract interface class VideoSourceScrapeManualBinding {
   Future<SourceScrapeReport> rescrapeWorkWithLookup({
     required SourceLibraryRow source,
     required String workTitle,
+    String? workStableKey,
     required VideoMetadataLookup lookup,
     required VideoSourceScrapeCancellationToken cancellationToken,
     required VideoSourceScrapeProgressCallback onProgress,
   });
+}
+
+/// 一条排队中的「手动指定作品」请求。
+///
+/// 手动重刮与批次刮削共用同一把互斥门（同样联网、同样受 AniDB 限流、同样写库与
+/// sidecar），所以它不能并行；但「不能并行」不等于「必须拒绝」——早先第二条请求
+/// 直接抛 StateError，UI 只好把所有条目的搜索按钮一起灰掉，用户被迫盯着一条刮完
+/// 才能点下一条。排队后串行执行，用户可以一口气把整屏未识别作品都指定完。
+class VideoSourceScrapeManualRequest {
+  VideoSourceScrapeManualRequest({
+    required this.source,
+    required this.workTitle,
+    this.workStableKey,
+    required this.lookup,
+  });
+
+  final SourceLibraryRow source;
+  final String workTitle;
+  final String? workStableKey;
+  final VideoMetadataLookup lookup;
+  final Completer<SourceScrapeReport> completer =
+      Completer<SourceScrapeReport>();
+
+  /// 当前计划按稳定键识别作品；历史记录没有键时才沿用标题。
+  bool matches({
+    required int sourceId,
+    required String workTitle,
+    String? workStableKey,
+  }) =>
+      source.id == sourceId &&
+      (workStableKey != null
+          ? this.workStableKey == workStableKey
+          : this.workTitle == workTitle);
 }
 
 /// App/HomePage 生命周期级控制器：所有入口共用一把锁，保证同一时刻只有一个联网
@@ -345,6 +390,13 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
   bool _disposed = false;
   VideoSourceScrapeProgress _progress = const VideoSourceScrapeProgress();
 
+  /// 等待执行的手动重刮请求（FIFO）。批次跑着时也可以往里塞，批次结束后接棒。
+  final List<VideoSourceScrapeManualRequest> _manualQueue =
+      <VideoSourceScrapeManualRequest>[];
+
+  /// 正在执行的那一条手动重刮；批次刮削期间为 null。
+  VideoSourceScrapeManualRequest? _activeManualRequest;
+
   VideoSourceScrapeProgress get progress => _progress;
   bool get isRunning => _active != null;
   Future<SourceScrapeReport>? get activeTask => _active;
@@ -354,48 +406,87 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
   bool get isScanning => _scanningSourceId != null;
   bool get isBusy => isRunning || isScanning;
 
+  /// 正在执行的手动重刮请求（没有则为 null）。
+  VideoSourceScrapeManualRequest? get activeManualRequest =>
+      _activeManualRequest;
+
+  /// 还在排队、尚未开始的手动重刮请求数。
+  int get queuedManualRequestCount => _manualQueue.length;
+
+  /// 只读队列快照，任务面板关闭后重开仍能显示每一条待执行请求。
+  List<VideoSourceScrapeManualRequest> get queuedManualRequests =>
+      List<VideoSourceScrapeManualRequest>.unmodifiable(_manualQueue);
+
+  /// 只撤回尚未执行的请求，不中断当前作品或其它排队任务。
+  bool cancelQueuedManualRequest(VideoSourceScrapeManualRequest request) {
+    if (_disposed || !_manualQueue.remove(request)) return false;
+    request.completer.completeError(
+      const VideoSourceScrapeCancelled(),
+      StackTrace.current,
+    );
+    notifyListeners();
+    return true;
+  }
+
+  /// 该作品是否已提交手动重刮（正在跑或还在队列里）。UI 据此把单条标成忙，
+  /// 而不是把整屏按钮一起灰掉。
+  bool isManualRequestPending({
+    required int sourceId,
+    required String workTitle,
+    String? workStableKey,
+  }) =>
+      _activeManualRequest?.matches(
+              sourceId: sourceId,
+              workTitle: workTitle,
+              workStableKey: workStableKey) ==
+          true ||
+      _manualQueue.any((VideoSourceScrapeManualRequest request) =>
+          request.matches(
+              sourceId: sourceId,
+              workTitle: workTitle,
+              workStableKey: workStableKey));
+
   Future<SourceScrapeReport> scrapeSource(
     SourceLibraryRow source, {
     bool interactive = false,
     bool allowProtectedOverwrite = false,
-  }) => _start(
-    <SourceLibraryRow>[source],
-    interactive: interactive,
-    allowProtectedOverwrite: allowProtectedOverwrite,
-  );
+  }) =>
+      _start(
+        <SourceLibraryRow>[source],
+        interactive: interactive,
+        allowProtectedOverwrite: allowProtectedOverwrite,
+      );
 
   Future<SourceScrapeReport> scrapeAllSources(
     Iterable<SourceLibraryRow> sources, {
     bool interactive = false,
     bool allowProtectedOverwrite = false,
-  }) => _start(
-    sources.where(
-      (SourceLibraryRow source) =>
-          source.mediaKind == 'video' && source.transport == 'local',
-    ),
-    interactive: interactive,
-    allowProtectedOverwrite: allowProtectedOverwrite,
-  );
+  }) =>
+      _start(
+        sources.where((SourceLibraryRow source) =>
+            source.mediaKind == 'video' && source.transport == 'local'),
+        interactive: interactive,
+        allowProtectedOverwrite: allowProtectedOverwrite,
+      );
 
   /// 库内自动补刮批次：只刮各来源给定的「未识别作品」子集，run 记
   /// scope='sweep'。与手动批次共用同一把互斥门、同一个进度面板；已有批次在
   /// 跑时直接返回那个批次（不排队），由调用方先看 [isBusy] 决定要不要发起。
   Future<SourceScrapeReport> scrapeWorkSubsets(
     Map<SourceLibraryRow, List<VideoSourceScrapeWork>> worksBySource,
-  ) => _start(
-    worksBySource.keys.where(
-      (SourceLibraryRow source) =>
-          source.mediaKind == 'video' && source.transport == 'local',
-    ),
-    interactive: false,
-    allowProtectedOverwrite: false,
-    plannedWorksBySource: <int, List<VideoSourceScrapeWork>>{
-      for (final MapEntry<SourceLibraryRow, List<VideoSourceScrapeWork>> entry
-          in worksBySource.entries)
-        entry.key.id: entry.value,
-    },
-    runScope: 'sweep',
-  );
+  ) =>
+      _start(
+        worksBySource.keys.where((SourceLibraryRow source) =>
+            source.mediaKind == 'video' && source.transport == 'local'),
+        interactive: false,
+        allowProtectedOverwrite: false,
+        plannedWorksBySource: <int, List<VideoSourceScrapeWork>>{
+          for (final MapEntry<SourceLibraryRow,
+              List<VideoSourceScrapeWork>> entry in worksBySource.entries)
+            entry.key.id: entry.value,
+        },
+        runScope: 'sweep',
+      );
 
   /// 当前 runner 是否支持事后手动指定作品。
   bool get supportsManualBinding => _runner is VideoSourceScrapeManualBinding;
@@ -404,6 +495,7 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
   Future<List<VideoSourceScrapeConfirmationCandidate>> searchManualCandidates({
     required SourceLibraryRow source,
     required String workTitle,
+    String? workStableKey,
     required String query,
   }) {
     if (_disposed || _runner is! VideoSourceScrapeManualBinding) {
@@ -414,44 +506,78 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
     return (_runner as VideoSourceScrapeManualBinding).searchManualCandidates(
       source: source,
       workTitle: workTitle,
+      workStableKey: workStableKey,
       query: query,
     );
   }
 
-  /// 按用户手动选中的身份重刮单个作品。与批次共用同一把互斥门——它同样联网、
-  /// 同样写库、同样写 sidecar，不能和批次并行跑。
+  /// 按用户手动选中的身份重刮单个作品。
+  ///
+  /// 与批次共用同一把互斥门——它同样联网、同样写库、同样写 sidecar，不能和批次
+  /// 并行跑。但重复提交不再被拒绝：请求进 FIFO 队列，门一空就按提交顺序接棒，
+  /// 所以用户可以连着指定多个作品而不必等前一条刮完（返回的 Future 仍然对应
+  /// 调用方自己那一条的结果）。
   Future<SourceScrapeReport> rescrapeWorkWithLookup({
     required SourceLibraryRow source,
     required String workTitle,
+    String? workStableKey,
     required VideoMetadataLookup lookup,
   }) {
     if (_disposed) {
-      return Future<SourceScrapeReport>.error(StateError('视频来源任务控制器已释放'));
+      return Future<SourceScrapeReport>.error(
+        StateError('视频来源任务控制器已释放'),
+      );
     }
     if (_runner is! VideoSourceScrapeManualBinding) {
-      return Future<SourceScrapeReport>.error(StateError('当前刮削实现不支持手动指定作品'));
+      return Future<SourceScrapeReport>.error(
+        StateError('当前刮削实现不支持手动指定作品'),
+      );
     }
+    final VideoSourceScrapeManualRequest request =
+        VideoSourceScrapeManualRequest(
+      source: source,
+      workTitle: workTitle,
+      workStableKey: workStableKey,
+      lookup: lookup,
+    );
+    _manualQueue.add(request);
+    if (!_disposed) notifyListeners();
+    _pumpManualQueue();
+    return request.completer.future;
+  }
+
+  /// 队列泵：门空了就取队首执行；门被批次或扫描占着就什么也不做——它们的收尾
+  /// 会再调一次本方法接棒。
+  void _pumpManualQueue() {
+    if (_disposed || _manualQueue.isEmpty) return;
+    if (_active != null || _scanningSourceId != null) return;
     final VideoSourceScrapeManualBinding runner =
         _runner as VideoSourceScrapeManualBinding;
-    if (_active != null || _scanningSourceId != null) {
-      return Future<SourceScrapeReport>.error(StateError('已有视频来源扫描或刮削任务正在运行'));
-    }
     final VideoScrapeOperationLease? lease =
         VideoScrapeOperationGate.tryEnterOperation();
     if (lease == null) {
-      return Future<SourceScrapeReport>.error(StateError('视频刮削资料正在清理'));
+      // 资料清理期间整条队列都跑不了，逐条报错比让它们无限期挂着诚实。
+      _failQueuedManualRequests(StateError('视频刮削资料正在清理'));
+      return;
     }
+    final VideoSourceScrapeManualRequest request = _manualQueue.removeAt(0);
     final VideoSourceScrapeCancellationToken token =
         VideoSourceScrapeCancellationToken();
     _token = token;
-    _progress = const VideoSourceScrapeProgress(
+    _activeManualRequest = request;
+    _progress = VideoSourceScrapeProgress(
       phase: VideoSourceScrapePhase.planning,
+      sourceId: request.source.id,
+      sourceLabel: request.source.label,
+      currentWorkTitle: request.workTitle,
+      total: 1,
     );
     final Future<SourceScrapeReport> future = _runManualRescrape(
       runner,
-      source: source,
-      workTitle: workTitle,
-      lookup: lookup,
+      source: request.source,
+      workTitle: request.workTitle,
+      workStableKey: request.workStableKey,
+      lookup: request.lookup,
       token: token,
     );
     _active = future;
@@ -461,13 +587,40 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
       if (identical(_active, future)) {
         _active = null;
         _token = null;
+        _activeManualRequest = null;
         _clearPendingConfirmation();
         if (!_disposed) notifyListeners();
       }
+      _pumpManualQueue();
     }
 
-    future.then<void>((_) => clear(), onError: (_, __) => clear());
-    return future;
+    future.then<void>(
+      (SourceScrapeReport report) {
+        if (!request.completer.isCompleted) request.completer.complete(report);
+        clear();
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        if (!request.completer.isCompleted) {
+          request.completer.completeError(error, stackTrace);
+        }
+        clear();
+      },
+    );
+  }
+
+  /// 清空队列并把每条请求以 [error] 结束。取消、释放和门不可用都走这里，
+  /// 保证调用方的 Future 不会永远挂着。
+  void _failQueuedManualRequests(Object error) {
+    if (_manualQueue.isEmpty) return;
+    final List<VideoSourceScrapeManualRequest> pending =
+        List<VideoSourceScrapeManualRequest>.of(_manualQueue);
+    _manualQueue.clear();
+    for (final VideoSourceScrapeManualRequest request in pending) {
+      if (!request.completer.isCompleted) {
+        request.completer.completeError(error, StackTrace.current);
+      }
+    }
+    if (!_disposed) notifyListeners();
   }
 
   /// 与联网刮削共用的应用级互斥门。扫描完成即释放，随后自动刮削可以顺序接棒。
@@ -490,6 +643,7 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
       if (_scanningSourceId == sourceId) _scanningSourceId = null;
       lease.release();
       if (!_disposed) notifyListeners();
+      _pumpManualQueue();
     }
   }
 
@@ -501,25 +655,30 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
     String runScope = 'source',
   }) {
     if (_disposed) {
-      return Future<SourceScrapeReport>.error(StateError('视频来源任务控制器已释放'));
+      return Future<SourceScrapeReport>.error(
+        StateError('视频来源任务控制器已释放'),
+      );
     }
     final Future<SourceScrapeReport>? running = _active;
     if (running != null) return running;
     if (_scanningSourceId != null) {
-      return Future<SourceScrapeReport>.error(StateError('视频来源扫描尚未完成'));
+      return Future<SourceScrapeReport>.error(
+        StateError('视频来源扫描尚未完成'),
+      );
     }
-    final List<SourceLibraryRow> sources = sourceIterable.toList(
-      growable: false,
-    );
+    final List<SourceLibraryRow> sources =
+        sourceIterable.toList(growable: false);
     final VideoScrapeOperationLease? lease =
         VideoScrapeOperationGate.tryEnterOperation();
     if (lease == null) {
-      return Future<SourceScrapeReport>.error(StateError('视频刮削资料正在清理'));
+      return Future<SourceScrapeReport>.error(
+        StateError('视频刮削资料正在清理'),
+      );
     }
     final VideoSourceScrapeCancellationToken token =
         VideoSourceScrapeCancellationToken(
-          allowProtectedOverwrite: allowProtectedOverwrite,
-        );
+      allowProtectedOverwrite: allowProtectedOverwrite,
+    );
     _token = token;
     _progress = const VideoSourceScrapeProgress(
       phase: VideoSourceScrapePhase.planning,
@@ -543,6 +702,9 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
         _clearPendingConfirmation();
         if (!_disposed) notifyListeners();
       }
+      // 批次占门期间用户可能已经手动指定了几个作品：门一空立刻接棒，
+      // 不要等下一次用户交互才把队列跑起来。
+      _pumpManualQueue();
     }
 
     future.then<void>((_) => clear(), onError: (_, __) => clear());
@@ -558,7 +720,7 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
   }) async {
     SourceScrapeReport aggregate = SourceScrapeReport(
       sourceIds: <int>[
-        for (final SourceLibraryRow source in sources) source.id,
+        for (final SourceLibraryRow source in sources) source.id
       ],
     );
     final VideoSourceScrapeBatchContext batchContext =
@@ -577,14 +739,12 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
         );
         aggregate = aggregate.merge(report);
       }
-      _publish(
-        VideoSourceScrapeProgress(
-          phase: VideoSourceScrapePhase.completed,
-          current: aggregate.totalWorks,
-          total: aggregate.totalWorks,
-          report: aggregate,
-        ),
-      );
+      _publish(VideoSourceScrapeProgress(
+        phase: VideoSourceScrapePhase.completed,
+        current: aggregate.totalWorks,
+        total: aggregate.totalWorks,
+        report: aggregate,
+      ));
       return aggregate;
     } on VideoSourceScrapeCancelled {
       aggregate = SourceScrapeReport(
@@ -601,21 +761,17 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
         errors: aggregate.errors,
         cancelled: true,
       );
-      _publish(
-        VideoSourceScrapeProgress(
-          phase: VideoSourceScrapePhase.cancelled,
-          report: aggregate,
-        ),
-      );
+      _publish(VideoSourceScrapeProgress(
+        phase: VideoSourceScrapePhase.cancelled,
+        report: aggregate,
+      ));
       return aggregate;
     } catch (error) {
-      _publish(
-        VideoSourceScrapeProgress(
-          phase: VideoSourceScrapePhase.failed,
-          report: aggregate,
-          message: error.toString(),
-        ),
-      );
+      _publish(VideoSourceScrapeProgress(
+        phase: VideoSourceScrapePhase.failed,
+        report: aggregate,
+        message: error.toString(),
+      ));
       rethrow;
     }
   }
@@ -626,6 +782,7 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
     VideoSourceScrapeManualBinding runner, {
     required SourceLibraryRow source,
     required String workTitle,
+    String? workStableKey,
     required VideoMetadataLookup lookup,
     required VideoSourceScrapeCancellationToken token,
   }) async {
@@ -633,30 +790,41 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
       final SourceScrapeReport report = await runner.rescrapeWorkWithLookup(
         source: source,
         workTitle: workTitle,
+        workStableKey: workStableKey,
         lookup: lookup,
         cancellationToken: token,
         onProgress: _publish,
       );
-      _publish(
-        VideoSourceScrapeProgress(
-          phase: VideoSourceScrapePhase.completed,
-          sourceId: source.id,
-          sourceLabel: source.label,
-          current: report.totalWorks,
-          total: report.totalWorks,
-          report: report,
-        ),
+      _publish(VideoSourceScrapeProgress(
+        phase: report.cancelled
+            ? VideoSourceScrapePhase.cancelled
+            : VideoSourceScrapePhase.completed,
+        sourceId: source.id,
+        sourceLabel: source.label,
+        current: report.totalWorks,
+        total: report.totalWorks,
+        report: report,
+      ));
+      return report;
+    } on VideoSourceScrapeCancelled {
+      final SourceScrapeReport report = SourceScrapeReport(
+        sourceIds: <int>[source.id],
+        cancelled: true,
       );
+      _publish(VideoSourceScrapeProgress(
+        phase: VideoSourceScrapePhase.cancelled,
+        sourceId: source.id,
+        sourceLabel: source.label,
+        report: report,
+      ));
       return report;
     } catch (error) {
-      _publish(
-        VideoSourceScrapeProgress(
-          phase: VideoSourceScrapePhase.failed,
-          sourceId: source.id,
-          sourceLabel: source.label,
-          message: error.toString(),
-        ),
-      );
+      _publish(VideoSourceScrapeProgress(
+        phase: VideoSourceScrapePhase.failed,
+        sourceId: source.id,
+        sourceLabel: source.label,
+        message: error.toString(),
+      ));
       rethrow;
     }
   }
@@ -690,7 +858,9 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
     return completer.future.whenComplete(_clearPendingConfirmation);
   }
 
-  void confirmPending(VideoSourceScrapeConfirmationCandidate candidate) {
+  void confirmPending(
+    VideoSourceScrapeConfirmationCandidate candidate,
+  ) {
     final Completer<VideoSourceScrapeConfirmationCandidate?>? completer =
         _confirmationCompleter;
     if (completer != null && !completer.isCompleted) {
@@ -715,6 +885,9 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
   void cancel() {
     _token?.cancel();
     skipPendingConfirmation();
+    // 取消是「停下现在这批刮削」，还没轮到的手动请求一并作废，否则取消完
+    // 队列会自己接着跑起来，用户看到的是「取消了个寂寞」。
+    _failQueuedManualRequests(const VideoSourceScrapeCancelled());
   }
 
   /// 应用退出/数据库关闭前调用。网络请求无法保证立刻被底层 socket 取消，但下一阶段
@@ -731,6 +904,7 @@ class VideoSourceScrapeTaskController extends ChangeNotifier {
     if (_disposed) return;
     _disposed = true;
     _token?.cancel();
+    _failQueuedManualRequests(StateError('视频来源任务控制器已释放'));
     final Completer<VideoSourceScrapeConfirmationCandidate?>? completer =
         _confirmationCompleter;
     if (completer != null && !completer.isCompleted) completer.complete();

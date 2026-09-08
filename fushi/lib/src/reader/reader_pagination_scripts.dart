@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:fushi/src/reader/reader_content_styles.dart';
+import 'package:fushi/src/reader/reader_study_unit_script.dart';
 import 'package:fushi/src/reader/reader_visual_novel_scripts.dart';
 import 'package:fushi_core/fushi_core.dart'
     show
@@ -89,65 +91,113 @@ class ReaderPaginationScripts {
   /// 重复句（BUG-060 用户担心的「来回跳动」）。
   static const int kSentenceAudioSearchWindow = 256;
 
+  /// BUG-2204：允许回吃前一条命中尾巴的字数（与 JS `OVERLAP`、matcher
+  /// `EpubSrtMatcher.cueTailOverlap` 同值）。
+  static const int kSentenceAudioTailOverlap = 4;
+
+  /// BUG-2204：「延续」判定的前向容差（与 JS `ADJACENT` 同值）：紧接前一条命中
+  /// 处这么多字以内的命中优先于离 hint 最近者。
+  static const int kSentenceAudioAdjacent = 2;
+
   /// 把 cue 的归一化偏移（提示）+ 原文，映射成在 [fullNorm]（实时 DOM 的
   /// 归一化文本）里的解析起点。这是 JS `collectSasayakiCueRanges` 搜索逻辑的
-  /// 纯 Dart 影子，供单测验证「漂移自愈 / 不跳远处重复 / 未命中回落提示」三
-  /// 不变量；JS 侧实现同一算法（见同文件脚本字符串 + 源码守卫测试）。
+  /// 纯 Dart 影子，供单测验证「漂移自愈 / 不跳远处重复 / 未命中回落提示 / 尾巴
+  /// 回吃」不变量；JS 侧实现同一算法（见同文件脚本字符串 + 源码守卫测试）。
   ///
-  /// 规则：单调游标 `cursor` 只增不减；每条 cue 在 `[max(cursor, hint-window),
-  /// hint+window]` 内取**离 hint 最近**的整句出现位置（对齐既有
-  /// scrollToSearchMatch 的就近策略）；窗口内无命中则回落到裁剪后的 hint。
+  /// 规则：游标 `cursor` 单调（BUG-2204 起允许回到前一条命中的尾巴 [kSentenceAudioTailOverlap]
+  /// 字以内、不越过其起点）；每条 cue 先看紧接前一条命中处
+  /// `[cursor-OVERLAP, cursor+ADJACENT]` 有没有「延续」命中——有则优先（ASR 切句边界
+  /// 漂移 / 旧数据 hint 指向远处同前缀句时仍锚定真实位置）；否则在
+  /// `[max(floor, hint-window), hint+window]` 内取**离 hint 最近**者；窗口内无命中则
+  /// 回落到裁剪后的 hint、不推进游标（BUG-282）。回吃了前一条尾巴时把前一条 span
+  /// 的长度裁到本条起点。返回每条 (start, length)。
+  @visibleForTesting
+  static List<(int, int)> resolveCueNormSpansForTesting({
+    required String fullNorm,
+    required List<SentenceAudioCueHint> cues,
+    int window = kSentenceAudioSearchWindow,
+  }) {
+    final List<(int, int)> spans = <(int, int)>[];
+    int cursor = 0;
+    int lastHit = -1;
+    int lastHitStart = -1;
+    for (final SentenceAudioCueHint c in cues) {
+      final String needle = c.needle;
+      final int hint = c.hint;
+      int resolved = -1;
+      if (needle.isNotEmpty) {
+        final int floor = lastHit >= 0
+            ? math.max(lastHitStart + 1, cursor - kSentenceAudioTailOverlap)
+            : cursor;
+        final int lo = floor > (hint - window) ? floor : (hint - window);
+        final int start = lo < 0 ? 0 : lo;
+        final int hi = math.max(hint + window, cursor + kSentenceAudioAdjacent);
+        int best = -1;
+        int bestDist = 1 << 30;
+        int adjacent = -1;
+        int adjacentDist = 1 << 30;
+        if (start <= fullNorm.length) {
+          int from = start;
+          while (true) {
+            final int i = fullNorm.indexOf(needle, from);
+            if (i < 0 || i > hi) {
+              break;
+            }
+            if (lastHit >= 0 &&
+                i >= cursor - kSentenceAudioTailOverlap &&
+                i <= cursor + kSentenceAudioAdjacent) {
+              final int da = (i - cursor).abs();
+              if (da < adjacentDist) {
+                adjacentDist = da;
+                adjacent = i;
+              }
+            }
+            if (i <= hint + window) {
+              final int d = (i - hint).abs();
+              if (d < bestDist) {
+                bestDist = d;
+                best = i;
+              }
+            }
+            from = i + 1;
+          }
+        }
+        if (adjacent >= 0) best = adjacent;
+        if (best >= 0) {
+          resolved = best;
+          if (best < cursor && lastHit >= 0) {
+            final (int ps, int _) = spans[lastHit];
+            spans[lastHit] = (ps, best - ps);
+          }
+          cursor = best + needle.length;
+          lastHit = spans.length;
+          lastHitStart = best;
+        }
+      }
+      if (resolved >= 0) {
+        spans.add((resolved, needle.length));
+      } else {
+        // BUG-282：未命中 / 空 needle 只给回落位置，绝不推进单调游标。
+        spans.add((_clampInt(hint, cursor, fullNorm.length), c.length));
+      }
+    }
+    return spans;
+  }
+
+  /// [resolveCueNormSpansForTesting] 的起点视图（既有测试口径）。
   @visibleForTesting
   static List<int> resolveCueNormStartsForTesting({
     required String fullNorm,
     required List<SentenceAudioCueHint> cues,
     int window = kSentenceAudioSearchWindow,
-  }) {
-    final List<int> out = <int>[];
-    int cursor = 0;
-    for (final SentenceAudioCueHint c in cues) {
-      final String needle = c.needle;
-      final int hint = c.hint;
-      int resolved;
-      if (needle.isNotEmpty) {
-        final int lo = cursor > (hint - window) ? cursor : (hint - window);
-        final int start = lo < 0 ? 0 : lo;
-        int best = -1;
-        int bestDist = 1 << 30;
-        if (start <= fullNorm.length) {
-          int from = start;
-          while (true) {
-            final int i = fullNorm.indexOf(needle, from);
-            if (i < 0 || i > hint + window) {
-              break;
-            }
-            final int d = (i - hint).abs();
-            if (d < bestDist) {
-              bestDist = d;
-              best = i;
-            }
-            from = i + 1;
-          }
-        }
-        if (best >= 0) {
-          resolved = best;
-          cursor = best + needle.length;
-        } else {
-          // BUG-282：未命中只为这一条 cue 选一个尽力而为的回落位置，**绝不推进
-          // 单调游标**。游标只在「DOM 真命中」时前进；若让回落按未经核实的 hint
-          // 猜测推进 cursor，就可能越过后面真正能命中的 cue 的真实位置，使其搜索
-          // 窗口下界 max(cursor, hint-window) 把真实位置排除掉 → 整本逐句累积漂移
-          // （BUG-060 想消除的正是累积漂移，这里是它的回落漏洞）。
-          resolved = _clampInt(hint, cursor, fullNorm.length);
-        }
-      } else {
-        // 空 needle 同理：只给回落位置，不污染游标。
-        resolved = _clampInt(hint, cursor, fullNorm.length);
-      }
-      out.add(resolved);
-    }
-    return out;
-  }
+  }) => <int>[
+    for (final (int start, int _) in resolveCueNormSpansForTesting(
+      fullNorm: fullNorm,
+      cues: cues,
+      window: window,
+    ))
+      start,
+  ];
 
   /// JS `window.fushiReader.paginate` 的纯 Dart 影子，供单测验证「错位不跳页」
   /// 不变量（BUG-169）。两侧同算法：
@@ -826,6 +876,7 @@ class ReaderPaginationScripts {
         ? ReaderVisualNovelScripts.vnShellScript()
         : (continuousMode ? continuousShellSource() : paginatedShellSource());
     return '''<script>
+$kStudyUnitJs
 window.__fushiShells = {};
 ${_stripShellScriptTags(shell)}
 window.__fushiInstallShell = function(C) {
@@ -940,8 +991,12 @@ window.__fushiInstallShell = function(C) {
   normalizeText: function(text) {
     return (text || '').replace(this.readerRegexNegated, '');
   },
+  // 统计 / 进度口径：学习单位数（无空格文字按码点、空格分词文字按连续串）。与 Dart
+  // countStudyChars 逐样本对拍（study_char_count_parity_test.dart）。**不要**改回
+  // normalizeText——那套白名单是有声书 cue 匹配与纯图片章判定的坐标系，见
+  // reader_study_unit_script.dart 的「与匹配 / 归一化的分界」。
   countChars: function(text) {
-    return Array.from(this.normalizeText(text)).length;
+    return window.fushiStudyUnits.count(text);
   },
   isMatchableChar: function(char) {
     return this.readerRegex.test(char || '');
@@ -1162,10 +1217,18 @@ window.__fushiInstallShell = function(C) {
   // 跨视口首边时才逐字二分定位首个仍可见字符，O(log n) 不全量遍历。空/零尺寸矩形跳过
   // （图片/折叠盒），代理对用 codePointAt/fromCodePoint 迭代（与 buildSasayakiNormIndex
   // 的码元处理一致），createWalker 已排除 rt/rp 振假名（分子分母同套，不重复计数）。
-  countCharsBeforeViewport: function(node, vertical) {
+  //
+  // 可选 edge（viewport 量纲）：缺省 = 视口**首边**（横排 0 / 竖排 window.innerWidth），
+  // 逐字判据走 isTextOffsetBeforeViewport（TODO-773 守卫钉死其 window 量纲三件套，不加
+  // 参数）；显式传入时 = 任意边（连续 getLastVisibleCharOffset 传视口**末边**：横排
+  // window.innerHeight / 竖排 0），逐字判据走同算法的通用边版本 isTextOffsetBeforeViewportPaged
+  // （名字里的 Paged 是它 body-relative 的出身，语义就是「rect 是否已越过给定边」）。
+  countCharsBeforeViewport: function(node, vertical, edge) {
     var text = node.textContent || '';
     var totalChars = this.countChars(text);
     if (totalChars <= 0) return 0;
+    var atFirstEdge = edge === undefined;
+    if (atFirstEdge) edge = vertical ? window.innerWidth : 0;
     var range = document.createRange();
     range.selectNodeContents(node);
     var rects = range.getClientRects();
@@ -1181,11 +1244,11 @@ window.__fushiInstallShell = function(C) {
       maxEnd = Math.max(maxEnd, end);
     }
     if (vertical) {
-      if (minStart >= window.innerWidth) return totalChars;
-      if (maxEnd <= window.innerWidth || minStart === Infinity) return 0;
+      if (minStart >= edge) return totalChars;
+      if (maxEnd <= edge || minStart === Infinity) return 0;
     } else {
-      if (maxEnd <= 0) return totalChars;
-      if (minStart >= 0 || minStart === Infinity) return 0;
+      if (maxEnd <= edge) return totalChars;
+      if (minStart >= edge || minStart === Infinity) return 0;
     }
     var offsets = [];
     var prefixCounts = [0];
@@ -1194,8 +1257,9 @@ window.__fushiInstallShell = function(C) {
     while (offset < text.length) {
       offsets.push(offset);
       var char = String.fromCodePoint(text.codePointAt(offset));
+      // 学习单位在**串尾**结算，判据吃位置而不是单个字符（见 reader_study_unit_script.dart）。
+      if (window.fushiStudyUnits.isUnitEnd(text, offset)) count += 1;
       offset += char.length;
-      if (this.isMatchableChar(char)) count += 1;
       prefixCounts.push(count);
     }
     var low = 0;
@@ -1203,7 +1267,10 @@ window.__fushiInstallShell = function(C) {
     var firstVisible = offsets.length;
     while (low <= high) {
       var mid = Math.floor((low + high) / 2);
-      if (this.isTextOffsetBeforeViewport(node, offsets[mid], text, vertical)) {
+      var passed = atFirstEdge
+        ? this.isTextOffsetBeforeViewport(node, offsets[mid], text, vertical)
+        : this.isTextOffsetBeforeViewportPaged(node, offsets[mid], text, vertical, edge);
+      if (passed) {
         low = mid + 1;
       } else {
         firstVisible = mid;
@@ -1303,8 +1370,9 @@ window.__fushiInstallShell = function(C) {
     while (offset < text.length) {
       offsets.push(offset);
       var char = String.fromCodePoint(text.codePointAt(offset));
+      // 学习单位在**串尾**结算，判据吃位置而不是单个字符（见 reader_study_unit_script.dart）。
+      if (window.fushiStudyUnits.isUnitEnd(text, offset)) count += 1;
       offset += char.length;
-      if (this.isMatchableChar(char)) count += 1;
       prefixCounts.push(count);
     }
     var low = 0;
@@ -1390,17 +1458,29 @@ window.__fushiInstallShell = function(C) {
     // BUG-060：高亮坐标由实时 DOM 权威定位。匹配时算出的 start/length 仅作
     // 「提示」，运行时用 cue 原文 text 在实时 DOM 的归一化全文里就近、单调地
     // 重新定位 —— 摆脱 package:html(匹配坐标系) 与浏览器 DOM(渲染坐标系) 逐字
-    // 不一致导致的累积偏移。不变量：① 游标 cursor 单调不回退；② 搜索窗口有界
-    // (整句 needle + 半径 WINDOW)，不跳远处重复句；③ 窗口内取离 hint 最近者；
-    // ④ 未命中回落提示偏移，绝不空高亮。与 Dart 影子
-    // ReaderPaginationScripts.resolveCueNormStartsForTesting 同算法。
+    // 不一致导致的累积偏移。不变量：① 游标 cursor 单调不回退（BUG-2204 起允许
+    // 回吃前一条命中的尾巴 OVERLAP 字，但不越过其起点）；② 搜索窗口有界
+    // (整句 needle + 半径 WINDOW)，不跳远处重复句；③ 紧接前一条命中处
+    // （cursor-OVERLAP..cursor+ADJACENT）的「延续」优先，否则窗口内取离 hint
+    // 最近者；④ 未命中回落提示偏移，绝不空高亮。与 Dart 影子
+    // ReaderPaginationScripts.resolveCueNormSpansForTesting 同算法。
+    //
+    // BUG-2204：ASR 字幕前句多带下一句首字（「…高い所。と」+「とはいえ、」）时，
+    // 前句命中后游标已越过后句真实起点；只按 hint 就近会撞上远处同前缀句（旧数据
+    // 的 hint 本身就指着那里），视口跳到下一页、中间十几句无高亮。延续优先 +
+    // 回吃尾巴让后句仍在真实位置命中，并把前句的 span 裁到后句起点。
     var out = [];
     if (!cues.length) return out;
     var idx = this.buildSentenceAudioNormIndex();
     var full = idx.full;
     var map = idx.map;
     var WINDOW = 256;
+    var OVERLAP = 4;
+    var ADJACENT = 2;
     var cursor = 0;
+    var lastHit = -1;
+    var lastHitStart = -1;
+    var spans = [];
     for (var ci = 0; ci < cues.length; ci++) {
       var cue = cues[ci];
       // TODO-630/BUG-366：needle 用 foldNormalize（剥+折叠），与 full(已折叠)、
@@ -1411,20 +1491,37 @@ window.__fushiInstallShell = function(C) {
       var normLen = needle.length;
       var resolved = -1;
       if (normLen > 0) {
-        var lo = cursor > (hint - WINDOW) ? cursor : (hint - WINDOW);
+        var floor = lastHit >= 0 ? Math.max(lastHitStart + 1, cursor - OVERLAP) : cursor;
+        var lo = floor > (hint - WINDOW) ? floor : (hint - WINDOW);
         var startAt = lo < 0 ? 0 : lo;
+        var hi = Math.max(hint + WINDOW, cursor + ADJACENT);
         var best = -1, bestDist = 1 << 30;
+        var adjacent = -1, adjacentDist = 1 << 30;
         if (startAt <= full.length) {
           var from = startAt;
           while (true) {
             var p = full.indexOf(needle, from);
-            if (p < 0 || p > hint + WINDOW) break;
-            var d = Math.abs(p - hint);
-            if (d < bestDist) { bestDist = d; best = p; }
+            if (p < 0 || p > hi) break;
+            if (lastHit >= 0 && p >= cursor - OVERLAP && p <= cursor + ADJACENT) {
+              var da = Math.abs(p - cursor);
+              if (da < adjacentDist) { adjacentDist = da; adjacent = p; }
+            }
+            if (p <= hint + WINDOW) {
+              var d = Math.abs(p - hint);
+              if (d < bestDist) { bestDist = d; best = p; }
+            }
             from = p + 1;
           }
         }
-        if (best >= 0) { resolved = best; cursor = best + normLen; }
+        if (adjacent >= 0) best = adjacent;
+        if (best >= 0) {
+          resolved = best;
+          // 回吃了前一条的尾巴：把它的 span 裁到本条起点，range 不重叠。
+          if (best < cursor && lastHit >= 0) spans[lastHit].len = best - spans[lastHit].start;
+          cursor = best + normLen;
+          lastHit = spans.length;
+          lastHitStart = best;
+        }
       }
       var spanStart, spanLen;
       if (resolved >= 0) {
@@ -1433,11 +1530,14 @@ window.__fushiInstallShell = function(C) {
         // BUG-282：未命中只给这一条 cue 一个尽力而为的回落区间，**不推进单调
         // 游标 cursor**。游标只在 DOM 真命中时前进；让回落按未核实的 hint 猜测
         // 推进游标会越过后面真正能命中 cue 的真实位置，把其搜索窗口下界顶过去
-        // → 整本逐句累积漂移（与 Dart 影子 resolveCueNormStartsForTesting 同改）。
+        // → 整本逐句累积漂移（与 Dart 影子 resolveCueNormSpansForTesting 同改）。
         spanStart = hint < cursor ? cursor : (hint > map.length ? map.length : hint);
         spanLen = len;
       }
-      out.push({ id: cue.id, ranges: this.rangesForNormSpan(map, spanStart, spanLen) });
+      spans.push({ id: cue.id, start: spanStart, len: spanLen });
+    }
+    for (var si = 0; si < spans.length; si++) {
+      out.push({ id: spans[si].id, ranges: this.rangesForNormSpan(map, spans[si].start, spans[si].len) });
     }
     // TODO-630/BUG-366 observability：full 长度 + 多少 cue 算出空 range（全空=路径/折叠未命中）。
     var emptyRanges = 0;
@@ -1538,13 +1638,26 @@ window.__fushiInstallShell = function(C) {
     if (!window.fushiSelection || !window.fushiSelection.getCaretRange) return null;
     var caret = window.fushiSelection.getCaretRange(x, y);
     if (!caret) return null;
-    var node = caret.startContainer, off = caret.startOffset;
+    return this.cueIdAtDomPoint(caret.startContainer, caret.startOffset);
+  },
+  // Resolve the actual rendered cue, shared by pointer seek and lookup payloads.
+  // Study-unit offsets are not subtitle-normalized character offsets.
+  cueIdAtDomPoint: function(node, off) {
+    var el = node && node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+    var sidEl = el && el.closest ? el.closest('[data-cue-id]') : null;
+    if (sidEl) return JSON.stringify({ type: 'sid', id: sidEl.getAttribute('data-cue-id') });
     var found = null;
     if (this.cueRangesMap && this.cueRangesMap.size) {
       this.cueRangesMap.forEach(function(ranges, id) {
         if (found) return;
         for (var i = 0; i < ranges.length; i++) {
-          try { if (ranges[i].comparePoint(node, off) === 0) { found = id; break; } }
+          try {
+            var r = ranges[i];
+            if (r.comparePoint(node, off) === 0 &&
+                !(r.endContainer === node && r.endOffset === off)) {
+              found = id; break;
+            }
+          }
           catch (e) {}
         }
       });
@@ -2322,25 +2435,35 @@ $_sharedJs
     this.paginationMetrics = metrics;
     return metrics;
   },
-  calculateProgress: function() {
+  // 可选 atScroll：按任意页位置求进度（默认当前页）。getLastVisibleCharOffset 的降级
+  // 路径传 `getPagePosition + pageSize`（下一页页首）得「下一页页首之前的累计字数」——
+  // 节点粒度、随 scroll 单调，无需临时 setPagePosition 探测（那会触发 snap 监听 /
+  // scroll 回传递归 / 闪屏）。
+  calculateProgress: function(atScroll) {
     var metrics = this.paginationMetrics || this.buildPaginationMetrics();
     if (metrics.totalChars <= 0) return 0;
-    var context = this.getScrollContext();
-    var currentScroll = this.getPagePosition(context);
+    return this.exploredCharsBeforeScroll(metrics, atScroll) / metrics.totalChars;
+  },
+  // progressStops 二分：起始边 <= scroll 的最后一个文本节点的累计字数（含该节点全部）。
+  // atScroll 缺省取当前页位置。
+  exploredCharsBeforeScroll: function(metrics, atScroll) {
+    var scroll = atScroll === undefined
+      ? this.getPagePosition(this.getScrollContext())
+      : atScroll;
     var stops = metrics.progressStops;
     var low = 0;
     var high = stops.length - 1;
     var exploredChars = 0;
     while (low <= high) {
       var mid = Math.floor((low + high) / 2);
-      if (stops[mid].scroll <= currentScroll) {
+      if (stops[mid].scroll <= scroll) {
         exploredChars = stops[mid].exploredChars;
         low = mid + 1;
       } else {
         high = mid - 1;
       }
     }
-    return exploredChars / metrics.totalChars;
+    return exploredChars;
   },
   // BUG-1241：最后一页的 progress 是「视口首字符 / 全章字符」，只要末页还能显示多行，
   // 它就天然停在 0.99 左右，不能拿来判断用户是否真的到达章末。末页判定必须读分页
@@ -2349,6 +2472,94 @@ $_sharedJs
     var metrics = this.paginationMetrics || this.buildPaginationMetrics();
     var context = this.getScrollContext();
     return this.getPagePosition(context) >= metrics.maxScroll - 1;
+  },
+  // 分页 caret 探点 → 章内学习单位偏移（与 getFirstVisibleCharOffset 同口径：
+  // nodeStartOffsets 基址 + 节点内 isUnitEnd 累加）。返回 { offset, node, index }
+  // （offset = caret 位置之前的单位数，node/index = caret 落点，供调用方判该字是否在页内），
+  // caret 失败 / 落点无文本节点 / 基址缺失返 null——调用方各自决定降级路径。
+  //
+  // getFirstVisibleCharOffset 未改走本函数：它的函数体被 TODO-773 守卫
+  // （paged_first_visible_scan_fallback_guard_test）钉成「三个失败出口各自回退
+  // firstVisibleCharOffsetByScanPaged」+ BUG-2058 口径守卫（study_char_caliber_guard_test）
+  // 要求其函数体内直接出现 fushiStudyUnits；两条守卫都要求逐出口内联，抽公共函数即红。
+  _charOffsetAtPoint: function(x, y) {
+    var range = document.caretRangeFromPoint(x, y);
+    if (!range || !range.startContainer) return null;
+    var target = range.startContainer;
+    if (target.nodeType !== Node.TEXT_NODE) {
+      var walker = this.createWalker(target);
+      target = walker.nextNode();
+      if (!target) return null;
+    }
+    var baseOffset = this.nodeStartOffsets.get(target);
+    if (baseOffset === undefined) {
+      this.buildNodeOffsets();
+      baseOffset = this.nodeStartOffsets.get(target);
+      if (baseOffset === undefined) return null;
+    }
+    var localChars = 0;
+    var text = target.textContent;
+    var limit = Math.min(range.startOffset, text.length);
+    for (var i = 0; i < limit; i++) {
+      var cp = text.codePointAt(i);
+      if (window.fushiStudyUnits.isUnitEnd(text, i)) localChars++;
+      if (cp > 0xFFFF) i++;
+    }
+    return { offset: baseOffset + localChars, node: target, index: limit };
+  },
+  // caret 落点处的那个字是否覆盖探点（沿行轴：横排 x 落在字的 [left,right]、竖排 y 落在
+  // [top,bottom]）。caretRangeFromPoint 在探点落于字左半时返「该字之前」、落于右半 / 行尾
+  // 空白时返「该字之后」；末字偏移只有前者需要 +1，后者 caret 之前的单位数已是半开区间 end。
+  _caretCharCoversPoint: function(caret, x, y, vertical) {
+    var text = caret.node.textContent;
+    if (caret.index >= text.length) return false;
+    var cp = text.codePointAt(caret.index);
+    var range = document.createRange();
+    range.setStart(caret.node, caret.index);
+    range.setEnd(caret.node, caret.index + (cp > 0xFFFF ? 2 : 1));
+    var rect = this.getRect(range);
+    if (!rect || rect.width <= 0 || rect.height <= 0) return false;
+    return vertical
+      ? (rect.top <= y && rect.bottom >= y)
+      : (rect.left <= x && rect.right >= x);
+  },
+  // 当前页可见字符区间的终点（半开 [start, end) 的 end，章内学习单位偏移）。统计口径
+  // 「翻走即计 + 覆盖并集」需要每次进度采样同时拿到可见区间两端；起点是
+  // getFirstVisibleCharOffset（页首角 caret），这里探页尾角：竖排（列自上而下堆叠、行自右
+  // 向左）末字在左下 (paddingLeft+2, clientHeight−paddingBottom−2)，横排末字在右下
+  // (clientWidth−paddingRight−2, clientHeight−paddingBottom−2)。探边量纲与
+  // getFirstVisibleCharOffset 同为 body-relative（分页 body 填满视口左上角）。
+  // 降级：caret 失败或算出 end <= start 时走 exploredCharsBeforeScroll(下一页页首)
+  // （节点粒度、单调，见 calculateProgress 注释）；isAtEnd 时 end = 章总字数。
+  // 不用 countCharsBeforeViewportPaged：它比较的轴（竖排 rect.left）与分页滚动轴（竖排 y）
+  // 不一致，算不出页尾；不用临时 setPagePosition 探测再滚回（snap 监听 / scroll 回传递归 /
+  // 闪屏）。startOffset 可选：调用方已算好 getFirstVisibleCharOffset 时传入免二次 caret。
+  getLastVisibleCharOffset: function(startOffset) {
+    var metrics = this.paginationMetrics || this.buildPaginationMetrics();
+    if (metrics.totalChars <= 0) return -1;
+    if (this.isAtEnd()) return metrics.totalChars;
+    var context = this.getScrollContext();
+    var start = (typeof startOffset === 'number' && startOffset >= 0)
+      ? startOffset
+      : this.getFirstVisibleCharOffset();
+    var cs = getComputedStyle(document.body);
+    var pl = parseFloat(cs.paddingLeft) || 0;
+    var pr = parseFloat(cs.paddingRight) || 0;
+    var pb = parseFloat(cs.paddingBottom) || 0;
+    var x = context.vertical ? (pl + 2) : (document.body.clientWidth - pr - 2);
+    var y = document.body.clientHeight - pb - 2;
+    var end = -1;
+    var caret = this._charOffsetAtPoint(x, y);
+    if (caret) {
+      end = caret.offset
+        + (this._caretCharCoversPoint(caret, x, y, context.vertical) ? 1 : 0);
+    }
+    if (end <= start) {
+      end = this.exploredCharsBeforeScroll(
+        metrics, this.getPagePosition(context) + context.pageSize);
+    }
+    if (end > metrics.totalChars) end = metrics.totalChars;
+    return end > start ? end : -1;
   },
   pageInfo: function() {
     // Page numbers only make sense once layout has settled. During a
@@ -2548,8 +2759,7 @@ $_sharedJs
     var limit = Math.min(range.startOffset, text.length);
     for (var i = 0; i < limit; i++) {
       var cp = text.codePointAt(i);
-      var char = String.fromCodePoint(cp);
-      if (this.isMatchableChar(char)) localChars++;
+      if (window.fushiStudyUnits.isUnitEnd(text, i)) localChars++;
       if (cp > 0xFFFF) i++;
     }
     return baseOffset + localChars;
@@ -2595,8 +2805,7 @@ $_sharedJs
     var text = targetNode.textContent;
     for (var i = 0; i < text.length && charIdx < remaining; i++) {
       var cp = text.codePointAt(i);
-      var ch = String.fromCodePoint(cp);
-      if (this.isMatchableChar(ch)) charIdx++;
+      if (window.fushiStudyUnits.isUnitEnd(text, i)) charIdx++;
       if (cp > 0xFFFF) i++;
       textOffset = i + 1;
     }
@@ -2615,9 +2824,25 @@ $_sharedJs
       // started, keep the original page so a ±1-column repagination doesn't
       // visibly shift the reader; otherwise jump to the char's actual page.
       var origPage = Math.round(hintScroll / context.pageSize);
-      aligned = (Math.abs(charPage - origPage) <= 1)
-        ? origPage * context.pageSize
-        : charPage * context.pageSize;
+      if (Math.abs(charPage - origPage) <= 1) {
+        aligned = origPage * context.pageSize;
+        // BUG-2205：±1 保原页只该兜「页边界舍入抖动」（同一布局下锚字恰在页首、collapsed
+        // range 被算到上一列末）。缩字号 / 减边距 / 减行高 / 挤压态藏底栏这类**让每页
+        // 装更多字**的重排会把锚字真的推到前一页：仍保原页 = 新页首字越过锚字 = 用户
+        // 丢掉锚字到新页首这段正文（缩一步丢一页），且随后的进度刷新把这段当「新读到」
+        // 计进统计（分页 progress 按节点粒度、水位只升不降 → 单向棘轮，反复缩放每次多计
+        // 一页）。判据不用像素容差（横排末行 collapsed range 的 x 可落在整列任意处），
+        // 而是落页后**实测页首字**：原页页首字 > 锚字即锚已丢，改落锚字所在页。
+        // 放大字号（charPage > origPage）保原页只会让页首字 ≤ 锚字（多看到已读的几行），
+        // 不丢正文、不推进度，维持原行为。
+        if (charPage < origPage) {
+          this.setPagePosition(context, aligned);
+          var firstOnOrig = this.getFirstVisibleCharOffset();
+          if (firstOnOrig > charOffset) aligned = charPage * context.pageSize;
+        }
+      } else {
+        aligned = charPage * context.pageSize;
+      }
     } else {
       aligned = charPage * context.pageSize;
     }
@@ -2998,6 +3223,27 @@ $_sharedJs
     var maxY = Math.max(0, root.scrollHeight - root.clientHeight);
     return root.scrollTop >= maxY - 1;
   },
+  // 连续模式当前视口可见字符区间的终点（半开 end，章内学习单位偏移；口径与
+  // calculateProgress 分子同源）。一次 walk 用 countCharsBeforeViewport 传视口**末边**
+  // （横排 window.innerHeight / 竖排 0）累加「末边之前的字数」；物理到底（isAtEnd）时
+  // end = 章总字数。calculateProgress 行为不变。
+  getLastVisibleCharOffset: function() {
+    var vertical = this.isVertical();
+    var edge = vertical ? 0 : window.innerHeight;
+    var walker = this.createWalker();
+    var totalChars = 0;
+    var exploredChars = 0;
+    var node;
+    while (node = walker.nextNode()) {
+      var nodeLen = this.countChars(node.textContent);
+      totalChars += nodeLen;
+      if (nodeLen > 0) {
+        exploredChars += this.countCharsBeforeViewport(node, vertical, edge);
+      }
+    }
+    if (totalChars <= 0) return -1;
+    return this.isAtEnd() ? totalChars : exploredChars;
+  },
   // 连续模式恢复落点 settle：等一帧让恢复滚动落定后通知 Dart。
   //
   // TODO-perf（跨章）：旧实现是两层嵌套 setTimeout(16)，而且**两层里都不做任何事**，
@@ -3116,8 +3362,7 @@ $_sharedJs
     var limit = Math.min(range.startOffset, text.length);
     for (var i = 0; i < limit; i++) {
       var cp = text.codePointAt(i);
-      var char = String.fromCodePoint(cp);
-      if (this.isMatchableChar(char)) localChars++;
+      if (window.fushiStudyUnits.isUnitEnd(text, i)) localChars++;
       if (cp > 0xFFFF) i++;
     }
     return baseOffset + localChars;
@@ -3146,8 +3391,7 @@ $_sharedJs
     var text = targetNode.textContent;
     for (var i = 0; i < text.length && charIdx < remaining; i++) {
       var cp = text.codePointAt(i);
-      var ch = String.fromCodePoint(cp);
-      if (this.isMatchableChar(ch)) charIdx++;
+      if (window.fushiStudyUnits.isUnitEnd(text, i)) charIdx++;
       if (cp > 0xFFFF) i++;
       textOffset = i + 1;
     }

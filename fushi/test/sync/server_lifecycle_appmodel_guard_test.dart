@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi/src/sync/fushi_server_controller.dart';
 import 'package:fushi_core/fushi_core.dart';
 
+import 'sync_orchestrator_source_corpus.dart';
 import 'sync_settings_schema_source_corpus.dart';
 
 FushiDatabase _memDb() => FushiDatabase.forTesting(NativeDatabase.memory());
@@ -56,14 +57,14 @@ void main() {
       );
     });
 
-    test('AppModel wires AppModelLibraryHostService into the controller', () {
+    test('AppModel wires LocalLibraryHostService into the controller', () {
       final String src = File(
         'lib/src/models/app_model.dart',
       ).readAsStringSync();
       expect(
-        src.contains('AppModelLibraryHostService'),
+        src.contains('LocalLibraryHostService'),
         isTrue,
-        reason: 'AppModel 必须构造并注入 AppModelLibraryHostService',
+        reason: 'AppModel 必须构造并注入 LocalLibraryHostService',
       );
       expect(
         src.contains('libraryServiceFactory'),
@@ -78,7 +79,7 @@ void main() {
       ).readAsStringSync();
       final int factory = src.indexOf(
         'libraryServiceFactory: () => '
-        'AppModelLibraryHostService(',
+        'LocalLibraryHostService(',
       );
       expect(factory, greaterThanOrEqualTo(0));
       final int removeLocalAudio = src.indexOf(
@@ -120,99 +121,101 @@ void main() {
     });
   });
 
-  group('source guards: AppModel wires audio params into host service (T3.4)', () {
-    test('AppModel 传 localAudioEntries: 到 AppModelLibraryHostService', () {
-      final String src = File(
-        'lib/src/models/app_model.dart',
-      ).readAsStringSync();
-      expect(
-        src.contains('localAudioEntries:'),
-        isTrue,
-        reason: 'AppModel 必须把 localAudioEntries 传给 AppModelLibraryHostService',
-      );
-    });
+  group(
+    'source guards: AppModel wires audio params into host service (T3.4)',
+    () {
+      test('AppModel 传 localAudioEntries: 到 LocalLibraryHostService', () {
+        final String src = File(
+          'lib/src/models/app_model.dart',
+        ).readAsStringSync();
+        expect(
+          src.contains('localAudioEntries:'),
+          isTrue,
+          reason: 'AppModel 必须把 localAudioEntries 传给 LocalLibraryHostService',
+        );
+      });
 
-    test('AppModel 传 audioDatabaseRoot: 到 AppModelLibraryHostService', () {
-      final String src = File(
-        'lib/src/models/app_model.dart',
-      ).readAsStringSync();
-      expect(
-        src.contains('audioDatabaseRoot:'),
-        isTrue,
-        reason: 'AppModel 必须把 audioDatabaseRoot 传给 AppModelLibraryHostService',
-      );
-    });
+      test('AppModel 传 audioDatabaseRoot: 到 LocalLibraryHostService', () {
+        final String src = File(
+          'lib/src/models/app_model.dart',
+        ).readAsStringSync();
+        expect(
+          src.contains('audioDatabaseRoot:'),
+          isTrue,
+          reason: 'AppModel 必须把 audioDatabaseRoot 传给 LocalLibraryHostService',
+        );
+      });
 
-    test('AppModel 传 onLocalAudioImported: 到 AppModelLibraryHostService', () {
-      final String src = File(
-        'lib/src/models/app_model.dart',
-      ).readAsStringSync();
-      expect(
-        src.contains('onLocalAudioImported:'),
-        isTrue,
-        reason:
-            'AppModel 必须把 onLocalAudioImported 传给 AppModelLibraryHostService',
-      );
-    });
+      test('AppModel 传 onLocalAudioImported: 到 LocalLibraryHostService', () {
+        final String src = File(
+          'lib/src/models/app_model.dart',
+        ).readAsStringSync();
+        expect(
+          src.contains('onLocalAudioImported:'),
+          isTrue,
+          reason:
+              'AppModel 必须把 onLocalAudioImported 传给 LocalLibraryHostService',
+        );
+      });
 
-    test('AppModel 传 removeLocalAudioEntry: 到 AppModelLibraryHostService', () {
-      final String src = File(
-        'lib/src/models/app_model.dart',
-      ).readAsStringSync();
-      expect(
-        src.contains('removeLocalAudioEntry:'),
-        isTrue,
-        reason:
-            'AppModel 必须传 removeLocalAudioEntry 使 host deleteLocalAudio 真正生效',
-      );
-    });
+      test('AppModel 传 removeLocalAudioEntry: 到 LocalLibraryHostService', () {
+        final String src = File(
+          'lib/src/models/app_model.dart',
+        ).readAsStringSync();
+        expect(
+          src.contains('removeLocalAudioEntry:'),
+          isTrue,
+          reason:
+              'AppModel 必须传 removeLocalAudioEntry 使 host deleteLocalAudio 真正生效',
+        );
+      });
 
-    test('orchestrator 互联分支分流：本地音频经 syncLocalAudioSources，有声书仍在 run()', () {
-      final String src = File(
-        'lib/src/sync/sync_orchestrator.dart',
-      ).readAsStringSync();
-      expect(
-        src.contains('_syncLocalAudioLive('),
-        isTrue,
-        reason: 'orchestrator 必须有 _syncLocalAudioLive live 分流方法',
-      );
-      expect(
-        src.contains('_syncAudiobooksLive('),
-        isTrue,
-        reason: 'orchestrator 必须有 _syncAudiobooksLive live 分流方法',
-      );
-      // 本地音频源数据库已从 run() 里整段拿掉：它没有同步开关，只由
-      // syncLocalAudioSources 分派（互联 → live 端点；云 → __local_audio__ 暂存），
-      // 由设置页的显式上传 / 下载动作驱动。断言的字面量是
-      // `syncLocalAudioSources(` … `await _syncLocalAudioLive(`。
-      expect(
-        RegExp(
-          r'syncLocalAudioSources\([\s\S]{0,600}?await _syncLocalAudioLive\(',
-        ).hasMatch(src),
-        isTrue,
-        reason: 'syncLocalAudioSources 的互联分支必须调用 _syncLocalAudioLive',
-      );
-      // 负向：`if (syncLocalAudio` 一旦复活就意味着本地音频又被开关门控着塞回了
-      // 自动 sweep —— 正是这次改动要消灭的东西（用户要的是显式上传 / 下载）。
-      expect(
-        src.contains('if (syncLocalAudio'),
-        isFalse,
-        reason: '本地音频不得再由开关门控进自动 sweep',
-      );
-      // 有声书文件仍是 run() 互联分支里的开关驱动维度（本次不动）。
-      //
-      // 用正则而非整行字面量匹配：门控条件会随功能演进追加（如增量同步的索引跳过
-      // `&& !skipAudiobooks`），而本守卫要钉的是「互联分支走 live 方法、不是走云的
-      // packages 方法」这个分流意图，不是那一行的逐字写法。
-      expect(
-        RegExp(
-          r'if \(syncAudioBookFiles[^)]*\)\s*\{?\s*await _syncAudiobooksLive\(',
-        ).hasMatch(src),
-        isTrue,
-        reason: '互联分支必须调用 _syncAudiobooksLive',
-      );
-    });
-  });
+      test('orchestrator 互联分支分流：本地音频经 syncLocalAudioSources，有声书仍在 run()', () {
+        // B2 拆分后 _sync*Live 定义在 sync_orchestrator/*.part.dart，调用点在主库。
+        final String src = readSyncOrchestratorSource();
+        expect(
+          src.contains('_syncLocalAudioLive('),
+          isTrue,
+          reason: 'orchestrator 必须有 _syncLocalAudioLive live 分流方法',
+        );
+        expect(
+          src.contains('_syncAudiobooksLive('),
+          isTrue,
+          reason: 'orchestrator 必须有 _syncAudiobooksLive live 分流方法',
+        );
+        // 本地音频源数据库已从 run() 里整段拿掉：它没有同步开关，只由
+        // syncLocalAudioSources 分派（互联 → live 端点；云 → __local_audio__ 暂存），
+        // 由设置页的显式上传 / 下载动作驱动。断言的字面量是
+        // `syncLocalAudioSources(` … `await _syncLocalAudioLive(`。
+        expect(
+          RegExp(
+            r'syncLocalAudioSources\([\s\S]{0,600}?await _syncLocalAudioLive\(',
+          ).hasMatch(src),
+          isTrue,
+          reason: 'syncLocalAudioSources 的互联分支必须调用 _syncLocalAudioLive',
+        );
+        // 负向：`if (syncLocalAudio` 一旦复活就意味着本地音频又被开关门控着塞回了
+        // 自动 sweep —— 正是这次改动要消灭的东西（用户要的是显式上传 / 下载）。
+        expect(
+          src.contains('if (syncLocalAudio'),
+          isFalse,
+          reason: '本地音频不得再由开关门控进自动 sweep',
+        );
+        // 有声书文件仍是 run() 互联分支里的开关驱动维度（本次不动）。
+        //
+        // 用正则而非整行字面量匹配：门控条件会随功能演进追加（如增量同步的索引跳过
+        // `&& !skipAudiobooks`），而本守卫要钉的是「互联分支走 live 方法、不是走云的
+        // packages 方法」这个分流意图，不是那一行的逐字写法。
+        expect(
+          RegExp(
+            r'if \(syncAudioBookFiles[^)]*\)\s*\{?\s*await _syncAudiobooksLive\(',
+          ).hasMatch(src),
+          isTrue,
+          reason: '互联分支必须调用 _syncAudiobooksLive',
+        );
+      });
+    },
+  );
 
   group('source guards: server lifecycle owned by AppModel (BUG-085)', () {
     test('the sync-settings page no longer owns or stops the server', () {
@@ -251,15 +254,15 @@ void main() {
       ).readAsStringSync();
       expect(
         RegExp(
-          r'FushiSyncServerController\s+syncServerController\s*=',
+          r'late\s+final\s+FushiSyncServerController\s+syncServerController\s*=',
         ).hasMatch(appModel),
         isTrue,
         reason: 'AppModel must own the server controller for the session',
       );
       expect(
-        RegExp(
-          r'syncServerController\s*\.\s*startIfEnabled\(\)',
-        ).hasMatch(appModel),
+        appModel
+            .replaceAll(RegExp(r'\s+'), '')
+            .contains('syncServerController.startIfEnabled()'),
         isTrue,
         reason: 'the host must start app-wide on launch when enabled',
       );

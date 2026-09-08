@@ -58,6 +58,34 @@ class StatFact {
   String get identityKey => mediaKey.isNotEmpty ? mediaKey : title;
 }
 
+/// 库表按 title 分桶（BUG-2216：legacy 阅读行只有 title，反查库表补身份时同名
+/// ≥2 本不能贴给任意一本——宁可留成无身份组也不错贴）。
+Map<String, List<EpubBookMeta>> _booksByTitle(Iterable<EpubBookMeta> rows) {
+  final Map<String, List<EpubBookMeta>> out = <String, List<EpubBookMeta>>{};
+  for (final EpubBookMeta r in rows) {
+    out.putIfAbsent(r.title, () => <EpubBookMeta>[]).add(r);
+  }
+  return out;
+}
+
+/// title → bookKey 的**唯一**反查表：库里恰好一本叫这个名字才进表。页面给 legacy
+/// 无身份行 / 无身份 tile 反查 bookKey（合集归属、override 书名、删除）都只许用它。
+Map<String, String> uniqueBookKeyByTitle(Iterable<EpubBookMeta> rows) =>
+    <String, String>{
+      for (final MapEntry<String, List<EpubBookMeta>> e
+          in _booksByTitle(rows).entries)
+        if (e.value.length == 1) e.key: e.value.single.bookKey,
+    };
+
+/// 库里同名 ≥2 本的 title 集合：喂 `groupStatFactsByIdentity` 的吸收否决（与视频域
+/// `computeVideoStats(ambiguousTitles:)` 同判据——库表判同名时，legacy 无身份行不许
+/// 吸进任何身份组）。
+Set<String> ambiguousBookTitles(Iterable<EpubBookMeta> rows) => <String>{
+      for (final MapEntry<String, List<EpubBookMeta>> e
+          in _booksByTitle(rows).entries)
+        if (e.value.length >= 2) e.key,
+    };
+
 /// 一次加载得到的全部统计事实，分**两面**：
 ///  * [daily]：日总量 / per-media / 热力图 / 趋势用——legacy 日汇总行 + 全部段；
 ///  * [hourly]：今日按小时图用——legacy 小时行 + 全部段。
@@ -65,6 +93,17 @@ class StatFact {
 /// 同一个段在两面各出现一次；legacy 的日行与小时行是同一段时间的两个**不相交**投影
 /// （一个有 title 没 hour，一个有 hour 没 title），所以绝不能并进同一列表求和——
 /// 两面分列，读方按用途只挑一面，结构上杜绝双计。
+/// 某条阅读域事实是否属于这本书：有身份看 mediaKey，legacy 无身份行按 title 回退
+/// （与阅读统计页按书分组同一规则）。唯一判据，别在页面里再拼一遍。
+bool statFactBelongsToBook(
+  StatFact f, {
+  required String bookKey,
+  String? title,
+}) {
+  if (f.mediaKey.isNotEmpty) return f.mediaKey == bookKey;
+  return title != null && title.isNotEmpty && f.title == title;
+}
+
 class StatFacts {
   const StatFacts({
     required this.daily,
@@ -82,7 +121,7 @@ class StatFacts {
     hourly: <StatFact>[],
     segments: <StudySegmentRow>[],
     legacyActivity: <ActivityEventRow>[],
-    epubRows: <EpubBookRow>[],
+    epubRows: <EpubBookMeta>[],
   );
 
   /// 最近的游玩会话（v92 起游玩只写 galgame_sessions，活动流从这里合成）。
@@ -97,15 +136,14 @@ class StatFacts {
   /// **活动流的唯一数据源**：legacy 活动行 ∪ 段合成行 ∪ 游玩会话合成行，按精确
   /// 时刻倒序、截到 [activityLimit]。首页时间轴与游戏首页时间线都只吃它。
   List<ActivityEventRow> get activityRows {
-    final List<ActivityEventRow> all =
-        <ActivityEventRow>[
-          ...legacyActivity,
-          ...segmentsAsActivityRows(segments),
-          ...galgameSessionsAsActivityRows(recentGameSessions, gameNamesById),
-        ]..sort(
-          (ActivityEventRow a, ActivityEventRow b) =>
-              b.timestampMs.compareTo(a.timestampMs),
-        );
+    final List<ActivityEventRow> all = <ActivityEventRow>[
+      ...legacyActivity,
+      ...segmentsAsActivityRows(segments),
+      ...galgameSessionsAsActivityRows(recentGameSessions, gameNamesById),
+    ]..sort(
+        (ActivityEventRow a, ActivityEventRow b) =>
+            b.timestampMs.compareTo(a.timestampMs),
+      );
     return all.length <= activityLimit ? all : all.sublist(0, activityLimit);
   }
 
@@ -119,10 +157,19 @@ class StatFacts {
   /// `added` 导入事件）。活动流把它与 [segmentsAsActivityRows] 并集。
   final List<ActivityEventRow> legacyActivity;
 
-  /// 加载 legacy 阅读行身份时顺带取的书表（页面复用：title→bookKey / format）。
-  final List<EpubBookRow> epubRows;
+  /// 加载 legacy 阅读行身份时顺带取的书表瘦投影（页面复用：title→bookKey /
+  /// uid / importedAt / format），不带章节 JSON 大列。
+  final List<EpubBookMeta> epubRows;
 
   Iterable<StatFact> get dailyBooks => daily.where((StatFact f) => f.isBook);
+
+  /// 阅读域日面里属于某本书的行（阅读器内统计浮层 / 按书切片共用）：身份优先
+  /// `mediaKey == bookKey`，legacy 无身份行按 title 回退——判据见 [statFactBelongsToBook]。
+  Iterable<StatFact> dailyBooksFor({required String bookKey, String? title}) =>
+      dailyBooks.where(
+        (StatFact f) =>
+            statFactBelongsToBook(f, bookKey: bookKey, title: title),
+      );
   Iterable<StatFact> get dailyVideos => daily.where((StatFact f) => f.isVideo);
   Iterable<StatFact> get dailyGames => daily.where((StatFact f) => f.isGame);
 }
@@ -135,17 +182,59 @@ Future<StatFacts> loadStatFacts(
   FushiDatabase db, {
   int activityLimit = 200,
 }) async {
-  final List<EpubBookRow> epubRows = await db.getAllEpubBooks();
-  final Map<String, EpubBookRow> bookByTitle = <String, EpubBookRow>{
-    for (final EpubBookRow r in epubRows) r.title: r,
+  // 九个全表读互不依赖：一次全部发出去让 Drift 后台执行器流水线化，而不是每个都
+  // 等上一个往返回来（首页与三个统计页每次打开都走这里）。先 Future.wait 挂上
+  // 监听，某个失败时其余错误不会成为无人接的未处理异常。
+  final Future<List<EpubBookMeta>> epubRowsF = db.getEpubBookMetas();
+  final Future<List<ReadingStatisticRow>> readingF =
+      db.getAllReadingStatistics();
+  final Future<List<VideoWatchStatisticRow>> watchF =
+      db.getAllVideoWatchStatistics();
+  final Future<List<ReadingHourlyLogRow>> readingHourlyF =
+      db.getAllReadingHourlyLogs();
+  final Future<List<VideoHourlyLogRow>> videoHourlyF =
+      db.getAllVideoHourlyLogs();
+  final Future<List<(String, String, int)>> gameDailyF =
+      db.getGalgameDailySecondsByGame();
+  final Future<List<ActivityEventRow>> activityF =
+      db.getRecentActivityEvents(limit: activityLimit);
+  final Future<List<ActivityEventRow>> gameActivityF =
+      db.getRecentActivityEvents(
+    limit: 1 << 31,
+    eventTypes: const <String>[kActivityGame],
+  );
+  final Future<List<StudySegmentRow>> segmentsF = db.getStudySegments();
+  final Future<List<GalgameSessionRow>> recentGameSessionsF = activityLimit <= 0
+      ? Future<List<GalgameSessionRow>>.value(const <GalgameSessionRow>[])
+      : db.getRecentGalgameSessions(limit: activityLimit);
+  await Future.wait<Object?>(<Future<Object?>>[
+    epubRowsF,
+    readingF,
+    watchF,
+    readingHourlyF,
+    videoHourlyF,
+    gameDailyF,
+    activityF,
+    gameActivityF,
+    segmentsF,
+    recentGameSessionsF,
+  ]);
+
+  final List<EpubBookMeta> epubRows = await epubRowsF;
+  // BUG-2216：同名 ≥2 本时不反查（后者覆盖前者 = 把一本书的历史错贴给另一本）。
+  final Map<String, EpubBookMeta> bookByTitle = <String, EpubBookMeta>{
+    for (final MapEntry<String, List<EpubBookMeta>> e
+        in _booksByTitle(epubRows).entries)
+      if (e.value.length == 1) e.key: e.value.single,
   };
   final List<StatFact> daily = <StatFact>[];
   final List<StatFact> hourly = <StatFact>[];
 
-  // legacy 日行：阅读按 title 反查库表补身份与 format（查不到 = 书已删，身份 ''、
-  // format ''，按 title 分组、归普通书）；视频 v39 起自带 bookUid。
-  for (final ReadingStatisticRow r in await db.getAllReadingStatistics()) {
-    final EpubBookRow? book = bookByTitle[r.title];
+  // legacy 日行：阅读按 title 反查库表补身份与 format（查不到 = 书已删或同名歧义，
+  // 身份 ''、format ''，读取端按 unique-title 吸收 / 无身份分组）；视频 v39 起自带
+  // bookUid。
+  for (final ReadingStatisticRow r in await readingF) {
+    final EpubBookMeta? book = bookByTitle[r.title];
     daily.add(
       StatFact(
         mediaKind: kActivityMediaBook,
@@ -161,8 +250,7 @@ Future<StatFacts> loadStatFacts(
       ),
     );
   }
-  for (final VideoWatchStatisticRow w
-      in await db.getAllVideoWatchStatistics()) {
+  for (final VideoWatchStatisticRow w in await watchF) {
     daily.add(
       StatFact(
         mediaKind: kActivityMediaVideo,
@@ -179,7 +267,7 @@ Future<StatFacts> loadStatFacts(
     );
   }
   // legacy 小时行（无身份、无 title）。
-  for (final ReadingHourlyLogRow h in await db.getAllReadingHourlyLogs()) {
+  for (final ReadingHourlyLogRow h in await readingHourlyF) {
     hourly.add(
       StatFact(
         mediaKind: kActivityMediaBook,
@@ -195,7 +283,7 @@ Future<StatFacts> loadStatFacts(
       ),
     );
   }
-  for (final VideoHourlyLogRow h in await db.getAllVideoHourlyLogs()) {
+  for (final VideoHourlyLogRow h in await videoHourlyF) {
     hourly.add(
       StatFact(
         mediaKind: kActivityMediaVideo,
@@ -212,8 +300,7 @@ Future<StatFacts> loadStatFacts(
     );
   }
   // 游戏时长真相源 galgame_sessions（v55 起就是事实表）：按 (game, day) 进日面。
-  for (final (String gameId, String dateKey, int seconds)
-      in await db.getGalgameDailySecondsByGame()) {
+  for (final (String gameId, String dateKey, int seconds) in await gameDailyF) {
     daily.add(
       StatFact(
         mediaKind: kActivityMediaGame,
@@ -232,13 +319,8 @@ Future<StatFacts> loadStatFacts(
   // legacy 活动行：v92 前的游戏 hook 字数只存在这里（chars-only game 行）；
   // read / watch 行的时长 / 字数已在日投影里，**只**取 game 的字数进日面，
   // 时长一律不取（时长真相源是 galgame_sessions，取了就双计）。
-  final List<ActivityEventRow> activity = await db.getRecentActivityEvents(
-    limit: activityLimit,
-  );
-  for (final ActivityEventRow e in await db.getRecentActivityEvents(
-    limit: 1 << 31,
-    eventTypes: const <String>[kActivityGame],
-  )) {
+  final List<ActivityEventRow> activity = await activityF;
+  for (final ActivityEventRow e in await gameActivityF) {
     final int chars = e.charsDelta ?? 0;
     if (chars <= 0) continue;
     daily.add(
@@ -257,8 +339,20 @@ Future<StatFacts> loadStatFacts(
     );
   }
   // v92 段：两面各一份。
-  final List<StudySegmentRow> segments = await db.getStudySegments();
+  final List<StudySegmentRow> segments = await segmentsF;
   for (final StudySegmentRow s in segments) {
+    // **写零的段不进事实面**。`zeroStudySegmentsOnDays`（时段明细里长按删除走的那条）
+    // 只把行写成零而不删行——必须删的是同步语义：真删行会被对端的旧数据按 LWW 复活，
+    // 写零才能跨端传播「这段不算了」。
+    //
+    // 于是过滤责任落在读侧。不过滤的话，被删掉的那条会以「0 字」原地复活：sheet 聚合
+    // 侧对任何命中该 dateKey 的 fact 都建 entry，渲染侧 ms==0 就走 formatStatChars(0)。
+    // 用户看到的就是「删了、刷新、它又回来了」。零行同样会污染排行、热力图等所有吃
+    // StatFacts.daily 的消费方。
+    //
+    // 判据与 [segmentsAsActivityRows] 逐字一致——**同一件事只能有一条判据**，
+    // 两处分别写就是给「活动流干净、统计页脏」这种半修好状态留门。
+    if (s.durationMs <= 0 && s.chars <= 0 && s.pages <= 0) continue;
     final StatFact fact = StatFact(
       mediaKind: s.mediaKind,
       mediaKey: s.mediaKey,
@@ -275,9 +369,7 @@ Future<StatFacts> loadStatFacts(
     hourly.add(fact);
   }
   // 游玩会话（活动流合成「游玩」事件用；activityLimit 为 0 时不取）。
-  final List<GalgameSessionRow> recentGameSessions = activityLimit <= 0
-      ? const <GalgameSessionRow>[]
-      : await db.getRecentGalgameSessions(limit: activityLimit);
+  final List<GalgameSessionRow> recentGameSessions = await recentGameSessionsF;
   final Map<String, String> gameNamesById = recentGameSessions.isEmpty
       ? const <String, String>{}
       : <String, String>{
