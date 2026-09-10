@@ -16,6 +16,7 @@ import 'package:fushi/src/media/video/video_shader_manager.dart';
 import 'package:fushi/src/media/video/video_subtitle_source.dart';
 import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
 import 'package:fushi/src/utils/misc/platform_utils.dart';
+import 'package:fushi/src/utils/net/app_native_proxy.dart';
 import 'package:fushi_audio/fushi_audio.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -1311,7 +1312,7 @@ class VideoPlayerController extends ChangeNotifier
     final LuaScriptLogHit? hit = matchLuaLogToScripts(
       prefix: log.prefix,
       level: log.level,
-      text: log.text,
+      text: redactAppNativeProxySecrets(log.text),
       scriptPaths: _loadedLuaScripts,
     );
     if (hit == null) return;
@@ -1587,6 +1588,18 @@ class VideoPlayerController extends ChangeNotifier
     if (!_isCurrentLoad(player, loadToken)) return; // 能力探测后换片/销毁。
     await applyLuaScripts(luaScriptPaths);
     if (!_isCurrentLoad(player, loadToken)) return; // 脚本装载后换片/销毁。
+
+    // Resolve every HLS segment, redirect and external audio request in Dart.
+    // Configure before loadfile so its first request uses the same policy.
+    final Uri nativeProxy = await ensureAppNativeProxyEndpoint();
+    if (!_isCurrentLoad(player, loadToken)) return;
+    final dynamic nativePlayer = player.platform;
+    try {
+      await nativePlayer.setProperty('http-proxy', nativeProxy.toString());
+    } on Object {
+      throw StateError('Unable to configure native network proxy');
+    }
+    if (!_isCurrentLoad(player, loadToken)) return;
 
     await player.open(
       Media(

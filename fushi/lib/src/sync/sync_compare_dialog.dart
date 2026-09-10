@@ -7,6 +7,8 @@ import 'package:fushi/src/epub/epub_importer.dart';
 import 'package:fushi/src/focus/fushi_focus_controller.dart';
 import 'package:fushi/src/focus/fushi_focus_target.dart';
 import 'package:fushi/src/sync/interconnect_sync_backend.dart';
+import 'package:fushi/src/sync/manga_sync_package.dart'
+    show importMangaPackageFile, isMangaPackage;
 import 'package:fushi/src/sync/fushi_library_host_service.dart';
 import 'package:fushi/src/sync/position_converter.dart';
 import 'package:fushi/src/sync/sync_auto_trigger.dart';
@@ -112,10 +114,20 @@ class SyncDictEntry {
     required this.name,
     required this.hasLocal,
     this.remoteAssetId,
+    this.displayName,
   });
 
   final String name;
   final bool hasLocal;
+
+  /// 词典改名（v95）：本地那本改过名时的显示名，只用于渲染这一行的标题。
+  /// [name] 是身份（远端资产名 `<name>.fushidict`、本地删除的键），永不翻译。
+  /// 远端独有的条目本地没有元数据行 → null → 显示 [name]。
+  final String? displayName;
+
+  String get shownName => (displayName?.trim().isNotEmpty ?? false)
+      ? displayName!.trim()
+      : name;
 
   /// 远端词典资产（`<name>.fushidict`）定位符；远端没有则 null。
   final String? remoteAssetId;
@@ -268,7 +280,12 @@ Future<List<SyncCompareEntry>> _fetchCompareData(
     final bool remoteHasContent = local == null
         ? (remote != null
             ? await _remoteFolderHasContent(backend, remote.id)
-            : (live?.hasContent ?? true))
+            // 互联 live 条目：host 对漫画恒 hasContent=false（那是 EPUB 内容树
+            // 判据），漫画内容走 hasMangaContent —— 只看 hasContent 会让互联漫画
+            // 在对比弹窗里连下载入口都不出现。与 _syncBooksContentLive 同判据取并。
+            : (live == null
+                ? true
+                : (live.hasContent || live.hasMangaContent)))
         : true;
 
     // 跨设备资产身份与 SyncManager 一致：sanitizeTtuFilename(title)。读共同祖先
@@ -329,9 +346,15 @@ Future<List<SyncDictEntry>> _fetchDictEntries(
           e.id;
     }
   }
+  final List<DictionaryMetaRow> localRows = await db.getAllDictionaryMetadata();
   final Set<String> localNames = <String>{
-    for (final DictionaryMetaRow d in await db.getAllDictionaryMetadata())
-      d.name,
+    for (final DictionaryMetaRow d in localRows) d.name,
+  };
+  // 只用于这张列表的显示；同步身份仍是真名。
+  final Map<String, String> localDisplayNames = <String, String>{
+    for (final DictionaryMetaRow d in localRows)
+      if (d.displayName != null && d.displayName!.trim().isNotEmpty)
+        d.name: d.displayName!.trim(),
   };
 
   final Set<String> allNames = <String>{...localNames, ...remoteByName.keys};
@@ -341,6 +364,7 @@ Future<List<SyncDictEntry>> _fetchDictEntries(
         name: n,
         hasLocal: localNames.contains(n),
         remoteAssetId: remoteByName[n],
+        displayName: localDisplayNames[n],
       ),
   ];
   // 纯本地项（远端没有、这里没得删）曾被「词典同步开关关着」过滤掉，理由是别用
@@ -853,11 +877,21 @@ class _SyncCompareDialogState extends State<SyncCompareDialog> {
       );
       try {
         await backend.getRemoteBook(entry.remoteLiveTitle!, tmp);
-        final String localBookKey = await EpubImporter.importFromPath(
-          db: widget.db,
-          filePath: tmp.path,
-          fileName: '${entry.title}.epub',
-        );
+        // 互联 host 的书内容端点对 EPUB 与漫画共用 `.epub` 名（内容即真相），故按
+        // 内容嗅探分流——此前这里恒走 EpubImporter，从「同步对比」弹窗下载互联
+        // 漫画必然失败（书架页的下载路径早有同款嗅探，唯独这条漏了）。标题用远端
+        // raw title（bookKey 由它派生），不用本地临时文件名。
+        final String localBookKey = (await isMangaPackage(tmp))
+            ? await importMangaPackageFile(
+                db: widget.db,
+                file: tmp,
+                title: entry.remoteLiveTitle,
+              )
+            : await EpubImporter.importFromPath(
+                db: widget.db,
+                filePath: tmp.path,
+                fileName: '${entry.title}.epub',
+              );
         // 750a：EPUB 导入成功后，若该远端书带有声书则一并补下音频包（与书架
         // 互联下载同接线）。bookKeyOverride 绑定到本地刚导入 EPUB 的 bookKey。
         await _downloadLiveAudiobookFor(backend, entry, localBookKey);
@@ -1152,8 +1186,17 @@ class _SyncCompareDialogState extends State<SyncCompareDialog> {
             overflowSpacing: tokens.spacing.gap,
             children: [
               TextButton(
-                onPressed: _applying ? null : () => Navigator.pop(context),
-                child: Text(t.sync_compare_close),
+                // 应用期间也保持可点：本框是 `barrierDismissible: false`，iOS 上既
+                // 没有系统返回键、对话框路由也没有侧滑返回，而 `_applyChoices` 先
+                // 抢全局同步互斥锁（后台自动云同步在跑就一直等）、拿到锁后逐本做
+                // 网络传输，全程没有取消令牌——禁用这颗按钮等于把用户锁死在框里。
+                // 由 [SyncConflictPrompter] 自动弹出的那条更严重：用户根本没主动
+                // 进来。关闭只解绑 UI，传输继续在后台跑完（下面每处 setState /
+                // Navigator.pop 都有 mounted 守卫）。
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  _applying ? t.dialog_background_close : t.sync_compare_close,
+                ),
               ),
               if (_entries != null && _entries!.isNotEmpty)
                 FilledButton(
@@ -1308,11 +1351,15 @@ class _SyncCompareDialogState extends State<SyncCompareDialog> {
             children: [
               _directionIcon(entry, theme),
               const SizedBox(width: 6),
+              // 书名是这一行唯一的身份（`_choices` 也按 title 索引），而轻小说 /
+              // 有声书标题动辄二三十字。单行省略后同一系列的多条冲突只剩下
+              // 同一个前缀（「無職転生 ～異世界行った…」），用户无法分辨自己在给
+              // 哪一本裁决。改成换行展示，3 行封顶以免异常长的标题把卡片拉得无界。
               Expanded(
                 child: Text(
                   entry.title,
                   style: theme.textTheme.titleSmall,
-                  maxLines: 1,
+                  maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -1435,7 +1482,7 @@ class _SyncCompareDialogState extends State<SyncCompareDialog> {
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              d.name,
+              d.shownName,
               style: theme.textTheme.titleSmall,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

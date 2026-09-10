@@ -75,13 +75,43 @@ on:
         required: false
         default: false
         type: boolean
+      kazumi_adhoc:
+        description: 'One-off: sign the upstream Kazumi 2.3.0 IPA for two registered devices.'
+        required: false
+        default: false
+        type: boolean
+      kazumi_device_1_name:
+        description: 'Kazumi Ad Hoc device 1 name.'
+        required: false
+      kazumi_device_1_udid:
+        description: 'Kazumi Ad Hoc device 1 UDID.'
+        required: false
+      kazumi_device_2_name:
+        description: 'Kazumi Ad Hoc device 2 name.'
+        required: false
+      kazumi_device_2_udid:
+        description: 'Kazumi Ad Hoc device 2 UDID.'
+        required: false
 
 concurrency:
-  group: fushi-release-${{ github.event.release.tag_name || github.event.inputs.tag_name || github.sha }}
+  # 组名带 workflow 名（2026-09-08，用户要求正式版并行发包）：Android（release.yml）与
+  # 桌面/Apple（release-desktop.yml）是两条产出不相交的 workflow，而 GitHub 的 concurrency
+  # 组是**仓库级**的——两条 workflow 只要组名算出来一样就串行，且同组「1 个 in-progress +
+  # 1 个 pending」的语义会让第二个 pending 把第一个 pending **取消**（2026-09-03 实测：同
+  # sha 先后 dispatch Android beta 与桌面 beta，Android 那条 5 秒内 cancelled、0 个 job）。
+  # 正式版靠 `release: published` 同时点燃两条、同 tag 同组必串行：桌面/Apple 包要等
+  # Android 整条跑完才开始（v2.2.4：Android 13:44 上传，Windows/macOS/iOS 14:52）。
+  # 两条并行上传同一个 GitHub Release 是安全的，上传侧本就按此设计：rolling debug 的
+  # prune 只删本平台资产（TODO-1131）；softprops 建 release 撞车会重取（同一条 workflow
+  # 里 windows/macos/ios 早就并行上传同一个 release）；update-manifest 推送有「重取远端
+  # tip 再合并」循环（TODO-781）。同一条 workflow 内仍按 tag/sha 串行，同 tag 两次 dispatch
+  # 不会互相踩。守卫：fushi/test/build/release_workflow_concurrency_guard_test.dart。
+  group: fushi-release-${{ github.workflow }}-${{ github.event.release.tag_name || github.event.inputs.tag_name || github.sha }}
   cancel-in-progress: false
 
 jobs:
   windows:
+    if: ${{ github.event.inputs.kazumi_adhoc != 'true' }}
     runs-on: windows-2022
     permissions:
       contents: write
@@ -803,23 +833,79 @@ jobs:
             "/DOutputDir=$PWD\fushi\build\installer" `
             "fushi\windows\installer\fushi.iss"
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
+      # 代码签名走 Certum 云端 HSM（SimplySign）。私钥按 CA/B Forum 规则留在硬件里、
+      # 导不出 .pfx，所以这里不能用 signtool /f cert.pfx —— 早先那条
+      # WINDOWS_CERT_BASE64 -> cert.pfx 的路径对这类证书永远走不通，
+      # 表现是 signcheck 恒判 false、签名步骤被静默跳过、发出去的包其实没签名。
+      # 现在的通路：装 SimplySign Desktop（注册 CSP/KSP）-> 用 TOTP seed 无人值守
+      # 登录 -> signtool /sha1 通过命名管道让云端 HSM 完成签名运算。
       - name: Check signing availability
         id: signcheck
         shell: bash
         env:
-          CERT: ${{ secrets.WINDOWS_CERT_BASE64 }}
+          SEED: ${{ secrets.CERTUM_OTP_URI }}
         run: |
-          if [ -n "$CERT" ]; then echo "have=true" >> "$GITHUB_OUTPUT"; else echo "have=false" >> "$GITHUB_OUTPUT"; fi
-      - name: Sign installer (optional)
+          if [ -n "$SEED" ]; then echo "have=true" >> "$GITHUB_OUTPUT"; else echo "have=false" >> "$GITHUB_OUTPUT"; fi
+          if [ -z "$SEED" ]; then
+            echo "::warning title=Windows installer unsigned::CERTUM_OTP_URI secret 未配置，本次产物不会被签名。"
+          fi
+      # MSI 有 274MB，每次重下既慢又给 Certum 添负担。按版本号缓存。
+      - name: Cache SimplySign Desktop installer
         if: steps.signcheck.outputs.have == 'true'
-        env:
-          WINDOWS_CERT_BASE64: ${{ secrets.WINDOWS_CERT_BASE64 }}
-          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        id: ssdcache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}\SimplySignDesktop.msi
+          key: simplysign-desktop-9.4.4.92-64bit-en
+      - name: Install SimplySign Desktop
+        if: steps.signcheck.outputs.have == 'true'
         shell: pwsh
         run: |
-          [IO.File]::WriteAllBytes("$PWD\cert.pfx", [Convert]::FromBase64String($env:WINDOWS_CERT_BASE64))
-          $st = (Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" | Select-Object -Last 1).FullName
-          & "$st" sign /fd SHA256 /f "$PWD\cert.pfx" /p $env:WINDOWS_CERT_PASSWORD /tr http://timestamp.digicert.com /td SHA256 "$PWD\fushi\build\installer\fushi-${{ steps.channel.outputs.build_version_name }}-windows-setup.exe"
+          $msi = "$env:RUNNER_TEMP\SimplySignDesktop.msi"
+          # 上游文件应当是不可变的（URL 带版本号）。哈希对不上就停 —— 这是签名
+          # 凭据链路，宁可发不出版本，也不能把来路不明的 CSP/KSP 装进签名环境。
+          $expected = '8EC420FC27798B86078B7BD02FE7152097E1B3005BAB51820EACA8E57DF84DA3'
+          if (-not (Test-Path -LiteralPath $msi)) {
+            $url = 'https://files.certum.eu/software/SimplySignDesktop/Windows/9.4.4.92/SimplySignDesktop-9.4.4.92-64-bit-en.msi'
+            Write-Host "下载 SimplySign Desktop…"
+            Invoke-WebRequest -Uri $url -OutFile $msi -UseBasicParsing
+          }
+          $actual = (Get-FileHash -LiteralPath $msi -Algorithm SHA256).Hash
+          if ($actual -ne $expected) {
+            throw "SimplySign MSI 哈希不符。expected=$expected actual=$actual"
+          }
+          Write-Host "MSI 哈希校验通过。"
+          $p = Start-Process msiexec -ArgumentList @('/i', "`"$msi`"", '/qn', '/norestart') -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "msiexec 安装失败，退出码 $($p.ExitCode)" }
+          Write-Host "SimplySign Desktop 安装完成。"
+      - name: Connect SimplySign (unattended)
+        if: steps.signcheck.outputs.have == 'true'
+        shell: pwsh
+        env:
+          CERTUM_OTP_URI: ${{ secrets.CERTUM_OTP_URI }}
+          CERTUM_CERT_THUMBPRINT: ${{ secrets.CERTUM_CERT_THUMBPRINT }}
+        run: |
+          & "$PWD\tool\simplysign_connect.ps1"
+          if ($LASTEXITCODE -ne 0) { throw "SimplySign 登录失败，退出码 $LASTEXITCODE" }
+      - name: Sign Windows installer
+        if: steps.signcheck.outputs.have == 'true'
+        shell: pwsh
+        env:
+          CERTUM_CERT_THUMBPRINT: ${{ secrets.CERTUM_CERT_THUMBPRINT }}
+        run: |
+          & "$PWD\tool\sign_windows_release.ps1" `
+            -Path "$PWD\fushi\build\installer\fushi-${{ steps.channel.outputs.build_version_name }}-windows-setup.exe" `
+            -Description 'Fushi'
+          if ($LASTEXITCODE -ne 0) { throw "签名失败，退出码 $LASTEXITCODE" }
+      # 登录会话留在 runner 上没有意义，且 GitHub 托管 runner 用完即毁；
+      # 自托管 runner 上不断开则会把会话泄给下一个 job。
+      - name: Disconnect SimplySign
+        if: always() && steps.signcheck.outputs.have == 'true'
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $exe = Get-ChildItem $env:ProgramFiles, ${env:ProgramFiles(x86)} -Filter 'SimplySignDesktop.exe' -Recurse -Depth 3 -File -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($exe) { Start-Process $exe.FullName -ArgumentList '/close' -Wait -ErrorAction SilentlyContinue }
       - name: Prepare Windows installer release asset
         shell: bash
         env:
@@ -864,6 +950,7 @@ jobs:
           retention-days: 14
 
   macos:
+    if: ${{ github.event.inputs.kazumi_adhoc != 'true' }}
     runs-on: macos-latest
     permissions:
       contents: write
@@ -1120,7 +1207,7 @@ jobs:
             fi
           done < <(find "$runtime_dir" -type f)
           chmod +x tool/mihon/verify_desktop_runtime.sh
-          tool/mihon/verify_desktop_runtime.sh "$runtime_dir"
+          tool/mihon/verify_desktop_runtime.sh "$runtime_dir" "$app_dir/Contents/MacOS/fushi"
           codesign --force --deep --sign - --timestamp=none "$app_dir"
           codesign --verify --deep --strict --verbose=2 "$app_dir"
       # BUG-1922：这一步以前根本不存在。tool/aidoku/build_macos_runtime.sh 只被本地
@@ -1429,6 +1516,7 @@ jobs:
           retention-days: 14
 
   ios:
+    if: ${{ github.event.inputs.kazumi_adhoc != 'true' }}
     runs-on: macos-latest
     permissions:
       contents: write
@@ -1440,10 +1528,6 @@ jobs:
         with:
           flutter-version: '3.44.0'
           cache: true
-      - name: Install Rust toolchain for physical iOS devices
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-apple-ios
       - name: Resolve desktop release channel
         id: channel
         shell: bash
@@ -1921,9 +2005,39 @@ jobs:
             --apiKey "$APPSTORE_API_KEY_ID" --apiIssuer "$APPSTORE_API_ISSUER_ID"
           echo "已上传 TestFlight；App Store Connect 处理完成（通常 5-30 分钟）后才会出现在测试员列表里。"
 
+  kazumi-adhoc:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.kazumi_adhoc == 'true' }}
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Sign Kazumi for registered devices
+        shell: bash
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
+          APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+          IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+          IOS_DIST_CERT_P12_PASSWORD: ${{ secrets.IOS_DIST_CERT_P12_PASSWORD }}
+          KAZUMI_DEVICE_1_NAME: ${{ github.event.inputs.kazumi_device_1_name }}
+          KAZUMI_DEVICE_1_UDID: ${{ github.event.inputs.kazumi_device_1_udid }}
+          KAZUMI_DEVICE_2_NAME: ${{ github.event.inputs.kazumi_device_2_name }}
+          KAZUMI_DEVICE_2_UDID: ${{ github.event.inputs.kazumi_device_2_udid }}
+          KAZUMI_OUTPUT_DIR: ${{ runner.temp }}/kazumi-output
+        run: bash tool/sign_kazumi_adhoc.sh
+      - name: Upload signed Kazumi IPA
+        uses: actions/upload-artifact@v7
+        with:
+          name: kazumi-2.3.0-internal-adhoc
+          path: ${{ runner.temp }}/kazumi-output/*
+          if-no-files-found: error
+          retention-days: 14
+
   publish:
     needs: [windows, macos, ios]
-    if: ${{ always() }}
+    if: ${{ always() && github.event.inputs.kazumi_adhoc != 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write

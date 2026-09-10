@@ -461,3 +461,18 @@ class MihonRuntimeException implements Exception {
   @override
   String toString() => 'MihonRuntimeException($code): $message';
 }
+
+class MihonCloudflareChallengeException extends MihonRuntimeException {
+  const MihonCloudflareChallengeException(
+    this.url, {
+    this.userAgent,
+    super.cause,
+    super.details,
+  }) : super(
+         'CLOUDFLARE_CHALLENGE_REQUIRED',
+         'Source requires browser verification',
+       );
+
+  final Uri url;
+  final String? userAgent;
+}

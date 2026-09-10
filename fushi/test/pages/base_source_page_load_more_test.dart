@@ -66,6 +66,10 @@ class LoadMoreTestAppModel extends AppModel {
 
   @override
   bool get popupBottomDocked => false;
+  @override
+  // #1402 把 popupFullWidth 也拉上了弹窗几何这条 build 路径，它同样走 prefsRepo；
+  // 桩里不覆写就会在 build 时抛（与 popupBottomDocked 同因）。
+  bool get popupFullWidth => false;
 
   @override
   double get appUiScale => 1.0;
@@ -244,7 +248,8 @@ void main() {
         reason: '按 entries.length 递增会让上限一次暴涨十几倍');
     // The popup layer receives a non-null onScrolledToBottom when not allLoaded.
     expect(
-        base.contains('item.allLoaded ? null : () => loadMoreForLayer(index)'),
+        RegExp(r'item\.allLoaded[\s\S]{0,80}?loadMoreForLayer\(index\)')
+            .hasMatch(base),
         isTrue,
         reason:
             'the popup layer must wire onScrolledToBottom to loadMoreForLayer');

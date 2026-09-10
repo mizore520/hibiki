@@ -85,6 +85,8 @@ Future<bool> _pinnedReachabilityProbe(
       password: token,
       connectionTimeout: InterconnectSyncBackend.probeTimeout,
       pinnedFingerprint: fingerprint,
+      // BUG-2377：互联的凭据是配对 token，不是登录会话。
+      unauthorizedKind: SyncAuthFailureKind.pairingRejected,
     );
     await ops.testConnection().timeout(InterconnectSyncBackend.probeTimeout);
     return true;
@@ -113,6 +115,8 @@ Future<bool> _defaultFushiProbe(String url, String token) async {
       // Bound the socket connect itself (WebDavOps defaults to 60s); the outer
       // .timeout only bounds the awaited future, not the underlying connect.
       connectionTimeout: InterconnectSyncBackend.probeTimeout,
+      // BUG-2377：互联的凭据是配对 token，不是登录会话。
+      unauthorizedKind: SyncAuthFailureKind.pairingRejected,
     );
     await ops.testConnection().timeout(InterconnectSyncBackend.probeTimeout);
     return true;
@@ -335,6 +339,8 @@ class InterconnectSyncBackend extends SyncBackend
           username: 'hibiki',
           password: token,
           pinnedFingerprint: candidate.fingerprintSha256,
+          // BUG-2377：互联的凭据是配对 token，不是登录会话。
+          unauthorizedKind: SyncAuthFailureKind.pairingRejected,
         );
         _activeFingerprint = candidate.fingerprintSha256;
         // 与 [_ensureResolved] 的判据保持同一真相：暂定句柄用的是哪份凭据必须记下，
@@ -353,7 +359,8 @@ class InterconnectSyncBackend extends SyncBackend
   Future<void> _ensureResolved() async {
     if (_sessionResolved) return;
     if (!_hasAnyCredential) {
-      throw SyncAuthError('Fushi server credentials not configured');
+      throw SyncAuthError('Fushi server credentials not configured',
+          kind: SyncAuthFailureKind.pairingNotConfigured);
     }
     final FushiClientUrl chosen =
         await resolveReachableFushiCandidate(_candidates, _token ?? '', _probe);
@@ -376,6 +383,8 @@ class InterconnectSyncBackend extends SyncBackend
         // clearCache 才复位，页面级读取失败后永远钉死在死地址上，WAN 备用
         // 地址到重启前都不会被尝试。
         onConnectivityError: () => _sessionResolved = false,
+        // BUG-2377：互联的凭据是配对 token，不是登录会话。
+        unauthorizedKind: SyncAuthFailureKind.pairingRejected,
       );
       _activeFingerprint = chosen.fingerprintSha256;
       _activeToken = token;
@@ -394,7 +403,8 @@ class InterconnectSyncBackend extends SyncBackend
   Future<void> authenticate({required SyncRepository repo}) async {
     await _loadConfig(repo);
     if (_candidates.isEmpty || !_hasAnyCredential) {
-      throw SyncAuthError('Fushi server credentials not configured');
+      throw SyncAuthError('Fushi server credentials not configured',
+          kind: SyncAuthFailureKind.pairingNotConfigured);
     }
     // Probes + selects a reachable address (or throws), confirming the token
     // is accepted by the server.
@@ -1033,6 +1043,64 @@ class InterconnectSyncBackend extends SyncBackend
     final HttpClientResponse res = await req.close();
     await res.drain<void>();
     _ops!.checkStatus(res.statusCode, 'PUT /api/library/books/$title');
+  }
+
+  // ── 互联漫画源（按页在线阅读）────────────────────────────────────────
+  // 与上面的 books 通道**并存不重叠**：那条搬的是整卷 zip（「把这本搬过来」），
+  // 这条搬的是页（「我在你那儿翻页」）。作品清单**不新开端点**——漫画本来就在
+  // `/api/library/books` 里带 `format=='manga'` + `hasMangaContent` 出现。
+
+  /// 对端漫画 [bookKey] 的页表。
+  ///
+  /// 老 host（没有 `/api/library/manga/**`）与关掉库服务的 host 都返回 404，这里
+  /// 统一抛 [MangaInterconnectUnsupported]，由源页翻译成「对端 Fushi 版本过低」，
+  /// 而不是退化成一本没有页的空章节让阅读器对着空白转圈。
+  Future<RemoteMangaManifest> remoteMangaManifest(String bookKey) async {
+    await _ensureResolved();
+    final String path =
+        '/api/library/manga/${Uri.encodeComponent(bookKey)}/manifest';
+    final HttpClientRequest req =
+        await _ops!.buildRequest('GET', '$_apiBase$path');
+    final HttpClientResponse res = await _sendBounded(req);
+    if (res.statusCode == 404) {
+      await res.drain<void>();
+      throw const MangaInterconnectUnsupported();
+    }
+    if (res.statusCode >= 400) {
+      _ops!.checkStatus(
+        res.statusCode,
+        'GET $path',
+        serverReason: await readSyncErrorBody(res),
+      );
+    }
+    final String body = await _readBodyBounded(res);
+    final Object? decoded = jsonDecode(body);
+    if (decoded is! Map) {
+      throw const FormatException('Invalid manga manifest response');
+    }
+    return RemoteMangaManifest.fromJson(decoded.cast<String, Object?>());
+  }
+
+  /// 取对端漫画 [bookKey] 第 [index] 页（0 基）的页图字节。
+  ///
+  /// 走 [requestTimeout] 封顶而不是大文件那套 stall 超时：一页图是几百 KB 量级，
+  /// 且阅读器等着它渲染——挂住不如尽早失败让上层重试。
+  Future<Uint8List> fetchRemoteMangaPage(String bookKey, int index) async {
+    await _ensureResolved();
+    final String path =
+        '/api/library/manga/${Uri.encodeComponent(bookKey)}/pages/$index';
+    final HttpClientRequest req =
+        await _ops!.buildRequest('GET', '$_apiBase$path');
+    final HttpClientResponse res = await _sendBounded(req);
+    if (res.statusCode == 404) {
+      await res.drain<void>();
+      throw const MangaInterconnectUnsupported();
+    }
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      await res.drain<void>();
+      throw SyncBackendError('GET $path -> ${res.statusCode}');
+    }
+    return consolidateHttpClientResponseBytes(res).timeout(requestTimeout);
   }
 
   /// 通知对端 host 删除书名为 [title] 的书。
@@ -1828,6 +1896,8 @@ class InterconnectSyncBackend extends SyncBackend
       // 「测试连接」就泄漏一个最长 60s 的挂起 socket。
       connectionTimeout: InterconnectSyncBackend.probeTimeout,
       pinnedFingerprint: fingerprint,
+      // BUG-2377：互联的凭据是配对 token，不是登录会话。
+      unauthorizedKind: SyncAuthFailureKind.pairingRejected,
     );
     try {
       await ops.testConnection().timeout(InterconnectSyncBackend.probeTimeout);

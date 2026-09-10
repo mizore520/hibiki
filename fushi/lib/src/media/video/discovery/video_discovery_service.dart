@@ -5,14 +5,15 @@ import 'package:flutter/foundation.dart';
 import 'package:fushi/src/media/external_provider.dart';
 import 'package:fushi/src/media/video/discovery/video_discovery_adapters.dart';
 import 'package:fushi/src/media/video/discovery/video_discovery_provider.dart';
+import 'package:fushi/src/media/video/discovery/video_metadata_discovery_provider.dart';
 import 'package:fushi/src/media/video/metadata/anilist_video_metadata_provider.dart';
-import 'package:fushi/src/media/video/metadata/mal_video_metadata_provider.dart';
-import 'package:fushi/src/media/video/metadata/tmdb_video_metadata_provider.dart';
+import 'package:fushi/src/media/video/metadata/video_metadata_resolver.dart';
 import 'package:fushi/src/media/video/metadata/video_metadata_merge.dart';
 import 'package:fushi/src/media/video/metadata/video_metadata_models.dart';
 import 'package:fushi/src/media/video/metadata/video_metadata_provider.dart';
 import 'package:fushi/src/media/video/metadata/video_source_scrape_config.dart';
 import 'package:fushi/src/media/video/scraper/title_normalizer.dart';
+import 'package:fushi/src/models/store_compliance.dart';
 
 /// 发现页的生产聚合服务。
 ///
@@ -24,6 +25,7 @@ class VideoDiscoveryService {
     Iterable<VideoMetadataProvider> metadataProviders =
         const <VideoMetadataProvider>[],
     bool closesProviders = false,
+    Set<String>? searchProviderIds,
   })  : _providers = List<VideoDiscoveryProvider>.unmodifiable(
           providers.toList()
             ..sort(
@@ -35,29 +37,51 @@ class VideoDiscoveryService {
           for (final VideoMetadataProvider provider in metadataProviders)
             provider.providerKind: provider,
         },
-        _closesProviders = closesProviders;
+        _closesProviders = closesProviders,
+        _searchProviderIds = searchProviderIds == null
+            ? null
+            : Set<String>.unmodifiable(searchProviderIds);
 
   factory VideoDiscoveryService.production(
     VideoSourceScrapeGlobalConfig config,
   ) {
-    final TmdbVideoMetadataProvider tmdb = TmdbVideoMetadataProvider(
-      apiKey: config.tmdbApiKey,
-      language: config.locale,
-    );
+    final VideoMetadataProviderRegistry catalog =
+        VideoMetadataProviderRegistry.production(config);
     final AniListVideoMetadataProvider anilist = AniListVideoMetadataProvider();
+    // iOS 上不登记任何**发现** provider（[StoreRestrictedCapability.externalDiscovery]）；
+    // metadata provider 照常保留——那条链路服务的是本地媒体库的刮削（MAL / TMDB /
+    // AniDB 补全已入库文件的作品资料），与「浏览站上有什么可看」不是一回事，
+    // 两者共用本类只是因为它们查的是同一批 API。
+    final bool discoveryAvailable =
+        StoreRestrictedCapability.externalDiscovery.isAvailable;
     return VideoDiscoveryService(
       providers: <VideoDiscoveryProvider>[
-        AniListVideoDiscoveryProvider(),
-        TmdbVideoDiscoveryProvider(
-          apiKey: config.tmdbApiKey,
-          language: config.locale,
-        ),
+        if (discoveryAvailable)
+          for (final VideoMetadataProvider provider in catalog.providers)
+            if (provider.providerKind == VideoMetadataProviderKind.tmdb)
+              // Preserve TMDB's discovery paging and filter capabilities.
+              TmdbVideoDiscoveryProvider(
+                apiKey: config.tmdbApiKey,
+                language: config.locale,
+              )
+            else
+              VideoMetadataSearchDiscoveryProvider(
+                provider: provider,
+                categories: const <VideoDiscoveryCategory>{
+                  VideoDiscoveryCategory.anime,
+                },
+                priority: 5,
+              ),
+        if (discoveryAvailable) AniListVideoDiscoveryProvider(),
       ],
       metadataProviders: <VideoMetadataProvider>[
-        MalVideoMetadataProvider(),
-        tmdb,
+        ...catalog.providers,
         anilist,
       ],
+      searchProviderIds: <String>{
+        for (final VideoMetadataProvider provider in catalog.providers)
+          provider.providerKind.name,
+      },
       closesProviders: true,
     );
   }
@@ -66,6 +90,7 @@ class VideoDiscoveryService {
   final Map<VideoMetadataProviderKind, VideoMetadataProvider>
       _metadataProviders;
   final bool _closesProviders;
+  final Set<String>? _searchProviderIds;
   bool _closed = false;
 
   /// 聚合来源清单（按 priority 排序后的 provider id）。
@@ -77,6 +102,25 @@ class VideoDiscoveryService {
   List<String> get providerIdsForTesting => _providers
       .map((VideoDiscoveryProvider provider) => provider.id)
       .toList(growable: false);
+
+  /// provider id -> 用户可见来源名。找不到时退回 id（服务自身产生的 failure，例如
+  /// `discovery` 这个合成 id，本来就没有对应的来源）。
+  String displayNameFor(String providerId) {
+    for (final VideoDiscoveryProvider provider in _providers) {
+      if (provider.id == providerId) return provider.displayName;
+    }
+    return providerId;
+  }
+
+  @visibleForTesting
+  Set<String> get searchProviderIdsForTesting => <String>{
+        for (final VideoDiscoveryProvider provider in _providers)
+          if (_supportsRequest(
+            provider,
+            const VideoDiscoveryRequest(query: 'catalog'),
+          ))
+            provider.id,
+      };
 
   Future<ProviderBatchResult<VideoDiscoveryPage>> load(
     VideoDiscoveryRequest request,
@@ -246,6 +290,10 @@ class VideoDiscoveryService {
       return false;
     }
     if (request.isSearch) {
+      if (_searchProviderIds != null &&
+          !_searchProviderIds.contains(provider.id)) {
+        return false;
+      }
       if (!capabilities.supportsSearch) return false;
       return true;
     }

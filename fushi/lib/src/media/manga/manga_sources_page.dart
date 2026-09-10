@@ -14,12 +14,18 @@ import 'package:fushi/src/media/manga/aidoku/aidoku_repository_store.dart';
 import 'package:fushi/src/media/manga/aidoku/aidoku_runtime.dart';
 import 'package:fushi/src/media/manga/extension_management_tile.dart';
 import 'package:fushi/src/media/manga/manga_import_dialog.dart';
+import 'package:fushi/src/media/manga/cookie/manga_cookie_jar.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_cookie_jar.dart';
 import 'package:fushi/src/media/manga/mihon/mihon_extensions_page.dart';
 import 'package:fushi/src/media/manga/mihon/mihon_manager.dart';
 import 'package:fushi/src/media/manga/mihon/mihon_models.dart';
 import 'package:fushi/src/media/manga/mihon/mihon_runtime_factory.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_runtime.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_web_login_page.dart';
+import 'package:fushi/src/media/manga/interconnect/interconnect_manga_source_row.dart';
 import 'package:fushi/src/media/manga/online/mokuro_moe_source_row.dart';
 import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/models/store_compliance.dart';
 import 'package:fushi/src/pages/implementations/media_sources_view.dart';
 import 'package:fushi/utils.dart';
 import 'package:fushi/src/media/import/real_path_directory_picker.dart';
@@ -569,6 +575,39 @@ class _MangaSourcesPageState extends ConsumerState<MangaSourcesPage> {
     }
   }
 
+  /// 该源能不能在 app 里登录，以及登录页要打开哪个地址。
+  ///
+  /// 两个条件缺一不可：运行时是「宿主持有 cookie」那一类（桌面 sidecar；Android
+  /// 由系统 `CookieManager` 拥有 cookie，不需要也不该走这条），以及该源报出了
+  /// 可解析出 host 的 baseUrl（有些源的 baseUrl 是空串或相对地址）。
+  Uri? _loginTargetFor(MangaOnlineSourceRow source) => mihonLoginTarget(
+        runtime: _manager?.runtime,
+        baseUrl: source.baseUrl,
+      );
+
+  Future<void> _openWebLogin(MangaOnlineSourceRow source) async {
+    final Uri? target = _loginTargetFor(source);
+    final Object? runtime = _manager?.runtime;
+    if (target == null || runtime is! HostCookieMihonRuntime) return;
+    final MangaCookieJar jar = runtime.cookieJar;
+    if (jar is! MihonCookieJar) return;
+    final bool? saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        fullscreenDialog: true,
+        builder: (BuildContext _) => MihonWebLoginPage(
+          sourceName: source.name,
+          baseUrl: target,
+          jar: jar,
+        ),
+      ),
+    );
+    if (!mounted || saved != true) return;
+    FushiToast.show(msg: t.mihon_source_login_saved);
+    // 登录态变了，源的章节归属会跟着变；让下一次进源重新取，而不是继续用锁着的
+    // 那份缓存。
+    setState(() {});
+  }
+
   void _openPreferences(MangaOnlineSourceRow source) {
     showAppDialog<void>(
       context: context,
@@ -637,6 +676,7 @@ class _MangaSourcesPageState extends ConsumerState<MangaSourcesPage> {
       );
 
   Widget _buildAidokuSection() {
+    final FushiDesignTokens tokens = FushiDesignTokens.of(context);
     if (!AidokuRuntimeFactory.isSupported) {
       return Padding(
         padding: const EdgeInsets.all(24),
@@ -753,11 +793,12 @@ class _MangaSourcesPageState extends ConsumerState<MangaSourcesPage> {
         for (final AidokuSavedRepository repository
             in _aidokuRepositories ?? const <AidokuSavedRepository>[])
           FushiCard(
+            margin: EdgeInsets.only(bottom: tokens.spacing.gap),
             padding: EdgeInsets.zero,
             child: FushiListItem(
               leading: const Icon(Icons.cloud_outlined),
               title: Text(repository.name),
-              subtitle: Text(repository.indexUrl),
+              subtitle: Text(mangaSourceHostLabel(repository.indexUrl)),
               trailing: Wrap(
                 children: <Widget>[
                   IconButton(
@@ -816,9 +857,11 @@ class _MangaSourcesPageState extends ConsumerState<MangaSourcesPage> {
                 contentWarning: (source.contentRating ?? 0) >= 3,
                 busy: _aidokuInstallingSourceId == source.id,
                 subtitle: Text(
-                  '${source.languages.join(', ').toUpperCase()} · '
-                  '${t.aidoku_extension_version} ${source.version}\n'
-                  '${source.baseUrl ?? source.id}',
+                  mangaSourceMetaLine(<String?>[
+                    source.languages.join(', ').toUpperCase(),
+                    '${t.aidoku_extension_version} ${source.version}',
+                    mangaSourceHostLabel(source.baseUrl ?? source.id),
+                  ]),
                 ),
                 enabled: package?.enabled,
                 onEnabledChanged: package == null
@@ -842,9 +885,11 @@ class _MangaSourcesPageState extends ConsumerState<MangaSourcesPage> {
           MangaExtensionManagementTile(
             title: package.name,
             subtitle: Text(
-              '${package.languages.join(', ').toUpperCase()} · '
-              '${t.aidoku_extension_version} ${package.version}\n'
-              '${package.id}',
+              mangaSourceMetaLine(<String?>[
+                package.languages.join(', ').toUpperCase(),
+                '${t.aidoku_extension_version} ${package.version}',
+                mangaSourceHostLabel(package.id),
+              ]),
             ),
             enabled: package.enabled,
             onEnabledChanged: (bool value) =>
@@ -871,6 +916,12 @@ class _MangaSourcesPageState extends ConsumerState<MangaSourcesPage> {
   @override
   Widget build(BuildContext context) {
     final MihonManager? manager = _manager;
+    // iOS 上「来源」视图只剩本地：扫描根与单卷导入。扩展仓库与在线源整段不渲染
+    // （[StoreRestrictedCapability.onlineMangaSource]），连「本平台不支持」的说明
+    // 也不留——合规要求的是不提供第三方内容源入口，一句「这个功能在 macOS 上有」
+    // 仍然是在向 iOS 用户指路。
+    final bool onlineSourcesAvailable =
+        StoreRestrictedCapability.onlineMangaSource.isAvailable;
     return DesktopContentLayout(
       kind: DesktopContentKind.readerShelf,
       child: Column(
@@ -941,20 +992,23 @@ class _MangaSourcesPageState extends ConsumerState<MangaSourcesPage> {
                               key: _localSourcesKey,
                               mediaKind: 'manga',
                             ),
-                            const SizedBox(height: 28),
-                            _sectionTitle(t.aidoku_extensions_title),
-                            const SizedBox(height: 8),
-                            _buildAidokuSection(),
-                            const SizedBox(height: 28),
-                            _sectionTitle(t.mihon_extensions_title),
-                            const SizedBox(height: 8),
+                            if (onlineSourcesAvailable) ...<Widget>[
+                              const SizedBox(height: 28),
+                              _sectionTitle(t.aidoku_extensions_title),
+                              const SizedBox(height: 8),
+                              _buildAidokuSection(),
+                              const SizedBox(height: 28),
+                              _sectionTitle(t.mihon_extensions_title),
+                              const SizedBox(height: 8),
+                            ],
                           ],
                         ),
                       ),
-                      if (manager == null)
-                        SliverToBoxAdapter(child: _unavailableNote())
-                      else
-                        const MihonExtensionsPage(embedded: true),
+                      if (onlineSourcesAvailable)
+                        if (manager == null)
+                          SliverToBoxAdapter(child: _unavailableNote())
+                        else
+                          const MihonExtensionsPage(embedded: true),
                       SliverToBoxAdapter(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -963,12 +1017,24 @@ class _MangaSourcesPageState extends ConsumerState<MangaSourcesPage> {
                             _sectionTitle(t.mihon_sources_title),
                             const SizedBox(height: 8),
                             // 内置在线源：与扩展提供的源同节同级（见类文档）。
-                            const MokuroMoeSourceRow(),
-                            if (manager == null) _unavailableNote(),
+                            if (onlineSourcesAvailable) ...<Widget>[
+                              const MokuroMoeSourceRow(),
+                              const SizedBox(height: 8),
+                            ],
+                            // 已配对互联对端的漫画库也是一个「在线源」：不下整卷，
+                            // 直接在对端上翻页（Suwayomi 作为 Tachiyomi 源的形态）。
+                            //
+                            // 这一行**不受商店合规边界约束**，iOS 上照常提供：它读的是
+                            // 用户自己另一台设备上的库，不是第三方内容索引——与 Plex /
+                            // Jellyfin 客户端连自己的服务器同类。整节因此也保留标题，
+                            // 只是在 iOS 上只剩这一行。
+                            const InterconnectMangaSourceRow(),
+                            if (onlineSourcesAvailable && manager == null)
+                              _unavailableNote(),
                           ],
                         ),
                       ),
-                      if (manager != null)
+                      if (onlineSourcesAvailable && manager != null)
                         SliverList.builder(
                           itemCount: manager.sources.length,
                           itemBuilder: (BuildContext context, int index) =>
@@ -1023,6 +1089,13 @@ class _MangaSourcesPageState extends ConsumerState<MangaSourcesPage> {
                   : () => unawaited(_moveSource(source, 1)),
               icon: const Icon(Icons.keyboard_arrow_down),
             ),
+            if (_loginTargetFor(source) != null)
+              IconButton(
+                key: ValueKey<String>('mihon_source_login_${source.sourceId}'),
+                tooltip: t.mihon_source_login,
+                onPressed: () => unawaited(_openWebLogin(source)),
+                icon: const Icon(Icons.login),
+              ),
             IconButton(
               tooltip: t.mihon_source_preferences,
               onPressed: () => _openPreferences(source),
@@ -1318,7 +1391,10 @@ class _AidokuRepositorySourcesDialogState
                           iconUrl: source.iconUri?.toString(),
                           contentWarning: (source.contentRating ?? 0) >= 3,
                           subtitle: Text(
-                            '${metadata.join(' · ')}\n${source.id}',
+                            mangaSourceMetaLine(<String?>[
+                              ...metadata,
+                              mangaSourceHostLabel(source.id),
+                            ]),
                           ),
                           busy: isInstalling,
                           enabled: installed?.enabled,

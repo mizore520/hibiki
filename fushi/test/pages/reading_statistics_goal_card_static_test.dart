@@ -114,12 +114,40 @@ void main() {
       isTrue,
       reason: '应定义 _editGoals',
     );
-    expect(text.contains('setReadingGoalDailyChars'), isTrue);
-    expect(text.contains('setReadingGoalWeeklyChars'), isTrue);
+    // 表单本体已提成统计页共享件：统计中心总览 tab 编辑的是同一个持久化目标，
+    // 两处各写一份的话单位/清零语义/校验一改就只改到一处。本页因此只剩「调共享
+    // 对话框 → setState 即时刷新卡片」两步，持久化写入的落点随之搬到
+    // stat_shared.dart（由下一条守卫钉死那边是唯一落点）。
+    final String editGoals = methodBody(text, 'Future<void> _editGoals()');
     expect(
-      text.contains('setState(() {})'),
+      editGoals.contains('showStatGoalEditDialog(context'),
       isTrue,
-      reason: '写 pref 后 setState 即时刷新卡片',
+      reason: '_editGoals 应调统计页共享目标对话框',
+    );
+    expect(
+      editGoals.contains('setState(() {})'),
+      isTrue,
+      reason: '保存后 setState 即时刷新卡片',
+    );
+  });
+
+  test('shared goal dialog is the single place that persists both goals', () {
+    final String text = File(
+      'lib/src/pages/implementations/stat_shared.dart',
+    ).readAsStringSync();
+    final String dialog = methodBody(
+      text,
+      'Future<bool> showStatGoalEditDialog(',
+    );
+    expect(
+      dialog.contains('setReadingGoalDailyChars'),
+      isTrue,
+      reason: '共享目标对话框应写穿每日目标',
+    );
+    expect(
+      dialog.contains('setReadingGoalWeeklyChars'),
+      isTrue,
+      reason: '共享目标对话框应写穿每周目标',
     );
   });
 

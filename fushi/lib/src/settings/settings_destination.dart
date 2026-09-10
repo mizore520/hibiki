@@ -14,7 +14,6 @@ enum SettingsDestinationId {
   lookup,
   cardCreation,
   video,
-  listening,
   mediaTracking,
   // 「下载」一级分类：torrent / qBittorrent 后端配置从下载页齿轮抬进设置主页
   // （可达 + 可搜）。位置紧随视频/听，在同步备份之前。
@@ -126,6 +125,7 @@ class SettingsDestination {
     this.summary,
     this.visible,
     this.body,
+    this.bodyBeforeSections = false,
     this.bodySearchEntries = const <SettingsBodySearchEntry>[],
   });
 
@@ -143,9 +143,12 @@ class SettingsDestination {
   /// **不得**自带脚手架/独立滚动（外层渲染器已提供滚动与内边距）。
   final SettingsItemBuilder? body;
 
-  /// [body] 逃生口里设置行的搜索元数据。设置搜索索引器只遍历 [sections]，
-  /// body 自绘正文里的行对它不可见；在此登记行标题让它们进入搜索。命中后跳转
-  /// 到本分类正文即可——body 行不是 schema item，没有滚动定位挂点。
+  /// Allows an existing grouped form to precede navigation without nesting its
+  /// surfaces inside a synthetic schema row.
+  final bool bodyBeforeSections;
+
+  /// 自绘正文的搜索元数据。索引器沿子页路径递归收集；声明 hasRevealTarget 的
+  /// 行使用真实 SettingsSearchTarget 定位，其余兼容条目只导航到所在页。
   final List<SettingsBodySearchEntry> bodySearchEntries;
 
   bool isVisible(SettingsContext context) => visible?.call(context) ?? true;
@@ -169,14 +172,17 @@ class SettingsBodySearchEntry {
     required this.title,
     this.subtitle,
     this.visible,
+    this.hasRevealTarget = false,
   });
 
-  /// 全局唯一 id（约定带所属 destination 前缀，如 `card_creation.anki.deck`）。
-  /// 只用于搜索条目身份，不对应任何 schema item。
+  /// 全局唯一 id（如 `card_creation.anki.deck`），与真实正文挂点使用相同身份。
   final String id;
   final String title;
   final String? subtitle;
   final SettingsVisibility? visible;
+
+  /// True only when the real body row is wrapped in SettingsSearchTarget.
+  final bool hasRevealTarget;
 
   bool isVisible(SettingsContext context) => visible?.call(context) ?? true;
 }
@@ -187,35 +193,50 @@ class SettingsBodySearchEntry {
 /// 削弱这道覆盖守卫。凡「枚举/驱动全部设置行」的测试须在 setUp 里置 true、tearDown 复位。
 bool debugSettingsForceExpandAllSections = false;
 
+/// Core controls remain visible; secondary groups explicitly opt into folding.
+enum SettingsSectionPresentation { alwaysExpanded, expanded, collapsed }
+
 class SettingsSection {
   const SettingsSection({
     required this.items,
+    this.id,
     this.title,
     this.footer,
     this.visible,
-    this.collapsedByDefault = false,
-  });
+    bool collapsedByDefault = false,
+    SettingsSectionPresentation? presentation,
+    this.summaryBuilder,
+  }) : presentation =
+           presentation ??
+           (collapsedByDefault
+               ? SettingsSectionPresentation.collapsed
+               : SettingsSectionPresentation.alwaysExpanded);
+
+  /// Stable identity independent of translated titles or visible row positions.
+  final String? id;
+  final SettingsSectionPresentation presentation;
+  final SettingsSubtitleBuilder? summaryBuilder;
 
   final String? title;
   final String? footer;
   final SettingsVisibility? visible;
   final List<SettingsItem> items;
 
-  /// 为 true 时本 section 进入详情页默认收起，标题头带可点击的展开箭头（触摸/鼠标
-  /// 点头 + 焦点驱动 Enter/手柄 A 都能展开）。只对带 [title] 的 section 生效——无题
-  /// section（如互联未激活指引）没有可点的头，永远平铺。搜索命中折叠 section 内的项
-  /// 时渲染器强制展开定位（见 SettingsSchemaSection）。仅影响显示，不改 item 集合/顺序/
-  /// 持久化。
-  final bool collapsedByDefault;
+  /// 旧调用点的兼容读取；新代码显式使用 presentation。折叠仅影响展示，
+  /// 搜索可临时展开，业务配置值不受影响。
+  bool get collapsedByDefault =>
+      presentation == SettingsSectionPresentation.collapsed;
 
   bool isVisible(SettingsContext context) => visible?.call(context) ?? true;
 
   SettingsSection visibleCopy(SettingsContext context) {
     return SettingsSection(
+      id: id ?? (items.isEmpty ? null : 'section.${items.first.id}'),
       title: title,
       footer: footer,
       visible: visible,
-      collapsedByDefault: collapsedByDefault,
+      presentation: presentation,
+      summaryBuilder: summaryBuilder,
       items: items
           .where((SettingsItem item) => item.isVisible(context))
           .toList(growable: false),
@@ -337,8 +358,10 @@ class SettingsStatusItem extends SettingsItem {
     super.video,
     this.actionLabel,
     this.onAction,
-  }) : assert((actionLabel == null) == (onAction == null),
-            'actionLabel 与 onAction 必须同时给或同时不给');
+  }) : assert(
+         (actionLabel == null) == (onAction == null),
+         'actionLabel 与 onAction 必须同时给或同时不给',
+       );
 
   /// 行尾动作按钮文案；null = 无按钮。
   final String? actionLabel;

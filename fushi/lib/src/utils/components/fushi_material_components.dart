@@ -296,10 +296,15 @@ class _FushiListItemState extends State<FushiListItem> {
     // pill 形态**两态都画边框**，未选中时透明：BoxDecoration 的 border 会把子节点向
     // 内挤 1px，只在选中时给边框会让同一行选中后比未选中高 2px（功能选择卡片在
     // 列表里逐行错位）。几何恒定，颜色才是唯一的选中信号。
+    //
+    // 非 eink 下选中边也保持透明：secondaryContainer 填充已经把选中态说清楚了，
+    // 再叠一圈 primary 20% 的细边只是填充之上的第二条线（设置页左栏里它和分组卡
+    // 描边、行分隔线一起凑成三层线）。eink 下选中填充塌缩成背景色，边是唯一信号，
+    // 那里保留并换成实描边色。
     final BoxBorder? pillBorder = pill
         ? Border.all(
-            color: widget.selected
-                ? tokens.surfaces.primary.withValues(alpha: 0.20)
+            color: widget.selected && isEinkTheme(context)
+                ? tokens.surfaces.outline
                 : Colors.transparent,
           )
         : null;
@@ -657,15 +662,25 @@ class FushiSelectableChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final FushiDesignTokens tokens = FushiDesignTokens.of(context);
     final ColorScheme colors = Theme.of(context).colorScheme;
-    final Color foreground =
-        selected ? colors.onPrimaryContainer : tokens.surfaces.onSurface;
+    final bool eink = isEinkTheme(context);
+    // E-ink：`primaryContainer` 与 `onPrimaryContainer` 双双塌缩到页面底色/前景，
+    // 于是选中态既没有填充差异、边框还从 outlineVariant 变成了底色——选中的
+    // chip 比未选中的更没有边，是个负信号。反色填充是墨水屏上唯一稳定可辨的
+    // 选中通道（与 segmentedButtonTheme / chipTheme 的处理同源）。
+    final Color selectedFill =
+        eink ? colors.onSurface : colors.primaryContainer;
+    final Color foreground = selected
+        ? (eink ? colors.surface : colors.onPrimaryContainer)
+        : tokens.surfaces.onSurface;
     // 仅图标模式（TODO-640）：图标当作 chip 的 label（不再放进 avatar + 文字），
     // chip 收成正方裸图标；需 leadingIcon 非空才生效，否则退化为普通文字 chip。
     final bool effectiveIconOnly = iconOnly && leadingIcon != null;
     final Widget? effectiveAvatar = effectiveIconOnly
         ? null
         : (avatar ??
-            (leadingIcon == null ? null : Icon(leadingIcon, size: 18)));
+            (leadingIcon == null
+                ? null
+                : Icon(leadingIcon, size: 18, color: foreground)));
     final Widget labelWidget = effectiveIconOnly
         ? Icon(leadingIcon, size: 18, color: foreground)
         : Text(
@@ -683,11 +698,13 @@ class FushiSelectableChip extends StatelessWidget {
       labelPadding: effectiveIconOnly ? EdgeInsets.zero : null,
       selected: selected,
       showCheckmark: false,
-      selectedColor: colors.primaryContainer,
+      selectedColor: selectedFill,
       backgroundColor: Colors.transparent,
       labelStyle: tokens.type.controlLabel.copyWith(color: foreground),
       side: BorderSide(
-        color: selected ? colors.primaryContainer : colors.outlineVariant,
+        color: selected
+            ? (eink ? colors.outline : colors.primaryContainer)
+            : colors.outlineVariant,
       ),
       shape: RoundedRectangleBorder(borderRadius: tokens.radii.chipRadius),
       visualDensity: VisualDensity.compact,
@@ -1786,15 +1803,18 @@ class FushiPageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final FushiDesignTokens tokens = FushiDesignTokens.of(context);
-    // TODO-667: 顶部留白分三档。
+    // TODO-667 / BUG-2402: 顶部留白按「页头主位是什么」先分两类，标题类再分三档。
+    // - 页头主位是嵌入的分段 tab 行（[titleWidget] 非空）：顶距恒 0，与窗口宽度
+    //   无关，理由见下方 [resolvedTop] 处的注释。
+    // 以下三档只适用于纯文字大标题（[title]）：
     // - [compact] 模式（上方已有 AppBar，由 [FushiPageScaffold] 传入）顶距最小，
     //   只留一个 gap，标题紧贴 AppBar 下沿。
     // - 非 compact 但窗口是手机竖屏 / 窄窗（[WindowSizeClass.compact]，宽 < 600）：
     //   页头本身就是顶部锚点，外层 [SafeArea] 已让出状态栏 / 刘海，再叠
-    //   `page + 8 = 24` 会让标题离顶部空出一行（用户反馈「和摄像头差一行」）。
-    //   收到普通 `page = 16`，保留必要呼吸又不顶到摄像头。
+    //   `page + 8` 会让标题离顶部空出一行（用户反馈「和摄像头差一行」）。
+    //   收到普通 `page`，保留必要呼吸又不顶到摄像头。
     // - 非 compact 的中 / 宽窗（桌面 / 平板，宽 >= 600）：窗口顶部无系统栏遮挡、
-    //   内容区另有左右留白，`page + 8 = 24` 的标题区呼吸感合适，保持不变。
+    //   内容区另有左右留白，`page + 8` 的标题区呼吸感合适。
     // BUG-401: classify on the real physical width. FushiPageHeader renders
     // inside FushiAppUiScale, so MediaQuery.sizeOf here is the inflated
     // logical width; multiply by the net app UI scale to recover the real
@@ -1804,9 +1824,18 @@ class FushiPageHeader extends StatelessWidget {
           FushiAppUiScale.of(context),
         ) ==
         WindowSizeClass.compact;
-    final double resolvedTop = compact
-        ? tokens.spacing.gap
-        : (narrowWindow ? tokens.spacing.page : tokens.spacing.page + 8);
+    // Embedded tabs already own a touch-height row, so the header is a seam
+    // between the shell chrome and those tabs, not a title band. Whatever sits
+    // above it already yields the space that seam needs -- SafeArea for the
+    // status bar / notch on phones, FushiDesktopTitleBar's real 32px caption row
+    // on desktop -- and the tabs carry their own 13px of centring slack inside
+    // the 46px MD3 TabBar. A title margin here is therefore a second, redundant
+    // one at every window size, which is why this arm ignores [narrowWindow].
+    final double resolvedTop = titleWidget != null
+        ? 0
+        : compact
+            ? tokens.spacing.gap
+            : (narrowWindow ? tokens.spacing.page : tokens.spacing.page + 8);
     final EdgeInsetsGeometry resolvedPadding = padding ??
         EdgeInsets.fromLTRB(
           tokens.spacing.page,

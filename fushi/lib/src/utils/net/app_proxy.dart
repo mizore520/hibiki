@@ -17,11 +17,11 @@
 ///   * 需要异步现场解析的老调用点（云同步 / 更新检查 / 下载发现）继续用 [applyAppProxy]；
 ///   * 词典链路经 `utils/net/dictionary_dio.dart` 的工厂钩子（BUG-1493）；
 ///   * **本机 / 局域网 / 自建服务**（AnkiConnect、Yomitan 端口、Mihon sidecar、互联 peer、
-///     qBittorrent WebUI、WebDAV/FTP/SFTP、texthooker WS）**故意不经本层**，并且**即便经了
+///     qBittorrent WebUI、FTP/SFTP、texthooker WS）**故意不经本层**，并且**即便经了
 ///     也不会被代理**——见 [isDirectProxyTarget]。
-///   * 结构上注入不了代理的：`NetworkImage` / `CachedNetworkImageProvider`（Flutter 内部
-///     HttpClient）、media_kit/libmpv 拉流、内置 torrent 引擎（BT peer 不是 HTTP，代理只能
-///     设在 libtorrent session 上）。
+///   * 图片经 `AppHttpImage` / `AppCachedHttpImage`；普通公网 WebDAV 同样经工厂。
+///   * 原生播放器与 Aidoku 经鉴权回环转发，Mihon 经逐 URL 策略回调。
+///   * 内置 torrent 引擎保留单独的 P2P 开关，代理下发到 libtorrent session。
 ///
 /// 守卫 `test/tools/outbound_http_discipline_guard_test.dart` 钉死这条纪律：新增裸
 /// `HttpClient()` / `http.Client()` / `IOClient()` / `Dio()` 必须登记在案并写明理由。
@@ -106,12 +106,7 @@ void _installManualProxyCredentials(
   HttpClient client, {
   String? legacyUserProxy,
 }) {
-  // 没配用户名 = 没有可交付的凭据。装一个恒返 false 的回调只有副作用：全应用每个
-  // HttpClient 都白挂一个捕获 client 的闭包。代价是凭据变成早绑定——用户中途填了
-  // 用户名，已建好的 client 拿不到钩子；设置页三个 onChanged 都调了
-  // resetSyncHttpClient()、更新检查每次新建 client，只有 dictionary_dio 那个进程级
-  // Dio 要等重启，可接受。
-  if (appUserProxyUsernameReader().isEmpty) return;
+  // 与 findProxy 一样在请求时读取，已有 client 也能响应后来填写的认证配置。
   // 同一 (host, port, scheme, realm) 只交付一次凭据。dart:io 的 retry() 没有深度
   // 计数器：密码错时它会「407 → 移除已用凭据 → 再问回调 → 又加同一份 → retry」
   // 无限打转，请求永不返回、用户只看到转圈。被问第二次就说明上一份被代理拒了。
@@ -126,6 +121,13 @@ void _installManualProxyCredentials(
         if (scheme.toLowerCase() != 'basic') return false;
         final String username = appUserProxyUsernameReader();
         if (username.isEmpty) return false;
+        final String? endpoint = normalizeUserProxyHostPort(
+          _resolveProxyDecision(legacyUserProxy).proxy,
+        );
+        if (endpoint == null ||
+            endpoint.toLowerCase() != '$host:$port'.toLowerCase()) {
+          return false;
+        }
         if (!attempted.add('$host:$port|$scheme|${realm ?? ''}')) return false;
         client.addProxyCredentials(
           host,
@@ -406,6 +408,20 @@ String? proxyHostPortFromDirective(String directive) {
 /// 落进 [isDirectProxyTarget] 的本机/局域网闸门，任何公网 host 得到的答案都一样。
 String? resolveAppProxyHostPort() =>
     proxyHostPortFromDirective(resolveAppProxyDirective(_kPublicProbeUri));
+
+/// Credentials for the currently selected manual proxy, never for a direct
+/// target or an environment/system proxy. Native clients ask at request time.
+({String username, String password})? resolveAppProxyCredentials(Uri uri) {
+  final ({String mode, String proxy}) decision = _resolveProxyDecision(null);
+  if (decision.mode != kProxyModeManual) return null;
+  final String? endpoint = normalizeUserProxyHostPort(decision.proxy);
+  if (endpoint == null || resolveAppProxyDirective(uri) != 'PROXY $endpoint') {
+    return null;
+  }
+  final String username = appUserProxyUsernameReader();
+  if (username.isEmpty) return null;
+  return (username: username, password: appUserProxyPasswordReader());
+}
 
 final Uri _kPublicProbeUri = Uri.parse('https://example.com/');
 

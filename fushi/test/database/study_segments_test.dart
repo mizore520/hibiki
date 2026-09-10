@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi/src/stats/stat_facts.dart';
+import 'package:fushi/src/stats/study_sessions.dart';
 import 'package:fushi_core/fushi_core.dart';
 
 // v92 统计域重构：study_segments 是学习统计的唯一事实表。本测试锁定 DAO 契约：
@@ -193,6 +194,77 @@ void main() {
         expect((await db.getStudySegments()).single.durationMs, 0);
       },
     );
+  });
+
+  group('会话流删单次会话（用户 2026-09-08：能删误点的 0 分钟会话）', () {
+    test('zeroStudySegmentsByUids：只写零命中的 uid，updatedAt 推进；空集 no-op', () async {
+      final FushiDatabase db = await _openDb();
+      await db.upsertStudySegment(_seg('a', ms: 5000, chars: 100));
+      await db.upsertStudySegment(_seg('b', ms: 7000));
+      await db.upsertStudySegment(_seg('c', key: 'b2', ms: 9000));
+      expect(await db.zeroStudySegmentsByUids(const <String>{}), 0);
+      expect(await db.zeroStudySegmentsByUids(<String>{'a', 'b'}), 2);
+      final Map<String, StudySegmentRow> rows = <String, StudySegmentRow>{
+        for (final StudySegmentRow r in await db.getStudySegments()) r.uid: r,
+      };
+      expect(rows['a']!.durationMs, 0);
+      expect(rows['a']!.chars, 0);
+      expect(rows['a']!.updatedAt, greaterThan(1000), reason: '零值是新的绝对值写');
+      expect(rows['b']!.durationMs, 0);
+      expect(rows['c']!.durationMs, 9000, reason: '别的会话不动');
+      expect(
+        await db.getStudySegmentTombstones(),
+        isEmpty,
+        reason: '删单次会话不立按身份墓碑（那会压死这本书的全部历史）',
+      );
+    });
+
+    test('deleteStudySession（游戏）：骨架行硬删 + 吸收的字数段写零，同一事务', () async {
+      final FushiDatabase db = await _openDb();
+      await db.upsertGalgame(
+        GalgamesCompanion.insert(
+          id: 'g1',
+          name: 'g1',
+          exePath: '/g/g1.exe',
+          workdir: '/g',
+          addedAt: 0,
+        ),
+      );
+      final int sid = await db.insertGalgameSession(
+        GalgameSessionsCompanion.insert(
+          gameId: 'g1',
+          startMs: 0,
+          endMs: 60000,
+          durationSeconds: 60,
+          dateKey: '2026-09-08',
+        ),
+      );
+      await db.upsertStudySegment(
+        _seg('h', kind: kActivityMediaGame, key: 'g1', chars: 300, ms: 0),
+      );
+      await db.deleteStudySession(
+        segmentUids: <String>{'h'},
+        gameSessionId: sid,
+      );
+      expect(await db.getGalgameSessions('g1'), isEmpty);
+      expect((await db.getStudySegments()).single.chars, 0);
+    });
+
+    test('写零后的会话不再出现在 StatFacts.sessions', () async {
+      final FushiDatabase db = await _openDb();
+      await db.upsertStudySegment(
+        _seg('a', ms: 5000, chars: 10, startAt: 1000, endAt: 6000),
+      );
+      await db.upsertStudySegment(
+        _seg('b', ms: 8000, startAt: 7200000, endAt: 7208000),
+      );
+      expect((await loadStatFacts(db, activityLimit: 0)).sessions, hasLength(2));
+      await db.deleteStudySession(segmentUids: <String>{'a'});
+      final List<StudySession> after =
+          (await loadStatFacts(db, activityLimit: 0)).sessions;
+      expect(after, hasLength(1));
+      expect(after.single.segmentUids, <String>['b']);
+    });
   });
 
   test('upsertStudySegment 按 uid 幂等：同 uid 两次写 = 一行，取后一次的绝对值', () async {
@@ -544,5 +616,167 @@ void main() {
     await db.upsertStudySegment(_seg('a'));
     await Future<void>.delayed(const Duration(milliseconds: 50));
     expect(emitted, isNotEmpty);
+  });
+
+  // 用户 2026-09-10：会话行可编辑（日期 / 字数）+ 会话区块「清除全部会话」。三条新
+  // DAO 原语的契约：读回段 / 批量清 / 逐段绝对值改写。语义层（分摊、平移、退役纪律）
+  // 在 test/stats/study_session_edit_test.dart。
+  group('会话编辑 / 批量清除的 DAO 原语', () {
+    Future<int> putGame(FushiDatabase db, String id, {int start = 1000}) async {
+      await db.upsertGalgame(
+        GalgamesCompanion.insert(
+          id: id,
+          name: 'G',
+          exePath: '$id.exe',
+          workdir: '.',
+          addedAt: 0,
+        ),
+      );
+      return db.insertGalgameSession(
+        GalgameSessionsCompanion.insert(
+          gameId: id,
+          startMs: start,
+          endMs: start + 3600000,
+          durationSeconds: 3600,
+          dateKey: '2026-08-29',
+        ),
+      );
+    }
+
+    test('getStudySegmentsByUids：命中 / 空集 / 不存在的 uid', () async {
+      final FushiDatabase db = await _openDb();
+      await db.upsertStudySegment(_seg('a', chars: 10));
+      await db.upsertStudySegment(_seg('b', chars: 20));
+      await db.upsertStudySegment(_seg('c', chars: 30));
+      expect(
+        (await db.getStudySegmentsByUids(<String>{'a', 'c'}))
+            .map((r) => r.uid)
+            .toSet(),
+        <String>{'a', 'c'},
+      );
+      expect(
+        await db.getStudySegmentsByUids(const <String>{}),
+        isEmpty,
+        reason: '空集不许退化成「取全表」',
+      );
+      expect(
+        (await db.getStudySegmentsByUids(<String>{'a', 'nope'}))
+            .map((r) => r.uid)
+            .toSet(),
+        <String>{'a'},
+        reason: '不存在的 uid 不报错、不造行',
+      );
+    });
+
+    test('deleteStudySessions：整批段写零 + 骨架行按 id 硬删 + 不立墓碑', () async {
+      final FushiDatabase db = await _openDb();
+      await db.upsertStudySegment(_seg('a', ms: 5000, chars: 10, pages: 2));
+      await db.upsertStudySegment(_seg('b', key: 'b2', ms: 7000, chars: 20));
+      await db.upsertStudySegment(_seg('keep', key: 'b3', ms: 9000, chars: 30));
+      final int g1 = await putGame(db, 'g1');
+      final int g2 = await putGame(db, 'g2', start: 2000);
+      final int gKeep = await putGame(db, 'g3', start: 3000);
+
+      await db.deleteStudySessions(
+        segmentUids: <String>{'a', 'b'},
+        gameSessionIds: <int>[g1, g2],
+      );
+
+      final Map<String, StudySegmentRow> rows = <String, StudySegmentRow>{
+        for (final StudySegmentRow r in await db.getStudySegments()) r.uid: r,
+      };
+      expect(rows, hasLength(3), reason: '写零不删行（同步语义要求）');
+      for (final String uid in <String>['a', 'b']) {
+        expect(rows[uid]!.durationMs, 0, reason: uid);
+        expect(rows[uid]!.chars, 0, reason: uid);
+        expect(rows[uid]!.pages, 0, reason: uid);
+        expect(
+          rows[uid]!.updatedAt,
+          greaterThan(1000),
+          reason: 'LWW 用新 updatedAt 传播这次删除',
+        );
+      }
+      expect(rows['keep']!.durationMs, 9000, reason: '不在批次里的段不动');
+      expect(
+        (await db.getRecentGalgameSessions()).map((g) => g.id).toList(),
+        <int>[gKeep],
+        reason: '游戏骨架行硬删（游戏统计不出本机）',
+      );
+      expect(
+        await db.getStudySegmentTombstones(),
+        isEmpty,
+        reason: '不立墓碑：按身份的碑会压死这本书的全部历史',
+      );
+    });
+
+    test('updateStudySession：逐段绝对值写入 + insertSegments 建行 + 骨架行平移', () async {
+      final FushiDatabase db = await _openDb();
+      await db.upsertStudySegment(
+        _seg(
+          'a',
+          dateKey: '2026-08-29',
+          hour: 12,
+          ms: 5000,
+          chars: 300,
+          startAt: 1000,
+          endAt: 2000,
+          updatedAt: 1000,
+        ),
+      );
+      await db.upsertStudySegment(_seg('other', key: 'b2', chars: 99));
+      final int gid = await putGame(db, 'g1');
+
+      await db.updateStudySession(
+        segments: <StudySegmentsCompanion>[
+          const StudySegmentsCompanion(
+            uid: Value('a'),
+            startAt: Value(90000),
+            endAt: Value(91000),
+            dateKey: Value('2026-09-01'),
+            hour: Value(9),
+            chars: Value(150),
+            updatedAt: Value(4242),
+          ),
+        ],
+        insertSegments: <StudySegmentsCompanion>[
+          StudySegmentsCompanion.insert(
+            uid: 'inserted',
+            deviceId: 'dev',
+            mediaKind: kActivityMediaGame,
+            mediaKey: 'g1',
+            title: 'G',
+            startAt: 2000,
+            endAt: 3600000,
+            dateKey: '2026-09-01',
+            hour: 9,
+            chars: const Value(77),
+            updatedAt: 4242,
+          ),
+        ],
+        gameSessionId: gid,
+        gameStartMs: 90000,
+        gameEndMs: 94000,
+        gameDateKey: '2026-09-01',
+      );
+
+      final Map<String, StudySegmentRow> rows = <String, StudySegmentRow>{
+        for (final StudySegmentRow r in await db.getStudySegments()) r.uid: r,
+      };
+      expect(rows['a']!.startAt, 90000);
+      expect(rows['a']!.endAt, 91000);
+      expect(rows['a']!.dateKey, '2026-09-01');
+      expect(rows['a']!.hour, 9);
+      expect(rows['a']!.chars, 150);
+      expect(rows['a']!.updatedAt, 4242);
+      expect(rows['a']!.durationMs, 5000, reason: 'companion 没带的列不动');
+      expect(rows['other']!.chars, 99, reason: '别的段不受牵连');
+      expect(rows['inserted']!.chars, 77, reason: 'insertSegments 真建了行');
+      expect(rows['inserted']!.mediaKind, kActivityMediaGame);
+      final GalgameSessionRow game = (await db.getRecentGalgameSessions())
+          .firstWhere((g) => g.id == gid);
+      expect(game.startMs, 90000);
+      expect(game.endMs, 94000);
+      expect(game.dateKey, '2026-09-01');
+    });
   });
 }
