@@ -280,7 +280,6 @@ class FloatingLyricWindow {
   std::wstring EffectiveTextFontFamily() const;
   void StartForegroundTopmostTracking();
   void StopForegroundTopmostTracking();
-  void ReassertTopmost();
   void Render();
   void RequestRender();
 

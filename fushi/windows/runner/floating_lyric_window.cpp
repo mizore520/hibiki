@@ -770,13 +770,22 @@ void FloatingLyricWindow::SetPassThroughBlocksMouse(bool enabled) {
 
 void FloatingLyricWindow::SetTopmost(bool enabled) {
   topmost_ = enabled;
-  if (hwnd_ == nullptr) {
+  if (!OwnsLiveWindow()) {
     // 还没建窗：Show() 自己会按 topmost_ 插入 Z 序。
     return;
   }
   // 不做「值没变就早退」：Dart 每局 show 会再调一次 SetTopmost(true)，同值也把窗口
   // 重新插到 Z 序顶上——上一局被别的窗口爬到上面时，这一次复位就是把它拉回来。
-  ReassertTopmost();
+  if (topmost_) {
+    ReassertTopmost();
+  } else {
+    // ReassertTopmost deliberately returns when the user unpins the window so
+    // its periodic guard cannot undo that explicit choice. The setter still
+    // has to apply the demotion immediately.
+    SetWindowPos(hwnd_, HWND_NOTOPMOST, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    SyncPassThroughToolbar();
+  }
   RequestRender();
 }
 
@@ -816,13 +825,6 @@ void FloatingLyricWindow::NotifyExternalWindowLifecycle(HWND external_window) {
   if (!PostMessageW(hwnd_, kReassertTopmostMessage, 0, 0)) {
     external_topmost_reassert_pending_ = false;
   }
-}
-
-void FloatingLyricWindow::ReassertTopmost() {
-  if (hwnd_ == nullptr) return;
-  SetWindowPos(hwnd_, topmost_ ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0,
-               SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-  SyncPassThroughToolbar();
 }
 
 void FloatingLyricWindow::SetHoverAutoLookup(bool enabled) {
