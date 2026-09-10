@@ -7,14 +7,14 @@ import '../helpers/source_guard.dart';
 
 // BUG-1918 ②：词典样式预览白屏。
 //
-// 内联 popup HTML 的四份资产（popup.css / dict-media.js / selection.js /
-// popup.js）有两条装载路径：启动时 fire-and-forget 的 preloadInlinePopupAssets，
-// 和真弹窗 build 里的同步兜底 _ensureInlinePopupAssetsLoaded。修前对外只暴露
-// 裸的构造函数，它假定四份都在；词典样式预览直接调它，于是在预读没跑完（或曾
+// 内联 popup HTML 的五份资产（popup.css / dict-media.js / selection.js /
+// yomitan-glossary-renderer.js / popup.js）有两条装载路径：启动时
+// fire-and-forget 的 preloadInlinePopupAssets，和真弹窗 build 里的同步兜底
+// _ensureInlinePopupAssetsLoaded。修前对外只暴露裸的构造函数，它假定五份都在；词典样式预览直接调它，于是在预读没跑完（或曾
 // 瞬时读盘失败）时拼出 `<style></style><script></script>` 的空壳——没有 popup.js，
 // 预览白屏，连 window.renderPopup 都不存在。
 //
-// 修法是把「确保装载 + 四项非空 + 拼装」收成一个原语
+// 修法是把「确保装载 + 五项非空 + 拼装」收成一个原语
 // buildInlinePopupHtmlIfReady，未就绪返回 null 让调用方回退 file:// URL。
 void main() {
   tearDown(DictionaryPopupWebViewState.debugResetInlinePopupAssets);
@@ -50,12 +50,13 @@ void main() {
     expect(html, isNull);
   });
 
-  test('资产装载后返回的 HTML 真的带着那四份资产', () {
+  test('资产装载后返回的 HTML 真的带着那五份资产', () {
     DictionaryPopupWebViewState.debugResetInlinePopupAssets();
     DictionaryPopupWebViewState.debugSetInlinePopupAssets(
       css: '.fake-css-marker{}',
       dictMediaJs: 'window.__fakeDictMedia = 1;',
       selectionJs: 'window.__fakeSelection = 1;',
+      yomitanGlossaryRendererJs: 'window.__fakeYomitanRenderer = 1;',
       popupJs: 'window.renderPopup = function () {};',
     );
 
@@ -68,6 +69,7 @@ void main() {
     expect(html!.contains('.fake-css-marker{}'), isTrue);
     expect(html.contains('window.__fakeDictMedia = 1;'), isTrue);
     expect(html.contains('window.__fakeSelection = 1;'), isTrue);
+    expect(html.contains('window.__fakeYomitanRenderer = 1;'), isTrue);
     expect(html.contains('window.renderPopup = function () {};'), isTrue);
     expect(html.contains('id="entries-container"'), isTrue,
         reason: 'popup.js 的 __fushiContainer() 靠它取容器，缺了就直接静默返回');

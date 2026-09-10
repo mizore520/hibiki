@@ -155,6 +155,9 @@ async function resolveCachedAudioUrl(expression, reading, entryIndex) {
 let currentAudio = null;
 let lastSelection = '';
 let currentDictionaryMedia = null;
+// Mining may happen before live definition images finish loading. Preserve
+// natural dimensions per dictionary/path for deterministic card export.
+const definitionImageNaturalSizes = new Map();
 const selectedDictionaries = {};
 
 // TODO-270 D: tri-state mine button — "overwrite the latest mined card".
@@ -1027,6 +1030,48 @@ function hasMismatchedNaturalAspectRatio(img, invAspectRatio) {
     return Math.abs(Math.log(naturalInvAspectRatio / invAspectRatio)) > Math.log(1.5);
 }
 
+function definitionImageNaturalSizeKey(dictionary, path) {
+    return `${dictionary}\n${normalizeDictMediaPath(path)}`;
+}
+
+function rememberDefinitionImageNaturalSize(dictionary, path, img) {
+    if (img.naturalWidth <= 0 || img.naturalHeight <= 0) return;
+    definitionImageNaturalSizes.set(
+        definitionImageNaturalSizeKey(dictionary, path),
+        {width: img.naturalWidth, height: img.naturalHeight},
+    );
+}
+
+async function hydrateDefinitionImageNaturalSizes(dictionaryMedia) {
+    if (!Array.isArray(dictionaryMedia) || dictionaryMedia.length === 0) return false;
+    try {
+        const bridge = window.flutter_inappwebview;
+        if (!bridge || typeof bridge.callHandler !== 'function') return false;
+        const sizes = await bridge.callHandler(
+            'getDictionaryMediaNaturalSizes',
+            JSON.stringify(dictionaryMedia),
+        );
+        if (!Array.isArray(sizes)) return false;
+        let hydrated = false;
+        for (const size of sizes) {
+            const dictionary = typeof size?.dictionary === 'string' ? size.dictionary : '';
+            const path = typeof size?.path === 'string' ? size.path : '';
+            const width = Number(size?.width);
+            const height = Number(size?.height);
+            if (!dictionary || !path || !Number.isFinite(width) || width <= 0 ||
+                !Number.isFinite(height) || height <= 0) continue;
+            definitionImageNaturalSizes.set(
+                definitionImageNaturalSizeKey(dictionary, path),
+                {width, height},
+            );
+            hydrated = true;
+        }
+        return hydrated;
+    } catch (_) {
+        return false;
+    }
+}
+
 function closeImageLightbox() {
     __fushiRootNode().querySelector('.dict-image-lightbox')?.remove();
 }
@@ -1528,6 +1573,42 @@ function constructGlossaryHtml(entryIndex) {
     return result;
 }
 
+function constructYomitanGlossaries(entryIndex) {
+    if (!window.lookupEntries || entryIndex >= window.lookupEntries.length) {
+        return {glossary: null, singleGlossaries: {}};
+    }
+    const renderer = window.__fushiYomitanGlossaryRenderer;
+    if (!renderer || typeof renderer.render !== 'function') {
+        throw new Error('Yomitan glossary renderer was not loaded');
+    }
+    return renderer.render(window.lookupEntries[entryIndex], {
+        dictionaryStyles: window.dictionaryStyles || {},
+        hiddenDictionaryNames: window.hiddenDictionaryNames || [],
+        compactGlossaries: window.compactGlossariesAnki === true,
+        compactGlossaryCss: COMPACT_GLOSSARIES_ANKI,
+        parseTags,
+        numericTagPattern: NUMERIC_TAG,
+        isRedirectGlossary,
+        getNaturalImageSize: (dictionary, path) => definitionImageNaturalSizes.get(
+            definitionImageNaturalSizeKey(dictionary, path),
+        ),
+        getMediaFilename: (dictionary, path) => (
+            window.useAnkiConnect || window.embedMedia
+                ? getMediaFilename(dictionary, path)
+                : null
+        ),
+        // Keep the latest Fushi selection-highlight and lookup-link semantics
+        // while Yomitan remains the structured-content export renderer.
+        decorateGlossaryContent: (html, glossaryIndex) => {
+            const root = document.createElement('div');
+            root.innerHTML = html;
+            rewriteExportedGlossaryAnchors(root);
+            highlightExportedGlossary(root, entryIndex, glossaryIndex);
+            return root.innerHTML;
+        },
+    });
+}
+
 function constructFrequencyHtml(frequencies) {
     if (!frequencies || frequencies.length === 0) {
         return '';
@@ -1772,6 +1853,7 @@ function createDefinitionImage(data, dictionary, exporting = false) {
                 img.style.display = 'inline-block';
             }
             img.addEventListener('load', () => {
+                rememberDefinitionImageNaturalSize(dictionary, path, img);
                 const shouldUseNaturalPixels = !isSvg && img.naturalWidth > 0 && img.naturalHeight > 0 && (!useEmUnits || hasMismatchedNaturalAspectRatio(img, invAspectRatio));
                 if (shouldUseNaturalPixels) {
                     if (!hasDimensions) {
@@ -1956,22 +2038,27 @@ async function buildMinePayload(expression, reading, frequencies, pitches, rules
     const furiganaPlain = constructFuriganaPlain(expression, reading);
     currentDictionaryMedia = new Map();
     currentSelectionHighlights = 0;
-    const glossary = constructGlossaryHtml(idx);
+    let renderedGlossaries = constructYomitanGlossaries(idx);
+    let glossary = renderedGlossaries.glossary;
     const freqHarmonicRank = getFrequencyHarmonicRank(frequencies);
     const frequenciesHtml = constructFrequencyHtml(frequencies);
-    const singleGlossaries = constructSingleGlossaryHtml(idx);
+    let singleGlossaries = renderedGlossaries.singleGlossaries;
     const dictionaryMedia = currentDictionaryMedia;
     currentDictionaryMedia = null;
-    // 选中段已经在释义里被 <mark> 标出来了，就不要再产出一份重复的 SelectionText。
-    // 选中的释义段已经作为 <mark> 进了导出的释义树。此时把同一段文本再原样塞进
-    // SelectionText 字段是否合适，**取决于用户的笔记类型和字段映射**——而这一层
-    // 两个都不知道：popup.js 只看得见 DOM，看不见 fieldMappings。所以这里只如实
-    // 上报「高亮是否真的落进了导出树」，让位与否交给知道映射的 Dart 层
-    // （BaseAnkiRepository.shouldYieldSelectionText）。
-    //
-    // 高亮**没**落地时（选中落在例句 / 词头 / 标签这些释义之外，或导出树文本流
-    // 校验没过）这个标志是 false，Dart 侧照旧把原文交给 SelectionText。
-    const glossarySelectionHighlighted = currentSelectionHighlights > 0;
+    let glossarySelectionHighlighted = currentSelectionHighlights > 0;
+
+    if (await hydrateDefinitionImageNaturalSizes([...dictionaryMedia.values()])) {
+        currentDictionaryMedia = dictionaryMedia;
+        currentSelectionHighlights = 0;
+        try {
+            renderedGlossaries = constructYomitanGlossaries(idx);
+            glossary = renderedGlossaries.glossary;
+            singleGlossaries = renderedGlossaries.singleGlossaries;
+            glossarySelectionHighlighted = currentSelectionHighlights > 0;
+        } finally {
+            currentDictionaryMedia = null;
+        }
+    }
     currentSelectionHighlights = 0;
     const glossaryFirst = Object.values(singleGlossaries)[0] || '';
     // BUG-2152 第二条路径：跨词典的同一份发音。展示侧在 createPitchSection 里先跑

@@ -3308,9 +3308,14 @@ class FushiYomitanGlossaryRenderer {
     _createDefinitions(entry, options) {
         const hiddenDictionaries = new Set(options.hiddenDictionaryNames || []);
         const definitions = [];
-        for (const glossary of entry?.glossaries || []) {
+        const glossaries = entry?.glossaries || [];
+        for (let glossaryIndex = 0; glossaryIndex < glossaries.length; ++glossaryIndex) {
+            const glossary = glossaries[glossaryIndex];
             const dictionary = typeof glossary?.dictionary === 'string' ? glossary.dictionary : '';
             if (dictionary.length === 0 || hiddenDictionaries.has(dictionary)) {
+                continue;
+            }
+            if (typeof options.isRedirectGlossary === 'function' && options.isRedirectGlossary(glossary)) {
                 continue;
             }
             let content = parseGlossaryContent(glossary.content);
@@ -3324,7 +3329,7 @@ class FushiYomitanGlossaryRenderer {
                     !(options.numericTagPattern instanceof RegExp && options.numericTagPattern.test(tag))
                 ))
                 : [];
-            definitions.push({dictionary, content, tags});
+            definitions.push({dictionary, content, tags, glossaryIndex});
         }
         return definitions;
     }
@@ -3335,11 +3340,14 @@ class FushiYomitanGlossaryRenderer {
         const label = labelParts.length > 0
             ? `<i>(${labelParts.map(escapeHtml).join(', ')})</i> `
             : '';
-        const content = this._formatGlossary(
+        let content = this._formatGlossary(
             definition.content,
             definition.dictionary,
             options.getMediaFilename,
         );
+        if (typeof options.decorateGlossaryContent === 'function') {
+            content = options.decorateGlossaryContent(content, definition.glossaryIndex);
+        }
         const scopedStyles = this._createScopedStyles(definition.dictionary, options);
         const style = scopedStyles.length > 0 ? `<style>${scopedStyles}</style>` : '';
         return `<li data-dictionary="${dictionaryAttribute}">${label}${content}</li>${style}`;

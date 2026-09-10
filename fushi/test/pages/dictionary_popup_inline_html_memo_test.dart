@@ -15,6 +15,7 @@ void main() {
       css: css,
       dictMediaJs: 'var dm=1;',
       selectionJs: 'var sel=1;',
+      yomitanGlossaryRendererJs: 'var yr=1;',
       popupJs: 'var pj=1;',
     );
   }

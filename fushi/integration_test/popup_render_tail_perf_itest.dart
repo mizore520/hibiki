@@ -24,7 +24,7 @@ import 'package:integration_test/integration_test.dart';
 ///
 /// 本测试**不启动 app**（不碰生产数据库），只挂一个 InAppWebView，用与生产 Windows
 /// 弹窗同一种 initialData 内联方式装载真 popup.css / dict-media.js / selection.js /
-/// popup.js，再灌合成词条（E 词条 × D 词典，结构化释义高度参差以触发 masonry）。
+/// yomitan-glossary-renderer.js / popup.js，再灌合成词条（E 词条 × D 词典，结构化释义高度参差以触发 masonry）。
 ///
 /// 输出（grep command.log `[render-tail-perf]`）每个场景一行 JSON：
 ///   - `completeMs`：renderPopup() 到 `_emitPopupRenderPerf('complete')` 的时长
@@ -53,6 +53,9 @@ void main() {
     final String selectionJs = await rootBundle.loadString(
       'assets/popup/selection.js',
     );
+    final String yomitanGlossaryRendererJs = await rootBundle.loadString(
+      'assets/popup/yomitan-glossary-renderer.js',
+    );
     final String popupJs = await rootBundle.loadString('assets/popup/popup.js');
     // 与 DictionaryPopupWebViewState._buildInlinePopupHtml 同形（Windows 生产路径）。
     inlineHtml = '<!DOCTYPE html>'
@@ -63,6 +66,7 @@ void main() {
         '<style>$css</style>'
         '<script>$dictMediaJs</script>'
         '<script>$selectionJs</script>'
+        '<script>$yomitanGlossaryRendererJs</script>'
         '<script>$popupJs</script>'
         '</head><body>'
         '<div id="entries-container"></div>'

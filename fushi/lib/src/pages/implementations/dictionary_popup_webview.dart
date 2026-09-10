@@ -1331,6 +1331,7 @@ JSON.stringify((function(){
   static String? _inlineCss;
   static String? _inlineDictMediaJs;
   static String? _inlineSelectionJs;
+  static String? _inlineYomitanGlossaryRendererJs;
   static String? _inlinePopupJs;
 
   static bool get _shouldInlinePopupAssets =>
@@ -1342,17 +1343,20 @@ JSON.stringify((function(){
     // 永久降级到不可靠的 file:// 路径，失败时下次唤起自然重试。
     if (_inlineCss != null) return;
     try {
-      // BUG-717 ②：四个文件全部读成功后再原子赋值——原实现逐个赋值，第一个
+      // BUG-717 ②：五个文件全部读成功后再原子赋值——原实现逐个赋值，第一个
       // 成功后若后续抛异常，_inlineCss 非空闩死重试、其余恒 null，内联路径
       // 永久失效（静默降级 file://）。
       final String css = _readPopupAsset('popup.css');
       final String dictMediaJs = _readPopupAsset('dict-media.js');
       final String selectionJs = _readPopupAsset('selection.js');
+      final String yomitanGlossaryRendererJs =
+          _readPopupAsset('yomitan-glossary-renderer.js');
       final String popupJs = _readPopupAsset('popup.js');
       _assignInlinePopupAssets(
         css: css,
         dictMediaJs: dictMediaJs,
         selectionJs: selectionJs,
+        yomitanGlossaryRendererJs: yomitanGlossaryRendererJs,
         popupJs: popupJs,
       );
     } catch (e, stack) {
@@ -1364,7 +1368,7 @@ JSON.stringify((function(){
   }
 
   /// BUG-717 ②：内联资产的异步预读钩子，供启动 / WebView 预热路径在首个弹窗
-  /// build 之前调用（幂等，多次调用共享同一 Future），把 4 次同步读盘挪出 UI
+  /// build 之前调用（幂等，多次调用共享同一 Future），把 5 次同步读盘挪出 UI
   /// 帧。不需要内联资产的平台（非 Windows/iOS）与已装载时为 no-op。
   ///
   /// 注意 widget 自身不在 initState 里 kick：initState 与首次 build 同帧，同步
@@ -1386,12 +1390,15 @@ JSON.stringify((function(){
       final String css = await _readPopupAssetAsync('popup.css');
       final String dictMediaJs = await _readPopupAssetAsync('dict-media.js');
       final String selectionJs = await _readPopupAssetAsync('selection.js');
+      final String yomitanGlossaryRendererJs =
+          await _readPopupAssetAsync('yomitan-glossary-renderer.js');
       final String popupJs = await _readPopupAssetAsync('popup.js');
       if (_inlineCss != null) return; // 同步兜底路径已先完成。
       _assignInlinePopupAssets(
         css: css,
         dictMediaJs: dictMediaJs,
         selectionJs: selectionJs,
+        yomitanGlossaryRendererJs: yomitanGlossaryRendererJs,
         popupJs: popupJs,
       );
     } catch (e, stack) {
@@ -1407,6 +1414,7 @@ JSON.stringify((function(){
     required String css,
     required String dictMediaJs,
     required String selectionJs,
+    required String yomitanGlossaryRendererJs,
     required String popupJs,
   }) {
     // BUG-717 ②：`</style` 转义从每次 _buildInlinePopupHtml 挪到装载时一次
@@ -1414,6 +1422,7 @@ JSON.stringify((function(){
     _inlineCss = css.replaceAll('</style', r'<\/style');
     _inlineDictMediaJs = dictMediaJs;
     _inlineSelectionJs = selectionJs;
+    _inlineYomitanGlossaryRendererJs = yomitanGlossaryRendererJs;
     _inlinePopupJs = popupJs;
     _inlineHtmlCacheKey = null;
     _inlineHtmlCache = null;
@@ -1441,6 +1450,7 @@ JSON.stringify((function(){
         '<style>$_inlineCss</style>'
         '<script>$_inlineDictMediaJs</script>'
         '<script>$_inlineSelectionJs</script>'
+        '<script>$_inlineYomitanGlossaryRendererJs</script>'
         '<script>$_inlinePopupJs</script>'
         '</head>'
         '<body>'
@@ -1461,12 +1471,14 @@ JSON.stringify((function(){
     required String css,
     required String dictMediaJs,
     required String selectionJs,
+    required String yomitanGlossaryRendererJs,
     required String popupJs,
   }) {
     _assignInlinePopupAssets(
       css: css,
       dictMediaJs: dictMediaJs,
       selectionJs: selectionJs,
+      yomitanGlossaryRendererJs: yomitanGlossaryRendererJs,
       popupJs: popupJs,
     );
   }
@@ -1477,6 +1489,7 @@ JSON.stringify((function(){
     _inlineCss = null;
     _inlineDictMediaJs = null;
     _inlineSelectionJs = null;
+    _inlineYomitanGlossaryRendererJs = null;
     _inlinePopupJs = null;
     _inlineHtmlCacheKey = null;
     _inlineHtmlCache = null;
@@ -1494,14 +1507,14 @@ JSON.stringify((function(){
   /// 与 in-app 弹窗同一份 memo 路径，故预览与真实弹窗吃的是同一份 popup.js /
   /// popup.css，不会出现「预览好看、真弹窗不一样」。
   ///
-  /// BUG-1918 ②：此前对外只暴露裸的 [_buildInlinePopupHtml]，它假定四个
+  /// BUG-1918 ②：此前对外只暴露裸的 [_buildInlinePopupHtml]，它假定五个
   /// `_inline*` 静态字段已装载——而装载有两条路径：启动时 fire-and-forget 的
   /// [preloadInlinePopupAssets]，以及真弹窗 build 里的同步兜底
   /// [_ensureInlinePopupAssetsLoaded]。词典样式预览只调了裸构造，于是在预读
   /// 尚未完成（或曾瞬时失败）时拼出 `<style></style><script></script>` 的空壳：
   /// 没有 popup.css 也没有 popup.js，预览白屏且连 `window.renderPopup` 都不存在。
   ///
-  /// 「确保装载 + 四项非空 + 拼装」是一个不可分的原语，任何调用点都不该再自己
+  /// 「确保装载 + 五项非空 + 拼装」是一个不可分的原语，任何调用点都不该再自己
   /// 拼这三步——真弹窗的 build 也改用它，两个入口从此不可能漂移。
   static String? buildInlinePopupHtmlIfReady({
     required String themeAttr,
@@ -1511,6 +1524,7 @@ JSON.stringify((function(){
     if (_inlineCss == null ||
         _inlineDictMediaJs == null ||
         _inlineSelectionJs == null ||
+        _inlineYomitanGlossaryRendererJs == null ||
         _inlinePopupJs == null) {
       return null;
     }
