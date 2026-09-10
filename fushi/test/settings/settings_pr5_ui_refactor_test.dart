@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi/i18n/strings.g.dart';
 import 'package:fushi/models.dart';
+import 'package:fushi_anki/fushi_anki.dart';
+import 'package:fushi/src/anki/anki_view_model.dart';
 import 'package:fushi/src/media/sources/reader_fushi_source.dart';
 import 'package:fushi/src/settings/settings_context.dart';
 import 'package:fushi/src/settings/settings_destination.dart';
@@ -34,23 +36,29 @@ void main() {
         isNot(contains('SettingsDestinationId.appearance')),
         reason: '宽屏默认选中分类不得再硬编码外观（重排后首项是阅读，未来跟随 schema）',
       );
-      // body 合成搜索条目不登记 reveal 挂点（挂点永远不会被消费）。
-      expect(
-        home.replaceAll(RegExp(r'\s+'), ''),
-        contains('entry.isBodyEntry?null:entry.item.id'),
-      );
+      // 只有声明真实挂点的正文行才登记 reveal。
+      expect(home, contains('entry.hasRevealTarget'));
     });
   });
 
   group('制卡分类搜索可见性', () {
     late SettingsContext sctx;
 
-    Future<void> pumpContext(WidgetTester tester) async {
+    Future<void> pumpContext(
+      WidgetTester tester, {
+      bool configured = true,
+    }) async {
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            ankiViewModelProvider.overrideWith(
+              (ref) => AnkiViewModel(_SearchAnkiRepository(configured)),
+            ),
+          ],
           child: MaterialApp(
             home: Consumer(
               builder: (BuildContext context, WidgetRef ref, _) {
+                ref.watch(ankiViewModelProvider);
                 sctx = SettingsContext(
                   context: context,
                   appModel: _TestAppModel(),
@@ -76,7 +84,7 @@ void main() {
         sctx,
       );
 
-      // sections 为空（body 逃生口），条目全部来自 bodySearchEntries。
+      // 常用正文和子页正文均可搜，导航条目保留各自路径。
       expect(
         entries,
         isNotEmpty,
@@ -84,7 +92,7 @@ void main() {
       );
       for (final SettingsSearchEntry entry in entries) {
         expect(entry.destination.id, SettingsDestinationId.cardCreation);
-        expect(entry.isBodyEntry, isTrue);
+
         expect(entry.title, isNotEmpty);
       }
       final List<String> ids = entries
@@ -93,6 +101,28 @@ void main() {
       expect(ids, contains('card_creation.anki.deck'));
       expect(ids, contains('card_creation.anki.note_type'));
       expect(ids, contains('card_creation.anki.field_mappings'));
+      expect(ids, contains('card_creation.anki.mining_audio_quality'));
+      final SettingsSearchEntry media = entries.firstWhere(
+        (entry) => entry.item.id == 'card_creation.anki.mining_audio_quality',
+      );
+      expect(media.isBodyEntry, isTrue);
+      expect(media.hasRevealTarget, isTrue);
+      expect(media.subPagePath, hasLength(1));
+      expect(media.subPagePath.single.id, 'card_creation.media.open');
+      final SettingsSearchEntry host = entries.firstWhere(
+        (entry) => entry.item.id == 'card_creation.anki.connect_host',
+      );
+      expect(host.subPagePath.single.id, 'card_creation.connection.open');
+    });
+
+    testWidgets('未配置时仅隐藏需要牌组和卡型的正文设置', (WidgetTester tester) async {
+      await pumpContext(tester, configured: false);
+      final List<String> ids = flattenVisibleSettings(<SettingsDestination>[
+        buildCardCreationDestination(),
+      ], sctx).map((entry) => entry.item.id).toList();
+      expect(ids, isNot(contains('card_creation.anki.deck')));
+      expect(ids, isNot(contains('card_creation.anki.field_mappings')));
+      expect(ids, contains('card_creation.anki.connect_host'));
       expect(ids, contains('card_creation.anki.mining_audio_quality'));
     });
 
@@ -255,4 +285,28 @@ void main() {
 /// item 闭包，不触碰真实子系统。
 class _TestAppModel extends AppModel {
   _TestAppModel() : super(testPlatformServices());
+}
+
+class _SearchAnkiRepository implements BaseAnkiRepository {
+  _SearchAnkiRepository(this.configured);
+  final bool configured;
+
+  @override
+  Future<AnkiSettings> loadSettings() async => configured
+      ? const AnkiSettings(
+          selectedDeckId: 1,
+          selectedNoteTypeId: 2,
+          availableDecks: [AnkiDeck(id: 1, name: 'Test')],
+          availableNoteTypes: [
+            AnkiNoteType(id: 2, name: 'Basic', fields: ['Front']),
+          ],
+        )
+      : const AnkiSettings();
+
+  @override
+  bool get supportsNoteTypeEditing => false;
+  @override
+  bool get supportsMediaMaintenance => false;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

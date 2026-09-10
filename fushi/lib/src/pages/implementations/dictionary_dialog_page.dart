@@ -14,6 +14,7 @@ import 'package:fushi/src/media/drag_drop/fushi_file_drop_target.dart';
 import 'package:fushi/src/models/dictionary_download_controller.dart';
 import 'package:fushi/src/models/dictionary_import_manager.dart';
 import 'package:fushi/src/models/dictionary_repository.dart';
+import 'package:fushi/src/pages/implementations/name_input_dialog.dart';
 import 'package:fushi/src/utils/misc/channel_constants.dart';
 import 'package:fushi/utils.dart';
 import 'package:fushi/src/utils/misc/error_details_dialog.dart';
@@ -69,6 +70,259 @@ void enterDictionaryImportStage({
 }
 
 /// Page used for managing installed dictionaries.
+/// 推荐词典下载弹窗的「可勾选下标域」：catalog 全体减去已安装项。
+///
+/// 全选 / 反选 / 分类三态一律以此为域，与默认勾选同判据（
+/// `defaultSelectionForLearningLang` 的结果也要 `.difference(installedIndices)`）：
+/// 已装的词典再下一遍只会走一趟无谓的下载 + 导入，把它们算进「全选」等于把
+/// 47 条目录里最贵的那部分默认塞给用户。
+@visibleForTesting
+Set<int> selectableDictionaryIndices({
+  required int catalogLength,
+  required Set<int> installedIndices,
+}) {
+  return <int>{
+    for (int i = 0; i < catalogLength; i++)
+      if (!installedIndices.contains(i)) i,
+  };
+}
+
+/// 分类头三态勾选框的值：全选 true / 全不选 false / 部分 null。
+///
+/// [categoryIndices] 只应传本类的**可勾选**下标；本类全是已安装项时传空集，
+/// 调用方据此把勾选框禁用（无可选项时 true/false 都是谎话）。
+@visibleForTesting
+bool? dictionaryCategoryCheckState({
+  required Set<int> categoryIndices,
+  required Set<int> checked,
+}) {
+  if (categoryIndices.isEmpty) return false;
+  final int hit = categoryIndices.where(checked.contains).length;
+  if (hit == 0) return false;
+  if (hit == categoryIndices.length) return true;
+  return null;
+}
+
+/// 推荐词典目录的勾选列表：顶部「已选 N · 全选 · 反选」+ 按分类折叠的三态勾选。
+///
+/// 从 `_showDownloadSelectionDialog` 的内联闭包里抽出来，是为了让「全选只作用于
+/// 可勾选域」「分类三态」这些接线能被真的测到——判据的纯函数好测，但按钮接错域
+/// （比如把已安装项也算进全选）编译期看不出来，只有 widget 用例拦得住。
+@visibleForTesting
+class DictionaryCatalogSelectionList extends StatelessWidget {
+  const DictionaryCatalogSelectionList({
+    required this.workingCatalog,
+    required this.byCategory,
+    required this.recIndex,
+    required this.installedIndices,
+    required this.checked,
+    required this.expandedCategories,
+    required this.onCheckedChanged,
+    required this.onExpansionChanged,
+    super.key,
+  });
+
+  final List<RecommendedDictionary> workingCatalog;
+  final Map<DictionaryCategory, List<RecommendedDictionary>> byCategory;
+  final Map<RecommendedDictionary, int> recIndex;
+  final Set<int> installedIndices;
+  final Set<int> checked;
+  final Set<DictionaryCategory> expandedCategories;
+  final ValueChanged<Set<int>> onCheckedChanged;
+  final void Function(DictionaryCategory cat, bool expanded) onExpansionChanged;
+
+  String _categoryLabel(DictionaryCategory cat) => switch (cat) {
+    DictionaryCategory.jaEn => t.dict_category_ja_en,
+    DictionaryCategory.jaJa => t.dict_category_ja_ja,
+    DictionaryCategory.jaOther => t.dict_category_ja_other,
+    DictionaryCategory.grammar => t.dict_category_grammar,
+    DictionaryCategory.kanji => t.dict_category_kanji,
+    DictionaryCategory.frequency => t.dict_category_frequency,
+    DictionaryCategory.names => t.dict_category_names,
+    DictionaryCategory.supplementary => t.dict_category_supplementary,
+    DictionaryCategory.bilingual => t.dict_category_bilingual,
+    DictionaryCategory.monolingual => t.dict_category_monolingual,
+  };
+
+  void _toggleOne(int idx, bool value) {
+    final Set<int> next = Set<int>.of(checked);
+    if (value) {
+      next.add(idx);
+    } else {
+      next.remove(idx);
+    }
+    onCheckedChanged(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme;
+    final FushiDesignTokens tokens = FushiDesignTokens.of(context);
+    // 47 条目录 + 分类折叠下，逐条点是唯一的入口太贵：全选 / 反选一律只作用于
+    // **可勾选域**（已装的不参与，见 [selectableDictionaryIndices]）。
+    final Set<int> selectable = selectableDictionaryIndices(
+      catalogLength: workingCatalog.length,
+      installedIndices: installedIndices,
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Text(
+              t.batch_selected_count(n: checked.length),
+              style: textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const Spacer(),
+            TextButton(
+              key: const ValueKey<String>('dict-download-select-all'),
+              onPressed: selectable.isEmpty
+                  ? null
+                  : () => onCheckedChanged(Set<int>.of(selectable)),
+              child: Text(t.batch_select_all),
+            ),
+            TextButton(
+              key: const ValueKey<String>('dict-download-invert-selection'),
+              onPressed: selectable.isEmpty
+                  ? null
+                  : () => onCheckedChanged(selectable.difference(checked)),
+              child: Text(t.batch_invert_selection),
+            ),
+          ],
+        ),
+        SizedBox(height: tokens.spacing.gap),
+        for (final DictionaryCategory cat in DictionaryCategory.values)
+          if (byCategory.containsKey(cat))
+            _buildCategoryTile(
+              context: context,
+              theme: theme,
+              textTheme: textTheme,
+              tokens: tokens,
+              cat: cat,
+              items: byCategory[cat]!,
+              expanded: expandedCategories.contains(cat),
+            ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryTile({
+    required BuildContext context,
+    required ThemeData theme,
+    required TextTheme textTheme,
+    required FushiDesignTokens tokens,
+    required DictionaryCategory cat,
+    required List<RecommendedDictionary> items,
+    required bool expanded,
+  }) {
+    // 本类的可勾选下标（已装的不算），三态框与「本类全选」同域。
+    final Set<int> categoryIndices = <int>{
+      for (final RecommendedDictionary rec in items)
+        if (recIndex[rec] != null && !installedIndices.contains(recIndex[rec]))
+          recIndex[rec]!,
+    };
+    return Padding(
+      padding: EdgeInsets.only(bottom: tokens.spacing.gap),
+      child: FushiCard(
+        padding: EdgeInsets.zero,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            FushiListItem(
+              minHeight: 52,
+              leading: Checkbox(
+                key: ValueKey<String>(
+                  'dict-download-category-check-${cat.name}',
+                ),
+                tristate: true,
+                value: dictionaryCategoryCheckState(
+                  categoryIndices: categoryIndices,
+                  checked: checked,
+                ),
+                onChanged: categoryIndices.isEmpty
+                    ? null
+                    : (bool? value) {
+                        final Set<int> next = Set<int>.of(checked);
+                        if (value ?? false) {
+                          next.addAll(categoryIndices);
+                        } else {
+                          next.removeAll(categoryIndices);
+                        }
+                        onCheckedChanged(next);
+                      },
+              ),
+              title: Text(
+                _categoryLabel(cat),
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              trailing: Icon(
+                expanded ? Icons.expand_less : Icons.expand_more,
+                color: tokens.surfaces.onVariant,
+              ),
+              onTap: () => onExpansionChanged(cat, !expanded),
+            ),
+            if (expanded)
+              for (final RecommendedDictionary rec in items)
+                _buildDictCheckbox(
+                  theme: theme,
+                  textTheme: textTheme,
+                  tokens: tokens,
+                  rec: rec,
+                ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDictCheckbox({
+    required ThemeData theme,
+    required TextTheme textTheme,
+    required FushiDesignTokens tokens,
+    required RecommendedDictionary rec,
+  }) {
+    // HBK-AUDIT-110: O(1) lookup from a precomputed map instead of the former
+    // per-checkbox catalog.indexOf(rec) linear scan on every rebuild.
+    final int idx = recIndex[rec] ?? -1;
+    final bool installed = installedIndices.contains(idx);
+    final bool selected = checked.contains(idx);
+    return FushiListItem(
+      key: ValueKey<String>('dict-download-entry-${rec.name}'),
+      minHeight: 68,
+      padding: EdgeInsets.symmetric(
+        horizontal: tokens.spacing.rowHorizontal - tokens.spacing.gap / 2,
+        vertical: tokens.spacing.gap,
+      ),
+      selected: selected,
+      onTap: () => _toggleOne(idx, !selected),
+      leading: Checkbox(
+        value: selected,
+        onChanged: (bool? value) => _toggleOne(idx, value ?? false),
+      ),
+      title: Text(
+        rec.name,
+        style: textTheme.bodyMedium?.copyWith(
+          color: installed ? theme.colorScheme.onSurfaceVariant : null,
+          fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+        ),
+      ),
+      subtitle: Text(
+        installed
+            ? '${t.dict_download_installed}  ${rec.sizeEstimate}'
+            : '${rec.description}  ${rec.sizeEstimate}',
+        style: textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+}
+
 class DictionaryDialogPage extends BasePage {
   /// Create an instance of this page.
   const DictionaryDialogPage({
@@ -399,13 +653,39 @@ class _DictionaryDialogPageState extends BasePageState {
     );
   }
 
+  /// 给词典改个显示名。落的是 `dictionary_metadata.display_name` 覆盖列，**真名
+  /// 不动**——真名是主键、磁盘目录名、C++ 引擎装载路径，还被每词典 CSS、样式规则、
+  /// 弹窗 `data-dictionary` 选择器、词典媒体 URL、Anki `{single-glossary-<名>}`
+  /// token、存储占用条目 id、同步资产名当键用。改真名会让这些全部静默失配（用户
+  /// 样式丢失、图/音 404、已配置的制卡字段失效）。
+  ///
+  /// 因此改名只贯通「给人看的地方」：本列表、查词弹窗里的词典名标题/频率/音高/
+  /// 汉字标签、存储占用明细、CSS 作用域下拉、同步对比对话框。
+  Future<void> _renameDictionary(Dictionary dictionary) async {
+    final String current = dictionary.effectiveDisplayName;
+    final String? name = await showNameInputDialog(
+      context: context,
+      title: t.dict_rename,
+      labelText: t.dict_rename_label,
+      initialName: current,
+      leadingIcon: Icons.drive_file_rename_outline,
+    );
+    if (!mounted || name == null || name == current) return;
+    appModel.setDictionaryDisplayName(dictionary, name);
+    setState(() {});
+  }
+
   Future<void> showDictionaryDeleteDialog(Dictionary dictionary) {
     return _showDictionaryActionConfirmDialog(
-      title: t.dialog_title_dictionary_delete(name: dictionary.name),
+      // 确认框与进度页都是给人看的，用显示名；真正的删除按 `dictionary` 对象走
+      // （deleteDictionary 内部用真名找磁盘目录）。
+      title: t.dialog_title_dictionary_delete(
+        name: dictionary.effectiveDisplayName,
+      ),
       content: t.dialog_content_dictionary_delete,
       confirmLabel: t.dialog_delete,
       run: () => appModel.deleteDictionary(dictionary),
-      progressName: dictionary.name,
+      progressName: dictionary.effectiveDisplayName,
     );
   }
 
@@ -438,7 +718,19 @@ class _DictionaryDialogPageState extends BasePageState {
                   DictionaryDialogDeletePage(name: progressName),
             );
 
-            await run();
+            Object? failure;
+            StackTrace? failureStack;
+            try {
+              await run();
+            } catch (e, stack) {
+              // 删除抛异常（DB 被占用、文件 IO 失败）时也必须往下走收尾：进度页是
+              // `barrierDismissible: false` + `PopScope(canPop: false)`，iOS 没有
+              // 系统返回键、侧滑又被 canPop 关掉，异常路径不 pop 就是把用户永久
+              // 锁在转圈框里，只能杀进程。
+              ErrorLogService.instance.log('DictionaryDialog.delete', e, stack);
+              failure = e;
+              failureStack = stack;
+            }
 
             if (mounted) {
               Navigator.pop(context);
@@ -447,6 +739,16 @@ class _DictionaryDialogPageState extends BasePageState {
             if (mounted) {
               Navigator.pop(context);
               setState(() {});
+            }
+
+            if (failure != null && mounted) {
+              unawaited(
+                showErrorDetails(
+                  context,
+                  title: title,
+                  error: '$failure\n$failureStack',
+                ),
+              );
             }
           },
         ),
@@ -628,31 +930,6 @@ class _DictionaryDialogPageState extends BasePageState {
     _importDictionaryPaths(importPaths);
   }
 
-  String _categoryLabel(DictionaryCategory cat) {
-    switch (cat) {
-      case DictionaryCategory.jaEn:
-        return t.dict_category_ja_en;
-      case DictionaryCategory.jaJa:
-        return t.dict_category_ja_ja;
-      case DictionaryCategory.jaOther:
-        return t.dict_category_ja_other;
-      case DictionaryCategory.grammar:
-        return t.dict_category_grammar;
-      case DictionaryCategory.kanji:
-        return t.dict_category_kanji;
-      case DictionaryCategory.frequency:
-        return t.dict_category_frequency;
-      case DictionaryCategory.names:
-        return t.dict_category_names;
-      case DictionaryCategory.supplementary:
-        return t.dict_category_supplementary;
-      case DictionaryCategory.bilingual:
-        return t.dict_category_bilingual;
-      case DictionaryCategory.monolingual:
-        return t.dict_category_monolingual;
-    }
-  }
-
   bool _isDictInstalled(RecommendedDictionary rec) {
     return appModel.dictionaries.any((d) {
       final String base = DictionaryRepository.baseName(d.name);
@@ -767,34 +1044,26 @@ class _DictionaryDialogPageState extends BasePageState {
                       },
                     ),
                     SizedBox(height: tokens.spacing.gap),
-                    for (final cat in DictionaryCategory.values)
-                      if (byCategory.containsKey(cat))
-                        _buildCategoryTile(
-                          cat: cat,
-                          items: byCategory[cat]!,
-                          recIndex: recIndex,
-                          checked: checked,
-                          installedIndices: installedIndices,
-                          expanded: expandedCategories.contains(cat),
-                          onExpansionChanged: (bool expanded) {
-                            setDialogState(() {
-                              if (expanded) {
-                                expandedCategories.add(cat);
-                              } else {
-                                expandedCategories.remove(cat);
-                              }
-                            });
-                          },
-                          onChanged: (int idx, bool val) {
-                            setDialogState(() {
-                              if (val) {
-                                checked.add(idx);
-                              } else {
-                                checked.remove(idx);
-                              }
-                            });
-                          },
-                        ),
+                    DictionaryCatalogSelectionList(
+                      workingCatalog: workingCatalog,
+                      byCategory: byCategory,
+                      recIndex: recIndex,
+                      installedIndices: installedIndices,
+                      checked: checked,
+                      expandedCategories: expandedCategories,
+                      onCheckedChanged: (Set<int> next) =>
+                          setDialogState(() => checked = next),
+                      onExpansionChanged: (
+                        DictionaryCategory cat,
+                        bool expanded,
+                      ) => setDialogState(() {
+                        if (expanded) {
+                          expandedCategories.add(cat);
+                        } else {
+                          expandedCategories.remove(cat);
+                        }
+                      }),
+                    ),
                   ],
                 ),
               ),
@@ -849,96 +1118,6 @@ class _DictionaryDialogPageState extends BasePageState {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildCategoryTile({
-    required DictionaryCategory cat,
-    required List<RecommendedDictionary> items,
-    required Map<RecommendedDictionary, int> recIndex,
-    required Set<int> checked,
-    required Set<int> installedIndices,
-    required bool expanded,
-    required ValueChanged<bool> onExpansionChanged,
-    required void Function(int idx, bool val) onChanged,
-  }) {
-    final FushiDesignTokens tokens = FushiDesignTokens.of(context);
-    return Padding(
-      padding: EdgeInsets.only(bottom: tokens.spacing.gap),
-      child: FushiCard(
-        padding: EdgeInsets.zero,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FushiListItem(
-              minHeight: 52,
-              title: Text(
-                _categoryLabel(cat),
-                style: textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              trailing: Icon(
-                expanded ? Icons.expand_less : Icons.expand_more,
-                color: tokens.surfaces.onVariant,
-              ),
-              onTap: () => onExpansionChanged(!expanded),
-            ),
-            if (expanded)
-              for (final rec in items)
-                _buildDictCheckbox(
-                  rec: rec,
-                  recIndex: recIndex,
-                  checked: checked,
-                  installedIndices: installedIndices,
-                  onChanged: onChanged,
-                ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDictCheckbox({
-    required RecommendedDictionary rec,
-    required Map<RecommendedDictionary, int> recIndex,
-    required Set<int> checked,
-    required Set<int> installedIndices,
-    required void Function(int idx, bool val) onChanged,
-  }) {
-    // HBK-AUDIT-110: O(1) lookup from a precomputed map instead of the former
-    // per-checkbox catalog.indexOf(rec) linear scan on every rebuild.
-    final int idx = recIndex[rec] ?? -1;
-    final bool installed = installedIndices.contains(idx);
-    final bool selected = checked.contains(idx);
-    final FushiDesignTokens tokens = FushiDesignTokens.of(context);
-    return FushiListItem(
-      minHeight: 68,
-      padding: EdgeInsets.symmetric(
-        horizontal: tokens.spacing.rowHorizontal - tokens.spacing.gap / 2,
-        vertical: tokens.spacing.gap,
-      ),
-      selected: selected,
-      onTap: () => onChanged(idx, !selected),
-      leading: Checkbox(
-        value: selected,
-        onChanged: (bool? value) => onChanged(idx, value ?? false),
-      ),
-      title: Text(
-        rec.name,
-        style: textTheme.bodyMedium?.copyWith(
-          color: installed ? theme.colorScheme.onSurfaceVariant : null,
-          fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-        ),
-      ),
-      subtitle: Text(
-        installed
-            ? '${t.dict_download_installed}  ${rec.sizeEstimate}'
-            : '${rec.description}  ${rec.sizeEstimate}',
-        style: textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
     );
   }
 
@@ -1488,7 +1667,8 @@ class _DictionaryDialogPageState extends BasePageState {
     // 情况，四个 tab（term/kanji/frequency/pitch）共用本 tile 一处修复全覆盖。
     final bool compact = MediaQuery.sizeOf(context).width < 480;
     final Text nameText = Text(
-      dictionary.name,
+      // 用户可见的词典名一律走 effectiveDisplayName（改过名用改的，否则真名）。
+      dictionary.effectiveDisplayName,
       style: textTheme.bodyLarge?.copyWith(
         color: titleColor,
         fontWeight: FontWeight.w600,
@@ -1612,6 +1792,16 @@ class _DictionaryDialogPageState extends BasePageState {
           onTap: onMoveDown,
         ),
         _buildDictionaryVisibilityButton(dictionary, enabled),
+        SizedBox(width: tokens.spacing.gap / 2),
+        // 改名：导入包里的 index.json title 常常又长又带日期（`JMdict [2026-05-17]`），
+        // 而它同时是主键/目录名/引擎键，改不得——所以这里改的是显示名覆盖层。
+        FushiIconButton(
+          key: ValueKey<String>('dict_rename_${dictionary.name}'),
+          icon: Icons.drive_file_rename_outline,
+          size: 20,
+          tooltip: t.dict_rename,
+          onTap: () => _renameDictionary(dictionary),
+        ),
         // TODO-839：每本词典行尾恒显示一个「更新」按钮（消除「这本能更新那本不能」
         // 的视觉断层）。按 isUpdatable 分流：
         //   - 在线来源（isUpdatable 三条件满足）→ 走 _updateSingleDictionary（拉远端
@@ -1824,7 +2014,10 @@ class _DictionaryDialogPageState extends BasePageState {
     required DictionaryDownloadJob job,
     required Map<String, String> sourceOverride,
   }) async {
-    final String name = dictionary.name;
+    // 只喂文案（进度行 / 导入阶段提示 / 完成 toast），无身份用途——身份走
+    // `dictionary` 对象本身（downloadUrl / 目录名）。所以这里用显示名：用户改过名
+    // 之后，进度条里还蹦出那个又长又带日期的原名会让人以为在更新别的东西。
+    final String name = dictionary.effectiveDisplayName;
     final ValueNotifier<String> progressNotifier = job.message;
     final ValueNotifier<double> downloadProgress = job.progress;
     final Directory tempDir = Directory(
@@ -1896,7 +2089,8 @@ class _DictionaryDialogPageState extends BasePageState {
             },
           );
           return DictionaryDownloadOutcome(
-            message: t.dict_update_done(name: dictionary.name),
+            message: t.dict_update_done(
+                name: dictionary.effectiveDisplayName),
             severity: ToastSeverity.success,
           );
         } catch (e, stack) {
@@ -1967,7 +2161,8 @@ class _DictionaryDialogPageState extends BasePageState {
     if (!mounted) return;
 
     await _runWithDownloadProgressDialog(
-      initialMessage: t.dict_update_updating(name: dictionary.name),
+      initialMessage:
+          t.dict_update_updating(name: dictionary.effectiveDisplayName),
       body: (DictionaryDownloadJob job) async {
         // 本地文件覆盖更新**全程都是导入阶段**（没有下载），故整条路径不可取消：
         // 进入 body 就切 importing，取消按钮从头到尾是灰的（BUG-1499）。
@@ -1982,7 +2177,8 @@ class _DictionaryDialogPageState extends BasePageState {
           );
           // 覆盖导入没抛异常即成功。
           return DictionaryDownloadOutcome(
-            message: t.dict_update_done(name: dictionary.name),
+            message: t.dict_update_done(
+                name: dictionary.effectiveDisplayName),
             severity: ToastSeverity.success,
           );
         } catch (e, stack) {

@@ -112,6 +112,31 @@ void main() {
     resetAppProxyCacheForTest();
   });
 
+  test('native proxy credentials follow current mode and destination', () {
+    final Uri remote = Uri.parse('https://example.com/file');
+    appUserProxyModeReader = () => kProxyModeManual;
+    appUserProxyReader = () => '127.0.0.1:7890';
+    appUserProxyUsernameReader = () => 'reader';
+    appUserProxyPasswordReader = () => 'secret';
+    expect(resolveAppProxyCredentials(remote), (
+      username: 'reader',
+      password: 'secret',
+    ));
+    for (final String target in kLocalOnlyTargets) {
+      expect(resolveAppProxyCredentials(Uri.parse(target)), isNull);
+    }
+    appUserProxyModeReader = () => kProxyModeDirect;
+    expect(resolveAppProxyCredentials(remote), isNull);
+    appUserProxyModeReader = () => kProxyModeAuto;
+    expect(resolveAppProxyCredentials(remote), isNull);
+    appUserProxyModeReader = () => kProxyModeManual;
+    appUserProxyReader = () => 'invalid';
+    expect(resolveAppProxyCredentials(remote), isNull);
+    appUserProxyReader = () => '127.0.0.1:7890';
+    appUserProxyUsernameReader = () => '';
+    expect(resolveAppProxyCredentials(remote), isNull);
+  });
+
   group('isDirectProxyTarget：纯判据', () {
     test('本机 / 私网 / link-local / mDNS 名一律直连', () {
       for (final String url in kLocalOnlyTargets) {
@@ -332,7 +357,7 @@ void main() {
       expect(client.addedCredential, isNull);
     });
 
-    test('没配用户名时根本不装认证钩子（不给每个 client 白挂捕获闭包）', () {
+    test('已有client在后来填写认证配置后生效且不向其它代理交付', () async {
       appUserProxyReader = () => '1.2.3.4:8080';
       appUserProxyModeReader = () => 'manual';
       appUserProxyUsernameReader = () => '';
@@ -340,7 +365,18 @@ void main() {
       final _CapturingHttpClient client = _CapturingHttpClient();
 
       applyAppProxySync(client);
-      expect(client.capturedAuth, isNull);
+      expect(client.capturedAuth, isNotNull);
+      expect(
+        await client.capturedAuth!('1.2.3.4', 8080, 'Basic', 'r'),
+        isFalse,
+      );
+      appUserProxyUsernameReader = () => 'alice';
+      appUserProxyPasswordReader = () => 'secret';
+      expect(
+        await client.capturedAuth!('5.6.7.8', 8080, 'Basic', 'r'),
+        isFalse,
+      );
+      expect(await client.capturedAuth!('1.2.3.4', 8080, 'Basic', 'r'), isTrue);
     });
     test('装上的闭包非空——裸 HttpClient 的 findProxy 恒为 null，那正是根因形态', () {
       final _CapturingHttpClient client = _CapturingHttpClient();

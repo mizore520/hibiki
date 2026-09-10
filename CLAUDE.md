@@ -33,7 +33,7 @@
 - 全局状态：`fushi/lib/src/models/app_model.dart`（`AppModel`，~5150 行，初始化流程 + 子系统委托核心，改前先理解）。
 - Drift 数据库：`packages/fushi_core/lib/src/database/database.dart` 和 `tables.dart`（schema v62，53 张表，WAL）。
 - 词典：Dart 封装 `packages/fushi_dictionary/lib/src/engine/fushidicts.dart` + FFI 绑定 `lib/src/ffi/fushidicts_ffi_bindings.dart`；C++ 引擎源码全在 `native/fushidicts/`（包内已无 C++），`fushidicts_external/` 是 vendored 第三方，上游同步基线见 `native/fushidicts/UPSTREAM.md`。
-- 有声书：`packages/fushi_audio/` + `fushi/lib/src/media/audiobook/`（导入入口 `book_import_dialog.dart` / `audiobook_import_dialog.dart`）。设备端语音转录生成字幕的**算法层已抽成独立仓库** [`hajisensai/fushi-asr`](https://github.com/hajisensai/fushi-asr)（GPL-3.0，纯 Dart，包 `asr_core` / `asr_align`；本仓按 sha 钉在 `fushi/pubspec.yaml` 的 git 依赖上）。本仓只留三样：Flutter 插件后端 `fushi/lib/src/onnx/onnx_inference_ort.dart`（method channel → `flutter_onnxruntime`）、装配层 `fushi/lib/src/asr_host/asr_host.dart`、UI （`media/audiobook/asr_transcribe_sheet.dart` 等）。**改 ASR 算法一律去那个仓库改，本仓只改装配与 UI。**
+- 有声书：`packages/fushi_audio/` + `fushi/lib/src/media/audiobook/`（导入入口 `book_import_dialog.dart` / `audiobook_import_dialog.dart`）。设备端语音转录生成字幕的**算法层已抽成独立仓库** [`hajisensai/fushi-subtitles`](https://github.com/hajisensai/fushi-subtitles)（GPL-3.0，纯 Dart，包 `fushi_asr_core` / `fushi_asr_align`；本仓按 sha 钉在 `fushi/pubspec.yaml` 的 git 依赖上）。本仓只留三样：Flutter 插件后端 `fushi/lib/src/onnx/onnx_inference_ort.dart`（method channel → `flutter_onnxruntime`）、装配层 `fushi/lib/src/asr_host/asr_host.dart`、UI （`media/audiobook/asr_transcribe_sheet.dart` 等）。**改 ASR 算法一律去那个仓库改，本仓只改装配与 UI。**
   - 装配点（都在 `asr_host.dart`，两个生产实例化点共用 `createAsrTranscriptionService()`）：数据根 `asrSupportRootResolver`、出站 `asrHttpClientFactory`（必须经 `createAppHttpClient`，否则模型下载绕过全应用代理装配）、日志 `asrLogSink`、ffmpeg `FushiAsrFfmpegBackend`（**五端一律注入本仓后端**，包自带的裸 CLI 后端会丢掉子进程登记表、`FUSHI_FFMPEG` 覆盖与捆绑损坏回退；移动端更没有 ffmpeg CLI），以及后台 isolate 的 `AsrIsolateBackend`（顶层函数 `buildFushiOnnxFactory` + `BackgroundIsolateBinaryMessenger` 引导——**根 isolate 的全局装配点一个都带不过 isolate 边界**，那边只认这条）。
   - `installAsrHostBindings()` 在 `main()` 里调一次，**不放 `AppModel.initialise()`**：弹窗词典与悬浮词典是另外两个 entry point，不经 `initialise()`。
   - 转录产物是单时间轴 SRT 喂既有匹配链路，旁边同序写逐 token 时间 sidecar `transcript.tokens.jsonl`；`attachAsrCueTokenTiming`（`audiobook_alignment_service.dart`）把它挂到 `AudioCue.tokenTiming` 上，**行数与 cue 数不符时一条都不挂**（行号错位比没有更糟，下游照样跑完、照样落库，只是跳播全偏）。
@@ -56,6 +56,7 @@
 - 词典导入/查询核心走 `hoshidicts` C++ FFI；格式 UI 或旧 Dart format 类不一定是真实导入路径。
 - 国际化用 Slang，源文件 `fushi/lib/i18n/*.i18n.json`（17 种语言），生成文件 `strings.g.dart`。
 - 5 平台均出包（Android/iOS/macOS/Windows/Linux）：`auto` 下五个平台统一走 Material Design 3；Cupertino / macOS renderer 仅保留为隐藏内部能力。桌面端依赖 fork 的 `flutter_inappwebview_windows` 渲染 EPUB。
+- **iOS 版按 App Store 合规少三类能力**，其余四平台不受影响：① 内置外部发现源与书/漫画/视频三个库页的「发现」视图（含用户自配 OPDS、视频域资源索引器与在线发现 provider）；② 在线漫画源宿主（Aidoku 仓库 / Mihon 扩展 / mokuro.moe 卷下载）；③ 下载中心（torrent / 磁力 / 直链队列，含外接 qBittorrent）。理由都不是「iOS 做不到」而是审核指南不允许，所以判据**只在 `fushi/lib/src/models/store_compliance.dart` 的 `StoreRestrictedCapability` 写一次**，`ModuleId.downloads` 的 `availableOn` 委托到它，消费端一律问这两处、不各自写 `Platform.isIOS`。Aidoku 的 iOS 宿主（内嵌 Rust 静态库 + Swift 桥 + Xcode build phase + CI rust target）已整条移除，**macOS 宿主不受影响**；漫画/视频/书的本地库与阅读播放能力一概保留。守卫 `fushi/test/build/ios_store_compliance_guard_test.dart`——这条边界失效是静默的（本地与 CI 全绿、上架才被拒），改动这三块前先读它。
 
 ## 命名术语表（2026-07 定案，新代码遵守）
 
@@ -95,7 +96,7 @@
 ## 动画刮削参考与 provider 边界
 
 - `references/ShokoServer/` 固定官方 `ShokoAnime/ShokoServer`，是动画文件识别、作品/分集模型、缓存和补源编排的长期参考。它是 git submodule：不得复制进 Fushi 构建、不得修改其源码来实现 Hibiki 功能；升级 gitlink 前必须先审上游差异并在本仓提交中说明采用了什么架构变化。
-- 用户于 2026-09-07 明确调整：动画**作品资料以 MAL 为主，TMDB 兜底**。MAL 经 Jikan 只读接口取得，匹配成功保留主源已有字段，缺项可由严格匹配的 TMDB 补充；主源查无或不可用时允许 TMDB 建立身份，歧义仍需人工确认。手动指定的 MAL/TMDB ID 不得静默换源。
+- 用户于 2026-09-07 明确调整：动画**作品资料以 MAL 为主，TMDB 兜底**；2026-09-08 再调整为**主源用户可选**（全局偏好 `video_metadata_primary_provider` + 来源级 `provider_override`，默认仍 MAL），MAL ↔ TMDB 互为兜底、单源语义（AniDB）不传兜底。识别链只在**唯一精确命中**时终止：主源歧义继续问兜底源，双歧义合并候选交人工，不再「主源一歧义就截止」（BUG-2268）。MAL 经 Jikan 只读接口取得，匹配成功保留主源已有字段，缺项可由严格匹配的另一源补充。手动指定的 MAL/TMDB ID 不得静默换源。设计与分批见 `docs/specs/2026-09-08-scrape-provider-choice.md`。
 - **AniDB 保留真实 ED2K 文件哈希识别**，返回文件/作品/分集原生身份；不得把标题匹配称作哈希识别。作品资料层仍为 MAL/TMDB。跨站映射仅唯一明确 ID 才自动采用，AniDB 集号不能未经验证直接套到 MAL/TMDB 集号。Shoko 是哈希/协议/缓存分层参考，不再是作品资料源清单。
 - 动画元数据刮削不装配 Bangumi、Douban、AniList、Fanart.tv 等并行资料源。历史 provider 字符串和 AniDB 资料模块可读兼容，不因旧库身份重新恢复旧生产链；Jikan 是 MAL 传输接口，持久身份统一使用 `mal`。
 - 本地 `.nfo` sidecar 是用户已有资料的离线兼容输入。同一作品可保持字段权威；与手动确认的新身份冲突时不混入新作品，保留原文件并提示，继续遵守覆盖保护。历史 ID 不能触发已退役 provider 网络请求。

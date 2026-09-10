@@ -55,9 +55,9 @@ extension _ReaderNavigation on _ReaderFushiPageState {
         // 变体已收敛进 _failNavigation（清 _isNavigatingToChapter + _restoreInFlight 并
         // complete(false)+清空 completer，让等待方立即返回而非各等各的 10s 超时）。
         _failNavigation();
-        // TODO-1229 第三次复诉：兜底超时也算内容就绪，消费 pending 并 stamp 冷却窗，
-        // 避免惯性跨章后旗子悬空到下一次真实导航才被清（那会造成一次假冷却）。
-        _noteChapterTurnSettledIfPending();
+        // BUG-2424：兜底超时也算内容就绪 —— 积压的翻页意图必须在这里也放行，否则
+        // 一次 JS 卡死会把用户此后拨的所有滚轮永久压在队列里。
+        unawaited(_replayPendingPageTurn());
         // BUG-467：兜底超时路径同样补下 chrome insets（_hasEverLoaded 刚翻 true）。
         _reapplyChromeInsetsAfterFirstLoad();
         // TODO-700 T3：兜底超时路径也确定性落焦（门控见 helper）。
@@ -107,9 +107,7 @@ extension _ReaderNavigation on _ReaderFushiPageState {
     ReaderChapterPerfTrace.mark('jsInitRestore');
     // BUG-438 / TODO-889：恢复完成=内容真正就绪，清掉兜底 deadline，下次导航拿新窗口。
     _clearContentReadyTimeout();
-    // TODO-1229 第三次复诉：惯性跨章落地的新章一就绪，就把跨章冷却窗 stamp 到当下，
-    // 挡住随后的残余滚轮/惯性在新章边界二次跨章（滚轮离散事件在长加载期间不续窗的真因）。
-    _noteChapterTurnSettledIfPending();
+
     if (!mounted) {
       return;
     }
@@ -243,6 +241,14 @@ extension _ReaderNavigation on _ReaderFushiPageState {
       _prefetchAdjacentChapterImages(
         _currentChapter + _chapterAdvanceDirection,
       );
+      // BUG-2424：积压的翻页意图在收尾的**最后**重放——此刻遮罩已撤、新章可见、
+      // `fushiReader` 已就绪，页边界判定是在真实状态上做的（这正是原始「跳两章」
+      // 消失的原因：在飞时 evaluateJavascript 返 null 会被 _didScroll 误读成边界）。
+      // 一次只消费一个：若它导致跨章，`_paginationInFlight` 立刻再次为真，剩下的
+      // 意图由那次导航的 content-ready 继续消费，串成 1:1 的链，不会并发。
+      // 上面的代际守卫同样护住这里：被更晚的导航（目录跳转 / 书签）顶掉时整段丢弃，
+      // 不把旧的滚轮意图应用到用户刚跳到的新位置。
+      unawaited(_replayPendingPageTurn());
     });
   }
 
@@ -457,6 +463,13 @@ extension _ReaderNavigation on _ReaderFushiPageState {
     // 脚本（旧的 post-await 复位在 lyrics/spread/early-return/throw 路径会被跳过）。
     _initialFragment = fragment;
     _restoreInFlight = true;
+    // BUG-2424：非翻页导航（目录 / 书签 / 搜索 / 内链跳转）作废积压的翻页意图。翻页
+    // 触发的导航必须**保留**队列——排队正是发生在它开启的这段在飞窗口里，清掉就等于
+    // 又把用户的输入丢了。标记消费一次即复位（下一次导航默认按非翻页处理）。
+    if (!_navigationFromPageTurn) {
+      _pageTurnQueue.clear();
+    }
+    _navigationFromPageTurn = false;
     // TODO-718 重设计：删除 _continuousSettleGuardArmed 武装——非自愿 reflow 归零判据已改无状态
     // （直接看 fromUserScroll），不再需要「导航武装/用户滚动解武装」状态机。
     _rebuild(() {
@@ -655,20 +668,34 @@ extension _ReaderNavigation on _ReaderFushiPageState {
       // HBK-AUDIT-038: a same-document anchor (e.g. href="#note1") resolves to
       // the current chapter's path plus a fragment. Jump in place instead of
       // reloading the whole chapter (avoids a visible flash + lost scroll).
-      if (link.chapterIndex == _currentChapter && link.fragment != null) {
-        await _jumpToFragmentInPlace(link.fragment!);
-      } else {
-        await _navigateToChapterWithFragment(
-          link.chapterIndex,
-          link.fragment,
-          manual: true,
-        );
-      }
+      await _jumpToChapterAnchor(link.chapterIndex, link.fragment);
       return;
     }
     // HBK-AUDIT-038: route genuine external schemes (http/https/mailto/tel on a
     // foreign host) to the OS; _openExternalUrl no-ops for our own virtual host.
     await _openExternalUrl(url);
+  }
+
+  /// 「章号 + 可选章内锚」的唯一落地口，目录点击与书内链接共用。
+  ///
+  /// fragment 为 null 时就是普通跳章（[_navigateToChapter]，与修复前逐字相同）；
+  /// 带锚且**就在当前章**时原地滚过去（不重载章节，避免闪一下 + 丢滚动位置，
+  /// HBK-AUDIT-038）；带锚且跨章时随章加载一起把锚落地。
+  ///
+  /// 目录侧为什么需要它：EPUB 里「一个 xhtml 装整卷、目录靠 `#anchor` 分节」很
+  /// 常见，这类目录项的 spine 章号**全都一样**，此前锚被丢在
+  /// [flattenTtuTocEntries] 之外，于是同一章下的每一条目录项都只跳到章首——
+  /// 用户看到的「章节跳转不准」。
+  Future<void> _jumpToChapterAnchor(int index, String? fragment) async {
+    if (fragment == null) {
+      await _navigateToChapter(index, manual: true);
+      return;
+    }
+    if (index == _currentChapter) {
+      await _jumpToFragmentInPlace(fragment);
+      return;
+    }
+    await _navigateToChapterWithFragment(index, fragment, manual: true);
   }
 
   Future<void> _navigateToChapterWithFragment(
@@ -986,10 +1013,14 @@ extension _ReaderNavigation on _ReaderFushiPageState {
     unawaited(snapshot.evict());
   }
 
-  void _handlePageTurnLimit(String direction, {bool inertia = false}) {
+  void _handlePageTurnLimit(String direction) {
     if (_book == null) {
       return;
     }
+    // BUG-2424：本次导航由翻页触发。[_beginNavigation] 读它来决定要不要作废积压的
+    // 翻页意图——只有**非翻页**导航（目录 / 书签 / 搜索 / 内链跳转）才作废：用户已经
+    // 显式换了目的地，把之前排队的滚轮意图重放到新位置只会把他从那里带走。
+    _navigationFromPageTurn = true;
     // BUG-369/TODO-656 诊断：跨章真正落子前记录方向与当前章号，便于对照「跳早了」。
     debugPrint(
       '[xchapter] handlePageTurnLimit dir=$direction '
@@ -1009,12 +1040,10 @@ extension _ReaderNavigation on _ReaderFushiPageState {
       final bool manual = _settings?.spreadMode == 'off';
       if (direction == 'forward') {
         if (currentVirtual + 1 < _spreadMap!.length) {
-          if (inertia) _markInertiaChapterTurnPending();
           _navigateToVirtualPage(currentVirtual + 1, manual: manual);
         }
       } else {
         if (currentVirtual > 0) {
-          if (inertia) _markInertiaChapterTurnPending();
           _navigateToVirtualPage(
             currentVirtual - 1,
             progress: 0.99,
@@ -1028,12 +1057,10 @@ extension _ReaderNavigation on _ReaderFushiPageState {
     // 兜底：spread map 尚未构建（book/settings 未就绪，翻页前罕见）时退回裸翻章。
     if (direction == 'forward') {
       if (_currentChapter < _book!.chapters.length - 1) {
-        if (inertia) _markInertiaChapterTurnPending();
         _navigateToChapter(_currentChapter + 1, manual: true);
       }
     } else {
       if (_currentChapter > 0) {
-        if (inertia) _markInertiaChapterTurnPending();
         _navigateToChapter(_currentChapter - 1, progress: 0.99, manual: true);
       }
     }
@@ -1078,9 +1105,12 @@ extension _ReaderNavigation on _ReaderFushiPageState {
     // （_onRestoreComplete）与失败（_failNavigation / reload catch）都清旗，之后的
     // 首发刷新、onReanchorSettled 补刷都在清旗之后到达，不受这条门影响。
     if (_controller == null || _lyricsMode || _restoreInFlight) return;
+    final InAppWebViewController controller = _controller!;
+    final int generation = _navigateGeneration;
+    final int chapter = _currentChapter;
     final dynamic result;
     try {
-      result = await _controller!.evaluateJavascript(
+      result = await controller.evaluateJavascript(
         source: ReaderPaginationScripts.stableProgressInvocation(),
       );
     } catch (e, stack) {
@@ -1097,6 +1127,22 @@ extension _ReaderNavigation on _ReaderFushiPageState {
       );
       return;
     }
+    // JS 往返期间可能已经翻章、重载或替换 WebView。旧文档的章内偏移不能
+    // 按新章的累计字数入账，也不能覆盖新章恢复锚/落库位置。代际同时拦住
+    // A → B → A 和同章重载，不能只检查章号或此刻是否仍在恢复。
+    // BUG-2399：内容还没就绪时晚到的快照同样不得写进恢复锚。这道闸有**两个入口**
+    // （本方法与 [_syncPositionFromWebViewProgress]），判据必须两处一致——只补一处
+    // 等于这条路照样能污染，守卫 reader_progress_snapshot_generation_guard 也正是
+    // 按同一份清单扫这两个方法的。
+    if (!mounted ||
+        generation != _navigateGeneration ||
+        chapter != _currentChapter ||
+        !identical(controller, _controller) ||
+        _restoreInFlight ||
+        _lyricsMode ||
+        !_readerContentReady) {
+      return;
+    }
     if (result == null) {
       // BUG-493：null = JS stableProgressInvocation 早退（重锚在飞 _reanchorPending / 尚未
       // settle）。这是**瞬态**：JS 侧清旗已单点化（_sharedJs 的 _setReanchorPending），
@@ -1106,7 +1152,16 @@ extension _ReaderNavigation on _ReaderFushiPageState {
       // _applyImagePageProgressFallback 兜底显示。
       return;
     }
-    if (!mounted) return;
+    // await 期间可能已经换章、重载或重建 WebView。旧快照不能套新章坐标，
+    // 也不能写回恢复锚或把导航中的视口计入阅读账本。
+    if (!mounted ||
+        _controller != controller ||
+        _navigateGeneration != generation ||
+        _currentChapter != chapter ||
+        _restoreInFlight ||
+        _lyricsMode) {
+      return;
+    }
     final ReaderStableProgressDetails? snapshot =
         parseReaderStableProgressDetails(result);
     if (snapshot == null) {
@@ -1243,9 +1298,12 @@ extension _ReaderNavigation on _ReaderFushiPageState {
       return;
     }
 
+    final InAppWebViewController controller = _controller!;
+    final int generation = _navigateGeneration;
+    final int chapter = _currentChapter;
     final dynamic result;
     try {
-      result = await _controller!.evaluateJavascript(
+      result = await controller.evaluateJavascript(
         source: ReaderPaginationScripts.stableProgressInvocation(),
       );
     } catch (e, stack) {
@@ -1257,7 +1315,16 @@ extension _ReaderNavigation on _ReaderFushiPageState {
       debugPrint('[ReaderFushi] syncPositionFromWebViewProgress failed: $e');
       return;
     }
-    if (!mounted) return;
+    // 退出/后台刷新同样不能把旧文档快照写进新章节的恢复锚。
+    if (!mounted ||
+        generation != _navigateGeneration ||
+        chapter != _currentChapter ||
+        !identical(controller, _controller) ||
+        _restoreInFlight ||
+        _lyricsMode ||
+        !_readerContentReady) {
+      return;
+    }
 
     final ReaderStableProgressDetails? snapshot =
         parseReaderStableProgressDetails(result);
@@ -1402,20 +1469,22 @@ extension _ReaderNavigation on _ReaderFushiPageState {
       cue.textFragmentId,
     );
     if (frag != null) {
+      final int? studyOffset = _studyRangeForAudioFragment(frag)?.offset;
+      if (studyOffset == null) return;
       _lastProgressSection = frag.sectionIndex;
       if (frag.sectionIndex >= 0 &&
           frag.sectionIndex < _chapterCharCounts.length &&
           _chapterCharCounts[frag.sectionIndex] > 0) {
         _lastProgressValue =
-            frag.normCharStart / _chapterCharCounts[frag.sectionIndex];
+            studyOffset / _chapterCharCounts[frag.sectionIndex];
         _lastProgressValue = _lastProgressValue.clamp(0.0, 1.0);
-        // BUG-162: cue 派生位置无 WebView 精确偏移 → -1（恢复走 cue 的 normChar 分数），
-        // 并清陈旧锚，避免后续 flush 把别 section 的偏移误写进来。
-        _lastProgressCharOffset = -1;
+        // The validated XHTML mapping gives the same learning-unit anchor as
+        // the reader, including when exiting lyrics mode without a WebView.
+        _lastProgressCharOffset = studyOffset;
         _debouncedSaveReaderPosition(
           _lastProgressSection,
           _lastProgressValue,
-          -1,
+          studyOffset,
         );
       }
       return;
@@ -1502,10 +1571,7 @@ extension _ReaderNavigation on _ReaderFushiPageState {
       _syncPositionFromCurrentCue();
     }
     await _flushPosition();
-    // settle 而非 leave：这条路径不保证进程真的死（Android 退后台用同一组回调
-    // flush 后页面继续活着），清空当前单元会让下一次落回同一页的 arrive 把位置退
-    // 回单元起点、把刚记的字数撤回去。
-    _readLedger.settle();
+    // 退出 / 退后台不是翻走：站着的那页不结算（`ReadUnitLedger` 类文档），只写穿时钟。
     await _flushReadingStats();
     await _audiobookController?.flushPosition();
   }

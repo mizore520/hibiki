@@ -231,7 +231,7 @@ void main() {
         reason: '必须能把「正在退出」和「正常运行」区分开',
       );
       final int probeAt = runner.indexOf('::IsWindowVisible(exiting)');
-      final int waitAt = runner.indexOf('WaitForSingleInstanceMutex', probeAt);
+      final int waitAt = runner.indexOf('single_instance_mutex.Wait', probeAt);
       expect(
         waitAt,
         greaterThan(probeAt),

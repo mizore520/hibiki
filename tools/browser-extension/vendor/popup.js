@@ -18,6 +18,22 @@ function __fushiRootNode(){ return window.__fushiRoot || document; }
 function __fushiContainer(){ var r = window.__fushiRoot; return r ? r.querySelector('#entries-container') : document.getElementById('entries-container'); }
 function __fushiViewportWidth(){ var w = Number(window.__fushiPopupViewportWidth); return (isFinite(w) && w > 0) ? w : (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 0); }
 function __fushiOverlayParent(){ return window.__fushiRoot || document.body; }
+/* 词典改名（v95）：把**真名**翻成用户起的显示名，只用于渲染给人看的文本。
+   宿主在 popup_settings_injection 注入 window.dictionaryDisplayNames = {真名: 显示名}，
+   只含真正改过名的条目；没改过 / 表不存在 → 原样返回真名。
+
+   ⚠️ 绝不能拿它去替换 dictName 变量本身。同一个真名在本文件里还承担 6 种非显示
+   职责：`data-dictionary` CSS 作用域属性、window.dictionaryStyles 查表、隐藏/折叠
+   过滤、释义语言查表、词典媒体 URL 的 dictionary= 参数（要对上磁盘目录名）、
+   glossaries 分组 key（Anki `{single-glossary-<名>}` token 靠它对齐）。翻译了那些
+   就是：用户样式静默失效、词典图/音 404、已配置的制卡字段对不上。
+   只在 textContent 处调用本函数。 */
+function __fushiDictDisplayName(name){
+    var map = window.dictionaryDisplayNames;
+    if (!map || typeof name !== 'string') return name;
+    var shown = map[name];
+    return (typeof shown === 'string' && shown.length > 0) ? shown : name;
+}
 // 注意：scrollHeight 是**未乘 CSS zoom 的 layout px**。要和宿主几何（host CSS px）同单位，
 // 用下面的 __fushiReportedContentHeight()（BUG-1651 ②）。
 function __fushiScrollHeight(){ var c = __fushiContainer(); return c ? c.scrollHeight : document.body.scrollHeight; }
@@ -1479,6 +1495,13 @@ function constructSingleGlossaryHtml(entryIndex) {
         highlightExportedGlossary(tempDiv, entryIndex, glossaryIndex);
         const content = applyTableStyles(tempDiv.innerHTML);
         let listIdentifier = '';
+        /* 词典改名（v95）刻意**不**翻这里：本行进的是导出到 Anki 的卡片正文。
+           卡片是历史存档，改名不回溯——翻了之后同一个牌组里旧卡显示真名、新卡
+           显示新名，比统一显示真名更难认。同一段 HTML 里的 data-dictionary
+           属性也必须是真名（Lapis 模板 CSS 靠它命中），文本与属性不一致会让
+           排查变难。
+           上游 Yomitan 同位置放的是 dictionaryAlias，所以「跟着改名走」是个
+           合理的反向选择；要改就只翻这一行的 label 文本，别碰下面的属性。 */
         if (dictChanged) {
             label = tags ? `(${tags}, ${dictName})` : `(${dictName})`;
         } else {
@@ -2757,7 +2780,7 @@ function createDeinflectionTag(tag) {
 function createFrequencyGroup(freqGroup) {
     const values = freqGroup.frequencies.map(f => f.displayValue || f.value).join(', ');
     return el('span', { className: 'frequency-group', 'data-details': freqGroup.dictionary }, [
-        el('span', { className: 'frequency-dict-label', textContent: freqGroup.dictionary }),
+        el('span', { className: 'frequency-dict-label', textContent: __fushiDictDisplayName(freqGroup.dictionary) }),
         el('span', { className: 'frequency-values', textContent: values })
     ]);
 }
@@ -2895,9 +2918,10 @@ function mergeIdenticalPitchGroups(groups) {
 
 function createPitchGroup(pitchData, reading) {
     const dictionaries = pitchData.dictionaries || [pitchData.dictionary];
+    // data-details 仍用**真名**（选择器/样式按真名匹配），只有渲染出来的标签走显示名。
     const container = el('div', { className: 'pitch-group', 'data-details': dictionaries.join(', ') });
     dictionaries.forEach((dictionary) => {
-        container.appendChild(el('span', { className: 'pitch-dict-label', textContent: dictionary }));
+        container.appendChild(el('span', { className: 'pitch-dict-label', textContent: __fushiDictDisplayName(dictionary) }));
     });
 
     const list = el('ul', { className: 'pitch-entries' });
@@ -2988,19 +3012,40 @@ function createPitchSection(pitches, reading) {
     const merged = mergeIdenticalPitchGroups(pitches);
     const groups = [];
     if (window.deduplicatePitchAccents) {
-        const seen = new Set();
+        // BUG-2397：去重必须覆盖**三类可见条目**，各自一套 seen。此前只有数字
+        // 位置进 seen，`patterns`（“heiban” 等 pattern 式音调）与 `transcriptions`（IPA）
+        // 一概不管：两本词典都标 heiban、或都给同一段 IPA 时，它们照样各占一行，
+        // 用户看到的就是「开了去重还是重复」。（mergeIdenticalPitchGroups 只能接住整份
+        // payload 全等的那一种；只要两本词典在另一个字段上差一点，合并就不成立，
+        // 重复全部落到这一步。）
+        //
+        // 三类各一个 Set、不合并成一个：位置是数字、另两类是字符串，混在一起
+        // `1` 与 `'1'` 会互相误杀（Set 按 SameValueZero 比，不会相等，但语义上
+        // 把三个值域摆进同一个命名空间本身就是错的）。
+        const seenPositions = new Set();
+        const seenPatterns = new Set();
+        const seenTranscriptions = new Set();
         merged.forEach(group => {
-            const unique = (group.pitchPositions || []).filter(pos => !seen.has(pos));
+            const unique = (group.pitchPositions || []).filter(pos => !seenPositions.has(pos));
             // TODO-688: a group with no unique pitch positions but with IPA
             // transcriptions (Yomitan `ipa`-mode dicts have no pitch positions)
             // must still render, or the transcriptions are silently dropped.
             // Pattern-style accents (79c55c2) likewise keep the group alive.
-            const hasTranscriptions = group.transcriptions?.length;
-            const hasPatterns = group.patterns?.length;
-            if (unique.length > 0 || hasTranscriptions || hasPatterns) {
-                unique.forEach(pos => seen.add(pos));
-                // 保留合并出来的 `dictionaries`，只把位置换成去重后的那份。
-                groups.push(Object.assign({}, group, { pitchPositions: unique }));
+            // BUG-2397：保活的判据从「原始字段非空」改成「**去重后**还剩东西」——
+            // 前者会把一整行已经显示过的 IPA / pattern 再画一遍。
+            const uniquePatterns = (group.patterns || []).filter(p => !seenPatterns.has(p));
+            const uniqueTranscriptions =
+                (group.transcriptions || []).filter(ipa => !seenTranscriptions.has(ipa));
+            if (unique.length > 0 || uniquePatterns.length > 0 || uniqueTranscriptions.length > 0) {
+                unique.forEach(pos => seenPositions.add(pos));
+                uniquePatterns.forEach(p => seenPatterns.add(p));
+                uniqueTranscriptions.forEach(ipa => seenTranscriptions.add(ipa));
+                // 保留合并出来的 `dictionaries`，只把三类可见条目换成去重后的那份。
+                groups.push(Object.assign({}, group, {
+                    pitchPositions: unique,
+                    patterns: uniquePatterns,
+                    transcriptions: uniqueTranscriptions,
+                }));
             }
         });
     } else {
@@ -3355,7 +3400,7 @@ function wrapExpressionInlineKanji(container) {
             acceptNode(node) {
                 const p = node.parentElement;
                 if (!node.textContent || !p) return NodeFilter.FILTER_REJECT;
-                if (p.closest('rt, rp, .ruby-rt, .ruby-reserve, .kanji-inline')) {
+                if (p.closest('rt, rp, .ruby-rt, .ruby-reserve, .expr-char')) {
                     return NodeFilter.FILTER_REJECT;
                 }
                 return NodeFilter.FILTER_ACCEPT;
@@ -3363,36 +3408,50 @@ function wrapExpressionInlineKanji(container) {
         });
         const textNodes = [];
         while (walker.nextNode()) textNodes.push(walker.currentNode);
+        // 过滤器已排掉读音与孪生体，剩下的可见基字按文档序拼起来就是 expression
+        // 本身，所以这个累加偏移与 expression 的 UTF-16 下标同域。点击处理器还会
+        // 拿「本格字面 == expression 该位置的字符」再自校验一次：ruby 结构哪天让
+        // 基字序与 expression 错位，也只是退回整词，不会去查一段错位的串。
+        let offset = 0;
         for (const node of textNodes) {
-            const text = node.textContent;
-            let hasKanji = false;
-            for (const ch of text) {
-                if (KANJI_PATTERN.test(ch)) { hasKanji = true; break; }
-            }
-            if (!hasKanji) continue;
             const frag = document.createDocumentFragment();
-            let run = '';
-            const flushRun = () => {
-                if (run) {
-                    frag.appendChild(document.createTextNode(run));
-                    run = '';
-                }
-            };
-            for (const ch of text) {
-                if (KANJI_PATTERN.test(ch)) {
-                    flushRun();
-                    const span = document.createElement('span');
-                    span.className = 'kanji-inline';
-                    span.textContent = ch;
-                    frag.appendChild(span);
-                } else {
-                    run += ch;
-                }
+            for (const ch of node.textContent) {
+                const span = document.createElement('span');
+                span.className = KANJI_PATTERN.test(ch)
+                    ? 'expr-char kanji-inline'
+                    : 'expr-char';
+                span.setAttribute('data-char-index', String(offset));
+                span.textContent = ch;
+                frag.appendChild(span);
+                offset += ch.length;
             }
-            flushRun();
             node.replaceWith(frag);
         }
     });
+}
+
+// 词头上的一次点击落在哪个字格上、该查什么。
+//
+// - 汉字格（.kanji-inline）：查这个字本身。单字查询才带汉字卡（Dart 侧
+//   queryKanjiForTerm 只对单字生效），design-2026-08 的「点词头汉字看单字」入口
+//   照旧。
+// - 其余字格（假名 / 拉丁 …）：查**从这个字到词尾**的那一段。用户 2026-09-10
+//   反馈：点「置かない」的 か 要能出「かない」，而不是把整个词头原样再搜一遍
+//   ——那是一次空转查询，点了等于没点。
+// - 落在读音(rt)、孪生体或字与字之间的空隙：返回 null，调用方退回整词（旧行为）。
+function resolveExpressionTapTarget(expression, target) {
+    const cell = target instanceof Element ? target.closest('.expr-char') : null;
+    if (!cell) return null;
+    const ch = cell.textContent || '';
+    if (cell.classList.contains('kanji-inline')) {
+        return { term: ch, anchorEl: cell };
+    }
+    const index = Number(cell.getAttribute('data-char-index'));
+    if (!Number.isInteger(index) || index < 0 || index >= expression.length) {
+        return null;
+    }
+    if (!expression.startsWith(ch, index)) return null;
+    return { term: expression.slice(index), anchorEl: cell };
 }
 
 function createEntryHeader(entry, idx) {
@@ -3419,16 +3478,14 @@ function createEntryHeader(entry, idx) {
     expressionSpan.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        // design-2026-08 讨论区反馈: a click landing on an inline kanji (.kanji-inline, wrapped
-        // by wrapExpressionInlineKanji) looks up THAT character — same
-        // onLinkClick channel + anchor-rect semantics the removed
-        // kanji-breakdown chips used. Anywhere else on the headword keeps the
-        // old whole-expression re-lookup.
-        const kanjiEl = e.target instanceof Element
-            ? e.target.closest('.kanji-inline')
-            : null;
-        const anchorEl = kanjiEl || expressionSpan;
-        const term = kanjiEl ? kanjiEl.textContent : expression;
+        // 词头的每个字都是自己的点击目标（wrapExpressionInlineKanji 逐字包格）：
+        // 汉字格查该字（汉字卡入口，design-2026-08 讨论区反馈），其余字格查「从该
+        // 字到词尾」的那一段（用户 2026-09-10 反馈）。onLinkClick 通道与锚点矩形
+        // 语义与被删掉的 kanji-breakdown chip 时代一致。落空（读音/空隙）才退回
+        // 整词再查一遍。
+        const hit = resolveExpressionTapTarget(expression, e.target);
+        const anchorEl = hit ? hit.anchorEl : expressionSpan;
+        const term = hit ? hit.term : expression;
         const rect = anchorEl.getBoundingClientRect();
         window.flutter_inappwebview.callHandler('onLinkClick', term, {
             x: rect.left,
@@ -3446,6 +3503,17 @@ function createEntryHeader(entry, idx) {
     }
 
     const buttonsContainer = el('div', { className: 'header-buttons' });
+
+    // 「制卡」功能模块（Dart 侧 ModuleId.cardCreation）关掉时，词条头上的「+」制卡
+    // 按钮与跟它同源的「在 Anki 中打开」↗ 按钮**整颗不渲染**：模块关掉的语义是「该
+    // 模块的全部入口消失」，不是「按钮还在、点了没反应」。
+    //
+    // 判据写成 `!== false` 而不是真值判断：宿主没注入过这个 flag（浏览器扩展 content
+    // 侧、node 单测）时是 undefined → 照旧渲染，零回归。形态与既有的
+    // window.sentenceDraftEnabled / window.sentenceContextPreviewEnabled 一致——由宿主
+    // 声明能力，JS 侧只读不猜。注入点见 popup_settings_injection.dart（in-app 弹窗与
+    // app 外全局查词窗共用同一段 head，故两类表面同时生效）。
+    const miningEnabled = window.__fushiMiningEnabled !== false;
 
     if (window.audioSources?.length) {
         buttonsContainer.appendChild(createAudioButton(expression, reading, idx));
@@ -3728,7 +3796,9 @@ function createEntryHeader(entry, idx) {
             }
         }
     });
-    buttonsContainer.appendChild(mineButton);
+    if (miningEnabled) {
+        buttonsContainer.appendChild(mineButton);
+    }
 
     // TODO-1360：「在 Anki 中打开卡片」按钮——仅当该词已制卡（data-mined）时显示。点击
     // 让宿主据 expression/reading 反查 Anki 全部命中卡并直接跳转打开（单卡直开 / 多卡弹
@@ -3753,7 +3823,9 @@ function createEntryHeader(entry, idx) {
         }
     });
     setButtonIcon(openAnkiButton, 'openInAnki');
-    buttonsContainer.appendChild(openAnkiButton);
+    if (miningEnabled) {
+        buttonsContainer.appendChild(openAnkiButton);
+    }
     // Lookup-time detection: query Anki's real card existence for THIS word as
     // the popup renders it, and set the accurate 已制卡 ✓ / 可制卡 + state.
     //
@@ -3765,37 +3837,41 @@ function createEntryHeader(entry, idx) {
     // earlier card to the editable ✓↩ latest state so a single click overwrites
     // it in place — no need to have mined it in this popup session. A null reply
     // keeps the ordinary two-state behaviour (Never break userspace).
-    scheduleEntryStateCheck(
-        mineButton,
-        `duplicate\u0000${mineEntryKey(expression, reading)}`,
-        () => window.flutter_inappwebview.callHandler(
-            'duplicateCheck', { expression, reading }),
-        async (isDuplicate) => {
-            const stateEpoch = entryStateCheckEpoch;
-            const stateVersion = mineButton.__fushiEntryStateVersion || 0;
-            // Paint ✓/+ as soon as duplicateCheck answers. The optional
-            // overwrite-target probe is a second Anki round trip and must not
-            // hold the basic lookup-time state hostage.
-            setMineState(isDuplicate);
-            if (isDuplicate && !isLatestEditable(expression, reading)) {
-                try {
-                    const noteId = await window.flutter_inappwebview.callHandler(
-                        'overwriteTargetNoteId', { expression, reading });
-                    if (stateEpoch !== entryStateCheckEpoch ||
-                        stateVersion !== (mineButton.__fushiEntryStateVersion || 0) ||
-                        mineButton.isConnected === false) return;
-                    if (typeof noteId === 'number' && Number.isFinite(noteId)) {
-                        rememberLatestMined(expression, reading, noteId);
-                        setMineState(true);
+    // 制卡模块关掉时上面一颗制卡按钮都没渲染，这里的查重探测也一并停掉——模块
+    // 关掉 = 它的后台流量（每次查词一次 Anki 查重 + 可能的覆写目标反查）也一起停。
+    if (miningEnabled) {
+        scheduleEntryStateCheck(
+            mineButton,
+            `duplicate\u0000${mineEntryKey(expression, reading)}`,
+            () => window.flutter_inappwebview.callHandler(
+                'duplicateCheck', { expression, reading }),
+            async (isDuplicate) => {
+                const stateEpoch = entryStateCheckEpoch;
+                const stateVersion = mineButton.__fushiEntryStateVersion || 0;
+                // Paint ✓/+ as soon as duplicateCheck answers. The optional
+                // overwrite-target probe is a second Anki round trip and must not
+                // hold the basic lookup-time state hostage.
+                setMineState(isDuplicate);
+                if (isDuplicate && !isLatestEditable(expression, reading)) {
+                    try {
+                        const noteId = await window.flutter_inappwebview.callHandler(
+                            'overwriteTargetNoteId', { expression, reading });
+                        if (stateEpoch !== entryStateCheckEpoch ||
+                            stateVersion !== (mineButton.__fushiEntryStateVersion || 0) ||
+                            mineButton.isConnected === false) return;
+                        if (typeof noteId === 'number' && Number.isFinite(noteId)) {
+                            rememberLatestMined(expression, reading, noteId);
+                            setMineState(true);
+                        }
+                    } catch (e) {
+                        // A failed overwrite-target probe must never break the ✓/+ paint;
+                        // fall back to the ordinary mined state below.
+                        console.error('overwriteTargetNoteId probe failed', e);
                     }
-                } catch (e) {
-                    // A failed overwrite-target probe must never break the ✓/+ paint;
-                    // fall back to the ordinary mined state below.
-                    console.error('overwriteTargetNoteId probe failed', e);
                 }
-            }
-        },
-    );
+            },
+        );
+    }
 
     // TODO-393「查词窗口句子上下文制卡」：仅支持草稿的表面（书籍/有声书/视频；宿主接受
     // setSentenceContext）渲染「上 N 句 / 下 N 句」上下文选择器。选「上 N」「下 N」把当前
@@ -4256,7 +4332,7 @@ function createGlossarySection(dictName, contents, dictIdx, entryIdx, totalDicts
     }
 
     const summary = el('summary', { className: 'dict-label' });
-    summary.appendChild(el('span', { className: 'dict-name', textContent: dictName }));
+    summary.appendChild(el('span', { className: 'dict-name', textContent: __fushiDictDisplayName(dictName) }));
     details.appendChild(summary);
 
     let longPressTimer = null;
@@ -4809,7 +4885,7 @@ function createKanjiCard(kanji) {
     }
 
     if (kanji.dictName) {
-        card.appendChild(el('div', { className: 'kanji-card-dict', textContent: kanji.dictName }));
+        card.appendChild(el('div', { className: 'kanji-card-dict', textContent: __fushiDictDisplayName(kanji.dictName) }));
     }
 
     return card;
@@ -5254,10 +5330,25 @@ if (typeof document !== 'undefined' && typeof document.addEventListener === 'fun
 // min(用户设置, 装得下的列数)，写 --dict-columns-effective 供 grid 消费；
 // resize 只改 CSS 变量（grid 自动 reflow，零重渲）。in-app 弹窗同规则受益。
 const DICT_COLUMN_MIN_WIDTH = 170;
+// 触屏设备（主指针 coarse）列宽门槛加倍：每列至少 2×DICT_COLUMN_MIN_WIDTH 才许并排。
+// 手机弹窗本就窄（竖屏 ~400px 宽 → 340 门槛下仍是单列，维持「竖着堆叠才是手机上正确
+// 形态」的原裁决），但不再被无条件锁死——平板横屏、in-app 桌面尺寸大窗这类 coarse 且
+// 宽的场景按视口正常出多列（审计报告 #1295：老版 coarse→1 把 in-app 弹窗静默锁死单列，
+// 没有任何逃生门）。fine 指针（桌面）门槛不变。CSS grid 与 JS masonry 都经本函数取列数。
+function isCoarsePointerType() {
+    try {
+        return !!(window.matchMedia
+            && window.matchMedia('(pointer: coarse)').matches);
+    } catch (e) {
+        return false;
+    }
+}
 // 视口感知的有效列数（单一真值来源）：min(用户设置 --dict-columns, 每列 ≥DICT_COLUMN_MIN_WIDTH
 // px 装得下的列数)。CSS grid 经 --dict-columns-effective 消费、masonry 经 dictColumns() 消费，
 // 两者都走此函数——绝不再分叉（历史上 masonry 漏了视口收敛，自动调整对方框布局不生效）。
 function effectiveDictColumns() {
+    // 报告 #1295：coarse 不再「一律单列」，改为提高单列门槛（见上方注释）。
+    const colFloor = isCoarsePointerType() ? DICT_COLUMN_MIN_WIDTH * 2 : DICT_COLUMN_MIN_WIDTH;
     let configured = 1;
     try {
         configured = parseInt(
@@ -5269,7 +5360,7 @@ function effectiveDictColumns() {
     if (!(configured > 0)) configured = 1;
     const width = __fushiViewportWidth();
     const fit = width > 0
-        ? Math.max(1, Math.floor(width / DICT_COLUMN_MIN_WIDTH))
+        ? Math.max(1, Math.floor(width / colFloor))
         : configured;
     return Math.min(configured, fit);
 }
@@ -5713,6 +5804,23 @@ let _popupWheelResidualAt = 0;
 // until the idle/surface reset so one occasional large mid-fling frame is not
 // mis-classified as a coarse mouse notch and momentarily over-tamed.
 let _popupWheelFineDevice = false;
+// BUG-2284: 墨水屏「瞬时滚动」（app 设置 lookup.popup_instant_scroll，经
+// popup_settings_injection / 扩展 theme 下发 window.__fushiPopupInstantScroll）。
+// 墨水屏刷一次全屏才划算，按 delta 比例的连续滚动会一路刷出残影；开启后滚轮改成
+// 「每次手势跳固定距离」——步长 = 被滚表面视口高度 × VIEWPORT_FRACTION，乘用户的
+// 滚轮速度倍率后夹在 [MIN_STEP, 一屏] 内（永不跳过整屏内容），并在 COOLDOWN_MS 内
+// 吃掉后续帧：触控板一次惯性滑动会连发几十帧，不合并就直接跳到底。
+const POPUP_EINK_WHEEL_VIEWPORT_FRACTION = 0.5; // 一次跳半屏
+const POPUP_EINK_WHEEL_MIN_STEP = 48;           // 视口异常小时的下限（布局 px）
+const POPUP_EINK_WHEEL_COOLDOWN_MS = 140;       // 一次手势内的跳跃合并窗口
+let _popupEinkWheelAt = 0;
+// 被滚表面的视口高度，单位与 scrollBy 的实参一致（布局 px）。扩展的滚动者是 shadow
+// host（zoom 设在 host 上，clientHeight 已是它自己的布局 px）；in-app 滚 document，
+// window.innerHeight 是视觉 px，要除以 documentElement 的 zoom 才是布局 px。
+function popupEinkWheelExtent(scroller) {
+    if (scroller && scroller.clientHeight > 0) return scroller.clientHeight;
+    return (window.innerHeight || 0) / popupCurrentZoom(null);
+}
 function popupCurrentZoom(scroller) {
     // BUG-688: read the zoom of the surface we are about to scroll. The in-app
     // popup zooms document.documentElement (popup_settings_injection.dart sets
@@ -5891,6 +5999,23 @@ const __fushiPopupWheelListener = (e) => {
         isFinite(window.__fushiPopupWheelSpeed) && window.__fushiPopupWheelSpeed > 0)
         ? window.__fushiPopupWheelSpeed
         : 1;
+    // BUG-2284: 墨水屏瞬时滚动——固定距离跳，不按 delta 比例连续滚。放在这里是因为
+    // 它要复用上面已解析的 wheelSpeed（同一个「滚轮速度」旋钮同时缩放两种模式）与
+    // scroller/deltaPx，且必须走在比例滚动的 factor/亚像素余量之前把事件吃掉。
+    if (window.__fushiPopupInstantScroll) {
+        if ((nowMs - _popupEinkWheelAt) < POPUP_EINK_WHEEL_COOLDOWN_MS) return;
+        _popupEinkWheelAt = nowMs;
+        _popupWheelResidual = 0; // 比例模式的余量在瞬时模式下无意义，切换回去也别延迟跳
+        const extent = popupEinkWheelExtent(scroller);
+        const jump = Math.max(
+            POPUP_EINK_WHEEL_MIN_STEP,
+            Math.min(extent, extent * POPUP_EINK_WHEEL_VIEWPORT_FRACTION * wheelSpeed));
+        const step = Math.trunc(deltaPx < 0 ? -jump : jump);
+        if (step === 0) return;
+        if (scroller) { scroller.scrollBy({ top: step, behavior: 'auto' }); }
+        else { window.scrollBy({ top: step, behavior: 'auto' }); }
+        return;
+    }
     const factor = (coarseMouseNotch
         ? POPUP_WHEEL_PIXEL_FACTOR
         : POPUP_WHEEL_TRACKPAD_FACTOR) * wheelSpeed;
@@ -5918,6 +6043,137 @@ if (typeof chrome !== 'undefined' && !!(chrome.runtime && chrome.runtime.id)) {
 } else {
     // in-app 弹窗 WebView：整份文档就是弹窗，常驻 document 监听是正确行为（不变）。
     document.addEventListener('wheel', __fushiPopupWheelListener, { passive: false });
+}
+
+/* BUG-2415: 墨水屏「瞬时滚动」（app 设置 lookup.popup_instant_scroll）的**触摸**半边。
+   BUG-2284 把 window.__fushiPopupInstantScroll 接进了 wheel 监听，但墨水屏设备
+   （Android e-ink 阅读器）上根本没有滚轮——用户是用手指上下**滑**弹窗的，而那条路径
+   此前 100% 走 WebView 原生滚动：逐帧连续位移 + 松手后的惯性 fling。设置文案承诺的正是
+   「按固定距离瞬时跳动、无动画滚动（for e-ink screens）」，触摸路径不认这个开关 =
+   在唯一真正的墨水屏输入方式上开关等于没接线（与 BUG-2284 ① 同一类空开关）。
+
+   与滚轮同源但不同形：滚轮是离散 notch，可以「一格跳半屏」；手指是连续位移，同样按
+   固定距离跳，但量化的是**手指行程**——每滑够一步就跳一步，即「量化的 1:1 跟手」。
+   这样既保留方向反馈（与 _BodySwipeDismissDetector 跟手期刻意保留 Transform.translate
+   同理，见 BUG-2283 备注），又把整段滑动的重绘从每帧一次压成每步一次，preventDefault
+   再把松手惯性彻底掐掉——墨水屏上「松手后还要糊几秒」正是惯性拖出来的。
+
+   接管判定放在 touchstart 一次定死，touchmove 里不再判轴：Chromium 只在某一帧
+   touchmove 未被 preventDefault 时才会启动原生滚动，一旦启动，后续帧的 cancelable
+   就变 false、再 preventDefault 也没用。若留一段「判轴死区」不拦截，Android 的
+   ~8dp touch slop 恰好落在死区里，原生滚动会抢先起步 → 变成原生滚动与瞬跳同时位移。
+   所以要么从第一帧就拿下整轮手势，要么整轮不碰。
+
+   整轮不碰的三个豁免（都在 touchstart 判）：多指（缩放/系统手势）、已有选区（选区手柄
+   拖动也是 touchmove，拦了就拖不动手柄，嵌套查词要靠它选词）、以及手指落在**真正横向
+   溢出**的祖先上（.expression-scroll / .gloss-image-scroll / .gloss-sc-table-container，
+   见 popup.css）——拿下整轮会连它们的横滚一起掐掉。判据是实际溢出而非 CSS 声明，所以
+   短词头那种没溢出的 .expression-scroll 不会误触发豁免。
+
+   只在 in-app 弹窗挂载：扩展镜像里 popup.js 与宿主页共用 document，非 passive 的
+   touchmove 会掐掉宿主页整页的合成器快速滚动路径（wheel 那条为此专门只挂 shadow
+   host，见 BUG-1078），而墨水屏场景是 app 内弹窗，扩展侧没有这个需求。三镜像仍逐字节
+   一致（TODO-1267 parity guard），差别只在运行期分支。 */
+const POPUP_EINK_TOUCH_VIEWPORT_FRACTION = 0.25; // 一步跳 1/4 屏
+const POPUP_EINK_TOUCH_MIN_STEP = 24;            // 视口异常小时的下限（布局 px）
+// 防御性上限：一帧内最多补几步。正常一帧手指走不了几步，这个上限只为杜绝异常输入
+// （极端 zoom / 视口塌成 0）下的死循环。
+const POPUP_EINK_TOUCH_MAX_STEPS_PER_MOVE = 20;
+let _popupEinkTouchId = null;
+let _popupEinkTouchScroller = null;
+let _popupEinkTouchAnchorY = 0;
+
+function __fushiPopupEinkTouchReset() {
+    _popupEinkTouchId = null;
+    _popupEinkTouchScroller = null;
+}
+
+// 一步的距离：被滚表面视口高度 × FRACTION，夹在 [MIN_STEP, 一屏] 内（永不一步跳过整屏
+// 内容）。复用滚轮那条的 extent 解析——zoom → 布局 px 的换算已经在里面。
+function popupEinkTouchStep(scroller) {
+    const extent = popupEinkWheelExtent(scroller);
+    return Math.max(
+        POPUP_EINK_TOUCH_MIN_STEP,
+        Math.min(extent, extent * POPUP_EINK_TOUCH_VIEWPORT_FRACTION));
+}
+
+// 从触点向上找**真正横向溢出**的祖先（不是只看 CSS 声明）。找到 → 本轮不接管。
+function __fushiPopupEinkTouchHasHorizontalScroll(node) {
+    let el = node;
+    let hops = 0;
+    while (el && el.nodeType === 1 && hops < 32) {
+        if (el.scrollWidth > el.clientWidth + 1) {
+            let overflowX = '';
+            try {
+                overflowX = (window.getComputedStyle(el) || {}).overflowX || '';
+            } catch (_) { overflowX = ''; }
+            if (overflowX === 'auto' || overflowX === 'scroll') return true;
+        }
+        el = el.parentElement || (el.parentNode && el.parentNode.host) || null;
+        hops++;
+    }
+    return false;
+}
+
+function __fushiPopupEinkTouchStart(e) {
+    __fushiPopupEinkTouchReset();
+    if (!window.__fushiPopupInstantScroll) return;
+    if (!__fushiEventInsidePopup(e)) return;
+    if (!e.touches || e.touches.length !== 1) return;
+    try {
+        const sel = __fushiSel();
+        if (sel && !sel.isCollapsed) return;
+    } catch (_) { /* 读不到选区就按「无选区」走，最坏是拦了一次手柄拖动 */ }
+    if (__fushiPopupEinkTouchHasHorizontalScroll(__fushiEventTarget(e))) return;
+    const t = e.touches[0];
+    _popupEinkTouchId = t.identifier;
+    _popupEinkTouchScroller = __fushiWheelScroller(e);
+    _popupEinkTouchAnchorY = t.clientY;
+}
+
+function __fushiPopupEinkTouchMove(e) {
+    if (_popupEinkTouchId === null) return;
+    if (!window.__fushiPopupInstantScroll) { __fushiPopupEinkTouchReset(); return; }
+    // 中途落下第二根指针：本轮永久失效（不能把剩余指针重新解释成新的一次纵滑，
+    // 与 _BodySwipeDismissDetector 的 BUG-1242 同一条纪律）。
+    if (!e.touches || e.touches.length !== 1) { __fushiPopupEinkTouchReset(); return; }
+    const t = e.touches[0];
+    if (t.identifier !== _popupEinkTouchId) { __fushiPopupEinkTouchReset(); return; }
+    // 已经不可取消 = 原生滚动已起步（理论上进不来，touchstart 已拿下整轮）。此时再跳
+    // 会和原生一起双倍位移，直接弃掉本轮。
+    if (e.cancelable === false) { __fushiPopupEinkTouchReset(); return; }
+    e.preventDefault();
+    const step = popupEinkTouchStep(_popupEinkTouchScroller);
+    if (!(step > 0)) return;
+    // 手指上滑（clientY 变小）→ 正 → 内容下滚，与原生方向一致。
+    let travel = _popupEinkTouchAnchorY - t.clientY;
+    let guard = 0;
+    while (Math.abs(travel) >= step && guard < POPUP_EINK_TOUCH_MAX_STEPS_PER_MOVE) {
+        const dir = travel > 0 ? 1 : -1;
+        const jump = Math.trunc(dir * step);
+        if (jump === 0) break;
+        if (_popupEinkTouchScroller) {
+            _popupEinkTouchScroller.scrollBy({ top: jump, behavior: 'auto' });
+        } else {
+            window.scrollBy({ top: jump, behavior: 'auto' });
+        }
+        // 锚点跟着走一步：手指要再滑满一步才触发下一跳（这就是 1:1 量化）。
+        _popupEinkTouchAnchorY -= dir * step;
+        travel -= dir * step;
+        guard++;
+    }
+}
+
+if (typeof chrome !== 'undefined' && !!(chrome.runtime && chrome.runtime.id)) {
+    // 扩展镜像：不挂（理由见上方块注释）。留空分支是为了让三镜像逐字节一致时，
+    // 「扩展侧刻意不挂」这条决定在代码里看得见，而不是靠读注释推断。
+} else {
+    // in-app 弹窗 WebView：整份文档就是弹窗。touchmove 必须 passive:false，否则
+    // preventDefault 无效、惯性照旧（这正是 BUG-2415 要掐的东西）。
+    document.addEventListener('touchstart', __fushiPopupEinkTouchStart, { passive: true });
+    document.addEventListener('touchmove', __fushiPopupEinkTouchMove, { passive: false });
+    document.addEventListener('touchend', __fushiPopupEinkTouchReset, { passive: true });
+    document.addEventListener('touchcancel', __fushiPopupEinkTouchReset, { passive: true });
 }
 
 

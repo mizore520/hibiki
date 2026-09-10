@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:asr_core/asr_core.dart';
+import 'package:fushi_asr_core/asr_core.dart';
 import 'package:fushi/src/media/audiobook/asr_models_settings_section.dart';
 import 'package:fushi/utils.dart';
 import 'package:path/path.dart' as p;
@@ -13,6 +13,7 @@ import 'package:path/path.dart' as p;
 class _FakeService extends AsrTranscriptionService {
   _FakeService({required this.root, required this.readyByLanguage})
       : super(
+        audioProfile: AsrAudioProfile.cleanSpeech,
         backend: const AsrIsolateBackend(
           buildFactory: _unusedOnnxFactory,
         ),
@@ -51,6 +52,7 @@ class _FakeService extends AsrTranscriptionService {
   Stream<ModelDownloadEvent> downloadModel({
     required AsrLanguage language,
     required AsrEncoderVariant variant,
+    bool includeAlignment = false,
   }) async* {
     downloadLanguages.add(language);
     yield const ModelDownloadEvent(

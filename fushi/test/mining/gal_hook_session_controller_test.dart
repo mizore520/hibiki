@@ -10,6 +10,8 @@ import 'package:fushi/src/mining/galgame_japanese_locale.dart';
 import 'package:fushi/src/mining/gal_hook_session_controller.dart';
 import 'package:fushi/src/mining/galgame_audio_encode.dart';
 import 'package:fushi/src/mining/galgame_audio_source.dart';
+import 'package:fushi/src/mining/gal_voice_dump_index.dart';
+import 'package:fushi/src/lookup/gal_ingame_mining_binding.dart';
 import 'package:fushi/src/mining/galgame_play_tracker.dart';
 import 'package:fushi/src/mining/window_capture_channel.dart';
 import 'package:fushi/src/startup/exit_flush_registry.dart';
@@ -24,6 +26,323 @@ void main() {
   // listAudioTracks——必须先初始化 binding，让调用以 MissingPluginException 收敛为
   // 空列表而不是在无 binding 下直接抛错。
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  for (final String scenario in <String>[
+    'already exported',
+    'late export',
+    'different event',
+    'unmarked',
+    'silent',
+    'same event stale tick',
+    'folded new silent event',
+    'folded pending predecessor',
+  ]) {
+    test(
+      'BUG-2346 recovered history pairs only owned resource: $scenario',
+      () async {
+        const int tick = 951860281;
+        const String ownedName = '${tick}_fushi_textseq1_z0101.ovk_125.ogg';
+        final List<GalVoiceDumpEntry> files = <GalVoiceDumpEntry>[];
+        GalVoiceDumpEntry resource(String name) => GalVoiceDumpEntry(
+          name: name,
+          path: '${Directory.systemTemp.path}${Platform.pathSeparator}$name',
+          // Selection takes place a minute later; wall-clock age is not ownership.
+          modified: DateTime.now().subtract(const Duration(minutes: 1)),
+          kind: GalVoiceDumpKind.oggLike,
+        );
+        if (scenario == 'already exported' ||
+            scenario == 'folded new silent event') {
+          files.add(resource(ownedName));
+        }
+        if (scenario == 'different event') {
+          files.add(resource('${tick}_fushi_textseq2_z0101.ovk_125.ogg'));
+        }
+        if (scenario == 'unmarked') {
+          files.add(resource('${tick}_z0101.ovk_125.ogg'));
+        }
+        if (scenario == 'same event stale tick') {
+          files.add(
+            resource('${tick - 10000}_fushi_textseq1_z0101.ovk_125.ogg'),
+          );
+        }
+        final GalVoiceDumpIndex index = GalVoiceDumpIndex(
+          directory: Directory.systemTemp,
+          loader: (_) async => List<GalVoiceDumpEntry>.of(files),
+          watcher: (_) => const Stream<FileSystemEvent>.empty(),
+        );
+        await index.startSession();
+        final TexthookerService service = TexthookerService.test();
+        final ChangeNotifier endpoints = ChangeNotifier();
+        final _FakeEngineSource engine = _FakeEngineSource(
+          pairedBytes: Uint8List.fromList(<int>[1, 2, 3]),
+          rawReady: true,
+          voiceDumpIndex: index,
+          replayBufferedLines: true,
+          polledLines: <GalHookedLine>[
+            GalHookedLine(
+              seq: 1,
+              timestampMs: tick,
+              text: 'synthetic history line',
+              threadId: 5,
+              sourceKind: scenario.startsWith('folded') ? 4 : 0,
+              hookName: scenario.startsWith('folded')
+                  ? 'SiglusEngine message'
+                  : 'TestScenario',
+            ),
+          ],
+        );
+        final GalHookSessionController controller = GalHookSessionController(
+          textService: service,
+          isWindows: true,
+          targetWow64Probe: (_) async => true,
+          injectorResolver: ({required bool is32Bit}) async => 'injector.exe',
+          engineSourceFactory:
+              ({
+                required int targetPid,
+                required String? launchExe,
+                required String injectorPath,
+                required bool lunaPcHooks,
+                int? lunaCodepage,
+                List<String> launchArguments = const <String>[],
+                String launchWorkdir = '',
+                GalJapaneseLocaleMode japaneseLocaleMode =
+                    kGalDefaultJapaneseLocaleMode,
+                String? contentLanguage,
+              }) => engine,
+          loopbackSourceFactory: _FakeLoopbackSource.new,
+          textPollInterval: const Duration(milliseconds: 5),
+          resourceAudioWait: Duration.zero,
+          endpointListenable: endpoints,
+          endpointStatusLoader: () => const <TexthookerEndpointStatus>[],
+        );
+        addTearDown(() async {
+          await controller.close();
+          await index.stopSession();
+          endpoints.dispose();
+        });
+        await controller.startAttachedCapture(
+          const ExternalWindowInfo(hwnd: 9, pid: 4242, title: 'synthetic game'),
+        );
+        for (int i = 0; i < 100 && !engine.pollCursors.contains(1); i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 5));
+        }
+        expect(engine.pollCursors, contains(1));
+        expect(
+          service.entries,
+          isEmpty,
+          reason: 'Unselected native events only populate the thread directory',
+        );
+        expect(
+          await controller.selectTextThread(
+            5,
+            threadKey: engine.polledLines.first.textThreadKey,
+          ),
+          isTrue,
+        );
+        expect(
+          controller.events.map((e) => e.code),
+          contains('text.thread_history_recovered'),
+        );
+        expect(service.entries.single.sourceSequence, 1);
+        expect(service.entries.single.hookTimestampMs, tick);
+        final String rowId = service.entries.single.id;
+        if (scenario == 'late export') {
+          expect(service.entries.single.audioResourceId, isNull);
+          files.add(resource(ownedName));
+          index.invalidate();
+          await index.synchronize();
+          for (
+            int i = 0;
+            i < 100 && service.entries.single.audioResourceId == null;
+            i++
+          ) {
+            await Future<void>.delayed(const Duration(milliseconds: 5));
+          }
+        }
+        final bool shouldMatch =
+            scenario == 'already exported' ||
+            scenario == 'late export' ||
+            scenario == 'folded new silent event';
+        expect(service.entries.single.id, rowId);
+        expect(
+          service.entries.single.audioResourceId,
+          shouldMatch ? ownedName : isNull,
+        );
+        expect(
+          service.entries.single.audioStatus,
+          shouldMatch
+              ? TexthookerLineAudioStatus.matched
+              : TexthookerLineAudioStatus.unavailable,
+        );
+        expect(
+          engine.findEventIds,
+          isEmpty,
+          reason: 'History must never call the permissive matching API',
+        );
+        expect(
+          engine.utteranceTimestamps,
+          isEmpty,
+          reason: 'History must not recapture old PCM',
+        );
+        if (scenario == 'folded pending predecessor') {
+          const String nextName = '${tick + 2000}_fushi_textseq2_voice.ogg';
+          // Publish both files inside the next poll, after the prior pending
+          // request exists and before seq 2 immediately matches its own file.
+          engine.beforePoll = () async {
+            files.addAll(<GalVoiceDumpEntry>[
+              resource(ownedName),
+              resource(nextName),
+            ]);
+            index.invalidate();
+            await index.synchronize();
+            engine.polledLines.add(
+              const GalHookedLine(
+                seq: 2,
+                timestampMs: tick + 2000,
+                text: 'synthetic\nhistory line',
+                threadId: 5,
+                sourceKind: 4,
+                hookName: 'SiglusEngine message',
+              ),
+            );
+          };
+          for (
+            int i = 0;
+            i < 100 && service.entries.single.sourceSequence != 2;
+            i++
+          ) {
+            await Future<void>.delayed(const Duration(milliseconds: 5));
+          }
+          expect(service.entries.single.sourceSequence, 2);
+          expect(
+            service.entries.single.audioResourceId,
+            nextName,
+            reason: 'Old pending request cannot overwrite a new matched event',
+          );
+        }
+        if (scenario == 'folded new silent event') {
+          // Neither an unmarked time-near WAV nor another event's WAV may
+          // satisfy the strict native message request for seq 2.
+          for (final String name in <String>[
+            '${tick + 2000}_voice.wav',
+            '${tick + 2000}_fushi_textseq99_voice.wav',
+          ]) {
+            files.add(
+              GalVoiceDumpEntry(
+                name: name,
+                path:
+                    '${Directory.systemTemp.path}${Platform.pathSeparator}$name',
+                modified: DateTime.now(),
+                kind: GalVoiceDumpKind.wav,
+              ),
+            );
+          }
+          index.invalidate();
+          await index.synchronize();
+          final GalIngameMiningBinding popup = GalIngameMiningBinding(
+            textEventId: 1,
+            sessionStartedAt: controller.state.sessionStartedAt,
+            targetHwnd: 9,
+            selectedLines: controller.selectedSessionLines,
+          );
+          engine.polledLines.add(
+            const GalHookedLine(
+              seq: 2,
+              timestampMs: tick + 2000,
+              text: 'synthetic\nhistory line',
+              threadId: 5,
+              sourceKind: 4,
+              hookName: 'SiglusEngine message',
+            ),
+          );
+          for (
+            int i = 0;
+            i < 100 && service.entries.single.sourceSequence != 2;
+            i++
+          ) {
+            await Future<void>.delayed(const Duration(milliseconds: 5));
+          }
+          expect(service.entries.single.id, rowId);
+          expect(service.entries.single.sourceSequence, 2);
+          expect(
+            service.entries.single.audioResourceId,
+            isNull,
+            reason: 'New native event must not inherit old typed audio',
+          );
+          expect(
+            popup.resolve(
+              currentSessionStartedAt: controller.state.sessionStartedAt,
+              currentTargetHwnd: 9,
+              selectedLines: controller.selectedSessionLines,
+            ),
+            rowId,
+            reason: 'Existing popup keeps its original occurrence binding',
+          );
+          final GalIngameMiningBinding nextPopup = GalIngameMiningBinding(
+            textEventId: 2,
+            sessionStartedAt: controller.state.sessionStartedAt,
+            targetHwnd: 9,
+            selectedLines: controller.selectedSessionLines,
+          );
+          expect(
+            await controller.captureAudioForOccurrence(
+              occurrence: nextPopup,
+              outputExtension: 'aac',
+            ),
+            isNull,
+          );
+          expect(
+            await controller.captureAudioForOccurrence(
+              occurrence: popup,
+              outputExtension: 'aac',
+            ),
+            <int>[1, 2, 3],
+          );
+          expect(engine.pairedResourceIds.last, ownedName);
+          expect(engine.pairedEventIds.last, 1);
+          expect(
+            service.entries.single.audioResourceId,
+            isNull,
+            reason: 'Mining the old popup cannot rewrite the new row audio',
+          );
+          const String nextName =
+              '${tick + 2000}_fushi_textseq2_z0101.ovk_126.ogg';
+          files.add(resource(nextName));
+          index.invalidate();
+          await index.synchronize();
+          for (
+            int i = 0;
+            i < 100 && service.entries.single.audioResourceId == null;
+            i++
+          ) {
+            await Future<void>.delayed(const Duration(milliseconds: 5));
+          }
+          expect(service.entries.single.audioResourceId, nextName);
+          expect(
+            await controller.captureAudioForOccurrence(
+              occurrence: nextPopup,
+              outputExtension: 'aac',
+            ),
+            <int>[1, 2, 3],
+          );
+          expect(engine.pairedResourceIds.last, nextName);
+          expect(engine.pairedEventIds.last, 2);
+          await controller.captureAudioForOccurrence(
+            occurrence: popup,
+            outputExtension: 'aac',
+          );
+          expect(engine.pairedResourceIds.last, ownedName);
+          expect(
+            engine.findEventIds,
+            isEmpty,
+            reason:
+                'Strict Native message live events must use event-only pairing',
+          );
+        }
+      },
+      skip: !Platform.isWindows,
+    );
+  }
 
   test(
     'window binding is app-level state and stop keeps binding by default',
@@ -2367,10 +2686,9 @@ void _playTrackerWiringGuard() {
     );
 
     // BUG-1892：附着捕获与启动捕获是同一件事的两条入口，计时接线必须对称。
-    final Match? attachMatch = RegExp(
-      r'Future<void>\s+startAttachedCapture\(\s*ExternalWindowInfo',
-    ).firstMatch(body);
-    final int attachAt = attachMatch?.start ?? -1;
+    final int attachAt = body.indexOf(
+      'Future<void> startAttachedCapture(ExternalWindowInfo',
+    );
     expect(attachAt, greaterThan(0), reason: 'startAttachedCapture 不存在，守卫需更新');
     final int attachEnd = body.indexOf(
       'Future<GalHookLaunchResult> launchGame(',
@@ -3605,7 +3923,14 @@ class _FakeEngineSource extends EngineHookGalAudioSource {
     this.failure = const GalHookInjectorDiagnostics(),
     this.launched,
     this.startGate,
-  }) : super(targetPid: 0, launchExe: 'fake.exe', injectorPath: 'fake.exe');
+    GalVoiceDumpIndex? voiceDumpIndex,
+    this.replayBufferedLines = false,
+  }) : super(
+         targetPid: 0,
+         launchExe: 'fake.exe',
+         injectorPath: 'fake.exe',
+         voiceDumpIndex: voiceDumpIndex,
+       );
 
   final Uint8List pairedBytes;
   final PcmFormat? audioFormat;
@@ -3615,6 +3940,9 @@ class _FakeEngineSource extends EngineHookGalAudioSource {
   final bool pairedCandidate;
   final int pairedReadyAfterCalls;
   final List<GalHookedLine> polledLines;
+  final bool replayBufferedLines;
+  Future<void> Function()? beforePoll;
+  final List<int> pollCursors = <int>[];
   final GalAudioSlice? utteranceSlice;
 
   /// 本次 start 失败时 native 侧的结构化诊断（成功路径为 [GalHookInjectorFailure.none]）。
@@ -3645,6 +3973,9 @@ class _FakeEngineSource extends EngineHookGalAudioSource {
 
   @override
   int? get launchedPid => launched;
+
+  @override
+  bool get gameLaunchConfirmed => launched != null;
 
   @override
   bool get textHookReady => textReady;
@@ -3734,10 +4065,18 @@ class _FakeEngineSource extends EngineHookGalAudioSource {
 
   @override
   Future<GalTextPoll?> pollText(int sinceSeq) async {
+    final Future<void> Function()? callback = beforePoll;
+    beforePoll = null;
+    if (callback != null) await callback();
     _pollCalls++;
+    pollCursors.add(sinceSeq);
     return GalTextPoll(
       count: polledLines.length,
-      lines: _pollCalls == 1 ? polledLines : const <GalHookedLine>[],
+      lines: replayBufferedLines
+          ? polledLines.where((line) => line.seq > sinceSeq).toList()
+          : _pollCalls == 1
+          ? polledLines
+          : const <GalHookedLine>[],
     );
   }
 

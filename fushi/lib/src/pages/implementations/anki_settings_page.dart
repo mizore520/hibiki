@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,9 @@ import 'package:fushi/models.dart';
 import 'package:fushi/utils.dart';
 
 import 'package:fushi_anki/fushi_anki.dart';
+import 'package:fushi_dictionary/fushi_dictionary.dart'
+    show Dictionary, JapaneseLanguage;
+import 'package:fushi/src/anki/anki_deck_reposition_dialogs.dart';
 import 'package:fushi/src/anki/anki_media_dedup_dialogs.dart';
 import 'package:fushi/src/anki/lapis_backup_retention.dart';
 import 'package:fushi/src/anki/lapis_style_editor_page.dart';
@@ -19,19 +23,16 @@ import 'package:fushi/src/mining/immersion_mining_request.dart'
 import 'package:fushi/src/platform/platform_providers.dart';
 import 'package:fushi/src/platform/platform_services.dart';
 import 'package:fushi/src/profile/profile_selector.dart';
+import 'package:fushi/src/settings/settings_search.dart';
 
-/// Anki 设置正文（无脚手架）。直接平铺进「制卡」设置 destination 详情页
-/// （见 `SettingsDestination.body`），不再藏在一层独立路由子页里。返回一个
-/// [Column]，自身不带 `Scaffold` / 独立滚动——外层设置渲染器已提供滚动与内边距。
-///
-/// 末尾并入了原本挂在「制卡」分组里、与 Anki 子菜单并列的「自动添加书名到标签」
-/// 开关，使整页就是完整的 Anki 配置入口。
-///
-/// 刻意用轻量 [ConsumerState]（而非 `BasePageState`）：`BasePageState.initState`
-/// 会 `ref.read(creatorProvider)`，而本 body 现在会在设置 schema 覆盖率 harness
-/// 里被直接渲染（不再藏在路由后），不引入 creator 依赖更稳。
+enum AnkiSettingsPanel { connection, lapis, maintenance, fields, media }
+
+/// 常用制卡选项直接展示，连接、模板、映射和媒体配置进入独立详情。
+/// 正文自身不滚动，由设置宿主或子页提供滚动容器。
 class AnkiSettingsBody extends ConsumerStatefulWidget {
-  const AnkiSettingsBody({super.key});
+  const AnkiSettingsBody({super.key, this.panel});
+
+  final AnkiSettingsPanel? panel;
 
   @override
   ConsumerState<AnkiSettingsBody> createState() => _AnkiSettingsBodyState();
@@ -95,6 +96,9 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
   @override
   void initState() {
     super.initState();
+    if (widget.panel != null && widget.panel != AnkiSettingsPanel.maintenance) {
+      return;
+    }
     // 媒体去重区的门控要的是「此刻真能不能用」，不是后端类型（手机连局域网
     // 桌面 Anki 时后端类型说支持、媒体目录本机却不存在）。探测要一次网络往返，
     // 只在真正需要这个结论的设置页发起，不塞进 vm 构造。
@@ -111,247 +115,50 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
     final settings = uiState.settings;
     final FushiDesignTokens tokens = FushiDesignTokens.of(context);
 
+    if (widget.panel != null) {
+      return switch (widget.panel!) {
+        AnkiSettingsPanel.connection => _buildConnectionPanel(uiState, vm),
+        AnkiSettingsPanel.lapis =>
+          vm.supportsNoteTypeEditing
+              ? _buildLapisPanel(uiState, vm)
+              : const SizedBox.shrink(),
+        AnkiSettingsPanel.maintenance =>
+          (uiState.mediaMaintenanceAvailable ?? vm.supportsMediaMaintenance)
+              ? _buildMaintenancePanel(uiState, vm)
+              : const SizedBox.shrink(),
+        AnkiSettingsPanel.fields =>
+          uiState.isConfigured
+              ? _buildFieldsPanel(uiState, vm)
+              : const SizedBox.shrink(),
+        AnkiSettingsPanel.media => _buildMediaPanel(uiState, vm),
+      };
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AdaptiveSettingsSection(
           children: [
             // showIcon 与同卡片的刷新/Lapis 行一致，左栏图标对齐。
-            AdaptiveSettingsRow(
-              title: t.profile_label,
-              icon: Icons.person_outline,
-              showIcon: true,
-              trailing: const ProfileSelector(),
+            SettingsSearchTarget(
+              id: 'card_creation.anki.profile',
+              child: AdaptiveSettingsRow(
+                title: t.profile_label,
+                icon: Icons.person_outline,
+                showIcon: true,
+                trailing: const ProfileSelector(),
+              ),
             ),
-            _buildFetchTile(uiState, vm),
-            _buildCreateLapisTile(uiState, vm),
+            SettingsSearchTarget(
+              id: 'card_creation.anki.fetch',
+              child: _buildFetchTile(uiState, vm),
+            ),
+            SettingsSearchTarget(
+              id: 'card_creation.anki.create_lapis',
+              child: _buildCreateLapisTile(uiState, vm),
+            ),
           ],
         ),
-        // NOTE:「制卡到已配对设备」开关已移到设置 →「Hibiki 互联」→「交给已配对设备」
-        // （见 buildInterconnectDestination）。它的前置条件、目标主机、失效条件全部由互联
-        // 决定（未启用互联/未配对时只会让制卡失败），留在这里是一个与本页其余 Anki 本地
-        // 配置无关、且在互联关闭时纯死的开关。
-        AdaptiveSettingsSection(
-          title: 'AnkiConnect',
-          titlePlacement: _isMobileAnkiPlatform
-              ? SettingsSectionTitlePlacement.inside
-              : SettingsSectionTitlePlacement.outside,
-          collapsible: _isMobileAnkiPlatform,
-          initiallyExpanded: !_isMobileAnkiPlatform,
-          children: [
-            // 移动端两个原生后端都受限（AnkiDroid 的 Content Provider 与
-            // AnkiMobile 的 URL scheme 都改不了已存在的 note type），所以两端
-            // 同样提供「改用 AnkiConnect」这条路——指向局域网里跑着 Anki 桌面版
-            // 的机器。桌面本来就走 AnkiConnect，没有这个开关。
-            if (_isMobileAnkiPlatform)
-              AdaptiveSettingsSwitchRow(
-                title: t.anki_connect_use_on_mobile,
-                subtitle: t.anki_connect_use_on_mobile_hint,
-                value: settings.useAnkiConnectOnMobile,
-                onChanged: _ankiBackendBusy || uiState.isFetching
-                    ? null
-                    : (bool value) =>
-                          _updateMobileAnkiBackend(vm, settings, value),
-              ),
-            _AnkiConnectionField(
-              label: t.anki_connect_host,
-              value: settings.ankiConnectHost,
-              hint: 'localhost',
-              // 移动端连局域网 Anki 桌面版要手输 192.168.x.x，中文输入法会把
-              // 点转成句号（BUG-1807）；旁边的 port 框一直有声明，这里漏了。
-              keyboardType: TextInputType.url,
-              onChanged: vm.updateAnkiConnectHost,
-            ),
-            _AnkiConnectionField(
-              label: t.anki_connect_port,
-              value: settings.ankiConnectPort.toString(),
-              hint: '8765',
-              keyboardType: TextInputType.number,
-              onChanged: vm.updateAnkiConnectPort,
-            ),
-            // 8765 被别的程序占着是这条链路最常见的失败，而它的症状只是一句超时：
-            // 占用者接受了 TCP 连接却不按 AnkiConnect 应答。手工解法要同时改两处
-            // （这里 + Anki 插件配置的 webBindPort），少改一处就仍然连不上——这一行
-            // 把「挑一个空闲端口 + 两处一起写」收成一次点击。
-            if (_supportsPortRepair)
-              AdaptiveSettingsRow(
-                icon: Icons.swap_horiz_outlined,
-                showIcon: true,
-                title: t.anki_connect_port_auto_fix,
-                subtitle: t.anki_connect_port_auto_fix_hint,
-                trailing: _portRepairBusy
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child:
-                            adaptiveIndicator(context: context, strokeWidth: 2),
-                      )
-                    : null,
-                onTap: _portRepairBusy
-                    ? null
-                    : () => _switchToFreeAnkiConnectPort(vm, settings),
-              ),
-            _AnkiConnectionField(
-              label: t.anki_connect_api_key,
-              value: settings.ankiConnectApiKey,
-              hint: t.anki_connect_api_key_hint,
-              obscureText: true,
-              // 不直接接 vm：移动端清空 key 会让「改用 AnkiConnect」失去前提，
-              // 必须当场处置（见 [_updateAnkiConnectApiKey]）。
-              onChanged: _updateAnkiConnectApiKey,
-            ),
-            // 没有 AnkiConnect，上面这三个字段填得再对也连不上——而装它原本要
-            // 手动走 工具 → 插件 → 获取插件 → 输编号 → 重启。这一行把那套流程
-            // 收成一次点击：下载 + 交给 Anki，剩下的确认与重启由 Anki 自己主持。
-            if (_supportsAddonInstall)
-              AdaptiveSettingsRow(
-                icon: Icons.extension_outlined,
-                showIcon: true,
-                title: t.anki_connect_addon_install,
-                subtitle: t.anki_connect_addon_install_hint,
-                trailing: _addonInstallBusy
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: adaptiveIndicator(
-                          context: context,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : null,
-                onTap: _addonInstallBusy ? null : _installAnkiConnectAddon,
-              ),
-          ],
-        ),
-        // Lapis 样式客制化：备份 / 恢复 / 字号缩放 / 自定义 CSS / 应用。
-        // 仅后端支持读写已存在 note type 时显示（AnkiConnect；开启「制卡到
-        // 已配对设备」时经互联作用于主机端 Anki，手机上因此也显示）；纯本地
-        // AnkiDroid / AnkiMobile 平台 API 改不了已存在模板（平台边界），整区隐藏。
-        if (vm.supportsNoteTypeEditing)
-          AdaptiveSettingsSection(
-            title: t.anki_lapis_section,
-            children: [
-              AdaptiveSettingsPickerRow<int>(
-                title: t.anki_lapis_font_scale,
-                subtitle: t.anki_lapis_font_scale_hint,
-                icon: Icons.format_size_outlined,
-                showIcon: true,
-                selected: settings.lapisFontScalePercent,
-                // 档位表来自 hibiki_anki 的单一真相源：从备份恢复时
-                // splitLapisUserSectionBody 会优先反解出这些档位，选择器与
-                // 反解各写一份迟早漂成「显示了一个档位表里没有的值」。
-                options: <AdaptiveSettingsPickerOption<int>>[
-                  for (final int p in kLapisFontScalePresets)
-                    AdaptiveSettingsPickerOption<int>(value: p, label: '$p%'),
-                ],
-                onChanged: (int v) => vm.setLapisFontScalePercent(v),
-              ),
-              AdaptiveSettingsRow(
-                icon: Icons.palette_outlined,
-                showIcon: true,
-                title: t.anki_lapis_visual_editor,
-                subtitle: t.anki_lapis_visual_editor_hint,
-                onTap: () => _openLapisStyleEditor(settings, vm),
-              ),
-              AdaptiveSettingsRow(
-                icon: Icons.brush_outlined,
-                showIcon: true,
-                title: t.anki_lapis_apply,
-                trailing: _lapisBusy
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: adaptiveIndicator(
-                          context: context,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : null,
-                onTap: _lapisBusy ? null : () => _applyLapisStyling(vm),
-              ),
-              AdaptiveSettingsRow(
-                icon: Icons.save_outlined,
-                showIcon: true,
-                title: t.anki_lapis_backup,
-                onTap: _lapisBusy ? null : () => _backupLapisTemplate(vm),
-              ),
-              AdaptiveSettingsRow(
-                icon: Icons.settings_backup_restore_outlined,
-                showIcon: true,
-                title: t.anki_lapis_restore,
-                onTap: _lapisBusy ? null : () => _restoreLapisBackup(vm),
-              ),
-              // 兜底出口：卡片长歪了、又没有可用备份时，这是唯一能回到已知
-              // 良好状态的路。与「从备份恢复」的分工——那个回到某个历史时刻
-              // （前提是那时落过备份），这个回到出厂，不依赖任何历史。
-              AdaptiveSettingsRow(
-                icon: Icons.restart_alt_outlined,
-                showIcon: true,
-                title: t.anki_lapis_restore_factory,
-                subtitle: t.anki_lapis_restore_factory_hint,
-                onTap: _lapisBusy ? null : () => _restoreLapisFactory(vm),
-              ),
-            ],
-          ),
-        // 媒体存储优化：字节级去重（只删字节相同的多余副本，绝不重编码）。
-        // 需要与 Anki 同机（本机可直读 collection.media）。门控读探测结论
-        // （[AnkiViewModel.probeMediaMaintenance]）而不是后端静态能力：手机连
-        // 局域网里的桌面 Anki 时后端类型也是 AnkiConnect，但媒体目录在那台
-        // 机器上，显示出来只会是个点了说「不可用」的死区块。探测还没有结论
-        // （没探完 / Anki 没开）时回落静态能力，不让「Anki 暂时没开」把桌面
-        // 用户的整区弄消失。
-        // 用户拍板方案 A：默认不跑；自动处理是一个**默认关**的开关，打开之后
-        // 也只是自动干跑并提示，真删仍要用户确认——除非再显式打开「自动直接
-        // 删除」。手动触发同样先看干跑清单再确认。
-        if (uiState.mediaMaintenanceAvailable ?? vm.supportsMediaMaintenance)
-          AdaptiveSettingsSection(
-            title: t.anki_dedup_section,
-            children: [
-              AdaptiveSettingsSwitchRow(
-                icon: Icons.autorenew_outlined,
-                showIcon: true,
-                title: t.anki_dedup_auto,
-                subtitle: t.anki_dedup_auto_hint,
-                value: settings.mediaDedupAutoEnabled,
-                onChanged: (bool v) => vm.setMediaDedupAutoEnabled(v),
-              ),
-              // 从属开关：自动处理关着的时候它无意义，置灰而不是隐藏——隐藏
-              // 会让用户以为「打开自动 = 直接删」。
-              AdaptiveSettingsSwitchRow(
-                icon: Icons.delete_forever_outlined,
-                showIcon: true,
-                title: t.anki_dedup_auto_delete,
-                subtitle: t.anki_dedup_auto_delete_hint,
-                value: settings.mediaDedupAutoDelete,
-                onChanged: settings.mediaDedupAutoEnabled
-                    ? (bool v) => vm.setMediaDedupAutoDelete(v)
-                    : null,
-              ),
-              AdaptiveSettingsRow(
-                icon: Icons.search_outlined,
-                showIcon: true,
-                title: t.anki_dedup_scan,
-                trailing: _dedupBusy
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: adaptiveIndicator(
-                          context: context,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : null,
-                onTap: _dedupBusy ? null : () => _scanMediaDedup(vm),
-              ),
-              AdaptiveSettingsRow(
-                icon: Icons.cleaning_services_outlined,
-                showIcon: true,
-                title: t.anki_dedup_run,
-                subtitle: t.anki_dedup_run_hint,
-                onTap: _dedupBusy ? null : () => _runMediaDedup(vm),
-              ),
-            ],
-          ),
         if (uiState.errorMessage != null)
           Padding(
             padding: EdgeInsets.fromLTRB(
@@ -386,41 +193,56 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
         if (uiState.isConfigured) ...[
           AdaptiveSettingsSection(
             children: [
-              _buildDeckDropdown(settings, vm),
-              _buildNoteTypeDropdown(settings, vm),
+              SettingsSearchTarget(
+                id: 'card_creation.anki.deck',
+                child: _buildDeckDropdown(settings, vm),
+              ),
+              SettingsSearchTarget(
+                id: 'card_creation.anki.note_type',
+                child: _buildNoteTypeDropdown(settings, vm),
+              ),
+              SettingsSearchTarget(
+                id: 'card_creation.anki.reposition',
+                child: _buildDeckRepositionRow(vm),
+              ),
+              SettingsSearchTarget(
+                id: 'card_creation.anki.reposition_auto',
+                child: _buildAutoRepositionRow(settings, vm),
+              ),
             ],
-          ),
-          // 字段映射的主入口已经是可视化编辑器（选中区域 → 直接改喂它的字段），
-          // 这里这份按卡型逐字段平铺的列表退成兜底/全量视图：默认折叠，需要时
-          // 再展开。折叠而不是删掉——非 Lapis 卡型没有可视化编辑器可用，这里
-          // 仍是唯一能配映射的地方。
-          AdaptiveSettingsSection(
-            title: t.anki_field_mappings,
-            titlePlacement: SettingsSectionTitlePlacement.inside,
-            collapsible: true,
-            initiallyExpanded: false,
-            children: _buildFieldMappings(settings, vm),
           ),
           AdaptiveSettingsSection(
             children: [
-              AdaptiveSettingsSwitchRow(
-                title: t.anki_allow_duplicates,
-                subtitle: t.anki_allow_duplicates_hint,
-                value: settings.allowDupes,
-                onChanged: vm.updateAllowDupes,
+              SettingsSearchTarget(
+                id: 'card_creation.anki.allow_duplicates',
+                child: AdaptiveSettingsSwitchRow(
+                  title: t.anki_allow_duplicates,
+                  subtitle: t.anki_allow_duplicates_hint,
+                  value: settings.allowDupes,
+                  onChanged: vm.updateAllowDupes,
+                ),
               ),
               // TODO-614：「覆写已制卡片」范围单选——和「允许重复」并排（两者都关乎
               // 「再点 ✓ 时改旧卡还是建新卡」）。latest=仅最近一张（默认=现状）；
               // all=按同一查重条件覆写任意已存在卡（含更早制的）。
               // 查重范围：与「允许重复」「覆写范围」同区（三者都关乎「这个词算不算
               // 已经有卡、再点 ✓ 时怎么办」）。默认 deck = 旧行为。
-              _buildDuplicateScopePicker(settings, vm),
-              _buildOverwriteScopePicker(settings, vm),
-              AdaptiveSettingsSwitchRow(
-                title: t.anki_compact_glossaries,
-                subtitle: t.anki_compact_glossaries_hint,
-                value: settings.compactGlossaries,
-                onChanged: vm.updateCompactGlossaries,
+              SettingsSearchTarget(
+                id: 'card_creation.anki.duplicate_scope',
+                child: _buildDuplicateScopePicker(settings, vm),
+              ),
+              SettingsSearchTarget(
+                id: 'card_creation.anki.overwrite_scope',
+                child: _buildOverwriteScopePicker(settings, vm),
+              ),
+              SettingsSearchTarget(
+                id: 'card_creation.anki.compact_glossaries',
+                child: AdaptiveSettingsSwitchRow(
+                  title: t.anki_compact_glossaries,
+                  subtitle: t.anki_compact_glossaries_hint,
+                  value: settings.compactGlossaries,
+                  onChanged: vm.updateCompactGlossaries,
+                ),
               ),
             ],
           ),
@@ -437,48 +259,367 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
             // TODO-614：自定义标签输入框归位到「默认标签」区最前——它和下面三个
             // 「自动加什么标签」开关同属「这张卡带哪些标签」，放一起更自洽。随该区
             // 无条件显示（未连 Anki 也露出，与同区两 tag 开关一致，取舍见上方注释）。
-            _buildTagsInput(settings, vm),
-            AdaptiveSettingsSwitchRow(
-              title: t.anki_tag_include_fushi,
-              subtitle: t.anki_tag_include_fushi_hint,
-              value: settings.tagIncludeHibiki,
-              onChanged: vm.updateTagIncludeHibiki,
+            SettingsSearchTarget(
+              id: 'card_creation.anki.tags',
+              child: _buildTagsInput(settings, vm),
             ),
-            AdaptiveSettingsSwitchRow(
-              title: t.anki_tag_include_category,
-              subtitle: t.anki_tag_include_category_hint,
-              value: settings.tagIncludeCategory,
-              onChanged: vm.updateTagIncludeCategory,
+            SettingsSearchTarget(
+              id: 'card_creation.anki.tag_include_hibiki',
+              child: AdaptiveSettingsSwitchRow(
+                title: t.anki_tag_include_fushi,
+                subtitle: t.anki_tag_include_fushi_hint,
+                value: settings.tagIncludeHibiki,
+                onChanged: vm.updateTagIncludeHibiki,
+              ),
             ),
+            SettingsSearchTarget(
+              id: 'card_creation.anki.tag_include_category',
+              child: AdaptiveSettingsSwitchRow(
+                title: t.anki_tag_include_category,
+                subtitle: t.anki_tag_include_category_hint,
+                value: settings.tagIncludeCategory,
+                onChanged: vm.updateTagIncludeCategory,
+              ),
+            ),
+            SettingsSearchTarget(
+              id: 'card_creation.anki.tag_book_name',
+              child: AdaptiveSettingsSwitchRow(
+                title: t.auto_add_book_name_to_tags,
+                icon: Icons.label_outline,
+                value: appModel.autoAddBookNameToTags,
+                onChanged: (bool value) {
+                  appModel.toggleAutoAddBookNameToTags();
+                  setState(() {});
+                },
+              ),
+            ),
+            // 制卡所在字符数标签（`chars_12345`）：只有小说阅读器会注入（其它来源没有
+            // 「全书第几个字」这个坐标），但开关与其余标签开关同区——用户找「卡片带哪些
+            // 标签」只会来这里找。
             AdaptiveSettingsSwitchRow(
-              title: t.auto_add_book_name_to_tags,
-              icon: Icons.label_outline,
-              value: appModel.autoAddBookNameToTags,
+              title: t.auto_add_char_position_to_tags,
+              subtitle: t.auto_add_char_position_to_tags_hint,
+              icon: Icons.my_location_outlined,
+              value: appModel.autoAddCharPositionToTags,
               onChanged: (bool value) {
-                appModel.toggleAutoAddBookNameToTags();
+                appModel.toggleAutoAddCharPositionToTags();
                 setState(() {});
               },
             ),
           ],
         ),
-        // TODO-1650 制卡媒体清晰度：媒体清晰度与「卡片带哪些标签」语义无关，单独占
-        // 一个无标题区，紧随默认标签区之后。无条件显示（与标签区一致，不藏在
-        // `uiState.isConfigured` 门控里）。图片/GIF 清晰度与音频质量各是一个独立滑块
-        // （替代旧的单一「压缩」开关）：越高越清晰、体积越大；满档=最高（截图原图直通，
-        // GIF 封顶——BUG-1039）。
-        AdaptiveSettingsSection(
-          children: [
-            _buildMiningImageQualityRow(),
-            _buildMiningAudioQualityRow(),
-            _buildVideoMiningImageModePicker(),
-            _buildVideoMiningAnimatedFormatPicker(),
-            _buildVideoMiningStillFormatPicker(),
-            _buildGalMiningImageModePicker(),
-            _buildGalMiningScreenshotSizePicker(),
-            _buildGalMiningAnimatedFormatPicker(),
-            _buildGalMiningStillFormatPicker(),
-          ],
+      ],
+    );
+  }
+
+  Widget _buildConnectionPanel(AnkiUiState uiState, AnkiViewModel vm) {
+    final AnkiSettings settings = uiState.settings;
+    return AdaptiveSettingsSection(
+      title: 'AnkiConnect',
+      children: [
+        // 移动端两个原生后端都受限（AnkiDroid 的 Content Provider 与
+        // AnkiMobile 的 URL scheme 都改不了已存在的 note type），所以两端
+        // 同样提供「改用 AnkiConnect」这条路——指向局域网里跑着 Anki 桌面版
+        // 的机器。桌面本来就走 AnkiConnect，没有这个开关。
+        if (_isMobileAnkiPlatform)
+          SettingsSearchTarget(
+            id: 'card_creation.anki.connect_mobile',
+            child: AdaptiveSettingsSwitchRow(
+              title: t.anki_connect_use_on_mobile,
+              subtitle: t.anki_connect_use_on_mobile_hint,
+              value: settings.useAnkiConnectOnMobile,
+              onChanged: _ankiBackendBusy || uiState.isFetching
+                  ? null
+                  : (bool value) =>
+                        _updateMobileAnkiBackend(vm, settings, value),
+            ),
+          ),
+        SettingsSearchTarget(
+          id: 'card_creation.anki.connect_host',
+          child: _AnkiConnectionField(
+            label: t.anki_connect_host,
+            value: settings.ankiConnectHost,
+            hint: 'localhost',
+            // 移动端连局域网 Anki 桌面版要手输 192.168.x.x，中文输入法会把
+            // 点转成句号（BUG-1807）；旁边的 port 框一直有声明，这里漏了。
+            keyboardType: TextInputType.url,
+            onChanged: vm.updateAnkiConnectHost,
+          ),
         ),
+        SettingsSearchTarget(
+          id: 'card_creation.anki.connect_port',
+          child: _AnkiConnectionField(
+            label: t.anki_connect_port,
+            value: settings.ankiConnectPort.toString(),
+            hint: '8765',
+            keyboardType: TextInputType.number,
+            onChanged: vm.updateAnkiConnectPort,
+          ),
+        ),
+        // 8765 被别的程序占着是这条链路最常见的失败，而它的症状只是一句超时：
+        // 占用者接受了 TCP 连接却不按 AnkiConnect 应答。手工解法要同时改两处
+        // （这里 + Anki 插件配置的 webBindPort），少改一处就仍然连不上——这一行
+        // 把「挑一个空闲端口 + 两处一起写」收成一次点击。
+        if (_supportsPortRepair)
+          SettingsSearchTarget(
+            id: 'card_creation.anki.connect_port_auto_fix',
+            child: AdaptiveSettingsRow(
+              icon: Icons.swap_horiz_outlined,
+              showIcon: true,
+              title: t.anki_connect_port_auto_fix,
+              subtitle: t.anki_connect_port_auto_fix_hint,
+              trailing: _portRepairBusy
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: adaptiveIndicator(
+                        context: context,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : null,
+              onTap: _portRepairBusy
+                  ? null
+                  : () => _switchToFreeAnkiConnectPort(vm, settings),
+            ),
+          ),
+        SettingsSearchTarget(
+          id: 'card_creation.anki.connect_api_key',
+          child: _AnkiConnectionField(
+            label: t.anki_connect_api_key,
+            value: settings.ankiConnectApiKey,
+            hint: t.anki_connect_api_key_hint,
+            obscureText: true,
+            // 不直接接 vm：移动端清空 key 会让「改用 AnkiConnect」失去前提，
+            // 必须当场处置（见 [_updateAnkiConnectApiKey]）。
+            onChanged: _updateAnkiConnectApiKey,
+          ),
+        ),
+        // 没有 AnkiConnect，上面这三个字段填得再对也连不上——而装它原本要
+        // 手动走 工具 → 插件 → 获取插件 → 输编号 → 重启。这一行把那套流程
+        // 收成一次点击：下载 + 交给 Anki，剩下的确认与重启由 Anki 自己主持。
+        if (_supportsAddonInstall)
+          SettingsSearchTarget(
+            id: 'card_creation.anki.connect_addon_install',
+            child: AdaptiveSettingsRow(
+              icon: Icons.extension_outlined,
+              showIcon: true,
+              title: t.anki_connect_addon_install,
+              subtitle: t.anki_connect_addon_install_hint,
+              trailing: _addonInstallBusy
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: adaptiveIndicator(
+                        context: context,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : null,
+              onTap: _addonInstallBusy ? null : _installAnkiConnectAddon,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildLapisPanel(AnkiUiState uiState, AnkiViewModel vm) {
+    final AnkiSettings settings = uiState.settings;
+    return AdaptiveSettingsSection(
+      title: t.anki_lapis_section,
+      children: [
+        SettingsSearchTarget(
+          id: 'card_creation.anki.lapis_font_scale',
+          child: AdaptiveSettingsPickerRow<int>(
+            title: t.anki_lapis_font_scale,
+            subtitle: t.anki_lapis_font_scale_hint,
+            icon: Icons.format_size_outlined,
+            showIcon: true,
+            selected: settings.lapisFontScalePercent,
+            // 档位表来自 hibiki_anki 的单一真相源：从备份恢复时
+            // splitLapisUserSectionBody 会优先反解出这些档位，选择器与
+            // 反解各写一份迟早漂成「显示了一个档位表里没有的值」。
+            options: <AdaptiveSettingsPickerOption<int>>[
+              for (final int p in kLapisFontScalePresets)
+                AdaptiveSettingsPickerOption<int>(value: p, label: '$p%'),
+            ],
+            onChanged: (int v) => vm.setLapisFontScalePercent(v),
+          ),
+        ),
+        SettingsSearchTarget(
+          id: 'card_creation.anki.lapis_visual_editor',
+          child: AdaptiveSettingsRow(
+            icon: Icons.palette_outlined,
+            showIcon: true,
+            title: t.anki_lapis_visual_editor,
+            subtitle: t.anki_lapis_visual_editor_hint,
+            onTap: () => _openLapisStyleEditor(settings, vm),
+          ),
+        ),
+        SettingsSearchTarget(
+          id: 'card_creation.anki.lapis_apply',
+          child: AdaptiveSettingsRow(
+            icon: Icons.brush_outlined,
+            showIcon: true,
+            title: t.anki_lapis_apply,
+            trailing: _lapisBusy
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: adaptiveIndicator(context: context, strokeWidth: 2),
+                  )
+                : null,
+            onTap: _lapisBusy ? null : () => _applyLapisStyling(vm),
+          ),
+        ),
+        SettingsSearchTarget(
+          id: 'card_creation.anki.lapis_backup',
+          child: AdaptiveSettingsRow(
+            icon: Icons.save_outlined,
+            showIcon: true,
+            title: t.anki_lapis_backup,
+            onTap: _lapisBusy ? null : () => _backupLapisTemplate(vm),
+          ),
+        ),
+        SettingsSearchTarget(
+          id: 'card_creation.anki.lapis_restore',
+          child: AdaptiveSettingsRow(
+            icon: Icons.settings_backup_restore_outlined,
+            showIcon: true,
+            title: t.anki_lapis_restore,
+            onTap: _lapisBusy ? null : () => _restoreLapisBackup(vm),
+          ),
+        ),
+        // 兜底出口：卡片长歪了、又没有可用备份时，这是唯一能回到已知
+        // 良好状态的路。与「从备份恢复」的分工——那个回到某个历史时刻
+        // （前提是那时落过备份），这个回到出厂，不依赖任何历史。
+        SettingsSearchTarget(
+          id: 'card_creation.anki.lapis_restore_factory',
+          child: AdaptiveSettingsRow(
+            icon: Icons.restart_alt_outlined,
+            showIcon: true,
+            title: t.anki_lapis_restore_factory,
+            subtitle: t.anki_lapis_restore_factory_hint,
+            onTap: _lapisBusy ? null : () => _restoreLapisFactory(vm),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMaintenancePanel(AnkiUiState uiState, AnkiViewModel vm) {
+    final AnkiSettings settings = uiState.settings;
+    return AdaptiveSettingsSection(
+      title: t.anki_dedup_section,
+      children: [
+        SettingsSearchTarget(
+          id: 'card_creation.anki.dedup_auto',
+          child: AdaptiveSettingsSwitchRow(
+            icon: Icons.autorenew_outlined,
+            showIcon: true,
+            title: t.anki_dedup_auto,
+            subtitle: t.anki_dedup_auto_hint,
+            value: settings.mediaDedupAutoEnabled,
+            onChanged: (bool v) => vm.setMediaDedupAutoEnabled(v),
+          ),
+        ),
+        // 从属开关：自动处理关着的时候它无意义，置灰而不是隐藏——隐藏
+        // 会让用户以为「打开自动 = 直接删」。
+        SettingsSearchTarget(
+          id: 'card_creation.anki.dedup_auto_delete',
+          child: AdaptiveSettingsSwitchRow(
+            icon: Icons.delete_forever_outlined,
+            showIcon: true,
+            title: t.anki_dedup_auto_delete,
+            subtitle: t.anki_dedup_auto_delete_hint,
+            value: settings.mediaDedupAutoDelete,
+            onChanged: settings.mediaDedupAutoEnabled
+                ? (bool v) => vm.setMediaDedupAutoDelete(v)
+                : null,
+          ),
+        ),
+        SettingsSearchTarget(
+          id: 'card_creation.anki.dedup_scan',
+          child: AdaptiveSettingsRow(
+            icon: Icons.search_outlined,
+            showIcon: true,
+            title: t.anki_dedup_scan,
+            trailing: _dedupBusy
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: adaptiveIndicator(context: context, strokeWidth: 2),
+                  )
+                : null,
+            onTap: _dedupBusy ? null : () => _scanMediaDedup(vm),
+          ),
+        ),
+        SettingsSearchTarget(
+          id: 'card_creation.anki.dedup_run',
+          child: AdaptiveSettingsRow(
+            icon: Icons.cleaning_services_outlined,
+            showIcon: true,
+            title: t.anki_dedup_run,
+            subtitle: t.anki_dedup_run_hint,
+            onTap: _dedupBusy ? null : () => _runMediaDedup(vm),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFieldsPanel(AnkiUiState uiState, AnkiViewModel vm) {
+    final AnkiSettings settings = uiState.settings;
+    return SettingsSearchTarget(
+      id: 'card_creation.anki.field_mappings',
+      child: AdaptiveSettingsSection(
+        title: t.anki_field_mappings,
+        children: _buildFieldMappings(settings, vm),
+      ),
+    );
+  }
+
+  Widget _buildMediaPanel(AnkiUiState uiState, AnkiViewModel vm) {
+    return AdaptiveSettingsSection(
+      children: [
+        SettingsSearchTarget(
+          id: 'card_creation.anki.mining_image_quality',
+          child: _buildMiningImageQualityRow(),
+        ),
+        SettingsSearchTarget(
+          id: 'card_creation.anki.mining_audio_quality',
+          child: _buildMiningAudioQualityRow(),
+        ),
+        SettingsSearchTarget(
+          id: 'card_creation.anki.video_mining_image_mode',
+          child: _buildVideoMiningImageModePicker(),
+        ),
+        SettingsSearchTarget(
+          id: 'card_creation.anki.video_mining_animated_format',
+          child: _buildVideoMiningAnimatedFormatPicker(),
+        ),
+        SettingsSearchTarget(
+          id: 'card_creation.anki.video_mining_still_format',
+          child: _buildVideoMiningStillFormatPicker(),
+        ),
+        if (Platform.isWindows) ...[
+          SettingsSearchTarget(
+            id: 'card_creation.anki.gal_mining_image_mode',
+            child: _buildGalMiningImageModePicker(),
+          ),
+          SettingsSearchTarget(
+            id: 'card_creation.anki.gal_mining_screenshot_size',
+            child: _buildGalMiningScreenshotSizePicker(),
+          ),
+          SettingsSearchTarget(
+            id: 'card_creation.anki.gal_mining_animated_format',
+            child: _buildGalMiningAnimatedFormatPicker(),
+          ),
+          SettingsSearchTarget(
+            id: 'card_creation.anki.gal_mining_still_format',
+            child: _buildGalMiningStillFormatPicker(),
+          ),
+        ],
       ],
     );
   }
@@ -550,7 +691,6 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
   Widget _buildVideoMiningImageModePicker() {
     return AdaptiveSettingsPickerRow<VideoMiningImageMode>(
       title: t.video_mining_image_mode,
-      subtitle: t.video_mining_image_mode_hint,
       icon: Icons.photo_library_outlined,
       controlBelow: true,
       selected: appModel.videoMiningImageMode,
@@ -586,9 +726,6 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
     final VideoMiningImageMode current = appModel.galMiningImageMode;
     return AdaptiveSettingsPickerRow<VideoMiningImageMode>(
       title: t.gal_mining_image_mode,
-      subtitle: '${t.gal_mining_image_mode_hint}\n'
-          '${t.gal_mining_image_mode_video_clip}: '
-          '${t.gal_mining_image_mode_video_clip_hint}',
       icon: Icons.photo_camera_back_outlined,
       controlBelow: true,
       // 历史值可能是 subtitleStart（与视频项共用枚举）：按 isStill 归到静态截图，
@@ -596,8 +733,8 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
       selected: current.isVideoClip
           ? VideoMiningImageMode.videoClip
           : current.isStill
-              ? VideoMiningImageMode.currentFrame
-              : VideoMiningImageMode.gif,
+          ? VideoMiningImageMode.currentFrame
+          : VideoMiningImageMode.gif,
       options: [
         AdaptiveSettingsPickerOption<VideoMiningImageMode>(
           value: VideoMiningImageMode.gif,
@@ -654,7 +791,7 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
   /// 场景无关，没必要为两个页面各写一份会漂开的文案。
   Widget _buildAnimatedFormatPicker({
     required String title,
-    required String subtitle,
+    String? subtitle,
     required MiningAnimatedFormat selected,
     required void Function(MiningAnimatedFormat) onChanged,
   }) {
@@ -710,7 +847,7 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
   /// 三档共用一套 option 文案 —— 格式含义与场景无关。
   Widget _buildStillFormatPicker({
     required String title,
-    required String subtitle,
+    String? subtitle,
     required MiningStillFormat selected,
     required void Function(MiningStillFormat) onChanged,
   }) {
@@ -781,8 +918,17 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
       // 任一在途动作（刷新或 Lapis 创建）期间都不可重入。
       onTap: uiState.isFetching || _creatingLapis
           ? null
-          : () => vm.fetchConfiguration(),
+          : () => unawaited(_refreshAndCheckMining(vm)),
     );
+  }
+
+  /// BUG-2380：刷新（= 连接 Anki）之后当场判一次「这套配置真能制出卡吗」，判不过
+  /// 就地劝建并选用 Lapis —— 与新手引导「测试连接」是同一个判据、同一个弹窗
+  /// （[promptCreateLapisIfCannotMine]），两处不许各写一套。
+  Future<void> _refreshAndCheckMining(AnkiViewModel vm) async {
+    await vm.fetchConfiguration();
+    if (!mounted) return;
+    await promptCreateLapisIfCannotMine(context: context, viewModel: vm);
   }
 
   /// AnkiConnect 的 API key 编辑入口。
@@ -1062,16 +1208,18 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
     setState(() => _portRepairBusy = true);
     try {
       // 排掉当前端口：调用这个功能的前提就是它不好使，把它选回来等于没动。
-      final int? port =
-          await findFreeAnkiConnectPort(exclude: settings.ankiConnectPort);
+      final int? port = await findFreeAnkiConnectPort(
+        exclude: settings.ankiConnectPort,
+      );
       if (port == null) {
         messenger.showSnackBar(
           SnackBar(content: Text(t.anki_connect_port_auto_fix_none)),
         );
         return;
       }
-      final AnkiConnectPortWriteResult result =
-          await writeAnkiConnectAddonPort(port);
+      final AnkiConnectPortWriteResult result = await writeAnkiConnectAddonPort(
+        port,
+      );
       await vm.updateAnkiConnectPort(port.toString());
       messenger.showSnackBar(
         SnackBar(
@@ -1309,6 +1457,51 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
 
   Widget _buildNoteTypeDropdown(AnkiSettings settings, AnkiViewModel vm) =>
       AnkiNoteTypePickerRow(settings: settings, viewModel: vm);
+
+  /// 「按词频重排新卡」入口。只有 AnkiConnect 有卡片级读写；其它后端把行
+  /// 置灰并说明原因，而不是隐藏——隐藏会让用户以为功能不存在。
+  Widget _buildDeckRepositionRow(AnkiViewModel vm) {
+    final bool supported = vm.supportsDeckReposition;
+    return AdaptiveSettingsRow(
+      icon: Icons.sort_outlined,
+      showIcon: true,
+      title: t.anki_reposition_title,
+      subtitle: supported
+          ? t.anki_reposition_hint
+          : t.anki_reposition_unsupported,
+      subtitleMaxLines: 3,
+      onTap: supported ? () => _openDeckReposition(vm) : null,
+    );
+  }
+
+  /// 「制卡后自动重排」开关。与上面那行同样的支持判据：不支持的后端置灰而
+  /// 不隐藏，否则用户会以为这功能不存在。
+  Widget _buildAutoRepositionRow(AnkiSettings settings, AnkiViewModel vm) {
+    final bool supported = vm.supportsDeckReposition;
+    return AdaptiveSettingsSwitchRow(
+      icon: Icons.autorenew_outlined,
+      showIcon: true,
+      title: t.anki_reposition_auto_title,
+      subtitle: supported
+          ? t.anki_reposition_auto_hint
+          : t.anki_reposition_unsupported,
+      value: supported && settings.autoRepositionEnabled,
+      onChanged: supported ? (bool v) => vm.setAutoRepositionEnabled(v) : null,
+    );
+  }
+
+  Future<void> _openDeckReposition(AnkiViewModel vm) {
+    // 隐藏的词频词典根本不进引擎（AppModel.bucketDictPaths），列表只给已装载的。
+    final List<String> loaded = appModel.freqDictionaries
+        .where((Dictionary d) => !d.isHidden(JapaneseLanguage.instance))
+        .map((Dictionary d) => d.name)
+        .toList();
+    return showAnkiDeckRepositionDialog(
+      context,
+      viewModel: vm,
+      loadedFrequencyDictionaries: loaded,
+    );
+  }
 
   List<Widget> _buildFieldMappings(AnkiSettings settings, AnkiViewModel vm) {
     final noteType = settings.selectedNoteType;

@@ -4,6 +4,7 @@ import 'package:fushi/src/settings/settings_destination.dart';
 import 'package:fushi/src/settings/settings_detail_page.dart';
 import 'package:fushi/src/settings/settings_schema_fields.dart';
 import 'package:fushi/src/settings/settings_search.dart';
+import 'package:fushi/src/settings/settings_section_container.dart';
 import 'package:fushi/src/utils/components/fushi_design_tokens.dart';
 import 'package:fushi/src/utils/components/settings_shared.dart';
 
@@ -31,6 +32,7 @@ class SettingsSchemaSection extends StatelessWidget {
     required this.showIcons,
     required this.routeBuilder,
     required this.footerStyle,
+    this.scopeId = 'settings',
   });
 
   final SettingsSection section;
@@ -38,6 +40,7 @@ class SettingsSchemaSection extends StatelessWidget {
   final bool showIcons;
   final SettingsRouteBuilder routeBuilder;
   final SettingsFooterStyle footerStyle;
+  final String scopeId;
 
   @override
   Widget build(BuildContext context) {
@@ -56,30 +59,17 @@ class SettingsSchemaSection extends StatelessWidget {
           ),
         )
         .toList(growable: false);
-    // 折叠能力只取决于「有没有标题」（无标题 section 没有可点的折叠头）；
-    // 「默认展开还是收起」由 collapsedByDefault 单独决定（见下方 initiallyExpanded）。
-    // 两者解耦——所有带标题分区都可折叠，各自默认态互不影响。
-    final bool collapsible = section.title?.isNotEmpty ?? false;
-    // 搜索跳转落在折叠 section 内的项时强制展开——否则收起态下目标行不入树、
-    // SettingsSearchReveal 的一次性挂点永不被消费，定位失效。测试钩子强制全展开
-    // 让覆盖守卫能焦点驱动到所有行（见 debugSettingsForceExpandAllSections）。
-    final bool containsPendingReveal =
-        SettingsSearchReveal.pendingItemId != null &&
-        section.items.any(
-          (SettingsItem item) => item.id == SettingsSearchReveal.pendingItemId,
-        );
-    final bool initiallyExpanded =
-        debugSettingsForceExpandAllSections ||
-        !section.collapsedByDefault ||
-        containsPendingReveal;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        AdaptiveSettingsSection(
+        SettingsSectionContainer(
+          id: '$scopeId.${section.id ?? section.items.first.id}',
           title: section.title,
-          titlePlacement: SettingsSectionTitlePlacement.inside,
-          collapsible: collapsible,
-          initiallyExpanded: initiallyExpanded,
+          summary: section.summaryBuilder?.call(settingsContext),
+          presentation: section.presentation,
+          searchTargetIds: section.items
+              .map((SettingsItem item) => item.id)
+              .toList(),
           children: rows,
         ),
         if (section.footer != null && section.footer!.isNotEmpty)
@@ -122,11 +112,7 @@ class SettingsSchemaItem extends StatelessWidget {
     };
     // 设置搜索跳转落点：本项是待定位目标时消费一次性挂点，包上滚动定位 +
     // 闪烁高亮（见 SettingsSearchReveal）。消费即清除，后续 rebuild 不再包装。
-    if (SettingsSearchReveal.pendingItemId == item.id) {
-      SettingsSearchReveal.pendingItemId = null;
-      return SettingsRevealTarget(child: row);
-    }
-    return row;
+    return SettingsSearchTarget(id: item.id, child: row);
   }
 
   Widget _routeRow(BuildContext context, SettingsNavigationItem navigation) {
@@ -146,10 +132,9 @@ class SettingsSchemaItem extends StatelessWidget {
         final SettingsDestination Function()? child = navigation.child;
         if (child != null) {
           // 子 schema 页：与顶层分类同一套详情壳；取新鲜树靠闭包而非 id。
-          Navigator.of(context).push(routeBuilder(
-            context,
-            (_) => SettingsDetailPage.subPage(child),
-          ));
+          Navigator.of(context).push(
+            routeBuilder(context, (_) => SettingsDetailPage.subPage(child)),
+          );
           return;
         }
         final WidgetBuilder? builder = navigation.builder;

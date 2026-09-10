@@ -220,6 +220,14 @@ Rect resolvePopupRect({
   double bottomReserve = 0.0,
   double topReserve = 0.0,
   bool verticalWriting = false,
+
+  /// 全宽展示：忽略 [maxWidth]，让弹窗横向铺满可用宽度（左右仍各留 [padding]）。
+  /// 只作用于跟随选区这一支——[bottomDocked] 的 dock 面板本来就是全宽的。
+  ///
+  /// 之所以是「把 maxWidth 换成屏宽」而不是另起一套几何：[calcPopupPosition] 的
+  /// `availableWidth` 本就是 `(screen.width - padding * 2).clamp(0, maxWidth)`，
+  /// 传屏宽即让 clamp 失去约束力，避让 / 边界 / 竖排回退全部沿用同一条既有路径。
+  bool fullWidth = false,
 }) {
   if (bottomDocked) {
     return dockedPopupRect(
@@ -234,7 +242,7 @@ Rect resolvePopupRect({
     selectionRect: selectionRect,
     screen: screen,
     padding: padding,
-    maxWidth: maxWidth,
+    maxWidth: fullWidth ? screen.width : maxWidth,
     maxHeight: maxHeight,
     bottomReserve: bottomReserve,
     topReserve: topReserve,
@@ -277,7 +285,7 @@ double resolveAutoFitPopupHeight({
 /// mixin 家族（video / 首页词典 / texthooker / 网页视频）把查词浮层插进根 Overlay，
 /// 再用 [FushiAppUiScaleNeutralizer] 中和回净缩放 1；选区矩形则来自被点字符的
 /// `localToGlobal`。两者只有在根 Overlay 原点与屏幕原点重合时才同系。Windows 上
-/// `FushiWindowsTitleBar` 把整个导航器（含根 Overlay）压在一条 32 逻辑像素的自绘
+/// `FushiDesktopTitleBar` 把整个导航器（含根 Overlay）压在一条 32 逻辑像素的自绘
 /// 标题栏之下（main.dart），根 Overlay 原点就比屏幕原点低一个标题栏：浮层按
 /// 「屏幕 rect」摆到 Overlay 坐标里，整栈集体下移 32px，贴在被查词上方的弹窗底边
 /// 正好压进词里。中和层的原点与根 Overlay 原点重合（FittedBox 左上对齐、净缩放 1），
@@ -521,15 +529,29 @@ class _PopupEntranceFadeState extends State<_PopupEntranceFade> {
 /// chain, accounting for the header offset, border inset, and any scale in one
 /// shot. Falls back to [fallback] only when the render box is unavailable
 /// (should not happen at selection time — the parent popup is on-screen).
+/// With [coordinateSpaceKey], return coordinates in that popup Stack instead.
+/// BUG-2416: reader popup placement must not apply screen offsets/scale twice.
 Rect popupWordScreenRect({
   required GlobalKey webViewKey,
   required Rect localRect,
   required Rect fallback,
+  GlobalKey? coordinateSpaceKey,
 }) {
   final RenderObject? obj = webViewKey.currentContext?.findRenderObject();
   if (obj is RenderBox && obj.attached && obj.hasSize) {
     final Offset topLeft = obj.localToGlobal(localRect.topLeft);
     final Offset bottomRight = obj.localToGlobal(localRect.bottomRight);
+    if (coordinateSpaceKey != null) {
+      final RenderObject? target = coordinateSpaceKey.currentContext
+          ?.findRenderObject();
+      if (target is! RenderBox || !target.attached || !target.hasSize) {
+        return fallback;
+      }
+      return Rect.fromPoints(
+        target.globalToLocal(topLeft),
+        target.globalToLocal(bottomRight),
+      );
+    }
     return Rect.fromPoints(topLeft, bottomRight);
   }
   return fallback;
@@ -567,19 +589,21 @@ bool reanchorNestedPopupToWord({
   required String expectedTerm,
   required Rect? wordLocalRect,
   required Rect fallback,
+  GlobalKey? coordinateSpaceKey,
 }) {
   if (wordLocalRect == null || wordLocalRect.isEmpty) return false;
   final int childIndex = parentIndex + 1;
   if (childIndex <= 0 || childIndex >= controller.entries.length) return false;
   final DictionaryPopupEntry child = controller.entries[childIndex];
   if (child.searchTerm != expectedTerm.trim()) return false;
-  final Rect screenRect = popupWordScreenRect(
+  final Rect targetRect = popupWordScreenRect(
     webViewKey: parentWebViewKey,
     localRect: wordLocalRect,
     fallback: fallback,
+    coordinateSpaceKey: coordinateSpaceKey,
   );
-  if (screenRect == fallback || screenRect == child.selectionRect) return false;
-  controller.reanchorEntry(child, screenRect);
+  if (targetRect == fallback || targetRect == child.selectionRect) return false;
+  controller.reanchorEntry(child, targetRect);
   return true;
 }
 
@@ -594,8 +618,8 @@ class DictionaryPopupLayer extends StatelessWidget {
     required this.onDismiss,
     required this.onTextSelected,
     required this.onLinkClick,
-    required this.onMineEntry,
-    required this.onDuplicateCheck,
+    this.onMineEntry,
+    this.onDuplicateCheck,
     this.onOverwriteTargetNoteId,
     this.onMinedCardAction,
     this.onOpenInAnki,
@@ -655,15 +679,30 @@ class DictionaryPopupLayer extends StatelessWidget {
   final VoidCallback onDismiss;
   final void Function(String text, Rect localRect) onTextSelected;
   final void Function(String query, Rect localRect) onLinkClick;
-  final Future<MinePopupResult> Function(Map<String, String> fields)
-      onMineEntry;
+
+  /// 制卡（「+」按钮）回调。**可空**：宿主没有制卡能力（或「制卡」功能模块被关掉）
+  /// 时传 null，与 [onAppendSentence] 等一样走「回调为 null 就不接线」的既有契约，
+  /// 而不是挂一个点了没反应的 no-op。
+  ///
+  /// 注意按钮**渲不渲染**由 popup.js 的 `window.__fushiMiningEnabled` 决定
+  /// （注入点 popup_settings_injection.dart，判据是 ModuleId.cardCreation）——
+  /// 那是 in-app 与 app 外两类表面共用的唯一注入点；本回调为空只是宿主侧的第二道
+  /// 闸（桥调用无人接管时不做任何事），两者正交。
+  final Future<MinePopupResult> Function(Map<String, String> fields)?
+  onMineEntry;
 
   /// TODO-270 D：覆盖「最新制的那张卡」（[noteId] + 新字段）。null 时弹窗不进
   /// 「最新可改」第三态，点 ✓ 仍走旧的查重/再制流程（向后兼容）。
   final Future<MinePopupResult> Function(
-      int noteId, Map<String, String> fields)? onUpdateEntry;
-  final Future<bool> Function(String expression, String reading)
-      onDuplicateCheck;
+    int noteId,
+    Map<String, String> fields,
+  )?
+  onUpdateEntry;
+
+  /// 查重（词条渲染时问 Anki「这张卡已经有了吗」）。**可空**：与 [onMineEntry] 同
+  /// 进同退——制卡不可用时传 null，弹窗既不画 ✓ 也不发查重探测。
+  final Future<bool> Function(String expression, String reading)?
+  onDuplicateCheck;
 
   /// TODO-614：覆写范围=「全部」时按内容反查可覆写的已存在 note id（多张取最近），
   /// 透传给 [DictionaryPopupWebView] 让更早的卡也能进「✓↩ 最新可改」态。null 时弹窗
@@ -1325,13 +1364,18 @@ class _BodySwipeDismissDetectorState extends State<_BodySwipeDismissDetector>
       ..addStatusListener(_onStatus);
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // 墨水屏模式：滑出/弹回补间归零（Duration.zero 的 forward 立即 complete，
-    // onDismiss 时序不变，只是不再画补间帧）。跟随主题切换双向生效。
-    _controller.duration =
-        isEinkTheme(context) ? Duration.zero : _kSlideDuration;
+  /// 滑出/弹回补间的时长**用时取值**，不缓存（`Duration.zero` 的 forward 立即
+  /// complete，onDismiss 时序不变，只是不再画补间帧）。
+  ///
+  /// 曾经写在 `didChangeDependencies` 里，但那只在**依赖**（这里是 `Theme`）变化时
+  /// 重跑：用户在设置里翻「弹窗关闭动画」只触发 rebuild、不触发
+  /// `didChangeDependencies`，控制器会一直留着上一次的 200ms，表现成「关了没用」的
+  /// 空开关。取值改在每次启动补间前一刻，两条来源（用户开关 / 墨水屏）都当场生效。
+  void _applyDismissDuration() {
+    _controller.duration = popupDismissAnimationDuration(
+      context,
+      _kSlideDuration,
+    );
   }
 
   @override
@@ -1431,6 +1475,7 @@ class _BodySwipeDismissDetectorState extends State<_BodySwipeDismissDetector>
   }
 
   void _finishHorizontalDrag() {
+    _applyDismissDuration();
     final double accumulated = _dragX;
     // 双向水平：左右皆可，对齐手机 `_dragX.abs()`。
     if (accumulated.abs() > _threshold) {
@@ -1449,6 +1494,7 @@ class _BodySwipeDismissDetectorState extends State<_BodySwipeDismissDetector>
   }
 
   void _springBack() {
+    _applyDismissDuration();
     _dragStartX = _dragX;
     _dragTargetX = 0;
     _dismissing = false;

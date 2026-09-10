@@ -281,6 +281,19 @@ mixin _FushiDbVideoDomain
             ..where(($VideoMetadataWorksTable t) => t.bookUid.equals(bookUid)))
           .getSingleOrNull();
 
+  /// 写作品级字段锁（schema v99）。`null` = 清空全部锁。锁是纯用户意图，独立于
+  /// 刮削产物，所以是自己的原语而不是 `upsertVideoMetadataWork` 的一个字段。
+  Future<void> setVideoMetadataWorkLockedFields(
+    int workId,
+    String? lockedFields,
+  ) async {
+    await (update(videoMetadataWorks)
+          ..where(($VideoMetadataWorksTable t) => t.id.equals(workId)))
+        .write(VideoMetadataWorksCompanion(
+      lockedFields: Value<String?>(lockedFields),
+    ));
+  }
+
   Future<VideoMetadataWorkRow?> getVideoMetadataWorkById(int workId) =>
       (select(videoMetadataWorks)
             ..where(($VideoMetadataWorksTable t) => t.id.equals(workId)))
@@ -2189,6 +2202,22 @@ mixin _FushiDbVideoDomain
                       OrderingTerm(expression: t.discoveredAt),
                 ]))
               .get();
+
+  /// 这条下载任务是不是某条订阅拉起来的。
+  ///
+  /// v101 更新提醒的番剧侧判据：手动下载是用户自己刚点的，下载完成再提醒一次
+  /// 只是复述他刚做过的动作；订阅下载则是他没盯着的时候悄悄完成的，那一条才值
+  /// 得提醒。`video_download_jobs` 本身没有来源标记，唯一的关联是订阅条目回填的
+  /// `jobId`，所以判据只能反查这张边表。
+  Future<bool> isVideoDownloadJobFromSubscription(String jobId) async {
+    final VideoDownloadSubscriptionItemRow? row =
+        await (select(videoDownloadSubscriptionItems)
+              ..where(($VideoDownloadSubscriptionItemsTable t) =>
+                  t.jobId.equals(jobId))
+              ..limit(1))
+            .getSingleOrNull();
+    return row != null;
+  }
 
   Stream<List<VideoDownloadSubscriptionItemRow>>
       watchVideoDownloadSubscriptionItems(String subscriptionId) =>

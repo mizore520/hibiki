@@ -5,6 +5,7 @@ import 'package:fushi_audio/fushi_audio.dart'
 import 'package:fushi_core/fushi_core.dart';
 import 'package:fushi/src/dictionary/dict_style_rules.dart';
 import 'package:fushi/src/media/discovery/opds_server_config.dart';
+import 'package:fushi/src/models/module_id.dart';
 import 'package:fushi/src/media/manga/ocr/manga_ocr_engine.dart';
 import 'package:fushi/src/media/torrent/anime_download_config.dart';
 import 'package:fushi/src/media/torrent/torznab_client.dart';
@@ -89,7 +90,8 @@ class PreferencesRepository extends ChangeNotifier {
       'video_online_services_setup_dismissed';
 
   bool get videoOnlineServicesSetupDismissed =>
-      getPref(videoOnlineServicesSetupDismissedKey, defaultValue: false) as bool;
+      getPref(videoOnlineServicesSetupDismissedKey, defaultValue: false)
+          as bool;
 
   Future<void> dismissVideoOnlineServicesSetup() async {
     await setPref(videoOnlineServicesSetupDismissedKey, true);
@@ -123,7 +125,58 @@ class PreferencesRepository extends ChangeNotifier {
     DandanplayConfig.current = DandanplayConfig.decode(
       getPref('video_danmaku_config', defaultValue: '') as String,
     );
+    await _repairOpenSubtitlesEnabledOnce();
     _installAppProxyReaders();
+  }
+
+  /// BUG-2429 的存量数据修复标记。跑过一次就再也不跑。
+  static const String openSubtitlesEnabledRepairedKey =
+      'video_subtitle_opensubtitles_enabled_repaired';
+
+  /// 把「空草稿」写下的 `enabled=false` 一次性归一回默认启用。
+  ///
+  /// 设置页的 OpenSubtitles 详情草稿曾把未配置态的开关初值硬写成 false（与
+  /// [OpenSubtitlesConfig] 的构造默认相反），于是用户只要在该页碰过任意一个字段，
+  /// debounce 保存就把这个**没人选过的 false** 落盘，内置应用密钥从此形同虚设，
+  /// 而设置列表还照样显示「已内置」。判据取「一条自有凭据都没有（apiKey /
+  /// username / password 全空）却是关闭态」——这正是空草稿的指纹。真正手动关掉
+  /// 且没填过任何凭据的用户会被打开一次，但标记键保证只发生一次；此后再关就一直
+  /// 是关的。挂在 [loadFromDb]（偏好变得可读的那一刻）而不是某个 entry point 的
+  /// initialise，理由同 [_installAppProxyReaders]。
+  Future<void> _repairOpenSubtitlesEnabledOnce() async {
+    if (getPref(openSubtitlesEnabledRepairedKey, defaultValue: false) as bool) {
+      return;
+    }
+    final String raw =
+        getPref('video_subtitle_opensubtitles_config', defaultValue: '')
+            as String;
+    // 没写过配置的用户没有需要修的东西，但同样打标记：这条修复只针对存量脏数据，
+    // 不该在此后每次启动都重新解析一遍。
+    if (raw.trim().isNotEmpty) {
+      final OpenSubtitlesConfig config = videoSubtitleOpenSubtitlesConfig;
+      final bool hasOwnCredentials =
+          config.apiKey.trim().isNotEmpty ||
+          (config.username?.trim().isNotEmpty ?? false) ||
+          (config.password?.isNotEmpty ?? false);
+      if (!config.enabled && !hasOwnCredentials) {
+        await setPref(
+          'video_subtitle_opensubtitles_config',
+          jsonEncode(
+            OpenSubtitlesConfig(
+              apiKey: config.apiKey,
+              username: config.username,
+              password: config.password,
+              userAgent: config.userAgent,
+              baseUrl: config.baseUrl,
+              enabled: true,
+              priority: config.priority,
+              allowInsecureHttp: config.allowInsecureHttp,
+            ).toJson(),
+          ),
+        );
+      }
+    }
+    await setPref(openSubtitlesEnabledRepairedKey, true);
   }
 
   /// 把进程级代理读取器接到本仓库上。**绑定点必须是「偏好变得可读的那一刻」**，不是
@@ -182,6 +235,30 @@ class PreferencesRepository extends ChangeNotifier {
     };
     _prefCache.addAll(encoded);
     await _db.setPrefs(encoded);
+  }
+
+  /// 只在持久化原值仍匹配快照时提交更新。耗时迁移在事务外准备文件，
+  /// 此处仅短事务比较/写入，避免覆盖其它进程或用户期间的新配置。
+  /// [expectedRaw] 使用 [prefsSnapshot] 的原始编码值；null 表示 key 不存在。
+  Future<bool> compareAndSetPrefs({
+    required Map<String, String?> expectedRaw,
+    required Map<String, dynamic> updates,
+  }) async {
+    final Map<String, String> encoded = <String, String>{
+      for (final MapEntry<String, dynamic> entry in updates.entries)
+        entry.key: PrefCodec.encode(entry.value),
+    };
+    final bool applied = await _db.transaction(() async {
+      final Map<String, String> persisted = await _db.getAllPrefs();
+      for (final MapEntry<String, String?> entry in expectedRaw.entries) {
+        if (persisted[entry.key] != entry.value) return false;
+      }
+      await _db.setPrefs(encoded);
+      return true;
+    });
+    // 冲突时也刷新本进程，后续绑定必须使用赢家配置；提交前不改缓存。
+    await loadFromDb();
+    return applied;
   }
 
   /// The prefs-version value currently held in this process's in-memory cache,
@@ -585,6 +662,20 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 查词弹窗「全宽展示」：忽略上面的最大宽度，横向铺满可用宽度（左右仍留同一条
+  /// 边距）。位置仍跟随选区——与「底部固定」正交：底部固定本来就是屏幕底部的一条
+  /// 全宽面板，本项管的是**贴词定位下**也占满宽度。
+  ///
+  /// 存在的理由是「最大宽度」是绝对逻辑像素：换设备、旋屏、改界面缩放后都得重调，
+  /// 而墨水屏这类窄屏上用户要的恒定是「占满」。默认 false = 保持既有手感。
+  bool get popupFullWidth =>
+      getPref('popup_full_width', defaultValue: false) as bool;
+
+  Future<void> setPopupFullWidth(bool value) async {
+    await setPref('popup_full_width', value);
+    notifyListeners();
+  }
+
   final double defaultPopupMaxHeight = 360;
 
   double get popupMaxHeight =>
@@ -775,64 +866,22 @@ class PreferencesRepository extends ChangeNotifier {
     await setPref('first_time_setup', false);
   }
 
-  /// 「功能模块」显隐：小说/漫画/视频/游戏/浏览器扩展五个库页 tab 加 下载/查词
-  /// 两个工具 tab 是否出现在底栏/侧栏。默认全开（与旧版行为一致）；新手引导的功能
-  /// 选择与 设置 → 外观 → 功能模块 写同一真值（引导只勾库页，不勾下载/查词）。
-  /// games（Windows）与浏览器扩展（桌面）在读取端还叠加平台门控，这里只存用户意愿。
-  /// 首页/设置恒在，是全部隐藏后的安全回退面，不提供开关。
-  bool get moduleBooksEnabled =>
-      getPref('module_books_enabled', defaultValue: true) as bool;
+  /// 「功能模块」显隐：用户意愿的**唯一存储**，一个 [ModuleId] 一个键。
+  ///
+  /// 默认全开（与旧版行为一致）；新手引导的功能选择与 设置 → 外观 → 功能模块
+  /// 写同一真值。games（Windows）与浏览器扩展（桌面）的平台门控**不在这里**——
+  /// 这里只存用户意愿，平台判据统一在 [ModuleId.availableOn] 判一次，合成见
+  /// [ModuleVisibility.resolve]。首页/设置恒在，是全部关闭后的安全回退面，
+  /// 没有对应 [ModuleId]。
+  ///
+  /// 此前这里是七对手写 getter/setter（22 行/模块），加一个模块要在 prefs /
+  /// AppModel / 设置 schema / 引导 / 底栏 / macOS 侧栏各抄一遍，少抄一处就静默
+  /// 漏一处门控。现在读写都走枚举，加模块只加一个 enum 值。
+  bool moduleEnabled(ModuleId module) =>
+      getPref(module.prefKey, defaultValue: true) as bool;
 
-  Future<void> setModuleBooksEnabled(bool value) async {
-    await setPref('module_books_enabled', value);
-    notifyListeners();
-  }
-
-  bool get moduleBrowserExtensionEnabled =>
-      getPref('module_browser_extension_enabled', defaultValue: true) as bool;
-
-  Future<void> setModuleBrowserExtensionEnabled(bool value) async {
-    await setPref('module_browser_extension_enabled', value);
-    notifyListeners();
-  }
-
-  bool get moduleMangaEnabled =>
-      getPref('module_manga_enabled', defaultValue: true) as bool;
-
-  Future<void> setModuleMangaEnabled(bool value) async {
-    await setPref('module_manga_enabled', value);
-    notifyListeners();
-  }
-
-  bool get moduleVideoEnabled =>
-      getPref('module_video_enabled', defaultValue: true) as bool;
-
-  Future<void> setModuleVideoEnabled(bool value) async {
-    await setPref('module_video_enabled', value);
-    notifyListeners();
-  }
-
-  bool get moduleGamesEnabled =>
-      getPref('module_games_enabled', defaultValue: true) as bool;
-
-  Future<void> setModuleGamesEnabled(bool value) async {
-    await setPref('module_games_enabled', value);
-    notifyListeners();
-  }
-
-  bool get moduleDownloadsEnabled =>
-      getPref('module_downloads_enabled', defaultValue: true) as bool;
-
-  Future<void> setModuleDownloadsEnabled(bool value) async {
-    await setPref('module_downloads_enabled', value);
-    notifyListeners();
-  }
-
-  bool get moduleDictionariesEnabled =>
-      getPref('module_dictionaries_enabled', defaultValue: true) as bool;
-
-  Future<void> setModuleDictionariesEnabled(bool value) async {
-    await setPref('module_dictionaries_enabled', value);
+  Future<void> setModuleEnabled(ModuleId module, bool value) async {
+    await setPref(module.prefKey, value);
     notifyListeners();
   }
 
@@ -920,8 +969,8 @@ class PreferencesRepository extends ChangeNotifier {
   /// 探到的结果缓存，存 [MpvLuaCapability.name]）。全局设置页没有播放器，靠这份
   /// 缓存如实说明脚本开关在本平台是否可用。默认 unknown = 从未播过视频。
   MpvLuaCapability get videoMpvLuaCapability => MpvLuaCapability.fromName(
-        getPref('video_mpv_lua_capability', defaultValue: 'unknown') as String,
-      );
+    getPref('video_mpv_lua_capability', defaultValue: 'unknown') as String,
+  );
 
   Future<void> setVideoMpvLuaCapability(MpvLuaCapability value) async {
     if (videoMpvLuaCapability == value) return;
@@ -1238,14 +1287,22 @@ class PreferencesRepository extends ChangeNotifier {
   }
 
   /// OpenSubtitles 的设备本地配置。登录 token 只存在 client 内存中，绝不写入本键。
-  OpenSubtitlesConfig? get videoSubtitleOpenSubtitlesConfig {
+  ///
+  /// **永不返回 null**：没配置过 = [OpenSubtitlesConfig.unconfigured]（启用 + 内置
+  /// 应用密钥）。BUG-2429：此前返回 null，于是「没配置过」这个特殊情况要由每个消费方
+  /// 各自解释一遍，而三处解释互相矛盾——运行时装配当它「不装配」（内置密钥形同虚设），
+  /// 设置页列表当它「已内置」（谎报可用），详情页草稿当它「开关关闭」（用户一碰字段
+  /// 就把 enabled=false 落盘）。默认值收敛到一处，特殊情况随之消失。
+  OpenSubtitlesConfig get videoSubtitleOpenSubtitlesConfig {
     final String raw =
         getPref('video_subtitle_opensubtitles_config', defaultValue: '')
             as String;
-    if (raw.trim().isEmpty) return null;
+    if (raw.trim().isEmpty) return OpenSubtitlesConfig.unconfigured();
     try {
       final Object? decoded = jsonDecode(raw);
-      if (decoded is! Map<Object?, Object?>) return null;
+      if (decoded is! Map<Object?, Object?>) {
+        return OpenSubtitlesConfig.unconfigured();
+      }
       return OpenSubtitlesConfig.fromJson(<String, Object?>{
         for (final MapEntry<Object?, Object?> entry in decoded.entries)
           entry.key.toString(): entry.value,
@@ -1256,7 +1313,7 @@ class PreferencesRepository extends ChangeNotifier {
         error,
         stack,
       );
-      return null;
+      return OpenSubtitlesConfig.unconfigured();
     }
   }
 
@@ -1691,6 +1748,17 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 小说阅读器制卡时是否给卡片追加「制卡所在字符数」标签（`chars_12345`，全书绝对
+  /// 学习字数位置，countStudyChars 口径）。默认开：这是用户点名要的标注，且只多一个
+  /// tag、不动任何既有字段。
+  bool get autoAddCharPositionToTags =>
+      getPref('auto_add_char_position_to_tags', defaultValue: true) as bool;
+
+  void toggleAutoAddCharPositionToTags() async {
+    await setPref('auto_add_char_position_to_tags', !autoAddCharPositionToTags);
+    notifyListeners();
+  }
+
   // TODO-1650 制卡图片/GIF 清晰度档（0..3，见 [MiningMediaCompression.imageTiers]）。
   // 替代旧的单一「压缩」开关。未显式设过时从旧 `compress_mining_media` 布尔迁移：
   // 开(默认)→标准档 1（= TODO-646 现状，零行为破坏）；关→高清档 2。读写都夹到 0..3，
@@ -1873,6 +1941,18 @@ class PreferencesRepository extends ChangeNotifier {
 
   void toggleCollapseDictionaries() async {
     await setPref('collapse_dictionaries', !collapseDictionaries);
+    notifyListeners();
+  }
+
+  // 对齐 Hoshi Reader Android 的 "Compact Glossaries"：释义列表由每条一行改成
+  // inline + ` | ` 分隔的紧凑排版（popup.js createDictionaryBlock 的 compactCss）。
+  // 渲染器早就支持 window.compactGlossaries，只是从来没有偏好写入它。默认 false =
+  // 保持现状（Android 那边默认 true，但改默认会让所有存量用户的弹窗观感突变）。
+  bool get compactGlossaries =>
+      getPref('popup_compact_glossaries', defaultValue: false) as bool;
+
+  void toggleCompactGlossaries() async {
+    await setPref('popup_compact_glossaries', !compactGlossaries);
     notifyListeners();
   }
 
@@ -2945,6 +3025,36 @@ class PreferencesRepository extends ChangeNotifier {
 
   Future<void> setDiscoveryDisabledSources(String value) async {
     await setPref('discovery_disabled_sources', value);
+    notifyListeners();
+  }
+
+  /// 发现页隐藏 0 做种的种子条目。**默认开**（用户 2026-09-08 拍板；调研里
+  /// 交互式 UI 的通行做法是只沉底不隐藏，记录为反对意见）。
+  bool get discoveryHideZeroSeeders =>
+      getPref('discovery_hide_zero_seeders', defaultValue: true) as bool;
+
+  Future<void> setDiscoveryHideZeroSeeders(bool value) async {
+    await setPref('discovery_hide_zero_seeders', value);
+    notifyListeners();
+  }
+
+  /// 发现页隐藏疑似漫画（只隐藏 `DiscoveryContentHint.manga` 档，undecided
+  /// 保留）。默认开。
+  bool get discoveryHideSuspectedManga =>
+      getPref('discovery_hide_suspected_manga', defaultValue: true) as bool;
+
+  Future<void> setDiscoveryHideSuspectedManga(bool value) async {
+    await setPref('discovery_hide_suspected_manga', value);
+    notifyListeners();
+  }
+
+  /// 发现页 Nyaa 过滤三态（0 全部 / 1 排除 remake / 2 仅 trusted），透传为
+  /// nyaa `f`。默认 0，与 Nyaa UI / Prowlarr / Flexget 一致。
+  int get discoveryNyaaQualityFilter =>
+      getPref('discovery_nyaa_quality_filter', defaultValue: 0) as int;
+
+  Future<void> setDiscoveryNyaaQualityFilter(int value) async {
+    await setPref('discovery_nyaa_quality_filter', value);
     notifyListeners();
   }
 

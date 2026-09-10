@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dynamic_color/dynamic_color.dart';
-import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
+import 'package:flutter/cupertino.dart'
+    show CupertinoPageTransitionsBuilder, CupertinoRouteTransitionMixin;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fushi/i18n/strings.g.dart';
@@ -171,7 +172,9 @@ ColorScheme buildFushiColorScheme({
         ? _readableOnColor(accentContainer)
         : base.onPrimaryContainer,
   );
-  if (surfaceRoles == null) return _hibikiSchemeCache[key] = withRoles;
+  if (surfaceRoles == null) {
+    return _hibikiSchemeCache[key] = applyFushiSurfaceLadder(withRoles);
+  }
   return _hibikiSchemeCache[key] = withRoles.copyWith(
     surface: surfaceRoles.surface,
     surfaceDim: surfaceRoles.surfaceDim,
@@ -221,24 +224,98 @@ typedef SurfaceRoles = ({
   Color onInverseSurface,
 });
 
-/// 以 [surface] 为页面底色，按 M3 容器层级向对比端（底色偏亮 → 黑，偏暗 → 白）
-/// 各混入少量灰推出分组 / 卡片 / 搜索框 / 菜单四级底色与文字、描边、反色。
-/// 层级比例参照 M3 亮色 tone 100/96/94/92/90 的间距；纯白底下卡片是极浅灰、
-/// 层次仍在。编辑页预览与词典弹窗都复用它，保证所见即所得。
+/// Hibiki 的表面层级 tone 表（顺序：containerLowest / surface / containerLow /
+/// container / containerHigh / containerHighest）。
+///
+/// M3 baseline 的六级容器色在亮色下是 tone 100/98/96/94/92/90——相邻只差 2
+/// tone，折合 WCAG 对比度约 **1.05**，远低于大面积色块的可辨阈值。M3 本来指望
+/// elevation 阴影与 surfaceTint 叠层承担层次，色差只作辅助；但 Hibiki 是
+/// 「扁平 + 描边」的视觉语言，全局 `elevation: 0` 且 surfaceTint 一律
+/// [Colors.transparent]，阴影和叠层都不存在——层次就只剩这 1.05 的色差。
+///
+/// 更糟的是 [FushiSurfaceColors] 的映射恰好落在阶梯最挤的一段：
+/// page=surface(98) / group=surfaceContainerLow(96) / card=surfaceContainer(94)，
+/// 这三层是设置页、书架、媒体库里最常同屏出现的组合，总跨度却只有 1.11；而
+/// 间距最大的 High / Highest 反倒给了搜索框和菜单这些小面积控件。结果就是页面
+/// 底、导航窗格、卡片糊成一片，既不像分层也不像扁平。
+///
+/// 这里把六级重新排布：相邻层 ≥ 1.07、页面↔卡片 1.16（原 1.11），并把深色下
+/// baseline 本身就不均匀的阶梯（1.079 / 1.045 / 1.147 / 1.167）拉齐。**只改
+/// tone，色相与彩度沿用原方案**，所以每个主题的性格不变，只是层级看得见了。
+///
+/// 亮色下探到 93.5 就打住，是因为 tone 90 是 `secondaryContainer` 等
+/// `*Container` 角色的地盘：卡片再往下压就会贴上选中态的明度，列表选中项反而
+/// 糊掉（压到 92.5 时实测 secondaryContainer↔卡片从 1.109 掉到 1.069）。深色
+/// 没有这个约束——那边 `secondaryContainer` 在 tone 30，离得远。
+const List<double> _lightSurfaceTones =
+    <double>[100, 99.5, 96.5, 93.5, 90.5, 87];
+const List<double> _darkSurfaceTones = <double>[3, 5, 9.5, 14, 19, 24];
+
+/// 把 [scheme] 的六级表面按 [_lightSurfaceTones] / [_darkSurfaceTones] 重算。
+///
+/// 三条主题路径（系统取色 / 内置预设 / 自定义 seed）出口都过这一道，所以层级
+/// 关系是全应用、全平台唯一的：Android 的 `CorePalette.toColorScheme()`（来自
+/// 系统壁纸）与桌面的 `fromSeed(accent)` 原本会推出**间距不同**的两套阶梯，
+/// 同一个「系统」主题在手机和桌面观感并不一致，收口后两端一致。
+///
+/// 两种情况不覆盖：墨水屏由 [buildEinkColorScheme] 全塌成纯黑白（层次改由描边
+/// 承担），用户钉死底色则走 [deriveSurfaceRolesFrom] 从钉死的那个色推同比例
+/// 阶梯——都在各自出口保持语义。
+ColorScheme applyFushiSurfaceLadder(ColorScheme scheme) {
+  final bool light = scheme.brightness == Brightness.light;
+  final List<double> tones = light ? _lightSurfaceTones : _darkSurfaceTones;
+  // 锚定原方案的中性色相 / 彩度：tonalSpot 给中性色 chroma 6、monochrome 给 0，
+  // 取 surfaceContainer 的 HCT 就能原样继承，不必区分 variant。
+  final Hct anchor = Hct.fromInt(scheme.surfaceContainer.toARGB32());
+  Color at(double tone) =>
+      Color(Hct.from(anchor.hue, anchor.chroma, tone).toInt());
+  return scheme.copyWith(
+    surfaceContainerLowest: at(tones[0]),
+    surface: at(tones[1]),
+    surfaceContainerLow: at(tones[2]),
+    surfaceContainer: at(tones[3]),
+    surfaceContainerHigh: at(tones[4]),
+    surfaceContainerHighest: at(tones[5]),
+    // dim / bright 是页面底自己的暗 / 亮变体，必须跟着走：亮色把 highest 压到
+    // tone 87 之后，baseline 的 dim(亮 87 / 暗 6) 不再比 highest 暗，语义就倒了。
+    surfaceBright: at(light ? tones[1] : 26),
+    surfaceDim: at(light ? 85 : 4),
+  );
+}
+
+/// 以 [surface] 为页面底色，向对比端（底色偏亮 → 暗，偏暗 → 亮）逐级推出分组 /
+/// 卡片 / 搜索框 / 菜单四级底色与文字、描边、反色。
+///
+/// 层级走 HCT **tone 增量**，间距与 [applyFushiSurfaceLadder] 同源，用户钉底色
+/// 前后层次不会一跳。原先是按固定比例向黑 / 白 `Color.lerp`，有两个毛病：比例
+/// 照抄 M3 baseline，比新阶梯挤将近一半；而且 sRGB 混色不是感知均匀的——同样
+/// 4% 的比例，纯白底下推出的层次清晰可辨，纯黑底下只有 1.06 的对比度（gamma
+/// 在暗端压得厉害），钉死纯黑的自定义主题层级基本是看不见的。
+///
+/// 编辑页预览与词典弹窗都复用它，保证所见即所得。
 SurfaceRoles deriveSurfaceRolesFrom(Color surface) {
   final bool dark =
       ThemeData.estimateBrightnessForColor(surface) == Brightness.dark;
   final Color contrast = dark ? Colors.white : Colors.black;
   Color step(double t) => Color.lerp(surface, contrast, t)!;
+  // 钉死的底色自己在 HCT 里的位置就是阶梯起点，其余各级按 tone 增量往对比端
+  // 走；夹到 [0,100] 是为了钉纯白 / 纯黑这两个端点仍有层次可推。
+  final Hct anchor = Hct.fromInt(surface.toARGB32());
+  Color tone(double delta) {
+    final double t =
+        (anchor.tone + (dark ? delta : -delta)).clamp(0, 100).toDouble();
+    return Color(Hct.from(anchor.hue, anchor.chroma, t).toInt());
+  }
+
   return (
     surface: surface,
-    surfaceDim: step(0.13),
+    surfaceDim: dark ? tone(-1) : tone(14.5),
     surfaceBright: surface,
     surfaceContainerLowest: surface,
-    surfaceContainerLow: step(0.03),
-    surfaceContainer: step(0.05),
-    surfaceContainerHigh: step(0.08),
-    surfaceContainerHighest: step(0.11),
+    surfaceContainerLow: tone(dark ? 4.5 : 3),
+    surfaceContainer: tone(dark ? 9 : 6),
+    surfaceContainerHigh: tone(dark ? 14 : 9),
+    surfaceContainerHighest: tone(dark ? 19 : 12.5),
     onSurface: dark ? const Color(0xDEFFFFFF) : const Color(0xDE000000),
     onSurfaceVariant: dark ? const Color(0x99FFFFFF) : const Color(0x99000000),
     outline: step(0.5),
@@ -312,6 +389,42 @@ class EinkNoPageTransitionsBuilder extends PageTransitionsBuilder {
     Widget child,
   ) {
     return child;
+  }
+}
+
+/// E-ink route transition for the platforms whose *only* way back out of a
+/// pushed page is the Cupertino edge-swipe gesture (iOS has no system back
+/// button, and `isCupertinoPlatform` is false under the default `auto` design
+/// system, so every page there is a plain [MaterialPageRoute] whose gesture
+/// comes solely from this [PageTransitionsTheme] entry).
+///
+/// [EinkNoPageTransitionsBuilder] returns `child` verbatim, which never
+/// installs Flutter's back-gesture detector — turning on e-ink mode therefore
+/// used to strip swipe-back from the whole app on iOS/macOS, stranding users on
+/// any page whose chrome is hidden. This builder keeps the detector by
+/// delegating to [CupertinoRouteTransitionMixin.buildPageTransitions], and
+/// still refreshes the panel exactly once by feeding it settled animations
+/// whenever no drag is in flight: pages swap in a single frame as before, and
+/// only a real finger drag gets the live, finger-following animation.
+class EinkCupertinoPageTransitionsBuilder extends PageTransitionsBuilder {
+  const EinkCupertinoPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final bool dragging = route.popGestureInProgress;
+    return CupertinoRouteTransitionMixin.buildPageTransitions<T>(
+      route,
+      context,
+      dragging ? animation : kAlwaysCompleteAnimation,
+      dragging ? secondaryAnimation : kAlwaysDismissedAnimation,
+      child,
+    );
   }
 }
 
@@ -596,8 +709,17 @@ class ThemeNotifier extends ChangeNotifier {
         accent = null;
       }
     }
+    // 值没变就不广播（BUG-2010）。本方法挂在 `AppLifecycleState.resumed` 上，而
+    // 桌面端每次窗口激活都会走一遍 resumed，于是「无条件 notifyListeners」＝
+    // 「每把 Fushi 拉到前台一次就让整棵树重建一次」。重建本身无害，但它会引爆
+    // 任何把 FutureBuilder 的 future 写在 build 里的页面——那种页面会退回
+    // waiting、内容整块消失一帧（用户报的「一拉到前台就闪」）。系统调色板本就
+    // 极少变，这里只在真变了时才通知；订阅方少一次无谓重建，闪的放大器就没了。
+    final bool unchanged =
+        palette == _systemPalette && accent == _systemAccentColor;
     _systemPalette = palette;
     _systemAccentColor = accent;
+    if (unchanged) return;
     if (appThemeKey == 'system-theme') notifyListeners();
   }
 
@@ -1073,12 +1195,14 @@ class ThemeNotifier extends ChangeNotifier {
       return buildEinkColorScheme(brightness);
     }
     if (appThemeKey == 'system-theme') {
-      return buildSystemThemeColorScheme(
+      // 系统取色的中性阶梯有两个来源（Android 壁纸调色板 / 桌面 accent seed），
+      // 间距各不相同；同预设与自定义主题一样收口到统一阶梯。
+      return applyFushiSurfaceLadder(buildSystemThemeColorScheme(
         brightness: brightness,
         palette: _systemPalette,
         accent: _systemAccentColor,
         fallbackSeed: _seedColor,
-      );
+      ));
     }
     return buildFushiColorScheme(
       seedColor: _seedColor,
@@ -1191,8 +1315,11 @@ class ThemeNotifier extends ChangeNotifier {
           ? const PageTransitionsTheme(
               builders: <TargetPlatform, PageTransitionsBuilder>{
                 TargetPlatform.android: EinkNoPageTransitionsBuilder(),
-                TargetPlatform.iOS: EinkNoPageTransitionsBuilder(),
-                TargetPlatform.macOS: EinkNoPageTransitionsBuilder(),
+                // iOS/macOS 不能用零转场：它们的返回手势由这份 builder 装载，
+                // 直接 `return child` 等于把侧滑返回从整个 app 拆掉（iOS 又没有
+                // 系统返回键），隐藏顶栏的页面就此退不出去。
+                TargetPlatform.iOS: EinkCupertinoPageTransitionsBuilder(),
+                TargetPlatform.macOS: EinkCupertinoPageTransitionsBuilder(),
                 TargetPlatform.windows: EinkNoPageTransitionsBuilder(),
                 TargetPlatform.linux: EinkNoPageTransitionsBuilder(),
                 TargetPlatform.fuchsia: EinkNoPageTransitionsBuilder(),
@@ -1328,12 +1455,65 @@ class ThemeNotifier extends ChangeNotifier {
           borderRadius: FushiBorderRadius.control,
         ),
       ),
+      // E-ink：M3 只用 `secondaryContainer` 填充表达选中段，而墨水屏方案把它
+      // 塌缩成了页面底色——选中段与相邻段逐像素相同，全仓调用点又一律
+      // `showSelectedIcon: false`，连勾选形状这条兜底都没有。`side` 由整条按钮
+      // 的 states 解析（Flutter 的 `segmentStyleFor` 不把 side 下发到分段），
+      // 做不出按段差异；反色填充是剩下唯一的通道，也是上游 HSA 的做法——它的
+      // eink scheme 直接把 `secondaryContainer` 定义成前景色。失效态返回 null
+      // 交回 M3 默认，不动既有的失效观感。填充/前景都不改几何，不影响分段条
+      // 的宽度估算与 overflow 守卫。
+      segmentedButtonTheme: eink
+          ? SegmentedButtonThemeData(
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.resolveWith<Color?>((
+                  Set<WidgetState> states,
+                ) {
+                  if (states.contains(WidgetState.disabled)) return null;
+                  return states.contains(WidgetState.selected)
+                      ? cs.onSurface
+                      : cs.surface;
+                }),
+                foregroundColor: WidgetStateProperty.resolveWith<Color?>((
+                  Set<WidgetState> states,
+                ) {
+                  if (states.contains(WidgetState.disabled)) return null;
+                  return states.contains(WidgetState.selected)
+                      ? cs.surface
+                      : cs.onSurface;
+                }),
+                iconColor: WidgetStateProperty.resolveWith<Color?>((
+                  Set<WidgetState> states,
+                ) {
+                  if (states.contains(WidgetState.disabled)) return null;
+                  return states.contains(WidgetState.selected)
+                      ? cs.surface
+                      : cs.onSurface;
+                }),
+              ),
+            )
+          : const SegmentedButtonThemeData(),
       chipTheme: ChipThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: FushiBorderRadius.chip,
         ),
         side: BorderSide(color: cs.outlineVariant),
-        selectedColor: cs.secondaryContainer,
+        // E-ink：同一个塌缩——`secondaryContainer` 等于页面底色，`showCheckmark`
+        // 又关掉了 M3 唯一的形状信号，选中与未选中的 chip 逐像素相同（字体库那
+        // 排「用途」FilterChip 就栽在这）。反色填充 + 配对 label 色补回信号；
+        // labelStyle 必须从 `labelLarge` 派生，直接给裸 TextStyle 会把 chip 的
+        // 字号字族一起替换掉。
+        selectedColor: eink ? cs.onSurface : cs.secondaryContainer,
+        labelStyle: eink
+            ? (tt.labelLarge ?? const TextStyle()).copyWith(
+                color: WidgetStateColor.resolveWith(
+                  (Set<WidgetState> states) =>
+                      states.contains(WidgetState.selected)
+                          ? cs.surface
+                          : cs.onSurface,
+                ),
+              )
+            : null,
         showCheckmark: false,
       ),
       filledButtonTheme: FilledButtonThemeData(

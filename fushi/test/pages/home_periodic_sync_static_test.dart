@@ -43,12 +43,14 @@ void main() {
       contains('Timer? _periodicSyncTimer'),
       reason: '应持有可取消的周期同步 timer 字段',
     );
-    final String compact = src.replaceAll(RegExp(r'\s+'), '');
+    // 同步模块门控给这句包了一层 if 并换了行（实参本身没变），所以钉「周期用
+    // _periodicSyncInterval、回调是 _triggerFullAutoSync」，不钉单行写法。
     expect(
-      compact,
-      contains(
-        'Timer.periodic(_periodicSyncInterval,(_)=>_triggerFullAutoSync()',
-      ),
+      RegExp(
+        r'Timer\.periodic\([\s\S]{0,80}?_periodicSyncInterval'
+        r'[\s\S]{0,80}?_triggerFullAutoSync\(\)',
+      ).hasMatch(src),
+      isTrue,
       reason: '定时器必须周期性重跑共用全量同步入口',
     );
   });

@@ -178,17 +178,19 @@ Widget _harness({
     overrides: <Override>[
       appProvider.overrideWith((Ref ref) => resolvedAppModel),
     ],
-    child: MaterialApp(
-      theme: ThemeData(
-        useMaterial3: true,
-        platform: platform,
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF386A58)),
-        extensions: <ThemeExtension<dynamic>>[
-          designSystemTheme ??
-              FushiDesignSystemTheme(themeNotifier.designSystemTheme),
-        ],
+    child: TranslationProvider(
+      child: MaterialApp(
+        theme: ThemeData(
+          useMaterial3: true,
+          platform: platform,
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF386A58)),
+          extensions: <ThemeExtension<dynamic>>[
+            designSystemTheme ??
+                FushiDesignSystemTheme(themeNotifier.designSystemTheme),
+          ],
+        ),
+        home: _buildHome(cupertinoTheme, builder, textScaler),
       ),
-      home: _buildHome(cupertinoTheme, builder, textScaler),
     ),
   );
 }
@@ -196,6 +198,7 @@ Widget _harness({
 Future<AppModel> _prefsBackedAppModel(
   FushiDatabase db, {
   PackageInfo? packageInfo,
+  AppModel? instance,
 }) async {
   final PreferencesRepository prefsRepo = PreferencesRepository(db);
   await prefsRepo.loadFromDb();
@@ -206,9 +209,11 @@ Future<AppModel> _prefsBackedAppModel(
     if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
   });
 
-  final AppModel appModel = packageInfo == null
-      ? _RendererTestAppModel()
-      : _VersionedRendererTestAppModel(packageInfo);
+  final AppModel appModel =
+      instance ??
+      (packageInfo == null
+          ? _RendererTestAppModel()
+          : _VersionedRendererTestAppModel(packageInfo));
   return appModel
     ..wireLocalAudioForTesting(prefsRepo: prefsRepo, databaseDirectory: tempDir)
     ..wireDatabaseForTesting(db);
@@ -498,34 +503,42 @@ void main() {
     expect(icon.color, customPrimary);
   });
 
-  testWidgets(
-    'material master-detail destination list is one grouped surface with '
-    'pill selection',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        _harness(
-          platform: TargetPlatform.android,
-          builder: (SettingsContext settingsContext) {
-            return MaterialSettingsRenderer().buildDestinationList(
-              settingsContext: settingsContext,
-              destinations: <SettingsDestination>[_fixtureDestination()],
-              selectedDestinationId: SettingsDestinationId.appearance,
-              onDestinationSelected: (_) {},
-              pushRoutes: false,
-            );
-          },
-        ),
-      );
+  testWidgets('material master-detail destinations use fixed groups with '
+      'pill selection', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      _harness(
+        platform: TargetPlatform.android,
+        builder: (SettingsContext settingsContext) {
+          return MaterialSettingsRenderer().buildDestinationList(
+            settingsContext: settingsContext,
+            destinations: <SettingsDestination>[
+              _fixtureDestination(),
+              const SettingsDestination(
+                id: SettingsDestinationId.video,
+                title: 'Video',
+                icon: Icons.movie_outlined,
+                sections: <SettingsSection>[],
+              ),
+            ],
+            selectedDestinationId: SettingsDestinationId.appearance,
+            onDestinationSelected: (_) {},
+            pushRoutes: false,
+          );
+        },
+      ),
+    );
 
-      expect(find.byType(AdaptiveSettingsSection), findsOneWidget);
-      FushiListItem item = tester.widget<FushiListItem>(
-        find.widgetWithText(FushiListItem, 'Appearance'),
-      );
-      expect(item.selected, isTrue);
-      expect(item.selectedShape, FushiListItemSelectedShape.pill);
-      expect(item.trailing, isNull);
-    },
-  );
+    expect(find.byType(AdaptiveSettingsSection), findsNWidgets(2));
+    expect(find.text(t.settings_group_interface), findsOneWidget);
+    expect(find.text(t.settings_group_content), findsOneWidget);
+    expect(find.widgetWithText(FushiListItem, 'Video'), findsOneWidget);
+    FushiListItem item = tester.widget<FushiListItem>(
+      find.widgetWithText(FushiListItem, 'Appearance'),
+    );
+    expect(item.selected, isTrue);
+    expect(item.selectedShape, FushiListItemSelectedShape.pill);
+    expect(item.trailing, isNull);
+  });
 
   testWidgets(
     'material push destination list keeps fill selection and chevron',
@@ -758,7 +771,10 @@ void main() {
   ) async {
     final FushiDatabase db = _testDb();
     addTearDown(db.close);
-    final AppModel appModel = await _prefsBackedAppModel(db);
+    final _YomitanRendererTestAppModel appModel =
+        _YomitanRendererTestAppModel();
+    await _prefsBackedAppModel(db, instance: appModel);
+    await appModel.setYomitanApiServerEnabled(true);
 
     await tester.pumpWidget(
       _harness(
@@ -794,6 +810,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(appModel.yomitanApiKey, 'mpv-token');
+    final PreferencesRepository reloaded = PreferencesRepository(db);
+    await reloaded.loadFromDb();
+    expect(reloaded.yomitanApiKey, 'mpv-token');
+    expect(appModel.serverStops, 1);
+    expect(appModel.serverStarts, 1);
   });
 
   testWidgets('lookup settings exposes lookup audio volume slider', (
@@ -1287,13 +1308,9 @@ void main() {
   );
 
   testWidgets(
-    'BUG-925: every titled section is collapsible; collapsedByDefault only '
-    'controls the initial open/closed state, not the ability to fold',
+    'explicit presentation distinguishes core, expanded and collapsed groups',
     (WidgetTester tester) async {
-      // 折叠「能力」与「默认收起」解耦后（settings_schema_widgets.dart）：
-      //   有标题 → 一定有折叠头（chevron），不管 collapsedByDefault；
-      //   collapsedByDefault 只决定进页面时展开还是收起；
-      //   无标题 → 没有可点的折叠头，永远平铺。
+      // 核心设置常驻，进阶组显式声明默认展开/收起，无标题组不可折叠。
       // 关掉全展开钩子，才能同时验「默认收起」这一半（setUp 默认置 true）。
       debugSettingsForceExpandAllSections = false;
 
@@ -1304,7 +1321,7 @@ void main() {
         sections: <SettingsSection>[
           SettingsSection(
             title: 'Expanded group',
-            // collapsedByDefault 缺省 = false → 默认展开。
+            presentation: SettingsSectionPresentation.expanded,
             items: <SettingsItem>[
               SettingsSwitchItem(
                 id: 'alpha',
@@ -1410,4 +1427,20 @@ class _VersionedRendererTestAppModel extends _RendererTestAppModel {
 
   @override
   PackageInfo get packageInfo => _packageInfo;
+}
+
+/// Keep this test on real preference writes while replacing the HTTP listener.
+class _YomitanRendererTestAppModel extends _RendererTestAppModel {
+  int serverStarts = 0;
+  int serverStops = 0;
+
+  @override
+  Future<void> startYomitanApiServer() async {
+    serverStarts++;
+  }
+
+  @override
+  Future<void> stopYomitanApiServer() async {
+    serverStops++;
+  }
 }

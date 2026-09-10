@@ -29,7 +29,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:path/path.dart' as p;
 
-import 'package:asr_core/asr_core.dart';
+import 'package:fushi_asr_core/asr_core.dart';
 /// `--dart-define` 优先；没有就读同名进程环境变量——`tool/run_windows_itest.ps1`
 /// 不透传自定义 dart-define，但会把父进程环境原样传给运行器。
 String _param(String name, {String defaultValue = ''}) {
@@ -101,6 +101,8 @@ Future<
   required AsrEncoderVariant variant,
 }) async {
   final AsrTranscriptionService service = AsrTranscriptionService(
+    // 素材是干净朗读（TTS / 有声书），能量门限的双模态前提成立。
+    audioProfile: AsrAudioProfile.cleanSpeech,
     backend: fushiAsrBackend(),
     openStore: (AsrLanguage _) async => store,
     jobsRoot: () async => jobsRoot,
