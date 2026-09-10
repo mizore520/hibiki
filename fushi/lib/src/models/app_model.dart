@@ -4733,9 +4733,6 @@ class AppModel with ChangeNotifier {
       manualTorrentDirectory: Directory(
         path.join(appDirectory.path, 'manual_torrents'),
       ),
-      manualTorrentDirectory: Directory(
-        path.join(appDirectory.path, 'manual_torrents'),
-      ),
       updateFeed: updateFeedService,
     )..start();
     _videoDownloadPipelineService = pipeline;
