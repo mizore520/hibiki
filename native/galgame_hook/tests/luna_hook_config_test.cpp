@@ -87,6 +87,34 @@ int main() {
     return 8;
   }
 
+  fushi_voice_hook::LunaTargetIdentity little_busters;
+  little_busters.executable_sha256 =
+      "047748c47ab636b5a97954688c9cb3d0ee68de7960166eb427c4e00f6b3f172d";
+  const auto little_busters_profile = fushi_voice_hook::MatchLunaHookProfiles(
+      fushi_voice_hook::BuiltInLunaHookProfiles(), little_busters);
+  if (little_busters_profile.codepage != 932 ||
+      little_busters_profile.enable_pc_hooks ||
+      little_busters_profile.diagnostic_luca_text ||
+      !little_busters_profile.decode_luca_role_tokens ||
+      !little_busters_profile.preserve_luca_repetitive_text ||
+      little_busters_profile.hook_codes.size() != 1 ||
+      little_busters_profile.hook_codes.front() !=
+          L"HQFN1C@8BA37:LITBUS_WIN32.exe" ||
+      !little_busters_profile.blocked_hook_codes.empty() ||
+      !little_busters_profile.preferred_hook_codes.empty()) {
+    std::fprintf(stderr,
+                 "Little Busters Luca production profile did not match\n");
+    return 10;
+  }
+
+  if (fushi_voice_hook::MatchLunaHookProfiles(
+          fushi_voice_hook::BuiltInLunaHookProfiles(), nine)
+          .preserve_luca_repetitive_text) {
+    std::fprintf(stderr,
+                 "Luca repetitive-text policy leaked to another profile\n");
+    return 11;
+  }
+
   fushi_voice_hook::LunaTargetIdentity moved = nine;
   if (fushi_voice_hook::MatchLunaHookProfiles(
           fushi_voice_hook::BuiltInLunaHookProfiles(), moved)

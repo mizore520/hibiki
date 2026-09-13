@@ -3,12 +3,14 @@
 // 必须在任何 include 之前撤销它。守卫：tests/assert_liveness_guard_test.py
 #undef NDEBUG
 
+#include <array>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "luna_text_selector.h"
+#include "luca_token_decoder.h"
 
 std::vector<std::string> Split(const std::string& value) {
   std::vector<std::string> fields;
@@ -51,6 +53,67 @@ int main(int argc, char** argv) {
       return 51;
     }
   }
+
+  // Little Busters' verified HQFN1C source is a native one-line stream, so
+  // repeated kana and punctuation are valid text rather than hook artifacts.
+  // The generic heuristic must remain unchanged for every other source.
+  {
+    const std::wstring raw_role =
+        L"`\u7406\u6a39@\u300c\u2026\u2026\u2026\u2026\u2026\u2026\u300d";
+    std::wstring normalized_role;
+    if (!fushi_voice_hook::NormalizeLucaText(
+            raw_role.c_str(), raw_role.size(), &normalized_role) ||
+        normalized_role != L"\u300c\u2026\u2026\u2026\u2026\u2026\u2026\u300d") {
+      return 60;
+    }
+    if (!fushi_voice_hook::LunaTextIsArtifact(
+            normalized_role.c_str(),
+            static_cast<int>(normalized_role.size())) ||
+        fushi_voice_hook::LunaTextIsArtifactForSource(
+            normalized_role.c_str(),
+            static_cast<int>(normalized_role.size()), true) ||
+        !fushi_voice_hook::LunaTextIsArtifactForSource(
+            normalized_role.c_str(),
+            static_cast<int>(normalized_role.size()), false)) {
+      return 61;
+    }
+
+    const std::array<std::wstring, 8> legitimate_repetition = {{
+        L"\u306f\u3044\u306f\u3044",  // はいはい
+        L"\u3042\u3042",              // ああ
+        L"\u3042\u3042\u3042\u3042",  // ああああ
+        L"\uff57\uff57\uff57\uff57",  // ｗｗｗｗ
+        L"\u306f\u306f\u306f\u306f",  // はははは
+        L"\u3046\u3046\u3046\u3046",  // うううう
+        L"\u3042\u30fc\u3042\u30fc",  // あーあー
+        L"\u30fb\u30fb\u30fb\u30fb",  // ・・・・
+    }};
+    for (const std::wstring& text : legitimate_repetition) {
+      const int length = static_cast<int>(text.size());
+      if (!fushi_voice_hook::LunaTextIsArtifact(text.c_str(), length) ||
+          fushi_voice_hook::LunaTextIsArtifactForSource(
+              text.c_str(), length, true) ||
+          fushi_voice_hook::LunaTextIsArtifactForSource(
+              text.c_str(), length, false) !=
+              fushi_voice_hook::LunaTextIsArtifact(text.c_str(), length)) {
+        return 62;
+      }
+    }
+
+    const std::wstring short_exclamation = L"\u3048\u3063\uff01";  // えっ！
+    const std::wstring narration = L"\u30af\u30c9\u306f\u8003\u3048\u8fbc\u3093\u3060\u3002";
+    const std::wstring ordinary_at = L"\u666e\u901a\u306e@\u672c\u6587";
+    for (const std::wstring& text :
+         {short_exclamation, narration, ordinary_at}) {
+      const int length = static_cast<int>(text.size());
+      if (fushi_voice_hook::LunaTextIsArtifact(text.c_str(), length) ||
+          fushi_voice_hook::LunaTextIsArtifactForSource(
+              text.c_str(), length, true)) {
+        return 63;
+      }
+    }
+  }
+
   if (argc != 2) return 1;
   const std::wstring single_line =
       L"\u300c\u6c17\u3092\u4ed8\u3051\u307e\u3059\u3063\u3002"

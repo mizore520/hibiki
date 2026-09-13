@@ -203,6 +203,15 @@ inline bool LunaTextIsArtifact(const wchar_t* text, int len) {
   return len > 4 && adjacent_equal * 100 >= (len - 1) * 30;
 }
 
+// A source with a verified one-event-per-line native text stream may contain
+// legitimate ellipses, laughter, and repeated kana.  Keep the generic
+// heuristic unchanged for every other source; the exact profile that owns
+// this policy must opt in explicitly.
+inline bool LunaTextIsArtifactForSource(const wchar_t* text, int len,
+                                        bool preserve_repetitive_text) {
+  return preserve_repetitive_text ? false : LunaTextIsArtifact(text, len);
+}
+
 // ── hook 身份 id：injector 与测试共用同一实现 ────────────────────────
 // 放在头里而不是 injector 的 .cpp 里，是为了让跨引擎负向测试能拿真实引擎的
 // (addr, hookcode, hookname, ctx, ctx2) 驱动**生产实现**，而不是手捏 face 常量自证。

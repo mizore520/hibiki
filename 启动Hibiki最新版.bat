@@ -180,6 +180,21 @@ echo [4/7] Preparing the bundled torrent runtime...
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PREPARE_TORRENT%" -RepoRoot "%REPO%"
 if errorlevel 1 goto :dependency_failed
 
+rem Another launcher may have completed the same source build while this
+rem invocation was resolving dependencies. Re-read the marker immediately
+rem before the expensive helper build so that an already-finished build cannot
+rem be duplicated from an earlier stale decision snapshot.
+if /i not "%~1"=="clean" (
+  set "RECHECK_STATE="
+  for /f "delims=" %%i in ('powershell -NoProfile -ExecutionPolicy Bypass -File "%GET_BUILD_STATE%" -RepoRoot "%REPO%" 2^>nul') do set "RECHECK_STATE=%%i"
+  set "RECHECK_BUILT="
+  if exist "%STAMP%" set /p RECHECK_BUILT=<"%STAMP%"
+  if exist "%EXE%" if defined RECHECK_STATE if "!RECHECK_BUILT!"=="!RECHECK_STATE!" (
+    echo [SKIP] Another launcher already completed this exact source state; launching directly.
+    goto :launch
+  )
+)
+
 if not exist "%BUILD_HELPER%" (
   echo [ERROR] Galgame helper build script not found: %BUILD_HELPER%
   goto :fail

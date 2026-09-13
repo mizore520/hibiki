@@ -25,6 +25,9 @@ struct LunaHookProfileMatch {
   int codepage = 0;
   bool enable_pc_hooks = false;
   bool normalize_mages_controls = false;
+  bool diagnostic_luca_text = false;
+  bool decode_luca_role_tokens = false;
+  bool preserve_luca_repetitive_text = false;
   uint32_t defer_until_running_ms = 0;
   std::vector<std::wstring> hook_codes;
   std::vector<std::wstring> blocked_hook_codes;
@@ -101,8 +104,16 @@ inline bool LunaHostLogConfirmsHookRemoval(const wchar_t* log,
 // auto-detected hook; `block-name=<Luna-hook-name>` confirms that asynchronous
 // removal completed; `prefer=<hook-code-without-module>` limits automatic text
 // output to a known-good hook; `defer-ms=<milliseconds>` waits for fragile
-// engines to initialize before installing the guarded hooks. A row may identify
-// by executable hash, module hash, or both.
+// engines to initialize before installing the guarded hooks;
+// luca-text-diagnostic enables the structural Luca full text-thread inventory;
+// luca-native-token-decoder enables the engine-side Luca token/presentation
+// decoder for the matched production source. It never rewrites diagnostic payloads.
+// luca-native-preserve-repetitive-text keeps legitimate repeated native Luca text
+// out of the generic artifact heuristic for that exact profile only; it never
+// changes diagnostic classification or any other engine's policy.
+// The legacy luca-runtime-sink spelling is accepted as an alias; neither spelling selects
+// a preferred thread or rewrites live text through SCRIPT.PAK. A row may
+// identify by executable hash, module hash, or both.
 inline LunaHookProfileMatch MatchLunaHookProfiles(
     const std::string& tsv, const LunaTargetIdentity& identity) {
   LunaHookProfileMatch result;
@@ -148,6 +159,16 @@ inline LunaHookProfileMatch MatchLunaHookProfiles(
           result.enable_pc_hooks = true;
         } else if (option == "normalize-mages-controls") {
           result.normalize_mages_controls = true;
+        } else if (option == "luca-text-diagnostic" ||
+                   option == "luca-runtime-sink") {
+          result.diagnostic_luca_text = true;
+        } else if (option == "luca-native-token-decoder") {
+          // The option name is retained for profile compatibility; the
+          // native Luca decoder also applies the evidence-backed numeric $K
+          // presentation-marker normalization.
+          result.decode_luca_role_tokens = true;
+        } else if (option == "luca-native-preserve-repetitive-text") {
+          result.preserve_luca_repetitive_text = true;
         } else if (option.rfind("block=", 0) == 0 && option.size() > 6) {
           const std::string code = option.substr(6);
           result.blocked_hook_codes.emplace_back(code.begin(), code.end());

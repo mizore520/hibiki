@@ -4,17 +4,23 @@
 #include <mmreg.h>
 #include <shellapi.h>
 #include <tlhelp32.h>
+#include <winver.h>
 
 #include <algorithm>
+#include <array>
+#include <cctype>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
 #include <iomanip>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <sstream>
 #include <string>
+#include <thread>
+#include <utility>
 #include <cwchar>
 #include <vector>
 
@@ -35,6 +41,11 @@
 #include "steam_launch.h"
 #include "luna_bridge.h"
 #include "luna_hook_config.h"
+#include "luca_body_text_resolver.h"
+#include "luca_no_speaker_text_resolver.h"
+#include "luca_text_resolver.h"
+#include "luca_text_sink_resolver.h"
+#include "luca_token_decoder.h"
 #include "luna_text_selector.h"
 #include "text_thread_identity.h"
 
@@ -107,8 +118,11 @@ using fushi_voice_hook::InspectMappingSession;
 using fushi_voice_hook::AdvanceUnityEventCursorIfCommitted;
 using fushi_voice_hook::MappingSessionAction;
 using fushi_voice_hook::LunaBridgeExports;
+using fushi_voice_hook::LunaFindHooksCallback;
+using fushi_voice_hook::LunaSearchParam;
 using fushi_voice_hook::LunaThreadParam;
 using fushi_voice_hook::PFN_Luna_DetachProcess;
+using fushi_voice_hook::PFN_Luna_FindHooks;
 using fushi_voice_hook::PFN_Luna_InsertHookCode;
 using fushi_voice_hook::PFN_Luna_InsertPCHooks;
 using fushi_voice_hook::PFN_Luna_RemoveHook;
@@ -168,6 +182,29 @@ HMODULE FindRemoteModuleBase(DWORD pid, const wchar_t* module_name) {
   }
   CloseHandle(snap);
   return base;
+}
+
+// Same module snapshot as FindRemoteModuleBase, but retain the path reported
+// by the target process.  The local injector DLL path is not sufficient to
+// prove which LunaHook artifact was actually loaded into the game.
+std::wstring FindRemoteModulePath(DWORD pid, const wchar_t* module_name) {
+  if (pid == 0 || module_name == nullptr) return L"";
+  HANDLE snap =
+      CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
+  if (snap == INVALID_HANDLE_VALUE) return L"";
+  MODULEENTRY32W entry = {};
+  entry.dwSize = sizeof(entry);
+  std::wstring path;
+  if (Module32FirstW(snap, &entry)) {
+    do {
+      if (_wcsicmp(entry.szModule, module_name) == 0) {
+        path.assign(entry.szExePath);
+        break;
+      }
+    } while (Module32NextW(snap, &entry));
+  }
+  CloseHandle(snap);
+  return path;
 }
 
 // 经 CreateRemoteThread(LoadLibraryW) 把 [dll_path] 注入 [target]。成功返回 true。
@@ -296,17 +333,51 @@ struct LunaCtx {
   PFN_Luna_InsertPCHooks insert_pc = nullptr;
   PFN_Luna_InsertHookCode insert_hook = nullptr;
   PFN_Luna_RemoveHook remove_hook = nullptr;
+  PFN_Luna_FindHooks find_hooks = nullptr;
+  LunaSearchParam diagnostic_search_param = {};
+  bool diagnostic_find_preflight_ok = false;
   bool use_pc_hooks = false;       // 连接后是否补装通用 PC hooks（默认否，避免与 GDI 重复）
   bool normalize_mages_controls = false;
+  bool diagnostic_luca_text = false;
+  bool decode_luca_role_tokens = false;
+  bool preserve_luca_repetitive_text = false;
   std::vector<std::wstring> hook_codes;
   std::vector<std::wstring> blocked_hook_codes;
   std::vector<std::wstring> blocked_hook_names;
   std::vector<std::wstring> confirmed_blocked_hook_names;
   std::vector<std::wstring> preferred_hook_codes;
+  // Diagnostic-only provenance for dynamically resolved Luca lanes.  A code
+  // may be shared by source and no-speaker, so keep the lane labels together
+  // instead of letting the install ledger lose that distinction.
+  std::map<std::wstring, std::string> diagnostic_hook_lanes;
   volatile LONG blocked_hook_remove_requests = 0;
   volatile LONG blocked_hook_remove_confirmations = 0;
 };
 LunaCtx g_luna;
+
+// Targeted Little Busters validation candidate. This is an explicit
+// diagnostic baseline, not an address/name heuristic: only the exact H-code
+// below may be dispatched through Luna_InsertHookCode in the targeted
+// diagnostic run. Resolver and FindHooks results remain ledger/discovery data.
+struct LucaDiagnosticExplicitCandidate {
+  const wchar_t* hookcode;
+  const char* label;
+};
+
+constexpr std::array<LucaDiagnosticExplicitCandidate, 1>
+    kLucaDiagnosticExplicitCandidates = {{
+        {L"HQFN1C@8BA37:LITBUS_WIN32.exe", "HQFN1C@8BA37"},
+    }};
+
+const char* LucaDiagnosticExplicitCandidateLabel(const wchar_t* hookcode) {
+  if (hookcode == nullptr || hookcode[0] == L'\0') return nullptr;
+  for (const auto& candidate : kLucaDiagnosticExplicitCandidates) {
+    if (_wcsicmp(hookcode, candidate.hookcode) == 0) {
+      return candidate.label;
+    }
+  }
+  return nullptr;
+}
 
 // injector 自身所在目录（末尾带反斜杠）。DLL 部署在 injector 同目录（CMake post-build 拷入）。
 std::wstring InjectorDir() {
@@ -323,6 +394,1584 @@ std::wstring InjectorDir() {
     path.clear();
   }
   return path;
+}
+
+// The diagnostic build is intentionally independent of the bounded shared
+// memory text ring.  The ring is a UI/consumer transport and can overwrite
+// old entries; these JSONL files are the loss-auditable record for every
+// ThreadCreate and Output callback received by this host.
+CRITICAL_SECTION g_lucaDiagnosticCs;
+bool g_lucaDiagnosticCsInit = false;
+volatile LONG g_lucaDiagnosticActive = 0;
+alignas(8) volatile LONGLONG g_lucaDiagnosticSeq = 0;
+alignas(8) volatile LONGLONG g_lucaDiagnosticFindCallbackSeq = 0;
+volatile LONG g_lucaDiagnosticFindStarted = 0;
+volatile LONG g_lucaDiagnosticFindDispatched = 0;
+// 0=ready boundary not reached, 1=typed API call in progress,
+// 2=typed API call returned, 3=C++ exception, 4=blocked before the call.
+// FindHooks has no return value or completion callback, so this state is kept
+// separately from the dispatched flag and is used to explain shutdown races.
+volatile LONG g_lucaDiagnosticFindCallState = 0;
+volatile LONG g_lucaDiagnosticFindAbiCompatible = 0;
+volatile LONG g_lucaDiagnosticEverInitialized = 0;
+// Once diagnostic mode is selected, keep this flag set for the rest of the
+// injector lifetime.  A late Luna callback can then stop before touching the
+// normal shared-memory path after ShutdownLunaHook has invalidated its fields.
+volatile LONG g_lucaDiagnosticMode = 0;
+HANDLE g_lucaDiagnosticLog = INVALID_HANDLE_VALUE;
+HANDLE g_lucaDiagnosticThreadDirectory = INVALID_HANDLE_VALUE;
+std::wstring g_lucaDiagnosticLogPath;
+std::wstring g_lucaDiagnosticThreadDirectoryPath;
+std::string g_lucaDiagnosticRunId;
+std::string g_lucaDiagnosticSearchId;
+// Keep FindHooks lifecycle records self-contained: a sliced lifecycle record
+// still carries the target and the exact Luna identities that authorized the
+// call, rather than relying only on the meta header.
+std::string g_lucaDiagnosticTargetExecutableUtf8;
+std::string g_lucaDiagnosticHostIdentityJson;
+std::string g_lucaDiagnosticLocalHookIdentityJson;
+std::string g_lucaDiagnosticRemoteHookIdentityJson;
+// Keep only a fixed-size duplicate key digest, never the callback's complete
+// hookcode/text payload.  The JSONL record remains the lossless source of
+// truth; this table is an advisory duplicate tag and is bounded by the
+// configured maxRecords value.
+std::map<uint64_t, LONGLONG> g_lucaDiagnosticFindCandidateFirstSeq;
+
+bool LucaDiagnosticModeConfigured() {
+  return InterlockedCompareExchange(&g_lucaDiagnosticMode, 0, 0) != 0;
+}
+
+bool LucaDiagnosticCaptureActive() {
+  return LucaDiagnosticModeConfigured() &&
+         InterlockedCompareExchange(&g_lucaDiagnosticActive, 0, 0) != 0;
+}
+
+// A LunaHost callback may race injector shutdown.  In diagnostic mode this
+// guard covers the whole callback, including the bounded shared-memory preview
+// after the JSONL append.  CloseLucaDiagnosticFiles takes the same lock before
+// clearing the active flag and closing the files, so a callback cannot retain
+// a header/file pointer while RunInjection unmaps the shared memory.
+class LucaDiagnosticCallbackGuard {
+ public:
+  LucaDiagnosticCallbackGuard() {
+    if (!LucaDiagnosticModeConfigured() || !g_lucaDiagnosticCsInit) return;
+    EnterCriticalSection(&g_lucaDiagnosticCs);
+    locked_ = true;
+    active_ = InterlockedCompareExchange(&g_lucaDiagnosticActive, 0, 0) != 0;
+  }
+
+  LucaDiagnosticCallbackGuard(const LucaDiagnosticCallbackGuard&) = delete;
+  LucaDiagnosticCallbackGuard& operator=(const LucaDiagnosticCallbackGuard&) =
+      delete;
+
+  ~LucaDiagnosticCallbackGuard() {
+    if (locked_) LeaveCriticalSection(&g_lucaDiagnosticCs);
+  }
+
+  bool locked() const { return locked_; }
+  bool active() const { return active_; }
+
+ private:
+  bool locked_ = false;
+  bool active_ = false;
+};
+
+std::string LucaDiagnosticJsonEscape(const std::string& value) {
+  static constexpr char kHex[] = "0123456789abcdef";
+  std::string escaped;
+  escaped.reserve(value.size() + 16);
+  for (const unsigned char c : value) {
+    switch (c) {
+      case '\"':
+        escaped += "\\\"";
+        break;
+      case '\\':
+        escaped += "\\\\";
+        break;
+      case '\b':
+        escaped += "\\b";
+        break;
+      case '\f':
+        escaped += "\\f";
+        break;
+      case '\n':
+        escaped += "\\n";
+        break;
+      case '\r':
+        escaped += "\\r";
+        break;
+      case '\t':
+        escaped += "\\t";
+        break;
+      default:
+        if (c < 0x20) {
+          escaped += "\\u00";
+          escaped.push_back(kHex[c >> 4]);
+          escaped.push_back(kHex[c & 0x0f]);
+        } else {
+          escaped.push_back(static_cast<char>(c));
+        }
+        break;
+    }
+  }
+  return escaped;
+}
+
+std::string LucaDiagnosticWideToUtf8(const wchar_t* text, size_t length) {
+  if (text == nullptr || length == 0 ||
+      length > static_cast<size_t>((std::numeric_limits<int>::max)())) {
+    return std::string();
+  }
+  const int wlength = static_cast<int>(length);
+  const int required =
+      WideCharToMultiByte(CP_UTF8, 0, text, wlength, nullptr, 0, nullptr,
+                          nullptr);
+  if (required <= 0) return std::string();
+  std::string result(static_cast<size_t>(required), '\0');
+  const int written =
+      WideCharToMultiByte(CP_UTF8, 0, text, wlength, result.data(), required,
+                          nullptr, nullptr);
+  if (written <= 0) return std::string();
+  result.resize(static_cast<size_t>(written));
+  return result;
+}
+
+// UTF-8 conversion is expected to succeed for normal Luna payloads, but a
+// malformed UTF-16 sequence must not silently erase the raw evidence.  This
+// fallback is emitted only on conversion failure and keeps the original
+// Windows UTF-16 code units in a compact, lossless form.
+std::string LucaDiagnosticWideUnitsToHex(const wchar_t* text, size_t length) {
+  if (text == nullptr || length == 0) return std::string();
+  static constexpr char kHex[] = "0123456789abcdef";
+  std::string result;
+  result.reserve(length * 4);
+  for (size_t i = 0; i < length; ++i) {
+    const uint16_t unit = static_cast<uint16_t>(text[i]);
+    result.push_back(kHex[(unit >> 12) & 0x0f]);
+    result.push_back(kHex[(unit >> 8) & 0x0f]);
+    result.push_back(kHex[(unit >> 4) & 0x0f]);
+    result.push_back(kHex[unit & 0x0f]);
+  }
+  return result;
+}
+
+ULONGLONG LucaDiagnosticWallClockMs() {
+  FILETIME file_time = {};
+  GetSystemTimeAsFileTime(&file_time);
+  ULARGE_INTEGER ticks = {};
+  ticks.LowPart = file_time.dwLowDateTime;
+  ticks.HighPart = file_time.dwHighDateTime;
+  constexpr ULONGLONG kUnixEpochFileTime = 116444736000000000ull;
+  if (ticks.QuadPart < kUnixEpochFileTime) return 0;
+  return (ticks.QuadPart - kUnixEpochFileTime) / 10000ull;
+}
+
+bool LucaDiagnosticHasJapanese(const wchar_t* text, size_t length) {
+  if (text == nullptr) return false;
+  for (size_t i = 0; i < length; ++i) {
+    const unsigned int c = static_cast<unsigned int>(text[i]);
+    if ((c >= 0x3040 && c <= 0x30ff) ||
+        (c >= 0x3400 && c <= 0x9fff)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool LucaDiagnosticHasEnglish(const wchar_t* text, size_t length) {
+  if (text == nullptr) return false;
+  for (size_t i = 0; i < length; ++i) {
+    const wchar_t c = text[i];
+    if ((c >= L'A' && c <= L'Z') || (c >= L'a' && c <= L'z')) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool LucaDiagnosticHasCharacter(const wchar_t* text, size_t length,
+                                wchar_t wanted) {
+  if (text == nullptr) return false;
+  for (size_t i = 0; i < length; ++i) {
+    if (text[i] == wanted) return true;
+  }
+  return false;
+}
+
+bool LucaDiagnosticLooksLikeSystemHook(const char* hookname) {
+  if (hookname == nullptr) return false;
+  std::string lower(hookname);
+  std::transform(lower.begin(), lower.end(), lower.begin(),
+                 [](unsigned char c) {
+                   return static_cast<char>(std::tolower(c));
+                 });
+  return lower.find("widechartomultibyte") != std::string::npos ||
+         lower.find("multibytetowidechar") != std::string::npos ||
+         lower.find("lstrlena") != std::string::npos ||
+         lower.find("textout") != std::string::npos ||
+         lower.find("drawtext") != std::string::npos ||
+         lower.find("gettext") != std::string::npos;
+}
+
+bool LucaDiagnosticWriteHandleLocked(HANDLE handle,
+                                     const std::string& line) {
+  if (handle == INVALID_HANDLE_VALUE ||
+      line.size() > static_cast<size_t>((std::numeric_limits<DWORD>::max)())) {
+    return false;
+  }
+  size_t offset = 0;
+  while (offset < line.size()) {
+    const DWORD remaining = static_cast<DWORD>(line.size() - offset);
+    DWORD written = 0;
+    if (WriteFile(handle, line.data() + offset, remaining, &written,
+                  nullptr) == FALSE ||
+        written == 0) {
+      return false;
+    }
+    offset += written;
+  }
+  return true;
+}
+
+void LucaDiagnosticFlushFilesLocked(bool force, LONGLONG seq) {
+  // WriteFile is issued for every record, so the JSONL stream does not retain
+  // the candidate payloads in an in-memory queue.  A per-record FlushFileBuffers
+  // would, however, turn a 100000-record search into 200000 synchronous disk
+  // barriers.  Flush periodically, at lifecycle boundaries, and always during
+  // shutdown; the record itself is never dropped or truncated by this policy.
+  constexpr LONGLONG kFlushEveryRecords = 64;
+  if (!force && (seq <= 0 || seq % kFlushEveryRecords != 0)) return;
+  if (g_lucaDiagnosticLog != INVALID_HANDLE_VALUE) {
+    FlushFileBuffers(g_lucaDiagnosticLog);
+  }
+  if (g_lucaDiagnosticThreadDirectory != INVALID_HANDLE_VALUE) {
+    FlushFileBuffers(g_lucaDiagnosticThreadDirectory);
+  }
+}
+
+void LucaDiagnosticCloseFilesLocked() {
+  if (g_lucaDiagnosticLog != INVALID_HANDLE_VALUE) {
+    FlushFileBuffers(g_lucaDiagnosticLog);
+    CloseHandle(g_lucaDiagnosticLog);
+    g_lucaDiagnosticLog = INVALID_HANDLE_VALUE;
+  }
+  if (g_lucaDiagnosticThreadDirectory != INVALID_HANDLE_VALUE) {
+    FlushFileBuffers(g_lucaDiagnosticThreadDirectory);
+    CloseHandle(g_lucaDiagnosticThreadDirectory);
+    g_lucaDiagnosticThreadDirectory = INVALID_HANDLE_VALUE;
+  }
+}
+
+void AppendLucaDiagnosticFindLifecycle(
+    const std::string& search_id, const char* event_kind, const char* status,
+    const LunaSearchParam* search, const wchar_t* addresses,
+    const char* detail, ULONGLONG completion_deadline_ms = 0);
+
+void AppendLucaDiagnosticLedgerRecord(
+    const char* event_kind, const char* lane, const char* status,
+    const char* api, const wchar_t* hookcode, uint64_t hook_address,
+    bool result_known, bool result, int category, const char* detail);
+
+void CloseLucaDiagnosticFiles() {
+  if (!g_lucaDiagnosticCsInit) return;
+  // Take the callback gate before sampling the FindHooks state.  Sampling
+  // first would allow a concurrent LunaConnect callback to dispatch the
+  // search after this function had already decided to log
+  // find_search_not_dispatched.  The same recursive CRITICAL_SECTION is
+  // intentionally used by AppendLucaDiagnosticFindLifecycle below.
+  EnterCriticalSection(&g_lucaDiagnosticCs);
+  if (LucaDiagnosticCaptureActive()) {
+    const LONG find_call_state = InterlockedCompareExchange(
+        &g_lucaDiagnosticFindCallState, 0, 0);
+    const LONG find_dispatched = InterlockedCompareExchange(
+        &g_lucaDiagnosticFindDispatched, 0, 0);
+    const std::string search_id = g_lucaDiagnosticSearchId;
+    // Luna_FindHooks has no cancellation or completion export.  Record the
+    // shutdown boundary before disabling writes; callbacks that arrive after
+    // this point are safely ignored by the active flag.  This is a logical
+    // cancellation marker, never a claim that LunaHook's private worker ended.
+    if (!search_id.empty() &&
+        (find_call_state == 1 || find_call_state == 2 ||
+         find_dispatched != 0)) {
+      AppendLucaDiagnosticFindLifecycle(
+          search_id, "find_search_cancelled", "diagnostic_shutdown", nullptr,
+          nullptr,
+          find_call_state == 1
+              ? "injector shutdown interrupted the typed FindHooks call; late callbacks are ignored; no engine completion was observed"
+              : "injector shutdown closed the diagnostic sink; late FindHooks callbacks are ignored; no engine completion was observed");
+    } else if (!search_id.empty() && find_call_state == 0) {
+      AppendLucaDiagnosticFindLifecycle(
+          search_id, "find_search_not_dispatched",
+          "ready_boundary_not_observed", &g_luna.diagnostic_search_param,
+          nullptr,
+          "LunaConnect did not reach the ready boundary before diagnostic shutdown; no FindHooks call was dispatched");
+    }
+  }
+  // Set the flag while holding the callback gate.  A callback that enters
+  // after this point observes inactive and returns before touching header or
+  // any other state that ShutdownLunaHook is about to clear.
+  InterlockedExchange(&g_lucaDiagnosticActive, 0);
+  LucaDiagnosticCloseFilesLocked();
+  LeaveCriticalSection(&g_lucaDiagnosticCs);
+}
+
+std::wstring ProcessImagePath(HANDLE process);
+std::string Sha256File(const std::wstring& path);
+std::string FileVersionString(const std::wstring& path);
+std::wstring LoadedModulePath(HMODULE module);
+std::wstring CurrentExecutablePath();
+std::string LucaDiagnosticLaneForHook(const std::wstring& hookcode);
+std::string LucaDiagnosticSourceKindForRecord(const char* event_kind,
+                                              const char* lane,
+                                              const wchar_t* hookcode);
+std::string LucaDiagnosticOriginForRecord(const char* event_kind,
+                                          const char* lane,
+                                          const wchar_t* hookcode);
+
+struct LunaDiagnosticDllEvidence {
+  std::wstring actual_path;
+  std::string file_version;
+  std::string sha256;
+  std::string expected_version;
+  std::string expected_sha256;
+  bool file_present = false;
+  bool version_match = false;
+  bool hash_match = false;
+  bool exact_match = false;
+};
+
+struct LucaDiagnosticFileIdentity {
+  std::wstring path;
+  std::string file_version;
+  std::string sha256;
+  bool file_present = false;
+};
+
+LucaDiagnosticFileIdentity InspectLucaDiagnosticFile(
+    const std::wstring& path) {
+  LucaDiagnosticFileIdentity identity;
+  identity.path = path;
+  const DWORD attributes = path.empty() ? INVALID_FILE_ATTRIBUTES
+                                        : GetFileAttributesW(path.c_str());
+  identity.file_present =
+      attributes != INVALID_FILE_ATTRIBUTES &&
+      (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+  if (identity.file_present) {
+    identity.file_version = FileVersionString(path);
+    identity.sha256 = Sha256File(path);
+  }
+  return identity;
+}
+
+std::string LucaDiagnosticFileIdentityJson(
+    const LucaDiagnosticFileIdentity& identity) {
+  const std::string path_utf8 = LucaDiagnosticWideToUtf8(
+      identity.path.c_str(), identity.path.size());
+  std::ostringstream record;
+  record << "{\"path\":\"" << LucaDiagnosticJsonEscape(path_utf8)
+         << "\",\"file_version\":\""
+         << LucaDiagnosticJsonEscape(identity.file_version)
+         << "\",\"sha256\":\""
+         << LucaDiagnosticJsonEscape(identity.sha256)
+         << "\",\"file_present\":"
+         << (identity.file_present ? "true" : "false") << '}';
+  return record.str();
+}
+
+const char* ExpectedLunaHostSha256() {
+#ifdef _WIN64
+  return fushi_voice_hook::kLunaHost64Sha256;
+#else
+  return fushi_voice_hook::kLunaHost32Sha256;
+#endif
+}
+
+const char* ExpectedLunaHookSha256() {
+#ifdef _WIN64
+  return fushi_voice_hook::kLunaHook64Sha256;
+#else
+  return fushi_voice_hook::kLunaHook32Sha256;
+#endif
+}
+
+LunaDiagnosticDllEvidence InspectLunaDiagnosticDll(
+    const std::wstring& actual_path, const char* expected_sha256) {
+  LunaDiagnosticDllEvidence evidence;
+  evidence.actual_path = actual_path;
+  evidence.expected_version = fushi_voice_hook::kLunaVendoredVersionString;
+  evidence.expected_sha256 = expected_sha256 == nullptr ? "" : expected_sha256;
+  const DWORD attributes = actual_path.empty()
+                               ? INVALID_FILE_ATTRIBUTES
+                               : GetFileAttributesW(actual_path.c_str());
+  evidence.file_present =
+      attributes != INVALID_FILE_ATTRIBUTES &&
+      (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+  if (!evidence.file_present) return evidence;
+  evidence.file_version = FileVersionString(actual_path);
+  evidence.sha256 = Sha256File(actual_path);
+  evidence.version_match =
+      evidence.file_version == evidence.expected_version;
+  evidence.hash_match =
+      !evidence.sha256.empty() &&
+      _stricmp(evidence.sha256.c_str(), evidence.expected_sha256.c_str()) == 0;
+  evidence.exact_match = evidence.file_present && evidence.version_match &&
+                         evidence.hash_match;
+  return evidence;
+}
+
+std::string LunaDiagnosticDllEvidenceJson(
+    const LunaDiagnosticDllEvidence& evidence) {
+  const std::string path_utf8 = LucaDiagnosticWideToUtf8(
+      evidence.actual_path.c_str(), evidence.actual_path.size());
+  std::ostringstream record;
+  record << "{\"actual_path\":\""
+         << LucaDiagnosticJsonEscape(path_utf8)
+         << "\",\"file_version\":\""
+         << LucaDiagnosticJsonEscape(evidence.file_version)
+         << "\",\"sha256\":\""
+         << LucaDiagnosticJsonEscape(evidence.sha256)
+         << "\",\"expected_version\":\""
+         << LucaDiagnosticJsonEscape(evidence.expected_version)
+         << "\",\"expected_sha256\":\""
+         << LucaDiagnosticJsonEscape(evidence.expected_sha256)
+         << "\",\"file_present\":"
+         << (evidence.file_present ? "true" : "false")
+         << ",\"version_match\":"
+         << (evidence.version_match ? "true" : "false")
+         << ",\"hash_match\":"
+         << (evidence.hash_match ? "true" : "false")
+         << ",\"exact_match\":"
+         << (evidence.exact_match ? "true" : "false") << '}';
+  return record.str();
+}
+
+void AppendLucaDiagnosticDllIdentity(const char* stage,
+                                     const LunaDiagnosticDllEvidence& evidence,
+                                     bool find_abi_gate) {
+  if (!g_lucaDiagnosticCsInit ||
+      InterlockedCompareExchange(&g_lucaDiagnosticActive, 0, 0) == 0) {
+    return;
+  }
+  bool diagnostic_locked = false;
+  try {
+    const ULONGLONG timestamp = GetTickCount64();
+    const std::string wall_timestamp = std::to_string(
+        static_cast<unsigned long long>(LucaDiagnosticWallClockMs()));
+    const std::string path_utf8 = LucaDiagnosticWideToUtf8(
+        evidence.actual_path.c_str(), evidence.actual_path.size());
+    EnterCriticalSection(&g_lucaDiagnosticCs);
+    diagnostic_locked = true;
+    if (InterlockedCompareExchange(&g_lucaDiagnosticActive, 0, 0) == 0 ||
+        g_lucaDiagnosticLog == INVALID_HANDLE_VALUE ||
+        g_lucaDiagnosticThreadDirectory == INVALID_HANDLE_VALUE) {
+      LeaveCriticalSection(&g_lucaDiagnosticCs);
+      diagnostic_locked = false;
+      return;
+    }
+    const LONGLONG seq = InterlockedIncrement64(&g_lucaDiagnosticSeq);
+    std::ostringstream record;
+    record << "{\"record_schema\":\"fushi-luca-text-diagnostic-v3\","
+           << "\"record_kind\":\"luna_dll_identity\",\"seq\":"
+           << seq << ",\"timestamp_ms\":" << timestamp
+           << ",\"wall_timestamp_ms\":" << wall_timestamp
+           << ",\"run_id\":\""
+           << LucaDiagnosticJsonEscape(g_lucaDiagnosticRunId)
+           << "\",\"search_id\":\""
+           << LucaDiagnosticJsonEscape(g_lucaDiagnosticSearchId)
+           << "\",\"callback_thread_id\":" << GetCurrentThreadId()
+           << ",\"stage\":\""
+           << LucaDiagnosticJsonEscape(stage == nullptr ? "" : stage)
+           << "\",\"actual_path\":\""
+           << LucaDiagnosticJsonEscape(path_utf8)
+           << "\",\"file_version\":\""
+           << LucaDiagnosticJsonEscape(evidence.file_version)
+           << "\",\"sha256\":\""
+           << LucaDiagnosticJsonEscape(evidence.sha256)
+           << "\",\"expected_version\":\""
+           << LucaDiagnosticJsonEscape(evidence.expected_version)
+           << "\",\"expected_sha256\":\""
+           << LucaDiagnosticJsonEscape(evidence.expected_sha256)
+           << "\",\"file_present\":"
+           << (evidence.file_present ? "true" : "false")
+           << ",\"version_match\":"
+           << (evidence.version_match ? "true" : "false")
+           << ",\"hash_match\":"
+           << (evidence.hash_match ? "true" : "false")
+           << ",\"exact_match\":"
+           << (evidence.exact_match ? "true" : "false")
+           << ",\"find_abi_gate\":"
+           << (find_abi_gate ? "true" : "false") << "}\n";
+    const std::string line = record.str();
+    const bool log_written =
+        LucaDiagnosticWriteHandleLocked(g_lucaDiagnosticLog, line);
+    const bool directory_written = LucaDiagnosticWriteHandleLocked(
+        g_lucaDiagnosticThreadDirectory, line);
+    LucaDiagnosticFlushFilesLocked(true, seq);
+    LeaveCriticalSection(&g_lucaDiagnosticCs);
+    diagnostic_locked = false;
+    if (!log_written || !directory_written) {
+      fprintf(stderr,
+              "[luca-diagnostic] DLL identity write failure (stage=%s)\n",
+              stage == nullptr ? "" : stage);
+    }
+  } catch (...) {
+    if (diagnostic_locked) LeaveCriticalSection(&g_lucaDiagnosticCs);
+    fprintf(stderr,
+            "[luca-diagnostic] DLL identity serialization failed\n");
+  }
+}
+
+bool InitializeLucaDiagnosticFiles(DWORD pid, HANDLE target, HMODULE host,
+                                   const std::wstring& hook_path,
+                                   const std::wstring& fushi_hook_path) {
+  // The callback ABI has no user-data/epoch parameter.  Do not reuse this
+  // injector for a second diagnostic run: a late callback from LunaHook's
+  // private search worker could otherwise be indistinguishable from a new
+  // run's callback.  A new run gets a new injector process.
+  if (InterlockedCompareExchange(&g_lucaDiagnosticEverInitialized, 1, 0) !=
+      0) {
+    fprintf(stderr,
+            "[luca-diagnostic] one run per injector; refusing to reuse the "
+            "callback sink\n");
+    return false;
+  }
+  if (!g_lucaDiagnosticCsInit) {
+    InitializeCriticalSection(&g_lucaDiagnosticCs);
+    g_lucaDiagnosticCsInit = true;
+  }
+  CloseLucaDiagnosticFiles();
+
+  const ULONGLONG stamp = GetTickCount64();
+  g_lucaDiagnosticRunId = "lb-" + std::to_string(pid) + "-" +
+                          std::to_string(stamp);
+  // Allocate the search identity at run creation, not when LunaConnect
+  // happens.  A run that never reaches the ready boundary can therefore still
+  // emit a complete not-dispatched ledger record with a stable search_id.
+  g_lucaDiagnosticSearchId = g_lucaDiagnosticRunId + "-find-1";
+  g_lucaDiagnosticFindCandidateFirstSeq.clear();
+  g_lucaDiagnosticFindCallbackSeq = 0;
+  InterlockedExchange(&g_lucaDiagnosticFindStarted, 0);
+  InterlockedExchange(&g_lucaDiagnosticFindDispatched, 0);
+  InterlockedExchange(&g_lucaDiagnosticFindCallState, 0);
+  InterlockedExchange(&g_lucaDiagnosticFindAbiCompatible, 0);
+  const LunaDiagnosticDllEvidence host_evidence =
+      InspectLunaDiagnosticDll(LoadedModulePath(host),
+                               ExpectedLunaHostSha256());
+  const LunaDiagnosticDllEvidence hook_artifact_evidence =
+      InspectLunaDiagnosticDll(hook_path, ExpectedLunaHookSha256());
+  const bool find_abi_preflight = host_evidence.exact_match &&
+                                  hook_artifact_evidence.exact_match;
+  g_luna.diagnostic_find_preflight_ok = find_abi_preflight;
+  InterlockedExchange(&g_lucaDiagnosticFindAbiCompatible,
+                      find_abi_preflight ? 1 : 0);
+  const std::wstring stem =
+      InjectorDir() + L"luca-text-diagnostic-" + std::to_wstring(pid) +
+      L"-" + std::to_wstring(stamp);
+  const std::wstring log_path = stem + L".jsonl";
+  const std::wstring thread_directory_path =
+      stem + L"-thread-directory.jsonl";
+  const DWORD share_mode =
+      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+  HANDLE log = CreateFileW(log_path.c_str(), GENERIC_WRITE, share_mode,
+                           nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
+                           nullptr);
+  HANDLE thread_directory =
+      CreateFileW(thread_directory_path.c_str(), GENERIC_WRITE, share_mode,
+                  nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (log == INVALID_HANDLE_VALUE ||
+      thread_directory == INVALID_HANDLE_VALUE) {
+    if (log != INVALID_HANDLE_VALUE) CloseHandle(log);
+    if (thread_directory != INVALID_HANDLE_VALUE) CloseHandle(thread_directory);
+    fprintf(stderr,
+            "[luca-diagnostic] cannot create JSONL files (%lu); diagnostic "
+            "initialization failed\n",
+            GetLastError());
+    InterlockedExchange(&g_lucaDiagnosticEverInitialized, 0);
+    return false;
+  }
+
+  const std::wstring target_image = ProcessImagePath(target);
+  const std::wstring injector_image = CurrentExecutablePath();
+  const std::wstring injector_directory = InjectorDir();
+  const std::string target_image_utf8 =
+      LucaDiagnosticWideToUtf8(target_image.c_str(), target_image.size());
+  g_lucaDiagnosticTargetExecutableUtf8 = target_image_utf8;
+  g_lucaDiagnosticHostIdentityJson =
+      LunaDiagnosticDllEvidenceJson(host_evidence);
+  g_lucaDiagnosticLocalHookIdentityJson =
+      LunaDiagnosticDllEvidenceJson(hook_artifact_evidence);
+  g_lucaDiagnosticRemoteHookIdentityJson = "null";
+  const LucaDiagnosticFileIdentity target_identity =
+      InspectLucaDiagnosticFile(target_image);
+  const LucaDiagnosticFileIdentity injector_identity =
+      InspectLucaDiagnosticFile(injector_image);
+  const LucaDiagnosticFileIdentity fushi_hook_identity =
+      InspectLucaDiagnosticFile(fushi_hook_path);
+  std::ostringstream header;
+  header << "{\"record_schema\":\"fushi-luca-text-diagnostic-v3\","
+         << "\"record_kind\":\"meta\",\"seq\":0,"
+         << "\"timestamp_ms\":" << GetTickCount64()
+         << ",\"wall_timestamp_ms\":"
+         << static_cast<unsigned long long>(LucaDiagnosticWallClockMs())
+         << ",\"run_id\":\""
+         << LucaDiagnosticJsonEscape(g_lucaDiagnosticRunId) << '"'
+         << ",\"target_pid\":" << pid
+          << ",\"target_executable\":\""
+          << LucaDiagnosticJsonEscape(target_image_utf8)
+          << "\",\"target_executable_identity\":"
+          << LucaDiagnosticFileIdentityJson(target_identity)
+          << ",\"injector_identity\":"
+          << LucaDiagnosticFileIdentityJson(injector_identity)
+          << ",\"fushi_voice_hook_identity\":"
+          << LucaDiagnosticFileIdentityJson(fushi_hook_identity)
+          << ",\"injector_directory\":\""
+         << LucaDiagnosticJsonEscape(
+                LucaDiagnosticWideToUtf8(injector_directory.c_str(),
+                                          injector_directory.size()))
+         << "\",\"luna_vendor_version\":\""
+         << fushi_voice_hook::kLunaVendoredVersionString
+         << "\",\"luna_host_runtime\":"
+         << LunaDiagnosticDllEvidenceJson(host_evidence)
+         << ",\"luna_hook_local_artifact\":"
+         << LunaDiagnosticDllEvidenceJson(hook_artifact_evidence)
+         << ",\"find_abi_preflight\":"
+         << (find_abi_preflight ? "true" : "false")
+         << ",\"find_abi_gate_policy\":\"exact Host file-version+SHA256 and Hook remote file-version+SHA256 required; mismatch refuses FindHooks\""
+         << ",\"raw_payload_policy\":\"callback text unchanged\","
+         << "\"publication_policy\":\"formal Fushi text output disabled\","
+         << "\"thread_directory_policy\":\"same records as event log\","
+         << "\"context_field_policy\":\"context=LunaThreadParam.ctx; ctx2=LunaThreadParam.ctx2; split=ctx2; no return_address field\","
+         << "\"find_hooks_policy\":\"discovery_only; callback candidates are never auto-installed\","
+         << "\"find_hooks_candidate_policy\":\"stream every callback; maxRecords=100000; duplicate index stores only bounded FNV-1a64 digests and never payload text\","
+         << "\"diagnostic_flush_policy\":\"WriteFile per record; FlushFileBuffers every 64 records, at lifecycle boundaries, and at shutdown; no in-memory candidate queue\","
+         << "\"find_hooks_completion_policy\":\"Luna_FindHooks has no completion callback; log an assumed quiet-period deadline\","
+         << "\"installation_ledger_policy\":\"resolver, candidate, InsertHookCode, PC-hook call, LunaHookInsert callback, LunaHostInfo, FindHooks discovery\","
+          << "\"explicit_candidate_install_policy\":\"diagnostic run dispatches only the exact HQFN1C@8BA37:LITBUS_WIN32.exe baseline; resolver/profile observations remain ledger-only and FindHooks callbacks remain discovery-only\","
+          << "\"formal_luca_policy\":\"production profile decodes the exact HQFN1C@8BA37:LITBUS_WIN32.exe source and preserves legitimate repetitive native text; diagnostic payloads remain raw\"}\n";
+  const std::string header_line = header.str();
+
+  EnterCriticalSection(&g_lucaDiagnosticCs);
+  g_lucaDiagnosticLog = log;
+  g_lucaDiagnosticThreadDirectory = thread_directory;
+  g_lucaDiagnosticSeq = 0;
+  const bool header_written =
+      LucaDiagnosticWriteHandleLocked(g_lucaDiagnosticLog, header_line) &&
+      LucaDiagnosticWriteHandleLocked(g_lucaDiagnosticThreadDirectory,
+                                      header_line);
+  if (!header_written) {
+    LucaDiagnosticCloseFilesLocked();
+    LeaveCriticalSection(&g_lucaDiagnosticCs);
+    fprintf(stderr,
+            "[luca-diagnostic] cannot write JSONL header; diagnostic "
+            "initialization failed\n");
+    InterlockedExchange(&g_lucaDiagnosticEverInitialized, 0);
+    return false;
+  }
+  FlushFileBuffers(g_lucaDiagnosticLog);
+  FlushFileBuffers(g_lucaDiagnosticThreadDirectory);
+  g_lucaDiagnosticLogPath = log_path;
+  g_lucaDiagnosticThreadDirectoryPath = thread_directory_path;
+  InterlockedExchange(&g_lucaDiagnosticActive, 1);
+  LeaveCriticalSection(&g_lucaDiagnosticCs);
+
+  fwprintf(stderr, L"[luca-diagnostic] event log: %ls\n",
+           g_lucaDiagnosticLogPath.c_str());
+  fwprintf(stderr, L"[luca-diagnostic] thread directory: %ls\n",
+           g_lucaDiagnosticThreadDirectoryPath.c_str());
+  return true;
+}
+
+void AppendLucaDiagnosticRecord(const char* event_kind,
+                                const wchar_t* hookcode,
+                                const char* hookname,
+                                const LunaThreadParam& tp,
+                                uint64_t thread_id, uint64_t face_id,
+                                uint32_t event_flags,
+                                const wchar_t* raw_text, size_t raw_length,
+                                bool artifact_tag) {
+  if (event_kind == nullptr || !g_lucaDiagnosticCsInit ||
+      InterlockedCompareExchange(&g_lucaDiagnosticActive, 0, 0) == 0) {
+    return;
+  }
+  bool diagnostic_locked = false;
+  try {
+    const size_t hook_length = hookcode == nullptr ? 0 : std::wcslen(hookcode);
+    const std::string code_utf8 = LucaDiagnosticWideToUtf8(
+        hookcode, hook_length);
+    const std::string raw_utf8 =
+        LucaDiagnosticWideToUtf8(raw_text, raw_length);
+    const bool hookcode_conversion_ok =
+        hook_length == 0 || !code_utf8.empty();
+    const bool raw_text_conversion_ok =
+        raw_length == 0 || !raw_utf8.empty();
+    const std::string hookcode_utf16_hex =
+        hookcode_conversion_ok
+            ? std::string()
+            : LucaDiagnosticWideUnitsToHex(hookcode, hook_length);
+    const std::string raw_text_utf16_hex =
+        raw_text_conversion_ok
+            ? std::string()
+            : LucaDiagnosticWideUnitsToHex(raw_text, raw_length);
+    const std::string hook_name = hookname == nullptr ? "" : hookname;
+    const char* candidate_label =
+        LucaDiagnosticExplicitCandidateLabel(hookcode);
+    const bool has_japanese =
+        LucaDiagnosticHasJapanese(raw_text, raw_length);
+    const bool has_english = LucaDiagnosticHasEnglish(raw_text, raw_length);
+    const bool has_speaker_marker =
+        LucaDiagnosticHasCharacter(raw_text, raw_length, L'@');
+    const bool has_dollar_control =
+        LucaDiagnosticHasCharacter(raw_text, raw_length, L'$');
+    const bool has_percent_control =
+        LucaDiagnosticHasCharacter(raw_text, raw_length, L'%');
+    const bool has_hash_control =
+        LucaDiagnosticHasCharacter(raw_text, raw_length, L'#');
+    const bool system_hook = LucaDiagnosticLooksLikeSystemHook(hookname);
+    const ULONGLONG timestamp = GetTickCount64();
+    const ULONGLONG wall_timestamp = LucaDiagnosticWallClockMs();
+
+    EnterCriticalSection(&g_lucaDiagnosticCs);
+    diagnostic_locked = true;
+    if (InterlockedCompareExchange(&g_lucaDiagnosticActive, 0, 0) == 0 ||
+        g_lucaDiagnosticLog == INVALID_HANDLE_VALUE ||
+        g_lucaDiagnosticThreadDirectory == INVALID_HANDLE_VALUE) {
+      LeaveCriticalSection(&g_lucaDiagnosticCs);
+      diagnostic_locked = false;
+      return;
+    }
+    // Provenance maps are cleared only after this lock is no longer used
+    // during diagnostic shutdown.  Resolve them under the same lock as the
+    // JSON writer so a late callback cannot race ShutdownLunaHook.
+    const std::string source_kind = LucaDiagnosticSourceKindForRecord(
+        event_kind, nullptr, hookcode);
+    const std::string origin =
+        LucaDiagnosticOriginForRecord(event_kind, nullptr, hookcode);
+    const LONGLONG seq = InterlockedIncrement64(&g_lucaDiagnosticSeq);
+    std::ostringstream record;
+    record << "{\"record_schema\":\"fushi-luca-text-diagnostic-v3\","
+           << "\"record_kind\":\""
+           << LucaDiagnosticJsonEscape(event_kind)
+           << "\",\"seq\":" << seq
+           << ",\"timestamp_ms\":" << timestamp
+           << ",\"wall_timestamp_ms\":" << wall_timestamp
+           << ",\"run_id\":\""
+           << LucaDiagnosticJsonEscape(g_lucaDiagnosticRunId) << '"'
+           << ",\"search_id\":\""
+           << LucaDiagnosticJsonEscape(g_lucaDiagnosticSearchId) << '"'
+           << ",\"callback_thread_id\":" << GetCurrentThreadId()
+           << ",\"thread_id\":" << thread_id
+           << ",\"process_id\":" << tp.processId
+           << ",\"face_id\":" << face_id
+           << ",\"hook_code\":\""
+           << LucaDiagnosticJsonEscape(code_utf8)
+           << "\",\"hookcode_conversion_ok\":"
+           << (hookcode_conversion_ok ? "true" : "false")
+           << ",\"hookcode_utf16_hex\":\""
+           << LucaDiagnosticJsonEscape(hookcode_utf16_hex) << '"'
+           << ",\"hook_name\":\""
+           << LucaDiagnosticJsonEscape(hook_name)
+           << "\",\"hook_address\":" << tp.addr
+           << ",\"candidate_label\":";
+    if (candidate_label == nullptr) {
+      record << "null";
+    } else {
+      record << "\""
+             << LucaDiagnosticJsonEscape(candidate_label) << "\"";
+    }
+    record
+           << ",\"context\":" << tp.ctx
+           << ",\"subcontext\":" << tp.ctx2
+           << ",\"split\":" << tp.ctx2
+           << ",\"source_kind\":\""
+           << LucaDiagnosticJsonEscape(source_kind)
+           << "\",\"origin\":\""
+           << LucaDiagnosticJsonEscape(origin) << '"'
+           << ",\"event_flags\":" << event_flags
+           << ",\"embedable\":"
+           << ((event_flags & 1u) != 0 ? "true" : "false")
+           << ",\"exact_context\":"
+           << ((event_flags &
+                fushi_voice_hook::kTextEventFlagExactThreadContext) != 0
+                   ? "true"
+                   : "false")
+           << ",\"raw_text\":\""
+           << LucaDiagnosticJsonEscape(raw_utf8)
+           << "\",\"raw_utf16_units\":" << raw_length
+           << ",\"raw_text_conversion_ok\":"
+           << (raw_text_conversion_ok ? "true" : "false")
+           << ",\"raw_text_utf16_hex\":\""
+           << LucaDiagnosticJsonEscape(raw_text_utf16_hex) << '"'
+           << ",\"raw_text_truncated\":false"
+           << ",\"raw_text_present\":"
+           << (raw_text != nullptr && raw_length != 0 ? "true" : "false")
+           << ",\"has_japanese\":" << (has_japanese ? "true" : "false")
+           << ",\"has_english\":" << (has_english ? "true" : "false")
+           << ",\"has_speaker_marker\":"
+           << (has_speaker_marker ? "true" : "false")
+           << ",\"has_dollar_control\":"
+           << (has_dollar_control ? "true" : "false")
+           << ",\"has_percent_control\":"
+           << (has_percent_control ? "true" : "false")
+           << ",\"has_hash_control\":"
+           << (has_hash_control ? "true" : "false")
+           << ",\"system_api_hook_tag\":"
+           << (system_hook ? "true" : "false")
+           << ",\"artifact_tag\":"
+           << (artifact_tag ? "true" : "false") << "}\n";
+    const std::string line = record.str();
+    const bool log_written =
+        LucaDiagnosticWriteHandleLocked(g_lucaDiagnosticLog, line);
+    const bool directory_written = LucaDiagnosticWriteHandleLocked(
+        g_lucaDiagnosticThreadDirectory, line);
+    LucaDiagnosticFlushFilesLocked(false, seq);
+    LeaveCriticalSection(&g_lucaDiagnosticCs);
+    diagnostic_locked = false;
+    if (!log_written || !directory_written) {
+      fprintf(stderr,
+              "[luca-diagnostic] JSONL write failure (event=%s log=%d "
+              "thread_directory=%d)\n",
+              event_kind, log_written ? 1 : 0, directory_written ? 1 : 0);
+    }
+  } catch (...) {
+    if (diagnostic_locked) {
+      LeaveCriticalSection(&g_lucaDiagnosticCs);
+    }
+    fprintf(stderr,
+            "[luca-diagnostic] record serialization failed; callback was "
+            "not allowed to affect the game\n");
+  }
+}
+
+// Installation/resolver evidence is kept in the same loss-auditable JSONL
+// files as callbacks.  Unlike the old human-readable stderr-only messages,
+// these records distinguish a resolver result, a queued candidate, the bool
+// returned by Luna_InsertHookCode, a void PC-hook call, and a later callback.
+// No field in this record is inferred from the old all_hook_candidates flag.
+std::string LucaDiagnosticHookRva(const wchar_t* hookcode) {
+  if (hookcode == nullptr) return std::string();
+  const wchar_t* at = std::wcschr(hookcode, L'@');
+  if (at == nullptr || at[1] == L'\0') return std::string();
+  const wchar_t* separator = at + 1;
+  while (*separator != L'\0' && *separator != L':' &&
+         *separator != L' ' && *separator != L'\t') {
+    ++separator;
+  }
+  if (separator == at + 1) return std::string();
+  return LucaDiagnosticWideToUtf8(at + 1,
+                                  static_cast<size_t>(separator - at - 1));
+}
+
+uint64_t LucaDiagnosticCandidateDigest(const std::string& hookcode,
+                                        const std::string& text) {
+  // The duplicate index must not retain the complete candidate payload.  A
+  // 64-bit digest is only an advisory tag; the original callback is always
+  // written to JSONL, so a rare hash collision cannot lose evidence.
+  uint64_t hash = 1469598103934665603ull;
+  const auto mix = [&hash](const std::string& value) {
+    for (const unsigned char byte : value) {
+      hash ^= byte;
+      hash *= 1099511628211ull;
+    }
+  };
+  mix(hookcode);
+  hash ^= 0x1full;
+  hash *= 1099511628211ull;
+  mix(text);
+  return hash;
+}
+
+std::string LucaDiagnosticHexUint64(uint64_t value) {
+  std::ostringstream out;
+  out << std::hex << std::setfill('0') << std::setw(16) << value;
+  return out.str();
+}
+
+void AppendLucaDiagnosticLedgerRecord(
+    const char* event_kind, const char* lane, const char* status,
+    const char* api, const wchar_t* hookcode, uint64_t hook_address,
+    bool result_known, bool result, int category, const char* detail) {
+  if (event_kind == nullptr || !g_lucaDiagnosticCsInit ||
+      InterlockedCompareExchange(&g_lucaDiagnosticActive, 0, 0) == 0) {
+    return;
+  }
+  bool diagnostic_locked = false;
+  try {
+    const std::string code_utf8 = LucaDiagnosticWideToUtf8(
+        hookcode, hookcode == nullptr ? 0 : std::wcslen(hookcode));
+    const std::string hook_rva = LucaDiagnosticHookRva(hookcode);
+    const ULONGLONG timestamp = GetTickCount64();
+    const ULONGLONG wall_timestamp = LucaDiagnosticWallClockMs();
+
+    EnterCriticalSection(&g_lucaDiagnosticCs);
+    diagnostic_locked = true;
+    if (InterlockedCompareExchange(&g_lucaDiagnosticActive, 0, 0) == 0 ||
+        g_lucaDiagnosticLog == INVALID_HANDLE_VALUE ||
+        g_lucaDiagnosticThreadDirectory == INVALID_HANDLE_VALUE) {
+      LeaveCriticalSection(&g_lucaDiagnosticCs);
+      diagnostic_locked = false;
+      return;
+    }
+    const std::string source_kind = LucaDiagnosticSourceKindForRecord(
+        event_kind, lane, hookcode);
+    const std::string origin =
+        LucaDiagnosticOriginForRecord(event_kind, lane, hookcode);
+    const char* candidate_label =
+        LucaDiagnosticExplicitCandidateLabel(hookcode);
+    const LONGLONG seq = InterlockedIncrement64(&g_lucaDiagnosticSeq);
+    std::ostringstream record;
+    record << "{\"record_schema\":\"fushi-luca-text-diagnostic-v3\","
+           << "\"record_kind\":\""
+           << LucaDiagnosticJsonEscape(event_kind)
+           << "\",\"seq\":" << seq
+           << ",\"timestamp_ms\":" << timestamp
+           << ",\"wall_timestamp_ms\":" << wall_timestamp
+           << ",\"run_id\":\""
+           << LucaDiagnosticJsonEscape(g_lucaDiagnosticRunId) << '"'
+           << ",\"search_id\":\""
+           << LucaDiagnosticJsonEscape(g_lucaDiagnosticSearchId) << '"'
+           << ",\"callback_thread_id\":" << GetCurrentThreadId()
+           << ",\"process_id\":" << g_luna.pid
+           << ",\"target_executable\":\""
+           << LucaDiagnosticJsonEscape(g_lucaDiagnosticTargetExecutableUtf8)
+           << "\",\"luna_host_runtime\":"
+           << (g_lucaDiagnosticHostIdentityJson.empty()
+                   ? "null"
+                   : g_lucaDiagnosticHostIdentityJson)
+           << ",\"luna_hook_local_artifact\":"
+           << (g_lucaDiagnosticLocalHookIdentityJson.empty()
+                   ? "null"
+                   : g_lucaDiagnosticLocalHookIdentityJson)
+           << ",\"luna_hook_remote_runtime\":"
+           << (g_lucaDiagnosticRemoteHookIdentityJson.empty()
+                   ? "null"
+                   : g_lucaDiagnosticRemoteHookIdentityJson)
+           << ",\"lane\":\""
+           << LucaDiagnosticJsonEscape(lane == nullptr ? "" : lane)
+           << "\",\"status\":\""
+           << LucaDiagnosticJsonEscape(status == nullptr ? "" : status)
+           << "\",\"api\":\""
+           << LucaDiagnosticJsonEscape(api == nullptr ? "" : api) << '"';
+    if (hookcode != nullptr) {
+      record << ",\"hook_code\":\""
+             << LucaDiagnosticJsonEscape(code_utf8)
+             << "\",\"hook_rva\":\""
+             << LucaDiagnosticJsonEscape(hook_rva)
+             << "\",\"hook_address_source\":\""
+             << (hook_address != 0
+                     ? "callback_argument"
+                     : (hook_rva.empty() ? "not_observed"
+                                         : "hookcode_derived"))
+             << '"';
+    }
+    record << ",\"hook_address\":" << hook_address
+           << ",\"candidate_label\":";
+    if (candidate_label == nullptr) {
+      record << "null";
+    } else {
+      record << "\""
+             << LucaDiagnosticJsonEscape(candidate_label) << "\"";
+    }
+    record
+           << ",\"source_kind\":\""
+           << LucaDiagnosticJsonEscape(source_kind)
+           << "\",\"origin\":\""
+           << LucaDiagnosticJsonEscape(origin) << '"'
+           << ",\"result_known\":"
+           << (result_known ? "true" : "false");
+    if (result_known) {
+      record << ",\"result\":" << (result ? "true" : "false");
+    }
+    if (category >= 0) {
+      record << ",\"category\":" << category;
+    }
+    if (detail != nullptr && detail[0] != '\0') {
+      record << ",\"detail\":\""
+             << LucaDiagnosticJsonEscape(detail) << '"';
+    }
+    record << "}\n";
+    const std::string line = record.str();
+    const bool log_written =
+        LucaDiagnosticWriteHandleLocked(g_lucaDiagnosticLog, line);
+    const bool directory_written = LucaDiagnosticWriteHandleLocked(
+        g_lucaDiagnosticThreadDirectory, line);
+    LucaDiagnosticFlushFilesLocked(true, seq);
+    LeaveCriticalSection(&g_lucaDiagnosticCs);
+    diagnostic_locked = false;
+    if (!log_written || !directory_written) {
+      fprintf(stderr,
+              "[luca-diagnostic] ledger write failure (event=%s log=%d "
+              "thread_directory=%d)\n",
+              event_kind, log_written ? 1 : 0, directory_written ? 1 : 0);
+    }
+  } catch (...) {
+    if (diagnostic_locked) {
+      LeaveCriticalSection(&g_lucaDiagnosticCs);
+    }
+    fprintf(stderr,
+            "[luca-diagnostic] ledger serialization failed; evidence was "
+            "not allowed to affect the game\n");
+  }
+}
+
+std::string LucaDiagnosticLaneForHook(const std::wstring& hookcode) {
+  const auto it = g_luna.diagnostic_hook_lanes.find(hookcode);
+  if (it == g_luna.diagnostic_hook_lanes.end() || it->second.empty()) {
+    return "configured_or_other";
+  }
+  return it->second;
+}
+
+// These labels describe observed provenance, not semantic quality.  In
+// particular, a LunaHookInsert callback does not carry enough information to
+// prove whether the originating code was an engine auto-hook, a configured
+// insertion, or a FindHooks candidate, so that callback remains unknown.
+std::string LucaDiagnosticSourceKindForRecord(const char* event_kind,
+                                              const char* lane,
+                                              const wchar_t* hookcode) {
+  const std::string event = event_kind == nullptr ? "" : event_kind;
+  const std::string lane_name = lane == nullptr ? "" : lane;
+  const char* explicit_candidate_label =
+      LucaDiagnosticExplicitCandidateLabel(hookcode);
+  if (event == "candidate_install_scope" ||
+      lane_name == "manual_insert" ||
+      (explicit_candidate_label != nullptr &&
+       (event == "luca_candidate" || event == "insert_hook_code"))) {
+    return "manual_insert";
+  }
+  if (event == "find_start" || event == "find_dispatched" ||
+      event == "find_search_start" || event == "find_search_dispatched" ||
+      event == "find_candidate" || event == "find_completion_assumed" ||
+      event == "find_search_completion_assumed" ||
+      event == "find_search_cancelled" ||
+      lane_name == "find_candidate") {
+    return "find_candidate";
+  }
+  if (event == "pc_hook_call" || event == "pc_hook_config" ||
+      lane_name == "pc") {
+    return "pc_hook";
+  }
+  if (event == "auto_hook_insert") {
+    return "unknown";
+  }
+  if (event == "thread_create" || event == "thread_remove" ||
+      event == "output") {
+    // Luna's callback carries the hookcode, but no origin token.  The same
+    // code can be configured, engine-created, or otherwise observed, so a
+    // code/name lookup here would be an unsupported provenance claim.
+    return "unknown";
+  }
+  if (event == "luna_hook_dll_injection" ||
+      event == "luna_callback_registration" || lane_name == "luna_auto") {
+    return "engine_auto";
+  }
+  if (hookcode != nullptr && hookcode[0] != L'\0') {
+    const auto it = g_luna.diagnostic_hook_lanes.find(hookcode);
+    if (it != g_luna.diagnostic_hook_lanes.end()) {
+      return "configured_luca";
+    }
+  }
+  if (lane_name == "configured" || lane_name == "source" ||
+      lane_name == "no-speaker" || lane_name == "sink" ||
+      lane_name == "body") {
+    return "configured_luca";
+  }
+  return "unknown";
+}
+
+std::string LucaDiagnosticOriginForRecord(const char* event_kind,
+                                          const char* lane,
+                                          const wchar_t* hookcode) {
+  const std::string event = event_kind == nullptr ? "" : event_kind;
+  const std::string lane_name = lane == nullptr ? "" : lane;
+  const char* explicit_candidate_label =
+      LucaDiagnosticExplicitCandidateLabel(hookcode);
+  if (event == "candidate_install_scope" ||
+      lane_name == "manual_insert" ||
+      (explicit_candidate_label != nullptr &&
+       (event == "luca_candidate" || event == "insert_hook_code"))) {
+    return "diagnostic explicit candidate allowlist";
+  }
+  if (event == "find_start" || event == "find_dispatched" ||
+      event == "find_search_start" || event == "find_search_dispatched" ||
+      event == "find_candidate" || event == "find_completion_assumed" ||
+      event == "find_search_completion_assumed" ||
+      event == "find_search_cancelled" ||
+      lane_name == "find_candidate") {
+    return "Luna_FindHooks";
+  }
+  if (event == "pc_hook_call" || event == "pc_hook_config" ||
+      lane_name == "pc") {
+    return "Luna_InsertPCHooks";
+  }
+  if (event == "auto_hook_insert") {
+    return "LunaHookInsert callback has no origin token";
+  }
+  if (event == "thread_create" || event == "thread_remove" ||
+      event == "output") {
+    return "Luna_Start callback has no origin token";
+  }
+  if (event == "luna_hook_dll_injection" ||
+      event == "luna_callback_registration" || lane_name == "luna_auto") {
+    return "LunaHook automatic lifecycle";
+  }
+  if (hookcode != nullptr && hookcode[0] != L'\0') {
+    const auto it = g_luna.diagnostic_hook_lanes.find(hookcode);
+    if (it != g_luna.diagnostic_hook_lanes.end() && !it->second.empty()) {
+      return it->second;
+    }
+  }
+  if (lane_name == "configured" || lane_name == "source" ||
+      lane_name == "no-speaker" || lane_name == "sink" ||
+      lane_name == "body") {
+    return lane_name;
+  }
+  return "unknown";
+}
+
+std::string LucaDiagnosticWideFieldToUtf8(const wchar_t* value,
+                                          size_t capacity) {
+  if (value == nullptr) return std::string();
+  size_t length = 0;
+  while (length < capacity && value[length] != L'\0') ++length;
+  return LucaDiagnosticWideToUtf8(value, length);
+}
+
+std::string LucaDiagnosticPatternHex(const LunaSearchParam& search) {
+  static constexpr char kHex[] = "0123456789abcdef";
+  std::string result;
+  result.reserve(sizeof(search.pattern) * 2);
+  for (const unsigned char byte : search.pattern) {
+    result.push_back(kHex[byte >> 4]);
+    result.push_back(kHex[byte & 0x0f]);
+  }
+  return result;
+}
+
+// The default values are copied from the v10.16.1.2 GUI default search
+// settings. This creates a discovery request only. It does not install the
+// returned candidates and deliberately leaves text empty so the LunaHook
+// search path does not switch to SearchForText's auto-install behavior.
+LunaSearchParam BuildLunaDiagnosticSearchParam(const std::wstring& target_image,
+                                               int codepage) {
+  LunaSearchParam search = {};
+#ifdef _WIN64
+  const unsigned char pattern[] = {0xcc, 0xcc, 0x48, 0x89};
+  std::memcpy(search.pattern, pattern, sizeof(pattern));
+  search.length = 4;
+  search.offset = 2;
+  search.maxAddress = UINT64_MAX;
+#else
+  const unsigned char pattern[] = {0x55, 0x8b, 0xec};
+  std::memcpy(search.pattern, pattern, sizeof(pattern));
+  search.length = 3;
+  search.offset = 0;
+  search.maxAddress = UINT32_MAX;
+#endif
+  search.address_method = 0;
+  search.search_method = 0;
+  search.searchTime = 30000;
+  search.maxRecords = 100000;
+  search.codepage = codepage;
+  search.padding = 0;
+  search.minAddress = 0;
+  const size_t slash = target_image.find_last_of(L"\\/");
+  const std::wstring boundary_module =
+      slash == std::wstring::npos ? target_image
+                                  : target_image.substr(slash + 1);
+  wcsncpy_s(search.boundaryModule, std::size(search.boundaryModule),
+            boundary_module.c_str(), _TRUNCATE);
+  search.isjithook = false;
+  // exportModule/text/sharememname/sharememsize remain zero. In particular,
+  // text[0]==0 selects dynamic hook discovery, not SearchForText.
+  return search;
+}
+
+void AppendLucaDiagnosticFindLifecycle(
+    const std::string& search_id, const char* event_kind, const char* status,
+    const LunaSearchParam* search, const wchar_t* addresses,
+    const char* detail, ULONGLONG completion_deadline_ms) {
+  if (event_kind == nullptr || !g_lucaDiagnosticCsInit ||
+      InterlockedCompareExchange(&g_lucaDiagnosticActive, 0, 0) == 0 ||
+      g_lucaDiagnosticRunId.empty() || search_id.rfind(
+          g_lucaDiagnosticRunId + "-", 0) != 0) {
+    return;
+  }
+  bool diagnostic_locked = false;
+  try {
+    const std::string addresses_utf8 = LucaDiagnosticWideToUtf8(
+        addresses, addresses == nullptr ? 0 : std::wcslen(addresses));
+    const ULONGLONG timestamp = GetTickCount64();
+    const ULONGLONG wall_timestamp = LucaDiagnosticWallClockMs();
+    EnterCriticalSection(&g_lucaDiagnosticCs);
+    diagnostic_locked = true;
+    if (InterlockedCompareExchange(&g_lucaDiagnosticActive, 0, 0) == 0 ||
+        g_lucaDiagnosticLog == INVALID_HANDLE_VALUE ||
+        g_lucaDiagnosticThreadDirectory == INVALID_HANDLE_VALUE) {
+      LeaveCriticalSection(&g_lucaDiagnosticCs);
+      diagnostic_locked = false;
+      return;
+    }
+    const LONGLONG seq = InterlockedIncrement64(&g_lucaDiagnosticSeq);
+    std::ostringstream record;
+    record << "{\"record_schema\":\"fushi-luca-text-diagnostic-v3\","
+           << "\"record_kind\":\""
+           << LucaDiagnosticJsonEscape(event_kind)
+           << "\",\"seq\":" << seq
+           << ",\"timestamp_ms\":" << timestamp
+           << ",\"wall_timestamp_ms\":" << wall_timestamp
+           << ",\"run_id\":\""
+           << LucaDiagnosticJsonEscape(g_lucaDiagnosticRunId) << '"'
+           << ",\"search_id\":\""
+           << LucaDiagnosticJsonEscape(search_id) << '"'
+           << ",\"callback_thread_id\":" << GetCurrentThreadId()
+           << ",\"process_id\":" << g_luna.pid
+           << ",\"target_executable\":\""
+           << LucaDiagnosticJsonEscape(g_lucaDiagnosticTargetExecutableUtf8)
+           << "\",\"luna_host_runtime\":"
+           << (g_lucaDiagnosticHostIdentityJson.empty()
+                   ? "null"
+                   : g_lucaDiagnosticHostIdentityJson)
+           << ",\"luna_hook_local_artifact\":"
+           << (g_lucaDiagnosticLocalHookIdentityJson.empty()
+                   ? "null"
+                   : g_lucaDiagnosticLocalHookIdentityJson)
+           << ",\"luna_hook_remote_runtime\":"
+           << (g_lucaDiagnosticRemoteHookIdentityJson.empty()
+                   ? "null"
+                   : g_lucaDiagnosticRemoteHookIdentityJson)
+           << ",\"source_kind\":\"find_candidate\","
+           << "\"origin\":\"Luna_FindHooks\",\"status\":\""
+           << LucaDiagnosticJsonEscape(status == nullptr ? "" : status)
+           << '"';
+    if (completion_deadline_ms != 0) {
+      record << ",\"completion_assumed_after_ms\":"
+             << completion_deadline_ms
+             << ",\"completion_basis\":\"no completion callback; quiet-period deadline after dispatch\"";
+    }
+    if (search != nullptr) {
+      record << ",\"search_param\":{\"pattern_hex\":\""
+             << LucaDiagnosticPatternHex(*search)
+             << "\",\"address_method\":" << search->address_method
+             << ",\"search_method\":" << search->search_method
+             << ",\"length\":" << search->length
+             << ",\"offset\":" << search->offset
+             << ",\"searchTime_ms\":" << search->searchTime
+             << ",\"maxRecords\":" << search->maxRecords
+             << ",\"codepage\":" << search->codepage
+             << ",\"padding\":" << search->padding
+             << ",\"minAddress\":" << search->minAddress
+             << ",\"maxAddress\":" << search->maxAddress
+             << ",\"boundaryModule\":\""
+             << LucaDiagnosticJsonEscape(
+                    LucaDiagnosticWideFieldToUtf8(search->boundaryModule,
+                                                  std::size(search->boundaryModule)))
+             << "\",\"exportModule\":\""
+             << LucaDiagnosticJsonEscape(
+                    LucaDiagnosticWideFieldToUtf8(search->exportModule,
+                                                  std::size(search->exportModule)))
+             << "\",\"text\":\""
+             << LucaDiagnosticJsonEscape(
+                    LucaDiagnosticWideFieldToUtf8(search->text,
+                                                  std::size(search->text)))
+             << "\",\"isjithook\":"
+             << (search->isjithook ? "true" : "false")
+             << ",\"sharememname\":\""
+             << LucaDiagnosticJsonEscape(
+                    LucaDiagnosticWideFieldToUtf8(search->sharememname,
+                                                  std::size(search->sharememname)))
+             << "\",\"sharememsize\":" << search->sharememsize << '}';
+    }
+    record << ",\"addresses_present\":"
+           << (addresses != nullptr ? "true" : "false")
+           << ",\"addresses_raw\":\""
+           << LucaDiagnosticJsonEscape(addresses_utf8) << '"';
+    if (detail != nullptr && detail[0] != '\0') {
+      record << ",\"detail\":\""
+             << LucaDiagnosticJsonEscape(detail) << '"';
+    }
+    record << "}\n";
+    const std::string line = record.str();
+    const bool log_written =
+        LucaDiagnosticWriteHandleLocked(g_lucaDiagnosticLog, line);
+    const bool directory_written = LucaDiagnosticWriteHandleLocked(
+        g_lucaDiagnosticThreadDirectory, line);
+    LucaDiagnosticFlushFilesLocked(true, seq);
+    LeaveCriticalSection(&g_lucaDiagnosticCs);
+    diagnostic_locked = false;
+    if (!log_written || !directory_written) {
+      fprintf(stderr,
+              "[luca-diagnostic] FindHooks lifecycle write failure "
+              "(event=%s log=%d thread_directory=%d)\n",
+              event_kind, log_written ? 1 : 0, directory_written ? 1 : 0);
+    }
+  } catch (...) {
+    if (diagnostic_locked) LeaveCriticalSection(&g_lucaDiagnosticCs);
+    fprintf(stderr,
+            "[luca-diagnostic] FindHooks lifecycle serialization failed\n");
+  }
+}
+
+void AppendLucaDiagnosticFindCandidate(LONGLONG callback_seq,
+                                       const wchar_t* hookcode,
+                                       const wchar_t* text) {
+  if (!g_lucaDiagnosticCsInit ||
+      InterlockedCompareExchange(&g_lucaDiagnosticActive, 0, 0) == 0) {
+    return;
+  }
+  bool diagnostic_locked = false;
+  try {
+    const size_t hook_length = hookcode == nullptr ? 0 : std::wcslen(hookcode);
+    const size_t text_length = text == nullptr ? 0 : std::wcslen(text);
+    // Copy both callback-owned pointers before returning to LunaHost. The
+    // v10.16 export wrapper uses a stack hookcode buffer and a temporary text
+    // string, so neither pointer may escape this function.
+    const std::string hook_utf8 =
+        LucaDiagnosticWideToUtf8(hookcode, hook_length);
+    const std::string text_utf8 = LucaDiagnosticWideToUtf8(text, text_length);
+    const bool hookcode_conversion_ok =
+        hook_length == 0 || !hook_utf8.empty();
+    const bool raw_text_conversion_ok =
+        text_length == 0 || !text_utf8.empty();
+    const std::string hookcode_utf16_hex =
+        hookcode_conversion_ok
+            ? std::string()
+            : LucaDiagnosticWideUnitsToHex(hookcode, hook_length);
+    const std::string raw_text_utf16_hex =
+        raw_text_conversion_ok
+            ? std::string()
+            : LucaDiagnosticWideUnitsToHex(text, text_length);
+    const uint64_t duplicate_key_hash =
+        LucaDiagnosticCandidateDigest(
+            hookcode_conversion_ok ? hook_utf8 : hookcode_utf16_hex,
+            raw_text_conversion_ok ? text_utf8 : raw_text_utf16_hex);
+    const char* candidate_label =
+        LucaDiagnosticExplicitCandidateLabel(hookcode);
+    const std::string hook_address = LucaDiagnosticHookRva(hookcode);
+    const bool has_japanese = LucaDiagnosticHasJapanese(text, text_length);
+    const bool has_english = LucaDiagnosticHasEnglish(text, text_length);
+    const bool has_speaker_marker =
+        LucaDiagnosticHasCharacter(text, text_length, L'@');
+    const bool has_dollar_control =
+        LucaDiagnosticHasCharacter(text, text_length, L'$');
+    const bool has_percent_control =
+        LucaDiagnosticHasCharacter(text, text_length, L'%');
+    const bool has_hash_control =
+        LucaDiagnosticHasCharacter(text, text_length, L'#');
+    const ULONGLONG timestamp = GetTickCount64();
+    const ULONGLONG wall_timestamp = LucaDiagnosticWallClockMs();
+
+    EnterCriticalSection(&g_lucaDiagnosticCs);
+    diagnostic_locked = true;
+    if (InterlockedCompareExchange(&g_lucaDiagnosticActive, 0, 0) == 0 ||
+        g_lucaDiagnosticLog == INVALID_HANDLE_VALUE ||
+        g_lucaDiagnosticThreadDirectory == INVALID_HANDLE_VALUE) {
+      LeaveCriticalSection(&g_lucaDiagnosticCs);
+      diagnostic_locked = false;
+      return;
+    }
+    const auto seen = g_lucaDiagnosticFindCandidateFirstSeq.find(
+        duplicate_key_hash);
+    const bool duplicate = seen != g_lucaDiagnosticFindCandidateFirstSeq.end();
+    const LONGLONG first_callback_seq =
+        duplicate ? seen->second : callback_seq;
+    bool duplicate_tracking_saturated = false;
+    constexpr size_t kMaxDuplicateDigests = 100000;
+    if (!duplicate) {
+      if (g_lucaDiagnosticFindCandidateFirstSeq.size() <
+          kMaxDuplicateDigests) {
+        g_lucaDiagnosticFindCandidateFirstSeq.emplace(duplicate_key_hash,
+                                                      callback_seq);
+      } else {
+        duplicate_tracking_saturated = true;
+      }
+    }
+    const LONGLONG seq = InterlockedIncrement64(&g_lucaDiagnosticSeq);
+    std::ostringstream record;
+    record << "{\"record_schema\":\"fushi-luca-text-diagnostic-v3\","
+           << "\"record_kind\":\"find_candidate\",\"seq\":" << seq
+           << ",\"timestamp_ms\":" << timestamp
+           << ",\"wall_timestamp_ms\":" << wall_timestamp
+           << ",\"run_id\":\""
+           << LucaDiagnosticJsonEscape(g_lucaDiagnosticRunId) << '"'
+           << ",\"search_id\":\""
+           << LucaDiagnosticJsonEscape(g_lucaDiagnosticSearchId) << '"'
+           << ",\"process_id\":" << g_luna.pid
+           << ",\"callback_seq\":" << callback_seq
+           << ",\"callback_thread_id\":" << GetCurrentThreadId()
+           << ",\"source_kind\":\"find_candidate\","
+           << "\"origin\":\"Luna_FindHooks\",\"hook_code\":\""
+           << LucaDiagnosticJsonEscape(hook_utf8)
+           << "\",\"hook_address_from_code\":\""
+           << LucaDiagnosticJsonEscape(hook_address)
+           << "\",\"hook_address_source\":\"hookcode @ segment; not an observed installation address\","
+           << "\"candidate_label\":";
+    if (candidate_label == nullptr) {
+      record << "null";
+    } else {
+      record << "\""
+             << LucaDiagnosticJsonEscape(candidate_label) << "\"";
+    }
+    record
+           << ",\"raw_text\":\""
+           << LucaDiagnosticJsonEscape(text_utf8)
+           << "\",\"raw_utf16_units\":" << text_length
+           << ",\"raw_text_conversion_ok\":"
+           << (raw_text_conversion_ok ? "true" : "false")
+           << ",\"raw_text_utf16_hex\":\""
+           << LucaDiagnosticJsonEscape(raw_text_utf16_hex) << '"'
+           << ",\"raw_text_truncated\":false"
+           << ",\"hookcode_conversion_ok\":"
+           << (hookcode_conversion_ok ? "true" : "false")
+           << ",\"hookcode_utf16_hex\":\""
+           << LucaDiagnosticJsonEscape(hookcode_utf16_hex) << '"'
+           << ",\"raw_text_present\":"
+           << (text != nullptr && text_length != 0 ? "true" : "false")
+           << ",\"has_japanese\":" << (has_japanese ? "true" : "false")
+           << ",\"has_english\":" << (has_english ? "true" : "false")
+           << ",\"has_speaker_marker\":"
+           << (has_speaker_marker ? "true" : "false")
+           << ",\"has_dollar_control\":"
+           << (has_dollar_control ? "true" : "false")
+           << ",\"has_percent_control\":"
+           << (has_percent_control ? "true" : "false")
+           << ",\"has_hash_control\":"
+           << (has_hash_control ? "true" : "false")
+           << ",\"duplicate\":" << (duplicate ? "true" : "false")
+           << ",\"duplicate_key_hash\":\""
+           << LucaDiagnosticHexUint64(duplicate_key_hash) << '"'
+           << ",\"duplicate_detection\":\"fnv1a64_hash_only\""
+           << ",\"duplicate_tracking_saturated\":"
+           << (duplicate_tracking_saturated ? "true" : "false")
+           << ",\"first_duplicate_callback_seq\":"
+           << first_callback_seq << "}\n";
+    const std::string line = record.str();
+    const bool log_written =
+        LucaDiagnosticWriteHandleLocked(g_lucaDiagnosticLog, line);
+    const bool directory_written = LucaDiagnosticWriteHandleLocked(
+        g_lucaDiagnosticThreadDirectory, line);
+    LucaDiagnosticFlushFilesLocked(false, seq);
+    LeaveCriticalSection(&g_lucaDiagnosticCs);
+    diagnostic_locked = false;
+    if (!log_written || !directory_written) {
+      fprintf(stderr,
+              "[luca-diagnostic] FindHooks candidate write failure "
+              "(log=%d thread_directory=%d)\n",
+              log_written ? 1 : 0, directory_written ? 1 : 0);
+    }
+  } catch (...) {
+    if (diagnostic_locked) LeaveCriticalSection(&g_lucaDiagnosticCs);
+    fprintf(stderr,
+            "[luca-diagnostic] FindHooks candidate serialization failed\n");
+  }
+}
+
+void __cdecl LunaFindHooksCallbackImpl(wchar_t* hookcode,
+                                       const wchar_t* text) {
+  // Serialize the active check with diagnostic shutdown.  Without this gate a
+  // callback could pass the early active check, increment callback_seq, then
+  // lose its record after CloseLucaDiagnosticFiles closed the files.  A late
+  // callback now returns before it is assigned a sequence number.
+  LucaDiagnosticCallbackGuard diagnostic_guard;
+  if (!diagnostic_guard.active()) return;
+  const LONGLONG callback_seq =
+      InterlockedIncrement64(&g_lucaDiagnosticFindCallbackSeq);
+  AppendLucaDiagnosticFindCandidate(callback_seq, hookcode, text);
+}
+
+static_assert(std::is_same_v<decltype(&LunaFindHooksCallbackImpl),
+                             LunaFindHooksCallback>,
+              "FindHooks callback implementation must remain __cdecl");
+
+void StartLunaFindHooksDiscovery() {
+  if (!LucaDiagnosticCaptureActive() ||
+      InterlockedCompareExchange(&g_lucaDiagnosticFindStarted, 1, 0) != 0) {
+    return;
+  }
+  std::string search_id;
+  EnterCriticalSection(&g_lucaDiagnosticCs);
+  search_id = g_lucaDiagnosticSearchId;
+  LeaveCriticalSection(&g_lucaDiagnosticCs);
+  if (search_id.empty()) {
+    InterlockedExchange(&g_lucaDiagnosticFindCallState, 4);
+    return;
+  }
+  if (g_luna.find_hooks == nullptr) {
+    InterlockedExchange(&g_lucaDiagnosticFindCallState, 4);
+    AppendLucaDiagnosticFindLifecycle(
+        search_id, "find_search_start", "api_missing",
+        &g_luna.diagnostic_search_param, nullptr,
+        "Luna_FindHooks export is absent; no discovery call was attempted");
+    AppendLucaDiagnosticFindLifecycle(
+        search_id, "find_search_not_dispatched", "api_missing",
+        &g_luna.diagnostic_search_param, nullptr,
+        "Luna_FindHooks export is absent; the discovery request was not dispatched");
+    return;
+  }
+  if (InterlockedCompareExchange(&g_lucaDiagnosticFindAbiCompatible, 0, 0) ==
+      0) {
+    InterlockedExchange(&g_lucaDiagnosticFindCallState, 4);
+    AppendLucaDiagnosticFindLifecycle(
+        search_id, "find_search_start", "abi_gate_failed",
+        &g_luna.diagnostic_search_param, nullptr,
+        "runtime Host/Hook identity did not match the audited v10.16.1.2 ABI; no discovery call was attempted");
+    AppendLucaDiagnosticFindLifecycle(
+        search_id, "find_search_not_dispatched", "abi_gate_failed",
+        &g_luna.diagnostic_search_param, nullptr,
+        "runtime Host/Hook identity did not match the audited v10.16.1.2 ABI; the discovery request was not dispatched");
+    return;
+  }
+
+  const LunaSearchParam search = g_luna.diagnostic_search_param;
+  const PFN_Luna_FindHooks find_hooks = g_luna.find_hooks;
+  const DWORD pid = g_luna.pid;
+  const ULONGLONG deadline =
+      static_cast<ULONGLONG>((std::max)(0, search.searchTime)) + 60000ull;
+  const DWORD wait_ms = static_cast<DWORD>((std::min)(
+      deadline, static_cast<ULONGLONG>((std::numeric_limits<DWORD>::max)())));
+  AppendLucaDiagnosticFindLifecycle(
+      search_id, "find_search_start", "prepared", &search, nullptr,
+      "LunaConnect callback is the ready boundary: Host has a process record and connected pipe; empty SearchParam.text; discovery callback only; no candidate auto-install");
+  try {
+    InterlockedExchange(&g_lucaDiagnosticFindCallState, 1);
+    AppendLucaDiagnosticFindLifecycle(
+        search_id, "find_search_call_entered", "calling", nullptr, nullptr,
+        "typed __cdecl FindHooks call entered; the API has no return value");
+    // LunaConnect is delivered only after LunaHost has created the target's
+    // process record and pipe.  Host::FindHooks only queues LunaHook's own
+    // asynchronous search worker, so calling it here is event-driven and
+    // avoids treating an arbitrary 100 ms sleep as readiness.
+    find_hooks(pid, search, &LunaFindHooksCallbackImpl, nullptr);
+    InterlockedExchange(&g_lucaDiagnosticFindCallState, 2);
+    InterlockedExchange(&g_lucaDiagnosticFindDispatched, 1);
+    AppendLucaDiagnosticFindLifecycle(
+        search_id, "find_search_dispatched", "returned_void", nullptr,
+        nullptr,
+        "Luna_FindHooks is asynchronous; this is API return evidence, not search completion");
+  } catch (...) {
+    InterlockedExchange(&g_lucaDiagnosticFindCallState, 3);
+    AppendLucaDiagnosticFindLifecycle(
+        search_id, "find_search_dispatch_failed", "cpp_exception", nullptr,
+        nullptr,
+        "the typed FindHooks call raised a C++ exception; no installation was attempted");
+    return;
+  }
+  try {
+    std::thread([search_id, wait_ms]() {
+      Sleep(wait_ms);
+      if (InterlockedCompareExchange(&g_lucaDiagnosticActive, 0, 0) != 0) {
+        AppendLucaDiagnosticFindLifecycle(
+            search_id, "find_search_completion_assumed", "deadline_reached",
+            nullptr, nullptr,
+            "Luna_FindHooks exposes no completion callback; deadline is only a log boundary",
+            wait_ms);
+      }
+    }).detach();
+  } catch (...) {
+    AppendLucaDiagnosticFindLifecycle(
+        search_id, "find_search_completion_timer_failed", "cpp_exception",
+        nullptr, nullptr,
+        "completion_assumed cannot be scheduled; no real completion is claimed");
+  }
 }
 
 struct UnityExtractorRuntime {
@@ -735,8 +2384,9 @@ uint64_t LunaTextThreadId(const wchar_t* hookcode, const char* hookname,
 }
 
 // hook「面」id：与 LunaTextThreadId 同源，但**刻意不含 ctx**（BUG-1159）。
-// ctx 是调用点（返回地址），同一 hook 面换剧情分支就变；ctx2 是 split H 码声明的
-// 语义分类（角色名/正文），必须保留。判据实现在 luna_text_selector.h，与单测共用。
+// ctx 是 Luna 提供的 context 值；本组件没有证据把它解释为 caller/return address。
+// ctx2 是 split H 码声明的语义分类（角色名/正文），必须保留。判据实现在
+// luna_text_selector.h，与单测共用。
 uint64_t LunaTextFaceId(const wchar_t* hookcode, const char* hookname,
                         const LunaThreadParam& tp) {
   return fushi_voice_hook::LunaTextFaceIdFrom(tp.processId, tp.addr, tp.ctx2,
@@ -808,10 +2458,9 @@ void WriteLunaTextLine(SharedHeader* header, const wchar_t* hookcode,
 // 剔除（它们会挤掉本线程自己的真台词）。理由见 voice_hook_ipc.h 的 v13 分道注释。
 //
 // EmbedKrkrZ 的精确完整行双写先折叠成第一份；其他引擎保持原过滤语义。
-// 伪影判别（纯函数）：给定规范化后的 [text,len]，判断是否为坏 hook 的重复伪影。
-//   ① 等长游程：对字符串做游程编码（连续相同字符归为一段），若段数 >=3 且所有段
-//     长度相等且 >=2 → 伪影（捕获每字×2/×3/×10 等）。
-// 其余为“干净”。
+// 通用 LunaTextIsArtifact 仍负责三类重复伪影判定：整串二倍、等长游程和相邻重复率。
+// 经过 Luca native decoder 的 Little Busters 精确 profile 由 source policy 明确保留这类
+// 合法重复文本；这不是全局关闭，也不改变诊断 JSONL 的原始 artifact 标记。
 // 线程准入的纯逻辑位于 luna_text_selector.h；运行时只负责跨回调加锁和读取手动选择值。
 // v12：把本行记进该线程的预览槽。**必须在任何过滤/门控之前调用**——预览区存在的意义
 // 就是让用户看见那些没被发布的线程；只记已发布行等于什么都没做。
@@ -918,12 +2567,46 @@ int LunaWideToUtf8(const wchar_t* text, int wlen, char* out, int out_cap) {
 }
 
 // ── Luna_Start 的 8 个回调实现（__cdecl 默认约定）─────────────────────────────
-// Output：全引擎精确台词入口。过滤 + 写文本环。返回值在本 vendored 版恒 true（不作门控）。
+// Output：在 Luca 诊断模式下先把回调收到的原始 payload 完整写入 JSONL，再返回；
+// 不经过语言、角色名、控制码、重复或空白过滤，也不写正式 Fushi 文本环。
+// 非诊断目标继续使用原有的正常文本准入路径。
 void LunaOutput(const wchar_t* hookcode, const char* hookname,
                 LunaThreadParam tp, const wchar_t* text) {
+  LucaDiagnosticCallbackGuard diagnostic_guard;
+  if (LucaDiagnosticModeConfigured() && !diagnostic_guard.active()) return;
+  const size_t raw_length = text == nullptr ? 0 : wcslen(text);
+  if (diagnostic_guard.active()) {
+    const bool artifact =
+        text != nullptr &&
+        fushi_voice_hook::LunaTextIsArtifact(
+            text, static_cast<int>((std::min)(
+                      raw_length,
+                      static_cast<size_t>((std::numeric_limits<int>::max)()))));
+    const uint64_t thread_id = LunaTextThreadId(hookcode, hookname, tp);
+    const uint64_t face_id = LunaTextFaceId(hookcode, hookname, tp);
+    const uint32_t event_flags =
+        fushi_voice_hook::LunaTextRequiresExactThreadContext(hookname)
+            ? fushi_voice_hook::kTextEventFlagExactThreadContext
+            : 0u;
+    AppendLucaDiagnosticRecord(
+        "output", hookcode, hookname, tp, thread_id, face_id, event_flags,
+        text, raw_length, artifact);
+    if (g_luna.header != nullptr) {
+      g_luna.header->hook_diagnostics |= kDiagLunaOutputObserved;
+      // This is only the bounded live preview. The JSONL event log above is
+      // the complete source of truth and retains the untruncated payload.
+      WriteThreadPreview(
+          g_luna.header, thread_id, artifact, text,
+          static_cast<int>((std::min)(
+              raw_length,
+              static_cast<size_t>((std::numeric_limits<int>::max)()))));
+    }
+    return;
+  }
+
   if (g_luna.header != nullptr && text != nullptr) {
     g_luna.header->hook_diagnostics |= kDiagLunaOutputObserved;
-    const int raw_len = static_cast<int>(wcslen(text));
+    const int raw_len = static_cast<int>(raw_length);
     const std::wstring normalized_storage =
         fushi_voice_hook::LunaNormalizeMagesControls(
             text, raw_len, g_luna.normalize_mages_controls);
@@ -949,30 +2632,30 @@ void LunaOutput(const wchar_t* hookcode, const char* hookname,
               normalized_len, u8);
       fflush(stderr);
     }
-    if (LunaPassesFilter(normalized_text, normalized_len)) {
+    std::wstring luca_decoded_storage;
+    const wchar_t* output_text = normalized_text;
+    int output_len = normalized_len;
+    if (g_luna.decode_luca_role_tokens &&
+        fushi_voice_hook::NormalizeLucaText(
+            normalized_text, static_cast<size_t>(normalized_len),
+            &luca_decoded_storage)) {
+      output_text = luca_decoded_storage.c_str();
+      output_len = static_cast<int>(luca_decoded_storage.size());
+    }
+    if (LunaPassesFilter(output_text, output_len)) {
       // 先判伪影，再决定本行是否写入文本环。
-      const bool artifact =
-          fushi_voice_hook::LunaTextIsArtifact(normalized_text, normalized_len);
+      const bool artifact = fushi_voice_hook::LunaTextIsArtifactForSource(
+          output_text, output_len, g_luna.preserve_luca_repetitive_text);
       const uint64_t thread_id = LunaTextThreadId(hookcode, hookname, tp);
       const uint64_t face_id = LunaTextFaceId(hookcode, hookname, tp);
-      // v12：预览必须写在门控**之前**且无条件（含伪影行）。预览区的全部意义就是让用户
-      // 看见未被发布的线程；放到门控之后就只剩已选中的那条，等于没做。
-      WriteThreadPreview(g_luna.header, thread_id, artifact, normalized_text,
-                         normalized_len);
-      // LunaHook 权威标记：游戏内 GDI 文本 hook 据此让位，避免双写者污染（见
-      // voice_hook_ipc.h SharedHeader::luna_active 注释）。幂等，写 1 即可。
-      //
-      // v12：判据从「已**发布**干净行」改成「已**观测到**干净行」。取消自动选线程后
-      // 用户选定之前一行都不发布，若仍绑在发布上，luna_active 永远是 0，GDI 会在整个
-      // 选线程期间把逐字重绘垃圾灌进文本环——旧行为下自动赢家几行内就置位，这个窗口
-      // 根本不存在。绑在观测上既保住原意（LunaHook 确实覆盖了这个引擎 → GDI 让位），
-      // 又不依赖发布门控；LunaHook 对该引擎无输出时 luna_active 仍为 0，GDI 兜底照旧。
+      WriteThreadPreview(g_luna.header, thread_id, artifact, output_text,
+                         output_len);
       if (!artifact) {
         g_luna.header->luna_active = 1;
       }
       if (LunaShouldWriteLine(thread_id, artifact, face_id)) {
         WriteLunaTextLine(g_luna.header, hookcode, hookname, tp, thread_id,
-                          face_id, normalized_text, normalized_len);
+                          face_id, output_text, output_len);
       }
     }
   }
@@ -981,6 +2664,8 @@ void LunaOutput(const wchar_t* hookcode, const char* hookname,
 // Connect：LunaHook DLL 注入并连回 host 时触发。可选补装通用 PC hooks（默认关，避免与游戏内
 // GDI hook 产生重复行；LunaHook 内置的各引擎精确 hook 本就自动上线，无需在此手动插）。
 void LunaConnect(DWORD pid) {
+  LucaDiagnosticCallbackGuard diagnostic_guard;
+  if (LucaDiagnosticModeConfigured() && !diagnostic_guard.active()) return;
   fprintf(stderr, "[luna] connected pid=%lu\n", pid);
   // 连接成功即代表 LunaHook 的文本管线已经安装并可接收内容。不能等到第一句 Output
   // 才置 text_hooked：游戏停在标题/菜单超过 Dart 等待窗口时会把健康 helper 误判失败。
@@ -988,42 +2673,155 @@ void LunaConnect(DWORD pid) {
     g_luna.header->hook_diagnostics |= kDiagLunaConnected;
     g_luna.header->text_hooked = 1;
   }
-  if (g_luna.insert_hook != nullptr) {
+  if (diagnostic_guard.active()) {
+    AppendLucaDiagnosticLedgerRecord(
+        "luna_process_record_ready", "luna_host", "callback_boundary",
+        "LunaHost __handlepipethread", nullptr, 0, true, true, -1,
+        "source audit: processRecordsByIds.emplace and connected pipe precede OnConnect; FindHooks is not called before this boundary");
+    AppendLucaDiagnosticLedgerRecord(
+        "luna_connect", "luna_host", "callback_received",
+        "Luna_ConnectProcess callback", nullptr, 0, true, true, -1,
+        "LunaConnect callback received after the Host process-record/pipe ready boundary");
+  }
+  bool diagnostic_optional_api_gate = true;
+  if (diagnostic_guard.active()) {
+    const std::wstring remote_hook_name =
+        L"LunaHook" + std::wstring(kLunaArch) + L".dll";
+    const std::wstring remote_hook_path =
+        FindRemoteModulePath(pid, remote_hook_name.c_str());
+    const LunaDiagnosticDllEvidence remote_hook_evidence =
+        InspectLunaDiagnosticDll(remote_hook_path, ExpectedLunaHookSha256());
+    g_lucaDiagnosticRemoteHookIdentityJson =
+        LunaDiagnosticDllEvidenceJson(remote_hook_evidence);
+    const bool find_abi_gate = g_luna.diagnostic_find_preflight_ok &&
+                               remote_hook_evidence.exact_match;
+    diagnostic_optional_api_gate = find_abi_gate;
+    AppendLucaDiagnosticDllIdentity("remote_lunahook_after_connect",
+                                    remote_hook_evidence, find_abi_gate);
+    InterlockedExchange(&g_lucaDiagnosticFindAbiCompatible,
+                        find_abi_gate ? 1 : 0);
+    AppendLucaDiagnosticLedgerRecord(
+        "find_abi_gate", "find_candidate",
+        find_abi_gate ? "exact_runtime_match" : "runtime_identity_mismatch",
+        "Luna_FindHooks ABI gate", nullptr, 0, true, find_abi_gate, -1,
+        find_abi_gate
+            ? "Host loaded artifact and remote Hook artifact match the audited v10.16.1.2 release"
+            : "FindHooks and diagnostic optional typed API calls are refused because Host/local preflight or remote Hook identity did not match");
+  }
+  if (g_luna.insert_hook != nullptr &&
+      (!diagnostic_guard.active() || diagnostic_optional_api_gate)) {
     bool inserted_any = false;
     for (const std::wstring& code : g_luna.hook_codes) {
+      if (diagnostic_guard.active()) {
+        const std::string lane = LucaDiagnosticLaneForHook(code);
+        AppendLucaDiagnosticLedgerRecord(
+            "insert_hook_code", lane.c_str(), "requested",
+            "Luna_InsertHookCode", code.c_str(), 0, false, false, -1,
+            "InsertHookCode request is about to be dispatched; no installation claim");
+      }
       const bool inserted = g_luna.insert_hook(pid, code.c_str());
       inserted_any = inserted_any || inserted;
+      if (diagnostic_guard.active()) {
+        const std::string lane = LucaDiagnosticLaneForHook(code);
+        AppendLucaDiagnosticLedgerRecord(
+            "insert_hook_code", lane.c_str(),
+            inserted ? "returned_true" : "returned_false",
+            "Luna_InsertHookCode", code.c_str(), 0, true, inserted, -1,
+            inserted
+                ? "HookCode::Parse accepted and Host::InsertHook was dispatched; not an installed/triggered claim"
+                : "HookCode::Parse rejected; no Host::InsertHook dispatch is claimed");
+      }
       fprintf(stderr, "[luna] known hook %ls pid=%lu result=%d\n",
               code.c_str(), pid, inserted ? 1 : 0);
     }
     if (inserted_any && g_luna.header != nullptr &&
         fushi_voice_hook::HasLookupRegion(g_luna.header)) {
       g_luna.header->lookup_diag |=
-          fushi_voice_hook::kLookupDiagLunaKnownHookReady;
+        fushi_voice_hook::kLookupDiagLunaKnownHookReady;
+    }
+  } else if (diagnostic_guard.active()) {
+    for (const std::wstring& code : g_luna.hook_codes) {
+      const std::string lane = LucaDiagnosticLaneForHook(code);
+      AppendLucaDiagnosticLedgerRecord(
+          "insert_hook_code", lane.c_str(),
+          g_luna.insert_hook == nullptr
+              ? "not_called_api_missing"
+              : "not_called_abi_gate_failed",
+          "Luna_InsertHookCode", code.c_str(), 0, false, false, -1,
+          g_luna.insert_hook == nullptr
+              ? "InsertHookCode export missing; no request was dispatched"
+              : "runtime LunaHost/LunaHook identity gate failed; no typed optional API request was dispatched");
     }
   }
-  if (g_luna.use_pc_hooks && g_luna.insert_pc != nullptr) {
-    g_luna.insert_pc(pid, 0);
-    g_luna.insert_pc(pid, 1);
+  if (g_luna.use_pc_hooks && g_luna.insert_pc != nullptr &&
+      (!diagnostic_guard.active() || diagnostic_optional_api_gate)) {
+    for (const int category : {0, 1}) {
+      if (diagnostic_guard.active()) {
+        AppendLucaDiagnosticLedgerRecord(
+            "pc_hook_call", "pc", "requested", "Luna_InsertPCHooks",
+            nullptr, 0, false, false, category,
+            "PC-hook request is about to be dispatched; no installation claim");
+      }
+      g_luna.insert_pc(pid, category);
+      if (diagnostic_guard.active()) {
+        AppendLucaDiagnosticLedgerRecord(
+            "pc_hook_call", "pc", "returned_void",
+            "Luna_InsertPCHooks", nullptr, 0, false, false, category,
+            "Host::InsertPCHooks request was dispatched; no installation or trigger notification is claimed");
+      }
+    }
     fprintf(stderr, "[luna] inserted PC hooks pid=%lu\n", pid);
+  } else if (diagnostic_guard.active()) {
+    for (const int category : {0, 1}) {
+      AppendLucaDiagnosticLedgerRecord(
+          "pc_hook_call", "pc",
+          (g_luna.insert_pc == nullptr || !g_luna.use_pc_hooks)
+              ? "not_called_api_missing_or_disabled"
+              : "not_called_abi_gate_failed",
+          "Luna_InsertPCHooks", nullptr, 0, false, false, category,
+          (g_luna.insert_pc == nullptr || !g_luna.use_pc_hooks)
+              ? "PC hook request was not dispatched because the export was absent or diagnostic policy disabled it"
+              : "runtime LunaHost/LunaHook identity gate failed; no typed optional API request was dispatched");
+    }
   }
+  // Host has created its process record by the time LunaConnect is delivered.
+  // FindHooks itself starts LunaHook's detached search worker and returns void;
+  // this call records discovery only and never feeds candidates back into
+  // Luna_InsertHookCode.
+  StartLunaFindHooksDiscovery();
 }
 void LunaDisconnect(DWORD pid) {
+  LucaDiagnosticCallbackGuard diagnostic_guard;
+  if (LucaDiagnosticModeConfigured() && !diagnostic_guard.active()) return;
   fprintf(stderr, "[luna] disconnected pid=%lu\n", pid);
+  if (diagnostic_guard.active()) {
+    AppendLucaDiagnosticLedgerRecord(
+        "luna_disconnect", "luna_host", "callback_received",
+        "Luna_DisconnectProcess callback", nullptr, 0, true, true, -1,
+        "LunaHost disconnect callback received");
+  }
 }
 // ThreadCreate 是 LunaTranslator 线程列表的真相源。不能再只从已通过自动赢家过滤的 Output
 // 反推线程，否则 TextRender 这类候选在线程被选中前没有已发布行，就永远无法出现在选择器里。
 void LunaThreadCreate(const wchar_t* hookcode, const char* hookname,
                       LunaThreadParam tp, bool embedable) {
-  if (g_luna.header == nullptr) {
-    return;
-  }
+  LucaDiagnosticCallbackGuard diagnostic_guard;
+  if (LucaDiagnosticModeConfigured() && !diagnostic_guard.active()) return;
   const uint64_t thread_id = LunaTextThreadId(hookcode, hookname, tp);
   const uint32_t event_flags =
       (embedable ? 1u : 0u) |
       (fushi_voice_hook::LunaTextRequiresExactThreadContext(hookname)
            ? fushi_voice_hook::kTextEventFlagExactThreadContext
            : 0u);
+  if (diagnostic_guard.active()) {
+    AppendLucaDiagnosticRecord(
+        "thread_create", hookcode, hookname, tp, thread_id,
+        LunaTextFaceId(hookcode, hookname, tp), event_flags, nullptr, 0,
+        false);
+  }
+  if (g_luna.header == nullptr) {
+    return;
+  }
   WriteLunaTextEvent(
       g_luna.header, hookcode, hookname, tp, thread_id,
       LunaTextFaceId(hookcode, hookname, tp),
@@ -1033,6 +2831,14 @@ void LunaThreadCreate(const wchar_t* hookcode, const char* hookname,
 // 重建仍沿用用户选择。这里只回收预览槽，避免累计超过 64 个历史线程后新线程永久没有预览。
 void LunaThreadRemove(const wchar_t* hookcode, const char* hookname,
                       LunaThreadParam tp) {
+  LucaDiagnosticCallbackGuard diagnostic_guard;
+  if (LucaDiagnosticModeConfigured() && !diagnostic_guard.active()) return;
+  if (diagnostic_guard.active()) {
+    AppendLucaDiagnosticRecord(
+        "thread_remove", hookcode, hookname, tp,
+        LunaTextThreadId(hookcode, hookname, tp),
+        LunaTextFaceId(hookcode, hookname, tp), 0, nullptr, 0, false);
+  }
   if (g_luna.header == nullptr || !g_lunaSelectCsInit ||
       g_luna.header->thread_preview_offset == 0) {
     return;
@@ -1061,11 +2867,21 @@ void LunaThreadRemove(const wchar_t* hookcode, const char* hookname,
   LeaveCriticalSection(&g_lunaSelectCs);
 }
 void LunaHostInfo(int type, const wchar_t* log) {
+  LucaDiagnosticCallbackGuard diagnostic_guard;
+  if (LucaDiagnosticModeConfigured() && !diagnostic_guard.active()) return;
   if (LunaDiagEnabled() && log != nullptr) {
     fwprintf(stderr, L"[lunahost] type=%d log=%ls\n", type, log);
     fflush(stderr);
   }
   if (log == nullptr) return;
+  if (diagnostic_guard.active()) {
+    const std::string detail =
+        LucaDiagnosticWideToUtf8(log, std::wcslen(log));
+    AppendLucaDiagnosticLedgerRecord(
+        "luna_host_info", "luna_host", "callback_received",
+        "LunaHostInfo callback", nullptr, 0, true, true, type,
+        detail.c_str());
+  }
   const LONG requests =
       InterlockedCompareExchange(&g_luna.blocked_hook_remove_requests, 0, 0);
   LONG confirmations = InterlockedCompareExchange(
@@ -1088,7 +2904,15 @@ void LunaHostInfo(int type, const wchar_t* log) {
   }
 }
 void LunaHookInsert(DWORD pid, uint64_t addr, const wchar_t* hookcode) {
+  LucaDiagnosticCallbackGuard diagnostic_guard;
+  if (LucaDiagnosticModeConfigured() && !diagnostic_guard.active()) return;
   if (pid != g_luna.pid || hookcode == nullptr) return;
+  if (diagnostic_guard.active()) {
+    AppendLucaDiagnosticLedgerRecord(
+        "auto_hook_insert", "luna_auto", "callback_received",
+        "LunaHookInsert callback", hookcode, addr, true, true, -1,
+        "LunaHookInsert notification observed; this is not proof that a ThreadCreate or Output followed");
+  }
   if (LunaDiagEnabled()) {
     fwprintf(stderr, L"[lunahookinsert] pid=%lu addr=0x%llx code=%ls\n", pid,
              static_cast<unsigned long long>(addr), hookcode);
@@ -1122,14 +2946,19 @@ void LunaEmbed(const wchar_t* text, LunaThreadParam tp) {
 // LunaHook host 侧初始化：加载 LunaHost<arch>.dll、解析导出、注册回调、触发对目标注入。
 // 缺 DLL / 缺关键导出 / 加载失败 → 打日志跳过，**不致命**（仍走游戏内 GDI hook）。
 // target 是目标进程句柄（复用 InjectDll 把 LunaHook<arch>.dll 注入游戏）。成功接线返回 true。
-bool InitLunaHook(SharedHeader* header, HANDLE target, DWORD pid, int codepage,
+bool InitLunaHook(SharedHeader* header, HANDLE target, DWORD pid,
+                  const std::wstring& fushi_hook_path, int codepage,
                   bool use_pc_hooks, bool normalize_mages_controls,
+                  bool diagnostic_luca_text, bool decode_luca_role_tokens,
+                  bool preserve_luca_repetitive_text,
                   const std::vector<std::wstring>& hook_codes,
                   const std::vector<std::wstring>& blocked_hook_codes,
                   const std::vector<std::wstring>& blocked_hook_names,
                   const std::vector<std::wstring>& preferred_hook_codes) {
   const std::wstring host_path =
       InjectorDir() + L"LunaHost" + kLunaArch + L".dll";
+  const std::wstring hook_path =
+      InjectorDir() + L"LunaHook" + kLunaArch + L".dll";
   HMODULE host = LoadLibraryW(host_path.c_str());
   if (host == nullptr) {
     fprintf(stderr,
@@ -1152,21 +2981,293 @@ bool InitLunaHook(SharedHeader* header, HANDLE target, DWORD pid, int codepage,
   g_luna.insert_pc = bridge.insert_pc;
   g_luna.insert_hook = bridge.insert_hook;
   g_luna.remove_hook = bridge.remove_hook;
-  g_luna.use_pc_hooks = use_pc_hooks && (bridge.insert_pc != nullptr);
+  g_luna.find_hooks = bridge.find_hooks;
+  g_luna.diagnostic_search_param =
+      BuildLunaDiagnosticSearchParam(ProcessImagePath(target), codepage);
+  // The targeted candidate pass must not add a second, unrelated PC-hook
+  // install path.  LunaHook's own engine auto-discovery still runs from
+  // Luna_Start; only explicit PC-hook requests are suppressed here.
+  g_luna.use_pc_hooks =
+      !diagnostic_luca_text && use_pc_hooks &&
+      (bridge.insert_pc != nullptr);
   g_luna.normalize_mages_controls = normalize_mages_controls;
+  g_luna.diagnostic_luca_text = diagnostic_luca_text;
+  g_luna.decode_luca_role_tokens = decode_luca_role_tokens;
+  g_luna.preserve_luca_repetitive_text = preserve_luca_repetitive_text;
+  InterlockedExchange(&g_lucaDiagnosticMode, diagnostic_luca_text ? 1 : 0);
+  g_luna.diagnostic_find_preflight_ok = false;
   g_luna.hook_codes = hook_codes;
-  g_luna.blocked_hook_codes = blocked_hook_codes;
-  g_luna.blocked_hook_names = blocked_hook_names;
+  g_luna.blocked_hook_codes =
+      diagnostic_luca_text ? std::vector<std::wstring>() : blocked_hook_codes;
+  g_luna.blocked_hook_names =
+      diagnostic_luca_text ? std::vector<std::wstring>() : blocked_hook_names;
   g_luna.confirmed_blocked_hook_names.clear();
-  g_luna.preferred_hook_codes = preferred_hook_codes;
+  g_luna.preferred_hook_codes =
+      diagnostic_luca_text ? std::vector<std::wstring>()
+                           : preferred_hook_codes;
+  g_luna.diagnostic_hook_lanes.clear();
   InterlockedExchange(&g_luna.blocked_hook_remove_requests, 0);
   InterlockedExchange(&g_luna.blocked_hook_remove_confirmations, 0);
   header->hook_diagnostics |= kDiagLunaHostReady;
 
-  // flushDelay=200ms（一句停顿 flush 一行）、filterRepetition=true（LunaHook 侧先去重）、
-  // codepage（日文 galgame 默认 932/SHIFT_JIS）、maxBufferSize/maxHistorySize 保守非零值。
+  // Open the diagnostic files before any resolver or LunaHost callback can
+  // run.  The old implementation opened them after resolver selection, which
+  // made the most important installation failures impossible to audit.
+  if (g_luna.diagnostic_luca_text &&
+      !InitializeLucaDiagnosticFiles(pid, target, host, hook_path,
+                                     fushi_hook_path)) {
+    fprintf(stderr,
+            "[luca] diagnostic JSONL files are required for this mode; "
+            "LunaHook setup aborted\n");
+    g_luna.host_dll = nullptr;
+    g_luna.header = nullptr;
+    g_luna.detach = nullptr;
+    g_luna.insert_pc = nullptr;
+    g_luna.insert_hook = nullptr;
+    g_luna.remove_hook = nullptr;
+    g_luna.find_hooks = nullptr;
+    g_luna.diagnostic_find_preflight_ok = false;
+    g_luna.decode_luca_role_tokens = false;
+    g_luna.preserve_luca_repetitive_text = false;
+    g_luna.pid = 0;
+    FreeLibrary(host);
+    return false;
+  }
+
+  if (g_luna.diagnostic_luca_text) {
+    AppendLucaDiagnosticLedgerRecord(
+        "luna_diagnostic_policy", "diagnostic", "inventory_mode",
+        "Fushi Luca diagnostic policy", nullptr, 0, true, true, -1,
+        "authoritative/prefer disabled; configured blocked-hook lists ignored; resolver/profile results are retained in the ledger only; the diagnostic explicit install queue is set to the single HQFN1C@8BA37:LITBUS_WIN32.exe baseline; FindHooks candidates are discovery-only and never auto-installed; formal Fushi text publication disabled; ThreadCreate/Output payloads are recorded without semantic filtering");
+    auto record_export = [&](const char* name, bool present) {
+      const std::string api =
+          std::string("GetProcAddress:") + (name == nullptr ? "" : name);
+      AppendLucaDiagnosticLedgerRecord(
+          "luna_export", "luna_bridge",
+          present ? "resolved_present" : "resolver_absent", api.c_str(),
+          nullptr, 0, true, present, -1,
+          "GetProcAddress result recorded; this is not an installation result");
+    };
+    record_export("Luna_Start", bridge.start != nullptr);
+    record_export("Luna_ConnectProcess", bridge.connect != nullptr);
+    record_export("Luna_CheckIfNeedInject", bridge.need_inject != nullptr);
+    record_export("Luna_DetachProcess", bridge.detach != nullptr);
+    record_export("Luna_Settings", bridge.settings != nullptr);
+    record_export("Luna_InsertPCHooks", bridge.insert_pc != nullptr);
+    record_export("Luna_InsertHookCode", bridge.insert_hook != nullptr);
+    record_export("Luna_RemoveHook", bridge.remove_hook != nullptr);
+    record_export("Luna_FindHooks", bridge.find_hooks != nullptr);
+    AppendLucaDiagnosticLedgerRecord(
+        "luna_bridge_resolve", "luna_bridge", "required_exports_resolved",
+        "LunaBridgeExports::Resolve", nullptr, 0, true, true, -1,
+        bridge.find_hooks == nullptr
+            ? "Luna_FindHooks absent; no unverified call is attempted"
+            : "Luna_FindHooks typed v10.16 ABI verified; discovery call is deferred until LunaConnect");
+  }
+
+  if (g_luna.diagnostic_luca_text) {
+    auto add_luca_hook = [&](const std::wstring& code, const char* lane) {
+      std::string lane_name = lane == nullptr ? "configured_or_other" : lane;
+      if (code.empty()) {
+        AppendLucaDiagnosticLedgerRecord(
+            "luca_candidate", lane_name.c_str(), "not_added_empty_hookcode",
+            "diagnostic candidate list", nullptr, 0, true, false, -1,
+            "resolver reported success but returned an empty HookCode; no InsertHookCode request was possible");
+        AppendLucaDiagnosticLedgerRecord(
+            "insert_hook_code", lane_name.c_str(),
+            "not_called_empty_hookcode", "Luna_InsertHookCode", nullptr, 0,
+            true, false, -1,
+            "resolver returned an empty HookCode; InsertHookCode was not attempted");
+        return;
+      }
+      auto lane_it = g_luna.diagnostic_hook_lanes.find(code);
+      if (lane_it == g_luna.diagnostic_hook_lanes.end()) {
+        g_luna.diagnostic_hook_lanes.emplace(code, lane_name);
+      } else if (lane_it->second.find(lane_name) == std::string::npos) {
+        lane_it->second += "," + lane_name;
+      }
+      const bool already_queued =
+          std::find(g_luna.hook_codes.begin(), g_luna.hook_codes.end(), code) !=
+          g_luna.hook_codes.end();
+      if (!already_queued) {
+        g_luna.hook_codes.push_back(code);
+      }
+      AppendLucaDiagnosticLedgerRecord(
+          "luca_candidate", lane_name.c_str(),
+          already_queued ? "queued_deduplicated" : "queued_new",
+          "diagnostic candidate list", code.c_str(), 0, true, true, -1,
+          "candidate retained for diagnostic accounting; no authority or semantic filtering");
+    };
+
+    // Preserve every profile/CLI code in the diagnostic inventory.  The
+    // diagnostic mode does not turn these into an authority; it only records
+    // their provenance before adding the live structural candidates.
+    const std::vector<std::wstring> configured_hook_codes = g_luna.hook_codes;
+    for (const std::wstring& code : configured_hook_codes) {
+      add_luca_hook(code, "configured");
+    }
+
+    auto record_resolver = [&](const char* lane, const char* resolver,
+                               bool resolved, const std::wstring& code,
+                               const char* detail) {
+      AppendLucaDiagnosticLedgerRecord(
+          "luca_resolver", lane, resolved ? "resolved" : "failed", resolver,
+          resolved ? code.c_str() : nullptr, 0, true, resolved, -1, detail);
+    };
+    auto record_resolver_insert_not_attempted =
+        [&](const char* lane, const char* detail) {
+          AppendLucaDiagnosticLedgerRecord(
+              "insert_hook_code", lane, "not_called_resolver_failed",
+              "Luna_InsertHookCode", nullptr, 0, true, false, -1, detail);
+        };
+
+    std::wstring native_source_hook;
+    const bool have_native_source =
+        fushi_voice_hook::ResolveLucaTextSourceHookCode(target, pid,
+                                                        &native_source_hook);
+    record_resolver("source", "ResolveLucaTextSourceHookCode",
+                    have_native_source, native_source_hook,
+                    have_native_source ? nullptr
+                                       : "live source contract did not resolve");
+    if (have_native_source) {
+      add_luca_hook(native_source_hook, "source");
+      fprintf(stderr, "[luca] diagnostic source entry: %ls\n",
+              native_source_hook.c_str());
+
+      // The source-copy routine has a separately resolved no-speaker call
+      // path. Install it in the same run so narration and other records are
+      // inventoried without another compile/reinject cycle.
+      std::wstring no_speaker_hook;
+      const bool have_no_speaker =
+          fushi_voice_hook::ResolveLucaNoSpeakerTextHookCode(
+              target, pid, native_source_hook, &no_speaker_hook);
+      record_resolver(
+          "no-speaker", "ResolveLucaNoSpeakerTextHookCode", have_no_speaker,
+          no_speaker_hook,
+          have_no_speaker ? nullptr
+                          : "live no-speaker callsite contract did not resolve");
+      if (have_no_speaker) {
+        add_luca_hook(no_speaker_hook, "no-speaker");
+        fprintf(stderr, "[luca] diagnostic no-speaker lane: %ls\n",
+                no_speaker_hook.c_str());
+      } else {
+        record_resolver_insert_not_attempted(
+            "no-speaker",
+            "no-speaker resolver failed; no candidate was available for InsertHookCode");
+      }
+    } else {
+      AppendLucaDiagnosticLedgerRecord(
+          "luca_resolver", "no-speaker", "not_attempted_source_unresolved",
+          "ResolveLucaNoSpeakerTextHookCode", nullptr, 0, false, false, -1,
+          "source resolver failed; no-speaker resolver was not called");
+      record_resolver_insert_not_attempted(
+          "no-speaker",
+          "source resolver failed; no-speaker resolver was not called, so InsertHookCode was not attempted");
+    }
+
+    if (!have_native_source) {
+      record_resolver_insert_not_attempted(
+          "source",
+          "source resolver failed; no candidate was available for InsertHookCode");
+    }
+
+    // Resolve every independently available Luca observation lane for the
+    // ledger.  The targeted candidate scope below replaces the install queue,
+    // so these resolver results are not dispatched in this run.
+    std::wstring sink_hook;
+    const bool have_sink =
+        fushi_voice_hook::ResolveLucaTextSinkHookCode(target, pid, &sink_hook);
+    record_resolver("sink", "ResolveLucaTextSinkHookCode", have_sink,
+                    sink_hook,
+                    have_sink ? nullptr
+                              : "live text-sink contract did not resolve");
+    if (have_sink) {
+      add_luca_hook(sink_hook, "sink");
+      fprintf(stderr, "[luca] diagnostic sink entry: %ls\n",
+              sink_hook.c_str());
+    } else {
+      record_resolver_insert_not_attempted(
+          "sink",
+          "sink resolver failed; no candidate was available for InsertHookCode");
+    }
+
+    std::wstring body_hook;
+    const bool have_body =
+        fushi_voice_hook::ResolveLucaBodyTextHookCode(target, pid, &body_hook);
+    record_resolver("body", "ResolveLucaBodyTextHookCode", have_body,
+                    body_hook,
+                    have_body ? nullptr
+                              : "live body-parser contract did not resolve");
+    if (have_body) {
+      add_luca_hook(body_hook, "body");
+      fprintf(stderr, "[luca] diagnostic body lane: %ls\n",
+              body_hook.c_str());
+    } else {
+      record_resolver_insert_not_attempted(
+          "body",
+          "body resolver failed; no candidate was available for InsertHookCode");
+    }
+
+    // This run is intentionally a targeted validation pass, not another
+    // full resolver inventory.  Resolver/profile results above remain in the
+    // ledger, but none of them may be dispatched.  Replace the install queue
+    // with the single explicit baseline H-code whose runtime behavior was
+    // established during the prior diagnostic runs.
+    g_luna.hook_codes.clear();
+    g_luna.diagnostic_hook_lanes.clear();
+    AppendLucaDiagnosticLedgerRecord(
+        "candidate_install_scope", "manual_insert", "exact_allowlist",
+        "Luna_InsertHookCode", nullptr, 0, false, false, -1,
+        "diagnostic run installs only HQFN1C@8BA37:LITBUS_WIN32.exe; profile/resolver candidates and FindHooks callback candidates are not dispatched");
+    for (const auto& candidate : kLucaDiagnosticExplicitCandidates) {
+      const std::wstring code(candidate.hookcode);
+      g_luna.hook_codes.push_back(code);
+      g_luna.diagnostic_hook_lanes.emplace(code, "manual_insert");
+      AppendLucaDiagnosticLedgerRecord(
+          "luca_candidate", "manual_insert", "targeted_selected",
+          "diagnostic explicit candidate list", candidate.hookcode, 0, false,
+          false, -1, candidate.label);
+      fprintf(stderr, "[luca] targeted diagnostic candidate: %ls (%s)\n",
+              candidate.hookcode, candidate.label);
+    }
+    fprintf(stderr, "[luca] targeted diagnostic candidate count: %zu\n",
+            g_luna.hook_codes.size());
+  }
+
+  if (g_luna.diagnostic_luca_text) {
+    AppendLucaDiagnosticLedgerRecord(
+        "pc_hook_config", "pc",
+        g_luna.use_pc_hooks
+            ? "enabled"
+            : "disabled_targeted_scope_or_api_missing",
+        "Fushi diagnostic PC-hook policy", nullptr, 0, true,
+        g_luna.use_pc_hooks, -1,
+        g_luna.use_pc_hooks
+            ? "diagnostic mode requests PC-hook categories 0 and 1"
+            : "targeted candidate mode suppresses explicit PC-hook requests; LunaHook engine auto-discovery remains enabled");
+  }
+
+  /* Keep the candidate-building scope above explicit: no fallback to a single
+     authoritative hook is allowed in this diagnostic mode. */
+
+  // Diagnostic mode deliberately disables LunaHook-side repetition filtering:
+  // duplicate callbacks are evidence too.  A short flush delay keeps arrival
+  // timing useful; this mode does not publish those lines to formal Fushi text.
   if (bridge.settings != nullptr) {
-    bridge.settings(200, true, codepage, 8192, 1000, false);
+    bridge.settings(g_luna.diagnostic_luca_text ? 50 : 200,
+                    g_luna.diagnostic_luca_text ? false : true,
+                    codepage, 8192, 1000, false);
+    if (g_luna.diagnostic_luca_text) {
+      AppendLucaDiagnosticLedgerRecord(
+          "luna_settings", "luna_bridge", "returned_void", "Luna_Settings",
+          nullptr, 0, false, false, -1,
+          "repetition_filter=false; flush_delay_ms=50; max_text_length=8192; history=1000");
+    }
+  } else if (g_luna.diagnostic_luca_text) {
+    AppendLucaDiagnosticLedgerRecord(
+        "luna_settings", "luna_bridge", "not_called_api_missing",
+        "Luna_Settings", nullptr, 0, false, false, -1,
+        "diagnostic settings export is unavailable");
   }
 
   // 文本线程 face 表、显式选择判定与预览 writer 的共享锁：Output/ThreadRemove 回调可在
@@ -1177,31 +3278,105 @@ bool InitLunaHook(SharedHeader* header, HANDLE target, DWORD pid, int codepage,
   }
   g_lunaTextSelector.Reset();
 
+  if (g_luna.diagnostic_luca_text && header != nullptr) {
+    // Keep GDI's formal text publisher from mixing with this inventory pass.
+    // Luca callbacks are recorded in JSONL, not published to the Fushi text
+    // lane in this mode.
+    header->luna_active = 1;
+  }
+
   // 注册回调，顺序严格对齐 texthook.py：Connect, Disconnect, ThreadCreate, ThreadRemove,
   // Output, HostInfo, HookInsert, Embed, I18NQuery, EmuGameInfo。后两项本组件不用，传空让
   // LunaHost 采用默认行为。
+  if (g_luna.diagnostic_luca_text) {
+    const std::array<std::pair<const char*, bool>, 10> callbacks = {{
+        {"ConnectProcess", true},
+        {"DisconnectProcess", true},
+        {"ThreadCreate", true},
+        {"ThreadRemove", true},
+        {"Output", true},
+        {"HostInfo", true},
+        {"HookInsert", true},
+        {"Embed", true},
+        {"I18nQuery", false},
+        {"EmuGameInfo", false},
+    }};
+    for (const auto& callback : callbacks) {
+      const std::string detail =
+          std::string("Luna_Start callback slot=") + callback.first;
+      AppendLucaDiagnosticLedgerRecord(
+          "luna_callback_registration", "luna_auto",
+          callback.second ? "passed_nonnull" : "passed_null", "Luna_Start",
+          nullptr, 0, true, callback.second, -1, detail.c_str());
+    }
+    AppendLucaDiagnosticLedgerRecord(
+        "luna_start", "luna_bridge", "calling", "Luna_Start", nullptr, 0,
+        false, false, -1,
+        "engine auto-hook lifecycle begins in the injected LunaHook DLL");
+  }
   bridge.start(&LunaConnect, &LunaDisconnect, &LunaThreadCreate,
                &LunaThreadRemove, &LunaOutput, &LunaHostInfo, &LunaHookInsert,
                &LunaEmbed, nullptr, nullptr);
+  if (g_luna.diagnostic_luca_text) {
+    AppendLucaDiagnosticLedgerRecord(
+        "luna_start", "luna_bridge", "returned_void", "Luna_Start", nullptr,
+        0, false, false, -1,
+        "callback slots registered; FindHooks discovery is dispatched after LunaConnect");
+  }
 
   // 触发 attach：先建 host<->hook 管道，再判断目标是否需要注入。需要则把
   // LunaHook<arch>.dll 注入游戏（复用 CreateRemoteThread(LoadLibraryW) 纯 DLL 注入，等价
   // LunaTranslator 的 shareddllproxy dllinject；LunaHook.dll 自初始化、连回管道、自动识别引擎
   // 装台词 hook → Output 回调回传）。
+  if (g_luna.diagnostic_luca_text) {
+    AppendLucaDiagnosticLedgerRecord(
+        "luna_connect_process", "luna_bridge", "calling",
+        "Luna_ConnectProcess", nullptr, 0, false, false, -1,
+        "host attach requested for target process");
+  }
   bridge.connect(pid);
-  if (bridge.need_inject(pid)) {
-    const std::wstring hook_path =
-        InjectorDir() + L"LunaHook" + kLunaArch + L".dll";
+  if (g_luna.diagnostic_luca_text) {
+    AppendLucaDiagnosticLedgerRecord(
+        "luna_connect_process", "luna_bridge", "returned_void",
+        "Luna_ConnectProcess", nullptr, 0, false, false, -1,
+        "API returned void; the later LunaConnect callback is the ready-boundary evidence");
+  }
+  const bool need_inject = bridge.need_inject(pid);
+  if (g_luna.diagnostic_luca_text) {
+    AppendLucaDiagnosticLedgerRecord(
+        "luna_need_inject", "luna_bridge",
+        need_inject ? "returned_true" : "returned_false",
+        "Luna_CheckIfNeedInject", nullptr, 0, true, need_inject, -1,
+        "API return recorded; this does not prove remote Hook DLL load or engine HookInsert");
+  }
+  if (need_inject) {
     if (GetFileAttributesW(hook_path.c_str()) == INVALID_FILE_ATTRIBUTES) {
+      if (g_luna.diagnostic_luca_text) {
+        AppendLucaDiagnosticLedgerRecord(
+            "luna_hook_dll_injection", "luna_auto",
+            "not_called_file_missing", "InjectDll", nullptr, 0, true, false,
+            -1, "LunaHook architecture-matched DLL is missing");
+      }
       fprintf(stderr, "[luna] LunaHook%ls.dll 缺失，无法注入；仅 GDI hook\n",
               kLunaArch);
-    } else if (!InjectDll(target, hook_path)) {
-      header->hook_diagnostics |= kDiagLunaInjectFailed;
-      fprintf(stderr, "[luna] LunaHook%ls.dll 注入失败；仅 GDI hook\n",
-              kLunaArch);
     } else {
-      fprintf(stderr, "[luna] LunaHook%ls.dll 已注入 pid=%lu，等待连接...\n",
-              kLunaArch, pid);
+      const bool injected = InjectDll(target, hook_path);
+      if (g_luna.diagnostic_luca_text) {
+        AppendLucaDiagnosticLedgerRecord(
+            "luna_hook_dll_injection", "luna_auto",
+            injected ? "returned_true" : "returned_false", "InjectDll",
+            nullptr, 0, true, injected, -1,
+            "remote LoadLibrary thread was created; this does not prove engine hook discovery");
+      }
+      if (!injected) {
+        header->hook_diagnostics |= kDiagLunaInjectFailed;
+        fprintf(stderr, "[luna] LunaHook%ls.dll 注入失败；仅 GDI hook\n",
+                kLunaArch);
+      } else {
+        fprintf(stderr,
+                "[luna] LunaHook%ls.dll 已注入 pid=%lu，等待连接...\n",
+                kLunaArch, pid);
+      }
     }
   } else {
     fprintf(stderr,
@@ -1215,6 +3390,14 @@ bool InitLunaHook(SharedHeader* header, HANDLE target, DWORD pid, int codepage,
 // 立即退出，故成功启动过 Host 时故意保留模块到进程结束，由 OS 安全回收。幂等。
 void ShutdownLunaHook() {
   if (g_luna.host_dll != nullptr) {
+    // Close the diagnostic gate before calling into LunaHost.  DetachProcess
+    // is an external pipe operation; holding our JSON lock across it could
+    // deadlock if LunaHost waits for a callback thread that is itself waiting
+    // for this lock.  CloseLucaDiagnosticFiles records the shutdown boundary,
+    // marks callbacks inactive, and closes both files while g_luna.header is
+    // still valid.  Late diagnostic callbacks then return before touching any
+    // state that is cleared below.
+    CloseLucaDiagnosticFiles();
     if (g_luna.detach != nullptr && g_luna.pid != 0) {
       g_luna.detach(g_luna.pid);
     }
@@ -1224,12 +3407,17 @@ void ShutdownLunaHook() {
     g_luna.insert_pc = nullptr;
     g_luna.insert_hook = nullptr;
     g_luna.remove_hook = nullptr;
+    g_luna.find_hooks = nullptr;
     g_luna.hook_codes.clear();
     g_luna.blocked_hook_codes.clear();
     g_luna.blocked_hook_names.clear();
     g_luna.confirmed_blocked_hook_names.clear();
     g_luna.preferred_hook_codes.clear();
+    g_luna.diagnostic_hook_lanes.clear();
     g_luna.normalize_mages_controls = false;
+    g_luna.diagnostic_luca_text = false;
+    g_luna.decode_luca_role_tokens = false;
+    g_luna.preserve_luca_repetitive_text = false;
     InterlockedExchange(&g_luna.blocked_hook_remove_requests, 0);
     InterlockedExchange(&g_luna.blocked_hook_remove_confirmations, 0);
     g_luna.pid = 0;
@@ -1242,6 +3430,9 @@ struct LunaOptions {
   int codepage = 932;     // --luna-codepage（日文默认 SHIFT_JIS）
   bool pc_hooks = false;  // --luna-pchooks 补装通用 PC hooks
   bool normalize_mages_controls = false;
+  bool diagnostic_luca_text = false;
+  bool decode_luca_role_tokens = false;
+  bool preserve_luca_repetitive_text = false;
   uint32_t defer_until_running_ms = 0;
   std::vector<std::wstring> hook_codes;  // 版本专用、已验证的 H-code
   std::vector<std::wstring> blocked_hook_codes;  // SHA-256 精确匹配的危险自动 hook
@@ -1252,6 +3443,7 @@ struct LunaOptions {
 
 std::string ReadUtf8File(const std::wstring& path);
 std::string Sha256File(const std::wstring& path);
+std::wstring ProcessImagePath(HANDLE process);
 fushi_voice_hook::LunaTargetIdentity BuildTargetIdentity(
     const std::wstring& executable, DWORD pid);
 
@@ -1266,6 +3458,23 @@ void ApplyLunaProfiles(const std::wstring& executable, DWORD pid,
     if (match.enable_pc_hooks) options->pc_hooks = true;
     if (match.normalize_mages_controls) {
       options->normalize_mages_controls = true;
+    }
+    if (match.diagnostic_luca_text) {
+      options->diagnostic_luca_text = true;
+      fprintf(stderr,
+              "[luna] matched %s Luca full text thread diagnostic mode\n",
+              source);
+    }
+    if (match.decode_luca_role_tokens) {
+      options->decode_luca_role_tokens = true;
+      fprintf(stderr,
+              "[luna] matched %s Luca native role-token decoder\n", source);
+    }
+    if (match.preserve_luca_repetitive_text) {
+      options->preserve_luca_repetitive_text = true;
+      fprintf(stderr,
+              "[luna] matched %s Luca source-scoped repetitive-text preservation\n",
+              source);
     }
     if (match.defer_until_running_ms > options->defer_until_running_ms) {
       options->defer_until_running_ms = match.defer_until_running_ms;
@@ -1299,6 +3508,11 @@ void ApplyLunaProfiles(const std::wstring& executable, DWORD pid,
       }
     }
     for (const std::wstring& code : match.preferred_hook_codes) {
+      if (options->diagnostic_luca_text) {
+        // A diagnostic run is an inventory pass: no profile-level preference
+        // may silently hide another Hook from the callback stream.
+        continue;
+      }
       if (std::find(options->preferred_hook_codes.begin(),
                     options->preferred_hook_codes.end(),
                     code) == options->preferred_hook_codes.end()) {
@@ -1924,8 +4138,12 @@ int RunInjection(HANDLE target, DWORD pid, const std::wstring& dll_path,
     }
     if (!luna_startup_gate.ShouldAttempt(text_owner)) return;
     luna_initialized =
-        InitLunaHook(header, target, pid, luna.codepage, luna.pc_hooks,
+        InitLunaHook(header, target, pid, dll_path, luna.codepage,
+                     luna.pc_hooks,
                      luna.normalize_mages_controls,
+                     luna.diagnostic_luca_text,
+                     luna.decode_luca_role_tokens,
+                     luna.preserve_luca_repetitive_text,
                      luna.hook_codes, luna.blocked_hook_codes,
                      luna.blocked_hook_names, luna.preferred_hook_codes);
   };
@@ -2495,6 +4713,45 @@ GameChildWaitResult WaitForGameChildProcess(
     if (action != fushi_voice_hook::ChildWaitAction::kWait) return {candidate, action};
     Sleep(100);
   }
+}
+
+std::wstring LoadedModulePath(HMODULE module) {
+  if (module == nullptr) return L"";
+  std::vector<wchar_t> buffer(32768, L'\0');
+  const DWORD length = GetModuleFileNameW(module, buffer.data(),
+                                           static_cast<DWORD>(buffer.size()));
+  if (length == 0 || length >= buffer.size()) return L"";
+  return std::wstring(buffer.data(), length);
+}
+
+std::wstring CurrentExecutablePath() {
+  std::vector<wchar_t> buffer(32768, L'\0');
+  const DWORD length = GetModuleFileNameW(nullptr, buffer.data(),
+                                           static_cast<DWORD>(buffer.size()));
+  if (length == 0 || length >= buffer.size()) return L"";
+  return std::wstring(buffer.data(), length);
+}
+
+std::string FileVersionString(const std::wstring& path) {
+  if (path.empty()) return {};
+  DWORD ignored = 0;
+  const DWORD size = GetFileVersionInfoSizeW(path.c_str(), &ignored);
+  if (size == 0) return {};
+  std::vector<uint8_t> data(size);
+  if (!GetFileVersionInfoW(path.c_str(), 0, size, data.data())) return {};
+  VS_FIXEDFILEINFO* fixed = nullptr;
+  UINT fixed_size = 0;
+  if (!VerQueryValueW(data.data(), L"\\",
+                      reinterpret_cast<LPVOID*>(&fixed), &fixed_size) ||
+      fixed == nullptr || fixed_size < sizeof(VS_FIXEDFILEINFO)) {
+    return {};
+  }
+  std::ostringstream version;
+  version << HIWORD(fixed->dwFileVersionMS) << '.'
+          << LOWORD(fixed->dwFileVersionMS) << '.'
+          << HIWORD(fixed->dwFileVersionLS) << '.'
+          << LOWORD(fixed->dwFileVersionLS);
+  return version.str();
 }
 
 std::string Sha256File(const std::wstring& path) {

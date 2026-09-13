@@ -15,9 +15,11 @@ void main() {
     'launcher builds helper before Flutter and records exact source state',
     () {
       final String source = launcher.readAsStringSync();
+      final String stateSource = stateScript.readAsStringSync();
       final String packaging = packager.readAsStringSync();
 
       expect(source, contains('get_windows_build_state.ps1'));
+      expect(stateSource, contains('core.quotePath=false'));
       expect(source, contains('.last_built_state'));
       expect(source, isNot(contains('status --porcelain')));
       expect(source, contains('prepare_windows_gal_helper.ps1'));
@@ -37,6 +39,20 @@ void main() {
       expect(
         source.indexOf('prepare_windows_gal_helper.ps1'),
         lessThan(source.indexOf('build windows --release')),
+      );
+      expect(
+        source,
+        contains('RECHECK_STATE'),
+        reason:
+            '在依赖准备后重新核对 state/stamp，避免并行 launcher 重复进入 helper build',
+      );
+      expect(
+        source.indexOf('RECHECK_STATE'),
+        lessThan(source.indexOf('echo [5/7] Building and testing')),
+      );
+      expect(
+        source,
+        contains('Another launcher already completed this exact source state'),
       );
       expect(source, contains('-HelperAlreadyBuilt'));
       expect(packaging, contains(r'[switch]$HelperAlreadyBuilt'));
@@ -93,7 +109,7 @@ void main() {
   );
 
   test(
-    'build state tracks source but ignores gitignored build products',
+    'build state tracks source but ignores docs and gitignored build products',
     () async {
       if (!Platform.isWindows) return;
 
@@ -141,12 +157,49 @@ void main() {
       await File('${temp.path}/.gitignore').writeAsString('build/\n');
       final File tracked = File('${temp.path}/source.txt');
       await tracked.writeAsString('one\n');
-      await git(<String>['add', '.gitignore', 'source.txt']);
+      final File trackedDocs = File('${temp.path}/docs/README.md');
+      await trackedDocs.parent.create(recursive: true);
+      await trackedDocs.writeAsString('docs\n');
+      final File trackedTest = File('${temp.path}/test/fixture.txt');
+      await trackedTest.parent.create(recursive: true);
+      await trackedTest.writeAsString('test\n');
+      final File trackedStateTool =
+          File('${temp.path}/tool/get_windows_build_state.ps1');
+      await trackedStateTool.parent.create(recursive: true);
+      await trackedStateTool.writeAsString('state tool\n');
+      final File trackedLauncher =
+          File('${temp.path}/启动Hibiki最新版.bat');
+      await trackedLauncher.writeAsString('launcher\n');
+      await git(<String>[
+        'add',
+        '.gitignore',
+        'source.txt',
+        'docs/README.md',
+        'test/fixture.txt',
+        'tool/get_windows_build_state.ps1',
+        '启动Hibiki最新版.bat',
+      ]);
       await git(<String>['commit', '-m', 'fixture']);
 
       final String clean = await state();
       await Directory('${temp.path}/build').create();
       await File('${temp.path}/build/output.exe').writeAsString('generated');
+      expect(await state(), clean);
+
+      await trackedDocs.writeAsString('docs changed\n');
+      expect(await state(), clean);
+
+      await trackedTest.writeAsString('test changed\n');
+      expect(await state(), clean);
+
+      await trackedStateTool.writeAsString('state tool changed\n');
+      expect(await state(), clean);
+
+      await trackedLauncher.writeAsString('launcher changed\n');
+      expect(await state(), clean);
+
+      await Directory('${temp.path}/docs').create();
+      await File('${temp.path}/docs/bug-note.md').writeAsString('notes\n');
       expect(await state(), clean);
 
       await tracked.writeAsString('two\n');

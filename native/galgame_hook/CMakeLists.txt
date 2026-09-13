@@ -16,6 +16,13 @@ project(fushi_voice_hook LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+add_executable(fushi_luca_token_decoder_test
+  "tests/luca_token_decoder_test.cpp")
+target_include_directories(fushi_luca_token_decoder_test PRIVATE "include")
+if(MSVC)
+  target_compile_options(fushi_luca_token_decoder_test PRIVATE /utf-8)
+endif()
+
 # 源码含中文注释/字符串（UTF-8 无 BOM）。中文 locale 下 MSVC 默认按 GBK 解析会把 UTF-8
 # 多字节序列误读、错乱引号/大括号（本组件即因此曾编译失败）。/utf-8 明确按 UTF-8 解析。
 if(MSVC)
@@ -146,6 +153,8 @@ add_test(NAME fushi_leaf_autoprofile_test
 
 # Siglus OVK 索引/Ogg 完整性解析是纯函数，独立小测试不需启动或注入游戏。
 enable_testing()
+add_test(NAME fushi_luca_token_decoder_test
+  COMMAND fushi_luca_token_decoder_test)
 add_executable(fushi_siglus_ovk_test
   "tests/siglus_ovk_test.cpp"
 )
@@ -761,7 +770,7 @@ add_executable(fushi_voice_injector
 )
 target_include_directories(fushi_voice_injector PRIVATE "include" "hook" "injector")
 target_compile_definitions(fushi_voice_injector PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
-target_link_libraries(fushi_voice_injector PRIVATE shell32 bcrypt)
+target_link_libraries(fushi_voice_injector PRIVATE shell32 bcrypt version)
 
 add_executable(fushi_siglus_child_readiness_test
   "tests/siglus_child_readiness_test.cpp")

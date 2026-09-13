@@ -14,12 +14,64 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $sourceRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$buildRoot = Join-Path $sourceRoot 'build'
+$buildLogDirectory = Join-Path $buildRoot 'logs'
+New-Item -ItemType Directory -Force -Path $buildLogDirectory | Out-Null
+$buildLogName = 'gal-helper-build-{0}-{1}.log' -f (Get-Date -Format 'yyyyMMdd-HHmmss-fff'), $PID
+$script:BuildLogPath = [IO.Path]::GetFullPath((Join-Path $buildLogDirectory $buildLogName))
+$script:BuildFailureExitCode = $null
+Set-Content -LiteralPath $script:BuildLogPath -Encoding UTF8 -Value (@(
+    'kind=gal-helper-build'
+    "started_utc=$([DateTime]::UtcNow.ToString('o'))"
+    "repo=$sourceRoot"
+    "script=$($MyInvocation.MyCommand.Path)"
+    'log_directory_excluded_from_source_fingerprint=true'
+  ) -join [Environment]::NewLine)
+Write-Host "[BUILD LOG] $script:BuildLogPath"
+
+function Write-BuildLogMarker {
+  param([Parameter(Mandatory = $true)][string]$Message)
+
+  $line = "[build] $Message"
+  Add-Content -LiteralPath $script:BuildLogPath -Encoding UTF8 -Value $line
+  Write-Host $line
+}
+
+function Write-BuildLogCommandOutput {
+  [CmdletBinding()]
+  param(
+    [Parameter(ValueFromPipeline = $true)][AllowNull()][object]$InputObject
+  )
+
+  process {
+    $line = [string]$InputObject
+    Add-Content -LiteralPath $script:BuildLogPath -Encoding UTF8 -Value $line
+    Write-Host $line
+  }
+}
+
+trap {
+  $caughtError = $_
+  try {
+    Write-BuildLogMarker "status=failed error=$($caughtError.Exception.ToString())"
+  }
+  catch {
+    # Do not mask the original build error if the log volume becomes unavailable.
+  }
+  Write-Host "[BUILD LOG] $script:BuildLogPath"
+  if ($null -ne $script:BuildFailureExitCode) {
+    exit $script:BuildFailureExitCode
+  }
+  throw $caughtError
+}
+
 $fingerprintScript = Join-Path $PSScriptRoot 'helper_source_fingerprint.ps1'
 if (-not (Test-Path -LiteralPath $fingerprintScript -PathType Leaf)) {
   throw "Helper source fingerprint script is missing: $fingerprintScript"
 }
 . $fingerprintScript
 $sourceFingerprintBefore = Get-FushiHelperSourceFingerprint -SourceRoot $sourceRoot
+Write-BuildLogMarker "source_fingerprint_before=$sourceFingerprintBefore"
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
   $outputRoot = [IO.Path]::GetFullPath((Join-Path $sourceRoot 'dist'))
 }
@@ -29,16 +81,26 @@ elseif ([IO.Path]::IsPathRooted($OutputDirectory)) {
 else {
   $outputRoot = [IO.Path]::GetFullPath((Join-Path $sourceRoot $OutputDirectory))
 }
-$buildRoot = Join-Path $sourceRoot 'build'
-
 function Invoke-Checked {
   param(
     [Parameter(Mandatory = $true)][string]$FilePath,
     [Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments
   )
-  & $FilePath @Arguments
-  if ($LASTEXITCODE -ne 0) {
-    throw "$FilePath failed with exit code $LASTEXITCODE"
+  $commandText = (@($FilePath) + @($Arguments)) -join ' '
+  Write-BuildLogMarker "command=$commandText"
+  try {
+    & $FilePath @Arguments 2>&1 | Write-BuildLogCommandOutput
+    $exitCode = $LASTEXITCODE
+  }
+  catch {
+    $commandError = $_
+    Write-BuildLogMarker "command_exception=$($commandError.Exception.ToString())"
+    throw $commandError
+  }
+  Write-BuildLogMarker "command_exit_code=$exitCode"
+  if ($exitCode -ne 0) {
+    $script:BuildFailureExitCode = [int]$exitCode
+    throw "$FilePath failed with exit code $exitCode"
   }
 }
 
@@ -93,6 +155,7 @@ function Get-StageRelativePath {
 }
 
 New-Item -ItemType Directory -Force -Path $outputRoot | Out-Null
+Write-BuildLogMarker "output_root=$outputRoot"
 
 foreach ($config in @(
   @{ Arch = 'x64'; GeneratorArch = 'x64' },
@@ -100,9 +163,11 @@ foreach ($config in @(
 )) {
   $arch = $config.Arch
   $buildDir = Join-Path $buildRoot $arch
+  Write-BuildLogMarker "stage=$arch configure"
   Invoke-Checked -FilePath cmake -Arguments @(
     '-S', $sourceRoot, '-B', $buildDir, '-A', $config.GeneratorArch
   )
+  Write-BuildLogMarker "stage=$arch build"
   Invoke-Checked -FilePath cmake -Arguments @(
     '--build', $buildDir, '--config', 'Release'
   )
@@ -111,6 +176,7 @@ foreach ($config in @(
     # so a CMakeLists refactor that stops registering the suite would read as a
     # pass. Same "zero tests executed masquerades as green" family as BUG-1157.
     # Matches .github/workflows/native-fushidicts-gate.yml.
+    Write-BuildLogMarker "stage=$arch test"
     Invoke-Checked -FilePath ctest -Arguments @(
       '--test-dir', $buildDir, '-C', 'Release', '--output-on-failure',
       '--no-tests=error'
@@ -171,6 +237,8 @@ $leZip = Join-Path $tempBase 'Locale.Emulator.2.5.0.1.zip'
 $leDir = Join-Path $tempBase 'hibiki-locale-emulator-2.5.0.1'
 $leUrl = 'https://github.com/xupefei/Locale-Emulator/releases/download/v2.5.0.1/Locale.Emulator.2.5.0.1.zip'
 $expectedLeSha = '808ff584426d52cc775ad6406da00622f454be95bd4c8fbca42eef4b7235ad5c'
+$leLicenseSource = Join-Path $sourceRoot 'third_party/locale_emulator/LICENSE-LGPL.txt'
+$expectedLeLicenseSha = 'ea8af5e789cb2d4e9b10bce3874982ade163b749b6bfbdb32e2df21c4d106de1'
 if (-not (Test-Path -LiteralPath $leZip -PathType Leaf) -or
     (Get-Sha256Hex -Path $leZip) -ne $expectedLeSha) {
   Invoke-WebRequest -Uri $leUrl -OutFile $leZip
@@ -190,9 +258,25 @@ if (Test-Path -LiteralPath $leDir) {
 Expand-Archive -LiteralPath $leZip -DestinationPath $leDir -Force
 Copy-Item -LiteralPath (Join-Path $leDir 'LoaderDll.dll') -Destination $stageX86 -Force
 Copy-Item -LiteralPath (Join-Path $leDir 'LocaleEmulator.dll') -Destination $stageX86 -Force
-Invoke-WebRequest `
-  -Uri 'https://raw.githubusercontent.com/xupefei/Locale-Emulator/v2.5.0.1/COPYING.LESSER' `
-  -OutFile (Join-Path $stageX86 'LocaleEmulator-LGPL-3.0.txt')
+
+# The pinned source tree carries the complete LGPL-3.0 text as a tracked,
+# offline license copy. Do not make a successful binary build depend on a
+# second raw.githubusercontent.com request; reject a missing or modified copy
+# instead of silently omitting or substituting the license.
+if (-not (Test-Path -LiteralPath $leLicenseSource -PathType Leaf)) {
+  throw "Locale Emulator license source is missing: $leLicenseSource"
+}
+$actualLeLicenseSha = Get-Sha256Hex -Path $leLicenseSource
+if ($actualLeLicenseSha -ne $expectedLeLicenseSha) {
+  throw "Locale Emulator license SHA-256 mismatch: $actualLeLicenseSha"
+}
+$leLicenseDestination = Join-Path $stageX86 'LocaleEmulator-LGPL-3.0.txt'
+Copy-Item -LiteralPath $leLicenseSource -Destination $leLicenseDestination -Force
+$stagedLeLicenseSha = Get-Sha256Hex -Path $leLicenseDestination
+if ($stagedLeLicenseSha -ne $expectedLeLicenseSha) {
+  throw "Staged Locale Emulator license SHA-256 mismatch: $stagedLeLicenseSha"
+}
+Write-BuildLogMarker "locale_emulator_license source=repository_pinned sha256=$actualLeLicenseSha destination=$leLicenseDestination"
 
 $expected = @{
   x64 = @(
@@ -234,7 +318,7 @@ foreach ($arch in @('x64', 'x86')) {
   Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zip -Force
   $hash = Get-Sha256Hex -Path $zip
   Set-Content -LiteralPath "$zip.sha256" -Value $hash -NoNewline
-  Write-Host "$arch sha256=$hash"
+  Write-BuildLogMarker "$arch sha256=$hash"
 }
 
 # Staging is packaging-only and must not be copied into the app bundle.
@@ -252,4 +336,6 @@ if ($sourceFingerprintAfter -ne $sourceFingerprintBefore) {
 Set-Content -LiteralPath (Join-Path $outputRoot 'voice_hook_source.sha256') `
   -Value $sourceFingerprintAfter -NoNewline -Encoding ascii
 
+Write-BuildLogMarker "status=success output_root=$outputRoot source_fingerprint=$sourceFingerprintAfter"
 Write-Host "Helper distribution archives ready: $outputRoot"
+Write-Host "[BUILD LOG] $script:BuildLogPath"

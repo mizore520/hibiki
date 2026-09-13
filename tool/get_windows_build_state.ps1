@@ -32,14 +32,65 @@ function Get-FileSha256Hex {
   finally { $stream.Dispose() }
 }
 
+function Test-IsBuildInputPath {
+  param([Parameter(Mandatory = $true)][string] $RelativePath)
+
+  $normalized = ($RelativePath -replace '\\', '/').TrimStart('./')
+  if ([string]::IsNullOrWhiteSpace($normalized)) {
+    return $false
+  }
+
+  # The launcher fingerprint must describe inputs to the Windows bundle, not
+  # repository bookkeeping. In particular, bug-index regeneration used to
+  # make an unchanged EXE look stale because docs/BUGS.md and a new
+  # docs/bugs/*.md were included in the all-worktree diff. Keep this exclusion
+  # path-based and conservative: application/native/package/tool sources still
+  # participate in the fingerprint, including untracked files.
+  if ($normalized -match '^(?:docs/|\.codex-test/|\.worktrees/|\.github/)') {
+    return $false
+  }
+  if ($normalized -match '^(?:fushi/(?:test|integration_test)/|(?:test|integration_test)/|packages/[^/]+/test/|native(?:/[^/]+)*/tests/)') {
+    return $false
+  }
+  if ($normalized -match '^(?:fushi/docs/|packages/[^/]+/docs/|native(?:/[^/]+)*/docs/)') {
+    return $false
+  }
+  if ($normalized -match '^(?:启动Hibiki最新版\.bat|tool/get_windows_build_state\.ps1)$') {
+    return $false
+  }
+  if ($normalized -match '(^|/)(?:AGENTS|CLAUDE)(?:\.local)?\.md$') {
+    return $false
+  }
+  return $true
+}
+
 $repo = (Resolve-Path -LiteralPath $RepoRoot).Path
 $head = (Invoke-GitText 'rev-parse' '--verify' 'HEAD').Trim()
-$trackedPatch = Invoke-GitText 'diff' '--binary' 'HEAD' '--' '.'
+# Keep non-ASCII path names literal. Git's default octal quoting (for example
+# the Chinese launcher filename) would otherwise be fed back as a literal
+# path argument below and can become an invalid Windows path such as /345.
+$trackedPathText = Invoke-GitText '-c' 'core.quotePath=false' 'diff' '--name-only' 'HEAD' '--' '.'
+$trackedPaths = @(
+  $trackedPathText -split "`n" |
+    ForEach-Object { $_.TrimEnd("`r") } |
+    Where-Object {
+      -not [string]::IsNullOrWhiteSpace($_) -and
+        (Test-IsBuildInputPath -RelativePath $_)
+    }
+)
+$trackedPatch = ''
+if ($trackedPaths.Count -gt 0) {
+  $diffArguments = @('diff', '--binary', 'HEAD', '--') + $trackedPaths
+  $trackedPatch = Invoke-GitText @diffArguments
+}
 $untrackedText = Invoke-GitText 'ls-files' '--others' '--exclude-standard'
 $untracked = @(
   $untrackedText -split "`n" |
     ForEach-Object { $_.TrimEnd("`r") } |
-    Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+    Where-Object {
+      -not [string]::IsNullOrWhiteSpace($_) -and
+        (Test-IsBuildInputPath -RelativePath $_)
+    }
 )
 [Array]::Sort($untracked, [StringComparer]::Ordinal)
 

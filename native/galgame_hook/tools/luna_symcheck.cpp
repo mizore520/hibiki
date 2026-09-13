@@ -51,6 +51,10 @@ int main() {
   printf("bridge ABI=%u, vendored Luna=10.16.1.2 (0x%08x)\n",
          fushi_voice_hook::kLunaBridgeAbiVersion,
          fushi_voice_hook::kLunaVendoredVersion);
+  printf("FindHooks ABI: __cdecl(DWORD, SearchParam by value, callback, LPCWSTR)\n");
+  printf("sizeof(SearchParam)=0x%zx, search_method offset=0x%zx, callback pointers must be copied before return\n",
+         sizeof(fushi_voice_hook::LunaSearchParam),
+         offsetof(fushi_voice_hook::LunaSearchParam, search_method));
 
   int missing_required = 0;
   printf("== 必需导出 ==\n");
