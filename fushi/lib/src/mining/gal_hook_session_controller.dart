@@ -121,6 +121,21 @@ enum GalTrackEmptyHint { generic, resourceMode, loopbackMode }
 /// [kGalOverlongSliceSuspectReason] 让 UI 亮黄提醒，而不是静默当正常语音。
 const int kGalOverlongSliceSuspectMs = 20000;
 
+/// Exact native event-owned lines (currently the pinned Little Busters
+/// producer) have no safe generic fallback.  These reasons deliberately do
+/// not claim that the game line is unvoiced; they describe why the exact
+/// resource proof was unavailable.
+const String kGalEventOwnedResourceUnavailableReason =
+    'event_owned_resource_unavailable';
+const String kGalEventOwnedResourceNotFoundReason =
+    'event_owned_resource_not_found';
+const String kGalEventOwnedResourceBytesUnavailableReason =
+    'event_owned_resource_bytes_unavailable';
+const String kGalEventOwnedResourceIdentityUnavailableReason =
+    'event_owned_resource_identity_unavailable';
+const String kGalLittleBustersExplicitNoVoiceReason =
+    'little_busters_message_voice_id_zero';
+
 /// 自动降级链允许走到哪一级（取代旧的 bool `allowAudioFallback`）。
 ///
 /// 旧 bool 把两件不同的事捆成一个开关：`false` 既禁掉了**整机混音**（真会混进 BGM），
@@ -993,8 +1008,23 @@ class GalHookSessionController extends ChangeNotifier {
   }
 
   static bool _isLittleBustersProductionHookCode(String? hookCode) {
-    return hookCode == 'HQFN1C@8BA37:LITBUS_WIN32.exe';
+    return hookCode == 'HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe';
   }
+
+  static bool _isLittleBustersEventOwnedLine(GalHookedLine line) {
+    return line.sourceKind == 2 &&
+        line.eventKind == GalTextEventKind.line &&
+        _isLittleBustersProductionHookCode(line.hookCode);
+  }
+
+  static bool _isLittleBustersEventOwnedEntry(TexthookerLineEntry entry) {
+    return entry.source == TexthookerLineSource.engineHook &&
+        entry.eventOwnedVoice &&
+        _isLittleBustersProductionHookCode(entry.textHookCode);
+  }
+
+  static bool _isLittleBustersExplicitNoVoiceEntry(TexthookerLineEntry entry) =>
+      _isLittleBustersEventOwnedEntry(entry) && entry.littleBustersVoiceId == 0;
 
   /// 「本局当前可用的台词行」——**工作台展示与游戏内制卡共用这一份**。
   ///
@@ -1175,6 +1205,16 @@ class GalHookSessionController extends ChangeNotifier {
   _pendingResourceMatches =
       <String, ({int timestampMs, int textEventId, bool eventOwnedOnly})>{};
 
+  /// Exact event-owned resource waits are bounded and terminal.  Keeping the
+  /// settled event id prevents a later generic refresh/mining pass from
+  /// reopening a conclusively failed exact lookup and then guessing a newer
+  /// resource.  The event id is part of the value because a folded row may
+  /// reuse the same visible row id for a new native event.
+  final Map<String, ({int textEventId, String reason})>
+  _eventOwnedResourceSettled = <String, ({int textEventId, String reason})>{};
+  final Map<String, Future<String?>> _eventOwnedResourceWaits =
+      <String, Future<String?>>{};
+
   /// 被折叠吞掉的行 id → 合并结果 id。
   ///
   /// [_redirectFoldedLines] 会把所有以 lineId 为键的会话态**即时**搬过去，但它
@@ -1226,6 +1266,8 @@ class GalHookSessionController extends ChangeNotifier {
       _lineTimestampCache.remove(old);
       _lineTextEventIdCache.remove(old);
       _pendingResourceMatches.remove(old);
+      _eventOwnedResourceSettled.remove(old);
+      _eventOwnedResourceWaits.remove(old);
 
       // ④ loopback：掐掉被吞行的冻结定时器；起点取**最早**那个——这句话是从那一刻
       //    开始说的，用晚的那个会把回取窗口算短。
@@ -2568,6 +2610,8 @@ class GalHookSessionController extends ChangeNotifier {
       _manualRecaptureLines.add(lineId);
       // 补录即用户裁决：清掉这行的资源配对与逐行选轨，也别让延迟资源匹配改回去。
       _pendingResourceMatches.remove(lineId);
+      _eventOwnedResourceSettled.remove(lineId);
+      _eventOwnedResourceWaits.remove(lineId);
       _lineVoiceSourcePtr.remove(lineId);
       _textService.updateLineAudio(
         lineId,
@@ -2764,6 +2808,7 @@ class GalHookSessionController extends ChangeNotifier {
         sourceSequence: line.seq,
         hookTimestampMs: line.timestampMs,
         eventOwnedVoice: line.eventOwnedVoice,
+        littleBustersVoiceId: line.littleBustersVoiceId,
         textThreadKey: line.textThreadKey,
         textThreadLabel: line.textThreadLabel,
         textHookCode: line.hookCode.isEmpty ? null : line.hookCode,
@@ -2774,10 +2819,31 @@ class GalHookSessionController extends ChangeNotifier {
       _redirectFoldedLines(_textService.lastFoldedLineIds, entry.id);
       _lineTimestampCache[entry.id] = line.timestampMs;
       _lineTextEventIdCache[entry.id] = line.seq;
+      _eventOwnedResourceSettled.remove(entry.id);
+      _eventOwnedResourceWaits.remove(entry.id);
+      if (_isLittleBustersEventOwnedEntry(entry) &&
+          line.littleBustersVoiceId == null) {
+        _textService.updateLineAudio(
+          entry.id,
+          status: TexthookerLineAudioStatus.missing,
+          backend: 'game_resource',
+          fallbackReason: kGalEventOwnedResourceIdentityUnavailableReason,
+        );
+        continue;
+      }
+      if (line.littleBustersVoiceId == 0) {
+        _textService.updateLineAudio(
+          entry.id,
+          status: TexthookerLineAudioStatus.unavailable,
+          backend: 'game_resource',
+          fallbackReason: kGalLittleBustersExplicitNoVoiceReason,
+        );
+      }
       if (_isWindows &&
           !_isUserAdjudicated(entry.id) &&
           line.seq > 0 &&
-          line.timestampMs > 0) {
+          line.timestampMs > 0 &&
+          line.littleBustersVoiceId != 0) {
         _pendingResourceMatches[entry.id] = (
           timestampMs: line.timestampMs,
           textEventId: line.seq,
@@ -2962,6 +3028,8 @@ class GalHookSessionController extends ChangeNotifier {
     // 选轨与补录互斥，且都要挡住延迟资源匹配 / 延迟 loopback 冻结把结果改回去。
     _manualRecaptureLines.remove(lineId);
     _pendingResourceMatches.remove(lineId);
+    _eventOwnedResourceSettled.remove(lineId);
+    _eventOwnedResourceWaits.remove(lineId);
     _loopbackFreezeTimers.remove(lineId)?.resolve();
     _loopbackFreezeStartedAt.remove(lineId);
     _textService.updateLineAudio(
@@ -3015,6 +3083,14 @@ class GalHookSessionController extends ChangeNotifier {
 
   @visibleForTesting
   int? debugLineVoiceSourcePtr(String lineId) => _lineVoiceSourcePtr[lineId];
+
+  @visibleForTesting
+  bool debugHasPendingResourceMatch(String lineId) =>
+      _pendingResourceMatches.containsKey(lineId);
+
+  @visibleForTesting
+  String? debugEventOwnedResourceSettlementReason(String lineId) =>
+      _eventOwnedResourceSettled[lineId]?.reason;
 
   void setTrackExcluded(int sourcePtr, bool excluded) {
     final EngineHookGalAudioSource? engine = _engineSource;
@@ -3367,6 +3443,40 @@ class GalHookSessionController extends ChangeNotifier {
     }
     final EngineHookGalAudioSource? engine = _engineSource;
     if (engine == null) return null;
+    if (_isLittleBustersEventOwnedEntry(original)) {
+      while (current() && identical(engine, _engineSource)) {
+        final String? resource = await _waitForExactEventOwnedResourceId(
+          engine,
+          lineId: original.id,
+          timestampMs: tick,
+          textEventId: seq,
+          requireCurrentEvent: false,
+        );
+        if (resource != null) {
+          final Uint8List? bytes = await engine.grabPairedVoiceBytes(
+            tick,
+            textEventId: seq,
+            resourceId: resource,
+            outputExtension: outputExtension,
+            allowLatestSessionFallback: false,
+          );
+          if (bytes == null || bytes.isEmpty) {
+            _settleEventOwnedResourceMiss(
+              lineId: original.id,
+              textEventId: seq,
+              timestampMs: tick,
+              reason: kGalEventOwnedResourceBytesUnavailableReason,
+            );
+          }
+          return current() && identical(engine, _engineSource) ? bytes : null;
+        }
+        return null;
+      }
+      return null;
+    }
+    // Other event-owned popup recovery keeps the existing strict event lookup
+    // for the original occurrence.  The Little Busters fail-closed policy is
+    // intentionally scoped to the exact production entry above.
     final Stopwatch elapsed = Stopwatch()..start();
     while (current() && identical(engine, _engineSource)) {
       final String? resource = engine.findEventOwnedVoiceResourceId(
@@ -3539,6 +3649,252 @@ class GalHookSessionController extends ChangeNotifier {
         .catchError((Object _) {});
   }
 
+  bool _isLittleBustersEventOwnedLineId(String lineId) {
+    final TexthookerLineEntry? entry = _textService.entryById(lineId);
+    return entry != null && _isLittleBustersEventOwnedEntry(entry);
+  }
+
+  bool _isEventOwnedLineId(String lineId) {
+    final TexthookerLineEntry? entry = _textService.entryById(lineId);
+    return entry?.eventOwnedVoice == true ||
+        _pendingResourceMatches[lineId]?.eventOwnedOnly == true;
+  }
+
+  int _textEventIdForLine(String lineId) =>
+      _lineTextEventIdCache[lineId] ??
+      _textService.entryById(lineId)?.sourceSequence ??
+      0;
+
+  int _timestampForLine(String lineId) =>
+      _lineTimestampCache[lineId] ??
+      _textService.entryById(lineId)?.hookTimestampMs ??
+      0;
+
+  bool _isCurrentEventOwnedLine(
+    String lineId, {
+    required int textEventId,
+    required int timestampMs,
+  }) {
+    final TexthookerLineEntry? entry = _textService.entryById(lineId);
+    return entry != null &&
+        isLineInCurrentSession(entry) &&
+        _isLittleBustersEventOwnedEntry(entry) &&
+        entry.sourceSequence == textEventId &&
+        entry.hookTimestampMs == timestampMs;
+  }
+
+  void _settleEventOwnedResourceMiss({
+    required String lineId,
+    required int textEventId,
+    required int timestampMs,
+    required String reason,
+  }) {
+    final ({int timestampMs, int textEventId, bool eventOwnedOnly})? pending =
+        _pendingResourceMatches[lineId];
+    if (pending?.textEventId == textEventId &&
+        pending?.timestampMs == timestampMs) {
+      _pendingResourceMatches.remove(lineId);
+    }
+    final ({int textEventId, String reason})? settled =
+        _eventOwnedResourceSettled[lineId];
+    if (settled?.textEventId == textEventId) return;
+    _eventOwnedResourceSettled[lineId] = (
+      textEventId: textEventId,
+      reason: reason,
+    );
+    _trimCache(_eventOwnedResourceSettled);
+    final TexthookerLineEntry? entry = _textService.entryById(lineId);
+    if (entry == null ||
+        entry.sourceSequence != textEventId ||
+        entry.hookTimestampMs != timestampMs ||
+        !_isLittleBustersEventOwnedEntry(entry) ||
+        _isUserAdjudicated(lineId)) {
+      return;
+    }
+    _textService.updateLineAudio(
+      lineId,
+      status: TexthookerLineAudioStatus.missing,
+      backend: 'game_resource',
+      fallbackReason: reason,
+    );
+    _record(
+      GalHookEventSeverity.warning,
+      'match',
+      'audio.event_owned_resource_unavailable',
+      'Exact event-owned resource audio was not available; no fallback was used',
+      details: <String, Object?>{
+        'lineId': lineId,
+        'textEventId': textEventId,
+        'timestampMs': timestampMs,
+        'reason': reason,
+      },
+    );
+  }
+
+  Future<String?> _waitForExactEventOwnedResourceId(
+    EngineHookGalAudioSource engine, {
+    required String lineId,
+    required int timestampMs,
+    required int textEventId,
+    bool requireCurrentEvent = true,
+  }) {
+    final Future<String?>? inFlight = _eventOwnedResourceWaits[lineId];
+    if (inFlight != null) return inFlight;
+    late Future<String?> wait;
+    wait = () async {
+      // Always yield once so the wait is present in [_eventOwnedResourceWaits]
+      // before a zero-duration/no-ready path can settle synchronously.
+      await Future<void>.value();
+      try {
+        final ({int textEventId, String reason})? settled =
+            _eventOwnedResourceSettled[lineId];
+        if (settled?.textEventId == textEventId || _isUserAdjudicated(lineId)) {
+          return null;
+        }
+        if (requireCurrentEvent &&
+            !_isCurrentEventOwnedLine(
+              lineId,
+              textEventId: textEventId,
+              timestampMs: timestampMs,
+            )) {
+          return null;
+        }
+        final TexthookerLineEntry? lineEntry = _textService.entryById(lineId);
+        if (lineEntry != null &&
+            _isLittleBustersEventOwnedEntry(lineEntry) &&
+            (lineEntry.littleBustersVoiceId == null ||
+                lineEntry.littleBustersVoiceId == 0)) {
+          return null;
+        }
+        if (!engine.rawVoiceReady || textEventId <= 0 || timestampMs <= 0) {
+          _settleEventOwnedResourceMiss(
+            lineId: lineId,
+            textEventId: textEventId,
+            timestampMs: timestampMs,
+            reason: textEventId <= 0 || timestampMs <= 0
+                ? kGalEventOwnedResourceIdentityUnavailableReason
+                : kGalEventOwnedResourceUnavailableReason,
+          );
+          return null;
+        }
+        final Stopwatch elapsed = Stopwatch()..start();
+        final int waitUs = _resourceAudioWait.inMicroseconds;
+        final int pollUs = _resourceAudioPollInterval.inMicroseconds;
+        while (true) {
+          if (engine != _engineSource ||
+              (requireCurrentEvent &&
+                  !_isCurrentEventOwnedLine(
+                    lineId,
+                    textEventId: textEventId,
+                    timestampMs: timestampMs,
+                  ))) {
+            return null;
+          }
+          final ({int textEventId, String reason})? currentSettled =
+              _eventOwnedResourceSettled[lineId];
+          if (currentSettled?.textEventId == textEventId ||
+              _isUserAdjudicated(lineId)) {
+            return null;
+          }
+          final String? resourceId = engine.findEventOwnedVoiceResourceId(
+            timestampMs,
+            textEventId: textEventId,
+            expectedLittleBustersVoiceId: _textService
+                .entryById(lineId)
+                ?.littleBustersVoiceId,
+          );
+          if (resourceId != null && resourceId.isNotEmpty) {
+            final ({int timestampMs, int textEventId, bool eventOwnedOnly})?
+            pending = _pendingResourceMatches[lineId];
+            if (pending?.textEventId == textEventId &&
+                pending?.timestampMs == timestampMs) {
+              _pendingResourceMatches.remove(lineId);
+            }
+            if (requireCurrentEvent &&
+                !_isUserAdjudicated(lineId) &&
+                _isCurrentEventOwnedLine(
+                  lineId,
+                  textEventId: textEventId,
+                  timestampMs: timestampMs,
+                )) {
+              _textService.updateLineAudio(
+                lineId,
+                status: TexthookerLineAudioStatus.matched,
+                backend: 'game_resource',
+                resourceId: resourceId,
+              );
+            }
+            return resourceId;
+          }
+          if (waitUs <= 0 || elapsed.elapsedMicroseconds >= waitUs) {
+            _settleEventOwnedResourceMiss(
+              lineId: lineId,
+              textEventId: textEventId,
+              timestampMs: timestampMs,
+              reason: kGalEventOwnedResourceNotFoundReason,
+            );
+            return null;
+          }
+          final int remainingUs = waitUs - elapsed.elapsedMicroseconds;
+          final int delayUs = pollUs <= 0
+              ? remainingUs
+              : (pollUs < remainingUs ? pollUs : remainingUs);
+          if (delayUs <= 0) {
+            _settleEventOwnedResourceMiss(
+              lineId: lineId,
+              textEventId: textEventId,
+              timestampMs: timestampMs,
+              reason: kGalEventOwnedResourceNotFoundReason,
+            );
+            return null;
+          }
+          await Future<void>.delayed(Duration(microseconds: delayUs));
+        }
+      } finally {
+        if (identical(_eventOwnedResourceWaits[lineId], wait)) {
+          _eventOwnedResourceWaits.remove(lineId);
+        }
+      }
+    }();
+    _eventOwnedResourceWaits[lineId] = wait;
+    return wait;
+  }
+
+  void _scheduleExactEventOwnedResourceWait({
+    required EngineHookGalAudioSource engine,
+    required String lineId,
+    required int timestampMs,
+    required int textEventId,
+  }) {
+    if (_isUserAdjudicated(lineId) ||
+        _eventOwnedResourceSettled[lineId]?.textEventId == textEventId) {
+      return;
+    }
+    final Future<String?> wait = _waitForExactEventOwnedResourceId(
+      engine,
+      lineId: lineId,
+      timestampMs: timestampMs,
+      textEventId: textEventId,
+    );
+    unawaited(
+      wait.catchError((Object error, StackTrace stack) {
+        _record(
+          GalHookEventSeverity.error,
+          'match',
+          'audio.event_owned_resource_wait_failed',
+          'Exact event-owned resource wait failed',
+          details: <String, Object?>{
+            'lineId': lineId,
+            'textEventId': textEventId,
+            'error': '$error',
+            'stack': '$stack',
+          },
+        );
+        return null;
+      }),
+    );
+  }
+
   Future<Uint8List?> _captureAudioBytesNow({
     required String lineId,
     required String sentence,
@@ -3546,8 +3902,18 @@ class GalHookSessionController extends ChangeNotifier {
   }) async {
     final GalAudioSource? source = _audioSource;
     final EngineHookGalAudioSource? engine = _engineSource;
+    final bool eventOwned = _isLittleBustersEventOwnedLineId(lineId);
     if (source == null && engine == null) {
-      _markLineAudioMissing(lineId, 'audio_source_unavailable');
+      if (eventOwned) {
+        _settleEventOwnedResourceMiss(
+          lineId: lineId,
+          textEventId: _textEventIdForLine(lineId),
+          timestampMs: _timestampForLine(lineId),
+          reason: kGalEventOwnedResourceUnavailableReason,
+        );
+      } else {
+        _markLineAudioMissing(lineId, 'audio_source_unavailable');
+      }
       return null;
     }
     // 用户裁决优先于一切自动配对：点了浮窗「重播并录音」或为这句选了音轨，都说明
@@ -3568,7 +3934,64 @@ class GalHookSessionController extends ChangeNotifier {
             : 'manual_recapture',
       );
     }
-    final int timestamp = _lineTimestampCache[lineId] ?? 0;
+    final int timestamp = _timestampForLine(lineId);
+    if (eventOwned) {
+      final TexthookerLineEntry? entry = _textService.entryById(lineId);
+      if (entry != null &&
+          _isLittleBustersEventOwnedEntry(entry) &&
+          (entry.littleBustersVoiceId == null ||
+              entry.littleBustersVoiceId == 0)) {
+        _textService.updateLineAudio(
+          lineId,
+          status: entry.littleBustersVoiceId == 0
+              ? TexthookerLineAudioStatus.unavailable
+              : TexthookerLineAudioStatus.missing,
+          backend: 'game_resource',
+          fallbackReason: entry.littleBustersVoiceId == 0
+              ? kGalLittleBustersExplicitNoVoiceReason
+              : kGalEventOwnedResourceIdentityUnavailableReason,
+        );
+        return null;
+      }
+      // Little Busters event-owned lines have exactly one automatic source:
+      // the resource carrying this text event's ownership.  A miss is
+      // terminal for this occurrence; engine PCM, loopback, neighboring
+      // resources, and cached generic clips are all semantic guesses.
+      if (engine == null || !_isWindows) {
+        _settleEventOwnedResourceMiss(
+          lineId: lineId,
+          textEventId: _textEventIdForLine(lineId),
+          timestampMs: timestamp,
+          reason: kGalEventOwnedResourceUnavailableReason,
+        );
+        return null;
+      }
+      final Uint8List? paired = await _waitForPairedResourceAudio(
+        engine,
+        lineId: lineId,
+        timestamp: timestamp,
+        outputExtension: outputExtension,
+      );
+      if (paired == null || paired.isEmpty) return null;
+      _textService.updateLineAudio(
+        lineId,
+        status: TexthookerLineAudioStatus.encoded,
+        backend: 'game_resource',
+        durationMs: adtsDurationMs(paired),
+      );
+      _record(
+        GalHookEventSeverity.success,
+        'match',
+        'audio.paired_voice_encoded',
+        'Paired original voice audio encoded for mining',
+        details: <String, Object?>{
+          'lineId': lineId,
+          'chars': sentence.length,
+          'eventOwned': true,
+        },
+      );
+      return paired;
+    }
     if (engine != null && _isWindows) {
       final Uint8List? paired = await _waitForPairedResourceAudio(
         engine,
@@ -3777,13 +4200,46 @@ class GalHookSessionController extends ChangeNotifier {
     required int timestamp,
     required String outputExtension,
   }) async {
+    final bool eventOnly = _isEventOwnedLineId(lineId);
+    if (eventOnly) {
+      final TexthookerLineEntry? lineEntry = _textService.entryById(lineId);
+      if (lineEntry != null &&
+          _isLittleBustersEventOwnedEntry(lineEntry) &&
+          (lineEntry.littleBustersVoiceId == null ||
+              lineEntry.littleBustersVoiceId == 0)) {
+        return null;
+      }
+      final int textEventId = _textEventIdForLine(lineId);
+      final String? resourceId = textEventId <= 0 || timestamp <= 0
+          ? null
+          : _resourceIdForLine(lineId) ??
+                await _waitForExactEventOwnedResourceId(
+                  engine,
+                  lineId: lineId,
+                  timestampMs: timestamp,
+                  textEventId: textEventId,
+                );
+      if (resourceId == null || resourceId.isEmpty) return null;
+      final Uint8List? bytes = await engine.grabPairedVoiceBytes(
+        timestamp,
+        outputExtension: outputExtension,
+        textEventId: textEventId,
+        resourceId: resourceId,
+        allowLatestSessionFallback: false,
+      );
+      if (bytes != null && bytes.isNotEmpty) return bytes;
+      _settleEventOwnedResourceMiss(
+        lineId: lineId,
+        textEventId: textEventId,
+        timestampMs: timestamp,
+        reason: kGalEventOwnedResourceBytesUnavailableReason,
+      );
+      return null;
+    }
     final Stopwatch elapsed = Stopwatch()..start();
     final int waitUs = _resourceAudioWait.inMicroseconds;
     final int pollUs = _resourceAudioPollInterval.inMicroseconds;
     while (true) {
-      final bool eventOnly =
-          _textService.entryById(lineId)?.eventOwnedVoice == true ||
-          _pendingResourceMatches[lineId]?.eventOwnedOnly == true;
       String? resourceId = _resourceIdForLine(lineId);
       // BUG-955：mine 阶段解析具体某行，绝不走「最新语音」兜底——历史行时间戳被淘汰后 timestamp=0，
       // 借最新语音会把当前语音错配给旧台词。晚附着 live 行的资源已在捕获期固化到 _resourceIdForLine，
@@ -3792,6 +4248,9 @@ class GalHookSessionController extends ChangeNotifier {
           ? engine.findEventOwnedVoiceResourceId(
               timestamp,
               textEventId: _lineTextEventIdCache[lineId] ?? 0,
+              expectedLittleBustersVoiceId: _textService
+                  .entryById(lineId)
+                  ?.littleBustersVoiceId,
             )
           : engine.findPairedVoiceResourceId(
               timestamp,
@@ -3806,15 +4265,13 @@ class GalHookSessionController extends ChangeNotifier {
           resourceId: resourceId,
         );
       }
-      final Uint8List? bytes = eventOnly && resourceId == null
-          ? null
-          : await engine.grabPairedVoiceBytes(
-              timestamp,
-              outputExtension: outputExtension,
-              textEventId: _lineTextEventIdCache[lineId],
-              resourceId: resourceId,
-              allowLatestSessionFallback: false,
-            );
+      final Uint8List? bytes = await engine.grabPairedVoiceBytes(
+        timestamp,
+        outputExtension: outputExtension,
+        textEventId: _lineTextEventIdCache[lineId],
+        resourceId: resourceId,
+        allowLatestSessionFallback: false,
+      );
       if (bytes != null && bytes.isNotEmpty) return bytes;
       if (!engine.rawVoiceReady ||
           waitUs <= 0 ||
@@ -4764,6 +5221,8 @@ class GalHookSessionController extends ChangeNotifier {
     _loopbackCacheInFlight.clear();
     _cancelLoopbackFreezes();
     _pendingResourceMatches.clear();
+    _eventOwnedResourceSettled.clear();
+    _eventOwnedResourceWaits.clear();
     unawaited(engine.pruneVoiceDump());
     _textPollTimer?.cancel();
     _textPollTimer = Timer.periodic(
@@ -5112,6 +5571,8 @@ class GalHookSessionController extends ChangeNotifier {
     _loopbackCacheInFlight.clear();
     _cancelLoopbackFreezes();
     _pendingResourceMatches.clear();
+    _eventOwnedResourceSettled.clear();
+    _eventOwnedResourceWaits.clear();
     final GalAudioSource? source = _audioSource;
     _audioSource = null;
     final Set<GalAudioSource> sources = HashSet<GalAudioSource>.identity();
@@ -5162,6 +5623,7 @@ class GalHookSessionController extends ChangeNotifier {
       sourceSequence: effectiveLine.seq,
       hookTimestampMs: effectiveLine.timestampMs,
       eventOwnedVoice: effectiveLine.eventOwnedVoice,
+      littleBustersVoiceId: effectiveLine.littleBustersVoiceId,
       textThreadKey: effectiveLine.textThreadKey,
       textThreadLabel: effectiveLine.textThreadLabel,
       textHookCode: effectiveLine.hookCode.isEmpty
@@ -5170,7 +5632,9 @@ class GalHookSessionController extends ChangeNotifier {
       nativeTextThreadId: effectiveLine.threadId == 0
           ? null
           : effectiveLine.threadId,
-      audioStatus: TexthookerLineAudioStatus.pending,
+      audioStatus: effectiveLine.littleBustersVoiceId == 0
+          ? TexthookerLineAudioStatus.unavailable
+          : TexthookerLineAudioStatus.pending,
     );
     if (entry == null) return false;
 
@@ -5180,6 +5644,8 @@ class GalHookSessionController extends ChangeNotifier {
     // A folded row has a new event owner, even when its next resource is
     // already available. Retire the preceding event's pending request.
     _pendingResourceMatches.remove(entry.id);
+    _eventOwnedResourceSettled.remove(entry.id);
+    _eventOwnedResourceWaits.remove(entry.id);
     // 字数按 appendLine 报出来的**新增量**计，不按 entry.text 计：同一句台词被
     // 引擎分多次重绘时会折成一条，按整条计会让这句话每重绘一次就再算一遍
     // （增量为空 = 这次重绘没带来新字，不算新活动）。
@@ -5188,12 +5654,35 @@ class GalHookSessionController extends ChangeNotifier {
     _trimCache(_lineTimestampCache);
     _lineTextEventIdCache[entry.id] = effectiveLine.seq;
     _trimCache(_lineTextEventIdCache);
+    final bool littleBustersLine = _isLittleBustersEventOwnedLine(
+      effectiveLine,
+    );
+    if (littleBustersLine && effectiveLine.littleBustersVoiceId == null) {
+      _textService.updateLineAudio(
+        entry.id,
+        status: TexthookerLineAudioStatus.missing,
+        backend: 'game_resource',
+        fallbackReason: kGalEventOwnedResourceIdentityUnavailableReason,
+      );
+      return true;
+    }
+    if (effectiveLine.littleBustersVoiceId == 0) {
+      _textService.updateLineAudio(
+        entry.id,
+        status: TexthookerLineAudioStatus.unavailable,
+        backend: 'game_resource',
+        fallbackReason: kGalLittleBustersExplicitNoVoiceReason,
+      );
+      return true;
+    }
     final bool resourceReady = engine.rawVoiceReady;
     final String? resourceId = resourceReady
         ? effectiveLine.eventOwnedVoice
               ? engine.findEventOwnedVoiceResourceId(
                   effectiveLine.timestampMs,
                   textEventId: effectiveLine.seq,
+                  expectedLittleBustersVoiceId:
+                      effectiveLine.littleBustersVoiceId,
                 )
               : engine.findPairedVoiceResourceId(
                   effectiveLine.timestampMs,
@@ -5450,6 +5939,18 @@ class GalHookSessionController extends ChangeNotifier {
     required GalHookedLine line,
     required bool resourceReady,
   }) {
+    if (_isLittleBustersEventOwnedLine(line)) {
+      // Exact event-owned resources get their own bounded waiter.  They must
+      // never enter the generic PCM/loopback attach queue, even when the
+      // resource hook is ready but the member has not appeared yet.
+      _scheduleExactEventOwnedResourceWait(
+        engine: engine,
+        lineId: entry.id,
+        timestampMs: line.timestampMs,
+        textEventId: line.seq,
+      );
+      return;
+    }
     unawaited(() async {
       await _audioQueue.enqueue<bool>(
         () async {
@@ -5699,7 +6200,20 @@ class GalHookSessionController extends ChangeNotifier {
     required bool resourceReady,
   }) async {
     // BUG-950：入队到执行之间、以及下面每个 await 之间都可能夹一次 stop/重启。
-    if (engine != _engineSource || !isLineInCurrentSession(entry)) return;
+    if (engine != _engineSource) return;
+    if (!isLineInCurrentSession(entry)) return;
+    if (_isLittleBustersEventOwnedLine(line)) {
+      // Keep this guard at the generic attach boundary as well as at the
+      // scheduler.  Future callers must not accidentally re-enable PCM or
+      // loopback fallback for an exact event-owned line.
+      _scheduleExactEventOwnedResourceWait(
+        engine: engine,
+        lineId: entry.id,
+        timestampMs: line.timestampMs,
+        textEventId: line.seq,
+      );
+      return;
+    }
     GalAudioSlice? clip;
     // BUG-1060：只有 readiness 已选择 engine PCM 作为当前音频源时才读取 engine clip。
     // 文本 helper 在 Loopback 降级会话中仍然保活，但它暴露的残留/未通过门控 PCM 不能
@@ -5885,6 +6399,20 @@ class GalHookSessionController extends ChangeNotifier {
       if (textEventId == null) continue;
       // 用户已经为这行裁决过音频（补录 / 选轨），晚到的资源不得改回去。
       if (_isUserAdjudicated(line.key)) continue;
+      final TexthookerLineEntry? row = _textService.entryById(line.key);
+      if (row != null &&
+          _isLittleBustersEventOwnedEntry(row) &&
+          row.littleBustersVoiceId == null) {
+        continue;
+      }
+      if (row != null && _isLittleBustersExplicitNoVoiceEntry(row)) {
+        continue;
+      }
+      if (row != null &&
+          _isLittleBustersEventOwnedEntry(row) &&
+          _eventOwnedResourceSettled[line.key]?.textEventId == textEventId) {
+        continue;
+      }
       _pendingResourceMatches.putIfAbsent(
         line.key,
         () => (
@@ -5941,16 +6469,43 @@ class GalHookSessionController extends ChangeNotifier {
         matched.add(pending.key); // 用户已裁决：撤出待匹配集合，不再自动改写。
         continue;
       }
-      final String? resourceId = pending.value.eventOwnedOnly
-          ? engine.findEventOwnedVoiceResourceId(
-              pending.value.timestampMs,
-              textEventId: pending.value.textEventId,
-            )
-          : engine.findPairedVoiceResourceId(
-              pending.value.timestampMs,
-              textEventId: pending.value.textEventId,
-            );
-      if (resourceId == null) continue;
+      if (row != null &&
+          _isLittleBustersEventOwnedEntry(row) &&
+          (row.littleBustersVoiceId == null || row.littleBustersVoiceId == 0)) {
+        matched.add(pending.key);
+        continue;
+      }
+      final String? resourceId;
+      if (pending.value.eventOwnedOnly &&
+          row != null &&
+          _isLittleBustersEventOwnedEntry(row)) {
+        resourceId = engine.findEventOwnedVoiceResourceId(
+          pending.value.timestampMs,
+          textEventId: pending.value.textEventId,
+          expectedLittleBustersVoiceId: row.littleBustersVoiceId,
+        );
+        if (resourceId == null) {
+          _scheduleExactEventOwnedResourceWait(
+            engine: engine,
+            lineId: pending.key,
+            timestampMs: pending.value.timestampMs,
+            textEventId: pending.value.textEventId,
+          );
+          continue;
+        }
+      } else if (pending.value.eventOwnedOnly) {
+        resourceId = engine.findEventOwnedVoiceResourceId(
+          pending.value.timestampMs,
+          textEventId: pending.value.textEventId,
+        );
+        if (resourceId == null) continue;
+      } else {
+        resourceId = engine.findPairedVoiceResourceId(
+          pending.value.timestampMs,
+          textEventId: pending.value.textEventId,
+        );
+        if (resourceId == null) continue;
+      }
       _textService.updateLineAudio(
         pending.key,
         status: TexthookerLineAudioStatus.matched,

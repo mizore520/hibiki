@@ -48,6 +48,7 @@
 #include "luca_token_decoder.h"
 #include "luna_text_selector.h"
 #include "text_thread_identity.h"
+#include "adapters/little_busters_voice_profile.h"
 
 // galgame 一键制卡 C 阶段注入器（C.1）。把 hook DLL 注入目标游戏进程，建立共享内存 + 就绪
 // 事件，确认注入成功后读回语音格式。Hibiki 主进程把它当子进程拉起（部署红线：注入代码只在
@@ -366,7 +367,8 @@ struct LucaDiagnosticExplicitCandidate {
 
 constexpr std::array<LucaDiagnosticExplicitCandidate, 1>
     kLucaDiagnosticExplicitCandidates = {{
-        {L"HQFN1C@8BA37:LITBUS_WIN32.exe", "HQFN1C@8BA37"},
+        {fushi_voice_hook::little_busters::kLittleBustersTextHookCode,
+         "HQFN1C:-18*-3244@8BA37"},
     }};
 
 const char* LucaDiagnosticExplicitCandidateLabel(const wchar_t* hookcode) {
@@ -1046,8 +1048,8 @@ bool InitializeLucaDiagnosticFiles(DWORD pid, HANDLE target, HMODULE host,
          << "\"diagnostic_flush_policy\":\"WriteFile per record; FlushFileBuffers every 64 records, at lifecycle boundaries, and at shutdown; no in-memory candidate queue\","
          << "\"find_hooks_completion_policy\":\"Luna_FindHooks has no completion callback; log an assumed quiet-period deadline\","
          << "\"installation_ledger_policy\":\"resolver, candidate, InsertHookCode, PC-hook call, LunaHookInsert callback, LunaHostInfo, FindHooks discovery\","
-          << "\"explicit_candidate_install_policy\":\"diagnostic run dispatches only the exact HQFN1C@8BA37:LITBUS_WIN32.exe baseline; resolver/profile observations remain ledger-only and FindHooks callbacks remain discovery-only\","
-          << "\"formal_luca_policy\":\"production profile decodes the exact HQFN1C@8BA37:LITBUS_WIN32.exe source and preserves legitimate repetitive native text; diagnostic payloads remain raw\"}\n";
+          << "\"explicit_candidate_install_policy\":\"diagnostic run dispatches only the exact HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe MESSAGE.voiceId bridge; resolver/profile observations remain ledger-only and FindHooks callbacks remain discovery-only\","
+          << "\"formal_luca_policy\":\"production profile decodes the exact HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe source and preserves legitimate repetitive native text; diagnostic payloads remain raw\"}\n";
   const std::string header_line = header.str();
 
   EnterCriticalSection(&g_lucaDiagnosticCs);
@@ -2378,19 +2380,27 @@ bool LunaPassesFilter(const wchar_t* text, int len) {
 // 其内部工作线程并发触发，原子占号同样保证 injector 侧多次调用互不撞槽。
 uint64_t LunaTextThreadId(const wchar_t* hookcode, const char* hookname,
                           const LunaThreadParam& tp) {
+  const uint64_t logical_context2 =
+      fushi_voice_hook::little_busters::CanonicalLittleBustersTextContext2(
+          hookcode, tp.ctx2);
   return fushi_voice_hook::NormalizeLunaTextThreadId(
       fushi_voice_hook::LunaTextThreadIdFrom(
-          tp.processId, tp.addr, tp.ctx, tp.ctx2, hookcode, hookname));
+          tp.processId, tp.addr, tp.ctx, logical_context2, hookcode, hookname));
 }
 
 // hook「面」id：与 LunaTextThreadId 同源，但**刻意不含 ctx**（BUG-1159）。
 // ctx 是 Luna 提供的 context 值；本组件没有证据把它解释为 caller/return address。
-// ctx2 是 split H 码声明的语义分类（角色名/正文），必须保留。判据实现在
-// luna_text_selector.h，与单测共用。
+// ctx2 是 split H 码声明的语义分类（角色名/正文），通常必须保留。
+// Little Busters 的精确 split hook 是受证实的例外：ctx2 是 MESSAGE.voiceId，
+// 因此仅在该精确 hook 上将其从逻辑 lane/face 身份归一为 0；WriteLunaTextEvent
+// 仍把原始 tp.ctx2 写入 TextSlot.thread_context2。
 uint64_t LunaTextFaceId(const wchar_t* hookcode, const char* hookname,
                         const LunaThreadParam& tp) {
-  return fushi_voice_hook::LunaTextFaceIdFrom(tp.processId, tp.addr, tp.ctx2,
-                                               hookcode, hookname);
+  const uint64_t logical_context2 =
+      fushi_voice_hook::little_busters::CanonicalLittleBustersTextContext2(
+          hookcode, tp.ctx2);
+  return fushi_voice_hook::LunaTextFaceIdFrom(
+      tp.processId, tp.addr, logical_context2, hookcode, hookname);
 }
 
 // Luna 侧写者状态。**必须定义在所有写路径之前**：v13 起写文本道也要在这把锁下认领，
@@ -3038,7 +3048,7 @@ bool InitLunaHook(SharedHeader* header, HANDLE target, DWORD pid,
     AppendLucaDiagnosticLedgerRecord(
         "luna_diagnostic_policy", "diagnostic", "inventory_mode",
         "Fushi Luca diagnostic policy", nullptr, 0, true, true, -1,
-        "authoritative/prefer disabled; configured blocked-hook lists ignored; resolver/profile results are retained in the ledger only; the diagnostic explicit install queue is set to the single HQFN1C@8BA37:LITBUS_WIN32.exe baseline; FindHooks candidates are discovery-only and never auto-installed; formal Fushi text publication disabled; ThreadCreate/Output payloads are recorded without semantic filtering");
+        "authoritative/prefer disabled; configured blocked-hook lists ignored; resolver/profile results are retained in the ledger only; the diagnostic explicit install queue is set to the single HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe MESSAGE.voiceId bridge; FindHooks candidates are discovery-only and never auto-installed; formal Fushi text publication disabled; ThreadCreate/Output payloads are recorded without semantic filtering");
     auto record_export = [&](const char* name, bool present) {
       const std::string api =
           std::string("GetProcAddress:") + (name == nullptr ? "" : name);
@@ -3218,7 +3228,7 @@ bool InitLunaHook(SharedHeader* header, HANDLE target, DWORD pid,
     AppendLucaDiagnosticLedgerRecord(
         "candidate_install_scope", "manual_insert", "exact_allowlist",
         "Luna_InsertHookCode", nullptr, 0, false, false, -1,
-        "diagnostic run installs only HQFN1C@8BA37:LITBUS_WIN32.exe; profile/resolver candidates and FindHooks callback candidates are not dispatched");
+        "diagnostic run installs only HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe MESSAGE.voiceId bridge; profile/resolver candidates and FindHooks callback candidates are not dispatched");
     for (const auto& candidate : kLucaDiagnosticExplicitCandidates) {
       const std::wstring code(candidate.hookcode);
       g_luna.hook_codes.push_back(code);

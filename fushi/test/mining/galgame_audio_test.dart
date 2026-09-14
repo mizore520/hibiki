@@ -217,6 +217,71 @@ void main() {
     });
   });
 
+  group('GalHookedLine event-owned resources', () {
+    test('Little Busters exact Luca hook owns only line resource events', () {
+      const GalHookedLine line = GalHookedLine(
+        seq: 638,
+        timestampMs: 16710109,
+        text: 'a, Noumi-san okaeri-',
+        threadId: 7,
+        sourceKind: 2,
+        eventKind: GalTextEventKind.line,
+        hookCode: 'HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe',
+      );
+      expect(line.eventOwnedVoice, isTrue);
+      expect(line.littleBustersVoiceId, 0);
+      expect(
+        const GalHookedLine(
+          seq: 641,
+          timestampMs: 16710400,
+          text: 'S1',
+          threadId: 7,
+          threadContext2: 733,
+          sourceKind: 2,
+          eventKind: GalTextEventKind.line,
+          hookCode: 'HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe',
+        ).littleBustersVoiceId,
+        733,
+      );
+      expect(
+        const GalHookedLine(
+          seq: 642,
+          timestampMs: 16710500,
+          text: 'malformed',
+          threadId: 7,
+          threadContext2: 0x10000,
+          sourceKind: 2,
+          eventKind: GalTextEventKind.line,
+          hookCode: 'HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe',
+        ).littleBustersVoiceId,
+        isNull,
+      );
+      expect(
+        const GalHookedLine(
+          seq: 639,
+          timestampMs: 16710200,
+          text: 'not this executable',
+          threadId: 7,
+          sourceKind: 2,
+          hookCode: 'HQFN1C@8BA37:other.exe',
+        ).eventOwnedVoice,
+        isFalse,
+      );
+      expect(
+        const GalHookedLine(
+          seq: 640,
+          timestampMs: 16710300,
+          text: 'not a line event',
+          threadId: 7,
+          sourceKind: 2,
+          eventKind: GalTextEventKind.threadDiscovered,
+          hookCode: 'HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe',
+        ).eventOwnedVoice,
+        isFalse,
+      );
+    });
+  });
+
   group('pcmDurationMs', () {
     test('一秒混音字节 -> 1000ms', () {
       expect(pcmDurationMs(192000, 192000), 1000);

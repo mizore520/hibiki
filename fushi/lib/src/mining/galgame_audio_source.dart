@@ -2569,13 +2569,28 @@ class EngineHookGalAudioSource implements GalAudioSource {
   String? findEventOwnedVoiceResourceId(
     int textTsMs, {
     required int textEventId,
+    int? expectedLittleBustersVoiceId,
   }) {
     if (!Platform.isWindows) return null;
+    if (expectedLittleBustersVoiceId != null &&
+        expectedLittleBustersVoiceId <= 0) {
+      return null;
+    }
     _voiceDumpIndex.requestFreshness();
-    final List<String> names = _voiceDumpIndex.findEventOwnedResourceNames(
+    List<String> names = _voiceDumpIndex.findEventOwnedResourceNames(
       textTsMs: textTsMs,
       textEventId: textEventId,
     );
+    if (expectedLittleBustersVoiceId != null) {
+      final String marker = '_lb-voice0-member-$expectedLittleBustersVoiceId-r';
+      names = names
+          .where(
+            (String name) =>
+                name.toLowerCase().contains(marker.toLowerCase()) &&
+                name.toLowerCase().endsWith('.ogg'),
+          )
+          .toList();
+    }
     return names.isEmpty ? null : names.first;
   }
 
@@ -2898,7 +2913,25 @@ class GalHookedLine {
   /// Fixed native producer tag, not a game title or engine-name heuristic.
   /// This writer commits a seq before publishing its frozen voice binding.
   bool get eventOwnedVoice =>
-      sourceKind == 4 && hookName == 'SiglusEngine message';
+      (sourceKind == 4 && hookName == 'SiglusEngine message') ||
+      (sourceKind == 2 &&
+          eventKind == GalTextEventKind.line &&
+          hookCode == 'HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe');
+
+  /// The pinned Little Busters MESSAGE bridge exposes a uint16 voice id in
+  /// raw Luna ctx2.  Keep zero as a real no-voice value and reject malformed
+  /// values instead of allowing them to reach a generic resource fallback.
+  int? get littleBustersVoiceId {
+    if (!eventOwnedVoice ||
+        sourceKind != 2 ||
+        eventKind != GalTextEventKind.line ||
+        hookCode != 'HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe' ||
+        threadContext2 < 0 ||
+        threadContext2 > 0xffff) {
+      return null;
+    }
+    return threadContext2;
+  }
 
   bool get requiresExactThreadContext =>
       (eventFlags & flagExactThreadContext) != 0;

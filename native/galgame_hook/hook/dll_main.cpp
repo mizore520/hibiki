@@ -99,6 +99,10 @@
 #include "adapters/hunex_gge_lookup_core.h"
 #include "adapters/hunex_gge_selected_text.h"
 #include "adapters/leaf_aquaplus_voice_archive.h"
+#include "adapters/little_busters_voice_profile.h"
+#include "adapters/little_busters_voice_pak.h"
+#include "adapters/little_busters_voice_binding.h"
+#include "adapters/little_busters_voice_calibration.h"
 #include "adapters/smash_fzmedia_shared.h"
 #include "adapters/smash_fzmedia_lookup_core.h"
 #include "adapters/smash_fzmedia_lookup.h"
@@ -607,6 +611,7 @@ bool SignalReady(DWORD pid, bool legacy_hibiki_ipc) {
 #include "adapters/siglus_message_voice.inc"
 #include "adapters/loopback_adapter.inc"
 #include "generated/adapter_includes.inc"
+#include "adapters/little_busters_voice_adapter.inc"
 
 #include "generic_input_shield.inc"
 #include "adapter_registry.inc"

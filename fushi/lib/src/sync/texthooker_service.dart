@@ -353,6 +353,7 @@ class TexthookerLineEntry {
     this.sourceSequence,
     this.hookTimestampMs,
     this.eventOwnedVoice = false,
+    this.littleBustersVoiceId,
     this.textThreadKey,
     this.textThreadLabel,
     this.textHookCode,
@@ -381,6 +382,11 @@ class TexthookerLineEntry {
 
   /// Windows native message producer supplies exact resource event ownership.
   final bool eventOwnedVoice;
+
+  /// Pinned Little Busters MESSAGE.voiceId carried by raw Luna ctx2. Null
+  /// means this is not the exact LB event or the raw value was invalid; zero
+  /// is meaningful and explicitly means that this line has no voice.
+  final int? littleBustersVoiceId;
   final String? textThreadKey;
   final String? textThreadLabel;
   final String? textHookCode;
@@ -434,6 +440,8 @@ class TexthookerLineEntry {
     int? sourceSequence,
     int? hookTimestampMs,
     bool? eventOwnedVoice,
+    int? littleBustersVoiceId,
+    bool clearLittleBustersVoiceId = false,
     TexthookerLineAudioStatus? audioStatus,
     String? audioBackend,
     String? audioResourceId,
@@ -455,6 +463,9 @@ class TexthookerLineEntry {
       sourceSequence: sourceSequence ?? this.sourceSequence,
       hookTimestampMs: hookTimestampMs ?? this.hookTimestampMs,
       eventOwnedVoice: eventOwnedVoice ?? this.eventOwnedVoice,
+      littleBustersVoiceId: clearLittleBustersVoiceId
+          ? null
+          : littleBustersVoiceId ?? this.littleBustersVoiceId,
       textThreadKey: textThreadKey,
       textThreadLabel: textThreadLabel,
       textHookCode: textHookCode,
@@ -854,6 +865,7 @@ class TexthookerService extends ChangeNotifier {
     int? sourceSequence,
     int? hookTimestampMs,
     bool eventOwnedVoice = false,
+    int? littleBustersVoiceId,
     String? textThreadKey,
     String? textThreadLabel,
     String? textHookCode,
@@ -980,6 +992,9 @@ class TexthookerService extends ChangeNotifier {
         sourceSequence: sourceSequence,
         hookTimestampMs: hookTimestampMs,
         eventOwnedVoice: eventOwnedVoice,
+        littleBustersVoiceId: littleBustersVoiceId,
+        clearLittleBustersVoiceId:
+            eventOwnedVoice && littleBustersVoiceId == null,
         audioStatus: inheritsAudio ? audioDonor.audioStatus : audioStatus,
         audioBackend: audioDonor.audioBackend,
         audioResourceId: audioDonor.audioResourceId,
@@ -1026,6 +1041,7 @@ class TexthookerService extends ChangeNotifier {
       sourceSequence: sourceSequence,
       hookTimestampMs: hookTimestampMs,
       eventOwnedVoice: eventOwnedVoice,
+      littleBustersVoiceId: littleBustersVoiceId,
       textThreadKey: textThreadKey,
       textThreadLabel: textThreadLabel,
       textHookCode: textHookCode,
