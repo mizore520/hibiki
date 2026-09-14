@@ -399,6 +399,11 @@ constexpr uint32_t kDiagElfAi6ArcReadObserved = 0x04000000u;
 constexpr uint32_t kDiagElfAi6ArcOggObserved = 0x08000000u;
 constexpr uint32_t kDiagElfAi6ArcVoiceQueued = 0x10000000u;
 constexpr uint32_t kDiagElfAi6ArcTaskRejected = 0x20000000u;
+// Little Busters! owns the high two bits of the secondary file-resource word.
+// It is an exact executable-profile + VOICE0/VOICE2 PAK path; the observed bit
+// is diagnostic only and never makes an unpaired text line acquire audio.
+constexpr uint32_t kDiagLittleBustersVoicePakHooksReady = 0x40000000u;
+constexpr uint32_t kDiagLittleBustersVoicePakMemberObserved = 0x80000000u;
 // XAudio2 可直接接收 Microsoft ADPCM，由引擎内部解码。4-bit 源不能冒充 PCM 写共享环；
 // hook 回调只复制进有界队列，工作线程解码成 16-bit PCM 后再发布。
 constexpr uint32_t kDiagXAudioAdpcmObserved = 0x40000000u;
@@ -589,6 +594,7 @@ inline constexpr bool HasReadyGameResourceAudio(uint32_t reserved_luna,
          (hook_diagnostics & kDiagMalieLibpHooksReady) != 0 ||
          (hook_diagnostics & kDiagVisualArtsOvkHooksReady) != 0 ||
          (reserved_hook_diagnostics & kDiagElfAi6ArcHooksReady) != 0 ||
+         (reserved_hook_diagnostics & kDiagLittleBustersVoicePakHooksReady) != 0 ||
          (xaudio_diagnostics & kXAudioDiagLeafLacHooksReady) != 0 ||
          (xaudio_diagnostics & kXAudioDiagGameResourcePublished) != 0 ||
          unity_ready;

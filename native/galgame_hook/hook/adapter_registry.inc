@@ -546,6 +546,39 @@ class LoopbackAdapter final : public fushi_voice_hook::EngineAdapter {
   bool installed_ = false;
 };
 
+class LittleBustersVoiceAdapter final
+    : public fushi_voice_hook::EngineAdapter {
+ public:
+  const char* id() const override { return "little_busters_voice_pak"; }
+  bool probe() const override { return IsLittleBustersProfileMatched(); }
+  bool install() override {
+    ready_ = TryHookLittleBustersVoicePak();
+    installed_ = installed_ || ready_;
+    return ready_;
+  }
+  void ProcessPendingEvents() {
+    if (!ready_) install();
+    if (ready_) ProcessLittleBustersVoiceTasks();
+  }
+  fushi_voice_hook::AdapterCapability capabilities() const override {
+    return fushi_voice_hook::AdapterCapability::kResourceAudio;
+  }
+  void onModuleLoaded(const wchar_t*) override {}
+  void shutdown() override {
+    StopLittleBustersVoicePak();
+    installed_ = false;
+    ready_ = false;
+  }
+  fushi_voice_hook::AdapterDiagnostics diagnostics() const override {
+    return {id(), probe(), installed_,
+            g_header == nullptr ? 0u : g_header->reserved_hook_diagnostics};
+  }
+
+ private:
+  bool installed_ = false;
+  bool ready_ = false;
+};
+
 class AdapterRegistry {
  public:
   void FailSiglusTextStartup() { siglus_.FailTextStartup(); }
@@ -556,6 +589,7 @@ class AdapterRegistry {
     // the injector observes kDiagStartupAudioHooksReady and resumes a suspended game.
     generic_audio_.install();
     siglus_.InstallResourceAudio();
+    little_busters_.install();
     tyrano_.install();
     bgi_ethornell_.install();
     artemis_pfs_.install();
@@ -605,6 +639,7 @@ class AdapterRegistry {
     generic_audio_.ProcessPendingEvents();
     unity_.ProcessPendingEvents();
     siglus_.ProcessPendingEvents();
+    little_busters_.ProcessPendingEvents();
     tyrano_.ProcessPendingEvents();
     bgi_ethornell_.ProcessPendingEvents();
     artemis_pfs_.ProcessPendingEvents();
@@ -695,6 +730,7 @@ class AdapterRegistry {
     // adapter_admission.inc，于是自动出现在本读数里，不存在第二份会漂移的清单。
     consider(generic_audio_);
     consider(siglus_);
+    consider(little_busters_);
     consider(unity_);
     consider(text_render_);
     consider(kirikiri_);
@@ -801,6 +837,7 @@ class AdapterRegistry {
     renpy_.shutdown();
     tyrano_.shutdown();
     kirikiri_.shutdown();
+    little_busters_.shutdown();
     siglus_.shutdown();
     text_render_.shutdown();
     unity_.shutdown();
@@ -842,6 +879,7 @@ class AdapterRegistry {
         kirikiri_.onModuleLoaded(entry.szModule);
         renpy_.onModuleLoaded(entry.szModule);
         loopback_.onModuleLoaded(entry.szModule);
+        little_busters_.onModuleLoaded(entry.szModule);
 #include "generated/adapter_module.inc"
       } while (Module32NextW(snapshot, &entry));
       modules_seeded_ = true;
@@ -862,6 +900,7 @@ class AdapterRegistry {
   ULONGLONG adapter_report_tick_ = 0;  // v23 读数限速（见 PublishAdapterReportSnapshot）
   GenericWindowsAudioAdapter generic_audio_;
   SiglusAdapter siglus_;
+  LittleBustersVoiceAdapter little_busters_;
   UnityIl2CppAdapter unity_;
   TextRenderAdapter text_render_;
   KiriKiriAdapter kirikiri_;

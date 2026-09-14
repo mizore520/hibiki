@@ -113,6 +113,11 @@ add_library(fushi_voice_hook SHARED
   "hook/adapters/leaf_aquaplus_lookup.h"
   "hook/adapters/leaf_aquaplus_voice_archive.h"
   "hook/adapters/leaf_aquaplus_adapter.inc"
+  "hook/adapters/little_busters_voice_profile.h"
+  "hook/adapters/little_busters_voice_pak.h"
+  "hook/adapters/little_busters_voice_binding.h"
+  "hook/adapters/little_busters_voice_calibration.h"
+  "hook/adapters/little_busters_voice_adapter.inc"
   "hook/adapters/hunex_gge_adapter.inc"
   "hook/adapters/hunex_gge_lookup.h"
   "hook/adapters/hunex_gge_profile.h"
@@ -397,6 +402,20 @@ add_executable(fushi_resource_audio_ready_test
 target_include_directories(fushi_resource_audio_ready_test PRIVATE "include")
 target_compile_definitions(fushi_resource_audio_ready_test PRIVATE UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
 add_test(NAME fushi_resource_audio_ready_test COMMAND fushi_resource_audio_ready_test)
+
+add_executable(fushi_little_busters_voice_pak_test
+  "tests/little_busters_voice_pak_test.cpp")
+target_include_directories(fushi_little_busters_voice_pak_test PRIVATE
+  "hook/adapters")
+add_test(NAME fushi_little_busters_voice_pak_test
+  COMMAND fushi_little_busters_voice_pak_test)
+
+add_executable(fushi_little_busters_voice_binding_test
+  "tests/little_busters_voice_binding_test.cpp")
+target_include_directories(fushi_little_busters_voice_binding_test PRIVATE
+  "hook/adapters" "include")
+add_test(NAME fushi_little_busters_voice_binding_test
+  COMMAND fushi_little_busters_voice_binding_test)
 
 add_executable(fushi_utterance_window_test
   "tests/utterance_window_test.cpp"

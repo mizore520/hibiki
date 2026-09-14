@@ -99,7 +99,7 @@ int main() {
       !little_busters_profile.preserve_luca_repetitive_text ||
       little_busters_profile.hook_codes.size() != 1 ||
       little_busters_profile.hook_codes.front() !=
-          L"HQFN1C@8BA37:LITBUS_WIN32.exe" ||
+          L"HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe" ||
       !little_busters_profile.blocked_hook_codes.empty() ||
       !little_busters_profile.preferred_hook_codes.empty()) {
     std::fprintf(stderr,

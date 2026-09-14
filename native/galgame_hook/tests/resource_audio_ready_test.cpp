@@ -19,6 +19,7 @@ using fushi_voice_hook::kXAudioDiagLeafLacHooksReady;
 using fushi_voice_hook::kDiagUnityIl2CppHooksReady;
 using fushi_voice_hook::kDiagUnityResourceExtractorReady;
 using fushi_voice_hook::kDiagElfAi6ArcHooksReady;
+using fushi_voice_hook::kDiagLittleBustersVoicePakHooksReady;
 
 int main() {
   assert(!HasReadyGameResourceAudio(0, 0));
@@ -27,6 +28,8 @@ int main() {
   assert(HasReadyGameResourceAudio(0, kDiagVisualArtsOvkHooksReady));
   assert(HasReadyGameResourceAudio(kDiagSiglusOvkHooksReady, 0));
   assert(HasReadyGameResourceAudio(0, 0, kDiagElfAi6ArcHooksReady));
+  assert(HasReadyGameResourceAudio(
+      0, 0, kDiagLittleBustersVoicePakHooksReady));
   assert(HasReadyGameResourceAudio(
       0, 0, 0, kXAudioDiagGameResourcePublished));
   assert(HasReadyGameResourceAudio(0, 0, 0, kXAudioDiagLeafLacHooksReady));

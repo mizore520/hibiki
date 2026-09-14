@@ -1548,6 +1548,210 @@ void main() {
   });
 
   test(
+    'exact Little Busters event resource miss fails closed and manual override remains allowed',
+    () async {
+      const GalHookedLine exactLine = GalHookedLine(
+        seq: 638,
+        timestampMs: 16710109,
+        text: '「おかえり、能美さん」',
+        threadId: 5,
+        threadContext2: 733,
+        sourceKind: 2,
+        hookCode: 'HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe',
+      );
+      final TexthookerService service = TexthookerService.test();
+      final ChangeNotifier endpoints = ChangeNotifier();
+      final _FakeEngineSource engine = _FakeEngineSource(
+        pairedBytes: Uint8List.fromList(<int>[9, 8, 7]),
+        rawReady: true,
+        utteranceSlice: GalAudioSlice(
+          pcm: Uint8List(4096),
+          format: const PcmFormat(
+            sampleRate: 44100,
+            channels: 1,
+            bitsPerSample: 16,
+            isFloat: false,
+          ),
+        ),
+        polledLines: const <GalHookedLine>[exactLine],
+      );
+      final _FakeLoopbackSource loopback = _FakeLoopbackSource();
+      final GalHookSessionController controller = GalHookSessionController(
+        textService: service,
+        isWindows: true,
+        targetWow64Probe: (_) async => true,
+        injectorResolver: ({required bool is32Bit}) async => 'injector.exe',
+        engineSourceFactory:
+            ({
+              required int targetPid,
+              required String? launchExe,
+              required String injectorPath,
+              required bool lunaPcHooks,
+              int? lunaCodepage,
+              List<String> launchArguments = const <String>[],
+              String launchWorkdir = '',
+              GalJapaneseLocaleMode japaneseLocaleMode =
+                  kGalDefaultJapaneseLocaleMode,
+              String? contentLanguage,
+            }) => engine,
+        loopbackSourceFactory: () => loopback,
+        textPollInterval: const Duration(milliseconds: 5),
+        resourceAudioWait: Duration.zero,
+        endpointListenable: endpoints,
+        endpointStatusLoader: () => const <TexthookerEndpointStatus>[],
+      );
+      addTearDown(() async {
+        await controller.close();
+        endpoints.dispose();
+      });
+
+      await controller.startAttachedCapture(
+        const ExternalWindowInfo(hwnd: 9, pid: 28160, title: 'Little Busters'),
+      );
+      expect(
+        await controller.selectTextThread(
+          5,
+          threadKey: exactLine.textThreadKey,
+        ),
+        isTrue,
+      );
+      for (
+        int i = 0;
+        i < 100 &&
+            (service.entries.isEmpty ||
+                service.entries.single.audioStatus !=
+                    TexthookerLineAudioStatus.missing);
+        i++
+      ) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      expect(service.entries, hasLength(1));
+      final TexthookerLineEntry entry = service.entries.single;
+      expect(entry.eventOwnedVoice, isTrue);
+      expect(entry.audioStatus, TexthookerLineAudioStatus.missing);
+      expect(entry.fallbackReason, kGalEventOwnedResourceNotFoundReason);
+      expect(controller.debugHasPendingResourceMatch(entry.id), isFalse);
+      expect(
+        controller.debugEventOwnedResourceSettlementReason(entry.id),
+        kGalEventOwnedResourceNotFoundReason,
+      );
+
+      expect(
+        await controller.captureAudioBytes(
+          lineId: entry.id,
+          sentence: entry.text,
+          outputExtension: 'aac',
+        ),
+        isNull,
+      );
+      expect(engine.pairedResourceIds, isEmpty);
+      expect(engine.utteranceTimestamps, isEmpty);
+      expect(engine.clipNearTimestamps, isEmpty);
+      expect(loopback.grabRecentCalls, 0);
+
+      // Explicit user adjudication remains a permitted, non-automatic path.
+      expect(await controller.setLineVoiceTrack(entry.id, 77), isTrue);
+      expect(
+        service.entries.single.audioStatus,
+        TexthookerLineAudioStatus.matched,
+      );
+      expect(service.entries.single.audioBackend, 'engine_pcm');
+      expect(service.entries.single.fallbackReason, 'manual_track_override');
+      expect(engine.utteranceTimestamps, <int>[exactLine.timestampMs]);
+    },
+    skip: !Platform.isWindows,
+  );
+
+  test(
+    'exact Little Busters event resource is the only automatic source',
+    () async {
+      const GalHookedLine exactLine = GalHookedLine(
+        seq: 642,
+        timestampMs: 16717343,
+        text: '「はい、ただいまです」',
+        threadId: 5,
+        threadContext2: 735,
+        sourceKind: 2,
+        hookCode: 'HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe',
+      );
+      final TexthookerService service = TexthookerService.test();
+      final ChangeNotifier endpoints = ChangeNotifier();
+      final _FakeEngineSource engine = _FakeEngineSource(
+        pairedBytes: Uint8List.fromList(<int>[1, 2, 3]),
+        rawReady: true,
+        eventOwnedResourceId: 'lb-voice0-member-735-r44100.ogg',
+        polledLines: const <GalHookedLine>[exactLine],
+      );
+      final _FakeLoopbackSource loopback = _FakeLoopbackSource();
+      final GalHookSessionController controller = GalHookSessionController(
+        textService: service,
+        isWindows: true,
+        targetWow64Probe: (_) async => true,
+        injectorResolver: ({required bool is32Bit}) async => 'injector.exe',
+        engineSourceFactory:
+            ({
+              required int targetPid,
+              required String? launchExe,
+              required String injectorPath,
+              required bool lunaPcHooks,
+              int? lunaCodepage,
+              List<String> launchArguments = const <String>[],
+              String launchWorkdir = '',
+              GalJapaneseLocaleMode japaneseLocaleMode =
+                  kGalDefaultJapaneseLocaleMode,
+              String? contentLanguage,
+            }) => engine,
+        loopbackSourceFactory: () => loopback,
+        textPollInterval: const Duration(milliseconds: 5),
+        resourceAudioWait: Duration.zero,
+        endpointListenable: endpoints,
+        endpointStatusLoader: () => const <TexthookerEndpointStatus>[],
+      );
+      addTearDown(() async {
+        await controller.close();
+        endpoints.dispose();
+      });
+
+      await controller.startAttachedCapture(
+        const ExternalWindowInfo(hwnd: 9, pid: 28160, title: 'Little Busters'),
+      );
+      expect(
+        await controller.selectTextThread(
+          5,
+          threadKey: exactLine.textThreadKey,
+        ),
+        isTrue,
+      );
+      for (int i = 0; i < 100 && service.entries.isEmpty; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      expect(service.entries, hasLength(1));
+      final TexthookerLineEntry entry = service.entries.single;
+      expect(entry.eventOwnedVoice, isTrue);
+      expect(entry.audioResourceId, 'lb-voice0-member-735-r44100.ogg');
+      expect(entry.audioBackend, 'game_resource');
+      expect(controller.debugHasPendingResourceMatch(entry.id), isFalse);
+
+      expect(
+        await controller.captureAudioBytes(
+          lineId: entry.id,
+          sentence: entry.text,
+          outputExtension: 'aac',
+        ),
+        <int>[1, 2, 3],
+      );
+      expect(engine.eventOwnedEventIds, contains(exactLine.seq));
+      expect(engine.pairedResourceIds, <String?>[
+        'lb-voice0-member-735-r44100.ogg',
+      ]);
+      expect(engine.grabFallbackFlags, <bool>[false]);
+      expect(engine.utteranceTimestamps, isEmpty);
+      expect(loopback.grabRecentCalls, 0);
+    },
+    skip: !Platform.isWindows,
+  );
+
+  test(
     'RealLive replay fixture selects resource audio through production pairing',
     () async {
       final Map<String, dynamic> fixture =
@@ -3923,8 +4127,9 @@ class _FakeEngineSource extends EngineHookGalAudioSource {
     this.failure = const GalHookInjectorDiagnostics(),
     this.launched,
     this.startGate,
-    GalVoiceDumpIndex? voiceDumpIndex,
+    this.voiceDumpIndex,
     this.replayBufferedLines = false,
+    this.eventOwnedResourceId,
   }) : super(
          targetPid: 0,
          launchExe: 'fake.exe',
@@ -3941,6 +4146,8 @@ class _FakeEngineSource extends EngineHookGalAudioSource {
   final int pairedReadyAfterCalls;
   final List<GalHookedLine> polledLines;
   final bool replayBufferedLines;
+  final GalVoiceDumpIndex? voiceDumpIndex;
+  final String? eventOwnedResourceId;
   Future<void> Function()? beforePoll;
   final List<int> pollCursors = <int>[];
   final GalAudioSlice? utteranceSlice;
@@ -3955,6 +4162,8 @@ class _FakeEngineSource extends EngineHookGalAudioSource {
   final List<int?> pairedEventIds = <int?>[];
   final List<int?> findEventIds = <int?>[];
   final List<int> utteranceTimestamps = <int>[];
+  final List<int> clipNearTimestamps = <int>[];
+  final List<int> eventOwnedEventIds = <int>[];
   final List<String?> pairedResourceIds = <String?>[];
   final List<bool> grabFallbackFlags = <bool>[];
   int stopCalls = 0;
@@ -4045,6 +4254,31 @@ class _FakeEngineSource extends EngineHookGalAudioSource {
   }
 
   @override
+  String? findEventOwnedVoiceResourceId(
+    int textTsMs, {
+    required int textEventId,
+    int? expectedLittleBustersVoiceId,
+  }) {
+    eventOwnedEventIds.add(textEventId);
+    if (eventOwnedResourceId != null) {
+      if (expectedLittleBustersVoiceId != null &&
+          !eventOwnedResourceId!.contains(
+            'lb-voice0-member-$expectedLittleBustersVoiceId-',
+          )) {
+        return null;
+      }
+      return eventOwnedResourceId;
+    }
+    final List<String> names =
+        voiceDumpIndex?.findEventOwnedResourceNames(
+          textTsMs: textTsMs,
+          textEventId: textEventId,
+        ) ??
+        const <String>[];
+    return names.isEmpty ? null : names.first;
+  }
+
+  @override
   Future<GalAudioSlice?> grabUtterance(
     int tsMs, {
     int? sourcePtr,
@@ -4061,7 +4295,10 @@ class _FakeEngineSource extends EngineHookGalAudioSource {
     int tolMs = 8000,
     int? sourcePtr,
     List<int>? exclude,
-  }) async => null;
+  }) async {
+    clipNearTimestamps.add(tsMs);
+    return null;
+  }
 
   @override
   Future<GalTextPoll?> pollText(int sinceSeq) async {
