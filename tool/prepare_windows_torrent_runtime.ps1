@@ -101,6 +101,53 @@ function Test-SameTorrentSources {
     return $null -eq (Compare-Object -ReferenceObject $left -DifferenceObject $right)
 }
 
+function Get-SuitablePowerShellCore {
+    param(
+        [Version]$MinimumVersion = [Version]'7.6.3'
+    )
+
+    # vcpkg's tool provider requires PowerShell Core 7.6.3 on Windows. The
+    # launcher itself intentionally runs under Windows PowerShell 5.1, and a
+    # machine can have an older system pwsh before a newer one on PATH. Check
+    # every application candidate and put the first suitable one first before
+    # CMake invokes vcpkg, so vcpkg does not needlessly download its tool.
+    $candidates = @(
+        Get-Command pwsh -All -CommandType Application -ErrorAction SilentlyContinue |
+            ForEach-Object { $_.Path }
+    )
+    $candidates += @(
+        (Join-Path ${env:ProgramFiles} 'PowerShell\7\pwsh.exe'),
+        (Join-Path ${env:LOCALAPPDATA} 'Programs\PowerShell\7\pwsh.exe')
+    )
+
+    foreach ($path in ($candidates | Where-Object { $_ } | Select-Object -Unique)) {
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+            continue
+        }
+        try {
+            $versionText = @(
+                & $path -NoProfile -NonInteractive -Command '$PSVersionTable.PSVersion.ToString()' 2>$null
+            ) | Select-Object -First 1
+            if (-not $versionText) {
+                continue
+            }
+            $version = [Version]$versionText.ToString().Trim()
+            if ($version -ge $MinimumVersion) {
+                return [pscustomobject]@{
+                    Path    = $path
+                    Version = $version
+                }
+            }
+        }
+        catch {
+            # An unusable candidate should not prevent vcpkg from trying its
+            # normal managed-tool download as a final fallback.
+        }
+    }
+
+    return $null
+}
+
 if (Test-CompleteRuntime -Directory $targetDirectory) {
     Write-Host "[torrent] runtime ready: $targetDirectory"
     exit 0
@@ -273,6 +320,13 @@ if (-not (Test-CompleteRuntime -Directory $targetDirectory)) {
             $env:PATH = "$visualStudioCmakeBin;$env:PATH"
             Write-Host "[torrent] using Visual Studio CMake: $visualStudioCmakeBin"
         }
+    }
+
+    $powerShellCore = Get-SuitablePowerShellCore
+    if ($powerShellCore) {
+        $powerShellCoreDirectory = Split-Path -Parent $powerShellCore.Path
+        $env:PATH = "$powerShellCoreDirectory;$env:PATH"
+        Write-Host "[torrent] using PowerShell Core $($powerShellCore.Version) for vcpkg: $powerShellCoreDirectory"
     }
 
     $builder = Join-Path $repo "native\fushi_torrent\build_windows_dll.ps1"
