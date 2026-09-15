@@ -13,49 +13,130 @@ if ((Test-Path -LiteralPath $decoder) -and (Test-Path -LiteralPath $classdata)) 
   exit 0
 }
 
+function Get-Sha256([string]$Path) {
+  $stream = [System.IO.File]::OpenRead($Path)
+  try {
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+      return ([System.BitConverter]::ToString($sha.ComputeHash($stream))).Replace('-', '').ToLowerInvariant()
+    }
+    finally {
+      $sha.Dispose()
+    }
+  }
+  finally {
+    $stream.Dispose()
+  }
+}
+
+function Test-VerifiedArchive([string]$Path, [string]$ExpectedSha256) {
+  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+    return $false
+  }
+  $item = Get-Item -LiteralPath $Path
+  return $item.Length -gt 0 -and (Get-Sha256 $Path) -eq $ExpectedSha256.ToLowerInvariant()
+}
+
+function Get-VerifiedArchive {
+  param(
+    [Parameter(Mandatory = $true)][string]$Url,
+    [Parameter(Mandatory = $true)][string]$Destination,
+    [Parameter(Mandatory = $true)][string]$ExpectedSha256,
+    [Parameter(Mandatory = $true)][string]$Label
+  )
+
+  if (Test-VerifiedArchive $Destination $ExpectedSha256) {
+    Write-Host "[unity-audio] verified cached package: $Destination"
+    return
+  }
+
+  $curl = Get-Command 'curl.exe' -ErrorAction SilentlyContinue
+  if (-not $curl) {
+    throw 'curl.exe is required to download the Unity audio runtime packages'
+  }
+  $partial = "$Destination.partial"
+  $lastError = $null
+  for ($attempt = 1; $attempt -le 3; $attempt++) {
+    try {
+      if (Test-VerifiedArchive $partial $ExpectedSha256) {
+        Move-Item -LiteralPath $partial -Destination $Destination -Force
+        return
+      }
+      Write-Host "[unity-audio] download attempt $attempt/3 ($Label): $Url"
+      $arguments = @(
+        '--fail', '--location', '--silent', '--show-error',
+        '--http1.1', '--connect-timeout', '20', '--max-time', '300',
+        '--output', $partial
+      )
+      if ((Test-Path -LiteralPath $partial -PathType Leaf) -and
+          (Get-Item -LiteralPath $partial).Length -gt 0) {
+        $arguments += @('--continue-at', '-')
+      }
+      $arguments += $Url
+      & $curl.Source @arguments
+      $exitCode = $LASTEXITCODE
+      if ($exitCode -ne 0) {
+        if (Test-VerifiedArchive $partial $ExpectedSha256) {
+          Move-Item -LiteralPath $partial -Destination $Destination -Force
+          return
+        }
+        throw "curl.exe failed with exit code $exitCode"
+      }
+      if (-not (Test-VerifiedArchive $partial $ExpectedSha256)) {
+        Remove-Item -LiteralPath $partial -Force -ErrorAction SilentlyContinue
+        throw "downloaded $Label failed its pinned SHA-256 check"
+      }
+      Move-Item -LiteralPath $partial -Destination $Destination -Force
+      return
+    }
+    catch {
+      $lastError = $_
+      Write-Warning "Unity audio package attempt $attempt failed: $($_.Exception.Message)"
+      if ($attempt -lt 3) {
+        Start-Sleep -Seconds 2
+      }
+    }
+  }
+  throw "Unable to download verified Unity audio package after 3 attempts: $($lastError.Exception.Message)"
+}
+
+# Keep archives in the ignored repository cache. A failed transfer therefore
+# remains resumable, and a later CMake build does not redownload packages that
+# already passed their checksums.
+$repositoryRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
+$downloadRoot = Join-Path $repositoryRoot '.build-cache\galgame_hook\unity-audio\downloads'
+New-Item -ItemType Directory -Force -Path $downloadRoot | Out-Null
+$vgmZip = Join-Path $downloadRoot 'vgmstream-win64-r2117.zip'
+$uabeaZip = Join-Path $downloadRoot 'uabea-windows-v8.zip'
+Get-VerifiedArchive `
+  -Url 'https://github.com/vgmstream/vgmstream/releases/download/r2117/vgmstream-win64.zip' `
+  -Destination $vgmZip `
+  -ExpectedSha256 '6c4a8a3813864fefed081bbd337dbc0ad93bf88e0b92f5db98d7ab258b22dc6c' `
+  -Label 'vgmstream r2117'
+Get-VerifiedArchive `
+  -Url 'https://github.com/nesrak1/UABEA/releases/download/v8/uabea-windows.zip' `
+  -Destination $uabeaZip `
+  -ExpectedSha256 '0623ab1dc099a6397c3a7e72782b91405e60b286c6825fb6fa21e553ff2ea580' `
+  -Label 'UABEA v8'
+
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) (
   'hibiki-unity-audio-runtime-' + [System.Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $tempRoot | Out-Null
 try {
-  $vgmZip = Join-Path $tempRoot 'vgmstream-win64.zip'
-  $uabeaZip = Join-Path $tempRoot 'uabea-windows.zip'
-  Invoke-WebRequest `
-    -Uri 'https://github.com/vgmstream/vgmstream/releases/download/r2117/vgmstream-win64.zip' `
-    -OutFile $vgmZip
-  Invoke-WebRequest `
-    -Uri 'https://github.com/nesrak1/UABEA/releases/download/v8/uabea-windows.zip' `
-    -OutFile $uabeaZip
-
-  function Get-Sha256([string]$Path) {
-    $stream = [System.IO.File]::OpenRead($Path)
-    try {
-      $sha = [System.Security.Cryptography.SHA256]::Create()
-      try {
-        return ([System.BitConverter]::ToString($sha.ComputeHash($stream))).Replace('-', '')
-      }
-      finally {
-        $sha.Dispose()
-      }
-    }
-    finally {
-      $stream.Dispose()
-    }
-  }
-  $vgmHash = Get-Sha256 $vgmZip
-  $uabeaHash = Get-Sha256 $uabeaZip
-  if ($vgmHash -ne '6C4A8A3813864FEFED081BBD337DBC0AD93BF88E0B92F5DB98D7AB258B22DC6C') {
-    throw "vgmstream r2117 SHA256 mismatch: $vgmHash"
-  }
-  if ($uabeaHash -ne '0623AB1DC099A6397C3A7E72782B91405E60B286C6825FB6FA21E553FF2EA580') {
-    throw "UABEA v8 SHA256 mismatch: $uabeaHash"
-  }
-
   Add-Type -AssemblyName System.IO.Compression.FileSystem
-  [System.IO.Compression.ZipFile]::ExtractToDirectory($vgmZip, $runtimePath)
+  $vgmStage = Join-Path $tempRoot 'vgmstream'
   $uabeaDir = Join-Path $tempRoot 'uabea'
+  New-Item -ItemType Directory -Path $vgmStage, $uabeaDir | Out-Null
+  [System.IO.Compression.ZipFile]::ExtractToDirectory($vgmZip, $vgmStage)
   [System.IO.Compression.ZipFile]::ExtractToDirectory($uabeaZip, $uabeaDir)
-  Copy-Item -LiteralPath (Join-Path $uabeaDir 'classdata.tpk') `
-    -Destination $classdata -Force
+  $uabeaClassdata = Join-Path $uabeaDir 'classdata.tpk'
+  if (-not (Test-Path -LiteralPath $uabeaClassdata -PathType Leaf)) {
+    throw "UABEA v8 archive has no classdata.tpk: $uabeaClassdata"
+  }
+  Get-ChildItem -LiteralPath $vgmStage -Force | ForEach-Object {
+    Copy-Item -LiteralPath $_.FullName -Destination $runtimePath -Recurse -Force
+  }
+  Copy-Item -LiteralPath $uabeaClassdata -Destination $classdata -Force
 }
 finally {
   if (Test-Path -LiteralPath $tempRoot) {

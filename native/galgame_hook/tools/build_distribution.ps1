@@ -117,6 +117,82 @@ function Get-Sha256Hex {
   finally { $stream.Dispose() }
 }
 
+function Test-VerifiedArchive {
+  param(
+    [Parameter(Mandatory = $true)][string]$Path,
+    [Parameter(Mandatory = $true)][string]$ExpectedSha256
+  )
+  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+    return $false
+  }
+  $item = Get-Item -LiteralPath $Path
+  return $item.Length -gt 0 -and
+    (Get-Sha256Hex -Path $Path) -eq $ExpectedSha256.ToLowerInvariant()
+}
+
+function Get-VerifiedArchive {
+  param(
+    [Parameter(Mandatory = $true)][string]$Url,
+    [Parameter(Mandatory = $true)][string]$Destination,
+    [Parameter(Mandatory = $true)][string]$ExpectedSha256,
+    [Parameter(Mandatory = $true)][string]$Label
+  )
+
+  if (Test-VerifiedArchive -Path $Destination -ExpectedSha256 $ExpectedSha256) {
+    Write-BuildLogMarker "verified cached package label=$Label path=$Destination"
+    return
+  }
+
+  $curl = Get-Command 'curl.exe' -ErrorAction SilentlyContinue
+  if (-not $curl) {
+    throw 'curl.exe is required to download the galgame helper packages'
+  }
+  $partial = "$Destination.partial"
+  $lastError = $null
+  for ($attempt = 1; $attempt -le 3; $attempt++) {
+    try {
+      if (Test-VerifiedArchive -Path $partial -ExpectedSha256 $ExpectedSha256) {
+        Move-Item -LiteralPath $partial -Destination $Destination -Force
+        return
+      }
+      Write-BuildLogMarker "download attempt $attempt/3 label=$Label url=$Url"
+      $arguments = @(
+        '--fail', '--location', '--silent', '--show-error',
+        '--http1.1', '--connect-timeout', '20', '--max-time', '300',
+        '--output', $partial
+      )
+      if ((Test-Path -LiteralPath $partial -PathType Leaf) -and
+          (Get-Item -LiteralPath $partial).Length -gt 0) {
+        $arguments += @('--continue-at', '-')
+      }
+      $arguments += $Url
+      & $curl.Source @arguments
+      $exitCode = $LASTEXITCODE
+      if ($exitCode -ne 0) {
+        if (Test-VerifiedArchive -Path $partial -ExpectedSha256 $ExpectedSha256) {
+          Move-Item -LiteralPath $partial -Destination $Destination -Force
+          return
+        }
+        throw "curl.exe failed with exit code $exitCode"
+      }
+      if (-not (Test-VerifiedArchive -Path $partial -ExpectedSha256 $ExpectedSha256)) {
+        Remove-Item -LiteralPath $partial -Force -ErrorAction SilentlyContinue
+        throw "downloaded $Label failed its pinned SHA-256 check"
+      }
+      Move-Item -LiteralPath $partial -Destination $Destination -Force
+      return
+    }
+    catch {
+      $lastError = $_
+      Write-BuildLogMarker "download attempt failed label=$Label error=$($_.Exception.Message)"
+      if ($attempt -lt 3) {
+        Start-Sleep -Seconds 2
+      }
+    }
+  }
+  throw "Unable to download verified helper package after 3 attempts: $($lastError.Exception.Message)"
+}
+
 function Reset-StageDirectory {
   param([Parameter(Mandatory = $true)][string]$Path)
   $full = [IO.Path]::GetFullPath($Path)
@@ -233,16 +309,16 @@ foreach ($file in @(
 
 # Locale Emulator 2.5.0.1 (LGPL-3.0), pinned by version and SHA-256 for x86.
 $tempBase = if ($env:RUNNER_TEMP) { $env:RUNNER_TEMP } else { [IO.Path]::GetTempPath() }
-$leZip = Join-Path $tempBase 'Locale.Emulator.2.5.0.1.zip'
 $leDir = Join-Path $tempBase 'hibiki-locale-emulator-2.5.0.1'
 $leUrl = 'https://github.com/xupefei/Locale-Emulator/releases/download/v2.5.0.1/Locale.Emulator.2.5.0.1.zip'
 $expectedLeSha = '808ff584426d52cc775ad6406da00622f454be95bd4c8fbca42eef4b7235ad5c'
+$repositoryRoot = Split-Path -Parent (Split-Path -Parent $sourceRoot)
+$helperDownloadCache = Join-Path $repositoryRoot '.build-cache\galgame_hook\downloads'
+New-Item -ItemType Directory -Force -Path $helperDownloadCache | Out-Null
+$leZip = Join-Path $helperDownloadCache 'Locale.Emulator.2.5.0.1.zip'
+Get-VerifiedArchive -Url $leUrl -Destination $leZip -ExpectedSha256 $expectedLeSha -Label 'Locale Emulator 2.5.0.1'
 $leLicenseSource = Join-Path $sourceRoot 'third_party/locale_emulator/LICENSE-LGPL.txt'
 $expectedLeLicenseSha = 'ea8af5e789cb2d4e9b10bce3874982ade163b749b6bfbdb32e2df21c4d106de1'
-if (-not (Test-Path -LiteralPath $leZip -PathType Leaf) -or
-    (Get-Sha256Hex -Path $leZip) -ne $expectedLeSha) {
-  Invoke-WebRequest -Uri $leUrl -OutFile $leZip
-}
 $actualLeSha = Get-Sha256Hex -Path $leZip
 if ($actualLeSha -ne $expectedLeSha) {
   throw "Locale Emulator SHA-256 mismatch: $actualLeSha"
