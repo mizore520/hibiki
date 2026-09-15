@@ -1,5 +1,4 @@
 #undef NDEBUG
-
 #include "../single_instance_mutex.h"
 
 #include <atomic>

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:fushi_engine/sync/remote_collection_adoption_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fushi/src/media/manga/interconnect/interconnect_manga_source.dart';
@@ -8,7 +9,7 @@ import 'package:fushi/src/media/manga/library/manga_series_page.dart';
 import 'package:fushi/src/media/manga/library/online_manga_library_service.dart';
 import 'package:fushi/src/media/media_search_text.dart';
 import 'package:fushi/src/models/app_model.dart';
-import 'package:fushi/src/sync/fushi_library_host_service.dart';
+import 'package:fushi_engine/sync/fushi_library_host_service.dart';
 import 'package:fushi/src/sync/interconnect_sync_backend.dart';
 import 'package:fushi/src/sync/remote_cover_image.dart';
 import 'package:fushi/utils.dart';
@@ -62,6 +63,10 @@ class _InterconnectMangaBrowsePageState
       final List<RemoteBookInfo> items = await InterconnectMangaCatalog(
         _backend,
       ).listSeries();
+      if (!mounted) return;
+      final RemoteCollectionAdoptionService adoption =
+          RemoteCollectionAdoptionService(ref.read(appProvider).database);
+      await adoption.adoptBooks(items);
       if (!mounted) return;
       setState(() {
         _items = items;

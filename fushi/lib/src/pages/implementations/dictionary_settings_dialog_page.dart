@@ -10,7 +10,7 @@ import 'package:fushi/src/pages/implementations/dict_style_preview.dart';
 import 'package:fushi/src/pages/implementations/dict_style_visual_editor.dart';
 import 'package:fushi/src/profile/profile_view_model.dart';
 import 'package:fushi/src/reader/dictionary_style_css.dart';
-import 'package:fushi/src/utils/net/url_input_normalizer.dart';
+import 'package:fushi_engine/utils/net/url_input_normalizer.dart';
 import 'package:fushi/utils.dart';
 
 @visibleForTesting
@@ -581,7 +581,6 @@ class _AudioSourcesDialogState extends State<AudioSourcesDialog> {
           .toList();
       _sources = <AudioSourceConfig>[
         if (hadHibiki) AudioSourceConfig.fushiRemote(),
-        ...AudioSourceConfig.fromLegacyUrls(AppModel.defaultAudioSources),
         // Anki 本地音频服务器内置预设：重置默认后也在列（默认关闭，与新装一致）。
         AudioSourceConfig.remoteAudio(
           url: AppModel.ankiLocalAudioUrl,

@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:fushi/src/anki/source_review_navigation.dart';
+import 'package:fushi/src/anki/source_review_session.dart';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +13,8 @@ import 'package:fushi_anki/fushi_anki.dart' show AnkiOpenWordOutcome;
 import 'package:fushi/src/anki/anki_view_model.dart';
 import 'package:fushi/src/anki/anki_mined_card_action_sheet.dart';
 import 'package:fushi/src/lookup/effective_lookup_size.dart';
+import 'package:fushi/src/media/audiobook/mining_sentence_draft.dart'
+    show SentenceContextSlot;
 import 'package:fushi/src/models/module_id.dart';
 import 'package:fushi/src/pages/implementations/dictionary_popup_controller.dart';
 import 'package:fushi/src/pages/implementations/dictionary_popup_input_bridge.dart';
@@ -82,6 +86,13 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
   void initState() {
     super.initState();
 
+    ExternalMediaNavigation.instance.register(
+      this,
+      _closeForSourceReturn,
+      returnToReading: SourceReviewScope.read(context)?.onReturnToReading,
+      isSourceReview: () => SourceReviewScope.read(context)?.isReview ?? false,
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _seedWarmPopup();
     });
@@ -106,6 +117,7 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
 
   @override
   void dispose() {
+    ExternalMediaNavigation.instance.unregister(this);
     _visibleRenderFailsafeTimer?.cancel();
     // TODO-058：controller 现持有挂起层兜底 Timer，作为其所有者必须 dispose 取消，防泄漏。
     _popup.dispose();
@@ -248,6 +260,8 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
   /// Handles leaving a source page. All sources should
   /// use this and wrap their [build] function with a [PopScope].
   Future<bool> onWillPop() async {
+    final bool isSourceReview =
+        SourceReviewScope.read(context)?.isReview ?? false;
     final mediaSource = appModel.currentMediaSource;
     final item = widget.item;
     final messenger = ScaffoldMessenger.maybeOf(context);
@@ -261,7 +275,7 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
       );
     }
 
-    if (item != null && messenger != null) {
+    if (!isSourceReview && item != null && messenger != null) {
       triggerAutoSyncAfterClose(
         db: appModel.database,
         mediaIdentifier: item.mediaIdentifier,
@@ -269,6 +283,17 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
         onReport: appModel.presentSyncPrompts,
       );
     }
+    return true;
+  }
+
+  Future<bool> _closeForSourceReturn() async {
+    if (!mounted) return true;
+    final ModalRoute<dynamic>? route = ModalRoute.of(context);
+    if (route == null || !route.isCurrent) return false;
+    final NavigatorState navigator = Navigator.of(context);
+    if (!await onWillPop()) return false;
+    if (mounted && route.isCurrent) navigator.pop();
+    await route.completed;
     return true;
   }
 
@@ -400,15 +425,22 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
     // BUG-1478：按**词头**递增，不是按 glossary 行数（entries.length）——
     // 后者是另一个单位，一个词头带十几条注释时上限会一次暴涨十几倍。
     final int newMax = current.headwordCount + appModel.maximumTerms;
+    final String term = entry.searchTerm;
     entry.isSearching = true;
     try {
       final DictionarySearchResult result = await appModel.searchDictionary(
-        searchTerm: entry.searchTerm,
+        searchTerm: term,
         searchWithWildcards: false,
         overrideMaximumTerms: newMax,
       );
       // 续查期间该层可能被裁掉/换词（嵌套查词、关栈）；用身份核对确保只更新原层。
-      if (!mounted || !_popup.entries.contains(entry)) return;
+      // 原地跳转 / 后退 / 前进会在**同一个 entry** 上换词，所以还要核对词没变，
+      // 否则旧词的续查结果会灌进新页。
+      if (!mounted ||
+          !_popup.entries.contains(entry) ||
+          entry.searchTerm != term) {
+        return;
+      }
       _popup.fillResult(
         entry,
         result: result,
@@ -419,6 +451,82 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
       if (_popup.entries.contains(entry) && entry.isSearching) {
         entry.isSearching = false;
       }
+    }
+  }
+
+  /// 弹窗内原地跳转（词头 / 交叉引用链接 / 汉字点击）：先裁掉 [index] 之上的子层，
+  /// 查 [query]，**有结果才**把 [item] 当前页压进后退栈、在同一个 WebView 里换成新词
+  /// （Hoshi iOS：`if (count > 0) redirect(count)`，空结果什么都不发生，弹窗不动）。
+  /// 弹窗位置 / 尺寸都不变：selectionRect 保留，外壳高度由新内容的 onContentMetrics
+  /// 再伸缩。
+  ///
+  /// 身份门：查询往返期间本层可能被关掉（`entries.contains`）或已被另一次跳转 /
+  /// 顶层换词换掉内容（`searchTerm` 变了）——迟到的结果一律丢弃，不灌进别的词。
+  /// 查询期间置 [DictionaryPopupEntry.isSearching] 挡住同层 load-more 并发写入。
+  Future<void> navigatePopupInPlace({
+    required int index,
+    required DictionaryPopupEntry item,
+    required String query,
+  }) async {
+    final String trimmed = query.trim();
+    if (trimmed.isEmpty || item.isSearching) return;
+    prunePopupStack(index + 1);
+    // 离开当前页前记下它的滚动位（回来时恢复）；查询开始后再读会读到新内容。
+    final double scrollTop =
+        await item.webViewKey.currentState?.currentScrollTop() ?? 0;
+    if (!mounted || !_popup.entries.contains(item)) return;
+    final String termAtStart = item.searchTerm;
+    item.isSearching = true;
+    try {
+      final DictionarySearchResult result = await appModel.searchDictionary(
+        searchTerm: trimmed,
+        searchWithWildcards: false,
+        overrideMaximumTerms: appModel.maximumTerms,
+      );
+      if (!mounted ||
+          !_popup.entries.contains(item) ||
+          item.searchTerm != termAtStart) {
+        return;
+      }
+      if (result.entries.isEmpty && result.kanjiResults.isEmpty) return;
+      appModel.addToDictionaryHistory(result: result);
+      _popup.navigateInPlace(
+        item,
+        term: trimmed,
+        result: result,
+        allLoaded: !result.truncated,
+        scrollTop: scrollTop,
+      );
+      if (ReaderFushiSource.instance.autoReadOnLookup &&
+          result.entries.isNotEmpty) {
+        final DictionaryEntry entry = result.entries.first;
+        if (entry.word.isNotEmpty) {
+          _autoReadWord(entry.word, entry.reading);
+        }
+      }
+    } finally {
+      // navigateInPlace 成功路径已清 isSearching；失败 / 提前 return 在此兜底复位。
+      if (_popup.entries.contains(item) && item.isSearching) {
+        item.isSearching = false;
+      }
+    }
+  }
+
+  /// 顶栏 ← / →：在 [item] 的原地跳转历史里后退 / 前进一页。先记当前页滚动位（再往
+  /// 回走时恢复），controller 换页后 `notifyListeners` 经 [buildDictionary] 的
+  /// AnimatedBuilder 重建，WebView 按 result 身份重推、渲染完恢复该页滚动位。
+  Future<void> _navigatePopupHistory(
+    DictionaryPopupEntry item, {
+    required bool forward,
+  }) async {
+    if (item.isSearching) return;
+    final double scrollTop =
+        await item.webViewKey.currentState?.currentScrollTop() ?? 0;
+    if (!mounted || !_popup.entries.contains(item)) return;
+    if (forward) {
+      _popup.goForward(item, scrollTop: scrollTop);
+    } else {
+      _popup.goBack(item, scrollTop: scrollTop);
     }
   }
 
@@ -792,12 +900,15 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
       screen: screen,
       child: DictionaryPopupLayer(
         result: item.result,
+        restoreScrollTop: item.restoreScrollTop,
         webViewKey: item.webViewKey,
         keepWebViewWarm: item.isWarmSlot,
         // TODO-869：本层有后代弹窗时注入 __hasChildPopup，点卡片本体留白才能关子窗。
         hasChildPopup: index < stack.length - 1,
         isDark: isDark,
         overrideFillColor: appModel.overrideDictionaryColor,
+        // dock 面板铺满屏幕左右缘时把圆角摊平，否则边缘露出背景（BUG-2439）。
+        bottomDocked: appModel.popupBottomDocked,
         onDismiss: () => _dismissPopupAt(index),
         // TODO-407②：平台/偏好级"滑动关闭"开关（Windows/Linux 默认 false）。
         enableSwipeToClose: ReaderFushiSource.instance.enableSwipeToClose,
@@ -862,42 +973,20 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
             }
           }
         },
-        onLinkClick: (query, localRect) async {
-          final childRect = localRect == Rect.zero
-              ? item.selectionRect
-              : popupWordScreenRect(
-                  webViewKey: item.webViewKey,
-                  localRect: localRect,
-                  fallback: item.selectionRect,
-                  coordinateSpaceKey: _popupCoordinateSpaceKey,
-                );
-          prunePopupStack(index + 1);
-          // TODO-1190: symmetric with onTextSelected above — mark the clicked
-          // headword/link target in this parent card after the child search
-          // (it previously highlighted only on plain-text selection, so a
-          // headword/kanji-tag tap left the source word unmarked).
-          final count = await searchDictionaryResult(
-            searchTerm: query,
-            selectionRect: childRect,
-          );
-          if (count > 0) {
-            // BUG-2054：与 onTextSelected 对称（含两道身份门）。
-            final int generation = activeLookupGeneration;
-            final Rect? wordRect =
-                await item.webViewKey.currentState?.highlightSelection(count);
-            if (mounted && generation == activeLookupGeneration) {
-              reanchorNestedPopupToWord(
-                controller: _popup,
-                parentWebViewKey: item.webViewKey,
-                parentIndex: index,
-                expectedTerm: query,
-                wordLocalRect: wordRect,
-                fallback: childRect,
-                coordinateSpaceKey: _popupCoordinateSpaceKey,
-              );
-            }
-          }
-        },
+        // 词头 / 交叉引用链接 / 汉字（onLinkClick 通道）：**原地跳转**而不是叠一层
+        // 子弹窗——对齐 Hoshi Reader iOS（`lookupRedirect` → `redirect(count)`：
+        // 同一个 WebView 换内容，← → 在历史页间来回）。释义正文点词（onTextSelected）
+        // 仍叠子层，也与 Hoshi 一致（那边 `textSelected` 走 `popups.append`）。
+        onLinkClick: (query, localRect) =>
+            navigatePopupInPlace(index: index, item: item, query: query),
+        historyNav: item.hasNavigationHistory
+            ? DictionaryPopupHistoryNav(
+                canGoBack: item.canGoBack,
+                canGoForward: item.canGoForward,
+                onBack: () => _navigatePopupHistory(item, forward: false),
+                onForward: () => _navigatePopupHistory(item, forward: true),
+              )
+            : null,
         // TODO-962：弹窗滚到底时若该层结果可能被截断（!allLoaded）就续查下一批词头
         // （与 dictionary_page_mixin / home_dictionary_page 同构），webview 的
         // _pushResults 据 searchTerm 不变 + entries 增多自动判 isLoadMore → 走
@@ -1014,6 +1103,11 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
           matched: matched,
           fetchPreview: onSentenceContextPreviewFromDraft,
           setContext: onSetSentenceContextToDraft,
+          // 「手改某一句文本」：只改这次会写进卡片的**文本**，不动该句的音频区间/
+          // 身份（改完照样是同一句、同一段音频）。门控与其余草稿回调同判据
+          // （本入口只在 sentenceDraftEnabled 时才挂上，这里再按
+          // [supportsSentenceDraft] 兜一层）；不支持的表面传 null，对话框不渲染编辑入口。
+          editSentence: supportsSentenceDraft ? onEditSentenceContextText : null,
           // BUG-2196 ②：只有真的能出声的表面才给试听按钮。
           previewAudio: supportsSentenceAudioPreview ? onPreviewSentenceAudio : null,
           stopAudioPreview:
@@ -1105,6 +1199,19 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
   Future<Map<String, Object?>> onSentenceContextPreviewFromDraft() async =>
       const <String, Object?>{};
 
+  /// 「制卡前调整·选择句子上下文」里**手改某一句文本**：把 [slot]（上文/当前/下文）
+  /// 第 [index] 句的文本改成 [text]，写回本表面会话级制卡草稿。
+  ///
+  /// 只改**会写进卡片的那段文本**，不动该句的音频区间与身份——改错别字 / 补主语 /
+  /// 去掉说话人名之后，仍是同一句、同一段音频，试听与压制结果不变。
+  /// 默认 no-op（[supportsSentenceDraft] 为 false 时不会被调用）。reader/视频覆写。
+  @protected
+  Future<void> onEditSentenceContextText(
+    SentenceContextSlot slot,
+    int index,
+    String text,
+  ) async {}
+
   /// BUG-2196 ②：试听**这次制卡真正会写进卡片的那段音频**。
   ///
   /// 为什么值得单独一个钩子而不是「播当前句的 cue」：写进卡的区间是
@@ -1181,7 +1288,6 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
       selectionRect: sel,
       screen: screen,
       bottomDocked: appModel.popupBottomDocked,
-      fullWidth: appModel.popupFullWidth,
       maxWidth: popupMaxWidth,
       maxHeight: popupMaxHeight,
       padding: popupPadding,
@@ -1322,6 +1428,9 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
   /// [onUpdateFromPopup] 执行。
   Future<MinePopupResult> onMinedCardActionFromPopup(
       Map<String, String> fields) async {
+    if (SourceReviewScope.read(context) != null) {
+      return onMineFromPopup(fields);
+    }
     final repo = ref.read(ankiRepositoryProvider);
     final expression = fields['expression'] ?? '';
     final reading = fields['reading'] ?? '';
@@ -1370,6 +1479,7 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
   /// （顶层 / 嵌套 / 重复查各一次）累加 [FushiDatabase.addLookupCount]。best-effort，
   /// 失败吞掉并记日志（与 [addMiningCount] 记账同容错口径）。
   void _recordLookupCounter() {
+    if (SourceReviewScope.read(context)?.isReview ?? false) return;
     // best-effort：连同同步阶段（[AppModel.database] late 字段 getter 在 DB 未初始化
     // 时会抛 LateInitializationError）一起吞掉——查词计数是旁路埋点，任何异常都不得
     // 打断弹窗查词流程（否则 [DictionaryPopupController.beginTop] 会随查词一起崩）。

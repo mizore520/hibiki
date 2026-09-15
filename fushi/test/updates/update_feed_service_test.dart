@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi_core/fushi_core.dart';
 
 import 'package:fushi/src/models/preferences_repository.dart';
-import 'package:fushi/src/updates/update_feed_kind.dart';
+import 'package:fushi_engine/updates/update_feed_kind.dart';
 import 'package:fushi/src/updates/update_feed_service.dart';
 import 'package:fushi/src/updates/update_notifier.dart';
 
@@ -113,7 +113,7 @@ void main() {
     expect(notifier.sent.single.body, contains('+2'));
     expect(await service.unseenTotal(), 3);
 
-    await service.setSystemNotificationsEnabled(false);
+    await service.disableSystemNotifications();
     await service.publishBatch(
         UpdateFeedKind.videoEpisode, <UpdateFeedDraft>[episode('4')]);
     expect(notifier.sent, hasLength(1), reason: '总开关关掉后不再发通知');
@@ -181,6 +181,191 @@ void main() {
     expect(counts[UpdateFeedKind.videoEpisode], 1);
     expect(counts[UpdateFeedKind.appRelease], 1);
     expect(counts.containsKey(UpdateFeedKind.mangaChapter), isFalse);
+  });
+
+  test('通知按组拆：同域不同作品各一条，同作品多集一条；配图/时刻/按钮透传', () async {
+    db = FushiDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    prefs = PreferencesRepository(db);
+    await prefs.loadFromDb();
+    notifier = RecordingUpdateNotifier();
+    final UpdateFeedService service = UpdateFeedService(
+      database: db,
+      prefs: prefs,
+      notifier: notifier,
+      notificationText: (UpdateFeedKind kind, List<UpdateFeedDraft> fresh) =>
+          UpdateNotificationText(
+        title: fresh.first.title,
+        body: fresh.length == 1
+            ? fresh.first.subtitle ?? ''
+            : '+${fresh.length - 1}',
+        openLabel: 'Play',
+        viewAllLabel: 'View',
+      ),
+    );
+
+    UpdateFeedDraft grouped(String key, String group, {String? image}) =>
+        UpdateFeedDraft(
+          kind: UpdateFeedKind.videoEpisode,
+          targetKey: '$group/$key',
+          title: group,
+          subtitle: 'S01E$key',
+          imagePath: image,
+          publishedAt: 1700000000000,
+          notificationGroup: 'collection:$group',
+        );
+
+    await service.publishBatch(
+      UpdateFeedKind.videoEpisode,
+      <UpdateFeedDraft>[
+        grouped('1', 'A', image: r'C:\covers\a1.jpg'),
+        grouped('2', 'A'),
+        grouped('1', 'B'),
+      ],
+    );
+    expect(notifier.sent, hasLength(2), reason: '两部作品各占一格，同作品两集合并');
+    final UpdateNotification a = notifier.sent[0];
+    final UpdateNotification b = notifier.sent[1];
+    expect(a.id, isNot(b.id));
+    expect(
+      a.id,
+      updateNotificationId(UpdateFeedKind.videoEpisode, 'collection:A'),
+      reason: '同组恒同 id：下次 A 再更新替换而不是叠加',
+    );
+    expect(a.body, '+1');
+    expect(a.imagePath, r'C:\covers\a1.jpg', reason: '配图取组内第一条');
+    expect(a.timestamp, DateTime.fromMillisecondsSinceEpoch(1700000000000));
+    expect(
+      a.actions.map((UpdateNotificationAction x) => x.id),
+      <String>[kUpdateNotificationActionOpen, kUpdateNotificationActionViewAll],
+    );
+    expect(
+      a.actions.map((UpdateNotificationAction x) => x.label),
+      <String>['Play', 'View'],
+    );
+    final UpdateNotificationPayload? payload =
+        UpdateNotificationPayload.decode(a.payload);
+    expect(payload?.kind, UpdateFeedKind.videoEpisode);
+    expect(payload?.entryId, grouped('1', 'A').entryId,
+        reason: '载荷指向组内第一条：点通知就播那一集');
+    expect(b.imagePath, isNull);
+
+    await service.markAllSeen(kind: UpdateFeedKind.videoEpisode);
+    expect(notifier.cancelled, containsAll(<int>[a.id, b.id]),
+        reason: '标已读要撤掉本进程发过的每条分组通知');
+    expect(
+      notifier.cancelled,
+      contains(updateNotificationId(UpdateFeedKind.videoEpisode, null)),
+      reason: '域级固定 id 也撤：上个进程留下的那条不在内存账本里',
+    );
+  });
+
+  test('warmUpNotifier：启动期初始化一次；总开关关着不初始化', () async {
+    final UpdateFeedService service = await makeService();
+    await service.warmUpNotifier();
+    await service.warmUpNotifier();
+    expect(notifier.ensureReadyCalls, 1, reason: '重复 warm-up 不重复初始化');
+    await service.publishBatch(
+        UpdateFeedKind.videoEpisode, <UpdateFeedDraft>[episode('1')]);
+    expect(notifier.ensureReadyCalls, 1, reason: '发通知复用启动期的初始化');
+
+    final UpdateFeedService cold = await makeService();
+    await cold.disableSystemNotifications();
+    await cold.warmUpNotifier();
+    expect(notifier.ensureReadyCalls, 0, reason: '关着总开关时不初始化');
+  });
+
+  test('BUG-2498：启动期 warm-up 只查询权限，绝不申请；申请只跟着用户打开开关',
+      () async {
+    db = FushiDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    prefs = PreferencesRepository(db);
+    await prefs.loadFromDb();
+    final RecordingUpdateNotifier fresh =
+        RecordingUpdateNotifier(permission: false);
+    final UpdateFeedService service = UpdateFeedService(
+      database: db,
+      prefs: prefs,
+      notifier: fresh,
+      now: () => DateTime.utc(2026, 9, 13, 12),
+    );
+
+    await service.warmUpNotifier();
+    expect(fresh.ensureReadyCalls, 1);
+    expect(fresh.replayLaunchCalls, 1, reason: '冷启动点击回放只在启动期');
+    expect(fresh.requestPermissionCalls, 0,
+        reason: '退出新手引导那一帧不得弹系统权限框——MIUI 的权限界面会崩并连坐杀掉我们');
+    expect(service.systemNotificationsEnabled, isTrue, reason: '偏好默认开');
+    expect(service.systemNotificationsActive, isFalse,
+        reason: '系统没授权时开关显示为关，不假装能发');
+
+    final UpdateFeedPublishResult result = await service
+        .publishBatch(UpdateFeedKind.videoEpisode, <UpdateFeedDraft>[
+      episode('1'),
+    ]);
+    expect(result.hasNew, isTrue);
+    expect(result.notificationSent, isFalse);
+    expect(fresh.requestPermissionCalls, 0, reason: '发通知也不趁机申请');
+    expect(await service.unseenTotal(), 1, reason: '没权限只是不发通知，红点照常');
+
+    // 用户在设置里打开开关：这才是唯一的申请点。系统拒绝 → 开关仍显示为关。
+    expect(await service.enableSystemNotifications(), isFalse);
+    expect(fresh.requestPermissionCalls, 1);
+    expect(fresh.replayLaunchCalls, 1, reason: '打开开关不回放旧的冷启动点击');
+    expect(service.systemNotificationsActive, isFalse);
+
+    // 关掉再打开 = 再申请一次（用户改了主意，系统也可能已在设置里放行）。
+    await service.disableSystemNotifications();
+    expect(service.systemNotificationsEnabled, isFalse);
+    expect(await service.enableSystemNotifications(), isFalse);
+    expect(fresh.requestPermissionCalls, 2);
+  });
+
+  test('BUG-2498：用户打开开关且系统放行 → 开关显示开、通知照发', () async {
+    final UpdateFeedService service = await makeService();
+    expect(service.systemNotificationsActive, isFalse,
+        reason: '还没 warm-up/申请，权限状态未知，不能显示为开');
+    expect(await service.enableSystemNotifications(), isTrue);
+    expect(notifier.requestPermissionCalls, 1);
+    expect(service.systemNotificationsActive, isTrue);
+    await service.publishBatch(
+        UpdateFeedKind.videoEpisode, <UpdateFeedDraft>[episode('1')]);
+    expect(notifier.sent, hasLength(1));
+  });
+
+  test('通知 id：无组回落到域固定值；有组跨进程稳定且不与其它域撞', () {
+    expect(updateNotificationId(UpdateFeedKind.videoEpisode, null), 9101);
+    expect(updateNotificationId(UpdateFeedKind.appRelease, null), 9104);
+    final int a1 =
+        updateNotificationId(UpdateFeedKind.videoEpisode, 'collection:1');
+    expect(
+      a1,
+      updateNotificationId(UpdateFeedKind.videoEpisode, 'collection:1'),
+    );
+    expect(
+      a1,
+      isNot(updateNotificationId(UpdateFeedKind.videoEpisode, 'collection:2')),
+    );
+    expect(
+      a1,
+      isNot(updateNotificationId(UpdateFeedKind.mangaChapter, 'collection:1')),
+    );
+    expect(a1, greaterThan(0));
+    expect(a1, lessThan(1 << 31), reason: 'Android 通知 id 是 32 位有符号 int');
+  });
+
+  test('载荷：JSON 往返；旧版裸 kind 值 / 垃圾解成 null 让调用方退到更新中心', () {
+    const UpdateNotificationPayload payload = UpdateNotificationPayload(
+      kind: UpdateFeedKind.mangaChapter,
+      entryId: 'manga_chapter:x',
+    );
+    final UpdateNotificationPayload? back =
+        UpdateNotificationPayload.decode(payload.encode());
+    expect(back?.kind, UpdateFeedKind.mangaChapter);
+    expect(back?.entryId, 'manga_chapter:x');
+    expect(UpdateNotificationPayload.decode('video_episode'), isNull);
+    expect(UpdateNotificationPayload.decode('{not json'), isNull);
+    expect(UpdateNotificationPayload.decode(null), isNull);
   });
 
   test('混域投递直接抛错（通知按域合并，混进来会算错归属）', () async {

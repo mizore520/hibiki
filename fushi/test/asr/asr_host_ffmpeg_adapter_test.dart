@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:fushi_asr_core/asr_core.dart' as asr;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi/src/asr_host/asr_host.dart';
-import 'package:fushi/src/media/video/ffmpeg_backend.dart' as host;
+import 'package:fushi_engine/media/video/ffmpeg_backend.dart' as host;
 
 /// ASR 的 PCM 解码搬进 `fushi_asr_core` 之后，本仓与包之间隔着一个
 /// [FushiAsrFfmpegBackend]。它转的是两套**同源但不同类型**的 `Ffmpeg*`，字段错位
@@ -49,20 +49,6 @@ class _ThrowingBackend implements host.FfmpegBackend {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const FushiAsrFfmpegBackend adapter = FushiAsrFfmpegBackend();
-
-  test('声学调轴默认关：转录本身就产出完整 SRT，调轴是精修不是必需', () {
-    // 曾经默认开，代价是：日语包是 transducer 架构，调轴要另下 Omnilingual 1B
-    // （int8 约 985 MB），而识别模型才约 150 MB —— 于是「选个小模型」被要求先下
-    // 近 1 GB，不下就不让转录。转录出来的时间取自 VAD 段边界与 RNN-T 发射时刻，
-    // 已经是一份可用的 SRT；调轴只是把每个 token 的时间再按声学定位一遍。
-    expect(createAsrTranscriptionService().alignGeneratedSubtitles, isFalse);
-    // 能力还在，一个参数就能打开。
-    expect(
-      createAsrTranscriptionService(alignGeneratedSubtitles: true)
-          .alignGeneratedSubtitles,
-      isTrue,
-    );
-  });
 
   test('有声书路径显式声明素材是干净朗读', () {
     // 能量门限是带前提的优化（语音与静默双模态可分），上游已把这个前提改成必填

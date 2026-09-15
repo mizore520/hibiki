@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fushi/src/media/source_library/source_library_row.dart';
-import 'package:fushi/src/media/video/metadata/video_metadata_models.dart';
-import 'package:fushi/src/media/video/metadata/video_metadata_provider.dart';
-import 'package:fushi/src/media/video/metadata/video_source_scrape_task.dart';
-import 'package:fushi/src/media/video/metadata/video_source_work_planner.dart'
+import 'package:fushi_engine/media/source_library/source_library_row.dart';
+import 'package:fushi_engine/media/video/metadata/video_metadata_models.dart';
+import 'package:fushi_engine/media/video/metadata/video_metadata_provider.dart';
+import 'package:fushi_engine/media/video/metadata/video_source_scrape_task.dart';
+import 'package:fushi_engine/media/video/metadata/video_source_work_planner.dart'
     show VideoSourceScrapeWork;
 
 void main() {
@@ -476,12 +476,16 @@ class _ManualRunner
 
   @override
   Future<List<VideoSourceScrapeConfirmationCandidate>> searchManualCandidates({
-    required SourceLibraryRow source,
+    SourceLibraryRow? source,
     required String workTitle,
     String? workStableKey,
     required String query,
   }) async =>
       const <VideoSourceScrapeConfirmationCandidate>[];
+
+  @override
+  Future<VideoMetadataWork?> fetchWorkForLookup(VideoMetadataLookup lookup) =>
+      Future<VideoMetadataWork?>.value(null);
 
   @override
   Future<SourceScrapeReport> rescrapeWorkWithLookup({

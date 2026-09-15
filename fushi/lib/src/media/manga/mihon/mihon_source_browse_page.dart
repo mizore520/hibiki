@@ -1,11 +1,12 @@
 import 'dart:async';
-import 'package:fushi/src/media/manga/mihon/mihon_cloudflare_action.dart';
 import 'dart:collection';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
 import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi/src/media/manga/manga_cover_failure.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_cloudflare_action.dart';
 import 'package:fushi/src/media/manga/mihon/mihon_cover_cache.dart';
 import 'package:fushi/src/media/manga/library/manga_series_page.dart';
 import 'package:fushi/src/media/manga/library/online_manga_library_entry.dart';
@@ -59,6 +60,11 @@ class MihonSourceBrowsePage extends StatefulWidget {
   final MihonBrowseTarget target;
 
   /// 钉在正文底部的操作条。预览用它放「放弃 / 信任并安装」。
+  ///
+  /// BUG-2440：scaffold 的 body 不再扣底部安全区，所以这条动作条贴的是屏幕真正的
+  /// 最底边。**底部安全区由 footer 自己套 SafeArea 补**（`_PreviewFooter` 就是这么
+  /// 做的：`ColoredBox` 包在 `SafeArea` 外，让手势条那一段也上底色）——这里不代劳，
+  /// 在外面补会把那一段留成页面底色的空条。
   final Widget? footer;
 
   @override
@@ -284,7 +290,18 @@ class _MihonSourceBrowsePageState extends State<MihonSourceBrowsePage> {
               error: _error,
               onVerified: () => _load(reset: false),
             ),
-          Expanded(child: _buildResults()),
+          // BUG-2440：scaffold 的 body 不再扣底部安全区。有 footer 时那段归 footer
+          // 自己的 SafeArea 认领，先从网格的 MediaQuery 里摘掉，免得网格底部和
+          // footer 各补一次、在动作条上方多顶出一条空白。
+          Expanded(
+            child: widget.footer == null
+                ? _buildResults()
+                : MediaQuery.removePadding(
+                    context: context,
+                    removeBottom: true,
+                    child: _buildResults(),
+                  ),
+          ),
           if (widget.footer != null) widget.footer!,
         ],
       ),
@@ -321,7 +338,10 @@ class _MihonSourceBrowsePageState extends State<MihonSourceBrowsePage> {
       builder: (BuildContext context, BoxConstraints constraints) {
         final int columns = (constraints.maxWidth / 180).floor().clamp(2, 8);
         return GridView.builder(
-          padding: const EdgeInsets.all(16),
+          // BUG-2440：scaffold 的 body 不再扣底部安全区，网格最后一行要靠这里
+          // 补出手势条那一段。有 footer 时上面已把这段从 MediaQuery 摘掉，这里
+          // 自动退回纯 16。
+          padding: withBottomSafeInset(context, const EdgeInsets.all(16)),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,
             childAspectRatio: 0.62,
@@ -526,24 +546,13 @@ class _MihonSourceImageState extends State<MihonSourceImage> {
           );
         }
         if (snapshot.hasError) {
-          return ColoredBox(
-            color: Color(0xff303030),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  const Icon(Icons.broken_image_outlined),
-                  MihonCloudflareAction(
-                    runtime: widget.runtime,
-                    error: snapshot.error,
-                    compact: true,
-                    onVerified: () async {
-                      if (mounted) setState(_reload);
-                    },
-                  ),
-                ],
-              ),
-            ),
+          // 缓存层的自动退避已经用尽（或错误本就不该自动重试）：这里给手动入口。
+          return MangaCoverFailure(
+            runtime: widget.runtime,
+            error: snapshot.error,
+            onRetry: () {
+              if (mounted) setState(_reload);
+            },
           );
         }
         return const ColoredBox(
@@ -555,6 +564,17 @@ class _MihonSourceImageState extends State<MihonSourceImage> {
   }
 }
 
+/// 封面在并发闸门里最多排多久（BUG-2450）。
+///
+/// 桌面封面单张首响应 / 空闲超时各 90s，4 并发 × 90s 串行排队时整页封面会一起
+/// 转圈几分钟；排到 30s 还没轮上就直接落失败态（可点重试），把慢源的代价限制在
+/// 它自己那几格上。
+const Duration kMihonSourceImageQueueWaitTimeout = Duration(seconds: 30);
+
+/// 排队超时的错误码；[isTransientMihonImageError] 明确不对它自动退避——队列
+/// 本身已经等满了一档，再排一次只会把失败态往后推。
+const String kMihonImageQueueTimeoutCode = 'IMAGE_QUEUE_TIMEOUT';
+
 /// 漫画源封面的轻量共享并发闸门。
 ///
 /// `GridView.builder` 虽然懒建，但仍会为当前视口和 cacheExtent 同时创建多张封面；
@@ -562,10 +582,15 @@ class _MihonSourceImageState extends State<MihonSourceImage> {
 /// 缓存未命中网络任务；命中磁盘的封面不占用网络并发名额，图片仍由各自 widget
 /// 独立解码与渲染。
 class MihonSourceImageLoadQueue {
-  MihonSourceImageLoadQueue({required this.maxConcurrent})
-    : assert(maxConcurrent > 0);
+  MihonSourceImageLoadQueue({
+    required this.maxConcurrent,
+    this.waitTimeout = kMihonSourceImageQueueWaitTimeout,
+  }) : assert(maxConcurrent > 0);
 
   final int maxConcurrent;
+
+  /// 等待名额的上限；超时的等待者以 [kMihonImageQueueTimeoutCode] 失败。
+  final Duration waitTimeout;
   final Queue<Completer<void>> _waiters = Queue<Completer<void>>();
   int _active = 0;
 
@@ -588,7 +613,23 @@ class MihonSourceImageLoadQueue {
     }
     final Completer<void> waiter = Completer<void>();
     _waiters.addLast(waiter);
-    await waiter.future;
+    // 超时判据是「还在等待队列里」：_release 一旦把名额交给它就从队列移走，
+    // 定时器再响也只会空转，不会既拿了名额又报失败（那会把名额永久漏掉）。
+    final Timer timer = Timer(waitTimeout, () {
+      if (_waiters.remove(waiter)) {
+        waiter.completeError(
+          const MihonRuntimeException(
+            kMihonImageQueueTimeoutCode,
+            'The source image waited too long for a load slot',
+          ),
+        );
+      }
+    });
+    try {
+      await waiter.future;
+    } finally {
+      timer.cancel();
+    }
   }
 
   void _release() {

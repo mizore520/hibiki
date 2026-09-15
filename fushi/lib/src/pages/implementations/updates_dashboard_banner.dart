@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fushi/src/pages/implementations/updates_center_open.dart';
 import 'package:fushi/src/pages/implementations/updates_center_page.dart';
-import 'package:fushi/src/updates/update_feed_kind.dart';
+import 'package:fushi_engine/updates/update_feed_kind.dart';
 import 'package:fushi/src/updates/update_feed_service.dart';
 import 'package:fushi/utils.dart';
 
@@ -51,15 +51,7 @@ class _UpdatesDashboardBannerState extends State<UpdatesDashboardBanner> {
   int get _total => _counts.values.fold<int>(0, (int a, int b) => a + b);
 
   Future<void> _openCenter() async {
-    await Navigator.of(context).push(
-      adaptivePageRoute<void>(
-        context: context,
-        builder: (BuildContext pageContext) => UpdatesCenterPage(
-          service: widget.service,
-          onOpenEntry: (entry) => openUpdateFeedEntry(pageContext, entry),
-        ),
-      ),
-    );
+    await openUpdatesCenter(context, widget.service);
     await _reload();
   }
 

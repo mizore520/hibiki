@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fushi/src/media/torrent/torznab_client.dart';
+import 'package:fushi_engine/media/torrent/torznab_client.dart';
 import 'package:fushi/src/media/video/dandanplay_client.dart';
-import 'package:fushi/src/media/video/subtitle/open_subtitles_client.dart';
-import 'package:fushi/src/media/video/metadata/video_source_scrape_config.dart';
+import 'package:fushi_engine/media/video/metadata/video_source_scrape_config.dart';
 import 'package:fushi/src/media/video/scraper/tmdb_default_key.dart';
 import 'package:fushi/src/media/video/video_settings_actions.dart';
 import 'package:fushi/src/pages/implementations/discovery_source_settings_section.dart';
@@ -19,6 +18,7 @@ import 'package:fushi/src/sync/sync_repository.dart';
 import 'package:fushi/src/sync/jellyfin_video_client.dart'
     show JellyfinServerConfig;
 import 'package:fushi/utils.dart';
+import 'package:fushi_engine/media/video/subtitle/open_subtitles_client.dart';
 
 /// 「在线服务」一级设置分类：第三方 API / 索引器 / 媒体服务器的凭据与端点。
 ///
@@ -521,10 +521,12 @@ class _JellyfinSettingsLinkState extends State<_JellyfinSettingsLink> {
   }
 
   Future<void> _open() async {
+    // 必须走 `.subPage`：默认构造器按 id 回顶层 schema 找「最新声明」，而这页
+    // 复用父分类 `services` 的 id，按 id 找回来的是整页「在线服务」（BUG-2485）。
     await pushSettingsPage(
       widget.settingsContext,
-      (_) => SettingsDetailPage(
-        destination: SettingsDestination(
+      (_) => SettingsDetailPage.subPage(
+        () => SettingsDestination(
           id: SettingsDestinationId.services,
           title: 'Jellyfin · Emby',
           icon: Icons.cloud_outlined,

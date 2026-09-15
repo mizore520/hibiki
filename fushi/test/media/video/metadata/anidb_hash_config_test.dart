@@ -1,6 +1,6 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fushi/src/media/video/metadata/video_source_scrape_config.dart';
+import 'package:fushi_engine/media/video/metadata/video_source_scrape_config.dart';
 import 'package:fushi/src/models/preferences_repository.dart';
 import 'package:fushi_core/fushi_core.dart';
 
@@ -19,7 +19,7 @@ void main() {
     await prefs.setPref(kVideoMetadataAniDbClientVersionPref, '3');
     final VideoSourceScrapeGlobalConfig config =
         VideoSourceScrapeGlobalConfig.fromPreferences(prefs,
-            resolvedTmdbApiKey: '');
+            resolvedTmdbApiKey: '', uiLocaleTag: 'en-US');
     expect(config.hashEnabled, isTrue);
     expect(config.anidbUdpConfig.isAvailable, isTrue);
     expect(config.anidbUdpConfig.username, 'tester');

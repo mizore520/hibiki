@@ -6,10 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fushi/i18n/strings.g.dart';
-import 'package:fushi/src/media/discovery/discovery_download_queue.dart';
+import 'package:fushi_engine/media/discovery/discovery_download_queue.dart';
 import 'package:fushi/src/media/discovery/discovery_download_tasks_section.dart';
 import 'package:fushi/src/media/discovery/discovery_labels.dart';
-import 'package:fushi/src/media/discovery/discovery_models.dart';
+import 'package:fushi_engine/media/discovery/discovery_models.dart';
 import 'package:fushi/src/utils/misc/reveal_in_file_manager.dart';
 
 import '../../helpers/source_guard.dart';
@@ -93,7 +93,7 @@ void main() {
       reason: '找不到 downloads_page.dart（路径变了要同步本守卫）',
     );
     final String code = maskCommentsAndScriptLines(f.readAsStringSync());
-    final int mokuro = code.indexOf('MokuroMoeTasksSection(');
+    final int mokuro = code.indexOf('MangaDownloadTasksSection(');
     final int direct = code.indexOf('DiscoveryDownloadTasksSection(');
     expect(
       direct,

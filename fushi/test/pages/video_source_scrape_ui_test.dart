@@ -6,13 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi/models.dart';
-import 'package:fushi/src/media/source_library/source_library_row.dart';
+import 'package:fushi_engine/media/source_library/source_library_row.dart';
 import 'package:fushi/src/media/source_library/source_library_scanner.dart';
-import 'package:fushi/src/media/video/metadata/video_metadata_models.dart';
-import 'package:fushi/src/media/video/metadata/video_metadata_provider.dart';
+import 'package:fushi_engine/media/video/metadata/video_metadata_models.dart';
+import 'package:fushi_engine/media/video/metadata/video_metadata_provider.dart';
 import 'package:fushi/src/media/video/metadata/video_source_scrape_dialog.dart';
-import 'package:fushi/src/media/video/metadata/video_source_scrape_task.dart';
-import 'package:fushi/src/media/video/metadata/video_source_work_planner.dart'
+import 'package:fushi_engine/media/video/metadata/video_source_scrape_task.dart';
+import 'package:fushi_engine/media/video/metadata/video_source_work_planner.dart'
     show VideoSourceScrapeWork;
 import 'package:fushi/src/pages/implementations/media_sources_view.dart';
 import 'package:fushi_core/fushi_core.dart';
@@ -132,7 +132,7 @@ class _ManualBindingRunner
 
   @override
   Future<List<VideoSourceScrapeConfirmationCandidate>> searchManualCandidates({
-    required SourceLibraryRow source,
+    SourceLibraryRow? source,
     required String workTitle,
     String? workStableKey,
     required String query,
@@ -140,6 +140,10 @@ class _ManualBindingRunner
     queries.add(query);
     return results;
   }
+
+  @override
+  Future<VideoMetadataWork?> fetchWorkForLookup(VideoMetadataLookup lookup) =>
+      Future<VideoMetadataWork?>.value(null);
 
   @override
   Future<SourceScrapeReport> rescrapeWorkWithLookup({

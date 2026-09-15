@@ -13,6 +13,11 @@ import 'package:flutter_test/flutter_test.dart';
 ///
 /// 页面依赖 media_kit 原生播放器，widget 层不可离线测试 → 落最强可落地层：源码切片守卫
 /// （删掉任一步即红），与 TODO-1307 守卫同构。
+/// 源码扫描的归一化：压掉全部空白，并把 tall-style 拆行补出来的尾随逗号
+/// （`,)`）收回 `)`。钉的是调用形态本身，不是它当天被 dart format 排成什么样。
+String _flat(String v) =>
+    v.replaceAll(RegExp(r'\s+'), '').replaceAll(',)', ')');
+
 void main() {
   final String pageSrc = File(
     'lib/src/pages/implementations/video_fushi_page.dart',

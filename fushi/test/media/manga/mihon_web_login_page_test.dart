@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:fushi/i18n/strings.g.dart';
+import 'package:fushi/src/media/manga/cookie/browser_cookie_import.dart';
 import 'package:fushi/src/media/manga/cookie/manga_cookie_jar.dart';
 import 'package:fushi/src/media/manga/mihon/mihon_cookie_jar.dart';
 import 'package:fushi/src/media/manga/mihon/mihon_runtime.dart';
@@ -29,19 +31,16 @@ void main() {
     String? domain,
     bool isHttpOnly = false,
   }) =>
-      Cookie(
-        name: name,
-        value: value,
-        domain: domain,
-        isHttpOnly: isHttpOnly,
-      );
+      Cookie(name: name, value: value, domain: domain, isHttpOnly: isHttpOnly);
 
   /// 挂起页面并返回 pop 结果（null = 还没 pop）。
   Future<bool?> pumpLogin(
     WidgetTester tester, {
-    required MihonCookieJar store,
+    required MihonCookieJar? store,
     required Future<List<Cookie>> Function(WebUri url) cookieReader,
     Uri? baseUrl,
+    Future<void> Function(Uri url)? openExternal,
+    Future<bool> Function(BrowserSiteCookie cookie)? cookieWriter,
   }) async {
     bool? popped;
     await tester.pumpWidget(
@@ -56,6 +55,9 @@ void main() {
                     baseUrl: baseUrl ?? Uri.parse('https://bookwalker.jp'),
                     jar: store,
                     cookieReader: cookieReader,
+                    environmentFactory: () async => null,
+                    openExternal: openExternal,
+                    cookieWriter: cookieWriter,
                     webViewBuilder: (_) =>
                         const SizedBox(key: ValueKey<String>('stub-webview')),
                   ),
@@ -77,12 +79,35 @@ void main() {
   /// 必须包在 [WidgetTester.runAsync] 里：widget 测试默认跑在 fake-async 时区，
   /// `dart:io` 的完成事件送不进去，`pumpAndSettle` 会在导出还没落盘时就返回，
   /// 断言随即读到一个空 jar——那是测试机制的假红，不是功能坏了。
+  /// 点「完成」并**等 `_finish()` 真的跑完**。
+  ///
+  /// 它是异步的（读 cookie → 写 jar → pop 或弹 SnackBar）。原先这里等的是固定
+  /// 50ms 墙钟：本机够用，Linux CI runner 一忙就来不及，于是「点了完成、页还在」
+  /// 变成一条与代码无关的红。改成等可观测的真实信号——
+  /// `_saving` 期间「完成」按钮 onPressed 为 null，所以
+  ///   ① 按钮重新可点（失败/空结果那支，页留着）或
+  ///   ② 整页已经 pop 掉（成功那支）
+  /// 任一成立即为跑完。上界只用来防死循环，正常路径远早于它退出。
   Future<void> tapDone(WidgetTester tester) async {
-    await tester.runAsync(() async {
-      await tester.tap(find.byKey(const ValueKey<String>('mihon_login_done')));
+    await tester.tap(find.byKey(const ValueKey<String>('mihon_login_done')));
+    await tester.pump();
+
+    final Finder done = find.byKey(const ValueKey<String>('mihon_login_done'));
+    bool settled() {
+      final Iterable<Element> hits = done.evaluate();
+      if (hits.isEmpty) return true; // 页已经 pop
+      final Widget widget = hits.first.widget;
+      return widget is TextButton && widget.onPressed != null;
+    }
+
+    final Stopwatch clock = Stopwatch()..start();
+    while (!settled() && clock.elapsed < const Duration(seconds: 10)) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 5)),
+      );
       await tester.pump();
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-    });
+    }
+    expect(settled(), isTrue, reason: '_finish() 10 秒还没跑完，不是时序问题了');
     await tester.pumpAndSettle();
   }
 
@@ -97,7 +122,7 @@ void main() {
       );
     });
 
-    test('运行时不持有 cookie（Android：系统 CookieManager 才是所有者）→ 无入口', () {
+    test('运行时既不持有也不共享浏览器 cookie → 无入口', () {
       expect(
         mihonLoginTarget(runtime: Object(), baseUrl: 'https://bookwalker.jp'),
         isNull,
@@ -108,12 +133,22 @@ void main() {
       );
     });
 
+    test('浏览器持有 cookie 的运行时（Android）同样给入口（BUG-2479）', () {
+      expect(
+        mihonLoginTarget(
+          runtime: _BrowserCookieRuntime(),
+          baseUrl: 'https://bookwalker.jp',
+        ),
+        Uri.parse('https://bookwalker.jp'),
+      );
+    });
+
     test('baseUrl 解析不出 host → 无入口（既开不了页也定不了域）', () {
       for (final String baseUrl in <String>[
         '',
         '   ',
         '/relative',
-        'not a url'
+        'not a url',
       ]) {
         expect(
           mihonLoginTarget(runtime: _HostCookieRuntime(), baseUrl: baseUrl),
@@ -179,8 +214,11 @@ void main() {
         // 又不是访问先后（Set.add 命中已有元素不会挪到末尾）——等于随机挑一个，
         // 挑错就是「显示已登录但还是锁着」。
         browserCookie('session', value: 'content', domain: 'bookwalker.jp'),
-        browserCookie('session',
-            value: 'login', domain: 'member.bookwalker.jp'),
+        browserCookie(
+          'session',
+          value: 'login',
+          domain: 'member.bookwalker.jp',
+        ),
       ],
     );
 
@@ -234,9 +272,7 @@ void main() {
     expect(header, isNot(contains('_ga')));
   });
 
-  testWidgets('一条都没拿到时不关页——直接 pop 会让用户以为登录成功了', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('一条都没拿到时不关页——直接 pop 会让用户以为登录成功了', (WidgetTester tester) async {
     final MihonCookieJar store = jar();
     await pumpLogin(
       tester,
@@ -283,7 +319,205 @@ void main() {
     expect(read, isFalse);
     expect(store.cookies, isEmpty);
   });
+
+  testWidgets('浏览器持有 cookie（jar 为 null）：点「完成」不读 cookie、直接 pop true', (
+    WidgetTester tester,
+  ) async {
+    bool read = false;
+    bool? popped;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (BuildContext context) => ElevatedButton(
+            onPressed: () async {
+              popped = await Navigator.of(context).push<bool>(
+                MaterialPageRoute<bool>(
+                  builder: (_) => MihonWebLoginPage(
+                    sourceName: 'BookWalker Japan',
+                    baseUrl: Uri.parse('https://bookwalker.jp'),
+                    jar: null,
+                    cookieReader: (WebUri url) async {
+                      read = true;
+                      return const <Cookie>[];
+                    },
+                    environmentFactory: () async => null,
+                    webViewBuilder: (_) =>
+                        const SizedBox(key: ValueKey<String>('stub-webview')),
+                  ),
+                ),
+              );
+            },
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey<String>('mihon_login_done')));
+    await tester.pumpAndSettle();
+
+    expect(read, isFalse, reason: '没有 jar 就没有东西要导出');
+    expect(popped, isTrue);
+    expect(find.byKey(const ValueKey<String>('stub-webview')), findsNothing);
+  });
+
+  testWidgets('导航条：后退 / 前进 / 刷新三个按钮在树上，WebView 未就绪时禁用', (
+    WidgetTester tester,
+  ) async {
+    await pumpLogin(
+      tester,
+      store: jar(),
+      cookieReader: (WebUri url) async => const <Cookie>[],
+    );
+    for (final String key in <String>[
+      'mihon_login_back',
+      'mihon_login_forward',
+      'mihon_login_reload',
+    ]) {
+      final Finder finder = find.byKey(ValueKey<String>(key));
+      expect(finder, findsOneWidget, reason: key);
+      expect(tester.widget<IconButton>(finder).onPressed, isNull, reason: key);
+    }
+    // 地址栏显示当前地址。
+    expect(find.text('https://bookwalker.jp'), findsOneWidget);
+  });
+  group('从浏览器导入（BUG-2480）', () {
+    setUp(BrowserCookieImportGate.resetForTesting);
+    tearDown(BrowserCookieImportGate.resetForTesting);
+
+    testWidgets('点按钮 → 登记本站 + 在系统浏览器打开源站；扩展送来后写 jar、「完成」直接关页', (
+      WidgetTester tester,
+    ) async {
+      final MihonCookieJar store = jar();
+      final List<Uri> opened = <Uri>[];
+      final List<BrowserSiteCookie> backfilled = <BrowserSiteCookie>[];
+      bool readWebView = false;
+      await pumpLogin(
+        tester,
+        store: store,
+        cookieReader: (WebUri url) async {
+          readWebView = true;
+          return const <Cookie>[];
+        },
+        openExternal: (Uri url) async => opened.add(url),
+        cookieWriter: (BrowserSiteCookie cookie) async {
+          backfilled.add(cookie);
+          return true;
+        },
+      );
+      expect(BrowserCookieImportGate.pending, isNull);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('mihon_login_import_browser')),
+      );
+      await tester.pump();
+      expect(opened, <Uri>[Uri.parse('https://bookwalker.jp')]);
+      final BrowserCookieImportRequest? request =
+          BrowserCookieImportGate.pending;
+      expect(request, isNotNull);
+      expect(request!.host, 'bookwalker.jp');
+      // 按钮变禁用（不能重复登记），状态文字先是「还没收到」。
+      expect(
+        tester
+            .widget<OutlinedButton>(
+              find.byKey(const ValueKey<String>('mihon_login_import_browser')),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(find.text(t.mihon_source_login_import_none), findsOneWidget);
+
+      // 扩展回传（含一条第三方域，必须被挡）。送达 → 写 jar 是真实文件 IO，
+      // 整段放进 runAsync，fake zone 里等不到 dart:io 的完成事件。
+      await tester.runAsync(() async {
+        final bool accepted = BrowserCookieImportGate.deliver(
+          nonce: request.nonce,
+          host: 'bookwalker.jp',
+          cookies:
+              <Object?>[
+                    _browserCookie('session', '.bookwalker.jp'),
+                    _browserCookie('member', 'member.bookwalker.jp'),
+                    _browserCookie('_ga', '.google-analytics.com'),
+                  ]
+                  .map(BrowserSiteCookie.fromJson)
+                  .whereType<BrowserSiteCookie>()
+                  .toList(),
+        );
+        expect(accepted, isTrue);
+      });
+      // 写 jar 的每一步 IO 续体都排在 fake zone 里：与 tapDone 同一节奏，
+      // 真实等待 + pump 交替，直到状态文字出现。
+      final Finder received = find.text(
+        t.mihon_source_login_import_received(count: 2),
+      );
+      final Stopwatch clock = Stopwatch()..start();
+      while (received.evaluate().isEmpty &&
+          clock.elapsed < const Duration(seconds: 10)) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 5)),
+        );
+        await tester.pump();
+      }
+      expect(received, findsWidgets);
+      expect(
+        store.cookieHeaderFor(Uri.parse('https://bookwalker.jp/')),
+        'session=v-session',
+      );
+      expect(
+        store.cookieHeaderFor(Uri.parse('https://member.bookwalker.jp/')),
+        contains('member=v-member'),
+      );
+      // 同一批同时回灌进本页 WebView（第三方域同样被挡），属性原样：域 cookie
+      // 带域、host-only 不带、httpOnly 从线格式带过来。
+      expect(backfilled.map((BrowserSiteCookie c) => c.name).toList(), <String>[
+        'session',
+        'member',
+      ]);
+      final BrowserSiteCookie session = backfilled[0];
+      expect(session.hostOnly, isFalse);
+      expect(session.canonicalDomain, 'bookwalker.jp');
+      expect(session.httpOnly, isTrue);
+      expect(session.originUrl, Uri.parse('https://bookwalker.jp/'));
+      final BrowserSiteCookie member = backfilled[1];
+      expect(member.hostOnly, isTrue);
+      expect(member.originUrl, Uri.parse('https://member.bookwalker.jp/'));
+
+      await tester.tap(find.byKey(const ValueKey<String>('mihon_login_done')));
+      await tester.pumpAndSettle();
+      expect(readWebView, isFalse, reason: '会话已从浏览器来，不再导出 WebView');
+      expect(find.byKey(const ValueKey<String>('stub-webview')), findsNothing);
+      expect(BrowserCookieImportGate.pending, isNull, reason: '关页即撤登记');
+    });
+
+    testWidgets('jar 为 null（Android）没有导入按钮', (WidgetTester tester) async {
+      await pumpLogin(
+        tester,
+        store: null,
+        cookieReader: (WebUri url) async => const <Cookie>[],
+      );
+      expect(
+        find.byKey(const ValueKey<String>('mihon_login_import_browser')),
+        findsNothing,
+      );
+    });
+  });
 }
+
+/// 只为判据测试存在：实现「浏览器持有 cookie」这个能力即可。
+class _BrowserCookieRuntime implements BrowserCookieMihonRuntime {}
+
+Map<String, Object?> _browserCookie(String name, String domain) =>
+    <String, Object?>{
+      'name': name,
+      'value': 'v-$name',
+      'domain': domain,
+      'path': '/',
+      'secure': true,
+      'httpOnly': true,
+      'hostOnly': !domain.startsWith('.'),
+    };
 
 /// 只为判据测试存在：实现「宿主持有 cookie」这个能力即可，不需要真的是运行时。
 class _HostCookieRuntime implements HostCookieMihonRuntime {

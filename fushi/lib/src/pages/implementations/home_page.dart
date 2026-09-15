@@ -32,36 +32,38 @@ import 'package:fushi/src/anki/anki_view_model.dart'
     show ankiRepositoryProvider;
 import 'package:fushi/src/anki/lapis_template_service.dart';
 import 'package:fushi/src/sync/sync_auto_trigger.dart';
-import 'package:fushi/src/media/external_provider.dart';
-import 'package:fushi/src/media/source_library/source_library_row.dart';
+import 'package:fushi_engine/media/external_provider.dart';
+import 'package:fushi_engine/media/source_library/source_library_row.dart';
 import 'package:fushi/src/media/source_library/source_library_scanner.dart';
 import 'package:fushi/src/media/import/real_path_directory_picker.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:fushi/src/media/collections/collection_continue.dart';
-import 'package:fushi/src/media/torrent/nyaa_resource_provider.dart';
-import 'package:fushi/src/media/torrent/video_resource_provider.dart';
-import 'package:fushi/src/media/video/discovery/video_discovery_provider.dart';
+import 'package:fushi_engine/media/torrent/nyaa_resource_provider.dart';
+import 'package:fushi/src/sync/interconnect_subscription_client.dart';
+import 'package:fushi/src/sync/sync_repository.dart';
+import 'package:fushi_engine/media/torrent/video_resource_provider.dart';
+import 'package:fushi_engine/media/video/discovery/video_discovery_provider.dart';
 import 'package:fushi/src/media/video/discovery/video_discovery_service.dart';
-import 'package:fushi/src/media/video/download/video_media_reference_codec.dart';
-import 'package:fushi/src/media/video/download/video_download_backend_identity.dart';
+import 'package:fushi_engine/media/video/download/video_media_reference_codec.dart';
+import 'package:fushi_engine/media/video/download/video_download_backend_identity.dart';
 import 'package:fushi/src/media/drag_drop/drop_surface_scope.dart';
-import 'package:fushi/src/media/video/download/video_download_pipeline_service.dart';
-import 'package:fushi/src/media/video/download/video_resource_registry.dart';
-import 'package:fushi/src/media/video/subtitle/video_subtitle_provider.dart'
+import 'package:fushi_engine/media/video/download/video_download_pipeline_service.dart';
+import 'package:fushi_engine/media/video/download/video_resource_registry.dart';
+import 'package:fushi_engine/media/video/subtitle/video_subtitle_provider.dart'
     show VideoSubtitleCandidate;
 import 'package:fushi/src/media/video/video_subtitle_attach.dart';
 import 'package:fushi/src/media/video/video_subtitle_attach_messages.dart';
 import 'package:fushi/src/media/video/metadata/video_country_display.dart';
-import 'package:fushi/src/media/video/metadata/video_library_scrape_sweep.dart';
-import 'package:fushi/src/media/video/metadata/video_metadata_models.dart';
-import 'package:fushi/src/media/video/metadata/video_source_scrape_config.dart';
-import 'package:fushi/src/media/video/metadata/video_source_scrape_coordinator.dart';
+import 'package:fushi_engine/media/video/metadata/video_library_scrape_sweep.dart';
+import 'package:fushi_engine/media/video/metadata/video_metadata_models.dart';
+import 'package:fushi_engine/media/video/metadata/video_source_scrape_config.dart';
+import 'package:fushi_engine/media/video/metadata/video_source_scrape_coordinator.dart';
 import 'package:fushi/src/media/video/metadata/video_source_scrape_dialog.dart';
-import 'package:fushi/src/media/video/metadata/video_source_scrape_task.dart';
+import 'package:fushi_engine/media/video/metadata/video_source_scrape_task.dart';
 import 'package:fushi/src/media/video/metadata/video_scrape_cleanup_action.dart';
 import 'package:fushi/src/media/video/metadata/video_source_metadata_indexer.dart';
 import 'package:fushi/src/media/video/scraper/tmdb_default_key.dart';
-import 'package:fushi/src/media/video/video_book_repository.dart';
+import 'package:fushi_engine/media/video/video_book_repository.dart';
 import 'package:fushi/src/pages/implementations/video_discovery_acquisition_dialogs.dart';
 import 'package:fushi/src/pages/implementations/video_discovery_detail_page.dart';
 import 'package:fushi/src/pages/implementations/video_discovery_page.dart'
@@ -84,12 +86,14 @@ import 'package:fushi/src/shortcuts/gamepad_service.dart'
     show
         GamepadButtonIntent,
         arrowFocusMoveDirection,
+        arrowKeyClaimedByFocus,
         arrowTraversalDirection,
         dispatchNativeGamepadButtonIntent,
-        focusedEditableText,
-        gamepadMoveFocusInDirection;
+        focusedEditableText;
 import 'package:fushi/src/shortcuts/mouse_binding_dispatch.dart'
     show dispatchClaimedMouseAction, resolveMouseBindingAction;
+import 'package:fushi/src/shortcuts/page_scroll_shortcuts.dart'
+    show pageScrollRequestFor;
 import 'package:fushi/src/shortcuts/shortcut_action.dart';
 import 'package:fushi_core/fushi_core.dart'
     show
@@ -414,6 +418,10 @@ class _HomePageState extends BasePageState<HomePage>
   @override
   void initState() {
     super.initState();
+    // 7a：把本页持有的刮削控制器借给互联 host（远程候选搜索 / 重刮）。getter 按
+    // 当前偏好惰性建，所以解析器每次都返回配置正确的那一个。
+    appModelNoUpdate.videoScrapeControllerResolver =
+        () async => _videoSourceScrapeController;
 
     _currentTab = homeInitialTab(
       startupDefaultDictionaryTab: appModelNoUpdate.startupDefaultDictionaryTab,
@@ -528,6 +536,10 @@ class _HomePageState extends BasePageState<HomePage>
       // 启动期：用户最想知道「我不在的时候更新了什么」的时刻就是刚打开应用。
       // 各域自己的到期判据挡住频繁重启造成的重复请求。
       appModel.startUpdateChecks();
+      // 在线漫画章节下载 worker（设计稿 2026-09-12 §4）：复位上次进程死亡留下的
+      // running 行并续跑队列。放在这里而不是 initialise()：完成钩子的自动 OCR 要
+      // 从 navigator 的 context 装配引擎，HomePage 就绪之前拿不到。
+      unawaited(appModel.startMangaDownloads());
 
       // 这一段是 HomePage 层的模块专属后台自启：同步（sync）与视频索引（video）。
       // 模块关掉就不再拉起——「关掉的模块下次启动不该还在后台跑」。已经在飞的
@@ -721,6 +733,7 @@ class _HomePageState extends BasePageState<HomePage>
 
   @override
   void dispose() {
+    appModelNoUpdate.videoScrapeControllerResolver = null;
     assert(() {
       HomePage.debugSelectTab = null;
       HomePage.debugVideoDiscoveryActions = null;
@@ -815,13 +828,18 @@ class _HomePageState extends BasePageState<HomePage>
     // focus — re-resolving a bound shortcut on every repeat would fire it
     // repeatedly. Skipped while a text field is focused so the field's own caret
     // keeps the arrows (same guard as the KeyDown arrow branch below).
-    final TraversalDirection? repeatDir = event is KeyRepeatEvent
-        ? arrowFocusMoveDirection(event)
-        : null;
+    //
+    // 仲裁走 [arrowKeyClaimedByFocus]：有焦点目标才移焦并认领；没有（列表边缘 /
+    // 焦点还停在本页键事件 sink 上）就放行冒泡，让 app 根的页面滚动兜底接住
+    // ——按下沿的四个方向键在下面走的是**同一个**仲裁（六件套不在本页 return），
+    // 重复沿若还自己 bootstrap 焦点，就成了「按一下滚页、按住却把焦点甩到首个卡片」。
+    final TraversalDirection? repeatDir =
+        event is KeyRepeatEvent ? arrowFocusMoveDirection(event) : null;
     if (repeatDir != null) {
       if (focusedEditableText() != null) return KeyEventResult.ignored;
-      gamepadMoveFocusInDirection(context, repeatDir);
-      return KeyEventResult.handled;
+      return arrowKeyClaimedByFocus(context, repeatDir)
+          ? KeyEventResult.handled
+          : KeyEventResult.ignored;
     }
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
@@ -891,9 +909,17 @@ class _HomePageState extends BasePageState<HomePage>
       }
     }
 
-    if (action != null) return _executeShortcutAction(action);
+    // 页面滚动六件套（global scope，默认 ↑/↓ 单步）不由本页执行——执行体在 app 根
+    // [wrapWithGlobalNavigation]，而且它对方向键的规则是「先问焦点、无目标才滚」。
+    // 解析到六件套时**不能**在这里 return：`_executeShortcutAction` 对它们落 default
+    // → ignored 冒泡到根固然也能滚，但下面那段方向键仲裁就对 ↑/↓ 永远不可达，按下沿
+    // （根用 primaryFocus.context 仲裁）与重复沿（本页 context 仲裁）走成两条路。
+    // 让六件套穿过来、与重复沿同走一条仲裁；用户改绑到其它动作的键仍照常先执行。
+    if (action != null && pageScrollRequestFor(action) == null) {
+      return _executeShortcutAction(action);
+    }
 
-    // Arrow keys are unbound on home, so drive robust directional focus
+    // Arrow keys carry no home-scope binding, so drive robust directional focus
     // navigation through the SAME helper the gamepad D-pad/stick uses — keyboard
     // and gamepad therefore behave identically. Skipped while a text field is
     // focused so the field's own cursor movement keeps working (up/down then
@@ -903,10 +929,15 @@ class _HomePageState extends BasePageState<HomePage>
     // private `is EditableText` check missed every field (the primary focus is
     // EditableText's inner Focus, not the EditableText), so it never actually
     // guarded the search field's caret.
+    // 按下沿与上面的重复沿走**同一条**判据 [arrowKeyClaimedByFocus]：有焦点目标才
+    // 移焦并认领，没有就放行冒泡给 app 根（↑/↓ 在那里按六件套落到页面滚动；←/→
+    // 没有 global 绑定则交给框架）。此前按下沿单独走 gamepadMoveFocusInDirection 的
+    // 阅读顺序回退，焦点导航关闭时同一个 ← 按一下会跳焦点、按住却不动。
     final TraversalDirection? dir = arrowTraversalDirection(event.logicalKey);
     if (dir != null && focusedEditableText() == null) {
-      gamepadMoveFocusInDirection(context, dir);
-      return KeyEventResult.handled;
+      return arrowKeyClaimedByFocus(context, dir)
+          ? KeyEventResult.handled
+          : KeyEventResult.ignored;
     }
     return KeyEventResult.ignored;
   }
@@ -1550,9 +1581,10 @@ class _HomePageState extends BasePageState<HomePage>
             as String;
     final VideoSourceScrapeGlobalConfig config =
         VideoSourceScrapeGlobalConfig.fromPreferences(
-          appModelNoUpdate.prefsRepo,
-          resolvedTmdbApiKey: resolveTmdbApiKey(configuredTmdbKey),
-        );
+      appModelNoUpdate.prefsRepo,
+      resolvedTmdbApiKey: resolveTmdbApiKey(configuredTmdbKey),
+      uiLocaleTag: appModelNoUpdate.appLocale.toLanguageTag(),
+    );
     final String fingerprint = <Object>[
       config.tmdbApiKey,
       config.anidbClientName,
@@ -1860,19 +1892,31 @@ class _HomePageState extends BasePageState<HomePage>
     }
     final VideoResourceRegistry? registry =
         appModelNoUpdate.videoResourceRegistry;
-    if (registry == null ||
-        appModelNoUpdate.videoDownloadPipelineService == null ||
-        appModelNoUpdate.videoDownloadSubscriptionService == null) {
+    // 订阅可以交给已配对 host 跑（host 自己搜、自己下）：先探一遍，有 host 时
+    // 本地下载后端/落地源都不是硬前置。
+    final InterconnectSubscriptionClient remoteClient =
+        InterconnectSubscriptionClient(
+      repo: SyncRepository(appModelNoUpdate.database),
+    );
+    final List<HostSubscriptionTarget> remoteTargets =
+        await remoteClient.probeAll();
+    if (!context.mounted) return;
+    final bool localRunnable = registry != null &&
+        appModelNoUpdate.videoDownloadPipelineService != null &&
+        appModelNoUpdate.videoDownloadSubscriptionService != null;
+    if (registry == null || (!localRunnable && remoteTargets.isEmpty)) {
       unawaited(_promptDownloadBackendSetup(context));
       return;
     }
-    final List<MediaSourceRow> sources =
-        await _managedVideoDownloadSourcesOrPrompt(context);
+    final List<MediaSourceRow> sources = remoteTargets.isEmpty
+        ? await _managedVideoDownloadSourcesOrPrompt(context)
+        : await appModelNoUpdate.getManagedVideoDownloadSources();
     // PR #1021 把「后端 runtime 是否可用」延后到真正提交下载时（target 在
     // onSubmit 里取），后端没配好也能先搜资源。但「有没有受管视频来源」是另一
     // 回事：没有落地文件夹时来源下拉是空的、提交按钮永远灰着，所以 BUG-1872 的
     // 引导必须留在打开页面之前。两个原因本来就是两条分支，别再合成一条。
-    if (!context.mounted || sources.isEmpty) return;
+    // 有 host 可用时例外：落点在 host，没有本地来源也能订阅。
+    if (!context.mounted || (sources.isEmpty && remoteTargets.isEmpty)) return;
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => VideoDiscoverySubscriptionPage(
@@ -1883,6 +1927,36 @@ class _HomePageState extends BasePageState<HomePage>
               appModelNoUpdate.prefsRepo.videoDownloadTargetSourceId,
           // 同资源搜索页：后端没配好这条失败落在页面里，配置引导按端口注入。
           onConfigureBackend: _promptDownloadBackendSetup,
+          remoteTargets: remoteTargets,
+          onRemoteSubmit:
+              (VideoDiscoveryRemoteSubscriptionSelection selection) async {
+            final VideoMediaReference reference = selection.media;
+            await remoteClient.create(
+              selection.target,
+              HostSubscriptionCreate(
+                // 与本地订阅同一个稳定 id：同一作品在同一台 host 上重复订阅只 upsert。
+                subscriptionId: videoDiscoverySubscriptionId(reference),
+                title: reference.title,
+                searchQuery: _videoResourceSearchQuery(reference),
+                mediaKind: reference.mediaKind.name,
+                mode: reference.mediaKind == VideoMetadataMediaKind.movie
+                    ? 'oneShot'
+                    : 'ongoing',
+                resourceProvider:
+                    persistedVideoResourceProviderId(selection.resource),
+                identityJson: encodeVideoMediaReference(reference),
+                metadataProvider: reference.providerId,
+                externalId: reference.mediaId,
+                discoveryCategory: reference.discoveryCategory.name,
+                year: reference.year,
+                season: reference.season,
+                coverUrl: item.posterUrl,
+                filterJson: selection.filter.json,
+                startAfterEpisode: selection.startAfterEpisode,
+                subtitlePolicy: selection.subtitlePolicy.name,
+              ),
+            );
+          },
           onSubmit: (VideoDiscoverySubscriptionSelection selection) async {
             final VideoDownloadBackendTarget target = await appModelNoUpdate
                 .currentVideoDownloadBackendTarget();
@@ -2359,9 +2433,10 @@ class _HomePageState extends BasePageState<HomePage>
             as String;
     final VideoSourceScrapeGlobalConfig config =
         VideoSourceScrapeGlobalConfig.fromPreferences(
-          appModelNoUpdate.prefsRepo,
-          resolvedTmdbApiKey: resolveTmdbApiKey(configuredTmdbKey),
-        );
+      appModelNoUpdate.prefsRepo,
+      resolvedTmdbApiKey: resolveTmdbApiKey(configuredTmdbKey),
+      uiLocaleTag: appModelNoUpdate.appLocale.toLanguageTag(),
+    );
     final String fingerprint = <Object>[
       config.tmdbApiKey,
       config.anidbClientName,

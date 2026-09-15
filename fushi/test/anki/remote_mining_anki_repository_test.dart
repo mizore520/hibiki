@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi_anki/fushi_anki.dart';
 
 import 'package:fushi/src/anki/remote_mining_anki_repository.dart';
-import 'package:fushi/src/sync/forwarded_mine_payload.dart';
+import 'package:fushi_engine/sync/forwarded_mine_payload.dart';
 import 'package:fushi/src/sync/fushi_remote_mining_client.dart';
 import 'package:fushi/src/sync/sync_backend.dart';
 
@@ -145,6 +145,37 @@ class _FakeLocalWithSettings extends _FakeLocal {
 
 void main() {
   group('RemoteMiningAnkiRepository', () {
+    test('synchronized video reads and transfers its muxed media once', () async {
+      final sender = _FakeSender(<String, dynamic>{'result': 'success'});
+      final paths = <String>[];
+      final repo = RemoteMiningAnkiRepository(
+        local: _FakeLocal(), client: sender,
+        dictMediaLoader: (String dictionary, String path) => null,
+        fileByteLoader: (String path) async {
+          paths.add(path);
+          return Uint8List.fromList(<int>[1, 2, 3]);
+        },
+      );
+      final outcome = await repo.mineEntry(
+        rawPayloadJson: '{"expression":"猫"}',
+        context: const AnkiMiningContext(
+          sentence: '猫です。', coverPath: '/tmp/sentence.mp4',
+          sentenceAudioPath: '/tmp/sentence.mp4', synchronizedVideo: true,
+          source: AnkiMiningSource.video,
+        ),
+      );
+      expect(outcome.result, MineResult.success);
+      expect(paths, <String>['/tmp/sentence.mp4']);
+      final wire = sender.captured!.toJson();
+      expect(wire['synchronizedVideo'], isTrue);
+      expect(wire.containsKey('sentenceAudioBase64'), isFalse);
+      final received = ForwardedMinePayload.fromJson(wire);
+      expect(received.synchronizedVideo, isTrue);
+      expect(received.coverExt, 'mp4');
+      expect(received.coverBytes, <int>[1, 2, 3]);
+      expect(received.sentenceAudioBytes, isNull);
+    });
+
     test('mineEntry 采集四类媒体并转发；映射 success', () async {
       final _FakeSender sender = _FakeSender(<String, dynamic>{
         'result': 'success',
@@ -302,7 +333,7 @@ void main() {
         RemoteMiningAnkiRepository.pairedDeviceUnreachableMessage,
       );
       expect(outcome.errorDetail, contains('Fushi is running'));
-      expect(outcome.errorDetail, contains('Mine to paired device'));
+      expect(outcome.errorDetail, contains('Mine to Fushi Interconnect server'));
       expect(outcome.errorDetail, isNot(contains('server-side mining')));
     });
 

@@ -14,7 +14,7 @@ import 'package:fushi/src/media/manga/mihon/mihon_models.dart';
 import 'package:fushi/src/media/manga/mihon/mihon_source_browse_page.dart';
 import 'package:fushi/src/models/app_model.dart';
 import 'package:fushi/src/utils/misc/error_details_dialog.dart';
-import 'package:fushi/src/utils/net/url_input_normalizer.dart';
+import 'package:fushi_engine/utils/net/url_input_normalizer.dart';
 import 'package:fushi/utils.dart';
 import 'package:fushi/src/media/import/real_path_directory_picker.dart';
 
@@ -965,6 +965,77 @@ class _MihonExtensionsPageState extends ConsumerState<MihonExtensionsPage> {
       ),
     );
     if (confirmed != true || !mounted) return;
+    await _runBulk(targets, upgrade: false);
+  }
+
+  /// 「一键更新」（BUG-2481）：已装且仓库里版本更高的全部更新。判据与角标 / 更新
+  /// 提醒共用 [mihonExtensionUpdates]，同一包多仓库取版本最高的那条。
+  /// 签名换了的那条不顺手信任（`trustSigner: false`），以 `SIGNER_NOT_TRUSTED`
+  /// 进失败清单，让用户回到单条流程看着指纹确认。
+  Future<void> _updateAll() async {
+    final MihonManager manager = _manager!;
+    final List<MihonAvailableExtension> targets = mihonExtensionUpdates(
+      available: manager.available,
+      installed: manager.installed,
+    ).map((MihonExtensionUpdate update) => update.available).toList();
+    if (targets.isEmpty) {
+      if (mounted) {
+        unawaited(
+          showAppDialog<void>(
+            context: context,
+            builder: (BuildContext dialogContext) => AlertDialog.adaptive(
+              title: Text(t.mihon_extension_update_all),
+              content: Text(t.mihon_extension_update_all_nothing),
+              actions: <Widget>[
+                adaptiveDialogAction(
+                  context: dialogContext,
+                  isDefaultAction: true,
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text(t.dialog_ok),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+      return;
+    }
+    final bool? confirmed = await showAppDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog.adaptive(
+        title: Text(t.mihon_extension_update_all),
+        content: Text(
+          t.mihon_extension_update_all_confirm(count: targets.length),
+        ),
+        actions: <Widget>[
+          adaptiveDialogAction(
+            context: dialogContext,
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(t.dialog_cancel),
+          ),
+          adaptiveDialogAction(
+            context: dialogContext,
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(t.mihon_extension_update),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    await _runBulk(targets, upgrade: true);
+  }
+
+  /// 批量安装 / 一键更新共用的执行体：进度框 → [MihonManager.installMany] →
+  /// 结果框。两条入口只在「选哪些」和「信不信新签名」上不同。
+  Future<void> _runBulk(
+    List<MihonAvailableExtension> targets, {
+    required bool upgrade,
+  }) async {
+    final MihonManager manager = _manager!;
+    final String title = upgrade
+        ? t.mihon_extension_update_all
+        : t.mihon_extension_bulk_install;
     setState(() {
       _bulkInstalling = true;
       _bulkCancelled = false;
@@ -978,12 +1049,13 @@ class _MihonExtensionsPageState extends ConsumerState<MihonExtensionsPage> {
         builder: (BuildContext dialogContext) {
           progressContext = dialogContext;
           return AlertDialog.adaptive(
-            title: Text(t.mihon_extension_bulk_install),
+            title: Text(title),
             content: ValueListenableBuilder<(int, int, String)?>(
               valueListenable: _bulkProgress,
               builder: (BuildContext context, (int, int, String)? progress, _) {
                 final (int done, int total, String name) =
                     progress ?? (0, targets.length, '');
+                final int current = done + 1 > total ? total : done + 1;
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -993,11 +1065,17 @@ class _MihonExtensionsPageState extends ConsumerState<MihonExtensionsPage> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      t.mihon_extension_bulk_install_progress(
-                        current: done + 1 > total ? total : done + 1,
-                        total: total,
-                        name: name,
-                      ),
+                      upgrade
+                          ? t.mihon_extension_update_all_progress(
+                              current: current,
+                              total: total,
+                              name: name,
+                            )
+                          : t.mihon_extension_bulk_install_progress(
+                              current: current,
+                              total: total,
+                              name: name,
+                            ),
                     ),
                   ],
                 );
@@ -1021,7 +1099,8 @@ class _MihonExtensionsPageState extends ConsumerState<MihonExtensionsPage> {
     try {
       report = await manager.installMany(
         targets,
-        trustSigner: true,
+        trustSigner: !upgrade,
+        upgrade: upgrade,
         onProgress: (int done, int total, MihonAvailableExtension current) {
           _bulkProgress.value = (done, total, current.name);
         },
@@ -1050,7 +1129,7 @@ class _MihonExtensionsPageState extends ConsumerState<MihonExtensionsPage> {
       showAppDialog<void>(
         context: context,
         builder: (BuildContext dialogContext) => AlertDialog.adaptive(
-          title: Text(t.mihon_extension_bulk_install),
+          title: Text(title),
           content: SingleChildScrollView(
             child: SelectableText(
               <String>[
@@ -1059,6 +1138,17 @@ class _MihonExtensionsPageState extends ConsumerState<MihonExtensionsPage> {
                   skipped: finished.skipped.length,
                   failed: finished.failed.length,
                 ),
+                upgrade
+                    ? t.mihon_extension_update_all_done(
+                        installed: finished.installed.length,
+                        skipped: finished.skipped.length,
+                        failed: finished.failed.length,
+                      )
+                    : t.mihon_extension_bulk_install_done(
+                        installed: finished.installed.length,
+                        skipped: finished.skipped.length,
+                        failed: finished.failed.length,
+                      ),
                 // 失败原因逐条列出来：批量里最常见的失败是上游删了某个 release
                 // 或某个源换了签名，只报一个总数用户无从判断要不要重试。
                 ...finished.failed.entries.map(
@@ -1118,6 +1208,12 @@ class _MihonExtensionsPageState extends ConsumerState<MihonExtensionsPage> {
               onPressed: _bulkInstalling ? null : _bulkInstall,
               icon: const Icon(Icons.playlist_add_check),
               label: Text(t.mihon_extension_bulk_install),
+            ),
+            OutlinedButton.icon(
+              key: const ValueKey<String>('mihon_extension_update_all'),
+              onPressed: _bulkInstalling ? null : _updateAll,
+              icon: const Icon(Icons.system_update_alt),
+              label: Text(t.mihon_extension_update_all),
             ),
           ],
         ),

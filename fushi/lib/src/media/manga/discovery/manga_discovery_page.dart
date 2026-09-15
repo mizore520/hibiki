@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fushi_core/fushi_core.dart';
 import 'package:fushi/src/focus/fushi_focus_controller.dart';
-import 'package:fushi/src/media/discovery/discovery_models.dart';
+import 'package:fushi_engine/media/discovery/discovery_models.dart';
 import 'package:fushi/src/media/discovery/opds_server_config.dart';
 import 'package:fushi/src/media/discovery/sources/opds_discovery_source.dart';
 import 'package:fushi/src/media/manga/aidoku/aidoku_package_store.dart';
@@ -651,7 +651,9 @@ class _MangaDiscoverySourceRowState extends State<MangaDiscoverySourceRow> {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    t.manga_discovery_source_popular(source: widget.feed.name),
+                    t.manga_discovery_source_popular(
+                      source: widget.feed.displayName,
+                    ),
                     style: Theme.of(context).textTheme.titleMedium,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

@@ -6,10 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'package:fushi/src/media/torrent/anime_release_descriptor.dart';
-import 'package:fushi/src/media/torrent/download_timeouts.dart';
-import 'package:fushi/src/media/torrent/nyaa_client.dart';
-import 'package:fushi/src/media/torrent/public_trackers.dart';
+import 'package:fushi_engine/media/torrent/anime_release_descriptor.dart';
+import 'package:fushi_engine/media/torrent/download_timeouts.dart';
+import 'package:fushi_engine/media/torrent/nyaa_client.dart';
+import 'package:fushi_engine/media/torrent/public_trackers.dart';
 
 import 'nyaa_html_fixture.dart';
 
@@ -549,6 +549,44 @@ void main() {
       expect(items[1].remake, isTrue);
       expect(items[2].trusted, isFalse);
       expect(items[2].remake, isFalse);
+      client.close();
+    });
+
+    test('BUG-2523：带评论的行跳过前置的 #comments 链接，标题/详情页取真实发布', () async {
+      const List<NyaaHtmlRow> rows = <NyaaHtmlRow>[
+        NyaaHtmlRow(
+          title:
+              '[Erai-raws] Yani Neko - 10 [1080p NF WEB-DL AVC AAC][MultiSub]',
+          infoHash: '0123456789abcdef0123456789abcdef01234567',
+          id: '2159240',
+          commentCount: 1,
+        ),
+        NyaaHtmlRow(
+          title:
+              '[Erai-raws] Yani Neko - 01 [1080p NF WEB-DL AVC AAC][MultiSub]',
+          infoHash: '89abcdef0123456789abcdef0123456789abcdef',
+          id: '2101001',
+          commentCount: 5,
+        ),
+        NyaaHtmlRow(
+          title:
+              '[Erai-raws] Yani Neko - 02 [1080p NF WEB-DL AVC AAC][MultiSub]',
+          infoHash: 'fedcba9876543210fedcba9876543210fedcba98',
+          id: '2110002',
+        ),
+      ];
+      final NyaaClient client = _clientWith(
+        (_) async => http.Response(nyaaSearchHtml(rows), 200),
+      );
+      final List<NyaaTorrent> items = await client.search('Yani Neko');
+      expect(items.map((NyaaTorrent t) => t.title).toList(), <String>[
+        '[Erai-raws] Yani Neko - 10 [1080p NF WEB-DL AVC AAC][MultiSub]',
+        '[Erai-raws] Yani Neko - 01 [1080p NF WEB-DL AVC AAC][MultiSub]',
+        '[Erai-raws] Yani Neko - 02 [1080p NF WEB-DL AVC AAC][MultiSub]',
+      ]);
+      expect(items.map((NyaaTorrent t) => t.episode).toList(), <int>[10, 1, 2]);
+      expect(items[0].pageUrl, 'https://nyaa.si/view/2159240');
+      expect(items[1].pageUrl, 'https://nyaa.si/view/2101001');
       client.close();
     });
 

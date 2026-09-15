@@ -30,6 +30,8 @@ bool get supportsFloatingOverlay => Platform.isAndroid;
 
 bool get isWindowsPlatform => Platform.isWindows;
 
+bool get isMacOSPlatform => Platform.isMacOS;
+
 /// Sets the system-UI mode for the **home/menu shell** (book shelf, video,
 /// dictionary search, settings -- everything that is NOT an open media session).
 ///

@@ -1,5 +1,4 @@
 #undef NDEBUG
-
 #include "siglus_eightarg_message_capture.h"
 
 #include <cstdio>

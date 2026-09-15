@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fushi/src/sync/aggregate_merge_service.dart';
-import 'package:fushi/src/sync/aggregate_snapshot.dart';
-import 'package:fushi/src/sync/aggregate_sync_service.dart';
+import 'package:fushi_engine/sync/aggregate_merge_service.dart';
+import 'package:fushi_engine/sync/aggregate_snapshot.dart';
+import 'package:fushi_engine/sync/aggregate_sync_service.dart';
 import 'package:fushi/src/sync/backup_service.dart';
-import 'package:fushi/src/sync/sync_asset_store.dart' show AssetEntry;
+import 'package:fushi_engine/sync/sync_asset_store.dart' show AssetEntry;
 import 'package:fushi_core/fushi_core.dart';
 import 'package:path/path.dart' as p;
 
@@ -614,12 +614,13 @@ void main() {
         'shared',
         'local',
         'backup',
-      }, reason: 'doomed 被备份里的墓碑压制；备份里的游戏段不搬入（BUG-2221）');
+      }, reason: 'doomed 被备份里的墓碑压制；备份里的游戏段无宿主游戏行 → 不搬入'
+          '（有宿主时经游戏身份映射落地，见 backup_games_category_test）');
       expect(byUid['shared']!.durationMs, 900, reason: 'LWW 取备份里更新的值');
       expect(
         (await merged.getStudySegmentTombstones()).single.mediaKey,
         'v3',
-        reason: '游戏碑不搬入',
+        reason: '无宿主的游戏碑不搬入',
       );
     });
 

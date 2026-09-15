@@ -1,7 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fushi/src/media/video/metadata/anidb_app_client.dart';
-import 'package:fushi/src/media/video/metadata/video_source_scrape_config.dart';
+import 'package:fushi_engine/media/video/metadata/anidb_app_client.dart';
+import 'package:fushi_engine/media/video/metadata/video_source_scrape_config.dart';
 import 'package:fushi/src/models/preferences_repository.dart';
 import 'package:fushi_core/fushi_core.dart';
 
@@ -13,7 +13,7 @@ void main() {
     addTearDown(prefs.dispose);
     final VideoSourceScrapeGlobalConfig config =
         VideoSourceScrapeGlobalConfig.fromPreferences(prefs,
-            resolvedTmdbApiKey: '');
+            resolvedTmdbApiKey: '', uiLocaleTag: 'en-US');
     expect(config.anidbClientName, 'fushiplayer');
     expect(config.anidbClientVersion, 1);
     expect(config.anidbUsername, isEmpty);
@@ -24,7 +24,7 @@ void main() {
     await prefs.setPref(kVideoAniDbPasswordPref, ' my password ');
     final VideoSourceScrapeGlobalConfig personal =
         VideoSourceScrapeGlobalConfig.fromPreferences(prefs,
-            resolvedTmdbApiKey: '');
+            resolvedTmdbApiKey: '', uiLocaleTag: 'en-US');
     expect(personal.anidbUdpConfig.isAvailable, isTrue);
     expect(personal.anidbPassword, ' my password ');
     expect(personal.hashEnabled, isFalse);

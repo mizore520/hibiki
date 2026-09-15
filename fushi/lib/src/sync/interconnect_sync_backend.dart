@@ -3,25 +3,32 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:fushi/src/sync/collection_manifest.dart';
-import 'package:fushi/src/sync/deletion_propagation.dart';
-import 'package:fushi/src/sync/fushi_library_host_service.dart';
-import 'package:fushi/src/sync/interconnect_service_config.dart';
-import 'package:fushi/src/sync/interconnect_profile_transfer.dart';
+import 'package:fushi_engine/media/video/metadata/video_metadata_models.dart'
+    show VideoMetadataWork;
+import 'package:fushi_engine/media/video/metadata/video_metadata_provider.dart'
+    show VideoMetadataLookup;
+import 'package:fushi_engine/media/video/metadata/video_metadata_wire.dart';
+import 'package:fushi_engine/sync/collection_manifest.dart';
+import 'package:fushi_engine/sync/video_metadata_manifest.dart';
+import 'package:fushi_engine/sync/deletion_propagation.dart';
+import 'package:fushi_engine/sync/fushi_library_host_service.dart';
+import 'package:fushi_engine/sync/interconnect_service_config.dart';
+import 'package:fushi_engine/sync/interconnect_profile_transfer.dart';
 import 'package:fushi/src/sync/remote_book_client.dart';
 import 'package:fushi/src/sync/remote_cover_fetcher.dart';
 import 'package:fushi/src/sync/remote_library_source.dart';
 import 'package:fushi/src/sync/remote_video_client.dart';
-import 'package:fushi/src/utils/misc/resumable_downloader.dart';
-import 'package:fushi/src/sync/sync_asset_store.dart';
+import 'package:fushi_engine/utils/misc/resumable_downloader.dart';
+import 'package:fushi_engine/sync/sync_asset_store.dart';
 import 'package:fushi/src/sync/sync_backend.dart';
 import 'package:fushi/src/sync/sync_backend_file_trio_mixin.dart';
 import 'package:fushi/src/sync/sync_repository.dart';
-import 'package:fushi/src/sync/tls/fushi_pinning_http.dart';
+import 'package:fushi_engine/sync/tls/fushi_pinning_http.dart';
 import 'package:fushi/src/sync/sync_utils.dart';
-import 'package:fushi/src/sync/ttu_filename.dart';
+import 'package:fushi_engine/sync/ttu_filename.dart';
 import 'package:fushi/src/sync/sync_file_ref.dart';
-import 'package:fushi/src/sync/ttu_models.dart';
+import 'package:fushi/src/utils/net/app_native_proxy.dart';
+import 'package:fushi_engine/sync/ttu_models.dart';
 import 'package:fushi/src/sync/webdav_ops.dart';
 import 'package:fushi/src/sync/webdav_path_backend_mixin.dart';
 
@@ -140,6 +147,14 @@ Future<bool> _defaultFushiProbe(String url, String token) async {
 /// Uses the WebDAV protocol (same as [WebDavSyncBackend]) but stores
 /// credentials in dedicated keys to avoid collision with the user's
 /// standalone WebDAV config.
+/// 对端 host 没有视频刮削元数据端点（老版本）；UI 据此提示「对端不支持远程刮削」。
+class RemoteVideoMetadataUnsupported implements Exception {
+  const RemoteVideoMetadataUnsupported();
+
+  @override
+  String toString() => 'RemoteVideoMetadataUnsupported';
+}
+
 class InterconnectSyncBackend extends SyncBackend
     with
         SyncFolderCache,
@@ -181,14 +196,25 @@ class InterconnectSyncBackend extends SyncBackend
   @visibleForTesting
   Duration requestTimeout = const Duration(seconds: 15);
 
+  /// 视频刮削元数据端点专用超时（审查 PR#1431 #1）：7a 的 scrape 是 host 同步跑完
+  /// 整条刮削链（联网取详情 + 分季分集 + 下图 + sidecar，且排在 host 手动队列后面
+  /// 接棒），candidates 是 MAL→TMDB 双形态各搜一轮，全库 GET 是几百部作品逐表装载
+  /// ——都不是 15s 量级。仍然封顶，只是量级对齐 host 侧真实耗时。
+  @visibleForTesting
+  Duration metadataRequestTimeout = const Duration(minutes: 5);
+
   /// BUG-1567：把 [req] 发出并在 [requestTimeout] 内等到响应头；超时则中止请求
   /// （释放底层连接）并抛 [TimeoutException]，让挂死 host 降级为可重试失败。
-  Future<HttpClientResponse> _sendBounded(HttpClientRequest req) {
-    return req.close().timeout(requestTimeout, onTimeout: () {
+  Future<HttpClientResponse> _sendBounded(
+    HttpClientRequest req, {
+    Duration? timeout,
+  }) {
+    final Duration limit = timeout ?? requestTimeout;
+    return req.close().timeout(limit, onTimeout: () {
       req.abort();
       throw TimeoutException(
-        'interconnect request timed out after $requestTimeout',
-        requestTimeout,
+        'interconnect request timed out after $limit',
+        limit,
       );
     });
   }
@@ -390,7 +416,32 @@ class InterconnectSyncBackend extends SyncBackend
       _activeToken = token;
       clearCache();
     }
+    _registerPinnedNativeOrigin(normalized, chosen.fingerprintSha256);
     _sessionResolved = true;
+  }
+
+  /// BUG-2455：https host 的 TOFU 指纹登记给 app 内置中继，让 native 播放器
+  /// （libmpv / ffmpeg）取这台 host 的视频流时由 Dart 侧钉扎 TLS，而不是各平台
+  /// libmpv 自己去判自签证书（curl 后端默认校验 → 一律打不开）。明文 http host
+  /// 每次解析都登记（幂等覆盖）：重新配对换了证书时指纹跟着刷新。解析成明文
+  /// http 的 host 则**撤销**同一 (host, port) 的登记（host 关了 TLS 后重新配对，
+  /// 端口不变）——残留旧指纹会让中继把明文请求硬升 https 去握手明文端口。
+  static void _registerPinnedNativeOrigin(
+    String baseUrl,
+    String? fingerprintSha256,
+  ) {
+    final Uri base = Uri.parse(baseUrl);
+    if (!base.isScheme('https') ||
+        fingerprintSha256 == null ||
+        fingerprintSha256.isEmpty) {
+      unregisterPinnedNativeOrigin(host: base.host, port: base.port);
+      return;
+    }
+    registerPinnedNativeOrigin(
+      host: base.host,
+      port: base.port,
+      fingerprintSha256: fingerprintSha256,
+    );
   }
 
   /// BUG-1550：是否至少有一个已启用候选拿得出凭据（自带 token 或全局回落）。
@@ -1055,10 +1106,25 @@ class InterconnectSyncBackend extends SyncBackend
   /// 老 host（没有 `/api/library/manga/**`）与关掉库服务的 host 都返回 404，这里
   /// 统一抛 [MangaInterconnectUnsupported]，由源页翻译成「对端 Fushi 版本过低」，
   /// 而不是退化成一本没有页的空章节让阅读器对着空白转圈。
-  Future<RemoteMangaManifest> remoteMangaManifest(String bookKey) async {
+  Future<RemoteMangaManifest> remoteMangaManifest(String bookKey) =>
+      _fetchMangaManifest(
+        '/api/library/manga/${Uri.encodeComponent(bookKey)}/manifest',
+      );
+
+  /// 对端章节式在线漫画 [bookKey] 中目录摘要 [chapterDigest] 那一章的页表
+  /// （BUG-2474）。老 host / 该章对端没下载 → 404 → [MangaInterconnectUnsupported]
+  /// 由调用方按阶段分类。
+  Future<RemoteMangaManifest> remoteMangaChapterManifest(
+    String bookKey,
+    String chapterDigest,
+  ) =>
+      _fetchMangaManifest(
+        '/api/library/manga/${Uri.encodeComponent(bookKey)}'
+        '/chapters/$chapterDigest/manifest',
+      );
+
+  Future<RemoteMangaManifest> _fetchMangaManifest(String path) async {
     await _ensureResolved();
-    final String path =
-        '/api/library/manga/${Uri.encodeComponent(bookKey)}/manifest';
     final HttpClientRequest req =
         await _ops!.buildRequest('GET', '$_apiBase$path');
     final HttpClientResponse res = await _sendBounded(req);
@@ -1085,10 +1151,24 @@ class InterconnectSyncBackend extends SyncBackend
   ///
   /// 走 [requestTimeout] 封顶而不是大文件那套 stall 超时：一页图是几百 KB 量级，
   /// 且阅读器等着它渲染——挂住不如尽早失败让上层重试。
-  Future<Uint8List> fetchRemoteMangaPage(String bookKey, int index) async {
+  Future<Uint8List> fetchRemoteMangaPage(String bookKey, int index) =>
+      _fetchMangaPageBytes(
+        '/api/library/manga/${Uri.encodeComponent(bookKey)}/pages/$index',
+      );
+
+  /// 章节式在线漫画的页图（BUG-2474），判据同 [fetchRemoteMangaPage]。
+  Future<Uint8List> fetchRemoteMangaChapterPage(
+    String bookKey,
+    String chapterDigest,
+    int index,
+  ) =>
+      _fetchMangaPageBytes(
+        '/api/library/manga/${Uri.encodeComponent(bookKey)}'
+        '/chapters/$chapterDigest/pages/$index',
+      );
+
+  Future<Uint8List> _fetchMangaPageBytes(String path) async {
     await _ensureResolved();
-    final String path =
-        '/api/library/manga/${Uri.encodeComponent(bookKey)}/pages/$index';
     final HttpClientRequest req =
         await _ops!.buildRequest('GET', '$_apiBase$path');
     final HttpClientResponse res = await _sendBounded(req);
@@ -1239,6 +1319,118 @@ class InterconnectSyncBackend extends SyncBackend
     _ops!.checkStatus(res.statusCode, 'POST /api/library/collections');
     final String body = await _readBodyBounded(res);
     return CollectionManifest.fromJson(jsonDecode(body));
+  }
+
+  // ── Live video metadata (interconnect-only, #7) ────────────────────────
+  // `docs/specs/2026-09-12-interconnect-scrape-metadata.md`。
+
+  /// 7c：GET host 全部作品刮削元数据（[since] 非 null 只取 updatedAt 更新的）。
+  /// 老 host 无端点 404 → null（调用方跳过元数据同步，不崩）。
+  Future<List<VideoMetadataWorkEntry>?> getRemoteVideoMetadata({
+    int? since,
+  }) async {
+    await _ensureResolved();
+    final String query = since == null ? '' : '?since=$since';
+    final HttpClientRequest req = await _ops!.buildRequest(
+      'GET',
+      '$_apiBase/api/library/metadata$query',
+    );
+    final HttpClientResponse res =
+        await _sendBounded(req, timeout: metadataRequestTimeout);
+    if (res.statusCode == 404) {
+      await res.drain<void>();
+      return null;
+    }
+    _ops!.checkStatus(res.statusCode, 'GET /api/library/metadata');
+    final Object? decoded = jsonDecode(await _readBodyBounded(res));
+    final List<VideoMetadataWorkEntry> out = <VideoMetadataWorkEntry>[];
+    if (decoded is Map && decoded['works'] is List) {
+      for (final Object? raw in decoded['works'] as List<Object?>) {
+        try {
+          out.add(VideoMetadataWorkEntry.fromJson(raw));
+        } on FormatException {
+          // 单条坏数据跳过，不让整份清单失效。
+        }
+      }
+    }
+    return out;
+  }
+
+  /// 7a：让 host 按 [query] 搜候选（host 自己的 provider / 主源 / 资料语言配置）。
+  Future<List<VideoMetadataCandidateEntry>> searchRemoteVideoMetadataCandidates({
+    required VideoMetadataWorkKey key,
+    required String query,
+  }) async {
+    final Object? decoded = await _postMetadataJson(
+      '/api/library/metadata/candidates',
+      <String, Object?>{'key': key.toJson(), 'query': query},
+    );
+    return <VideoMetadataCandidateEntry>[
+      if (decoded is Map && decoded['candidates'] is List)
+        for (final Object? raw in decoded['candidates'] as List<Object?>)
+          VideoMetadataCandidateEntry.fromJson(raw),
+    ];
+  }
+
+  /// 7a：让 host 用 [lookup] 重刮 [key]。200 / 409 都解成 [VideoMetadataWriteResult]。
+  Future<VideoMetadataWriteResult> requestRemoteVideoMetadataScrape({
+    required VideoMetadataWorkKey key,
+    required VideoMetadataLookup lookup,
+  }) async {
+    final Object? decoded = await _postMetadataJson(
+      '/api/library/metadata/scrape',
+      <String, Object?>{
+        'key': key.toJson(),
+        'lookup': encodeVideoMetadataLookup(lookup),
+      },
+    );
+    return VideoMetadataWriteResult.fromJson(decoded);
+  }
+
+  /// 7b：把本机刮好的 [work] 写回 host。409 identity 冲突也解成结果对象由 UI 决定。
+  Future<VideoMetadataWriteResult> putRemoteVideoMetadata({
+    required VideoMetadataWorkKey key,
+    required VideoMetadataLookup lookup,
+    required VideoMetadataWork work,
+    bool replaceIdentity = false,
+  }) async {
+    final Object? decoded = await _postMetadataJson(
+      '/api/library/metadata',
+      <String, Object?>{
+        'key': key.toJson(),
+        'lookup': encodeVideoMetadataLookup(lookup),
+        'work': encodeVideoMetadataWork(work),
+        'replaceIdentity': replaceIdentity,
+      },
+      method: 'PUT',
+    );
+    return VideoMetadataWriteResult.fromJson(decoded);
+  }
+
+  /// 元数据端点共用的 JSON 往返：409 是协议内的可解释拒绝，与 200 一样返回 body；
+  /// 其余非 2xx 走 [checkStatus] 抛错。
+  Future<Object?> _postMetadataJson(
+    String path,
+    Map<String, Object?> body, {
+    String method = 'POST',
+  }) async {
+    await _ensureResolved();
+    final HttpClientRequest req =
+        await _ops!.buildRequest(method, '$_apiBase$path');
+    req.headers.set('Content-Type', 'application/json; charset=utf-8');
+    req.add(utf8.encode(jsonEncode(body)));
+    final HttpClientResponse res =
+        await _sendBounded(req, timeout: metadataRequestTimeout);
+    // 老 host 没有元数据端点：归一成一种可识别异常，UI 提示「对端不支持」而不是
+    // 一句通用错误（审查 #8：客户端不消费能力位，按 404 现场判定同样零破坏）。
+    if (res.statusCode == 404) {
+      await res.drain<void>();
+      throw const RemoteVideoMetadataUnsupported();
+    }
+    if (res.statusCode != 409) {
+      _ops!.checkStatus(res.statusCode, '$method $path');
+    }
+    return jsonDecode(await _readBodyBounded(res));
   }
 
   /// GET 对端 host 当前删除墓碑清单（显式确认式删除传播，host→client 消费方向）。

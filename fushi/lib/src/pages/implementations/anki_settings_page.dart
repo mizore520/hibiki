@@ -18,7 +18,9 @@ import 'package:fushi/src/anki/anki_view_model.dart';
 import 'package:fushi/src/anki/ankiconnect_port_repair.dart';
 import 'package:fushi/src/anki/lapis_template_service.dart';
 import 'package:fushi/src/mining/gal_mining_screenshot_size.dart';
-import 'package:fushi/src/mining/immersion_mining_request.dart'
+import 'package:fushi/src/media/audiobook/mining_audio_clip.dart'
+    show kMiningPadMaxMs;
+import 'package:fushi_engine/mining/immersion_mining_request.dart'
     show MiningAnimatedFormat, MiningStillFormat, VideoMiningImageMode;
 import 'package:fushi/src/platform/platform_providers.dart';
 import 'package:fushi/src/platform/platform_services.dart';
@@ -591,9 +593,31 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
           child: _buildMiningAudioQualityRow(),
         ),
         SettingsSearchTarget(
+          id: 'card_creation.anki.mining_audio_head_pad',
+          child: _buildMiningAudioPadRow(
+            title: t.mining_audio_head_pad,
+            subtitle: t.mining_audio_head_pad_hint,
+            icon: Icons.first_page,
+            value: appModel.miningAudioHeadPadMs,
+            onChanged: appModel.setMiningAudioHeadPadMs,
+          ),
+        ),
+        SettingsSearchTarget(
+          id: 'card_creation.anki.mining_audio_tail_pad',
+          child: _buildMiningAudioPadRow(
+            title: t.mining_audio_tail_pad,
+            subtitle: t.mining_audio_tail_pad_hint,
+            icon: Icons.last_page,
+            value: appModel.miningAudioTailPadMs,
+            onChanged: appModel.setMiningAudioTailPadMs,
+          ),
+        ),
+        SettingsSearchTarget(
           id: 'card_creation.anki.video_mining_image_mode',
           child: _buildVideoMiningImageModePicker(),
         ),
+        // videoClip 模式下这两行不参与制卡，但仍渲染：设置行按 item-id 被覆盖守卫
+        // 枚举，按模式从树上抽掉会让焦点驱动的守卫在切换那一刻账目对不上。
         SettingsSearchTarget(
           id: 'card_creation.anki.video_mining_animated_format',
           child: _buildVideoMiningAnimatedFormatPicker(),
@@ -685,12 +709,48 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
     );
   }
 
-  /// 视频制卡封面图片模式三选一：gif=字幕区间动图（默认，现状零破坏）；currentFrame=
+  /// 制卡句子音频头/尾 padding 滑块（对齐 asbplayer 的 audio padding）。0..[kMiningPadMaxMs]
+  /// 毫秒、步进 50；透传 [AppModel.miningAudioHeadPadMs] / [miningAudioTailPadMs]，视频字幕与
+  /// 有声书两条制卡链共用。实际裁剪时还会夹在相邻 cue 边界内（[padSentenceRange]），所以填
+  /// 大了也不会把邻句混进来——hint 文案即由此而来。
+  Widget _buildMiningAudioPadRow({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required int value,
+    required void Function(int ms) onChanged,
+  }) {
+    const int step = 50;
+    final int clamped = value.clamp(0, kMiningPadMaxMs);
+    final String readout = t.mining_audio_pad_readout(ms: clamped);
+    return AdaptiveSettingsSliderRow(
+      title: title,
+      subtitle: subtitle,
+      icon: icon,
+      value: clamped.toDouble(),
+      min: 0,
+      max: kMiningPadMaxMs.toDouble(),
+      divisions: kMiningPadMaxMs ~/ step,
+      step: step.toDouble(),
+      label: readout,
+      readout: readout,
+      onChanged: (double v) {
+        onChanged((v / step).round() * step);
+        setState(() {});
+      },
+    );
+  }
+
+  /// 视频制卡封面模式：gif=字幕区间动图（默认）；currentFrame=
   /// 制卡那一刻的当前解码帧（点词已自动暂停）；subtitleStart=当前字幕 cue 起始时间点的帧。
+  /// videoClip 将同一时间段的画面与例句声音封装为一个 MP4，由 Anki 媒体播放器播放。
   /// 全局设置，透传 [AppModel.videoMiningImageMode]，所有视频制卡生效。
   Widget _buildVideoMiningImageModePicker() {
     return AdaptiveSettingsPickerRow<VideoMiningImageMode>(
       title: t.video_mining_image_mode,
+      subtitle: appModel.videoMiningImageMode.isVideoClip
+          ? t.video_mining_image_mode_video_clip_hint
+          : null,
       icon: Icons.photo_library_outlined,
       controlBelow: true,
       selected: appModel.videoMiningImageMode,
@@ -698,6 +758,10 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
         AdaptiveSettingsPickerOption<VideoMiningImageMode>(
           value: VideoMiningImageMode.gif,
           label: t.video_mining_image_mode_gif,
+        ),
+        AdaptiveSettingsPickerOption<VideoMiningImageMode>(
+          value: VideoMiningImageMode.videoClip,
+          label: t.video_mining_image_mode_video_clip,
         ),
         AdaptiveSettingsPickerOption<VideoMiningImageMode>(
           value: VideoMiningImageMode.currentFrame,
@@ -720,8 +784,8 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
   /// 二十遍。共用一个开关会逼用户为一边将就另一边。
   ///
   /// galgame 没有「字幕区间」，所以给 gif / 静态截图 / 视频片段三档——不渲染
-  /// subtitleStart，免得暗示能选一个对这个场景无意义的模式。视频片段（mp4）反过来
-  /// 只在这里渲染：它靠 hook 会话的窗口录制 + 台词时间戳，视频页没有这两样。
+  /// subtitleStart，免得暗示能选一个对这个场景无意义的模式。这里的视频片段（mp4）
+  /// 来自 hook 会话的窗口录制 + 台词时间戳；普通视频页直接截取源视频。
   Widget _buildGalMiningImageModePicker() {
     final VideoMiningImageMode current = appModel.galMiningImageMode;
     return AdaptiveSettingsPickerRow<VideoMiningImageMode>(
@@ -1742,6 +1806,8 @@ String _ankiHandlebarBaseLabel(String option) {
       return t.handlebar_document_title;
     case '{clip-timestamp}':
       return t.handlebar_clip_timestamp;
+    case '{source-link}':
+      return t.handlebar_source_link;
     case '{card-image}':
       return t.handlebar_card_image;
     case '{book-cover}':

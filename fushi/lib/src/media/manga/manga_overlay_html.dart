@@ -1,12 +1,11 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:characters/characters.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
 import 'package:fushi/src/media/manga/manga_reading_mode.dart';
 import 'package:fushi/src/media/manga/manga_view_prefs.dart';
-import 'package:fushi/src/media/manga/mokuro_payload.dart';
+import 'package:fushi_engine/media/manga/mokuro_payload.dart';
 
 /// 把一页所有 mokuro block 渲染成绝对定位的透明 `<p class="ocr-box">` 层。
 ///
@@ -33,7 +32,7 @@ String mangaOcrBoxesHtml(MokuroImage page) {
   final StringBuffer buffer = StringBuffer();
   for (int blockIndex = 0; blockIndex < page.blocks.length; blockIndex++) {
     final MokuroBlock block = page.blocks[blockIndex];
-    final Rect r = block.rectangle;
+    final MokuroRect r = block.rectangle;
     final double leftPct = (r.left / pageWidth) * 100;
     final double topPct = (r.top / pageHeight) * 100;
     final double widthPct = (r.width / pageWidth) * 100;
@@ -213,20 +212,20 @@ bool _mangaKanaOnly(String text) =>
 bool _mangaContainsKanji(String text) =>
     RegExp(r'[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]').hasMatch(text);
 
-double _mangaAxisOverlap(Rect a, Rect b, {required bool vertical}) {
+double _mangaAxisOverlap(MokuroRect a, MokuroRect b, {required bool vertical}) {
   if (vertical) {
     return math.max(0, math.min(a.bottom, b.bottom) - math.max(a.top, b.top));
   }
   return math.max(0, math.min(a.right, b.right) - math.max(a.left, b.left));
 }
 
-double _mangaAxisLength(Rect rect, {required bool vertical}) =>
+double _mangaAxisLength(MokuroRect rect, {required bool vertical}) =>
     vertical ? rect.height : rect.width;
 
-double _mangaCrossThickness(Rect rect, {required bool vertical}) =>
+double _mangaCrossThickness(MokuroRect rect, {required bool vertical}) =>
     vertical ? rect.width : rect.height;
 
-double _mangaCrossGap(Rect a, Rect b, {required bool vertical}) {
+double _mangaCrossGap(MokuroRect a, MokuroRect b, {required bool vertical}) {
   if (vertical) {
     return math.max(0, math.max(a.left, b.left) - math.min(a.right, b.right));
   }
@@ -351,7 +350,7 @@ List<MangaOcrTextRegion> mangaEffectiveTextRegions(MokuroBlock block) {
   if (block.lines.isEmpty || block.rectangle.isEmpty) {
     return const <MangaOcrTextRegion>[];
   }
-  final List<Rect> lineRects = _mangaLineRects(block);
+  final List<MokuroRect> lineRects = _mangaLineRects(block);
   final List<MangaOcrTextRegion> result = <MangaOcrTextRegion>[];
   int utf16Base = 0;
   for (int lineIndex = 0; lineIndex < block.lines.length; lineIndex++) {
@@ -367,16 +366,16 @@ List<MangaOcrTextRegion> mangaEffectiveTextRegions(MokuroBlock block) {
       offset = end;
     }
     if (characters.isNotEmpty) {
-      final Rect lineRect = lineRects[lineIndex];
+      final MokuroRect lineRect = lineRects[lineIndex];
       for (int index = 0; index < characters.length; index++) {
-        final Rect characterRect = block.isVertical
-            ? Rect.fromLTWH(
+        final MokuroRect characterRect = block.isVertical
+            ? MokuroRect.fromLTWH(
                 lineRect.left,
                 lineRect.top + index * lineRect.height / characters.length,
                 lineRect.width,
                 lineRect.height / characters.length,
               )
-            : Rect.fromLTWH(
+            : MokuroRect.fromLTWH(
                 lineRect.left + index * lineRect.width / characters.length,
                 lineRect.top,
                 lineRect.width / characters.length,
@@ -396,10 +395,10 @@ List<MangaOcrTextRegion> mangaEffectiveTextRegions(MokuroBlock block) {
   return result;
 }
 
-List<Rect> _mangaLineRects(MokuroBlock block) {
+List<MokuroRect> _mangaLineRects(MokuroBlock block) {
   final List<List<List<double>>>? coordinates = block.linesCoords;
   if (coordinates != null && coordinates.length == block.lines.length) {
-    final List<Rect> parsed = <Rect>[];
+    final List<MokuroRect> parsed = <MokuroRect>[];
     for (final List<List<double>> polygon in coordinates) {
       if (polygon.isEmpty ||
           polygon.any((List<double> point) => point.length < 2)) {
@@ -420,20 +419,20 @@ List<Rect> _mangaLineRects(MokuroBlock block) {
         parsed.clear();
         break;
       }
-      parsed.add(Rect.fromLTRB(left, top, right, bottom));
+      parsed.add(MokuroRect.fromLTRB(left, top, right, bottom));
     }
     if (parsed.length == block.lines.length) {
       return parsed;
     }
   }
 
-  final Rect rect = block.rectangle;
+  final MokuroRect rect = block.rectangle;
   final int count = block.lines.length;
   if (block.isVertical) {
     final double width = rect.width / count;
-    return <Rect>[
+    return <MokuroRect>[
       for (int index = 0; index < count; index++)
-        Rect.fromLTWH(
+        MokuroRect.fromLTWH(
           rect.right - (index + 1) * width,
           rect.top,
           width,
@@ -442,9 +441,14 @@ List<Rect> _mangaLineRects(MokuroBlock block) {
     ];
   }
   final double height = rect.height / count;
-  return <Rect>[
+  return <MokuroRect>[
     for (int index = 0; index < count; index++)
-      Rect.fromLTWH(rect.left, rect.top + index * height, rect.width, height),
+      MokuroRect.fromLTWH(
+        rect.left,
+        rect.top + index * height,
+        rect.width,
+        height,
+      ),
   ];
 }
 
@@ -453,7 +457,7 @@ String _mangaCharacterRegionsHtml({
   required List<MangaOcrTextRegion> regions,
 }) {
   final String sentence = block.lines.join();
-  final Rect parent = block.rectangle;
+  final MokuroRect parent = block.rectangle;
   final double parentWidth = parent.width <= 0 ? 1 : parent.width;
   final double parentHeight = parent.height <= 0 ? 1 : parent.height;
   final StringBuffer buffer = StringBuffer();
@@ -463,7 +467,7 @@ String _mangaCharacterRegionsHtml({
         region.utf16End > sentence.length) {
       continue;
     }
-    final Rect r = region.rectangle;
+    final MokuroRect r = region.rectangle;
     final double leftPct = ((r.left - parent.left) / parentWidth) * 100;
     final double topPct = ((r.top - parent.top) / parentHeight) * 100;
     final double widthPct = (r.width / parentWidth) * 100;
@@ -598,6 +602,7 @@ String mangaWindowDocument(
   /// wheel binding can prevent the WebView's native scrolling before it reaches
   /// the existing manga wheel gesture handlers.
   String shortcutWheelBindingsJson = '{}',
+  bool showOcrBoxes = false,
 }) {
   final bool isWebtoon = mode == MangaReadingMode.webtoon;
   // spread 容器本身始终按 LTR 的几何顺序排列，保证 offsetLeft 是稳定的
@@ -740,6 +745,12 @@ String mangaWindowDocument(
       '.manga-page img{display:block;width:100%;height:100%;'
       'object-fit:contain;-webkit-user-drag:none;user-drag:none;}'
       '.ocr-box{margin:0;padding:0;pointer-events:auto;}'
+      // BUG-2481「显示识别范围」：body 挂 ocr-boxes-visible 时把每个 OCR 块的框
+      // 画出来（外描边 + 淡底），字符级命中区用虚线，一眼能看出识别漏了哪块、
+      // 框歪到哪。只改样式不改几何，命中判定与平时逐字节一致。
+      '.ocr-boxes-visible .ocr-box{outline:2px solid rgba(255,64,64,.9);'
+      'background:rgba(255,64,64,.12);}'
+      '.ocr-boxes-visible .ocr-char{outline:1px dashed rgba(64,160,255,.7);}'
       // Character geometry is entirely explicit. Keep the common hit-layer
       // declarations in one rule instead of repeating them for every OCR
       // character: dense magazine pages can contain several thousand regions.
@@ -747,7 +758,7 @@ String mangaWindowDocument(
       'color:transparent;pointer-events:auto;line-height:1;'
       'writing-mode:horizontal-tb;}'
       '</style></head>'
-      '<body>'
+      '<body${showOcrBoxes ? ' class="ocr-boxes-visible"' : ''}>'
       '$body'
       '<script>$inlineSelectionJs</script>'
       '<script>'
@@ -1337,7 +1348,6 @@ String _mangaGestureJs({
   // pointer distance so a stationary cursor does not repeat the same lookup.
   var shiftHoverX = -1, shiftHoverY = -1;
   document.addEventListener('mousemove', function(e){
-    if (RESCAN) return;
     if (!e.shiftKey) { shiftHoverX = -1; shiftHoverY = -1; return; }
     var dx = e.clientX - shiftHoverX, dy = e.clientY - shiftHoverY;
     if (shiftHoverX >= 0 && dx * dx + dy * dy < 16) return;
@@ -1365,10 +1375,7 @@ String _mangaGestureJs({
     var zone = _tapZoneTurn(x);
     if (zone) { b.callHandler('onMangaTurn', zone); return; }
     // 裸图 / 尚未完成 OCR 的区域不打开大图，继续留在阅读器。
-    //
-    // 但空白点不再是纯 no-op：带上「点在哪一页、该页有没有文字层」，Dart 侧据此
-    // 决定要不要就地开跑 OCR。判据是**该页有没有 .ocr-box**，不是「这一点没命中
-    // 文字」——已识别的页面上点空隙本来就该什么都不做，那不是缺 OCR。
+    // 带上「点在哪一页、该页有没有文字层」，Dart 侧可按需启动 OCR。
     var page = _pageAt(x, y);
     b.callHandler('onTapEmpty', JSON.stringify(page ? {
       pageIndex: page.pageIndex,
@@ -1578,7 +1585,6 @@ String _mangaGestureJs({
     var _wheelAccum = 0;
     var _wheelDir = 0;
     document.addEventListener('wheel', function(e){
-      if (RESCAN) return;
       if (e.ctrlKey || e.metaKey) return;
       e.preventDefault();
       var wdx = e.deltaX || 0;

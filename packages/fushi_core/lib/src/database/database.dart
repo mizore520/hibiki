@@ -3,18 +3,19 @@ import 'dart:io';
 import 'dart:convert';
 import 'dart:math' show Random;
 
-import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/common.dart' show CommonDatabase;
 import 'package:sqlite3/sqlite3.dart' as sqlite3;
 
+import '../utils/fushi_debug_print.dart';
 import '../utils/ttu_sanitize.dart';
 import '../utils/video_book_uid.dart';
 import 'activity_event_types.dart';
 import 'book_format.dart';
 import 'collection_order.dart';
+import 'collection_book_identity.dart';
 import 'epub_book_meta.dart';
 import 'media_kind.dart';
 import 'media_kind_mappings.dart';
@@ -32,6 +33,7 @@ part 'database_statistics.part.dart';
 part 'database_content_misc.part.dart';
 part 'database_tags_sync.part.dart';
 part 'database_update_feed.part.dart';
+part 'database_manga_download.part.dart';
 
 /// Thrown when the on-disk database was created by a NEWER build of Fushi than
 /// the one currently running (`db user_version > code schemaVersion`).
@@ -227,7 +229,7 @@ Future<QueryExecutor> _openWithRecovery(
             : FushiDatabaseFailureKind.cannotOpen,
       );
     }
-    debugPrint('[fushi-db] sidecar open error on "$path" '
+    fushiDebugPrint('[fushi-db] sidecar open error on "$path" '
         '(main db healthy → recovering): $e\n$stack');
   }
 
@@ -246,12 +248,12 @@ Future<QueryExecutor> _openWithRecovery(
     } finally {
       recover.close();
     }
-    debugPrint(
+    fushiDebugPrint(
         '[fushi-db] Layer 1 recovery OK (checkpoint+DELETE) for "$path"');
     return NativeDatabase.createInBackground(dbFile, setup: applyPragmas);
   } catch (e, stack) {
     if (!_isSidecarOpenError(e)) rethrow;
-    debugPrint('[fushi-db] Layer 1 still failing on "$path": $e\n$stack');
+    fushiDebugPrint('[fushi-db] Layer 1 still failing on "$path": $e\n$stack');
   }
 
   // ── Layer 2 — physical sidecar rebuild. Layer 1 could not even open a raw
@@ -272,7 +274,7 @@ Future<QueryExecutor> _openWithRecovery(
     // ── Layer 3 — sidecar gone yet still failing ⇒ the main fushi.db is
     //    corrupt after all. Terminal: hand the app a recognisable type so it can
     //    stop the Retry loop and offer restore/clear instead of looping.
-    debugPrint(
+    fushiDebugPrint(
         '[fushi-db] Layer 2 rebuild failed, DB unrecoverable: $e\n$stack');
     throw FushiDatabaseUnrecoverableException(dbPath: path, cause: e);
   }
@@ -304,7 +306,7 @@ Future<void> _rebuildSidecar(File dbFile) async {
       try {
         await src.copy('$path.corrupt-bak-$stamp$suffix');
       } catch (e) {
-        debugPrint(
+        fushiDebugPrint(
             '[fushi-db] snapshot of "${src.path}" failed (non-fatal): $e');
       }
     }
@@ -329,7 +331,7 @@ Future<void> _rebuildSidecar(File dbFile) async {
 
   await deleteSidecar('$path-wal');
   await deleteSidecar('$path-shm');
-  debugPrint('[fushi-db] Layer 2: deleted stale -wal/-shm for "$path" '
+  fushiDebugPrint('[fushi-db] Layer 2: deleted stale -wal/-shm for "$path" '
       '(main .db untouched, .corrupt-bak-$stamp snapshot kept)');
 }
 
@@ -528,7 +530,7 @@ Future<void> _migrateLegacyDatabaseFileName(String dbDirectory) async {
     if (!await newDb.exists()) rethrow;
     return;
   }
-  debugPrint('[fushi-db] renamed legacy hibiki.db(+sidecars) -> fushi.db '
+  fushiDebugPrint('[fushi-db] renamed legacy hibiki.db(+sidecars) -> fushi.db '
       'in "$dbDirectory"');
 }
 
@@ -648,6 +650,7 @@ void _requireOneVideoMetadataOwner({
   MediaCollections,
   MediaCollectionItems,
   CollectionMemberTombstones,
+  CollectionBookAliases,
   FushiPairedPeers,
   BookTombstones,
   LookupMiningCounters,
@@ -698,6 +701,7 @@ void _requireOneVideoMetadataOwner({
   WebMineQueue,
   VideoFileSpecs,
   UpdateFeedEntries,
+  MangaDownloadJobs,
 ])
 class FushiDatabase extends _$FushiDatabase
     with
@@ -708,7 +712,8 @@ class FushiDatabase extends _$FushiDatabase
         _FushiDbContentMisc,
         _FushiDbStatistics,
         _FushiDbVideoDomain,
-        _FushiDbUpdateFeed {
+        _FushiDbUpdateFeed,
+        _FushiDbMangaDownload {
   /// [isMainProcess] gates the TODO-905 sidecar rebuild: the main app passes
   /// the default `true` (it may physically delete a poisoned `-wal`/`-shm`),
   /// while the separate `:popup` process passes `false` so it backs off on an
@@ -729,7 +734,7 @@ class FushiDatabase extends _$FushiDatabase
   final bool _isMainProcess;
 
   @override
-  int get schemaVersion => 102;
+  int get schemaVersion => 104;
 
   /// BUG-2335: version 97 also exists in a parallel migration history without
   /// the v96 expansion column. Reuse the additive migration on open so a
@@ -3108,6 +3113,32 @@ class FushiDatabase extends _$FushiDatabase
               'ON update_feed_entries (discovered_at)',
             );
           }
+          if (from < 103) {
+            // v103（漫画先下载再读）：新表 manga_download_jobs——在线章节 /
+            // mokuro.moe 卷的持久化下载队列。与 v100、v102 同款的纯新增表范式。
+            //
+            // 无损：旧库升级后表为空 = 一个任务都没有 = 下载 worker 空转，与升级前
+            // 逐字节一致；在线阅读改走本地目录是 B2 阶段的事，本步只加表。
+            // 幂等：fresh DB 由 onCreate 的 createAll 建好；重复升级被 _tableExists 短路。
+            if (!await _tableExists('manga_download_jobs')) {
+              await m.createTable(mangaDownloadJobs);
+            }
+            // 索引与建表同步内联（升级路径不会自动补上）；fresh 库由
+            // `_ensureIndexes` 建同名索引，两处 SQL 必须逐字一致。
+            await customStatement(
+              'CREATE UNIQUE INDEX IF NOT EXISTS idx_manga_download_jobs_identity '
+              'ON manga_download_jobs (kind, book_key, chapter_key)',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_manga_download_jobs_status_created '
+              'ON manga_download_jobs (status, created_at)',
+            );
+          }
+          if (from < 104) {
+            if (!await _tableExists('collection_book_aliases')) {
+              await m.createTable(collectionBookAliases);
+            }
+          }
         },
         onCreate: (m) async {
           await m.createAll();
@@ -3390,7 +3421,7 @@ class FushiDatabase extends _$FushiDatabase
         rewritten += 1;
       }
 
-      debugPrint(
+      fushiDebugPrint(
         '[fushi-migration v26] audiobook book_key backfill: '
         'rewritten=$rewritten, '
         'skippedAmbiguousOldKey=$skippedAmbiguousOldKey, '
@@ -3402,7 +3433,7 @@ class FushiDatabase extends _$FushiDatabase
 
   /// TODO-894：为缺失配对 srt_books 行的 EPUB-backed 有声书补写一条 srt_books
   /// 行（v29 自愈迁移），仿 [backfillMismatchedAudiobookKeysV26] 范式：表/列守卫 →
-  /// transaction → 裸 SQL → debugPrint 计数。
+  /// transaction → 裸 SQL → fushiDebugPrint 计数。
   ///
   /// 候选只取「audiobooks.book_key 能 JOIN 上 epub_books（即 EPUB-backed），且其
   /// book_key 不在任何 srt_books.book_key 里」。standalone 纯字幕书（有 srt_books
@@ -3462,7 +3493,7 @@ class FushiDatabase extends _$FushiDatabase
         inserted += 1;
       }
 
-      debugPrint(
+      fushiDebugPrint(
         '[fushi-migration v29] EPUB-backed audiobook srt_books backfill: '
         'inserted=$inserted '
         '(standalone 字幕书无 audiobooks 行天然豁免，重复迁移幂等)',
@@ -3524,7 +3555,7 @@ class FushiDatabase extends _$FushiDatabase
       // 引用再 DELETE（等效 FK onDelete:setNull，但显式）。
       await customStatement('UPDATE shelf_entries SET series_id = NULL');
       await customStatement('DELETE FROM series');
-      debugPrint(
+      fushiDebugPrint(
         '[fushi-migration v38] series→collection converted='
         '$convertedCollections',
       );
@@ -3765,7 +3796,8 @@ class FushiDatabase extends _$FushiDatabase
         }
         splitCount += 1;
       }
-      debugPrint('[fushi-migration v38] playlist videos split=$splitCount');
+      fushiDebugPrint(
+          '[fushi-migration v38] playlist videos split=$splitCount');
 
       // favorite_sentences（收藏句）改写并入**同一事务**：整个 v38 拆集要么全成要么全
       // 回滚。否则若拆集事务先提交、收藏改写在两步之间崩溃，重跑时 parent 已删 → splitMap

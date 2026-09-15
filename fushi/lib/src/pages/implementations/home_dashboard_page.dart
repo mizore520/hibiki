@@ -1,15 +1,14 @@
-import 'package:fushi/src/utils/net/app_http_image.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
 import 'package:fushi_dictionary/fushi_dictionary.dart';
 import 'dart:async';
-
-import 'package:flutter/foundation.dart' show ValueListenable;
+import 'package:fushi_engine/sync/remote_collection_adoption_service.dart';
+import 'package:fushi_engine/sync/collection_book_identity_index.dart';
+import 'package:flutter/foundation.dart'
+    show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import 'package:fushi/media.dart';
 import 'package:fushi/utils.dart';
 import 'package:fushi/src/models/app_model.dart';
@@ -19,18 +18,18 @@ import 'package:fushi/src/models/preferences_repository.dart';
 import 'package:fushi/src/media/collections/collection_continue.dart';
 import 'package:fushi/src/media/display_title.dart';
 import 'package:fushi/src/media/media_cover_source.dart';
-import 'package:fushi/src/media/tracking/bangumi_api_client.dart';
+import 'package:fushi_engine/media/tracking/bangumi_api_client.dart';
 import 'package:fushi/src/media/tracking/media_tracking_labels.dart';
-import 'package:fushi/src/media/tracking/media_tracking_repository.dart';
-import 'package:fushi/src/media/tracking/media_tracking_service.dart';
+import 'package:fushi_engine/media/tracking/media_tracking_repository.dart';
+import 'package:fushi_engine/media/tracking/media_tracking_service.dart';
 import 'package:fushi/src/mining/galgame_library.dart';
 import 'package:fushi/src/mining/galgame_repository.dart';
 import 'package:fushi/src/media/video/cover_ui/cover_orientation_builder.dart';
 import 'package:fushi/src/media/video/cover_ui/portrait_cover_image.dart';
 import 'package:fushi/src/media/video/video_home_layout.dart'
     show VideoCardOrientation;
-import 'package:fushi/src/media/video/m3u8_playlist.dart';
-import 'package:fushi/src/media/video/video_book_repository.dart';
+import 'package:fushi_engine/media/video/m3u8_playlist.dart';
+import 'package:fushi_engine/media/video/video_book_repository.dart';
 import 'package:fushi/src/pages/base_module_tab_page.dart';
 import 'package:fushi/src/pages/implementations/activity_feed.dart';
 import 'package:fushi/src/pages/implementations/home_page.dart';
@@ -42,10 +41,10 @@ import 'package:fushi/src/pages/implementations/stat_shared.dart';
 import 'package:fushi/src/pages/implementations/statistics_center_page.dart';
 import 'package:fushi/src/settings/settings_detail_page.dart';
 import 'package:fushi/src/settings/settings_schema_tracking.dart';
-import 'package:fushi/src/stats/stat_facts.dart';
+import 'package:fushi_engine/stats/stat_facts.dart';
 import 'package:fushi/src/stats/stat_window.dart';
 import 'package:fushi/src/sync/interconnect_sync_backend.dart';
-import 'package:fushi/src/sync/fushi_library_host_service.dart';
+import 'package:fushi_engine/sync/fushi_library_host_service.dart';
 import 'package:fushi/src/sync/remote_cover_image.dart';
 import 'package:fushi/src/sync/remote_library_cache.dart';
 import 'package:fushi/src/sync/sync_repository.dart';
@@ -57,6 +56,8 @@ import 'package:fushi/src/migration/migration_target_channel.dart';
 import 'package:fushi/src/pages/implementations/migration_page.dart';
 import 'package:fushi/src/pages/implementations/migration_import_page.dart';
 import 'package:fushi/src/migration/migration_importer.dart';
+import 'package:fushi_engine/foundation/engine_notifier.dart';
+import 'package:fushi/src/utils/net/app_http_image.dart';
 
 /// 首页仪表盘（阅读向），参考 ReinaManager 首页改造：
 ///
@@ -610,7 +611,7 @@ class _HomeDashboardPageState
   }
 
   /// 追踪状态版本号（[initState] 挂监听，[dispose] 解除）。
-  ValueListenable<int>? _trackingRevision;
+  EngineValueListenable<int>? _trackingRevision;
 
   /// 游戏库仓储（[initState] 挂监听，[dispose] 解除）。
   GalgameRepository? _galgameRepo;
@@ -898,6 +899,12 @@ class _HomeDashboardPageState
           results[0] as List<RemoteBookInfo>;
       final List<RemoteVideoInfo> remoteVideos =
           results[1] as List<RemoteVideoInfo>;
+      final RemoteCollectionAdoptionService adoption =
+          RemoteCollectionAdoptionService(appModel.database);
+      await adoption.adoptBooks(remoteBooks);
+      for (final RemoteVideoInfo video in remoteVideos) {
+        await adoption.adoptVideo(video);
+      }
       final List<RemoteActivityEvent> remoteActivity =
           results[2] as List<RemoteActivityEvent>;
       if (!mounted) return;
@@ -909,6 +916,10 @@ class _HomeDashboardPageState
           ReaderFushiSource.parseBookKey(item.mediaIdentifier) ??
               item.mediaIdentifier,
       };
+      localBookKeys.addAll(
+        (await CollectionBookIdentityIndex.load(appModel.database)).uidByKey.keys,
+      );
+      if (!mounted) return;
       final Set<String> localVideoUids = <String>{
         for (final VideoBookRow v in _videos) v.bookUid,
       };
@@ -1073,15 +1084,17 @@ class _HomeDashboardPageState
               SizedBox(height: tokens.spacing.card),
               continueCard,
               SizedBox(height: tokens.spacing.card),
+              // 与宽屏主列同序（继续 → 最近添加）：窄屏单列把最近添加压在活动
+              // 时间轴之下，时间轴天然很长，用户要滚到底才看得见新入库的条目。
+              if (recentCard != null) ...<Widget>[
+                recentCard,
+                SizedBox(height: tokens.spacing.card),
+              ],
               if (trackingCard != null) ...<Widget>[
                 trackingCard,
                 SizedBox(height: tokens.spacing.card),
               ],
               activityCard,
-              if (recentCard != null) ...<Widget>[
-                SizedBox(height: tokens.spacing.card),
-                recentCard,
-              ],
             ],
           );
         }
@@ -2543,8 +2556,8 @@ class _HomeDashboardPageState
     return entry.title;
   }
 
-  /// 活动条前置视觉：命中本地条目用封面缩略（书与游戏 40×56 竖版 / 视频 68×40
-  /// 横版，圆角裁切，与继续卡同源取图），查不到（已删/远端 display-only 行/导入
+  /// 活动条前置视觉：命中本地条目用封面缩略（书、游戏、视频一律 40×56 竖版，
+  /// 圆角裁切，与继续卡同源取图），查不到（已删/远端 display-only 行/导入
   /// 无封面）回退原类型图标（用户反馈时间轴只有小图标认不出条目）。
   Widget _activityLeading(
     FushiDesignTokens tokens,
@@ -2583,13 +2596,14 @@ class _HomeDashboardPageState
           return ClipRRect(
             borderRadius: FushiBorderRadius.card,
             child: SizedBox(
-              width: 68,
-              height: 40,
-              // BUG-1299：横版槽，判定方向随槽走（海报垫底、截帧铺满）。
+              width: 40,
+              height: 56,
+              // 竖版槽，与同列表的书/游戏同槽（用户 2026-07-24 拍板统一竖版）：
+              // 刮削回来的 2:3 海报直接铺满，16:9 截帧由 PortraitCoverImage 走
+              // 模糊垫底 + contain（BUG-1299 的槽向自适应，判定方向随槽走）。
               child: _videoCover(
                 tokens,
                 video,
-                landscapeSlot: true,
                 decodeWidth: kActivityCoverDecodePixelWidth,
               ),
             ),

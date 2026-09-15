@@ -10,9 +10,9 @@ import 'package:fushi/src/settings/settings_actions.dart';
 import 'package:fushi/src/settings/settings_context.dart';
 import 'package:fushi/src/settings/port_kill_confirm.dart';
 import 'package:fushi/src/settings/settings_destination.dart';
-import 'package:fushi/src/sync/deletion_propagation.dart';
+import 'package:fushi_engine/sync/deletion_propagation.dart';
 import 'package:fushi/src/sync/desktop_lookup_service.dart';
-import 'package:fushi/src/sync/fushi_sync_server.dart';
+import 'package:fushi_engine/sync/fushi_sync_server.dart';
 import 'package:fushi/src/sync/port_process_terminator.dart';
 import 'package:fushi/src/sync/texthooker_ws_client_manager.dart';
 import 'package:fushi/src/sync/yomitan_api_server.dart'
@@ -176,8 +176,9 @@ SettingsDestination buildLookupDestination() {
             },
           ),
           // TODO-861②（移植 Hoshi `07b5c09`）：扫描非日文文本。关闭后选区/查词遇非
-          // 日文码点即停（不吃相邻拉丁词/数字）。默认 true = 现状，向后兼容。重进
-          // 阅读器章节后注入端生效（window.scanNonJapaneseText）。
+          // 日文码点即停（不吃相邻拉丁词/数字）。默认 true = 现状，向后兼容。开着的
+          // 阅读器经 notifyReaderSettingsChanged → updateLive 热更新
+          // window.scanNonJapaneseText（BUG-2471），不必重进章节。
           SettingsSwitchItem(
             id: 'lookup.scan_non_japanese',
             title: t.scan_non_japanese_text,
@@ -187,7 +188,7 @@ SettingsDestination buildLookupDestination() {
                 settingsContext.appModel.scanNonJapaneseText,
             onChanged: (SettingsContext settingsContext, bool value) async {
               await settingsContext.appModel.setScanNonJapaneseText(value);
-              settingsContext.refresh();
+              notifyReaderSettingsChanged(settingsContext);
             },
           ),
           // TODO-756b：“鼠标悬停即自动查词”。开启后无需按住 Shift，鼠标悬停在字幕/正文
@@ -490,26 +491,9 @@ SettingsDestination buildLookupDestination() {
         presentation: SettingsSectionPresentation.collapsed,
         title: t.settings_section_lookup_popup_window,
         items: <SettingsItem>[
-          // 全宽展示（对齐 Hoshi Reader Android 的 "Full Width" 弹窗开关）。放在
-          // 宽度滑杆之前：它一旦打开，下面那条滑杆就不再决定任何东西，故同时隐藏，
-          // 避免留一条「拖了没反应」的死控件。
-          SettingsSwitchItem(
-            id: 'lookup.popup_full_width',
-            title: t.popup_full_width,
-            subtitle: t.popup_full_width_hint,
-            icon: Icons.fit_screen_outlined,
-            value: (SettingsContext settingsContext) =>
-                settingsContext.appModel.popupFullWidth,
-            onChanged: (SettingsContext settingsContext, bool value) async {
-              await settingsContext.appModel.setPopupFullWidth(value);
-              settingsContext.refresh();
-            },
-          ),
           SettingsSliderItem(
             id: 'lookup.popup_max_width',
             titleReadout: true,
-            visible: (SettingsContext settingsContext) =>
-                !settingsContext.appModel.popupFullWidth,
             // TODO-1352: 放宽查词弹窗最大宽度的强制上限（1000→2000），让宽屏 / 4K 下
             // 弹窗能拉到接近占满（实际宽度仍由 resolvePopupRect 按当前屏宽 clamp，
             // 绝不会超出屏幕）。divisions 保持 10px 步进（1750/175）。

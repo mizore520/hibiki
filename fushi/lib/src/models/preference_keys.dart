@@ -135,6 +135,15 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'local_audio_dbs',
   'lookup.global_context_capture',
   'low_memory_mode',
+  // bool（默认 true）：漫画阅读器顶栏悬浮（不占布局、点页面中央/顶边悬停唤出）
+  // 还是常驻钉在页图上方。
+  'manga_chrome_floating',
+  // int（天，BUG-2450）：在线漫画封面磁盘缓存的保留天数（Mihon 封面缓存
+  // MihonCoverCache.maxAge）。默认 180，范围 30..360。
+  'manga_cover_cache_max_age_days',
+  // bool（默认 false）：作品页「完成后自动识别」chip——章节下载任务入队时写进
+  // `manga_download_jobs.auto_ocr`，下载完成钩子据此起整卷 OCR（设计稿 2026-09-12 §5）。
+  'manga_download_auto_ocr',
   'manga_external_mokuro_path',
   'manga_ocr_engine_preference',
   'manga_ocr_lens_language',
@@ -151,7 +160,10 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'manga_zoom_sensitivity',
   'maximum_terms',
   'mine_to_server',
+  // #1447：制卡句子音频头/尾 padding（asbplayer 式），两条链共用。
+  'mining_audio_head_pad_ms',
   'mining_audio_quality',
+  'mining_audio_tail_pad_ms',
   'mining_image_quality',
   'module_books_enabled',
   'module_browser_extension_enabled',
@@ -180,13 +192,13 @@ const Set<String> kKnownPreferenceKeys = <String>{
   // "Compact Glossaries"）。默认 false。
   'popup_compact_glossaries',
   'popup_dictionary_columns',
-  // bool：查词弹窗全宽展示（忽略最大宽度，横向铺满；位置仍跟随选区）。默认 false。
-  'popup_full_width',
   'popup_instant_scroll',
   'popup_max_height',
   'popup_max_width',
   'popup_wheel_speed',
   'qb_connection_config',
+  // 阅读器顶栏 / 底栏按钮布局 JSON（ReaderControlLayout，v1 槽位表）。
+  'reader_control_layout',
   'reading_goal_daily_chars',
   'reading_goal_weekly_chars',
   'remote_lookup_enabled',

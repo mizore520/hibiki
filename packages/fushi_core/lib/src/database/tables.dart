@@ -2784,8 +2784,9 @@ class StudySegmentTombstones extends Table {
 // （v79：galgame_tag_mappings 已并入 [TagAssignments]。与游戏**元数据标签**
 // （bgm/vndb 刮削字符串，存 [GalgameSources].dataJson + [Galgames].customDataJson）
 // 仍是两条正交轴，刻意不合并：元数据标签是外部事实、动辄上百个且随刮削变动，
-// 塞进用户标签池会污染书/视频共享的那份手工标签。游戏标签依旧不进 live-sync /
-// 备份合并导入（合并层按 kind 过滤），全量备份恢复走整库文件拷贝原样还原。）
+// 塞进用户标签池会污染书/视频共享的那份手工标签。游戏标签依旧不进 live-sync；
+// 备份合并导入自 `BackupCategory.games` 起经游戏身份映射（同 id / 刮削身份 /
+// exe 路径）落到本机游戏行上，见 backup_merge_engine.dart 的 `_buildGameIdMap`。）
 
 // ── manga_extension_stores ──────────────────────────────────────────
 /// v65：用户自行添加的 Mihon 扩展仓库。Fushi 不预置第三方仓库。
@@ -3057,4 +3058,104 @@ class UpdateFeedEntries extends Table {
 
   @override
   Set<Column> get primaryKey => {entryId};
+}
+
+/// 漫画章节下载任务的种类值域（`manga_download_jobs.kind`）。
+abstract final class MangaDownloadJobKind {
+  /// 在线来源（Mihon / Aidoku / 互联）的单章。
+  static const String chapter = 'chapter';
+
+  /// mokuro.moe 整卷（替代原内存队列 `MokuroMoeDownloadQueue`）。
+  static const String mokuroVolume = 'mokuro_volume';
+}
+
+/// 漫画下载任务状态值域（`manga_download_jobs.status`）。
+abstract final class MangaDownloadJobStatus {
+  static const String queued = 'queued';
+  static const String running = 'running';
+  static const String done = 'done';
+  static const String failed = 'failed';
+  static const String cancelled = 'cancelled';
+}
+
+/// 漫画章节 / mokuro 卷的下载任务队列（schema v103，device-local）。
+///
+/// 设计稿 `docs/specs/2026-09-12-manga-download-first-design.md` §2.2。
+/// 在线漫画改成「先下载再读」后，每个待下载的章（或 mokuro.moe 卷）在这里占
+/// 一行；单 worker 按 `(status, created_at)` 串行取任务，进程死亡后 `running`
+/// 行由 `resetRunningMangaDownloadJobs` 复位回 `queued` 续跑。
+///
+/// **不复用 `video_download_jobs`**：那张表的 CHECK 强制 magnet / backend /
+/// fingerprint 非空、stage 限 torrent 六段，塞章节任务要造假值。
+///
+/// 设备本地表（同列于 backup 的 device-local 清单、merge 跳过清单）：任务对应的
+/// 是本机磁盘上的章目录，另一台设备既没有这份半成品也不该替它续跑。
+/// 无路径列：章目录由消费方按 `(bookKey, chapterKey)` 在当前数据根下解析，
+/// 见 `kPathRebaseColumns` 的登记。
+@DataClassName('MangaDownloadJobRow')
+class MangaDownloadJobs extends Table {
+  /// 调用方生成的稳定任务 id：`sha256(kind NUL bookKey NUL chapterKey)[:32]`，
+  /// 同章重复入队幂等；不能用自增 id 充当跨崩溃幂等键。
+  TextColumn get jobId => text()();
+
+  /// 取 [MangaDownloadJobKind]。
+  TextColumn get kind => text()();
+
+  /// 在线条目 bookKey；mokuro 卷为 `mokuro:<seriesName>`。
+  TextColumn get bookKey => text()();
+
+  /// 章 key；mokuro 卷为卷名。
+  TextColumn get chapterKey => text()();
+
+  /// `mihon` / `aidoku` / `interconnect` / `mokuro_moe`。
+  TextColumn get runtime => text()();
+
+  /// 展示用作品名 / 章名。落快照而不是 join 回源表：源条目可能已被移出书架。
+  TextColumn get title => text()();
+  TextColumn get chapterTitle => text()();
+
+  /// 取 [MangaDownloadJobStatus]。
+  TextColumn get status =>
+      text().withDefault(const Constant(MangaDownloadJobStatus.queued))();
+
+  IntColumn get pagesDone => integer().withDefault(const Constant(0))();
+  IntColumn get pagesTotal => integer().withDefault(const Constant(0))();
+
+  /// 自动重试次数（退避 2s/8s/20s，与 mokuro 队列既有语义一致）。
+  IntColumn get attemptCount => integer().withDefault(const Constant(0))();
+  TextColumn get lastError => text().nullable()();
+
+  /// 完成后自动起 OCR（Google Lens 引擎除外——它需要用户逐次同意）。
+  BoolColumn get autoOcr => boolean().withDefault(const Constant(false))();
+
+  /// 时刻列均为毫秒。
+  IntColumn get createdAt => integer()();
+  IntColumn get updatedAt => integer()();
+  IntColumn get completedAt => integer().nullable()();
+
+  @override
+  Set<Column> get primaryKey => <Column>{jobId};
+
+  @override
+  List<String> get customConstraints => <String>[
+        "CHECK (job_id != '' AND book_key != '' AND chapter_key != '' "
+            "AND runtime != '')",
+        "CHECK (kind IN ('chapter', 'mokuro_volume'))",
+        "CHECK (status IN ('queued', 'running', 'done', 'failed', "
+            "'cancelled'))",
+        'CHECK (pages_done >= 0 AND pages_total >= 0 '
+            'AND pages_done <= pages_total)',
+        'CHECK (attempt_count >= 0)',
+      ];
+}
+
+/// v104：合集域远端书键与实际导入 UID 的持久一对一关系。
+/// uid 父表索引是 partial，不能作为 SQLite FK；deleteEpubBook 显式级联。
+@DataClassName('CollectionBookAliasRow')
+class CollectionBookAliases extends Table {
+  TextColumn get localUid => text()();
+  TextColumn get remoteKey => text().unique()();
+
+  @override
+  Set<Column> get primaryKey => {localUid};
 }

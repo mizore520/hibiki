@@ -11,10 +11,10 @@ import 'package:fushi/i18n/strings.g.dart';
 import 'package:fushi/media.dart';
 import 'package:fushi/models.dart';
 import 'package:fushi/src/anki/anki_view_model.dart';
-import 'package:fushi/src/media/tracking/bangumi_api_client.dart';
-import 'package:fushi/src/media/tracking/media_tracking_repository.dart';
-import 'package:fushi/src/media/tracking/media_tracking_service.dart';
-import 'package:fushi/src/media/video/video_book_repository.dart';
+import 'package:fushi_engine/media/tracking/bangumi_api_client.dart';
+import 'package:fushi_engine/media/tracking/media_tracking_repository.dart';
+import 'package:fushi_engine/media/tracking/media_tracking_service.dart';
+import 'package:fushi_engine/media/video/video_book_repository.dart';
 import 'package:fushi/src/models/preferences_repository.dart';
 import 'package:fushi/src/pages/implementations/home_dashboard_page.dart';
 import 'package:fushi/src/pages/implementations/home_page.dart'
@@ -23,7 +23,7 @@ import 'package:fushi/src/platform/platform_providers.dart';
 import 'package:fushi/src/platform/platform_services.dart';
 import 'package:fushi/src/utils/components/fushi_design_tokens.dart';
 import 'package:fushi/src/utils/components/stat_contribution_heatmap.dart';
-import 'package:fushi/src/utils/misc/fushi_time_format.dart';
+import 'package:fushi_engine/utils/misc/fushi_time_format.dart';
 import 'package:fushi_core/fushi_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -242,9 +242,37 @@ void main() {
     expect(find.text(t.home_activity), findsOneWidget);
   });
 
-  testWidgets('宽屏 1280 + 真实载入数据（异步回填后）：下段两列渲染不抛无限高度', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('窄屏（420）单列：「最近添加」排在「继续」与「活动」之间', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(420, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    // 仅导入（无播放断点）：让「最近添加」区块有内容而非被空库折叠。
+    await db.upsertVideoBook(VideoBooksCompanion(
+      bookUid: const Value('recent-narrow'),
+      title: const Value('窄屏新导入'),
+      videoPath: const Value('/abs/recent-narrow.mp4'),
+      importedAt: Value(DateTime.now().millisecondsSinceEpoch),
+    ));
+
+    await tester.pumpWidget(buildApp());
+    await pumpDashboard(tester);
+    expect(tester.takeException(), isNull);
+
+    // 单列里三个标题的纵坐标必须严格递增：活动时间轴天然很长，最近添加若压在
+    // 它下面，用户得滚到底才看得见新入库条目。
+    double top(String text) =>
+        tester.getTopLeft(find.text(text, skipOffstage: false)).dy;
+    final double continueY = top(t.home_continue);
+    final double recentY = top(t.home_recently_added);
+    final double activityY = top(t.home_activity);
+    expect(continueY, lessThan(recentY));
+    expect(recentY, lessThan(activityY));
+  });
+
+  testWidgets('宽屏 1280 + 真实载入数据（异步回填后）：下段两列渲染不抛无限高度',
+      (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -614,12 +642,19 @@ void main() {
     expect(opened.last, ('v1', cid));
     // 旧行为（只把首页切到视频 tab）不再发生。
     expect(homeShellTabNotifier.value, tabBefore);
-    // 活动条前置已是视频封面缩略槽（68×40，占位图标兜底），不再是裸 20px 图标。
+    // 活动条前置已是视频封面缩略槽（占位图标兜底），不再是裸 20px 图标；且槽是
+    // **竖版 40×56**，与同列表的书/游戏同槽——刮削回来的 2:3 海报塞进旧的 68×40
+    // 横槽会被 PortraitCoverImage 判为不合槽，缩成模糊垫底里的一小条。
     expect(
       find.byWidgetPredicate(
-        (Widget w) => w is SizedBox && w.width == 68 && w.height == 40,
-      ),
+          (Widget w) => w is SizedBox && w.width == 40 && w.height == 56),
       findsWidgets,
+    );
+    expect(
+      find.byWidgetPredicate(
+          (Widget w) => w is SizedBox && w.width == 68 && w.height == 40),
+      findsNothing,
+      reason: '视频活动条不得回退横版槽（竖版海报会被缩成模糊垫底里的一小条）',
     );
     expect(tester.takeException(), isNull);
   });

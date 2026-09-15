@@ -56,6 +56,20 @@ extension _ReaderCaret on _ReaderFushiPageState {
   Set<ModifierKey> _activeModifiers() => activeModifierKeys();
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    // BUG-2508（对齐视频页 BUG-880）：Shift 按下瞬间在最后指针位置直接查词，根治
+    // 「光标停在词上不动、按 Shift 却不出词」——两条悬停腿都只在指针移动时派发。
+    // 不消费按键：Shift 组合快捷键等行为不变。平台门（只在宿主腿平台）与光标模式门
+    // （Shift+方向是键盘扩选，不能被查词抹掉）都在 [_triggerShiftLookupAtLastPointer]
+    // 里，这里只认「是 Shift 的按下沿」。macOS 上 WKWebView 持有 first responder 时
+    // Flutter 收不到 flagsChanged，下一次鼠标事件由嵌入层同步修饰键、合成同款
+    // KeyDownEvent 送到这里，仍能触发。文本框聚焦时放行
+    // （focusedEditableText != null）：在弹窗搜索框里打大写字母按的 Shift 不是查词。
+    if (event is KeyDownEvent &&
+        (event.logicalKey == LogicalKeyboardKey.shiftLeft ||
+            event.logicalKey == LogicalKeyboardKey.shiftRight) &&
+        focusedEditableText() == null) {
+      _triggerShiftLookupAtLastPointer();
+    }
     // The popup header toolbar (sibling of the popup content). Down returns to
     // the content caret; B/Escape dismiss the popup (ascend out of it). Left/
     // Right/Enter fall through to the framework so the buttons traverse and
@@ -682,8 +696,10 @@ extension _ReaderCaret on _ReaderFushiPageState {
         }
         return KeyEventResult.handled;
       case ShortcutAction.readerToggleFurigana:
-        // Mirror the double-tap furigana toggle so a gamepad (R3) can show/hide
-        // furigana without a pointer double-tap the WebView can't synthesise.
+        // 振假名 toggle 态的整页揭示 / 收回（CSS `body.show-all-rt`）：键盘 / 手柄
+        // (R3) 没有「点一个揭示一个」的指针，这颗键一次揭示全页；dimmed 态同一颗键
+        // 是「临时恢复全亮」（opacity 拉回 1）；off / hidden 态没有对应 CSS，按下是
+        // no-op。
         _controller?.evaluateJavascript(
           source: "document.body.classList.toggle('show-all-rt');",
         );

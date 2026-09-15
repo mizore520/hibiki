@@ -6,13 +6,13 @@ import 'package:archive/archive_io.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:fushi_core/fushi_core.dart';
-import 'package:fushi/src/epub/epub_book.dart';
-import 'package:fushi/src/epub/epub_parser.dart';
-import 'package:fushi/src/epub/book_title_conflict.dart';
+import 'package:fushi_engine/epub/epub_book.dart';
+import 'package:fushi_engine/epub/epub_parser.dart';
+import 'package:fushi_engine/epub/book_title_conflict.dart';
 import 'package:fushi/src/media/discovery/import/discovery_archive_extractor.dart';
-import 'package:fushi/src/media/manga/manga_importer.dart';
-import 'package:fushi/src/media/manga/manga_storage.dart';
-import 'package:fushi/src/media/manga/mokuro_payload.dart';
+import 'package:fushi_engine/media/manga/manga_importer.dart';
+import 'package:fushi_engine/media/manga/manga_storage.dart';
+import 'package:fushi_engine/media/manga/mokuro_payload.dart';
 
 const int _maximumArchiveExpandedBytes = 2 * 1024 * 1024 * 1024;
 const int _maximumMokuroBytes = 64 * 1024 * 1024;
@@ -769,6 +769,9 @@ abstract final class MangaArchiveImporter {
     } on ArgumentError {
       // Keep the literal name; invalid percent escapes may still be valid ZIP
       // entry characters and can be matched byte-for-byte.
+    } on FormatException {
+      // Same, for escapes that are syntactically valid but decode to invalid
+      // UTF-8 (`%FF`): ArgumentError does not cover those.
     }
     return normalized;
   }
@@ -860,6 +863,8 @@ abstract final class MangaArchiveImporter {
           } on ArgumentError {
             // Keep the original href; the missing-resource error below is more
             // useful than an invalid percent-escape error.
+          } on FormatException {
+            // Same, for `%FF`-style escapes (valid syntax, invalid UTF-8).
           }
         }
         if (bytes == null) {

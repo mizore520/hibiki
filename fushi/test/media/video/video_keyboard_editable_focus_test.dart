@@ -336,7 +336,7 @@ void main() {
       );
     });
 
-    test('kVideoPressEdgeOnlyActions 的成员就是这 5 个（直测，不经 resolver）', () {
+    test('kVideoPressEdgeOnlyActions 的成员就是这 6 个（直测，不经 resolver）', () {
       // 只经 resolver 间接覆盖时，「集合里少一个动作」会退化成「那个动作的重复沿
       // 照常连发」——而连发本身是别的动作的正确行为，间接用例分不出来。
       expect(
@@ -347,10 +347,12 @@ void main() {
           ShortcutAction.videoToggleSubtitleHide,
           ShortcutAction.videoEnterCaret,
           ShortcutAction.popupMineEntry,
+          // BUG-2462：F11 视频全屏只认按下沿（app 根那条路本就如此）。
+          ShortcutAction.globalToggleFullscreen,
         },
         reason:
-            '按一下翻一次的动作（模糊 / 遮蔽循环 / 隐藏 / 进选词光标 / 制卡）'
-            '——长按不该连发查词、更不该连发制卡',
+            '按一下翻一次的动作（模糊 / 遮蔽循环 / 隐藏 / 进选词光标 / 制卡 / F11 全屏）'
+            '——长按不该连发查词、更不该连发制卡、也不该来回翻全屏',
       );
       // 连续型动作绝不能混进来：混进去 = 长按方向键不能连续快进 / 长按不能持续调音量。
       for (final ShortcutAction continuous in <ShortcutAction>[

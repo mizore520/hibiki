@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fushi/src/media/manga/manga_ocr_provider.dart';
 import 'package:fushi/src/media/manga/manga_ocr_settings_section.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_cover_cache.dart';
 import 'package:fushi/src/media/manga/online/mokuro_moe_client.dart';
 import 'package:fushi/src/settings/settings_context.dart';
 import 'package:fushi/src/settings/settings_destination.dart';
@@ -27,9 +28,8 @@ SettingsSection buildMangaOcrSection() {
         icon: Icons.document_scanner_outlined,
         child: _buildMangaOcrDestination,
       ),
-      // 「点一下没识别的对话框就地开跑」。默认开——这条路径存在的全部意义就是
-      // 让用户不必先去点识别模式；关掉即回到旧行为（空白点只回收焦点），给不
-      // 希望被动触发联网/耗电的人留后路。
+      // 点击未识别气泡即可按当前偏好启动整页 OCR；关闭后保留作者原来的
+      // 空白点击行为（只回收焦点）。
       SettingsSwitchItem(
         id: 'manga.tap_to_ocr',
         title: t.manga_tap_to_ocr,
@@ -79,6 +79,25 @@ SettingsSection buildMangaCatalogSection() {
             settingsContext.appModel.mangaOnlineCatalogBaseUrl,
         onChanged: (SettingsContext settingsContext, String value) =>
             settingsContext.appModel.setMangaOnlineCatalogBaseUrl(value.trim()),
+      ),
+      // 在线源封面磁盘缓存的保留天数（BUG-2450 用户诉求「缓存失效时间拉长」）。
+      // 生效点是 MihonCoverCache.maxAge：过期条目下次读取时删掉重取。
+      SettingsSliderItem(
+        id: 'manga.cover_cache_max_age',
+        title: t.manga_cover_cache_max_age,
+        subtitle: t.manga_cover_cache_max_age_subtitle,
+        icon: Icons.image_outlined,
+        min: kMangaCoverCacheMinDays.toDouble(),
+        max: kMangaCoverCacheMaxDays.toDouble(),
+        divisions: (kMangaCoverCacheMaxDays - kMangaCoverCacheMinDays) ~/ 30,
+        step: 30,
+        titleReadout: true,
+        commitOnRelease: true,
+        label: (double v) => t.stat_format_days(n: v.round()),
+        value: (SettingsContext c) =>
+            c.appModel.mangaCoverCacheMaxAgeDays.toDouble(),
+        onChanged: (SettingsContext c, double value) =>
+            c.appModel.setMangaCoverCacheMaxAgeDays(value.round()),
       ),
     ],
   );

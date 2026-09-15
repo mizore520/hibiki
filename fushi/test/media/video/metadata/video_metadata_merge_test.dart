@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fushi/src/media/video/metadata/video_metadata_merge.dart';
-import 'package:fushi/src/media/video/metadata/video_metadata_models.dart';
+import 'package:fushi_engine/media/video/metadata/video_metadata_languages.dart';
+import 'package:fushi_engine/media/video/metadata/video_metadata_merge.dart';
+import 'package:fushi_engine/media/video/metadata/video_metadata_models.dart';
 
 void main() {
   test('TMDB supplement cannot replace the AniDB media kind', () {
@@ -66,28 +67,137 @@ void main() {
     expect(merged.seasons, hasLength(1));
   });
 
-  test('TMDB 图片先按评分票数排序且语言只作同分兜底', () {
+  test('海报按资料语言优先，高分外语海报压不住本语言海报', () {
+    // 用户报告的原始路径：资料语言 ja，TMDB 回来一张 8 分中文海报和一张低分
+    // 日文海报——评分先于语言时中文永远赢，「资料语言」对海报形同虚设。
+    const List<VideoMetadataImage> covers = <VideoMetadataImage>[
+      VideoMetadataImage(
+        kind: VideoMetadataImageKind.cover,
+        url: 'high-zh',
+        provider: VideoMetadataProviderKind.tmdb,
+        language: 'zh',
+        voteAverage: 8,
+        voteCount: 100,
+      ),
+      VideoMetadataImage(
+        kind: VideoMetadataImageKind.cover,
+        url: 'low-ja',
+        provider: VideoMetadataProviderKind.tmdb,
+        language: 'ja',
+        voteAverage: 5,
+        voteCount: 3,
+      ),
+      VideoMetadataImage(
+        kind: VideoMetadataImageKind.cover,
+        url: 'mid-neutral',
+        provider: VideoMetadataProviderKind.tmdb,
+        voteAverage: 6,
+        voteCount: 10,
+      ),
+    ];
+    expect(
+      selectVideoMetadataImages(
+        primary: covers,
+        languageOrder: const VideoMetadataLanguages('ja').imageLanguages,
+      ).single.url,
+      'low-ja',
+    );
+    // 同一批候选换成中文用户，选出来的就是中文那张：语言序真的在起作用，
+    // 不是恰好 ja 那张排前面。
+    expect(
+      selectVideoMetadataImages(
+        primary: covers,
+        languageOrder: const VideoMetadataLanguages('zh-CN').imageLanguages,
+      ).single.url,
+      'high-zh',
+    );
+    // 本语言没有海报时回落 en → 无语言纯图，而不是随便拿一张外语的。
+    expect(
+      selectVideoMetadataImages(
+        primary: covers,
+        languageOrder: const VideoMetadataLanguages('de-DE').imageLanguages,
+      ).single.url,
+      'mid-neutral',
+    );
+  });
+
+  test('同一语言内海报仍按评分票数排序', () {
     final List<VideoMetadataImage> selected = selectVideoMetadataImages(
       primary: const <VideoMetadataImage>[
         VideoMetadataImage(
           kind: VideoMetadataImageKind.cover,
-          url: 'low-zh',
+          url: 'low-ja',
           provider: VideoMetadataProviderKind.tmdb,
-          language: 'zh',
+          language: 'ja',
           voteAverage: 5,
           voteCount: 100,
         ),
         VideoMetadataImage(
           kind: VideoMetadataImageKind.cover,
-          url: 'high-neutral',
+          url: 'high-ja',
+          provider: VideoMetadataProviderKind.tmdb,
+          language: 'ja',
+          voteAverage: 9,
+          voteCount: 10,
+        ),
+      ],
+      languageOrder: const VideoMetadataLanguages('ja').imageLanguages,
+    );
+    expect(selected.single.url, 'high-ja');
+  });
+
+  test('分集剧照是画面不是文字：0 票的 en 剧照压不住高分无标签剧照', () {
+    // TMDB 给剧照打的语言标签不代表上面印了字；按语言优先会选错。
+    final List<VideoMetadataImage> selected = selectVideoMetadataImages(
+      primary: const <VideoMetadataImage>[
+        VideoMetadataImage(
+          kind: VideoMetadataImageKind.thumb,
+          url: 'still-en-zero-votes',
+          provider: VideoMetadataProviderKind.tmdb,
+          language: 'en',
+          seasonNumber: 1,
+          episodeNumber: 1,
+          voteAverage: 0,
+          voteCount: 0,
+        ),
+        VideoMetadataImage(
+          kind: VideoMetadataImageKind.thumb,
+          url: 'still-untagged-high',
+          provider: VideoMetadataProviderKind.tmdb,
+          seasonNumber: 1,
+          episodeNumber: 1,
+          voteAverage: 8.5,
+          voteCount: 40,
+        ),
+      ],
+      languageOrder: const VideoMetadataLanguages('ja').imageLanguages,
+    );
+    expect(selected.single.url, 'still-untagged-high');
+  });
+
+  test('背景图是画面不是文字：评分优先，语言只作同分兜底（与修复前一致）', () {
+    final List<VideoMetadataImage> selected = selectVideoMetadataImages(
+      primary: const <VideoMetadataImage>[
+        VideoMetadataImage(
+          kind: VideoMetadataImageKind.backdrop,
+          url: 'low-ja-backdrop',
+          provider: VideoMetadataProviderKind.tmdb,
+          language: 'ja',
+          voteAverage: 5,
+          voteCount: 100,
+        ),
+        VideoMetadataImage(
+          kind: VideoMetadataImageKind.backdrop,
+          url: 'high-neutral-backdrop',
           provider: VideoMetadataProviderKind.tmdb,
           voteAverage: 9,
           voteCount: 10,
         ),
       ],
+      languageOrder: const VideoMetadataLanguages('ja').imageLanguages,
+      maxBackdrops: 1,
     );
-
-    expect(selected.single.url, 'high-neutral');
+    expect(selected.single.url, 'high-neutral-backdrop');
   });
 
   test('续季单主源先重映射到本地季号再与 TMDB 全剧骨架合并', () {
@@ -516,7 +626,93 @@ void main() {
 
       expect(merged.plot, '中文简介');
       expect(merged.tagline, '中文标语');
-      expect(merged.title, 'MAL title', reason: '只覆盖简介/标语，标题仍先到者');
+    });
+
+    test('标题语言感知：zh-CN 首选下 MAL 日文原文标题被 TMDB 中文译名替换，原文与别名不丢', () {
+      // 「刮削同语言」：同一趟刮到的简介、海报已是中文，标题不能还留日文。
+      final VideoMetadataWork merged = supplementVideoMetadata(
+        mal(plot: 'English synopsis'),
+        tmdb(plot: '中文简介'),
+        preferredLanguage: 'zh-CN',
+      );
+
+      expect(merged.title, 'TMDB title');
+      expect(merged.originalTitle, '日本語原題', reason: '主源自带原名优先保留');
+      expect(merged.aliases, contains('MAL title'),
+          reason: '被换下来的主源标题进别名池，exact gate 匹配面不缩');
+      expect(merged.aliases, isNot(contains('TMDB title')));
+      expect(merged.provider, VideoMetadataProviderKind.mal,
+          reason: '只换标题文字，主源身份不变');
+    });
+
+    test('标题语言感知：ja / en 首选下 MAL 给的就是本语言标题，不被 TMDB 替换', () {
+      for (final String preferred in <String>['ja', 'ja-JP', 'en-US']) {
+        final VideoMetadataWork merged = supplementVideoMetadata(
+          mal(),
+          tmdb(),
+          preferredLanguage: preferred,
+        );
+        expect(merged.title, 'MAL title', reason: 'preferredLanguage=$preferred');
+      }
+    });
+
+    test('标题语言感知：无首选语言（旧调用方）标题仍先到者独占', () {
+      expect(supplementVideoMetadataWithTmdb(mal(), tmdb()).title, 'MAL title');
+    });
+
+    test('标题语言感知：主源标题语言不明（AniDB）时不动，不能把「不明」当「非首选」', () {
+      final VideoMetadataWork anidb = VideoMetadataWork(
+        provider: VideoMetadataProviderKind.anidb,
+        kind: VideoMetadataMediaKind.tv,
+        title: '紫罗兰永恒花园',
+        ids: const <VideoMetadataId>[VideoMetadataId(type: 'anidb', value: '9')],
+      );
+      final VideoMetadataWork merged = supplementVideoMetadata(
+        anidb,
+        tmdb(),
+        preferredLanguage: 'zh-CN',
+      );
+      expect(merged.title, '紫罗兰永恒花园');
+    });
+
+    test('标题语言感知：分集名跟作品名同一条规则换译名，缺译名的分集保留原文', () {
+      VideoMetadataWork withEpisodes(
+        VideoMetadataProviderKind provider,
+        Map<int, String> titles,
+      ) =>
+          VideoMetadataWork(
+            provider: provider,
+            kind: VideoMetadataMediaKind.tv,
+            title: provider.name,
+            ids: <VideoMetadataId>[
+              VideoMetadataId(type: provider.name, value: '1')
+            ],
+            seasons: <VideoMetadataSeason>[
+              VideoMetadataSeason(
+                seasonNumber: 1,
+                title: 'S1',
+                episodes: <VideoMetadataEpisode>[
+                  for (final MapEntry<int, String> entry in titles.entries)
+                    VideoMetadataEpisode(
+                      seasonNumber: 1,
+                      episodeNumber: entry.key,
+                      title: entry.value,
+                    ),
+                ],
+              ),
+            ],
+          );
+      final VideoMetadataWork merged = supplementVideoMetadata(
+        withEpisodes(
+            VideoMetadataProviderKind.mal, <int, String>{1: '第一話', 2: '第二話'}),
+        withEpisodes(
+            VideoMetadataProviderKind.tmdb, <int, String>{1: '第一集', 2: '  '}),
+        preferredLanguage: 'zh-CN',
+      );
+      final List<VideoMetadataEpisode> episodes =
+          merged.seasons.single.episodes;
+      expect(episodes.first.title, '第一集');
+      expect(episodes.last.title, '第二話', reason: '补充源分集名空白 → 保留主源');
     });
 
     test('plot 语言感知：supplement 首选但为空时回落 primary', () {

@@ -712,6 +712,17 @@ void main() {
           'placeholder using surfaceContainerHighest); episode cover art / '
           'media-shelf content, not ordinary page chrome — same reviewed '
           'exception class as series_shelf_card mosaic covers.',
+      // 更新中心（#1427）每条新集消息带一张该集截图缩略图（Image.file + ClipRRect
+      // 圆角，无图时退作品封面/纯文字）。列表行外壳本身走 FushiListItem，文件里
+      // 唯一的裸 BorderRadius 就是这张缩略图的圆角——截图/封面美术，非普通页面
+      // chrome，同 media_collection_detail_page 每集封面缩略图豁免类。
+      'lib/src/pages/implementations/updates_center_page.dart':
+          'Updates center rows carry a per-episode screenshot thumbnail '
+          '(Image.file + ClipRRect radius, falling back to the work cover); '
+          'the row shell itself is a shared FushiListItem, so the only bare '
+          'radius is the thumbnail corner — screenshot / cover art, not '
+          'ordinary page chrome, same reviewed exception class as '
+          'media_collection_detail_page per-episode covers.',
       // galgame 游戏库页把每个游戏渲染成封面卡片（有 coverPath 用 Image.file，
       // 否则 surfaceContainerHighest letterbox + 手柄图标占位），点击卡片启动游戏
       // 进入制卡。卡片外框 Card + 无封面占位面色 surfaceContainerHighest 是游戏
@@ -733,35 +744,6 @@ void main() {
           'Remote book download control density is reader-shelf content.',
       'lib/src/pages/implementations/reader_history/dialogs.part.dart':
           'Reader-shelf dialog/segment typography is content chrome.',
-      // 漫画 OCR 数据模型：fontSize 是 mokuro/manga.json 的块级字段（气泡文字
-      // 的检测字号，随数据往返/估算），不是 Flutter 页面排版——纯数据层文件，
-      // 无任何 UI 代码，同「内容而非 chrome」豁免类。
-      'lib/src/media/manga/mokuro_payload.dart':
-          'MokuroBlock.fontSize is a mokuro/manga.json data field (detected '
-          'bubble text size, serialized round-trip), not page typography — '
-          'pure data-model file with no UI code.',
-      'lib/src/ocr/manga_ocr_folder_job.dart':
-          'Estimates the MokuroBlock.fontSize data field (sqrt(area/chars)) '
-          'for OCR-produced manga.json blocks; pure data layer, no UI '
-          'code.',
-      // BUG-1414：PR#692 的框选回写曾是 manga.json 的**第四个生产者**，与上面三条
-      // 豁免的是同一个数据字段——`MokuroBlock(fontSize: …)` 落盘成 `font_size`，
-      // 由 manga_overlay_html.dart:46 折算成 WebView 覆盖层的 CSS `cqi` 命中框字号，
-      // 从不进任何 Flutter `TextStyle`。判据本身表达不了这个区分：那串禁用子串
-      // 与 `TextStyle(...)` 里的同名实参逐字符同形，要分辨只能知道外层构造器
-      // 是谁，也就是把这个子串扫描器换成 Dart 语法分析——那是它有意不做的事。
-      // 所以走守卫自己在失败信息里写明的机制（reviewed allowlist reason），
-      // 并由下面「框选区域重识别层保持纯数据层」把「无 UI 代码」这句话钉成可证伪
-      // 的断言，防止这条豁免退化成整文件免检。「框选识别」改成「重新识别框选
-      // 区域」后，写侧 manga_json_writeback.dart 不再自己构造块（块由引擎链产出），
-      // 携带这个数据字段穿过平移 / 区域替换的是 manga_region_ocr.dart。
-      'lib/src/media/manga/ocr/manga_region_ocr.dart':
-          'Carries the MokuroBlock.fontSize data field through offsetting '
-          're-recognized region blocks back to page pixels and replacing '
-          'the region in a page (copy of an existing field, no estimate); '
-          'pure data layer with no Flutter import, same reviewed '
-          'exception class as mokuro_payload / manga_ocr_folder_job / '
-          'google_lens_ocr_service.',
       'lib/src/pages/implementations/reader_fushi_page.dart':
           'Hoshi reader content and reader chrome have separate migration rules.',
       // TODO-589 batch1: reader_fushi_page.dart 拆成主壳 + reader_fushi/*.part.dart；
@@ -1134,22 +1116,16 @@ void main() {
           'Status strip font size is kReaderStatusFooterFontSize == '
           'kTopProgressFontSize: the footer must match the top progress '
           'pill exactly — same reviewed exception class as '
-          'reader_fushi/chrome.part.dart.',
-      'lib/src/reader/reader_gallery_page.dart':
-          'Thumbnail grid is image content: the placeholder surface and the '
-          'thumbnail corner radii size to the image cells, not to page '
-          'chrome — same reviewed exception class as '
-          'reader_fushi/chrome.part.dart.',
+          'reader_fushi/chrome.part.dart. The 3px progress track / 2px edge '
+          'line round their own height (chart content, not page chrome).',
       'lib/src/reader/reader_audiobook_panel.dart':
           'Audiobook cue list is dense reader content (tonal cue track + cue '
           'row corners) — same reviewed exception class as '
           'reader_fushi/chrome.part.dart.',
-      'lib/src/reader/reader_statistics_dialog.dart':
-          'Reading-session metric bars are chart content (progress-track '
-          'surface) — same reviewed exception class as '
-          'reading_statistics_page / video_statistics_page. The compact '
-          'chart controls are gone: the dialog now uses full-width shared '
-          'components, so VisualDensity.compact is no longer exempted.',
+      'lib/src/reader/reader_statistics_sheet.dart':
+          'Reading-position progress bars are chart content (progress-track '
+          'surface + clipped track corners) — same reviewed exception class '
+          'as reading_statistics_page / video_statistics_page.',
       'lib/src/media/audiobook/reader_quick_settings_sheet.dart':
           'In-book quick settings sheet packs reader controls at reader '
           'density — same reviewed exception class as '
@@ -1193,11 +1169,9 @@ void main() {
         'BorderRadius.circular(',
         'surfaceContainerHighest',
       },
-      'lib/src/media/manga/ocr/manga_region_ocr.dart': <String>{'fontSize:'},
       'lib/src/media/video/video_clip_subtitle_image.dart': <String>{
         'fontSize:',
       },
-      'lib/src/media/manga/mokuro_payload.dart': <String>{'fontSize:'},
       'lib/src/media/manga/ocr/google_lens_ocr_service.dart': <String>{
         'fontSize:',
       },
@@ -1264,7 +1238,6 @@ void main() {
         'surfaceContainerHigh',
         'surfaceContainerHighest',
       },
-      'lib/src/ocr/manga_ocr_folder_job.dart': <String>{'fontSize:'},
       'lib/src/pages/implementations/anime_download_dialog.dart': <String>{
         'BorderRadius.circular(',
         'VisualDensity.compact',
@@ -1314,6 +1287,11 @@ void main() {
             'surfaceContainerHighest',
             'fontSize:',
           },
+      // 更新中心（#1427）：行骨架走 FushiListItem，唯一命中的是新集截图缩略图的
+      // ClipRRect 圆角。范围就写这一个 token——多写一个就是预留通行证。
+      'lib/src/pages/implementations/updates_center_page.dart': <String>{
+        'BorderRadius.circular(',
+      },
       'lib/src/pages/implementations/dictionary_popup_theme.dart': <String>{
         'surfaceContainerHigh',
         'surfaceContainerHighest',
@@ -1326,7 +1304,7 @@ void main() {
       'lib/src/pages/implementations/reader_fushi/chrome.part.dart': <String>{
         'BorderRadius.circular(',
         // VisualDensity.compact 已随 BUG-2166 批的 chrome 拆分搬到
-        // lib/src/reader/reader_statistics_dialog.dart，本文件已无此 token，
+        // lib/src/reader/reader_statistics_sheet.dart，本文件已无此 token，
         // 留着就是死豁免（会给它无声开着回来的门）。
         'surfaceContainerHigh',
         // BUG-2434：查词弹窗覆盖主题的中性梯度（surfaceContainerHighest /
@@ -1335,17 +1313,17 @@ void main() {
         'fontSize:',
       },
       'lib/src/reader/reader_desktop_chrome.dart': <String>{'fontSize:'},
-      'lib/src/reader/reader_status_footer.dart': <String>{'fontSize:'},
-      'lib/src/reader/reader_gallery_page.dart': <String>{
+      'lib/src/reader/reader_status_footer.dart': <String>{
+        'fontSize:',
         'BorderRadius.circular(',
-        'surfaceContainerHighest',
       },
       'lib/src/reader/reader_audiobook_panel.dart': <String>{
         'BorderRadius.circular(',
         'surfaceContainerHighest',
       },
-      'lib/src/reader/reader_statistics_dialog.dart': <String>{
+      'lib/src/reader/reader_statistics_sheet.dart': <String>{
         'surfaceContainerHighest',
+        'BorderRadius.circular(',
       },
       'lib/src/media/audiobook/reader_quick_settings_sheet.dart': <String>{
         'VisualDensity.compact',
@@ -1767,54 +1745,6 @@ void main() {
     ], reason: 'the allowlisted hits must stay computed video-pixel sizes');
   });
 
-  test('manga region re-OCR layer stays a pure data layer', () {
-    // 与 manga_json_writeback / system_ocr_manga_service 同款纪律：豁免的是
-    // MokuroBlock.fontSize 这个数据字段，不是这份文件。
-    final String source = File(
-      'lib/src/media/manga/ocr/manga_region_ocr.dart',
-    ).readAsStringSync();
-    final String code = maskComments(source);
-
-    expect(
-      code,
-      isNot(contains('package:flutter/')),
-      reason:
-          'manga_region_ocr.dart is allowlisted as a pure data layer; '
-          'a Flutter import invalidates that reason',
-    );
-
-    // 两处命中都只是把既有块的字段原样搬到新块（平移 / 重编号），不估算、不排版。
-    final List<String> dataFieldLines = code
-        .split('\n')
-        .where((String line) => line.contains('fontSize:'))
-        .map((String line) => line.trim())
-        .toList(growable: false);
-    expect(
-      dataFieldLines,
-      <String>[
-        'fontSize: block.fontSize,',
-        'fontSize: merged[index].fontSize,',
-      ],
-      reason:
-          'the allowlisted hits must stay MokuroBlock data-field copies, '
-          'not page typography',
-    );
-
-    for (final String chrome in const <String>[
-      'TextStyle(',
-      'Card(',
-      'ListTile(',
-      'BorderRadius.circular(',
-      'Widget build(',
-    ]) {
-      expect(
-        code,
-        isNot(contains(chrome)),
-        reason: 'the reviewed exemption must not start covering page chrome',
-      );
-    }
-  });
-
   test('manga.json writeback stays a pure data layer', () {
     final String source = File(
       'lib/src/media/manga/manga_json_writeback.dart',
@@ -1830,8 +1760,8 @@ void main() {
           'layer; a Flutter import invalidates that reason',
     );
 
-    // 写侧不再自己构造块（块由引擎链产出、经 manga_region_ocr.dart 平移/替换），
-    // 这里一个 fontSize: 都不该再有；有了就是有人把排版或块构造塞回了写侧。
+    // 写侧不自己构造块（块由引擎链产出），这里一个 fontSize: 都不该有；有了就是
+    // 有人把排版或块构造塞回了写侧。
     final List<String> dataFieldLines = code
         .split('\n')
         .where((String line) => line.contains('fontSize:'))
@@ -2097,10 +2027,7 @@ void main() {
     expect(sharedBar, isNot(contains('const SizedBox(width: 12)')));
     expect(sharedBar, isNot(contains('const SizedBox(width: 8)')));
 
-    for (final String section in <String>[
-      placeholder,
-      batchTagIntentRow,
-    ]) {
+    for (final String section in <String>[placeholder, batchTagIntentRow]) {
       expect(section, contains('FushiDesignTokens'));
       expect(section, contains('tokens.spacing'));
       expect(section, isNot(contains('const SizedBox(height: 12)')));
@@ -2512,16 +2439,16 @@ void main() {
     ).readAsStringSync();
     final String updateFlow = _functionSource(
       releaseSource,
-      'static void _showUpdateDialog(',
+      'static Future<void> _showUpdateDialog(',
       // 终止锚点用**方法签名**而不是下一个方法的文档注释首行：注释是会被重写的
       // （iOS 更新落地入口分流那次就把这行英文注释换成了中文），锚点跟着失效，
       // 守卫拿 -1 当窗口末尾直接红，而被守的 chrome 其实一点没变。签名不会因为
       // 改注释而漂。
-      '  static void _showFallbackDialog(',
+      '  static Future<void> _showFallbackDialog(',
     );
     final String fallbackFlow = _functionSource(
       releaseSource,
-      'static void _showFallbackDialog(',
+      'static Future<void> _showFallbackDialog(',
       '  static Future<void> _downloadAndInstall(',
     );
     final String dialogSource = _sectionSource(
@@ -2728,27 +2655,29 @@ void main() {
     }
   });
 
-  test('selected list items use primary foreground without stacking an outline',
-      () {
-    final String components = File(
-      'lib/src/utils/components/fushi_material_components.dart',
-    ).readAsStringSync();
-    final String listItem = _sectionSource(
-      components,
-      'class FushiListItem',
-      'class FushiSearchField',
-    );
+  test(
+    'selected list items use primary foreground without stacking an outline',
+    () {
+      final String components = File(
+        'lib/src/utils/components/fushi_material_components.dart',
+      ).readAsStringSync();
+      final String listItem = _sectionSource(
+        components,
+        'class FushiListItem',
+        'class FushiSearchField',
+      );
 
-    expect(listItem, contains('selectedForeground'));
-    expect(listItem, contains('tokens.surfaces.primary'));
-    expect(listItem, contains('FontWeight.w700'));
-    // pill 的边框两态都画、非 eink 下两态都透明：几何恒定（1px 占位）以免选中后
-    // 行高跳变，而填充已经是选中信号，再叠一圈 primary 细边就是填充之上的第二
-    // 条线。eink 下填充塌缩，那里才换成实描边色。
-    expect(listItem, contains('Border.all('));
-    expect(listItem, contains('Colors.transparent'));
-    expect(listItem, isNot(contains('withValues(alpha: 0.20)')));
-  });
+      expect(listItem, contains('selectedForeground'));
+      expect(listItem, contains('tokens.surfaces.primary'));
+      expect(listItem, contains('FontWeight.w700'));
+      // pill 的边框两态都画、非 eink 下两态都透明：几何恒定（1px 占位）以免选中后
+      // 行高跳变，而填充已经是选中信号，再叠一圈 primary 细边就是填充之上的第二
+      // 条线。eink 下填充塌缩，那里才换成实描边色。
+      expect(listItem, contains('Border.all('));
+      expect(listItem, contains('Colors.transparent'));
+      expect(listItem, isNot(contains('withValues(alpha: 0.20)')));
+    },
+  );
 
   test('dictionary and popup surfaces use shared MD3 primitives', () {
     final String dictionaryManager = File(

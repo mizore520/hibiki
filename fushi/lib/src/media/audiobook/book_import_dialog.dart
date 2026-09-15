@@ -16,9 +16,9 @@ import 'package:fushi/src/media/drag_drop/import_dialog_drop.dart';
 import 'package:fushi_asr_core/asr_core.dart';
 import 'package:fushi/src/asr_host/asr_host.dart';
 import 'package:fushi/src/media/audiobook/asr_transcribe_sheet.dart';
-import 'package:fushi/src/media/audiobook/audiobook_alignment_service.dart';
+import 'package:fushi_engine/media/audiobook/audiobook_alignment_service.dart';
 import 'package:fushi/src/media/audiobook/subtitle_rematch.dart';
-import 'package:fushi/src/media/audiobook/text_to_epub.dart';
+import 'package:fushi_engine/media/audiobook/text_to_epub.dart';
 import 'package:fushi/src/media/import/audiobook_health_summary.dart';
 import 'package:fushi/src/media/import/import_carrier.dart';
 import 'package:fushi/src/media/import/import_dialog_frame.dart';
@@ -26,11 +26,13 @@ import 'package:fushi/src/media/import/import_flow_mixin.dart';
 import 'package:fushi/src/media/import/real_path_directory_picker.dart';
 import 'package:fushi/src/media/import/sidecar_finder.dart';
 import 'package:fushi/src/media/media_cover_service.dart';
+import 'package:fushi_engine/media/cover_file_writer.dart'
+    show CoverImageInvalidException;
 import 'package:fushi/src/models/app_model.dart';
 import 'package:fushi_core/fushi_core.dart';
-import 'package:fushi/src/epub/book_title_conflict.dart';
-import 'package:fushi/src/epub/epub_importer.dart';
-import 'package:fushi/src/epub/epub_parser.dart';
+import 'package:fushi_engine/epub/book_title_conflict.dart';
+import 'package:fushi_engine/epub/epub_importer.dart';
+import 'package:fushi_engine/epub/epub_parser.dart';
 import 'package:fushi/src/media/manga/manga_import_dialog.dart';
 import 'package:fushi/src/media/manga/manga_module.dart';
 import 'package:fushi/src/pdf/pdf_importer.dart';
@@ -847,13 +849,31 @@ class _BookImportDialogState extends State<BookImportDialog>
     final String extractDir = row.extractDir;
     final String ext = p.extension(source);
     final String dest = p.join(extractDir, 'cover$ext');
-    await MediaCoverService.applyCoverFile(
-      source: File(source),
-      destPath: dest,
-    );
+    if (!await _writeCoverOrSkip(source: source, destPath: dest)) return;
     await (widget.db.update(widget.db.epubBooks)
           ..where((tbl) => tbl.bookKey.equals(bookKey)))
         .write(EpubBooksCompanion(coverPath: Value('cover$ext')));
+  }
+
+  /// 封面落盘的唯一出口（EPUB 包内 `cover.*` 与字幕书 `persistDir/cover.*` 共用）。
+  ///
+  /// BUG-2496：收口会拒收非图片 / 截断图片（改过扩展名的 HTML、ffmpeg 抽到一半的
+  /// 内嵌封面）。封面坏了不能让整本书导入失败——记诊断、返回 false，调用方不写
+  /// `coverPath`，书照常入库、书架回落占位图。其它 IO 异常照旧向上抛。
+  Future<bool> _writeCoverOrSkip({
+    required String source,
+    required String destPath,
+  }) async {
+    try {
+      await MediaCoverService.applyCoverFile(
+        source: File(source),
+        destPath: destPath,
+      );
+      return true;
+    } on CoverImageInvalidException catch (e) {
+      ErrorLogService.instance.logDiagnostic('BookImportDialog.cover', e);
+      return false;
+    }
   }
 
   Future<bool> _epubHasCover(String bookKey) async {
@@ -1070,8 +1090,9 @@ class _BookImportDialogState extends State<BookImportDialog>
     if (coverSource != null) {
       final String ext = p.extension(coverSource);
       final String dest = p.join(persistDir.path, 'cover$ext');
-      await File(coverSource).copy(dest);
-      book.coverPath = dest;
+      if (await _writeCoverOrSkip(source: coverSource, destPath: dest)) {
+        book.coverPath = dest;
+      }
     }
 
     debugPrint('[fushi-import] SrtBook save: uid=$uid title="$title" '
@@ -1194,8 +1215,6 @@ class _BookImportDialogState extends State<BookImportDialog>
       autoWindow: _autoWindow,
       searchWindow: _searchWindow,
       similarityThreshold: _similarityThreshold,
-      replaceCueTextWithBookText:
-          AsrTranscriptionService.isAsrGeneratedSubtitlePath(_subtitlePath!),
       onProgress: reportProgress,
       messages: AudiobookAlignmentMessages(
         readingIdb: t.import_step_reading_idb,

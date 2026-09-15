@@ -11,11 +11,9 @@ import 'package:fushi/src/media/video/video_mpv_config.dart';
 import 'package:fushi/src/media/video/video_settings_actions.dart';
 import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
 import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
-import 'package:fushi/src/media/video/metadata/video_metadata_models.dart';
-import 'package:fushi/src/media/video/metadata/video_metadata_provider_label.dart';
-import 'package:fushi/src/media/video/metadata/video_source_scrape_config.dart';
+import 'package:fushi_engine/media/video/metadata/video_source_scrape_config.dart';
 import 'package:fushi/src/media/video/metadata/video_scrape_cleanup_action.dart';
-import 'package:fushi/src/media/video/scraper/scrape_identifier_words.dart';
+import 'package:fushi_engine/media/video/scraper/scrape_identifier_words.dart';
 import 'package:fushi/src/media/video/video_subtitle_style.dart';
 import 'package:fushi/src/models/module_registry.dart';
 import 'package:fushi/src/models/preferences_repository.dart';
@@ -24,6 +22,8 @@ import 'package:fushi/src/settings/settings_destination.dart';
 import 'package:fushi/src/settings/settings_schema_services.dart';
 import 'package:fushi/utils.dart';
 import 'package:fushi/src/media/import/real_path_directory_picker.dart';
+import 'package:fushi_engine/media/video/metadata/video_metadata_models.dart';
+import 'package:fushi/src/media/video/metadata/video_metadata_provider_label.dart';
 
 /// 视频设置唯一真相源（阶段 B）：每个条目声明一次，同时服务两个宿主——
 /// 全局设置页（本 destination 的 sections 直接渲染；无 host 时读写纯 pref、下次
@@ -826,18 +826,29 @@ SettingsDestination buildVideoDestination() {
               );
             },
           ),
+          // 资料语言默认**跟随界面语言**，不是写死的某一种语言（BUG-2454）。
+          //
+          // 这里曾经硬编码 'zh-CN'（默认值与 placeholder 各一份），于是每个德语、
+          // 韩语、阿拉伯语用户装上就默认拉中文简介和中文海报。app 出 17 种语言，
+          // 没有哪种配当隐含默认值。
+          //
+          // 输入框显示的是**存的值**：空 = 跟随界面语言，占位文案说明这一点。不把
+          // 界面语言的具体串预填进去——预填后用户在没动过的框上按回车就会把
+          // `en-US` 这种具体串写进偏好，「跟随」从此变成「钉死」，而界面上看不出
+          // 区别。resetValue 写空串 = 一键回到跟随。
           SettingsTextItem(
             id: 'video.library.metadata_locale',
             title: t.video_source_scrape_locale,
             subtitle: t.video_source_scrape_locale_hint,
             icon: Icons.language_outlined,
-            placeholder: 'zh-CN',
+            placeholder: t.video_source_scrape_locale_follow_ui,
             value: (SettingsContext settingsContext) =>
-                settingsContext.appModel.prefsRepo.getPref(
-                      kVideoMetadataLocalePref,
-                      defaultValue: 'zh-CN',
-                    )
-                    as String,
+                (settingsContext.appModel.prefsRepo.getPref(
+              kVideoMetadataLocalePref,
+              defaultValue: '',
+            ) as String)
+                    .trim(),
+            resetValue: (SettingsContext settingsContext) => '',
             onChanged: (SettingsContext settingsContext, String value) async {
               await commitVideoMetadataRuntimePreference(
                 settingsContext,

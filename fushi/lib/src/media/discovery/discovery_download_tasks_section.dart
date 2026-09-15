@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:fushi/src/media/discovery/discovery_download_queue.dart';
+import 'package:fushi_engine/media/discovery/discovery_download_queue.dart';
 import 'package:fushi/src/media/discovery/discovery_labels.dart';
-import 'package:fushi/src/media/discovery/discovery_models.dart';
+import 'package:fushi_engine/media/discovery/discovery_models.dart';
 import 'package:fushi/src/models/app_model.dart';
 import 'package:fushi/src/media/downloads/download_task_entry.dart';
 import 'package:fushi/src/media/downloads/download_task_card.dart';
@@ -11,6 +11,7 @@ import 'package:fushi/src/pages/implementations/video_download_jobs_panel.dart'
     show showDownloadTaskDeleteConfirm;
 import 'package:fushi/src/utils/misc/reveal_in_file_manager.dart';
 import 'package:fushi/utils.dart';
+import 'package:fushi/src/utils/misc/engine_listenable.dart';
 
 /// 「下载」页任务 tab 的发现页直链下载区：渲染 [DiscoveryDownloadQueue] 的任务
 /// 列表（游戏 / 小说 / 有声书等 HTTP 直链，与 torrent 任务、漫画目录队列并列，
@@ -22,7 +23,7 @@ import 'package:fushi/utils.dart';
 /// 生命周期常驻），这里直接监听它，不另存一份。
 ///
 /// 行内可取消排队/执行中的任务、重试失败/取消的任务；已结束任务经「清除已完成」
-/// 批量清掉。范式与 `MokuroMoeTasksSection` 相同。
+/// 批量清掉。范式与 `MangaDownloadTasksSection` 相同。
 class DiscoveryDownloadTasksSection extends ConsumerWidget {
   const DiscoveryDownloadTasksSection({
     super.key,
@@ -53,7 +54,7 @@ class DiscoveryDownloadTasksSection extends ConsumerWidget {
           const SizedBox.shrink();
     }
     return ListenableBuilder(
-      listenable: queue,
+      listenable: EngineListenable(queue),
       builder: (BuildContext context, Widget? _) {
         final List<DiscoveryDownloadTask> tasks = queue.tasks;
         if (tasksBuilder != null) {

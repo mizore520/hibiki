@@ -115,6 +115,19 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   'manga/Page turn animation': 'test/media/manga/manga_overlay_html_test.dart',
   'manga/Tap edges to turn pages':
       'test/media/manga/manga_overlay_html_test.dart',
+  // 顶栏悬浮/固定：写 prefsRepo（changed=true），生效点是阅读器打开书时读一次
+  // appModel.mangaChromeFloating 决定栏形态与正文让位——harness 里没有阅读器。
+  // 由 manga_reader_chrome_test 咬住让位/绘制两条纯函数，manga_fushi_page_test
+  // 「悬浮顶栏」用例咬住偏好 → 页面形态的接线。
+  'manga/Floating toolbar':
+      'test/media/manga/manga_reader_chrome_test.dart + '
+          'test/pages/manga_fushi_page_test.dart（悬浮顶栏）',
+  // BUG-2450：在线源封面磁盘缓存保留天数。写 prefsRepo（changed=true），生效点是
+  // MihonCoverCache.maxAge（过期条目下次读取删掉重取），harness 里没有封面缓存
+  // 目录可探。由专项测试咬住：过期封面重新联网、未过期命中磁盘、偏好改动即时
+  // 写穿到已建 manager 的缓存实例。
+  'manga/Cover cache retention':
+      'test/media/manga/manga_cover_retry_test.dart（maxAge 过期重取 + 偏好写穿）',
   // galgame 窗口超分三态开关（PR#430）。写 prefsRepo（changed=true），生效点整条在
   // 本进程之外 —— 改写 Magpie 自己的 config.json、拉起 / 收掉一个独立的 Magpie 进程、
   // 由它去做全屏缩放，widget harness 里没有任何可探的渲染输入；而且它 Windows-only，
@@ -349,11 +362,6 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // charOffset 不变/spread 优先由专项纯函数测试守住，渲染效果需真机验。
   'reading/Merge illustration pages into text':
       'test/epub/epub_spread_map_test.dart: mergeImagePages absorb/spread-priority/charOffset (reader layout effect needs live WebView, DEVICE for render)',
-  // BUG-2434 批：「弹窗全宽」（对齐 Hoshi 的 Full Width）。焦点遍历能切到开关并
-  // 写穿 DB，但生效点是 resolvePopupRect 算出的矩形宽度——纯几何，harness 没有
-  // 适用的 T4 渲染探针，故与兄弟行 Popup max width / max height 同款登记，行为由
-  // 专项纯函数测试钉住（含「开/关同一组入参结果必须不同」的判别力用例）。
-  'lookup/Full-width popup': 'test/pages/popup_full_width_test.dart',
   'lookup/Popup max width': 'test/pages/dictionary_popup_layer_test.dart',
   'lookup/Popup max height': 'test/pages/dictionary_popup_layer_test.dart',
   // TODO-776: 查词弹窗「词典最多列数（自动填充）」（实验性）。PR#83 语义收敛后文案
@@ -408,6 +416,12 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
       'test/settings/mining_media_quality_guard_test.dart + test/utils/desktop_audio_clipper_test.dart',
   'cardCreation/Audio quality':
       'test/settings/mining_media_quality_guard_test.dart + test/utils/desktop_audio_clipper_test.dart',
+  // 句子音频头/尾 padding：效果在裁剪区间（padSentenceRange），纯函数 + 偏好写穿 +
+  // 两条制卡链调用点源码守卫都在专项测试里。
+  'cardCreation/Audio padding before sentence':
+      'test/settings/mining_audio_padding_guard_test.dart',
+  'cardCreation/Audio padding after sentence':
+      'test/settings/mining_audio_padding_guard_test.dart',
   // TODO-135: 默认标签区现无条件显示（hibiki/分类两开关移出 isConfigured 门控），
   // focus-driven 现能驱动到它们；但它们写的是 AnkiSettings（经 SharedPreferences，
   // 非本测试的内存 DB），故 changed=false。标签拼装行为本体由 hibiki_anki 真制卡
@@ -434,7 +448,7 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 序列化契约（远端制卡仓库包装 + 转发载荷 + 服务端 handler）。
   // 归属：开关已从「制卡」分类移到「Hibiki 互联」→「交给已配对设备」（它的前置条件、
   // 目标设备、失效条件全由互联决定），故登记键的 destId 随之从 cardCreation 变 interconnect。
-  'interconnect/Mine to paired device':
+  'interconnect/Mine to Fushi Interconnect server':
       'test/anki/remote_mining_anki_repository_test.dart + '
       'test/sync/forwarded_mine_payload_test.dart + '
       'test/sync/fushi_remote_mining_service_test.dart',

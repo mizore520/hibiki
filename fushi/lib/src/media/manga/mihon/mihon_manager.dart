@@ -10,6 +10,7 @@ import 'package:fushi_core/fushi_core.dart';
 import 'package:fushi/src/media/manga/mihon/mihon_cover_cache.dart';
 import 'package:fushi/src/media/manga/mihon/mihon_download_counts.dart';
 import 'package:fushi/src/media/manga/mihon/mihon_extension_store_client.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_extension_updates.dart';
 import 'package:fushi/src/media/manga/mihon/mihon_models.dart';
 import 'package:fushi/src/media/manga/mihon/mihon_runtime.dart';
 import 'package:fushi/src/startup/exit_flush_registry.dart';
@@ -38,11 +39,15 @@ class MihonManager extends ChangeNotifier {
     MihonDownloadCountsClient? downloadCountsClient,
     this.seedDefaultStore = false,
     this.fetchDownloadCounts = false,
+    Duration coverCacheMaxAge = const Duration(
+      days: kMangaCoverCacheDefaultMaxAgeDays,
+    ),
   }) : _storeClient = storeClient ?? MihonExtensionStoreClient(),
        _downloadCountsClient =
            downloadCountsClient ?? MihonDownloadCountsClient() {
     coverCache = MihonCoverCache(
       Directory(p.join(rootDirectory.path, 'cache', 'covers')),
+      maxAge: coverCacheMaxAge,
     );
     if (Platform.isWindows || Platform.isMacOS) {
       _exitShutdown = ExitFlushRegistry.instance.register(
@@ -743,11 +748,18 @@ class MihonManager extends ChangeNotifier {
 
   /// 批量安装一批可安装扩展。
   ///
-  /// **只装没装过的**：已经装了的直接跳过，不做「顺手升级」。升级和首装在
-  /// runtime 上不是一回事——桌面 sidecar 的 class loader 加载过某个包之后不重启
-  /// 就拿不到新版本，而本方法为了不重启 N 次（见 [MihonRuntime.invalidateExtensions]）
-  /// 把整批的失效攒到最后。首装没有这个问题（sidecar 从没加载过这个包），
-  /// 升级有，所以升级仍然走单条 [commitInstall]。
+  /// 两种模式，由 [upgrade] 选：
+  /// - **首装**（默认）：只装没装过的，已经装了的直接跳过，不做「顺手升级」——批量
+  ///   的意义是铺满一个语言的可用源，不是替用户决定升级。
+  /// - **升级**（[upgrade] = true，扩展页「一键更新」，BUG-2481）：只处理已装且仓库
+  ///   里版本更高的（[hasMihonExtensionUpdate]，与角标同一判据），没装的 / 已是最新
+  ///   的跳过。签名换了的那条会以 `SIGNER_NOT_TRUSTED` 落进 `failed`（调用方传
+  ///   `trustSigner: false`），让用户回到单条流程看着指纹确认——一键更新不能
+  ///   顺手信任新签名。
+  ///
+  /// 两种模式都把整批的运行时失效攒到最后一次（见
+  /// [MihonRuntime.invalidateExtensions]）：桌面 sidecar 每次失效都要重启，逐个
+  /// 装等于重启 N 次。升级期间旧版本继续被加载着，直到最后那一次重启统一换新。
   ///
   /// **每个仓库只解析一次索引**（[_resolveStoreCatalogue]），而不是像单条安装那样
   /// 每个扩展重拉一遍：装一百个就是一百次全量索引下载 + 解析。
@@ -757,6 +769,7 @@ class MihonManager extends ChangeNotifier {
   Future<MihonBulkInstallReport> installMany(
     List<MihonAvailableExtension> targets, {
     required bool trustSigner,
+    bool upgrade = false,
     void Function(int done, int total, MihonAvailableExtension current)?
     onProgress,
     bool Function()? isCancelled,
@@ -764,9 +777,18 @@ class MihonManager extends ChangeNotifier {
     final List<String> installedPackages = <String>[];
     final List<String> skippedPackages = <String>[];
     final Map<String, String> failedPackages = <String, String>{};
-    final Set<String> alreadyInstalled = installed
-        .map((MangaExtensionRow row) => row.packageName)
-        .toSet();
+    final Map<String, MangaExtensionRow> installedByPackage =
+        <String, MangaExtensionRow>{
+          for (final MangaExtensionRow row in installed) row.packageName: row,
+        };
+    final Set<String> alreadyInstalled = installedByPackage.keys.toSet();
+    // 升级模式的「该不该动这一条」：没装 → 跳；仓库里不比已装新 → 跳。
+    bool shouldSkip(MihonAvailableExtension target) => upgrade
+        ? !hasMihonExtensionUpdate(
+            available: target,
+            installed: installedByPackage[target.packageName],
+          )
+        : alreadyInstalled.contains(target.packageName);
     final Map<String, List<MihonAvailableExtension>> byStore =
         <String, List<MihonAvailableExtension>>{};
     for (final MihonAvailableExtension target in targets) {
@@ -810,7 +832,7 @@ class MihonManager extends ChangeNotifier {
           if (cancelled()) break;
           onProgress?.call(done, total, target);
           done++;
-          if (alreadyInstalled.contains(target.packageName)) {
+          if (shouldSkip(target)) {
             skippedPackages.add(target.packageName);
             continue;
           }
@@ -1100,6 +1122,31 @@ class MihonManager extends ChangeNotifier {
       sortOrder: sortOrder,
     );
     await reload();
+  }
+
+  /// 「按下载量排序」（BUG-2481）：把已登记的源按其扩展 APK 的公开下载次数重排
+  /// 一次，写穿 `sort_order`；之后用户仍可用上下箭头微调。
+  ///
+  /// 计数来自仓库目录快照（[available] 的 `downloadCount`，同一包在多仓库里取
+  /// 最大）；快照为空（还没刷过仓库 / 断网）时返回 false，什么都不改。
+  Future<bool> sortSourcesByDownloads() async {
+    final Map<String, int> counts = mihonDownloadCountsByPackage(available);
+    if (counts.isEmpty) return false;
+    final List<MangaOnlineSourceRow> ordered = sortMangaSourcesByDownloads(
+      sources,
+      counts,
+    );
+    for (int index = 0; index < ordered.length; index++) {
+      final MangaOnlineSourceRow row = ordered[index];
+      if (row.sortOrder == index) continue;
+      await database.updateMangaOnlineSourceSettings(
+        extensionPackage: row.extensionPackage,
+        sourceId: row.sourceId,
+        sortOrder: index,
+      );
+    }
+    await reload();
+    return true;
   }
 
   Future<List<MihonPreference>> getPreferences(
@@ -1398,4 +1445,45 @@ class MihonBulkInstallReport {
   final Map<String, String> failed;
 
   int get attempted => installed.length + skipped.length + failed.length;
+}
+
+/// 目录快照里每个扩展包的公开下载次数（同一包在多个仓库都有时取最大）；没有
+/// 计数的包不出现在结果里。
+Map<String, int> mihonDownloadCountsByPackage(
+  Iterable<MihonAvailableExtension> available,
+) {
+  final Map<String, int> counts = <String, int>{};
+  for (final MihonAvailableExtension extension in available) {
+    final int? count = extension.downloadCount;
+    if (count == null) continue;
+    final int? existing = counts[extension.packageName];
+    if (existing == null || count > existing) {
+      counts[extension.packageName] = count;
+    }
+  }
+  return counts;
+}
+
+/// 源按其扩展下载量降序；没有计数的排最后；同分按原 `sortOrder` 保持稳定。
+///
+/// 纯函数，与页面解耦：「排完是什么顺序」必须能直接断言，否则这类一次性重排
+/// 写错方向（升序 / null 排前）只有用户点了才发现。
+List<MangaOnlineSourceRow> sortMangaSourcesByDownloads(
+  List<MangaOnlineSourceRow> sources,
+  Map<String, int> countsByPackage,
+) {
+  final List<MangaOnlineSourceRow> ordered = List<MangaOnlineSourceRow>.of(
+    sources,
+  );
+  ordered.sort((MangaOnlineSourceRow a, MangaOnlineSourceRow b) {
+    final int? left = countsByPackage[a.extensionPackage];
+    final int? right = countsByPackage[b.extensionPackage];
+    if (left != right) {
+      if (left == null) return 1;
+      if (right == null) return -1;
+      return right.compareTo(left);
+    }
+    return a.sortOrder.compareTo(b.sortOrder);
+  });
+  return ordered;
 }

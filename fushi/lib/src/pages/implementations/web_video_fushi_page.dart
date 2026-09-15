@@ -18,7 +18,7 @@ import 'package:fushi/src/focus/page_focus_ownership.dart';
 import 'package:fushi/src/focus/panel_focus_scope.dart';
 import 'package:fushi/src/focus/webview_key_bridge.dart';
 import 'package:fushi/src/media/sources/reader_fushi_source.dart';
-import 'package:fushi/src/media/video/video_book_repository.dart';
+import 'package:fushi_engine/media/video/video_book_repository.dart';
 import 'package:fushi/src/media/video/video_player_controller.dart';
 import 'package:fushi/src/media/video/video_player_shortcuts.dart';
 import 'package:fushi/src/media/video/video_subtitle_jump_panel.dart';
@@ -33,13 +33,13 @@ import 'package:fushi/src/anki/anki_view_model.dart';
 import 'package:fushi/src/mining/galgame_audio_encode.dart';
 import 'package:fushi/src/mining/galgame_audio_source.dart';
 import 'package:fushi/src/mining/immersion_mining_engine.dart';
-import 'package:fushi/src/mining/immersion_mining_request.dart';
+import 'package:fushi_engine/mining/immersion_mining_request.dart';
 import 'package:fushi/src/mining/web_mine_queue_store.dart';
 import 'package:fushi/src/mining/web_mine_replay.dart';
 import 'package:fushi/src/pages/implementations/dictionary_page_mixin.dart';
 import 'package:fushi/src/pages/implementations/dictionary_popup_webview.dart'
     show MinePopupResult;
-import 'package:fushi/src/utils/misc/desktop_audio_clipper.dart'
+import 'package:fushi_engine/utils/misc/desktop_audio_clipper.dart'
     show MiningMediaCompression;
 import 'package:fushi/src/utils/misc/fushi_toast.dart';
 import 'package:fushi_anki/fushi_anki.dart';
@@ -55,12 +55,13 @@ import 'package:fushi/src/shortcuts/input_binding.dart';
 import 'package:fushi/src/shortcuts/shortcut_action.dart';
 import 'package:fushi/src/shortcuts/window_fullscreen_hosts.dart'
     show WindowFullscreenHost;
-import 'package:fushi/src/sync/fushi_library_host_service.dart'
+import 'package:fushi_engine/sync/fushi_library_host_service.dart'
     show videoRemotePositionEpisodeAtPrefKey, videoRemotePositionEpisodePrefKey;
 import 'package:fushi/src/utils/adaptive/adaptive_widgets.dart'
     show adaptivePageRoute;
 import 'package:fushi/src/utils/app_ui_scale.dart';
 import 'package:fushi/src/utils/components/fushi_desktop_title_bar.dart';
+import 'package:fushi/src/utils/window_caption_channel.dart';
 import 'package:fushi/src/utils/misc/error_log_service.dart';
 import 'package:fushi/src/utils/misc/lookup_dismiss_barrier.dart';
 import 'package:fushi/src/utils/overlay_entry_lifecycle.dart';
@@ -507,6 +508,9 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
       _popupOverlayEntry = null;
     }
     if (_fullscreen && Platform.isWindows) {
+      // 全屏中退页：runner 拥有的窗口全屏态不随路由消失，这里必须亲手退出，
+      // 否则回到书架的是一扇没有标题栏、盖着任务栏的巨窗。
+      unawaited(WindowCaptionChannel.setFullscreen(false));
       FushiDesktopTitleBar.setContentFullscreen(owner: this, enabled: false);
     }
     _controller.removeListener(_onControllerChanged);
@@ -1734,21 +1738,39 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
     if (!_listVisible) _listHitTester.unbind();
   }
 
+  /// 本页全屏的唯一执行体：F 键 / 全屏按钮 / F11（[buildVideoPlayerShortcutsFromRegistry]
+  /// 把 `globalToggleFullscreen` 映射到这里，BUG-2462）三者同路。
+  ///
+  /// Windows 走 runner 自有的保边框全屏 [WindowCaptionChannel.setFullscreen]
+  /// （BUG-1933）：media_kit 的 `defaultEnterNativeFullscreen` 与 window_manager 同技法
+  /// ——剥 `WS_CAPTION|WS_THICKFRAME` 迫使 DWM 重建窗口 visual，Flutter 子窗图层缺席
+  /// 一帧、露出表面色（浅色主题 = 白帧）。BUG-1933 当初只改了 app 根 F11 与视频页
+  /// 两个入口，本页被漏掉，F 键一直闪白；F11 改由本页接管后（BUG-2462）连 F11 也
+  /// 落回了那条路。与 `fullscreen.part.dart` 同序：进入前先藏 app frame，退出时
+  /// 等 runner 同步还原窗口矩形后再亮出 frame（早亮会在退出过程闪一下标题栏）。
+  /// macOS / Linux 保留 media_kit 默认回调。
   Future<void> _toggleFullscreen() async {
     if (!Platform.isWindows && !Platform.isMacOS && !Platform.isLinux) return;
     final bool enter = !_fullscreen;
     setState(() => _fullscreen = enter);
     if (Platform.isWindows) {
-      FushiDesktopTitleBar.setContentFullscreen(owner: this, enabled: enter);
-    }
-    try {
       if (enter) {
-        await defaultEnterNativeFullscreen();
+        FushiDesktopTitleBar.setContentFullscreen(owner: this, enabled: true);
+        await WindowCaptionChannel.setFullscreen(true);
       } else {
-        await defaultExitNativeFullscreen();
+        await WindowCaptionChannel.setFullscreen(false);
+        FushiDesktopTitleBar.setContentFullscreen(owner: this, enabled: false);
       }
-    } catch (e) {
-      ErrorLogService.instance.log('web_video', 'fullscreen: $e');
+    } else {
+      try {
+        if (enter) {
+          await defaultEnterNativeFullscreen();
+        } else {
+          await defaultExitNativeFullscreen();
+        }
+      } catch (e) {
+        ErrorLogService.instance.log('web_video', 'fullscreen: $e');
+      }
     }
     _focusOwnership.reclaimAfterFrame(FocusReclaimCause.chromeToggled);
   }

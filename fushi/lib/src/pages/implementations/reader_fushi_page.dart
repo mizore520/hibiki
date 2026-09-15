@@ -1,5 +1,6 @@
 import 'package:fushi_dictionary/fushi_dictionary.dart';
 import 'dart:async';
+import 'package:fushi/src/anki/source_review_session.dart';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
@@ -8,12 +9,15 @@ import 'dart:ui' show ImageFilter;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:fushi/src/shortcuts/context_menu_trigger.dart';
 import 'package:fushi/i18n/strings.g.dart';
 import 'package:fushi/src/utils/misc/fushi_toast.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/services.dart' hide ModifierKey;
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:fushi/src/media/media_item.dart';
+import 'package:fushi/src/media/media_source.dart';
 import 'package:fushi/pages.dart';
 import 'package:fushi/src/models/app_model.dart';
 import 'package:fushi/src/models/theme_notifier.dart'
@@ -22,15 +26,16 @@ import 'package:fushi/src/models/content_font_chain.dart';
 import 'package:fushi/src/pages/implementations/dictionary_popup_theme.dart';
 import 'package:fushi/src/utils/adaptive/adaptive_widgets.dart';
 import 'package:fushi_core/fushi_core.dart';
-import 'package:fushi/src/epub/epub_book.dart';
-import 'package:fushi/src/epub/epub_parser.dart';
+import 'package:fushi_engine/epub/epub_book.dart';
+import 'package:fushi_engine/epub/epub_parser.dart';
 import 'package:fushi/src/epub/epub_spread_analyzer.dart';
 import 'package:fushi/src/epub/epub_spread_map.dart';
-import 'package:fushi/src/epub/epub_storage.dart';
+import 'package:fushi_engine/epub/epub_storage.dart';
 import 'package:fushi/src/media/audiobook/audiobook_bridge.dart';
 import 'package:fushi/src/media/audiobook/audiobook_session.dart';
 import 'package:fushi/src/media/audiobook/audiobook_session_launcher.dart';
 import 'package:fushi/src/media/audiobook/lyrics_mode_html.dart';
+import 'package:fushi/src/media/audiobook/lyrics_cue_text.dart';
 import 'package:fushi/src/media/audiobook/floating_lyric_lookup_routing.dart';
 import 'package:fushi_audio/fushi_audio.dart';
 import 'package:fushi/src/media/audiobook/highlight_bridge.dart';
@@ -46,15 +51,15 @@ import 'package:fushi/src/media/audiobook/audiobook_clip_export.dart';
 import 'package:fushi/src/utils/misc/card_screenshot_downsampler.dart';
 import 'package:fushi/src/media/audiobook/audiobook_clip_text_render.dart';
 import 'package:fushi/src/media/audiobook/audiobook_clip_webview_render.dart';
-import 'package:fushi/src/utils/misc/desktop_audio_clipper.dart'
+import 'package:fushi_engine/utils/misc/desktop_audio_clipper.dart'
     show extractAudioSegmentViaFfmpeg;
 import 'package:fushi/src/media/display_title.dart';
 import 'package:fushi/src/media/audiobook/mining_sentence_draft.dart';
 import 'package:fushi/src/media/audiobook/reader_quick_settings_sheet.dart';
 import 'package:fushi/src/media/sources/reader_fushi_source.dart';
-import 'package:fushi/src/media/tracking/media_tracking_service.dart'
+import 'package:fushi_engine/media/tracking/media_tracking_service.dart'
     show kMediaTrackingEnabled;
-import 'package:fushi/src/mining/immersion_mining_request.dart'
+import 'package:fushi_engine/mining/immersion_mining_request.dart'
     show immersionMiningAudioExtension;
 import 'package:fushi/src/pages/implementations/dictionary_popup_webview.dart'
     show DictionaryPopupWebViewState, MinePopupResult;
@@ -71,22 +76,28 @@ import 'package:fushi/src/reader/reader_content_styles.dart';
 import 'package:fushi/src/reader/image_reveal_key.dart';
 import 'package:fushi/src/reader/reader_resource_sanitizer.dart';
 import 'package:fushi/src/reader/reader_exit_flush.dart';
+import 'package:fushi/src/sync/sync_auto_trigger.dart';
 import 'package:fushi/src/reader/reader_pagination_scripts.dart';
 import 'package:fushi/src/reader/reader_restore_anchor.dart';
+import 'package:fushi/src/reader/reader_source_locator.dart';
 import 'package:fushi/src/reader/reader_search_navigation.dart';
 import 'package:fushi/src/reader/reader_selection_data.dart';
 import 'package:fushi/src/reader/reader_selection_scripts.dart';
 import 'package:fushi/src/reader/reader_chrome_floating.dart';
 import 'package:fushi/src/reader/reader_settings.dart';
 import 'package:fushi/src/reader/reader_chrome_controller.dart';
+import 'package:fushi/src/reader/reader_control_layout.dart';
 import 'package:fushi/src/reader/reader_desktop_chrome.dart';
+import 'package:fushi/src/reader/reader_collection_volumes.dart';
 import 'package:fushi/src/reader/reader_gallery_page.dart';
+import 'package:fushi/src/reader/reader_host_hover_lookup.dart';
 import 'package:fushi/src/reader/reader_open_trace.dart';
 import 'package:fushi/src/reader/reader_progress_state.dart';
-import 'package:fushi/src/reader/reader_statistics_dialog.dart';
+import 'package:fushi/src/reader/reader_statistics_sheet.dart';
 import 'package:fushi/src/reader/reader_status_footer.dart';
 import 'package:fushi/src/stats/read_unit_ledger.dart';
-import 'package:fushi/src/stats/stat_facts.dart';
+import 'package:fushi/src/stats/study_diag_log.dart';
+import 'package:fushi_engine/stats/stat_facts.dart';
 import 'package:fushi/src/reader/reader_top_progress.dart';
 import 'package:fushi/src/reader/ttu_toc_flatten.dart';
 import 'package:fushi/src/startup/exit_flush_registry.dart';
@@ -1375,6 +1386,10 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
 
   EpubBook? _book;
 
+  /// 歌词模式下按 cue 反查 EPUB 原文的解析器，与 [_book] 同生命周期；只经
+  /// `_lyricsCueTextResolverFor` 取（audiobook.part.dart）。
+  LyricsCueTextResolver? _lyricsCueTextResolver;
+
   /// TODO-1204：查词计数归属本书——[title] 与阅读统计 tile 的聚合键（[EpubBook.title]，
   /// 见 study_segments 的 mediaKey）对齐，[bookKey] 存书身份。
   @override
@@ -1407,6 +1422,13 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
   /// 的读写跳过，**不**拿 bookKey 兜底写入（epub 域 uid 缺失即 no-op，与
   /// resolveEpubBookUid 的契约一致）。
   String? _bookUid;
+
+  /// 同合集卷上下文（BUG-2521）：开书后由 [_loadVolumeContext] 一次装载；null =
+  /// 不在多卷合集里。消费点：章节列表卷 chip、画廊卷 chip、[_switchToVolume]。
+  ReaderVolumeContext? _volumeContext;
+
+  /// 兄弟卷 EPUB 结构缓存（isolate 解析、按卷一次）；当前书开书后 seed 进去。
+  final ReaderVolumeBookCache _volumeBooks = ReaderVolumeBookCache();
 
   /// 库内 part 文件（extension）改状态的入口：扩展不被视作 State 子类实例成员，
   /// 直接调 @protected 的 setState 会报 invalid_use_of_protected_member。由本 State
@@ -1494,12 +1516,38 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
       '[ReaderFushi] restore from $source: '
       'chapter=$chapter progress=$progress charOffset=$charOffset',
     );
+    studyDiag(
+      'reader',
+      'open resume point chapter=$chapter '
+          'progress=${progress.toStringAsFixed(4)} charOffset=$charOffset '
+          'source=$source',
+    );
   }
+
   // BUG-459: 临时浏览跳转（收藏句 / 制卡历史跳回原文）整页生命周期内抑制 ReaderPosition
   // 持久化——用户从收藏 / 制卡历史点进来看某句，不应把该书真实阅读进度覆盖成跳转锚。
   // 由 widget.initialBookmarkJump.preserveSavedPosition 在开书时置位；普通打开 / 真实
   // 书签跳转恒 false，照常 debounce / 退出 flush 保存。
   bool _suppressPositionPersist = false;
+  SourceReviewSession? _sourceReviewSession;
+  bool _sourceReviewWasActive = false;
+  bool _sourceReviewClosed = false;
+  bool get _sourceReviewActive =>
+      _sourceReviewClosed || (_sourceReviewSession?.isReview ?? false);
+
+  void _onSourceReviewChanged() {
+    if (!mounted) return;
+    if (_sourceReviewWasActive && !_sourceReviewActive) {
+      _saveDebounce?.cancel();
+      _readLedger.reset();
+      _suppressPositionPersist = false;
+      _syncStudyClockRunState();
+      unawaited(_syncAndFlushPosition());
+    }
+    _sourceReviewWasActive = _sourceReviewActive;
+    setState(() {});
+  }
+
   String? _initialFragment;
   // TODO-1309: 跨章「文本搜索跳转」落定目标章后要执行的章内精确定位（scrollToSearchMatch
   // 的 JS）+ 绑定的导航代际。旧两段式（调用方在 restore 完成微任务里抢发 scrollToSearchMatch）
@@ -1512,6 +1560,11 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
 
   double _stableTopInset = 0;
   double _stableBottomInset = 0;
+
+  /// 鼠标此刻是否停在顶栏 / 底栏上（两处 MouseRegion 进出翻它）。悬停在栏上时
+  /// 自动收起计时暂停（[_ReaderChrome._handleReaderPointerHover] 也不再 re-arm），
+  /// 离开后重新武装——否则鼠标静止在栏上 3 秒它就自己收掉。
+  bool _chromeHovered = false;
 
   /// 底栏内容行的自然（未缩放）高度。
   static const double _readerChromeBaseHeight = 56;
@@ -1564,6 +1617,12 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
   /// 听书跟随 reveal 落定后的进度补刷（见 `_scheduleReanchorSettleProgressRefresh`）。
   Timer? _revealProgressRefreshTimer;
 
+  /// 统计诊断流水上次记过的单元（`_traceArrive` 去重用）。
+  (int, int)? _lastTracedUnit;
+
+  /// 上次记过的「起点未通过页上校验、未入账」采样起点（BUG-2492；同页重复采样只记一行）。
+  int _lastTracedSkipStart = -1;
+
   List<int> get _chapterCharCounts => _progress.chapterCharCounts;
   set _chapterCharCounts(List<int> v) => _progress.chapterCharCounts = v;
   List<int> get _chapterCumulativeChars => _progress.chapterCumulativeChars;
@@ -1607,6 +1666,10 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
   /// dc:language 回填，或用户在书籍设置里手动指定。null = 未知，正文字体退回
   /// 浏览器默认（不猜，见 content_font_chain.dart）。
   String? _contentLanguage;
+
+  /// 本书自带的正文语言（EPUB `dc:language` / SRT 书卡上手动指定），全局默认内容语言
+  /// 改变时用它重新解析 [_contentLanguage]（BUG-2471：改默认语言实时生效）。
+  String? _explicitContentLanguage;
 
   String? _cachedStyleTag;
 
@@ -1949,11 +2012,58 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
   );
 
   /// 状态行的底部预留高（挤压式：视觉高度 == 预留高度，正文永不压到它下面）。
-  /// 不随 `_hasEverLoaded` 翻转——预留从初始 HTML 起就含它，首屏就绪后不必再补发
-  /// insets 触发一次 reflow；只有**绘制**才等首次冷加载完成（[_buildStatusFooter]）。
+  /// 预留从初始 HTML 起就含它；只有**绘制**才等首次冷加载完成（[_buildStatusFooter]）。
+  ///
+  /// 挤压态底栏占位且读数并进底栏右端时（[_statusFooterAbsorbedByBar]）预留归 0：
+  /// 底部只有一条，不再是底栏 + 状态行叠两行（BUG-2467）。这层门控与底栏预留
+  /// [_bottomChromeReserve] 同一时刻翻转（首次就绪 / 挤压态收放底栏），那两处本就
+  /// 会重下 chrome insets，不引入额外 reflow。
   double get _statusFooterReserve => readerStatusFooterReserve(
     enabled: _statusFooterEnabled,
     footerHeight: kReaderStatusFooterHeight,
+    absorbedByBar: _statusFooterAbsorbedByBar,
+    // 悬浮态状态行随控制栏显隐、不占预留（2026-09-13）。
+    floating: _bottomBarFloating,
+  );
+
+  /// 状态行是否被底栏吸收（既不画也不占预留），单一真相源
+  /// [readerStatusFooterAbsorbedByBar]：挤压态看底栏预留；悬浮态看有声书播放条
+  /// 此刻是否画着（读数并进播放条右端，底部只留一条）。
+  bool get _statusFooterAbsorbedByBar => readerStatusFooterAbsorbedByBar(
+    inlineStatus: _playbackStatusInline,
+    bottomChromeReserve: _bottomChromeReserve,
+    floatingBarPainted: _bottomBarFloating &&
+        _bottomBarShouldPaint &&
+        _audiobookController != null,
+  );
+
+  /// 状态行此刻是否绘制（单一真相源 [readerStatusFooterVisible]）。
+  bool get _statusFooterShouldPaint => readerStatusFooterVisible(
+    enabled: _statusFooterEnabled,
+    hasEverLoaded: _hasEverLoaded,
+    absorbedByBar: _statusFooterAbsorbedByBar,
+    floating: _bottomBarFloating,
+    transientVisible: _chromeTransientVisible,
+  );
+
+  /// 状态行**画出来**占的底部带高（悬浮态唤出时 28px，收起时 0），是底栏在窄屏
+  /// 坐落的高度；与 [_statusFooterBand]（预留口径）的区别只在悬浮态。
+  double get _statusFooterPaintedBand => readerStatusFooterBandHeight(
+    footerReserve: _statusFooterShouldPaint ? kReaderStatusFooterHeight : 0,
+    bottomInset: _stableBottomInset,
+  );
+
+  /// 屏底细进度线此刻是否绘制（[readerProgressEdgeLineVisible]）。
+  bool get _progressEdgeLineShouldPaint => readerProgressEdgeLineVisible(
+    floating: _bottomBarFloating,
+    footerVisible: _statusFooterShouldPaint,
+    showProgress: _statusFooterEnabled &&
+        ReaderFushiSource.instance.showTopProgressBar,
+    hasTotal: readerProgressRatio(
+          current: _progressCurrentChars,
+          total: _progressTotalChars,
+        ) !=
+        null,
   );
 
   /// ッツ 形态共用 chrome（顶部工具栏 + 右侧抽屉）是否启用：**所有平台、两种模式**。
@@ -1969,11 +2079,13 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
   /// 冻住的旧数。
   bool get _desktopChromeEnabled => true;
 
-  /// 顶部工具栏的顶部预留高：占位时恒占工具栏高（悬浮/挤压同值，BUG-2387——
-  /// 顶栏是不透明面，正文不得排到它下面），并入 [_readerTopOffset]。
+  /// 顶部工具栏的顶部预留高：挤压态占位时占工具栏高；悬浮态 0（隐藏满屏、唤出
+  /// 盖在正文上，用户 2026-09-13 拍板；历史见 [readerDesktopHeaderReserve]），
+  /// 并入 [_readerTopOffset]。
   double get _desktopHeaderReserve => readerDesktopHeaderReserve(
     enabled: _desktopChromeEnabled,
     barOccupiesLayout: _hasEverLoaded && _showChrome,
+    floating: _bottomBarFloating,
     headerHeight: kReaderDesktopHeaderHeight,
   );
 
@@ -2006,7 +2118,8 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
   double get _bottomChromeReserve => bottomChromeReserve(
     barOccupiesLayout: _hasEverLoaded && _showChrome,
     floating: _bottomBarFloating,
-    chromeHeight: _desktopChromeEnabled && _audiobookController == null
+    // 无有声书播放条且底栏槽位没有按钮时底栏不存在 → 0（默认布局如此）。
+    chromeHeight: _audiobookController == null && !_bottomSlotsHaveButtons
         ? 0
         : _readerChromeHeight,
   );
@@ -2028,8 +2141,14 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
   bool get _separatePlaybackStatus =>
       _statusFooterEnabled && !_playbackStatusInline;
 
-  double get _statusFooterBottomOffset =>
-      _stableBottomInset + (_separatePlaybackStatus ? 0 : _bottomChromeReserve);
+  /// 底部带高：状态行坐进系统底部安全区，带高 = max(状态行预留, 系统底 inset)
+  /// （单一真相源 [readerStatusFooterBandHeight]，BUG-2470）。状态行不在场时就是
+  /// 系统 inset 本身。它是 [_readerBottomReserve] 里「底栏之下」的那一段，也是挤压态
+  /// 窄屏底栏坐落的高度（[_wrapBottomChromeBar]）。
+  double get _statusFooterBand => readerStatusFooterBandHeight(
+    footerReserve: _statusFooterReserve,
+    bottomInset: _stableBottomInset,
+  );
 
   /// TODO-975：顶部进度此刻是否绘制。悬浮态额外受 [_chromeTransientVisible]（点击
   /// 唤出、计时自动收起）门控；挤压态恒随 [_showTopProgress]。
@@ -2073,8 +2192,8 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
   /// WebView，歌词这条走 [independentDocumentInsets] 的 Flutter 侧 Padding。
   double get _lyricsTopReserve => _stableTopInset + _desktopHeaderReserve;
 
-  double get _readerBottomReserve =>
-      _bottomChromeReserve + _statusFooterReserve + _stableBottomInset;
+  /// 正文底部总预留 = 底栏预留 + 底部带（状态行与系统底 inset 取大，不再相加）。
+  double get _readerBottomReserve => _bottomChromeReserve + _statusFooterBand;
 
   @override
   double get popupBottomReserve =>
@@ -2092,6 +2211,10 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
   @override
   void initState() {
     super.initState();
+    _sourceReviewSession = SourceReviewScope.read(context);
+    _sourceReviewWasActive = _sourceReviewActive;
+    _suppressPositionPersist = _sourceReviewActive;
+    _sourceReviewSession?.addListener(_onSourceReviewChanged);
     // chrome 状态机的变更（含自动收起计时到点）统一经此重建。
     _chrome.addListener(_onChromeControllerChanged);
     assert(() {
@@ -2257,8 +2380,9 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
     // 出现，v81 回填兜底）视同缺失——相关写入跳过，不拿 bookKey 兜底。
     // 正文语言：本书手动指定/导入回填的 dc:language > 全局默认内容语言。
     // 书这一档没有独立的「元数据」层——dc:language 在导入时就写进同一列了。
+    _explicitContentLanguage = bookRow?.language;
     _contentLanguage = resolveContentLanguage(
-      explicit: bookRow?.language,
+      explicit: _explicitContentLanguage,
       globalDefault: appModel.prefsRepo.defaultContentLanguage,
     );
     // 查词卡的**词头**跟这本书的语言走（释义跟词典走）。开书即登记。
@@ -2302,6 +2426,15 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
     final List<String> hrefs = _book!.chapters.map((ch) => ch.href).toList();
     debugPrint('[ReaderFushi] chapter hrefs: $hrefs');
     _openTrace.mark('parsed');
+    // 同合集卷上下文与首屏无关，后台装载；失败只记日志（卷切换入口不出现）。
+    unawaited(_loadVolumeContext(db));
+
+    // Source links must resolve exactly. Ordinary stale bookmarks may fall
+    // back to a saved position, which would show unrelated text for this card.
+    final CardSourceLink? sourceLink = _sourceReviewSession?.link;
+    if (sourceLink != null) {
+      validateReaderSourceLocator(_book!, sourceLink);
+    }
 
     if (charsFromDb != null) {
       // TODO-1192: 先立刻用命中的计数（即便是旧口径 v1，先让进度/总字数有值不闪 0）；
@@ -2363,7 +2496,9 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
       // 底栏切）。无句长（制卡行 / 老收藏）→ -1 退回单点句首锚（旧行为）。
       // BUG-459: 临时浏览跳转（收藏 / 制卡历史）进入后不覆盖该书已保存的阅读进度——
       // 用户点进来看某句不该毁掉真正的阅读位置。普通书签跳转照常持久化。
-      _suppressPositionPersist = bm.preserveSavedPosition;
+      _suppressPositionPersist = _sourceReviewSession != null
+          ? _sourceReviewActive
+          : bm.preserveSavedPosition;
       final int? charAnchor = bm.charAnchor;
       final int? len = bm.charAnchorLength;
       final bool precise = charAnchor != null && charAnchor >= 0;
@@ -2440,7 +2575,8 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
     // 这里把「上次是歌词模式」记成待恢复意图（保留偏好、不再抹除），等 EPUB 内容就绪
     // + 有声书已挂载后（见 _onChapterLoadComplete）再切歌词，等价用户手动切、已知安全。
     _lyricsMode = false;
-    _pendingLyricsRestore = ReaderFushiSource.instance.lyricsMode;
+    _pendingLyricsRestore =
+        _sourceReviewSession == null && ReaderFushiSource.instance.lyricsMode;
 
     _audioSlotResolved = true;
 
@@ -2695,6 +2831,8 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
 
   @override
   void dispose() {
+    _sourceReviewClosed = _sourceReviewActive;
+    _sourceReviewSession?.removeListener(_onSourceReviewChanged);
     // 关书不是翻走：站着的那页不结算（`ReadUnitLedger` 类文档），只停表。
     //
     // 全程零 DB IO：dispose 是同步的，在这里发起的事务没有任何人持有它的 future，
@@ -2773,7 +2911,9 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
     // - 开启（=true）：只 detachReader，控制器留在 [AudiobookSession] 进程级常驻
     //   持有者里继续后台播放（保 TODO-291 阶段2 的后台续播）。
     appModel.audiobookSession.detachReader(this);
-    if (!appModel.audiobookBackgroundPlay) {
+    if ((_sourceReviewSession != null || !appModel.audiobookBackgroundPlay) &&
+        _audiobookController != null &&
+        identical(appModel.audiobookSession.controller, _audiobookController)) {
       // fire-and-forget 必须 catchError：dispose 同步签名无法 await，stop 内
       // stopPlayback 在 await 边界后若抛平台异常（native 解码器半销毁），会逃进
       // 当前 zone 成未捕获异步错误。与本文件其它 unawaited future 惯例对齐。
@@ -2838,7 +2978,9 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
     // 返回无效，等句子停了那次返回才生效」。会话可见状态由同步首段负责，native 资源
     // 释放与「用户已经离开这一页」无因果关系，改 fire-and-forget（catchError 兜住
     // 平台异常，语义与 dispose 路径一致）。
-    if (!appModel.audiobookBackgroundPlay) {
+    if ((_sourceReviewSession != null || !appModel.audiobookBackgroundPlay) &&
+        _audiobookController != null &&
+        identical(appModel.audiobookSession.controller, _audiobookController)) {
       unawaited(
         appModel.audiobookSession.stop().catchError((Object e, StackTrace s) {
           ErrorLogService.instance.log('ReaderFushi.popStopAudiobook', e, s);
@@ -3112,6 +3254,9 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
             child: Listener(
               behavior: HitTestBehavior.translucent,
               onPointerDown: _handleReaderPointerDown,
+              // 鼠标在正文上移动即唤出悬浮 chrome（Flutter 腿，见
+              // [_handleReaderPointerHover]）。
+              onPointerHover: _handleReaderPointerHover,
               child: PopScope(
                 canPop: false,
                 onPopInvokedWithResult: (didPop, dynamic result) {
@@ -3138,15 +3283,27 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
                     exit: () => nav.pop(),
                     onPersistError: (Object error, StackTrace stack) =>
                         ErrorLogService.instance.log(
-                      'ReaderFushi.exitFlush',
-                      error,
-                      stack,
-                    ),
+                          'ReaderFushi.exitFlush',
+                          error,
+                          stack,
+                        ),
                   );
                 },
                 child: Scaffold(
                   backgroundColor: bgColor,
                   resizeToAvoidBottomInset: false,
+                  appBar: _sourceReviewSession == null
+                      ? null
+                      : PreferredSize(
+                          preferredSize: const Size.fromHeight(100),
+                          child: SourceReviewBanner(
+                            session: _sourceReviewSession!,
+                            runHidden: runWithLookupPopupHidden,
+                            onReturn: () {
+                              Navigator.of(context).maybePop();
+                            },
+                          ),
+                        ),
                   body: Stack(
                     fit: StackFit.expand,
                     children: <Widget>[
@@ -3237,9 +3394,10 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
                       _buildTopProgressBar(),
                       // 桌面端顶边悬停热区（收起时才存在）+ 顶部工具栏（ッツ 形态）：与底栏
                       // 同一显隐状态机，排在词典弹层之前。
-                      _buildHoverRevealLayer(),
                       _buildDesktopHeader(),
-                      // 桌面端底部状态行：排在词典弹层 / 底栏之前，让它们盖在其上。
+                      // 底部状态行 / 悬浮态收起后的屏底细进度线：排在词典弹层 /
+                      // 底栏之前，让它们盖在其上。
+                      _buildProgressEdgeLine(),
                       _buildStatusFooter(),
                       buildDictionary(),
                       // The bottom chrome returns a Positioned; it MUST stay a direct
@@ -3407,9 +3565,14 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
   Future<void> _applyHoverAutoLookupLive() async {
     if (_controller == null) return;
     final bool enabled = ReaderFushiSource.instance.hoverAutoLookup;
+    // BUG-2508：歌词页是独立文档、不经 setup 脚本，宿主腿开关也在这里一并下发
+    // （正文文档重复赋同值，无害）。判据只认 [hostOwnsWebViewHoverLookup]（macOS）。
+    final bool hostHover = hostOwnsWebViewHoverLookup;
     try {
       await _controller!.evaluateJavascript(
-        source: 'window.__hoverAutoLookup = $enabled;',
+        source:
+            'window.__hoverAutoLookup = $enabled;'
+            'window.__fushiHostHoverLookup = $hostHover;',
       );
     } catch (e, stack) {
       ErrorLogService.instance.log(
@@ -3442,6 +3605,20 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
       await _updateLyricsStyleLive();
       return;
     }
+    // BUG-2471：全局默认内容语言可能刚改过——CSS 的字体族按正文语言选，重解析一次。
+    final String? contentLanguage = resolveContentLanguage(
+      explicit: _explicitContentLanguage,
+      globalDefault: appModel.prefsRepo.defaultContentLanguage,
+    );
+    if (contentLanguage != _contentLanguage) {
+      _contentLanguage = contentLanguage;
+      appModel.currentLookupLanguage = contentLanguage;
+      _invalidateStyleCache();
+    }
+    // BUG-2471：先把引擎里已物化的 per-nav 值热更新（边距像素变量、滑动阈值、滚轮静默
+    // 窗、扫描非日文），再换 CSS——否则新样式表里 `var(--reader-margin-*, Xvh)` 的回退值
+    // 被 install 时写死的旧内联变量遮住，改边距没反应。与 CSS 换入拼在同一次 eval。
+    final String liveConfigJs = _liveEngineConfigJs();
     final String jsonCss = _currentStyleJson();
     // 余白/主题实时不生效根因修复：CSS 换入（用户可见效果）不得被样式重锚的就绪门控
     // [readerStyleReanchorAllowed] 挡掉。旧实现只在 `!window.fushiReader` 时裸换 CSS，
@@ -3461,6 +3638,7 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
       await _controller!.evaluateJavascript(
         source:
             '''
+$liveConfigJs
 (function(){
   var el = document.getElementById('fushi-reader-style');
   if (!el) {
@@ -3728,6 +3906,19 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
       next: <MiningDraftSentence>[for (final s in parsed.next) toEntry(s)],
     );
     return _miningDraft.length;
+  }
+
+  /// 「选择句子上下文」对话框里手改某一句文本：只把草稿里 [slot] 第 [index] 句的
+  /// **文本**换成 [text]，音频区间（该句从哪儿到哪儿、属哪个音频文件）原样保留——
+  /// 用户改的是会写进卡片的那行字（错别字、补主语、去掉说话人名），不是这句是哪句。
+  /// 故这里直接转调草稿模型，不重新跑 DOM 取句、也不重算区间。
+  @override
+  Future<void> onEditSentenceContextText(
+    SentenceContextSlot slot,
+    int index,
+    String text,
+  ) async {
+    _miningDraft.editSentence(slot: slot, index: index, text: text);
   }
 
   /// TODO-382 / TODO-393：弹窗点「清空已加句子」清掉本次查词的上下文选择（回到只制
@@ -4031,25 +4222,28 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
     );
   }
 
-  // ── Shift+Hover over dismiss barrier ──────────────────────────────
+  // ── Shift+Hover：宿主侧悬停查词（dismiss barrier + 正文 WebView）──────────
 
-  double _barrierHoverLastDx = -1;
-  double _barrierHoverLastDy = -1;
+  /// 宿主腿的门控 + 8px 节流（BUG-2508），barrier 与正文 WebView 两个入口共用一把
+  /// 锚，同一位置不会被两处各查一次。
+  final ReaderHostHoverLookupGate _hostHoverGate = ReaderHostHoverLookupGate();
+
+  /// 最后一次落在正文 WebView 盒内的指针位置（WebView 局部 == CSS 视口坐标）。
+  /// 由正文 [MouseRegion] 与 dismiss barrier 两个 hover 入口共同维护；指针离开
+  /// 正文（且没有弹窗盖着——弹窗一出 barrier 接管 hover，正文 MouseRegion 会先
+  /// 收到一次 exit，那不是真离开）时清空。Shift 按下沿用它在**静止光标**处直接
+  /// 查词（BUG-880 视频页同款：hover 只在移动时派发，停着按 Shift 没有事件）。
+  Offset? _lastWebViewHoverLocal;
 
   @override
   void onDismissBarrierHover(PointerHoverEvent event) {
-    if (!HardwareKeyboard.instance.isShiftPressed) {
-      _barrierHoverLastDx = -1;
-      _barrierHoverLastDy = -1;
-      return;
-    }
     // 连续查词（和鼠标一样）：弹窗出现后，全屏 dismiss barrier 盖在 WebView 之上，
     // WebView DOM 的 onShiftHover 收不到事件——此时唯一还能接 hover 的入口就是这里。
     // 故此处**不再**门控 isDictionaryShown（旧 TODO-851「限一级弹窗」放开）：按住
     // Shift 一路滑，命中新词就 _selectTextAt 换词。换词经 _runLookupAndHighlight →
     // prunePopupStack(0) 复用热槽无缝替换（不叠层、不白屏，BUG-092/482 已验证），
     // 命中同一个词由 JS selectText 的 fromHover 同词短路挡住（不重复 fire、不闪、不刷
-    // FFI）。下面的 8px 平方阈值仍在，避免每像素抖动都查。
+    // FFI）。8px 平方阈值在 [_hostHoverGate] 里，避免每像素抖动都查。
     // TODO-806 真坐标系修复：[event.localPosition] 是相对**dismiss barrier**
     // （Positioned.fill 铺满页面 Stack）的逻辑像素，而 WebView 被 chrome inset
     // （顶栏 [_readerTopOffset] / 底栏预留）挤在 Stack 内部、原点 ≠ barrier 原点。
@@ -4065,12 +4259,76 @@ class _ReaderFushiPageState extends BaseSourcePageState<ReaderFushiPage>
     final Offset local = (obj is RenderBox && obj.attached && obj.hasSize)
         ? obj.globalToLocal(event.position)
         : event.localPosition;
-    final double dx = local.dx - _barrierHoverLastDx;
-    final double dy = local.dy - _barrierHoverLastDy;
-    if (dx * dx + dy * dy < 64) return;
-    _barrierHoverLastDx = local.dx;
-    _barrierHoverLastDy = local.dy;
-    // TODO-851：遮罩悬停也是 hover 路径，传 fromHover:true，命中空白不触发 onTapEmpty。
+    _lastWebViewHoverLocal = local;
+    // barrier 上**只认 Shift**（五平台共用、与改宿主腿之前一字不差）：弹窗开着时
+    // 鼠标要从正文挪进弹窗滚动/点按钮，路上每越过一个词都换词的话永远够不到弹窗。
+    // 「悬停即查词」偏好只作用于正文 MouseRegion 入口（JS 腿在 barrier 盖住时同样
+    // 收不到 mousemove，语义一致）。
+    _hostHoverLookupAt(local, hoverAutoLookup: false);
+  }
+
+  /// 宿主腿的落点入口（barrier / 正文 MouseRegion 共用）：门开且越过节流阈值才
+  /// 查词。[hoverAutoLookup] 由调用方按入口决定，barrier 恒 false。
+  /// TODO-851：悬停是 hover 路径，传 fromHover:true，命中空白不触发 onTapEmpty。
+  void _hostHoverLookupAt(Offset local, {required bool hoverAutoLookup}) {
+    if (!_hostHoverGate.shouldLookup(
+      local,
+      shiftPressed: HardwareKeyboard.instance.isShiftPressed,
+      hoverAutoLookup: hoverAutoLookup,
+    )) {
+      return;
+    }
+    _selectTextAt(local.dx, local.dy, fromHover: true);
+  }
+
+  /// BUG-2508：正文 WebView 上的宿主侧 hover——只在 [hostOwnsWebViewHoverLookup]
+  /// （macOS）平台装配，那里 DOM `mousemove` 受 AppKit 命中测试门控（见
+  /// [ReaderHostHoverLookupGate] 文档），宿主腿是唯一可靠的一条；JS 腿由
+  /// `window.__fushiHostHoverLookup` 关掉，保持「一平台一条腿」。其余平台根本不包
+  /// [MouseRegion]，本方法不会被调用。`localPosition` 即 WebView 局部坐标，与
+  /// `onShiftHover` 的 `e.clientX/clientY` 同尺度。
+  void _handleWebViewHostHover(PointerHoverEvent event) {
+    final Offset local = event.localPosition;
+    final RenderObject? obj = _webViewKey.currentContext?.findRenderObject();
+    if (obj is RenderBox &&
+        obj.hasSize &&
+        !readerHostHoverPointInside(local, obj.size)) {
+      return;
+    }
+    _lastWebViewHoverLocal = local;
+    _hostHoverLookupAt(
+      local,
+      hoverAutoLookup: ReaderFushiSource.instance.hoverAutoLookup,
+    );
+  }
+
+  /// 指针离开正文 WebView：清掉 Shift 反查用的最后位置并复位节流锚——除非是弹窗
+  /// 刚出、barrier 接管 hover 引起的 exit（此时指针仍在正文上，位置由
+  /// [onDismissBarrierHover] 接力更新）。
+  void _handleWebViewHostHoverExit(PointerExitEvent event) {
+    if (isDictionaryShown) return;
+    _lastWebViewHoverLocal = null;
+    _hostHoverGate.reset();
+  }
+
+  /// BUG-2508（对齐视频页 BUG-880）：Shift 按下瞬间在最后指针位置直接查词，不必
+  /// 抖鼠标。hover 只在指针**移动**时派发，光标停在词上再按 Shift 没有任何 hover
+  /// 事件，两条腿都不会触发。锚点同步推进，紧随的微小抖动不会再查一次同一处；
+  /// 命中同词由 JS `selectText` 的 fromHover 短路兜底。
+  ///
+  /// 两道门，缺一条都会把用户现有选区抹掉（JS `selectText` 命中空白 `clearSelection`、
+  /// 命中别的词换词）：
+  /// * 只在宿主腿平台（[hostOwnsWebViewHoverLookup]）——Windows 的 JS 腿自有语义，
+  ///   宿主不该在按 Shift+方向 / Shift+滚轮 / 任何含 Shift 的快捷键时替它查词；
+  /// * 光标模式激活时不查（[_caretActive]）——那里 Shift+方向键是**键盘扩选**
+  ///   （[ReaderCaretRouter.decideKeyboard] 的 `shift:`），按下 Shift 的那一瞬正是
+  ///   扩选的起点，视频页 BUG-880 没有光标选区，「对齐」到这里不能无条件。
+  void _triggerShiftLookupAtLastPointer() {
+    if (!hostOwnsWebViewHoverLookup) return;
+    if (_focusNavEnabled && _caretActive) return;
+    final Offset? local = _lastWebViewHoverLocal;
+    if (local == null) return;
+    _hostHoverGate.markLookedUp(local);
     _selectTextAt(local.dx, local.dy, fromHover: true);
   }
 

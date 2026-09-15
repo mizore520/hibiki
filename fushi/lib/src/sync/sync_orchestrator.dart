@@ -1,34 +1,35 @@
 import 'dart:io';
-
-import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting;
 import 'package:fushi/src/epub/book_css_repository.dart';
-import 'package:fushi/src/epub/epub_importer.dart';
-import 'package:fushi/src/media/video/video_sidecar.dart'
+import 'package:fushi_engine/epub/epub_importer.dart';
+import 'package:fushi_engine/media/video/video_sidecar.dart'
     show listSidecarSubtitles;
 import 'package:fushi/src/models/local_audio_manager.dart';
-import 'package:fushi/src/sync/collection_manifest.dart';
-import 'package:fushi/src/sync/manga_sync_package.dart'
+import 'package:fushi_engine/sync/collection_manifest.dart';
+import 'package:fushi_engine/sync/video_metadata_manifest.dart';
+import 'package:fushi_engine/sync/video_metadata_work_target.dart';
+import 'package:fushi_engine/sync/manga_sync_package.dart'
     show
         hasExportableMangaContent,
         importMangaPackageFile,
         isMangaPackage,
         repackageMangaBook;
-import 'package:fushi/src/sync/collection_sync_engine.dart';
-import 'package:fushi/src/sync/deletion_propagation.dart';
+import 'package:fushi_engine/sync/collection_sync_engine.dart';
+import 'package:fushi_engine/sync/deletion_propagation.dart';
+import 'package:fushi/src/sync/interconnect_book_progress_sync.dart';
 import 'package:fushi/src/sync/interconnect_sync_backend.dart';
-import 'package:fushi/src/sync/override_title_lookup.dart';
-import 'package:fushi/src/sync/interconnect_service_config.dart';
-import 'package:fushi/src/sync/fushi_library_host_service.dart';
-import 'package:fushi/src/sync/aggregate_sync_service.dart';
-import 'package:fushi/src/sync/sync_asset_package_service.dart';
-import 'package:fushi/src/sync/sync_asset_store.dart';
+import 'package:fushi_engine/sync/override_title_lookup.dart';
+import 'package:fushi_engine/sync/interconnect_service_config.dart';
+import 'package:fushi_engine/sync/fushi_library_host_service.dart';
+import 'package:fushi_engine/sync/aggregate_sync_service.dart';
+import 'package:fushi_engine/sync/sync_asset_package_service.dart';
+import 'package:fushi_engine/sync/sync_asset_store.dart';
 import 'package:fushi/src/sync/sync_backend.dart';
 import 'package:fushi/src/sync/sync_remote_listing.dart';
 import 'package:fushi/src/sync/sync_manager.dart';
 import 'package:fushi/src/sync/sync_progress.dart';
 import 'package:fushi/src/sync/sync_repository.dart';
-import 'package:fushi/src/sync/ttu_filename.dart';
+import 'package:fushi_engine/sync/ttu_filename.dart';
 import 'package:fushi/src/sync/sync_file_ref.dart';
 import 'package:fushi/src/sync/video_manifest.dart';
 import 'package:fushi_audio/fushi_audio.dart'
@@ -38,6 +39,7 @@ import 'package:path/path.dart' as p;
 
 part 'sync_orchestrator/aggregate.part.dart';
 part 'sync_orchestrator/collections.part.dart';
+part 'sync_orchestrator/video_metadata.part.dart';
 part 'sync_orchestrator/tombstones.part.dart';
 part 'sync_orchestrator/books.part.dart';
 part 'sync_orchestrator/videos.part.dart';
@@ -245,6 +247,10 @@ class SyncRunReport {
   /// 故计入 [needsLocalLibraryRefresh]。
   int collectionsUpdated = 0;
 
+  /// 7c：本轮从互联 host 落到本地的视频刮削元数据作品数（`applyRemoteVideoMetadata`）。
+  /// >0 时合集详情页 / 视频卡的简介、评分、分集名会变，计入 [needsLocalLibraryRefresh]。
+  int videoMetadataUpdated = 0;
+
   /// Host-owned external-service preferences imported over the authenticated
   /// interconnect channel. These require an AppModel preference-cache refresh
   /// even though no media row was imported.
@@ -301,6 +307,7 @@ class SyncRunReport {
       localAudioImported > 0 ||
       localBookProgressPulled > 0 ||
       collectionsUpdated > 0 ||
+      videoMetadataUpdated > 0 ||
       serviceConfigsImported > 0;
 
   /// 合并另一条通道的报告到本报告（option B 双通道：云备份 + 互联并行各跑一轮后，
@@ -317,6 +324,7 @@ class SyncRunReport {
     localBookProgressPulled += other.localBookProgressPulled;
     rootSpillFilesRemoved += other.rootSpillFilesRemoved;
     collectionsUpdated += other.collectionsUpdated;
+    videoMetadataUpdated += other.videoMetadataUpdated;
     serviceConfigsImported += other.serviceConfigsImported;
     errors.addAll(other.errors);
     for (final SyncAuthFailure f in other.authFailures) {
@@ -707,6 +715,8 @@ class SyncOrchestrator {
     // 成员并集 + 移出/删除墓碑 + 手动序整合集 LWW，仅通道不同。
     if (isInterconnect) {
       await _syncCollectionsLive(report, b);
+      // 7c：刮削元数据紧跟合集之后（合集级作品按自然键解析刚同步出来的合集行）。
+      await _syncVideoMetadataLive(report, b);
     } else {
       await syncCollections(report);
     }
@@ -764,6 +774,7 @@ class SyncOrchestrator {
     final SyncRunReport report = SyncRunReport();
     final SyncBackend b = _backend;
     if (b is InterconnectSyncBackend) {
+      // 合集防抖轻量路径只同步合集；刮削元数据整库拉取留给完整 sweep（审查 #4）。
       await _syncCollectionsLive(report, b);
     } else {
       // 云路径的 ensureNamespace 依赖同步根已解析（与 [run] 开头一致）。
@@ -913,6 +924,14 @@ class SyncOrchestrator {
       report.noteError('collections sync', e);
     }
   }
+
+  /// 测试入口：直接调用 [_syncVideoMetadataLive]。
+  @visibleForTesting
+  Future<void> syncVideoMetadataLiveForTest(
+    SyncRunReport report,
+    InterconnectSyncBackend backend,
+  ) =>
+      _syncVideoMetadataLive(report, backend);
 
   /// 测试入口：直接调用 [_syncCollectionsLive]（private 方法对测试文件不可见）。
   @visibleForTesting

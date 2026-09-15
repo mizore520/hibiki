@@ -1,19 +1,17 @@
 import 'dart:developer' as developer;
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:fushi/src/epub/book_title_conflict.dart';
-import 'package:fushi/src/epub/epub_importer.dart';
+import 'package:fushi_engine/epub/book_title_conflict.dart';
+import 'package:fushi_engine/epub/epub_importer.dart';
 import 'package:fushi/src/focus/fushi_focus_controller.dart';
 import 'package:fushi/src/focus/fushi_focus_target.dart';
+import 'package:fushi/src/sync/interconnect_book_progress_sync.dart';
 import 'package:fushi/src/sync/interconnect_sync_backend.dart';
-import 'package:fushi/src/sync/manga_sync_package.dart'
-    show importMangaPackageFile, isMangaPackage;
-import 'package:fushi/src/sync/fushi_library_host_service.dart';
+import 'package:fushi_engine/sync/fushi_library_host_service.dart';
 import 'package:fushi/src/sync/position_converter.dart';
 import 'package:fushi/src/sync/sync_auto_trigger.dart';
-import 'package:fushi/src/sync/sync_asset_package_service.dart';
-import 'package:fushi/src/sync/sync_asset_store.dart';
+import 'package:fushi_engine/sync/sync_asset_package_service.dart';
+import 'package:fushi_engine/sync/sync_asset_store.dart';
 import 'package:fushi/src/sync/sync_backend.dart';
 import 'package:fushi/src/sync/sync_error_messages.dart';
 import 'package:fushi/src/sync/sync_manager.dart';
@@ -21,11 +19,13 @@ import 'package:fushi/src/sync/sync_message_dialog.dart';
 import 'package:fushi/src/sync/sync_orchestrator.dart';
 import 'package:fushi/src/sync/sync_progress_resolver.dart';
 import 'package:fushi/src/sync/sync_repository.dart';
-import 'package:fushi/src/sync/ttu_filename.dart';
+import 'package:fushi_engine/sync/ttu_filename.dart';
 import 'package:fushi/src/sync/sync_file_ref.dart';
 import 'package:fushi/utils.dart';
 import 'package:fushi_core/fushi_core.dart';
 import 'package:path/path.dart' as p;
+import 'package:fushi_engine/sync/manga_sync_package.dart'
+    show importMangaPackageFile, isMangaPackage;
 
 enum SyncChoice { skip, useLocal, useRemote }
 
@@ -46,6 +46,7 @@ class SyncCompareEntry {
     this.localAudioPosMs,
     this.remoteAudioPosSec,
     this.base,
+    this.liveAction,
   });
 
   final String title;
@@ -84,21 +85,42 @@ class SyncCompareEntry {
   /// 共同祖先基线（progress 维度时间戳）；用于把「时间戳不等」收紧为「真分叉」。
   final int? base;
 
+  /// 互联 live 进度的三方判定结论（BUG-2506）。非 null 表示这一行的远端进度
+  /// 来自 host DB（`/api/library/books/<key>/progress`）而不是 WebDAV 文件箱，
+  /// 冲突 / 方向 / 应用都按它走：文件箱里 `progress_*.json` 只有 client 自己写、
+  /// host 从不读回，对互联通道它描述不了「host 与本机的分歧」。
+  final BookProgressSyncAction? liveAction;
+
   bool get hasLocal => localUpdatedAt != null;
   bool get hasRemote => remoteUpdatedAt != null;
 
   /// 冲突 = 双边都偏离共同祖先 base（真分叉），不再是简单的时间戳不等。
   /// 单边改动（一边等于 base）由 [resolveProgressSync] 判为自动方向，不算冲突。
-  bool get hasConflict => resolveProgressSync(
-        local: localUpdatedAt,
-        remote: remoteUpdatedAt,
-        base: base,
-      ).isConflict;
-  bool get isSynced =>
-      hasLocal && hasRemote && localUpdatedAt == remoteUpdatedAt;
+  /// 互联 live 行按位置基线三方判定（[liveAction]，BUG-2506）。
+  bool get hasConflict => liveAction != null
+      ? liveAction == BookProgressSyncAction.conflict
+      : resolveProgressSync(
+          local: localUpdatedAt,
+          remote: remoteUpdatedAt,
+          base: base,
+        ).isConflict;
+  bool get isSynced => liveAction != null
+      ? liveAction == BookProgressSyncAction.synced
+      : hasLocal && hasRemote && localUpdatedAt == remoteUpdatedAt;
   bool get needsManualChoice => hasConflict;
 
   SyncDirection get autoDirection {
+    switch (liveAction) {
+      case BookProgressSyncAction.synced:
+        return SyncDirection.synced;
+      case BookProgressSyncAction.pushLocal:
+        return SyncDirection.exportToTtu;
+      case BookProgressSyncAction.applyRemote:
+        return SyncDirection.importFromTtu;
+      case BookProgressSyncAction.conflict:
+      case null:
+        break;
+    }
     if (!hasLocal && !hasRemote) return SyncDirection.synced;
     if (!hasLocal) return SyncDirection.importFromTtu;
     if (!hasRemote) return SyncDirection.exportToTtu;
@@ -193,7 +215,7 @@ Future<List<SyncCompareEntry>> _fetchCompareData(
   final remoteByTitle = <String, SyncFileRef>{};
   for (final f in remoteBooks) {
     remoteByTitle[f.name] = f;
-    final cleaned = _unsanitize(f.name);
+    final cleaned = unsanitizeTtuFilename(f.name);
     if (cleaned != f.name) remoteByTitle[cleaned] = f;
     allTitles.add(cleaned);
   }
@@ -227,6 +249,31 @@ Future<List<SyncCompareEntry>> _fetchCompareData(
     );
     for (var j = 0; j < batch.length; j++) {
       remoteDataMap[batch[j].key] = results[j];
+    }
+  }
+
+  // BUG-2506：互联通道的书进度真相在 host DB，不在 WebDAV 文件箱。对「本机有、
+  // host 也有」的书按 live 端点取 host 进度 + 位置基线做三方判定，与 sweep
+  // （SyncOrchestrator._syncBookProgressLive）同一份纯函数、同一份 IO 层，弹出来
+  // 的冲突和 sweep 报出来的冲突才是同一批。
+  final Map<String, _LiveProgressRow> liveProgressByTitle =
+      <String, _LiveProgressRow>{};
+  if (backend is InterconnectSyncBackend) {
+    final InterconnectBookProgressSync liveSync =
+        InterconnectBookProgressSync(db: db, backend: backend);
+    final List<EpubBookRow> liveJobs = <EpubBookRow>[
+      for (final EpubBookRow b in localBooks)
+        if (liveByTitle.containsKey(b.title)) b,
+    ];
+    for (var i = 0; i < liveJobs.length; i += batchSize) {
+      final List<EpubBookRow> batch = liveJobs.skip(i).take(batchSize).toList();
+      final List<_LiveProgressRow?> rows = await Future.wait(
+        batch.map((EpubBookRow b) => _fetchLiveProgress(liveSync, b)),
+      );
+      for (var j = 0; j < batch.length; j++) {
+        final _LiveProgressRow? row = rows[j];
+        if (row != null) liveProgressByTitle[batch[j].title] = row;
+      }
     }
   }
 
@@ -293,6 +340,18 @@ Future<List<SyncCompareEntry>> _fetchCompareData(
     final int? base =
         await db.getSyncBaseline(sanitizeTtuFilename(title), 'progress');
 
+    // 互联 live 行：远端进度 / 时间戳换成 host DB 的（BUG-2506）；host 无记录时
+    // 远端显示「无数据」而不是文件箱里 client 自己上次导出的旧值。
+    final _LiveProgressRow? liveRow = liveProgressByTitle[title];
+    final double? remoteProg = liveRow != null
+        ? (liveRow.remote.updatedAtMs > 0 && local != null
+            ? _fractionOf(liveRow.remote, local)
+            : null)
+        : remoteData?.progress;
+    final int? remoteUpdatedAt = liveRow != null
+        ? (liveRow.remote.updatedAtMs > 0 ? liveRow.remote.updatedAtMs : null)
+        : remoteData?.updatedAt;
+
     entries.add(SyncCompareEntry(
       title: title,
       bookKey: local?.bookKey,
@@ -302,13 +361,14 @@ Future<List<SyncCompareEntry>> _fetchCompareData(
       remoteAudioBookId: remoteData?.audioBookId,
       localProgress: localProg,
       localUpdatedAt: localUpdatedAt,
-      remoteProgress: remoteData?.progress,
-      remoteUpdatedAt: remoteData?.updatedAt,
+      remoteProgress: remoteProg,
+      remoteUpdatedAt: remoteUpdatedAt,
       localStatsCount: localStatsCount,
       remoteStatsCount: remoteData?.statsCount,
       localAudioPosMs: localAudioMs,
       remoteAudioPosSec: remoteData?.audioPosSec,
       base: base,
+      liveAction: liveRow?.action,
     ));
   }
 
@@ -393,6 +453,61 @@ class _RemoteBookData {
   final String? audioBookId;
 }
 
+/// 互联 live 行的取数结果（BUG-2506）：host 进度 + 本机进度 + 三方判定结论。
+class _LiveProgressRow {
+  const _LiveProgressRow({
+    required this.local,
+    required this.remote,
+    required this.action,
+  });
+
+  final RemoteBookProgress local;
+  final RemoteBookProgress remote;
+  final BookProgressSyncAction action;
+}
+
+/// 取一本书的 host 进度并做三方判定；网络失败返回 null（这一行退回文件箱口径，
+/// 不让一本书的 GET 失败把整个对比弹窗炸掉）。
+Future<_LiveProgressRow?> _fetchLiveProgress(
+  InterconnectBookProgressSync sync,
+  EpubBookRow book,
+) async {
+  try {
+    final RemoteBookProgress remote = await sync.remoteProgress(book);
+    final RemoteBookProgress local = await sync.localProgress(book);
+    final BookProgressBaseline? base = await sync.baseline(book);
+    return _LiveProgressRow(
+      local: local,
+      remote: remote,
+      action: resolveBookProgressThreeWay(
+        local: local,
+        remote: remote,
+        base: base,
+      ),
+    );
+  } catch (e) {
+    developer.log(
+      'Failed to fetch live progress for "${book.title}"',
+      error: e,
+      name: 'SyncCompare',
+    );
+    return null;
+  }
+}
+
+/// host 进度 → 阅读分数（与本机列同一算法：按本机书的章节字符表折算）。
+double _fractionOf(RemoteBookProgress progress, EpubBookRow book) {
+  final chapters = parseChaptersJson(book.chaptersJson);
+  final int total = totalCharacterCount(chapters);
+  if (total <= 0) return 0;
+  final int explored = toExploredCharCount(
+    sectionIndex: progress.sectionIndex,
+    normCharOffset: progress.normCharOffset,
+    chapters: chapters,
+  );
+  return explored / total;
+}
+
 Future<_RemoteBookData> _fetchRemoteBookData(
   SyncBackend backend,
   String folderId,
@@ -457,17 +572,6 @@ Future<String> _ensureRoot(
   final savedCache = await repo.getFolderCache(scope);
   backend.restoreCache(rootFolderId: savedRoot, titleToFolderId: savedCache);
   return backend.findOrCreateRootFolder();
-}
-
-String _unsanitize(String name) {
-  return name
-      .replaceAll('~ttu-spc~', ' ')
-      .replaceAll('~ttu-dend~', '.')
-      .replaceAll('~ttu-star~', '*')
-      .replaceAllMapped(
-        RegExp(r'%([0-9A-Fa-f]{2})'),
-        (m) => String.fromCharCode(int.parse(m[1]!, radix: 16)),
-      );
 }
 
 Future<void> showSyncCompareDialog(
@@ -754,6 +858,7 @@ class _SyncCompareDialogState extends State<SyncCompareDialog> {
               ? SyncDirection.exportToTtu
               : SyncDirection.importFromTtu;
 
+          SyncApplyOutcome outcome;
           try {
             final result = await manager.syncBook(
               book: book,
@@ -763,22 +868,46 @@ class _SyncCompareDialogState extends State<SyncCompareDialog> {
               syncAudioBook: syncAudioBook,
               syncContent: syncContent,
             );
-            switch (classifySyncApply(result)) {
-              case SyncApplyOutcome.applied:
-                applied++;
-              case SyncApplyOutcome.failed:
-                errors.add(entry.title);
-              case SyncApplyOutcome.noop:
-                // 良性跳过（无可传输内容）：既不计成功也不报错，避免误报「同步错误」。
-                break;
-            }
+            outcome = classifySyncApply(result);
           } catch (e) {
-            errors.add(entry.title);
+            outcome = SyncApplyOutcome.failed;
             developer.log(
               'Failed to sync "${entry.title}"',
               error: e,
               name: 'SyncCompare',
             );
+          }
+          // BUG-2506：互联 live 行的**书进度**按用户的选择经 live 端点落地
+          // （host DB ↔ 本机 reader_positions），并记下新的位置基线。放在
+          // SyncManager 之后——它对互联仍会把文件箱里 client 自己的旧进度导回
+          // 本机，这里最后一步用用户选的那一侧把它盖正；也不依赖它成败——文件箱
+          // 那步对互联是 dead weight，它失败不该把用户刚做的选择判成失败。
+          if (entry.liveAction != null &&
+              widget.backend is InterconnectSyncBackend) {
+            try {
+              if (await _applyLiveProgressChoice(
+                book: book,
+                useLocal: choice == SyncChoice.useLocal,
+              )) {
+                outcome = SyncApplyOutcome.applied;
+              }
+            } catch (e) {
+              outcome = SyncApplyOutcome.failed;
+              developer.log(
+                'Failed to apply live progress for "${entry.title}"',
+                error: e,
+                name: 'SyncCompare',
+              );
+            }
+          }
+          switch (outcome) {
+            case SyncApplyOutcome.applied:
+              applied++;
+            case SyncApplyOutcome.failed:
+              errors.add(entry.title);
+            case SyncApplyOutcome.noop:
+              // 良性跳过（无可传输内容）：既不计成功也不报错，避免误报「同步错误」。
+              break;
           }
           done++;
           if (mounted) setState(() => _progress = done / total);
@@ -802,6 +931,30 @@ class _SyncCompareDialogState extends State<SyncCompareDialog> {
         });
       }
     }
+  }
+
+  /// 互联 live 行的书进度按用户选择落地（BUG-2506）：选本机 → 推给 host（时间戳
+  /// 抬到严格新于 host，见 [InterconnectBookProgressSync.pushLocal]）；选远端 →
+  /// host 进度落回本机。两者都记下新的位置基线，这本书不再以同一分叉重复弹出。
+  /// 返回是否真的写了东西（host 无记录且本机也无记录时无事可做）。
+  Future<bool> _applyLiveProgressChoice({
+    required EpubBookRow book,
+    required bool useLocal,
+  }) async {
+    final InterconnectBookProgressSync sync = InterconnectBookProgressSync(
+      db: widget.db,
+      backend: widget.backend as InterconnectSyncBackend,
+    );
+    final RemoteBookProgress local = await sync.localProgress(book);
+    final RemoteBookProgress remote = await sync.remoteProgress(book);
+    if (useLocal) {
+      if (local.updatedAtMs <= 0) return false;
+      await sync.pushLocal(book, local: local, remote: remote);
+      return true;
+    }
+    if (remote.updatedAtMs <= 0) return false;
+    await sync.applyRemote(book, remote);
+    return true;
   }
 
   /// 750a：互联下载远端独有书时补下其有声书包（若有）。

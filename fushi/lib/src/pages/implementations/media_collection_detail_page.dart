@@ -1,14 +1,11 @@
 import 'dart:async' show Timer, unawaited;
 import 'dart:io';
-
 import 'package:fushi/src/utils/net/app_http_image.dart';
 import 'package:flutter/material.dart';
-
 import 'package:path/path.dart' as p;
-
 import 'package:fushi/src/focus/fushi_focus_controller.dart';
 import 'package:fushi/src/focus/fushi_focus_target.dart';
-import 'package:fushi/src/media/collections/collection_asset_reclaim.dart';
+import 'package:fushi_engine/media/collections/collection_asset_reclaim.dart';
 import 'package:fushi/src/media/collections/collection_continue.dart';
 import 'package:fushi/src/media/collections/collection_episode_slot.dart';
 import 'package:fushi/src/media/media_cover_service.dart';
@@ -16,9 +13,9 @@ import 'package:fushi/src/media/collections/collection_one_key_sort.dart'
     show CollectionSortMeta, compareCollectionMembers;
 import 'package:fushi/src/media/collections/collection_relation.dart';
 import 'package:fushi/src/media/collections/collection_scrape_metadata_compat.dart';
-import 'package:fushi/src/media/collections/collection_season_groups.dart';
+import 'package:fushi_engine/media/collections/collection_season_groups.dart';
 import 'package:fushi/src/media/media_cover_source.dart';
-import 'package:fushi/src/media/source_library/source_library_row.dart';
+import 'package:fushi_engine/media/source_library/source_library_row.dart';
 import 'package:fushi/src/media/video/anilist_client.dart' show AniListMedia;
 import 'package:fushi/src/media/video/cover_ui/episode_rename_confirm_dialog.dart';
 import 'package:fushi/src/media/video/cover_ui/landscape_cover_image.dart';
@@ -27,16 +24,15 @@ import 'package:fushi/src/media/video/cover_ui/video_specs_panel.dart';
 import 'package:fushi/src/media/video/video_specs_service.dart';
 import 'package:fushi/src/media/video/metadata/video_country_display.dart';
 import 'package:fushi/src/media/video/metadata/video_metadata_credit_repository.dart';
-import 'package:fushi/src/media/video/metadata/video_metadata_lock_dialog.dart';
-import 'package:fushi/src/media/video/metadata/video_metadata_models.dart';
+import 'package:fushi_engine/media/video/metadata/video_metadata_models.dart';
 import 'package:fushi/src/media/video/metadata/video_source_metadata_indexer.dart';
 import 'package:fushi/src/media/video/stream_video_launch.dart';
-import 'package:fushi/src/media/video/video_local_files.dart'
+import 'package:fushi_engine/media/video/video_local_files.dart'
     show videoBookHasLocalFiles;
 import 'package:fushi/src/media/video/scraper/episode_rename.dart';
-import 'package:fushi/src/media/video/scraper/scraper_types.dart';
-import 'package:fushi/src/media/video/video_book_repository.dart';
-import 'package:fushi/src/media/video/video_filename_parser.dart';
+import 'package:fushi_engine/media/video/scraper/scraper_types.dart';
+import 'package:fushi_engine/media/video/video_book_repository.dart';
+import 'package:fushi_engine/media/video/video_filename_parser.dart';
 import 'package:fushi/src/media/video/video_library_overview.dart'
     show formatVideoPosition;
 import 'package:fushi/src/pages/implementations/anime_download_dialog.dart';
@@ -51,12 +47,13 @@ import 'package:fushi/src/pages/implementations/subtitle_collection_panel.dart'
 import 'package:fushi/src/pages/implementations/subtitle_workbench_page.dart';
 import 'package:fushi/src/storage/app_paths.dart';
 import 'package:fushi/src/pages/implementations/video_fushi_page.dart';
-import 'package:fushi/src/sync/fushi_library_host_service.dart'
+import 'package:fushi_engine/sync/fushi_library_host_service.dart'
     show RemoteVideoInfo;
 import 'package:fushi/src/sync/remote_cover_image.dart';
 import 'package:fushi/src/utils/components/fushi_reorderable_grid.dart';
 import 'package:fushi/utils.dart';
 import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi/src/media/video/metadata/video_metadata_lock_dialog.dart';
 
 /// 统一合集 Phase 4：合集详情页（Jellyfin 式）。playlist 合集 = 有序剧集列表：点某集从
 /// 该集开始播放（带剧集面板 / 上下集 / 连播，调用方经 playlistCollectionId 打开播放器）；
@@ -1947,7 +1944,22 @@ class _MediaCollectionDetailPageState extends State<MediaCollectionDetailPage>
                                   color: Color(0x1FFFFFFF),
                                   child: Icon(Icons.person_outline, size: 42),
                                 )
-                              : Image(image: image, fit: BoxFit.cover),
+                              : Image(
+                                  image: image,
+                                  fit: BoxFit.cover,
+                                  // BUG-2496：坏头像文件解码失败退回占位，不当致命错误。
+                                  errorBuilder: (_, Object error, __) {
+                                    ErrorLogService.instance.logDiagnostic(
+                                      'MediaCollectionDetailPage.credit.coverDecode',
+                                      '${path ?? url}: $error',
+                                    );
+                                    return const ColoredBox(
+                                      color: Color(0x1FFFFFFF),
+                                      child: Icon(Icons.person_outline,
+                                          size: 42),
+                                    );
+                                  },
+                                ),
                         ),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(9, 8, 9, 2),
@@ -2045,7 +2057,19 @@ class _MediaCollectionDetailPageState extends State<MediaCollectionDetailPage>
                             fit: StackFit.expand,
                             children: <Widget>[
                               if (thumb != null && File(thumb).existsSync())
-                                Image.file(File(thumb), fit: BoxFit.cover)
+                                Image.file(
+                                  File(thumb),
+                                  fit: BoxFit.cover,
+                                  // BUG-2496：坏缩略图解码失败退回底色块，不当致命错误。
+                                  errorBuilder: (_, Object error, __) {
+                                    ErrorLogService.instance.logDiagnostic(
+                                      'MediaCollectionDetailPage.extra.coverDecode',
+                                      '$thumb: $error',
+                                    );
+                                    return const ColoredBox(
+                                        color: Color(0x1FFFFFFF));
+                                  },
+                                )
                               else if (thumb != null)
                                 Image(
                                   image: AppCachedHttpImage(thumb),
@@ -2519,6 +2543,20 @@ class _MediaCollectionDetailPageState extends State<MediaCollectionDetailPage>
       case _CollectionManageAction.fillMissing:
         _fillMissingEpisodes();
         return;
+      case _CollectionManageAction.downloadRemote:
+        // 批下载在 app 级管理器里跑到底；这里只等它排完，回来重载让新落地的
+        // 本地行替换远端占位。
+        await widget.remote?.downloadMembers?.call(_collection, _remoteMembers);
+        if (mounted) await _reload();
+        return;
+      case _CollectionManageAction.scrapeOnHost:
+        await widget.remote?.scrapeOnHost?.call(_collection);
+        if (mounted) await _reload();
+        return;
+      case _CollectionManageAction.scrapeForHost:
+        await widget.remote?.scrapeForHost?.call(_collection);
+        if (mounted) await _reload();
+        return;
       case _CollectionManageAction.splitBySeason:
         await _splitBySeason();
         return;
@@ -2633,6 +2671,28 @@ class _MediaCollectionDetailPageState extends State<MediaCollectionDetailPage>
                 Icons.playlist_add,
                 t.collection_episode_fill_missing,
                 enabled: _slots.isNotEmpty,
+              ),
+            // 合集整体下载（#6）：把只在对端的成员整批拉到本机。与「补齐缺集」
+            // （torrent 下载中心）是两条不同的路，入口分开、文案分开。
+            if (widget.remote?.downloadMembers != null)
+              _manageMenuItem(
+                _CollectionManageAction.downloadRemote,
+                Icons.cloud_download_outlined,
+                t.remote_collection_download_members,
+                enabled: _remoteMembers.isNotEmpty,
+              ),
+            // 互联刮削（7a / 7b）。
+            if (widget.remote?.scrapeOnHost != null)
+              _manageMenuItem(
+                _CollectionManageAction.scrapeOnHost,
+                Icons.cloud_sync_outlined,
+                t.remote_collection_scrape_on_host,
+              ),
+            if (widget.remote?.scrapeForHost != null)
+              _manageMenuItem(
+                _CollectionManageAction.scrapeForHost,
+                Icons.cloud_upload_outlined,
+                t.remote_collection_scrape_push_to_host,
               ),
             _manageMenuItem(
               _CollectionManageAction.splitBySeason,
@@ -2754,6 +2814,9 @@ enum _CollectionManageAction {
   subtitles,
   renameEpisodes,
   fillMissing,
+  downloadRemote,
+  scrapeOnHost,
+  scrapeForHost,
   splitBySeason,
   lockFields,
   rename,

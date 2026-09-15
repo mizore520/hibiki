@@ -15,9 +15,9 @@ import 'package:fushi/src/pages/implementations/stat_shared.dart';
 import 'package:fushi/src/pages/implementations/stat_source_totals.dart';
 import 'package:fushi/src/pages/implementations/stat_summary.dart';
 import 'package:fushi/src/pages/implementations/stat_trends.dart';
-import 'package:fushi/src/stats/stat_facts.dart';
+import 'package:fushi_engine/stats/stat_facts.dart';
 import 'package:fushi/src/stats/stat_window.dart';
-import 'package:fushi/src/stats/study_sessions.dart';
+import 'package:fushi_engine/stats/study_sessions.dart';
 import 'package:fushi/utils.dart';
 import 'package:fushi_core/fushi_core.dart';
 
@@ -437,9 +437,8 @@ class _ReadingStatisticsPageState extends BasePageState<ReadingStatisticsPage> {
     }
   }
 
-  /// 阅读速度展示：四舍五入到整数字/小时，套 i18n 单位。
-  static String _formatCph(double cph) =>
-      t.stat_speed_cph(n: cph.round().toString());
+  /// 阅读速度展示：委托共享的 [formatStatCph]（时段卡 / 会话行同一口径）。
+  static String _formatCph(double cph) => formatStatCph(cph);
 
   /// 日期范围展示：`首日 ~ 末日`；无数据回退占位符。
   String _formatDateRange() {
@@ -560,7 +559,9 @@ class _ReadingStatisticsPageState extends BasePageState<ReadingStatisticsPage> {
                 childCount: _bookData.length,
               ),
             ),
-            SliverPadding(padding: EdgeInsets.only(bottom: card * 2)),
+            // BUG-2440：收尾留白连带补上底部安全区，否则脚手架让出 home indicator
+            // 那一段后，最后一本书会被手势条压住。
+            buildStatTailSliver(context),
           ],
         );
       },
@@ -851,6 +852,7 @@ class _ReadingStatisticsPageState extends BasePageState<ReadingStatisticsPage> {
     int favoritedSentences, {
     required bool Function(String dateKey) contains,
   }) {
+    final String? cph = formatStatCphOf(chars, ms);
     return StatPeriodSummary(
       label: label,
       // 主值 = 学习时长，与观看 / 游戏 / 总览三个 tab 同口径（用户 2026-09-08
@@ -860,6 +862,9 @@ class _ReadingStatisticsPageState extends BasePageState<ReadingStatisticsPage> {
       onTap: () => unawaited(_showPeriodDetail(label, contains)),
       lines: <StatSummaryLine>[
         StatSummaryLine(value: formatStatChars(chars)),
+        // 速度（字/时）紧跟字数：用户 2026-09-12 要求顶部方框直接给出每小时字数。
+        if (cph != null)
+          StatSummaryLine(label: t.stat_reading_speed, value: cph),
         StatSummaryLine(label: t.stat_lookup, value: '$lookup'),
         StatSummaryLine(label: t.stat_mined, value: '$mined'),
         StatSummaryLine(label: t.stat_favorited, value: '$favorited'),

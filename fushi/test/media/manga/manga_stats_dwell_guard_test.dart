@@ -64,11 +64,18 @@ void main() {
     );
     expect(note, contains('_studyClock?.touch();'));
     expect(note, contains('_readLedger.arrive(start, end);'));
-    // 本地开书 / 在线开章 / _recordProgress / spread↔webtoon 切换。
+    // 装载（本地卷与已下载的在线章共用 _loadLocalPayload，2026-09-12 起阅读器
+    // 只有这一条装载路径）/ _recordProgress / spread↔webtoon 切换 / 卡片来源
+    // 回看转正常阅读（_onSourceReviewChanged：回看态不计统计，用户点「继续阅读」
+    // 那一刻才建时钟并把当前页交给账本）。
     expect(
       '_noteVisiblePages();'.allMatches(src).length,
       4,
       reason: '四个位置变化入口都必须把当前单元交给账本，少一处就是那条路上的页永远不计',
+    );
+    expect(
+      _functionSource(src, '  void _onSourceReviewChanged() {', '\n  }\n'),
+      contains('_noteVisiblePages();'),
     );
   });
 
@@ -81,7 +88,8 @@ void main() {
     expect(
       dispose,
       contains('_studyClock?.detach();'),
-      reason: 'dispose 是同步的：停表必须走 detach（零 IO，攒下的写交给 '
+      reason:
+          'dispose 是同步的：停表必须走 detach（零 IO，攒下的写交给 '
           'ExitFlushRegistry.defer）。在 dispose 里直接落库 = 一笔无人 await 的事务，'
           '与随后的 db.close() 互等',
     );
@@ -108,7 +116,10 @@ void main() {
       reason: '最后一次位置落盘改为登记到退出汇合点，由退出路径统一 await',
     );
     // 进程退出登记的是 _flushForExit（只落盘）：桌面点 X 不触发 dispose。
-    expect(src, contains('ExitFlushRegistry.instance.register(_flushForExit);'));
+    expect(
+      src,
+      contains('ExitFlushRegistry.instance.register(_flushForExit);'),
+    );
     final String forExit = _functionSource(
       src,
       '  Future<void> _flushForExit() async {',
@@ -135,16 +146,18 @@ void main() {
     expect(
       '_readLedger.leave();'.allMatches(src),
       isEmpty,
-      reason: '单行 leave 已无：关书三条路零账本动作；生命周期 paused 也不 leave——'
+      reason:
+          '单行 leave 已无：关书三条路零账本动作；生命周期 paused 也不 leave——'
           '停表期间 addPages 会被丢弃，且恢复后当前页要继续算',
     );
-    // 换章：同一 State 内页号坐标系重用，先结算旧章末页再清并集。
-    final String online = _functionSource(
+    // 换章：同一 State 内页号坐标系重用，先结算旧章末页再清并集。装载路径只有
+    // _loadLocalPayload 一条（在线章下载后就是本地形状），首次打开两步都是 no-op。
+    final String load = _functionSource(
       src,
-      '  Future<void> _loadOnlineChapter(',
+      '  Future<void> _loadLocalPayload({',
       '\n  }\n',
     );
-    expect(online, contains('_readLedger\n      ..leave()\n      ..reset();'));
+    expect(load, contains('_readLedger\n      ..leave()\n      ..reset();'));
   });
 
   test('停留门 / 会话 Set / 存档预置形态不得回潮', () {

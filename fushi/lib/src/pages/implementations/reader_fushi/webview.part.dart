@@ -11,7 +11,7 @@ part of '../reader_fushi_page.dart';
 ///   (d) `_buildWebView` 里调 @protected 的 `prunePopupStack` / `topPopupState`
 ///       改走主壳新增的 `_webviewPrunePopupStack` / `_webviewTopPopupState` 转发器
 ///       （扩展不能直接读写基类 @protected 成员），与 caret 域的 `_caret*` 转发同款。
-///   (e) `_notFound` / `_forbidden` / `_isValidFontData` / `_buildFuriganaJs` /
+///   (e) `_notFound` / `_forbidden` / `_isValidFontData` /
 ///       `_stripScriptTags` 五个 static 连同其唯一调用者一起搬来，作扩展 static 保留
 ///       （裸名可解析）。
 /// 样式/主题域（`_buildStyleTag` / `_computeStyleTag` / `_applyStylesLive` 等）被
@@ -57,9 +57,7 @@ extension _ReaderWebView on _ReaderFushiPageState {
     }
     _isNavigatingToChapter = true;
     try {
-      await _controller!.loadUrl(
-        urlRequest: URLRequest(url: WebUri(url)),
-      );
+      await _controller!.loadUrl(urlRequest: URLRequest(url: WebUri(url)));
     } catch (e) {
       _isNavigatingToChapter = false;
       rethrow;
@@ -118,7 +116,7 @@ extension _ReaderWebView on _ReaderFushiPageState {
       final String? safeFontPath = ReaderFushiSource.safeCustomFontPath(
         fontPath,
         allowedRoots: <String>[
-          p.join(appModel.appDirectory.path, 'custom_fonts')
+          p.join(appModel.appDirectory.path, 'custom_fonts'),
         ],
       );
       if (safeFontPath == null) {
@@ -142,7 +140,8 @@ extension _ReaderWebView on _ReaderFushiPageState {
         return _notFound('font corrupted: $fontPath (${data.length} bytes)');
       }
       debugPrint(
-          '[ReaderFushi] font served: $safeFontPath (${data.length} bytes)');
+        '[ReaderFushi] font served: $safeFontPath (${data.length} bytes)',
+      );
       final String mime = fallbackMimeType(safeFontPath);
       return _ReaderResourceResponse(
         contentType: mime,
@@ -160,8 +159,9 @@ extension _ReaderWebView on _ReaderFushiPageState {
     if (!path.startsWith('/epub/')) return _notFound('unknown path: $path');
     if (_extractDir == null) return _notFound('extractDir not ready: $path');
 
-    final String epubPath =
-        Uri.decodeComponent(path.substring('/epub/'.length));
+    final String epubPath = Uri.decodeComponent(
+      path.substring('/epub/'.length),
+    );
     // BUG-1218：边界校验用 canonicalize（大小写折叠，`../` 逃逸不被大小写绕过），
     // 真实读取路径用 normalize（**保留大小写**）。拿 canonicalize 的结果去 File()
     // 会把 `OEBPS/Dick_x.htm` 折成 `oebps/dick_x.htm` —— Windows 侥幸能读，
@@ -193,8 +193,9 @@ extension _ReaderWebView on _ReaderFushiPageState {
     // （都被折成小写）也能互相匹配，但那让 filePath 在大小写敏感平台上根本读不到文件；
     // 现在 parser 的 resources 键与这里的 declaredHref 都是真实大小写，既能读到文件，
     // 也仍然对得上。
-    final String declaredHref =
-        p.relative(filePath, from: normExtractDir).replaceAll('\\', '/');
+    final String declaredHref = p
+        .relative(filePath, from: normExtractDir)
+        .replaceAll('\\', '/');
     final String extMime = fallbackMimeType(filePath);
     // [EpubBook.mediaType] 自带「manifest 未声明就按扩展名兜底」，故 book 未就绪 /
     // 资源不在 manifest / OPF 缺 media-type 三种情况都自然退回 extMime。
@@ -282,8 +283,11 @@ extension _ReaderWebView on _ReaderFushiPageState {
           ? await _readerResourcePayload(request.url)
           : _notFound('unknown custom scheme URL: ${request.url}');
     } catch (e, stack) {
-      ErrorLogService.instance
-          .log('ReaderFushi.customSchemeResource', e, stack);
+      ErrorLogService.instance.log(
+        'ReaderFushi.customSchemeResource',
+        e,
+        stack,
+      );
       response = _notFound('custom scheme resource failed: ${request.url}');
     }
     return CustomSchemeResponse(
@@ -375,7 +379,8 @@ extension _ReaderWebView on _ReaderFushiPageState {
     final RegExpMatch? headOpen = headOpenPattern.firstMatch(html);
     final RegExpMatch? headClose = headClosePattern.firstMatch(html);
     if (headOpen != null && headClose != null) {
-      html = '${html.substring(0, headOpen.end)}\n$hideUntilReady'
+      html =
+          '${html.substring(0, headOpen.end)}\n$hideUntilReady'
           '${html.substring(headOpen.end, headClose.start)}\n$styleTag\n'
           '${html.substring(headClose.start)}';
     } else if (headOpen != null) {
@@ -411,15 +416,17 @@ extension _ReaderWebView on _ReaderFushiPageState {
 
     final StringBuffer figures = StringBuffer();
     for (final int imageChapter in merged) {
-      final String chapterDir =
-          p.posix.dirname(normalizeHref(book.chapters[imageChapter].href));
+      final String chapterDir = p.posix.dirname(
+        normalizeHref(book.chapters[imageChapter].href),
+      );
       for (final String src in book.chapterImageSrcs(imageChapter)) {
         if (src.trim().isEmpty) continue;
         final bool isAbsolute = src.startsWith('data:') || src.contains('://');
         final String absoluteUrl = isAbsolute
             ? src
             : ReaderFushiSource.epubUrl(
-                p.posix.normalize(p.posix.join(chapterDir, src)));
+                p.posix.normalize(p.posix.join(chapterDir, src)),
+              );
         // TODO-1339 / BUG-1140 第二轮：显式 `loading="eager"`。这些前导插图是章首
         // **结构性**内容（firstContentEdge 只计入非零尺寸媒体，挂 lazy 会让章首锚跳过
         // 第一张）。JS 侧靠 `.fushi-merged-image` 放行，Dart 侧原本只靠「markImagesLazy
@@ -479,27 +486,34 @@ extension _ReaderWebView on _ReaderFushiPageState {
     if (_prefetchingHtmlPath == filePath) return;
     _prefetchingHtmlPath = filePath;
     final int styleEpochAtStart = _styleEpoch;
-    unawaited(Future<void>(() async {
-      try {
-        if (!mounted || _settings == null) return;
-        if (_sanitizedHtmlCache.containsKey(filePath)) return;
-        final File file = File(filePath);
-        if (!await file.exists()) return;
-        final Uint8List raw = await file.readAsBytes();
-        if (!mounted || _settings == null) return;
-        final Uint8List built =
-            _buildSanitizedChapterHtmlBytes(raw, chapterIndex: index);
-        if (!mounted || _styleEpoch != styleEpochAtStart) return;
-        _putChapterHtml(filePath, built);
-      } catch (e, stack) {
-        ErrorLogService.instance
-            .log('ReaderFushi._prefetchAdjacentChapter', e, stack);
-      } finally {
-        if (_prefetchingHtmlPath == filePath) {
-          _prefetchingHtmlPath = null;
+    unawaited(
+      Future<void>(() async {
+        try {
+          if (!mounted || _settings == null) return;
+          if (_sanitizedHtmlCache.containsKey(filePath)) return;
+          final File file = File(filePath);
+          if (!await file.exists()) return;
+          final Uint8List raw = await file.readAsBytes();
+          if (!mounted || _settings == null) return;
+          final Uint8List built = _buildSanitizedChapterHtmlBytes(
+            raw,
+            chapterIndex: index,
+          );
+          if (!mounted || _styleEpoch != styleEpochAtStart) return;
+          _putChapterHtml(filePath, built);
+        } catch (e, stack) {
+          ErrorLogService.instance.log(
+            'ReaderFushi._prefetchAdjacentChapter',
+            e,
+            stack,
+          );
+        } finally {
+          if (_prefetchingHtmlPath == filePath) {
+            _prefetchingHtmlPath = null;
+          }
         }
-      }
-    }));
+      }),
+    );
   }
 
   /// 章号非法 / 书未就绪时返回 true（保守走 eager，宁可慢一点也不冒「该 eager 的图
@@ -541,8 +555,9 @@ extension _ReaderWebView on _ReaderFushiPageState {
     final List<String> srcs = book.chapterImageSrcs(index);
     if (srcs.isEmpty) return;
     final String? extractDir = _extractDir;
-    final String chapterDir =
-        p.posix.dirname(normalizeHref(book.chapters[index].href));
+    final String chapterDir = p.posix.dirname(
+      normalizeHref(book.chapters[index].href),
+    );
     final List<String> urls = <String>[];
     int budget = _ReaderFushiPageState._kImagePrefetchMaxBytes;
     for (final String src in srcs) {
@@ -558,13 +573,16 @@ extension _ReaderWebView on _ReaderFushiPageState {
     }
     if (urls.isEmpty) return;
     final String json = jsonEncode(urls);
-    unawaited(controller
-        .evaluateJavascript(
-          source: '(function(){try{var u=$json;'
-              'for(var i=0;i<u.length;i++){var im=new Image();'
-              'im.decoding="async";im.src=u[i];}}catch(e){}})();',
-        )
-        .catchError((Object _) => null));
+    unawaited(
+      controller
+          .evaluateJavascript(
+            source:
+                '(function(){try{var u=$json;'
+                'for(var i=0;i<u.length;i++){var im=new Image();'
+                'im.decoding="async";im.src=u[i];}}catch(e){}})();',
+          )
+          .catchError((Object _) => null),
+    );
   }
 
   /// 预热配额用的磁盘体量（只 stat 不读内容）。解出的路径必须仍在 extractDir 内
@@ -589,35 +607,11 @@ extension _ReaderWebView on _ReaderFushiPageState {
 
   static bool _isValidFontData(Uint8List data) => isValidFontData(data);
 
-  /// BUG-1140 第二阶段①：三种 furigana 模式的监听器全部随引擎发一份，运行时按
-  /// `C.furiganaMode` 选一个装（旧实现在 Dart 侧按 `s.furiganaMode` 三选一插值，
-  /// 那会让引擎源码随设置变化 → 外链缓存与编译复用同时失效）。
-  ///
-  /// 值域与分支判据逐条对齐旧的 `switch (mode)`：`partial` 装 click 切换单个 ruby、
-  /// `toggle` 装 dblclick 切换整页、其余（含 `off`）什么都不装。
-  static String _buildFuriganaJs() {
-    return '''
-  if (C.furiganaMode === 'partial') {
-    document.addEventListener('click', function(e) {
-      var sel = window.getSelection();
-      if (sel && !sel.isCollapsed) return;
-      var node = e.target;
-      while (node && node !== document.body) {
-        if (node.tagName === 'RUBY') {
-          node.classList.toggle('show-rt');
-          return;
-        }
-        node = node.parentElement;
-      }
-    }, true);
-  } else if (C.furiganaMode === 'toggle') {
-    document.addEventListener('dblclick', function() {
-      var sel = window.getSelection();
-      if (sel && !sel.isCollapsed) return;
-      document.body.classList.toggle('show-all-rt');
-    });
-  }''';
-  }
+  // 振假名四态（off / toggle / hidden / dimmed）不再装任何 JS 监听器：隐藏 / 淡显
+  // 都由 CSS 承担，toggle 态的「点一个揭示一个」收进 fushiSelection.selectText
+  // （查词入口，命中隐藏注音的 ruby 只揭示、不查词），整页揭示 / dimmed 的临时全亮
+  // 走 readerToggleFurigana 快捷键。
+  // 旧 `_buildFuriganaJs`（partial 的 click 切换 / toggle 的 dblclick 整页切换）已删。
 
   // ── Single IIFE setup script (mirrors Hoshi Android's readerSetupScript) ──
 
@@ -656,13 +650,16 @@ extension _ReaderWebView on _ReaderFushiPageState {
       // TODO-756b：是否“鼠标悬停即自动查词”。live 变更经 _applyHoverAutoLookupLive
       // 改同一个 JS 全局，无需整章重注入。
       hoverAutoLookup: ReaderFushiSource.instance.hoverAutoLookup,
+      // BUG-2508：macOS 由宿主腿接管悬停查词，关掉文档内 mousemove 腿（判据见
+      // [hostOwnsWebViewHoverLookup]，只有 macOS；其余平台 JS 腿不动）。
+      hostHoverLookup: hostOwnsWebViewHoverLookup,
       highlightOnTap: ReaderFushiSource.instance.highlightOnTap,
       showChrome: _showChrome,
       debugLogging: DebugLogService.instance.enabled,
       swipeDistThreshold: swipeThresholds.dist,
       swipeFastDistThreshold: swipeThresholds.fastDist,
-      wheelGestureQuietMs:
-          ReaderFushiSource.instance.wheelPageTurnInterval.clamp(150, 800),
+      wheelGestureQuietMs: ReaderFushiSource.instance.wheelPageTurnInterval
+          .clamp(150, 800),
       furiganaMode: s.furiganaMode,
       caretColor: _caretRingColorCss(),
       caretInsetTop: _readerTopOffset,
@@ -696,6 +693,27 @@ extension _ReaderWebView on _ReaderFushiPageState {
       vnMergeCrossScreenSentenceAudioCues:
           s.visualNovelMergeCrossScreenSentenceAudioCues,
       sentenceAudioCuesJson: sentenceAudioCuesJson,
+    );
+  }
+
+  /// BUG-2471：设置热更新时下发给引擎的那一小份（[ReaderEngineConfig.liveUpdateInvocation]），
+  /// 与 [_buildReaderEngineConfig] 同一套派生（滑动阈值经
+  /// [ReaderSettings.swipePageTurnDistThresholds]、滚轮静默窗同样 clamp），只是不带
+  /// 导航 / 视口 / 进度那些必须随 install 走的键。
+  String _liveEngineConfigJs() {
+    final ReaderSettings s = _settings!;
+    final ({int dist, int fastDist}) swipeThresholds =
+        ReaderSettings.swipePageTurnDistThresholds(s.swipePageTurnSensitivity);
+    return ReaderEngineConfig.liveUpdateInvocation(
+      marginTop: s.marginTop,
+      marginBottom: s.marginBottom,
+      marginLeft: s.marginLeft,
+      marginRight: s.marginRight,
+      swipeDistThreshold: swipeThresholds.dist,
+      swipeFastDistThreshold: swipeThresholds.fastDist,
+      wheelGestureQuietMs: ReaderFushiSource.instance.wheelPageTurnInterval
+          .clamp(150, 800),
+      scanNonJapaneseText: appModel.scanNonJapaneseText,
     );
   }
 
@@ -737,9 +755,6 @@ extension _ReaderWebView on _ReaderFushiPageState {
       ),
     );
 
-    // 三种 furigana 模式的监听器全部随引擎发，运行时按 C.furiganaMode 选一个装。
-    final String furiganaJs = _buildFuriganaJs();
-
     final String caretJs = ReaderCaretScripts.source();
 
     return '''
@@ -763,6 +778,9 @@ install: function(C) {
   window.__fushiApplyReaderMargins = function(width, height) {
     var w = Math.max(0, Number(width) || 0);
     var h = Math.max(0, Number(height) || 0);
+    // BUG-2471: remember the viewport the margins were sized from so a live
+    // margin change (updateLive) can re-materialize without a resize.
+    window.__fushiReaderMarginsLast = { w: w, h: h };
     var root = document.documentElement;
     function pct(value) {
       var n = Number(value);
@@ -786,7 +804,6 @@ install: function(C) {
     insetBottom: C.caretInsetBottom,
     scopeSelector: null
   });
-  $furiganaJs
   // BUG-239: 连续模式不让 _gestureEnd 回传 onSwipe（交给原生滚动 + 边界 IIFE），
   // 消除横向滑动 90% 跳页与原生滚动的轴向冲突；分页模式照旧水平滑动翻页。
   var fushiContinuousMode = C.continuousMode;
@@ -794,6 +811,10 @@ install: function(C) {
   var fushiVnMode = C.vnMode;
   var fushiVnClickAdvance = C.vnClickAdvance;
   window.__hoverAutoLookup = C.hoverAutoLookup;
+  // BUG-2508：宿主（Flutter）侧接管悬停查词的平台上，本文档的 mousemove 腿整条关掉
+  // （一平台一条腿，见 reader_host_hover_lookup.dart）。与 __hoverAutoLookup 同为
+  // Dart 单写的只读镜像，live 变更经 _applyHoverAutoLookupLive 改同一全局。
+  window.__fushiHostHoverLookup = C.hostHoverLookup;
   var startX = 0, startY = 0, startTime = 0, hasStart = false;
   var gestureExceededTapSlop = false;
   var imageLongPressTimer = null;
@@ -1375,7 +1396,8 @@ install: function(C) {
     if (hasStart && !_fushiReaderMouseNativeTextStart && (Date.now() - startTime) < 400) e.preventDefault();
   });
   // TODO-1028: 砍掉双击建立的原生框选——它会盖住单击查词、并绊住振假名 dblclick
-  // 切换（_buildFuriganaJs 'toggle' 分支带 `!sel.isCollapsed` 守卫）。原生双击选词在
+  // 切换（历史上 'toggle' 分支的 dblclick 整页切换带 `!sel.isCollapsed` 守卫，
+  // 该分支已随三态改造删除，本 capture 清选区仍是单击查词不被双击框选盖住的前提）。原生双击选词在
   // mousedown/selectstart 阶段已发生，dblclick 只是结果，preventDefault 拦不住，故改
   // removeAllRanges 清掉既成选区。用 capture 让它先于振假名 handler（bubble 阶段）跑，
   // 从而振假名切换反而恢复正常（守卫不再被双击选区绊住）。单击查词走 onTap/_selectTextAt
@@ -1496,8 +1518,26 @@ $kPagedWheelGestureHelperJs
     // 纵向鼠标滚轮仍走 _paginate 固定窗口。invertSwipeDirection 只管触摸/鼠标拖动。
     _handlePagedWheelTick(e);
   }, {passive: false});
+  // 鼠标移动唤出悬浮控制栏（JS 腿，非 Windows / 非 macOS；Windows 由 Flutter 侧
+  // Listener 承担，macOS 的 DOM 收不到 pointermove、同样走宿主腿，Dart 端按
+  // hostOwnsWebViewPointerInput / hostOwnsWebViewHoverLookup 互斥）。用 pointermove
+  // + pointerType 判真鼠标：触屏一次 tap 之后 Chromium/WebKit 会合成 mousemove→mousedown→mouseup→
+  // click（正文空白点不 preventDefault），走 mousemove 会让「点空白收起」被紧跟的
+  // 合成移动又唤出。250ms 节流：唤出 / 续命不需要每帧。
+  var _hoverRevealLast = 0;
+  document.addEventListener('pointermove', function(e) {
+    // BUG-2508：宿主腿活着的平台上本腿让路（macOS 上这里本来也收不到事件）。
+    if (window.__fushiHostHoverLookup) return;
+    if (e.pointerType !== 'mouse') return;
+    var now = Date.now();
+    if (now - _hoverRevealLast < 250) return;
+    _hoverRevealLast = now;
+    window.flutter_inappwebview.callHandler('onPointerHoverReveal');
+  }, {passive: true});
   var _shiftHoverLastX = -1, _shiftHoverLastY = -1;
   document.addEventListener('mousemove', function(e) {
+    // BUG-2508：宿主腿活着的平台上本腿让路（macOS 上这里本来也收不到事件）。
+    if (window.__fushiHostHoverLookup) return;
     // TODO-756b：开了 window.__hoverAutoLookup 则纯悬停即查词（不要求 Shift）；
     // 否则退回 756a 的 Shift 门控。未触发分支仍复位节流锚，使下次进入即触发。
     if (!e.shiftKey && !window.__hoverAutoLookup) { _shiftHoverLastX = -1; _shiftHoverLastY = -1; return; }
@@ -1544,8 +1584,12 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
     // 统计「翻走即计 + 覆盖并集」逐次采样记区间；atEnd 时钳到 total。三种 shell 都实现
     // getLastVisibleCharOffset（分页版接受已算好的 start 免二次 caret）；没有该函数的
     // reader（旧 shell / 测试桩）不追加第四段，Dart 解析按缺省 -1 处理。
+    // BUG-2492：第三段的 start 只保证「尽力」（分页版 caret 落插图 / 空行 / 章容器时走兜底），
+    // 是否真在本页由 getLastVisibleCharOffset(start) 校验（不在 → -1 → Dart 不 arrive）；
+    // atEnd 的 total 钳位必须在校验之后——末页起点错时 [假起点, total) 同样是整段幻象。
     var hasEnd = typeof r.getLastVisibleCharOffset === 'function';
-    var end = atEnd ? total : (hasEnd ? r.getLastVisibleCharOffset(off) : -1);
+    var end = hasEnd ? r.getLastVisibleCharOffset(off) : -1;
+    if (atEnd && end >= 0) end = total;
     return (atEnd ? total : Math.round(p * total)) + ',' + total + ',' + off
         + (hasEnd ? ',' + end : '');
   };
@@ -1607,6 +1651,34 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
   $longPressDragJs
   var cloak = document.getElementById('fushi-cloak');
   if (cloak) cloak.remove();
+},
+// BUG-2471: hot-update the per-nav config without re-running install. `C`
+// inside install() IS window.__fushiReaderConfig (same object), so assigning
+// onto it is visible to every closure that reads C.* at use time. Derived
+// values that install() materialized once are recomputed here: the four
+// margin percentages -> `--reader-margin-*` px (sized from the last viewport
+// __fushiApplyReaderMargins saw) and window.scanNonJapaneseText. Returns
+// whether the margins changed (the caller then swaps CSS + re-anchors).
+updateLive: function(patch) {
+  var C = window.__fushiReaderConfig;
+  if (!C || !patch) return false;
+  var marginKeys = ['marginTop', 'marginBottom', 'marginLeft', 'marginRight'];
+  var marginsChanged = false;
+  for (var k in patch) {
+    if (!Object.prototype.hasOwnProperty.call(patch, k)) continue;
+    if (marginKeys.indexOf(k) >= 0 && Number(patch[k]) !== Number(C[k])) {
+      marginsChanged = true;
+    }
+    C[k] = patch[k];
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, 'scanNonJapaneseText')) {
+    window.scanNonJapaneseText = C.scanNonJapaneseText;
+  }
+  var last = window.__fushiReaderMarginsLast;
+  if (marginsChanged && last && window.__fushiApplyReaderMargins) {
+    window.__fushiApplyReaderMargins(last.w, last.h);
+  }
+  return marginsChanged;
 }
 };
 ''';
@@ -1624,8 +1696,9 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
     required bool vnMode,
     required bool continuousMode,
   }) {
-    final String key =
-        vnMode ? 'vn' : (continuousMode ? 'continuous' : 'paged');
+    final String key = vnMode
+        ? 'vn'
+        : (continuousMode ? 'continuous' : 'paged');
     return _cachedEngineSource.putIfAbsent(
       key,
       () => ReaderScriptCompactor.compact(
@@ -1751,8 +1824,9 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
                     if (text == null || text.isEmpty) return;
                     await Clipboard.setData(ClipboardData(text: text));
                     FushiToast.show(
-                        msg: t.copied_to_clipboard,
-                        severity: ToastSeverity.success);
+                      msg: t.copied_to_clipboard,
+                      severity: ToastSeverity.success,
+                    );
                     // 复制后清掉 ActionMode 残留的原生选区，和桌面右键 'copy' 对齐，
                     // 避免残留选区卡住后续查词。BUG-927。
                     await _clearReaderAppSelection();
@@ -1770,8 +1844,9 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
                           .shareText(text);
                       if (mounted && !shared) {
                         FushiToast.show(
-                            msg: t.selection_share_failed,
-                            severity: ToastSeverity.error);
+                          msg: t.selection_share_failed,
+                          severity: ToastSeverity.error,
+                        );
                       }
                       await _clearReaderAppSelection();
                     },
@@ -1788,8 +1863,9 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
                           .searchWeb(text);
                       if (mounted && !opened) {
                         FushiToast.show(
-                            msg: t.selection_web_search_unavailable,
-                            severity: ToastSeverity.error);
+                          msg: t.selection_web_search_unavailable,
+                          severity: ToastSeverity.error,
+                        );
                       }
                       await _clearReaderAppSelection();
                     },
@@ -1851,16 +1927,18 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
             'once.',
           );
           ReaderFushiPage.debugHookOwner = this;
-          ReaderFushiPage.debugEvaluateJavascript =
-              (String source) => controller.evaluateJavascript(source: source);
-          ReaderFushiPage.debugCaptureWebView =
-              () => controller.takeScreenshot();
+          ReaderFushiPage.debugEvaluateJavascript = (String source) =>
+              controller.evaluateJavascript(source: source);
+          ReaderFushiPage.debugCaptureWebView = () =>
+              controller.takeScreenshot();
           ReaderFushiPage.debugCaretSurface = () => _caretSurface.name;
-          ReaderFushiPage.debugEvaluateTopPopup =
-              (String source) async => _webviewTopPopupState?.debugEval(source);
+          ReaderFushiPage.debugEvaluateTopPopup = (String source) async =>
+              _webviewTopPopupState?.debugEval(source);
           ReaderFushiPage.debugInjectAudiobookBridge = () =>
-              AudiobookBridge.inject(controller,
-                  primaryColor: _themeSentenceAudioHighlightColor());
+              AudiobookBridge.inject(
+                controller,
+                primaryColor: _themeSentenceAudioHighlightColor(),
+              );
           return true;
         }());
         _startContentReadyTimeout();
@@ -1913,8 +1991,11 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
                   jsonDecode(args[0] as String) as Map<String, dynamic>;
               await _handleTextSelected(ReaderSelectionData.fromJson(payload));
             } catch (e, stack) {
-              ErrorLogService.instance
-                  .log('ReaderFushi.onTextSelected', e, stack);
+              ErrorLogService.instance.log(
+                'ReaderFushi.onTextSelected',
+                e,
+                stack,
+              );
               debugPrint('[ReaderFushi] onTextSelected error: $e');
             }
           },
@@ -1933,8 +2014,11 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
                   jsonDecode(args[0] as String) as Map<String, dynamic>;
               await _handleSelectionMenu(ReaderSelectionData.fromJson(payload));
             } catch (e, stack) {
-              ErrorLogService.instance
-                  .log('ReaderFushi.onSelectionMenu', e, stack);
+              ErrorLogService.instance.log(
+                'ReaderFushi.onSelectionMenu',
+                e,
+                stack,
+              );
               debugPrint('[ReaderFushi] onSelectionMenu error: $e');
             }
           },
@@ -2025,6 +2109,11 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
             // not reclaim here or we would fight the popup for focus.
             _selectTextAt(x, y);
           },
+        );
+
+        controller.addJavaScriptHandler(
+          handlerName: 'onPointerHoverReveal',
+          callback: (_) => _handleJsHoverReveal(),
         );
 
         controller.addJavaScriptHandler(
@@ -2160,8 +2249,9 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
           handlerName: 'onSpreadKey',
           callback: (List<dynamic> args) {
             if (args.isEmpty || _lyricsMode) return;
-            final InputBinding? binding =
-                InputBinding.deserialize(args[0] as String);
+            final InputBinding? binding = InputBinding.deserialize(
+              args[0] as String,
+            );
             if (binding == null) return;
             final ShortcutAction? action = resolveSpreadKeyBridgeAction(
               appModel.shortcutRegistry,
@@ -2188,16 +2278,22 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
             // （resolveReaderArrowPageTurn），滑动却漏了。改用同构的纯谓词
             // swipeLeftIsForward(invert ^ rtl)：竖排(rtl=true)默认手感不变，横排
             // (rtl=false)整体反转——向左滑=前进（LTR 下一页在右，推内容向左露出）。
-            final bool leftIsForward =
-                swipeLeftIsForward(invert: invert, rtl: _isRtlReading);
+            final bool leftIsForward = swipeLeftIsForward(
+              invert: invert,
+              rtl: _isRtlReading,
+            );
             if (dir == 'left') {
-              _paginate(leftIsForward
-                  ? ReaderNavigationDirection.forward
-                  : ReaderNavigationDirection.backward);
+              _paginate(
+                leftIsForward
+                    ? ReaderNavigationDirection.forward
+                    : ReaderNavigationDirection.backward,
+              );
             } else if (dir == 'right') {
-              _paginate(leftIsForward
-                  ? ReaderNavigationDirection.backward
-                  : ReaderNavigationDirection.forward);
+              _paginate(
+                leftIsForward
+                    ? ReaderNavigationDirection.backward
+                    : ReaderNavigationDirection.forward,
+              );
             }
           },
         );
@@ -2243,11 +2339,15 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
             }
             _focusOwnership.reclaim(FocusReclaimCause.gesture);
             if (dir == 'forward') {
-              _paginate(ReaderNavigationDirection.forward,
-                  throttleMs: throttleMs);
+              _paginate(
+                ReaderNavigationDirection.forward,
+                throttleMs: throttleMs,
+              );
             } else if (dir == 'backward') {
-              _paginate(ReaderNavigationDirection.backward,
-                  throttleMs: throttleMs);
+              _paginate(
+                ReaderNavigationDirection.backward,
+                throttleMs: throttleMs,
+              );
             }
           },
         );
@@ -2283,8 +2383,9 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
             final int throttleMs =
                 ReaderFushiSource.instance.wheelPageTurnInterval;
             if (throttleMs > 0 && _lastPaginateTime != null) {
-              final int elapsedMs =
-                  DateTime.now().difference(_lastPaginateTime!).inMilliseconds;
+              final int elapsedMs = DateTime.now()
+                  .difference(_lastPaginateTime!)
+                  .inMilliseconds;
               if (elapsedMs < throttleMs) return;
             }
             // 过了节流 = 这一次输入被**接受**，占掉一个翻页配额，此刻就 stamp（哪怕它
@@ -2313,8 +2414,9 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
             // 'trackpad'），但这个 handler 一直只读 args[0] 把它丢了，于是只能对所有
             // 设备一刀切上时间窗。缺省按鼠标推断（老 shell / 触摸边界 IIFE 只传 dir，
             // 它们本就是离散的一次性手势）。
-            final String pointerKind =
-                args.length > 1 ? args[1] as String : 'wheel';
+            final String pointerKind = args.length > 1
+                ? args[1] as String
+                : 'wheel';
             if (!_hasChapterTurnTarget(dir)) return;
             // BUG-2424：触摸板的一次物理滑动会喷出持续 1s+ 的惯性 tick，必须聚合成
             // 一次跨章。**不能靠 JS 侧那道 `startsNewWheelGesture`**——跨章会 loadUrl
@@ -2349,8 +2451,10 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
               return;
             }
             // BUG-369/TODO-656 诊断：跨章手势汇合点（滚轮/触摸/指针都经此）。
-            debugPrint('[xchapter] onBoundarySwipe dir=$dir '
-                'chapter=$_currentChapter kind=$pointerKind');
+            debugPrint(
+              '[xchapter] onBoundarySwipe dir=$dir '
+              'chapter=$_currentChapter kind=$pointerKind',
+            );
             if (dir == 'forward') {
               _handlePageTurnLimit('forward');
             } else if (dir == 'backward') {
@@ -2375,8 +2479,9 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
           handlerName: 'onImageRevealed',
           callback: (List<dynamic> args) {
             if (args.isEmpty) return;
-            final String? key =
-                ImageRevealKey.normalize(args[0]?.toString() ?? '');
+            final String? key = ImageRevealKey.normalize(
+              args[0]?.toString() ?? '',
+            );
             if (key == null) return;
             // 仅新揭开才写库（省重复写）；DB 失败不阻塞 UI（内存集已生效）。
             // v82：revealed_images 键 = 书 uid（[_bookUid]）；uid 缺失只留内存
@@ -2384,11 +2489,13 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
             if (_revealedImageKeys.add(key)) {
               final String? bookUid = _bookUid;
               if (bookUid == null) return;
-              unawaited(appModel.database.markImageRevealed(
-                bookUid,
-                key,
-                DateTime.now().millisecondsSinceEpoch,
-              ));
+              unawaited(
+                appModel.database.markImageRevealed(
+                  bookUid,
+                  key,
+                  DateTime.now().millisecondsSinceEpoch,
+                ),
+              );
             }
           },
         );
@@ -2480,8 +2587,9 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
             final int sentenceIndex = (args[0] as num).toInt();
             final List<AudioCue>? allCues = _cachedAllCues;
             if (allCues == null) return;
-            final int idx = allCues
-                .indexWhere((AudioCue c) => c.sentenceIndex == sentenceIndex);
+            final int idx = allCues.indexWhere(
+              (AudioCue c) => c.sentenceIndex == sentenceIndex,
+            );
             if (idx >= 0) {
               _audiobookController!.playCueAndContinue(allCues[idx]);
             }
@@ -2550,8 +2658,9 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
           handlerName: 'onLyricsReady',
           callback: (args) {
             final dynamic raw = args.isEmpty ? null : args.first;
-            final int? generation =
-                raw is num ? raw.toInt() : int.tryParse(raw?.toString() ?? '');
+            final int? generation = raw is num
+                ? raw.toInt()
+                : int.tryParse(raw?.toString() ?? '');
             if (generation == null) return false;
             return _finalizeLyricsDocumentIfReady(
               controller,
@@ -2586,15 +2695,19 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
         _isNavigatingToChapter = false;
         ReaderChapterPerfTrace.mark('docLoad');
         final int chapterSnapshot = _currentChapter;
-        debugPrint('[ReaderFushi] onLoadStop: url=$url '
-            'chapter=$chapterSnapshot progress=$_initialProgress');
+        debugPrint(
+          '[ReaderFushi] onLoadStop: url=$url '
+          'chapter=$chapterSnapshot progress=$_initialProgress',
+        );
         if (_lyricsMode) {
           if (!await _finalizeLyricsDocumentIfReady(
             controller,
             generation: _lyricsLoadGeneration,
           )) {
-            debugPrint('[ReaderFushi] onLoadStop: stale non-lyrics page '
-                'while lyrics mode is active, ignoring');
+            debugPrint(
+              '[ReaderFushi] onLoadStop: stale non-lyrics page '
+              'while lyrics mode is active, ignoring',
+            );
           }
           return;
         }
@@ -2602,7 +2715,8 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
         if (url != null &&
             Uri.parse(url.toString()).path != Uri.parse(expectedUrl).path) {
           debugPrint(
-              '[ReaderFushi] onLoadStop: stale page (expected=$expectedUrl), ignoring');
+            '[ReaderFushi] onLoadStop: stale page (expected=$expectedUrl), ignoring',
+          );
           return;
         }
         await _onChapterLoadComplete(controller);
@@ -2614,26 +2728,36 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
         // 恢复。命中 sentinel 时走与 _initBook 同款可见恢复（toast + 退回书架），
         // 不再永久 spinner。
         if (error.description.contains(kReaderWebViewCreationFailedSentinel)) {
-          debugPrint('[ReaderFushi] WebView creation failed: '
-              '${error.description}');
+          debugPrint(
+            '[ReaderFushi] WebView creation failed: '
+            '${error.description}',
+          );
           ErrorLogService.instance.log(
-              'ReaderFushi.onWebViewCreationFailed', error.description, null);
+            'ReaderFushi.onWebViewCreationFailed',
+            error.description,
+            null,
+          );
           if (!mounted) return;
           FushiToast.show(
-              msg: t.reader_open_failed, severity: ToastSeverity.error);
+            msg: t.reader_open_failed,
+            severity: ToastSeverity.error,
+          );
           Navigator.of(context).pop();
           return;
         }
         if (request.isForMainFrame ?? false) {
-          final int? failedLyricsGeneration =
-              _lyricsDocumentGenerationFromUrl(request.url.toString());
+          final int? failedLyricsGeneration = _lyricsDocumentGenerationFromUrl(
+            request.url.toString(),
+          );
           if (failedLyricsGeneration != null &&
               failedLyricsGeneration == _lyricsDocumentLoadGeneration &&
               failedLyricsGeneration == _lyricsLoadGeneration) {
             _lyricsDocumentLoadGeneration = null;
           }
-          debugPrint('[ReaderFushi] onReceivedError: ${error.description} '
-              'url=${request.url}');
+          debugPrint(
+            '[ReaderFushi] onReceivedError: ${error.description} '
+            'url=${request.url}',
+          );
           // Windows 拦截域 (fushi.local) 的 NavigationCompleted 假失败已在 fork
           // 引擎层根治（packages/flutter_inappwebview_windows：主框架已注入 2xx
           // 时按成功走 onLoadStop），此处不再做事后补偿；下面是真实加载失败处理。
@@ -2655,16 +2779,35 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
       // **不重建**（见 [_webViewDeathGuard] 的注释：恢复锚陈旧会把进度写回退）。
       onRenderProcessGone:
           (InAppWebViewController _, RenderProcessGoneDetail detail) =>
-              unawaited(_webViewDeathGuard.handleDeath(
-        didCrash: detail.didCrash,
-        rendererPriorityAtExit: detail.rendererPriorityAtExit,
-      )),
+              unawaited(
+                _webViewDeathGuard.handleDeath(
+                  didCrash: detail.didCrash,
+                  rendererPriorityAtExit: detail.rendererPriorityAtExit,
+                ),
+              ),
     );
     // KeyedSubtree carries [_webViewKey] (a GlobalKey) on the InAppWebView's own
     // render subtree so [onDismissBarrierHover] can read the WebView's RenderBox
     // for global→local coordinate mapping (TODO-806), while the ValueKey stays on
     // the InAppWebView itself for the integration-test finders (fushi_webview).
-    final Widget keyed = KeyedSubtree(key: _webViewKey, child: webView);
+    //
+    // BUG-2508：只在宿主腿平台（[hostOwnsWebViewHoverLookup]，macOS）紧包一层
+    // MouseRegion 作宿主侧 Shift-悬停查词的入口（那里 WebView DOM 收不到 mousemove，
+    // 见 [_handleWebViewHostHover]）；其余平台不装，连位置都不记——JS 腿是唯一一条。
+    // `opaque: false`：只旁听、不改任何命中结果——WebView 本就是 Stack 最底层，弹窗
+    // barrier 盖上来时本层自然收到 exit、由 barrier 接力。RenderMouseRegion 与
+    // WebView 同尺寸同原点，[_webViewKey] 读到的 RenderBox 几何不变。
+    final Widget keyed = KeyedSubtree(
+      key: _webViewKey,
+      child: hostOwnsWebViewHoverLookup
+          ? MouseRegion(
+              opaque: false,
+              onHover: _handleWebViewHostHover,
+              onExit: _handleWebViewHostHoverExit,
+              child: webView,
+            )
+          : webView,
+    );
     // TODO-954：Windows 文字选区右键。`HitTestBehavior.translucent` 让左键框选 / 滚动 /
     // 查词点击照常落进 WebView（与 dictionary_popup_webview 的 BUG-261 范式同），只额外
     // 截菜单键弹出 Flutter 菜单——后者随界面大小缩放。BUG-2111 之后「菜单键」由绑定表决定
@@ -2689,8 +2832,11 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
       );
       return result == true || result == 'true' || result == 1 || result == '1';
     } catch (e, stack) {
-      ErrorLogService.instance
-          .log('ReaderFushi.isLoadedLyricsDocument', e, stack);
+      ErrorLogService.instance.log(
+        'ReaderFushi.isLoadedLyricsDocument',
+        e,
+        stack,
+      );
       return false;
     }
   }
@@ -2706,20 +2852,14 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
     if (_lyricsReadyFinalizingGeneration == generation) return false;
     _lyricsReadyFinalizingGeneration = generation;
     try {
-      if (!await _isLoadedLyricsDocument(
-        controller,
-        generation: generation,
-      )) {
+      if (!await _isLoadedLyricsDocument(controller, generation: generation)) {
         return false;
       }
       if (!mounted || !_lyricsMode || generation != _lyricsLoadGeneration) {
         return false;
       }
       if (!_lyricsPageReady) {
-        await _onChapterLoadComplete(
-          controller,
-          lyricsGeneration: generation,
-        );
+        await _onChapterLoadComplete(controller, lyricsGeneration: generation);
       }
       if (!mounted || !_lyricsMode || generation != _lyricsLoadGeneration) {
         return false;
@@ -2778,8 +2918,10 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
     // 「两张整页图、正文 ≤20 字」的 image-only 章都无意义。Windows 早就是这个行为，
     // 这里把 Android 拉齐，而不是给 Android 再加一层特例。
     if (_spreadDocumentLoaded) {
-      debugPrint('[ReaderFushi] onChapterLoadComplete: spread document, '
-          'skipping body engine injection');
+      debugPrint(
+        '[ReaderFushi] onChapterLoadComplete: spread document, '
+        'skipping body engine injection',
+      );
       return;
     }
     if (_lyricsMode) {
@@ -2808,7 +2950,8 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
       // 注入歌词专用行级 caret（键盘/手柄逐词查词），镜像 reader 的 fushiCaret 注入。
       // 文档刚加载，caret inactive；surface 在 _enterCaret 成功时才置 lyrics。
       await controller.evaluateJavascript(
-          source: ReaderLyricsCaretScripts.source());
+        source: ReaderLyricsCaretScripts.source(),
+      );
       if (!currentLyricsLoad()) return;
       if (mounted) {
         await controller.evaluateJavascript(
@@ -2905,8 +3048,11 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
         }
       }
     } catch (e, stack) {
-      ErrorLogService.instance
-          .log('ReaderFushi._onChapterLoadComplete', e, stack);
+      ErrorLogService.instance.log(
+        'ReaderFushi._onChapterLoadComplete',
+        e,
+        stack,
+      );
       debugPrint('[ReaderFushi] _onChapterLoadComplete failed: $e');
     }
   }
@@ -2920,11 +3066,10 @@ ${webViewKeyBridgeScript(handlerName: 'onSpaceKey', keys: const <String>[' '])}
 String readerFushiEngineSource({
   bool vnMode = false,
   bool continuousMode = false,
-}) =>
-    _ReaderWebView.readerEngineSource(
-      vnMode: vnMode,
-      continuousMode: continuousMode,
-    );
+}) => _ReaderWebView.readerEngineSource(
+  vnMode: vnMode,
+  continuousMode: continuousMode,
+);
 
 /// 每次导航下发的那一小份（config + install 调用），供守卫测试断言它不含引擎本体。
 String readerFushiEngineBoot(ReaderEngineConfig config) =>
@@ -2940,11 +3085,10 @@ String readerFushiEngineBoot(ReaderEngineConfig config) =>
 String readerFushiEngineSourceUncompacted({
   bool vnMode = false,
   bool continuousMode = false,
-}) =>
-    _ReaderWebView._buildReaderEngineSource(
-      vnMode: vnMode,
-      continuousMode: continuousMode,
-    );
+}) => _ReaderWebView._buildReaderEngineSource(
+  vnMode: vnMode,
+  continuousMode: continuousMode,
+);
 
 /// BUG-1745：分页滚轮手势桥的 JS 片段，**两个注入点的唯一真值源**。
 ///

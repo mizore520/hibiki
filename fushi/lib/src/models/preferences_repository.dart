@@ -6,27 +6,36 @@ import 'package:fushi_core/fushi_core.dart';
 import 'package:fushi/src/dictionary/dict_style_rules.dart';
 import 'package:fushi/src/media/discovery/opds_server_config.dart';
 import 'package:fushi/src/models/module_id.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_cover_cache.dart'
+    show
+        kMangaCoverCacheDefaultMaxAgeDays,
+        kMangaCoverCacheMaxDays,
+        kMangaCoverCacheMinDays;
 import 'package:fushi/src/media/manga/ocr/manga_ocr_engine.dart';
-import 'package:fushi/src/media/torrent/anime_download_config.dart';
-import 'package:fushi/src/media/torrent/torznab_client.dart';
+import 'package:fushi_engine/media/torrent/anime_download_config.dart';
+import 'package:fushi_engine/media/torrent/torznab_client.dart';
+import 'package:fushi_engine/media/video/download/video_resource_prefs.dart';
 import 'package:fushi/src/media/video/dandanplay_client.dart';
-import 'package:fushi/src/media/video/download/video_download_path_mapping.dart';
-import 'package:fushi/src/media/video/download/video_download_backend_identity.dart';
-import 'package:fushi/src/media/video/subtitle/open_subtitles_client.dart';
+import 'package:fushi_engine/media/video/download/video_download_path_mapping.dart';
+import 'package:fushi_engine/media/video/download/video_download_backend_identity.dart';
+import 'package:fushi_engine/media/video/subtitle/open_subtitles_client.dart';
 import 'package:fushi/src/media/video/video_danmaku_model.dart';
 import 'package:fushi/src/media/video/video_hdr_output.dart'
     show VideoHdrOutputMode, kVideoHdrOutputPref;
 import 'package:fushi/src/media/video/video_control_customization.dart';
+import 'package:fushi/src/reader/reader_control_layout.dart';
 import 'package:fushi/src/media/video/video_custom_action_bindings.dart';
 import 'package:fushi/src/media/video/video_immersive_mode.dart';
 import 'package:fushi/src/media/video/video_lua_capability.dart';
 import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
+import 'package:fushi/src/media/audiobook/mining_audio_clip.dart'
+    show kMiningHeadPadMs, kMiningPadMaxMs, kMiningTailPadMs;
 import 'package:fushi/src/media/video/video_subtitle_language_filter.dart';
 import 'package:fushi/src/mining/galgame_library.dart';
 import 'package:fushi/src/mining/gal_mining_screenshot_size.dart';
 // 迁移判据要用「这个存量代理地址归一得出来吗」，与 applyAppProxy 同一份实现，
 // 不在这里重写一遍（重写就会漂移，而漂移的后果是存量用户升级即断网）。
-import 'package:fushi/src/utils/net/app_proxy.dart'
+import 'package:fushi_engine/utils/net/app_proxy.dart'
     show
         appUserProxyModeReader,
         appUserProxyPasswordReader,
@@ -36,14 +45,15 @@ import 'package:fushi/src/utils/net/app_proxy.dart'
         kProxyModeDirect,
         kProxyModeManual,
         normalizeUserProxyHostPort;
-import 'package:fushi/src/mining/immersion_mining_request.dart'
+import 'package:fushi_engine/mining/immersion_mining_request.dart'
     show MiningAnimatedFormat, MiningStillFormat, VideoMiningImageMode;
 import 'package:fushi/src/models/audio_source_config.dart';
-import 'package:fushi/src/utils/misc/desktop_audio_clipper.dart'
+import 'package:fushi_engine/utils/misc/desktop_audio_clipper.dart'
     show MiningMediaCompression;
 import 'package:fushi/src/utils/misc/error_log_service.dart';
 import 'package:fushi/src/utils/misc/update_check_cache.dart';
 import 'package:fushi/src/media/manga/manga_view_prefs.dart';
+import 'package:fushi_engine/foundation/pref_store.dart';
 
 /// 视频画面缩放/比例模式（作用于 Flutter 层 [Video] widget 的 [BoxFit]，TODO-152 子B）。
 ///
@@ -83,7 +93,7 @@ BoxFit videoFitModeToBoxFit(VideoFitMode mode) {
   }
 }
 
-class PreferencesRepository extends ChangeNotifier {
+class PreferencesRepository extends ChangeNotifier implements PrefStore {
   PreferencesRepository(this._db);
 
   static const String videoOnlineServicesSetupDismissedKey =
@@ -126,6 +136,11 @@ class PreferencesRepository extends ChangeNotifier {
       getPref('video_danmaku_config', defaultValue: '') as String,
     );
     await _repairOpenSubtitlesEnabledOnce();
+    // 上面那次修复写会经 setPref 抬高持久化版本号，而缓存是**在它之前**读的。
+    // 不把版本重读回来，loadFromDb 一结束进程内值就比 DB 少一个，
+    // 「版本不同 = 别的进程改过」于是每次启动误报一次、白重载一次。
+    _prefCache[prefsVersionKey] =
+        PrefCodec.encode(await readPrefsVersionFromDb());
     _installAppProxyReaders();
   }
 
@@ -202,6 +217,7 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
   dynamic getPref(String key, {dynamic defaultValue}) {
     final raw = _prefCache[key];
     if (raw == null) {
@@ -210,6 +226,7 @@ class PreferencesRepository extends ChangeNotifier {
     return PrefCodec.decode(raw, defaultValue);
   }
 
+  @override
   Future<void> setPref(String key, dynamic value) async {
     final String strVal = PrefCodec.encode(value);
     _prefCache[key] = strVal;
@@ -659,20 +676,6 @@ class PreferencesRepository extends ChangeNotifier {
 
   void setPopupMaxWidth(double width) async {
     await setPref('popup_max_width', width);
-    notifyListeners();
-  }
-
-  /// 查词弹窗「全宽展示」：忽略上面的最大宽度，横向铺满可用宽度（左右仍留同一条
-  /// 边距）。位置仍跟随选区——与「底部固定」正交：底部固定本来就是屏幕底部的一条
-  /// 全宽面板，本项管的是**贴词定位下**也占满宽度。
-  ///
-  /// 存在的理由是「最大宽度」是绝对逻辑像素：换设备、旋屏、改界面缩放后都得重调，
-  /// 而墨水屏这类窄屏上用户要的恒定是「占满」。默认 false = 保持既有手感。
-  bool get popupFullWidth =>
-      getPref('popup_full_width', defaultValue: false) as bool;
-
-  Future<void> setPopupFullWidth(bool value) async {
-    await setPref('popup_full_width', value);
     notifyListeners();
   }
 
@@ -1233,27 +1236,22 @@ class PreferencesRepository extends ChangeNotifier {
 
   /// 多个 Torznab indexer 的设备本地配置。API key 与 endpoint 分栏保存，读取旧
   /// Jackett/Prowlarr `?apikey=` URL 时由 codec 拆开，避免含密钥 URL 流出本机。
-  List<TorznabIndexerConfig> get videoResourceTorznabConfigs {
-    final String raw =
-        getPref('video_resource_torznab_config', defaultValue: '') as String;
-    if (raw.trim().isEmpty) return const <TorznabIndexerConfig>[];
-    try {
-      return decodeTorznabIndexerConfigs(jsonDecode(raw));
-    } on Object catch (error, stack) {
-      ErrorLogService.instance.log(
-        'PreferencesRepository.videoResourceTorznabConfigs.decode',
-        error,
-        stack,
+  List<TorznabIndexerConfig> get videoResourceTorznabConfigs =>
+      readTorznabIndexerConfigs(
+        this,
+        onDecodeError: (Object error, StackTrace stack) =>
+            ErrorLogService.instance.log(
+          'PreferencesRepository.videoResourceTorznabConfigs.decode',
+          error,
+          stack,
+        ),
       );
-      return const <TorznabIndexerConfig>[];
-    }
-  }
 
   Future<void> setVideoResourceTorznabConfigs(
     Iterable<TorznabIndexerConfig> configs,
   ) async {
     await setPref(
-      'video_resource_torznab_config',
+      kVideoResourceTorznabConfigPref,
       jsonEncode(encodeTorznabIndexerConfigs(configs)),
     );
     notifyListeners();
@@ -1478,6 +1476,17 @@ class PreferencesRepository extends ChangeNotifier {
 
   Future<void> setVideoControlLayout(VideoControlLayout layout) async {
     await setPref('video_control_customization', layout.encode());
+    notifyListeners();
+  }
+
+  /// 阅读器顶栏 / 底栏按钮布局（与视频页同一套泛型模型，2026-09-13）。持久化键
+  /// `reader_control_layout`，空 / 坏值回出厂布局。
+  ReaderControlLayout get readerControlLayout => ReaderControlLayout.decode(
+        getPref('reader_control_layout', defaultValue: '') as String,
+      );
+
+  Future<void> setReaderControlLayout(ReaderControlLayout layout) async {
+    await setPref('reader_control_layout', layout.encode());
     notifyListeners();
   }
 
@@ -1912,6 +1921,32 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  // 制卡句子音频的头/尾 padding（毫秒）。对齐 asbplayer 的 audio padding：字幕 cue 的
+  // 时间窗通常比实际发声短，尾音/助词/呼吸直接被硬切。视频字幕与有声书两条制卡链共用
+  // 这一对值（同一个人听同一种语言，句首/句尾余量的需求不随媒体种类变），裁剪时都走
+  // [padSentenceRange] 夹相邻 cue 边界，所以填大了也不会把下一句混进来。
+  // 默认值 = 原有声书硬编码常量（头 120 / 尾 200，[kMiningHeadPadMs]/[kMiningTailPadMs]），
+  // 有声书用户行为零变化；视频链此前完全没 padding，默认即获得余量。
+  int get miningAudioHeadPadMs =>
+      (getPref('mining_audio_head_pad_ms', defaultValue: kMiningHeadPadMs)
+              as int)
+          .clamp(0, kMiningPadMaxMs);
+
+  void setMiningAudioHeadPadMs(int ms) async {
+    await setPref('mining_audio_head_pad_ms', ms.clamp(0, kMiningPadMaxMs));
+    notifyListeners();
+  }
+
+  int get miningAudioTailPadMs =>
+      (getPref('mining_audio_tail_pad_ms', defaultValue: kMiningTailPadMs)
+              as int)
+          .clamp(0, kMiningPadMaxMs);
+
+  void setMiningAudioTailPadMs(int ms) async {
+    await setPref('mining_audio_tail_pad_ms', ms.clamp(0, kMiningPadMaxMs));
+    notifyListeners();
+  }
+
   bool get deduplicatePitchAccents =>
       getPref('deduplicate_pitch_accents', defaultValue: true) as bool;
 
@@ -2021,22 +2056,27 @@ class PreferencesRepository extends ChangeNotifier {
 
   // ── audio sources ────────────────────────────────────────────────────
 
-  static const List<String> defaultAudioSources = [
+  /// 已退役的内置远端音频源 URL。曾经随新装默认写入用户的音频源列表；2026-09-13
+  /// 用户拍板不再依赖任何第三方网络音频库，内置默认远端源整个删掉。老用户列表里
+  /// 残留的这些 URL 在读取时剔除——只删默认值而不清持久化，就等于只对新装生效。
+  /// 消费方一律经 [audioSourceConfigs] 读，这里是唯一咽喉。
+  static const Set<String> retiredAudioSourceUrls = <String>{
     'https://fushi-reader.manhhaoo-do.workers.dev/?term={term}&reading={reading}',
-  ];
+  };
 
   /// Anki 本地音频服务器（local-audio-yomichan，默认端口 5050）的内置预设 URL。
   /// 用户装了该服务器后，在「管理音频来源」里打开开关即用；默认关闭——本地第三方
-  /// 服务不经用户同意不参与查词发音（与 fushiRemote / worker 默认源同策）。
+  /// 服务不经用户同意不参与查词发音（与 fushiRemote 同策）。
   /// 由 [_withDefaultAudioSources] 对所有用户「缺则补」为一条 disabled 源。
   static const String ankiLocalAudioUrl =
       'http://localhost:5050/?term={term}&reading={reading}';
 
+  /// legacy `audio_sources`（只存已启用的远端 URL）。无内置默认远端源，未写过即空。
   List<String> get audioSources {
-    final result = getPref('audio_sources', defaultValue: defaultAudioSources);
+    final result = getPref('audio_sources', defaultValue: const <String>[]);
     if (result is List<String>) return result;
     if (result is List) return result.cast<String>();
-    return List<String>.from(defaultAudioSources);
+    return <String>[];
   }
 
   List<AudioSourceConfig> get audioSourceConfigs {
@@ -2056,31 +2096,23 @@ class PreferencesRepository extends ChangeNotifier {
           .toList();
       if (configs.isNotEmpty) return _withDefaultAudioSources(configs);
     }
-    // 纯新装（typed config 与 legacy audio_sources 两个 pref 都未写过）下，内置的
-    // 远端音频源（fushi-reader.manhhaoo worker）默认**关闭**：第三方私有远端服务不
-    // 应未经用户同意就默认参与查词发音。一旦用户存过任一 pref（老用户/已配置过），
-    // 走下面的 legacy 装配，按其保存值原样还原（fromLegacyUrls 默认 enabled，保留
-    // 老用户已启用的 URL，向后兼容）。
-    if (!containsKey('audio_source_configs') && !containsKey('audio_sources')) {
-      return _withDefaultAudioSources(_defaultDisabledRemoteSources());
-    }
+    // 没写过 typed config 就按 legacy audio_sources 装配（fromLegacyUrls 默认
+    // enabled，保留老用户已启用的 URL）；纯新装两个 pref 都空，走同一条路。
     return _withDefaultAudioSources(
       AudioSourceConfig.fromLegacyUrls(audioSources),
     );
   }
 
-  /// 新装默认远端音频源装配：把 [defaultAudioSources] 的 URL 装成 remoteAudio，但
-  /// 全部标记为 disabled（新装默认不启用第三方远端发音）。
-  List<AudioSourceConfig> _defaultDisabledRemoteSources() {
-    return AudioSourceConfig.fromLegacyUrls(defaultAudioSources)
-        .map((AudioSourceConfig source) => source.copyWith(enabled: false))
-        .toList();
-  }
-
   List<AudioSourceConfig> _withDefaultAudioSources(
     List<AudioSourceConfig> sources,
   ) {
-    final List<AudioSourceConfig> result = <AudioSourceConfig>[...sources];
+    // 已退役的内置远端源（见 [retiredAudioSourceUrls]）从老用户列表里剔除。
+    final List<AudioSourceConfig> result = <AudioSourceConfig>[
+      for (final AudioSourceConfig source in sources)
+        if (source.kind != AudioSourceKind.remoteAudio ||
+            !retiredAudioSourceUrls.contains(source.url))
+          source,
+    ];
 
     // fushiRemote 恒在列首（缺则补），历史行为不变。
     final bool hasFushiRemote = result.any(
@@ -2869,10 +2901,8 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 漫画阅读器「点一下没识别的对话框就地开跑 OCR」。
-  ///
-  /// 默认开：这条路径存在的全部意义就是让用户不必先去点识别模式。关掉它等于
-  /// 回到旧行为（空白点只回收焦点），给不希望被动触发联网/耗电的人留后路。
+  /// 漫画阅读器「点一下没识别的对话框就地开跑 OCR」。默认开启；关闭后空白点
+  /// 恢复为只回收焦点，给不希望被动触发联网或耗电的用户留后路。
   bool get mangaTapToOcr =>
       getPref('manga_tap_to_ocr', defaultValue: true) as bool;
 
@@ -2881,11 +2911,7 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 「点击即识别」的首次说明是否已经给过。
-  ///
-  /// 单独一个键而不是复用 Lens 的上传告知：那条只在 Lens 引擎下出现，而本次要
-  /// 说的是「你这一点会触发一次识别、用的是你在设置里选的哪个引擎」——两件事，
-  /// 只是恰好在 Lens 下会前后脚出现。
+  /// 「点击即识别」首次说明是否已经展示。
   bool get mangaTapToOcrNoticeShown =>
       getPref('manga_tap_to_ocr_notice_shown', defaultValue: false) as bool;
 
@@ -2907,6 +2933,23 @@ class PreferencesRepository extends ChangeNotifier {
 
   Future<void> setMangaReadingDirection(String value) async {
     await setPref('manga_reading_direction', value);
+    notifyListeners();
+  }
+
+  /// 在线漫画封面磁盘缓存的保留天数（BUG-2450，默认 180）。
+  int get mangaCoverCacheMaxAgeDays {
+    final int days = getPref(
+      'manga_cover_cache_max_age_days',
+      defaultValue: kMangaCoverCacheDefaultMaxAgeDays,
+    ) as int;
+    return days.clamp(kMangaCoverCacheMinDays, kMangaCoverCacheMaxDays);
+  }
+
+  Future<void> setMangaCoverCacheMaxAgeDays(int value) async {
+    await setPref(
+      'manga_cover_cache_max_age_days',
+      value.clamp(kMangaCoverCacheMinDays, kMangaCoverCacheMaxDays),
+    );
     notifyListeners();
   }
 
@@ -2959,6 +3002,17 @@ class PreferencesRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 漫画阅读器顶栏是否悬浮（默认开，与 EPUB 阅读器「点空白隐藏控制栏」同默认）。
+  /// 悬浮 = 顶栏不占布局、默认收起、点页面中央 / 顶边悬停唤出并自动收起；
+  /// 关 = 顶栏常驻并占 48px 布局高，页图在它下方排布。
+  bool get mangaChromeFloating =>
+      getPref('manga_chrome_floating', defaultValue: true) as bool;
+
+  Future<void> setMangaChromeFloating(bool value) async {
+    await setPref('manga_chrome_floating', value);
+    notifyListeners();
+  }
+
   /// 点击页面左右边缘翻页。默认开：触屏此前完全没有点击翻页手段。
   bool get mangaTapZonePaging =>
       getPref('manga_tap_zone_paging', defaultValue: true) as bool;
@@ -2986,6 +3040,17 @@ class PreferencesRepository extends ChangeNotifier {
   /// Defaults to true to preserve the pre-source-toggle behaviour.
   bool get mangaOnlineCatalogEnabled =>
       getPref('manga_online_catalog_enabled', defaultValue: true) as bool;
+
+  /// 作品页「完成后自动识别」：章节下载任务入队时的 `auto_ocr` 取值（设计稿
+  /// 2026-09-12 §5）。默认关——自动 OCR 要么占本机算力要么走已配对主机，
+  /// 不该在用户没点过的情况下悄悄开始。
+  bool get mangaDownloadAutoOcr =>
+      getPref('manga_download_auto_ocr', defaultValue: false) as bool;
+
+  Future<void> setMangaDownloadAutoOcr(bool value) async {
+    await setPref('manga_download_auto_ocr', value);
+    notifyListeners();
+  }
 
   Future<void> setMangaOnlineCatalogEnabled(bool value) async {
     await setPref('manga_online_catalog_enabled', value);

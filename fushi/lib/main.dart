@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui' show AppExitResponse, PlatformDispatcher;
-
+import 'dart:ui'
+    show AppExitResponse, PlatformDispatcher;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fushi/src/asr_host/asr_host.dart';
@@ -38,6 +38,7 @@ import 'package:fushi/src/utils/misc/flutter_error_log.dart';
 import 'package:fushi/src/utils/misc/present_watchdog.dart';
 import 'package:fushi/src/utils/misc/shortcut_icon_sync.dart';
 import 'package:fushi/src/utils/misc/wgc_capture_log.dart';
+import 'package:fushi/src/utils/rasterized_frame_size_reporter.dart';
 import 'package:fushi/src/utils/window_caption_channel.dart';
 import 'package:fushi/src/utils/components/fushi_desktop_title_bar.dart';
 import 'package:fushi/src/utils/adaptive/fushi_macos_theme.dart';
@@ -48,6 +49,8 @@ import 'package:fushi/src/lookup/lookup_deep_link.dart';
 import 'package:fushi/src/lookup/global_lookup_controller.dart';
 import 'package:fushi/src/lookup/gal_hook_text_overlay_controller.dart';
 import 'package:fushi/src/startup/desktop_window_placement.dart';
+import 'package:fushi/src/stats/study_diag_log.dart';
+import 'package:fushi_audio/fushi_audio.dart' show StudyClock;
 import 'package:fushi/src/settings/settings_schema.dart'
     show resetSettingsSchemaCache;
 import 'package:fushi/src/storage/data_root_migration_view.dart';
@@ -61,35 +64,38 @@ import 'package:fushi/src/startup/android_view_lifecycle.dart';
 import 'package:fushi/src/sync/book_exit_sync_scope.dart';
 import 'package:fushi/src/anki/anki_view_model.dart';
 import 'package:fushi/src/anki/ankimobile_repository.dart';
+import 'package:fushi/src/anki/card_source_router.dart';
 import 'package:fushi/src/platform/platform_services.dart';
+import 'package:fushi/src/platform/source_url_channel.dart';
 import 'package:fushi/src/platform/windows_ime_guard.dart';
 import 'package:fushi/src/platform/platform_providers.dart';
 import 'package:fushi/src/platform/desktop/desktop_lifecycle_service.dart';
 import 'package:fushi/src/platform/ios/ios_url_event_channel.dart';
+import 'package:fushi/src/platform/engine_deep_link_route_guard.dart';
 import 'package:fushi/src/media/audiobook/floating_lyric_lookup_host.dart';
 import 'package:fushi/src/media/manga/aidoku/aidoku_cloudflare_challenge_page.dart';
-import 'package:fushi/src/media/manga/aidoku/aidoku_runtime.dart';
-import 'package:fushi/src/media/video/download/video_download_pipeline_service.dart';
-import 'package:fushi/src/media/video/external_video.dart';
-import 'package:fushi/src/media/video/metadata/video_scrape_operation_gate.dart';
-import 'package:fushi/src/media/video/scraper/cover_meta_store.dart';
-import 'package:fushi/src/media/video/video_cover_extractor.dart'
+import 'package:fushi_engine/media/video/download/video_download_pipeline_service.dart';
+import 'package:fushi_engine/media/video/external_video.dart';
+import 'package:fushi_engine/media/video/metadata/video_scrape_operation_gate.dart';
+import 'package:fushi_engine/media/video/scraper/cover_meta_store.dart';
+import 'package:fushi_engine/media/video/video_cover_extractor.dart'
     show extractVideoCover;
-import 'package:fushi/src/media/video/video_book_repository.dart';
-import 'package:fushi/src/media/video/video_storage.dart';
+import 'package:fushi_engine/media/video/video_book_repository.dart';
+import 'package:fushi_engine/media/video/video_storage.dart';
 import 'package:fushi/src/pages/implementations/dictionary_popup_webview.dart';
 import 'package:fushi/src/pages/implementations/video_fushi_page.dart';
 import 'package:fushi/src/profile/profile_view_model.dart';
-import 'package:drift/drift.dart' show Value;
+import 'package:drift/drift.dart'
+    show Value;
 import 'package:fushi_core/fushi_core.dart'
-    show
-        VideoBooksCompanion,
-        VideoBookRow,
-        ProfileMediaKind,
-        FushiDatabaseFailureKind;
+    show FushiDatabaseFailureKind, ProfileMediaKind, VideoBookRow, VideoBooksCompanion;
 import 'package:path/path.dart' as p;
 import 'package:fushi/src/utils/misc/fushi_share.dart';
 import 'package:fushi/src/storage/legacy_support_dir_migration.dart';
+import 'package:fushi/src/engine_bindings.dart';
+import 'package:fushi/src/media/manga/aidoku/aidoku_runtime.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_cloudflare_challenge.dart';
+import 'package:fushi/src/media/manga/mihon/mihon_runtime_factory.dart';
 
 Color? _savedSplashColor;
 
@@ -102,6 +108,7 @@ String? _pendingExternalVideoPath;
 /// 冷启动时从 `main(args)` 暂存待查词；app 初始化完成后由 [_FushiReaderAppState]
 /// 经 [DesktopLookupService.triggerLookup] 排队查词。null = 本次启动非深链查词。
 String? _pendingLookupDeepLinkWord;
+final List<String> _pendingCardSourceUrls = <String>[];
 
 /// 外部打开新视频时的自动封面锁边界。maintenance 已开始时 [action] 仍可按
 /// `allowAutoCover == false` 建立无封面的媒体行，但不得产生自动封面文件。
@@ -169,6 +176,10 @@ void main([List<String> args = const <String>[]]) {
     // BUG-1666：系统协议注册把 `fushi://lookup?word=<词>` 交给 `fushi.exe "%1"`，
     // 冷启动时该 URL 就在 argv 里；与视频路径互斥判定（URL 不会命中视频白名单）。
     for (final String arg in args) {
+      if (SourceUrlChannel.isSourceUrl(arg)) {
+        _pendingCardSourceUrls.add(arg);
+        break;
+      }
       final String? word = lookupWordFromDeepLink(arg);
       if (word != null) {
         _pendingLookupDeepLinkWord = word;
@@ -199,6 +210,7 @@ void main([List<String> args = const <String>[]]) {
     // 由宿主装上。放在这里而不是 `AppModel.initialise()`：装的全是同步工厂，没有
     // 时序前置条件，而 `initialise()` 有两个 entry point 绕开它（弹窗词典与悬浮
     // 词典），写在 main 里哪个入口都不会漏。
+    installEngineHostBindings();
     installAsrHostBindings();
     // 用户的模型选择 / 自带模型包住在数据根下，必须在装完数据根解析器之后读。
     // 不 await 的话第一次转录会按内置表规划，用户的选择要等下一次才生效。
@@ -241,6 +253,9 @@ void main([List<String> args = const <String>[]]) {
         debugPrint('[Fushi] Android launcher icon restore failed: $e');
       }
     }
+    // BUG-2462：Windows 子窗 resize 闸门的确认信号。必须在 runApp 之前挂——
+    // 首帧起 runner 就在等这条上报来确认它交付的第一个尺寸。
+    installRasterizedFrameSizeReporter();
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       await windowManager.ensureInitialized();
       if (Platform.isWindows || Platform.isMacOS) {
@@ -459,6 +474,10 @@ void main([List<String> args = const <String>[]]) {
 
     /// Initialise error log service.
     await ErrorLogService.instance.init();
+    // 统计诊断流水（用户 2026-09-12：导出日志排查阅读速度异常）。StudyClock 在
+    // fushi_audio 包里，靠静态 sink 接进来——五个装配点一处不改。
+    await StudyDiagLog.instance.init();
+    StudyClock.trace = (String line) => StudyDiagLog.instance.add('clock', line);
     // 下面四步都只依赖错误日志已就绪、彼此独立（各自读写自己的文件 / 通道），
     // 并发跑；串行 await 四段小 IO 是启动到 LoadingPage 之前的纯等待。
     await Future.wait<void>(<Future<void>>[
@@ -619,6 +638,16 @@ void main([List<String> args = const <String>[]]) {
         return;
       }
       FlutterError.presentError(details);
+      // BUG-2496：框架自己标 `silent: true` 的错误（图片解码失败等
+      // `MultiFrameImageStreamCompleter` 上报的非致命错误）不是崩溃前兆，
+      // 只留诊断痕迹（不计入错误计数、不同步 flush），别把一张坏封面记成致命错误。
+      if (details.silent) {
+        ErrorLogService.instance.logDiagnostic(
+          flutterErrorLogSource(details),
+          '$msg\n${details.stack}',
+        );
+        return;
+      }
       // TODO-607 P0-1：FlutterError 是致命级，用同步 flush 落盘——若这条错误紧接着把
       // 进程带崩（如 build/layout 期的 native 回调异常），异步 append 来不及写盘。
       ErrorLogService.instance.logFatal(
@@ -676,6 +705,10 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
 
   /// BUG-1666：同上——`fushi://lookup` 深链查词只触发一次。
   bool _lookupDeepLinkHandled = false;
+  StreamSubscription<String>? _sourceUrlSubscription;
+  bool _sourceNavigationScheduled = false;
+  bool _sourceNavigationRunning = false;
+  String? _openingCardSourceUrl;
 
   /// TODO-904 P0 回归：Windows 单实例守卫下，第二实例（文件关联 / 拖到 exe / CLI
   /// `hibiki.exe "%1"`）不会自己起窗口，而是把视频路径经 WM_COPYDATA 转交首实例
@@ -812,6 +845,11 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
     if (AidokuRuntimeFactory.isSupported) {
       installAidokuCloudflareResolver(ref.read(appProvider).navigatorKey);
     }
+    // 桌面 Mihon sidecar 是无头 JVM，被 Cloudflare 拦下时由宿主弹 WebView 解题；
+    // Android 有自己的 CloudflareChallengeActivity，不走这条。
+    if (MihonRuntimeFactory.isSupported && !Platform.isAndroid) {
+      installMihonCloudflareResolver(ref.read(appProvider).navigatorKey);
+    }
 
     if (Platform.isAndroid) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -829,6 +867,10 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
           ),
         );
       });
+    }
+    if (Platform.isMacOS) {
+      _sourceUrlSubscription =
+          SourceUrlChannel.urls.listen(_queueCardSourceUrl);
     }
     if (Platform.isIOS) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -848,10 +890,25 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
     }
   }
 
+  /// BUG-2459：引擎默认 deep linking 会把 `fushi://ankiFetch` 这类 x-callback
+  /// 回跳再推成 `pushRouteInformation`，`WidgetsApp` 据此 `pushNamed('/')` 在
+  /// 设置页上面又压一个 HomePage（用户看到「跳回主页」）。本 observer 在
+  /// `WidgetsApp` 之前注册，先答 true 把这条推送截断；真正的 URL 处理仍由各平台
+  /// 通道送进 [handleIncomingUrl]。理由与边界见 [swallowEngineDeepLinkRoute]。
+  @override
+  Future<bool> didPushRouteInformation(RouteInformation routeInformation) async {
+    return swallowEngineDeepLinkRoute(routeInformation);
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       ref.read(appProvider).refreshSystemPalette();
+      if (Platform.isIOS) {
+        unawaited(_consumeAnkiMobileInfoReturn(
+          AnkiMobileInfoReturnTrigger.appResumed,
+        ));
+      }
       return;
     }
     if (Platform.isAndroid) {
@@ -1065,6 +1122,7 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
 
   @override
   void dispose() {
+    _sourceUrlSubscription?.cancel();
     _intentsSubscription?.cancel();
     _iosUrlSubscription?.cancel();
     _systemColorRefreshDebounce?.cancel();
@@ -1104,6 +1162,10 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
     required bool isInitial,
   }) async {
     if (data == null || !mounted) return false;
+    if (SourceUrlChannel.isSourceUrl(data)) {
+      _queueCardSourceUrl(data);
+      return true;
+    }
     final String normalized = data.toLowerCase();
     if (normalized.startsWith('fushi://auth/')) {
       await _handleOAuthRedirect(data);
@@ -1119,10 +1181,74 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
     return false;
   }
 
-  Future<void> _handleAnkiMobileInfoCallback() async {
-    final repo = ref.read(ankiRepositoryProvider);
-    if (repo is! AnkiMobileRepository) return;
-    final result = await repo.consumeInfoForAddingPasteboard();
+  void _queueCardSourceUrl(String url) {
+    if (_openingCardSourceUrl == url) return;
+    if (!_pendingCardSourceUrls.contains(url)) _pendingCardSourceUrls.add(url);
+    if (!mounted) return;
+    if (!ref.read(appProvider).isInitialised) {
+      setState(() {});
+      return;
+    }
+    _scheduleCardSourceNavigation();
+  }
+
+  void _scheduleCardSourceNavigation() {
+    if (_sourceNavigationScheduled ||
+        _sourceNavigationRunning ||
+        _pendingCardSourceUrls.isEmpty) {
+      return;
+    }
+    _sourceNavigationScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _sourceNavigationScheduled = false;
+      if (mounted) unawaited(_drainCardSourceNavigation());
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
+  }
+
+  Future<void> _drainCardSourceNavigation() async {
+    if (_sourceNavigationRunning) return;
+    _sourceNavigationRunning = true;
+    try {
+      while (mounted && _pendingCardSourceUrls.isNotEmpty) {
+        final String url = _pendingCardSourceUrls.removeAt(0);
+        final CardSourceLink? link = CardSourceLink.tryParse(url);
+        if (link == null) {
+          FushiToast.show(msg: t.card_source_review_invalid);
+          continue;
+        }
+        try {
+          _openingCardSourceUrl = url;
+          await openCardSource(ref: ref, link: link);
+        } catch (error, stackTrace) {
+          ErrorLogService.instance.log('CardSource.open', error, stackTrace);
+          FushiToast.show(msg: t.card_source_review_failed);
+        } finally {
+          _openingCardSourceUrl = null;
+        }
+      }
+    } finally {
+      _sourceNavigationRunning = false;
+    }
+  }
+
+  Future<void> _handleAnkiMobileInfoCallback() =>
+      _consumeAnkiMobileInfoReturn(AnkiMobileInfoReturnTrigger.urlCallback);
+
+  /// AnkiMobile `infoForAdding` 往返的终点（BUG-2493）。两条路都进这里：
+  /// `fushi://ankiFetch` 回调，以及 iOS 上 app 回到前台的兜底——回调没送达、
+  /// 用户手动切回、或 AnkiMobile 那侧没同意时，用户此前只会看到设置页永远挂着
+  /// 「已打开 AnkiMobile，请去同意」。同一次往返只读一次剪贴板，由
+  /// [AnkiMobileInfoReturnCoordinator] 去重。
+  Future<void> _consumeAnkiMobileInfoReturn(
+    AnkiMobileInfoReturnTrigger trigger,
+  ) async {
+    final AnkiMobileRepository? repo =
+        resolveAnkiMobileRepository(ref.read(ankiRepositoryProvider));
+    if (repo == null) return;
+    final AnkiFetchResult? result =
+        await repo.consumeInfoForAddingReturn(trigger);
+    if (result == null || !mounted) return;
     switch (result) {
       case AnkiFetchSuccess():
         await ref
@@ -1203,6 +1329,10 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
     if (raw is! String) return null;
     final String videoPath = raw;
     if (videoPath.isEmpty) return null;
+    if (SourceUrlChannel.isSourceUrl(videoPath)) {
+      _queueCardSourceUrl(videoPath);
+      return null;
+    }
     // BUG-1666：单实例转交的是「候选 argv 字符串」，不只视频路径——Anki 卡片上的
     // `fushi://lookup?word=<词>` 协议启动第二实例后经同一 WM_COPYDATA 通道到这里。
     // 深链先于视频白名单分流：查词请求交 DesktopLookupService（explicit 起源，
@@ -1841,6 +1971,8 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
         ),
       );
     }
+
+    _scheduleCardSourceNavigation();
 
     // app 已初始化完成（走到这里说明 home 即将渲染）：若本次启动是「从 app 外
     // 打开视频」，在首帧后建/取 VideoBook 并打开播放页。只触发一次。

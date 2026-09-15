@@ -6,6 +6,11 @@ import 'video_fushi_page_source_corpus.dart';
 /// 源码守卫：桌面右键上下文菜单（TODO-048c）。整页 widget 测试依赖真实 libmpv
 /// player（测试宿主无 libmpv，`load()` / `Player` 构造即抛），故按既有视频守卫范式
 /// （见 video_player_keyboard_static_test.dart）在源码层钉死结构不变量。
+/// 源码扫描的归一化：压掉全部空白，并把 tall-style 拆行补出来的尾随逗号
+/// （`,)`）收回 `)`。钉调用形态本身，不钉它当天被 dart format 排成什么样。
+String _flat(String v) =>
+    v.replaceAll(RegExp(r'\s+'), '').replaceAll(',)', ')');
+
 void main() {
   // TODO-590 batch16: 右键触发点 onSecondaryTapUp 在 _buildVideoControlsInner、
   // 截断锚点 _buildVideoBody 都已搬到 video_fushi/layout.part.dart，故改读「主壳 + 全部

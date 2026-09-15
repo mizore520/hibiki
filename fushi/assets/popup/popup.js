@@ -2628,9 +2628,11 @@ function renderStructuredContent(parent, node, language = null, dictName = null,
             if (isExternal) {
                 openExternalLink(node.href);
             } else {
+                // BUG-2456：没有 ?query= 时以链接的**基字**文本为查询词，不能用裸
+                // textContent——它会把 <rt> 振假名拼进去（见 linkVisibleBaseText）。
                 const query = node.href.indexOf('?') >= 0
-                    ? new URLSearchParams(node.href.substring(node.href.indexOf('?'))).get('query') || element.textContent || ''
-                    : element.textContent || '';
+                    ? new URLSearchParams(node.href.substring(node.href.indexOf('?'))).get('query') || linkVisibleBaseText(element)
+                    : linkVisibleBaseText(element);
                 const rect = element.getBoundingClientRect();
                 window.flutter_inappwebview.callHandler('onLinkClick', query, {
                     x: rect.left,
@@ -4364,9 +4366,26 @@ function createGlossarySection(dictName, contents, dictIdx, entryIdx, totalDicts
         if (longPressed) event?.preventDefault?.();
     });
     summary.addEventListener('touchmove', () => clearTimeout(longPressTimer));
-    summary.addEventListener('mousedown', () => {
+    // BUG-2447：`<summary>` 是查词弹窗里唯一「鼠标点一下就会拿到 DOM 焦点」的元素——
+    // 按钮与链接在 macOS WebKit 下按平台惯例 `isMouseFocusable` 恒为 false，释义正文与
+    // 留白根本不可聚焦。而节点一旦获得焦点，WebKit 就让承载它的 WKWebView 成为窗口的
+    // first responder，此后 `keyDown:` 全部进 WebKit，FlutterViewController 再也收不到
+    // 按键。macOS 上**没有任何东西能把 first responder 还回来**：Flutter 引擎的平台视图
+    // 层（FlutterMutatorView / FlutterPlatformViewController）整层没有 firstResponder
+    // 代码，`PageFocusOwnership.reclaim` 只动 Flutter 自己的焦点树，而 Windows 那条兜底
+    // （fork 的 custom_platform_view 每次 onPointerDown 都 requestFocus）依赖 WebView2 的
+    // 无窗口合成、在真原生 WKWebView 上并不存在。于是「展开/折叠一次词典分组」之后宿主
+    // 页面的快捷键整条失效，只剩 JS 桥里宿主显式转发的那两三个动作还活着——BUG-1269 当年
+    // 补的正是那条桥，它按构造覆盖不到其余绑定。
+    //
+    // 取消 mousedown 的默认动作即掐断「点击 → 节点获焦」这一步，而 `<details>` 的开合是
+    // `click` 的 activation behavior，与 mousedown 的默认动作无关，照常发生；Tab 聚焦也
+    // 不受影响（只有**鼠标**聚焦是 mousedown 的默认动作）。只对主键生效：非主键本就不
+    // 参与聚焦，中键/右键要原样留给弹窗输入桥的 `Mouse<n>` 转发判定。
+    summary.addEventListener('mousedown', (e) => {
         longPressed = false;
         longPressTimer = setTimeout(toggleSelection, 500);
+        if (e && e.button === 0) e.preventDefault();
     });
     summary.addEventListener('mouseup', () => clearTimeout(longPressTimer));
     summary.addEventListener('mouseleave', () => clearTimeout(longPressTimer));
@@ -5004,6 +5023,23 @@ function __fushiReportedContentHeight(){
     return Math.ceil(__fushiScrollHeight() * __fushiPopupContentZoom());
 }
 
+// 弹窗内原地跳转（对齐 Hoshi Reader iOS 的 backStack/forwardStack）：后退 / 前进回到
+// 历史页时，Dart 在 renderPopup() 之前把该页离开时的 scrollTop 写进
+// window.__fushiPendingScrollTop（新词 / load-more 写 0 = 不恢复）。内容是分批进
+// DOM 的，首发 popupRendered 时文档往往还不够高、直接 scrollTo 会被夹到底；所以
+// 每个尾批切片后都试一次「够高就恢复」，尾批全部完成（final）时不管够不够高都
+// 应用一次兜底（浏览器自行夹紧）。应用后清零，同一份 pending 绝不影响下一次渲染。
+window.__fushiPendingScrollTop = 0;
+function __fushiApplyPendingScrollTop(isFinal) {
+    const y = window.__fushiPendingScrollTop || 0;
+    if (!(y > 0)) return;
+    const el = document.scrollingElement || document.documentElement;
+    if (!el) return;
+    if (!isFinal && (el.scrollHeight - el.clientHeight) < y) return;
+    el.scrollTop = y;
+    window.__fushiPendingScrollTop = 0;
+}
+
 // 性能（查词时延）：多词条渲染现在**双发**同一 token 的 popupRendered——首词条
 // 同步渲染完（build + 局部 postProcessRuby + applyCustomCSS）立即发第一次，宿主
 // 据此撤盖板/翻可见（首屏可见性只依赖首词条，Dart 侧全部消费方幂等）；尾批词条
@@ -5019,6 +5055,7 @@ function _firePopupRendered(stillRendering) {
         // Its own render signal owns the reveal gate; never let this stale
         // callback reveal the new card early.
         if (generation !== window._renderGeneration) return;
+        __fushiApplyPendingScrollTop(!stillRendering);
         _reportPopupHeight();
         // 词典方框排列：渲染完成后（含首条 + 其余条两次调用）铺 masonry。masonry 在下一帧
         // RAF 里跑，跑完会自行 _reportPopupHeight() 复报修正后的高度。
@@ -5612,6 +5649,8 @@ window.renderPopup = function() {
         } while ((activeEntryElement || nextEntryIndex < entries.length) &&
             performance.now() - sliceStart < TAIL_SLICE_BUDGET_MS);
         if (activeEntryElement || nextEntryIndex < entries.length) {
+            // 历史页回退：内容一够高就把滚动位恢复回去，不等尾批全部完成。
+            __fushiApplyPendingScrollTop(false);
             scheduleRenderTail(renderNextDictionaryBlock);
             return;
         }
@@ -6194,6 +6233,39 @@ function __fushiPopupMouseDown(e) {
 // openExternalLink，发音媒体节点忽略，其余内部交叉引用用可见词头 textContent 作查询词转成
 // onLinkClick 重查（与结构化内容链接、app 的干净词头索引一致）。抽成具名函数便于 test/js
 // jsdom 行为测试直接执行判据。
+// BUG-2456：词典正文里链接的「可见基字文本」——拿来当查询词时必须剥掉振假名。
+//
+// 交叉引用（明鏡逆引き列出的惯用句、MDX 類義語 等）多半带 <ruby>：
+//   <a><ruby>足<rt>あし</rt></ruby>が<ruby>棒<rt>ぼう</rt></ruby>になる</a>
+// 裸 textContent 把读音一起拼进来 → 「足あしが棒ぼうになる」。Dart 侧 searchDictionary
+// 是从串首由长到短的**前缀扫描**（scan_candidates 只产出前缀），这串能命中的最长前缀
+// 只剩首字「足」→ 单字查询 → 汉字卡。这就是用户报的「惯用句开头是汉字就进不去、
+// 被重定向到那个汉字」；开头是假名的链接读音跟在后面的汉字后，前缀恰好还能多命中
+// 一段，才显得时好时坏。postProcessRuby 还会给每个 rt 克隆一份 .ruby-reserve
+// （aria-hidden 占位孪生体），textContent 里读音其实是双份。
+//
+// 过滤集与 wrapExpressionInlineKanji 的 walker 一致：rt / rp / .ruby-rt / .ruby-reserve
+// 一律不收，只拼基字文本节点；空白折叠成单个空格后 trim（拉丁词典的多词链接仍保留
+// 词间空格）。故意用 childNodes 递归而不用 TreeWalker：结构化内容链接与 MDX 锚点两条
+// 路径共用，且能在无 TreeWalker 的极简 DOM 桩里执行（fushi/test/pages 的 node 行为测试）。
+function linkVisibleBaseText(root) {
+    if (!root) return '';
+    let out = '';
+    const walk = (node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+            out += node.textContent || '';
+            return;
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) return;
+        if (node.tagName === 'RT' || node.tagName === 'RP') return;
+        const cls = node.classList;
+        if (cls && (cls.contains('ruby-rt') || cls.contains('ruby-reserve'))) return;
+        for (const child of node.childNodes) walk(child);
+    };
+    walk(root);
+    return out.replace(/\s+/g, ' ').trim();
+}
+
 function handleGlossaryAnchorClick(event, anchor) {
     event.preventDefault();
     const href = (anchor.getAttribute('href') || '').trim();
@@ -6217,7 +6289,8 @@ function handleGlossaryAnchorClick(event, anchor) {
         }
         return;
     }
-    const query = (anchor.textContent || '').trim();
+    // BUG-2456：查询词只取基字，不取振假名（见 linkVisibleBaseText）。
+    const query = linkVisibleBaseText(anchor);
     if (!query) return;
     const rect = anchor.getBoundingClientRect();
     window.flutter_inappwebview.callHandler('onLinkClick', query, {
@@ -6264,7 +6337,12 @@ function __fushiPopupClick(e) {
     // 是顶层节点，当年正是这个毛病。
     if (target?.closest('.grammar-tooltip')) return;
     if (target?.closest('summary')) return;
-    if (target?.closest('.glossary-content')) {
+    // 可点词查词的文本节点：词典释义正文 .glossary-content，以及汉字卡片的读音/stats
+    // 值（.kanji-card-value）与释义（.kanji-card-meanings）。汉字卡片正文与释义正文
+    // 同语义（点哪个字从哪个字扫词），selection.js 本就不分容器；此前它们落到下面的
+    // .kanji-card-section 卡片分支裸 return，点了没反应。大字 .kanji-card-char 自带
+    // onLinkClick + stopPropagation，不经这里。
+    if (target?.closest('.glossary-content, .kanji-card-value, .kanji-card-meanings')) {
         // BUG-767：glossary 内的锚点（MDX 原始 HTML 交叉引用/外链/发音）统一走
         // handleGlossaryAnchorClick——preventDefault 阻止默认导航（否则结果框架被导走→白屏），
         // 内部引用转 onLinkClick 重查。结构化内容链接自带 onclick + stopPropagation，永不冒泡到此。

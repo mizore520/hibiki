@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fushi/media.dart';
 import 'package:fushi/pages.dart';
 import 'package:fushi/src/media/display_title.dart';
-import 'package:fushi/src/media/video/video_book_repository.dart';
+import 'package:fushi_engine/media/video/video_book_repository.dart';
 import 'package:fushi/src/mining/galgame_library.dart';
 import 'package:fushi/src/pages/implementations/game_statistics_page.dart';
 import 'package:fushi/src/models/app_model.dart';
@@ -16,9 +16,9 @@ import 'package:fushi/src/pages/implementations/stat_delete_confirm_dialog.dart'
 import 'package:fushi/src/pages/implementations/stat_period_detail_sheet.dart';
 import 'package:fushi/src/pages/implementations/stat_session_list.dart';
 import 'package:fushi/src/pages/implementations/stat_shared.dart';
-import 'package:fushi/src/stats/stat_facts.dart';
+import 'package:fushi_engine/stats/stat_facts.dart';
 import 'package:fushi/src/stats/stat_window.dart';
-import 'package:fushi/src/stats/study_sessions.dart';
+import 'package:fushi_engine/stats/study_sessions.dart';
 import 'package:fushi/utils.dart';
 import 'package:fushi_core/fushi_core.dart';
 import 'package:fushi_dictionary/fushi_dictionary.dart';
@@ -206,7 +206,12 @@ class _StatsOverviewTabState extends ConsumerState<_StatsOverviewTab> {
     }
     final StatWindow w = StatWindow(DateTime.now());
     return ListView(
-      padding: EdgeInsets.only(bottom: tokens.spacing.card * 2),
+      // BUG-2440：scaffold 底部安全区不再从 viewport 扣掉，tab 内容末尾自己让开
+      // home indicator / 手势条（三个域 tab 走 [buildStatTailSliver]）。
+      padding: withBottomSafeInset(
+        context,
+        EdgeInsets.only(bottom: tokens.spacing.card * 2),
+      ),
       children: <Widget>[
         _buildGoalCard(tokens, w),
         _buildSummaryCards(w),
@@ -408,12 +413,17 @@ class _StatsOverviewTabState extends ConsumerState<_StatsOverviewTab> {
       chars += f.chars;
       ms += f.ms;
     }
+    // 阅读速度只按阅读域算（[statBookCphOf]）：卡上的时长 / 字数是跨域总和，
+    // 视频只计时不计字、游戏 hook 只计字不计时，混进去的「字/时」谁也解释不了。
+    final String? cph = statBookCphOf(_daily, contains);
     return StatPeriodSummary(
       label: label,
       primaryValue: formatStatTime(ms),
       onTap: () => unawaited(_showPeriodDetail(label, contains)),
       lines: <StatSummaryLine>[
         StatSummaryLine(value: formatStatChars(chars)),
+        if (cph != null)
+          StatSummaryLine(label: t.stat_reading_speed, value: cph),
         StatSummaryLine(label: t.stat_lookup, value: '${pick(_lookup)}'),
         StatSummaryLine(label: t.stat_mined, value: '${pick(_mined)}'),
         StatSummaryLine(label: t.stat_favorited, value: '${pick(_favorited)}'),

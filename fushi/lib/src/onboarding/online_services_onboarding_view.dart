@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fushi/src/media/video/dandanplay_client.dart';
 import 'package:fushi/src/media/video/scraper/tmdb_default_key.dart';
-import 'package:fushi/src/media/video/subtitle/open_subtitles_client.dart';
+import 'package:fushi_engine/media/video/subtitle/open_subtitles_client.dart';
 import 'package:fushi/src/settings/settings_detail_page.dart';
 import 'package:fushi/src/settings/settings_schema_services.dart';
 import 'package:fushi/utils.dart';
@@ -171,7 +171,9 @@ class OnlineServicesOnboardingPage extends StatelessWidget {
   Widget build(BuildContext context) => FushiPageScaffold(
         title: t.settings_destination_services,
         body: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          // BUG-2440：scaffold 底部安全区不再从 viewport 扣掉，滚动内容末尾自己
+          // 补上 home indicator / 手势条的高度。
+          padding: withBottomSafeInset(context, const EdgeInsets.all(24)),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 720),

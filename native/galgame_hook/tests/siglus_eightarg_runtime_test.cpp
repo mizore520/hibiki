@@ -1,5 +1,4 @@
 #undef NDEBUG
-
 #include "siglus_eightarg_runtime.h"
 
 #include <cstdio>

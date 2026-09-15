@@ -1,5 +1,4 @@
 #undef NDEBUG
-
 #include "siglus_legacy_owner.h"
 
 #include <cstdio>

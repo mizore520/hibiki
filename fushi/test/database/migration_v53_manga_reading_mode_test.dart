@@ -120,6 +120,6 @@ CREATE TABLE epub_books (
         .customSelect('PRAGMA user_version')
         .getSingle();
     expect(version.read<int>('user_version'), db.schemaVersion);
-    expect(db.schemaVersion, 102);
+    expect(db.schemaVersion, 104);
   });
 }

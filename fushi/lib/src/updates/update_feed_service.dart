@@ -4,32 +4,21 @@
 /// 剩下的事——开关过滤、幂等、系统通知合并、已读——全在这里，各域不再各写一遍。
 library;
 
+import 'dart:convert' show jsonDecode, jsonEncode;
+
 import 'package:drift/drift.dart' show Value;
 import 'package:fushi_core/fushi_core.dart'
     show FushiDatabase, UpdateFeedEntriesCompanion, UpdateFeedEntryRow;
 
 import 'package:fushi/src/models/preferences_repository.dart';
-import 'package:fushi/src/updates/update_feed_kind.dart';
+import 'package:fushi_engine/updates/update_feed_kind.dart';
+import 'package:fushi_engine/updates/update_feed_port.dart';
+// 纯数据与端口住在引擎（依赖方向 app → 引擎，见 update_feed_port.dart）；
+// 这里 re-export 让既有调用点照旧只 import 本文件。
+export 'package:fushi_engine/updates/update_feed_port.dart'
+    show UpdateFeedDraft, UpdateFeedPublisher;
 import 'package:fushi/src/updates/update_notifier.dart';
 
-/// 一条待投递的更新事件。域侧只需填这些，身份拼接与落库由服务负责。
-class UpdateFeedDraft {
-  const UpdateFeedDraft({
-    required this.kind,
-    required this.targetKey,
-    required this.title,
-    this.subtitle,
-    this.detailJson,
-  });
-
-  final UpdateFeedKind kind;
-  final String targetKey;
-  final String title;
-  final String? subtitle;
-  final String? detailJson;
-
-  String get entryId => updateFeedEntryId(kind, targetKey);
-}
 
 /// 一次投递的结果。域侧一般不用看，[newEntries] 供调用方写日志或做后续动作。
 class UpdateFeedPublishResult {
@@ -53,7 +42,9 @@ class UpdateFeedPublishResult {
 /// 检查是各域自己的事（番剧走既有订阅检查节奏、漫画走库更新调度、app 走启动检查），
 /// 这里只负责「发现了之后怎么办」。把调度也塞进来会让这一层同时owning四种完全
 /// 不同的节奏，而那四种节奏本来就该由最懂它的域来定。
-class UpdateFeedService {
+/// 投递实现：端口定义在引擎侧（[UpdateFeedPublisher]），依赖方向 app → 引擎。
+/// 显式 implements 是有意的——不写的话，端口签名将来改了这里不会被编译器拦住。
+class UpdateFeedService implements UpdateFeedPublisher {
   UpdateFeedService({
     required FushiDatabase database,
     required PreferencesRepository prefs,
@@ -79,18 +70,16 @@ class UpdateFeedService {
   final UpdateNotificationText Function(UpdateFeedKind, List<UpdateFeedDraft>)
       _notificationText;
 
-  /// 通知权限只申请一次；null = 还没问过。
+  /// 通知后端只初始化一次；null = 还没初始化过。
   bool? _notifierReady;
 
-  /// 域 → 系统通知 id。同一个域重复发通知会**替换**上一条而不是叠出一串，
-  /// 所以「订阅的番更新了 5 部」始终只占通知栏一格。
-  static const Map<UpdateFeedKind, int> _notificationIds =
-      <UpdateFeedKind, int>{
-    UpdateFeedKind.videoEpisode: 9101,
-    UpdateFeedKind.mangaChapter: 9102,
-    UpdateFeedKind.mangaExtension: 9103,
-    UpdateFeedKind.appRelease: 9104,
-  };
+  /// 系统权限的最近一次查询结果；null = 还没查过。启动期 [warmUpNotifier] 与
+  /// [enableSystemNotifications] 之后刷新，设置页的开关同步读它。
+  bool? _permissionGranted;
+
+  /// 本进程内发过的通知 id，按域——[markAllSeen] 撤通知时要知道该域挂着哪些
+  /// （分组通知的 id 由组名派生，事先不可枚举）。
+  final Map<UpdateFeedKind, Set<int>> _shownIds = <UpdateFeedKind, Set<int>>{};
 
   /// 这个域要不要提醒。默认全开——用户装了订阅功能就是想被告知，默认关等于功能
   /// 不存在。
@@ -100,12 +89,51 @@ class UpdateFeedService {
   Future<void> setKindEnabled(UpdateFeedKind kind, bool enabled) =>
       _prefs.setPref(kind.enabledPrefKey, enabled);
 
-  /// 系统通知总开关。默认开；关掉后仍照常投递、照常出红点。
+  /// 系统通知总开关（用户偏好）。默认开；关掉后仍照常投递、照常出红点。
+  ///
+  /// 只是偏好的一半：真能不能发还要系统点头（[systemNotificationsGranted]）。
+  /// 设置页显示 [systemNotificationsActive]，发通知也以它为准。
   bool get systemNotificationsEnabled =>
       _prefs.getPref(kUpdateSystemNotificationsPref, defaultValue: true) as bool;
 
-  Future<void> setSystemNotificationsEnabled(bool enabled) async {
-    await _prefs.setPref(kUpdateSystemNotificationsPref, enabled);
+  /// 系统当前允不允许发（最近一次查询的结果；没查过按不允许）。
+  bool get systemNotificationsGranted => _permissionGranted ?? false;
+
+  /// 偏好开着 **且** 系统已授权——设置页开关显示的就是这个值。开关只有一种
+  /// 「开」：两边都开；缺任一边都显示为关，用户再打开就是一次申请。
+  bool get systemNotificationsActive =>
+      systemNotificationsEnabled && systemNotificationsGranted;
+
+  /// 用户关掉「系统通知」。不碰系统权限（撤回权限只能在系统设置里做）。
+  Future<void> disableSystemNotifications() async {
+    await _prefs.setPref(kUpdateSystemNotificationsPref, false);
+  }
+
+  /// 用户打开「系统通知」——**这是唯一会弹系统权限对话框的地方**。偏好先写开，
+  /// 再向系统申请；被拒的话偏好仍是开的，但 [systemNotificationsActive] 为假，
+  /// 开关显示为关，下次再打开就再申请一次（系统「不再询问」之后申请立即返回
+  /// 拒绝，用户得去系统设置授权）。返回申请后的最终状态。
+  Future<bool> enableSystemNotifications() async {
+    await _prefs.setPref(kUpdateSystemNotificationsPref, true);
+    _notifierReady ??= await _notifier.ensureReady();
+    if (_notifierReady != true) return _permissionGranted = false;
+    return _permissionGranted = await _notifier.requestPermission();
+  }
+
+  /// 启动期把通知后端初始化好：注册点击回调、回放「被通知冷启动」的那次点击、
+  /// 让上个进程留下的通知能被撤销。没有这一步，回调只在本进程**第一次发通知**
+  /// 时才挂上——重启后点昨晚那条「播放」什么都不发生。总开关关着就不初始化。
+  ///
+  /// **不申请权限，只查询**：这里跑在 HomePage 就绪那一帧，用户没做任何动作。
+  /// 权限申请只在 [enableSystemNotifications]（BUG-2498）。
+  Future<void> warmUpNotifier() async {
+    if (!systemNotificationsEnabled) return;
+    _notifierReady ??= await _notifier.ensureReady();
+    if (_notifierReady != true) return;
+    // 冷启动点击只在这里回放：别的 ensureReady 入口（发通知、打开开关）都可能
+    // 晚上几小时，那时回放旧点击是莫名其妙的跳转。
+    await _notifier.replayLaunchResponse();
+    _permissionGranted = await _notifier.hasPermission();
   }
 
   /// 投递一批事件。**同一域**的一批合成**一条**汇总通知。
@@ -115,6 +143,7 @@ class UpdateFeedService {
   ///
   /// 关掉的域在这里就被整批丢弃——不投递、不出红点、不通知。「投递了但不提醒」
   /// 会让更新页里堆满用户明确说过不关心的东西。
+  @override
   Future<UpdateFeedPublishResult> publishBatch(
     UpdateFeedKind kind,
     List<UpdateFeedDraft> drafts,
@@ -155,7 +184,20 @@ class UpdateFeedService {
         notificationSent: false,
       );
     }
-    final bool sent = await _sendNotification(kind, fresh);
+    // 按通知组拆：同组一条汇总（番剧域 = 一部作品一条），无组的整域一条。
+    // 组在 [drafts] 里首次出现的顺序即通知顺序，稳定可断言。
+    final Map<String?, List<UpdateFeedDraft>> byGroup =
+        <String?, List<UpdateFeedDraft>>{};
+    for (final UpdateFeedDraft draft in fresh) {
+      byGroup
+          .putIfAbsent(draft.notificationGroup, () => <UpdateFeedDraft>[])
+          .add(draft);
+    }
+    bool sent = false;
+    for (final MapEntry<String?, List<UpdateFeedDraft>> group
+        in byGroup.entries) {
+      sent = await _sendNotification(kind, group.key, group.value) || sent;
+    }
     return UpdateFeedPublishResult(newEntries: fresh, notificationSent: sent);
   }
 
@@ -165,18 +207,47 @@ class UpdateFeedService {
 
   Future<bool> _sendNotification(
     UpdateFeedKind kind,
+    String? group,
     List<UpdateFeedDraft> fresh,
   ) async {
     if (!systemNotificationsEnabled) return false;
     _notifierReady ??= await _notifier.ensureReady();
     if (_notifierReady != true) return false;
+    // 每次发前问一次系统（用户可能在系统设置里改过），顺手刷新缓存。
+    final bool granted = await _notifier.hasPermission();
+    _permissionGranted = granted;
+    if (!granted) return false;
     final UpdateNotificationText text = _notificationText(kind, fresh);
+    final UpdateFeedDraft first = fresh.first;
+    final int id = updateNotificationId(kind, group);
+    _shownIds.putIfAbsent(kind, () => <int>{}).add(id);
+    final int? publishedAt = first.publishedAt;
     await _notifier.notify(
       UpdateNotification(
-        id: _notificationIds[kind]!,
+        id: id,
         title: text.title,
         body: text.body,
-        payload: kind.dbValue,
+        // 载荷指向组内第一条：点通知就落到它（番剧 = 播这一集）。
+        payload: UpdateNotificationPayload(
+          kind: kind,
+          entryId: first.entryId,
+        ).encode(),
+        imagePath: first.imagePath,
+        timestamp: publishedAt == null
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(publishedAt),
+        actions: <UpdateNotificationAction>[
+          if (text.openLabel case final String label)
+            UpdateNotificationAction(
+              id: kUpdateNotificationActionOpen,
+              label: label,
+            ),
+          if (text.viewAllLabel case final String label)
+            UpdateNotificationAction(
+              id: kUpdateNotificationActionViewAll,
+              label: label,
+            ),
+        ],
       ),
     );
     return true;
@@ -219,11 +290,15 @@ class UpdateFeedService {
       kind: kind?.dbValue,
       seenAt: _now().millisecondsSinceEpoch,
     );
-    if (kind != null) {
-      await _notifier.cancel(_notificationIds[kind]!);
-    } else {
-      for (final int id in _notificationIds.values) {
-        await _notifier.cancel(id);
+    final List<UpdateFeedKind> kinds =
+        kind == null ? UpdateFeedKind.values : <UpdateFeedKind>[kind];
+    for (final UpdateFeedKind k in kinds) {
+      // 域级固定 id 总撤（上个进程留下的那条不在 [_shownIds] 里）；分组 id 撤本
+      // 进程发过的。
+      final int baseId = updateNotificationId(k, null);
+      await _notifier.cancel(baseId);
+      for (final int id in _shownIds.remove(k) ?? const <int>{}) {
+        if (id != baseId) await _notifier.cancel(id);
       }
     }
   }
@@ -237,12 +312,95 @@ class UpdateFeedService {
   Stream<void> watchChanged() => _db.watchUpdateFeedChanged();
 }
 
+/// 域 → 系统通知的固定 id（v101 起就是这四个值，跨版本稳定：撤销要按同一个
+/// id 找到上个进程发出的那条）。
+const Map<UpdateFeedKind, int> kUpdateNotificationBaseIds =
+    <UpdateFeedKind, int>{
+  UpdateFeedKind.videoEpisode: 9101,
+  UpdateFeedKind.mangaChapter: 9102,
+  UpdateFeedKind.mangaExtension: 9103,
+  UpdateFeedKind.appRelease: 9104,
+};
+
+/// 通知 id：无组 = 域固定 id；有组 = 域序号占高 4 位 + 组名 FNV-1a 哈希占低
+/// 28 位（Android 通知 id 是 32 位有符号 int，取正数范围）。同域同组恒同 id，
+/// 所以「A 又更新了」替换而不是叠加；不用 `String.hashCode`——它不保证跨进程
+/// 稳定，撤不到上个进程发的那条。
+int updateNotificationId(UpdateFeedKind kind, String? group) {
+  if (group == null) return kUpdateNotificationBaseIds[kind]!;
+  int hash = 0x811C9DC5;
+  for (final int unit in group.codeUnits) {
+    hash = ((hash ^ unit) * 0x01000193) & 0xFFFFFFFF;
+  }
+  return ((kind.index + 1) << 28) | (hash & 0x0FFFFFFF);
+}
+
+/// 通知按钮 id：打开那条更新的落点（视频 = 播放该集，漫画 = 作品页，扩展 =
+/// 扩展页，app = 发布页）。点通知本体与它同义。
+const String kUpdateNotificationActionOpen = 'open';
+
+/// 通知按钮 id：进更新中心。
+const String kUpdateNotificationActionViewAll = 'view_all';
+
+/// 通知点击载荷：只带身份，落点从数据库还原（`getUpdateFeedEntry`），通知里不
+/// 复制一份 detailJson——那份可能在发出后被域侧更新。
+class UpdateNotificationPayload {
+  const UpdateNotificationPayload({required this.kind, required this.entryId});
+
+  final UpdateFeedKind kind;
+  final String entryId;
+
+  String encode() => jsonEncode(<String, String>{
+        'kind': kind.dbValue,
+        'entryId': entryId,
+      });
+
+  /// 解不出（旧版本发的裸 `kind.dbValue`、损坏）返回 null，调用方退到更新中心。
+  static UpdateNotificationPayload? decode(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final Object? decoded = jsonDecode(raw);
+      if (decoded is! Map<String, Object?>) return null;
+      final UpdateFeedKind? kind =
+          UpdateFeedKind.fromDbValue(decoded['kind'] as String? ?? '');
+      final String? entryId = decoded['entryId'] as String?;
+      if (kind == null || entryId == null) return null;
+      return UpdateNotificationPayload(kind: kind, entryId: entryId);
+    } on FormatException {
+      return null;
+    }
+  }
+}
+
+/// 解一条更新的 `detailJson`（本机自己写的）。坏掉只可能是版本间格式漂移——
+/// 那时「打不开 / 不显示」比崩掉好，返回空表。
+Map<String, Object?> decodeUpdateFeedDetail(String? json) {
+  if (json == null || json.isEmpty) return const <String, Object?>{};
+  try {
+    final Object? decoded = jsonDecode(json);
+    return decoded is Map<String, Object?> ? decoded : const <String, Object?>{};
+  } on FormatException {
+    return const <String, Object?>{};
+  }
+}
+
 /// 通知的标题与正文。纯数据，便于单测直接断言文案组装规则。
 class UpdateNotificationText {
-  const UpdateNotificationText({required this.title, required this.body});
+  const UpdateNotificationText({
+    required this.title,
+    required this.body,
+    this.openLabel,
+    this.viewAllLabel,
+  });
 
   final String title;
   final String body;
+
+  /// 「打开落点」按钮文案；null = 不放按钮（默认纯结构实现没有 i18n，给 null）。
+  final String? openLabel;
+
+  /// 「查看更新」按钮文案；null 同上。
+  final String? viewAllLabel;
 }
 
 /// 通知文案的组装规则（纯函数）。

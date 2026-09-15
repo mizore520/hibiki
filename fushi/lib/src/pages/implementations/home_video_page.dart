@@ -1,6 +1,5 @@
 import 'dart:async' show StreamSubscription, Timer, unawaited;
 import 'dart:io';
-
 import 'package:fushi/src/utils/net/app_http_image.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:fushi/src/pages/base_module_tab_page.dart';
@@ -11,7 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fushi_audio/fushi_audio.dart';
 import 'package:fushi_core/fushi_core.dart';
 import 'package:fushi/src/focus/fushi_focus_controller.dart';
-import 'package:fushi/src/media/collections/collection_asset_reclaim.dart';
+import 'package:fushi_engine/media/collections/collection_asset_reclaim.dart';
+import 'package:fushi_engine/sync/remote_collection_adoption_service.dart';
 import 'package:fushi/src/media/drag_drop/card_drop_registry.dart';
 import 'package:fushi/src/media/drag_drop/drop_classification.dart';
 import 'package:fushi/src/media/drag_drop/drop_decision.dart';
@@ -31,31 +31,33 @@ import 'package:fushi/src/settings/settings_schema_services.dart';
 import 'package:fushi/src/onboarding/online_services_onboarding_view.dart';
 import 'package:fushi/src/media/video/video_subscription_updates.dart';
 import 'package:fushi/src/media/video/scraper/auto_scrape_service.dart';
-import 'package:fushi/src/media/video/scraper/cover_meta_store.dart';
+import 'package:fushi_engine/media/video/scraper/cover_meta_store.dart';
 import 'package:fushi/src/media/video/scraper/cover_scraper_service.dart';
 import 'package:fushi/src/media/media_cover_service.dart';
 import 'package:fushi/src/media/video/cover_backfill_ledger.dart';
-import 'package:fushi/src/media/video/video_cover_extractor.dart'
+import 'package:fushi_engine/media/video/video_cover_extractor.dart'
     show isLocalFrameExtractableVideoSource;
-import 'package:fushi/src/media/video/m3u8_playlist.dart';
+import 'package:fushi_engine/media/video/m3u8_playlist.dart';
 import 'package:fushi/src/media/video/video_folder_collection_policy.dart';
-import 'package:fushi/src/media/video/video_book_repository.dart';
+import 'package:fushi_engine/media/video/video_book_repository.dart';
 import 'package:fushi/src/media/video/video_library_delete.dart';
 import 'package:fushi/src/sync/local_file_delete_feedback.dart';
-import 'package:fushi/src/media/video/video_local_files.dart'
+import 'package:fushi_engine/media/video/video_local_files.dart'
     show localVideoFileCandidates, videoBookHasLocalFiles;
 import 'package:fushi/src/media/video/video_subtitle_attach.dart';
 import 'package:fushi/src/media/video/video_subtitle_attach_messages.dart';
 import 'package:fushi/src/media/video/video_import_dialog.dart';
 import 'package:fushi/src/media/video/video_library_overview.dart';
 import 'package:fushi/src/media/video/video_library_section.dart';
-import 'package:fushi/src/media/video/metadata/video_scrape_operation_gate.dart';
-import 'package:fushi/src/media/video/metadata/video_library_scrape_sweep.dart';
-import 'package:fushi/src/media/video/metadata/video_source_scrape_run_detail_dialog.dart'
-    show showVideoSourceScrapeManualBindingDialog;
-import 'package:fushi/src/media/video/metadata/video_source_scrape_task.dart';
+import 'package:fushi_engine/media/video/metadata/video_scrape_operation_gate.dart';
+import 'package:fushi_engine/media/video/metadata/video_library_scrape_sweep.dart';
+import 'package:fushi_engine/media/video/metadata/video_metadata_models.dart'
+    show VideoMetadataWork;
+import 'package:fushi_engine/media/video/metadata/video_metadata_provider.dart'
+    show VideoMetadataLookup;
+import 'package:fushi_engine/media/video/metadata/video_source_scrape_task.dart';
 import 'package:fushi/src/media/video/video_mpv_config.dart';
-import 'package:fushi/src/media/video/video_storage.dart';
+import 'package:fushi_engine/media/video/video_storage.dart';
 import 'package:fushi/src/media/video/video_shader_downloader.dart';
 import 'package:fushi/src/media/video/video_shader_manager.dart';
 import 'package:fushi/src/media/video/video_shader_tier.dart';
@@ -71,7 +73,7 @@ import 'package:fushi/src/media/collections/collection_grouping.dart';
 import 'package:fushi/src/media/collections/collection_episode_slot.dart';
 import 'package:fushi/src/media/collections/collection_one_key_sort.dart'
     show sortNewCollectionMembersNaturally;
-import 'package:fushi/src/media/collections/shelf_sort.dart';
+import 'package:fushi_engine/media/collections/shelf_sort.dart';
 import 'package:fushi/src/media/media_search_text.dart';
 import 'package:fushi/src/media/collections/collection_drag.dart';
 import 'package:fushi/src/media/selection/media_selection_controller.dart';
@@ -87,9 +89,11 @@ import 'package:fushi/src/pages/implementations/tag_filter_sheet.dart';
 import 'package:fushi/src/pages/implementations/tag_picker_page.dart';
 import 'package:fushi/src/pages/implementations/video_fushi_page.dart';
 import 'package:fushi/src/sync/deletion_prompt.dart';
-import 'package:fushi/src/sync/deletion_propagation.dart';
+import 'package:fushi_engine/sync/deletion_propagation.dart';
 import 'package:fushi/src/sync/interconnect_sync_backend.dart';
-import 'package:fushi/src/sync/fushi_library_host_service.dart';
+import 'package:fushi_engine/sync/fushi_library_host_service.dart';
+import 'package:fushi_engine/sync/video_metadata_manifest.dart';
+import 'package:fushi_engine/sync/video_metadata_work_target.dart';
 import 'package:fushi/src/sync/manual_sync_ui.dart';
 import 'package:fushi/src/sync/remote_download_progress_badge.dart';
 import 'package:fushi/src/sync/interconnect_download_manager.dart';
@@ -108,13 +112,17 @@ import 'package:fushi/src/utils/components/batch_tag_dialog_frame.dart';
 import 'package:fushi/src/utils/cover_image.dart';
 import 'package:fushi/src/pages/implementations/collection_name_dialog.dart';
 import 'package:fushi/src/pages/implementations/name_input_dialog.dart';
-import 'package:fushi/src/media/video/video_filename_parser.dart';
+import 'package:fushi_engine/media/video/video_filename_parser.dart';
 import 'package:fushi/src/utils/misc/reveal_in_file_manager.dart'
     show currentRevealHost, revealFirstOf;
 import 'package:fushi/src/utils/misc/shelf_ordering.dart';
 import 'package:fushi/src/media/source_library/add_local_folder_source.dart';
 import 'package:fushi/src/media/import/real_path_directory_picker.dart';
 import 'package:path/path.dart' as p;
+import 'package:fushi/src/media/video/metadata/video_source_scrape_run_detail_dialog.dart'
+    show
+        showVideoMetadataCandidateSearchDialog,
+        showVideoSourceScrapeManualBindingDialog;
 
 /// 顶层 helper：打开本地视频播放页的**共享路由入口**（本页 hero/卡片与首页
 /// dashboard 继续卡/活动条同一条路径），统一经 [VideoFushiPage.neutralized]
@@ -337,6 +345,19 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
   bool get _selectionMode => _selection.active;
 
   Set<String> get _selectedUids => _selection.looseKeys;
+
+  /// 选中集里的本地条目（裸 bookUid）：组合 / 打标签 / 删除三个本地动作的输入。
+  /// BUG-2458：散卡选中集里现在混着远端占位键（[_remoteVideoSelectionKey]）。
+  Set<String> get _selectedLocalUids => <String>{
+        for (final String key in _selectedUids)
+          if (!_isRemoteVideoSelectionKey(key)) key,
+      };
+
+  /// 选中集里的远端占位键：批量「下载」的输入。
+  Set<String> get _selectedRemoteKeys => <String>{
+        for (final String key in _selectedUids)
+          if (_isRemoteVideoSelectionKey(key)) key,
+      };
 
   /// 多选态合集整选（块2）：选中合集 id 集，与散卡选中集 [_selectedUids] 并存。
   /// 组合三档判定（块3）与批量解散/删除（块4）都读这两个集。
@@ -1265,6 +1286,12 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
       // BUG-1891：Jellyfin/Emby 关掉「自动列出条目」且手里还没有清单 → 本轮一个
       // 请求都不发，也不渲染远端卡（与「显示远端条目」关闭同款空态，不是失败态）。
       if (videos == null) return null;
+      final RemoteCollectionAdoptionService adoption =
+          RemoteCollectionAdoptionService(appModelNoUpdate.database);
+      for (final RemoteVideoInfo video in videos) {
+        await adoption.adoptVideo(video);
+      }
+      if (mounted) await _loadLibraryMaps();
       // #6: 远端与本地是同一视频时（同 bookUid）不在混排网格重复展示。
       final List<VideoBookRow> localVideos = await widget.repo.listAll();
       final Set<String> localUids =
@@ -1381,6 +1408,36 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     setState(() => _selection.enterWith(slot));
   }
 
+  /// 散卡点击的多选分发——本地 / 远端、网格 / 列表所有散卡的**唯一**入口
+  /// （BUG-2458 视频侧根治）。此前每张卡各抄一份 `handleTap`，远端卡那份漏抄
+  /// → 多选态点远端卡照走流播 / 下载。分发只认 [selectionKey]，不认卡是本地还是
+  /// 远端：null = 该卡不可勾选（合集成员卡），多选态照常 [open]。
+  void _dispatchCardTap({
+    required String? selectionKey,
+    required VoidCallback open,
+  }) {
+    if (selectionKey != null) {
+      if (_selectionMode) {
+        _toggleSelection(selectionKey);
+        return;
+      }
+      // 桌面 Ctrl/⌘（macOS）/ Shift + 点击 = 不经工具栏直接进多选并选中该卡。
+      if (selectionEntryModifierPressed(context)) {
+        _enterSelectionWith(SelectionSlot.loose(selectionKey));
+        return;
+      }
+    }
+    open();
+  }
+
+  /// 散卡槽的多选键：本地 = 裸 bookUid（与 [shelfSelectionToEntry] 的 video 面
+  /// 同源），远端 = [_remoteVideoSelectionKey]。
+  String _videoSlotSelectionKey(_VideoSlot slot) {
+    final VideoBookRow? local = slot.local;
+    if (local != null) return local.bookUid;
+    return _remoteVideoSelectionKey(slot.remote!);
+  }
+
   /// 一个视频是否已归进某个系列（= 在系列视图里被折进合集卡）。
   ///
   /// 判据与 [_groupVideos] 的折叠判据同源（`collection_grouping.collectionIdOf`）：
@@ -1470,8 +1527,16 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     final List<MediaCollectionRow> collections =
         await ref.read(appProvider).database.getAllMediaCollections();
     if (!mounted) return false;
+    // BUG-2458：远端占位键的存在性真值是最近一次拉到的远端目录（占位卡就是从它
+    // 渲染的），不在本地表里；不纳入就会被当幽灵键整批剔光。
+    final _RemoteVideoState? remoteState = _lastRemoteState;
     final int dropped = _selection.retainExisting(
-      loose: <String>{for (final VideoBookRow b in books) b.bookUid},
+      loose: <String>{
+        for (final VideoBookRow b in books) b.bookUid,
+        if (remoteState != null)
+          for (final RemoteVideoInfo v in remoteState.videos)
+            _remoteVideoSelectionKey(v),
+      },
       collections: <int>{for (final MediaCollectionRow c in collections) c.id},
     );
     if (dropped == 0) return _selection.isNotEmpty;
@@ -1498,7 +1563,7 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     // 从 null 解析出集合、自动刮削刷新列表——都会让它自己变。跨 await 两侧各读
     // 一次的话，确认框说「删 5 个」而实际删 3 个，极端情况下甚至一个都没删还弹
     // 成功提示。
-    final Set<String> targetUids = Set<String>.of(_selectedUids);
+    final Set<String> targetUids = _selectedLocalUids;
     final Set<int> targetCollectionIds = Set<int>.of(_selectedCollectionIds);
     final int mediaCount = targetUids.length;
     final int collectionCount = targetCollectionIds.length;
@@ -1512,7 +1577,10 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
             : t.batch_delete_mixed_confirm(n: mediaCount, m: collectionCount);
     // 勾过但被当前筛选挡住的那些不会被删（批量操作只作用于看得见的条目），必须
     // 说出来——否则用户以为勾了几个就删了几个。
-    final int hidden = _selection.hiddenSelectedCount;
+    // 只数本地键：远端占位键不是删除对象（BUG-2458）。
+    final int hidden = _selection.hiddenSelectedCountWhere(
+      (String key) => !_isRemoteVideoSelectionKey(key),
+    );
     final String message = hidden == 0
         ? baseMessage
         : '$baseMessage\n\n${t.batch_hidden_by_filter_note(n: hidden)}';
@@ -1524,7 +1592,7 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     if (collectionCount == 0) {
       // 「同时删除本地文件」只在选中集里至少有一条是本地文件时才摆出来
       // （全是远端流就没有文件可删，与同步勾选框「兑现不了就不显示」同一纪律）。
-      final Set<String> selected = Set<String>.of(_selectedUids);
+      final Set<String> selected = _selectedLocalUids;
       final bool anyLocalFile = (await widget.repo.listAll()).any(
         (VideoBookRow b) =>
             selected.contains(b.bookUid) && videoBookHasLocalFiles(b),
@@ -1644,7 +1712,8 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     // 幽灵键会让 bookTags 的外键插入抛异常，而弹窗把落库 await 在 loading 态里，
     // 一抛就永远转圈（卡死）。必须在开弹窗前剔干净。
     if (!await _pruneStaleSelection() || !mounted) return;
-    if (_selectedUids.isEmpty) return;
+    final Set<String> localUids = _selectedLocalUids;
+    if (localUids.isEmpty) return;
     final List<BookTagRow>? allTags = ref.read(allTagsProvider).valueOrNull;
     if (allTags == null || allTags.isEmpty) {
       FushiToast.show(msg: t.tag_no_tags_hint, severity: ToastSeverity.info);
@@ -1654,7 +1723,7 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
       context: context,
       builder: (_) => _VideoBatchTagPickerDialog(
         allTags: allTags,
-        selectedUids: Set<String>.of(_selectedUids),
+        selectedUids: localUids,
         database: ref.read(appProvider).database,
       ),
     );
@@ -1905,7 +1974,7 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     };
     final List<ShelfEntryRef> looseRefs = sortNewCollectionMembersNaturally(
       <ShelfEntryRef>[
-        for (final String uid in _selectedUids)
+        for (final String uid in _selectedLocalUids)
           if (shelfSelectionToEntry(uid, ShelfSelectionSurface.video)
               case final ShelfEntryRef ref)
             ref,
@@ -1935,7 +2004,7 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
   ) async {
     // TODO-1125 B：预填合集默认名——把选中视频标题经 parseVideoFilename 去集号得系列名，
     // 再取最长公共前缀；推导为空则兜底 t.series_default_name（「新系列」）。
-    final Set<String> selectedUids = Set<String>.of(_selectedUids);
+    final Set<String> selectedUids = _selectedLocalUids;
     final List<String> memberSeries = <String>[
       for (final VideoBookRow book in _visibleVideos)
         if (selectedUids.contains(book.bookUid))
@@ -2211,33 +2280,10 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
         ref.read(interconnectDownloadManagerProvider);
     if (manager.isRunning(video.id)) return;
 
-    final File dest = await _remoteDownloadDestination(video);
-    // TODO-2119：下载本身是所有源的共同能力，不再分派——[RemoteVideoSource] 各自
-    // 实现续传口径（互联 host live 引擎 Range + `.part` 可续；云盘整文件重下）。
-    // bookUid 用稳定的远端 video.id（与 dedupeRemoteVideos 去重键一致：upsert 同行不
-    // 撞键），故下载好的视频立即出现在列表、并从混排占位区去重隐藏。
-    Future<void> run(
-      File target, {
-      void Function(double progress)? onProgress,
-    }) =>
-        source.downloadRemoteVideo(video.id, target, onProgress: onProgress);
-    // 收尾登记仍按源分流：互联要回填外挂字幕 + host 断点，云盘要按资产名取封面、
-    // 且没有字幕/进度可回填。这是两种源**真实**的能力差异，不是样板分支。
-    final CloudRemoteVideoClient? cloud = _cloudRemoteVideoClient;
-    final RemoteVideoClient? client = _remoteVideoClient;
-    final InterconnectDownloadComplete onComplete = client != null
-        ? (File downloaded) =>
-            _registerDownloadedVideo(client, video, downloaded)
-        : (File downloaded) =>
-            _registerDownloadedCloudVideo(cloud!, video, downloaded);
+    final Future<void> Function() start =
+        await _prepareRemoteDownload(video, source, manager);
     try {
-      await manager.startVideoDownload(
-        id: video.id,
-        title: video.title,
-        dest: dest,
-        run: run,
-        onComplete: onComplete,
-      );
+      await start();
     } catch (e) {
       debugPrint('[home-video] remote video download failed: $e');
       if (!mounted) return;
@@ -2254,6 +2300,151 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     );
   }
 
+  /// BUG-2458：批量栏「下载」——把选中的远端占位卡逐个交给既有单本下载链
+  /// （[_downloadRemote]，任务归 [InterconnectDownloadManager] 所有、与本页生命周期
+  /// 无关），先退出多选态；进度 / 失败落在各卡角标上（[_remoteDownloadBadge]）。
+  ///
+  /// 选中键只是身份，占位对象要回到最近一次远端目录里找；目录已刷新、已下载入库
+  /// 被去重隐藏的键找不到就跳过。**串行**：管理器只按 id 去重、无并发上限，
+  /// 「全选 → 下载」若一帧内扇出 N 个并行下载 + 落库，对手机端 host 是真实压力；
+  /// 逐个 await 让批量与用户逐张点的节奏等价。服务不可达进循环前判一次、只提示一次。
+  Future<void> _batchDownloadSelectedRemote() async {
+    final Set<String> keys = _selectedRemoteKeys;
+    if (keys.isEmpty) return;
+    final _RemoteVideoState? state = _lastRemoteState;
+    _exitSelectionMode();
+    if (state == null) return;
+    if (_remoteVideoSource == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.remote_video_unavailable)),
+      );
+      return;
+    }
+    for (final RemoteVideoInfo video in state.videos) {
+      if (!keys.contains(_remoteVideoSelectionKey(video))) continue;
+      // 页面卸载后停止派发：已起的任务归管理器继续跑到底。
+      if (!mounted) return;
+      await _downloadRemote(video);
+    }
+  }
+
+  /// 把一条远端视频的下载装配成**可延迟启动**的启动器：目标路径、传输原语、收尾
+  /// 登记全在此刻解析，启动器本身不再碰 `ref` / 本页 State——合集批下载
+  /// （[_downloadRemoteMembers]）串行排队时，轮到后面的成员起跑时本页可能早已 dispose。
+  ///
+  /// TODO-2119：下载本身是所有源的共同能力，不再分派——[RemoteVideoSource] 各自
+  /// 实现续传口径（互联 host live 引擎 Range + `.part` 可续；云盘整文件重下）。
+  /// bookUid 用稳定的远端 video.id（与 dedupeRemoteVideos 去重键一致：upsert 同行不
+  /// 撞键），故下载好的视频立即出现在列表、并从混排占位区去重隐藏。
+  Future<Future<void> Function()> _prepareRemoteDownload(
+    RemoteVideoInfo video,
+    RemoteVideoSource source,
+    InterconnectDownloadManager manager,
+  ) async {
+    final File dest = await _remoteDownloadDestination(video);
+    Future<void> run(
+      File target, {
+      void Function(double progress)? onProgress,
+    }) =>
+        source.downloadRemoteVideo(video.id, target, onProgress: onProgress);
+    // 收尾登记仍按源分流：互联要回填外挂字幕 + host 断点，云盘要按资产名取封面、
+    // 且没有字幕/进度可回填。这是两种源**真实**的能力差异，不是样板分支。
+    final CloudRemoteVideoClient? cloud = _cloudRemoteVideoClient;
+    final RemoteVideoClient? client = _remoteVideoClient;
+    final InterconnectDownloadComplete onComplete = client != null
+        ? (File downloaded) =>
+            _registerDownloadedVideo(client, video, downloaded)
+        : (File downloaded) =>
+            _registerDownloadedCloudVideo(cloud!, video, downloaded);
+    return () => manager.startVideoDownload(
+          id: video.id,
+          title: video.title,
+          dest: dest,
+          run: run,
+          onComplete: onComplete,
+        );
+  }
+
+  /// 合集整体下载（#6）：把 [collection] 里**只在对端**的成员 [members] 串行排进
+  /// [InterconnectDownloadManager.startBatch]。成员清单来自本地
+  /// `media_collection_items`（合集清单经 `/api/library/collections` 跨端同步，
+  /// 客户端本地必然有 host 侧成员行）+ 共享远端视频清单，不需要新 wire 端点。
+  /// 已在跑的成员跳过；没有可下载成员时明确提示而不是静默。
+  Future<void> _downloadRemoteMembers(
+    MediaCollectionRow collection,
+    List<RemoteVideoInfo> members,
+  ) async {
+    final RemoteVideoSource? source = _remoteVideoSource;
+    if (source == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.remote_video_unavailable)),
+      );
+      return;
+    }
+    final InterconnectDownloadManager manager =
+        ref.read(interconnectDownloadManagerProvider);
+    final String batchId =
+        InterconnectDownloadManager.collectionBatchId(collection.id);
+    if (manager.isBatchRunning(batchId)) return;
+    final List<RemoteVideoInfo> pending = <RemoteVideoInfo>[
+      for (final RemoteVideoInfo video in members)
+        if (!manager.isRunning(video.id)) video,
+    ];
+    if (pending.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.remote_collection_download_nothing)),
+      );
+      return;
+    }
+    // 先把整批启动器解析完再起跑：启动器不依赖本页 State（见 _prepareRemoteDownload）。
+    final List<Future<void> Function()> starters = <Future<void> Function()>[
+      for (final RemoteVideoInfo video in pending)
+        await _prepareRemoteDownload(video, source, manager),
+    ];
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t.remote_collection_download_started(count: pending.length),
+          ),
+        ),
+      );
+    }
+    final InterconnectDownloadBatch batch = await manager.startBatch(
+      id: batchId,
+      title: collection.name,
+      starters: starters,
+    );
+    if (!mounted) return;
+    _refresh();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(t.remote_collection_download_done(
+          ok: batch.completed,
+          failed: batch.failed,
+        )),
+      ),
+    );
+  }
+
+  /// 合集卡右键「下载远端集」：先按详情页同一路径解析成员槽，取远端子集交给
+  /// [_downloadRemoteMembers]。
+  Future<void> _downloadRemoteCollection(MediaCollectionRow collection) async {
+    final CollectionRemoteContext? remote = _collectionRemoteContext();
+    if (remote == null) return;
+    final List<CollectionEpisodeSlot> slots = await loadCollectionEpisodeSlots(
+      repository: widget.repo,
+      collectionId: collection.id,
+      loadRemoteVideos: remote.loadRemoteVideos,
+    );
+    await _downloadRemoteMembers(collection, <RemoteVideoInfo>[
+      for (final CollectionEpisodeSlot slot in slots)
+        if (slot.remote case final RemoteVideoInfo info) info,
+    ]);
+  }
+
   /// 把刚下载到本机的对端视频 [dest] 登记成本地 [VideoBooksCompanion] 行，使其出现在
   /// 视频列表（TODO-820）。bookUid 直接取远端稳定 [RemoteVideoInfo.id]——与
   /// [dedupeRemoteVideos] 的去重键一致，故 upsert 语义下重复下载同一视频只覆盖同一行、
@@ -2261,15 +2452,22 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
   ///
   /// 字幕：host 字幕原语 [RemoteVideoClient.getRemoteVideoSubtitle] 就绪，[video]
   /// 标记 [RemoteVideoInfo.hasSubtitle] 时下载外挂字幕落地、解析成 cue 一并写入，使
-  /// 下载来的视频可查词/句导航。封面：host 无封面文件下载原语（仅 coverUrl/coverPath
-  /// 元数据），故退回本地抽帧 [extractVideoCover]（桌面 ffmpeg；移动端无则留空占位），
-  /// 与本地导入一致。
+  /// 下载来的视频可查词/句导航。封面：host 下发 [RemoteVideoInfo.coverUrl]（`/cover`
+  /// 端点，含刮削封面），client 具备 [RemoteCoverFetcher] 能力时先拉 host 封面落盘；
+  /// 无 coverUrl / 拉取失败再退回本地抽帧 [extractVideoCover]（桌面 ffmpeg；移动端
+  /// 无则留空占位）。此前这里无条件抽帧，host 上刮好的封面下载后变成一帧截图（7c）。
+  ///
+  /// `importedAt` / `completedAt` 镜像 host 值（旧 host 不带 importedAt 时才用本机
+  /// now）：远端占位卡按 host 的 importedAt 排序、按 host 的 completedAt 画已看完角标，
+  /// 下载落地后同一条目不该在「按导入时间」里跳位、也不该丢掉已看完标记。
   Future<void> _registerDownloadedVideo(
     RemoteVideoClient client,
     RemoteVideoInfo video,
     File dest,
   ) async {
     final String bookUid = video.id;
+    final RemoteCollectionAdoptionService adoption =
+        RemoteCollectionAdoptionService(appModelNoUpdate.database);
     final ({String? source, String? format, List<AudioCue> cues}) subtitle =
         await _downloadRemoteSubtitleForBook(client, video, bookUid);
     await widget.repo.saveVideoBook(VideoBooksCompanion(
@@ -2281,8 +2479,15 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
       embeddedSubtitleTrack: subtitle.source == null
           ? const Value<int?>(0)
           : const Value<int?>(null),
-      importedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      importedAt:
+          Value(video.importedAt ?? DateTime.now().millisecondsSinceEpoch),
+      completedAt: Value<DateTime?>(
+        video.completedAt == null
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(video.completedAt!),
+      ),
     ));
+    await adoption.adoptVideo(video);
     if (subtitle.cues.isNotEmpty) {
       await widget.repo.saveCues(bookUid: bookUid, cues: subtitle.cues);
     }
@@ -2304,10 +2509,10 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
         remoteTombstones: video.tagTombstones,
       );
     }
-    // 封面抽帧（extractVideoCover 走 ffmpeg 子进程，最长 30s）是慢的可选增强，绝不能
-    // 挡在建行前——否则用户「下载完」要等到抽帧结束才看到视频。这里建行已落库，封面
-    // 单独抽好后再 updateCover 回写并刷新一次（extractVideoCover 内部已吞失败返 null，
-    // 移动端无 ffmpeg 时留空占位，与本地导入一致）。
+    // 封面（先 host 封面、再抽帧）是慢的可选增强，绝不能挡在建行前——否则用户
+    // 「下载完」要等到封面结束才看到视频。这里建行已落库，封面单独落好后再
+    // updateCover 回写并刷新一次（extractVideoCover 内部已吞失败返 null，移动端无
+    // ffmpeg 时留空占位，与本地导入一致）。
     final VideoScrapeOperationLease? coverLease =
         VideoScrapeOperationGate.tryEnterOperation();
     if (coverLease == null) return;
@@ -2318,10 +2523,13 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
             bookUid,
           );
           if (coverMetaStore == null) return false;
-          final String? coverPath = await extractVideoCover(
-            videoPath: dest.path,
-            bookUid: bookUid,
-          );
+          final String? hostCover =
+              await _fetchHostCoverToDisk(client, video, bookUid);
+          final String? coverPath = hostCover ??
+              await extractVideoCover(
+                videoPath: dest.path,
+                bookUid: bookUid,
+              );
           if (coverPath == null) return false;
           await widget.repo.updateCover(bookUid, coverPath);
           return _commitAutoFrameCover(coverMetaStore, bookUid);
@@ -2330,6 +2538,35 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
       if (wroteCover && mounted) _refresh();
     } finally {
       coverLease.release();
+    }
+  }
+
+  /// 把 host 下发的封面（[RemoteVideoInfo.coverUrl]，`/cover` 端点）拉到
+  /// `remote_videos/<uid>.cover.jpg`，返回落盘路径；无 coverUrl / client 不具备
+  /// [RemoteCoverFetcher] 能力 / 拉取失败 / 空响应一律返回 null 让调用方退回抽帧。
+  Future<String?> _fetchHostCoverToDisk(
+    RemoteVideoClient client,
+    RemoteVideoInfo video,
+    String bookUid,
+  ) async {
+    final String? coverUrl = video.coverUrl;
+    final RemoteCoverFetcher? fetcher = remoteCoverFetcherFor(client);
+    if (coverUrl == null || coverUrl.isEmpty || fetcher == null) return null;
+    try {
+      final Uint8List bytes = await fetcher.fetchRemoteCover(coverUrl);
+      if (bytes.isEmpty) return null;
+      final File coverDest = await _remoteCoverDestination(bookUid);
+      // 经收口写：bookUid 稳定 ⇒ 同一远端视频重下就是**同路径覆盖**，裸
+      // writeAsBytes 不驱逐解码缓存，重下后照旧画旧封面（BUG-1118 的回归形态）。
+      // applyCoverBytes 把「落稳 rename + 双键 evict」收在一个函数里。
+      await MediaCoverService.applyCoverBytes(
+        bytes: bytes,
+        destPath: coverDest.path,
+      );
+      return coverDest.path;
+    } catch (e) {
+      debugPrint('[home-video] host video cover download failed: $e');
+      return null;
     }
   }
 
@@ -2352,6 +2589,8 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
       embeddedSubtitleTrack: const Value<int?>(0),
       importedAt: Value(DateTime.now().millisecondsSinceEpoch),
     ));
+    await RemoteCollectionAdoptionService(appModelNoUpdate.database)
+        .adoptVideo(video);
     // tags 稳健档：合并云清单携带的标签 LWW 时钟（删除/改名传播、防复活）。空则 no-op。
     if (video.tagsAddedAt.isNotEmpty || video.tagTombstones.isNotEmpty) {
       await widget.repo.mergeRemoteVideoTags(
@@ -2373,7 +2612,7 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
           );
           if (coverMetaStore == null) return false;
           try {
-            final File coverDest = await _cloudCoverDestination(bookUid);
+            final File coverDest = await _remoteCoverDestination(bookUid);
             if (await cloud.getRemoteVideoCover(bookUid, coverDest)) {
               await widget.repo.updateCover(bookUid, coverDest.path);
               return _commitAutoFrameCover(coverMetaStore, bookUid);
@@ -2430,7 +2669,8 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
 
   /// 云视频封面下载落点：`<documents>/remote_videos/<safeUid>.cover.jpg`（与视频落点
   /// 同目录，重复下载覆盖同一副本）。
-  Future<File> _cloudCoverDestination(String bookUid) async {
+  /// 远端（互联 host / 云盘）封面的本机落盘路径。
+  Future<File> _remoteCoverDestination(String bookUid) async {
     final Directory dir = await AppPaths.remoteVideosDirectory();
     await dir.create(recursive: true);
     final String safeUid = safeWindowsFileName(bookUid);
@@ -2473,7 +2713,7 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     final Directory dir = await AppPaths.videoSubtitlesDirectory();
     await dir.create(recursive: true);
     // BUG-1125：旧手写字符集漏了反斜杠（`[\/:*?"<>|]` 只转义了 `/`），id 含 `\`
-    // 时字幕会落到与封面（[_cloudCoverDestination] 走全集）不同的目录。统一走
+    // 时字幕会落到与封面（[_remoteCoverDestination] 走全集）不同的目录。统一走
     // 共享 helper 根修。
     final String safeUid = safeWindowsFileName(video.id);
     final File subDest = File(p.join(dir.path, '$safeUid.$ext'));
@@ -3790,25 +4030,15 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
   // 「视频首页没完全互联」。改成统一用 [_VideoSlot]：取组内序 / 取观看态 / 取封面 /
   // 点开这四件事按来源分流，其余逻辑（下一集选集、最近添加窗口、排序）两边同一份。
 
-  /// 远端条目解析到的本地合集 id；host 未给归属或本地没有同名合集 → null（散卡）。
-  int? _remoteCollectionId(RemoteVideoInfo video) {
-    final RemoteCollectionMembership? membership = video.collection;
-    if (membership == null) return null;
-    return _resolveLocalCollectionId(
-      membership.collectionName,
-      membership.collectionType,
-    );
-  }
+  /// 远端占位同样使用经过 DAO 墓碑裁决的持久归属。
+  int? _remoteCollectionId(RemoteVideoInfo video) =>
+      _primaryCollectionByEntry[MediaKind.video.compositeKey(video.id)];
 
-  /// 组内序：本地取页级 [_memberSortIndex]，远端取 host 下发的 sortIndex。
-  int _slotSortIndex(_VideoSlot slot) {
-    final VideoBookRow? local = slot.local;
-    if (local != null) {
-      return _memberSortIndex[MediaKind.video.compositeKey(local.bookUid)] ??
-          1 << 30;
-    }
-    return slot.remote!.collection?.sortIndex ?? 1 << 30;
-  }
+  /// 本地与远端成员共享本地保存的组内顺序。
+  int _slotSortIndex(_VideoSlot slot) =>
+      _memberSortIndex[MediaKind.video.compositeKey(
+        slot.local?.bookUid ?? slot.remote!.id,
+      )] ?? 1 << 30;
 
   /// 最近观看时刻（epoch 毫秒，0 = 没看过）。远端的真相源是 host 下发的
   /// [RemoteVideoInfo.positionUpdatedAtMs]（与「继续观看」行同一口径）。
@@ -4595,29 +4825,9 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
       return _emptyStateSlivers(_buildFilteredEmpty());
     }
     final FushiDesignTokens tokens = FushiDesignTokens.of(context);
-    // 多端库联合视图 §2.3 任务10：把「远端有本地无」视频的**主合集归属**（host 下发的
-    // RemoteVideoInfo.collection）注入折叠映射，使远端占位卡折进对应本地合集行。远端合集
-    // 本地无 id——按 (name, type) 对本地合集表解析（[_resolveLocalCollectionId]），解析不到
-    // = 散卡降级（不硬造合集行）。云视频占位 collection 恒 null（散卡）。局部拷贝页级
-    // 映射后注入，避免污染跨帧共享的 _primaryCollectionByEntry / _memberSortIndex。
-    final Map<String, int> primaryByEntry = Map<String, int>.of(
-      _primaryCollectionByEntry,
-    );
-    final Map<String, int> memberSortIndex = Map<String, int>.of(
-      _memberSortIndex,
-    );
-    for (final RemoteVideoInfo video in groupedRemoteVideos) {
-      final RemoteCollectionMembership? membership = video.collection;
-      if (membership == null) continue;
-      final int? cid = _resolveLocalCollectionId(
-        membership.collectionName,
-        membership.collectionType,
-      );
-      if (cid == null) continue; // 归属解析不到本地合集 → 散卡降级
-      final String key = MediaKind.video.compositeKey(video.id);
-      primaryByEntry[key] = cid;
-      memberSortIndex[key] = membership.sortIndex;
-    }
+    // DTO 的归属已在目录加载时原子收养，渲染只读取本地裁决结果。
+    final Map<String, int> primaryByEntry = _primaryCollectionByEntry;
+    final Map<String, int> memberSortIndex = _memberSortIndex;
     final List<CollectionGroup<_VideoSlot>> groups =
         <CollectionGroup<_VideoSlot>>[
       for (final CollectionGroup<_VideoSlot> group in _groupVideos(
@@ -4657,7 +4867,7 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
             build: (VideoCardOrientation orientation) =>
                 _buildVideoSlotCard(slot, orientation: orientation),
           ),
-          selectionKey: slot.local?.bookUid,
+          selectionKey: _videoSlotSelectionKey(slot),
         ));
       } else if (collectionVisible(group.collection!.id)) {
         collectionGroups.add(group);
@@ -4721,8 +4931,13 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
             _sortMode,
           ));
     _visibleCollectionIds = const <int>[];
+    // 本地在前、远端占位在后，与下面列表 / 网格两种布局的渲染序一致。
     _syncVisibleOrder(
-      loose: <String>[for (final VideoBookRow book in ordered) book.bookUid],
+      loose: <String>[
+        for (final VideoBookRow book in ordered) book.bookUid,
+        for (final RemoteVideoInfo video in remoteVideos)
+          _remoteVideoSelectionKey(video),
+      ],
       collections: const <int>[],
     );
     if (_allVideosLayout == _AllVideosLayout.list) {
@@ -4776,22 +4991,16 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     final bool selected =
         _selectionMode && _selectedUids.contains(book.bookUid);
     final SelectionSlot slot = SelectionSlot.loose(book.bookUid);
-    void handleTap() {
-      if (_selectionMode) {
-        _toggleSelection(book.bookUid);
-      } else if (selectionEntryModifierPressed(context)) {
-        _enterSelectionWith(slot);
-      } else {
-        _open(book);
-      }
-    }
 
     final Widget row = FushiCard(
       key: ValueKey<String>('home_video_list_${book.bookUid}'),
       focusId: FushiFocusId('home-video-list-${book.bookUid}'),
       padding: EdgeInsets.zero,
       selected: selected,
-      onTap: handleTap,
+      onTap: () => _dispatchCardTap(
+        selectionKey: book.bookUid,
+        open: () => _open(book),
+      ),
       onLongPress: _selectionMode ? null : () => _showVideoMenu(book),
       onSecondaryTap: _selectionMode ? null : () => _showVideoMenu(book),
       child: SizedBox(
@@ -4876,11 +5085,19 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
 
   Widget _buildAllVideoRemoteListRow(RemoteVideoInfo video) {
     final String safeKey = _safeRemoteKey(video.id);
+    final String selectionKey = _remoteVideoSelectionKey(video);
+    final bool selected =
+        _selectionMode && _selectedUids.contains(selectionKey);
     return FushiCard(
       key: ValueKey<String>('remote_video_list_$safeKey'),
       focusId: FushiFocusId('home-video-remote-list-$safeKey'),
       padding: EdgeInsets.zero,
-      onTap: () => _openRemote(video),
+      selected: selected,
+      // BUG-2458：与本地行同走 [_dispatchCardTap]，多选态点击 = 勾选。
+      onTap: () => _dispatchCardTap(
+        selectionKey: selectionKey,
+        open: () => _openRemote(video),
+      ),
       onLongPress: _selectionMode ? null : () => _showRemoteVideoDialog(video),
       onSecondaryTap:
           _selectionMode ? null : () => _showRemoteVideoDialog(video),
@@ -4890,10 +5107,23 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
           children: <Widget>[
             SizedBox(
               width: 164,
-              child: _buildRemoteVideoCover(
-                video,
-                poster: false,
-                landscapeSlot: true,
+              child: Stack(
+                fit: StackFit.expand,
+                children: <Widget>[
+                  _buildRemoteVideoCover(
+                    video,
+                    poster: false,
+                    landscapeSlot: true,
+                  ),
+                  if (_selectionMode)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: ShelfSelectionCheck(selected: selected),
+                    ),
+                  if (selected)
+                    const Positioned.fill(child: ShelfSelectedOverlay()),
+                ],
               ),
             ),
             const SizedBox(width: 14),
@@ -5021,18 +5251,6 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
       if (provider != null) return provider;
     }
     return null;
-  }
-
-  /// 按 (name, collectionType) 自然键把远端合集归属解析成本地合集 id（折叠归属同「最小
-  /// collectionId」规则，多个同键取最小）；本地无此合集则返 null（散卡降级，不硬造行）。
-  int? _resolveLocalCollectionId(String name, String type) {
-    int? best;
-    for (final MediaCollectionRow c in _collectionsById.values) {
-      if (c.name == name && c.collectionType == type) {
-        if (best == null || c.id < best) best = c.id;
-      }
-    }
-    return best;
   }
 
   /// 过滤后视频（本地 + 远端占位 union）→ 合集折叠 + 按当前排序方式排 group。远端占位
@@ -5451,15 +5669,25 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     final String safeKey = _safeRemoteKey(video.id);
     final Widget? downloadBadge = _remoteDownloadBadge(video, safeKey);
     final List<_VideoTagChip> remoteTags = _remoteTagChips(video.tags);
+    // BUG-2458：散卡区远端占位卡可勾选（勾选后经批量栏「下载」一起下）；带合集
+    // 成员上下文的成员卡与本地成员卡同规则不可单独勾。
+    final bool selectable = collectionMembers == null;
+    final String selectionKey = _remoteVideoSelectionKey(video);
+    final bool showSelection = _selectionMode && selectable;
+    final bool selected = showSelection && _selectedUids.contains(selectionKey);
     // 不再固定 260 宽：和本地 [_buildCard] 一样让卡片填满网格 cell，宽度由
     // 响应式网格决定（TODO-593）。
     final Widget card = FushiCard(
       key: ValueKey<String>('remote_video_card_$safeKey'),
       focusId: FushiFocusId('home-video-remote-$safeKey'),
       padding: EdgeInsets.zero,
+      selected: selected,
       // 合集行内点远端成员：带合集成员上下文进播放器（连播）；散卡区无上下文（单视频）。
-      onTap: () => _openRemote(video,
-          collectionMembers: collectionMembers, startIndex: memberIndex),
+      onTap: () => _dispatchCardTap(
+        selectionKey: selectable ? selectionKey : null,
+        open: () => _openRemote(video,
+            collectionMembers: collectionMembers, startIndex: memberIndex),
+      ),
       // 短按仍流式播放（_openRemote）；长按 / 桌面右键弹选项面板，与本地视频
       // 卡长按一致（TODO-768 / BUG-416）。原先远端视频卡无 onLongPress（长按
       // 没反应），现在补齐。
@@ -5503,7 +5731,9 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
                 // 左上一列：远端标签 chip（BUG-1808，host 清单下发标签名）在上、
                 // 字幕角标在下。标签补画前这个角只有字幕角标，两者并成一列后谁都
                 // 不遮谁。字幕角标收敛到共享 [CoverBadge]（UI 巡检 PR-4，PR-0 组件）。
-                if (remoteTags.isNotEmpty || video.hasSubtitle)
+                // 多选态勾选框占左上角（与本地卡同位 top:6,left:6），这一列让位。
+                if ((remoteTags.isNotEmpty || video.hasSubtitle) &&
+                    !showSelection)
                   Positioned(
                     top: 6,
                     left: 6,
@@ -5517,6 +5747,14 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
                       ],
                     ),
                   ),
+                if (showSelection)
+                  Positioned(
+                    top: 6,
+                    left: 6,
+                    child: ShelfSelectionCheck(selected: selected),
+                  ),
+                if (selected)
+                  const Positioned.fill(child: ShelfSelectedOverlay()),
                 // TODO-885: 远端播放列表集数角标（与本地卡同款，左下避开右上字幕/下载）。
                 if (video.isPlaylist)
                   Positioned(
@@ -6395,7 +6633,29 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
           label: t.video_jimaku_batch_title,
           icon: Icons.subtitles_outlined,
           onPressed: () => _openCollectionSubtitles(collection),
-        )
+        ),
+        // 合集整体下载（#6）：只在有远端源时出现；成员全在本机时点了会明确提示
+        // 「没有可下载的远端集」。
+        if (_collectionRemoteContext() != null)
+          DialogListAction(
+            label: t.remote_collection_download_members,
+            icon: Icons.cloud_download_outlined,
+            onPressed: () => unawaited(_downloadRemoteCollection(collection)),
+          ),
+        // 互联刮削（7a / 7b）：只在互联源上出现。
+        if (_metadataBackend != null) ...<DialogListAction>[
+          DialogListAction(
+            label: t.remote_collection_scrape_on_host,
+            icon: Icons.cloud_sync_outlined,
+            onPressed: () => unawaited(_scrapeCollectionOnHost(collection)),
+          ),
+          if (widget.scrapeTaskController != null)
+            DialogListAction(
+              label: t.remote_collection_scrape_push_to_host,
+              icon: Icons.cloud_upload_outlined,
+              onPressed: () => unawaited(_scrapeCollectionForHost(collection)),
+            ),
+        ],
       ],
     );
   }
@@ -6598,6 +6858,231 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
         startIndex: index,
       )),
       coverFetcher: remoteCoverFetcherFor(_remoteVideoClient),
+      downloadMembers: _downloadRemoteMembers,
+      scrapeOnHost:
+          _metadataBackend == null ? null : _scrapeCollectionOnHost,
+      scrapeForHost: _metadataBackend == null ||
+              widget.scrapeTaskController == null
+          ? null
+          : _scrapeCollectionForHost,
+    );
+  }
+
+  // ── 互联刮削元数据（7a / 7b）────────────────────────────────────────────
+  // `docs/specs/2026-09-12-interconnect-scrape-metadata.md` §3。
+
+  /// 元数据端点只在互联 backend 上有；云盘源没有。
+  InterconnectSyncBackend? get _metadataBackend {
+    final RemoteVideoClient? client = _remoteVideoClient;
+    return client is InterconnectSyncBackend ? client : null;
+  }
+
+  static VideoMetadataWorkKey _metadataKeyOf(MediaCollectionRow collection) =>
+      VideoMetadataWorkKey.collection(
+        name: collection.name,
+        collectionType: collection.collectionType,
+      );
+
+  /// 7a：候选搜索与重刮都在 host 上跑（host 自己的 provider / 主源 / 资料语言），
+  /// 客户端只负责让用户选身份，回来把 host 落好的作品条目落进本地并刷新。
+  Future<void> _scrapeCollectionOnHost(MediaCollectionRow collection) async {
+    final InterconnectSyncBackend? backend = _metadataBackend;
+    if (backend == null) return;
+    VideoMetadataWorkKey key = _metadataKeyOf(collection);
+    final VideoSourceScrapeConfirmationCandidate? candidate =
+        await showVideoMetadataCandidateSearchDialog(
+      context: context,
+      workTitle: collection.name,
+      search: (String query) async => <VideoSourceScrapeConfirmationCandidate>[
+        for (final VideoMetadataCandidateEntry c
+            in await backend.searchRemoteVideoMetadataCandidates(
+          key: key,
+          query: query,
+        ))
+          VideoSourceScrapeConfirmationCandidate(lookup: c.lookup, work: c.work),
+      ],
+    );
+    if (candidate == null || !mounted) return;
+    FushiToast.show(
+      msg: t.collection_rescrape_started,
+      severity: ToastSeverity.info,
+    );
+    try {
+      VideoMetadataWriteResult result =
+          await backend.requestRemoteVideoMetadataScrape(
+        key: key,
+        lookup: candidate.lookup,
+      );
+      // BUG-2433 同款：合集在 host 计划里是 N 个独立作品时让用户选，不默选第一个。
+      if (result.conflict == VideoMetadataConflict.ambiguousWork) {
+        if (!mounted) return;
+        final VideoMetadataWorkKey? picked =
+            await _pickRemoteWorkKey(result.ambiguousWorks);
+        if (picked == null) return;
+        key = picked;
+        result = await backend.requestRemoteVideoMetadataScrape(
+          key: key,
+          lookup: candidate.lookup,
+        );
+      }
+      await _finishRemoteMetadataWrite(result);
+    } on RemoteVideoMetadataUnsupported {
+      if (!mounted) return;
+      FushiToast.show(
+        msg: t.remote_collection_scrape_unavailable,
+        severity: ToastSeverity.warning,
+      );
+    } on Object catch (e, stack) {
+      ErrorLogService.instance.log('video.scrapeCollectionOnHost', e, stack);
+      if (!mounted) return;
+      FushiToast.show(
+        msg: t.collection_rescrape_failed,
+        severity: ToastSeverity.error,
+      );
+    }
+  }
+
+  /// 7b：本机刮削链搜候选、拉完整资料，再 PUT 到 host（host 字段锁保留旧值；
+  /// host 已绑不同身份时先问用户是否替换——手动指定 ID 不静默换源）。
+  Future<void> _scrapeCollectionForHost(MediaCollectionRow collection) async {
+    final InterconnectSyncBackend? backend = _metadataBackend;
+    final VideoSourceScrapeTaskController? controller =
+        widget.scrapeTaskController;
+    if (backend == null || controller == null) return;
+    final VideoMetadataWorkKey key = _metadataKeyOf(collection);
+    final VideoSourceScrapeConfirmationCandidate? candidate =
+        await showVideoSourceScrapeManualBindingDialog(
+      context: context,
+      controller: controller,
+      workTitle: collection.name,
+    );
+    if (candidate == null || !mounted) return;
+    FushiToast.show(
+      msg: t.collection_rescrape_started,
+      severity: ToastSeverity.info,
+    );
+    try {
+      final VideoMetadataWork work =
+          await controller.fetchWorkForLookup(candidate.lookup) ??
+              candidate.work;
+      VideoMetadataWriteResult result = await backend.putRemoteVideoMetadata(
+        key: key,
+        lookup: candidate.lookup,
+        work: work,
+      );
+      if (result.conflict == VideoMetadataConflict.identity) {
+        final VideoMetadataLookup? current = result.currentLookup;
+        if (!mounted) return;
+        final bool? replace = await showAppDialog<bool>(
+          context: context,
+          builder: (BuildContext dialogContext) => AlertDialog(
+            title: Text(collection.name),
+            content: Text(t.remote_collection_scrape_identity_conflict(
+              provider: current?.provider.name.toUpperCase() ?? '?',
+              id: current?.externalId ?? '?',
+            )),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: Text(t.dialog_cancel),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: Text(t.dialog_replace),
+              ),
+            ],
+          ),
+        );
+        if (replace != true) return;
+        result = await backend.putRemoteVideoMetadata(
+          key: key,
+          lookup: candidate.lookup,
+          work: work,
+          replaceIdentity: true,
+        );
+      }
+      await _finishRemoteMetadataWrite(result);
+    } on RemoteVideoMetadataUnsupported {
+      if (!mounted) return;
+      FushiToast.show(
+        msg: t.remote_collection_scrape_unavailable,
+        severity: ToastSeverity.warning,
+      );
+    } on Object catch (e, stack) {
+      ErrorLogService.instance.log('video.scrapeCollectionForHost', e, stack);
+      if (!mounted) return;
+      FushiToast.show(
+        msg: t.collection_rescrape_failed,
+        severity: ToastSeverity.error,
+      );
+    }
+  }
+
+  /// host 写操作的收尾：成功则把 host 回传的作品条目落本地（客户端立刻看到，
+  /// 不等下一轮同步）并刷新；可解释拒绝给对应提示。
+  Future<void> _finishRemoteMetadataWrite(
+    VideoMetadataWriteResult result,
+  ) async {
+    final VideoMetadataWorkEntry? entry = result.entry;
+    if (entry != null) {
+      final RemoteVideoMetadataApplyResult applied =
+          await applyRemoteVideoMetadata(
+        ref.read(appProvider).database,
+        <VideoMetadataWorkEntry>[entry],
+      );
+      if (!mounted) return;
+      _refresh();
+      // 本地被跳过（本地资料不比 host 旧 / 清理中）时不谎报「已更新」。
+      FushiToast.show(
+        msg: applied.applied > 0
+            ? t.remote_collection_scrape_done
+            : t.collection_rescrape_not_planned,
+        severity: ToastSeverity.info,
+      );
+      return;
+    }
+    if (!mounted) return;
+    FushiToast.show(
+      msg: result.conflict == VideoMetadataConflict.notPlanned
+          ? t.remote_collection_scrape_failed
+          : t.collection_rescrape_failed,
+      severity: ToastSeverity.error,
+    );
+  }
+
+  /// host 报合集对应多个作品单元时让用户选一个（标题取远端清单里该 bookUid 的
+  /// 标题，取不到退回 bookUid）。
+  Future<VideoMetadataWorkKey?> _pickRemoteWorkKey(
+    List<VideoMetadataWorkKey> works,
+  ) async {
+    final RemoteVideoSource? source = _remoteVideoSource;
+    final Map<String, String> titles = <String, String>{};
+    if (source != null) {
+      try {
+        for (final RemoteVideoInfo v in await _remoteCache.read(
+          sourceId: source.remoteLibrarySourceId,
+          key: RemoteLibraryCacheKeys.videos,
+          fetch: source.listRemoteVideos,
+        )) {
+          titles[v.id] = v.title;
+        }
+      } catch (_) {
+        // 取不到标题就显示 bookUid，不阻断选择。
+      }
+    }
+    if (!mounted) return null;
+    return showAppDialog<VideoMetadataWorkKey>(
+      context: context,
+      builder: (BuildContext context) => SimpleDialog(
+        title: Text(t.remote_collection_scrape_pick_work),
+        children: <Widget>[
+          for (final VideoMetadataWorkKey k in works)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, k),
+              child: Text(titles[k.bookUid] ?? k.bookUid ?? k.toString()),
+            ),
+        ],
+      ),
     );
   }
 
@@ -6693,34 +7178,19 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
     // 块2：只有可单独勾选的卡才在多选态显示勾选框/高亮/切换选中。
     final bool showSelection = _selectionMode && selectable;
     final bool selected = showSelection && _selectedUids.contains(book.bookUid);
-    final SelectionSlot slot = SelectionSlot.loose(book.bookUid);
-    void handleTap() {
-      if (showSelection) {
-        _toggleSelection(book.bookUid);
-        return;
-      }
-      // 桌面 Ctrl/⌘（macOS）/ Shift + 点击 = 不经工具栏直接进多选并选中该卡。
-      if (selectable &&
-          !_selectionMode &&
-          selectionEntryModifierPressed(context)) {
-        _enterSelectionWith(slot);
-        return;
-      }
-      if (onTapOverride != null) {
-        onTapOverride();
-      } else {
-        _open(book, playlistCollectionId: playlistCollectionId);
-      }
-    }
-
     final FushiCard fushiCard = FushiCard(
       key: ValueKey<String>('home_video_${book.bookUid}'),
       focusId: FushiFocusId('home-video-${book.bookUid}'),
       padding: EdgeInsets.zero,
       selected: selected,
       // 选择态：点击切换勾选、长按交给祖先的扫选接管区（与书架 _bookCardShell 一致）。
-      // 成员卡（selectable=false）多选态照常开播、不切换选中。
-      onTap: handleTap,
+      // 成员卡（selectable=false）多选态照常开播、不切换选中。分发走
+      // [_dispatchCardTap]（所有散卡唯一入口）。
+      onTap: () => _dispatchCardTap(
+        selectionKey: selectable ? book.bookUid : null,
+        open: onTapOverride ??
+            () => _open(book, playlistCollectionId: playlistCollectionId),
+      ),
       // 长按 / 桌面右键都弹管理菜单，与书架书卡（_bookCardShell）、远端视频卡
       // （_buildRemoteVideoCard）一致——本地视频卡此前只挂了 onLongPress、漏了
       // onSecondaryTap，故桌面右键本地视频卡无反应（BUG-758）。
@@ -6923,15 +7393,19 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
   Widget _buildBatchActionBar() {
     final ThemeData theme = Theme.of(context);
     // 块2/3/4：计数与按钮可用态涵盖散卡选中集 + 合集选中集。
+    // BUG-2458：散卡选中集里混着远端占位键——「已选 N」计全部，但组合 / 打标签 /
+    // 删除三个本地动作只按本地键判可用态与取目标；远端键只喂「下载」。
+    final Set<String> localUids = _selectedLocalUids;
+    final Set<String> remoteKeys = _selectedRemoteKeys;
     final int selectedCount =
         _selectedUids.length + _selectedCollectionIds.length;
-    final bool hasSelection =
-        _selectedUids.isNotEmpty || _selectedCollectionIds.isNotEmpty;
+    final bool hasLocalSelection =
+        localUids.isNotEmpty || _selectedCollectionIds.isNotEmpty;
     // 复查 #5：组合按钮 noop 档（0 合集 0 散卡 / 仅 1 合集且无散卡）不再当启用态死按钮，
     // 只在真能组合（新建 / 并入 / 合并）时才可点，与 [_batchCombineIntoSeries] 同判据。
     final bool canCombine = classifyCombine(
           collectionCount: _selectedCollectionIds.length,
-          looseCount: _selectedUids.length,
+          looseCount: localUids.length,
         ) !=
         CombineTier.noop;
     return BatchActionBar(
@@ -6939,6 +7413,13 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
       onSelectAll: _selectAllVisible,
       onInvertSelection: _invertSelection,
       actions: <Widget>[
+        FushiIconButton(
+          key: const ValueKey<String>('home_video_batch_download'),
+          enabled: remoteKeys.isNotEmpty,
+          onTap: _batchDownloadSelectedRemote,
+          icon: Icons.download_outlined,
+          tooltip: t.remote_video_download,
+        ),
         FushiIconButton(
           key: const ValueKey<String>('home_video_batch_combine'),
           enabled: canCombine,
@@ -6949,15 +7430,15 @@ class _HomeVideoPageState extends BaseModuleTabPageState<HomeVideoPage> {
           tooltip: t.combine_into_series,
         ),
         FushiIconButton(
-          // 打标签只作用于散卡媒体（合集无直接标签），故按散卡选中集可用态。
-          enabled: _selectedUids.isNotEmpty,
+          // 打标签只作用于散卡媒体（合集无直接标签），故按本地散卡选中集可用态。
+          enabled: localUids.isNotEmpty,
           onTap: _batchShowTagPicker,
           icon: Icons.sell_outlined,
           tooltip: t.tag_label,
         ),
         FushiIconButton(
           key: const ValueKey<String>('home_video_batch_delete'),
-          enabled: hasSelection,
+          enabled: hasLocalSelection,
           onTap: _batchDeleteConfirm,
           icon: Icons.delete_outline,
           tooltip: t.dialog_delete,
@@ -7348,6 +7829,17 @@ class _VideoHeroItem {
 /// 视频库分组 union 载荷（多端库联合视图 §2.3 任务10）：本地视频行 [local] 或
 /// 「远端有本地无」占位 [remote]，二者恰一非空。让 [groupByCollections] 把本地成员与
 /// 远端占位成员折进同一合集行（远端占位归属由 host 合集下发 + 本地自然键解析注入）。
+/// BUG-2458：远端占位卡的多选键（与本地裸 bookUid 同住一个选中集，靠前缀分流）。
+/// 身份是远端稳定 `video.id`；下载入库后 bookUid == id、占位卡被去重隐藏，两者
+/// 不会同时可见。
+const String _kRemoteVideoSelectionPrefix = 'remote_video_';
+
+String _remoteVideoSelectionKey(RemoteVideoInfo video) =>
+    '$_kRemoteVideoSelectionPrefix${video.id}';
+
+bool _isRemoteVideoSelectionKey(String key) =>
+    key.startsWith(_kRemoteVideoSelectionPrefix);
+
 class _VideoSlot {
   const _VideoSlot({this.local, this.remote})
       : assert(local != null || remote != null);

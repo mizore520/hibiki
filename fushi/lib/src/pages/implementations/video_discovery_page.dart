@@ -4,9 +4,9 @@ import 'package:fushi/src/utils/net/app_http_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show SliverConstraints;
 import 'package:fushi/src/focus/fushi_focus_controller.dart';
-import 'package:fushi/src/media/external_provider.dart';
+import 'package:fushi_engine/media/external_provider.dart';
 import 'package:fushi/src/media/video/cover_ui/portrait_cover_image.dart';
-import 'package:fushi/src/media/video/discovery/video_discovery_provider.dart'
+import 'package:fushi_engine/media/video/discovery/video_discovery_provider.dart'
     as discovery;
 import 'package:fushi/src/pages/implementations/airing_calendar_page.dart';
 import 'package:fushi/src/pages/implementations/video_discovery_detail_page.dart';
@@ -452,8 +452,12 @@ class _VideoDiscoveryPageState extends State<VideoDiscoveryPage> {
                     Expanded(child: search),
                     SizedBox(width: tokens.spacing.gap),
                     IconButton.filledTonal(
-                      constraints:
-                          const BoxConstraints(minWidth: 44, minHeight: 44),
+                      // 与同一行的搜索框等高：搜索框已统一为
+                      // kFushiSearchFieldHeight（40），原来的 44 会高出一截。
+                      constraints: const BoxConstraints(
+                        minWidth: kFushiSearchFieldHeight,
+                        minHeight: kFushiSearchFieldHeight,
+                      ),
                       key: const ValueKey<String>(
                         'video-discovery-open-filters',
                       ),

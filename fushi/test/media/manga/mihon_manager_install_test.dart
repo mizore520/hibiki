@@ -644,6 +644,64 @@ void main() {
       expect(report.installed, <String>['org.example.bulk1']);
     });
 
+    test('upgrade 模式（一键更新，BUG-2481）：只动已装且仓库更新的，没装的跳过，整批一次失效', () async {
+      await useBulkRepository(count: 3);
+      // bulk0 已装旧版（versionCode 1 < 仓库的 9）→ 该更新；bulk1 已装同版 → 跳；
+      // bulk2 没装 → 升级模式下也跳（升级不顺手首装）。
+      for (final (int index, int versionCode) in <(int, int)>[(0, 1), (1, 9)]) {
+        await database.upsertMangaExtension(
+          MangaExtensionsCompanion.insert(
+            packageName: 'org.example.bulk$index',
+            name: 'Bulk $index',
+            versionCode: versionCode,
+            versionName: '1.6.$versionCode',
+            libVersion: '1.6',
+            language: 'ja',
+            apkPath: 'extensions/org.example.bulk$index.apk',
+            apkSha256: 'old$index',
+            signerSha256: 'aabb',
+            installedAt: 1,
+          ),
+        );
+      }
+      // 已装扩展的签名在当初安装时就信任过了；一键更新不再顺手信任新签名。
+      await database.trustMangaSigner(
+        MangaTrustedSignersCompanion.insert(
+          fingerprint: 'aabb',
+          label: 'Bulk',
+          origin: 'https://repo.example/index.json',
+          trustedAt: 1,
+        ),
+      );
+      await manager.reload();
+      runtime.invalidatedBatches.clear();
+
+      final MihonBulkInstallReport report = await manager.installMany(
+        <MihonAvailableExtension>[
+          _bulkSnapshot(0),
+          _bulkSnapshot(1),
+          _bulkSnapshot(2),
+        ],
+        trustSigner: false,
+        upgrade: true,
+      );
+      expect(report.failed, isEmpty, reason: '${report.failed}');
+
+      expect(report.installed, <String>['org.example.bulk0']);
+      expect(report.skipped, <String>[
+        'org.example.bulk1',
+        'org.example.bulk2',
+      ]);
+      expect(report.failed, isEmpty);
+      expect(runtime.invalidatedBatches, hasLength(1));
+      expect(runtime.invalidatedBatches.single, <String>['org.example.bulk0']);
+      final MangaExtensionRow updated = (await database.getMangaExtensions())
+          .firstWhere(
+            (MangaExtensionRow row) => row.packageName == 'org.example.bulk0',
+          );
+      expect(updated.versionCode, 9);
+    });
+
     test('单条失败不中断整批，失败原因逐条留在报告里', () async {
       await useBulkRepository(count: 3, brokenApks: <String>{'/apk/bulk1.apk'});
 

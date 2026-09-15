@@ -253,9 +253,9 @@ void main() {
     // 条件、目标设备、失效条件全由互联决定，互联关掉时留在这里就是纯死开关）。归属由
     // test/sync/sync_settings_visibility_test.dart 咬住；这里只守「不得回流」。
     expect(
-      find.widgetWithText(AdaptiveSettingsSwitchRow, 'Mine to paired device'),
+      find.widgetWithText(AdaptiveSettingsSwitchRow, 'Mine to Fushi Interconnect server'),
       findsNothing,
-      reason: '「制卡到已配对设备」不应再出现在 Anki 正文',
+      reason: '「制卡到 Fushi 互联服务端」不应再出现在 Anki 正文',
     );
 
     // ④「自动添加书名」开关仍真生效（写穿 prefs）——必须保留的用户目标。
@@ -318,7 +318,8 @@ void main() {
       <SettingsDestination>[],
       panelId: 'card_creation.media.open',
     );
-    expect(find.byType(AdaptiveSettingsSliderRow), findsNWidgets(2));
+    // 图片质量 / 音频质量 + 句子音频头/尾 padding 两对滑块。
+    expect(find.byType(AdaptiveSettingsSliderRow), findsNWidgets(4));
     expect(find.byType(AdaptiveSettingsSwitchRow), findsNothing);
   });
 

@@ -7,6 +7,7 @@
 library;
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -18,12 +19,16 @@ import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 
 import 'package:fushi_asr_core/asr_core.dart';
+import 'package:fushi_engine/media/audiobook/audiobook_alignment_service.dart'
+    show preferredTranscriptExportPath;
 import 'package:fushi/src/asr_host/asr_host.dart';
 import 'package:fushi/src/asr_host/apple_speech_transcription_service.dart';
 import 'package:fushi/src/asr_host/asr_engine_options.dart';
 import 'package:fushi/src/asr_host/asr_model_catalog.dart';
 import 'package:fushi/src/media/audiobook/asr_local_model_dialog.dart';
 import 'package:fushi/src/models/app_model.dart';
+import 'package:fushi/src/sync/interconnect_job_client.dart';
+import 'package:fushi/src/sync/sync_repository.dart';
 import 'package:fushi/src/utils/misc/fushi_share.dart';
 import 'package:fushi/utils.dart';
 
@@ -46,6 +51,7 @@ Future<String?> showAsrTranscribeSheet({
   })? saveFilePicker,
   String Function()? languageGetter,
   Future<void> Function(String tag)? languageSetter,
+  InterconnectJobClient? remoteClient,
   AsrModelCatalog Function()? catalogGetter,
   Future<void> Function(AsrModelCatalog catalog)? catalogSetter,
   Future<String?> Function()? directoryPicker,
@@ -54,12 +60,27 @@ Future<String?> showAsrTranscribeSheet({
       service ?? createAsrTranscriptionService();
   String Function() getter = languageGetter ?? () => '';
   Future<void> Function(String) setter = languageSetter ?? (String _) async {};
-  if (languageGetter == null || languageSetter == null) {
-    final AppModel appModel =
-        ProviderScope.containerOf(context, listen: false).read(appProvider);
-    getter = languageGetter ?? () => appModel.asrTranscribeLanguage;
-    setter = languageSetter ?? appModel.setAsrTranscribeLanguage;
+  AppModel? appModel;
+  if (languageGetter == null ||
+      languageSetter == null ||
+      remoteClient == null) {
+    try {
+      appModel =
+          ProviderScope.containerOf(context, listen: false).read(appProvider);
+    } catch (_) {
+      // 测试/无 ProviderScope 的宿主：没有 app 模型就没有远程 host 与语言记忆。
+    }
   }
+  if (appModel != null) {
+    final AppModel model = appModel;
+    getter = languageGetter ?? () => model.asrTranscribeLanguage;
+    setter = languageSetter ?? model.setAsrTranscribeLanguage;
+  }
+  // 「在互联 host 上运行」：已配对 host 宣告 jobs.kinds 含 asr 时面板多一个运行位置。
+  final InterconnectJobClient? remote = remoteClient ??
+      (appModel == null
+          ? null
+          : InterconnectJobClient(repo: SyncRepository(appModel.database)));
   Widget build(BuildContext ctx) => AsrTranscribeSheet(
         audioPaths: audioPaths,
         service: effective,
@@ -67,6 +88,7 @@ Future<String?> showAsrTranscribeSheet({
         languageHint: languageHint,
         languageGetter: getter,
         languageSetter: setter,
+        remoteClient: remote,
         catalogGetter: catalogGetter,
         catalogSetter: catalogSetter,
         directoryPicker: directoryPicker,
@@ -175,6 +197,10 @@ class _SubtitleSourceChooser extends StatelessWidget {
 /// 导出转录产物：桌面走存盘对话框（默认文件名 = 首个音频同名 `.srt`、起始目录 =
 /// 音频所在目录），移动端走系统分享。返回是否真的导出了（用户取消返回 false）。
 /// [saveFilePicker] 可注入，测试里替换掉真的平台对话框。
+///
+/// 拷的是 [srtPath] 旁的对齐版 `transcript.aligned.srt`（「使用字幕」跑过正文匹配
+/// 后才有：命中 cue 已换成带标点的正文原文），没有才回退原始听写稿
+/// （[preferredTranscriptExportPath]）。原始 `transcript.srt` 永不覆盖。
 Future<bool> exportTranscribedSrt({
   required String srtPath,
   required List<String> audioPaths,
@@ -184,6 +210,7 @@ Future<bool> exportTranscribedSrt({
   })? saveFilePicker,
   bool? desktop,
 }) async {
+  srtPath = preferredTranscriptExportPath(srtPath);
   final String suggestedName = suggestedTranscriptFileName(audioPaths);
   if (desktop ?? isDesktopPlatform) {
     final String? initialDirectory =
@@ -249,6 +276,7 @@ class AsrTranscribeSheet extends StatefulWidget {
     this.languageHint,
     this.languageGetter,
     this.languageSetter,
+    this.remoteClient,
     AsrModelCatalog Function()? catalogGetter,
     Future<void> Function(AsrModelCatalog catalog)? catalogSetter,
     this.directoryPicker,
@@ -276,6 +304,9 @@ class AsrTranscribeSheet extends StatefulWidget {
 
   /// 切换语言后写回偏好（[AsrLanguage.tag]）；null = 不记忆。
   final Future<void> Function(String tag)? languageSetter;
+
+  /// 互联通用任务客户端；null = 不提供「在 host 上运行」。
+  final InterconnectJobClient? remoteClient;
 
   /// 模型目录（每语言选了谁 + 自带包）的读写口。默认读写本进程的那份并落盘；
   /// widget 测试注入内存实现，不碰数据根。
@@ -323,7 +354,19 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
   StreamSubscription<AsrTranscribeEvent>? _runSub;
   AsrTranscribeProgress? _progress;
   AsrTranscribeResult? _result;
+
+  /// 本次「开始」到拿到结果的墙钟（含装模型 / 远端上传）。只在本 sheet 里跑过
+  /// 一轮才有值——上一轮会话留下的完成产物没有可信的耗时，不显示。
+  Stopwatch? _runClock;
+  Duration? _elapsedTotal;
   OnnxProviderResolution? _resolution;
+
+  /// 远程 host（能力位含 asr）；null = 只有本机。
+  HostJobTarget? _remoteTarget;
+  bool _runRemote = false;
+  StreamSubscription<HostJobEvent>? _remoteSub;
+  String? _remoteStatus;
+  double? _remoteProgress;
 
   @override
   void initState() {
@@ -334,11 +377,13 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
     _service = _serviceFor(_selectedEngineId());
     unawaited(_probeSystemSpeech());
     _refreshPlan();
+    _probeRemote();
   }
 
   @override
   void dispose() {
     _downloadSub?.cancel();
+    _remoteSub?.cancel();
     // 关闭弹层不等于取消：请求在下一个检查点暂停，暂停后释放会话；进度已落盘。
     final AsrRunningTranscription? running = _running;
     final StreamSubscription<AsrTranscribeEvent>? sub = _runSub;
@@ -465,6 +510,9 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
   }
 
   Future<void> _startTranscription() async {
+    _runClock = Stopwatch()..start();
+    _elapsedTotal = null;
+    if (_runRemote && _remoteTarget != null) return _startRemoteTranscription();
     final AsrTranscribePlan? plan = _plan;
     if (plan == null) return;
     setState(() {
@@ -509,6 +557,7 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
               setState(() {
                 _result = r;
                 _finishedSrt = r.srtPath;
+                _elapsedTotal = _runClock?.elapsed;
                 _phase = _Phase.finished;
               });
           }
@@ -536,8 +585,115 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
   }
 
   void _pause() {
+    if (_runRemote) {
+      // 远端任务没有暂停：取消订阅 = 远端 DELETE，回到就绪态。
+      _remoteSub?.cancel();
+      _remoteSub = null;
+      setState(() => _phase = _Phase.ready);
+      return;
+    }
     _running?.requestPause();
     setState(() => _phase = _Phase.pausing);
+  }
+
+  Future<void> _probeRemote() async {
+    final InterconnectJobClient? client = widget.remoteClient;
+    if (client == null || widget.audioPaths.length != 1) return;
+    try {
+      final HostJobTarget? target = await client.probe('asr');
+      if (!mounted) return;
+      setState(() => _remoteTarget = target);
+    } catch (_) {
+      // 探测失败 = 没有可用 host；本机路径不受影响。
+    }
+  }
+
+  Future<void> _startRemoteTranscription() async {
+    final HostJobTarget? target = _remoteTarget;
+    final InterconnectJobClient? client = widget.remoteClient;
+    if (target == null || client == null) return;
+    if (!target.asrModelReady(_language.tag)) {
+      setState(() {
+        _phase = _Phase.error;
+        _error = t.audiobook_transcribe_remote_model_missing(
+          device: target.label,
+        );
+      });
+      return;
+    }
+    final Directory jobDir =
+        await widget.service.jobDirFor(widget.audioPaths, _language);
+    await jobDir.create(recursive: true);
+    if (!mounted) return;
+    setState(() {
+      _phase = _Phase.loading;
+      _error = null;
+      _result = null;
+      _remoteProgress = null;
+      _remoteStatus = t.audiobook_transcribe_remote_uploading(
+        device: target.label,
+        done: 0,
+        total: widget.audioPaths.length,
+      );
+    });
+    _remoteSub = client
+        .run(
+      target: target,
+      kind: 'asr',
+      params: <String, Object?>{'language': _language.tag},
+      inputs: widget.audioPaths.map(File.new).toList(growable: false),
+      outputDir: jobDir,
+    )
+        .listen(
+      (HostJobEvent e) async {
+        if (!mounted) return;
+        switch (e) {
+          case HostJobUploading(done: final int done, total: final int total):
+            setState(() {
+              _phase = _Phase.loading;
+              _remoteStatus = t.audiobook_transcribe_remote_uploading(
+                device: target.label,
+                done: done,
+                total: total,
+              );
+            });
+          case HostJobRunning(progress: final double progress):
+            setState(() {
+              _phase = _Phase.running;
+              _remoteProgress = progress;
+              _remoteStatus = t.audiobook_transcribe_remote_running(
+                device: target.label,
+                percent: (progress * 100).toStringAsFixed(0),
+              );
+            });
+          case HostJobDone(outputs: final Map<String, File> outputs):
+            final File? srt = outputs[AsrJobFiles.srt];
+            // 补一份 state.json：本机链路靠它识别「这是 ASR 产物目录」（token
+            // 时间 sidecar 就在旁边）；modelId 记 host 名，便于事后追溯。
+            final AsrJobState state = AsrJobState.fresh(
+              widget.audioPaths,
+              modelId: 'remote:${target.label}',
+            ).copyWith(finished: true);
+            await File(p.join(jobDir.path, AsrJobFiles.state))
+                .writeAsString(jsonEncode(state.toJson()), flush: true);
+            if (!mounted) return;
+            setState(() {
+              _finishedSrt = srt?.path;
+              _remoteProgress = 1;
+              _elapsedTotal = srt == null ? null : _runClock?.elapsed;
+              _phase = srt == null ? _Phase.error : _Phase.finished;
+              if (srt == null) _error = 'no subtitle in remote result';
+            });
+        }
+      },
+      onError: (Object error) {
+        if (!mounted) return;
+        setState(() {
+          _phase = _Phase.error;
+          _error = '$error';
+        });
+      },
+    );
   }
 
   /// 切换语音语言：记住选择，再按新语言包重新规划（模型是否就绪 / 该语言下这组
@@ -546,6 +702,7 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
     if (language == _language) return;
     _language = language;
     _result = null;
+    _elapsedTotal = null;
     _progress = null;
     unawaited(widget.languageSetter?.call(language.tag));
     _refreshPlan();
@@ -591,7 +748,10 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
     setState(() => _systemSpeechAvailable = available);
   }
 
-  /// 下拉每项的副标题：平台适配度 + int8 全套大小。
+  /// 下拉每项的副标题：模型定位 + 平台适配度 + int8 全套大小。
+  ///
+  /// 定位排第一：只报「轻量 / 大模型」会让用户把大的读成更好的，而专用包在自己
+  /// 那门语言上比通用的 Omnilingual 更准（见 [AsrModelScope]）。
   ///
   /// 「多大」用 int8 那套：它是手机与无 GPU 桌面实际会下的一套，也是两套里小的
   /// 那个——把大的报给用户会让「Omnilingual 在手机上要 4 GB」这种吓人的数字出现在
@@ -601,6 +761,11 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
     // 系统语音没有包、没有大小可报——说清它的真实代价（系统会下自己的语言资产），
     // 别编一个字节数，也别吹成零下载。
     if (pack == null) return t.audiobook_transcribe_engine_system_hint;
+    final String scope = switch (asrModelScopeFor(pack)) {
+      AsrModelScope.dedicated => t.audiobook_transcribe_model_scope_dedicated,
+      AsrModelScope.multilingual =>
+        t.audiobook_transcribe_model_scope_multilingual,
+    };
     final String fit = switch (asrModelFitFor(pack, mobile: _isMobile)) {
       AsrModelFit.light => t.audiobook_transcribe_model_fit_light,
       AsrModelFit.desktop => t.audiobook_transcribe_model_fit_desktop,
@@ -612,7 +777,7 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
     final bool custom = pack.id.startsWith(kAsrCustomPackIdPrefix);
     final String badge =
         custom ? ' · ${t.audiobook_transcribe_model_custom_badge}' : '';
-    return '$fit · $size$badge';
+    return '$scope · $fit · $size$badge';
   }
 
   /// 当前选中的是不是系统语音引擎。
@@ -684,6 +849,7 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
     }
     if (!mounted) return;
     _result = null;
+    _elapsedTotal = null;
     _progress = null;
     await _refreshPlan();
   }
@@ -709,6 +875,7 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
     await _service.discard(widget.audioPaths, _language);
     if (!mounted) return;
     _result = null;
+    _elapsedTotal = null;
     _finishedSrt = null;
     _progress = null;
     await _refreshPlan();
@@ -737,6 +904,11 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
   }
 
   String _statusLine() {
+    if (_runRemote &&
+        _remoteStatus != null &&
+        (_phase == _Phase.loading || _phase == _Phase.running)) {
+      return _remoteStatus!;
+    }
     final AsrTranscribePlan? plan = _plan;
     switch (_phase) {
       case _Phase.checking:
@@ -836,13 +1008,25 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
         return sb.toString().trimRight();
       case _Phase.finished:
         final AsrTranscribeResult? r = _result;
-        if (r != null) {
-          return t.audiobook_transcribe_done(
-            cues: r.cueCount,
-            segments: r.segmentCount,
-          );
+        final StringBuffer sb = StringBuffer(
+          r != null
+              ? t.audiobook_transcribe_done(
+                  cues: r.cueCount,
+                  segments: r.segmentCount,
+                )
+              : t.audiobook_transcribe_result_name,
+        );
+        final Duration? elapsed = _elapsedTotal;
+        if (elapsed != null) {
+          sb
+            ..writeln()
+            ..write(
+              t.audiobook_transcribe_elapsed_total(
+                elapsed: _fmtDuration(elapsed),
+              ),
+            );
         }
-        return t.audiobook_transcribe_result_name;
+        return sb.toString();
       case _Phase.error:
         return t.audiobook_transcribe_failed(error: _error ?? '');
     }
@@ -866,7 +1050,7 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
             : null;
       case _Phase.running:
       case _Phase.pausing:
-        return _progress?.fraction;
+        return _runRemote ? _remoteProgress : _progress?.fraction;
       case _Phase.finished:
         return 1;
       case _Phase.checking:
@@ -911,10 +1095,6 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(t.audiobook_transcribe_intro, style: tokens.type.metadata),
-          // 声学调轴已默认关闭（见 createAsrTranscriptionService）：转录本身就
-          // 产出完整 SRT，调轴只是精修，代价是另下约 985 MB 的 CTC 模型 + 一倍
-          // 推理时间。文案先不渲染，i18n key（audiobook_transcribe_alignment_hint）
-          // 保留 17 种语言的既有翻译，重新打开调轴时原位恢复即可。
           SizedBox(height: tokens.spacing.rowVertical),
           Text(
             t.audiobook_transcribe_language_label,
@@ -1014,6 +1194,29 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
                     _refreshPlan();
                   },
           ),
+          if (_remoteTarget != null) ...<Widget>[
+            SizedBox(height: tokens.spacing.rowVertical),
+            Text(
+              t.audiobook_transcribe_run_location,
+              style: tokens.type.listTitle,
+            ),
+            SizedBox(height: tokens.spacing.gap),
+            GamepadMenuDropdown<bool>(
+              key: const ValueKey<String>('asr-transcribe-run-location'),
+              entries: <GamepadDropdownEntry<bool>>[
+                (value: false, label: t.audiobook_transcribe_run_local),
+                (
+                  value: true,
+                  label: t.audiobook_transcribe_run_remote(
+                    device: _remoteTarget!.label,
+                  ),
+                ),
+              ],
+              selected: _runRemote,
+              enabled: _canChangePreference,
+              onChanged: (bool v) => setState(() => _runRemote = v),
+            ),
+          ],
           SizedBox(height: tokens.spacing.rowVertical),
           Text(
             _statusLine(),
@@ -1049,12 +1252,19 @@ class _AsrTranscribeSheetState extends State<AsrTranscribeSheet> {
     );
     switch (_phase) {
       case _Phase.needDownload:
+        // 选了远端 host 就不需要本机模型：直接给「开始」。
         add(
-          FilledButton.icon(
-            icon: const Icon(Icons.download_outlined, size: 18),
-            label: Text(t.audiobook_transcribe_model_download),
-            onPressed: _startDownload,
-          ),
+          _runRemote && _remoteTarget != null
+              ? FilledButton.icon(
+                  icon: const Icon(Icons.play_arrow_outlined, size: 18),
+                  label: Text(t.audiobook_transcribe_start),
+                  onPressed: _startTranscription,
+                )
+              : FilledButton.icon(
+                  icon: const Icon(Icons.download_outlined, size: 18),
+                  label: Text(t.audiobook_transcribe_model_download),
+                  onPressed: _startDownload,
+                ),
         );
       case _Phase.ready:
         add(

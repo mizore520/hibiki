@@ -122,6 +122,6 @@ CREATE TABLE media_collection_items (
         .customSelect('PRAGMA user_version')
         .getSingle();
     expect(version.read<int>('user_version'), db.schemaVersion);
-    expect(db.schemaVersion, 102);
+    expect(db.schemaVersion, 104);
   });
 }
