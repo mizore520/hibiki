@@ -119,6 +119,24 @@ function Get-SuitablePowerShellCore {
         (Join-Path ${env:ProgramFiles} 'PowerShell\7\pwsh.exe'),
         (Join-Path ${env:LOCALAPPDATA} 'Programs\PowerShell\7\pwsh.exe')
     )
+    # The launcher can be started from Explorer, where the Codex-provided
+    # runtime directory is not necessarily inherited in PATH. It is still a
+    # normal per-user installation, so include its stable layout when present.
+    $runtimeRoots = @(
+        (Join-Path ${env:USERPROFILE} '.cache\codex-runtimes'),
+        (Join-Path ${env:LOCALAPPDATA} 'codex-runtimes')
+    )
+    foreach ($root in $runtimeRoots) {
+        if (-not (Test-Path -LiteralPath $root -PathType Container)) {
+            continue
+        }
+        $candidates += @(
+            Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue |
+                ForEach-Object {
+                    Join-Path $_.FullName 'dependencies\native\powershell\pwsh.exe'
+                }
+        )
+    }
 
     foreach ($path in ($candidates | Where-Object { $_ } | Select-Object -Unique)) {
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
