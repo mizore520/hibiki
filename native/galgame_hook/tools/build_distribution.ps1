@@ -4,7 +4,10 @@
 
 .DESCRIPTION
   The Windows bundle (build-multiplatform.yml / release-desktop.yml) and any
-  manual repack share this entry point. Output contains only the two zip files and sidecars.
+  manual repack share this entry point. Without -RunTests, only the production
+  hook/injector targets and their runtime dependencies are built. -RunTests is
+  the explicit full native validation mode used by CI. Output contains only
+  the two zip files and sidecars.
 #>
 [CmdletBinding()]
 param(
@@ -243,10 +246,23 @@ foreach ($config in @(
   Invoke-Checked -FilePath cmake -Arguments @(
     '-S', $sourceRoot, '-B', $buildDir, '-A', $config.GeneratorArch
   )
-  Write-BuildLogMarker "stage=$arch build"
-  Invoke-Checked -FilePath cmake -Arguments @(
-    '--build', $buildDir, '--config', 'Release'
-  )
+  if ($RunTests) {
+    Write-BuildLogMarker "stage=$arch build mode=full-native-suite"
+    Invoke-Checked -FilePath cmake -Arguments @(
+      '--build', $buildDir, '--config', 'Release', '--parallel'
+    )
+  }
+  else {
+    # The launcher only needs these two shipped targets. Every native test is
+    # an independent add_executable and therefore belongs to the default ALL
+    # target; asking CMake for the production targets avoids compiling the
+    # entire test suite during an ordinary local game-build iteration.
+    Write-BuildLogMarker "stage=$arch build mode=production-only"
+    Invoke-Checked -FilePath cmake -Arguments @(
+      '--build', $buildDir, '--config', 'Release',
+      '--parallel', '--target', 'fushi_voice_hook', 'fushi_voice_injector'
+    )
+  }
   if ($RunTests) {
     # --no-tests=error: ctest defaults to returning 0 when NO test is registered,
     # so a CMakeLists refactor that stops registering the suite would read as a
@@ -258,6 +274,29 @@ foreach ($config in @(
       '--no-tests=error'
     )
   }
+}
+
+function Get-SharedCheckoutRoot {
+  param([Parameter(Mandatory = $true)][string]$FallbackRoot)
+
+  $fallback = [IO.Path]::GetFullPath($FallbackRoot)
+  try {
+    if (Get-Command git -CommandType Application -ErrorAction SilentlyContinue) {
+      $commonDirOutput = & git -C $fallback rev-parse --path-format=absolute --git-common-dir 2>$null
+      $gitExitCode = $LASTEXITCODE
+      $commonDir = ($commonDirOutput | Select-Object -First 1)
+      if ($gitExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($commonDir)) {
+        $resolvedCommonDir = [IO.Path]::GetFullPath($commonDir.Trim())
+        if ((Split-Path -Leaf $resolvedCommonDir) -eq '.git') {
+          return Split-Path -Parent $resolvedCommonDir
+        }
+      }
+    }
+  }
+  catch {
+    # A source archive without Git still has a valid local fallback cache.
+  }
+  return $fallback
 }
 
 $stageX64 = Join-Path $outputRoot 'x64'
@@ -312,7 +351,7 @@ $tempBase = if ($env:RUNNER_TEMP) { $env:RUNNER_TEMP } else { [IO.Path]::GetTemp
 $leDir = Join-Path $tempBase 'hibiki-locale-emulator-2.5.0.1'
 $leUrl = 'https://github.com/xupefei/Locale-Emulator/releases/download/v2.5.0.1/Locale.Emulator.2.5.0.1.zip'
 $expectedLeSha = '808ff584426d52cc775ad6406da00622f454be95bd4c8fbca42eef4b7235ad5c'
-$repositoryRoot = Split-Path -Parent (Split-Path -Parent $sourceRoot)
+$repositoryRoot = Get-SharedCheckoutRoot -FallbackRoot $sourceRoot
 $helperDownloadCache = Join-Path $repositoryRoot '.build-cache\galgame_hook\downloads'
 New-Item -ItemType Directory -Force -Path $helperDownloadCache | Out-Null
 $leZip = Join-Path $helperDownloadCache 'Locale.Emulator.2.5.0.1.zip'

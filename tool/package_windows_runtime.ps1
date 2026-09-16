@@ -6,9 +6,9 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$ReleaseDir,
 
-    # The smart launcher builds and tests the helper before Flutter so CMake's
-    # install step can never encounter a stale distribution. Other callers keep
-    # the original self-contained behavior by omitting this switch.
+# The smart launcher builds the helper before Flutter so the install step can
+# never encounter a stale distribution. Other callers keep the original
+# self-contained full-native-test behavior by omitting this switch.
     [switch]$HelperAlreadyBuilt
 )
 
@@ -38,27 +38,30 @@ $vswhere = $vswhereCandidates |
     Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
     Select-Object -First 1
 
-# Flutter resolves Visual Studio's bundled CMake internally, but the helper
-# packaging script invokes cmake/ctest by command name in a child PowerShell.
-# A normal desktop shell may therefore build the Flutter app successfully and
-# still fail before helper compilation.  Add the detected VS CMake bin to PATH
-# without pinning a Visual Studio version or edition.
-if (-not (Get-Command cmake -CommandType Application -ErrorAction SilentlyContinue)) {
-    $vsInstallPath = $null
-    if ($vswhere) {
-        $vsInstallPath = (& $vswhere -latest -products '*' -property installationPath 2>$null |
-            Select-Object -First 1)
-    }
-    if ($vsInstallPath) {
-        $vsCmakeBin = Join-Path $vsInstallPath 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin'
-        if (Test-Path -LiteralPath (Join-Path $vsCmakeBin 'cmake.exe') -PathType Leaf) {
-            $env:PATH = "$vsCmakeBin;$env:PATH"
+if (-not $HelperAlreadyBuilt) {
+    # Flutter resolves Visual Studio's bundled CMake internally, but the helper
+    # packaging script invokes cmake/ctest by command name in a child
+    # PowerShell. A normal desktop shell may therefore build the Flutter app
+    # successfully and still fail before helper compilation. Add the detected
+    # VS CMake bin to PATH without pinning a Visual Studio version or edition.
+    if (-not (Get-Command cmake -CommandType Application -ErrorAction SilentlyContinue)) {
+        $vsInstallPath = $null
+        if ($vswhere) {
+            $vsInstallPath = (& $vswhere -latest -products '*' -property installationPath 2>$null |
+                Select-Object -First 1)
+        }
+        if ($vsInstallPath) {
+            $vsCmakeBin = Join-Path $vsInstallPath 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin'
+            if (Test-Path -LiteralPath (Join-Path $vsCmakeBin 'cmake.exe') -PathType Leaf) {
+                $env:PATH = "$vsCmakeBin;$env:PATH"
+            }
         }
     }
-}
-foreach ($command in @('cmake', 'ctest')) {
-    if (-not (Get-Command $command -CommandType Application -ErrorAction SilentlyContinue)) {
-        throw "Required helper build tool is unavailable: $command"
+    $requiredCommands = @('cmake', 'ctest')
+    foreach ($command in $requiredCommands) {
+        if (-not (Get-Command $command -CommandType Application -ErrorAction SilentlyContinue)) {
+            throw "Required helper build tool is unavailable: $command"
+        }
     }
 }
 

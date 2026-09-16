@@ -230,6 +230,69 @@ struct VoiceHookLookupAdmission {
   std::string executable_sha256;
 };
 
+// One bounded numeric event from the Little Busters first-runtime diagnostic
+// ring.  This is deliberately separate from VoiceHookLookupHit: a diagnostic
+// observation never becomes a production hit and therefore cannot arm input
+// ownership or disturb the stable text/audio path.
+struct VoiceHookLookupDiagnosticEvent {
+  uint64_t seq = 0;
+  uint64_t tick_ms = 0;
+  uint32_t event_kind = 0;
+  uint32_t reason_id = 0;
+  uint32_t probe_id = 0;
+  uint32_t flags = 0;
+  uint32_t thread_id = 0;
+  uint32_t process_id = 0;
+  uint32_t callsite_rva = 0;
+  uint32_t candidate_rva = 0;
+  uint32_t vtable_slot = 0;
+  uint32_t vptr_rva = 0;
+  uint32_t input_surface = 0;
+  uint32_t owner_kind = 0;
+  uint32_t provider_kind = 0;
+  uint32_t provider_id = 0;
+  uint64_t hwnd = 0;
+  uint64_t text_seq = 0;
+  uint64_t text_thread_id = 0;
+  uint64_t text_utf16_hash = 0;
+  uint32_t text_utf16_length = 0;
+  uint64_t pre_text_seq = 0;
+  uint64_t pre_text_thread_id = 0;
+  uint64_t post_text_seq = 0;
+  uint64_t post_text_thread_id = 0;
+  uint32_t source_start = 0;
+  uint32_t source_length = 0;
+  uint32_t glyph_index = 0;
+  uint32_t glyph_count = 0;
+  uint64_t geometry_generation = 0;
+  int32_t glyph_x = 0;
+  int32_t glyph_y = 0;
+  int32_t glyph_w = 0;
+  int32_t glyph_h = 0;
+  int32_t client_w = 0;
+  int32_t client_h = 0;
+  uint32_t design_w = 0;
+  uint32_t design_h = 0;
+  uint32_t viewport_w = 0;
+  uint32_t viewport_h = 0;
+  uint64_t argument0 = 0;
+  uint64_t argument1 = 0;
+  uint64_t result0 = 0;
+  uint64_t result1 = 0;
+  uint32_t record_index = 0;
+  uint32_t record_count = 0;
+  uint32_t coordinate_space = 0;
+  uint32_t transform_flags = 0;
+  int32_t layer_origin_x = 0;
+  int32_t layer_origin_y = 0;
+  uint32_t render_target_w = 0;
+  uint32_t render_target_h = 0;
+  uint32_t schema_version = 0;
+  uint64_t session_id = 0;
+  uint64_t overflow_count = 0;
+  std::string reason_token;
+};
+
 // 查词通道的**结构化**失败原因。和 [VoiceHookOpenError] 同一条纪律：原因是在
 // `return` 那一刻丢掉的，下游文案层补不回来。尤其 kNoRegion——它专指「helper 是
 // v14 以前的版本 / 本会话没有查词区」，处置是更新 helper，与"没开开关"完全不同。
@@ -535,6 +598,11 @@ class VoiceHookReader {
 
   // 取输入环里游标之后的全部事件（被环覆盖的那段直接跳过，不假装补齐）。
   void PollLookupInputs(std::vector<VoiceHookLookupInput>& out);
+
+  // 取 Little Busters 的固定诊断环。环覆盖的旧事件直接跳过；当本段没有
+  // 收到任何已启用诊断事件时返回一次合成的 LB_IPC_NOT_RECEIVED 观察，避免
+  // 「native 没写 / reader 没读」在第一轮运行时完全同形。
+  void PollLookupDiagnostics(std::vector<VoiceHookLookupDiagnosticEvent>& out);
 
   // 把一张已取好的位图（BGRA8 / 直通 alpha / 自顶向下 / pitch 恒正）投进共享内存。
   //

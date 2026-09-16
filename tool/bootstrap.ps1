@@ -167,8 +167,153 @@ function Get-ProxyHelpText {
 "@
 }
 
+function Get-BootstrapFileSha256Hex {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $stream = [IO.File]::OpenRead($Path)
+    try {
+        $sha256 = [Security.Cryptography.SHA256]::Create()
+        try {
+            return (($sha256.ComputeHash($stream) |
+                ForEach-Object { $_.ToString('x2') }) -join '')
+        }
+        finally { $sha256.Dispose() }
+    }
+    finally { $stream.Dispose() }
+}
+
+function Get-BootstrapInputState {
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)][string]$RepoRoot,
+        [Parameter(Mandatory = $true)][string]$FlutterPath
+    )
+
+    $repoPath = (Resolve-Path -LiteralPath $RepoRoot).Path
+    $rootPrefix = $repoPath.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+    $files = [System.Collections.Generic.List[string]]::new()
+
+    function Add-BootstrapInput {
+        param([Parameter(Mandatory = $true)][string]$RelativePath)
+        $normalized = $RelativePath.Replace('\', '/')
+        if (-not $files.Contains($normalized)) {
+            [void]$files.Add($normalized)
+        }
+    }
+
+    foreach ($relative in @(
+        'pubspec.yaml',
+        'pubspec.lock',
+        'tool/bootstrap.ps1',
+        'ci/apply-patches.sh'
+    )) {
+        $path = Join-Path $repoPath ($relative -replace '/', '\')
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+            throw "Bootstrap cache-state input is missing: $path"
+        }
+        Add-BootstrapInput -RelativePath $relative
+    }
+
+    # Any workspace/member manifest can change package_config or the generated
+    # Dart package graph, even before pub has rewritten the root lockfile.
+    foreach ($directoryName in @('fushi', 'packages', 'third_party')) {
+        $directory = Join-Path $repoPath $directoryName
+        if (-not (Test-Path -LiteralPath $directory -PathType Container)) {
+            continue
+        }
+        foreach ($file in Get-ChildItem -LiteralPath $directory -File -Recurse -Filter 'pubspec.yaml') {
+            $full = [IO.Path]::GetFullPath($file.FullName)
+            if (-not $full.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+                throw "Bootstrap cache-state input escapes repository: $full"
+            }
+            Add-BootstrapInput -RelativePath $full.Substring($rootPrefix.Length)
+        }
+    }
+
+    $patchDirectory = Join-Path $repoPath 'ci\patches'
+    if (Test-Path -LiteralPath $patchDirectory -PathType Container) {
+        foreach ($file in Get-ChildItem -LiteralPath $patchDirectory -File -Recurse) {
+            $full = [IO.Path]::GetFullPath($file.FullName)
+            if (-not $full.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+                throw "Bootstrap cache-state input escapes repository: $full"
+            }
+            Add-BootstrapInput -RelativePath $full.Substring($rootPrefix.Length)
+        }
+    }
+
+    $branch = & git -C $repoPath symbolic-ref --quiet --short HEAD 2>$null
+    $branchExitCode = $LASTEXITCODE
+    if ($branchExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($branch)) {
+        $identity = "branch:$($branch.Trim())"
+    }
+    else {
+        $head = & git -C $repoPath rev-parse --verify HEAD 2>$null
+        $headExitCode = $LASTEXITCODE
+        if ($headExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($head)) {
+            throw 'Could not determine the current Git identity for bootstrap'
+        }
+        $identity = "detached:$($head.Trim())"
+    }
+
+    $flutterAbsolute = [IO.Path]::GetFullPath($FlutterPath)
+    $manifest = [Text.StringBuilder]::new()
+    [void]$manifest.Append('format')
+    [void]$manifest.Append([char]0)
+    [void]$manifest.Append('bootstrap-v1')
+    [void]$manifest.Append([Environment]::NewLine)
+    [void]$manifest.Append('identity')
+    [void]$manifest.Append([char]0)
+    [void]$manifest.Append($identity)
+    [void]$manifest.Append([Environment]::NewLine)
+    [void]$manifest.Append('flutter')
+    [void]$manifest.Append([char]0)
+    [void]$manifest.Append($flutterAbsolute)
+    [void]$manifest.Append([Environment]::NewLine)
+
+    $flutterBinDirectory = Split-Path -Parent $flutterAbsolute
+    $flutterRoot = Split-Path -Parent $flutterBinDirectory
+    $flutterVersionFile = Join-Path $flutterRoot 'version'
+    if (Test-Path -LiteralPath $flutterVersionFile -PathType Leaf) {
+        [void]$manifest.Append('flutter-version')
+        [void]$manifest.Append([char]0)
+        [void]$manifest.Append((Get-BootstrapFileSha256Hex -Path $flutterVersionFile))
+        [void]$manifest.Append([Environment]::NewLine)
+    }
+
+    $orderedFiles = $files.ToArray()
+    [Array]::Sort($orderedFiles, [StringComparer]::Ordinal)
+    foreach ($relative in $orderedFiles) {
+        $path = Join-Path $repoPath ($relative -replace '/', '\')
+        [void]$manifest.Append($relative)
+        [void]$manifest.Append([char]0)
+        [void]$manifest.Append((Get-BootstrapFileSha256Hex -Path $path))
+        [void]$manifest.Append([Environment]::NewLine)
+    }
+
+    $bytes = [Text.Encoding]::UTF8.GetBytes($manifest.ToString())
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try {
+        return (($sha256.ComputeHash($bytes) |
+            ForEach-Object { $_.ToString('x2') }) -join '')
+    }
+    finally { $sha256.Dispose() }
+}
+
 $flutter = Resolve-FlutterExe
 Write-Host "flutter: $flutter" -ForegroundColor DarkGray
+
+$bootstrapStateFile = Join-Path $root '.dart_tool\fushi_bootstrap_state'
+$packageConfigFile = Join-Path $root '.dart_tool\package_config.json'
+$bootstrapState = Get-BootstrapInputState -RepoRoot $root -FlutterPath $flutter
+if ((Test-Path -LiteralPath $bootstrapStateFile -PathType Leaf) -and
+    (Test-Path -LiteralPath $packageConfigFile -PathType Leaf)) {
+    $recordedBootstrapState = Get-Content -LiteralPath $bootstrapStateFile -Raw
+    if ($null -ne $recordedBootstrapState -and
+        $recordedBootstrapState.Trim() -eq $bootstrapState) {
+        Write-Host '[SKIP] Flutter dependency graph is unchanged; reusing pub cache and package config.' -ForegroundColor Green
+        exit 0
+    }
+}
 
 $resolved = Resolve-BootstrapProxy -RepoRoot $root
 $proxy = [string]$resolved.Proxy
@@ -225,6 +370,10 @@ bash ci/apply-patches.sh
 if ($LASTEXITCODE -ne 0) {
     throw "ci/apply-patches.sh failed."
 }
+
+$finalBootstrapState = Get-BootstrapInputState -RepoRoot $root -FlutterPath $flutter
+New-Item -ItemType Directory -Force -Path (Split-Path -Parent $bootstrapStateFile) | Out-Null
+Set-Content -LiteralPath $bootstrapStateFile -Value $finalBootstrapState -NoNewline -Encoding ascii
 
 Write-Host "`nBootstrap complete. Build with, e.g.:" -ForegroundColor Green
 Write-Host "  cd fushi; & '$flutter' build windows --release"

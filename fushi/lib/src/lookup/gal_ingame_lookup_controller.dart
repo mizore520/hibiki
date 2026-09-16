@@ -174,6 +174,11 @@ class GalIngameLookupController {
   final ValueNotifier<GalLookupAdmission> _admission =
       ValueNotifier<GalLookupAdmission>(GalLookupAdmission.unknown);
 
+  // Bounded per-session counters for the P11 diagnostic path.  This is a
+  // controller-side observability ledger only; it never participates in hit,
+  // popup, mining, or input admission decisions.
+  final Map<String, int> _diagnosticCounts = <String, int>{};
+
   /// 最近一次被 runner **确认成功**的开关值，仅供诊断使用。
   /// 它不是跨 shared mapping 的真值：mapping 换代后
   /// runner 中的实际状态可能已丢失，所以 [_syncEnabled] 绝不用它跳过 native 调用。
@@ -281,6 +286,32 @@ class GalIngameLookupController {
     _admission.value = admission;
   }
 
+  /// Receives the shared native diagnostic ring through the existing
+  /// gal_hook_text channel. Unknown tokens remain countable, but the key set
+  /// is capped so a malformed/native-future stream cannot grow without bound.
+  void handleDiagnostic(GalLookupDiagnostic event) {
+    recordDiagnosticReason(event.reasonToken);
+  }
+
+  void recordDiagnosticReason(String reason) {
+    final String normalized =
+        reason.startsWith('LB_') && reason.length <= 64
+            ? reason
+            : 'LB_DIAGNOSTIC_OTHER';
+    if (!_diagnosticCounts.containsKey(normalized) &&
+        _diagnosticCounts.length >= 96) {
+      _diagnosticCounts['LB_DIAGNOSTIC_OTHER'] =
+          (_diagnosticCounts['LB_DIAGNOSTIC_OTHER'] ?? 0) + 1;
+      return;
+    }
+    _diagnosticCounts[normalized] =
+        (_diagnosticCounts[normalized] ?? 0) + 1;
+  }
+
+  @visibleForTesting
+  Map<String, int> get debugDiagnosticCounts =>
+      Map<String, int>.unmodifiable(_diagnosticCounts);
+
   @visibleForTesting
   bool get debugSessionActive => _sessionActive;
 
@@ -300,6 +331,7 @@ class GalIngameLookupController {
     if (_sessionEpochKey == sessionEpochKey) return;
     _sessionEpochKey = sessionEpochKey;
     _admission.value = GalLookupAdmission.unknown;
+    _diagnosticCounts.clear();
     // Observe the lifecycle edge before attempting to retire the old route.
     // The Reader may already have swapped mappings when the host receives the
     // active -> active snapshot; advancing now makes every old dismiss
@@ -700,6 +732,11 @@ class GalIngameLookupController {
   Future<void> handleHit(GalLookupHit hit) async {
     if (!_started || !_enabledNow || !_providerAdmission) {
       if (hit.submit) {
+        recordDiagnosticReason(
+          !_providerAdmission
+              ? 'LB_DART_REJECT_PROVIDER'
+              : 'LB_DART_REJECT_INPUT',
+        );
         glog(
           'gal-ingame: rejected hit seq=${hit.seq} '
           'started=$_started enabled=$_enabledNow '
@@ -713,6 +750,7 @@ class GalIngameLookupController {
       // highlight 帧不仅重复，还会和查词卡争双缓冲的最新发布序。
       return;
     }
+    recordDiagnosticReason('LB_DART_ACCEPT');
     _latestSubmitHit = hit;
     _sameLineReplayLoggedSubmitSeq = null;
     // latest-wins：在途查词不打断，但只保留最后一次意图。代数也在入队时递增，
@@ -757,8 +795,12 @@ class GalIngameLookupController {
 
   /// hook 转发的卡片内输入：严格按上报顺序丢回 runner 的既有 popup 输入注入口。
   Future<void> handleInput(GalLookupInput input) {
-    if (!_providerAdmission) return Future<void>.value();
+    if (!_providerAdmission) {
+      recordDiagnosticReason('LB_DART_REJECT_PROVIDER');
+      return Future<void>.value();
+    }
     if (input.kind == GalLookupInput.dismissOutsideKind) {
+      recordDiagnosticReason('LB_POPUP_OUTSIDE_CONSUMED');
       final Completer<void> done = Completer<void>();
       _inputTail = _inputTail.then<void>(
         (_) => _runQueuedOutsideDismiss(input, done),
@@ -775,6 +817,7 @@ class GalIngameLookupController {
         _activeHit == null ||
         route == null) {
       if (input.kind != 0) {
+        recordDiagnosticReason('LB_DART_REJECT_INPUT');
         glog(
           'gal-ingame: input DROP seq=${input.seq} kind=${input.kind} '
           'at=entry_gate',
@@ -837,6 +880,11 @@ class GalIngameLookupController {
     // 只会在不可见 DOM 上触发按钮或滚轮，并制造一张本不该在截图中途恢复的 dirty 帧。
     if (_captureSuppressed || !_isCurrentLookup(generation, route)) {
       if (input.kind != 0) {
+        recordDiagnosticReason(
+          _captureSuppressed
+              ? 'LB_DART_REJECT_INPUT'
+              : 'LB_DART_REJECT_GENERATION',
+        );
         glog(
           'gal-ingame: input DROP seq=${input.seq} kind=${input.kind} '
           'at=queue_gate',
@@ -848,11 +896,13 @@ class GalIngameLookupController {
     final GalLookupCallResult result =
         await GalHookTextOverlayChannel.galLookupInput(input);
     if (!result.ok) {
+      recordDiagnosticReason('LB_POPUP_REJECT');
       glog('gal-ingame: input kind=${input.kind} FAILED ${result.error}');
       return;
     }
     if (!_isCurrentLookup(generation, route)) {
       if (input.kind != 0) {
+        recordDiagnosticReason('LB_DART_REJECT_GENERATION');
         glog(
           'gal-ingame: input DROP seq=${input.seq} kind=${input.kind} '
           'at=reply_gate',
@@ -1250,9 +1300,13 @@ class GalIngameLookupController {
     int generation,
     GlobalLookupRoute route,
   ) async {
-    if (!_isCurrentLookup(generation, route)) return;
+    if (!_isCurrentLookup(generation, route)) {
+      recordDiagnosticReason('LB_DART_REJECT_GENERATION');
+      return;
+    }
     final String query = lookupQueryFromIndex(hit.line, hit.charIndex);
     if (query.isEmpty) {
+      recordDiagnosticReason('LB_WORKER_REJECT_OCCURRENCE');
       if (_isCurrentLookup(generation, route)) {
         await _terminateCurrentLookup();
       }
@@ -1288,13 +1342,16 @@ class GalIngameLookupController {
       );
     });
     if (!_isCurrentLookup(generation, route)) {
+      recordDiagnosticReason('LB_DART_REJECT_GENERATION');
       return;
     }
     if (!taken) {
+      recordDiagnosticReason('LB_POPUP_REJECT');
       glog('gal-ingame: overlay refused lookup seq=${hit.seq}');
       await _terminateCurrentLookup();
       return;
     }
+    recordDiagnosticReason('LB_WORKER_ACCEPT');
   }
 
   /// 覆盖窗回报「卡片已渲染、尺寸已定」（物理 px）→ 投帧。
@@ -1322,6 +1379,7 @@ class GalIngameLookupController {
     _rootPhysicalHeight = physicalRootHeight > 0
         ? physicalRootHeight
         : (_rootPhysicalHeight > 0 ? _rootPhysicalHeight : physicalHeight);
+    recordDiagnosticReason('LB_POPUP_VISIBLE');
     final int rootHeight = _rootPhysicalHeight;
     glog(
       'gal-ingame: rendered seq=${hit.seq} '

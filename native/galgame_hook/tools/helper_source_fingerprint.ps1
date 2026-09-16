@@ -62,6 +62,7 @@ function Get-FushiHelperSourceFingerprint {
 
   foreach ($relativeFile in @(
       'CMakeLists.txt',
+      'third_party/locale_emulator/LICENSE-LGPL.txt',
       'third_party/lunahook/LunaHook32.dll',
       'third_party/lunahook/LunaHook64.dll',
       'third_party/lunahook/LunaHost32.dll',
@@ -69,6 +70,7 @@ function Get-FushiHelperSourceFingerprint {
       'unity_audio_extract/Fushi.UnityAudioExtract.csproj',
       'unity_audio_extract/Program.cs',
       'unity_audio_extract/fetch_runtime.ps1',
+      'unity_audio_extract/ensure_runtime.ps1',
       'tools/build_distribution.ps1',
       'tools/helper_source_fingerprint.ps1'
     )) {

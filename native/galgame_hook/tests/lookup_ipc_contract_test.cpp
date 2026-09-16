@@ -37,6 +37,7 @@ using fushi_voice_hook::HasLookupRegion;
 using fushi_voice_hook::IsLookupFrameSane;
 using fushi_voice_hook::kClipCount;
 using fushi_voice_hook::kLookupBitmapBytes;
+using fushi_voice_hook::kLookupDiagnosticEventCount;
 using fushi_voice_hook::kLookupFrameCount;
 using fushi_voice_hook::kLookupFrameCaptureSuppress;
 using fushi_voice_hook::kLookupFrameDismiss;
@@ -49,6 +50,7 @@ using fushi_voice_hook::kTextLaneCount;
 using fushi_voice_hook::kTextLaneSlotCount;
 using fushi_voice_hook::kThreadPreviewCount;
 using fushi_voice_hook::LookupBitmapAt;
+using fushi_voice_hook::LookupDiagnosticEvent;
 using fushi_voice_hook::LookupFrame;
 using fushi_voice_hook::LookupFrameAt;
 using fushi_voice_hook::LookupHitOf;
@@ -636,8 +638,8 @@ void TestV14LookupRegionIsPureAppendOverV13() {
 }
 
 void TestV16V17AndV19OnlyAppendOverV15() {
-  Check(kSharedVersion == 24,
-        "本测试锁的是 v24 契约（Siglus text ownership 尾追加）");
+  Check(kSharedVersion == 25,
+        "本测试锁的是 v25 契约（Little Busters diagnostic ring 尾追加）");
 
   // v14 的最后一个字段是 lookup_diag。v15 只能紧随其后追加一个 64 位 applied seq；
   // 把字段插进 v14 中间，或在 applied seq 后再偷偷长出别的字段，都必须判红。
@@ -991,11 +993,35 @@ void TestV19AdmissionIsPureAppendOverV17() {
   Check(offsetof(SharedHeader, siglus_text_owner) ==
             offsetof(SharedHeader, adapter_report_seq) + sizeof(uint32_t),
         "v24 owner 只能追加在 v23 adapter 读数之后");
-  Check(sizeof(SharedHeader) ==
-            ((offsetof(SharedHeader, siglus_text_owner) +
+  Check(offsetof(SharedHeader, lookup_diagnostics_enabled) ==
+            offsetof(SharedHeader, siglus_text_owner) + sizeof(uint32_t),
+        "v25 diagnostics must append immediately after v24 owner");
+  Check(offsetof(SharedHeader, lookup_diagnostic_schema_version) ==
+            offsetof(SharedHeader, lookup_diagnostics_enabled) +
+                sizeof(uint32_t),
+        "v25 schema must follow the diagnostic enable word");
+  Check(offsetof(SharedHeader, lookup_diagnostic_session_id) ==
+            ((offsetof(SharedHeader, lookup_diagnostic_schema_version) +
               sizeof(uint32_t) + 7u) /
-             8u) * 8u,
-        "v24 末尾除 8 字节对齐填充外不得混入其他字段");
+             8u) *
+                8u,
+        "v25 session id must retain 8-byte alignment");
+  Check(offsetof(SharedHeader, lookup_diagnostic_event_seq) ==
+            offsetof(SharedHeader, lookup_diagnostic_session_id) +
+                sizeof(uint64_t),
+        "v25 event sequence must follow session id");
+  Check(offsetof(SharedHeader, lookup_diagnostic_overflow_count) ==
+            offsetof(SharedHeader, lookup_diagnostic_event_seq) +
+                sizeof(uint64_t),
+        "v25 overflow count must follow event sequence");
+  Check(offsetof(SharedHeader, lookup_diagnostic_events) ==
+            offsetof(SharedHeader, lookup_diagnostic_overflow_count) +
+                sizeof(uint64_t),
+        "v25 event ring must follow overflow count");
+  Check(sizeof(SharedHeader) ==
+            offsetof(SharedHeader, lookup_diagnostic_events) +
+                sizeof(LookupDiagnosticEvent) * kLookupDiagnosticEventCount,
+        "v25 diagnostic ring must be the exact SharedHeader tail");
 }
 
 // 准入的读写往返。这些性质全都是「UI 会不会误导用户」的直接决定因素，不是内部细节。

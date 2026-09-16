@@ -558,13 +558,18 @@ class LittleBustersVoiceAdapter final
   }
   void ProcessPendingEvents() {
     if (!ready_) install();
+    ProcessLittleBustersLookup();
     if (ready_) ProcessLittleBustersVoiceTasks();
+  }
+  fushi_voice_hook::LookupAdmissionReport lookupAdmission() const override {
+    return LittleBustersLookupAdmission();
   }
   fushi_voice_hook::AdapterCapability capabilities() const override {
     return fushi_voice_hook::AdapterCapability::kResourceAudio;
   }
   void onModuleLoaded(const wchar_t*) override {}
   void shutdown() override {
+    StopLittleBustersLookupDiagnostics();
     StopLittleBustersVoicePak();
     installed_ = false;
     ready_ = false;
@@ -767,6 +772,7 @@ class AdapterRegistry {
     // probe() 恒为 true（它们是横切能力，不声称"这游戏是哪个引擎"），放进来会让任何
     // 游戏在引擎探测成立之前就先被判成 EngineUnsupported——开关先灰后亮，比不显示更糟。
     consider(siglus_);
+    consider(little_busters_);
     consider(unity_);
     consider(kirikiri_);
     consider(renpy_);
@@ -829,6 +835,11 @@ class AdapterRegistry {
       return 16;
     }
     if (smash_fzmedia_.lookup_sensor_available() && g_header != nullptr &&
+        fushi_voice_hook::HasLookupRegion(g_header) &&
+        g_header->lookup_enabled != 0) {
+      return 16;
+    }
+    if (little_busters_.probe() && g_header != nullptr &&
         fushi_voice_hook::HasLookupRegion(g_header) &&
         g_header->lookup_enabled != 0) {
       return 16;

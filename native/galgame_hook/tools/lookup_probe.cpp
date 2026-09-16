@@ -23,6 +23,8 @@
 // 不注入、不投帧、不碰位图区。命名文件映射跨 32/64 位可读写，故 x64 工具能验 32 位游戏。
 //
 // 用法：fushi_voice_lookup_probe <pid> [轮数=60] [间隔ms=500] [--no-enable]
+// 诊断环会在每轮打印新事件；它与 lookup_enabled 独立，--no-enable 可用于只观察
+// P0/P1/P2/P8/P9/P11 的事件而不打开生产查词闸门。
 namespace {
 
 using fushi_voice_hook::kSharedMagic;
@@ -104,6 +106,71 @@ void PrintHit(const fushi_voice_hook::LookupHitSlot* hit) {
       hit->coordinate_space, hit->writing_mode, hit->glyph_x, hit->glyph_y,
       hit->glyph_w, hit->glyph_h, hit->view_w, hit->view_h, hit->flags);
   std::printf("  line=%s\n", line.c_str());
+}
+
+void PrintDiagnosticEvent(
+    const fushi_voice_hook::LookupDiagnosticEvent& event) {
+  std::printf(
+      "  lbdiag seq=%llu tick=%llu kind=%u probe=%u reason=%u(%s) "
+      "flags=0x%X thread=%u callsite=0x%X candidate=0x%X "
+       "occ=%llu/%llu pre=%llu/%llu post=%llu/%llu geom=%llu "
+       "glyph=%u/%u rect=(%d,%d %dx%d) "
+      "hwnd=0x%llX input=0x%X owner=%u provider=%u/%u args=0x%llX,0x%llX "
+      "result=0x%llX,0x%llX\n",
+      static_cast<unsigned long long>(event.seq),
+      static_cast<unsigned long long>(event.tick_ms), event.event_kind,
+      event.probe_id, event.reason_id,
+      fushi_voice_hook::LookupDiagnosticReasonToken(event.reason_id),
+      event.flags, event.thread_id, event.callsite_rva, event.candidate_rva,
+       static_cast<unsigned long long>(event.text_seq),
+       static_cast<unsigned long long>(event.text_thread_id),
+       static_cast<unsigned long long>(event.pre_text_seq),
+       static_cast<unsigned long long>(event.pre_text_thread_id),
+       static_cast<unsigned long long>(event.post_text_seq),
+       static_cast<unsigned long long>(event.post_text_thread_id),
+       static_cast<unsigned long long>(event.geometry_generation),
+      event.glyph_index, event.glyph_count, event.glyph_x, event.glyph_y,
+      event.glyph_w, event.glyph_h,
+      static_cast<unsigned long long>(event.hwnd), event.input_surface,
+      event.owner_kind, event.provider_kind, event.provider_id,
+      static_cast<unsigned long long>(event.argument0),
+      static_cast<unsigned long long>(event.argument1),
+      static_cast<unsigned long long>(event.result0),
+      static_cast<unsigned long long>(event.result1));
+  std::printf(
+       "    record=%u/%u space=%u xform=0x%X layer=(%d,%d) "
+       "design=%ux%u viewport=%ux%u target=%ux%u\n",
+       event.record_index, event.record_count, event.coordinate_space,
+       event.transform_flags, event.layer_origin_x, event.layer_origin_y,
+       event.design_w, event.design_h, event.viewport_w, event.viewport_h,
+       event.render_target_w, event.render_target_h);
+}
+
+void PrintNewDiagnosticEvents(const SharedHeader* header, uint64_t* cursor) {
+  if (header == nullptr || cursor == nullptr) return;
+  const uint64_t count = fushi_voice_hook::AtomicLoadPreview64(
+      &header->lookup_diagnostic_event_seq);
+  if (count == 0u || count <= *cursor) return;
+  const uint64_t from = count - *cursor >
+                                fushi_voice_hook::kLookupDiagnosticEventCount
+                            ? count -
+                                  fushi_voice_hook::kLookupDiagnosticEventCount +
+                                  1u
+                            : *cursor + 1u;
+  for (uint64_t sequence = from; sequence <= count; ++sequence) {
+    const auto& slot = header->lookup_diagnostic_events[
+        static_cast<size_t>(sequence %
+                            fushi_voice_hook::kLookupDiagnosticEventCount)];
+    if (fushi_voice_hook::AtomicLoadPreview64(&slot.seq) != sequence) continue;
+    fushi_voice_hook::LookupDiagnosticEvent event = {};
+    std::memcpy(
+        &event,
+        const_cast<const void*>(reinterpret_cast<const volatile void*>(&slot)),
+        sizeof(event));
+    if (fushi_voice_hook::AtomicLoadPreview64(&slot.seq) != sequence) continue;
+    PrintDiagnosticEvent(event);
+  }
+  *cursor = count;
 }
 
 // ── 合成帧：把「呈现器能不能真的把位图显示出来」单独验穿 ─────────────────────────
@@ -257,6 +324,7 @@ int main(int argc, char** argv) {
   const fushi_voice_hook::LookupHitSlot* hit =
       fushi_voice_hook::LookupHitOf(header);
   uint64_t last_hit_seq = 0;
+  uint64_t last_diagnostic_seq = 0;
   for (int round = 0; round < rounds; ++round) {
     // applied 是**截图抑制的回执**（lookup_frame_applied_seq）。制卡要先让注入侧藏卡
     // 再拍一张不含卡片的图，host 只有看到这个数推进才会去抓图；它不动就说明注入侧没确认，
@@ -269,11 +337,11 @@ int main(int argc, char** argv) {
         static_cast<unsigned long long>(header->lookup_frame_count_written),
         static_cast<unsigned long long>(header->lookup_frame_applied_seq));
     std::printf(
-        "  geometry=%u/%u status=%u generation=%llu/%llu "
+        "  lookup_enabled=%u geometry=%u/%u status=%u generation=%llu/%llu "
         "shield=req:%u applied:%u owner:%u buttons:0x%02X risk:%u "
         "required:0x%02X ready:0x%02X observed:0x%02X fault:0x%02X "
         "status:0x%02X\n",
-        header->lookup_geometry_active_kind,
+        header->lookup_enabled, header->lookup_geometry_active_kind,
         header->lookup_geometry_active_id, header->lookup_geometry_status,
         static_cast<unsigned long long>(
             header->lookup_geometry_text_generation),
@@ -287,6 +355,20 @@ int main(int argc, char** argv) {
         header->lookup_shield_fault_mask,
         header->lookup_shield_status_flags);
     PrintDiag(header->lookup_diag);
+    std::printf(
+        "  lbdiag schema=%u enabled=%u session=%llu events=%llu "
+        "overflow=%llu\n",
+        fushi_voice_hook::AtomicLoadShared32(
+            &header->lookup_diagnostic_schema_version),
+        fushi_voice_hook::AtomicLoadShared32(
+            &header->lookup_diagnostics_enabled),
+        static_cast<unsigned long long>(fushi_voice_hook::AtomicLoadPreview64(
+            &header->lookup_diagnostic_session_id)),
+        static_cast<unsigned long long>(fushi_voice_hook::AtomicLoadPreview64(
+            &header->lookup_diagnostic_event_seq)),
+        static_cast<unsigned long long>(fushi_voice_hook::AtomicLoadPreview64(
+            &header->lookup_diagnostic_overflow_count)));
+    PrintNewDiagnosticEvents(header, &last_diagnostic_seq);
     if (hit != nullptr && hit->seq != last_hit_seq) {
       last_hit_seq = hit->seq;
       PrintHit(hit);

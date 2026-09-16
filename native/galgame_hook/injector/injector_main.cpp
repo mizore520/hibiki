@@ -3932,6 +3932,12 @@ int RunInjection(HANDLE target, DWORD pid, const std::wstring& dll_path,
     header->luna_bridge_abi_version =
         fushi_voice_hook::kLunaBridgeAbiVersion;
     header->luna_vendored_version = fushi_voice_hook::kLunaVendoredVersion;
+    // v25: the diagnostic ring belongs to this fresh mapping session.  Keep it
+    // disabled until the injected DLL independently proves the exact LB
+    // profile; a reused resident mapping is intentionally never reset.
+    fushi_voice_hook::ResetLookupDiagnosticRing(
+        header, (static_cast<uint64_t>(GetTickCount64()) << 32) |
+                    static_cast<uint64_t>(pid));
     header->ring_capacity = ring_capacity;
     // 文本环紧随音频环形；clip 索引紧随文本环。hook DLL 据此偏移定位两区。
     header->text_region_offset = expected_text_offset;
