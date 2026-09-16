@@ -14,22 +14,36 @@ FetchContent_Declare(nuget
   DOWNLOAD_NO_EXTRACT true
 )
 
-find_program(NUGET nuget)
-if (NOT NUGET)
-    message("Nuget.exe not found, trying to download or use cached version.")
-    FetchContent_MakeAvailable(nuget)
-    set(NUGET ${nuget_SOURCE_DIR}/nuget.exe)
+set(CPPWINRT_PACKAGE_DIR
+    "${CMAKE_BINARY_DIR}/packages/Microsoft.Windows.CppWinRT.${CPPWINRT_VERSION}")
+set(CPPWINRT
+    "${CPPWINRT_PACKAGE_DIR}/bin/cppwinrt.exe")
+
+# A fresh worktree may already have a verified package cache prepared by the
+# launcher.  Do not invoke NuGet in that case: NuGet still contacts its feeds
+# even when the exact package is already present, turning an offline build into
+# an unbounded configure hang.  Keep the original download path for a genuinely
+# missing package.
+if (NOT EXISTS "${CPPWINRT}")
+    find_program(NUGET nuget)
+    if (NOT NUGET)
+        message("Nuget.exe not found, trying to download or use cached version.")
+        FetchContent_MakeAvailable(nuget)
+        set(NUGET ${nuget_SOURCE_DIR}/nuget.exe)
+    endif()
+
+    execute_process(COMMAND
+        ${NUGET} install Microsoft.Windows.CppWinRT -Version ${CPPWINRT_VERSION} -OutputDirectory packages
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        RESULT_VARIABLE ret)
+    if (NOT ret EQUAL 0)
+        message(FATAL_ERROR "Failed to install nuget package Microsoft.Windows.CppWinRT.${CPPWINRT_VERSION}")
+    endif()
 endif()
 
-execute_process(COMMAND
-    ${NUGET} install Microsoft.Windows.CppWinRT -Version ${CPPWINRT_VERSION} -OutputDirectory packages
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    RESULT_VARIABLE ret)
-if (NOT ret EQUAL 0)
-    message(FATAL_ERROR "Failed to install nuget package Microsoft.Windows.CppWinRT.${CPPWINRT_VERSION}")
+if (NOT EXISTS "${CPPWINRT}")
+    message(FATAL_ERROR "Microsoft.Windows.CppWinRT.${CPPWINRT_VERSION} is unavailable at ${CPPWINRT}")
 endif()
-
-set(CPPWINRT ${CMAKE_BINARY_DIR}/packages/Microsoft.Windows.CppWinRT.${CPPWINRT_VERSION}/bin/cppwinrt.exe)
 execute_process(COMMAND
     ${CPPWINRT} -input sdk -output include
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}

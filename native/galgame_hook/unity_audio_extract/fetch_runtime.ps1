@@ -7,9 +7,39 @@ $ErrorActionPreference = 'Stop'
 $runtimePath = [System.IO.Path]::GetFullPath($RuntimeDir)
 New-Item -ItemType Directory -Force -Path $runtimePath | Out-Null
 
-$decoder = Join-Path $runtimePath 'vgmstream-cli.exe'
-$classdata = Join-Path $runtimePath 'classdata.tpk'
-if ((Test-Path -LiteralPath $decoder) -and (Test-Path -LiteralPath $classdata)) {
+$requiredFiles = @(
+  'classdata.tpk',
+  'vgmstream-cli.exe',
+  'avcodec-vgmstream-59.dll',
+  'avformat-vgmstream-59.dll',
+  'avutil-vgmstream-57.dll',
+  'swresample-vgmstream-4.dll',
+  'libatrac9.dll',
+  'libcelt-0061.dll',
+  'libcelt-0110.dll',
+  'libg719_decode.dll',
+  'libmpg123-0.dll',
+  'libspeex-1.dll',
+  'libvorbis.dll',
+  'COPYING'
+)
+function Test-CompleteRuntime {
+  foreach ($relative in $requiredFiles) {
+    $path = Join-Path $runtimePath $relative
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf) -or
+        (Get-Item -LiteralPath $path).Length -le 0) {
+      return $false
+    }
+  }
+  return $true
+}
+
+# Do not treat just the two primary files as success: an interrupted or
+# hand-copied runtime may contain them while missing a vgmstream DLL. The
+# managed fushi_unity_audio_extract.exe is deliberately not in this list: it is
+# produced by dotnet publish, so a missing managed output must not redownload
+# the already-complete third-party runtime.
+if (Test-CompleteRuntime) {
   exit 0
 }
 
@@ -100,11 +130,38 @@ function Get-VerifiedArchive {
   throw "Unable to download verified Unity audio package after 3 attempts: $($lastError.Exception.Message)"
 }
 
+function Get-SharedCheckoutRoot {
+  param([Parameter(Mandatory = $true)][string]$FallbackRoot)
+
+  $fallback = [System.IO.Path]::GetFullPath($FallbackRoot)
+  try {
+    if (Get-Command git -CommandType Application -ErrorAction SilentlyContinue) {
+      $commonDirOutput = & git -C $fallback rev-parse --path-format=absolute --git-common-dir 2>$null
+      $gitExitCode = $LASTEXITCODE
+      $commonDir = ($commonDirOutput | Select-Object -First 1)
+      if ($gitExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($commonDir)) {
+        $resolvedCommonDir = [System.IO.Path]::GetFullPath($commonDir.Trim())
+        if ((Split-Path -Leaf $resolvedCommonDir) -eq '.git') {
+          return Split-Path -Parent $resolvedCommonDir
+        }
+      }
+    }
+  }
+  catch {
+    # A source archive without Git still has a valid local fallback cache.
+  }
+  return $fallback
+}
+
 # Keep archives in the ignored repository cache. A failed transfer therefore
 # remains resumable, and a later CMake build does not redownload packages that
 # already passed their checksums.
-$repositoryRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
+$checkoutRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
+$repositoryRoot = Get-SharedCheckoutRoot -FallbackRoot $checkoutRoot
 $downloadRoot = Join-Path $repositoryRoot '.build-cache\galgame_hook\unity-audio\downloads'
+if (-not $repositoryRoot.Equals($checkoutRoot, [StringComparison]::OrdinalIgnoreCase)) {
+  Write-Host "[unity-audio] using shared download cache: $downloadRoot"
+}
 New-Item -ItemType Directory -Force -Path $downloadRoot | Out-Null
 $vgmZip = Join-Path $downloadRoot 'vgmstream-win64-r2117.zip'
 $uabeaZip = Join-Path $downloadRoot 'uabea-windows-v8.zip'

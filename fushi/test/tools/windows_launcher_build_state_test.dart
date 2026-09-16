@@ -26,6 +26,12 @@ void main() {
       expect(source, contains('prepare_windows_torrent_runtime.ps1'));
       expect(source, contains(r'.dart_tool\flutter_build'));
       expect(source, contains(r'build\windows\app.so'));
+      expect(source, contains('HELPER_X64'));
+      expect(source, contains('HELPER_X86'));
+      expect(
+        source,
+        contains('Existing Release bundle has no complete Galgame helper'),
+      );
       expect(source, contains(r'rmdir /s /q "%FLUTTER_AOT_CACHE%"'));
       expect(
         source.indexOf(r'rmdir /s /q "%FLUTTER_AOT_CACHE%"'),
@@ -43,12 +49,13 @@ void main() {
       expect(
         source,
         contains('RECHECK_STATE'),
-        reason:
-            '在依赖准备后重新核对 state/stamp，避免并行 launcher 重复进入 helper build',
+        reason: '在依赖准备后重新核对 state/stamp，避免并行 launcher 重复进入 helper build',
       );
       expect(
         source.indexOf('RECHECK_STATE'),
-        lessThan(source.indexOf('echo [5/7] Building and testing')),
+        lessThan(
+          source.indexOf('echo [5/7] Building the bundled Galgame helper'),
+        ),
       );
       expect(
         source,
@@ -61,7 +68,13 @@ void main() {
       final String helper = helperScript.readAsStringSync();
       expect(helper, contains('vswhere.exe'));
       expect(helper, contains(r'CommonExtensions\Microsoft\CMake\CMake\bin'));
-      expect(helper, contains("@('cmake', 'ctest')"));
+      expect(helper, contains(r"$requiredCommands = @('cmake')"));
+      expect(
+        helper,
+        contains('if (-not $Force -and -not $RunTests)'),
+        reason: '缓存只能短路普通本地构建，不能短路显式的完整测试请求',
+      );
+      expect(helper, contains(r"$requiredCommands += 'ctest'"));
       expect(helper, contains('build_distribution.ps1'));
       expect(helper, contains('-RunTests'));
 
@@ -163,12 +176,12 @@ void main() {
       final File trackedTest = File('${temp.path}/test/fixture.txt');
       await trackedTest.parent.create(recursive: true);
       await trackedTest.writeAsString('test\n');
-      final File trackedStateTool =
-          File('${temp.path}/tool/get_windows_build_state.ps1');
+      final File trackedStateTool = File(
+        '${temp.path}/tool/get_windows_build_state.ps1',
+      );
       await trackedStateTool.parent.create(recursive: true);
       await trackedStateTool.writeAsString('state tool\n');
-      final File trackedLauncher =
-          File('${temp.path}/启动Hibiki最新版.bat');
+      final File trackedLauncher = File('${temp.path}/启动Hibiki最新版.bat');
       await trackedLauncher.writeAsString('launcher\n');
       await git(<String>[
         'add',

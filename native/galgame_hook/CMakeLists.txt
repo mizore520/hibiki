@@ -16,17 +16,23 @@ project(fushi_voice_hook LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# 源码含中文注释/字符串（UTF-8 无 BOM）。中文 locale 下 MSVC 默认按 GBK
+# 解析会把 UTF-8 多字节序列误读、错乱引号/大括号（本组件即因此曾编译失败）。
+# /utf-8 明确按 UTF-8 解析。
+if(MSVC)
+  add_compile_options(/utf-8)
+  # MSVC 14.51 now diagnoses STL operations that may unwind with C4530 when
+  # the exception model is left at its legacy default. Several focused tests
+  # intentionally use /WX, so make the C++ exception model explicit for every
+  # C++ target instead of allowing a toolchain update to break the build.
+  add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/EHsc>")
+endif()
+
 add_executable(fushi_luca_token_decoder_test
   "tests/luca_token_decoder_test.cpp")
 target_include_directories(fushi_luca_token_decoder_test PRIVATE "include")
 if(MSVC)
   target_compile_options(fushi_luca_token_decoder_test PRIVATE /utf-8)
-endif()
-
-# 源码含中文注释/字符串（UTF-8 无 BOM）。中文 locale 下 MSVC 默认按 GBK 解析会把 UTF-8
-# 多字节序列误读、错乱引号/大括号（本组件即因此曾编译失败）。/utf-8 明确按 UTF-8 解析。
-if(MSVC)
-  add_compile_options(/utf-8)
 endif()
 
 # MinHook（vendored，MIT，与本组件 GPLv3 兼容）—— inline/vtable hook 引擎（C.2 用）。
@@ -117,6 +123,8 @@ add_library(fushi_voice_hook SHARED
   "hook/adapters/little_busters_voice_pak.h"
   "hook/adapters/little_busters_voice_binding.h"
   "hook/adapters/little_busters_voice_calibration.h"
+  "hook/adapters/little_busters_lookup_diagnostics.h"
+  "hook/adapters/little_busters_lookup_diagnostics.inc"
   "hook/adapters/little_busters_voice_adapter.inc"
   "hook/adapters/hunex_gge_adapter.inc"
   "hook/adapters/hunex_gge_lookup.h"
@@ -741,6 +749,16 @@ target_compile_definitions(fushi_generic_input_shield_test PRIVATE
 add_test(NAME fushi_generic_input_shield_test
   COMMAND fushi_generic_input_shield_test)
 
+add_executable(fushi_little_busters_lookup_diagnostics_test
+  tests/little_busters_lookup_diagnostics_test.cpp)
+target_include_directories(fushi_little_busters_lookup_diagnostics_test PRIVATE
+  include
+  hook/adapters)
+target_compile_definitions(fushi_little_busters_lookup_diagnostics_test PRIVATE
+  UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)
+add_test(NAME fushi_little_busters_lookup_diagnostics_test
+  COMMAND fushi_little_busters_lookup_diagnostics_test)
+
 add_executable(fushi_unity_text_mesh_reassembler_test
   tests/unity_text_mesh_reassembler_test.cpp)
 target_include_directories(fushi_unity_text_mesh_reassembler_test
@@ -816,19 +834,33 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   set(_UNITY_AUDIO_PROJECT
       "${CMAKE_CURRENT_SOURCE_DIR}/unity_audio_extract/Fushi.UnityAudioExtract.csproj")
   set(_UNITY_AUDIO_RUNTIME "${CMAKE_CURRENT_BINARY_DIR}/unity_audio_runtime")
-  add_custom_target(fushi_unity_audio_runtime ALL
+  # This used to be an ALL custom target.  CMake therefore invoked the
+  # PowerShell fetch check and dotnet publish on every `cmake --build`, even
+  # when every pinned runtime file was already present.  The fetch script did
+  # avoid a second download, but dotnet publish still ran and a missing cache
+  # turned an otherwise unrelated helper build into a network operation.
+  # The completion marker and required-file validation live in
+  # ensure_runtime.ps1. This avoids making CMake/MSBuild reason about
+  # third-party files whose archives intentionally preserve old timestamps.
+  set(_UNITY_AUDIO_ENSURE
+      "${CMAKE_CURRENT_SOURCE_DIR}/unity_audio_extract/ensure_runtime.ps1")
+  # Visual Studio may visit this utility target on every native build. The
+  # ensure script performs the cheap local stamp/file check first, and invokes
+  # fetch_runtime.ps1 plus dotnet publish only when the runtime is incomplete
+  # or its three real source inputs changed.
+  add_custom_target(fushi_unity_audio_runtime
     COMMAND "${POWERSHELL_EXECUTABLE}" -NoProfile -ExecutionPolicy Bypass
-      -File "${CMAKE_CURRENT_SOURCE_DIR}/unity_audio_extract/fetch_runtime.ps1"
+      -File "${_UNITY_AUDIO_ENSURE}"
       -RuntimeDir "${_UNITY_AUDIO_RUNTIME}"
-    COMMAND "${DOTNET_EXECUTABLE}" publish "${_UNITY_AUDIO_PROJECT}"
-      --configuration Release --runtime win-x64 --self-contained true
-      -p:PublishSingleFile=true -p:PublishTrimmed=false
-      --output "${_UNITY_AUDIO_RUNTIME}"
+      -ProjectFile "${_UNITY_AUDIO_PROJECT}"
+      -DotnetExecutable "${DOTNET_EXECUTABLE}"
+      -PowerShellExecutable "${POWERSHELL_EXECUTABLE}"
     DEPENDS
+      "${_UNITY_AUDIO_ENSURE}"
       "${_UNITY_AUDIO_PROJECT}"
       "${CMAKE_CURRENT_SOURCE_DIR}/unity_audio_extract/Program.cs"
       "${CMAKE_CURRENT_SOURCE_DIR}/unity_audio_extract/fetch_runtime.ps1"
-    COMMENT "构建 Unity Streaming AudioClip 资源提取运行时"
+    COMMENT "检查 Unity Streaming AudioClip 资源提取运行时"
     VERBATIM)
   add_dependencies(fushi_voice_injector fushi_unity_audio_runtime)
   add_custom_command(TARGET fushi_voice_injector POST_BUILD

@@ -66,7 +66,7 @@ bool isGalLookupProductionProviderPair(int kind, int id) {
     case 1: // runtime_layout
       return id == 1 || id == 2 || id == 6 || id == 7 || id == 8;
     case 2: // engine_exact_layout
-      return id == 3 || id == 4 || id == 5 || id == 14 || id == 15 || id == 16;
+      return id == 3 || id == 4 || id == 5 || id == 14 || id == 15 || id == 16 || id == 17;
     case 3: // positioned_text_api
       return id == 9 || id == 10;
     default:
@@ -440,10 +440,257 @@ class GalLookupAdmission {
       'GalLookupAdmission(${state.name}, sha=$executableSha256)';
 }
 
+/// Native Little Busters first-runtime diagnostics.  These events are
+/// intentionally loss-tolerant at the channel boundary: an unknown reason or
+/// a partial numeric payload must remain visible to the diagnostic controller,
+/// rather than being mistaken for a production lookup hit or silently dropped.
+@immutable
+class GalLookupDiagnostic {
+  const GalLookupDiagnostic({
+    required this.seq,
+    required this.tickMs,
+    required this.eventKind,
+    required this.reasonId,
+    required this.reasonToken,
+    required this.probeId,
+    required this.flags,
+    required this.threadId,
+    required this.processId,
+    required this.callsiteRva,
+    required this.candidateRva,
+    required this.vtableSlot,
+    required this.vptrRva,
+    required this.inputSurface,
+    required this.ownerKind,
+    required this.providerKind,
+    required this.providerId,
+    required this.hwnd,
+    required this.textSeq,
+    required this.textThreadId,
+    required this.textUtf16Hash,
+    required this.textUtf16Length,
+    required this.preTextSeq,
+    required this.preTextThreadId,
+    required this.postTextSeq,
+    required this.postTextThreadId,
+    required this.sourceStart,
+    required this.sourceLength,
+    required this.glyphIndex,
+    required this.glyphCount,
+    required this.geometryGeneration,
+    required this.glyphX,
+    required this.glyphY,
+    required this.glyphW,
+    required this.glyphH,
+    required this.clientW,
+    required this.clientH,
+    required this.designW,
+    required this.designH,
+    required this.viewportW,
+    required this.viewportH,
+    required this.argument0,
+    required this.argument1,
+    required this.result0,
+    required this.result1,
+    required this.recordIndex,
+    required this.recordCount,
+    required this.coordinateSpace,
+    required this.transformFlags,
+    required this.layerOriginX,
+    required this.layerOriginY,
+    required this.renderTargetW,
+    required this.renderTargetH,
+    required this.schemaVersion,
+    required this.sessionId,
+    required this.overflowCount,
+  });
+
+  final int seq;
+  final int tickMs;
+  final int eventKind;
+  final int reasonId;
+  final String reasonToken;
+  final int probeId;
+  final int flags;
+  final int threadId;
+  final int processId;
+  final int callsiteRva;
+  final int candidateRva;
+  final int vtableSlot;
+  final int vptrRva;
+  final int inputSurface;
+  final int ownerKind;
+  final int providerKind;
+  final int providerId;
+  final int hwnd;
+  final int textSeq;
+  final int textThreadId;
+  final int textUtf16Hash;
+  final int textUtf16Length;
+  final int preTextSeq;
+  final int preTextThreadId;
+  final int postTextSeq;
+  final int postTextThreadId;
+  final int sourceStart;
+  final int sourceLength;
+  final int glyphIndex;
+  final int glyphCount;
+  final int geometryGeneration;
+  final int glyphX;
+  final int glyphY;
+  final int glyphW;
+  final int glyphH;
+  final int clientW;
+  final int clientH;
+  final int designW;
+  final int designH;
+  final int viewportW;
+  final int viewportH;
+  final int argument0;
+  final int argument1;
+  final int result0;
+  final int result1;
+  final int recordIndex;
+  final int recordCount;
+  final int coordinateSpace;
+  final int transformFlags;
+  final int layerOriginX;
+  final int layerOriginY;
+  final int renderTargetW;
+  final int renderTargetH;
+  final int schemaVersion;
+  final int sessionId;
+  final int overflowCount;
+
+  factory GalLookupDiagnostic.synthetic(String reasonToken) =>
+      GalLookupDiagnostic(
+        seq: 0,
+        tickMs: 0,
+        eventKind: 11,
+        reasonId: 0,
+        reasonToken: reasonToken,
+        probeId: 11,
+        flags: 1,
+        threadId: 0,
+        processId: 0,
+        callsiteRva: 0,
+        candidateRva: 0,
+        vtableSlot: 0,
+        vptrRva: 0,
+        inputSurface: 0,
+        ownerKind: 0,
+        providerKind: 0,
+        providerId: 0,
+        hwnd: 0,
+        textSeq: 0,
+        textThreadId: 0,
+        textUtf16Hash: 0,
+        textUtf16Length: 0,
+        preTextSeq: 0,
+        preTextThreadId: 0,
+        postTextSeq: 0,
+        postTextThreadId: 0,
+        sourceStart: 0,
+        sourceLength: 0,
+        glyphIndex: 0,
+        glyphCount: 0,
+        geometryGeneration: 0,
+        glyphX: 0,
+        glyphY: 0,
+        glyphW: 0,
+        glyphH: 0,
+        clientW: 0,
+        clientH: 0,
+        designW: 0,
+        designH: 0,
+        viewportW: 0,
+        viewportH: 0,
+        argument0: 0,
+        argument1: 0,
+        result0: 0,
+        result1: 0,
+        recordIndex: 0,
+        recordCount: 0,
+        coordinateSpace: 0,
+        transformFlags: 0,
+        layerOriginX: 0,
+        layerOriginY: 0,
+        renderTargetW: 0,
+        renderTargetH: 0,
+        schemaVersion: 0,
+        sessionId: 0,
+        overflowCount: 0,
+      );
+
+  static GalLookupDiagnostic fromMap(Map<Object?, Object?> map) {
+    int intOf(String key) => _finiteWireInt(map[key]) ?? 0;
+    return GalLookupDiagnostic(
+      seq: intOf('seq'),
+      tickMs: intOf('tickMs'),
+      eventKind: intOf('eventKind'),
+      reasonId: intOf('reasonId'),
+      reasonToken: map['reasonToken']?.toString() ?? 'LB_REASON_UNKNOWN',
+      probeId: intOf('probeId'),
+      flags: intOf('flags'),
+      threadId: intOf('threadId'),
+      processId: intOf('processId'),
+      callsiteRva: intOf('callsiteRva'),
+      candidateRva: intOf('candidateRva'),
+      vtableSlot: intOf('vtableSlot'),
+      vptrRva: intOf('vptrRva'),
+      inputSurface: intOf('inputSurface'),
+      ownerKind: intOf('ownerKind'),
+      providerKind: intOf('providerKind'),
+      providerId: intOf('providerId'),
+      hwnd: intOf('hwnd'),
+      textSeq: intOf('textSeq'),
+      textThreadId: intOf('textThreadId'),
+      textUtf16Hash: intOf('textUtf16Hash'),
+      textUtf16Length: intOf('textUtf16Length'),
+      preTextSeq: intOf('preTextSeq'),
+      preTextThreadId: intOf('preTextThreadId'),
+      postTextSeq: intOf('postTextSeq'),
+      postTextThreadId: intOf('postTextThreadId'),
+      sourceStart: intOf('sourceStart'),
+      sourceLength: intOf('sourceLength'),
+      glyphIndex: intOf('glyphIndex'),
+      glyphCount: intOf('glyphCount'),
+      geometryGeneration: intOf('geometryGeneration'),
+      glyphX: intOf('glyphX'),
+      glyphY: intOf('glyphY'),
+      glyphW: intOf('glyphW'),
+      glyphH: intOf('glyphH'),
+      clientW: intOf('clientW'),
+      clientH: intOf('clientH'),
+      designW: intOf('designW'),
+      designH: intOf('designH'),
+      viewportW: intOf('viewportW'),
+      viewportH: intOf('viewportH'),
+      argument0: intOf('argument0'),
+      argument1: intOf('argument1'),
+      result0: intOf('result0'),
+      result1: intOf('result1'),
+      recordIndex: intOf('recordIndex'),
+      recordCount: intOf('recordCount'),
+      coordinateSpace: intOf('coordinateSpace'),
+      transformFlags: intOf('transformFlags'),
+      layerOriginX: intOf('layerOriginX'),
+      layerOriginY: intOf('layerOriginY'),
+      renderTargetW: intOf('renderTargetW'),
+      renderTargetH: intOf('renderTargetH'),
+      schemaVersion: intOf('schemaVersion'),
+      sessionId: intOf('sessionId'),
+      overflowCount: intOf('overflowCount'),
+    );
+  }
+}
+
 typedef GalLookupHitHandler = FutureOr<void> Function(GalLookupHit hit);
 typedef GalLookupInputHandler = FutureOr<void> Function(GalLookupInput input);
 typedef GalLookupAdmissionHandler =
     FutureOr<void> Function(GalLookupAdmission admission);
+typedef GalLookupDiagnosticHandler =
+    FutureOr<void> Function(GalLookupDiagnostic event);
 
 /// v19 attached-surface identity. Every attached call and event carries both
 /// epochs; callers can therefore discard delayed events after a game/window
@@ -1084,6 +1331,7 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
   static GalAttachedCalibrationCancelledHandler?
   _onAttachedCalibrationCancelled;
   static GalLookupAdmissionHandler? _onGalLookupAdmission;
+  static GalLookupDiagnosticHandler? _onGalLookupDiagnostic;
 
   static void setEventHandlers({
     GalHookTextLookupHandler? onLookupText,
@@ -1105,6 +1353,7 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
     GalAttachedCalibrationHandler? onAttachedCalibrationCommitted,
     GalAttachedCalibrationCancelledHandler? onAttachedCalibrationCancelled,
     GalLookupAdmissionHandler? onGalLookupAdmission,
+    GalLookupDiagnosticHandler? onGalLookupDiagnostic,
   }) {
     _onLookupText = onLookupText;
     _onToggleFollow = onToggleFollow;
@@ -1125,6 +1374,7 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
     _onAttachedCalibrationCommitted = onAttachedCalibrationCommitted;
     _onAttachedCalibrationCancelled = onAttachedCalibrationCancelled;
     _onGalLookupAdmission = onGalLookupAdmission;
+    _onGalLookupDiagnostic = onGalLookupDiagnostic;
     _instance.channel.setMethodCallHandler(_handleNativeCall);
   }
 
@@ -1148,6 +1398,7 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
     _onAttachedCalibrationCommitted = null;
     _onAttachedCalibrationCancelled = null;
     _onGalLookupAdmission = null;
+    _onGalLookupDiagnostic = null;
     _instance.channel.setMethodCallHandler(null);
   }
 
@@ -1213,7 +1464,25 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
       // 负责去抖/丢弃，channel 层只做解析与自洽校验。
       case 'onGalLookupHit':
         final GalLookupHit? hit = GalLookupHit.fromMap(args);
-        if (hit != null && hit.isProductionSane) {
+        if (hit == null) {
+          await _onGalLookupDiagnostic?.call(
+            GalLookupDiagnostic.synthetic('LB_DART_REJECT_OCCURRENCE'),
+          );
+        } else if (!hit.isProductionSane) {
+          final String reason = !isGalLookupProductionProviderPair(
+                hit.providerKind,
+                hit.providerId,
+              )
+              ? 'LB_DART_REJECT_PROVIDER'
+              : hit.textGeneration <= 0 || hit.geometryGeneration <= 0
+              ? 'LB_DART_REJECT_GENERATION'
+              : !hit.hasConsistentCharCount || !hit.isAddressable
+              ? 'LB_DART_REJECT_OCCURRENCE'
+              : 'LB_DART_REJECT_INPUT';
+          await _onGalLookupDiagnostic?.call(
+            GalLookupDiagnostic.synthetic(reason),
+          );
+        } else {
           await _onGalLookupHit?.call(hit);
         }
         break;
@@ -1238,6 +1507,9 @@ class GalHookTextOverlayChannel extends FloatingOverlayChannel {
       // （开关关着照样推）。不做任何过滤——"还不知道"也是必须送达的状态。
       case 'onGalLookupAdmission':
         await _onGalLookupAdmission?.call(GalLookupAdmission.fromMap(args));
+        break;
+      case 'onGalLookupDiagnostic':
+        await _onGalLookupDiagnostic?.call(GalLookupDiagnostic.fromMap(args));
         break;
       default:
         break;

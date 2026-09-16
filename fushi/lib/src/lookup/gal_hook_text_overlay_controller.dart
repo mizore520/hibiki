@@ -327,6 +327,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
       // 游戏内查词：hook 报命中 / 转发卡片内输入，两条都直通编排器，本控制器不解释。
       onGalLookupHit: _ingameLookup.handleHit,
       onGalLookupInput: _ingameLookup.handleInput,
+      onGalLookupDiagnostic: _ingameLookup.handleDiagnostic,
       // attached surface 复用同一个 MethodChannel listener；子控制器只收类型化事件，
       // 不自行 setMethodCallHandler，也不订阅第二条 session listener。
       onAttachedLookupText: _attachedText.handleLookupText,
@@ -1979,6 +1980,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
               targetHwnd: targetHwnd,
             );
       if (resolved == null) {
+        _ingameLookup.recordDiagnosticReason('LB_MINING_OCCURRENCE_REJECT');
         // BUG-1734：这里过去是**纯静默返回**——不 toast、不记录、不打日志。popup 侧收到
         // ankiConnect:false 同样什么都不做（assets/popup/popup.js 的 mine 分支只在
         // ankiConnect 为真时才有动作），于是用户点「制卡」后屏幕上零反馈，无法区分
@@ -2017,6 +2019,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
   }) async {
     final AppModel? model = _appModel;
     if (model == null) {
+      _ingameLookup.recordDiagnosticReason('LB_WORKER_REJECT_PROVIDER');
       return const <String, Object?>{'ankiConnect': false, 'noteId': null};
     }
     FushiToast.showMine(
@@ -2048,6 +2051,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
       captureLeaseFactory: captureLeaseFactory,
     );
     if (result.aborted) {
+      _ingameLookup.recordDiagnosticReason('LB_WORKER_REJECT_LAYOUT');
       // 截图已经成功后，resource-only 音频门禁也可能中止制卡。不要把所有
       // abort 都误报成“窗口截图失败”；与 texthooker 页入口保持同一分流。
       final String abortMessage = result.audioFallbackDisabled
@@ -2061,6 +2065,9 @@ class GalHookTextOverlayController extends ChangeNotifier {
       return result.toPopupReply(message: abortMessage);
     }
     final MineOutcome outcome = result.outcome!;
+    _ingameLookup.recordDiagnosticReason(
+      result.success ? 'LB_WORKER_ACCEPT' : 'LB_WORKER_REJECT_LAYOUT',
+    );
     final described = describeMineOutcome(
       outcome,
       overwrite: updateNoteId != null,

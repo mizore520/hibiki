@@ -91,6 +91,7 @@
 #include "adapters/siglus_message_capture.h"
 #include "adapters/siglus_native_message_profile.h"
 #include "adapters/siglus_native_message_capture.h"
+#include "adapters/little_busters_lookup_diagnostics.h"
 #include "adapters/siglus_legacy_message_profile.h"
 #include "adapters/siglus_legacy_message_capture.h"
 #include "adapters/siglus_legacy_resource.h"
@@ -617,6 +618,7 @@ bool SignalReady(DWORD pid, bool legacy_hibiki_ipc) {
 #include "generated/adapter_includes.inc"
 #include "adapters/little_busters_voice_adapter.inc"
 
+#include "adapters/little_busters_lookup_diagnostics.inc"
 #include "generic_input_shield.inc"
 #include "adapter_registry.inc"
 

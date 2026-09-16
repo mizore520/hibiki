@@ -26,10 +26,15 @@ set "PREPARE_ONNX=%REPO%\tool\prepare_windows_onnxruntime.ps1"
 set "PREPARE_SQLITE=%REPO%\tool\prepare_windows_sqlite3.ps1"
 set "PREPARE_TORRENT=%REPO%\tool\prepare_windows_torrent_runtime.ps1"
 set "GET_BUILD_STATE=%REPO%\tool\get_windows_build_state.ps1"
+set "GET_FLUTTER_CACHE_STATE=%REPO%\tool\get_windows_flutter_cache_state.ps1"
 set "BUILD_HELPER=%REPO%\tool\prepare_windows_gal_helper.ps1"
 set "RUNTIME_UNLOCK_CHECK=%REPO%\tool\check_windows_runtime_unlocked.ps1"
 set "EXE=%APP%\build\windows\x64\runner\Release\fushi.exe"
+set "RELEASE_BUNDLE=%APP%\build\windows\x64\runner\Release"
+set "HELPER_X64=%RELEASE_BUNDLE%\voice_hook\x64"
+set "HELPER_X86=%RELEASE_BUNDLE%\voice_hook\x86"
 set "STAMP=%APP%\build\.last_built_state"
+set "FLUTTER_CACHE_STATE=%APP%\build\.flutter_aot_state"
 set "FLUTTER_AOT_CACHE=%APP%\.dart_tool\flutter_build"
 set "FLUTTER_AOT_OUTPUT=%APP%\build\windows\app.so"
 set "FUSHI_ONNXRUNTIME_ROOT=%REPO%\.build-cache\onnxruntime\onnxruntime-directml-1.22.0"
@@ -90,6 +95,27 @@ if /i "%~1"=="clean" (
   call "%FLUTTER%" clean
   if errorlevel 1 goto :build_failed
   goto :build
+)
+
+rem A matching source stamp is not enough if a previous install was manually
+rem damaged. Rebuild instead of launching an app that cannot inject the helper.
+if exist "%EXE%" (
+  if not exist "%HELPER_X64%\fushi_voice_injector.exe" (
+    echo [BUILD] Existing Release bundle has no complete Galgame helper; rebuilding...
+    goto :build
+  )
+  if not exist "%HELPER_X64%\fushi_voice_hook.dll" (
+    echo [BUILD] Existing Release bundle has no complete Galgame helper; rebuilding...
+    goto :build
+  )
+  if not exist "%HELPER_X86%\fushi_voice_injector.exe" (
+    echo [BUILD] Existing Release bundle has no complete Galgame helper; rebuilding...
+    goto :build
+  )
+  if not exist "%HELPER_X86%\fushi_voice_hook.dll" (
+    echo [BUILD] Existing Release bundle has no complete Galgame helper; rebuilding...
+    goto :build
+  )
 )
 
 rem --- compare the last built source state --------------------------------
@@ -199,26 +225,47 @@ if not exist "%BUILD_HELPER%" (
   echo [ERROR] Galgame helper build script not found: %BUILD_HELPER%
   goto :fail
 )
-echo [5/7] Building and testing the bundled Galgame helper...
-powershell -NoProfile -ExecutionPolicy Bypass -File "%BUILD_HELPER%" -RepoRoot "%REPO%"
+echo [5/7] Building the bundled Galgame helper (production targets)...
+set "HELPER_FORCE_ARG="
+if /i "%~1"=="clean" set "HELPER_FORCE_ARG=-Force"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%BUILD_HELPER%" -RepoRoot "%REPO%" %HELPER_FORCE_ARG%
 if errorlevel 1 goto :helper_failed
 
-rem A Git merge/worktree switch can give newly checked-out Dart sources older
-rem timestamps than an existing incremental kernel cache. Flutter may then
-rem relink a fresh app.so around stale package code (for example schema v88
-rem after the source already moved to v89). Remove only the reproducible Dart
-rem AOT cache/output whenever a real source build is required. Native and
-rem downloaded dependency caches remain intact, and the exact-state fast path
-rem above still skips all compilation on subsequent double-clicks.
-if exist "%FLUTTER_AOT_CACHE%" (
-  echo [AOT] Invalidating stale Flutter AOT cache...
-  rmdir /s /q "%FLUTTER_AOT_CACHE%"
-  if exist "%FLUTTER_AOT_CACHE%" (
-    echo [ERROR] Could not remove Flutter AOT cache: %FLUTTER_AOT_CACHE%
-    goto :build_failed
-  )
+if not exist "%GET_FLUTTER_CACHE_STATE%" (
+  echo [ERROR] Flutter cache-state script not found: %GET_FLUTTER_CACHE_STATE%
+  goto :fail
 )
-if exist "%FLUTTER_AOT_OUTPUT%" del /f /q "%FLUTTER_AOT_OUTPUT%"
+set "FLUTTER_STATE="
+for /f "delims=" %%i in ('powershell -NoProfile -ExecutionPolicy Bypass -File "%GET_FLUTTER_CACHE_STATE%" -RepoRoot "%REPO%" -FlutterExecutable "%FLUTTER%" 2^>nul') do set "FLUTTER_STATE=%%i"
+if not defined FLUTTER_STATE (
+  echo [ERROR] Cannot compute the Flutter incremental-cache state.
+  goto :fail
+)
+
+rem Keep Flutter's incremental kernel/AOT cache for ordinary source edits. The
+rem old launcher deleted it on every build, forcing a full Dart relink even
+rem after a native-only change. Reset only after a branch, commit, dependency,
+rem or Flutter SDK state change, or when explicitly requested with
+rem FUSHI_FORCE_FLUTTER_AOT_RESET=1.
+set "OLD_FLUTTER_STATE="
+if exist "%FLUTTER_CACHE_STATE%" set /p OLD_FLUTTER_STATE=<"%FLUTTER_CACHE_STATE%"
+set "RESET_FLUTTER_AOT=0"
+if not defined OLD_FLUTTER_STATE set "RESET_FLUTTER_AOT=1"
+if defined OLD_FLUTTER_STATE if not "!OLD_FLUTTER_STATE!"=="!FLUTTER_STATE!" set "RESET_FLUTTER_AOT=1"
+if /i "%FUSHI_FORCE_FLUTTER_AOT_RESET%"=="1" set "RESET_FLUTTER_AOT=1"
+if "!RESET_FLUTTER_AOT!"=="1" (
+  if exist "%FLUTTER_AOT_CACHE%" (
+    echo [AOT] Resetting Flutter incremental cache after state change...
+    rmdir /s /q "%FLUTTER_AOT_CACHE%"
+    if exist "%FLUTTER_AOT_CACHE%" (
+      echo [ERROR] Could not remove Flutter AOT cache: %FLUTTER_AOT_CACHE%
+      goto :build_failed
+    )
+  )
+  if exist "%FLUTTER_AOT_OUTPUT%" del /f /q "%FLUTTER_AOT_OUTPUT%"
+) else (
+  echo [AOT] Reusing Flutter incremental cache.
+)
 
 echo [6/7] flutter build windows --release ...
 call "%FLUTTER%" build windows --release
@@ -232,6 +279,7 @@ if not exist "%EXE%" (
   echo [ERROR] Build completed but executable was not found: %EXE%
   goto :fail
 )
+>"%FLUTTER_CACHE_STATE%" echo !FLUTTER_STATE!
 rem Bootstrap may update generated dependency state but not source inputs. Re-read
 rem the fingerprint after the successful build so the stamp names exactly what
 rem is in the bundle.

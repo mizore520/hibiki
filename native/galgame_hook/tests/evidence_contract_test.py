@@ -415,14 +415,41 @@ class EvidenceContractTest(unittest.TestCase):
         constants = load_diag_constants(ROOT / "include" / "voice_hook_ipc.h")
         self.assertIn("xaudiodiag2", constants)
 
+        # The v1 reserved_hook_diagnostics word already has two documented
+        # legacy aliases: its top two bits are shared by the title-scoped
+        # Little Busters resource probe and the generic XAudio ADPCM probe.
+        # Keep those aliases explicit, while still rejecting every accidental
+        # duplicate (especially a newly added bit folded into the wrong word).
+        allowed_aliases = {
+            frozenset(
+                {
+                    "kDiagLittleBustersVoicePakHooksReady",
+                    "kDiagXAudioAdpcmObserved",
+                }
+            ),
+            frozenset(
+                {
+                    "kDiagLittleBustersVoicePakMemberObserved",
+                    "kDiagXAudioAdpcmPcmCaptured",
+                }
+            ),
+        }
+        observed_aliases: set[frozenset[str]] = set()
         for field, entries in constants.items():
-            masks = [mask for _, mask in entries]
-            duplicates = sorted({f"0x{m:08x}" for m in masks if masks.count(m) > 1})
-            self.assertEqual(
-                [],
-                duplicates,
-                f"{field} 里出现重复掩码 {duplicates}——多半是相邻诊断字被折进了同一段",
-            )
+            by_mask: dict[int, set[str]] = {}
+            for name, mask in entries:
+                by_mask.setdefault(mask, set()).add(name)
+            for mask, names in by_mask.items():
+                if len(names) <= 1:
+                    continue
+                alias = frozenset(names)
+                self.assertIn(
+                    alias,
+                    allowed_aliases,
+                    f"{field} 里出现未登记的重复掩码 0x{mask:08x}: {sorted(names)}",
+                )
+                observed_aliases.add(alias)
+        self.assertEqual(allowed_aliases, observed_aliases)
 
         first_word = [name for name, _ in constants["xaudiodiag"]]
         second_word = [name for name, _ in constants["xaudiodiag2"]]

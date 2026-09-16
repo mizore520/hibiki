@@ -29,8 +29,8 @@ void Check(bool condition, const char* message) {
 
 void TestV16AndV17TailAbiAndDefaultDeny() {
   SharedHeader header{};
-  Check(fushi_voice_hook::kSharedVersion == 24,
-        "shared ABI must be v24（Siglus text ownership 尾追加）");
+  Check(fushi_voice_hook::kSharedVersion == 25,
+        "shared ABI must be v25（Little Busters diagnostic ring 尾追加）");
   Check(offsetof(SharedHeader, native_loopback_request_seq) ==
             offsetof(SharedHeader, native_loopback_requested) + 4,
         "request_seq must follow requested");
@@ -73,11 +73,24 @@ void TestV16AndV17TailAbiAndDefaultDeny() {
   Check(offsetof(SharedHeader, siglus_text_owner) ==
             offsetof(SharedHeader, adapter_report_seq) + sizeof(uint32_t),
         "v24 ownership must follow the v23 reports without changing old fields");
-  Check(sizeof(SharedHeader) ==
-            ((offsetof(SharedHeader, siglus_text_owner) +
+  Check(offsetof(SharedHeader, lookup_diagnostics_enabled) ==
+            offsetof(SharedHeader, siglus_text_owner) + sizeof(uint32_t),
+        "v25 diagnostics must append immediately after v24 ownership");
+  Check(offsetof(SharedHeader, lookup_diagnostic_schema_version) ==
+            offsetof(SharedHeader, lookup_diagnostics_enabled) +
+                sizeof(uint32_t),
+        "v25 schema must follow the diagnostic enable word");
+  Check(offsetof(SharedHeader, lookup_diagnostic_session_id) ==
+            ((offsetof(SharedHeader, lookup_diagnostic_schema_version) +
               sizeof(uint32_t) + 7u) /
-             8u) * 8u,
-        "v24 ownership must be the exact SharedHeader tail (only 8-align padding)");
+             8u) *
+                8u,
+        "v25 session id must retain 8-byte alignment");
+  Check(sizeof(SharedHeader) ==
+            offsetof(SharedHeader, lookup_diagnostic_events) +
+                sizeof(fushi_voice_hook::LookupDiagnosticEvent) *
+                    fushi_voice_hook::kLookupDiagnosticEventCount,
+        "v25 diagnostic ring must be the exact SharedHeader tail");
   Check(fushi_voice_hook::AtomicLoadShared32(
             &header.native_loopback_requested) ==
             fushi_voice_hook::kNativeLoopbackDeny,

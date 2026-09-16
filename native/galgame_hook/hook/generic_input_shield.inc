@@ -158,6 +158,11 @@ SHORT WINAPI Detour_GenericGetKeyState(int virtual_key) {
   SHORT state = original(virtual_key);
   if (virtual_key != VK_LBUTTON)
     return state;
+  ObserveLittleBustersInputSurface(
+      fushi_voice_hook::kLookupShieldSurfaceKeyState,
+      fushi_voice_hook::kLbInputKeyState,
+      static_cast<uintptr_t>(static_cast<uint16_t>(state)),
+      reinterpret_cast<uintptr_t>(_ReturnAddress()));
   MarkGenericShieldObserved(fushi_voice_hook::kLookupShieldSurfaceKeyState);
   g_generic_key_observed_coverage.fetch_or(kGenericKeyCoverageGetKeyState,
                                            std::memory_order_relaxed);
@@ -179,6 +184,17 @@ SHORT WINAPI Detour_GenericGetAsyncKeyState(int virtual_key) {
   SHORT state = original(virtual_key);
   if (virtual_key != VK_LBUTTON)
     return state;
+  const uintptr_t return_address = reinterpret_cast<uintptr_t>(_ReturnAddress());
+  ObserveLittleBustersInputSurface(
+      fushi_voice_hook::kLookupShieldSurfaceKeyState,
+      fushi_voice_hook::kLbInputAsync,
+      static_cast<uintptr_t>(static_cast<uint16_t>(state)),
+      return_address);
+  // Little Busters advances from its exact GetAsyncKeyState poller rather
+  // than from a reliable WM_LBUTTONDOWN path.  Let the exact adapter arm the
+  // shared hit/ownership transaction before the generic request filter runs;
+  // all other callers remain on the unchanged generic path.
+  HandleLittleBustersLookupAsyncKeyState(&state, return_address);
   MarkGenericShieldObserved(fushi_voice_hook::kLookupShieldSurfaceKeyState);
   g_generic_key_observed_coverage.fetch_or(kGenericKeyCoverageGetAsyncKeyState,
                                            std::memory_order_relaxed);
@@ -204,6 +220,11 @@ BOOL WINAPI Detour_GenericGetKeyboardState(PBYTE keys) {
                                            std::memory_order_relaxed);
   if (result == FALSE || keys == nullptr)
     return result;
+  ObserveLittleBustersInputSurface(
+      fushi_voice_hook::kLookupShieldSurfaceKeyState,
+      fushi_voice_hook::kLbInputKeyState,
+      (keys[VK_LBUTTON] & 0x80u) != 0u ? 0x8000u : 0u,
+      reinterpret_cast<uintptr_t>(_ReturnAddress()));
   const auto request = fushi_voice_hook::ReadLookupShieldRequest(g_header);
   const bool active = GenericShieldRequestActiveForSurface(
       request, fushi_voice_hook::kLookupShieldSurfaceKeyState);
@@ -276,6 +297,11 @@ UINT WINAPI Detour_GenericGetRawInputData(HRAWINPUT raw_handle, UINT command,
     return result;
   }
   MarkGenericShieldObserved(fushi_voice_hook::kLookupShieldSurfaceRawInputData);
+  ObserveLittleBustersInputSurface(
+      fushi_voice_hook::kLookupShieldSurfaceRawInputData,
+      fushi_voice_hook::kLbInputRaw,
+      static_cast<uintptr_t>(raw->data.mouse.usButtonFlags),
+      reinterpret_cast<uintptr_t>(_ReturnAddress()));
   const auto request = fushi_voice_hook::ReadLookupShieldRequest(g_header);
   const bool active = GenericShieldRequestActiveForSurface(
       request, fushi_voice_hook::kLookupShieldSurfaceRawInputData);
@@ -308,9 +334,11 @@ UINT WINAPI Detour_GenericGetRawInputBuffer(PRAWINPUT data, PUINT size,
   AcquireSRWLockExclusive(&g_generic_shield_state_lock);
   PRAWINPUT current = data;
   bool mouse_observed = false;
+  uint16_t observed_button_flags = 0u;
   for (UINT i = 0; i < result; ++i) {
     if (current->header.dwType == RIM_TYPEMOUSE) {
       mouse_observed = true;
+      observed_button_flags |= current->data.mouse.usButtonFlags;
       fushi_voice_hook::FilterRawInputLeftButtonFlags(
           active, &current->data.mouse.usButtonFlags,
           &g_generic_raw_input_buffer_latch);
@@ -330,6 +358,11 @@ UINT WINAPI Detour_GenericGetRawInputBuffer(PRAWINPUT data, PUINT size,
   if (mouse_observed) {
     MarkGenericShieldObserved(
         fushi_voice_hook::kLookupShieldSurfaceRawInputBuffer);
+    ObserveLittleBustersInputSurface(
+        fushi_voice_hook::kLookupShieldSurfaceRawInputBuffer,
+        fushi_voice_hook::kLbInputRaw,
+        static_cast<uintptr_t>(observed_button_flags),
+        reinterpret_cast<uintptr_t>(_ReturnAddress()));
   }
   return result;
 }
@@ -459,7 +492,9 @@ HRESULT STDMETHODCALLTYPE Detour_GenericDirectInputGetDeviceState(
     return result;
   }
   record->immediate_observed = true;
+  uint8_t observed_button = 0u;
   __try {
+    if (bytes >= 13u) observed_button = static_cast<uint8_t *>(state)[12];
     fushi_voice_hook::FilterDirectInputImmediateLeftButton(
         active, static_cast<uint8_t *>(state), bytes, &record->immediate_latch);
   } __except (EXCEPTION_EXECUTE_HANDLER) {
@@ -468,6 +503,13 @@ HRESULT STDMETHODCALLTYPE Detour_GenericDirectInputGetDeviceState(
         std::memory_order_relaxed);
   }
   ReleaseSRWLockExclusive(&g_generic_shield_state_lock);
+  if (bytes >= 13u) {
+    ObserveLittleBustersInputSurface(
+        fushi_voice_hook::kLookupShieldSurfaceDirectInputImmediate,
+        fushi_voice_hook::kLbInputDi,
+        static_cast<uintptr_t>(observed_button),
+        reinterpret_cast<uintptr_t>(_ReturnAddress()));
+  }
   return result;
 }
 
@@ -508,6 +550,8 @@ HRESULT STDMETHODCALLTYPE Detour_GenericDirectInputGetDeviceData(
   }
   record->buffered_observed = true;
   const bool peek = (flags & DIGDD_PEEK) != 0;
+  uint32_t observed_button_data = 0u;
+  bool observed_left_button = false;
   __try {
     const size_t count = static_cast<size_t>(*event_count);
     size_t write = 0;
@@ -520,6 +564,10 @@ HRESULT STDMETHODCALLTYPE Detour_GenericDirectInputGetDeviceData(
       memcpy(&data, source + sizeof(DWORD), sizeof(data));
       const bool left = offset == DIMOFS_BUTTON0;
       const bool down = left && (data & 0x80u) != 0;
+      if (left) {
+        observed_left_button = true;
+        observed_button_data = data;
+      }
       if (active && left)
         record->buffered_latch.owned = true;
       const bool suppress = left && (active || record->buffered_latch.owned);
@@ -549,6 +597,13 @@ HRESULT STDMETHODCALLTYPE Detour_GenericDirectInputGetDeviceData(
         std::memory_order_relaxed);
   }
   ReleaseSRWLockExclusive(&g_generic_shield_state_lock);
+  if (observed_left_button) {
+    ObserveLittleBustersInputSurface(
+        fushi_voice_hook::kLookupShieldSurfaceDirectInputBuffered,
+        fushi_voice_hook::kLbInputDi,
+        static_cast<uintptr_t>(observed_button_data),
+        reinterpret_cast<uintptr_t>(_ReturnAddress()));
+  }
   return result;
 }
 

@@ -89,6 +89,8 @@ inline constexpr LookupGeometryProviderIdentity
          kLookupGeometryProviderIdSmashFzmedia},
         {kLookupGeometryProviderEngineExactLayout,
          kLookupGeometryProviderIdCmvs},
+        {kLookupGeometryProviderEngineExactLayout,
+         kLookupGeometryProviderIdLittleBusters},
         {kLookupGeometryProviderPositionedTextApi,
          kLookupGeometryProviderIdGdiPositioned},
         {kLookupGeometryProviderPositionedTextApi,
@@ -134,6 +136,8 @@ inline constexpr LookupGeometryProviderIdentity
          kLookupGeometryProviderIdSmashFzmedia},
         {kLookupGeometryProviderEngineExactLayout,
          kLookupGeometryProviderIdSiglus},
+        {kLookupGeometryProviderEngineExactLayout,
+         kLookupGeometryProviderIdLittleBusters},
 };
 
 inline constexpr bool IsLookupGeometryNativeInputGatedProvider(uint32_t kind,
@@ -205,11 +209,19 @@ class GeometryProviderRegistry {
     if (provider_index < 0 ||
         provider_kind == kLookupGeometryProviderAttachedCalibrated ||
         !IsHeaderSane(header, true)) {
+      RecordLookupDiagnosticReason(
+          header, kLookupDiagnosticEventProvider,
+          kLookupDiagnosticProbeP7Admission, kLbProviderOfferMiss,
+          kLookupDiagnosticFlagFailure, provider_kind, provider_id);
       return false;
     }
 
     AcquireSRWLockExclusive(&lock_);
     if (AtomicLoadShared32(&header->lookup_enabled) == 0) {
+      RecordLookupDiagnosticReason(
+          header, kLookupDiagnosticEventProvider,
+          kLookupDiagnosticProbeP7Admission, kLbAdmissionReject,
+          kLookupDiagnosticFlagFailure, provider_kind, provider_id);
       ReleaseSRWLockExclusive(&lock_);
       return false;
     }
@@ -227,6 +239,10 @@ class GeometryProviderRegistry {
     }
     ReconcileLocked(header);
     ReleaseSRWLockExclusive(&lock_);
+    RecordLookupDiagnosticReason(
+        header, kLookupDiagnosticEventProvider,
+        kLookupDiagnosticProbeP7Admission, kLbProviderOfferReady, 0u,
+        provider_kind, provider_id);
     return true;
   }
 
@@ -347,12 +363,20 @@ class GeometryProviderRegistry {
     if (!IsLookupGeometryNativeInputGatedProvider(provider_kind,
                                                   provider_id) ||
         !IsHeaderSane(header, true)) {
+      RecordLookupDiagnosticReason(
+          const_cast<SharedHeader*>(header), kLookupDiagnosticEventProvider,
+          kLookupDiagnosticProbeP7Admission, kLbNativeDeny,
+          kLookupDiagnosticFlagFailure, provider_kind, provider_id);
       return false;
     }
 
     uint32_t admission_seq = 0;
     if (!NativeInputAdmissionApplied(header, &admission_seq) ||
         !TryAcquireSRWLockShared(&lock_)) {
+      RecordLookupDiagnosticReason(
+          const_cast<SharedHeader*>(header), kLookupDiagnosticEventProvider,
+          kLookupDiagnosticProbeP7Admission, kLbNativeDeny,
+          kLookupDiagnosticFlagFailure, provider_kind, provider_id);
       return false;
     }
     const int provider_index = LookupGeometryProductionProviderIndex(
@@ -365,26 +389,59 @@ class GeometryProviderRegistry {
          (active_status_ == kLookupGeometryStatusActive &&
           text_generation_ != 0 && geometry_generation_ != 0));
     ReleaseSRWLockShared(&lock_);
-    if (!active) return false;
+    if (!active) {
+      RecordLookupDiagnosticReason(
+          const_cast<SharedHeader*>(header), kLookupDiagnosticEventProvider,
+          kLookupDiagnosticProbeP7Admission, kLbNativeDeny,
+          kLookupDiagnosticFlagFailure, provider_kind, provider_id);
+      return false;
+    }
 
     // Close the host-disable race across the registry snapshot.  A changed or
     // writer-held request, or an ack for any other generation, fails closed.
     uint32_t confirmed_seq = 0;
-    return NativeInputAdmissionApplied(header, &confirmed_seq) &&
-           confirmed_seq == admission_seq;
+    const bool allowed = NativeInputAdmissionApplied(header, &confirmed_seq) &&
+                         confirmed_seq == admission_seq;
+    RecordLookupDiagnosticReason(
+        const_cast<SharedHeader*>(header), kLookupDiagnosticEventProvider,
+        kLookupDiagnosticProbeP7Admission,
+        allowed ? kLbNativeAllowed : kLbNativeDeny,
+        allowed ? 0u : kLookupDiagnosticFlagFailure, provider_kind,
+        provider_id);
+    return allowed;
   }
 
   bool PublishHit(SharedHeader* header,
                   const LookupGeometryHitPublication& publication,
                   uint64_t* published_seq = nullptr) {
     if (published_seq != nullptr) *published_seq = 0;
-    if (!IsPublicationSane(header, publication)) return false;
+    RecordLookupDiagnosticReason(
+        header, kLookupDiagnosticEventPipeline,
+        kLookupDiagnosticProbeP11Pipeline, kLbPublishAttempt,
+        kLookupDiagnosticFlagPre, publication.provider_kind,
+        publication.provider_id);
+    if (!IsPublicationSane(header, publication)) {
+      RecordLookupDiagnosticReason(
+          header, kLookupDiagnosticEventPipeline,
+          kLookupDiagnosticProbeP11Pipeline, kLbPublishRejectInvalid,
+          kLookupDiagnosticFlagFailure, publication.provider_kind,
+          publication.provider_id);
+      return false;
+    }
 
     AcquireSRWLockExclusive(&lock_);
     const int provider_index = LookupGeometryProductionProviderIndex(
         publication.provider_kind, publication.provider_id);
     if (provider_index < 0 || !ready_offers_[provider_index] ||
         AtomicLoadShared32(&header->lookup_enabled) == 0) {
+      RecordLookupDiagnosticReason(
+          header, kLookupDiagnosticEventProvider,
+          kLookupDiagnosticProbeP7Admission,
+          AtomicLoadShared32(&header->lookup_enabled) == 0
+              ? kLbPublishRejectAdmission
+              : kLbPublishRejectProvider,
+          kLookupDiagnosticFlagFailure, publication.provider_kind,
+          publication.provider_id);
       ReleaseSRWLockExclusive(&lock_);
       return false;
     }
@@ -400,12 +457,27 @@ class GeometryProviderRegistry {
         !native_input_allowed ||
         publication.text_generation < text_generation_ ||
         publication.geometry_generation < geometry_generation_) {
+      RecordLookupDiagnosticReason(
+          header, kLookupDiagnosticEventPipeline,
+          kLookupDiagnosticProbeP11Pipeline,
+          (!native_input_allowed || active_retire_pending_ ||
+           publication.text_generation < text_generation_ ||
+           publication.geometry_generation < geometry_generation_)
+              ? kLbPublishRejectStale
+              : kLbPublishRejectProvider,
+          kLookupDiagnosticFlagFailure, publication.provider_kind,
+          publication.provider_id);
       ReleaseSRWLockExclusive(&lock_);
       return false;
     }
 
     LookupHitSlot* slot = LookupHitOf(header);
     if (slot == nullptr) {
+      RecordLookupDiagnosticReason(
+          header, kLookupDiagnosticEventPipeline,
+          kLookupDiagnosticProbeP11Pipeline, kLbPublishRejectSlot,
+          kLookupDiagnosticFlagFailure, publication.provider_kind,
+          publication.provider_id);
       ReleaseSRWLockExclusive(&lock_);
       return false;
     }
@@ -452,6 +524,10 @@ class GeometryProviderRegistry {
                      kLookupDiagGeometryObserved | kLookupDiagHitSubmitted);
     if (published_seq != nullptr) *published_seq = next_hit_seq_;
     ReleaseSRWLockExclusive(&lock_);
+    RecordLookupDiagnosticReason(
+        header, kLookupDiagnosticEventPipeline,
+        kLookupDiagnosticProbeP11Pipeline, kLbPublishAccept, 0u,
+        publication.provider_kind, publication.provider_id);
     return true;
   }
 

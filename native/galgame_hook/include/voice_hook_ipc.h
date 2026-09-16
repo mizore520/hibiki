@@ -135,9 +135,9 @@ constexpr uint32_t kSharedMagic = 0x31485648;  // 'H''V''H''1'
 //     读数看着正常，说的却是另一个 adapter。
 //     与 v22 同理，布局变了就必须升版（两侧都用 `sizeof(SharedHeader)` 现算 ring /
 //     region 基址，新旧混装会整体错位而版本门本会放行）。
-// v24 appends the injected Siglus text ownership decision. DLL Ready is not
-// permission for the injector to race native text installation with Luna.
-constexpr uint32_t kSharedVersion = 24;
+// v25 appends a bounded, numeric-only Little Busters lookup diagnostic ring.
+// It is opt-in and does not change the meaning of existing lookup records.
+constexpr uint32_t kSharedVersion = 25;
 
 enum class SiglusTextOwner : uint32_t {
   kPending = 0,
@@ -848,6 +848,8 @@ constexpr uint32_t kLookupGeometryProviderIdHunexGge = 14u;
 // smash/fzmedia KAG text-layer exact layout provider (append-only id).
 constexpr uint32_t kLookupGeometryProviderIdSmashFzmedia = 15u;
 constexpr uint32_t kLookupGeometryProviderIdCmvs = 16u;
+// Little Busters/Luca cText exact layout provider (append-only id).
+constexpr uint32_t kLookupGeometryProviderIdLittleBusters = 17u;
 
 constexpr uint32_t kLookupGeometryStatusUnavailable = 0u;
 constexpr uint32_t kLookupGeometryStatusReady = 1u;
@@ -1147,6 +1149,473 @@ struct AdapterReportSlot {
 static_assert(sizeof(AdapterReportSlot) == kAdapterReportIdChars + 8u,
               "AdapterReportSlot must stay tightly packed");
 
+// ── v25 Little Busters lookup diagnostics ─────────────────────────────────
+// This is a numeric-only evidence channel, not a production lookup channel.
+// It is intentionally fixed-size so a renderer/input hook never allocates or
+// formats a string on the game's hot path.  The host may decode the reason
+// token from the stable enum below after reading the event.
+// Diagnostic schema v3: semantic probes carry explicit pre/post occurrence
+// identities, and concrete hydrated-parser/layout/input observations live in
+// the same bounded ring.  The shared header version is kept in lockstep with
+// the event layout so an older reader cannot reinterpret appended fields.
+constexpr uint32_t kLookupDiagnosticSchemaVersion = 3u;
+constexpr uint32_t kLookupDiagnosticEventCount = 128u;
+
+enum LookupDiagnosticEventKind : uint32_t {
+  kLookupDiagnosticEventIdentity = 1u,
+  kLookupDiagnosticEventOccurrence = 2u,
+  kLookupDiagnosticEventMethod = 3u,
+  kLookupDiagnosticEventLayout = 4u,
+  kLookupDiagnosticEventMapping = 5u,
+  kLookupDiagnosticEventTransform = 6u,
+  kLookupDiagnosticEventProvider = 7u,
+  kLookupDiagnosticEventInput = 8u,
+  kLookupDiagnosticEventSemantic = 9u,
+  kLookupDiagnosticEventOwnership = 10u,
+  kLookupDiagnosticEventPipeline = 11u,
+  kLookupDiagnosticEventCounter = 12u,
+};
+
+enum LookupDiagnosticProbe : uint32_t {
+  kLookupDiagnosticProbeP0Identity = 0u,
+  kLookupDiagnosticProbeP1Occurrence = 1u,
+  kLookupDiagnosticProbeP2Vtable = 2u,
+  kLookupDiagnosticProbeP3Renderer = 3u,
+  kLookupDiagnosticProbeP4Layout = 4u,
+  kLookupDiagnosticProbeP5Mapping = 5u,
+  kLookupDiagnosticProbeP6Transform = 6u,
+  kLookupDiagnosticProbeP7Admission = 7u,
+  kLookupDiagnosticProbeP8Input = 8u,
+  kLookupDiagnosticProbeP9Semantic = 9u,
+  kLookupDiagnosticProbeP10Ownership = 10u,
+  kLookupDiagnosticProbeP11Pipeline = 11u,
+};
+
+// Keep these IDs append-only.  Dart, the ring probe, and offline reports use
+// the token strings as the human-readable contract; numbers are the compact
+// cross-process representation.
+enum LookupDiagnosticReason : uint32_t {
+  kLbReasonNone = 0u,
+  kLbIdMatch = 1u,
+  kLbIdMismatch = 2u,
+  kLbOccBridgeOk = 3u,
+  kLbOccBridgeMiss = 4u,
+  kLbOccStaleSeq = 5u,
+  kLbVtableHydrated = 6u,
+  kLbVtableNotHydrated = 7u,
+  kLbMethodCall = 8u,
+  kLbMethodNoCall = 9u,
+  kLbGlyphCaptureNative = 10u,
+  kLbGlyphCaptureNone = 11u,
+  kLbDrawOnlyNoSource = 12u,
+  kLbTextureBlitOnly = 13u,
+  kLbLayoutBegin = 14u,
+  kLbLayoutUpdate = 15u,
+  kLbLayoutSealed = 16u,
+  kLbLayoutPartial = 17u,
+  kLbLayoutInvalidated = 18u,
+  kLbMapOk = 19u,
+  kLbMapGap = 20u,
+  kLbMapUtf16Split = 21u,
+  kLbMapMarkupUnknown = 22u,
+  kLbXformClientCaptured = 23u,
+  kLbXformSpaceUnknown = 24u,
+  kLbXformViewportMissing = 25u,
+  kLbXformRoundtripFail = 26u,
+  kLbProviderOfferReady = 27u,
+  kLbProviderOfferMiss = 28u,
+  kLbAdmissionOk = 29u,
+  kLbAdmissionReject = 30u,
+  kLbNativeAllowed = 31u,
+  kLbNativeDeny = 32u,
+  kLbInputWndproc = 33u,
+  kLbInputAsync = 34u,
+  kLbInputKeyState = 35u,
+  kLbInputRaw = 36u,
+  kLbInputDi = 37u,
+  kLbInputPrivate = 38u,
+  kLbSemanticCandidate = 39u,
+  kLbSemanticNotSeen = 40u,
+  kLbAdvanceBeforeLookup = 41u,
+  kLbShieldReady = 42u,
+  kLbShieldNotReady = 43u,
+  kLbDownOwnerNative = 44u,
+  kLbDownOwnerAttached = 45u,
+  kLbDownOwnerPopup = 46u,
+  kLbDownOwnerDismiss = 47u,
+  kLbDownOwnerNone = 48u,
+  kLbDownPass = 49u,
+  kLbUpOwned = 50u,
+  kLbTailOpen = 51u,
+  kLbTailClosed = 52u,
+  kLbPublishAttempt = 53u,
+  kLbPublishAccept = 54u,
+  kLbPublishRejectInvalid = 55u,
+  kLbPublishRejectProvider = 56u,
+  kLbPublishRejectAdmission = 57u,
+  kLbPublishRejectStale = 58u,
+  kLbPublishRejectSlot = 59u,
+  kLbIpcReceived = 60u,
+  kLbIpcNotReceived = 61u,
+  kLbDartAccept = 62u,
+  kLbDartRejectProvider = 63u,
+  kLbDartRejectGeneration = 64u,
+  kLbDartRejectOccurrence = 65u,
+  kLbDartRejectInput = 66u,
+  kLbWorkerAccept = 67u,
+  kLbWorkerRejectProvider = 68u,
+  kLbWorkerRejectOccurrence = 69u,
+  kLbWorkerRejectLayout = 70u,
+  kLbMiningOccurrenceReject = 71u,
+  kLbPopupVisible = 72u,
+  kLbPopupReject = 73u,
+  kLbPopupOutsideConsumed = 74u,
+  kLbShieldTailOwned = 75u,
+  kLbInputUser32 = 76u,
+  kLbParserCalled = 77u,
+  kLbParserSourceCaptured = 78u,
+  kLbParserHandoffMiss = 79u,
+  kLbParserHandoffRecord = 80u,
+  kLbRecordCaptured = 81u,
+  kLbRecordMiss = 82u,
+  kLbDrawCaptured = 83u,
+  kLbDrawMiss = 84u,
+  kLbHitTestCalled = 85u,
+  kLbHitTestMiss = 86u,
+  kLbHitTestOpaqueKey = 87u,
+  kLbMapAmbiguous = 88u,
+  kLbMapWrapObserved = 89u,
+  kLbMapSpaceObserved = 90u,
+  kLbMapPunctuationObserved = 91u,
+  kLbMapRubyObserved = 92u,
+  kLbMapGlossaryObserved = 93u,
+  kLbMapControlObserved = 94u,
+  kLbMapUtf16PairObserved = 95u,
+  kLbLayoutNotSealed = 96u,
+  kLbGeometryStale = 97u,
+  kLbXformHwndMissing = 98u,
+  kLbXformEngineMissing = 99u,
+  kLbXformLayerMissing = 100u,
+  kLbXformDesignMissing = 101u,
+  kLbXformClientMissing = 102u,
+  kLbXformProjectionMissing = 103u,
+  kLbXformRoundtripOk = 104u,
+  kLbXformEngineState = 105u,
+  kLbInputPoll = 106u,
+  kLbPhysicalLeftEdgeMiss = 107u,
+  kLbSelector7NotQueried = 108u,
+  kLbSelector7False = 109u,
+  kLbSelector7True = 110u,
+  kLbF70A50NotCalled = 111u,
+  kLbF70A50Called = 112u,
+  kLbScriptStateChanged = 113u,
+  kLbScriptStateNoOccurrence = 114u,
+  kLbOccurrenceAfterSubmit = 115u,
+  kLbSemanticHostCalled = 116u,
+  kLbSemanticLifecycleCalled = 117u,
+  kLbProviderNotReal = 118u,
+  kLbNativePermissionSnapshot = 119u,
+  kLbDownOwnerUnproven = 120u,
+  kLbD3d11FallbackUnobserved = 121u,
+  kLbMethodHooked = 122u,
+  kLbMethodHookUnavailable = 123u,
+  kLbDartRejectUnknown = 124u,
+  kLbWorkerRejectUnknown = 125u,
+  kLbMiningOccurrenceAccept = 126u,
+  kLbPopupOutsidePass = 127u,
+  kLbParserSourceMissing = 128u,
+  kLbMapAnnotationObserved = 129u,
+  kLbParserOccurrenceSourceMismatch = 130u,
+  kLbXformViewportUnproven = 131u,
+  kLbXformRenderTargetMissing = 132u,
+  // v25/schema3 append-only evidence reasons.  These IDs describe the
+  // post-call and state-classification probes added for the first hydrated
+  // LB runtime; they do not change the event ABI.
+  kLbParserHandoffPost = 133u,
+  kLbProducerRecordObserved = 134u,
+  kLbProducerHandoffNoRecord = 135u,
+  kLbProducerHandoffObserverMissed = 136u,
+  kLbRecordSourceSpanUnproven = 137u,
+  kLbLayoutPostcall = 138u,
+  kLbLayoutObserverEarly = 139u,
+  kLbRenderCommandCaptured = 140u,
+  kLbRenderCommandRaw = 141u,
+  kLbRenderCommandLineageUnproven = 142u,
+  kLbTextureBlitUnobserved = 143u,
+  kLbXformLayerStateRaw = 144u,
+  kLbXformViewportUnobserved = 145u,
+  kLbXformRenderTargetUnobserved = 146u,
+  kLbXformProjectionUnobserved = 147u,
+  kLbWndprocHwndUnavailable = 148u,
+  kLbWndprocTargetBound = 149u,
+  kLbWndprocTargetUnbound = 150u,
+  kLbWndprocSubclassInstallFailed = 151u,
+  kLbWndprocSubclassActive = 152u,
+  kLbProducerHandoffNotObserved = 153u,
+};
+
+inline const char* LookupDiagnosticReasonToken(uint32_t reason) {
+  switch (reason) {
+    case kLbIdMatch: return "LB_ID_MATCH";
+    case kLbIdMismatch: return "LB_ID_MISMATCH";
+    case kLbOccBridgeOk: return "LB_OCC_BRIDGE_OK";
+    case kLbOccBridgeMiss: return "LB_OCC_BRIDGE_MISS";
+    case kLbOccStaleSeq: return "LB_OCC_STALE_SEQ";
+    case kLbVtableHydrated: return "LB_VTABLE_HYDRATED";
+    case kLbVtableNotHydrated: return "LB_VTABLE_NOT_HYDRATED";
+    case kLbMethodCall: return "LB_METHOD_CALL";
+    case kLbMethodNoCall: return "LB_METHOD_NO_CALL";
+    case kLbGlyphCaptureNative: return "LB_GLYPH_CAPTURE_NATIVE";
+    case kLbGlyphCaptureNone: return "LB_GLYPH_CAPTURE_NONE";
+    case kLbDrawOnlyNoSource: return "LB_DRAW_ONLY_NO_SOURCE";
+    case kLbTextureBlitOnly: return "LB_TEXTURE_BLIT_ONLY";
+    case kLbLayoutBegin: return "LB_LAYOUT_BEGIN";
+    case kLbLayoutUpdate: return "LB_LAYOUT_UPDATE";
+    case kLbLayoutSealed: return "LB_LAYOUT_SEALED";
+    case kLbLayoutPartial: return "LB_LAYOUT_PARTIAL";
+    case kLbLayoutInvalidated: return "LB_LAYOUT_INVALIDATED";
+    case kLbMapOk: return "LB_MAP_OK";
+    case kLbMapGap: return "LB_MAP_GAP";
+    case kLbMapUtf16Split: return "LB_MAP_UTF16_SPLIT";
+    case kLbMapMarkupUnknown: return "LB_MAP_MARKUP_UNKNOWN";
+    case kLbXformClientCaptured: return "LB_XFORM_CLIENT_CAPTURED";
+    case kLbXformSpaceUnknown: return "LB_XFORM_SPACE_UNKNOWN";
+    case kLbXformViewportMissing: return "LB_XFORM_VIEWPORT_MISSING";
+    case kLbXformRoundtripFail: return "LB_XFORM_ROUNDTRIP_FAIL";
+    case kLbProviderOfferReady: return "LB_PROVIDER_OFFER_READY";
+    case kLbProviderOfferMiss: return "LB_PROVIDER_OFFER_MISS";
+    case kLbAdmissionOk: return "LB_ADMISSION_OK";
+    case kLbAdmissionReject: return "LB_ADMISSION_REJECT";
+    case kLbNativeAllowed: return "LB_NATIVE_ALLOWED";
+    case kLbNativeDeny: return "LB_NATIVE_DENY";
+    case kLbInputWndproc: return "LB_INPUT_WNDPROC";
+    case kLbInputAsync: return "LB_INPUT_ASYNC";
+    case kLbInputKeyState: return "LB_INPUT_KEYSTATE";
+    case kLbInputRaw: return "LB_INPUT_RAW";
+    case kLbInputDi: return "LB_INPUT_DI";
+    case kLbInputPrivate: return "LB_INPUT_PRIVATE";
+    case kLbSemanticCandidate: return "LB_SEMANTIC_CANDIDATE";
+    case kLbSemanticNotSeen: return "LB_SEMANTIC_NOT_SEEN";
+    case kLbAdvanceBeforeLookup: return "LB_ADVANCE_BEFORE_LOOKUP";
+    case kLbShieldReady: return "LB_SHIELD_READY";
+    case kLbShieldNotReady: return "LB_SHIELD_NOT_READY";
+    case kLbDownOwnerNative: return "LB_DOWN_OWNER_NATIVE";
+    case kLbDownOwnerAttached: return "LB_DOWN_OWNER_ATTACHED";
+    case kLbDownOwnerPopup: return "LB_DOWN_OWNER_POPUP";
+    case kLbDownOwnerDismiss: return "LB_DOWN_OWNER_DISMISS";
+    case kLbDownOwnerNone: return "LB_DOWN_OWNER_NONE";
+    case kLbDownPass: return "LB_DOWN_PASS";
+    case kLbUpOwned: return "LB_UP_OWNED";
+    case kLbTailOpen: return "LB_TAIL_OPEN";
+    case kLbTailClosed: return "LB_TAIL_CLOSED";
+    case kLbPublishAttempt: return "LB_PUBLISH_ATTEMPT";
+    case kLbPublishAccept: return "LB_PUBLISH_ACCEPT";
+    case kLbPublishRejectInvalid: return "LB_PUBLISH_REJECT_INVALID";
+    case kLbPublishRejectProvider: return "LB_PUBLISH_REJECT_PROVIDER";
+    case kLbPublishRejectAdmission: return "LB_PUBLISH_REJECT_ADMISSION";
+    case kLbPublishRejectStale: return "LB_PUBLISH_REJECT_STALE";
+    case kLbPublishRejectSlot: return "LB_PUBLISH_REJECT_SLOT";
+    case kLbIpcReceived: return "LB_IPC_RECEIVED";
+    case kLbIpcNotReceived: return "LB_IPC_NOT_RECEIVED";
+    case kLbDartAccept: return "LB_DART_ACCEPT";
+    case kLbDartRejectProvider: return "LB_DART_REJECT_PROVIDER";
+    case kLbDartRejectGeneration: return "LB_DART_REJECT_GENERATION";
+    case kLbDartRejectOccurrence: return "LB_DART_REJECT_OCCURRENCE";
+    case kLbDartRejectInput: return "LB_DART_REJECT_INPUT";
+    case kLbWorkerAccept: return "LB_WORKER_ACCEPT";
+    case kLbWorkerRejectProvider: return "LB_WORKER_REJECT_PROVIDER";
+    case kLbWorkerRejectOccurrence: return "LB_WORKER_REJECT_OCCURRENCE";
+    case kLbWorkerRejectLayout: return "LB_WORKER_REJECT_LAYOUT";
+    case kLbMiningOccurrenceReject: return "LB_MINING_OCCURRENCE_REJECT";
+    case kLbPopupVisible: return "LB_POPUP_VISIBLE";
+    case kLbPopupReject: return "LB_POPUP_REJECT";
+    case kLbPopupOutsideConsumed: return "LB_POPUP_OUTSIDE_CONSUMED";
+    case kLbShieldTailOwned: return "LB_SHIELD_TAIL_OWNED";
+    case kLbInputUser32: return "LB_INPUT_USER32";
+    case kLbParserCalled: return "LB_PARSER_CALLED";
+    case kLbParserSourceCaptured: return "LB_PARSER_SOURCE_CAPTURED";
+    case kLbParserHandoffMiss: return "LB_PARSER_HANDOFF_MISS";
+    case kLbParserHandoffRecord: return "LB_PARSER_HANDOFF_RECORD";
+    case kLbRecordCaptured: return "LB_RECORD_CAPTURED";
+    case kLbRecordMiss: return "LB_RECORD_MISS";
+    case kLbDrawCaptured: return "LB_DRAW_CAPTURED";
+    case kLbDrawMiss: return "LB_DRAW_MISS";
+    case kLbHitTestCalled: return "LB_HITTEST_CALLED";
+    case kLbHitTestMiss: return "LB_HITTEST_MISS";
+    case kLbHitTestOpaqueKey: return "LB_HITTEST_OPAQUE_KEY";
+    case kLbMapAmbiguous: return "LB_MAP_AMBIGUOUS";
+    case kLbMapWrapObserved: return "LB_MAP_WRAP_OBSERVED";
+    case kLbMapSpaceObserved: return "LB_MAP_SPACE_OBSERVED";
+    case kLbMapPunctuationObserved: return "LB_MAP_PUNCTUATION_OBSERVED";
+    case kLbMapRubyObserved: return "LB_MAP_RUBY_OBSERVED";
+    case kLbMapGlossaryObserved: return "LB_MAP_GLOSSARY_OBSERVED";
+    case kLbMapControlObserved: return "LB_MAP_CONTROL_OBSERVED";
+    case kLbMapUtf16PairObserved: return "LB_MAP_UTF16_PAIR_OBSERVED";
+    case kLbLayoutNotSealed: return "LB_LAYOUT_NOT_SEALED";
+    case kLbGeometryStale: return "LB_GEOMETRY_STALE";
+    case kLbXformHwndMissing: return "LB_XFORM_HWND_MISSING";
+    case kLbXformEngineMissing: return "LB_XFORM_ENGINE_MISSING";
+    case kLbXformLayerMissing: return "LB_XFORM_LAYER_MISSING";
+    case kLbXformDesignMissing: return "LB_XFORM_DESIGN_MISSING";
+    case kLbXformClientMissing: return "LB_XFORM_CLIENT_MISSING";
+    case kLbXformProjectionMissing: return "LB_XFORM_PROJECTION_MISSING";
+    case kLbXformRoundtripOk: return "LB_XFORM_ROUNDTRIP_OK";
+    case kLbXformEngineState: return "LB_XFORM_ENGINE_STATE";
+    case kLbInputPoll: return "LB_INPUT_POLL";
+    case kLbPhysicalLeftEdgeMiss: return "LB_PHYSICAL_LEFT_EDGE_MISS";
+    case kLbSelector7NotQueried: return "LB_SELECTOR7_NOT_QUERIED";
+    case kLbSelector7False: return "LB_SELECTOR7_FALSE";
+    case kLbSelector7True: return "LB_SELECTOR7_TRUE";
+    case kLbF70A50NotCalled: return "LB_F70A50_NOT_CALLED";
+    case kLbF70A50Called: return "LB_F70A50_CALLED";
+    case kLbScriptStateChanged: return "LB_SCRIPT_STATE_CHANGED";
+    case kLbScriptStateNoOccurrence: return "LB_SCRIPT_STATE_NO_OCCURRENCE";
+    case kLbOccurrenceAfterSubmit: return "LB_OCCURRENCE_AFTER_SUBMIT";
+    case kLbSemanticHostCalled: return "LB_SEMANTIC_HOST_CALLED";
+    case kLbSemanticLifecycleCalled: return "LB_SEMANTIC_LIFECYCLE_CALLED";
+    case kLbProviderNotReal: return "LB_PROVIDER_NOT_REAL";
+    case kLbNativePermissionSnapshot: return "LB_NATIVE_PERMISSION_SNAPSHOT";
+    case kLbDownOwnerUnproven: return "LB_DOWN_OWNER_UNPROVEN";
+    case kLbD3d11FallbackUnobserved: return "LB_D3D11_FALLBACK_UNOBSERVED";
+    case kLbMethodHooked: return "LB_METHOD_HOOKED";
+    case kLbMethodHookUnavailable: return "LB_METHOD_HOOK_UNAVAILABLE";
+    case kLbDartRejectUnknown: return "LB_DART_REJECT_UNKNOWN";
+    case kLbWorkerRejectUnknown: return "LB_WORKER_REJECT_UNKNOWN";
+    case kLbMiningOccurrenceAccept: return "LB_MINING_OCCURRENCE_ACCEPT";
+    case kLbPopupOutsidePass: return "LB_POPUP_OUTSIDE_PASS";
+    case kLbParserSourceMissing: return "LB_PARSER_SOURCE_MISSING";
+    case kLbMapAnnotationObserved: return "LB_MAP_ANNOTATION_OBSERVED";
+    case kLbParserOccurrenceSourceMismatch:
+      return "LB_PARSER_OCCURRENCE_SOURCE_MISMATCH";
+    case kLbXformViewportUnproven: return "LB_XFORM_VIEWPORT_UNPROVEN";
+    case kLbXformRenderTargetMissing:
+      return "LB_XFORM_RENDER_TARGET_MISSING";
+    case kLbParserHandoffPost: return "LB_PARSER_HANDOFF_POST";
+    case kLbProducerRecordObserved: return "LB_PRODUCER_RECORD_OBSERVED";
+    case kLbProducerHandoffNoRecord:
+      return "LB_PRODUCER_HANDOFF_NO_RECORD";
+    case kLbProducerHandoffObserverMissed:
+      return "LB_PRODUCER_HANDOFF_OBSERVER_MISSED";
+    case kLbRecordSourceSpanUnproven:
+      return "LB_RECORD_SOURCE_SPAN_UNPROVEN";
+    case kLbLayoutPostcall: return "LB_LAYOUT_POSTCALL";
+    case kLbLayoutObserverEarly: return "LB_LAYOUT_OBSERVER_EARLY";
+    case kLbRenderCommandCaptured: return "LB_RENDER_COMMAND_CAPTURED";
+    case kLbRenderCommandRaw: return "LB_RENDER_COMMAND_RAW";
+    case kLbRenderCommandLineageUnproven:
+      return "LB_RENDER_COMMAND_LINEAGE_UNPROVEN";
+    case kLbTextureBlitUnobserved: return "LB_TEXTURE_BLIT_UNOBSERVED";
+    case kLbXformLayerStateRaw: return "LB_XFORM_LAYER_STATE_RAW";
+    case kLbXformViewportUnobserved:
+      return "LB_XFORM_VIEWPORT_UNOBSERVED";
+    case kLbXformRenderTargetUnobserved:
+      return "LB_XFORM_RENDER_TARGET_UNOBSERVED";
+    case kLbXformProjectionUnobserved:
+      return "LB_XFORM_PROJECTION_UNOBSERVED";
+    case kLbWndprocHwndUnavailable:
+      return "LB_WNDPROC_HWND_UNAVAILABLE";
+    case kLbWndprocTargetBound: return "LB_WNDPROC_TARGET_BOUND";
+    case kLbWndprocTargetUnbound: return "LB_WNDPROC_TARGET_UNBOUND";
+    case kLbWndprocSubclassInstallFailed:
+      return "LB_WNDPROC_SUBCLASS_INSTALL_FAILED";
+    case kLbWndprocSubclassActive: return "LB_WNDPROC_SUBCLASS_ACTIVE";
+    case kLbProducerHandoffNotObserved:
+      return "LB_PRODUCER_HANDOFF_NOT_OBSERVED";
+    default: return "LB_REASON_UNKNOWN";
+  }
+}
+
+enum LookupDiagnosticEventFlags : uint32_t {
+  kLookupDiagnosticFlagFailure = 0x1u,
+  kLookupDiagnosticFlagPre = 0x2u,
+  kLookupDiagnosticFlagPost = 0x4u,
+  kLookupDiagnosticFlagHasOccurrence = 0x8u,
+  kLookupDiagnosticFlagHasGeometry = 0x10u,
+  kLookupDiagnosticFlagHasHwnd = 0x20u,
+  kLookupDiagnosticFlagEdge = 0x40u,
+  kLookupDiagnosticFlagExplicitOccurrence = 0x80u,
+};
+
+enum LookupDiagnosticCoordinateSpace : uint32_t {
+  kLookupDiagnosticCoordinateUnknown = 0u,
+  kLookupDiagnosticCoordinateCTextRecord = 1u,
+  kLookupDiagnosticCoordinateRenderCommand = 2u,
+  kLookupDiagnosticCoordinateEngineLayer = 3u,
+  kLookupDiagnosticCoordinateClientPhysical = 4u,
+};
+
+enum LookupDiagnosticTransformFlags : uint32_t {
+  kLookupDiagnosticTransformEngineScale = 0x1u,
+  kLookupDiagnosticTransformDisplayContext = 0x2u,
+  kLookupDiagnosticTransformLayerOrigin = 0x4u,
+  kLookupDiagnosticTransformDesign = 0x8u,
+  kLookupDiagnosticTransformViewport = 0x10u,
+  kLookupDiagnosticTransformClientRect = 0x20u,
+  kLookupDiagnosticTransformClientScreenRoundtrip = 0x40u,
+  kLookupDiagnosticTransformProjection = 0x80u,
+};
+
+#pragma pack(push, 8)
+struct LookupDiagnosticEvent {
+  volatile uint64_t seq;
+  uint64_t tick_ms;
+  uint32_t event_kind;
+  uint32_t reason_id;
+  uint32_t probe_id;
+  uint32_t flags;
+  uint32_t thread_id;
+  uint32_t process_id;
+  uint32_t callsite_rva;
+  uint32_t candidate_rva;
+  uint32_t vtable_slot;
+  uint32_t vptr_rva;
+  uint32_t input_surface;
+  uint32_t owner_kind;
+  uint32_t provider_kind;
+  uint32_t provider_id;
+  uint64_t hwnd;
+  uint64_t text_seq;
+  uint64_t text_thread_id;
+  uint64_t text_utf16_hash;
+  uint32_t text_utf16_length;
+  uint64_t pre_text_seq;
+  uint64_t pre_text_thread_id;
+  uint64_t post_text_seq;
+  uint64_t post_text_thread_id;
+  uint32_t source_start;
+  uint32_t source_length;
+  uint32_t glyph_index;
+  uint32_t glyph_count;
+  uint64_t geometry_generation;
+  int32_t glyph_x;
+  int32_t glyph_y;
+  int32_t glyph_w;
+  int32_t glyph_h;
+  int32_t client_w;
+  int32_t client_h;
+  uint32_t design_w;
+  uint32_t design_h;
+  uint32_t viewport_w;
+  uint32_t viewport_h;
+  uint64_t argument0;
+  uint64_t argument1;
+  uint64_t result0;
+  uint64_t result1;
+  uint32_t record_index;
+  uint32_t record_count;
+  uint32_t coordinate_space;
+  uint32_t transform_flags;
+  int32_t layer_origin_x;
+  int32_t layer_origin_y;
+  uint32_t render_target_w;
+  uint32_t render_target_h;
+};
+#pragma pack(pop)
+
+static_assert(sizeof(LookupDiagnosticEvent) % 8 == 0,
+              "LookupDiagnosticEvent must stay 8-aligned");
+static_assert(sizeof(LookupDiagnosticEvent) == 272,
+              "LookupDiagnosticEvent ABI must stay fixed");
 struct SharedHeader {
   uint32_t magic;           // = kSharedMagic
   uint32_t version;         // = kSharedVersion
@@ -1335,6 +1804,18 @@ struct SharedHeader {
   // v24, hook worker -> injector, single writer. Initialize before Ready;
   // Pending may become one terminal value and never return to Pending.
   volatile uint32_t siglus_text_owner;
+  // // v25, numeric-only LB first-runtime diagnostics. The enable bit is set
+  // only for the exact executable basename; concrete probes require the full
+  // profile identity match, while P0 can still report a name-matched/hash-
+  // mismatched image.  lookup_enabled and provider/input permissions remain
+  // independent contracts.
+  volatile uint32_t lookup_diagnostics_enabled;
+  volatile uint32_t lookup_diagnostic_schema_version;
+  volatile uint64_t lookup_diagnostic_session_id;
+  volatile uint64_t lookup_diagnostic_event_seq;
+  volatile uint64_t lookup_diagnostic_overflow_count;
+  LookupDiagnosticEvent
+      lookup_diagnostic_events[kLookupDiagnosticEventCount];
 };
 #pragma pack(pop)
 
@@ -1409,6 +1890,75 @@ inline void AtomicOrShared32(volatile uint32_t* value, uint32_t bits) {
                 static_cast<LONG>(bits));
 }
 
+// Reset is called only by the injector immediately after it has created and
+// zeroed a fresh mapping.  A reused mapping is never reset: its event history
+// belongs to the resident injected DLL and must remain observable to a
+// reconnecting reader.
+inline void ResetLookupDiagnosticRing(SharedHeader* header,
+                                      uint64_t session_id) {
+  if (header == nullptr) return;
+  AtomicStoreShared32(&header->lookup_diagnostics_enabled, 0u);
+  AtomicStoreShared32(&header->lookup_diagnostic_schema_version,
+                      kLookupDiagnosticSchemaVersion);
+  AtomicStorePreview64(&header->lookup_diagnostic_session_id, session_id);
+  AtomicStorePreview64(&header->lookup_diagnostic_event_seq, 0u);
+  AtomicStorePreview64(&header->lookup_diagnostic_overflow_count, 0u);
+  std::memset(header->lookup_diagnostic_events, 0,
+              sizeof(header->lookup_diagnostic_events));
+  MemoryBarrier();
+}
+
+// One bounded publication primitive shared by native probes and registry
+// gates.  It intentionally accepts a fully numeric value object; no heap,
+// printf, or unbounded text is reachable from a hot hook.  seq=0 marks a slot
+// in progress and the final Interlocked store is the cross-process commit.
+inline void RecordLookupDiagnostic(SharedHeader* header,
+                                   LookupDiagnosticEvent event) {
+  if (header == nullptr ||
+      AtomicLoadShared32(&header->lookup_diagnostics_enabled) == 0u ||
+      AtomicLoadShared32(&header->lookup_diagnostic_schema_version) !=
+          kLookupDiagnosticSchemaVersion) {
+    return;
+  }
+  if (event.tick_ms == 0u) event.tick_ms = GetTickCount64();
+  if (event.thread_id == 0u) event.thread_id = GetCurrentThreadId();
+  if (event.process_id == 0u) event.process_id = GetCurrentProcessId();
+  event.seq = 0u;
+  const uint64_t sequence = static_cast<uint64_t>(InterlockedIncrement64(
+      reinterpret_cast<volatile LONG64*>(
+          const_cast<volatile uint64_t*>(
+              &header->lookup_diagnostic_event_seq))));
+  if (sequence == 0u) return;
+  if (sequence > kLookupDiagnosticEventCount) {
+    InterlockedIncrement64(reinterpret_cast<volatile LONG64*>(
+        const_cast<volatile uint64_t*>(
+            &header->lookup_diagnostic_overflow_count)));
+  }
+  LookupDiagnosticEvent* slot =
+      &header->lookup_diagnostic_events[sequence %
+                                        kLookupDiagnosticEventCount];
+  AtomicStorePreview64(&slot->seq, 0u);
+  std::memcpy(slot, &event, sizeof(event));
+  MemoryBarrier();
+  AtomicStorePreview64(&slot->seq, sequence);
+}
+
+inline void RecordLookupDiagnosticReason(SharedHeader* header,
+                                          uint32_t event_kind,
+                                          uint32_t probe_id,
+                                          uint32_t reason_id,
+                                          uint32_t flags = 0u,
+                                          uint32_t provider_kind = 0u,
+                                          uint32_t provider_id = 0u) {
+  LookupDiagnosticEvent event = {};
+  event.event_kind = event_kind;
+  event.probe_id = probe_id;
+  event.reason_id = reason_id;
+  event.flags = flags;
+  event.provider_kind = provider_kind;
+  event.provider_id = provider_id;
+  RecordLookupDiagnostic(header, event);
+}
 // Host-side attached hit publication and the injected provider registry share
 // the shield request writer bit as their hand-off fence.  Callers which hold
 // that fence may use this bounded, lock-free snapshot to decide whether an
@@ -2535,6 +3085,10 @@ inline bool IsLookupFrameSane(const SharedHeader* header,
 static_assert(sizeof(SharedHeader) % 8 == 0, "SharedHeader must stay 8-aligned");
 static_assert(offsetof(SharedHeader, siglus_text_owner) % 4 == 0,
               "Siglus ownership must support aligned Interlocked access");
+static_assert(offsetof(SharedHeader, lookup_diagnostic_events) % 8 == 0,
+              "Lookup diagnostic ring must stay 8-aligned");
+static_assert(kLookupDiagnosticEventCount >= 32u,
+              "diagnostic ring must retain a bounded first-runtime window");
 static_assert(sizeof(LookupHitSlot) % 8 == 0, "LookupHitSlot must stay 8-aligned");
 static_assert(sizeof(LookupFrame) % 8 == 0, "LookupFrame must stay 8-aligned");
 static_assert(sizeof(LookupInputSlot) % 8 == 0,

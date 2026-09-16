@@ -3366,6 +3366,41 @@ class GalHookSessionController extends ChangeNotifier {
     );
   }
 
+  /// Little Busters' production Luca source is a single version-gated,
+  /// engine-exact line.  The native lookup adapter intentionally requires the
+  /// shared selected-thread id, while the generic consumer below keeps this
+  /// source visible even before a picker choice exists.  Select that one
+  /// unambiguous source as soon as its first line is observed so the native
+  /// lookup model and the host-side text lane use the same identity.
+  void _maybeAutoSelectLittleBustersThread(GalHookedLine line) {
+    if (!_isLittleBustersProductionHookCode(line.hookCode) ||
+        line.threadId == 0 ||
+        _selectedNativeTextThreadId != null ||
+        _selectedTextThreadKey != null ||
+        _textThreadMemoryApplied) {
+      return;
+    }
+    final String? wanted = _ensureCaptureMemoryLoaded()
+        ? _captureMemory.textThreadFingerprint
+        : null;
+    if (wanted != null) return;
+    final String? key = line.textThreadKey;
+    if (key == null || key.isEmpty) return;
+    _textThreadMemoryApplied = true;
+    unawaited(
+      selectTextThread(line.threadId, threadKey: key).then((bool selected) {
+        if (!selected) return;
+        _record(
+          GalHookEventSeverity.info,
+          'text',
+          'text.thread_little_busters_selected',
+          'Selected the pinned Little Busters production text thread automatically',
+          details: <String, Object?>{'threadKey': key},
+        );
+      }),
+    );
+  }
+
   /// 用户显式选定/取消文本线程后同步持久化（null = 未选择，清掉记忆）。
   void _persistTextThread(TexthookerTextThread? thread) {
     if (!_ensureCaptureMemoryLoaded()) return;
@@ -5791,6 +5826,7 @@ class GalHookSessionController extends ChangeNotifier {
               hookCode: line.hookCode.isEmpty ? null : line.hookCode,
               nativeThreadId: line.threadId == 0 ? null : line.threadId,
             );
+            _maybeAutoSelectLittleBustersThread(line);
             _maybeRestoreTextThread();
           }
         }

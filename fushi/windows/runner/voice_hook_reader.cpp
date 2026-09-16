@@ -51,9 +51,10 @@ struct ReaderState {
   HANDLE mapping = nullptr;
   SharedHeader* header = nullptr;
   uint32_t pid = 0;
-  // ── v14 查词通道游标（与上面同一把锁）───────────────────────────────────────
-  // 三个游标都在 Open 时对齐到「现在」而不是 0：会话重开时把注入侧遗留的旧 hit
-  // 当成新命中重放，用户会看到一张莫名其妙的卡片弹出来。
+  // ── 查词通道游标（与上面同一把锁）──────────────────────────────────────────
+  // 生产 hit/input 游标在 Open 时对齐到「现在」而不是 0：会话重开时把注入侧遗留的
+  // 旧 hit 当成新命中重放，用户会看到一张莫名其妙的卡片弹出来。诊断游标是例外：
+  // 它只回放固定 ring 的证据，保证注入早期的 P0/P1/P2 仍能被首个 reader 看见。
   //
   // ── 段级状态：换段必须**整体归零** ─────────────────────────────────────────
   // 这些字段的寿命恰好等于一个共享内存段。收成一个子结构、由 [CloseLocked] 整体
@@ -66,6 +67,9 @@ struct ReaderState {
     uint64_t lookup_hit_count = 0;  // 上次见到的 header->lookup_hit_count
     uint64_t lookup_hit_seq = 0;  // 上次消费掉的 hit seq（计数变了但 seq 没前进=重复）
     uint64_t lookup_input_seq = 0;  // 上次消费到的输入环序号
+    uint64_t lookup_diagnostic_seq = 0;  // 上次消费到的 LB diagnostic event seq
+    bool lookup_diagnostic_not_received_reported = false;
+    bool lookup_diagnostic_received_reported = false;
     // Validated outside WH_MOUSE_LL. The callback compares this exact handle and
     // never calls IsWindow/GetWindowThreadProcessId while the system waits.
     HWND lookup_shield_prevalidated_target = nullptr;
@@ -321,11 +325,25 @@ void ResetLookupCursorsLocked(ReaderState& st, const SharedHeader* h) {
   st.seg.lookup_hit_count = 0;
   st.seg.lookup_hit_seq = 0;
   st.seg.lookup_input_seq = 0;
+  st.seg.lookup_diagnostic_seq = 0;
+  st.seg.lookup_diagnostic_not_received_reported = false;
+  st.seg.lookup_diagnostic_received_reported = false;
   st.lookup_publish_seq = 0;
   // 准入游标**在查词区那道早退之前**复位：准入活在 SharedHeader 里，没有查词区的
   // 会话照样要报（"本引擎没做查词传感器"正是必须报得出来的那一类）。
   st.seg.lookup_admission_seq = 0;
   st.seg.lookup_admission_primed = false;
+  if (h != nullptr) {
+    // Diagnostics are evidence, not a production hit/input stream.  Rewind
+    // to the retained bounded window so P0 identity and early P1/P2 events
+    // are still visible when Open happens after injection has started.
+    const uint64_t diagnostic_count = fushi_voice_hook::AtomicLoadPreview64(
+        &h->lookup_diagnostic_event_seq);
+    st.seg.lookup_diagnostic_seq =
+        diagnostic_count > fushi_voice_hook::kLookupDiagnosticEventCount
+            ? diagnostic_count - fushi_voice_hook::kLookupDiagnosticEventCount
+            : 0u;
+  }
   if (!fushi_voice_hook::HasLookupRegion(h)) {
     return;
   }
@@ -796,6 +814,125 @@ flutter::EncodableValue LookupAdmissionMap(
   });
 }
 
+flutter::EncodableValue LookupDiagnosticMap(
+    const VoiceHookLookupDiagnosticEvent& event) {
+  return flutter::EncodableValue(flutter::EncodableMap{
+      {flutter::EncodableValue("seq"),
+       flutter::EncodableValue(static_cast<int64_t>(event.seq))},
+      {flutter::EncodableValue("tickMs"),
+       flutter::EncodableValue(static_cast<int64_t>(event.tick_ms))},
+      {flutter::EncodableValue("eventKind"),
+       flutter::EncodableValue(static_cast<int64_t>(event.event_kind))},
+      {flutter::EncodableValue("reasonId"),
+       flutter::EncodableValue(static_cast<int64_t>(event.reason_id))},
+      {flutter::EncodableValue("reasonToken"),
+       flutter::EncodableValue(event.reason_token)},
+      {flutter::EncodableValue("probeId"),
+       flutter::EncodableValue(static_cast<int64_t>(event.probe_id))},
+      {flutter::EncodableValue("flags"),
+       flutter::EncodableValue(static_cast<int64_t>(event.flags))},
+      {flutter::EncodableValue("threadId"),
+       flutter::EncodableValue(static_cast<int64_t>(event.thread_id))},
+      {flutter::EncodableValue("processId"),
+       flutter::EncodableValue(static_cast<int64_t>(event.process_id))},
+      {flutter::EncodableValue("callsiteRva"),
+       flutter::EncodableValue(static_cast<int64_t>(event.callsite_rva))},
+      {flutter::EncodableValue("candidateRva"),
+       flutter::EncodableValue(static_cast<int64_t>(event.candidate_rva))},
+      {flutter::EncodableValue("vtableSlot"),
+       flutter::EncodableValue(static_cast<int64_t>(event.vtable_slot))},
+      {flutter::EncodableValue("vptrRva"),
+       flutter::EncodableValue(static_cast<int64_t>(event.vptr_rva))},
+      {flutter::EncodableValue("inputSurface"),
+       flutter::EncodableValue(static_cast<int64_t>(event.input_surface))},
+      {flutter::EncodableValue("ownerKind"),
+       flutter::EncodableValue(static_cast<int64_t>(event.owner_kind))},
+      {flutter::EncodableValue("providerKind"),
+       flutter::EncodableValue(static_cast<int64_t>(event.provider_kind))},
+      {flutter::EncodableValue("providerId"),
+       flutter::EncodableValue(static_cast<int64_t>(event.provider_id))},
+      {flutter::EncodableValue("hwnd"),
+       flutter::EncodableValue(static_cast<int64_t>(event.hwnd))},
+      {flutter::EncodableValue("textSeq"),
+       flutter::EncodableValue(static_cast<int64_t>(event.text_seq))},
+      {flutter::EncodableValue("textThreadId"),
+       flutter::EncodableValue(static_cast<int64_t>(event.text_thread_id))},
+      {flutter::EncodableValue("textUtf16Hash"),
+       flutter::EncodableValue(static_cast<int64_t>(event.text_utf16_hash))},
+      {flutter::EncodableValue("textUtf16Length"),
+       flutter::EncodableValue(static_cast<int64_t>(event.text_utf16_length))},
+      {flutter::EncodableValue("preTextSeq"),
+       flutter::EncodableValue(static_cast<int64_t>(event.pre_text_seq))},
+      {flutter::EncodableValue("preTextThreadId"),
+       flutter::EncodableValue(static_cast<int64_t>(event.pre_text_thread_id))},
+      {flutter::EncodableValue("postTextSeq"),
+       flutter::EncodableValue(static_cast<int64_t>(event.post_text_seq))},
+      {flutter::EncodableValue("postTextThreadId"),
+       flutter::EncodableValue(
+           static_cast<int64_t>(event.post_text_thread_id))},
+      {flutter::EncodableValue("sourceStart"),
+       flutter::EncodableValue(static_cast<int64_t>(event.source_start))},
+      {flutter::EncodableValue("sourceLength"),
+       flutter::EncodableValue(static_cast<int64_t>(event.source_length))},
+      {flutter::EncodableValue("glyphIndex"),
+       flutter::EncodableValue(static_cast<int64_t>(event.glyph_index))},
+      {flutter::EncodableValue("glyphCount"),
+       flutter::EncodableValue(static_cast<int64_t>(event.glyph_count))},
+      {flutter::EncodableValue("geometryGeneration"),
+       flutter::EncodableValue(static_cast<int64_t>(event.geometry_generation))},
+      {flutter::EncodableValue("glyphX"),
+       flutter::EncodableValue(event.glyph_x)},
+      {flutter::EncodableValue("glyphY"),
+       flutter::EncodableValue(event.glyph_y)},
+      {flutter::EncodableValue("glyphW"),
+       flutter::EncodableValue(event.glyph_w)},
+      {flutter::EncodableValue("glyphH"),
+       flutter::EncodableValue(event.glyph_h)},
+      {flutter::EncodableValue("clientW"),
+       flutter::EncodableValue(event.client_w)},
+      {flutter::EncodableValue("clientH"),
+       flutter::EncodableValue(event.client_h)},
+      {flutter::EncodableValue("designW"),
+       flutter::EncodableValue(static_cast<int64_t>(event.design_w))},
+      {flutter::EncodableValue("designH"),
+       flutter::EncodableValue(static_cast<int64_t>(event.design_h))},
+      {flutter::EncodableValue("viewportW"),
+       flutter::EncodableValue(static_cast<int64_t>(event.viewport_w))},
+      {flutter::EncodableValue("viewportH"),
+       flutter::EncodableValue(static_cast<int64_t>(event.viewport_h))},
+      {flutter::EncodableValue("argument0"),
+       flutter::EncodableValue(static_cast<int64_t>(event.argument0))},
+      {flutter::EncodableValue("argument1"),
+       flutter::EncodableValue(static_cast<int64_t>(event.argument1))},
+      {flutter::EncodableValue("result0"),
+       flutter::EncodableValue(static_cast<int64_t>(event.result0))},
+      {flutter::EncodableValue("result1"),
+       flutter::EncodableValue(static_cast<int64_t>(event.result1))},
+      {flutter::EncodableValue("recordIndex"),
+       flutter::EncodableValue(static_cast<int64_t>(event.record_index))},
+      {flutter::EncodableValue("recordCount"),
+       flutter::EncodableValue(static_cast<int64_t>(event.record_count))},
+      {flutter::EncodableValue("coordinateSpace"),
+       flutter::EncodableValue(static_cast<int64_t>(event.coordinate_space))},
+      {flutter::EncodableValue("transformFlags"),
+       flutter::EncodableValue(static_cast<int64_t>(event.transform_flags))},
+      {flutter::EncodableValue("layerOriginX"),
+       flutter::EncodableValue(event.layer_origin_x)},
+      {flutter::EncodableValue("layerOriginY"),
+       flutter::EncodableValue(event.layer_origin_y)},
+      {flutter::EncodableValue("renderTargetW"),
+       flutter::EncodableValue(static_cast<int64_t>(event.render_target_w))},
+      {flutter::EncodableValue("renderTargetH"),
+       flutter::EncodableValue(static_cast<int64_t>(event.render_target_h))},
+      {flutter::EncodableValue("schemaVersion"),
+       flutter::EncodableValue(static_cast<int64_t>(event.schema_version))},
+      {flutter::EncodableValue("sessionId"),
+       flutter::EncodableValue(static_cast<int64_t>(event.session_id))},
+      {flutter::EncodableValue("overflowCount"),
+       flutter::EncodableValue(static_cast<int64_t>(event.overflow_count))},
+  });
+}
+
 // 一次泵动：准入快照 + 一条 hit（latest-wins，多的没意义）+ 环里全部新输入。
 void PumpLookupOnce() {
   LookupPumpState& pump = Pump();
@@ -819,6 +956,16 @@ void PumpLookupOnce() {
   if (!reader.HasSession()) {
     StopLookupPump();
     return;
+  }
+  std::vector<VoiceHookLookupDiagnosticEvent> diagnostics;
+  reader.PollLookupDiagnostics(diagnostics);
+  if (pump.channel != nullptr) {
+    for (const VoiceHookLookupDiagnosticEvent& event : diagnostics) {
+      pump.channel->InvokeMethod(
+          "onGalLookupDiagnostic",
+          std::make_unique<flutter::EncodableValue>(
+              LookupDiagnosticMap(event)));
+    }
   }
   const VoiceHookLookupGeometryStatus geometry = reader.LookupGeometryStatus();
   const bool geometry_changed =
@@ -863,11 +1010,13 @@ void PumpLookupOnce() {
   }
   // 查词没开（或本会话没有查词区）：只报准入，绝不消费 hit/input——那两个游标一旦
   // 在关闭期间被推进，重新打开时用户的第一次点击就会被当成"旧输入"吞掉。
-  if (reader.PeekLookupGate(true) != VoiceHookLookupError::kNone) {
+  const VoiceHookLookupError lookup_gate = reader.PeekLookupGate(true);
+  if (lookup_gate != VoiceHookLookupError::kNone) {
     return;
   }
   VoiceHookLookupHit hit;
-  if (reader.PollLookupHit(&hit) && pump.channel != nullptr) {
+  const bool hit_available = reader.PollLookupHit(&hit);
+  if (hit_available && pump.channel != nullptr) {
     // 客户区**现量现报**：host 的卡片尺寸上界要按屏幕物理像素算，而它必须在
     // 查词开始之前就知道。量不到就留 0，host 退回画布口径（保守但不越界）。
     fushi::game_client_extent::QueryGameClientExtent(
@@ -2444,6 +2593,20 @@ bool VoiceHookReader::PollLookupHit(VoiceHookLookupHit* out) {
     hit.text_generation = slot->text_generation;
     hit.geometry_generation = slot->geometry_generation;
     hit.coordinate_space = slot->coordinate_space;
+    // Little Busters' exact-layout publisher emits client physical pixels.
+    // Keep a narrow compatibility bridge for an already-injected helper that
+    // predates the publisher's explicit coordinate-space assignment: its
+    // otherwise complete hit has the zero/unknown value here, while glyph and
+    // view dimensions are already measured in the client rectangle.  Do not
+    // broaden this to other providers or to non-zero unresolved spaces.
+    if (hit.provider_kind ==
+            fushi_voice_hook::kLookupGeometryProviderEngineExactLayout &&
+        hit.provider_id ==
+            fushi_voice_hook::kLookupGeometryProviderIdLittleBusters &&
+        hit.coordinate_space == fushi_voice_hook::kLookupCoordinateSpaceUnknown) {
+      hit.coordinate_space =
+          fushi_voice_hook::kLookupCoordinateSpaceClientPhysicalPixels;
+    }
     hit.writing_mode = slot->writing_mode;
     hit.glyph_x = slot->glyph_x;
     hit.glyph_y = slot->glyph_y;
@@ -2471,23 +2634,36 @@ bool VoiceHookReader::PollLookupHit(VoiceHookLookupHit* out) {
     const uint64_t active_geometry_after =
         fushi_voice_hook::AtomicLoadPreview64(
             &h->lookup_geometry_generation);
-    if (fushi_voice_hook::AtomicLoadPreview64(&slot->seq) != seq ||
-        active_geometry_before == 0 ||
-        active_geometry_before != active_geometry_after ||
-        hit.geometry_generation != active_geometry_after ||
-        hit.text_generation != fushi_voice_hook::AtomicLoadPreview64(
-                                   &h->lookup_geometry_text_generation) ||
-        hit.provider_kind != fushi_voice_hook::AtomicLoadShared32(
-                                 &h->lookup_geometry_active_kind) ||
-        hit.provider_id != fushi_voice_hook::AtomicLoadShared32(
-                               &h->lookup_geometry_active_id) ||
-        fushi_voice_hook::AtomicLoadShared32(&h->lookup_geometry_status) !=
-            fushi_voice_hook::kLookupGeometryStatusActive ||
-        !provider_pair_valid || !source_span_valid || !geometry_valid ||
-        !fushi_voice_hook::IsLookupCardCoordinateSpaceResolved(
-            hit.coordinate_space) ||
-        hit.writing_mode != fushi_voice_hook::kLookupWritingModeHorizontal ||
-        hit.text_generation == 0 || hit.geometry_generation == 0) {
+    const bool seq_stable =
+        fushi_voice_hook::AtomicLoadPreview64(&slot->seq) == seq;
+    const bool geometry_stable = active_geometry_before != 0 &&
+                                 active_geometry_before == active_geometry_after;
+    const bool geometry_generation_matches =
+        hit.geometry_generation == active_geometry_after;
+    const bool text_generation_matches =
+        hit.text_generation == fushi_voice_hook::AtomicLoadPreview64(
+                                   &h->lookup_geometry_text_generation);
+    const bool provider_matches =
+        hit.provider_kind == fushi_voice_hook::AtomicLoadShared32(
+                                 &h->lookup_geometry_active_kind) &&
+        hit.provider_id == fushi_voice_hook::AtomicLoadShared32(
+                               &h->lookup_geometry_active_id);
+    const bool geometry_status_active =
+        fushi_voice_hook::AtomicLoadShared32(&h->lookup_geometry_status) ==
+        fushi_voice_hook::kLookupGeometryStatusActive;
+    const bool coordinate_space_valid =
+        fushi_voice_hook::IsLookupCardCoordinateSpaceResolved(
+            hit.coordinate_space);
+    const bool writing_mode_valid =
+        hit.writing_mode == fushi_voice_hook::kLookupWritingModeHorizontal;
+    const bool generations_valid = hit.text_generation != 0 &&
+                                   hit.geometry_generation != 0;
+    const bool valid =
+        seq_stable && geometry_stable && geometry_generation_matches &&
+        text_generation_matches && provider_matches && geometry_status_active &&
+        provider_pair_valid && source_span_valid && geometry_valid &&
+        coordinate_space_valid && writing_mode_valid && generations_valid;
+    if (!valid) {
       continue;
     }
     st.seg.lookup_hit_count = count;
@@ -2544,6 +2720,153 @@ void VoiceHookReader::PollLookupInputs(
     out.push_back(input);
   }
   st.seg.lookup_input_seq = count;
+}
+
+void VoiceHookReader::PollLookupDiagnostics(
+    std::vector<VoiceHookLookupDiagnosticEvent>& out) {
+  out.clear();
+  ReaderState& st = State();
+  std::lock_guard<std::mutex> lock(st.mutex);
+  const SharedHeader* h = st.header;
+  if (!ProtocolMatches(h)) return;
+
+  const uint32_t schema = fushi_voice_hook::AtomicLoadShared32(
+      &h->lookup_diagnostic_schema_version);
+  const uint32_t enabled = fushi_voice_hook::AtomicLoadShared32(
+      &h->lookup_diagnostics_enabled);
+  const uint64_t session_id = fushi_voice_hook::AtomicLoadPreview64(
+      &h->lookup_diagnostic_session_id);
+  const uint64_t overflow_count = fushi_voice_hook::AtomicLoadPreview64(
+      &h->lookup_diagnostic_overflow_count);
+  const uint64_t count = fushi_voice_hook::AtomicLoadPreview64(
+      &h->lookup_diagnostic_event_seq);
+  // A fresh non-LB session also starts with the common diagnostic schema
+  // number, but its enable bit remains zero.  Do not manufacture an
+  // LB_IPC_NOT_RECEIVED event for every other game; the injected LB adapter
+  // enables this channel even for an exact-name/profile mismatch so P0 can
+  // still report that identity failure.
+  if (enabled == 0u) {
+    st.seg.lookup_diagnostic_not_received_reported = false;
+    st.seg.lookup_diagnostic_received_reported = false;
+    return;
+  }
+  if (schema != fushi_voice_hook::kLookupDiagnosticSchemaVersion ||
+      count == 0u) {
+    if (!st.seg.lookup_diagnostic_not_received_reported) {
+      VoiceHookLookupDiagnosticEvent event;
+      event.reason_id = fushi_voice_hook::kLbIpcNotReceived;
+      event.probe_id = fushi_voice_hook::kLookupDiagnosticProbeP11Pipeline;
+      event.event_kind = fushi_voice_hook::kLookupDiagnosticEventPipeline;
+      event.flags = fushi_voice_hook::kLookupDiagnosticFlagFailure;
+      event.schema_version = schema;
+      event.session_id = session_id;
+      event.overflow_count = overflow_count;
+      event.argument0 = enabled;
+      event.argument1 = count;
+      event.result0 = fushi_voice_hook::kLookupDiagnosticSchemaVersion;
+      event.reason_token = fushi_voice_hook::LookupDiagnosticReasonToken(
+          event.reason_id);
+      out.push_back(std::move(event));
+      st.seg.lookup_diagnostic_not_received_reported = true;
+    }
+    return;
+  }
+  st.seg.lookup_diagnostic_not_received_reported = false;
+  if (!st.seg.lookup_diagnostic_received_reported) {
+    VoiceHookLookupDiagnosticEvent event;
+    event.reason_id = fushi_voice_hook::kLbIpcReceived;
+    event.probe_id = fushi_voice_hook::kLookupDiagnosticProbeP11Pipeline;
+    event.event_kind = fushi_voice_hook::kLookupDiagnosticEventPipeline;
+    event.flags = fushi_voice_hook::kLookupDiagnosticFlagPost;
+    event.schema_version = schema;
+    event.session_id = session_id;
+    event.overflow_count = overflow_count;
+    event.argument0 = count;
+    event.reason_token = fushi_voice_hook::LookupDiagnosticReasonToken(
+        event.reason_id);
+    out.push_back(std::move(event));
+    st.seg.lookup_diagnostic_received_reported = true;
+  }
+  if (count <= st.seg.lookup_diagnostic_seq) return;
+
+  uint64_t from = st.seg.lookup_diagnostic_seq + 1u;
+  if (count - st.seg.lookup_diagnostic_seq >
+      fushi_voice_hook::kLookupDiagnosticEventCount) {
+    from = count - fushi_voice_hook::kLookupDiagnosticEventCount + 1u;
+  }
+  const fushi_voice_hook::LookupDiagnosticEvent* base =
+      h->lookup_diagnostic_events;
+  for (uint64_t sequence = from; sequence <= count; ++sequence) {
+    const fushi_voice_hook::LookupDiagnosticEvent& slot =
+        base[static_cast<size_t>(sequence %
+                                 fushi_voice_hook::kLookupDiagnosticEventCount)];
+    const uint64_t slot_seq =
+        fushi_voice_hook::AtomicLoadPreview64(&slot.seq);
+    if (slot_seq != sequence) continue;
+    VoiceHookLookupDiagnosticEvent event;
+    event.seq = slot_seq;
+    event.tick_ms = slot.tick_ms;
+    event.event_kind = slot.event_kind;
+    event.reason_id = slot.reason_id;
+    event.probe_id = slot.probe_id;
+    event.flags = slot.flags;
+    event.thread_id = slot.thread_id;
+    event.process_id = slot.process_id;
+    event.callsite_rva = slot.callsite_rva;
+    event.candidate_rva = slot.candidate_rva;
+    event.vtable_slot = slot.vtable_slot;
+    event.vptr_rva = slot.vptr_rva;
+    event.input_surface = slot.input_surface;
+    event.owner_kind = slot.owner_kind;
+    event.provider_kind = slot.provider_kind;
+    event.provider_id = slot.provider_id;
+    event.hwnd = slot.hwnd;
+    event.text_seq = slot.text_seq;
+    event.text_thread_id = slot.text_thread_id;
+    event.text_utf16_hash = slot.text_utf16_hash;
+    event.text_utf16_length = slot.text_utf16_length;
+    event.pre_text_seq = slot.pre_text_seq;
+    event.pre_text_thread_id = slot.pre_text_thread_id;
+    event.post_text_seq = slot.post_text_seq;
+    event.post_text_thread_id = slot.post_text_thread_id;
+    event.source_start = slot.source_start;
+    event.source_length = slot.source_length;
+    event.glyph_index = slot.glyph_index;
+    event.glyph_count = slot.glyph_count;
+    event.geometry_generation = slot.geometry_generation;
+    event.glyph_x = slot.glyph_x;
+    event.glyph_y = slot.glyph_y;
+    event.glyph_w = slot.glyph_w;
+    event.glyph_h = slot.glyph_h;
+    event.client_w = slot.client_w;
+    event.client_h = slot.client_h;
+    event.design_w = slot.design_w;
+    event.design_h = slot.design_h;
+    event.viewport_w = slot.viewport_w;
+    event.viewport_h = slot.viewport_h;
+    event.argument0 = slot.argument0;
+    event.argument1 = slot.argument1;
+    event.result0 = slot.result0;
+    event.result1 = slot.result1;
+    event.record_index = slot.record_index;
+    event.record_count = slot.record_count;
+    event.coordinate_space = slot.coordinate_space;
+    event.transform_flags = slot.transform_flags;
+    event.layer_origin_x = slot.layer_origin_x;
+    event.layer_origin_y = slot.layer_origin_y;
+    event.render_target_w = slot.render_target_w;
+    event.render_target_h = slot.render_target_h;
+    event.schema_version = schema;
+    event.session_id = session_id;
+    event.overflow_count = overflow_count;
+    // The final slot-seq recheck is the commit check.  A writer that wrapped
+    // while the fields were copied invalidates this event, never a partial one.
+    if (fushi_voice_hook::AtomicLoadPreview64(&slot.seq) != sequence) continue;
+    event.reason_token = fushi_voice_hook::LookupDiagnosticReasonToken(
+        event.reason_id);
+    out.push_back(std::move(event));
+  }
+  st.seg.lookup_diagnostic_seq = count;
 }
 
 VoiceHookLookupWriteResult VoiceHookReader::WriteLookupFrame(

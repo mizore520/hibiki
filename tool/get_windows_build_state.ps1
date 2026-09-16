@@ -35,7 +35,11 @@ function Get-FileSha256Hex {
 function Test-IsBuildInputPath {
   param([Parameter(Mandatory = $true)][string] $RelativePath)
 
-  $normalized = ($RelativePath -replace '\\', '/').TrimStart('./')
+  $normalized = ($RelativePath -replace '\\', '/')
+  while ($normalized.StartsWith('./', [StringComparison]::Ordinal)) {
+    $normalized = $normalized.Substring(2)
+  }
+  $normalized = $normalized.TrimStart('/')
   if ([string]::IsNullOrWhiteSpace($normalized)) {
     return $false
   }
@@ -47,6 +51,20 @@ function Test-IsBuildInputPath {
   # path-based and conservative: application/native/package/tool sources still
   # participate in the fingerprint, including untracked files.
   if ($normalized -match '^(?:docs/|\.codex-test/|\.worktrees/|\.github/)') {
+    return $false
+  }
+  # Codex scratch directories/scripts and loose compiler objects are local
+  # diagnostics, not Windows bundle inputs. They are intentionally not
+  # deleted or added to .gitignore here: excluding them at the fingerprint
+  # boundary keeps an existing user's files visible while preventing a probe
+  # or a temporary CMake backup from forcing a full app rebuild.
+  if ($normalized -match '(^|/)\.codex(?:-|/)') {
+    return $false
+  }
+  if ($normalized -match '\.obj$') {
+    return $false
+  }
+  if ($normalized -eq 'native/galgame_hook/tools/little_busters_memory_probe.cpp') {
     return $false
   }
   if ($normalized -match '^(?:fushi/(?:test|integration_test)/|(?:test|integration_test)/|packages/[^/]+/test/|native(?:/[^/]+)*/tests/)') {
