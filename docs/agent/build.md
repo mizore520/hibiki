@@ -40,6 +40,23 @@ cd fushi
 flutter build apk --release --target-platform android-arm64 --split-per-abi
 ```
 
+### Windows/Galgame 本地迭代与缓存失效矩阵
+
+普通 `启动Hibiki最新版.bat` 是开发迭代入口，不是完整候选入口。默认路径必须复用已验证的 pub/package、Flutter 增量产物、Galgame helper、ONNX/SQLite/torrent 等本地缓存；只有缓存缺失、校验失败或输入确实变化时才允许下载或重建。日志必须明确显示命中/跳过原因，不能让“每次都下载”成为正常行为。
+
+| 改动范围 | 默认动作 | 不应做的动作 |
+| --- | --- | --- |
+| 仅 Dart/UI | bootstrap 状态未变则复用依赖，保留 Flutter 增量缓存，重新构建 app | 重编 x86/x64 helper、重下运行库、无故执行全量 native 测试 |
+| native adapter/hook | 按当前 source fingerprint 增量构建 x86/x64 生产目标，并跑直接相关的 native 测试 | 因一次源码修改就重新解析 pub 或下载已有归档 |
+| 共享 IPC/查词协议 | 同步修改 native 与 Fushi 消费端，分别做两侧定向验证，再做候选打包 | 只编译一侧，或把旧 bundle/旧 DLL 当成新协议验证 |
+| pubspec/lock、Flutter SDK、依赖补丁 | 只失效受影响的 bootstrap/package/AOT 缓存，重新解析依赖并记录原因 | 继续使用未重算的 package config 或把缓存错误吞掉 |
+| 数据库 schema/迁移 | 先做 schema 兼容与迁移门检查；不兼容就停止并报告 | 修改版本守卫、强行降级或用旧 app 打开新数据库 |
+| `clean`/正式候选 | 仅在明确要求时执行完整清理或 `tool/build_windows_candidate.ps1` | 把 clean 当作每次普通启动的默认步骤 |
+
+Galgame helper 的普通本地构建不传 `-RunTests`；`native/galgame_hook/tools/build_distribution.ps1 -RunTests` 只用于 CI、正式验证或用户明确要求的完整 native 门。`prepare_windows_gal_helper.ps1` 必须先检查 source fingerprint、archive SHA-256 和 sidecar，命中时直接复用，不启动 CMake，也不触发网络下载。
+
+构建失败先按阶段归类：依赖/网络、Visual Studio/CMake 环境、源码编译、测试、打包、运行时。若失败发生在编译器启动前，先记录 VS 安装路径、CMake/NMake/MSBuild 版本、x86/x64 开发环境和 `TrackFileAccess` 状态，做最小工具链预检；不得把环境错误反复当成源码错误全量重编译。若失败发生在测试或打包，则保留原始日志和退出码，不能用管道截断输出或零测试执行来判绿。
+
 ### TODO-207 release channel invariants
 
 客户端按 stable / beta / debug 三个通道过滤 GitHub Release。stable 只看正式 Latest；beta/debug 扫描最近 releases，但只接受 tag 形如 `v<version>-beta.<seq>` / `v<version>-debug.<seq>+<short-sha>` 且 `prerelease=true` 的 release。旧的 `debug-<sha>` tag 不可比较，客户端会忽略。
