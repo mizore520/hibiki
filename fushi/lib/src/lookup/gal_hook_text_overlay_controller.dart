@@ -1745,10 +1745,14 @@ class GalHookTextOverlayController extends ChangeNotifier {
   /// a historical row or same-text replacement cannot become this screenshot.
   Future<GalLookupCalibrationCapture> captureCalibrationSample() async {
     if (_calibrationCaptureInFlight) {
-      throw StateError('calibration_sample_capture_busy');
+      throw const GalLookupCalibrationCaptureException(
+        GalLookupCalibrationCaptureFailure.busy,
+      );
     }
     if (!_started || !_attachedText.canCaptureCalibrationSample) {
-      throw StateError('calibration_sample_surface_not_ready');
+      throw const GalLookupCalibrationCaptureException(
+        GalLookupCalibrationCaptureFailure.sourceNotReady,
+      );
     }
     _calibrationCaptureInFlight = true;
     ++_syncRevision;
@@ -1765,13 +1769,20 @@ class GalHookTextOverlayController extends ChangeNotifier {
           if (overlayWasVisible) {
             await GalHookTextOverlayChannel.hide();
             if (await GalHookTextOverlayChannel.isShowing()) {
-              throw StateError('calibration_sample_overlay_hide_failed');
+              throw const GalLookupCalibrationCaptureException(
+                GalLookupCalibrationCaptureFailure.overlayHideFailed,
+              );
             }
             _visible = false;
           }
           return _acquireCalibrationCaptureLease();
         },
       );
+    } catch (error) {
+      final GalLookupCalibrationCaptureFailure failure =
+          _calibrationCaptureFailureFor(error);
+      glog('gal-overlay: calibration_sample failed category=${failure.name}');
+      throw GalLookupCalibrationCaptureException(failure);
     } finally {
       _calibrationCaptureInFlight = false;
       if (_started && sessionEpoch == _sessionKey && overlayWasVisible) {
@@ -1780,6 +1791,18 @@ class GalHookTextOverlayController extends ChangeNotifier {
       if (_started) _scheduleSync();
       notifyListeners();
     }
+  }
+
+  static GalLookupCalibrationCaptureFailure _calibrationCaptureFailureFor(
+    Object error,
+  ) {
+    if (error is GalLookupCalibrationCaptureException) {
+      return error.failure;
+    }
+    if (error is GalHookCaptureSuppressionException) {
+      return GalLookupCalibrationCaptureFailure.suppressionUnavailable;
+    }
+    return GalLookupCalibrationCaptureFailure.unknown;
   }
 
   GalLookupCalibrationCaptureSnapshot _calibrationCaptureSnapshot() {
@@ -1807,11 +1830,15 @@ class GalHookTextOverlayController extends ChangeNotifier {
         state.boundWindow?.pid != target.targetPid ||
         !(_attachedText.canCaptureCalibrationSample || ownCaptureSuppression) ||
         !_attachedText.calibrationManuallyEnabled) {
-      throw StateError('calibration_sample_source_not_ready');
+      throw const GalLookupCalibrationCaptureException(
+        GalLookupCalibrationCaptureFailure.sourceNotReady,
+      );
     }
     final TexthookerLineEntry entry = lines.last;
     if (entry.rubySpans.isNotEmpty) {
-      throw StateError('calibration_sample_ruby_not_supported');
+      throw const GalLookupCalibrationCaptureException(
+        GalLookupCalibrationCaptureFailure.rubyUnsupported,
+      );
     }
     return GalLookupCalibrationCaptureSnapshot(
       sourceText: entry.text,
@@ -1844,7 +1871,9 @@ class GalHookTextOverlayController extends ChangeNotifier {
     }
     if (!_attachedText.canCaptureCalibrationSample ||
         _attachedText.surfaceVisible) {
-      throw StateError('calibration_sample_surface_changed');
+      throw const GalLookupCalibrationCaptureException(
+        GalLookupCalibrationCaptureFailure.sourceNotReady,
+      );
     }
     // A new profile has no attached surface. Only fence an existing dictionary
     // card; inventing a glyph lease here would require a calibrated layout.
@@ -1853,7 +1882,9 @@ class GalHookTextOverlayController extends ChangeNotifier {
     final int token = ++_nextCalibrationCaptureGeneration;
     try {
       if (!await GlobalLookupChannel.suspendForCapture(token)) {
-        throw StateError('calibration_sample_card_hide_failed');
+        throw const GalLookupCalibrationCaptureException(
+          GalLookupCalibrationCaptureFailure.suppressionUnavailable,
+        );
       }
     } catch (_) {
       await GlobalLookupChannel.runWithRoute(
@@ -1869,7 +1900,9 @@ class GalHookTextOverlayController extends ChangeNotifier {
           () => GlobalLookupChannel.restoreAfterCapture(token),
         );
         if (!restored) {
-          throw StateError('calibration_sample_card_restore_failed');
+          throw const GalLookupCalibrationCaptureException(
+            GalLookupCalibrationCaptureFailure.restoreFailed,
+          );
         }
       },
     );

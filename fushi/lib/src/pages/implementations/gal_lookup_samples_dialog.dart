@@ -56,9 +56,12 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
   bool _previewRunning = false;
   int _previewRevision = 0;
   bool _showBoxes = true;
+  bool _manualLayout = false;
   double _opacity = 0.55;
   String? _message;
   bool _failed = false;
+
+  bool get _canPreview => _manualLayout || _layout.cellGrid != null;
 
   GalLookupCalibrationDraft get _draft => GalLookupCalibrationDraft(
     rect: _rect,
@@ -115,6 +118,9 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     _previewRunning = true;
     try {
       while (mounted) {
+        // A legacy draft is only a rough region until automatic measurement.
+        // Its font preview says nothing about whether the screenshot fits.
+        if (!_canPreview) break;
         final int revision = _previewRevision;
         final GalLookupCalibrationDraft draft = _draft;
         final List<GalCalibrationPreview> previews;
@@ -141,7 +147,9 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     } catch (_) {
       if (mounted) {
         setState(() {
-          _message = t.game_lookup_samples_unavailable;
+          _message = _manualLayout
+              ? t.game_lookup_samples_unavailable
+              : t.game_lookup_samples_auto_preview_failed;
           _failed = true;
         });
       }
@@ -175,7 +183,9 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       final GalLookupCalibrationCapture capture = await widget.capture();
       if (!mounted) return;
       if (capture.exeSha256 != widget.exeSha256) {
-        throw StateError('game_changed');
+        throw const GalLookupCalibrationCaptureException(
+          GalLookupCalibrationCaptureFailure.sceneChanged,
+        );
       }
       final List<GalCalibrationSample> samples = [
         ..._samples,
@@ -193,18 +203,42 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       _changed();
       // New captures are persisted immediately so returning to the game never
       // risks losing the user's collected samples when the window is closed.
-      await widget.store.save(widget.exeSha256, _draft);
-      _dirty = false;
-    } catch (_) {
+      await _save();
+    } catch (error) {
       if (mounted) {
         setState(() {
-          _message = t.game_lookup_samples_capture_failed;
+          _message = _captureFailureMessage(error);
           _failed = true;
         });
       }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  String _captureFailureMessage(Object error) {
+    if (error is! GalLookupCalibrationCaptureException) {
+      return t.game_lookup_samples_capture_failed;
+    }
+    return switch (error.failure) {
+      GalLookupCalibrationCaptureFailure.sceneChanged =>
+        t.game_lookup_samples_capture_changed,
+      GalLookupCalibrationCaptureFailure.sourceNotReady ||
+      GalLookupCalibrationCaptureFailure.invalidSource =>
+        t.game_lookup_samples_capture_source,
+      GalLookupCalibrationCaptureFailure.rubyUnsupported =>
+        t.game_lookup_samples_capture_unsupported,
+      GalLookupCalibrationCaptureFailure.overlayHideFailed ||
+      GalLookupCalibrationCaptureFailure.suppressionUnavailable ||
+      GalLookupCalibrationCaptureFailure.restoreFailed =>
+        t.game_lookup_samples_capture_overlay,
+      GalLookupCalibrationCaptureFailure.windowCaptureFailed ||
+      GalLookupCalibrationCaptureFailure.clientMappingUnavailable ||
+      GalLookupCalibrationCaptureFailure.imageTooLarge ||
+      GalLookupCalibrationCaptureFailure.imageDimensionsInvalid =>
+        t.game_lookup_samples_capture_window,
+      _ => t.game_lookup_samples_capture_failed,
+    };
   }
 
   Future<bool> _save() async {
@@ -222,7 +256,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     } catch (_) {
       if (mounted) {
         setState(() {
-          _message = t.game_lookup_samples_load_failed;
+          _message = t.game_lookup_samples_save_failed;
           _failed = true;
         });
       }
@@ -231,7 +265,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
   }
 
   Future<void> _finish({bool apply = false}) async {
-    if (_busy) return;
+    if (_busy || (apply && !_canPreview)) return;
     _commitNumberEdit();
     setState(() => _busy = true);
     if (apply) {
@@ -257,7 +291,9 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       if (!valid) {
         setState(() {
           _busy = false;
-          _message = t.game_lookup_samples_unavailable;
+          _message = _manualLayout
+              ? t.game_lookup_samples_unavailable
+              : t.game_lookup_samples_auto_preview_failed;
           _failed = true;
         });
         return;
@@ -313,16 +349,9 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       _failed = false;
     });
     try {
-      // The selected screenshot trains this operation; all other saved images
-      // are independent checks, including drafts previously marked validation.
-      final GalLookupCalibrationDraft input = GalLookupCalibrationDraft(
-        rect: _rect,
-        layout: _layout,
-        samples: [
-          for (int i = 0; i < _samples.length; i++)
-            _samples[i].copyWith(validation: i != _selected),
-        ],
-      );
+      // Keep the user's training/validation split: quoted and plain multiline
+      // examples may teach different continuation indents in one shared grid.
+      final GalLookupCalibrationDraft input = _draft;
       final GalCalibrationImageFit result = await widget.imageFitter(
         input,
         build: widget.previewBuilder,
@@ -331,17 +360,27 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       if (result.draft == null) {
         setState(() {
           _failed = true;
-          _message = switch (result.reason) {
+          final String reason = switch (result.reason) {
             'multiline_required' => t.game_lookup_samples_auto_multiline,
             'unsupported_text' => t.game_lookup_samples_auto_unsupported,
+            'text_rows_not_found' => t.game_lookup_samples_auto_rows_missing,
+            'inconsistent_samples' => t.game_lookup_samples_auto_inconsistent,
+            'preview_rejected' => t.game_lookup_samples_auto_preview_failed,
             _ => t.game_lookup_samples_auto_failed,
           };
+          _message = result.sampleIndex == null
+              ? reason
+              : t.game_lookup_samples_auto_sample_failed(
+                  sample: '${result.sampleIndex! + 1}',
+                  reason: reason,
+                );
         });
       } else {
         _rect = result.draft!.rect;
         _layout = result.draft!.layout;
         _samples = result.draft!.samples.toList();
         _font.text = _layout.fontFamily;
+        _manualLayout = false;
         _markIndex = null;
         _editMode = GalCalibrationEditMode.pan;
         _changed();
@@ -364,7 +403,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
   }
 
   double? _errorFor(int sampleIndex) {
-    if (_layout.cellGrid != null) return null;
+    if (!_manualLayout) return null;
     if (_previews.length != _samples.length) return null;
     final GalCalibrationSample sample = _samples[sampleIndex];
     final GalLookupReferenceClientV1 client = sample.capture.referenceClient;
@@ -446,6 +485,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
               TextButton(
                 onPressed:
                     _busy ||
+                        !_canPreview ||
                         _samples.isEmpty ||
                         _previewRunning ||
                         _previews.length != _samples.length ||
@@ -463,7 +503,10 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: Text(
-                  _message ?? t.game_lookup_samples_auto_hint,
+                  _message ??
+                      (_canPreview
+                          ? t.game_lookup_samples_auto_hint
+                          : t.game_lookup_samples_auto_pending),
                   style: _failed
                       ? TextStyle(color: Theme.of(context).colorScheme.error)
                       : null,
@@ -529,7 +572,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                                 if (_sample != null)
                                   SizedBox(
                                     height: math.min(
-                                      270,
+                                      _manualLayout ? 270 : 160,
                                       constraints.maxHeight * 0.45,
                                     ),
                                     child: SingleChildScrollView(
@@ -567,7 +610,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       client: sample.capture.referenceClient,
       rect: _rect,
       boxes: _showBoxes ? _preview?.boxes ?? [] : [],
-      anchors: _layout.cellGrid == null ? sample.anchors : const {},
+      anchors: _manualLayout ? sample.anchors : const {},
       selectedIndex: _markIndex,
       mode: _editMode,
       opacity: _opacity,
@@ -602,11 +645,12 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            hovered == null
-                ? t.game_lookup_samples_hover
-                : '「${sample.capture.sourceText.substring(hovered.charIndex, hovered.charIndex + hovered.charLength)}」 · ${hovered.charIndex + 1}',
-          ),
+          if (_canPreview)
+            Text(
+              hovered == null
+                  ? t.game_lookup_samples_hover
+                  : '「${sample.capture.sourceText.substring(hovered.charIndex, hovered.charIndex + hovered.charLength)}」 · ${hovered.charIndex + 1}',
+            ),
           Wrap(
             spacing: 6,
             children: <Widget>[
@@ -626,7 +670,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                     ),
                   ].where(
                     (mode) =>
-                        _layout.cellGrid == null ||
+                        _manualLayout ||
                         mode.$1 != GalCalibrationEditMode.points,
                   ))
                 ChoiceChip(
@@ -642,11 +686,11 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
           Text(
             _layout.cellGrid != null
                 ? t.game_lookup_samples_auto_success
-                : _editMode == GalCalibrationEditMode.region
+                : !_manualLayout || _editMode == GalCalibrationEditMode.region
                 ? t.game_lookup_samples_region_hint
                 : t.game_lookup_samples_points_hint,
           ),
-          if (_layout.cellGrid == null)
+          if (_manualLayout)
             SizedBox(
               height: 96,
               child: SingleChildScrollView(
@@ -673,7 +717,9 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                 ),
               ),
             ),
-          if (_markIndex != null && sample.anchors.containsKey(_markIndex))
+          if (_manualLayout &&
+              _markIndex != null &&
+              sample.anchors.containsKey(_markIndex))
             Wrap(
               spacing: 4,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -738,15 +784,16 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                         _dirty = true;
                       }),
               ),
-              TextButton(
-                onPressed: _busy
-                    ? null
-                    : () => setState(() {
-                        _samples[_selected] = sample.copyWith(anchors: {});
-                        _dirty = true;
-                      }),
-                child: Text(t.game_lookup_samples_clear_anchors),
-              ),
+              if (_manualLayout)
+                TextButton(
+                  onPressed: _busy
+                      ? null
+                      : () => setState(() {
+                          _samples[_selected] = sample.copyWith(anchors: {});
+                          _dirty = true;
+                        }),
+                  child: Text(t.game_lookup_samples_clear_anchors),
+                ),
               TextButton(
                 onPressed: _busy
                     ? null
@@ -765,7 +812,12 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
           ),
           if (_preview != null && !_preview!.accepted)
             Text(
-              t.game_lookup_samples_unavailable,
+              _manualLayout
+                  ? t.game_lookup_samples_unavailable
+                  : t.game_lookup_samples_auto_sample_failed(
+                      sample: '${_selected + 1}',
+                      reason: t.game_lookup_samples_auto_preview_failed,
+                    ),
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
         ],
@@ -845,17 +897,23 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
             '${_layout.cellGrid!.columns} · '
             '${(_layout.cellGrid!.advancePerClientHeight * height).toStringAsFixed(1)} px',
           ),
+        ],
+        if (!_manualLayout)
           TextButton(
+            key: const ValueKey<String>('calibration-manual-layout'),
             onPressed: _busy
                 ? null
                 : () {
-                    _layout = const GalLookupTextLayoutV1();
+                    if (_layout.cellGrid != null) {
+                      _layout = const GalLookupTextLayoutV1();
+                    }
+                    _manualLayout = true;
                     _font.text = _layout.fontFamily;
                     _changed();
                   },
             child: Text(t.game_lookup_samples_manual_layout),
           ),
-        ] else ...[
+        if (_manualLayout) ...[
           Text(
             t.game_lookup_samples_layout_title,
             style: Theme.of(context).textTheme.titleSmall,

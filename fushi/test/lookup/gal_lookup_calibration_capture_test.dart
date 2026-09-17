@@ -64,6 +64,15 @@ class _Lease implements GalHookCaptureLease {
   Future<void> release() async => onRelease();
 }
 
+Matcher throwsCaptureFailure(GalLookupCalibrationCaptureFailure failure) =>
+    throwsA(
+      isA<GalLookupCalibrationCaptureException>().having(
+        (GalLookupCalibrationCaptureException error) => error.failure,
+        'failure',
+        failure,
+      ),
+    );
+
 void main() {
   test(
     'captures full client and freezes bytes with round-trip identity',
@@ -134,7 +143,7 @@ void main() {
               return WindowCaptureResult(pngBytes: _png(), metadata: _metadata);
             },
           ),
-          throwsStateError,
+          throwsCaptureFailure(GalLookupCalibrationCaptureFailure.sceneChanged),
         );
         expect(released, isTrue);
       },
@@ -153,7 +162,7 @@ void main() {
         },
         captureWindow: (_) async => throw TestFailure('must not capture'),
       ),
-      throwsStateError,
+      throwsCaptureFailure(GalLookupCalibrationCaptureFailure.sceneChanged),
     );
     expect(released, isTrue);
   });
@@ -177,7 +186,9 @@ void main() {
         acquireLease: () async => _Lease(() => released = true),
         captureWindow: (_) async => throw StateError('WGC failed'),
       ),
-      throwsStateError,
+      throwsCaptureFailure(
+        GalLookupCalibrationCaptureFailure.windowCaptureFailed,
+      ),
     );
     expect(released, isTrue);
   });
@@ -191,7 +202,7 @@ void main() {
         captureWindow: (_) async =>
             WindowCaptureResult(pngBytes: _png(), metadata: _metadata),
       ),
-      throwsStateError,
+      throwsCaptureFailure(GalLookupCalibrationCaptureFailure.restoreFailed),
     );
   });
 
@@ -206,7 +217,9 @@ void main() {
           acquireLease: () async => null,
           captureWindow: (_) async => legacy,
         ),
-        throwsStateError,
+        throwsCaptureFailure(
+          GalLookupCalibrationCaptureFailure.clientMappingUnavailable,
+        ),
       );
     },
   );
@@ -231,7 +244,9 @@ void main() {
             metadata: WindowCaptureMetadata.tryFromMap(map),
           ),
         ),
-        throwsStateError,
+        throwsCaptureFailure(
+          GalLookupCalibrationCaptureFailure.clientMappingUnavailable,
+        ),
       );
     });
   }
@@ -246,7 +261,7 @@ void main() {
           metadata: _metadata,
         ),
       ),
-      throwsStateError,
+      throwsCaptureFailure(GalLookupCalibrationCaptureFailure.imageTooLarge),
     );
   });
 
@@ -260,7 +275,9 @@ void main() {
         captureWindow: (_) async =>
             WindowCaptureResult(pngBytes: png, metadata: _metadata),
       ),
-      throwsStateError,
+      throwsCaptureFailure(
+        GalLookupCalibrationCaptureFailure.imageDimensionsInvalid,
+      ),
     );
   });
 

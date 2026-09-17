@@ -1328,13 +1328,24 @@ class GalAttachedTextController extends ChangeNotifier {
         break;
       case 'captureSuppressed':
       case 'targetMinimized':
-      case 'targetBackground':
       case 'hitSnapshotUnavailable':
         _surfaceVisible = false;
         _setStatus(
           GalAttachedTextStatus.suspended,
           reason: _stateEventReason(event),
         );
+        break;
+      case 'targetBackground':
+        _surfaceVisible = false;
+        _setStatus(
+          GalAttachedTextStatus.suspended,
+          reason: _stateEventReason(event),
+        );
+        // The overlay routing key does not include status reason. A prior
+        // noGlyphClusters suspension therefore cannot rely on a fresh session
+        // sync when the native health tick reports targetBackground. This
+        // method only stages an attached, hidden background calibration state.
+        unawaited(_pushLatestTextIfActive());
         break;
       case 'detached':
         _setStatus(
@@ -1915,9 +1926,18 @@ class GalAttachedTextController extends ChangeNotifier {
   }
 
   Future<void> _pushLatestTextIfActive() async {
+    // While the samples dialog owns the foreground, the native surface stays
+    // hidden as targetBackground. Its text still has to advance: a later
+    // calibration capture requires the exact current text generation before it
+    // may acquire a visibility lease.
+    final bool stageForBackgroundCalibrationCapture =
+        _status == GalAttachedTextStatus.suspended &&
+        _statusReason == 'targetBackground' &&
+        calibrationCaptureNeedsAttachedLease;
     if ((_status != GalAttachedTextStatus.activeAttached &&
             !calibrationActive &&
-            _activeCaptureLease == null) ||
+            _activeCaptureLease == null &&
+            !stageForBackgroundCalibrationCapture) ||
         _latestSourceText == _sentSourceText) {
       return;
     }

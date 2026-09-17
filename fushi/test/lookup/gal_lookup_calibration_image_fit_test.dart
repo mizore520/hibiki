@@ -16,6 +16,8 @@ GalCalibrationSample _sample({
   bool blank = false,
   bool explicitBreak = false,
   bool trailingBreak = false,
+  bool borderSpecks = false,
+  bool extraGlyph = false,
 }) {
   final img.Image image = img.Image(width: 600, height: 300);
   img.fill(image, color: img.ColorRgb8(30, 40, 60));
@@ -65,6 +67,29 @@ GalCalibrationSample _sample({
         );
       }
     }
+    if (borderSpecks) {
+      for (final (int x, int y) in [(588, 118), (10, 149)]) {
+        img.fillRect(
+          image,
+          x1: x,
+          y1: y,
+          x2: x + 1,
+          y2: y + 2,
+          color: img.ColorRgb8(245, 245, 245),
+        );
+      }
+    }
+    if (extraGlyph) {
+      img.drawRect(
+        image,
+        x1: 580,
+        y1: 110,
+        x2: 591,
+        y2: 129,
+        color: img.ColorRgb8(245, 245, 245),
+        thickness: 2,
+      );
+    }
   }
   return GalCalibrationSample(
     validation: validation,
@@ -102,6 +127,20 @@ GalLookupCalibrationDraft _draft(List<GalCalibrationSample> samples) =>
     );
 
 void main() {
+  test('rough regions tolerate isolated background specks beside text', () {
+    final GalCalibrationImageFit result = inferGalCalibrationGrid(
+      _draft([_sample(borderSpecks: true)]),
+    );
+    expect(result.draft?.layout.cellGrid?.columns, 20);
+    expect(result.draft?.layout.cellGrid?.quotedContinuationIndent, 1);
+  });
+
+  test('does not discard an unexplained full glyph outside the text run', () {
+    expect(
+      inferGalCalibrationGrid(_draft([_sample(extraGlyph: true)])).draft,
+      isNull,
+    );
+  });
   test(
     'measures ink grid and quoted continuation without any centre marks',
     () {

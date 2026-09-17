@@ -1669,6 +1669,101 @@ void main() {
   );
 
   test(
+    'background calibration stages a changed occurrence before acquiring lease',
+    () async {
+      preferences[key()] = jsonEncode(_profile().toJson());
+      await sync();
+      controller.handleSurfaceStateChanged(
+        GalAttachedSurfaceStateEvent(
+          target: controller.target!,
+          state: 'suspended',
+          status: 'targetBackground',
+        ),
+      );
+      port.textSurfaceVisible = false;
+
+      await sync(text: '后台期间的新正文');
+
+      expect(port.texts.last.text, '后台期间的新正文');
+      expect(port.texts.last.generation, 2);
+      expect(controller.canCaptureCalibrationSample, isTrue);
+      final GalAttachedMiningCaptureLease? lease = await controller
+          .acquireMiningCaptureLease(allowBackgroundCalibrationCapture: true);
+      expect(lease, isNotNull);
+      expect(
+        port.calls,
+        contains('suspendForCapture:2:${lease!.captureGeneration}'),
+      );
+    },
+  );
+
+  test(
+    'target background state stages text retained after no-glyph suspension',
+    () async {
+      preferences[key()] = jsonEncode(_profile().toJson());
+      await sync();
+      controller.handleSurfaceStateChanged(
+        GalAttachedSurfaceStateEvent(
+          target: controller.target!,
+          state: 'ready',
+          status: 'noGlyphClusters',
+        ),
+      );
+
+      await sync(text: 'no-glyph 期间到达的三行长正文');
+      expect(port.texts, hasLength(1));
+
+      port.textSurfaceVisible = false;
+      controller.handleSurfaceStateChanged(
+        GalAttachedSurfaceStateEvent(
+          target: controller.target!,
+          state: 'suspended',
+          status: 'targetBackground',
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(port.texts.last.text, 'no-glyph 期间到达的三行长正文');
+      expect(port.texts.last.generation, 2);
+      final GalAttachedMiningCaptureLease? lease = await controller
+          .acquireMiningCaptureLease(allowBackgroundCalibrationCapture: true);
+      expect(lease, isNotNull);
+      expect(
+        port.calls,
+        contains('suspendForCapture:2:${lease!.captureGeneration}'),
+      );
+    },
+  );
+
+  test(
+    'non-background suspension does not stage retained calibration text',
+    () async {
+      preferences[key()] = jsonEncode(_profile().toJson());
+      await sync();
+      controller.handleSurfaceStateChanged(
+        GalAttachedSurfaceStateEvent(
+          target: controller.target!,
+          state: 'ready',
+          status: 'noGlyphClusters',
+        ),
+      );
+
+      await sync(text: '最小化期间到达的正文');
+      controller.handleSurfaceStateChanged(
+        GalAttachedSurfaceStateEvent(
+          target: controller.target!,
+          state: 'suspended',
+          status: 'targetMinimized',
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(port.texts, hasLength(1));
+      expect(controller.canCaptureCalibrationSample, isFalse);
+    },
+  );
+
+  test(
     'sentence race after suspend acknowledgement compensates exact token',
     () async {
       preferences[key()] = jsonEncode(_profile().toJson());

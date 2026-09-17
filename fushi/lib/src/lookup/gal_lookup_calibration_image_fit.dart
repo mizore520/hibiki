@@ -10,9 +10,12 @@ import 'package:image/image.dart' as img;
 /// supplies every character. Only a regular, horizontal full-width grid is
 /// inferred; ambiguous images/text leave the existing draft untouched.
 class GalCalibrationImageFit {
-  const GalCalibrationImageFit({this.draft, this.reason});
+  const GalCalibrationImageFit({this.draft, this.reason, this.sampleIndex});
   final GalLookupCalibrationDraft? draft;
   final String? reason;
+
+  /// Zero-based failing sample, without including private text or pixels.
+  final int? sampleIndex;
 }
 
 Future<GalCalibrationImageFit> fitGalCalibrationImages(
@@ -25,7 +28,8 @@ Future<GalCalibrationImageFit> fitGalCalibrationImages(
   );
   final GalLookupCalibrationDraft? fitted = fit.draft;
   if (fitted == null) return fit;
-  for (final GalCalibrationSample sample in fitted.samples) {
+  for (int index = 0; index < fitted.samples.length; index++) {
+    final GalCalibrationSample sample = fitted.samples[index];
     final GalCalibrationPreview preview = await build(
       text: sample.capture.sourceText,
       client: sample.capture.referenceClient,
@@ -33,7 +37,10 @@ Future<GalCalibrationImageFit> fitGalCalibrationImages(
       layout: fitted.layout,
     );
     if (!preview.accepted) {
-      return const GalCalibrationImageFit(reason: 'preview_rejected');
+      return GalCalibrationImageFit(
+        reason: 'preview_rejected',
+        sampleIndex: index,
+      );
     }
   }
   return fit;
@@ -112,6 +119,37 @@ List<List<int>> _lines(String text, int capacity, int indent) {
   return lines;
 }
 
+/// A rough selection can include a few bright pixels from the surrounding
+/// artwork. Discard only tiny, isolated islands, never another text-sized run.
+/// Punctuation near its neighbours stays part of the same run; a whole short
+/// line is also retained. The remaining ink still has to explain every cell.
+void _removeIsolatedSpecks(List<int> columns, int rowHeight) {
+  final List<(int, int)> groups = [];
+  int start = -1;
+  int previous = -1;
+  for (int x = 0; x < columns.length; x++) {
+    if (columns[x] < 2) continue;
+    if (start < 0) {
+      start = x;
+    } else if (x - previous > rowHeight * 1.5) {
+      groups.add((start, previous + 1));
+      start = x;
+    }
+    previous = x;
+  }
+  if (start >= 0) groups.add((start, previous + 1));
+  if (groups.length < 2) return;
+  final int total = columns.fold<int>(0, (int a, int b) => a + b);
+  for (final (int left, int right) in groups) {
+    if (right - left > rowHeight * 0.5) continue;
+    int ink = 0;
+    for (int x = left; x < right; x++) ink += columns[x];
+    if (ink <= math.max(4, rowHeight * 0.5) && ink <= total * 0.01) {
+      columns.fillRange(left, right, 0);
+    }
+  }
+}
+
 _SampleInk? _measure(
   GalCalibrationSample sample,
   GalLookupNormalizedRectV1 rect,
@@ -175,6 +213,7 @@ _SampleInk? _measure(
     for (int y = a; y < b; y++) {
       for (int x = 0; x < width; x++) columns[left + x] += mask[y * width + x];
     }
+    _removeIsolatedSpecks(columns, b - a);
     final int first = columns.indexWhere((int v) => v >= 2);
     final int last = columns.lastIndexWhere((int v) => v >= 2);
     if (first < 0 || last - first < (b - a) * 1.2) continue;
@@ -300,19 +339,31 @@ _GridFit? _fitSample(_SampleInk sample) {
 GalCalibrationImageFit inferGalCalibrationGrid(
   GalLookupCalibrationDraft draft,
 ) {
-  if (draft.samples.isEmpty ||
-      !draft.rect.isValid ||
-      draft.samples.any(
-        (GalCalibrationSample s) => !_eligible(s.capture.sourceText),
-      )) {
+  if (draft.samples.isEmpty || !draft.rect.isValid) {
     return const GalCalibrationImageFit(reason: 'unsupported_text');
   }
+  for (int index = 0; index < draft.samples.length; index++) {
+    if (!_eligible(draft.samples[index].capture.sourceText)) {
+      return GalCalibrationImageFit(
+        reason: 'unsupported_text',
+        sampleIndex: index,
+      );
+    }
+  }
+  String failure = 'image_grid_ambiguous';
+  int? failedSample;
   bool onlySingleLines = false;
   for (final bool light in [true, false]) {
     final List<_SampleInk> samples = [];
     for (final GalCalibrationSample sample in draft.samples) {
       final _SampleInk? measured = _measure(sample, draft.rect, light);
-      if (measured == null) break;
+      if (measured == null) {
+        if (light) {
+          failure = 'text_rows_not_found';
+          failedSample = samples.length;
+        }
+        break;
+      }
       samples.add(measured);
     }
     if (samples.length != draft.samples.length) continue;
@@ -367,7 +418,8 @@ GalCalibrationImageFit inferGalCalibrationGrid(
     ]);
     if (lineAdvance < cellHeight) continue;
     bool valid = true;
-    for (final _SampleInk sample in samples) {
+    for (int index = 0; index < samples.length; index++) {
+      final _SampleInk sample = samples[index];
       if (_score(
             sample,
             columns,
@@ -379,6 +431,8 @@ GalCalibrationImageFit inferGalCalibrationGrid(
           ) >
           0.12) {
         valid = false;
+        failure = 'inconsistent_samples';
+        failedSample = index;
         break;
       }
       for (int row = 0; row < sample.rows.length; row++) {
@@ -386,8 +440,11 @@ GalCalibrationImageFit inferGalCalibrationGrid(
                     1 -
                     sample.rows[row].top)
                 .abs() >
-            math.max(2, cellHeight * sample.height * 0.12))
+            math.max(2, cellHeight * sample.height * 0.12)) {
           valid = false;
+          failure = 'inconsistent_samples';
+          failedSample = index;
+        }
       }
     }
     if (!valid) continue;
@@ -421,7 +478,8 @@ GalCalibrationImageFit inferGalCalibrationGrid(
     );
   }
   return GalCalibrationImageFit(
-    reason: onlySingleLines ? 'multiline_required' : 'image_grid_ambiguous',
+    reason: onlySingleLines ? 'multiline_required' : failure,
+    sampleIndex: onlySingleLines ? null : failedSample,
   );
 }
 

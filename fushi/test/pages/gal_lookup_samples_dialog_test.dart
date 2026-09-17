@@ -94,6 +94,7 @@ class _MemoryStore extends GalLookupCalibrationStore {
   _MemoryStore({this.draft});
 
   GalLookupCalibrationDraft? draft;
+  bool failSave = false;
   final List<GalLookupCalibrationDraft> saved = <GalLookupCalibrationDraft>[];
 
   @override
@@ -105,6 +106,7 @@ class _MemoryStore extends GalLookupCalibrationStore {
   @override
   Future<void> save(String hash, GalLookupCalibrationDraft draft) async {
     expect(hash, _sha);
+    if (failSave) throw StateError('synthetic disk failure');
     saved.add(draft);
     this.draft = draft;
   }
@@ -127,6 +129,7 @@ Future<_Result> _open(
       imageFitter =
       fitGalCalibrationImages,
   Size size = const Size(1280, 900),
+  bool manual = true,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -164,6 +167,15 @@ Future<_Result> _open(
   );
   await tester.tap(find.byType(ElevatedButton));
   await tester.pumpAndSettle();
+  // Existing anchor/font cases explicitly opt in to the advanced workflow.
+  if (manual) {
+    final Finder button = find.byKey(
+      const ValueKey<String>('calibration-manual-layout'),
+    );
+    await tester.ensureVisible(button);
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+  }
   return result;
 }
 
@@ -573,6 +585,7 @@ void main() {
       final _Result result = await _open(
         tester,
         store: store,
+        manual: false,
         imageFitter: (draft, {build = _preview}) async {
           expect(draft.samples.single.validation, isFalse);
           expect(draft.samples.single.anchors, isEmpty);
@@ -620,6 +633,7 @@ void main() {
     await _open(
       tester,
       store: store,
+      manual: false,
       imageFitter: (draft, {build = _preview}) async =>
           const GalCalibrationImageFit(reason: 'multiline_required'),
     );
@@ -632,6 +646,138 @@ void main() {
     await tester.pumpAndSettle();
     expect(store.saved.single.layout, _layout);
     expect(store.saved.single.rect, _rect);
+  });
+
+  testWidgets(
+    'automatic mode ignores legacy overflow and preserves the split',
+    (WidgetTester tester) async {
+      final GalLookupCalibrationDraft original = _draft(count: 3);
+      final _MemoryStore store = _MemoryStore(
+        draft: GalLookupCalibrationDraft(
+          rect: original.rect,
+          layout: original.layout,
+          samples: [
+            original.samples[0].copyWith(validation: true),
+            original.samples[1],
+            original.samples[2],
+          ],
+        ),
+      );
+      int previews = 0;
+      await _open(
+        tester,
+        store: store,
+        manual: false,
+        previewBuilder:
+            ({
+              required text,
+              required client,
+              required rect,
+              required layout,
+            }) async {
+              previews++;
+              return const GalCalibrationPreview(boxes: [], reason: 'overflow');
+            },
+        imageFitter: (draft, {build = _preview}) async {
+          expect(draft.samples.map((s) => s.validation), [true, false, false]);
+          return const GalCalibrationImageFit(
+            reason: 'inconsistent_samples',
+            sampleIndex: 2,
+          );
+        },
+      );
+      expect(previews, 0);
+      expect(canvas(tester).boxes, isEmpty);
+      expect(canvas(tester).anchors, isEmpty);
+      expect(
+        find.byKey(const ValueKey<String>('calibration-font')),
+        findsNothing,
+      );
+      expect(find.text(t.game_lookup_samples_unavailable), findsNothing);
+      expect(find.text(t.game_lookup_samples_auto_pending), findsOneWidget);
+      final TextButton apply = tester.widget<TextButton>(
+        find.widgetWithText(TextButton, t.game_lookup_samples_apply),
+      );
+      expect(apply.onPressed, isNull);
+      await tester.tap(
+        find.byKey(const ValueKey<String>('calibration-auto-align')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          t.game_lookup_samples_auto_sample_failed(
+            sample: '3',
+            reason: t.game_lookup_samples_auto_inconsistent,
+          ),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.byTooltip(t.game_lookup_samples_save));
+      await tester.pumpAndSettle();
+      expect(store.saved.last.layout, original.layout);
+      expect(store.saved.last.rect, original.rect);
+      expect(store.saved.last.samples.map((s) => s.validation), [
+        true,
+        false,
+        false,
+      ]);
+    },
+  );
+
+  testWidgets(
+    'deleting from eight allows capture and a failed attempt recovers',
+    (WidgetTester tester) async {
+      final _MemoryStore store = _MemoryStore(draft: _draft(count: 8));
+      int captures = 0;
+      await _open(
+        tester,
+        store: store,
+        manual: false,
+        capture: () async {
+          captures++;
+          if (captures == 1) {
+            throw const GalLookupCalibrationCaptureException(
+              GalLookupCalibrationCaptureFailure.sceneChanged,
+            );
+          }
+          return _capture();
+        },
+      );
+      await tester.tap(find.byTooltip(t.game_lookup_samples_capture));
+      await tester.pumpAndSettle();
+      expect(captures, 0);
+      expect(find.text(t.game_lookup_samples_limit), findsOneWidget);
+      await tester.ensureVisible(find.text(t.game_lookup_samples_remove));
+      await tester.tap(find.text(t.game_lookup_samples_remove));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip(t.game_lookup_samples_capture));
+      await tester.pumpAndSettle();
+      expect(captures, 1);
+      expect(find.text(t.game_lookup_samples_capture_changed), findsOneWidget);
+      expect(store.saved, isEmpty);
+      await tester.tap(find.byTooltip(t.game_lookup_samples_capture));
+      await tester.pumpAndSettle();
+      expect(captures, 2);
+      expect(store.saved.single.samples, hasLength(8));
+      expect(find.text(t.game_lookup_samples_capture_changed), findsNothing);
+    },
+  );
+
+  testWidgets('disk failure keeps the new capture available for saving', (
+    WidgetTester tester,
+  ) async {
+    final _MemoryStore store = _MemoryStore()..failSave = true;
+    await _open(tester, store: store, manual: false);
+    await tester.tap(find.byTooltip(t.game_lookup_samples_capture));
+    await tester.pumpAndSettle();
+    expect(find.byType(Image), findsOneWidget);
+    expect(find.text(t.game_lookup_samples_save_failed), findsOneWidget);
+    expect(find.text(t.game_lookup_samples_capture_failed), findsNothing);
+    store.failSave = false;
+    await tester.tap(find.byTooltip(t.game_lookup_samples_save));
+    await tester.pumpAndSettle();
+    expect(store.saved.single.samples, hasLength(1));
+    expect(tester.takeException(), isNull);
   });
 
   for (final Size size in <Size>[const Size(1280, 900), const Size(800, 600)]) {

@@ -189,6 +189,36 @@ typedef GalCalibrationWindowCapture =
 typedef GalCalibrationCaptureLeaseFactory =
     Future<GalHookCaptureLease?> Function();
 
+/// A privacy-safe, stable terminal category for calibration capture.
+///
+/// This deliberately carries no Hook text, executable path, window handle, or
+/// platform error. The UI can choose a specific recovery message and desktop
+/// diagnostics can record the category without retaining game content.
+enum GalLookupCalibrationCaptureFailure {
+  busy,
+  sourceNotReady,
+  rubyUnsupported,
+  overlayHideFailed,
+  suppressionUnavailable,
+  restoreFailed,
+  invalidSource,
+  sceneChanged,
+  windowCaptureFailed,
+  clientMappingUnavailable,
+  imageTooLarge,
+  imageDimensionsInvalid,
+  unknown,
+}
+
+class GalLookupCalibrationCaptureException implements Exception {
+  const GalLookupCalibrationCaptureException(this.failure);
+
+  final GalLookupCalibrationCaptureFailure failure;
+
+  @override
+  String toString() => 'GalLookupCalibrationCaptureException(${failure.name})';
+}
+
 /// Captures once, fails closed on a scene change, and always releases the exact
 /// visibility lease. No delay, string search, historical-line or latest fallback.
 Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
@@ -206,11 +236,15 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
       before.targetPid <= 0 ||
       before.selectedThreadKey.isEmpty ||
       !GalLookupSurfaceProfileV1.isValidSha256(before.exeSha256)) {
-    throw StateError('calibration_sample_invalid_source');
+    throw const GalLookupCalibrationCaptureException(
+      GalLookupCalibrationCaptureFailure.invalidSource,
+    );
   }
   void requireCurrent() {
     if (!before.sameOccurrenceAs(readSnapshot())) {
-      throw StateError('calibration_sample_scene_changed');
+      throw const GalLookupCalibrationCaptureException(
+        GalLookupCalibrationCaptureFailure.sceneChanged,
+      );
     }
   }
 
@@ -219,15 +253,31 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
   late final DateTime capturedAt;
   try {
     requireCurrent();
-    result = await captureWindow(before.targetHwnd);
+    try {
+      result = await captureWindow(before.targetHwnd);
+    } catch (_) {
+      throw const GalLookupCalibrationCaptureException(
+        GalLookupCalibrationCaptureFailure.windowCaptureFailed,
+      );
+    }
     capturedAt = DateTime.now().toUtc();
     requireCurrent();
   } finally {
-    if (lease != null) await lease.release();
+    if (lease != null) {
+      try {
+        await lease.release();
+      } catch (_) {
+        throw const GalLookupCalibrationCaptureException(
+          GalLookupCalibrationCaptureFailure.restoreFailed,
+        );
+      }
+    }
   }
   requireCurrent();
   if (!result.ok) {
-    throw StateError('calibration_sample_capture_failed: ${result.error}');
+    throw const GalLookupCalibrationCaptureException(
+      GalLookupCalibrationCaptureFailure.windowCaptureFailed,
+    );
   }
   final WindowCaptureMetadata? metadata = result.metadata;
   if (metadata == null ||
@@ -237,16 +287,22 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
       metadata.clientWidthPx != before.referenceClient.widthPx ||
       metadata.clientHeightPx != before.referenceClient.heightPx ||
       metadata.dpi != before.referenceClient.dpi) {
-    throw StateError('calibration_sample_client_mapping_unavailable');
+    throw const GalLookupCalibrationCaptureException(
+      GalLookupCalibrationCaptureFailure.clientMappingUnavailable,
+    );
   }
   final Uint8List bytes = result.pngBytes!;
   if (bytes.length > GalLookupCalibrationCapture.maxPngBytes ||
       metadata.imageWidthPx * metadata.imageHeightPx >
           GalLookupCalibrationCapture.maxImagePixels) {
-    throw StateError('calibration_sample_image_too_large');
+    throw const GalLookupCalibrationCaptureException(
+      GalLookupCalibrationCaptureFailure.imageTooLarge,
+    );
   }
   if (!_pngMatchesClient(bytes, metadata)) {
-    throw StateError('calibration_sample_image_dimensions_invalid');
+    throw const GalLookupCalibrationCaptureException(
+      GalLookupCalibrationCaptureFailure.imageDimensionsInvalid,
+    );
   }
   return GalLookupCalibrationCapture(
     sourceText: before.sourceText,

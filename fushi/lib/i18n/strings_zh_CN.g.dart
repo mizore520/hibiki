@@ -10801,8 +10801,6 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get game_lookup_samples_busy => '处理中…';
   @override
-  String get game_lookup_samples_capture_failed => '未能采集稳定样本，请停在当前台词后重试。';
-  @override
   String get game_lookup_samples_load_failed => '无法读取已保存的样本草稿。';
   @override
   String get game_lookup_samples_limit => '最多保留八个样本，请先删除一个再采集。';
@@ -10892,9 +10890,6 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get game_lookup_samples_auto_align => '从截图自动对齐';
   @override
-  String get game_lookup_samples_auto_hint =>
-      '大致框住台词后自动对齐。请选择一张完整的两行或三行台词来确定换行；不用点字符中心，也不用调字体。';
-  @override
   String get game_lookup_samples_auto_failed =>
       '暂时无法可靠确定字格。请使用完整的多行台词，把正文框进来，避开名字和按钮；原草稿未改动。';
   @override
@@ -10903,11 +10898,51 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get game_lookup_samples_auto_grid => '已测量字格 · 无需调整字体';
   @override
-  String get game_lookup_samples_manual_layout => '改用手动字体排版';
-  @override
   String get game_lookup_samples_auto_multiline =>
       '请选择或采集一张完整的两行或三行台词；短句无法确定换行位置。';
   @override
   String get game_lookup_samples_auto_unsupported =>
       '这张样本含有暂时无法验证宽度的字符，请暂用手动排版。';
+  @override
+  String get game_lookup_samples_auto_hint =>
+      '大致框住正文，自动测量字距、行距和换行。已有训练样本会共同参与，验证样本用于检查结果。';
+  @override
+  String get game_lookup_samples_manual_layout => '手动排版（高级）';
+  @override
+  String get game_lookup_samples_capture_failed =>
+      '未能采集样本。请重试；若仍失败，保留当前窗口并反馈此提示。';
+  @override
+  String get game_lookup_samples_auto_pending =>
+      '尚未自动对齐。黄框只需包含各行正文，点击“自动对齐”；无需先调字号、字距或逐字点中心。';
+  @override
+  String get game_lookup_samples_auto_rows_missing =>
+      '未找到清晰的正文行。请检查黄框是否包含完整正文，且未包含姓名或界面按钮。';
+  @override
+  String get game_lookup_samples_auto_inconsistent =>
+      '样本的换行或字格不一致，无法应用同一套排版。请检查标出的样本是否截到了完整台词。';
+  @override
+  String get game_lookup_samples_auto_preview_failed =>
+      '自动测量结果未能通过完整台词校验，未应用此次结果。';
+  @override
+  String game_lookup_samples_auto_sample_failed({
+    required Object sample,
+    required Object reason,
+  }) => '样本 ${sample}：${reason}';
+  @override
+  String get game_lookup_samples_capture_changed =>
+      '采集时台词或窗口发生变化。请停在完整台词上，再采集一次。';
+  @override
+  String get game_lookup_samples_capture_source =>
+      '当前没有可采集的台词。请确认游戏已附着，且正文文本正在正常获取。';
+  @override
+  String get game_lookup_samples_capture_window =>
+      '未能取得完整的游戏画面。请确认游戏窗口未最小化，再采集一次。';
+  @override
+  String get game_lookup_samples_capture_overlay =>
+      '未能安全隐藏或恢复查词层。请关闭校准窗口并重新附着后再采集。';
+  @override
+  String get game_lookup_samples_capture_unsupported =>
+      '当前文本包含暂不支持的注音格式，请换一条普通台词采集。';
+  @override
+  String get game_lookup_samples_save_failed => '草稿未能写入磁盘，当前样本仍保留在本窗口；请重试保存。';
 }

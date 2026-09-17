@@ -6778,8 +6778,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get game_lookup_samples_saved_hint =>
       'Samples and screenshots stay on this device. Saving a draft does not enable lookup.';
   String get game_lookup_samples_busy => 'Working…';
-  String get game_lookup_samples_capture_failed =>
-      'Could not capture a stable sample. Keep the current line visible and try again.';
   String get game_lookup_samples_load_failed =>
       'The saved sample draft could not be read.';
   String get game_lookup_samples_limit =>
@@ -6844,17 +6842,43 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get game_lookup_attached_calibration_ready =>
       'Probe clicks are ready. Click inside the highlighted character boxes in order; clicks outside those boxes still control the game.';
   String get game_lookup_samples_auto_align => 'Align from screenshot';
-  String get game_lookup_samples_auto_hint =>
-      'Frame the dialogue roughly, then align. Use one complete sample with two or more lines to measure wrapping. Character-centre marks and font settings are not needed.';
   String get game_lookup_samples_auto_failed =>
       'No reliable regular grid was found. Use a complete multiline sample, keep the dialogue inside the frame, and exclude the speaker and buttons. Your draft has not changed.';
   String get game_lookup_samples_auto_success =>
       'Grid measured. Check that each box contains its character and that subsequent lines match before applying.';
   String get game_lookup_samples_auto_grid =>
       'Measured grid · no font adjustment required';
-  String get game_lookup_samples_manual_layout => 'Use manual font layout';
   String get game_lookup_samples_auto_multiline =>
       'Select or capture one complete sample with two or more lines; a short line cannot determine the wrap position.';
   String get game_lookup_samples_auto_unsupported =>
       'This sample contains character widths that the grid method cannot verify. Use manual layout for now.';
+  String get game_lookup_samples_auto_hint =>
+      'Frame the dialogue roughly and automatically measure character spacing, line spacing, and wrapping. Training samples contribute together; validation samples check the result.';
+  String get game_lookup_samples_manual_layout => 'Manual layout (advanced)';
+  String get game_lookup_samples_capture_failed =>
+      'Could not capture a sample. Try again; if it still fails, keep this window open and report this message.';
+  String get game_lookup_samples_auto_pending =>
+      'Not automatically aligned yet. Let the yellow frame contain each line of dialogue, then select “Align from screenshot”. You do not need to adjust font size, character spacing, or click character centres first.';
+  String get game_lookup_samples_auto_rows_missing =>
+      'No clear dialogue lines were found. Check that the yellow frame contains the complete dialogue but not the speaker name or interface buttons.';
+  String get game_lookup_samples_auto_inconsistent =>
+      'The samples have inconsistent wrapping or character grids, so one layout cannot be applied. Check whether the highlighted sample captured the complete dialogue.';
+  String get game_lookup_samples_auto_preview_failed =>
+      'The automatic measurement did not pass the complete-dialogue check, so this result was not applied.';
+  String game_lookup_samples_auto_sample_failed({
+    required Object sample,
+    required Object reason,
+  }) => 'Sample ${sample}: ${reason}';
+  String get game_lookup_samples_capture_changed =>
+      'The dialogue or window changed while capturing. Keep a complete line visible, then capture again.';
+  String get game_lookup_samples_capture_source =>
+      'There is no dialogue available to capture. Confirm that the game is attached and dialogue text is being received.';
+  String get game_lookup_samples_capture_window =>
+      'Could not get the complete game image. Confirm that the game window is not minimized, then capture again.';
+  String get game_lookup_samples_capture_overlay =>
+      'Could not safely hide or restore the lookup layer. Close the calibration window, reattach to the game, and try again.';
+  String get game_lookup_samples_capture_unsupported =>
+      'This text contains a ruby format that is not supported yet. Capture a normal dialogue line instead.';
+  String get game_lookup_samples_save_failed =>
+      'The draft could not be written to disk. The current samples remain in this window; try saving again.';
 }
