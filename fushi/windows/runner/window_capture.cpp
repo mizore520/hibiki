@@ -28,6 +28,42 @@ namespace fushi {
 
 namespace {
 
+bool ReadCaptureClient(HWND hwnd, WindowCaptureMetadata* metadata) {
+  RECT client{};
+  POINT origin{};
+  if (!metadata || !IsWindow(hwnd) || IsIconic(hwnd) ||
+      !GetClientRect(hwnd, &client) || !ClientToScreen(hwnd, &origin)) {
+    return false;
+  }
+  POINT end{client.right, client.bottom};
+  DWORD pid = 0;
+  if (!ClientToScreen(hwnd, &end) ||
+      !GetWindowThreadProcessId(hwnd, &pid) || pid == 0 ||
+      end.x <= origin.x || end.y <= origin.y) {
+    return false;
+  }
+  const UINT dpi = GetDpiForWindow(hwnd);
+  if (dpi == 0) return false;
+  metadata->captured_hwnd = reinterpret_cast<int64_t>(hwnd);
+  metadata->captured_pid = pid;
+  metadata->client_left_px = origin.x;
+  metadata->client_top_px = origin.y;
+  metadata->client_width_px = end.x - origin.x;
+  metadata->client_height_px = end.y - origin.y;
+  metadata->dpi = dpi;
+  return true;
+}
+
+bool SameCaptureClient(const WindowCaptureMetadata& a,
+                       const WindowCaptureMetadata& b) {
+  return a.captured_hwnd == b.captured_hwnd &&
+         a.captured_pid == b.captured_pid &&
+         a.client_left_px == b.client_left_px &&
+         a.client_top_px == b.client_top_px &&
+         a.client_width_px == b.client_width_px &&
+         a.client_height_px == b.client_height_px && a.dpi == b.dpi;
+}
+
 using Microsoft::WRL::ComPtr;
 using Microsoft::WRL::Callback;
 namespace WGC = ABI::Windows::Graphics::Capture;
@@ -320,6 +356,8 @@ namespace {
 
 // 单帧捕获核心（假定调用线程已 RoInitialize）。任何失败写 out->error 并返回。
 void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
+  WindowCaptureMetadata initial_client;
+  const bool initial_client_valid = ReadCaptureClient(hwnd, &initial_client);
   ComPtr<WGC::IGraphicsCaptureSessionStatics> session_statics;
   if (FAILED(GetActivationFactory(
           RuntimeClass_Windows_Graphics_Capture_GraphicsCaptureSession,
@@ -486,6 +524,11 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
     out->error = "frame surface unavailable";
     return;
   }
+  const uint64_t captured_at_tick_ms = GetTickCount64();
+  ABI::Windows::Graphics::SizeInt32 content_size{};
+  const bool content_size_valid =
+      SUCCEEDED(frame->get_ContentSize(&content_size)) &&
+      content_size.Width > 0 && content_size.Height > 0;
 
   D3D11_TEXTURE2D_DESC desc = {};
   texture->GetDesc(&desc);
@@ -528,6 +571,21 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
     }
     out->png = EncodeBgraToPng(pixels, encode_w, encode_h, mapped.RowPitch,
                                &out->error);
+    WindowCaptureMetadata final_client;
+    if (ReadCaptureClient(hwnd, &final_client)) {
+      final_client.image_width_px = static_cast<int>(encode_w);
+      final_client.image_height_px = static_cast<int>(encode_h);
+      final_client.captured_at_tick_ms = captured_at_tick_ms;
+      final_client.client_area_complete =
+          initial_client_valid && SameCaptureClient(initial_client, final_client) &&
+          content_size_valid && crop.right <= content_size.Width &&
+          crop.bottom <= content_size.Height &&
+          crop.right > crop.left && crop.bottom > crop.top &&
+          static_cast<int>(encode_w) == final_client.client_width_px &&
+          static_cast<int>(encode_h) == final_client.client_height_px;
+      out->metadata = final_client;
+      out->has_metadata = true;
+    }
     context->Unmap(staging.Get(), 0);
   } else {
     out->error = "map staging texture failed";

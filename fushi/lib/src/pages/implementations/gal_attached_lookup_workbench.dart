@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fushi/i18n/strings.g.dart';
 import 'package:fushi/src/lookup/gal_attached_text_controller.dart';
+import 'package:fushi/src/lookup/gal_hook_text_overlay_controller.dart';
+import 'package:fushi/src/lookup/gal_lookup_calibration_draft.dart';
 import 'package:fushi/src/lookup/gal_lookup_surface_profile.dart';
+import 'package:fushi/src/pages/implementations/gal_lookup_samples_dialog.dart';
 import 'package:fushi/src/platform/gal_hook_text_overlay_channel.dart';
 import 'package:fushi/src/utils/components/fushi_design_tokens.dart';
 import 'package:fushi/src/utils/components/fushi_material_components.dart';
@@ -154,6 +157,18 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
                 ),
                 if (calibrationExposed)
                   IconButton(
+                    key: const ValueKey<String>('game-attached-lookup-samples'),
+                    tooltip: t.game_lookup_samples_title,
+                    onPressed:
+                        hasSelectedBodyThread &&
+                            controller.executableSha256 != null &&
+                            controller.currentClient != null
+                        ? () => _openSamples(context)
+                        : null,
+                    icon: const Icon(Icons.photo_library_outlined, size: 20),
+                  ),
+                if (calibrationExposed)
+                  IconButton(
                     key: const ValueKey<String>(
                       'game-attached-lookup-calibrate',
                     ),
@@ -256,7 +271,37 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
     await controller.acceptUnsafeRiskAndRetry(request);
   }
 
-  Future<void> _openCalibration(BuildContext context) async {
+  Future<void> _openSamples(BuildContext context) async {
+    final String? hash = controller.executableSha256;
+    final GalLookupReferenceClientV1? client = controller.currentClient;
+    if (hash == null || client == null) return;
+    final GalLookupSurfaceVariantV1? seed = controller.profile
+        ?.nearestVariantForClient(client);
+    final GalLookupCalibrationDraft? draft =
+        await showDialog<GalLookupCalibrationDraft>(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) => GalLookupSamplesDialog(
+            exeSha256: hash,
+            initialRect:
+                seed?.bodyRect ?? GalAttachedTextController.defaultBodyRect,
+            initialLayout: seed?.layout ?? const GalLookupTextLayoutV1(),
+            capture:
+                GalHookTextOverlayController.instance.captureCalibrationSample,
+          ),
+        );
+    if (draft == null ||
+        !context.mounted ||
+        controller.executableSha256 != hash) {
+      return;
+    }
+    await _openCalibration(context, draft: draft);
+  }
+
+  Future<void> _openCalibration(
+    BuildContext context, {
+    GalLookupCalibrationDraft? draft,
+  }) async {
     if (!hasSelectedBodyThread || !controller.canCalibrate) return;
     final GalLookupSurfaceProfileV1? profile = controller.profile;
     final bool alreadyAccepted = profile?.unsafeLeftClickAccepted ?? false;
@@ -274,6 +319,8 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
     }
     final bool started = await controller.beginCalibration(
       acceptUnsafeLeftClick: true,
+      initialBodyRect: draft?.rect,
+      initialLayout: draft?.layout,
     );
     if (!context.mounted) return;
     if (!started || controller.draftBodyRect == null) {

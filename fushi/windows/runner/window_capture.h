@@ -23,6 +23,23 @@ struct ExternalWindow {
   DWORD pid = 0;      // 所属进程 PID（galgame voice hook 注入目标；见 voice_hook_reader）
 };
 
+// All dimensions/origins are physical screen pixels; image dimensions describe
+// the encoded PNG. Completeness is false for a whole-window fallback, clipping,
+// or a target/client/DPI change while WGC was waiting for its frame.
+struct WindowCaptureMetadata {
+  int64_t captured_hwnd = 0;
+  uint32_t captured_pid = 0;
+  int client_left_px = 0;
+  int client_top_px = 0;
+  int client_width_px = 0;
+  int client_height_px = 0;
+  int image_width_px = 0;
+  int image_height_px = 0;
+  double dpi = 0;
+  bool client_area_complete = false;
+  uint64_t captured_at_tick_ms = 0;
+};
+
 // 单帧窗口捕获结果：成功带 PNG 字节，失败带人类可读原因。
 // [ok] 仅当 png 非空且 error 空时为 true。
 struct WindowCaptureResult {
@@ -34,6 +51,8 @@ struct WindowCaptureResult {
   // ② 捕获目标被从 Magpie 缩放窗重定向到了真实源窗口。与 [error] 正交：有
   // diagnostics 不代表失败，[ok] 不受它影响。
   std::string diagnostics;
+  WindowCaptureMetadata metadata;
+  bool has_metadata = false;
   bool ok = false;
 };
 

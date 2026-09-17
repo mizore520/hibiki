@@ -55,11 +55,11 @@ abstract final class WindowCaptureChannel {
   /// 的结果（fail-open，绝不抛给调用方）。
   static Future<WindowCaptureResult> captureWindow(int hwnd) async {
     try {
-      final Map<Object?, Object?>? r =
-          await _channel.invokeMethod<Map<Object?, Object?>>(
-        'captureWindow',
-        <String, Object?>{'hwnd': hwnd},
-      );
+      final Map<Object?, Object?>? r = await _channel
+          .invokeMethod<Map<Object?, Object?>>(
+            'captureWindow',
+            <String, Object?>{'hwnd': hwnd},
+          );
       return WindowCaptureResult.fromMap(r ?? const <Object?, Object?>{});
     } on PlatformException catch (e) {
       return WindowCaptureResult(error: e.message ?? 'capture failed');
@@ -156,15 +156,15 @@ abstract final class WindowCaptureChannel {
       );
     }
     try {
-      final Map<Object?, Object?>? r =
-          await _channel.invokeMethod<Map<Object?, Object?>>(
-        'exportWindowRecording',
-        <String, Object?>{
-          'fromTickMs': fromTickMs,
-          'toTickMs': toTickMs,
-          'directory': directory,
-        },
-      );
+      final Map<Object?, Object?>? r = await _channel
+          .invokeMethod<Map<Object?, Object?>>(
+            'exportWindowRecording',
+            <String, Object?>{
+              'fromTickMs': fromTickMs,
+              'toTickMs': toTickMs,
+              'directory': directory,
+            },
+          );
       return WindowRecordingExport.fromMap(r ?? const <Object?, Object?>{});
     } on PlatformException catch (e) {
       return WindowRecordingExport(
@@ -297,7 +297,12 @@ class ExternalWindowInfo {
 
 /// [WindowCaptureChannel.captureWindow] 的结果：成功带 PNG 字节，失败带人类可读原因。
 class WindowCaptureResult {
-  const WindowCaptureResult({this.pngBytes, this.error, this.diagnostics});
+  const WindowCaptureResult({
+    this.pngBytes,
+    this.error,
+    this.diagnostics,
+    this.metadata,
+  });
 
   /// 捕获到的 PNG 图像字节（成功时非空）。
   final Uint8List? pngBytes;
@@ -311,6 +316,10 @@ class WindowCaptureResult {
   /// ② 捕获目标被从 Magpie 缩放窗重定向到了真实源窗口。native 无话可说时为 null。
   final String? diagnostics;
 
+  /// Geometry measured by the same native operation that encoded [pngBytes].
+  /// Older runners omit it; ordinary screenshots remain backwards compatible.
+  final WindowCaptureMetadata? metadata;
+
   /// true = 成功拿到非空图像字节。
   bool get ok => error == null && pngBytes != null && pngBytes!.isNotEmpty;
 
@@ -319,5 +328,100 @@ class WindowCaptureResult {
         pngBytes: m['pngBytes'] as Uint8List?,
         error: m['error'] as String?,
         diagnostics: m['diagnostics'] as String?,
+        metadata: WindowCaptureMetadata.tryFromMap(m['metadata']),
       );
+}
+
+/// One WGC capture's physical pixel mapping. Screen origin may be negative on
+/// multi-monitor desktops. [clientAreaComplete] is false when the native crop
+/// fell back to the entire window, clipped the client, or observed a resize.
+@immutable
+class WindowCaptureMetadata {
+  const WindowCaptureMetadata({
+    required this.capturedHwnd,
+    required this.capturedPid,
+    required this.clientLeftPx,
+    required this.clientTopPx,
+    required this.clientWidthPx,
+    required this.clientHeightPx,
+    required this.imageWidthPx,
+    required this.imageHeightPx,
+    required this.dpi,
+    required this.clientAreaComplete,
+    required this.capturedAtTickMs,
+  });
+
+  final int capturedHwnd;
+  final int capturedPid;
+  final int clientLeftPx;
+  final int clientTopPx;
+  final int clientWidthPx;
+  final int clientHeightPx;
+  final int imageWidthPx;
+  final int imageHeightPx;
+  final double dpi;
+  final bool clientAreaComplete;
+
+  /// Runner GetTickCount64 when the WGC frame was received, not a GPU present
+  /// timestamp and not evidence that the Hook event was rendered in that frame.
+  final int capturedAtTickMs;
+
+  bool get isCompleteClient =>
+      clientAreaComplete &&
+      capturedHwnd != 0 &&
+      capturedPid > 0 &&
+      clientWidthPx > 0 &&
+      clientHeightPx > 0 &&
+      imageWidthPx == clientWidthPx &&
+      imageHeightPx == clientHeightPx &&
+      dpi.isFinite &&
+      dpi > 0 &&
+      capturedAtTickMs > 0;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'capturedHwnd': capturedHwnd,
+    'capturedPid': capturedPid,
+    'clientLeftPx': clientLeftPx,
+    'clientTopPx': clientTopPx,
+    'clientWidthPx': clientWidthPx,
+    'clientHeightPx': clientHeightPx,
+    'imageWidthPx': imageWidthPx,
+    'imageHeightPx': imageHeightPx,
+    'dpi': dpi,
+    'clientAreaComplete': clientAreaComplete,
+    'capturedAtTickMs': capturedAtTickMs,
+  };
+
+  static WindowCaptureMetadata? tryFromMap(Object? value) {
+    if (value is! Map) return null;
+    const List<String> integerKeys = <String>[
+      'capturedHwnd',
+      'capturedPid',
+      'clientLeftPx',
+      'clientTopPx',
+      'clientWidthPx',
+      'clientHeightPx',
+      'imageWidthPx',
+      'imageHeightPx',
+      'capturedAtTickMs',
+    ];
+    if (integerKeys.any((String key) => value[key] is! int) ||
+        value['dpi'] is! num ||
+        value['clientAreaComplete'] is! bool) {
+      return null;
+    }
+    return WindowCaptureMetadata(
+      capturedHwnd: value['capturedHwnd'] as int,
+      capturedPid: value['capturedPid'] as int,
+      clientLeftPx: value['clientLeftPx'] as int,
+      clientTopPx: value['clientTopPx'] as int,
+      clientWidthPx: value['clientWidthPx'] as int,
+      clientHeightPx: value['clientHeightPx'] as int,
+      imageWidthPx: value['imageWidthPx'] as int,
+      imageHeightPx: value['imageHeightPx'] as int,
+      dpi: (value['dpi'] as num).toDouble(),
+      clientAreaComplete: value['clientAreaComplete'] as bool,
+      capturedAtTickMs: value['capturedAtTickMs'] as int,
+    );
+  }
 }

@@ -14,6 +14,7 @@
 #include "attached_capture_token.h"
 #include "attached_hover_tracker.h"
 #include "attached_overlayability.h"
+#include "attached_text_layout.h"
 
 // Transparent, no-activate Win32 surface attached to a foreign game client.
 //
@@ -35,28 +36,9 @@ public:
     uint64_t surface = 0;
   };
 
-  struct NormalizedRect {
-    double left = 0.0;
-    double top = 0.0;
-    double width = 0.0;
-    double height = 0.0;
-  };
-
-  struct ReferenceClient {
-    int width_px = 0;
-    int height_px = 0;
-    int dpi = 96;
-  };
-
-  struct Layout {
-    std::wstring font_family = L"Yu Gothic";
-    double font_size_per_client_height = 0.045;
-    double letter_spacing_per_client_height = 0.0;
-    double line_height = 1.0;
-    std::string text_align = "left";
-    std::string vertical_align = "top";
-    double padding_per_client_height = 0.0;
-  };
+  using NormalizedRect = fushi::attached_text_layout::NormalizedRect;
+  using ReferenceClient = fushi::attached_text_layout::ReferenceClient;
+  using Layout = fushi::attached_text_layout::Layout;
 
   struct TargetInfo {
     uint32_t pid = 0;
@@ -261,11 +243,7 @@ public:
   Snapshot GetSnapshot() const;
 
 private:
-  struct ClusterBox {
-    uint32_t text_position = 0;
-    uint32_t text_length = 0;
-    RECT client_rect{};
-  };
+  using ClusterBox = fushi::attached_text_layout::ClusterBox;
 
   enum class Mode {
     kDetached,

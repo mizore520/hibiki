@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <functional>
@@ -1125,6 +1126,78 @@ AttachedTextSurfaceWindow::Layout AttachedLayoutFromArgs(
   return layout;
 }
 
+flutter::EncodableMap AttachedPreviewLayoutFromArgs(
+    const flutter::EncodableMap* args) {
+  const auto failure = [](const char* reason) {
+    return flutter::EncodableMap{
+        {flutter::EncodableValue("accepted"), flutter::EncodableValue(false)},
+        {flutter::EncodableValue("reason"), flutter::EncodableValue(reason)},
+        {flutter::EncodableValue("boxes"),
+         flutter::EncodableValue(flutter::EncodableList{})},
+    };
+  };
+  const auto rect = AttachedRectFromArgs(args);
+  if (!rect.has_value()) return failure("invalid_body_rect");
+  const flutter::EncodableMap* reference_map =
+      MapFromValue(args, "referenceClient");
+  const double width = DoubleFromValue(reference_map, "widthPx", 0.0);
+  const double height = DoubleFromValue(reference_map, "heightPx", 0.0);
+  const double dpi = DoubleFromValue(reference_map, "dpi", 0.0);
+  // Validate before narrowing: malformed int64/NaN fields must not wrap into
+  // a plausible client size and allocate an unbounded DirectWrite layout.
+  if (!std::isfinite(width) || !std::isfinite(height) || !std::isfinite(dpi) ||
+      width < 1 || width > 16384 || width != std::floor(width) ||
+      height < 1 || height > 16384 || height != std::floor(height) ||
+      dpi < 1 || dpi > 960) {
+    return failure("invalid_reference_client");
+  }
+  const flutter::EncodableMap* layout_map = MapFromValue(args, "layout");
+  if (layout_map == nullptr) return failure("invalid_layout");
+  const std::string source_utf8 = StringFromValue(args, "sourceText", "");
+  if (source_utf8.size() > 4u * 32768u)
+    return failure("source_text_too_large");
+  const std::wstring source = Utf8ToWideString(source_utf8);
+  if (!source_utf8.empty() && source.empty())
+    return failure("invalid_source_text");
+  const std::string font = StringFromValue(layout_map, "fontFamily", "");
+  if (font.size() > 4u * 256u ||
+      (!font.empty() && Utf8ToWideString(font).empty())) {
+    return failure("invalid_layout");
+  }
+  const AttachedTextSurfaceWindow::ReferenceClient reference{
+      static_cast<int>(width), static_cast<int>(height),
+      static_cast<int>(std::llround(dpi))};
+  const fushi::attached_text_layout::Result preview =
+      fushi::attached_text_layout::Preview(
+          source, reference, rect.value(), AttachedLayoutFromArgs(args));
+  flutter::EncodableList boxes;
+  boxes.reserve(preview.boxes.size());
+  for (const auto& box : preview.boxes) {
+    boxes.emplace_back(flutter::EncodableMap{
+        {flutter::EncodableValue("charIndex"),
+         flutter::EncodableValue(static_cast<int64_t>(box.text_position))},
+        {flutter::EncodableValue("charLength"),
+         flutter::EncodableValue(static_cast<int64_t>(box.text_length))},
+        {flutter::EncodableValue("left"),
+         flutter::EncodableValue(static_cast<int32_t>(box.client_rect.left))},
+        {flutter::EncodableValue("top"),
+         flutter::EncodableValue(static_cast<int32_t>(box.client_rect.top))},
+        {flutter::EncodableValue("right"),
+         flutter::EncodableValue(static_cast<int32_t>(box.client_rect.right))},
+        {flutter::EncodableValue("bottom"),
+         flutter::EncodableValue(static_cast<int32_t>(box.client_rect.bottom))},
+    });
+  }
+  return flutter::EncodableMap{
+      {flutter::EncodableValue("accepted"),
+       flutter::EncodableValue(preview.ok())},
+      {flutter::EncodableValue("reason"),
+       flutter::EncodableValue(preview.reason)},
+      {flutter::EncodableValue("boxes"),
+       flutter::EncodableValue(std::move(boxes))},
+  };
+}
+
 AttachedTextSurfaceWindow::CalibrationProbes AttachedProbesFromArgs(
     const flutter::EncodableMap* args) {
   AttachedTextSurfaceWindow::CalibrationProbes probes;
@@ -1871,6 +1944,13 @@ void FlutterWindow::RegisterGalHookTextChannel() {
                  result) {
         const auto* args = std::get_if<flutter::EncodableMap>(call.arguments());
         const std::string& method = call.method_name();
+        if (method == "attachedPreviewLayout") {
+          // Stateless calibration rendering works with saved samples even
+          // when the game/session is closed. It never adopts a live surface.
+          result->Success(
+              flutter::EncodableValue(AttachedPreviewLayoutFromArgs(args)));
+          return;
+        }
         // 查词方法先走一遍：同名通道只有一个 handler 槽位，所以 reader 侧不能自己
         // 注册（会顶掉本处理器），只能挂在分发链最前面。不认的方法它返回 false。
         if (fushi::VoiceHookReader::Instance().TryHandleLookupMethodCall(
@@ -3628,6 +3708,36 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
         if (!pending->result.diagnostics.empty()) {
           reply[flutter::EncodableValue("diagnostics")] =
               flutter::EncodableValue(pending->result.diagnostics);
+        }
+        if (pending->result.has_metadata) {
+          const auto& metadata = pending->result.metadata;
+          reply[flutter::EncodableValue("metadata")] =
+              flutter::EncodableValue(flutter::EncodableMap{
+                  {flutter::EncodableValue("capturedHwnd"),
+                   flutter::EncodableValue(metadata.captured_hwnd)},
+                  {flutter::EncodableValue("capturedPid"),
+                   flutter::EncodableValue(
+                       static_cast<int64_t>(metadata.captured_pid))},
+                  {flutter::EncodableValue("clientLeftPx"),
+                   flutter::EncodableValue(metadata.client_left_px)},
+                  {flutter::EncodableValue("clientTopPx"),
+                   flutter::EncodableValue(metadata.client_top_px)},
+                  {flutter::EncodableValue("clientWidthPx"),
+                   flutter::EncodableValue(metadata.client_width_px)},
+                  {flutter::EncodableValue("clientHeightPx"),
+                   flutter::EncodableValue(metadata.client_height_px)},
+                  {flutter::EncodableValue("imageWidthPx"),
+                   flutter::EncodableValue(metadata.image_width_px)},
+                  {flutter::EncodableValue("imageHeightPx"),
+                   flutter::EncodableValue(metadata.image_height_px)},
+                  {flutter::EncodableValue("dpi"),
+                   flutter::EncodableValue(metadata.dpi)},
+                  {flutter::EncodableValue("clientAreaComplete"),
+                   flutter::EncodableValue(metadata.client_area_complete)},
+                  {flutter::EncodableValue("capturedAtTickMs"),
+                   flutter::EncodableValue(static_cast<int64_t>(
+                       metadata.captured_at_tick_ms))},
+              });
         }
         pending->reply->Success(flutter::EncodableValue(std::move(reply)));
         delete pending;

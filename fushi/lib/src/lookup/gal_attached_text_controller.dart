@@ -339,6 +339,30 @@ class GalAttachedTextController extends ChangeNotifier {
   GalLookupNormalizedRectV1? get draftBodyRect => _draftBodyRect;
   GalLookupTextLayoutV1? get draftLayout => _draftLayout;
 
+  /// WGC can capture a background game while the user operates the Fushi
+  /// sample dialog. Only that explicit hidden state is admissible; minimized,
+  /// lost-target, unknown suspension and an active live calibration are not.
+  bool get canCaptureCalibrationSample =>
+      calibrationManuallyEnabled &&
+      _target != null &&
+      _currentClient != null &&
+      _exePath != null &&
+      _exeSha256 != null &&
+      _draftBodyRect == null &&
+      _draftLayout == null &&
+      (_status == GalAttachedTextStatus.needsCalibration ||
+          _status == GalAttachedTextStatus.activeAttached ||
+          (_status == GalAttachedTextStatus.suspended &&
+              _statusReason == 'targetBackground' &&
+              !_surfaceVisible));
+
+  bool get calibrationCaptureNeedsAttachedLease =>
+      _status == GalAttachedTextStatus.activeAttached ||
+      (_status == GalAttachedTextStatus.suspended &&
+          _statusReason == 'targetBackground' &&
+          _attachedProviderClaimed &&
+          _activeVariant != null);
+
   /// 手动校准只在用户显式把模式切到「仅贴附层」之后才存在。自动模式下原生几何
   /// 缺席时不再把校准入口推到用户面前——那条路的第一步就是往游戏正文上盖一个
   /// 预置矩形，属于用户没要过的干扰。
@@ -843,6 +867,7 @@ class GalAttachedTextController extends ChangeNotifier {
 
   Future<bool> beginCalibration({
     GalLookupNormalizedRectV1? initialBodyRect,
+    GalLookupTextLayoutV1? initialLayout,
     required bool acceptUnsafeLeftClick,
   }) async {
     final GalAttachedSurfaceTarget? target = _target;
@@ -866,7 +891,8 @@ class GalAttachedTextController extends ChangeNotifier {
     );
     final GalLookupNormalizedRectV1 rect =
         initialBodyRect ?? seed?.bodyRect ?? defaultBodyRect;
-    final GalLookupTextLayoutV1 layout = seed?.layout ?? _layoutBuilder(client);
+    final GalLookupTextLayoutV1 layout =
+        initialLayout ?? seed?.layout ?? _layoutBuilder(client);
     if (!rect.isValid || !layout.isValid) return false;
     final int calibrationOperation = ++_operationGeneration;
     ++_unsafeRiskAcceptanceLifecycleRevision;
@@ -1561,12 +1587,17 @@ class GalAttachedTextController extends ChangeNotifier {
   /// by the exact surface epoch and capture token: text may advance while the
   /// surface is hidden, in which case release stages/synchronizes the current
   /// generation instead of ever reviving the acquisition-time geometry.
-  Future<GalAttachedMiningCaptureLease?> acquireMiningCaptureLease() async {
+  Future<GalAttachedMiningCaptureLease?> acquireMiningCaptureLease({
+    bool allowBackgroundCalibrationCapture = false,
+  }) async {
     final GalAttachedSurfaceTarget? target = _target;
     final int generation = _textGeneration;
     if (target == null ||
         _activeCaptureLease != null ||
-        _status != GalAttachedTextStatus.activeAttached ||
+        !(_status == GalAttachedTextStatus.activeAttached ||
+            (allowBackgroundCalibrationCapture &&
+                canCaptureCalibrationSample &&
+                calibrationCaptureNeedsAttachedLease)) ||
         generation <= 0 ||
         _sentSourceText != _latestSourceText) {
       return null;

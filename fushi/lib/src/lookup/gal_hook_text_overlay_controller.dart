@@ -9,6 +9,7 @@ import 'package:fushi_anki/fushi_anki.dart';
 import 'package:fushi/src/lookup/gal_attached_text_controller.dart';
 import 'package:fushi/src/lookup/gal_ingame_lookup_controller.dart';
 import 'package:fushi/src/lookup/gal_ingame_mining_binding.dart';
+import 'package:fushi/src/lookup/gal_lookup_calibration_capture.dart';
 import 'package:fushi/src/lookup/gal_lookup_surface_profile.dart';
 import 'package:fushi/src/lookup/global_lookup_channel.dart';
 import 'package:fushi/src/lookup/global_lookup_controller.dart';
@@ -21,6 +22,7 @@ import 'package:fushi/src/mining/galgame_window_gif.dart';
 import 'package:fushi/src/mining/galgame_library.dart';
 import 'package:fushi/src/mining/magpie_upscaling.dart';
 import 'package:fushi/src/mining/magpie_upscaling_service.dart';
+import 'package:fushi/src/mining/window_capture_channel.dart';
 import 'package:fushi/src/media/sources/reader_fushi_source.dart';
 import 'package:fushi/src/models/app_model.dart';
 import 'package:fushi/src/models/app_font_loader.dart';
@@ -153,6 +155,8 @@ class GalHookTextOverlayController extends ChangeNotifier {
   bool _suppressedForSession = false;
   bool _syncing = false;
   bool _syncAgain = false;
+  bool _calibrationCaptureInFlight = false;
+  int _nextCalibrationCaptureGeneration = 1 << 52;
   int _syncRevision = 0;
   String _sessionSyncIdentity = '';
   String _attachedRoutingKey = '';
@@ -1251,7 +1255,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
       if (!_isSyncSnapshotCurrent(syncRevision, nextSessionKey)) return;
     }
 
-    if (_suppressedForSession) return;
+    if (_suppressedForSession || _calibrationCaptureInFlight) return;
     if (lines.isEmpty) return;
     final TexthookerLineEntry latest = lines.last;
     // BUG-1981：`_visible` 是**派生镜像**，不是 HWND 真值。窗口被系统 / 外部
@@ -1736,6 +1740,141 @@ class GalHookTextOverlayController extends ChangeNotifier {
     await DesktopLookupService.instance.bringMainWindowToFront();
   }
 
+  /// Takes a bounded private calibration sample before live probe calibration.
+  /// The current selected occurrence must survive every asynchronous boundary;
+  /// a historical row or same-text replacement cannot become this screenshot.
+  Future<GalLookupCalibrationCapture> captureCalibrationSample() async {
+    if (_calibrationCaptureInFlight) {
+      throw StateError('calibration_sample_capture_busy');
+    }
+    if (!_started || !_attachedText.canCaptureCalibrationSample) {
+      throw StateError('calibration_sample_surface_not_ready');
+    }
+    _calibrationCaptureInFlight = true;
+    ++_syncRevision;
+    final int? sessionEpoch = _sessionKey;
+    final bool overlayWasVisible = _visible;
+    try {
+      return await captureGalLookupCalibrationSample(
+        readSnapshot: _calibrationCaptureSnapshot,
+        captureWindow: WindowCaptureChannel.captureWindow,
+        acquireLease: () async {
+          // Freeze the occurrence before the first visibility await. WGC
+          // normally excludes separate HWNDs; explicitly hide the Hook text
+          // overlay too and prevent central sync from reopening it mid-frame.
+          if (overlayWasVisible) {
+            await GalHookTextOverlayChannel.hide();
+            if (await GalHookTextOverlayChannel.isShowing()) {
+              throw StateError('calibration_sample_overlay_hide_failed');
+            }
+            _visible = false;
+          }
+          return _acquireCalibrationCaptureLease();
+        },
+      );
+    } finally {
+      _calibrationCaptureInFlight = false;
+      if (_started && sessionEpoch == _sessionKey && overlayWasVisible) {
+        _visible = false;
+      }
+      if (_started) _scheduleSync();
+      notifyListeners();
+    }
+  }
+
+  GalLookupCalibrationCaptureSnapshot _calibrationCaptureSnapshot() {
+    final GalHookSessionState state = _session.state;
+    final GalAttachedSurfaceTarget? target = _attachedText.target;
+    final GalLookupReferenceClientV1? client = _attachedText.currentClient;
+    final String? exePath = _attachedText.executablePath;
+    final String? exeSha256 = _attachedText.executableSha256;
+    final String? thread = _session.selectedTextThreadKey;
+    final List<TexthookerLineEntry> lines = _session.selectedSessionLines;
+    final int? epoch = state.sessionStartedAt?.microsecondsSinceEpoch;
+    final bool ownCaptureSuppression =
+        _calibrationCaptureInFlight &&
+        _attachedText.status == GalAttachedTextStatus.suspended &&
+        _attachedText.statusReason == 'captureSuppressed';
+    if (target == null ||
+        client == null ||
+        exePath == null ||
+        exeSha256 == null ||
+        thread == null ||
+        lines.isEmpty ||
+        epoch == null ||
+        epoch != target.sessionEpoch ||
+        state.boundWindow?.hwnd != target.targetHwnd ||
+        state.boundWindow?.pid != target.targetPid ||
+        !(_attachedText.canCaptureCalibrationSample || ownCaptureSuppression) ||
+        !_attachedText.calibrationManuallyEnabled) {
+      throw StateError('calibration_sample_source_not_ready');
+    }
+    final TexthookerLineEntry entry = lines.last;
+    if (entry.rubySpans.isNotEmpty) {
+      throw StateError('calibration_sample_ruby_not_supported');
+    }
+    return GalLookupCalibrationCaptureSnapshot(
+      sourceText: entry.text,
+      referenceClient: client,
+      exePath: exePath,
+      exeSha256: exeSha256,
+      sessionEpoch: epoch,
+      occurrenceId: entry.id,
+      sourceSequence: entry.sourceSequence,
+      targetHwnd: target.targetHwnd,
+      targetPid: target.targetPid,
+      selectedThreadKey: thread,
+      sourceIdentity: jsonEncode(<Object?>[
+        entry.source.name,
+        entry.sourceLabel,
+        entry.textThreadKey,
+        entry.nativeTextThreadId,
+        target.surfaceEpoch,
+      ]),
+    );
+  }
+
+  Future<GalHookCaptureLease?> _acquireCalibrationCaptureLease() async {
+    if (_attachedText.canCaptureCalibrationSample &&
+        _attachedText.calibrationCaptureNeedsAttachedLease) {
+      return _acquireAttachedMiningCaptureLease(
+        requireCard: false,
+        allowBackgroundCalibrationCapture: true,
+      );
+    }
+    if (!_attachedText.canCaptureCalibrationSample ||
+        _attachedText.surfaceVisible) {
+      throw StateError('calibration_sample_surface_changed');
+    }
+    // A new profile has no attached surface. Only fence an existing dictionary
+    // card; inventing a glyph lease here would require a calibrated layout.
+    final GlobalLookupRoute route = GlobalLookupChannel.currentRoute;
+    if (!await GlobalLookupChannel.isShowing()) return null;
+    final int token = ++_nextCalibrationCaptureGeneration;
+    try {
+      if (!await GlobalLookupChannel.suspendForCapture(token)) {
+        throw StateError('calibration_sample_card_hide_failed');
+      }
+    } catch (_) {
+      await GlobalLookupChannel.runWithRoute(
+        route,
+        () => GlobalLookupChannel.restoreAfterCapture(token),
+      );
+      rethrow;
+    }
+    return _AttachedCompositeCaptureLease(
+      releaseCallback: () async {
+        final bool restored = await GlobalLookupChannel.runWithRoute(
+          route,
+          () => GlobalLookupChannel.restoreAfterCapture(token),
+        );
+        if (!restored) {
+          throw StateError('calibration_sample_card_restore_failed');
+        }
+      },
+    );
+  }
+
   /// [consumeOutsideClicksOwnerHwnd]：attached 校准字形表面命中时传游戏
   /// HWND，桌面弹窗「点卡外关闭」的点击成对吞掉、不推进游戏；台词浮窗（C 表面）
   /// 不传，行为不变。
@@ -1817,10 +1956,15 @@ class GalHookTextOverlayController extends ChangeNotifier {
   /// the visible global dictionary card. The two exact generation tokens are
   /// kept together so a late release cannot revive either an old sentence or
   /// an old card route.
-  Future<GalHookCaptureLease> _acquireAttachedMiningCaptureLease() async {
+  Future<GalHookCaptureLease> _acquireAttachedMiningCaptureLease({
+    bool requireCard = true,
+    bool allowBackgroundCalibrationCapture = false,
+  }) async {
     final GlobalLookupRoute route = GlobalLookupChannel.currentRoute;
     final GalAttachedMiningCaptureLease? attachedLease = await _attachedText
-        .acquireMiningCaptureLease();
+        .acquireMiningCaptureLease(
+          allowBackgroundCalibrationCapture: allowBackgroundCalibrationCapture,
+        );
     if (attachedLease == null) {
       throw const GalHookCaptureSuppressionException(
         'the attached glyph surface is no longer current',
@@ -1828,6 +1972,12 @@ class GalHookTextOverlayController extends ChangeNotifier {
     }
 
     try {
+      if (!requireCard && !await GlobalLookupChannel.isShowing()) {
+        return _AttachedCompositeCaptureLease(
+          releaseCallback: () =>
+              _attachedText.releaseMiningCaptureLease(attachedLease),
+        );
+      }
       final bool cardHidden = await GlobalLookupChannel.runWithRoute(
         route,
         () => GlobalLookupChannel.suspendForCapture(
