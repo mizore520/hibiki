@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:fushi/i18n/strings.g.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_capture.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_draft.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_preview.dart';
 import 'package:fushi/src/lookup/gal_lookup_surface_profile.dart';
+import 'package:fushi/src/pages/implementations/gal_lookup_calibration_canvas.dart';
+import 'package:fushi/src/pages/implementations/gal_lookup_calibration_number_field.dart';
 
 /// Screenshot notebook. It does not claim a geometry provider or arm game input.
 /// Applying a draft returns it to the existing live calibration/commit flow.
@@ -42,6 +43,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
   int _selected = 0;
   int? _markIndex;
   int? _hoverIndex;
+  GalCalibrationEditMode _editMode = GalCalibrationEditMode.region;
   bool _busy = true;
   bool _dirty = false;
   bool _previewRunning = false;
@@ -144,7 +146,6 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
 
   void _changed() {
     _dirty = true;
-    _markIndex = null;
     _hoverIndex = null;
     _message = null;
     _failed = false;
@@ -181,6 +182,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       if (!next.validFor(widget.exeSha256)) throw StateError('sample_limit');
       _samples = samples;
       _selected = _samples.length - 1;
+      _markIndex = null;
       _changed();
       // New captures are persisted immediately so returning to the game never
       // risks losing the user's collected samples when the window is closed.
@@ -199,6 +201,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
   }
 
   Future<bool> _save() async {
+    _commitNumberEdit();
     try {
       await widget.store.save(widget.exeSha256, _draft);
       if (mounted) {
@@ -222,7 +225,37 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
 
   Future<void> _finish({bool apply = false}) async {
     if (_busy) return;
+    _commitNumberEdit();
     setState(() => _busy = true);
+    if (apply) {
+      bool valid = false;
+      try {
+        final List<GalCalibrationPreview> previews = await Future.wait(
+          _samples.map(
+            (GalCalibrationSample sample) => widget.previewBuilder(
+              text: sample.capture.sourceText,
+              client: sample.capture.referenceClient,
+              rect: _rect,
+              layout: _layout,
+            ),
+          ),
+        );
+        valid =
+            previews.isNotEmpty &&
+            previews.every((GalCalibrationPreview p) => p.accepted);
+      } catch (_) {
+        valid = false;
+      }
+      if (!mounted) return;
+      if (!valid) {
+        setState(() {
+          _busy = false;
+          _message = t.game_lookup_samples_unavailable;
+          _failed = true;
+        });
+        return;
+      }
+    }
     final bool saved = !_dirty || await _save();
     if (!mounted) return;
     setState(() => _busy = false);
@@ -231,6 +264,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
 
   Future<void> _fit() async {
     if (_busy) return;
+    _commitNumberEdit();
     setState(() {
       _busy = true;
       _message = null;
@@ -263,6 +297,11 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     }
   }
 
+  void _commitNumberEdit() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    FocusManager.instance.applyFocusChangesIfNeeded();
+  }
+
   double? _errorFor(int sampleIndex) {
     if (_previews.length != _samples.length) return null;
     final GalCalibrationSample sample = _samples[sampleIndex];
@@ -285,20 +324,32 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     return math.sqrt(total / sample.anchors.length);
   }
 
-  void _setAnchor(Offset point) {
-    final int? index = _markIndex;
+  void _setAnchor(int index, Offset point) {
     final GalCalibrationSample? sample = _sample;
     if (_busy ||
-        index == null ||
         sample == null ||
-        sample.anchors.length >= 128) {
+        (sample.anchors.length >= 128 && !sample.anchors.containsKey(index))) {
       return;
     }
     _samples[_selected] = sample.copyWith(
       anchors: {...sample.anchors, index: point},
     );
     _dirty = true;
-    setState(() => _markIndex = null);
+    setState(() => _markIndex = index);
+  }
+
+  void _nudgeAnchor(double dx, double dy) {
+    final int? index = _markIndex;
+    final GalCalibrationSample? sample = _sample;
+    final Offset? point = sample?.anchors[index];
+    if (index == null || point == null || sample == null) return;
+    _setAnchor(
+      index,
+      Offset(
+        (point.dx + dx / sample.capture.referenceClient.widthPx).clamp(0, 1),
+        (point.dy + dy / sample.capture.referenceClient.heightPx).clamp(0, 1),
+      ),
+    );
   }
 
   @override
@@ -391,6 +442,8 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                                                 '${i + 1} · ${_samples[i].validation ? t.game_lookup_samples_validation : t.game_lookup_samples_reference}'
                                                 '${_errorFor(i) == null ? '' : ' · ${_errorFor(i)!.toStringAsFixed(1)} px'}',
                                               ),
+                                              tooltip: t
+                                                  .game_lookup_samples_residual_hint,
                                               selected: i == _selected,
                                               onSelected: _busy
                                                   ? null
@@ -446,67 +499,25 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
   Widget _image() {
     final GalCalibrationSample? sample = _sample;
     if (sample == null) return Center(child: Text(t.game_lookup_samples_empty));
-    final GalLookupReferenceClientV1 client = sample.capture.referenceClient;
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final double scale = math.min(
-          constraints.maxWidth / client.widthPx,
-          constraints.maxHeight / client.heightPx,
-        );
-        final Size size = Size(client.widthPx * scale, client.heightPx * scale);
-        return Center(
-          child: InteractiveViewer(
-            maxScale: 8,
-            child: MouseRegion(
-              onExit: (_) => setState(() => _hoverIndex = null),
-              onHover: (PointerHoverEvent event) {
-                final Offset at = event.localPosition / scale;
-                GalCalibrationBox? hit;
-                for (final GalCalibrationBox box
-                    in _preview?.boxes ?? <GalCalibrationBox>[]) {
-                  if (box.rect.contains(at)) {
-                    hit = box;
-                    break;
-                  }
-                }
-                if (_hoverIndex != hit?.charIndex) {
-                  setState(() => _hoverIndex = hit?.charIndex);
-                }
-              },
-              child: GestureDetector(
-                onTapUp: (TapUpDetails details) => _setAnchor(
-                  Offset(
-                    (details.localPosition.dx / size.width).clamp(0, 1),
-                    (details.localPosition.dy / size.height).clamp(0, 1),
-                  ),
-                ),
-                child: SizedBox.fromSize(
-                  size: size,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Image.memory(
-                        sample.capture.pngBytes,
-                        fit: BoxFit.fill,
-                        gaplessPlayback: false,
-                      ),
-                      CustomPaint(
-                        painter: _CalibrationPainter(
-                          boxes: _showBoxes ? _preview?.boxes ?? [] : [],
-                          client: client,
-                          anchors: sample.anchors,
-                          selectedIndex: _markIndex,
-                          hoverIndex: _hoverIndex,
-                          opacity: _opacity,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
+    return GalLookupCalibrationCanvas(
+      key: ValueKey<Object>(sample.capture),
+      pngBytes: sample.capture.pngBytes,
+      client: sample.capture.referenceClient,
+      rect: _rect,
+      boxes: _showBoxes ? _preview?.boxes ?? [] : [],
+      anchors: sample.anchors,
+      selectedIndex: _markIndex,
+      mode: _editMode,
+      opacity: _opacity,
+      enabled: !_busy,
+      onRectChanged: (GalLookupNormalizedRectV1 rect) {
+        _rect = rect;
+        _changed();
+      },
+      onAnchorChanged: _setAnchor,
+      onIndexSelected: (int index) => setState(() => _markIndex = index),
+      onHover: (int? index) {
+        if (_hoverIndex != index) setState(() => _hoverIndex = index);
       },
     );
   }
@@ -534,7 +545,39 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                 ? t.game_lookup_samples_hover
                 : '「${sample.capture.sourceText.substring(hovered.charIndex, hovered.charIndex + hovered.charLength)}」 · ${hovered.charIndex + 1}',
           ),
-          Text(t.game_lookup_samples_anchor_hint),
+          Wrap(
+            spacing: 6,
+            children: <Widget>[
+              for (final (GalCalibrationEditMode, String) mode
+                  in <(GalCalibrationEditMode, String)>[
+                    (
+                      GalCalibrationEditMode.region,
+                      t.game_lookup_samples_region_mode,
+                    ),
+                    (
+                      GalCalibrationEditMode.points,
+                      t.game_lookup_samples_point_mode,
+                    ),
+                    (
+                      GalCalibrationEditMode.pan,
+                      t.game_lookup_samples_pan_mode,
+                    ),
+                  ])
+                ChoiceChip(
+                  key: ValueKey<String>('calibration-mode-${mode.$1.name}'),
+                  label: Text(mode.$2),
+                  selected: _editMode == mode.$1,
+                  onSelected: _busy
+                      ? null
+                      : (_) => setState(() => _editMode = mode.$1),
+                ),
+            ],
+          ),
+          Text(
+            _editMode == GalCalibrationEditMode.region
+                ? t.game_lookup_samples_region_hint
+                : t.game_lookup_samples_points_hint,
+          ),
           SizedBox(
             height: 96,
             child: SingleChildScrollView(
@@ -551,14 +594,64 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                           : null,
                       onSelected: _busy
                           ? null
-                          : (bool selected) => setState(
-                              () => _markIndex = selected ? cluster.key : null,
-                            ),
+                          : (bool selected) => setState(() {
+                              _markIndex = selected ? cluster.key : null;
+                              _editMode = GalCalibrationEditMode.points;
+                            }),
                     ),
                 ],
               ),
             ),
           ),
+          if (_markIndex != null && sample.anchors.containsKey(_markIndex))
+            Wrap(
+              spacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                Text(
+                  '${t.game_lookup_samples_point_selected}: ${clusters[_markIndex] ?? ''}',
+                ),
+                IconButton(
+                  key: const ValueKey<String>('anchor-nudge-left'),
+                  tooltip: t.game_lookup_samples_nudge_left,
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: _busy ? null : () => _nudgeAnchor(-1, 0),
+                ),
+                IconButton(
+                  key: const ValueKey<String>('anchor-nudge-right'),
+                  tooltip: t.game_lookup_samples_nudge_right,
+                  icon: const Icon(Icons.arrow_forward),
+                  onPressed: _busy ? null : () => _nudgeAnchor(1, 0),
+                ),
+                IconButton(
+                  key: const ValueKey<String>('anchor-nudge-up'),
+                  tooltip: t.game_lookup_samples_nudge_up,
+                  icon: const Icon(Icons.arrow_upward),
+                  onPressed: _busy ? null : () => _nudgeAnchor(0, -1),
+                ),
+                IconButton(
+                  key: const ValueKey<String>('anchor-nudge-down'),
+                  tooltip: t.game_lookup_samples_nudge_down,
+                  icon: const Icon(Icons.arrow_downward),
+                  onPressed: _busy ? null : () => _nudgeAnchor(0, 1),
+                ),
+                IconButton(
+                  tooltip: t.game_lookup_samples_point_remove,
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: _busy
+                      ? null
+                      : () => setState(() {
+                          final Map<int, Offset> anchors = Map<int, Offset>.of(
+                            sample.anchors,
+                          )..remove(_markIndex);
+                          _samples[_selected] = sample.copyWith(
+                            anchors: anchors,
+                          );
+                          _dirty = true;
+                        }),
+                ),
+              ],
+            ),
           Wrap(
             spacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
@@ -590,6 +683,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                     : () {
                         _samples.removeAt(_selected);
                         _selected = math.max(0, _selected - 1);
+                        _markIndex = null;
                         _changed();
                       },
                 child: Text(t.game_lookup_samples_remove),
@@ -609,103 +703,163 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     );
   }
 
-  Widget _controls() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      Text(t.game_lookup_samples_native_hint),
-      const SizedBox(height: 12),
-      SwitchListTile.adaptive(
-        contentPadding: EdgeInsets.zero,
-        title: Text(t.game_lookup_samples_boxes),
-        value: _showBoxes,
-        onChanged: (bool value) => setState(() => _showBoxes = value),
-      ),
-      _slider(
-        t.game_lookup_samples_opacity,
-        _opacity,
-        0.1,
-        1,
-        (double v) => setState(() => _opacity = v),
-      ),
-      const Divider(),
-      _slider(
-        t.game_lookup_attached_left,
-        _rect.left,
-        0,
-        1 - _rect.width,
-        (double v) => _setRect(left: v),
-      ),
-      _slider(
-        t.game_lookup_attached_top,
-        _rect.top,
-        0,
-        1 - _rect.height,
-        (double v) => _setRect(top: v),
-      ),
-      _slider(
-        t.game_lookup_attached_width,
-        _rect.width,
-        0.02,
-        1 - _rect.left,
-        (double v) => _setRect(width: v),
-      ),
-      _slider(
-        t.game_lookup_attached_height,
-        _rect.height,
-        0.02,
-        1 - _rect.top,
-        (double v) => _setRect(height: v),
-      ),
-      TextField(
-        controller: _font,
-        enabled: !_busy,
-        decoration: InputDecoration(
-          labelText: t.game_lookup_attached_font_family,
+  Widget _controls() {
+    final GalLookupReferenceClientV1? client = _sample?.capture.referenceClient;
+    final double width = client?.widthPx.toDouble() ?? 1;
+    final double height = client?.heightPx.toDouble() ?? 1;
+    final int trainingPoints = _samples
+        .where((GalCalibrationSample s) => !s.validation)
+        .fold<int>(
+          0,
+          (int total, GalCalibrationSample s) => total + s.anchors.length,
+        );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Text(
+          t.game_lookup_samples_region_title,
+          style: Theme.of(context).textTheme.titleSmall,
         ),
-        onChanged: (String value) {
-          _layout = copyGalCalibrationLayout(_layout, fontFamily: value.trim());
-          _changed();
-        },
-      ),
-      _slider(
-        t.game_lookup_attached_font_size,
-        _layout.fontSizePerClientHeight,
-        0.01,
-        0.12,
-        (double v) {
-          _layout = copyGalCalibrationLayout(_layout, fontSize: v);
-          _changed();
-        },
-      ),
-      _slider(
-        t.game_lookup_attached_letter_spacing,
-        _layout.letterSpacingPerClientHeight,
-        -0.02,
-        0.05,
-        (double v) {
-          _layout = copyGalCalibrationLayout(_layout, tracking: v);
-          _changed();
-        },
-      ),
-      _slider(
-        t.game_lookup_attached_line_height,
-        _layout.lineHeight,
-        0.5,
-        2.5,
-        (double v) {
-          _layout = copyGalCalibrationLayout(_layout, lineHeight: v);
-          _changed();
-        },
-      ),
-      FilledButton(
-        onPressed: _busy || _samples.isEmpty ? null : _fit,
-        child: Text(t.game_lookup_samples_fit),
-      ),
-      const SizedBox(height: 12),
-      Text(t.game_lookup_samples_validation_hint),
-      const SizedBox(height: 12),
-      Text(t.game_lookup_samples_saved_hint),
-    ],
+        Text(t.game_lookup_samples_region_hint),
+        Text(t.game_lookup_samples_pixel_hint),
+        const SizedBox(height: 12),
+        _number(
+          'left',
+          t.game_lookup_attached_left,
+          _rect.left * width,
+          0,
+          (1 - _rect.width) * width,
+          (double v) => _setRect(left: v / width),
+        ),
+        _number(
+          'top',
+          t.game_lookup_attached_top,
+          _rect.top * height,
+          0,
+          (1 - _rect.height) * height,
+          (double v) => _setRect(top: v / height),
+        ),
+        _number(
+          'width',
+          t.game_lookup_attached_width,
+          _rect.width * width,
+          math.max(0.001 * width, 8),
+          (1 - _rect.left) * width,
+          (double v) => _setRect(width: v / width),
+        ),
+        _number(
+          'height',
+          t.game_lookup_attached_height,
+          _rect.height * height,
+          math.max(0.001 * height, 8),
+          (1 - _rect.top) * height,
+          (double v) => _setRect(height: v / height),
+        ),
+        const Divider(),
+        Text(
+          t.game_lookup_samples_layout_title,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        Text(t.game_lookup_samples_font_hint),
+        TextField(
+          key: const ValueKey<String>('calibration-font'),
+          controller: _font,
+          enabled: !_busy,
+          decoration: InputDecoration(
+            labelText: t.game_lookup_attached_font_family,
+          ),
+          onChanged: (String value) {
+            _layout = copyGalCalibrationLayout(
+              _layout,
+              fontFamily: value.trim(),
+            );
+            _changed();
+          },
+        ),
+        const SizedBox(height: 8),
+        _number(
+          'font-size',
+          t.game_lookup_attached_font_size,
+          _layout.fontSizePerClientHeight * height,
+          1,
+          height * 0.25,
+          (double v) {
+            _layout = copyGalCalibrationLayout(_layout, fontSize: v / height);
+            _changed();
+          },
+        ),
+        _number(
+          'tracking',
+          t.game_lookup_attached_letter_spacing,
+          _layout.letterSpacingPerClientHeight * height,
+          -0.05 * height,
+          0.1 * height,
+          (double v) {
+            _layout = copyGalCalibrationLayout(_layout, tracking: v / height);
+            _changed();
+          },
+          step: 0.25,
+        ),
+        _number(
+          'line-height',
+          t.game_lookup_attached_line_height,
+          _layout.lineHeight,
+          0.5,
+          3,
+          (double v) {
+            _layout = copyGalCalibrationLayout(_layout, lineHeight: v);
+            _changed();
+          },
+          step: 0.05,
+          unit: '',
+        ),
+        if (trainingPoints < 6) Text(t.game_lookup_samples_few_points),
+        FilledButton(
+          onPressed: _busy || _samples.isEmpty ? null : _fit,
+          child: Text(t.game_lookup_samples_fit),
+        ),
+        const SizedBox(height: 12),
+        Text(t.game_lookup_samples_validation_hint),
+        const Divider(),
+        SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          title: Text(t.game_lookup_samples_boxes),
+          value: _showBoxes,
+          onChanged: (bool value) => setState(() => _showBoxes = value),
+        ),
+        _slider(
+          t.game_lookup_samples_opacity,
+          _opacity,
+          0.1,
+          1,
+          (double v) => setState(() => _opacity = v),
+        ),
+        Text(t.game_lookup_samples_saved_hint),
+      ],
+    );
+  }
+
+  Widget _number(
+    String key,
+    String label,
+    double value,
+    double min,
+    double max,
+    ValueChanged<double> changed, {
+    double step = 1,
+    String unit = 'px',
+  }) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: GalCalibrationNumberField(
+      key: ValueKey<String>('calibration-number-$key'),
+      label: unit.isEmpty ? label : '$label · $unit',
+      value: value,
+      min: math.min(min, max),
+      max: max,
+      step: step,
+      enabled: !_busy && _sample != null,
+      onChanged: changed,
+    ),
   );
 
   void _setRect({double? left, double? top, double? width, double? height}) {
@@ -741,69 +895,4 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       ],
     );
   }
-}
-
-class _CalibrationPainter extends CustomPainter {
-  const _CalibrationPainter({
-    required this.boxes,
-    required this.client,
-    required this.anchors,
-    required this.selectedIndex,
-    required this.hoverIndex,
-    required this.opacity,
-  });
-  final List<GalCalibrationBox> boxes;
-  final GalLookupReferenceClientV1 client;
-  final Map<int, Offset> anchors;
-  final int? selectedIndex;
-  final int? hoverIndex;
-  final double opacity;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double sx = size.width / client.widthPx;
-    final double sy = size.height / client.heightPx;
-    for (final GalCalibrationBox box in boxes) {
-      final bool active =
-          box.charIndex == selectedIndex || box.charIndex == hoverIndex;
-      final Rect rect = Rect.fromLTRB(
-        box.rect.left * sx,
-        box.rect.top * sy,
-        box.rect.right * sx,
-        box.rect.bottom * sy,
-      );
-      canvas.drawRect(
-        rect,
-        Paint()
-          ..color = (active ? Colors.amber : Colors.cyan).withValues(
-            alpha: opacity,
-          )
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = active ? 2 : 1,
-      );
-      if (active) {
-        canvas.drawRect(
-          rect,
-          Paint()..color = Colors.amber.withValues(alpha: 0.15),
-        );
-      }
-    }
-    for (final Offset point in anchors.values) {
-      final Offset at = Offset(point.dx * size.width, point.dy * size.height);
-      final Paint paint = Paint()
-        ..color = Colors.deepOrangeAccent
-        ..strokeWidth = 2;
-      canvas.drawLine(at - const Offset(5, 0), at + const Offset(5, 0), paint);
-      canvas.drawLine(at - const Offset(0, 5), at + const Offset(0, 5), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _CalibrationPainter old) =>
-      old.boxes != boxes ||
-      old.client != client ||
-      old.anchors != anchors ||
-      old.selectedIndex != selectedIndex ||
-      old.hoverIndex != hoverIndex ||
-      old.opacity != opacity;
 }

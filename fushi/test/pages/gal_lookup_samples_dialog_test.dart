@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:ui' show PointerDeviceKind;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,7 @@ import 'package:fushi/src/lookup/gal_lookup_calibration_preview.dart';
 import 'package:fushi/src/lookup/gal_lookup_surface_profile.dart';
 import 'package:fushi/src/mining/window_capture_channel.dart';
 import 'package:fushi/src/pages/implementations/gal_lookup_samples_dialog.dart';
+import 'package:fushi/src/pages/implementations/gal_lookup_calibration_canvas.dart';
 import 'package:image/image.dart' as img;
 
 const String _sha =
@@ -62,9 +64,10 @@ GalLookupCalibrationCapture _capture() => GalLookupCalibrationCapture(
 
 GalLookupCalibrationDraft _draft({
   int count = 1,
+  GalLookupNormalizedRectV1 rect = _rect,
   Map<int, Offset> anchors = const <int, Offset>{},
 }) => GalLookupCalibrationDraft(
-  rect: _rect,
+  rect: rect,
   layout: _layout,
   samples: <GalCalibrationSample>[
     for (int i = 0; i < count; i++)
@@ -166,7 +169,7 @@ Finder _cluster(String label) => find.byWidgetPredicate(
 );
 
 Future<void> _enterFont(WidgetTester tester, String value) async {
-  final Finder field = find.byType(TextField);
+  final Finder field = find.byKey(const ValueKey<String>('calibration-font'));
   await tester.ensureVisible(field);
   await tester.enterText(field, value);
   // Deliberately do not submit the text field: normal typing must take effect.
@@ -175,6 +178,231 @@ Future<void> _enterFont(WidgetTester tester, String value) async {
 
 void main() {
   setUp(() => LocaleSettings.setLocale(AppLocale.en));
+
+  GalLookupCalibrationCanvas canvas(WidgetTester tester) =>
+      tester.widget<GalLookupCalibrationCanvas>(
+        find.byType(GalLookupCalibrationCanvas),
+      );
+
+  testWidgets(
+    'dragging the outer area moves layout without moving reference points',
+    (WidgetTester tester) async {
+      final _MemoryStore store = _MemoryStore(
+        draft: _draft(anchors: const <int, Offset>{0: Offset(0.3, 0.7)}),
+      );
+      await _open(tester, store: store);
+      final Size imageSize = tester.getSize(find.byType(Image));
+      await tester.drag(
+        find.byKey(const ValueKey<String>('calibration-region-move')),
+        const Offset(30, -20),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        canvas(tester).rect.left,
+        closeTo(_rect.left + 30 / imageSize.width, 0.002),
+      );
+      expect(
+        canvas(tester).rect.top,
+        closeTo(_rect.top - 20 / imageSize.height, 0.002),
+      );
+      expect(canvas(tester).anchors[0], const Offset(0.3, 0.7));
+      await tester.tap(find.byTooltip(t.game_lookup_samples_save));
+      await tester.pumpAndSettle();
+      expect(store.saved.last.rect, canvas(tester).rect);
+    },
+  );
+
+  testWidgets(
+    'bottom handle visibly resizes outer area without changing font size',
+    (WidgetTester tester) async {
+      final _MemoryStore store = _MemoryStore(draft: _draft());
+      await _open(tester, store: store);
+      final Size imageSize = tester.getSize(find.byType(Image));
+      await tester.drag(
+        find.byKey(const ValueKey<String>('calibration-region-bottom')),
+        const Offset(0, -35),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        canvas(tester).rect.height,
+        closeTo(_rect.height - 35 / imageSize.height, 0.002),
+      );
+      expect(canvas(tester).rect.top, _rect.top);
+      await tester.tap(find.byTooltip(t.game_lookup_samples_save));
+      await tester.pumpAndSettle();
+      expect(
+        store.saved.last.layout.fontSizePerClientHeight,
+        _layout.fontSizePerClientHeight,
+      );
+    },
+  );
+
+  testWidgets(
+    'zoomed region drag uses inverse transform and stays inside the screenshot',
+    (WidgetTester tester) async {
+      await _open(tester, store: _MemoryStore(draft: _draft()));
+      final Size imageSize = tester.getSize(find.byType(Image));
+      await tester.tap(find.byTooltip(t.game_lookup_samples_zoom_in));
+      await tester.pumpAndSettle();
+      await tester.drag(
+        find.byKey(const ValueKey<String>('calibration-region-move')),
+        const Offset(30, -15),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        canvas(tester).rect.left,
+        closeTo(_rect.left + 30 / 1.5 / imageSize.width, 0.003),
+      );
+      await tester.drag(
+        find.byKey(const ValueKey<String>('calibration-region-move')),
+        const Offset(2000, 2000),
+      );
+      await tester.pumpAndSettle();
+      expect(canvas(tester).rect.isValid, isTrue);
+      expect(
+        canvas(tester).rect.left + canvas(tester).rect.width,
+        closeTo(1, 1e-8),
+      );
+      expect(
+        canvas(tester).rect.top + canvas(tester).rect.height,
+        closeTo(1, 1e-8),
+      );
+    },
+  );
+
+  testWidgets('existing points can be dragged and nudged by one source pixel', (
+    WidgetTester tester,
+  ) async {
+    final _MemoryStore store = _MemoryStore(
+      draft: _draft(anchors: const <int, Offset>{0: Offset(0.3, 0.7)}),
+    );
+    await _open(tester, store: store);
+    await tester.tap(_cluster('A'));
+    await tester.pumpAndSettle();
+    final Size imageSize = tester.getSize(find.byType(Image));
+    await tester.drag(
+      find.byKey(const ValueKey<String>('calibration-anchor-0')),
+      const Offset(25, -20),
+    );
+    await tester.pumpAndSettle();
+    final Offset moved = canvas(tester).anchors[0]!;
+    expect(moved.dx, closeTo(0.3 + 25 / imageSize.width, 0.002));
+    expect(moved.dy, closeTo(0.7 - 20 / imageSize.height, 0.002));
+    final Finder nudge = find.byKey(
+      const ValueKey<String>('anchor-nudge-right'),
+    );
+    await tester.ensureVisible(nudge);
+    await tester.tap(nudge);
+    await tester.pumpAndSettle();
+    expect(canvas(tester).anchors[0]!.dx, closeTo(moved.dx + 1 / 800, 1e-9));
+    await tester.tap(find.byTooltip(t.game_lookup_samples_save));
+    await tester.pumpAndSettle();
+    expect(
+      store.saved.last.samples.single.anchors[0],
+      canvas(tester).anchors[0],
+    );
+  });
+
+  testWidgets(
+    'pixel height input updates visible bounds and saves pending input',
+    (WidgetTester tester) async {
+      final _MemoryStore store = _MemoryStore(draft: _draft());
+      await _open(tester, store: store);
+      final Finder field = find.descendant(
+        of: find.byKey(const ValueKey<String>('calibration-number-height')),
+        matching: find.byType(TextField),
+      );
+      await tester.ensureVisible(field);
+      await tester.enterText(field, '100');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(canvas(tester).rect.height, closeTo(100 / 600, 1e-9));
+      await tester.enterText(field, '120');
+      await tester.tap(find.byTooltip(t.game_lookup_samples_save));
+      await tester.pumpAndSettle();
+      expect(store.saved.last.rect.height, closeTo(120 / 600, 1e-9));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('zoomed mouse adjustments preserve the point grab offset', (
+    WidgetTester tester,
+  ) async {
+    await _open(
+      tester,
+      store: _MemoryStore(
+        draft: _draft(anchors: const <int, Offset>{0: Offset(0.3, 0.7)}),
+      ),
+    );
+    await tester.tap(_cluster('A'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip(t.game_lookup_samples_zoom_in));
+    await tester.pumpAndSettle();
+    final Offset zoomedPoint = tester.getCenter(
+      find.byKey(const ValueKey<String>('calibration-anchor-0')),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('calibration-mode-pan')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey<String>('calibration-mode-points')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.getCenter(
+        find.byKey(const ValueKey<String>('calibration-anchor-0')),
+      ),
+      zoomedPoint,
+    );
+    final Size imageSize = tester.getSize(find.byType(Image));
+    final Offset grab =
+        tester.getCenter(
+          find.byKey(const ValueKey<String>('calibration-anchor-0')),
+        ) +
+        const Offset(6, -4);
+    final TestGesture mouse = await tester.startGesture(
+      grab,
+      kind: PointerDeviceKind.mouse,
+    );
+    await mouse.moveBy(const Offset(1, 0));
+    await tester.pump();
+    expect(
+      canvas(tester).anchors[0]!.dx,
+      closeTo(0.3 + 1 / 1.5 / imageSize.width, 1e-8),
+    );
+    expect(canvas(tester).anchors[0]!.dy, closeTo(0.7, 1e-8));
+    await mouse.up();
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('a narrow saved region at the edge can still be resized', (
+    WidgetTester tester,
+  ) async {
+    const GalLookupNormalizedRectV1 narrow = GalLookupNormalizedRectV1(
+      left: 0.001,
+      top: 0.4,
+      width: 0.005,
+      height: 0.2,
+    );
+    await _open(
+      tester,
+      store: _MemoryStore(draft: _draft(rect: narrow)),
+    );
+    final Offset start = tester.getCenter(
+      find.byKey(const ValueKey<String>('calibration-region-left')),
+    );
+    final TestGesture mouse = await tester.startGesture(
+      start,
+      kind: PointerDeviceKind.mouse,
+    );
+    await mouse.moveBy(const Offset(-25, 0));
+    await mouse.up();
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(canvas(tester).rect.left, 0);
+    expect(canvas(tester).rect.width, closeTo(0.006, 1e-8));
+  });
 
   testWidgets('capture action saves the exact sample immediately', (
     WidgetTester tester,
@@ -218,6 +446,7 @@ void main() {
       final Finder screenshot = find.byType(Image);
       await tester.tapAt(tester.getCenter(screenshot));
       await tester.pump();
+      await tester.ensureVisible(find.byType(FilterChip));
       await tester.tap(find.byType(FilterChip));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip(t.game_lookup_samples_save));
@@ -294,6 +523,40 @@ void main() {
     expect(store.saved.single.layout.fontFamily, 'Applied font');
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'apply validates pending numeric input before returning a draft',
+    (WidgetTester tester) async {
+      final _MemoryStore store = _MemoryStore(draft: _draft());
+      final _Result result = await _open(
+        tester,
+        store: store,
+        previewBuilder:
+            ({
+              required String text,
+              required GalLookupReferenceClientV1 client,
+              required GalLookupNormalizedRectV1 rect,
+              required GalLookupTextLayoutV1 layout,
+            }) async => rect.height < 0.2
+            ? const GalCalibrationPreview(boxes: [], reason: 'overflow')
+            : _preview(text: text, client: client, rect: rect, layout: layout),
+      );
+      final Finder field = find.descendant(
+        of: find.byKey(const ValueKey<String>('calibration-number-height')),
+        matching: find.byType(TextField),
+      );
+      await tester.ensureVisible(field);
+      await tester.enterText(field, '100');
+      // Apply while the last accepted preview still corresponds to 150 px.
+      await tester.tap(find.text(t.game_lookup_samples_apply));
+      await tester.pumpAndSettle();
+      expect(result.closed, isFalse);
+      expect(result.applied, isNull);
+      expect(canvas(tester).rect.height, closeTo(100 / 600, 1e-9));
+      expect(find.text(t.game_lookup_samples_unavailable), findsWidgets);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   for (final Size size in <Size>[const Size(1280, 900), const Size(800, 600)]) {
     testWidgets(

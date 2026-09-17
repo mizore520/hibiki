@@ -10825,4 +10825,48 @@ class _StringsZhCn extends _StringsEn {
   String get game_lookup_samples_measured => '已标记样本';
   @override
   String get game_lookup_samples_validation_hint => '验证样本的标记只用于检查，不参与自动对齐。';
+  @override
+  String get game_lookup_samples_region_mode => '拖动外框';
+  @override
+  String get game_lookup_samples_point_mode => '标记文字';
+  @override
+  String get game_lookup_samples_pan_mode => '浏览图片';
+  @override
+  String get game_lookup_samples_region_title => '台词区域（橙色外框）';
+  @override
+  String get game_lookup_samples_layout_title => '文字排版（蓝色字框）';
+  @override
+  String get game_lookup_samples_region_hint =>
+      '拖动橙色外框内部可移动，拖动边角可缩放。宽高控制排版空间和换行，不改变单个字框大小。';
+  @override
+  String get game_lookup_samples_points_hint =>
+      '在几句校准样本中各标3～5个分散的字，尽量避开标点。不必一次点准，选中后可拖动或微调；两个点只能粗调。';
+  @override
+  String get game_lookup_samples_point_selected => '当前选择';
+  @override
+  String get game_lookup_samples_point_remove => '删除该标记';
+  @override
+  String get game_lookup_samples_nudge_left => '向左微调1个截图像素';
+  @override
+  String get game_lookup_samples_nudge_right => '向右微调1个截图像素';
+  @override
+  String get game_lookup_samples_nudge_up => '向上微调1个截图像素';
+  @override
+  String get game_lookup_samples_nudge_down => '向下微调1个截图像素';
+  @override
+  String get game_lookup_samples_zoom_in => '放大截图';
+  @override
+  String get game_lookup_samples_zoom_out => '缩小截图';
+  @override
+  String get game_lookup_samples_zoom_reset => '显示完整截图';
+  @override
+  String get game_lookup_samples_pixel_hint => '数值使用截图像素，可输入后按回车，或用减号、加号微调。';
+  @override
+  String get game_lookup_samples_font_hint =>
+      '字体留空时使用Yu Gothic。字体或字号不匹配时，可能无法让所有句子同时对齐。';
+  @override
+  String get game_lookup_samples_residual_hint => '此数值是与人工标记点的偏差，不代表游戏真实字形精度。';
+  @override
+  String get game_lookup_samples_few_points =>
+      '校准点较少，微小标记误差也会影响结果。建议在多句样本上补充分散标记后再判断精度。';
 }

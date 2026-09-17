@@ -201,7 +201,10 @@ Future<GalLookupCalibrationDraft?> fitGalCalibrationAnchors(
       .where((GalCalibrationSample s) => !s.validation && s.anchors.isNotEmpty)
       .toList();
   if (training.isEmpty || draft.layout.textAlign != 'left') return null;
-  final List<({double derivative, double dx, double dy})> rows = [];
+  final List<
+    ({double derivative, double dx, double dy, double aspect, double pixel})
+  >
+  rows = [];
   bool hasSeparatedPair = false;
   for (final GalCalibrationSample sample in training) {
     final GalLookupReferenceClientV1 client = sample.capture.referenceClient;
@@ -240,6 +243,8 @@ Future<GalLookupCalibrationDraft?> fitGalCalibrationAnchors(
             (moved.rect.center.dx - box.rect.center.dx) / client.widthPx / step,
         dx: anchor.value.dx - box.rect.center.dx / client.widthPx,
         dy: anchor.value.dy - box.rect.center.dy / client.heightPx,
+        aspect: client.widthPx / client.heightPx,
+        pixel: 1 / client.heightPx,
       ));
     }
     for (final GalCalibrationBox a in marked) {
@@ -252,17 +257,76 @@ Future<GalLookupCalibrationDraft?> fitGalCalibrationAnchors(
     }
   }
   if (!hasSeparatedPair || rows.length < 2) return null;
+  // Two points cannot reveal an inaccurate mark. With enough redundancy,
+  // median pair slopes provide an initial estimate independent of a single
+  // extreme mark. Tukey weights then limit that mark's influence. The UI's
+  // reported error still includes EVERY mark, including held-out samples.
+  final List<double> weights = List<double>.filled(rows.length, 1);
+  if (rows.length >= 6) {
+    final List<double> slopes = [];
+    for (int a = 0; a < rows.length; a++) {
+      for (int b = a + 1; b < rows.length; b++) {
+        final double separation = rows[b].derivative - rows[a].derivative;
+        if (separation.abs() > 1e-6) {
+          slopes.add((rows[b].dx - rows[a].dx) / separation);
+        }
+      }
+    }
+    if (slopes.isNotEmpty) {
+      final double slope = _calibrationMedian(slopes);
+      final double origin = _calibrationMedian([
+        for (final row in rows) row.dx - slope * row.derivative,
+      ]);
+      final double vertical = _calibrationMedian([
+        for (final row in rows) row.dy,
+      ]);
+      final List<double> residuals = [
+        for (final row in rows)
+          Offset(
+            (row.dx - origin - slope * row.derivative) * row.aspect,
+            row.dy - vertical,
+          ).distance,
+      ];
+      final double cutoff = math.max(
+        4.685 * 1.4826 * _calibrationMedian(residuals.toList()),
+        rows.map((row) => row.pixel * 2).reduce(math.max),
+      );
+      final List<double> robust = [
+        for (final double residual in residuals)
+          residual >= cutoff
+              ? 0
+              : math.pow(1 - math.pow(residual / cutoff, 2), 2).toDouble(),
+      ];
+      if (robust.where((double weight) => weight > 0).length >= 4) {
+        weights.setAll(0, robust);
+      }
+    }
+  }
+  final double weightTotal = weights.reduce((double a, double b) => a + b);
   final double meanD =
-      rows.fold<double>(0, (double s, row) => s + row.derivative) / rows.length;
+      List<double>.generate(
+        rows.length,
+        (int i) => rows[i].derivative * weights[i],
+      ).reduce((double a, double b) => a + b) /
+      weightTotal;
   final double meanX =
-      rows.fold<double>(0, (double s, row) => s + row.dx) / rows.length;
+      List<double>.generate(
+        rows.length,
+        (int i) => rows[i].dx * weights[i],
+      ).reduce((double a, double b) => a + b) /
+      weightTotal;
   final double meanY =
-      rows.fold<double>(0, (double s, row) => s + row.dy) / rows.length;
+      List<double>.generate(
+        rows.length,
+        (int i) => rows[i].dy * weights[i],
+      ).reduce((double a, double b) => a + b) /
+      weightTotal;
   double variance = 0;
   double covariance = 0;
-  for (final row in rows) {
-    variance += math.pow(row.derivative - meanD, 2).toDouble();
-    covariance += (row.derivative - meanD) * (row.dx - meanX);
+  for (int i = 0; i < rows.length; i++) {
+    final row = rows[i];
+    variance += weights[i] * math.pow(row.derivative - meanD, 2).toDouble();
+    covariance += weights[i] * (row.derivative - meanD) * (row.dx - meanX);
   }
   if (variance < 1e-8) return null;
   final double spacingDelta = covariance / variance;
@@ -290,6 +354,7 @@ Future<GalLookupCalibrationDraft?> fitGalCalibrationAnchors(
   // spacing model cannot prove correspondence across a wrapping discontinuity.
   double before = 0;
   double after = 0;
+  int rowIndex = 0;
   for (final GalCalibrationSample sample in training) {
     final GalLookupReferenceClientV1 client = sample.capture.referenceClient;
     final GalCalibrationPreview original = await build(
@@ -320,11 +385,14 @@ Future<GalLookupCalibrationDraft?> fitGalCalibrationAnchors(
         anchor.value.dy * client.heightPx,
       );
       before +=
+          weights[rowIndex] *
           (a.rect.center - target).distanceSquared /
           (client.heightPx * client.heightPx);
       after +=
+          weights[rowIndex] *
           (b.rect.center - target).distanceSquared /
           (client.heightPx * client.heightPx);
+      rowIndex++;
     }
   }
   if (after > before + 1e-10) return null;
@@ -333,4 +401,12 @@ Future<GalLookupCalibrationDraft?> fitGalCalibrationAnchors(
     layout: layout,
     samples: draft.samples,
   );
+}
+
+double _calibrationMedian(List<double> values) {
+  values.sort();
+  final int middle = values.length ~/ 2;
+  return values.length.isOdd
+      ? values[middle]
+      : (values[middle - 1] + values[middle]) / 2;
 }

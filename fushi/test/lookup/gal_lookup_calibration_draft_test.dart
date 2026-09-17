@@ -224,6 +224,79 @@ void main() {
   });
 
   group('fitting marked characters', () {
+    test('redundant marks limit one misclick without erasing it', () async {
+      final Map<int, Offset> points = <int, Offset>{
+        for (int i = 0; i < 8; i++) i: Offset((120 + 22 * i) / 1000, 115 / 500),
+      };
+      // An erroneous far-end mark has high leverage in ordinary least squares.
+      points[7] = points[7]! + const Offset(0.06, 0.04);
+      final GalLookupCalibrationDraft draft = _draft(<GalCalibrationSample>[
+        _sample(text: 'ABCDEFGH', anchors: points),
+      ]);
+      final GalLookupCalibrationDraft result = (await fitGalCalibrationAnchors(
+        draft,
+        build: _linearPreview,
+      ))!;
+      expect(result.rect.left * 1000, closeTo(115, 1));
+      expect(result.rect.top * 500, closeTo(105, 1));
+      expect(result.layout.letterSpacingPerClientHeight * 500, closeTo(2, 0.1));
+      expect(
+        result.samples.single.anchors,
+        points,
+        reason: 'All marks remain visible and editable, including the outlier',
+      );
+    });
+
+    test(
+      'small marking noise is shared across multiple training samples',
+      () async {
+        const List<double> noise = <double>[
+          0.5,
+          -0.8,
+          0.3,
+          -0.4,
+          0.7,
+          -0.3,
+          0.2,
+          -0.2,
+        ];
+        final List<GalCalibrationSample> samples = <GalCalibrationSample>[
+          for (int sample = 0; sample < 2; sample++)
+            _sample(
+              text: 'ABCDEFGH',
+              anchors: <int, Offset>{
+                for (int i = sample * 4; i < sample * 4 + 4; i++)
+                  i: Offset(
+                    (120 + 22 * i + noise[i]) / 1000,
+                    (115 + noise[7 - i]) / 500,
+                  ),
+              },
+            ),
+          _sample(
+            text: 'VALIDATION',
+            validation: true,
+            anchors: const <int, Offset>{
+              0: Offset(0.8, 0.8),
+              8: Offset(0.9, 0.9),
+            },
+          ),
+        ];
+        final GalLookupCalibrationDraft result =
+            (await fitGalCalibrationAnchors(
+              _draft(samples),
+              build: _linearPreview,
+            ))!;
+        final GalCalibrationPreview preview = await _linearPreview(
+          text: 'VALIDATION',
+          client: _client,
+          rect: result.rect,
+          layout: result.layout,
+        );
+        expect(preview.boxForIndex(8)!.rect.center.dx, closeTo(296, 1));
+        expect(preview.boxForIndex(8)!.rect.center.dy, closeTo(115, 1));
+      },
+    );
+
     test(
       'two separated characters determine translation and tracking',
       () async {

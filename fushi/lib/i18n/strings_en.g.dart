@@ -6798,4 +6798,35 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get game_lookup_samples_measured => 'Measured samples';
   String get game_lookup_samples_validation_hint =>
       'Validation points are checked but do not change the fitted layout.';
+  String get game_lookup_samples_region_mode => 'Move/resize area';
+  String get game_lookup_samples_point_mode => 'Mark characters';
+  String get game_lookup_samples_pan_mode => 'Pan image';
+  String get game_lookup_samples_region_title =>
+      'Dialogue area (orange outline)';
+  String get game_lookup_samples_layout_title =>
+      'Character layout (blue boxes)';
+  String get game_lookup_samples_region_hint =>
+      'Drag inside the orange outline to move it; drag its handles to resize. Width and height control wrapping space, not character size.';
+  String get game_lookup_samples_points_hint =>
+      'Mark 3–5 spread-out characters in each of several training samples. Avoid punctuation. Points need not be perfect: select, drag, or nudge them later. Two points provide only a rough estimate.';
+  String get game_lookup_samples_point_selected => 'Selected character';
+  String get game_lookup_samples_point_remove => 'Remove selected point';
+  String get game_lookup_samples_nudge_left =>
+      'Move left by one screenshot pixel';
+  String get game_lookup_samples_nudge_right =>
+      'Move right by one screenshot pixel';
+  String get game_lookup_samples_nudge_up => 'Move up by one screenshot pixel';
+  String get game_lookup_samples_nudge_down =>
+      'Move down by one screenshot pixel';
+  String get game_lookup_samples_zoom_in => 'Zoom in';
+  String get game_lookup_samples_zoom_out => 'Zoom out';
+  String get game_lookup_samples_zoom_reset => 'Fit screenshot';
+  String get game_lookup_samples_pixel_hint =>
+      'Values are screenshot pixels. Enter a number and press Enter, or use the minus/plus buttons.';
+  String get game_lookup_samples_font_hint =>
+      'An empty font uses Yu Gothic. A font or size mismatch may prevent all sentences from aligning.';
+  String get game_lookup_samples_residual_hint =>
+      'Distance from your reference points, not measured accuracy of the game glyphs.';
+  String get game_lookup_samples_few_points =>
+      'Few training points: alignment is sensitive to small marking errors. Add spread-out points in multiple samples before judging accuracy.';
 }
