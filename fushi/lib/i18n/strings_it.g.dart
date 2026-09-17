@@ -11992,4 +11992,25 @@ class _StringsIt extends _StringsEn {
   @override
   String get game_lookup_samples_few_points =>
       'Few training points: alignment is sensitive to small marking errors. Add spread-out points in multiple samples before judging accuracy.';
+  @override
+  String get game_lookup_attached_calibration_preparing =>
+      'Preparing click protection. Do not click the game dialogue yet.';
+  @override
+  String get game_lookup_attached_calibration_paused =>
+      'Calibration is paused while the game is hidden or in the background. Return with Alt+Tab and wait for the character highlights before clicking. You can still adjust and confirm here.';
+  @override
+  String get game_lookup_attached_calibration_unavailable =>
+      'Calibration is unavailable. Stop clicking the game dialogue; adjust the parameters or cancel calibration.';
+  @override
+  String get game_lookup_attached_calibration_ended =>
+      'Calibration has ended. Close this dialog before starting again.';
+  @override
+  String get game_lookup_attached_calibration_region_help =>
+      'Adjust the region here, or drag it over a screenshot in the sample editor. The game overlay only accepts highlighted character probes.';
+  @override
+  String get game_lookup_attached_calibration_text_changed =>
+      'The dialogue changed. Cancel and reopen calibration for the current line.';
+  @override
+  String get game_lookup_attached_calibration_ready =>
+      'Probe clicks are ready. Click inside the highlighted character boxes in order; clicks outside those boxes still control the game.';
 }

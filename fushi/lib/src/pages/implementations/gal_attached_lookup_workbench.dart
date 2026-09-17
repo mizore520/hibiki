@@ -308,10 +308,11 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
     if (!alreadyAccepted && !await _confirmRisk(context)) return;
     if (!context.mounted) return;
 
+    final String previewText = controller.latestSourceText.isNotEmpty
+        ? controller.latestSourceText
+        : bodyPreview;
     final GalAttachedProbePlan? probePlan = buildGalAttachedProbePlan(
-      controller.latestSourceText.isNotEmpty
-          ? controller.latestSourceText
-          : bodyPreview,
+      previewText,
     );
     if (probePlan == null) {
       _showFailure(context, t.game_lookup_attached_calibration_short_text);
@@ -322,28 +323,35 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
       initialBodyRect: draft?.rect,
       initialLayout: draft?.layout,
     );
-    if (!context.mounted) return;
+    if (!context.mounted) {
+      if (started) await controller.cancelCalibration();
+      return;
+    }
     if (!started || controller.draftBodyRect == null) {
       _showFailure(context, t.game_lookup_attached_calibration_failed);
       return;
     }
 
-    final bool? committed = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) => GalAttachedCalibrationDialog(
-        controller: controller,
-        previewText: controller.latestSourceText,
-        probePlan: probePlan,
-        initialRect:
-            controller.draftBodyRect ??
-            GalAttachedTextController.defaultBodyRect,
-        initialLayout: controller.draftLayout ?? const GalLookupTextLayoutV1(),
-      ),
-    );
-    if (committed != true &&
-        controller.status == GalAttachedTextStatus.calibrating) {
-      await controller.cancelCalibration();
+    bool? committed;
+    try {
+      committed = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) => GalAttachedCalibrationDialog(
+          controller: controller,
+          previewText: previewText,
+          probePlan: probePlan,
+          initialRect:
+              controller.draftBodyRect ??
+              GalAttachedTextController.defaultBodyRect,
+          initialLayout:
+              controller.draftLayout ?? const GalLookupTextLayoutV1(),
+        ),
+      );
+    } finally {
+      if (committed != true && controller.calibrationActive) {
+        await controller.cancelCalibration();
+      }
     }
   }
 
@@ -557,6 +565,7 @@ class _GalAttachedCalibrationDialogState
   late GalLookupNormalizedRectV1 _rect;
   late GalLookupTextLayoutV1 _layout;
   late final TextEditingController _fontController;
+  late final int _previewTextGeneration;
   bool _startConfirmed = false;
   bool _middleConfirmed = false;
   bool _endConfirmed = false;
@@ -570,6 +579,7 @@ class _GalAttachedCalibrationDialogState
     _rect = widget.initialRect;
     _layout = widget.initialLayout;
     _fontController = TextEditingController(text: _layout.fontFamily);
+    _previewTextGeneration = widget.controller.textGeneration;
     widget.controller.addListener(_adoptNativeDraft);
   }
 
@@ -609,15 +619,25 @@ class _GalAttachedCalibrationDialogState
     endConfirmed: _endConfirmed && _endObserved,
   );
 
+  bool get _previewCurrent =>
+      widget.controller.latestSourceText == widget.previewText &&
+      widget.controller.textGeneration == _previewTextGeneration;
+
   bool get _startObserved =>
+      _previewCurrent &&
       widget.controller.probeStartObservedIndex == widget.probePlan.startIndex;
   bool get _middleObserved =>
+      _previewCurrent &&
       widget.controller.probeMiddleObservedIndex ==
-      widget.probePlan.middleIndex;
+          widget.probePlan.middleIndex;
   bool get _endObserved =>
+      _previewCurrent &&
       widget.controller.probeEndObservedIndex == widget.probePlan.endIndex;
 
   bool get _allConfirmed =>
+      widget.controller.calibrationActive &&
+      widget.controller.calibrationStatus !=
+          GalAttachedCalibrationStatus.failed &&
       _startConfirmed &&
       _middleConfirmed &&
       _endConfirmed &&
@@ -630,10 +650,11 @@ class _GalAttachedCalibrationDialogState
     final GalLookupTextLayoutV1 layout = _layout;
     final GalAttachedCalibrationProbes probes = _probes;
     _draftQueue = _draftQueue.then((_) async {
-      if (!mounted) return;
+      if (!mounted || !_previewCurrent) return;
       final bool styleOk = await widget.controller.updateCalibrationStyle(
         layout,
       );
+      if (!mounted || !_previewCurrent) return;
       final bool rectOk = await widget.controller.updateCalibration(
         bodyRect: rect,
         probes: probes,
@@ -702,6 +723,11 @@ class _GalAttachedCalibrationDialogState
     });
     _queueDraftPush();
     await _draftQueue;
+    if (!mounted) return;
+    if (!_allConfirmed) {
+      setState(() => _committing = false);
+      return;
+    }
     final bool committed = await widget.controller.commitCalibration(
       probes: _probes,
     );
@@ -727,6 +753,24 @@ class _GalAttachedCalibrationDialogState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  _calibrationStatusText(),
+                  key: const ValueKey<String>(
+                    'game-attached-calibration-status',
+                  ),
+                  style: TextStyle(
+                    color:
+                        !_previewCurrent ||
+                            widget.controller.calibrationStatus ==
+                                GalAttachedCalibrationStatus.failed
+                        ? Theme.of(context).colorScheme.error
+                        : null,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
               Text(
                 t.game_lookup_attached_preview,
                 style: Theme.of(context).textTheme.labelLarge,
@@ -741,6 +785,7 @@ class _GalAttachedCalibrationDialogState
                 t.game_lookup_attached_body_rect,
                 style: Theme.of(context).textTheme.titleSmall,
               ),
+              Text(t.game_lookup_attached_calibration_region_help),
               _RatioSlider(
                 label: t.game_lookup_attached_left,
                 value: _rect.left,
@@ -913,7 +958,10 @@ class _GalAttachedCalibrationDialogState
                 ],
               ),
               const SizedBox(height: 16),
-              Text(t.game_lookup_attached_probes_hint),
+              if (_previewCurrent &&
+                  widget.controller.calibrationStatus ==
+                      GalAttachedCalibrationStatus.ready)
+                Text(t.game_lookup_attached_probes_hint),
               FushiListItem(
                 key: const ValueKey<String>(
                   'game-attached-calibration-probe-start',
@@ -982,6 +1030,7 @@ class _GalAttachedCalibrationDialogState
       ),
       actions: <Widget>[
         TextButton(
+          key: const ValueKey<String>('game-attached-calibration-cancel'),
           onPressed: _committing
               ? null
               : () => Navigator.of(context).pop(false),
@@ -999,6 +1048,23 @@ class _GalAttachedCalibrationDialogState
         ),
       ],
     );
+  }
+
+  String _calibrationStatusText() {
+    if (!_previewCurrent)
+      return t.game_lookup_attached_calibration_text_changed;
+    return switch (widget.controller.calibrationStatus) {
+      GalAttachedCalibrationStatus.idle =>
+        t.game_lookup_attached_calibration_ended,
+      GalAttachedCalibrationStatus.preparing =>
+        t.game_lookup_attached_calibration_preparing,
+      GalAttachedCalibrationStatus.ready =>
+        t.game_lookup_attached_calibration_ready,
+      GalAttachedCalibrationStatus.paused =>
+        t.game_lookup_attached_calibration_paused,
+      GalAttachedCalibrationStatus.failed =>
+        t.game_lookup_attached_calibration_unavailable,
+    };
   }
 }
 

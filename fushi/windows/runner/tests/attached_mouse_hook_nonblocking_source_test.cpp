@@ -3,6 +3,7 @@
 #include <cassert>
 #include <fstream>
 #include <iterator>
+#include <iostream>
 #include <string>
 
 #ifndef FUSHI_RUNNER_SOURCE_DIR
@@ -139,5 +140,97 @@ int main() {
   assert(callback_publish.find("IsWindow(") == std::string::npos);
   assert(callback_publish.find("GetWindowThreadProcessId(") ==
          std::string::npos);
+
+  // BUG-2531: a visible calibration HWND alone cannot shield a game's input
+  // polling. Probes must use the same admitted glyph down/up transaction.
+  std::ifstream surface_input(std::string(FUSHI_RUNNER_SOURCE_DIR) +
+                              "/attached_text_surface_window.cpp");
+  assert(surface_input.good());
+  const std::string surface((std::istreambuf_iterator<char>(surface_input)),
+                            std::istreambuf_iterator<char>());
+  const std::string sync = FunctionSlice(
+      surface, "void AttachedTextSurfaceWindow::SyncToTarget()",
+      "void AttachedTextSurfaceWindow::HideSurface()");
+  const size_t handshake = sync.find("EnsureShieldHandshake()");
+  const size_t permits = sync.find("!ShieldPermitsLookup()",
+                                   sync.find("const bool calibration ="));
+  const size_t snapshot_publish = sync.find("!PublishInteractiveSnapshot(");
+  const size_t show = sync.find("!SetVisible(true)");
+  const size_t ready = sync.find("SetState(calibration ? \"calibrating\"");
+  assert(handshake != std::string::npos && permits != std::string::npos &&
+         snapshot_publish != std::string::npos && show != std::string::npos &&
+         ready != std::string::npos && handshake < permits &&
+         permits < snapshot_publish && snapshot_publish < show && show < ready);
+  assert(sync.find("if (mode_ != Mode::kCalibration)") == std::string::npos);
+  assert(sync.find("SetRuntimeClickThrough(false)") == std::string::npos);
+  const std::string visible = FunctionSlice(
+      surface, "bool AttachedTextSurfaceWindow::SetVisible(",
+      "void AttachedTextSurfaceWindow::SetRuntimeClickThrough(");
+  assert(visible.find("mode_ == Mode::kConfigured || mode_ == Mode::kCalibration") !=
+         std::string::npos);
+  assert(visible.find("ArmLowLevelMouseHookForAttachedGlyph(") !=
+         std::string::npos);
+  const std::string surface_publish = FunctionSlice(
+      surface, "bool AttachedTextSurfaceWindow::PublishInteractiveSnapshot(",
+      "void AttachedTextSurfaceWindow::RenderLayerBitmap(");
+  assert(surface_publish.find("mode_ != Mode::kConfigured && mode_ != Mode::kCalibration") !=
+         std::string::npos);
+  assert(surface_publish.find("for (const ClusterBox &cluster : clusters_)") !=
+         std::string::npos);
+  // Full-client calibration drawing must never become a full-client catch box.
+  assert(surface_publish.find("screen_rects.push_back(surface_screen_rect_)") ==
+         std::string::npos);
+
+  const std::string ordinary = FunctionSlice(
+      surface, "case WM_LBUTTONDOWN:",
+      "case fushi::kLowLevelMouseAttachedGlyphDownMessage:");
+  assert(ordinary.find("RecordObservedCalibrationProbe(") == std::string::npos);
+  assert(ordinary.find("BeginPointerGesture(") == std::string::npos);
+  assert(ordinary.find("EndPointerGesture(") == std::string::npos);
+  assert(surface.find("calibration_dragging_") == std::string::npos);
+  const std::string down_message = FunctionSlice(
+      surface, "case fushi::kLowLevelMouseAttachedGlyphDownMessage:",
+      "case fushi::kLowLevelMouseAttachedGlyphUpMessage:");
+  assert(down_message.find("mode_ != Mode::kConfigured && mode_ != Mode::kCalibration") !=
+         std::string::npos);
+  assert(down_message.find("snapshot_token != hit_snapshot_token_") !=
+         std::string::npos);
+  assert(down_message.find("BeginPointerGesture(point, transaction_id)") !=
+         std::string::npos);
+  const std::string up = FunctionSlice(
+      surface, "void AttachedTextSurfaceWindow::EndPointerGesture(",
+      "void AttachedTextSurfaceWindow::EmitLookupEvent(");
+  assert(up.find("external_transaction_id == 0 || !shield_transaction_active_") !=
+         std::string::npos);
+  assert(up.find("shield_transaction_.transaction_id != external_transaction_id") !=
+         std::string::npos);
+  assert(up.find("pressed_cluster == released_cluster") != std::string::npos);
+  assert(up.find("pointer_text_generation_ == text_generation_") !=
+         std::string::npos);
+  const size_t probe = up.find("valid && RecordObservedCalibrationProbe(");
+  const size_t probe_return = up.find("return;", probe);
+  const size_t lookup = up.find("EmitLookupEvent(");
+  assert(probe != std::string::npos && probe_return != std::string::npos &&
+         lookup != std::string::npos && probe < probe_return &&
+         probe_return < lookup);
+  const std::string release_mirror = FunctionSlice(
+      surface, "void AttachedTextSurfaceWindow::ReleaseShieldTransaction()",
+      "void AttachedTextSurfaceWindow::RefreshShieldStatus()");
+  assert(release_mirror.find("PublishLookupShield") == std::string::npos);
+  assert(release_mirror.find("MarkPhysicalUp") == std::string::npos);
+  for (const char *method : {"CommitCalibration(", "CancelCalibration("}) {
+    const size_t method_start = surface.find(method);
+    const size_t hide = surface.find("HideSurface();", method_start);
+    const size_t mode_change = surface.find("mode_ = pre_calibration_configured_", method_start);
+    assert(method_start != std::string::npos && hide != std::string::npos &&
+           mode_change != std::string::npos && hide < mode_change);
+  }
+  // Misses still fall through the existing LL route without a shield request.
+  const size_t hit = hook.find("if (attached_rect != SIZE_MAX)");
+  const size_t begin_hit = hook.find("BeginAttachedGlyphTransaction(", hit);
+  const size_t miss = hook.find("return CallNextHookEx(", begin_hit);
+  assert(hit != std::string::npos && begin_hit != std::string::npos &&
+         miss != std::string::npos && hit < begin_hit && begin_hit < miss);
+  std::cout << "attached mouse hook and calibration source guards passed\n";
   return 0;
 }

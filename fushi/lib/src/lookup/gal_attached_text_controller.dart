@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:fushi/src/lookup/gal_lookup_surface_profile.dart';
+import 'package:fushi/src/lookup/global_lookup_log.dart';
 import 'package:fushi/src/platform/gal_hook_text_overlay_channel.dart';
 
 typedef GalAttachedPreferenceReader = Object? Function(String key);
@@ -32,6 +33,9 @@ enum GalAttachedTextStatus {
   suspended,
   fallback,
 }
+
+/// A live calibration remains open while its game surface is temporarily hidden.
+enum GalAttachedCalibrationStatus { idle, preparing, ready, paused, failed }
 
 /// Immutable identity for one visible unsafe-input consent request.
 ///
@@ -241,6 +245,7 @@ class GalAttachedTextController extends ChangeNotifier {
     GalAttachedLayoutBuilder? layoutBuilder,
     GalAttachedBeforeActivationCallback? onBeforeAttachedActivation,
     GalAttachedLookupCallback? onLookup,
+    void Function(String message) calibrationLog = glog,
   }) : _preferenceReader = preferenceReader,
        _preferenceWriter = preferenceWriter,
        _surfacePort = surfacePort,
@@ -248,7 +253,8 @@ class GalAttachedTextController extends ChangeNotifier {
            layoutBuilder ??
            ((GalLookupReferenceClientV1 _) => const GalLookupTextLayoutV1()),
        _onBeforeAttachedActivation = onBeforeAttachedActivation,
-       _onLookup = onLookup;
+       _onLookup = onLookup,
+       _calibrationLog = calibrationLog;
 
   static const GalLookupNormalizedRectV1 defaultBodyRect =
       GalLookupNormalizedRectV1(
@@ -264,6 +270,7 @@ class GalAttachedTextController extends ChangeNotifier {
   final GalAttachedLayoutBuilder _layoutBuilder;
   final GalAttachedBeforeActivationCallback? _onBeforeAttachedActivation;
   final GalAttachedLookupCallback? _onLookup;
+  final void Function(String message) _calibrationLog;
 
   GalAttachedTextStatus _status = GalAttachedTextStatus.disabled;
   String? _statusReason;
@@ -313,6 +320,12 @@ class GalAttachedTextController extends ChangeNotifier {
   GalLookupNormalizedRectV1? _draftBodyRect;
   GalLookupTextLayoutV1? _draftLayout;
   int _calibrationProbeMask = 0;
+  GalAttachedCalibrationStatus _calibrationStatus =
+      GalAttachedCalibrationStatus.idle;
+  int _calibrationLogCount = 0;
+  String? _lastCalibrationLog;
+  int _calibrationGeneration = 0;
+  int? _committedCalibrationGeneration;
 
   GalAttachedTextStatus get status => _status;
   String? get statusReason => _statusReason;
@@ -338,6 +351,8 @@ class GalAttachedTextController extends ChangeNotifier {
   bool get forceAttachedProvider => _forceAttachedProvider;
   GalLookupNormalizedRectV1? get draftBodyRect => _draftBodyRect;
   GalLookupTextLayoutV1? get draftLayout => _draftLayout;
+  bool get calibrationActive => _draftBodyRect != null && _draftLayout != null;
+  GalAttachedCalibrationStatus get calibrationStatus => _calibrationStatus;
 
   /// WGC can capture a background game while the user operates the Fushi
   /// sample dialog. Only that explicit hidden state is admissible; minimized,
@@ -371,6 +386,7 @@ class GalAttachedTextController extends ChangeNotifier {
       GalLookupSurfaceMode.attachedOnly;
   bool get canCalibrate =>
       calibrationManuallyEnabled &&
+      !calibrationActive &&
       _target != null &&
       _currentClient != null &&
       _exePath != null &&
@@ -483,6 +499,10 @@ class GalAttachedTextController extends ChangeNotifier {
       return;
     }
     _latestSourceText = nextText;
+    if (calibrationActive) {
+      await _pushLatestTextIfActive();
+      return;
+    }
     if (_activationDeferred) {
       if (inspectOnly) return;
       _activationDeferred = false;
@@ -650,6 +670,7 @@ class GalAttachedTextController extends ChangeNotifier {
     GalAttachedSurfaceTarget target, {
     bool Function()? stillCurrent,
   }) async {
+    if (calibrationActive) return;
     if (stillCurrent != null && !stillCurrent()) return;
     final GalAttachedSurfaceTarget? callTarget = _target;
     if (callTarget == null || !_sameLogicalSurface(callTarget, target)) return;
@@ -872,7 +893,10 @@ class GalAttachedTextController extends ChangeNotifier {
   }) async {
     final GalAttachedSurfaceTarget? target = _target;
     final GalLookupReferenceClientV1? client = _currentClient;
-    if (target == null || client == null || _latestSourceText.isEmpty) {
+    if (calibrationActive ||
+        target == null ||
+        client == null ||
+        _latestSourceText.isEmpty) {
       return false;
     }
     // UI 门控之外再守一道：校准只能由「仅贴附层」这一显式手动模式触发，
@@ -895,12 +919,17 @@ class GalAttachedTextController extends ChangeNotifier {
         initialLayout ?? seed?.layout ?? _layoutBuilder(client);
     if (!rect.isValid || !layout.isValid) return false;
     final int calibrationOperation = ++_operationGeneration;
+    ++_calibrationGeneration;
     ++_unsafeRiskAcceptanceLifecycleRevision;
     _unsafeRiskAcceptanceRequestToken = null;
     _unsafeRiskAcceptanceCommitToken = null;
-    _setStatus(GalAttachedTextStatus.calibrating);
     _draftBodyRect = rect;
     _draftLayout = layout;
+    _calibrationLogCount = 0;
+    _lastCalibrationLog = null;
+    _surfaceVisible = false;
+    _calibrationStatus = GalAttachedCalibrationStatus.preparing;
+    _setStatus(GalAttachedTextStatus.suspended, reason: 'calibrationPreparing');
     _calibrationProbeMask = 0;
     _probeStartObservedIndex = null;
     _probeMiddleObservedIndex = null;
@@ -911,6 +940,10 @@ class GalAttachedTextController extends ChangeNotifier {
       profileMode: _profile?.mode ?? GalLookupSurfaceMode.auto,
       forceAttached: true,
     )) {
+      if (_isCurrent(calibrationOperation, target)) {
+        _clearDraft();
+        notifyListeners();
+      }
       return false;
     }
     final GalAttachedCallResult result = await _surfacePort.calibrationStart(
@@ -923,14 +956,14 @@ class GalAttachedTextController extends ChangeNotifier {
     if (!_isCurrent(calibrationOperation, target)) return false;
     _adoptNativeMetadata(result);
     if (!result.ok) {
+      _clearDraft();
       _activationFailure(result.reason ?? result.error);
       return false;
     }
     if (_sentSourceText != _latestSourceText) {
       await _pushText(_latestSourceText);
     }
-    return _isCurrent(calibrationOperation, target) &&
-        _status == GalAttachedTextStatus.calibrating;
+    return _isCurrent(calibrationOperation, target) && calibrationActive;
   }
 
   Future<bool> updateCalibration({
@@ -939,20 +972,22 @@ class GalAttachedTextController extends ChangeNotifier {
   }) async {
     final GalAttachedSurfaceTarget? target = _target;
     if (target == null ||
-        _status != GalAttachedTextStatus.calibrating ||
+        !calibrationActive ||
         !bodyRect.isValid ||
         !probes.hasValidIndicesForSourceLength(_latestSourceText.length)) {
       return false;
     }
     final GalAttachedCalibrationProbes observedProbes =
         _onlyObservedConfirmations(probes);
+    final int operation = _operationGeneration;
     final GalAttachedCallResult result = await _surfacePort.calibrationUpdate(
       target: target,
       bodyRect: bodyRect,
       probes: observedProbes,
     );
-    if (!_isCurrentSurface(target) || !result.ok) return false;
+    if (!_isCurrent(operation, target) || !calibrationActive) return false;
     _adoptNativeMetadata(result);
+    if (!result.ok) return false;
     _draftBodyRect = bodyRect;
     _calibrationProbeMask = result.calibrationProbeMask & 7;
     notifyListeners();
@@ -964,17 +999,17 @@ class GalAttachedTextController extends ChangeNotifier {
   /// updates its invisible hit layout and calibration bounds.
   Future<bool> updateCalibrationStyle(GalLookupTextLayoutV1 layout) async {
     final GalAttachedSurfaceTarget? target = _target;
-    if (target == null ||
-        _status != GalAttachedTextStatus.calibrating ||
-        !layout.isValid) {
+    if (target == null || !calibrationActive || !layout.isValid) {
       return false;
     }
+    final int operation = _operationGeneration;
     final GalAttachedCallResult result = await _surfacePort.updateStyle(
       target: target,
       layout: layout,
     );
-    if (!_isCurrentSurface(target) || !result.ok) return false;
+    if (!_isCurrent(operation, target) || !calibrationActive) return false;
     _adoptNativeMetadata(result);
+    if (!result.ok) return false;
     _draftLayout = result.layout ?? layout;
     notifyListeners();
     return true;
@@ -987,18 +1022,27 @@ class GalAttachedTextController extends ChangeNotifier {
     final GalLookupNormalizedRectV1? bodyRect = _draftBodyRect;
     if (target == null ||
         bodyRect == null ||
-        _status != GalAttachedTextStatus.calibrating ||
+        !calibrationActive ||
+        _calibrationStatus == GalAttachedCalibrationStatus.failed ||
         !probes.isCommitReadyForSourceLength(_latestSourceText.length) ||
         !_allProbeIndicesObserved(probes)) {
       return false;
     }
+    final int operation = _operationGeneration;
+    final int calibrationGeneration = _calibrationGeneration;
     final GalAttachedCallResult result = await _surfacePort.calibrationCommit(
       target: target,
       bodyRect: bodyRect,
       probes: probes,
     );
-    if (!_isCurrentSurface(target) || !result.ok) return false;
+    if (!_isCurrentSurface(target)) return false;
+    if (!calibrationActive) {
+      return result.ok &&
+          _committedCalibrationGeneration == calibrationGeneration;
+    }
+    if (!_isCurrent(operation, target)) return false;
     _adoptNativeMetadata(result);
+    if (!result.ok) return false;
     _calibrationProbeMask = result.calibrationProbeMask & 7;
     notifyListeners();
     if (result.bodyRect != null &&
@@ -1020,11 +1064,12 @@ class GalAttachedTextController extends ChangeNotifier {
 
   Future<void> cancelCalibration() async {
     final GalAttachedSurfaceTarget? target = _target;
-    if (target == null) return;
+    if (target == null || !calibrationActive) return;
+    final int operation = ++_operationGeneration;
     final GalAttachedCallResult result = await _surfacePort.calibrationCancel(
       target,
     );
-    if (!_isCurrentSurface(target)) return;
+    if (!_isCurrent(operation, target)) return;
     _adoptNativeMetadata(result);
     _clearDraft();
     _setAttachedProviderClaim(_attachedProviderClaimed, forceAttached: false);
@@ -1038,7 +1083,8 @@ class GalAttachedTextController extends ChangeNotifier {
   Future<void> handleCalibrationCommitted(
     GalAttachedCalibrationEvent event,
   ) async {
-    if (!_adoptLifecycleTarget(event.target) ||
+    if (!calibrationActive ||
+        !_adoptLifecycleTarget(event.target) ||
         !event.riskAccepted ||
         event.calibrationProbeMask != 7) {
       return;
@@ -1080,6 +1126,7 @@ class GalAttachedTextController extends ChangeNotifier {
     );
     _profile = committed;
     _currentClient = event.referenceClient;
+    _committedCalibrationGeneration = _calibrationGeneration;
     _clearDraft();
     _setAttachedProviderClaim(true, forceAttached: false);
     await _persistProfile(committed);
@@ -1108,9 +1155,17 @@ class GalAttachedTextController extends ChangeNotifier {
     _surfaceVisible = _activeCaptureLease == null && event.surfaceVisible;
     _calibrationProbeMask = event.calibrationProbeMask & 7;
     if (event.referenceClient != null) _currentClient = event.referenceClient;
-    if (_status == GalAttachedTextStatus.calibrating) {
+    if (calibrationActive) {
       if (event.bodyRect != null) _draftBodyRect = event.bodyRect;
       if (event.layout != null) _draftLayout = event.layout;
+      _setCalibrationState(
+        status: event.status,
+        reason: event.reason,
+        visible: _surfaceVisible,
+        failed: event.state == 'error' || event.state == 'unavailable',
+      );
+      notifyListeners();
+      return;
     }
     final GalLookupSurfaceMode mode =
         _profile?.mode ?? GalLookupSurfaceMode.auto;
@@ -1418,6 +1473,7 @@ class GalAttachedTextController extends ChangeNotifier {
   }
 
   Future<void> setMode(GalLookupSurfaceMode mode) async {
+    if (calibrationActive) await cancelCalibration();
     GalLookupSurfaceProfileV1? profile = _profile;
     final GalAttachedSurfaceTarget? target = _target;
     final pendingDetach = _modeDetach;
@@ -1520,6 +1576,7 @@ class GalAttachedTextController extends ChangeNotifier {
     _unsafeRiskAcceptanceCommitToken = null;
     _profile = null;
     _activeVariant = null;
+    _clearDraft();
     _setAttachedProviderClaim(false);
     _surfaceVisible = false;
     _setStatus(
@@ -1859,6 +1916,7 @@ class GalAttachedTextController extends ChangeNotifier {
 
   Future<void> _pushLatestTextIfActive() async {
     if ((_status != GalAttachedTextStatus.activeAttached &&
+            !calibrationActive &&
             _activeCaptureLease == null) ||
         _latestSourceText == _sentSourceText) {
       return;
@@ -1915,7 +1973,16 @@ class GalAttachedTextController extends ChangeNotifier {
       }
       _adoptNativeMetadata(result);
       if (!result.ok) {
-        _activationFailure(result.reason ?? result.error);
+        if (calibrationActive) {
+          _setCalibrationState(
+            status: result.status,
+            reason: result.reason ?? result.error,
+            visible: false,
+            failed: true,
+          );
+        } else {
+          _activationFailure(result.reason ?? result.error);
+        }
         return false;
       }
       _sentSourceText = sourceText;
@@ -1929,7 +1996,7 @@ class GalAttachedTextController extends ChangeNotifier {
         _providerId = providerPendingId;
         _providerStatus = providerPendingState;
         _surfaceVisible = false;
-      } else {
+      } else if (!calibrationActive) {
         _surfaceVisible = _activeCaptureLease == null && result.surfaceVisible;
       }
       notifyListeners();
@@ -1972,9 +2039,14 @@ class GalAttachedTextController extends ChangeNotifier {
     _draftBodyRect = null;
     _draftLayout = null;
     _calibrationProbeMask = 0;
+    _calibrationStatus = GalAttachedCalibrationStatus.idle;
+    _probeStartObservedIndex = null;
+    _probeMiddleObservedIndex = null;
+    _probeEndObservedIndex = null;
   }
 
   void _resetLocalState() {
+    _committedCalibrationGeneration = null;
     _target = null;
     _profile = null;
     _activeVariant = null;
@@ -2141,10 +2213,89 @@ class GalAttachedTextController extends ChangeNotifier {
     if (result.probeEndObservedIndex != null) {
       _probeEndObservedIndex = result.probeEndObservedIndex;
     }
-    if (_status == GalAttachedTextStatus.calibrating) {
+    if (calibrationActive) {
       if (result.bodyRect != null) _draftBodyRect = result.bodyRect;
       if (result.layout != null) _draftLayout = result.layout;
+      _probeStartObservedIndex = result.probeStartObservedIndex;
+      _probeMiddleObservedIndex = result.probeMiddleObservedIndex;
+      _probeEndObservedIndex = result.probeEndObservedIndex;
+      _calibrationProbeMask = result.calibrationProbeMask & 7;
+      _setCalibrationState(
+        status: result.status,
+        reason: result.reason ?? result.error,
+        visible: result.surfaceVisible,
+        failed: !result.ok,
+      );
     }
+  }
+
+  void _setCalibrationState({
+    required String? status,
+    required String? reason,
+    required bool visible,
+    bool failed = false,
+  }) {
+    final bool faulted =
+        _shieldStatus.conclusion == GalAttachedShieldConclusion.faulted;
+    _calibrationStatus = failed || faulted
+        ? GalAttachedCalibrationStatus.failed
+        : switch (status) {
+            'calibrating' when visible => GalAttachedCalibrationStatus.ready,
+            'targetBackground' ||
+            'targetMinimized' ||
+            'targetCloaked' ||
+            'captureSuppressed' => GalAttachedCalibrationStatus.paused,
+            'shieldFaulted' ||
+            'inputShieldUnavailable' ||
+            'mouseHookBusy' ||
+            'hitSnapshotUnavailable' ||
+            'targetUnavailable' ||
+            'surfaceUnavailable' ||
+            'invalidConfiguration' ||
+            'exclusiveFullscreenUnavailable' ||
+            'noGlyphClusters' ||
+            'emptyText' => GalAttachedCalibrationStatus.failed,
+            _ => GalAttachedCalibrationStatus.preparing,
+          };
+    _surfaceVisible = _calibrationStatus == GalAttachedCalibrationStatus.ready;
+    _setStatus(
+      _surfaceVisible
+          ? GalAttachedTextStatus.calibrating
+          : GalAttachedTextStatus.suspended,
+      reason: reason ?? (faulted ? 'input_shield_faulted' : status),
+    );
+    _logCalibrationState();
+  }
+
+  void _logCalibrationState() {
+    if (!calibrationActive || _calibrationLogCount >= 64) return;
+    String token(String? value) {
+      final String safe = (value ?? '-').replaceAll(
+        RegExp(r'[^a-zA-Z0-9_.:-]'),
+        '_',
+      );
+      return safe.length <= 128 ? safe : safe.substring(0, 128);
+    }
+
+    final GalAttachedShieldStatus shield = _shieldStatus;
+    final String state =
+        'session=${_target?.sessionEpoch} surface=${_target?.surfaceEpoch} '
+        'phase=${_calibrationStatus.name} status=${token(_nativeStatus)} '
+        'reason=${token(_statusReason)} surfaceVisible=$_surfaceVisible '
+        'textGeneration=$_textGeneration '
+        'probeIndices=$_probeStartObservedIndex,$_probeMiddleObservedIndex,'
+        '$_probeEndObservedIndex probeMask=$_calibrationProbeMask '
+        'shieldAvailable=${shield.available} request=${shield.requestSeq} '
+        'applied=${shield.appliedSeq} owner=${shield.ownerKind} '
+        'target=${shield.targetHwnd} transaction=${shield.transactionId} '
+        'buttons=${shield.activeButtons} allowRisk=${shield.allowRisk} '
+        'required=${shield.requiredMask} ready=${shield.readyMask} '
+        'observed=${shield.observedMask} fault=${shield.faultMask} '
+        'flags=${shield.statusFlags}';
+    if (state == _lastCalibrationLog) return;
+    _lastCalibrationLog = state;
+    _calibrationLogCount++;
+    _calibrationLog('gal-calibration: record=$_calibrationLogCount $state');
   }
 
   GalAttachedCalibrationProbes _onlyObservedConfirmations(

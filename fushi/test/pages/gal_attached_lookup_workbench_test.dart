@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fushi/i18n/strings.g.dart';
 import 'package:fushi/src/lookup/gal_attached_text_controller.dart';
 import 'package:fushi/src/lookup/gal_lookup_surface_profile.dart';
 import 'package:fushi/src/pages/implementations/gal_attached_lookup_workbench.dart';
@@ -43,6 +45,37 @@ class _PartialNativeSurfacePort implements GalAttachedTextSurfacePort {
       Future<GalAttachedCallResult>.value(
         const GalAttachedCallResult(status: 'ready'),
       );
+}
+
+class _CalibrationSurfacePort extends _PartialNativeSurfacePort {
+  int cancelCalls = 0;
+  GalAttachedCallResult liveResult = const GalAttachedCallResult(
+    status: 'shieldHandshakePending',
+  );
+
+  @override
+  Future<GalAttachedCallResult> calibrationStart({
+    required GalAttachedSurfaceTarget target,
+    required GalLookupNormalizedRectV1 bodyRect,
+    required GalLookupReferenceClientV1 referenceClient,
+    required GalLookupTextLayoutV1 layout,
+    required bool riskAccepted,
+  }) async => liveResult;
+
+  @override
+  Future<GalAttachedCallResult> updateText({
+    required GalAttachedSurfaceTarget target,
+    required String sourceText,
+    required int textGeneration,
+  }) async => liveResult;
+
+  @override
+  Future<GalAttachedCallResult> calibrationCancel(
+    GalAttachedSurfaceTarget target,
+  ) async {
+    cancelCalls++;
+    return const GalAttachedCallResult(status: 'cancelled');
+  }
 }
 
 void main() {
@@ -144,11 +177,7 @@ void main() {
       final IconButton calibrate = tester.widget<IconButton>(
         find.byKey(const ValueKey<String>('game-attached-lookup-calibrate')),
       );
-      expect(
-        calibrate.onPressed,
-        isNull,
-        reason: '手动模式下入口出现，但未选正文线程时仍然禁用',
-      );
+      expect(calibrate.onPressed, isNull, reason: '手动模式下入口出现，但未选正文线程时仍然禁用');
       expect(
         find.textContaining('Select one body-text thread'),
         findsOneWidget,
@@ -167,4 +196,177 @@ void main() {
       isTrue,
     );
   });
+
+  testWidgets(
+    'live calibration shows readiness, rejects changed text and cancels while paused',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1280, 1100);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final _CalibrationSurfacePort port = _CalibrationSurfacePort();
+      final GalAttachedTextController controller = GalAttachedTextController(
+        preferenceReader: (_) => jsonEncode(
+          GalLookupSurfaceProfileV1(
+            exePath: r'c:\games\sample\game.exe',
+            exeSha256: _sha,
+            mode: GalLookupSurfaceMode.attachedOnly,
+            unsafeLeftClickAccepted: true,
+            variants: const <GalLookupSurfaceVariantV1>[],
+          ).toJson(),
+        ),
+        preferenceWriter: (_, __) async {},
+        surfacePort: port,
+        calibrationLog: (_) {},
+      );
+      await controller.syncSession(
+        active: true,
+        sessionEpoch: 1,
+        targetPid: 2,
+        targetHwnd: 3,
+        sourceText: 'テスト本文です',
+      );
+      addTearDown(() async {
+        await controller.detach();
+        controller.dispose();
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: GalAttachedLookupWorkbench(
+              controller: controller,
+              hasSelectedBodyThread: true,
+              bodyPreview: 'テスト本文です',
+            ),
+          ),
+        ),
+      );
+      tester
+          .widget<IconButton>(
+            find.byKey(
+              const ValueKey<String>('game-attached-lookup-calibrate'),
+            ),
+          )
+          .onPressed!();
+      await tester.pumpAndSettle();
+      expect(find.byType(GalAttachedCalibrationDialog), findsOneWidget);
+      expect(
+        find.text(t.game_lookup_attached_calibration_preparing),
+        findsOneWidget,
+      );
+      expect(find.text(t.game_lookup_attached_probes_hint), findsNothing);
+
+      void emit(String status, {bool visible = false, bool observed = false}) {
+        controller.handleSurfaceStateChanged(
+          GalAttachedSurfaceStateEvent(
+            target: controller.target!,
+            state: visible ? 'calibrating' : 'suspended',
+            status: status,
+            surfaceVisible: visible,
+            probeStartObservedIndex: observed ? 0 : null,
+            probeMiddleObservedIndex: observed ? 3 : null,
+            probeEndObservedIndex: observed ? 6 : null,
+          ),
+        );
+      }
+
+      emit('targetBackground');
+      await tester.pump();
+      expect(
+        find.text(t.game_lookup_attached_calibration_paused),
+        findsOneWidget,
+      );
+      expect(controller.calibrationActive, isTrue);
+      emit('calibrating', visible: true);
+      await tester.pump();
+      expect(
+        find.text(t.game_lookup_attached_calibration_ready),
+        findsOneWidget,
+      );
+      emit('inputShieldUnavailable');
+      await tester.pump();
+      expect(
+        find.text(t.game_lookup_attached_calibration_unavailable),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(
+                const ValueKey<String>('game-attached-calibration-commit'),
+              ),
+            )
+            .onPressed,
+        isNull,
+      );
+      emit('calibrating', visible: true, observed: true);
+      await tester.pump();
+      final Finder probeCheckboxes = find.descendant(
+        of: find.byType(GalAttachedCalibrationDialog),
+        matching: find.byType(Checkbox),
+      );
+      expect(probeCheckboxes, findsNWidgets(3));
+      expect(
+        tester
+            .widgetList<Checkbox>(probeCheckboxes)
+            .every((Checkbox checkbox) => checkbox.onChanged != null),
+        isTrue,
+      );
+      await controller.syncSession(
+        active: true,
+        sessionEpoch: 1,
+        targetPid: 2,
+        targetHwnd: 3,
+        sourceText: '次の新本文です',
+      );
+      emit('calibrating', visible: true, observed: true);
+      await tester.pump();
+      expect(
+        find.text(t.game_lookup_attached_calibration_text_changed),
+        findsOneWidget,
+      );
+      expect(find.text(t.game_lookup_attached_probes_hint), findsNothing);
+      expect(
+        tester
+            .widgetList<Checkbox>(probeCheckboxes)
+            .every((Checkbox checkbox) => checkbox.onChanged == null),
+        isTrue,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(
+                const ValueKey<String>('game-attached-calibration-commit'),
+              ),
+            )
+            .onPressed,
+        isNull,
+      );
+      await controller.syncSession(
+        active: true,
+        sessionEpoch: 1,
+        targetPid: 2,
+        targetHwnd: 3,
+        sourceText: 'テスト本文です',
+      );
+      await tester.pump();
+      expect(
+        find.text(t.game_lookup_attached_calibration_text_changed),
+        findsOneWidget,
+      );
+      emit('targetBackground');
+      await tester.pump();
+      tester
+          .widget<TextButton>(
+            find.byKey(
+              const ValueKey<String>('game-attached-calibration-cancel'),
+            ),
+          )
+          .onPressed!();
+      await tester.pumpAndSettle();
+      expect(port.cancelCalls, 1);
+      expect(controller.calibrationActive, isFalse);
+      expect(find.byType(GalAttachedCalibrationDialog), findsNothing);
+    },
+  );
 }

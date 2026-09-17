@@ -357,6 +357,11 @@ void main() {
           'observedMask': 0x7f,
           'faultMask': 0,
           'statusFlags': 1,
+          'ownerKind': 4,
+          'targetHwnd': 77,
+          'transactionId': 4294967297,
+          'activeButtons': 1,
+          'allowRisk': true,
         },
         'calibrationProbeMask': 3,
       });
@@ -382,6 +387,11 @@ void main() {
       expect(state?.providerId, 11);
       expect(state?.providerStatus, 2);
       expect(state?.shield.conclusion, GalAttachedShieldConclusion.verified);
+      expect(state?.shield.ownerKind, 4);
+      expect(state?.shield.targetHwnd, 77);
+      expect(state?.shield.transactionId, 4294967297);
+      expect(state?.shield.activeButtons, 1);
+      expect(state?.shield.allowRisk, isTrue);
       expect(state?.calibrationProbeMask, 3);
       expect(committed?.bodyRect, _rect);
       expect(committed?.riskAccepted, isTrue);

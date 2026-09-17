@@ -61,6 +61,13 @@ class _FakeSurfacePort implements GalAttachedTextSurfacePort {
     providerStatus: 1,
   );
   int nativeProbeMask = 0;
+  bool calibrationActive = false;
+  GalAttachedCallResult calibrationResult = const GalAttachedCallResult(
+    status: 'calibrating',
+    surfaceVisible: true,
+  );
+  Future<void> Function()? beforeCalibrationCommitReply;
+  Completer<GalAttachedCallResult>? calibrationUpdateCompleter;
   bool textSurfaceVisible = true;
   String? lastInspectLaunchExePath;
   Completer<GalAttachedCallResult>? suspendCompleter;
@@ -101,7 +108,8 @@ class _FakeSurfacePort implements GalAttachedTextSurfacePort {
   }) async {
     calls.add('calibrationStart:$riskAccepted');
     nativeProbeMask = 0;
-    return const GalAttachedCallResult(status: 'calibrating');
+    calibrationActive = calibrationResult.ok;
+    return calibrationResult;
   }
 
   @override
@@ -111,9 +119,13 @@ class _FakeSurfacePort implements GalAttachedTextSurfacePort {
     required GalAttachedCalibrationProbes probes,
   }) async {
     calls.add('calibrationUpdate:${probes.confirmationMask}');
+    if (calibrationUpdateCompleter != null) {
+      return calibrationUpdateCompleter!.future;
+    }
     nativeProbeMask = probes.confirmationMask;
     return GalAttachedCallResult(
-      status: 'calibrating',
+      status: calibrationResult.status,
+      surfaceVisible: calibrationResult.surfaceVisible,
       calibrationProbeMask: nativeProbeMask,
       probeStartObservedIndex: probes.startIndex,
       probeMiddleObservedIndex: probes.middleIndex,
@@ -128,6 +140,8 @@ class _FakeSurfacePort implements GalAttachedTextSurfacePort {
     required GalAttachedCalibrationProbes probes,
   }) async {
     calls.add('calibrationCommit:${probes.confirmationMask}');
+    calibrationActive = false;
+    await beforeCalibrationCommitReply?.call();
     return const GalAttachedCallResult(
       status: 'calibrating',
       calibrationProbeMask: 7,
@@ -139,6 +153,7 @@ class _FakeSurfacePort implements GalAttachedTextSurfacePort {
     GalAttachedSurfaceTarget target,
   ) async {
     calls.add('calibrationCancel');
+    calibrationActive = false;
     return const GalAttachedCallResult(status: 'cancelled');
   }
 
@@ -161,6 +176,7 @@ class _FakeSurfacePort implements GalAttachedTextSurfacePort {
   }) async {
     calls.add('updateText');
     texts.add((text: sourceText, generation: textGeneration));
+    if (calibrationActive) return calibrationResult;
     return GalAttachedCallResult(
       status: textSurfaceVisible ? 'visible' : 'noGlyphClusters',
       surfaceVisible: textSurfaceVisible,
@@ -173,6 +189,7 @@ class _FakeSurfacePort implements GalAttachedTextSurfacePort {
     required GalLookupTextLayoutV1 layout,
   }) async {
     calls.add('updateStyle');
+    if (calibrationActive) return calibrationResult;
     return const GalAttachedCallResult(status: 'ready');
   }
 
@@ -205,6 +222,7 @@ class _FakeSurfacePort implements GalAttachedTextSurfacePort {
   @override
   Future<GalAttachedCallResult> detach(GalAttachedSurfaceTarget target) async {
     calls.add('detach');
+    calibrationActive = false;
     final Completer<GalAttachedCallResult>? completer = detachCompleter;
     if (completer != null) return completer.future;
     return detachResult;
@@ -217,6 +235,7 @@ void main() {
   late GalAttachedTextController controller;
   late List<GalAttachedLookupHitV19> lookups;
   late int providerClaims;
+  late List<String> calibrationLogs;
   Completer<void>? preferenceWriteGate;
   Object? preferenceWriteError;
   Completer<void>? providerClaimGate;
@@ -226,6 +245,7 @@ void main() {
     port = _FakeSurfacePort();
     lookups = <GalAttachedLookupHitV19>[];
     providerClaims = 0;
+    calibrationLogs = <String>[];
     preferenceWriteGate = null;
     preferenceWriteError = null;
     providerClaimGate = null;
@@ -248,6 +268,7 @@ void main() {
             if (gate != null) await gate.future;
           },
       onLookup: lookups.add,
+      calibrationLog: calibrationLogs.add,
     );
   });
 
@@ -270,6 +291,28 @@ void main() {
   );
 
   String key() => GalLookupSurfaceProfileV1.preferenceKeyForExePath(_exePath);
+
+  void calibrationState(
+    String status, {
+    bool visible = false,
+    String? reason,
+    bool observed = false,
+    GalAttachedShieldStatus shield = const GalAttachedShieldStatus(),
+  }) {
+    controller.handleSurfaceStateChanged(
+      GalAttachedSurfaceStateEvent(
+        target: controller.target!,
+        state: visible ? 'calibrating' : 'suspended',
+        status: status,
+        reason: reason,
+        surfaceVisible: visible,
+        probeStartObservedIndex: observed ? 0 : null,
+        probeMiddleObservedIndex: observed ? 3 : null,
+        probeEndObservedIndex: observed ? 6 : null,
+        shield: shield,
+      ),
+    );
+  }
 
   test(
     'launch identity is explicit while attach identity is PID-derived',
@@ -602,6 +645,205 @@ void main() {
         ),
         isNotNull,
       );
+    },
+  );
+
+  test(
+    'pending and background calibration keep the editable session',
+    () async {
+      await sync();
+      await controller.setMode(GalLookupSurfaceMode.attachedOnly);
+      port.calibrationResult = const GalAttachedCallResult(
+        status: 'shieldHandshakePending',
+        reason: 'input_shield_rehandshake_pending',
+      );
+      expect(
+        await controller.beginCalibration(acceptUnsafeLeftClick: true),
+        isTrue,
+      );
+      expect(controller.calibrationActive, isTrue);
+      expect(
+        controller.calibrationStatus,
+        GalAttachedCalibrationStatus.preparing,
+      );
+      expect(controller.status, GalAttachedTextStatus.suspended);
+      expect(controller.surfaceVisible, isFalse);
+      expect(controller.canCaptureCalibrationSample, isFalse);
+      expect(controller.canCalibrate, isFalse);
+
+      calibrationState('targetBackground');
+      expect(controller.calibrationStatus, GalAttachedCalibrationStatus.paused);
+      const GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(
+        lineHeight: 1.5,
+      );
+      expect(await controller.updateCalibrationStyle(layout), isTrue);
+      expect(controller.draftLayout, layout);
+      expect(
+        await controller.updateCalibration(
+          bodyRect: GalAttachedTextController.defaultBodyRect,
+          probes: _probes,
+        ),
+        isTrue,
+      );
+      expect(controller.attachedProviderClaimed, isTrue);
+
+      calibrationState('calibrating', visible: true);
+      expect(controller.calibrationStatus, GalAttachedCalibrationStatus.ready);
+      expect(controller.status, GalAttachedTextStatus.calibrating);
+      calibrationState('targetBackground');
+      await controller.cancelCalibration();
+      expect(
+        port.calls.where((String call) => call == 'calibrationCancel'),
+        hasLength(1),
+      );
+      expect(controller.calibrationActive, isFalse);
+      expect(controller.calibrationStatus, GalAttachedCalibrationStatus.idle);
+      expect(controller.draftBodyRect, isNull);
+    },
+  );
+
+  test(
+    'hidden calibrating token is not proof of a ready input surface',
+    () async {
+      await sync();
+      await controller.setMode(GalLookupSurfaceMode.attachedOnly);
+      await controller.beginCalibration(acceptUnsafeLeftClick: true);
+      calibrationState('calibrating');
+      expect(
+        controller.calibrationStatus,
+        GalAttachedCalibrationStatus.preparing,
+      );
+      expect(controller.surfaceVisible, isFalse);
+      calibrationState('shieldFaulted', reason: 'input_shield_faulted');
+      expect(controller.calibrationStatus, GalAttachedCalibrationStatus.failed);
+      expect(controller.calibrationActive, isTrue);
+      expect(controller.attachedProviderClaimed, isTrue);
+      await controller.cancelCalibration();
+      expect(port.calls, contains('calibrationCancel'));
+    },
+  );
+
+  test(
+    'confirmed probes can commit after returning to the background panel',
+    () async {
+      await sync();
+      await controller.setMode(GalLookupSurfaceMode.attachedOnly);
+      await controller.beginCalibration(acceptUnsafeLeftClick: true);
+      calibrationState('calibrating', visible: true, observed: true);
+      calibrationState('targetBackground', observed: true);
+      expect(await controller.commitCalibration(probes: _probes), isTrue);
+      expect(port.calls, contains('calibrationCommit:7'));
+    },
+  );
+
+  test(
+    'committed event before the method reply completes the same calibration',
+    () async {
+      await sync();
+      await controller.setMode(GalLookupSurfaceMode.attachedOnly);
+      await controller.beginCalibration(acceptUnsafeLeftClick: true);
+      calibrationState('targetBackground', observed: true);
+      port.beforeCalibrationCommitReply = () =>
+          controller.handleCalibrationCommitted(
+            GalAttachedCalibrationEvent(
+              target: controller.target!,
+              bodyRect: GalAttachedTextController.defaultBodyRect,
+              referenceClient: _client,
+              riskAccepted: true,
+              calibrationProbeMask: 7,
+            ),
+          );
+      expect(await controller.commitCalibration(probes: _probes), isTrue);
+      expect(controller.calibrationActive, isFalse);
+      expect(controller.profile!.variants, hasLength(1));
+    },
+  );
+
+  test(
+    'cancelled or replaced session cannot masquerade as a successful commit',
+    () async {
+      await sync();
+      await controller.setMode(GalLookupSurfaceMode.attachedOnly);
+      await controller.beginCalibration(acceptUnsafeLeftClick: true);
+      calibrationState('targetBackground', observed: true);
+      port.beforeCalibrationCommitReply = () => controller.cancelCalibration();
+      expect(await controller.commitCalibration(probes: _probes), isFalse);
+      expect(controller.profile!.variants, isEmpty);
+
+      await controller.beginCalibration(acceptUnsafeLeftClick: true);
+      calibrationState('targetBackground', observed: true);
+      port.beforeCalibrationCommitReply = () => sync(sessionEpoch: 9002);
+      expect(await controller.commitCalibration(probes: _probes), isFalse);
+    },
+  );
+
+  test('late draft reply cannot reopen a cancelled calibration', () async {
+    await sync();
+    await controller.setMode(GalLookupSurfaceMode.attachedOnly);
+    await controller.beginCalibration(acceptUnsafeLeftClick: true);
+    port.calibrationUpdateCompleter = Completer<GalAttachedCallResult>();
+    final Future<bool> update = controller.updateCalibration(
+      bodyRect: GalAttachedTextController.defaultBodyRect,
+      probes: _probes,
+    );
+    await controller.cancelCalibration();
+    port.calibrationUpdateCompleter!.complete(
+      const GalAttachedCallResult(status: 'calibrating', surfaceVisible: true),
+    );
+    expect(await update, isFalse);
+    expect(controller.calibrationActive, isFalse);
+    expect(controller.draftBodyRect, isNull);
+  });
+
+  test(
+    'calibration logs scalar changes once with a per-session limit',
+    () async {
+      await sync();
+      await controller.setMode(GalLookupSurfaceMode.attachedOnly);
+      expect(calibrationLogs, isEmpty);
+      await controller.beginCalibration(acceptUnsafeLeftClick: true);
+      const GalAttachedShieldStatus shield = GalAttachedShieldStatus(
+        available: true,
+        requestSeq: 12,
+        appliedSeq: 11,
+        ownerKind: 4,
+        targetHwnd: 77,
+        transactionId: 4294967297,
+        activeButtons: 1,
+        allowRisk: true,
+        requiredMask: 127,
+        readyMask: 3,
+        observedMask: 1,
+        statusFlags: 2,
+      );
+      calibrationState(
+        'calibrating',
+        visible: true,
+        observed: true,
+        shield: shield,
+      );
+      final int count = calibrationLogs.length;
+      calibrationState(
+        'calibrating',
+        visible: true,
+        observed: true,
+        shield: shield,
+      );
+      expect(calibrationLogs, hasLength(count));
+      expect(calibrationLogs.last, contains('probeIndices=0,3,6'));
+      expect(calibrationLogs.last, contains('transaction=4294967297'));
+      expect(calibrationLogs.last, contains('request=12 applied=11 owner=4'));
+      for (int index = 0; index < 100; index++) {
+        calibrationState('shieldHandshakePending', reason: 'pending_$index');
+      }
+      expect(calibrationLogs, hasLength(64));
+      expect(
+        calibrationLogs.join(),
+        isNot(contains(controller.latestSourceText)),
+      );
+      await controller.cancelCalibration();
+      calibrationState('targetBackground');
+      expect(calibrationLogs, hasLength(64));
     },
   );
 

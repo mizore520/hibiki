@@ -897,6 +897,7 @@ AttachedTextSurfaceWindow::CommitCalibration(const Epoch &epoch,
     return RequestResult::kRejected;
   }
   body_rect_ = calibration_rect_;
+  HideSurface();
   mode_ = pre_calibration_configured_ ? Mode::kConfigured : Mode::kTargetReady;
   layout_dirty_ = true;
   NotifyCalibrationCommitted();
@@ -1036,7 +1037,9 @@ AttachedTextSurfaceWindow::CancelCalibration(const Epoch &epoch,
     return RequestResult::kRejected;
   }
   body_rect_ = pre_calibration_rect_;
+  HideSurface();
   mode_ = pre_calibration_configured_ ? Mode::kConfigured : Mode::kTargetReady;
+  layout_dirty_ = true;
   NotifyCalibrationCancelled(reason.empty() ? "cancelled" : reason);
   SyncToTarget();
   return RequestResult::kApplied;
@@ -1160,8 +1163,8 @@ AttachedTextSurfaceWindow::RequestResult AttachedTextSurfaceWindow::UpdateText(
     return RequestResult::kRejected;
   }
   // Never leave the previous sentence's region live while a replacement
-  // DirectWrite layout is being built. This also releases any down latch tied
-  // to the old generation before publishing the new source.
+  // DirectWrite layout is being built. This cancels submission for the old
+  // generation; the LL layer still owns its matching physical release tail.
   const bool calibration_text_changed =
       mode_ == Mode::kCalibration &&
       (source_text_ != source_text || text_generation_ != text_generation);
@@ -1527,23 +1530,23 @@ void AttachedTextSurfaceWindow::SyncToTarget() {
     EmitStateIfChanged();
     return;
   }
-  if (mode_ != Mode::kCalibration) {
-    if (!EnsureWindow(&error)) {
-      HideSurface();
-      SetState("error", "surfaceUnavailable", error);
-      EmitStateIfChanged();
-      return;
-    }
-    const ShieldHandshakeState handshake = EnsureShieldHandshake();
-    if (handshake != ShieldHandshakeState::kReady) {
-      HideSurface();
-      SetState("suspended", "shieldHandshakePending",
-               handshake == ShieldHandshakeState::kUnavailable
-                   ? "input_shield_handshake_unavailable"
-                   : "input_shield_rehandshake_pending");
-      EmitStateIfChanged();
-      return;
-    }
+  if (!EnsureWindow(&error)) {
+    HideSurface();
+    SetState("error", "surfaceUnavailable", error);
+    EmitStateIfChanged();
+    return;
+  }
+  // Calibration probes consume game clicks too. They require the same
+  // acknowledged shield and immutable glyph snapshot as ordinary lookup.
+  const ShieldHandshakeState handshake = EnsureShieldHandshake();
+  if (handshake != ShieldHandshakeState::kReady) {
+    HideSurface();
+    SetState("suspended", "shieldHandshakePending",
+             handshake == ShieldHandshakeState::kUnavailable
+                 ? "input_shield_handshake_unavailable"
+                 : "input_shield_rehandshake_pending");
+    EmitStateIfChanged();
+    return;
   }
   if (native_provider_preferred) {
     if (!overlayability.overlayable && !native_without_desktop_overlay) {
@@ -1628,19 +1631,8 @@ void AttachedTextSurfaceWindow::SyncToTarget() {
     return;
   }
 
-  if (mode_ == Mode::kCalibration) {
-    SetRuntimeClickThrough(false);
-    PositionSurface(client, true);
-    if (layout_dirty_)
-      (void)RebuildClusters();
-    ApplyInteractiveRegion();
-    RenderLayerBitmap(true);
-    SetVisible(true);
-    SetState("calibrating", "calibrating");
-    EmitStateIfChanged();
-    return;
-  }
-  if (mode_ != Mode::kConfigured || !ShieldPermitsLookup()) {
+  const bool calibration = mode_ == Mode::kCalibration;
+  if ((!calibration && mode_ != Mode::kConfigured) || !ShieldPermitsLookup()) {
     HideSurface();
     SetState(ShieldFaulted()
                  ? "error"
@@ -1659,7 +1651,8 @@ void AttachedTextSurfaceWindow::SyncToTarget() {
     return;
   }
 
-  const RECT body = ResolveNormalizedRect(client, body_rect_);
+  const RECT body = ResolveNormalizedRect(
+      client, calibration ? calibration_rect_ : body_rect_);
   if (body.right - body.left < kMinimumBodyPixels ||
       body.bottom - body.top < kMinimumBodyPixels) {
     HideSurface();
@@ -1667,17 +1660,21 @@ void AttachedTextSurfaceWindow::SyncToTarget() {
     EmitStateIfChanged();
     return;
   }
+  const RECT surface = calibration ? client : body;
   const bool size_changed =
-      body.right - body.left !=
+      surface.right - surface.left !=
           surface_screen_rect_.right - surface_screen_rect_.left ||
-      body.bottom - body.top !=
+      surface.bottom - surface.top !=
           surface_screen_rect_.bottom - surface_screen_rect_.top ||
       reference.height_px != previous_reference.height_px ||
       reference.dpi != previous_reference.dpi;
   SetRuntimeClickThrough(true);
-  PositionSurface(body, false);
-  if (size_changed)
+  PositionSurface(surface, calibration);
+  if (size_changed) {
+    if (calibration)
+      ResetObservedCalibrationProbes();
     layout_dirty_ = true;
+  }
   if (layout_dirty_ && !RebuildClusters()) {
     HideSurface();
     SetState("ready", "noGlyphClusters",
@@ -1713,7 +1710,7 @@ void AttachedTextSurfaceWindow::SyncToTarget() {
     EmitStateIfChanged();
     return;
   }
-  RenderLayerBitmap(false);
+  RenderLayerBitmap(calibration);
   if (!SetVisible(true)) {
     // BUG-2140：这一路有五个互不相干的闸门，报出到底是哪条。
     const char *arm_failure = fushi::LastAttachedGlyphArmFailure();
@@ -1725,7 +1722,8 @@ void AttachedTextSurfaceWindow::SyncToTarget() {
     return;
   }
   const bool risky = fushi::LowLevelAttachedGlyphUsesRiskFallback(hwnd_);
-  SetState("visible", risky ? "visibleRisky" : "visible",
+  SetState(calibration ? "calibrating" : "visible",
+           calibration ? "calibrating" : (risky ? "visibleRisky" : "visible"),
            risky ? "sampled_input_shield_unverified" : std::string());
   EmitStateIfChanged();
 }
@@ -1754,7 +1752,7 @@ bool AttachedTextSurfaceWindow::SetVisible(bool visible) {
     return true;
   }
 
-  if (mode_ == Mode::kConfigured) {
+  if (mode_ == Mode::kConfigured || mode_ == Mode::kCalibration) {
     // Revalidate singleton ownership on every 500ms health sync. A desktop or
     // global popup may have taken the process-wide HHOOK after this surface was
     // shown; attached must hide and retry later, never steal it back.
@@ -1907,7 +1905,8 @@ bool AttachedTextSurfaceWindow::PublishInteractiveSnapshot(
   if (publication_error != nullptr)
     publication_error->clear();
   if (hwnd_ == nullptr || !IsWindow(hwnd_) || target_.hwnd == nullptr ||
-      clusters_.empty() || mode_ != Mode::kConfigured) {
+      clusters_.empty() ||
+      (mode_ != Mode::kConfigured && mode_ != Mode::kCalibration)) {
     return false;
   }
   // Re-read immediately before the low-level immutable snapshot publication.
@@ -2044,6 +2043,31 @@ void AttachedTextSurfaceWindow::RenderLayerBitmap(bool calibration) {
                           y < selection.top + border_width ||
                           y >= selection.bottom - border_width;
         pixels[static_cast<size_t>(y) * width + x] = edge ? border : fill;
+      }
+    }
+    // Show the exact glyph catch rectangles, not only the much larger body
+    // bounds. A click outside these boxes intentionally remains a game miss.
+    // Green records the observed cluster, so the user can detect a mismatch
+    // without confusing the outer calibration frame with a click shield.
+    for (const ClusterBox &cluster : clusters_) {
+      const int64_t index = static_cast<int64_t>(cluster.text_position);
+      const bool observed = index == probe_start_observed_index_ ||
+                            index == probe_middle_observed_index_ ||
+                            index == probe_end_observed_index_;
+      const uint32_t outline = observed ? PremultipliedPixel(230, 64, 230, 128)
+                                        : PremultipliedPixel(210, 64, 180, 255);
+      const RECT box{
+          std::clamp(cluster.client_rect.left, 0L, static_cast<LONG>(width)),
+          std::clamp(cluster.client_rect.top, 0L, static_cast<LONG>(height)),
+          std::clamp(cluster.client_rect.right, 0L, static_cast<LONG>(width)),
+          std::clamp(cluster.client_rect.bottom, 0L, static_cast<LONG>(height))};
+      for (LONG y = box.top; y < box.bottom; ++y) {
+        for (LONG x = box.left; x < box.right; ++x) {
+          if (x == box.left || x == box.right - 1 || y == box.top ||
+              y == box.bottom - 1) {
+            pixels[static_cast<size_t>(y) * width + x] = outline;
+          }
+        }
       }
     }
   }
@@ -2445,9 +2469,8 @@ void AttachedTextSurfaceWindow::UpdatePointerGesture(POINT client_point) {
 
 void AttachedTextSurfaceWindow::EndPointerGesture(
     POINT client_point, uint64_t external_transaction_id) {
-  if (external_transaction_id != 0 &&
-      (!shield_transaction_active_ ||
-       shield_transaction_.transaction_id != external_transaction_id)) {
+  if (external_transaction_id == 0 || !shield_transaction_active_ ||
+      shield_transaction_.transaction_id != external_transaction_id) {
     return;
   }
   if (!pointer_down_) {
@@ -2468,7 +2491,18 @@ void AttachedTextSurfaceWindow::EndPointerGesture(
   if (GetCapture() == hwnd_)
     ReleaseCapture();
   ReleaseShieldTransaction();
-  if (!valid || !on_lookup_)
+  if (mode_ == Mode::kCalibration) {
+    std::string probe_error;
+    const bool observed =
+        valid && RecordObservedCalibrationProbe(client_point, &probe_error);
+    SetState("calibrating", "calibrating",
+             observed ? "calibration_probe_observed"
+                      : (valid ? probe_error : "calibration_click_rejected"));
+    RenderLayerBitmap(true);
+    EmitStateIfChanged(true);
+    return;
+  }
+  if (!valid || mode_ != Mode::kConfigured || !on_lookup_)
     return;
   EmitLookupEvent(pressed_cluster, false);
 }
@@ -2682,108 +2716,24 @@ LRESULT AttachedTextSurfaceWindow::HandleMessage(UINT message, WPARAM wparam,
   case WM_MOUSEACTIVATE:
     return MA_NOACTIVATE;
   case WM_NCHITTEST:
-    return mode_ == Mode::kCalibration ? HTCLIENT : HTTRANSPARENT;
+    return HTTRANSPARENT;
   case WM_SETCURSOR:
     SetCursor(LoadCursorW(nullptr,
                           mode_ == Mode::kCalibration ? IDC_CROSS : IDC_HAND));
     return TRUE;
-  case WM_LBUTTONDOWN: {
-    POINT point{GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
-    if (mode_ == Mode::kCalibration) {
-      calibration_dragging_ = true;
-      calibration_drag_moved_ = false;
-      calibration_drag_start_ = point;
-      SetCapture(hwnd_);
-    } else if (mode_ == Mode::kConfigured) {
-      // Runtime is click-through. A real attached down arrives only through
-      // the low-level hook with an already-published v19 transaction id.
-      BeginPointerGesture(point, 0);
-    }
+  case WM_LBUTTONDOWN:
+  case WM_LBUTTONUP:
+  case WM_MOUSEMOVE:
+    // Both modes are click-through. Only the LL glyph messages below carry
+    // an already-published shield transaction. Ordinary window messages must
+    // neither record a probe nor finish a different physical LL transaction.
     return 0;
-  }
-  case WM_MOUSEMOVE: {
-    POINT point{GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
-    if (mode_ == Mode::kCalibration && calibration_dragging_) {
-      if (!calibration_drag_moved_) {
-        const int threshold_x = std::max(1, GetSystemMetrics(SM_CXDRAG) / 2);
-        const int threshold_y = std::max(1, GetSystemMetrics(SM_CYDRAG) / 2);
-        if (std::abs(point.x - calibration_drag_start_.x) <= threshold_x &&
-            std::abs(point.y - calibration_drag_start_.y) <= threshold_y) {
-          return 0;
-        }
-        calibration_drag_moved_ = true;
-        ResetObservedCalibrationProbes();
-      }
-      const int width =
-          std::max(1, static_cast<int>(surface_screen_rect_.right -
-                                       surface_screen_rect_.left));
-      const int height =
-          std::max(1, static_cast<int>(surface_screen_rect_.bottom -
-                                       surface_screen_rect_.top));
-      const int left = std::clamp(
-          static_cast<int>(std::min(calibration_drag_start_.x, point.x)), 0,
-          width);
-      const int top = std::clamp(
-          static_cast<int>(std::min(calibration_drag_start_.y, point.y)), 0,
-          height);
-      const int right = std::clamp(
-          static_cast<int>(std::max(calibration_drag_start_.x, point.x)), 0,
-          width);
-      const int bottom = std::clamp(
-          static_cast<int>(std::max(calibration_drag_start_.y, point.y)), 0,
-          height);
-      calibration_rect_ = NormalizedRect{
-          static_cast<double>(left) / width,
-          static_cast<double>(top) / height,
-          static_cast<double>(right - left) / width,
-          static_cast<double>(bottom - top) / height,
-      };
-      layout_dirty_ = true;
-      RenderLayerBitmap(true);
-    } else {
-      UpdatePointerGesture(point);
-    }
-    return 0;
-  }
-  case WM_LBUTTONUP: {
-    POINT point{GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
-    if (mode_ == Mode::kCalibration && calibration_dragging_) {
-      const bool calibration_was_dragged = calibration_drag_moved_;
-      calibration_dragging_ = false;
-      if (GetCapture() == hwnd_)
-        ReleaseCapture();
-      std::string probe_error;
-      if (calibration_was_dragged) {
-        if (!IsNormalizedRectValid(calibration_rect_)) {
-          calibration_rect_ = NormalizedRect{0.08, 0.68, 0.84, 0.24};
-        }
-        layout_dirty_ = true;
-        (void)RebuildClusters();
-        ApplyInteractiveRegion();
-        SetState("calibrating", "calibrating");
-      } else {
-        if (layout_dirty_)
-          (void)RebuildClusters();
-        ApplyInteractiveRegion();
-        if (RecordObservedCalibrationProbe(point, &probe_error)) {
-          SetState("calibrating", "calibrating");
-        } else {
-          SetState("calibrating", "calibrating", probe_error);
-        }
-      }
-      calibration_drag_moved_ = false;
-      RenderLayerBitmap(true);
-      EmitStateIfChanged(true);
-    } else {
-      EndPointerGesture(point);
-    }
-    return 0;
-  }
   case fushi::kLowLevelMouseAttachedGlyphDownMessage: {
     const uint64_t transaction_id = static_cast<uint64_t>(wparam);
     const uint32_t snapshot_token =
         fushi::LowLevelAttachedGlyphSnapshotToken(transaction_id);
-    if (mode_ != Mode::kConfigured || !surface_visible_ ||
+    if ((mode_ != Mode::kConfigured && mode_ != Mode::kCalibration) ||
+        !surface_visible_ ||
         transaction_id == 0 || snapshot_token == 0 ||
         snapshot_token != hit_snapshot_token_) {
       return 0;
@@ -2831,13 +2781,11 @@ LRESULT AttachedTextSurfaceWindow::HandleMessage(UINT message, WPARAM wparam,
   }
   case WM_CAPTURECHANGED:
   case WM_CANCELMODE:
-    calibration_dragging_ = false;
-    calibration_drag_moved_ = false;
     CancelPointerGesture();
     return 0;
   case fushi::kLowLevelMouseClickMessage:
-    // The low-level hook only pre-arms sampled-input suppression for this
-    // surface. Normal region hit-testing delivers the actual pointer messages.
+    // Legacy popup notification: attached glyphs use the transaction-specific
+    // down/up messages above, including calibration probes.
     return 0;
   case fushi::kLowLevelMouseShieldReleaseMessage:
     fushi::FinalizeLowLevelMouseDirectInputShield(hwnd_);

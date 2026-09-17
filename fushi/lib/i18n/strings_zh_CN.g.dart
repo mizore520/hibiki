@@ -10869,4 +10869,24 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get game_lookup_samples_few_points =>
       '校准点较少，微小标记误差也会影响结果。建议在多句样本上补充分散标记后再判断精度。';
+  @override
+  String get game_lookup_attached_calibration_preparing =>
+      '正在准备点击保护，请先不要点击游戏台词。';
+  @override
+  String get game_lookup_attached_calibration_paused =>
+      '游戏在后台或已隐藏，校准暂时暂停。用 Alt+Tab 切回游戏，等字形高亮出现后再点探针；这里仍可调整和确认。';
+  @override
+  String get game_lookup_attached_calibration_unavailable =>
+      '校准暂不可用。请停止点击游戏台词，调整参数或取消校准。';
+  @override
+  String get game_lookup_attached_calibration_ended => '校准已结束，请关闭此窗口后重新开始。';
+  @override
+  String get game_lookup_attached_calibration_region_help =>
+      '请在这里调整正文区域，或在样本编辑器的截图上拖框。游戏中的覆盖层只接收高亮字形探针。';
+  @override
+  String get game_lookup_attached_calibration_text_changed =>
+      '台词已变化，请取消并重新打开校准，以当前台词重新确认。';
+  @override
+  String get game_lookup_attached_calibration_ready =>
+      '探针已就绪。请按顺序点击高亮字框内部；点击字框外仍会操作游戏。';
 }

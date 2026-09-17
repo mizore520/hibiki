@@ -307,7 +307,7 @@ private:
                            uint64_t external_transaction_id);
   void UpdatePointerGesture(POINT client_point);
   void EndPointerGesture(POINT client_point,
-                         uint64_t external_transaction_id = 0);
+                         uint64_t external_transaction_id);
   void CancelPointerGesture();
   // Builds the LookupEvent for |cluster_index| (index into clusters_) and
   // invokes on_lookup_. Shared by the click transaction and the Shift+hover
@@ -403,9 +403,6 @@ private:
   GeometryProviderStatus provider_status_;
   bool native_provider_retire_pending_ = false;
 
-  bool calibration_dragging_ = false;
-  bool calibration_drag_moved_ = false;
-  POINT calibration_drag_start_{};
   int64_t probe_start_index_ = -1;
   int64_t probe_middle_index_ = -1;
   int64_t probe_end_index_ = -1;
