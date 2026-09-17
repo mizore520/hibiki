@@ -29,10 +29,11 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 2357 条。点号进各自文件。
+> 共 2358 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-2537](bugs/BUG-2537-gal-cross-game-calibration-unrecognized.md) | 🚧 | 🚧 | 换游戏后台词识别不到，校准对无底色文字不兼容 |
 | [BUG-2536](bugs/BUG-2536-fushi-access-violation-after-calibration.md) | 🚧 | 🚧 | 校准验证完成后 Fushi 发生访问冲突闪退 |
 | [BUG-2526](bugs/BUG-2526-youtube-android-dash-60s-window-visionos.md) | ✅ | ✅ | YouTube 花絮/流媒体打不开或无声：android client DASH 流无 PO token 只放前 60 秒 |
 | [BUG-2525](bugs/BUG-2525-reader-floating-chrome-gap-and-no-hover-reveal.md) | ✅ | ✅ | 悬浮控制栏：顶部常驻空带 + 控制栏不自动恢复 |
