@@ -29,12 +29,13 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 2359 条。点号进各自文件。
+> 共 2360 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-2540](bugs/BUG-2540-gal-calibration-alignment-uncertain.md) | 🚧 | 🚧 | 多行台词可见但校准框无法可靠对齐字形 |
 | [BUG-2538](bugs/BUG-2538-gal-calibration-unmeasurable-glyph.md) | 🚧 | 🚧 | 特殊字符宽度无法自动验证而被要求手动排版 |
-| [BUG-2537](bugs/BUG-2537-gal-cross-game-calibration-unrecognized.md) | 🚧 | 🚧 | 换游戏后台词识别不到，校准对无底色文字不兼容 |
+| [BUG-2537](bugs/BUG-2537-gal-cross-game-calibration-unrecognized.md) | 🚧 | 🚧 | 换游戏后截图校准找不到正文行，无底色兼容性待验证 |
 | [BUG-2536](bugs/BUG-2536-fushi-access-violation-after-calibration.md) | 🚧 | 🚧 | 校准验证完成后 Fushi 发生访问冲突闪退 |
 | [BUG-2526](bugs/BUG-2526-youtube-android-dash-60s-window-visionos.md) | ✅ | ✅ | YouTube 花絮/流媒体打不开或无声：android client DASH 流无 PO token 只放前 60 秒 |
 | [BUG-2525](bugs/BUG-2525-reader-floating-chrome-gap-and-no-hover-reveal.md) | ✅ | ✅ | 悬浮控制栏：顶部常驻空带 + 控制栏不自动恢复 |
@@ -247,8 +248,8 @@
 | [BUG-2270](bugs/BUG-2270-sidecar-ownership-record-failed-opaque.md) | ✅ | 🚧 | 刮削 sidecar 报「文件已写入，但所有权记录失败」但不给出真实异常，Cover Song Collection 三条无法定位根因 |
 | [BUG-2269](bugs/BUG-2269-candidate-windows-runtime-gate.md) | ✅ | ✅ | Windows 候选包可绕过完整运行组件组装与验证 |
 | [BUG-2269](bugs/BUG-2269-ankiconnect-multi-subaction-key.md) | ✅ | ✅ | AnkiConnect multi 子 action 缺 key：配置 apiKey 时所有批量写被整批拒绝 |
-| [BUG-2268](bugs/BUG-2268-windows-aot-stack-overflow-on-slang-flat-map.md) | ✅ | ✅ | Windows AOT 编译 Slang 巨型动态映射时栈溢出 |
 | [BUG-2268](bugs/BUG-2268-mal-ambiguity-blocks-tmdb-fallback.md) | ✅ | ✅ | MAL 主源歧义即终止识别链，TMDB 兜底永远不被询问，中文目录名整批记成待确认 |
+| [BUG-2268](bugs/BUG-2268-windows-aot-stack-overflow-on-slang-flat-map.md) | ✅ | ✅ | Windows AOT 编译 Slang 巨型动态映射时栈溢出 |
 | [BUG-2267](bugs/BUG-2267-windows-runtime-lock-preflight.md) | ✅ | ✅ | Windows 完整打包未提前检查运行组件占用 |
 | [BUG-2267](bugs/BUG-2267-coreaudio-download-errors.md) | ✅ | ✅ | CoreAudio下载失败被误报为qBittorrent推送失败 |
 | [BUG-2266](bugs/BUG-2266-injector-attach-target-exit.md) | ✅ | ✅ | 附着模式游戏退出后 injector 不结束 |
@@ -265,8 +266,8 @@
 | [BUG-2261](bugs/BUG-2261-luna-mine-before-audio-boundary.md) | ✅ | ✅ | Luna 当前句制卡提前截断录音导致卡片无音频 |
 | [BUG-2260](bugs/BUG-2260-netflix-advisory-overlay-selector-drift.md) | ✅ | ✅ | Netflix 分级提示 overlay 改用 .watch-video--advisories-container，三处隐藏选择器全部静默失效；内置播放器换集重载后 chrome 隐藏丢失 |
 | [BUG-2260](bugs/BUG-2260-local-windows-build-misses-gal-helper.md) | ✅ | ✅ | 本地 Windows 构建成功但未打包 galgame helper |
-| [BUG-2259](bugs/BUG-2259-macos-quit-no-exit-flush.md) | ✅ | ✅ | macOS Cmd+Q 退出不跑退出 flush（阅读位置/有声书进度/阅读统计丢最后一段） |
 | [BUG-2259](bugs/BUG-2259-windows-build-bundle-prefix.md) | ✅ | ✅ | Windows 构建 bundle 安装目标误指向 Program Files |
+| [BUG-2259](bugs/BUG-2259-macos-quit-no-exit-flush.md) | ✅ | ✅ | macOS Cmd+Q 退出不跑退出 flush（阅读位置/有声书进度/阅读统计丢最后一段） |
 | [BUG-2258](bugs/BUG-2258-macos-video-retina-blur.md) | ✅ | ✅ | mac 视频在 Retina 上发虚：media_kit 按视频原生分辨率建纹理，放大交给 Flutter 双线性 |
 | [BUG-2258](bugs/BUG-2258-alt-wheel-entry-scroll.md) | ✅ | ✅ | 查词窗口 Alt+滚轮词条定位与顶部回退 |
 | [BUG-2257](bugs/BUG-2257-manga-discovery-mal.md) | ✅ | ✅ | 漫画发现 AniList API 停用返回403，迁移MAL |
