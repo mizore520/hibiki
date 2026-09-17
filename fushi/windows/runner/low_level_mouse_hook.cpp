@@ -1,6 +1,7 @@
 #include "low_level_mouse_hook.h"
 
 #include "attached_glyph_transaction_latch.h"
+#include "attached_popup_rearm_policy.h"
 #include "voice_hook_reader.h"
 
 #include "../../../native/galgame_hook/include/voice_hook_ipc.h"
@@ -100,6 +101,10 @@ struct AttachedGlyphHitSnapshot {
 // allocate/copy on the surface thread; WH_MOUSE_LL performs only an atomic
 // snapshot load and linear reads over immutable RECTs.
 std::shared_ptr<const AttachedGlyphHitSnapshot> g_attached_hit_snapshot;
+// A visible attached surface can lose its published snapshot while a popup
+// owns the singleton hook. Keep a passive HWND candidate so popup close can
+// request a fresh snapshot/admission without waiting for the health timer.
+std::atomic<HWND> g_attached_rearm_candidate{nullptr};
 std::atomic<uint32_t> g_attached_hit_token{0};
 std::atomic<uint32_t> g_attached_transaction_counter{0};
 SRWLOCK g_attached_transaction_lock = SRWLOCK_INIT;
@@ -204,6 +209,8 @@ std::atomic<const SampledInputShieldContract*>
     g_direct_input_shield_contract{nullptr};
 std::atomic<uint32_t> g_direct_input_shield_tail_generation{0};
 std::atomic<uint32_t> g_direct_input_shield_tail_token{0};
+
+void RequestAttachedGlyphRearmIfNeutral();
 
 static_assert(kLowLevelMouseShieldReleaseMessage ==
                   fushi_voice_hook::kSampledInputShieldReleaseWindowMessage,
@@ -610,6 +617,10 @@ void RevokeDirectInputShieldIfIdle(HWND expected_popup) {
   g_direct_input_shield_popup.store(nullptr, std::memory_order_release);
   g_direct_input_shield_game.store(nullptr, std::memory_order_release);
   g_direct_input_shield_contract.store(nullptr, std::memory_order_release);
+  // Leaf/HUNEX posts kLowLevelMouseShieldReleaseMessage only after the
+  // injected detour has observed raw zero and published its exact tail ACK.
+  // This is the tail's real neutral edge, not a timer approximation.
+  RequestAttachedGlyphRearmIfNeutral();
 }
 
 bool PointInWindowClient(HWND window, POINT point) {
@@ -969,6 +980,22 @@ bool HasActiveAttachedGlyphTransaction() {
   return active;
 }
 
+void RequestAttachedGlyphRearmIfNeutral() {
+  // This is callable from HookProc: atomic reads plus PostMessage only. Never
+  // inspect HWND state or take the transaction lock on the synchronous path.
+  const attached_popup_rearm_policy::State state{
+      g_attached_rearm_candidate.load(std::memory_order_acquire),
+      g_target.load(std::memory_order_acquire),
+      g_swallowed_buttons.load(std::memory_order_acquire),
+      g_direct_input_shield_buttons.load(std::memory_order_acquire),
+      g_direct_input_shield_tail_token.load(std::memory_order_acquire),
+      HasActiveAttachedGlyphTransactionFast(),
+  };
+  if (!attached_popup_rearm_policy::CanRequestRearm(state)) return;
+  PostMessageW(state.candidate_surface,
+               kLowLevelMouseAttachedGlyphRearmMessage, 0, 0);
+}
+
 bool FailOpenRetireAttachedGlyphTransaction(uint64_t transaction_id) {
   if (transaction_id == 0)
     return false;
@@ -1140,6 +1167,7 @@ bool AdvanceAttachedGlyphReleaseIfAcknowledged() {
       g_attached_active_transaction = {};
       g_attached_active_transaction_id.store(0, std::memory_order_release);
       ReleaseSRWLockExclusive(&g_attached_transaction_lock);
+      RequestAttachedGlyphRearmIfNeutral();
       return false;
     }
     ReleaseSRWLockExclusive(&g_attached_transaction_lock);
@@ -1186,6 +1214,10 @@ LRESULT CALLBACK HookProc(int code, WPARAM wparam, LPARAM lparam) {
     if (bit != 0 &&
         (g_swallowed_buttons.fetch_and(~bit, std::memory_order_relaxed) & bit) !=
             0) {
+      // Popup Hide cleared g_target after swallowing its down. This matching
+      // up is the first safe point to wake the attached surface; re-arming
+      // earlier would split the popup's dismiss transaction.
+      RequestAttachedGlyphRearmIfNeutral();
       return 1;
     }
     return CallNextHookEx(nullptr, code, wparam, lparam);
@@ -1689,6 +1721,7 @@ uint32_t UpdateLowLevelAttachedGlyphHitRegions(
   std::shared_ptr<const AttachedGlyphHitSnapshot> immutable = snapshot;
   std::atomic_store_explicit(&g_attached_hit_snapshot, std::move(immutable),
                              std::memory_order_release);
+  g_attached_rearm_candidate.store(surface, std::memory_order_release);
   return token;
 }
 
@@ -1714,6 +1747,14 @@ void ClearLowLevelAttachedGlyphHitRegions(HWND surface) {
     g_attached_active_transaction.latch.Cancel();
   }
   ReleaseSRWLockExclusive(&g_attached_transaction_lock);
+}
+
+void RetireLowLevelAttachedGlyphRearmCandidate(HWND surface) {
+  if (surface == nullptr) return;
+  HWND expected = surface;
+  g_attached_rearm_candidate.compare_exchange_strong(
+      expected, nullptr, std::memory_order_acq_rel,
+      std::memory_order_acquire);
 }
 
 namespace {
@@ -1923,6 +1964,9 @@ void FinalizeLowLevelMouseDirectInputShield(HWND target) {
 void DisarmLowLevelMouseHook(HWND expected_target) {
   if (expected_target == nullptr) return;
   ClearLowLevelAttachedGlyphHitRegions(expected_target);
+  const bool released_transient_popup =
+      expected_target !=
+      g_attached_rearm_candidate.load(std::memory_order_acquire);
   std::lock_guard<std::mutex> guard(g_binding_mutex);
   const HWND current = g_target.load(std::memory_order_acquire);
   const bool owns_binding = current == expected_target;
@@ -1969,6 +2013,11 @@ void DisarmLowLevelMouseHook(HWND expected_target) {
   if ((owns_binding || clean_uncommitted_arm) && thread_id != 0) {
     PostThreadMessage(thread_id, kThreadDisarm, 0, 0);
   }
+  // Esc/button/programmatic popup Hide has no physical up to wake the
+  // candidate. An attached surface hiding itself must not post a self-rearm
+  // loop; the predicate keeps a popup dismiss click pending until HookProc
+  // owns its up.
+  if (released_transient_popup) RequestAttachedGlyphRearmIfNeutral();
 }
 
 }  // namespace fushi

@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <limits>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -32,6 +34,50 @@ struct ReferenceClient {
   int dpi = 96;
 };
 
+struct CellGrid {
+  double advance_per_client_height = std::numeric_limits<double>::quiet_NaN();
+  double line_advance_per_client_height =
+      std::numeric_limits<double>::quiet_NaN();
+  double cell_height_per_client_height =
+      std::numeric_limits<double>::quiet_NaN();
+  int columns = 0;
+  int continuation_indent = -1;
+  int quoted_continuation_indent = -1;
+
+  bool operator==(const CellGrid &other) const {
+    return advance_per_client_height == other.advance_per_client_height &&
+           line_advance_per_client_height ==
+               other.line_advance_per_client_height &&
+           cell_height_per_client_height ==
+               other.cell_height_per_client_height &&
+           columns == other.columns &&
+           continuation_indent == other.continuation_indent &&
+           quoted_continuation_indent == other.quoted_continuation_indent;
+  }
+
+  bool operator!=(const CellGrid &other) const { return !(*this == other); }
+};
+
+inline bool IsCellGridValid(const CellGrid &grid) {
+  const int maximum_indent = std::min(grid.columns - 1, 8);
+  return std::isfinite(grid.advance_per_client_height) &&
+         grid.advance_per_client_height >= 0.001 &&
+         grid.advance_per_client_height <= 0.25 &&
+         std::isfinite(grid.line_advance_per_client_height) &&
+         grid.line_advance_per_client_height >= 0.001 &&
+         grid.line_advance_per_client_height <= 0.25 &&
+         std::isfinite(grid.cell_height_per_client_height) &&
+         grid.cell_height_per_client_height >= 0.001 &&
+         grid.cell_height_per_client_height <= 0.25 &&
+         grid.line_advance_per_client_height >=
+             grid.cell_height_per_client_height &&
+         grid.columns >= 2 && grid.columns <= 128 &&
+         grid.continuation_indent >= 0 &&
+         grid.continuation_indent <= maximum_indent &&
+         grid.quoted_continuation_indent >= 0 &&
+         grid.quoted_continuation_indent <= maximum_indent;
+}
+
 struct Layout {
   std::wstring font_family = L"Yu Gothic";
   double font_size_per_client_height = 0.045;
@@ -40,6 +86,7 @@ struct Layout {
   std::string text_align = "left";
   std::string vertical_align = "top";
   double padding_per_client_height = 0.0;
+  std::optional<CellGrid> cell_grid;
 };
 
 struct ClusterBox {
@@ -91,6 +138,105 @@ inline bool RectHasArea(const RECT &rect) {
   return rect.right > rect.left && rect.bottom > rect.top;
 }
 
+inline bool IsGridSupportedTextUnit(wchar_t value) {
+  const uint32_t code = static_cast<uint16_t>(value);
+  return (code >= 0x3001 && code <= 0x303F) ||
+         (code >= 0x3041 && code <= 0x3096) ||
+         (code >= 0x309D && code <= 0x309F) ||
+         (code >= 0x30A1 && code <= 0x30FF) ||
+         (code >= 0x3400 && code <= 0x9FFF) ||
+         (code >= 0xFF01 && code <= 0xFF60) || code == 0x2014 ||
+         code == 0x2026;
+}
+
+inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
+                            int client_height_px, int surface_width_px,
+                            int surface_height_px,
+                            const RECT &layout_bounds) {
+  if (!style.cell_grid.has_value() || !IsCellGridValid(*style.cell_grid))
+    return Failure("invalid_layout");
+  constexpr float kMinimumBodyPixels = 8.0f;
+  const float layout_width =
+      static_cast<float>(layout_bounds.right - layout_bounds.left);
+  const float layout_height =
+      static_cast<float>(layout_bounds.bottom - layout_bounds.top);
+  if (layout_width < kMinimumBodyPixels || layout_height < kMinimumBodyPixels)
+    return Failure("layout_bounds_too_small");
+
+  const CellGrid &grid = *style.cell_grid;
+  const double client_height =
+      static_cast<double>(std::max(1, client_height_px));
+  const double advance = grid.advance_per_client_height * client_height;
+  const double line_advance =
+      grid.line_advance_per_client_height * client_height;
+  const double cell_height = grid.cell_height_per_client_height * client_height;
+  const double bounds_left = static_cast<double>(layout_bounds.left);
+  const double bounds_top = static_cast<double>(layout_bounds.top);
+  if (!std::isfinite(advance) || !std::isfinite(line_advance) ||
+      !std::isfinite(cell_height) ||
+      std::llround(bounds_left + static_cast<double>(grid.columns) * advance) >
+          layout_bounds.right ||
+      std::llround(bounds_top + cell_height) > layout_bounds.bottom) {
+    return Failure("grid_overflow_body_rect");
+  }
+
+  const bool quoted =
+      !source.empty() &&
+      (source.front() == L'\u300C' || source.front() == L'\u300E');
+  const int continuation_indent = quoted ? grid.quoted_continuation_indent
+                                         : grid.continuation_indent;
+  int column = 0;
+  int row = 0;
+  const auto advance_line = [&]() {
+    ++row;
+    column = continuation_indent;
+  };
+  const auto next_cell_bounds = [&](RECT *box) -> bool {
+    if (column >= grid.columns) advance_line();
+    const double left = bounds_left + static_cast<double>(column) * advance;
+    const double top = bounds_top + static_cast<double>(row) * line_advance;
+    const double right = left + advance;
+    const double bottom = top + cell_height;
+    ++column;
+    *box = RECT{static_cast<LONG>(std::llround(left)),
+                static_cast<LONG>(std::llround(top)),
+                static_cast<LONG>(std::llround(right)),
+                static_cast<LONG>(std::llround(bottom))};
+    if (!RectHasArea(*box) || box->left < layout_bounds.left ||
+        box->top < layout_bounds.top || box->right > layout_bounds.right ||
+        box->bottom > layout_bounds.bottom || box->left < 0 || box->top < 0 ||
+        box->right > surface_width_px || box->bottom > surface_height_px) {
+      return false;
+    }
+    return true;
+  };
+
+  Result result;
+  for (uint32_t index = 0; index < source.size(); ++index) {
+    const wchar_t unit = source[index];
+    if (unit == L'\r') {
+      if (index + 1 < source.size() && source[index + 1] == L'\n') ++index;
+      advance_line();
+      continue;
+    }
+    if (unit == L'\n') {
+      advance_line();
+      continue;
+    }
+    const bool whitespace = unit == L' ' || unit == L'\u3000';
+    if (!whitespace && !IsGridSupportedTextUnit(unit))
+      return Failure("grid_unsupported_text");
+    RECT box{};
+    if (!next_cell_bounds(&box))
+      return Failure("grid_overflow_body_rect");
+    if (!whitespace) {
+      result.boxes.push_back(ClusterBox{index, 1, box});
+    }
+  }
+  if (result.boxes.empty()) return Failure("clusters_empty");
+  return result;
+}
+
 // Build a surface-local layout. Runtime calibration uses a full-client surface
 // with body_bounds inside it; normal lookup uses a surface the size of the
 // body.
@@ -100,6 +246,10 @@ inline Result Build(IDWriteFactory *factory, const std::wstring &source,
                     const RECT &layout_bounds) {
   if (source.empty() || surface_width_px <= 0 || surface_height_px <= 0)
     return Failure("empty_text_or_no_surface_rect");
+  if (style.cell_grid.has_value()) {
+    return BuildCellGrid(source, style, client_height_px, surface_width_px,
+                         surface_height_px, layout_bounds);
+  }
   if (factory == nullptr)
     return Failure("dwrite_factory_failed");
   constexpr float kMinimumBodyPixels = 8.0f;
@@ -332,7 +482,8 @@ inline Result Preview(const std::wstring &source,
           layout.font_size_per_client_height,
           layout.letter_spacing_per_client_height, layout.line_height,
           layout.text_align, layout.vertical_align,
-          layout.padding_per_client_height))
+          layout.padding_per_client_height) ||
+      (layout.cell_grid.has_value() && !IsCellGridValid(*layout.cell_grid)))
     return Failure("invalid_layout");
   const RECT client{0, 0, reference.width_px, reference.height_px};
   const RECT body = ResolveBodyRect(client, body_rect);

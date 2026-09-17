@@ -70,6 +70,10 @@ constexpr UINT kLowLevelMouseAttachedGlyphCancelMessage = WM_APP + 0x56;
 // matching generation so another down cannot overwrite a best-effort neutral
 // tail before the injected side observes it.
 constexpr UINT kLowLevelMouseAttachedGlyphAbortMessage = WM_APP + 0x57;
+// A popup that temporarily owned the singleton hook has completed its close
+// path. The attached surface uses this only to re-run its ordinary admission
+// path after the full down/up and sampled-input tail are neutral.
+constexpr UINT kLowLevelMouseAttachedGlyphRearmMessage = WM_APP + 0x58;
 
 // 打包/解包屏幕坐标（x64 下 WPARAM 为 64 位；坐标可为负，故按 uint32 位模式搬运）。
 WPARAM PackMouseHookPoint(int x, int y);
@@ -143,6 +147,11 @@ uint32_t UpdateLowLevelAttachedGlyphHitRegions(
 // non-blocking callback records its paired up and the acknowledgement worker
 // publishes/drains the v19 release asynchronously.
 void ClearLowLevelAttachedGlyphHitRegions(HWND surface);
+
+// The passive re-arm candidate intentionally outlives a transient snapshot
+// clear while a popup owns the singleton. The surface retires it at WM_NCDESTROY
+// so a recycled HWND can never receive a late notification.
+void RetireLowLevelAttachedGlyphRearmCandidate(HWND surface);
 
 inline uint32_t LowLevelAttachedGlyphSnapshotToken(
     uint64_t transaction_id) {

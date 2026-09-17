@@ -100,6 +100,69 @@ void main() {
     });
   });
 
+  test('optional cell grid round-trips without changing legacy layout JSON', () {
+    const GalLookupCellGridV1 grid = GalLookupCellGridV1(
+      advancePerClientHeight: 0.03,
+      lineAdvancePerClientHeight: 0.04,
+      cellHeightPerClientHeight: 0.035,
+      columns: 24,
+      continuationIndent: 2,
+      quotedContinuationIndent: 3,
+    );
+    const GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(
+      cellGrid: grid,
+    );
+    expect(grid.isValid, isTrue);
+    expect(layout.isValid, isTrue);
+    expect(layout.toJson()['cellGrid'], grid.toJson());
+    expect(GalLookupTextLayoutV1.tryFromJson(layout.toJson()), layout);
+    expect(
+      const GalLookupTextLayoutV1().toJson().containsKey('cellGrid'),
+      isFalse,
+    );
+  });
+
+  test('present but malformed cell grid rejects the complete layout', () {
+    const GalLookupCellGridV1 grid = GalLookupCellGridV1(
+      advancePerClientHeight: 0.03,
+      lineAdvancePerClientHeight: 0.04,
+      cellHeightPerClientHeight: 0.035,
+      columns: 24,
+      continuationIndent: 2,
+      quotedContinuationIndent: 3,
+    );
+    final Map<String, Object?> valid = const GalLookupTextLayoutV1(
+      cellGrid: grid,
+    ).toJson();
+    Map<String, Object?> withGrid(
+      void Function(Map<String, Object?> grid) mutate,
+    ) {
+      final Map<String, Object?> result = Map<String, Object?>.of(valid);
+      final Map<String, Object?> gridMap = Map<String, Object?>.of(
+        (valid['cellGrid']! as Map<Object?, Object?>).cast<String, Object?>(),
+      );
+      mutate(gridMap);
+      result['cellGrid'] = gridMap;
+      return result;
+    }
+
+    final Map<String, Object?> missing = withGrid(
+      (Map<String, Object?> grid) => grid.remove('columns'),
+    );
+    expect(GalLookupTextLayoutV1.tryFromJson(missing), isNull);
+
+    final Map<String, Object?> invalidLineAdvance = withGrid(
+      (Map<String, Object?> grid) =>
+          grid['lineAdvancePerClientHeight'] = 0.02,
+    );
+    expect(GalLookupTextLayoutV1.tryFromJson(invalidLineAdvance), isNull);
+
+    final Map<String, Object?> invalidIndent = withGrid(
+      (Map<String, Object?> grid) => grid['continuationIndent'] = 9,
+    );
+    expect(GalLookupTextLayoutV1.tryFromJson(invalidIndent), isNull);
+  });
+
   test('best of multiple variants must be within one-percent aspect error', () {
     final GalLookupSurfaceProfileV1 value = profile(
       variants: <GalLookupSurfaceVariantV1>[

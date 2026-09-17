@@ -698,6 +698,7 @@ class _GalAttachedCalibrationDialogState
     textAlign: textAlign ?? _layout.textAlign,
     verticalAlign: verticalAlign ?? _layout.verticalAlign,
     paddingPerClientHeight: _layout.paddingPerClientHeight,
+    cellGrid: _layout.cellGrid,
   );
 
   void _setStartConfirmed(bool? value) {
@@ -781,183 +782,191 @@ class _GalAttachedCalibrationDialogState
                 child: SelectableText(widget.previewText),
               ),
               const SizedBox(height: 16),
-              Text(
-                t.game_lookup_attached_body_rect,
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              Text(t.game_lookup_attached_calibration_region_help),
-              _RatioSlider(
-                label: t.game_lookup_attached_left,
-                value: _rect.left,
-                min: 0,
-                max: 1 - _rect.width,
-                onChanged: (double value) => _setRect(
-                  GalLookupNormalizedRectV1(
-                    left: value,
-                    top: _rect.top,
-                    width: _rect.width,
-                    height: _rect.height,
-                  ),
+              if (_layout.cellGrid != null) ...[
+                Text(t.game_lookup_samples_auto_grid),
+                Text(t.game_lookup_samples_auto_success),
+              ] else ...[
+                Text(
+                  t.game_lookup_attached_body_rect,
+                  style: Theme.of(context).textTheme.titleSmall,
                 ),
-                onChangeEnd: (_) => _queueDraftPush(),
-              ),
-              _RatioSlider(
-                label: t.game_lookup_attached_top,
-                value: _rect.top,
-                min: 0,
-                max: 1 - _rect.height,
-                onChanged: (double value) => _setRect(
-                  GalLookupNormalizedRectV1(
-                    left: _rect.left,
-                    top: value,
-                    width: _rect.width,
-                    height: _rect.height,
-                  ),
-                ),
-                onChangeEnd: (_) => _queueDraftPush(),
-              ),
-              _RatioSlider(
-                label: t.game_lookup_attached_width,
-                value: _rect.width,
-                min: 0.02,
-                max: 1 - _rect.left,
-                onChanged: (double value) => _setRect(
-                  GalLookupNormalizedRectV1(
-                    left: _rect.left,
-                    top: _rect.top,
-                    width: value,
-                    height: _rect.height,
-                  ),
-                ),
-                onChangeEnd: (_) => _queueDraftPush(),
-              ),
-              _RatioSlider(
-                label: t.game_lookup_attached_height,
-                value: _rect.height,
-                min: 0.02,
-                max: 1 - _rect.top,
-                onChanged: (double value) => _setRect(
-                  GalLookupNormalizedRectV1(
-                    left: _rect.left,
-                    top: _rect.top,
-                    width: _rect.width,
-                    height: value,
-                  ),
-                ),
-                onChangeEnd: (_) => _queueDraftPush(),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                key: const ValueKey<String>(
-                  'game-attached-calibration-font-family',
-                ),
-                controller: _fontController,
-                decoration: InputDecoration(
-                  labelText: t.game_lookup_attached_font_family,
-                  border: const OutlineInputBorder(),
-                ),
-                onFieldSubmitted: (String value) {
-                  _setLayout(_copyLayout(fontFamily: value.trim()));
-                  _queueDraftPush();
-                },
-              ),
-              const SizedBox(height: 8),
-              _RatioSlider(
-                label: t.game_lookup_attached_font_size,
-                value: _layout.fontSizePerClientHeight,
-                min: 0.01,
-                max: 0.12,
-                fractionDigits: 3,
-                onChanged: (double value) =>
-                    _setLayout(_copyLayout(fontSizePerClientHeight: value)),
-                onChangeEnd: (_) => _queueDraftPush(),
-              ),
-              _RatioSlider(
-                label: t.game_lookup_attached_letter_spacing,
-                value: _layout.letterSpacingPerClientHeight.clamp(-0.02, 0.05),
-                min: -0.02,
-                max: 0.05,
-                fractionDigits: 3,
-                onChanged: (double value) =>
-                    _setLayout(_copyLayout(letterSpacing: value)),
-                onChangeEnd: (_) => _queueDraftPush(),
-              ),
-              _RatioSlider(
-                label: t.game_lookup_attached_line_height,
-                value: _layout.lineHeight.clamp(0.5, 2.5),
-                min: 0.5,
-                max: 2.5,
-                fractionDigits: 2,
-                onChanged: (double value) =>
-                    _setLayout(_copyLayout(lineHeight: value)),
-                onChangeEnd: (_) => _queueDraftPush(),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                children: <Widget>[
-                  SizedBox(
-                    width: 250,
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _layout.textAlign,
-                      decoration: InputDecoration(
-                        labelText: t.game_lookup_attached_text_align,
-                        border: const OutlineInputBorder(),
-                      ),
-                      items: <DropdownMenuItem<String>>[
-                        DropdownMenuItem<String>(
-                          value: 'left',
-                          child: Text(t.game_lookup_attached_align_left),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: 'center',
-                          child: Text(t.game_lookup_attached_align_center),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: 'right',
-                          child: Text(t.game_lookup_attached_align_right),
-                        ),
-                      ],
-                      onChanged: (String? value) {
-                        if (value == null) return;
-                        _setLayout(_copyLayout(textAlign: value));
-                        _queueDraftPush();
-                      },
+                Text(t.game_lookup_attached_calibration_region_help),
+                _RatioSlider(
+                  label: t.game_lookup_attached_left,
+                  value: _rect.left,
+                  min: 0,
+                  max: 1 - _rect.width,
+                  onChanged: (double value) => _setRect(
+                    GalLookupNormalizedRectV1(
+                      left: value,
+                      top: _rect.top,
+                      width: _rect.width,
+                      height: _rect.height,
                     ),
                   ),
-                  SizedBox(
-                    width: 250,
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _layout.verticalAlign,
-                      decoration: InputDecoration(
-                        labelText: t.game_lookup_attached_vertical_align,
-                        border: const OutlineInputBorder(),
-                      ),
-                      items: <DropdownMenuItem<String>>[
-                        DropdownMenuItem<String>(
-                          value: 'top',
-                          child: Text(t.game_lookup_attached_align_top),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: 'center',
-                          child: Text(t.game_lookup_attached_align_center),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: 'bottom',
-                          child: Text(t.game_lookup_attached_align_bottom),
-                        ),
-                      ],
-                      onChanged: (String? value) {
-                        if (value == null) return;
-                        _setLayout(_copyLayout(verticalAlign: value));
-                        _queueDraftPush();
-                      },
+                  onChangeEnd: (_) => _queueDraftPush(),
+                ),
+                _RatioSlider(
+                  label: t.game_lookup_attached_top,
+                  value: _rect.top,
+                  min: 0,
+                  max: 1 - _rect.height,
+                  onChanged: (double value) => _setRect(
+                    GalLookupNormalizedRectV1(
+                      left: _rect.left,
+                      top: value,
+                      width: _rect.width,
+                      height: _rect.height,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
+                  onChangeEnd: (_) => _queueDraftPush(),
+                ),
+                _RatioSlider(
+                  label: t.game_lookup_attached_width,
+                  value: _rect.width,
+                  min: 0.02,
+                  max: 1 - _rect.left,
+                  onChanged: (double value) => _setRect(
+                    GalLookupNormalizedRectV1(
+                      left: _rect.left,
+                      top: _rect.top,
+                      width: value,
+                      height: _rect.height,
+                    ),
+                  ),
+                  onChangeEnd: (_) => _queueDraftPush(),
+                ),
+                _RatioSlider(
+                  label: t.game_lookup_attached_height,
+                  value: _rect.height,
+                  min: 0.02,
+                  max: 1 - _rect.top,
+                  onChanged: (double value) => _setRect(
+                    GalLookupNormalizedRectV1(
+                      left: _rect.left,
+                      top: _rect.top,
+                      width: _rect.width,
+                      height: value,
+                    ),
+                  ),
+                  onChangeEnd: (_) => _queueDraftPush(),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  key: const ValueKey<String>(
+                    'game-attached-calibration-font-family',
+                  ),
+                  controller: _fontController,
+                  decoration: InputDecoration(
+                    labelText: t.game_lookup_attached_font_family,
+                    border: const OutlineInputBorder(),
+                  ),
+                  onFieldSubmitted: (String value) {
+                    _setLayout(_copyLayout(fontFamily: value.trim()));
+                    _queueDraftPush();
+                  },
+                ),
+                const SizedBox(height: 8),
+                _RatioSlider(
+                  label: t.game_lookup_attached_font_size,
+                  value: _layout.fontSizePerClientHeight,
+                  min: 0.01,
+                  max: 0.12,
+                  fractionDigits: 3,
+                  onChanged: (double value) =>
+                      _setLayout(_copyLayout(fontSizePerClientHeight: value)),
+                  onChangeEnd: (_) => _queueDraftPush(),
+                ),
+                _RatioSlider(
+                  label: t.game_lookup_attached_letter_spacing,
+                  value: _layout.letterSpacingPerClientHeight.clamp(
+                    -0.02,
+                    0.05,
+                  ),
+                  min: -0.02,
+                  max: 0.05,
+                  fractionDigits: 3,
+                  onChanged: (double value) =>
+                      _setLayout(_copyLayout(letterSpacing: value)),
+                  onChangeEnd: (_) => _queueDraftPush(),
+                ),
+                _RatioSlider(
+                  label: t.game_lookup_attached_line_height,
+                  value: _layout.lineHeight.clamp(0.5, 2.5),
+                  min: 0.5,
+                  max: 2.5,
+                  fractionDigits: 2,
+                  onChanged: (double value) =>
+                      _setLayout(_copyLayout(lineHeight: value)),
+                  onChangeEnd: (_) => _queueDraftPush(),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
+                  children: <Widget>[
+                    SizedBox(
+                      width: 250,
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _layout.textAlign,
+                        decoration: InputDecoration(
+                          labelText: t.game_lookup_attached_text_align,
+                          border: const OutlineInputBorder(),
+                        ),
+                        items: <DropdownMenuItem<String>>[
+                          DropdownMenuItem<String>(
+                            value: 'left',
+                            child: Text(t.game_lookup_attached_align_left),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'center',
+                            child: Text(t.game_lookup_attached_align_center),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'right',
+                            child: Text(t.game_lookup_attached_align_right),
+                          ),
+                        ],
+                        onChanged: (String? value) {
+                          if (value == null) return;
+                          _setLayout(_copyLayout(textAlign: value));
+                          _queueDraftPush();
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      width: 250,
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _layout.verticalAlign,
+                        decoration: InputDecoration(
+                          labelText: t.game_lookup_attached_vertical_align,
+                          border: const OutlineInputBorder(),
+                        ),
+                        items: <DropdownMenuItem<String>>[
+                          DropdownMenuItem<String>(
+                            value: 'top',
+                            child: Text(t.game_lookup_attached_align_top),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'center',
+                            child: Text(t.game_lookup_attached_align_center),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'bottom',
+                            child: Text(t.game_lookup_attached_align_bottom),
+                          ),
+                        ],
+                        onChanged: (String? value) {
+                          if (value == null) return;
+                          _setLayout(_copyLayout(verticalAlign: value));
+                          _queueDraftPush();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
               if (_previewCurrent &&
                   widget.controller.calibrationStatus ==
                       GalAttachedCalibrationStatus.ready)

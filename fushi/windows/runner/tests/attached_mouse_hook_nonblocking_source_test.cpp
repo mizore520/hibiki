@@ -76,6 +76,8 @@ int main() {
                                          "void HookThreadMain()");
   assert(hook.find("HasActiveAttachedGlyphTransactionFast()") !=
          std::string::npos);
+  assert(hook.find("RequestAttachedGlyphRearmIfNeutral()") !=
+         std::string::npos);
   assert(hook.find("TryObserveAttachedGlyphPhysicalUp(info->pt, false)") ==
          std::string::npos);
 
@@ -231,6 +233,42 @@ int main() {
   const size_t miss = hook.find("return CallNextHookEx(", begin_hit);
   assert(hit != std::string::npos && begin_hit != std::string::npos &&
          miss != std::string::npos && hit < begin_hit && begin_hit < miss);
+
+  // Popup close has a direct notification path. It must be gated by the full
+  // neutral transaction state and must not rely on the 500 ms follow timer.
+  const std::string rearm = FunctionSlice(
+      source, "void RequestAttachedGlyphRearmIfNeutral() {",
+      "bool FailOpenRetireAttachedGlyphTransaction(");
+  assert(rearm.find("g_attached_rearm_candidate.load") != std::string::npos);
+  assert(rearm.find("g_target.load") != std::string::npos);
+  assert(rearm.find("g_swallowed_buttons.load") != std::string::npos);
+  assert(rearm.find("g_direct_input_shield_tail_token.load") !=
+         std::string::npos);
+  assert(rearm.find("HasActiveAttachedGlyphTransactionFast()") !=
+         std::string::npos);
+  assert(rearm.find("PostMessageW(state.candidate_surface,") !=
+         std::string::npos);
+  const std::string revoke = FunctionSlice(
+      source, "void RevokeDirectInputShieldIfIdle(HWND expected_popup) {",
+      "bool PointInWindowClient(");
+  const size_t direct_tail_clear = revoke.rfind(
+      "g_direct_input_shield_tail_token.store(0", revoke.size());
+  const size_t tail_rearm = revoke.rfind("RequestAttachedGlyphRearmIfNeutral()",
+                                        revoke.size());
+  assert(direct_tail_clear != std::string::npos &&
+         tail_rearm != std::string::npos && direct_tail_clear < tail_rearm);
+  const std::string disarm = FunctionSlice(source,
+                                            "void DisarmLowLevelMouseHook(",
+                                            "}  // namespace fushi");
+  assert(disarm.find("RequestAttachedGlyphRearmIfNeutral()") !=
+         std::string::npos);
+  assert(disarm.find("released_transient_popup") != std::string::npos);
+  assert(hook.find("RequestAttachedGlyphRearmIfNeutral();\n      return 1;") !=
+         std::string::npos);
+  assert(surface.find("case fushi::kLowLevelMouseAttachedGlyphRearmMessage:") !=
+         std::string::npos);
+  assert(surface.find("RetireLowLevelAttachedGlyphRearmCandidate(hwnd_)") !=
+         std::string::npos);
   std::cout << "attached mouse hook and calibration source guards passed\n";
   return 0;
 }

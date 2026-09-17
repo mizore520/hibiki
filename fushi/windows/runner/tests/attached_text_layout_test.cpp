@@ -115,6 +115,66 @@ int main() {
   }
   ++cases;
 
+  layout::Layout grid_style = style;
+  layout::CellGrid grid;
+  grid.advance_per_client_height = 0.03;
+  grid.line_advance_per_client_height = 0.04;
+  grid.cell_height_per_client_height = 0.035;
+  grid.columns = 16;
+  grid.continuation_indent = 1;
+  grid.quoted_continuation_indent = 2;
+  grid_style.cell_grid = grid;
+  const auto grid_preview = layout::Preview(
+      L"\u300C\u3042\u3044 \u3046\u3048\u304A\n\u304B\u304D\u304F\u2026\u2014", client, rect,
+      grid_style);
+  assert(grid_preview.ok() && grid_preview.text_layout == nullptr);
+  assert(grid_preview.boxes.front().text_position == 0);
+  assert(grid_preview.boxes.front().text_length == 1);
+  bool found_space = false;
+  bool found_quoted_continuation = false;
+  for (const auto &box : grid_preview.boxes) {
+    if (box.text_position == 3 || box.text_position == 7)
+      found_space = true;
+    if (box.text_position == 8) {
+      assert(box.client_rect.left == body.left + 36);
+      assert(box.client_rect.top == body.top + 24);
+      found_quoted_continuation = true;
+    }
+  }
+  assert(!found_space && found_quoted_continuation);
+  ++cases;
+
+  const auto grid_wrapped = layout::Preview(
+      std::wstring(17, L'\u3042'), client, rect, grid_style);
+  assert(grid_wrapped.ok());
+  assert(grid_wrapped.boxes.back().text_position == 16);
+  assert(grid_wrapped.boxes.back().client_rect.left == body.left + 18);
+  assert(grid_wrapped.boxes.back().client_rect.top == body.top + 24);
+  ++cases;
+
+  ExpectRejected(layout::Preview(L"\u3042A", client, rect, grid_style),
+                 "grid_unsupported_text");
+  ExpectRejected(layout::Preview(L"\u3042\U0001f600", client, rect, grid_style),
+                 "grid_unsupported_text");
+  ExpectRejected(layout::Preview(
+                     std::wstring(17, L'\u3042'), client,
+                     layout::NormalizedRect{0.1, 0.1, 0.5, 0.05}, grid_style),
+                 "grid_overflow_body_rect");
+  ++cases;
+
+  // A terminal line break changes only the logical cursor. The body need not
+  // contain a future cell until a following source unit actually needs one.
+  const layout::NormalizedRect tight_grid_rect{0.1, 0.1, 0.5, 0.05};
+  const auto trailing_newline =
+      layout::Preview(L"\u3042\r\n", client, tight_grid_rect, grid_style);
+  assert(trailing_newline.ok());
+  assert(trailing_newline.boxes.size() == 1);
+  assert(trailing_newline.boxes.front().text_position == 0);
+  ExpectRejected(layout::Preview(L"\u3042\n\n\u3044", client,
+                                 tight_grid_rect, grid_style),
+                 "grid_overflow_body_rect");
+  ++cases;
+
   ExpectRejected(layout::Preview(L"", client, rect, style),
                  "empty_text_or_no_surface_rect");
   ExpectRejected(

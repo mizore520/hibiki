@@ -12021,4 +12021,26 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get game_lookup_attached_calibration_ready =>
       'Probe clicks are ready. Click inside the highlighted character boxes in order; clicks outside those boxes still control the game.';
+  @override
+  String get game_lookup_samples_auto_align => 'Align from screenshot';
+  @override
+  String get game_lookup_samples_auto_hint =>
+      'Frame the dialogue roughly, then align. Use one complete sample with two or more lines to measure wrapping. Character-centre marks and font settings are not needed.';
+  @override
+  String get game_lookup_samples_auto_failed =>
+      'No reliable regular grid was found. Use a complete multiline sample, keep the dialogue inside the frame, and exclude the speaker and buttons. Your draft has not changed.';
+  @override
+  String get game_lookup_samples_auto_success =>
+      'Grid measured. Check that each box contains its character and that subsequent lines match before applying.';
+  @override
+  String get game_lookup_samples_auto_grid =>
+      'Measured grid · no font adjustment required';
+  @override
+  String get game_lookup_samples_manual_layout => 'Use manual font layout';
+  @override
+  String get game_lookup_samples_auto_multiline =>
+      'Select or capture one complete sample with two or more lines; a short line cannot determine the wrap position.';
+  @override
+  String get game_lookup_samples_auto_unsupported =>
+      'This sample contains character widths that the grid method cannot verify. Use manual layout for now.';
 }

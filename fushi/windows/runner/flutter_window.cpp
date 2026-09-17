@@ -1103,11 +1103,75 @@ AttachedTextSurfaceWindow::ReferenceClient AttachedReferenceFromArgs(
   return reference;
 }
 
+bool ExactFiniteDoubleFromValue(const flutter::EncodableMap* map,
+                                const char* key, double* output) {
+  if (map == nullptr || output == nullptr) return false;
+  const auto it = map->find(flutter::EncodableValue(key));
+  if (it == map->end()) return false;
+  if (const auto* value = std::get_if<double>(&it->second)) {
+    if (!std::isfinite(*value)) return false;
+    *output = *value;
+    return true;
+  }
+  if (const auto* value = std::get_if<int32_t>(&it->second)) {
+    *output = static_cast<double>(*value);
+    return true;
+  }
+  if (const auto* value = std::get_if<int64_t>(&it->second)) {
+    *output = static_cast<double>(*value);
+    return true;
+  }
+  return false;
+}
+
+bool ExactIntFromValue(const flutter::EncodableMap* map, const char* key,
+                       int* output) {
+  if (map == nullptr || output == nullptr) return false;
+  const auto it = map->find(flutter::EncodableValue(key));
+  if (it == map->end()) return false;
+  if (const auto* value = std::get_if<int32_t>(&it->second)) {
+    *output = *value;
+    return true;
+  }
+  if (const auto* value = std::get_if<int64_t>(&it->second)) {
+    if (*value < std::numeric_limits<int>::min() ||
+        *value > std::numeric_limits<int>::max()) {
+      return false;
+    }
+    *output = static_cast<int>(*value);
+    return true;
+  }
+  if (const auto* value = std::get_if<double>(&it->second)) {
+    if (!std::isfinite(*value) || std::floor(*value) != *value ||
+        *value < static_cast<double>(std::numeric_limits<int>::min()) ||
+        *value > static_cast<double>(std::numeric_limits<int>::max())) {
+      return false;
+    }
+    *output = static_cast<int>(*value);
+    return true;
+  }
+  return false;
+}
+
+bool HasExactCellGridKeys(const flutter::EncodableMap* map) {
+  static constexpr const char* kKeys[] = {
+      "advancePerClientHeight", "lineAdvancePerClientHeight",
+      "cellHeightPerClientHeight", "columns", "continuationIndent",
+      "quotedContinuationIndent"};
+  if (map == nullptr || map->size() != sizeof(kKeys) / sizeof(kKeys[0]))
+    return false;
+  for (const char* key : kKeys) {
+    if (map->find(flutter::EncodableValue(key)) == map->end()) return false;
+  }
+  return true;
+}
+
 AttachedTextSurfaceWindow::Layout AttachedLayoutFromArgs(
     const flutter::EncodableMap* args) {
   AttachedTextSurfaceWindow::Layout layout;
   const flutter::EncodableMap* map = MapFromValue(args, "layout");
   if (map == nullptr) map = args;
+  if (map == nullptr) return layout;
   layout.font_family = WideFromValue(map, "fontFamily", layout.font_family);
   layout.font_size_per_client_height = DoubleFromValue(
       map, "fontSizePerClientHeight", layout.font_size_per_client_height);
@@ -1123,6 +1187,30 @@ AttachedTextSurfaceWindow::Layout AttachedLayoutFromArgs(
   layout.padding_per_client_height =
       DoubleFromValue(map, "paddingPerClientHeight",
                       layout.padding_per_client_height);
+  const auto cell_grid_it = map->find(flutter::EncodableValue("cellGrid"));
+  if (cell_grid_it != map->end()) {
+    // Presence changes the layout contract. Any malformed grid deliberately
+    // remains invalid so the surface validation gate cannot silently fall
+    // back to legacy DirectWrite geometry.
+    fushi::attached_text_layout::CellGrid grid;
+    const auto* grid_map =
+        std::get_if<flutter::EncodableMap>(&cell_grid_it->second);
+    if (HasExactCellGridKeys(grid_map)) {
+      (void)ExactFiniteDoubleFromValue(grid_map, "advancePerClientHeight",
+                                       &grid.advance_per_client_height);
+      (void)ExactFiniteDoubleFromValue(
+          grid_map, "lineAdvancePerClientHeight",
+          &grid.line_advance_per_client_height);
+      (void)ExactFiniteDoubleFromValue(grid_map, "cellHeightPerClientHeight",
+                                       &grid.cell_height_per_client_height);
+      (void)ExactIntFromValue(grid_map, "columns", &grid.columns);
+      (void)ExactIntFromValue(grid_map, "continuationIndent",
+                               &grid.continuation_indent);
+      (void)ExactIntFromValue(grid_map, "quotedContinuationIndent",
+                               &grid.quoted_continuation_indent);
+    }
+    layout.cell_grid = grid;
+  }
   return layout;
 }
 
@@ -1260,7 +1348,7 @@ flutter::EncodableMap AttachedReferenceMap(
 
 flutter::EncodableMap AttachedLayoutMap(
     const AttachedTextSurfaceWindow::Layout& layout) {
-  return flutter::EncodableMap{
+  flutter::EncodableMap result{
       {flutter::EncodableValue("fontFamily"),
        flutter::EncodableValue(Utf8FromWide(layout.font_family))},
       {flutter::EncodableValue("fontSizePerClientHeight"),
@@ -1276,6 +1364,25 @@ flutter::EncodableMap AttachedLayoutMap(
       {flutter::EncodableValue("paddingPerClientHeight"),
        flutter::EncodableValue(layout.padding_per_client_height)},
   };
+  if (layout.cell_grid.has_value()) {
+    const fushi::attached_text_layout::CellGrid& grid = *layout.cell_grid;
+    result[flutter::EncodableValue("cellGrid")] = flutter::EncodableValue(
+        flutter::EncodableMap{
+            {flutter::EncodableValue("advancePerClientHeight"),
+             flutter::EncodableValue(grid.advance_per_client_height)},
+            {flutter::EncodableValue("lineAdvancePerClientHeight"),
+             flutter::EncodableValue(grid.line_advance_per_client_height)},
+            {flutter::EncodableValue("cellHeightPerClientHeight"),
+             flutter::EncodableValue(grid.cell_height_per_client_height)},
+            {flutter::EncodableValue("columns"),
+             flutter::EncodableValue(grid.columns)},
+            {flutter::EncodableValue("continuationIndent"),
+             flutter::EncodableValue(grid.continuation_indent)},
+            {flutter::EncodableValue("quotedContinuationIndent"),
+             flutter::EncodableValue(grid.quoted_continuation_indent)},
+        });
+  }
+  return result;
 }
 
 flutter::EncodableMap AttachedSnapshotMap(

@@ -129,6 +129,101 @@ class GalLookupReferenceClientV1 {
   int get hashCode => Object.hash(widthPx, heightPx, dpi);
 }
 
+class GalLookupCellGridV1 {
+  const GalLookupCellGridV1({
+    required this.advancePerClientHeight,
+    required this.lineAdvancePerClientHeight,
+    required this.cellHeightPerClientHeight,
+    required this.columns,
+    required this.continuationIndent,
+    required this.quotedContinuationIndent,
+  });
+
+  final double advancePerClientHeight;
+  final double lineAdvancePerClientHeight;
+  final double cellHeightPerClientHeight;
+  final int columns;
+  final int continuationIndent;
+  final int quotedContinuationIndent;
+
+  bool get isValid =>
+      advancePerClientHeight.isFinite &&
+      advancePerClientHeight >= 0.001 &&
+      advancePerClientHeight <= 0.25 &&
+      lineAdvancePerClientHeight.isFinite &&
+      lineAdvancePerClientHeight >= 0.001 &&
+      lineAdvancePerClientHeight <= 0.25 &&
+      cellHeightPerClientHeight.isFinite &&
+      cellHeightPerClientHeight >= 0.001 &&
+      cellHeightPerClientHeight <= 0.25 &&
+      lineAdvancePerClientHeight >= cellHeightPerClientHeight &&
+      columns >= 2 &&
+      columns <= 128 &&
+      continuationIndent >= 0 &&
+      continuationIndent <= _maximumIndent &&
+      quotedContinuationIndent >= 0 &&
+      quotedContinuationIndent <= _maximumIndent;
+
+  int get _maximumIndent => columns - 1 < 8 ? columns - 1 : 8;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'advancePerClientHeight': advancePerClientHeight,
+    'lineAdvancePerClientHeight': lineAdvancePerClientHeight,
+    'cellHeightPerClientHeight': cellHeightPerClientHeight,
+    'columns': columns,
+    'continuationIndent': continuationIndent,
+    'quotedContinuationIndent': quotedContinuationIndent,
+  };
+
+  static GalLookupCellGridV1? tryFromJson(Object? value) {
+    if (value is! Map) return null;
+    final Map<Object?, Object?> map = value.cast<Object?, Object?>();
+    if (!_hasExactKeys(map, const <String>{
+      'advancePerClientHeight',
+      'lineAdvancePerClientHeight',
+      'cellHeightPerClientHeight',
+      'columns',
+      'continuationIndent',
+      'quotedContinuationIndent',
+    })) {
+      return null;
+    }
+    final GalLookupCellGridV1 grid = GalLookupCellGridV1(
+      advancePerClientHeight:
+          _finiteDouble(map['advancePerClientHeight']) ?? double.nan,
+      lineAdvancePerClientHeight:
+          _finiteDouble(map['lineAdvancePerClientHeight']) ?? double.nan,
+      cellHeightPerClientHeight:
+          _finiteDouble(map['cellHeightPerClientHeight']) ?? double.nan,
+      columns: _exactInt(map['columns']) ?? 0,
+      continuationIndent: _exactInt(map['continuationIndent']) ?? -1,
+      quotedContinuationIndent:
+          _exactInt(map['quotedContinuationIndent']) ?? -1,
+    );
+    return grid.isValid ? grid : null;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is GalLookupCellGridV1 &&
+      other.advancePerClientHeight == advancePerClientHeight &&
+      other.lineAdvancePerClientHeight == lineAdvancePerClientHeight &&
+      other.cellHeightPerClientHeight == cellHeightPerClientHeight &&
+      other.columns == columns &&
+      other.continuationIndent == continuationIndent &&
+      other.quotedContinuationIndent == quotedContinuationIndent;
+
+  @override
+  int get hashCode => Object.hash(
+    advancePerClientHeight,
+    lineAdvancePerClientHeight,
+    cellHeightPerClientHeight,
+    columns,
+    continuationIndent,
+    quotedContinuationIndent,
+  );
+}
+
 class GalLookupTextLayoutV1 {
   const GalLookupTextLayoutV1({
     this.fontFamily = '',
@@ -138,6 +233,7 @@ class GalLookupTextLayoutV1 {
     this.textAlign = 'left',
     this.verticalAlign = 'top',
     this.paddingPerClientHeight = 0,
+    this.cellGrid,
   });
 
   final String fontFamily;
@@ -147,6 +243,7 @@ class GalLookupTextLayoutV1 {
   final String textAlign;
   final String verticalAlign;
   final double paddingPerClientHeight;
+  final GalLookupCellGridV1? cellGrid;
 
   bool get isValid =>
       fontSizePerClientHeight.isFinite &&
@@ -162,22 +259,27 @@ class GalLookupTextLayoutV1 {
       const <String>{'top', 'center', 'bottom'}.contains(verticalAlign) &&
       paddingPerClientHeight.isFinite &&
       paddingPerClientHeight >= 0 &&
-      paddingPerClientHeight <= 0.25;
+      paddingPerClientHeight <= 0.25 &&
+      (cellGrid == null || cellGrid!.isValid);
 
-  Map<String, Object?> toJson() => <String, Object?>{
-    'fontFamily': fontFamily,
-    'fontSizePerClientHeight': fontSizePerClientHeight,
-    'letterSpacingPerClientHeight': letterSpacingPerClientHeight,
-    'lineHeight': lineHeight,
-    'textAlign': textAlign,
-    'verticalAlign': verticalAlign,
-    'paddingPerClientHeight': paddingPerClientHeight,
-  };
+  Map<String, Object?> toJson() {
+    final Map<String, Object?> result = <String, Object?>{
+      'fontFamily': fontFamily,
+      'fontSizePerClientHeight': fontSizePerClientHeight,
+      'letterSpacingPerClientHeight': letterSpacingPerClientHeight,
+      'lineHeight': lineHeight,
+      'textAlign': textAlign,
+      'verticalAlign': verticalAlign,
+      'paddingPerClientHeight': paddingPerClientHeight,
+    };
+    if (cellGrid != null) result['cellGrid'] = cellGrid!.toJson();
+    return result;
+  }
 
   static GalLookupTextLayoutV1? tryFromJson(Object? value) {
     if (value is! Map) return null;
     final Map<Object?, Object?> map = value.cast<Object?, Object?>();
-    if (!_hasExactKeys(map, const <String>{
+    const Set<String> legacyKeys = <String>{
       'fontFamily',
       'fontSizePerClientHeight',
       'letterSpacingPerClientHeight',
@@ -185,7 +287,9 @@ class GalLookupTextLayoutV1 {
       'textAlign',
       'verticalAlign',
       'paddingPerClientHeight',
-    })) {
+    };
+    final Set<String> gridKeys = <String>{...legacyKeys, 'cellGrid'};
+    if (!_hasExactKeys(map, legacyKeys) && !_hasExactKeys(map, gridKeys)) {
       return null;
     }
     final Object? fontFamily = map['fontFamily'];
@@ -196,6 +300,10 @@ class GalLookupTextLayoutV1 {
         verticalAlign is! String) {
       return null;
     }
+    final GalLookupCellGridV1? cellGrid = map.containsKey('cellGrid')
+        ? GalLookupCellGridV1.tryFromJson(map['cellGrid'])
+        : null;
+    if (map.containsKey('cellGrid') && cellGrid == null) return null;
     final GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(
       fontFamily: fontFamily,
       fontSizePerClientHeight:
@@ -207,6 +315,7 @@ class GalLookupTextLayoutV1 {
       verticalAlign: verticalAlign,
       paddingPerClientHeight:
           _finiteDouble(map['paddingPerClientHeight']) ?? double.nan,
+      cellGrid: cellGrid,
     );
     return layout.isValid ? layout : null;
   }
@@ -220,7 +329,8 @@ class GalLookupTextLayoutV1 {
       other.lineHeight == lineHeight &&
       other.textAlign == textAlign &&
       other.verticalAlign == verticalAlign &&
-      other.paddingPerClientHeight == paddingPerClientHeight;
+      other.paddingPerClientHeight == paddingPerClientHeight &&
+      other.cellGrid == cellGrid;
 
   @override
   int get hashCode => Object.hash(
@@ -231,6 +341,7 @@ class GalLookupTextLayoutV1 {
     textAlign,
     verticalAlign,
     paddingPerClientHeight,
+    cellGrid,
   );
 }
 

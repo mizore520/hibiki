@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:fushi/i18n/strings.g.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_capture.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_draft.dart';
+import 'package:fushi/src/lookup/gal_lookup_calibration_image_fit.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_preview.dart';
 import 'package:fushi/src/lookup/gal_lookup_surface_profile.dart';
 import 'package:fushi/src/pages/implementations/gal_lookup_calibration_canvas.dart';
@@ -20,6 +21,7 @@ class GalLookupSamplesDialog extends StatefulWidget {
     required this.capture,
     this.store = const GalLookupCalibrationStore(),
     this.previewBuilder = GalLookupCalibrationPreviewChannel.build,
+    this.imageFitter = fitGalCalibrationImages,
     super.key,
   });
 
@@ -29,6 +31,11 @@ class GalLookupSamplesDialog extends StatefulWidget {
   final Future<GalLookupCalibrationCapture> Function() capture;
   final GalLookupCalibrationStore store;
   final GalCalibrationPreviewBuilder previewBuilder;
+  final Future<GalCalibrationImageFit> Function(
+    GalLookupCalibrationDraft draft, {
+    GalCalibrationPreviewBuilder build,
+  })
+  imageFitter;
 
   @override
   State<GalLookupSamplesDialog> createState() => _GalLookupSamplesDialogState();
@@ -297,12 +304,67 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     }
   }
 
+  Future<void> _fitImage() async {
+    if (_busy || _samples.isEmpty) return;
+    _commitNumberEdit();
+    setState(() {
+      _busy = true;
+      _message = null;
+      _failed = false;
+    });
+    try {
+      // The selected screenshot trains this operation; all other saved images
+      // are independent checks, including drafts previously marked validation.
+      final GalLookupCalibrationDraft input = GalLookupCalibrationDraft(
+        rect: _rect,
+        layout: _layout,
+        samples: [
+          for (int i = 0; i < _samples.length; i++)
+            _samples[i].copyWith(validation: i != _selected),
+        ],
+      );
+      final GalCalibrationImageFit result = await widget.imageFitter(
+        input,
+        build: widget.previewBuilder,
+      );
+      if (!mounted) return;
+      if (result.draft == null) {
+        setState(() {
+          _failed = true;
+          _message = switch (result.reason) {
+            'multiline_required' => t.game_lookup_samples_auto_multiline,
+            'unsupported_text' => t.game_lookup_samples_auto_unsupported,
+            _ => t.game_lookup_samples_auto_failed,
+          };
+        });
+      } else {
+        _rect = result.draft!.rect;
+        _layout = result.draft!.layout;
+        _samples = result.draft!.samples.toList();
+        _font.text = _layout.fontFamily;
+        _markIndex = null;
+        _editMode = GalCalibrationEditMode.pan;
+        _changed();
+        setState(() => _message = t.game_lookup_samples_auto_success);
+      }
+    } catch (_) {
+      if (mounted)
+        setState(() {
+          _message = t.game_lookup_samples_auto_failed;
+          _failed = true;
+        });
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   void _commitNumberEdit() {
     FocusManager.instance.primaryFocus?.unfocus();
     FocusManager.instance.applyFocusChangesIfNeeded();
   }
 
   double? _errorFor(int sampleIndex) {
+    if (_layout.cellGrid != null) return null;
     if (_previews.length != _samples.length) return null;
     final GalCalibrationSample sample = _samples[sampleIndex];
     final GalLookupReferenceClientV1 client = sample.capture.referenceClient;
@@ -401,7 +463,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: Text(
-                  _message ?? t.game_lookup_samples_hint,
+                  _message ?? t.game_lookup_samples_auto_hint,
                   style: _failed
                       ? TextStyle(color: Theme.of(context).colorScheme.error)
                       : null,
@@ -505,7 +567,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       client: sample.capture.referenceClient,
       rect: _rect,
       boxes: _showBoxes ? _preview?.boxes ?? [] : [],
-      anchors: sample.anchors,
+      anchors: _layout.cellGrid == null ? sample.anchors : const {},
       selectedIndex: _markIndex,
       mode: _editMode,
       opacity: _opacity,
@@ -562,7 +624,11 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                       GalCalibrationEditMode.pan,
                       t.game_lookup_samples_pan_mode,
                     ),
-                  ])
+                  ].where(
+                    (mode) =>
+                        _layout.cellGrid == null ||
+                        mode.$1 != GalCalibrationEditMode.points,
+                  ))
                 ChoiceChip(
                   key: ValueKey<String>('calibration-mode-${mode.$1.name}'),
                   label: Text(mode.$2),
@@ -574,35 +640,39 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
             ],
           ),
           Text(
-            _editMode == GalCalibrationEditMode.region
+            _layout.cellGrid != null
+                ? t.game_lookup_samples_auto_success
+                : _editMode == GalCalibrationEditMode.region
                 ? t.game_lookup_samples_region_hint
                 : t.game_lookup_samples_points_hint,
           ),
-          SizedBox(
-            height: 96,
-            child: SingleChildScrollView(
-              child: Wrap(
-                spacing: 2,
-                runSpacing: 2,
-                children: [
-                  for (final MapEntry<int, String> cluster in clusters.entries)
-                    ChoiceChip(
-                      label: Text(cluster.value),
-                      selected: _markIndex == cluster.key,
-                      avatar: sample.anchors.containsKey(cluster.key)
-                          ? const Icon(Icons.check, size: 14)
-                          : null,
-                      onSelected: _busy
-                          ? null
-                          : (bool selected) => setState(() {
-                              _markIndex = selected ? cluster.key : null;
-                              _editMode = GalCalibrationEditMode.points;
-                            }),
-                    ),
-                ],
+          if (_layout.cellGrid == null)
+            SizedBox(
+              height: 96,
+              child: SingleChildScrollView(
+                child: Wrap(
+                  spacing: 2,
+                  runSpacing: 2,
+                  children: [
+                    for (final MapEntry<int, String> cluster
+                        in clusters.entries)
+                      ChoiceChip(
+                        label: Text(cluster.value),
+                        selected: _markIndex == cluster.key,
+                        avatar: sample.anchors.containsKey(cluster.key)
+                            ? const Icon(Icons.check, size: 14)
+                            : null,
+                        onSelected: _busy
+                            ? null
+                            : (bool selected) => setState(() {
+                                _markIndex = selected ? cluster.key : null;
+                                _editMode = GalCalibrationEditMode.points;
+                              }),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
           if (_markIndex != null && sample.anchors.containsKey(_markIndex))
             Wrap(
               spacing: 4,
@@ -716,11 +786,24 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        Text(t.game_lookup_samples_auto_hint),
+        const SizedBox(height: 8),
+        FilledButton.icon(
+          key: const ValueKey<String>('calibration-auto-align'),
+          onPressed: _busy || _samples.isEmpty ? null : _fitImage,
+          icon: const Icon(Icons.auto_fix_high),
+          label: Text(t.game_lookup_samples_auto_align),
+        ),
+        const Divider(),
         Text(
           t.game_lookup_samples_region_title,
           style: Theme.of(context).textTheme.titleSmall,
         ),
-        Text(t.game_lookup_samples_region_hint),
+        Text(
+          _layout.cellGrid == null
+              ? t.game_lookup_samples_region_hint
+              : t.game_lookup_samples_auto_grid,
+        ),
         Text(t.game_lookup_samples_pixel_hint),
         const SizedBox(height: 12),
         _number(
@@ -756,70 +839,88 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
           (double v) => _setRect(height: v / height),
         ),
         const Divider(),
-        Text(
-          t.game_lookup_samples_layout_title,
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        Text(t.game_lookup_samples_font_hint),
-        TextField(
-          key: const ValueKey<String>('calibration-font'),
-          controller: _font,
-          enabled: !_busy,
-          decoration: InputDecoration(
-            labelText: t.game_lookup_attached_font_family,
+        if (_layout.cellGrid != null) ...[
+          Text(t.game_lookup_samples_auto_grid),
+          Text(
+            '${_layout.cellGrid!.columns} · '
+            '${(_layout.cellGrid!.advancePerClientHeight * height).toStringAsFixed(1)} px',
           ),
-          onChanged: (String value) {
-            _layout = copyGalCalibrationLayout(
-              _layout,
-              fontFamily: value.trim(),
-            );
-            _changed();
-          },
-        ),
-        const SizedBox(height: 8),
-        _number(
-          'font-size',
-          t.game_lookup_attached_font_size,
-          _layout.fontSizePerClientHeight * height,
-          1,
-          height * 0.25,
-          (double v) {
-            _layout = copyGalCalibrationLayout(_layout, fontSize: v / height);
-            _changed();
-          },
-        ),
-        _number(
-          'tracking',
-          t.game_lookup_attached_letter_spacing,
-          _layout.letterSpacingPerClientHeight * height,
-          -0.05 * height,
-          0.1 * height,
-          (double v) {
-            _layout = copyGalCalibrationLayout(_layout, tracking: v / height);
-            _changed();
-          },
-          step: 0.25,
-        ),
-        _number(
-          'line-height',
-          t.game_lookup_attached_line_height,
-          _layout.lineHeight,
-          0.5,
-          3,
-          (double v) {
-            _layout = copyGalCalibrationLayout(_layout, lineHeight: v);
-            _changed();
-          },
-          step: 0.05,
-          unit: '',
-        ),
-        if (trainingPoints < 6) Text(t.game_lookup_samples_few_points),
-        FilledButton(
-          onPressed: _busy || _samples.isEmpty ? null : _fit,
-          child: Text(t.game_lookup_samples_fit),
-        ),
-        const SizedBox(height: 12),
-        Text(t.game_lookup_samples_validation_hint),
+          TextButton(
+            onPressed: _busy
+                ? null
+                : () {
+                    _layout = const GalLookupTextLayoutV1();
+                    _font.text = _layout.fontFamily;
+                    _changed();
+                  },
+            child: Text(t.game_lookup_samples_manual_layout),
+          ),
+        ] else ...[
+          Text(
+            t.game_lookup_samples_layout_title,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          Text(t.game_lookup_samples_font_hint),
+          TextField(
+            key: const ValueKey<String>('calibration-font'),
+            controller: _font,
+            enabled: !_busy,
+            decoration: InputDecoration(
+              labelText: t.game_lookup_attached_font_family,
+            ),
+            onChanged: (String value) {
+              _layout = copyGalCalibrationLayout(
+                _layout,
+                fontFamily: value.trim(),
+              );
+              _changed();
+            },
+          ),
+          const SizedBox(height: 8),
+          _number(
+            'font-size',
+            t.game_lookup_attached_font_size,
+            _layout.fontSizePerClientHeight * height,
+            1,
+            height * 0.25,
+            (double v) {
+              _layout = copyGalCalibrationLayout(_layout, fontSize: v / height);
+              _changed();
+            },
+          ),
+          _number(
+            'tracking',
+            t.game_lookup_attached_letter_spacing,
+            _layout.letterSpacingPerClientHeight * height,
+            -0.05 * height,
+            0.1 * height,
+            (double v) {
+              _layout = copyGalCalibrationLayout(_layout, tracking: v / height);
+              _changed();
+            },
+            step: 0.25,
+          ),
+          _number(
+            'line-height',
+            t.game_lookup_attached_line_height,
+            _layout.lineHeight,
+            0.5,
+            3,
+            (double v) {
+              _layout = copyGalCalibrationLayout(_layout, lineHeight: v);
+              _changed();
+            },
+            step: 0.05,
+            unit: '',
+          ),
+          if (trainingPoints < 6) Text(t.game_lookup_samples_few_points),
+          FilledButton(
+            onPressed: _busy || _samples.isEmpty ? null : _fit,
+            child: Text(t.game_lookup_samples_fit),
+          ),
+          const SizedBox(height: 12),
+          Text(t.game_lookup_samples_validation_hint),
+        ],
         const Divider(),
         SwitchListTile.adaptive(
           contentPadding: EdgeInsets.zero,

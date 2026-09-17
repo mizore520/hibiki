@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fushi/i18n/strings.g.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_capture.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_draft.dart';
+import 'package:fushi/src/lookup/gal_lookup_calibration_image_fit.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_preview.dart';
 import 'package:fushi/src/lookup/gal_lookup_surface_profile.dart';
 import 'package:fushi/src/mining/window_capture_channel.dart';
@@ -119,6 +120,12 @@ Future<_Result> _open(
   required _MemoryStore store,
   Future<GalLookupCalibrationCapture> Function() capture = _captureAsync,
   GalCalibrationPreviewBuilder previewBuilder = _preview,
+  Future<GalCalibrationImageFit> Function(
+        GalLookupCalibrationDraft draft, {
+        GalCalibrationPreviewBuilder build,
+      })
+      imageFitter =
+      fitGalCalibrationImages,
   Size size = const Size(1280, 900),
 }) async {
   tester.view.devicePixelRatio = 1;
@@ -143,6 +150,7 @@ Future<_Result> _open(
                     capture: capture,
                     store: store,
                     previewBuilder: previewBuilder,
+                    imageFitter: imageFitter,
                   ),
                 );
                 result.closed = true;
@@ -557,6 +565,74 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'image alignment applies grid and hides irrelevant font controls',
+    (tester) async {
+      final _MemoryStore store = _MemoryStore(draft: _draft());
+      final _Result result = await _open(
+        tester,
+        store: store,
+        imageFitter: (draft, {build = _preview}) async {
+          expect(draft.samples.single.validation, isFalse);
+          expect(draft.samples.single.anchors, isEmpty);
+          return GalCalibrationImageFit(
+            draft: GalLookupCalibrationDraft(
+              rect: draft.rect,
+              samples: draft.samples,
+              layout: const GalLookupTextLayoutV1(
+                cellGrid: GalLookupCellGridV1(
+                  advancePerClientHeight: 0.04,
+                  lineAdvancePerClientHeight: 0.06,
+                  cellHeightPerClientHeight: 0.05,
+                  columns: 20,
+                  continuationIndent: 0,
+                  quotedContinuationIndent: 1,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+      await tester.tap(
+        find.byKey(const ValueKey<String>('calibration-auto-align')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey<String>('calibration-font')),
+        findsNothing,
+      );
+      expect(find.text(t.game_lookup_samples_auto_success), findsWidgets);
+      await tester.tap(find.text(t.game_lookup_samples_apply));
+      await tester.pumpAndSettle();
+      expect(result.applied!.layout.cellGrid!.columns, 20);
+      expect(
+        store.saved.single.layout.cellGrid,
+        result.applied!.layout.cellGrid,
+      );
+    },
+  );
+
+  testWidgets('ambiguous image alignment preserves the saved layout', (
+    tester,
+  ) async {
+    final _MemoryStore store = _MemoryStore(draft: _draft());
+    await _open(
+      tester,
+      store: store,
+      imageFitter: (draft, {build = _preview}) async =>
+          const GalCalibrationImageFit(reason: 'multiline_required'),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('calibration-auto-align')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(t.game_lookup_samples_auto_multiline), findsOneWidget);
+    await tester.tap(find.byTooltip(t.game_lookup_samples_save));
+    await tester.pumpAndSettle();
+    expect(store.saved.single.layout, _layout);
+    expect(store.saved.single.rect, _rect);
+  });
 
   for (final Size size in <Size>[const Size(1280, 900), const Size(800, 600)]) {
     testWidgets(

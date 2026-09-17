@@ -794,7 +794,9 @@ AttachedTextSurfaceWindow::StartCalibration(
           layout.font_size_per_client_height,
           layout.letter_spacing_per_client_height, layout.line_height,
           layout.text_align, layout.vertical_align,
-          layout.padding_per_client_height)) {
+          layout.padding_per_client_height) ||
+      (layout.cell_grid.has_value() &&
+       !fushi::attached_text_layout::IsCellGridValid(*layout.cell_grid))) {
     if (error != nullptr)
       *error = "invalid_layout";
     return RequestResult::kRejected;
@@ -1076,7 +1078,9 @@ AttachedTextSurfaceWindow::RequestResult AttachedTextSurfaceWindow::Configure(
           layout.font_size_per_client_height,
           layout.letter_spacing_per_client_height, layout.line_height,
           layout.text_align, layout.vertical_align,
-          layout.padding_per_client_height)) {
+          layout.padding_per_client_height) ||
+      (layout.cell_grid.has_value() &&
+       !fushi::attached_text_layout::IsCellGridValid(*layout.cell_grid))) {
     if (error != nullptr)
       *error = "invalid_layout";
     return RequestResult::kRejected;
@@ -1192,7 +1196,9 @@ AttachedTextSurfaceWindow::UpdateStyle(const Epoch &epoch, uint32_t target_pid,
           layout.font_size_per_client_height,
           layout.letter_spacing_per_client_height, layout.line_height,
           layout.text_align, layout.vertical_align,
-          layout.padding_per_client_height)) {
+          layout.padding_per_client_height) ||
+      (layout.cell_grid.has_value() &&
+       !fushi::attached_text_layout::IsCellGridValid(*layout.cell_grid))) {
     if (error != nullptr)
       *error = "invalid_layout";
     return RequestResult::kRejected;
@@ -1204,6 +1210,7 @@ AttachedTextSurfaceWindow::UpdateStyle(const Epoch &epoch, uint32_t target_pid,
     return std::abs(left - right) <= 1e-12;
   };
   const bool layout_changed =
+      desired.cell_grid != layout_.cell_grid ||
       desired.font_family != layout_.font_family ||
       !same_double(desired.font_size_per_client_height,
                    layout_.font_size_per_client_height) ||
@@ -2805,7 +2812,14 @@ LRESULT AttachedTextSurfaceWindow::HandleMessage(UINT message, WPARAM wparam,
   case kSyncTargetMessage:
     SyncToTarget();
     return 0;
+  case fushi::kLowLevelMouseAttachedGlyphRearmMessage:
+    // A popup released the singleton only after its full input transaction
+    // became neutral. Re-run normal admission now instead of waiting for the
+    // 500 ms health timer.
+    SyncToTarget();
+    return 0;
   case WM_NCDESTROY:
+    fushi::RetireLowLevelAttachedGlyphRearmCandidate(hwnd_);
     SetWindowLongPtrW(hwnd_, GWLP_USERDATA, 0);
     return DefWindowProcW(hwnd_, message, wparam, lparam);
   default:

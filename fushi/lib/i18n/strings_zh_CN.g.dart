@@ -10889,4 +10889,25 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get game_lookup_attached_calibration_ready =>
       '探针已就绪。请按顺序点击高亮字框内部；点击字框外仍会操作游戏。';
+  @override
+  String get game_lookup_samples_auto_align => '从截图自动对齐';
+  @override
+  String get game_lookup_samples_auto_hint =>
+      '大致框住台词后自动对齐。请选择一张完整的两行或三行台词来确定换行；不用点字符中心，也不用调字体。';
+  @override
+  String get game_lookup_samples_auto_failed =>
+      '暂时无法可靠确定字格。请使用完整的多行台词，把正文框进来，避开名字和按钮；原草稿未改动。';
+  @override
+  String get game_lookup_samples_auto_success =>
+      '已测出字格。确认每个框都包含对应文字、后续各行也对应，再应用即可。';
+  @override
+  String get game_lookup_samples_auto_grid => '已测量字格 · 无需调整字体';
+  @override
+  String get game_lookup_samples_manual_layout => '改用手动字体排版';
+  @override
+  String get game_lookup_samples_auto_multiline =>
+      '请选择或采集一张完整的两行或三行台词；短句无法确定换行位置。';
+  @override
+  String get game_lookup_samples_auto_unsupported =>
+      '这张样本含有暂时无法验证宽度的字符，请暂用手动排版。';
 }

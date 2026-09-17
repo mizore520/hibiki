@@ -188,6 +188,7 @@ GalLookupTextLayoutV1 copyGalCalibrationLayout(
   textAlign: layout.textAlign,
   verticalAlign: layout.verticalAlign,
   paddingPerClientHeight: layout.paddingPerClientHeight,
+  cellGrid: layout.cellGrid,
 );
 
 /// Fits only translation and character spacing. Font, wrapping area and line
@@ -200,7 +201,10 @@ Future<GalLookupCalibrationDraft?> fitGalCalibrationAnchors(
   final List<GalCalibrationSample> training = draft.samples
       .where((GalCalibrationSample s) => !s.validation && s.anchors.isNotEmpty)
       .toList();
-  if (training.isEmpty || draft.layout.textAlign != 'left') return null;
+  if (training.isEmpty ||
+      draft.layout.textAlign != 'left' ||
+      draft.layout.cellGrid != null)
+    return null;
   final List<
     ({double derivative, double dx, double dy, double aspect, double pixel})
   >
