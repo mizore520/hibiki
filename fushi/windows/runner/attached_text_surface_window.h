@@ -175,6 +175,11 @@ public:
   }
   void OnGeometryProviderStatusChanged();
 
+  // Magpie can recreate its presentation HWND while the source game keeps
+  // the foreground handle. Re-run the normal target/presentation resolution
+  // immediately instead of waiting for the 500 ms health timer.
+  void OnExternalWindowLifecycle(HWND output_window, bool scaling);
+
   // Resolves and fingerprints the target. |requested_hwnd| may be null; in that
   // case the largest visible top-level window for |target_pid| is selected.
   RequestResult InspectTarget(const Epoch &epoch, uint32_t target_pid,
@@ -394,6 +399,10 @@ private:
   ShieldTransaction shield_transaction_;
   bool shield_transaction_active_ = false;
   fushi::AttachedHoverTracker hover_tracker_;
+  // Calibration-only visual feedback.  This is deliberately separate from
+  // hover_tracker_: moving the pointer must never submit a lookup or acquire
+  // an input-shield transaction.
+  int hover_cluster_ = -1;
   ShieldStatus shield_status_;
   Epoch shield_handshake_epoch_;
   HWND shield_handshake_target_ = nullptr;

@@ -178,6 +178,37 @@ void main() {
     expect(sample.sourceText, 'Synthetic sample');
   });
 
+  test(
+    'accepts Magpie source pixels when presentation size is different',
+    () async {
+      const GalLookupReferenceClientV1 presentation =
+          GalLookupReferenceClientV1(widthPx: 2, heightPx: 2, dpi: 96);
+      const WindowCaptureMetadata sourceMetadata = WindowCaptureMetadata(
+        capturedHwnd: 77,
+        capturedPid: 1234,
+        clientLeftPx: 0,
+        clientTopPx: 0,
+        clientWidthPx: 1,
+        clientHeightPx: 1,
+        imageWidthPx: 1,
+        imageHeightPx: 1,
+        dpi: 96,
+        clientAreaComplete: true,
+        capturedAtTickMs: 401,
+      );
+      final GalLookupCalibrationCapture sample =
+          await captureGalLookupCalibrationSample(
+            readSnapshot: () => _snapshot(client: presentation),
+            acquireLease: () async => null,
+            captureWindow: (_) async =>
+                WindowCaptureResult(pngBytes: _png(), metadata: sourceMetadata),
+          );
+      expect(sample.referenceClient.widthPx, 1);
+      expect(sample.referenceClient.heightPx, 1);
+      expect(sample.captureMetadata, sourceMetadata);
+    },
+  );
+
   test('capture failure releases lease', () async {
     bool released = false;
     await expectLater(

@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_capture.dart';
@@ -74,7 +75,7 @@ class _GridFit {
   final double score;
 }
 
-enum _InkMode { light, dark, brightColor, darkColor, localContrast }
+enum _InkMode { light, dark, brightColor, darkColor, localContrast, edge }
 
 bool _space(int unit) => unit == 0x20 || unit == 0x3000;
 bool _newline(int unit) => unit == 10 || unit == 13;
@@ -204,6 +205,7 @@ _SampleInk? _measure(
   final List<int> totals = List<int>.filled(height, 0);
   Float64List? integral;
   int integralStride = 0;
+  Float32List? luminance;
   if (mode == _InkMode.localContrast) {
     // The local window is queried only inside the selected body crop.  Keep
     // the integral image crop-sized; allocating one for a full 32 MP capture
@@ -219,6 +221,18 @@ _SampleInk? _measure(
         rowSum += value;
         integral[(y + 1) * integralStride + x + 1] =
             integral[y * integralStride + x + 1] + rowSum;
+      }
+    }
+  } else if (mode == _InkMode.edge) {
+    // A dialogue line without a panel can have nearly the same average
+    // brightness as the artwork behind it.  Keep one cheap grayscale plane
+    // for an edge mask so outlines/shadows remain detectable without OCR.
+    luminance = Float32List(width * height);
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        final img.Pixel pixel = image.getPixel(left + x, top + y);
+        luminance[y * width + x] =
+            pixel.r * 0.299 + pixel.g * 0.587 + pixel.b * 0.114;
       }
     }
   }
@@ -259,6 +273,32 @@ _SampleInk? _measure(
           // threshold below the old binary-mask cutoff; isolated background
           // texture is removed by the row/grid consistency checks below.
           ink = (brightness - sum / area).abs() >= 12;
+        case _InkMode.edge:
+          final Float32List edgeLuminance = luminance!;
+          final int localX = x - left;
+          final int localY = y - top;
+          final int offset = localY * width + localX;
+          final double center = edgeLuminance[offset];
+          double edge = 0;
+          if (localX > 0) {
+            edge = math.max(edge, (center - edgeLuminance[offset - 1]).abs());
+          }
+          if (localX + 1 < width) {
+            edge = math.max(edge, (center - edgeLuminance[offset + 1]).abs());
+          }
+          if (localY > 0) {
+            edge = math.max(
+              edge,
+              (center - edgeLuminance[offset - width]).abs(),
+            );
+          }
+          if (localY + 1 < height) {
+            edge = math.max(
+              edge,
+              (center - edgeLuminance[offset + width]).abs(),
+            );
+          }
+          ink = edge >= 10;
       }
       if (ink) {
         mask[(y - top) * width + x - left] = 1;
@@ -268,7 +308,9 @@ _SampleInk? _measure(
   }
   // Blank scanlines separate text rows. A border alone cannot form a row.
   final int peak = totals.fold<int>(0, math.max);
-  final double threshold = math.max(3, peak * 0.04);
+  final double threshold = mode == _InkMode.edge
+      ? math.max(4, peak * 0.07)
+      : math.max(3, peak * 0.04);
   final List<(int, int)> bands = [];
   int start = -1;
   int end = -1;
@@ -382,11 +424,15 @@ _GridFit? _fitSample(_SampleInk sample) {
       if (lines.length != sample.rows.length ||
           lines.any((List<int> l) => l.isEmpty))
         continue;
-      final double nominal =
-          (sample.rows.first.right - sample.rows.first.left) /
-          lines.first.length;
+      final double nominal = _median([
+        for (int row = 0; row < lines.length; row++)
+          (sample.rows[row].right - sample.rows[row].left) / lines[row].length,
+      ]);
       _GridFit? best;
-      for (int step = 0; step <= 40; step++) {
+      // Use all visible rows as the pitch estimate and search on both sides of
+      // it. The old first-row-only, positive-only search rejected games whose
+      // first line had punctuation/spacing unlike the continuation line.
+      for (int step = -50; step <= 50; step++) {
         final double pitch = nominal * (1 + step * 0.003);
         if (pitch < inkHeight * 0.65 || pitch > inkHeight * 1.6) continue;
         for (int phase = 0; phase <= 20; phase++) {
@@ -429,6 +475,8 @@ GalCalibrationImageFit inferGalCalibrationGrid(
   String failure = 'image_grid_ambiguous';
   int? failedSample;
   bool multilineEvidence = false;
+  GalLookupCalibrationDraft? bestDraft;
+  double bestQuality = double.infinity;
   for (final _InkMode mode in _InkMode.values) {
     final List<_SampleInk> samples = [];
     for (final GalCalibrationSample sample in draft.samples) {
@@ -493,34 +541,41 @@ GalCalibrationImageFit inferGalCalibrationGrid(
     ]);
     if (lineAdvance < cellHeight) continue;
     bool valid = true;
+    // Edge masks are a deliberate last resort for text over artwork. Prefer
+    // a color/contrast mask whenever both explain the same samples; edge
+    // pixels sit on the outline and otherwise bias the fitted body upward.
+    double quality = mode == _InkMode.edge ? 100 : 0;
     for (int index = 0; index < samples.length; index++) {
       final _SampleInk sample = samples[index];
-      if (_score(
-            sample,
-            columns,
-            _quoted(sample.sample.capture.sourceText)
-                ? quoteIndent
-                : plainIndent,
-            pitch * sample.height,
-            left * sample.width,
-          ) >
-          0.12) {
+      final double sampleScore = _score(
+        sample,
+        columns,
+        _quoted(sample.sample.capture.sourceText) ? quoteIndent : plainIndent,
+        pitch * sample.height,
+        left * sample.width,
+      );
+      if (sampleScore > 0.12) {
         valid = false;
         failure = 'inconsistent_samples';
         failedSample = index;
         break;
       }
+      quality += sampleScore;
       for (int row = 0; row < sample.rows.length; row++) {
-        if (((top + row * lineAdvance) * sample.height +
+        final double rowError =
+            ((top + row * lineAdvance) * sample.height +
                     1 -
                     sample.rows[row].top)
-                .abs() >
-            math.max(2, cellHeight * sample.height * 0.12)) {
+                .abs();
+        if (rowError > math.max(2, cellHeight * sample.height * 0.12)) {
           valid = false;
           failure = 'inconsistent_samples';
           failedSample = index;
+          break;
         }
+        quality += rowError / math.max(1, sample.height);
       }
+      if (!valid) break;
     }
     if (!valid) continue;
     final double aspect = training.first.$1.width / training.first.$1.height;
@@ -537,20 +592,25 @@ GalCalibrationImageFit inferGalCalibrationGrid(
     );
     if (!grid.isValid) continue;
     final GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(cellGrid: grid);
-    return GalCalibrationImageFit(
-      draft: GalLookupCalibrationDraft(
-        rect: GalLookupNormalizedRectV1(
-          left: left,
-          top: top,
-          width: width,
-          height: math
-              .max(cellHeight, draft.rect.bottom - top)
-              .clamp(cellHeight, 1 - top),
-        ),
-        layout: layout,
-        samples: draft.samples,
+    final GalLookupCalibrationDraft candidate = GalLookupCalibrationDraft(
+      rect: GalLookupNormalizedRectV1(
+        left: left,
+        top: top,
+        width: width,
+        height: math
+            .max(cellHeight, draft.rect.bottom - top)
+            .clamp(cellHeight, 1 - top),
       ),
+      layout: layout,
+      samples: draft.samples,
     );
+    if (quality < bestQuality) {
+      bestQuality = quality;
+      bestDraft = candidate;
+    }
+  }
+  if (bestDraft != null) {
+    return GalCalibrationImageFit(draft: bestDraft);
   }
   return GalCalibrationImageFit(
     reason: multilineEvidence ? failure : 'multiline_required',

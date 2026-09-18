@@ -100,27 +100,30 @@ void main() {
     });
   });
 
-  test('optional cell grid round-trips without changing legacy layout JSON', () {
-    const GalLookupCellGridV1 grid = GalLookupCellGridV1(
-      advancePerClientHeight: 0.03,
-      lineAdvancePerClientHeight: 0.04,
-      cellHeightPerClientHeight: 0.035,
-      columns: 24,
-      continuationIndent: 2,
-      quotedContinuationIndent: 3,
-    );
-    const GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(
-      cellGrid: grid,
-    );
-    expect(grid.isValid, isTrue);
-    expect(layout.isValid, isTrue);
-    expect(layout.toJson()['cellGrid'], grid.toJson());
-    expect(GalLookupTextLayoutV1.tryFromJson(layout.toJson()), layout);
-    expect(
-      const GalLookupTextLayoutV1().toJson().containsKey('cellGrid'),
-      isFalse,
-    );
-  });
+  test(
+    'optional cell grid round-trips without changing legacy layout JSON',
+    () {
+      const GalLookupCellGridV1 grid = GalLookupCellGridV1(
+        advancePerClientHeight: 0.03,
+        lineAdvancePerClientHeight: 0.04,
+        cellHeightPerClientHeight: 0.035,
+        columns: 24,
+        continuationIndent: 2,
+        quotedContinuationIndent: 3,
+      );
+      const GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(
+        cellGrid: grid,
+      );
+      expect(grid.isValid, isTrue);
+      expect(layout.isValid, isTrue);
+      expect(layout.toJson()['cellGrid'], grid.toJson());
+      expect(GalLookupTextLayoutV1.tryFromJson(layout.toJson()), layout);
+      expect(
+        const GalLookupTextLayoutV1().toJson().containsKey('cellGrid'),
+        isFalse,
+      );
+    },
+  );
 
   test('present but malformed cell grid rejects the complete layout', () {
     const GalLookupCellGridV1 grid = GalLookupCellGridV1(
@@ -152,8 +155,7 @@ void main() {
     expect(GalLookupTextLayoutV1.tryFromJson(missing), isNull);
 
     final Map<String, Object?> invalidLineAdvance = withGrid(
-      (Map<String, Object?> grid) =>
-          grid['lineAdvancePerClientHeight'] = 0.02,
+      (Map<String, Object?> grid) => grid['lineAdvancePerClientHeight'] = 0.02,
     );
     expect(GalLookupTextLayoutV1.tryFromJson(invalidLineAdvance), isNull);
 
@@ -267,4 +269,39 @@ void main() {
       expect(GalLookupSurfaceProfileV1.tryFromJson(wrongType), isNull);
     },
   );
+
+  test('cell-grid variants scale across same-aspect resolution changes', () {
+    const GalLookupCellGridV1 grid = GalLookupCellGridV1(
+      advancePerClientHeight: 0.03,
+      lineAdvancePerClientHeight: 0.04,
+      cellHeightPerClientHeight: 0.035,
+      columns: 24,
+      continuationIndent: 0,
+      quotedContinuationIndent: 1,
+    );
+    final GalLookupSurfaceProfileV1 value = profile(
+      variants: <GalLookupSurfaceVariantV1>[
+        GalLookupSurfaceVariantV1(
+          aspectRatio: 16 / 9,
+          referenceClient: const GalLookupReferenceClientV1(
+            widthPx: 1280,
+            heightPx: 720,
+            dpi: 96,
+          ),
+          bodyRect: GalAttachedTextController.defaultBodyRect,
+          layout: const GalLookupTextLayoutV1(cellGrid: grid),
+        ),
+      ],
+    );
+    expect(
+      value.bestVariantForClient(
+        const GalLookupReferenceClientV1(
+          widthPx: 2560,
+          heightPx: 1440,
+          dpi: 144,
+        ),
+      ),
+      isNotNull,
+    );
+  });
 }

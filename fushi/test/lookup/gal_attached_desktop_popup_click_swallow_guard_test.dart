@@ -181,6 +181,21 @@ void main() {
       expect(tick.contains('GetKeyState('), isFalse);
       expect(tick.contains('hover_tracker_.Observe('), isTrue);
       expect(tick.contains('EmitLookupEvent(cluster,true)'), isTrue);
+      expect(
+        tick.contains('mode_==Mode::kCalibration&&over_text?cluster:-1'),
+        isTrue,
+        reason: '校准层的视觉高亮必须独立于 Shift 查词事件',
+      );
+      expect(
+        tick.contains('visual_cluster') && tick.contains('hover_cluster_'),
+        isTrue,
+        reason: '移动到新字簇时才重绘，避免 60ms 定时器不断刷位图',
+      );
+      expect(
+        tick.contains('if(!shift_down){hover_tracker_.Reset();return;}'),
+        isTrue,
+        reason: '高亮可不按 Shift，但 Shift 查词状态仍须复位',
+      );
       for (final String forbidden in <String>[
         'AdoptShieldTransaction(',
         'BeginPointerGesture(',
@@ -208,6 +223,17 @@ void main() {
         isTrue,
       );
       expect(source.contains('KillTimer(hwnd_,kHoverTimerId);'), isTrue);
+      expect(
+        source.contains('hover_cluster_>=0') &&
+            source.contains('PremultipliedPixel(35,190,220,105)'),
+        isTrue,
+        reason: '校准层要画当前字簇的纯视觉反馈',
+      );
+      expect(
+        header.contains('inthover_cluster_=-1;'),
+        isTrue,
+        reason: '视觉高亮必须有独立状态，不能复用查词 tracker',
+      );
 
       final String gesture = compactCode(
         methodBody(

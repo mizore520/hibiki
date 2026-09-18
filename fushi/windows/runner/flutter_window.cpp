@@ -3538,9 +3538,17 @@ void FlutterWindow::NotifyMagpieScalingChanged(WPARAM wparam, LPARAM lparam) {
   const bool output_lifecycle_event =
       has_output_window &&
       (wparam == 0 || wparam == 1 || wparam == 2 || wparam == 3);
+  // Magpie broadcast semantics: a zero state with a non-zero HWND means the
+  // source merely moved to the background; the scaler is still alive.
+  const bool scaling = (wparam == 0) ? (lparam != 0) : true;
   if (output_lifecycle_event && gal_hook_text_window_ != nullptr) {
     gal_hook_text_window_->NotifyExternalWindowLifecycle(
         reinterpret_cast<HWND>(static_cast<intptr_t>(lparam)));
+  }
+  if (attached_text_surface_window_ != nullptr &&
+      (output_lifecycle_event || (wparam == 0 && lparam == 0))) {
+    attached_text_surface_window_->OnExternalWindowLifecycle(
+        reinterpret_cast<HWND>(static_cast<intptr_t>(lparam)), scaling);
   }
 
   // WndProc 跑在 platform 线程，InvokeMethod 可直接调用。channel 在 OnCreate 建好
@@ -3557,7 +3565,6 @@ void FlutterWindow::NotifyMagpieScalingChanged(WPARAM wparam, LPARAM lparam) {
   //                         否则一切走到后台就被误判成「已退出缩放」。
   //   2 / 3              -> 窗口模式下位置/大小变化 / 用户开始拖动；不改变缩放态，
   //                         原样透传给 Dart。
-  const bool scaling = (wparam == 0) ? (lparam != 0) : true;
   flutter::EncodableMap map{
       {flutter::EncodableValue("state"),
        flutter::EncodableValue(static_cast<int>(wparam))},

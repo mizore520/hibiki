@@ -603,27 +603,50 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
 }  // namespace
 
 WindowCaptureResult CaptureWindowPng(HWND hwnd) {
-  WindowCaptureResult out;
   if (hwnd == nullptr || !IsWindow(hwnd)) {
+    WindowCaptureResult out;
     out.error = "window handle invalid";
     return out;
   }
-  // BUG-1096：捕获绑定前重定向。Dart 侧可能拿的是**上一次枚举缓存**的句柄，或者
-  // Magpie 是在选窗之后才起来的，所以枚举侧重定向不够，绑定这一步必须再过一次。
-  if (const HWND source = ResolveScalingSourceWindow(hwnd)) {
-    AppendDiagnostic(&out,
-                     "capture target redirected: Magpie scaling window -> "
-                     "source window (Magpie.SrcHWND)",
-                     S_OK);
-    hwnd = source;
-  }
+  // BUG-2541：Magpie 在用户点下“采集”后可能刚好重建输出窗口，第一帧会
+  // 看到旧的源/客户区尺寸。Dart 侧必须继续 fail-closed，native 侧则在同一
+  // 请求内重新解析一次源 HWND 并重试，避免把一次可恢复的切换误报成永久
+  // 不兼容。最多两次，避免把 WGC/DRM 的真正失败拖成无界等待。
+  const HWND requested_hwnd = hwnd;
   const HRESULT ro = RoInitialize(RO_INIT_MULTITHREADED);
   // RPC_E_CHANGED_MODE = 本线程已按其它套间初始化；照常用、但不由我们反初始化。
   if (FAILED(ro) && ro != RPC_E_CHANGED_MODE) {
+    WindowCaptureResult out;
     out.error = "RoInitialize failed";
     return out;
   }
-  CaptureCore(hwnd, &out);
+  WindowCaptureResult out;
+  constexpr int kMaximumAttempts = 2;
+  for (int attempt = 0; attempt < kMaximumAttempts; ++attempt) {
+    WindowCaptureResult candidate;
+    HWND capture_hwnd = requested_hwnd;
+    // Dart 侧可能拿的是**上一次枚举缓存**的句柄，或者 Magpie 是在选窗
+    // 之后才起来的，所以每次尝试都重新解析，而不是只在枚举时解析一次。
+    if (const HWND source = ResolveScalingSourceWindow(capture_hwnd)) {
+      AppendDiagnostic(&candidate,
+                       "capture target redirected: Magpie scaling window -> "
+                       "source window (Magpie.SrcHWND)",
+                       S_OK);
+      capture_hwnd = source;
+    }
+    CaptureCore(capture_hwnd, &candidate);
+    const bool complete =
+        candidate.ok && candidate.has_metadata &&
+        candidate.metadata.client_area_complete;
+    if (complete || attempt + 1 == kMaximumAttempts) {
+      out = std::move(candidate);
+      break;
+    }
+    // A transient resize/rebind is the only condition worth retrying here.
+    // Keep this delay short; CaptureCore already bounds the WGC wait at 1.5 s.
+    Sleep(40);
+    out = std::move(candidate);
+  }
   if (SUCCEEDED(ro)) {
     RoUninitialize();
   }

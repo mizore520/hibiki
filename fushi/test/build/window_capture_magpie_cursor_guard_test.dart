@@ -11,12 +11,21 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  final String capture =
-      File('windows/runner/window_capture.cpp').readAsStringSync();
-  final String header =
-      File('windows/runner/window_capture.h').readAsStringSync();
-  final String flutterWindow =
-      File('windows/runner/flutter_window.cpp').readAsStringSync();
+  final String capture = File(
+    'windows/runner/window_capture.cpp',
+  ).readAsStringSync();
+  final String header = File(
+    'windows/runner/window_capture.h',
+  ).readAsStringSync();
+  final String flutterWindow = File(
+    'windows/runner/flutter_window.cpp',
+  ).readAsStringSync();
+  final String attachedSurface = File(
+    'windows/runner/attached_text_surface_window.cpp',
+  ).readAsStringSync();
+  final String attachedHeader = File(
+    'windows/runner/attached_text_surface_window.h',
+  ).readAsStringSync();
 
   test('① Magpie 缩放窗按 Magpie.SrcHWND 属性重定向到源窗口', () {
     expect(
@@ -38,8 +47,9 @@ void main() {
   });
 
   test('① 枚举阶段与捕获绑定阶段都过一次重定向', () {
-    final int enumUse =
-        'ResolveScalingSourceWindow('.allMatches(capture).length;
+    final int enumUse = 'ResolveScalingSourceWindow('
+        .allMatches(capture)
+        .length;
     expect(
       enumUse,
       greaterThanOrEqualTo(3),
@@ -60,7 +70,8 @@ void main() {
     );
     expect(
       capture.contains(
-          'const HRESULT cursor_hr = session2->put_IsCursorCaptureEnabled(false);'),
+        'const HRESULT cursor_hr = session2->put_IsCursorCaptureEnabled(false);',
+      ),
       isTrue,
       reason: 'put_IsCursorCaptureEnabled 的 HRESULT 必须被接住，不得裸调丢弃',
     );
@@ -87,12 +98,59 @@ void main() {
       isTrue,
       reason: 'native 记了但不回传等于没记',
     );
-    final String dartChannel =
-        File('lib/src/mining/window_capture_channel.dart').readAsStringSync();
+    final String dartChannel = File(
+      'lib/src/mining/window_capture_channel.dart',
+    ).readAsStringSync();
     expect(
       dartChannel.contains("diagnostics: m['diagnostics'] as String?"),
       isTrue,
       reason: 'Dart 侧必须解析该字段',
+    );
+  });
+
+  test('④ Magpie 重建期间最多重试一次，并继续保留完整客户区门槛', () {
+    expect(
+      capture.contains('constexpr int kMaximumAttempts = 2;'),
+      isTrue,
+      reason: '捕获重试必须有硬上限，不能把 WGC/DRM 失败变成无界等待',
+    );
+    expect(
+      capture.contains('Sleep(40);'),
+      isTrue,
+      reason: '重试只允许给窗口重绑一个短暂稳定窗口',
+    );
+    expect(
+      capture.contains('candidate.metadata.client_area_complete'),
+      isTrue,
+      reason: '重试不能放宽客户区完整性契约',
+    );
+    expect(
+      capture
+          .substring(capture.indexOf('for (int attempt = 0;'))
+          .contains('ResolveScalingSourceWindow(capture_hwnd)'),
+      isTrue,
+      reason: '每次尝试都必须重新解析 Magpie 源 HWND',
+    );
+  });
+
+  test('⑤ Magpie 生命周期立即触发贴附层重新解析 presentation HWND', () {
+    expect(
+      attachedHeader.contains('OnExternalWindowLifecycle(HWND output_window'),
+      isTrue,
+    );
+    expect(
+      attachedSurface.contains(
+        'PostMessageW(hwnd_, kSyncTargetMessage, 0, 0);',
+      ),
+      isTrue,
+      reason: '超分窗口重建/销毁后不能只等下一次 500ms 健康 tick',
+    );
+    expect(
+      flutterWindow.contains(
+        'attached_text_surface_window_->OnExternalWindowLifecycle(',
+      ),
+      isTrue,
+      reason: 'Magpie 广播要同时通知 Dart 与 attached calibration surface',
     );
   });
 }

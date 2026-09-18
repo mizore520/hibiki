@@ -491,8 +491,15 @@ class GalLookupSurfaceProfileV1 {
         client.aspectRatio,
       );
       final double sizeError = variant.relativeClientSizeError(client);
+      // Screenshot-derived cell grids are normalized geometry: once the
+      // aspect ratio is unchanged, their body and per-client-height metrics
+      // scale with the live client. Allow Magpie/fullscreen resolution
+      // changes for that explicit layout kind. Keep the conservative size
+      // gate for legacy DirectWrite settings, whose reflow cannot be proved
+      // from a normalized rectangle alone.
+      final bool normalizedGrid = variant.layout.cellGrid != null;
       if (aspectError <= maxRelativeAspectError &&
-          sizeError <= maxRelativeClientSizeError &&
+          (normalizedGrid || sizeError <= maxRelativeClientSizeError) &&
           (sizeError < bestSizeError ||
               sizeError == bestSizeError && aspectError < bestAspectError)) {
         best = variant;

@@ -31,6 +31,10 @@ class GalLookupCalibrationCapture {
 
   final String sourceText;
   final Uint8List pngBytes;
+
+  /// Pixel space of [pngBytes].  With Magpie this can be the source game's
+  /// client rather than the presentation client; the normalized draft is
+  /// later applied to the live presentation size.
   final GalLookupReferenceClientV1 referenceClient;
   final String exePath;
   final String exeSha256;
@@ -280,13 +284,34 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
     );
   }
   final WindowCaptureMetadata? metadata = result.metadata;
-  if (metadata == null ||
-      !metadata.isCompleteClient ||
-      metadata.capturedHwnd != before.targetHwnd ||
-      metadata.capturedPid != before.targetPid ||
-      metadata.clientWidthPx != before.referenceClient.widthPx ||
-      metadata.clientHeightPx != before.referenceClient.heightPx ||
-      metadata.dpi != before.referenceClient.dpi) {
+  if (metadata == null || !metadata.isCompleteClient) {
+    throw const GalLookupCalibrationCaptureException(
+      GalLookupCalibrationCaptureFailure.clientMappingUnavailable,
+    );
+  }
+  final bool sameTarget =
+      metadata.capturedHwnd == before.targetHwnd &&
+      metadata.capturedPid == before.targetPid;
+  final bool sameClient =
+      sameTarget &&
+      metadata.clientWidthPx == before.referenceClient.widthPx &&
+      metadata.clientHeightPx == before.referenceClient.heightPx &&
+      metadata.dpi == before.referenceClient.dpi;
+  // Magpie deliberately makes the attached surface follow its presentation
+  // window while the capture backend reads the source HWND.  Both images are
+  // still in the same normalized game coordinate system when their aspect
+  // ratio agrees; keep the captured source dimensions as the sample's pixel
+  // reference so the fitter never compares source pixels to output pixels.
+  final double capturedAspect =
+      metadata.clientWidthPx / metadata.clientHeightPx;
+  final double referenceAspect = before.referenceClient.aspectRatio;
+  final bool sourceClient =
+      sameTarget &&
+      metadata.dpi == before.referenceClient.dpi &&
+      capturedAspect.isFinite &&
+      referenceAspect.isFinite &&
+      ((capturedAspect - referenceAspect).abs() / referenceAspect) <= 0.01;
+  if (!sameClient && !sourceClient) {
     throw const GalLookupCalibrationCaptureException(
       GalLookupCalibrationCaptureFailure.clientMappingUnavailable,
     );
@@ -307,7 +332,13 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
   return GalLookupCalibrationCapture(
     sourceText: before.sourceText,
     pngBytes: bytes,
-    referenceClient: before.referenceClient,
+    referenceClient: sameClient
+        ? before.referenceClient
+        : GalLookupReferenceClientV1(
+            widthPx: metadata.clientWidthPx,
+            heightPx: metadata.clientHeightPx,
+            dpi: metadata.dpi,
+          ),
     exePath: before.exePath,
     exeSha256: before.exeSha256,
     sessionEpoch: before.sessionEpoch,

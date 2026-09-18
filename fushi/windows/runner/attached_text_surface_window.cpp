@@ -1425,6 +1425,7 @@ void AttachedTextSurfaceWindow::DestroySurfaceWindow() {
   if (active_instance_ == this)
     active_instance_ = nullptr;
   hover_tracker_.Reset();
+  hover_cluster_ = -1;
   if (hwnd_ != nullptr && IsWindow(hwnd_)) {
     KillTimer(hwnd_, kFollowTimerId);
     KillTimer(hwnd_, kHoverTimerId);
@@ -1864,6 +1865,7 @@ bool AttachedTextSurfaceWindow::RebuildClusters() {
 
 void AttachedTextSurfaceWindow::ClearInteractiveRegion() {
   CancelPointerGesture();
+  hover_cluster_ = -1;
   if (hwnd_ != nullptr) {
     fushi::ClearLowLevelAttachedGlyphHitRegions(hwnd_);
   }
@@ -2078,6 +2080,30 @@ void AttachedTextSurfaceWindow::RenderLayerBitmap(bool calibration) {
               y == box.bottom - 1) {
             pixels[static_cast<size_t>(y) * width + x] = outline;
           }
+        }
+      }
+    }
+    // KiraKira-like feedback for calibration: show the exact DirectWrite
+    // cluster currently under the global cursor.  The surface remains
+    // WS_EX_NOACTIVATE/click-through; this is paint-only and never changes
+    // probe state or the input shield.
+    if (hover_cluster_ >= 0 &&
+        static_cast<size_t>(hover_cluster_) < clusters_.size()) {
+      const RECT cluster =
+          clusters_[static_cast<size_t>(hover_cluster_)].client_rect;
+      const RECT box{
+          std::clamp(cluster.left, 0L, static_cast<LONG>(width)),
+          std::clamp(cluster.top, 0L, static_cast<LONG>(height)),
+          std::clamp(cluster.right, 0L, static_cast<LONG>(width)),
+          std::clamp(cluster.bottom, 0L, static_cast<LONG>(height))};
+      const uint32_t hover_fill = PremultipliedPixel(35, 190, 220, 105);
+      const uint32_t outline = PremultipliedPixel(100, 235, 255, 230);
+      for (LONG y = box.top; y < box.bottom; ++y) {
+        for (LONG x = box.left; x < box.right; ++x) {
+          const bool edge = x == box.left || x == box.right - 1 ||
+                            y == box.top || y == box.bottom - 1;
+          pixels[static_cast<size_t>(y) * width + x] =
+              edge ? outline : hover_fill;
         }
       }
     }
@@ -2449,6 +2475,20 @@ void AttachedTextSurfaceWindow::OnGeometryProviderStatusChanged() {
     EmitStateIfChanged(true);
 }
 
+void AttachedTextSurfaceWindow::OnExternalWindowLifecycle(HWND output_window,
+                                                           bool scaling) {
+  (void)output_window;
+  (void)scaling;
+  if (mode_ == Mode::kDetached || hwnd_ == nullptr || !IsWindow(hwnd_)) {
+    return;
+  }
+  // Keep all target/presentation changes on the surface window's existing
+  // message path. The Magpie broadcast runs on the runner UI thread too, but
+  // posting avoids re-entering SyncToTarget while WndProc is still dispatching
+  // the broadcast and preserves the same lifecycle ordering as WinEvent hooks.
+  PostMessageW(hwnd_, kSyncTargetMessage, 0, 0);
+}
+
 void AttachedTextSurfaceWindow::BeginPointerGesture(
     POINT client_point, uint64_t external_transaction_id) {
   CancelPointerGesture();
@@ -2564,14 +2604,15 @@ void AttachedTextSurfaceWindow::TickHoverLookup() {
   const bool shift_down =
       eligible && (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
   int cluster = -1;
-  if (shift_down) {
+  bool over_text = false;
+  if (eligible) {
     POINT screen{};
     if (GetCursorPos(&screen)) {
       // The runtime surface is click-through, so the cursor must be over the
       // game itself (or this surface). A cursor resting on the lookup card or
       // any other window is not a hover over game text.
       const HWND under = WindowFromPoint(screen);
-      const bool over_text =
+      over_text =
           under != nullptr &&
           (under == hwnd_ || under == target_.hwnd ||
            under == presentation_hwnd_ ||
@@ -2584,6 +2625,19 @@ void AttachedTextSurfaceWindow::TickHoverLookup() {
         cluster = ClusterAt(client);
       }
     }
+  }
+  const int visual_cluster =
+      mode_ == Mode::kCalibration && over_text ? cluster : -1;
+  if (visual_cluster != hover_cluster_) {
+    hover_cluster_ = visual_cluster;
+    if (mode_ == Mode::kCalibration) RenderLayerBitmap(true);
+  }
+  if (!shift_down) {
+    // The visual state above is useful without Shift, but lookup submission
+    // remains explicitly Shift-gated and the tracker must forget its prior
+    // cluster when Shift is released.
+    hover_tracker_.Reset();
+    return;
   }
   if (!hover_tracker_.Observe(shift_down, cluster, epoch_.session,
                               epoch_.surface, text_generation_)) {

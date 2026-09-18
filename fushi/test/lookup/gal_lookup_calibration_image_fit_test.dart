@@ -162,6 +162,18 @@ void main() {
     expect(result.draft?.layout.cellGrid?.columns, 20);
   });
 
+  test('finds low-contrast outlined text without a dialogue panel', () {
+    final GalCalibrationImageFit result = inferGalCalibrationGrid(
+      _draft([
+        _sample(
+          backgroundColor: img.ColorRgb8(120, 120, 120),
+          inkColor: img.ColorRgb8(135, 135, 135),
+        ),
+      ]),
+    );
+    expect(result.draft?.layout.cellGrid?.columns, 20);
+  });
+
   test(
     'measures ink grid and quoted continuation without any centre marks',
     () {
