@@ -129,132 +129,474 @@ void main() {
     expect(status.totalBytes, 30);
   });
 
-  test('normalizes OCR geometry across training resolutions', () async {
-    GalCalibrationOcrMatchedLine line({
-      required int lineIndex,
-      required int cellCount,
-      required int indent,
-      required double origin,
-      required double top,
-      required double pitch,
-      required double height,
-    }) {
-      return GalCalibrationOcrMatchedLine(
-        sourceStart: lineIndex * 5,
-        sourceEnd: lineIndex * 5 + cellCount,
-        cellCount: cellCount,
-        lineIndex: lineIndex,
-        rect: OcrRect(
-          left: origin + indent * pitch,
-          top: top,
-          right: origin + (indent + cellCount) * pitch,
-          bottom: top + height,
+  test(
+    'normalizes OCR geometry and validates real preview coordinates',
+    () async {
+      final GalCalibrationImageFit fit = await _fit(
+        [_sample('あいうえおかきくけ', scale: 1), _sample('あいうえおかきくけ', scale: 2)],
+        [
+          _alignment(['あいうえお', 'かきくけ']),
+          _alignment(['あいうえお', 'かきくけ'], scale: 2),
+        ],
+      );
+      expect(fit.reason, isNull);
+      expect(fit.draft!.layout.cellGrid!.columns, 5);
+      expect(fit.draft!.layout.cellGrid!.continuationIndent, 1);
+      expect(
+        fit.draft!.layout.cellGrid!.advancePerClientHeight,
+        closeTo(.08, 1e-9),
+      );
+      expect(fit.draft!.rect.left, closeTo(.1, 1e-9));
+      expect(fit.draft!.rect.top, closeTo(.6, 1e-9));
+    },
+  );
+
+  test(
+    'short samples do not shrink the body width or its vertical capacity',
+    () async {
+      final GalCalibrationImageFit fit = await _fit(
+        [
+          _sample('あいうえおかきくけ'),
+          _sample('あいう'),
+          _sample('あい'),
+          _sample('あいうえおかきくけさしす', validation: true),
+        ],
+        [
+          _alignment(['あいうえお', 'かきくけ']),
+          _alignment(['あいう']),
+          _alignment(['あい']),
+          _alignment(['あいうえお', 'かきくけ', 'さしす']),
+        ],
+      );
+      expect(fit.reason, isNull);
+      expect(fit.draft!.layout.cellGrid!.columns, 5);
+      expect(fit.draft!.rect.width, greaterThanOrEqualTo(.2));
+      expect(fit.draft!.rect.bottom, closeTo(1, 1e-9));
+    },
+  );
+
+  test(
+    'rough bottom edge expands to a full row without fitting holdout geometry',
+    () async {
+      final draft = GalLookupCalibrationDraft(
+        rect: const GalLookupNormalizedRectV1(
+          left: 0,
+          top: .6,
+          width: 1,
+          height: .26,
         ),
-        glyphs: [
-          for (int offset = 0; offset < cellCount; offset++)
-            GalCalibrationOcrGlyph(
-              sourceIndex: lineIndex * 5 + offset,
-              charLength: 1,
-              cellOffset: offset,
-              lineIndex: lineIndex,
-              rect: OcrRect(
-                left: origin + (indent + offset) * pitch,
-                top: top,
-                right: origin + (indent + offset + 1) * pitch,
-                bottom: top + height,
-              ),
-              confidence: 1,
-            ),
+        layout: const GalLookupTextLayoutV1(),
+        samples: [
+          _sample('あいうえおかきくけ'),
+          _sample('あいうえおかきくけさしす', validation: true),
         ],
       );
-    }
+      final fit = await fitGalCalibrationOcrGrid(draft, [
+        _alignment(['あいうえお', 'かきくけ']),
+        _alignment(['あいうえお', 'かきくけ', 'さしす']),
+      ], build: _preview);
+      expect(fit.reason, isNull);
+      expect(fit.draft!.rect.bottom, greaterThanOrEqualTo(.864));
+    },
+  );
 
-    GalCalibrationOcrAlignment alignment({required double scale}) {
-      final double pitch = 40 * scale;
-      final double height = 36 * scale;
-      return GalCalibrationOcrAlignment(
-        lines: [
-          line(
-            lineIndex: 0,
-            cellCount: 5,
-            indent: 0,
-            origin: 100 * scale,
-            top: 300 * scale,
-            pitch: pitch,
-            height: height,
-          ),
-          line(
-            lineIndex: 1,
-            cellCount: 4,
-            indent: 1,
-            origin: 100 * scale,
-            top: 348 * scale,
-            pitch: pitch,
-            height: height,
-          ),
+  test(
+    'learns one hanging closing punctuation cell from measured rows',
+    () async {
+      final fit = await _fit(
+        [_sample('「あいうえおかきく」')],
+        [
+          _alignment(['「あいうえ', 'おかきく」']),
         ],
-        confidence: 1,
       );
-    }
+      expect(fit.reason, isNull);
+      expect(fit.draft!.layout.cellGrid!.columns, 5);
+      expect(fit.draft!.layout.cellGrid!.hangingPunctuation, isTrue);
+      expect(fit.draft!.rect.width, greaterThanOrEqualTo(.24));
+    },
+  );
 
-    GalCalibrationSample sample(GalLookupReferenceClientV1 client) =>
-        GalCalibrationSample(
-          capture: GalLookupCalibrationCapture(
-            sourceText: 'あいうえおかきくけこ',
-            pngBytes: Uint8List.fromList(const <int>[1]),
-            referenceClient: client,
-            exePath: 'game.exe',
-            exeSha256: 'a' * 64,
-            sessionEpoch: 1,
-            occurrenceId: 'occurrence',
-            targetHwnd: 1,
-            capturedAt: DateTime.utc(2026),
-            selectedThreadKey: 'thread',
-          ),
-        );
-
-    const GalLookupReferenceClientV1 clientA = GalLookupReferenceClientV1(
-      widthPx: 1000,
-      heightPx: 500,
-      dpi: 96,
+  test('does not accept arbitrary extra text as hanging punctuation', () async {
+    final fit = await _fit(
+      [_sample('あいうえおかきくけこ')],
+      [
+        _alignment(['あいうえお', 'かきくけこ']),
+      ],
     );
-    const GalLookupReferenceClientV1 clientB = GalLookupReferenceClientV1(
-      widthPx: 2000,
-      heightPx: 1000,
-      dpi: 96,
-    );
-    final GalLookupCalibrationDraft draft = GalLookupCalibrationDraft(
-      rect: const GalLookupNormalizedRectV1(
-        left: 0,
-        top: 0,
-        width: 1,
-        height: 1,
-      ),
-      layout: const GalLookupTextLayoutV1(),
-      samples: [sample(clientA), sample(clientB)],
-    );
-    final GalCalibrationImageFit result = await fitGalCalibrationOcrGrid(
-      draft,
-      [alignment(scale: 1), alignment(scale: 2)],
-      build:
-          ({
-            required String text,
-            required GalLookupReferenceClientV1 client,
-            required GalLookupNormalizedRectV1 rect,
-            required GalLookupTextLayoutV1 layout,
-          }) async => const GalCalibrationPreview(
-            boxes: [GalCalibrationBox(0, 1, Rect.fromLTWH(0, 0, 1, 1))],
-          ),
-    );
-
-    expect(result.draft, isNotNull);
-    expect(result.draft!.layout.cellGrid!.columns, 5);
-    expect(result.draft!.layout.cellGrid!.continuationIndent, 1);
-    expect(
-      result.draft!.layout.cellGrid!.advancePerClientHeight,
-      closeTo(.08, 1e-9),
-    );
-    expect(result.draft!.rect.left, closeTo(.1, 1e-9));
-    expect(result.draft!.rect.top, closeTo(.6, 1e-9));
+    expect(fit.reason, 'ocr_geometry_inconsistent');
   });
+
+  test('held-out geometry rejects a shifted row even when text fits', () async {
+    final GalCalibrationImageFit fit = await _fit(
+      [_sample('あいうえおかきくけ'), _sample('あいうえおかきくけ', validation: true)],
+      [
+        _alignment(['あいうえお', 'かきくけ']),
+        _alignment(['あいうえお', 'かきくけ'], shiftX: 40),
+      ],
+    );
+    expect(fit.draft, isNull);
+    expect(fit.reason, 'ocr_geometry_inconsistent');
+    expect(fit.sampleIndex, 1);
+  });
+
+  test('held-out line wrapping is checked against native preview', () async {
+    final GalCalibrationImageFit fit = await _fit(
+      [_sample('あいうえおかきくけ'), _sample('あいうえおかきくけ', validation: true)],
+      [
+        _alignment(['あいうえお', 'かきくけ']),
+        _alignment(['あいうえ', 'おかきくけ']),
+      ],
+    );
+    expect(fit.reason, 'ocr_geometry_inconsistent');
+    expect(fit.sampleIndex, 1);
+  });
+
+  test('explicit newlines alone cannot determine soft wrap capacity', () async {
+    final GalCalibrationImageFit fit = await _fit(
+      [_sample('あいうえお\nかきくけ')],
+      [
+        _alignment(['あいうえお', 'かきくけ'], source: 'あいうえお\nかきくけ'),
+      ],
+    );
+    expect(fit.reason, 'multiline_required');
+  });
+
+  test(
+    'explicit newlines and surrogate offsets survive native validation',
+    () async {
+      final GalCalibrationImageFit fit = await _fit(
+        [_sample('あいうえおかきくけ'), _sample('😀いう\r\nかきく', validation: true)],
+        [
+          _alignment(['あいうえお', 'かきくけ']),
+          _alignment(['😀いう', 'かきく'], source: '😀いう\r\nかきく'),
+        ],
+      );
+      expect(fit.reason, isNull);
+    },
+  );
+
+  test(
+    'recognition positions prevent a missing OCR character shifting the row',
+    () async {
+      final GalCalibrationOcrAlignment alignment = alignGalCalibrationOcrLines(
+        sourceText: 'あいうえおかきくけ',
+        lines: [
+          _line('あいえお', top: 300, offsets: [0, 1, 3, 4]),
+          _line('かきくけ', top: 348, indent: 1),
+        ],
+      );
+      expect(alignment.accepted, isTrue);
+      final GalCalibrationImageFit fit = await _fit(
+        [_sample('あいうえおかきくけ')],
+        [alignment],
+      );
+      expect(fit.reason, isNull);
+      expect(
+        fit.draft!.layout.cellGrid!.advancePerClientHeight,
+        closeTo(.08, 1e-9),
+      );
+    },
+  );
+
+  test('combining marks stay in one UTF-16 glyph cluster', () {
+    final GalCalibrationOcrAlignment alignment = alignGalCalibrationOcrLines(
+      sourceText: 'か\u3099e\u0301😀あ',
+      lines: [_line('か\u3099e\u0301😀あ', top: 300)],
+    );
+    // Kana U+3099 is not currently a supported native combining mark; the
+    // Latin combining mark is, and must include both UTF-16 units.
+    expect(alignment.accepted, isTrue);
+    expect(
+      alignment.lines.single.glyphs
+          .firstWhere((g) => g.sourceIndex == 2)
+          .charLength,
+      2,
+    );
+    expect(
+      alignment.lines.single.glyphs
+          .firstWhere((g) => g.sourceIndex == 4)
+          .charLength,
+      2,
+    );
+  });
+
+  test(
+    'joins separated detections on the same row without losing x positions',
+    () async {
+      final GalCalibrationOcrAlignment alignment = alignGalCalibrationOcrLines(
+        sourceText: 'あいうえおかきくけ',
+        lines: [
+          _line('あいう', top: 300),
+          _line('えお', top: 302, indent: 3),
+          _line('かきくけ', top: 348, indent: 1),
+        ],
+      );
+      expect(alignment.accepted, isTrue);
+      expect(alignment.lines, hasLength(2));
+      expect(alignment.lines.first.glyphs[3].rect.centerX, 240);
+      final GalCalibrationImageFit fit = await _fit(
+        [_sample('あいうえおかきくけ')],
+        [alignment],
+      );
+      expect(fit.reason, isNull);
+    },
+  );
+
+  test('overlapping detector margins still form a single row', () {
+    final alignment = alignGalCalibrationOcrLines(
+      sourceText: 'あいうえお',
+      lines: [
+        _line('あいう', top: 300),
+        _line('えお', top: 301, indent: 3, shiftX: -3),
+      ],
+    );
+    expect(alignment.accepted, isTrue);
+    expect(alignment.lines, hasLength(1));
+  });
+
+  test(
+    'detector confidence and recognition confidence have separate roles',
+    () {
+      final row = _line('あいうえお', top: 300);
+      final alignment = alignGalCalibrationOcrLines(
+        sourceText: row.text,
+        lines: [
+          GalCalibrationOcrLine(
+            text: row.text,
+            rect: row.rect,
+            score: .47,
+            tokens: row.tokens,
+          ),
+        ],
+      );
+      expect(alignment.accepted, isTrue);
+    },
+  );
+
+  test('padding text cannot compensate for missing position evidence', () {
+    final row = _line('あいうえお', top: 300);
+    final alignment = alignGalCalibrationOcrLines(
+      sourceText: row.text,
+      lines: [
+        GalCalibrationOcrLine(
+          text: row.text,
+          rect: row.rect,
+          score: .99,
+          tokens: [
+            row.tokens.first,
+            for (final token in row.tokens.skip(1))
+              GalCalibrationOcrToken(token.text, token.rect, 0),
+          ],
+        ),
+      ],
+    );
+    expect(alignment.accepted, isFalse);
+  });
+
+  test('detector unclip margins cannot create overlapping hit rows', () async {
+    final lines = [
+      _line('あいうえお', top: 300),
+      _line('かきくけ', top: 348, indent: 1),
+    ];
+    final alignment = alignGalCalibrationOcrLines(
+      sourceText: lines.map((l) => l.text).join(),
+      lines: [
+        for (final row in lines)
+          GalCalibrationOcrLine(
+            text: row.text,
+            score: row.score,
+            tokens: row.tokens,
+            rect: OcrRect(
+              left: row.rect.left,
+              right: row.rect.right,
+              top: row.rect.top - 12,
+              bottom: row.rect.bottom + 12,
+            ),
+          ),
+      ],
+    );
+    final fit = await _fit([_sample('あいうえおかきくけ')], [alignment]);
+    expect(fit.reason, isNull);
+    expect(
+      fit.draft!.layout.cellGrid!.cellHeightPerClientHeight,
+      fit.draft!.layout.cellGrid!.lineAdvancePerClientHeight,
+    );
+  });
+
+  test(
+    'low confidence and incomplete screenshots cannot become accepted fits',
+    () {
+      expect(
+        alignGalCalibrationOcrLines(
+          sourceText: 'あいうえおかきくけ',
+          lines: [
+            const GalCalibrationOcrLine(
+              text: 'あいうえおかきくけ',
+              rect: OcrRect(left: 0, top: 0, right: 360, bottom: 36),
+              score: .1,
+            ),
+          ],
+        ).accepted,
+        isFalse,
+      );
+      expect(
+        alignGalCalibrationOcrLines(
+          sourceText: 'あいうえおかきくけ',
+          lines: [_line('あいう', top: 300)],
+        ).accepted,
+        isFalse,
+      );
+    },
+  );
+}
+
+GalCalibrationOcrLine _line(
+  String text, {
+  required double top,
+  double scale = 1,
+  int indent = 0,
+  double shiftX = 0,
+  List<int>? offsets,
+}) {
+  final List<String> chars = text.runes.map(String.fromCharCode).toList();
+  return GalCalibrationOcrLine(
+    text: text,
+    score: .99,
+    rect: OcrRect(
+      left: (100 + indent * 40 + shiftX) * scale,
+      top: top * scale,
+      right:
+          (100 +
+              (indent + (offsets?.last ?? chars.length - 1) + 1) * 40 +
+              shiftX) *
+          scale,
+      bottom: (top + 36) * scale,
+    ),
+    tokens: [
+      for (int i = 0; i < chars.length; i++)
+        GalCalibrationOcrToken(
+          chars[i],
+          OcrRect(
+            left: (100 + (indent + (offsets?[i] ?? i)) * 40 + shiftX) * scale,
+            right:
+                (100 + (indent + (offsets?[i] ?? i) + 1) * 40 + shiftX) * scale,
+            top: top * scale,
+            bottom: (top + 36) * scale,
+          ),
+          .99,
+        ),
+    ],
+  );
+}
+
+GalCalibrationOcrAlignment _alignment(
+  List<String> rows, {
+  double scale = 1,
+  double shiftX = 0,
+  String? source,
+}) => alignGalCalibrationOcrLines(
+  sourceText: source ?? rows.join(),
+  lines: [
+    for (int i = 0; i < rows.length; i++)
+      _line(
+        rows[i],
+        top: 300 + i * 48,
+        scale: scale,
+        indent: i == 0 ? 0 : 1,
+        shiftX: shiftX,
+      ),
+  ],
+);
+
+GalCalibrationSample _sample(
+  String text, {
+  double scale = 1,
+  bool validation = false,
+}) => GalCalibrationSample(
+  validation: validation,
+  capture: GalLookupCalibrationCapture(
+    sourceText: text,
+    pngBytes: Uint8List.fromList([1]),
+    referenceClient: GalLookupReferenceClientV1(
+      widthPx: (1000 * scale).round(),
+      heightPx: (500 * scale).round(),
+      dpi: 96,
+    ),
+    exePath: 'game.exe',
+    exeSha256: 'a' * 64,
+    sessionEpoch: 1,
+    occurrenceId: 'occurrence',
+    targetHwnd: 1,
+    capturedAt: DateTime.utc(2026),
+    selectedThreadKey: 'thread',
+  ),
+);
+
+Future<GalCalibrationImageFit> _fit(
+  List<GalCalibrationSample> samples,
+  List<GalCalibrationOcrAlignment> alignments,
+) => fitGalCalibrationOcrGrid(
+  GalLookupCalibrationDraft(
+    rect: const GalLookupNormalizedRectV1(left: 0, top: 0, width: 1, height: 1),
+    layout: const GalLookupTextLayoutV1(),
+    samples: samples,
+  ),
+  alignments,
+  build: _preview,
+);
+
+// Independent preview double implements the native grid's row/UTF-16 contract,
+// so acceptance requires actual coordinate agreement rather than a dummy box.
+Future<GalCalibrationPreview> _preview({
+  required String text,
+  required GalLookupReferenceClientV1 client,
+  required GalLookupNormalizedRectV1 rect,
+  required GalLookupTextLayoutV1 layout,
+}) async {
+  final GalLookupCellGridV1 grid = layout.cellGrid!;
+  final double pitch = grid.advancePerClientHeight * client.heightPx;
+  final double height = grid.cellHeightPerClientHeight * client.heightPx;
+  final double advance = grid.lineAdvancePerClientHeight * client.heightPx;
+  if (grid.columns * pitch > rect.width * client.widthPx + .5) {
+    return const GalCalibrationPreview(boxes: [], reason: 'overflow');
+  }
+  final int indent = text.startsWith('「') || text.startsWith('『')
+      ? grid.quotedContinuationIndent
+      : grid.continuationIndent;
+  final List<GalCalibrationBox> boxes = [];
+  int row = 0, column = 0, index = 0;
+  int previous = 0;
+  for (final int rune in text.runes) {
+    final int length = String.fromCharCode(rune).length;
+    if (rune == 13 || rune == 10) {
+      if (rune != 10 || previous != 13) {
+        row++;
+        column = indent;
+      }
+    } else {
+      if (column >= grid.columns &&
+          !(grid.hangingPunctuation &&
+              column == grid.columns &&
+              '」』）)]｝}】〕〉》、。，．！？!?'.contains(String.fromCharCode(rune)))) {
+        row++;
+        column = indent;
+      }
+      final Rect box = Rect.fromLTWH(
+        rect.left * client.widthPx + column * pitch,
+        rect.top * client.heightPx + row * advance,
+        pitch,
+        height,
+      );
+      if (box.bottom > rect.bottom * client.heightPx + .5) {
+        return const GalCalibrationPreview(boxes: [], reason: 'overflow');
+      }
+      if (String.fromCharCode(rune).trim().isNotEmpty) {
+        boxes.add(GalCalibrationBox(index, length, box));
+      }
+      column++;
+    }
+    index += length;
+    previous = rune;
+  }
+  return GalCalibrationPreview(boxes: boxes);
 }

@@ -426,8 +426,14 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
           final String reason = switch (result.reason) {
             'multiline_required' => t.game_lookup_samples_auto_multiline,
             'unsupported_text' => t.game_lookup_samples_auto_unsupported,
-            'text_rows_not_found' => t.game_lookup_samples_auto_rows_missing,
-            'inconsistent_samples' => t.game_lookup_samples_auto_inconsistent,
+            'text_rows_not_found' ||
+            'ocr_lines_not_found' => t.game_lookup_samples_auto_rows_missing,
+            'inconsistent_samples' ||
+            'ocr_geometry_inconsistent' ||
+            'ocr_indent_ambiguous' ||
+            'ocr_text_alignment_failed' ||
+            'ocr_text_alignment_weak' ||
+            'ocr_confidence_low' => t.game_lookup_samples_auto_inconsistent,
             'preview_rejected' => t.game_lookup_samples_auto_preview_failed,
             _ => t.game_lookup_samples_auto_failed,
           };
@@ -450,11 +456,12 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
         setState(() => _message = t.game_lookup_samples_auto_success);
       }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _message = t.game_lookup_samples_auto_failed;
           _failed = true;
         });
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -905,10 +912,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
         const SizedBox(height: 8),
         if (galCalibrationOcrModelStatus != null) ...[
           if (_ocrModel?.ready == true)
-            Text(
-              '${t.manga_ocr_model_status_ready}：'
-              '会用 Hook 台词纠正截图中的粗略位置。',
-            )
+            Text(t.manga_ocr_model_status_ready)
           else ...[
             Text(
               '${t.manga_ocr_model_status_missing} · '

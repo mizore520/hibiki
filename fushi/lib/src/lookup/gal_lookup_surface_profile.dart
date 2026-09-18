@@ -139,6 +139,7 @@ class GalLookupCellGridV1 {
     required this.columns,
     required this.continuationIndent,
     required this.quotedContinuationIndent,
+    this.hangingPunctuation = false,
   });
 
   final double advancePerClientHeight;
@@ -147,6 +148,7 @@ class GalLookupCellGridV1 {
   final int columns;
   final int continuationIndent;
   final int quotedContinuationIndent;
+  final bool hangingPunctuation;
 
   bool get isValid =>
       advancePerClientHeight.isFinite &&
@@ -168,28 +170,45 @@ class GalLookupCellGridV1 {
 
   int get _maximumIndent => columns - 1 < 8 ? columns - 1 : 8;
 
-  Map<String, Object?> toJson() => <String, Object?>{
-    'advancePerClientHeight': advancePerClientHeight,
-    'lineAdvancePerClientHeight': lineAdvancePerClientHeight,
-    'cellHeightPerClientHeight': cellHeightPerClientHeight,
-    'columns': columns,
-    'continuationIndent': continuationIndent,
-    'quotedContinuationIndent': quotedContinuationIndent,
-  };
+  Map<String, Object?> toJson() {
+    final Map<String, Object?> result = <String, Object?>{
+      'advancePerClientHeight': advancePerClientHeight,
+      'lineAdvancePerClientHeight': lineAdvancePerClientHeight,
+      'cellHeightPerClientHeight': cellHeightPerClientHeight,
+      'columns': columns,
+      'continuationIndent': continuationIndent,
+      'quotedContinuationIndent': quotedContinuationIndent,
+    };
+    if (hangingPunctuation) result['hangingPunctuation'] = true;
+    return result;
+  }
 
   static GalLookupCellGridV1? tryFromJson(Object? value) {
     if (value is! Map) return null;
     final Map<Object?, Object?> map = value.cast<Object?, Object?>();
-    if (!_hasExactKeys(map, const <String>{
+    const Set<String> legacyKeys = <String>{
       'advancePerClientHeight',
       'lineAdvancePerClientHeight',
       'cellHeightPerClientHeight',
       'columns',
       'continuationIndent',
       'quotedContinuationIndent',
-    })) {
+    };
+    final Set<String> extendedKeys = <String>{
+      ...legacyKeys,
+      'hangingPunctuation',
+    };
+    if (!_hasExactKeys(map, legacyKeys) && !_hasExactKeys(map, extendedKeys)) {
       return null;
     }
+    final Object? hangingPunctuationValue = map['hangingPunctuation'];
+    if (map.containsKey('hangingPunctuation') &&
+        hangingPunctuationValue is! bool) {
+      return null;
+    }
+    final bool hangingPunctuation = hangingPunctuationValue is bool
+        ? hangingPunctuationValue
+        : false;
     final GalLookupCellGridV1 grid = GalLookupCellGridV1(
       advancePerClientHeight:
           _finiteDouble(map['advancePerClientHeight']) ?? double.nan,
@@ -201,6 +220,7 @@ class GalLookupCellGridV1 {
       continuationIndent: _exactInt(map['continuationIndent']) ?? -1,
       quotedContinuationIndent:
           _exactInt(map['quotedContinuationIndent']) ?? -1,
+      hangingPunctuation: hangingPunctuation,
     );
     return grid.isValid ? grid : null;
   }
@@ -213,7 +233,8 @@ class GalLookupCellGridV1 {
       other.cellHeightPerClientHeight == cellHeightPerClientHeight &&
       other.columns == columns &&
       other.continuationIndent == continuationIndent &&
-      other.quotedContinuationIndent == quotedContinuationIndent;
+      other.quotedContinuationIndent == quotedContinuationIndent &&
+      other.hangingPunctuation == hangingPunctuation;
 
   @override
   int get hashCode => Object.hash(
@@ -223,6 +244,7 @@ class GalLookupCellGridV1 {
     columns,
     continuationIndent,
     quotedContinuationIndent,
+    hangingPunctuation,
   );
 }
 

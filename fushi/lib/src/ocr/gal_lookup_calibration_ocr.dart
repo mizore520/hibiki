@@ -9,8 +9,8 @@ library;
 
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_draft.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_capture.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_image_fit.dart';
@@ -151,11 +151,21 @@ class GalCalibrationOcrLine {
     required this.text,
     required this.rect,
     required this.score,
+    this.tokens = const <GalCalibrationOcrToken>[],
   });
 
   final String text;
   final OcrRect rect;
   final double score;
+  final List<GalCalibrationOcrToken> tokens;
+}
+
+/// Approximate recognition-frame locations, not exact glyph outlines.
+class GalCalibrationOcrToken {
+  const GalCalibrationOcrToken(this.text, this.rect, this.confidence);
+  final String text;
+  final OcrRect rect;
+  final double confidence;
 }
 
 class GalCalibrationOcrGlyph {
@@ -216,19 +226,26 @@ class _SourceUnit {
     required this.index,
     required this.length,
     required this.whitespace,
+    this.hardBreakBefore = false,
   });
 
   final String value;
   final int index;
   final int length;
   final bool whitespace;
+  final bool hardBreakBefore;
 }
 
 class _OcrUnit {
-  const _OcrUnit({required this.value, required this.rect});
+  const _OcrUnit({
+    required this.value,
+    required this.rect,
+    this.confidence = 1,
+  });
 
   final String value;
   final OcrRect rect;
+  final double confidence;
 }
 
 class _LineSpan {
@@ -265,11 +282,13 @@ bool _ocrWhitespace(String value) => value.trim().isEmpty;
 List<_SourceUnit> _sourceUnits(String text) {
   final List<_SourceUnit> units = <_SourceUnit>[];
   int index = 0;
+  bool hardBreak = false;
   for (final int rune in text.runes) {
     final String value = String.fromCharCode(rune);
     final int length = value.length;
     if (rune == 0x0a || rune == 0x0d) {
       index += length;
+      hardBreak = true;
       continue;
     }
     final bool combining =
@@ -278,9 +297,20 @@ List<_SourceUnit> _sourceUnits(String text) {
         (rune >= 0x1dc0 && rune <= 0x1dff) ||
         (rune >= 0x20d0 && rune <= 0x20ff) ||
         (rune >= 0xfe00 && rune <= 0xfe0f) ||
+        (rune >= 0xfe20 && rune <= 0xfe2f) ||
         (rune >= 0x1f3fb && rune <= 0x1f3ff) ||
         (rune >= 0xe0100 && rune <= 0xe01ef);
-    if (combining && units.isNotEmpty && !units.last.whitespace) {
+    if (combining && !hardBreak && units.isNotEmpty && !units.last.whitespace) {
+      final _SourceUnit previous = units.removeLast();
+      units.add(
+        _SourceUnit(
+          value: previous.value + value,
+          index: previous.index,
+          length: previous.length + length,
+          whitespace: false,
+          hardBreakBefore: previous.hardBreakBefore,
+        ),
+      );
       index += length;
       continue;
     }
@@ -290,14 +320,54 @@ List<_SourceUnit> _sourceUnits(String text) {
         index: index,
         length: length,
         whitespace: value == ' ' || value == '\t' || value == '\u3000',
+        hardBreakBefore: hardBreak,
       ),
     );
     index += length;
+    hardBreak = false;
   }
   return units;
 }
 
 List<_OcrUnit> _ocrUnits(GalCalibrationOcrLine line) {
+  if (line.tokens.isNotEmpty) {
+    if (line.tokens.map((GalCalibrationOcrToken t) => t.text).join() !=
+        line.text) {
+      return const <_OcrUnit>[];
+    }
+    final List<_OcrUnit> measured = <_OcrUnit>[];
+    int offset = 0;
+    final List<_SourceUnit> units = _sourceUnits(line.text);
+    for (final _SourceUnit unit in units) {
+      int tokenOffset = 0;
+      final List<GalCalibrationOcrToken> parts = <GalCalibrationOcrToken>[];
+      for (final GalCalibrationOcrToken token in line.tokens) {
+        final int end = tokenOffset + token.text.length;
+        if (tokenOffset < unit.index + unit.length && end > unit.index) {
+          parts.add(token);
+        }
+        tokenOffset = end;
+      }
+      if (parts.isEmpty) return const <_OcrUnit>[];
+      measured.add(
+        _OcrUnit(
+          value: unit.value,
+          rect: OcrRect(
+            left: parts.first.rect.left,
+            top: line.rect.top,
+            right: parts.last.rect.right,
+            bottom: line.rect.bottom,
+          ),
+          confidence: parts
+              .map((GalCalibrationOcrToken t) => t.confidence)
+              .reduce(math.min),
+        ),
+      );
+      offset += unit.length;
+    }
+    if (offset != line.text.length) return const <_OcrUnit>[];
+    return measured;
+  }
   final List<String> values = <String>[];
   for (final int rune in line.text.runes) {
     final String value = String.fromCharCode(rune);
@@ -370,13 +440,55 @@ String _visibleText(Iterable<_SourceUnit> units) => units
     .map((_SourceUnit unit) => unit.value)
     .join();
 
+// Cache substring alignment once per detected row. The old implementation
+// recomputed a full edit-distance matrix for every partition and every row run.
+List<Map<int, double>> _lineCosts(List<_SourceUnit> source, String text) {
+  final List<String> target = _sourceUnits(text)
+      .where((_SourceUnit u) => !u.whitespace)
+      .map((_SourceUnit u) => _foldOcrChar(u.value))
+      .toList();
+  final int limit = target.length + math.max(4, (target.length * .45).ceil());
+  return List<Map<int, double>>.generate(source.length, (int start) {
+    final Map<int, double> costs = <int, double>{};
+    List<double> previous = List<double>.generate(
+      target.length + 1,
+      (int j) => j * .85,
+    );
+    int visible = 0;
+    for (int end = start + 1; end <= source.length; end++) {
+      final _SourceUnit unit = source[end - 1];
+      if (end > start + 1 && unit.hardBreakBefore) break;
+      if (!unit.whitespace) {
+        if (++visible > limit) break;
+        final List<double> current = List<double>.filled(target.length + 1, 0);
+        current[0] = visible * .85;
+        for (int j = 1; j <= target.length; j++) {
+          current[j] = math.min(
+            previous[j] + .85,
+            math.min(
+              current[j - 1] + .85,
+              previous[j - 1] +
+                  (_foldOcrChar(unit.value) == target[j - 1] ? 0 : .65),
+            ),
+          );
+        }
+        previous = current;
+      }
+      if (visible < math.max(1, (target.length * .5).floor())) continue;
+      costs[end] =
+          previous.last / math.max(1, math.max(visible, target.length)) +
+          (visible - target.length).abs() * .025;
+    }
+    return costs;
+  });
+}
+
 List<_LineSpan>? _partitionSource(
   List<_SourceUnit> source,
-  List<GalCalibrationOcrLine> lines,
+  List<List<Map<int, double>>> costs,
 ) {
-  if (source.isEmpty || lines.isEmpty) return null;
   final int n = source.length;
-  final int m = lines.length;
+  final int m = costs.length;
   final List<List<double>> dp = List<List<double>>.generate(
     m + 1,
     (_) => List<double>.filled(n + 1, double.infinity),
@@ -389,24 +501,9 @@ List<_LineSpan>? _partitionSource(
   for (int i = 0; i < m; i++) {
     for (int start = 0; start < n; start++) {
       if (!dp[i][start].isFinite) continue;
-      for (int end = start + 1; end <= n; end++) {
-        final String sourceText = _visibleText(source.sublist(start, end));
-        final String ocrText = lines[i].text;
-        final double lengthPenalty =
-            (sourceText.runes.length -
-                    ocrText.runes
-                        .where(
-                          (int r) =>
-                              String.fromCharCode(r).trim().isNotEmpty,
-                        )
-                        .length)
-                .abs() *
-            0.025;
-        final double cost =
-            dp[i][start] +
-            _editDistance(sourceText, ocrText) +
-            lengthPenalty +
-            (i == m - 1 && end != n ? 0.4 : 0);
+      for (final MapEntry<int, double> span in costs[i][start].entries) {
+        final int end = span.key;
+        final double cost = dp[i][start] + span.value;
         if (cost < dp[i + 1][end]) {
           dp[i + 1][end] = cost;
           previous[i + 1][end] = start;
@@ -414,7 +511,7 @@ List<_LineSpan>? _partitionSource(
       }
     }
   }
-  if (!dp[m][n].isFinite || dp[m][n] > math.max(0.7, m * 0.48)) return null;
+  if (!dp[m][n].isFinite || dp[m][n] > math.max(.7, m * .48)) return null;
   final List<_LineSpan> result = <_LineSpan>[];
   int end = n;
   for (int i = m; i > 0; i--) {
@@ -436,11 +533,18 @@ _OcrLineSelection? _selectOcrLineRun(
   List<GalCalibrationOcrLine> lines,
 ) {
   if (source.isEmpty || lines.isEmpty) return null;
+  final List<List<Map<int, double>>> costs = <List<Map<int, double>>>[
+    for (final GalCalibrationOcrLine line in lines)
+      _lineCosts(source, line.text),
+  ];
   _OcrLineSelection? best;
   for (int start = 0; start < lines.length; start++) {
     for (int end = start + 1; end <= lines.length; end++) {
       final List<GalCalibrationOcrLine> candidate = lines.sublist(start, end);
-      final List<_LineSpan>? spans = _partitionSource(source, candidate);
+      final List<_LineSpan>? spans = _partitionSource(
+        source,
+        costs.sublist(start, end),
+      );
       if (spans == null) continue;
       double score = (lines.length - candidate.length) * 0.08;
       for (int i = 0; i < candidate.length; i++) {
@@ -487,8 +591,12 @@ List<_TokenPair> _alignLineTokens(
     sourceTokens.length + 1,
     (_) => List<double>.filled(ocrTokens.length + 1, 0),
   );
-  for (int i = 0; i <= sourceTokens.length; i++) dp[i][0] = i * 0.85;
-  for (int j = 0; j <= ocrTokens.length; j++) dp[0][j] = j * 0.85;
+  for (int i = 0; i <= sourceTokens.length; i++) {
+    dp[i][0] = i * 0.85;
+  }
+  for (int j = 0; j <= ocrTokens.length; j++) {
+    dp[0][j] = j * 0.85;
+  }
   for (int i = 1; i <= sourceTokens.length; i++) {
     for (int j = 1; j <= ocrTokens.length; j++) {
       final String a = _foldOcrChar(source[sourceTokens[i - 1]].value);
@@ -527,16 +635,37 @@ List<_TokenPair> _alignLineTokens(
 }
 
 /// Align OCR's imperfect text back to the exact Hook string and retain only
-/// geometry-backed character hints.  Equal subdivision is deliberate: OCR is
-/// the coarse locator, never the final glyph measurement.
+/// geometry-backed character hints. Recognition-frame positions are approximate;
+/// text-only test/legacy callers may supply coarse uniformly spaced hints.
 GalCalibrationOcrAlignment alignGalCalibrationOcrLines({
   required String sourceText,
   required List<GalCalibrationOcrLine> lines,
 }) {
   final List<_SourceUnit> source = _sourceUnits(sourceText);
-  final List<GalCalibrationOcrLine> usable = lines
-      .where((GalCalibrationOcrLine line) => line.text.trim().isNotEmpty)
-      .toList();
+  if (source.length > 1024 || lines.length > 24) {
+    return const GalCalibrationOcrAlignment(
+      lines: [],
+      confidence: 0,
+      reason: 'ocr_region_too_large',
+    );
+  }
+  final List<GalCalibrationOcrLine> usable = _mergeRowFragments(
+    lines
+        .where(
+          (GalCalibrationOcrLine line) =>
+              line.text.trim().isNotEmpty &&
+              line.text.length <= 1024 &&
+              line.score.isFinite &&
+              line.score >= kPpDetBoxThresh &&
+              line.rect.left.isFinite &&
+              line.rect.top.isFinite &&
+              line.rect.right.isFinite &&
+              line.rect.bottom.isFinite &&
+              line.rect.width > 0 &&
+              line.rect.height > 0,
+        )
+        .toList(),
+  );
   final _OcrLineSelection? selection = _selectOcrLineRun(source, usable);
   if (selection == null) {
     return const GalCalibrationOcrAlignment(
@@ -579,10 +708,30 @@ GalCalibrationOcrAlignment alignGalCalibrationOcrLines({
           cellOffset: cellOffset,
           lineIndex: lineIndex,
           rect: ocrUnit.rect,
-          confidence: line.score.clamp(0, 1) * (exact ? 1 : 0.35),
+          confidence: ocrUnit.confidence * (exact ? 1 : 0.35),
         ),
       );
-      confidence += exact ? 1 : 0.35;
+      confidence += ocrUnit.confidence * (exact ? 1 : 0.35);
+    }
+    final List<GalCalibrationOcrGlyph> reliable = glyphs
+        .where(
+          (GalCalibrationOcrGlyph g) =>
+              g.confidence.isFinite &&
+              g.confidence >= .5 &&
+              g.rect.centerX.isFinite &&
+              g.rect.centerY.isFinite &&
+              g.rect.width > 0,
+        )
+        .toList();
+    if (reliable.length < math.max(1, (sourceVisible * .65).ceil()) ||
+        (sourceVisible >= 5 &&
+            reliable.last.cellOffset - reliable.first.cellOffset <
+                (span.end - span.start - 1) * .6)) {
+      return const GalCalibrationOcrAlignment(
+        lines: [],
+        confidence: 0,
+        reason: 'ocr_geometry_weak',
+      );
     }
     matched.add(
       GalCalibrationOcrMatchedLine(
@@ -595,13 +744,9 @@ GalCalibrationOcrAlignment alignGalCalibrationOcrLines({
       ),
     );
   }
-  final int totalGlyphs = matched.fold<int>(
-    0,
-    (int total, GalCalibrationOcrMatchedLine line) =>
-        total + line.glyphs.length,
-  );
+  final int totalGlyphs = source.where((_SourceUnit u) => !u.whitespace).length;
   final double normalized = totalGlyphs == 0 ? 0 : confidence / totalGlyphs;
-  if (normalized < 0.35) {
+  if (normalized < 0.65) {
     return GalCalibrationOcrAlignment(
       lines: const <GalCalibrationOcrMatchedLine>[],
       confidence: normalized,
@@ -611,6 +756,83 @@ GalCalibrationOcrAlignment alignGalCalibrationOcrLines({
   return GalCalibrationOcrAlignment(
     lines: List.unmodifiable(matched),
     confidence: normalized,
+  );
+}
+
+// Detectors may split a horizontal row at spaces or changes of ink color.
+// Join only nearby boxes on the same baseline; preserve measured token x's.
+List<GalCalibrationOcrLine> _mergeRowFragments(
+  List<GalCalibrationOcrLine> input,
+) {
+  final List<List<GalCalibrationOcrLine>> rows =
+      <List<GalCalibrationOcrLine>>[];
+  final List<GalCalibrationOcrLine> ordered = input.toList()
+    ..sort(
+      (GalCalibrationOcrLine a, GalCalibrationOcrLine b) =>
+          a.rect.centerY.compareTo(b.rect.centerY),
+    );
+  for (final GalCalibrationOcrLine line in ordered) {
+    List<GalCalibrationOcrLine>? owner;
+    for (final List<GalCalibrationOcrLine> row in rows) {
+      final OcrRect anchor = row.first.rect;
+      final double minHeight = math.min(anchor.height, line.rect.height);
+      final double overlap =
+          math.min(anchor.bottom, line.rect.bottom) -
+          math.max(anchor.top, line.rect.top);
+      if (minHeight / math.max(anchor.height, line.rect.height) < .65 ||
+          overlap < minHeight * .65) {
+        continue;
+      }
+      if (row.any((GalCalibrationOcrLine other) {
+        final double gap =
+            math.max(other.rect.left, line.rect.left) -
+            math.min(other.rect.right, line.rect.right);
+        return gap >= -minHeight * .3 && gap <= minHeight * 2.5;
+      })) {
+        owner = row;
+        break;
+      }
+    }
+    if (owner == null) {
+      rows.add(<GalCalibrationOcrLine>[line]);
+    } else {
+      owner.add(line);
+    }
+  }
+  return <GalCalibrationOcrLine>[
+    for (final List<GalCalibrationOcrLine> row in rows)
+      _mergeOneRow(
+        row..sort(
+          (GalCalibrationOcrLine a, GalCalibrationOcrLine b) =>
+              a.rect.left.compareTo(b.rect.left),
+        ),
+      ),
+  ]..sort(
+    (GalCalibrationOcrLine a, GalCalibrationOcrLine b) =>
+        a.rect.centerY.compareTo(b.rect.centerY),
+  );
+}
+
+GalCalibrationOcrLine _mergeOneRow(List<GalCalibrationOcrLine> row) {
+  if (row.length == 1) return row.single;
+  return GalCalibrationOcrLine(
+    text: row.map((GalCalibrationOcrLine line) => line.text).join(),
+    rect: OcrRect(
+      left: row.first.rect.left,
+      right: row.last.rect.right,
+      top: row
+          .map((GalCalibrationOcrLine line) => line.rect.top)
+          .reduce(math.min),
+      bottom: row
+          .map((GalCalibrationOcrLine line) => line.rect.bottom)
+          .reduce(math.max),
+    ),
+    score: row.map((GalCalibrationOcrLine line) => line.score).reduce(math.min),
+    tokens: <GalCalibrationOcrToken>[
+      for (final GalCalibrationOcrLine line in row)
+        for (final _OcrUnit token in _ocrUnits(line))
+          GalCalibrationOcrToken(token.value, token.rect, token.confidence),
+    ],
   );
 }
 
@@ -642,290 +864,216 @@ Future<GalCalibrationImageFit> fitGalCalibrationOcrGrid(
       );
     }
   }
-  final List<int> trainingIndices = [
+  final List<int> training = <int>[
     for (int i = 0; i < draft.samples.length; i++)
       if (!draft.samples[i].validation) i,
   ];
-  final List<int> multilineTraining = [
-    for (final int i in trainingIndices)
-      if (alignments[i].lines.length >= 2) i,
-  ];
-  if (multilineTraining.isEmpty) {
+  final List<double> pitches = <double>[];
+  final List<double> heights = <double>[];
+  final List<double> advances = <double>[];
+  for (final int i in training) {
+    final double height = draft.samples[i].capture.referenceClient.heightPx
+        .toDouble();
+    final List<GalCalibrationOcrMatchedLine> lines = alignments[i].lines;
+    for (final GalCalibrationOcrMatchedLine line in lines) {
+      heights.add(line.rect.height / height);
+      final List<GalCalibrationOcrGlyph> glyphs = _reliableGlyphs(line);
+      // Long baselines reduce the effect of CTC's horizontal quantization and
+      // small punctuation. Adjacent differences alone amplify that noise.
+      final List<double> slopes = <double>[];
+      for (int a = 0; a < glyphs.length; a++) {
+        for (int b = a + 1; b < glyphs.length; b++) {
+          final int delta = glyphs[b].cellOffset - glyphs[a].cellOffset;
+          if (delta < (glyphs.length >= 5 ? 3 : 1)) continue;
+          final double slope =
+              (glyphs[b].rect.centerX - glyphs[a].rect.centerX) / delta;
+          if (slope > 0) slopes.add(slope / height);
+        }
+      }
+      if (slopes.isNotEmpty) pitches.add(_median(slopes));
+    }
+    for (int row = 1; row < lines.length; row++) {
+      advances.add(
+        (lines[row].rect.centerY - lines[row - 1].rect.centerY) / height,
+      );
+    }
+  }
+  if (advances.isEmpty) {
     return const GalCalibrationImageFit(reason: 'multiline_required');
   }
-
-  final List<
-    ({
-      int index,
-      double pitch,
-      double cellHeight,
-      double? lineAdvance,
-      double origin,
-      double top,
-      int columns,
-    })
-  >
-  measurements = [];
-  final List<double> normalizedPitches = <double>[];
-  final List<double> normalizedAdvances = <double>[];
-  final List<double> normalizedCellHeights = <double>[];
-  for (final int i in trainingIndices) {
-    final GalCalibrationOcrAlignment alignment = alignments[i];
+  final double pitch = _median(pitches);
+  final double lineAdvance = _median(advances);
+  // DB detector boxes include an unclip margin. Hit rows end at the midpoint
+  // between baselines so that that margin cannot create overlapping targets.
+  final double cellHeight = math.min(_median(heights), lineAdvance);
+  if (!pitch.isFinite ||
+      !cellHeight.isFinite ||
+      !lineAdvance.isFinite ||
+      pitch <= 0 ||
+      cellHeight <= 0 ||
+      lineAdvance < cellHeight) {
+    return const GalCalibrationImageFit(reason: 'ocr_geometry_weak');
+  }
+  final List<double> lefts = <double>[];
+  final List<double> tops = <double>[];
+  for (final int i in training) {
     final GalLookupReferenceClientV1 client =
         draft.samples[i].capture.referenceClient;
-    final List<double> pitches = <double>[];
-    final List<double> lineAdvances = <double>[];
-    final List<double> cellHeights = <double>[];
-    for (final GalCalibrationOcrMatchedLine line in alignment.lines) {
-      cellHeights.add(line.rect.height);
-      final List<GalCalibrationOcrGlyph> glyphs = line.glyphs.toList()
-        ..sort(
-          (GalCalibrationOcrGlyph a, GalCalibrationOcrGlyph b) =>
-              a.cellOffset.compareTo(b.cellOffset),
-        );
-      for (int g = 1; g < glyphs.length; g++) {
-        final GalCalibrationOcrGlyph a = glyphs[g - 1];
-        final GalCalibrationOcrGlyph b = glyphs[g];
-        final int cells = b.cellOffset - a.cellOffset;
-        if (cells > 0 && b.rect.centerX > a.rect.centerX) {
-          pitches.add((b.rect.centerX - a.rect.centerX) / cells);
-        }
-      }
+    final List<GalCalibrationOcrMatchedLine> lines = alignments[i].lines;
+    final List<GalCalibrationOcrGlyph> first = _reliableGlyphs(lines.first);
+    if (first.isEmpty) {
+      return GalCalibrationImageFit(
+        reason: 'ocr_geometry_weak',
+        sampleIndex: i,
+      );
     }
-    if (pitches.isEmpty) {
-      // A very short OCR line can contain only one matched glyph per detected
-      // box, leaving no pairwise pitch.  Its whole line box still gives a
-      // useful coarse estimate; another multiline sample supplies the final
-      // shared median.
-      for (final GalCalibrationOcrMatchedLine line in alignment.lines) {
-        if (line.cellCount > 1 && line.rect.width > 0) {
-          pitches.add(line.rect.width / line.cellCount);
-        }
-      }
-    }
-    for (int line = 1; line < alignment.lines.length; line++) {
-      final double delta =
-          alignment.lines[line].rect.top - alignment.lines[line - 1].rect.top;
-      if (delta > 0) lineAdvances.add(delta);
-    }
-    final double samplePitch = _median(
-      pitches.where((double v) => v > 0).toList(),
+    lefts.add(
+      _median(<double>[
+        for (final GalCalibrationOcrGlyph glyph in first)
+          (glyph.rect.centerX -
+                  (glyph.cellOffset + .5) * pitch * client.heightPx) /
+              client.widthPx,
+      ]),
     );
-    final double sampleCellHeight = _median(
-      cellHeights.where((double v) => v > 0).toList(),
+    tops.add(
+      _median(<double>[
+        for (int row = 0; row < lines.length; row++)
+          lines[row].rect.centerY / client.heightPx -
+              row * lineAdvance -
+              cellHeight / 2,
+      ]),
     );
-    final double? sampleLineAdvance = lineAdvances.isEmpty
-        ? null
-        : _median(lineAdvances.where((double v) => v > 0).toList());
-    if (!samplePitch.isFinite ||
-        !sampleCellHeight.isFinite ||
-        samplePitch <= 0 ||
-        sampleCellHeight <= 0) {
-      return GalCalibrationImageFit(
-        reason: 'ocr_geometry_weak',
-        sampleIndex: i,
-      );
-    }
-    final List<double> originCandidates = <double>[];
-    // The first visual line has no continuation indent.  Later lines may be
-    // intentionally shifted by a space, so using them to estimate the origin
-    // would bake that indent into the shared left edge.
-    for (final GalCalibrationOcrGlyph glyph in alignment.lines.first.glyphs) {
-      originCandidates.add(
-        (glyph.rect.centerX - (glyph.cellOffset + 0.5) * samplePitch) /
-            client.widthPx,
-      );
-    }
-    final double sampleOrigin = _median(originCandidates);
-    final double sampleTop = alignment.lines.first.rect.top / client.heightPx;
-    if (!sampleOrigin.isFinite || !sampleTop.isFinite) {
-      return GalCalibrationImageFit(
-        reason: 'ocr_geometry_weak',
-        sampleIndex: i,
-      );
-    }
-    int sampleColumns = 0;
-    for (int lineIndex = 0; lineIndex < alignment.lines.length; lineIndex++) {
-      final GalCalibrationOcrMatchedLine line = alignment.lines[lineIndex];
-      final List<GalCalibrationOcrGlyph> glyphs = line.glyphs.toList()
-        ..sort(
-          (GalCalibrationOcrGlyph a, GalCalibrationOcrGlyph b) =>
-              a.cellOffset.compareTo(b.cellOffset),
-        );
-      if (glyphs.isEmpty) continue;
-      final GalCalibrationOcrGlyph first = glyphs.first;
-      final int inferred =
-          ((first.rect.centerX - sampleOrigin * client.widthPx) / samplePitch -
-                  first.cellOffset -
-                  0.5)
-              .round();
-      final int indent = lineIndex == 0 ? 0 : inferred;
-      if (indent < 0 || indent > 8) {
-        return GalCalibrationImageFit(
-          reason: 'ocr_indent_ambiguous',
-          sampleIndex: i,
-        );
-      }
-      sampleColumns = math.max(sampleColumns, indent + line.cellCount);
-    }
-    if (sampleColumns < 2 || sampleColumns > 128) {
-      return GalCalibrationImageFit(
-        reason: 'ocr_geometry_weak',
-        sampleIndex: i,
-      );
-    }
-    measurements.add((
-      index: i,
-      pitch: samplePitch,
-      cellHeight: sampleCellHeight,
-      lineAdvance: sampleLineAdvance,
-      origin: sampleOrigin,
-      top: sampleTop,
-      columns: sampleColumns,
-    ));
-    normalizedPitches.add(samplePitch / client.heightPx);
-    normalizedCellHeights.add(sampleCellHeight / client.heightPx);
-    if (sampleLineAdvance != null) {
-      normalizedAdvances.add(sampleLineAdvance / client.heightPx);
-    }
   }
-  final double pitchPerHeight = _median(normalizedPitches);
-  final double cellHeightPerHeight = _median(normalizedCellHeights);
-  final double lineAdvancePerHeight = _median(normalizedAdvances);
-  if (!pitchPerHeight.isFinite ||
-      !cellHeightPerHeight.isFinite ||
-      !lineAdvancePerHeight.isFinite ||
-      pitchPerHeight <= 0 ||
-      cellHeightPerHeight <= 0 ||
-      lineAdvancePerHeight < cellHeightPerHeight * 0.65) {
-    return const GalCalibrationImageFit(reason: 'ocr_geometry_weak');
-  }
-
-  final List<double> origins = <double>[];
-  final List<double> tops = <double>[];
-  for (final measurement in measurements) {
-    final GalCalibrationOcrAlignment alignment = alignments[measurement.index];
-    if (alignment.lines.isEmpty) continue;
-    origins.add(measurement.origin);
-    tops.add(measurement.top);
-  }
-  final double origin = _median(origins);
+  final double left = _median(lefts);
   final double top = _median(tops);
-  if (!origin.isFinite || !top.isFinite) {
+  if (!left.isFinite || !top.isFinite) {
     return const GalCalibrationImageFit(reason: 'ocr_geometry_weak');
   }
-
-  final List<int> plainIndents = <int>[];
-  final List<int> quoteIndents = <int>[];
-  int columns = 0;
-  double maxBodyHeight = 0;
-  final List<double> normalizedBodyWidths = <double>[];
-  for (final measurement in measurements) {
-    final int i = measurement.index;
-    final GalCalibrationOcrAlignment alignment = alignments[i];
+  final Set<int> plainIndents = <int>{};
+  final Set<int> quotedIndents = <int>{};
+  final List<({int columns, bool softWrap, bool punctuation, int sample})>
+  rowEnds = [];
+  final Set<int> wrapColumns = <int>{};
+  double observedHeight = 0;
+  for (final int i in training) {
     final GalLookupCalibrationCapture capture = draft.samples[i].capture;
-    final int imageWidth = capture.referenceClient.widthPx;
-    final int imageHeight = capture.referenceClient.heightPx;
-    final double pitch = pitchPerHeight * imageHeight;
-    final double cellHeight = cellHeightPerHeight * imageHeight;
-    final double lineAdvance = lineAdvancePerHeight * imageHeight;
+    final GalLookupReferenceClientV1 client = capture.referenceClient;
+    final List<_SourceUnit> source = _sourceUnits(capture.sourceText);
+    final List<GalCalibrationOcrMatchedLine> lines = alignments[i].lines;
     final bool quoted =
         capture.sourceText.startsWith('「') ||
         capture.sourceText.startsWith('『');
-    int maxLineEnd = 0;
-    int sampleColumns = 0;
-    for (int lineIndex = 0; lineIndex < alignment.lines.length; lineIndex++) {
-      final GalCalibrationOcrMatchedLine line = alignment.lines[lineIndex];
-      final List<GalCalibrationOcrGlyph> glyphs = line.glyphs.toList()
-        ..sort(
-          (GalCalibrationOcrGlyph a, GalCalibrationOcrGlyph b) =>
-              a.cellOffset.compareTo(b.cellOffset),
+    observedHeight = math.max(
+      observedHeight,
+      (lines.length - 1) * lineAdvance + cellHeight,
+    );
+    for (int row = 0; row < lines.length; row++) {
+      final GalCalibrationOcrMatchedLine line = lines[row];
+      final List<GalCalibrationOcrGlyph> glyphs = _reliableGlyphs(line);
+      if (glyphs.isEmpty) {
+        return GalCalibrationImageFit(
+          reason: 'ocr_geometry_weak',
+          sampleIndex: i,
         );
-      if (glyphs.isEmpty) continue;
-      final GalCalibrationOcrGlyph first = glyphs.first;
-      final int inferred =
-          ((first.rect.centerX - measurement.origin * imageWidth) / pitch -
-                  first.cellOffset -
-                  0.5)
-              .round();
-      final int indent = lineIndex == 0 ? 0 : inferred;
-      if (indent < 0 || indent > 8) {
+      }
+      final double offset = _median(<double>[
+        for (final GalCalibrationOcrGlyph glyph in glyphs)
+          (glyph.rect.centerX - left * client.widthPx) /
+                  (pitch * client.heightPx) -
+              glyph.cellOffset -
+              .5,
+      ]);
+      final int indent = row == 0 ? 0 : offset.round();
+      if (indent < 0 || indent > 8 || (offset - indent).abs() > .35) {
         return GalCalibrationImageFit(
           reason: 'ocr_indent_ambiguous',
           sampleIndex: i,
         );
       }
-      if (lineIndex > 0) {
-        (quoted ? quoteIndents : plainIndents).add(indent);
-      }
-      columns = math.max(columns, indent + line.cellCount);
-      sampleColumns = math.max(sampleColumns, indent + line.cellCount);
-      maxLineEnd = math.max(maxLineEnd, lineIndex);
-      for (final GalCalibrationOcrGlyph glyph in glyphs) {
-        final double expectedX =
-            origin * imageWidth + (indent + glyph.cellOffset + 0.5) * pitch;
-        final double expectedY =
-            top * imageHeight + lineIndex * lineAdvance + cellHeight / 2;
-        if ((glyph.rect.centerX - expectedX).abs() > pitch * 0.65 ||
-            (glyph.rect.centerY - expectedY).abs() > cellHeight * 0.9) {
-          return GalCalibrationImageFit(
-            reason: 'ocr_geometry_inconsistent',
-            sampleIndex: i,
-          );
-        }
+      if (row > 0) (quoted ? quotedIndents : plainIndents).add(indent);
+      final bool softWrap =
+          row + 1 < lines.length &&
+          line.sourceEnd < source.length &&
+          !source[line.sourceEnd].hardBreakBefore;
+      rowEnds.add((
+        columns: indent + line.cellCount,
+        softWrap: softWrap,
+        punctuation:
+            line.sourceEnd > 0 &&
+            _hangingPunctuation(source[line.sourceEnd - 1].value),
+        sample: i,
+      ));
+      // Only a *natural* wrap proves capacity. A short sentence or an
+      // explicit newline is not evidence of the dialogue box's right edge.
+      if (row + 1 < lines.length &&
+          line.sourceEnd < source.length &&
+          !source[line.sourceEnd].hardBreakBefore) {
+        wrapColumns.add(indent + line.cellCount);
       }
     }
-    normalizedBodyWidths.add(sampleColumns * pitch / imageWidth);
-    maxBodyHeight = math.max(
-      maxBodyHeight,
-      (maxLineEnd * lineAdvance + cellHeight) / imageHeight,
-    );
   }
-  int mode(List<int> values) {
-    if (values.isEmpty) return 0;
-    final Map<int, int> counts = <int, int>{};
-    for (final int value in values) {
-      counts[value] = (counts[value] ?? 0) + 1;
+  if (wrapColumns.isEmpty) {
+    return const GalCalibrationImageFit(reason: 'multiline_required');
+  }
+  final int columns = wrapColumns.reduce(math.min);
+  bool hanging = false;
+  for (final row in rowEnds) {
+    if (row.columns > columns || (row.softWrap && row.columns != columns)) {
+      if (row.columns == columns + 1 && row.punctuation) {
+        hanging = true;
+      } else {
+        return GalCalibrationImageFit(
+          reason: 'ocr_geometry_inconsistent',
+          sampleIndex: row.sample,
+        );
+      }
     }
-    return counts.entries
-        .reduce(
-          (MapEntry<int, int> a, MapEntry<int, int> b) =>
-              a.value >= b.value ? a : b,
-        )
-        .key;
   }
-
-  final int plainIndent = mode(plainIndents);
-  final int quoteIndent = quoteIndents.isEmpty
+  if (plainIndents.length > 1 || quotedIndents.length > 1) {
+    return const GalCalibrationImageFit(reason: 'ocr_geometry_inconsistent');
+  }
+  final int plainIndent = plainIndents.isEmpty ? 0 : plainIndents.single;
+  final int quotedIndent = quotedIndents.isEmpty
       ? plainIndent
-      : mode(quoteIndents);
-  if (plainIndents.any((int v) => v != plainIndent) ||
-      quoteIndents.any((int v) => v != quoteIndent) ||
-      columns < 2 ||
-      columns > 128) {
-    return const GalCalibrationImageFit(reason: 'ocr_indent_ambiguous');
-  }
-
+      : quotedIndents.single;
   final GalLookupCellGridV1 grid = GalLookupCellGridV1(
-    advancePerClientHeight: pitchPerHeight,
-    lineAdvancePerClientHeight: lineAdvancePerHeight,
-    cellHeightPerClientHeight: cellHeightPerHeight,
+    advancePerClientHeight: pitch,
+    lineAdvancePerClientHeight: lineAdvance,
+    cellHeightPerClientHeight: cellHeight,
     columns: columns,
     continuationIndent: plainIndent,
-    quotedContinuationIndent: quoteIndent,
+    quotedContinuationIndent: quotedIndent,
+    hangingPunctuation: hanging,
   );
-  final double left = origin;
-  final double bodyTop = top;
-  final double bodyWidth = _median(normalizedBodyWidths);
-  final double bodyHeight = math.max(
-    maxBodyHeight,
-    cellHeightPerHeight + lineAdvancePerHeight,
+  // Compute the frame from the common capacity, never the median length of
+  // observed sentences. Keep the rough frame's vertical room for longer text.
+  // One physical pixel covers the native integer bounds rounding.
+  double bodyWidth = 0;
+  double roundingHeight = 0;
+  for (final int i in training) {
+    final GalLookupReferenceClientV1 client =
+        draft.samples[i].capture.referenceClient;
+    bodyWidth = math.max(
+      bodyWidth,
+      ((columns + (hanging ? 1 : 0)) * pitch * client.heightPx + 1) /
+          client.widthPx,
+    );
+    roundingHeight = math.max(roundingHeight, 1 / client.heightPx);
+  }
+  // A roughly drawn bottom edge can cut through a row. Round that capacity
+  // outward to a complete row, without using held-out samples to fit geometry.
+  final int roughRows = math.max(
+    1,
+    ((draft.rect.bottom - top - cellHeight) / lineAdvance).ceil() + 1,
   );
+  final double bodyHeight =
+      math.max(observedHeight, (roughRows - 1) * lineAdvance + cellHeight) +
+      roundingHeight;
   final GalLookupNormalizedRectV1 rect = GalLookupNormalizedRectV1(
     left: left,
-    top: bodyTop,
+    top: top,
     width: bodyWidth,
-    height: bodyHeight,
+    height: math.min(1 - top, bodyHeight),
   );
   final GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(
     fontFamily: draft.layout.fontFamily,
@@ -946,18 +1094,69 @@ Future<GalCalibrationImageFit> fitGalCalibrationOcrGrid(
     samples: draft.samples,
   );
   for (int i = 0; i < result.samples.length; i++) {
+    final GalLookupCalibrationCapture capture = result.samples[i].capture;
     final GalCalibrationPreview preview = await build(
-      text: result.samples[i].capture.sourceText,
-      client: result.samples[i].capture.referenceClient,
+      text: capture.sourceText,
+      client: capture.referenceClient,
       rect: result.rect,
       layout: result.layout,
     );
     if (!preview.accepted) {
       return GalCalibrationImageFit(reason: 'preview_rejected', sampleIndex: i);
     }
+    // Validate actual native boxes against *every* screenshot, including the
+    // held-out samples. They never influence fitted parameters above.
+    final double pxPitch = pitch * capture.referenceClient.heightPx;
+    final double pxHeight = cellHeight * capture.referenceClient.heightPx;
+    for (final GalCalibrationOcrMatchedLine line in alignments[i].lines) {
+      final List<GalCalibrationOcrGlyph> glyphs = _reliableGlyphs(line);
+      if (glyphs.isEmpty) {
+        return GalCalibrationImageFit(
+          reason: 'ocr_geometry_weak',
+          sampleIndex: i,
+        );
+      }
+      for (final GalCalibrationOcrGlyph glyph in glyphs) {
+        final GalCalibrationBox? box = preview.boxForIndex(glyph.sourceIndex);
+        if (box == null ||
+            box.charIndex != glyph.sourceIndex ||
+            box.charLength != glyph.charLength ||
+            (box.rect.center.dx - glyph.rect.centerX).abs() >
+                pxPitch * .42 + 1 ||
+            (box.rect.center.dy - glyph.rect.centerY).abs() >
+                pxHeight * .5 + 1) {
+          return GalCalibrationImageFit(
+            reason: 'ocr_geometry_inconsistent',
+            sampleIndex: i,
+          );
+        }
+      }
+    }
   }
   return GalCalibrationImageFit(draft: result);
 }
+
+bool _hangingPunctuation(String value) =>
+    value.runes.length == 1 && '」』）)]｝}】〕〉》、。，．！？!?'.contains(value);
+
+List<GalCalibrationOcrGlyph> _reliableGlyphs(
+  GalCalibrationOcrMatchedLine line,
+) =>
+    line.glyphs
+        .where(
+          (GalCalibrationOcrGlyph glyph) =>
+              glyph.confidence.isFinite &&
+              glyph.confidence >= .5 &&
+              glyph.rect.centerX.isFinite &&
+              glyph.rect.centerY.isFinite &&
+              glyph.rect.width > 0 &&
+              glyph.rect.height > 0,
+        )
+        .toList()
+      ..sort(
+        (GalCalibrationOcrGlyph a, GalCalibrationOcrGlyph b) =>
+            a.cellOffset.compareTo(b.cellOffset),
+      );
 
 class GalCalibrationOcrEngine {
   GalCalibrationOcrEngine._({required this.detector, required this.recognizer});
@@ -1011,20 +1210,30 @@ class GalCalibrationOcrEngine {
       p.join(directory.path, kPpOcrDetFileName),
       providers: detectionProviders,
     );
-    final OcrSession recSession = await factory.createSession(
-      p.join(directory.path, kPpOcrRecFileName),
-      providers: recognitionProviders,
-    );
-    final String dict = await File(
-      p.join(directory.path, kPpOcrRecDictFileName),
-    ).readAsString();
-    return GalCalibrationOcrEngine._(
-      detector: PpOcrLineDetector(detSession),
-      recognizer: PpOcrLineRecognizer(
-        recSession,
-        vocab: buildPpOcrCtcVocab(parsePpOcrCharacterDict(dict)),
-      ),
-    );
+    OcrSession? recSession;
+    try {
+      recSession = await factory.createSession(
+        p.join(directory.path, kPpOcrRecFileName),
+        providers: recognitionProviders,
+      );
+      final String dict = await File(
+        p.join(directory.path, kPpOcrRecDictFileName),
+      ).readAsString();
+      return GalCalibrationOcrEngine._(
+        detector: PpOcrLineDetector(detSession),
+        recognizer: PpOcrLineRecognizer(
+          recSession,
+          vocab: buildPpOcrCtcVocab(parsePpOcrCharacterDict(dict)),
+        ),
+      );
+    } catch (_) {
+      try {
+        await recSession?.close();
+      } finally {
+        await detSession.close();
+      }
+      rethrow;
+    }
   }
 
   Future<List<GalCalibrationOcrLine>> read(
@@ -1032,7 +1241,7 @@ class GalCalibrationOcrEngine {
     GalLookupNormalizedRectV1 rect,
     GalLookupReferenceClientV1 client,
   ) async {
-    final img.Image? decoded = img.decodePng(pngBytes);
+    final img.Image? decoded = await compute(img.decodePng, pngBytes);
     if (decoded == null ||
         decoded.width != client.widthPx ||
         decoded.height != client.heightPx) {
@@ -1070,22 +1279,26 @@ class GalCalibrationOcrEngine {
       width: right - left,
       height: bottom - top,
     );
-    final List<PpTextLine> detected = orderLinesForReading(
-      filterThinLines(
+    // Manga's median-thickness filter can delete a short dialogue row.
+    // Text matching below determines which detected rows belong to the Hook.
+    final List<PpTextLine> detected =
         (await detector.detect(
           crop,
-        )).where((PpTextLine line) => !line.vertical).toList(),
-      ),
-    );
+        )).where((PpTextLine line) => !line.vertical).toList()..sort(
+          (PpTextLine a, PpTextLine b) =>
+              a.rect.centerY.compareTo(b.rect.centerY),
+        );
     final List<GalCalibrationOcrLine> result = <GalCalibrationOcrLine>[];
     for (final PpTextLine line in detected) {
       final int x = line.rect.left.floor().clamp(0, crop.width - 1);
       final int y = line.rect.top.floor().clamp(0, crop.height - 1);
       final int r = line.rect.right.ceil().clamp(x + 1, crop.width);
       final int b = line.rect.bottom.ceil().clamp(y + 1, crop.height);
-      final String text = await recognizer.recognizeLine(
-        img.copyCrop(crop, x: x, y: y, width: r - x, height: b - y),
-      );
+      final PpOcrLineRecognition recognition = await recognizer
+          .recognizeLineDetailed(
+            img.copyCrop(crop, x: x, y: y, width: r - x, height: b - y),
+          );
+      final String text = recognition.text;
       if (text.trim().isEmpty) continue;
       result.add(
         GalCalibrationOcrLine(
@@ -1097,6 +1310,19 @@ class GalCalibrationOcrEngine {
             bottom: top + line.rect.bottom,
           ),
           score: line.score,
+          tokens: <GalCalibrationOcrToken>[
+            for (final PpOcrCtcToken token in recognition.tokens)
+              GalCalibrationOcrToken(
+                token.text,
+                OcrRect(
+                  left: left + x + (token.left ?? 0),
+                  top: (top + y).toDouble(),
+                  right: left + x + (token.right ?? 0),
+                  bottom: (top + b).toDouble(),
+                ),
+                token.hasPosition ? token.confidence : 0,
+              ),
+          ],
         ),
       );
     }
@@ -1104,8 +1330,11 @@ class GalCalibrationOcrEngine {
   }
 
   Future<void> close() async {
-    await detector.close();
-    await recognizer.close();
+    try {
+      await recognizer.close();
+    } finally {
+      await detector.close();
+    }
   }
 }
 
@@ -1118,48 +1347,65 @@ class GalCalibrationOcrRunner {
 
   final GalCalibrationOcrModelStore models;
   final OcrSessionFactory Function()? _factoryBuilder;
-  GalCalibrationOcrEngine? _engine;
+  bool _fitting = false;
 
   Future<GalCalibrationImageFit?> fit(
     GalLookupCalibrationDraft draft, {
     required GalCalibrationPreviewBuilder build,
   }) async {
-    final GalCalibrationOcrModelStatus status = await models.status();
-    if (!status.ready) return null;
-    final Directory directory = await models.directory();
-    _engine ??= await GalCalibrationOcrEngine.create(
-      directory: directory,
-      factoryBuilder: _factoryBuilder,
-    );
-    final List<GalCalibrationOcrAlignment> alignments = [];
-    for (int i = 0; i < draft.samples.length; i++) {
-      final GalCalibrationSample sample = draft.samples[i];
-      final List<GalCalibrationOcrLine> lines = await _engine!.read(
-        sample.capture.pngBytes,
-        draft.rect,
-        sample.capture.referenceClient,
+    if (_fitting) return const GalCalibrationImageFit(reason: 'ocr_busy');
+    _fitting = true;
+    GalCalibrationOcrEngine? engine;
+    try {
+      final GalCalibrationOcrModelStatus status = await models.status();
+      if (!status.ready) return null;
+      engine = await GalCalibrationOcrEngine.create(
+        directory: await models.directory(),
+        factoryBuilder: _factoryBuilder,
       );
-      if (lines.isEmpty) {
-        return GalCalibrationImageFit(
-          reason: 'ocr_lines_not_found',
-          sampleIndex: i,
+      final List<GalCalibrationOcrAlignment> alignments =
+          <GalCalibrationOcrAlignment>[];
+      for (int i = 0; i < draft.samples.length; i++) {
+        final GalCalibrationSample sample = draft.samples[i];
+        final List<GalCalibrationOcrLine> lines = await engine.read(
+          sample.capture.pngBytes,
+          draft.rect,
+          sample.capture.referenceClient,
         );
+        if (lines.isEmpty) {
+          return GalCalibrationImageFit(
+            reason: 'ocr_lines_not_found',
+            sampleIndex: i,
+          );
+        }
+        final GalCalibrationOcrAlignment alignment = await compute(
+          _alignCapturedLines,
+          (text: sample.capture.sourceText, lines: lines),
+        );
+        if (!alignment.accepted) {
+          return GalCalibrationImageFit(
+            reason: alignment.reason,
+            sampleIndex: i,
+          );
+        }
+        alignments.add(alignment);
       }
-      final GalCalibrationOcrAlignment alignment = alignGalCalibrationOcrLines(
-        sourceText: sample.capture.sourceText,
-        lines: lines,
-      );
-      alignments.add(alignment);
+      return await fitGalCalibrationOcrGrid(draft, alignments, build: build);
+    } finally {
+      // A fit owns both sessions, including error/closed-dialog paths. No
+      // unbounded app-global native session cache or concurrent use/disposal.
+      try {
+        await engine?.close();
+      } finally {
+        _fitting = false;
+      }
     }
-    return fitGalCalibrationOcrGrid(draft, alignments, build: build);
-  }
-
-  Future<void> close() async {
-    final GalCalibrationOcrEngine? engine = _engine;
-    _engine = null;
-    await engine?.close();
   }
 }
+
+GalCalibrationOcrAlignment _alignCapturedLines(
+  ({String text, List<GalCalibrationOcrLine> lines}) input,
+) => alignGalCalibrationOcrLines(sourceText: input.text, lines: input.lines);
 
 final GalCalibrationOcrRunner defaultGalCalibrationOcrRunner =
     GalCalibrationOcrRunner();

@@ -125,6 +125,50 @@ void main() {
     },
   );
 
+  test(
+    'cell grid accepts legacy JSON and strictly round-trips hanging mode',
+    () {
+      const GalLookupCellGridV1 legacyGrid = GalLookupCellGridV1(
+        advancePerClientHeight: 0.03,
+        lineAdvancePerClientHeight: 0.04,
+        cellHeightPerClientHeight: 0.035,
+        columns: 24,
+        continuationIndent: 2,
+        quotedContinuationIndent: 3,
+      );
+      final Map<String, Object?> legacyJson = legacyGrid.toJson();
+      expect(legacyJson.containsKey('hangingPunctuation'), isFalse);
+      expect(GalLookupCellGridV1.tryFromJson(legacyJson), legacyGrid);
+      final Map<String, Object?> explicitFalse = Map<String, Object?>.of(
+        legacyJson,
+      )..['hangingPunctuation'] = false;
+      expect(GalLookupCellGridV1.tryFromJson(explicitFalse), legacyGrid);
+
+      const GalLookupCellGridV1 hangingGrid = GalLookupCellGridV1(
+        advancePerClientHeight: 0.03,
+        lineAdvancePerClientHeight: 0.04,
+        cellHeightPerClientHeight: 0.035,
+        columns: 24,
+        continuationIndent: 2,
+        quotedContinuationIndent: 3,
+        hangingPunctuation: true,
+      );
+      final Map<String, Object?> hangingJson = hangingGrid.toJson();
+      expect(hangingJson['hangingPunctuation'], true);
+      expect(GalLookupCellGridV1.tryFromJson(hangingJson), hangingGrid);
+      expect(hangingGrid, isNot(legacyGrid));
+      expect(hangingGrid.hashCode, isNot(legacyGrid.hashCode));
+
+      final Map<String, Object?> wrongType = Map<String, Object?>.of(
+        hangingJson,
+      )..['hangingPunctuation'] = 1;
+      expect(GalLookupCellGridV1.tryFromJson(wrongType), isNull);
+      final Map<String, Object?> unknown = Map<String, Object?>.of(legacyJson)
+        ..['unexpected'] = false;
+      expect(GalLookupCellGridV1.tryFromJson(unknown), isNull);
+    },
+  );
+
   test('present but malformed cell grid rejects the complete layout', () {
     const GalLookupCellGridV1 grid = GalLookupCellGridV1(
       advancePerClientHeight: 0.03,

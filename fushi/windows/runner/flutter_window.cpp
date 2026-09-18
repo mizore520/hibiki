@@ -1154,15 +1154,22 @@ bool ExactIntFromValue(const flutter::EncodableMap* map, const char* key,
 }
 
 bool HasExactCellGridKeys(const flutter::EncodableMap* map) {
-  static constexpr const char* kKeys[] = {
+  static constexpr const char* kLegacyKeys[] = {
       "advancePerClientHeight", "lineAdvancePerClientHeight",
       "cellHeightPerClientHeight", "columns", "continuationIndent",
       "quotedContinuationIndent"};
-  if (map == nullptr || map->size() != sizeof(kKeys) / sizeof(kKeys[0]))
+  constexpr size_t kLegacyKeyCount =
+      sizeof(kLegacyKeys) / sizeof(kLegacyKeys[0]);
+  if (map == nullptr ||
+      (map->size() != kLegacyKeyCount && map->size() != kLegacyKeyCount + 1))
     return false;
-  for (const char* key : kKeys) {
+  for (const char* key : kLegacyKeys) {
     if (map->find(flutter::EncodableValue(key)) == map->end()) return false;
   }
+  const auto hanging = map->find(flutter::EncodableValue("hangingPunctuation"));
+  if (map->size() == kLegacyKeyCount) return hanging == map->end();
+  if (hanging == map->end() || std::get_if<bool>(&hanging->second) == nullptr)
+    return false;
   return true;
 }
 
@@ -1208,6 +1215,11 @@ AttachedTextSurfaceWindow::Layout AttachedLayoutFromArgs(
                                &grid.continuation_indent);
       (void)ExactIntFromValue(grid_map, "quotedContinuationIndent",
                                &grid.quoted_continuation_indent);
+      const auto hanging =
+          grid_map->find(flutter::EncodableValue("hangingPunctuation"));
+      if (hanging != grid_map->end()) {
+        grid.hanging_punctuation = std::get<bool>(hanging->second);
+      }
     }
     layout.cell_grid = grid;
   }
@@ -1366,21 +1378,26 @@ flutter::EncodableMap AttachedLayoutMap(
   };
   if (layout.cell_grid.has_value()) {
     const fushi::attached_text_layout::CellGrid& grid = *layout.cell_grid;
-    result[flutter::EncodableValue("cellGrid")] = flutter::EncodableValue(
-        flutter::EncodableMap{
-            {flutter::EncodableValue("advancePerClientHeight"),
-             flutter::EncodableValue(grid.advance_per_client_height)},
-            {flutter::EncodableValue("lineAdvancePerClientHeight"),
-             flutter::EncodableValue(grid.line_advance_per_client_height)},
-            {flutter::EncodableValue("cellHeightPerClientHeight"),
-             flutter::EncodableValue(grid.cell_height_per_client_height)},
-            {flutter::EncodableValue("columns"),
-             flutter::EncodableValue(grid.columns)},
-            {flutter::EncodableValue("continuationIndent"),
-             flutter::EncodableValue(grid.continuation_indent)},
-            {flutter::EncodableValue("quotedContinuationIndent"),
-             flutter::EncodableValue(grid.quoted_continuation_indent)},
-        });
+    flutter::EncodableMap serialized_grid{
+        {flutter::EncodableValue("advancePerClientHeight"),
+         flutter::EncodableValue(grid.advance_per_client_height)},
+        {flutter::EncodableValue("lineAdvancePerClientHeight"),
+         flutter::EncodableValue(grid.line_advance_per_client_height)},
+        {flutter::EncodableValue("cellHeightPerClientHeight"),
+         flutter::EncodableValue(grid.cell_height_per_client_height)},
+        {flutter::EncodableValue("columns"),
+         flutter::EncodableValue(grid.columns)},
+        {flutter::EncodableValue("continuationIndent"),
+         flutter::EncodableValue(grid.continuation_indent)},
+        {flutter::EncodableValue("quotedContinuationIndent"),
+         flutter::EncodableValue(grid.quoted_continuation_indent)},
+    };
+    if (grid.hanging_punctuation) {
+      serialized_grid[flutter::EncodableValue("hangingPunctuation")] =
+          flutter::EncodableValue(true);
+    }
+    result[flutter::EncodableValue("cellGrid")] =
+        flutter::EncodableValue(std::move(serialized_grid));
   }
   return result;
 }

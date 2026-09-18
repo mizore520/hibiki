@@ -152,6 +152,70 @@ int main() {
   assert(grid_wrapped.boxes.back().client_rect.top == body.top + 24);
   ++cases;
 
+  // A disabled grid keeps the legacy wrap point. Enabling hanging punctuation
+  // adds exactly one body cell for the terminal punctuation, then normal text
+  // starts on the continuation row.
+  const std::wstring full_line(16, L'\u3042');
+  const auto disabled_wrap =
+      layout::Preview(full_line + L"。A", client, rect, grid_style);
+  assert(disabled_wrap.ok() && disabled_wrap.boxes.size() == 18);
+  assert(disabled_wrap.boxes[16].text_position == 16);
+  assert(disabled_wrap.boxes[16].client_rect.top >
+         disabled_wrap.boxes[15].client_rect.top);
+
+  layout::Layout hanging_style = grid_style;
+  hanging_style.cell_grid->hanging_punctuation = true;
+  assert(*grid_style.cell_grid != *hanging_style.cell_grid);
+  const auto hanging =
+      layout::Preview(full_line + L"。A", client, rect, hanging_style);
+  assert(hanging.ok() && hanging.boxes.size() == 18);
+  assert(hanging.boxes[16].text_position == 16);
+  assert(hanging.boxes[16].client_rect.left == body.left + 16 * 18);
+  assert(hanging.boxes[16].client_rect.top == body.top);
+  assert(hanging.boxes[17].text_position == 17);
+  assert(hanging.boxes[17].client_rect.left == body.left + 18);
+  assert(hanging.boxes[17].client_rect.top == body.top + 24);
+
+  // Only one punctuation may hang. A second punctuation and the following
+  // ordinary character both remain in the normal continuation row.
+  const auto one_hang = layout::Preview(full_line + L"。。A", client, rect,
+                                        hanging_style);
+  assert(one_hang.ok() && one_hang.boxes.size() == 19);
+  assert(one_hang.boxes[16].client_rect.top == body.top);
+  assert(one_hang.boxes[17].client_rect.top == body.top + 24);
+  assert(one_hang.boxes[18].client_rect.top == body.top + 24);
+  assert(one_hang.boxes[18].client_rect.left == body.left + 36);
+  ++cases;
+
+  // UTF-16 offsets and explicit CRLF remain stable after a hanging cell.
+  const auto hanging_unicode = layout::Preview(
+      full_line + L"。\r\n\U0001f600A", client, rect, hanging_style);
+  assert(hanging_unicode.ok());
+  bool found_emoji = false;
+  bool found_after_break = false;
+  for (const auto &box : hanging_unicode.boxes) {
+    if (box.text_position == 19) {
+      assert(box.text_length == 2);
+      assert(box.client_rect.top == body.top + 24);
+      found_emoji = true;
+    }
+    if (box.text_position == 21) {
+      assert(box.client_rect.top == body.top + 24);
+      found_after_break = true;
+    }
+  }
+  assert(found_emoji && found_after_break);
+  ++cases;
+
+  // The fitter supplies the extra cell in bodyRect. Native layout rejects a
+  // narrower body instead of returning an out-of-bounds clickable box.
+  ExpectRejected(
+      layout::Preview(full_line + L"。", client,
+                      layout::NormalizedRect{0.1, 0.1, 0.36, 0.8},
+                      hanging_style),
+      "grid_overflow_body_rect");
+  ++cases;
+
   const auto mixed_grid = layout::Preview(
       L"\u3042A\U0001f600e\u0301", client, rect, grid_style);
   assert(mixed_grid.ok());

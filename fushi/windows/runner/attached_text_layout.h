@@ -43,6 +43,7 @@ struct CellGrid {
   int columns = 0;
   int continuation_indent = -1;
   int quoted_continuation_indent = -1;
+  bool hanging_punctuation = false;
 
   bool operator==(const CellGrid &other) const {
     return advance_per_client_height == other.advance_per_client_height &&
@@ -52,7 +53,8 @@ struct CellGrid {
                other.cell_height_per_client_height &&
            columns == other.columns &&
            continuation_indent == other.continuation_indent &&
-           quoted_continuation_indent == other.quoted_continuation_indent;
+           quoted_continuation_indent == other.quoted_continuation_indent &&
+           hanging_punctuation == other.hanging_punctuation;
   }
 
   bool operator!=(const CellGrid &other) const { return !(*this == other); }
@@ -164,6 +166,33 @@ inline bool IsGridCombiningMark(uint32_t code) {
          (code >= 0xE0100 && code <= 0xE01EF);
 }
 
+inline bool IsHangingPunctuation(uint32_t code) {
+  switch (code) {
+    case L'\u300D':  // 」
+    case L'\u300F':  // 』
+    case L'\uFF09':  // ）
+    case L')':
+    case L']':
+    case L'\uFF5D':  // ｝
+    case L'}':
+    case L'\u3011':  // 】
+    case L'\u3015':  // 〕
+    case L'\u3009':  // 〉
+    case L'\u300B':  // 》
+    case L'\u3001':  // 、
+    case L'\u3002':  // 。
+    case L'\uFF0C':  // ，
+    case L'\uFF0E':  // ．
+    case L'\uFF01':  // ！
+    case L'\uFF1F':  // ？
+    case L'!':
+    case L'?':
+      return true;
+    default:
+      return false;
+  }
+}
+
 inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
                             int client_height_px, int surface_width_px,
                             int surface_height_px,
@@ -187,9 +216,12 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
   const double cell_height = grid.cell_height_per_client_height * client_height;
   const double bounds_left = static_cast<double>(layout_bounds.left);
   const double bounds_top = static_cast<double>(layout_bounds.top);
+  const int maximum_columns =
+      grid.columns + (grid.hanging_punctuation ? 1 : 0);
   if (!std::isfinite(advance) || !std::isfinite(line_advance) ||
       !std::isfinite(cell_height) ||
-      std::llround(bounds_left + static_cast<double>(grid.columns) * advance) >
+      std::llround(bounds_left +
+                   static_cast<double>(maximum_columns) * advance) >
           layout_bounds.right ||
       std::llround(bounds_top + cell_height) > layout_bounds.bottom) {
     return Failure("grid_overflow_body_rect");
@@ -202,12 +234,14 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
                                          : grid.continuation_indent;
   int column = 0;
   int row = 0;
+  bool hanging_punctuation_used = false;
   const auto advance_line = [&]() {
     ++row;
     column = continuation_indent;
+    hanging_punctuation_used = false;
   };
-  const auto next_cell_bounds = [&](RECT *box) -> bool {
-    if (column >= grid.columns) advance_line();
+  const auto next_cell_bounds = [&](bool allow_hanging, RECT *box) -> bool {
+    if (column >= grid.columns && !allow_hanging) advance_line();
     const double left = bounds_left + static_cast<double>(column) * advance;
     const double top = bounds_top + static_cast<double>(row) * line_advance;
     const double right = left + advance;
@@ -261,8 +295,12 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
       continue;
     }
     RECT box{};
-    if (!next_cell_bounds(&box))
+    const bool allow_hanging =
+        grid.hanging_punctuation && column == grid.columns &&
+        !hanging_punctuation_used && IsHangingPunctuation(code);
+    if (!next_cell_bounds(allow_hanging, &box))
       return Failure("grid_overflow_body_rect");
+    if (allow_hanging) hanging_punctuation_used = true;
     if (!whitespace) {
       result.boxes.push_back(ClusterBox{index, length, box});
     }
