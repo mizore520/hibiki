@@ -1,52 +1,49 @@
 # 内嵌查词当前交接
 
-更新：2026-09-18。本文件只维护当前阶段，历史反馈见 [样本任务记录](LOOKUP_CALIBRATION_SAMPLES.md)。
+更新：2026-09-19。历史反馈见 [样本记录](LOOKUP_CALIBRATION_SAMPLES.md)。
 
-## 基线与范围
+## 基线与阶段
 
-- 唯一候选分支：`codex/lookup-calibration-samples-20260917`；工作区为主仓下 `.worktrees/lookup-calibration-samples-20260917`，继续原工作区，不另建。
-- 接手基线：`c4f45f3a01`；本批代码提交：`e2bb9c80be`。此前 OCR 接入为 `2e6e5c9abb`，采集与对齐加固为 `ca1a5ac3a6`。
-- 用户授权本批重审 Luna 改动并优化 OCR + 通用算法，面向常见、稳定的横排游戏。特殊动态排版暂不处理；不逐游戏写特例，不要求逐字点中心。
-- 阶段：源码、定向验证与离线真实截图验证完成，真实游戏路径仍为 `implemented_unverified`。未完整构建、未合入 `custom`、未推送。
-- 最新规则已读；辅助实现与独立审查使用 Luna max。完整 BAT 构建和游戏操作由用户执行，集中反馈后统一修复。
+- 唯一候选：`codex/lookup-calibration-samples-20260917`，原工作区 `.worktrees/lookup-calibration-samples-20260917`，不另建。
+- 本批起点 `fd84ad67ba`，上批 OCR `e2bb9c80be`；本批采集诊断 `e8a9036981`。最终源码候选 `cea2b6cafb`。
+- 用户已授权统一修复，优先三点验证结束闪退与识别精度，同时补正常游戏悬停高亮。“只记录”阶段已结束。
+- 用户确认启动上述工作区 BAT；两款必现闪退游戏为 BGI 和 hamidashi，私有 EXE 路径已在本机会话核对，不提交。
+- 状态：源码候选与定向/离线验证，真实游戏仍为 `implemented_unverified`；未合入 `custom`、未推送。用户负责最终完整 BAT 构建与游戏操作。
+- 主代理 Astra，辅助 Luna max。规则、边界和 ownership 已核对；不重新 bootstrap，不重复已通过且输入未变的测试。
 
-## 本批实现与事实
+## 本批实际变化
 
-OCR 校准使用 PP-OCRv6 small 检测/识别模型。识别器现在保留 CTC 帧中的近似字符位置及置信度，由 Hook 正文确定文字身份，算法推断字距、行距、自然换行列数和续行缩进。CTC 位置不是游戏引擎的精确字形边界；当前运行期仍使用经过校准的规则字格。
+1. **闪退路径**：三点结束从全客户区窗口缩到正文窗口时，旧 clusters 曾立即写入更小 DIB，配置 alpha mask 没有边界裁剪。现先撤销旧快照和几何，重建后绘制，并用共享裁剪 helper 限制内存写入。已定位代码越界，不等同证明历史 WER 一定来自此处；用户两款游戏仍须验收。
+2. **精确定位**：PP-OCRv6 small 提供文字/行与近似 CTC 位置；Hook 提供正文；新增实际笔画像素校正确定规则字格。颜色候选来自图像，排除大连通背景块与重复纹理；足够长的行没有笔画证据则拒绝发布，短尾行不贡献字距/字高；有实测行时不让短句影响起点，优先用实测行对确定行距，已有实测续行缩进时短尾只验证该值。仅一长一短时仍以受限近似行位置提供续行证据，这是保留的精度边界。逐字校验中心、笔画覆盖和真实 native preview，不用“未溢出”代表准确。
+3. **选区契约**：新增 `searchRect`，旧草稿兼容；橙框是识别范围，`rect` 是生成排版区。OCR 严格框内，不再暗中扩框或用结果覆盖橙框；改选区使旧拟合失效。用户只需圈完整正文，不逐字点中心。
+4. **多行**：允许检测框重叠但 token 不重叠的同行碎片合并；普通小假名增加一格行末禁则。三角附件预览未把三角当正文，失败来自短尾行标点污染字距，现该预览可拟合。
+5. **正常悬停**：configured 模式鼠标移到当前查词字簇即显示高亮，移开清除，不要求 Shift；Shift 查词及输入屏蔽原契约维持。通用模式仍用拟合字格，不能声称已读取游戏真实字形或支持比例字体。
+6. **采集诊断**：失败时也保留 reason、目标/捕获 HWND/PID、client/image/content/texture 尺寸和 session/surface/shield，写入现有日志，限字段范围且不记对白/路径。静态核对 Magpie 目标重解析已有；尚无证据宣布超分或完整采集问题已实机解决。
 
-- 保留重复字、UTF-16 和组合字符索引，过滤 padding 的假位置；区分概率与 logits。
-- 合并同基线 OCR 碎片，保留其原位置；逐行验证几何覆盖及锚点跨度。纯显式换行不能证明自然换行列数。
-- 短句不压窄正文框，粗框底部补齐完整行容量，避免两行训练后第三行差几像素溢出；字框高度受行距约束。
-- 从样本证据启用可选的一格行末标点悬挂；Dart、native、IPC 和旧六字段 JSON 兼容同步维护。
-- 所有样本（包括独立验证样本）与真实 native preview 的逐字索引、长度、位置比较，不能只凭 preview 未溢出就通过。
-- 图像解码/对应计算在后台执行；fit 期间复用模型 session，结束释放，创建失败也清理已创建 session，防止并发拟合。
-- OCR 只用于冻结截图校准；运行期内嵌查词不执行 OCR。
+## 验证与证据
 
-## 已完成验证
+- OCR/像素校正、草稿、样本页、旧图像拟合与运行期无 OCR 守卫：六个 Dart suite 合计 **80 个用例通过**（先六文件 78 项，审查后受影响 OCR suite 27 项含新增 2 项；其余结果复用），`.codex-test/ocr-followup-final-tests.log`、`.codex-test/ocr-short-tail-final.log`。
+- 采集通道 14、校准捕获 27、Magpie 7、客户区 3、控制器 19：共 **70 项通过**，复用 capture 代理结果。
+- MSVC x64 `/W4 /WX`：原生排版 **19 cases**，bitmap guarded writes、mouse/source guard 通过；surface、window_capture、flutter_window 单对象编译通过。bitmap 用执行回归证明旧大字框、负坐标与跨界不破坏前后保护字节。CMake 新 gate 注册尚未经生成构建验证，插件 NuGet 下载阻断重新配置；独立编译测试已通过。
+- 独立审查覆盖 native 生命周期/点击路径、采集契约和 OCR 几何路线；短尾增量复核未发现新增 P1/P2，保留无实测续行时 CTC fallback 的误拒/极端噪声边界。
+- 改动 Dart 分析无 error/warning；旧 draft/image fitter 留有 11 条既有花括号 info，新像素校正文件单独分析无诊断；格式/差异检查通过。
+- 当前保存样本是 **六组 11 张**（不是上批 14 张）：同一 PP-OCR 模型、本机 Python ONNX Runtime 1.22.0、生产 Dart 预后处理/拟合、真实 C++ preview，全组成功断言与笔画边界检查通过；叠框已人工复查。最后受影响回放 `.codex-test/ocr-short-tail-final.log`（27 项 OCR + 真实回放 + 附件诊断，共 29 项），以及 `.codex-test/ocr-followup-after/summary.json`、`*-fit.png`。没有验证应用内 ONNX session 装配或新句点击，不外推成功率。
+- 三角附件是缩放后的 UI 预览，正文人工转写，仅作诊断：`.codex-test/ocr-triangle/summary.json`；最初只输出结果，现已补拟合成功断言，最后日志 `.codex-test/ocr-triangle-final.log`，不冒充原始游戏捕获/Hook 验收。
+- 本机 Tesseract 日文模型完成 13 个对照输入，本次识字及 symbol 框未显示优势，不接入生产。`.codex-test/tesseract-ab/summary.json`，其 `hook` 字段实际是 PP-OCR 输出，不能引用为 Hook 识别成绩；预处理/多余行不同，不作标准模型排名。没有调用云端 OCR 或上传截图，模型不需用户再下载。
+- 真实截图、对白、脚本和叠框仅在忽略目录 `.codex-test`，未修改用户保存样本、不提交私人素材。
 
-- 相关 Dart 用例跨批次共 86 项通过：识别器、原图像拟合、样本 UI、运行期无 OCR 守卫共 50；新 OCR 对齐 22；profile 9；模型生命周期 5。
-- 生命周期测试初次有 2 个异步 matcher 写法错误，已修正后单独 5 项通过；不得把初次失败日志称为全绿。
-- MSVC x64 `/W4 /WX`：native 排版 18 cases 通过，`flutter_window` 单对象编译通过。未完整构建应用。
-- 改动 Dart 定向分析最终无诊断，格式及差异检查通过。最后独立增量审查未发现可静态定性的 P1/P2；真实 MethodChannel 往返尚未单独验证。
-- 六组用户草稿、14 张截图全部完成真实模型识别、Hook 对应和真实 C++ native preview 检查；包含两行、三行、续行缩进、行末闭引号，叠框已经人工复查。部分样本正文重复，不可用于推导跨游戏成功率。
-- 真实推理使用本机 Python ONNX Runtime 1.22.0 CPU 执行同一模型，生产 Dart 预后处理、识别解码、对齐和拟合保持一致。这没有验证应用内 ONNX session 的完整装配或新台词点击。
-- 真实回放最后退出码 0，1 个 suite、6 组均有成功断言。证据在本工作区忽略目录 `.codex-test/ocr-evidence/summary.json`、`*-fit.png`，日志 `.codex-test/ocr-real-replay.log`；辅助脚本 `.codex-test/ocr_real_replay_test.dart`。截图、对白和私有回放不提交。
+## 未闭合项
 
-本机实际数据目录的 `support/ocr_models/gal_calibration` 已准备模型并核对复制前后 SHA-256；用户无需再手动下载。只新增缺失模型文件，没有改写用户草稿。检测模型 revision 为 `28fe5895c24fd108c19eb3e8479f4ab385fbfc62`，识别为 `b8f84f0b80c529de40b4fbb3544b84fa7233a513`。
-
-## 尚未解决或验收
-
-- [BUG-2535](../bugs/BUG-2535-fushi-access-violation-after-calibration.md)：校准后闪退仅有 WER `0xc0000005`，无 dump/调用栈；生命周期加固不等于已修复根因。
-- [BUG-2541](../bugs/BUG-2541-gal-magpie-upscaler-breaks-calibration.md)：已有采集 metadata/窗口重解析修复，Magpie 开关后的采集与查词恢复仍缺实机证据。本批没有修改输入/采集路径。
-- [BUG-2542](../bugs/BUG-2542-gal-cross-game-calibration-still-not-general.md)：本批增强通用 OCR 和几何验证，旧样本通过；新游戏、新句和其他尺寸尚未验收，不标为全面解决。
-- [BUG-2543](../bugs/BUG-2543-gal-incomplete-game-capture.md)：部分游戏截图不完整仍待新失败 metadata 与实机复测。
-- 普通查词模式的鼠标悬停逐字高亮尚未实现；已有高亮仅覆盖校准模式。不得把校准叠框当作该需求已完成。
-- 比例字体、复杂禁则、竖排、注音和动态布局不保证。常见稳定横排的高覆盖是目标，尚无代表性游戏集支持“绝大部分已适配”的结论。
+- [BUG-2535](../bugs/BUG-2535-fushi-access-violation-after-calibration.md)：需两款原始游戏三点完成不退的证据；若仍退，保留时间、WER/dump，不能只靠旧偏移归因。
+- [BUG-2542](../bugs/BUG-2542-gal-cross-game-calibration-still-not-general.md)：精定位与框内契约已改，需普通新句/换游戏验收。OCR+像素校正是目标常见稳定横排的路线，不保证特殊排版、比例字体、竖排、注音或全部游戏。
+- [BUG-2541](../bugs/BUG-2541-gal-magpie-upscaler-breaks-calibration.md)、[BUG-2543](../bugs/BUG-2543-gal-incomplete-game-capture.md)：已有恢复路径复核与失败诊断，仍需原始超分开关/失败采集现场确认，不能标“全部解决”。
 
 ## 一次集中验收
 
-在上述原工作区运行 `启动Hibiki最新版.bat` 构建 Windows x64，无需 clean。保留旧样本，确认模型就绪后选完整两行/三行样本，粗框正文并执行“从截图自动对齐”；检查各行首尾、缩进、行末标点对应，然后应用校准并完成原三点确认。无需逐字微调中心或字号。
+在同一工作区运行 `启动Hibiki最新版.bat`，Windows x64，无需 clean。本批中途出现过代理旧增量产物，它早于最终修改，不能拿它代替本次最终 BAT 构建。关闭 Fushi 后构建再启动，游戏没有 Hook 输入变化时无需仅因本次应用修改重启。
 
-进入未用于校准的新台词，连续测试单行/多行查词及关闭词典后立即再点。另集中记录 Magpie 开启/退出后的采集和查词恢复、是否闪退。自动对齐拒绝、框错字或点击推进台词时，保留提示/样本并停止该应用流程，不靠追加手动点位掩盖。运行日志沿用 `%TEMP%/hibiki_glookup.log`；崩溃仍需 WER/dump。没有新代码变化不要求再编译。
+1. 保留旧样本，在 BGI 或 hamidashi 先对现存完整多行截图执行自动对齐，再应用并完成“第一、中间、最后”三点。预期不闪退、能正常进入游戏查词阶段；无需逐字手调。
+2. 在未用于拟合的新台词上移动鼠标：预期高亮跟随当前字，移出正文清除；连续查词及关闭词典后立即再查，均不推进游戏。看两/三行首尾和缩进，不只看训练句。另一款游戏再完成同流程。
+3. 同一次运行检查 Magpie 开启及退出后能否采集、查词是否恢复；如仍失败，保留发生时间与 `%TEMP%/hibiki_glookup.log`，不要反复重编、重启或删除草稿。
 
-接手时注意：本批开始前就存在 `docs/BUGS.md`、历史样本记录的未提交改动，以及上述四条未跟踪 Bug 文档；本批保留原样，未擅自纳入代码提交。它们是历史反馈，不应删除或覆盖。
+闪退、识别拒绝、框错字或点击推进时，停止对应流程并保留样本/提示/日志，统一反馈。完整构建与游戏原始验收未完成前，只交付源码候选。
