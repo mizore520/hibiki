@@ -3840,6 +3840,10 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
           reply[flutter::EncodableValue("diagnostics")] =
               flutter::EncodableValue(pending->result.diagnostics);
         }
+        if (!pending->result.capture_reason.empty()) {
+          reply[flutter::EncodableValue("captureReason")] =
+              flutter::EncodableValue(pending->result.capture_reason);
+        }
         if (pending->result.has_metadata) {
           const auto& metadata = pending->result.metadata;
           reply[flutter::EncodableValue("metadata")] =
@@ -3861,6 +3865,14 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                    flutter::EncodableValue(metadata.image_width_px)},
                   {flutter::EncodableValue("imageHeightPx"),
                    flutter::EncodableValue(metadata.image_height_px)},
+                  {flutter::EncodableValue("contentWidthPx"),
+                   flutter::EncodableValue(metadata.content_width_px)},
+                  {flutter::EncodableValue("contentHeightPx"),
+                   flutter::EncodableValue(metadata.content_height_px)},
+                  {flutter::EncodableValue("textureWidthPx"),
+                   flutter::EncodableValue(metadata.texture_width_px)},
+                  {flutter::EncodableValue("textureHeightPx"),
+                   flutter::EncodableValue(metadata.texture_height_px)},
                   {flutter::EncodableValue("dpi"),
                    flutter::EncodableValue(metadata.dpi)},
                   {flutter::EncodableValue("clientAreaComplete"),

@@ -3,6 +3,16 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+final RegExp _captureReasonPattern = RegExp(r'^[a-z0-9_]{1,64}$');
+
+String? _readBoundedCaptureReason(Object? value) {
+  if (value == null) return null;
+  if (value is! String || !_captureReasonPattern.hasMatch(value)) {
+    return null;
+  }
+  return value;
+}
+
 /// TODO-1162 外部窗口挖矿 M0（仅 Windows）：枚举系统可见顶层窗口 + 对选定窗口抓一帧
 /// 静态截图（Windows.Graphics.Capture 单帧），经 MethodChannel 返回给 Dart。
 ///
@@ -301,6 +311,7 @@ class WindowCaptureResult {
     this.pngBytes,
     this.error,
     this.diagnostics,
+    this.captureReason,
     this.metadata,
   });
 
@@ -316,6 +327,11 @@ class WindowCaptureResult {
   /// ② 捕获目标被从 Magpie 缩放窗重定向到了真实源窗口。native 无话可说时为 null。
   final String? diagnostics;
 
+  /// Bounded machine-readable reason for the native capture attempt. It is
+  /// safe to include in diagnostics; it never contains titles, paths, or Hook
+  /// text.
+  final String? captureReason;
+
   /// Geometry measured by the same native operation that encoded [pngBytes].
   /// Older runners omit it; ordinary screenshots remain backwards compatible.
   final WindowCaptureMetadata? metadata;
@@ -328,6 +344,7 @@ class WindowCaptureResult {
         pngBytes: m['pngBytes'] as Uint8List?,
         error: m['error'] as String?,
         diagnostics: m['diagnostics'] as String?,
+        captureReason: _readBoundedCaptureReason(m['captureReason']),
         metadata: WindowCaptureMetadata.tryFromMap(m['metadata']),
       );
 }
@@ -346,6 +363,10 @@ class WindowCaptureMetadata {
     required this.clientHeightPx,
     required this.imageWidthPx,
     required this.imageHeightPx,
+    this.contentWidthPx = 0,
+    this.contentHeightPx = 0,
+    this.textureWidthPx = 0,
+    this.textureHeightPx = 0,
     required this.dpi,
     required this.clientAreaComplete,
     required this.capturedAtTickMs,
@@ -359,6 +380,16 @@ class WindowCaptureMetadata {
   final int clientHeightPx;
   final int imageWidthPx;
   final int imageHeightPx;
+
+  /// WGC frame content size. Zero means the frame did not expose a valid
+  /// content size or the result came from an older runner.
+  final int contentWidthPx;
+  final int contentHeightPx;
+
+  /// D3D texture size before client-area cropping. Zero means no frame reached
+  /// the texture stage or the result came from an older runner.
+  final int textureWidthPx;
+  final int textureHeightPx;
   final double dpi;
   final bool clientAreaComplete;
 
@@ -387,6 +418,10 @@ class WindowCaptureMetadata {
     'clientHeightPx': clientHeightPx,
     'imageWidthPx': imageWidthPx,
     'imageHeightPx': imageHeightPx,
+    'contentWidthPx': contentWidthPx,
+    'contentHeightPx': contentHeightPx,
+    'textureWidthPx': textureWidthPx,
+    'textureHeightPx': textureHeightPx,
     'dpi': dpi,
     'clientAreaComplete': clientAreaComplete,
     'capturedAtTickMs': capturedAtTickMs,
@@ -405,7 +440,16 @@ class WindowCaptureMetadata {
       'imageHeightPx',
       'capturedAtTickMs',
     ];
+    const List<String> optionalIntegerKeys = <String>[
+      'contentWidthPx',
+      'contentHeightPx',
+      'textureWidthPx',
+      'textureHeightPx',
+    ];
     if (integerKeys.any((String key) => value[key] is! int) ||
+        optionalIntegerKeys.any(
+          (String key) => value.containsKey(key) && value[key] is! int,
+        ) ||
         value['dpi'] is! num ||
         value['clientAreaComplete'] is! bool) {
       return null;
@@ -419,6 +463,10 @@ class WindowCaptureMetadata {
       clientHeightPx: value['clientHeightPx'] as int,
       imageWidthPx: value['imageWidthPx'] as int,
       imageHeightPx: value['imageHeightPx'] as int,
+      contentWidthPx: value['contentWidthPx'] as int? ?? 0,
+      contentHeightPx: value['contentHeightPx'] as int? ?? 0,
+      textureWidthPx: value['textureWidthPx'] as int? ?? 0,
+      textureHeightPx: value['textureHeightPx'] as int? ?? 0,
       dpi: (value['dpi'] as num).toDouble(),
       clientAreaComplete: value['clientAreaComplete'] as bool,
       capturedAtTickMs: value['capturedAtTickMs'] as int,

@@ -20,6 +20,9 @@ void main() {
   final String flutterWindow = File(
     'windows/runner/flutter_window.cpp',
   ).readAsStringSync();
+  final String dartChannel = File(
+    'lib/src/mining/window_capture_channel.dart',
+  ).readAsStringSync();
   final String attachedSurface = File(
     'windows/runner/attached_text_surface_window.cpp',
   ).readAsStringSync();
@@ -98,9 +101,6 @@ void main() {
       isTrue,
       reason: 'native 记了但不回传等于没记',
     );
-    final String dartChannel = File(
-      'lib/src/mining/window_capture_channel.dart',
-    ).readAsStringSync();
     expect(
       dartChannel.contains("diagnostics: m['diagnostics'] as String?"),
       isTrue,
@@ -108,7 +108,44 @@ void main() {
     );
   });
 
-  test('④ Magpie 重建期间最多重试一次，并继续保留完整客户区门槛', () {
+  test('④ 捕获失败 reason 与 frame metadata 经 Flutter reply 回到 Dart', () {
+    expect(
+      header.contains('std::string capture_reason;'),
+      isTrue,
+      reason: 'native 需要保留 bounded machine-readable capture reason',
+    );
+    expect(
+      capture.contains('"no_frame"'),
+      isTrue,
+      reason: '无首帧不能只留下人类可读 error',
+    );
+    expect(
+      flutterWindow.contains('flutter::EncodableValue("captureReason")'),
+      isTrue,
+      reason: 'native reason 必须进入 Dart channel reply',
+    );
+    for (final String key in <String>[
+      'contentWidthPx',
+      'contentHeightPx',
+      'textureWidthPx',
+      'textureHeightPx',
+    ]) {
+      expect(
+        flutterWindow.contains('flutter::EncodableValue("$key")'),
+        isTrue,
+        reason: '$key 必须经 Flutter reply 发送',
+      );
+    }
+    expect(
+      dartChannel.contains(
+        "captureReason: _readBoundedCaptureReason(m['captureReason'])",
+      ),
+      isTrue,
+    );
+    expect(dartChannel.contains("'contentWidthPx'"), isTrue);
+  });
+
+  test('⑤ Magpie 重建期间最多重试一次，并继续保留完整客户区门槛', () {
     expect(
       capture.contains('constexpr int kMaximumAttempts = 2;'),
       isTrue,
@@ -133,7 +170,7 @@ void main() {
     );
   });
 
-  test('⑤ Magpie 生命周期立即触发贴附层重新解析 presentation HWND', () {
+  test('⑥ Magpie 生命周期立即触发贴附层重新解析 presentation HWND', () {
     expect(
       attachedHeader.contains('OnExternalWindowLifecycle(HWND output_window'),
       isTrue,

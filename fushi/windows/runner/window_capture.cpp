@@ -110,6 +110,24 @@ void AppendDiagnostic(WindowCaptureResult* out, const char* note, HRESULT hr) {
   out->diagnostics += line;
 }
 
+// Keep the capture reason bounded and machine-readable. The human-readable
+// error remains useful to the immediate caller, but must not be persisted into
+// calibration diagnostics.
+void SetCaptureFailure(WindowCaptureResult* out, const char* reason,
+                       const char* error) {
+  if (out == nullptr) {
+    return;
+  }
+  out->capture_reason = reason == nullptr ? "capture_failed" : reason;
+  out->error = error == nullptr ? "capture failed" : error;
+}
+
+void SetCaptureReason(WindowCaptureResult* out, const char* reason) {
+  if (out != nullptr && reason != nullptr) {
+    out->capture_reason = reason;
+  }
+}
+
 }  // namespace
 
 // BUG-1854：把 WGC 整窗纹理裁到窗口**客户区**。
@@ -358,39 +376,52 @@ namespace {
 void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
   WindowCaptureMetadata initial_client;
   const bool initial_client_valid = ReadCaptureClient(hwnd, &initial_client);
+  if (initial_client_valid) {
+    // Keep the initial geometry even when WGC times out or the final client
+    // read fails. It is the only bounded evidence available for those paths.
+    out->metadata = initial_client;
+    out->has_metadata = true;
+  } else {
+    SetCaptureReason(out, "initial_client_unavailable");
+  }
   ComPtr<WGC::IGraphicsCaptureSessionStatics> session_statics;
   if (FAILED(GetActivationFactory(
           RuntimeClass_Windows_Graphics_Capture_GraphicsCaptureSession,
           session_statics.GetAddressOf()))) {
-    out->error = "graphics capture unavailable";
+    SetCaptureFailure(out, "wgc_activation_unavailable",
+                      "graphics capture unavailable");
     return;
   }
   boolean supported = false;
   session_statics->IsSupported(&supported);
   if (!supported) {
-    out->error = "graphics capture not supported (Windows 10 1903+ required)";
+    SetCaptureFailure(out, "wgc_unsupported",
+                      "graphics capture not supported (Windows 10 1903+ required)");
     return;
   }
 
   ComPtr<ID3D11Device> d3d = CreateD3DDevice();
   if (!d3d) {
-    out->error = "D3D11 device create failed";
+    SetCaptureFailure(out, "d3d_device_unavailable", "D3D11 device create failed");
     return;
   }
   ComPtr<IDXGIDevice> dxgi;
   if (FAILED(d3d.As(&dxgi))) {
-    out->error = "IDXGIDevice query failed";
+    SetCaptureFailure(out, "dxgi_device_query_failed",
+                      "IDXGIDevice query failed");
     return;
   }
   ComPtr<IInspectable> inspectable;
   if (FAILED(CreateDirect3D11DeviceFromDXGIDevice(dxgi.Get(),
                                                   inspectable.GetAddressOf()))) {
-    out->error = "CreateDirect3D11DeviceFromDXGIDevice failed";
+    SetCaptureFailure(out, "d3d_interop_unavailable",
+                      "CreateDirect3D11DeviceFromDXGIDevice failed");
     return;
   }
   ComPtr<WGDXD3D::IDirect3DDevice> device;
   if (FAILED(inspectable.As(&device))) {
-    out->error = "IDirect3DDevice query failed";
+    SetCaptureFailure(out, "direct3d_device_query_failed",
+                      "IDirect3DDevice query failed");
     return;
   }
 
@@ -398,7 +429,8 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
   if (FAILED(GetActivationFactory(
           RuntimeClass_Windows_Graphics_Capture_GraphicsCaptureItem,
           interop.GetAddressOf()))) {
-    out->error = "capture item interop unavailable";
+    SetCaptureFailure(out, "wgc_item_interop_unavailable",
+                      "capture item interop unavailable");
     return;
   }
   ComPtr<WGC::IGraphicsCaptureItem> item;
@@ -406,12 +438,13 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
           hwnd, __uuidof(WGC::IGraphicsCaptureItem),
           reinterpret_cast<void**>(item.GetAddressOf()))) ||
       !item) {
-    out->error = "CreateForWindow failed (window not capturable)";
+    SetCaptureFailure(out, "wgc_item_create_failed",
+                      "CreateForWindow failed (window not capturable)");
     return;
   }
   ABI::Windows::Graphics::SizeInt32 size = {};
   if (FAILED(item->get_Size(&size)) || size.Width <= 0 || size.Height <= 0) {
-    out->error = "window has zero size";
+    SetCaptureFailure(out, "wgc_item_size_invalid", "window has zero size");
     return;
   }
 
@@ -419,7 +452,8 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
   if (FAILED(GetActivationFactory(
           RuntimeClass_Windows_Graphics_Capture_Direct3D11CaptureFramePool,
           pool_statics.GetAddressOf()))) {
-    out->error = "frame pool statics unavailable";
+    SetCaptureFailure(out, "wgc_frame_pool_unavailable",
+                      "frame pool statics unavailable");
     return;
   }
   ComPtr<WGC::IDirect3D11CaptureFramePool> frame_pool;
@@ -427,13 +461,15 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
           device.Get(), WGDX::DirectXPixelFormat_B8G8R8A8UIntNormalized, 2,
           size, frame_pool.GetAddressOf())) ||
       !frame_pool) {
-    out->error = "frame pool create failed";
+    SetCaptureFailure(out, "wgc_frame_pool_create_failed",
+                      "frame pool create failed");
     return;
   }
   ComPtr<WGC::IGraphicsCaptureSession> session;
   if (FAILED(frame_pool->CreateCaptureSession(item.Get(),
                                               session.GetAddressOf()))) {
-    out->error = "capture session create failed";
+    SetCaptureFailure(out, "wgc_session_create_failed",
+                      "capture session create failed");
     return;
   }
   // BUG-1096：关闭 WGC 合成光标。IGraphicsCaptureSession2 需要 Win10 build 19041+，
@@ -464,7 +500,7 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
   ComPtr<WGC::IDirect3D11CaptureFrame> frame;
   HANDLE frame_event = CreateEventW(nullptr, TRUE, FALSE, nullptr);
   if (frame_event == nullptr) {
-    out->error = "event create failed";
+    SetCaptureFailure(out, "frame_event_create_failed", "event create failed");
     return;
   }
   // 免线程（agile）委托：FreeThreaded 帧池会在任意线程池线程回调 FrameArrived。
@@ -487,13 +523,14 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
   EventRegistrationToken token = {};
   if (FAILED(frame_pool->add_FrameArrived(handler.Get(), &token))) {
     CloseHandle(frame_event);
-    out->error = "add_FrameArrived failed";
+    SetCaptureFailure(out, "frame_arrived_registration_failed",
+                      "add_FrameArrived failed");
     return;
   }
   if (FAILED(session->StartCapture())) {
     frame_pool->remove_FrameArrived(token);
     CloseHandle(frame_event);
-    out->error = "StartCapture failed";
+    SetCaptureFailure(out, "wgc_start_failed", "StartCapture failed");
     return;
   }
 
@@ -504,8 +541,9 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
   if (wait != WAIT_OBJECT_0 || !frame) {
     CloseIfClosable(session);
     CloseIfClosable(frame_pool);
-    out->error =
-        "capture timed out (no frame; DRM-protected windows yield no frame)";
+    SetCaptureFailure(
+        out, "no_frame",
+        "capture timed out (no frame; DRM-protected windows yield no frame)");
     return;
   }
 
@@ -521,7 +559,8 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
     CloseIfClosable(frame);
     CloseIfClosable(session);
     CloseIfClosable(frame_pool);
-    out->error = "frame surface unavailable";
+    SetCaptureFailure(out, "frame_surface_unavailable",
+                      "frame surface unavailable");
     return;
   }
   const uint64_t captured_at_tick_ms = GetTickCount64();
@@ -532,6 +571,14 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
 
   D3D11_TEXTURE2D_DESC desc = {};
   texture->GetDesc(&desc);
+  if (out->has_metadata) {
+    out->metadata.content_width_px =
+        content_size_valid ? content_size.Width : 0;
+    out->metadata.content_height_px =
+        content_size_valid ? content_size.Height : 0;
+    out->metadata.texture_width_px = static_cast<int>(desc.Width);
+    out->metadata.texture_height_px = static_cast<int>(desc.Height);
+  }
   D3D11_TEXTURE2D_DESC staging_desc = desc;
   staging_desc.Usage = D3D11_USAGE_STAGING;
   staging_desc.BindFlags = 0;
@@ -543,7 +590,8 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
     CloseIfClosable(frame);
     CloseIfClosable(session);
     CloseIfClosable(frame_pool);
-    out->error = "staging texture create failed";
+    SetCaptureFailure(out, "staging_texture_create_failed",
+                      "staging texture create failed");
     return;
   }
   ComPtr<ID3D11DeviceContext> context;
@@ -558,7 +606,9 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
     const uint8_t* pixels = static_cast<const uint8_t*>(mapped.pData);
     UINT encode_w = desc.Width;
     UINT encode_h = desc.Height;
-    if (ComputeClientCropBox(hwnd, desc.Width, desc.Height, &crop)) {
+    const bool crop_valid =
+        ComputeClientCropBox(hwnd, desc.Width, desc.Height, &crop);
+    if (crop_valid) {
       pixels += static_cast<size_t>(crop.top) * mapped.RowPitch +
                 static_cast<size_t>(crop.left) * 4;
       encode_w = static_cast<UINT>(crop.right - crop.left);
@@ -571,11 +621,20 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
     }
     out->png = EncodeBgraToPng(pixels, encode_w, encode_h, mapped.RowPitch,
                                &out->error);
+    if (out->png.empty()) {
+      SetCaptureReason(out, "png_encode_failed");
+    }
     WindowCaptureMetadata final_client;
     if (ReadCaptureClient(hwnd, &final_client)) {
       final_client.image_width_px = static_cast<int>(encode_w);
       final_client.image_height_px = static_cast<int>(encode_h);
       final_client.captured_at_tick_ms = captured_at_tick_ms;
+      final_client.content_width_px =
+          content_size_valid ? content_size.Width : 0;
+      final_client.content_height_px =
+          content_size_valid ? content_size.Height : 0;
+      final_client.texture_width_px = static_cast<int>(desc.Width);
+      final_client.texture_height_px = static_cast<int>(desc.Height);
       final_client.client_area_complete =
           initial_client_valid && SameCaptureClient(initial_client, final_client) &&
           content_size_valid && crop.right <= content_size.Width &&
@@ -585,10 +644,33 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
           static_cast<int>(encode_h) == final_client.client_height_px;
       out->metadata = final_client;
       out->has_metadata = true;
+      if (out->png.empty()) {
+        SetCaptureReason(out, "png_encode_failed");
+      } else if (!initial_client_valid) {
+        SetCaptureReason(out, "initial_client_unavailable");
+      } else if (!content_size_valid) {
+        SetCaptureReason(out, "content_size_invalid");
+      } else if (!crop_valid) {
+        SetCaptureReason(out, "client_crop_unavailable");
+      } else if (crop.right > content_size.Width ||
+                 crop.bottom > content_size.Height) {
+        SetCaptureReason(out, "client_crop_outside_content");
+      } else if (!SameCaptureClient(initial_client, final_client)) {
+        SetCaptureReason(out, "client_changed_during_capture");
+      } else if (static_cast<int>(encode_w) != final_client.client_width_px ||
+                 static_cast<int>(encode_h) != final_client.client_height_px) {
+        SetCaptureReason(out, "client_image_size_mismatch");
+      } else if (!final_client.client_area_complete) {
+        SetCaptureReason(out, "client_area_incomplete");
+      } else {
+        SetCaptureReason(out, "complete");
+      }
+    } else if (!out->png.empty()) {
+      SetCaptureReason(out, "final_client_unavailable");
     }
     context->Unmap(staging.Get(), 0);
   } else {
-    out->error = "map staging texture failed";
+    SetCaptureFailure(out, "staging_map_failed", "map staging texture failed");
   }
 
   CloseIfClosable(frame);
@@ -596,7 +678,9 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
   CloseIfClosable(frame_pool);
   out->ok = out->error.empty() && !out->png.empty();
   if (!out->ok && out->error.empty()) {
-    out->error = "capture produced no pixels";
+    SetCaptureFailure(out, "capture_failed", "capture produced no pixels");
+  } else if (out->ok && out->capture_reason.empty()) {
+    SetCaptureReason(out, "complete");
   }
 }
 
@@ -605,7 +689,7 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
 WindowCaptureResult CaptureWindowPng(HWND hwnd) {
   if (hwnd == nullptr || !IsWindow(hwnd)) {
     WindowCaptureResult out;
-    out.error = "window handle invalid";
+    SetCaptureFailure(&out, "invalid_window_handle", "window handle invalid");
     return out;
   }
   // BUG-2541：Magpie 在用户点下“采集”后可能刚好重建输出窗口，第一帧会
@@ -617,7 +701,7 @@ WindowCaptureResult CaptureWindowPng(HWND hwnd) {
   // RPC_E_CHANGED_MODE = 本线程已按其它套间初始化；照常用、但不由我们反初始化。
   if (FAILED(ro) && ro != RPC_E_CHANGED_MODE) {
     WindowCaptureResult out;
-    out.error = "RoInitialize failed";
+    SetCaptureFailure(&out, "ro_initialize_failed", "RoInitialize failed");
     return out;
   }
   WindowCaptureResult out;

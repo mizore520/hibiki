@@ -35,6 +35,12 @@ struct WindowCaptureMetadata {
   int client_height_px = 0;
   int image_width_px = 0;
   int image_height_px = 0;
+  // WGC frame facts. Zero means no frame reached the texture stage (for
+  // example a timeout) or an older runner did not provide the fields.
+  int content_width_px = 0;
+  int content_height_px = 0;
+  int texture_width_px = 0;
+  int texture_height_px = 0;
   double dpi = 0;
   bool client_area_complete = false;
   uint64_t captured_at_tick_ms = 0;
@@ -45,6 +51,11 @@ struct WindowCaptureMetadata {
 struct WindowCaptureResult {
   std::vector<uint8_t> png;
   std::string error;
+  // Bounded machine-readable reason for the last attempt. This is kept
+  // separate from [error], whose wording is for the immediate caller.
+  // Production call sites use literals from the capture reason vocabulary;
+  // it never contains window titles, paths, or Hook text.
+  std::string capture_reason;
   // BUG-1096：**成功路径**上值得记录的事实，非空即有话说，空 = 一切如预期。
   // 目前两类：① 光标合成抑制没能生效（IGraphicsCaptureSession2 缺失 / put_ 失败，
   // 以前这两处 HRESULT 都被静默丢掉，用户机器上到底有没有关掉光标完全不可证）；

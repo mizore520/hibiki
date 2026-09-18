@@ -215,9 +215,15 @@ enum GalLookupCalibrationCaptureFailure {
 }
 
 class GalLookupCalibrationCaptureException implements Exception {
-  const GalLookupCalibrationCaptureException(this.failure);
+  const GalLookupCalibrationCaptureException(
+    this.failure, {
+    this.captureReason,
+    this.captureMetadata,
+  });
 
   final GalLookupCalibrationCaptureFailure failure;
+  final String? captureReason;
+  final WindowCaptureMetadata? captureMetadata;
 
   @override
   String toString() => 'GalLookupCalibrationCaptureException(${failure.name})';
@@ -265,7 +271,15 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
       );
     }
     capturedAt = DateTime.now().toUtc();
-    requireCurrent();
+    try {
+      requireCurrent();
+    } on GalLookupCalibrationCaptureException catch (error) {
+      throw GalLookupCalibrationCaptureException(
+        error.failure,
+        captureReason: result.captureReason,
+        captureMetadata: result.metadata,
+      );
+    }
   } finally {
     if (lease != null) {
       try {
@@ -278,14 +292,21 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
     }
   }
   requireCurrent();
+  GalLookupCalibrationCaptureException captureFailure(
+    GalLookupCalibrationCaptureFailure failure,
+  ) => GalLookupCalibrationCaptureException(
+    failure,
+    captureReason: result.captureReason,
+    captureMetadata: result.metadata,
+  );
   if (!result.ok) {
-    throw const GalLookupCalibrationCaptureException(
+    throw captureFailure(
       GalLookupCalibrationCaptureFailure.windowCaptureFailed,
     );
   }
   final WindowCaptureMetadata? metadata = result.metadata;
   if (metadata == null || !metadata.isCompleteClient) {
-    throw const GalLookupCalibrationCaptureException(
+    throw captureFailure(
       GalLookupCalibrationCaptureFailure.clientMappingUnavailable,
     );
   }
@@ -312,7 +333,7 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
       referenceAspect.isFinite &&
       ((capturedAspect - referenceAspect).abs() / referenceAspect) <= 0.01;
   if (!sameClient && !sourceClient) {
-    throw const GalLookupCalibrationCaptureException(
+    throw captureFailure(
       GalLookupCalibrationCaptureFailure.clientMappingUnavailable,
     );
   }
@@ -320,12 +341,10 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
   if (bytes.length > GalLookupCalibrationCapture.maxPngBytes ||
       metadata.imageWidthPx * metadata.imageHeightPx >
           GalLookupCalibrationCapture.maxImagePixels) {
-    throw const GalLookupCalibrationCaptureException(
-      GalLookupCalibrationCaptureFailure.imageTooLarge,
-    );
+    throw captureFailure(GalLookupCalibrationCaptureFailure.imageTooLarge);
   }
   if (!_pngMatchesClient(bytes, metadata)) {
-    throw const GalLookupCalibrationCaptureException(
+    throw captureFailure(
       GalLookupCalibrationCaptureFailure.imageDimensionsInvalid,
     );
   }

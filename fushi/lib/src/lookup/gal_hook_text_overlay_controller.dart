@@ -51,6 +51,7 @@ typedef GalHookHoverAutoLookupReader = bool Function();
 class GalHookTextOverlayController extends ChangeNotifier {
   static const Duration _geometryAdmissionTimeout = Duration(seconds: 1);
   static const Duration _attachedSyncTimeout = Duration(seconds: 2);
+  static final RegExp _captureReasonPattern = RegExp(r'^[a-z0-9_]{1,64}$');
 
   GalHookTextOverlayController._({
     GalHookSessionController? session,
@@ -1758,6 +1759,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
     ++_syncRevision;
     final int? sessionEpoch = _sessionKey;
     final bool overlayWasVisible = _visible;
+    final GalAttachedSurfaceTarget? requestedTarget = _attachedText.target;
     try {
       return await captureGalLookupCalibrationSample(
         readSnapshot: _calibrationCaptureSnapshot,
@@ -1779,10 +1781,31 @@ class GalHookTextOverlayController extends ChangeNotifier {
         },
       );
     } catch (error) {
-      final GalLookupCalibrationCaptureFailure failure =
-          _calibrationCaptureFailureFor(error);
-      glog('gal-overlay: calibration_sample failed category=${failure.name}');
-      throw GalLookupCalibrationCaptureException(failure);
+      final GalLookupCalibrationCaptureException failure =
+          _calibrationCaptureExceptionFor(error);
+      final WindowCaptureMetadata? metadata = failure.captureMetadata;
+      glog(
+        'gal-overlay: calibration_sample failed '
+        'category=${failure.failure.name} '
+        'captureReason=${_boundedCaptureReason(failure.captureReason)} '
+        'requestedHwnd=${_boundedCaptureIdentity(requestedTarget?.targetHwnd)} '
+        'requestedPid=${_boundedCaptureIdentity(requestedTarget?.targetPid)} '
+        'capturedHwnd=${_boundedCaptureIdentity(metadata?.capturedHwnd)} '
+        'capturedPid=${_boundedCaptureIdentity(metadata?.capturedPid)} '
+        'clientWidth=${_boundedCaptureDimension(metadata?.clientWidthPx)} '
+        'clientHeight=${_boundedCaptureDimension(metadata?.clientHeightPx)} '
+        'imageWidth=${_boundedCaptureDimension(metadata?.imageWidthPx)} '
+        'imageHeight=${_boundedCaptureDimension(metadata?.imageHeightPx)} '
+        'contentWidth=${_boundedCaptureDimension(metadata?.contentWidthPx)} '
+        'contentHeight=${_boundedCaptureDimension(metadata?.contentHeightPx)} '
+        'textureWidth=${_boundedCaptureDimension(metadata?.textureWidthPx)} '
+        'textureHeight=${_boundedCaptureDimension(metadata?.textureHeightPx)} '
+        'surfaceStatus=${_attachedText.status.name} '
+        'surfaceVisible=${_attachedText.surfaceVisible} '
+        'shieldConclusion=${_attachedText.shieldStatus.conclusion.name} '
+        'sessionEpoch=${sessionEpoch ?? 0}',
+      );
+      throw failure;
     } finally {
       _calibrationCaptureInFlight = false;
       if (_started && sessionEpoch == _sessionKey && overlayWasVisible) {
@@ -1793,16 +1816,41 @@ class GalHookTextOverlayController extends ChangeNotifier {
     }
   }
 
-  static GalLookupCalibrationCaptureFailure _calibrationCaptureFailureFor(
+  static GalLookupCalibrationCaptureException _calibrationCaptureExceptionFor(
     Object error,
   ) {
     if (error is GalLookupCalibrationCaptureException) {
-      return error.failure;
+      return error;
     }
     if (error is GalHookCaptureSuppressionException) {
-      return GalLookupCalibrationCaptureFailure.suppressionUnavailable;
+      return const GalLookupCalibrationCaptureException(
+        GalLookupCalibrationCaptureFailure.suppressionUnavailable,
+      );
     }
-    return GalLookupCalibrationCaptureFailure.unknown;
+    return const GalLookupCalibrationCaptureException(
+      GalLookupCalibrationCaptureFailure.unknown,
+    );
+  }
+
+  static String _boundedCaptureReason(String? value) {
+    if (value == null || !_captureReasonPattern.hasMatch(value)) {
+      return 'none';
+    }
+    return value;
+  }
+
+  static int _boundedCaptureDimension(int? value) {
+    if (value == null || value < 0 || value > 100000) {
+      return 0;
+    }
+    return value;
+  }
+
+  static int _boundedCaptureIdentity(int? value) {
+    if (value == null || value < 0 || value.bitLength > 63) {
+      return 0;
+    }
+    return value;
   }
 
   GalLookupCalibrationCaptureSnapshot _calibrationCaptureSnapshot() {

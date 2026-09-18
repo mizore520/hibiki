@@ -224,6 +224,40 @@ void main() {
     expect(released, isTrue);
   });
 
+  test('native capture reason and metadata survive capture failure', () async {
+    await expectLater(
+      captureGalLookupCalibrationSample(
+        readSnapshot: _snapshot,
+        acquireLease: () async => null,
+        captureWindow: (_) async => const WindowCaptureResult(
+          error: 'capture timed out',
+          captureReason: 'no_frame',
+          metadata: _metadata,
+        ),
+      ),
+      throwsA(
+        isA<GalLookupCalibrationCaptureException>()
+            .having(
+              (GalLookupCalibrationCaptureException error) => error.failure,
+              'failure',
+              GalLookupCalibrationCaptureFailure.windowCaptureFailed,
+            )
+            .having(
+              (GalLookupCalibrationCaptureException error) =>
+                  error.captureReason,
+              'captureReason',
+              'no_frame',
+            )
+            .having(
+              (GalLookupCalibrationCaptureException error) =>
+                  error.captureMetadata?.capturedHwnd,
+              'capturedHwnd',
+              77,
+            ),
+      ),
+    );
+  });
+
   test('failed restore does not publish sample', () async {
     await expectLater(
       captureGalLookupCalibrationSample(
