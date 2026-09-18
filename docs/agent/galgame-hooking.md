@@ -4,6 +4,8 @@
 
 总设计见 [design.md](../specs/galgame-mining/design.md)，阶段计划与完成证据见 [engine-adapter-plan.md](../specs/galgame-mining/engine-adapter-plan.md)，当前支持状态以 `native/galgame_hook/engine-support.yaml` 为唯一真相源。
 
+按任务读取：新引擎/查词适配读取第 0 节对应能力契约；静态诊断、实现与离线验证使用第 1–6 节相关部分；真实运行或支持状态升级再进入第 2、7 节证据门。文档与只读审计不启动游戏或构建。运行/完整应用构建的执行者与已有授权按个人规则，不把本 SOP 当作新增操作授权。
+
 ## 0. 因果证据优先：新引擎快速决策入口
 
 ### 核心规则
@@ -45,7 +47,7 @@
 
 1. 先离线检查脚本 metadata/opcode、voice key 语义。若引擎暴露可识别且可合法/技术上解析的脚本或资源 archive、index、member 表，必须先验证其结构、边界和压缩/解码格式。
 2. 存在可解析的 ID 表时，用已知 ID 做离线定位、边界检查和原始资源解析；ID 可寻址时优先精确 ID 查找，不从读时刻反推台词。若没有静态容器/metadata，或无法合法/技术上解析，明确记录该事实，并转向最早的权威 decoder、engine API 或 request-object seam，不假定每个引擎都有 archive/member 语义。
-3. 尽早阅读成熟适配器的架构和测试，例如 KiriKiri、Elf/AI6、Leaf/Aquaplus、Siglus 等；只复用分层、生命周期和证据模式，不机械复制引擎专属字段或兼容假设。
+3. 选择与当前数据流最接近的成熟适配器及测试作为参考，例如 KiriKiri、Elf/AI6、Leaf/Aquaplus、Siglus；必要信息不足时再扩展，不逐一通读。只复用分层、生命周期和证据模式，不机械复制引擎专属字段。
 4. 只有静态证据无法闭合时才做运行时追踪，并把追踪目标限定为缺失的权威字段。API、loopback 和混音是最后的观察层，不能替代脚本/引擎 ownership。
 
 ### 静态先行与运行时预算
@@ -123,7 +125,7 @@
 
 #### 复用既有架构
 
-新引擎的查词是 adapter/provider 问题，不是第二套产品栈。必须复用现有 `LookupHit`、input/frame 通道、Fushi popup/`galCard`/mining context、geometry provider registry 和 input shielding；禁止另建字典、popup、IPC 或制卡链。实现前先阅读 Siglus、SGRE、HUNEX GGE、Leaf/Aquaplus、Smash/FZMedia、Ren'Py 等成熟适配器及其测试，按已证明的数据流和失败边界选择最近架构，不按厂商或引擎名称机械套用。
+新引擎的查词必须复用现有 `LookupHit`、input/frame 通道、Fushi popup/`galCard`/mining context、geometry provider registry 和 input shielding，禁止另建字典、popup、IPC 或制卡链。实现前按数据流和失败边界选择最接近的适配器及测试，缺少关键契约时再扩大查阅；不要求遍历全部成熟引擎，也不按厂商名称机械套用。
 
 #### 参考实现行为契约（新增适配的前置门）
 
@@ -245,7 +247,7 @@
 - native 采集组件在本仓 `native/galgame_hook/`（源码已合仓）。**进程/链接边界不变且是硬规则：绝不链接进 `fushi.exe`**。`tools/build_distribution.ps1` 单独构建 `voice_hook_<arch>.zip`；两架构 zip 由 `tools/install_into_bundle.ps1` 在**构建期**解压进 `fushi.exe` 同级 `voice_hook/<arch>/`（BUG-1449），与本体同一次构建产出、同一个安装包落地；运行期不下载任何组件（helper 的在线发布通道 `voice-hook-helper` release 已于 2026-08-11 连同其 workflow 一并删除）。helper 仍以隔离子进程/DLL 运行。
 - 合仓的依据：迁出独立仓库的真正根因是「主仓库那份 workflow 不在默认分支、无法 workflow_dispatch」，合仓后 workflow 就在 develop 上，问题消失；而「必被杀软报毒」经实测证伪（Defender 签名 1.455.357.0 对全部文件与 zip 零检出，同轮 EICAR 阳性对照正常报出，见 hibiki-hook#8）。国产杀软未验证，若被拦按误报处理。
 - 消费端（IPC 消费、文本与音频配对、制卡 UI）与 native 采集实现现在同仓，**改 IPC 契约必须两侧在同一个 PR 里落地**——这正是合仓要消除的版本不同步。引擎支持矩阵唯一真相源是 `native/galgame_hook/docs/engine-support.md`（由同目录 `engine-support.yaml` 自动生成），不得另存副本。
-- 一引擎一任务、一独立 worktree；批量引擎任务只负责排队和汇总，不在同一实现任务里交叉试错。worktree 先运行 `tool/setup_worktree.ps1`，并按根 `CLAUDE.md` 登记 ownership。
+- 一引擎一任务、一独立 worktree；批量引擎任务只负责排队和汇总，不在同一实现任务里交叉试错。环境按根 `CLAUDE.md` 按需初始化，并按个人规则登记 ownership。
 - 先记录游戏名、版本、exe 架构、启动器与真实游戏进程关系、原始失败路径；没有真实样本证据时只能标记 `implemented_unverified`，不得写成“已支持”。
 - 仓库 fixture 和可分享/脱敏诊断包不得含真实对白、语音字节、任意内存或其他受版权保护的游戏 payload。用户明确授权的本机临时诊断可以采集区分假设所需的最小内容，但必须留在仓库外、有硬性上限、不得上传或分享，也不能事后直接作为提交素材。
 
@@ -257,7 +259,7 @@ powershell -ExecutionPolicy Bypass -File tool/galhook.ps1 <command> ...
 
 ## 2. 身份、阶段与证据台账
 
-写任何 Hook 或配对代码前，先按用户报告的原始安装目录、原始启动入口和原始操作顺序跑一遍，并为本次会话保存以下台账。路径可在对外诊断包中脱敏，但本机验证时必须能据此确认实际加载对象。
+运行时诊断或支持验收时，按用户报告的原始安装目录、启动入口和操作顺序建立以下台账；复用仍适用的已采集证据。静态调查与离线修复可先进行，缺失字段如实记录，不猜测或据此升级支持状态。路径可在对外诊断包中脱敏，本机验证须能确认实际加载对象。
 
 | 类别 | 必填事实 |
 |---|---|
@@ -349,7 +351,7 @@ fixture 包含 `config`、按时间排序的 `events` 和 `expected`。至少覆
 
 ## 6. native 与 Fushi 验证门
 
-在 `native/galgame_hook/` 下至少执行：
+以下是声明完整离线阶段、支持升级或 CI/正式验证时的 native 门，在 `native/galgame_hook/` 下执行。日常候选按真实变更面选择直接相关检查；native adapter/hook 变更仍须双架构编译和相关测试，未完成时不能宣称完整离线门通过。纯文档不运行，纯 Dart 消费端不重建未变 helper。
 
 ```powershell
 python tools/generate_engine_support.py --check
@@ -365,9 +367,9 @@ cmake --build build-x86 --config Release
 ctest --test-dir build-x86 -C Release --output-on-failure
 ```
 
-若改动 Fushi 的 Dart/Flutter 消费端，则在 `fushi/` 下按根规则执行 `dart format .`、相关定向测试，再执行完整 `flutter test` 与 `flutter analyze`。工具自身崩溃要原样记录，不能当作代码通过；可补充 `dart analyze` 的有效结果，但不能伪装成完整 analyze。
+若改动 Fushi 的 Dart/Flutter 消费端，在 `fushi/` 下格式化所改文件、执行相关定向分析/测试，代码 push 前完成全量 `flutter analyze`；本地不跑完整 `flutter test`。工具自身崩溃要原样记录，不能当作通过；可补充定向分析的有效结果，但不能冒充完整 analyze。
 
-任何必需命令、双架构构建、replay、定向测试或完整测试被跳过、崩溃或因环境阻塞时，逐项记录命令和原因；该能力只能停在 `implemented_unverified`。Loopback 通过只证明降级链可用，不能替代引擎 Hook、逐句配对或纯人声验证。
+本次声明所需的命令、双架构构建、replay 或定向测试被跳过、崩溃或因环境阻塞时，记录命令和原因；未具备支持证据的能力停在 `implemented_unverified`。Loopback 通过只证明降级链可用，不能替代引擎 Hook、逐句配对或纯人声验证。
 
 ## 7. 真实游戏验收与证据
 
