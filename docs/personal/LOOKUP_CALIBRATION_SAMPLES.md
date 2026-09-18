@@ -156,6 +156,6 @@ Luna 服务本轮多次返回 503，用户授权临时用 Terra 承担辅助调�
 - 词典关闭后的重新接管窗口增加一次性 pending 闸门；重新接管完成前吞掉成对的物理鼠标按下/抬起，避免台词推进。窗口销毁时显式撤销候选，减少旧 HWND 生命周期残留。
 - Windows 原生排版按逻辑字簇验证可打印字符，覆盖日文、拉丁字符、表情符号和组合字符。
 
-工程验证（均在上述原分支执行）：图像拟合 11 项、尺寸档案 8 项、文本控制器 58 项、样本页 21 项 Flutter 定向测试全部通过；MSVC 原生排版 15 cases、字簇事务、鼠标 Hook 源码守卫、overlayability 和 shield policy 测试全部通过；`git diff --check` 通过。定向 Dart analyze 仍因本机分析器退出时无法删除 `C:\Users\mizore\AppData\Local\Dart\perf\32052` 而失败，未取得静态分析结论；没有运行完整 BAT 或真实游戏。
+工程验证（均在上述原分支执行）：图像拟合 11 项、尺寸档案 8 项、文本控制器 58 项、样本页 21 项 Flutter 定向测试全部通过；MSVC 原生排版 15 cases、字簇事务、鼠标 Hook 源码守卫、overlayability 和 shield policy 测试全部通过；`git diff --check` 通过。Flutter 定向 analyze 没有错误或警告，只有 11 个既有的 `curly_braces_in_flow_control_structures` 信息项，因此工具退出码为 1；没有运行完整 BAT 或真实游戏。
 
 校准后 Fushi 闪退目前只有 WER 访问冲突证据，没有调用栈，不能把上述生命周期加固说成已定位根因。下一步由用户在本分支运行 BAT 后，集中验收多行自动对齐、无底色/彩色文字、换句查词、关闭词典后立即再点，以及校准完成后是否仍闪退。
