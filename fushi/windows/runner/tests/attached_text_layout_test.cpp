@@ -152,9 +152,17 @@ int main() {
   assert(grid_wrapped.boxes.back().client_rect.top == body.top + 24);
   ++cases;
 
-  ExpectRejected(layout::Preview(L"\u3042A", client, rect, grid_style),
-                 "grid_unsupported_text");
-  ExpectRejected(layout::Preview(L"\u3042\U0001f600", client, rect, grid_style),
+  const auto mixed_grid = layout::Preview(
+      L"\u3042A\U0001f600e\u0301", client, rect, grid_style);
+  assert(mixed_grid.ok());
+  assert(mixed_grid.boxes.size() == 4);
+  assert(mixed_grid.boxes[1].text_position == 1 &&
+         mixed_grid.boxes[1].text_length == 1);
+  assert(mixed_grid.boxes[2].text_position == 2 &&
+         mixed_grid.boxes[2].text_length == 2);
+  assert(mixed_grid.boxes[3].text_position == 4 &&
+         mixed_grid.boxes[3].text_length == 2);
+  ExpectRejected(layout::Preview(L"\u3042\u0001", client, rect, grid_style),
                  "grid_unsupported_text");
   ExpectRejected(layout::Preview(
                      std::wstring(17, L'\u3042'), client,

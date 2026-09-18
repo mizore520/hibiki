@@ -153,6 +153,11 @@ void ClearLowLevelAttachedGlyphHitRegions(HWND surface);
 // so a recycled HWND can never receive a late notification.
 void RetireLowLevelAttachedGlyphRearmCandidate(HWND surface);
 
+// Finish one queued re-arm attempt.  A failed admission must not leave the
+// global hook suppressing game clicks forever; the next health tick may retry
+// from a clean pending state.
+void CompleteLowLevelAttachedGlyphRearm(HWND surface);
+
 inline uint32_t LowLevelAttachedGlyphSnapshotToken(
     uint64_t transaction_id) {
   return static_cast<uint32_t>(transaction_id >> 32u);

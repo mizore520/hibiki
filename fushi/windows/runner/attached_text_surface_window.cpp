@@ -1429,6 +1429,10 @@ void AttachedTextSurfaceWindow::DestroySurfaceWindow() {
     KillTimer(hwnd_, kFollowTimerId);
     KillTimer(hwnd_, kHoverTimerId);
     HWND old = hwnd_;
+    // DestroySurfaceWindow clears the member and userdata before DestroyWindow,
+    // so WM_NCDESTROY cannot recover |this| to retire the passive candidate.
+    // Retire it explicitly while the concrete HWND is still known.
+    fushi::RetireLowLevelAttachedGlyphRearmCandidate(old);
     hwnd_ = nullptr;
     SetWindowLongPtrW(old, GWLP_USERDATA, 0);
     DestroyWindow(old);
@@ -2817,6 +2821,7 @@ LRESULT AttachedTextSurfaceWindow::HandleMessage(UINT message, WPARAM wparam,
     // became neutral. Re-run normal admission now instead of waiting for the
     // 500 ms health timer.
     SyncToTarget();
+    fushi::CompleteLowLevelAttachedGlyphRearm(hwnd_);
     return 0;
   case WM_NCDESTROY:
     fushi::RetireLowLevelAttachedGlyphRearmCandidate(hwnd_);

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:fushi/src/lookup/gal_lookup_calibration_capture.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_draft.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_preview.dart';
 import 'package:fushi/src/lookup/gal_lookup_surface_profile.dart';
@@ -73,6 +74,8 @@ class _GridFit {
   final double score;
 }
 
+enum _InkMode { light, dark, brightColor, darkColor, localContrast }
+
 bool _space(int unit) => unit == 0x20 || unit == 0x3000;
 bool _newline(int unit) => unit == 10 || unit == 13;
 bool _quoted(String text) => text.startsWith('「') || text.startsWith('『');
@@ -81,29 +84,51 @@ bool _centered(int unit) =>
     unit >= 0x30a1 && unit <= 0x30fa ||
     unit >= 0x3400 && unit <= 0x9fff;
 
-/// Keep this eligibility in step with the native cell-grid layout. A narrow or
-/// combining glyph cannot silently consume one full-width cell.
-bool _eligible(String text) =>
-    text.isNotEmpty &&
-    text.length <= 512 &&
-    text.codeUnits.every(
-      (int unit) =>
-          _space(unit) ||
-          _newline(unit) ||
-          unit >= 0x3001 && unit <= 0x303f ||
-          unit >= 0x3041 && unit <= 0x3096 ||
-          unit >= 0x309d && unit <= 0x309f ||
-          unit >= 0x30a1 && unit <= 0x30ff ||
-          unit >= 0x3400 && unit <= 0x9fff ||
-          unit >= 0xff01 && unit <= 0xff60 ||
-          unit == 0x2026 ||
-          unit == 0x2014,
-    );
+bool _combining(int rune) =>
+    rune >= 0x0300 && rune <= 0x036f ||
+    rune >= 0x1ab0 && rune <= 0x1aff ||
+    rune >= 0x1dc0 && rune <= 0x1dff ||
+    rune >= 0x20d0 && rune <= 0x20ff ||
+    rune >= 0xfe00 && rune <= 0xfe0f ||
+    rune >= 0xfe20 && rune <= 0xfe2f ||
+    rune >= 0x1f3fb && rune <= 0x1f3ff ||
+    rune >= 0xe0100 && rune <= 0xe01ef;
+
+/// The native grid consumes one logical glyph cell.  The old allow-list made
+/// the screenshot fitter reject otherwise usable sentences before it even
+/// looked at the pixels (Latin, symbols and combining marks were common
+/// examples).  Reject only control text here; the runtime performs the same
+/// logical-unit grouping and can still fail closed on an invalid layout.
+bool _eligible(String text) {
+  if (text.isEmpty || text.length > GalLookupCalibrationCapture.maxTextLength) {
+    return false;
+  }
+  for (final int rune in text.runes) {
+    if (_space(rune) || _newline(rune) || rune == 0x09) continue;
+    if (rune < 0x20 || rune >= 0x7f && rune <= 0x9f) return false;
+  }
+  return true;
+}
+
+List<int> _logicalUnits(String text) {
+  final List<int> units = <int>[];
+  for (final int rune in text.runes) {
+    if (_combining(rune) &&
+        units.isNotEmpty &&
+        !_newline(units.last) &&
+        !_space(units.last) &&
+        units.last != 0x09) {
+      continue;
+    }
+    units.add(rune);
+  }
+  return units;
+}
 
 List<List<int>> _lines(String text, int capacity, int indent) {
   final List<List<int>> lines = [[]];
   int previous = 0;
-  for (final int unit in text.codeUnits) {
+  for (final int unit in _logicalUnits(text)) {
     if (_newline(unit)) {
       if (unit != 10 || previous != 13) lines.add([]);
     } else {
@@ -153,7 +178,7 @@ void _removeIsolatedSpecks(List<int> columns, int rowHeight) {
 _SampleInk? _measure(
   GalCalibrationSample sample,
   GalLookupNormalizedRectV1 rect,
-  bool light,
+  _InkMode mode,
 ) {
   final img.Image? decoded = img.decodePng(sample.capture.pngBytes);
   if (decoded == null ||
@@ -177,13 +202,64 @@ _SampleInk? _measure(
   if (width < 16 || height < 8) return null;
   final Uint8List mask = Uint8List(width * height);
   final List<int> totals = List<int>.filled(height, 0);
+  Float64List? integral;
+  int integralStride = 0;
+  if (mode == _InkMode.localContrast) {
+    // The local window is queried only inside the selected body crop.  Keep
+    // the integral image crop-sized; allocating one for a full 32 MP capture
+    // would waste hundreds of MB while adding no signal to the fit.
+    integralStride = width + 1;
+    integral = Float64List((height + 1) * integralStride);
+    for (int y = 0; y < height; y++) {
+      double rowSum = 0;
+      for (int x = 0; x < width; x++) {
+        final img.Pixel pixel = image.getPixel(left + x, top + y);
+        final double value =
+            pixel.r * 0.299 + pixel.g * 0.587 + pixel.b * 0.114;
+        rowSum += value;
+        integral[(y + 1) * integralStride + x + 1] =
+            integral[y * integralStride + x + 1] + rowSum;
+      }
+    }
+  }
   for (int y = top; y < bottom; y++) {
     for (int x = left; x < right; x++) {
       final img.Pixel pixel = image.getPixel(x, y);
       final num low = math.min(pixel.r, math.min(pixel.g, pixel.b));
       final num high = math.max(pixel.r, math.max(pixel.g, pixel.b));
-      // Text interiors, excluding coloured frames and most background art.
-      final bool ink = high - low < 65 && (light ? low >= 195 : high <= 60);
+      final double brightness =
+          pixel.r * 0.299 + pixel.g * 0.587 + pixel.b * 0.114;
+      bool ink;
+      switch (mode) {
+        case _InkMode.light:
+          ink = high - low < 65 && low >= 195;
+        case _InkMode.dark:
+          ink = high - low < 65 && high <= 60;
+        case _InkMode.brightColor:
+          ink = brightness >= 175;
+        case _InkMode.darkColor:
+          ink = brightness <= 100;
+        case _InkMode.localContrast:
+          final Float64List contrastIntegral = integral!;
+          const int radius = 4;
+          final int localX = x - left;
+          final int localY = y - top;
+          final int x0 = math.max(0, localX - radius);
+          final int y0 = math.max(0, localY - radius);
+          final int x1 = math.min(width - 1, localX + radius);
+          final int y1 = math.min(height - 1, localY + radius);
+          final double area = (x1 - x0 + 1) * (y1 - y0 + 1).toDouble();
+          final double sum =
+              contrastIntegral[(y1 + 1) * integralStride + x1 + 1] -
+              contrastIntegral[y0 * integralStride + x1 + 1] -
+              contrastIntegral[(y1 + 1) * integralStride + x0] +
+              contrastIntegral[y0 * integralStride + x0];
+          // Anti-aliased and saturated glyphs may have only a modest
+          // luminance delta from the artwork behind them.  Keep the local
+          // threshold below the old binary-mask cutoff; isolated background
+          // texture is removed by the row/grid consistency checks below.
+          ink = (brightness - sum / area).abs() >= 12;
+      }
       if (ink) {
         mask[(y - top) * width + x - left] = 1;
         totals[y - top]++;
@@ -291,7 +367,7 @@ double _score(
 
 _GridFit? _fitSample(_SampleInk sample) {
   if (sample.rows.length < 2) return null;
-  final int length = sample.sample.capture.sourceText.length;
+  final int length = _logicalUnits(sample.sample.capture.sourceText).length;
   final double inkHeight = _median(
     sample.rows.map((_InkRow r) => r.height.toDouble()).toList(),
   );
@@ -352,13 +428,13 @@ GalCalibrationImageFit inferGalCalibrationGrid(
   }
   String failure = 'image_grid_ambiguous';
   int? failedSample;
-  bool onlySingleLines = false;
-  for (final bool light in [true, false]) {
+  bool multilineEvidence = false;
+  for (final _InkMode mode in _InkMode.values) {
     final List<_SampleInk> samples = [];
     for (final GalCalibrationSample sample in draft.samples) {
-      final _SampleInk? measured = _measure(sample, draft.rect, light);
+      final _SampleInk? measured = _measure(sample, draft.rect, mode);
       if (measured == null) {
-        if (light) {
+        if (failedSample == null) {
           failure = 'text_rows_not_found';
           failedSample = samples.length;
         }
@@ -367,15 +443,14 @@ GalCalibrationImageFit inferGalCalibrationGrid(
       samples.add(measured);
     }
     if (samples.length != draft.samples.length) continue;
-    if (light &&
-        samples
-            .where((_SampleInk s) => !s.sample.validation)
-            .every((_SampleInk s) => s.rows.length == 1))
-      onlySingleLines = true;
+    final List<_SampleInk> trainingSamples = samples
+        .where((_SampleInk s) => !s.sample.validation)
+        .toList();
+    if (trainingSamples.any((_SampleInk s) => s.rows.length >= 2)) {
+      multilineEvidence = true;
+    }
     final List<(_SampleInk, _GridFit)> training = [];
-    for (final _SampleInk sample in samples.where(
-      (_SampleInk s) => !s.sample.validation,
-    )) {
+    for (final _SampleInk sample in trainingSamples) {
       final _GridFit? fitted = _fitSample(sample);
       if (fitted != null) training.add((sample, fitted));
     }
@@ -478,8 +553,8 @@ GalCalibrationImageFit inferGalCalibrationGrid(
     );
   }
   return GalCalibrationImageFit(
-    reason: onlySingleLines ? 'multiline_required' : failure,
-    sampleIndex: onlySingleLines ? null : failedSample,
+    reason: multilineEvidence ? failure : 'multiline_required',
+    sampleIndex: multilineEvidence ? failedSample : null,
   );
 }
 

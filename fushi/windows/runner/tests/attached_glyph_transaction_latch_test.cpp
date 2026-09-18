@@ -128,6 +128,10 @@ int main() {
   popup_closed.current_target = reinterpret_cast<HWND>(0x5678);
   ok &= Expect(!CanRequestRearm(popup_closed),
                "a newer popup binding must keep ownership");
+  popup_closed.current_target = nullptr;
+  popup_closed.rearm_pending = true;
+  ok &= Expect(!CanRequestRearm(popup_closed),
+               "an already queued rearm must not post duplicate messages");
 
   if (!ok)
     return 1;

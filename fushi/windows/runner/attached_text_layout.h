@@ -138,15 +138,30 @@ inline bool RectHasArea(const RECT &rect) {
   return rect.right > rect.left && rect.bottom > rect.top;
 }
 
-inline bool IsGridSupportedTextUnit(wchar_t value) {
-  const uint32_t code = static_cast<uint16_t>(value);
-  return (code >= 0x3001 && code <= 0x303F) ||
-         (code >= 0x3041 && code <= 0x3096) ||
-         (code >= 0x309D && code <= 0x309F) ||
-         (code >= 0x30A1 && code <= 0x30FF) ||
-         (code >= 0x3400 && code <= 0x9FFF) ||
-         (code >= 0xFF01 && code <= 0xFF60) || code == 0x2014 ||
-         code == 0x2026;
+inline bool IsGridSupportedTextUnit(uint32_t code) {
+  if (code == L'\r' || code == L'\n' || code == L' ' || code == L'\t' ||
+      code == 0x3000) {
+    return true;
+  }
+  // The cell grid is a geometry contract, not a Japanese-character allow
+  // list.  Hook text may contain Latin, symbols, emoji and game-specific
+  // punctuation; rejecting those before building boxes made a valid profile
+  // unusable in another game.  Control characters remain invalid because
+  // they have no deterministic cell semantics.
+  return code >= 0x20 && code <= 0x10FFFF &&
+         !(code >= 0x7F && code <= 0x9F) &&
+         !(code >= 0xD800 && code <= 0xDFFF);
+}
+
+inline bool IsGridCombiningMark(uint32_t code) {
+  return (code >= 0x0300 && code <= 0x036F) ||
+         (code >= 0x1AB0 && code <= 0x1AFF) ||
+         (code >= 0x1DC0 && code <= 0x1DFF) ||
+         (code >= 0x20D0 && code <= 0x20FF) ||
+         (code >= 0xFE00 && code <= 0xFE0F) ||
+         (code >= 0xFE20 && code <= 0xFE2F) ||
+         (code >= 0x1F3FB && code <= 0x1F3FF) ||
+         (code >= 0xE0100 && code <= 0xE01EF);
 }
 
 inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
@@ -212,26 +227,47 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
   };
 
   Result result;
+  bool previous_cell = false;
   for (uint32_t index = 0; index < source.size(); ++index) {
-    const wchar_t unit = source[index];
-    if (unit == L'\r') {
+    uint32_t code = static_cast<uint16_t>(source[index]);
+    uint32_t length = 1;
+    if (code >= 0xD800 && code <= 0xDBFF && index + 1 < source.size()) {
+      const uint32_t low = static_cast<uint16_t>(source[index + 1]);
+      if (low >= 0xDC00 && low <= 0xDFFF) {
+        code = 0x10000 + ((code - 0xD800) << 10) + (low - 0xDC00);
+        length = 2;
+      }
+    }
+    if (code == L'\r') {
       if (index + 1 < source.size() && source[index + 1] == L'\n') ++index;
       advance_line();
+      previous_cell = false;
       continue;
     }
-    if (unit == L'\n') {
+    if (code == L'\n') {
       advance_line();
+      previous_cell = false;
       continue;
     }
-    const bool whitespace = unit == L' ' || unit == L'\u3000';
-    if (!whitespace && !IsGridSupportedTextUnit(unit))
+    const bool whitespace = code == L' ' || code == L'\t' || code == L'\u3000';
+    if (!IsGridSupportedTextUnit(code))
       return Failure("grid_unsupported_text");
+    if (IsGridCombiningMark(code) && previous_cell && !result.boxes.empty() &&
+        result.boxes.back().text_position +
+                result.boxes.back().text_length ==
+            index) {
+      result.boxes.back().text_length += length;
+      index += length - 1;
+      continue;
+    }
     RECT box{};
     if (!next_cell_bounds(&box))
       return Failure("grid_overflow_body_rect");
     if (!whitespace) {
-      result.boxes.push_back(ClusterBox{index, 1, box});
+      result.boxes.push_back(ClusterBox{index, length, box});
     }
+    previous_cell = !whitespace;
+    index += length - 1;
   }
   if (result.boxes.empty()) return Failure("clusters_empty");
   return result;

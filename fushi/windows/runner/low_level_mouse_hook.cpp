@@ -105,6 +105,11 @@ std::shared_ptr<const AttachedGlyphHitSnapshot> g_attached_hit_snapshot;
 // owns the singleton hook. Keep a passive HWND candidate so popup close can
 // request a fresh snapshot/admission without waiting for the health timer.
 std::atomic<HWND> g_attached_rearm_candidate{nullptr};
+// Popup close and attached re-arm are delivered on different threads.  Keep a
+// short-lived fence between the two so a physical click cannot fall through
+// while g_target is empty and advance the game before SyncToTarget runs.
+std::atomic<bool> g_attached_rearm_pending{false};
+std::atomic<uint32_t> g_attached_rearm_suppressed_buttons{0};
 std::atomic<uint32_t> g_attached_hit_token{0};
 std::atomic<uint32_t> g_attached_transaction_counter{0};
 SRWLOCK g_attached_transaction_lock = SRWLOCK_INIT;
@@ -990,10 +995,19 @@ void RequestAttachedGlyphRearmIfNeutral() {
       g_direct_input_shield_buttons.load(std::memory_order_acquire),
       g_direct_input_shield_tail_token.load(std::memory_order_acquire),
       HasActiveAttachedGlyphTransactionFast(),
+      g_attached_rearm_pending.load(std::memory_order_acquire),
   };
   if (!attached_popup_rearm_policy::CanRequestRearm(state)) return;
-  PostMessageW(state.candidate_surface,
-               kLowLevelMouseAttachedGlyphRearmMessage, 0, 0);
+  bool expected = false;
+  if (!g_attached_rearm_pending.compare_exchange_strong(
+          expected, true, std::memory_order_acq_rel,
+          std::memory_order_acquire)) {
+    return;
+  }
+  if (!PostMessageW(state.candidate_surface,
+                    kLowLevelMouseAttachedGlyphRearmMessage, 0, 0)) {
+    g_attached_rearm_pending.store(false, std::memory_order_release);
+  }
 }
 
 bool FailOpenRetireAttachedGlyphTransaction(uint64_t transaction_id) {
@@ -1195,6 +1209,31 @@ LRESULT CALLBACK HookProc(int code, WPARAM wparam, LPARAM lparam) {
       (is_button_down || is_button_up)
           ? ButtonBitForMessage(wparam, info->mouseData)
           : 0;
+
+  // A re-arm may complete between a suppressed down and its physical up.
+  // Retire that private pair before checking the normal target path, otherwise
+  // the next lookup would inherit a stale suppressed-button bit.
+  if (is_button_up && button_bit != 0 &&
+      (g_attached_rearm_suppressed_buttons.fetch_and(
+           ~button_bit, std::memory_order_relaxed) &
+       button_bit) != 0) {
+    return 1;
+  }
+
+  // A popup can release the singleton before its re-arm message is processed
+  // by the attached surface thread.  Keep the game fail-closed for this tiny
+  // handoff window.  Only a button that we actually swallowed is paired and
+  // swallowed on up; once a target is published normal dispatch resumes.
+  if (g_attached_rearm_pending.load(std::memory_order_acquire) &&
+      g_target.load(std::memory_order_acquire) == nullptr &&
+      g_attached_rearm_candidate.load(std::memory_order_acquire) != nullptr &&
+      button_bit != 0) {
+    if (is_button_down) {
+      g_attached_rearm_suppressed_buttons.fetch_or(
+          button_bit, std::memory_order_relaxed);
+      return 1;
+    }
+  }
 
   // 这道闸故意在 g_target 之前。外部 down 被吞后，PostMessage 会让窗口线程
   // 立刻 Hide/Disarm；配对 up 到来时 target 通常已空，若先看 target 就会漏半个
@@ -1752,9 +1791,19 @@ void ClearLowLevelAttachedGlyphHitRegions(HWND surface) {
 void RetireLowLevelAttachedGlyphRearmCandidate(HWND surface) {
   if (surface == nullptr) return;
   HWND expected = surface;
-  g_attached_rearm_candidate.compare_exchange_strong(
-      expected, nullptr, std::memory_order_acq_rel,
-      std::memory_order_acquire);
+  if (g_attached_rearm_candidate.compare_exchange_strong(
+          expected, nullptr, std::memory_order_acq_rel,
+          std::memory_order_acquire)) {
+    g_attached_rearm_pending.store(false, std::memory_order_release);
+    g_attached_rearm_suppressed_buttons.store(0, std::memory_order_release);
+  }
+}
+
+void CompleteLowLevelAttachedGlyphRearm(HWND surface) {
+  if (surface == nullptr) return;
+  if (g_attached_rearm_candidate.load(std::memory_order_acquire) == surface) {
+    g_attached_rearm_pending.store(false, std::memory_order_release);
+  }
 }
 
 namespace {
@@ -1945,6 +1994,7 @@ bool ArmLowLevelMouseHookForAttachedGlyph(HWND target, HWND game_owner) {
       target, game_owner, true, snapshot->allow_risk, true);
   if (armed) {
     g_attached_arm_failure.store(nullptr, std::memory_order_release);
+    CompleteLowLevelAttachedGlyphRearm(target);
   }
   return armed;
 }

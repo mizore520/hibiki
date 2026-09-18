@@ -1105,6 +1105,12 @@ class GalAttachedTextController extends ChangeNotifier {
     int replacement = -1;
     double bestError = double.infinity;
     for (int i = 0; i < variants.length; i++) {
+      if (!GalLookupSurfaceProfileV1.sameReferenceClient(
+        variants[i].referenceClient,
+        variant.referenceClient,
+      )) {
+        continue;
+      }
       final double error = variants[i].relativeAspectError(variant.aspectRatio);
       if (error <= GalLookupSurfaceProfileV1.maxRelativeAspectError &&
           error < bestError) {

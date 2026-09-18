@@ -166,9 +166,9 @@ void main() {
   test('best of multiple variants must be within one-percent aspect error', () {
     final GalLookupSurfaceProfileV1 value = profile(
       variants: <GalLookupSurfaceVariantV1>[
-        variant(width: 4, height: 3),
-        variant(width: 16, height: 9),
-        variant(width: 16, height: 10),
+        variant(width: 1280, height: 960),
+        variant(width: 1920, height: 1080),
+        variant(width: 1600, height: 1000),
       ],
     );
     const GalLookupReferenceClientV1 nearWide = GalLookupReferenceClientV1(
@@ -189,6 +189,13 @@ void main() {
         ),
       ),
       isNull,
+    );
+    expect(
+      value.bestVariantForClient(
+        const GalLookupReferenceClientV1(widthPx: 1280, heightPx: 720, dpi: 96),
+      ),
+      isNull,
+      reason: 'a large same-aspect size jump needs a fresh calibration',
     );
   });
 

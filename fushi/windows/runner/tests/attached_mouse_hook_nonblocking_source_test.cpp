@@ -246,6 +246,8 @@ int main() {
          std::string::npos);
   assert(rearm.find("HasActiveAttachedGlyphTransactionFast()") !=
          std::string::npos);
+  assert(rearm.find("g_attached_rearm_pending") != std::string::npos);
+  assert(rearm.find("compare_exchange_strong") != std::string::npos);
   assert(rearm.find("PostMessageW(state.candidate_surface,") !=
          std::string::npos);
   const std::string revoke = FunctionSlice(
@@ -265,7 +267,12 @@ int main() {
   assert(disarm.find("released_transient_popup") != std::string::npos);
   assert(hook.find("RequestAttachedGlyphRearmIfNeutral();\n      return 1;") !=
          std::string::npos);
+  assert(hook.find("g_attached_rearm_suppressed_buttons") !=
+         std::string::npos);
   assert(surface.find("case fushi::kLowLevelMouseAttachedGlyphRearmMessage:") !=
+         std::string::npos);
+  assert(surface.find(
+             "RetireLowLevelAttachedGlyphRearmCandidate(old)") !=
          std::string::npos);
   assert(surface.find("RetireLowLevelAttachedGlyphRearmCandidate(hwnd_)") !=
          std::string::npos);

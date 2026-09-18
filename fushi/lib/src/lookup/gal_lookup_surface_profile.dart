@@ -1,6 +1,8 @@
 /// Pure-Dart persisted plan for galgame text lookup surfaces.
 library;
 
+import 'dart:math' as math;
+
 const String kGalLookupSurfaceProfilePreferencePrefix =
     'gal_lookup_surface_v1::';
 
@@ -371,6 +373,12 @@ class GalLookupSurfaceVariantV1 {
   double relativeAspectError(double currentAspectRatio) =>
       (currentAspectRatio - aspectRatio).abs() / aspectRatio;
 
+  double relativeClientSizeError(GalLookupReferenceClientV1 client) => math.max(
+    (client.widthPx - referenceClient.widthPx).abs() / referenceClient.widthPx,
+    (client.heightPx - referenceClient.heightPx).abs() /
+        referenceClient.heightPx,
+  );
+
   Map<String, Object?> toJson() => <String, Object?>{
     'aspectRatio': aspectRatio,
     'referenceClient': referenceClient.toJson(),
@@ -434,6 +442,10 @@ class GalLookupSurfaceProfileV1 {
   static const String inputMode = 'unsafeLeftClick';
   static const String writingMode = 'horizontal';
   static const double maxRelativeAspectError = 0.01;
+  // A normalized body can be scaled safely only across nearby client sizes.
+  // Large jumps often mean a game reflowed or introduced black bars; silently
+  // reusing the old profile would put every hit box in the wrong place.
+  static const double maxRelativeClientSizeError = 0.12;
 
   final String exePath;
   final String exeSha256;
@@ -472,12 +484,20 @@ class GalLookupSurfaceProfileV1 {
   ) {
     if (!client.isValid) return null;
     GalLookupSurfaceVariantV1? best;
-    double bestError = double.infinity;
+    double bestSizeError = double.infinity;
+    double bestAspectError = double.infinity;
     for (final GalLookupSurfaceVariantV1 variant in variants) {
-      final double error = variant.relativeAspectError(client.aspectRatio);
-      if (error <= maxRelativeAspectError && error < bestError) {
+      final double aspectError = variant.relativeAspectError(
+        client.aspectRatio,
+      );
+      final double sizeError = variant.relativeClientSizeError(client);
+      if (aspectError <= maxRelativeAspectError &&
+          sizeError <= maxRelativeClientSizeError &&
+          (sizeError < bestSizeError ||
+              sizeError == bestSizeError && aspectError < bestAspectError)) {
         best = variant;
-        bestError = error;
+        bestSizeError = sizeError;
+        bestAspectError = aspectError;
       }
     }
     return best;
@@ -498,6 +518,14 @@ class GalLookupSurfaceProfileV1 {
     }
     return nearest;
   }
+
+  static bool sameReferenceClient(
+    GalLookupReferenceClientV1 left,
+    GalLookupReferenceClientV1 right,
+  ) =>
+      left.widthPx == right.widthPx &&
+      left.heightPx == right.heightPx &&
+      left.dpi == right.dpi;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'schemaVersion': schemaVersion,

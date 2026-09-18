@@ -18,9 +18,13 @@ GalCalibrationSample _sample({
   bool trailingBreak = false,
   bool borderSpecks = false,
   bool extraGlyph = false,
+  img.ColorRgb8? backgroundColor,
+  img.ColorRgb8? inkColor,
 }) {
   final img.Image image = img.Image(width: 600, height: 300);
-  img.fill(image, color: img.ColorRgb8(30, 40, 60));
+  final img.ColorRgb8 background = backgroundColor ?? img.ColorRgb8(30, 40, 60);
+  final img.ColorRgb8 ink = inkColor ?? img.ColorRgb8(245, 245, 245);
+  img.fill(image, color: background);
   const String text = '「春夏秋冬山川海空花鳥風月日光森林大地雨雪水火石土星夜朝夕音夢ー」';
   if (!blank) {
     for (int i = 0; i < text.length; i++) {
@@ -28,7 +32,6 @@ GalCalibrationSample _sample({
       final int col = i < 20 ? i : i - 20 + indent;
       final int x = 42 + col * 24;
       final int y = 110 + row * 31 + (row == 1 && wrongSecondRow ? 11 : 0);
-      final img.ColorRgb8 white = img.ColorRgb8(245, 245, 245);
       if (i == 0) {
         img.fillRect(
           image,
@@ -36,7 +39,7 @@ GalCalibrationSample _sample({
           y1: y,
           x2: x + 18,
           y2: y + 14,
-          color: white,
+          color: ink,
         );
         img.fillRect(
           image,
@@ -44,7 +47,7 @@ GalCalibrationSample _sample({
           y1: y,
           x2: x + 18,
           y2: y + 2,
-          color: white,
+          color: ink,
         );
       } else {
         img.drawRect(
@@ -53,7 +56,7 @@ GalCalibrationSample _sample({
           y1: y,
           x2: x + 20,
           y2: y + 19,
-          color: white,
+          color: ink,
           thickness: 2,
         );
         img.drawLine(
@@ -62,21 +65,14 @@ GalCalibrationSample _sample({
           y1: y + 10,
           x2: x + 19,
           y2: y + 10,
-          color: white,
+          color: ink,
           thickness: 2,
         );
       }
     }
     if (borderSpecks) {
       for (final (int x, int y) in [(588, 118), (10, 149)]) {
-        img.fillRect(
-          image,
-          x1: x,
-          y1: y,
-          x2: x + 1,
-          y2: y + 2,
-          color: img.ColorRgb8(245, 245, 245),
-        );
+        img.fillRect(image, x1: x, y1: y, x2: x + 1, y2: y + 2, color: ink);
       }
     }
     if (extraGlyph) {
@@ -86,7 +82,7 @@ GalCalibrationSample _sample({
         y1: 110,
         x2: 591,
         y2: 129,
-        color: img.ColorRgb8(245, 245, 245),
+        color: ink,
         thickness: 2,
       );
     }
@@ -141,6 +137,31 @@ void main() {
       isNull,
     );
   });
+
+  test('finds dark glyphs on a light dialogue panel', () {
+    final GalCalibrationImageFit result = inferGalCalibrationGrid(
+      _draft([
+        _sample(
+          backgroundColor: img.ColorRgb8(238, 238, 238),
+          inkColor: img.ColorRgb8(24, 24, 24),
+        ),
+      ]),
+    );
+    expect(result.draft?.layout.cellGrid?.columns, 20);
+  });
+
+  test('finds colored glyphs by local contrast without a text box color', () {
+    final GalCalibrationImageFit result = inferGalCalibrationGrid(
+      _draft([
+        _sample(
+          backgroundColor: img.ColorRgb8(76, 108, 132),
+          inkColor: img.ColorRgb8(184, 84, 156),
+        ),
+      ]),
+    );
+    expect(result.draft?.layout.cellGrid?.columns, 20);
+  });
+
   test(
     'measures ink grid and quoted continuation without any centre marks',
     () {

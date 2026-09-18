@@ -18,13 +18,14 @@ struct State {
   uint32_t direct_shield_buttons = 0;
   uint32_t direct_shield_tail_token = 0;
   bool attached_transaction_active = false;
+  bool rearm_pending = false;
 };
 
 inline bool CanRequestRearm(const State& state) {
   return state.candidate_surface != nullptr && state.current_target == nullptr &&
          state.swallowed_buttons == 0 && state.direct_shield_buttons == 0 &&
          state.direct_shield_tail_token == 0 &&
-         !state.attached_transaction_active;
+         !state.attached_transaction_active && !state.rearm_pending;
 }
 
 }  // namespace fushi::attached_popup_rearm_policy

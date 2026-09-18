@@ -360,6 +360,13 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       if (result.draft == null) {
         setState(() {
           _failed = true;
+          if (result.sampleIndex != null &&
+              result.sampleIndex! >= 0 &&
+              result.sampleIndex! < _samples.length) {
+            _selected = result.sampleIndex!;
+            _markIndex = null;
+            _hoverIndex = null;
+          }
           final String reason = switch (result.reason) {
             'multiline_required' => t.game_lookup_samples_auto_multiline,
             'unsupported_text' => t.game_lookup_samples_auto_unsupported,
