@@ -109,10 +109,11 @@ class GalLookupCalibrationCapture {
         client == null ||
         capturedAt == null ||
         metadata == null ||
-        !metadata.isCompleteClient ||
-        metadata.capturedHwnd != hwnd ||
-        metadata.clientWidthPx != client.widthPx ||
-        metadata.clientHeightPx != client.heightPx ||
+        !(metadata.usedPresentationCapture
+            ? metadata.isCompletePresentation && metadata.sourceHwnd == hwnd
+            : metadata.isCompleteClient && metadata.capturedHwnd == hwnd) ||
+        metadata.imageWidthPx != client.widthPx ||
+        metadata.imageHeightPx != client.heightPx ||
         metadata.dpi != client.dpi ||
         client.widthPx * client.heightPx > maxImagePixels) {
       return null;
@@ -305,7 +306,10 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
     );
   }
   final WindowCaptureMetadata? metadata = result.metadata;
-  if (metadata == null || !metadata.isCompleteClient) {
+  if (metadata == null ||
+      !(metadata.usedPresentationCapture
+          ? metadata.isCompletePresentation
+          : metadata.isCompleteClient)) {
     throw captureFailure(
       GalLookupCalibrationCaptureFailure.clientMappingUnavailable,
     );
@@ -313,6 +317,10 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
   final bool sameTarget =
       metadata.capturedHwnd == before.targetHwnd &&
       metadata.capturedPid == before.targetPid;
+  final bool presentationTarget =
+      metadata.isCompletePresentation &&
+      metadata.sourceHwnd == before.targetHwnd &&
+      metadata.sourcePid == before.targetPid;
   final bool sameClient =
       sameTarget &&
       metadata.clientWidthPx == before.referenceClient.widthPx &&
@@ -323,16 +331,25 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
   // still in the same normalized game coordinate system when their aspect
   // ratio agrees; keep the captured source dimensions as the sample's pixel
   // reference so the fitter never compares source pixels to output pixels.
-  final double capturedAspect =
-      metadata.clientWidthPx / metadata.clientHeightPx;
+  final double capturedAspect = metadata.imageWidthPx / metadata.imageHeightPx;
   final double referenceAspect = before.referenceClient.aspectRatio;
   final bool sourceClient =
-      sameTarget &&
+      (sameTarget || presentationTarget) &&
       metadata.dpi == before.referenceClient.dpi &&
       capturedAspect.isFinite &&
       referenceAspect.isFinite &&
       ((capturedAspect - referenceAspect).abs() / referenceAspect) <= 0.01;
-  if (!sameClient && !sourceClient) {
+  final bool validPresentation =
+      presentationTarget &&
+      sourceClient &&
+      ((metadata.sourceViewportWidthPx / metadata.sourceViewportHeightPx -
+                      capturedAspect)
+                  .abs() /
+              capturedAspect) <=
+          0.01;
+  if (metadata.usedPresentationCapture
+      ? !validPresentation
+      : !sameClient && !sourceClient) {
     throw captureFailure(
       GalLookupCalibrationCaptureFailure.clientMappingUnavailable,
     );
@@ -354,8 +371,8 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
     referenceClient: sameClient
         ? before.referenceClient
         : GalLookupReferenceClientV1(
-            widthPx: metadata.clientWidthPx,
-            heightPx: metadata.clientHeightPx,
+            widthPx: metadata.imageWidthPx,
+            heightPx: metadata.imageHeightPx,
             dpi: metadata.dpi,
           ),
     exePath: before.exePath,

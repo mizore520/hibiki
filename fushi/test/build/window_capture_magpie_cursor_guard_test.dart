@@ -65,6 +65,58 @@ void main() {
     );
   });
 
+  test(
+    '① Magpie presentation mapping reads the explicit source/output viewports',
+    () {
+      expect(
+        header.contains('struct MagpiePresentationMapping'),
+        isTrue,
+        reason:
+            'surface geometry must have a shared source/presentation mapping type',
+      );
+      expect(
+        header.contains(
+          'ReadMagpiePresentationMapping(HWND presentation_hwnd,',
+        ),
+        isTrue,
+        reason: 'mapping must be reusable by capture and the attached surface',
+      );
+      for (final String property in <String>[
+        'Magpie.SrcLeft',
+        'Magpie.SrcTop',
+        'Magpie.SrcRight',
+        'Magpie.SrcBottom',
+        'Magpie.DestLeft',
+        'Magpie.DestTop',
+        'Magpie.DestRight',
+        'Magpie.DestBottom',
+      ]) {
+        expect(
+          capture.contains('L"$property"'),
+          isTrue,
+          reason: '$property must be read from the presentation window',
+        );
+      }
+      expect(
+        capture.contains('EnumPropsExW'),
+        isTrue,
+        reason:
+            'zero is a valid screen coordinate; property presence must not be inferred from GetProp null',
+      );
+      expect(
+        capture.contains('expected_source_hwnd'),
+        isTrue,
+        reason:
+            'a same-shaped arbitrary window must not be accepted as the presentation',
+      );
+      expect(
+        capture.contains('expected_source_hwnd == nullptr'),
+        isTrue,
+        reason: 'the mapping API must require an explicit source identity',
+      );
+    },
+  );
+
   test('② 光标抑制的 QI 与 HRESULT 不再被静默丢弃', () {
     expect(
       capture.contains('const HRESULT cursor_qi = session.As(&session2);'),
@@ -164,7 +216,7 @@ void main() {
     expect(
       capture
           .substring(capture.indexOf('for (int attempt = 0;'))
-          .contains('ResolveScalingSourceWindow(capture_hwnd)'),
+          .contains('ResolveScalingSourceWindow(source_hwnd)'),
       isTrue,
       reason: '每次尝试都必须重新解析 Magpie 源 HWND',
     );

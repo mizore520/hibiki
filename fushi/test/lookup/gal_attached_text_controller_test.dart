@@ -292,6 +292,185 @@ void main() {
 
   String key() => GalLookupSurfaceProfileV1.preferenceKeyForExePath(_exePath);
 
+  GalLookupSurfaceVariantV1 measuredVariant({
+    GalLookupReferenceClientV1 client = _client,
+  }) => GalLookupSurfaceVariantV1(
+    aspectRatio: client.aspectRatio,
+    referenceClient: client,
+    bodyRect: GalAttachedTextController.defaultBodyRect,
+    layout: const GalLookupTextLayoutV1(
+      cellGrid: GalLookupCellGridV1(
+        advancePerClientHeight: 0.03,
+        lineAdvancePerClientHeight: 0.04,
+        cellHeightPerClientHeight: 0.035,
+        columns: 24,
+        continuationIndent: 0,
+        quotedContinuationIndent: 0,
+      ),
+    ),
+  );
+
+  test('measured calibration activates without manufacturing probes', () async {
+    await sync();
+    await controller.setMode(GalLookupSurfaceMode.attachedOnly);
+    port.calls.clear();
+    expect(
+      await controller.applyMeasuredCalibration(
+        expectedTarget: controller.target!,
+        expectedExeSha256: _sha,
+        variant: measuredVariant(),
+      ),
+      isTrue,
+    );
+    expect(controller.profile!.variants.single.layout.cellGrid, isNotNull);
+    expect(controller.status, GalAttachedTextStatus.activeAttached);
+    expect(controller.calibrationActive, isFalse);
+    expect(port.nativeProbeMask, 0);
+    expect(
+      port.calls.any((String call) => call.startsWith('calibration')),
+      isFalse,
+    );
+    expect(port.calls, contains('configure:attachedOnly:true'));
+    expect(jsonDecode(preferences[key()]! as String)['variants'], hasLength(1));
+  });
+
+  test(
+    'measured calibration rejects legacy layout and incompatible aspect',
+    () async {
+      await sync();
+      await controller.setMode(GalLookupSurfaceMode.attachedOnly);
+      final Object? previous = preferences[key()];
+      for (final GalLookupSurfaceVariantV1 variant
+          in <GalLookupSurfaceVariantV1>[
+            _variant(),
+            measuredVariant(
+              client: const GalLookupReferenceClientV1(
+                widthPx: 800,
+                heightPx: 600,
+                dpi: 96,
+              ),
+            ),
+          ]) {
+        expect(
+          await controller.applyMeasuredCalibration(
+            expectedTarget: controller.target!,
+            expectedExeSha256: _sha,
+            variant: variant,
+          ),
+          isFalse,
+        );
+      }
+      expect(preferences[key()], previous);
+    },
+  );
+
+  test('measured calibration waits for a transient Magpie mapping', () async {
+    await sync();
+    await controller.setMode(GalLookupSurfaceMode.attachedOnly);
+    port.configureResult = const GalAttachedCallResult(
+      status: 'targetMappingUnavailable',
+      providerKind: 4,
+      providerId: 11,
+      providerStatus: 1,
+    );
+    port.textSurfaceVisible = false;
+    expect(
+      await controller.applyMeasuredCalibration(
+        expectedTarget: controller.target!,
+        expectedExeSha256: _sha,
+        variant: measuredVariant(),
+      ),
+      isTrue,
+    );
+    expect(controller.profile!.variants, hasLength(1));
+    expect(controller.status, GalAttachedTextStatus.suspended);
+    expect(controller.statusReason, 'targetMappingUnavailable');
+    expect(controller.surfaceVisible, isFalse);
+    final int claims = providerClaims;
+    controller.handleSurfaceStateChanged(
+      GalAttachedSurfaceStateEvent(
+        target: controller.target!,
+        state: 'suspended',
+        status: 'targetMappingUnavailable',
+      ),
+    );
+    expect(providerClaims, claims);
+    controller.handleSurfaceStateChanged(
+      GalAttachedSurfaceStateEvent(
+        target: controller.target!,
+        state: 'active',
+        status: 'visible',
+        surfaceVisible: true,
+        providerKind: 4,
+        providerId: 11,
+        providerStatus: 2,
+      ),
+    );
+    expect(controller.status, GalAttachedTextStatus.activeAttached);
+    expect(controller.surfaceVisible, isTrue);
+  });
+
+  test('measured calibration cannot cross a session change', () async {
+    await sync();
+    await controller.setMode(GalLookupSurfaceMode.attachedOnly);
+    final GalAttachedSurfaceTarget previous = controller.target!;
+    await sync(sessionEpoch: 9002);
+    expect(
+      await controller.applyMeasuredCalibration(
+        expectedTarget: previous,
+        expectedExeSha256: _sha,
+        variant: measuredVariant(),
+      ),
+      isFalse,
+    );
+    expect(controller.profile!.variants, isEmpty);
+  });
+
+  test(
+    'mode change during measured profile save prevents late activation',
+    () async {
+      await sync();
+      await controller.setMode(GalLookupSurfaceMode.attachedOnly);
+      preferenceWriteGate = Completer<void>();
+      final Future<bool> applying = controller.applyMeasuredCalibration(
+        expectedTarget: controller.target!,
+        expectedExeSha256: _sha,
+        variant: measuredVariant(),
+      );
+      await Future<void>.delayed(Duration.zero);
+      final Future<void> disabling = controller.setMode(
+        GalLookupSurfaceMode.off,
+      );
+      preferenceWriteGate!.complete();
+      expect(await applying, isFalse);
+      await disabling;
+      expect(controller.profile!.mode, GalLookupSurfaceMode.off);
+      expect(controller.status, GalAttachedTextStatus.disabled);
+      expect(jsonDecode(preferences[key()]! as String)['mode'], 'off');
+    },
+  );
+
+  test('failed measured profile save does not activate it', () async {
+    await sync();
+    await controller.setMode(GalLookupSurfaceMode.attachedOnly);
+    final GalLookupSurfaceProfileV1? previous = controller.profile;
+    preferenceWriteError = StateError('disk failed');
+    port.calls.clear();
+    expect(
+      await controller.applyMeasuredCalibration(
+        expectedTarget: controller.target!,
+        expectedExeSha256: _sha,
+        variant: measuredVariant(),
+      ),
+      isFalse,
+    );
+    expect(controller.profile, same(previous));
+    expect(
+      port.calls.any((String call) => call.startsWith('configure:')),
+      isFalse,
+    );
+  });
+
   void calibrationState(
     String status, {
     bool visible = false,

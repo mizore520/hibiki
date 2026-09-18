@@ -408,42 +408,6 @@ List<_OcrUnit> _ocrUnits(GalCalibrationOcrLine line) {
   ];
 }
 
-double _editDistance(String a, String b) {
-  final List<String> aa = a.runes
-      .map(String.fromCharCode)
-      .where((String c) => !_ocrWhitespace(c))
-      .map(_foldOcrChar)
-      .toList();
-  final List<String> bb = b.runes
-      .map(String.fromCharCode)
-      .where((String c) => !_ocrWhitespace(c))
-      .map(_foldOcrChar)
-      .toList();
-  final List<double> previous = List<double>.generate(
-    bb.length + 1,
-    (int i) => i.toDouble(),
-  );
-  for (int i = 1; i <= aa.length; i++) {
-    final List<double> current = List<double>.filled(bb.length + 1, 0);
-    current[0] = i.toDouble();
-    for (int j = 1; j <= bb.length; j++) {
-      final double substitute =
-          previous[j - 1] + (aa[i - 1] == bb[j - 1] ? 0 : 0.65);
-      current[j] = math.min(
-        math.min(substitute, previous[j] + 0.85),
-        current[j - 1] + 0.85,
-      );
-    }
-    previous.setAll(0, current);
-  }
-  return previous.last / math.max(1, math.max(aa.length, bb.length));
-}
-
-String _visibleText(Iterable<_SourceUnit> units) => units
-    .where((_SourceUnit unit) => !unit.whitespace)
-    .map((_SourceUnit unit) => unit.value)
-    .join();
-
 // Cache substring alignment once per detected row. The old implementation
 // recomputed a full edit-distance matrix for every partition and every row run.
 List<Map<int, double>> _lineCosts(List<_SourceUnit> source, String text) {
@@ -479,20 +443,25 @@ List<Map<int, double>> _lineCosts(List<_SourceUnit> source, String text) {
         previous = current;
       }
       if (visible < math.max(1, (target.length * .5).floor())) continue;
-      costs[end] =
-          previous.last / math.max(1, math.max(visible, target.length)) +
-          (visible - target.length).abs() * .025;
+      // Compare errors per character across the whole sentence. Giving every
+      // row the same weight makes one uncertain closing quote outweigh a long
+      // correctly recognized row and can swallow the short continuation.
+      costs[end] = previous.last + (visible - target.length).abs() * .025;
     }
     return costs;
   });
 }
 
-List<_LineSpan>? _partitionSource(
+/// Align the whole Hook sentence while allowing unrelated detections between
+/// its rows. A rough crop can include a button beside the first row; requiring
+/// a contiguous run would mistake that button for a separate dialogue line.
+_OcrLineSelection? _selectOcrLineRun(
   List<_SourceUnit> source,
-  List<List<Map<int, double>>> costs,
+  List<GalCalibrationOcrLine> lines,
 ) {
+  if (source.isEmpty || lines.isEmpty) return null;
   final int n = source.length;
-  final int m = costs.length;
+  final int m = lines.length;
   final List<List<double>> dp = List<List<double>>.generate(
     m + 1,
     (_) => List<double>.filled(n + 1, double.infinity),
@@ -502,76 +471,47 @@ List<_LineSpan>? _partitionSource(
     (_) => List<int>.filled(n + 1, -1),
   );
   dp[0][0] = 0;
-  for (int i = 0; i < m; i++) {
-    for (int start = 0; start < n; start++) {
-      if (!dp[i][start].isFinite) continue;
-      for (final MapEntry<int, double> span in costs[i][start].entries) {
-        final int end = span.key;
-        final double cost = dp[i][start] + span.value;
-        if (cost < dp[i + 1][end]) {
-          dp[i + 1][end] = cost;
-          previous[i + 1][end] = start;
+  for (int row = 0; row < m; row++) {
+    final List<Map<int, double>> costs = _lineCosts(source, lines[row].text);
+    for (int start = 0; start <= n; start++) {
+      if (!dp[row][start].isFinite) continue;
+      final double skip = dp[row][start] + .08;
+      if (skip < dp[row + 1][start]) {
+        dp[row + 1][start] = skip;
+        previous[row + 1][start] = start;
+      }
+      if (start == n) continue;
+      for (final MapEntry<int, double> span in costs[start].entries) {
+        final double cost = dp[row][start] + span.value;
+        if (cost < dp[row + 1][span.key]) {
+          dp[row + 1][span.key] = cost;
+          previous[row + 1][span.key] = start;
         }
       }
     }
   }
-  if (!dp[m][n].isFinite || dp[m][n] > math.max(.7, m * .48)) return null;
-  final List<_LineSpan> result = <_LineSpan>[];
+  final int visible = source.where((_SourceUnit u) => !u.whitespace).length;
+  if (!dp[m][n].isFinite || dp[m][n] > math.max(.7, visible * .48) + m * .08) {
+    return null;
+  }
+  final List<GalCalibrationOcrLine> selected = [];
+  final List<_LineSpan> spans = [];
   int end = n;
-  for (int i = m; i > 0; i--) {
-    final int start = previous[i][end];
+  for (int row = m; row > 0; row--) {
+    final int start = previous[row][end];
     if (start < 0) return null;
-    result.add(_LineSpan(start, end));
+    if (start != end) {
+      selected.add(lines[row - 1]);
+      spans.add(_LineSpan(start, end));
+    }
     end = start;
   }
-  return result.reversed.toList();
-}
-
-/// A deliberately rough capture rectangle can include a speaker name or a
-/// button row.  Prefer the contiguous run of detected lines that explains the
-/// Hook sentence instead of requiring the user to crop those extras by hand.
-/// The dropped-line penalty prevents a short accidental match from winning a
-/// tie against the complete dialogue block.
-_OcrLineSelection? _selectOcrLineRun(
-  List<_SourceUnit> source,
-  List<GalCalibrationOcrLine> lines,
-) {
-  if (source.isEmpty || lines.isEmpty) return null;
-  final List<List<Map<int, double>>> costs = <List<Map<int, double>>>[
-    for (final GalCalibrationOcrLine line in lines)
-      _lineCosts(source, line.text),
-  ];
-  _OcrLineSelection? best;
-  for (int start = 0; start < lines.length; start++) {
-    for (int end = start + 1; end <= lines.length; end++) {
-      final List<GalCalibrationOcrLine> candidate = lines.sublist(start, end);
-      final List<_LineSpan>? spans = _partitionSource(
-        source,
-        costs.sublist(start, end),
-      );
-      if (spans == null) continue;
-      double score = (lines.length - candidate.length) * 0.08;
-      for (int i = 0; i < candidate.length; i++) {
-        final _LineSpan span = spans[i];
-        score += _editDistance(
-          _visibleText(source.sublist(span.start, span.end)),
-          candidate[i].text,
-        );
-      }
-      final _OcrLineSelection selection = (
-        lines: List.unmodifiable(candidate),
-        spans: spans,
-        score: score,
-      );
-      if (best == null ||
-          score < best.score - 1e-9 ||
-          ((score - best.score).abs() < 1e-9 &&
-              candidate.length > best.lines.length)) {
-        best = selection;
-      }
-    }
-  }
-  return best;
+  if (selected.isEmpty) return null;
+  return (
+    lines: List.unmodifiable(selected.reversed),
+    spans: List.unmodifiable(spans.reversed),
+    score: dp[m][n] / math.max(1, visible),
+  );
 }
 
 List<_TokenPair> _alignLineTokens(
@@ -721,16 +661,20 @@ GalCalibrationOcrAlignment alignGalCalibrationOcrLines({
         .where(
           (GalCalibrationOcrGlyph g) =>
               g.confidence.isFinite &&
-              g.confidence >= .5 &&
+              g.confidence >= .35 &&
               g.rect.centerX.isFinite &&
               g.rect.centerY.isFinite &&
               g.rect.width > 0,
         )
         .toList();
-    if (reliable.length < math.max(1, (sourceVisible * .65).ceil()) ||
+    // OCR on outlined dialogue often keeps the line and the repeated kana,
+    // while confidence is concentrated in only some characters.  A broadly
+    // distributed subset is enough to propose a grid; the native preview and
+    // every calibration sample still decide whether that grid is usable.
+    if (reliable.length < math.max(1, (sourceVisible * .35).ceil()) ||
         (sourceVisible >= 5 &&
             reliable.last.cellOffset - reliable.first.cellOffset <
-                (span.end - span.start - 1) * .6)) {
+                (span.end - span.start - 1) * .35)) {
       return const GalCalibrationOcrAlignment(
         lines: [],
         confidence: 0,
@@ -750,7 +694,10 @@ GalCalibrationOcrAlignment alignGalCalibrationOcrLines({
   }
   final int totalGlyphs = source.where((_SourceUnit u) => !u.whitespace).length;
   final double normalized = totalGlyphs == 0 ? 0 : confidence / totalGlyphs;
-  if (normalized < 0.65) {
+  // Position coverage above is the primary guard.  This lower aggregate
+  // threshold admits low-confidence, repeated dialogue only when it still
+  // provides enough positions across the selected row.
+  if (normalized < .14) {
     return GalCalibrationOcrAlignment(
       lines: const <GalCalibrationOcrMatchedLine>[],
       confidence: normalized,
@@ -1278,6 +1225,12 @@ List<GalCalibrationOcrGlyph> _reliableGlyphs(
 class GalCalibrationOcrEngine {
   GalCalibrationOcrEngine._({required this.detector, required this.recognizer});
 
+  @visibleForTesting
+  GalCalibrationOcrEngine.forTesting({
+    required PpOcrLineDetector detector,
+    required PpOcrLineRecognizer recognizer,
+  }) : this._(detector: detector, recognizer: recognizer);
+
   final PpOcrLineDetector detector;
   final PpOcrLineRecognizer recognizer;
 
@@ -1390,25 +1343,82 @@ class GalCalibrationOcrEngine {
       width: right - left,
       height: bottom - top,
     );
+    final int detectorPadding = _ocrEdgePadding(
+      crop,
+      maxPadding: _kMaxDetectorCropPadding,
+    );
+    final ({img.Image image, int padding}) detectorInput =
+        _copyWithReplicatedEdge(crop, detectorPadding);
     // Manga's median-thickness filter can delete a short dialogue row.
     // Text matching below determines which detected rows belong to the Hook.
-    final List<PpTextLine> detected =
-        (await detector.detect(
-          crop,
-        )).where((PpTextLine line) => !line.vertical).toList()..sort(
-          (PpTextLine a, PpTextLine b) =>
-              a.rect.centerY.compareTo(b.rect.centerY),
-        );
-    final List<GalCalibrationOcrLine> result = <GalCalibrationOcrLine>[];
-    for (final PpTextLine line in detected) {
-      final int x = line.rect.left.floor().clamp(0, crop.width - 1);
-      final int y = line.rect.top.floor().clamp(0, crop.height - 1);
-      final int r = line.rect.right.ceil().clamp(x + 1, crop.width);
-      final int b = line.rect.bottom.ceil().clamp(y + 1, crop.height);
-      final PpOcrLineRecognition recognition = await recognizer
-          .recognizeLineDetailed(
-            img.copyCrop(crop, x: x, y: y, width: r - x, height: b - y),
+    final List<({PpTextLine line, OcrRect unpaddedRect})> detected =
+        [
+            for (final PpTextLine paddedLine in await detector.detect(
+              detectorInput.image,
+            ))
+              if (_unpaddedDetectorRect(
+                    paddedLine.rect,
+                    detectorInput.padding,
+                  ).clamp(crop.width.toDouble(), crop.height.toDouble()).width >
+                  0)
+                (
+                  line: PpTextLine(
+                    rect: _unpaddedDetectorRect(
+                      paddedLine.rect,
+                      detectorInput.padding,
+                    ).clamp(crop.width.toDouble(), crop.height.toDouble()),
+                    score: paddedLine.score,
+                  ),
+                  unpaddedRect: _unpaddedDetectorRect(
+                    paddedLine.rect,
+                    detectorInput.padding,
+                  ),
+                ),
+          ]
+          ..removeWhere((({PpTextLine line, OcrRect unpaddedRect}) item) {
+            return item.line.vertical || item.line.rect.height <= 0;
+          })
+          ..sort(
+            (
+              ({PpTextLine line, OcrRect unpaddedRect}) a,
+              ({PpTextLine line, OcrRect unpaddedRect}) b,
+            ) => a.line.rect.centerY.compareTo(b.line.rect.centerY),
           );
+    final List<GalCalibrationOcrLine> result = <GalCalibrationOcrLine>[];
+    for (final ({PpTextLine line, OcrRect unpaddedRect}) detectedLine
+        in detected) {
+      final PpTextLine line = detectedLine.line;
+      final int x = detectedLine.unpaddedRect.left.floor().clamp(
+        0,
+        crop.width - 1,
+      );
+      final int y = detectedLine.unpaddedRect.top.floor().clamp(
+        0,
+        crop.height - 1,
+      );
+      final int r = detectedLine.unpaddedRect.right.ceil().clamp(
+        x + 1,
+        crop.width,
+      );
+      final int b = detectedLine.unpaddedRect.bottom.ceil().clamp(
+        y + 1,
+        crop.height,
+      );
+      final img.Image lineCrop = img.copyCrop(
+        crop,
+        x: x,
+        y: y,
+        width: r - x,
+        height: b - y,
+      );
+      final int linePadding = _ocrEdgePadding(
+        lineCrop,
+        maxPadding: _kMaxRecognizerLinePadding,
+      );
+      final ({img.Image image, int padding}) lineInput =
+          _copyWithReplicatedEdge(lineCrop, linePadding);
+      final PpOcrLineRecognition recognition = await recognizer
+          .recognizeLineDetailed(lineInput.image);
       final String text = recognition.text;
       if (text.trim().isEmpty) continue;
       result.add(
@@ -1426,11 +1436,21 @@ class GalCalibrationOcrEngine {
               GalCalibrationOcrToken(
                 token.text,
                 OcrRect(
-                  left: left + x + (token.left ?? 0),
+                  left:
+                      left +
+                      x +
+                      (token.left == null
+                          ? 0
+                          : token.left! - lineInput.padding),
                   top: (top + y).toDouble(),
-                  right: left + x + (token.right ?? 0),
+                  right:
+                      left +
+                      x +
+                      (token.right == null
+                          ? 0
+                          : token.right! - lineInput.padding),
                   bottom: (top + b).toDouble(),
-                ),
+                ).clamp(decoded.width.toDouble(), decoded.height.toDouble()),
                 token.hasPosition ? token.confidence : 0,
               ),
           ],
@@ -1448,6 +1468,45 @@ class GalCalibrationOcrEngine {
     }
   }
 }
+
+const int _kMaxDetectorCropPadding = 8;
+const int _kMaxRecognizerLinePadding = 4;
+
+int _ocrEdgePadding(img.Image image, {required int maxPadding}) {
+  final int shortest = math.min(image.width, image.height);
+  return math.min(maxPadding, math.max(2, shortest ~/ 24));
+}
+
+/// Adds a small synthetic context made only from the crop's own edge pixels.
+///
+/// This is deliberately edge replication rather than an expanded source crop:
+/// the selected rectangle remains the only source of real pixels.
+({img.Image image, int padding}) _copyWithReplicatedEdge(
+  img.Image source,
+  int padding,
+) {
+  final img.Image result = img.Image(
+    width: source.width + padding * 2,
+    height: source.height + padding * 2,
+    numChannels: 4,
+  );
+  for (int y = 0; y < result.height; y++) {
+    final int sourceY = (y - padding).clamp(0, source.height - 1);
+    for (int x = 0; x < result.width; x++) {
+      final int sourceX = (x - padding).clamp(0, source.width - 1);
+      final img.Pixel pixel = source.getPixel(sourceX, sourceY);
+      result.setPixelRgba(x, y, pixel.r, pixel.g, pixel.b, pixel.a);
+    }
+  }
+  return (image: result, padding: padding);
+}
+
+OcrRect _unpaddedDetectorRect(OcrRect rect, int padding) => OcrRect(
+  left: rect.left - padding,
+  top: rect.top - padding,
+  right: rect.right - padding,
+  bottom: rect.bottom - padding,
+);
 
 class GalCalibrationOcrRunner {
   GalCalibrationOcrRunner({

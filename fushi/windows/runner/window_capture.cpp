@@ -23,10 +23,23 @@
 
 #include <atomic>
 #include <cstdio>
+#include <limits>
 
 namespace fushi {
 
 namespace {
+
+// Bound each BGRA frame before allocating the WGC pool or CPU staging copy.
+// The Dart calibration boundary uses the same 32-megapixel image limit.
+constexpr bool CaptureSizeWithinBudget(uint64_t width, uint64_t height) {
+  constexpr uint64_t kMaximumFrameBytes = 128ULL * 1024 * 1024;
+  return width > 0 && height > 0 &&
+         width <= (kMaximumFrameBytes / 4) / height;
+}
+static_assert(CaptureSizeWithinBudget(7680, 4320));
+static_assert(!CaptureSizeWithinBudget(0, 1080));
+static_assert(!CaptureSizeWithinBudget(65536, 65536));
+static_assert(!CaptureSizeWithinBudget(UINT64_MAX, UINT64_MAX));
 
 bool ReadCaptureClient(HWND hwnd, WindowCaptureMetadata* metadata) {
   RECT client{};
@@ -62,6 +75,83 @@ bool SameCaptureClient(const WindowCaptureMetadata& a,
          a.client_top_px == b.client_top_px &&
          a.client_width_px == b.client_width_px &&
          a.client_height_px == b.client_height_px && a.dpi == b.dpi;
+}
+
+bool RectHasArea(const RECT& rect) {
+  return rect.right > rect.left && rect.bottom > rect.top;
+}
+
+bool RectWithin(const RECT& inner, const RECT& outer) {
+  return RectHasArea(inner) && RectHasArea(outer) &&
+         inner.left >= outer.left && inner.top >= outer.top &&
+         inner.right <= outer.right && inner.bottom <= outer.bottom;
+}
+
+bool SameRect(const RECT& a, const RECT& b) {
+  return a.left == b.left && a.top == b.top && a.right == b.right &&
+         a.bottom == b.bottom;
+}
+
+int RectWidth(const RECT& rect) {
+  return rect.right > rect.left ? rect.right - rect.left : 0;
+}
+
+int RectHeight(const RECT& rect) {
+  return rect.bottom > rect.top ? rect.bottom - rect.top : 0;
+}
+
+uint32_t ReadWindowPid(HWND hwnd) {
+  DWORD pid = 0;
+  if (hwnd != nullptr) {
+    GetWindowThreadProcessId(hwnd, &pid);
+  }
+  return static_cast<uint32_t>(pid);
+}
+
+void SetRectMetadata(const RECT& source_rect, const RECT& destination_rect,
+                     WindowCaptureMetadata* metadata) {
+  if (metadata == nullptr) {
+    return;
+  }
+  metadata->source_viewport_left_px = source_rect.left;
+  metadata->source_viewport_top_px = source_rect.top;
+  metadata->source_viewport_width_px = RectWidth(source_rect);
+  metadata->source_viewport_height_px = RectHeight(source_rect);
+  metadata->destination_viewport_left_px = destination_rect.left;
+  metadata->destination_viewport_top_px = destination_rect.top;
+  metadata->destination_viewport_width_px = RectWidth(destination_rect);
+  metadata->destination_viewport_height_px = RectHeight(destination_rect);
+}
+
+void SetCaptureProvenance(WindowCaptureMetadata* metadata, HWND captured_hwnd,
+                          HWND source_hwnd,
+                          const MagpiePresentationMapping* mapping) {
+  if (metadata == nullptr) {
+    return;
+  }
+  if (source_hwnd == nullptr) {
+    source_hwnd = captured_hwnd;
+  }
+  metadata->source_hwnd = reinterpret_cast<int64_t>(source_hwnd);
+  metadata->source_pid = ReadWindowPid(source_hwnd);
+  metadata->presentation_hwnd = reinterpret_cast<int64_t>(captured_hwnd);
+  metadata->presentation_pid = ReadWindowPid(captured_hwnd);
+  metadata->used_presentation_capture = mapping != nullptr;
+  metadata->presentation_viewport_complete = false;
+
+  RECT source_rect{};
+  RECT destination_rect{};
+  if (mapping != nullptr) {
+    source_rect = mapping->source_rect_screen;
+    destination_rect = mapping->destination_rect_screen;
+  } else {
+    source_rect.left = metadata->client_left_px;
+    source_rect.top = metadata->client_top_px;
+    source_rect.right = source_rect.left + metadata->client_width_px;
+    source_rect.bottom = source_rect.top + metadata->client_height_px;
+    destination_rect = source_rect;
+  }
+  SetRectMetadata(source_rect, destination_rect, metadata);
 }
 
 using Microsoft::WRL::ComPtr;
@@ -177,6 +267,41 @@ bool ComputeClientCropBox(HWND hwnd, UINT width, UINT height, RECT* box) {
       std::min<LONG>(static_cast<LONG>(width), far_corner.x - frame.left);
   const LONG bottom =
       std::min<LONG>(static_cast<LONG>(height), far_corner.y - frame.top);
+  if (right <= left || bottom <= top) {
+    return false;
+  }
+  box->left = left;
+  box->top = top;
+  box->right = right;
+  box->bottom = bottom;
+  return true;
+}
+
+// Convert a screen-space Magpie viewport into the WGC texture's coordinates.
+// Magpie publishes physical screen pixels, while CreateForWindow starts at
+// the DWM extended frame.  The caller must still verify that the returned box
+// was not clipped and that its dimensions equal the published destination
+// viewport; this helper only computes the intersection with the texture.
+bool ComputeScreenCropBox(HWND hwnd, const RECT& screen_rect, UINT width,
+                          UINT height, RECT* box) {
+  if (hwnd == nullptr || box == nullptr || width == 0 || height == 0 ||
+      !RectHasArea(screen_rect)) {
+    return false;
+  }
+  RECT frame{};
+  if (FAILED(DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, &frame,
+                                   sizeof(frame)))) {
+    return false;
+  }
+  const LONG left = std::max<LONG>(0, screen_rect.left - frame.left);
+  const LONG top = std::max<LONG>(0, screen_rect.top - frame.top);
+  if (left >= static_cast<LONG>(width) || top >= static_cast<LONG>(height)) {
+    return false;
+  }
+  const LONG right = std::min<LONG>(static_cast<LONG>(width),
+                                    screen_rect.right - frame.left);
+  const LONG bottom = std::min<LONG>(static_cast<LONG>(height),
+                                     screen_rect.bottom - frame.top);
   if (right <= left || bottom <= top) {
     return false;
   }
@@ -363,6 +488,131 @@ HWND ResolveScalingSourceWindow(HWND hwnd) {
   return source;
 }
 
+namespace {
+
+struct WindowPropertyLookup {
+  const wchar_t* name = nullptr;
+  HANDLE value = nullptr;
+  bool found = false;
+};
+
+BOOL CALLBACK FindWindowPropertyProc(HWND, LPWSTR name, HANDLE value,
+                                     ULONG_PTR data) {
+  auto* lookup = reinterpret_cast<WindowPropertyLookup*>(data);
+  if (lookup == nullptr || name == nullptr || IS_INTRESOURCE(name) ||
+      lookup->name == nullptr || lstrcmpW(name, lookup->name) != 0) {
+    return TRUE;
+  }
+  lookup->value = value;
+  lookup->found = true;
+  return FALSE;
+}
+
+bool ReadWindowPropertyInt32(HWND hwnd, const wchar_t* name, LONG* value) {
+  if (hwnd == nullptr || name == nullptr || value == nullptr) {
+    return false;
+  }
+  WindowPropertyLookup lookup{name};
+  if (EnumPropsExW(hwnd, FindWindowPropertyProc,
+                   reinterpret_cast<ULONG_PTR>(&lookup)) == -1 ||
+      !lookup.found) {
+    return false;
+  }
+  const INT_PTR raw = reinterpret_cast<INT_PTR>(lookup.value);
+  if (raw < static_cast<INT_PTR>(std::numeric_limits<LONG>::min()) ||
+      raw > static_cast<INT_PTR>(std::numeric_limits<LONG>::max())) {
+    return false;
+  }
+  *value = static_cast<LONG>(raw);
+  return true;
+}
+
+bool ReadMagpieRect(HWND hwnd, const wchar_t* left_name,
+                    const wchar_t* top_name, const wchar_t* right_name,
+                    const wchar_t* bottom_name, RECT* rect) {
+  if (rect == nullptr ||
+      !ReadWindowPropertyInt32(hwnd, left_name, &rect->left) ||
+      !ReadWindowPropertyInt32(hwnd, top_name, &rect->top) ||
+      !ReadWindowPropertyInt32(hwnd, right_name, &rect->right) ||
+      !ReadWindowPropertyInt32(hwnd, bottom_name, &rect->bottom)) {
+    return false;
+  }
+  return rect->right > rect->left && rect->bottom > rect->top;
+}
+
+}  // namespace
+
+bool ReadMagpiePresentationMapping(HWND presentation_hwnd,
+                                    HWND expected_source_hwnd,
+                                    MagpiePresentationMapping* mapping) {
+  if (mapping == nullptr || presentation_hwnd == nullptr ||
+      expected_source_hwnd == nullptr || !IsWindow(presentation_hwnd) ||
+      !IsWindow(expected_source_hwnd)) {
+    return false;
+  }
+  *mapping = MagpiePresentationMapping{};
+  const HWND source_hwnd = ResolveScalingSourceWindow(presentation_hwnd);
+  if (source_hwnd == nullptr || source_hwnd != expected_source_hwnd) {
+    return false;
+  }
+  RECT source_rect{};
+  RECT destination_rect{};
+  if (!ReadMagpieRect(presentation_hwnd, L"Magpie.SrcLeft",
+                      L"Magpie.SrcTop", L"Magpie.SrcRight",
+                      L"Magpie.SrcBottom", &source_rect) ||
+      !ReadMagpieRect(presentation_hwnd, L"Magpie.DestLeft",
+                      L"Magpie.DestTop", L"Magpie.DestRight",
+                      L"Magpie.DestBottom", &destination_rect)) {
+    return false;
+  }
+  mapping->presentation_hwnd = presentation_hwnd;
+  mapping->source_hwnd = source_hwnd;
+  mapping->source_rect_screen = source_rect;
+  mapping->destination_rect_screen = destination_rect;
+  return true;
+}
+
+namespace {
+
+struct PresentationEnumContext {
+  HWND source_hwnd = nullptr;
+  std::vector<MagpiePresentationMapping>* mappings = nullptr;
+};
+
+BOOL CALLBACK FindMagpiePresentationProc(HWND hwnd, LPARAM lparam) {
+  auto* context = reinterpret_cast<PresentationEnumContext*>(lparam);
+  if (context == nullptr || context->mappings == nullptr ||
+      hwnd == nullptr || hwnd == context->source_hwnd ||
+      !IsWindowVisible(hwnd) || IsIconic(hwnd)) {
+    return TRUE;
+  }
+  BOOL cloaked = FALSE;
+  if (SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &cloaked,
+                                      sizeof(cloaked))) &&
+      cloaked) {
+    return TRUE;
+  }
+  MagpiePresentationMapping mapping;
+  if (ReadMagpiePresentationMapping(hwnd, context->source_hwnd, &mapping)) {
+    context->mappings->push_back(mapping);
+  }
+  return TRUE;
+}
+
+std::vector<MagpiePresentationMapping> EnumerateMagpiePresentations(
+    HWND source_hwnd) {
+  std::vector<MagpiePresentationMapping> mappings;
+  if (source_hwnd == nullptr || !IsWindow(source_hwnd)) {
+    return mappings;
+  }
+  PresentationEnumContext context{source_hwnd, &mappings};
+  EnumWindows(&FindMagpiePresentationProc,
+              reinterpret_cast<LPARAM>(&context));
+  return mappings;
+}
+
+}  // namespace
+
 std::vector<ExternalWindow> EnumerateTopLevelWindows(HWND self) {
   std::vector<ExternalWindow> out;
   EnumContext ctx{self, &out};
@@ -373,10 +623,53 @@ std::vector<ExternalWindow> EnumerateTopLevelWindows(HWND self) {
 namespace {
 
 // 单帧捕获核心（假定调用线程已 RoInitialize）。任何失败写 out->error 并返回。
-void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
+// [source_hwnd] is the logical game window. When [presentation_mapping] is
+// present, [hwnd] is a verified Magpie output window and the encoded image is
+// restricted to its published destination viewport.
+void CaptureCore(HWND hwnd, WindowCaptureResult* out,
+                 HWND source_hwnd = nullptr,
+                 const MagpiePresentationMapping* presentation_mapping =
+                     nullptr) {
+  const HWND source_identity = source_hwnd != nullptr ? source_hwnd : hwnd;
   WindowCaptureMetadata initial_client;
   const bool initial_client_valid = ReadCaptureClient(hwnd, &initial_client);
+  WindowCaptureMetadata initial_source_client;
+  const bool initial_source_client_valid =
+      source_identity == hwnd
+          ? initial_client_valid
+          : ReadCaptureClient(source_identity, &initial_source_client);
+  if (presentation_mapping != nullptr &&
+      (presentation_mapping->presentation_hwnd != hwnd ||
+       presentation_mapping->source_hwnd != source_identity ||
+       !initial_client_valid || !initial_source_client_valid)) {
+    SetCaptureFailure(out, "presentation_viewport_unavailable",
+                      "Magpie presentation viewport unavailable");
+    return;
+  }
+  if (presentation_mapping != nullptr) {
+    RECT presentation_client{
+        initial_client.client_left_px,
+        initial_client.client_top_px,
+        initial_client.client_left_px + initial_client.client_width_px,
+        initial_client.client_top_px + initial_client.client_height_px};
+    RECT source_client{
+        initial_source_client.client_left_px,
+        initial_source_client.client_top_px,
+        initial_source_client.client_left_px +
+            initial_source_client.client_width_px,
+        initial_source_client.client_top_px +
+            initial_source_client.client_height_px};
+    if (!RectWithin(presentation_mapping->destination_rect_screen,
+                    presentation_client) ||
+        !SameRect(presentation_mapping->source_rect_screen, source_client)) {
+      SetCaptureFailure(out, "presentation_viewport_invalid",
+                        "Magpie presentation viewport is outside its client");
+      return;
+    }
+  }
   if (initial_client_valid) {
+    SetCaptureProvenance(&initial_client, hwnd, source_identity,
+                         presentation_mapping);
     // Keep the initial geometry even when WGC times out or the final client
     // read fails. It is the only bounded evidence available for those paths.
     out->metadata = initial_client;
@@ -445,6 +738,10 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
   ABI::Windows::Graphics::SizeInt32 size = {};
   if (FAILED(item->get_Size(&size)) || size.Width <= 0 || size.Height <= 0) {
     SetCaptureFailure(out, "wgc_item_size_invalid", "window has zero size");
+    return;
+  }
+  if (!CaptureSizeWithinBudget(size.Width, size.Height)) {
+    SetCaptureFailure(out, "capture_size_limit", "capture exceeds frame budget");
     return;
   }
 
@@ -571,6 +868,13 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
 
   D3D11_TEXTURE2D_DESC desc = {};
   texture->GetDesc(&desc);
+  if (!CaptureSizeWithinBudget(desc.Width, desc.Height)) {
+    CloseIfClosable(frame);
+    CloseIfClosable(session);
+    CloseIfClosable(frame_pool);
+    SetCaptureFailure(out, "capture_size_limit", "texture exceeds frame budget");
+    return;
+  }
   if (out->has_metadata) {
     out->metadata.content_width_px =
         content_size_valid ? content_size.Width : 0;
@@ -599,28 +903,64 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
   context->CopyResource(staging.Get(), texture.Get());
   D3D11_MAPPED_SUBRESOURCE mapped = {};
   if (SUCCEEDED(context->Map(staging.Get(), 0, D3D11_MAP_READ, 0, &mapped))) {
-    // BUG-1854：只编码客户区子矩形（标题栏 / 菜单栏 / 边框不进卡片）。指针按
-    // 行距偏移到子矩形左上角即可，行距不变，不必再拷一次纹理。裁不出来就整窗
-    // 编码并记一条 diagnostics，让「这张图为什么带标题栏」可证。
+    // BUG-1854：直接捕获时只编码客户区子矩形（标题栏 / 菜单栏 / 边框不进卡片）。
+    // Magpie fallback 则只能编码已验证的 DestRect；未知 viewport 时 fail closed，
+    // 绝不能把整个 presentation client 当作游戏图像。
     RECT crop{};
     const uint8_t* pixels = static_cast<const uint8_t*>(mapped.pData);
-    UINT encode_w = desc.Width;
-    UINT encode_h = desc.Height;
-    const bool crop_valid =
-        ComputeClientCropBox(hwnd, desc.Width, desc.Height, &crop);
-    if (crop_valid) {
+    UINT encode_w = 0;
+    UINT encode_h = 0;
+    const bool using_presentation = presentation_mapping != nullptr;
+    const bool crop_valid = using_presentation
+                                ? ComputeScreenCropBox(
+                                      hwnd,
+                                      presentation_mapping->destination_rect_screen,
+                                      desc.Width, desc.Height, &crop)
+                                : ComputeClientCropBox(hwnd, desc.Width,
+                                                       desc.Height, &crop);
+    const int requested_destination_width =
+        using_presentation
+            ? RectWidth(presentation_mapping->destination_rect_screen)
+            : 0;
+    const int requested_destination_height =
+        using_presentation
+            ? RectHeight(presentation_mapping->destination_rect_screen)
+            : 0;
+    const bool crop_matches_destination =
+        using_presentation && crop_valid &&
+        static_cast<int>(crop.right - crop.left) ==
+            requested_destination_width &&
+        static_cast<int>(crop.bottom - crop.top) ==
+            requested_destination_height;
+    const bool crop_inside_content =
+        crop_valid && content_size_valid && crop.left >= 0 && crop.top >= 0 &&
+        crop.right <= content_size.Width && crop.bottom <= content_size.Height;
+    const bool encode_allowed =
+        crop_valid && (!using_presentation ||
+                       (crop_matches_destination && crop_inside_content));
+    if (encode_allowed) {
       pixels += static_cast<size_t>(crop.top) * mapped.RowPitch +
                 static_cast<size_t>(crop.left) * 4;
       encode_w = static_cast<UINT>(crop.right - crop.left);
       encode_h = static_cast<UINT>(crop.bottom - crop.top);
+    } else if (using_presentation) {
+      SetCaptureFailure(out, "presentation_viewport_unavailable",
+                        "Magpie destination viewport could not be captured");
     } else {
+      // If the regular client crop is unavailable, preserve the historical
+      // fail-open behavior for ordinary windows. This branch is deliberately
+      // unreachable for a presentation fallback.
+      encode_w = desc.Width;
+      encode_h = desc.Height;
       AppendDiagnostic(out,
                        "client-area crop unavailable; encoded the whole "
                        "window (title bar included)",
                        S_OK);
     }
-    out->png = EncodeBgraToPng(pixels, encode_w, encode_h, mapped.RowPitch,
-                               &out->error);
+    if (encode_w > 0 && encode_h > 0) {
+      out->png = EncodeBgraToPng(pixels, encode_w, encode_h, mapped.RowPitch,
+                                 &out->error);
+    }
     if (out->png.empty()) {
       SetCaptureReason(out, "png_encode_failed");
     }
@@ -636,16 +976,72 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
       final_client.texture_width_px = static_cast<int>(desc.Width);
       final_client.texture_height_px = static_cast<int>(desc.Height);
       final_client.client_area_complete =
-          initial_client_valid && SameCaptureClient(initial_client, final_client) &&
-          content_size_valid && crop.right <= content_size.Width &&
-          crop.bottom <= content_size.Height &&
+          !using_presentation && initial_client_valid &&
+          SameCaptureClient(initial_client, final_client) && content_size_valid &&
+          crop.right <= content_size.Width && crop.bottom <= content_size.Height &&
           crop.right > crop.left && crop.bottom > crop.top &&
           static_cast<int>(encode_w) == final_client.client_width_px &&
           static_cast<int>(encode_h) == final_client.client_height_px;
+      SetCaptureProvenance(&final_client, hwnd, source_identity,
+                           presentation_mapping);
+      if (using_presentation) {
+        WindowCaptureMetadata final_source_client;
+        const bool final_source_client_valid =
+            ReadCaptureClient(source_identity, &final_source_client);
+        MagpiePresentationMapping final_mapping;
+        const bool final_mapping_valid = ReadMagpiePresentationMapping(
+            hwnd, source_identity, &final_mapping);
+        const RECT presentation_client{
+            final_client.client_left_px,
+            final_client.client_top_px,
+            final_client.client_left_px + final_client.client_width_px,
+            final_client.client_top_px + final_client.client_height_px};
+        const bool destination_still_inside =
+            final_mapping_valid &&
+            RectWithin(final_mapping.destination_rect_screen,
+                       presentation_client);
+        const bool source_still_inside =
+            final_mapping_valid && final_source_client_valid &&
+            SameRect(final_mapping.source_rect_screen,
+                       RECT{final_source_client.client_left_px,
+                            final_source_client.client_top_px,
+                            final_source_client.client_left_px +
+                                final_source_client.client_width_px,
+                            final_source_client.client_top_px +
+                                final_source_client.client_height_px});
+        const bool mapping_stable =
+            final_mapping_valid &&
+            SameRect(final_mapping.source_rect_screen,
+                     presentation_mapping->source_rect_screen) &&
+            SameRect(final_mapping.destination_rect_screen,
+                     presentation_mapping->destination_rect_screen);
+        final_client.presentation_viewport_complete =
+            !out->png.empty() && initial_client_valid &&
+            initial_source_client_valid && final_source_client_valid &&
+            SameCaptureClient(initial_client, final_client) &&
+            SameCaptureClient(initial_source_client, final_source_client) &&
+            content_size_valid && crop_inside_content &&
+            crop_matches_destination && destination_still_inside &&
+            source_still_inside && mapping_stable &&
+            static_cast<int>(encode_w) ==
+                RectWidth(presentation_mapping->destination_rect_screen) &&
+            static_cast<int>(encode_h) ==
+                RectHeight(presentation_mapping->destination_rect_screen);
+      }
       out->metadata = final_client;
       out->has_metadata = true;
       if (out->png.empty()) {
         SetCaptureReason(out, "png_encode_failed");
+      } else if (using_presentation && !content_size_valid) {
+        SetCaptureReason(out, "presentation_content_size_invalid");
+      } else if (using_presentation && !crop_matches_destination) {
+        SetCaptureReason(out, "presentation_destination_size_mismatch");
+      } else if (using_presentation && !crop_inside_content) {
+        SetCaptureReason(out, "presentation_viewport_outside_content");
+      } else if (using_presentation) {
+        SetCaptureReason(out, final_client.presentation_viewport_complete
+                                ? "presentation_complete"
+                                : "presentation_viewport_incomplete");
       } else if (!initial_client_valid) {
         SetCaptureReason(out, "initial_client_unavailable");
       } else if (!content_size_valid) {
@@ -676,6 +1072,12 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out) {
   CloseIfClosable(frame);
   CloseIfClosable(session);
   CloseIfClosable(frame_pool);
+  if (presentation_mapping != nullptr && out->has_metadata &&
+      !out->metadata.presentation_viewport_complete) {
+    out->png.clear();
+    SetCaptureFailure(out, "presentation_viewport_incomplete",
+                      "Magpie presentation viewport changed during capture");
+  }
   out->ok = out->error.empty() && !out->png.empty();
   if (!out->ok && out->error.empty()) {
     SetCaptureFailure(out, "capture_failed", "capture produced no pixels");
@@ -708,21 +1110,90 @@ WindowCaptureResult CaptureWindowPng(HWND hwnd) {
   constexpr int kMaximumAttempts = 2;
   for (int attempt = 0; attempt < kMaximumAttempts; ++attempt) {
     WindowCaptureResult candidate;
-    HWND capture_hwnd = requested_hwnd;
+    HWND source_hwnd = requested_hwnd;
     // Dart 侧可能拿的是**上一次枚举缓存**的句柄，或者 Magpie 是在选窗
     // 之后才起来的，所以每次尝试都重新解析，而不是只在枚举时解析一次。
-    if (const HWND source = ResolveScalingSourceWindow(capture_hwnd)) {
+    if (const HWND source = ResolveScalingSourceWindow(source_hwnd)) {
       AppendDiagnostic(&candidate,
                        "capture target redirected: Magpie scaling window -> "
                        "source window (Magpie.SrcHWND)",
                        S_OK);
-      capture_hwnd = source;
+      source_hwnd = source;
     }
-    CaptureCore(capture_hwnd, &candidate);
+    CaptureCore(source_hwnd, &candidate);
+
+    // A source HWND can be visible and valid while WGC refuses to create an
+    // item for it (for example when Magpie owns the presentation path). Only
+    // then look for an output window, and only accept candidates whose
+    // SrcHWND plus all eight viewport properties validate against this exact
+    // source. Capturing the whole output client would shift calibration boxes
+    // whenever Magpie letterboxes or crops the source.
+    if (candidate.capture_reason == "wgc_item_create_failed") {
+      std::vector<MagpiePresentationMapping> mappings;
+      MagpiePresentationMapping requested_mapping;
+      if (requested_hwnd != source_hwnd &&
+          ReadMagpiePresentationMapping(requested_hwnd, source_hwnd,
+                                        &requested_mapping)) {
+        mappings.push_back(requested_mapping);
+      }
+      std::vector<MagpiePresentationMapping> discovered =
+          EnumerateMagpiePresentations(source_hwnd);
+      for (const MagpiePresentationMapping& discovered_mapping : discovered) {
+        bool duplicate = false;
+        for (const MagpiePresentationMapping& existing : mappings) {
+          if (existing.presentation_hwnd ==
+              discovered_mapping.presentation_hwnd) {
+            duplicate = true;
+            break;
+          }
+        }
+        if (!duplicate) {
+          mappings.push_back(discovered_mapping);
+        }
+      }
+      constexpr size_t kMaximumPresentationAttempts = 2;
+      WindowCaptureResult fallback_failure;
+      bool attempted_presentation = false;
+      for (size_t i = 0;
+           i < mappings.size() && i < kMaximumPresentationAttempts; ++i) {
+        const MagpiePresentationMapping& mapping = mappings[i];
+        WindowCaptureResult presentation_candidate;
+        AppendDiagnostic(
+            &presentation_candidate,
+            "source WGC item unavailable; tried verified Magpie presentation",
+            S_OK);
+        CaptureCore(mapping.presentation_hwnd, &presentation_candidate,
+                    source_hwnd, &mapping);
+        attempted_presentation = true;
+        if (presentation_candidate.ok &&
+            presentation_candidate.has_metadata &&
+            presentation_candidate.metadata.presentation_viewport_complete) {
+          AppendDiagnostic(&presentation_candidate,
+                           "captured Magpie DestRect viewport", S_OK);
+          candidate = std::move(presentation_candidate);
+          break;
+        }
+        if (!fallback_failure.has_metadata ||
+            fallback_failure.capture_reason.empty()) {
+          fallback_failure = std::move(presentation_candidate);
+        }
+      }
+      if (attempted_presentation &&
+          candidate.capture_reason == "wgc_item_create_failed" &&
+          !fallback_failure.capture_reason.empty()) {
+        candidate = std::move(fallback_failure);
+      }
+    }
     const bool complete =
         candidate.ok && candidate.has_metadata &&
-        candidate.metadata.client_area_complete;
-    if (complete || attempt + 1 == kMaximumAttempts) {
+        (candidate.metadata.client_area_complete ||
+         candidate.metadata.presentation_viewport_complete);
+    const bool geometry_changed =
+        candidate.capture_reason == "client_changed_during_capture" ||
+        candidate.capture_reason == "client_image_size_mismatch" ||
+        candidate.capture_reason == "client_crop_outside_content" ||
+        candidate.capture_reason == "presentation_viewport_incomplete";
+    if (complete || !geometry_changed || attempt + 1 == kMaximumAttempts) {
       out = std::move(candidate);
       break;
     }

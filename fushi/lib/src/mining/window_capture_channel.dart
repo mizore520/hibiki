@@ -367,6 +367,16 @@ class WindowCaptureMetadata {
     this.contentHeightPx = 0,
     this.textureWidthPx = 0,
     this.textureHeightPx = 0,
+    this.sourceHwnd = 0,
+    this.sourcePid = 0,
+    this.presentationHwnd = 0,
+    this.presentationPid = 0,
+    this.usedPresentationCapture = false,
+    this.presentationViewportComplete = false,
+    this.sourceViewportWidthPx = 0,
+    this.sourceViewportHeightPx = 0,
+    this.destinationViewportWidthPx = 0,
+    this.destinationViewportHeightPx = 0,
     required this.dpi,
     required this.clientAreaComplete,
     required this.capturedAtTickMs,
@@ -390,6 +400,16 @@ class WindowCaptureMetadata {
   /// the texture stage or the result came from an older runner.
   final int textureWidthPx;
   final int textureHeightPx;
+  final int sourceHwnd;
+  final int sourcePid;
+  final int presentationHwnd;
+  final int presentationPid;
+  final bool usedPresentationCapture;
+  final bool presentationViewportComplete;
+  final int sourceViewportWidthPx;
+  final int sourceViewportHeightPx;
+  final int destinationViewportWidthPx;
+  final int destinationViewportHeightPx;
   final double dpi;
   final bool clientAreaComplete;
 
@@ -409,6 +429,28 @@ class WindowCaptureMetadata {
       dpi > 0 &&
       capturedAtTickMs > 0;
 
+  bool get isCompletePresentation =>
+      usedPresentationCapture &&
+      presentationViewportComplete &&
+      capturedHwnd != 0 &&
+      capturedPid > 0 &&
+      sourceHwnd != 0 &&
+      sourcePid > 0 &&
+      sourceHwnd != presentationHwnd &&
+      presentationHwnd == capturedHwnd &&
+      presentationPid == capturedPid &&
+      sourceViewportWidthPx > 0 &&
+      sourceViewportHeightPx > 0 &&
+      destinationViewportWidthPx > 0 &&
+      destinationViewportHeightPx > 0 &&
+      imageWidthPx == destinationViewportWidthPx &&
+      imageHeightPx == destinationViewportHeightPx &&
+      imageWidthPx <= clientWidthPx &&
+      imageHeightPx <= clientHeightPx &&
+      dpi.isFinite &&
+      dpi > 0 &&
+      capturedAtTickMs > 0;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'capturedHwnd': capturedHwnd,
     'capturedPid': capturedPid,
@@ -422,6 +464,16 @@ class WindowCaptureMetadata {
     'contentHeightPx': contentHeightPx,
     'textureWidthPx': textureWidthPx,
     'textureHeightPx': textureHeightPx,
+    'sourceHwnd': sourceHwnd,
+    'sourcePid': sourcePid,
+    'presentationHwnd': presentationHwnd,
+    'presentationPid': presentationPid,
+    'usedPresentationCapture': usedPresentationCapture,
+    'presentationViewportComplete': presentationViewportComplete,
+    'sourceViewportWidthPx': sourceViewportWidthPx,
+    'sourceViewportHeightPx': sourceViewportHeightPx,
+    'destinationViewportWidthPx': destinationViewportWidthPx,
+    'destinationViewportHeightPx': destinationViewportHeightPx,
     'dpi': dpi,
     'clientAreaComplete': clientAreaComplete,
     'capturedAtTickMs': capturedAtTickMs,
@@ -445,11 +497,23 @@ class WindowCaptureMetadata {
       'contentHeightPx',
       'textureWidthPx',
       'textureHeightPx',
+      'sourceHwnd',
+      'sourcePid',
+      'presentationHwnd',
+      'presentationPid',
+      'sourceViewportWidthPx',
+      'sourceViewportHeightPx',
+      'destinationViewportWidthPx',
+      'destinationViewportHeightPx',
     ];
     if (integerKeys.any((String key) => value[key] is! int) ||
         optionalIntegerKeys.any(
           (String key) => value.containsKey(key) && value[key] is! int,
         ) ||
+        <String>[
+          'usedPresentationCapture',
+          'presentationViewportComplete',
+        ].any((String key) => value.containsKey(key) && value[key] is! bool) ||
         value['dpi'] is! num ||
         value['clientAreaComplete'] is! bool) {
       return null;
@@ -467,6 +531,20 @@ class WindowCaptureMetadata {
       contentHeightPx: value['contentHeightPx'] as int? ?? 0,
       textureWidthPx: value['textureWidthPx'] as int? ?? 0,
       textureHeightPx: value['textureHeightPx'] as int? ?? 0,
+      sourceHwnd: value['sourceHwnd'] as int? ?? 0,
+      sourcePid: value['sourcePid'] as int? ?? 0,
+      presentationHwnd: value['presentationHwnd'] as int? ?? 0,
+      presentationPid: value['presentationPid'] as int? ?? 0,
+      usedPresentationCapture:
+          value['usedPresentationCapture'] as bool? ?? false,
+      presentationViewportComplete:
+          value['presentationViewportComplete'] as bool? ?? false,
+      sourceViewportWidthPx: value['sourceViewportWidthPx'] as int? ?? 0,
+      sourceViewportHeightPx: value['sourceViewportHeightPx'] as int? ?? 0,
+      destinationViewportWidthPx:
+          value['destinationViewportWidthPx'] as int? ?? 0,
+      destinationViewportHeightPx:
+          value['destinationViewportHeightPx'] as int? ?? 0,
       dpi: (value['dpi'] as num).toDouble(),
       clientAreaComplete: value['clientAreaComplete'] as bool,
       capturedAtTickMs: value['capturedAtTickMs'] as int,

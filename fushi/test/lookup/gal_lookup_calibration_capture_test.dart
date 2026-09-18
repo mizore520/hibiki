@@ -32,6 +32,25 @@ Uint8List _png() => base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=',
 );
 
+Map<String, Object?> _presentationMetadata() => <String, Object?>{
+  ..._metadata.toJson(),
+  'capturedHwnd': 88,
+  'capturedPid': 4567,
+  'sourceHwnd': 77,
+  'sourcePid': 1234,
+  'presentationHwnd': 88,
+  'presentationPid': 4567,
+  'usedPresentationCapture': true,
+  'presentationViewportComplete': true,
+  'clientAreaComplete': false,
+  'clientWidthPx': 3,
+  'clientHeightPx': 2,
+  'sourceViewportWidthPx': 2,
+  'sourceViewportHeightPx': 2,
+  'destinationViewportWidthPx': 1,
+  'destinationViewportHeightPx': 1,
+};
+
 GalLookupCalibrationCaptureSnapshot _snapshot({
   int epoch = 10,
   String id = 'entry-1',
@@ -74,6 +93,66 @@ Matcher throwsCaptureFailure(GalLookupCalibrationCaptureFailure failure) =>
     );
 
 void main() {
+  test(
+    'Magpie viewport keeps actual capture identity and survives disk reload',
+    () async {
+      final WindowCaptureMetadata metadata = WindowCaptureMetadata.tryFromMap(
+        _presentationMetadata(),
+      )!;
+      expect(metadata.isCompleteClient, isFalse);
+      final GalLookupCalibrationCapture sample =
+          await captureGalLookupCalibrationSample(
+            readSnapshot: () => _snapshot(
+              client: const GalLookupReferenceClientV1(
+                widthPx: 4,
+                heightPx: 4,
+                dpi: 96,
+              ),
+            ),
+            acquireLease: () async => null,
+            captureWindow: (_) async =>
+                WindowCaptureResult(pngBytes: _png(), metadata: metadata),
+          );
+      expect(sample.referenceClient, _client);
+      expect(sample.targetHwnd, 77);
+      expect(sample.captureMetadata!.capturedHwnd, 88);
+      final GalLookupCalibrationCapture restored =
+          GalLookupCalibrationCapture.tryFromJson(sample.toJson())!;
+      expect(restored.captureMetadata!.sourcePid, 1234);
+      expect(restored.captureMetadata!.presentationPid, 4567);
+      expect(restored.referenceClient, _client);
+    },
+  );
+
+  for (final MapEntry<String, Object> invalid in <String, Object>{
+    'sourceHwnd': 78,
+    'sourcePid': 1235,
+    'presentationHwnd': 89,
+    'presentationPid': 4568,
+    'presentationViewportComplete': false,
+    'sourceViewportWidthPx': 3,
+    'destinationViewportWidthPx': 2,
+    'usedPresentationCapture': 'true',
+  }.entries) {
+    test('rejects invalid Magpie ${invalid.key}', () async {
+      final Map<String, Object?> fields = _presentationMetadata()
+        ..[invalid.key] = invalid.value;
+      await expectLater(
+        captureGalLookupCalibrationSample(
+          readSnapshot: _snapshot,
+          acquireLease: () async => null,
+          captureWindow: (_) async => WindowCaptureResult(
+            pngBytes: _png(),
+            metadata: WindowCaptureMetadata.tryFromMap(fields),
+          ),
+        ),
+        throwsCaptureFailure(
+          GalLookupCalibrationCaptureFailure.clientMappingUnavailable,
+        ),
+      );
+    });
+  }
+
   test(
     'captures full client and freezes bytes with round-trip identity',
     () async {

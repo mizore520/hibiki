@@ -4986,5 +4986,15 @@
   "game_lookup_samples_capture_unsupported": "This text contains a ruby format that is not supported yet. Capture a normal dialogue line instead.",
   "game_lookup_samples_save_failed": "The draft could not be written to disk. The current samples remain in this window; try saving again.",
   "game_lookup_samples_search_title": "Recognition region (orange frame)",
-  "game_lookup_samples_search_hint": "Enclose all dialogue text. Recognition stays inside this frame and keeps your selection. Character boxes are computed separately. Moving the frame requires aligning again."
+  "game_lookup_samples_search_hint": "Enclose all dialogue text. Recognition stays inside this frame and keeps your selection. Character boxes are computed separately. Moving the frame requires aligning again.",
+  "game_lookup_samples_current": "Current sample: $sample of $total",
+  "game_lookup_samples_auto_current_hint": "Use the selected screenshot only. It should show the complete dialogue across at least two lines.",
+  "game_lookup_samples_auto_all_hint": "Use all calibration samples together. Validation samples only check the result.",
+  "game_lookup_samples_advanced": "Advanced options",
+  "game_lookup_samples_advanced_hint": "Extra samples, pixel values, manual layout, and overlay inspection",
+  "game_lookup_samples_fit_all": "Fit all calibration samples together",
+  "game_lookup_samples_fit_all_hint": "Use this when several complete samples share one grid. Validation samples remain checks.",
+  "game_lookup_samples_auto_align_current": "Align current screenshot",
+  "game_lookup_samples_auto_align_all": "Align all calibration samples",
+  "game_lookup_samples_pixel_advanced_hint": "These are source screenshot pixels for the orange recognition frame. They are a manual backup, not character size."
 }

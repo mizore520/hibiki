@@ -670,11 +670,41 @@ bool AttachedTextSurfaceWindow::RefreshTargetClient(RECT *client_screen,
       *error = "target_cloaked";
     return false;
   }
-  const RECT client = ClientScreenRect(geometry_window);
+  RECT client = ClientScreenRect(geometry_window);
   if (!RectHasArea(client)) {
     if (error != nullptr)
       *error = "target_client_unavailable";
     return false;
+  }
+  // Magpie may letterbox or crop the source inside a larger presentation
+  // client. Its public viewport properties are the only trustworthy mapping
+  // for that case; using the whole client shifts every calibrated hit box.
+  if (geometry_window != target_.hwnd &&
+      fushi::ResolveScalingSourceWindow(geometry_window) == target_.hwnd) {
+    fushi::MagpiePresentationMapping mapping;
+    if (!fushi::ReadMagpiePresentationMapping(geometry_window, target_.hwnd,
+                                              &mapping)) {
+      if (error != nullptr)
+        *error = "magpie_viewport_unavailable";
+      return false;
+    }
+    const RECT presentation_client = client;
+    if (mapping.destination_rect_screen.left < presentation_client.left ||
+        mapping.destination_rect_screen.top < presentation_client.top ||
+        mapping.destination_rect_screen.right > presentation_client.right ||
+        mapping.destination_rect_screen.bottom > presentation_client.bottom) {
+      if (error != nullptr)
+        *error = "magpie_viewport_outside_presentation";
+      return false;
+    }
+    const RECT source_client = ClientScreenRect(target_.hwnd);
+    if (!RectHasArea(source_client) ||
+        !EqualRect(&mapping.source_rect_screen, &source_client)) {
+      if (error != nullptr)
+        *error = "magpie_source_crop_unsupported";
+      return false;
+    }
+    client = mapping.destination_rect_screen;
   }
   UINT dpi = GetDpiForWindow(geometry_window);
   *client_screen = client;
@@ -1503,8 +1533,12 @@ void AttachedTextSurfaceWindow::SyncToTarget() {
       mode_ = Mode::kTargetReady;
     }
     HideSurface();
-    SetState(error == "target_cloaked" ? "suspended" : "error",
-             error == "target_cloaked" ? "targetCloaked" : "targetUnavailable",
+    const bool mapping_unavailable = error.rfind("magpie_", 0) == 0;
+    SetState(error == "target_cloaked" || mapping_unavailable ? "suspended"
+                                                             : "error",
+             error == "target_cloaked" ? "targetCloaked"
+             : mapping_unavailable ? "targetMappingUnavailable"
+                                   : "targetUnavailable",
              error);
     EmitStateIfChanged();
     return;
@@ -2099,14 +2133,12 @@ void AttachedTextSurfaceWindow::RenderLayerBitmap(bool calibration) {
         std::clamp(cluster.top, 0L, static_cast<LONG>(height)),
         std::clamp(cluster.right, 0L, static_cast<LONG>(width)),
         std::clamp(cluster.bottom, 0L, static_cast<LONG>(height))};
-    const uint32_t hover_fill = PremultipliedPixel(35, 190, 220, 105);
-    const uint32_t outline = PremultipliedPixel(100, 235, 255, 230);
+    // Match KiriKiri's fushiLookupPaintHighlight: colorRect(0x31d7ff, 88).
+    // Keep the same bounded hit geometry, with a translucent fill only.
+    const uint32_t hover_fill = PremultipliedPixel(49, 215, 255, 88);
     for (LONG y = box.top; y < box.bottom; ++y) {
       for (LONG x = box.left; x < box.right; ++x) {
-        const bool edge = x == box.left || x == box.right - 1 ||
-                          y == box.top || y == box.bottom - 1;
-        pixels[static_cast<size_t>(y) * width + x] =
-            edge ? outline : hover_fill;
+        pixels[static_cast<size_t>(y) * width + x] = hover_fill;
       }
     }
   }

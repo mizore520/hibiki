@@ -13,6 +13,34 @@ import 'package:fushi_engine/ocr/manga_ocr_model_manifest.dart';
 import 'package:fushi_engine/ocr/ocr_types.dart';
 
 void main() {
+  test('a button between detected rows cannot swallow a punctuation tail', () {
+    const String first = '「あいうえおかきくけこさしすせそたちつてと！！';
+    final GalCalibrationOcrAlignment result = alignGalCalibrationOcrLines(
+      sourceText: '$first！』',
+      lines: [
+        _line(first, top: 300),
+        _line('X', top: 307, shiftX: 1100),
+        _line('！」', top: 350, indent: 1),
+        _line('G', top: 362, shiftX: 800),
+      ],
+    );
+    expect(result.accepted, isTrue);
+    expect(result.lines, hasLength(2));
+    expect(result.lines.first.cellCount, first.length);
+    expect(result.lines.last.cellCount, 2);
+    expect(result.lines.last.rect.top, 350);
+  });
+
+  test('one closing character is a valid continuation row', () {
+    final GalCalibrationOcrAlignment result = alignGalCalibrationOcrLines(
+      sourceText: '「あいうえおかきくけこ」',
+      lines: [_line('「あいうえおかきくけこ', top: 300), _line('」', top: 350)],
+    );
+    expect(result.accepted, isTrue);
+    expect(result.lines, hasLength(2));
+    expect(result.lines.last.cellCount, 1);
+  });
+
   test('a trailing advance icon never becomes a Hook character', () {
     final GalCalibrationOcrAlignment result = alignGalCalibrationOcrLines(
       sourceText: 'あいうえおかきくけこ。',
@@ -544,6 +572,27 @@ void main() {
     expect(alignment.accepted, isFalse);
   });
 
+  test(
+    'keeps a repeated dialogue candidate with sparse distributed positions',
+    () {
+      const String first = '「かきゃっかきゃっかきゃっかきゃっかきゃっ！！';
+      const String second = '！」」』';
+      final List<GalCalibrationOcrLine> lines = <GalCalibrationOcrLine>[
+        _sparsePositionLine(first, top: 300),
+        _sparsePositionLine(second, top: 348),
+      ];
+
+      final GalCalibrationOcrAlignment alignment = alignGalCalibrationOcrLines(
+        sourceText: '$first\n$second',
+        lines: lines,
+      );
+
+      expect(alignment.accepted, isTrue);
+      expect(alignment.confidence, lessThan(.65));
+      expect(alignment.lines, hasLength(2));
+    },
+  );
+
   test('detector unclip margins cannot create overlapping hit rows', () async {
     final lines = [
       _line('あいうえお', top: 300),
@@ -635,6 +684,24 @@ GalCalibrationOcrLine _line(
             bottom: (top + 36) * scale,
           ),
           .99,
+        ),
+    ],
+  );
+}
+
+GalCalibrationOcrLine _sparsePositionLine(String text, {required double top}) {
+  final GalCalibrationOcrLine line = _line(text, top: top);
+  final int visible = line.tokens.length;
+  return GalCalibrationOcrLine(
+    text: line.text,
+    rect: line.rect,
+    score: line.score,
+    tokens: <GalCalibrationOcrToken>[
+      for (int i = 0; i < visible; i++)
+        GalCalibrationOcrToken(
+          line.tokens[i].text,
+          line.tokens[i].rect,
+          (i < 6 || i >= visible - 6) ? .42 : 0,
         ),
     ],
   );

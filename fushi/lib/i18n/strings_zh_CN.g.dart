@@ -10950,4 +10950,30 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get game_lookup_samples_search_hint =>
       '框住完整正文即可。只识别橙框内的内容，并保留你的选区；字符小框另行计算。调整选区后需重新自动对齐。';
+  @override
+  String game_lookup_samples_current({
+    required Object sample,
+    required Object total,
+  }) => '当前样本：第 ${sample} / ${total} 张';
+  @override
+  String get game_lookup_samples_auto_current_hint =>
+      '默认只用当前选中的截图拟合；请选择一张包含至少两行完整台词的截图。';
+  @override
+  String get game_lookup_samples_auto_all_hint =>
+      '高级模式会将所有校准样本共同拟合；验证样本只用于检查结果。';
+  @override
+  String get game_lookup_samples_advanced => '高级选项';
+  @override
+  String get game_lookup_samples_advanced_hint => '多样本、像素数值、手动排版和叠框检查';
+  @override
+  String get game_lookup_samples_fit_all => '将所有校准样本共同拟合';
+  @override
+  String get game_lookup_samples_fit_all_hint => '多张完整台词共用同一字格时使用；验证样本仍只用于检查。';
+  @override
+  String get game_lookup_samples_auto_align_current => '按当前截图自动对齐';
+  @override
+  String get game_lookup_samples_auto_align_all => '用全部校准样本自动对齐';
+  @override
+  String get game_lookup_samples_pixel_advanced_hint =>
+      '这些数值是橙色识别框在原始截图中的像素位置，是手动备用定位，不是字的字号。';
 }

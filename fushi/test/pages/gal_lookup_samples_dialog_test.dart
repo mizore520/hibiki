@@ -48,14 +48,17 @@ final Uint8List _png = Uint8List.fromList(
   img.encodePng(img.Image(width: 800, height: 600)),
 );
 
-GalLookupCalibrationCapture _capture() => GalLookupCalibrationCapture(
+GalLookupCalibrationCapture _capture({
+  GalLookupReferenceClientV1 client = _client,
+  String occurrenceId = 'synthetic-entry-1',
+}) => GalLookupCalibrationCapture(
   sourceText: _text,
   pngBytes: _png,
-  referenceClient: _client,
+  referenceClient: client,
   exePath: r'C:\synthetic\game.exe',
   exeSha256: _sha,
   sessionEpoch: 2,
-  occurrenceId: 'synthetic-entry-1',
+  occurrenceId: occurrenceId,
   sourceSequence: 17,
   targetHwnd: 77,
   capturedAt: DateTime.utc(2026, 9, 17, 12),
@@ -169,6 +172,12 @@ Future<_Result> _open(
   await tester.pumpAndSettle();
   // Existing anchor/font cases explicitly opt in to the advanced workflow.
   if (manual) {
+    final Finder advanced = find.byKey(
+      const ValueKey<String>('calibration-advanced'),
+    );
+    await tester.ensureVisible(advanced);
+    await tester.tap(advanced);
+    await tester.pumpAndSettle();
     final Finder button = find.byKey(
       const ValueKey<String>('calibration-manual-layout'),
     );
@@ -186,6 +195,13 @@ Finder _cluster(String label) => find.byWidgetPredicate(
       widget is ChoiceChip &&
       widget.label is Text &&
       (widget.label as Text).data == label,
+);
+
+Finder _sampleChip(int index) => find.byWidgetPredicate(
+  (Widget widget) =>
+      widget is ChoiceChip &&
+      widget.label is Text &&
+      ((widget.label as Text).data?.startsWith('${index + 1} ·') ?? false),
 );
 
 Future<void> _enterFont(WidgetTester tester, String value) async {
@@ -643,6 +659,247 @@ void main() {
     },
   );
 
+  testWidgets(
+    'automatic alignment defaults to the selected sample and preserves the notebook',
+    (WidgetTester tester) async {
+      const GalLookupNormalizedRectV1 fittedRect = GalLookupNormalizedRectV1(
+        left: .11,
+        top: .61,
+        width: .85,
+        height: .3,
+      );
+      final _MemoryStore store = _MemoryStore(draft: _draft(count: 3));
+      final List<int> fitSampleCounts = <int>[];
+      final _Result result = await _open(
+        tester,
+        store: store,
+        manual: false,
+        imageFitter: (draft, {build = _preview}) async {
+          fitSampleCounts.add(draft.samples.length);
+          return GalCalibrationImageFit(
+            draft: GalLookupCalibrationDraft(
+              rect: fittedRect,
+              searchRect: draft.searchRect,
+              samples: draft.samples,
+              layout: const GalLookupTextLayoutV1(
+                cellGrid: GalLookupCellGridV1(
+                  advancePerClientHeight: 0.04,
+                  lineAdvancePerClientHeight: 0.06,
+                  cellHeightPerClientHeight: 0.05,
+                  columns: 20,
+                  continuationIndent: 0,
+                  quotedContinuationIndent: 1,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+      await tester.tap(
+        find.byKey(const ValueKey<String>('calibration-auto-align')),
+      );
+      await tester.pumpAndSettle();
+      expect(fitSampleCounts, [1]);
+      await tester.tap(find.text(t.game_lookup_samples_apply));
+      await tester.pumpAndSettle();
+      expect(result.applied!.samples, hasLength(3));
+    },
+  );
+
+  testWidgets(
+    'single image fit stores its selected reference without changing validation groups',
+    (WidgetTester tester) async {
+      const GalLookupReferenceClientV1 selectedClient =
+          GalLookupReferenceClientV1(widthPx: 1280, heightPx: 720, dpi: 120);
+      final GalLookupCalibrationDraft original = GalLookupCalibrationDraft(
+        rect: _rect,
+        layout: _layout,
+        samples: <GalCalibrationSample>[
+          GalCalibrationSample(capture: _capture()),
+          GalCalibrationSample(
+            capture: _capture(
+              client: selectedClient,
+              occurrenceId: 'synthetic-entry-2',
+            ),
+            validation: true,
+          ),
+        ],
+      );
+      final _MemoryStore store = _MemoryStore(draft: original);
+      final _Result result = await _open(
+        tester,
+        store: store,
+        manual: false,
+        imageFitter: (draft, {build = _preview}) async {
+          expect(draft.samples, hasLength(1));
+          expect(draft.samples.single.capture.referenceClient, selectedClient);
+          expect(draft.samples.single.validation, isFalse);
+          return GalCalibrationImageFit(
+            draft: GalLookupCalibrationDraft(
+              rect: draft.rect,
+              searchRect: draft.searchRect,
+              layout: const GalLookupTextLayoutV1(
+                cellGrid: GalLookupCellGridV1(
+                  advancePerClientHeight: 0.04,
+                  lineAdvancePerClientHeight: 0.06,
+                  cellHeightPerClientHeight: 0.05,
+                  columns: 20,
+                  continuationIndent: 0,
+                  quotedContinuationIndent: 1,
+                ),
+              ),
+              samples: draft.samples,
+            ),
+          );
+        },
+      );
+      final Finder advanced = find.byKey(
+        const ValueKey<String>('calibration-advanced'),
+      );
+      await tester.ensureVisible(advanced);
+      await tester.tap(advanced);
+      await tester.pumpAndSettle();
+      await tester.tap(_sampleChip(1));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('calibration-auto-align')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(t.game_lookup_samples_apply));
+      await tester.pumpAndSettle();
+      expect(result.applied!.layoutReferenceClient, selectedClient);
+      expect(result.applied!.samples.map((sample) => sample.validation), [
+        false,
+        true,
+      ]);
+    },
+  );
+
+  testWidgets(
+    'single image fit reports its selected sample when the fitter returns index zero',
+    (WidgetTester tester) async {
+      final GalLookupCalibrationCapture selected = _capture(
+        occurrenceId: 'synthetic-entry-2',
+      );
+      final _MemoryStore store = _MemoryStore(
+        draft: GalLookupCalibrationDraft(
+          rect: _rect,
+          layout: _layout,
+          samples: <GalCalibrationSample>[
+            GalCalibrationSample(capture: _capture()),
+            GalCalibrationSample(capture: selected),
+          ],
+        ),
+      );
+      await _open(
+        tester,
+        store: store,
+        manual: false,
+        imageFitter: (draft, {build = _preview}) async =>
+            const GalCalibrationImageFit(
+              reason: 'inconsistent_samples',
+              sampleIndex: 0,
+            ),
+      );
+      final Finder advanced = find.byKey(
+        const ValueKey<String>('calibration-advanced'),
+      );
+      await tester.ensureVisible(advanced);
+      await tester.tap(advanced);
+      await tester.pumpAndSettle();
+      await tester.tap(_sampleChip(1));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('calibration-auto-align')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          t.game_lookup_samples_auto_sample_failed(
+            sample: '2',
+            reason: t.game_lookup_samples_auto_inconsistent,
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byKey(ValueKey<Object>(selected)), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'applying a single fit ignores an overflow in an older validation sample',
+    (WidgetTester tester) async {
+      const GalLookupReferenceClientV1 selectedClient =
+          GalLookupReferenceClientV1(widthPx: 640, heightPx: 480, dpi: 96);
+      final GalLookupCalibrationDraft original = GalLookupCalibrationDraft(
+        rect: _rect,
+        layout: _layout,
+        samples: <GalCalibrationSample>[
+          GalCalibrationSample(capture: _capture(), validation: true),
+          GalCalibrationSample(
+            capture: _capture(
+              client: selectedClient,
+              occurrenceId: 'synthetic-entry-2',
+            ),
+          ),
+        ],
+      );
+      final _MemoryStore store = _MemoryStore(draft: original);
+      final _Result result = await _open(
+        tester,
+        store: store,
+        manual: false,
+        previewBuilder:
+            ({
+              required text,
+              required client,
+              required rect,
+              required layout,
+            }) async => client == selectedClient
+            ? _preview(text: text, client: client, rect: rect, layout: layout)
+            : const GalCalibrationPreview(boxes: [], reason: 'overflow'),
+        imageFitter: (draft, {build = _preview}) async =>
+            GalCalibrationImageFit(
+              draft: GalLookupCalibrationDraft(
+                rect: draft.rect,
+                searchRect: draft.searchRect,
+                layout: const GalLookupTextLayoutV1(
+                  cellGrid: GalLookupCellGridV1(
+                    advancePerClientHeight: 0.04,
+                    lineAdvancePerClientHeight: 0.06,
+                    cellHeightPerClientHeight: 0.05,
+                    columns: 20,
+                    continuationIndent: 0,
+                    quotedContinuationIndent: 1,
+                  ),
+                ),
+                samples: draft.samples,
+              ),
+            ),
+      );
+      final Finder advanced = find.byKey(
+        const ValueKey<String>('calibration-advanced'),
+      );
+      await tester.ensureVisible(advanced);
+      await tester.tap(advanced);
+      await tester.pumpAndSettle();
+      await tester.tap(_sampleChip(1));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('calibration-auto-align')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(t.game_lookup_samples_apply));
+      await tester.pumpAndSettle();
+      expect(result.closed, isTrue);
+      expect(result.applied!.layoutReferenceClient, selectedClient);
+      expect(result.applied!.samples.map((sample) => sample.validation), [
+        true,
+        false,
+      ]);
+    },
+  );
+
   testWidgets('ambiguous image alignment preserves the saved layout', (
     tester,
   ) async {
@@ -703,6 +960,18 @@ void main() {
           );
         },
       );
+      final Finder advanced = find.byKey(
+        const ValueKey<String>('calibration-advanced'),
+      );
+      await tester.ensureVisible(advanced);
+      await tester.tap(advanced);
+      await tester.pumpAndSettle();
+      final Finder fitAll = find.byKey(
+        const ValueKey<String>('calibration-fit-all'),
+      );
+      await tester.ensureVisible(fitAll);
+      await tester.tap(fitAll);
+      await tester.pumpAndSettle();
       expect(previews, 0);
       expect(canvas(tester).boxes, isEmpty);
       expect(canvas(tester).anchors, isEmpty);
@@ -716,9 +985,11 @@ void main() {
         find.widgetWithText(TextButton, t.game_lookup_samples_apply),
       );
       expect(apply.onPressed, isNull);
-      await tester.tap(
-        find.byKey(const ValueKey<String>('calibration-auto-align')),
+      final Finder autoAlign = find.byKey(
+        const ValueKey<String>('calibration-auto-align'),
       );
+      await tester.ensureVisible(autoAlign);
+      await tester.tap(autoAlign);
       await tester.pumpAndSettle();
       expect(
         find.text(
@@ -764,6 +1035,12 @@ void main() {
       await tester.pumpAndSettle();
       expect(captures, 0);
       expect(find.text(t.game_lookup_samples_limit), findsOneWidget);
+      final Finder advanced = find.byKey(
+        const ValueKey<String>('calibration-advanced'),
+      );
+      await tester.ensureVisible(advanced);
+      await tester.tap(advanced);
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.text(t.game_lookup_samples_remove));
       await tester.tap(find.text(t.game_lookup_samples_remove));
       await tester.pumpAndSettle();

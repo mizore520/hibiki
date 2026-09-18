@@ -174,10 +174,17 @@ void main() {
       await controller.setMode(GalLookupSurfaceMode.attachedOnly);
       await tester.pump();
 
-      final IconButton calibrate = tester.widget<IconButton>(
-        find.byKey(const ValueKey<String>('game-attached-lookup-calibrate')),
+      await tester.tap(
+        find.byKey(const ValueKey<String>('game-attached-lookup-mode')),
       );
-      expect(calibrate.onPressed, isNull, reason: '手动模式下入口出现，但未选正文线程时仍然禁用');
+      await tester.pumpAndSettle();
+      final PopupMenuItem<String> calibrate = tester
+          .widget<PopupMenuItem<String>>(
+            find.byKey(
+              const ValueKey<String>('game-attached-lookup-calibrate'),
+            ),
+          );
+      expect(calibrate.enabled, isFalse, reason: '手动模式下入口出现，但未选正文线程时仍然禁用');
       expect(
         find.textContaining('Select one body-text thread'),
         findsOneWidget,
@@ -241,13 +248,13 @@ void main() {
           ),
         ),
       );
-      tester
-          .widget<IconButton>(
-            find.byKey(
-              const ValueKey<String>('game-attached-lookup-calibrate'),
-            ),
-          )
-          .onPressed!();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('game-attached-lookup-mode')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('game-attached-lookup-calibrate')),
+      );
       await tester.pumpAndSettle();
       expect(find.byType(GalAttachedCalibrationDialog), findsOneWidget);
       expect(

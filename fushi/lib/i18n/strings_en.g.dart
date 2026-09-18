@@ -6885,4 +6885,25 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
       'Recognition region (orange frame)';
   String get game_lookup_samples_search_hint =>
       'Enclose all dialogue text. Recognition stays inside this frame and keeps your selection. Character boxes are computed separately. Moving the frame requires aligning again.';
+  String game_lookup_samples_current({
+    required Object sample,
+    required Object total,
+  }) => 'Current sample: ${sample} of ${total}';
+  String get game_lookup_samples_auto_current_hint =>
+      'Use the selected screenshot only. It should show the complete dialogue across at least two lines.';
+  String get game_lookup_samples_auto_all_hint =>
+      'Use all calibration samples together. Validation samples only check the result.';
+  String get game_lookup_samples_advanced => 'Advanced options';
+  String get game_lookup_samples_advanced_hint =>
+      'Extra samples, pixel values, manual layout, and overlay inspection';
+  String get game_lookup_samples_fit_all =>
+      'Fit all calibration samples together';
+  String get game_lookup_samples_fit_all_hint =>
+      'Use this when several complete samples share one grid. Validation samples remain checks.';
+  String get game_lookup_samples_auto_align_current =>
+      'Align current screenshot';
+  String get game_lookup_samples_auto_align_all =>
+      'Align all calibration samples';
+  String get game_lookup_samples_pixel_advanced_hint =>
+      'These are source screenshot pixels for the orange recognition frame. They are a manual backup, not character size.';
 }

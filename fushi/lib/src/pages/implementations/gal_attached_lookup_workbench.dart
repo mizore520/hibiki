@@ -167,24 +167,6 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
                         : null,
                     icon: const Icon(Icons.photo_library_outlined, size: 20),
                   ),
-                if (calibrationExposed)
-                  IconButton(
-                    key: const ValueKey<String>(
-                      'game-attached-lookup-calibrate',
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: BoxConstraints.tightFor(
-                      width: tokens.density.compactControlHeight,
-                      height: tokens.density.compactControlHeight,
-                    ),
-                    tooltip: canOpenCalibration
-                        ? t.game_lookup_attached_calibrate
-                        : t.game_lookup_attached_thread_required,
-                    onPressed: canOpenCalibration
-                        ? () => _openCalibration(context)
-                        : null,
-                    icon: const Icon(Icons.crop_free_outlined, size: 20),
-                  ),
                 PopupMenuButton<String>(
                   key: const ValueKey<String>('game-attached-lookup-mode'),
                   tooltip: t.game_lookup_attached_mode,
@@ -198,6 +180,8 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
                                 value.wireName == action.substring(5),
                           );
                       unawaited(controller.setMode(selected));
+                    } else if (action == 'calibrate') {
+                      unawaited(_openCalibration(context));
                     } else if (action == 'clear') {
                       unawaited(_clearProfile(context));
                     }
@@ -215,6 +199,15 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
                             checked: value == mode,
                             enabled: controller.target != null,
                             child: Text(_modeLabel(value)),
+                          ),
+                        if (calibrationExposed)
+                          PopupMenuItem<String>(
+                            key: const ValueKey<String>(
+                              'game-attached-lookup-calibrate',
+                            ),
+                            value: 'calibrate',
+                            enabled: canOpenCalibration,
+                            child: Text(t.game_lookup_attached_calibrate),
                           ),
                         if (profile != null)
                           PopupMenuItem<String>(
@@ -274,7 +267,8 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
   Future<void> _openSamples(BuildContext context) async {
     final String? hash = controller.executableSha256;
     final GalLookupReferenceClientV1? client = controller.currentClient;
-    if (hash == null || client == null) return;
+    final GalAttachedSurfaceTarget? target = controller.target;
+    if (hash == null || client == null || target == null) return;
     final GalLookupSurfaceVariantV1? seed = controller.profile
         ?.nearestVariantForClient(client);
     final GalLookupCalibrationDraft? draft =
@@ -292,10 +286,45 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
         );
     if (draft == null ||
         !context.mounted ||
-        controller.executableSha256 != hash) {
+        controller.executableSha256 != hash ||
+        controller.target?.matches(target) != true) {
       return;
     }
-    await _openCalibration(context, draft: draft);
+    if (draft.layout.cellGrid == null) {
+      await _openCalibration(context, draft: draft);
+      return;
+    }
+    final GalLookupSurfaceProfileV1? profile = controller.profile;
+    if (!(profile?.unsafeLeftClickAccepted ?? false) &&
+        !await _confirmRisk(context)) {
+      return;
+    }
+    if (!context.mounted ||
+        controller.executableSha256 != hash ||
+        controller.target?.matches(target) != true) {
+      return;
+    }
+    final GalLookupReferenceClientV1? measuredClient =
+        draft.layoutReferenceClient;
+    if (!draft.validFor(hash) ||
+        draft.samples.isEmpty ||
+        measuredClient == null) {
+      _showFailure(context, t.game_lookup_attached_calibration_failed);
+      return;
+    }
+    final bool applied = await controller.applyMeasuredCalibration(
+      expectedTarget: target,
+      expectedExeSha256: hash,
+      variant: GalLookupSurfaceVariantV1(
+        aspectRatio: measuredClient.aspectRatio,
+        referenceClient: measuredClient,
+        bodyRect: draft.rect,
+        layout: draft.layout,
+      ),
+    );
+    if (!applied && context.mounted) {
+      _showFailure(context, t.game_lookup_attached_calibration_failed);
+    }
   }
 
   Future<void> _openCalibration(
@@ -1060,8 +1089,9 @@ class _GalAttachedCalibrationDialogState
   }
 
   String _calibrationStatusText() {
-    if (!_previewCurrent)
+    if (!_previewCurrent) {
       return t.game_lookup_attached_calibration_text_changed;
+    }
     return switch (widget.controller.calibrationStatus) {
       GalAttachedCalibrationStatus.idle =>
         t.game_lookup_attached_calibration_ended,

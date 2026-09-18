@@ -79,8 +79,12 @@ class GalLookupCalibrationDraft {
     required this.layout,
     required List<GalCalibrationSample> samples,
     GalLookupNormalizedRectV1? searchRect,
+    GalLookupReferenceClientV1? layoutReferenceClient,
   }) : searchRect = searchRect ?? rect,
-       samples = List.unmodifiable(samples);
+       samples = List.unmodifiable(samples),
+       layoutReferenceClient =
+           layoutReferenceClient ??
+           (samples.isEmpty ? null : samples.first.capture.referenceClient);
 
   static const int maxSamples = 8;
   static const int maxImageBytes = 64 * 1024 * 1024;
@@ -91,11 +95,16 @@ class GalLookupCalibrationDraft {
   final GalLookupTextLayoutV1 layout;
   final List<GalCalibrationSample> samples;
 
+  /// The frozen client dimensions that the fitted layout was measured against.
+  /// Older notebooks did not persist this and therefore use their first sample.
+  final GalLookupReferenceClientV1? layoutReferenceClient;
+
   bool validFor(String hash) =>
       RegExp(r'^[a-fA-F0-9]{64}$').hasMatch(hash) &&
       rect.isValid &&
       searchRect.isValid &&
       layout.isValid &&
+      (layoutReferenceClient?.isValid ?? true) &&
       samples.length <= maxSamples &&
       samples.every((GalCalibrationSample s) => s.capture.exeSha256 == hash) &&
       samples.fold<int>(
@@ -104,12 +113,14 @@ class GalLookupCalibrationDraft {
           ) <=
           maxImageBytes;
 
-  Map<String, Object?> toJson() => {
+  Map<String, Object?> toJson() => <String, Object?>{
     'version': 1,
     'bodyRect': rect.toJson(),
     'searchRect': searchRect.toJson(),
     'layout': layout.toJson(),
     'samples': samples.map((GalCalibrationSample s) => s.toJson()).toList(),
+    if (layoutReferenceClient != null)
+      'layoutReferenceClient': layoutReferenceClient!.toJson(),
   };
 
   static GalLookupCalibrationDraft fromJson(Map<String, dynamic> json) {
@@ -129,17 +140,26 @@ class GalLookupCalibrationDraft {
         raw.length > maxSamples) {
       throw const FormatException('invalid_draft');
     }
+    final List<GalCalibrationSample> samples = raw
+        .map(
+          (dynamic item) => GalCalibrationSample.fromJson(
+            (item as Map).cast<String, dynamic>(),
+          ),
+        )
+        .toList();
+    final bool hasLayoutReference = json.containsKey('layoutReferenceClient');
+    final GalLookupReferenceClientV1? layoutReferenceClient = hasLayoutReference
+        ? GalLookupReferenceClientV1.tryFromJson(json['layoutReferenceClient'])
+        : null;
+    if (hasLayoutReference && layoutReferenceClient == null) {
+      throw const FormatException('invalid_draft');
+    }
     return GalLookupCalibrationDraft(
       rect: rect,
       searchRect: searchRect,
       layout: layout,
-      samples: raw
-          .map(
-            (dynamic item) => GalCalibrationSample.fromJson(
-              (item as Map).cast<String, dynamic>(),
-            ),
-          )
-          .toList(),
+      samples: samples,
+      layoutReferenceClient: layoutReferenceClient,
     );
   }
 }
@@ -218,8 +238,9 @@ Future<GalLookupCalibrationDraft?> fitGalCalibrationAnchors(
       .toList();
   if (training.isEmpty ||
       draft.layout.textAlign != 'left' ||
-      draft.layout.cellGrid != null)
+      draft.layout.cellGrid != null) {
     return null;
+  }
   final List<
     ({double derivative, double dx, double dy, double aspect, double pixel})
   >
@@ -420,6 +441,7 @@ Future<GalLookupCalibrationDraft?> fitGalCalibrationAnchors(
     searchRect: draft.searchRect,
     layout: layout,
     samples: draft.samples,
+    layoutReferenceClient: draft.layoutReferenceClient,
   );
 }
 

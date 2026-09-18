@@ -144,4 +144,24 @@ void main() {
     ));
     expect(result.accepted, isFalse);
   });
+  test('an edge-clipped anchor leaves the interior geometry usable', () {
+    final GalCalibrationOcrAlignment result = refineGalCalibrationOcrGeometry((
+      pngBytes: Uint8List.fromList(img.encodePng(_strokes())),
+      text: _text,
+      searchRect: const GalLookupNormalizedRectV1(
+        left: .08,
+        top: 0,
+        width: .92,
+        height: 1,
+      ),
+      alignment: _alignment(),
+    ));
+    expect(result.accepted, isTrue);
+    expect(
+      result.lines.single.glyphs
+          .where((GalCalibrationOcrGlyph g) => g.sourceIndex > 0)
+          .any((GalCalibrationOcrGlyph g) => g.inkMeasured),
+      isTrue,
+    );
+  });
 }

@@ -865,6 +865,16 @@ class GalAttachedTextController extends ChangeNotifier {
     _activeVariant = variant;
     _nativeStatus = result.status;
     _surfaceVisible = result.surfaceVisible;
+    if (result.status == 'targetMappingUnavailable') {
+      _surfaceVisible = false;
+      _setStatus(
+        GalAttachedTextStatus.suspended,
+        reason: 'targetMappingUnavailable',
+      );
+      await _pushText(_latestSourceText);
+      _surfaceVisible = false;
+      return;
+    }
     _setStatus(GalAttachedTextStatus.activeAttached);
     await _pushLatestTextIfActive();
   }
@@ -884,6 +894,61 @@ class GalAttachedTextController extends ChangeNotifier {
           : GalAttachedTextStatus.suspended,
       reason: reason ?? 'attached_surface_failed',
     );
+  }
+
+  /// Applies measured screenshot geometry through the normal activation path.
+  /// This does not manufacture probe observations or a calibration commit.
+  Future<bool> applyMeasuredCalibration({
+    required GalAttachedSurfaceTarget expectedTarget,
+    required String expectedExeSha256,
+    required GalLookupSurfaceVariantV1 variant,
+  }) async {
+    final GalAttachedSurfaceTarget? target = _target;
+    final GalLookupReferenceClientV1? client = _currentClient;
+    if (!canCalibrate ||
+        target == null ||
+        client == null ||
+        !target.matches(expectedTarget) ||
+        _exeSha256 != expectedExeSha256 ||
+        _activeCaptureLease != null ||
+        !variant.isValid ||
+        variant.layout.cellGrid == null ||
+        variant.relativeAspectError(client.aspectRatio) >
+            GalLookupSurfaceProfileV1.maxRelativeAspectError ||
+        _shieldStatus.conclusion == GalAttachedShieldConclusion.faulted) {
+      return false;
+    }
+    final int operation = ++_operationGeneration;
+    final GalLookupSurfaceProfileV1? previous = _profile;
+    final GalLookupSurfaceProfileV1 measured = _profileWithVariant(variant);
+    _profile = measured;
+    try {
+      await _persistProfile(measured);
+    } catch (_) {
+      if (_isCurrent(operation, target) && identical(_profile, measured)) {
+        _profile = previous;
+        notifyListeners();
+      }
+      return false;
+    }
+    if (!_isCurrent(operation, target) ||
+        !identical(_profile, measured) ||
+        _currentClient == null ||
+        variant.relativeAspectError(_currentClient!.aspectRatio) >
+            GalLookupSurfaceProfileV1.maxRelativeAspectError) {
+      return false;
+    }
+    await _evaluateAndActivate(operation, target);
+    return _isCurrent(operation, target) &&
+        identical(_profile, measured) &&
+        _shieldStatus.conclusion != GalAttachedShieldConclusion.faulted &&
+        (_status == GalAttachedTextStatus.activeAttached ||
+            _status == GalAttachedTextStatus.waitingForBodyThread ||
+            (_status == GalAttachedTextStatus.suspended &&
+                (_statusReason == 'targetBackground' ||
+                    _statusReason == 'targetMappingUnavailable' ||
+                    _statusReason == 'geometryProviderPending' ||
+                    _statusReason == 'shieldHandshakePending')));
   }
 
   Future<bool> beginCalibration({
@@ -1099,6 +1164,19 @@ class GalAttachedTextController extends ChangeNotifier {
       layout: event.layout ?? _draftLayout ?? const GalLookupTextLayoutV1(),
     );
     if (!variant.isValid) return;
+    final GalLookupSurfaceProfileV1 committed = _profileWithVariant(variant);
+    _profile = committed;
+    _currentClient = event.referenceClient;
+    _committedCalibrationGeneration = _calibrationGeneration;
+    _clearDraft();
+    _setAttachedProviderClaim(true, forceAttached: false);
+    await _persistProfile(committed);
+    await _evaluateAndActivate(++_operationGeneration, event.target);
+  }
+
+  GalLookupSurfaceProfileV1 _profileWithVariant(
+    GalLookupSurfaceVariantV1 variant,
+  ) {
     final GalLookupSurfaceProfileV1? previous = _profile;
     final List<GalLookupSurfaceVariantV1> variants =
         List<GalLookupSurfaceVariantV1>.of(previous?.variants ?? const []);
@@ -1123,20 +1201,13 @@ class GalAttachedTextController extends ChangeNotifier {
     } else {
       variants[replacement] = variant;
     }
-    final GalLookupSurfaceProfileV1 committed = GalLookupSurfaceProfileV1(
-      exePath: exePath,
-      exeSha256: exeSha256,
+    return GalLookupSurfaceProfileV1(
+      exePath: _exePath!,
+      exeSha256: _exeSha256!,
       mode: previous?.mode ?? GalLookupSurfaceMode.auto,
       unsafeLeftClickAccepted: true,
       variants: List<GalLookupSurfaceVariantV1>.unmodifiable(variants),
     );
-    _profile = committed;
-    _currentClient = event.referenceClient;
-    _committedCalibrationGeneration = _calibrationGeneration;
-    _clearDraft();
-    _setAttachedProviderClaim(true, forceAttached: false);
-    await _persistProfile(committed);
-    await _evaluateAndActivate(++_operationGeneration, event.target);
   }
 
   Future<void> handleCalibrationCancelled(
@@ -1333,6 +1404,10 @@ class GalAttachedTextController extends ChangeNotifier {
         _activationFailure(event.reason);
         break;
       case 'captureSuppressed':
+      // A scaling window publishes its viewport separately from SrcHWND.
+      // Hide hit geometry while that mapping is unavailable, but keep the
+      // provider claim so native can recover when Magpie closes or stabilizes.
+      case 'targetMappingUnavailable':
       case 'targetMinimized':
       case 'hitSnapshotUnavailable':
         _surfaceVisible = false;

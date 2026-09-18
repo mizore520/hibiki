@@ -116,10 +116,15 @@ void main() {
         _sample(),
       ]);
       final Map<String, Object?> legacy = original.toJson()
-        ..remove('searchRect');
+        ..remove('searchRect')
+        ..remove('layoutReferenceClient');
       expect(
         GalLookupCalibrationDraft.fromJson(legacy).searchRect,
         original.rect,
+      );
+      expect(
+        GalLookupCalibrationDraft.fromJson(legacy).layoutReferenceClient,
+        original.samples.first.capture.referenceClient,
       );
       const GalLookupNormalizedRectV1 search = GalLookupNormalizedRectV1(
         left: .05,
@@ -132,15 +137,34 @@ void main() {
         searchRect: search,
         layout: original.layout,
         samples: original.samples,
+        layoutReferenceClient: const GalLookupReferenceClientV1(
+          widthPx: 1600,
+          heightPx: 900,
+          dpi: 144,
+        ),
       );
       final GalLookupCalibrationDraft restored =
           GalLookupCalibrationDraft.fromJson(draft.toJson());
       expect(restored.rect, original.rect);
       expect(restored.searchRect, search);
+      expect(
+        restored.layoutReferenceClient,
+        const GalLookupReferenceClientV1(
+          widthPx: 1600,
+          heightPx: 900,
+          dpi: 144,
+        ),
+      );
       final Map<String, Object?> invalid = draft.toJson()
         ..['searchRect'] = <String, Object?>{'left': -1};
       expect(
         () => GalLookupCalibrationDraft.fromJson(invalid),
+        throwsFormatException,
+      );
+      final Map<String, Object?> invalidReference = draft.toJson()
+        ..['layoutReferenceClient'] = <String, Object?>{'widthPx': 0};
+      expect(
+        () => GalLookupCalibrationDraft.fromJson(invalidReference),
         throwsFormatException,
       );
     },

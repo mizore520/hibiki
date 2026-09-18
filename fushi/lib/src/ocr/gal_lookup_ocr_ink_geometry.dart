@@ -75,17 +75,27 @@ GalCalibrationOcrMatchedLine? _refineInkLine(
   String text,
   GalLookupNormalizedRectV1 search,
   GalCalibrationOcrMatchedLine line,
-) {
+) =>
+    _measureInkLine(image, text, search, line, relaxed: false) ??
+    _measureInkLine(image, text, search, line, relaxed: true);
+
+GalCalibrationOcrMatchedLine? _measureInkLine(
+  img.Image image,
+  String text,
+  GalLookupNormalizedRectV1 search,
+  GalCalibrationOcrMatchedLine line, {
+  required bool relaxed,
+}) {
   final List<GalCalibrationOcrGlyph> anchors = line.glyphs
       .where(
         (GalCalibrationOcrGlyph g) =>
-            g.confidence >= .7 &&
+            g.confidence >= (relaxed ? .55 : .7) &&
             _fullSizeInkCharacter(
               text.substring(g.sourceIndex, g.sourceIndex + g.charLength),
             ),
       )
       .toList();
-  if (anchors.length < 5) return null;
+  if (anchors.length < (relaxed ? 4 : 5)) return null;
   final List<double> slopes = <double>[
     for (final GalCalibrationOcrGlyph a in anchors)
       for (final GalCalibrationOcrGlyph b in anchors)
@@ -95,27 +105,28 @@ GalCalibrationOcrMatchedLine? _refineInkLine(
   if (slopes.isEmpty) return null;
   final double pitch = _median(slopes);
   if (!pitch.isFinite || pitch < 5) return null;
+  final double searchLeft = search.left * image.width;
+  final double searchTop = search.top * image.height;
+  final double searchRight = search.right * image.width;
+  final double searchBottom = search.bottom * image.height;
   final double initialLeft = _median(<double>[
     for (final GalCalibrationOcrGlyph g in anchors)
       g.rect.centerX - (g.cellOffset + .5) * pitch,
   ]);
   final int x0 = math
-      .max(
-        (search.left * image.width).floor(),
-        (initialLeft - pitch * .35).floor(),
-      )
+      .max(searchLeft.floor(), (initialLeft - pitch * .35).floor())
       .clamp(0, image.width - 1);
   final int x1 = math
       .min(
-        (search.right * image.width).ceil(),
+        searchRight.ceil(),
         (initialLeft + (line.cellCount + .35) * pitch).ceil(),
       )
       .clamp(x0 + 1, image.width);
   final int y0 = math
-      .max((search.top * image.height).floor(), line.rect.top.floor())
+      .max(searchTop.floor(), line.rect.top.floor())
       .clamp(0, image.height - 1);
   final int y1 = math
-      .min((search.bottom * image.height).ceil(), line.rect.bottom.ceil())
+      .min(searchBottom.ceil(), line.rect.bottom.ceil())
       .clamp(y0 + 1, image.height);
   final int width = x1 - x0;
   final int height = y1 - y0;
@@ -258,7 +269,18 @@ GalCalibrationOcrMatchedLine? _refineInkLine(
       bottom: y0 + bottom + 1,
     );
   }
-  if (measured.length < 5 || measured.length < anchors.length * .65) {
+  // A slightly rough search rectangle can cut the first or last visible
+  // glyph.  Do not use that partial component as pixel evidence, but retain
+  // the interior measurements and the OCR candidate itself.
+  measured.removeWhere(
+    (int _, OcrRect rect) =>
+        rect.left <= searchLeft + .5 ||
+        rect.right >= searchRight - .5 ||
+        rect.top <= searchTop + .5 ||
+        rect.bottom >= searchBottom - .5,
+  );
+  if (measured.length < (relaxed ? 4 : 5) ||
+      measured.length < anchors.length * (relaxed ? .45 : .65)) {
     return null;
   }
   final List<GalCalibrationOcrGlyph> usable = anchors

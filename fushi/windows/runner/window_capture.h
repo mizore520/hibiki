@@ -29,6 +29,23 @@ struct ExternalWindow {
 struct WindowCaptureMetadata {
   int64_t captured_hwnd = 0;
   uint32_t captured_pid = 0;
+  // The HWND/PID roles are explicit when a Magpie presentation is captured
+  // as a fallback. [captured_*] always names the HWND passed to WGC; it is
+  // never rewritten to look like the requested source window.
+  int64_t source_hwnd = 0;
+  uint32_t source_pid = 0;
+  int64_t presentation_hwnd = 0;
+  uint32_t presentation_pid = 0;
+  bool used_presentation_capture = false;
+  bool presentation_viewport_complete = false;
+  int source_viewport_left_px = 0;
+  int source_viewport_top_px = 0;
+  int source_viewport_width_px = 0;
+  int source_viewport_height_px = 0;
+  int destination_viewport_left_px = 0;
+  int destination_viewport_top_px = 0;
+  int destination_viewport_width_px = 0;
+  int destination_viewport_height_px = 0;
   int client_left_px = 0;
   int client_top_px = 0;
   int client_width_px = 0;
@@ -74,6 +91,23 @@ struct WindowCaptureResult {
 // 必然得到「游戏自绘光标 + Magpie 补画的一个」= 两个指针。返回 nullptr 表示不是
 // 这种窗口（或属性指向的句柄已失效），调用方保持原窗口不变。绝不抛异常。
 HWND ResolveScalingSourceWindow(HWND hwnd);
+
+// Magpie 的输出窗口在窗口属性中同时公开源 viewport 与实际输出 viewport。
+// 两组 RECT 都是物理屏幕像素坐标：SrcRect 是源客户区中参与缩放的区域，
+// DestRect 是输出窗口中真正绘制源图像的区域（可能小于整个输出客户区）。
+// 只有在 `Magpie.SrcHWND` 明确指向 [expected_source_hwnd]，且八个坐标属性
+// 都存在并构成非空矩形时才返回 true；任何属性缺失、句柄失效或退化矩形都
+// fail closed，调用方不得用整个 presentation client 代替未知 viewport。
+struct MagpiePresentationMapping {
+  HWND presentation_hwnd = nullptr;
+  HWND source_hwnd = nullptr;
+  RECT source_rect_screen{};
+  RECT destination_rect_screen{};
+};
+
+bool ReadMagpiePresentationMapping(HWND presentation_hwnd,
+                                    HWND expected_source_hwnd,
+                                    MagpiePresentationMapping* mapping);
 
 // BUG-1854：算出把 WGC 整窗纹理（[width]×[height]）裁到窗口**客户区**的子矩形。
 // 两个角都经 ClientToScreen 换算到与 DWM 扩展框架同一坐标系（DPI-unaware 老游戏在
