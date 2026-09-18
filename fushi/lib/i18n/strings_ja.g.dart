@@ -11440,4 +11440,10 @@ class _StringsJa extends _StringsEn {
   @override
   String get game_lookup_samples_save_failed =>
       'The draft could not be written to disk. The current samples remain in this window; try saving again.';
+  @override
+  String get game_lookup_samples_search_title =>
+      'Recognition region (orange frame)';
+  @override
+  String get game_lookup_samples_search_hint =>
+      'Enclose all dialogue text. Recognition stays inside this frame and keeps your selection. Character boxes are computed separately. Moving the frame requires aligning again.';
 }

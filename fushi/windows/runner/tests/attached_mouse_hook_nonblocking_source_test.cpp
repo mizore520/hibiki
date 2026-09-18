@@ -183,6 +183,42 @@ int main() {
   assert(surface_publish.find("screen_rects.push_back(surface_screen_rect_)") ==
          std::string::npos);
 
+  // A calibration surface covers the full client, while the configured
+  // surface is only the body rect.  Positioning the smaller HWND must retire
+  // the old clusters before any bitmap render, and bitmap writes must remain
+  // bounded if stale geometry ever reaches the defensive path.
+  const std::string position = FunctionSlice(
+      surface, "void AttachedTextSurfaceWindow::PositionSurface(",
+      "// BUG-2138");
+  const size_t clear_geometry = position.find("ClearInteractiveRegion();");
+  const size_t mark_dirty = position.find("layout_dirty_ = true;");
+  const size_t move_window = position.find("SetWindowPos(");
+  assert(clear_geometry != std::string::npos && mark_dirty != std::string::npos &&
+         move_window != std::string::npos && clear_geometry < move_window &&
+         mark_dirty < move_window);
+  assert(position.find("RenderLayerBitmap(") == std::string::npos);
+  const std::string render = FunctionSlice(
+      surface, "void AttachedTextSurfaceWindow::RenderLayerBitmap(bool",
+      "int AttachedTextSurfaceWindow::ClusterAt(");
+  const size_t surface_bounds = render.find("surface_bounds");
+  const size_t clipped_rect =
+      render.find(
+          "fushi::attached_bitmap_bounds::FillRectClippedToSurface(");
+  assert(surface_bounds == std::string::npos &&
+         clipped_rect != std::string::npos);
+
+  const std::string hover = FunctionSlice(
+      surface, "void AttachedTextSurfaceWindow::TickHoverLookup()",
+      "void AttachedTextSurfaceWindow::CancelPointerGesture()");
+  assert(hover.find("const int visual_cluster = over_text ? cluster : -1;") !=
+         std::string::npos);
+  assert(hover.find("RenderLayerBitmap(mode_ == Mode::kCalibration);") !=
+         std::string::npos);
+  const size_t hover_paint = render.find(
+      "Show the current text cluster under the global cursor");
+  assert(hover_paint != std::string::npos);
+  assert(hover_paint > render.find("if (calibration && IsNormalizedRectValid"));
+
   const std::string ordinary = FunctionSlice(
       surface, "case WM_LBUTTONDOWN:",
       "case fushi::kLowLevelMouseAttachedGlyphDownMessage:");

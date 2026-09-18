@@ -340,6 +340,23 @@ add_custom_target(fushi_windows_attached_mouse_hook_nonblocking_source_gate
 add_dependencies(${BINARY_NAME}
   fushi_windows_attached_mouse_hook_nonblocking_source_gate)
 
+# The configured surface can be smaller than the calibration surface that
+# produced the old cluster boxes. Keep the production DIB clipping helper
+# executable with guarded pixels so stale, negative and crossing rectangles
+# cannot write outside the current surface.
+add_executable(fushi_windows_attached_bitmap_bounds_test
+  "tests/attached_bitmap_bounds_test.cpp"
+)
+apply_standard_settings(fushi_windows_attached_bitmap_bounds_test)
+target_compile_definitions(fushi_windows_attached_bitmap_bounds_test PRIVATE
+  "NOMINMAX")
+add_custom_target(fushi_windows_attached_bitmap_bounds_gate
+  COMMAND "$<TARGET_FILE:fushi_windows_attached_bitmap_bounds_test>"
+  DEPENDS fushi_windows_attached_bitmap_bounds_test
+  VERBATIM
+)
+add_dependencies(${BINARY_NAME} fushi_windows_attached_bitmap_bounds_gate)
+
 # A same-PID game window may be destroyed and recreated while the injected
 # mapping survives. Keep shield status target/transaction/epoch attribution
 # executable so a new HWND cannot borrow an old fault or verified conclusion,

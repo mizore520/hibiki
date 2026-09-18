@@ -4984,5 +4984,7 @@
   "game_lookup_samples_capture_window": "未能取得完整的游戏画面。请确认游戏窗口未最小化，再采集一次。",
   "game_lookup_samples_capture_overlay": "未能安全隐藏或恢复查词层。请关闭校准窗口并重新附着后再采集。",
   "game_lookup_samples_capture_unsupported": "当前文本包含暂不支持的注音格式，请换一条普通台词采集。",
-  "game_lookup_samples_save_failed": "草稿未能写入磁盘，当前样本仍保留在本窗口；请重试保存。"
+  "game_lookup_samples_save_failed": "草稿未能写入磁盘，当前样本仍保留在本窗口；请重试保存。",
+  "game_lookup_samples_search_title": "识别范围（橙色外框）",
+  "game_lookup_samples_search_hint": "框住完整正文即可。只识别橙框内的内容，并保留你的选区；字符小框另行计算。调整选区后需重新自动对齐。"
 }

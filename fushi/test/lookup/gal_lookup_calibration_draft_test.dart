@@ -109,6 +109,42 @@ const Map<int, Offset> _targetPoints = <int, Offset>{
 };
 
 void main() {
+  test(
+    'search crop and fitted layout survive independently, including legacy drafts',
+    () {
+      final GalLookupCalibrationDraft original = _draft(<GalCalibrationSample>[
+        _sample(),
+      ]);
+      final Map<String, Object?> legacy = original.toJson()
+        ..remove('searchRect');
+      expect(
+        GalLookupCalibrationDraft.fromJson(legacy).searchRect,
+        original.rect,
+      );
+      const GalLookupNormalizedRectV1 search = GalLookupNormalizedRectV1(
+        left: .05,
+        top: .1,
+        width: .8,
+        height: .6,
+      );
+      final GalLookupCalibrationDraft draft = GalLookupCalibrationDraft(
+        rect: original.rect,
+        searchRect: search,
+        layout: original.layout,
+        samples: original.samples,
+      );
+      final GalLookupCalibrationDraft restored =
+          GalLookupCalibrationDraft.fromJson(draft.toJson());
+      expect(restored.rect, original.rect);
+      expect(restored.searchRect, search);
+      final Map<String, Object?> invalid = draft.toJson()
+        ..['searchRect'] = <String, Object?>{'left': -1};
+      expect(
+        () => GalLookupCalibrationDraft.fromJson(invalid),
+        throwsFormatException,
+      );
+    },
+  );
   group('private calibration draft storage', () {
     late Directory directory;
     late GalLookupCalibrationStore store;

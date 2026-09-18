@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_capture.dart';
@@ -520,7 +519,7 @@ _GridFit? _fitSample(_SampleInk sample) {
 GalCalibrationImageFit inferGalCalibrationGrid(
   GalLookupCalibrationDraft draft,
 ) {
-  if (draft.samples.isEmpty || !draft.rect.isValid) {
+  if (draft.samples.isEmpty || !draft.searchRect.isValid) {
     return const GalCalibrationImageFit(reason: 'unsupported_text');
   }
   for (int index = 0; index < draft.samples.length; index++) {
@@ -539,7 +538,7 @@ GalCalibrationImageFit inferGalCalibrationGrid(
   for (final _InkMode mode in _InkMode.values) {
     final List<_SampleInk> samples = [];
     for (final GalCalibrationSample sample in draft.samples) {
-      final _SampleInk? measured = _measure(sample, draft.rect, mode);
+      final _SampleInk? measured = _measure(sample, draft.searchRect, mode);
       if (measured == null) {
         if (failedSample == null) {
           failure = 'text_rows_not_found';
@@ -652,12 +651,13 @@ GalCalibrationImageFit inferGalCalibrationGrid(
     if (!grid.isValid) continue;
     final GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(cellGrid: grid);
     final GalLookupCalibrationDraft candidate = GalLookupCalibrationDraft(
+      searchRect: draft.searchRect,
       rect: GalLookupNormalizedRectV1(
         left: left,
         top: top,
         width: width,
         height: math
-            .max(cellHeight, draft.rect.bottom - top)
+            .max(cellHeight, draft.searchRect.bottom - top)
             .clamp(cellHeight, 1 - top),
       ),
       layout: layout,

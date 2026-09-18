@@ -16,6 +16,7 @@
 #include <utility>
 
 #include "attached_layout_validation.h"
+#include "attached_bitmap_bounds.h"
 #include "attached_overlayability.h"
 #include "attached_shield_status_policy.h"
 #include "lookup_hit_validation.h"
@@ -1810,6 +1811,14 @@ void AttachedTextSurfaceWindow::PositionSurface(const RECT &screen_rect,
                                                 bool calibration) {
   const bool changed = !EqualRect(&surface_screen_rect_, &screen_rect) ||
                        ((mode_ == Mode::kCalibration) != calibration);
+  if (changed) {
+    // The new surface can be smaller than the old calibration surface.  Drop
+    // the old hit snapshot and cluster geometry before changing the HWND
+    // bounds; otherwise a resize can render old full-client boxes into the
+    // new, smaller DIB before SyncToTarget rebuilds them.
+    ClearInteractiveRegion();
+    layout_dirty_ = true;
+  }
   surface_screen_rect_ = screen_rect;
   if (hwnd_ == nullptr || !RectHasArea(screen_rect))
     return;
@@ -1817,9 +1826,6 @@ void AttachedTextSurfaceWindow::PositionSurface(const RECT &screen_rect,
                screen_rect.right - screen_rect.left,
                screen_rect.bottom - screen_rect.top,
                SWP_NOACTIVATE | SWP_NOZORDER);
-  if (changed) {
-    RenderLayerBitmap(calibration);
-  }
 }
 
 // BUG-2138：17 个失败点原本全是裸 `return false`，对外只发一条笼统的
@@ -2028,14 +2034,10 @@ void AttachedTextSurfaceWindow::RenderLayerBitmap(bool calibration) {
     // Alpha is the final pixel-level catch gate in addition to WindowRgn. Keep
     // every gap, whitespace cell and unused body pixel exactly zero-alpha.
     for (const ClusterBox &cluster : clusters_) {
-      for (LONG y = cluster.client_rect.top; y < cluster.client_rect.bottom;
-           ++y) {
-        for (LONG x = cluster.client_rect.left; x < cluster.client_rect.right;
-             ++x) {
-          pixels[static_cast<size_t>(y) * static_cast<size_t>(width) +
-                 static_cast<size_t>(x)] = 0x01000000u;
-        }
-      }
+      // Keep the bitmap write bounded even if a stale or malformed cluster
+      // reaches this defensive rendering path.
+      fushi::attached_bitmap_bounds::FillRectClippedToSurface(
+          pixels, width, height, cluster.client_rect, 0x01000000u);
     }
   }
   if (calibration && IsNormalizedRectValid(calibration_rect_)) {
@@ -2083,28 +2085,28 @@ void AttachedTextSurfaceWindow::RenderLayerBitmap(bool calibration) {
         }
       }
     }
-    // KiraKira-like feedback for calibration: show the exact DirectWrite
-    // cluster currently under the global cursor.  The surface remains
-    // WS_EX_NOACTIVATE/click-through; this is paint-only and never changes
-    // probe state or the input shield.
-    if (hover_cluster_ >= 0 &&
-        static_cast<size_t>(hover_cluster_) < clusters_.size()) {
-      const RECT cluster =
-          clusters_[static_cast<size_t>(hover_cluster_)].client_rect;
-      const RECT box{
-          std::clamp(cluster.left, 0L, static_cast<LONG>(width)),
-          std::clamp(cluster.top, 0L, static_cast<LONG>(height)),
-          std::clamp(cluster.right, 0L, static_cast<LONG>(width)),
-          std::clamp(cluster.bottom, 0L, static_cast<LONG>(height))};
-      const uint32_t hover_fill = PremultipliedPixel(35, 190, 220, 105);
-      const uint32_t outline = PremultipliedPixel(100, 235, 255, 230);
-      for (LONG y = box.top; y < box.bottom; ++y) {
-        for (LONG x = box.left; x < box.right; ++x) {
-          const bool edge = x == box.left || x == box.right - 1 ||
-                            y == box.top || y == box.bottom - 1;
-          pixels[static_cast<size_t>(y) * width + x] =
-              edge ? outline : hover_fill;
-        }
+  }
+
+  // Show the current text cluster under the global cursor when hover geometry
+  // is available. The surface remains WS_EX_NOACTIVATE/click-through; this is
+  // paint-only and never changes probe state or the input shield.
+  if (hover_cluster_ >= 0 &&
+      static_cast<size_t>(hover_cluster_) < clusters_.size()) {
+    const RECT cluster =
+        clusters_[static_cast<size_t>(hover_cluster_)].client_rect;
+    const RECT box{
+        std::clamp(cluster.left, 0L, static_cast<LONG>(width)),
+        std::clamp(cluster.top, 0L, static_cast<LONG>(height)),
+        std::clamp(cluster.right, 0L, static_cast<LONG>(width)),
+        std::clamp(cluster.bottom, 0L, static_cast<LONG>(height))};
+    const uint32_t hover_fill = PremultipliedPixel(35, 190, 220, 105);
+    const uint32_t outline = PremultipliedPixel(100, 235, 255, 230);
+    for (LONG y = box.top; y < box.bottom; ++y) {
+      for (LONG x = box.left; x < box.right; ++x) {
+        const bool edge = x == box.left || x == box.right - 1 ||
+                          y == box.top || y == box.bottom - 1;
+        pixels[static_cast<size_t>(y) * width + x] =
+            edge ? outline : hover_fill;
       }
     }
   }
@@ -2626,11 +2628,10 @@ void AttachedTextSurfaceWindow::TickHoverLookup() {
       }
     }
   }
-  const int visual_cluster =
-      mode_ == Mode::kCalibration && over_text ? cluster : -1;
+  const int visual_cluster = over_text ? cluster : -1;
   if (visual_cluster != hover_cluster_) {
     hover_cluster_ = visual_cluster;
-    if (mode_ == Mode::kCalibration) RenderLayerBitmap(true);
+    RenderLayerBitmap(mode_ == Mode::kCalibration);
   }
   if (!shift_down) {
     // The visual state above is useful without Shift, but lookup submission

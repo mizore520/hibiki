@@ -4984,5 +4984,7 @@
   "game_lookup_samples_capture_window": "Could not get the complete game image. Confirm that the game window is not minimized, then capture again.",
   "game_lookup_samples_capture_overlay": "Could not safely hide or restore the lookup layer. Close the calibration window, reattach to the game, and try again.",
   "game_lookup_samples_capture_unsupported": "This text contains a ruby format that is not supported yet. Capture a normal dialogue line instead.",
-  "game_lookup_samples_save_failed": "The draft could not be written to disk. The current samples remain in this window; try saving again."
+  "game_lookup_samples_save_failed": "The draft could not be written to disk. The current samples remain in this window; try saving again.",
+  "game_lookup_samples_search_title": "Recognition region (orange frame)",
+  "game_lookup_samples_search_hint": "Enclose all dialogue text. Recognition stays inside this frame and keeps your selection. Character boxes are computed separately. Moving the frame requires aligning again."
 }

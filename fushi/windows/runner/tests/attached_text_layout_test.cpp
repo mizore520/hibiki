@@ -187,6 +187,17 @@ int main() {
   assert(one_hang.boxes[18].client_rect.left == body.left + 36);
   ++cases;
 
+  const auto small_kana = layout::Preview(full_line + L"ょあ", client, rect,
+                                          hanging_style);
+  assert(small_kana.ok() && small_kana.boxes.size() == 18);
+  assert(small_kana.boxes[16].client_rect.top == body.top);
+  assert(small_kana.boxes[17].client_rect.top == body.top + 24);
+  const auto normal_kana = layout::Preview(full_line + L"よ", client, rect,
+                                           hanging_style);
+  assert(normal_kana.ok());
+  assert(normal_kana.boxes[16].client_rect.top == body.top + 24);
+  ++cases;
+
   // UTF-16 offsets and explicit CRLF remain stable after a hanging cell.
   const auto hanging_unicode = layout::Preview(
       full_line + L"。\r\n\U0001f600A", client, rect, hanging_style);

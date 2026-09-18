@@ -581,6 +581,12 @@ void main() {
   testWidgets(
     'image alignment applies grid and hides irrelevant font controls',
     (tester) async {
+      const GalLookupNormalizedRectV1 fittedRect = GalLookupNormalizedRectV1(
+        left: .11,
+        top: .61,
+        width: .85,
+        height: .3,
+      );
       final _MemoryStore store = _MemoryStore(draft: _draft());
       final _Result result = await _open(
         tester,
@@ -591,7 +597,8 @@ void main() {
           expect(draft.samples.single.anchors, isEmpty);
           return GalCalibrationImageFit(
             draft: GalLookupCalibrationDraft(
-              rect: draft.rect,
+              rect: fittedRect,
+              searchRect: draft.searchRect,
               samples: draft.samples,
               layout: const GalLookupTextLayoutV1(
                 cellGrid: GalLookupCellGridV1(
@@ -616,9 +623,19 @@ void main() {
         findsNothing,
       );
       expect(find.text(t.game_lookup_samples_auto_success), findsWidgets);
+      expect(
+        tester
+            .widget<GalLookupCalibrationCanvas>(
+              find.byType(GalLookupCalibrationCanvas),
+            )
+            .rect,
+        _rect,
+      );
       await tester.tap(find.text(t.game_lookup_samples_apply));
       await tester.pumpAndSettle();
       expect(result.applied!.layout.cellGrid!.columns, 20);
+      expect(result.applied!.rect, fittedRect);
+      expect(result.applied!.searchRect, _rect);
       expect(
         store.saved.single.layout.cellGrid,
         result.applied!.layout.cellGrid,

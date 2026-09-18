@@ -13,6 +13,141 @@ import 'package:fushi_engine/ocr/manga_ocr_model_manifest.dart';
 import 'package:fushi_engine/ocr/ocr_types.dart';
 
 void main() {
+  test('a trailing advance icon never becomes a Hook character', () {
+    final GalCalibrationOcrAlignment result = alignGalCalibrationOcrLines(
+      sourceText: 'あいうえおかきくけこ。',
+      lines: [_line('あいうえお', top: 300), _line('かきくけこ。▼', top: 348)],
+    );
+    expect(result.accepted, isTrue);
+    expect(
+      result.lines
+          .expand((GalCalibrationOcrMatchedLine l) => l.glyphs)
+          .map((GalCalibrationOcrGlyph g) => g.sourceIndex),
+      everyElement(lessThan(11)),
+    );
+    expect(result.lines.last.cellCount, 6);
+  });
+  test(
+    'short punctuation tail cannot bias ink-measured long-line pitch',
+    () async {
+      const String source = 'あいうえおかきくえた。';
+      final GalCalibrationOcrAlignment raw = alignGalCalibrationOcrLines(
+        sourceText: source,
+        lines: [_line('あいうえおかきく', top: 300), _line('えた。', top: 348)],
+      );
+      final GalCalibrationOcrAlignment measured = GalCalibrationOcrAlignment(
+        confidence: raw.confidence,
+        lines: [
+          for (final GalCalibrationOcrMatchedLine line in raw.lines)
+            GalCalibrationOcrMatchedLine(
+              sourceStart: line.sourceStart,
+              sourceEnd: line.sourceEnd,
+              cellCount: line.cellCount,
+              lineIndex: line.lineIndex,
+              rect: line.rect,
+              glyphs: [
+                for (final GalCalibrationOcrGlyph g in line.glyphs)
+                  GalCalibrationOcrGlyph(
+                    sourceIndex: g.sourceIndex,
+                    charLength: g.charLength,
+                    cellOffset: g.cellOffset,
+                    lineIndex: g.lineIndex,
+                    confidence: g.confidence,
+                    inkMeasured: line.lineIndex == 0,
+                    rect: g.sourceIndex == source.length - 1
+                        ? OcrRect(
+                            left: g.rect.left - 12,
+                            right: g.rect.right - 12,
+                            top: g.rect.top,
+                            bottom: g.rect.bottom,
+                          )
+                        : g.rect,
+                  ),
+              ],
+            ),
+        ],
+      );
+      final GalCalibrationImageFit fit = await _fit(
+        [_sample(source)],
+        [measured],
+      );
+      expect(fit.draft, isNotNull);
+      expect(
+        fit.draft!.layout.cellGrid!.advancePerClientHeight * 500,
+        closeTo(40, .1),
+      );
+    },
+  );
+  for (final double tailShift in <double>[16, 40]) {
+    test(
+      'measured rows own geometry over short CTC tails ($tailShift)',
+      () async {
+        final List<String> rows = <String>['あいうえおかきく', 'けこさしすせそ', 'たち。'];
+        final GalCalibrationOcrAlignment raw = _alignment(rows);
+        final GalCalibrationOcrAlignment measured = GalCalibrationOcrAlignment(
+          confidence: raw.confidence,
+          lines: <GalCalibrationOcrMatchedLine>[
+            for (final GalCalibrationOcrMatchedLine line in raw.lines)
+              GalCalibrationOcrMatchedLine(
+                sourceStart: line.sourceStart,
+                sourceEnd: line.sourceEnd,
+                cellCount: line.cellCount,
+                lineIndex: line.lineIndex,
+                rect: OcrRect(
+                  left: line.rect.left,
+                  right: line.rect.right,
+                  top: line.rect.top + (line.lineIndex == 2 ? 10 : 0),
+                  bottom: line.rect.bottom + (line.lineIndex == 2 ? 10 : 0),
+                ),
+                glyphs: <GalCalibrationOcrGlyph>[
+                  for (final GalCalibrationOcrGlyph g in line.glyphs)
+                    GalCalibrationOcrGlyph(
+                      sourceIndex: g.sourceIndex,
+                      charLength: g.charLength,
+                      cellOffset: g.cellOffset,
+                      lineIndex: g.lineIndex,
+                      confidence: g.confidence,
+                      inkMeasured: line.lineIndex < 2,
+                      rect: OcrRect(
+                        left:
+                            g.rect.left + (line.lineIndex == 2 ? tailShift : 0),
+                        right:
+                            g.rect.right +
+                            (line.lineIndex == 2 ? tailShift : 0),
+                        top: g.rect.top + (line.lineIndex == 2 ? 10 : 0),
+                        bottom: g.rect.bottom + (line.lineIndex == 2 ? 10 : 0),
+                      ),
+                    ),
+                ],
+              ),
+          ],
+        );
+        final GalCalibrationImageFit fit = await _fit(
+          <GalCalibrationSample>[_sample(rows.join()), _sample('あい')],
+          <GalCalibrationOcrAlignment>[
+            measured,
+            _alignment(['あい'], shiftX: 12),
+          ],
+        );
+        if (tailShift == 40) {
+          expect(
+            fit.draft,
+            isNull,
+            reason: 'a whole-cell shift must not alter indentation',
+          );
+          return;
+        }
+        expect(fit.draft, isNotNull, reason: fit.reason);
+        expect(fit.draft!.rect.left, closeTo(.1, .001));
+        expect(fit.draft!.rect.top, closeTo(.6, .001));
+        expect(
+          fit.draft!.layout.cellGrid!.lineAdvancePerClientHeight * 500,
+          closeTo(48, .1),
+        );
+        expect(fit.draft!.layout.cellGrid!.continuationIndent, 1);
+      },
+    );
+  }
   test('aligns Hook text to OCR lines and keeps UTF-16 glyph offsets', () {
     final GalCalibrationOcrAlignment alignment = alignGalCalibrationOcrLines(
       sourceText: '「あいうえお」\nかきくけこ',
@@ -225,6 +360,22 @@ void main() {
     );
     expect(fit.reason, 'ocr_geometry_inconsistent');
   });
+
+  test(
+    'small kana may hang at a proven line end under Japanese kinsoku',
+    () async {
+      final fit = await _fit(
+        [_sample('あいうえおかきくけ'), _sample('あいうえおょかきく')],
+        [
+          _alignment(['あいうえお', 'かきくけ']),
+          _alignment(['あいうえおょ', 'かきく']),
+        ],
+      );
+      expect(fit.draft, isNotNull);
+      expect(fit.draft!.layout.cellGrid!.columns, 5);
+      expect(fit.draft!.layout.cellGrid!.hangingPunctuation, isTrue);
+    },
+  );
 
   test('held-out geometry rejects a shifted row even when text fits', () async {
     final GalCalibrationImageFit fit = await _fit(
@@ -577,7 +728,9 @@ Future<GalCalibrationPreview> _preview({
       if (column >= grid.columns &&
           !(grid.hangingPunctuation &&
               column == grid.columns &&
-              '」』）)]｝}】〕〉》、。，．！？!?'.contains(String.fromCharCode(rune)))) {
+              '」』）)]｝}】〕〉》、。，．！？!?ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ'.contains(
+                String.fromCharCode(rune),
+              ))) {
         row++;
         column = indent;
       }

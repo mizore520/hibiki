@@ -78,17 +78,23 @@ class GalLookupCalibrationDraft {
     required this.rect,
     required this.layout,
     required List<GalCalibrationSample> samples,
-  }) : samples = List.unmodifiable(samples);
+    GalLookupNormalizedRectV1? searchRect,
+  }) : searchRect = searchRect ?? rect,
+       samples = List.unmodifiable(samples);
 
   static const int maxSamples = 8;
   static const int maxImageBytes = 64 * 1024 * 1024;
   final GalLookupNormalizedRectV1 rect;
+
+  /// User-owned OCR crop; fitted runtime geometry is stored separately in rect.
+  final GalLookupNormalizedRectV1 searchRect;
   final GalLookupTextLayoutV1 layout;
   final List<GalCalibrationSample> samples;
 
   bool validFor(String hash) =>
       RegExp(r'^[a-fA-F0-9]{64}$').hasMatch(hash) &&
       rect.isValid &&
+      searchRect.isValid &&
       layout.isValid &&
       samples.length <= maxSamples &&
       samples.every((GalCalibrationSample s) => s.capture.exeSha256 == hash) &&
@@ -101,6 +107,7 @@ class GalLookupCalibrationDraft {
   Map<String, Object?> toJson() => {
     'version': 1,
     'bodyRect': rect.toJson(),
+    'searchRect': searchRect.toJson(),
     'layout': layout.toJson(),
     'samples': samples.map((GalCalibrationSample s) => s.toJson()).toList(),
   };
@@ -112,12 +119,19 @@ class GalLookupCalibrationDraft {
     final GalLookupTextLayoutV1? layout = GalLookupTextLayoutV1.tryFromJson(
       json['layout'],
     );
+    final GalLookupNormalizedRectV1? searchRect = json.containsKey('searchRect')
+        ? GalLookupNormalizedRectV1.tryFromJson(json['searchRect'])
+        : rect;
     final List<dynamic> raw = json['samples'] as List<dynamic>;
-    if (rect == null || layout == null || raw.length > maxSamples) {
+    if (rect == null ||
+        searchRect == null ||
+        layout == null ||
+        raw.length > maxSamples) {
       throw const FormatException('invalid_draft');
     }
     return GalLookupCalibrationDraft(
       rect: rect,
+      searchRect: searchRect,
       layout: layout,
       samples: raw
           .map(
@@ -180,6 +194,7 @@ GalLookupTextLayoutV1 copyGalCalibrationLayout(
   double? fontSize,
   double? tracking,
   double? lineHeight,
+  bool clearCellGrid = false,
 }) => GalLookupTextLayoutV1(
   fontFamily: fontFamily ?? layout.fontFamily,
   fontSizePerClientHeight: fontSize ?? layout.fontSizePerClientHeight,
@@ -188,7 +203,7 @@ GalLookupTextLayoutV1 copyGalCalibrationLayout(
   textAlign: layout.textAlign,
   verticalAlign: layout.verticalAlign,
   paddingPerClientHeight: layout.paddingPerClientHeight,
-  cellGrid: layout.cellGrid,
+  cellGrid: clearCellGrid ? null : layout.cellGrid,
 );
 
 /// Fits only translation and character spacing. Font, wrapping area and line
@@ -402,6 +417,7 @@ Future<GalLookupCalibrationDraft?> fitGalCalibrationAnchors(
   if (after > before + 1e-10) return null;
   return GalLookupCalibrationDraft(
     rect: rect,
+    searchRect: draft.searchRect,
     layout: layout,
     samples: draft.samples,
   );

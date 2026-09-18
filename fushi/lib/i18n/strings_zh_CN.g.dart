@@ -10945,4 +10945,9 @@ class _StringsZhCn extends _StringsEn {
       '当前文本包含暂不支持的注音格式，请换一条普通台词采集。';
   @override
   String get game_lookup_samples_save_failed => '草稿未能写入磁盘，当前样本仍保留在本窗口；请重试保存。';
+  @override
+  String get game_lookup_samples_search_title => '识别范围（橙色外框）';
+  @override
+  String get game_lookup_samples_search_hint =>
+      '框住完整正文即可。只识别橙框内的内容，并保留你的选区；字符小框另行计算。调整选区后需重新自动对齐。';
 }

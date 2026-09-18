@@ -167,6 +167,14 @@ inline bool IsGridCombiningMark(uint32_t code) {
 }
 
 inline bool IsHangingPunctuation(uint32_t code) {
+  // Small kana cannot begin a line in ordinary Japanese kinsoku layout.
+  // Keep this set in sync with the calibration fitter; no engine-name rules.
+  static constexpr wchar_t kSmallKana[] =
+      L"\u3041\u3043\u3045\u3047\u3049\u3063\u3083\u3085\u3087\u308E"
+      L"\u30A1\u30A3\u30A5\u30A7\u30A9\u30C3\u30E3\u30E5\u30E7\u30EE\u30F5\u30F6";
+  for (const wchar_t kana : kSmallKana) {
+    if (kana != 0 && code == static_cast<uint32_t>(kana)) return true;
+  }
   switch (code) {
     case L'\u300D':  // 」
     case L'\u300F':  // 』

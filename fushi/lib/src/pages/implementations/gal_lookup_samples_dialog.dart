@@ -43,6 +43,7 @@ class GalLookupSamplesDialog extends StatefulWidget {
 
 class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
   late GalLookupNormalizedRectV1 _rect;
+  late GalLookupNormalizedRectV1 _layoutRect;
   late GalLookupTextLayoutV1 _layout;
   late final TextEditingController _font;
   List<GalCalibrationSample> _samples = [];
@@ -69,7 +70,8 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
   bool get _canPreview => _manualLayout || _layout.cellGrid != null;
 
   GalLookupCalibrationDraft get _draft => GalLookupCalibrationDraft(
-    rect: _rect,
+    rect: _layoutRect,
+    searchRect: _rect,
     layout: _layout,
     samples: _samples,
   );
@@ -84,6 +86,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
   void initState() {
     super.initState();
     _rect = widget.initialRect;
+    _layoutRect = widget.initialRect;
     _layout = widget.initialLayout;
     _font = TextEditingController(text: _layout.fontFamily);
     unawaited(_load());
@@ -103,7 +106,8 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       );
       if (!mounted) return;
       if (draft != null) {
-        _rect = draft.rect;
+        _rect = draft.searchRect;
+        _layoutRect = draft.rect;
         _layout = draft.layout;
         _samples = draft.samples.toList();
         _font.text = _layout.fontFamily;
@@ -248,7 +252,8 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
         GalCalibrationSample(capture: capture),
       ];
       final GalLookupCalibrationDraft next = GalLookupCalibrationDraft(
-        rect: _rect,
+        rect: _layoutRect,
+        searchRect: _rect,
         layout: _layout,
         samples: samples,
       );
@@ -332,7 +337,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
             (GalCalibrationSample sample) => widget.previewBuilder(
               text: sample.capture.sourceText,
               client: sample.capture.referenceClient,
-              rect: _rect,
+              rect: _layoutRect,
               layout: _layout,
             ),
           ),
@@ -380,7 +385,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
           _failed = true;
         });
       } else {
-        _rect = fitted.rect;
+        _layoutRect = fitted.rect;
         _layout = fitted.layout;
         _changed();
       }
@@ -433,6 +438,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
             'ocr_indent_ambiguous' ||
             'ocr_text_alignment_failed' ||
             'ocr_text_alignment_weak' ||
+            'ocr_ink_geometry_weak' ||
             'ocr_confidence_low' => t.game_lookup_samples_auto_inconsistent,
             'preview_rejected' => t.game_lookup_samples_auto_preview_failed,
             _ => t.game_lookup_samples_auto_failed,
@@ -445,7 +451,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                 );
         });
       } else {
-        _rect = result.draft!.rect;
+        _layoutRect = result.draft!.rect;
         _layout = result.draft!.layout;
         _samples = result.draft!.samples.toList();
         _font.text = _layout.fontFamily;
@@ -686,8 +692,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       opacity: _opacity,
       enabled: !_busy,
       onRectChanged: (GalLookupNormalizedRectV1 rect) {
-        _rect = rect;
-        _changed();
+        _setSearchRect(rect);
       },
       onAnchorChanged: _setAnchor,
       onIndexSelected: (int index) => setState(() => _markIndex = index),
@@ -757,7 +762,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
             _layout.cellGrid != null
                 ? t.game_lookup_samples_auto_success
                 : !_manualLayout || _editMode == GalCalibrationEditMode.region
-                ? t.game_lookup_samples_region_hint
+                ? t.game_lookup_samples_search_hint
                 : t.game_lookup_samples_points_hint,
           ),
           if (_manualLayout)
@@ -950,12 +955,12 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
         ),
         const Divider(),
         Text(
-          t.game_lookup_samples_region_title,
+          t.game_lookup_samples_search_title,
           style: Theme.of(context).textTheme.titleSmall,
         ),
         Text(
           _layout.cellGrid == null
-              ? t.game_lookup_samples_region_hint
+              ? t.game_lookup_samples_search_hint
               : t.game_lookup_samples_auto_grid,
         ),
         Text(t.game_lookup_samples_pixel_hint),
@@ -1131,7 +1136,14 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       height: height ?? _rect.height,
     );
     if (!rect.isValid) return;
+    _setSearchRect(rect);
+  }
+
+  void _setSearchRect(GalLookupNormalizedRectV1 rect) {
     _rect = rect;
+    _layoutRect = rect;
+    // A new crop needs a new fit; never apply stale geometry from another crop.
+    _layout = copyGalCalibrationLayout(_layout, clearCellGrid: true);
     _changed();
   }
 
