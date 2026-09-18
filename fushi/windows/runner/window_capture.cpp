@@ -1183,6 +1183,18 @@ WindowCaptureResult CaptureWindowPng(HWND hwnd) {
           !fallback_failure.capture_reason.empty()) {
         candidate = std::move(fallback_failure);
       }
+      if (!attempted_presentation &&
+          candidate.capture_reason == "wgc_item_create_failed") {
+        // Keep the failure fail-closed, but distinguish a source window that
+        // WGC rejects from a verified Magpie output that could have supplied
+        // a bounded destination crop.  This avoids presenting the user with
+        // the misleading generic "window not capturable" diagnosis.
+        SetCaptureReason(&candidate, "wgc_item_no_verified_presentation");
+        AppendDiagnostic(&candidate,
+                         "source WGC item rejected and no verified Magpie "
+                         "presentation mapping was found",
+                         S_OK);
+      }
     }
     const bool complete =
         candidate.ok && candidate.has_metadata &&
