@@ -20,10 +20,69 @@ class GalCalibrationImageFit {
   final int? sampleIndex;
 }
 
+/// Optional offline OCR assistant installed by the app host.
+///
+/// The lookup geometry code deliberately knows nothing about OCR.  The host
+/// may install a calibration-only assistant from `src/ocr/`; tests and headless
+/// builds leave this null and keep the deterministic pixel fallback below.
+typedef GalCalibrationOcrAssist =
+    Future<GalCalibrationImageFit?> Function(
+      GalLookupCalibrationDraft draft, {
+      required GalCalibrationPreviewBuilder build,
+    });
+
+GalCalibrationOcrAssist? galCalibrationOcrAssist;
+
+/// UI-facing model status kept as a tiny value object so the lookup dialog
+/// does not import the OCR implementation (and therefore cannot accidentally
+/// make OCR part of the runtime lookup path).
+class GalCalibrationOcrModelInfo {
+  const GalCalibrationOcrModelInfo({
+    required this.ready,
+    required this.obtainedBytes,
+    required this.totalBytes,
+  });
+
+  final bool ready;
+  final int obtainedBytes;
+  final int totalBytes;
+}
+
+class GalCalibrationOcrDownloadProgress {
+  const GalCalibrationOcrDownloadProgress({
+    required this.fileName,
+    required this.receivedBytes,
+    required this.totalBytes,
+    this.done = false,
+  });
+
+  final String fileName;
+  final int receivedBytes;
+  final int totalBytes;
+  final bool done;
+}
+
+typedef GalCalibrationOcrModelStatusReader =
+    Future<GalCalibrationOcrModelInfo> Function();
+typedef GalCalibrationOcrModelDownloader =
+    Stream<GalCalibrationOcrDownloadProgress> Function();
+
+GalCalibrationOcrModelStatusReader? galCalibrationOcrModelStatus;
+GalCalibrationOcrModelDownloader? galCalibrationOcrModelDownloader;
+
 Future<GalCalibrationImageFit> fitGalCalibrationImages(
   GalLookupCalibrationDraft draft, {
   GalCalibrationPreviewBuilder build = GalLookupCalibrationPreviewChannel.build,
 }) async {
+  final GalCalibrationOcrAssist? ocr = galCalibrationOcrAssist;
+  if (ocr != null) {
+    // OCR is an offline calibration aid only.  A null result means that its
+    // small model pack is not installed; retain the old pixel fitter as a
+    // useful zero-download fallback.  A non-null failure is authoritative so
+    // an installed model never silently falls back to a worse fit.
+    final GalCalibrationImageFit? assisted = await ocr(draft, build: build);
+    if (assisted != null) return assisted;
+  }
   final GalCalibrationImageFit fit = await compute(
     inferGalCalibrationGrid,
     draft,

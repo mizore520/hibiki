@@ -60,6 +60,11 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
   double _opacity = 0.55;
   String? _message;
   bool _failed = false;
+  GalCalibrationOcrModelInfo? _ocrModel;
+  bool _ocrDownloadBusy = false;
+  String _ocrDownloadFileName = '';
+  int _ocrDownloadReceived = 0;
+  int _ocrDownloadTotal = 0;
 
   bool get _canPreview => _manualLayout || _layout.cellGrid != null;
 
@@ -82,6 +87,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     _layout = widget.initialLayout;
     _font = TextEditingController(text: _layout.fontFamily);
     unawaited(_load());
+    unawaited(_refreshOcrModel());
   }
 
   @override
@@ -109,6 +115,56 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     if (!mounted) return;
     setState(() => _busy = false);
     unawaited(_refresh());
+  }
+
+  Future<void> _refreshOcrModel() async {
+    final GalCalibrationOcrModelStatusReader? reader =
+        galCalibrationOcrModelStatus;
+    if (reader == null) return;
+    try {
+      final GalCalibrationOcrModelInfo info = await reader();
+      if (!mounted) return;
+      setState(() => _ocrModel = info);
+    } catch (_) {
+      // The screenshot fitter remains available when the local OCR runtime is
+      // unavailable; keep this optional status quiet rather than blocking it.
+    }
+  }
+
+  Future<void> _downloadOcrModel() async {
+    if (_busy || _ocrDownloadBusy) return;
+    final GalCalibrationOcrModelDownloader? downloader =
+        galCalibrationOcrModelDownloader;
+    if (downloader == null) return;
+    setState(() {
+      _ocrDownloadBusy = true;
+      _ocrDownloadFileName = '';
+      _ocrDownloadReceived = 0;
+      _ocrDownloadTotal = 0;
+      _message = null;
+      _failed = false;
+    });
+    try {
+      await for (final GalCalibrationOcrDownloadProgress event
+          in downloader()) {
+        if (!mounted) return;
+        setState(() {
+          _ocrDownloadFileName = event.fileName;
+          _ocrDownloadReceived = event.receivedBytes;
+          _ocrDownloadTotal = event.totalBytes;
+        });
+      }
+      await _refreshOcrModel();
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _message = t.manga_ocr_download_failed;
+          _failed = true;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _ocrDownloadBusy = false);
+    }
   }
 
   Future<void> _refresh() async {
@@ -847,9 +903,44 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       children: <Widget>[
         Text(t.game_lookup_samples_auto_hint),
         const SizedBox(height: 8),
+        if (galCalibrationOcrModelStatus != null) ...[
+          if (_ocrModel?.ready == true)
+            Text(
+              '${t.manga_ocr_model_status_ready}：'
+              '会用 Hook 台词纠正截图中的粗略位置。',
+            )
+          else ...[
+            Text(
+              '${t.manga_ocr_model_status_missing} · '
+              '${t.manga_ocr_model_download_size(size: '31 MB')}。'
+              '${t.manga_ocr_engine_local_onnx_desc}',
+            ),
+            const SizedBox(height: 6),
+            OutlinedButton.icon(
+              key: const ValueKey<String>('calibration-ocr-download'),
+              onPressed: _busy || _ocrDownloadBusy ? null : _downloadOcrModel,
+              icon: const Icon(Icons.download),
+              label: Text(
+                _ocrDownloadBusy
+                    ? t.manga_ocr_downloading_file(file: _ocrDownloadFileName)
+                    : t.manga_ocr_download,
+              ),
+            ),
+            if (_ocrDownloadBusy && _ocrDownloadTotal > 0)
+              LinearProgressIndicator(
+                value: (_ocrDownloadReceived / _ocrDownloadTotal).clamp(
+                  0.0,
+                  1.0,
+                ),
+              ),
+          ],
+          const SizedBox(height: 8),
+        ],
         FilledButton.icon(
           key: const ValueKey<String>('calibration-auto-align'),
-          onPressed: _busy || _samples.isEmpty ? null : _fitImage,
+          onPressed: _busy || _ocrDownloadBusy || _samples.isEmpty
+              ? null
+              : _fitImage,
           icon: const Icon(Icons.auto_fix_high),
           label: Text(t.game_lookup_samples_auto_align),
         ),
