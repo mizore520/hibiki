@@ -1192,7 +1192,12 @@ WindowCaptureResult CaptureWindowPng(HWND hwnd) {
         candidate.capture_reason == "client_changed_during_capture" ||
         candidate.capture_reason == "client_image_size_mismatch" ||
         candidate.capture_reason == "client_crop_outside_content" ||
-        candidate.capture_reason == "presentation_viewport_incomplete";
+        candidate.capture_reason == "presentation_viewport_incomplete" ||
+        // A game can recreate its swap chain between the window selection and
+        // WGC item creation.  Treat this single bounded failure like the
+        // existing resize/rebind cases; the next attempt re-resolves the
+        // source/presentation HWND and never reuses the failed capture item.
+        candidate.capture_reason == "wgc_item_create_failed";
     if (complete || !geometry_changed || attempt + 1 == kMaximumAttempts) {
       out = std::move(candidate);
       break;
