@@ -21,9 +21,12 @@
 
 #include "wgc_interop.h"
 
+#include <algorithm>
 #include <atomic>
 #include <cstdio>
 #include <limits>
+#include <memory>
+#include <thread>
 
 namespace fushi {
 
@@ -138,6 +141,15 @@ void SetCaptureProvenance(WindowCaptureMetadata* metadata, HWND captured_hwnd,
   metadata->presentation_pid = ReadWindowPid(captured_hwnd);
   metadata->used_presentation_capture = mapping != nullptr;
   metadata->presentation_viewport_complete = false;
+
+  WindowCaptureMetadata source_client;
+  if (ReadCaptureClient(source_hwnd, &source_client)) {
+    metadata->source_client_left_px = source_client.client_left_px;
+    metadata->source_client_top_px = source_client.client_top_px;
+    metadata->source_client_width_px = source_client.client_width_px;
+    metadata->source_client_height_px = source_client.client_height_px;
+    metadata->source_client_dpi = static_cast<int>(source_client.dpi);
+  }
 
   RECT source_rect{};
   RECT destination_rect{};
@@ -451,6 +463,333 @@ std::vector<uint8_t> EncodeBgraToPng(const uint8_t* pixels, UINT width,
   return result;
 }
 
+constexpr UINT kPrintWindowTimeoutMs = 750;
+std::atomic<bool> g_print_window_worker_busy{false};
+
+enum class PrintWindowWorkerStatus {
+  kPending,
+  kComUnavailable,
+  kDcCreateFailed,
+  kDibCreateFailed,
+  kDibSelectFailed,
+  kPrintFailed,
+  kNoPixels,
+  kPartialPixels,
+  kClientChanged,
+  kPngEncodeFailed,
+  kComplete,
+};
+
+HRESULT LastWin32ErrorAsHresult() {
+  const DWORD error = GetLastError();
+  return error == ERROR_SUCCESS ? E_FAIL : HRESULT_FROM_WIN32(error);
+}
+
+// WGC cannot create an item for some composition-only windows. PrintWindow is
+// a bounded compatibility path for that narrow case. It must never become a
+// generic screen/window fallback: the target must have explicitly opted out of
+// DWM redirection, be visible and unprotected, and remain geometrically stable.
+bool TryCapturePrintWindow(HWND hwnd, WindowCaptureResult* out) {
+  if (out == nullptr) {
+    return false;
+  }
+  if (hwnd == nullptr || !IsWindow(hwnd)) {
+    AppendDiagnostic(out, "PrintWindow target invalid", E_HANDLE);
+    return false;
+  }
+  if ((GetWindowLongPtrW(hwnd, GWL_EXSTYLE) & WS_EX_NOREDIRECTIONBITMAP) ==
+      0) {
+    AppendDiagnostic(out,
+                     "PrintWindow rejected: WS_EX_NOREDIRECTIONBITMAP absent",
+                     S_OK);
+    return false;
+  }
+  if (!IsWindowVisible(hwnd)) {
+    AppendDiagnostic(out, "PrintWindow rejected: window not visible", S_OK);
+    return false;
+  }
+  if (IsIconic(hwnd)) {
+    AppendDiagnostic(out, "PrintWindow rejected: window minimized", S_OK);
+    return false;
+  }
+
+  BOOL cloaked = FALSE;
+  const HRESULT cloaked_hr =
+      DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &cloaked, sizeof(cloaked));
+  if (FAILED(cloaked_hr)) {
+    AppendDiagnostic(out, "PrintWindow rejected: cloaked state unavailable",
+                     cloaked_hr);
+    return false;
+  }
+  if (cloaked) {
+    AppendDiagnostic(out, "PrintWindow rejected: window cloaked", S_OK);
+    return false;
+  }
+
+  DWORD affinity = WDA_NONE;
+  SetLastError(ERROR_SUCCESS);
+  if (!GetWindowDisplayAffinity(hwnd, &affinity)) {
+    AppendDiagnostic(out, "PrintWindow rejected: display affinity unavailable",
+                     LastWin32ErrorAsHresult());
+    return false;
+  }
+  if (affinity != WDA_NONE) {
+    AppendDiagnostic(out,
+                     "PrintWindow rejected: display affinity protected",
+                     S_OK);
+    return false;
+  }
+
+  WindowCaptureMetadata initial_client;
+  if (!ReadCaptureClient(hwnd, &initial_client)) {
+    AppendDiagnostic(out, "PrintWindow rejected: client geometry unavailable",
+                     S_OK);
+    return false;
+  }
+  if (!CaptureSizeWithinBudget(
+          static_cast<uint64_t>(initial_client.client_width_px),
+          static_cast<uint64_t>(initial_client.client_height_px)) ||
+      initial_client.client_width_px > std::numeric_limits<LONG>::max() ||
+      initial_client.client_height_px > std::numeric_limits<LONG>::max()) {
+    AppendDiagnostic(out, "PrintWindow rejected: client size exceeds budget",
+                     S_OK);
+    return false;
+  }
+
+  const UINT width = static_cast<UINT>(initial_client.client_width_px);
+  const UINT height = static_cast<UINT>(initial_client.client_height_px);
+  BITMAPINFO bitmap_info{};
+  bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+  bitmap_info.bmiHeader.biWidth = static_cast<LONG>(width);
+  bitmap_info.bmiHeader.biHeight = -static_cast<LONG>(height);
+  bitmap_info.bmiHeader.biPlanes = 1;
+  bitmap_info.bmiHeader.biBitCount = 32;
+  bitmap_info.bmiHeader.biCompression = BI_RGB;
+
+  bool expected_idle = false;
+  if (!g_print_window_worker_busy.compare_exchange_strong(expected_idle, true)) {
+    AppendDiagnostic(out, "PrintWindow fallback busy after a previous timeout",
+                     S_OK);
+    return false;
+  }
+
+  struct PrintWindowTask {
+    HDC dc = nullptr;
+    HBITMAP dib = nullptr;
+    HGDIOBJ previous = nullptr;
+    HANDLE completed = nullptr;
+    void* bits = nullptr;
+    HRESULT failure_hr = S_OK;
+    PrintWindowWorkerStatus status = PrintWindowWorkerStatus::kPending;
+    WindowCaptureMetadata final_client;
+    std::vector<uint8_t> png;
+
+    void ReleaseGdiOnOwnerThread() {
+      if (dc != nullptr && previous != nullptr && previous != HGDI_ERROR) {
+        SelectObject(dc, previous);
+      }
+      previous = nullptr;
+      if (dib != nullptr) {
+        DeleteObject(dib);
+      }
+      dib = nullptr;
+      bits = nullptr;
+      if (dc != nullptr) {
+        DeleteDC(dc);
+      }
+      dc = nullptr;
+    }
+
+    ~PrintWindowTask() {
+      // The worker owns the DC while PrintWindow is running. Normally it has
+      // already released the GDI objects before signaling [completed]; this
+      // second release is only a defensive cleanup after the worker returns.
+      ReleaseGdiOnOwnerThread();
+      if (completed != nullptr) {
+        CloseHandle(completed);
+      }
+      g_print_window_worker_busy.store(false);
+    }
+  };
+
+  std::shared_ptr<PrintWindowTask> task = std::make_shared<PrintWindowTask>();
+  task->completed = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+  if (task->completed == nullptr) {
+    AppendDiagnostic(out, "PrintWindow completion event creation failed",
+                     LastWin32ErrorAsHresult());
+    return false;
+  }
+
+  const UINT stride = width * 4u;
+  const size_t buffer_size = static_cast<size_t>(stride) * height;
+  std::thread([task, hwnd, bitmap_info, initial_client, width, height, stride,
+               buffer_size]() {
+    const HRESULT com_hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    const bool uninitialize_com = SUCCEEDED(com_hr);
+    auto finish = [&]() {
+      task->ReleaseGdiOnOwnerThread();
+      if (uninitialize_com) {
+        CoUninitialize();
+      }
+      SetEvent(task->completed);
+    };
+    if (FAILED(com_hr) && com_hr != RPC_E_CHANGED_MODE) {
+      task->status = PrintWindowWorkerStatus::kComUnavailable;
+      task->failure_hr = com_hr;
+      finish();
+      return;
+    }
+
+    task->dc = CreateCompatibleDC(nullptr);
+    if (task->dc == nullptr) {
+      task->status = PrintWindowWorkerStatus::kDcCreateFailed;
+      task->failure_hr = LastWin32ErrorAsHresult();
+      finish();
+      return;
+    }
+    task->dib = CreateDIBSection(task->dc, &bitmap_info, DIB_RGB_COLORS,
+                                 &task->bits, nullptr, 0);
+    if (task->dib == nullptr || task->bits == nullptr) {
+      task->status = PrintWindowWorkerStatus::kDibCreateFailed;
+      task->failure_hr = LastWin32ErrorAsHresult();
+      finish();
+      return;
+    }
+    task->previous = SelectObject(task->dc, task->dib);
+    if (task->previous == nullptr || task->previous == HGDI_ERROR) {
+      task->status = PrintWindowWorkerStatus::kDibSelectFailed;
+      task->failure_hr = LastWin32ErrorAsHresult();
+      finish();
+      return;
+    }
+
+    uint8_t* bytes = static_cast<uint8_t*>(task->bits);
+    for (size_t i = 0; i < buffer_size; ++i) {
+      bytes[i] = static_cast<uint8_t>(0xA5u ^ (i & 0x3Fu));
+    }
+    SetLastError(ERROR_SUCCESS);
+    if (!PrintWindow(hwnd, task->dc, PW_CLIENTONLY | PW_RENDERFULLCONTENT)) {
+      task->status = PrintWindowWorkerStatus::kPrintFailed;
+      task->failure_hr = LastWin32ErrorAsHresult();
+      finish();
+      return;
+    }
+    GdiFlush();
+
+    size_t untouched_pixels = 0;
+    for (size_t i = 0; i < buffer_size; i += 4) {
+      const bool unchanged =
+          bytes[i] == static_cast<uint8_t>(0xA5u ^ (i & 0x3Fu)) &&
+          bytes[i + 1] == static_cast<uint8_t>(0xA5u ^ ((i + 1) & 0x3Fu)) &&
+          bytes[i + 2] == static_cast<uint8_t>(0xA5u ^ ((i + 2) & 0x3Fu)) &&
+          bytes[i + 3] == static_cast<uint8_t>(0xA5u ^ ((i + 3) & 0x3Fu));
+      if (unchanged) {
+        ++untouched_pixels;
+      }
+      // A 32bpp BI_RGB DIB does not promise meaningful alpha. A captured game
+      // client is opaque, so normalize it before handing pixels to WIC.
+      bytes[i + 3] = 0xFF;
+    }
+    if (untouched_pixels == static_cast<size_t>(width) * height) {
+      task->status = PrintWindowWorkerStatus::kNoPixels;
+      finish();
+      return;
+    }
+    if (untouched_pixels != 0) {
+      task->status = PrintWindowWorkerStatus::kPartialPixels;
+      finish();
+      return;
+    }
+
+    WindowCaptureMetadata final_client;
+    if (!ReadCaptureClient(hwnd, &final_client) ||
+        !SameCaptureClient(initial_client, final_client)) {
+      task->status = PrintWindowWorkerStatus::kClientChanged;
+      finish();
+      return;
+    }
+
+    std::string encode_error;
+    task->png = EncodeBgraToPng(bytes, width, height, stride, &encode_error);
+    if (task->png.empty()) {
+      task->status = PrintWindowWorkerStatus::kPngEncodeFailed;
+      finish();
+      return;
+    }
+
+    final_client.image_width_px = static_cast<int>(width);
+    final_client.image_height_px = static_cast<int>(height);
+    final_client.captured_at_tick_ms = GetTickCount64();
+    final_client.client_area_complete = true;
+    SetCaptureProvenance(&final_client, hwnd, hwnd, nullptr);
+    task->final_client = final_client;
+    task->status = PrintWindowWorkerStatus::kComplete;
+    finish();
+  }).detach();
+
+  if (WaitForSingleObject(task->completed, kPrintWindowTimeoutMs) !=
+      WAIT_OBJECT_0) {
+    AppendDiagnostic(out, "PrintWindow timed out; worker retained capture DC",
+                     HRESULT_FROM_WIN32(ERROR_TIMEOUT));
+    return false;
+  }
+
+  switch (task->status) {
+    case PrintWindowWorkerStatus::kComUnavailable:
+      AppendDiagnostic(out, "PrintWindow worker COM unavailable",
+                       task->failure_hr);
+      return false;
+    case PrintWindowWorkerStatus::kDcCreateFailed:
+      AppendDiagnostic(out, "PrintWindow compatible DC creation failed",
+                       task->failure_hr);
+      return false;
+    case PrintWindowWorkerStatus::kDibCreateFailed:
+      AppendDiagnostic(out, "PrintWindow DIB creation failed",
+                       task->failure_hr);
+      return false;
+    case PrintWindowWorkerStatus::kDibSelectFailed:
+      AppendDiagnostic(out, "PrintWindow DIB selection failed",
+                       task->failure_hr);
+      return false;
+    case PrintWindowWorkerStatus::kPrintFailed:
+      AppendDiagnostic(out, "PrintWindow failed", task->failure_hr);
+      return false;
+    case PrintWindowWorkerStatus::kNoPixels:
+      AppendDiagnostic(out, "PrintWindow produced no pixels", S_OK);
+      return false;
+    case PrintWindowWorkerStatus::kPartialPixels:
+      AppendDiagnostic(out, "PrintWindow produced partial client pixels", S_OK);
+      return false;
+    case PrintWindowWorkerStatus::kClientChanged:
+      AppendDiagnostic(out,
+                       "PrintWindow rejected: client identity changed during capture",
+                       S_OK);
+      return false;
+    case PrintWindowWorkerStatus::kPngEncodeFailed:
+      AppendDiagnostic(out, "PrintWindow PNG encoding failed", S_OK);
+      return false;
+    case PrintWindowWorkerStatus::kComplete:
+      break;
+    case PrintWindowWorkerStatus::kPending:
+      AppendDiagnostic(out, "PrintWindow worker returned without a result",
+                       E_UNEXPECTED);
+      return false;
+  }
+
+  WindowCaptureResult replacement;
+  replacement.png = std::move(task->png);
+  replacement.diagnostics = out->diagnostics;
+  replacement.has_metadata = true;
+  replacement.metadata = task->final_client;
+  replacement.capture_reason = "printwindow_complete";
+  replacement.ok = true;
+  AppendDiagnostic(&replacement,
+                   "PrintWindow fallback captured the target client area",
+                   S_OK);
+  *out = std::move(replacement);
+  return true;
+}
+
 }  // namespace
 
 // D3D11 设备（BGRA 支持），硬件失败回退 WARP。
@@ -661,7 +1000,7 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out,
             initial_source_client.client_height_px};
     if (!RectWithin(presentation_mapping->destination_rect_screen,
                     presentation_client) ||
-        !SameRect(presentation_mapping->source_rect_screen, source_client)) {
+        !RectWithin(presentation_mapping->source_rect_screen, source_client)) {
       SetCaptureFailure(out, "presentation_viewport_invalid",
                         "Magpie presentation viewport is outside its client");
       return;
@@ -727,12 +1066,15 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out,
     return;
   }
   ComPtr<WGC::IGraphicsCaptureItem> item;
-  if (FAILED(interop->CreateForWindow(
-          hwnd, __uuidof(WGC::IGraphicsCaptureItem),
-          reinterpret_cast<void**>(item.GetAddressOf()))) ||
-      !item) {
+  const HRESULT item_hr = interop->CreateForWindow(
+      hwnd, __uuidof(WGC::IGraphicsCaptureItem),
+      reinterpret_cast<void**>(item.GetAddressOf()));
+  if (FAILED(item_hr) || !item) {
     SetCaptureFailure(out, "wgc_item_create_failed",
                       "CreateForWindow failed (window not capturable)");
+    AppendDiagnostic(out, item ? "CreateForWindow failed"
+                               : "CreateForWindow returned no item",
+                     FAILED(item_hr) ? item_hr : E_POINTER);
     return;
   }
   ABI::Windows::Graphics::SizeInt32 size = {};
@@ -1002,19 +1344,34 @@ void CaptureCore(HWND hwnd, WindowCaptureResult* out,
                        presentation_client);
         const bool source_still_inside =
             final_mapping_valid && final_source_client_valid &&
-            SameRect(final_mapping.source_rect_screen,
-                       RECT{final_source_client.client_left_px,
-                            final_source_client.client_top_px,
-                            final_source_client.client_left_px +
-                                final_source_client.client_width_px,
-                            final_source_client.client_top_px +
-                                final_source_client.client_height_px});
+            RectWithin(
+                final_mapping.source_rect_screen,
+                RECT{final_source_client.client_left_px,
+                     final_source_client.client_top_px,
+                     final_source_client.client_left_px +
+                         final_source_client.client_width_px,
+                     final_source_client.client_top_px +
+                         final_source_client.client_height_px});
         const bool mapping_stable =
             final_mapping_valid &&
             SameRect(final_mapping.source_rect_screen,
                      presentation_mapping->source_rect_screen) &&
             SameRect(final_mapping.destination_rect_screen,
                      presentation_mapping->destination_rect_screen);
+        if (final_source_client_valid) {
+          // Keep the serialized source client geometry tied to the same final
+          // identity/size/DPI read used by the presentation completeness gate.
+          final_client.source_client_left_px =
+              final_source_client.client_left_px;
+          final_client.source_client_top_px =
+              final_source_client.client_top_px;
+          final_client.source_client_width_px =
+              final_source_client.client_width_px;
+          final_client.source_client_height_px =
+              final_source_client.client_height_px;
+          final_client.source_client_dpi =
+              static_cast<int>(final_source_client.dpi);
+        }
         final_client.presentation_viewport_complete =
             !out->png.empty() && initial_client_valid &&
             initial_source_client_valid && final_source_client_valid &&
@@ -1094,10 +1451,6 @@ WindowCaptureResult CaptureWindowPng(HWND hwnd) {
     SetCaptureFailure(&out, "invalid_window_handle", "window handle invalid");
     return out;
   }
-  // BUG-2541：Magpie 在用户点下“采集”后可能刚好重建输出窗口，第一帧会
-  // 看到旧的源/客户区尺寸。Dart 侧必须继续 fail-closed，native 侧则在同一
-  // 请求内重新解析一次源 HWND 并重试，避免把一次可恢复的切换误报成永久
-  // 不兼容。最多两次，避免把 WGC/DRM 的真正失败拖成无界等待。
   const HWND requested_hwnd = hwnd;
   const HRESULT ro = RoInitialize(RO_INIT_MULTITHREADED);
   // RPC_E_CHANGED_MODE = 本线程已按其它套间初始化；照常用、但不由我们反初始化。
@@ -1107,33 +1460,35 @@ WindowCaptureResult CaptureWindowPng(HWND hwnd) {
     return out;
   }
   WindowCaptureResult out;
-  constexpr int kMaximumAttempts = 2;
-  for (int attempt = 0; attempt < kMaximumAttempts; ++attempt) {
-    WindowCaptureResult candidate;
-    HWND source_hwnd = requested_hwnd;
-    // Dart 侧可能拿的是**上一次枚举缓存**的句柄，或者 Magpie 是在选窗
-    // 之后才起来的，所以每次尝试都重新解析，而不是只在枚举时解析一次。
-    if (const HWND source = ResolveScalingSourceWindow(source_hwnd)) {
-      AppendDiagnostic(&candidate,
-                       "capture target redirected: Magpie scaling window -> "
-                       "source window (Magpie.SrcHWND)",
-                       S_OK);
-      source_hwnd = source;
-    }
-    CaptureCore(source_hwnd, &candidate);
+  WindowCaptureResult candidate;
+  HWND source_hwnd = requested_hwnd;
+  // Resolve the logical source once for this request. A failed WGC item is a
+  // backend decision, not evidence that a second immediate CreateForWindow
+  // call can change the result.
+  if (const HWND source = ResolveScalingSourceWindow(source_hwnd)) {
+    AppendDiagnostic(&candidate,
+                     "capture target redirected: Magpie scaling window -> "
+                     "source window (Magpie.SrcHWND)",
+                     S_OK);
+    source_hwnd = source;
+  }
+  CaptureCore(source_hwnd, &candidate);
 
-    // A source HWND can be visible and valid while WGC refuses to create an
-    // item for it (for example when Magpie owns the presentation path). Only
-    // then look for an output window, and only accept candidates whose
-    // SrcHWND plus all eight viewport properties validate against this exact
-    // source. Capturing the whole output client would shift calibration boxes
-    // whenever Magpie letterboxes or crops the source.
-    if (candidate.capture_reason == "wgc_item_create_failed") {
+  // A source HWND can be visible and valid while WGC refuses to create an
+  // item. First try the narrow composition-only compatibility path. If it is
+  // unavailable, retain the source failure and then try only verified Magpie
+  // presentations whose published viewport can be checked end to end.
+  if (candidate.capture_reason == "wgc_item_create_failed") {
+    const bool print_window_captured =
+        TryCapturePrintWindow(source_hwnd, &candidate);
+    if (!print_window_captured &&
+        candidate.capture_reason == "wgc_item_create_failed") {
+      const std::string source_diagnostics = candidate.diagnostics;
       std::vector<MagpiePresentationMapping> mappings;
       MagpiePresentationMapping requested_mapping;
       if (requested_hwnd != source_hwnd &&
           ReadMagpiePresentationMapping(requested_hwnd, source_hwnd,
-                                        &requested_mapping)) {
+                                         &requested_mapping)) {
         mappings.push_back(requested_mapping);
       }
       std::vector<MagpiePresentationMapping> discovered =
@@ -1158,6 +1513,7 @@ WindowCaptureResult CaptureWindowPng(HWND hwnd) {
            i < mappings.size() && i < kMaximumPresentationAttempts; ++i) {
         const MagpiePresentationMapping& mapping = mappings[i];
         WindowCaptureResult presentation_candidate;
+        presentation_candidate.diagnostics = source_diagnostics;
         AppendDiagnostic(
             &presentation_candidate,
             "source WGC item unavailable; tried verified Magpie presentation",
@@ -1185,40 +1541,14 @@ WindowCaptureResult CaptureWindowPng(HWND hwnd) {
       }
       if (!attempted_presentation &&
           candidate.capture_reason == "wgc_item_create_failed") {
-        // Keep the failure fail-closed, but distinguish a source window that
-        // WGC rejects from a verified Magpie output that could have supplied
-        // a bounded destination crop.  This avoids presenting the user with
-        // the misleading generic "window not capturable" diagnosis.
-        SetCaptureReason(&candidate, "wgc_item_no_verified_presentation");
         AppendDiagnostic(&candidate,
                          "source WGC item rejected and no verified Magpie "
                          "presentation mapping was found",
                          S_OK);
       }
     }
-    const bool complete =
-        candidate.ok && candidate.has_metadata &&
-        (candidate.metadata.client_area_complete ||
-         candidate.metadata.presentation_viewport_complete);
-    const bool geometry_changed =
-        candidate.capture_reason == "client_changed_during_capture" ||
-        candidate.capture_reason == "client_image_size_mismatch" ||
-        candidate.capture_reason == "client_crop_outside_content" ||
-        candidate.capture_reason == "presentation_viewport_incomplete" ||
-        // A game can recreate its swap chain between the window selection and
-        // WGC item creation.  Treat this single bounded failure like the
-        // existing resize/rebind cases; the next attempt re-resolves the
-        // source/presentation HWND and never reuses the failed capture item.
-        candidate.capture_reason == "wgc_item_create_failed";
-    if (complete || !geometry_changed || attempt + 1 == kMaximumAttempts) {
-      out = std::move(candidate);
-      break;
-    }
-    // A transient resize/rebind is the only condition worth retrying here.
-    // Keep this delay short; CaptureCore already bounds the WGC wait at 1.5 s.
-    Sleep(40);
-    out = std::move(candidate);
   }
+  out = std::move(candidate);
   if (SUCCEEDED(ro)) {
     RoUninitialize();
   }

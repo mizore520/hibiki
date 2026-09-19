@@ -197,32 +197,103 @@ void main() {
     expect(dartChannel.contains("'contentWidthPx'"), isTrue);
   });
 
-  test('⑤ Magpie 重建期间最多重试一次，并继续保留完整客户区门槛', () {
+  test('⑤ WGC item 失败保留 HRESULT，且不盲目重试', () {
+    expect(
+      capture.contains('const HRESULT item_hr = interop->CreateForWindow('),
+      isTrue,
+      reason: 'CreateForWindow 的真实 HRESULT 必须先保存再处理失败',
+    );
+    expect(
+      capture.contains('FAILED(item_hr) ? item_hr : E_POINTER'),
+      isTrue,
+      reason: 'item 为空时只能为无 HRESULT 的异常情况补 E_POINTER',
+    );
+    expect(
+      capture.contains('AppendDiagnostic(out, item ? "CreateForWindow failed"'),
+      isTrue,
+      reason: 'WGC item 创建失败必须进入 bounded diagnostics',
+    );
     expect(
       capture.contains('constexpr int kMaximumAttempts = 2;'),
-      isTrue,
-      reason: '捕获重试必须有硬上限，不能把 WGC/DRM 失败变成无界等待',
+      isFalse,
+      reason: '永久拒绝不能再次调用 CreateForWindow 伪装成几何重试',
     );
     expect(
       capture.contains('Sleep(40);'),
-      isTrue,
-      reason: '重试只允许给窗口重绑一个短暂稳定窗口',
+      isFalse,
+      reason: 'WGC item 失败路径不再等待后盲重试',
     );
     expect(
-      capture.contains('candidate.metadata.client_area_complete'),
-      isTrue,
-      reason: '重试不能放宽客户区完整性契约',
+      capture.contains(
+        'SetCaptureReason(&candidate, "wgc_item_no_verified_presentation")',
+      ),
+      isFalse,
+      reason: '不能用泛化 reason 覆盖首个真实 WGC 失败',
     );
     expect(
-      capture
-          .substring(capture.indexOf('for (int attempt = 0;'))
-          .contains('ResolveScalingSourceWindow(source_hwnd)'),
+      capture.contains('TryCapturePrintWindow(source_hwnd, &candidate)'),
       isTrue,
-      reason: '每次尝试都必须重新解析 Magpie 源 HWND',
+      reason: '源 WGC item 失败后必须经过受限兼容后端',
     );
   });
 
-  test('⑥ Magpie 生命周期立即触发贴附层重新解析 presentation HWND', () {
+  test('⑥ PrintWindow fallback 具备保护门槛、超时和非空像素校验', () {
+    for (final String token in <String>[
+      'WS_EX_NOREDIRECTIONBITMAP',
+      'IsWindowVisible(hwnd)',
+      'IsIconic(hwnd)',
+      'DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED',
+      'GetWindowDisplayAffinity(hwnd, &affinity)',
+      'affinity != WDA_NONE',
+      'PrintWindow(',
+      'PW_CLIENTONLY | PW_RENDERFULLCONTENT',
+      'PrintWindow timed out; worker retained capture DC',
+      'g_print_window_worker_busy',
+      'PrintWindow produced no pixels',
+      'PrintWindow produced partial client pixels',
+      'ReleaseGdiOnOwnerThread',
+      'bytes[i + 3] = 0xFF',
+      'SameCaptureClient(initial_client, final_client)',
+    ]) {
+      expect(capture.contains(token), isTrue, reason: 'missing $token');
+    }
+    expect(
+      capture.contains('constexpr UINT kPrintWindowTimeoutMs = 750;'),
+      isTrue,
+      reason: 'PrintWindow worker 必须有固定的调用和等待上限',
+    );
+    expect(
+      capture.contains('CreateForMonitor'),
+      isFalse,
+      reason: '不能回退到无法证明属于目标窗口的显示器图像',
+    );
+    expect(
+      capture.contains('BitBlt'),
+      isFalse,
+      reason: '不能用屏幕 BitBlt 捕获遮挡桌面或错误窗口',
+    );
+  });
+
+  test('⑦ Magpie 源 viewport 允许子区域并保留源客户区身份', () {
+    for (final String token in <String>[
+      'source_client_left_px',
+      'source_client_top_px',
+      'source_client_width_px',
+      'source_client_height_px',
+      'source_client_dpi',
+      'RectWithin(presentation_mapping->source_rect_screen, source_client)',
+      'SameCaptureClient(initial_source_client, final_source_client)',
+    ]) {
+      expect(capture.contains(token), isTrue, reason: 'missing $token');
+    }
+    expect(
+      header.contains('int source_client_width_px = 0;'),
+      isTrue,
+      reason: 'Dart mapping 需要 native 返回真实源客户区尺寸',
+    );
+  });
+
+  test('⑧ Magpie 生命周期立即触发贴附层重新解析 presentation HWND', () {
     expect(
       attachedHeader.contains('OnExternalWindowLifecycle(HWND output_window'),
       isTrue,

@@ -50,10 +50,19 @@ struct WindowCaptureMetadata {
   int client_top_px = 0;
   int client_width_px = 0;
   int client_height_px = 0;
+  // Source client geometry remains explicit when the encoded image comes from
+  // a verified Magpie presentation viewport. These fields describe the
+  // logical source HWND and are never inferred from the presentation output.
+  int source_client_left_px = 0;
+  int source_client_top_px = 0;
+  int source_client_width_px = 0;
+  int source_client_height_px = 0;
+  int source_client_dpi = 0;
   int image_width_px = 0;
   int image_height_px = 0;
-  // WGC frame facts. Zero means no frame reached the texture stage (for
-  // example a timeout) or an older runner did not provide the fields.
+  // WGC frame facts. Zero means no WGC frame reached the texture stage (for
+  // example a timeout), the result used the bounded PrintWindow fallback, or an
+  // older runner did not provide the fields.
   int content_width_px = 0;
   int content_height_px = 0;
   int texture_width_px = 0;
@@ -123,8 +132,10 @@ Microsoft::WRL::ComPtr<ID3D11Device> CreateD3DDevice();
 // 源窗口，并按 hwnd 去重（重定向后可能与单独枚举到的源窗口重合）。绝不抛异常。
 std::vector<ExternalWindow> EnumerateTopLevelWindows(HWND self);
 
-// 对 [hwnd] 抓一帧（Windows.Graphics.Capture）转 PNG 字节。任何失败（系统不支持 /
-// 窗口已关 / DRM 黑帧 / 超时 / D3D/WIC 失败）返回带非空 error、空 png 的结果。
+// 对 [hwnd] 抓一帧（优先 Windows.Graphics.Capture；特定
+// WS_EX_NOREDIRECTIONBITMAP 窗口允许有界 PrintWindow 兼容路径）转 PNG 字节。
+// 任何后端失败（系统不支持 / 窗口已关 / DRM 黑帧 / 超时 / D3D/WIC 失败）返回带
+// 非空 error、空 png 的结果。
 // BUG-1096：绑定前先过 [ResolveScalingSourceWindow]，命中 Magpie 缩放窗时改抓源窗口。
 // 同步运行在**调用线程**上（自建 WinRT MTA apartment，用完即退）；调用方应放到
 // 非 UI 线程调用（会阻塞等首帧，最长约 1.5s）。绝不抛异常。
