@@ -4919,7 +4919,6 @@
   "game_lookup_samples_reference": "Calibration sample",
   "game_lookup_samples_validation": "Validation sample",
   "game_lookup_samples_boxes": "Show click areas",
-  "game_lookup_samples_opacity": "Click area opacity",
   "game_lookup_samples_native_hint": "The boxes show the areas used to select characters. Adjust the layout until they cover the original text.",
   "game_lookup_samples_unavailable": "This layout cannot cover the complete line. Adjust the area or font size.",
   "game_lookup_samples_save": "Save draft",
@@ -4996,5 +4995,6 @@
   "game_lookup_samples_fit_all_hint": "Use this when several complete samples share one grid. Validation samples remain checks.",
   "game_lookup_samples_auto_align_current": "Align current screenshot",
   "game_lookup_samples_auto_align_all": "Align all calibration samples",
-  "game_lookup_samples_pixel_advanced_hint": "These are source screenshot pixels for the orange recognition frame. They are a manual backup, not character size."
+  "game_lookup_samples_pixel_advanced_hint": "These are source screenshot pixels for the orange recognition frame. They are a manual backup, not character size.",
+  "game_lookup_samples_capture_unavailable": "This window could not be captured. Your saved calibration is unchanged; the capture failure has been logged for diagnosis."
 }

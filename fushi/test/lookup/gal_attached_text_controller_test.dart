@@ -1668,6 +1668,68 @@ void main() {
     expect(port.calls.last, 'detach');
   });
 
+  test(
+    'dictionary hook ownership does not block the screenshot fence',
+    () async {
+      preferences[key()] = jsonEncode(_profile().toJson());
+      await sync();
+      controller.handleSurfaceStateChanged(
+        GalAttachedSurfaceStateEvent(
+          target: controller.target!,
+          state: 'suspended',
+          status: 'mouseHookBusy',
+          reason: 'low_level_mouse_arm_failed:singleton_owned_by_other_hwnd',
+        ),
+      );
+      final GalAttachedMiningCaptureLease? lease = await controller
+          .acquireMiningCaptureLease();
+      expect(lease, isNotNull);
+      expect(port.calls, contains('suspendForCapture:1:1'));
+      expect(await controller.acquireMiningCaptureLease(), isNull);
+      port.restoreResult = const GalAttachedCallResult(
+        status: 'mouseHookBusy',
+        reason: 'low_level_mouse_arm_failed:singleton_owned_by_other_hwnd',
+        surfaceVisible: false,
+      );
+      await controller.releaseMiningCaptureLease(lease!);
+      expect(controller.surfaceVisible, isFalse);
+      expect(port.calls, contains('restoreAfterCapture:1:1'));
+    },
+  );
+
+  test(
+    'other hook failures and a changed line cannot use the card fence',
+    () async {
+      preferences[key()] = jsonEncode(_profile().toJson());
+      await sync();
+      controller.handleSurfaceStateChanged(
+        GalAttachedSurfaceStateEvent(
+          target: controller.target!,
+          state: 'suspended',
+          status: 'mouseHookBusy',
+          reason: 'low_level_mouse_arm_failed:worker_unavailable',
+        ),
+      );
+      expect(await controller.acquireMiningCaptureLease(), isNull);
+      controller.handleSurfaceStateChanged(
+        GalAttachedSurfaceStateEvent(
+          target: controller.target!,
+          state: 'suspended',
+          status: 'mouseHookBusy',
+          reason: 'low_level_mouse_arm_failed:singleton_owned_by_other_hwnd',
+        ),
+      );
+      await sync(text: 'new occurrence while the input owner is busy');
+      expect(await controller.acquireMiningCaptureLease(), isNull);
+      expect(
+        port.calls.where(
+          (String call) => call.startsWith('suspendForCapture:'),
+        ),
+        isEmpty,
+      );
+    },
+  );
+
   test('background sample capture leases configured hidden surface', () async {
     preferences[key()] = jsonEncode(_profile().toJson());
     await sync();

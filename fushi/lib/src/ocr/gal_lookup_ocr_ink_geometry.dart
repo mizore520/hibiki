@@ -279,6 +279,64 @@ GalCalibrationOcrMatchedLine? _measureInkLine(
         rect.top <= searchTop + .5 ||
         rect.bottom >= searchBottom - .5,
   );
+  final Map<int, OcrRect> visualMeasured = <int, OcrRect>{};
+  for (final GalCalibrationOcrGlyph glyph in line.glyphs) {
+    if (!glyph.confidence.isFinite || glyph.confidence < (relaxed ? .55 : .7)) {
+      continue;
+    }
+    if (_singlePunctuationCodePoint(
+          text.substring(
+            glyph.sourceIndex,
+            glyph.sourceIndex + glyph.charLength,
+          ),
+        ) ==
+        null) {
+      continue;
+    }
+    final int a = (selected.left + glyph.cellOffset * selected.pitch - x0)
+        .round()
+        .clamp(0, width);
+    final int b = (selected.left + (glyph.cellOffset + 1) * selected.pitch - x0)
+        .round()
+        .clamp(a, width);
+    int left = width;
+    int right = -1;
+    int top = height;
+    int bottom = -1;
+    int total = 0;
+    for (int y = 0; y < height; y++) {
+      for (int x = a; x < b; x++) {
+        if (selected.mask[y * width + x] == 0) continue;
+        left = math.min(left, x);
+        right = math.max(right, x);
+        top = math.min(top, y);
+        bottom = math.max(bottom, y);
+        total++;
+      }
+    }
+    if (total < math.max(2, (selected.pitch * .08).round()) ||
+        right < left ||
+        bottom < top ||
+        left <= 0 ||
+        right >= width - 1 ||
+        top <= 0 ||
+        bottom >= height - 1) {
+      continue;
+    }
+    final OcrRect candidate = OcrRect(
+      left: (x0 + left).toDouble(),
+      top: (y0 + top).toDouble(),
+      right: (x0 + right + 1).toDouble(),
+      bottom: (y0 + bottom + 1).toDouble(),
+    );
+    // This map is only an observation channel. The fitter applies an
+    // additional smallness and multi-sample consistency gate before storing
+    // an override, so a broad punctuation glyph remains a normal cell.
+    if (candidate.width <= selected.pitch * .9 ||
+        candidate.height <= line.rect.height * .9) {
+      visualMeasured[glyph.sourceIndex] = candidate;
+    }
+  }
   if (measured.length < (relaxed ? 4 : 5) ||
       measured.length < anchors.length * (relaxed ? .45 : .65)) {
     return null;
@@ -374,8 +432,12 @@ GalCalibrationOcrMatchedLine? _measureInkLine(
           cellOffset: g.cellOffset,
           lineIndex: g.lineIndex,
           confidence: g.confidence,
-          rect: measured[g.sourceIndex] ?? g.rect,
+          rect:
+              measured[g.sourceIndex] ??
+              visualMeasured[g.sourceIndex] ??
+              g.rect,
           inkMeasured: measured.containsKey(g.sourceIndex),
+          visualMeasured: visualMeasured.containsKey(g.sourceIndex),
         ),
     ],
   );

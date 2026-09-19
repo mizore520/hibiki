@@ -1173,6 +1173,40 @@ bool HasExactCellGridKeys(const flutter::EncodableMap* map) {
   return true;
 }
 
+bool HasExactPunctuationVisualBoundKeys(const flutter::EncodableMap* map) {
+  static constexpr const char* kKeys[] = {"codePoint", "left", "top",
+                                          "right", "bottom"};
+  constexpr size_t kKeyCount = sizeof(kKeys) / sizeof(kKeys[0]);
+  if (map == nullptr || map->size() != kKeyCount) return false;
+  for (const char* key : kKeys) {
+    if (map->find(flutter::EncodableValue(key)) == map->end()) return false;
+  }
+  return true;
+}
+
+bool PunctuationVisualBoundFromValue(
+    const flutter::EncodableValue& value,
+    fushi::attached_text_layout::PunctuationVisualBounds* output) {
+  if (output == nullptr) return false;
+  const auto* map = std::get_if<flutter::EncodableMap>(&value);
+  if (!HasExactPunctuationVisualBoundKeys(map)) return false;
+  int code_point = 0;
+  fushi::attached_text_layout::PunctuationVisualBounds bounds;
+  if (!ExactIntFromValue(map, "codePoint", &code_point) || code_point < 0) {
+    return false;
+  }
+  bounds.code_point = static_cast<uint32_t>(code_point);
+  if (!ExactFiniteDoubleFromValue(map, "left", &bounds.left) ||
+      !ExactFiniteDoubleFromValue(map, "top", &bounds.top) ||
+      !ExactFiniteDoubleFromValue(map, "right", &bounds.right) ||
+      !ExactFiniteDoubleFromValue(map, "bottom", &bounds.bottom) ||
+      !fushi::attached_text_layout::IsPunctuationVisualBoundsValid(bounds)) {
+    return false;
+  }
+  *output = bounds;
+  return true;
+}
+
 AttachedTextSurfaceWindow::Layout AttachedLayoutFromArgs(
     const flutter::EncodableMap* args) {
   AttachedTextSurfaceWindow::Layout layout;
@@ -1222,6 +1256,30 @@ AttachedTextSurfaceWindow::Layout AttachedLayoutFromArgs(
       }
     }
     layout.cell_grid = grid;
+  }
+  const auto visual_it =
+      map->find(flutter::EncodableValue("punctuationVisualBounds"));
+  if (visual_it != map->end()) {
+    const auto* list = std::get_if<flutter::EncodableList>(&visual_it->second);
+    if (list == nullptr || list->empty() || list->size() > 32) {
+      layout.punctuation_visual_bounds_valid = false;
+    } else {
+      for (const flutter::EncodableValue& value : *list) {
+        fushi::attached_text_layout::PunctuationVisualBounds bounds;
+        if (!PunctuationVisualBoundFromValue(value, &bounds) ||
+            std::any_of(
+                layout.punctuation_visual_bounds.begin(),
+                layout.punctuation_visual_bounds.end(),
+                [&bounds](const auto& existing) {
+                  return existing.code_point == bounds.code_point;
+                })) {
+          layout.punctuation_visual_bounds_valid = false;
+          layout.punctuation_visual_bounds.clear();
+          break;
+        }
+        layout.punctuation_visual_bounds.push_back(bounds);
+      }
+    }
   }
   return layout;
 }
@@ -1279,13 +1337,21 @@ flutter::EncodableMap AttachedPreviewLayoutFromArgs(
         {flutter::EncodableValue("charLength"),
          flutter::EncodableValue(static_cast<int64_t>(box.text_length))},
         {flutter::EncodableValue("left"),
-         flutter::EncodableValue(static_cast<int32_t>(box.client_rect.left))},
+         flutter::EncodableValue(static_cast<int32_t>(box.hit_rect.left))},
         {flutter::EncodableValue("top"),
-         flutter::EncodableValue(static_cast<int32_t>(box.client_rect.top))},
+         flutter::EncodableValue(static_cast<int32_t>(box.hit_rect.top))},
         {flutter::EncodableValue("right"),
-         flutter::EncodableValue(static_cast<int32_t>(box.client_rect.right))},
+         flutter::EncodableValue(static_cast<int32_t>(box.hit_rect.right))},
         {flutter::EncodableValue("bottom"),
-         flutter::EncodableValue(static_cast<int32_t>(box.client_rect.bottom))},
+         flutter::EncodableValue(static_cast<int32_t>(box.hit_rect.bottom))},
+        {flutter::EncodableValue("visualLeft"),
+         flutter::EncodableValue(static_cast<int32_t>(box.visual_rect.left))},
+        {flutter::EncodableValue("visualTop"),
+         flutter::EncodableValue(static_cast<int32_t>(box.visual_rect.top))},
+        {flutter::EncodableValue("visualRight"),
+         flutter::EncodableValue(static_cast<int32_t>(box.visual_rect.right))},
+        {flutter::EncodableValue("visualBottom"),
+         flutter::EncodableValue(static_cast<int32_t>(box.visual_rect.bottom))},
     });
   }
   return flutter::EncodableMap{
@@ -1398,6 +1464,26 @@ flutter::EncodableMap AttachedLayoutMap(
     }
     result[flutter::EncodableValue("cellGrid")] =
         flutter::EncodableValue(std::move(serialized_grid));
+  }
+  if (!layout.punctuation_visual_bounds.empty()) {
+    flutter::EncodableList serialized_bounds;
+    serialized_bounds.reserve(layout.punctuation_visual_bounds.size());
+    for (const auto& bound : layout.punctuation_visual_bounds) {
+      serialized_bounds.emplace_back(flutter::EncodableMap{
+          {flutter::EncodableValue("codePoint"),
+           flutter::EncodableValue(static_cast<int64_t>(bound.code_point))},
+          {flutter::EncodableValue("left"),
+           flutter::EncodableValue(bound.left)},
+          {flutter::EncodableValue("top"),
+           flutter::EncodableValue(bound.top)},
+          {flutter::EncodableValue("right"),
+           flutter::EncodableValue(bound.right)},
+          {flutter::EncodableValue("bottom"),
+           flutter::EncodableValue(bound.bottom)},
+      });
+    }
+    result[flutter::EncodableValue("punctuationVisualBounds")] =
+        flutter::EncodableValue(std::move(serialized_bounds));
   }
   return result;
 }
@@ -1520,15 +1606,105 @@ struct ForegroundSelectionPending {
   int64_t elapsed_ms = 0;
 };
 
-// TODO-1162 M0 — a completed window_capture WGC single-frame grab (run on a
-// worker thread) posted back to the UI thread, where the pending Flutter reply
-// is completed. LPARAM is a heap-owned WindowCapturePending* (deleted there).
-constexpr UINT WM_WINDOWCAP_DONE = WM_APP + 4;
+constexpr UINT_PTR kWindowCaptureReplyTimerId = 0x46574350;
+constexpr UINT kWindowCaptureReplyTickMs = 16;
 
-struct WindowCapturePending {
-  fushi::WindowCaptureResult result;
-  std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> reply;
-};
+flutter::EncodableMap WindowCaptureReplyMap(
+    const fushi::WindowCaptureResult& capture) {
+  flutter::EncodableMap reply;
+  if (capture.ok && !capture.png.empty()) {
+    reply[flutter::EncodableValue("pngBytes")] =
+        flutter::EncodableValue(capture.png);
+  } else {
+    reply[flutter::EncodableValue("error")] =
+        flutter::EncodableValue(capture.error.empty()
+                                    ? std::string("capture failed")
+                                    : capture.error);
+  }
+  // BUG-1096 — 成功路径上的可观测事实（WGC 光标抑制是否真的生效 / 捕获目标是否
+  // 被从 Magpie 缩放窗重定向）。空则不带字段，Dart 侧只在非空时记一条日志。
+  if (!capture.diagnostics.empty()) {
+    reply[flutter::EncodableValue("diagnostics")] =
+        flutter::EncodableValue(capture.diagnostics);
+  }
+  if (!capture.capture_reason.empty()) {
+    reply[flutter::EncodableValue("captureReason")] =
+        flutter::EncodableValue(capture.capture_reason);
+  }
+  if (capture.has_metadata) {
+    const auto& metadata = capture.metadata;
+    reply[flutter::EncodableValue("metadata")] =
+        flutter::EncodableValue(flutter::EncodableMap{
+            {flutter::EncodableValue("capturedHwnd"),
+             flutter::EncodableValue(metadata.captured_hwnd)},
+            {flutter::EncodableValue("capturedPid"),
+             flutter::EncodableValue(
+                 static_cast<int64_t>(metadata.captured_pid))},
+            {flutter::EncodableValue("clientLeftPx"),
+             flutter::EncodableValue(metadata.client_left_px)},
+            {flutter::EncodableValue("clientTopPx"),
+             flutter::EncodableValue(metadata.client_top_px)},
+            {flutter::EncodableValue("clientWidthPx"),
+             flutter::EncodableValue(metadata.client_width_px)},
+            {flutter::EncodableValue("clientHeightPx"),
+             flutter::EncodableValue(metadata.client_height_px)},
+            {flutter::EncodableValue("imageWidthPx"),
+             flutter::EncodableValue(metadata.image_width_px)},
+            {flutter::EncodableValue("imageHeightPx"),
+             flutter::EncodableValue(metadata.image_height_px)},
+            {flutter::EncodableValue("contentWidthPx"),
+             flutter::EncodableValue(metadata.content_width_px)},
+            {flutter::EncodableValue("contentHeightPx"),
+             flutter::EncodableValue(metadata.content_height_px)},
+            {flutter::EncodableValue("textureWidthPx"),
+             flutter::EncodableValue(metadata.texture_width_px)},
+            {flutter::EncodableValue("textureHeightPx"),
+             flutter::EncodableValue(metadata.texture_height_px)},
+            {flutter::EncodableValue("sourceHwnd"),
+             flutter::EncodableValue(metadata.source_hwnd)},
+            {flutter::EncodableValue("sourcePid"),
+             flutter::EncodableValue(static_cast<int64_t>(metadata.source_pid))},
+            {flutter::EncodableValue("presentationHwnd"),
+             flutter::EncodableValue(metadata.presentation_hwnd)},
+            {flutter::EncodableValue("presentationPid"),
+             flutter::EncodableValue(static_cast<int64_t>(metadata.presentation_pid))},
+            {flutter::EncodableValue("usedPresentationCapture"),
+             flutter::EncodableValue(metadata.used_presentation_capture)},
+            {flutter::EncodableValue("presentationViewportComplete"),
+             flutter::EncodableValue(metadata.presentation_viewport_complete)},
+            {flutter::EncodableValue("sourceClientLeftPx"),
+             flutter::EncodableValue(metadata.source_client_left_px)},
+            {flutter::EncodableValue("sourceClientTopPx"),
+             flutter::EncodableValue(metadata.source_client_top_px)},
+            {flutter::EncodableValue("sourceClientWidthPx"),
+             flutter::EncodableValue(metadata.source_client_width_px)},
+            {flutter::EncodableValue("sourceClientHeightPx"),
+             flutter::EncodableValue(metadata.source_client_height_px)},
+            {flutter::EncodableValue("sourceClientDpi"),
+             flutter::EncodableValue(metadata.source_client_dpi)},
+            {flutter::EncodableValue("sourceViewportLeftPx"),
+             flutter::EncodableValue(metadata.source_viewport_left_px)},
+            {flutter::EncodableValue("sourceViewportTopPx"),
+             flutter::EncodableValue(metadata.source_viewport_top_px)},
+            {flutter::EncodableValue("sourceViewportWidthPx"),
+             flutter::EncodableValue(metadata.source_viewport_width_px)},
+            {flutter::EncodableValue("sourceViewportHeightPx"),
+             flutter::EncodableValue(metadata.source_viewport_height_px)},
+            {flutter::EncodableValue("destinationViewportWidthPx"),
+             flutter::EncodableValue(metadata.destination_viewport_width_px)},
+            {flutter::EncodableValue("destinationViewportHeightPx"),
+             flutter::EncodableValue(metadata.destination_viewport_height_px)},
+            {flutter::EncodableValue("dpi"),
+             flutter::EncodableValue(metadata.dpi)},
+            {flutter::EncodableValue("clientAreaComplete"),
+             flutter::EncodableValue(metadata.client_area_complete)},
+            {flutter::EncodableValue("capturedAtTickMs"),
+             flutter::EncodableValue(static_cast<int64_t>(
+                 metadata.captured_at_tick_ms))},
+        });
+  }
+  return reply;
+}
 
 }  // namespace
 
@@ -2778,11 +2954,12 @@ void FlutterWindow::RegisterForegroundSelectionChannel() {
 
 // TODO-1162 M0 — window_capture channel (Windows-only external-window mining).
 // `listWindows` runs synchronously (EnumWindows is instant). `captureWindow`
-// runs the blocking WGC single-frame grab on a DETACHED worker thread and
-// marshals the PNG/error back to the UI thread via WM_WINDOWCAP_DONE (the
-// Flutter MethodResult is not thread-safe), mirroring the foreground-selection
-// channel. Both fail-open with an error map (never a silent success).
+// runs the blocking single-frame grab on a worker thread. An owned completion
+// queue delivers pixels/error on the UI thread; workers never retain a Flutter
+// MethodResult or host HWND. Host teardown cancels pending replies before the
+// Flutter messenger is destroyed.
 void FlutterWindow::RegisterWindowCaptureChannel() {
+  window_capture_replies_ = std::make_unique<fushi::WindowCaptureReplyQueue>();
   window_capture_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(),
@@ -2911,21 +3088,27 @@ void FlutterWindow::RegisterWindowCaptureChannel() {
         }
         const HWND target =
             reinterpret_cast<HWND>(static_cast<intptr_t>(hwnd_val));
-        const HWND host = GetHandle();
-        auto* pending = new WindowCapturePending();
-        pending->reply = std::move(result);
-        std::thread([target, host, pending]() {
-          pending->result = fushi::CaptureWindowPng(target);
-          if (!PostMessage(host, WM_WINDOWCAP_DONE, 0,
-                           reinterpret_cast<LPARAM>(pending))) {
-            pending->reply->Success(
-                flutter::EncodableValue(flutter::EncodableMap{
-                    {flutter::EncodableValue("error"),
-                     flutter::EncodableValue(
-                         std::string("post message failed"))}}));
-            delete pending;
-          }
-        }).detach();
+        // Keep replies UI-owned. The completion timer is active only while a
+        // request exists; it schedules delivery, never retries the capture.
+        if (window_capture_replies_->empty() &&
+            SetTimer(GetHandle(), kWindowCaptureReplyTimerId,
+                     kWindowCaptureReplyTickMs, nullptr) == 0) {
+          result->Error("capture_dispatch_failed",
+                        "Could not schedule capture completion");
+          return;
+        }
+        auto reply = std::shared_ptr<
+            flutter::MethodResult<flutter::EncodableValue>>(std::move(result));
+        auto completion = window_capture_replies_->Enqueue(
+            [reply](fushi::WindowCaptureResult captured) {
+              reply->Success(
+                  flutter::EncodableValue(WindowCaptureReplyMap(captured)));
+            });
+        if (completion) {
+          std::thread([target, completion]() {
+            completion->Publish(fushi::CaptureWindowPng(target));
+          }).detach();
+        }
       });
 }
 
@@ -3661,6 +3844,15 @@ bool FlutterWindow::ApplyWindowIcon(const std::wstring& path) {
 }
 
 void FlutterWindow::OnDestroy() {
+  if (window_capture_channel_) {
+    window_capture_channel_->SetMethodCallHandler(nullptr);
+    window_capture_channel_.reset();
+  }
+  KillTimer(GetHandle(), kWindowCaptureReplyTimerId);
+  if (window_capture_replies_) {
+    window_capture_replies_->Close();
+    window_capture_replies_.reset();
+  }
   // TODO-1066 — 撤销全局侧键的 Raw Input 登记。登记是绑在**本窗口 HWND** 上的
   // （RIDEV_INPUTSINK 要求 hwndTarget），HWND 一销毁那条登记就成了悬空目标，
   // 必须在这里主动摘掉而不是等进程退出兜底。
@@ -3700,6 +3892,15 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  if (message == WM_TIMER && wparam == kWindowCaptureReplyTimerId) {
+    if (window_capture_replies_) {
+      window_capture_replies_->Drain();
+    }
+    if (!window_capture_replies_ || window_capture_replies_->empty()) {
+      KillTimer(hwnd, kWindowCaptureReplyTimerId);
+    }
+    return 0;
+  }
   // HDR passthrough host: keep the libmpv popup glued behind the main window.
   // Non-consuming — these messages fall through to their normal handlers.
   if (hdr_video_host_ && hdr_video_host_->IsCreated()) {
@@ -3813,96 +4014,6 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
         } else {
           pending->result->Success(flutter::EncodableValue());
         }
-        delete pending;
-      }
-      return 0;
-    }
-    case WM_WINDOWCAP_DONE: {
-      // TODO-1162 M0 — a worker-thread WGC capture finished; complete its
-      // pending Flutter reply on the UI thread. On success return
-      // {pngBytes: Uint8List}; on failure {error: String} (fail-open, never a
-      // silent empty success).
-      auto* pending = reinterpret_cast<WindowCapturePending*>(lparam);
-      if (pending != nullptr) {
-        flutter::EncodableMap reply;
-        if (pending->result.ok && !pending->result.png.empty()) {
-          reply[flutter::EncodableValue("pngBytes")] =
-              flutter::EncodableValue(pending->result.png);
-        } else {
-          reply[flutter::EncodableValue("error")] =
-              flutter::EncodableValue(pending->result.error.empty()
-                                          ? std::string("capture failed")
-                                          : pending->result.error);
-        }
-        // BUG-1096 — 成功路径上的可观测事实（WGC 光标抑制是否真的生效 / 捕获目标是否
-        // 被从 Magpie 缩放窗重定向）。空则不带字段，Dart 侧只在非空时记一条日志。
-        if (!pending->result.diagnostics.empty()) {
-          reply[flutter::EncodableValue("diagnostics")] =
-              flutter::EncodableValue(pending->result.diagnostics);
-        }
-        if (!pending->result.capture_reason.empty()) {
-          reply[flutter::EncodableValue("captureReason")] =
-              flutter::EncodableValue(pending->result.capture_reason);
-        }
-        if (pending->result.has_metadata) {
-          const auto& metadata = pending->result.metadata;
-          reply[flutter::EncodableValue("metadata")] =
-              flutter::EncodableValue(flutter::EncodableMap{
-                  {flutter::EncodableValue("capturedHwnd"),
-                   flutter::EncodableValue(metadata.captured_hwnd)},
-                  {flutter::EncodableValue("capturedPid"),
-                   flutter::EncodableValue(
-                       static_cast<int64_t>(metadata.captured_pid))},
-                  {flutter::EncodableValue("clientLeftPx"),
-                   flutter::EncodableValue(metadata.client_left_px)},
-                  {flutter::EncodableValue("clientTopPx"),
-                   flutter::EncodableValue(metadata.client_top_px)},
-                  {flutter::EncodableValue("clientWidthPx"),
-                   flutter::EncodableValue(metadata.client_width_px)},
-                  {flutter::EncodableValue("clientHeightPx"),
-                   flutter::EncodableValue(metadata.client_height_px)},
-                  {flutter::EncodableValue("imageWidthPx"),
-                   flutter::EncodableValue(metadata.image_width_px)},
-                  {flutter::EncodableValue("imageHeightPx"),
-                   flutter::EncodableValue(metadata.image_height_px)},
-                  {flutter::EncodableValue("contentWidthPx"),
-                   flutter::EncodableValue(metadata.content_width_px)},
-                  {flutter::EncodableValue("contentHeightPx"),
-                   flutter::EncodableValue(metadata.content_height_px)},
-                  {flutter::EncodableValue("textureWidthPx"),
-                   flutter::EncodableValue(metadata.texture_width_px)},
-                  {flutter::EncodableValue("textureHeightPx"),
-                   flutter::EncodableValue(metadata.texture_height_px)},
-                  {flutter::EncodableValue("sourceHwnd"),
-                   flutter::EncodableValue(metadata.source_hwnd)},
-                  {flutter::EncodableValue("sourcePid"),
-                   flutter::EncodableValue(static_cast<int64_t>(metadata.source_pid))},
-                  {flutter::EncodableValue("presentationHwnd"),
-                   flutter::EncodableValue(metadata.presentation_hwnd)},
-                  {flutter::EncodableValue("presentationPid"),
-                   flutter::EncodableValue(static_cast<int64_t>(metadata.presentation_pid))},
-                  {flutter::EncodableValue("usedPresentationCapture"),
-                   flutter::EncodableValue(metadata.used_presentation_capture)},
-                  {flutter::EncodableValue("presentationViewportComplete"),
-                   flutter::EncodableValue(metadata.presentation_viewport_complete)},
-                  {flutter::EncodableValue("sourceViewportWidthPx"),
-                   flutter::EncodableValue(metadata.source_viewport_width_px)},
-                  {flutter::EncodableValue("sourceViewportHeightPx"),
-                   flutter::EncodableValue(metadata.source_viewport_height_px)},
-                  {flutter::EncodableValue("destinationViewportWidthPx"),
-                   flutter::EncodableValue(metadata.destination_viewport_width_px)},
-                  {flutter::EncodableValue("destinationViewportHeightPx"),
-                   flutter::EncodableValue(metadata.destination_viewport_height_px)},
-                  {flutter::EncodableValue("dpi"),
-                   flutter::EncodableValue(metadata.dpi)},
-                  {flutter::EncodableValue("clientAreaComplete"),
-                   flutter::EncodableValue(metadata.client_area_complete)},
-                  {flutter::EncodableValue("capturedAtTickMs"),
-                   flutter::EncodableValue(static_cast<int64_t>(
-                       metadata.captured_at_tick_ms))},
-              });
-        }
-        pending->reply->Success(flutter::EncodableValue(std::move(reply)));
         delete pending;
       }
       return 0;

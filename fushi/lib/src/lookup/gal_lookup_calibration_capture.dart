@@ -32,9 +32,8 @@ class GalLookupCalibrationCapture {
   final String sourceText;
   final Uint8List pngBytes;
 
-  /// Pixel space of [pngBytes].  With Magpie this can be the source game's
-  /// client rather than the presentation client; the normalized draft is
-  /// later applied to the live presentation size.
+  /// Pixel space of [pngBytes]. Magpie captures use the visible destination
+  /// viewport; application converts the fitted layout back to source space.
   final GalLookupReferenceClientV1 referenceClient;
   final String exePath;
   final String exeSha256;
@@ -220,11 +219,13 @@ class GalLookupCalibrationCaptureException implements Exception {
     this.failure, {
     this.captureReason,
     this.captureMetadata,
+    this.captureErrorCodes = const <String>[],
   });
 
   final GalLookupCalibrationCaptureFailure failure;
   final String? captureReason;
   final WindowCaptureMetadata? captureMetadata;
+  final List<String> captureErrorCodes;
 
   @override
   String toString() => 'GalLookupCalibrationCaptureException(${failure.name})';
@@ -279,6 +280,7 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
         error.failure,
         captureReason: result.captureReason,
         captureMetadata: result.metadata,
+        captureErrorCodes: _captureErrorCodes(result.diagnostics),
       );
     }
   } finally {
@@ -299,6 +301,7 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
     failure,
     captureReason: result.captureReason,
     captureMetadata: result.metadata,
+    captureErrorCodes: _captureErrorCodes(result.diagnostics),
   );
   if (!result.ok) {
     throw captureFailure(
@@ -339,14 +342,26 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
       capturedAspect.isFinite &&
       referenceAspect.isFinite &&
       ((capturedAspect - referenceAspect).abs() / referenceAspect) <= 0.01;
+  final bool hasSourceProvenance =
+      metadata.sourceClientWidthPx != 0 ||
+      metadata.sourceClientHeightPx != 0 ||
+      metadata.sourceClientDpi != 0;
   final bool validPresentation =
       presentationTarget &&
-      sourceClient &&
-      ((metadata.sourceViewportWidthPx / metadata.sourceViewportHeightPx -
-                      capturedAspect)
-                  .abs() /
-              capturedAspect) <=
-          0.01;
+      (hasSourceProvenance
+          ? metadata.hasSourceClientMapping &&
+                metadata.sourceClientWidthPx ==
+                    before.referenceClient.widthPx &&
+                metadata.sourceClientHeightPx ==
+                    before.referenceClient.heightPx &&
+                metadata.sourceClientDpi == before.referenceClient.dpi
+          : sourceClient &&
+                ((metadata.sourceViewportWidthPx /
+                                    metadata.sourceViewportHeightPx -
+                                capturedAspect)
+                            .abs() /
+                        capturedAspect) <=
+                    0.01);
   if (metadata.usedPresentationCapture
       ? !validPresentation
       : !sameClient && !sourceClient) {
@@ -385,6 +400,20 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
     selectedThreadKey: before.selectedThreadKey,
     captureMetadata: metadata,
   );
+}
+
+List<String> _captureErrorCodes(String? diagnostics) {
+  if (diagnostics == null) return const <String>[];
+  // Keep numeric HRESULTs, never arbitrary platform messages or game paths.
+  return RegExp(r'\bhr=(0x[0-9a-fA-F]{8})\b')
+      .allMatches(
+        diagnostics.length > 4096
+            ? diagnostics.substring(0, 4096)
+            : diagnostics,
+      )
+      .take(4)
+      .map((RegExpMatch match) => match.group(1)!)
+      .toList(growable: false);
 }
 
 bool _pngMatchesClient(Uint8List bytes, WindowCaptureMetadata metadata) {

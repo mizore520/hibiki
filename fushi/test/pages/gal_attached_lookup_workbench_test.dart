@@ -154,7 +154,7 @@ void main() {
         reason: '这条提示只为校准服务，校准不露面时它也不该占位',
       );
       expect(
-        find.byKey(const ValueKey<String>('game-attached-lookup-risk-status')),
+        find.byKey(const ValueKey<String>('game-attached-lookup-details')),
         findsOneWidget,
       );
       // BUG-2154：「确认点击风险」那个按钮不能再出现。它原本是通用覆盖下**每个**游戏的

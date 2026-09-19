@@ -13,6 +13,7 @@
 
 #include "attached_capture_token.h"
 #include "attached_hover_tracker.h"
+#include "attached_magpie_surface_geometry.h"
 #include "attached_overlayability.h"
 #include "attached_text_layout.h"
 
@@ -39,6 +40,7 @@ public:
   using NormalizedRect = fushi::attached_text_layout::NormalizedRect;
   using ReferenceClient = fushi::attached_text_layout::ReferenceClient;
   using Layout = fushi::attached_text_layout::Layout;
+  using SurfaceGeometry = fushi::attached_magpie_surface_geometry::Mapping;
 
   struct TargetInfo {
     uint32_t pid = 0;
@@ -366,6 +368,10 @@ private:
   NormalizedRect calibration_rect_;
   NormalizedRect pre_calibration_rect_;
   bool pre_calibration_configured_ = false;
+  SurfaceGeometry surface_geometry_;
+  RECT source_body_screen_rect_{};
+  RECT mapped_body_screen_rect_{};
+  int presentation_dpi_ = 96;
   ReferenceClient configured_reference_client_;
   ReferenceClient live_reference_client_;
   Layout layout_;

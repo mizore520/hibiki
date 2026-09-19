@@ -94,6 +94,68 @@ Matcher throwsCaptureFailure(GalLookupCalibrationCaptureFailure failure) =>
 
 void main() {
   test(
+    'cropped Magpie image keeps source mapping across save and reload',
+    () async {
+      final Map<String, Object?> fields = <String, Object?>{
+        ..._presentationMetadata(),
+        'sourceClientLeftPx': -10,
+        'sourceClientTopPx': 5,
+        'sourceClientWidthPx': 4,
+        'sourceClientHeightPx': 4,
+        'sourceClientDpi': 120,
+        'sourceViewportLeftPx': -9,
+        'sourceViewportTopPx': 7,
+        'sourceViewportWidthPx': 2,
+        'sourceViewportHeightPx': 1,
+      };
+      final GalLookupCalibrationCaptureSnapshot before = _snapshot(
+        client: const GalLookupReferenceClientV1(
+          widthPx: 4,
+          heightPx: 4,
+          dpi: 120,
+        ),
+      );
+      final GalLookupCalibrationCapture sample =
+          await captureGalLookupCalibrationSample(
+            readSnapshot: () => before,
+            acquireLease: () async => null,
+            captureWindow: (_) async => WindowCaptureResult(
+              pngBytes: _png(),
+              metadata: WindowCaptureMetadata.tryFromMap(fields),
+            ),
+          );
+      expect(sample.referenceClient, _client);
+      final GalLookupCalibrationCapture restored =
+          GalLookupCalibrationCapture.tryFromJson(sample.toJson())!;
+      expect(restored.captureMetadata!.hasSourceClientMapping, isTrue);
+      expect(restored.captureMetadata!.sourceViewportLeftPx, -9);
+      expect(restored.captureMetadata!.sourceClientDpi, 120);
+      for (final Map<String, Object?> invalid in [
+        <String, Object?>{'sourceClientDpi': 96},
+        <String, Object?>{'sourceClientWidthPx': 5},
+        <String, Object?>{'sourceViewportTopPx': 4},
+      ]) {
+        await expectLater(
+          captureGalLookupCalibrationSample(
+            readSnapshot: () => before,
+            acquireLease: () async => null,
+            captureWindow: (_) async => WindowCaptureResult(
+              pngBytes: _png(),
+              metadata: WindowCaptureMetadata.tryFromMap({
+                ...fields,
+                ...invalid,
+              }),
+            ),
+          ),
+          throwsCaptureFailure(
+            GalLookupCalibrationCaptureFailure.clientMappingUnavailable,
+          ),
+        );
+      }
+    },
+  );
+
+  test(
     'Magpie viewport keeps actual capture identity and survives disk reload',
     () async {
       final WindowCaptureMetadata metadata = WindowCaptureMetadata.tryFromMap(
@@ -312,6 +374,7 @@ void main() {
           error: 'capture timed out',
           captureReason: 'no_frame',
           metadata: _metadata,
+          diagnostics: 'private platform detail; CreateForWindow hr=0x80070057',
         ),
       ),
       throwsA(
@@ -326,6 +389,12 @@ void main() {
                   error.captureReason,
               'captureReason',
               'no_frame',
+            )
+            .having(
+              (GalLookupCalibrationCaptureException error) =>
+                  error.captureErrorCodes,
+              'numeric error codes only',
+              <String>['0x80070057'],
             )
             .having(
               (GalLookupCalibrationCaptureException error) =>

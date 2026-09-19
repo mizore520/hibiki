@@ -10784,8 +10784,6 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get game_lookup_samples_boxes => '显示点击区域';
   @override
-  String get game_lookup_samples_opacity => '点击区域透明度';
-  @override
   String get game_lookup_samples_native_hint =>
       '方框表示实际用于选字的区域。调整排版，让它们覆盖原文对应的字。';
   @override
@@ -10976,4 +10974,7 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get game_lookup_samples_pixel_advanced_hint =>
       '这些数值是橙色识别框在原始截图中的像素位置，是手动备用定位，不是字的字号。';
+  @override
+  String get game_lookup_samples_capture_unavailable =>
+      '未能采集这个窗口。已保存的校准不受影响；采集失败原因已记录到日志，便于排查。';
 }

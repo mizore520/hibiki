@@ -5,6 +5,7 @@
 #include <dwmapi.h>
 #include <d3d11.h>
 #include <dxgi.h>
+#include <shellapi.h>
 #include <wincodec.h>
 #include <shlwapi.h>
 
@@ -23,10 +24,12 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cerrno>
+#include <cstdlib>
 #include <cstdio>
+#include <cstring>
+#include <cwchar>
 #include <limits>
-#include <memory>
-#include <thread>
 
 namespace fushi {
 
@@ -464,6 +467,11 @@ std::vector<uint8_t> EncodeBgraToPng(const uint8_t* pixels, UINT width,
 }
 
 constexpr UINT kPrintWindowTimeoutMs = 750;
+constexpr UINT kPrintWindowHelperExitGraceMs = 500;
+constexpr wchar_t kPrintWindowHelperSwitch[] =
+    L"--fushi-print-window-helper";
+constexpr uint32_t kPrintWindowHelperMagic = 0x46505748u;
+constexpr uint32_t kPrintWindowHelperVersion = 1u;
 std::atomic<bool> g_print_window_worker_busy{false};
 
 enum class PrintWindowWorkerStatus {
@@ -475,9 +483,103 @@ enum class PrintWindowWorkerStatus {
   kPrintFailed,
   kNoPixels,
   kPartialPixels,
+  kBlackPixels,
+  kTransparentPixels,
   kClientChanged,
   kPngEncodeFailed,
+  kHelperProtocolFailed,
   kComplete,
+};
+
+// This is the only data crossing the helper boundary. The mapping contains a
+// fixed header followed by one bounded BGRA buffer; it never contains a C++
+// container, a GDI handle, or a pointer into either process.
+struct PrintWindowHelperSharedState {
+  uint32_t magic = 0;
+  uint32_t version = 0;
+  uint32_t width = 0;
+  uint32_t height = 0;
+  uint32_t stride = 0;
+  uint32_t reserved = 0;
+  uint64_t pixel_bytes = 0;
+  volatile LONG status =
+      static_cast<LONG>(PrintWindowWorkerStatus::kPending);
+  volatile LONG failure_hr = static_cast<LONG>(S_OK);
+  WindowCaptureMetadata initial_client;
+  WindowCaptureMetadata final_client;
+};
+
+class ScopedWinHandle {
+ public:
+  ScopedWinHandle() = default;
+  explicit ScopedWinHandle(HANDLE handle) : handle_(handle) {}
+  ScopedWinHandle(const ScopedWinHandle&) = delete;
+  ScopedWinHandle& operator=(const ScopedWinHandle&) = delete;
+  ~ScopedWinHandle() { reset(); }
+
+  HANDLE get() const { return handle_; }
+  explicit operator bool() const {
+    return handle_ != nullptr && handle_ != INVALID_HANDLE_VALUE;
+  }
+
+  void reset(HANDLE handle = nullptr) {
+    if (*this) {
+      CloseHandle(handle_);
+    }
+    handle_ = handle;
+  }
+
+ private:
+  HANDLE handle_ = nullptr;
+};
+
+class ScopedMappedView {
+ public:
+  explicit ScopedMappedView(void* view) : view_(view) {}
+  ScopedMappedView(const ScopedMappedView&) = delete;
+  ScopedMappedView& operator=(const ScopedMappedView&) = delete;
+  ~ScopedMappedView() {
+    if (view_ != nullptr) {
+      UnmapViewOfFile(view_);
+    }
+  }
+
+  void* get() const { return view_; }
+  explicit operator bool() const { return view_ != nullptr; }
+
+ private:
+  void* view_ = nullptr;
+};
+
+struct PrintWindowBusyGuard {
+  ~PrintWindowBusyGuard() {
+    g_print_window_worker_busy.store(false, std::memory_order_release);
+  }
+};
+
+struct PrintWindowGdiResources {
+  HDC dc = nullptr;
+  HBITMAP dib = nullptr;
+  HGDIOBJ previous = nullptr;
+  void* bits = nullptr;
+
+  void ReleaseGdiOnOwnerThread() {
+    if (dc != nullptr && previous != nullptr && previous != HGDI_ERROR) {
+      SelectObject(dc, previous);
+    }
+    previous = nullptr;
+    if (dib != nullptr) {
+      DeleteObject(dib);
+    }
+    dib = nullptr;
+    bits = nullptr;
+    if (dc != nullptr) {
+      DeleteDC(dc);
+    }
+    dc = nullptr;
+  }
+
+  ~PrintWindowGdiResources() { ReleaseGdiOnOwnerThread(); }
 };
 
 HRESULT LastWin32ErrorAsHresult() {
@@ -487,21 +589,241 @@ HRESULT LastWin32ErrorAsHresult() {
 
 // WGC cannot create an item for some composition-only windows. PrintWindow is
 // a bounded compatibility path for that narrow case. It must never become a
-// generic screen/window fallback: the target must have explicitly opted out of
-// DWM redirection, be visible and unprotected, and remain geometrically stable.
+// generic screen/window fallback: the target must be visible and unprotected,
+// and must remain geometrically stable.
+void SignalPrintWindowHelper(PrintWindowHelperSharedState* state,
+                             PrintWindowWorkerStatus status, HRESULT hr,
+                             HANDLE completed) {
+  if (state != nullptr) {
+    state->failure_hr = static_cast<LONG>(hr);
+    ::InterlockedExchange(&state->status, static_cast<LONG>(status));
+  }
+  if (completed != nullptr) {
+    SetEvent(completed);
+  }
+}
+
+bool VerifyPrintWindowTarget(HWND hwnd) {
+  if (hwnd == nullptr || !IsWindow(hwnd) || !IsWindowVisible(hwnd) ||
+      IsIconic(hwnd)) {
+    return false;
+  }
+  BOOL cloaked = FALSE;
+  if (FAILED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &cloaked,
+                                   sizeof(cloaked))) ||
+      cloaked) {
+    return false;
+  }
+  DWORD affinity = WDA_NONE;
+  if (!GetWindowDisplayAffinity(hwnd, &affinity) || affinity != WDA_NONE) {
+    return false;
+  }
+  return true;
+}
+
+PrintWindowWorkerStatus ValidatePrintWindowPixels(uint8_t* bytes,
+                                                  size_t buffer_size,
+                                                  UINT width, UINT height) {
+  size_t untouched_pixels = 0;
+  bool has_non_black_rgb = false;
+  bool has_nonzero_alpha = false;
+  for (size_t i = 0; i < buffer_size; i += 4) {
+    const bool unchanged =
+        bytes[i] == static_cast<uint8_t>(0xA5u ^ (i & 0x3Fu)) &&
+        bytes[i + 1] == static_cast<uint8_t>(0xA5u ^ ((i + 1) & 0x3Fu)) &&
+        bytes[i + 2] == static_cast<uint8_t>(0xA5u ^ ((i + 2) & 0x3Fu)) &&
+        bytes[i + 3] == static_cast<uint8_t>(0xA5u ^ ((i + 3) & 0x3Fu));
+    if (unchanged) {
+      ++untouched_pixels;
+    }
+    if (bytes[i] != 0 || bytes[i + 1] != 0 || bytes[i + 2] != 0) {
+      has_non_black_rgb = true;
+    }
+    if (bytes[i + 3] != 0) {
+      has_nonzero_alpha = true;
+    }
+    // A 32bpp BI_RGB DIB does not promise meaningful alpha. A captured game
+    // client is opaque, so normalize it before handing pixels to WIC.
+    bytes[i + 3] = 0xFF;
+  }
+  const size_t pixel_count = static_cast<size_t>(width) * height;
+  if (untouched_pixels == pixel_count) {
+    return PrintWindowWorkerStatus::kNoPixels;
+  }
+  if (untouched_pixels != 0) {
+    return PrintWindowWorkerStatus::kPartialPixels;
+  }
+  if (!has_non_black_rgb) {
+    // A BI_RGB DIB may leave alpha at zero even after a visible WM_PRINT.
+    // Treat an all-black RGB frame as unusable; distinguish an explicitly
+    // zero-alpha black frame from a non-transparent black frame in logs.
+    return has_nonzero_alpha ? PrintWindowWorkerStatus::kBlackPixels
+                             : PrintWindowWorkerStatus::kTransparentPixels;
+  }
+  return PrintWindowWorkerStatus::kComplete;
+}
+
+bool ParsePointerArgument(const wchar_t* value, ULONG_PTR* parsed) {
+  if (value == nullptr || parsed == nullptr || value[0] == L'\0') {
+    return false;
+  }
+  errno = 0;
+  wchar_t* end = nullptr;
+  const unsigned long long number = std::wcstoull(value, &end, 10);
+  if (errno == ERANGE || end == value || end == nullptr || *end != L'\0') {
+    return false;
+  }
+  const unsigned long long maximum = static_cast<unsigned long long>(
+      (std::numeric_limits<ULONG_PTR>::max)());
+  if (number == 0 || number > maximum) {
+    return false;
+  }
+  *parsed = static_cast<ULONG_PTR>(number);
+  return true;
+}
+
+std::wstring PointerArgument(ULONG_PTR value) {
+  return std::to_wstring(static_cast<unsigned long long>(value));
+}
+
+int RunPrintWindowHelperFromCommandLine() {
+  int argc = 0;
+  wchar_t** argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+  if (argv == nullptr) {
+    return -1;
+  }
+  const bool helper_mode = argc > 1 &&
+                           wcscmp(argv[1], kPrintWindowHelperSwitch) == 0;
+  if (!helper_mode) {
+    LocalFree(argv);
+    return -1;
+  }
+  ULONG_PTR target_value = 0;
+  ULONG_PTR mapping_value = 0;
+  ULONG_PTR event_value = 0;
+  const bool valid_arguments =
+      argc == 5 && ParsePointerArgument(argv[2], &target_value) &&
+      ParsePointerArgument(argv[3], &mapping_value) &&
+      ParsePointerArgument(argv[4], &event_value);
+  LocalFree(argv);
+  if (!valid_arguments) {
+    return EXIT_FAILURE;
+  }
+
+  const HWND hwnd = reinterpret_cast<HWND>(target_value);
+  ScopedWinHandle mapping(reinterpret_cast<HANDLE>(mapping_value));
+  ScopedWinHandle completed(reinterpret_cast<HANDLE>(event_value));
+  ScopedMappedView shared_view(MapViewOfFile(mapping.get(),
+                                             FILE_MAP_READ | FILE_MAP_WRITE, 0,
+                                             0, 0));
+  if (!shared_view) {
+    SetEvent(completed.get());
+    return EXIT_FAILURE;
+  }
+  auto* state = static_cast<PrintWindowHelperSharedState*>(shared_view.get());
+  if (state->magic != kPrintWindowHelperMagic ||
+      state->version != kPrintWindowHelperVersion || state->width == 0 ||
+      state->height == 0 ||
+      !CaptureSizeWithinBudget(state->width, state->height) ||
+      state->stride != state->width * 4u ||
+      state->pixel_bytes != static_cast<uint64_t>(state->stride) *
+                                state->height) {
+    SignalPrintWindowHelper(state, PrintWindowWorkerStatus::kHelperProtocolFailed,
+                             E_INVALIDARG, completed.get());
+    return EXIT_FAILURE;
+  }
+  if (!VerifyPrintWindowTarget(hwnd)) {
+    SignalPrintWindowHelper(state, PrintWindowWorkerStatus::kClientChanged,
+                             S_OK, completed.get());
+    return EXIT_FAILURE;
+  }
+  WindowCaptureMetadata current_client;
+  if (!ReadCaptureClient(hwnd, &current_client) ||
+      !SameCaptureClient(state->initial_client, current_client)) {
+    SignalPrintWindowHelper(state, PrintWindowWorkerStatus::kClientChanged,
+                             S_OK, completed.get());
+    return EXIT_FAILURE;
+  }
+
+  const UINT width = state->width;
+  const UINT height = state->height;
+  const size_t buffer_size = static_cast<size_t>(state->pixel_bytes);
+  BITMAPINFO bitmap_info{};
+  bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+  bitmap_info.bmiHeader.biWidth = static_cast<LONG>(width);
+  bitmap_info.bmiHeader.biHeight = -static_cast<LONG>(height);
+  bitmap_info.bmiHeader.biPlanes = 1;
+  bitmap_info.bmiHeader.biBitCount = 32;
+  bitmap_info.bmiHeader.biCompression = BI_RGB;
+
+  PrintWindowGdiResources resources;
+  auto finish = [&](PrintWindowWorkerStatus status, HRESULT hr) {
+    resources.ReleaseGdiOnOwnerThread();
+    SignalPrintWindowHelper(state, status, hr, completed.get());
+  };
+  resources.dc = CreateCompatibleDC(nullptr);
+  if (resources.dc == nullptr) {
+    finish(PrintWindowWorkerStatus::kDcCreateFailed,
+           LastWin32ErrorAsHresult());
+    return EXIT_FAILURE;
+  }
+  resources.dib = CreateDIBSection(resources.dc, &bitmap_info, DIB_RGB_COLORS,
+                                   &resources.bits, nullptr, 0);
+  if (resources.dib == nullptr || resources.bits == nullptr) {
+    finish(PrintWindowWorkerStatus::kDibCreateFailed,
+           LastWin32ErrorAsHresult());
+    return EXIT_FAILURE;
+  }
+  resources.previous = SelectObject(resources.dc, resources.dib);
+  if (resources.previous == nullptr || resources.previous == HGDI_ERROR) {
+    finish(PrintWindowWorkerStatus::kDibSelectFailed,
+           LastWin32ErrorAsHresult());
+    return EXIT_FAILURE;
+  }
+
+  uint8_t* bytes = static_cast<uint8_t*>(resources.bits);
+  for (size_t i = 0; i < buffer_size; ++i) {
+    bytes[i] = static_cast<uint8_t>(0xA5u ^ (i & 0x3Fu));
+  }
+  SetLastError(ERROR_SUCCESS);
+  if (!PrintWindow(hwnd, resources.dc, PW_CLIENTONLY | PW_RENDERFULLCONTENT)) {
+    finish(PrintWindowWorkerStatus::kPrintFailed, LastWin32ErrorAsHresult());
+    return EXIT_FAILURE;
+  }
+  GdiFlush();
+  uint8_t* shared_pixels = reinterpret_cast<uint8_t*>(state) +
+                           sizeof(PrintWindowHelperSharedState);
+  std::memcpy(shared_pixels, bytes, buffer_size);
+  WindowCaptureMetadata final_client;
+  if (!ReadCaptureClient(hwnd, &final_client) ||
+      !SameCaptureClient(state->initial_client, final_client)) {
+    finish(PrintWindowWorkerStatus::kClientChanged, S_OK);
+    return EXIT_FAILURE;
+  }
+  state->final_client = final_client;
+  finish(PrintWindowWorkerStatus::kComplete, S_OK);
+  return EXIT_SUCCESS;
+}
+
+void TerminatePrintWindowHelper(HANDLE job, HANDLE process) {
+  if (job != nullptr && job != INVALID_HANDLE_VALUE) {
+    TerminateJobObject(job, ERROR_TIMEOUT);
+  }
+  if (process != nullptr && process != INVALID_HANDLE_VALUE &&
+      WaitForSingleObject(process, 0) != WAIT_OBJECT_0) {
+    TerminateProcess(process, ERROR_TIMEOUT);
+  }
+  if (process != nullptr && process != INVALID_HANDLE_VALUE) {
+    WaitForSingleObject(process, kPrintWindowHelperExitGraceMs);
+  }
+}
+
 bool TryCapturePrintWindow(HWND hwnd, WindowCaptureResult* out) {
   if (out == nullptr) {
     return false;
   }
   if (hwnd == nullptr || !IsWindow(hwnd)) {
     AppendDiagnostic(out, "PrintWindow target invalid", E_HANDLE);
-    return false;
-  }
-  if ((GetWindowLongPtrW(hwnd, GWL_EXSTYLE) & WS_EX_NOREDIRECTIONBITMAP) ==
-      0) {
-    AppendDiagnostic(out,
-                     "PrintWindow rejected: WS_EX_NOREDIRECTIONBITMAP absent",
-                     S_OK);
     return false;
   }
   if (!IsWindowVisible(hwnd)) {
@@ -558,229 +880,284 @@ bool TryCapturePrintWindow(HWND hwnd, WindowCaptureResult* out) {
 
   const UINT width = static_cast<UINT>(initial_client.client_width_px);
   const UINT height = static_cast<UINT>(initial_client.client_height_px);
-  BITMAPINFO bitmap_info{};
-  bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-  bitmap_info.bmiHeader.biWidth = static_cast<LONG>(width);
-  bitmap_info.bmiHeader.biHeight = -static_cast<LONG>(height);
-  bitmap_info.bmiHeader.biPlanes = 1;
-  bitmap_info.bmiHeader.biBitCount = 32;
-  bitmap_info.bmiHeader.biCompression = BI_RGB;
-
-  bool expected_idle = false;
-  if (!g_print_window_worker_busy.compare_exchange_strong(expected_idle, true)) {
-    AppendDiagnostic(out, "PrintWindow fallback busy after a previous timeout",
-                     S_OK);
+  const UINT stride = width * 4u;
+  const size_t buffer_size = static_cast<size_t>(stride) * height;
+  const size_t mapping_size = sizeof(PrintWindowHelperSharedState) + buffer_size;
+  if (mapping_size < buffer_size) {
+    AppendDiagnostic(out, "PrintWindow shared buffer size overflow", E_INVALIDARG);
     return false;
   }
 
-  struct PrintWindowTask {
-    HDC dc = nullptr;
-    HBITMAP dib = nullptr;
-    HGDIOBJ previous = nullptr;
-    HANDLE completed = nullptr;
-    void* bits = nullptr;
-    HRESULT failure_hr = S_OK;
-    PrintWindowWorkerStatus status = PrintWindowWorkerStatus::kPending;
-    WindowCaptureMetadata final_client;
-    std::vector<uint8_t> png;
+  bool expected_idle = false;
+  if (!g_print_window_worker_busy.compare_exchange_strong(
+          expected_idle, true, std::memory_order_acq_rel)) {
+    AppendDiagnostic(out,
+                     "PrintWindow fallback busy while another helper is running",
+                     S_OK);
+    return false;
+  }
+  PrintWindowBusyGuard busy_guard;
 
-    void ReleaseGdiOnOwnerThread() {
-      if (dc != nullptr && previous != nullptr && previous != HGDI_ERROR) {
-        SelectObject(dc, previous);
-      }
-      previous = nullptr;
-      if (dib != nullptr) {
-        DeleteObject(dib);
-      }
-      dib = nullptr;
-      bits = nullptr;
-      if (dc != nullptr) {
-        DeleteDC(dc);
-      }
-      dc = nullptr;
-    }
+  SECURITY_ATTRIBUTES inheritable{};
+  inheritable.nLength = sizeof(inheritable);
+  inheritable.bInheritHandle = TRUE;
+  const DWORD mapping_size_high = static_cast<DWORD>(
+      (static_cast<ULONGLONG>(mapping_size) >> 32) & 0xFFFFFFFFULL);
+  const DWORD mapping_size_low = static_cast<DWORD>(
+      static_cast<ULONGLONG>(mapping_size) & 0xFFFFFFFFULL);
+  ScopedWinHandle mapping(CreateFileMappingW(
+      INVALID_HANDLE_VALUE, &inheritable, PAGE_READWRITE, mapping_size_high,
+      mapping_size_low, nullptr));
+  if (!mapping) {
+    AppendDiagnostic(out, "PrintWindow shared buffer creation failed",
+                     LastWin32ErrorAsHresult());
+    return false;
+  }
+  ScopedMappedView shared_view(MapViewOfFile(mapping.get(),
+                                             FILE_MAP_READ | FILE_MAP_WRITE, 0,
+                                             0, 0));
+  if (!shared_view) {
+    AppendDiagnostic(out, "PrintWindow shared buffer mapping failed",
+                     LastWin32ErrorAsHresult());
+    return false;
+  }
+  auto* state = static_cast<PrintWindowHelperSharedState*>(shared_view.get());
+  std::memset(state, 0, sizeof(*state));
+  state->magic = kPrintWindowHelperMagic;
+  state->version = kPrintWindowHelperVersion;
+  state->width = width;
+  state->height = height;
+  state->stride = stride;
+  state->pixel_bytes = buffer_size;
+  state->initial_client = initial_client;
+  ::InterlockedExchange(&state->status,
+                        static_cast<LONG>(PrintWindowWorkerStatus::kPending));
 
-    ~PrintWindowTask() {
-      // The worker owns the DC while PrintWindow is running. Normally it has
-      // already released the GDI objects before signaling [completed]; this
-      // second release is only a defensive cleanup after the worker returns.
-      ReleaseGdiOnOwnerThread();
-      if (completed != nullptr) {
-        CloseHandle(completed);
-      }
-      g_print_window_worker_busy.store(false);
-    }
-  };
-
-  std::shared_ptr<PrintWindowTask> task = std::make_shared<PrintWindowTask>();
-  task->completed = CreateEventW(nullptr, TRUE, FALSE, nullptr);
-  if (task->completed == nullptr) {
+  ScopedWinHandle completed(CreateEventW(&inheritable, TRUE, FALSE, nullptr));
+  if (!completed) {
     AppendDiagnostic(out, "PrintWindow completion event creation failed",
                      LastWin32ErrorAsHresult());
     return false;
   }
+  ScopedWinHandle job(CreateJobObjectW(nullptr, nullptr));
+  if (!job) {
+    AppendDiagnostic(out, "PrintWindow helper job creation failed",
+                     LastWin32ErrorAsHresult());
+    return false;
+  }
+  JOBOBJECT_EXTENDED_LIMIT_INFORMATION job_limits{};
+  job_limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+  if (!SetInformationJobObject(job.get(), JobObjectExtendedLimitInformation,
+                               &job_limits, sizeof(job_limits))) {
+    AppendDiagnostic(out, "PrintWindow helper job configuration failed",
+                     LastWin32ErrorAsHresult());
+    return false;
+  }
 
-  const UINT stride = width * 4u;
-  const size_t buffer_size = static_cast<size_t>(stride) * height;
-  std::thread([task, hwnd, bitmap_info, initial_client, width, height, stride,
-               buffer_size]() {
-    const HRESULT com_hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-    const bool uninitialize_com = SUCCEEDED(com_hr);
-    auto finish = [&]() {
-      task->ReleaseGdiOnOwnerThread();
-      if (uninitialize_com) {
-        CoUninitialize();
-      }
-      SetEvent(task->completed);
-    };
-    if (FAILED(com_hr) && com_hr != RPC_E_CHANGED_MODE) {
-      task->status = PrintWindowWorkerStatus::kComUnavailable;
-      task->failure_hr = com_hr;
-      finish();
-      return;
-    }
+  wchar_t executable_path[32768] = {};
+  const DWORD executable_capacity = static_cast<DWORD>(
+      sizeof(executable_path) / sizeof(executable_path[0]));
+  const DWORD executable_length = GetModuleFileNameW(
+      nullptr, executable_path, executable_capacity);
+  if (executable_length == 0 || executable_length >= executable_capacity) {
+    AppendDiagnostic(out, "PrintWindow helper executable path unavailable",
+                     LastWin32ErrorAsHresult());
+    return false;
+  }
+  const std::wstring executable(executable_path, executable_length);
+  std::wstring command = L"\"" + executable + L"\" " +
+                         kPrintWindowHelperSwitch + L" " +
+                         PointerArgument(reinterpret_cast<ULONG_PTR>(hwnd)) +
+                         L" " +
+                         PointerArgument(reinterpret_cast<ULONG_PTR>(mapping.get())) +
+                         L" " +
+                         PointerArgument(reinterpret_cast<ULONG_PTR>(completed.get()));
+  std::vector<wchar_t> mutable_command(command.begin(), command.end());
+  mutable_command.push_back(L'\0');
 
-    task->dc = CreateCompatibleDC(nullptr);
-    if (task->dc == nullptr) {
-      task->status = PrintWindowWorkerStatus::kDcCreateFailed;
-      task->failure_hr = LastWin32ErrorAsHresult();
-      finish();
-      return;
-    }
-    task->dib = CreateDIBSection(task->dc, &bitmap_info, DIB_RGB_COLORS,
-                                 &task->bits, nullptr, 0);
-    if (task->dib == nullptr || task->bits == nullptr) {
-      task->status = PrintWindowWorkerStatus::kDibCreateFailed;
-      task->failure_hr = LastWin32ErrorAsHresult();
-      finish();
-      return;
-    }
-    task->previous = SelectObject(task->dc, task->dib);
-    if (task->previous == nullptr || task->previous == HGDI_ERROR) {
-      task->status = PrintWindowWorkerStatus::kDibSelectFailed;
-      task->failure_hr = LastWin32ErrorAsHresult();
-      finish();
-      return;
-    }
+  HANDLE inherited_handles[] = {mapping.get(), completed.get()};
+  SIZE_T attribute_size = 0;
+  InitializeProcThreadAttributeList(nullptr, 1, 0, &attribute_size);
+  if (attribute_size == 0) {
+    AppendDiagnostic(out, "PrintWindow helper attribute list sizing failed",
+                     LastWin32ErrorAsHresult());
+    return false;
+  }
+  std::vector<BYTE> attribute_storage(attribute_size);
+  STARTUPINFOEXW startup{};
+  startup.StartupInfo.cb = sizeof(STARTUPINFOEXW);
+  startup.lpAttributeList = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(
+      attribute_storage.data());
+  if (!InitializeProcThreadAttributeList(startup.lpAttributeList, 1, 0,
+                                         &attribute_size)) {
+    AppendDiagnostic(out, "PrintWindow helper attribute list creation failed",
+                     LastWin32ErrorAsHresult());
+    return false;
+  }
+  const BOOL handles_updated = UpdateProcThreadAttribute(
+      startup.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
+      inherited_handles, sizeof(inherited_handles), nullptr, nullptr);
+  if (!handles_updated) {
+    DeleteProcThreadAttributeList(startup.lpAttributeList);
+    AppendDiagnostic(out, "PrintWindow helper handle list creation failed",
+                     LastWin32ErrorAsHresult());
+    return false;
+  }
 
-    uint8_t* bytes = static_cast<uint8_t*>(task->bits);
-    for (size_t i = 0; i < buffer_size; ++i) {
-      bytes[i] = static_cast<uint8_t>(0xA5u ^ (i & 0x3Fu));
-    }
-    SetLastError(ERROR_SUCCESS);
-    if (!PrintWindow(hwnd, task->dc, PW_CLIENTONLY | PW_RENDERFULLCONTENT)) {
-      task->status = PrintWindowWorkerStatus::kPrintFailed;
-      task->failure_hr = LastWin32ErrorAsHresult();
-      finish();
-      return;
-    }
-    GdiFlush();
+  PROCESS_INFORMATION process_info{};
+  const BOOL created = CreateProcessW(
+      executable.c_str(), mutable_command.data(), nullptr, nullptr, TRUE,
+      EXTENDED_STARTUPINFO_PRESENT | CREATE_NO_WINDOW | CREATE_SUSPENDED,
+      nullptr, nullptr,
+      &startup.StartupInfo, &process_info);
+  DeleteProcThreadAttributeList(startup.lpAttributeList);
+  if (!created) {
+    AppendDiagnostic(out, "PrintWindow helper process creation failed",
+                     LastWin32ErrorAsHresult());
+    return false;
+  }
+  ScopedWinHandle process(process_info.hProcess);
+  ScopedWinHandle process_thread(process_info.hThread);
+  if (!AssignProcessToJobObject(job.get(), process.get())) {
+    const HRESULT assign_hr = LastWin32ErrorAsHresult();
+    TerminatePrintWindowHelper(job.get(), process.get());
+    AppendDiagnostic(out, "PrintWindow helper job assignment failed", assign_hr);
+    return false;
+  }
+  if (ResumeThread(process_thread.get()) == static_cast<DWORD>(-1)) {
+    const HRESULT resume_hr = LastWin32ErrorAsHresult();
+    TerminatePrintWindowHelper(job.get(), process.get());
+    AppendDiagnostic(out, "PrintWindow helper resume failed", resume_hr);
+    return false;
+  }
 
-    size_t untouched_pixels = 0;
-    for (size_t i = 0; i < buffer_size; i += 4) {
-      const bool unchanged =
-          bytes[i] == static_cast<uint8_t>(0xA5u ^ (i & 0x3Fu)) &&
-          bytes[i + 1] == static_cast<uint8_t>(0xA5u ^ ((i + 1) & 0x3Fu)) &&
-          bytes[i + 2] == static_cast<uint8_t>(0xA5u ^ ((i + 2) & 0x3Fu)) &&
-          bytes[i + 3] == static_cast<uint8_t>(0xA5u ^ ((i + 3) & 0x3Fu));
-      if (unchanged) {
-        ++untouched_pixels;
-      }
-      // A 32bpp BI_RGB DIB does not promise meaningful alpha. A captured game
-      // client is opaque, so normalize it before handing pixels to WIC.
-      bytes[i + 3] = 0xFF;
-    }
-    if (untouched_pixels == static_cast<size_t>(width) * height) {
-      task->status = PrintWindowWorkerStatus::kNoPixels;
-      finish();
-      return;
-    }
-    if (untouched_pixels != 0) {
-      task->status = PrintWindowWorkerStatus::kPartialPixels;
-      finish();
-      return;
-    }
-
-    WindowCaptureMetadata final_client;
-    if (!ReadCaptureClient(hwnd, &final_client) ||
-        !SameCaptureClient(initial_client, final_client)) {
-      task->status = PrintWindowWorkerStatus::kClientChanged;
-      finish();
-      return;
-    }
-
-    std::string encode_error;
-    task->png = EncodeBgraToPng(bytes, width, height, stride, &encode_error);
-    if (task->png.empty()) {
-      task->status = PrintWindowWorkerStatus::kPngEncodeFailed;
-      finish();
-      return;
-    }
-
-    final_client.image_width_px = static_cast<int>(width);
-    final_client.image_height_px = static_cast<int>(height);
-    final_client.captured_at_tick_ms = GetTickCount64();
-    final_client.client_area_complete = true;
-    SetCaptureProvenance(&final_client, hwnd, hwnd, nullptr);
-    task->final_client = final_client;
-    task->status = PrintWindowWorkerStatus::kComplete;
-    finish();
-  }).detach();
-
-  if (WaitForSingleObject(task->completed, kPrintWindowTimeoutMs) !=
+  const DWORD completed_wait =
+      WaitForSingleObject(completed.get(), kPrintWindowTimeoutMs);
+  if (completed_wait != WAIT_OBJECT_0) {
+    const HRESULT wait_hr =
+        completed_wait == WAIT_FAILED ? LastWin32ErrorAsHresult()
+                                      : HRESULT_FROM_WIN32(ERROR_TIMEOUT);
+    TerminatePrintWindowHelper(job.get(), process.get());
+    AppendDiagnostic(out, "PrintWindow timed out; helper process terminated",
+                     wait_hr);
+    return false;
+  }
+  if (WaitForSingleObject(process.get(), kPrintWindowHelperExitGraceMs) !=
       WAIT_OBJECT_0) {
-    AppendDiagnostic(out, "PrintWindow timed out; worker retained capture DC",
+    TerminatePrintWindowHelper(job.get(), process.get());
+    AppendDiagnostic(out, "PrintWindow helper did not exit after completion",
                      HRESULT_FROM_WIN32(ERROR_TIMEOUT));
     return false;
   }
 
-  switch (task->status) {
+  const uint64_t expected_pixel_bytes =
+      static_cast<uint64_t>(stride) * static_cast<uint64_t>(height);
+  if (state->magic != kPrintWindowHelperMagic ||
+      state->version != kPrintWindowHelperVersion || state->width != width ||
+      state->height != height || state->stride != stride ||
+      state->pixel_bytes != expected_pixel_bytes ||
+      expected_pixel_bytes != static_cast<uint64_t>(buffer_size)) {
+    AppendDiagnostic(out, "PrintWindow helper protocol failed", E_INVALIDARG);
+    return false;
+  }
+  const auto status = static_cast<PrintWindowWorkerStatus>(
+      ::InterlockedCompareExchange(&state->status, 0, 0));
+  const HRESULT failure_hr = static_cast<HRESULT>(state->failure_hr);
+  switch (status) {
     case PrintWindowWorkerStatus::kComUnavailable:
-      AppendDiagnostic(out, "PrintWindow worker COM unavailable",
-                       task->failure_hr);
+      AppendDiagnostic(out, "PrintWindow helper COM unavailable", failure_hr);
       return false;
     case PrintWindowWorkerStatus::kDcCreateFailed:
       AppendDiagnostic(out, "PrintWindow compatible DC creation failed",
-                       task->failure_hr);
+                       failure_hr);
       return false;
     case PrintWindowWorkerStatus::kDibCreateFailed:
-      AppendDiagnostic(out, "PrintWindow DIB creation failed",
-                       task->failure_hr);
+      AppendDiagnostic(out, "PrintWindow DIB creation failed", failure_hr);
       return false;
     case PrintWindowWorkerStatus::kDibSelectFailed:
-      AppendDiagnostic(out, "PrintWindow DIB selection failed",
-                       task->failure_hr);
+      AppendDiagnostic(out, "PrintWindow DIB selection failed", failure_hr);
       return false;
     case PrintWindowWorkerStatus::kPrintFailed:
-      AppendDiagnostic(out, "PrintWindow failed", task->failure_hr);
-      return false;
-    case PrintWindowWorkerStatus::kNoPixels:
-      AppendDiagnostic(out, "PrintWindow produced no pixels", S_OK);
-      return false;
-    case PrintWindowWorkerStatus::kPartialPixels:
-      AppendDiagnostic(out, "PrintWindow produced partial client pixels", S_OK);
+      AppendDiagnostic(out, "PrintWindow failed", failure_hr);
       return false;
     case PrintWindowWorkerStatus::kClientChanged:
       AppendDiagnostic(out,
                        "PrintWindow rejected: client identity changed during capture",
                        S_OK);
       return false;
+    case PrintWindowWorkerStatus::kHelperProtocolFailed:
+      AppendDiagnostic(out, "PrintWindow helper protocol failed", failure_hr);
+      return false;
     case PrintWindowWorkerStatus::kPngEncodeFailed:
       AppendDiagnostic(out, "PrintWindow PNG encoding failed", S_OK);
       return false;
+    case PrintWindowWorkerStatus::kNoPixels:
+    case PrintWindowWorkerStatus::kPartialPixels:
+    case PrintWindowWorkerStatus::kBlackPixels:
+    case PrintWindowWorkerStatus::kTransparentPixels:
+      break;
     case PrintWindowWorkerStatus::kComplete:
       break;
     case PrintWindowWorkerStatus::kPending:
-      AppendDiagnostic(out, "PrintWindow worker returned without a result",
+      AppendDiagnostic(out, "PrintWindow helper returned without a result",
                        E_UNEXPECTED);
       return false;
   }
 
+  uint8_t* bytes = reinterpret_cast<uint8_t*>(state) +
+                   sizeof(PrintWindowHelperSharedState);
+  const PrintWindowWorkerStatus pixel_status =
+      ValidatePrintWindowPixels(bytes, buffer_size, width, height);
+  if (pixel_status != PrintWindowWorkerStatus::kComplete) {
+    switch (pixel_status) {
+      case PrintWindowWorkerStatus::kNoPixels:
+        AppendDiagnostic(out, "PrintWindow produced no pixels", S_OK);
+        break;
+      case PrintWindowWorkerStatus::kPartialPixels:
+        AppendDiagnostic(out, "PrintWindow produced partial client pixels", S_OK);
+        break;
+      case PrintWindowWorkerStatus::kBlackPixels:
+        AppendDiagnostic(out, "PrintWindow produced a black client frame", S_OK);
+        break;
+      case PrintWindowWorkerStatus::kTransparentPixels:
+        AppendDiagnostic(out, "PrintWindow produced a transparent client frame",
+                         S_OK);
+        break;
+      default:
+        AppendDiagnostic(out, "PrintWindow helper returned invalid pixels",
+                         E_UNEXPECTED);
+        break;
+    }
+    return false;
+  }
+
+  WindowCaptureMetadata observed_client;
+  if (!ReadCaptureClient(hwnd, &observed_client) ||
+      !SameCaptureClient(initial_client, observed_client) ||
+      !SameCaptureClient(initial_client, state->final_client)) {
+    AppendDiagnostic(out,
+                     "PrintWindow rejected: client identity changed during capture",
+                     S_OK);
+    return false;
+  }
+  std::string encode_error;
+  std::vector<uint8_t> png =
+      EncodeBgraToPng(bytes, width, height, stride, &encode_error);
+  if (png.empty()) {
+    AppendDiagnostic(out, "PrintWindow PNG encoding failed", S_OK);
+    return false;
+  }
+  observed_client.image_width_px = static_cast<int>(width);
+  observed_client.image_height_px = static_cast<int>(height);
+  observed_client.captured_at_tick_ms = GetTickCount64();
+  observed_client.client_area_complete = true;
+  SetCaptureProvenance(&observed_client, hwnd, hwnd, nullptr);
+
   WindowCaptureResult replacement;
-  replacement.png = std::move(task->png);
+  replacement.png = std::move(png);
   replacement.diagnostics = out->diagnostics;
   replacement.has_metadata = true;
-  replacement.metadata = task->final_client;
+  replacement.metadata = observed_client;
   replacement.capture_reason = "printwindow_complete";
   replacement.ok = true;
   AppendDiagnostic(&replacement,
@@ -791,6 +1168,10 @@ bool TryCapturePrintWindow(HWND hwnd, WindowCaptureResult* out) {
 }
 
 }  // namespace
+
+int RunPrintWindowCaptureHelperIfRequested() {
+  return RunPrintWindowHelperFromCommandLine();
+}
 
 // D3D11 设备（BGRA 支持），硬件失败回退 WARP。
 ComPtr<ID3D11Device> CreateD3DDevice() {

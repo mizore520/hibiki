@@ -315,6 +315,109 @@ void main() {
   );
 
   test(
+    'keeps stable punctuation visual bounds from one or more training captures',
+    () async {
+      const String source = 'あいうえおかきくけ。さし';
+      const GalLookupCellGridV1 grid = GalLookupCellGridV1(
+        advancePerClientHeight: .08,
+        lineAdvancePerClientHeight: .096,
+        cellHeightPerClientHeight: .072,
+        columns: 9,
+        continuationIndent: 1,
+        quotedContinuationIndent: 1,
+      );
+      final GalCalibrationOcrAlignment first = _visualPunctuationAlignment(
+        scale: 1,
+        left: .35,
+        top: .2,
+        right: .65,
+        bottom: .65,
+      );
+      final GalCalibrationOcrAlignment second = _visualPunctuationAlignment(
+        scale: 2,
+        left: .36,
+        top: .21,
+        right: .64,
+        bottom: .64,
+      );
+      final List<GalLookupPunctuationVisualBoundV1> one =
+          deriveGalCalibrationPunctuationVisualBounds(
+            samples: <GalCalibrationSample>[_sample(source)],
+            alignments: <GalCalibrationOcrAlignment>[first],
+            grid: grid,
+            left: .1,
+            top: .6,
+          );
+      final List<GalLookupPunctuationVisualBoundV1> two =
+          deriveGalCalibrationPunctuationVisualBounds(
+            samples: <GalCalibrationSample>[
+              _sample(source),
+              _sample(source, scale: 2),
+            ],
+            alignments: <GalCalibrationOcrAlignment>[first, second],
+            grid: grid,
+            left: .1,
+            top: .6,
+          );
+      expect(one, hasLength(1));
+      expect(two, hasLength(1));
+      expect(one.single.codePoint, 0x3002);
+      expect(two.single.left, closeTo(one.single.left, .02));
+      expect(two.single.right, closeTo(one.single.right, .02));
+
+      final GalCalibrationImageFit fit = await _fit(
+        <GalCalibrationSample>[_sample(source), _sample(source, scale: 2)],
+        <GalCalibrationOcrAlignment>[first, second],
+      );
+      expect(fit.reason, isNull);
+      expect(fit.draft!.layout.punctuationVisualBounds, hasLength(1));
+      expect(
+        fit.draft!.layout.cellGrid!.advancePerClientHeight,
+        closeTo(.08, 1e-9),
+      );
+    },
+  );
+
+  test('rejects an unstable punctuation bound across training captures', () {
+    const String source = 'あいうえおかきくけ。さし';
+    const GalLookupCellGridV1 grid = GalLookupCellGridV1(
+      advancePerClientHeight: .08,
+      lineAdvancePerClientHeight: .096,
+      cellHeightPerClientHeight: .072,
+      columns: 9,
+      continuationIndent: 1,
+      quotedContinuationIndent: 1,
+    );
+    final List<GalLookupPunctuationVisualBoundV1> result =
+        deriveGalCalibrationPunctuationVisualBounds(
+          samples: <GalCalibrationSample>[
+            _sample(source),
+            _sample(source, scale: 2),
+          ],
+          alignments: <GalCalibrationOcrAlignment>[
+            _visualPunctuationAlignment(
+              scale: 1,
+              left: .35,
+              top: .2,
+              right: .65,
+              bottom: .65,
+            ),
+            _visualPunctuationAlignment(
+              scale: 2,
+              left: .05,
+              top: .5,
+              right: .95,
+              bottom: .95,
+            ),
+          ],
+          grid: grid,
+          left: .1,
+          top: .6,
+        );
+    expect(result, isEmpty);
+  });
+
+  test(
     'short samples do not shrink the body width or its vertical capacity',
     () async {
       final GalCalibrationImageFit fit = await _fit(
@@ -647,6 +750,55 @@ void main() {
         isFalse,
       );
     },
+  );
+}
+
+GalCalibrationOcrAlignment _visualPunctuationAlignment({
+  required double scale,
+  required double left,
+  required double top,
+  required double right,
+  required double bottom,
+}) {
+  const String source = 'あいうえおかきくけ。さし';
+  final GalCalibrationOcrAlignment base = _alignment(
+    <String>['あいうえおかきくけ', '。さし'],
+    scale: scale,
+    source: source,
+  );
+  final int punctuationIndex = source.indexOf('。');
+  return GalCalibrationOcrAlignment(
+    confidence: base.confidence,
+    lines: <GalCalibrationOcrMatchedLine>[
+      for (final GalCalibrationOcrMatchedLine line in base.lines)
+        GalCalibrationOcrMatchedLine(
+          sourceStart: line.sourceStart,
+          sourceEnd: line.sourceEnd,
+          cellCount: line.cellCount,
+          lineIndex: line.lineIndex,
+          rect: line.rect,
+          glyphs: <GalCalibrationOcrGlyph>[
+            for (final GalCalibrationOcrGlyph glyph in line.glyphs)
+              if (glyph.sourceIndex != punctuationIndex)
+                glyph
+              else
+                GalCalibrationOcrGlyph(
+                  sourceIndex: glyph.sourceIndex,
+                  charLength: glyph.charLength,
+                  cellOffset: glyph.cellOffset,
+                  lineIndex: glyph.lineIndex,
+                  confidence: glyph.confidence,
+                  rect: OcrRect(
+                    left: glyph.rect.left + left * glyph.rect.width,
+                    top: glyph.rect.top + top * glyph.rect.height,
+                    right: glyph.rect.left + right * glyph.rect.width,
+                    bottom: glyph.rect.top + bottom * glyph.rect.height,
+                  ),
+                  visualMeasured: true,
+                ),
+          ],
+        ),
+    ],
   );
 }
 

@@ -239,7 +239,6 @@ void main() {
 
   test('⑥ PrintWindow fallback 具备保护门槛、超时和非空像素校验', () {
     for (final String token in <String>[
-      'WS_EX_NOREDIRECTIONBITMAP',
       'IsWindowVisible(hwnd)',
       'IsIconic(hwnd)',
       'DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED',
@@ -247,10 +246,15 @@ void main() {
       'affinity != WDA_NONE',
       'PrintWindow(',
       'PW_CLIENTONLY | PW_RENDERFULLCONTENT',
-      'PrintWindow timed out; worker retained capture DC',
+      'PrintWindow timed out; helper process terminated',
+      'JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE',
+      'PROC_THREAD_ATTRIBUTE_HANDLE_LIST',
+      'TerminatePrintWindowHelper(job.get(), process.get())',
       'g_print_window_worker_busy',
       'PrintWindow produced no pixels',
       'PrintWindow produced partial client pixels',
+      'PrintWindow produced a black client frame',
+      'PrintWindow produced a transparent client frame',
       'ReleaseGdiOnOwnerThread',
       'bytes[i + 3] = 0xFF',
       'SameCaptureClient(initial_client, final_client)',
@@ -260,7 +264,12 @@ void main() {
     expect(
       capture.contains('constexpr UINT kPrintWindowTimeoutMs = 750;'),
       isTrue,
-      reason: 'PrintWindow worker 必须有固定的调用和等待上限',
+      reason: 'PrintWindow helper 必须有固定等待上限，同时最多一个',
+    );
+    expect(
+      capture.contains('WS_EX_NOREDIRECTIONBITMAP'),
+      isFalse,
+      reason: 'fallback 不能因未知 ex-style 把原始 WGC 失败直接挡掉',
     );
     expect(
       capture.contains('CreateForMonitor'),

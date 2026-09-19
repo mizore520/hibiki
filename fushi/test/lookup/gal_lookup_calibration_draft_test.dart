@@ -109,6 +109,32 @@ const Map<int, Offset> _targetPoints = <int, Offset>{
 };
 
 void main() {
+  test('fitted capture provenance survives removing the original sample', () {
+    final GalLookupCalibrationDraft draft = GalLookupCalibrationDraft(
+      rect: _rect,
+      layout: _layout,
+      samples: const [],
+      layoutReferenceClient: _client,
+      layoutCaptureMetadata: _metadata,
+    );
+    final GalLookupCalibrationDraft restored =
+        GalLookupCalibrationDraft.fromJson(draft.toJson());
+    expect(restored.validFor(_sha), isTrue);
+    expect(restored.layoutCaptureMetadata!.toJson(), _metadata.toJson());
+    final GalLookupCalibrationDraft mismatch = GalLookupCalibrationDraft(
+      rect: _rect,
+      layout: _layout,
+      samples: const [],
+      layoutReferenceClient: const GalLookupReferenceClientV1(
+        widthPx: 800,
+        heightPx: 600,
+        dpi: 96,
+      ),
+      layoutCaptureMetadata: _metadata,
+    );
+    expect(mismatch.validFor(_sha), isFalse);
+  });
+
   test(
     'search crop and fitted layout survive independently, including legacy drafts',
     () {

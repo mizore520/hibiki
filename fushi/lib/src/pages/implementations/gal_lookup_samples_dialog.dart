@@ -8,8 +8,34 @@ import 'package:fushi/src/lookup/gal_lookup_calibration_draft.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_image_fit.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_preview.dart';
 import 'package:fushi/src/lookup/gal_lookup_surface_profile.dart';
+import 'package:fushi/src/mining/window_capture_channel.dart';
 import 'package:fushi/src/pages/implementations/gal_lookup_calibration_canvas.dart';
 import 'package:fushi/src/pages/implementations/gal_lookup_calibration_number_field.dart';
+
+bool _sameSourceViewport(WindowCaptureMetadata? a, WindowCaptureMetadata? b) {
+  List<double>? normalizedViewport(WindowCaptureMetadata? value) {
+    if (value == null || !value.usedPresentationCapture) {
+      return <double>[0, 0, 1, 1];
+    }
+    if (!value.hasSourceClientMapping) return null;
+    return <double>[
+      (value.sourceViewportLeftPx - value.sourceClientLeftPx) /
+          value.sourceClientWidthPx,
+      (value.sourceViewportTopPx - value.sourceClientTopPx) /
+          value.sourceClientHeightPx,
+      value.sourceViewportWidthPx / value.sourceClientWidthPx,
+      value.sourceViewportHeightPx / value.sourceClientHeightPx,
+    ];
+  }
+
+  final List<double>? left = normalizedViewport(a);
+  final List<double>? right = normalizedViewport(b);
+  if (left == null || right == null) return false;
+  for (int i = 0; i < left.length; i++) {
+    if ((left[i] - right[i]).abs() > 0.000001) return false;
+  }
+  return true;
+}
 
 /// Screenshot notebook. It does not claim a geometry provider or arm game input.
 /// Applying a draft returns it to the existing live calibration/commit flow.
@@ -46,6 +72,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
   late GalLookupNormalizedRectV1 _layoutRect;
   late GalLookupTextLayoutV1 _layout;
   GalLookupReferenceClientV1? _layoutReferenceClient;
+  WindowCaptureMetadata? _layoutCaptureMetadata;
   late final TextEditingController _font;
   List<GalCalibrationSample> _samples = [];
   List<GalCalibrationPreview> _previews = [];
@@ -61,7 +88,6 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
   bool _showAdvanced = false;
   bool _fitAllSamples = false;
   bool _manualLayout = false;
-  double _opacity = 0.55;
   String? _message;
   bool _failed = false;
   GalCalibrationOcrModelInfo? _ocrModel;
@@ -78,6 +104,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     layout: _layout,
     samples: _samples,
     layoutReferenceClient: _layoutReferenceClient,
+    layoutCaptureMetadata: _layoutCaptureMetadata,
   );
   GalCalibrationSample? get _sample =>
       _samples.isEmpty ? null : _samples[_selected];
@@ -120,6 +147,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
         _layoutRect = draft.rect;
         _layout = draft.layout;
         _layoutReferenceClient = draft.layoutReferenceClient;
+        _layoutCaptureMetadata = draft.layoutCaptureMetadata;
         _samples = draft.samples.toList();
         _font.text = _layout.fontFamily;
       }
@@ -198,12 +226,23 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
         try {
           previews = await Future.wait(
             draft.samples.map(
-              (GalCalibrationSample sample) => widget.previewBuilder(
-                text: sample.capture.sourceText,
-                client: sample.capture.referenceClient,
-                rect: draft.rect,
-                layout: draft.layout,
-              ),
+              (GalCalibrationSample sample) =>
+                  !_sameSourceViewport(
+                    _layoutCaptureMetadata,
+                    sample.capture.captureMetadata,
+                  )
+                  ? Future<GalCalibrationPreview>.value(
+                      const GalCalibrationPreview(
+                        boxes: [],
+                        reason: 'source_viewport_changed',
+                      ),
+                    )
+                  : widget.previewBuilder(
+                      text: sample.capture.sourceText,
+                      client: sample.capture.referenceClient,
+                      rect: draft.rect,
+                      layout: draft.layout,
+                    ),
             ),
           );
         } catch (_) {
@@ -304,7 +343,8 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       GalLookupCalibrationCaptureFailure.suppressionUnavailable ||
       GalLookupCalibrationCaptureFailure.restoreFailed =>
         t.game_lookup_samples_capture_overlay,
-      GalLookupCalibrationCaptureFailure.windowCaptureFailed ||
+      GalLookupCalibrationCaptureFailure.windowCaptureFailed =>
+        t.game_lookup_samples_capture_unavailable,
       GalLookupCalibrationCaptureFailure.clientMappingUnavailable ||
       GalLookupCalibrationCaptureFailure.imageTooLarge ||
       GalLookupCalibrationCaptureFailure.imageDimensionsInvalid =>
@@ -357,6 +397,12 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
           ),
         );
         valid =
+            samplesToValidate.every(
+              (GalCalibrationSample sample) => _sameSourceViewport(
+                _layoutCaptureMetadata,
+                sample.capture.captureMetadata,
+              ),
+            ) &&
             previews.isNotEmpty &&
             previews.every((GalCalibrationPreview p) => p.accepted);
       } catch (_) {
@@ -382,6 +428,19 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
 
   Future<void> _fit() async {
     if (_busy) return;
+    if (_samples.isEmpty ||
+        _samples.any(
+          (GalCalibrationSample sample) => !_sameSourceViewport(
+            _samples.first.capture.captureMetadata,
+            sample.capture.captureMetadata,
+          ),
+        )) {
+      setState(() {
+        _message = t.game_lookup_samples_auto_inconsistent;
+        _failed = true;
+      });
+      return;
+    }
     _commitNumberEdit();
     setState(() {
       _busy = true;
@@ -401,6 +460,8 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       } else {
         _layoutRect = fitted.rect;
         _layout = fitted.layout;
+        _layoutReferenceClient = _samples.first.capture.referenceClient;
+        _layoutCaptureMetadata = _samples.first.capture.captureMetadata;
         _changed();
       }
     } catch (_) {
@@ -440,6 +501,23 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
         layout: _layout,
         samples: fittingSamples,
       );
+      // Cropped screenshots have different normalized origins. Joint fitting
+      // is meaningful only when every image has the same source viewport.
+      final WindowCaptureMetadata? fittingMetadata =
+          fittingSamples.first.capture.captureMetadata;
+      if (_fitAllSamples &&
+          fittingSamples.any(
+            (GalCalibrationSample sample) => !_sameSourceViewport(
+              fittingMetadata,
+              sample.capture.captureMetadata,
+            ),
+          )) {
+        setState(() {
+          _message = t.game_lookup_samples_auto_inconsistent;
+          _failed = true;
+        });
+        return;
+      }
       final GalCalibrationImageFit result = await widget.imageFitter(
         input,
         build: widget.previewBuilder,
@@ -486,6 +564,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
         _layoutRect = result.draft!.rect;
         _layout = result.draft!.layout;
         _layoutReferenceClient = fittingSamples.first.capture.referenceClient;
+        _layoutCaptureMetadata = fittingMetadata;
         _font.text = _layout.fontFamily;
         _manualLayout = false;
         _markIndex = null;
@@ -739,7 +818,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       anchors: _manualLayout ? sample.anchors : const {},
       selectedIndex: _markIndex,
       mode: _editMode,
-      opacity: _opacity,
+      opacity: 0.55,
       enabled: !_busy,
       onRectChanged: (GalLookupNormalizedRectV1 rect) {
         _setSearchRect(rect);
@@ -1043,7 +1122,6 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                 t.game_lookup_samples_auto_grid,
                 style: Theme.of(context).textTheme.titleSmall,
               ),
-              Text(t.game_lookup_samples_auto_all_hint),
               const SizedBox(height: 8),
             ],
             Text(t.game_lookup_samples_pixel_advanced_hint),
@@ -1091,6 +1169,10 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                           _layout = const GalLookupTextLayoutV1();
                         }
                         _manualLayout = true;
+                        _layoutReferenceClient =
+                            _sample?.capture.referenceClient;
+                        _layoutCaptureMetadata =
+                            _sample?.capture.captureMetadata;
                         _font.text = _layout.fontFamily;
                         _changed();
                       },
@@ -1175,13 +1257,6 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
               value: _showBoxes,
               onChanged: (bool value) => setState(() => _showBoxes = value),
             ),
-            _slider(
-              t.game_lookup_samples_opacity,
-              _opacity,
-              0.1,
-              1,
-              (double v) => setState(() => _opacity = v),
-            ),
           ],
         ),
         Text(t.game_lookup_samples_saved_hint),
@@ -1229,27 +1304,5 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     // A new crop needs a new fit; never apply stale geometry from another crop.
     _layout = copyGalCalibrationLayout(_layout, clearCellGrid: true);
     _changed();
-  }
-
-  Widget _slider(
-    String label,
-    double value,
-    double min,
-    double max,
-    ValueChanged<double> changed,
-  ) {
-    final double upper = math.max(min, max);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text('$label · ${value.toStringAsFixed(4)}'),
-        Slider(
-          value: value.clamp(min, upper),
-          min: min,
-          max: upper,
-          onChanged: _busy || max <= min ? null : changed,
-        ),
-      ],
-    );
   }
 }

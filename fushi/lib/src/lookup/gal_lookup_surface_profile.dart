@@ -248,6 +248,99 @@ class GalLookupCellGridV1 {
   );
 }
 
+/// A screenshot-backed visual box for one punctuation code point.
+///
+/// The coordinates are fractions of that character's cell.  They only affect
+/// paint/anchor geometry; the cell's advance and hit region remain unchanged.
+class GalLookupPunctuationVisualBoundV1 {
+  const GalLookupPunctuationVisualBoundV1({
+    required this.codePoint,
+    required this.left,
+    required this.top,
+    required this.right,
+    required this.bottom,
+  });
+
+  static const int maxEntriesPerLayout = 32;
+  static const double minExtent = 0.02;
+  static final RegExp _punctuationOrSymbol = RegExp(
+    r'^[\p{P}\p{S}]$',
+    unicode: true,
+  );
+
+  final int codePoint;
+  final double left;
+  final double top;
+  final double right;
+  final double bottom;
+
+  String get character => String.fromCharCode(codePoint);
+
+  bool get isValid {
+    if (codePoint < 0x20 ||
+        codePoint > 0xffff ||
+        (codePoint >= 0xd800 && codePoint <= 0xdfff) ||
+        !_punctuationOrSymbol.hasMatch(character)) {
+      return false;
+    }
+    return left.isFinite &&
+        top.isFinite &&
+        right.isFinite &&
+        bottom.isFinite &&
+        left >= 0 &&
+        top >= 0 &&
+        right <= 1 &&
+        bottom <= 1 &&
+        right - left >= minExtent &&
+        bottom - top >= minExtent &&
+        right > left &&
+        bottom > top;
+  }
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'codePoint': codePoint,
+    'left': left,
+    'top': top,
+    'right': right,
+    'bottom': bottom,
+  };
+
+  static GalLookupPunctuationVisualBoundV1? tryFromJson(Object? value) {
+    if (value is! Map) return null;
+    final Map<Object?, Object?> map = value.cast<Object?, Object?>();
+    if (!_hasExactKeys(map, const <String>{
+      'codePoint',
+      'left',
+      'top',
+      'right',
+      'bottom',
+    })) {
+      return null;
+    }
+    final GalLookupPunctuationVisualBoundV1 bound =
+        GalLookupPunctuationVisualBoundV1(
+          codePoint: _exactInt(map['codePoint']) ?? -1,
+          left: _finiteDouble(map['left']) ?? double.nan,
+          top: _finiteDouble(map['top']) ?? double.nan,
+          right: _finiteDouble(map['right']) ?? double.nan,
+          bottom: _finiteDouble(map['bottom']) ?? double.nan,
+        );
+    return bound.isValid ? bound : null;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is GalLookupPunctuationVisualBoundV1 &&
+      other.codePoint == codePoint &&
+      other.left == left &&
+      other.top == top &&
+      other.right == right &&
+      other.bottom == bottom;
+
+  @override
+  int get hashCode => Object.hash(codePoint, left, top, right, bottom);
+}
+
 class GalLookupTextLayoutV1 {
   const GalLookupTextLayoutV1({
     this.fontFamily = '',
@@ -258,6 +351,7 @@ class GalLookupTextLayoutV1 {
     this.verticalAlign = 'top',
     this.paddingPerClientHeight = 0,
     this.cellGrid,
+    this.punctuationVisualBounds = const <GalLookupPunctuationVisualBoundV1>[],
   });
 
   final String fontFamily;
@@ -268,6 +362,7 @@ class GalLookupTextLayoutV1 {
   final String verticalAlign;
   final double paddingPerClientHeight;
   final GalLookupCellGridV1? cellGrid;
+  final List<GalLookupPunctuationVisualBoundV1> punctuationVisualBounds;
 
   bool get isValid =>
       fontSizePerClientHeight.isFinite &&
@@ -284,7 +379,18 @@ class GalLookupTextLayoutV1 {
       paddingPerClientHeight.isFinite &&
       paddingPerClientHeight >= 0 &&
       paddingPerClientHeight <= 0.25 &&
-      (cellGrid == null || cellGrid!.isValid);
+      (cellGrid == null || cellGrid!.isValid) &&
+      punctuationVisualBounds.length <=
+          GalLookupPunctuationVisualBoundV1.maxEntriesPerLayout &&
+      (punctuationVisualBounds.isEmpty || cellGrid != null) &&
+      punctuationVisualBounds.every(
+        (GalLookupPunctuationVisualBoundV1 bound) => bound.isValid,
+      ) &&
+      punctuationVisualBounds
+              .map((GalLookupPunctuationVisualBoundV1 bound) => bound.codePoint)
+              .toSet()
+              .length ==
+          punctuationVisualBounds.length;
 
   Map<String, Object?> toJson() {
     final Map<String, Object?> result = <String, Object?>{
@@ -297,6 +403,19 @@ class GalLookupTextLayoutV1 {
       'paddingPerClientHeight': paddingPerClientHeight,
     };
     if (cellGrid != null) result['cellGrid'] = cellGrid!.toJson();
+    if (punctuationVisualBounds.isNotEmpty) {
+      final List<GalLookupPunctuationVisualBoundV1> sorted =
+          List<GalLookupPunctuationVisualBoundV1>.of(punctuationVisualBounds)
+            ..sort(
+              (
+                GalLookupPunctuationVisualBoundV1 a,
+                GalLookupPunctuationVisualBoundV1 b,
+              ) => a.codePoint.compareTo(b.codePoint),
+            );
+      result['punctuationVisualBounds'] = sorted
+          .map((GalLookupPunctuationVisualBoundV1 bound) => bound.toJson())
+          .toList(growable: false);
+    }
     return result;
   }
 
@@ -313,7 +432,19 @@ class GalLookupTextLayoutV1 {
       'paddingPerClientHeight',
     };
     final Set<String> gridKeys = <String>{...legacyKeys, 'cellGrid'};
-    if (!_hasExactKeys(map, legacyKeys) && !_hasExactKeys(map, gridKeys)) {
+    final Set<String> visualKeys = <String>{
+      ...legacyKeys,
+      'punctuationVisualBounds',
+    };
+    final Set<String> gridVisualKeys = <String>{
+      ...legacyKeys,
+      'cellGrid',
+      'punctuationVisualBounds',
+    };
+    if (!_hasExactKeys(map, legacyKeys) &&
+        !_hasExactKeys(map, gridKeys) &&
+        !_hasExactKeys(map, visualKeys) &&
+        !_hasExactKeys(map, gridVisualKeys)) {
       return null;
     }
     final Object? fontFamily = map['fontFamily'];
@@ -328,6 +459,30 @@ class GalLookupTextLayoutV1 {
         ? GalLookupCellGridV1.tryFromJson(map['cellGrid'])
         : null;
     if (map.containsKey('cellGrid') && cellGrid == null) return null;
+    final List<GalLookupPunctuationVisualBoundV1> punctuationVisualBounds =
+        <GalLookupPunctuationVisualBoundV1>[];
+    if (map.containsKey('punctuationVisualBounds')) {
+      final Object? rawBounds = map['punctuationVisualBounds'];
+      if (rawBounds is! List ||
+          rawBounds.isEmpty ||
+          rawBounds.length >
+              GalLookupPunctuationVisualBoundV1.maxEntriesPerLayout ||
+          cellGrid == null) {
+        return null;
+      }
+      for (final Object? rawBound in rawBounds) {
+        final GalLookupPunctuationVisualBoundV1? bound =
+            GalLookupPunctuationVisualBoundV1.tryFromJson(rawBound);
+        if (bound == null ||
+            punctuationVisualBounds.any(
+              (GalLookupPunctuationVisualBoundV1 other) =>
+                  other.codePoint == bound.codePoint,
+            )) {
+          return null;
+        }
+        punctuationVisualBounds.add(bound);
+      }
+    }
     final GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(
       fontFamily: fontFamily,
       fontSizePerClientHeight:
@@ -340,6 +495,7 @@ class GalLookupTextLayoutV1 {
       paddingPerClientHeight:
           _finiteDouble(map['paddingPerClientHeight']) ?? double.nan,
       cellGrid: cellGrid,
+      punctuationVisualBounds: punctuationVisualBounds,
     );
     return layout.isValid ? layout : null;
   }
@@ -354,7 +510,11 @@ class GalLookupTextLayoutV1 {
       other.textAlign == textAlign &&
       other.verticalAlign == verticalAlign &&
       other.paddingPerClientHeight == paddingPerClientHeight &&
-      other.cellGrid == cellGrid;
+      other.cellGrid == cellGrid &&
+      _samePunctuationVisualBounds(
+        other.punctuationVisualBounds,
+        punctuationVisualBounds,
+      );
 
   @override
   int get hashCode => Object.hash(
@@ -366,7 +526,19 @@ class GalLookupTextLayoutV1 {
     verticalAlign,
     paddingPerClientHeight,
     cellGrid,
+    Object.hashAll(punctuationVisualBounds),
   );
+}
+
+bool _samePunctuationVisualBounds(
+  List<GalLookupPunctuationVisualBoundV1> left,
+  List<GalLookupPunctuationVisualBoundV1> right,
+) {
+  if (left.length != right.length) return false;
+  for (int index = 0; index < left.length; index++) {
+    if (left[index] != right[index]) return false;
+  }
+  return true;
 }
 
 class GalLookupSurfaceVariantV1 {

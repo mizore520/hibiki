@@ -60,6 +60,46 @@ struct CellGrid {
   bool operator!=(const CellGrid &other) const { return !(*this == other); }
 };
 
+struct PunctuationVisualBounds {
+  uint32_t code_point = 0;
+  double left = 0.0;
+  double top = 0.0;
+  double right = 1.0;
+  double bottom = 1.0;
+};
+
+inline bool IsPunctuationOrSymbolCodePoint(uint32_t code_point) {
+  // Keep the override schema BMP-only. DirectWrite and Windows NLS use
+  // UTF-16 code units here; rejecting supplementary code points keeps the
+  // classifier conservative and avoids deriving a visual override that the
+  // native admission path cannot classify consistently.
+  if (code_point < 0x20 || code_point > 0xFFFF ||
+      (code_point >= 0xD800 && code_point <= 0xDFFF)) {
+    return false;
+  }
+  const wchar_t utf16 = static_cast<wchar_t>(code_point);
+  WORD ctype1[2]{};
+  WORD ctype3[2]{};
+  if (!GetStringTypeExW(LOCALE_INVARIANT, CT_CTYPE1, &utf16, 1, ctype1) ||
+      !GetStringTypeExW(LOCALE_INVARIANT, CT_CTYPE3, &utf16, 1, ctype3)) {
+    return false;
+  }
+  return (ctype1[0] & C1_PUNCT) != 0 || (ctype3[0] & C3_SYMBOL) != 0;
+}
+
+inline bool IsPunctuationVisualBoundsValid(
+    const PunctuationVisualBounds &bounds) {
+  return bounds.code_point >= 0x20 && bounds.code_point <= 0x10FFFF &&
+         !(bounds.code_point >= 0xD800 && bounds.code_point <= 0xDFFF) &&
+         IsPunctuationOrSymbolCodePoint(bounds.code_point) &&
+         std::isfinite(bounds.left) && std::isfinite(bounds.top) &&
+         std::isfinite(bounds.right) && std::isfinite(bounds.bottom) &&
+         bounds.left >= 0.0 && bounds.top >= 0.0 && bounds.right <= 1.0 &&
+         bounds.bottom <= 1.0 && bounds.right > bounds.left &&
+         bounds.bottom > bounds.top && bounds.right - bounds.left >= 0.02 &&
+         bounds.bottom - bounds.top >= 0.02;
+}
+
 inline bool IsCellGridValid(const CellGrid &grid) {
   const int maximum_indent = std::min(grid.columns - 1, 8);
   return std::isfinite(grid.advance_per_client_height) &&
@@ -89,12 +129,47 @@ struct Layout {
   std::string vertical_align = "top";
   double padding_per_client_height = 0.0;
   std::optional<CellGrid> cell_grid;
+  std::vector<PunctuationVisualBounds> punctuation_visual_bounds;
+  // MethodChannel decoding is fail-closed.  A present but malformed list
+  // must never silently become the legacy layout.
+  bool punctuation_visual_bounds_valid = true;
 };
+
+inline bool IsPunctuationVisualBoundsListValid(const Layout &layout) {
+  if (!layout.punctuation_visual_bounds_valid ||
+      layout.punctuation_visual_bounds.size() > 32) {
+    return false;
+  }
+  for (size_t index = 0; index < layout.punctuation_visual_bounds.size();
+       ++index) {
+    const PunctuationVisualBounds &bounds =
+        layout.punctuation_visual_bounds[index];
+    if (!IsPunctuationVisualBoundsValid(bounds)) return false;
+    for (size_t previous = 0; previous < index; ++previous) {
+      if (layout.punctuation_visual_bounds[previous].code_point ==
+          bounds.code_point) {
+        return false;
+      }
+    }
+  }
+  return layout.punctuation_visual_bounds.empty() ||
+         layout.cell_grid.has_value();
+}
+
+inline const PunctuationVisualBounds *FindPunctuationVisualBounds(
+    const Layout &layout, uint32_t code_point) {
+  for (const PunctuationVisualBounds &bounds :
+       layout.punctuation_visual_bounds) {
+    if (bounds.code_point == code_point) return &bounds;
+  }
+  return nullptr;
+}
 
 struct ClusterBox {
   uint32_t text_position = 0;
   uint32_t text_length = 0;
-  RECT client_rect{};
+  RECT hit_rect{};
+  RECT visual_rect{};
 };
 
 struct Result {
@@ -205,7 +280,8 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
                             int client_height_px, int surface_width_px,
                             int surface_height_px,
                             const RECT &layout_bounds) {
-  if (!style.cell_grid.has_value() || !IsCellGridValid(*style.cell_grid))
+  if (!style.cell_grid.has_value() || !IsCellGridValid(*style.cell_grid) ||
+      !IsPunctuationVisualBoundsListValid(style))
     return Failure("invalid_layout");
   constexpr float kMinimumBodyPixels = 8.0f;
   const float layout_width =
@@ -310,7 +386,25 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
       return Failure("grid_overflow_body_rect");
     if (allow_hanging) hanging_punctuation_used = true;
     if (!whitespace) {
-      result.boxes.push_back(ClusterBox{index, length, box});
+      RECT visual = box;
+      if (const PunctuationVisualBounds *bounds =
+              FindPunctuationVisualBounds(style, code);
+          bounds != nullptr) {
+        visual.left = box.left + static_cast<LONG>(std::llround(
+                                      bounds->left * (box.right - box.left)));
+        visual.top = box.top + static_cast<LONG>(std::llround(
+                                     bounds->top * (box.bottom - box.top)));
+        visual.right = box.left + static_cast<LONG>(std::llround(
+                                       bounds->right * (box.right - box.left)));
+        visual.bottom = box.top + static_cast<LONG>(std::llround(
+                                        bounds->bottom * (box.bottom - box.top)));
+        if (!RectHasArea(visual) || visual.left < box.left ||
+            visual.top < box.top || visual.right > box.right ||
+            visual.bottom > box.bottom) {
+          return Failure("invalid_punctuation_visual_bounds");
+        }
+      }
+      result.boxes.push_back(ClusterBox{index, length, box, visual});
     }
     previous_cell = !whitespace;
     index += length - 1;
@@ -328,6 +422,8 @@ inline Result Build(IDWriteFactory *factory, const std::wstring &source,
                     const RECT &layout_bounds) {
   if (source.empty() || surface_width_px <= 0 || surface_height_px <= 0)
     return Failure("empty_text_or_no_surface_rect");
+  if (!IsPunctuationVisualBoundsListValid(style))
+    return Failure("invalid_layout");
   if (style.cell_grid.has_value()) {
     return BuildCellGrid(source, style, client_height_px, surface_width_px,
                          surface_height_px, layout_bounds);
@@ -524,7 +620,8 @@ inline Result Build(IDWriteFactory *factory, const std::wstring &source,
             box.bottom > static_cast<LONG>(surface_height)) {
           return Failure("cluster_box_outside_surface");
         }
-        result.boxes.push_back(ClusterBox{text_position, length, box});
+        result.boxes.push_back(
+            ClusterBox{text_position, length, box, box});
       }
     }
     text_position += length;
@@ -567,6 +664,8 @@ inline Result Preview(const std::wstring &source,
           layout.padding_per_client_height) ||
       (layout.cell_grid.has_value() && !IsCellGridValid(*layout.cell_grid)))
     return Failure("invalid_layout");
+  if (!IsPunctuationVisualBoundsListValid(layout))
+    return Failure("invalid_layout");
   const RECT client{0, 0, reference.width_px, reference.height_px};
   const RECT body = ResolveBodyRect(client, body_rect);
   const int width = body.right - body.left;
@@ -583,10 +682,14 @@ inline Result Preview(const std::wstring &source,
   Result result = Build(factory.Get(), source, style, reference.height_px,
                         width, height, bounds);
   for (ClusterBox &box : result.boxes) {
-    box.client_rect.left += body.left;
-    box.client_rect.right += body.left;
-    box.client_rect.top += body.top;
-    box.client_rect.bottom += body.top;
+    box.hit_rect.left += body.left;
+    box.hit_rect.right += body.left;
+    box.hit_rect.top += body.top;
+    box.hit_rect.bottom += body.top;
+    box.visual_rect.left += body.left;
+    box.visual_rect.right += body.left;
+    box.visual_rect.top += body.top;
+    box.visual_rect.bottom += body.top;
   }
   return result;
 }

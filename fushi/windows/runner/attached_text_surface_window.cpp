@@ -285,14 +285,19 @@ RECT ClientScreenRect(HWND hwnd) {
   return RECT{top_left.x, top_left.y, bottom_right.x, bottom_right.y};
 }
 
-RECT ResolveNormalizedRect(
-    const RECT &client,
-    const AttachedTextSurfaceWindow::NormalizedRect &normalized) {
-  return fushi::attached_text_layout::ResolveBodyRect(client, normalized);
-}
-
 bool RectHasArea(const RECT &rect) {
   return rect.right > rect.left && rect.bottom > rect.top;
+}
+
+bool SurfaceGeometryEqual(
+    const AttachedTextSurfaceWindow::SurfaceGeometry &left,
+    const AttachedTextSurfaceWindow::SurfaceGeometry &right) {
+  return EqualRect(&left.source_client_screen, &right.source_client_screen) &&
+         EqualRect(&left.source_viewport_screen, &right.source_viewport_screen) &&
+         EqualRect(&left.presentation_client_screen,
+                   &right.presentation_client_screen) &&
+         EqualRect(&left.destination_viewport_screen,
+                   &right.destination_viewport_screen);
 }
 
 using QueryVidPnExclusiveOwnership =
@@ -457,6 +462,10 @@ void AttachedTextSurfaceWindow::AdoptNewEpoch(const Epoch &epoch,
   calibration_rect_ = NormalizedRect{};
   pre_calibration_rect_ = NormalizedRect{};
   pre_calibration_configured_ = false;
+  surface_geometry_ = SurfaceGeometry{};
+  source_body_screen_rect_ = RECT{};
+  mapped_body_screen_rect_ = RECT{};
+  presentation_dpi_ = 96;
   probe_start_index_ = -1;
   probe_middle_index_ = -1;
   probe_end_index_ = -1;
@@ -676,6 +685,17 @@ bool AttachedTextSurfaceWindow::RefreshTargetClient(RECT *client_screen,
       *error = "target_client_unavailable";
     return false;
   }
+  const RECT source_client = ClientScreenRect(target_.hwnd);
+  if (!RectHasArea(source_client)) {
+    if (error != nullptr)
+      *error = "target_source_client_unavailable";
+    return false;
+  }
+  SurfaceGeometry geometry;
+  geometry.source_client_screen = source_client;
+  geometry.source_viewport_screen = source_client;
+  geometry.presentation_client_screen = client;
+  geometry.destination_viewport_screen = client;
   // Magpie may letterbox or crop the source inside a larger presentation
   // client. Its public viewport properties are the only trustworthy mapping
   // for that case; using the whole client shifts every calibrated hit box.
@@ -688,29 +708,41 @@ bool AttachedTextSurfaceWindow::RefreshTargetClient(RECT *client_screen,
         *error = "magpie_viewport_unavailable";
       return false;
     }
-    const RECT presentation_client = client;
-    if (mapping.destination_rect_screen.left < presentation_client.left ||
-        mapping.destination_rect_screen.top < presentation_client.top ||
-        mapping.destination_rect_screen.right > presentation_client.right ||
-        mapping.destination_rect_screen.bottom > presentation_client.bottom) {
+    geometry.source_viewport_screen = mapping.source_rect_screen;
+    geometry.destination_viewport_screen = mapping.destination_rect_screen;
+    if (!fushi::attached_magpie_surface_geometry::RectContainedIn(
+            geometry.destination_viewport_screen,
+            geometry.presentation_client_screen)) {
       if (error != nullptr)
         *error = "magpie_viewport_outside_presentation";
       return false;
     }
-    const RECT source_client = ClientScreenRect(target_.hwnd);
-    if (!RectHasArea(source_client) ||
-        !EqualRect(&mapping.source_rect_screen, &source_client)) {
+    if (!fushi::attached_magpie_surface_geometry::RectContainedIn(
+            geometry.source_viewport_screen, geometry.source_client_screen)) {
       if (error != nullptr)
-        *error = "magpie_source_crop_unsupported";
+        *error = "magpie_source_viewport_invalid";
       return false;
     }
-    client = mapping.destination_rect_screen;
+    if (!fushi::attached_magpie_surface_geometry::IsMappingValid(geometry)) {
+      if (error != nullptr)
+        *error = "magpie_viewport_invalid";
+      return false;
+    }
   }
-  UINT dpi = GetDpiForWindow(geometry_window);
-  *client_screen = client;
-  reference->width_px = client.right - client.left;
-  reference->height_px = client.bottom - client.top;
-  reference->dpi = static_cast<int>(dpi == 0 ? 96 : dpi);
+  if (!fushi::attached_magpie_surface_geometry::IsMappingValid(geometry)) {
+    if (error != nullptr)
+      *error = "target_client_unavailable";
+    return false;
+  }
+  const UINT source_dpi = GetDpiForWindow(target_.hwnd);
+  const UINT presentation_dpi = GetDpiForWindow(geometry_window);
+  surface_geometry_ = geometry;
+  presentation_dpi_ = static_cast<int>(presentation_dpi == 0 ? 96
+                                                               : presentation_dpi);
+  *client_screen = geometry.destination_viewport_screen;
+  reference->width_px = source_client.right - source_client.left;
+  reference->height_px = source_client.bottom - source_client.top;
+  reference->dpi = static_cast<int>(source_dpi == 0 ? 96 : source_dpi);
   return true;
 }
 
@@ -827,7 +859,9 @@ AttachedTextSurfaceWindow::StartCalibration(
           layout.text_align, layout.vertical_align,
           layout.padding_per_client_height) ||
       (layout.cell_grid.has_value() &&
-       !fushi::attached_text_layout::IsCellGridValid(*layout.cell_grid))) {
+       !fushi::attached_text_layout::IsCellGridValid(*layout.cell_grid)) ||
+      !fushi::attached_text_layout::IsPunctuationVisualBoundsListValid(
+          layout)) {
     if (error != nullptr)
       *error = "invalid_layout";
     return RequestResult::kRejected;
@@ -1111,7 +1145,9 @@ AttachedTextSurfaceWindow::RequestResult AttachedTextSurfaceWindow::Configure(
           layout.text_align, layout.vertical_align,
           layout.padding_per_client_height) ||
       (layout.cell_grid.has_value() &&
-       !fushi::attached_text_layout::IsCellGridValid(*layout.cell_grid))) {
+       !fushi::attached_text_layout::IsCellGridValid(*layout.cell_grid)) ||
+      !fushi::attached_text_layout::IsPunctuationVisualBoundsListValid(
+          layout)) {
     if (error != nullptr)
       *error = "invalid_layout";
     return RequestResult::kRejected;
@@ -1229,7 +1265,9 @@ AttachedTextSurfaceWindow::UpdateStyle(const Epoch &epoch, uint32_t target_pid,
           layout.text_align, layout.vertical_align,
           layout.padding_per_client_height) ||
       (layout.cell_grid.has_value() &&
-       !fushi::attached_text_layout::IsCellGridValid(*layout.cell_grid))) {
+       !fushi::attached_text_layout::IsCellGridValid(*layout.cell_grid)) ||
+      !fushi::attached_text_layout::IsPunctuationVisualBoundsListValid(
+          layout)) {
     if (error != nullptr)
       *error = "invalid_layout";
     return RequestResult::kRejected;
@@ -1240,8 +1278,27 @@ AttachedTextSurfaceWindow::UpdateStyle(const Epoch &epoch, uint32_t target_pid,
   const auto same_double = [](double left, double right) {
     return std::abs(left - right) <= 1e-12;
   };
+  const auto same_punctuation_bounds = [&](const auto &left,
+                                           const auto &right) {
+    if (left.size() != right.size())
+      return false;
+    for (size_t index = 0; index < left.size(); ++index) {
+      const auto &a = left[index];
+      const auto &b = right[index];
+      if (a.code_point != b.code_point ||
+          !same_double(a.left, b.left) || !same_double(a.top, b.top) ||
+          !same_double(a.right, b.right) || !same_double(a.bottom, b.bottom)) {
+        return false;
+      }
+    }
+    return true;
+  };
   const bool layout_changed =
       desired.cell_grid != layout_.cell_grid ||
+      !same_punctuation_bounds(desired.punctuation_visual_bounds,
+                               layout_.punctuation_visual_bounds) ||
+      desired.punctuation_visual_bounds_valid !=
+          layout_.punctuation_visual_bounds_valid ||
       desired.font_family != layout_.font_family ||
       !same_double(desired.font_size_per_client_height,
                    layout_.font_size_per_client_height) ||
@@ -1524,6 +1581,8 @@ void AttachedTextSurfaceWindow::SyncToTarget() {
     HideSurface();
     return;
   }
+  const SurfaceGeometry previous_geometry = surface_geometry_;
+  const RECT previous_source_body = source_body_screen_rect_;
   std::string error;
   RECT client{};
   ReferenceClient reference;
@@ -1698,8 +1757,34 @@ void AttachedTextSurfaceWindow::SyncToTarget() {
     return;
   }
 
-  const RECT body = ResolveNormalizedRect(
-      client, calibration ? calibration_rect_ : body_rect_);
+  const NormalizedRect &active_body =
+      calibration ? calibration_rect_ : body_rect_;
+  RECT source_body{};
+  if (!fushi::attached_magpie_surface_geometry::ResolveSourceBodyRect(
+          surface_geometry_.source_client_screen, active_body, &source_body)) {
+    source_body_screen_rect_ = RECT{};
+    mapped_body_screen_rect_ = RECT{};
+    HideSurface();
+    SetState("error", "invalidConfiguration", "body_rect_invalid");
+    EmitStateIfChanged();
+    return;
+  }
+  RECT body{};
+  if (!fushi::attached_magpie_surface_geometry::ResolveVisibleBody(
+          surface_geometry_, active_body, &body)) {
+    source_body_screen_rect_ = source_body;
+    mapped_body_screen_rect_ = RECT{};
+    HideSurface();
+    SetState("error", "invalidConfiguration", "body_rect_not_visible");
+    EmitStateIfChanged();
+    return;
+  }
+  if (!SurfaceGeometryEqual(previous_geometry, surface_geometry_) ||
+      !EqualRect(&previous_source_body, &source_body)) {
+    layout_dirty_ = true;
+  }
+  source_body_screen_rect_ = source_body;
+  mapped_body_screen_rect_ = body;
   if (body.right - body.left < kMinimumBodyPixels ||
       body.bottom - body.top < kMinimumBodyPixels) {
     HideSurface();
@@ -1883,22 +1968,68 @@ bool AttachedTextSurfaceWindow::RebuildClusters() {
       return ClusterFailure("dwrite_factory_failed");
   }
 
-  const int width = surface_screen_rect_.right - surface_screen_rect_.left;
-  const int height = surface_screen_rect_.bottom - surface_screen_rect_.top;
-  RECT layout_bounds{0, 0, width, height};
-  if (mode_ == Mode::kCalibration) {
-    if (!IsNormalizedRectValid(calibration_rect_))
-      return ClusterFailure("calibration_rect_invalid");
-    layout_bounds = ResolveNormalizedRect(layout_bounds, calibration_rect_);
+  if (!RectHasArea(source_body_screen_rect_) ||
+      !RectHasArea(mapped_body_screen_rect_)) {
+    return ClusterFailure("mapped_body_not_visible");
   }
+  // Build in source pixels with the source reference height.  Magpie can
+  // enlarge the destination several times; transforming the finished boxes
+  // keeps wrapping, cell advances and punctuation geometry identical to the
+  // source profile instead of leaving the catch surface at source scale.
+  const int source_width = source_body_screen_rect_.right -
+                           source_body_screen_rect_.left;
+  const int source_height = source_body_screen_rect_.bottom -
+                            source_body_screen_rect_.top;
+  const RECT layout_bounds{0, 0, source_width, source_height};
   fushi::attached_text_layout::Result result =
       fushi::attached_text_layout::Build(
           dwrite_factory_.Get(), source_text_, layout_,
-          live_reference_client_.height_px, width, height, layout_bounds);
+          live_reference_client_.height_px, source_width, source_height,
+          layout_bounds);
   if (!result.ok())
     return ClusterFailure(result.reason.c_str());
+
+  std::vector<ClusterBox> mapped_clusters;
+  mapped_clusters.reserve(result.boxes.size());
+  const auto map_cluster_rect = [&](const RECT &source_local,
+                                    RECT *surface_local) {
+    if (surface_local == nullptr || !RectHasArea(source_local))
+      return false;
+    RECT source_screen = source_local;
+    OffsetRect(&source_screen, source_body_screen_rect_.left,
+               source_body_screen_rect_.top);
+    RECT mapped_screen{};
+    if (!fushi::attached_magpie_surface_geometry::MapSourceRectToDestination(
+            surface_geometry_, source_screen, &mapped_screen)) {
+      return false;
+    }
+    RECT clipped_screen{};
+    if (!fushi::attached_magpie_surface_geometry::ClipRectTo(
+            mapped_screen, surface_screen_rect_, &clipped_screen)) {
+      return false;
+    }
+    OffsetRect(&clipped_screen, -surface_screen_rect_.left,
+               -surface_screen_rect_.top);
+    if (!RectHasArea(clipped_screen))
+      return false;
+    *surface_local = clipped_screen;
+    return true;
+  };
+  for (ClusterBox cluster : result.boxes) {
+    RECT hit_rect{};
+    RECT visual_rect{};
+    if (!map_cluster_rect(cluster.hit_rect, &hit_rect) ||
+        !map_cluster_rect(cluster.visual_rect, &visual_rect)) {
+      continue;
+    }
+    cluster.hit_rect = hit_rect;
+    cluster.visual_rect = visual_rect;
+    mapped_clusters.push_back(std::move(cluster));
+  }
+  if (mapped_clusters.empty())
+    return ClusterFailure("mapped_clusters_empty");
   text_layout_ = std::move(result.text_layout);
-  clusters_ = std::move(result.boxes);
+  clusters_ = std::move(mapped_clusters);
   last_cluster_failure_.clear();
   return true;
 }
@@ -1940,8 +2071,8 @@ void AttachedTextSurfaceWindow::ApplyInteractiveRegion() {
   } else {
     for (const ClusterBox &cluster : clusters_) {
       HRGN box =
-          CreateRectRgn(cluster.client_rect.left, cluster.client_rect.top,
-                        cluster.client_rect.right, cluster.client_rect.bottom);
+          CreateRectRgn(cluster.hit_rect.left, cluster.hit_rect.top,
+                        cluster.hit_rect.right, cluster.hit_rect.bottom);
       if (box != nullptr) {
         CombineRgn(region, region, box, RGN_OR);
         DeleteObject(box);
@@ -1986,7 +2117,7 @@ bool AttachedTextSurfaceWindow::PublishInteractiveSnapshot(
   std::vector<RECT> screen_rects;
   screen_rects.reserve(clusters_.size());
   for (const ClusterBox &cluster : clusters_) {
-    RECT screen = cluster.client_rect;
+    RECT screen = cluster.hit_rect;
     OffsetRect(&screen, surface_screen_rect_.left, surface_screen_rect_.top);
     screen_rects.push_back(screen);
   }
@@ -2071,12 +2202,13 @@ void AttachedTextSurfaceWindow::RenderLayerBitmap(bool calibration) {
       // Keep the bitmap write bounded even if a stale or malformed cluster
       // reaches this defensive rendering path.
       fushi::attached_bitmap_bounds::FillRectClippedToSurface(
-          pixels, width, height, cluster.client_rect, 0x01000000u);
+          pixels, width, height, cluster.hit_rect, 0x01000000u);
     }
   }
   if (calibration && IsNormalizedRectValid(calibration_rect_)) {
-    const RECT local_client{0, 0, width, height};
-    RECT selection = ResolveNormalizedRect(local_client, calibration_rect_);
+    RECT selection = mapped_body_screen_rect_;
+    OffsetRect(&selection, -surface_screen_rect_.left,
+               -surface_screen_rect_.top);
     selection.left = std::clamp(selection.left, 0L, static_cast<LONG>(width));
     selection.top = std::clamp(selection.top, 0L, static_cast<LONG>(height));
     selection.right = std::clamp(selection.right, 0L, static_cast<LONG>(width));
@@ -2084,7 +2216,7 @@ void AttachedTextSurfaceWindow::RenderLayerBitmap(bool calibration) {
         std::clamp(selection.bottom, 0L, static_cast<LONG>(height));
     const uint32_t fill = PremultipliedPixel(18, 64, 160, 255);
     const uint32_t border = PremultipliedPixel(210, 64, 180, 255);
-    const int border_width = std::max(2, live_reference_client_.dpi / 48);
+    const int border_width = std::max(2, presentation_dpi_ / 48);
     for (int y = selection.top; y < selection.bottom; ++y) {
       for (int x = selection.left; x < selection.right; ++x) {
         const bool edge = x < selection.left + border_width ||
@@ -2094,10 +2226,11 @@ void AttachedTextSurfaceWindow::RenderLayerBitmap(bool calibration) {
         pixels[static_cast<size_t>(y) * width + x] = edge ? border : fill;
       }
     }
-    // Show the exact glyph catch rectangles, not only the much larger body
-    // bounds. A click outside these boxes intentionally remains a game miss.
-    // Green records the observed cluster, so the user can detect a mismatch
-    // without confusing the outer calibration frame with a click shield.
+    // Show the observed visual rectangles inside the larger hit cells. A click
+    // outside the hit boxes remains a game miss, while the visual outline lets
+    // calibration distinguish the glyph from its catch area.
+    // Green records the observed cluster without confusing the outer frame
+    // with a click shield.
     for (const ClusterBox &cluster : clusters_) {
       const int64_t index = static_cast<int64_t>(cluster.text_position);
       const bool observed = index == probe_start_observed_index_ ||
@@ -2106,10 +2239,10 @@ void AttachedTextSurfaceWindow::RenderLayerBitmap(bool calibration) {
       const uint32_t outline = observed ? PremultipliedPixel(230, 64, 230, 128)
                                         : PremultipliedPixel(210, 64, 180, 255);
       const RECT box{
-          std::clamp(cluster.client_rect.left, 0L, static_cast<LONG>(width)),
-          std::clamp(cluster.client_rect.top, 0L, static_cast<LONG>(height)),
-          std::clamp(cluster.client_rect.right, 0L, static_cast<LONG>(width)),
-          std::clamp(cluster.client_rect.bottom, 0L, static_cast<LONG>(height))};
+          std::clamp(cluster.visual_rect.left, 0L, static_cast<LONG>(width)),
+          std::clamp(cluster.visual_rect.top, 0L, static_cast<LONG>(height)),
+          std::clamp(cluster.visual_rect.right, 0L, static_cast<LONG>(width)),
+          std::clamp(cluster.visual_rect.bottom, 0L, static_cast<LONG>(height))};
       for (LONG y = box.top; y < box.bottom; ++y) {
         for (LONG x = box.left; x < box.right; ++x) {
           if (x == box.left || x == box.right - 1 || y == box.top ||
@@ -2127,15 +2260,16 @@ void AttachedTextSurfaceWindow::RenderLayerBitmap(bool calibration) {
   if (hover_cluster_ >= 0 &&
       static_cast<size_t>(hover_cluster_) < clusters_.size()) {
     const RECT cluster =
-        clusters_[static_cast<size_t>(hover_cluster_)].client_rect;
+        clusters_[static_cast<size_t>(hover_cluster_)].visual_rect;
     const RECT box{
         std::clamp(cluster.left, 0L, static_cast<LONG>(width)),
         std::clamp(cluster.top, 0L, static_cast<LONG>(height)),
         std::clamp(cluster.right, 0L, static_cast<LONG>(width)),
         std::clamp(cluster.bottom, 0L, static_cast<LONG>(height))};
     // Match KiriKiri's fushiLookupPaintHighlight: colorRect(0x31d7ff, 88).
-    // Keep the same bounded hit geometry, with a translucent fill only.
-    const uint32_t hover_fill = PremultipliedPixel(49, 215, 255, 88);
+    // PremultipliedPixel takes alpha first; keep this as a translucent fill
+    // over the observed visual glyph bounds, without an outline.
+    const uint32_t hover_fill = PremultipliedPixel(88, 49, 215, 255);
     for (LONG y = box.top; y < box.bottom; ++y) {
       for (LONG x = box.left; x < box.right; ++x) {
         pixels[static_cast<size_t>(y) * width + x] = hover_fill;
@@ -2158,7 +2292,7 @@ void AttachedTextSurfaceWindow::RenderLayerBitmap(bool calibration) {
 
 int AttachedTextSurfaceWindow::ClusterAt(POINT client_point) const {
   for (size_t index = 0; index < clusters_.size(); ++index) {
-    if (PtInRect(&clusters_[index].client_rect, client_point)) {
+    if (PtInRect(&clusters_[index].hit_rect, client_point)) {
       return static_cast<int>(index);
     }
   }
@@ -2607,10 +2741,13 @@ void AttachedTextSurfaceWindow::EmitLookupEvent(int cluster_index,
   event.source_text = source_text_utf8_;
   event.char_index = cluster.text_position;
   event.source_length = cluster.text_length;
-  event.screen_rect_px = cluster.client_rect;
+  event.screen_rect_px = cluster.visual_rect;
   OffsetRect(&event.screen_rect_px, surface_screen_rect_.left,
              surface_screen_rect_.top);
-  event.dpi = std::max(96, live_reference_client_.dpi);
+  // screen_rect_px is in the presentation monitor's physical pixels.  The
+  // source DPI belongs to profile/layout scaling and may differ when Magpie
+  // presents the output on another monitor.
+  event.dpi = std::max(96, presentation_dpi_);
   event.hover = hover;
   on_lookup_(event);
 }

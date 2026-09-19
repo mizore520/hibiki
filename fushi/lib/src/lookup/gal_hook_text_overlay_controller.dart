@@ -161,6 +161,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
   int _syncRevision = 0;
   String _sessionSyncIdentity = '';
   String _attachedRoutingKey = '';
+  String? _lastAttachedStateDiagnostic;
   Timer? _syncRetryTimer;
   int _syncRetryAttempt = 0;
 
@@ -344,6 +345,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
       onGalLookupAdmission: _ingameLookup.handleAdmission,
     );
     _attachedRoutingKey = _currentAttachedRoutingKey;
+    _lastAttachedStateDiagnostic = null;
     _sessionSyncIdentity = _currentSessionSyncIdentity;
     _attachedText.addListener(_onAttachedRoutingChanged);
     _session.addListener(_scheduleSessionSync);
@@ -1148,15 +1150,18 @@ class GalHookTextOverlayController extends ChangeNotifier {
         lookupSurfaceActive && _attachedText.attachedProviderClaimed;
     // BUG-2142 复验用：`attachedReady` 是两个输入的合取，只记结论就分不清是「宿主没
     // 认领」还是「查词面整体没武装」——真机上这两种情况的排障方向完全相反。
-    glog(
-      'gal-overlay: attachedReady=$attachedReady '
-      'lookupSurfaceActive=$lookupSurfaceActive '
-      'claimed=${_attachedText.attachedProviderClaimed} '
-      'lookupActive=$lookupActive profileSynchronized=$profileSynchronized '
-      'attachedSynchronized=$attachedSynchronized '
-      'mode=${lookupMode.wireName} status=${_attachedText.status.name}/'
-      '${_attachedText.statusReason}',
-    );
+    final String diagnostic =
+        'gal-overlay: attachedReady=$attachedReady '
+        'lookupSurfaceActive=$lookupSurfaceActive '
+        'claimed=${_attachedText.attachedProviderClaimed} '
+        'lookupActive=$lookupActive profileSynchronized=$profileSynchronized '
+        'attachedSynchronized=$attachedSynchronized '
+        'mode=${lookupMode.wireName} status=${_attachedText.status.name}/'
+        '${_attachedText.statusReason}';
+    if (_lastAttachedStateDiagnostic != diagnostic) {
+      _lastAttachedStateDiagnostic = diagnostic;
+      glog(diagnostic);
+    }
     final bool nativeProviderDesired =
         sessionPushSucceeded &&
         lookupSurfaceActive &&
@@ -1788,6 +1793,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
         'gal-overlay: calibration_sample failed '
         'category=${failure.failure.name} '
         'captureReason=${_boundedCaptureReason(failure.captureReason)} '
+        'captureHresults=${failure.captureErrorCodes.join(',')} '
         'requestedHwnd=${_boundedCaptureIdentity(requestedTarget?.targetHwnd)} '
         'requestedPid=${_boundedCaptureIdentity(requestedTarget?.targetPid)} '
         'capturedHwnd=${_boundedCaptureIdentity(metadata?.capturedHwnd)} '

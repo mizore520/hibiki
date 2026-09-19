@@ -1741,9 +1741,23 @@ class GalAttachedTextController extends ChangeNotifier {
   }) async {
     final GalAttachedSurfaceTarget? target = _target;
     final int generation = _textGeneration;
+    // The dictionary card owns the singleton mouse hook while it is open.
+    // Losing input admission for that reason does not invalidate the current
+    // text or the configured surface. Native must still acknowledge hiding
+    // the exact epoch/generation; the caller separately fences the card.
+    final bool cardOwnsInput =
+        _status == GalAttachedTextStatus.suspended &&
+        _nativeStatus == 'mouseHookBusy' &&
+        _statusReason ==
+            'low_level_mouse_arm_failed:singleton_owned_by_other_hwnd' &&
+        !_surfaceVisible &&
+        _attachedProviderClaimed &&
+        _activeVariant != null &&
+        !calibrationActive;
     if (target == null ||
         _activeCaptureLease != null ||
         !(_status == GalAttachedTextStatus.activeAttached ||
+            cardOwnsInput ||
             (allowBackgroundCalibrationCapture &&
                 canCaptureCalibrationSample &&
                 calibrationCaptureNeedsAttachedLease)) ||

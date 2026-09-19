@@ -79,10 +79,34 @@ void main() {
       preview.boxForIndex(1)!.rect,
       const Rect.fromLTRB(90, 420, 120, 450),
     );
+    expect(
+      preview.boxForIndex(1)!.visualRect,
+      const Rect.fromLTRB(90, 420, 120, 450),
+    );
     expect(preview.boxForIndex(2), same(preview.boxForIndex(1)));
     expect(preview.boxForIndex(0), isNull);
     expect(preview.boxForIndex(3), isNull);
     expect(() => preview.boxes.clear(), throwsUnsupportedError);
+  });
+
+  test('exposes visual bounds while keeping legacy hit edges', () async {
+    reply = <String, Object?>{
+      'accepted': true,
+      'boxes': <Object?>[
+        <String, Object?>{
+          ..._box(),
+          'visualLeft': 98,
+          'visualTop': 428,
+          'visualRight': 112,
+          'visualBottom': 445,
+        },
+      ],
+    };
+    final GalCalibrationPreview preview = await _build();
+    final GalCalibrationBox box = preview.boxForIndex(1)!;
+    expect(box.hitRect, const Rect.fromLTRB(90, 420, 120, 450));
+    expect(box.visualRect, const Rect.fromLTRB(98, 428, 112, 445));
+    expect(box.rect, box.hitRect);
   });
 
   test('invalid inputs never call native layout', () async {
@@ -172,6 +196,13 @@ void main() {
         'bottom outside client': <String, Object?>{'bottom': 601},
         'zero width': <String, Object?>{'right': 90},
         'inverted height': <String, Object?>{'bottom': 419},
+        'visual box outside hit box': <String, Object?>{
+          'visualLeft': 89,
+          'visualTop': 420,
+          'visualRight': 120,
+          'visualBottom': 450,
+        },
+        'partial visual box': <String, Object?>{'visualLeft': 92},
       };
   for (final MapEntry<String, Map<String, Object?>> invalid
       in invalidBoxes.entries) {

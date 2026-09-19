@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'package:fushi/src/lookup/gal_lookup_calibration_capture.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_preview.dart';
 import 'package:fushi/src/lookup/gal_lookup_surface_profile.dart';
+import 'package:fushi/src/mining/window_capture_channel.dart';
 import 'package:fushi/src/storage/app_paths.dart';
 import 'package:path/path.dart' as p;
 
@@ -80,6 +81,7 @@ class GalLookupCalibrationDraft {
     required List<GalCalibrationSample> samples,
     GalLookupNormalizedRectV1? searchRect,
     GalLookupReferenceClientV1? layoutReferenceClient,
+    this.layoutCaptureMetadata,
   }) : searchRect = searchRect ?? rect,
        samples = List.unmodifiable(samples),
        layoutReferenceClient =
@@ -99,12 +101,23 @@ class GalLookupCalibrationDraft {
   /// Older notebooks did not persist this and therefore use their first sample.
   final GalLookupReferenceClientV1? layoutReferenceClient;
 
+  /// Provenance of the image used to fit this layout, independent of which
+  /// sample is currently selected or subsequently removed.
+  final WindowCaptureMetadata? layoutCaptureMetadata;
+
   bool validFor(String hash) =>
       RegExp(r'^[a-fA-F0-9]{64}$').hasMatch(hash) &&
       rect.isValid &&
       searchRect.isValid &&
       layout.isValid &&
       (layoutReferenceClient?.isValid ?? true) &&
+      (layoutCaptureMetadata == null ||
+          (layoutReferenceClient != null &&
+              layoutCaptureMetadata!.imageWidthPx ==
+                  layoutReferenceClient!.widthPx &&
+              layoutCaptureMetadata!.imageHeightPx ==
+                  layoutReferenceClient!.heightPx &&
+              layoutCaptureMetadata!.dpi == layoutReferenceClient!.dpi)) &&
       samples.length <= maxSamples &&
       samples.every((GalCalibrationSample s) => s.capture.exeSha256 == hash) &&
       samples.fold<int>(
@@ -121,6 +134,8 @@ class GalLookupCalibrationDraft {
     'samples': samples.map((GalCalibrationSample s) => s.toJson()).toList(),
     if (layoutReferenceClient != null)
       'layoutReferenceClient': layoutReferenceClient!.toJson(),
+    if (layoutCaptureMetadata != null)
+      'layoutCaptureMetadata': layoutCaptureMetadata!.toJson(),
   };
 
   static GalLookupCalibrationDraft fromJson(Map<String, dynamic> json) {
@@ -154,12 +169,19 @@ class GalLookupCalibrationDraft {
     if (hasLayoutReference && layoutReferenceClient == null) {
       throw const FormatException('invalid_draft');
     }
+    final WindowCaptureMetadata? layoutCaptureMetadata =
+        WindowCaptureMetadata.tryFromMap(json['layoutCaptureMetadata']);
+    if (json.containsKey('layoutCaptureMetadata') &&
+        layoutCaptureMetadata == null) {
+      throw const FormatException('invalid_draft');
+    }
     return GalLookupCalibrationDraft(
       rect: rect,
       searchRect: searchRect,
       layout: layout,
       samples: samples,
       layoutReferenceClient: layoutReferenceClient,
+      layoutCaptureMetadata: layoutCaptureMetadata,
     );
   }
 }
@@ -215,6 +237,7 @@ GalLookupTextLayoutV1 copyGalCalibrationLayout(
   double? tracking,
   double? lineHeight,
   bool clearCellGrid = false,
+  List<GalLookupPunctuationVisualBoundV1>? punctuationVisualBounds,
 }) => GalLookupTextLayoutV1(
   fontFamily: fontFamily ?? layout.fontFamily,
   fontSizePerClientHeight: fontSize ?? layout.fontSizePerClientHeight,
@@ -224,6 +247,9 @@ GalLookupTextLayoutV1 copyGalCalibrationLayout(
   verticalAlign: layout.verticalAlign,
   paddingPerClientHeight: layout.paddingPerClientHeight,
   cellGrid: clearCellGrid ? null : layout.cellGrid,
+  punctuationVisualBounds: clearCellGrid
+      ? const <GalLookupPunctuationVisualBoundV1>[]
+      : punctuationVisualBounds ?? layout.punctuationVisualBounds,
 );
 
 /// Fits only translation and character spacing. Font, wrapping area and line
@@ -442,6 +468,7 @@ Future<GalLookupCalibrationDraft?> fitGalCalibrationAnchors(
     layout: layout,
     samples: draft.samples,
     layoutReferenceClient: draft.layoutReferenceClient,
+    layoutCaptureMetadata: draft.layoutCaptureMetadata,
   );
 }
 

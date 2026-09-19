@@ -65,9 +65,9 @@ void main() {
     expect(map, isNot(-1));
     final String tail = capture.substring(map, capture.indexOf('Unmap(', map));
     expect(
-      tail.contains(
-        'ComputeClientCropBox(hwnd, desc.Width, desc.Height, &crop)',
-      ),
+      tail
+          .replaceAll(RegExp(r'\s+'), '')
+          .contains('ComputeClientCropBox(hwnd,desc.Width,desc.Height,&crop)'),
       isTrue,
       reason: '裁剪必须落在 Map 之后、编码之前',
     );

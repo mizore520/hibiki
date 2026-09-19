@@ -6767,7 +6767,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get game_lookup_samples_reference => 'Calibration sample';
   String get game_lookup_samples_validation => 'Validation sample';
   String get game_lookup_samples_boxes => 'Show click areas';
-  String get game_lookup_samples_opacity => 'Click area opacity';
   String get game_lookup_samples_native_hint =>
       'The boxes show the areas used to select characters. Adjust the layout until they cover the original text.';
   String get game_lookup_samples_unavailable =>
@@ -6906,4 +6905,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
       'Align all calibration samples';
   String get game_lookup_samples_pixel_advanced_hint =>
       'These are source screenshot pixels for the orange recognition frame. They are a manual backup, not character size.';
+  String get game_lookup_samples_capture_unavailable =>
+      'This window could not be captured. Your saved calibration is unchanged; the capture failure has been logged for diagnosis.';
 }

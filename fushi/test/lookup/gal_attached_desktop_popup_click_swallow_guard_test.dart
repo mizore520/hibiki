@@ -182,9 +182,9 @@ void main() {
       expect(tick.contains('hover_tracker_.Observe('), isTrue);
       expect(tick.contains('EmitLookupEvent(cluster,true)'), isTrue);
       expect(
-        tick.contains('mode_==Mode::kCalibration&&over_text?cluster:-1'),
+        tick.contains('visual_cluster=over_text?cluster:-1'),
         isTrue,
-        reason: '校准层的视觉高亮必须独立于 Shift 查词事件',
+        reason: '普通查词和校准的视觉高亮都必须独立于 Shift 查词事件',
       );
       expect(
         tick.contains('visual_cluster') && tick.contains('hover_cluster_'),
@@ -225,9 +225,12 @@ void main() {
       expect(source.contains('KillTimer(hwnd_,kHoverTimerId);'), isTrue);
       expect(
         source.contains('hover_cluster_>=0') &&
-            source.contains('PremultipliedPixel(35,190,220,105)'),
+            source.contains('PremultipliedPixel(88,49,215,255)') &&
+            source.contains(
+              'clusters_[static_cast<size_t>(hover_cluster_)].visual_rect',
+            ),
         isTrue,
-        reason: '校准层要画当前字簇的纯视觉反馈',
+        reason: '按 KiriKiri 参考用浅蓝填充当前字簇的视觉框，命中仍使用完整格',
       );
       expect(
         header.contains('inthover_cluster_=-1;'),

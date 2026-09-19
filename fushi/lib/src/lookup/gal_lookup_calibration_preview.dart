@@ -5,11 +5,24 @@ import 'package:fushi/src/utils/misc/channel_constants.dart';
 /// The native DirectWrite hit boxes, in client physical pixels. A preview never
 /// registers an input surface or changes the current game session.
 class GalCalibrationBox {
-  const GalCalibrationBox(this.charIndex, this.charLength, this.rect);
+  const GalCalibrationBox(
+    this.charIndex,
+    this.charLength,
+    this.hitRect, {
+    Rect? visualRect,
+  }) : visualRect = visualRect ?? hitRect;
 
   final int charIndex;
   final int charLength;
-  final Rect rect;
+
+  /// The full advance cell used for hit testing and text positioning.
+  final Rect hitRect;
+
+  /// The observed glyph bounds used for the paint/anchor layer.
+  final Rect visualRect;
+
+  /// Legacy callers use [rect] for the hit rectangle.
+  Rect get rect => hitRect;
 }
 
 class GalCalibrationPreview {
@@ -73,34 +86,60 @@ abstract final class GalLookupCalibrationPreviewChannel {
       }
       final Object? index = raw['charIndex'];
       final Object? length = raw['charLength'];
-      final List<Object?> edges = [
+      final List<Object?> legacyEdges = [
         raw['left'],
         raw['top'],
         raw['right'],
         raw['bottom'],
       ];
+      final bool hasVisualEdges = raw.keys.any(
+        (Object? key) => key is String && key.startsWith('visual'),
+      );
+      final List<Object?> hitEdges = legacyEdges;
+      final List<Object?> visualEdges = hasVisualEdges
+          ? <Object?>[
+              raw['visualLeft'],
+              raw['visualTop'],
+              raw['visualRight'],
+              raw['visualBottom'],
+            ]
+          : hitEdges;
       if (index is! int ||
           length is! int ||
           index < 0 ||
           length <= 0 ||
           index + length > text.length ||
-          edges.any((Object? v) => v is! num || !v.isFinite)) {
+          hitEdges.any((Object? v) => v is! num || !v.isFinite) ||
+          visualEdges.any((Object? v) => v is! num || !v.isFinite)) {
         return const GalCalibrationPreview(boxes: [], reason: 'invalid_boxes');
       }
-      final Rect box = Rect.fromLTRB(
-        (edges[0]! as num).toDouble(),
-        (edges[1]! as num).toDouble(),
-        (edges[2]! as num).toDouble(),
-        (edges[3]! as num).toDouble(),
+      final Rect hitRect = Rect.fromLTRB(
+        (hitEdges[0]! as num).toDouble(),
+        (hitEdges[1]! as num).toDouble(),
+        (hitEdges[2]! as num).toDouble(),
+        (hitEdges[3]! as num).toDouble(),
       );
-      if (box.isEmpty ||
-          box.left < 0 ||
-          box.top < 0 ||
-          box.right > client.widthPx ||
-          box.bottom > client.heightPx) {
+      final Rect visualRect = Rect.fromLTRB(
+        (visualEdges[0]! as num).toDouble(),
+        (visualEdges[1]! as num).toDouble(),
+        (visualEdges[2]! as num).toDouble(),
+        (visualEdges[3]! as num).toDouble(),
+      );
+      if (hitRect.isEmpty ||
+          visualRect.isEmpty ||
+          hitRect.left < 0 ||
+          hitRect.top < 0 ||
+          hitRect.right > client.widthPx ||
+          hitRect.bottom > client.heightPx ||
+          visualRect.left < hitRect.left ||
+          visualRect.top < hitRect.top ||
+          visualRect.right > hitRect.right ||
+          visualRect.bottom > hitRect.bottom) {
         return const GalCalibrationPreview(boxes: [], reason: 'invalid_boxes');
       }
-      boxes.add(GalCalibrationBox(index, length, box));
+      boxes.add(
+        GalCalibrationBox(index, length, hitRect, visualRect: visualRect),
+      );
     }
     return GalCalibrationPreview(boxes: List.unmodifiable(boxes));
   }

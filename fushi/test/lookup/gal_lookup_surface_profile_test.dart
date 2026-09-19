@@ -169,6 +169,61 @@ void main() {
     },
   );
 
+  test(
+    'punctuation visual bounds round-trip without changing the cell grid',
+    () {
+      const GalLookupCellGridV1 grid = GalLookupCellGridV1(
+        advancePerClientHeight: 0.03,
+        lineAdvancePerClientHeight: 0.04,
+        cellHeightPerClientHeight: 0.035,
+        columns: 24,
+        continuationIndent: 2,
+        quotedContinuationIndent: 3,
+      );
+      const GalLookupPunctuationVisualBoundV1 bound =
+          GalLookupPunctuationVisualBoundV1(
+            codePoint: 0x3002,
+            left: 0.35,
+            top: 0.55,
+            right: 0.65,
+            bottom: 0.95,
+          );
+      const GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(
+        cellGrid: grid,
+        punctuationVisualBounds: <GalLookupPunctuationVisualBoundV1>[bound],
+      );
+      expect(bound.isValid, isTrue);
+      expect(layout.isValid, isTrue);
+      final Map<String, Object?> json = layout.toJson();
+      expect(json['punctuationVisualBounds'], <Map<String, Object?>>[
+        bound.toJson(),
+      ]);
+      expect(GalLookupTextLayoutV1.tryFromJson(json), layout);
+      expect(
+        const GalLookupTextLayoutV1().toJson().containsKey(
+          'punctuationVisualBounds',
+        ),
+        isFalse,
+      );
+
+      final Map<String, Object?> invalid = Map<String, Object?>.of(json)
+        ..['punctuationVisualBounds'] = <Object?>[
+          <String, Object?>{...bound.toJson(), 'codePoint': 0x3042},
+        ];
+      expect(GalLookupTextLayoutV1.tryFromJson(invalid), isNull);
+      final Map<String, Object?> supplementary = Map<String, Object?>.of(json)
+        ..['punctuationVisualBounds'] = <Object?>[
+          <String, Object?>{...bound.toJson(), 'codePoint': 0x1f4a9},
+        ];
+      expect(GalLookupTextLayoutV1.tryFromJson(supplementary), isNull);
+      final Map<String, Object?> outOfCell = Map<String, Object?>.of(json)
+        ..['punctuationVisualBounds'] = <Object?>[
+          <String, Object?>{...bound.toJson(), 'right': 1.1},
+        ];
+      expect(GalLookupTextLayoutV1.tryFromJson(outOfCell), isNull);
+    },
+  );
+
   test('present but malformed cell grid rejects the complete layout', () {
     const GalLookupCellGridV1 grid = GalLookupCellGridV1(
       advancePerClientHeight: 0.03,

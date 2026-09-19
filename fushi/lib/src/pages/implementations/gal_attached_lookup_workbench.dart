@@ -5,6 +5,7 @@ import 'package:fushi/i18n/strings.g.dart';
 import 'package:fushi/src/lookup/gal_attached_text_controller.dart';
 import 'package:fushi/src/lookup/gal_hook_text_overlay_controller.dart';
 import 'package:fushi/src/lookup/gal_lookup_calibration_draft.dart';
+import 'package:fushi/src/lookup/gal_lookup_calibration_projection.dart';
 import 'package:fushi/src/lookup/gal_lookup_surface_profile.dart';
 import 'package:fushi/src/pages/implementations/gal_lookup_samples_dialog.dart';
 import 'package:fushi/src/platform/gal_hook_text_overlay_channel.dart';
@@ -96,23 +97,6 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           _WorkbenchPill(
-                            label: t.game_lookup_attached_native_status,
-                            value: controller.nativeStatus ?? '—',
-                          ),
-                          const SizedBox(width: 6),
-                          _WorkbenchPill(
-                            label: t.game_lookup_attached_provider,
-                            value: galAttachedProviderLabel(
-                              providerKind: controller.providerKind,
-                              providerId: controller.providerId,
-                              providerStatus: controller.providerStatus,
-                              fallbackStatus: controller.status,
-                              unknownLabel:
-                                  t.game_lookup_attached_provider_unknown,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          _WorkbenchPill(
                             label: t.game_lookup_attached_profile,
                             value: profile == null || profile.variants.isEmpty
                                 ? t.game_lookup_attached_profile_missing
@@ -120,27 +104,28 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
                                       '(${profile.variants.length})',
                           ),
                           const SizedBox(width: 6),
-                          _WorkbenchPill(
-                            label: t.game_lookup_attached_shield,
-                            value: _shieldLabel(
-                              controller.shieldStatus.conclusion,
+                          Tooltip(
+                            message: <String>[
+                              '${t.game_lookup_attached_native_status}: '
+                                  '${controller.nativeStatus ?? '—'}',
+                              '${t.game_lookup_attached_provider}: '
+                                  '${galAttachedProviderLabel(providerKind: controller.providerKind, providerId: controller.providerId, providerStatus: controller.providerStatus, fallbackStatus: controller.status, unknownLabel: t.game_lookup_attached_provider_unknown)}',
+                              '${t.game_lookup_attached_shield}: '
+                                  '${_shieldLabel(controller.shieldStatus.conclusion)}',
+                              '${t.game_lookup_attached_risk}: '
+                                  '${riskModeActive
+                                      ? t.game_lookup_attached_risk_active
+                                      : riskPending
+                                      ? t.game_lookup_attached_risk_pending
+                                      : t.game_lookup_attached_risk_safe}',
+                            ].join('\n'),
+                            child: const Padding(
+                              key: ValueKey<String>(
+                                'game-attached-lookup-details',
+                              ),
+                              padding: EdgeInsets.all(6),
+                              child: Icon(Icons.info_outline, size: 18),
                             ),
-                            warning:
-                                controller.shieldStatus.conclusion !=
-                                GalAttachedShieldConclusion.verified,
-                          ),
-                          const SizedBox(width: 6),
-                          _WorkbenchPill(
-                            key: const ValueKey<String>(
-                              'game-attached-lookup-risk-status',
-                            ),
-                            label: t.game_lookup_attached_risk,
-                            value: riskModeActive
-                                ? t.game_lookup_attached_risk_active
-                                : riskPending
-                                ? t.game_lookup_attached_risk_pending
-                                : t.game_lookup_attached_risk_safe,
-                            warning: riskModeActive || riskPending,
                           ),
                           if (showThreadRequiredPill) ...<Widget>[
                             const SizedBox(width: 6),
@@ -312,15 +297,22 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
       _showFailure(context, t.game_lookup_attached_calibration_failed);
       return;
     }
+    final GalLookupSurfaceVariantV1? variant = projectGalCalibrationToSource(
+      client: measuredClient,
+      rect: draft.rect,
+      layout: draft.layout,
+      metadata:
+          draft.layoutCaptureMetadata ??
+          draft.samples.first.capture.captureMetadata,
+    );
+    if (variant == null) {
+      _showFailure(context, t.game_lookup_attached_calibration_failed);
+      return;
+    }
     final bool applied = await controller.applyMeasuredCalibration(
       expectedTarget: target,
       expectedExeSha256: hash,
-      variant: GalLookupSurfaceVariantV1(
-        aspectRatio: measuredClient.aspectRatio,
-        referenceClient: measuredClient,
-        bodyRect: draft.rect,
-        layout: draft.layout,
-      ),
+      variant: variant,
     );
     if (!applied && context.mounted) {
       _showFailure(context, t.game_lookup_attached_calibration_failed);
@@ -347,10 +339,27 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
       _showFailure(context, t.game_lookup_attached_calibration_short_text);
       return;
     }
+    final GalLookupSurfaceVariantV1? initial =
+        draft?.layoutReferenceClient == null
+        ? null
+        : projectGalCalibrationToSource(
+            client: draft!.layoutReferenceClient!,
+            rect: draft.rect,
+            layout: draft.layout,
+            metadata:
+                draft.layoutCaptureMetadata ??
+                (draft.samples.isEmpty
+                    ? null
+                    : draft.samples.first.capture.captureMetadata),
+          );
+    if (draft != null && initial == null) {
+      _showFailure(context, t.game_lookup_attached_calibration_failed);
+      return;
+    }
     final bool started = await controller.beginCalibration(
       acceptUnsafeLeftClick: true,
-      initialBodyRect: draft?.rect,
-      initialLayout: draft?.layout,
+      initialBodyRect: initial?.bodyRect,
+      initialLayout: initial?.layout,
     );
     if (!context.mounted) {
       if (started) await controller.cancelCalibration();
@@ -440,7 +449,6 @@ class _WorkbenchPill extends StatelessWidget {
     required this.label,
     required this.value,
     this.warning = false,
-    super.key,
   });
 
   final String label;

@@ -373,6 +373,13 @@ class WindowCaptureMetadata {
     this.presentationPid = 0,
     this.usedPresentationCapture = false,
     this.presentationViewportComplete = false,
+    this.sourceClientLeftPx = 0,
+    this.sourceClientTopPx = 0,
+    this.sourceClientWidthPx = 0,
+    this.sourceClientHeightPx = 0,
+    this.sourceClientDpi = 0,
+    this.sourceViewportLeftPx = 0,
+    this.sourceViewportTopPx = 0,
     this.sourceViewportWidthPx = 0,
     this.sourceViewportHeightPx = 0,
     this.destinationViewportWidthPx = 0,
@@ -406,6 +413,13 @@ class WindowCaptureMetadata {
   final int presentationPid;
   final bool usedPresentationCapture;
   final bool presentationViewportComplete;
+  final int sourceClientLeftPx;
+  final int sourceClientTopPx;
+  final int sourceClientWidthPx;
+  final int sourceClientHeightPx;
+  final int sourceClientDpi;
+  final int sourceViewportLeftPx;
+  final int sourceViewportTopPx;
   final int sourceViewportWidthPx;
   final int sourceViewportHeightPx;
   final int destinationViewportWidthPx;
@@ -451,6 +465,20 @@ class WindowCaptureMetadata {
       dpi > 0 &&
       capturedAtTickMs > 0;
 
+  /// Explicit source coordinates distinguish a cropped presentation from a
+  /// scaled full client. Older captures have no such provenance.
+  bool get hasSourceClientMapping =>
+      isCompletePresentation &&
+      sourceClientWidthPx > 0 &&
+      sourceClientHeightPx > 0 &&
+      sourceClientDpi > 0 &&
+      sourceViewportLeftPx >= sourceClientLeftPx &&
+      sourceViewportTopPx >= sourceClientTopPx &&
+      sourceViewportLeftPx + sourceViewportWidthPx <=
+          sourceClientLeftPx + sourceClientWidthPx &&
+      sourceViewportTopPx + sourceViewportHeightPx <=
+          sourceClientTopPx + sourceClientHeightPx;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'capturedHwnd': capturedHwnd,
     'capturedPid': capturedPid,
@@ -470,6 +498,13 @@ class WindowCaptureMetadata {
     'presentationPid': presentationPid,
     'usedPresentationCapture': usedPresentationCapture,
     'presentationViewportComplete': presentationViewportComplete,
+    'sourceClientLeftPx': sourceClientLeftPx,
+    'sourceClientTopPx': sourceClientTopPx,
+    'sourceClientWidthPx': sourceClientWidthPx,
+    'sourceClientHeightPx': sourceClientHeightPx,
+    'sourceClientDpi': sourceClientDpi,
+    'sourceViewportLeftPx': sourceViewportLeftPx,
+    'sourceViewportTopPx': sourceViewportTopPx,
     'sourceViewportWidthPx': sourceViewportWidthPx,
     'sourceViewportHeightPx': sourceViewportHeightPx,
     'destinationViewportWidthPx': destinationViewportWidthPx,
@@ -501,6 +536,13 @@ class WindowCaptureMetadata {
       'sourcePid',
       'presentationHwnd',
       'presentationPid',
+      'sourceClientLeftPx',
+      'sourceClientTopPx',
+      'sourceClientWidthPx',
+      'sourceClientHeightPx',
+      'sourceClientDpi',
+      'sourceViewportLeftPx',
+      'sourceViewportTopPx',
       'sourceViewportWidthPx',
       'sourceViewportHeightPx',
       'destinationViewportWidthPx',
@@ -539,6 +581,13 @@ class WindowCaptureMetadata {
           value['usedPresentationCapture'] as bool? ?? false,
       presentationViewportComplete:
           value['presentationViewportComplete'] as bool? ?? false,
+      sourceClientLeftPx: value['sourceClientLeftPx'] as int? ?? 0,
+      sourceClientTopPx: value['sourceClientTopPx'] as int? ?? 0,
+      sourceClientWidthPx: value['sourceClientWidthPx'] as int? ?? 0,
+      sourceClientHeightPx: value['sourceClientHeightPx'] as int? ?? 0,
+      sourceClientDpi: value['sourceClientDpi'] as int? ?? 0,
+      sourceViewportLeftPx: value['sourceViewportLeftPx'] as int? ?? 0,
+      sourceViewportTopPx: value['sourceViewportTopPx'] as int? ?? 0,
       sourceViewportWidthPx: value['sourceViewportWidthPx'] as int? ?? 0,
       sourceViewportHeightPx: value['sourceViewportHeightPx'] as int? ?? 0,
       destinationViewportWidthPx:

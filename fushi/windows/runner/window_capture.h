@@ -132,14 +132,20 @@ Microsoft::WRL::ComPtr<ID3D11Device> CreateD3DDevice();
 // 源窗口，并按 hwnd 去重（重定向后可能与单独枚举到的源窗口重合）。绝不抛异常。
 std::vector<ExternalWindow> EnumerateTopLevelWindows(HWND self);
 
-// 对 [hwnd] 抓一帧（优先 Windows.Graphics.Capture；特定
-// WS_EX_NOREDIRECTIONBITMAP 窗口允许有界 PrintWindow 兼容路径）转 PNG 字节。
+// 对 [hwnd] 抓一帧（优先 Windows.Graphics.Capture；WGC item 创建失败时允许有界
+// PrintWindow 兼容路径）转 PNG 字节。
 // 任何后端失败（系统不支持 / 窗口已关 / DRM 黑帧 / 超时 / D3D/WIC 失败）返回带
 // 非空 error、空 png 的结果。
 // BUG-1096：绑定前先过 [ResolveScalingSourceWindow]，命中 Magpie 缩放窗时改抓源窗口。
 // 同步运行在**调用线程**上（自建 WinRT MTA apartment，用完即退）；调用方应放到
-// 非 UI 线程调用（会阻塞等首帧，最长约 1.5s）。绝不抛异常。
+// 非 UI 线程调用（WGC 首帧最长约 1.5s；WGC item 失败时另有固定上限的 helper
+// fallback）。绝不抛异常。
 WindowCaptureResult CaptureWindowPng(HWND hwnd);
+
+// wWinMain 调用的最早 helper 分流。返回 -1 表示普通应用启动，返回其它值表示
+// 当前进程已执行 `--fushi-print-window-helper` 专用入口并可直接退出；该入口不触发
+// Flutter、单实例互斥量或 WebView2 初始化。
+int RunPrintWindowCaptureHelperIfRequested();
 
 }  // namespace fushi
 

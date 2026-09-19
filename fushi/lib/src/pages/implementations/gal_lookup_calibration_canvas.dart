@@ -431,10 +431,10 @@ class _CalibrationPainter extends CustomPainter {
     for (final GalCalibrationBox box in boxes) {
       final bool active = box.charIndex == selectedIndex;
       final Rect rect = Rect.fromLTRB(
-        box.rect.left * sx,
-        box.rect.top * sy,
-        box.rect.right * sx,
-        box.rect.bottom * sy,
+        box.visualRect.left * sx,
+        box.visualRect.top * sy,
+        box.visualRect.right * sx,
+        box.visualRect.bottom * sy,
       );
       canvas.drawRect(
         rect,

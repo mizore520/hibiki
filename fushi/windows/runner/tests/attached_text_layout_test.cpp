@@ -18,10 +18,14 @@ void ExpectSameBoxes(const layout::Result &left, const layout::Result &right,
     const auto &expected = right.boxes[index];
     assert(actual.text_position == expected.text_position);
     assert(actual.text_length == expected.text_length);
-    assert(actual.client_rect.left == expected.client_rect.left + offset_x);
-    assert(actual.client_rect.right == expected.client_rect.right + offset_x);
-    assert(actual.client_rect.top == expected.client_rect.top + offset_y);
-    assert(actual.client_rect.bottom == expected.client_rect.bottom + offset_y);
+    assert(actual.hit_rect.left == expected.hit_rect.left + offset_x);
+    assert(actual.hit_rect.right == expected.hit_rect.right + offset_x);
+    assert(actual.hit_rect.top == expected.hit_rect.top + offset_y);
+    assert(actual.hit_rect.bottom == expected.hit_rect.bottom + offset_y);
+    assert(actual.visual_rect.left == expected.visual_rect.left + offset_x);
+    assert(actual.visual_rect.right == expected.visual_rect.right + offset_x);
+    assert(actual.visual_rect.top == expected.visual_rect.top + offset_y);
+    assert(actual.visual_rect.bottom == expected.visual_rect.bottom + offset_y);
   }
 }
 
@@ -72,7 +76,7 @@ int main() {
       found_pair = true;
     }
     if (box.text_position == 5) {
-      assert(box.client_rect.top > unicode.boxes.front().client_rect.top);
+      assert(box.hit_rect.top > unicode.boxes.front().hit_rect.top);
       found_second_line = true;
     }
   }
@@ -83,8 +87,8 @@ int main() {
       layout::Preview(std::wstring(36, L'\u3042'), client,
                       layout::NormalizedRect{0.1, 0.1, 0.35, 0.8}, style);
   assert(wrapped.ok());
-  assert(wrapped.boxes.back().client_rect.top >
-         wrapped.boxes.front().client_rect.top);
+  assert(wrapped.boxes.back().hit_rect.top >
+         wrapped.boxes.front().hit_rect.top);
   ++cases;
 
   // Physical pixel coordinates do not receive a second DPI multiplier.
@@ -106,8 +110,8 @@ int main() {
   assert(small_result.ok() && large_result.ok());
   assert(small_result.boxes.size() == large_result.boxes.size());
   for (size_t index = 0; index < small_result.boxes.size(); ++index) {
-    const auto &a = small_result.boxes[index].client_rect;
-    const auto &b = large_result.boxes[index].client_rect;
+    const auto &a = small_result.boxes[index].hit_rect;
+    const auto &b = large_result.boxes[index].hit_rect;
     assert(std::abs(b.left - 2 * a.left) <= 1);
     assert(std::abs(b.top - 2 * a.top) <= 1);
     assert(std::abs(b.right - 2 * a.right) <= 1);
@@ -136,20 +140,70 @@ int main() {
     if (box.text_position == 3 || box.text_position == 7)
       found_space = true;
     if (box.text_position == 8) {
-      assert(box.client_rect.left == body.left + 36);
-      assert(box.client_rect.top == body.top + 24);
+      assert(box.hit_rect.left == body.left + 36);
+      assert(box.hit_rect.top == body.top + 24);
       found_quoted_continuation = true;
     }
   }
   assert(!found_space && found_quoted_continuation);
   ++cases;
 
+  // A visual punctuation override shrinks only the painted/anchor rectangle;
+  // the full advance cell and the following character stay unchanged.
+  layout::Layout punctuation_style = grid_style;
+  punctuation_style.punctuation_visual_bounds.push_back(
+      layout::PunctuationVisualBounds{0x3002, 0.35, 0.55, 0.65, 0.95});
+  const auto punctuation =
+      layout::Preview(L"あ。い", client, rect, punctuation_style);
+  const auto punctuation_legacy =
+      layout::Preview(L"あ。い", client, rect, grid_style);
+  assert(punctuation.ok() && punctuation_legacy.ok());
+  assert(punctuation.boxes.size() == 3 && punctuation_legacy.boxes.size() == 3);
+  assert(EqualRect(&punctuation.boxes[1].hit_rect,
+                   &punctuation_legacy.boxes[1].hit_rect));
+  assert(EqualRect(&punctuation.boxes[2].hit_rect,
+                   &punctuation_legacy.boxes[2].hit_rect));
+  assert(punctuation.boxes[1].visual_rect.left >
+         punctuation.boxes[1].hit_rect.left);
+  assert(punctuation.boxes[1].visual_rect.right <
+         punctuation.boxes[1].hit_rect.right);
+  assert(punctuation.boxes[1].visual_rect.top >
+         punctuation.boxes[1].hit_rect.top);
+  assert(punctuation.boxes[1].visual_rect.bottom <
+         punctuation.boxes[1].hit_rect.bottom);
+  ++cases;
+
+  layout::Layout duplicate_visual = punctuation_style;
+  duplicate_visual.punctuation_visual_bounds.push_back(
+      layout::PunctuationVisualBounds{0x3002, 0.2, 0.2, 0.8, 0.8});
+  ExpectRejected(layout::Preview(L"あ。", client, rect, duplicate_visual),
+                 "invalid_layout");
+  ++cases;
+
+  layout::Layout letter_visual = grid_style;
+  letter_visual.punctuation_visual_bounds.push_back(
+      layout::PunctuationVisualBounds{L'A', 0.2, 0.2, 0.8, 0.8});
+  ExpectRejected(layout::Preview(L"あA", client, rect, letter_visual),
+                 "invalid_layout");
+  ++cases;
+
+  // Supplementary-plane symbols remain ordinary full cells; only BMP
+  // punctuation/symbols may carry a visual override.
+  assert(!layout::IsPunctuationOrSymbolCodePoint(0x1F4A9));
+  assert(!layout::IsPunctuationOrSymbolCodePoint(0xD800));
+  layout::Layout supplementary_symbol = grid_style;
+  supplementary_symbol.punctuation_visual_bounds.push_back(
+      layout::PunctuationVisualBounds{0x1F4A9, 0.2, 0.2, 0.8, 0.8});
+  ExpectRejected(layout::Preview(L"A", client, rect, supplementary_symbol),
+                 "invalid_layout");
+  ++cases;
+
   const auto grid_wrapped = layout::Preview(
       std::wstring(17, L'\u3042'), client, rect, grid_style);
   assert(grid_wrapped.ok());
   assert(grid_wrapped.boxes.back().text_position == 16);
-  assert(grid_wrapped.boxes.back().client_rect.left == body.left + 18);
-  assert(grid_wrapped.boxes.back().client_rect.top == body.top + 24);
+  assert(grid_wrapped.boxes.back().hit_rect.left == body.left + 18);
+  assert(grid_wrapped.boxes.back().hit_rect.top == body.top + 24);
   ++cases;
 
   // A disabled grid keeps the legacy wrap point. Enabling hanging punctuation
@@ -160,8 +214,8 @@ int main() {
       layout::Preview(full_line + L"。A", client, rect, grid_style);
   assert(disabled_wrap.ok() && disabled_wrap.boxes.size() == 18);
   assert(disabled_wrap.boxes[16].text_position == 16);
-  assert(disabled_wrap.boxes[16].client_rect.top >
-         disabled_wrap.boxes[15].client_rect.top);
+  assert(disabled_wrap.boxes[16].hit_rect.top >
+         disabled_wrap.boxes[15].hit_rect.top);
 
   layout::Layout hanging_style = grid_style;
   hanging_style.cell_grid->hanging_punctuation = true;
@@ -170,32 +224,32 @@ int main() {
       layout::Preview(full_line + L"。A", client, rect, hanging_style);
   assert(hanging.ok() && hanging.boxes.size() == 18);
   assert(hanging.boxes[16].text_position == 16);
-  assert(hanging.boxes[16].client_rect.left == body.left + 16 * 18);
-  assert(hanging.boxes[16].client_rect.top == body.top);
+  assert(hanging.boxes[16].hit_rect.left == body.left + 16 * 18);
+  assert(hanging.boxes[16].hit_rect.top == body.top);
   assert(hanging.boxes[17].text_position == 17);
-  assert(hanging.boxes[17].client_rect.left == body.left + 18);
-  assert(hanging.boxes[17].client_rect.top == body.top + 24);
+  assert(hanging.boxes[17].hit_rect.left == body.left + 18);
+  assert(hanging.boxes[17].hit_rect.top == body.top + 24);
 
   // Only one punctuation may hang. A second punctuation and the following
   // ordinary character both remain in the normal continuation row.
   const auto one_hang = layout::Preview(full_line + L"。。A", client, rect,
                                         hanging_style);
   assert(one_hang.ok() && one_hang.boxes.size() == 19);
-  assert(one_hang.boxes[16].client_rect.top == body.top);
-  assert(one_hang.boxes[17].client_rect.top == body.top + 24);
-  assert(one_hang.boxes[18].client_rect.top == body.top + 24);
-  assert(one_hang.boxes[18].client_rect.left == body.left + 36);
+  assert(one_hang.boxes[16].hit_rect.top == body.top);
+  assert(one_hang.boxes[17].hit_rect.top == body.top + 24);
+  assert(one_hang.boxes[18].hit_rect.top == body.top + 24);
+  assert(one_hang.boxes[18].hit_rect.left == body.left + 36);
   ++cases;
 
   const auto small_kana = layout::Preview(full_line + L"ょあ", client, rect,
                                           hanging_style);
   assert(small_kana.ok() && small_kana.boxes.size() == 18);
-  assert(small_kana.boxes[16].client_rect.top == body.top);
-  assert(small_kana.boxes[17].client_rect.top == body.top + 24);
+  assert(small_kana.boxes[16].hit_rect.top == body.top);
+  assert(small_kana.boxes[17].hit_rect.top == body.top + 24);
   const auto normal_kana = layout::Preview(full_line + L"よ", client, rect,
                                            hanging_style);
   assert(normal_kana.ok());
-  assert(normal_kana.boxes[16].client_rect.top == body.top + 24);
+  assert(normal_kana.boxes[16].hit_rect.top == body.top + 24);
   ++cases;
 
   // UTF-16 offsets and explicit CRLF remain stable after a hanging cell.
@@ -207,11 +261,11 @@ int main() {
   for (const auto &box : hanging_unicode.boxes) {
     if (box.text_position == 19) {
       assert(box.text_length == 2);
-      assert(box.client_rect.top == body.top + 24);
+      assert(box.hit_rect.top == body.top + 24);
       found_emoji = true;
     }
     if (box.text_position == 21) {
-      assert(box.client_rect.top == body.top + 24);
+      assert(box.hit_rect.top == body.top + 24);
       found_after_break = true;
     }
   }

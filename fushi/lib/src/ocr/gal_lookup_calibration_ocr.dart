@@ -179,6 +179,7 @@ class GalCalibrationOcrGlyph {
     required this.rect,
     required this.confidence,
     this.inkMeasured = false,
+    this.visualMeasured = false,
   });
 
   final int sourceIndex;
@@ -188,6 +189,22 @@ class GalCalibrationOcrGlyph {
   final OcrRect rect;
   final double confidence;
   final bool inkMeasured;
+
+  /// A pixel-backed visual rectangle for a small punctuation mark. This is
+  /// intentionally separate from [inkMeasured], which is reserved for the
+  /// full-size anchors that establish the cell grid.
+  final bool visualMeasured;
+}
+
+final RegExp _punctuationOrSymbolCharacter = RegExp(
+  r'^[\p{P}\p{S}]$',
+  unicode: true,
+);
+
+int? _singlePunctuationCodePoint(String text) {
+  if (!_punctuationOrSymbolCharacter.hasMatch(text)) return null;
+  final List<int> runes = text.runes.toList(growable: false);
+  return runes.length == 1 && runes.single <= 0xffff ? runes.single : null;
 }
 
 class GalCalibrationOcrMatchedLine {
@@ -826,6 +843,176 @@ double _median(List<double> values) {
       : (values[middle - 1] + values[middle]) / 2;
 }
 
+/// Keep only small punctuation bounds supported by pixel evidence. A single
+/// training capture is sufficient when the visual measurement is stable; if
+/// the same code point appears in multiple captures, their normalized bounds
+/// must agree before an override is stored. This intentionally has no effect
+/// on the fitted cell advance.
+List<GalLookupPunctuationVisualBoundV1>
+deriveGalCalibrationPunctuationVisualBounds({
+  required List<GalCalibrationSample> samples,
+  required List<GalCalibrationOcrAlignment> alignments,
+  required GalLookupCellGridV1 grid,
+  required double left,
+  required double top,
+}) {
+  final Map<
+    int,
+    List<({int sample, double left, double top, double right, double bottom})>
+  >
+  observations =
+      <
+        int,
+        List<
+          ({int sample, double left, double top, double right, double bottom})
+        >
+      >{};
+  for (int sampleIndex = 0; sampleIndex < samples.length; sampleIndex++) {
+    if (samples[sampleIndex].validation ||
+        sampleIndex >= alignments.length ||
+        !alignments[sampleIndex].accepted) {
+      continue;
+    }
+    final GalLookupCalibrationCapture capture = samples[sampleIndex].capture;
+    final GalLookupReferenceClientV1 client = capture.referenceClient;
+    final double cellWidth = grid.advancePerClientHeight * client.heightPx;
+    final double cellHeight = grid.cellHeightPerClientHeight * client.heightPx;
+    final double lineAdvance =
+        grid.lineAdvancePerClientHeight * client.heightPx;
+    if (!cellWidth.isFinite ||
+        !cellHeight.isFinite ||
+        !lineAdvance.isFinite ||
+        cellWidth <= 0 ||
+        cellHeight <= 0 ||
+        lineAdvance <= 0) {
+      continue;
+    }
+    final bool quoted =
+        capture.sourceText.startsWith('「') ||
+        capture.sourceText.startsWith('『');
+    for (final GalCalibrationOcrMatchedLine line
+        in alignments[sampleIndex].lines) {
+      final int indent = line.lineIndex == 0
+          ? 0
+          : quoted
+          ? grid.quotedContinuationIndent
+          : grid.continuationIndent;
+      for (final GalCalibrationOcrGlyph glyph in line.glyphs) {
+        if (!glyph.visualMeasured) continue;
+        final int? codePoint = _singlePunctuationCodePoint(
+          capture.sourceText.substring(
+            glyph.sourceIndex,
+            glyph.sourceIndex + glyph.charLength,
+          ),
+        );
+        if (codePoint == null) continue;
+        final double cellLeft =
+            left * client.widthPx + (indent + glyph.cellOffset) * cellWidth;
+        final double cellTop =
+            top * client.heightPx + line.lineIndex * lineAdvance;
+        final double boundLeft = (glyph.rect.left - cellLeft) / cellWidth;
+        final double boundTop = (glyph.rect.top - cellTop) / cellHeight;
+        final double boundRight = (glyph.rect.right - cellLeft) / cellWidth;
+        final double boundBottom = (glyph.rect.bottom - cellTop) / cellHeight;
+        if (!boundLeft.isFinite ||
+            !boundTop.isFinite ||
+            !boundRight.isFinite ||
+            !boundBottom.isFinite ||
+            boundLeft < -.08 ||
+            boundTop < -.08 ||
+            boundRight > 1.08 ||
+            boundBottom > 1.08) {
+          continue;
+        }
+        final double clampedLeft = boundLeft.clamp(0, 1);
+        final double clampedTop = boundTop.clamp(0, 1);
+        final double clampedRight = boundRight.clamp(0, 1);
+        final double clampedBottom = boundBottom.clamp(0, 1);
+        if (clampedRight - clampedLeft < .02 ||
+            clampedBottom - clampedTop < .02 ||
+            (clampedRight - clampedLeft > .82 &&
+                clampedBottom - clampedTop > .82)) {
+          continue;
+        }
+        observations.putIfAbsent(codePoint, () => []).add((
+          sample: sampleIndex,
+          left: clampedLeft,
+          top: clampedTop,
+          right: clampedRight,
+          bottom: clampedBottom,
+        ));
+      }
+    }
+  }
+  final List<GalLookupPunctuationVisualBoundV1> result =
+      <GalLookupPunctuationVisualBoundV1>[];
+  for (final MapEntry<
+        int,
+        List<
+          ({int sample, double left, double top, double right, double bottom})
+        >
+      >
+      entry
+      in observations.entries) {
+    // One capture is enough when the pixel-backed measurement is stable.
+    double medianEdge(
+      double Function(
+        ({int sample, double left, double top, double right, double bottom})
+        observation,
+      )
+      read,
+    ) => _median(entry.value.map(read).toList());
+    final double boundLeft = medianEdge(
+      (
+        ({int sample, double left, double top, double right, double bottom}) o,
+      ) => o.left,
+    );
+    final double boundTop = medianEdge(
+      (
+        ({int sample, double left, double top, double right, double bottom}) o,
+      ) => o.top,
+    );
+    final double boundRight = medianEdge(
+      (
+        ({int sample, double left, double top, double right, double bottom}) o,
+      ) => o.right,
+    );
+    final double boundBottom = medianEdge(
+      (
+        ({int sample, double left, double top, double right, double bottom}) o,
+      ) => o.bottom,
+    );
+    final bool stable = entry.value.every(
+      (
+        ({int sample, double left, double top, double right, double bottom}) o,
+      ) =>
+          (o.left - boundLeft).abs() <= .12 &&
+          (o.top - boundTop).abs() <= .12 &&
+          (o.right - boundRight).abs() <= .12 &&
+          (o.bottom - boundBottom).abs() <= .12,
+    );
+    if (!stable) continue;
+    final GalLookupPunctuationVisualBoundV1 bound =
+        GalLookupPunctuationVisualBoundV1(
+          codePoint: entry.key,
+          left: boundLeft,
+          top: boundTop,
+          right: boundRight,
+          bottom: boundBottom,
+        );
+    if (bound.isValid) result.add(bound);
+  }
+  result.sort(
+    (
+      GalLookupPunctuationVisualBoundV1 a,
+      GalLookupPunctuationVisualBoundV1 b,
+    ) => a.codePoint.compareTo(b.codePoint),
+  );
+  return List.unmodifiable(
+    result.take(GalLookupPunctuationVisualBoundV1.maxEntriesPerLayout),
+  );
+}
+
 /// Convert aligned OCR hints into the same native cell-grid contract used by
 /// the existing pixel fitter.  Training samples determine the grid; validation
 /// samples only accept/reject it.
@@ -1115,6 +1302,14 @@ Future<GalCalibrationImageFit> fitGalCalibrationOcrGrid(
     width: bodyWidth,
     height: math.min(1 - top, bodyHeight),
   );
+  final List<GalLookupPunctuationVisualBoundV1> punctuationVisualBounds =
+      deriveGalCalibrationPunctuationVisualBounds(
+        samples: draft.samples,
+        alignments: alignments,
+        grid: grid,
+        left: left,
+        top: top,
+      );
   final GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(
     fontFamily: draft.layout.fontFamily,
     fontSizePerClientHeight: draft.layout.fontSizePerClientHeight,
@@ -1124,6 +1319,7 @@ Future<GalCalibrationImageFit> fitGalCalibrationOcrGrid(
     verticalAlign: draft.layout.verticalAlign,
     paddingPerClientHeight: draft.layout.paddingPerClientHeight,
     cellGrid: grid,
+    punctuationVisualBounds: punctuationVisualBounds,
   );
   if (!rect.isValid || !layout.isValid) {
     return const GalCalibrationImageFit(reason: 'ocr_geometry_out_of_bounds');
