@@ -274,15 +274,9 @@ bool WindowIsCloaked(HWND hwnd) {
 
 RECT ClientScreenRect(HWND hwnd) {
   RECT client{};
-  if (hwnd == nullptr || !GetClientRect(hwnd, &client))
+  if (!fushi::ReadPhysicalClientScreenRect(hwnd, &client))
     return RECT{};
-  POINT top_left{client.left, client.top};
-  POINT bottom_right{client.right, client.bottom};
-  if (!ClientToScreen(hwnd, &top_left) ||
-      !ClientToScreen(hwnd, &bottom_right)) {
-    return RECT{};
-  }
-  return RECT{top_left.x, top_left.y, bottom_right.x, bottom_right.y};
+  return client;
 }
 
 bool RectHasArea(const RECT &rect) {
@@ -2764,6 +2758,8 @@ void AttachedTextSurfaceWindow::EmitLookupEvent(int cluster_index,
   event.screen_rect_px = cluster.visual_rect;
   OffsetRect(&event.screen_rect_px, surface_screen_rect_.left,
              surface_screen_rect_.top);
+  event.destination_viewport_screen_px =
+      surface_geometry_.destination_viewport_screen;
   // screen_rect_px is in the presentation monitor's physical pixels.  The
   // source DPI belongs to profile/layout scaling and may differ when Magpie
   // presents the output on another monitor.

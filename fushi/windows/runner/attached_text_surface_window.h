@@ -105,6 +105,8 @@ public:
     uint32_t char_index = 0;
     uint32_t source_length = 0;
     RECT screen_rect_px{};
+    // Presentation viewport, in the same physical screen-pixel space as the hit.
+    RECT destination_viewport_screen_px{};
     int dpi = 96;
     // True when emitted by the Shift+hover timer instead of a completed
     // shielded click transaction. Hover never consumes any input.

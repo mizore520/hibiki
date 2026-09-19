@@ -13,6 +13,128 @@ import 'package:fushi_engine/ocr/manga_ocr_model_manifest.dart';
 import 'package:fushi_engine/ocr/ocr_types.dart';
 
 void main() {
+  test('narrow leading ASCII space preserves the common row origin', () async {
+    const List<String> rows = ['（ あいうえおかきく', 'けこさしすせそ ）'];
+    final GalCalibrationImageFit fit = await _fit(
+      [_sample(rows.join())],
+      [_spaceGeometry(rows, .25)],
+    );
+    expect(fit.draft, isNotNull, reason: '${fit.reason}: ${fit.detail}');
+    expect(fit.draft!.rect.left, closeTo(.1, .001));
+    expect(fit.draft!.layout.cellGrid!.continuationIndent, 0);
+    expect(fit.draft!.layout.characterAdvances, const [
+      GalLookupCharacterAdvanceV1(codePoint: 0x20, advanceRatio: .25),
+    ]);
+    final GalCalibrationPreview preview = await _preview(
+      text: rows.join(),
+      client: _sample(rows.join()).capture.referenceClient,
+      rect: fit.draft!.rect,
+      layout: fit.draft!.layout,
+    );
+    expect(preview.boxForIndex(0)!.rect.left, closeTo(100, .1));
+    expect(preview.boxForIndex(1), isNull);
+    expect(preview.boxForIndex(2)!.rect.left, closeTo(150, .1));
+    expect(preview.boxForIndex(rows.first.length)!.rect.left, closeTo(100, .1));
+    final int lastIndex = rows.join().length - 1;
+    expect(preview.boxForIndex(lastIndex - 1), isNull);
+    expect(
+      preview.boxForIndex(0)!.rect.size,
+      preview.boxForIndex(2)!.rect.size,
+    );
+    expect(
+      preview.boxForIndex(lastIndex)!.rect.size,
+      preview.boxForIndex(2)!.rect.size,
+    );
+  });
+  for (final bool missingOpening in [true, false]) {
+    test(
+      missingOpening
+          ? 'aligned body cannot hide a missing opening bracket'
+          : 'aligned body cannot hide an end bracket on the wrong row',
+      () async {
+        const List<String> rows = ['（ あいうえおかきく', 'けこさしすせそ ）'];
+        final GalCalibrationImageFit fit = await _fit(
+          [_sample(rows.join())],
+          [_spaceGeometry(rows, .25)],
+          build:
+              ({
+                required String text,
+                required GalLookupReferenceClientV1 client,
+                required GalLookupNormalizedRectV1 rect,
+                required GalLookupTextLayoutV1 layout,
+              }) async {
+                final GalCalibrationPreview valid = await _preview(
+                  text: text,
+                  client: client,
+                  rect: rect,
+                  layout: layout,
+                );
+                return GalCalibrationPreview(
+                  boxes: [
+                    for (final GalCalibrationBox box in valid.boxes)
+                      if (!(missingOpening && box.charIndex == 0))
+                        GalCalibrationBox(
+                          box.charIndex,
+                          box.charLength,
+                          !missingOpening && box.charIndex == text.length - 1
+                              ? box.rect.shift(
+                                  Offset(
+                                    0,
+                                    layout
+                                            .cellGrid!
+                                            .lineAdvancePerClientHeight *
+                                        client.heightPx,
+                                  ),
+                                )
+                              : box.rect,
+                        ),
+                  ],
+                );
+              },
+        );
+        expect(fit.draft, isNull);
+        expect(
+          fit.reason,
+          missingOpening
+              ? 'ocr_character_positions_inconsistent'
+              : 'ocr_line_wrap_inconsistent',
+        );
+      },
+    );
+  }
+  for (final double ratio in [.25, 1.0]) {
+    test(
+      'ASCII space measured between ordinary glyphs has advance $ratio',
+      () async {
+        const List<String> rows = ['あいうえ おかきく', 'けこさしすせそ'];
+        final GalCalibrationImageFit fit = await _fit(
+          [_sample(rows.join())],
+          [_spaceGeometry(rows, ratio)],
+        );
+        expect(fit.draft, isNotNull, reason: fit.reason);
+        expect(fit.draft!.rect.left, closeTo(.1, .001));
+        if (ratio == 1) {
+          expect(fit.draft!.layout.characterAdvances, isEmpty);
+        } else {
+          expect(
+            fit.draft!.layout.characterAdvances.single.advanceRatio,
+            ratio,
+          );
+        }
+      },
+    );
+  }
+  test(
+    'ambiguous leading spaces do not invent a width to pass calibration',
+    () async {
+      const List<String> rows = ['（  あいうえおかきく', 'けこさしすせそ）'];
+      final GalCalibrationImageFit fit = await _fit(
+        [_sample(rows.join())],
+        [_spaceGeometry(rows, .25)],
+      );
+      expect(fit.draft, isNull);
+    },
+  );
   test(
     'fitting retains its calibration slot and measured coordinate source',
     () async {
@@ -794,6 +916,55 @@ void main() {
   );
 }
 
+GalCalibrationOcrAlignment _spaceGeometry(List<String> rows, double ratio) {
+  final String source = rows.join();
+  final GalCalibrationOcrAlignment raw = alignGalCalibrationOcrLines(
+    sourceText: source,
+    lines: [
+      for (int i = 0; i < rows.length; i++) _line(rows[i], top: 300 + i * 48),
+    ],
+  );
+  return GalCalibrationOcrAlignment(
+    confidence: raw.confidence,
+    lines: [
+      for (final GalCalibrationOcrMatchedLine line in raw.lines)
+        GalCalibrationOcrMatchedLine(
+          sourceStart: line.sourceStart,
+          sourceEnd: line.sourceEnd,
+          cellCount: line.cellCount,
+          lineIndex: line.lineIndex,
+          rect: line.rect,
+          glyphs: [
+            for (final GalCalibrationOcrGlyph g in line.glyphs)
+              for (final double shift in [
+                rows[line.lineIndex]
+                        .substring(0, g.cellOffset)
+                        .split(' ')
+                        .length -
+                    1.0,
+              ])
+                GalCalibrationOcrGlyph(
+                  sourceIndex: g.sourceIndex,
+                  charLength: g.charLength,
+                  cellOffset: g.cellOffset,
+                  lineIndex: g.lineIndex,
+                  confidence: g.confidence,
+                  inkMeasured: RegExp(
+                    r'^[あ-ん]$',
+                  ).hasMatch(source[g.sourceIndex]),
+                  rect: OcrRect(
+                    left: g.rect.left + shift * (ratio - 1) * 40,
+                    right: g.rect.right + shift * (ratio - 1) * 40,
+                    top: g.rect.top,
+                    bottom: g.rect.bottom,
+                  ),
+                ),
+          ],
+        ),
+    ],
+  );
+}
+
 GalCalibrationOcrAlignment _withGeometry(
   GalCalibrationOcrAlignment base,
   double Function(GalCalibrationOcrGlyph) shift, {
@@ -931,15 +1102,16 @@ GalCalibrationSample _sample(
 
 Future<GalCalibrationImageFit> _fit(
   List<GalCalibrationSample> samples,
-  List<GalCalibrationOcrAlignment> alignments,
-) => fitGalCalibrationOcrGrid(
+  List<GalCalibrationOcrAlignment> alignments, {
+  GalCalibrationPreviewBuilder build = _preview,
+}) => fitGalCalibrationOcrGrid(
   GalLookupCalibrationDraft(
     rect: const GalLookupNormalizedRectV1(left: 0, top: 0, width: 1, height: 1),
     layout: const GalLookupTextLayoutV1(),
     samples: samples,
   ),
   alignments,
-  build: _preview,
+  build: build,
 );
 
 // Independent preview double implements the native grid's row/UTF-16 contract,

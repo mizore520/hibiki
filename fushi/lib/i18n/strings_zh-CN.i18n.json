@@ -5010,5 +5010,6 @@
   "game_lookup_samples_diagnostic": "诊断：${reason}${detail}",
   "game_lookup_samples_capture_replace": "替换当前样本",
   "game_lookup_samples_auto_line_spacing_missing": "未能测出可靠行距，请换一张完整的两行或三行台词图。",
-  "game_lookup_samples_auto_character_positions_inconsistent": "生成的字格与识别位置偏差较大，未应用此次结果。"
+  "game_lookup_samples_auto_character_positions_inconsistent": "生成的字格与识别位置偏差较大，未应用此次结果。",
+  "game_lookup_samples_capture_surface_mapping": "游戏窗口与超分画面的位置暂时无法对应，无法采集校准截图。"
 }

@@ -473,10 +473,19 @@ void main() {
     expect(
       GalLookupCharacterAdvanceV1.tryFromJson(<String, Object?>{
         'codePoint': 0x20,
-        'advanceRatio': 1.0,
+        'advanceRatio': 0.25,
       }),
-      isNull,
+      const GalLookupCharacterAdvanceV1(codePoint: 0x20, advanceRatio: 0.25),
     );
+    for (final int codePoint in <int>[0x09, 0x0a, 0x3000, 0x200b]) {
+      expect(
+        GalLookupCharacterAdvanceV1.tryFromJson(<String, Object?>{
+          'codePoint': codePoint,
+          'advanceRatio': 0.25,
+        }),
+        isNull,
+      );
+    }
     expect(
       GalLookupCharacterAdvanceV1.tryFromJson(<String, Object?>{
         'codePoint': 0x1f600,

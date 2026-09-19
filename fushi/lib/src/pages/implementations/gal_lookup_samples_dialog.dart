@@ -362,6 +362,8 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     return switch (error.failure) {
       GalLookupCalibrationCaptureFailure.sceneChanged =>
         t.game_lookup_samples_capture_changed,
+      GalLookupCalibrationCaptureFailure.surfaceMappingUnavailable =>
+        t.game_lookup_samples_capture_surface_mapping,
       GalLookupCalibrationCaptureFailure.sourceNotReady ||
       GalLookupCalibrationCaptureFailure.invalidSource =>
         t.game_lookup_samples_capture_source,

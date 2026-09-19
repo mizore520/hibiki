@@ -119,6 +119,16 @@ int main() {
   }
   ++cases;
 
+  // Normalized body edges are expanded when converted to integer pixels. This
+  // keeps a fractional body margin available to the calibrated grid after a
+  // window resize instead of letting nearest rounding remove it.
+  const RECT fractional_body = layout::ResolveBodyRect(
+      RECT{10, 20, 1010, 620},
+      layout::NormalizedRect{0.1006, 0.1006, 0.28848, 0.5004});
+  const RECT expected_fractional_body{110, 80, 400, 381};
+  assert(EqualRect(&fractional_body, &expected_fractional_body));
+  ++cases;
+
   layout::Layout grid_style = style;
   layout::CellGrid grid;
   grid.advance_per_client_height = 0.03;
@@ -129,6 +139,81 @@ int main() {
   grid.quoted_continuation_indent = 2;
   grid_style.cell_grid = grid;
   const std::wstring full_line(16, L'\u3042');
+
+  // The same cell grid keeps character order and line numbers under an
+  // equal-aspect-ratio resize. Compare coordinates relative to each body's
+  // outer integer origin because the normalized origin itself can move by one
+  // pixel at different sizes.
+  const layout::NormalizedRect scaled_grid_rect{0.1, 0.1, 0.5, 0.8};
+  const auto small_grid = layout::Preview(
+      full_line + L"A", layout::ReferenceClient{1000, 600, 96},
+      scaled_grid_rect, grid_style);
+  const auto large_grid = layout::Preview(
+      full_line + L"A", layout::ReferenceClient{2000, 1200, 96},
+      scaled_grid_rect, grid_style);
+  assert(small_grid.ok() && large_grid.ok());
+  assert(small_grid.boxes.size() == large_grid.boxes.size());
+  const RECT small_grid_body = layout::ResolveBodyRect(
+      RECT{0, 0, 1000, 600}, scaled_grid_rect);
+  const RECT large_grid_body = layout::ResolveBodyRect(
+      RECT{0, 0, 2000, 1200}, scaled_grid_rect);
+  for (size_t index = 0; index < small_grid.boxes.size(); ++index) {
+    const auto &small_box = small_grid.boxes[index];
+    const auto &large_box = large_grid.boxes[index];
+    assert(small_box.text_position == large_box.text_position);
+    assert(small_box.text_length == large_box.text_length);
+    assert(large_box.hit_rect.left - large_grid_body.left ==
+           2 * (small_box.hit_rect.left - small_grid_body.left));
+    assert(large_box.hit_rect.right - large_grid_body.left ==
+           2 * (small_box.hit_rect.right - small_grid_body.left));
+    assert(large_box.hit_rect.top - large_grid_body.top ==
+           2 * (small_box.hit_rect.top - small_grid_body.top));
+    assert(large_box.hit_rect.bottom - large_grid_body.top ==
+           2 * (small_box.hit_rect.bottom - small_grid_body.top));
+  }
+  assert(small_grid.boxes.back().hit_rect.top >
+         small_grid.boxes.front().hit_rect.top);
+  assert(large_grid.boxes.back().hit_rect.top >
+         large_grid.boxes.front().hit_rect.top);
+  ++cases;
+
+  // Regression: the OCR fitter reserves one pixel at the calibration size.
+  // At half size the required width is 288.48 and the continuous body is
+  // 288.98, but nearest-rounded edges used to leave only 288 integer pixels.
+  // Keep the SAME saved profile through resize and restoration; no reflow.
+  layout::Layout resize_style = grid_style;
+  resize_style.cell_grid->advance_per_client_height = 0.0601;
+  const layout::NormalizedRect resize_rect{
+      0.10102, 0.3, (16 * 0.0601 * 600 + 1) / 1000, 0.5};
+  const std::wstring resize_text = full_line + L"ABC";
+  for (const auto &size : {layout::ReferenceClient{1000, 600, 96},
+                          layout::ReferenceClient{500, 300, 96},
+                          layout::ReferenceClient{655, 393, 96},
+                          layout::ReferenceClient{750, 450, 96},
+                          layout::ReferenceClient{1000, 600, 96}}) {
+    const auto resized =
+        layout::Preview(resize_text, size, resize_rect, resize_style);
+    assert(resized.ok() && resized.boxes.size() == resize_text.size());
+    const RECT resized_body = layout::ResolveBodyRect(
+        RECT{0, 0, size.width_px, size.height_px}, resize_rect);
+    for (size_t index = 0; index < resized.boxes.size(); ++index) {
+      const auto &box = resized.boxes[index];
+      assert(box.text_position == index && box.text_length == 1);
+      const int expected_row = index < 16 ? 0 : 1;
+      const int expected_column = index < 16
+                                      ? static_cast<int>(index)
+                                      : static_cast<int>(index) - 16 +
+                                            grid.continuation_indent;
+      assert(box.hit_rect.left == resized_body.left +
+                 std::llround(expected_column * 0.0601 * size.height_px));
+      assert(box.hit_rect.top == resized_body.top +
+                 std::llround(expected_row *
+                              grid.line_advance_per_client_height *
+                              size.height_px));
+    }
+  }
+  ++cases;
+
   const auto grid_preview = layout::Preview(
       L"\u300C\u3042\u3044 \u3046\u3048\u304A\n\u304B\u304D\u304F\u2026\u2014", client, rect,
       grid_style);
@@ -254,6 +339,18 @@ int main() {
   const auto spaced_tab = layout::Preview(L"A\tB", client, rect, narrow_style);
   assert(spaced_tab.ok() && spaced_tab.boxes.size() == 2);
   assert(spaced_tab.boxes[1].hit_rect.left == body.left + 36);
+  layout::Layout narrow_space_style = grid_style;
+  narrow_space_style.character_advances.push_back(
+      layout::CharacterAdvance{L' ', 0.5});
+  const auto narrow_space =
+      layout::Preview(L"A B", client, rect, narrow_space_style);
+  assert(narrow_space.ok() && narrow_space.boxes.size() == 2);
+  assert(narrow_space.boxes[1].text_position == 2);
+  assert(narrow_space.boxes[1].hit_rect.left == body.left + 27);
+  const auto narrow_space_tab =
+      layout::Preview(L"A\tB", client, rect, narrow_space_style);
+  assert(narrow_space_tab.ok() && narrow_space_tab.boxes.size() == 2);
+  assert(narrow_space_tab.boxes[1].hit_rect.left == body.left + 36);
   const auto advanced_emoji =
       layout::Preview(L"A\U0001F600B", client, rect, narrow_style);
   assert(advanced_emoji.ok() && advanced_emoji.boxes.size() == 3);
@@ -267,12 +364,20 @@ int main() {
       layout::CharacterAdvance{0x10FFFF, 0.15}));
   assert(layout::IsCharacterAdvanceValid(
       layout::CharacterAdvance{0x3002, 2.0}));
+  assert(layout::IsCharacterAdvanceValid(
+      layout::CharacterAdvance{L' ', 0.15}));
+  assert(layout::IsCharacterAdvanceValid(
+      layout::CharacterAdvance{L' ', 2.0}));
   assert(!layout::IsCharacterAdvanceValid(
       layout::CharacterAdvance{0x1F, 1.0}));
   assert(!layout::IsCharacterAdvanceValid(
       layout::CharacterAdvance{0x200B, 1.0}));
   assert(!layout::IsCharacterAdvanceValid(
-      layout::CharacterAdvance{L' ', 1.0}));
+      layout::CharacterAdvance{L'\t', 1.0}));
+  assert(!layout::IsCharacterAdvanceValid(
+      layout::CharacterAdvance{0x00A0, 1.0}));
+  assert(!layout::IsCharacterAdvanceValid(
+      layout::CharacterAdvance{0x3000, 1.0}));
   assert(!layout::IsCharacterAdvanceValid(
       layout::CharacterAdvance{0xD800, 1.0}));
   assert(!layout::IsCharacterAdvanceValid(
@@ -390,8 +495,37 @@ int main() {
   assert(one_hang.boxes[18].hit_rect.left == body.left + 36);
   ++cases;
 
+  // A subpixel mathematical overflow is still a real overflow. The nearest
+  // integer box for 288.48 pixels could fit in 288 pixels, but the calibrated
+  // capacity must remain unchanged and the grid must reject that body. The
+  // outer-rounded body restores the available margin and succeeds.
+  layout::Layout fractional_grid = grid_style;
+  fractional_grid.cell_grid->advance_per_client_height = 0.03005;
+  const layout::ReferenceClient fractional_client{1000, 600, 96};
+  ExpectRejected(
+      layout::Preview(full_line, fractional_client,
+                      layout::NormalizedRect{0.1, 0.1, 0.288, 0.8},
+                      fractional_grid),
+      "grid_overflow_body_rect");
+  const auto recovered_grid = layout::Preview(
+      full_line, fractional_client,
+      layout::NormalizedRect{0.1006, 0.1, 0.28848, 0.8}, fractional_grid);
+  assert(recovered_grid.ok() && recovered_grid.boxes.size() == 16);
+
+  // The same strict check applies vertically; llround must not turn a
+  // 20.01-pixel cell into a 20-pixel cell that appears to fit.
+  layout::Layout fractional_height = grid_style;
+  fractional_height.cell_grid->cell_height_per_client_height = 0.03335;
+  ExpectRejected(
+      layout::Preview(L"A", fractional_client,
+                      layout::NormalizedRect{0.1, 0.1, 0.5,
+                                             0.0333333333333},
+                      fractional_height),
+      "grid_overflow_body_rect");
+  ++cases;
+
   const auto small_kana = layout::Preview(full_line + L"ょあ", client, rect,
-                                          hanging_style);
+                                           hanging_style);
   assert(small_kana.ok() && small_kana.boxes.size() == 18);
   assert(small_kana.boxes[16].hit_rect.top == body.top);
   assert(small_kana.boxes[17].hit_rect.top == body.top + 24);

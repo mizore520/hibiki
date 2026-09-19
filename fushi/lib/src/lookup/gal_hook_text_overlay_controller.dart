@@ -1755,16 +1755,26 @@ class GalHookTextOverlayController extends ChangeNotifier {
         GalLookupCalibrationCaptureFailure.busy,
       );
     }
+    final int? sessionEpoch = _sessionKey;
+    final GalAttachedSurfaceTarget? requestedTarget = _attachedText.target;
     if (!_started || !_attachedText.canCaptureCalibrationSample) {
+      final GalLookupCalibrationCaptureException? mappingFailure =
+          _calibrationSurfaceMappingFailure();
+      if (mappingFailure != null) {
+        _logCalibrationCaptureFailure(
+          mappingFailure,
+          requestedTarget: requestedTarget,
+          sessionEpoch: sessionEpoch,
+        );
+        throw mappingFailure;
+      }
       throw const GalLookupCalibrationCaptureException(
         GalLookupCalibrationCaptureFailure.sourceNotReady,
       );
     }
     _calibrationCaptureInFlight = true;
     ++_syncRevision;
-    final int? sessionEpoch = _sessionKey;
     final bool overlayWasVisible = _visible;
-    final GalAttachedSurfaceTarget? requestedTarget = _attachedText.target;
     try {
       return await captureGalLookupCalibrationSample(
         readSnapshot: _calibrationCaptureSnapshot,
@@ -1788,28 +1798,10 @@ class GalHookTextOverlayController extends ChangeNotifier {
     } catch (error) {
       final GalLookupCalibrationCaptureException failure =
           _calibrationCaptureExceptionFor(error);
-      final WindowCaptureMetadata? metadata = failure.captureMetadata;
-      glog(
-        'gal-overlay: calibration_sample failed '
-        'category=${failure.failure.name} '
-        'captureReason=${_boundedCaptureReason(failure.captureReason)} '
-        'captureHresults=${failure.captureErrorCodes.join(',')} '
-        'requestedHwnd=${_boundedCaptureIdentity(requestedTarget?.targetHwnd)} '
-        'requestedPid=${_boundedCaptureIdentity(requestedTarget?.targetPid)} '
-        'capturedHwnd=${_boundedCaptureIdentity(metadata?.capturedHwnd)} '
-        'capturedPid=${_boundedCaptureIdentity(metadata?.capturedPid)} '
-        'clientWidth=${_boundedCaptureDimension(metadata?.clientWidthPx)} '
-        'clientHeight=${_boundedCaptureDimension(metadata?.clientHeightPx)} '
-        'imageWidth=${_boundedCaptureDimension(metadata?.imageWidthPx)} '
-        'imageHeight=${_boundedCaptureDimension(metadata?.imageHeightPx)} '
-        'contentWidth=${_boundedCaptureDimension(metadata?.contentWidthPx)} '
-        'contentHeight=${_boundedCaptureDimension(metadata?.contentHeightPx)} '
-        'textureWidth=${_boundedCaptureDimension(metadata?.textureWidthPx)} '
-        'textureHeight=${_boundedCaptureDimension(metadata?.textureHeightPx)} '
-        'surfaceStatus=${_attachedText.status.name} '
-        'surfaceVisible=${_attachedText.surfaceVisible} '
-        'shieldConclusion=${_attachedText.shieldStatus.conclusion.name} '
-        'sessionEpoch=${sessionEpoch ?? 0}',
+      _logCalibrationCaptureFailure(
+        failure,
+        requestedTarget: requestedTarget,
+        sessionEpoch: sessionEpoch,
       );
       throw failure;
     } finally {
@@ -1839,10 +1831,13 @@ class GalHookTextOverlayController extends ChangeNotifier {
   }
 
   static String _boundedCaptureReason(String? value) {
-    if (value == null || !_captureReasonPattern.hasMatch(value)) {
+    final String? normalized = normalizeGalLookupCalibrationCaptureReason(
+      value,
+    );
+    if (normalized == null || !_captureReasonPattern.hasMatch(normalized)) {
       return 'none';
     }
-    return value;
+    return normalized;
   }
 
   static int _boundedCaptureDimension(int? value) {
@@ -1859,6 +1854,81 @@ class GalHookTextOverlayController extends ChangeNotifier {
     return value;
   }
 
+  void _logCalibrationCaptureFailure(
+    GalLookupCalibrationCaptureException failure, {
+    required GalAttachedSurfaceTarget? requestedTarget,
+    required int? sessionEpoch,
+  }) {
+    final WindowCaptureMetadata? metadata = failure.captureMetadata;
+    glog(
+      'gal-overlay: calibration_sample failed '
+      'category=${failure.failure.name} '
+      'captureReason=${_boundedCaptureReason(failure.captureReason)} '
+      'captureHresults=${failure.captureErrorCodes.join(',')} '
+      'requestedHwnd=${_boundedCaptureIdentity(requestedTarget?.targetHwnd)} '
+      'requestedPid=${_boundedCaptureIdentity(requestedTarget?.targetPid)} '
+      'capturedHwnd=${_boundedCaptureIdentity(metadata?.capturedHwnd)} '
+      'capturedPid=${_boundedCaptureIdentity(metadata?.capturedPid)} '
+      'clientWidth=${_boundedCaptureDimension(metadata?.clientWidthPx)} '
+      'clientHeight=${_boundedCaptureDimension(metadata?.clientHeightPx)} '
+      'imageWidth=${_boundedCaptureDimension(metadata?.imageWidthPx)} '
+      'imageHeight=${_boundedCaptureDimension(metadata?.imageHeightPx)} '
+      'contentWidth=${_boundedCaptureDimension(metadata?.contentWidthPx)} '
+      'contentHeight=${_boundedCaptureDimension(metadata?.contentHeightPx)} '
+      'textureWidth=${_boundedCaptureDimension(metadata?.textureWidthPx)} '
+      'textureHeight=${_boundedCaptureDimension(metadata?.textureHeightPx)} '
+      'surfaceStatus=${_attachedText.status.name} '
+      'surfaceVisible=${_attachedText.surfaceVisible} '
+      'shieldConclusion=${_attachedText.shieldStatus.conclusion.name} '
+      'sessionEpoch=${sessionEpoch ?? 0}',
+    );
+  }
+
+  GalLookupCalibrationCaptureException? _calibrationSurfaceMappingFailure() {
+    final String? captureReason =
+        normalizeGalLookupCalibrationSurfaceMappingReason(
+          _attachedText.statusReason,
+        ) ??
+        normalizeGalLookupCalibrationSurfaceMappingReason(
+          _attachedText.nativeStatus,
+        );
+    if (captureReason == null ||
+        _attachedText.status != GalAttachedTextStatus.suspended) {
+      return null;
+    }
+    final GalHookSessionState state = _session.state;
+    final GalAttachedSurfaceTarget? target = _attachedText.target;
+    final GalLookupReferenceClientV1? client = _attachedText.currentClient;
+    final String? exePath = _attachedText.executablePath;
+    final String? exeSha256 = _attachedText.executableSha256;
+    final String? thread = _session.selectedTextThreadKey;
+    final int? epoch = state.sessionStartedAt?.microsecondsSinceEpoch;
+    final List<TexthookerLineEntry> lines = _session.selectedSessionLines;
+    if (target == null ||
+        client == null ||
+        !client.isValid ||
+        exePath == null ||
+        exePath.isEmpty ||
+        exeSha256 == null ||
+        !GalLookupSurfaceProfileV1.isValidSha256(exeSha256) ||
+        thread == null ||
+        thread.isEmpty ||
+        lines.isEmpty ||
+        lines.last.text.trim().isEmpty ||
+        epoch == null ||
+        epoch != target.sessionEpoch ||
+        state.boundWindow?.hwnd != target.targetHwnd ||
+        state.boundWindow?.pid != target.targetPid ||
+        target.targetHwnd == 0 ||
+        target.targetPid <= 0) {
+      return null;
+    }
+    return GalLookupCalibrationCaptureException(
+      GalLookupCalibrationCaptureFailure.surfaceMappingUnavailable,
+      captureReason: captureReason,
+    );
+  }
+
   GalLookupCalibrationCaptureSnapshot _calibrationCaptureSnapshot() {
     final GalHookSessionState state = _session.state;
     final GalAttachedSurfaceTarget? target = _attachedText.target;
@@ -1872,6 +1942,9 @@ class GalHookTextOverlayController extends ChangeNotifier {
         _calibrationCaptureInFlight &&
         _attachedText.status == GalAttachedTextStatus.suspended &&
         _attachedText.statusReason == 'captureSuppressed';
+    final GalLookupCalibrationCaptureException? mappingFailure =
+        _calibrationSurfaceMappingFailure();
+    if (mappingFailure != null) throw mappingFailure;
     if (target == null ||
         client == null ||
         exePath == null ||
@@ -1916,6 +1989,9 @@ class GalHookTextOverlayController extends ChangeNotifier {
   }
 
   Future<GalHookCaptureLease?> _acquireCalibrationCaptureLease() async {
+    final GalLookupCalibrationCaptureException? mappingFailure =
+        _calibrationSurfaceMappingFailure();
+    if (mappingFailure != null) throw mappingFailure;
     if (_attachedText.canCaptureCalibrationSample &&
         _attachedText.calibrationCaptureNeedsAttachedLease) {
       return _acquireAttachedMiningCaptureLease(
@@ -1932,14 +2008,28 @@ class GalHookTextOverlayController extends ChangeNotifier {
     // A new profile has no attached surface. Only fence an existing dictionary
     // card; inventing a glyph lease here would require a calibrated layout.
     final GlobalLookupRoute route = GlobalLookupChannel.currentRoute;
-    if (!await GlobalLookupChannel.isShowing()) return null;
+    if (!await GlobalLookupChannel.isShowing()) {
+      final GalLookupCalibrationCaptureException? mappingAfterCheck =
+          _calibrationSurfaceMappingFailure();
+      if (mappingAfterCheck != null) throw mappingAfterCheck;
+      return null;
+    }
     final int token = ++_nextCalibrationCaptureGeneration;
     try {
+      final GalLookupCalibrationCaptureException? mappingBeforeSuspend =
+          _calibrationSurfaceMappingFailure();
+      if (mappingBeforeSuspend != null) throw mappingBeforeSuspend;
       if (!await GlobalLookupChannel.suspendForCapture(token)) {
+        final GalLookupCalibrationCaptureException? mappingAfterSuspend =
+            _calibrationSurfaceMappingFailure();
+        if (mappingAfterSuspend != null) throw mappingAfterSuspend;
         throw const GalLookupCalibrationCaptureException(
           GalLookupCalibrationCaptureFailure.suppressionUnavailable,
         );
       }
+      final GalLookupCalibrationCaptureException? mappingAfterSuspend =
+          _calibrationSurfaceMappingFailure();
+      if (mappingAfterSuspend != null) throw mappingAfterSuspend;
     } catch (_) {
       await GlobalLookupChannel.runWithRoute(
         route,
@@ -1970,6 +2060,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
     String text,
     int index,
     Rect? wordRect, {
+    GlobalLookupPhysicalPlacement? physicalPlacement,
     GalHookCaptureLeaseFactory? captureLeaseFactory,
     int? consumeOutsideClicksOwnerHwnd,
   }) async {
@@ -1998,6 +2089,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
       // 浮窗里点词跟阅读器/剪贴板面板一样是「点哪个词看哪个词」。老 native 不带
       // 矩形时为 null，自动回落到光标定位。
       anchorScreenRect: wordRect,
+      physicalPlacement: physicalPlacement,
       miningHandler:
           ({required Map<String, String> fields, int? updateNoteId}) =>
               _mineFromLookup(
@@ -2033,6 +2125,12 @@ class GalHookTextOverlayController extends ChangeNotifier {
       hit.sourceText,
       hit.charIndex,
       hit.wordRect,
+      physicalPlacement: hit.physicalWordRect == null
+          ? null
+          : GlobalLookupPhysicalPlacement(
+              anchorScreenRect: hit.physicalWordRect!,
+              destinationViewportScreenRect: hit.destinationViewportScreen,
+            ),
       captureLeaseFactory: _acquireAttachedMiningCaptureLease,
       consumeOutsideClicksOwnerHwnd: hit.target.targetHwnd,
     );

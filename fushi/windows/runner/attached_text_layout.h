@@ -217,7 +217,11 @@ inline bool IsCharacterAdvanceCodePoint(uint32_t code_point) {
   return code_point <= 0x10FFFF &&
          !(code_point >= 0xD800 && code_point <= 0xDFFF) &&
          !IsUnicodeControlOrFormat(code_point) &&
-         !IsUnicodeWhitespace(code_point);
+         // An ordinary ASCII space can have a measured proportional advance,
+         // but it remains non-clickable in the grid layout. Other whitespace
+         // stays rejected so controls and invisible separators cannot become
+         // persisted character overrides.
+         (code_point == 0x20 || !IsUnicodeWhitespace(code_point));
 }
 
 inline bool IsCharacterAdvanceValid(const CharacterAdvance &advance) {
@@ -296,16 +300,20 @@ inline RECT ResolveBodyRect(const RECT &client,
                             const NormalizedRect &normalized) {
   const double width = static_cast<double>(client.right - client.left);
   const double height = static_cast<double>(client.bottom - client.top);
+  // Keep the integer body as an outer approximation of the normalized body.
+  // Rounding both edges to nearest can make a mathematically compatible body
+  // one pixel narrower after a resize, even though the calibrated grid still
+  // fits in the continuous region.
   const LONG left =
-      client.left + static_cast<LONG>(std::llround(normalized.left * width));
+      client.left + static_cast<LONG>(std::floor(normalized.left * width));
   const LONG top =
-      client.top + static_cast<LONG>(std::llround(normalized.top * height));
+      client.top + static_cast<LONG>(std::floor(normalized.top * height));
   const LONG right =
-      client.left + static_cast<LONG>(std::llround(
-                        (normalized.left + normalized.width) * width));
+      client.left + static_cast<LONG>(std::ceil(
+          (normalized.left + normalized.width) * width));
   const LONG bottom =
-      client.top + static_cast<LONG>(std::llround(
-                       (normalized.top + normalized.height) * height));
+      client.top + static_cast<LONG>(std::ceil(
+          (normalized.top + normalized.height) * height));
   return RECT{left, top, right, bottom};
 }
 
@@ -399,14 +407,15 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
   const double cell_height = grid.cell_height_per_client_height * client_height;
   const double bounds_left = static_cast<double>(layout_bounds.left);
   const double bounds_top = static_cast<double>(layout_bounds.top);
+  const double bounds_right = static_cast<double>(layout_bounds.right);
+  const double bounds_bottom = static_cast<double>(layout_bounds.bottom);
   const double line_width_in_cells = EffectiveLineWidthInCells(grid);
   const double maximum_line_width_in_cells =
       line_width_in_cells + (grid.hanging_punctuation ? 1.0 : 0.0);
   if (!std::isfinite(advance) || !std::isfinite(line_advance) ||
       !std::isfinite(cell_height) || !std::isfinite(line_width_in_cells) ||
       bounds_left + maximum_line_width_in_cells * advance >
-          static_cast<double>(layout_bounds.right) ||
-      std::llround(bounds_top + cell_height) > layout_bounds.bottom) {
+          bounds_right || bounds_top + cell_height > bounds_bottom) {
     return Failure("grid_overflow_body_rect");
   }
 
@@ -429,6 +438,14 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
     const double top = bounds_top + static_cast<double>(row) * line_advance;
     const double right = left + width_in_cells * advance;
     const double bottom = top + cell_height;
+    if (!std::isfinite(left) || !std::isfinite(top) ||
+        !std::isfinite(right) || !std::isfinite(bottom) ||
+        left < bounds_left || top < bounds_top || right > bounds_right ||
+        bottom > bounds_bottom || left < 0.0 || top < 0.0 ||
+        right > static_cast<double>(surface_width_px) ||
+        bottom > static_cast<double>(surface_height_px)) {
+      return false;
+    }
     *box = RECT{static_cast<LONG>(std::llround(left)),
                 static_cast<LONG>(std::llround(top)),
                 static_cast<LONG>(std::llround(right)),

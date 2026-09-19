@@ -433,7 +433,7 @@ class GalLookupCharacterAdvanceV1 {
       return false;
     }
     final String value = character;
-    return value.trim().isNotEmpty &&
+    return (value == ' ' || value.trim().isNotEmpty) &&
         !_controlOrFormat.hasMatch(value) &&
         advanceRatio.isFinite &&
         advanceRatio >= minAdvanceRatio &&

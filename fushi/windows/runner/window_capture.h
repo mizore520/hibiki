@@ -93,6 +93,13 @@ struct WindowCaptureResult {
   bool ok = false;
 };
 
+// Read the client rectangle in the runner's physical screen-pixel space.
+// The runner is PerMonitorV2; GetWindowInfo returns rcClient as one coherent
+// screen-space snapshot. This avoids the cross-DPI endpoint rounding that can
+// occur when GetClientRect is followed by two ClientToScreen calls on a
+// DPI-unaware source window.
+bool ReadPhysicalClientScreenRect(HWND hwnd, RECT* rect);
+
 // BUG-1096：把 Magpie（及同类缩放工具）的缩放窗口解析成它正在缩放的**源窗口**。
 // Magpie 的缩放窗口上挂着窗口属性 `Magpie.SrcHWND` 指向源窗口（类名形如
 // `Window_Magpie_<GUID>`，但属性名才是稳定契约，故只按属性判定）。Magpie 自己也
@@ -119,9 +126,10 @@ bool ReadMagpiePresentationMapping(HWND presentation_hwnd,
                                     MagpiePresentationMapping* mapping);
 
 // BUG-1854：算出把 WGC 整窗纹理（[width]×[height]）裁到窗口**客户区**的子矩形。
-// 两个角都经 ClientToScreen 换算到与 DWM 扩展框架同一坐标系（DPI-unaware 老游戏在
-// 缩放屏上也对）。返回 true 时 [box] 非空且已与纹理求交；失败返回 false，调用方回退
-// 整窗（宁可带标题栏也不丢图）。单帧截图与持续录制共用。绝不抛异常。
+// 客户区由 ReadPhysicalClientScreenRect 一次读出为屏幕物理像素，再与 DWM 扩展框架
+// 求差；不要把 DPI-unaware 窗口的 GetClientRect 宽高加到屏幕原点。返回 true 时 [box]
+// 非空且已与纹理求交；失败返回 false，调用方回退整窗（宁可带标题栏也不丢图）。单帧
+// 截图与持续录制共用。绝不抛异常。
 bool ComputeClientCropBox(HWND hwnd, UINT width, UINT height, RECT* box);
 
 // D3D11 设备（BGRA 支持），硬件失败回退 WARP；两条路都失败返回空指针。

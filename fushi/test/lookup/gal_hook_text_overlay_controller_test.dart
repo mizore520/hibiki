@@ -612,6 +612,73 @@ void main() {
   );
 
   test(
+    'a current sentence with invalid Magpie mapping is not missing text',
+    () async {
+      const String exe = r'C:\Synthetic\Game.exe';
+      const String sha =
+          '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+      preferences[GalLookupSurfaceProfileV1.preferenceKeyForExePath(
+        exe,
+      )] = jsonEncode(
+        const GalLookupSurfaceProfileV1(
+          exePath: exe,
+          exeSha256: sha,
+          mode: GalLookupSurfaceMode.attachedOnly,
+          unsafeLeftClickAccepted: true,
+          variants: <GalLookupSurfaceVariantV1>[],
+        ).toJson(),
+      );
+      attachedInspectionOverride = <String, Object?>{
+        'status': 'targetBackground',
+        'exePath': exe,
+        'exeSha256': sha,
+        'referenceClient': const GalLookupReferenceClientV1(
+          widthPx: 1280,
+          heightPx: 720,
+          dpi: 96,
+        ).toJson(),
+      };
+      await controller.start(appModel: AppModel(testPlatformServices()));
+      await startSession();
+      await session.selectTextThread(11, threadKey: 'luna:first');
+      textService.appendLine(
+        '合成本文',
+        source: TexthookerLineSource.engineHook,
+        textThreadKey: 'luna:first',
+        nativeTextThreadId: 11,
+        sourceSequence: 9,
+      );
+      await _waitUntil(
+        () => controller.attachedText.canCaptureCalibrationSample,
+      );
+      controller.attachedText.handleSurfaceStateChanged(
+        GalAttachedSurfaceStateEvent(
+          target: controller.attachedText.target!,
+          state: 'suspended',
+          status: 'targetMappingUnavailable',
+          reason: 'magpie_source_viewport_invalid',
+        ),
+      );
+      await expectLater(
+        controller.captureCalibrationSample(),
+        throwsA(
+          isA<GalLookupCalibrationCaptureException>()
+              .having(
+                (e) => e.failure,
+                'failure',
+                GalLookupCalibrationCaptureFailure.surfaceMappingUnavailable,
+              )
+              .having(
+                (e) => e.captureReason,
+                'reason',
+                'magpie_source_viewport_invalid',
+              ),
+        ),
+      );
+    },
+  );
+
+  test(
     'saved rectangle is restored and changed bounds are persisted',
     () async {
       preferences['gal_hook_text_window_rect'] =

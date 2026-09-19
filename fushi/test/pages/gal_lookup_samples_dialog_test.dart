@@ -474,6 +474,30 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('surface mapping failure uses the dedicated capture message', (
+    WidgetTester tester,
+  ) async {
+    await _open(
+      tester,
+      store: _MemoryStore(),
+      manual: false,
+      capture: () async {
+        throw const GalLookupCalibrationCaptureException(
+          GalLookupCalibrationCaptureFailure.surfaceMappingUnavailable,
+          captureReason: 'magpie_source_viewport_invalid',
+        );
+      },
+    );
+    await tester.tap(find.byTooltip(t.game_lookup_samples_capture));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(t.game_lookup_samples_capture_surface_mapping),
+      findsOneWidget,
+    );
+    expect(find.text(t.game_lookup_samples_capture_source), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('fixed slot keeps failed sample and replaces it on success', (
     WidgetTester tester,
   ) async {

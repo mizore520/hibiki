@@ -2194,6 +2194,39 @@ void FlutterWindow::RegisterGalHookTextChannel() {
              flutter::EncodableValue(width)},
             {flutter::EncodableValue("anchorH"),
              flutter::EncodableValue(height)},
+            // Keep the raw screen-physical geometry alongside the legacy
+            // target-DPI-normalized rectangle. Dart must not multiply this
+            // domain by the main Flutter window's DPR.
+            {flutter::EncodableValue("physicalWordRect"),
+             flutter::EncodableMap{
+                 {flutter::EncodableValue("left"),
+                  flutter::EncodableValue(event.screen_rect_px.left)},
+                 {flutter::EncodableValue("top"),
+                  flutter::EncodableValue(event.screen_rect_px.top)},
+                 {flutter::EncodableValue("width"),
+                  flutter::EncodableValue(event.screen_rect_px.right -
+                                         event.screen_rect_px.left)},
+                 {flutter::EncodableValue("height"),
+                  flutter::EncodableValue(event.screen_rect_px.bottom -
+                                         event.screen_rect_px.top)},
+             }},
+            {flutter::EncodableValue("destinationViewportScreen"),
+             flutter::EncodableMap{
+                 {flutter::EncodableValue("left"),
+                  flutter::EncodableValue(
+                      event.destination_viewport_screen_px.left)},
+                 {flutter::EncodableValue("top"),
+                  flutter::EncodableValue(
+                      event.destination_viewport_screen_px.top)},
+                 {flutter::EncodableValue("width"),
+                  flutter::EncodableValue(
+                      event.destination_viewport_screen_px.right -
+                      event.destination_viewport_screen_px.left)},
+                 {flutter::EncodableValue("height"),
+                  flutter::EncodableValue(
+                      event.destination_viewport_screen_px.bottom -
+                      event.destination_viewport_screen_px.top)},
+             }},
         };
         gal_hook_text_channel_->InvokeMethod(
             "lookupText",

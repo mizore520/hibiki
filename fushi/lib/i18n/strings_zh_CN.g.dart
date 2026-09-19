@@ -11013,4 +11013,7 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get game_lookup_samples_auto_character_positions_inconsistent =>
       '生成的字格与识别位置偏差较大，未应用此次结果。';
+  @override
+  String get game_lookup_samples_capture_surface_mapping =>
+      '游戏窗口与超分画面的位置暂时无法对应，无法采集校准截图。';
 }

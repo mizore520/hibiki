@@ -47,28 +47,47 @@ static_assert(!CaptureSizeWithinBudget(0, 1080));
 static_assert(!CaptureSizeWithinBudget(65536, 65536));
 static_assert(!CaptureSizeWithinBudget(UINT64_MAX, UINT64_MAX));
 
-bool ReadCaptureClient(HWND hwnd, WindowCaptureMetadata* metadata) {
-  RECT client{};
-  POINT origin{};
-  if (!metadata || !IsWindow(hwnd) || IsIconic(hwnd) ||
-      !GetClientRect(hwnd, &client) || !ClientToScreen(hwnd, &origin)) {
+}  // namespace
+
+bool ReadPhysicalClientScreenRect(HWND hwnd, RECT* rect) {
+  if (rect == nullptr) {
     return false;
   }
-  POINT end{client.right, client.bottom};
+  *rect = RECT{};
+  if (hwnd == nullptr || !IsWindow(hwnd)) {
+    return false;
+  }
+  WINDOWINFO info{};
+  info.cbSize = sizeof(info);
+  if (!GetWindowInfo(hwnd, &info) ||
+      info.rcClient.right <= info.rcClient.left ||
+      info.rcClient.bottom <= info.rcClient.top) {
+    return false;
+  }
+  *rect = info.rcClient;
+  return true;
+}
+
+namespace {
+
+bool ReadCaptureClient(HWND hwnd, WindowCaptureMetadata* metadata) {
+  RECT client{};
+  if (!metadata || IsIconic(hwnd) ||
+      !ReadPhysicalClientScreenRect(hwnd, &client)) {
+    return false;
+  }
   DWORD pid = 0;
-  if (!ClientToScreen(hwnd, &end) ||
-      !GetWindowThreadProcessId(hwnd, &pid) || pid == 0 ||
-      end.x <= origin.x || end.y <= origin.y) {
+  if (!GetWindowThreadProcessId(hwnd, &pid) || pid == 0) {
     return false;
   }
   const UINT dpi = GetDpiForWindow(hwnd);
   if (dpi == 0) return false;
   metadata->captured_hwnd = reinterpret_cast<int64_t>(hwnd);
   metadata->captured_pid = pid;
-  metadata->client_left_px = origin.x;
-  metadata->client_top_px = origin.y;
-  metadata->client_width_px = end.x - origin.x;
-  metadata->client_height_px = end.y - origin.y;
+  metadata->client_left_px = client.left;
+  metadata->client_top_px = client.top;
+  metadata->client_width_px = client.right - client.left;
+  metadata->client_height_px = client.bottom - client.top;
   metadata->dpi = dpi;
   return true;
 }
@@ -239,17 +258,13 @@ void SetCaptureReason(WindowCaptureResult* out, const char* reason) {
 //
 // `CreateForWindow` 拿到的 item 覆盖窗口的整个 DWM 视觉（= DWMWA_EXTENDED_FRAME_BOUNDS），
 // 标题栏 / 菜单栏 / 边框全在里面，窗口化跑的 galgame 制卡必然把标题栏拍进卡片。
-// 裁剪原点 = 客户区屏幕原点（ClientToScreen）− 扩展框架原点：不能用 GetWindowRect
+// 裁剪原点 = 客户区屏幕原点（WINDOWINFO.rcClient）− 扩展框架原点：不能用 GetWindowRect
 // 的 left/top，Win10+ 的不可见 resize 边框会让它比 DWM 视觉原点偏出几像素（OBS 的
 // 「Client Area」选项是同一套算法）。
 //
-// **两个角都必须经 ClientToScreen**，不能拿屏幕空间的原点去加 GetClientRect 的宽高。
-// 本进程是 PerMonitorV2（runner.exe.manifest），ClientToScreen / 扩展框架原点 / WGC
-// 纹理三者同为物理像素；但 `GetClientRect` 返回的是**目标窗口自己坐标空间**里的尺寸，
-// 而老 galgame 大量是 DPI-unaware 进程 —— 在缩放屏上 DWM 会把它整窗放大，纹理是放大
-// 后的物理尺寸，GetClientRect 却仍是放大前的逻辑尺寸。两者直接相加会把裁剪框算小，
-// 而且 right/bottom 仍然大于 left/top，走不到下面的失败回退，是一次**静默**的错裁。
-// 把右下角也过一遍 ClientToScreen，两个角就落在同一个坐标系里，缩放与否都对。
+// **不要把 GetClientRect 的逻辑宽高加到屏幕原点上**。老 galgame 大量是
+// DPI-unaware 进程，在缩放屏上跨 DPI 的两个 ClientToScreen 端点可能独立舍入，
+// 使屏幕空间的右边少几个像素；GetWindowInfo.rcClient 一次返回完整的屏幕矩形。
 //
 // 返回 true 时 [box] 是 [width]×[height] 纹理内的一个非空子矩形（已与纹理求交）；
 // 任何一步失败（窗口最小化 / API 失败 / 退化成空矩形）返回 false，调用方回退整窗——
@@ -260,28 +275,20 @@ bool ComputeClientCropBox(HWND hwnd, UINT width, UINT height, RECT* box) {
   }
   RECT client{};
   RECT frame{};
-  POINT origin{0, 0};
-  if (!GetClientRect(hwnd, &client) || client.right <= 0 ||
-      client.bottom <= 0 ||
+  if (!ReadPhysicalClientScreenRect(hwnd, &client) ||
       FAILED(DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, &frame,
-                                   sizeof(frame))) ||
-      !ClientToScreen(hwnd, &origin)) {
+                                   sizeof(frame)))) {
     return false;
   }
-  // 右下角走同一条换算，别用 origin + GetClientRect 的宽高（见函数头注释）。
-  POINT far_corner{client.right, client.bottom};
-  if (!ClientToScreen(hwnd, &far_corner)) {
-    return false;
-  }
-  const LONG left = std::max<LONG>(0, origin.x - frame.left);
-  const LONG top = std::max<LONG>(0, origin.y - frame.top);
+  const LONG left = std::max<LONG>(0, client.left - frame.left);
+  const LONG top = std::max<LONG>(0, client.top - frame.top);
   if (left >= static_cast<LONG>(width) || top >= static_cast<LONG>(height)) {
     return false;
   }
   const LONG right =
-      std::min<LONG>(static_cast<LONG>(width), far_corner.x - frame.left);
+      std::min<LONG>(static_cast<LONG>(width), client.right - frame.left);
   const LONG bottom =
-      std::min<LONG>(static_cast<LONG>(height), far_corner.y - frame.top);
+      std::min<LONG>(static_cast<LONG>(height), client.bottom - frame.top);
   if (right <= left || bottom <= top) {
     return false;
   }

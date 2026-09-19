@@ -963,16 +963,35 @@ Future<GalCalibrationImageFit> fitGalCalibrationOcrGrid(
       lineAdvance < cellHeight) {
     return const GalCalibrationImageFit(reason: 'ocr_geometry_weak');
   }
-  final List<GalLookupCharacterAdvanceV1> characterAdvances =
-      deriveGalCalibrationCharacterAdvances(
-        samples: draft.samples,
-        alignments: alignments,
-        pitchPerClientHeight: pitch,
-      );
+  final List<GalLookupCharacterAdvanceV1> characterAdvances = List.of(
+    deriveGalCalibrationCharacterAdvances(
+      samples: draft.samples,
+      alignments: alignments,
+      pitchPerClientHeight: pitch,
+    ),
+  );
   final Map<int, double> widths = {
     for (final GalLookupCharacterAdvanceV1 advance in characterAdvances)
       advance.codePoint: advance.advanceRatio,
   };
+  if (!widths.containsKey(0x20)) {
+    final double? spaceAdvance = _leadingAsciiSpaceAdvance(
+      samples: draft.samples,
+      alignments: alignments,
+      pitchPerClientHeight: pitch,
+      widths: widths,
+    );
+    if (spaceAdvance != null && characterAdvances.length < 64) {
+      widths[0x20] = spaceAdvance;
+      characterAdvances.add(
+        GalLookupCharacterAdvanceV1(
+          codePoint: 0x20,
+          advanceRatio: spaceAdvance,
+        ),
+      );
+      characterAdvances.sort((a, b) => a.codePoint.compareTo(b.codePoint));
+    }
+  }
   final List<double> lefts = <double>[];
   final List<double> tops = <double>[];
   final bool hasMeasuredFirstRow = training.any(
@@ -1247,6 +1266,34 @@ Future<GalCalibrationImageFit> fitGalCalibrationOcrGrid(
     final double pxPitch = pitch * capture.referenceClient.heightPx;
     final double pxHeight = cellHeight * capture.referenceClient.heightPx;
     for (final GalCalibrationOcrMatchedLine line in alignments[i].lines) {
+      // Ink anchors establish geometry, but do not cover every source unit.
+      // Keep punctuation and OCR-missed letters in the native index/row check:
+      // a well-aligned body must not hide a missing or wrapped end bracket.
+      for (int index = line.sourceStart; index < line.sourceEnd; index++) {
+        final _SourceUnit unit = sources[i][index];
+        if (unit.whitespace) continue;
+        final GalCalibrationBox? box = preview.boxForIndex(unit.index);
+        if (box == null ||
+            box.charIndex != unit.index ||
+            box.charLength != unit.length) {
+          return GalCalibrationImageFit(
+            reason: 'ocr_character_positions_inconsistent',
+            sampleIndex: i,
+            detail: 'glyph_index_mismatch',
+          );
+        }
+        final int actualRow =
+            ((box.rect.top - rect.top * capture.referenceClient.heightPx) /
+                    (lineAdvance * capture.referenceClient.heightPx))
+                .round();
+        if (actualRow != line.lineIndex) {
+          return GalCalibrationImageFit(
+            reason: 'ocr_line_wrap_inconsistent',
+            sampleIndex: i,
+            detail: 'row=${line.lineIndex + 1};previewRow=${actualRow + 1}',
+          );
+        }
+      }
       final List<GalCalibrationOcrGlyph> glyphs = _reliableGlyphs(line);
       if (glyphs.isEmpty) {
         return GalCalibrationImageFit(
@@ -1265,19 +1312,6 @@ Future<GalCalibrationImageFit> fitGalCalibrationOcrGrid(
             reason: 'ocr_character_positions_inconsistent',
             sampleIndex: i,
             detail: 'glyph_index_mismatch',
-          );
-        }
-        // An incorrect native row is a wrapping error, regardless of the
-        // quality of this character's OCR/ink measurement.
-        final int actualRow =
-            ((box.rect.top - rect.top * capture.referenceClient.heightPx) /
-                    (lineAdvance * capture.referenceClient.heightPx))
-                .round();
-        if (actualRow != line.lineIndex) {
-          return GalCalibrationImageFit(
-            reason: 'ocr_line_wrap_inconsistent',
-            sampleIndex: i,
-            detail: 'row=${line.lineIndex + 1};previewRow=${actualRow + 1}',
           );
         }
         final double dx = (box.rect.center.dx - glyph.rect.centerX).abs();

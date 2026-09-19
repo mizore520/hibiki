@@ -48,7 +48,9 @@ GalCalibrationOcrMatchedLine? _refineInkSegments(
   if (!source
       .sublist(line.sourceStart, line.sourceEnd)
       .any(
-        (_SourceUnit unit) => _singlePunctuationCodePoint(unit.value) != null,
+        (_SourceUnit unit) =>
+            unit.value == ' ' ||
+            _singlePunctuationCodePoint(unit.value) != null,
       )) {
     return null;
   }
@@ -57,6 +59,7 @@ GalCalibrationOcrMatchedLine? _refineInkSegments(
   bool split = false;
   for (int end = start; end <= line.sourceEnd; end++) {
     if (end < line.sourceEnd &&
+        source[end].value != ' ' &&
         _singlePunctuationCodePoint(source[end].value) == null) {
       continue;
     }

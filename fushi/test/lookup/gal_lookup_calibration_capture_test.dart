@@ -406,6 +406,101 @@ void main() {
     );
   });
 
+  test('known Magpie viewport failure gets its own capture category', () async {
+    await expectLater(
+      captureGalLookupCalibrationSample(
+        readSnapshot: _snapshot,
+        acquireLease: () async => null,
+        captureWindow: (_) async => const WindowCaptureResult(
+          error: 'presentation viewport unavailable',
+          captureReason: 'presentation_viewport_unavailable',
+          metadata: _metadata,
+        ),
+      ),
+      throwsA(
+        isA<GalLookupCalibrationCaptureException>()
+            .having(
+              (GalLookupCalibrationCaptureException error) => error.failure,
+              'failure',
+              GalLookupCalibrationCaptureFailure.surfaceMappingUnavailable,
+            )
+            .having(
+              (GalLookupCalibrationCaptureException error) =>
+                  error.captureReason,
+              'captureReason',
+              'presentation_viewport_unavailable',
+            ),
+      ),
+    );
+  });
+
+  test(
+    'mapping failure during snapshot still releases the capture lease',
+    () async {
+      int reads = 0;
+      bool released = false;
+      bool captured = false;
+      await expectLater(
+        captureGalLookupCalibrationSample(
+          readSnapshot: () {
+            if (++reads == 1) return _snapshot();
+            throw const GalLookupCalibrationCaptureException(
+              GalLookupCalibrationCaptureFailure.surfaceMappingUnavailable,
+              captureReason: 'magpie_source_viewport_invalid',
+            );
+          },
+          acquireLease: () async => _Lease(() => released = true),
+          captureWindow: (_) async {
+            captured = true;
+            return WindowCaptureResult(pngBytes: _png(), metadata: _metadata);
+          },
+        ),
+        throwsCaptureFailure(
+          GalLookupCalibrationCaptureFailure.surfaceMappingUnavailable,
+        ),
+      );
+      expect(captured, isFalse);
+      expect(released, isTrue);
+    },
+  );
+
+  test(
+    'mapping failure from lease acquisition is preserved before capture',
+    () async {
+      bool captured = false;
+      await expectLater(
+        captureGalLookupCalibrationSample(
+          readSnapshot: _snapshot,
+          acquireLease: () async {
+            throw const GalLookupCalibrationCaptureException(
+              GalLookupCalibrationCaptureFailure.surfaceMappingUnavailable,
+              captureReason: 'target_mapping_unavailable',
+            );
+          },
+          captureWindow: (_) async {
+            captured = true;
+            return WindowCaptureResult(pngBytes: _png(), metadata: _metadata);
+          },
+        ),
+        throwsCaptureFailure(
+          GalLookupCalibrationCaptureFailure.surfaceMappingUnavailable,
+        ),
+      );
+      expect(captured, isFalse);
+    },
+  );
+
+  test('empty source remains invalid instead of mapping failure', () async {
+    await expectLater(
+      captureGalLookupCalibrationSample(
+        readSnapshot: () => _snapshot(text: ''),
+        acquireLease: () async => null,
+        captureWindow: (_) async => throw TestFailure('must not capture'),
+      ),
+      throwsCaptureFailure(GalLookupCalibrationCaptureFailure.invalidSource),
+    );
+  });
+
   test('failed restore does not publish sample', () async {
     await expectLater(
       captureGalLookupCalibrationSample(

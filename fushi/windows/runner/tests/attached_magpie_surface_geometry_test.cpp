@@ -85,6 +85,34 @@ int main() {
   source_outside.source_viewport_screen = RECT{-1, 100, 900, 900};
   ExpectRejected(source_outside, NormalizedRect{0.1, 0.1, 0.2, 0.2});
 
+  // Round13 live data: the old GetClientRect + two ClientToScreen calls
+  // reported the DPI-unaware source client as {952,474,3276,1783}, while
+  // Magpie and GetWindowInfo.rcClient both reported {952,474,3278,1783}.
+  // The corrected physical client must contain Magpie's published viewport;
+  // strict containment still rejects the old rectangle.
+  const RECT round13_source_client{952, 474, 3278, 1783};
+  const RECT round13_source_viewport{952, 474, 3278, 1783};
+  Mapping round13_mapping{round13_source_client, round13_source_viewport,
+                          RECT{0, 0, 3840, 2160}, RECT{1, 0, 3839, 2160}};
+  assert(fushi::attached_magpie_surface_geometry::RectContainedIn(
+      round13_mapping.source_viewport_screen,
+      round13_mapping.source_client_screen));
+  assert(fushi::attached_magpie_surface_geometry::IsMappingValid(
+      round13_mapping));
+  RECT round13_mapped_destination{};
+  assert(MapSourceRectToDestination(round13_mapping,
+                                    round13_source_viewport,
+                                    &round13_mapped_destination));
+  assert(SameRect(round13_mapped_destination,
+                  round13_mapping.destination_viewport_screen));
+  Mapping round13_old_mapping = round13_mapping;
+  round13_old_mapping.source_client_screen = RECT{952, 474, 3276, 1783};
+  assert(!fushi::attached_magpie_surface_geometry::RectContainedIn(
+      round13_old_mapping.source_viewport_screen,
+      round13_old_mapping.source_client_screen));
+  assert(!fushi::attached_magpie_surface_geometry::IsMappingValid(
+      round13_old_mapping));
+
   Mapping destination_outside = cropped;
   destination_outside.destination_viewport_screen = RECT{400, 300, 1801, 1500};
   ExpectRejected(destination_outside, NormalizedRect{0.1, 0.1, 0.2, 0.2});

@@ -277,6 +277,48 @@ void main() {
   });
 
   group('Dart: attached hit → lookupText 必带游戏 HWND', () {
+    test('attached physical hit and viewport reach the public popup route', () {
+      final String emit = compactCode(
+        methodBody(
+          attachedSource,
+          'void AttachedTextSurfaceWindow::EmitLookupEvent(',
+        ),
+      );
+      expect(
+        emit,
+        contains(
+          'event.destination_viewport_screen_px='
+          'surface_geometry_.destination_viewport_screen;',
+        ),
+      );
+      final String attached = compactCode(
+        methodBody(
+          overlayController,
+          'Future<void> _onAttachedLookupText(GalAttachedLookupHitV19 hit)',
+        ),
+      );
+      expect(attached, contains('GlobalLookupPhysicalPlacement('));
+      expect(attached, contains('anchorScreenRect:hit.physicalWordRect!'));
+      expect(
+        attached,
+        contains('destinationViewportScreenRect:hit.destinationViewportScreen'),
+      );
+      final String lookup = compactCode(
+        methodBody(overlayController, 'Future<void> _onLookupText('),
+      );
+      expect(lookup, contains('physicalPlacement:physicalPlacement'));
+      final String callback = flutterWindowSource.substring(
+        flutterWindowSource.indexOf(
+          'attached_text_surface_window_->SetLookupCallback(',
+        ),
+        flutterWindowSource.indexOf(
+          'attached_text_surface_window_->SetShieldStatusCallback(',
+        ),
+      );
+      expect(callback, contains('EncodableValue("physicalWordRect")'));
+      expect(callback, contains('EncodableValue("destinationViewportScreen")'));
+    });
+
     test('_onAttachedLookupText 传 hit.target.targetHwnd，浮窗路径不传', () {
       final String attached = compactCode(
         methodBody(

@@ -34,7 +34,7 @@ bool _ordinarySpan(List<_SourceUnit> source, int start, int end) => source
     .sublist(start, end)
     .every(
       (_SourceUnit unit) =>
-          _singlePunctuationCodePoint(unit.value) == null && unit.value != '\t',
+          _singlePunctuationCodePoint(unit.value) == null && !unit.whitespace,
     );
 
 /// Recover pen movement from the centers of ordinary glyphs on both sides.
@@ -69,7 +69,9 @@ List<GalLookupCharacterAdvanceV1> deriveGalCalibrationCharacterAdvances({
           index < line.sourceStart + b.cellOffset;
           index++
         ) {
-          final int? code = _singlePunctuationCodePoint(source[index].value);
+          final int? code = source[index].value == ' '
+              ? 0x20
+              : _singlePunctuationCodePoint(source[index].value);
           if (code != null) special[code] = (special[code] ?? 0) + 1;
         }
         // Two different unknown advances cannot be solved from one gap.
@@ -117,6 +119,97 @@ List<GalLookupCharacterAdvanceV1> deriveGalCalibrationCharacterAdvances({
   }
   result.sort((a, b) => a.codePoint.compareTo(b.codePoint));
   return List.unmodifiable(result.take(64));
+}
+
+/// A leading ASCII space has no ordinary glyph on its left. Measured rows can
+/// still establish its width when one shared origin and whole-cell indentation
+/// have a unique solution. CTC-only rows cannot establish this exception.
+double? _leadingAsciiSpaceAdvance({
+  required List<GalCalibrationSample> samples,
+  required List<GalCalibrationOcrAlignment> alignments,
+  required double pitchPerClientHeight,
+  required Map<int, double> widths,
+}) {
+  final List<({double offset, int spaces, bool quoted})> equations = [];
+  for (int i = 0; i < samples.length; i++) {
+    if (samples[i].validation) continue;
+    final List<_SourceUnit> source = _sourceUnits(
+      samples[i].capture.sourceText,
+    );
+    final double pitch =
+        pitchPerClientHeight * samples[i].capture.referenceClient.heightPx;
+    final List<GalCalibrationOcrMatchedLine> lines = alignments[i].lines;
+    final List<({double origin, int spaces})> origins = [];
+    for (final GalCalibrationOcrMatchedLine line in lines) {
+      final List<GalCalibrationOcrGlyph> anchors = _reliableGlyphs(line)
+          .where(
+            (g) =>
+                g.inkMeasured &&
+                _fullSizeInkCharacter(
+                  source[line.sourceStart + g.cellOffset].value,
+                ),
+          )
+          .toList();
+      if (anchors.length < 4) break;
+      final Set<int> spaces = {
+        for (final GalCalibrationOcrGlyph g in anchors)
+          source
+              .sublist(line.sourceStart, line.sourceStart + g.cellOffset)
+              .where((u) => u.value == ' ')
+              .length,
+      };
+      // Internal spaces belong to the direct gap solver instead.
+      if (spaces.length != 1) break;
+      origins.add((
+        origin: _median([
+          for (final GalCalibrationOcrGlyph g in anchors)
+            g.rect.centerX / pitch - _glyphCellCenter(line, g, source, widths),
+        ]),
+        spaces: spaces.single,
+      ));
+    }
+    if (origins.length != lines.length || origins.length < 2) continue;
+    final bool quoted =
+        samples[i].capture.sourceText.startsWith('「') ||
+        samples[i].capture.sourceText.startsWith('『');
+    for (final row in origins.skip(1)) {
+      equations.add((
+        offset: row.origin - origins.first.origin,
+        spaces: row.spaces - origins.first.spaces,
+        quoted: quoted,
+      ));
+    }
+  }
+  final List<({double offset, int spaces, bool quoted})> informative = equations
+      .where((e) => e.spaces != 0 && (e.offset - e.offset.round()).abs() > .15)
+      .toList();
+  if (informative.isEmpty) return null;
+  final first = informative.first;
+  final List<double> candidates = [];
+  for (int indent = 0; indent <= 8; indent++) {
+    final double ratio = 1 + (first.offset - indent) / first.spaces;
+    // This inference establishes only a narrow ASCII space. Wider spaces
+    // require direct measurements between ordinary glyphs.
+    if (!ratio.isFinite || ratio < .15 || ratio > .85) continue;
+    final Map<bool, int> indents = {};
+    bool valid = true;
+    for (final equation in equations) {
+      final double actual = equation.offset - equation.spaces * (ratio - 1);
+      final int rounded = actual.round();
+      if (rounded < 0 ||
+          rounded > 8 ||
+          (actual - rounded).abs() > .05 ||
+          (indents.containsKey(equation.quoted) &&
+              indents[equation.quoted] != rounded)) {
+        valid = false;
+        break;
+      }
+      indents[equation.quoted] = rounded;
+    }
+    if (valid) candidates.add(ratio);
+  }
+  if (candidates.length != 1) return null;
+  return (candidates.single * 100).round() / 100;
 }
 
 typedef _OcrRowEnd = ({

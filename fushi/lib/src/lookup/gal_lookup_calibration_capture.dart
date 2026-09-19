@@ -201,6 +201,7 @@ typedef GalCalibrationCaptureLeaseFactory =
 enum GalLookupCalibrationCaptureFailure {
   busy,
   sourceNotReady,
+  surfaceMappingUnavailable,
   rubyUnsupported,
   overlayHideFailed,
   suppressionUnavailable,
@@ -212,6 +213,50 @@ enum GalLookupCalibrationCaptureFailure {
   imageTooLarge,
   imageDimensionsInvalid,
   unknown,
+}
+
+final RegExp _calibrationCaptureReasonPattern = RegExp(r'^[a-z0-9_]{1,64}$');
+
+const Set<String> _surfaceMappingCaptureReasons = <String>{
+  'magpie_source_viewport_invalid',
+  'magpie_viewport_invalid',
+  'magpie_viewport_outside_presentation',
+  'magpie_viewport_unavailable',
+  'presentation_content_size_invalid',
+  'presentation_destination_size_mismatch',
+  'presentation_viewport_incomplete',
+  'presentation_viewport_invalid',
+  'presentation_viewport_outside_content',
+  'presentation_viewport_unavailable',
+  'target_mapping_unavailable',
+};
+
+/// Returns the bounded reason when it identifies a known source/presentation
+/// mapping failure. Native status names use camelCase in one path; normalize
+/// that spelling before it reaches logs or UI diagnostics.
+String? normalizeGalLookupCalibrationSurfaceMappingReason(String? value) {
+  if (value == null) return null;
+  final String reason = value.trim();
+  if (reason == 'targetMappingUnavailable') {
+    return 'target_mapping_unavailable';
+  }
+  if (!_calibrationCaptureReasonPattern.hasMatch(reason) ||
+      !_surfaceMappingCaptureReasons.contains(reason)) {
+    return null;
+  }
+  return reason;
+}
+
+/// Keeps a native capture reason safe for diagnostics while preserving the
+/// machine-readable reason used by existing capture failure logs.
+String? normalizeGalLookupCalibrationCaptureReason(String? value) {
+  if (value == null) return null;
+  final String reason = value.trim();
+  if (reason == 'targetMappingUnavailable') {
+    return 'target_mapping_unavailable';
+  }
+  if (!_calibrationCaptureReasonPattern.hasMatch(reason)) return null;
+  return reason;
 }
 
 class GalLookupCalibrationCaptureException implements Exception {
@@ -278,7 +323,9 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
     } on GalLookupCalibrationCaptureException catch (error) {
       throw GalLookupCalibrationCaptureException(
         error.failure,
-        captureReason: result.captureReason,
+        captureReason: normalizeGalLookupCalibrationCaptureReason(
+          result.captureReason,
+        ),
         captureMetadata: result.metadata,
         captureErrorCodes: _captureErrorCodes(result.diagnostics),
       );
@@ -297,12 +344,26 @@ Future<GalLookupCalibrationCapture> captureGalLookupCalibrationSample({
   requireCurrent();
   GalLookupCalibrationCaptureException captureFailure(
     GalLookupCalibrationCaptureFailure failure,
-  ) => GalLookupCalibrationCaptureException(
-    failure,
-    captureReason: result.captureReason,
-    captureMetadata: result.metadata,
-    captureErrorCodes: _captureErrorCodes(result.diagnostics),
-  );
+  ) {
+    final String? captureReason = normalizeGalLookupCalibrationCaptureReason(
+      result.captureReason,
+    );
+    final String? mappingReason =
+        normalizeGalLookupCalibrationSurfaceMappingReason(captureReason);
+    return GalLookupCalibrationCaptureException(
+      (failure == GalLookupCalibrationCaptureFailure.windowCaptureFailed ||
+                  failure ==
+                      GalLookupCalibrationCaptureFailure
+                          .clientMappingUnavailable) &&
+              mappingReason != null
+          ? GalLookupCalibrationCaptureFailure.surfaceMappingUnavailable
+          : failure,
+      captureReason: captureReason,
+      captureMetadata: result.metadata,
+      captureErrorCodes: _captureErrorCodes(result.diagnostics),
+    );
+  }
+
   if (!result.ok) {
     throw captureFailure(
       GalLookupCalibrationCaptureFailure.windowCaptureFailed,

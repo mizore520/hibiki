@@ -5010,5 +5010,6 @@
   "game_lookup_samples_diagnostic": "Diagnostic: ${reason}${detail}",
   "game_lookup_samples_capture_replace": "Replace current sample",
   "game_lookup_samples_auto_line_spacing_missing": "Reliable line spacing could not be measured. Try a complete two- or three-line sample.",
-  "game_lookup_samples_auto_character_positions_inconsistent": "The generated cells differ too much from the detected positions. This result was not applied."
+  "game_lookup_samples_auto_character_positions_inconsistent": "The generated cells differ too much from the detected positions. This result was not applied.",
+  "game_lookup_samples_capture_surface_mapping": "The game window and the upscaled image cannot be aligned right now, so a calibration screenshot cannot be captured."
 }

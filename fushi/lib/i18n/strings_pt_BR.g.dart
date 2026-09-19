@@ -12157,4 +12157,7 @@ class _StringsPtBr extends _StringsEn {
   @override
   String get game_lookup_samples_auto_character_positions_inconsistent =>
       'The generated cells differ too much from the detected positions. This result was not applied.';
+  @override
+  String get game_lookup_samples_capture_surface_mapping =>
+      'The game window and the upscaled image cannot be aligned right now, so a calibration screenshot cannot be captured.';
 }
