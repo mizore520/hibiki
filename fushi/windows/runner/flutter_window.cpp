@@ -1303,10 +1303,11 @@ AttachedTextSurfaceWindow::Layout AttachedLayoutFromArgs(
       (void)ExactFiniteDoubleFromValue(grid_map, "cellHeightPerClientHeight",
                                        &grid.cell_height_per_client_height);
       (void)ExactIntFromValue(grid_map, "columns", &grid.columns);
-      (void)ExactIntFromValue(grid_map, "continuationIndent",
-                               &grid.continuation_indent);
-      (void)ExactIntFromValue(grid_map, "quotedContinuationIndent",
-                               &grid.quoted_continuation_indent);
+      (void)ExactFiniteDoubleFromValue(grid_map, "continuationIndent",
+                                       &grid.continuation_indent);
+      (void)ExactFiniteDoubleFromValue(
+          grid_map, "quotedContinuationIndent",
+          &grid.quoted_continuation_indent);
       const auto line_width =
           grid_map->find(flutter::EncodableValue("lineWidthInCells"));
       if (line_width != grid_map->end() &&

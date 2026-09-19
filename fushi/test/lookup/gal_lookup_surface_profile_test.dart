@@ -172,6 +172,56 @@ void main() {
   );
 
   test(
+    'cell grid preserves fractional continuation indents and old integers',
+    () {
+      const GalLookupCellGridV1 fractionalGrid = GalLookupCellGridV1(
+        advancePerClientHeight: 0.03,
+        lineAdvancePerClientHeight: 0.04,
+        cellHeightPerClientHeight: 0.035,
+        columns: 24,
+        continuationIndent: 0.5,
+        quotedContinuationIndent: 1.5,
+      );
+      expect(fractionalGrid.isValid, isTrue);
+      final Map<String, Object?> fractionalJson = fractionalGrid.toJson();
+      expect(fractionalJson['continuationIndent'], 0.5);
+      expect(fractionalJson['quotedContinuationIndent'], 1.5);
+      expect(GalLookupCellGridV1.tryFromJson(fractionalJson), fractionalGrid);
+
+      final Map<String, Object?> legacyJson =
+          Map<String, Object?>.of(fractionalJson)
+            ..['continuationIndent'] = 2
+            ..['quotedContinuationIndent'] = 3;
+      expect(
+        GalLookupCellGridV1.tryFromJson(legacyJson),
+        const GalLookupCellGridV1(
+          advancePerClientHeight: 0.03,
+          lineAdvancePerClientHeight: 0.04,
+          cellHeightPerClientHeight: 0.035,
+          columns: 24,
+          continuationIndent: 2,
+          quotedContinuationIndent: 3,
+        ),
+      );
+
+      for (final double invalid in <double>[
+        -0.01,
+        double.nan,
+        double.infinity,
+      ]) {
+        final Map<String, Object?> invalidJson = Map<String, Object?>.of(
+          fractionalJson,
+        )..['continuationIndent'] = invalid;
+        expect(GalLookupCellGridV1.tryFromJson(invalidJson), isNull);
+      }
+      final Map<String, Object?> outOfRange = Map<String, Object?>.of(
+        fractionalJson,
+      )..['quotedContinuationIndent'] = 8.01;
+      expect(GalLookupCellGridV1.tryFromJson(outOfRange), isNull);
+    },
+  );
+
+  test(
     'punctuation visual bounds round-trip without changing the cell grid',
     () {
       const GalLookupCellGridV1 grid = GalLookupCellGridV1(

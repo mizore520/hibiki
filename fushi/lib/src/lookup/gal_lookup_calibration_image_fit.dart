@@ -653,8 +653,8 @@ GalCalibrationImageFit inferGalCalibrationGrid(
       lineAdvancePerClientHeight: lineAdvance,
       cellHeightPerClientHeight: cellHeight,
       columns: columns,
-      continuationIndent: plainIndent,
-      quotedContinuationIndent: quoteIndent,
+      continuationIndent: plainIndent.toDouble(),
+      quotedContinuationIndent: quoteIndent.toDouble(),
     );
     if (!grid.isValid) continue;
     final GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(cellGrid: grid);

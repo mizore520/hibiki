@@ -150,6 +150,41 @@ class _InkGeometryCandidate {
   final Uint8List mask;
 }
 
+/// A periodic stroke grid can accidentally associate a letter with its next
+/// neighbour (especially a long vowel mark). Keep the OCR token ordering as
+/// independent evidence of identity before promoting pixels to ink anchors.
+@visibleForTesting
+bool galCalibrationInkBelongsToToken({
+  required GalCalibrationOcrGlyph glyph,
+  required OcrRect measured,
+  required List<GalCalibrationOcrGlyph> tokens,
+}) {
+  final double center = glyph.rect.centerX;
+  if (!center.isFinite || !measured.centerX.isFinite) return false;
+  for (final GalCalibrationOcrGlyph other in tokens) {
+    if (other.cellOffset == glyph.cellOffset ||
+        !other.confidence.isFinite ||
+        other.confidence < .5 ||
+        !other.rect.centerX.isFinite) {
+      continue;
+    }
+    final double neighbour = other.rect.centerX;
+    // Only ordered observations establish a boundary. Coincident or reversed
+    // CTC emissions do not prove which side a glyph occupies.
+    if (other.cellOffset < glyph.cellOffset &&
+        neighbour < center &&
+        measured.centerX <= (neighbour + center) / 2) {
+      return false;
+    }
+    if (other.cellOffset > glyph.cellOffset &&
+        neighbour > center &&
+        measured.centerX >= (neighbour + center) / 2) {
+      return false;
+    }
+  }
+  return true;
+}
+
 GalCalibrationOcrMatchedLine? _refineInkLine(
   img.Image image,
   String text,
@@ -342,12 +377,20 @@ GalCalibrationOcrMatchedLine? _measureInkLine(
         bottom - t < pitch * .35) {
       continue;
     }
-    measured[g.sourceIndex] = OcrRect(
+    final OcrRect bounds = OcrRect(
       left: x0 + a + l,
       right: x0 + a + r + 1,
       top: y0 + t,
       bottom: y0 + bottom + 1,
     );
+    if (!galCalibrationInkBelongsToToken(
+      glyph: g,
+      measured: bounds,
+      tokens: line.glyphs,
+    )) {
+      continue;
+    }
+    measured[g.sourceIndex] = bounds;
   }
   // A slightly rough search rectangle can cut the first or last visible
   // glyph.  Do not use that partial component as pixel evidence, but retain

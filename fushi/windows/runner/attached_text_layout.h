@@ -44,8 +44,9 @@ struct CellGrid {
   // the default and still bounds continuation indents.
   double line_width_in_cells = std::numeric_limits<double>::quiet_NaN();
   int columns = 0;
-  int continuation_indent = -1;
-  int quoted_continuation_indent = -1;
+  double continuation_indent = std::numeric_limits<double>::quiet_NaN();
+  double quoted_continuation_indent =
+      std::numeric_limits<double>::quiet_NaN();
   bool hanging_punctuation = false;
 
   bool operator==(const CellGrid &other) const {
@@ -53,6 +54,14 @@ struct CellGrid {
         (std::isnan(line_width_in_cells) &&
          std::isnan(other.line_width_in_cells)) ||
         line_width_in_cells == other.line_width_in_cells;
+    const bool same_continuation_indent =
+        (std::isnan(continuation_indent) &&
+         std::isnan(other.continuation_indent)) ||
+        continuation_indent == other.continuation_indent;
+    const bool same_quoted_continuation_indent =
+        (std::isnan(quoted_continuation_indent) &&
+         std::isnan(other.quoted_continuation_indent)) ||
+        quoted_continuation_indent == other.quoted_continuation_indent;
     return advance_per_client_height == other.advance_per_client_height &&
            line_advance_per_client_height ==
                other.line_advance_per_client_height &&
@@ -60,8 +69,7 @@ struct CellGrid {
                other.cell_height_per_client_height &&
            same_line_width &&
            columns == other.columns &&
-           continuation_indent == other.continuation_indent &&
-           quoted_continuation_indent == other.quoted_continuation_indent &&
+           same_continuation_indent && same_quoted_continuation_indent &&
            hanging_punctuation == other.hanging_punctuation;
   }
 
@@ -114,7 +122,8 @@ inline bool IsPunctuationVisualBoundsValid(
 }
 
 inline bool IsCellGridValid(const CellGrid &grid) {
-  const int maximum_indent = std::min(grid.columns - 1, 8);
+  const double maximum_indent =
+      std::min(static_cast<double>(grid.columns - 1), 8.0);
   const bool line_width_valid =
       std::isnan(grid.line_width_in_cells) ||
       (std::isfinite(grid.line_width_in_cells) &&
@@ -130,10 +139,11 @@ inline bool IsCellGridValid(const CellGrid &grid) {
          grid.cell_height_per_client_height <= 0.25 &&
          grid.line_advance_per_client_height >=
              grid.cell_height_per_client_height &&
-         line_width_valid &&
-         grid.columns >= 2 && grid.columns <= 128 &&
+         line_width_valid && grid.columns >= 2 && grid.columns <= 128 &&
+         std::isfinite(grid.continuation_indent) &&
          grid.continuation_indent >= 0 &&
          grid.continuation_indent <= maximum_indent &&
+         std::isfinite(grid.quoted_continuation_indent) &&
          grid.quoted_continuation_indent >= 0 &&
          grid.quoted_continuation_indent <= maximum_indent;
 }
@@ -422,14 +432,14 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
   const bool quoted =
       !source.empty() &&
       (source.front() == L'\u300C' || source.front() == L'\u300E');
-  const int continuation_indent = quoted ? grid.quoted_continuation_indent
-                                         : grid.continuation_indent;
+  const double continuation_indent = quoted ? grid.quoted_continuation_indent
+                                            : grid.continuation_indent;
   int row = 0;
   double cursor_in_cells = 0.0;
   bool hanging_punctuation_used = false;
   const auto advance_line = [&]() {
     ++row;
-    cursor_in_cells = static_cast<double>(continuation_indent);
+    cursor_in_cells = continuation_indent;
     hanging_punctuation_used = false;
   };
   const auto next_cell_bounds = [&](double left_in_cells, double width_in_cells,

@@ -200,10 +200,10 @@ int main() {
       const auto &box = resized.boxes[index];
       assert(box.text_position == index && box.text_length == 1);
       const int expected_row = index < 16 ? 0 : 1;
-      const int expected_column = index < 16
-                                      ? static_cast<int>(index)
-                                      : static_cast<int>(index) - 16 +
-                                            grid.continuation_indent;
+      const double expected_column =
+          index < 16 ? static_cast<double>(index)
+                     : static_cast<double>(index) - 16 +
+                           grid.continuation_indent;
       assert(box.hit_rect.left == resized_body.left +
                  std::llround(expected_column * 0.0601 * size.height_px));
       assert(box.hit_rect.top == resized_body.top +
@@ -212,6 +212,28 @@ int main() {
                               size.height_px));
     }
   }
+  ++cases;
+
+  // Fractional continuation starts preserve the shared first-row origin and
+  // move only the wrapped row by the configured half-cell amount.
+  layout::Layout fractional_indent = grid_style;
+  fractional_indent.cell_grid->continuation_indent = 0.5;
+  fractional_indent.cell_grid->quoted_continuation_indent = 1.5;
+  const auto fractional_plain =
+      layout::Preview(full_line + L"AB", client, rect, fractional_indent);
+  assert(fractional_plain.ok() && fractional_plain.boxes.size() == 18);
+  assert(fractional_plain.boxes[16].hit_rect.left == body.left + 9);
+  assert(fractional_plain.boxes[16].hit_rect.right == body.left + 27);
+  assert(fractional_plain.boxes[16].hit_rect.top == body.top + 24);
+
+  const std::wstring quoted_text =
+      L"\u300C" + std::wstring(15, L'\u3042') + L"\nA";
+  const auto fractional_quoted =
+      layout::Preview(quoted_text, client, rect, fractional_indent);
+  assert(fractional_quoted.ok() && fractional_quoted.boxes.size() == 17);
+  assert(fractional_quoted.boxes.back().text_position == 17);
+  assert(fractional_quoted.boxes.back().hit_rect.left == body.left + 27);
+  assert(fractional_quoted.boxes.back().hit_rect.top == body.top + 24);
   ++cases;
 
   const auto grid_preview = layout::Preview(
@@ -405,6 +427,17 @@ int main() {
   assert(!layout::IsCellGridValid(invalid_line_width));
   invalid_line_width.line_width_in_cells = 128.01;
   assert(!layout::IsCellGridValid(invalid_line_width));
+  layout::CellGrid invalid_indent = grid;
+  invalid_indent.continuation_indent = -0.01;
+  assert(!layout::IsCellGridValid(invalid_indent));
+  invalid_indent.continuation_indent = 8.01;
+  assert(!layout::IsCellGridValid(invalid_indent));
+  invalid_indent.continuation_indent =
+      std::numeric_limits<double>::quiet_NaN();
+  assert(!layout::IsCellGridValid(invalid_indent));
+  invalid_indent = grid;
+  invalid_indent.quoted_continuation_indent = 0.5;
+  assert(layout::IsCellGridValid(invalid_indent));
   ++cases;
 
   // Legacy punctuation visual bounds remain readable but never alter the

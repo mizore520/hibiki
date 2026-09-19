@@ -175,8 +175,8 @@ class GalLookupCellGridV1 {
   final double lineAdvancePerClientHeight;
   final double cellHeightPerClientHeight;
   final int columns;
-  final int continuationIndent;
-  final int quotedContinuationIndent;
+  final double continuationIndent;
+  final double quotedContinuationIndent;
   final bool hangingPunctuation;
   final double? lineWidthInCells;
 
@@ -202,12 +202,14 @@ class GalLookupCellGridV1 {
           (lineWidthInCells!.isFinite &&
               lineWidthInCells! >= 2 &&
               lineWidthInCells! <= 128)) &&
+      continuationIndent.isFinite &&
       continuationIndent >= 0 &&
       continuationIndent <= _maximumIndent &&
+      quotedContinuationIndent.isFinite &&
       quotedContinuationIndent >= 0 &&
       quotedContinuationIndent <= _maximumIndent;
 
-  int get _maximumIndent => columns - 1 < 8 ? columns - 1 : 8;
+  double get _maximumIndent => math.min(columns - 1, 8).toDouble();
 
   Map<String, Object?> toJson() {
     final Map<String, Object?> result = <String, Object?>{
@@ -277,9 +279,9 @@ class GalLookupCellGridV1 {
       cellHeightPerClientHeight:
           _finiteDouble(map['cellHeightPerClientHeight']) ?? double.nan,
       columns: _exactInt(map['columns']) ?? 0,
-      continuationIndent: _exactInt(map['continuationIndent']) ?? -1,
+      continuationIndent: _finiteDouble(map['continuationIndent']) ?? -1.0,
       quotedContinuationIndent:
-          _exactInt(map['quotedContinuationIndent']) ?? -1,
+          _finiteDouble(map['quotedContinuationIndent']) ?? -1.0,
       hangingPunctuation: hangingPunctuation,
       lineWidthInCells: lineWidthInCells,
     );

@@ -296,6 +296,9 @@ String _foldOcrChar(String value) {
     return String.fromCharCode(rune - 0xfee0);
   }
   if (rune == 0x3000) return ' ';
+  // A horizontal dash is often emitted as an ASCII hyphen. Preserve its
+  // source character/advance; fold only for OCR-to-Hook correspondence.
+  if ('‐‑‒–—―−'.contains(value)) return '-';
   return value.toLowerCase();
 }
 
@@ -596,6 +599,40 @@ List<_TokenPair> _alignLineTokens(
   return pairs.reversed.toList();
 }
 
+bool _isTerminalPunctuation(String value) =>
+    value.trim().isEmpty || _singlePunctuationCodePoint(value) != null;
+
+bool _isLowConfidenceTerminalSuffix({
+  required List<_SourceUnit> source,
+  required _LineSpan span,
+  required GalCalibrationOcrLine line,
+  required List<_TokenPair> pairs,
+  required int lineIndex,
+  required List<GalCalibrationOcrMatchedLine> matched,
+}) {
+  if (lineIndex == 0 || matched.isEmpty || pairs.isEmpty) return false;
+  if (span.end != source.length) return false;
+  final int sourceVisible = source
+      .sublist(span.start, span.end)
+      .where((_SourceUnit unit) => !unit.whitespace)
+      .length;
+  if (sourceVisible == 0 || sourceVisible > 4) return false;
+  if (!line.text.runes.every(
+    (int rune) => _isTerminalPunctuation(String.fromCharCode(rune)),
+  )) {
+    return false;
+  }
+  if (!source
+      .sublist(span.start, span.end)
+      .every((_SourceUnit unit) => _isTerminalPunctuation(unit.value))) {
+    return false;
+  }
+  final List<GalCalibrationOcrGlyph> previous = _reliableGlyphs(matched.last);
+  if (previous.length < 4) return false;
+  return previous.last.cellOffset - previous.first.cellOffset >=
+      math.max(1, (matched.last.cellCount - 1) * .35);
+}
+
 /// Align OCR's imperfect text back to the exact Hook string and retain only
 /// geometry-backed character hints. Recognition-frame positions are approximate;
 /// text-only test/legacy callers may supply coarse uniformly spaced hints.
@@ -651,7 +688,16 @@ GalCalibrationOcrAlignment alignGalCalibrationOcrLines({
         .sublist(span.start, span.end)
         .where((_SourceUnit unit) => !unit.whitespace)
         .length;
-    if (pairs.length < math.max(1, (sourceVisible * 0.3).round())) {
+    final bool terminalSuffix = _isLowConfidenceTerminalSuffix(
+      source: source,
+      span: span,
+      line: line,
+      pairs: pairs,
+      lineIndex: lineIndex,
+      matched: matched,
+    );
+    if (pairs.length < math.max(1, (sourceVisible * 0.3).round()) &&
+        !terminalSuffix) {
       return GalCalibrationOcrAlignment(
         lines: const <GalCalibrationOcrMatchedLine>[],
         confidence: 0,
@@ -691,10 +737,11 @@ GalCalibrationOcrAlignment alignGalCalibrationOcrLines({
     // while confidence is concentrated in only some characters.  A broadly
     // distributed subset is enough to propose a grid; the native preview and
     // every calibration sample still decide whether that grid is usable.
-    if (reliable.length < math.max(1, (sourceVisible * .25).ceil()) ||
-        (sourceVisible >= 5 &&
-            reliable.last.cellOffset - reliable.first.cellOffset <
-                (span.end - span.start - 1) * .35)) {
+    if (!terminalSuffix &&
+        (reliable.length < math.max(1, (sourceVisible * .25).ceil()) ||
+            (sourceVisible >= 5 &&
+                reliable.last.cellOffset - reliable.first.cellOffset <
+                    (span.end - span.start - 1) * .35))) {
       return const GalCalibrationOcrAlignment(
         lines: [],
         confidence: 0,
@@ -1037,11 +1084,13 @@ Future<GalCalibrationImageFit> fitGalCalibrationOcrGrid(
   if (!left.isFinite || !top.isFinite) {
     return const GalCalibrationImageFit(reason: 'ocr_geometry_weak');
   }
-  // Measured continuation rows own indentation when available. A short
+  // Row starts are independent of character advances: a half-cell offset
+  // must not become a narrow opening quote. Measured continuation rows own
+  // indentation when available. A short
   // CTC-only tail may validate that choice, but cannot invent a competing grid.
-  final Map<bool, Set<int>> measuredIndents = <bool, Set<int>>{
-    false: <int>{},
-    true: <int>{},
+  final Map<bool, List<double>> measuredIndents = <bool, List<double>>{
+    false: <double>[],
+    true: <double>[],
   };
   for (final int i in training) {
     final GalLookupCalibrationCapture capture = draft.samples[i].capture;
@@ -1059,20 +1108,28 @@ Future<GalCalibrationImageFit> fitGalCalibrationOcrGrid(
         sources[i],
         widths,
       );
-      if (!offset.isFinite || (offset - offset.round()).abs() > .35) {
+      if (!offset.isFinite || offset < -.12 || offset > 8) {
         return GalCalibrationImageFit(
           reason: 'ocr_indent_ambiguous',
           sampleIndex: i,
         );
       }
-      measuredIndents[quoted]!.add(offset.round());
+      measuredIndents[quoted]!.add(
+        (offset - offset.round()).abs() <= .12
+            ? offset.roundToDouble()
+            : offset,
+      );
     }
   }
-  if (measuredIndents.values.any((Set<int> values) => values.length > 1)) {
+  if (measuredIndents.values.any(
+    (List<double> values) =>
+        values.isNotEmpty &&
+        values.any((double v) => (v - _median(values)).abs() > .18),
+  )) {
     return const GalCalibrationImageFit(reason: 'ocr_indent_ambiguous');
   }
-  final Set<int> plainIndents = <int>{};
-  final Set<int> quotedIndents = <int>{};
+  final Set<double> plainIndents = <double>{};
+  final Set<double> quotedIndents = <double>{};
   final List<_OcrRowEnd> rowEnds = [];
   bool hasNaturalWrap = false;
   double observedHeight = 0;
@@ -1091,33 +1148,59 @@ Future<GalCalibrationImageFit> fitGalCalibrationOcrGrid(
     for (int row = 0; row < lines.length; row++) {
       final GalCalibrationOcrMatchedLine line = lines[row];
       final List<GalCalibrationOcrGlyph> glyphs = _reliableGlyphs(line);
-      if (glyphs.isEmpty) {
+      final bool ctcTail = _isAcceptedCtcTail(line, lines, source);
+      if (glyphs.isEmpty && !ctcTail) {
         return GalCalibrationImageFit(
           reason: 'ocr_geometry_weak',
           sampleIndex: i,
         );
       }
-      final double offset = _lineCellOffset(
-        line,
-        left,
-        pitch,
-        client,
-        sources[i],
-        widths,
-      );
-      final Set<int> proven = measuredIndents[quoted]!;
-      final bool shortFallback = hasInkGeometry && !_hasMeasuredInk(line);
-      final int indent = row == 0
-          ? 0
-          : shortFallback && proven.isNotEmpty
-          ? proven.single
-          : offset.round();
-      final double tolerance = shortFallback && proven.isNotEmpty ? .42 : .35;
-      if (indent < 0 || indent > 8 || (offset - indent).abs() > tolerance) {
-        return GalCalibrationImageFit(
-          reason: 'ocr_indent_ambiguous',
-          sampleIndex: i,
+      final List<double> proven = measuredIndents[quoted]!;
+      final double indent;
+      if (ctcTail) {
+        // Weak recognition still carries a coarse position. Infer only a
+        // nearby whole-cell indent, or validate the previously measured one.
+        final double offset = _median(<double>[
+          for (final GalCalibrationOcrGlyph glyph in line.glyphs)
+            (glyph.rect.centerX - left * client.widthPx) /
+                    (pitch * client.heightPx) -
+                _glyphCellCenter(line, glyph, source, widths),
+        ]);
+        if (!offset.isFinite) {
+          return GalCalibrationImageFit(
+            reason: 'ocr_geometry_weak',
+            sampleIndex: i,
+          );
+        }
+        indent = proven.isNotEmpty ? _median(proven) : offset.roundToDouble();
+        if (indent < 0 || indent > 8 || (offset - indent).abs() > .48) {
+          return GalCalibrationImageFit(
+            reason: 'ocr_indent_ambiguous',
+            sampleIndex: i,
+          );
+        }
+      } else {
+        final double offset = _lineCellOffset(
+          line,
+          left,
+          pitch,
+          client,
+          sources[i],
+          widths,
         );
+        final bool shortFallback = hasInkGeometry && !_hasMeasuredInk(line);
+        indent = row == 0
+            ? 0
+            : proven.isNotEmpty
+            ? _median(proven)
+            : offset.roundToDouble();
+        final double tolerance = shortFallback && proven.isNotEmpty ? .42 : .35;
+        if (indent < 0 || indent > 8 || (offset - indent).abs() > tolerance) {
+          return GalCalibrationImageFit(
+            reason: 'ocr_indent_ambiguous',
+            sampleIndex: i,
+          );
+        }
       }
       if (row > 0) (quoted ? quotedIndents : plainIndents).add(indent);
       final bool softWrap =
@@ -1174,8 +1257,8 @@ Future<GalCalibrationImageFit> fitGalCalibrationOcrGrid(
   if (plainIndents.length > 1 || quotedIndents.length > 1) {
     return const GalCalibrationImageFit(reason: 'ocr_indent_ambiguous');
   }
-  final int plainIndent = plainIndents.isEmpty ? 0 : plainIndents.single;
-  final int quotedIndent = quotedIndents.isEmpty
+  final double plainIndent = plainIndents.isEmpty ? 0 : plainIndents.single;
+  final double quotedIndent = quotedIndents.isEmpty
       ? plainIndent
       : quotedIndents.single;
   final GalLookupCellGridV1 grid = GalLookupCellGridV1(
@@ -1294,12 +1377,53 @@ Future<GalCalibrationImageFit> fitGalCalibrationOcrGrid(
           );
         }
       }
+      // Row offsets must not hide a displaced opening/closing character.
+      // CTC is coarse, so this only rejects an endpoint almost a cell away;
+      // precise body positioning still uses measured ink below.
+      for (final GalCalibrationOcrGlyph glyph in line.glyphs) {
+        final int unit = line.sourceStart + glyph.cellOffset;
+        if ((unit != line.sourceStart && unit != line.sourceEnd - 1) ||
+            glyph.confidence < .5 ||
+            glyph.inkMeasured ||
+            !_isTerminalPunctuation(sources[i][unit].value)) {
+          continue;
+        }
+        final GalCalibrationBox? box = preview.boxForIndex(glyph.sourceIndex);
+        if (box != null &&
+            (box.rect.center.dx - glyph.rect.centerX).abs() >
+                pxPitch * .85 + 1) {
+          return GalCalibrationImageFit(
+            reason: 'ocr_character_positions_inconsistent',
+            sampleIndex: i,
+            detail: 'row=${line.lineIndex + 1};endpoint_position_mismatch',
+          );
+        }
+      }
       final List<GalCalibrationOcrGlyph> glyphs = _reliableGlyphs(line);
-      if (glyphs.isEmpty) {
+      if (glyphs.isEmpty &&
+          !_isAcceptedCtcTail(line, alignments[i].lines, sources[i])) {
         return GalCalibrationImageFit(
           reason: 'ocr_geometry_weak',
           sampleIndex: i,
         );
+      }
+      if (glyphs.isEmpty) {
+        // A low-confidence terminal mark can confirm coarse placement, but
+        // cannot bypass screenshot validation altogether (including held-out
+        // samples). The detector row also has to overlap the predicted row.
+        for (final GalCalibrationOcrGlyph glyph in line.glyphs) {
+          final GalCalibrationBox box = preview.boxForIndex(glyph.sourceIndex)!;
+          if ((box.rect.center.dx - glyph.rect.centerX).abs() > pxPitch * .65 ||
+              box.rect.bottom < line.rect.top ||
+              box.rect.top > line.rect.bottom) {
+            return GalCalibrationImageFit(
+              reason: 'ocr_character_positions_inconsistent',
+              sampleIndex: i,
+              detail: 'row=${line.lineIndex + 1};terminal_position_mismatch',
+            );
+          }
+        }
+        continue;
       }
       int mismatches = 0;
       final List<double> horizontalErrors = [];
@@ -1345,6 +1469,37 @@ bool _hangingPunctuation(String value) =>
 
 bool _hasMeasuredInk(GalCalibrationOcrMatchedLine line) =>
     line.glyphs.any((GalCalibrationOcrGlyph glyph) => glyph.inkMeasured);
+
+bool _isAcceptedCtcTail(
+  GalCalibrationOcrMatchedLine line,
+  List<GalCalibrationOcrMatchedLine> lines,
+  List<_SourceUnit> source,
+) {
+  if (line.lineIndex == 0 || line.lineIndex != lines.length - 1) return false;
+  if (_hasMeasuredInk(line) || _reliableGlyphs(line).isNotEmpty) return false;
+  if (line.glyphs.isEmpty ||
+      line.sourceEnd != source.length ||
+      line.sourceEnd - line.sourceStart > 4 ||
+      line.glyphs.any(
+        (GalCalibrationOcrGlyph g) =>
+            !g.rect.centerX.isFinite ||
+            !g.rect.centerY.isFinite ||
+            g.rect.width <= 0 ||
+            g.rect.height <= 0,
+      )) {
+    return false;
+  }
+  if (!source
+      .sublist(line.sourceStart, line.sourceEnd)
+      .every((_SourceUnit unit) => _isTerminalPunctuation(unit.value))) {
+    return false;
+  }
+  final GalCalibrationOcrMatchedLine previous = lines[line.lineIndex - 1];
+  final List<GalCalibrationOcrGlyph> anchors = _reliableGlyphs(previous);
+  return anchors.length >= 4 &&
+      anchors.last.cellOffset - anchors.first.cellOffset >=
+          math.max(1, (previous.cellCount - 1) * .35);
+}
 
 double _lineCellOffset(
   GalCalibrationOcrMatchedLine line,

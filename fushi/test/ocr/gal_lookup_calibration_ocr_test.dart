@@ -13,6 +13,104 @@ import 'package:fushi_engine/ocr/manga_ocr_model_manifest.dart';
 import 'package:fushi_engine/ocr/ocr_types.dart';
 
 void main() {
+  test(
+    'fractional row start keeps opening quote and ordinary cells equal',
+    () async {
+      const List<String> rows = ['「あいうえおかきく', 'けこさしすせそ」'];
+      final GalCalibrationOcrAlignment measured = _withGeometry(
+        alignGalCalibrationOcrLines(
+          sourceText: rows.join(),
+          lines: [_line(rows.first, top: 300), _line(rows.last, top: 348)],
+        ),
+        (g) => g.lineIndex == 1 ? 20 : 0,
+      );
+      final GalCalibrationImageFit fit = await _fit(
+        [_sample(rows.join())],
+        [measured],
+      );
+      expect(fit.draft, isNotNull, reason: '${fit.reason}: ${fit.detail}');
+      expect(
+        fit.draft!.layout.cellGrid!.quotedContinuationIndent,
+        closeTo(.5, .001),
+      );
+      expect(fit.draft!.layout.characterAdvances, isEmpty);
+      final GalCalibrationPreview boxes = await _preview(
+        text: rows.join(),
+        client: _sample(rows.join()).capture.referenceClient,
+        rect: fit.draft!.rect,
+        layout: fit.draft!.layout,
+      );
+      final Rect first = boxes.boxForIndex(0)!.rect;
+      final Rect second = boxes.boxForIndex(rows.first.length)!.rect;
+      expect(first.size, second.size);
+      expect(second.left - first.left, closeTo(20, .001));
+    },
+  );
+
+  test('weak dash tail retains its source index and measured indent', () async {
+    const String first = '「あいうえおかきく―';
+    const String text = '$first―」';
+    final GalCalibrationOcrAlignment aligned = alignGalCalibrationOcrLines(
+      sourceText: text,
+      lines: [
+        _line(first, top: 300),
+        const GalCalibrationOcrLine(
+          text: '-',
+          score: .91,
+          rect: OcrRect(left: 140, top: 348, right: 220, bottom: 384),
+          tokens: [
+            GalCalibrationOcrToken(
+              '-',
+              OcrRect(left: 156, top: 348, right: 164, bottom: 384),
+              .23,
+            ),
+          ],
+        ),
+      ],
+    );
+    expect(aligned.accepted, isTrue);
+    expect(aligned.lines.last.glyphs.single.sourceIndex, first.length);
+    final GalCalibrationImageFit fit = await _fit([_sample(text)], [aligned]);
+    expect(fit.draft, isNotNull, reason: '${fit.reason}: ${fit.detail}');
+    expect(fit.draft!.layout.cellGrid!.quotedContinuationIndent, 1);
+    final GalCalibrationImageFit displaced = await _fit(
+      [_sample(text), _sample(text, validation: true)],
+      [
+        aligned,
+        GalCalibrationOcrAlignment(
+          confidence: 1,
+          lines: [
+            aligned.lines.first,
+            GalCalibrationOcrMatchedLine(
+              sourceStart: aligned.lines.last.sourceStart,
+              sourceEnd: aligned.lines.last.sourceEnd,
+              cellCount: 2,
+              lineIndex: 1,
+              rect: const OcrRect(left: 260, top: 348, right: 340, bottom: 384),
+              glyphs: [
+                GalCalibrationOcrGlyph(
+                  sourceIndex: first.length,
+                  charLength: 1,
+                  cellOffset: 0,
+                  lineIndex: 1,
+                  confidence: .23,
+                  rect: const OcrRect(
+                    left: 276,
+                    top: 348,
+                    right: 284,
+                    bottom: 384,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+    expect(displaced.draft, isNull);
+    expect(displaced.reason, 'ocr_character_positions_inconsistent');
+  });
+
   test('narrow leading ASCII space preserves the common row origin', () async {
     const List<String> rows = ['（ あいうえおかきく', 'けこさしすせそ ）'];
     final GalCalibrationImageFit fit = await _fit(
@@ -1130,7 +1228,7 @@ Future<GalCalibrationPreview> _preview({
   if (capacity * pitch > rect.width * client.widthPx + .5) {
     return const GalCalibrationPreview(boxes: [], reason: 'overflow');
   }
-  final int indent = text.startsWith('「') || text.startsWith('『')
+  final double indent = text.startsWith('「') || text.startsWith('『')
       ? grid.quotedContinuationIndent
       : grid.continuationIndent;
   final List<GalCalibrationBox> boxes = [];
