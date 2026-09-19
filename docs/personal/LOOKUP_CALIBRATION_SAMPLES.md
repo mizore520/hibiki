@@ -266,3 +266,14 @@ Luna 服务本轮多次返回 503，用户授权临时用 Terra 承担辅助调�
 - 证据附件：`codex-clipboard-84c1aa1d-3e0b-4536-8d7b-485a6dfd5090.png`，仅引用附件标识，不复制截图或对白进仓库。
 
 本轮仅更新问题记录和当前交接；未修改生产代码、档案或样本，未运行测试或编译，不要求用户为这条反馈重编。
+
+### 完整两行选区仍无法自动识别，失败提示混淆原因（同轮，只读核对与记录）
+
+- 用户提交错误提示与选框截图，询问为什么识别不了。错误原文为“样本1：样本的换行或字格不一致，无法应用同一套排版。请检查标出的样本是否截到了完整台词。”橙框看起来覆盖完整两行正文，姓名和右下推进标记在框外；不能仅凭这条提示断定用户漏框或游戏不规则。
+- 已只读核对`fushi/lib/src/pages/implementations/gal_lookup_samples_dialog.dart`中`result.reason`的展示映射：`inconsistent_samples`、`ocr_geometry_inconsistent`、`ocr_indent_ambiguous`、`ocr_text_alignment_failed`、`ocr_text_alignment_weak`、`ocr_ink_geometry_weak`、`ocr_confidence_low`都使用同一条“换行或字格不一致”文案。因此它既可能是文字匹配或置信度问题，也可能是后续几何拟合拒绝；不能把该提示当作OCR已正确识别、只剩排版失败的证据。
+- `gal_lookup_calibration_ocr.dart`还会比较拟合后native字框与各个可靠识别字的位置、边界，失败可返回`ocr_geometry_inconsistent`；单张样本也会经过该检查，并不要求多个样本互相冲突才触发。当前规则字格加visual bounds仍不表达个别标点实际推进宽度的例外，这与上一条纠正有关，但尚未证明是本图失败根因。
+- 对现有查词日志只读取了末尾有限记录，没有找到能对应此次点击的具体OCR失败reason。未运行重新推理或回放，未核对该图的完整Hook原文、OCR中间输出和实际运行EXE哈希，不据图猜测精确失败分支。
+- 后续统一处理时，应先定位本样本实际失败阶段，区分识别/文字对齐/几何/原生预览；错误提示需说明真实原因，不能一律让用户检查是否截全台词。保留原图，不要求用户反复改框、删除草稿或重编。
+- 证据附件：`codex-clipboard-fa662c82-3e4f-4ac1-8a39-cadae0248e6e.png`（提示）、`codex-clipboard-2ecd673b-f616-4096-9baa-eec4557a6c00.png`（选区）。仅引用附件标识，不复制素材或对白进仓库。
+
+沿用集中收集阶段，本次只读核对和记录，没有修改程序、运行测试或编译。
