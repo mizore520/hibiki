@@ -1,5 +1,13 @@
 ## BUG-2541 · Magpie 超分导致校准采集与已校准内嵌查词失效
 
+### 第十三轮：跨 DPI 的物理客户区误差（2026-09-19，候选）
+
+现场已记录的 `magpie_source_viewport_invalid` 来自真实边界误差：DPI-unaware 源窗口在 175% 显示缩放下，`GetClientRect` 后分别 `ClientToScreen` 把实际 2326 像素的客户区算成 2324。Magpie 公布的 SrcRect 因此被误判越界，截图与贴附查词都被暂停；文本 Hook 仍可正常到达。
+
+`window_capture.cpp::ReadPhysicalClientScreenRect` 改用 `GetWindowInfo.rcClient` 一次读取物理屏幕客户区。贴附层、截图元数据与 DWM 客户区裁剪共用它，保留 SrcRect/DestRect 的严格包含检查。原生几何回归包含实际 `{952,474,3278,1783}`，以及少两像素时仍应拒绝的反例。错误分类另将已知映射失败与“没有台词”分开，日志只记录有界原因和尺寸。
+
+定向测试、原生编译和最终源码提交见 [当前交接](../personal/GAL_LOOKUP_HANDOFF.md)。本轮没有操作用户游戏、切换超分或新采集桌面；普通窗口 → Magpie → 退出后的实机恢复仍需用户验收。
+
 ### 当前修订：源裁剪坐标与截图应用（2026-09-19）
 
 本机现场日志已确认 `magpie_source_crop_unsupported`。以下旧阶段中的“只支持完整源客户区”正在由本批候选替换，不再把增加日志视作功能修复。
