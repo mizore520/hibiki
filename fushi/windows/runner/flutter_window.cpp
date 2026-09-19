@@ -1160,16 +1160,74 @@ bool HasExactCellGridKeys(const flutter::EncodableMap* map) {
       "quotedContinuationIndent"};
   constexpr size_t kLegacyKeyCount =
       sizeof(kLegacyKeys) / sizeof(kLegacyKeys[0]);
-  if (map == nullptr ||
-      (map->size() != kLegacyKeyCount && map->size() != kLegacyKeyCount + 1))
+  if (map == nullptr || map->size() < kLegacyKeyCount ||
+      map->size() > kLegacyKeyCount + 2)
     return false;
   for (const char* key : kLegacyKeys) {
     if (map->find(flutter::EncodableValue(key)) == map->end()) return false;
   }
   const auto hanging = map->find(flutter::EncodableValue("hangingPunctuation"));
-  if (map->size() == kLegacyKeyCount) return hanging == map->end();
-  if (hanging == map->end() || std::get_if<bool>(&hanging->second) == nullptr)
+  if (hanging != map->end() && std::get_if<bool>(&hanging->second) == nullptr)
     return false;
+  const auto line_width = map->find(flutter::EncodableValue("lineWidthInCells"));
+  if (line_width != map->end() &&
+      std::get_if<double>(&line_width->second) == nullptr &&
+      std::get_if<int32_t>(&line_width->second) == nullptr &&
+      std::get_if<int64_t>(&line_width->second) == nullptr) {
+    return false;
+  }
+  if (map->size() != kLegacyKeyCount +
+                           (hanging != map->end() ? 1u : 0u) +
+                           (line_width != map->end() ? 1u : 0u)) {
+    return false;
+  }
+  return true;
+}
+
+bool HasExactCharacterAdvanceKeys(const flutter::EncodableMap* map) {
+  static constexpr const char* kKeys[] = {"codePoint", "advanceRatio"};
+  constexpr size_t kKeyCount = sizeof(kKeys) / sizeof(kKeys[0]);
+  if (map == nullptr || map->size() != kKeyCount) return false;
+  for (const char* key : kKeys) {
+    if (map->find(flutter::EncodableValue(key)) == map->end()) return false;
+  }
+  return true;
+}
+
+bool ExactCharacterAdvanceCodePointFromValue(const flutter::EncodableMap* map,
+                                            const char* key,
+                                            uint32_t* output) {
+  if (map == nullptr || output == nullptr) return false;
+  const auto it = map->find(flutter::EncodableValue(key));
+  if (it == map->end()) return false;
+  int64_t code_point = 0;
+  if (const auto* value32 = std::get_if<int32_t>(&it->second)) {
+    code_point = *value32;
+  } else if (const auto* value64 = std::get_if<int64_t>(&it->second)) {
+    code_point = *value64;
+  } else {
+    return false;
+  }
+  if (code_point < 0 || code_point > 0x10FFFF) return false;
+  *output = static_cast<uint32_t>(code_point);
+  return true;
+}
+
+bool CharacterAdvanceFromValue(
+    const flutter::EncodableValue& value,
+    fushi::attached_text_layout::CharacterAdvance* output) {
+  if (output == nullptr) return false;
+  const auto* map = std::get_if<flutter::EncodableMap>(&value);
+  if (!HasExactCharacterAdvanceKeys(map)) return false;
+  fushi::attached_text_layout::CharacterAdvance advance;
+  if (!ExactCharacterAdvanceCodePointFromValue(map, "codePoint",
+                                               &advance.code_point) ||
+      !ExactFiniteDoubleFromValue(map, "advanceRatio",
+                                  &advance.advance_ratio) ||
+      !fushi::attached_text_layout::IsCharacterAdvanceValid(advance)) {
+    return false;
+  }
+  *output = advance;
   return true;
 }
 
@@ -1249,6 +1307,15 @@ AttachedTextSurfaceWindow::Layout AttachedLayoutFromArgs(
                                &grid.continuation_indent);
       (void)ExactIntFromValue(grid_map, "quotedContinuationIndent",
                                &grid.quoted_continuation_indent);
+      const auto line_width =
+          grid_map->find(flutter::EncodableValue("lineWidthInCells"));
+      if (line_width != grid_map->end() &&
+          !ExactFiniteDoubleFromValue(grid_map, "lineWidthInCells",
+                                      &grid.line_width_in_cells)) {
+        // A present but malformed optional value must not be treated as
+        // omitted; IsCellGridValid will reject this sentinel.
+        grid.line_width_in_cells = 0.0;
+      }
       const auto hanging =
           grid_map->find(flutter::EncodableValue("hangingPunctuation"));
       if (hanging != grid_map->end()) {
@@ -1256,6 +1323,38 @@ AttachedTextSurfaceWindow::Layout AttachedLayoutFromArgs(
       }
     }
     layout.cell_grid = grid;
+  }
+  const auto character_advances_it =
+      map->find(flutter::EncodableValue("characterAdvances"));
+  if (character_advances_it != map->end()) {
+    const auto* list =
+        std::get_if<flutter::EncodableList>(&character_advances_it->second);
+    if (list == nullptr || list->empty() || list->size() > 64) {
+      layout.character_advances_valid = false;
+    } else {
+      for (const flutter::EncodableValue& value : *list) {
+        fushi::attached_text_layout::CharacterAdvance advance;
+        if (!CharacterAdvanceFromValue(value, &advance) ||
+            std::any_of(
+                layout.character_advances.begin(),
+                layout.character_advances.end(),
+                [&advance](const auto& existing) {
+                  return existing.code_point == advance.code_point;
+                })) {
+          layout.character_advances_valid = false;
+          layout.character_advances.clear();
+          break;
+        }
+        layout.character_advances.push_back(advance);
+      }
+      if (layout.character_advances_valid) {
+        std::sort(layout.character_advances.begin(),
+                  layout.character_advances.end(),
+                  [](const auto& left, const auto& right) {
+                    return left.code_point < right.code_point;
+                  });
+      }
+    }
   }
   const auto visual_it =
       map->find(flutter::EncodableValue("punctuationVisualBounds"));
@@ -1458,12 +1557,36 @@ flutter::EncodableMap AttachedLayoutMap(
         {flutter::EncodableValue("quotedContinuationIndent"),
          flutter::EncodableValue(grid.quoted_continuation_indent)},
     };
+    if (std::isfinite(grid.line_width_in_cells)) {
+      serialized_grid[flutter::EncodableValue("lineWidthInCells")] =
+          flutter::EncodableValue(grid.line_width_in_cells);
+    }
     if (grid.hanging_punctuation) {
       serialized_grid[flutter::EncodableValue("hangingPunctuation")] =
           flutter::EncodableValue(true);
     }
     result[flutter::EncodableValue("cellGrid")] =
         flutter::EncodableValue(std::move(serialized_grid));
+  }
+  if (!layout.character_advances.empty()) {
+    std::vector<fushi::attached_text_layout::CharacterAdvance> advances =
+        layout.character_advances;
+    std::sort(advances.begin(), advances.end(),
+              [](const auto& left, const auto& right) {
+                return left.code_point < right.code_point;
+              });
+    flutter::EncodableList serialized_advances;
+    serialized_advances.reserve(advances.size());
+    for (const auto& advance : advances) {
+      serialized_advances.emplace_back(flutter::EncodableMap{
+          {flutter::EncodableValue("codePoint"),
+           flutter::EncodableValue(static_cast<int64_t>(advance.code_point))},
+          {flutter::EncodableValue("advanceRatio"),
+           flutter::EncodableValue(advance.advance_ratio)},
+      });
+    }
+    result[flutter::EncodableValue("characterAdvances")] =
+        flutter::EncodableValue(std::move(serialized_advances));
   }
   if (!layout.punctuation_visual_bounds.empty()) {
     flutter::EncodableList serialized_bounds;

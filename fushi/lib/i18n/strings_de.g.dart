@@ -12128,4 +12128,45 @@ class _StringsDe extends _StringsEn {
   @override
   String get game_lookup_samples_capture_unavailable =>
       'This window could not be captured. Your saved calibration is unchanged; the capture failure has been logged for diagnosis.';
+  @override
+  String get game_lookup_samples_dialogue => 'Dialogue calibration';
+  @override
+  String get game_lookup_samples_narration => 'Narration calibration';
+  @override
+  String get game_lookup_samples_auto_text_alignment_failed =>
+      'The detected text does not match the hooked text closely enough.';
+  @override
+  String get game_lookup_samples_auto_text_alignment_weak =>
+      'The detected text only weakly matches the hooked text.';
+  @override
+  String get game_lookup_samples_auto_geometry_weak =>
+      'There are not enough well-spread character positions to determine the layout.';
+  @override
+  String get game_lookup_samples_auto_indent_ambiguous =>
+      'The continuation line start could not be determined.';
+  @override
+  String get game_lookup_samples_auto_line_wrap_inconsistent =>
+      'The measured character widths cannot reproduce the sample\'s line wrapping.';
+  @override
+  String get game_lookup_samples_auto_geometry_out_of_bounds =>
+      'The fitted layout extends beyond the screenshot.';
+  @override
+  String get game_lookup_samples_auto_preview_unavailable =>
+      'The native layout preview was unavailable.';
+  @override
+  String get game_lookup_samples_auto_preview_text_overflow =>
+      'The fitted text exceeds the calibrated body region.';
+  @override
+  String game_lookup_samples_diagnostic({
+    required Object reason,
+    required Object detail,
+  }) => 'Diagnostic: ${reason}${detail}';
+  @override
+  String get game_lookup_samples_capture_replace => 'Replace current sample';
+  @override
+  String get game_lookup_samples_auto_line_spacing_missing =>
+      'Reliable line spacing could not be measured. Try a complete two- or three-line sample.';
+  @override
+  String get game_lookup_samples_auto_character_positions_inconsistent =>
+      'The generated cells differ too much from the detected positions. This result was not applied.';
 }

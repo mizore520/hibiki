@@ -11,9 +11,17 @@ import 'package:image/image.dart' as img;
 /// supplies every character. Only a regular, horizontal full-width grid is
 /// inferred; ambiguous images/text leave the existing draft untouched.
 class GalCalibrationImageFit {
-  const GalCalibrationImageFit({this.draft, this.reason, this.sampleIndex});
+  const GalCalibrationImageFit({
+    this.draft,
+    this.reason,
+    this.sampleIndex,
+    this.detail,
+  });
   final GalLookupCalibrationDraft? draft;
   final String? reason;
+
+  /// Payload-free diagnostic, such as the native preview rejection reason.
+  final String? detail;
 
   /// Zero-based failing sample, without including private text or pixels.
   final int? sampleIndex;

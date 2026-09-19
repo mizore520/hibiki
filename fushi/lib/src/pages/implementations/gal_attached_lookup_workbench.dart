@@ -140,18 +140,40 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (calibrationExposed)
+                if (calibrationExposed) ...<Widget>[
                   IconButton(
-                    key: const ValueKey<String>('game-attached-lookup-samples'),
-                    tooltip: t.game_lookup_samples_title,
+                    key: const ValueKey<String>(
+                      'game-attached-lookup-dialogue-samples',
+                    ),
+                    tooltip: t.game_lookup_samples_dialogue,
                     onPressed:
                         hasSelectedBodyThread &&
                             controller.executableSha256 != null &&
                             controller.currentClient != null
-                        ? () => _openSamples(context)
+                        ? () => _openSamples(
+                            context,
+                            slot: GalLookupCalibrationSlotV1.dialogue,
+                          )
                         : null,
-                    icon: const Icon(Icons.photo_library_outlined, size: 20),
+                    icon: const Icon(Icons.format_quote_outlined, size: 20),
                   ),
+                  IconButton(
+                    key: const ValueKey<String>(
+                      'game-attached-lookup-narration-samples',
+                    ),
+                    tooltip: t.game_lookup_samples_narration,
+                    onPressed:
+                        hasSelectedBodyThread &&
+                            controller.executableSha256 != null &&
+                            controller.currentClient != null
+                        ? () => _openSamples(
+                            context,
+                            slot: GalLookupCalibrationSlotV1.narration,
+                          )
+                        : null,
+                    icon: const Icon(Icons.subject_outlined, size: 20),
+                  ),
+                ],
                 PopupMenuButton<String>(
                   key: const ValueKey<String>('game-attached-lookup-mode'),
                   tooltip: t.game_lookup_attached_mode,
@@ -249,13 +271,16 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
     await controller.acceptUnsafeRiskAndRetry(request);
   }
 
-  Future<void> _openSamples(BuildContext context) async {
+  Future<void> _openSamples(
+    BuildContext context, {
+    required GalLookupCalibrationSlotV1 slot,
+  }) async {
     final String? hash = controller.executableSha256;
     final GalLookupReferenceClientV1? client = controller.currentClient;
     final GalAttachedSurfaceTarget? target = controller.target;
     if (hash == null || client == null || target == null) return;
     final GalLookupSurfaceVariantV1? seed = controller.profile
-        ?.nearestVariantForClient(client);
+        ?.nearestVariantForClient(client, slot: slot);
     final GalLookupCalibrationDraft? draft =
         await showDialog<GalLookupCalibrationDraft>(
           context: context,
@@ -265,6 +290,7 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
             initialRect:
                 seed?.bodyRect ?? GalAttachedTextController.defaultBodyRect,
             initialLayout: seed?.layout ?? const GalLookupTextLayoutV1(),
+            slot: slot,
             capture:
                 GalHookTextOverlayController.instance.captureCalibrationSample,
           ),
@@ -276,7 +302,7 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
       return;
     }
     if (draft.layout.cellGrid == null) {
-      await _openCalibration(context, draft: draft);
+      await _openCalibration(context, draft: draft, slot: slot);
       return;
     }
     final GalLookupSurfaceProfileV1? profile = controller.profile;
@@ -301,6 +327,7 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
       client: measuredClient,
       rect: draft.rect,
       layout: draft.layout,
+      slot: draft.slot ?? slot,
       metadata:
           draft.layoutCaptureMetadata ??
           draft.samples.first.capture.captureMetadata,
@@ -322,6 +349,7 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
   Future<void> _openCalibration(
     BuildContext context, {
     GalLookupCalibrationDraft? draft,
+    GalLookupCalibrationSlotV1? slot,
   }) async {
     if (!hasSelectedBodyThread || !controller.canCalibrate) return;
     final GalLookupSurfaceProfileV1? profile = controller.profile;
@@ -358,6 +386,7 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
     }
     final bool started = await controller.beginCalibration(
       acceptUnsafeLeftClick: true,
+      slot: slot ?? draft?.slot,
       initialBodyRect: initial?.bodyRect,
       initialLayout: initial?.layout,
     );
@@ -736,6 +765,8 @@ class _GalAttachedCalibrationDialogState
     verticalAlign: verticalAlign ?? _layout.verticalAlign,
     paddingPerClientHeight: _layout.paddingPerClientHeight,
     cellGrid: _layout.cellGrid,
+    punctuationVisualBounds: _layout.punctuationVisualBounds,
+    characterAdvances: _layout.characterAdvances,
   );
 
   void _setStartConfirmed(bool? value) {

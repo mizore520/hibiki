@@ -10977,4 +10977,40 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get game_lookup_samples_capture_unavailable =>
       '未能采集这个窗口。已保存的校准不受影响；采集失败原因已记录到日志，便于排查。';
+  @override
+  String get game_lookup_samples_dialogue => '对话校准';
+  @override
+  String get game_lookup_samples_narration => '旁白校准';
+  @override
+  String get game_lookup_samples_auto_text_alignment_failed =>
+      '检测到的文字与 Hook 正文对应不足。';
+  @override
+  String get game_lookup_samples_auto_text_alignment_weak =>
+      '检测到的文字与 Hook 正文对应较弱。';
+  @override
+  String get game_lookup_samples_auto_geometry_weak => '缺少足够分散的字位置，无法确定排版。';
+  @override
+  String get game_lookup_samples_auto_indent_ambiguous => '无法确定续行起点。';
+  @override
+  String get game_lookup_samples_auto_line_wrap_inconsistent =>
+      '按测得字宽无法复现样本换行。';
+  @override
+  String get game_lookup_samples_auto_geometry_out_of_bounds => '拟合范围超出截图。';
+  @override
+  String get game_lookup_samples_auto_preview_unavailable => '原生排版预览不可用。';
+  @override
+  String get game_lookup_samples_auto_preview_text_overflow => '拟合文字超出校准正文区。';
+  @override
+  String game_lookup_samples_diagnostic({
+    required Object reason,
+    required Object detail,
+  }) => '诊断：${reason}${detail}';
+  @override
+  String get game_lookup_samples_capture_replace => '替换当前样本';
+  @override
+  String get game_lookup_samples_auto_line_spacing_missing =>
+      '未能测出可靠行距，请换一张完整的两行或三行台词图。';
+  @override
+  String get game_lookup_samples_auto_character_positions_inconsistent =>
+      '生成的字格与识别位置偏差较大，未应用此次结果。';
 }

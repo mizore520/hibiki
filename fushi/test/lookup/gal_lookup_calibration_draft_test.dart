@@ -74,8 +74,15 @@ GalCalibrationSample _sample({
   anchors: anchors,
 );
 
-GalLookupCalibrationDraft _draft(List<GalCalibrationSample> samples) =>
-    GalLookupCalibrationDraft(rect: _rect, layout: _layout, samples: samples);
+GalLookupCalibrationDraft _draft(
+  List<GalCalibrationSample> samples, {
+  GalLookupCalibrationSlotV1? slot,
+}) => GalLookupCalibrationDraft(
+  rect: _rect,
+  layout: _layout,
+  samples: samples,
+  slot: slot,
+);
 
 /// A simple, independently defined renderer for fitting tests. Each glyph has
 /// a 20 px advance before tracking, with a 10 by 20 px hit region.
@@ -193,6 +200,12 @@ void main() {
         () => GalLookupCalibrationDraft.fromJson(invalidReference),
         throwsFormatException,
       );
+      final Map<String, Object?> unknown = draft.toJson()
+        ..['futureField'] = true;
+      expect(
+        () => GalLookupCalibrationDraft.fromJson(unknown),
+        throwsFormatException,
+      );
     },
   );
   group('private calibration draft storage', () {
@@ -307,6 +320,100 @@ void main() {
       await expectLater(store.save(_sha, oversized), throwsFormatException);
       expect((await store.load(_sha))!.samples.single.capture.pngBytes, _png);
     });
+
+    test(
+      'slot files are isolated and legacy drafts remain readable seeds',
+      () async {
+        final GalCalibrationSample reference = _sample();
+        final GalLookupCalibrationDraft legacy = _draft(<GalCalibrationSample>[
+          reference,
+        ]);
+        await store.save(_sha, legacy);
+        final GalLookupCalibrationDraft? legacySeed = await store.load(
+          _sha,
+          slot: GalLookupCalibrationSlotV1.dialogue,
+        );
+        expect(legacySeed?.slot, isNull);
+
+        final GalLookupCalibrationDraft dialogue = _draft(
+          <GalCalibrationSample>[reference],
+          slot: GalLookupCalibrationSlotV1.dialogue,
+        );
+        await store.save(
+          _sha,
+          dialogue,
+          slot: GalLookupCalibrationSlotV1.dialogue,
+        );
+        expect(
+          (await store.load(
+            _sha,
+            slot: GalLookupCalibrationSlotV1.dialogue,
+          ))?.slot,
+          GalLookupCalibrationSlotV1.dialogue,
+        );
+        expect(
+          (await store.load(
+            _sha,
+            slot: GalLookupCalibrationSlotV1.narration,
+          ))?.slot,
+          isNull,
+        );
+        expect((await store.load(_sha))?.slot, isNull);
+      },
+    );
+
+    test('a fixed slot accepts at most one sample', () async {
+      final GalLookupCalibrationDraft invalid = _draft(<GalCalibrationSample>[
+        _sample(),
+        _sample(occurrenceId: 'second'),
+      ], slot: GalLookupCalibrationSlotV1.dialogue);
+      expect(invalid.validFor(_sha), isFalse);
+      await expectLater(store.save(_sha, invalid), throwsFormatException);
+    });
+
+    test(
+      'an unreadable slot draft is not overwritten by a new capture',
+      () async {
+        final GalLookupCalibrationDraft draft = _draft(<GalCalibrationSample>[
+          _sample(),
+        ], slot: GalLookupCalibrationSlotV1.dialogue);
+        await store.save(_sha, draft);
+        final File file = File('${directory.path}/$_sha.dialogue.json');
+        final Map<String, Object?> unsupported = draft.toJson()
+          ..['version'] = 2;
+        final String original = jsonEncode(unsupported);
+        await file.writeAsString(original);
+        await expectLater(
+          store.load(_sha, slot: draft.slot),
+          throwsFormatException,
+        );
+        await expectLater(store.save(_sha, draft), throwsFormatException);
+        expect(await file.readAsString(), original);
+      },
+    );
+  });
+
+  test('leaving measured grid clears its character advances', () {
+    const GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(
+      cellGrid: GalLookupCellGridV1(
+        advancePerClientHeight: .03,
+        lineAdvancePerClientHeight: .04,
+        cellHeightPerClientHeight: .035,
+        columns: 24,
+        continuationIndent: 0,
+        quotedContinuationIndent: 1,
+      ),
+      characterAdvances: [
+        GalLookupCharacterAdvanceV1(codePoint: 0x3001, advanceRatio: .5),
+      ],
+    );
+    final GalLookupTextLayoutV1 manual = copyGalCalibrationLayout(
+      layout,
+      clearCellGrid: true,
+    );
+    expect(manual.cellGrid, isNull);
+    expect(manual.characterAdvances, isEmpty);
+    expect(manual.isValid, isTrue);
   });
 
   group('fitting marked characters', () {
@@ -331,6 +438,16 @@ void main() {
         points,
         reason: 'All marks remain visible and editable, including the outlier',
       );
+    });
+
+    test('anchor fitting preserves the fixed calibration slot', () async {
+      final GalLookupCalibrationDraft result = (await fitGalCalibrationAnchors(
+        _draft(<GalCalibrationSample>[
+          _sample(anchors: _targetPoints),
+        ], slot: GalLookupCalibrationSlotV1.dialogue),
+        build: _linearPreview,
+      ))!;
+      expect(result.slot, GalLookupCalibrationSlotV1.dialogue);
     });
 
     test(

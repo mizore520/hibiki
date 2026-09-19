@@ -6907,4 +6907,31 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
       'These are source screenshot pixels for the orange recognition frame. They are a manual backup, not character size.';
   String get game_lookup_samples_capture_unavailable =>
       'This window could not be captured. Your saved calibration is unchanged; the capture failure has been logged for diagnosis.';
+  String get game_lookup_samples_dialogue => 'Dialogue calibration';
+  String get game_lookup_samples_narration => 'Narration calibration';
+  String get game_lookup_samples_auto_text_alignment_failed =>
+      'The detected text does not match the hooked text closely enough.';
+  String get game_lookup_samples_auto_text_alignment_weak =>
+      'The detected text only weakly matches the hooked text.';
+  String get game_lookup_samples_auto_geometry_weak =>
+      'There are not enough well-spread character positions to determine the layout.';
+  String get game_lookup_samples_auto_indent_ambiguous =>
+      'The continuation line start could not be determined.';
+  String get game_lookup_samples_auto_line_wrap_inconsistent =>
+      'The measured character widths cannot reproduce the sample\'s line wrapping.';
+  String get game_lookup_samples_auto_geometry_out_of_bounds =>
+      'The fitted layout extends beyond the screenshot.';
+  String get game_lookup_samples_auto_preview_unavailable =>
+      'The native layout preview was unavailable.';
+  String get game_lookup_samples_auto_preview_text_overflow =>
+      'The fitted text exceeds the calibrated body region.';
+  String game_lookup_samples_diagnostic({
+    required Object reason,
+    required Object detail,
+  }) => 'Diagnostic: ${reason}${detail}';
+  String get game_lookup_samples_capture_replace => 'Replace current sample';
+  String get game_lookup_samples_auto_line_spacing_missing =>
+      'Reliable line spacing could not be measured. Try a complete two- or three-line sample.';
+  String get game_lookup_samples_auto_character_positions_inconsistent =>
+      'The generated cells differ too much from the detected positions. This result was not applied.';
 }

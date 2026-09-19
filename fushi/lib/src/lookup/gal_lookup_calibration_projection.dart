@@ -8,6 +8,7 @@ GalLookupSurfaceVariantV1? projectGalCalibrationToSource({
   required GalLookupNormalizedRectV1 rect,
   required GalLookupTextLayoutV1 layout,
   WindowCaptureMetadata? metadata,
+  GalLookupCalibrationSlotV1? slot,
 }) {
   if (!client.isValid || !rect.isValid || !layout.isValid) return null;
   if (metadata == null || !metadata.usedPresentationCapture) {
@@ -16,6 +17,7 @@ GalLookupSurfaceVariantV1? projectGalCalibrationToSource({
       referenceClient: client,
       bodyRect: rect,
       layout: layout,
+      slot: slot,
     );
   }
   if (!metadata.hasSourceClientMapping ||
@@ -75,8 +77,10 @@ GalLookupSurfaceVariantV1? projectGalCalibrationToSource({
             continuationIndent: grid.continuationIndent,
             quotedContinuationIndent: grid.quotedContinuationIndent,
             hangingPunctuation: grid.hangingPunctuation,
+            lineWidthInCells: grid.lineWidthInCells,
           ),
     punctuationVisualBounds: layout.punctuationVisualBounds,
+    characterAdvances: layout.characterAdvances,
   );
   if (!source.isValid || !sourceRect.isValid || !sourceLayout.isValid) {
     return null;
@@ -86,5 +90,6 @@ GalLookupSurfaceVariantV1? projectGalCalibrationToSource({
     referenceClient: source,
     bodyRect: sourceRect,
     layout: sourceLayout,
+    slot: slot,
   );
 }

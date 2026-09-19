@@ -10,6 +10,7 @@ GalLookupSurfaceVariantV1 variant({
   int height = 1080,
   GalLookupNormalizedRectV1 bodyRect =
       GalAttachedTextController.defaultBodyRect,
+  GalLookupCalibrationSlotV1? slot,
 }) {
   final GalLookupReferenceClientV1 client = GalLookupReferenceClientV1(
     widthPx: width,
@@ -21,6 +22,7 @@ GalLookupSurfaceVariantV1 variant({
     referenceClient: client,
     bodyRect: bodyRect,
     layout: const GalLookupTextLayoutV1(),
+    slot: slot,
   );
 }
 
@@ -401,6 +403,86 @@ void main() {
         ),
       ),
       isNotNull,
+    );
+  });
+
+  test('dialogue and narration slots select by paired outer quotes', () {
+    final GalLookupSurfaceVariantV1 dialogue = variant(
+      slot: GalLookupCalibrationSlotV1.dialogue,
+    );
+    final GalLookupSurfaceVariantV1 narration = variant(
+      slot: GalLookupCalibrationSlotV1.narration,
+    );
+    final GalLookupSurfaceProfileV1 value = profile(
+      variants: <GalLookupSurfaceVariantV1>[dialogue, narration],
+    );
+    const GalLookupReferenceClientV1 client = GalLookupReferenceClientV1(
+      widthPx: 1920,
+      heightPx: 1080,
+      dpi: 144,
+    );
+    expect(isGalLookupDialogueText('「外层引号」'), isTrue);
+    expect(isGalLookupDialogueText('旁白含有「内嵌引号」'), isFalse);
+    expect(value.bestVariantForSourceText(client, '「外层引号」'), dialogue);
+    expect(value.bestVariantForSourceText(client, '旁白含有「内嵌引号」'), narration);
+  });
+
+  test('one usable slot is the shared fallback for every source text', () {
+    final GalLookupSurfaceVariantV1 narration = variant(
+      slot: GalLookupCalibrationSlotV1.narration,
+    );
+    final GalLookupSurfaceProfileV1 value = profile(
+      variants: <GalLookupSurfaceVariantV1>[narration],
+    );
+    const GalLookupReferenceClientV1 client = GalLookupReferenceClientV1(
+      widthPx: 1920,
+      heightPx: 1080,
+      dpi: 144,
+    );
+    expect(value.bestVariantForSourceText(client, '「对话」'), narration);
+    expect(value.bestVariantForSourceText(client, '旁白'), narration);
+  });
+
+  test('character advances and fractional line widths round-trip strictly', () {
+    const GalLookupCellGridV1 grid = GalLookupCellGridV1(
+      advancePerClientHeight: 0.03,
+      lineAdvancePerClientHeight: 0.04,
+      cellHeightPerClientHeight: 0.035,
+      columns: 24,
+      continuationIndent: 2,
+      quotedContinuationIndent: 3,
+      lineWidthInCells: 23.5,
+    );
+    const GalLookupCharacterAdvanceV1 advance = GalLookupCharacterAdvanceV1(
+      codePoint: 0x1f600,
+      advanceRatio: 0.75,
+    );
+    const GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(
+      cellGrid: grid,
+      characterAdvances: <GalLookupCharacterAdvanceV1>[advance],
+    );
+    expect(grid.effectiveLineWidthInCells, 23.5);
+    expect(layout.isValid, isTrue);
+    expect(GalLookupTextLayoutV1.tryFromJson(layout.toJson()), layout);
+    expect(
+      GalLookupTextLayoutV1.tryFromJson(
+        Map<String, Object?>.of(layout.toJson())..remove('cellGrid'),
+      ),
+      isNull,
+    );
+    expect(
+      GalLookupCharacterAdvanceV1.tryFromJson(<String, Object?>{
+        'codePoint': 0x20,
+        'advanceRatio': 1.0,
+      }),
+      isNull,
+    );
+    expect(
+      GalLookupCharacterAdvanceV1.tryFromJson(<String, Object?>{
+        'codePoint': 0x1f600,
+        'advanceRatio': 2.1,
+      }),
+      isNull,
     );
   });
 }

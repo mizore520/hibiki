@@ -24,6 +24,34 @@ enum GalLookupSurfaceMode {
   }
 }
 
+/// The two optional calibration slots exposed by the game lookup workbench.
+/// A null slot on a stored variant is the legacy shared calibration.
+enum GalLookupCalibrationSlotV1 {
+  dialogue('dialogue'),
+  narration('narration');
+
+  const GalLookupCalibrationSlotV1(this.wireName);
+
+  final String wireName;
+
+  static GalLookupCalibrationSlotV1? fromWireName(Object? value) {
+    for (final GalLookupCalibrationSlotV1 slot in values) {
+      if (slot.wireName == value) return slot;
+    }
+    return null;
+  }
+}
+
+/// Classifies only paired outer quote marks. Quotes occurring inside the body
+/// are deliberately ignored so narration containing quoted text stays
+/// narration.
+bool isGalLookupDialogueText(String text) {
+  final String value = text.trim();
+  if (value.length < 2) return false;
+  return (value.startsWith('「') && value.endsWith('」')) ||
+      (value.startsWith('『') && value.endsWith('』'));
+}
+
 class GalLookupNormalizedRectV1 {
   const GalLookupNormalizedRectV1({
     required this.left,
@@ -140,6 +168,7 @@ class GalLookupCellGridV1 {
     required this.continuationIndent,
     required this.quotedContinuationIndent,
     this.hangingPunctuation = false,
+    this.lineWidthInCells,
   });
 
   final double advancePerClientHeight;
@@ -149,6 +178,12 @@ class GalLookupCellGridV1 {
   final int continuationIndent;
   final int quotedContinuationIndent;
   final bool hangingPunctuation;
+  final double? lineWidthInCells;
+
+  /// OCR can measure a fractional last line width while [columns] remains the
+  /// legacy integer fallback.
+  double get effectiveLineWidthInCells =>
+      lineWidthInCells ?? columns.toDouble();
 
   bool get isValid =>
       advancePerClientHeight.isFinite &&
@@ -163,6 +198,10 @@ class GalLookupCellGridV1 {
       lineAdvancePerClientHeight >= cellHeightPerClientHeight &&
       columns >= 2 &&
       columns <= 128 &&
+      (lineWidthInCells == null ||
+          (lineWidthInCells!.isFinite &&
+              lineWidthInCells! >= 2 &&
+              lineWidthInCells! <= 128)) &&
       continuationIndent >= 0 &&
       continuationIndent <= _maximumIndent &&
       quotedContinuationIndent >= 0 &&
@@ -180,6 +219,9 @@ class GalLookupCellGridV1 {
       'quotedContinuationIndent': quotedContinuationIndent,
     };
     if (hangingPunctuation) result['hangingPunctuation'] = true;
+    if (lineWidthInCells != null) {
+      result['lineWidthInCells'] = lineWidthInCells;
+    }
     return result;
   }
 
@@ -198,7 +240,19 @@ class GalLookupCellGridV1 {
       ...legacyKeys,
       'hangingPunctuation',
     };
-    if (!_hasExactKeys(map, legacyKeys) && !_hasExactKeys(map, extendedKeys)) {
+    final Set<String> lineWidthKeys = <String>{
+      ...legacyKeys,
+      'lineWidthInCells',
+    };
+    final Set<String> extendedLineWidthKeys = <String>{
+      ...legacyKeys,
+      'hangingPunctuation',
+      'lineWidthInCells',
+    };
+    if (!_hasExactKeys(map, legacyKeys) &&
+        !_hasExactKeys(map, extendedKeys) &&
+        !_hasExactKeys(map, lineWidthKeys) &&
+        !_hasExactKeys(map, extendedLineWidthKeys)) {
       return null;
     }
     final Object? hangingPunctuationValue = map['hangingPunctuation'];
@@ -209,6 +263,12 @@ class GalLookupCellGridV1 {
     final bool hangingPunctuation = hangingPunctuationValue is bool
         ? hangingPunctuationValue
         : false;
+    final double? lineWidthInCells = map.containsKey('lineWidthInCells')
+        ? _finiteDouble(map['lineWidthInCells'])
+        : null;
+    if (map.containsKey('lineWidthInCells') && lineWidthInCells == null) {
+      return null;
+    }
     final GalLookupCellGridV1 grid = GalLookupCellGridV1(
       advancePerClientHeight:
           _finiteDouble(map['advancePerClientHeight']) ?? double.nan,
@@ -221,6 +281,7 @@ class GalLookupCellGridV1 {
       quotedContinuationIndent:
           _exactInt(map['quotedContinuationIndent']) ?? -1,
       hangingPunctuation: hangingPunctuation,
+      lineWidthInCells: lineWidthInCells,
     );
     return grid.isValid ? grid : null;
   }
@@ -234,7 +295,8 @@ class GalLookupCellGridV1 {
       other.columns == columns &&
       other.continuationIndent == continuationIndent &&
       other.quotedContinuationIndent == quotedContinuationIndent &&
-      other.hangingPunctuation == hangingPunctuation;
+      other.hangingPunctuation == hangingPunctuation &&
+      other.lineWidthInCells == lineWidthInCells;
 
   @override
   int get hashCode => Object.hash(
@@ -245,6 +307,7 @@ class GalLookupCellGridV1 {
     continuationIndent,
     quotedContinuationIndent,
     hangingPunctuation,
+    lineWidthInCells,
   );
 }
 
@@ -341,6 +404,70 @@ class GalLookupPunctuationVisualBoundV1 {
   int get hashCode => Object.hash(codePoint, left, top, right, bottom);
 }
 
+/// A per-character advance override measured from the game's actual layout.
+/// The cell height remains the shared grid height; only the standard advance
+/// and all following hit positions are multiplied by [advanceRatio].
+class GalLookupCharacterAdvanceV1 {
+  const GalLookupCharacterAdvanceV1({
+    required this.codePoint,
+    required this.advanceRatio,
+  });
+
+  static const int maxEntriesPerLayout = 64;
+  static const double minAdvanceRatio = 0.15;
+  static const double maxAdvanceRatio = 2.0;
+  static final RegExp _controlOrFormat = RegExp(
+    r'^[\p{Cc}\p{Cf}]$',
+    unicode: true,
+  );
+
+  final int codePoint;
+  final double advanceRatio;
+
+  String get character => String.fromCharCode(codePoint);
+
+  bool get isValid {
+    if (codePoint < 0 ||
+        codePoint > 0x10ffff ||
+        (codePoint >= 0xd800 && codePoint <= 0xdfff)) {
+      return false;
+    }
+    final String value = character;
+    return value.trim().isNotEmpty &&
+        !_controlOrFormat.hasMatch(value) &&
+        advanceRatio.isFinite &&
+        advanceRatio >= minAdvanceRatio &&
+        advanceRatio <= maxAdvanceRatio;
+  }
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'codePoint': codePoint,
+    'advanceRatio': advanceRatio,
+  };
+
+  static GalLookupCharacterAdvanceV1? tryFromJson(Object? value) {
+    if (value is! Map) return null;
+    final Map<Object?, Object?> map = value.cast<Object?, Object?>();
+    if (!_hasExactKeys(map, const <String>{'codePoint', 'advanceRatio'})) {
+      return null;
+    }
+    final GalLookupCharacterAdvanceV1 advance = GalLookupCharacterAdvanceV1(
+      codePoint: _exactInt(map['codePoint']) ?? -1,
+      advanceRatio: _finiteDouble(map['advanceRatio']) ?? double.nan,
+    );
+    return advance.isValid ? advance : null;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is GalLookupCharacterAdvanceV1 &&
+      other.codePoint == codePoint &&
+      other.advanceRatio == advanceRatio;
+
+  @override
+  int get hashCode => Object.hash(codePoint, advanceRatio);
+}
+
 class GalLookupTextLayoutV1 {
   const GalLookupTextLayoutV1({
     this.fontFamily = '',
@@ -352,6 +479,7 @@ class GalLookupTextLayoutV1 {
     this.paddingPerClientHeight = 0,
     this.cellGrid,
     this.punctuationVisualBounds = const <GalLookupPunctuationVisualBoundV1>[],
+    this.characterAdvances = const <GalLookupCharacterAdvanceV1>[],
   });
 
   final String fontFamily;
@@ -363,6 +491,7 @@ class GalLookupTextLayoutV1 {
   final double paddingPerClientHeight;
   final GalLookupCellGridV1? cellGrid;
   final List<GalLookupPunctuationVisualBoundV1> punctuationVisualBounds;
+  final List<GalLookupCharacterAdvanceV1> characterAdvances;
 
   bool get isValid =>
       fontSizePerClientHeight.isFinite &&
@@ -382,7 +511,10 @@ class GalLookupTextLayoutV1 {
       (cellGrid == null || cellGrid!.isValid) &&
       punctuationVisualBounds.length <=
           GalLookupPunctuationVisualBoundV1.maxEntriesPerLayout &&
+      characterAdvances.length <=
+          GalLookupCharacterAdvanceV1.maxEntriesPerLayout &&
       (punctuationVisualBounds.isEmpty || cellGrid != null) &&
+      (characterAdvances.isEmpty || cellGrid != null) &&
       punctuationVisualBounds.every(
         (GalLookupPunctuationVisualBoundV1 bound) => bound.isValid,
       ) &&
@@ -390,7 +522,15 @@ class GalLookupTextLayoutV1 {
               .map((GalLookupPunctuationVisualBoundV1 bound) => bound.codePoint)
               .toSet()
               .length ==
-          punctuationVisualBounds.length;
+          punctuationVisualBounds.length &&
+      characterAdvances.every(
+        (GalLookupCharacterAdvanceV1 advance) => advance.isValid,
+      ) &&
+      characterAdvances
+              .map((GalLookupCharacterAdvanceV1 advance) => advance.codePoint)
+              .toSet()
+              .length ==
+          characterAdvances.length;
 
   Map<String, Object?> toJson() {
     final Map<String, Object?> result = <String, Object?>{
@@ -416,6 +556,16 @@ class GalLookupTextLayoutV1 {
           .map((GalLookupPunctuationVisualBoundV1 bound) => bound.toJson())
           .toList(growable: false);
     }
+    if (characterAdvances.isNotEmpty) {
+      final List<GalLookupCharacterAdvanceV1> sorted =
+          List<GalLookupCharacterAdvanceV1>.of(characterAdvances)..sort(
+            (GalLookupCharacterAdvanceV1 a, GalLookupCharacterAdvanceV1 b) =>
+                a.codePoint.compareTo(b.codePoint),
+          );
+      result['characterAdvances'] = sorted
+          .map((GalLookupCharacterAdvanceV1 advance) => advance.toJson())
+          .toList(growable: false);
+    }
     return result;
   }
 
@@ -431,20 +581,17 @@ class GalLookupTextLayoutV1 {
       'verticalAlign',
       'paddingPerClientHeight',
     };
-    final Set<String> gridKeys = <String>{...legacyKeys, 'cellGrid'};
-    final Set<String> visualKeys = <String>{
-      ...legacyKeys,
-      'punctuationVisualBounds',
-    };
-    final Set<String> gridVisualKeys = <String>{
-      ...legacyKeys,
+    const Set<String> optionalKeys = <String>{
       'cellGrid',
       'punctuationVisualBounds',
+      'characterAdvances',
     };
-    if (!_hasExactKeys(map, legacyKeys) &&
-        !_hasExactKeys(map, gridKeys) &&
-        !_hasExactKeys(map, visualKeys) &&
-        !_hasExactKeys(map, gridVisualKeys)) {
+    if (!legacyKeys.every(map.containsKey) ||
+        map.keys.any(
+          (Object? key) =>
+              key is! String ||
+              (!legacyKeys.contains(key) && !optionalKeys.contains(key)),
+        )) {
       return null;
     }
     final Object? fontFamily = map['fontFamily'];
@@ -483,6 +630,28 @@ class GalLookupTextLayoutV1 {
         punctuationVisualBounds.add(bound);
       }
     }
+    final List<GalLookupCharacterAdvanceV1> characterAdvances =
+        <GalLookupCharacterAdvanceV1>[];
+    if (map.containsKey('characterAdvances')) {
+      final Object? rawAdvances = map['characterAdvances'];
+      if (rawAdvances is! List ||
+          rawAdvances.length >
+              GalLookupCharacterAdvanceV1.maxEntriesPerLayout) {
+        return null;
+      }
+      for (final Object? rawAdvance in rawAdvances) {
+        final GalLookupCharacterAdvanceV1? advance =
+            GalLookupCharacterAdvanceV1.tryFromJson(rawAdvance);
+        if (advance == null ||
+            characterAdvances.any(
+              (GalLookupCharacterAdvanceV1 other) =>
+                  other.codePoint == advance.codePoint,
+            )) {
+          return null;
+        }
+        characterAdvances.add(advance);
+      }
+    }
     final GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(
       fontFamily: fontFamily,
       fontSizePerClientHeight:
@@ -496,6 +665,7 @@ class GalLookupTextLayoutV1 {
           _finiteDouble(map['paddingPerClientHeight']) ?? double.nan,
       cellGrid: cellGrid,
       punctuationVisualBounds: punctuationVisualBounds,
+      characterAdvances: characterAdvances,
     );
     return layout.isValid ? layout : null;
   }
@@ -514,7 +684,8 @@ class GalLookupTextLayoutV1 {
       _samePunctuationVisualBounds(
         other.punctuationVisualBounds,
         punctuationVisualBounds,
-      );
+      ) &&
+      _sameCharacterAdvances(other.characterAdvances, characterAdvances);
 
   @override
   int get hashCode => Object.hash(
@@ -527,6 +698,7 @@ class GalLookupTextLayoutV1 {
     paddingPerClientHeight,
     cellGrid,
     Object.hashAll(punctuationVisualBounds),
+    Object.hashAll(characterAdvances),
   );
 }
 
@@ -541,18 +713,33 @@ bool _samePunctuationVisualBounds(
   return true;
 }
 
+bool _sameCharacterAdvances(
+  List<GalLookupCharacterAdvanceV1> left,
+  List<GalLookupCharacterAdvanceV1> right,
+) {
+  if (left.length != right.length) return false;
+  for (int index = 0; index < left.length; index++) {
+    if (left[index] != right[index]) return false;
+  }
+  return true;
+}
+
 class GalLookupSurfaceVariantV1 {
   const GalLookupSurfaceVariantV1({
     required this.aspectRatio,
     required this.referenceClient,
     required this.bodyRect,
     required this.layout,
+    this.slot,
   });
 
   final double aspectRatio;
   final GalLookupReferenceClientV1 referenceClient;
   final GalLookupNormalizedRectV1 bodyRect;
   final GalLookupTextLayoutV1 layout;
+
+  /// Null preserves the v1 shared calibration semantics.
+  final GalLookupCalibrationSlotV1? slot;
 
   bool get isValid =>
       aspectRatio.isFinite &&
@@ -578,19 +765,26 @@ class GalLookupSurfaceVariantV1 {
     'referenceClient': referenceClient.toJson(),
     'bodyRect': bodyRect.toJson(),
     'layout': layout.toJson(),
+    if (slot != null) 'slot': slot!.wireName,
   };
 
   static GalLookupSurfaceVariantV1? tryFromJson(Object? value) {
     if (value is! Map) return null;
     final Map<Object?, Object?> map = value.cast<Object?, Object?>();
-    if (!_hasExactKeys(map, const <String>{
+    const Set<String> legacyKeys = <String>{
       'aspectRatio',
       'referenceClient',
       'bodyRect',
       'layout',
-    })) {
+    };
+    final Set<String> slotKeys = <String>{...legacyKeys, 'slot'};
+    if (!_hasExactKeys(map, legacyKeys) && !_hasExactKeys(map, slotKeys)) {
       return null;
     }
+    final GalLookupCalibrationSlotV1? slot = map.containsKey('slot')
+        ? GalLookupCalibrationSlotV1.fromWireName(map['slot'])
+        : null;
+    if (map.containsKey('slot') && slot == null) return null;
     final GalLookupReferenceClientV1? client =
         GalLookupReferenceClientV1.tryFromJson(map['referenceClient']);
     final GalLookupNormalizedRectV1? rect =
@@ -604,6 +798,7 @@ class GalLookupSurfaceVariantV1 {
       referenceClient: client,
       bodyRect: rect,
       layout: layout,
+      slot: slot,
     );
     return variant.isValid ? variant : null;
   }
@@ -614,11 +809,12 @@ class GalLookupSurfaceVariantV1 {
       other.aspectRatio == aspectRatio &&
       other.referenceClient == referenceClient &&
       other.bodyRect == bodyRect &&
-      other.layout == layout;
+      other.layout == layout &&
+      other.slot == slot;
 
   @override
   int get hashCode =>
-      Object.hash(aspectRatio, referenceClient, bodyRect, layout);
+      Object.hash(aspectRatio, referenceClient, bodyRect, layout, slot);
 }
 
 /// Exact v1 schema. Unknown keys and invalid nested values reject the complete
@@ -704,18 +900,71 @@ class GalLookupSurfaceProfileV1 {
     return best;
   }
 
-  GalLookupSurfaceVariantV1? nearestVariantForClient(
+  GalLookupSurfaceVariantV1? bestVariantForSourceText(
     GalLookupReferenceClientV1 client,
+    String sourceText,
   ) {
+    if (!client.isValid) return null;
+    final GalLookupSurfaceVariantV1? dialogue = _bestVariantForClient(
+      client,
+      slot: GalLookupCalibrationSlotV1.dialogue,
+    );
+    final GalLookupSurfaceVariantV1? narration = _bestVariantForClient(
+      client,
+      slot: GalLookupCalibrationSlotV1.narration,
+    );
+    // A slot only counts when it is usable at this client size. This keeps a
+    // single matching slot as the shared fallback even if a stale second slot
+    // exists for a different resolution.
+    if (dialogue != null && narration != null) {
+      return isGalLookupDialogueText(sourceText) ? dialogue : narration;
+    }
+    return dialogue ?? narration ?? bestVariantForClient(client);
+  }
+
+  GalLookupSurfaceVariantV1? _bestVariantForClient(
+    GalLookupReferenceClientV1 client, {
+    required GalLookupCalibrationSlotV1 slot,
+  }) {
+    GalLookupSurfaceVariantV1? best;
+    double bestSizeError = double.infinity;
+    double bestAspectError = double.infinity;
+    for (final GalLookupSurfaceVariantV1 variant in variants) {
+      if (variant.slot != slot) continue;
+      final double aspectError = variant.relativeAspectError(
+        client.aspectRatio,
+      );
+      final double sizeError = variant.relativeClientSizeError(client);
+      final bool normalizedGrid = variant.layout.cellGrid != null;
+      if (aspectError <= maxRelativeAspectError &&
+          (normalizedGrid || sizeError <= maxRelativeClientSizeError) &&
+          (sizeError < bestSizeError ||
+              sizeError == bestSizeError && aspectError < bestAspectError)) {
+        best = variant;
+        bestSizeError = sizeError;
+        bestAspectError = aspectError;
+      }
+    }
+    return best;
+  }
+
+  GalLookupSurfaceVariantV1? nearestVariantForClient(
+    GalLookupReferenceClientV1 client, {
+    GalLookupCalibrationSlotV1? slot,
+  }) {
     if (!client.isValid) return null;
     GalLookupSurfaceVariantV1? nearest;
     double nearestError = double.infinity;
     for (final GalLookupSurfaceVariantV1 variant in variants) {
+      if (slot != null && variant.slot != slot) continue;
       final double error = variant.relativeAspectError(client.aspectRatio);
       if (error < nearestError) {
         nearest = variant;
         nearestError = error;
       }
+    }
+    if (nearest == null && slot != null) {
+      return nearestVariantForClient(client);
     }
     return nearest;
   }

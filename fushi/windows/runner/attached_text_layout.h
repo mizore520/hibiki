@@ -40,17 +40,25 @@ struct CellGrid {
       std::numeric_limits<double>::quiet_NaN();
   double cell_height_per_client_height =
       std::numeric_limits<double>::quiet_NaN();
+  // Optional actual line capacity.  The legacy integer columns field remains
+  // the default and still bounds continuation indents.
+  double line_width_in_cells = std::numeric_limits<double>::quiet_NaN();
   int columns = 0;
   int continuation_indent = -1;
   int quoted_continuation_indent = -1;
   bool hanging_punctuation = false;
 
   bool operator==(const CellGrid &other) const {
+    const bool same_line_width =
+        (std::isnan(line_width_in_cells) &&
+         std::isnan(other.line_width_in_cells)) ||
+        line_width_in_cells == other.line_width_in_cells;
     return advance_per_client_height == other.advance_per_client_height &&
            line_advance_per_client_height ==
                other.line_advance_per_client_height &&
            cell_height_per_client_height ==
                other.cell_height_per_client_height &&
+           same_line_width &&
            columns == other.columns &&
            continuation_indent == other.continuation_indent &&
            quoted_continuation_indent == other.quoted_continuation_indent &&
@@ -66,6 +74,11 @@ struct PunctuationVisualBounds {
   double top = 0.0;
   double right = 1.0;
   double bottom = 1.0;
+};
+
+struct CharacterAdvance {
+  uint32_t code_point = 0;
+  double advance_ratio = 1.0;
 };
 
 inline bool IsPunctuationOrSymbolCodePoint(uint32_t code_point) {
@@ -102,6 +115,10 @@ inline bool IsPunctuationVisualBoundsValid(
 
 inline bool IsCellGridValid(const CellGrid &grid) {
   const int maximum_indent = std::min(grid.columns - 1, 8);
+  const bool line_width_valid =
+      std::isnan(grid.line_width_in_cells) ||
+      (std::isfinite(grid.line_width_in_cells) &&
+       grid.line_width_in_cells >= 2.0 && grid.line_width_in_cells <= 128.0);
   return std::isfinite(grid.advance_per_client_height) &&
          grid.advance_per_client_height >= 0.001 &&
          grid.advance_per_client_height <= 0.25 &&
@@ -113,6 +130,7 @@ inline bool IsCellGridValid(const CellGrid &grid) {
          grid.cell_height_per_client_height <= 0.25 &&
          grid.line_advance_per_client_height >=
              grid.cell_height_per_client_height &&
+         line_width_valid &&
          grid.columns >= 2 && grid.columns <= 128 &&
          grid.continuation_indent >= 0 &&
          grid.continuation_indent <= maximum_indent &&
@@ -133,6 +151,10 @@ struct Layout {
   // MethodChannel decoding is fail-closed.  A present but malformed list
   // must never silently become the legacy layout.
   bool punctuation_visual_bounds_valid = true;
+  std::vector<CharacterAdvance> character_advances;
+  // MethodChannel decoding is fail-closed. A present but malformed list must
+  // never silently become a legacy layout.
+  bool character_advances_valid = true;
 };
 
 inline bool IsPunctuationVisualBoundsListValid(const Layout &layout) {
@@ -156,13 +178,89 @@ inline bool IsPunctuationVisualBoundsListValid(const Layout &layout) {
          layout.cell_grid.has_value();
 }
 
-inline const PunctuationVisualBounds *FindPunctuationVisualBounds(
-    const Layout &layout, uint32_t code_point) {
-  for (const PunctuationVisualBounds &bounds :
-       layout.punctuation_visual_bounds) {
-    if (bounds.code_point == code_point) return &bounds;
+inline bool IsUnicodeWhitespace(uint32_t code_point) {
+  if (code_point == 0x20 || code_point == 0x85 || code_point == 0xA0 ||
+      code_point == 0x1680 || code_point == 0x2028 ||
+      code_point == 0x2029 || code_point == 0x202F ||
+      code_point == 0x205F || code_point == 0x3000 || code_point == 0xFEFF) {
+    return true;
+  }
+  return code_point >= 0x2000 && code_point <= 0x200A;
+}
+
+inline bool IsUnicodeControlOrFormat(uint32_t code_point) {
+  if (code_point <= 0x1F || (code_point >= 0x7F && code_point <= 0x9F)) {
+    return true;
+  }
+  if (code_point == 0x00AD || code_point == 0x061C ||
+      code_point == 0x06DD || code_point == 0x070F ||
+      code_point == 0x180E || code_point == 0xFEFF ||
+      (code_point >= 0x0600 && code_point <= 0x0605) ||
+      (code_point >= 0x0890 && code_point <= 0x0891) ||
+      (code_point >= 0x200B && code_point <= 0x200F) ||
+      (code_point >= 0x202A && code_point <= 0x202E) ||
+      (code_point >= 0x2060 && code_point <= 0x2064) ||
+      (code_point >= 0x2066 && code_point <= 0x206F) ||
+      (code_point >= 0xFFF9 && code_point <= 0xFFFB) ||
+      code_point == 0x110BD || code_point == 0x110CD ||
+      (code_point >= 0x13430 && code_point <= 0x1343F) ||
+      (code_point >= 0x1BCA0 && code_point <= 0x1BCA3) ||
+      (code_point >= 0x1D173 && code_point <= 0x1D17A) ||
+      code_point == 0xE0001 ||
+      (code_point >= 0xE0020 && code_point <= 0xE007F)) {
+    return true;
+  }
+  return false;
+}
+
+inline bool IsCharacterAdvanceCodePoint(uint32_t code_point) {
+  return code_point <= 0x10FFFF &&
+         !(code_point >= 0xD800 && code_point <= 0xDFFF) &&
+         !IsUnicodeControlOrFormat(code_point) &&
+         !IsUnicodeWhitespace(code_point);
+}
+
+inline bool IsCharacterAdvanceValid(const CharacterAdvance &advance) {
+  return IsCharacterAdvanceCodePoint(advance.code_point) &&
+         std::isfinite(advance.advance_ratio) &&
+         advance.advance_ratio >= 0.15 && advance.advance_ratio <= 2.0;
+}
+
+inline bool IsCharacterAdvancesListValid(const Layout &layout) {
+  if (!layout.character_advances_valid ||
+      layout.character_advances.size() > 64) {
+    return false;
+  }
+  for (size_t index = 0; index < layout.character_advances.size(); ++index) {
+    const CharacterAdvance &advance = layout.character_advances[index];
+    if (!IsCharacterAdvanceValid(advance)) return false;
+    for (size_t previous = 0; previous < index; ++previous) {
+      if (layout.character_advances[previous].code_point ==
+          advance.code_point) {
+        return false;
+      }
+    }
+  }
+  return layout.character_advances.empty() || layout.cell_grid.has_value();
+}
+
+inline const CharacterAdvance *FindCharacterAdvance(const Layout &layout,
+                                                     uint32_t code_point) {
+  for (const CharacterAdvance &advance : layout.character_advances) {
+    if (advance.code_point == code_point) return &advance;
   }
   return nullptr;
+}
+
+inline double CharacterAdvanceRatio(const Layout &layout, uint32_t code_point) {
+  const CharacterAdvance *advance = FindCharacterAdvance(layout, code_point);
+  return advance == nullptr ? 1.0 : advance->advance_ratio;
+}
+
+inline double EffectiveLineWidthInCells(const CellGrid &grid) {
+  return std::isfinite(grid.line_width_in_cells)
+             ? grid.line_width_in_cells
+             : static_cast<double>(grid.columns);
 }
 
 struct ClusterBox {
@@ -281,7 +379,8 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
                             int surface_height_px,
                             const RECT &layout_bounds) {
   if (!style.cell_grid.has_value() || !IsCellGridValid(*style.cell_grid) ||
-      !IsPunctuationVisualBoundsListValid(style))
+      !IsPunctuationVisualBoundsListValid(style) ||
+      !IsCharacterAdvancesListValid(style))
     return Failure("invalid_layout");
   constexpr float kMinimumBodyPixels = 8.0f;
   const float layout_width =
@@ -300,13 +399,13 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
   const double cell_height = grid.cell_height_per_client_height * client_height;
   const double bounds_left = static_cast<double>(layout_bounds.left);
   const double bounds_top = static_cast<double>(layout_bounds.top);
-  const int maximum_columns =
-      grid.columns + (grid.hanging_punctuation ? 1 : 0);
+  const double line_width_in_cells = EffectiveLineWidthInCells(grid);
+  const double maximum_line_width_in_cells =
+      line_width_in_cells + (grid.hanging_punctuation ? 1.0 : 0.0);
   if (!std::isfinite(advance) || !std::isfinite(line_advance) ||
-      !std::isfinite(cell_height) ||
-      std::llround(bounds_left +
-                   static_cast<double>(maximum_columns) * advance) >
-          layout_bounds.right ||
+      !std::isfinite(cell_height) || !std::isfinite(line_width_in_cells) ||
+      bounds_left + maximum_line_width_in_cells * advance >
+          static_cast<double>(layout_bounds.right) ||
       std::llround(bounds_top + cell_height) > layout_bounds.bottom) {
     return Failure("grid_overflow_body_rect");
   }
@@ -316,21 +415,20 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
       (source.front() == L'\u300C' || source.front() == L'\u300E');
   const int continuation_indent = quoted ? grid.quoted_continuation_indent
                                          : grid.continuation_indent;
-  int column = 0;
   int row = 0;
+  double cursor_in_cells = 0.0;
   bool hanging_punctuation_used = false;
   const auto advance_line = [&]() {
     ++row;
-    column = continuation_indent;
+    cursor_in_cells = static_cast<double>(continuation_indent);
     hanging_punctuation_used = false;
   };
-  const auto next_cell_bounds = [&](bool allow_hanging, RECT *box) -> bool {
-    if (column >= grid.columns && !allow_hanging) advance_line();
-    const double left = bounds_left + static_cast<double>(column) * advance;
+  const auto next_cell_bounds = [&](double left_in_cells, double width_in_cells,
+                                    RECT *box) -> bool {
+    const double left = bounds_left + left_in_cells * advance;
     const double top = bounds_top + static_cast<double>(row) * line_advance;
-    const double right = left + advance;
+    const double right = left + width_in_cells * advance;
     const double bottom = top + cell_height;
-    ++column;
     *box = RECT{static_cast<LONG>(std::llround(left)),
                 static_cast<LONG>(std::llround(top)),
                 static_cast<LONG>(std::llround(right)),
@@ -378,33 +476,52 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
       index += length - 1;
       continue;
     }
-    RECT box{};
-    const bool allow_hanging =
-        grid.hanging_punctuation && column == grid.columns &&
-        !hanging_punctuation_used && IsHangingPunctuation(code);
-    if (!next_cell_bounds(allow_hanging, &box))
-      return Failure("grid_overflow_body_rect");
-    if (allow_hanging) hanging_punctuation_used = true;
-    if (!whitespace) {
-      RECT visual = box;
-      if (const PunctuationVisualBounds *bounds =
-              FindPunctuationVisualBounds(style, code);
-          bounds != nullptr) {
-        visual.left = box.left + static_cast<LONG>(std::llround(
-                                      bounds->left * (box.right - box.left)));
-        visual.top = box.top + static_cast<LONG>(std::llround(
-                                     bounds->top * (box.bottom - box.top)));
-        visual.right = box.left + static_cast<LONG>(std::llround(
-                                       bounds->right * (box.right - box.left)));
-        visual.bottom = box.top + static_cast<LONG>(std::llround(
-                                        bounds->bottom * (box.bottom - box.top)));
-        if (!RectHasArea(visual) || visual.left < box.left ||
-            visual.top < box.top || visual.right > box.right ||
-            visual.bottom > box.bottom) {
-          return Failure("invalid_punctuation_visual_bounds");
+    const double advance_ratio = CharacterAdvanceRatio(style, code);
+    const double width_in_cells = advance_ratio;
+    if (!std::isfinite(width_in_cells))
+      return Failure("invalid_layout");
+
+    constexpr double kCursorEpsilon = 1e-9;
+    bool allow_hanging = false;
+    if (cursor_in_cells + width_in_cells >
+        line_width_in_cells + kCursorEpsilon) {
+      allow_hanging =
+          grid.hanging_punctuation &&
+          cursor_in_cells + kCursorEpsilon >= line_width_in_cells &&
+          !hanging_punctuation_used &&
+          IsHangingPunctuation(code) &&
+          cursor_in_cells + width_in_cells <=
+              line_width_in_cells + 1.0 + kCursorEpsilon;
+      if (!allow_hanging) {
+        advance_line();
+        if (cursor_in_cells + width_in_cells >
+            line_width_in_cells + kCursorEpsilon) {
+          // A continuation indent can leave less than one usable cell. Avoid
+          // repeatedly wrapping an item that cannot fit on any line.
+          allow_hanging =
+              grid.hanging_punctuation &&
+              cursor_in_cells + kCursorEpsilon >= line_width_in_cells &&
+              !hanging_punctuation_used &&
+              IsHangingPunctuation(code) &&
+              cursor_in_cells + width_in_cells <=
+                  line_width_in_cells + 1.0 + kCursorEpsilon;
+          if (!allow_hanging && cursor_in_cells + width_in_cells >
+                                   line_width_in_cells + kCursorEpsilon) {
+            return Failure("grid_overflow_body_rect");
+          }
         }
       }
-      result.boxes.push_back(ClusterBox{index, length, box, visual});
+    }
+    RECT box{};
+    const double left_in_cells = cursor_in_cells;
+    if (!next_cell_bounds(left_in_cells, width_in_cells, &box))
+      return Failure("grid_overflow_body_rect");
+    cursor_in_cells += width_in_cells;
+    if (allow_hanging) hanging_punctuation_used = true;
+    if (!whitespace) {
+      // Legacy punctuationVisualBounds remains readable for old profiles, but
+      // actual per-character width is represented by the cell advance itself.
+      result.boxes.push_back(ClusterBox{index, length, box, box});
     }
     previous_cell = !whitespace;
     index += length - 1;
@@ -422,7 +539,8 @@ inline Result Build(IDWriteFactory *factory, const std::wstring &source,
                     const RECT &layout_bounds) {
   if (source.empty() || surface_width_px <= 0 || surface_height_px <= 0)
     return Failure("empty_text_or_no_surface_rect");
-  if (!IsPunctuationVisualBoundsListValid(style))
+  if (!IsPunctuationVisualBoundsListValid(style) ||
+      !IsCharacterAdvancesListValid(style))
     return Failure("invalid_layout");
   if (style.cell_grid.has_value()) {
     return BuildCellGrid(source, style, client_height_px, surface_width_px,
@@ -664,7 +782,8 @@ inline Result Preview(const std::wstring &source,
           layout.padding_per_client_height) ||
       (layout.cell_grid.has_value() && !IsCellGridValid(*layout.cell_grid)))
     return Failure("invalid_layout");
-  if (!IsPunctuationVisualBoundsListValid(layout))
+  if (!IsPunctuationVisualBoundsListValid(layout) ||
+      !IsCharacterAdvancesListValid(layout))
     return Failure("invalid_layout");
   const RECT client{0, 0, reference.width_px, reference.height_px};
   const RECT body = ResolveBodyRect(client, body_rect);

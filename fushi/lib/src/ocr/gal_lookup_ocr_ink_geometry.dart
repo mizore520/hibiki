@@ -24,33 +24,110 @@ GalCalibrationOcrAlignment refineGalCalibrationOcrGeometry(
   final List<GalCalibrationOcrMatchedLine> lines =
       <GalCalibrationOcrMatchedLine>[
         for (final GalCalibrationOcrMatchedLine line in input.alignment.lines)
-          _refineInkLine(image, input.text, input.searchRect, line) ?? line,
+          _refineInkSegments(image, input.text, input.searchRect, line) ??
+              _refineInkLine(image, input.text, input.searchRect, line) ??
+              line,
       ];
-  final bool hasMeasuredLine = lines.any(
-    (GalCalibrationOcrMatchedLine line) =>
-        line.glyphs.any((GalCalibrationOcrGlyph g) => g.inkMeasured),
-  );
-  final bool unmeasuredLongLine = lines.any(
-    (GalCalibrationOcrMatchedLine line) =>
-        !line.glyphs.any((GalCalibrationOcrGlyph g) => g.inkMeasured) &&
-        line.glyphs
-                .where(
-                  (GalCalibrationOcrGlyph g) => _fullSizeInkCharacter(
-                    input.text.substring(
-                      g.sourceIndex,
-                      g.sourceIndex + g.charLength,
-                    ),
-                  ),
-                )
-                .length >=
-            5,
-  );
   return GalCalibrationOcrAlignment(
     confidence: input.alignment.confidence,
     lines: lines,
-    reason: !hasMeasuredLine || unmeasuredLongLine
-        ? 'ocr_ink_geometry_weak'
-        : null,
+  );
+}
+
+/// Punctuation can change the pen advance without changing glyph height.
+/// Measure ordinary runs independently so a narrow comma does not force both
+/// sides onto a fictitious uniform grid. Their relative origins then provide
+/// width evidence to the fitter; the comma's ink rectangle does not.
+GalCalibrationOcrMatchedLine? _refineInkSegments(
+  img.Image image,
+  String text,
+  GalLookupNormalizedRectV1 search,
+  GalCalibrationOcrMatchedLine line,
+) {
+  final List<_SourceUnit> source = _sourceUnits(text);
+  if (!source
+      .sublist(line.sourceStart, line.sourceEnd)
+      .any(
+        (_SourceUnit unit) => _singlePunctuationCodePoint(unit.value) != null,
+      )) {
+    return null;
+  }
+  final List<GalCalibrationOcrMatchedLine> measured = [];
+  int start = line.sourceStart;
+  bool split = false;
+  for (int end = start; end <= line.sourceEnd; end++) {
+    if (end < line.sourceEnd &&
+        _singlePunctuationCodePoint(source[end].value) == null) {
+      continue;
+    }
+    if (end < line.sourceEnd) split = true;
+    final int offset = start - line.sourceStart;
+    final List<GalCalibrationOcrGlyph> glyphs = [
+      for (final GalCalibrationOcrGlyph g in line.glyphs)
+        if (g.cellOffset >= offset && g.cellOffset < end - line.sourceStart)
+          GalCalibrationOcrGlyph(
+            sourceIndex: g.sourceIndex,
+            charLength: g.charLength,
+            cellOffset: g.cellOffset - offset,
+            lineIndex: g.lineIndex,
+            rect: g.rect,
+            confidence: g.confidence,
+          ),
+    ];
+    if (glyphs.length >= 4) {
+      final GalCalibrationOcrMatchedLine? refined = _refineInkLine(
+        image,
+        text,
+        search,
+        GalCalibrationOcrMatchedLine(
+          sourceStart: start,
+          sourceEnd: end,
+          cellCount: end - start,
+          lineIndex: line.lineIndex,
+          rect: line.rect,
+          glyphs: glyphs,
+        ),
+      );
+      if (refined != null) measured.add(refined);
+    }
+    start = end + 1;
+  }
+  if (!split || measured.isEmpty) return null;
+  final Map<int, GalCalibrationOcrGlyph> evidence = {
+    for (final GalCalibrationOcrMatchedLine segment in measured)
+      for (final GalCalibrationOcrGlyph g in segment.glyphs)
+        if (g.inkMeasured) g.sourceIndex: g,
+  };
+  final double centerY = _median([
+    for (final GalCalibrationOcrMatchedLine segment in measured)
+      segment.rect.centerY,
+  ]);
+  final double height = measured
+      .map((GalCalibrationOcrMatchedLine segment) => segment.rect.height)
+      .reduce(math.max);
+  return GalCalibrationOcrMatchedLine(
+    sourceStart: line.sourceStart,
+    sourceEnd: line.sourceEnd,
+    cellCount: line.cellCount,
+    lineIndex: line.lineIndex,
+    rect: OcrRect(
+      left: line.rect.left,
+      right: line.rect.right,
+      top: centerY - height / 2,
+      bottom: centerY + height / 2,
+    ),
+    glyphs: [
+      for (final GalCalibrationOcrGlyph g in line.glyphs)
+        GalCalibrationOcrGlyph(
+          sourceIndex: g.sourceIndex,
+          charLength: g.charLength,
+          cellOffset: g.cellOffset,
+          lineIndex: g.lineIndex,
+          rect: evidence[g.sourceIndex]?.rect ?? g.rect,
+          confidence: g.confidence,
+          inkMeasured: evidence.containsKey(g.sourceIndex),
+        ),
+    ],
   );
 }
 
@@ -279,64 +356,6 @@ GalCalibrationOcrMatchedLine? _measureInkLine(
         rect.top <= searchTop + .5 ||
         rect.bottom >= searchBottom - .5,
   );
-  final Map<int, OcrRect> visualMeasured = <int, OcrRect>{};
-  for (final GalCalibrationOcrGlyph glyph in line.glyphs) {
-    if (!glyph.confidence.isFinite || glyph.confidence < (relaxed ? .55 : .7)) {
-      continue;
-    }
-    if (_singlePunctuationCodePoint(
-          text.substring(
-            glyph.sourceIndex,
-            glyph.sourceIndex + glyph.charLength,
-          ),
-        ) ==
-        null) {
-      continue;
-    }
-    final int a = (selected.left + glyph.cellOffset * selected.pitch - x0)
-        .round()
-        .clamp(0, width);
-    final int b = (selected.left + (glyph.cellOffset + 1) * selected.pitch - x0)
-        .round()
-        .clamp(a, width);
-    int left = width;
-    int right = -1;
-    int top = height;
-    int bottom = -1;
-    int total = 0;
-    for (int y = 0; y < height; y++) {
-      for (int x = a; x < b; x++) {
-        if (selected.mask[y * width + x] == 0) continue;
-        left = math.min(left, x);
-        right = math.max(right, x);
-        top = math.min(top, y);
-        bottom = math.max(bottom, y);
-        total++;
-      }
-    }
-    if (total < math.max(2, (selected.pitch * .08).round()) ||
-        right < left ||
-        bottom < top ||
-        left <= 0 ||
-        right >= width - 1 ||
-        top <= 0 ||
-        bottom >= height - 1) {
-      continue;
-    }
-    final OcrRect candidate = OcrRect(
-      left: (x0 + left).toDouble(),
-      top: (y0 + top).toDouble(),
-      right: (x0 + right + 1).toDouble(),
-      bottom: (y0 + bottom + 1).toDouble(),
-    );
-    // This map is only an observation channel. The fitter applies an
-    // additional smallness and multi-sample consistency gate before storing
-    // an override, so a broad punctuation glyph remains a normal cell.
-    if (candidate.width <= selected.pitch * .9 ||
-        candidate.height <= line.rect.height * .9) {
-      visualMeasured[glyph.sourceIndex] = candidate;
-    }
-  }
   if (measured.length < (relaxed ? 4 : 5) ||
       measured.length < anchors.length * (relaxed ? .45 : .65)) {
     return null;
@@ -432,12 +451,8 @@ GalCalibrationOcrMatchedLine? _measureInkLine(
           cellOffset: g.cellOffset,
           lineIndex: g.lineIndex,
           confidence: g.confidence,
-          rect:
-              measured[g.sourceIndex] ??
-              visualMeasured[g.sourceIndex] ??
-              g.rect,
+          rect: measured[g.sourceIndex] ?? g.rect,
           inkMeasured: measured.containsKey(g.sourceIndex),
-          visualMeasured: visualMeasured.containsKey(g.sourceIndex),
         ),
     ],
   );

@@ -101,13 +101,20 @@ class _MemoryStore extends GalLookupCalibrationStore {
   final List<GalLookupCalibrationDraft> saved = <GalLookupCalibrationDraft>[];
 
   @override
-  Future<GalLookupCalibrationDraft?> load(String hash) async {
+  Future<GalLookupCalibrationDraft?> load(
+    String hash, {
+    GalLookupCalibrationSlotV1? slot,
+  }) async {
     expect(hash, _sha);
     return draft;
   }
 
   @override
-  Future<void> save(String hash, GalLookupCalibrationDraft draft) async {
+  Future<void> save(
+    String hash,
+    GalLookupCalibrationDraft draft, {
+    GalLookupCalibrationSlotV1? slot,
+  }) async {
     expect(hash, _sha);
     if (failSave) throw StateError('synthetic disk failure');
     saved.add(draft);
@@ -133,6 +140,7 @@ Future<_Result> _open(
       fitGalCalibrationImages,
   Size size = const Size(1280, 900),
   bool manual = true,
+  GalLookupCalibrationSlotV1? slot,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -154,6 +162,7 @@ Future<_Result> _open(
                     initialRect: _rect,
                     initialLayout: _layout,
                     capture: capture,
+                    slot: slot,
                     store: store,
                     previewBuilder: previewBuilder,
                     imageFitter: imageFitter,
@@ -463,6 +472,68 @@ void main() {
     expect(find.byType(Image), findsOneWidget);
     expect(result.closed, isFalse);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('fixed slot keeps failed sample and replaces it on success', (
+    WidgetTester tester,
+  ) async {
+    final GalLookupCalibrationCapture oldCapture = _capture(
+      occurrenceId: 'old-entry',
+    );
+    final GalLookupCalibrationCapture newCapture = _capture(
+      occurrenceId: 'new-entry',
+    );
+    final _MemoryStore store = _MemoryStore(
+      draft: GalLookupCalibrationDraft(
+        rect: _rect,
+        layout: _layout,
+        samples: <GalCalibrationSample>[
+          GalCalibrationSample(capture: oldCapture),
+        ],
+        slot: GalLookupCalibrationSlotV1.dialogue,
+      ),
+    );
+    int captures = 0;
+
+    await _open(
+      tester,
+      store: store,
+      manual: false,
+      slot: GalLookupCalibrationSlotV1.dialogue,
+      capture: () async {
+        captures++;
+        if (captures == 1) {
+          throw const GalLookupCalibrationCaptureException(
+            GalLookupCalibrationCaptureFailure.sceneChanged,
+          );
+        }
+        return newCapture;
+      },
+    );
+    expect(find.text(t.game_lookup_samples_dialogue), findsOneWidget);
+    expect(
+      find.byTooltip(t.game_lookup_samples_capture_replace),
+      findsOneWidget,
+    );
+    expect(find.byTooltip(t.game_lookup_samples_capture), findsNothing);
+    expect(find.byKey(ValueKey<Object>(oldCapture)), findsOneWidget);
+
+    await tester.tap(find.byTooltip(t.game_lookup_samples_capture_replace));
+    await tester.pumpAndSettle();
+    expect(captures, 1);
+    expect(store.saved, isEmpty);
+    expect(store.draft!.samples.single.capture, same(oldCapture));
+    expect(find.byKey(ValueKey<Object>(oldCapture)), findsOneWidget);
+    expect(find.text(t.game_lookup_samples_capture_changed), findsOneWidget);
+
+    await tester.tap(find.byTooltip(t.game_lookup_samples_capture_replace));
+    await tester.pumpAndSettle();
+    expect(captures, 2);
+    expect(store.saved, hasLength(1));
+    expect(store.saved.single.samples, hasLength(1));
+    expect(store.saved.single.samples.single.capture, same(newCapture));
+    expect(find.byKey(ValueKey<Object>(oldCapture)), findsNothing);
+    expect(find.byKey(ValueKey<Object>(newCapture)), findsOneWidget);
   });
 
   testWidgets(

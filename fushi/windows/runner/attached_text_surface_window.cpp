@@ -861,7 +861,8 @@ AttachedTextSurfaceWindow::StartCalibration(
       (layout.cell_grid.has_value() &&
        !fushi::attached_text_layout::IsCellGridValid(*layout.cell_grid)) ||
       !fushi::attached_text_layout::IsPunctuationVisualBoundsListValid(
-          layout)) {
+          layout) ||
+      !fushi::attached_text_layout::IsCharacterAdvancesListValid(layout)) {
     if (error != nullptr)
       *error = "invalid_layout";
     return RequestResult::kRejected;
@@ -1147,7 +1148,8 @@ AttachedTextSurfaceWindow::RequestResult AttachedTextSurfaceWindow::Configure(
       (layout.cell_grid.has_value() &&
        !fushi::attached_text_layout::IsCellGridValid(*layout.cell_grid)) ||
       !fushi::attached_text_layout::IsPunctuationVisualBoundsListValid(
-          layout)) {
+          layout) ||
+      !fushi::attached_text_layout::IsCharacterAdvancesListValid(layout)) {
     if (error != nullptr)
       *error = "invalid_layout";
     return RequestResult::kRejected;
@@ -1267,7 +1269,8 @@ AttachedTextSurfaceWindow::UpdateStyle(const Epoch &epoch, uint32_t target_pid,
       (layout.cell_grid.has_value() &&
        !fushi::attached_text_layout::IsCellGridValid(*layout.cell_grid)) ||
       !fushi::attached_text_layout::IsPunctuationVisualBoundsListValid(
-          layout)) {
+          layout) ||
+      !fushi::attached_text_layout::IsCharacterAdvancesListValid(layout)) {
     if (error != nullptr)
       *error = "invalid_layout";
     return RequestResult::kRejected;
@@ -1293,12 +1296,29 @@ AttachedTextSurfaceWindow::UpdateStyle(const Epoch &epoch, uint32_t target_pid,
     }
     return true;
   };
+  const auto same_character_advances = [&](const auto &left,
+                                           const auto &right) {
+    if (left.size() != right.size())
+      return false;
+    for (size_t index = 0; index < left.size(); ++index) {
+      const auto &a = left[index];
+      const auto &b = right[index];
+      if (a.code_point != b.code_point ||
+          !same_double(a.advance_ratio, b.advance_ratio)) {
+        return false;
+      }
+    }
+    return true;
+  };
   const bool layout_changed =
       desired.cell_grid != layout_.cell_grid ||
       !same_punctuation_bounds(desired.punctuation_visual_bounds,
                                layout_.punctuation_visual_bounds) ||
+      !same_character_advances(desired.character_advances,
+                               layout_.character_advances) ||
       desired.punctuation_visual_bounds_valid !=
           layout_.punctuation_visual_bounds_valid ||
+      desired.character_advances_valid != layout_.character_advances_valid ||
       desired.font_family != layout_.font_family ||
       !same_double(desired.font_size_per_client_height,
                    layout_.font_size_per_client_height) ||

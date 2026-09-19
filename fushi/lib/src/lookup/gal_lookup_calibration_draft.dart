@@ -42,17 +42,36 @@ class GalCalibrationSample {
   };
 
   static GalCalibrationSample fromJson(Map<String, dynamic> json) {
+    const Set<String> expectedKeys = <String>{
+      'capture',
+      'validation',
+      'anchors',
+    };
+    if (!_hasExactStringKeys(json, expectedKeys)) {
+      throw const FormatException('sample_schema');
+    }
     final GalLookupCalibrationCapture? capture =
         GalLookupCalibrationCapture.tryFromJson(json['capture']);
     if (capture == null) throw const FormatException('invalid_capture');
     final Map<int, Offset> anchors = {};
+    if (json['validation'] is! bool || json['anchors'] is! List) {
+      throw const FormatException('sample_schema');
+    }
     final List<dynamic> rawAnchors = json['anchors'] as List<dynamic>;
     if (rawAnchors.length > 128) throw const FormatException('too_many_points');
     for (final dynamic raw in rawAnchors) {
-      final int index = raw['index'] as int;
+      if (raw is! Map) throw const FormatException('invalid_point');
+      final Map<Object?, Object?> pointMap = raw.cast<Object?, Object?>();
+      if (!_hasExactStringKeys(pointMap, const <String>{'index', 'x', 'y'}) ||
+          pointMap['index'] is! int ||
+          pointMap['x'] is! num ||
+          pointMap['y'] is! num) {
+        throw const FormatException('invalid_point');
+      }
+      final int index = pointMap['index']! as int;
       final Offset point = Offset(
-        (raw['x'] as num).toDouble(),
-        (raw['y'] as num).toDouble(),
+        (pointMap['x']! as num).toDouble(),
+        (pointMap['y']! as num).toDouble(),
       );
       if (index < 0 ||
           index >= capture.sourceText.length ||
@@ -63,6 +82,9 @@ class GalCalibrationSample {
           point.dy < 0 ||
           point.dy > 1) {
         throw const FormatException('invalid_point');
+      }
+      if (anchors.containsKey(index)) {
+        throw const FormatException('duplicate_point');
       }
       anchors[index] = point;
     }
@@ -82,6 +104,7 @@ class GalLookupCalibrationDraft {
     GalLookupNormalizedRectV1? searchRect,
     GalLookupReferenceClientV1? layoutReferenceClient,
     this.layoutCaptureMetadata,
+    this.slot,
   }) : searchRect = searchRect ?? rect,
        samples = List.unmodifiable(samples),
        layoutReferenceClient =
@@ -89,6 +112,7 @@ class GalLookupCalibrationDraft {
            (samples.isEmpty ? null : samples.first.capture.referenceClient);
 
   static const int maxSamples = 8;
+  static const int maxSamplesPerSlot = 1;
   static const int maxImageBytes = 64 * 1024 * 1024;
   final GalLookupNormalizedRectV1 rect;
 
@@ -104,6 +128,20 @@ class GalLookupCalibrationDraft {
   /// Provenance of the image used to fit this layout, independent of which
   /// sample is currently selected or subsequently removed.
   final WindowCaptureMetadata? layoutCaptureMetadata;
+  final GalLookupCalibrationSlotV1? slot;
+
+  static const Set<String> _requiredJsonKeys = <String>{
+    'version',
+    'bodyRect',
+    'layout',
+    'samples',
+  };
+  static const Set<String> _optionalJsonKeys = <String>{
+    'searchRect',
+    'slot',
+    'layoutReferenceClient',
+    'layoutCaptureMetadata',
+  };
 
   bool validFor(String hash) =>
       RegExp(r'^[a-fA-F0-9]{64}$').hasMatch(hash) &&
@@ -119,6 +157,7 @@ class GalLookupCalibrationDraft {
                   layoutReferenceClient!.heightPx &&
               layoutCaptureMetadata!.dpi == layoutReferenceClient!.dpi)) &&
       samples.length <= maxSamples &&
+      (slot == null || samples.length <= maxSamplesPerSlot) &&
       samples.every((GalCalibrationSample s) => s.capture.exeSha256 == hash) &&
       samples.fold<int>(
             0,
@@ -132,6 +171,7 @@ class GalLookupCalibrationDraft {
     'searchRect': searchRect.toJson(),
     'layout': layout.toJson(),
     'samples': samples.map((GalCalibrationSample s) => s.toJson()).toList(),
+    if (slot != null) 'slot': slot!.wireName,
     if (layoutReferenceClient != null)
       'layoutReferenceClient': layoutReferenceClient!.toJson(),
     if (layoutCaptureMetadata != null)
@@ -139,7 +179,21 @@ class GalLookupCalibrationDraft {
   };
 
   static GalLookupCalibrationDraft fromJson(Map<String, dynamic> json) {
+    if (!_requiredJsonKeys.every(json.containsKey) ||
+        json.keys.any(
+          (String key) =>
+              !_requiredJsonKeys.contains(key) &&
+              !_optionalJsonKeys.contains(key),
+        )) {
+      throw const FormatException('draft_schema');
+    }
     if (json['version'] != 1) throw const FormatException('draft_version');
+    final GalLookupCalibrationSlotV1? slot = json.containsKey('slot')
+        ? GalLookupCalibrationSlotV1.fromWireName(json['slot'])
+        : null;
+    if (json.containsKey('slot') && slot == null) {
+      throw const FormatException('draft_slot');
+    }
     final GalLookupNormalizedRectV1? rect =
         GalLookupNormalizedRectV1.tryFromJson(json['bodyRect']);
     final GalLookupTextLayoutV1? layout = GalLookupTextLayoutV1.tryFromJson(
@@ -152,7 +206,8 @@ class GalLookupCalibrationDraft {
     if (rect == null ||
         searchRect == null ||
         layout == null ||
-        raw.length > maxSamples) {
+        raw.length > maxSamples ||
+        (slot != null && raw.length > maxSamplesPerSlot)) {
       throw const FormatException('invalid_draft');
     }
     final List<GalCalibrationSample> samples = raw
@@ -182,8 +237,22 @@ class GalLookupCalibrationDraft {
       samples: samples,
       layoutReferenceClient: layoutReferenceClient,
       layoutCaptureMetadata: layoutCaptureMetadata,
+      slot: slot,
     );
   }
+
+  GalLookupCalibrationDraft copyWith({
+    GalLookupCalibrationSlotV1? slot,
+    bool clearSlot = false,
+  }) => GalLookupCalibrationDraft(
+    rect: rect,
+    searchRect: searchRect,
+    layout: layout,
+    samples: samples,
+    layoutReferenceClient: layoutReferenceClient,
+    layoutCaptureMetadata: layoutCaptureMetadata,
+    slot: clearSlot ? null : slot ?? this.slot,
+  );
 }
 
 /// Private, bounded drafts live under the app support root. No images/text are
@@ -192,7 +261,7 @@ class GalLookupCalibrationStore {
   const GalLookupCalibrationStore({this.directory});
   final Directory? directory;
 
-  Future<File> _file(String hash) async {
+  Future<File> _file(String hash, {GalLookupCalibrationSlotV1? slot}) async {
     if (!RegExp(r'^[a-fA-F0-9]{64}$').hasMatch(hash)) {
       throw const FormatException('invalid_executable_hash');
     }
@@ -205,11 +274,20 @@ class GalLookupCalibrationStore {
           ),
         );
     await root.create(recursive: true);
-    return File(p.join(root.path, '${hash.toLowerCase()}.json'));
+    final String suffix = slot == null ? '' : '.${slot.wireName}';
+    return File(p.join(root.path, '${hash.toLowerCase()}$suffix.json'));
   }
 
-  Future<GalLookupCalibrationDraft?> load(String hash) async {
-    final File file = await _file(hash);
+  Future<GalLookupCalibrationDraft?> load(
+    String hash, {
+    GalLookupCalibrationSlotV1? slot,
+  }) async {
+    File file = await _file(hash, slot: slot);
+    // A legacy shared draft remains a readable seed for either fixed slot. It
+    // is never overwritten when a slot-specific draft is later saved.
+    if (slot != null && !await file.exists()) {
+      file = await _file(hash);
+    }
     if (!await file.exists()) return null;
     if (await file.length() > 92 * 1024 * 1024) {
       throw const FormatException('draft_too_large');
@@ -218,17 +296,41 @@ class GalLookupCalibrationStore {
       (jsonDecode(await file.readAsString()) as Map).cast<String, dynamic>(),
     );
     if (!draft.validFor(hash)) throw const FormatException('draft_identity');
+    if (slot != null && draft.slot != null && draft.slot != slot) {
+      throw const FormatException('draft_slot_mismatch');
+    }
     return draft;
   }
 
-  Future<void> save(String hash, GalLookupCalibrationDraft draft) async {
+  Future<void> save(
+    String hash,
+    GalLookupCalibrationDraft draft, {
+    GalLookupCalibrationSlotV1? slot,
+  }) async {
     if (!draft.validFor(hash)) throw const FormatException('invalid_draft');
-    final File file = await _file(hash);
+    if (slot != null && draft.slot != null && draft.slot != slot) {
+      throw const FormatException('draft_slot_mismatch');
+    }
+    final GalLookupCalibrationDraft persisted =
+        slot != null && draft.slot == null ? draft.copyWith(slot: slot) : draft;
+    if (!persisted.validFor(hash)) {
+      throw const FormatException('invalid_draft');
+    }
+    final File file = await _file(hash, slot: slot ?? draft.slot);
+    // A newer or invalid on-disk draft must survive a failed load. Capturing a
+    // replacement cannot silently downgrade or erase fields we cannot read.
+    if (await file.exists()) {
+      await load(hash, slot: slot ?? draft.slot);
+    }
     final File pending = File('${file.path}.pending');
-    await pending.writeAsString(jsonEncode(draft.toJson()), flush: true);
+    await pending.writeAsString(jsonEncode(persisted.toJson()), flush: true);
     await pending.rename(file.path);
   }
 }
+
+bool _hasExactStringKeys(Map<Object?, Object?> map, Set<String> expected) =>
+    map.length == expected.length &&
+    map.keys.every((Object? key) => key is String && expected.contains(key));
 
 GalLookupTextLayoutV1 copyGalCalibrationLayout(
   GalLookupTextLayoutV1 layout, {
@@ -250,6 +352,9 @@ GalLookupTextLayoutV1 copyGalCalibrationLayout(
   punctuationVisualBounds: clearCellGrid
       ? const <GalLookupPunctuationVisualBoundV1>[]
       : punctuationVisualBounds ?? layout.punctuationVisualBounds,
+  characterAdvances: clearCellGrid
+      ? const <GalLookupCharacterAdvanceV1>[]
+      : layout.characterAdvances,
 );
 
 /// Fits only translation and character spacing. Font, wrapping area and line
@@ -469,6 +574,7 @@ Future<GalLookupCalibrationDraft?> fitGalCalibrationAnchors(
     samples: draft.samples,
     layoutReferenceClient: draft.layoutReferenceClient,
     layoutCaptureMetadata: draft.layoutCaptureMetadata,
+    slot: draft.slot,
   );
 }
 

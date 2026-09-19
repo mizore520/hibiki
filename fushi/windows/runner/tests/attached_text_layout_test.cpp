@@ -128,6 +128,7 @@ int main() {
   grid.continuation_indent = 1;
   grid.quoted_continuation_indent = 2;
   grid_style.cell_grid = grid;
+  const std::wstring full_line(16, L'\u3042');
   const auto grid_preview = layout::Preview(
       L"\u300C\u3042\u3044 \u3046\u3048\u304A\n\u304B\u304D\u304F\u2026\u2014", client, rect,
       grid_style);
@@ -148,8 +149,161 @@ int main() {
   assert(!found_space && found_quoted_continuation);
   ++cases;
 
-  // A visual punctuation override shrinks only the painted/anchor rectangle;
-  // the full advance cell and the following character stay unchanged.
+  // Per-character advances change the actual horizontal cell width and the
+  // following cursor, while every row keeps the calibrated cell height.
+  layout::Layout narrow_style = grid_style;
+  narrow_style.character_advances.push_back(
+      layout::CharacterAdvance{0x3002, 0.5});
+  const auto narrow =
+      layout::Preview(L"あ。い", client, rect, narrow_style);
+  assert(narrow.ok() && narrow.boxes.size() == 3);
+  assert(narrow.boxes[1].hit_rect.left == body.left + 18);
+  assert(narrow.boxes[1].hit_rect.right == body.left + 27);
+  assert(narrow.boxes[2].hit_rect.left == body.left + 27);
+  assert(narrow.boxes[2].hit_rect.right == body.left + 45);
+  for (const auto &box : narrow.boxes) {
+    assert(box.hit_rect.bottom - box.hit_rect.top == 21);
+    assert(EqualRect(&box.hit_rect, &box.visual_rect));
+  }
+  ++cases;
+
+  layout::Layout wide_style = grid_style;
+  wide_style.cell_grid->line_width_in_cells = 2.0;
+  wide_style.cell_grid->continuation_indent = 0;
+  wide_style.cell_grid->quoted_continuation_indent = 0;
+  wide_style.character_advances.push_back(
+      layout::CharacterAdvance{L'あ', 1.5});
+  const auto wide =
+      layout::Preview(L"ああ", client, rect, wide_style);
+  assert(wide.ok() && wide.boxes.size() == 2);
+  assert(wide.boxes[0].hit_rect.left == body.left);
+  assert(wide.boxes[0].hit_rect.right == body.left + 27);
+  assert(wide.boxes[1].hit_rect.left == body.left);
+  assert(wide.boxes[1].hit_rect.top == body.top + 24);
+  ++cases;
+
+  // A fractional line width is the actual capacity. Three characters whose
+  // ratios total 2.5 cells remain on one line; the legacy default capacity of
+  // two cells wraps the third character.
+  layout::Layout fractional_capacity = grid_style;
+  fractional_capacity.cell_grid->columns = 4;
+  fractional_capacity.cell_grid->line_width_in_cells = 2.5;
+  fractional_capacity.character_advances = {
+      layout::CharacterAdvance{L'あ', 0.75},
+      layout::CharacterAdvance{L'い', 1.0},
+      layout::CharacterAdvance{L'う', 0.75},
+  };
+  const auto fractional = layout::Preview(
+      L"あいう", client, rect, fractional_capacity);
+  assert(fractional.ok() && fractional.boxes.size() == 3);
+  assert(fractional.boxes[2].hit_rect.top == body.top);
+  assert(fractional.boxes[2].hit_rect.left == body.left + 32);
+  layout::Layout integer_capacity = fractional_capacity;
+  integer_capacity.cell_grid->line_width_in_cells = 2.0;
+  const auto integer = layout::Preview(L"あいう", client, rect,
+                                       integer_capacity);
+  assert(integer.ok() && integer.boxes[2].hit_rect.top == body.top + 24);
+  ++cases;
+
+  // Hanging punctuation is decided from accumulated actual width. A narrow
+  // terminal punctuation can hang after a full line, and the next character
+  // starts at the configured continuation indent.
+  layout::Layout narrow_hanging = grid_style;
+  narrow_hanging.character_advances.push_back(
+      layout::CharacterAdvance{0x3002, 0.5});
+  narrow_hanging.cell_grid->hanging_punctuation = true;
+  const auto narrow_hang = layout::Preview(full_line + L"。A", client, rect,
+                                            narrow_hanging);
+  assert(narrow_hang.ok() && narrow_hang.boxes.size() == 18);
+  assert(narrow_hang.boxes[16].hit_rect.left == body.left + 16 * 18);
+  assert(narrow_hang.boxes[16].hit_rect.right == body.left + 16 * 18 + 9);
+  assert(narrow_hang.boxes[16].hit_rect.top == body.top);
+  assert(narrow_hang.boxes[17].hit_rect.left == body.left + 18);
+  assert(narrow_hang.boxes[17].hit_rect.top == body.top + 24);
+  layout::Layout partial_hanging = grid_style;
+  partial_hanging.cell_grid->hanging_punctuation = true;
+  partial_hanging.cell_grid->line_width_in_cells = 2.0;
+  partial_hanging.character_advances.push_back(
+      layout::CharacterAdvance{L'A', 0.75});
+  const auto partial = layout::Preview(L"AA。", client, rect,
+                                       partial_hanging);
+  assert(partial.ok() && partial.boxes.size() == 3);
+  assert(partial.boxes[2].hit_rect.top == body.top + 24);
+  ++cases;
+
+  // Continuation indentation still uses the legacy default-cell basis, while
+  // subsequent characters advance by their actual ratios.
+  layout::Layout indented = grid_style;
+  indented.character_advances.push_back(
+      layout::CharacterAdvance{L'A', 0.5});
+  const auto indented_result =
+      layout::Preview(full_line + L"AB", client, rect, indented);
+  assert(indented_result.ok() && indented_result.boxes.size() == 18);
+  assert(indented_result.boxes[16].hit_rect.left == body.left + 18);
+  assert(indented_result.boxes[16].hit_rect.right == body.left + 27);
+  assert(indented_result.boxes[17].hit_rect.left == body.left + 27);
+  assert(indented_result.boxes[17].hit_rect.top == body.top + 24);
+  ++cases;
+
+  // Whitespace remains non-clickable but consumes one default cell, and a
+  // supplementary code point keeps its two UTF-16 code units.
+  const auto spaced = layout::Preview(L"A B", client, rect, narrow_style);
+  assert(spaced.ok() && spaced.boxes.size() == 2);
+  assert(spaced.boxes[1].text_position == 2);
+  assert(spaced.boxes[1].hit_rect.left == body.left + 36);
+  const auto spaced_tab = layout::Preview(L"A\tB", client, rect, narrow_style);
+  assert(spaced_tab.ok() && spaced_tab.boxes.size() == 2);
+  assert(spaced_tab.boxes[1].hit_rect.left == body.left + 36);
+  const auto advanced_emoji =
+      layout::Preview(L"A\U0001F600B", client, rect, narrow_style);
+  assert(advanced_emoji.ok() && advanced_emoji.boxes.size() == 3);
+  assert(advanced_emoji.boxes[1].text_position == 1);
+  assert(advanced_emoji.boxes[1].text_length == 2);
+  ++cases;
+
+  // Native validation mirrors the MethodChannel limits: scalar, printable,
+  // non-whitespace code points; unique entries; and bounded finite ratios.
+  assert(layout::IsCharacterAdvanceValid(
+      layout::CharacterAdvance{0x10FFFF, 0.15}));
+  assert(layout::IsCharacterAdvanceValid(
+      layout::CharacterAdvance{0x3002, 2.0}));
+  assert(!layout::IsCharacterAdvanceValid(
+      layout::CharacterAdvance{0x1F, 1.0}));
+  assert(!layout::IsCharacterAdvanceValid(
+      layout::CharacterAdvance{0x200B, 1.0}));
+  assert(!layout::IsCharacterAdvanceValid(
+      layout::CharacterAdvance{L' ', 1.0}));
+  assert(!layout::IsCharacterAdvanceValid(
+      layout::CharacterAdvance{0xD800, 1.0}));
+  assert(!layout::IsCharacterAdvanceValid(
+      layout::CharacterAdvance{0x110000, 1.0}));
+  assert(!layout::IsCharacterAdvanceValid(
+      layout::CharacterAdvance{L'A', 0.149}));
+  assert(!layout::IsCharacterAdvanceValid(
+      layout::CharacterAdvance{L'A', 2.001}));
+  assert(!layout::IsCharacterAdvanceValid(
+      layout::CharacterAdvance{L'A', std::numeric_limits<double>::quiet_NaN()}));
+  assert(!layout::IsCharacterAdvanceValid(
+      layout::CharacterAdvance{L'A', std::numeric_limits<double>::infinity()}));
+  layout::Layout duplicate_advance = grid_style;
+  duplicate_advance.character_advances = {
+      layout::CharacterAdvance{L'A', 0.5},
+      layout::CharacterAdvance{L'A', 1.5},
+  };
+  assert(!layout::IsCharacterAdvancesListValid(duplicate_advance));
+  layout::Layout too_many_advances = grid_style;
+  too_many_advances.character_advances.resize(65,
+                                               layout::CharacterAdvance{L'A', 1.0});
+  assert(!layout::IsCharacterAdvancesListValid(too_many_advances));
+  layout::CellGrid invalid_line_width = grid;
+  invalid_line_width.line_width_in_cells = 1.99;
+  assert(!layout::IsCellGridValid(invalid_line_width));
+  invalid_line_width.line_width_in_cells = 128.01;
+  assert(!layout::IsCellGridValid(invalid_line_width));
+  ++cases;
+
+  // Legacy punctuation visual bounds remain readable but never alter the
+  // actual hit/visual cell or the following character position.
   layout::Layout punctuation_style = grid_style;
   punctuation_style.punctuation_visual_bounds.push_back(
       layout::PunctuationVisualBounds{0x3002, 0.35, 0.55, 0.65, 0.95});
@@ -161,16 +315,12 @@ int main() {
   assert(punctuation.boxes.size() == 3 && punctuation_legacy.boxes.size() == 3);
   assert(EqualRect(&punctuation.boxes[1].hit_rect,
                    &punctuation_legacy.boxes[1].hit_rect));
+  assert(EqualRect(&punctuation.boxes[1].visual_rect,
+                   &punctuation.boxes[1].hit_rect));
   assert(EqualRect(&punctuation.boxes[2].hit_rect,
                    &punctuation_legacy.boxes[2].hit_rect));
-  assert(punctuation.boxes[1].visual_rect.left >
-         punctuation.boxes[1].hit_rect.left);
-  assert(punctuation.boxes[1].visual_rect.right <
-         punctuation.boxes[1].hit_rect.right);
-  assert(punctuation.boxes[1].visual_rect.top >
-         punctuation.boxes[1].hit_rect.top);
-  assert(punctuation.boxes[1].visual_rect.bottom <
-         punctuation.boxes[1].hit_rect.bottom);
+  assert(EqualRect(&punctuation.boxes[2].visual_rect,
+                   &punctuation.boxes[2].hit_rect));
   ++cases;
 
   layout::Layout duplicate_visual = punctuation_style;
@@ -209,7 +359,6 @@ int main() {
   // A disabled grid keeps the legacy wrap point. Enabling hanging punctuation
   // adds exactly one body cell for the terminal punctuation, then normal text
   // starts on the continuation row.
-  const std::wstring full_line(16, L'\u3042');
   const auto disabled_wrap =
       layout::Preview(full_line + L"。A", client, rect, grid_style);
   assert(disabled_wrap.ok() && disabled_wrap.boxes.size() == 18);

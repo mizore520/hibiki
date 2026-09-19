@@ -25,11 +25,13 @@ const GalAttachedCalibrationProbes _probes = GalAttachedCalibrationProbes(
 
 GalLookupSurfaceVariantV1 _variant({
   GalLookupReferenceClientV1 client = _client,
+  GalLookupCalibrationSlotV1? slot,
 }) => GalLookupSurfaceVariantV1(
   aspectRatio: client.aspectRatio,
   referenceClient: client,
   bodyRect: GalAttachedTextController.defaultBodyRect,
   layout: const GalLookupTextLayoutV1(),
+  slot: slot,
 );
 
 GalLookupSurfaceProfileV1 _profile({
@@ -60,6 +62,10 @@ class _FakeSurfacePort implements GalAttachedTextSurfacePort {
     providerId: 11,
     providerStatus: 1,
   );
+  final List<Completer<GalAttachedCallResult>> configureCompleters =
+      <Completer<GalAttachedCallResult>>[];
+  final List<GalLookupCalibrationSlotV1?> configuredSlots =
+      <GalLookupCalibrationSlotV1?>[];
   int nativeProbeMask = 0;
   bool calibrationActive = false;
   GalAttachedCallResult calibrationResult = const GalAttachedCallResult(
@@ -165,6 +171,10 @@ class _FakeSurfacePort implements GalAttachedTextSurfacePort {
     required bool riskAccepted,
   }) async {
     calls.add('configure:${mode.wireName}:$riskAccepted');
+    configuredSlots.add(variant.slot);
+    if (configureCompleters.isNotEmpty) {
+      return configureCompleters.removeAt(0).future;
+    }
     return configureResult;
   }
 
@@ -1371,6 +1381,103 @@ void main() {
       reason: 'clear 必须在旧 provider claim 返回前取消旧 activation op',
     );
   });
+
+  test(
+    'slot changes keep the latest activation and reject stale text hits',
+    () async {
+      final GalLookupSurfaceProfileV1 profile = GalLookupSurfaceProfileV1(
+        exePath: _exePath,
+        exeSha256: _sha,
+        mode: GalLookupSurfaceMode.attachedOnly,
+        unsafeLeftClickAccepted: true,
+        variants: <GalLookupSurfaceVariantV1>[
+          _variant(slot: GalLookupCalibrationSlotV1.dialogue),
+          _variant(slot: GalLookupCalibrationSlotV1.narration),
+        ],
+      );
+      preferences[key()] = jsonEncode(profile.toJson());
+
+      final Completer<GalAttachedCallResult> firstConfigure =
+          Completer<GalAttachedCallResult>();
+      port.configureCompleters.add(firstConfigure);
+      const String firstDialogue = '「最初の台詞」';
+      final Future<void> first = sync(text: firstDialogue);
+      await pumpEventQueue();
+      expect(port.configuredSlots, <GalLookupCalibrationSlotV1?>[
+        GalLookupCalibrationSlotV1.dialogue,
+      ]);
+
+      firstConfigure.complete(port.configureResult);
+      await first;
+      expect(controller.status, GalAttachedTextStatus.activeAttached);
+      expect(
+        controller.activeVariant?.slot,
+        GalLookupCalibrationSlotV1.dialogue,
+      );
+
+      final Completer<GalAttachedCallResult> narrationConfigure =
+          Completer<GalAttachedCallResult>();
+      final Completer<GalAttachedCallResult> finalDialogueConfigure =
+          Completer<GalAttachedCallResult>();
+      port.configureCompleters.addAll(<Completer<GalAttachedCallResult>>[
+        narrationConfigure,
+        finalDialogueConfigure,
+      ]);
+      const String narration = 'これは地の文です';
+      const String finalDialogue = '「戻った台詞」';
+      final Future<void> second = sync(text: narration);
+      await pumpEventQueue();
+      await sync(text: '更新された地の文です');
+      expect(
+        port.texts.map((({String text, int generation}) value) => value.text),
+        <String>[firstDialogue],
+        reason: '同类的新句必须等对应排版生效，不能先推入旧对话字格',
+      );
+      final Future<void> third = sync(text: finalDialogue);
+      await pumpEventQueue();
+
+      expect(port.configuredSlots, <GalLookupCalibrationSlotV1?>[
+        GalLookupCalibrationSlotV1.dialogue,
+        GalLookupCalibrationSlotV1.narration,
+        GalLookupCalibrationSlotV1.dialogue,
+      ]);
+
+      final GalAttachedSurfaceTarget target = controller.target!;
+      await controller.handleLookupText(
+        GalAttachedLookupHitV19(
+          target: target,
+          sourceText: firstDialogue,
+          textGeneration: controller.textGeneration,
+          charIndex: 0,
+          sourceLength: 1,
+        ),
+      );
+      expect(lookups, isEmpty, reason: '配置等待期间，旧正文不能绕过 latest source 校验触发查词');
+
+      // The narration reply arrives after the third operation has taken over.
+      // It must not replace the selected dialogue slot or push narration text.
+      narrationConfigure.complete(port.configureResult);
+      await second;
+      expect(
+        controller.activeVariant?.slot,
+        GalLookupCalibrationSlotV1.dialogue,
+      );
+      expect(
+        port.texts.map((({String text, int generation}) value) => value.text),
+        isNot(contains(narration)),
+      );
+
+      finalDialogueConfigure.complete(port.configureResult);
+      await third;
+      expect(controller.status, GalAttachedTextStatus.activeAttached);
+      expect(
+        controller.activeVariant?.slot,
+        GalLookupCalibrationSlotV1.dialogue,
+      );
+      expect(port.texts.last.text, finalDialogue);
+      expect(controller.latestSourceText, finalDialogue);
+    },
+  );
 
   test('faulted shield cannot be bypassed by persisted risk', () async {
     preferences[key()] = jsonEncode(

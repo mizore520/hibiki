@@ -169,6 +169,81 @@ GalCalibrationOcrAlignment _refine(img.Image image) =>
     ));
 
 void main() {
+  test('ordinary runs keep their actual origins across a narrow comma', () {
+    const String text = '日月山川田、目口中木本大小';
+    final img.Image image = img.Image(width: 330, height: 55);
+    img.fill(image, color: img.ColorRgb8(38, 53, 70));
+    final img.Color ink = img.ColorRgb8(241, 235, 209);
+    for (int i = 0; i < text.length; i++) {
+      final int left = 24 + i * 22 - (i > 5 ? 11 : 0);
+      if (i == 5) {
+        img.fillRect(
+          image,
+          x1: left + 2,
+          y1: 30,
+          x2: left + 4,
+          y2: 34,
+          color: ink,
+        );
+      } else {
+        img.fillRect(image, x1: left, y1: 14, x2: left + 2, y2: 35, color: ink);
+        img.fillRect(
+          image,
+          x1: left + 11,
+          y1: 14,
+          x2: left + 13,
+          y2: 35,
+          color: ink,
+        );
+        img.fillRect(
+          image,
+          x1: left,
+          y1: 17 + i % 3 * 5,
+          x2: left + 13,
+          y2: 19 + i % 3 * 5,
+          color: ink,
+        );
+      }
+    }
+    final GalCalibrationOcrAlignment result = refineGalCalibrationOcrGeometry((
+      pngBytes: Uint8List.fromList(img.encodePng(image)),
+      text: text,
+      searchRect: _search,
+      alignment: GalCalibrationOcrAlignment(
+        confidence: .99,
+        lines: [
+          GalCalibrationOcrMatchedLine(
+            sourceStart: 0,
+            sourceEnd: text.length,
+            cellCount: text.length,
+            lineIndex: 0,
+            rect: const OcrRect(left: 22, top: 9, right: 310, bottom: 41),
+            glyphs: [
+              for (int i = 0; i < text.length; i++)
+                GalCalibrationOcrGlyph(
+                  sourceIndex: i,
+                  charLength: 1,
+                  cellOffset: i,
+                  lineIndex: 0,
+                  confidence: .99,
+                  rect: OcrRect(
+                    left: 33 + i * 22.0 - (i > 5 ? 11 : 0),
+                    top: 9,
+                    right: 35 + i * 22.0 - (i > 5 ? 11 : 0),
+                    bottom: 41,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    ));
+    final GalCalibrationOcrGlyph before = result.lines.single.glyphs[4];
+    final GalCalibrationOcrGlyph after = result.lines.single.glyphs[6];
+    expect(before.inkMeasured, isTrue);
+    expect(after.inkMeasured, isTrue);
+    expect(after.rect.centerX - before.rect.centerX, closeTo(33, 1));
+  });
   for (final bool dark in <bool>[false, true]) {
     test(
       'pixel evidence removes CTC shift and drift with ${dark ? 'dark' : 'colored'} strokes',
@@ -195,8 +270,8 @@ void main() {
     final img.Image panel = img.Image(width: 305, height: 55);
     img.fill(panel, color: img.ColorRgb8(180, 200, 220));
     final GalCalibrationOcrAlignment result = _refine(panel);
-    expect(result.accepted, isFalse);
-    expect(result.reason, 'ocr_ink_geometry_weak');
+    expect(result.accepted, isTrue);
+    expect(result.lines.single.glyphs.any((g) => g.inkMeasured), isFalse);
   });
   test('repeated background tiles cannot explain distinct Hook characters', () {
     final img.Image panel = img.Image(width: 305, height: 55);
@@ -211,33 +286,42 @@ void main() {
         color: img.ColorRgb8(240, 230, 220),
       );
     }
-    expect(_refine(panel).accepted, isFalse);
+    expect(
+      _refine(panel).lines.single.glyphs.any((g) => g.inkMeasured),
+      isFalse,
+    );
   });
 
-  test('pixel evidence records a small punctuation visual box separately', () {
-    final GalCalibrationOcrAlignment refined = refineGalCalibrationOcrGeometry((
-      pngBytes: Uint8List.fromList(img.encodePng(_punctuationStrokes())),
-      text: _punctuationText,
-      searchRect: _search,
-      alignment: _punctuationAlignment(),
-    ));
-    expect(refined.accepted, isTrue);
-    final GalCalibrationOcrGlyph punctuation = refined.lines.single.glyphs
-        .singleWhere(
-          (GalCalibrationOcrGlyph glyph) =>
-              glyph.sourceIndex == _punctuationIndex,
-        );
-    expect(punctuation.visualMeasured, isTrue);
-    expect(punctuation.inkMeasured, isFalse);
-    expect(punctuation.rect.width, lessThan(10));
-    expect(punctuation.rect.height, lessThan(10));
-    final List<GalCalibrationOcrGlyph> anchors = refined.lines.single.glyphs
-        .where((GalCalibrationOcrGlyph glyph) => glyph.inkMeasured)
-        .toList();
-    expect(anchors.length, greaterThanOrEqualTo(10));
-    expect(anchors.first.rect.centerX, closeTo(31, .6));
-    expect(anchors[1].rect.centerX, closeTo(53, .6));
-  });
+  test(
+    'small punctuation never changes the glyph height from its ink bounds',
+    () {
+      final GalCalibrationOcrAlignment refined =
+          refineGalCalibrationOcrGeometry((
+            pngBytes: Uint8List.fromList(img.encodePng(_punctuationStrokes())),
+            text: _punctuationText,
+            searchRect: _search,
+            alignment: _punctuationAlignment(),
+          ));
+      expect(refined.accepted, isTrue);
+      final GalCalibrationOcrGlyph punctuation = refined.lines.single.glyphs
+          .singleWhere(
+            (GalCalibrationOcrGlyph glyph) =>
+                glyph.sourceIndex == _punctuationIndex,
+          );
+      expect(punctuation.visualMeasured, isFalse);
+      expect(punctuation.inkMeasured, isFalse);
+      expect(
+        punctuation.rect.height,
+        _punctuationAlignment().lines.single.rect.height,
+      );
+      final List<GalCalibrationOcrGlyph> anchors = refined.lines.single.glyphs
+          .where((GalCalibrationOcrGlyph glyph) => glyph.inkMeasured)
+          .toList();
+      expect(anchors.length, greaterThanOrEqualTo(10));
+      expect(anchors.first.rect.centerX, closeTo(31, .6));
+      expect(anchors[1].rect.centerX, closeTo(53, .6));
+    },
+  );
 
   test(
     'tiny noise and crop-edge punctuation do not become visual evidence',
@@ -279,7 +363,7 @@ void main() {
       ),
       alignment: _alignment(),
     ));
-    expect(result.accepted, isFalse);
+    expect(result.lines.single.glyphs.any((g) => g.inkMeasured), isFalse);
   });
   test('an edge-clipped anchor leaves the interior geometry usable', () {
     final GalCalibrationOcrAlignment result = refineGalCalibrationOcrGeometry((
