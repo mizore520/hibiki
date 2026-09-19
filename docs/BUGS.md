@@ -29,13 +29,14 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 2365 条。点号进各自文件。
+> 共 2366 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
-| [BUG-2543](bugs/BUG-2543-gal-incomplete-game-capture.md) | 🚧 | 🚧 | 部分游戏无法采集完整游戏画面 |
+| [BUG-2544](bugs/BUG-2544-gal-popup-blocks-attached-capture.md) | ✅ | ✅ | 词典占用鼠标时贴附层拒绝制卡截图 |
+| [BUG-2543](bugs/BUG-2543-gal-incomplete-game-capture.md) | ✅ | ✅ | 部分游戏无法采集完整游戏画面 |
 | [BUG-2542](bugs/BUG-2542-gal-cross-game-calibration-still-not-general.md) | 🚧 | ✅ | 换游戏后自动校准兼容性仍不足，需要逐游戏适配 |
-| [BUG-2541](bugs/BUG-2541-gal-magpie-upscaler-breaks-calibration.md) | 🚧 | 🚧 | Magpie 超分导致校准采集与已校准内嵌查词失效 |
+| [BUG-2541](bugs/BUG-2541-gal-magpie-upscaler-breaks-calibration.md) | ✅ | ✅ | Magpie 超分导致校准采集与已校准内嵌查词失效 |
 | [BUG-2535](bugs/BUG-2535-fushi-access-violation-after-calibration.md) | 🚧 | ✅ | 校准验证完成后 Fushi 发生访问冲突闪退 |
 | [BUG-2534](bugs/BUG-2534-background-calibration-sample-text-not-staged.md) | ✅ | ✅ | 后台校准采样未同步最新台词 |
 | [BUG-2533](bugs/BUG-2533-gal-calibration-image-grid.md) | ✅ | ✅ | 人工中心拟合无法求字号、换行及续行缩进 |
