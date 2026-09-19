@@ -457,6 +457,7 @@ void AttachedTextSurfaceWindow::AdoptNewEpoch(const Epoch &epoch,
   pre_calibration_rect_ = NormalizedRect{};
   pre_calibration_configured_ = false;
   surface_geometry_ = SurfaceGeometry{};
+  magpie_mapping_active_ = false;
   source_body_screen_rect_ = RECT{};
   mapped_body_screen_rect_ = RECT{};
   presentation_dpi_ = 96;
@@ -686,6 +687,7 @@ bool AttachedTextSurfaceWindow::RefreshTargetClient(RECT *client_screen,
     return false;
   }
   SurfaceGeometry geometry;
+  magpie_mapping_active_ = false;
   geometry.source_client_screen = source_client;
   geometry.source_viewport_screen = source_client;
   geometry.presentation_client_screen = client;
@@ -722,6 +724,7 @@ bool AttachedTextSurfaceWindow::RefreshTargetClient(RECT *client_screen,
         *error = "magpie_viewport_invalid";
       return false;
     }
+    magpie_mapping_active_ = true;
   }
   if (!fushi::attached_magpie_surface_geometry::IsMappingValid(geometry)) {
     if (error != nullptr)
@@ -1846,6 +1849,10 @@ void AttachedTextSurfaceWindow::SyncToTarget() {
     if (snapshot_publication_error == "geometry_provider_not_owned") {
       SetState("suspended", "geometryProviderPending",
                "attached_registry_owner_changed");
+    } else if (snapshot_publication_error ==
+               "magpie_cursor_capture_inactive") {
+      SetState("suspended", "cursorCapturePending",
+               "magpie_presentation_not_transparent");
     } else if (!snapshot_publication_error.empty()) {
       SetState("unavailable", "exclusiveFullscreenUnavailable",
                snapshot_publication_error);
@@ -1890,6 +1897,9 @@ bool AttachedTextSurfaceWindow::SetVisible(bool visible) {
     hit_snapshot_token_ = 0;
     published_snapshot_game_ = nullptr;
     published_snapshot_allow_risk_ = false;
+    published_snapshot_has_cursor_mapping_ = false;
+    published_snapshot_cursor_presentation_ = nullptr;
+    published_snapshot_cursor_mapping_ = SurfaceGeometry{};
     published_screen_rects_.clear();
     fushi::DisarmLowLevelMouseHook(hwnd_);
     mouse_hook_ready_ = false;
@@ -1910,6 +1920,9 @@ bool AttachedTextSurfaceWindow::SetVisible(bool visible) {
       hit_snapshot_token_ = 0;
       published_snapshot_game_ = nullptr;
       published_snapshot_allow_risk_ = false;
+      published_snapshot_has_cursor_mapping_ = false;
+      published_snapshot_cursor_presentation_ = nullptr;
+      published_snapshot_cursor_mapping_ = SurfaceGeometry{};
       published_screen_rects_.clear();
       fushi::FinalizeLowLevelMouseDirectInputShield(hwnd_);
       ShowWindow(hwnd_, SW_HIDE);
@@ -2057,6 +2070,9 @@ void AttachedTextSurfaceWindow::ClearInteractiveRegion() {
   hit_snapshot_token_ = 0;
   published_snapshot_game_ = nullptr;
   published_snapshot_allow_risk_ = false;
+  published_snapshot_has_cursor_mapping_ = false;
+  published_snapshot_cursor_presentation_ = nullptr;
+  published_snapshot_cursor_mapping_ = SurfaceGeometry{};
   published_screen_rects_.clear();
   clusters_.clear();
   text_layout_.Reset();
@@ -2128,6 +2144,21 @@ bool AttachedTextSurfaceWindow::PublishInteractiveSnapshot(
     }
     return false;
   }
+  const bool has_cursor_mapping = magpie_mapping_active_;
+  if (has_cursor_mapping) {
+    // Magpie's cursor is in source coordinates only while its presentation
+    // window is transparent.  A verified viewport with a non-transparent
+    // presentation is a toolbar/obscured state, so pause the attached layer
+    // instead of guessing which desktop space the next click uses.
+    SetLastError(ERROR_SUCCESS);
+    const LONG_PTR style = GetWindowLongPtrW(presentation_hwnd_, GWL_EXSTYLE);
+    if ((style == 0 && GetLastError() != ERROR_SUCCESS) ||
+        (style & static_cast<LONG_PTR>(WS_EX_TRANSPARENT)) == 0) {
+      if (publication_error != nullptr)
+        *publication_error = "magpie_cursor_capture_inactive";
+      return false;
+    }
+  }
   std::vector<RECT> screen_rects;
   screen_rects.reserve(clusters_.size());
   for (const ClusterBox &cluster : clusters_) {
@@ -2136,9 +2167,18 @@ bool AttachedTextSurfaceWindow::PublishInteractiveSnapshot(
     screen_rects.push_back(screen);
   }
   const bool effective_allow_risk = EffectiveAllowRisk();
+  const bool cursor_mapping_unchanged =
+      published_snapshot_has_cursor_mapping_ == has_cursor_mapping &&
+      (!has_cursor_mapping ||
+       (published_snapshot_cursor_presentation_ == presentation_hwnd_ &&
+        SurfaceGeometryEqual(published_snapshot_cursor_mapping_,
+                              surface_geometry_)));
   const bool unchanged =
       hit_snapshot_token_ != 0 && published_snapshot_game_ == target_.hwnd &&
       published_snapshot_allow_risk_ == effective_allow_risk &&
+      cursor_mapping_unchanged &&
+      fushi::LowLevelAttachedGlyphHitSnapshotIsCurrent(hwnd_,
+                                                       hit_snapshot_token_) &&
       published_screen_rects_.size() == screen_rects.size() &&
       std::equal(screen_rects.begin(), screen_rects.end(),
                  published_screen_rects_.begin(),
@@ -2154,13 +2194,23 @@ bool AttachedTextSurfaceWindow::PublishInteractiveSnapshot(
   }
   hit_snapshot_token_ = fushi::UpdateLowLevelAttachedGlyphHitRegions(
       hwnd_, target_.hwnd, screen_rects.data(), screen_rects.size(),
-      effective_allow_risk);
+      effective_allow_risk,
+      has_cursor_mapping ? &surface_geometry_ : nullptr,
+      has_cursor_mapping ? presentation_hwnd_ : nullptr);
   if (hit_snapshot_token_ != 0) {
     published_snapshot_game_ = target_.hwnd;
     published_snapshot_allow_risk_ = effective_allow_risk;
+    published_snapshot_has_cursor_mapping_ = has_cursor_mapping;
+    published_snapshot_cursor_presentation_ =
+        has_cursor_mapping ? presentation_hwnd_ : nullptr;
+    published_snapshot_cursor_mapping_ =
+        has_cursor_mapping ? surface_geometry_ : SurfaceGeometry{};
     published_screen_rects_ = std::move(screen_rects);
   } else {
     published_snapshot_game_ = nullptr;
+    published_snapshot_has_cursor_mapping_ = false;
+    published_snapshot_cursor_presentation_ = nullptr;
+    published_snapshot_cursor_mapping_ = SurfaceGeometry{};
     published_screen_rects_.clear();
   }
   return hit_snapshot_token_ != 0;
@@ -2804,11 +2854,27 @@ void AttachedTextSurfaceWindow::TickHoverLookup() {
           (under == hwnd_ || under == target_.hwnd ||
            under == presentation_hwnd_ ||
            IsChild(target_.hwnd, under) != FALSE);
+      POINT destination = screen;
+      if (over_text && magpie_mapping_active_) {
+        SetLastError(ERROR_SUCCESS);
+        const LONG_PTR style =
+            GetWindowLongPtrW(presentation_hwnd_, GWL_EXSTYLE);
+        const bool cursor_captured =
+            !(style == 0 && GetLastError() != ERROR_SUCCESS) &&
+            (style & static_cast<LONG_PTR>(WS_EX_TRANSPARENT)) != 0;
+        if (!cursor_captured ||
+            !fushi::attached_magpie_surface_geometry::
+                MapSourcePointToDestination(surface_geometry_, screen,
+                                            &destination)) {
+          over_text = false;
+        }
+      }
       if (over_text) {
-        // Invert the same offset EmitLookupEvent applies; do not rely on
-        // ScreenToClient while the HWND may be hidden (mouseHookBusy).
-        const POINT client{screen.x - surface_screen_rect_.left,
-                           screen.y - surface_screen_rect_.top};
+        // WindowFromPoint above answers only whether the raw cursor is over
+        // the game/presentation area.  Apply Magpie's source->destination
+        // cursor transform exactly once for the glyph lookup itself.
+        const POINT client{destination.x - surface_screen_rect_.left,
+                           destination.y - surface_screen_rect_.top};
         cluster = ClusterAt(client);
       }
     }

@@ -80,6 +80,30 @@ int main() {
          std::string::npos);
   assert(hook.find("TryObserveAttachedGlyphPhysicalUp(info->pt, false)") ==
          std::string::npos);
+  const size_t attached_branch =
+      hook.find("const auto attached_snapshot = AttachedGlyphSnapshotForTarget(target);");
+  const size_t attached_branch_end =
+      hook.find("if (!IsWindow(target))", attached_branch);
+  assert(attached_branch != std::string::npos &&
+         attached_branch_end != std::string::npos);
+  const std::string attached_fast_path =
+      hook.substr(attached_branch, attached_branch_end - attached_branch);
+  // The only synchronous HWND read permitted for a Magpie attached snapshot
+  // is the already-bound presentation ex-style bit used to validate the
+  // published coordinate space. No property lookup, enumeration or point
+  // ownership query may re-enter the hook path.
+  assert(attached_fast_path.find("GetPropW(") == std::string::npos);
+  assert(attached_fast_path.find("EnumWindows(") == std::string::npos);
+  assert(attached_fast_path.find("WindowFromPoint(") == std::string::npos);
+  assert(attached_fast_path.find("ResolveAttachedGlyphPointHit(") !=
+         std::string::npos);
+  const std::string cursor_style = FunctionSlice(
+      source, "bool PresentationWindowHasTransparentStyle(",
+      "bool AttachedGlyphCursorCaptureStillActive(");
+  assert(cursor_style.find("GetWindowLongPtrW(") != std::string::npos);
+  assert(cursor_style.find("GetPropW(") == std::string::npos);
+  assert(cursor_style.find("EnumWindows(") == std::string::npos);
+  assert(cursor_style.find("WindowFromPoint(") == std::string::npos);
 
   const std::string release = FunctionSlice(
       source, "bool AdvanceAttachedGlyphReleaseIfAcknowledged() {",
@@ -264,7 +288,7 @@ int main() {
            mode_change != std::string::npos && hide < mode_change);
   }
   // Misses still fall through the existing LL route without a shield request.
-  const size_t hit = hook.find("if (attached_rect != SIZE_MAX)");
+  const size_t hit = hook.find("if (ResolveAttachedGlyphPointHit(");
   const size_t begin_hit = hook.find("BeginAttachedGlyphTransaction(", hit);
   const size_t miss = hook.find("return CallNextHookEx(", begin_hit);
   assert(hit != std::string::npos && begin_hit != std::string::npos &&

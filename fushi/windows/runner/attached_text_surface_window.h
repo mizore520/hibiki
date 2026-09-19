@@ -371,6 +371,7 @@ private:
   NormalizedRect pre_calibration_rect_;
   bool pre_calibration_configured_ = false;
   SurfaceGeometry surface_geometry_;
+  bool magpie_mapping_active_ = false;
   RECT source_body_screen_rect_{};
   RECT mapped_body_screen_rect_{};
   int presentation_dpi_ = 96;
@@ -396,6 +397,9 @@ private:
   uint32_t hit_snapshot_token_ = 0;
   HWND published_snapshot_game_ = nullptr;
   bool published_snapshot_allow_risk_ = false;
+  bool published_snapshot_has_cursor_mapping_ = false;
+  HWND published_snapshot_cursor_presentation_ = nullptr;
+  SurfaceGeometry published_snapshot_cursor_mapping_;
   std::vector<RECT> published_screen_rects_;
 
   bool pointer_down_ = false;

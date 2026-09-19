@@ -10,7 +10,10 @@ namespace {
 
 using fushi::attached_magpie_surface_geometry::Mapping;
 using fushi::attached_magpie_surface_geometry::ClipRectTo;
+using fushi::attached_magpie_surface_geometry::MapSourcePointToDestination;
 using fushi::attached_magpie_surface_geometry::MapSourceRectToDestination;
+using fushi::attached_magpie_surface_geometry::ResolveCursorPoint;
+using fushi::attached_magpie_surface_geometry::ResolveCursorTransactionPoint;
 using fushi::attached_magpie_surface_geometry::ResolveVisibleBody;
 using NormalizedRect = fushi::attached_text_layout::NormalizedRect;
 
@@ -121,6 +124,68 @@ int main() {
   degenerate.source_viewport_screen = RECT{100, 100, 100, 900};
   ExpectRejected(degenerate, NormalizedRect{0.1, 0.1, 0.2, 0.2});
   ExpectRejected(cropped, NormalizedRect{0.0, 0.0, 0.0, 0.2});
+
+  // Cursor mapping follows Magpie's first/last-pixel rule, including both
+  // endpoints.  This is the live round-14 mapping and cursor sample.
+  const Mapping round14_mapping{
+      RECT{0, 0, 4000, 2000}, RECT{1001, 292, 3327, 1601},
+      RECT{0, 0, 3840, 2160}, RECT{1, 0, 3839, 2160}};
+  POINT mapped_point{};
+  assert(MapSourcePointToDestination(round14_mapping, POINT{1001, 292},
+                                     &mapped_point));
+  assert(mapped_point.x == 1 && mapped_point.y == 0);
+  assert(MapSourcePointToDestination(round14_mapping, POINT{3326, 1600},
+                                     &mapped_point));
+  assert(mapped_point.x == 3838 && mapped_point.y == 2159);
+  assert(MapSourcePointToDestination(round14_mapping, POINT{3089, 367},
+                                     &mapped_point));
+  assert(mapped_point.x == 3447 && mapped_point.y == 124);
+
+  // Round the non-negative delta before adding a negative destination origin.
+  // Rounding the absolute coordinate would produce -3 here instead of
+  // Magpie's -5 + lround(2.5) == -2.
+  const Mapping negative_destination{
+      RECT{0, 0, 5, 5}, RECT{0, 0, 5, 5}, RECT{-20, -20, 20, 20},
+      RECT{-5, -5, 6, 6}};
+  assert(MapSourcePointToDestination(negative_destination, POINT{1, 1},
+                                     &mapped_point));
+  assert(mapped_point.x == -2 && mapped_point.y == -2);
+
+  // Outside the published viewport the cursor keeps a one-to-one offset from
+  // the corresponding viewport edge instead of extending the scale.
+  const Mapping viewport_offset{
+      RECT{0, 0, 300, 300}, RECT{100, 100, 200, 200},
+      RECT{900, 900, 1300, 1300}, RECT{1000, 1000, 1200, 1200}};
+  assert(MapSourcePointToDestination(viewport_offset, POINT{90, 210},
+                                     &mapped_point));
+  assert(mapped_point.x == 990 && mapped_point.y == 1210);
+
+  // A physical point can fall in one destination glyph while its captured
+  // source mapping falls in another.  The snapshot's selected space decides
+  // the hit; it must never try both rectangles and accept whichever matches.
+  const POINT physical_cursor{3089, 367};
+  const RECT raw_glyph{3075, 350, 3105, 385};
+  const RECT mapped_glyph{3435, 110, 3460, 140};
+  POINT resolved_cursor{};
+  assert(ResolveCursorPoint(nullptr, false, physical_cursor,
+                            &resolved_cursor));
+  assert(PtInRect(&raw_glyph, resolved_cursor) != FALSE);
+  assert(PtInRect(&mapped_glyph, resolved_cursor) == FALSE);
+  assert(ResolveCursorPoint(&round14_mapping, true, physical_cursor,
+                            &resolved_cursor));
+  assert(PtInRect(&raw_glyph, resolved_cursor) == FALSE);
+  assert(PtInRect(&mapped_glyph, resolved_cursor) != FALSE);
+
+  // Once a Magpie snapshot has been admitted, leaving capture mode invalidates
+  // both a fresh hit and the up side of an already admitted down/up pair.
+  assert(!ResolveCursorPoint(&round14_mapping, false, physical_cursor,
+                             &resolved_cursor));
+  assert(ResolveCursorTransactionPoint(&round14_mapping, true, true,
+                                       physical_cursor, &resolved_cursor));
+  assert(!ResolveCursorTransactionPoint(&round14_mapping, true, false,
+                                        physical_cursor, &resolved_cursor));
+  assert(!ResolveCursorTransactionPoint(nullptr, true, false, physical_cursor,
+                                        &resolved_cursor));
 
   std::cout << "attached Magpie surface geometry passed\n";
   return 0;

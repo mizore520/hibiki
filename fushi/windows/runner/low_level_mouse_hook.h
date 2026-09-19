@@ -30,6 +30,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "attached_magpie_surface_geometry.h"
+
 namespace fushi {
 
 // 钩子命中时 PostMessage 给目标窗口的消息（WM_APP 段，进程内私有）：
@@ -139,7 +141,15 @@ bool LowLevelAttachedGlyphUsesRiskFallback(HWND target);
 // and copying happen here on the window thread, never in WH_MOUSE_LL.
 uint32_t UpdateLowLevelAttachedGlyphHitRegions(
     HWND surface, HWND game_owner, const RECT* screen_rects,
-    size_t screen_rect_count, bool allow_risk);
+    size_t screen_rect_count, bool allow_risk,
+    const attached_magpie_surface_geometry::Mapping* cursor_mapping,
+    HWND cursor_presentation_hwnd);
+
+// True while the exact immutable snapshot for |surface| and |token| is still
+// published.  A callback can revoke a Magpie snapshot immediately after its
+// bound presentation HWND leaves cursor-capture mode; the surface thread uses
+// this bit to force a fresh publication on its next health sync.
+bool LowLevelAttachedGlyphHitSnapshotIsCurrent(HWND surface, uint32_t token);
 
 // Revoke one surface's immutable snapshot and fail-open any owned transaction.
 // Safe to call repeatedly during sentence replacement, hide, detach or target
