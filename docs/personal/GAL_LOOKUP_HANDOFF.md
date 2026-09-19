@@ -2,6 +2,8 @@
 
 更新：2026-09-19，第十四轮收尾。完整历史见 [样本记录](LOOKUP_CALIBRATION_SAMPLES.md)。
 
+启动交接补充：用户随后运行 BAT 在源码状态检查处失败，已定位并修复未跟踪中文文件的 Git 转义与 Windows PowerShell 编码问题（BUG-2548）。启动器两项定向测试、分析以及原工作区 CMD/936 下的同一状态读取语句通过。没有启动完整构建，用户可继续运行原 BAT；OCR/Magpie 源码及下列验收边界不变。
+
 ## 基线与阶段
 
 - 唯一工作区 `.worktrees/lookup-calibration-samples-20260917`，分支 `codex/lookup-calibration-samples-20260917`。起点 `d72f47e751`；Magpie 鼠标修复 `cf8d802367`；本轮最终源码 **`01a4eaaa09`**。未合入 `custom`、未推送、未提 PR；用户要求等他说提才提。

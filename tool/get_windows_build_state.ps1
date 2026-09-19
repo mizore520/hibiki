@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   [Parameter(Mandatory = $true)]
   [string] $RepoRoot
@@ -6,6 +6,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+
+# Git emits literal path names as UTF-8. Windows PowerShell otherwise decodes
+# them with the console's legacy code page when launched from cmd.exe.
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 
 function Invoke-GitText {
   param([Parameter(ValueFromRemainingArguments = $true)][string[]] $Arguments)
@@ -101,7 +105,8 @@ if ($trackedPaths.Count -gt 0) {
   $diffArguments = @('diff', '--binary', 'HEAD', '--') + $trackedPaths
   $trackedPatch = Invoke-GitText @diffArguments
 }
-$untrackedText = Invoke-GitText 'ls-files' '--others' '--exclude-standard'
+# Untracked paths need the same literal non-ASCII names as tracked paths.
+$untrackedText = Invoke-GitText '-c' 'core.quotePath=false' 'ls-files' '--others' '--exclude-standard'
 $untracked = @(
   $untrackedText -split "`n" |
     ForEach-Object { $_.TrimEnd("`r") } |

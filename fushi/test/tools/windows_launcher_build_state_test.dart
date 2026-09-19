@@ -71,7 +71,7 @@ void main() {
       expect(helper, contains(r"$requiredCommands = @('cmake')"));
       expect(
         helper,
-        contains('if (-not $Force -and -not $RunTests)'),
+        contains(r'if (-not $Force -and -not $RunTests)'),
         reason: '缓存只能短路普通本地构建，不能短路显式的完整测试请求',
       );
       expect(helper, contains(r"$requiredCommands += 'ctest'"));
@@ -167,6 +167,7 @@ void main() {
       await git(<String>['init']);
       await git(<String>['config', 'user.name', 'Fushi Test']);
       await git(<String>['config', 'user.email', 'fushi-test@example.invalid']);
+      await git(<String>['config', 'core.quotePath', 'true']);
       await File('${temp.path}/.gitignore').writeAsString('build/\n');
       final File tracked = File('${temp.path}/source.txt');
       await tracked.writeAsString('one\n');
@@ -222,7 +223,18 @@ void main() {
       expect(await state(), clean);
 
       await File('${temp.path}/new_source.txt').writeAsString('new\n');
-      expect(await state(), isNot(clean));
+      final String asciiUntracked = await state();
+      expect(asciiUntracked, isNot(clean));
+
+      final File chineseUntracked = File('${temp.path}/tool/启动识别测试.bat');
+      await chineseUntracked.writeAsString('first\n');
+      final String chineseState = await state();
+      expect(chineseState, matches(RegExp(r'^[a-f0-9]{64}$')));
+      expect(chineseState, isNot(asciiUntracked));
+      await chineseUntracked.writeAsString('second\n');
+      expect(await state(), isNot(chineseState));
+      await chineseUntracked.delete();
+      expect(await state(), asciiUntracked);
     },
   );
 }

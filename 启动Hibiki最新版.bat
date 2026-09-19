@@ -73,7 +73,7 @@ if not exist "%GET_BUILD_STATE%" (
   goto :fail
 )
 set "STATE="
-for /f "delims=" %%i in ('powershell -NoProfile -ExecutionPolicy Bypass -File "%GET_BUILD_STATE%" -RepoRoot "%REPO%" 2^>nul') do set "STATE=%%i"
+for /f "delims=" %%i in ('powershell -NoProfile -ExecutionPolicy Bypass -File "%GET_BUILD_STATE%" -RepoRoot "%REPO%"') do set "STATE=%%i"
 if not defined STATE (
   echo [ERROR] Cannot compute the source state for: %REPO%
   goto :fail
@@ -212,7 +212,7 @@ rem before the expensive helper build so that an already-finished build cannot
 rem be duplicated from an earlier stale decision snapshot.
 if /i not "%~1"=="clean" (
   set "RECHECK_STATE="
-  for /f "delims=" %%i in ('powershell -NoProfile -ExecutionPolicy Bypass -File "%GET_BUILD_STATE%" -RepoRoot "%REPO%" 2^>nul') do set "RECHECK_STATE=%%i"
+  for /f "delims=" %%i in ('powershell -NoProfile -ExecutionPolicy Bypass -File "%GET_BUILD_STATE%" -RepoRoot "%REPO%"') do set "RECHECK_STATE=%%i"
   set "RECHECK_BUILT="
   if exist "%STAMP%" set /p RECHECK_BUILT=<"%STAMP%"
   if exist "%EXE%" if defined RECHECK_STATE if "!RECHECK_BUILT!"=="!RECHECK_STATE!" (
@@ -284,7 +284,7 @@ rem Bootstrap may update generated dependency state but not source inputs. Re-re
 rem the fingerprint after the successful build so the stamp names exactly what
 rem is in the bundle.
 set "STATE="
-for /f "delims=" %%i in ('powershell -NoProfile -ExecutionPolicy Bypass -File "%GET_BUILD_STATE%" -RepoRoot "%REPO%" 2^>nul') do set "STATE=%%i"
+for /f "delims=" %%i in ('powershell -NoProfile -ExecutionPolicy Bypass -File "%GET_BUILD_STATE%" -RepoRoot "%REPO%"') do set "STATE=%%i"
 if not defined STATE (
   echo [ERROR] Build succeeded but the source state could not be recorded.
   goto :fail
