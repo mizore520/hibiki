@@ -618,4 +618,29 @@ void main() {
       reason: '不得回退到 slide 延迟路径（stale-dismiss 会杀掉新卡，回归 signature）',
     );
   });
+
+  test(
+    'desktop work-area clamp keeps shell HRGN and shadow aligned with DOM',
+    () {
+      final String reveal = functionBody(
+        cpp,
+        'void GlobalLookupWindow::RevealStack(',
+      );
+      final String finalize = functionBody(
+        cpp,
+        'void GlobalLookupWindow::FinalizePendingShellGeometry(',
+      );
+      expect(reveal, contains('bbox_left + clamp_dx_css'));
+      expect(reveal, contains('bbox_top + clamp_dy_css'));
+      expect(
+        reveal,
+        contains('FinalizePendingShellGeometry(geometry_epoch, clamp_dx_css,'),
+      );
+      expect(finalize, contains('CommitPendingShellGeometry(geometry_epoch)'));
+      expect(finalize, contains('rect[0] -= clamp_dx_css;'));
+      expect(finalize, contains('rect[1] -= clamp_dy_css;'));
+      expect(hdr, contains('double clamp_dx_css = 0.0'));
+      expect(hdr, contains('double clamp_dy_css = 0.0'));
+    },
+  );
 }

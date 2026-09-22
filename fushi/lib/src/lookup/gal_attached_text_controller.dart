@@ -503,7 +503,7 @@ class GalAttachedTextController extends ChangeNotifier {
     }
     _latestSourceText = nextText;
     if (calibrationActive) {
-      await _pushLatestTextIfActive();
+      if (!inspectOnly) await _pushLatestTextIfActive();
       return;
     }
     if (_activationDeferred) {
@@ -596,7 +596,9 @@ class GalAttachedTextController extends ChangeNotifier {
         return;
       }
     }
-    await _pushLatestTextIfActive();
+    // Inspection only resolves the profile; sending the next sentence here
+    // would rebuild native hit boxes with the previous slot's layout.
+    if (!inspectOnly) await _pushLatestTextIfActive();
   }
 
   Future<void> _attachTarget({
@@ -1408,14 +1410,26 @@ class GalAttachedTextController extends ChangeNotifier {
         }
         if (_latestSourceText.isEmpty) {
           _surfaceVisible = false;
-          _activeVariant = variant;
           _setStatus(
             GalAttachedTextStatus.waitingForBodyThread,
             reason: 'state_event_no_source_text',
           );
           break;
         }
-        _activeVariant = variant;
+        // Visibility does not prove which slot is configured. Only a
+        // successful Configure response may advance _activeVariant; otherwise
+        // phase 2 mistakes the desired slot for an installed one.
+        if (!identical(variant, _activeVariant)) {
+          if (!identical(variant, _activationVariantInFlight)) {
+            _activationDeferred = true;
+          }
+          _surfaceVisible = false;
+          _setStatus(
+            GalAttachedTextStatus.suspended,
+            reason: 'state_event_layout_pending',
+          );
+          break;
+        }
         _setStatus(GalAttachedTextStatus.activeAttached, reason: event.reason);
         unawaited(_pushLatestTextIfActive());
         break;
@@ -2104,6 +2118,21 @@ class GalAttachedTextController extends ChangeNotifier {
             !stageForBackgroundCalibrationCapture) ||
         _latestSourceText == _sentSourceText) {
       return;
+    }
+    // A newer inspected sentence can arrive while Configure is in flight.
+    // Never publish it with the slot that just finished installing.
+    if (!calibrationActive &&
+        _activeCaptureLease == null &&
+        !stageForBackgroundCalibrationCapture &&
+        _latestSourceText.isNotEmpty) {
+      final GalLookupSurfaceVariantV1? selected =
+          _profile != null && _currentClient != null
+          ? _profile!.bestVariantForSourceText(
+              _currentClient!,
+              _latestSourceText,
+            )
+          : null;
+      if (selected == null || !identical(selected, _activeVariant)) return;
     }
     await _pushText(_latestSourceText);
   }

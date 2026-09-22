@@ -290,6 +290,7 @@ void main() {
   Future<void> sync({
     String text = 'これは本文テストです',
     String? launchExePath,
+    bool inspectOnly = false,
     int sessionEpoch = 9001,
   }) => controller.syncSession(
     active: true,
@@ -298,6 +299,7 @@ void main() {
     targetHwnd: 77,
     sourceText: text,
     launchExePath: launchExePath,
+    inspectOnly: inspectOnly,
   );
 
   String key() => GalLookupSurfaceProfileV1.preferenceKeyForExePath(_exePath);
@@ -1381,6 +1383,132 @@ void main() {
       reason: 'clear 必须在旧 provider claim 返回前取消旧 activation op',
     );
   });
+
+  test(
+    'two-phase sync installs the selected slot before publishing text',
+    () async {
+      preferences[key()] = jsonEncode(
+        GalLookupSurfaceProfileV1(
+          exePath: _exePath,
+          exeSha256: _sha,
+          mode: GalLookupSurfaceMode.attachedOnly,
+          unsafeLeftClickAccepted: true,
+          variants: <GalLookupSurfaceVariantV1>[
+            _variant(slot: GalLookupCalibrationSlotV1.dialogue),
+            _variant(slot: GalLookupCalibrationSlotV1.narration),
+          ],
+        ).toJson(),
+      );
+      const String dialogue = '「会話」';
+      const String narration = '地の文です';
+      await sync(text: dialogue);
+      expect(port.texts.last.text, dialogue);
+
+      // Central sync inspects first, then admits/configures the chosen layout.
+      await sync(text: narration, inspectOnly: true);
+      expect(controller.latestSourceText, narration);
+      expect(port.texts.last.text, dialogue);
+      expect(
+        controller.activeVariant?.slot,
+        GalLookupCalibrationSlotV1.dialogue,
+      );
+
+      // A visibility event from the old native layout cannot claim that the
+      // new slot has already been installed.
+      void reportVisible() => controller.handleSurfaceStateChanged(
+        GalAttachedSurfaceStateEvent(
+          target: controller.target!,
+          state: 'active',
+          status: 'visible',
+          surfaceVisible: true,
+          providerKind: 4,
+          providerId: 11,
+          providerStatus: 2,
+        ),
+      );
+      reportVisible();
+      expect(
+        controller.activeVariant?.slot,
+        GalLookupCalibrationSlotV1.dialogue,
+      );
+      expect(controller.status, GalAttachedTextStatus.suspended);
+
+      final Completer<GalAttachedCallResult> configuring =
+          Completer<GalAttachedCallResult>();
+      port.configureCompleters.add(configuring);
+      final Future<void> secondPhase = sync(text: narration);
+      await pumpEventQueue();
+      expect(port.configuredSlots, <GalLookupCalibrationSlotV1?>[
+        GalLookupCalibrationSlotV1.dialogue,
+        GalLookupCalibrationSlotV1.narration,
+      ]);
+      expect(port.texts.last.text, dialogue);
+      reportVisible();
+      expect(
+        controller.activeVariant?.slot,
+        GalLookupCalibrationSlotV1.dialogue,
+      );
+      configuring.complete(port.configureResult);
+      await secondPhase;
+      expect(
+        controller.activeVariant?.slot,
+        GalLookupCalibrationSlotV1.narration,
+      );
+      expect(port.texts.last.text, narration);
+
+      const String nextDialogue = '「次の会話」';
+      await sync(text: nextDialogue, inspectOnly: true);
+      expect(port.texts.last.text, narration);
+      await sync(text: nextDialogue);
+      expect(port.configuredSlots.last, GalLookupCalibrationSlotV1.dialogue);
+      expect(
+        controller.activeVariant?.slot,
+        GalLookupCalibrationSlotV1.dialogue,
+      );
+      expect(port.texts.last.text, nextDialogue);
+    },
+  );
+
+  test(
+    'inspection racing Configure never publishes text under the old slot',
+    () async {
+      preferences[key()] = jsonEncode(
+        GalLookupSurfaceProfileV1(
+          exePath: _exePath,
+          exeSha256: _sha,
+          mode: GalLookupSurfaceMode.attachedOnly,
+          unsafeLeftClickAccepted: true,
+          variants: <GalLookupSurfaceVariantV1>[
+            _variant(slot: GalLookupCalibrationSlotV1.dialogue),
+            _variant(slot: GalLookupCalibrationSlotV1.narration),
+          ],
+        ).toJson(),
+      );
+      const String firstDialogue = '「会話」';
+      const String narration = '地の文です';
+      const String nextDialogue = '「次の会話」';
+      await sync(text: firstDialogue);
+      final Completer<GalAttachedCallResult> configuring =
+          Completer<GalAttachedCallResult>();
+      port.configureCompleters.add(configuring);
+      final Future<void> narrationPhase = sync(text: narration);
+      await pumpEventQueue();
+      expect(port.configuredSlots.last, GalLookupCalibrationSlotV1.narration);
+
+      await sync(text: nextDialogue, inspectOnly: true);
+      configuring.complete(port.configureResult);
+      await narrationPhase;
+      expect(
+        controller.activeVariant?.slot,
+        GalLookupCalibrationSlotV1.narration,
+      );
+      expect(port.texts.last.text, firstDialogue);
+
+      await sync(text: nextDialogue);
+      expect(port.configuredSlots.last, GalLookupCalibrationSlotV1.dialogue);
+      expect(port.texts.last.text, nextDialogue);
+    },
+  );
 
   test(
     'slot changes keep the latest activation and reject stale text hits',
