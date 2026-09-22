@@ -48,6 +48,7 @@ struct CellGrid {
   double quoted_continuation_indent =
       std::numeric_limits<double>::quiet_NaN();
   bool hanging_punctuation = false;
+  bool trim_wrap_whitespace = false;
 
   bool operator==(const CellGrid &other) const {
     const bool same_line_width =
@@ -70,7 +71,8 @@ struct CellGrid {
            same_line_width &&
            columns == other.columns &&
            same_continuation_indent && same_quoted_continuation_indent &&
-           hanging_punctuation == other.hanging_punctuation;
+           hanging_punctuation == other.hanging_punctuation &&
+           trim_wrap_whitespace == other.trim_wrap_whitespace;
   }
 
   bool operator!=(const CellGrid &other) const { return !(*this == other); }
@@ -141,10 +143,10 @@ inline bool IsCellGridValid(const CellGrid &grid) {
              grid.cell_height_per_client_height &&
          line_width_valid && grid.columns >= 2 && grid.columns <= 128 &&
          std::isfinite(grid.continuation_indent) &&
-         grid.continuation_indent >= 0 &&
+         grid.continuation_indent >= -1 &&
          grid.continuation_indent <= maximum_indent &&
          std::isfinite(grid.quoted_continuation_indent) &&
-         grid.quoted_continuation_indent >= 0 &&
+         grid.quoted_continuation_indent >= -1 &&
          grid.quoted_continuation_indent <= maximum_indent;
 }
 
@@ -435,11 +437,14 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
   const double continuation_indent = quoted ? grid.quoted_continuation_indent
                                             : grid.continuation_indent;
   int row = 0;
-  double cursor_in_cells = 0.0;
+  // The body contains the leftmost row. Signed indentation supports a first
+  // row one cell to the right without moving later hit boxes outside the body.
+  double cursor_in_cells = std::max(0.0, -continuation_indent);
   bool hanging_punctuation_used = false;
+  bool pending_wrap_space = false;
   const auto advance_line = [&]() {
     ++row;
-    cursor_in_cells = continuation_indent;
+    cursor_in_cells = std::max(0.0, continuation_indent);
     hanging_punctuation_used = false;
   };
   const auto next_cell_bounds = [&](double left_in_cells, double width_in_cells,
@@ -482,12 +487,14 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
       }
     }
     if (code == L'\r') {
+      pending_wrap_space = false;
       if (index + 1 < source.size() && source[index + 1] == L'\n') ++index;
       advance_line();
       previous_cell = false;
       continue;
     }
     if (code == L'\n') {
+      pending_wrap_space = false;
       advance_line();
       previous_cell = false;
       continue;
@@ -509,6 +516,19 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
       return Failure("invalid_layout");
 
     constexpr double kCursorEpsilon = 1e-9;
+    if (grid.trim_wrap_whitespace && whitespace &&
+        (pending_wrap_space ||
+         cursor_in_cells + width_in_cells >
+             line_width_in_cells + kCursorEpsilon)) {
+      pending_wrap_space = true;
+      previous_cell = false;
+      index += length - 1;
+      continue;
+    }
+    if (pending_wrap_space) {
+      advance_line();
+      pending_wrap_space = false;
+    }
     bool allow_hanging = false;
     if (cursor_in_cells + width_in_cells >
         line_width_in_cells + kCursorEpsilon) {

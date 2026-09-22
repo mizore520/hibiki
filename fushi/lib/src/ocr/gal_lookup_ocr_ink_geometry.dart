@@ -75,6 +75,11 @@ GalCalibrationOcrMatchedLine? _refineInkSegments(
             lineIndex: g.lineIndex,
             rect: g.rect,
             confidence: g.confidence,
+            matchKind: g.matchKind,
+            ocrTokenIndex: g.ocrTokenIndex,
+            syntheticOcrPosition: g.syntheticOcrPosition,
+            ocrConfidence: g.ocrConfidence,
+            ocrText: g.ocrText,
           ),
     ];
     if (glyphs.length >= 4) {
@@ -129,6 +134,11 @@ GalCalibrationOcrMatchedLine? _refineInkSegments(
           rect: evidence[g.sourceIndex]?.rect ?? g.rect,
           confidence: g.confidence,
           inkMeasured: evidence.containsKey(g.sourceIndex),
+          matchKind: g.matchKind,
+          ocrTokenIndex: g.ocrTokenIndex,
+          syntheticOcrPosition: g.syntheticOcrPosition,
+          ocrConfidence: g.ocrConfidence,
+          ocrText: g.ocrText,
         ),
     ],
   );
@@ -499,6 +509,11 @@ GalCalibrationOcrMatchedLine? _measureInkLine(
           confidence: g.confidence,
           rect: measured[g.sourceIndex] ?? g.rect,
           inkMeasured: measured.containsKey(g.sourceIndex),
+          matchKind: g.matchKind,
+          ocrTokenIndex: g.ocrTokenIndex,
+          syntheticOcrPosition: g.syntheticOcrPosition,
+          ocrConfidence: g.ocrConfidence,
+          ocrText: g.ocrText,
         ),
     ],
   );

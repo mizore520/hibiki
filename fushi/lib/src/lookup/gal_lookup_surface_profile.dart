@@ -168,6 +168,7 @@ class GalLookupCellGridV1 {
     required this.continuationIndent,
     required this.quotedContinuationIndent,
     this.hangingPunctuation = false,
+    this.trimWrapWhitespace = false,
     this.lineWidthInCells,
   });
 
@@ -175,9 +176,14 @@ class GalLookupCellGridV1 {
   final double lineAdvancePerClientHeight;
   final double cellHeightPerClientHeight;
   final int columns;
+
+  /// Signed shift of later rows relative to the first row. A negative value
+  /// places the first row inside the common body and starts later rows at its
+  /// left edge. Existing nonnegative profiles retain their original meaning.
   final double continuationIndent;
   final double quotedContinuationIndent;
   final bool hangingPunctuation;
+  final bool trimWrapWhitespace;
   final double? lineWidthInCells;
 
   /// OCR can measure a fractional last line width while [columns] remains the
@@ -203,10 +209,10 @@ class GalLookupCellGridV1 {
               lineWidthInCells! >= 2 &&
               lineWidthInCells! <= 128)) &&
       continuationIndent.isFinite &&
-      continuationIndent >= 0 &&
+      continuationIndent >= -1 &&
       continuationIndent <= _maximumIndent &&
       quotedContinuationIndent.isFinite &&
-      quotedContinuationIndent >= 0 &&
+      quotedContinuationIndent >= -1 &&
       quotedContinuationIndent <= _maximumIndent;
 
   double get _maximumIndent => math.min(columns - 1, 8).toDouble();
@@ -221,6 +227,7 @@ class GalLookupCellGridV1 {
       'quotedContinuationIndent': quotedContinuationIndent,
     };
     if (hangingPunctuation) result['hangingPunctuation'] = true;
+    if (trimWrapWhitespace) result['trimWrapWhitespace'] = true;
     if (lineWidthInCells != null) {
       result['lineWidthInCells'] = lineWidthInCells;
     }
@@ -242,8 +249,19 @@ class GalLookupCellGridV1 {
       ...legacyKeys,
       'hangingPunctuation',
     };
+    final Set<String> trimKeys = <String>{...legacyKeys, 'trimWrapWhitespace'};
+    final Set<String> extendedTrimKeys = <String>{
+      ...legacyKeys,
+      'hangingPunctuation',
+      'trimWrapWhitespace',
+    };
     final Set<String> lineWidthKeys = <String>{
       ...legacyKeys,
+      'lineWidthInCells',
+    };
+    final Set<String> trimLineWidthKeys = <String>{
+      ...legacyKeys,
+      'trimWrapWhitespace',
       'lineWidthInCells',
     };
     final Set<String> extendedLineWidthKeys = <String>{
@@ -251,10 +269,20 @@ class GalLookupCellGridV1 {
       'hangingPunctuation',
       'lineWidthInCells',
     };
+    final Set<String> extendedTrimLineWidthKeys = <String>{
+      ...legacyKeys,
+      'hangingPunctuation',
+      'trimWrapWhitespace',
+      'lineWidthInCells',
+    };
     if (!_hasExactKeys(map, legacyKeys) &&
         !_hasExactKeys(map, extendedKeys) &&
+        !_hasExactKeys(map, trimKeys) &&
+        !_hasExactKeys(map, extendedTrimKeys) &&
         !_hasExactKeys(map, lineWidthKeys) &&
-        !_hasExactKeys(map, extendedLineWidthKeys)) {
+        !_hasExactKeys(map, trimLineWidthKeys) &&
+        !_hasExactKeys(map, extendedLineWidthKeys) &&
+        !_hasExactKeys(map, extendedTrimLineWidthKeys)) {
       return null;
     }
     final Object? hangingPunctuationValue = map['hangingPunctuation'];
@@ -264,6 +292,14 @@ class GalLookupCellGridV1 {
     }
     final bool hangingPunctuation = hangingPunctuationValue is bool
         ? hangingPunctuationValue
+        : false;
+    final Object? trimWrapWhitespaceValue = map['trimWrapWhitespace'];
+    if (map.containsKey('trimWrapWhitespace') &&
+        trimWrapWhitespaceValue is! bool) {
+      return null;
+    }
+    final bool trimWrapWhitespace = trimWrapWhitespaceValue is bool
+        ? trimWrapWhitespaceValue
         : false;
     final double? lineWidthInCells = map.containsKey('lineWidthInCells')
         ? _finiteDouble(map['lineWidthInCells'])
@@ -279,10 +315,12 @@ class GalLookupCellGridV1 {
       cellHeightPerClientHeight:
           _finiteDouble(map['cellHeightPerClientHeight']) ?? double.nan,
       columns: _exactInt(map['columns']) ?? 0,
-      continuationIndent: _finiteDouble(map['continuationIndent']) ?? -1.0,
+      continuationIndent:
+          _finiteDouble(map['continuationIndent']) ?? double.nan,
       quotedContinuationIndent:
-          _finiteDouble(map['quotedContinuationIndent']) ?? -1.0,
+          _finiteDouble(map['quotedContinuationIndent']) ?? double.nan,
       hangingPunctuation: hangingPunctuation,
+      trimWrapWhitespace: trimWrapWhitespace,
       lineWidthInCells: lineWidthInCells,
     );
     return grid.isValid ? grid : null;
@@ -298,6 +336,7 @@ class GalLookupCellGridV1 {
       other.continuationIndent == continuationIndent &&
       other.quotedContinuationIndent == quotedContinuationIndent &&
       other.hangingPunctuation == hangingPunctuation &&
+      other.trimWrapWhitespace == trimWrapWhitespace &&
       other.lineWidthInCells == lineWidthInCells;
 
   @override
@@ -309,6 +348,7 @@ class GalLookupCellGridV1 {
     continuationIndent,
     quotedContinuationIndent,
     hangingPunctuation,
+    trimWrapWhitespace,
     lineWidthInCells,
   );
 }

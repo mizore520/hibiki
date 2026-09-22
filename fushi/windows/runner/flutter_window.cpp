@@ -1161,13 +1161,18 @@ bool HasExactCellGridKeys(const flutter::EncodableMap* map) {
   constexpr size_t kLegacyKeyCount =
       sizeof(kLegacyKeys) / sizeof(kLegacyKeys[0]);
   if (map == nullptr || map->size() < kLegacyKeyCount ||
-      map->size() > kLegacyKeyCount + 2)
+      map->size() > kLegacyKeyCount + 3)
     return false;
   for (const char* key : kLegacyKeys) {
     if (map->find(flutter::EncodableValue(key)) == map->end()) return false;
   }
   const auto hanging = map->find(flutter::EncodableValue("hangingPunctuation"));
   if (hanging != map->end() && std::get_if<bool>(&hanging->second) == nullptr)
+    return false;
+  const auto trim_wrap_whitespace =
+      map->find(flutter::EncodableValue("trimWrapWhitespace"));
+  if (trim_wrap_whitespace != map->end() &&
+      std::get_if<bool>(&trim_wrap_whitespace->second) == nullptr)
     return false;
   const auto line_width = map->find(flutter::EncodableValue("lineWidthInCells"));
   if (line_width != map->end() &&
@@ -1178,6 +1183,7 @@ bool HasExactCellGridKeys(const flutter::EncodableMap* map) {
   }
   if (map->size() != kLegacyKeyCount +
                            (hanging != map->end() ? 1u : 0u) +
+                           (trim_wrap_whitespace != map->end() ? 1u : 0u) +
                            (line_width != map->end() ? 1u : 0u)) {
     return false;
   }
@@ -1321,6 +1327,12 @@ AttachedTextSurfaceWindow::Layout AttachedLayoutFromArgs(
           grid_map->find(flutter::EncodableValue("hangingPunctuation"));
       if (hanging != grid_map->end()) {
         grid.hanging_punctuation = std::get<bool>(hanging->second);
+      }
+      const auto trim_wrap_whitespace =
+          grid_map->find(flutter::EncodableValue("trimWrapWhitespace"));
+      if (trim_wrap_whitespace != grid_map->end()) {
+        grid.trim_wrap_whitespace =
+            std::get<bool>(trim_wrap_whitespace->second);
       }
     }
     layout.cell_grid = grid;
@@ -1564,6 +1576,10 @@ flutter::EncodableMap AttachedLayoutMap(
     }
     if (grid.hanging_punctuation) {
       serialized_grid[flutter::EncodableValue("hangingPunctuation")] =
+          flutter::EncodableValue(true);
+    }
+    if (grid.trim_wrap_whitespace) {
+      serialized_grid[flutter::EncodableValue("trimWrapWhitespace")] =
           flutter::EncodableValue(true);
     }
     result[flutter::EncodableValue("cellGrid")] =

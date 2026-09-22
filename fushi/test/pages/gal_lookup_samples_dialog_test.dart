@@ -698,6 +698,11 @@ void main() {
         width: .85,
         height: .3,
       );
+      const fittedClient = GalLookupReferenceClientV1(
+        widthPx: 800,
+        heightPx: 600,
+        dpi: 144,
+      );
       final _MemoryStore store = _MemoryStore(draft: _draft());
       final _Result result = await _open(
         tester,
@@ -710,6 +715,8 @@ void main() {
             draft: GalLookupCalibrationDraft(
               rect: fittedRect,
               searchRect: draft.searchRect,
+              layoutReferenceClient: fittedClient,
+              layoutCaptureMetadata: _metadata,
               samples: draft.samples,
               layout: const GalLookupTextLayoutV1(
                 cellGrid: GalLookupCellGridV1(
@@ -747,6 +754,8 @@ void main() {
       expect(result.applied!.layout.cellGrid!.columns, 20);
       expect(result.applied!.rect, fittedRect);
       expect(result.applied!.searchRect, _rect);
+      expect(result.applied!.layoutReferenceClient, fittedClient);
+      expect(result.applied!.layoutCaptureMetadata, _metadata);
       expect(
         store.saved.single.layout.cellGrid,
         result.applied!.layout.cellGrid,

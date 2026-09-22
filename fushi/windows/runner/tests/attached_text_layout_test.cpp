@@ -380,6 +380,89 @@ int main() {
   assert(advanced_emoji.boxes[1].text_length == 2);
   ++cases;
 
+  // Trimming is opt-in: the legacy grid lays out boundary spaces as cells,
+  // while the calibrated mode defers one wrap until the next visible unit.
+  layout::Layout trim_style = grid_style;
+  trim_style.cell_grid->line_width_in_cells = 2.0;
+  trim_style.cell_grid->continuation_indent = 0;
+  trim_style.cell_grid->quoted_continuation_indent = 0;
+  layout::CellGrid trim_flag = grid;
+  trim_flag.trim_wrap_whitespace = true;
+  assert(trim_flag != grid);
+  assert(layout::IsCellGridValid(trim_flag));
+  trim_style.cell_grid->trim_wrap_whitespace = false;
+  const auto legacy_boundary =
+      layout::Preview(L"AA  B", client, rect, trim_style);
+  assert(legacy_boundary.ok() && legacy_boundary.boxes.size() == 3);
+  assert(legacy_boundary.boxes.back().text_position == 4);
+  assert(legacy_boundary.boxes.back().hit_rect.left == body.left);
+  assert(legacy_boundary.boxes.back().hit_rect.top == body.top + 48);
+
+  trim_style.cell_grid->trim_wrap_whitespace = true;
+  const auto trimmed_boundary =
+      layout::Preview(L"AA  B", client, rect, trim_style);
+  assert(trimmed_boundary.ok() && trimmed_boundary.boxes.size() == 3);
+  assert(trimmed_boundary.boxes.back().text_position == 4);
+  assert(trimmed_boundary.boxes.back().hit_rect.left == body.left);
+  assert(trimmed_boundary.boxes.back().hit_rect.top == body.top + 24);
+
+  // A space that still fits remains a real advance in trim mode.
+  trim_style.cell_grid->line_width_in_cells = 3.0;
+  const auto internal_space =
+      layout::Preview(L"A B", client, rect, trim_style);
+  assert(internal_space.ok() && internal_space.boxes.size() == 2);
+  assert(internal_space.boxes.back().text_position == 2);
+  assert(internal_space.boxes.back().hit_rect.left == body.left + 36);
+
+  // Explicit breaks clear pending boundary whitespace; spaces after a break
+  // are measured normally, including at the start of the next row.
+  trim_style.cell_grid->line_width_in_cells = 2.0;
+  const auto explicit_break =
+      layout::Preview(L"AA \nB", client, rect, trim_style);
+  assert(explicit_break.ok() && explicit_break.boxes.size() == 3);
+  assert(explicit_break.boxes.back().text_position == 4);
+  assert(explicit_break.boxes.back().hit_rect.left == body.left);
+  assert(explicit_break.boxes.back().hit_rect.top == body.top + 24);
+  const auto leading_space =
+      layout::Preview(L"AA\n B", client, rect, trim_style);
+  assert(leading_space.ok() && leading_space.boxes.size() == 3);
+  assert(leading_space.boxes.back().text_position == 4);
+  assert(leading_space.boxes.back().hit_rect.left == body.left + 18);
+  assert(leading_space.boxes.back().hit_rect.top == body.top + 24);
+
+  // Consecutive boundary spaces advance one row only, and trailing spaces do
+  // not allocate a future row that is outside a tight body rectangle.
+  const auto consecutive_boundary =
+      layout::Preview(L"AA   B", client, rect, trim_style);
+  assert(consecutive_boundary.ok() && consecutive_boundary.boxes.size() == 3);
+  assert(consecutive_boundary.boxes.back().text_position == 5);
+  assert(consecutive_boundary.boxes.back().hit_rect.left == body.left);
+  assert(consecutive_boundary.boxes.back().hit_rect.top == body.top + 24);
+  const layout::NormalizedRect tight_trim_rect{0.1, 0.1, 0.5, 0.05};
+  const auto trimmed_trailing =
+      layout::Preview(L"AA ", client, tight_trim_rect, trim_style);
+  assert(trimmed_trailing.ok() && trimmed_trailing.boxes.size() == 2);
+  trim_style.cell_grid->trim_wrap_whitespace = false;
+  ExpectRejected(layout::Preview(L"AA ", client, tight_trim_rect, trim_style),
+                 "grid_overflow_body_rect");
+
+  // Skipped spaces never alter the UTF-16 source positions of a surrogate
+  // pair or the visible character that follows it.
+  trim_style.cell_grid->trim_wrap_whitespace = true;
+  const auto trimmed_emoji =
+      layout::Preview(L"AA \U0001F600B", client, rect, trim_style);
+  assert(trimmed_emoji.ok() && trimmed_emoji.boxes.size() == 4);
+  assert(trimmed_emoji.boxes[2].text_position == 3);
+  assert(trimmed_emoji.boxes[2].text_length == 2);
+  assert(trimmed_emoji.boxes[2].hit_rect.left == body.left);
+  assert(trimmed_emoji.boxes[2].hit_rect.top == body.top + 24);
+  assert(trimmed_emoji.boxes[2].text_position +
+             trimmed_emoji.boxes[2].text_length ==
+         5);
+  assert(trimmed_emoji.boxes[3].text_position == 5);
+  assert(trimmed_emoji.boxes[3].hit_rect.left == body.left + 18);
+  ++cases;
+
   // Native validation mirrors the MethodChannel limits: scalar, printable,
   // non-whitespace code points; unique entries; and bounded finite ratios.
   assert(layout::IsCharacterAdvanceValid(
@@ -428,7 +511,7 @@ int main() {
   invalid_line_width.line_width_in_cells = 128.01;
   assert(!layout::IsCellGridValid(invalid_line_width));
   layout::CellGrid invalid_indent = grid;
-  invalid_indent.continuation_indent = -0.01;
+  invalid_indent.continuation_indent = -1.01;
   assert(!layout::IsCellGridValid(invalid_indent));
   invalid_indent.continuation_indent = 8.01;
   assert(!layout::IsCellGridValid(invalid_indent));
@@ -672,6 +755,34 @@ int main() {
   assert(overflow.reason == "metrics_overflow_body_rect" ||
          overflow.reason == "overhang_outside_body_rect" ||
          overflow.reason == "line_units_or_height_mismatch");
+  ++cases;
+
+  // A -1 continuation means first-row indentation within the same body.
+  // Preview and body-local runtime must retain identical boxes after scaling.
+  layout::Layout signed_style = grid_style;
+  signed_style.cell_grid->continuation_indent = -1;
+  signed_style.cell_grid->quoted_continuation_indent = -1;
+  const std::wstring signed_text = L"ABCDE\nFGHIJ\nKLM";
+  const auto signed_preview = layout::Preview(signed_text, client, rect, signed_style);
+  const auto signed_runtime = layout::Build(factory.Get(), signed_text, signed_style,
+      600, width, height, RECT{0, 0, width, height});
+  ExpectSameBoxes(signed_preview, signed_runtime, body.left, body.top);
+  const LONG signed_pitch = static_cast<LONG>(std::llround(
+      signed_style.cell_grid->advance_per_client_height * 600));
+  assert(signed_preview.boxes[0].hit_rect.left == body.left + signed_pitch);
+  assert(signed_preview.boxes[5].hit_rect.left == body.left);
+  assert(signed_preview.boxes[10].hit_rect.left == body.left);
+  for (const auto &box : signed_preview.boxes) {
+    assert(box.hit_rect.right - box.hit_rect.left == signed_pitch);
+  }
+  const auto signed_scaled = layout::Preview(signed_text, {1600, 1200, 96}, rect, signed_style);
+  assert(signed_scaled.ok());
+  for (size_t index = 0; index < signed_preview.boxes.size(); ++index) {
+    assert(std::abs(signed_scaled.boxes[index].hit_rect.left -
+                    2 * signed_preview.boxes[index].hit_rect.left) <= 1);
+  }
+  signed_style.cell_grid->continuation_indent = -1.01;
+  ExpectRejected(layout::Preview(signed_text, client, rect, signed_style), "invalid_layout");
   ++cases;
 
   std::cout << "attached_text_layout: " << cases << " cases passed\n";

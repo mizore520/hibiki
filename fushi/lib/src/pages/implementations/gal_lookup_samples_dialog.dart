@@ -579,20 +579,21 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
           }
           final String reason = switch (result.reason) {
             'multiline_required' => t.game_lookup_samples_auto_multiline,
-            'ocr_line_spacing_missing' =>
+            'ocr_line_spacing_missing' || 'line_spacing_insufficient' =>
               t.game_lookup_samples_auto_line_spacing_missing,
-            'ocr_text_alignment_failed' =>
+            'ocr_text_alignment_failed' || 'text_correspondence_insufficient' =>
               t.game_lookup_samples_auto_text_alignment_failed,
-            'ocr_text_alignment_weak' =>
+            'ocr_text_alignment_weak' || 'ocr_anchor_insufficient' =>
               t.game_lookup_samples_auto_text_alignment_weak,
-            'ocr_geometry_weak' => t.game_lookup_samples_auto_geometry_weak,
+            'ocr_geometry_weak' || 'geometry_evidence_insufficient' =>
+              t.game_lookup_samples_auto_geometry_weak,
             'ocr_indent_ambiguous' =>
               t.game_lookup_samples_auto_indent_ambiguous,
             'ocr_line_wrap_inconsistent' =>
               t.game_lookup_samples_auto_line_wrap_inconsistent,
-            'ocr_character_positions_inconsistent' =>
+            'ocr_character_positions_inconsistent' || 'ocr_geometry_conflict' =>
               t.game_lookup_samples_auto_character_positions_inconsistent,
-            'ocr_geometry_out_of_bounds' =>
+            'ocr_geometry_out_of_bounds' || 'selection_out_of_bounds' =>
               t.game_lookup_samples_auto_geometry_out_of_bounds,
             'ocr_preview_unavailable' =>
               t.game_lookup_samples_auto_preview_unavailable,
@@ -617,8 +618,11 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       } else {
         _layoutRect = result.draft!.rect;
         _layout = result.draft!.layout;
-        _layoutReferenceClient = fittingSamples.first.capture.referenceClient;
-        _layoutCaptureMetadata = fittingMetadata;
+        _layoutReferenceClient =
+            result.draft!.layoutReferenceClient ??
+            fittingSamples.first.capture.referenceClient;
+        _layoutCaptureMetadata =
+            result.draft!.layoutCaptureMetadata ?? fittingMetadata;
         _diagnosticDetail = null;
         _font.text = _layout.fontFamily;
         _manualLayout = false;

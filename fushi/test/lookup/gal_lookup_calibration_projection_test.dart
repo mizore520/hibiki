@@ -22,6 +22,7 @@ const GalLookupTextLayoutV1 _layout = GalLookupTextLayoutV1(
     columns: 30,
     continuationIndent: 0,
     quotedContinuationIndent: 1,
+    trimWrapWhitespace: true,
   ),
 );
 const WindowCaptureMetadata _mapping = WindowCaptureMetadata(
@@ -77,6 +78,7 @@ void main() {
     );
     expect(variant.layout.cellGrid!.columns, 30);
     expect(variant.layout.cellGrid!.quotedContinuationIndent, 1);
+    expect(variant.layout.cellGrid!.trimWrapWhitespace, isTrue);
   });
 
   test('anisotropic output independently restores x and y advances', () {

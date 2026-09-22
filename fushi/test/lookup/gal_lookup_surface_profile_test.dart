@@ -140,11 +140,16 @@ void main() {
       );
       final Map<String, Object?> legacyJson = legacyGrid.toJson();
       expect(legacyJson.containsKey('hangingPunctuation'), isFalse);
+      expect(legacyJson.containsKey('trimWrapWhitespace'), isFalse);
       expect(GalLookupCellGridV1.tryFromJson(legacyJson), legacyGrid);
       final Map<String, Object?> explicitFalse = Map<String, Object?>.of(
         legacyJson,
       )..['hangingPunctuation'] = false;
       expect(GalLookupCellGridV1.tryFromJson(explicitFalse), legacyGrid);
+      final Map<String, Object?> explicitTrimFalse = Map<String, Object?>.of(
+        legacyJson,
+      )..['trimWrapWhitespace'] = false;
+      expect(GalLookupCellGridV1.tryFromJson(explicitTrimFalse), legacyGrid);
 
       const GalLookupCellGridV1 hangingGrid = GalLookupCellGridV1(
         advancePerClientHeight: 0.03,
@@ -161,10 +166,31 @@ void main() {
       expect(hangingGrid, isNot(legacyGrid));
       expect(hangingGrid.hashCode, isNot(legacyGrid.hashCode));
 
+      const GalLookupCellGridV1 trimmedGrid = GalLookupCellGridV1(
+        advancePerClientHeight: 0.03,
+        lineAdvancePerClientHeight: 0.04,
+        cellHeightPerClientHeight: 0.035,
+        columns: 24,
+        continuationIndent: 2,
+        quotedContinuationIndent: 3,
+        hangingPunctuation: true,
+        trimWrapWhitespace: true,
+        lineWidthInCells: 23.5,
+      );
+      final Map<String, Object?> trimmedJson = trimmedGrid.toJson();
+      expect(trimmedJson['trimWrapWhitespace'], true);
+      expect(GalLookupCellGridV1.tryFromJson(trimmedJson), trimmedGrid);
+      expect(trimmedGrid, isNot(hangingGrid));
+      expect(trimmedGrid.hashCode, isNot(hangingGrid.hashCode));
+
       final Map<String, Object?> wrongType = Map<String, Object?>.of(
         hangingJson,
       )..['hangingPunctuation'] = 1;
       expect(GalLookupCellGridV1.tryFromJson(wrongType), isNull);
+      final Map<String, Object?> wrongTrimType = Map<String, Object?>.of(
+        trimmedJson,
+      )..['trimWrapWhitespace'] = 1;
+      expect(GalLookupCellGridV1.tryFromJson(wrongTrimType), isNull);
       final Map<String, Object?> unknown = Map<String, Object?>.of(legacyJson)
         ..['unexpected'] = false;
       expect(GalLookupCellGridV1.tryFromJson(unknown), isNull);
@@ -204,8 +230,28 @@ void main() {
         ),
       );
 
+      final Map<String, Object?> hangingIndent =
+          Map<String, Object?>.of(fractionalJson)
+            ..['continuationIndent'] = -1
+            ..['quotedContinuationIndent'] = -1;
+      final GalLookupCellGridV1 restored = GalLookupCellGridV1.tryFromJson(
+        hangingIndent,
+      )!;
+      expect(restored.continuationIndent, -1);
+      expect(restored.quotedContinuationIndent, -1);
+      expect(GalLookupCellGridV1.tryFromJson(restored.toJson()), restored);
+      for (final Object? missing in <Object?>[null, 'invalid']) {
+        expect(
+          GalLookupCellGridV1.tryFromJson(
+            Map<String, Object?>.of(hangingIndent)
+              ..['continuationIndent'] = missing,
+          ),
+          isNull,
+        );
+      }
+
       for (final double invalid in <double>[
-        -0.01,
+        -1.01,
         double.nan,
         double.infinity,
       ]) {

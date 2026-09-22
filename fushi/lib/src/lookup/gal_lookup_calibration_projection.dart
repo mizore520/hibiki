@@ -77,6 +77,7 @@ GalLookupSurfaceVariantV1? projectGalCalibrationToSource({
             continuationIndent: grid.continuationIndent,
             quotedContinuationIndent: grid.quotedContinuationIndent,
             hangingPunctuation: grid.hangingPunctuation,
+            trimWrapWhitespace: grid.trimWrapWhitespace,
             lineWidthInCells: grid.lineWidthInCells,
           ),
     punctuationVisualBounds: layout.punctuationVisualBounds,
